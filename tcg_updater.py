@@ -105,12 +105,17 @@ def update_cycle(trigger='manual'):
             promo_status=update_promo_events.main().get('collection_status','정상')
         except Exception as exc:
             promo_status=f'프로모 행사 갱신 오류: {type(exc).__name__}'
+        try:
+            import update_exchange_rates
+            fx_status=update_exchange_rates.main().get('collection_status','정상')
+        except Exception as exc:
+            fx_status=f'환율 갱신 오류: {type(exc).__name__}'
         data=load_db()
         data['auto_update']={
             'enabled':True,'interval_hours':6,'trigger':trigger,
             'last_run':time.strftime('%Y-%m-%dT%H:%M:%S%z',time.localtime(started)),
             'next_run':time.strftime('%Y-%m-%dT%H:%M:%S%z',time.localtime(started+AUTO_INTERVAL_SECONDS)),
-            'status':release_status,'market_status':market_status,'promo_status':promo_status,
+            'status':release_status,'market_status':market_status,'promo_status':promo_status,'fx_status':fx_status,
         }
         save_db(data)
         return data

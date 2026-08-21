@@ -1,0 +1,7 @@
+{
+  "updated_at": "2026-08-21T15:47:13+09:00",
+  "base": "KRW",
+  "rates": {"JPY_KRW": 8.72295, "USD_KRW": 1386.89},
+  "source": "public reference exchange rates",
+  "note": "참고환율 · 환전 및 결제 수수료 제외"
+}

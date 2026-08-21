@@ -48,6 +48,14 @@ def main():
         else: errors.append('KREAM HIT: 거래가격 패턴 0건')
     except Exception as e: errors.append('KREAM HIT: '+type(e).__name__)
     try:
+        url='https://kream.co.kr/products/stock/16256508'; text=textify(fetch(url))
+        values=[int(x.replace(',','')) for x in re.findall(r'(?:구매가|즉시 구매가)\s*([0-9,]+)원',text)]
+        plausible=[x for x in values if 50_000 <= x <= 500_000]
+        if plausible:
+            set_price(db,'KR|로맨스 던|BOX',f'₩{plausible[0]:,}','KREAM 공개 상품 구매가','KREAM 한국판','공개 구매가 · 판매완료 체결가 아님',url)
+        else: errors.append('KREAM 로맨스 던 BOX: 구매가격 패턴 0건')
+    except Exception as e: errors.append('KREAM 로맨스 던 BOX: '+type(e).__name__)
+    try:
         url='https://pokard.io/jpcard/SV8a-217/'; text=textify(fetch(url))
         m=re.search(r'(?:Ungrade|미감정)\s*¥([0-9,]+)',text,re.I)
         if m:set_price(db,'JP|테라스탈 페스타 ex 일본판|HIT','¥'+m.group(1),'미감정 참고가격','POKARD · SNKRDUNK','공개 표시가격',url)

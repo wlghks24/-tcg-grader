@@ -29,6 +29,14 @@
     "JP|닌자스피너|BOX": {"display":"₩42,000","kind":"BOX 리셀가","market":"POKARD","transactions":"공개 표시가격","source_date":"2026-08-21","source":"https://pokard.io/asset/"},
     "JP|메가 드림 ex|BOX": {"display":"₩92,000","kind":"BOX 리셀가","market":"POKARD","transactions":"공개 표시가격","source_date":"2026-08-21","source":"https://pokard.io/asset/"},
     "JP|메가 브레이브|BOX": {"display":"₩46,000","kind":"BOX 리셀가","market":"POKARD","transactions":"공개 표시가격","source_date":"2026-08-21","source":"https://pokard.io/asset/"},
-    "JP|메가 심포니아|BOX": {"display":"₩37,000","kind":"BOX 리셀가","market":"POKARD","transactions":"공개 표시가격","source_date":"2026-08-21","source":"https://pokard.io/asset/"}
+    "JP|메가 심포니아|BOX": {"display":"₩37,000","kind":"BOX 리셀가","market":"POKARD","transactions":"공개 표시가격","source_date":"2026-08-21","source":"https://pokard.io/asset/"},
+    "KR|로맨스 던|BOX": {
+      "display": "₩149,000",
+      "kind": "KREAM 95점 상품 구매가",
+      "market": "KREAM 한국판",
+      "transactions": "공개 구매가 · 판매완료 체결가 아님",
+      "source_date": "2026-08-21",
+      "source": "https://kream.co.kr/products/stock/16256508"
+    }
   }
 }

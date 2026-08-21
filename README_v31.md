@@ -19,7 +19,7 @@ Pokémon 및 ONE PIECE 카드의 사진을 이용해 센터링과 사진상 결�
 
 ## 아이폰 단독 설치
 
-1. 이 폴더의 `index.html`, `manifest.webmanifest`, `sw.js`, `icon.svg`, `releases.json`, `promo_events.json`, `market_prices.json`을 GitHub 저장소에 올립니다.
+1. 이 폴더의 `index.html`, `manifest.webmanifest`, `sw.js`, `icon.svg`, `releases.json`, `promo_events.json`, `market_prices.json`, `exchange_rates.json`을 GitHub 저장소에 올립니다.
 2. GitHub 저장소의 **Settings → Pages**에서 **Deploy from a branch**, `main`, `/root`를 선택합니다.
 3. 생성된 HTTPS 주소를 아이폰 Safari에서 엽니다.
 4. Safari의 **공유 → 홈 화면에 추가 → 추가**를 누릅니다.
@@ -70,6 +70,8 @@ Pokémon 및 ONE PIECE 카드의 사진을 이용해 센터링과 사진상 결�
 - BOX 결과에서 공식 출고가와 현재 거래시세를 같은 결과 카드에 분리 표시
 - 프로모 카드 행사는 공식 출처가 확인된 자료만 표시하며 한국·일본·미국 국가 필터 제공
 - BOX와 HIT 목록을 인기순위·최신 출시순·가나다순으로 전환하고, 선호도·출시일·검증 시세자료 갱신 시 인기순위를 다시 계산
+- 한국판 OPK-01 로맨스 던 BOX의 KREAM 공개 구매가를 앱 내부에 표시하고, 판매완료 체결가와 구분
+- 일본 엔화·미국 달러 공식가격 아래에 원화 환산금액과 환율 기준일을 표시하고, PC·태블릿·GitHub 자동 업데이트에서 참고환율 갱신
 - 서버·페이지·캐시 버전을 v31로 통일
 - 오래된 캐시 자동 삭제 및 PWA 아이콘 180/192/512 제공
 
