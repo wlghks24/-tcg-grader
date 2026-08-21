@@ -6,7 +6,7 @@ from pathlib import Path
 
 ROOT=Path(__file__).resolve().parent
 HISTORY=ROOT/'verification_history.json'
-PY_FILES=('tcg_updater.py','auto_update_all.py','auto_repair_engine.py','update_releases.py','update_market_prices.py','update_market_watch.py','update_promo_events.py','update_exchange_rates.py')
+PY_FILES=('tcg_updater.py','auto_update_all.py','auto_repair_engine.py','update_releases.py','update_market_prices.py','update_market_watch.py','update_promo_events.py','update_exchange_rates.py','migrate_old_data.py')
 JSON_FILES=('releases.json','market_prices.json','market_watch.json','promo_events.json','exchange_rates.json','auto_update_report.json','auto_update_issues.json','auto_repair_memory.json','learning_store.json')
 
 def check(name,fn,rows):
@@ -57,7 +57,7 @@ def main():
         return '판매·재발매 자료 캐시 포함'
     check('서비스워커',sw_check,rows)
     def launchers():
-        required=('TCG_AUTO_UPDATE.bat','정보자동업데이트.bat','START_TCG_UPDATER_ANDROID.sh','자동실행_설치.bat','ANDROID_AUTO_START_INSTALL.sh','PC_SERVER_AUTO_START_INSTALL.bat','TCG_SERVER_AUTO_RUN.cmd','자동실행_해제.bat','기존버전_학습자료_가져오기.bat','학습자료_백업.bat')
+        required=('TCG_AUTO_UPDATE.bat','정보자동업데이트.bat','START_TCG_UPDATER_ANDROID.sh','자동실행_설치.bat','ANDROID_AUTO_START_INSTALL.sh','PC_SERVER_AUTO_START_INSTALL.bat','TCG_SERVER_AUTO_RUN.cmd','자동실행_해제.bat','기존버전_학습자료_가져오기.bat','학습자료_백업.bat','migrate_old_data.py')
         assert all((ROOT/f).exists() for f in required);return f'{len(required)}개'
     check('PC·태블릿 실행파일',launchers,rows)
     def startup_safety():
@@ -72,6 +72,26 @@ def main():
         assert 'TCG_SERVER_AUTO_START.cmd' in remover and 'TCG_AUTO_UPDATE_START.cmd' in remover
         return '필수파일·Python 확인 · 오류 시 10초 후 자동복구'
     check('Windows 자동실행 안전장치',startup_safety,rows)
+    def migration_safety():
+        import migrate_old_data
+        with tempfile.TemporaryDirectory() as tmp:
+            base=Path(tmp);old=base/'old';new=base/'new';old.mkdir();new.mkdir()
+            (old/'tcg_updater.py').write_text('# old',encoding='utf-8');(new/'tcg_updater.py').write_text('# new',encoding='utf-8')
+            def put(folder,name,data):(folder/name).write_text(json.dumps(data,ensure_ascii=False),encoding='utf-8')
+            put(old,'learning_store.json',{'v30_validation':[{'time':'old','company':'PSA','actual':9,'pred':10}]})
+            put(new,'learning_store.json',{'v30_validation':[{'time':'new','company':'PSA','actual':10,'pred':10}]})
+            put(old,'verification_history.json',{'version':1,'runs':[{'checked_at':'2026-01-01','checks':[]}]})
+            put(new,'verification_history.json',{'version':1,'runs':[{'checked_at':'2026-08-22','checks':[]}]})
+            put(old,'auto_repair_memory.json',{'version':1,'total_runs':5,'patterns':{},'files':{}});put(new,'auto_repair_memory.json',{'version':1,'total_runs':2,'patterns':{},'files':{}})
+            put(old,'tcg_live_data.json',{'auto_update':{'last_run':'2026-08-21T12:00:00+09:00'}});put(new,'tcg_live_data.json',{'auto_update':{'last_run':'2026-08-22T12:00:00+09:00'},'keep':'new'})
+            backup=migrate_old_data.migrate(old,new)
+            learning=json.loads((new/'learning_store.json').read_text(encoding='utf-8'));history=json.loads((new/'verification_history.json').read_text(encoding='utf-8'))
+            assert len(learning['v30_validation'])==2 and len(history['runs'])==2
+            assert json.loads((new/'auto_repair_memory.json').read_text(encoding='utf-8'))['total_runs']==5
+            assert json.loads((new/'tcg_live_data.json').read_text(encoding='utf-8'))['keep']=='new'
+            assert (backup/'verification_history.json').exists()
+        return '기존·신규 기록 병합 · 최신자료 선택 · 병합 전 백업'
+    check('기존버전 자료 안전 이전',migration_safety,rows)
     def lan_selection():
         import tcg_updater
         assert tcg_updater.choose_lan_ip(['10.5.0.2','192.168.1.2'])=='192.168.1.2'
