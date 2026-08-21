@@ -1,7 +1,7 @@
 {
   "verified_at": "2026-08-21",
   "result": "PASS",
-  "build": "tcg-v31-market-watch-ko-31",
+  "build": "tcg-v31-site-update-ko-32",
   "checks": {
     "html_parse": "PASS",
     "html_ids": "PASS - 176 unique, no duplicates",
@@ -24,6 +24,8 @@
     "service_worker_core_assets": "PASS - market_watch.json 포함",
     "server_api_pwa_http": "PASS - health, HTML, releases, promo events, prices",
     "server_market_watch_api": "PASS - 판매·재발매 추적목록과 OPK-13 가격 실제 응답",
+    "site_update_button": "PASS - 상단 전체정보 업데이트 버튼, 진행상태, 중복실행 방지, 완료 후 재활성화",
+    "site_update_dual_mode": "PASS - PC·태블릿 서버 실제수집 및 GitHub Pages 캐시 없는 재조회 분리",
     "post_apply_and_error_block": "PASS",
     "catalog_selection_links": "PASS - 32/32",
     "release_parser_fixtures": "PASS - KR/JP/US/NARUTO 4/4",
