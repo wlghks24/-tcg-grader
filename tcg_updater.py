@@ -139,12 +139,16 @@ if __name__=='__main__':
     os.chdir(BASE)
     server=ThreadingHTTPServer(('0.0.0.0',PORT),Handler)
     try:
-        lan_ip=socket.gethostbyname(socket.gethostname())
+        probe=socket.socket(socket.AF_INET,socket.SOCK_DGRAM)
+        probe.connect(('8.8.8.8',80))
+        lan_ip=probe.getsockname()[0]
+        probe.close()
     except OSError:
-        lan_ip='127.0.0.1'
+        try: lan_ip=socket.gethostbyname(socket.gethostname())
+        except OSError: lan_ip='127.0.0.1'
     url=f'http://127.0.0.1:{PORT}/index.html'
-    print('TCG v31 PC 주소:',url,flush=True)
-    print(f'아이폰 접속 주소(같은 Wi-Fi): http://{lan_ip}:{PORT}/index.html',flush=True)
+    print('이 기기 접속 주소:',url,flush=True)
+    print(f'다른 기기 접속 주소(같은 Wi-Fi): http://{lan_ip}:{PORT}/index.html',flush=True)
     try: threading.Thread(target=lambda:webbrowser.open(url),daemon=True).start()
     except Exception: pass
     threading.Thread(target=auto_update_loop,daemon=True).start()

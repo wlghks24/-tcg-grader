@@ -374,7 +374,7 @@ loadReleases();
 <button type="button" class="update-menu-btn" data-update-target="v16update"><span class="update-icon">🔄</span><b>안전 업데이트</b><small>확인 · 비교 · 반영</small></button>
 <button type="button" class="update-menu-btn" data-update-target="v17semi"><span class="update-icon">✍️</span><b>직접 정보 입력</b><small>가격 · HIT · 출처</small></button>
 <button type="button" class="update-menu-btn" data-update-target="v23dual"><span class="update-icon">📱</span><b>모바일 업데이트</b><small>PC 없이 상태 확인</small></button>
-<button type="button" class="update-menu-btn" data-update-target="v20live"><span class="update-icon">🖥️</span><b>PC 서버 업데이트</b><small>수집 · 검증 · 반영</small></button>
+<button type="button" class="update-menu-btn" data-update-target="v20live"><span class="update-icon">🖥️</span><b>PC·태블릿 서버</b><small>수집 · 검증 · 반영</small></button>
 </div>
 
 <div class="update-panel hidden" id="v16update">
@@ -419,8 +419,8 @@ loadReleases();
 </div>
 
 <div class="update-panel hidden" id="v20live">
-<button type="button" class="update-panel-close">닫기 ✕</button><h4>🖥️ PC 서버 업데이트</h4>
-<div class="update-step-note">PC에서 공식 페이지 변경 여부를 수집합니다. 승인 버튼은 검토기록을 저장하며 정적 BOX·카드 목록을 자동으로 덮어쓰지 않습니다.</div>
+<button type="button" class="update-panel-close">닫기 ✕</button><h4>🖥️ PC·안드로이드 서버 업데이트</h4>
+<div class="update-step-note">PC 또는 안드로이드 태블릿에서 공식 페이지 변경 여부를 수집합니다. 승인 버튼은 검토기록을 저장하며 정적 BOX·카드 목록을 자동으로 덮어쓰지 않습니다.</div>
 <div class="grid2"><button id="v20collect">📡 최신정보 수집</button><button id="v20apply">✅ 검토 승인 기록</button></div>
 <div id="v20out" class="status" style="margin-top:10px">서버 연결 대기 중</div>
 </div>
@@ -1332,7 +1332,7 @@ function v20render(d){
 }
 document.getElementById("v20collect")?.addEventListener("click",async()=>{
  document.getElementById("v20out").textContent="⏳ 최신정보를 실제로 수집하는 중...";
- try{v20render(await v20json("/api/update"))}catch(e){document.getElementById("v20out").innerHTML="❌ 서버 연결 실패. START_TCG_UPDATER.bat를 먼저 실행하세요."}
+ try{v20render(await v20json("/api/update"))}catch(e){document.getElementById("v20out").innerHTML="❌ 서버 연결 실패. PC는 START_TCG_UPDATER.bat, 안드로이드는 START_TCG_UPDATER_ANDROID.sh를 실행하세요."}
 });
 document.getElementById("v20apply")?.addEventListener("click",async()=>{
  if(!confirm("현재 검토 대기 중인 변경사항을 승인 기록으로 저장할까요? 목록 파일은 자동 변경되지 않습니다.")) return;
@@ -1377,16 +1377,16 @@ document.getElementById("v20apply")?.addEventListener("click",async()=>{
    const d=await pc();
    const mode=document.getElementById("v23mode");
    if(d){
-     mode.innerHTML="🟢 <b>PC 서버 연결됨</b> — PC 서버 모드";
+     mode.innerHTML="🟢 <b>서버 연결됨</b> — PC·안드로이드 서버 모드";
      return {mode:"PC",data:d};
    }
-   mode.innerHTML="📱 <b>PC 서버 꺼짐</b> — 모바일 자체 업데이트 모드";
+   mode.innerHTML="📱 <b>로컬 서버 꺼짐</b> — 모바일 자체 업데이트 모드";
    return {mode:"MOBILE",data:null};
  }
  document.getElementById("v23check")?.addEventListener("click",async()=>{
    const x=await status();
    if(x.mode==="PC"){
-     document.getElementById("v23result").innerHTML="✅ PC 서버와 연결됐습니다. PC의 중앙 DB를 사용할 수 있습니다.";
+     document.getElementById("v23result").innerHTML="✅ PC·태블릿 서버와 연결됐습니다. 서버의 중앙 DB를 사용할 수 있습니다.";
    }else{
      const r=await directCheck();
      document.getElementById("v23result").innerHTML=
@@ -1401,8 +1401,8 @@ document.getElementById("v20apply")?.addEventListener("click",async()=>{
      try{
        const r=await fetch("/api/update",{cache:"no-store"});
        const d=await r.json();
-       out.innerHTML=`✅ PC 서버에서 최신자료 수집 완료<br>검토 대기: ${(d.pending||[]).length}건`;
-     }catch(e){out.textContent="❌ PC 서버 업데이트 실패"}
+       out.innerHTML=`✅ 서버에서 최신자료 수집 완료<br>검토 대기: ${(d.pending||[]).length}건`;
+     }catch(e){out.textContent="❌ PC·태블릿 서버 업데이트 실패"}
    }else{
      const r=await directCheck();
      const ok=r.filter(x=>x.status==="직접 확인 가능").length;
