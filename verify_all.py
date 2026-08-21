@@ -35,6 +35,8 @@ def main():
     def html_check():
         ids=re.findall(r'\bid="([^"]+)"',html);assert len(ids)==len(set(ids))
         assert 'market_watch.json' in html and 'BOX·박스' in html and '가격 확인 중' in html
+        assert 'id="siteUpdateAll"' in html and 'id="siteUpdateStatus"' in html
+        assert 'siteUpdateAll").addEventListener("click",refreshReleaseInfo)' in html
         return f'고유 ID {len(ids)}개'
     check('화면 구성',html_check,rows)
     def js_check():
