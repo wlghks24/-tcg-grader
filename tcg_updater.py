@@ -6,6 +6,8 @@ from urllib.request import Request, urlopen
 
 BASE=os.path.dirname(os.path.abspath(__file__))
 DB=os.path.join(BASE,'tcg_live_data.json')
+AUTO_INTERVAL_SECONDS=6*60*60
+UPDATE_LOCK=threading.Lock()
 SOURCES=[
  ('포켓몬 한국 공식','https://pokemoncard.co.kr/card/category/info1','공식'),
  ('포켓몬 일본 공식','https://www.pokemon-card.com/products/index.html','공식'),
@@ -33,7 +35,8 @@ def free_port(start=8765, limit=30):
 PORT=free_port()
 
 def default_db():
-    return {'updated_at':None,'sources':{},'pending':[],'applied':[]}
+    return {'updated_at':None,'sources':{},'pending':[],'applied':[],
+            'auto_update':{'enabled':True,'interval_hours':6,'last_run':None,'next_run':None,'status':'대기 중'}}
 
 def load_db():
     try:
@@ -71,6 +74,33 @@ def collect():
             pending.append({'source':name,'url':url,'kind':kind,'status':'수집 오류','error':str(exc),'checked_at':now})
     data['updated_at']=now; data['pending']=pending; save_db(data); return data
 
+def update_cycle(trigger='manual'):
+    """Collect official source changes and refresh the verified release board safely."""
+    with UPDATE_LOCK:
+        started=time.time()
+        data=collect()
+        release_status='정상'
+        try:
+            import update_releases
+            update_releases.main()
+        except Exception as exc:
+            release_status=f'출시목록 갱신 오류: {type(exc).__name__}'
+        data=load_db()
+        data['auto_update']={
+            'enabled':True,'interval_hours':6,'trigger':trigger,
+            'last_run':time.strftime('%Y-%m-%dT%H:%M:%S%z',time.localtime(started)),
+            'next_run':time.strftime('%Y-%m-%dT%H:%M:%S%z',time.localtime(started+AUTO_INTERVAL_SECONDS)),
+            'status':release_status,
+        }
+        save_db(data)
+        return data
+
+def auto_update_loop():
+    while True:
+        try: update_cycle('automatic')
+        except Exception: pass
+        time.sleep(AUTO_INTERVAL_SECONDS)
+
 class Handler(SimpleHTTPRequestHandler):
     def log_message(self, fmt, *args):
         pass
@@ -83,9 +113,10 @@ class Handler(SimpleHTTPRequestHandler):
         path=self.path.split('?',1)[0]
         if path=='/api/health': return self.json({'ok':True,'service':'TCG v31'})
         if path=='/api/status': return self.json(load_db())
+        if path=='/api/auto-status': return self.json(load_db().get('auto_update',{}))
         if path=='/api/validation': return self.json({'ok':True,'mode':'pre-grade','probability_claim':False})
         if path=='/api/update':
-            try: return self.json(collect())
+            try: return self.json(update_cycle('manual'))
             except Exception as exc: return self.json({'ok':False,'error':str(exc)},500)
         return super().do_GET()
     def do_POST(self):
@@ -116,6 +147,8 @@ if __name__=='__main__':
     print(f'아이폰 접속 주소(같은 Wi-Fi): http://{lan_ip}:{PORT}/index.html',flush=True)
     try: threading.Thread(target=lambda:webbrowser.open(url),daemon=True).start()
     except Exception: pass
+    threading.Thread(target=auto_update_loop,daemon=True).start()
+    print('공식자료 자동 확인: 시작 직후 + 6시간마다',flush=True)
     try: server.serve_forever()
     except KeyboardInterrupt: pass
     finally: server.server_close()
