@@ -1,36 +1,38 @@
 {
   "verified_at": "2026-08-21",
   "result": "PASS",
-  "included_games": ["Pokémon", "ONE PIECE", "NARUTO"],
+  "build": "tcg-v31-v13-result-fix-18",
   "checks": {
     "html_parse": "PASS",
-    "duplicate_html_ids": "PASS - none",
-    "javascript_syntax": "PASS",
+    "html_ids": "PASS - 166 unique, no duplicates",
+    "dom_references": "PASS - dynamic cal prefix verified",
+    "button_handlers": "PASS - 46/46",
+    "javascript_individual": "PASS - 21/21",
+    "javascript_combined_global_scope": "PASS",
     "python_syntax": "PASS",
-    "release_json": "PASS",
-    "github_actions_yaml": "PASS",
-    "service_worker_core_files": "PASS",
-    "pc_server_start": "PASS",
-    "index_http": 200,
-    "manifest_http": 200,
-    "releases_http": 200,
-    "app_icon_http": 200,
-    "service_worker_http": 200,
-    "health_api_http": 200,
-    "status_api_http": 200,
-    "naruto_release_update_validation": "PASS",
-    "kr_jp_us_box_price_fields": "PASS"
+    "android_shell_syntax": "PASS",
+    "json_and_manifest": "PASS",
+    "manifest_icon": "PASS",
+    "service_worker_core_assets": "PASS - 5/5",
+    "server_api_pwa_http": "PASS - 6/6",
+    "post_apply_and_error_block": "PASS",
+    "catalog_selection_links": "PASS - 32/32",
+    "release_parser_fixtures": "PASS - KR/JP/US/NARUTO 4/4",
+    "updater_domain_allowlist": "PASS",
+    "release_records": "PASS - 7/7 HTTPS records",
+    "zip_integrity": "PASS - 13/13 files and hashes"
   },
-  "fixes": [
-    "누락된 PNG 아이콘 참조를 실제 포함된 SVG 앱 아이콘으로 교체",
-    "화면이 없는 과거 v18/v19 코드 제거",
-    "Pokémon BOX 검색 데이터 키 불일치 수정",
-    "NARUTO 2027년 여름 글로벌 출시정보 및 공식 자동확인 추가",
-    "서비스워커 캐시 버전 갱신"
+  "confirmed_behavior": [
+    "v13 selection uses the catalog data key instead of the visible emoji label",
+    "selected BOX or HIT information is rendered inside the app",
+    "market search and official product source open as separate actions",
+    "failed updater records are not approved or written as verified changes",
+    "Windows, macOS and Android server launchers are included"
   ],
   "limitations": [
-    "정식 카드 등급은 PSA/BGS/CGC의 실물 검사 결과로만 확정 가능",
-    "NARUTO의 정확한 출시일·가격·카드 규격은 공식 미공개이며 공개 전까지 미정으로 표시",
-    "거래 시세는 판매완료·체결 자료를 입력하거나 원출처에서 확인해야 함"
+    "Photo analysis cannot replace physical grading or authentication",
+    "External asking prices are not treated as completed sales",
+    "Android background execution depends on Termux battery restrictions",
+    "Official-site layout changes can require parser maintenance; failures preserve existing verified data"
   ]
 }
