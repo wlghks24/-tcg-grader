@@ -31,6 +31,8 @@ Pokémon 및 ONE PIECE 카드의 사진을 이용해 센터링과 사진상 결�
 
 - Windows: `START_TCG_UPDATER.bat` 더블클릭
 - 자료만 즉시 갱신하려면 Windows 호환 영문 실행파일 `TCG_AUTO_UPDATE.bat`를 더블클릭합니다. `정보자동업데이트.bat`도 같은 기능이지만 일부 Windows의 한글 배치파일 해석 오류를 피하려면 영문 파일을 권장합니다.
+- PC 로그인 때마다 자동 갱신하려면 `자동실행_설치.bat`를 한 번만 더블클릭합니다. Windows 로그인 30초 후 최소화 상태로 실행되고 결과는 `TCG_AUTO_UPDATE_STARTUP.log`에 누적됩니다.
+- 자동실행을 중지하려면 `자동실행_해제.bat`를 더블클릭합니다.
 - 통합 갱신 결과는 `auto_update_report.json`에 저장되며, 실패한 자료는 이전 정상본으로 자동 복구됩니다.
 - 오류·재시도·자동복구 내용은 `auto_update_issues.json`과 앱의 `🩹 오류·자동보정 결과`에서 확인합니다.
 - 반복 오류의 종류·횟수·복구 성공기록은 `auto_repair_memory.json`에 누적되며 다음 갱신의 재시도 횟수와 복구정책에 반영됩니다.
@@ -47,6 +49,9 @@ Pokémon 및 ONE PIECE 카드의 사진을 이용해 센터링과 사진상 결�
 - 자세한 최초 설치 방법은 `ANDROID_TABLET_SETUP.md`를 확인하세요.
 - 같은 Wi-Fi에 연결된 휴대폰과 PC에서도 화면에 표시된 태블릿 주소로 접속할 수 있습니다.
 - Termux의 배터리 사용을 **제한 없음**으로 설정하고, 서버 실행 중에는 Termux를 종료하지 마세요.
+- 태블릿 부팅 자동실행은 F-Droid의 Termux:Boot를 설치하고 한 번 연 뒤 `bash ANDROID_AUTO_START_INSTALL.sh`를 실행합니다.
+- 부팅 후 서버가 자동 실행되며 시작 직후와 6시간마다 자료를 갱신하고 `TCG_ANDROID_STARTUP.log`에 기록합니다.
+- 자동실행 해제는 `bash ANDROID_AUTO_START_REMOVE.sh`를 실행합니다.
 
 ## 사용 순서
 

@@ -1,6 +1,8 @@
 @echo off
 setlocal
 cd /d "%~dp0"
+set "AUTO_MODE=0"
+if /i "%~1"=="/AUTO" set "AUTO_MODE=1"
 title TCG AUTO UPDATE
 echo ========================================
 echo TCG DATA AUTO UPDATE
@@ -35,5 +37,7 @@ echo [ERROR] Update failed. Check auto_update_issues.json.
 
 :END
 echo.
+if "%AUTO_MODE%"=="1" goto AUTO_EXIT
 pause
+:AUTO_EXIT
 endlocal
