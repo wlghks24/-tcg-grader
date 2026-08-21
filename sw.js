@@ -1,4 +1,4 @@
-const CACHE='tcg-v31-krw-conversion-ko-24';
+const CACHE='tcg-v31-adaptive-learning-ko-29';
 const CORE=['./','./index.html','./manifest.webmanifest','./releases.json','./promo_events.json','./market_prices.json','./exchange_rates.json','./icon.svg'];
 self.addEventListener('install',event=>event.waitUntil(caches.open(CACHE).then(cache=>cache.addAll(CORE)).then(()=>self.skipWaiting())));
 self.addEventListener('activate',event=>event.waitUntil(caches.keys().then(keys=>Promise.all(keys.filter(key=>key!==CACHE).map(key=>caches.delete(key)))).then(()=>self.clients.claim())));

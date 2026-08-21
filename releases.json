@@ -1,6 +1,15 @@
 {
-  "updated_at": "2026-08-21T18:24:47+09:00",
+  "updated_at": "2026-08-21T13:51:48+00:00",
   "items": [
+    {
+      "game": "ONE PIECE",
+      "region": "KR",
+      "name": "[EBK-03] 엑스트라 부스터 팩 ONE PIECE Heroines Edition",
+      "release_date": "2026-07-24",
+      "price": "₩48,000/BOX",
+      "status": "공식 확인",
+      "source": "https://onepiece-cardgame.kr/products.do"
+    },
     {
       "game": "ONE PIECE",
       "region": "KR",
@@ -9,6 +18,15 @@
       "price": "₩48,000/BOX",
       "status": "공식 출시",
       "source": "https://onepiece-cardgame.kr/"
+    },
+    {
+      "game": "ONE PIECE",
+      "region": "KR",
+      "name": "[OPK-14] 부스터 팩 창해의 칠걸",
+      "release_date": "2026-08-21",
+      "price": "₩48,000/BOX",
+      "status": "공식 확인",
+      "source": "https://onepiece-cardgame.kr/products.do"
     },
     {
       "game": "ONE PIECE",
@@ -67,6 +85,10 @@
     }
   ],
   "collection_policy": "공식 출처에서 상품명과 출시일 또는 공식 출시시기가 함께 확인된 항목만 자동 반영",
-  "collection_status": "공식 출처 수동 검증 완료",
-  "collection_errors": []
+  "collection_status": "일부 출처 확인 실패",
+  "collection_errors": [
+    "Pokémon JP: RuntimeError",
+    "ONE PIECE JP: HTTPError",
+    "ONE PIECE US: HTTPError"
+  ]
 }

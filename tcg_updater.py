@@ -8,6 +8,9 @@ from urllib.request import Request, urlopen
 BASE=os.path.dirname(os.path.abspath(__file__))
 DB=os.path.join(BASE,'tcg_live_data.json')
 MARKET_DB=os.path.join(BASE,'market_prices.json')
+AUTO_REPORT=os.path.join(BASE,'auto_update_report.json')
+AUTO_ISSUES=os.path.join(BASE,'auto_update_issues.json')
+AUTO_MEMORY=os.path.join(BASE,'auto_repair_memory.json')
 AUTO_INTERVAL_SECONDS=6*60*60
 UPDATE_LOCK=threading.Lock()
 SOURCES=[
@@ -61,6 +64,11 @@ def load_market_db():
     except (OSError,ValueError,TypeError):
         return {'updated_at':None,'entries':{},'collection_status':'가격자료 없음'}
 
+def load_json_file(path, fallback):
+    try:
+        with open(path,'r',encoding='utf-8') as f:return json.load(f)
+    except (OSError,ValueError,TypeError):return fallback
+
 def fetch(url):
     req=Request(url,headers={'User-Agent':'TCG-Research-Updater/27'})
     with urlopen(req,timeout=15) as r:
@@ -88,28 +96,17 @@ def update_cycle(trigger='manual'):
     with UPDATE_LOCK:
         started=time.time()
         data=collect()
-        release_status='정상'
         try:
-            import update_releases
-            update_releases.main()
+            import auto_update_all
+            report=auto_update_all.run_all(trigger)
+            result_map={x['file']:x for x in report['results']}
+            release_status=result_map['releases.json']['status']
+            market_status=result_map['market_prices.json']['status']
+            promo_status=result_map['promo_events.json']['status']
+            fx_status=result_map['exchange_rates.json']['status']
         except Exception as exc:
-            release_status=f'출시목록 갱신 오류: {type(exc).__name__}'
-        try:
-            import update_market_prices
-            market=update_market_prices.main()
-            market_status=market.get('collection_status','정상')
-        except Exception as exc:
-            market_status=f'가격목록 갱신 오류: {type(exc).__name__}'
-        try:
-            import update_promo_events
-            promo_status=update_promo_events.main().get('collection_status','정상')
-        except Exception as exc:
-            promo_status=f'프로모 행사 갱신 오류: {type(exc).__name__}'
-        try:
-            import update_exchange_rates
-            fx_status=update_exchange_rates.main().get('collection_status','정상')
-        except Exception as exc:
-            fx_status=f'환율 갱신 오류: {type(exc).__name__}'
+            message=f'통합 자동업데이트 오류: {type(exc).__name__}'
+            release_status=market_status=promo_status=fx_status=message
         data=load_db()
         data['auto_update']={
             'enabled':True,'interval_hours':6,'trigger':trigger,
@@ -139,6 +136,9 @@ class Handler(SimpleHTTPRequestHandler):
         if path=='/api/health': return self.json({'ok':True,'service':'TCG v31'})
         if path=='/api/status': return self.json(load_db())
         if path=='/api/auto-status': return self.json(load_db().get('auto_update',{}))
+        if path=='/api/update-report': return self.json(load_json_file(AUTO_REPORT,{'ok':False,'results':[]}))
+        if path=='/api/update-issues': return self.json(load_json_file(AUTO_ISSUES,{'issue_count':0,'issues':[]}))
+        if path=='/api/repair-memory': return self.json(load_json_file(AUTO_MEMORY,{'total_runs':0,'patterns':{},'files':{}}))
         if path=='/api/validation': return self.json({'ok':True,'mode':'pre-grade','probability_claim':False})
         if path=='/api/market-price':
             qs=parse_qs(parsed.query); key=qs.get('key',[''])[0]

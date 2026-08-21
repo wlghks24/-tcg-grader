@@ -6,10 +6,11 @@ from pathlib import Path
 
 ROOT=Path(__file__).resolve().parent
 DATA=ROOT/'market_prices.json'
+APP=ROOT/'index.html'
 HEADERS={'User-Agent':'TCG-Grader-Public-Price-Checker/1.0'}
 
 def fetch(url:str)->str:
-    if not url.startswith(('https://pokard.io/','https://kream.co.kr/')):
+    if not url.startswith(('https://pokard.io/','https://kream.co.kr/','https://www.packmagik.com/')):
         raise ValueError('허용되지 않은 가격 출처')
     req=urllib.request.Request(url,headers=HEADERS)
     with urllib.request.urlopen(req,timeout=20) as r:
@@ -23,6 +24,13 @@ def textify(raw:str)->str:
 def set_price(db,key,display,kind,market,transactions,source):
     db['entries'][key]={'display':display,'kind':kind,'market':market,'transactions':transactions,
       'source_date':dt.date.today().isoformat(),'source':source}
+
+def coverage(db):
+    raw=APP.read_text(encoding='utf-8');block=raw.split('const COUNTRY_BOX_DATA=',1)[1].split('const LEARNING_PRICE_DATA=',1)[0]
+    products=re.findall(r'\{country:"(KR|JP|US)",game:"[^"]+",name:"([^"]+)"',block)
+    required={f'{region}|{name}|{asset}' for region,name in products for asset in ('BOX','HIT')}
+    verified=required & set(db.get('entries',{}));missing=sorted(required-verified)
+    return {'total':len(required),'verified':len(verified),'pending':len(missing),'missing_keys':missing}
 
 def main():
     db=json.loads(DATA.read_text(encoding='utf-8')); db.setdefault('entries',{}); errors=[]
@@ -56,6 +64,21 @@ def main():
         else: errors.append('KREAM 로맨스 던 BOX: 구매가격 패턴 0건')
     except Exception as e: errors.append('KREAM 로맨스 던 BOX: '+type(e).__name__)
     try:
+        url='https://kream.co.kr/products/627575';text=textify(fetch(url))
+        trades=[int(x.replace(',','')) for x in re.findall(r'ONE SIZE\s*([0-9,]+)원',text)[:12]]
+        plausible=[x for x in trades if 20_000<=x<=150_000]
+        if plausible:
+            low,high=min(plausible),max(plausible);display=f'₩{low:,}' if low==high else f'₩{low:,}~₩{high:,}'
+            set_price(db,'KR|블랙볼트|BOX',display,'최근 공개 체결가 범위','KREAM 한국판',f'최근 공개 체결 {len(plausible)}건',url)
+        else: errors.append('KREAM 블랙볼트 BOX: 체결가격 패턴 0건')
+    except Exception as e: errors.append('KREAM 블랙볼트 BOX: '+type(e).__name__)
+    try:
+        url='https://www.packmagik.com/cards/op-op14-op14-009-p1';text=textify(fetch(url))
+        m=re.search(r'(?:Market|시장가)\s*\$([0-9]+(?:\.[0-9]+)?)',text,re.I)
+        if m:set_price(db,'KR|창해의 칠걸|HIT','$'+m.group(1),'OP14-009 패러렐 국제판 참고시세','Pack Magik 국제시장','한국판 실거래 아님 · 국제판 시장가 참고',url)
+        else: errors.append('Pack Magik OP14-009: 가격 패턴 0건')
+    except Exception as e: errors.append('Pack Magik OP14-009: '+type(e).__name__)
+    try:
         url='https://pokard.io/jpcard/SV8a-217/'; text=textify(fetch(url))
         m=re.search(r'(?:Ungrade|미감정)\s*¥([0-9,]+)',text,re.I)
         if m:set_price(db,'JP|테라스탈 페스타 ex 일본판|HIT','¥'+m.group(1),'미감정 참고가격','POKARD · SNKRDUNK','공개 표시가격',url)
@@ -64,6 +87,7 @@ def main():
     db['updated_at']=dt.datetime.now(dt.timezone.utc).isoformat(timespec='seconds')
     db['collection_status']='정상' if not errors else '일부 가격 출처 확인 실패'
     db['collection_errors']=errors
+    db['catalog_price_coverage']=coverage(db)
     tmp=DATA.with_suffix('.json.tmp');tmp.write_text(json.dumps(db,ensure_ascii=False,indent=2)+'\n',encoding='utf-8');tmp.replace(DATA)
     return db
 

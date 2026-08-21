@@ -1,5 +1,5 @@
 {
-  "updated_at": "2026-08-21T00:00:00+09:00",
+  "updated_at": "2026-08-21T13:53:12+00:00",
   "entries": {
     "KR|테라스탈 페스타 ex|HIT": {
       "display": "₩138,000",
@@ -13,7 +13,7 @@
       "display": "¥79,800",
       "kind": "미감정 참고가격",
       "market": "POKARD · SNKRDUNK",
-      "transactions": "확인된 체결자료 없음",
+      "transactions": "공개 표시가격",
       "source_date": "2026-08-21",
       "source": "https://pokard.io/jpcard/SV8a-217/"
     },
@@ -25,11 +25,46 @@
       "source_date": "2026-08-21",
       "source": "https://pokard.io/pokemon-card-price/us/"
     },
-    "JP|인페르노 X|BOX": {"display":"₩63,000","kind":"BOX 리셀가","market":"POKARD","transactions":"공개 표시가격","source_date":"2026-08-21","source":"https://pokard.io/asset/"},
-    "JP|닌자스피너|BOX": {"display":"₩42,000","kind":"BOX 리셀가","market":"POKARD","transactions":"공개 표시가격","source_date":"2026-08-21","source":"https://pokard.io/asset/"},
-    "JP|메가 드림 ex|BOX": {"display":"₩92,000","kind":"BOX 리셀가","market":"POKARD","transactions":"공개 표시가격","source_date":"2026-08-21","source":"https://pokard.io/asset/"},
-    "JP|메가 브레이브|BOX": {"display":"₩46,000","kind":"BOX 리셀가","market":"POKARD","transactions":"공개 표시가격","source_date":"2026-08-21","source":"https://pokard.io/asset/"},
-    "JP|메가 심포니아|BOX": {"display":"₩37,000","kind":"BOX 리셀가","market":"POKARD","transactions":"공개 표시가격","source_date":"2026-08-21","source":"https://pokard.io/asset/"},
+    "JP|인페르노 X|BOX": {
+      "display": "₩63,000",
+      "kind": "BOX 리셀가",
+      "market": "POKARD",
+      "transactions": "공개 표시가격",
+      "source_date": "2026-08-21",
+      "source": "https://pokard.io/"
+    },
+    "JP|닌자스피너|BOX": {
+      "display": "₩42,000",
+      "kind": "BOX 리셀가",
+      "market": "POKARD",
+      "transactions": "공개 표시가격",
+      "source_date": "2026-08-21",
+      "source": "https://pokard.io/"
+    },
+    "JP|메가 드림 ex|BOX": {
+      "display": "₩92,000",
+      "kind": "BOX 리셀가",
+      "market": "POKARD",
+      "transactions": "공개 표시가격",
+      "source_date": "2026-08-21",
+      "source": "https://pokard.io/"
+    },
+    "JP|메가 브레이브|BOX": {
+      "display": "₩46,000",
+      "kind": "BOX 리셀가",
+      "market": "POKARD",
+      "transactions": "공개 표시가격",
+      "source_date": "2026-08-21",
+      "source": "https://pokard.io/"
+    },
+    "JP|메가 심포니아|BOX": {
+      "display": "₩37,000",
+      "kind": "BOX 리셀가",
+      "market": "POKARD",
+      "transactions": "공개 표시가격",
+      "source_date": "2026-08-21",
+      "source": "https://pokard.io/"
+    },
     "KR|로맨스 던|BOX": {
       "display": "₩149,000",
       "kind": "KREAM 95점 상품 구매가",
@@ -37,6 +72,88 @@
       "transactions": "공개 구매가 · 판매완료 체결가 아님",
       "source_date": "2026-08-21",
       "source": "https://kream.co.kr/products/stock/16256508"
+    },
+    "KR|블랙볼트|BOX": {
+      "display": "₩47,000~₩50,000",
+      "kind": "최근 공개 체결가 범위",
+      "market": "KREAM 한국판",
+      "transactions": "최근 공개 체결 6건 · 47,000원/50,000원",
+      "source_date": "2026-08-21",
+      "source": "https://kream.co.kr/products/627575"
+    },
+    "KR|창해의 칠걸|HIT": {
+      "display": "$16.53",
+      "kind": "OP14-009 패러렐 국제판 참고시세",
+      "market": "Pack Magik 국제시장",
+      "transactions": "한국판 실거래 아님 · 국제판 시장가 참고",
+      "source_date": "2026-08-21",
+      "source": "https://www.packmagik.com/cards/op-op14-op14-009-p1"
     }
-  }
+  },
+  "catalog_price_coverage": {
+    "total": 64,
+    "verified": 11,
+    "pending": 53,
+    "missing_keys": [
+      "JP|닌자스피너|HIT",
+      "JP|메가 드림 ex|HIT",
+      "JP|메가 브레이브|HIT",
+      "JP|메가 심포니아|HIT",
+      "JP|배틀파트너즈 일본판|BOX",
+      "JP|배틀파트너즈 일본판|HIT",
+      "JP|블랙볼트 · 화이트플레어|BOX",
+      "JP|블랙볼트 · 화이트플레어|HIT",
+      "JP|세계 최강의 전사들 일본판|BOX",
+      "JP|세계 최강의 전사들 일본판|HIT",
+      "JP|스톰 에메랄드|BOX",
+      "JP|스톰 에메랄드|HIT",
+      "JP|인페르노 X|HIT",
+      "JP|테라스탈 페스타 ex 일본판|BOX",
+      "JP|포켓몬 카드 30주년 기념|BOX",
+      "JP|포켓몬 카드 30주년 기념|HIT",
+      "KR|계승되는 의지|BOX",
+      "KR|계승되는 의지|HIT",
+      "KR|로맨스 던|HIT",
+      "KR|메가 심포니아 한국판|BOX",
+      "KR|메가 심포니아 한국판|HIT",
+      "KR|배틀파트너즈|BOX",
+      "KR|배틀파트너즈|HIT",
+      "KR|블랙볼트|HIT",
+      "KR|새로운 황제|BOX",
+      "KR|새로운 황제|HIT",
+      "KR|신시대의 주역|BOX",
+      "KR|신시대의 주역|HIT",
+      "KR|창해의 칠걸|BOX",
+      "KR|테라스탈 페스타 ex|BOX",
+      "KR|화이트플레어|BOX",
+      "KR|화이트플레어|HIT",
+      "KR|히로인즈 에디션|BOX",
+      "KR|히로인즈 에디션|HIT",
+      "US|계승되는 의지 미국판|BOX",
+      "US|계승되는 의지 미국판|HIT",
+      "US|나루토 카드 게임|BOX",
+      "US|나루토 카드 게임|HIT",
+      "US|더 베스트 Vol.2|BOX",
+      "US|더 베스트 Vol.2|HIT",
+      "US|블랙볼트·화이트플레어 미국판|BOX",
+      "US|블랙볼트·화이트플레어 미국판|HIT",
+      "US|세계 최강의 전사들 미국판|BOX",
+      "US|세계 최강의 전사들 미국판|HIT",
+      "US|스승의 유산|BOX",
+      "US|스승의 유산|HIT",
+      "US|칠흑|BOX",
+      "US|칠흑|HIT",
+      "US|포켓몬 카드 30주년 엘리트 트레이너 박스|BOX",
+      "US|포켓몬 카드 30주년 엘리트 트레이너 박스|HIT",
+      "US|프리즈마틱 에볼루션|BOX",
+      "US|혼돈의 부상|BOX",
+      "US|혼돈의 부상|HIT"
+    ]
+  },
+  "collection_status": "일부 가격 출처 확인 실패",
+  "collection_errors": [
+    "KREAM HIT: TimeoutError",
+    "KREAM 로맨스 던 BOX: TimeoutError",
+    "KREAM 블랙볼트 BOX: TimeoutError"
+  ]
 }

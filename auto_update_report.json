@@ -1,0 +1,43 @@
+{
+  "version": 1,
+  "trigger": "manual",
+  "started_at": "2026-08-21T13:51:12+00:00",
+  "finished_at": "2026-08-21T13:53:26+00:00",
+  "ok": true,
+  "success_count": 4,
+  "failure_count": 0,
+  "results": [
+    {
+      "name": "출시일",
+      "file": "releases.json",
+      "ok": true,
+      "status": "일부 출처 확인 실패",
+      "updated_at": "2026-08-21T13:51:48+00:00",
+      "count": 9
+    },
+    {
+      "name": "현재 거래시세",
+      "file": "market_prices.json",
+      "ok": true,
+      "status": "일부 가격 출처 확인 실패",
+      "updated_at": "2026-08-21T13:53:12+00:00",
+      "count": 11
+    },
+    {
+      "name": "프로모 카드 행사",
+      "file": "promo_events.json",
+      "ok": true,
+      "status": "정상",
+      "updated_at": "2026-08-21T13:53:18+00:00",
+      "count": 1
+    },
+    {
+      "name": "원화 환산 환율",
+      "file": "exchange_rates.json",
+      "ok": true,
+      "status": "정상",
+      "updated_at": "2026-08-21T13:53:26+00:00",
+      "count": 0
+    }
+  ]
+}
