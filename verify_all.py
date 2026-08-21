@@ -7,7 +7,7 @@ from pathlib import Path
 ROOT=Path(__file__).resolve().parent
 HISTORY=ROOT/'verification_history.json'
 PY_FILES=('tcg_updater.py','auto_update_all.py','auto_repair_engine.py','update_releases.py','update_market_prices.py','update_market_watch.py','update_promo_events.py','update_exchange_rates.py')
-JSON_FILES=('releases.json','market_prices.json','market_watch.json','promo_events.json','exchange_rates.json','auto_update_report.json','auto_update_issues.json','auto_repair_memory.json')
+JSON_FILES=('releases.json','market_prices.json','market_watch.json','promo_events.json','exchange_rates.json','auto_update_report.json','auto_update_issues.json','auto_repair_memory.json','learning_store.json')
 
 def check(name,fn,rows):
     try: detail=fn() or '정상';rows.append({'name':name,'ok':True,'detail':str(detail)})
@@ -57,7 +57,7 @@ def main():
         return '판매·재발매 자료 캐시 포함'
     check('서비스워커',sw_check,rows)
     def launchers():
-        required=('TCG_AUTO_UPDATE.bat','정보자동업데이트.bat','START_TCG_UPDATER_ANDROID.sh','자동실행_설치.bat','ANDROID_AUTO_START_INSTALL.sh','PC_SERVER_AUTO_START_INSTALL.bat','TCG_SERVER_AUTO_RUN.cmd','자동실행_해제.bat')
+        required=('TCG_AUTO_UPDATE.bat','정보자동업데이트.bat','START_TCG_UPDATER_ANDROID.sh','자동실행_설치.bat','ANDROID_AUTO_START_INSTALL.sh','PC_SERVER_AUTO_START_INSTALL.bat','TCG_SERVER_AUTO_RUN.cmd','자동실행_해제.bat','기존버전_학습자료_가져오기.bat','학습자료_백업.bat')
         assert all((ROOT/f).exists() for f in required);return f'{len(required)}개'
     check('PC·태블릿 실행파일',launchers,rows)
     def startup_safety():
@@ -81,6 +81,9 @@ def main():
     check('휴대폰·태블릿 LAN 주소 선택',lan_selection,rows)
     def server_api():
         import tcg_updater
+        original_learning=tcg_updater.LEARNING_STORE
+        learning_tmp=tempfile.NamedTemporaryFile(suffix='.json',delete=False);learning_tmp.close();Path(learning_tmp.name).unlink(missing_ok=True)
+        tcg_updater.LEARNING_STORE=learning_tmp.name
         server=tcg_updater.ThreadingHTTPServer(('127.0.0.1',0),tcg_updater.Handler)
         thread=threading.Thread(target=server.serve_forever,daemon=True);thread.start()
         base=f'http://127.0.0.1:{server.server_address[1]}'
@@ -93,10 +96,16 @@ def main():
             key=urllib.parse.quote('KR|계승되는 의지|BOX')
             status,price=get('/api/market-price?key='+key);body=json.loads(price)
             assert status==200 and body['found'] and body['price']['display']=='₩89,000'
+            payload=json.dumps({'v30_validation':[{'time':'test','company':'PSA','actual':9,'pred':10}], 'v11_validation':[]}).encode('utf-8')
+            request=urllib.request.Request(base+'/api/learning-store',data=payload,headers={'Content-Type':'application/json'},method='POST')
+            with urllib.request.urlopen(request,timeout=5) as response: saved=json.loads(response.read().decode('utf-8'))
+            assert saved['ok'] and saved['saved']==1
+            status,learning=get('/api/learning-store');assert status==200 and len(json.loads(learning)['v30_validation'])==1
             status,page=get('/index.html');assert status==200 and 'BOX·박스' in page
         finally:
-            server.shutdown();server.server_close();thread.join(timeout=3)
-        return 'health·추적목록·OPK-13 가격·화면 응답 정상'
+            server.shutdown();server.server_close();thread.join(timeout=3);tcg_updater.LEARNING_STORE=original_learning
+            Path(learning_tmp.name).unlink(missing_ok=True);Path(learning_tmp.name+'.bak').unlink(missing_ok=True)
+        return 'health·추적목록·OPK-13 가격·학습 저장·화면 응답 정상'
     check('PC·태블릿 서버 실제 응답',server_api,rows)
     now=dt.datetime.now(dt.timezone.utc).isoformat(timespec='seconds')
     try: history=json.loads(HISTORY.read_text(encoding='utf-8'))
