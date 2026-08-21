@@ -46,7 +46,9 @@ Pokémon 및 ONE PIECE 카드의 사진을 이용해 센터링과 사진상 결�
 
 - Windows: `START_TCG_UPDATER.bat` 더블클릭
 - 자료만 즉시 갱신하려면 Windows 호환 영문 실행파일 `TCG_AUTO_UPDATE.bat`를 더블클릭합니다. `정보자동업데이트.bat`도 같은 기능이지만 일부 Windows의 한글 배치파일 해석 오류를 피하려면 영문 파일을 권장합니다.
-- PC 로그인 때마다 서버까지 자동 실행하려면 `PC_SERVER_AUTO_START_INSTALL.bat` 또는 `자동실행_설치.bat`를 한 번만 더블클릭합니다. Windows 로그인 30초 후 서버가 실행되고, 시작 직후와 6시간마다 갱신하며 기록은 `TCG_SERVER_STARTUP.log`에 누적됩니다.
+- PC 로그인 때마다 서버까지 자동 실행하려면 **압축을 완전히 푼 `TCG_GRADER` 폴더 안에서** `PC_SERVER_AUTO_START_INSTALL.bat` 또는 `자동실행_설치.bat`를 한 번만 더블클릭합니다. 필수파일과 Python이 없으면 성공으로 표시하지 않습니다.
+- Windows 로그인 30초 후 `TCG Grader Auto Server` 창이 열립니다. 이 창은 서버가 실행 중임을 보여주므로 닫지 마세요. 서버가 오류로 종료되면 10초 뒤 자동 재시작하고 기록은 `TCG_SERVER_STARTUP.log`에 누적됩니다.
+- 설치 후 `TCG_GRADER` 폴더를 옮겼다면 새 위치에서 설치파일을 다시 실행해야 합니다.
 - 자동실행을 중지하려면 `자동실행_해제.bat`를 더블클릭합니다.
 - 통합 갱신 결과는 `auto_update_report.json`에 저장되며, 실패한 자료는 이전 정상본으로 자동 복구됩니다.
 - 오류·재시도·자동복구 내용은 `auto_update_issues.json`과 앱의 `🩹 오류·자동보정 결과`에서 확인합니다.
@@ -55,6 +57,7 @@ Pokémon 및 ONE PIECE 카드의 사진을 이용해 센터링과 사진상 결�
 - macOS: `START_TCG_UPDATER.command` 실행
 - Python 3가 필요합니다.
 - 실행창에 PC 주소와 같은 Wi-Fi의 아이폰 접속 주소가 함께 표시됩니다.
+- NordVPN 같은 가상 어댑터와 Wi-Fi 주소가 함께 있으면 `192.168.x.x` Wi-Fi 주소를 우선 표시합니다.
 - Windows 방화벽이 물으면 **개인 네트워크**만 허용하세요.
 
 ## 레노버·안드로이드 태블릿에서 서버 실행

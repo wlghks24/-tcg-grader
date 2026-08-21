@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-import json, os, re, hashlib, threading, webbrowser, time, socket
+import json, os, re, hashlib, threading, webbrowser, time, socket, ipaddress, subprocess
 from urllib.parse import urlparse, parse_qs
 from http.server import ThreadingHTTPServer, SimpleHTTPRequestHandler
 from urllib.request import Request, urlopen
@@ -40,6 +40,34 @@ def free_port(start=8765, limit=30):
     raise OSError('사용 가능한 로컬 포트를 찾지 못했습니다.')
 
 PORT=free_port()
+
+def choose_lan_ip(candidates):
+    """Prefer a real home LAN address over VPN/virtual-adapter addresses."""
+    valid=[]
+    for raw in candidates:
+        try: ip=ipaddress.ip_address(str(raw).strip())
+        except ValueError: continue
+        if ip.version!=4 or ip.is_loopback or ip.is_link_local or not ip.is_private: continue
+        text=str(ip)
+        score=300 if text.startswith('192.168.') else 200 if ip in ipaddress.ip_network('172.16.0.0/12') else 100
+        valid.append((score,text))
+    return max(valid,default=(0,'127.0.0.1'))[1]
+
+def lan_ipv4_candidates():
+    found=[]
+    try:
+        probe=socket.socket(socket.AF_INET,socket.SOCK_DGRAM)
+        probe.connect(('8.8.8.8',80));found.append(probe.getsockname()[0]);probe.close()
+    except OSError: pass
+    try:
+        found.extend(x[4][0] for x in socket.getaddrinfo(socket.gethostname(),None,socket.AF_INET))
+    except OSError: pass
+    if os.name=='nt':
+        try:
+            output=subprocess.check_output(['ipconfig'],stderr=subprocess.DEVNULL,timeout=8).decode('mbcs','ignore')
+            found.extend(re.findall(r'IPv4[^:]*:\s*([0-9.]+)',output,re.I))
+        except (OSError,subprocess.SubprocessError): pass
+    return list(dict.fromkeys(found))
 
 def default_db():
     return {'updated_at':None,'sources':{},'pending':[],'applied':[],
@@ -174,17 +202,12 @@ class Handler(SimpleHTTPRequestHandler):
 if __name__=='__main__':
     os.chdir(BASE)
     server=ThreadingHTTPServer(('0.0.0.0',PORT),Handler)
-    try:
-        probe=socket.socket(socket.AF_INET,socket.SOCK_DGRAM)
-        probe.connect(('8.8.8.8',80))
-        lan_ip=probe.getsockname()[0]
-        probe.close()
-    except OSError:
-        try: lan_ip=socket.gethostbyname(socket.gethostname())
-        except OSError: lan_ip='127.0.0.1'
+    candidates=lan_ipv4_candidates();lan_ip=choose_lan_ip(candidates)
     url=f'http://127.0.0.1:{PORT}/index.html'
     print('이 기기 접속 주소:',url,flush=True)
     print(f'다른 기기 접속 주소(같은 Wi-Fi): http://{lan_ip}:{PORT}/index.html',flush=True)
+    alternatives=[x for x in candidates if x!=lan_ip and x!='127.0.0.1']
+    if alternatives: print('참고: 감지된 다른 주소:',', '.join(alternatives),flush=True)
     try: threading.Thread(target=lambda:webbrowser.open(url),daemon=True).start()
     except Exception: pass
     threading.Thread(target=auto_update_loop,daemon=True).start()
