@@ -14,6 +14,7 @@
     "filter_and_category_runtime": "PASS - country, game, BOX/HIT and sort controls render without runtime errors",
     "python_syntax": "PASS - 7/7",
     "android_shell_syntax": "PASS",
+    "windows_ascii_batch_launcher": "PASS - ASCII-only labels, py.exe/python.exe detection and explicit error branches",
     "json_and_manifest": "PASS",
     "manifest_icon": "PASS",
     "service_worker_core_assets": "PASS - 8/8",
