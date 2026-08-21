@@ -1,5 +1,5 @@
 {
-  "updated_at": "2026-08-21T06:26:51+00:00",
+  "updated_at": "2026-08-21T18:24:47+09:00",
   "items": [
     {
       "game": "ONE PIECE",
@@ -13,11 +13,11 @@
     {
       "game": "ONE PIECE",
       "region": "JP",
-      "name": "OP-17 The World's Strongest Warriors",
+      "name": "세계 최강의 전사들 (世界最強の戦士) [OP-17]",
       "release_date": "2026-08-22",
-      "price": "공식 상품페이지 확인",
+      "price": "¥240/팩",
       "status": "출시예정",
-      "source": "https://asia-en.onepiece-cardgame.com/products/"
+      "source": "https://www.onepiece-cardgame.com/products/?subcategory=boosters"
     },
     {
       "game": "ONE PIECE",
@@ -67,9 +67,6 @@
     }
   ],
   "collection_policy": "공식 출처에서 상품명과 출시일 또는 공식 출시시기가 함께 확인된 항목만 자동 반영",
-  "collection_status": "일부 출처 확인 실패",
-  "collection_errors": [
-    "ONE PIECE US: HTTPError",
-    "ONE PIECE Asia: HTTPError"
-  ]
+  "collection_status": "공식 출처 수동 검증 완료",
+  "collection_errors": []
 }

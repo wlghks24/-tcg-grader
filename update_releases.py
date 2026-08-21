@@ -13,7 +13,13 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parent
 DATA = ROOT / "releases.json"
 HEADERS = {"User-Agent": "TCG-Grader-Release-Checker/1.0 (+GitHub Pages; official pages only)"}
-ALLOWED = {"www.pokemon-card.com", "www.pokemon.com", "en.onepiece-cardgame.com", "asia-en.onepiece-cardgame.com", "onepiece-cardgame.kr", "www.naruto-cardgame.com"}
+ALLOWED = {
+    "pokemoncard.co.kr", "www.pokemoncard.co.kr",
+    "www.pokemon-card.com", "www.30th.pokemon-card.com", "www.pokemon.com",
+    "onepiece-cardgame.kr", "www.onepiece-cardgame.kr",
+    "www.onepiece-cardgame.com", "en.onepiece-cardgame.com",
+    "www.naruto-cardgame.com",
+}
 
 
 def fetch(url: str) -> str:
@@ -44,8 +50,43 @@ def collect_onepiece(url: str, region: str) -> list[dict]:
     return found
 
 
+def collect_onepiece_jp() -> list[dict]:
+    """Read the Japanese booster listing; never label Asia-English data as JP."""
+    url = "https://www.onepiece-cardgame.com/products/?subcategory=boosters"
+    text = textify(fetch(url))
+    pattern = re.compile(
+        r"(?:ブースターパック|エクストラブースター|プレミアムブースター)\s*"
+        r"(.{2,90}?)\s*〖(OP-\d+|EB-\d+|PRB-\d+)〗\s*"
+        r"発売日\s*(20\d{2})\.(\d{1,2})\.(\d{1,2})(?:\([^)]*\))?\s*"
+        r"メーカー希望小売価格\s*([0-9,]+)円",
+        re.I,
+    )
+    found = []
+    for title, code, y, m, d, price in pattern.findall(text):
+        found.append({
+            "game":"ONE PIECE", "region":"JP",
+            "name":f"{title.strip()} [{code}]",
+            "release_date":dt.date(int(y), int(m), int(d)).isoformat(),
+            "price":f"¥{price}/팩", "status":"공식 확인", "source":url,
+        })
+    return found
+
+
+def collect_onepiece_kr() -> list[dict]:
+    url = "https://onepiece-cardgame.kr/products.do"
+    text = textify(fetch(url))
+    pattern = re.compile(r"\[(OPK-\d+|EBK-\d+)\]\s*(.{2,75}?)\s*(20\d{2}-\d{2}-\d{2}).{0,100}?\[1BOX\]\s*([0-9,]+)\s*원", re.I)
+    found = []
+    for code, title, date, price in pattern.findall(text):
+        found.append({
+            "game":"ONE PIECE", "region":"KR", "name":f"[{code}] {title.strip()}",
+            "release_date":date, "price":f"₩{price}/BOX", "status":"공식 확인", "source":url,
+        })
+    return found
+
+
 def collect_pokemon_jp() -> list[dict]:
-    url = "https://www.pokemon-card.com/products/"
+    url = "https://www.pokemon-card.com/products/index.html?productType=expansion"
     text = textify(fetch(url))
     pattern = re.compile(r"(?:拡張パック|ハイクラスパック)\s*[「『]?(.{2,55}?)[」』]?\s*(?:拡張パック)?\s*販売日\s*(20\d{2})年\s*(\d{1,2})月\s*(\d{1,2})日.{0,130}?希望小売価格\s*([0-9,]+)円")
     found = []
@@ -86,13 +127,17 @@ def main() -> None:
     errors: list[str] = []
     collectors = [
         ("Pokémon JP", collect_pokemon_jp),
+        ("ONE PIECE KR", collect_onepiece_kr),
+        ("ONE PIECE JP", collect_onepiece_jp),
         ("ONE PIECE US", lambda: collect_onepiece("https://en.onepiece-cardgame.com/products/", "US")),
-        ("ONE PIECE Asia", lambda: collect_onepiece("https://asia-en.onepiece-cardgame.com/products/", "JP")),
         ("NARUTO Global", collect_naruto),
     ]
     for label, collector in collectors:
         try:
-            candidates.extend(collector())
+            batch = collector()
+            if not batch:
+                raise RuntimeError("공식 페이지에서 검증 가능한 상품을 1건도 읽지 못함")
+            candidates.extend(batch)
         except Exception as exc:
             errors.append(f"{label}: {type(exc).__name__}")
 

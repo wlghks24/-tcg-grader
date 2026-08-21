@@ -7,9 +7,12 @@ from urllib.request import Request, urlopen
 BASE=os.path.dirname(os.path.abspath(__file__))
 DB=os.path.join(BASE,'tcg_live_data.json')
 SOURCES=[
+ ('포켓몬 한국 공식','https://pokemoncard.co.kr/card/category/info1','공식'),
  ('포켓몬 일본 공식','https://www.pokemon-card.com/products/index.html','공식'),
  ('포켓몬 30주년 공식','https://www.30th.pokemon-card.com/','공식'),
  ('원피스 한국 공식','https://onepiece-cardgame.kr/products.do','공식'),
+ ('원피스 일본 공식','https://www.onepiece-cardgame.com/','공식'),
+ ('원피스 미국 공식','https://en.onepiece-cardgame.com/products/','공식'),
  ('나루토 카드게임 글로벌 공식','https://www.naruto-cardgame.com/asia-en/','공식'),
  ('PSA 공식 등급기준','https://www.psacard.com/gradingstandards','등급'),
  ('BGS 공식 등급','https://www.beckett.com/grading/scale','등급'),
@@ -91,7 +94,7 @@ class Handler(SimpleHTTPRequestHandler):
         valid=[x for x in pending if x.get('status')!='수집 오류']
         errors=[x for x in pending if x.get('status')=='수집 오류']
         if not valid:
-            return self.json({'ok':True,'applied_count':0,'error_count':len(errors),'updated_at':now,'message':'반영 가능한 정상 변경사항이 없습니다.'})
+            return self.json({'ok':True,'approved_count':0,'error_count':len(errors),'updated_at':now,'catalog_changed':False,'message':'승인 기록으로 저장할 정상 변경사항이 없습니다.'})
         if os.path.exists(DB):
             try:
                 with open(DB,'rb') as src, open(DB+'.bak','wb') as dst: dst.write(src.read())
@@ -99,7 +102,7 @@ class Handler(SimpleHTTPRequestHandler):
         data['applied']=(data.get('applied',[])+[{**x,'applied_at':now} for x in valid])[-1000:]
         data['pending']=errors
         save_db(data)
-        return self.json({'ok':True,'applied_count':len(valid),'error_count':len(errors),'updated_at':now})
+        return self.json({'ok':True,'approved_count':len(valid),'error_count':len(errors),'updated_at':now,'catalog_changed':False,'message':'검토 승인 기록을 저장했습니다. 정적 목록 파일은 자동 변경하지 않습니다.'})
 
 if __name__=='__main__':
     os.chdir(BASE)
