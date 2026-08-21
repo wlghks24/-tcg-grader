@@ -21,6 +21,12 @@ input[type=range]{width:100%}
 .modebtn.active{outline:3px solid #2563eb}
 .badge{display:inline-block;padding:3px 7px;border-radius:999px;background:#e5e7eb;font-size:12px}
 .logitem{padding:8px;border-bottom:1px solid #e5e7eb;font-size:12px}
+.box-knowledge-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:12px 0}
+.box-knowledge-item{border:1px solid #e5e7eb;border-radius:14px;padding:13px;background:#f8fafc;min-height:118px}
+.box-knowledge-head{display:flex;align-items:center;gap:9px;margin-bottom:7px}
+.box-knowledge-num{display:grid;place-items:center;flex:0 0 30px;height:30px;border-radius:9px;background:#111827;color:#fff;font-weight:850}
+.box-knowledge-item b{font-size:15px}.box-knowledge-item p{margin:0;color:#4b5563;font-size:12px;line-height:1.55}
+@media(max-width:520px){.box-knowledge-grid{grid-template-columns:1fr}.box-knowledge-item{min-height:0}}
 </style><link rel="manifest" href="manifest.webmanifest">
 <meta name="theme-color" content="#111827">
 <meta name="mobile-web-app-capable" content="yes">
@@ -290,7 +296,25 @@ input[type=range]{width:100%}
 
 <section class="card">
 <h3 style="margin:0 0 8px">📦 v14 BOX 지식베이스 — 한국 & 국제</h3>
-<p class="muted">박스별 원가 → 선호도 → HIT 후보 → 카드 가격 → 실제 거래 검증을 하나의 레코드로 관리합니다. 공식 가격과 중고 실거래를 절대 같은 값으로 저장하지 않습니다.</p>
+<p class="muted">박스를 검색하면 아래 네 가지 정보를 순서대로 확인할 수 있습니다.</p>
+<div class="box-knowledge-grid" aria-label="BOX 정보 구성">
+<div class="box-knowledge-item">
+<div class="box-knowledge-head"><span class="box-knowledge-num">1</span><b>박스 원가</b></div>
+<p>일본 공식 정가(¥)와 원화 환산가(₩)를 한 줄에 함께 표시합니다. 현재 판매가와는 따로 표시합니다.</p>
+</div>
+<div class="box-knowledge-item">
+<div class="box-knowledge-head"><span class="box-knowledge-num">2</span><b>사람들이 선호하는 박스</b></div>
+<p>최근 거래량·판매 빈도·가격 상승·재고 소진을 비교해 인기 정도를 보여줍니다.</p>
+</div>
+<div class="box-knowledge-item">
+<div class="box-knowledge-head"><span class="box-knowledge-num">3</span><b>박스별 히트카드</b></div>
+<p>어느 박스에서 어떤 인기 카드가 나오는지 카드 목록과 출처를 함께 확인합니다.</p>
+</div>
+<div class="box-knowledge-item">
+<div class="box-knowledge-head"><span class="box-knowledge-num">4</span><b>히트카드 실제 시세</b></div>
+<p>한국·일본·해외의 최근 판매완료 가격을 등급별로 구분해 보여줍니다.</p>
+</div>
+</div>
 <div class="grid2">
 <label>게임
 <select id="v14game"><option>Pokémon</option><option>ONE PIECE</option></select></label>
@@ -893,17 +917,24 @@ v11Render();
 </script>
 
 <script>
+const V12_JPY_KRW=8.70; // 2026-08-21 참고환율: 1엔 약 8.70원
 const V12BOXES=[
- {game:"Pokémon",name:"아비스아이",jp:"アビスアイ",release:"2026-05-22",price:"¥200/pack",source:"pokemon-card.com"},
- {game:"Pokémon",name:"메가심포니아",jp:"メガシンフォニア",release:"2025-08-01",price:"¥180/pack",source:"pokemon-card.com"},
- {game:"Pokémon",name:"메가브레이브",jp:"メガブレイブ",release:"2025-08-01",price:"¥180/pack",source:"pokemon-card.com"},
- {game:"Pokémon",name:"MEGA 드림 ex",jp:"MEGAドリームex",release:"2025-11-28",price:"¥550/pack",source:"pokemon-card.com"},
- {game:"ONE PIECE",name:"OPK-14 창해의 칠걸",release:"2026-08-21",price:"₩48,000/BOX",source:"onepiece-cardgame.kr"},
- {game:"ONE PIECE",name:"EBK-03 Heroines Edition",release:"2026-07-24",price:"₩48,000/BOX",source:"onepiece-cardgame.kr"},
- {game:"ONE PIECE",name:"OPK-13 계승되는 의지",release:"2026-06-26",price:"₩48,000/BOX",source:"onepiece-cardgame.kr"},
- {game:"ONE PIECE",name:"OPK-05 신시대의 주역",release:"2025-02-28",price:"₩48,000/BOX",source:"onepiece-cardgame.kr"},
- {game:"ONE PIECE",name:"OPK-01 ROMANCE DAWN",release:"2024-04-25",price:"₩48,000/BOX",source:"onepiece-cardgame.kr"}
+ {game:"Pokémon",name:"아비스아이",jp:"アビスアイ",release:"2026-05-22",jpy:6000,priceBasis:"¥200 × 30팩",source:"pokemon-card.com"},
+ {game:"Pokémon",name:"메가심포니아",jp:"メガシンフォニア",release:"2025-08-01",jpy:5400,priceBasis:"¥180 × 30팩",source:"pokemon-card.com"},
+ {game:"Pokémon",name:"메가브레이브",jp:"メガブレイブ",release:"2025-08-01",jpy:5400,priceBasis:"¥180 × 30팩",source:"pokemon-card.com"},
+ {game:"Pokémon",name:"MEGA 드림 ex",jp:"MEGAドリームex",release:"2025-11-28",jpy:5500,priceBasis:"¥550 × 10팩",source:"pokemon-card.com"},
+ {game:"ONE PIECE",name:"OPK-14 창해의 칠걸",release:"2026-08-21",krw:48000,source:"onepiece-cardgame.kr"},
+ {game:"ONE PIECE",name:"EBK-03 Heroines Edition",release:"2026-07-24",krw:48000,source:"onepiece-cardgame.kr"},
+ {game:"ONE PIECE",name:"OPK-13 계승되는 의지",release:"2026-06-26",krw:48000,source:"onepiece-cardgame.kr"},
+ {game:"ONE PIECE",name:"OPK-05 신시대의 주역",release:"2025-02-28",krw:48000,source:"onepiece-cardgame.kr"},
+ {game:"ONE PIECE",name:"OPK-01 ROMANCE DAWN",release:"2024-04-25",krw:48000,source:"onepiece-cardgame.kr"}
 ];
+function v12DualPrice(x){
+ const jpy=x.jpy||Math.round(x.krw/V12_JPY_KRW/10)*10;
+ const krw=x.krw||Math.round(jpy*V12_JPY_KRW/100)*100;
+ return `<b>¥${jpy.toLocaleString("ja-JP")}</b> / <b>약 ₩${krw.toLocaleString("ko-KR")}</b>`+
+  (x.priceBasis?` <span class="muted">(${x.priceBasis})</span>`:"");
+}
 const V12RULES={
  "정가": "공식 제조사/공식 상품 페이지",
  "실거래": "SOLD/체결가 우선",
@@ -913,7 +944,8 @@ const V12RULES={
 };
 function v12Render(){
  const el=document.getElementById("box12");
- el.innerHTML=V12BOXES.slice(0,9).map(x=>`<b>${x.game}</b> · ${x.name}<br><span class="muted">${x.release} · ${x.price} · 출처 ${x.source}</span>`).join("<hr>");
+ el.innerHTML=`<div class="muted" style="margin-bottom:8px">환산 기준: ¥100 ≈ ₩${Math.round(V12_JPY_KRW*100).toLocaleString("ko-KR")} (2026-08-21 참고환율, 수수료 제외)</div>`+
+ V12BOXES.slice(0,9).map(x=>`<b>${x.game}</b> · ${x.name}${x.jp?` / ${x.jp}`:""}<br>${v12DualPrice(x)}<br><span class="muted">출시 ${x.release} · 출처 ${x.source}</span>`).join("<hr>");
 }
 document.getElementById("search12")?.addEventListener("click",()=>{
  const q=document.getElementById("query12").value.trim();
