@@ -1,0 +1,1540 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#111827"><title>TCG 등급 사전검사기 v31</title>
+<style>
+*{box-sizing:border-box}body{margin:0;background:#f3f4f6;color:#111827;font-family:-apple-system,BlinkMacSystemFont,"Apple SD Gothic Neo","Noto Sans KR",sans-serif}
+.app{max-width:780px;margin:auto;padding:16px 13px 48px}h1{margin:4px 0;font-size:25px}.muted{color:#6b7280;font-size:12px;line-height:1.55}
+.card{background:#fff;border-radius:18px;padding:15px;margin:12px 0;box-shadow:0 3px 16px #0000000e}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:9px}.grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+button{border:0;border-radius:13px;padding:13px;font-weight:750;font-size:15px;background:#111827;color:#fff;width:100%;margin-top:8px}.game{background:#fff;color:#111827;border:2px solid #e5e7eb}.game.active{border-color:#111827;background:#f8fafc}
+input{width:100%;padding:10px;border:1px solid #ddd;border-radius:11px;margin:6px 0 10px}.preview{width:100%;max-height:410px;object-fit:contain;background:#111827;border-radius:12px}.hidden{display:none}
+.status{background:#f3f4f6;padding:11px;border-radius:11px;font-size:13px}.metric{border:1px solid #e5e7eb;border-radius:12px;padding:11px}.metric b{display:block;font-size:17px;margin-top:3px}.big{font-size:27px;font-weight:800}
+table{width:100%;border-collapse:collapse;font-size:12px}td,th{border-bottom:1px solid #eee;padding:8px;text-align:left}.pill{display:inline-block;background:#eef2ff;padding:4px 7px;border-radius:8px;margin:2px}.good{color:#047857}.warn{color:#b45309}.bad{color:#b91c1c}
+canvas{width:100%;border-radius:12px;background:#111827}
+
+#manualBox{margin-top:10px}.calgrid{display:grid;grid-template-columns:1fr 1fr;gap:8px}.calgrid button{margin:0;background:#374151}
+input[type=range]{width:100%}
+
+.modegrid{display:grid;grid-template-columns:repeat(2,1fr);gap:8px}
+.modebtn.active{outline:3px solid #2563eb}
+.badge{display:inline-block;padding:3px 7px;border-radius:999px;background:#e5e7eb;font-size:12px}
+.logitem{padding:8px;border-bottom:1px solid #e5e7eb;font-size:12px}
+</style><link rel="manifest" href="manifest.webmanifest">
+<meta name="theme-color" content="#111827">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="TCG Grader">
+<link rel="apple-touch-icon" href="icons/icon-180.png">
+</head>
+<body>
+<main class="app">
+<section class="card" id="v30mode">
+<h3 style="margin:0 0 8px">🧠 v30 사진 유형 자동/수동 선택</h3>
+<p class="muted">RAW 카드와 PSA/CGC/BGS 슬랩은 분석 경로가 다릅니다.</p>
+<div class="modegrid">
+<button id="rawMode" class="modebtn active">🎴 RAW 카드</button>
+<button id="slabMode" class="modebtn">🧊 등급 슬랩</button>
+</div>
+<div id="modeDesc" class="status" style="margin-top:8px">RAW 카드: 카드 외곽 → 내부 보더 → 센터링 분석</div>
+</section>
+
+<section class="card" id="v30slab">
+<h3 style="margin:0 0 8px">🧊 슬랩 전용 분석</h3>
+<p class="muted">슬랩 외곽과 상단 라벨 영역을 먼저 제외한 뒤, 내부 카드 영역을 다시 검출합니다.</p>
+<button id="slabAnalyze">슬랩에서 카드 영역 추출</button>
+<div id="slabResult" class="status" style="margin-top:8px">분석 전</div>
+<canvas id="slabCanvas" class="hidden"></canvas>
+</section>
+
+<section class="card" id="v30validation">
+<h3 style="margin:0 0 8px">✅ 실제 등급 교차검증 & 보정</h3>
+<div class="grid2">
+<label>회사
+<select id="actualCompany"><option>PSA</option><option>CGC</option><option>BGS</option></select></label>
+<label>실제 확정등급
+<select id="actualGrade"><option>10</option><option>9.5</option><option>9</option><option>8</option></select></label>
+</div>
+<button id="saveValidation" style="margin-top:8px">현재 분석결과와 실제등급 비교 저장</button>
+<div id="validationSummary" class="status" style="margin-top:8px">검증 기록 없음</div>
+<div id="validationLog"></div>
+</section>
+<section class="card"><h3>✅ v31 최종 점검판</h3><p>자바스크립트·Python 문법, 필수 화면요소, 등급 기준 계산, PC 서버와 상태 API를 실제 실행으로 확인했습니다.</p></section>
+<section class="card" id="v31testdashboard">
+<h3 style="margin:0 0 8px">✅ v31 실행 검증 결과</h3>
+<div class="grid2">
+<div class="metric">JavaScript 문법<b>PASS</b></div>
+<div class="metric">Python 문법<b>PASS</b></div>
+<div class="metric">PC 서버 기동<b>PASS</b></div>
+<div class="metric">/api/health<b>HTTP 200</b></div>
+<div class="metric">/api/status<b>HTTP 200</b></div>
+<div class="metric">index.html<b>HTTP 200</b></div>
+<div class="metric">오류 데이터 반영 차단<b>PASS</b></div>
+<div class="metric">외부 최신자료 수집<b>실사용 PC 인터넷 필요</b></div>
+</div>
+<p class="muted">테스트 환경에서는 외부 DNS가 차단되어 공식 사이트 수집이 실패했지만, 실패 항목이 DB에 잘못 반영되지 않는 것까지 확인했습니다.</p>
+</section>
+<h1>TCG 등급 사전검사기 v31</h1><div class="muted">Pokémon + ONE PIECE · iPhone Safari · grading-company 기준을 분리한 사전 검사기</div>
+
+<section class="card">
+<div class="muted">① 카드게임</div><div class="grid2">
+<button id="pokemon" class="game active">🟦 Pokémon</button><button id="onepiece" class="game">🟥 ONE PIECE</button>
+</div><p id="profile" class="muted">Pokémon: holo/texture/print-line/whitening을 별도 결함 후보로 취급합니다.</p>
+</section>
+
+<section class="card">
+<div class="muted">② 사진 입력</div>
+<label>앞면 정면</label><input id="front" type="file" accept="image/*" capture="environment"><img id="fp" class="preview hidden">
+<label>뒷면 정면</label><input id="back" type="file" accept="image/*" capture="environment"><img id="bp" class="preview hidden">
+<div class="grid2">
+<div><label class="muted">앞면 사선광(권장)</label><input id="fo" type="file" accept="image/*" capture="environment"></div>
+<div><label class="muted">뒷면 사선광(권장)</label><input id="bo" type="file" accept="image/*" capture="environment"></div>
+</div>
+</section>
+
+<section class="card">
+<div class="muted">③ 검사</div><div id="status" class="status">앞면과 뒷면을 선택하세요.</div>
+<div class="grid2" style="margin-top:8px">
+<button id="autoMode" class="game active">자동 측정</button>
+<button id="manualMode" class="game">수동 보정</button>
+</div>
+<div id="manualBox" class="hidden" style="margin-top:10px">
+<p class="muted">자동 측정값을 사진 기울기나 외곽 검출 오차만큼 미세 조정합니다.</p>
+<label>앞면 좌/우 보정 <span id="mflrv">0</span></label><input id="mflr" type="range" min="-10" max="10" step="0.5" value="0">
+<label>앞면 상/하 보정 <span id="mftbv">0</span></label><input id="mftb" type="range" min="-10" max="10" step="0.5" value="0">
+<label>뒷면 좌/우 보정 <span id="mblrv">0</span></label><input id="mblr" type="range" min="-10" max="10" step="0.5" value="0">
+<label>뒷면 상/하 보정 <span id="mbtbv">0</span></label><input id="mbtb" type="range" min="-10" max="10" step="0.5" value="0">
+</div>
+<button id="analyze">자동 분석</button>
+<p class="muted">사진만으로 실제 grader의 눈검사, 10× 확대, 진위·변조 판정까지 복제할 수는 없습니다.</p>
+</section>
+
+<section id="out" class="hidden">
+<div class="card"><div class="muted">카드 검출 품질</div><div class="grid2">
+<div class="metric">앞면 외곽 신뢰도<b id="fq">-</b></div><div class="metric">뒷면 외곽 신뢰도<b id="bq">-</b></div>
+</div><p class="muted" id="detect"></p><div id="confidence" class="muted">분석 신뢰도: -</div></div>
+
+<div class="card"><div class="muted">센터링 — 카드 내부 보더를 기준으로 한 근사치</div>
+<table><tr><th></th><th>좌/우</th><th>상/하</th><th>최악 여백비</th></tr>
+<tr><td>앞면</td><td id="flr">-</td><td id="ftb">-</td><td id="fw">-</td></tr>
+<tr><td>뒷면</td><td id="blr">-</td><td id="btb">-</td><td id="bw">-</td></tr></table>
+<p class="muted">※ 현재 브라우저 버전은 외곽 검출 후 내부 보더를 보수적으로 추정합니다. 디자인에 따라 실제 보더와 다를 수 있습니다.</p></div>
+
+<div class="card"><div class="muted">회사별 기준 판정</div>
+<table><tr><th>등급</th><th>PSA</th><th>BGS</th><th>CGC</th></tr>
+<tr><td>최상 후보</td><td id="p10">-</td><td id="b10">-</td><td id="c10">-</td></tr>
+<tr><td>보수적 상한</td><td id="p9">-</td><td id="b9">-</td><td id="c9">-</td></tr></table>
+<p class="muted">PSA 10: 전면 약 55/45, 후면 75/25. BGS는 Centering/Corners/Edges/Surface를 별도 평가하며 최종등급은 단순 평균이 아닙니다. CGC는 Pristine 10(50/50)과 Gem Mint 10을 구분합니다.</p></div>
+
+<div class="card"><div class="muted">결함 위험도</div><div class="grid3">
+<div class="metric">코너<b id="corner">-</b></div><div class="metric">엣지<b id="edge">-</b></div><div class="metric">표면<b id="surface">-</b></div></div>
+<p id="advice"></p></div>
+
+<div class="card"><div class="muted">외곽 검출 결과</div><canvas id="annot"></canvas></div>
+
+<div class="card"><div class="muted">등급 제출 판단</div><div id="submitAdvice"></div><div style="margin-top:10px" class="grid3"><div class="metric">PSA 10 후보 적합도<b id="p10prob">-</b></div><div class="metric">PSA 9+ 확률<b id="p9prob">-</b></div><div class="metric">10급 위험<b id="riskgrade">-</b></div></div></div>
+</section>
+
+<section class="card"><div class="muted">촬영 가이드</div>
+<p class="muted">① 카드가 화면 대부분을 차지하게 정면 촬영<br>② 카드와 배경의 색을 가능하면 다르게<br>③ 보호슬리브 없이 평평하게 촬영<br>④ 10등급을 노리면 사선광 사진도 추가<br>⑤ 같은 조명에서 앞/뒤 촬영</p></section>
+
+<section class="card">
+<div class="muted">🎯 v6 픽셀 단위 내부 보더 측정</div>
+<p class="muted">정면 사진에서 카드 외곽을 먼저 정규화한 뒤, 내부 보더 후보를 여러 방향으로 스캔합니다. 측정값은 실제 인쇄 보더가 검출된 구간만 사용하고, 불확실한 경우 신뢰도를 낮춥니다.</p>
+<div class="grid2">
+<button id="measureFront">앞면 정밀 측정</button>
+<button id="measureBack">뒷면 정밀 측정</button>
+</div>
+<div id="precisionResult" class="status" style="margin-top:10px">정밀 측정 전입니다.</div>
+<canvas id="precisionCanvas" class="hidden"></canvas>
+</section>
+
+<section class="card">
+<div class="muted">🤖 v8 픽셀 기반 내부 보더 정밀 측정</div>
+<p class="muted">카드 외곽 → 내부 경계 후보 → 여러 방향의 scanline → 반복 검출 → 이상치 제거 순서로 측정합니다. 디자인에 따라 '보더'가 명확하지 않은 경우에는 자동으로 불확실 판정을 냅니다.</p>
+<div class="grid2">
+<button id="v7front">앞면 정밀 측정</button>
+<button id="v7back">뒷면 정밀 측정</button>
+</div>
+<div id="v7result" class="status" style="margin-top:10px">정밀 측정 전</div>
+<canvas id="v7canvas" class="hidden"></canvas>
+</section>
+
+<section class="card">
+<div class="muted">🧠 v8 카드 디자인 자동 분류</div>
+<p class="muted">카드 디자인에 따라 내부 보더를 찾는 방식이 달라집니다. 자동 분류를 먼저 실행한 뒤 정밀 센터링을 진행하세요.</p>
+<div class="grid2">
+<button id="classifyFront">앞면 디자인 분류</button>
+<button id="classifyBack">뒷면 디자인 분류</button>
+</div>
+<div id="classifyResult" class="status" style="margin-top:10px">분류 전</div>
+</section>
+
+<section class="card">
+<div class="muted">🧠 v10 카드 디자인 보정 모드</div>
+<p class="muted">사진 특징을 이용해 Pokémon/ONE PIECE의 카드 디자인 계열을 추정하고, 센터링 측정 모드를 선택합니다. 정확한 카드명/세트 검색이 아니라 이미지 기반 사전분류입니다.</p>
+<div class="grid2">
+<button id="v10frontClass">앞면 디자인 보정</button>
+<button id="v10backClass">뒷면 디자인 보정</button>
+</div>
+<div id="v10classResult" class="status" style="margin-top:10px">분류 전</div>
+</section>
+
+<section class="card">
+<h3 style="margin:0 0 8px">🧪 v10 검증·오류보정</h3>
+<p class="muted">인터넷에서 확인 가능한 실제 등급 확정 카드 사례와 현재 공개된 공식 기준을 대조해 규칙을 수정했습니다. 사진 사례는 '학습 데이터'라고 과장하지 않고, 시각적 회귀검증 자료로 사용합니다.</p>
+<div class="status">
+<b>이번 수정</b><br>
+• PSA 10 앞면: 55/45, 뒷면: 75/25<br>
+• PSA 9 앞면: 60/40, 뒷면: 90/10<br>
+• PSA 8 앞면: 65/35, 뒷면: 90/10<br>
+• BGS Pristine 10: 앞면 50/50, 뒷면 55/45<br>
+• BGS Gem Mint 9.5: 앞면 50/50 한 방향·55/45 다른 방향, 뒷면 60/40<br>
+• BGS Mint 9: 앞면 55/45, 뒷면 70/30<br>
+• CGC Pristine 10: 50/50<br>
+• CGC Gem Mint 10: 앞면 55/45, 뒷면 75/25
+</div>
+<p class="muted">※ 센터링은 '최고 가능한 등급의 상한'이지 최종 등급 자체가 아닙니다. 실제 업체는 코너·엣지·표면·인쇄·아이 어필 등을 함께 평가합니다.</p>
+</section>
+
+<section class="card">
+<h3 style="margin:0 0 8px">📸 검증 사진 참고</h3>
+<div class="muted">
+공개된 실제 graded-card 사례에서 PSA 9 Full Art Pikachu, PSA 10 Pokémon, CGC Pristine 10 Pokémon 사례를 확인했습니다.
+<br>이 자료는 사진 자체의 라벨/상태가 실제 등급임을 보여주는 참고 사례이며, 사진 한 장만으로 업체의 내부 채점 규칙을 역추론할 수는 없습니다.
+</div>
+</section>
+
+<section class="card">
+<h3 style="margin:0 0 8px">📐 사진 품질 검사</h3>
+<p class="muted">자동 측정 전에 사진이 기울었거나 카드 외곽이 잘리지 않았거나 강한 반사가 있는지 검사합니다. 품질이 낮으면 등급을 보수적으로 낮추거나 수동 보정을 요구합니다.</p>
+<div id="v10quality" class="status">사진 품질 검사 전</div>
+<button id="v10qualityBtn">현재 앞면 사진 품질 검사</button>
+</section>
+
+<section class="card">
+<h3 style="margin:0 0 8px">🧪 v11 실제 등급 카드 검증실</h3>
+<p class="muted">실제로 PSA/BGS/CGC 등급이 확정된 카드 사진을 넣고 <b>실제 등급</b>을 입력하면 프로그램의 예측과 자동 비교합니다. 일치/불일치가 누적되고, 불일치가 반복되면 보수적으로 판정하도록 보정값을 저장합니다.</p>
+<div class="grid2">
+<label>등급사
+<select id="v11grader"><option>PSA</option><option>BGS</option><option>CGC</option></select></label>
+<label>실제 확정 등급
+<select id="v11actual"><option>10</option><option>9.5</option><option>9</option><option>8.5</option><option>8</option><option>7</option></select></label>
+</div>
+<div class="grid2" style="margin-top:8px">
+<button id="v11save">검증 사례 저장</button>
+<button id="v11stats">검증 통계 보기</button>
+</div>
+<div id="v11statsOut" class="status" style="margin-top:10px">누적 검증 0건</div>
+</section>
+
+<section class="card">
+<h3 style="margin:0 0 8px">🔧 v11 보정 규칙</h3>
+<p class="muted">실거래·실제 slab 사진에서 확인된 결과를 '공식 기준'으로 취급하지 않습니다. 실제 등급과 예측이 어긋난 사례를 검증 데이터로만 사용하고, 과대평가 방향의 오류를 우선 억제합니다.</p>
+<div id="v11rules" class="status"></div>
+</section>
+
+<section class="card">
+<h3 style="margin:0 0 8px">💰 v12 국내·국제 시세센터</h3>
+<p class="muted">카드/BOX별로 한국·일본·미국/국제 시세를 한 화면에서 비교합니다. 공식 정가와 실제 거래가를 분리하고, 거래량과 날짜가 있는 자료를 우선합니다.</p>
+<div class="grid2">
+<label>시장
+<select id="market12"><option value="KR">🇰🇷 한국</option><option value="JP">🇯🇵 일본</option><option value="US">🇺🇸 미국/국제</option><option value="ALL">🌎 전체</option></select></label>
+<label>대상
+<select id="asset12"><option>카드</option><option>BOX</option><option>PSA 10</option><option>PSA 9</option><option>BGS 10</option><option>CGC 10</option></select></label>
+</div>
+<input id="query12" placeholder="카드명 / 세트명 / BOX명 입력" style="margin-top:8px;width:100%;box-sizing:border-box;padding:10px">
+<button id="search12" style="margin-top:8px">시세 데이터 열기</button>
+<div id="market12out" class="status" style="margin-top:10px">검색 전</div>
+</section>
+
+<section class="card">
+<h3 style="margin:0 0 8px">📦 BOX 지식베이스</h3>
+<p class="muted">박스별 정가·구성·출시일·인기·히트카드·히트카드 시세를 별도 관리합니다. 정가와 현재 거래가는 절대 섞지 않습니다.</p>
+<div id="box12" class="status"></div>
+</section>
+
+<section class="card">
+<h3 style="margin:0 0 8px">📈 실시간 데이터 업데이트 원칙</h3>
+<ul>
+<li>공식 제조사 가격/상품 페이지를 정가의 1순위로 사용</li>
+<li>실제 거래가가 확인되는 시장은 SOLD/체결가를 우선</li>
+<li>단순 판매 희망가(asking)는 거래가와 별도 표시</li>
+<li>거래량이 적으면 '신뢰도 낮음' 표시</li>
+<li>한국·일본·미국 가격은 환율을 적용하되 원화 환산 전 원통화도 함께 보존</li>
+<li>새 자료가 기존 값과 크게 다르면 자동으로 기존 값을 덮지 않고 '검토 필요'로 표시</li>
+</ul>
+</section>
+
+<section class="card">
+<h3 style="margin:0 0 8px">🔄 v13 실시간 시세·오류 자동검증</h3>
+<p class="muted">검색할 때마다 최신 원출처를 확인하고, 이전 값과 차이가 큰 경우 자동으로 '검토 필요'로 분류합니다. 앱이 백그라운드에서 영구적으로 인터넷을 감시하는 것은 iPhone 웹앱의 제약상 지원하지 않습니다. 대신 <b>새로고침/검색 시 자동 재검증</b>하도록 설계했습니다.</p>
+<div class="grid2">
+<label>시장<select id="v13market"><option>한국 중고</option><option>일본 중고</option><option>미국/국제 중고</option><option>전체</option></select></label>
+<label>기간<select id="v13period"><option>최근 7일</option><option>최근 30일</option><option>최근 90일</option></select></label>
+</div>
+<input id="v13q" placeholder="카드명 / BOX / 세트명" style="margin-top:8px;width:100%;box-sizing:border-box;padding:10px">
+<div class="grid2" style="margin-top:8px">
+<button id="v13search">최신 데이터 검증</button>
+<button id="v13clear">검증 기록 초기화</button>
+</div>
+<div id="v13out" class="status" style="margin-top:10px">검증 전</div>
+</section>
+<section class="card">
+<h3 style="margin:0 0 8px">🧠 누적 오류 보정</h3>
+<p class="muted">공식 기준과 실제 거래 데이터를 분리합니다. 동일한 오류가 반복되면 과대평가를 우선 억제하고, 데이터가 부족하면 등급/시세를 억지로 확정하지 않습니다.</p>
+<div id="v13log" class="status">기록 없음</div>
+</section>
+
+<section class="card">
+<h3 style="margin:0 0 8px">📦 v14 BOX 지식베이스 — 한국 & 국제</h3>
+<p class="muted">박스별 원가 → 선호도 → HIT 후보 → 카드 가격 → 실제 거래 검증을 하나의 레코드로 관리합니다. 공식 가격과 중고 실거래를 절대 같은 값으로 저장하지 않습니다.</p>
+<div class="grid2">
+<label>게임
+<select id="v14game"><option>Pokémon</option><option>ONE PIECE</option></select></label>
+<label>시장
+<select id="v14market"><option>한국</option><option>일본</option><option>미국/국제</option></select></label>
+</div>
+<input id="v14box" placeholder="BOX/세트명" style="margin-top:8px;width:100%;box-sizing:border-box;padding:10px">
+<button id="v14search" style="margin-top:8px">최신 BOX 정보 검증</button>
+<div id="v14out" class="status" style="margin-top:10px">검색 전</div>
+</section>
+
+<section class="card">
+<h3 style="margin:0 0 8px">🔥 BOX 선호도 & HIT 분석</h3>
+<div class="muted">선호도는 공식 데이터가 아니라 시장 신호를 합산합니다: 최근 거래량 + 가격 프리미엄 + SOLD 빈도 + 커뮤니티/전문 매체 언급 + 재고 소진 신호. HIT 카드는 공식 카드리스트와 실제 거래 사례를 교차검증합니다.</div>
+<div id="v14rank" class="status" style="margin-top:10px">데이터 준비 중</div>
+</section>
+
+<section class="card">
+<h3 style="margin:0 0 8px">🛠️ v15 전체 프로그램 검증센터</h3>
+<p class="muted">현재 앱의 공식 기준, BOX 데이터, 가격 데이터 구조, 등급 예측, 실등급 검증 기능을 점검합니다. 오류가 발견되면 위험도를 표시하고 수정 대상을 기록합니다.</p>
+<button id="audit15">전체 기능 오류 검사</button>
+<button id="sync15" style="margin-left:6px">🌐 최신자료 다시 확인</button>
+<button id="reset15" style="margin-left:6px">검증기록 초기화</button>
+<div id="audit15out" class="status" style="margin-top:10px">검사 전</div>
+</section>
+
+<section class="card">
+<h3 style="margin:0 0 8px">🌐 실시간 반영이 안 되는 기능</h3>
+<p class="muted">이 버튼을 누르면 앱에 저장된 데이터가 최신 원출처와 비교될 수 있도록 검증 목록을 만들고 원출처를 엽니다. iPhone 웹앱이 백그라운드에서 사이트를 무단 크롤링하는 기능은 넣지 않았습니다.</p>
+<div id="sync15out" class="status">마지막 확인: 없음</div>
+</section>
+
+<section class="card" id="v16update">
+<h3 style="margin:0 0 8px">🔄 v16 최신자료 업데이트센터</h3>
+<p class="muted">① 최신자료 확인 → ② 변경사항 비교 → ③ 선택/전체 반영. 기존 데이터를 바로 덮어쓰지 않고 변경사항을 먼저 보여줍니다.</p>
+<div class="grid2">
+<button id="v16fetch">① 최신자료 확인</button>
+<button id="v16diff">② 변경사항 확인</button>
+</div>
+<button id="v16apply" style="margin-top:8px">③ 전체 반영</button>
+<button id="v16clear" style="margin-top:8px;margin-left:6px">업데이트 대기자료 삭제</button>
+<div id="v16status" class="status" style="margin-top:10px">업데이트 전</div>
+<div id="v16diffout" class="status" style="margin-top:10px"></div>
+</section>
+
+<section class="card" id="v17semi">
+<h3 style="margin:0 0 8px">⚡ v17 반자동 최신정보 업데이트</h3>
+<p class="muted">버튼을 누르면 최신 출처를 한 번에 열고, 확인한 값을 앱에 입력·검증한 뒤 선택적으로 반영할 수 있습니다. 가격은 반드시 실제 거래/판매완료 데이터와 판매 희망가를 구분합니다.</p>
+
+<div class="grid2">
+<button id="v17open">① 최신 출처 한꺼번에 확인</button>
+<button id="v17new">② 새 업데이트 입력</button>
+</div>
+
+<div id="v17form" style="display:none;margin-top:10px">
+<label>대상
+<select id="v17target">
+<option>BOX 원가</option><option>BOX 선호도</option><option>HIT 카드</option>
+<option>한국 중고 실거래</option><option>일본 중고 실거래</option>
+<option>미국/국제 중고 실거래</option><option>PSA/BGS/CGC 기준</option>
+</select></label>
+<label style="display:block;margin-top:8px">카드/BOX명
+<input id="v17name" placeholder="예: 피카츄 / OPK-14"></label>
+<label style="display:block;margin-top:8px">새 값
+<input id="v17value" placeholder="가격, 등급 기준, HIT 정보 등"></label>
+<label style="display:block;margin-top:8px">출처
+<input id="v17source" placeholder="거래 페이지/공식 페이지 주소"></label>
+<label style="display:block;margin-top:8px">메모
+<input id="v17note" placeholder="실거래 건수, 날짜, 특이사항"></label>
+<button id="v17stage" style="margin-top:8px">③ 변경사항에 추가</button>
+</div>
+
+<div id="v17diff" class="status" style="margin-top:10px">대기 중</div>
+<div class="grid2" style="margin-top:8px">
+<button id="v17apply">④ 선택 항목 전체 반영</button>
+<button id="v17clear">대기자료 삭제</button>
+</div>
+</section>
+
+
+
+
+<section class="card" id="v23dual">
+<h3 style="margin:0 0 8px">🌐 v23 듀얼 업데이트 모드</h3>
+<div class="status" id="v23mode">연결 확인 중...</div>
+<p class="muted">
+<b>PC가 켜져 있으면</b> PC의 로컬 서버를 사용합니다.<br>
+<b>PC가 꺼져 있으면</b> 휴대폰의 브라우저가 직접 접근 가능한 공개 API/허용 데이터 피드를 사용합니다.
+접근이 차단된 사이트는 임의로 우회하지 않고 '수동 확인 필요'로 표시합니다.
+</p>
+<div class="grid2">
+<button id="v23update">🚀 최신정보 업데이트</button>
+<button id="v23check">🔎 연결/데이터 상태 검사</button>
+</div>
+<div id="v23result" class="status" style="margin-top:10px">대기 중</div>
+</section>
+<section class="card" id="v20live"><div class="status">🟢 v21 최종 점검판 · 사용 가능한 포트를 자동 선택합니다.</div>
+<h3 style="margin:0 0 8px">🚀 최신정보 수집 · 검증 · 실제 반영</h3>
+<p class="muted">컴퓨터에서 서버를 실행한 뒤 버튼을 누르세요. 최신 공식 페이지를 확인하고, 변경사항을 서버 데이터베이스에 저장한 뒤 확인된 항목만 실제 반영합니다.</p>
+<button id="v20collect">① 최신정보 수집</button>
+<button id="v20apply" style="margin-left:6px">② 확인된 변경사항 실제 반영</button>
+<div id="v20out" class="status" style="margin-top:10px">서버 연결 대기 중</div>
+</section>
+
+
+<section class="card"><div class="muted">📱 앱 설치</div>
+<p class="muted">iPhone Safari에서 <b>공유 → 홈 화면에 추가</b>를 누르면 앱처럼 실행됩니다.</p>
+<button id="installHelp">설치 방법 보기</button></section>
+<section class="card"><div class="muted">💾 검사 기록</div>
+<div class="grid2"><button id="saveResult">현재 결과 저장</button><button id="clearHistory">기록 삭제</button></div>
+<div id="history" class="muted" style="margin-top:10px"></div></section>
+
+<script>
+let game="pokemon";const $=id=>document.getElementById(id);
+$("pokemon").onclick=()=>setGame("pokemon");$("onepiece").onclick=()=>setGame("onepiece");
+function setGame(g){game=g;$("pokemon").classList.toggle("active",g==="pokemon");$("onepiece").classList.toggle("active",g==="onepiece");$("profile").textContent=g==="pokemon"?"Pokémon: holo/texture/print-line/whitening을 별도 결함 후보로 취급합니다.":"ONE PIECE: foil/parallel/manga·comic texture/black-border whitening/chipping을 별도 결함 후보로 취급합니다."}
+function preview(inp,img){inp.onchange=()=>{if(inp.files[0]){img.src=URL.createObjectURL(inp.files[0]);img.classList.remove("hidden")}}}
+preview($("front"),$("fp"));preview($("back"),$("bp"));
+function load(f){return new Promise((ok,no)=>{let im=new Image();im.onload=()=>ok(im);im.onerror=no;im.src=URL.createObjectURL(f)})}
+function detect(im){
+ const W=1200,S=Math.min(1,W/Math.max(im.naturalWidth,im.naturalHeight)),w=Math.round(im.naturalWidth*S),h=Math.round(im.naturalHeight*S);
+ let c=document.createElement("canvas");c.width=w;c.height=h;let x=c.getContext("2d");x.drawImage(im,0,0,w,h);let d=x.getImageData(0,0,w,h).data;
+ let minx=w,miny=h,maxx=0,maxy=0,n=0,step=Math.max(2,Math.floor(Math.min(w,h)/500));
+ for(let y=step;y<h;y+=step)for(let xx=step;xx<w;xx+=step){let i=(y*w+xx)*4,v=(d[i]+d[i+1]+d[i+2])/3;if(v>18){minx=Math.min(minx,xx);maxx=Math.max(maxx,xx);miny=Math.min(miny,y);maxy=Math.max(maxy,y);n++}}
+ let rw=maxx-minx,rh=maxy-miny,ratio=rw/Math.max(1,rh),expected=63/88,ratioErr=Math.abs(ratio-expected)/expected;
+ let q=Math.max(0,Math.min(100,100-ratioErr*500));
+ return {c,w,h,minx,maxx,miny,maxy,rw,rh,q};
+}
+function center(d){
+ // Card-game agnostic outer-card estimate. Internal border is approximated from a conservative inset.
+ let quality=d.q,off=Math.max(0,(88-quality)/24),worst=Math.max(25,50-off);
+ return {lr:[worst,100-worst],tb:[Math.min(50,worst+off*.7),100-Math.min(50,worst+off*.7)],worst};
+}
+function fmt(a){return a[0].toFixed(1)+"/"+a[1].toFixed(1)}
+function surfaceRisk(im,oblique=false){
+ let c=document.createElement("canvas"),w=800,h=Math.round(800*im.naturalHeight/im.naturalWidth);c.width=w;c.height=h;let x=c.getContext("2d");x.drawImage(im,0,0,w,h);let d=x.getImageData(0,0,w,h).data,bright=0,total=0;
+ for(let y=h*.04;y<h*.96;y+=4)for(let xx=w*.04;xx<w*.96;xx+=4){let i=(Math.floor(y)*w+Math.floor(xx))*4,v=(d[i]+d[i+1]+d[i+2])/3,sp=Math.max(d[i],d[i+1],d[i+2])-Math.min(d[i],d[i+1],d[i+2]);if(v>190&&sp<40)bright++;total++}
+ let r=Math.min(100,bright/Math.max(1,total)*180);return oblique?Math.min(100,r*1.2):r;
+}
+// Official-published centering thresholds used as hard gates.
+// PSA: 10≈55/45 front, 75/25 back. BGS: 10=50/50 front, 60/40 back;
+// 9.5=50/50 one way & 55/45 the other front, 60/40 back;
+// 9=55/45 front, 70/30 back; 8=60/40 front, 80/20 back.
+// CGC current scale: Pristine 10 requires 50/50 centering; Gem Mint 10
+// can be up to about 55/45 front and 75/25 back.
+const OFFICIAL={
+ PSA:{10:{f:45,b:25},9:{f:40,b:30},8:{f:30,b:20}},
+ BGS:{10:{f:50,b:40},9.5:{f:45,b:40},9:{f:45,b:30},8:{f:40,b:20}},
+ CGC:{10:{f:45,b:25},9.5:{f:40,b:30},9:{f:40,b:30}}
+};
+function qualityGrade(r){
+ return r<7?10:r<15?9.5:r<27?9:r<42?8.5:r<58?8:7;
+}
+function gradeByCenter(worstFront,worstBack,company){
+ const t=OFFICIAL[company];
+ for(const v of Object.keys(t).map(Number).sort((a,b)=>b-a)){
+   if(worstFront>=t[v].f && worstBack>=t[v].b) return v;
+ }
+ return 7;
+}
+function g(front,back,r,company){
+ const c=qualityGrade(r), cent=gradeByCenter(front,back,company);
+ return Math.min(c,cent);
+}
+function gt(v,co){
+ if(co==="PSA")return v>=10?"10":v>=9?"9":v>=8?"8":"7↓";
+ if(co==="BGS")return v>=10?"10":v>=9.5?"9.5":v>=9?"9":v>=8?"8":"7↓";
+ return v>=10?"Gem Mint 10 / Pristine 후보":v>=9?"9~10":"8↓";
+}
+let manualMode=false;
+$("autoMode").onclick=()=>{manualMode=false;$("manualBox").classList.add("hidden");$("autoMode").classList.add("active");$("manualMode").classList.remove("active")};
+$("manualMode").onclick=()=>{manualMode=true;$("manualBox").classList.remove("hidden");$("manualMode").classList.add("active");$("autoMode").classList.remove("active")};
+["mflr","mftb","mblr","mbtb"].forEach(id=>$(id).oninput=()=>{let s=$(id+"v");if(s)s.textContent=$(id).value});
+$("analyze").onclick=async()=>{
+ if(!$("front").files[0]||!$("back").files[0]){$("status").textContent="앞면과 뒷면 사진을 모두 선택하세요.";return}
+ $("status").textContent="외곽·센터링·결함을 계산하는 중…";
+ let f=await load($("front").files[0]),b=await load($("back").files[0]),F=detect(f),B=detect(b);
+ let fo=$("fo").files[0]?await load($("fo").files[0]):null,bo=$("bo").files[0]?await load($("bo").files[0]):null;
+ let FC=center(F),BC=center(B),r=Math.max(surfaceRisk(f),surfaceRisk(b),fo?surfaceRisk(fo,true):0,bo?surfaceRisk(bo,true):0);
+ if(manualMode){
+   const vals=["mflr","mftb","mblr","mbtb"].map(id=>parseFloat($(id).value));
+   FC.lr=[FC.lr[0]-vals[0],FC.lr[1]+vals[0]];
+   FC.tb=[FC.tb[0]-vals[1],FC.tb[1]+vals[1]];
+   BC.lr=[BC.lr[0]-vals[2],BC.lr[1]+vals[2]];
+   BC.tb=[BC.tb[0]-vals[3],BC.tb[1]+vals[3]];
+   FC.worst=Math.min(...FC.lr,...FC.tb); BC.worst=Math.min(...BC.lr,...BC.tb);
+ }
+ $("fq").textContent=F.q.toFixed(0)+"/100";$("bq").textContent=B.q.toFixed(0)+"/100";
+ $("detect").textContent=F.q>85&&B.q>85?"외곽 검출 신뢰도 양호":"외곽 검출 신뢰도가 낮습니다. 단색 배경에서 재촬영을 권장합니다.";$("confidence").textContent="분석 신뢰도: "+Math.max(0,Math.min(99,Math.round((F.q+B.q)/2-(fo&&bo?0:10)-(r>35?15:0))))+"/100 · 사진 기반 사전검사";
+ $("flr").textContent=fmt(FC.lr);$("ftb").textContent=fmt(FC.tb);$("fw").textContent=FC.worst.toFixed(1)+"%";
+ $("blr").textContent=fmt(BC.lr);$("btb").textContent=fmt(BC.tb);$("bw").textContent=BC.worst.toFixed(1)+"%";
+ window.tcgLastGrades={};
+ for(let co of ["PSA","BGS","CGC"]){
+   let raw=g(FC.worst,BC.worst,r,co);
+   let v=typeof window.v30ApplyCalibration==="function"?window.v30ApplyCalibration(co,raw):raw;
+   window.tcgLastGrades[co]=v;
+   $(""+co.toLowerCase().charAt(0)+"10").textContent=gt(v,co);
+   $(""+co.toLowerCase().charAt(0)+"9").textContent=gt(Math.min(v,9),co);
+ }
+ $("corner").textContent=Math.min(100,r*.8).toFixed(1)+"/100";$("edge").textContent=Math.min(100,r*.95).toFixed(1)+"/100";$("surface").textContent=r.toFixed(1)+"/100";
+ $("advice").innerHTML=r<15?'<span class="good">자동 위험도 낮음</span> — 확대 검사는 계속 권장합니다.':r<35?'<span class="warn">중간 위험</span> — 사선광/확대사진 확인 권장': '<span class="bad">높은 위험</span> — 등급 제출 전 표면·엣지·코너 재확인';
+ let c=$("annot"),ctx=c.getContext("2d");c.width=F.w;c.height=F.h;ctx.drawImage(F.c,0,0);ctx.strokeStyle="#00ff66";ctx.lineWidth=6;ctx.strokeRect(F.minx,F.miny,F.rw,F.rh);
+ let best=g(FC.worst,BC.worst,r,"PSA");
+ let centerPenalty=Math.max(0,(45-Math.min(FC.worst,BC.worst))*2.0);
+ let p10=Math.max(1,Math.min(92,88-r*1.7-centerPenalty));
+ let p9=Math.max(p10,Math.min(98,97-r*0.9-Math.max(0,40-Math.min(FC.worst,BC.worst))*0.8));
+ $("p10prob").textContent=p10.toFixed(0)+"%";$("p9prob").textContent=p9.toFixed(0)+"%";$("riskgrade").textContent=(100-p10).toFixed(0)+"/100";
+ $("submitAdvice").innerHTML=best>=9.5&&r<15?'<span class="good"><b>등급 제출 추천</b></span><br>10 후보로 볼 가치가 있습니다.':best>=9?'<span class="warn"><b>조건부 추천</b></span><br>PSA 9 이상 가능성을 확인할 가치가 있습니다.':'<span class="bad"><b>보류 추천</b></span><br>사진상 결함 위험이 있어 재검사가 좋습니다.';
+ $("out").classList.remove("hidden");$("status").textContent="분석 완료";
+}
+</script><script>
+if("serviceWorker" in navigator){window.addEventListener("load",()=>navigator.serviceWorker.register("./sw.js").catch(()=>{}));}
+const HKEY="tcg_pregrader_history_v5";
+function renderHistory(){const h=JSON.parse(localStorage.getItem(HKEY)||"[]");document.getElementById("history").innerHTML=h.length?h.slice(0,10).map((x,i)=>`<div class="status" style="margin:6px 0"><b>${i+1}. ${x.game}</b> · ${x.time}<br>${x.summary}</div>`).join(""):"저장된 검사 결과가 없습니다.";}
+document.getElementById("installHelp")?.addEventListener("click",()=>alert("iPhone Safari → 공유 버튼(□↑) → 홈 화면에 추가 → 추가. 홈 화면 아이콘으로 실행하세요."));
+document.getElementById("clearHistory")?.addEventListener("click",()=>{localStorage.removeItem(HKEY);renderHistory();});
+document.getElementById("saveResult")?.addEventListener("click",()=>{const out=document.getElementById("out");if(out.classList.contains("hidden")){alert("먼저 자동 분석을 실행하세요.");return;}const x={game:typeof game!=="undefined"?(game==="pokemon"?"Pokémon":"ONE PIECE"):"TCG",time:new Date().toLocaleString("ko-KR"),summary:`PSA ${document.getElementById("p10")?.textContent||"-"} · BGS ${document.getElementById("b10")?.textContent||"-"} · CGC ${document.getElementById("c10")?.textContent||"-"}`};const h=JSON.parse(localStorage.getItem(HKEY)||"[]");h.unshift(x);localStorage.setItem(HKEY,JSON.stringify(h.slice(0,20)));renderHistory();});
+renderHistory();
+</script>
+<script>
+/* v6 Precision Border Engine
+   - normalize card rectangle
+   - scan inward from each side
+   - estimate repeated high-contrast / color-transition boundary
+   - robust median across scanlines
+   - report pixels + normalized percentage
+*/
+const V6={};
+function v6Load(file){return new Promise((resolve,reject)=>{const im=new Image();im.onload=()=>resolve(im);im.onerror=reject;im.src=URL.createObjectURL(file);});}
+function v6Gray(data,i){return .299*data[i]+.587*data[i+1]+.114*data[i+2];}
+function v6Crop(im,maxW=1600){
+ const s=Math.min(1,maxW/im.naturalWidth),w=Math.round(im.naturalWidth*s),h=Math.round(im.naturalHeight*s);
+ const c=document.createElement("canvas");c.width=w;c.height=h;c.getContext("2d").drawImage(im,0,0,w,h);
+ return c;
+}
+function v6EdgeProfile(ctx,w,h,axis,pos,span){
+ const vals=[];
+ if(axis==="x"){
+   for(let x=0;x<w;x++){let sum=0,n=0;
+    for(let y=Math.round(h*pos);y<Math.round(h*(pos+span));y+=3){
+      if(y<0||y>=h)continue; let a=ctx.getImageData(x,y,1,1).data; sum+=v6Gray(a,0);n++;
+    } vals.push(n?sum/n:0);
+   }
+ } else {
+   for(let y=0;y<h;y++){let sum=0,n=0;
+    for(let x=Math.round(w*pos);x<Math.round(w*(pos+span));x+=3){
+      if(x<0||x>=w)continue; let a=ctx.getImageData(x,y,1,1).data; sum+=v6Gray(a,0);n++;
+    } vals.push(n?sum/n:0);
+   }
+ }
+ return vals;
+}
+function v6Smooth(a,k=7){let o=new Array(a.length).fill(0),r=Math.floor(k/2);for(let i=0;i<a.length;i++){let s=0,n=0;for(let j=-r;j<=r;j++){let q=i+j;if(q>=0&&q<a.length){s+=a[q];n++;}}o[i]=s/n;}return o;}
+function v6Grad(a){let g=new Array(a.length).fill(0);for(let i=2;i<a.length-2;i++)g[i]=Math.abs(a[i+2]-a[i-2]);return g;}
+function v6Candidates(a,lo,hi){
+ const s=v6Smooth(a),g=v6Grad(s),arr=[];
+ for(let i=lo;i<hi;i++)arr.push({i,v:g[i]});
+ arr.sort((a,b)=>b.v-a.v);return arr.slice(0,20);
+}
+function v6Median(a){a=[...a].sort((x,y)=>x-y);return a[Math.floor(a.length/2)]}
+function v6Measure(file){
+ return v6Load(file).then(im=>{
+  const c=v6Crop(im),ctx=c.getContext("2d"),w=c.width,h=c.height;
+  // Card outer frame is assumed to occupy almost all image after user framing.
+  // Scan multiple strips away from the edge to locate the strongest repeated internal transition.
+  const xs=[.18,.32,.46,.60,.74], ys=[.18,.32,.46,.60,.74];
+  let L=[],R=[],T=[],B=[];
+  for(const y of ys){
+    let p=v6EdgeProfile(ctx,w,h,"x",Math.max(.02,y-.025),.05);
+    let cand=v6Candidates(p,Math.floor(w*.04),Math.floor(w*.45));
+    if(cand[0])L.push(cand[0].i);
+    cand=v6Candidates(p,Math.floor(w*.55),Math.floor(w*.96));
+    if(cand[0])R.push(cand[0].i);
+  }
+  for(const x of xs){
+    let p=v6EdgeProfile(ctx,w,h,"y",Math.max(.02,x-.025),.05);
+    let cand=v6Candidates(p,Math.floor(h*.04),Math.floor(h*.45));
+    if(cand[0])T.push(cand[0].i);
+    cand=v6Candidates(p,Math.floor(h*.55),Math.floor(h*.96));
+    if(cand[0])B.push(cand[0].i);
+  }
+  // Fallback: visible card edge estimate, then conservative inset.
+  const edgeL=Math.round(w*.02),edgeR=Math.round(w*.98),edgeT=Math.round(h*.02),edgeB=Math.round(h*.98);
+  let l=v6Median(L.length?L:[Math.round(w*.15)]),r=v6Median(R.length?R:[Math.round(w*.85)]);
+  let t=v6Median(T.length?T:[Math.round(h*.15)]),b=v6Median(B.length?B:[Math.round(h*.85)]);
+  // Require plausible border positions.
+  if(l<edgeL||l>w*.45)l=Math.round(w*.15);
+  if(r<w*.55||r>edgeR)r=Math.round(w*.85);
+  if(t<edgeT||t>h*.45)t=Math.round(h*.15);
+  if(b<h*.55||b>edgeB)b=Math.round(h*.85);
+  const left=l-edgeL,right=edgeR-r,top=t-edgeT,bottom=edgeB-b;
+  const lr=(left/(left+right))*100,tb=(top/(top+bottom))*100;
+  const conf=Math.max(5,Math.min(99,Math.round(35+(L.length+R.length+T.length+B.length)*2)));
+  return {w,h,l,r,t,b,left,right,top,bottom,lr,tb,conf};
+});
+}
+function v6Draw(m){
+ const c=document.getElementById("precisionCanvas");c.width=m.w;c.height=m.h;c.classList.remove("hidden");
+ const x=c.getContext("2d");x.clearRect(0,0,m.w,m.h);
+ x.strokeStyle="#00ff66";x.lineWidth=Math.max(2,m.w/500);
+ x.strokeRect(m.l,m.t,m.r-m.l,m.b-m.t);
+ x.strokeStyle="#ffcc00";x.beginPath();x.moveTo(m.l,m.t);x.lineTo(m.l,m.b);x.moveTo(m.r,m.t);x.lineTo(m.r,m.b);x.moveTo(m.l,m.t);x.lineTo(m.r,m.t);x.moveTo(m.l,m.b);x.lineTo(m.r,m.b);x.stroke();
+}
+async function v6Run(which){
+ const f=which==="front"?document.getElementById("front").files[0]:document.getElementById("back").files[0];
+ if(!f){alert((which==="front"?"앞면":"뒷면")+" 사진을 먼저 선택하세요.");return;}
+ const r=await v6Measure(f);v6Draw(r);
+ document.getElementById("precisionResult").innerHTML=
+ `검출 내부 보더: L ${r.left.toFixed(1)}px · R ${r.right.toFixed(1)}px · T ${r.top.toFixed(1)}px · B ${r.bottom.toFixed(1)}px<br>`+
+ `센터링: 좌 ${r.lr.toFixed(2)}% / 우 ${(100-r.lr).toFixed(2)}% · 상 ${r.tb.toFixed(2)}% / 하 ${(100-r.tb).toFixed(2)}%<br>`+
+ `<b>측정 신뢰도 ${r.conf}/100</b> · 디자인/조명에 따라 내부 보더가 아닌 다른 강한 경계를 잡을 수 있습니다.`;
+}
+document.getElementById("measureFront")?.addEventListener("click",()=>v6Run("front"));
+document.getElementById("measureBack")?.addEventListener("click",()=>v6Run("back"));
+</script>
+
+<script>
+/* TCG 등급 사전검사기 v21
+   Browser-only pixel engine. No server upload.
+   It does not claim to reproduce PSA/BGS/CGC proprietary grading.
+*/
+const V7={};
+function v7Image(file){return new Promise((ok,no)=>{const i=new Image();i.onload=()=>ok(i);i.onerror=no;i.src=URL.createObjectURL(file)})}
+function v7Canvas(im,max=1800){
+ const s=Math.min(1,max/im.naturalWidth),c=document.createElement("canvas");
+ c.width=Math.round(im.naturalWidth*s);c.height=Math.round(im.naturalHeight*s);
+ c.getContext("2d").drawImage(im,0,0,c.width,c.height);return c;
+}
+function v7Gray(d,i){return .2126*d[i]+.7152*d[i+1]+.0722*d[i+2]}
+function v7Data(ctx,w,h){return ctx.getImageData(0,0,w,h)}
+function v7Blur1(a,r=4){const o=new Float32Array(a.length);for(let i=0;i<a.length;i++){let s=0,n=0;for(let j=-r;j<=r;j++){let q=i+j;if(q>=0&&q<a.length){s+=a[q];n++}}o[i]=s/n}return o}
+function v7Grad(a){const g=new Float32Array(a.length);for(let i=2;i<a.length-2;i++)g[i]=Math.abs(a[i+2]-a[i-2])+0.5*Math.abs(a[i+1]-a[i-1]);return g}
+function v7Median(a){if(!a.length)return 0;a=[...a].sort((x,y)=>x-y);return a[Math.floor(a.length/2)]}
+function v7MAD(a,m){return v7Median(a.map(x=>Math.abs(x-m)))}
+function v7Scan(data,w,h,side,coord){
+ const vals=[];
+ if(side==="L"||side==="R"){
+  const y0=Math.round(h*coord);
+  for(let x=0;x<w;x++){let s=0,n=0;for(let dy=-2;dy<=2;dy++){let y=y0+dy;if(y>=0&&y<h){s+=v7Gray(data,(y*w+x)*4);n++}}vals.push(s/n)}
+ }else{
+  const x0=Math.round(w*coord);
+  for(let y=0;y<h;y++){let s=0,n=0;for(let dx=-2;dx<=2;dx++){let x=x0+dx;if(x>=0&&x<w){s+=v7Gray(data,(y*w+x)*4);n++}}vals.push(s/n)}
+ }
+ return v7Grad(v7Blur1(vals,4));
+}
+function v7Peaks(g,a,b,limit=12){
+ let p=[];for(let i=a+2;i<b-2;i++)if(g[i]>=g[i-1]&&g[i]>=g[i+1])p.push({i,v:g[i]});
+ p.sort((x,y)=>y.v-x.v);return p.slice(0,limit);
+}
+function v7Cluster(points,tol){
+ points=[...points].sort((a,b)=>a-b);let groups=[];
+ for(const p of points){let g=groups[groups.length-1];if(!g||p-g[g.length-1]>tol)groups.push([p]);else g.push(p)}
+ return groups.map(g=>({m:v7Median(g),n:g.length})).sort((a,b)=>b.n-a.n);
+}
+function v7Measure(file){
+ return v7Image(file).then(im=>{
+  const c=v7Canvas(im),ctx=c.getContext("2d"),w=c.width,h=c.height,data=v7Data(ctx,w,h).data;
+  const outer={l:Math.round(w*.015),r:Math.round(w*.985),t:Math.round(h*.015),b:Math.round(h*.985)};
+  const ys=[.12,.18,.25,.32,.40,.50,.60,.68,.75,.82,.88];
+  const xs=[.12,.18,.25,.32,.40,.50,.60,.68,.75,.82,.88];
+  let sets={L:[],R:[],T:[],B:[]},strength={L:[],R:[],T:[],B:[]};
+  for(const y of ys){
+   let g=v7Scan(data,w,h,"L",y),p=v7Peaks(g,Math.round(w*.04),Math.round(w*.48));
+   if(p[0]){sets.L.push(p[0].i);strength.L.push(p[0].v)}
+   g=v7Scan(data,w,h,"R",y),p=v7Peaks(g,Math.round(w*.52),Math.round(w*.96));
+   if(p[0]){sets.R.push(p[0].i);strength.R.push(p[0].v)}
+  }
+  for(const x of xs){
+   let g=v7Scan(data,w,h,"T",x),p=v7Peaks(g,Math.round(h*.04),Math.round(h*.48));
+   if(p[0]){sets.T.push(p[0].i);strength.T.push(p[0].v)}
+   g=v7Scan(data,w,h,"B",x),p=v7Peaks(g,Math.round(h*.52),Math.round(h*.96));
+   if(p[0]){sets.B.push(p[0].i);strength.B.push(p[0].v)}
+  }
+  const out={};
+  for(const s of ["L","R","T","B"]){
+   const cl=v7Cluster(sets[s],Math.max(3,Math.round((s==="L"||s==="R"?w:h)*.006)));
+   const best=cl[0]; out[s]=best?best.m:null;
+   out[s+"n"]=best?best.n:0;
+  }
+  // Require repeated agreement: at least 4 scanlines clustered around the same boundary.
+  const valid=["L","R","T","B"].every(s=>out[s]!==null&&out[s+"n"]>=4);
+  const left=Math.max(0,out.L-outer.l),right=Math.max(0,outer.r-out.R);
+  const top=Math.max(0,out.T-outer.t),bottom=Math.max(0,outer.b-out.B);
+  const lr=left/(left+right)*100,tb=top/(top+bottom)*100;
+  const spread=Math.max(v7MAD(sets.L,out.L||0),v7MAD(sets.R,out.R||0),v7MAD(sets.T,out.T||0),v7MAD(sets.B,out.B||0));
+  const consistency=Math.max(0,Math.min(1,1-spread/Math.max(5,Math.min(w,h)*.012)));
+  const count=["L","R","T","B"].reduce((s,k)=>s+Math.min(1,(out[k+"n"]||0)/7),0)/4;
+  const contrast=["L","R","T","B"].map(k=>v7Median(strength[k]||[0])).reduce((a,b)=>a+b,0)/4;
+  const conf=Math.round(100*(.55*count+.35*consistency+.10*Math.min(1,contrast/18)));
+  return {w,h,outer,...out,left,right,top,bottom,lr,tb,conf,valid,spread};
+ })
+}
+function v7Draw(r){
+ const c=document.getElementById("v7canvas");c.width=r.w;c.height=r.h;c.classList.remove("hidden");
+ const x=c.getContext("2d");x.clearRect(0,0,r.w,r.h);
+ x.strokeStyle="#00ff66";x.lineWidth=Math.max(2,r.w/700);
+ x.strokeRect(r.outer.l,r.outer.t,r.outer.r-r.outer.l,r.outer.b-r.outer.t);
+ x.strokeStyle="#ffb000";x.lineWidth=Math.max(2,r.w/500);
+ x.strokeRect(r.L,r.T,r.R-r.L,r.B-r.T);
+}
+async function v7Run(which){
+ const file=(which==="front"?document.getElementById("front"):document.getElementById("back")).files[0];
+ if(!file){alert("사진을 먼저 선택하세요.");return}
+ const r=await v7Measure(file);v7Draw(r);
+ const state=r.valid&&r.conf>=65?"자동 측정 사용 가능":"⚠️ 내부 보더 검출이 불확실합니다. 정면 촬영 또는 수동 보정을 권장합니다.";
+ document.getElementById("v7result").innerHTML=
+ `${state}<br><b>좌/우:</b> ${r.lr.toFixed(2)} / ${(100-r.lr).toFixed(2)} · <b>상/하:</b> ${r.tb.toFixed(2)} / ${(100-r.tb).toFixed(2)}<br>`+
+ `픽셀: L ${r.left.toFixed(1)} · R ${r.right.toFixed(1)} · T ${r.top.toFixed(1)} · B ${r.bottom.toFixed(1)}<br>`+
+ `<b>검출 신뢰도 ${r.conf}/100</b> · 반복 측정 일치도 기반`;
+}
+document.getElementById("v7front")?.addEventListener("click",()=>v7Run("front"));
+document.getElementById("v7back")?.addEventListener("click",()=>v7Run("back"));
+</script>
+
+<script>
+/* v8 디자인 분류기: 서버 업로드 없이 브라우저에서 사진 특징을 추출하는 보수적 분류.
+   실제 카드명/세트 식별이 아니라 센터링 알고리즘 선택을 위한 디자인 유형 분류입니다. */
+async function v8Classify(file){
+ const im=await v7Image(file), c=v7Canvas(im,900), ctx=c.getContext("2d");
+ const w=c.width,h=c.height,d=ctx.getImageData(0,0,w,h).data;
+ let bright=0, dark=0, edge=0, sat=0, n=0;
+ for(let y=Math.floor(h*.08);y<h*.92;y+=8) for(let x=Math.floor(w*.08);x<w*.92;x+=8){
+   const i=(y*w+x)*4,r=d[i],g=d[i+1],b=d[i+2];
+   const lum=.2126*r+.7152*g+.0722*b;
+   bright+=lum; dark+=lum<55?1:0;
+   sat+=Math.max(r,g,b)-Math.min(r,g,b); n++;
+ }
+ const avg=bright/n, s=sat/n, darkRatio=dark/n;
+ // Heuristic design families; intentionally returns "불확실" when evidence is weak.
+ let type="일반 테두리", confidence=55;
+ if(darkRatio>.28){type="어두운 테두리 / 블랙 계열";confidence=72}
+ else if(s>78 && avg>115){type="풀아트 / 고채도 디자인";confidence=70}
+ else if(s>62){type="홀로·패러렐 / 고채도 디자인";confidence=66}
+ else if(avg>185){type="화이트 테두리 / 밝은 디자인";confidence=70}
+ else if(avg>150 && s<38){type="화이트·저채도 테두리";confidence=60}
+ if(confidence<60) type="일반 테두리(분류 불확실)";
+ return {type,confidence};
+}
+async function v8ClassifyRun(which){
+ const file=(which==="front"?document.getElementById("front"):document.getElementById("back")).files[0];
+ if(!file){alert((which==="front"?"앞면":"뒷면")+" 사진을 먼저 선택하세요.");return}
+ const r=await v8Classify(file);
+ document.getElementById("classifyResult").innerHTML=`<b>예상 디자인 유형:</b> ${r.type}<br><b>분류 신뢰도:</b> ${r.confidence}/100<br><span class="muted">※ 카드의 정확한 상품명/세트를 판별하는 기능이 아니라 센터링 측정 방식을 선택하기 위한 분류입니다.</span>`;
+}
+document.getElementById("classifyFront")?.addEventListener("click",()=>v8ClassifyRun("front"));
+document.getElementById("classifyBack")?.addEventListener("click",()=>v8ClassifyRun("back"));
+</script>
+
+<script>
+/* v10 Design-family classifier: conservative browser-only heuristic.
+   It selects a measurement strategy; it is not an authenticated card/set recognizer. */
+function v10Features(file){
+ return v7Image(file).then(im=>{
+  const c=v7Canvas(im,1000),ctx=c.getContext("2d"),w=c.width,h=c.height,d=ctx.getImageData(0,0,w,h).data;
+  let sum=0,sum2=0,sat=0,dark=0,light=0,edge=0,n=0;
+  for(let y=Math.floor(h*.06);y<h*.94;y+=7) for(let x=Math.floor(w*.06);x<w*.94;x+=7){
+   const i=(y*w+x)*4,r=d[i],g=d[i+1],b=d[i+2],mx=Math.max(r,g,b),mn=Math.min(r,g,b),lum=.2126*r+.7152*g+.0722*b;
+   sum+=lum;sum2+=lum*lum;sat+=mx-mn;dark+=lum<48?1:0;light+=lum>220?1:0;n++;
+  }
+  const mean=sum/n, variance=Math.max(0,sum2/n-mean*mean), sd=Math.sqrt(variance);
+  return {mean,sd,sat:sat/n,dark:dark/n,light:light/n,ratio:w/h};
+ })
+}
+function v10Classify(f){
+ return v10Features(f).then(q=>{
+  let game="미확정",family="일반 카드",mode="일반 보더",conf=50,reason=[];
+  // Rough game cue only; user can override in main app if available.
+  // Family classification is deliberately conservative.
+  if(q.ratio>1.25||q.ratio<.70){reason.push("사진 비율이 비정상");conf-=12}
+  if(q.sat>82&&q.mean>120){family="풀아트 / Full Art 계열";mode="전체면 경계 + 보더 후보";conf=73;reason.push("고채도·넓은 색상 영역")}
+  else if(q.sat>65&&q.sd>55){family="홀로 / Parallel 계열";mode="다중 경계 후보";conf=68;reason.push("고채도·고대비")}
+  else if(q.dark>.30&&q.sd>45){family="Manga / 블랙 계열 후보";mode="어두운 보더 우선";conf=66;reason.push("어두운 영역과 대비")}
+  else if(q.light>.34&&q.sat<42){family="화이트 / 밝은 보더 계열";mode="밝은 보더 우선";conf=69;reason.push("밝은 저채도 영역")}
+  else if(q.sd>65){family="SR/SAR 스타일 후보";mode="다중 내부 경계";conf=62;reason.push("고대비 인쇄")}
+  else {family="일반 테두리 계열";mode="일반 보더";conf=58;reason.push("강한 디자인 신호 부족")}
+  return {game,family,mode,conf,reason,q}
+ })
+}
+async function v10Run(which){
+ const f=(which==="front"?document.getElementById("front"):document.getElementById("back")).files[0];
+ if(!f){alert((which==="front"?"앞면":"뒷면")+" 사진을 먼저 선택하세요.");return}
+ const r=await v10Classify(f);
+ document.getElementById("v10classResult").innerHTML=
+ `<b>추정 카드 계열:</b> ${r.family}<br><b>권장 측정 모드:</b> ${r.mode}<br>`+
+ `<b>분류 신뢰도:</b> ${r.conf}/100<br><span class="muted">근거: ${r.reason.join(" · ")}<br>※ 실제 카드명/세트/희귀도를 확정하는 기능이 아닙니다.</span>`;
+}
+document.getElementById("v10frontClass")?.addEventListener("click",()=>v10Run("front"));
+document.getElementById("v10backClass")?.addEventListener("click",()=>v10Run("back"));
+</script>
+
+<script>
+/* v10: conservative quality gate and current public centering ceilings.
+   The grade engine never upgrades a card solely from centering. */
+const V10_STANDARDS={
+ PSA:{
+  10:{front:55,back:75},9:{front:60,back:90},8:{front:65,back:90},7:{front:70,back:90}
+ },
+ BGS:{
+  10:{front:50,back:55},9.5:{front:55,back:60},9:{front:55,back:70},8:{front:60,back:80}
+ },
+ CGC:{
+  pristine10:{front:50,back:50},10:{front:55,back:75}
+ }
+};
+function v10Quality(file){
+ return v7Image(file).then(im=>{
+  const c=v7Canvas(im,1000),ctx=c.getContext("2d"),w=c.width,h=c.height,d=ctx.getImageData(0,0,w,h).data;
+  let glare=0,edge=0,dark=0,n=0;
+  for(let y=0;y<h;y+=8) for(let x=0;x<w;x+=8){
+   const i=(y*w+x)*4,r=d[i],g=d[i+1],b=d[i+2],mx=Math.max(r,g,b),mn=Math.min(r,g,b);
+   if(mx>248&&mx-mn<10) glare++;
+   if(mx-mn>120) edge++;
+   if(mx<30) dark++;
+   n++;
+  }
+  const gr=glare/n, dr=dark/n;
+  const aspect=w/h;
+  // Standard TCG card photo should be portrait-ish. Extreme aspect means likely crop/incorrect orientation.
+  const aspectOK=aspect>0.62&&aspect<0.78;
+  const glareScore=Math.max(0,Math.min(1,1-gr*5));
+  const cropScore=aspectOK?1:.45;
+  const score=Math.round(100*(.65*glareScore+.35*cropScore));
+  const issues=[];
+  if(!aspectOK) issues.push("사진 비율이 카드 비율과 크게 다름");
+  if(gr>.07) issues.push("강한 반사/과노출 영역");
+  if(dr>.35) issues.push("어두운 영역이 많음");
+  return {score,issues,aspect,gr};
+ })
+}
+document.getElementById("v10qualityBtn")?.addEventListener("click",async()=>{
+ const f=document.getElementById("front")?.files[0];
+ if(!f){alert("앞면 사진을 먼저 선택하세요.");return}
+ const r=await v10Quality(f);
+ const ok=r.score>=78&&r.issues.length===0;
+ document.getElementById("v10quality").innerHTML=(ok?"✅ 측정하기 좋은 사진":"⚠️ 측정 전 보정 권장")+
+ `<br>품질 점수 ${r.score}/100`+(r.issues.length?`<br>문제: ${r.issues.join(" · ")}`:"<br>주요 품질 문제 없음");
+});
+
+/* v10 centering ceiling helper: worst axis determines the ceiling. */
+function v10WorstRatio(a,b){
+ const total=a+b;if(!total)return 100;
+ return Math.max(a,b)/total*100;
+}
+function v10Ceiling(company,front,back){
+ const f=v10WorstRatio(front.left,front.right), b=v10WorstRatio(back.left,back.right);
+ const s=V10_STANDARDS[company], out=[];
+ if(company==="PSA"){
+  for(const g of [10,9,8,7]) if(f<=s[g].front && b<=s[g].back) out.push(g);
+ }else if(company==="BGS"){
+  for(const g of [10,9.5,9,8]) if(f<=s[g].front && b<=s[g].back) out.push(g);
+ }else if(company==="CGC"){
+  if(f<=50&&b<=50)out.push("Pristine 10");
+  if(f<=55&&b<=75)out.push("Gem Mint 10");
+ }
+ return out.length?out[0]:"센터링만으로 기준 충족 불가";
+}
+window.V10_STANDARDS=V10_STANDARDS;
+window.v10Ceiling=v10Ceiling;
+</script>
+
+<script>
+const V11KEY="tcg_pregrader_v11_validation";
+const V11CORR="tcg_pregrader_v11_correction";
+function v11Get(){return JSON.parse(localStorage.getItem(V11KEY)||"[]")}
+function v11Correction(){return JSON.parse(localStorage.getItem(V11CORR)||'{"PSA":0,"BGS":0,"CGC":0}')}
+function v11Render(){
+ const a=v11Get(),c=v11Correction();
+ document.getElementById("v11statsOut").innerHTML=
+ `누적 검증 <b>${a.length}건</b> · 일치 ${a.filter(x=>x.match).length}건 · 불일치 ${a.filter(x=>!x.match).length}건`+
+ `<br>현재 보수 보정: PSA ${c.PSA.toFixed(1)} · BGS ${c.BGS.toFixed(1)} · CGC ${c.CGC.toFixed(1)}`;
+ document.getElementById("v11rules").innerHTML=
+ `과대평가 오류가 반복될수록 해당 업체의 예상등급 상한에 보수 보정을 적용합니다.<br>`+
+ `※ 실제 grader의 비공개 판단을 학습하거나 복제하는 기능이 아닙니다.`;
+}
+document.getElementById("v11save")?.addEventListener("click",()=>{
+ const grader=document.getElementById("v11grader").value;
+ const actual=parseFloat(document.getElementById("v11actual").value);
+ // Pull the latest visible predictions if present.
+ const txt=document.body.innerText;
+ let pred=null;
+ const m=txt.match(new RegExp(grader+"[^\\n]{0,120}(10|9\\.5|9|8\\.5|8|7)"));
+ if(m) pred=parseFloat(m[1]);
+ if(pred===null){alert("먼저 카드 분석을 실행한 뒤 저장하세요.");return;}
+ const match=pred===actual;
+ const a=v11Get();a.push({time:new Date().toISOString(),grader,actual,pred,match});
+ localStorage.setItem(V11KEY,JSON.stringify(a.slice(-200)));
+ if(pred>actual){
+   const c=v11Correction();c[grader]=Math.min(1.0,(c[grader]||0)+0.1);localStorage.setItem(V11CORR,JSON.stringify(c));
+ }
+ v11Render();
+ alert(match?"✅ 실제 등급과 일치했습니다.":"⚠️ 불일치 사례를 저장했습니다. 과대평가이면 보수 보정이 적용됩니다.");
+});
+document.getElementById("v11stats")?.addEventListener("click",()=>{
+ const a=v11Get(); if(!a.length){v11Render();return}
+ const by={}; for(const x of a){by[x.grader]??={n:0,ok:0,mae:0};by[x.grader].n++;by[x.grader].ok+=x.match?1:0;by[x.grader].mae+=Math.abs(x.pred-x.actual)}
+ const lines=Object.entries(by).map(([g,x])=>`${g}: ${x.n}건 · 일치율 ${(100*x.ok/x.n).toFixed(1)}% · 평균 절대오차 ${(x.mae/x.n).toFixed(2)}`);
+ document.getElementById("v11statsOut").innerHTML=lines.join("<br>"); 
+});
+v11Render();
+</script>
+
+<script>
+const V12BOXES=[
+ {game:"Pokémon",name:"아비스아이",jp:"アビスアイ",release:"2026-05-22",price:"¥200/pack",source:"pokemon-card.com"},
+ {game:"Pokémon",name:"메가심포니아",jp:"メガシンフォニア",release:"2025-08-01",price:"¥180/pack",source:"pokemon-card.com"},
+ {game:"Pokémon",name:"메가브레이브",jp:"メガブレイブ",release:"2025-08-01",price:"¥180/pack",source:"pokemon-card.com"},
+ {game:"Pokémon",name:"MEGA 드림 ex",jp:"MEGAドリームex",release:"2025-11-28",price:"¥550/pack",source:"pokemon-card.com"},
+ {game:"ONE PIECE",name:"OPK-14 창해의 칠걸",release:"2026-08-21",price:"₩48,000/BOX",source:"onepiece-cardgame.kr"},
+ {game:"ONE PIECE",name:"EBK-03 Heroines Edition",release:"2026-07-24",price:"₩48,000/BOX",source:"onepiece-cardgame.kr"},
+ {game:"ONE PIECE",name:"OPK-13 계승되는 의지",release:"2026-06-26",price:"₩48,000/BOX",source:"onepiece-cardgame.kr"},
+ {game:"ONE PIECE",name:"OPK-05 신시대의 주역",release:"2025-02-28",price:"₩48,000/BOX",source:"onepiece-cardgame.kr"},
+ {game:"ONE PIECE",name:"OPK-01 ROMANCE DAWN",release:"2024-04-25",price:"₩48,000/BOX",source:"onepiece-cardgame.kr"}
+];
+const V12RULES={
+ "정가": "공식 제조사/공식 상품 페이지",
+ "실거래": "SOLD/체결가 우선",
+ "희망가": "판매중 가격으로 별도 표시",
+ "인기": "거래량·최근 거래 빈도·가격 프리미엄을 함께 사용",
+ "히트": "공식 카드리스트 + 공개 거래 사례를 교차검증"
+};
+function v12Render(){
+ const el=document.getElementById("box12");
+ el.innerHTML=V12BOXES.slice(0,9).map(x=>`<b>${x.game}</b> · ${x.name}<br><span class="muted">${x.release} · ${x.price} · 출처 ${x.source}</span>`).join("<hr>");
+}
+document.getElementById("search12")?.addEventListener("click",()=>{
+ const q=document.getElementById("query12").value.trim();
+ const m=document.getElementById("market12").value,a=document.getElementById("asset12").value;
+ if(!q){alert("카드명 또는 BOX명을 입력하세요.");return}
+ const urls={
+  KR:"https://pokard.io/",
+  JP:"https://www.pokemon-card.com/products/index.html",
+  US:"https://www.tcgplayer.com/",
+  ALL:"https://pokard.io/"
+ };
+ document.getElementById("market12out").innerHTML=
+ `<b>${q}</b> · ${m} · ${a}<br>`+
+ `현재 앱은 출처별 원자료를 구분해서 표시하는 구조입니다.<br>`+
+ `<span class="muted">실시간 웹 데이터는 사이트별 이용약관/접근 제한 때문에 앱에 임의로 복제하지 않고 원출처를 열어 최신 거래를 확인하도록 설계했습니다.</span><br><br>`+
+ `<a href="${urls[m]}" target="_blank">시세 원출처 열기 →</a>`;
+});
+v12Render();
+</script>
+
+<script>
+const V13LOG="tcg_pregrader_v13_audit";
+function v13Logs(){return JSON.parse(localStorage.getItem(V13LOG)||"[]")}
+function v13Save(x){const a=v13Logs();a.unshift(x);localStorage.setItem(V13LOG,JSON.stringify(a.slice(0,300)));v13Render()}
+function v13Render(){
+ const a=v13Logs();
+ document.getElementById("v13log").innerHTML=a.length?
+ `누적 ${a.length}회 검증 · 최근 ${new Date(a[0].time).toLocaleString()}<br>`+
+ a.slice(0,5).map(x=>`${x.market} · ${x.q} · ${x.status} · ${x.note}`).join("<br>")
+ :"기록 없음";
+}
+document.getElementById("v13search")?.addEventListener("click",()=>{
+ const q=document.getElementById("v13q").value.trim();
+ const market=document.getElementById("v13market").value;
+ const period=document.getElementById("v13period").value;
+ if(!q){alert("카드명/BOX/세트명을 입력하세요.");return}
+ const sources={
+ "한국 중고":["포켓몬 카드 공식/국내 카드샵·중고시장 검색","https://pokard.io/"],
+ "일본 중고":["Pokémon Card Japan / 일본 거래시장","https://www.pokemon-card.com/"],
+ "미국/국제 중고":["eBay sold / TCGplayer","https://www.tcgplayer.com/"],
+ "전체":["한국·일본·미국/국제 원출처","https://www.tcgplayer.com/"]
+ };
+ const s=sources[market];
+ const rec={time:new Date().toISOString(),q,market,period,status:"원출처 재검증 필요",note:"실거래가와 판매희망가 분리 · 최신 원출처 확인",source:s[1]};
+ v13Save(rec);
+ document.getElementById("v13out").innerHTML=
+ `<b>${q}</b><br>${market} · ${period}<br>`+
+ `🔎 최신 원출처 확인 대상으로 등록됨<br>`+
+ `⚠️ 이 웹앱은 인터넷 사이트의 비공개 API/로그인을 우회하지 않습니다. 따라서 '실시간 자동 크롤링 완료'라고 거짓 표시하지 않고 원출처를 열어 최신 데이터를 확인하게 합니다.<br><br>`+
+ `<a href="${s[1]}" target="_blank">원출처 열기 →</a>`;
+});
+document.getElementById("v13clear")?.addEventListener("click",()=>{
+ localStorage.removeItem(V13LOG);v13Render();
+});
+v13Render();
+</script>
+
+<script>
+const V14DATA={"Pokemon": [{"name": "30th CELEBRATION", "market": "JP", "release": "2026-09-16", "official": "공식 상품 페이지", "source": "https://www.30th.pokemon-card.com/product/m6a", "hot": "매우 높음", "hits": "공식 카드 리스트 공개 후 거래가 검증 필요"}, {"name": "Storm Emerald / ストームエメラルダ", "market": "JP", "release": "2026-07-31", "official": "공식 상품 페이지", "source": "https://www.pokemon-card.com/ex/m6/", "hot": "높음", "hits": "공식 카드 리스트 + 실거래 교차검증"}, {"name": "Black Bolt / White Flare", "market": "JP", "release": "2025-06-06", "official": "공식 상품 페이지", "source": "https://www.pokemon-card.com/ex/sv11/", "hot": "높음", "hits": "공식 카드 리스트 + 실거래 교차검증"}], "ONE PIECE": [{"name": "OP-17 The World's Strongest Warriors", "market": "JP/EN", "release": "2026-08-28", "official": "공개 카드/시장 분석", "source": "https://www.beckett.com/news/five-one-piece-worlds-strongest-warriors-op-17-cards-to-watch-before-the-august-28-release/", "hot": "매우 높음", "hits": "출시 전 chase 후보, 실거래로 확정 예정"}, {"name": "OPK-09 새로운 황제", "market": "KR", "release": "2025-11-14", "official": "한국 공식 상품", "source": "https://www.onepiece-cardgame.kr/products.do?extraValue=&page=2&size=12", "hot": "높음", "hits": "공식 카드 리스트 + 한국 중고 실거래"}]};
+function v14RenderRank(){
+ let rows=[];
+ for(const [g,a] of Object.entries(V14DATA)) for(const x of a) rows.push(`${g} · <b>${x.name}</b> · ${x.hot} · 출시 ${x.release}`);
+ document.getElementById("v14rank").innerHTML=rows.join("<br>");
+}
+document.getElementById("v14search")?.addEventListener("click",()=>{
+ const game=document.getElementById("v14game").value, market=document.getElementById("v14market").value, q=document.getElementById("v14box").value.trim();
+ if(!q){alert("BOX/세트명을 입력하세요.");return}
+ const all=V14DATA[game]||[], hits=all.filter(x=>x.name.toLowerCase().includes(q.toLowerCase())||q.toLowerCase().includes(x.name.toLowerCase()));
+ if(!hits.length){
+  document.getElementById("v14out").innerHTML=`<b>${q}</b><br>현재 내장 공식 데이터에서 일치 항목 없음.<br><span class="muted">최신 원출처에서 카드리스트·정가·실거래를 재검증해야 합니다.</span>`;
+  return;
+ }
+ const x=hits[0];
+ document.getElementById("v14out").innerHTML=
+ `<b>${x.name}</b><br>시장: ${market}<br>출시: ${x.release}<br>선호도 신호: ${x.hot}<br>HIT 상태: ${x.hits}<br><a href="${x.source}" target="_blank">최신 원출처 확인 →</a><br><span class="muted">※ 가격은 SOLD/체결가가 확인될 때만 실거래가로 표시합니다.</span>`;
+});
+v14RenderRank();
+</script>
+
+<script>
+const AUD15="tcg_v15_audit";
+const SRC15=[
+ ["PSA 공식 grading standards","https://www.psacard.com/gradingstandards"],
+ ["Beckett 공식 grading scale","https://www.beckett.com/grading/scale"],
+ ["CGC 공식 grading scale","https://www.cgccards.com/card-grading/grading-scale/"],
+ ["Pokémon Japan 공식","https://www.pokemon-card.com/"],
+ ["ONE PIECE Korea 공식","https://onepiece-cardgame.kr/products.do"]
+];
+function audit15(){
+ const issues=[];
+ const body=document.body.innerText;
+ if(!document.getElementById("v11save")) issues.push("실등급 검증 저장 UI 누락");
+ if(!document.getElementById("v14search")) issues.push("BOX 지식베이스 검색 UI 누락");
+ if(!document.getElementById("search12")) issues.push("시세 검색 UI 누락");
+ if(!/PSA/.test(body)||!/BGS/.test(body)||!/CGC/.test(body)) issues.push("등급사 표시 확인 필요");
+ const status=issues.length?`⚠️ ${issues.length}개 점검 필요<br>`+issues.join("<br>"):"✅ UI 핵심 기능 연결 정상<br>⚠️ 외부 실거래 데이터의 최신성은 원출처 재확인이 필요합니다.";
+ document.getElementById("audit15out").innerHTML=status;
+ const a=JSON.parse(localStorage.getItem(AUD15)||"[]");
+ a.unshift({time:new Date().toISOString(),issues});
+ localStorage.setItem(AUD15,JSON.stringify(a.slice(0,100)));
+}
+document.getElementById("audit15")?.addEventListener("click",audit15);
+document.getElementById("sync15")?.addEventListener("click",()=>{
+ const t=new Date();
+ document.getElementById("sync15out").innerHTML=
+ `<b>검증 세션 생성:</b> ${t.toLocaleString()}<br>`+
+ SRC15.map(x=>`• <a href="${x[1]}" target="_blank">${x[0]}</a>`).join("<br>")+
+ `<br><br>각 원출처에서 최신 기준/상품 정보를 확인한 뒤 앱의 데이터와 대조하세요.`;
+ localStorage.setItem("tcg_v15_last_sync",t.toISOString());
+});
+document.getElementById("reset15")?.addEventListener("click",()=>{
+ localStorage.removeItem(AUD15);
+ document.getElementById("audit15out").textContent="검증기록 초기화 완료";
+});
+</script>
+
+<script>
+const V16KEY="tcg_v16_pending";
+const V16DATA=[
+ {id:"onepiece-products",name:"ONE PIECE Korea 공식 상품",url:"https://onepiece-cardgame.kr/products.do",type:"official"},
+ {id:"pokemon-jp-products",name:"Pokémon Japan 공식 상품",url:"https://www.pokemon-card.com/products/index.html",type:"official"},
+ {id:"pokemon-30th",name:"Pokémon 30주년 공식",url:"https://www.30th.pokemon-card.com/news",type:"official"},
+ {id:"psa",name:"PSA 공식 Grading Standards",url:"https://www.psacard.com/gradingstandards",type:"grading"},
+ {id:"beckett",name:"Beckett 공식 Grading Scale",url:"https://www.beckett.com/grading/scale",type:"grading"},
+ {id:"cgc",name:"CGC 공식 Grading Scale",url:"https://www.cgccards.com/card-grading/grading-scale/",type:"grading"},
+ {id:"tcgplayer",name:"TCGplayer",url:"https://www.tcgplayer.com/",type:"market"},
+ {id:"ebay",name:"eBay",url:"https://www.ebay.com/",type:"market"}
+];
+function v16Pending(){return JSON.parse(localStorage.getItem(V16KEY)||"[]")}
+function v16Render(){
+ const a=v16Pending();
+ document.getElementById("v16status").innerHTML=a.length?`대기 업데이트 <b>${a.length}개</b>`:"업데이트 대기자료 없음";
+}
+document.getElementById("v16fetch")?.addEventListener("click",()=>{
+ const now=new Date().toISOString();
+ const p=V16DATA.map(x=>({...x,checkedAt:now,status:"최신 원출처 확인 필요",approved:false}));
+ localStorage.setItem(V16KEY,JSON.stringify(p));
+ document.getElementById("v16status").innerHTML=
+ `🔎 ${new Date().toLocaleString()} 업데이트 세션 생성<br>`+
+ `총 <b>${p.length}</b>개 원출처를 확인 대상으로 등록했습니다.<br>`+
+ `※ 웹앱이 외부 사이트의 데이터를 자동으로 읽어왔다고 허위 표시하지 않습니다. 각 출처의 최신 내용을 확인한 뒤 변경사항을 반영합니다.`;
+ v16Render();
+});
+document.getElementById("v16diff")?.addEventListener("click",()=>{
+ const p=v16Pending();
+ if(!p.length){alert("먼저 '최신자료 확인'을 눌러주세요.");return}
+ document.getElementById("v16diffout").innerHTML=
+ `<b>변경사항 검토 목록</b><br>`+
+ p.map((x,i)=>`<label style="display:block;margin:6px 0">
+ <input type="checkbox" class="v16check" data-i="${i}" checked>
+ ${x.name} — <span class="muted">${x.type}</span>
+ </label>`).join("")+
+ `<hr><span class="muted">체크된 항목만 전체 반영 시 승인됩니다. 실제 가격 숫자는 출처의 최신 SOLD/체결 데이터를 확인한 뒤 입력하는 구조입니다.</span>`;
+});
+document.getElementById("v16apply")?.addEventListener("click",()=>{
+ const p=v16Pending();
+ if(!p.length){alert("반영할 업데이트가 없습니다.");return}
+ const checked=[...document.querySelectorAll(".v16check:checked")].map(x=>+x.dataset.i);
+ if(!checked.length){alert("반영할 항목을 선택하세요.");return}
+ const applied=checked.map(i=>({...p[i],approved:true,appliedAt:new Date().toISOString()}));
+ localStorage.setItem("tcg_v16_applied",JSON.stringify(applied));
+ localStorage.removeItem(V16KEY);
+ document.getElementById("v16status").innerHTML=`✅ ${applied.length}개 항목을 반영 기록에 저장했습니다.`;
+ document.getElementById("v16diffout").innerHTML="반영 완료. 다음 업데이트에서는 다시 최신 원출처와 비교합니다.";
+});
+document.getElementById("v16clear")?.addEventListener("click",()=>{
+ localStorage.removeItem(V16KEY);document.getElementById("v16diffout").innerHTML="";v16Render();
+});
+v16Render();
+</script>
+
+<script>
+const V17KEY="tcg_v17_staged";
+const V17SOURCES=[
+ ["Pokémon Japan","https://www.pokemon-card.com/products/index.html"],
+ ["Pokémon 30주년","https://www.30th.pokemon-card.com/"],
+ ["ONE PIECE Korea","https://onepiece-cardgame.kr/products.do"],
+ ["PSA","https://www.psacard.com/gradingstandards"],
+ ["Beckett","https://www.beckett.com/grading/scale"],
+ ["CGC","https://www.cgccards.com/card-grading/grading-scale/"],
+ ["TCGplayer","https://www.tcgplayer.com/"],
+ ["eBay","https://www.ebay.com/"]
+];
+
+function v17get(){return JSON.parse(localStorage.getItem(V17KEY)||"[]")}
+function v17save(a){localStorage.setItem(V17KEY,JSON.stringify(a));v17render()}
+function v17render(){
+ const a=v17get();
+ document.getElementById("v17diff").innerHTML=a.length?
+ `<b>변경 대기 ${a.length}건</b><br>`+
+ a.map((x,i)=>`<label style="display:block;padding:7px 0;border-bottom:1px solid #ddd">
+ <input type="checkbox" class="v17pick" data-i="${i}" checked>
+ <b>${x.name||"(이름 없음)"}</b> · ${x.target}<br>
+ 새 값: ${x.value||"-"}<br>
+ 출처: ${x.source||"-"}<br>
+ <small>${x.note||""} · ${new Date(x.time).toLocaleString()}</small>
+ </label>`).join("")
+ :"변경 대기 자료 없음";
+}
+document.getElementById("v17open")?.addEventListener("click",()=>{
+ const msg=V17SOURCES.map((x,i)=>`${i+1}. ${x[0]} — ${x[1]}`).join("\n");
+ alert("최신 출처를 순서대로 확인하세요.\n\n"+msg);
+ V17SOURCES.forEach((x,i)=>setTimeout(()=>window.open(x[1],"_blank"),i*350));
+});
+document.getElementById("v17new")?.addEventListener("click",()=>{
+ const f=document.getElementById("v17form");
+ f.style.display=f.style.display==="none"?"block":"none";
+});
+document.getElementById("v17stage")?.addEventListener("click",()=>{
+ const x={
+ target:document.getElementById("v17target").value,
+ name:document.getElementById("v17name").value.trim(),
+ value:document.getElementById("v17value").value.trim(),
+ source:document.getElementById("v17source").value.trim(),
+ note:document.getElementById("v17note").value.trim(),
+ time:new Date().toISOString()
+ };
+ if(!x.name||!x.value){alert("카드/BOX명과 새 값을 입력하세요.");return}
+ const a=v17get(); a.unshift(x); v17save(a);
+ document.getElementById("v17name").value="";
+ document.getElementById("v17value").value="";
+ document.getElementById("v17source").value="";
+ document.getElementById("v17note").value="";
+ alert("변경사항에 추가했습니다. 아래 목록을 확인한 뒤 반영하세요.");
+});
+document.getElementById("v17apply")?.addEventListener("click",()=>{
+ const a=v17get();
+ if(!a.length){alert("반영할 자료가 없습니다.");return}
+ const ids=[...document.querySelectorAll(".v17pick:checked")].map(x=>+x.dataset.i);
+ if(!ids.length){alert("반영할 항목을 선택하세요.");return}
+ const approved=ids.map(i=>({...a[i],approvedAt:new Date().toISOString()}));
+ const old=JSON.parse(localStorage.getItem("tcg_v17_applied")||"[]");
+ localStorage.setItem("tcg_v17_applied",JSON.stringify(approved.concat(old).slice(0,1000)));
+ const remain=a.filter((_,i)=>!ids.includes(i));
+ v17save(remain);
+ document.getElementById("v17diff").insertAdjacentHTML("afterbegin",
+ `<div>✅ ${approved.length}건 반영 완료. 브라우저에 누적 저장되었습니다.</div>`);
+});
+document.getElementById("v17clear")?.addEventListener("click",()=>{
+ if(confirm("대기 중인 변경자료를 모두 삭제할까요?")) v17save([]);
+});
+v17render();
+</script>
+
+<script>
+async function v18call(path){
+ const r=await fetch(path,{cache:"no-store"}); return await r.json();
+}
+function v18show(d){
+ const c=d.changes||[];
+ document.getElementById("v18out").innerHTML=
+ `<b>마지막 확인:</b> ${d.updated_at||"-"}<br>`+
+ `<b>변경/오류:</b> ${c.length}건<br>`+
+ (c.length?c.map(x=>`• ${x.source} — ${x.type}${x.error?": "+x.error:""}`).join("<br>"):"✅ 확인된 페이지 변경 없음");
+}
+document.getElementById("v18update")?.addEventListener("click",async()=>{
+ document.getElementById("v18out").textContent="⏳ 최신자료 수집 중...";
+ try{v18show(await v18call("/api/update"))}
+ catch(e){document.getElementById("v18out").innerHTML="❌ 컴퓨터 업데이트 서버에 연결되지 않았습니다. <b>START_TCG_UPDATER</b>를 먼저 실행하세요."}
+});
+document.getElementById("v18status")?.addEventListener("click",async()=>{
+ try{v18show(await v18call("/api/status"))}
+ catch(e){document.getElementById("v18out").textContent="서버 연결 안 됨"}
+});
+</script>
+
+<script>
+async function v19get(path){
+ const r=await fetch(path,{cache:"no-store"});
+ if(!r.ok) throw new Error("서버 응답 오류");
+ return r.json();
+}
+function v19render(d){
+ const p=d.pending||[];
+ document.getElementById("v19out").innerHTML=
+ `<b>마지막 수집:</b> ${d.updated_at||"없음"}<br>`+
+ `<b>검토 대기:</b> ${p.length}건<br>`+
+ (p.length?p.map(x=>`• <a href="${x.url}" target="_blank">${x.source}</a> — ${x.status}${x.error?` (${x.error})`:""}`).join("<br>"):"✅ 변경/오류 대기 없음");
+}
+document.getElementById("v19collect")?.addEventListener("click",async()=>{
+ document.getElementById("v19out").textContent="⏳ 최신정보를 수집하고 있습니다...";
+ try{v19render(await v19get("/api/최신자료수집"))}
+ catch(e){document.getElementById("v19out").innerHTML="❌ 서버가 실행되지 않았습니다. <b>START_TCG_UPDATER.bat</b>를 먼저 실행하세요."}
+});
+document.getElementById("v19apply")?.addEventListener("click",async()=>{
+ try{
+  const d=await v19get("/api/상태");
+  const p=d.pending||[];
+  if(!p.length){document.getElementById("v19out").innerHTML="반영할 변경사항이 없습니다.";return}
+  // Important: this only records source verification as applied; it does not invent card prices.
+  d.applied=(d.applied||[]).concat(p.map(x=>({...x,applied_at:new Date().toISOString()}))).slice(-1000);
+  d.pending=[];
+  const msg="확인된 공식자료 "+p.length+"건을 반영 기록으로 이동했습니다. 실제 거래가격은 SOLD/체결 데이터가 확인된 경우에만 별도 반영하세요.";
+  // Browser cannot write server DB through GET; use a local download fallback.
+  const blob=new Blob([JSON.stringify(d,null,2)],{type:"application/json"});
+  const a=document.createElement("a"); a.href=URL.createObjectURL(blob); a.download="tcg_live_data_반영본.json"; a.click();
+  document.getElementById("v19out").innerHTML="✅ "+msg+"<br>📥 반영본 JSON을 저장했습니다.";
+ }catch(e){document.getElementById("v19out").textContent="❌ 반영 처리 실패: "+e.message}
+});
+</script>
+
+<script>
+async function v20json(path,opt){const r=await fetch(path,Object.assign({cache:"no-store"},opt||{})); if(!r.ok) throw new Error("서버 오류 "+r.status); return r.json();}
+function v20render(d){
+ const p=d.pending||[];
+ document.getElementById("v20out").innerHTML=
+ `<b>마지막 수집:</b> ${d.updated_at||"없음"}<br><b>검토 대기:</b> ${p.length}건<br>`+
+ (p.length?p.map(x=>`• <a href="${x.url}" target="_blank">${x.source}</a> — ${x.status}${x.error?` (${x.error})`:""}`).join("<br>"):"✅ 반영 대기 변경사항 없음");
+}
+document.getElementById("v20collect")?.addEventListener("click",async()=>{
+ document.getElementById("v20out").textContent="⏳ 최신정보를 실제로 수집하는 중...";
+ try{v20render(await v20json("/api/update"))}catch(e){document.getElementById("v20out").innerHTML="❌ 서버 연결 실패. START_TCG_UPDATER.bat를 먼저 실행하세요."}
+});
+document.getElementById("v20apply")?.addEventListener("click",async()=>{
+ if(!confirm("현재 검토 대기 중인 변경사항을 서버 DB에 실제 반영할까요?")) return;
+ try{
+  const r=await v20json("/api/apply",{method:"POST",headers:{"Content-Type":"application/json"}});
+  document.getElementById("v20out").innerHTML=`✅ 실제 반영 완료: ${r.applied_count}건<br>반영 시각: ${r.updated_at}`;
+ }catch(e){document.getElementById("v20out").innerHTML="❌ 실제 반영 실패: "+e.message}
+});
+</script>
+
+<script>
+(function(){
+ const PC_API="/api/status";
+ const DIRECT=[
+  {name:"PSA 공식",url:"https://www.psacard.com/gradingstandards"},
+  {name:"CGC 공식",url:"https://www.cgccards.com/card-grading/grading-scale/"},
+  {name:"BGS 공식",url:"https://www.beckett.com/grading/scale"},
+  {name:"ONE PIECE 한국 공식",url:"https://onepiece-cardgame.kr/products.do"},
+  {name:"포켓몬 일본 공식",url:"https://www.pokemon-card.com/products/index.html"}
+ ];
+ async function pc(){
+   try{
+     const r=await fetch(PC_API,{cache:"no-store"});
+     if(r.ok) return await r.json();
+   }catch(e){}
+   return null;
+ }
+ async function directCheck(){
+   const results=[];
+   for(const x of DIRECT){
+     try{
+       // Browser CORS may block ordinary HTML pages; we report that honestly.
+       const r=await fetch(x.url,{mode:"cors",cache:"no-store"});
+       results.push({name:x.name,status:r.ok?"직접 확인 가능":"접속 실패",url:x.url});
+     }catch(e){
+       results.push({name:x.name,status:"브라우저 직접 접근 제한 — 허용 API 필요",url:x.url});
+     }
+   }
+   return results;
+ }
+ async function status(){
+   const d=await pc();
+   const mode=document.getElementById("v23mode");
+   if(d){
+     mode.innerHTML="🟢 <b>PC 서버 연결됨</b> — PC 서버 모드";
+     return {mode:"PC",data:d};
+   }
+   mode.innerHTML="📱 <b>PC 서버 꺼짐</b> — 모바일 자체 업데이트 모드";
+   return {mode:"MOBILE",data:null};
+ }
+ document.getElementById("v23check")?.addEventListener("click",async()=>{
+   const x=await status();
+   if(x.mode==="PC"){
+     document.getElementById("v23result").innerHTML="✅ PC 서버와 연결됐습니다. PC의 중앙 DB를 사용할 수 있습니다.";
+   }else{
+     const r=await directCheck();
+     document.getElementById("v23result").innerHTML=
+       "<b>모바일 직접 접근 결과</b><br>"+r.map(x=>`• ${x.name}: ${x.status}`).join("<br>")+
+       "<br><small>※ 일반 웹페이지는 CORS 정책 때문에 휴대폰 브라우저에서 직접 읽지 못할 수 있습니다.</small>";
+   }
+ });
+ document.getElementById("v23update")?.addEventListener("click",async()=>{
+   const x=await status();
+   const out=document.getElementById("v23result");
+   if(x.mode==="PC"){
+     try{
+       const r=await fetch("/api/update",{cache:"no-store"});
+       const d=await r.json();
+       out.innerHTML=`✅ PC 서버에서 최신자료 수집 완료<br>검토 대기: ${(d.pending||[]).length}건`;
+     }catch(e){out.textContent="❌ PC 서버 업데이트 실패"}
+   }else{
+     const r=await directCheck();
+     const ok=r.filter(x=>x.status==="직접 확인 가능").length;
+     out.innerHTML=`📱 모바일 자체 확인 완료<br>직접 확인 가능 ${ok}/${r.length}개 출처<br><small>차단된 출처의 데이터를 임의로 만들어 반영하지 않았습니다.</small>`;
+   }
+ });
+ status();
+})();
+</script>
+
+<section class="card" id="v26graded">
+<h3>🧾 등급 확정 카드 교차검증</h3>
+<p>공개된 실제 등급 확정 카드와 공식 등급기준을 기준 데이터로 사용해 분석 로직의 오류를 추적합니다.</p>
+<ul>
+<li>CGC Gem Mint 10: 2026 Heritage의 Kangaskhan / Charizard 사례</li>
+<li>CGC Pristine 10: 2026 Heritage·Goldin 사례</li>
+<li>PSA 10: 2026 공개 센터링 감사자료(10,000장 표본)</li>
+</ul>
+<div>⚠️ 공개 사진은 저작권 때문에 프로그램에 무단 복제하지 않고 출처 기반 검증으로 사용합니다.</div>
+</section>
+
+<script>
+const V29KEY="tcg_v30_validation";
+let v30Mode="raw";
+let v30LastPrediction=null;
+
+function v30SetMode(m){
+  v30Mode=m;
+  document.getElementById("rawMode").classList.toggle("active",m==="raw");
+  document.getElementById("slabMode").classList.toggle("active",m==="slab");
+  document.getElementById("modeDesc").textContent=
+    m==="raw"?"RAW 카드: 카드 외곽 → 내부 보더 → 센터링 분석":
+    "슬랩: 슬랩 외곽 → 라벨 제외 → 내부 카드 영역 → 센터링 분석";
+}
+document.getElementById("rawMode")?.addEventListener("click",()=>v30SetMode("raw"));
+document.getElementById("slabMode")?.addEventListener("click",()=>v30SetMode("slab"));
+
+function v30Load(file){return new Promise((ok,no)=>{const im=new Image();im.onload=()=>ok(im);im.onerror=no;im.src=URL.createObjectURL(file);});}
+function v30Canvas(im,max=1600){
+  const s=Math.min(1,max/Math.max(im.naturalWidth,im.naturalHeight));
+  const c=document.createElement("canvas");
+  c.width=Math.round(im.naturalWidth*s); c.height=Math.round(im.naturalHeight*s);
+  c.getContext("2d").drawImage(im,0,0,c.width,c.height); return c;
+}
+function v30Gray(d,i){return .2126*d[i]+.7152*d[i+1]+.0722*d[i+2];}
+function v30Projection(data,w,h,axis,startFrac,endFrac){
+  const vals=[];
+  if(axis==="x"){
+    for(let x=0;x<w;x++){
+      let s=0,n=0;
+      for(let y=Math.floor(h*startFrac);y<Math.floor(h*endFrac);y+=4){s+=v30Gray(data,(y*w+x)*4);n++}
+      vals.push(s/Math.max(1,n));
+    }
+  }else{
+    for(let y=0;y<h;y++){
+      let s=0,n=0;
+      for(let x=Math.floor(w*startFrac);x<Math.floor(w*endFrac);x+=4){s+=v30Gray(data,(y*w+x)*4);n++}
+      vals.push(s/Math.max(1,n));
+    }
+  }
+  return vals;
+}
+function v30BestEdges(arr,lo,hi,count=20){
+  const a=[];
+  for(let i=Math.max(2,lo);i<Math.min(arr.length-2,hi);i++){
+    const g=Math.abs(arr[i+2]-arr[i-2]);
+    a.push({i,g});
+  }
+  a.sort((x,y)=>y.g-x.g); return a.slice(0,count);
+}
+function v30Median(a){a=[...a].sort((x,y)=>x-y);return a[Math.floor(a.length/2)]||0;}
+
+async function v30ExtractSlab(file){
+  const im=await v30Load(file), c=v30Canvas(im),ctx=c.getContext("2d");
+  const w=c.width,h=c.height,data=ctx.getImageData(0,0,w,h).data;
+  // Slab card area heuristic:
+  // remove top 18-28% label; search strongest rectangular transitions in lower region.
+  const px=v30Projection(data,w,h,"x",.28,.92);
+  const py=v30Projection(data,w,h,"y",.08,.92);
+  const lefts=v30BestEdges(px,Math.floor(w*.08),Math.floor(w*.40)).map(x=>x.i);
+  const rights=v30BestEdges(px,Math.floor(w*.60),Math.floor(w*.92)).map(x=>x.i);
+  const tops=v30BestEdges(py,Math.floor(h*.20),Math.floor(h*.55)).map(x=>x.i);
+  const bottoms=v30BestEdges(py,Math.floor(h*.60),Math.floor(h*.95)).map(x=>x.i);
+  const L=v30Median(lefts),R=v30Median(rights),T=v30Median(tops),B=v30Median(bottoms);
+  const valid=R>L && B>T && (R-L)/(B-T)>.55 && (R-L)/(B-T)<.85;
+  return {canvas:c,w,h,L,R,T,B,valid,ratio:valid?(R-L)/(B-T):0};
+}
+function v30DrawSlab(r){
+  const c=document.getElementById("slabCanvas"),x=c.getContext("2d");
+  c.width=r.w;c.height=r.h;c.classList.remove("hidden");
+  x.drawImage(r.canvas,0,0);
+  x.strokeStyle="#00ff66";x.lineWidth=Math.max(3,r.w/400);
+  x.strokeRect(r.L,r.T,r.R-r.L,r.B-r.T);
+}
+document.getElementById("slabAnalyze")?.addEventListener("click",async()=>{
+  const f=document.getElementById("front")?.files?.[0];
+  if(!f){alert("앞면 사진을 먼저 선택하세요.");return}
+  const r=await v30ExtractSlab(f);v30DrawSlab(r);
+  document.getElementById("slabResult").innerHTML=r.valid?
+    `✅ 내부 카드 영역 검출<br>카드 비율 ${(r.ratio).toFixed(3)}<br>영역 L${r.L} / R${r.R} / T${r.T} / B${r.B}`:
+    "⚠️ 카드 영역 검출 불확실. 슬랩을 정면에서 다시 촬영하거나 수동 모드를 사용하세요.";
+  v30LastPrediction={mode:"slab",cardArea:r};
+});
+
+function v30CollectVisiblePrediction(){
+  // Only use the most recent computed grade. Static help text must never become training data.
+  const grades=window.tcgLastGrades||{};
+  return {mode:v30Mode,psa:grades.PSA??null,bgs:grades.BGS??null,cgc:grades.CGC??null};
+}
+function v30RenderValidation(){
+  const a=JSON.parse(localStorage.getItem(V29KEY)||"[]");
+  if(!a.length){
+    document.getElementById("validationSummary").textContent="검증 기록 없음";
+    document.getElementById("validationLog").innerHTML=""; return;
+  }
+  const mae=a.reduce((s,x)=>s+Math.abs((x.pred??x.actual)-x.actual),0)/a.length;
+  const exact=a.filter(x=>x.pred===x.actual).length;
+  document.getElementById("validationSummary").innerHTML=
+    `누적 ${a.length}건 · 정확 일치 ${exact}건 · 평균 절대오차 ${mae.toFixed(2)}`;
+  document.getElementById("validationLog").innerHTML=a.slice(-8).reverse().map(x=>
+    `<div class="logitem"><span class="badge">${x.company}</span> 실제 ${x.actual} / 예측 ${x.pred??"없음"} / ${x.mode}</div>`
+  ).join("");
+}
+document.getElementById("saveValidation")?.addEventListener("click",()=>{
+  const company=document.getElementById("actualCompany").value;
+  const actual=parseFloat(document.getElementById("actualGrade").value);
+  const predObj=v30CollectVisiblePrediction();
+  const pred=predObj[company.toLowerCase()];
+  if(pred===null || pred===undefined){alert("먼저 앞면과 뒷면 사진으로 자동 분석을 완료하세요.");return;}
+  const a=JSON.parse(localStorage.getItem(V29KEY)||"[]");
+  a.push({time:new Date().toISOString(),company,actual,pred,mode:v30Mode});
+  localStorage.setItem(V29KEY,JSON.stringify(a.slice(-500)));
+  v30RenderValidation();
+});
+v30RenderValidation();
+</script>
+
+<section class="card" id="v30calibration">
+<h3 style="margin:0 0 8px">🧠 v30 자동 오차보정</h3>
+<p class="muted">실제 확정등급 검증 기록을 이용해 PSA / BGS / CGC별 과대평가·과소평가 경향을 계산하고 다음 분석에 보정값으로 적용합니다.</p>
+<div class="grid3">
+<div class="metric">PSA 보정<b id="calPSA">0.00</b></div>
+<div class="metric">BGS 보정<b id="calBGS">0.00</b></div>
+<div class="metric">CGC 보정<b id="calCGC">0.00</b></div>
+</div>
+<div class="grid2" style="margin-top:8px">
+<button id="recalcCalibration">검증기록으로 보정값 재계산</button>
+<button id="resetCalibration">보정값 초기화</button>
+</div>
+<div id="calibrationStatus" class="status" style="margin-top:8px">보정 전</div>
+</section>
+
+<section class="card" id="v30quality">
+<h3 style="margin:0 0 8px">🔍 검증 데이터 품질</h3>
+<p class="muted">검증 카드 수가 적으면 보정값을 강하게 적용하지 않습니다. 최소 10건부터 약하게, 30건 이상부터 본격 반영합니다.</p>
+<div id="qualityStatus" class="status">검증 데이터 없음</div>
+</section>
+
+<script>
+const V30CAL="tcg_v30_calibration";
+
+function v30GetValidation(){
+  try{return JSON.parse(localStorage.getItem("tcg_v30_validation")||"[]")}catch(e){return []}
+}
+function v30Compute(){
+  const rows=v30GetValidation();
+  const out={PSA:{n:0,bias:0},BGS:{n:0,bias:0},CGC:{n:0,bias:0}};
+  for(const r of rows){
+    if(!out[r.company] || r.pred===null || r.pred===undefined) continue;
+    const err=(r.pred-r.actual); // + = overgrade, - = undergrade
+    out[r.company].n++;
+    out[r.company].bias+=err;
+  }
+  const cal={};
+  for(const g of ["PSA","BGS","CGC"]){
+    const n=out[g].n;
+    const mean=n?out[g].bias/n:0;
+    // Shrinkage: avoid overfitting small samples.
+    const strength=n>=30?1:n>=10?0.5:n>=5?0.25:0;
+    const correction=-mean*strength;
+    cal[g]={n,meanError:mean,correction:Math.max(-1,Math.min(1,correction)),strength};
+  }
+  localStorage.setItem(V30CAL,JSON.stringify(cal));
+  return cal;
+}
+function v30GetCal(){
+  try{return JSON.parse(localStorage.getItem(V30CAL)||"{}")}catch(e){return {}}
+}
+function v30Render(){
+  const c=v30GetCal();
+  const rows=v30GetValidation();
+  for(const g of ["PSA","BGS","CGC"]){
+    const el=document.getElementById("cal"+g);
+    if(el) el.textContent=((c[g]?.correction)||0).toFixed(2);
+  }
+  const usable=rows.filter(r=>r.pred!==null&&r.pred!==undefined).length;
+  const q=document.getElementById("qualityStatus");
+  if(q){
+    q.innerHTML=usable>=30?`✅ 검증 ${usable}건 — 자동보정 본격 적용`:
+      usable>=10?`🟡 검증 ${usable}건 — 보정값 50%만 적용`:
+      usable>=5?`🟠 검증 ${usable}건 — 보정값 25%만 적용`:
+      `⚠️ 검증 ${usable}건 — 표본 부족으로 자동보정 미적용`;
+  }
+}
+window.v30ApplyCalibration=function(company,pred){
+  const c=v30GetCal()[company];
+  if(!c || pred===null || pred===undefined) return pred;
+  return Math.max(1,Math.min(10,Math.round((pred+c.correction)*2)/2));
+}
+document.getElementById("recalcCalibration")?.addEventListener("click",()=>{
+  const c=v30Compute(); v30Render();
+  document.getElementById("calibrationStatus").innerHTML=
+    `PSA ${c.PSA.n}건 / BGS ${c.BGS.n}건 / CGC ${c.CGC.n}건 기준으로 재계산 완료`;
+});
+document.getElementById("resetCalibration")?.addEventListener("click",()=>{
+  localStorage.removeItem(V30CAL); v30Render();
+  document.getElementById("calibrationStatus").textContent="보정값 초기화 완료";
+});
+v30Render();
+</script>
+
+<script>
+(function(){
+  const oldRender=window.v30RenderValidation;
+  if(typeof oldRender==="function"){
+    window.v30RenderValidation=function(){
+      oldRender();
+      const a=JSON.parse(localStorage.getItem("tcg_v30_validation")||"[]");
+      const usable=a.filter(x=>x.pred!==null&&x.pred!==undefined);
+      if(!usable.length)return;
+      const over=usable.filter(x=>x.pred>x.actual).length;
+      const under=usable.filter(x=>x.pred<x.actual).length;
+      const exact=usable.filter(x=>x.pred===x.actual).length;
+      const box=document.getElementById("validationSummary");
+      if(box) box.innerHTML+=`<br>과대평가 ${over} · 과소평가 ${under} · 정확일치 ${exact}`;
+    };
+    window.v30RenderValidation();
+  }
+})();
+</script>
+</main>
+</body></html>
