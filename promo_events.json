@@ -1,0 +1,21 @@
+{
+  "updated_at": "2026-08-21T12:49:23+00:00",
+  "collection_status": "정상",
+  "items": [
+    {
+      "game": "포켓몬 카드",
+      "region": "JP",
+      "name_ko": "포켓몬 카드짐 엔트리 캠페인 2026 상반기",
+      "name_native": "ポケカジムエントリーキャンペーン2026年前期",
+      "start_date": "2026-03-01",
+      "end_date": "2026-08-31",
+      "claim_deadline": "2026-10-31",
+      "reward": "스탬프 2개: 프로모 카드 ‘포켓패드’ · 스탬프 4개: ‘메가캥카 ex’",
+      "condition": "플레이어즈클럽 가입 후 포켓몬 카드짐 공식 행사에서 QR 체크인. 경품은 등록한 마이짐에서만 수령 가능",
+      "location": "일본 포켓몬 카드짐",
+      "status": "진행 중",
+      "source": "https://www.pokemon-card.com/info/005397.html"
+    }
+  ],
+  "collection_errors": []
+}

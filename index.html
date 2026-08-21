@@ -8,7 +8,7 @@
 .app{max-width:780px;margin:auto;padding:16px 13px 48px}h1{margin:4px 0;font-size:25px}.muted{color:#6b7280;font-size:12px;line-height:1.55}
 .card{background:#fff;border-radius:18px;padding:15px;margin:12px 0;box-shadow:0 3px 16px #0000000e}
 .grid2{display:grid;grid-template-columns:1fr 1fr;gap:9px}.grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
-button{border:0;border-radius:13px;padding:13px;font-weight:750;font-size:15px;background:#111827;color:#fff;width:100%;margin-top:8px}.game{background:#fff;color:#111827;border:2px solid #e5e7eb}.game.active{border-color:#111827;background:#f8fafc}
+button{border:0;border-radius:13px;padding:13px;font-weight:750;font-size:15px;background:#111827;color:#fff;width:100%;margin-top:8px}.game{background:#fff;color:#111827;border:2px solid #e5e7eb}.game.active{border-color:#111827;background:#f8fafc}button:disabled{opacity:.58;cursor:wait}
 input{width:100%;padding:10px;border:1px solid #ddd;border-radius:11px;margin:6px 0 10px}.preview{width:100%;max-height:410px;object-fit:contain;background:#111827;border-radius:12px}.hidden{display:none}
 .status{background:#f3f4f6;padding:11px;border-radius:11px;font-size:13px}.metric{border:1px solid #e5e7eb;border-radius:12px;padding:11px}.metric b{display:block;font-size:17px;margin-top:3px}.big{font-size:27px;font-weight:800}
 table{width:100%;border-collapse:collapse;font-size:12px}td,th{border-bottom:1px solid #eee;padding:8px;text-align:left}.pill{display:inline-block;background:#eef2ff;padding:4px 7px;border-radius:8px;margin:2px}.good{color:#047857}.warn{color:#b45309}.bad{color:#b91c1c}
@@ -39,13 +39,15 @@ input[type=range]{width:100%}
 .box-menu-btn.box-price-wide{grid-column:1/-1;background:#f0fdf4;border-color:#bbf7d0;color:#166534}
 @media(max-width:520px){.box-price-grid{grid-template-columns:1fr}}
 .release-board{background:linear-gradient(135deg,#111827,#1e3a8a);color:#fff;border-radius:20px;padding:16px;margin:0 0 14px;box-shadow:0 7px 24px #1e3a8a30}.release-board h2{font-size:20px;margin:0 0 4px}.release-board .muted{color:#cbd5e1}.release-tools{display:grid;grid-template-columns:1fr auto;gap:8px;margin:12px 0}.release-tools select{width:100%;border:0;border-radius:11px;padding:10px;background:#fff}.release-tools button{width:auto;margin:0;background:#2563eb;white-space:nowrap}.release-list{display:grid;gap:9px}.release-item{background:#fff;color:#111827;border-radius:14px;padding:12px}.release-top{display:flex;align-items:flex-start;justify-content:space-between;gap:8px}.release-name{font-weight:800;font-size:14px;line-height:1.35}.release-badge{flex:0 0 auto;padding:4px 8px;border-radius:999px;background:#dbeafe;color:#1d4ed8;font-size:11px;font-weight:800}.release-badge.today{background:#fee2e2;color:#b91c1c}.release-badge.released{background:#e5e7eb;color:#4b5563}.release-meta{font-size:12px;color:#4b5563;line-height:1.55;margin-top:6px}.release-meta a{color:#2563eb;font-weight:700}.release-empty{background:#ffffff18;border-radius:12px;padding:13px;color:#e5e7eb;font-size:13px}
+.top-info-tabs{display:grid;grid-template-columns:1fr 1fr;gap:7px;margin:12px 0 0}.top-info-tab{margin:0;background:#ffffff18;border:1px solid #ffffff55;padding:11px 5px}.top-info-tab.active{background:#fff;color:#1e3a8a}.top-info-panel[hidden]{display:none}.promo-reward{margin-top:7px;padding:8px;border-radius:9px;background:#eff6ff;color:#1e3a8a;font-size:12px;font-weight:800}.promo-condition{margin-top:6px;font-size:11px;color:#475569;line-height:1.5}
+.analysis-controls{display:grid;grid-template-columns:1fr 1fr;gap:9px}.analysis-rank{display:inline-grid;place-items:center;min-width:36px;height:26px;padding:0 7px;border-radius:999px;background:#fef3c7;color:#92400e;font-size:12px;font-weight:900;margin-right:6px}.analysis-score{color:#7c3aed;font-weight:850}.rank-note{font-size:10px;color:#64748b;background:#f8fafc;border-radius:9px;padding:8px;margin-top:7px}@media(max-width:430px){.analysis-controls{grid-template-columns:1fr}}
 .gamegrid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}@media(max-width:430px){.gamegrid{grid-template-columns:1fr}.gamegrid button{min-height:50px}}
 .country-tabs{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin:12px 0}.country-tab{margin:0;background:#fff;color:#334155;border:2px solid #cbd5e1;padding:11px 3px;font-size:12px}.country-tab.active{background:#1d4ed8;color:#fff;border-color:#1d4ed8}.catalog-mode-tabs{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin:12px 0}.catalog-mode-btn{margin:0;min-height:76px;background:#f8fafc;color:#334155;border:2px solid #cbd5e1;font-size:16px}.catalog-mode-btn span{display:block;font-size:27px;margin-bottom:3px}.catalog-mode-btn.active{background:#eff6ff;color:#1d4ed8;border-color:#2563eb;box-shadow:0 0 0 2px #bfdbfe}.analysis-filter select{width:100%;padding:11px;border:1px solid #cbd5e1;border-radius:11px;background:#fff;margin-top:5px}.learning-key{display:grid;grid-template-columns:repeat(2,1fr);gap:5px;margin:10px 0}.learning-key span{padding:8px 4px;border-radius:8px;background:#eff6ff;color:#1e40af;text-align:center;font-size:10px;font-weight:800}.analysis-count{font-size:12px;font-weight:800;color:#1d4ed8;margin-top:8px}.analysis-list{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin-top:8px}.analysis-box{min-width:0;border:1px solid #e5e7eb;border-radius:15px;background:#fff;overflow:hidden;box-shadow:0 3px 12px #0f172a10;display:flex;flex-direction:column}.catalog-main-image{height:210px;background:#f8fafc;border-bottom:1px solid #e5e7eb;display:flex;align-items:center;justify-content:center;overflow:hidden}.catalog-main-image img{width:100%;height:100%;object-fit:contain}.analysis-image-wait{font-size:10px;color:#94a3b8;text-align:center;padding:8px}.analysis-image-wait b{display:block;font-size:44px;line-height:1.2}.analysis-head{padding:10px 10px 8px;background:#fff}.analysis-title{font-size:14px;font-weight:850;line-height:1.35}.analysis-native{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;font-size:10px;font-weight:650;color:#64748b;margin-top:3px;min-height:27px}.analysis-sub{font-size:10px;color:#94a3b8;margin-top:5px}.analysis-parts{display:grid;grid-template-columns:1fr 1fr;border-top:1px solid #f1f5f9}.analysis-part{padding:8px;min-width:0;border-bottom:1px solid #f1f5f9}.analysis-part:nth-child(odd){border-right:1px solid #f1f5f9}.analysis-part h4{font-size:10px;margin:0 0 4px}.analysis-value{font-size:13px;font-weight:900;margin-bottom:3px;word-break:keep-all}.analysis-text{font-size:9px;line-height:1.4;color:#475569;word-break:keep-all}.analysis-source{display:block;margin-top:auto;padding:9px 10px;background:#f8fafc;color:#2563eb;font-size:10px;font-weight:750}.pref-high{color:#dc2626}.pref-mid{color:#d97706}.pref-wait{color:#64748b}.analysis-empty{grid-column:1/-1;padding:18px;text-align:center;background:#f8fafc;border-radius:13px;color:#64748b}.analysis-hit-name{font-size:9px;color:#2563eb;font-weight:750;margin-top:4px}@media(min-width:650px){.analysis-list{grid-template-columns:repeat(3,minmax(0,1fr))}}@media(max-width:380px){.catalog-main-image{height:175px}.analysis-title{font-size:13px}.analysis-part{padding:7px}.analysis-head{padding:8px}.country-tab{font-size:11px}}
 .category-select-grid{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-top:9px}.category-select-grid select{width:100%;padding:11px;border:1px solid #cbd5e1;border-radius:11px;background:#fff;margin-top:5px}.category-select-grid .category-item{grid-column:1/-1}@media(max-width:430px){.category-select-grid{grid-template-columns:1fr}.category-select-grid .category-item{grid-column:auto}}
 .box-kb-tabs{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin:10px 0}.box-kb-country{margin:0;background:#fff;color:#334155;border:2px solid #cbd5e1;padding:11px 3px;font-size:12px}.box-kb-country.active{background:#166534;color:#fff;border-color:#166534}.box-kb-count{font-size:12px;font-weight:800;color:#166534;margin:8px 0}.box-kb-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:11px;background:transparent;padding:0}.box-kb-card{border:1px solid #e5e7eb;border-radius:15px;background:#fff;overflow:hidden;box-shadow:0 3px 12px #0f172a10;min-width:0}.box-kb-image{height:180px;background:#f8fafc;display:flex;align-items:center;justify-content:center;border-bottom:1px solid #e5e7eb;overflow:hidden}.box-kb-image img{width:100%;height:100%;object-fit:contain}.box-kb-fallback{text-align:center;color:#94a3b8;font-size:10px;padding:8px}.box-kb-fallback b{display:block;font-size:46px}.box-kb-body{padding:10px}.box-kb-name{font-size:14px;font-weight:900;line-height:1.35}.box-kb-native{font-size:10px;color:#64748b;line-height:1.4;margin-top:3px;min-height:28px}.box-kb-price{font-size:15px;font-weight:900;color:#166534;margin-top:7px}.box-kb-meta{font-size:10px;color:#64748b;margin-top:4px;line-height:1.45}.box-kb-source{display:block;padding:8px 10px;background:#f0fdf4;color:#166534;font-size:10px;font-weight:800}@media(min-width:650px){.box-kb-grid{grid-template-columns:repeat(3,minmax(0,1fr))}}@media(max-width:380px){.box-kb-image{height:150px}.box-kb-name{font-size:13px}}
 .update-hub h3{margin:0 0 4px}.update-menu{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-top:12px}.update-menu-btn{margin:0;min-height:104px;background:#f8fafc;color:#0f172a;border:2px solid #e2e8f0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px;padding:10px 6px}.update-menu-btn .update-icon{font-size:34px;line-height:1}.update-menu-btn b{font-size:14px}.update-menu-btn small{font-size:10px;color:#64748b}.update-menu-btn.active{border-color:#2563eb;background:#eff6ff;color:#1d4ed8}.update-panel{margin-top:12px;border:1px solid #dbeafe;border-radius:16px;padding:13px;background:#f8fafc}.update-panel h4{margin:0 0 5px;font-size:17px}.update-panel .grid2 button{margin-top:6px}.update-panel-close{width:auto;float:right;margin:0!important;padding:7px 10px!important;background:#64748b!important}.update-step-note{font-size:12px;line-height:1.55;color:#64748b;margin-bottom:8px}@media(max-width:380px){.update-menu{grid-template-columns:1fr 1fr}.update-menu-btn{min-height:95px}}
 .precision-hub{border:2px solid #dbeafe;background:linear-gradient(180deg,#fff,#f8fbff)}.precision-hub h2{font-size:21px;margin:0 0 5px}.precision-flow{display:grid;gap:10px;margin-top:12px}.precision-step{border:1px solid #dbe3ef;border-radius:15px;padding:12px;background:#fff}.precision-step-head{display:flex;align-items:center;gap:9px;margin-bottom:8px}.precision-step-number{width:30px;height:30px;flex:0 0 30px;border-radius:50%;display:grid;place-items:center;background:#2563eb;color:#fff;font-weight:900}.precision-step-title{font-size:15px;font-weight:900}.precision-guide{display:grid;grid-template-columns:repeat(5,1fr);gap:5px;margin:8px 0}.precision-guide span{padding:7px 3px;border-radius:9px;background:#eff6ff;color:#1e40af;text-align:center;font-size:10px;font-weight:800}.precision-main{min-height:58px;background:#1d4ed8;font-size:17px}.precision-tools summary{cursor:pointer;list-style:none;font-weight:900;padding:3px 0}.precision-tools summary::-webkit-details-marker{display:none}.precision-tools summary::after{content:' 펼치기 ＋';float:right;color:#2563eb;font-size:12px}.precision-tools[open] summary::after{content:' 접기 －'}.precision-tool-grid{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-top:11px}.precision-tool{border:1px solid #e2e8f0;border-radius:13px;padding:10px;background:#f8fafc;min-width:0}.precision-tool h4{margin:0 0 4px;font-size:13px}.precision-tool p{margin:0 0 6px;font-size:10px;color:#64748b;line-height:1.45}.precision-tool button{font-size:12px;padding:10px 5px}.precision-tool .status{margin-top:7px!important;font-size:10px}@media(max-width:430px){.precision-guide{grid-template-columns:repeat(3,1fr)}.precision-tool-grid{grid-template-columns:1fr}}
-.v13-result-card{background:#fff;border:1px solid #dbe3ef;border-radius:14px;padding:13px}.v13-result-title{font-size:16px;font-weight:900;line-height:1.4}.v13-result-native{font-size:11px;color:#64748b;margin-top:3px}.v13-result-grid{display:grid;grid-template-columns:1fr 1fr;gap:7px;margin-top:10px}.v13-result-item{background:#f8fafc;border-radius:10px;padding:9px;font-size:10px;color:#64748b}.v13-result-item b{display:block;color:#0f172a;font-size:13px;margin-top:3px;line-height:1.4}.v13-result-actions{display:grid;grid-template-columns:1fr 1fr;gap:7px;margin-top:9px}.v13-result-actions a{display:block;text-align:center;text-decoration:none;border-radius:11px;padding:11px 5px;background:#111827;color:#fff;font-size:12px;font-weight:800}.v13-caution{font-size:10px;color:#92400e;background:#fffbeb;border-radius:9px;padding:8px;margin-top:9px}@media(max-width:430px){.v13-result-grid{grid-template-columns:1fr}.v13-result-actions{grid-template-columns:1fr}}
+.v13-result-card{background:#fff;border:1px solid #dbe3ef;border-radius:14px;padding:13px}.v13-result-title{font-size:16px;font-weight:900;line-height:1.4}.v13-result-native{font-size:11px;color:#64748b;margin-top:3px}.v13-result-grid{display:grid;grid-template-columns:1fr 1fr;gap:7px;margin-top:10px}.v13-result-item{background:#f8fafc;border-radius:10px;padding:9px;font-size:10px;color:#64748b}.v13-result-item b{display:block;color:#0f172a;font-size:13px;margin-top:3px;line-height:1.4}.v13-result-item span{display:block;margin-top:3px;line-height:1.35}.v13-result-actions{display:grid;grid-template-columns:1fr 1fr;gap:7px;margin-top:9px}.v13-result-actions a{display:block;text-align:center;text-decoration:none;border-radius:11px;padding:11px 5px;background:#111827;color:#fff;font-size:12px;font-weight:800}.v13-caution{font-size:10px;color:#92400e;background:#fffbeb;border-radius:9px;padding:8px;margin-top:9px}@media(max-width:430px){.v13-result-grid{grid-template-columns:1fr}.v13-result-actions{grid-template-columns:1fr}}
 </style><link rel="manifest" href="manifest.webmanifest">
 <meta name="theme-color" content="#111827">
 <meta name="mobile-web-app-capable" content="yes">
@@ -58,13 +60,21 @@ input[type=range]{width:100%}
 <main class="app">
 <section class="release-board" id="releaseBoard">
 <h2>🆕 신상품 · 사전예약 · 출시일</h2>
-<div class="muted">Pokémon · ONE PIECE · NARUTO 공식 출시정보를 국가별로 확인합니다.</div>
+<div class="muted">공식 출시정보와 프로모 카드 수령 행사를 국가별로 확인합니다.</div>
+<div class="top-info-tabs"><button type="button" class="top-info-tab active" data-top-panel="releasePanel">📅 출시일</button><button type="button" class="top-info-tab" data-top-panel="promoPanel">🎁 프로모 카드 행사</button></div>
+<div id="releasePanel" class="top-info-panel">
 <div class="release-tools">
 <select id="releaseFilter" aria-label="출시정보 국가 선택"><option value="ALL">🌏 전체</option><option value="GLOBAL">🌐 글로벌</option><option value="KR">🇰🇷 한국판</option><option value="JP">🇯🇵 일본판</option><option value="US">🇺🇸 미국판</option></select>
 <button type="button" id="refreshReleases">정보 새로고침</button>
 </div>
 <div id="releaseList" class="release-list"><div class="release-empty">출시정보를 불러오는 중입니다.</div></div>
 <div id="releaseUpdated" class="muted" style="margin-top:9px">마지막 확인: 불러오는 중</div>
+</div>
+<div id="promoPanel" class="top-info-panel" hidden>
+<div class="release-tools"><select id="promoFilter" aria-label="프로모 행사 국가 선택"><option value="ALL">🌏 전체</option><option value="KR">🇰🇷 한국</option><option value="JP">🇯🇵 일본</option><option value="US">🇺🇸 미국</option></select><button type="button" id="refreshPromos">행사 새로고침</button></div>
+<div id="promoList" class="release-list"><div class="release-empty">프로모 행사를 불러오는 중입니다.</div></div>
+<div id="promoUpdated" class="muted" style="margin-top:9px">마지막 확인: 불러오는 중</div>
+</div>
 </section>
 <section class="home-launcher" aria-label="주요 기능 선택">
 <h2>원하는 기능을 선택하세요</h2>
@@ -85,6 +95,8 @@ const RELEASE_FALLBACK={updated_at:"2026-08-21T00:00:00+09:00",items:[
  {game:"NARUTO",region:"GLOBAL",name:"NARUTO CARD GAME",release_date:null,release_window:"2027년 여름",price:"가격·제품 구성 미정",status:"전 세계 동시 출시 예정",source:"https://www.naruto-cardgame.com/asia-en/"}
 ]};
 let releaseData=RELEASE_FALLBACK;
+const PROMO_FALLBACK={updated_at:"2026-08-21T00:00:00+09:00",items:[{game:"포켓몬 카드",region:"JP",name_ko:"포켓몬 카드짐 엔트리 캠페인 2026 상반기",name_native:"ポケカジムエントリーキャンペーン2026年前期",start_date:"2026-03-01",end_date:"2026-08-31",claim_deadline:"2026-10-31",reward:"스탬프 2개: 프로모 카드 ‘포켓패드’ · 스탬프 4개: ‘메가캥카 ex’",condition:"플레이어즈클럽 가입 후 포켓몬 카드짐 공식 행사에서 QR 체크인. 경품은 등록한 마이짐에서만 수령 가능",location:"일본 포켓몬 카드짐",status:"진행 중",source:"https://www.pokemon-card.com/info/005397.html"}]};
+let promoData=PROMO_FALLBACK;
 function releaseDayInfo(date){
  if(!/^\d{4}-\d{2}-\d{2}$/.test(date||"")) return {text:"일정 확인",cls:""};
  const now=new Date(),today=new Date(now.getFullYear(),now.getMonth(),now.getDate());
@@ -100,11 +112,34 @@ function renderReleases(){
  document.getElementById("releaseUpdated").textContent=`마지막 공식정보 확인: ${updated} · 출처 확인된 항목만 표시`;
 }
 async function loadReleases(force=false){
- try{const r=await fetch(`releases.json${force?`?t=${Date.now()}`:""}`,{cache:force?"no-store":"default"});if(!r.ok)throw new Error("release data unavailable");releaseData=await r.json()}catch(e){releaseData=RELEASE_FALLBACK}renderReleases();
+ try{const r=await fetch(`releases.json${force?`?t=${Date.now()}`:""}`,{cache:force?"no-store":"default"});if(!r.ok)throw new Error("release data unavailable");const next=await r.json();if(!Array.isArray(next.items))throw new Error("invalid release data");releaseData=next;renderReleases();return {ok:true}}catch(e){if(!releaseData?.items?.length)releaseData=RELEASE_FALLBACK;renderReleases();return {ok:false,error:e}}
+}
+function renderPromos(){const region=document.getElementById("promoFilter").value,flags={KR:"🇰🇷 한국",JP:"🇯🇵 일본",US:"🇺🇸 미국"},rows=(promoData.items||[]).filter(x=>region==="ALL"||x.region===region);document.getElementById("promoList").innerHTML=rows.length?rows.map(x=>`<article class="release-item"><div class="release-top"><div class="release-name">${x.game} · ${x.name_ko}<br><small>${x.name_native||""}</small></div><span class="release-badge">${x.status||"공식 확인"}</span></div><div class="release-meta">${flags[x.region]||x.region} · 행사 ${x.start_date} ~ ${x.end_date}<br>수령기한 ${x.claim_deadline||x.end_date} · ${x.location||"공식 행사장"}</div><div class="promo-reward">🎁 ${x.reward}</div><div class="promo-condition">✅ 수령방법: ${x.condition}<br><a href="${x.source}" target="_blank" rel="noopener">공식 행사 안내</a></div></article>`).join(""):`<div class="release-empty">선택한 국가에서 현재 공식 확인된 프로모 카드 행사가 없습니다.</div>`;const updated=promoData.updated_at?new Date(promoData.updated_at).toLocaleString("ko-KR"):"확인되지 않음";document.getElementById("promoUpdated").textContent=`마지막 공식정보 확인: ${updated} · 확인된 행사만 표시`}
+async function loadPromos(force=false){try{const r=await fetch(`promo_events.json${force?`?t=${Date.now()}`:""}`,{cache:force?"no-store":"default"});if(!r.ok)throw new Error("promo unavailable");const next=await r.json();if(!Array.isArray(next.items))throw new Error("invalid promo data");promoData=next;renderPromos();return {ok:true}}catch(e){renderPromos();return {ok:false,error:e}}}
+async function releaseServerAvailable(){
+ const controller=new AbortController(),timer=setTimeout(()=>controller.abort(),1800);
+ try{const r=await fetch(`/api/health?t=${Date.now()}`,{cache:"no-store",signal:controller.signal});return r.ok&&((await r.json()).ok===true)}catch(e){return false}finally{clearTimeout(timer)}
+}
+async function refreshReleaseInfo(){
+ const btn=document.getElementById("refreshReleases"),promoBtn=document.getElementById("refreshPromos"),status=document.getElementById("releaseUpdated");
+ if(btn.disabled)return;btn.disabled=true;btn.textContent="확인 중…";status.textContent="최신 저장자료와 서버 연결을 확인하고 있습니다.";
+ promoBtn.disabled=true;promoBtn.textContent="확인 중…";document.getElementById("promoUpdated").textContent="최신 공식 행사자료를 확인하고 있습니다.";
+ let server=false,serverMessage="";
+ try{
+  server=await releaseServerAvailable();
+  if(server){btn.textContent="공식자료 수집 중…";status.textContent="PC·태블릿 서버에서 공식 출시·가격자료를 수집 중입니다. 최대 2분 정도 걸릴 수 있습니다.";const r=await fetch(`/api/update?t=${Date.now()}`,{cache:"no-store"});if(!r.ok)throw new Error("server update failed");const d=await r.json();serverMessage=d.auto_update?.market_status||"서버 수집 완료"}
+  btn.textContent="화면 갱신 중…";const [loaded,promos]=await Promise.all([loadReleases(true),loadPromos(true),loadPopularitySignals(true)]);
+  if("serviceWorker" in navigator){const reg=await navigator.serviceWorker.getRegistration();if(reg)await reg.update()}
+  const base=status.textContent;status.textContent=loaded.ok&&promos.ok?`✅ 새로고침 완료 · ${server?serverMessage:"GitHub 최신 저장자료 확인"} · ${base}`:"⚠️ 일부 새 자료를 받지 못해 기존 확인자료를 유지했습니다.";
+ }catch(e){await loadReleases(true);status.textContent="⚠️ 새로고침 중 일부 출처 확인에 실패해 기존 확인자료를 유지했습니다."}
+ finally{btn.disabled=false;btn.textContent="정보 새로고침";promoBtn.disabled=false;promoBtn.textContent="행사 새로고침"}
 }
 document.getElementById("releaseFilter").addEventListener("change",renderReleases);
-document.getElementById("refreshReleases").addEventListener("click",()=>loadReleases(true));
-loadReleases();
+document.getElementById("refreshReleases").addEventListener("click",refreshReleaseInfo);
+document.getElementById("promoFilter").addEventListener("change",renderPromos);
+document.getElementById("refreshPromos").addEventListener("click",refreshReleaseInfo);
+document.querySelectorAll("[data-top-panel]").forEach(btn=>btn.addEventListener("click",()=>{document.querySelectorAll("[data-top-panel]").forEach(x=>x.classList.toggle("active",x===btn));document.querySelectorAll(".top-info-panel").forEach(x=>x.hidden=x.id!==btn.dataset.topPanel)}));
+loadReleases();loadPromos();
 </script>
 <section class="card" id="v30mode">
 <h3 style="margin:0 0 8px">🧠 v30 사진 유형 자동/수동 선택</h3>
@@ -151,12 +186,12 @@ loadReleases();
 </div>
 <p class="muted">테스트 환경에서는 외부 DNS가 차단되어 공식 사이트 수집이 실패했지만, 실패 항목이 DB에 잘못 반영되지 않는 것까지 확인했습니다.</p>
 </section>
-<h1>TCG 등급 사전검사기 v31</h1><div class="muted">Pokémon + ONE PIECE + NARUTO · iPhone Safari · grading-company 기준을 분리한 사전 검사기</div>
+<h1>TCG 등급 사전검사기 v31</h1><div class="muted">포켓몬 + 원피스 + 나루토 · 아이폰 사파리 · 등급사별 기준을 분리한 사전검사기</div>
 
 <section class="card" id="gradeStart">
 <div class="muted">① 카드게임</div><div class="gamegrid">
-<button id="pokemon" class="game active">🟦 Pokémon</button><button id="onepiece" class="game">🟥 ONE PIECE</button><button id="naruto" class="game">🟧 NARUTO</button>
-</div><p id="profile" class="muted">Pokémon: holo/texture/print-line/whitening을 별도 결함 후보로 취급합니다.</p>
+<button id="pokemon" class="game active">🟦 포켓몬</button><button id="onepiece" class="game">🟥 원피스</button><button id="naruto" class="game">🟧 나루토</button>
+</div><p id="profile" class="muted">포켓몬: 홀로·텍스처·인쇄선·백화를 각각 별도의 결함 후보로 검사합니다.</p>
 </section>
 
 <section class="card">
@@ -290,7 +325,7 @@ loadReleases();
 <select id="asset12"><option>카드</option><option>BOX</option><option>PSA 10</option><option>PSA 9</option><option>BGS 10</option><option>CGC 10</option></select></label>
 </div>
 <div class="category-select-grid"><label>게임<select id="v12Game"><option value="ALL">전체 게임</option><option value="Pokémon">포켓몬 카드</option><option value="ONE PIECE">원피스 카드</option><option value="NARUTO">나루토 카드</option></select></label><label class="category-item">BOX/카드 항목<select id="query12"><option value="">목록 불러오는 중</option></select></label></div>
-<button id="search12" style="margin-top:8px">시세 데이터 열기</button>
+<button id="search12" style="margin-top:8px">💰 가격 불러오기</button>
 <div id="market12out" class="status" style="margin-top:10px">검색 전</div>
 </section>
 
@@ -315,15 +350,15 @@ loadReleases();
 </section>
 
 <section class="card">
-<h3 style="margin:0 0 8px">🔄 v13 실시간 시세·오류 자동검증</h3>
-<p class="muted">검색할 때마다 최신 원출처를 확인하고, 이전 값과 차이가 큰 경우 자동으로 '검토 필요'로 분류합니다. 앱이 백그라운드에서 영구적으로 인터넷을 감시하는 것은 iPhone 웹앱의 제약상 지원하지 않습니다. 대신 <b>새로고침/검색 시 자동 재검증</b>하도록 설계했습니다.</p>
+<h3 style="margin:0 0 8px">💰 카드·BOX 가격 불러오기</h3>
+<p class="muted">항목을 선택하고 버튼을 누르면 외부 사이트로 이동하지 않고 최근 저장 가격을 이 화면에 표시합니다. PC·안드로이드 서버 실행 시 공개 가격자료를 주기적으로 다시 확인합니다.</p>
 <div class="grid2">
 <label>시장<select id="v13market"><option>한국 중고</option><option>일본 중고</option><option>미국/국제 중고</option><option>전체</option></select></label>
 <label>기간<select id="v13period"><option>최근 7일</option><option>최근 30일</option><option>최근 90일</option></select></label>
 </div>
 <div class="category-select-grid"><label>대상<select id="v13Asset"><option value="BOX">📦 BOX</option><option value="HIT">🎴 HIT 카드</option></select></label><label>게임<select id="v13Game"><option value="ALL">전체 게임</option><option value="Pokémon">포켓몬 카드</option><option value="ONE PIECE">원피스 카드</option><option value="NARUTO">나루토 카드</option></select></label><label class="category-item">검증할 항목<select id="v13q"><option value="">목록 불러오는 중</option></select></label></div>
 <div class="grid2" style="margin-top:8px">
-<button id="v13search">최신 데이터 검증</button>
+<button id="v13search">💰 가격 불러오기</button>
 <button id="v13clear">검증 기록 초기화</button>
 </div>
 <div id="v13out" class="status" style="margin-top:10px">검증 전</div>
@@ -347,7 +382,8 @@ loadReleases();
 <button type="button" class="country-tab" data-country="JP">🇯🇵 일본판</button>
 <button type="button" class="country-tab" data-country="US">🇺🇸 미국판</button>
 </div>
-<div class="analysis-filter"><label>카드 종류<select id="analysisGame"><option value="ALL">전체</option><option value="Pokémon">포켓몬 카드</option><option value="ONE PIECE">원피스 카드</option><option value="NARUTO">나루토 카드</option></select></label></div>
+<div class="analysis-filter analysis-controls"><label>카드 종류<select id="analysisGame"><option value="ALL">전체</option><option value="Pokémon">포켓몬 카드</option><option value="ONE PIECE">원피스 카드</option><option value="NARUTO">나루토 카드</option></select></label><label>목록 정렬<select id="analysisSort"><option value="POPULAR">🏆 인기순위</option><option value="LATEST">🆕 최신 출시순</option><option value="NAME">가나다순</option></select></label></div>
+<div class="rank-note">🏆 인기순위는 선호도·최근 출시·앱에 저장된 검증 시세자료를 합산합니다. 최신자료가 갱신되면 자동으로 다시 계산됩니다.</div>
 <div id="learningKey" class="learning-key"><span>💴 BOX 출시원가</span><span>⭐ BOX 선호도</span></div>
 <div id="analysisCount" class="analysis-count">목록 준비 중</div>
 <div id="countryAnalysisList" class="analysis-list"><div class="analysis-empty">분석자료를 불러오는 중입니다.</div></div>
@@ -429,7 +465,7 @@ loadReleases();
 
 
 <section class="card"><div class="muted">📱 앱 설치</div>
-<p class="muted">iPhone Safari에서 <b>공유 → 홈 화면에 추가</b>를 누르면 앱처럼 실행됩니다.</p>
+<p class="muted">아이폰 사파리에서 <b>공유 → 홈 화면에 추가</b>를 누르면 앱처럼 실행됩니다.</p>
 <button id="installHelp">설치 방법 보기</button></section>
 <section class="card"><div class="muted">💾 검사 기록</div>
 <div class="grid2"><button id="saveResult">현재 결과 저장</button><button id="clearHistory">기록 삭제</button></div>
@@ -438,7 +474,7 @@ loadReleases();
 <script>
 let game="pokemon";const $=id=>document.getElementById(id);
 $("pokemon").onclick=()=>setGame("pokemon");$("onepiece").onclick=()=>setGame("onepiece");$("naruto").onclick=()=>setGame("naruto");
-function setGame(g){game=g;["pokemon","onepiece","naruto"].forEach(id=>$(id).classList.toggle("active",g===id));const desc={pokemon:"Pokémon: holo/texture/print-line/whitening을 별도 결함 후보로 취급합니다.",onepiece:"ONE PIECE: foil/parallel/manga·comic texture/black-border whitening/chipping을 별도 결함 후보로 취급합니다.",naruto:"NARUTO: 정식 카드 규격 공개 전이므로 일반 TCG 기준으로 보수 측정합니다. 공식 규격 공개 후 자동 갱신 대상입니다."};$("profile").textContent=desc[g]||desc.pokemon}
+function setGame(g){game=g;["pokemon","onepiece","naruto"].forEach(id=>$(id).classList.toggle("active",g===id));const desc={pokemon:"포켓몬: 홀로·텍스처·인쇄선·백화를 각각 별도의 결함 후보로 검사합니다.",onepiece:"원피스: 포일·패러렐·만화판 텍스처·검은 테두리 백화·찍힘을 각각 검사합니다.",naruto:"나루토: 정식 카드 규격 공개 전이므로 일반 TCG 기준으로 보수적으로 측정하며, 공식 규격 공개 후 갱신합니다."};$("profile").textContent=desc[g]||desc.pokemon}
 function preview(inp,img){inp.onchange=()=>{if(inp.files[0]){img.src=URL.createObjectURL(inp.files[0]);img.classList.remove("hidden")}}}
 preview($("front"),$("fp"));preview($("back"),$("bp"));
 function load(f){return new Promise((ok,no)=>{let im=new Image();im.onload=()=>ok(im);im.onerror=no;im.src=URL.createObjectURL(f)})}
@@ -537,9 +573,9 @@ $("analyze").onclick=async()=>{
 if("serviceWorker" in navigator){window.addEventListener("load",()=>navigator.serviceWorker.register("./sw.js").catch(()=>{}));}
 const HKEY="tcg_pregrader_history_v5";
 function renderHistory(){const h=JSON.parse(localStorage.getItem(HKEY)||"[]");document.getElementById("history").innerHTML=h.length?h.slice(0,10).map((x,i)=>`<div class="status" style="margin:6px 0"><b>${i+1}. ${x.game}</b> · ${x.time}<br>${x.summary}</div>`).join(""):"저장된 검사 결과가 없습니다.";}
-document.getElementById("installHelp")?.addEventListener("click",()=>alert("iPhone Safari → 공유 버튼(□↑) → 홈 화면에 추가 → 추가. 홈 화면 아이콘으로 실행하세요."));
+document.getElementById("installHelp")?.addEventListener("click",()=>alert("아이폰 사파리 → 공유 버튼(□↑) → 홈 화면에 추가 → 추가. 홈 화면 아이콘으로 실행하세요."));
 document.getElementById("clearHistory")?.addEventListener("click",()=>{localStorage.removeItem(HKEY);renderHistory();});
-document.getElementById("saveResult")?.addEventListener("click",()=>{const out=document.getElementById("out");if(out.classList.contains("hidden")){alert("먼저 자동 분석을 실행하세요.");return;}const names={pokemon:"Pokémon",onepiece:"ONE PIECE",naruto:"NARUTO"};const x={game:typeof game!=="undefined"?(names[game]||"TCG"):"TCG",time:new Date().toLocaleString("ko-KR"),summary:`PSA ${document.getElementById("p10")?.textContent||"-"} · BGS ${document.getElementById("b10")?.textContent||"-"} · CGC ${document.getElementById("c10")?.textContent||"-"}`};const h=JSON.parse(localStorage.getItem(HKEY)||"[]");h.unshift(x);localStorage.setItem(HKEY,JSON.stringify(h.slice(0,20)));renderHistory();});
+document.getElementById("saveResult")?.addEventListener("click",()=>{const out=document.getElementById("out");if(out.classList.contains("hidden")){alert("먼저 자동 분석을 실행하세요.");return;}const names={pokemon:"포켓몬",onepiece:"원피스",naruto:"나루토"};const x={game:typeof game!=="undefined"?(names[game]||"TCG"):"TCG",time:new Date().toLocaleString("ko-KR"),summary:`PSA ${document.getElementById("p10")?.textContent||"-"} · BGS ${document.getElementById("b10")?.textContent||"-"} · CGC ${document.getElementById("c10")?.textContent||"-"}`};const h=JSON.parse(localStorage.getItem(HKEY)||"[]");h.unshift(x);localStorage.setItem(HKEY,JSON.stringify(h.slice(0,20)));renderHistory();});
 renderHistory();
 </script>
 <script>
@@ -954,21 +990,25 @@ function v12Render(){
  const el=document.getElementById("box12");
  el.innerHTML='<div class="analysis-empty">나라별 BOX 사진목록을 준비하는 중입니다.</div>';
 }
-document.getElementById("search12")?.addEventListener("click",()=>{
- const q=document.getElementById("query12").value.trim();
+document.getElementById("search12")?.addEventListener("click",async()=>{
+ const q=document.getElementById("query12").value;
  const m=document.getElementById("market12").value,a=document.getElementById("asset12").value;
- if(!q){alert("카드명 또는 BOX명을 입력하세요.");return}
- const urls={
-  KR:"https://pokard.io/",
-  JP:"https://www.pokemon-card.com/products/index.html",
-  US:"https://www.tcgplayer.com/",
-  ALL:"https://pokard.io/"
- };
- document.getElementById("market12out").innerHTML=
- `<b>${q}</b> · ${m} · ${a}<br>`+
- `현재 앱은 출처별 원자료를 구분해서 표시하는 구조입니다.<br>`+
- `<span class="muted">실시간 웹 데이터는 사이트별 이용약관/접근 제한 때문에 앱에 임의로 복제하지 않고 원출처를 열어 최신 거래를 확인하도록 설계했습니다.</span><br><br>`+
- `<a href="${urls[m]}" target="_blank">시세 원출처 열기 →</a>`;
+ const game=document.getElementById("v12Game").value,region=catalogRegion(m),asset=a==="BOX"?"BOX":"HIT";
+ if(!q){alert("카드 또는 BOX 항목을 선택하세요.");return}
+ const item=COUNTRY_BOX_DATA.find(x=>x.name===q&&(region==="ALL"||x.country===region)&&(game==="ALL"||x.game===game));
+ const out=document.getElementById("market12out");
+ if(!item){out.textContent="❌ 선택 자료 연결에 실패했습니다.";return}
+ out.textContent="⏳ 가격자료를 불러오는 중…";
+ const loaded=(a==="카드"||a==="BOX")?await v13LoadMarketPrice(`${item.country}|${item.name}|${asset}`):null;
+ const live=loaded?.entry,base=LEARNING_PRICE_DATA[item.name]||{};
+ const official=asset==="BOX"?(base.retail||"공식 출고가 확인 중"):"해당 없음";
+ const flags={KR:"🇰🇷 한국판",JP:"🇯🇵 일본판",US:"🇺🇸 미국판"};
+ out.innerHTML=`<div class="v13-result-card"><div class="v13-result-title">${asset==="BOX"?"📦":"🎴"} ${asset==="BOX"?item.name:(item.hitName||item.hit)}</div>`+
+ `<div class="v13-result-native">${flags[item.country]} · ${item.native}</div><div class="v13-result-grid">`+
+ `<div class="v13-result-item">선택 기준<b>${a}</b></div><div class="v13-result-item">공식 출고가<b>${official}</b><span>제조사 공식 상품자료</span></div><div class="v13-result-item">현재 거래시세<b>${live?.display||"확인된 거래 없음"}</b><span>${live?.kind||"판매완료·체결자료 미확인"}</span></div>`+
+ `<div class="v13-result-item">가격 시장<b>${live?.market||"검증 거래자료 없음"}</b><span>${live?.transactions||"-"}</span></div><div class="v13-result-item">최근 확인<b>${loaded?.updated?new Date(loaded.updated).toLocaleString("ko-KR"):"저장자료 없음"}</b></div></div>`+
+ `<div class="promo-condition">📌 앱 내부 표시 자료 · ${live?.source?`가격 출처: ${new URL(live.source).hostname}`:"검증된 거래자료 없음"} · 공식자료: ${new URL(item.source).hostname}</div>`+
+ `<div class="v13-caution">⚠️ 실제 체결가·호가·공식 출시가는 서로 다른 가격입니다. 가격 성격과 거래 건수를 함께 표시합니다.</div></div>`;
 });
 v12Render();
 </script>
@@ -984,7 +1024,12 @@ function v13Render(){
  a.slice(0,5).map(x=>`${x.market} · ${x.q} · ${x.status} · ${x.note}`).join("<br>")
  :"기록 없음";
 }
-document.getElementById("v13search")?.addEventListener("click",()=>{
+async function v13LoadMarketPrice(key){
+ try{const r=await fetch(`/api/market-price?key=${encodeURIComponent(key)}`,{cache:"no-store"});if(r.ok){const d=await r.json();if(d.found)return {entry:d.price,updated:d.updated_at,mode:"서버 최신자료"}}}catch(e){}
+ try{const r=await fetch(`market_prices.json?t=${Date.now()}`,{cache:"no-store"});if(r.ok){const d=await r.json();if(d.entries?.[key])return {entry:d.entries[key],updated:d.updated_at,mode:"저장된 최근자료"}}}catch(e){}
+ return null;
+}
+document.getElementById("v13search")?.addEventListener("click",async()=>{
  const q=document.getElementById("v13q").value;
  const market=document.getElementById("v13market").value;
  const period=document.getElementById("v13period").value;
@@ -997,18 +1042,22 @@ document.getElementById("v13search")?.addEventListener("click",()=>{
  const price=LEARNING_PRICE_DATA[item.name]||{retail:"공식 출시가 확인",hitPrice:"판매완료 실거래 확인 필요"};
  const flags={KR:"🇰🇷 한국판",JP:"🇯🇵 일본판",US:"🇺🇸 미국판"};
  const targetName=asset==="HIT"?(item.hitName||item.hit):item.name;
- const query=encodeURIComponent(`${targetName} ${item.native}`);
- const marketUrl=market==="미국/국제 중고"?`https://www.tcgplayer.com/search/all/product?q=${query}&view=grid`:`https://www.google.com/search?q=${encodeURIComponent((market==="일본 중고"?"site:pokard.io/jpcard/ ":"site:pokard.io/card/ ")+targetName)}`;
- const updated=(typeof releaseData!=="undefined"&&releaseData.updated_at)?new Date(releaseData.updated_at).toLocaleString("ko-KR"):"앱 자료 기준";
- const rec={time:new Date().toISOString(),q:targetName,market,period,status:"선택 자료 연결 정상",note:"앱 내부 정보 표시 · 외부 시세는 별도 확인",source:item.source};
+ const priceKey=`${item.country}|${item.name}|${asset}`;
+ const out=document.getElementById("v13out");out.innerHTML="⏳ 공개 가격자료를 불러오는 중…";
+ const loaded=await v13LoadMarketPrice(priceKey),live=loaded?.entry;
+ const updated=loaded?.updated?new Date(loaded.updated).toLocaleString("ko-KR"):"검증 가격 없음";
+ const shownPrice=live?.display||(asset==="BOX"?price.retail:"가격자료 확인 중");
+ const priceKind=live?.kind||(asset==="BOX"?"공식 출시가":"확인된 거래가격 없음");
+ const rec={time:new Date().toISOString(),q:targetName,market,period,status:live?"가격 불러오기 정상":"저장 가격 없음",note:live?`${live.market} · ${shownPrice}`:"공식 출시정보만 표시",source:live?.source||item.source};
  v13Save(rec);
- document.getElementById("v13out").innerHTML=
+ out.innerHTML=
  `<div class="v13-result-card"><div class="v13-result-title">${asset==="HIT"?"🎴":"📦"} ${targetName}</div><div class="v13-result-native">수록 BOX: ${item.name}<br>${item.native}</div>`+
  `<div class="v13-result-grid"><div class="v13-result-item">시장·기간<b>${flags[item.country]} · ${period}</b></div>`+
- `<div class="v13-result-item">${asset==="HIT"?"HIT 참고정보":"공식 출시가"}<b>${asset==="HIT"?price.hitPrice:price.retail}</b></div>`+
- `<div class="v13-result-item">출시일<b>${item.release}</b></div><div class="v13-result-item">자료 확인<b>${updated}</b></div></div>`+
- `<div class="v13-result-actions"><a href="${marketUrl}" target="_blank" rel="noopener">🔎 선택 항목 시세 검색</a><a href="${item.source}" target="_blank" rel="noopener">🔖 공식 상품정보</a></div>`+
- `<div class="v13-caution">⚠️ 판매 희망가와 실제 체결가는 다릅니다. 외부 검색은 선택 항목에 맞춰 열리며, 앱이 확인하지 못한 가격을 실거래가로 확정하지 않습니다.</div></div>`;
+ `<div class="v13-result-item">공식 출고가<b>${asset==="BOX"?price.retail:"해당 없음"}</b><span>제조사 공식 상품자료</span></div><div class="v13-result-item">현재 거래시세<b>${live?.display||"확인된 거래 없음"}</b><span>${live?.kind||"판매완료·체결자료 미확인"}</span></div>`+
+ `<div class="v13-result-item">출시일<b>${item.release}</b></div><div class="v13-result-item">가격 출처<b>${live?.market||"공식 출시자료"}</b><span>${live?.transactions||"거래자료 미확인"}</span></div>`+
+ `<div class="v13-result-item">최근 확인<b>${updated}</b><span>${loaded?.mode||"앱 기본자료"}</span></div></div>`+
+ `<div class="promo-condition">📌 외부 이동 없이 앱 내부에 표시 · ${live?.source?`가격 출처: ${new URL(live.source).hostname}`:"현재 확인된 거래자료 없음"} · 공식자료: ${new URL(item.source).hostname}</div>`+
+ `<div class="v13-caution">⚠️ ${live?"불러온 가격의 성격과 거래 건수를 함께 확인하세요.":"현재 선택 항목은 공개적으로 검증된 거래가격을 불러오지 못해 공식 출시가만 표시합니다."} 판매 희망가는 실제 체결가와 다를 수 있습니다.</div></div>`;
 });
 document.getElementById("v13clear")?.addEventListener("click",()=>{
  localStorage.removeItem(V13LOG);v13Render();
@@ -1087,20 +1136,24 @@ const LEARNING_PRICE_DATA={
 };
 let selectedAnalysisCountry="ALL";
 let selectedCatalogMode="BOX";
+let popularityMarketKeys=new Set();
 const gameKorean={Pokémon:"포켓몬 카드","ONE PIECE":"원피스 카드",NARUTO:"나루토 카드"};
+function analysisDateValue(value){const nums=(value||"").match(/\d+/g)||[];return nums.length>=3?Number(`${nums[0]}${String(nums[1]).padStart(2,"0")}${String(nums[2]).padStart(2,"0")}`):0}
+function popularityScore(x){const pref={"매우 높음":70,"높음":58,"중간":44,"보통":38,"출시 전":30}[x.preference]||34;const age=analysisDateValue(x.release)>=20260000?14:analysisDateValue(x.release)>=20250000?9:4;const market=popularityMarketKeys.has(`${x.country}|${x.name}|${selectedCatalogMode}`)?16:0;return Math.min(100,pref+age+market)}
 function renderCountryAnalysis(){
  const game=document.getElementById("analysisGame").value;
- const rows=COUNTRY_BOX_DATA.filter(x=>(selectedAnalysisCountry==="ALL"||x.country===selectedAnalysisCountry)&&(game==="ALL"||x.game===game));
+ const sort=document.getElementById("analysisSort").value;
+ const rows=COUNTRY_BOX_DATA.filter(x=>(selectedAnalysisCountry==="ALL"||x.country===selectedAnalysisCountry)&&(game==="ALL"||x.game===game)).sort((a,b)=>sort==="LATEST"?analysisDateValue(b.release)-analysisDateValue(a.release):sort==="NAME"?a.name.localeCompare(b.name,"ko"):popularityScore(b)-popularityScore(a)||analysisDateValue(b.release)-analysisDateValue(a.release));
  const list=document.getElementById("countryAnalysisList");
  document.getElementById("analysisCount").textContent=selectedCatalogMode==="BOX"?`📦 BOX ${rows.length}개`:`🎴 HIT 카드 ${rows.length}개`;
  document.getElementById("learningKey").innerHTML=selectedCatalogMode==="BOX"?'<span>💴 BOX 출시원가</span><span>⭐ BOX 선호도</span>':'<span>🎯 대표 HIT 카드</span><span>💰 HIT 참고가격</span>';
  if(!rows.length){list.innerHTML=`<div class="analysis-empty">선택한 조건의 확인된 ${selectedCatalogMode==="BOX"?"BOX":"HIT 카드"} 자료가 없습니다.</div>`;return;}
- list.innerHTML=rows.map(x=>{
+ list.innerHTML=rows.map((x,index)=>{
   const cls=x.preference==="매우 높음"||x.preference==="높음"?"pref-high":x.preference==="출시 전"?"pref-wait":"pref-mid";
   const visual=(src,type)=>`<div class="catalog-main-image">${src?`<img src="${src}" alt="${x.name} ${type}" loading="lazy" referrerpolicy="no-referrer" onerror="this.style.display='none';this.nextElementSibling.style.display='block'"><span class="analysis-image-wait" style="display:none"><b>${type==="BOX"?"📦":"🎴"}</b>이미지를 불러오지 못했습니다.</span>`:`<span class="analysis-image-wait"><b>${type==="BOX"?"📦":"🎴"}</b>${type==="BOX"?"BOX":"HIT 카드"} 이미지 준비 중</span>`}</div>`;
   const price=LEARNING_PRICE_DATA[x.name]||{retail:"공식 출시가 확인",hitPrice:"최신 실거래 확인"};
   const details=selectedCatalogMode==="BOX"?`<div class="analysis-part"><h4>💴 한국/해당국 출시원가</h4><div class="analysis-value">${price.retail}</div><div class="analysis-text">공식 BOX 출시 기준</div></div><div class="analysis-part"><h4>⭐ BOX 선호도</h4><div class="analysis-value ${cls}">${x.preference}</div><div class="analysis-text">${x.reason}</div></div>`:`<div class="analysis-part"><h4>🎯 대표 HIT 카드</h4><div class="analysis-value">${x.hitName||"대표 카드 확인 중"}</div><div class="analysis-text">${x.hit}</div></div><div class="analysis-part"><h4>💰 HIT 참고가격</h4><div class="analysis-value">${price.hitPrice}</div><div class="analysis-text">판매완료 실거래에 따라 변동</div></div>`;
-  return `<article class="analysis-box">${visual(selectedCatalogMode==="BOX"?x.boxImage:x.cardImage,selectedCatalogMode)}<div class="analysis-head"><div class="analysis-title">${x.name}<span class="analysis-native">${x.native}</span></div><div class="analysis-sub">${gameKorean[x.game]} · 출시 ${x.release}</div></div><div class="analysis-parts">${details}</div><a class="analysis-source" href="${x.source}" target="_blank" rel="noopener">🔖 공식정보 보기</a></article>`;
+  return `<article class="analysis-box">${visual(selectedCatalogMode==="BOX"?x.boxImage:x.cardImage,selectedCatalogMode)}<div class="analysis-head"><div class="analysis-title"><span class="analysis-rank">${index+1}위</span>${x.name}<span class="analysis-native">${x.native}</span></div><div class="analysis-sub">${gameKorean[x.game]} · 출시 ${x.release} · <span class="analysis-score">인기지수 ${popularityScore(x)}</span></div></div><div class="analysis-parts">${details}</div><a class="analysis-source" href="${x.source}" target="_blank" rel="noopener">🔖 공식정보 보기</a></article>`;
  }).join("");
 }
 document.querySelectorAll(".country-tab").forEach(btn=>btn.addEventListener("click",()=>{
@@ -1114,7 +1167,9 @@ document.querySelectorAll(".catalog-mode-btn").forEach(btn=>btn.addEventListener
  renderCountryAnalysis();
 }));
 document.getElementById("analysisGame").addEventListener("change",renderCountryAnalysis);
-renderCountryAnalysis();
+document.getElementById("analysisSort").addEventListener("change",renderCountryAnalysis);
+async function loadPopularitySignals(force=false){try{const r=await fetch(`market_prices.json${force?`?t=${Date.now()}`:""}`,{cache:force?"no-store":"default"});if(r.ok){const d=await r.json();popularityMarketKeys=new Set(Object.keys(d.entries||{}))}}catch(e){}renderCountryAnalysis()}
+loadPopularitySignals();
 
 function catalogRegion(value){
  const map={KR:"KR",JP:"JP",US:"US",ALL:"ALL","한국 중고":"KR","일본 중고":"JP","미국/국제 중고":"US","전체":"ALL"};

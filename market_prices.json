@@ -1,0 +1,34 @@
+{
+  "updated_at": "2026-08-21T00:00:00+09:00",
+  "entries": {
+    "KR|테라스탈 페스타 ex|HIT": {
+      "display": "₩138,000",
+      "kind": "최근 미감정 거래 3건 중앙값",
+      "market": "KREAM 한국판",
+      "transactions": "공개 페이지 거래 41건",
+      "source_date": "2026-08-21",
+      "source": "https://kream.co.kr/products/959332"
+    },
+    "JP|테라스탈 페스타 ex 일본판|HIT": {
+      "display": "¥79,800",
+      "kind": "미감정 참고가격",
+      "market": "POKARD · SNKRDUNK",
+      "transactions": "확인된 체결자료 없음",
+      "source_date": "2026-08-21",
+      "source": "https://pokard.io/jpcard/SV8a-217/"
+    },
+    "US|프리즈마틱 에볼루션|HIT": {
+      "display": "$1,430",
+      "kind": "TCGPlayer 표시가격",
+      "market": "POKARD · TCGPlayer",
+      "transactions": "표시가격 참고",
+      "source_date": "2026-08-21",
+      "source": "https://pokard.io/pokemon-card-price/us/"
+    },
+    "JP|인페르노 X|BOX": {"display":"₩63,000","kind":"BOX 리셀가","market":"POKARD","transactions":"공개 표시가격","source_date":"2026-08-21","source":"https://pokard.io/asset/"},
+    "JP|닌자스피너|BOX": {"display":"₩42,000","kind":"BOX 리셀가","market":"POKARD","transactions":"공개 표시가격","source_date":"2026-08-21","source":"https://pokard.io/asset/"},
+    "JP|메가 드림 ex|BOX": {"display":"₩92,000","kind":"BOX 리셀가","market":"POKARD","transactions":"공개 표시가격","source_date":"2026-08-21","source":"https://pokard.io/asset/"},
+    "JP|메가 브레이브|BOX": {"display":"₩46,000","kind":"BOX 리셀가","market":"POKARD","transactions":"공개 표시가격","source_date":"2026-08-21","source":"https://pokard.io/asset/"},
+    "JP|메가 심포니아|BOX": {"display":"₩37,000","kind":"BOX 리셀가","market":"POKARD","transactions":"공개 표시가격","source_date":"2026-08-21","source":"https://pokard.io/asset/"}
+  }
+}

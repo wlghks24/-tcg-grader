@@ -1,11 +1,13 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 import json, os, re, hashlib, threading, webbrowser, time, socket
+from urllib.parse import urlparse, parse_qs
 from http.server import ThreadingHTTPServer, SimpleHTTPRequestHandler
 from urllib.request import Request, urlopen
 
 BASE=os.path.dirname(os.path.abspath(__file__))
 DB=os.path.join(BASE,'tcg_live_data.json')
+MARKET_DB=os.path.join(BASE,'market_prices.json')
 AUTO_INTERVAL_SECONDS=6*60*60
 UPDATE_LOCK=threading.Lock()
 SOURCES=[
@@ -16,6 +18,7 @@ SOURCES=[
  ('원피스 일본 공식','https://www.onepiece-cardgame.com/','공식'),
  ('원피스 미국 공식','https://en.onepiece-cardgame.com/products/','공식'),
  ('나루토 카드게임 글로벌 공식','https://www.naruto-cardgame.com/asia-en/','공식'),
+ ('포켓몬 일본 프로모 행사 공식','https://www.pokemon-card.com/info/005397.html','행사'),
  ('PSA 공식 등급기준','https://www.psacard.com/gradingstandards','등급'),
  ('BGS 공식 등급','https://www.beckett.com/grading/scale','등급'),
  ('CGC 공식 등급','https://www.cgccards.com/card-grading/grading-scale/','등급'),
@@ -52,6 +55,12 @@ def save_db(data):
     with open(tmp,'w',encoding='utf-8') as f: json.dump(data,f,ensure_ascii=False,indent=2)
     os.replace(tmp,DB)
 
+def load_market_db():
+    try:
+        with open(MARKET_DB,'r',encoding='utf-8') as f:return json.load(f)
+    except (OSError,ValueError,TypeError):
+        return {'updated_at':None,'entries':{},'collection_status':'가격자료 없음'}
+
 def fetch(url):
     req=Request(url,headers={'User-Agent':'TCG-Research-Updater/27'})
     with urlopen(req,timeout=15) as r:
@@ -85,12 +94,23 @@ def update_cycle(trigger='manual'):
             update_releases.main()
         except Exception as exc:
             release_status=f'출시목록 갱신 오류: {type(exc).__name__}'
+        try:
+            import update_market_prices
+            market=update_market_prices.main()
+            market_status=market.get('collection_status','정상')
+        except Exception as exc:
+            market_status=f'가격목록 갱신 오류: {type(exc).__name__}'
+        try:
+            import update_promo_events
+            promo_status=update_promo_events.main().get('collection_status','정상')
+        except Exception as exc:
+            promo_status=f'프로모 행사 갱신 오류: {type(exc).__name__}'
         data=load_db()
         data['auto_update']={
             'enabled':True,'interval_hours':6,'trigger':trigger,
             'last_run':time.strftime('%Y-%m-%dT%H:%M:%S%z',time.localtime(started)),
             'next_run':time.strftime('%Y-%m-%dT%H:%M:%S%z',time.localtime(started+AUTO_INTERVAL_SECONDS)),
-            'status':release_status,
+            'status':release_status,'market_status':market_status,'promo_status':promo_status,
         }
         save_db(data)
         return data
@@ -110,11 +130,16 @@ class Handler(SimpleHTTPRequestHandler):
         self.send_header('Cache-Control','no-store'); self.send_header('Content-Length',str(len(body)))
         self.end_headers(); self.wfile.write(body)
     def do_GET(self):
-        path=self.path.split('?',1)[0]
+        parsed=urlparse(self.path);path=parsed.path
         if path=='/api/health': return self.json({'ok':True,'service':'TCG v31'})
         if path=='/api/status': return self.json(load_db())
         if path=='/api/auto-status': return self.json(load_db().get('auto_update',{}))
         if path=='/api/validation': return self.json({'ok':True,'mode':'pre-grade','probability_claim':False})
+        if path=='/api/market-price':
+            qs=parse_qs(parsed.query); key=qs.get('key',[''])[0]
+            if not key or len(key)>160:return self.json({'ok':False,'error':'가격 키 오류'},400)
+            db=load_market_db(); entry=db.get('entries',{}).get(key)
+            return self.json({'ok':True,'found':bool(entry),'key':key,'updated_at':db.get('updated_at'),'collection_status':db.get('collection_status'),'price':entry})
         if path=='/api/update':
             try: return self.json(update_cycle('manual'))
             except Exception as exc: return self.json({'ok':False,'error':str(exc)},500)
