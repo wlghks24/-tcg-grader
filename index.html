@@ -269,6 +269,7 @@ loadReleases();loadPromos();
 <div class="workflow-part"><h3>1. 실제 확정등급 저장</h3>
 <div class="grid2"><label>등급사<select id="actualCompany"><option>PSA</option><option>CGC</option><option>BGS</option></select></label><label>실제 확정등급<select id="actualGrade"><option>10</option><option>9.5</option><option>9</option><option>8.5</option><option>8</option><option>7</option></select></label></div>
 <button id="saveValidation">현재 분석결과와 실제등급 비교 저장</button><div id="validationSummary" class="status" style="margin-top:8px">검증 기록 없음</div><div id="validationLog"></div>
+<div id="learningSyncStatus" class="status" style="margin-top:8px">학습기록 저장소 확인 중</div>
 </div>
 <div class="workflow-part" id="v30calibration"><h3>2. 누적 오차로 보정값 계산</h3>
 <p class="muted">과대평가·과소평가 경향을 등급사별로 계산합니다. 5건 미만은 적용하지 않고, 10건부터 제한적으로 반영합니다.</p>
@@ -906,6 +907,30 @@ window.v10Ceiling=v10Ceiling;
 <script>
 const V11KEY="tcg_pregrader_v11_validation";
 const V11CORR="tcg_pregrader_v11_correction";
+async function syncLearningToServer(){
+ try{
+  const body={v30_validation:JSON.parse(localStorage.getItem("tcg_v30_validation")||"[]"),v11_validation:JSON.parse(localStorage.getItem(V11KEY)||"[]")};
+  const r=await fetch("/api/learning-store",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(body)});
+  if(!r.ok)throw new Error("learning sync failed");
+  const saved=await r.json();const el=document.getElementById("learningSyncStatus");if(el)el.textContent=`✅ PC 서버 학습저장 완료 · ${saved.saved}건`;return saved;
+ }catch(e){const el=document.getElementById("learningSyncStatus");if(el)el.textContent="📱 브라우저에 안전 저장됨 · PC 서버 연결 시 자동 동기화";return {ok:false,offline:true}}
+}
+function mergeLearning(local,remote){
+ const map=new Map();
+ for(const row of [...remote,...local])map.set(`${row.time||""}|${row.company||row.grader||""}|${row.actual}|${row.pred}`,row);
+ return [...map.values()].slice(-500);
+}
+async function syncLearningFromServer(){
+ try{
+  const r=await fetch(`/api/learning-store?t=${Date.now()}`,{cache:"no-store"});if(!r.ok)return;
+  const data=await r.json();
+  const v30=mergeLearning(JSON.parse(localStorage.getItem("tcg_v30_validation")||"[]"),data.v30_validation||[]);
+  const v11=mergeLearning(JSON.parse(localStorage.getItem(V11KEY)||"[]"),data.v11_validation||[]);
+  localStorage.setItem("tcg_v30_validation",JSON.stringify(v30));localStorage.setItem(V11KEY,JSON.stringify(v11));
+  const el=document.getElementById("learningSyncStatus");if(el)el.textContent=`✅ PC 서버와 학습기록 동기화 · ${v30.length+v11.length}건`;
+  if(typeof window.v30RenderValidation==="function")window.v30RenderValidation();v11Render();
+ }catch(e){}
+}
 function v11Get(){return JSON.parse(localStorage.getItem(V11KEY)||"[]")}
 function v11Correction(){return JSON.parse(localStorage.getItem(V11CORR)||'{"PSA":0,"BGS":0,"CGC":0}')}
 function v11Render(){
@@ -931,6 +956,7 @@ document.getElementById("v11save")?.addEventListener("click",()=>{
    const c=v11Correction();c[grader]=Math.min(1.0,(c[grader]||0)+0.1);localStorage.setItem(V11CORR,JSON.stringify(c));
  }
  v11Render();
+ syncLearningToServer();
  alert(match?"✅ 실제 등급과 일치했습니다.":"⚠️ 불일치 사례를 저장했습니다. 과대평가이면 보수 보정이 적용됩니다.");
 });
 document.getElementById("v11stats")?.addEventListener("click",()=>{
@@ -1601,6 +1627,7 @@ document.getElementById("saveValidation")?.addEventListener("click",()=>{
   a.push({time:new Date().toISOString(),company,actual,pred,mode:v30Mode});
   localStorage.setItem(V29KEY,JSON.stringify(a.slice(-500)));
   v30RenderValidation();
+  syncLearningToServer();
 });
 v30RenderValidation();
 </script>
@@ -1698,7 +1725,8 @@ v30Render();
   closeUpdatePanels();
   if(target&&!wasOpen){target.classList.remove("hidden");btn.classList.add("active");setTimeout(()=>target.scrollIntoView({behavior:"smooth",block:"nearest"}),80);}
  }));
- document.querySelectorAll(".update-panel-close").forEach(btn=>btn.addEventListener("click",closeUpdatePanels));
+document.querySelectorAll(".update-panel-close").forEach(btn=>btn.addEventListener("click",closeUpdatePanels));
+ setTimeout(syncLearningFromServer,800);
 })();
 </script>
 <section class="card" id="v31testdashboard">
