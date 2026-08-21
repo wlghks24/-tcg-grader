@@ -1,5 +1,5 @@
-const CACHE='tcg-v31-box-ui-2';
-const CORE=['./','./index.html','./manifest.webmanifest'];
+const CACHE='tcg-v31-final-verified-1';
+const CORE=['./','./index.html','./manifest.webmanifest','./releases.json','./icon.svg'];
 self.addEventListener('install',event=>event.waitUntil(caches.open(CACHE).then(cache=>cache.addAll(CORE)).then(()=>self.skipWaiting())));
 self.addEventListener('activate',event=>event.waitUntil(caches.keys().then(keys=>Promise.all(keys.filter(key=>key!==CACHE).map(key=>caches.delete(key)))).then(()=>self.clients.claim())));
 self.addEventListener('fetch',event=>{

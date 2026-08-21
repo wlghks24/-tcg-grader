@@ -1,0 +1,36 @@
+{
+  "verified_at": "2026-08-21",
+  "result": "PASS",
+  "included_games": ["Pokémon", "ONE PIECE", "NARUTO"],
+  "checks": {
+    "html_parse": "PASS",
+    "duplicate_html_ids": "PASS - none",
+    "javascript_syntax": "PASS",
+    "python_syntax": "PASS",
+    "release_json": "PASS",
+    "github_actions_yaml": "PASS",
+    "service_worker_core_files": "PASS",
+    "pc_server_start": "PASS",
+    "index_http": 200,
+    "manifest_http": 200,
+    "releases_http": 200,
+    "app_icon_http": 200,
+    "service_worker_http": 200,
+    "health_api_http": 200,
+    "status_api_http": 200,
+    "naruto_release_update_validation": "PASS",
+    "kr_jp_us_box_price_fields": "PASS"
+  },
+  "fixes": [
+    "누락된 PNG 아이콘 참조를 실제 포함된 SVG 앱 아이콘으로 교체",
+    "화면이 없는 과거 v18/v19 코드 제거",
+    "Pokémon BOX 검색 데이터 키 불일치 수정",
+    "NARUTO 2027년 여름 글로벌 출시정보 및 공식 자동확인 추가",
+    "서비스워커 캐시 버전 갱신"
+  ],
+  "limitations": [
+    "정식 카드 등급은 PSA/BGS/CGC의 실물 검사 결과로만 확정 가능",
+    "NARUTO의 정확한 출시일·가격·카드 규격은 공식 미공개이며 공개 전까지 미정으로 표시",
+    "거래 시세는 판매완료·체결 자료를 입력하거나 원출처에서 확인해야 함"
+  ]
+}

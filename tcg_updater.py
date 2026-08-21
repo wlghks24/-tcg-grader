@@ -10,6 +10,7 @@ SOURCES=[
  ('포켓몬 일본 공식','https://www.pokemon-card.com/products/index.html','공식'),
  ('포켓몬 30주년 공식','https://www.30th.pokemon-card.com/','공식'),
  ('원피스 한국 공식','https://onepiece-cardgame.kr/products.do','공식'),
+ ('나루토 카드게임 글로벌 공식','https://www.naruto-cardgame.com/asia-en/','공식'),
  ('PSA 공식 등급기준','https://www.psacard.com/gradingstandards','등급'),
  ('BGS 공식 등급','https://www.beckett.com/grading/scale','등급'),
  ('CGC 공식 등급','https://www.cgccards.com/card-grading/grading-scale/','등급'),

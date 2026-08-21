@@ -21,22 +21,84 @@ input[type=range]{width:100%}
 .modebtn.active{outline:3px solid #2563eb}
 .badge{display:inline-block;padding:3px 7px;border-radius:999px;background:#e5e7eb;font-size:12px}
 .logitem{padding:8px;border-bottom:1px solid #e5e7eb;font-size:12px}
-.box-knowledge-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:12px 0}
-.box-knowledge-item{border:1px solid #e5e7eb;border-radius:14px;padding:13px;background:#f8fafc;min-height:118px}
-.box-knowledge-head{display:flex;align-items:center;gap:9px;margin-bottom:7px}
-.box-knowledge-num{display:grid;place-items:center;flex:0 0 30px;height:30px;border-radius:9px;background:#111827;color:#fff;font-weight:850}
-.box-knowledge-item b{font-size:15px}.box-knowledge-item p{margin:0;color:#4b5563;font-size:12px;line-height:1.55}
-@media(max-width:520px){.box-knowledge-grid{grid-template-columns:1fr}.box-knowledge-item{min-height:0}}
+.box-menu-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:12px 0}
+.box-menu-btn{margin:0;min-height:112px;background:#f8fafc;color:#111827;border:2px solid #e5e7eb;padding:12px 8px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px}
+.box-menu-btn .box-menu-emoji{font-size:34px;line-height:1}.box-menu-btn b{font-size:15px}.box-menu-btn small{font-size:11px;color:#6b7280;font-weight:600}
+.box-menu-btn.active{background:#eff6ff;border-color:#2563eb;color:#1d4ed8;outline:2px solid #bfdbfe}.box-menu-btn.active small{color:#1d4ed8}
+.box-menu-guide{padding:12px;border-radius:12px;background:#eff6ff;color:#1e3a8a;font-size:13px;line-height:1.55;margin-bottom:12px}
+@media(min-width:650px){.box-menu-grid{grid-template-columns:repeat(4,1fr)}}
+.home-launcher{background:#fff;border-radius:18px;padding:15px;margin:0 0 14px;box-shadow:0 3px 16px #00000012}
+.home-launcher h2{font-size:19px;margin:0 0 4px}.home-launcher-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:12px}
+.home-launch-btn{margin:0;min-height:128px;border:2px solid #dbeafe;background:#eff6ff;color:#1e3a8a;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;padding:12px 7px}
+.home-launch-btn:last-child{border-color:#fde68a;background:#fffbeb;color:#78350f}.home-launch-icon{font-size:42px;line-height:1}.home-launch-btn b{font-size:16px}.home-launch-btn small{font-size:11px;font-weight:650;opacity:.78}
+.home-launch-btn:active{transform:scale(.98)}
+@media(max-width:380px){.home-launcher-grid{grid-template-columns:1fr}.home-launch-btn{min-height:105px}}
+.box-price-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:10px}.box-price-edition{border:1px solid #e5e7eb;border-radius:14px;padding:13px;background:#f8fafc}.box-price-edition h4{margin:0 0 9px;font-size:16px}
+.box-price-result{border-radius:14px;padding:14px;margin-top:10px;background:#f3f4f6}.box-price-result .price-line{display:flex;justify-content:space-between;gap:8px;padding:6px 0;border-bottom:1px solid #e5e7eb;font-size:13px}.box-price-result .price-line:last-child{border:0}.price-change{font-size:22px;font-weight:850}.price-up{color:#dc2626}.price-down{color:#2563eb}.price-flat{color:#4b5563}
+.box-menu-btn.box-price-wide{grid-column:1/-1;background:#f0fdf4;border-color:#bbf7d0;color:#166534}
+@media(max-width:520px){.box-price-grid{grid-template-columns:1fr}}
+.release-board{background:linear-gradient(135deg,#111827,#1e3a8a);color:#fff;border-radius:20px;padding:16px;margin:0 0 14px;box-shadow:0 7px 24px #1e3a8a30}.release-board h2{font-size:20px;margin:0 0 4px}.release-board .muted{color:#cbd5e1}.release-tools{display:grid;grid-template-columns:1fr auto;gap:8px;margin:12px 0}.release-tools select{width:100%;border:0;border-radius:11px;padding:10px;background:#fff}.release-tools button{width:auto;margin:0;background:#2563eb;white-space:nowrap}.release-list{display:grid;gap:9px}.release-item{background:#fff;color:#111827;border-radius:14px;padding:12px}.release-top{display:flex;align-items:flex-start;justify-content:space-between;gap:8px}.release-name{font-weight:800;font-size:14px;line-height:1.35}.release-badge{flex:0 0 auto;padding:4px 8px;border-radius:999px;background:#dbeafe;color:#1d4ed8;font-size:11px;font-weight:800}.release-badge.today{background:#fee2e2;color:#b91c1c}.release-badge.released{background:#e5e7eb;color:#4b5563}.release-meta{font-size:12px;color:#4b5563;line-height:1.55;margin-top:6px}.release-meta a{color:#2563eb;font-weight:700}.release-empty{background:#ffffff18;border-radius:12px;padding:13px;color:#e5e7eb;font-size:13px}
+.gamegrid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}@media(max-width:430px){.gamegrid{grid-template-columns:1fr}.gamegrid button{min-height:50px}}
 </style><link rel="manifest" href="manifest.webmanifest">
 <meta name="theme-color" content="#111827">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="TCG Grader">
-<link rel="apple-touch-icon" href="icons/icon-180.png">
+<link rel="icon" href="icon.svg" type="image/svg+xml">
 </head>
 <body>
 <main class="app">
+<section class="release-board" id="releaseBoard">
+<h2>🆕 신상품 · 사전예약 · 출시일</h2>
+<div class="muted">Pokémon · ONE PIECE · NARUTO 공식 출시정보를 국가별로 확인합니다.</div>
+<div class="release-tools">
+<select id="releaseFilter" aria-label="출시정보 국가 선택"><option value="ALL">🌏 전체</option><option value="GLOBAL">🌐 글로벌</option><option value="KR">🇰🇷 한국판</option><option value="JP">🇯🇵 일본판</option><option value="US">🇺🇸 미국판</option></select>
+<button type="button" id="refreshReleases">정보 새로고침</button>
+</div>
+<div id="releaseList" class="release-list"><div class="release-empty">출시정보를 불러오는 중입니다.</div></div>
+<div id="releaseUpdated" class="muted" style="margin-top:9px">마지막 확인: 불러오는 중</div>
+</section>
+<section class="home-launcher" aria-label="주요 기능 선택">
+<h2>원하는 기능을 선택하세요</h2>
+<div class="muted">아래 버튼을 누르면 해당 기능으로 바로 이동합니다.</div>
+<div class="home-launcher-grid">
+<button type="button" class="home-launch-btn" data-home-target="gradeStart"><span class="home-launch-icon">🎴</span><b>카드 등급 측정</b><small>사진으로 센터링·결함 검사</small></button>
+<button type="button" class="home-launch-btn" data-home-target="v14section"><span class="home-launch-icon">📦</span><b>박스 정보·시세</b><small>원가·인기·히트카드·가격</small></button>
+</div>
+</section>
+<script>
+const RELEASE_FALLBACK={updated_at:"2026-08-21T00:00:00+09:00",items:[
+ {game:"ONE PIECE",region:"KR",name:"OPK-14 부스터 팩 창해의 칠걸",release_date:"2026-08-21",price:"₩48,000/BOX",status:"공식 출시",source:"https://onepiece-cardgame.kr/"},
+ {game:"ONE PIECE",region:"JP",name:"OP-17 The World's Strongest Warriors",release_date:"2026-08-22",price:"공식 상품페이지 확인",status:"출시예정",source:"https://asia-en.onepiece-cardgame.com/products/"},
+ {game:"ONE PIECE",region:"US",name:"OP-17 The World's Strongest Warriors",release_date:"2026-08-28",price:"$4.99/팩",status:"출시예정",source:"https://en.onepiece-cardgame.com/products/"},
+ {game:"Pokémon",region:"JP",name:"30th CELEBRATION",release_date:"2026-09-16",price:"¥360/팩",status:"출시예정",source:"https://www.pokemon-card.com/products/"},
+ {game:"Pokémon",region:"US",name:"30th Celebration Elite Trainer Box",release_date:"2026-09-16",price:"공식 상품페이지 확인",status:"출시예정",source:"https://www.pokemon.com/us/pokemon-tcg/product-gallery/30th-celebration-elite-trainer-box"},
+ {game:"Pokémon",region:"US",name:"30th Celebration Ultra-Premium Collection",release_date:"2026-11-06",price:"공식 상품페이지 확인",status:"출시예정",source:"https://www.pokemon.com/us/pokemon-tcg/product-gallery/30th-celebration-ultra-premium-collections-day-night"},
+ {game:"NARUTO",region:"GLOBAL",name:"NARUTO CARD GAME",release_date:null,release_window:"2027년 여름",price:"가격·제품 구성 미정",status:"전 세계 동시 출시 예정",source:"https://www.naruto-cardgame.com/asia-en/"}
+]};
+let releaseData=RELEASE_FALLBACK;
+function releaseDayInfo(date){
+ if(!/^\d{4}-\d{2}-\d{2}$/.test(date||"")) return {text:"일정 확인",cls:""};
+ const now=new Date(),today=new Date(now.getFullYear(),now.getMonth(),now.getDate());
+ const [y,m,d]=date.split("-").map(Number),target=new Date(y,m-1,d),days=Math.round((target-today)/86400000);
+ return days>0?{text:`D-${days}`,cls:""}:days===0?{text:"오늘 출시",cls:"today"}:{text:"출시됨",cls:"released"};
+}
+function renderReleases(){
+ const region=document.getElementById("releaseFilter").value;
+ const rows=(releaseData.items||[]).filter(x=>region==="ALL"||x.region===region).sort((a,b)=>(a.release_date||"").localeCompare(b.release_date||""));
+ const flags={GLOBAL:"🌐 글로벌",KR:"🇰🇷 한국판",JP:"🇯🇵 일본판",US:"🇺🇸 미국판"};
+ document.getElementById("releaseList").innerHTML=rows.length?rows.map(x=>{const day=releaseDayInfo(x.release_date),when=x.release_window||x.release_date||"미정";return `<article class="release-item"><div class="release-top"><div class="release-name">${x.game} · ${x.name}</div><span class="release-badge ${day.cls}">${x.release_window||day.text}</span></div><div class="release-meta">${flags[x.region]||x.region} · 출시 ${when}<br>${x.status||"공식 확인"} · ${x.price||"가격 미정"} · <a href="${x.source}" target="_blank" rel="noopener">공식 출처</a></div></article>`}).join(""):`<div class="release-empty">선택한 국가의 확인된 출시정보가 없습니다.</div>`;
+ const updated=releaseData.updated_at?new Date(releaseData.updated_at).toLocaleString("ko-KR"):"확인되지 않음";
+ document.getElementById("releaseUpdated").textContent=`마지막 공식정보 확인: ${updated} · 출처 확인된 항목만 표시`;
+}
+async function loadReleases(force=false){
+ try{const r=await fetch(`releases.json${force?`?t=${Date.now()}`:""}`,{cache:force?"no-store":"default"});if(!r.ok)throw new Error("release data unavailable");releaseData=await r.json()}catch(e){releaseData=RELEASE_FALLBACK}renderReleases();
+}
+document.getElementById("releaseFilter").addEventListener("change",renderReleases);
+document.getElementById("refreshReleases").addEventListener("click",()=>loadReleases(true));
+loadReleases();
+</script>
 <section class="card" id="v30mode">
 <h3 style="margin:0 0 8px">🧠 v30 사진 유형 자동/수동 선택</h3>
 <p class="muted">RAW 카드와 PSA/CGC/BGS 슬랩은 분석 경로가 다릅니다.</p>
@@ -82,11 +144,11 @@ input[type=range]{width:100%}
 </div>
 <p class="muted">테스트 환경에서는 외부 DNS가 차단되어 공식 사이트 수집이 실패했지만, 실패 항목이 DB에 잘못 반영되지 않는 것까지 확인했습니다.</p>
 </section>
-<h1>TCG 등급 사전검사기 v31</h1><div class="muted">Pokémon + ONE PIECE · iPhone Safari · grading-company 기준을 분리한 사전 검사기</div>
+<h1>TCG 등급 사전검사기 v31</h1><div class="muted">Pokémon + ONE PIECE + NARUTO · iPhone Safari · grading-company 기준을 분리한 사전 검사기</div>
 
-<section class="card">
-<div class="muted">① 카드게임</div><div class="grid2">
-<button id="pokemon" class="game active">🟦 Pokémon</button><button id="onepiece" class="game">🟥 ONE PIECE</button>
+<section class="card" id="gradeStart">
+<div class="muted">① 카드게임</div><div class="gamegrid">
+<button id="pokemon" class="game active">🟦 Pokémon</button><button id="onepiece" class="game">🟥 ONE PIECE</button><button id="naruto" class="game">🟧 NARUTO</button>
 </div><p id="profile" class="muted">Pokémon: holo/texture/print-line/whitening을 별도 결함 후보로 취급합니다.</p>
 </section>
 
@@ -242,7 +304,7 @@ input[type=range]{width:100%}
 <div id="v11rules" class="status"></div>
 </section>
 
-<section class="card">
+<section class="card" id="market12section">
 <h3 style="margin:0 0 8px">💰 v12 국내·국제 시세센터</h3>
 <p class="muted">카드/BOX별로 한국·일본·미국/국제 시세를 한 화면에서 비교합니다. 공식 정가와 실제 거래가를 분리하고, 거래량과 날짜가 있는 자료를 우선합니다.</p>
 <div class="grid2">
@@ -256,7 +318,7 @@ input[type=range]{width:100%}
 <div id="market12out" class="status" style="margin-top:10px">검색 전</div>
 </section>
 
-<section class="card">
+<section class="card" id="box12section">
 <h3 style="margin:0 0 8px">📦 BOX 지식베이스</h3>
 <p class="muted">박스별 정가·구성·출시일·인기·히트카드·히트카드 시세를 별도 관리합니다. 정가와 현재 거래가는 절대 섞지 않습니다.</p>
 <div id="box12" class="status"></div>
@@ -294,39 +356,58 @@ input[type=range]{width:100%}
 <div id="v13log" class="status">기록 없음</div>
 </section>
 
-<section class="card">
+<section class="card" id="v14section">
 <h3 style="margin:0 0 8px">📦 v14 BOX 지식베이스 — 한국 & 국제</h3>
-<p class="muted">박스를 검색하면 아래 네 가지 정보를 순서대로 확인할 수 있습니다.</p>
-<div class="box-knowledge-grid" aria-label="BOX 정보 구성">
-<div class="box-knowledge-item">
-<div class="box-knowledge-head"><span class="box-knowledge-num">1</span><b>박스 원가</b></div>
-<p>일본 공식 정가(¥)와 원화 환산가(₩)를 한 줄에 함께 표시합니다. 현재 판매가와는 따로 표시합니다.</p>
+<p class="muted">원하는 기능의 이모티콘을 누르면 해당 화면으로 바로 이동합니다.</p>
+<div class="box-menu-grid" aria-label="BOX 기능 선택">
+<button type="button" class="box-menu-btn" data-box-target="box12section" data-box-guide="일본 공식 정가(엔화)와 원화 환산가를 함께 확인합니다."><span class="box-menu-emoji">💴</span><b>박스 원가</b><small>엔화 + 원화</small></button>
+<button type="button" class="box-menu-btn" data-box-target="v14ranksection" data-box-guide="거래량과 가격 흐름을 바탕으로 사람들이 선호하는 박스를 확인합니다."><span class="box-menu-emoji">⭐</span><b>인기 박스</b><small>선호도 확인</small></button>
+<button type="button" class="box-menu-btn" data-box-target="v14searcharea" data-box-guide="게임과 시장을 고른 뒤 박스명을 입력해 히트카드를 확인합니다."><span class="box-menu-emoji">🎯</span><b>히트카드</b><small>박스별 HIT</small></button>
+<button type="button" class="box-menu-btn" data-box-target="market12section" data-box-guide="히트카드의 한국·일본·해외 실제 거래 시세를 검색합니다."><span class="box-menu-emoji">📊</span><b>히트 시세</b><small>국내 + 해외</small></button>
+<button type="button" class="box-menu-btn box-price-wide" data-box-target="boxPriceCompare" data-box-guide="한국판·일본판·미국판 BOX의 출고가·현재 거래가·상승률을 비교합니다."><span class="box-menu-emoji">🇰🇷 🇯🇵 🇺🇸</span><b>박스 시세 비교</b><small>출고가 · 거래가 · 상승률</small></button>
 </div>
-<div class="box-knowledge-item">
-<div class="box-knowledge-head"><span class="box-knowledge-num">2</span><b>사람들이 선호하는 박스</b></div>
-<p>최근 거래량·판매 빈도·가격 상승·재고 소진을 비교해 인기 정도를 보여줍니다.</p>
-</div>
-<div class="box-knowledge-item">
-<div class="box-knowledge-head"><span class="box-knowledge-num">3</span><b>박스별 히트카드</b></div>
-<p>어느 박스에서 어떤 인기 카드가 나오는지 카드 목록과 출처를 함께 확인합니다.</p>
-</div>
-<div class="box-knowledge-item">
-<div class="box-knowledge-head"><span class="box-knowledge-num">4</span><b>히트카드 실제 시세</b></div>
-<p>한국·일본·해외의 최근 판매완료 가격을 등급별로 구분해 보여줍니다.</p>
-</div>
-</div>
+<div id="boxMenuGuide" class="box-menu-guide">위에서 원하는 기능을 선택하세요.</div>
+<div id="v14searcharea">
 <div class="grid2">
 <label>게임
-<select id="v14game"><option>Pokémon</option><option>ONE PIECE</option></select></label>
+<select id="v14game"><option>Pokémon</option><option>ONE PIECE</option><option>NARUTO</option></select></label>
 <label>시장
 <select id="v14market"><option>한국</option><option>일본</option><option>미국/국제</option></select></label>
 </div>
 <input id="v14box" placeholder="BOX/세트명" style="margin-top:8px;width:100%;box-sizing:border-box;padding:10px">
 <button id="v14search" style="margin-top:8px">최신 BOX 정보 검증</button>
 <div id="v14out" class="status" style="margin-top:10px">검색 전</div>
+</div>
 </section>
 
-<section class="card">
+<section class="card" id="boxPriceCompare">
+<h3 style="margin:0 0 8px">📦 한국판·일본판·미국판 BOX 시세 비교</h3>
+<p class="muted">같은 박스의 출고가와 최근 실제 거래금액을 입력하면 판본별 상승률을 자동 계산합니다. 판매 희망가가 아닌 판매완료·체결가를 입력하세요.</p>
+<label>박스명<input id="boxPriceName" placeholder="예: 메가심포니아"></label>
+<div class="box-price-grid">
+<div class="box-price-edition">
+<h4>🇰🇷 한국판</h4>
+<label>출고가 (원)<input id="krBoxRetail" type="number" min="0" inputmode="numeric" placeholder="예: 30000"></label>
+<label>현재 거래금액 (원)<input id="krBoxCurrent" type="number" min="0" inputmode="numeric" placeholder="예: 45000"></label>
+</div>
+<div class="box-price-edition">
+<h4>🇯🇵 일본판</h4>
+<label>출고가 (엔)<input id="jpBoxRetail" type="number" min="0" inputmode="numeric" placeholder="예: 5400"></label>
+<label>현재 거래금액 (엔)<input id="jpBoxCurrent" type="number" min="0" inputmode="numeric" placeholder="예: 7000"></label>
+<label>100엔당 원화 환율<input id="boxFxRate" type="number" min="1" step="0.01" inputmode="decimal" value="870"></label>
+</div>
+<div class="box-price-edition">
+<h4>🇺🇸 미국판</h4>
+<label>출고가 (달러)<input id="usBoxRetail" type="number" min="0" step="0.01" inputmode="decimal" placeholder="예: 49.99"></label>
+<label>현재 거래금액 (달러)<input id="usBoxCurrent" type="number" min="0" step="0.01" inputmode="decimal" placeholder="예: 79.99"></label>
+<label>1달러당 원화 환율<input id="boxUsdRate" type="number" min="1" step="0.01" inputmode="decimal" value="1390"></label>
+</div>
+</div>
+<button id="calcBoxPrice">한국판·일본판·미국판 상승률 계산</button>
+<div id="boxPriceResult" class="box-price-result">가격을 입력한 뒤 계산 버튼을 누르세요.</div>
+</section>
+
+<section class="card" id="v14ranksection">
 <h3 style="margin:0 0 8px">🔥 BOX 선호도 & HIT 분석</h3>
 <div class="muted">선호도는 공식 데이터가 아니라 시장 신호를 합산합니다: 최근 거래량 + 가격 프리미엄 + SOLD 빈도 + 커뮤니티/전문 매체 언급 + 재고 소진 신호. HIT 카드는 공식 카드리스트와 실제 거래 사례를 교차검증합니다.</div>
 <div id="v14rank" class="status" style="margin-top:10px">데이터 준비 중</div>
@@ -429,8 +510,8 @@ input[type=range]{width:100%}
 
 <script>
 let game="pokemon";const $=id=>document.getElementById(id);
-$("pokemon").onclick=()=>setGame("pokemon");$("onepiece").onclick=()=>setGame("onepiece");
-function setGame(g){game=g;$("pokemon").classList.toggle("active",g==="pokemon");$("onepiece").classList.toggle("active",g==="onepiece");$("profile").textContent=g==="pokemon"?"Pokémon: holo/texture/print-line/whitening을 별도 결함 후보로 취급합니다.":"ONE PIECE: foil/parallel/manga·comic texture/black-border whitening/chipping을 별도 결함 후보로 취급합니다."}
+$("pokemon").onclick=()=>setGame("pokemon");$("onepiece").onclick=()=>setGame("onepiece");$("naruto").onclick=()=>setGame("naruto");
+function setGame(g){game=g;["pokemon","onepiece","naruto"].forEach(id=>$(id).classList.toggle("active",g===id));const desc={pokemon:"Pokémon: holo/texture/print-line/whitening을 별도 결함 후보로 취급합니다.",onepiece:"ONE PIECE: foil/parallel/manga·comic texture/black-border whitening/chipping을 별도 결함 후보로 취급합니다.",naruto:"NARUTO: 정식 카드 규격 공개 전이므로 일반 TCG 기준으로 보수 측정합니다. 공식 규격 공개 후 자동 갱신 대상입니다."};$("profile").textContent=desc[g]||desc.pokemon}
 function preview(inp,img){inp.onchange=()=>{if(inp.files[0]){img.src=URL.createObjectURL(inp.files[0]);img.classList.remove("hidden")}}}
 preview($("front"),$("fp"));preview($("back"),$("bp"));
 function load(f){return new Promise((ok,no)=>{let im=new Image();im.onload=()=>ok(im);im.onerror=no;im.src=URL.createObjectURL(f)})}
@@ -531,7 +612,7 @@ const HKEY="tcg_pregrader_history_v5";
 function renderHistory(){const h=JSON.parse(localStorage.getItem(HKEY)||"[]");document.getElementById("history").innerHTML=h.length?h.slice(0,10).map((x,i)=>`<div class="status" style="margin:6px 0"><b>${i+1}. ${x.game}</b> · ${x.time}<br>${x.summary}</div>`).join(""):"저장된 검사 결과가 없습니다.";}
 document.getElementById("installHelp")?.addEventListener("click",()=>alert("iPhone Safari → 공유 버튼(□↑) → 홈 화면에 추가 → 추가. 홈 화면 아이콘으로 실행하세요."));
 document.getElementById("clearHistory")?.addEventListener("click",()=>{localStorage.removeItem(HKEY);renderHistory();});
-document.getElementById("saveResult")?.addEventListener("click",()=>{const out=document.getElementById("out");if(out.classList.contains("hidden")){alert("먼저 자동 분석을 실행하세요.");return;}const x={game:typeof game!=="undefined"?(game==="pokemon"?"Pokémon":"ONE PIECE"):"TCG",time:new Date().toLocaleString("ko-KR"),summary:`PSA ${document.getElementById("p10")?.textContent||"-"} · BGS ${document.getElementById("b10")?.textContent||"-"} · CGC ${document.getElementById("c10")?.textContent||"-"}`};const h=JSON.parse(localStorage.getItem(HKEY)||"[]");h.unshift(x);localStorage.setItem(HKEY,JSON.stringify(h.slice(0,20)));renderHistory();});
+document.getElementById("saveResult")?.addEventListener("click",()=>{const out=document.getElementById("out");if(out.classList.contains("hidden")){alert("먼저 자동 분석을 실행하세요.");return;}const names={pokemon:"Pokémon",onepiece:"ONE PIECE",naruto:"NARUTO"};const x={game:typeof game!=="undefined"?(names[game]||"TCG"):"TCG",time:new Date().toLocaleString("ko-KR"),summary:`PSA ${document.getElementById("p10")?.textContent||"-"} · BGS ${document.getElementById("b10")?.textContent||"-"} · CGC ${document.getElementById("c10")?.textContent||"-"}`};const h=JSON.parse(localStorage.getItem(HKEY)||"[]");h.unshift(x);localStorage.setItem(HKEY,JSON.stringify(h.slice(0,20)));renderHistory();});
 renderHistory();
 </script>
 <script>
@@ -1004,7 +1085,20 @@ v13Render();
 </script>
 
 <script>
-const V14DATA={"Pokemon": [{"name": "30th CELEBRATION", "market": "JP", "release": "2026-09-16", "official": "공식 상품 페이지", "source": "https://www.30th.pokemon-card.com/product/m6a", "hot": "매우 높음", "hits": "공식 카드 리스트 공개 후 거래가 검증 필요"}, {"name": "Storm Emerald / ストームエメラルダ", "market": "JP", "release": "2026-07-31", "official": "공식 상품 페이지", "source": "https://www.pokemon-card.com/ex/m6/", "hot": "높음", "hits": "공식 카드 리스트 + 실거래 교차검증"}, {"name": "Black Bolt / White Flare", "market": "JP", "release": "2025-06-06", "official": "공식 상품 페이지", "source": "https://www.pokemon-card.com/ex/sv11/", "hot": "높음", "hits": "공식 카드 리스트 + 실거래 교차검증"}], "ONE PIECE": [{"name": "OP-17 The World's Strongest Warriors", "market": "JP/EN", "release": "2026-08-28", "official": "공개 카드/시장 분석", "source": "https://www.beckett.com/news/five-one-piece-worlds-strongest-warriors-op-17-cards-to-watch-before-the-august-28-release/", "hot": "매우 높음", "hits": "출시 전 chase 후보, 실거래로 확정 예정"}, {"name": "OPK-09 새로운 황제", "market": "KR", "release": "2025-11-14", "official": "한국 공식 상품", "source": "https://www.onepiece-cardgame.kr/products.do?extraValue=&page=2&size=12", "hot": "높음", "hits": "공식 카드 리스트 + 한국 중고 실거래"}]};
+const V14DATA={
+ "Pokémon":[
+  {name:"30th CELEBRATION",market:"JP",release:"2026-09-16",official:"공식 상품 페이지",source:"https://www.30th.pokemon-card.com/product/m6a",hot:"매우 높음",hits:"공식 카드 리스트 공개 후 거래가 검증 필요"},
+  {name:"Storm Emerald / ストームエメラルダ",market:"JP",release:"2026-07-31",official:"공식 상품 페이지",source:"https://www.pokemon-card.com/ex/m6/",hot:"높음",hits:"공식 카드 리스트 + 실거래 교차검증"},
+  {name:"Black Bolt / White Flare",market:"JP",release:"2025-06-06",official:"공식 상품 페이지",source:"https://www.pokemon-card.com/ex/sv11/",hot:"높음",hits:"공식 카드 리스트 + 실거래 교차검증"}
+ ],
+ "ONE PIECE":[
+  {name:"OP-17 The World's Strongest Warriors",market:"JP/EN",release:"2026-08-28",official:"공식 상품 페이지",source:"https://en.onepiece-cardgame.com/products/",hot:"매우 높음",hits:"출시 전 후보, 실거래로 확정 예정"},
+  {name:"OPK-09 새로운 황제",market:"KR",release:"2025-11-14",official:"한국 공식 상품",source:"https://www.onepiece-cardgame.kr/products.do?extraValue=&page=2&size=12",hot:"높음",hits:"공식 카드 리스트 + 한국 중고 실거래"}
+ ],
+ "NARUTO":[
+  {name:"NARUTO CARD GAME",market:"GLOBAL",release:"2027년 여름",official:"공식 글로벌 발표",source:"https://www.naruto-cardgame.com/asia-en/",hot:"출시 전",hits:"제품·카드리스트·가격 공식 공개 대기"}
+ ]
+};
 function v14RenderRank(){
  let rows=[];
  for(const [g,a] of Object.entries(V14DATA)) for(const x of a) rows.push(`${g} · <b>${x.name}</b> · ${x.hot} · 출시 ${x.release}`);
@@ -1023,6 +1117,51 @@ document.getElementById("v14search")?.addEventListener("click",()=>{
  `<b>${x.name}</b><br>시장: ${market}<br>출시: ${x.release}<br>선호도 신호: ${x.hot}<br>HIT 상태: ${x.hits}<br><a href="${x.source}" target="_blank">최신 원출처 확인 →</a><br><span class="muted">※ 가격은 SOLD/체결가가 확인될 때만 실거래가로 표시합니다.</span>`;
 });
 v14RenderRank();
+
+document.querySelectorAll(".box-menu-btn").forEach(btn=>btn.addEventListener("click",()=>{
+ document.querySelectorAll(".box-menu-btn").forEach(x=>x.classList.remove("active"));
+ btn.classList.add("active");
+ const guide=document.getElementById("boxMenuGuide");
+ if(guide) guide.textContent=btn.dataset.boxGuide||"선택한 기능으로 이동합니다.";
+ const target=document.getElementById(btn.dataset.boxTarget);
+ if(target){
+  setTimeout(()=>target.scrollIntoView({behavior:"smooth",block:"start"}),120);
+  if(btn.dataset.boxTarget==="v14searcharea") setTimeout(()=>document.getElementById("v14box")?.focus(),650);
+  if(btn.dataset.boxTarget==="market12section") setTimeout(()=>document.getElementById("query12")?.focus(),650);
+ }
+}));
+
+document.querySelectorAll(".home-launch-btn").forEach(btn=>btn.addEventListener("click",()=>{
+ const target=document.getElementById(btn.dataset.homeTarget);
+ if(target) target.scrollIntoView({behavior:"smooth",block:"start"});
+}));
+
+function boxPriceSummary(label,retail,current,currency,krwRetail,krwCurrent){
+ if(!(retail>0)||!(current>0)) return `<b>${label}</b><br><span class="muted">출고가와 현재 거래금액을 모두 입력하세요.</span>`;
+ const diff=current-retail, pct=diff/retail*100;
+ const cls=pct>0?"price-up":pct<0?"price-down":"price-flat";
+ const sign=pct>0?"▲ ":pct<0?"▼ ":"";
+ const fmt=n=>currency==="$"?Number(n).toLocaleString("en-US",{minimumFractionDigits:2,maximumFractionDigits:2}):Math.round(n).toLocaleString("ko-KR");
+ const fmtKrw=n=>Math.round(n).toLocaleString("ko-KR");
+ return `<b>${label}</b>`+
+ `<div class="price-line"><span>출고가</span><b>${currency}${fmt(retail)}${krwRetail?` <span class="muted">(약 ₩${fmtKrw(krwRetail)})</span>`:""}</b></div>`+
+ `<div class="price-line"><span>현재 거래가</span><b>${currency}${fmt(current)}${krwCurrent?` <span class="muted">(약 ₩${fmtKrw(krwCurrent)})</span>`:""}</b></div>`+
+ `<div class="price-line"><span>가격 변화</span><b class="${cls}">${diff>0?"+":diff<0?"-":""}${currency}${fmt(Math.abs(diff))}</b></div>`+
+ `<div class="price-line"><span>출고가 대비</span><span class="price-change ${cls}">${sign}${Math.abs(pct).toFixed(1)}%</span></div>`;
+}
+document.getElementById("calcBoxPrice")?.addEventListener("click",()=>{
+ const name=document.getElementById("boxPriceName").value.trim()||"선택한 BOX";
+ const krRetail=Number(document.getElementById("krBoxRetail").value),krCurrent=Number(document.getElementById("krBoxCurrent").value);
+ const jpRetail=Number(document.getElementById("jpBoxRetail").value),jpCurrent=Number(document.getElementById("jpBoxCurrent").value);
+ const usRetail=Number(document.getElementById("usBoxRetail").value),usCurrent=Number(document.getElementById("usBoxCurrent").value);
+ const fx=Number(document.getElementById("boxFxRate").value)||870, yenToWon=fx/100;
+ const usdFx=Number(document.getElementById("boxUsdRate").value)||1390;
+ document.getElementById("boxPriceResult").innerHTML=`<div style="font-size:17px;font-weight:800;margin-bottom:10px">${name}</div>`+
+ `<div class="box-price-grid"><div>${boxPriceSummary("🇰🇷 한국판",krRetail,krCurrent,"₩")}</div>`+
+ `<div>${boxPriceSummary("🇯🇵 일본판",jpRetail,jpCurrent,"¥",jpRetail*yenToWon,jpCurrent*yenToWon)}</div>`+
+ `<div>${boxPriceSummary("🇺🇸 미국판",usRetail,usCurrent,"$",usRetail*usdFx,usCurrent*usdFx)}</div></div>`+
+ `<div class="muted" style="margin-top:10px">환산 기준: ¥100 = ₩${fx.toLocaleString("ko-KR")} · $1 = ₩${usdFx.toLocaleString("ko-KR")} · 환전/배송/관세 수수료 제외</div>`;
+});
 </script>
 
 <script>
@@ -1188,63 +1327,6 @@ document.getElementById("v17clear")?.addEventListener("click",()=>{
  if(confirm("대기 중인 변경자료를 모두 삭제할까요?")) v17save([]);
 });
 v17render();
-</script>
-
-<script>
-async function v18call(path){
- const r=await fetch(path,{cache:"no-store"}); return await r.json();
-}
-function v18show(d){
- const c=d.changes||[];
- document.getElementById("v18out").innerHTML=
- `<b>마지막 확인:</b> ${d.updated_at||"-"}<br>`+
- `<b>변경/오류:</b> ${c.length}건<br>`+
- (c.length?c.map(x=>`• ${x.source} — ${x.type}${x.error?": "+x.error:""}`).join("<br>"):"✅ 확인된 페이지 변경 없음");
-}
-document.getElementById("v18update")?.addEventListener("click",async()=>{
- document.getElementById("v18out").textContent="⏳ 최신자료 수집 중...";
- try{v18show(await v18call("/api/update"))}
- catch(e){document.getElementById("v18out").innerHTML="❌ 컴퓨터 업데이트 서버에 연결되지 않았습니다. <b>START_TCG_UPDATER</b>를 먼저 실행하세요."}
-});
-document.getElementById("v18status")?.addEventListener("click",async()=>{
- try{v18show(await v18call("/api/status"))}
- catch(e){document.getElementById("v18out").textContent="서버 연결 안 됨"}
-});
-</script>
-
-<script>
-async function v19get(path){
- const r=await fetch(path,{cache:"no-store"});
- if(!r.ok) throw new Error("서버 응답 오류");
- return r.json();
-}
-function v19render(d){
- const p=d.pending||[];
- document.getElementById("v19out").innerHTML=
- `<b>마지막 수집:</b> ${d.updated_at||"없음"}<br>`+
- `<b>검토 대기:</b> ${p.length}건<br>`+
- (p.length?p.map(x=>`• <a href="${x.url}" target="_blank">${x.source}</a> — ${x.status}${x.error?` (${x.error})`:""}`).join("<br>"):"✅ 변경/오류 대기 없음");
-}
-document.getElementById("v19collect")?.addEventListener("click",async()=>{
- document.getElementById("v19out").textContent="⏳ 최신정보를 수집하고 있습니다...";
- try{v19render(await v19get("/api/최신자료수집"))}
- catch(e){document.getElementById("v19out").innerHTML="❌ 서버가 실행되지 않았습니다. <b>START_TCG_UPDATER.bat</b>를 먼저 실행하세요."}
-});
-document.getElementById("v19apply")?.addEventListener("click",async()=>{
- try{
-  const d=await v19get("/api/상태");
-  const p=d.pending||[];
-  if(!p.length){document.getElementById("v19out").innerHTML="반영할 변경사항이 없습니다.";return}
-  // Important: this only records source verification as applied; it does not invent card prices.
-  d.applied=(d.applied||[]).concat(p.map(x=>({...x,applied_at:new Date().toISOString()}))).slice(-1000);
-  d.pending=[];
-  const msg="확인된 공식자료 "+p.length+"건을 반영 기록으로 이동했습니다. 실제 거래가격은 SOLD/체결 데이터가 확인된 경우에만 별도 반영하세요.";
-  // Browser cannot write server DB through GET; use a local download fallback.
-  const blob=new Blob([JSON.stringify(d,null,2)],{type:"application/json"});
-  const a=document.createElement("a"); a.href=URL.createObjectURL(blob); a.download="tcg_live_data_반영본.json"; a.click();
-  document.getElementById("v19out").innerHTML="✅ "+msg+"<br>📥 반영본 JSON을 저장했습니다.";
- }catch(e){document.getElementById("v19out").textContent="❌ 반영 처리 실패: "+e.message}
-});
 </script>
 
 <script>

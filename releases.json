@@ -1,0 +1,75 @@
+{
+  "updated_at": "2026-08-21T06:26:51+00:00",
+  "items": [
+    {
+      "game": "ONE PIECE",
+      "region": "KR",
+      "name": "OPK-14 부스터 팩 창해의 칠걸",
+      "release_date": "2026-08-21",
+      "price": "₩48,000/BOX",
+      "status": "공식 출시",
+      "source": "https://onepiece-cardgame.kr/"
+    },
+    {
+      "game": "ONE PIECE",
+      "region": "JP",
+      "name": "OP-17 The World's Strongest Warriors",
+      "release_date": "2026-08-22",
+      "price": "공식 상품페이지 확인",
+      "status": "출시예정",
+      "source": "https://asia-en.onepiece-cardgame.com/products/"
+    },
+    {
+      "game": "ONE PIECE",
+      "region": "US",
+      "name": "OP-17 The World's Strongest Warriors",
+      "release_date": "2026-08-28",
+      "price": "$4.99/팩",
+      "status": "출시예정",
+      "source": "https://en.onepiece-cardgame.com/products/"
+    },
+    {
+      "game": "Pokémon",
+      "region": "JP",
+      "name": "30th CELEBRATION",
+      "release_date": "2026-09-16",
+      "price": "¥360/팩",
+      "status": "출시예정",
+      "source": "https://www.pokemon-card.com/products/"
+    },
+    {
+      "game": "Pokémon",
+      "region": "US",
+      "name": "30th Celebration Elite Trainer Box",
+      "release_date": "2026-09-16",
+      "price": "공식 상품페이지 확인",
+      "status": "출시예정",
+      "source": "https://www.pokemon.com/us/pokemon-tcg/product-gallery/30th-celebration-elite-trainer-box"
+    },
+    {
+      "game": "Pokémon",
+      "region": "US",
+      "name": "30th Celebration Ultra-Premium Collection",
+      "release_date": "2026-11-06",
+      "price": "공식 상품페이지 확인",
+      "status": "출시예정",
+      "source": "https://www.pokemon.com/us/pokemon-tcg/product-gallery/30th-celebration-ultra-premium-collections-day-night"
+    },
+    {
+      "game": "NARUTO",
+      "region": "GLOBAL",
+      "name": "NARUTO CARD GAME",
+      "release_date": null,
+      "release_window": "2027년 여름",
+      "price": "가격·제품 구성 미정",
+      "status": "전 세계 동시 출시 예정",
+      "source": "https://www.naruto-cardgame.com/asia-en/"
+    }
+  ],
+  "collection_policy": "공식 출처에서 상품명과 출시일 또는 공식 출시시기가 함께 확인된 항목만 자동 반영",
+  "collection_status": "일부 출처 확인 실패",
+  "collection_errors": [
+    "ONE PIECE US: HTTPError",
+    "ONE PIECE Asia: HTTPError"
+  ]
+}
