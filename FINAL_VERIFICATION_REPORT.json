@@ -1,7 +1,7 @@
 {
   "verified_at": "2026-08-21",
   "result": "PASS",
-  "build": "tcg-v31-adaptive-learning-ko-29",
+  "build": "tcg-v31-expanded-market-ko-30",
   "checks": {
     "html_parse": "PASS",
     "html_ids": "PASS - 176 unique, no duplicates",
@@ -48,7 +48,7 @@
     "popularity_ranking": "PASS - BOX/HIT, country and game filters; popularity/latest/name sorting",
     "popularity_refresh": "PASS - recalculates after refreshed market_prices.json",
     "trading_catalog_separation": "PASS - verified-price BOX and HIT products are shown in a separate category",
-    "trading_catalog_counts": "PASS - 7 BOX and 4 HIT verified-price records",
+    "trading_catalog_counts": "PASS - 20 BOX and 8 HIT verified-price records",
     "trading_catalog_filters": "PASS - BOX/HIT and KR/JP/US filters are isolated from popularity controls",
     "trading_catalog_refresh": "PASS - prices and foreign-currency KRW conversions rerender after refresh",
     "unified_auto_update": "PASS - releases, prices, promo events and FX run through one validated update cycle",
@@ -58,6 +58,8 @@
     "adaptive_repair_learning": "PASS - recurring error type, count and successful repair history alter later retry policy",
     "persistent_last_good_restore": "PASS - last validated JSON snapshots recover damage present before a new run",
     "repair_memory_ui": "PASS - learned runs, recurring categories and applied repair policies are visible in the server panel",
+    "uncatalogued_market_items": "PASS - verified-price products outside the fixed catalog render automatically",
+    "expanded_market_sources": "PASS - BOX resale, raw-card reference and graded-card completed-sale types remain explicitly separated",
     "service_worker_runtime": "PASS - install, activate, network-first JSON and offline cache fallback",
     "korean_game_labels": "PASS - Pokémon/ONE PIECE/NARUTO controls translated",
     "all_sources_offline_price_preservation": "PASS",

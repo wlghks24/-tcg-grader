@@ -39,13 +39,28 @@ def main():
         text=textify(fetch(url))
         boxes={'인페르노X':('JP|인페르노 X|BOX','인페르노 X'),'닌자스피너':('JP|닌자스피너|BOX','닌자스피너'),
           '메가 드림 ex':('JP|메가 드림 ex|BOX','메가 드림 ex'),'메가브레이브':('JP|메가 브레이브|BOX','메가 브레이브'),
-          '메가심포니아':('JP|메가 심포니아|BOX','메가 심포니아')}
+          '메가심포니아':('JP|메가 심포니아|BOX','메가 심포니아'),'스타버스':('JP|스타버스|BOX','스타버스'),
+          'VMAX 클라이맥스':('JP|VMAX 클라이맥스|BOX','VMAX 클라이맥스'),'니힐제로':('JP|니힐제로|BOX','니힐제로'),
+          '포켓몬 카드 151':('JP|포켓몬 카드 151|BOX','포켓몬 카드 151'),'블랙볼트':('JP|블랙볼트 일본판|BOX','블랙볼트'),
+          '화이트플레어':('JP|화이트플레어 일본판|BOX','화이트플레어'),'25주년 기념 컬렉션':('JP|25주년 기념 컬렉션|BOX','25주년 기념 컬렉션'),
+          '브이스타 유니버스':('JP|브이스타 유니버스|BOX','브이스타 유니버스'),'배틀리전':('JP|배틀리전|BOX','배틀리전'),
+          '포켓몬 GO':('JP|포켓몬 GO|BOX','포켓몬 GO'),'창공스트림':('JP|창공스트림|BOX','창공스트림')}
         found_boxes=0
         for token,(key,label) in boxes.items():
             m=re.search(re.escape(token)+r'\s*₩([0-9,]+)',text,re.I)
             if m:
                 set_price(db,key,'₩'+m.group(1),'BOX 리셀가','POKARD','공개 표시가격',url);found_boxes+=1
         if not found_boxes: errors.append('POKARD BOX: 가격 패턴 0건')
+        popular_cards={
+          '피카츄 RR 포켓심쿵 컬렉션 RR':('KR|포켓심쿵 컬렉션|HIT','Pokémon','피카츄 RR','PSA10 공개 체결가'),
+          '메가 리자몽 X ex':('JP|메가 리자몽 X ex|HIT','Pokémon','메가 리자몽 X ex','미감정 공개 시세'),
+          '뮤 P 극장판 뮤츠의 역습 프로모 카드':('KR|뮤츠의 역습 프로모|HIT','Pokémon','뮤 프로모','PSA10 공개 체결가'),
+          '리자몽ex SR':('KR|흑염의 지배자|HIT','Pokémon','리자몽 ex SR','PSA10 공개 체결가')}
+        for token,(key,game,card_name,kind) in popular_cards.items():
+            m=re.search(re.escape(token)+r'.{0,80}?([₩¥$][0-9,]+)',text,re.I)
+            if m:
+                set_price(db,key,m.group(1),kind,'POKARD',f'{token} 공개 표시가격',url)
+                db['entries'][key].update({'game':game,'card_name':card_name,'product_name':token})
     except Exception as e: errors.append('POKARD BOX: '+type(e).__name__)
     try:
         url='https://kream.co.kr/products/959332'; text=textify(fetch(url))
