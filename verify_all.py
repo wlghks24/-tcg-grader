@@ -52,9 +52,28 @@ def main():
         return '판매·재발매 자료 캐시 포함'
     check('서비스워커',sw_check,rows)
     def launchers():
-        required=('TCG_AUTO_UPDATE.bat','정보자동업데이트.bat','START_TCG_UPDATER_ANDROID.sh','자동실행_설치.bat','ANDROID_AUTO_START_INSTALL.sh')
+        required=('TCG_AUTO_UPDATE.bat','정보자동업데이트.bat','START_TCG_UPDATER_ANDROID.sh','자동실행_설치.bat','ANDROID_AUTO_START_INSTALL.sh','PC_SERVER_AUTO_START_INSTALL.bat','TCG_SERVER_AUTO_RUN.cmd','자동실행_해제.bat')
         assert all((ROOT/f).exists() for f in required);return f'{len(required)}개'
     check('PC·태블릿 실행파일',launchers,rows)
+    def startup_safety():
+        installer=(ROOT/'PC_SERVER_AUTO_START_INSTALL.bat').read_text(encoding='utf-8')
+        runner=(ROOT/'TCG_SERVER_AUTO_RUN.cmd').read_text(encoding='utf-8')
+        remover=(ROOT/'자동실행_해제.bat').read_text(encoding='utf-8')
+        assert 'if not exist "tcg_updater.py"' in installer
+        assert 'if not exist "index.html"' in installer
+        assert 'TCG_SERVER_AUTO_RUN.cmd' in installer
+        assert ':RUN' in runner and 'goto RUN' in runner and 'Restarting in 10 seconds' in runner
+        assert 'timeout /t 30' in runner and 'tcg_updater.py' in runner
+        assert 'TCG_SERVER_AUTO_START.cmd' in remover and 'TCG_AUTO_UPDATE_START.cmd' in remover
+        return '필수파일·Python 확인 · 오류 시 10초 후 자동복구'
+    check('Windows 자동실행 안전장치',startup_safety,rows)
+    def lan_selection():
+        import tcg_updater
+        assert tcg_updater.choose_lan_ip(['10.5.0.2','192.168.1.2'])=='192.168.1.2'
+        assert tcg_updater.choose_lan_ip(['10.0.0.8'])=='10.0.0.8'
+        assert tcg_updater.choose_lan_ip(['127.0.0.1'])=='127.0.0.1'
+        return 'VPN 10.5.0.2보다 Wi-Fi 192.168.1.2 우선'
+    check('휴대폰·태블릿 LAN 주소 선택',lan_selection,rows)
     def server_api():
         import tcg_updater
         server=tcg_updater.ThreadingHTTPServer(('127.0.0.1',0),tcg_updater.Handler)
