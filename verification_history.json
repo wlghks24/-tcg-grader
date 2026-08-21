@@ -1,0 +1,231 @@
+{
+  "version": 1,
+  "runs": [
+    {
+      "checked_at": "2026-08-21T14:46:42+00:00",
+      "ok": true,
+      "pass_count": 7,
+      "failure_count": 0,
+      "checks": [
+        {
+          "name": "Python 문법",
+          "ok": true,
+          "detail": "8개"
+        },
+        {
+          "name": "JSON 구조",
+          "ok": true,
+          "detail": "8개"
+        },
+        {
+          "name": "국가별 BOX·박스·카드 자료",
+          "ok": true,
+          "detail": "가격 36개 · 판매/재발매 추적 15개"
+        },
+        {
+          "name": "화면 구성",
+          "ok": true,
+          "detail": "고유 ID 176개"
+        },
+        {
+          "name": "JavaScript 문법",
+          "ok": true,
+          "detail": "인라인 JavaScript 문법 정상"
+        },
+        {
+          "name": "서비스워커",
+          "ok": true,
+          "detail": "판매·재발매 자료 캐시 포함"
+        },
+        {
+          "name": "PC·태블릿 실행파일",
+          "ok": true,
+          "detail": "5개"
+        }
+      ]
+    },
+    {
+      "checked_at": "2026-08-21T14:47:19+00:00",
+      "ok": true,
+      "pass_count": 7,
+      "failure_count": 0,
+      "checks": [
+        {
+          "name": "Python 문법",
+          "ok": true,
+          "detail": "8개"
+        },
+        {
+          "name": "JSON 구조",
+          "ok": true,
+          "detail": "8개"
+        },
+        {
+          "name": "국가별 BOX·박스·카드 자료",
+          "ok": true,
+          "detail": "가격 36개 · 판매/재발매 추적 15개"
+        },
+        {
+          "name": "화면 구성",
+          "ok": true,
+          "detail": "고유 ID 176개"
+        },
+        {
+          "name": "JavaScript 문법",
+          "ok": true,
+          "detail": "인라인 JavaScript 문법 정상"
+        },
+        {
+          "name": "서비스워커",
+          "ok": true,
+          "detail": "판매·재발매 자료 캐시 포함"
+        },
+        {
+          "name": "PC·태블릿 실행파일",
+          "ok": true,
+          "detail": "5개"
+        }
+      ]
+    },
+    {
+      "checked_at": "2026-08-21T14:59:15+00:00",
+      "ok": true,
+      "pass_count": 7,
+      "failure_count": 0,
+      "checks": [
+        {
+          "name": "Python 문법",
+          "ok": true,
+          "detail": "8개"
+        },
+        {
+          "name": "JSON 구조",
+          "ok": true,
+          "detail": "8개"
+        },
+        {
+          "name": "국가별 BOX·박스·카드 자료",
+          "ok": true,
+          "detail": "가격 36개 · 판매/재발매 추적 15개"
+        },
+        {
+          "name": "화면 구성",
+          "ok": true,
+          "detail": "고유 ID 176개"
+        },
+        {
+          "name": "JavaScript 문법",
+          "ok": true,
+          "detail": "인라인 JavaScript 문법 정상"
+        },
+        {
+          "name": "서비스워커",
+          "ok": true,
+          "detail": "판매·재발매 자료 캐시 포함"
+        },
+        {
+          "name": "PC·태블릿 실행파일",
+          "ok": true,
+          "detail": "5개"
+        }
+      ]
+    },
+    {
+      "checked_at": "2026-08-21T14:59:43+00:00",
+      "ok": true,
+      "pass_count": 8,
+      "failure_count": 0,
+      "checks": [
+        {
+          "name": "Python 문법",
+          "ok": true,
+          "detail": "8개"
+        },
+        {
+          "name": "JSON 구조",
+          "ok": true,
+          "detail": "8개"
+        },
+        {
+          "name": "국가별 BOX·박스·카드 자료",
+          "ok": true,
+          "detail": "가격 36개 · 판매/재발매 추적 15개"
+        },
+        {
+          "name": "화면 구성",
+          "ok": true,
+          "detail": "고유 ID 176개"
+        },
+        {
+          "name": "JavaScript 문법",
+          "ok": true,
+          "detail": "인라인 JavaScript 문법 정상"
+        },
+        {
+          "name": "서비스워커",
+          "ok": true,
+          "detail": "판매·재발매 자료 캐시 포함"
+        },
+        {
+          "name": "PC·태블릿 실행파일",
+          "ok": true,
+          "detail": "5개"
+        },
+        {
+          "name": "PC·태블릿 서버 실제 응답",
+          "ok": true,
+          "detail": "health·추적목록·OPK-13 가격·화면 응답 정상"
+        }
+      ]
+    },
+    {
+      "checked_at": "2026-08-21T15:02:14+00:00",
+      "ok": true,
+      "pass_count": 8,
+      "failure_count": 0,
+      "checks": [
+        {
+          "name": "Python 문법",
+          "ok": true,
+          "detail": "8개"
+        },
+        {
+          "name": "JSON 구조",
+          "ok": true,
+          "detail": "8개"
+        },
+        {
+          "name": "국가별 BOX·박스·카드 자료",
+          "ok": true,
+          "detail": "가격 36개 · 판매/재발매 추적 15개"
+        },
+        {
+          "name": "화면 구성",
+          "ok": true,
+          "detail": "고유 ID 176개"
+        },
+        {
+          "name": "JavaScript 문법",
+          "ok": true,
+          "detail": "인라인 JavaScript 문법 정상"
+        },
+        {
+          "name": "서비스워커",
+          "ok": true,
+          "detail": "판매·재발매 자료 캐시 포함"
+        },
+        {
+          "name": "PC·태블릿 실행파일",
+          "ok": true,
+          "detail": "5개"
+        },
+        {
+          "name": "PC·태블릿 서버 실제 응답",
+          "ok": true,
+          "detail": "health·추적목록·OPK-13 가격·화면 응답 정상"
+        }
+      ]
+    }
+  ],
+  "updated_at": "2026-08-21T15:02:14+00:00"
+}

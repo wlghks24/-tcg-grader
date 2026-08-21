@@ -1,5 +1,22 @@
 {
-  "updated_at": null,
-  "issue_count": 0,
-  "issues": []
+  "updated_at": "2026-08-21T15:01:57+00:00",
+  "issue_count": 2,
+  "issues": [
+    {
+      "name": "출시일",
+      "file": "releases.json",
+      "severity": "주의",
+      "auto_action": "검증 후 정상 반영",
+      "detail": "Pokémon JP: RuntimeError · ONE PIECE JP: HTTPError · ONE PIECE US: HTTPError",
+      "recommended_action": "공식 상품 페이지 구조와 출시일 표기를 확인하세요."
+    },
+    {
+      "name": "현재 거래시세",
+      "file": "market_prices.json",
+      "severity": "주의",
+      "auto_action": "검증 후 정상 반영",
+      "detail": "KREAM HIT: TimeoutError · KREAM 로맨스 던 BOX: TimeoutError · KREAM 블랙볼트 BOX: TimeoutError",
+      "recommended_action": "가격 출처의 공개 거래표시와 상품명을 확인하세요."
+    }
+  ]
 }

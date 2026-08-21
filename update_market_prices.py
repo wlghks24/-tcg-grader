@@ -10,7 +10,8 @@ APP=ROOT/'index.html'
 HEADERS={'User-Agent':'TCG-Grader-Public-Price-Checker/1.0'}
 
 def fetch(url:str)->str:
-    if not url.startswith(('https://pokard.io/','https://kream.co.kr/','https://www.packmagik.com/')):
+    if not url.startswith(('https://pokard.io/','https://kream.co.kr/','https://www.packmagik.com/',
+                           'https://www.tcgplayer.com/','https://psa-index.com/')):
         raise ValueError('허용되지 않은 가격 출처')
     req=urllib.request.Request(url,headers=HEADERS)
     with urllib.request.urlopen(req,timeout=20) as r:
@@ -25,6 +26,29 @@ def set_price(db,key,display,kind,market,transactions,source):
     db['entries'][key]={'display':display,'kind':kind,'market':market,'transactions':transactions,
       'source_date':dt.date.today().isoformat(),'source':source}
 
+def keep_verified_seeds(db):
+    """공개 상품 페이지에서 확인한 기준값을 보존한다. 수집 실패 때 빈 목록으로 지우지 않는다."""
+    seeds={
+      'KR|계승되는 의지|BOX':{'display':'₩89,000','kind':'KREAM 공개 현재가','market':'KREAM 한국판','transactions':'공개 페이지 거래 1,290건','source':'https://kream.co.kr/products/975577/','game':'ONE PIECE','product_name':'[OPK-13] 계승되는 의지','official_price':'₩48,000/BOX'},
+      'KR|히로인즈 에디션 8BOX|BOX':{'display':'₩574,000','kind':'8BOX 묶음 공개 현재가','market':'KREAM 한국판','transactions':'공개 페이지 거래 12건 · 박스당 참고 약 ₩71,750','source':'https://kream.co.kr/products/1015880','game':'ONE PIECE','product_name':'[EBK-03] Heroines Edition 8BOX','official_price':'8BOX 구성'},
+      'JP|계승되는 의지 일본판|BOX':{'display':'¥24,500','kind':'SNKRDUNK 공개 거래가격','market':'PSA Index · SNKRDUNK','transactions':'2026-08-13 공개 이력','source':'https://psa-index.com/op/box/f2368df8-afac-4442-b478-207121908a3c','game':'ONE PIECE','product_name':'受け継がれる意志 [OP-13]','official_price':'¥5,280/BOX'},
+      'US|계승되는 의지 미국판|BOX':{'display':'$419.29','kind':'TCGplayer Market Price','market':'TCGplayer 미국판','transactions':'공개 시장가격','source':'https://www.tcgplayer.com/content/article/Everything-We-Know-About-One-Piece-TCG-s-Carrying-On-His-Will-OP-13/39711531-74c9-45e6-acab-c67de795bc03/','game':'ONE PIECE','product_name':"Carrying On His Will [OP-13]",'official_price':'$4.99/팩 · 24팩'},
+      'US|더 베스트 Vol.2|BOX':{'display':'$394.85','kind':'TCGplayer Market Price','market':'TCGplayer 미국판','transactions':'공개 시장가격','source':'https://www.tcgplayer.com/content/article/The-10-Cards-Everybody-Wants-from-Premium-Booster-The-Best-Vol-2-PRB-02/5ebe50da-37b7-4be3-a0a2-ab0520a3beb7/','game':'ONE PIECE','product_name':'Premium Booster -The Best- Vol.2 [PRB-02]','official_price':'공식 BOX 구성 확인'},
+      'JP|계승되는 의지 일본판 에이스 만화패러렐|HIT':{'display':'₩11,190,000~₩13,000,000','kind':'PSA10 공개 체결가 범위','market':'KREAM 한국 거래','transactions':'공개 체결자료','source':'https://kream.co.kr/products/911415','game':'ONE PIECE','card_name':'포트거스 D. 에이스 만화 패러렐','product_name':'계승되는 의지 일본판'},
+      'JP|계승되는 의지 일본판 삼형제 SR|HIT':{'display':'₩20,000','kind':'미감정 A 공개 체결가','market':'KREAM 한국 거래','transactions':'공개 체결자료','source':'https://kream.co.kr/products/991036','game':'ONE PIECE','card_name':'에이스·사보·루피 SR','product_name':'계승되는 의지 일본판'},
+      'JP|계승되는 의지 일본판 카무사리|HIT':{'display':'₩43,000','kind':'미감정 A 공개 체결가','market':'KREAM 한국 거래','transactions':'공개 체결자료','source':'https://kream.co.kr/products/911481','game':'ONE PIECE','card_name':'카무사리 R-P','product_name':'계승되는 의지 일본판'}
+    }
+    today=dt.date.today().isoformat()
+    for key,value in seeds.items():
+        current=db['entries'].setdefault(key,{})
+        for field,field_value in value.items(): current.setdefault(field,field_value)
+        current.setdefault('source_date',today)
+
+def atomic_save(db):
+    tmp=DATA.with_suffix('.json.tmp')
+    tmp.write_text(json.dumps(db,ensure_ascii=False,indent=2)+'\n',encoding='utf-8')
+    tmp.replace(DATA)
+
 def coverage(db):
     raw=APP.read_text(encoding='utf-8');block=raw.split('const COUNTRY_BOX_DATA=',1)[1].split('const LEARNING_PRICE_DATA=',1)[0]
     products=re.findall(r'\{country:"(KR|JP|US)",game:"[^"]+",name:"([^"]+)"',block)
@@ -34,6 +58,9 @@ def coverage(db):
 
 def main():
     db=json.loads(DATA.read_text(encoding='utf-8')); db.setdefault('entries',{}); errors=[]
+    keep_verified_seeds(db)
+    # 느린 외부 사이트가 응답하지 않아도 확인 완료 기준자료는 즉시 보존한다.
+    atomic_save(db)
     try:
         url='https://pokard.io/'
         text=textify(fetch(url))
@@ -103,7 +130,7 @@ def main():
     db['collection_status']='정상' if not errors else '일부 가격 출처 확인 실패'
     db['collection_errors']=errors
     db['catalog_price_coverage']=coverage(db)
-    tmp=DATA.with_suffix('.json.tmp');tmp.write_text(json.dumps(db,ensure_ascii=False,indent=2)+'\n',encoding='utf-8');tmp.replace(DATA)
+    atomic_save(db)
     return db
 
 if __name__=='__main__': main()

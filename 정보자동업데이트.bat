@@ -26,6 +26,10 @@ python.exe auto_update_all.py
 
 :RESULT
 if errorlevel 1 goto FAILED
+where py.exe >nul 2>nul
+if not errorlevel 1 py.exe -3 verify_all.py
+if errorlevel 1 python.exe verify_all.py
+if errorlevel 1 goto FAILED
 echo.
 echo [OK] Update completed.
 echo Report: auto_update_report.json

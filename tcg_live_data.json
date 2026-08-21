@@ -1,0 +1,17 @@
+{
+  "updated_at": null,
+  "sources": {},
+  "pending": [],
+  "applied": [],
+  "auto_update": {
+    "enabled": true,
+    "interval_hours": 6,
+    "trigger": "manual",
+    "last_run": "2026-08-21T22:27:31+0900",
+    "next_run": "2026-08-22T04:27:31+0900",
+    "status": "정상",
+    "market_status": "가격 정상",
+    "promo_status": "행사 정상",
+    "fx_status": "환율 정상"
+  }
+}

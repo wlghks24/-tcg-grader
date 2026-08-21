@@ -1,10 +1,10 @@
 {
   "version": 1,
   "trigger": "manual",
-  "started_at": "2026-08-21T13:51:12+00:00",
-  "finished_at": "2026-08-21T13:53:26+00:00",
+  "started_at": "2026-08-21T14:59:43+00:00",
+  "finished_at": "2026-08-21T15:01:57+00:00",
   "ok": true,
-  "success_count": 4,
+  "success_count": 5,
   "failure_count": 0,
   "results": [
     {
@@ -12,32 +12,68 @@
       "file": "releases.json",
       "ok": true,
       "status": "일부 출처 확인 실패",
-      "updated_at": "2026-08-21T13:51:48+00:00",
-      "count": 9
+      "updated_at": "2026-08-21T15:00:18+00:00",
+      "count": 9,
+      "retry_count": 0,
+      "max_attempts": 2,
+      "auto_action": "검증 후 정상 반영",
+      "collection_errors": [
+        "Pokémon JP: RuntimeError",
+        "ONE PIECE JP: HTTPError",
+        "ONE PIECE US: HTTPError"
+      ]
+    },
+    {
+      "name": "판매·재발매 추적",
+      "file": "market_watch.json",
+      "ok": true,
+      "status": "정상",
+      "updated_at": "2026-08-21T15:00:18+00:00",
+      "count": 15,
+      "retry_count": 0,
+      "max_attempts": 2,
+      "auto_action": "검증 후 정상 반영",
+      "collection_errors": []
     },
     {
       "name": "현재 거래시세",
       "file": "market_prices.json",
       "ok": true,
       "status": "일부 가격 출처 확인 실패",
-      "updated_at": "2026-08-21T13:53:12+00:00",
-      "count": 11
+      "updated_at": "2026-08-21T15:01:43+00:00",
+      "count": 36,
+      "retry_count": 0,
+      "max_attempts": 2,
+      "auto_action": "검증 후 정상 반영",
+      "collection_errors": [
+        "KREAM HIT: TimeoutError",
+        "KREAM 로맨스 던 BOX: TimeoutError",
+        "KREAM 블랙볼트 BOX: TimeoutError"
+      ]
     },
     {
       "name": "프로모 카드 행사",
       "file": "promo_events.json",
       "ok": true,
       "status": "정상",
-      "updated_at": "2026-08-21T13:53:18+00:00",
-      "count": 1
+      "updated_at": "2026-08-21T15:01:49+00:00",
+      "count": 1,
+      "retry_count": 0,
+      "max_attempts": 2,
+      "auto_action": "검증 후 정상 반영",
+      "collection_errors": []
     },
     {
       "name": "원화 환산 환율",
       "file": "exchange_rates.json",
       "ok": true,
       "status": "정상",
-      "updated_at": "2026-08-21T13:53:26+00:00",
-      "count": 0
+      "updated_at": "2026-08-21T15:01:57+00:00",
+      "count": 0,
+      "retry_count": 0,
+      "max_attempts": 2,
+      "auto_action": "검증 후 정상 반영",
+      "collection_errors": []
     }
   ]
 }

@@ -13,6 +13,8 @@ if ! command -v python >/dev/null 2>&1; then
 fi
 
 echo "서버를 종료하려면 Ctrl+C를 누르세요."
+python auto_update_all.py || true
+python verify_all.py || echo "검사보고서에서 수정 필요 항목을 확인하세요."
 if command -v termux-wake-lock >/dev/null 2>&1; then
   termux-wake-lock || true
   trap 'termux-wake-unlock >/dev/null 2>&1 || true' EXIT INT TERM

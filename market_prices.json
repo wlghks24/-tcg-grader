@@ -1,5 +1,5 @@
 {
-  "updated_at": "2026-08-21T13:53:12+00:00",
+  "updated_at": "2026-08-21T15:01:43+00:00",
   "entries": {
     "KR|테라스탈 페스타 ex|HIT": {
       "display": "₩138,000",
@@ -14,7 +14,7 @@
       "kind": "미감정 참고가격",
       "market": "POKARD · SNKRDUNK",
       "transactions": "공개 표시가격",
-      "source_date": "2026-08-21",
+      "source_date": "2026-08-22",
       "source": "https://pokard.io/jpcard/SV8a-217/"
     },
     "US|프리즈마틱 에볼루션|HIT": {
@@ -30,7 +30,7 @@
       "kind": "BOX 리셀가",
       "market": "POKARD",
       "transactions": "공개 표시가격",
-      "source_date": "2026-08-21",
+      "source_date": "2026-08-22",
       "source": "https://pokard.io/"
     },
     "JP|닌자스피너|BOX": {
@@ -38,7 +38,7 @@
       "kind": "BOX 리셀가",
       "market": "POKARD",
       "transactions": "공개 표시가격",
-      "source_date": "2026-08-21",
+      "source_date": "2026-08-22",
       "source": "https://pokard.io/"
     },
     "JP|메가 드림 ex|BOX": {
@@ -46,7 +46,7 @@
       "kind": "BOX 리셀가",
       "market": "POKARD",
       "transactions": "공개 표시가격",
-      "source_date": "2026-08-21",
+      "source_date": "2026-08-22",
       "source": "https://pokard.io/"
     },
     "JP|메가 브레이브|BOX": {
@@ -54,7 +54,7 @@
       "kind": "BOX 리셀가",
       "market": "POKARD",
       "transactions": "공개 표시가격",
-      "source_date": "2026-08-21",
+      "source_date": "2026-08-22",
       "source": "https://pokard.io/"
     },
     "JP|메가 심포니아|BOX": {
@@ -62,7 +62,7 @@
       "kind": "BOX 리셀가",
       "market": "POKARD",
       "transactions": "공개 표시가격",
-      "source_date": "2026-08-21",
+      "source_date": "2026-08-22",
       "source": "https://pokard.io/"
     },
     "KR|로맨스 던|BOX": {
@@ -86,7 +86,7 @@
       "kind": "OP14-009 패러렐 국제판 참고시세",
       "market": "Pack Magik 국제시장",
       "transactions": "한국판 실거래 아님 · 국제판 시장가 참고",
-      "source_date": "2026-08-21",
+      "source_date": "2026-08-22",
       "source": "https://www.packmagik.com/cards/op-op14-op14-009-p1"
     },
     "KR|신시대의 주역|BOX": {
@@ -110,55 +110,230 @@
       "official_price": "₩50,000/BOX"
     },
     "JP|스타버스|BOX": {
-      "display": "₩62,000", "kind": "BOX 리셀가", "market": "POKARD", "transactions": "공개 표시가격", "source_date": "2026-08-21", "source": "https://pokard.io/", "game": "Pokémon", "product_name": "スターバース"
+      "display": "₩62,000",
+      "kind": "BOX 리셀가",
+      "market": "POKARD",
+      "transactions": "공개 표시가격",
+      "source_date": "2026-08-22",
+      "source": "https://pokard.io/"
     },
     "JP|VMAX 클라이맥스|BOX": {
-      "display": "₩150,000", "kind": "BOX 리셀가", "market": "POKARD", "transactions": "공개 표시가격", "source_date": "2026-08-21", "source": "https://pokard.io/", "game": "Pokémon", "product_name": "VMAXクライマックス"
+      "display": "₩150,000",
+      "kind": "BOX 리셀가",
+      "market": "POKARD",
+      "transactions": "공개 표시가격",
+      "source_date": "2026-08-22",
+      "source": "https://pokard.io/"
     },
     "JP|니힐제로|BOX": {
-      "display": "₩38,000", "kind": "BOX 리셀가", "market": "POKARD", "transactions": "공개 표시가격", "source_date": "2026-08-21", "source": "https://pokard.io/", "game": "Pokémon", "product_name": "ニヒルゼロ"
+      "display": "₩38,000",
+      "kind": "BOX 리셀가",
+      "market": "POKARD",
+      "transactions": "공개 표시가격",
+      "source_date": "2026-08-22",
+      "source": "https://pokard.io/"
     },
     "JP|포켓몬 카드 151|BOX": {
-      "display": "₩194,000", "kind": "BOX 리셀가", "market": "POKARD", "transactions": "공개 표시가격", "source_date": "2026-08-21", "source": "https://pokard.io/", "game": "Pokémon", "product_name": "ポケモンカード151"
+      "display": "₩194,000",
+      "kind": "BOX 리셀가",
+      "market": "POKARD",
+      "transactions": "공개 표시가격",
+      "source_date": "2026-08-22",
+      "source": "https://pokard.io/"
     },
     "JP|블랙볼트 일본판|BOX": {
-      "display": "₩60,000", "kind": "BOX 리셀가", "market": "POKARD", "transactions": "공개 표시가격", "source_date": "2026-08-21", "source": "https://pokard.io/", "game": "Pokémon", "product_name": "ブラックボルト"
+      "display": "₩60,000",
+      "kind": "BOX 리셀가",
+      "market": "POKARD",
+      "transactions": "공개 표시가격",
+      "source_date": "2026-08-22",
+      "source": "https://pokard.io/"
     },
     "JP|화이트플레어 일본판|BOX": {
-      "display": "₩57,000", "kind": "BOX 리셀가", "market": "POKARD", "transactions": "공개 표시가격", "source_date": "2026-08-21", "source": "https://pokard.io/", "game": "Pokémon", "product_name": "ホワイトフレア"
+      "display": "₩57,000",
+      "kind": "BOX 리셀가",
+      "market": "POKARD",
+      "transactions": "공개 표시가격",
+      "source_date": "2026-08-22",
+      "source": "https://pokard.io/"
     },
     "JP|25주년 기념 컬렉션|BOX": {
-      "display": "₩358,000", "kind": "BOX 리셀가", "market": "POKARD", "transactions": "공개 표시가격", "source_date": "2026-08-21", "source": "https://pokard.io/", "game": "Pokémon", "product_name": "25th ANNIVERSARY COLLECTION"
+      "display": "₩358,000",
+      "kind": "BOX 리셀가",
+      "market": "POKARD",
+      "transactions": "공개 표시가격",
+      "source_date": "2026-08-22",
+      "source": "https://pokard.io/"
     },
     "JP|브이스타 유니버스|BOX": {
-      "display": "₩119,000", "kind": "BOX 리셀가", "market": "POKARD", "transactions": "공개 표시가격", "source_date": "2026-08-21", "source": "https://pokard.io/", "game": "Pokémon", "product_name": "VSTARユニバース"
+      "display": "₩119,000",
+      "kind": "BOX 리셀가",
+      "market": "POKARD",
+      "transactions": "공개 표시가격",
+      "source_date": "2026-08-22",
+      "source": "https://pokard.io/"
     },
     "JP|배틀리전|BOX": {
-      "display": "₩57,000", "kind": "BOX 리셀가", "market": "POKARD", "transactions": "공개 표시가격", "source_date": "2026-08-21", "source": "https://pokard.io/", "game": "Pokémon", "product_name": "バトルリージョン"
+      "display": "₩57,000",
+      "kind": "BOX 리셀가",
+      "market": "POKARD",
+      "transactions": "공개 표시가격",
+      "source_date": "2026-08-22",
+      "source": "https://pokard.io/"
     },
     "JP|포켓몬 GO|BOX": {
-      "display": "₩113,000", "kind": "BOX 리셀가", "market": "POKARD", "transactions": "공개 표시가격", "source_date": "2026-08-21", "source": "https://pokard.io/", "game": "Pokémon", "product_name": "Pokémon GO"
+      "display": "₩113,000",
+      "kind": "BOX 리셀가",
+      "market": "POKARD",
+      "transactions": "공개 표시가격",
+      "source_date": "2026-08-22",
+      "source": "https://pokard.io/"
     },
     "JP|창공스트림|BOX": {
-      "display": "₩134,000", "kind": "BOX 리셀가", "market": "POKARD", "transactions": "공개 표시가격", "source_date": "2026-08-21", "source": "https://pokard.io/", "game": "Pokémon", "product_name": "蒼空ストリーム"
+      "display": "₩134,000",
+      "kind": "BOX 리셀가",
+      "market": "POKARD",
+      "transactions": "공개 표시가격",
+      "source_date": "2026-08-22",
+      "source": "https://pokard.io/"
     },
     "KR|포켓심쿵 컬렉션|HIT": {
-      "display": "₩3,100,000", "kind": "PSA10 공개 체결가", "market": "POKARD · KREAM", "transactions": "PSA10 체결 1건", "source_date": "2026-08-21", "source": "https://pokard.io/", "game": "Pokémon", "card_name": "피카츄 RR", "product_name": "포켓심쿵 컬렉션"
+      "display": "₩3,100,000",
+      "kind": "PSA10 공개 체결가",
+      "market": "POKARD",
+      "transactions": "피카츄 RR 포켓심쿵 컬렉션 RR 공개 표시가격",
+      "source_date": "2026-08-22",
+      "source": "https://pokard.io/",
+      "game": "Pokémon",
+      "card_name": "피카츄 RR",
+      "product_name": "피카츄 RR 포켓심쿵 컬렉션 RR"
     },
     "JP|메가 리자몽 X ex|HIT": {
-      "display": "¥210,220", "kind": "미감정 공개 시세", "market": "POKARD · SNKRDUNK", "transactions": "공개 표시가격", "source_date": "2026-08-21", "source": "https://pokard.io/", "game": "Pokémon", "card_name": "메가 리자몽 X ex", "product_name": "메가 리자몽 X ex"
+      "display": "¥210,220",
+      "kind": "미감정 공개 시세",
+      "market": "POKARD",
+      "transactions": "메가 리자몽 X ex 공개 표시가격",
+      "source_date": "2026-08-22",
+      "source": "https://pokard.io/",
+      "game": "Pokémon",
+      "card_name": "메가 리자몽 X ex",
+      "product_name": "메가 리자몽 X ex"
     },
     "KR|뮤츠의 역습 프로모|HIT": {
-      "display": "₩1,800,000", "kind": "PSA10 공개 체결가", "market": "POKARD · KREAM", "transactions": "PSA10 체결 9건", "source_date": "2026-08-21", "source": "https://pokard.io/", "game": "Pokémon", "card_name": "뮤 P 프로모", "product_name": "극장판 뮤츠의 역습 프로모"
+      "display": "₩1,800,000",
+      "kind": "PSA10 공개 체결가",
+      "market": "POKARD",
+      "transactions": "뮤 P 극장판 뮤츠의 역습 프로모 카드 공개 표시가격",
+      "source_date": "2026-08-22",
+      "source": "https://pokard.io/",
+      "game": "Pokémon",
+      "card_name": "뮤 프로모",
+      "product_name": "뮤 P 극장판 뮤츠의 역습 프로모 카드"
     },
     "KR|흑염의 지배자|HIT": {
-      "display": "₩1,700,000", "kind": "PSA10 공개 체결가", "market": "POKARD · KREAM", "transactions": "PSA10 체결 1건", "source_date": "2026-08-21", "source": "https://pokard.io/", "game": "Pokémon", "card_name": "리자몽 ex SR", "product_name": "흑염의 지배자"
+      "display": "₩1,700,000",
+      "kind": "PSA10 공개 체결가",
+      "market": "POKARD",
+      "transactions": "리자몽ex SR 공개 표시가격",
+      "source_date": "2026-08-22",
+      "source": "https://pokard.io/",
+      "game": "Pokémon",
+      "card_name": "리자몽 ex SR",
+      "product_name": "리자몽ex SR"
+    },
+    "KR|계승되는 의지|BOX": {
+      "display": "₩89,000",
+      "kind": "KREAM 공개 현재가",
+      "market": "KREAM 한국판",
+      "transactions": "공개 페이지 거래 1,290건",
+      "source": "https://kream.co.kr/products/975577/",
+      "game": "ONE PIECE",
+      "product_name": "[OPK-13] 계승되는 의지",
+      "official_price": "₩48,000/BOX",
+      "source_date": "2026-08-21"
+    },
+    "KR|히로인즈 에디션 8BOX|BOX": {
+      "display": "₩574,000",
+      "kind": "8BOX 묶음 공개 현재가",
+      "market": "KREAM 한국판",
+      "transactions": "공개 페이지 거래 12건 · 박스당 참고 약 ₩71,750",
+      "source": "https://kream.co.kr/products/1015880",
+      "game": "ONE PIECE",
+      "product_name": "[EBK-03] Heroines Edition 8BOX",
+      "official_price": "8BOX 구성",
+      "source_date": "2026-08-21"
+    },
+    "JP|계승되는 의지 일본판|BOX": {
+      "display": "¥24,500",
+      "kind": "SNKRDUNK 공개 거래가격",
+      "market": "PSA Index · SNKRDUNK",
+      "transactions": "2026-08-13 공개 이력",
+      "source": "https://psa-index.com/op/box/f2368df8-afac-4442-b478-207121908a3c",
+      "game": "ONE PIECE",
+      "product_name": "受け継がれる意志 [OP-13]",
+      "official_price": "¥5,280/BOX",
+      "source_date": "2026-08-21"
+    },
+    "US|계승되는 의지 미국판|BOX": {
+      "display": "$419.29",
+      "kind": "TCGplayer Market Price",
+      "market": "TCGplayer 미국판",
+      "transactions": "공개 시장가격",
+      "source": "https://www.tcgplayer.com/content/article/Everything-We-Know-About-One-Piece-TCG-s-Carrying-On-His-Will-OP-13/39711531-74c9-45e6-acab-c67de795bc03/",
+      "game": "ONE PIECE",
+      "product_name": "Carrying On His Will [OP-13]",
+      "official_price": "$4.99/팩 · 24팩",
+      "source_date": "2026-08-21"
+    },
+    "US|더 베스트 Vol.2|BOX": {
+      "display": "$394.85",
+      "kind": "TCGplayer Market Price",
+      "market": "TCGplayer 미국판",
+      "transactions": "공개 시장가격",
+      "source": "https://www.tcgplayer.com/content/article/The-10-Cards-Everybody-Wants-from-Premium-Booster-The-Best-Vol-2-PRB-02/5ebe50da-37b7-4be3-a0a2-ab0520a3beb7/",
+      "game": "ONE PIECE",
+      "product_name": "Premium Booster -The Best- Vol.2 [PRB-02]",
+      "official_price": "공식 BOX 구성 확인",
+      "source_date": "2026-08-21"
+    },
+    "JP|계승되는 의지 일본판 에이스 만화패러렐|HIT": {
+      "display": "₩11,190,000~₩13,000,000",
+      "kind": "PSA10 공개 체결가 범위",
+      "market": "KREAM 한국 거래",
+      "transactions": "공개 체결자료",
+      "source": "https://kream.co.kr/products/911415",
+      "game": "ONE PIECE",
+      "card_name": "포트거스 D. 에이스 만화 패러렐",
+      "product_name": "계승되는 의지 일본판",
+      "source_date": "2026-08-21"
+    },
+    "JP|계승되는 의지 일본판 삼형제 SR|HIT": {
+      "display": "₩20,000",
+      "kind": "미감정 A 공개 체결가",
+      "market": "KREAM 한국 거래",
+      "transactions": "공개 체결자료",
+      "source": "https://kream.co.kr/products/991036",
+      "game": "ONE PIECE",
+      "card_name": "에이스·사보·루피 SR",
+      "product_name": "계승되는 의지 일본판",
+      "source_date": "2026-08-21"
+    },
+    "JP|계승되는 의지 일본판 카무사리|HIT": {
+      "display": "₩43,000",
+      "kind": "미감정 A 공개 체결가",
+      "market": "KREAM 한국 거래",
+      "transactions": "공개 체결자료",
+      "source": "https://kream.co.kr/products/911481",
+      "game": "ONE PIECE",
+      "card_name": "카무사리 R-P",
+      "product_name": "계승되는 의지 일본판",
+      "source_date": "2026-08-21"
     }
   },
   "catalog_price_coverage": {
     "total": 64,
-    "verified": 11,
-    "pending": 53,
+    "verified": 16,
+    "pending": 48,
     "missing_keys": [
       "JP|닌자스피너|HIT",
       "JP|메가 드림 ex|HIT",
@@ -176,7 +351,6 @@
       "JP|테라스탈 페스타 ex 일본판|BOX",
       "JP|포켓몬 카드 30주년 기념|BOX",
       "JP|포켓몬 카드 30주년 기념|HIT",
-      "KR|계승되는 의지|BOX",
       "KR|계승되는 의지|HIT",
       "KR|로맨스 던|HIT",
       "KR|메가 심포니아 한국판|BOX",
@@ -186,19 +360,15 @@
       "KR|블랙볼트|HIT",
       "KR|새로운 황제|BOX",
       "KR|새로운 황제|HIT",
-      "KR|신시대의 주역|BOX",
       "KR|신시대의 주역|HIT",
       "KR|창해의 칠걸|BOX",
-      "KR|테라스탈 페스타 ex|BOX",
       "KR|화이트플레어|BOX",
       "KR|화이트플레어|HIT",
       "KR|히로인즈 에디션|BOX",
       "KR|히로인즈 에디션|HIT",
-      "US|계승되는 의지 미국판|BOX",
       "US|계승되는 의지 미국판|HIT",
       "US|나루토 카드 게임|BOX",
       "US|나루토 카드 게임|HIT",
-      "US|더 베스트 Vol.2|BOX",
       "US|더 베스트 Vol.2|HIT",
       "US|블랙볼트·화이트플레어 미국판|BOX",
       "US|블랙볼트·화이트플레어 미국판|HIT",

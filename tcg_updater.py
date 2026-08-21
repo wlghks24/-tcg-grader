@@ -8,6 +8,7 @@ from urllib.request import Request, urlopen
 BASE=os.path.dirname(os.path.abspath(__file__))
 DB=os.path.join(BASE,'tcg_live_data.json')
 MARKET_DB=os.path.join(BASE,'market_prices.json')
+MARKET_WATCH=os.path.join(BASE,'market_watch.json')
 AUTO_REPORT=os.path.join(BASE,'auto_update_report.json')
 AUTO_ISSUES=os.path.join(BASE,'auto_update_issues.json')
 AUTO_MEMORY=os.path.join(BASE,'auto_repair_memory.json')
@@ -64,6 +65,9 @@ def load_market_db():
     except (OSError,ValueError,TypeError):
         return {'updated_at':None,'entries':{},'collection_status':'가격자료 없음'}
 
+def load_market_watch():
+    return load_json_file(MARKET_WATCH,{'updated_at':None,'items':[],'collection_status':'추적자료 없음'})
+
 def load_json_file(path, fallback):
     try:
         with open(path,'r',encoding='utf-8') as f:return json.load(f)
@@ -102,17 +106,18 @@ def update_cycle(trigger='manual'):
             result_map={x['file']:x for x in report['results']}
             release_status=result_map['releases.json']['status']
             market_status=result_map['market_prices.json']['status']
+            watch_status=result_map['market_watch.json']['status']
             promo_status=result_map['promo_events.json']['status']
             fx_status=result_map['exchange_rates.json']['status']
         except Exception as exc:
             message=f'통합 자동업데이트 오류: {type(exc).__name__}'
-            release_status=market_status=promo_status=fx_status=message
+            release_status=market_status=watch_status=promo_status=fx_status=message
         data=load_db()
         data['auto_update']={
             'enabled':True,'interval_hours':6,'trigger':trigger,
             'last_run':time.strftime('%Y-%m-%dT%H:%M:%S%z',time.localtime(started)),
             'next_run':time.strftime('%Y-%m-%dT%H:%M:%S%z',time.localtime(started+AUTO_INTERVAL_SECONDS)),
-            'status':release_status,'market_status':market_status,'promo_status':promo_status,'fx_status':fx_status,
+            'status':release_status,'market_status':market_status,'watch_status':watch_status,'promo_status':promo_status,'fx_status':fx_status,
         }
         save_db(data)
         return data
@@ -139,6 +144,7 @@ class Handler(SimpleHTTPRequestHandler):
         if path=='/api/update-report': return self.json(load_json_file(AUTO_REPORT,{'ok':False,'results':[]}))
         if path=='/api/update-issues': return self.json(load_json_file(AUTO_ISSUES,{'issue_count':0,'issues':[]}))
         if path=='/api/repair-memory': return self.json(load_json_file(AUTO_MEMORY,{'total_runs':0,'patterns':{},'files':{}}))
+        if path=='/api/market-watch': return self.json(load_market_watch())
         if path=='/api/validation': return self.json({'ok':True,'mode':'pre-grade','probability_claim':False})
         if path=='/api/market-price':
             qs=parse_qs(parsed.query); key=qs.get('key',[''])[0]

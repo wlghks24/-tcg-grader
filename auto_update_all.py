@@ -17,6 +17,7 @@ MEMORY = ROOT / "auto_repair_memory.json"
 LAST_GOOD = ROOT / ".tcg_last_good"
 JOBS = (
     ("출시일", "update_releases", "releases.json"),
+    ("판매·재발매 추적", "update_market_watch", "market_watch.json"),
     ("현재 거래시세", "update_market_prices", "market_prices.json"),
     ("프로모 카드 행사", "update_promo_events", "promo_events.json"),
     ("원화 환산 환율", "update_exchange_rates", "exchange_rates.json"),
@@ -39,6 +40,12 @@ def validate_json(name: str, data: dict) -> None:
         for key, value in entries.items():
             if key.count("|") != 2 or not isinstance(value, dict) or not value.get("display"):
                 raise ValueError(f"가격자료 구조 오류: {key}")
+    elif name == "market_watch.json":
+        if not isinstance(data.get("items"), list):
+            raise ValueError("판매·재발매 추적 items 누락")
+        for item in data["items"]:
+            if item.get("region") not in ("KR", "JP", "US") or item.get("asset") not in ("BOX", "HIT") or not item.get("name"):
+                raise ValueError("판매·재발매 추적 필수값 누락")
     elif name == "promo_events.json" and not isinstance(data.get("items"), list):
         raise ValueError("행사목록 items 누락")
     elif name == "exchange_rates.json":
@@ -57,6 +64,7 @@ def issue_advice(filename: str) -> str:
     return {
         "releases.json": "공식 상품 페이지 구조와 출시일 표기를 확인하세요.",
         "market_prices.json": "가격 출처의 공개 거래표시와 상품명을 확인하세요.",
+        "market_watch.json": "국가·상품코드·판매상태와 재발매 출처를 확인하세요.",
         "promo_events.json": "공식 행사 페이지의 기간·수령조건을 확인하세요.",
         "exchange_rates.json": "인터넷 연결 후 환율 출처를 다시 확인하세요.",
     }.get(filename, "원출처와 인터넷 연결을 확인하세요.")
@@ -87,7 +95,8 @@ def run_all(trigger: str = "manual") -> dict:
     LAST_GOOD.mkdir(exist_ok=True)
     with tempfile.TemporaryDirectory(prefix="tcg-update-") as backup_dir:
         backup_root = Path(backup_dir)
-        for label, module_name, filename in JOBS:
+        for job_number, (label, module_name, filename) in enumerate(JOBS, 1):
+            print(f"[{job_number}/{len(JOBS)}] {label} 확인 중...", flush=True)
             target = ROOT / filename
             backup = backup_root / filename
             persistent_backup = LAST_GOOD / filename

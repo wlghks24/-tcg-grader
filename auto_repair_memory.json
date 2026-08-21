@@ -1,7 +1,94 @@
 {
   "version": 1,
-  "updated_at": null,
-  "total_runs": 0,
-  "patterns": {},
-  "files": {}
+  "updated_at": "2026-08-21T15:01:57+00:00",
+  "total_runs": 2,
+  "patterns": {
+    "b3dd31df03f05ece": {
+      "file": "releases.json",
+      "category": "기타 수집 오류",
+      "occurrences": 2,
+      "successful_repairs": 0,
+      "auto_action": "자동 재시도 · 실패 시 정상본 복원",
+      "recommended_action": "오류 상세와 원출처 상태를 확인하세요.",
+      "last_seen": "2026-08-21T15:01:57+00:00",
+      "last_detail": "Pokémon JP: RuntimeError"
+    },
+    "4885262ac70881d2": {
+      "file": "releases.json",
+      "category": "통신 오류",
+      "occurrences": 2,
+      "successful_repairs": 0,
+      "auto_action": "재시도 후 기존 검증자료 유지",
+      "recommended_action": "인터넷 연결과 공식 사이트 응답을 확인하세요.",
+      "last_seen": "2026-08-21T15:01:57+00:00",
+      "last_detail": "ONE PIECE JP: HTTPError"
+    },
+    "79066cc0931cbc01": {
+      "file": "releases.json",
+      "category": "통신 오류",
+      "occurrences": 2,
+      "successful_repairs": 0,
+      "auto_action": "재시도 후 기존 검증자료 유지",
+      "recommended_action": "인터넷 연결과 공식 사이트 응답을 확인하세요.",
+      "last_seen": "2026-08-21T15:01:57+00:00",
+      "last_detail": "ONE PIECE US: HTTPError"
+    },
+    "25951d920e878b92": {
+      "file": "market_prices.json",
+      "category": "통신 오류",
+      "occurrences": 2,
+      "successful_repairs": 0,
+      "auto_action": "재시도 후 기존 검증자료 유지",
+      "recommended_action": "인터넷 연결과 공식 사이트 응답을 확인하세요.",
+      "last_seen": "2026-08-21T15:01:57+00:00",
+      "last_detail": "KREAM HIT: TimeoutError"
+    },
+    "bd077eeafc746cc6": {
+      "file": "market_prices.json",
+      "category": "통신 오류",
+      "occurrences": 2,
+      "successful_repairs": 0,
+      "auto_action": "재시도 후 기존 검증자료 유지",
+      "recommended_action": "인터넷 연결과 공식 사이트 응답을 확인하세요.",
+      "last_seen": "2026-08-21T15:01:57+00:00",
+      "last_detail": "KREAM 로맨스 던 BOX: TimeoutError"
+    },
+    "cb22c18c3fe9e08d": {
+      "file": "market_prices.json",
+      "category": "통신 오류",
+      "occurrences": 2,
+      "successful_repairs": 0,
+      "auto_action": "재시도 후 기존 검증자료 유지",
+      "recommended_action": "인터넷 연결과 공식 사이트 응답을 확인하세요.",
+      "last_seen": "2026-08-21T15:01:57+00:00",
+      "last_detail": "KREAM 블랙볼트 BOX: TimeoutError"
+    }
+  },
+  "files": {
+    "releases.json": {
+      "runs": 2,
+      "recent_failures": 0,
+      "successful_repairs": 0
+    },
+    "market_watch.json": {
+      "runs": 2,
+      "recent_failures": 0,
+      "successful_repairs": 0
+    },
+    "market_prices.json": {
+      "runs": 2,
+      "recent_failures": 0,
+      "successful_repairs": 0
+    },
+    "promo_events.json": {
+      "runs": 2,
+      "recent_failures": 0,
+      "successful_repairs": 0
+    },
+    "exchange_rates.json": {
+      "runs": 2,
+      "recent_failures": 0,
+      "successful_repairs": 0
+    }
+  }
 }
