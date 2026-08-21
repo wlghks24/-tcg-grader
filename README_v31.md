@@ -46,7 +46,7 @@ Pokémon 및 ONE PIECE 카드의 사진을 이용해 센터링과 사진상 결�
 
 - Windows: `START_TCG_UPDATER.bat` 더블클릭
 - 자료만 즉시 갱신하려면 Windows 호환 영문 실행파일 `TCG_AUTO_UPDATE.bat`를 더블클릭합니다. `정보자동업데이트.bat`도 같은 기능이지만 일부 Windows의 한글 배치파일 해석 오류를 피하려면 영문 파일을 권장합니다.
-- PC 로그인 때마다 자동 갱신하려면 `자동실행_설치.bat`를 한 번만 더블클릭합니다. Windows 로그인 30초 후 최소화 상태로 실행되고 결과는 `TCG_AUTO_UPDATE_STARTUP.log`에 누적됩니다.
+- PC 로그인 때마다 서버까지 자동 실행하려면 `PC_SERVER_AUTO_START_INSTALL.bat` 또는 `자동실행_설치.bat`를 한 번만 더블클릭합니다. Windows 로그인 30초 후 서버가 실행되고, 시작 직후와 6시간마다 갱신하며 기록은 `TCG_SERVER_STARTUP.log`에 누적됩니다.
 - 자동실행을 중지하려면 `자동실행_해제.bat`를 더블클릭합니다.
 - 통합 갱신 결과는 `auto_update_report.json`에 저장되며, 실패한 자료는 이전 정상본으로 자동 복구됩니다.
 - 오류·재시도·자동복구 내용은 `auto_update_issues.json`과 앱의 `🩹 오류·자동보정 결과`에서 확인합니다.
