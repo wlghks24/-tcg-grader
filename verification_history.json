@@ -331,7 +331,65 @@
           "detail": "health·추적목록·OPK-13 가격·화면 응답 정상"
         }
       ]
+    },
+    {
+      "checked_at": "2026-08-21T17:46:29+00:00",
+      "ok": true,
+      "pass_count": 10,
+      "failure_count": 0,
+      "checks": [
+        {
+          "name": "Python 문법",
+          "ok": true,
+          "detail": "8개"
+        },
+        {
+          "name": "JSON 구조",
+          "ok": true,
+          "detail": "8개"
+        },
+        {
+          "name": "국가별 BOX·박스·카드 자료",
+          "ok": true,
+          "detail": "가격 36개 · 판매/재발매 추적 15개"
+        },
+        {
+          "name": "화면 구성",
+          "ok": true,
+          "detail": "고유 ID 177개"
+        },
+        {
+          "name": "JavaScript 문법",
+          "ok": true,
+          "detail": "인라인 JavaScript 문법 정상"
+        },
+        {
+          "name": "서비스워커",
+          "ok": true,
+          "detail": "판매·재발매 자료 캐시 포함"
+        },
+        {
+          "name": "PC·태블릿 실행파일",
+          "ok": true,
+          "detail": "8개"
+        },
+        {
+          "name": "Windows 자동실행 안전장치",
+          "ok": true,
+          "detail": "필수파일·Python 확인 · 오류 시 10초 후 자동복구"
+        },
+        {
+          "name": "휴대폰·태블릿 LAN 주소 선택",
+          "ok": true,
+          "detail": "VPN 10.5.0.2보다 Wi-Fi 192.168.1.2 우선"
+        },
+        {
+          "name": "PC·태블릿 서버 실제 응답",
+          "ok": true,
+          "detail": "health·추적목록·OPK-13 가격·화면 응답 정상"
+        }
+      ]
     }
   ],
-  "updated_at": "2026-08-21T17:38:31+00:00"
+  "updated_at": "2026-08-21T17:46:29+00:00"
 }

@@ -37,6 +37,11 @@ def main():
         assert 'market_watch.json' in html and 'BOX·박스' in html and '가격 확인 중' in html
         assert 'id="siteUpdateAll"' in html and 'id="siteUpdateStatus"' in html
         assert 'siteUpdateAll").addEventListener("click",refreshReleaseInfo)' in html
+        required=('v30mode','rawMode','slabMode','v30slab','slabAnalyze','precisionHub','v30validation','saveValidation','recalcCalibration','qualityStatus','v31testdashboard')
+        assert all(f'id="{item}"' in html for item in required)
+        assert html.index('TCG 등급 사전검사기 v31') < html.index('id="gradeStart"')
+        assert html.index('id="gradeStart"') < html.index('id="v30mode"') < html.index('id="precisionHub"') < html.index('id="v30validation"')
+        assert 'const grades=window.tcgLastGrades||{}' in html
         return f'고유 ID {len(ids)}개'
     check('화면 구성',html_check,rows)
     def js_check():

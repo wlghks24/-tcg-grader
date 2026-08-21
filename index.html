@@ -50,6 +50,7 @@ input[type=range]{width:100%}
 .site-update-box{margin:12px 0;padding:12px;border-radius:15px;background:#eff6ff;border:2px solid #93c5fd}.site-update-box button{margin:0;min-height:58px;background:#1d4ed8;font-size:17px}.site-update-status{margin-top:8px;padding:9px;border-radius:10px;background:#fff;color:#334155;font-size:11px;line-height:1.5}.site-update-status.busy{color:#1d4ed8}.site-update-status.ok{color:#166534}.site-update-status.warn{color:#92400e}
 .precision-hub{border:2px solid #dbeafe;background:linear-gradient(180deg,#fff,#f8fbff)}.precision-hub h2{font-size:21px;margin:0 0 5px}.precision-flow{display:grid;gap:10px;margin-top:12px}.precision-step{border:1px solid #dbe3ef;border-radius:15px;padding:12px;background:#fff}.precision-step-head{display:flex;align-items:center;gap:9px;margin-bottom:8px}.precision-step-number{width:30px;height:30px;flex:0 0 30px;border-radius:50%;display:grid;place-items:center;background:#2563eb;color:#fff;font-weight:900}.precision-step-title{font-size:15px;font-weight:900}.precision-guide{display:grid;grid-template-columns:repeat(5,1fr);gap:5px;margin:8px 0}.precision-guide span{padding:7px 3px;border-radius:9px;background:#eff6ff;color:#1e40af;text-align:center;font-size:10px;font-weight:800}.precision-main{min-height:58px;background:#1d4ed8;font-size:17px}.precision-tools summary{cursor:pointer;list-style:none;font-weight:900;padding:3px 0}.precision-tools summary::-webkit-details-marker{display:none}.precision-tools summary::after{content:' 펼치기 ＋';float:right;color:#2563eb;font-size:12px}.precision-tools[open] summary::after{content:' 접기 －'}.precision-tool-grid{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-top:11px}.precision-tool{border:1px solid #e2e8f0;border-radius:13px;padding:10px;background:#f8fafc;min-width:0}.precision-tool h4{margin:0 0 4px;font-size:13px}.precision-tool p{margin:0 0 6px;font-size:10px;color:#64748b;line-height:1.45}.precision-tool button{font-size:12px;padding:10px 5px}.precision-tool .status{margin-top:7px!important;font-size:10px}@media(max-width:430px){.precision-guide{grid-template-columns:repeat(3,1fr)}.precision-tool-grid{grid-template-columns:1fr}}
 .v13-result-card{background:#fff;border:1px solid #dbe3ef;border-radius:14px;padding:13px}.v13-result-title{font-size:16px;font-weight:900;line-height:1.4}.v13-result-native{font-size:11px;color:#64748b;margin-top:3px}.v13-result-grid{display:grid;grid-template-columns:1fr 1fr;gap:7px;margin-top:10px}.v13-result-item{background:#f8fafc;border-radius:10px;padding:9px;font-size:10px;color:#64748b}.v13-result-item b{display:block;color:#0f172a;font-size:13px;margin-top:3px;line-height:1.4}.v13-result-item span{display:block;margin-top:3px;line-height:1.35}.v13-result-actions{display:grid;grid-template-columns:1fr 1fr;gap:7px;margin-top:9px}.v13-result-actions a{display:block;text-align:center;text-decoration:none;border-radius:11px;padding:11px 5px;background:#111827;color:#fff;font-size:12px;font-weight:800}.v13-caution{font-size:10px;color:#92400e;background:#fffbeb;border-radius:9px;padding:8px;margin-top:9px}@media(max-width:430px){.v13-result-grid{grid-template-columns:1fr}.v13-result-actions{grid-template-columns:1fr}}
+.app-title{margin:18px 2px 12px}.app-title h1{margin:0 0 5px}.workflow-card{border:2px solid #dbeafe;background:linear-gradient(180deg,#fff,#f8fbff)}.workflow-card h2{font-size:20px;margin:0 0 5px}.workflow-part{padding:12px;border:1px solid #e2e8f0;border-radius:14px;background:#fff;margin-top:10px}.workflow-part h3{font-size:15px;margin:0 0 6px}.slab-tools{margin-top:10px;padding:11px;border-radius:12px;background:#eff6ff}.validation-hub{border:2px solid #dcfce7;background:linear-gradient(180deg,#fff,#f0fdf4)}.validation-hub h2{font-size:20px;margin:0 0 5px}.validation-actions{display:grid;grid-template-columns:1fr 1fr;gap:8px}.validation-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:7px;margin-top:10px}.validation-stats .metric{background:#fff}.compact-details{margin-top:10px;border:1px solid #dbe3ef;border-radius:13px;background:#fff;padding:10px}.compact-details summary{cursor:pointer;font-weight:850}.system-check summary{font-size:15px}.system-check .grid2{margin-top:10px}@media(max-width:430px){.validation-actions,.validation-stats{grid-template-columns:1fr}.workflow-part{padding:10px}}
 </style><link rel="manifest" href="manifest.webmanifest">
 <meta name="theme-color" content="#111827">
 <meta name="mobile-web-app-capable" content="yes">
@@ -145,52 +146,7 @@ document.getElementById("siteUpdateAll").addEventListener("click",refreshRelease
 document.querySelectorAll("[data-top-panel]").forEach(btn=>btn.addEventListener("click",()=>{document.querySelectorAll("[data-top-panel]").forEach(x=>x.classList.toggle("active",x===btn));document.querySelectorAll(".top-info-panel").forEach(x=>x.hidden=x.id!==btn.dataset.topPanel)}));
 loadReleases();loadPromos();
 </script>
-<section class="card" id="v30mode">
-<h3 style="margin:0 0 8px">🧠 v30 사진 유형 자동/수동 선택</h3>
-<p class="muted">RAW 카드와 PSA/CGC/BGS 슬랩은 분석 경로가 다릅니다.</p>
-<div class="modegrid">
-<button id="rawMode" class="modebtn active">🎴 RAW 카드</button>
-<button id="slabMode" class="modebtn">🧊 등급 슬랩</button>
-</div>
-<div id="modeDesc" class="status" style="margin-top:8px">RAW 카드: 카드 외곽 → 내부 보더 → 센터링 분석</div>
-</section>
-
-<section class="card" id="v30slab">
-<h3 style="margin:0 0 8px">🧊 슬랩 전용 분석</h3>
-<p class="muted">슬랩 외곽과 상단 라벨 영역을 먼저 제외한 뒤, 내부 카드 영역을 다시 검출합니다.</p>
-<button id="slabAnalyze">슬랩에서 카드 영역 추출</button>
-<div id="slabResult" class="status" style="margin-top:8px">분석 전</div>
-<canvas id="slabCanvas" class="hidden"></canvas>
-</section>
-
-<section class="card" id="v30validation">
-<h3 style="margin:0 0 8px">✅ 실제 등급 교차검증 & 보정</h3>
-<div class="grid2">
-<label>회사
-<select id="actualCompany"><option>PSA</option><option>CGC</option><option>BGS</option></select></label>
-<label>실제 확정등급
-<select id="actualGrade"><option>10</option><option>9.5</option><option>9</option><option>8</option></select></label>
-</div>
-<button id="saveValidation" style="margin-top:8px">현재 분석결과와 실제등급 비교 저장</button>
-<div id="validationSummary" class="status" style="margin-top:8px">검증 기록 없음</div>
-<div id="validationLog"></div>
-</section>
-<section class="card"><h3>✅ v31 최종 점검판</h3><p>자바스크립트·Python 문법, 필수 화면요소, 등급 기준 계산, PC 서버와 상태 API를 실제 실행으로 확인했습니다.</p></section>
-<section class="card" id="v31testdashboard">
-<h3 style="margin:0 0 8px">✅ v31 실행 검증 결과</h3>
-<div class="grid2">
-<div class="metric">JavaScript 문법<b>PASS</b></div>
-<div class="metric">Python 문법<b>PASS</b></div>
-<div class="metric">PC 서버 기동<b>PASS</b></div>
-<div class="metric">/api/health<b>HTTP 200</b></div>
-<div class="metric">/api/status<b>HTTP 200</b></div>
-<div class="metric">index.html<b>HTTP 200</b></div>
-<div class="metric">오류 데이터 반영 차단<b>PASS</b></div>
-<div class="metric">외부 최신자료 수집<b>실사용 PC 인터넷 필요</b></div>
-</div>
-<p class="muted">테스트 환경에서는 외부 DNS가 차단되어 공식 사이트 수집이 실패했지만, 실패 항목이 DB에 잘못 반영되지 않는 것까지 확인했습니다.</p>
-</section>
-<h1>TCG 등급 사전검사기 v31</h1><div class="muted">포켓몬 + 원피스 + 나루토 · 아이폰 사파리 · 등급사별 기준을 분리한 사전검사기</div>
+<header class="app-title"><h1>TCG 등급 사전검사기 v31</h1><div class="muted">포켓몬 + 원피스 + 나루토 · RAW 카드와 등급 슬랩을 한 흐름으로 측정합니다.</div></header>
 
 <section class="card" id="gradeStart">
 <div class="muted">① 카드게임</div><div class="gamegrid">
@@ -205,6 +161,23 @@ loadReleases();loadPromos();
 <div class="grid2">
 <div><label class="muted">앞면 사선광(권장)</label><input id="fo" type="file" accept="image/*" capture="environment"></div>
 <div><label class="muted">뒷면 사선광(권장)</label><input id="bo" type="file" accept="image/*" capture="environment"></div>
+</div>
+</section>
+
+<section class="card workflow-card" id="v30mode">
+<h2>🧭 분석 유형과 사진 점검</h2>
+<p class="muted">사진을 올린 뒤 카드 상태를 선택하세요. RAW 카드와 PSA·BGS·CGC 슬랩은 서로 다른 영역 검출 방식을 사용합니다.</p>
+<div class="workflow-part"><h3>1. 사진 유형 선택</h3>
+<div class="modegrid"><button id="rawMode" class="modebtn active">🎴 RAW 카드</button><button id="slabMode" class="modebtn">🧊 등급 슬랩</button></div>
+<div id="modeDesc" class="status" style="margin-top:8px">RAW 카드: 카드 외곽 → 내부 보더 → 센터링 분석</div>
+</div>
+<div class="workflow-part"><h3>2. 촬영 품질 확인</h3>
+<p class="muted">기울기·잘림·강한 반사를 먼저 확인하면 잘못된 센터링 판정을 줄일 수 있습니다.</p>
+<div id="v10quality" class="status">사진 품질 검사 전</div><button id="v10qualityBtn">📐 현재 앞면 사진 품질 검사</button>
+</div>
+<div class="workflow-part" id="v30slab"><h3>3. 슬랩 사진일 때만 카드 영역 추출</h3>
+<p class="muted">상단 라벨과 슬랩 외곽을 제외한 뒤 내부 카드 영역을 다시 검출합니다. RAW 카드는 이 단계를 건너뛰세요.</p>
+<div class="slab-tools"><button id="slabAnalyze">🧊 슬랩에서 카드 영역 추출</button><div id="slabResult" class="status" style="margin-top:8px">RAW 카드는 추출하지 않아도 됩니다.</div><canvas id="slabCanvas" class="hidden"></canvas></div>
 </div>
 </section>
 
@@ -290,33 +263,23 @@ loadReleases();loadPromos();
 </div>
 </section>
 
-<section class="card">
-<h3 style="margin:0 0 8px">📐 사진 품질 검사</h3>
-<p class="muted">자동 측정 전에 사진이 기울었거나 카드 외곽이 잘리지 않았거나 강한 반사가 있는지 검사합니다. 품질이 낮으면 등급을 보수적으로 낮추거나 수동 보정을 요구합니다.</p>
-<div id="v10quality" class="status">사진 품질 검사 전</div>
-<button id="v10qualityBtn">현재 앞면 사진 품질 검사</button>
-</section>
-
-<section class="card">
-<h3 style="margin:0 0 8px">🧪 v11 실제 등급 카드 검증실</h3>
-<p class="muted">실제로 PSA/BGS/CGC 등급이 확정된 카드 사진을 넣고 <b>실제 등급</b>을 입력하면 프로그램의 예측과 자동 비교합니다. 일치/불일치가 누적되고, 불일치가 반복되면 보수적으로 판정하도록 보정값을 저장합니다.</p>
-<div class="grid2">
-<label>등급사
-<select id="v11grader"><option>PSA</option><option>BGS</option><option>CGC</option></select></label>
-<label>실제 확정 등급
-<select id="v11actual"><option>10</option><option>9.5</option><option>9</option><option>8.5</option><option>8</option><option>7</option></select></label>
+<section class="card validation-hub" id="v30validation">
+<h2>✅ 실제 등급 검증 · 자동보정 센터</h2>
+<p class="muted">카드 분석을 먼저 실행한 뒤 실제 PSA·BGS·CGC 확정등급을 입력하세요. 예측과 실제 결과의 차이를 기록하되, 표본이 적을 때는 보정값을 적용하지 않습니다.</p>
+<div class="workflow-part"><h3>1. 실제 확정등급 저장</h3>
+<div class="grid2"><label>등급사<select id="actualCompany"><option>PSA</option><option>CGC</option><option>BGS</option></select></label><label>실제 확정등급<select id="actualGrade"><option>10</option><option>9.5</option><option>9</option><option>8.5</option><option>8</option><option>7</option></select></label></div>
+<button id="saveValidation">현재 분석결과와 실제등급 비교 저장</button><div id="validationSummary" class="status" style="margin-top:8px">검증 기록 없음</div><div id="validationLog"></div>
 </div>
-<div class="grid2" style="margin-top:8px">
-<button id="v11save">검증 사례 저장</button>
-<button id="v11stats">검증 통계 보기</button>
+<div class="workflow-part" id="v30calibration"><h3>2. 누적 오차로 보정값 계산</h3>
+<p class="muted">과대평가·과소평가 경향을 등급사별로 계산합니다. 5건 미만은 적용하지 않고, 10건부터 제한적으로 반영합니다.</p>
+<div class="validation-stats"><div class="metric">PSA 보정<b id="calPSA">0.00</b></div><div class="metric">BGS 보정<b id="calBGS">0.00</b></div><div class="metric">CGC 보정<b id="calCGC">0.00</b></div></div>
+<div class="validation-actions"><button id="recalcCalibration">검증기록으로 재계산</button><button id="resetCalibration">보정값 초기화</button></div>
+<div id="calibrationStatus" class="status" style="margin-top:8px">보정 전</div><div id="qualityStatus" class="status" style="margin-top:8px">검증 데이터 없음</div>
 </div>
-<div id="v11statsOut" class="status" style="margin-top:10px">누적 검증 0건</div>
-</section>
-
-<section class="card">
-<h3 style="margin:0 0 8px">🔧 v11 보정 규칙</h3>
-<p class="muted">실거래·실제 slab 사진에서 확인된 결과를 '공식 기준'으로 취급하지 않습니다. 실제 등급과 예측이 어긋난 사례를 검증 데이터로만 사용하고, 과대평가 방향의 오류를 우선 억제합니다.</p>
-<div id="v11rules" class="status"></div>
+<details class="compact-details"><summary>세부 통계와 보정 안전규칙 보기</summary>
+<div style="margin-top:10px" class="grid2"><label>빠른 통계 등급사<select id="v11grader"><option>PSA</option><option>BGS</option><option>CGC</option></select></label><label>실제 등급<select id="v11actual"><option>10</option><option>9.5</option><option>9</option><option>8.5</option><option>8</option><option>7</option></select></label></div>
+<div class="validation-actions"><button id="v11save">빠른 검증 저장</button><button id="v11stats">등급사별 통계 보기</button></div><div id="v11statsOut" class="status" style="margin-top:10px">누적 검증 0건</div><div id="v11rules" class="status" style="margin-top:8px"></div>
+</details>
 </section>
 
 <section class="card" id="market12section">
@@ -957,12 +920,10 @@ function v11Render(){
 document.getElementById("v11save")?.addEventListener("click",()=>{
  const grader=document.getElementById("v11grader").value;
  const actual=parseFloat(document.getElementById("v11actual").value);
- // Pull the latest visible predictions if present.
- const txt=document.body.innerText;
- let pred=null;
- const m=txt.match(new RegExp(grader+"[^\\n]{0,120}(10|9\\.5|9|8\\.5|8|7)"));
- if(m) pred=parseFloat(m[1]);
- if(pred===null){alert("먼저 카드 분석을 실행한 뒤 저장하세요.");return;}
+ const grades=window.tcgLastGrades||{};
+ const raw=grades[grader];
+ const pred=raw===null||raw===undefined?null:parseFloat(raw);
+ if(pred===null||Number.isNaN(pred)){alert("먼저 카드 분석을 실행한 뒤 저장하세요.");return;}
  const match=pred===actual;
  const a=v11Get();a.push({time:new Date().toISOString(),grader,actual,pred,match});
  localStorage.setItem(V11KEY,JSON.stringify(a.slice(-200)));
@@ -1644,27 +1605,6 @@ document.getElementById("saveValidation")?.addEventListener("click",()=>{
 v30RenderValidation();
 </script>
 
-<section class="card" id="v30calibration">
-<h3 style="margin:0 0 8px">🧠 v30 자동 오차보정</h3>
-<p class="muted">실제 확정등급 검증 기록을 이용해 PSA / BGS / CGC별 과대평가·과소평가 경향을 계산하고 다음 분석에 보정값으로 적용합니다.</p>
-<div class="grid3">
-<div class="metric">PSA 보정<b id="calPSA">0.00</b></div>
-<div class="metric">BGS 보정<b id="calBGS">0.00</b></div>
-<div class="metric">CGC 보정<b id="calCGC">0.00</b></div>
-</div>
-<div class="grid2" style="margin-top:8px">
-<button id="recalcCalibration">검증기록으로 보정값 재계산</button>
-<button id="resetCalibration">보정값 초기화</button>
-</div>
-<div id="calibrationStatus" class="status" style="margin-top:8px">보정 전</div>
-</section>
-
-<section class="card" id="v30quality">
-<h3 style="margin:0 0 8px">🔍 검증 데이터 품질</h3>
-<p class="muted">검증 카드 수가 적으면 보정값을 강하게 적용하지 않습니다. 최소 10건부터 약하게, 30건 이상부터 본격 반영합니다.</p>
-<div id="qualityStatus" class="status">검증 데이터 없음</div>
-</section>
-
 <script>
 const V30CAL="tcg_v30_calibration";
 
@@ -1761,5 +1701,12 @@ v30Render();
  document.querySelectorAll(".update-panel-close").forEach(btn=>btn.addEventListener("click",closeUpdatePanels));
 })();
 </script>
+<section class="card" id="v31testdashboard">
+<details class="compact-details system-check"><summary>✅ 프로그램 실행·오류 검증 결과 보기</summary>
+<p class="muted">배포 전 자동 검사를 실행해 화면 요소, 계산 코드, 서버 API와 오류 차단을 확인했습니다.</p>
+<div class="grid2"><div class="metric">전체 자동검사<b>10 / 10 PASS</b></div><div class="metric">JavaScript·Python<b>PASS</b></div><div class="metric">PC 서버 API<b>HTTP 200</b></div><div class="metric">모바일 LAN 선택<b>PASS</b></div><div class="metric">자동실행 복구<b>PASS</b></div><div class="metric">오류자료 반영 차단<b>PASS</b></div></div>
+<p class="muted">실제 외부자료 수집은 PC·태블릿 서버가 인터넷에 연결된 상태에서 수행하며, 실패한 자료는 마지막 정상본을 유지합니다.</p>
+</details>
+</section>
 </main>
 </body></html>
