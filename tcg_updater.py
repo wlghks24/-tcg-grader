@@ -12,6 +12,7 @@ MARKET_WATCH=os.path.join(BASE,'market_watch.json')
 AUTO_REPORT=os.path.join(BASE,'auto_update_report.json')
 AUTO_ISSUES=os.path.join(BASE,'auto_update_issues.json')
 AUTO_MEMORY=os.path.join(BASE,'auto_repair_memory.json')
+LEARNING_STORE=os.path.join(BASE,'learning_store.json')
 AUTO_INTERVAL_SECONDS=6*60*60
 UPDATE_LOCK=threading.Lock()
 SOURCES=[
@@ -101,6 +102,30 @@ def load_json_file(path, fallback):
         with open(path,'r',encoding='utf-8') as f:return json.load(f)
     except (OSError,ValueError,TypeError):return fallback
 
+def save_json_atomic(path,data):
+    temp=path+'.tmp'
+    with open(temp,'w',encoding='utf-8') as f:json.dump(data,f,ensure_ascii=False,indent=2)
+    if os.path.exists(path):
+        try:
+            with open(path,'rb') as src,open(path+'.bak','wb') as dst:dst.write(src.read())
+        except OSError:pass
+    os.replace(temp,path)
+
+def learning_store():
+    return load_json_file(LEARNING_STORE,{'version':1,'updated_at':None,'v30_validation':[],'v11_validation':[]})
+
+def valid_learning_rows(rows):
+    clean=[]
+    for row in rows[-500:]:
+        if not isinstance(row,dict):continue
+        company=str(row.get('company') or row.get('grader') or '').upper()
+        if company not in ('PSA','BGS','CGC'):continue
+        try:actual=float(row.get('actual'));pred=float(row.get('pred'))
+        except (TypeError,ValueError):continue
+        if not (1<=actual<=10 and 1<=pred<=10):continue
+        clean.append({**row,'company':company,'actual':actual,'pred':pred})
+    return clean
+
 def fetch(url):
     req=Request(url,headers={'User-Agent':'TCG-Research-Updater/27'})
     with urlopen(req,timeout=15) as r:
@@ -172,6 +197,7 @@ class Handler(SimpleHTTPRequestHandler):
         if path=='/api/update-report': return self.json(load_json_file(AUTO_REPORT,{'ok':False,'results':[]}))
         if path=='/api/update-issues': return self.json(load_json_file(AUTO_ISSUES,{'issue_count':0,'issues':[]}))
         if path=='/api/repair-memory': return self.json(load_json_file(AUTO_MEMORY,{'total_runs':0,'patterns':{},'files':{}}))
+        if path=='/api/learning-store': return self.json(learning_store())
         if path=='/api/market-watch': return self.json(load_market_watch())
         if path=='/api/validation': return self.json({'ok':True,'mode':'pre-grade','probability_claim':False})
         if path=='/api/market-price':
@@ -184,7 +210,18 @@ class Handler(SimpleHTTPRequestHandler):
             except Exception as exc: return self.json({'ok':False,'error':str(exc)},500)
         return super().do_GET()
     def do_POST(self):
-        if self.path.split('?',1)[0]!='/api/apply': return self.json({'ok':False,'error':'없는 API'},404)
+        post_path=self.path.split('?',1)[0]
+        if post_path=='/api/learning-store':
+            try:
+                size=int(self.headers.get('Content-Length','0'))
+                if size<=0 or size>1000000:return self.json({'ok':False,'error':'학습자료 크기 오류'},400)
+                incoming=json.loads(self.rfile.read(size).decode('utf-8'))
+                v30=valid_learning_rows(incoming.get('v30_validation',[]));v11=valid_learning_rows(incoming.get('v11_validation',[]))
+                data={'version':1,'updated_at':time.strftime('%Y-%m-%dT%H:%M:%S%z'),'v30_validation':v30,'v11_validation':v11}
+                save_json_atomic(LEARNING_STORE,data)
+                return self.json({'ok':True,'saved':len(v30)+len(v11),'updated_at':data['updated_at']})
+            except (ValueError,TypeError,json.JSONDecodeError):return self.json({'ok':False,'error':'학습자료 형식 오류'},400)
+        if post_path!='/api/apply': return self.json({'ok':False,'error':'없는 API'},404)
         data=load_db(); pending=data.get('pending',[]); now=time.strftime('%Y-%m-%dT%H:%M:%S%z')
         valid=[x for x in pending if x.get('status')!='수집 오류']
         errors=[x for x in pending if x.get('status')=='수집 오류']
