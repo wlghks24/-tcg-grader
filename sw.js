@@ -1,4 +1,4 @@
-const CACHE='tcg-v31-country-photo-box-15';
+const CACHE='tcg-v31-unified-precision-16';
 const CORE=['./','./index.html','./manifest.webmanifest','./releases.json','./icon.svg'];
 self.addEventListener('install',event=>event.waitUntil(caches.open(CACHE).then(cache=>cache.addAll(CORE)).then(()=>self.skipWaiting())));
 self.addEventListener('activate',event=>event.waitUntil(caches.keys().then(keys=>Promise.all(keys.filter(key=>key!==CACHE).map(key=>caches.delete(key)))).then(()=>self.clients.claim())));

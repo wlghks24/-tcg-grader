@@ -44,6 +44,7 @@ input[type=range]{width:100%}
 .category-select-grid{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-top:9px}.category-select-grid select{width:100%;padding:11px;border:1px solid #cbd5e1;border-radius:11px;background:#fff;margin-top:5px}.category-select-grid .category-item{grid-column:1/-1}@media(max-width:430px){.category-select-grid{grid-template-columns:1fr}.category-select-grid .category-item{grid-column:auto}}
 .box-kb-tabs{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin:10px 0}.box-kb-country{margin:0;background:#fff;color:#334155;border:2px solid #cbd5e1;padding:11px 3px;font-size:12px}.box-kb-country.active{background:#166534;color:#fff;border-color:#166534}.box-kb-count{font-size:12px;font-weight:800;color:#166534;margin:8px 0}.box-kb-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:11px;background:transparent;padding:0}.box-kb-card{border:1px solid #e5e7eb;border-radius:15px;background:#fff;overflow:hidden;box-shadow:0 3px 12px #0f172a10;min-width:0}.box-kb-image{height:180px;background:#f8fafc;display:flex;align-items:center;justify-content:center;border-bottom:1px solid #e5e7eb;overflow:hidden}.box-kb-image img{width:100%;height:100%;object-fit:contain}.box-kb-fallback{text-align:center;color:#94a3b8;font-size:10px;padding:8px}.box-kb-fallback b{display:block;font-size:46px}.box-kb-body{padding:10px}.box-kb-name{font-size:14px;font-weight:900;line-height:1.35}.box-kb-native{font-size:10px;color:#64748b;line-height:1.4;margin-top:3px;min-height:28px}.box-kb-price{font-size:15px;font-weight:900;color:#166534;margin-top:7px}.box-kb-meta{font-size:10px;color:#64748b;margin-top:4px;line-height:1.45}.box-kb-source{display:block;padding:8px 10px;background:#f0fdf4;color:#166534;font-size:10px;font-weight:800}@media(min-width:650px){.box-kb-grid{grid-template-columns:repeat(3,minmax(0,1fr))}}@media(max-width:380px){.box-kb-image{height:150px}.box-kb-name{font-size:13px}}
 .update-hub h3{margin:0 0 4px}.update-menu{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-top:12px}.update-menu-btn{margin:0;min-height:104px;background:#f8fafc;color:#0f172a;border:2px solid #e2e8f0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px;padding:10px 6px}.update-menu-btn .update-icon{font-size:34px;line-height:1}.update-menu-btn b{font-size:14px}.update-menu-btn small{font-size:10px;color:#64748b}.update-menu-btn.active{border-color:#2563eb;background:#eff6ff;color:#1d4ed8}.update-panel{margin-top:12px;border:1px solid #dbeafe;border-radius:16px;padding:13px;background:#f8fafc}.update-panel h4{margin:0 0 5px;font-size:17px}.update-panel .grid2 button{margin-top:6px}.update-panel-close{width:auto;float:right;margin:0!important;padding:7px 10px!important;background:#64748b!important}.update-step-note{font-size:12px;line-height:1.55;color:#64748b;margin-bottom:8px}@media(max-width:380px){.update-menu{grid-template-columns:1fr 1fr}.update-menu-btn{min-height:95px}}
+.precision-hub{border:2px solid #dbeafe;background:linear-gradient(180deg,#fff,#f8fbff)}.precision-hub h2{font-size:21px;margin:0 0 5px}.precision-flow{display:grid;gap:10px;margin-top:12px}.precision-step{border:1px solid #dbe3ef;border-radius:15px;padding:12px;background:#fff}.precision-step-head{display:flex;align-items:center;gap:9px;margin-bottom:8px}.precision-step-number{width:30px;height:30px;flex:0 0 30px;border-radius:50%;display:grid;place-items:center;background:#2563eb;color:#fff;font-weight:900}.precision-step-title{font-size:15px;font-weight:900}.precision-guide{display:grid;grid-template-columns:repeat(5,1fr);gap:5px;margin:8px 0}.precision-guide span{padding:7px 3px;border-radius:9px;background:#eff6ff;color:#1e40af;text-align:center;font-size:10px;font-weight:800}.precision-main{min-height:58px;background:#1d4ed8;font-size:17px}.precision-tools summary{cursor:pointer;list-style:none;font-weight:900;padding:3px 0}.precision-tools summary::-webkit-details-marker{display:none}.precision-tools summary::after{content:' 펼치기 ＋';float:right;color:#2563eb;font-size:12px}.precision-tools[open] summary::after{content:' 접기 －'}.precision-tool-grid{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-top:11px}.precision-tool{border:1px solid #e2e8f0;border-radius:13px;padding:10px;background:#f8fafc;min-width:0}.precision-tool h4{margin:0 0 4px;font-size:13px}.precision-tool p{margin:0 0 6px;font-size:10px;color:#64748b;line-height:1.45}.precision-tool button{font-size:12px;padding:10px 5px}.precision-tool .status{margin-top:7px!important;font-size:10px}@media(max-width:430px){.precision-guide{grid-template-columns:repeat(3,1fr)}.precision-tool-grid{grid-template-columns:1fr}}
 </style><link rel="manifest" href="manifest.webmanifest">
 <meta name="theme-color" content="#111827">
 <meta name="mobile-web-app-capable" content="yes">
@@ -167,11 +168,15 @@ loadReleases();
 </div>
 </section>
 
-<section class="card">
-<div class="muted">③ 검사</div><div id="status" class="status">앞면과 뒷면을 선택하세요.</div>
+<section class="card precision-hub" id="precisionHub">
+<h2>🎴 카드 정밀 측정</h2>
+<p class="muted">사진 선택 후 아래 순서대로 진행하세요. 기본 분석과 세부 교차검사를 한곳에 모았습니다.</p>
+<div class="precision-guide" aria-label="촬영 가이드"><span>📐 정면 촬영</span><span>🖼️ 배경 분리</span><span>🚫 슬리브 제거</span><span>💡 사선광 추가</span><span>🔁 같은 조명</span></div>
+<div class="precision-flow"><div class="precision-step">
+<div class="precision-step-head"><span class="precision-step-number">1</span><span class="precision-step-title">측정 방법 선택</span></div>
 <div class="grid2" style="margin-top:8px">
-<button id="autoMode" class="game active">자동 측정</button>
-<button id="manualMode" class="game">수동 보정</button>
+<button id="autoMode" class="game active">🤖 자동 측정</button>
+<button id="manualMode" class="game">🛠️ 수동 보정</button>
 </div>
 <div id="manualBox" class="hidden" style="margin-top:10px">
 <p class="muted">자동 측정값을 사진 기울기나 외곽 검출 오차만큼 미세 조정합니다.</p>
@@ -179,9 +184,19 @@ loadReleases();
 <label>앞면 상/하 보정 <span id="mftbv">0</span></label><input id="mftb" type="range" min="-10" max="10" step="0.5" value="0">
 <label>뒷면 좌/우 보정 <span id="mblrv">0</span></label><input id="mblr" type="range" min="-10" max="10" step="0.5" value="0">
 <label>뒷면 상/하 보정 <span id="mbtbv">0</span></label><input id="mbtb" type="range" min="-10" max="10" step="0.5" value="0">
-</div>
-<button id="analyze">자동 분석</button>
-<p class="muted">사진만으로 실제 grader의 눈검사, 10× 확대, 진위·변조 판정까지 복제할 수는 없습니다.</p>
+</div></div>
+<div class="precision-step"><div class="precision-step-head"><span class="precision-step-number">2</span><span class="precision-step-title">등급 사전 분석</span></div>
+<div id="status" class="status">앞면과 뒷면을 선택하세요.</div>
+<button id="analyze" class="precision-main">🔍 카드 자동 분석 시작</button>
+<p class="muted">센터링·코너·엣지·표면 위험과 회사별 등급 후보를 함께 확인합니다.</p></div>
+<div class="precision-step"><div class="precision-step-head"><span class="precision-step-number">3</span><span class="precision-step-title">정밀 교차검사</span></div>
+<details class="precision-tools"><summary>필요할 때 세부 측정 도구 열기</summary><div class="precision-tool-grid">
+<div class="precision-tool"><h4>🧠 디자인 자동 분류</h4><p>카드 디자인에 맞는 보더 검출 방식을 확인합니다.</p><div class="grid2"><button id="classifyFront">앞면 분류</button><button id="classifyBack">뒷면 분류</button></div><div id="classifyResult" class="status">분류 전</div></div>
+<div class="precision-tool"><h4>🎯 권장 정밀 측정</h4><p>다방향 스캔과 이상치 제거로 내부 보더를 측정합니다.</p><div class="grid2"><button id="v7front">앞면 측정</button><button id="v7back">뒷면 측정</button></div><div id="v7result" class="status">정밀 측정 전</div><canvas id="v7canvas" class="hidden"></canvas></div>
+<div class="precision-tool"><h4>📏 보조 교차 측정</h4><p>다른 경계 검출 방식으로 권장 측정값을 교차 확인합니다.</p><div class="grid2"><button id="measureFront">앞면 확인</button><button id="measureBack">뒷면 확인</button></div><div id="precisionResult" class="status">교차 측정 전입니다.</div><canvas id="precisionCanvas" class="hidden"></canvas></div>
+<div class="precision-tool"><h4>🛠️ 디자인 보정</h4><p>사진 특징으로 카드 계열과 센터링 모드를 보정합니다.</p><div class="grid2"><button id="v10frontClass">앞면 보정</button><button id="v10backClass">뒷면 보정</button></div><div id="v10classResult" class="status">보정 전</div></div>
+</div></details></div></div>
+<p class="muted">※ 사진 분석은 사전 점검용입니다. 실제 등급사의 확대 검사, 진위·변조 판정을 대체하지 않습니다.</p>
 </section>
 
 <section id="out" class="hidden">
@@ -208,51 +223,6 @@ loadReleases();
 <div class="card"><div class="muted">외곽 검출 결과</div><canvas id="annot"></canvas></div>
 
 <div class="card"><div class="muted">등급 제출 판단</div><div id="submitAdvice"></div><div style="margin-top:10px" class="grid3"><div class="metric">PSA 10 후보 적합도<b id="p10prob">-</b></div><div class="metric">PSA 9+ 확률<b id="p9prob">-</b></div><div class="metric">10급 위험<b id="riskgrade">-</b></div></div></div>
-</section>
-
-<section class="card"><div class="muted">촬영 가이드</div>
-<p class="muted">① 카드가 화면 대부분을 차지하게 정면 촬영<br>② 카드와 배경의 색을 가능하면 다르게<br>③ 보호슬리브 없이 평평하게 촬영<br>④ 10등급을 노리면 사선광 사진도 추가<br>⑤ 같은 조명에서 앞/뒤 촬영</p></section>
-
-<section class="card">
-<div class="muted">🎯 v6 픽셀 단위 내부 보더 측정</div>
-<p class="muted">정면 사진에서 카드 외곽을 먼저 정규화한 뒤, 내부 보더 후보를 여러 방향으로 스캔합니다. 측정값은 실제 인쇄 보더가 검출된 구간만 사용하고, 불확실한 경우 신뢰도를 낮춥니다.</p>
-<div class="grid2">
-<button id="measureFront">앞면 정밀 측정</button>
-<button id="measureBack">뒷면 정밀 측정</button>
-</div>
-<div id="precisionResult" class="status" style="margin-top:10px">정밀 측정 전입니다.</div>
-<canvas id="precisionCanvas" class="hidden"></canvas>
-</section>
-
-<section class="card">
-<div class="muted">🤖 v8 픽셀 기반 내부 보더 정밀 측정</div>
-<p class="muted">카드 외곽 → 내부 경계 후보 → 여러 방향의 scanline → 반복 검출 → 이상치 제거 순서로 측정합니다. 디자인에 따라 '보더'가 명확하지 않은 경우에는 자동으로 불확실 판정을 냅니다.</p>
-<div class="grid2">
-<button id="v7front">앞면 정밀 측정</button>
-<button id="v7back">뒷면 정밀 측정</button>
-</div>
-<div id="v7result" class="status" style="margin-top:10px">정밀 측정 전</div>
-<canvas id="v7canvas" class="hidden"></canvas>
-</section>
-
-<section class="card">
-<div class="muted">🧠 v8 카드 디자인 자동 분류</div>
-<p class="muted">카드 디자인에 따라 내부 보더를 찾는 방식이 달라집니다. 자동 분류를 먼저 실행한 뒤 정밀 센터링을 진행하세요.</p>
-<div class="grid2">
-<button id="classifyFront">앞면 디자인 분류</button>
-<button id="classifyBack">뒷면 디자인 분류</button>
-</div>
-<div id="classifyResult" class="status" style="margin-top:10px">분류 전</div>
-</section>
-
-<section class="card">
-<div class="muted">🧠 v10 카드 디자인 보정 모드</div>
-<p class="muted">사진 특징을 이용해 Pokémon/ONE PIECE의 카드 디자인 계열을 추정하고, 센터링 측정 모드를 선택합니다. 정확한 카드명/세트 검색이 아니라 이미지 기반 사전분류입니다.</p>
-<div class="grid2">
-<button id="v10frontClass">앞면 디자인 보정</button>
-<button id="v10backClass">뒷면 디자인 보정</button>
-</div>
-<div id="v10classResult" class="status" style="margin-top:10px">분류 전</div>
 </section>
 
 <section class="card">
