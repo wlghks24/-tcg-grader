@@ -17,22 +17,24 @@ DATA = ROOT / "promo_events.json"
 ALLOWED = {
     "www.pokemon-card.com", "www.30th.pokemon-card.com",
     "pokemoncard.co.kr", "www.pokemoncard.co.kr",
+    "pokemonkorea.co.kr", "www.pokemonkorea.co.kr",
     "onepiece-cardgame.kr", "www.onepiece-cardgame.kr",
     "www.onepiece-cardgame.com", "en.onepiece-cardgame.com",
     "shop.bandainamco-am.com", "www.pokemon.com",
 }
 INDEXES = (
     ("KR", "원피스 카드", "https://onepiece-cardgame.kr/events.do"),
-    ("KR", "포켓몬 카드", "https://pokemoncard.co.kr/card/category/event"),
+    ("KR", "포켓몬 카드", "https://pokemoncard.co.kr/main"),
+    ("KR", "포켓몬 카드", "https://pokemoncard.co.kr/news"),
     ("JP", "포켓몬 카드", "https://www.pokemon-card.com/info/"),
     ("JP", "원피스 카드", "https://www.onepiece-cardgame.com/events/"),
     ("US", "원피스 카드", "https://en.onepiece-cardgame.com/events/"),
     ("US", "포켓몬 카드", "https://www.pokemon.com/us/play-pokemon"),
 )
 TIMEOUT_SECONDS = 12
-MAX_DISCOVERED_PER_INDEX = 3
+MAX_DISCOVERED_PER_INDEX = 8
 EVENT_WORDS = re.compile(
-    r"이벤트|행사|배틀|교류회|챔피언|토너먼트|프로모|"
+    r"이벤트|행사|배틀|교류회|챔피언|토너먼트|프로모|대항전|미니리그|페스타|콜라보|기념|"
     r"イベント|バトル|キャンペーン|チャンピオン|"
     r"event|battle|championship|tournament|promo|league|cup",
     re.I,
@@ -165,7 +167,21 @@ def discover(index: tuple[str, str, str]) -> tuple[list[dict], list[str]]:
                 approved_url(target)
             except ValueError:
                 continue
-            dates = date_range(label)
+            # Korean official lists commonly show only the announcement date.
+            # The actual event dates are published on pokemonkorea.co.kr.
+            try:
+                detail = plain(fetch(target))
+            except Exception as exc:
+                errors.append(f"{region} {game} 행사 상세 확인: {type(exc).__name__}")
+                detail = ""
+            schedule = re.search(
+                r"(?:일정|기간|일시|schedule|date)\\s*[:|]?\\s*(.{0,450}?)(?=참가 방법|참가 조건|인원|레귤레이션|경품|$)",
+                detail,
+                re.I,
+            )
+            dates = date_range(schedule.group(1)) if schedule else None
+            if dates is None:
+                dates = date_range(detail) or date_range(label)
             if dates is None:
                 continue
             start, end = dates
@@ -173,7 +189,7 @@ def discover(index: tuple[str, str, str]) -> tuple[list[dict], list[str]]:
             rows.append({
                 "game": game,
                 "region": region,
-                "category": "collaboration" if EVENT_WORDS.search(native) and re.search(r"교류|collab|champion|チャンピオン", native, re.I) else "promo",
+                "category": "collaboration" if EVENT_WORDS.search(native) and re.search(r"교류|콜라보|대항전|성남|페스타|collab|champion|festival|city|gxg|チャンピオン", native, re.I) else "promo",
                 "name_ko": native if region == "KR" else f"{'일본' if region == 'JP' else '미국'} 공식 행사 · {native}",
                 "name_native": native,
                 "start_date": start,
