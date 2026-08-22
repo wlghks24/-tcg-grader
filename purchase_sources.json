@@ -27,6 +27,16 @@
     {"name":"TCGplayer","region":"US","games":["Pokemon","ONE PIECE","NARUTO"],"type":"marketplace","url_template":"https://www.tcgplayer.com/search/all/product?q={query}&view=grid","note":"TCG 전문 마켓, 판본·상태·판매자 확인"},
     {"name":"eBay","region":"US","games":["Pokemon","ONE PIECE","NARUTO"],"type":"used","url_template":"https://www.ebay.com/sch/i.html?_nkw={query}","note":"신품·중고 혼합, 판매완료·평점 확인"},
     {"name":"Amazon 미국","region":"US","games":["Pokemon","ONE PIECE","NARUTO"],"type":"marketplace","url_template":"https://www.amazon.com/s?k={query}","note":"판매·배송 주체와 정품 여부 확인"},
-    {"name":"Google 쇼핑·블로그 검색","region":"US","games":["Pokemon","ONE PIECE","NARUTO"],"type":"blog","url_template":"https://www.google.com/search?q={query}","note":"상점·블로그·입고정보 참고용"}
+    {"name":"Google 쇼핑·블로그 검색","region":"US","games":["Pokemon","ONE PIECE","NARUTO"],"type":"blog","url_template":"https://www.google.com/search?q={query}","note":"상점·블로그·입고정보 참고용"},
+
+    {"name":"네이버지도 주변 판매점","region":"KR","games":["Pokemon","ONE PIECE","NARUTO"],"type":"map","channel":"offline","url_template":"https://map.naver.com/p/search/{query}","note":"현 위치 주변 매장 검색 · 방문 전 전화로 재고 확인"},
+    {"name":"카카오맵 주변 판매점","region":"KR","games":["Pokemon","ONE PIECE","NARUTO"],"type":"map","channel":"offline","url_template":"https://map.kakao.com/?q={query}","note":"한국 오프라인 매장 위치·전화번호 확인"},
+    {"name":"포켓몬 공식 판매점 안내","region":"KR","games":["Pokemon"],"type":"official","channel":"offline","url":"https://pokemoncard.co.kr/","note":"공식 홈페이지에서 판매점·이벤트 매장 확인"},
+    {"name":"Google 지도 일본 매장","region":"JP","games":["Pokemon","ONE PIECE","NARUTO"],"type":"map","channel":"offline","url_template":"https://www.google.com/maps/search/{query}","note":"일본 현지 카드숍 지도 검색 · 영업시간 확인"},
+    {"name":"포켓몬센터 일본 매장","region":"JP","games":["Pokemon"],"type":"official","channel":"offline","url":"https://www.pokemon.co.jp/shop/","note":"일본 공식 포켓몬센터·스토어 매장 안내"},
+    {"name":"원피스 공식 점포·행사","region":"JP","games":["ONE PIECE"],"type":"official","channel":"offline","url":"https://www.onepiece-cardgame.com/events/","note":"일본 공식 행사·취급점 정보 확인"},
+    {"name":"Google Maps 주변 판매점","region":"US","games":["Pokemon","ONE PIECE","NARUTO"],"type":"map","channel":"offline","url_template":"https://www.google.com/maps/search/{query}","note":"미국 주변 카드숍 검색 · 방문 전 재고 확인"},
+    {"name":"Pokémon 공식 매장 찾기","region":"US","games":["Pokemon"],"type":"official","channel":"offline","url":"https://events.pokemon.com/en-us/locations","note":"미국 공식 Pokémon 취급점 위치 검색"},
+    {"name":"Bandai TCG+ 매장·행사","region":"US","games":["ONE PIECE"],"type":"official","channel":"offline","url":"https://www.bandai-tcg-plus.com/","note":"공식 앱·웹에서 원피스 취급점과 행사 검색"}
   ]
 }
