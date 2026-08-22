@@ -1,9 +1,9 @@
 {
-  "version": 1,
-  "updated_at": "2026-08-22T00:00:00+09:00",
+  "version": 2,
+  "updated_at": "2026-08-22T14:30:00+09:00",
   "notice": "검색 연결 목록입니다. 재고·가격·정품 여부·배송 가능 국가는 각 판매처에서 최종 확인하세요.",
   "sources": [
-    {"name":"포켓몬 카드 게임 코리아","region":"KR","games":["Pokemon"],"type":"official","url":"https://pokemoncard.co.kr/","note":"한국 공식 제품·판매점 정보"},
+    {"name":"포켓몬 카드 게임 코리아 제품","region":"KR","games":["Pokemon"],"type":"official","url":"https://pokemoncard.co.kr/card/category/product","note":"한국 공식 제품·출시정보"},
     {"name":"원피스 카드게임 코리아","region":"KR","games":["ONE PIECE"],"type":"official","url":"https://onepiece-cardgame.kr/","note":"한국 공식 제품·행사 정보"},
     {"name":"나루토 카드게임 공식","region":"KR","games":["NARUTO"],"type":"official","url":"https://www.naruto-cardgame.com/asia-en/","note":"아시아 공식 출시정보·판매 안내 확인"},
     {"name":"네이버쇼핑","region":"KR","games":["Pokemon","ONE PIECE","NARUTO"],"type":"marketplace","url_template":"https://search.shopping.naver.com/search/all?query={query}","note":"판매자·정품·국가판 표기를 비교"},
@@ -21,7 +21,7 @@
     {"name":"Yahoo! JAPAN 검색","region":"JP","games":["Pokemon","ONE PIECE","NARUTO"],"type":"blog","url_template":"https://search.yahoo.co.jp/search?p={query}","note":"상점·블로그·입고정보 통합 참고"},
 
     {"name":"Pokémon Center US","region":"US","games":["Pokemon"],"type":"official","url":"https://www.pokemoncenter.com/category/trading-card-game","note":"미국 공식 온라인 스토어"},
-    {"name":"Pokémon 공식 판매점 찾기","region":"US","games":["Pokemon"],"type":"official","url":"https://events.pokemon.com/en-us/locations","note":"미국 공식 취급점 위치 검색"},
+    {"name":"Pokémon 공식 판매점 찾기","region":"US","games":["Pokemon"],"type":"official","url":"https://events.pokemon.com/EventLocator","note":"미국 공식 취급점·행사 위치 검색"},
     {"name":"One Piece Card Game 공식","region":"US","games":["ONE PIECE"],"type":"official","url":"https://en.onepiece-cardgame.com/products/","note":"영문판 공식 제품·스토어 안내"},
     {"name":"Naruto Card Game 공식","region":"US","games":["NARUTO"],"type":"official","url":"https://www.naruto-cardgame.com/asia-en/","note":"공식 글로벌 출시정보 확인"},
     {"name":"TCGplayer","region":"US","games":["Pokemon","ONE PIECE","NARUTO"],"type":"marketplace","url_template":"https://www.tcgplayer.com/search/all/product?q={query}&view=grid","note":"TCG 전문 마켓, 판본·상태·판매자 확인"},
@@ -31,12 +31,13 @@
 
     {"name":"네이버지도 주변 판매점","region":"KR","games":["Pokemon","ONE PIECE","NARUTO"],"type":"map","channel":"offline","url_template":"https://map.naver.com/p/search/{query}","note":"현 위치 주변 매장 검색 · 방문 전 전화로 재고 확인"},
     {"name":"카카오맵 주변 판매점","region":"KR","games":["Pokemon","ONE PIECE","NARUTO"],"type":"map","channel":"offline","url_template":"https://map.kakao.com/?q={query}","note":"한국 오프라인 매장 위치·전화번호 확인"},
-    {"name":"포켓몬 공식 판매점 안내","region":"KR","games":["Pokemon"],"type":"official","channel":"offline","url":"https://pokemoncard.co.kr/","note":"공식 홈페이지에서 판매점·이벤트 매장 확인"},
+    {"name":"포켓몬 공인 카드샵 안내","region":"KR","games":["Pokemon"],"type":"official","channel":"offline","url":"https://pokemoncard.co.kr/card/225","note":"한국 공식 공인 카드샵 점포 안내"},
+    {"name":"원피스 공인·취급 점포","region":"KR","games":["ONE PIECE"],"type":"official","channel":"offline","url":"https://www.onepiece-cardgame.kr/shoplist.do","note":"한국 공식 원피스 카드게임 점포 검색"},
     {"name":"Google 지도 일본 매장","region":"JP","games":["Pokemon","ONE PIECE","NARUTO"],"type":"map","channel":"offline","url_template":"https://www.google.com/maps/search/{query}","note":"일본 현지 카드숍 지도 검색 · 영업시간 확인"},
     {"name":"포켓몬센터 일본 매장","region":"JP","games":["Pokemon"],"type":"official","channel":"offline","url":"https://www.pokemon.co.jp/shop/","note":"일본 공식 포켓몬센터·스토어 매장 안내"},
     {"name":"원피스 공식 점포·행사","region":"JP","games":["ONE PIECE"],"type":"official","channel":"offline","url":"https://www.onepiece-cardgame.com/events/","note":"일본 공식 행사·취급점 정보 확인"},
     {"name":"Google Maps 주변 판매점","region":"US","games":["Pokemon","ONE PIECE","NARUTO"],"type":"map","channel":"offline","url_template":"https://www.google.com/maps/search/{query}","note":"미국 주변 카드숍 검색 · 방문 전 재고 확인"},
-    {"name":"Pokémon 공식 매장 찾기","region":"US","games":["Pokemon"],"type":"official","channel":"offline","url":"https://events.pokemon.com/en-us/locations","note":"미국 공식 Pokémon 취급점 위치 검색"},
+    {"name":"Pokémon 공식 매장 찾기","region":"US","games":["Pokemon"],"type":"official","channel":"offline","url":"https://events.pokemon.com/EventLocator","note":"미국 공식 Pokémon 취급점·행사 위치 검색"},
     {"name":"Bandai TCG+ 매장·행사","region":"US","games":["ONE PIECE"],"type":"official","channel":"offline","url":"https://www.bandai-tcg-plus.com/","note":"공식 앱·웹에서 원피스 취급점과 행사 검색"}
     ,{"name":"11번가","region":"KR","games":["Pokemon","ONE PIECE","NARUTO"],"type":"marketplace","url_template":"https://search.11st.co.kr/Search.tmall?kwd={query}","note":"국내·해외 판매자와 판본 비교"}
     ,{"name":"G마켓","region":"KR","games":["Pokemon","ONE PIECE","NARUTO"],"type":"marketplace","url_template":"https://browse.gmarket.co.kr/search?keyword={query}","note":"판매자·배송·국가판 표기 확인"}
@@ -75,6 +76,6 @@
     ,{"name":"TYPA 재입고 알림","region":"US","games":["Pokemon"],"type":"tracker","url":"https://www.typa.app/brands/pokemon","note":"미국 판매점 재입고 알림, 독립 앱 서비스"}
     ,{"name":"Target 매장 찾기","region":"US","games":["Pokemon","ONE PIECE"],"type":"map","channel":"offline","url":"https://www.target.com/store-locator/find-stores","note":"가까운 Target 검색 · 방문 전 카드 재고 확인"}
     ,{"name":"Walmart 매장 찾기","region":"US","games":["Pokemon","ONE PIECE"],"type":"map","channel":"offline","url":"https://www.walmart.com/store/finder","note":"가까운 Walmart 검색 · 점포 재고 확인"}
-    ,{"name":"GameStop 매장 찾기","region":"US","games":["Pokemon","ONE PIECE"],"type":"map","channel":"offline","url":"https://www.gamestop.com/stores/","note":"가까운 GameStop과 영업시간 확인"}
+    ,{"name":"GameStop 매장 찾기","region":"US","games":["Pokemon","ONE PIECE"],"type":"map","channel":"offline","url":"https://www.gamestop.com/stores","note":"가까운 GameStop과 영업시간 확인"}
   ]
 }

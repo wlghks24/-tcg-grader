@@ -5,7 +5,7 @@ from pathlib import Path
 
 ROOT=Path(__file__).resolve().parent
 DATA=ROOT/'promo_events.json'
-ALLOWED={'www.pokemon-card.com','www.30th.pokemon-card.com','pokemoncard.co.kr','www.pokemoncard.co.kr','onepiece-cardgame.kr','www.onepiece-cardgame.kr','www.onepiece-cardgame.com','en.onepiece-cardgame.com','shop.bandainamco-am.com'}
+ALLOWED={'www.pokemon-card.com','www.30th.pokemon-card.com','pokemoncard.co.kr','www.pokemoncard.co.kr','onepiece-cardgame.kr','www.onepiece-cardgame.kr','www.onepiece-cardgame.com','en.onepiece-cardgame.com','shop.bandainamco-am.com','www.pokemon.com'}
 
 def fetch(url):
     if urllib.parse.urlparse(url).hostname not in ALLOWED: raise ValueError('허용되지 않은 공식 출처')
@@ -26,7 +26,11 @@ def main():
         if not valid(item):errors.append(f"구조 오류: {item.get('name_ko','이름 없음')}");continue
         try:
             page=fetch(item['source'])
-            if not any(token in page for token in re.findall(r'[가-힣ァ-ヶ一-龠]{4,}',item.get('name_native',''))[:2]):raise ValueError('행사명 확인 실패')
+            native_tokens=re.findall(r'[가-힣ァ-ヶ一-龠]{4,}|[A-Za-z]{5,}',item.get('name_native',''))[:4]
+            korean_tokens=re.findall(r'[가-힣]{4,}',item.get('name_ko',''))[:3]
+            if native_tokens or korean_tokens:
+                if not any(token.lower() in page.lower() for token in native_tokens+korean_tokens):
+                    raise ValueError('행사명 확인 실패')
             checked.append(item)
         except Exception as exc:
             errors.append(f"{item['name_ko']}: {type(exc).__name__}")
