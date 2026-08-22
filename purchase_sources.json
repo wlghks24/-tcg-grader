@@ -38,5 +38,43 @@
     {"name":"Google Maps 주변 판매점","region":"US","games":["Pokemon","ONE PIECE","NARUTO"],"type":"map","channel":"offline","url_template":"https://www.google.com/maps/search/{query}","note":"미국 주변 카드숍 검색 · 방문 전 재고 확인"},
     {"name":"Pokémon 공식 매장 찾기","region":"US","games":["Pokemon"],"type":"official","channel":"offline","url":"https://events.pokemon.com/en-us/locations","note":"미국 공식 Pokémon 취급점 위치 검색"},
     {"name":"Bandai TCG+ 매장·행사","region":"US","games":["ONE PIECE"],"type":"official","channel":"offline","url":"https://www.bandai-tcg-plus.com/","note":"공식 앱·웹에서 원피스 취급점과 행사 검색"}
+    ,{"name":"11번가","region":"KR","games":["Pokemon","ONE PIECE","NARUTO"],"type":"marketplace","url_template":"https://search.11st.co.kr/Search.tmall?kwd={query}","note":"국내·해외 판매자와 판본 비교"}
+    ,{"name":"G마켓","region":"KR","games":["Pokemon","ONE PIECE","NARUTO"],"type":"marketplace","url_template":"https://browse.gmarket.co.kr/search?keyword={query}","note":"판매자·배송·국가판 표기 확인"}
+    ,{"name":"옥션","region":"KR","games":["Pokemon","ONE PIECE","NARUTO"],"type":"marketplace","url_template":"https://browse.auction.co.kr/search?keyword={query}","note":"신품·해외구매 상품 비교"}
+    ,{"name":"롯데ON","region":"KR","games":["Pokemon","ONE PIECE","NARUTO"],"type":"marketplace","url_template":"https://www.lotteon.com/search/search/search.ecn?render=search&platform=pc&q={query}","note":"롯데 계열 온라인 판매 검색"}
+    ,{"name":"SSG.COM","region":"KR","games":["Pokemon","ONE PIECE","NARUTO"],"type":"marketplace","url_template":"https://www.ssg.com/search.ssg?target=all&query={query}","note":"신세계·이마트 계열 상품 검색"}
+    ,{"name":"KREAM","region":"KR","games":["Pokemon","ONE PIECE"],"type":"used","url_template":"https://kream.co.kr/search?keyword={query}","note":"검수·거래 상품 검색, 체결가와 판매가 구분"}
+    ,{"name":"중고나라","region":"KR","games":["Pokemon","ONE PIECE","NARUTO"],"type":"used","url_template":"https://web.joongna.com/search/{query}","note":"개인거래 상태·판매자 확인"}
+    ,{"name":"당근","region":"KR","games":["Pokemon","ONE PIECE","NARUTO"],"type":"used","url_template":"https://www.daangn.com/kr/buy-sell/?search={query}","note":"지역 중고거래, 앱에서 위치·판매자 확인"}
+    ,{"name":"Google 쇼핑 한국","region":"KR","games":["Pokemon","ONE PIECE","NARUTO"],"type":"blog","url_template":"https://www.google.com/search?tbm=shop&q={query}","note":"여러 온라인 판매처 가격 비교"}
+    ,{"name":"롯데마트·토이저러스 지도","region":"KR","games":["Pokemon","ONE PIECE"],"type":"map","channel":"offline","url_template":"https://map.naver.com/p/search/롯데마트 토이저러스 {query}","note":"매장 위치 검색 · 카드 입점과 재고는 전화 확인"}
+    ,{"name":"이마트 지도","region":"KR","games":["Pokemon","ONE PIECE"],"type":"map","channel":"offline","url_template":"https://map.naver.com/p/search/이마트 {query}","note":"주변 이마트 위치 검색 · 방문 전 재고 확인"}
+    ,{"name":"홈플러스 지도","region":"KR","games":["Pokemon","ONE PIECE"],"type":"map","channel":"offline","url_template":"https://map.naver.com/p/search/홈플러스 {query}","note":"주변 매장 검색 · 점포별 취급 여부 확인"}
+
+    ,{"name":"Yahoo! 쇼핑 일본","region":"JP","games":["Pokemon","ONE PIECE","NARUTO"],"type":"marketplace","url_template":"https://shopping.yahoo.co.jp/search?p={query}","note":"일본 온라인 판매점 가격 비교"}
+    ,{"name":"요도바시카메라","region":"JP","games":["Pokemon","ONE PIECE"],"type":"marketplace","url_template":"https://www.yodobashi.com/?word={query}","note":"온라인·점포 재고 표시는 사이트에서 확인"}
+    ,{"name":"빅카메라","region":"JP","games":["Pokemon","ONE PIECE"],"type":"marketplace","url_template":"https://www.biccamera.com/bc/category/?q={query}","note":"온라인 판매와 일본 점포 검색"}
+    ,{"name":"스루가야","region":"JP","games":["Pokemon","ONE PIECE","NARUTO"],"type":"used","url_template":"https://www.suruga-ya.jp/search?search_word={query}","note":"신품·중고 혼합, 상태등급 확인"}
+    ,{"name":"카드러시","region":"JP","games":["Pokemon","ONE PIECE"],"type":"marketplace","url_template":"https://www.google.com/search?q=site%3Acardrush-pokemon.jp+{query}","note":"일본 TCG 전문점 상품 검색"}
+    ,{"name":"드래곤스타","region":"JP","games":["Pokemon","ONE PIECE"],"type":"marketplace","url_template":"https://www.google.com/search?q=site%3Adorasuta.jp+{query}","note":"일본 카드 전문점 상품·점포 검색"}
+    ,{"name":"BOOKOFF","region":"JP","games":["Pokemon","ONE PIECE","NARUTO"],"type":"used","url_template":"https://shopping.bookoff.co.jp/search/keyword/{query}","note":"일본 중고 상품 상태와 점포 재고 확인"}
+    ,{"name":"만다라케","region":"JP","games":["Pokemon","ONE PIECE","NARUTO"],"type":"used","url_template":"https://order.mandarake.co.jp/order/listPage/list?keyword={query}&lang=ko", "note":"수집품·중고 카드 검색"}
+    ,{"name":"Yahoo! 옥션 일본","region":"JP","games":["Pokemon","ONE PIECE","NARUTO"],"type":"used","url_template":"https://auctions.yahoo.co.jp/search/search?p={query}","note":"경매·중고 거래, 판매자와 상태 확인"}
+    ,{"name":"일본 카드숍 지도","region":"JP","games":["Pokemon","ONE PIECE","NARUTO"],"type":"map","channel":"offline","url_template":"https://www.google.com/maps/search/トレカショップ+{query}","note":"주변 TCG 전문점과 영업시간 검색"}
+
+    ,{"name":"Target","region":"US","games":["Pokemon","ONE PIECE"],"type":"marketplace","url_template":"https://www.target.com/s?searchTerm={query}","note":"온라인·점포 재고와 구매 제한 확인"}
+    ,{"name":"Walmart","region":"US","games":["Pokemon","ONE PIECE"],"type":"marketplace","url_template":"https://www.walmart.com/search?q={query}","note":"판매 주체가 Walmart인지 제3자인지 확인"}
+    ,{"name":"Best Buy","region":"US","games":["Pokemon","ONE PIECE"],"type":"marketplace","url_template":"https://www.bestbuy.com/site/searchpage.jsp?st={query}","note":"온라인·매장수령 재고 확인"}
+    ,{"name":"GameStop","region":"US","games":["Pokemon","ONE PIECE"],"type":"marketplace","url_template":"https://www.gamestop.com/search/?q={query}","note":"온라인·오프라인 점포 재고 확인"}
+    ,{"name":"Barnes & Noble","region":"US","games":["Pokemon","ONE PIECE"],"type":"marketplace","url_template":"https://www.barnesandnoble.com/s/{query}","note":"매장수령 가능 여부 확인"}
+    ,{"name":"Costco","region":"US","games":["Pokemon"],"type":"marketplace","url_template":"https://www.costco.com/CatalogSearch?keyword={query}","note":"회원 판매·묶음상품 재고 확인"}
+    ,{"name":"Sam's Club","region":"US","games":["Pokemon"],"type":"marketplace","url_template":"https://www.samsclub.com/s/{query}","note":"회원제 묶음상품 검색"}
+    ,{"name":"Troll and Toad","region":"US","games":["Pokemon","ONE PIECE","NARUTO"],"type":"marketplace","url_template":"https://www.trollandtoad.com/category.php?selected-cat=0&search-words={query}","note":"TCG 전문몰, 카드 상태·판본 확인"}
+    ,{"name":"Dave & Adam's","region":"US","games":["Pokemon","ONE PIECE"],"type":"marketplace","url_template":"https://www.dacardworld.com/search?Search={query}","note":"밀봉상품·싱글카드 검색"}
+    ,{"name":"FairFetched 재고 추적","region":"US","games":["Pokemon","ONE PIECE"],"type":"tracker","url":"https://www.fairfetched.com/","note":"여러 대형 판매점의 온라인·점포 재고 참고, 독립 서비스"}
+    ,{"name":"TYPA 재입고 알림","region":"US","games":["Pokemon"],"type":"tracker","url":"https://www.typa.app/brands/pokemon","note":"미국 판매점 재입고 알림, 독립 앱 서비스"}
+    ,{"name":"Target 매장 찾기","region":"US","games":["Pokemon","ONE PIECE"],"type":"map","channel":"offline","url":"https://www.target.com/store-locator/find-stores","note":"가까운 Target 검색 · 방문 전 카드 재고 확인"}
+    ,{"name":"Walmart 매장 찾기","region":"US","games":["Pokemon","ONE PIECE"],"type":"map","channel":"offline","url":"https://www.walmart.com/store/finder","note":"가까운 Walmart 검색 · 점포 재고 확인"}
+    ,{"name":"GameStop 매장 찾기","region":"US","games":["Pokemon","ONE PIECE"],"type":"map","channel":"offline","url":"https://www.gamestop.com/stores/","note":"가까운 GameStop과 영업시간 확인"}
   ]
 }

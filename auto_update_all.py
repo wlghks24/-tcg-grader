@@ -19,7 +19,7 @@ JOBS = (
     ("출시일", "update_releases", "releases.json"),
     ("판매·재발매 추적", "update_market_watch", "market_watch.json"),
     ("현재 거래시세", "update_market_prices", "market_prices.json"),
-    ("프로모 카드 행사", "update_promo_events", "promo_events.json"),
+    ("프로모·콜라보 행사", "update_promo_events", "promo_events.json"),
     ("원화 환산 환율", "update_exchange_rates", "exchange_rates.json"),
 )
 

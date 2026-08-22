@@ -15,6 +15,42 @@
       "location": "일본 포켓몬 카드짐",
       "status": "진행 중",
       "source": "https://www.pokemon-card.com/info/005397.html"
+    },
+    {
+      "game": "포켓몬 카드", "region": "JP", "category": "promo",
+      "name_ko": "WCS 2026 기념 피카츄 프로모", "name_native": "「ピカチュウ」もらえる！ジムイベント",
+      "start_date": "2026-06-20", "end_date": "2026-09-30", "claim_deadline": "2026-09-30",
+      "reward": "대상 공식 행사 참가자에게 프로모 카드 ‘피카츄’ 1장",
+      "condition": "일본 전국 포켓몬 카드짐의 대상 이벤트에 참가하고 행사 조건을 충족해야 함",
+      "location": "일본 전국 포켓몬 카드짐", "status": "진행 중",
+      "source": "https://www.pokemon-card.com/info/005516.html"
+    },
+    {
+      "game": "포켓몬 카드", "region": "JP", "category": "collaboration",
+      "name_ko": "친구·가족과 프렌드 배틀", "name_native": "いっしょにフレンドバトル",
+      "start_date": "2026-08-14", "end_date": "2026-09-30", "claim_deadline": "2026-09-30",
+      "reward": "참가상 에너지 카드 2장, 친구·가족 동반 시 짐 프로모팩 각 1팩",
+      "condition": "대상 포켓몬 카드짐 행사에 친구 또는 가족과 참가. 경품 소진 시 종료",
+      "location": "일본 전국 포켓몬 카드짐", "status": "진행 중",
+      "source": "https://www.pokemon-card.com/info/005569.html"
+    },
+    {
+      "game": "포켓몬 카드", "region": "JP", "category": "collaboration",
+      "name_ko": "포켓몬 카드게임 30주년 기념 행사", "name_native": "ポケモンカードゲーム30th CELEBRATION EVENT",
+      "start_date": "2026-10-25", "end_date": "2026-11-01", "claim_deadline": "2026-11-01",
+      "reward": "30주년 특별 행사·캠페인 예정, 세부 보상은 공식 후속 발표 확인",
+      "condition": "도쿄 10월 25일, 오사카 10월 31일~11월 1일. 참가방법은 추후 공식 발표",
+      "location": "마쿠하리 멧세·인텍스 오사카", "status": "예정",
+      "source": "https://www.30th.pokemon-card.com/event"
+    },
+    {
+      "game": "원피스 카드", "region": "US", "category": "collaboration",
+      "name_ko": "Pirates League 공식 숍 대항전 2026", "name_native": "Pirates League: ONE PIECE CARD GAME Official Shop Edition 2026",
+      "start_date": "2026-09-06", "end_date": "2026-11-30", "claim_deadline": "2026-07-24",
+      "reward": "공식 숍 예선·온라인 대항전 참가 보상과 순위별 프로모 상품",
+      "condition": "미국 공식 숍 예선 선발자 대상. 일반 참가 등록은 7월 24일 종료",
+      "location": "미국 ONE PIECE CARD GAME 공식 숍 9곳", "status": "참가접수 종료·대회 예정",
+      "source": "https://shop.bandainamco-am.com/news/detail/pirates-league-one-piece-card-game-official-shop-edition-2026/"
     }
   ],
   "collection_errors": []
