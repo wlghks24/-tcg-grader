@@ -36,9 +36,12 @@ def main():
         assert {'KR','JP','US'} <= {x['region'] for x in sources}
         assert {'Pokemon','ONE PIECE','NARUTO'} <= {g for x in sources for g in x['games']}
         assert {'official','marketplace','used','blog'} <= {x['type'] for x in sources}
+        assert any(x.get('channel')=='offline' for x in sources)
+        assert {'KR','JP','US'} <= {x['region'] for x in sources if x.get('channel')=='offline'}
         assert all(x.get('url') or '{query}' in x.get('url_template','') for x in sources)
         assert any(x['name']=='Pokémon Center US' and x['type']=='official' for x in sources)
-        return f'{len(sources)}개 · 한국판/일본판/미국판 · 공식/쇼핑몰/중고/블로그'
+        offline=sum(x.get('channel')=='offline' for x in sources)
+        return f'{len(sources)}개 · 온라인 {len(sources)-offline}개 / 오프라인 {offline}개 · 3개 국가'
     check('국가별 구매처 검색',purchase_check,rows)
     html=(ROOT/'index.html').read_text(encoding='utf-8')
     def html_check():
@@ -53,6 +56,8 @@ def main():
         assert 'const grades=window.tcgLastGrades||{}' in html
         assert all(f'id="{item}"' in html for item in ('purchasePanel','purchaseGame','purchaseQuery','purchaseRegionGrid','guideLeft','guideRight','guideTop','guideBottom','guideCalculate','guideResult'))
         assert 'applyGuideCenteringCap' in html and 'purchase_sources.json' in html
+        assert 'data-purchase-channel="online"' in html and 'data-purchase-channel="offline"' in html
+        assert 'id="tabletServerGuide"' in html and 'START_TCG_UPDATER_ANDROID.sh' in html
         return f'고유 ID {len(ids)}개'
     check('화면 구성',html_check,rows)
     def js_check():
@@ -69,7 +74,10 @@ def main():
     check('서비스워커',sw_check,rows)
     def launchers():
         required=('TCG_AUTO_UPDATE.bat','정보자동업데이트.bat','START_TCG_UPDATER_ANDROID.sh','자동실행_설치.bat','ANDROID_AUTO_START_INSTALL.sh','PC_SERVER_AUTO_START_INSTALL.bat','TCG_SERVER_AUTO_RUN.cmd','자동실행_해제.bat','기존버전_학습자료_가져오기.bat','학습자료_백업.bat','migrate_old_data.py')
-        assert all((ROOT/f).exists() for f in required);return f'{len(required)}개'
+        assert all((ROOT/f).exists() for f in required)
+        for script in ('START_TCG_UPDATER_ANDROID.sh','ANDROID_AUTO_START_INSTALL.sh','ANDROID_AUTO_START_REMOVE.sh'):
+            subprocess.run(['bash','-n',script],cwd=ROOT,check=True,capture_output=True,text=True,timeout=10)
+        return f'{len(required)}개 · 안드로이드 셸 문법 정상'
     check('PC·태블릿 실행파일',launchers,rows)
     def startup_safety():
         installer=(ROOT/'PC_SERVER_AUTO_START_INSTALL.bat').read_text(encoding='utf-8')
