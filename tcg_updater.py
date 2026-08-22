@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-import json, os, re, hashlib, threading, webbrowser, time, socket, ipaddress, subprocess
+import json, os, re, hashlib, threading, webbrowser, time, socket, ipaddress, subprocess, platform
 from urllib.parse import urlparse, parse_qs
 from http.server import ThreadingHTTPServer, SimpleHTTPRequestHandler
 from urllib.request import Request, urlopen
@@ -40,7 +40,8 @@ def free_port(start=8765, limit=30):
             pass
     raise OSError('사용 가능한 로컬 포트를 찾지 못했습니다.')
 
-PORT=free_port()
+PORT=8765
+PLATFORM='Android 태블릿' if 'com.termux' in os.environ.get('PREFIX','') else ('Windows PC' if os.name=='nt' else platform.system())
 
 def choose_lan_ip(candidates):
     """Prefer a real home LAN address over VPN/virtual-adapter addresses."""
@@ -193,7 +194,8 @@ class Handler(SimpleHTTPRequestHandler):
         self.end_headers(); self.wfile.write(body)
     def do_GET(self):
         parsed=urlparse(self.path);path=parsed.path
-        if path=='/api/health': return self.json({'ok':True,'service':'TCG v31'})
+        if path=='/api/health':
+            return self.json({'ok':True,'service':'TCG v31 Updater','platform':PLATFORM,'port':PORT,'api_version':1})
         if path=='/api/status': return self.json(load_db())
         if path=='/api/auto-status': return self.json(load_db().get('auto_update',{}))
         if path=='/api/update-report': return self.json(load_json_file(AUTO_REPORT,{'ok':False,'results':[]}))
@@ -240,7 +242,10 @@ class Handler(SimpleHTTPRequestHandler):
 
 if __name__=='__main__':
     os.chdir(BASE)
-    server=ThreadingHTTPServer(('0.0.0.0',PORT),Handler)
+    try:
+        server=ThreadingHTTPServer(('0.0.0.0',PORT),Handler)
+    except OSError as exc:
+        raise SystemExit(f'[오류] {PORT}번 포트를 열 수 없습니다. 이미 실행 중인 TCG 서버가 있는지 확인하세요: {exc}')
     candidates=lan_ipv4_candidates();lan_ip=choose_lan_ip(candidates)
     url=f'http://127.0.0.1:{PORT}/index.html'
     print('이 기기 접속 주소:',url,flush=True)

@@ -661,7 +661,163 @@
           "detail": "health·자동수집 상태·업데이트 보고·행사·구매처·학습 저장·화면 응답 정상"
         }
       ]
+    },
+    {
+      "checked_at": "2026-08-22T12:21:28+00:00",
+      "ok": true,
+      "pass_count": 14,
+      "failure_count": 0,
+      "checks": [
+        {
+          "name": "Python 문법",
+          "ok": true,
+          "detail": "10개"
+        },
+        {
+          "name": "JSON 구조",
+          "ok": true,
+          "detail": "10개"
+        },
+        {
+          "name": "국가별 BOX·박스·카드 자료",
+          "ok": true,
+          "detail": "가격 36개 · 판매/재발매 추적 15개"
+        },
+        {
+          "name": "국가별 구매처 검색",
+          "ok": true,
+          "detail": "69개 · 온라인 52개 / 오프라인 17개 · 3개 국가"
+        },
+        {
+          "name": "프로모·콜라보 행사",
+          "ok": true,
+          "detail": "13개 · 프로모/콜라보·특별행사 · 공식 출처·기간·조건 확인"
+        },
+        {
+          "name": "화면 구성",
+          "ok": true,
+          "detail": "고유 ID 192개"
+        },
+        {
+          "name": "JavaScript 문법",
+          "ok": true,
+          "detail": "인라인 JavaScript 문법 정상"
+        },
+        {
+          "name": "서비스워커",
+          "ok": true,
+          "detail": "판매·재발매 자료 캐시 포함"
+        },
+        {
+          "name": "PC·태블릿 실행파일",
+          "ok": true,
+          "detail": "11개 · 안드로이드 셸 문법 정상"
+        },
+        {
+          "name": "태블릿 자동수집·링크 보안",
+          "ok": true,
+          "detail": "6종 자동수집 · 공식 HTTPS 검증 · 서버 우선 시작 · 1분 화면 동기화"
+        },
+        {
+          "name": "Windows 자동실행 안전장치",
+          "ok": true,
+          "detail": "필수파일·Python 확인 · 오류 시 10초 후 자동복구"
+        },
+        {
+          "name": "기존버전 자료 안전 이전",
+          "ok": true,
+          "detail": "기존·신규 기록 병합 · 최신자료 선택 · 병합 전 백업"
+        },
+        {
+          "name": "휴대폰·태블릿 LAN 주소 선택",
+          "ok": true,
+          "detail": "VPN 10.5.0.2보다 Wi-Fi 192.168.1.2 우선"
+        },
+        {
+          "name": "PC·태블릿 서버 실제 응답",
+          "ok": true,
+          "detail": "health·자동수집 상태·업데이트 보고·행사·구매처·학습 저장·화면 응답 정상"
+        }
+      ]
+    },
+    {
+      "checked_at": "2026-08-22T12:22:05+00:00",
+      "ok": true,
+      "pass_count": 14,
+      "failure_count": 0,
+      "checks": [
+        {
+          "name": "Python 문법",
+          "ok": true,
+          "detail": "10개"
+        },
+        {
+          "name": "JSON 구조",
+          "ok": true,
+          "detail": "10개"
+        },
+        {
+          "name": "국가별 BOX·박스·카드 자료",
+          "ok": true,
+          "detail": "가격 36개 · 판매/재발매 추적 15개"
+        },
+        {
+          "name": "국가별 구매처 검색",
+          "ok": true,
+          "detail": "69개 · 온라인 52개 / 오프라인 17개 · 3개 국가"
+        },
+        {
+          "name": "프로모·콜라보 행사",
+          "ok": true,
+          "detail": "13개 · 프로모/콜라보·특별행사 · 공식 출처·기간·조건 확인"
+        },
+        {
+          "name": "화면 구성",
+          "ok": true,
+          "detail": "고유 ID 192개"
+        },
+        {
+          "name": "JavaScript 문법",
+          "ok": true,
+          "detail": "인라인 JavaScript 문법 정상"
+        },
+        {
+          "name": "서비스워커",
+          "ok": true,
+          "detail": "판매·재발매 자료 캐시 포함"
+        },
+        {
+          "name": "PC·태블릿 실행파일",
+          "ok": true,
+          "detail": "11개 · 안드로이드 셸 문법 정상"
+        },
+        {
+          "name": "태블릿 자동수집·링크 보안",
+          "ok": true,
+          "detail": "6종 자동수집 · 공식 HTTPS 검증 · 서버 우선 시작 · 1분 화면 동기화"
+        },
+        {
+          "name": "Windows 자동실행 안전장치",
+          "ok": true,
+          "detail": "필수파일·Python 확인 · 오류 시 10초 후 자동복구"
+        },
+        {
+          "name": "기존버전 자료 안전 이전",
+          "ok": true,
+          "detail": "기존·신규 기록 병합 · 최신자료 선택 · 병합 전 백업"
+        },
+        {
+          "name": "휴대폰·태블릿 LAN 주소 선택",
+          "ok": true,
+          "detail": "VPN 10.5.0.2보다 Wi-Fi 192.168.1.2 우선"
+        },
+        {
+          "name": "PC·태블릿 서버 실제 응답",
+          "ok": true,
+          "detail": "health·자동수집 상태·업데이트 보고·행사·구매처·학습 저장·화면 응답 정상"
+        }
+      ]
     }
   ],
-  "updated_at": "2026-08-22T06:34:30+00:00"
+  "updated_at": "2026-08-22T12:22:05+00:00"
 }

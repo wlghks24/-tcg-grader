@@ -1470,7 +1470,7 @@ function v20render(d){
  const p=d.pending||[];
  const a=d.auto_update||{};
  document.getElementById("v20out").innerHTML=
- `<b>마지막 수집:</b> ${d.updated_at||"없음"}<br><b>검토 대기:</b> ${p.length}건<br><b>PC 자동수집:</b> ${a.enabled?`켜짐 · ${a.interval_hours||6}시간마다 · 다음 ${a.next_run||"계산 중"}`:"꺼짐"}<br>`+
+ `<b>마지막 수집:</b> ${d.updated_at||"없음"}<br><b>검토 대기:</b> ${p.length}건<br><b>PC·태블릿 자동수집:</b> ${a.enabled?`켜짐 · ${a.interval_hours||6}시간마다 · 다음 ${a.next_run||"계산 중"}`:"꺼짐"}<br>`+
  (p.length?p.map(x=>`• <a href="${x.url}" target="_blank">${x.source}</a> — ${x.status}${x.error?` (${x.error})`:""}`).join("<br>"):"✅ 반영 대기 변경사항 없음");
 }
 document.getElementById("v20collect")?.addEventListener("click",async()=>{
@@ -1498,7 +1498,8 @@ document.getElementById("v20apply")?.addEventListener("click",async()=>{
 
 <script>
 (function(){
- const PC_API="/api/status";
+ const HEALTH_API="/api/health";
+ const STATUS_API="/api/status";
  const DIRECT=[
   {name:"PSA 공식",url:"https://www.psacard.com/gradingstandards"},
   {name:"CGC 공식",url:"https://www.cgccards.com/card-grading/grading-scale/"},
@@ -1508,8 +1509,15 @@ document.getElementById("v20apply")?.addEventListener("click",async()=>{
  ];
  async function pc(){
    try{
-     const r=await fetch(PC_API,{cache:"no-store"});
-     if(r.ok) return await r.json();
+     const controller=new AbortController();
+     const timer=setTimeout(()=>controller.abort(),5000);
+     const healthResponse=await fetch(HEALTH_API,{cache:"no-store",signal:controller.signal});
+     clearTimeout(timer);
+     if(!healthResponse.ok) return null;
+     const health=await healthResponse.json();
+     if(!health.ok||health.service!=="TCG v31 Updater"||health.api_version!==1) return null;
+     const statusResponse=await fetch(STATUS_API,{cache:"no-store"});
+     if(statusResponse.ok) return {health,data:await statusResponse.json()};
    }catch(e){}
    return null;
  }
@@ -1530,7 +1538,7 @@ document.getElementById("v20apply")?.addEventListener("click",async()=>{
    const d=await pc();
    const mode=document.getElementById("v23mode");
    if(d){
-     mode.innerHTML="🟢 <b>서버 연결됨</b> — PC·안드로이드 서버 모드";
+     mode.innerHTML=`🟢 <b>서버 연결됨</b> — ${d.health.platform||"PC·안드로이드"} · 포트 ${d.health.port||8765}`;
      return {mode:"PC",data:d};
    }
    mode.innerHTML="📱 <b>로컬 서버 꺼짐</b> — 모바일 자체 업데이트 모드";
@@ -1539,7 +1547,7 @@ document.getElementById("v20apply")?.addEventListener("click",async()=>{
  document.getElementById("v23check")?.addEventListener("click",async()=>{
    const x=await status();
    if(x.mode==="PC"){
-     document.getElementById("v23result").innerHTML="✅ PC·태블릿 서버와 연결됐습니다. 서버의 중앙 DB를 사용할 수 있습니다.";
+     document.getElementById("v23result").innerHTML=`✅ ${x.data.health.platform||"PC·태블릿"} 업데이트 서버와 연결됐습니다.<br>동일한 중앙 DB·수집·검증 기능을 사용합니다.`;
    }else{
      const r=await directCheck();
      document.getElementById("v23result").innerHTML=

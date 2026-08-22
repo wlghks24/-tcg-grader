@@ -104,6 +104,7 @@ def main():
         launcher=(ROOT/'START_TCG_UPDATER_ANDROID.sh').read_text(encoding='utf-8')
         boot=(ROOT/'ANDROID_AUTO_START_INSTALL.sh').read_text(encoding='utf-8')
         assert 'python tcg_updater.py' in launcher and 'python auto_update_all.py' not in launcher
+        assert "PORT=8765" in (ROOT/'tcg_updater.py').read_text(encoding='utf-8')
         assert 'while true; do' in boot and 'sleep 10' in boot
         return '6종 자동수집 · 공식 HTTPS 검증 · 서버 우선 시작 · 1분 화면 동기화'
     check('태블릿 자동수집·링크 보안',tablet_auto_security,rows)
@@ -158,7 +159,9 @@ def main():
             def get(path):
                 with urllib.request.urlopen(base+path,timeout=5) as response:
                     return response.status,response.read().decode('utf-8')
-            status,health=get('/api/health');assert status==200 and json.loads(health)['ok']
+            status,health=get('/api/health');health_body=json.loads(health)
+            assert status==200 and health_body['ok'] and health_body['service']=='TCG v31 Updater'
+            assert health_body['port']==8765 and health_body['api_version']==1 and health_body['platform']
             status,watch=get('/api/market-watch');assert status==200 and len(json.loads(watch)['items'])>=3
             key=urllib.parse.quote('KR|계승되는 의지|BOX')
             status,price=get('/api/market-price?key='+key);body=json.loads(price)
