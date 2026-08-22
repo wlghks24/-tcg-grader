@@ -5,7 +5,7 @@ from pathlib import Path
 
 ROOT=Path(__file__).resolve().parent
 DATA=ROOT/'promo_events.json'
-ALLOWED={'www.pokemon-card.com','pokemoncard.co.kr','www.pokemoncard.co.kr','onepiece-cardgame.kr','www.onepiece-cardgame.kr','www.onepiece-cardgame.com','en.onepiece-cardgame.com'}
+ALLOWED={'www.pokemon-card.com','www.30th.pokemon-card.com','pokemoncard.co.kr','www.pokemoncard.co.kr','onepiece-cardgame.kr','www.onepiece-cardgame.kr','www.onepiece-cardgame.com','en.onepiece-cardgame.com','shop.bandainamco-am.com'}
 
 def fetch(url):
     if urllib.parse.urlparse(url).hostname not in ALLOWED: raise ValueError('허용되지 않은 공식 출처')
