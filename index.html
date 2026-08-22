@@ -110,6 +110,8 @@ const RELEASE_FALLBACK={updated_at:"2026-08-21T00:00:00+09:00",items:[
 let releaseData=RELEASE_FALLBACK;
 const PROMO_FALLBACK={updated_at:"2026-08-21T00:00:00+09:00",items:[{game:"포켓몬 카드",region:"JP",name_ko:"포켓몬 카드짐 엔트리 캠페인 2026 상반기",name_native:"ポケカジムエントリーキャンペーン2026年前期",start_date:"2026-03-01",end_date:"2026-08-31",claim_deadline:"2026-10-31",reward:"스탬프 2개: 프로모 카드 ‘포켓패드’ · 스탬프 4개: ‘메가캥카 ex’",condition:"플레이어즈클럽 가입 후 포켓몬 카드짐 공식 행사에서 QR 체크인. 경품은 등록한 마이짐에서만 수령 가능",location:"일본 포켓몬 카드짐",status:"진행 중",source:"https://www.pokemon-card.com/info/005397.html"}]};
 let promoData=PROMO_FALLBACK;
+function escapeDisplayText(value){return String(value??"").replace(/[&<>"']/g,char=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[char]))}
+function safeExternalUrl(value){try{const url=new URL(String(value||""));if(url.protocol!=="https:"||url.username||url.password)return "#";return url.href}catch(e){return "#"}}
 function releaseDayInfo(date){
  if(!/^\d{4}-\d{2}-\d{2}$/.test(date||"")) return {text:"일정 확인",cls:""};
  const now=new Date(),today=new Date(now.getFullYear(),now.getMonth(),now.getDate());
@@ -120,22 +122,22 @@ function renderReleases(){
  const region=document.getElementById("releaseFilter").value;
  const rows=(releaseData.items||[]).filter(x=>region==="ALL"||x.region===region).sort((a,b)=>(a.release_date||"").localeCompare(b.release_date||""));
  const flags={GLOBAL:"🌐 글로벌",KR:"🇰🇷 한국판",JP:"🇯🇵 일본판",US:"🇺🇸 미국판"};
- document.getElementById("releaseList").innerHTML=rows.length?rows.map(x=>{const day=releaseDayInfo(x.release_date),when=x.release_window||x.release_date||"미정";return `<article class="release-item"><div class="release-top"><div class="release-name">${x.game} · ${x.name}</div><span class="release-badge ${day.cls}">${x.release_window||day.text}</span></div><div class="release-meta">${flags[x.region]||x.region} · 출시 ${when}<br>${x.status||"공식 확인"} · ${x.price||"가격 미정"} · <a href="${x.source}" target="_blank" rel="noopener">공식 출처</a></div></article>`}).join(""):`<div class="release-empty">선택한 국가의 확인된 출시정보가 없습니다.</div>`;
+ document.getElementById("releaseList").innerHTML=rows.length?rows.map(x=>{const day=releaseDayInfo(x.release_date),when=x.release_window||x.release_date||"미정";return `<article class="release-item"><div class="release-top"><div class="release-name">${escapeDisplayText(x.game)} · ${escapeDisplayText(x.name)}</div><span class="release-badge ${day.cls}">${escapeDisplayText(x.release_window||day.text)}</span></div><div class="release-meta">${escapeDisplayText(flags[x.region]||x.region)} · 출시 ${escapeDisplayText(when)}<br>${escapeDisplayText(x.status||"공식 확인")} · ${escapeDisplayText(x.price||"가격 미정")} · <a href="${safeExternalUrl(x.source)}" target="_blank" rel="noopener noreferrer">공식 출처</a></div></article>`}).join(""):`<div class="release-empty">선택한 국가의 확인된 출시정보가 없습니다.</div>`;
  const updated=releaseData.updated_at?new Date(releaseData.updated_at).toLocaleString("ko-KR"):"확인되지 않음";
  document.getElementById("releaseUpdated").textContent=`마지막 공식정보 확인: ${updated} · 출처 확인된 항목만 표시`;
 }
 async function loadReleases(force=false){
  try{const r=await fetch(`releases.json${force?`?t=${Date.now()}`:""}`,{cache:force?"no-store":"default"});if(!r.ok)throw new Error("release data unavailable");const next=await r.json();if(!Array.isArray(next.items))throw new Error("invalid release data");releaseData=next;renderReleases();return {ok:true}}catch(e){if(!releaseData?.items?.length)releaseData=RELEASE_FALLBACK;renderReleases();return {ok:false,error:e}}
 }
-function renderPromos(){const region=document.getElementById("promoFilter").value,type=document.getElementById("promoType").value,flags={KR:"🇰🇷 한국",JP:"🇯🇵 일본",US:"🇺🇸 미국"},rows=(promoData.items||[]).filter(x=>(region==="ALL"||x.region===region)&&(type==="ALL"||(x.category||"promo")===type)).sort((a,b)=>a.start_date.localeCompare(b.start_date));document.getElementById("promoList").innerHTML=rows.length?rows.map(x=>`<article class="release-item"><div class="release-top"><div class="release-name">${(x.category||"promo")==="collaboration"?"🤝":"🎁"} ${x.game} · ${x.name_ko}<br><small>${x.name_native||""}</small></div><span class="release-badge">${x.status||"공식 확인"}</span></div><div class="release-meta">${flags[x.region]||x.region} · 행사 ${x.start_date} ~ ${x.end_date}<br>수령·접수기한 ${x.claim_deadline||x.end_date} · ${x.location||"공식 행사장"}</div><div class="promo-reward">🎁 ${x.reward}</div><div class="promo-condition">✅ 참가·수령조건: ${x.condition}<br><a href="${x.source}" target="_blank" rel="noopener">공식 행사 안내</a></div></article>`).join(""):`<div class="release-empty">선택한 조건에서 공식 확인된 행사가 없습니다.</div>`;const updated=promoData.updated_at?new Date(promoData.updated_at).toLocaleString("ko-KR"):"확인되지 않음";document.getElementById("promoUpdated").textContent=`마지막 공식정보 확인: ${updated} · 공식 출처가 있는 행사만 표시`}
+function renderPromos(){const region=document.getElementById("promoFilter").value,type=document.getElementById("promoType").value,flags={KR:"🇰🇷 한국",JP:"🇯🇵 일본",US:"🇺🇸 미국"},rows=(promoData.items||[]).filter(x=>(region==="ALL"||x.region===region)&&(type==="ALL"||(x.category||"promo")===type)).sort((a,b)=>a.start_date.localeCompare(b.start_date));document.getElementById("promoList").innerHTML=rows.length?rows.map(x=>`<article class="release-item"><div class="release-top"><div class="release-name">${(x.category||"promo")==="collaboration"?"🤝":"🎁"} ${escapeDisplayText(x.game)} · ${escapeDisplayText(x.name_ko)}<br><small>${escapeDisplayText(x.name_native||"")}</small></div><span class="release-badge">${escapeDisplayText(x.status||"공식 확인")}</span></div><div class="release-meta">${escapeDisplayText(flags[x.region]||x.region)} · 행사 ${escapeDisplayText(x.start_date)} ~ ${escapeDisplayText(x.end_date)}<br>수령·접수기한 ${escapeDisplayText(x.claim_deadline||x.end_date)} · ${escapeDisplayText(x.location||"공식 행사장")}</div><div class="promo-reward">🎁 ${escapeDisplayText(x.reward)}</div><div class="promo-condition">✅ 참가·수령조건: ${escapeDisplayText(x.condition)}<br><a href="${safeExternalUrl(x.source)}" target="_blank" rel="noopener noreferrer">공식 행사 안내</a></div></article>`).join(""):`<div class="release-empty">선택한 조건에서 공식 확인된 행사가 없습니다.</div>`;const updated=promoData.updated_at?new Date(promoData.updated_at).toLocaleString("ko-KR"):"확인되지 않음";document.getElementById("promoUpdated").textContent=`마지막 공식정보 확인: ${updated} · 공식 출처가 있는 행사만 표시`}
 async function loadPromos(force=false){try{const r=await fetch(`promo_events.json${force?`?t=${Date.now()}`:""}`,{cache:force?"no-store":"default"});if(!r.ok)throw new Error("promo unavailable");const next=await r.json();if(!Array.isArray(next.items))throw new Error("invalid promo data");promoData=next;renderPromos();return {ok:true}}catch(e){renderPromos();return {ok:false,error:e}}}
 let purchaseData={updated_at:null,sources:[]};
 let purchaseChannel="all";
 const PURCHASE_TERMS={Pokemon:{KR:"포켓몬 카드",JP:"ポケモンカード",US:"Pokemon cards"},"ONE PIECE":{KR:"원피스 카드",JP:"ワンピースカード",US:"One Piece Card Game"},NARUTO:{KR:"나루토 카드게임",JP:"NARUTO カードゲーム",US:"Naruto Card Game"}};
-function purchaseUrl(source,query){if(source.url)return source.url;return source.url_template.replace("{query}",encodeURIComponent(query))}
+function purchaseUrl(source,query){if(source.url)return safeExternalUrl(source.url);return safeExternalUrl(source.url_template.replace("{query}",encodeURIComponent(query)))}
 function renderPurchaseSources(){
  const selected=document.getElementById("purchaseGame").value,extra=document.getElementById("purchaseQuery").value.trim(),flags={KR:"🇰🇷 한국판",JP:"🇯🇵 일본판",US:"🇺🇸 미국판"},types={official:"공식",marketplace:"쇼핑몰",used:"중고",blog:"블로그·검색",map:"지도",tracker:"재고알림"};
- const card=(x,query)=>`<a class="purchase-source" href="${purchaseUrl(x,query)}" target="_blank" rel="noopener"><b>${x.name}<span class="source-badge ${x.type}">${types[x.type]}</span></b><small>${x.note}<br>${(x.channel||"online")==="offline"?"방문 전 영업·재고 전화 확인":"현재 구매 가능 여부는 판매처에서 확인"}</small></a>`;
+ const card=(x,query)=>`<a class="purchase-source" href="${purchaseUrl(x,query)}" target="_blank" rel="noopener noreferrer"><b>${escapeDisplayText(x.name)}<span class="source-badge ${escapeDisplayText(x.type)}">${escapeDisplayText(types[x.type]||"구매처")}</span></b><small>${escapeDisplayText(x.note||"")}<br>${(x.channel||"online")==="offline"?"방문 전 영업·재고 전화 확인":"현재 구매 가능 여부는 판매처에서 확인"}</small></a>`;
  document.getElementById("purchaseRegionGrid").innerHTML=["KR","JP","US"].map(region=>{const query=[PURCHASE_TERMS[selected][region],extra].filter(Boolean).join(" "),base=(purchaseData.sources||[]).filter(x=>x.region===region&&x.games.includes(selected)),rows=base.filter(x=>purchaseChannel==="all"||(x.channel||"online")===purchaseChannel),online=rows.filter(x=>(x.channel||"online")==="online"),offline=rows.filter(x=>x.channel==="offline"),groups=[online.length?`<div class="purchase-group-title">🌐 온라인 구매·검색</div>${online.map(x=>card(x,query)).join("")}`:"",offline.length?`<div class="purchase-group-title">📍 오프라인 매장·지도</div>${offline.map(x=>card(x,query)).join("")}`:""].join("");return `<section class="purchase-region"><h3>${flags[region]}</h3>${groups||`<div class="release-empty">선택 조건의 구매처가 없습니다.</div>`}</section>`}).join("");
  const when=purchaseData.updated_at?new Date(purchaseData.updated_at).toLocaleString("ko-KR"):"저장자료";document.getElementById("purchaseUpdated").textContent=`검색 연결 목록 확인: ${when} · 제품명을 입력하면 국가별 검색어에 함께 반영됩니다.`;
 }
@@ -151,11 +153,11 @@ async function refreshReleaseInfo(){
  let server=false,serverMessage="";
  try{
   server=await releaseServerAvailable();
-  if(server){btn.textContent="공식자료 수집 중…";status.textContent="PC·태블릿 서버에서 공식 출시·가격자료를 수집 중입니다. 최대 2분 정도 걸릴 수 있습니다.";siteStatus.textContent="🖥️ 서버 연결됨 · 출시·재발매·시세·프로모·환율 5단계를 수집하고 있습니다.";const controller=new AbortController(),timer=setTimeout(()=>controller.abort(),180000);let r;try{r=await fetch(`/api/update?t=${Date.now()}`,{cache:"no-store",signal:controller.signal})}finally{clearTimeout(timer)}if(!r.ok)throw new Error("server update failed");const d=await r.json();serverMessage=d.auto_update?.market_status||"서버 수집 완료"}
-  btn.textContent="화면 갱신 중…";const [loaded,promos]=await Promise.all([loadReleases(true),loadPromos(true),loadPopularitySignals(true),loadExchangeRates(true)]);
+  if(server){btn.textContent="공식자료 수집 중…";status.textContent="PC·태블릿 서버에서 공식 출시·가격자료를 수집 중입니다. 출처 상황에 따라 잠시 기다려 주세요.";siteStatus.textContent="🖥️ 서버 연결됨 · 출시·재발매·시세·행사·구매처·환율 6단계를 수집하고 있습니다.";const controller=new AbortController(),timer=setTimeout(()=>controller.abort(),240000);let r;try{r=await fetch(`/api/update?t=${Date.now()}`,{cache:"no-store",signal:controller.signal})}finally{clearTimeout(timer)}if(!r.ok)throw new Error("server update failed");const d=await r.json();serverMessage=d.auto_update?.market_status||"서버 수집 완료"}
+  btn.textContent="화면 갱신 중…";const [loaded,promos,purchases]=await Promise.all([loadReleases(true),loadPromos(true),loadPurchaseSources(true),loadPopularitySignals(true),loadExchangeRates(true)]);
   if("serviceWorker" in navigator){const reg=await navigator.serviceWorker.getRegistration();if(reg)await reg.update()}
-  const base=status.textContent,success=loaded.ok&&promos.ok;status.textContent=success?`✅ 새로고침 완료 · ${server?serverMessage:"GitHub 최신 저장자료 확인"} · ${base}`:"⚠️ 일부 새 자료를 받지 못해 기존 확인자료를 유지했습니다.";siteStatus.className=`site-update-status ${success?"ok":"warn"}`;siteStatus.textContent=success?`✅ 전체정보 업데이트 완료 · ${server?"PC·태블릿 서버에서 실제 수집 후 반영":"GitHub Pages 최신 저장자료를 캐시 없이 반영"}`:"⚠️ 일부 자료를 받지 못해 마지막 정상자료를 유지했습니다.";
- }catch(e){await Promise.all([loadReleases(true),loadPromos(true),loadPopularitySignals(true),loadExchangeRates(true)]);status.textContent="⚠️ 새로고침 중 일부 출처 확인에 실패해 기존 확인자료를 유지했습니다.";siteStatus.className="site-update-status warn";siteStatus.textContent="⚠️ 업데이트 일부 실패 · 기존 정상자료는 삭제하지 않고 유지했습니다."}
+  const base=status.textContent,success=loaded.ok&&promos.ok&&purchases.ok;status.textContent=success?`✅ 새로고침 완료 · ${server?serverMessage:"GitHub 최신 저장자료 확인"} · ${base}`:"⚠️ 일부 새 자료를 받지 못해 기존 확인자료를 유지했습니다.";siteStatus.className=`site-update-status ${success?"ok":"warn"}`;siteStatus.textContent=success?`✅ 전체정보 업데이트 완료 · ${server?"PC·태블릿 서버에서 실제 수집 후 반영":"GitHub Pages 최신 저장자료를 캐시 없이 반영"}`:"⚠️ 일부 자료를 받지 못해 마지막 정상자료를 유지했습니다.";
+ }catch(e){await Promise.all([loadReleases(true),loadPromos(true),loadPurchaseSources(true),loadPopularitySignals(true),loadExchangeRates(true)]);status.textContent="⚠️ 새로고침 중 일부 출처 확인에 실패해 기존 확인자료를 유지했습니다.";siteStatus.className="site-update-status warn";siteStatus.textContent="⚠️ 업데이트 일부 실패 · 기존 정상자료는 삭제하지 않고 유지했습니다."}
  finally{btn.disabled=false;btn.textContent="정보 새로고침";promoBtn.disabled=false;promoBtn.textContent="행사 새로고침";siteBtn.disabled=false;siteBtn.textContent="🔄 사이트 전체정보 업데이트"}
 }
 document.getElementById("releaseFilter").addEventListener("change",renderReleases);
@@ -169,6 +171,23 @@ document.getElementById("purchaseSearch").addEventListener("click",renderPurchas
 document.querySelectorAll("[data-purchase-channel]").forEach(btn=>btn.addEventListener("click",()=>{purchaseChannel=btn.dataset.purchaseChannel;document.querySelectorAll("[data-purchase-channel]").forEach(x=>x.classList.toggle("active",x===btn));renderPurchaseSources()}));
 document.getElementById("purchaseQuery").addEventListener("keydown",e=>{if(e.key==="Enter")renderPurchaseSources()});
 document.querySelectorAll("[data-top-panel]").forEach(btn=>btn.addEventListener("click",()=>{document.querySelectorAll("[data-top-panel]").forEach(x=>x.classList.toggle("active",x===btn));document.querySelectorAll(".top-info-panel").forEach(x=>x.hidden=x.id!==btn.dataset.topPanel)}));
+let backgroundSyncBusy=false;
+async function syncBackgroundData(){
+ if(backgroundSyncBusy||document.hidden)return;
+ backgroundSyncBusy=true;
+ try{
+  const tasks=[loadReleases(true),loadPromos(true),loadPurchaseSources(true)];
+  if(typeof loadPopularitySignals==="function")tasks.push(loadPopularitySignals(true));
+  if(typeof loadExchangeRates==="function")tasks.push(loadExchangeRates(true));
+  await Promise.all(tasks);
+  if(await releaseServerAvailable()){
+   const controller=new AbortController(),timer=setTimeout(()=>controller.abort(),3000);
+   try{const response=await fetch(`/api/auto-status?t=${Date.now()}`,{cache:"no-store",signal:controller.signal});if(response.ok){const status=await response.json(),area=document.getElementById("siteUpdateStatus");if(area&&!document.getElementById("siteUpdateAll").disabled){area.className="site-update-status ok";area.textContent=`🔄 자동수집 작동 중 · ${status.interval_hours||6}시간마다 · 최근 ${status.last_run?new Date(status.last_run).toLocaleString("ko-KR"):"첫 수집 진행 중"}`}}}finally{clearTimeout(timer)}
+  }
+ }catch(e){/* 일시적인 오류에서는 화면의 마지막 정상자료를 유지한다. */}finally{backgroundSyncBusy=false}
+}
+setInterval(syncBackgroundData,60000);
+document.addEventListener("visibilitychange",()=>{if(!document.hidden)syncBackgroundData()});
 loadReleases();loadPromos();loadPurchaseSources();
 </script>
 <header class="app-title"><h1>TCG 등급 사전검사기 v31</h1><div class="muted">포켓몬 + 원피스 + 나루토 · RAW 카드와 등급 슬랩을 한 흐름으로 측정합니다.</div></header>
@@ -1775,7 +1794,7 @@ document.querySelectorAll(".update-panel-close").forEach(btn=>btn.addEventListen
 <section class="card" id="v31testdashboard">
 <details class="compact-details system-check"><summary>✅ 프로그램 실행·오류 검증 결과 보기</summary>
 <p class="muted">배포 전 자동 검사를 실행해 화면 요소, 계산 코드, 서버 API와 오류 차단을 확인했습니다.</p>
-<div class="grid2"><div class="metric">전체 자동검사<b>검증 스크립트 기준 PASS</b></div><div class="metric">구매처 3개 국가<b>온라인·오프라인 69개</b></div><div class="metric">공식 프로모·특별행사<b>한국 3 · 일본 6 · 미국 4</b></div><div class="metric">PC·태블릿 API<b>HTTP 200</b></div><div class="metric">JavaScript·Python<b>PASS</b></div><div class="metric">자동실행 복구<b>PASS</b></div></div>
+<div class="grid2"><div class="metric">전체 자동검사<b>검증 스크립트 기준 PASS</b></div><div class="metric">구매처 3개 국가<b>69개 이상 · 링크 자동점검</b></div><div class="metric">공식 프로모·특별행사<b>13개 이상 · 신규행사 자동탐색</b></div><div class="metric">PC·태블릿 API<b>HTTP 200 · 시작 직후 + 6시간</b></div><div class="metric">화면 자동반영<b>1분마다 안전 동기화</b></div><div class="metric">자동실행·보안<b>HTTPS·출처 검증 PASS</b></div></div>
 <p class="muted">실제 외부자료 수집은 PC·태블릿 서버가 인터넷에 연결된 상태에서 수행하며, 실패한 자료는 마지막 정상본을 유지합니다.</p>
 </details>
 </section>

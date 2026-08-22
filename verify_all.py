@@ -6,7 +6,7 @@ from pathlib import Path
 
 ROOT=Path(__file__).resolve().parent
 HISTORY=ROOT/'verification_history.json'
-PY_FILES=('tcg_updater.py','auto_update_all.py','auto_repair_engine.py','update_releases.py','update_market_prices.py','update_market_watch.py','update_promo_events.py','update_exchange_rates.py','migrate_old_data.py')
+PY_FILES=('tcg_updater.py','auto_update_all.py','auto_repair_engine.py','update_releases.py','update_market_prices.py','update_market_watch.py','update_promo_events.py','update_purchase_sources.py','update_exchange_rates.py','migrate_old_data.py')
 JSON_FILES=('releases.json','market_prices.json','market_watch.json','promo_events.json','purchase_sources.json','exchange_rates.json','auto_update_report.json','auto_update_issues.json','auto_repair_memory.json','learning_store.json')
 
 def check(name,fn,rows):
@@ -66,6 +66,8 @@ def main():
         assert 'data-purchase-channel="online"' in html and 'data-purchase-channel="offline"' in html
         assert 'id="promoType"' in html and '콜라보·특별행사' in html
         assert 'id="tabletServerGuide"' in html and 'START_TCG_UPDATER_ANDROID.sh' in html
+        assert 'setInterval(syncBackgroundData,60000)' in html
+        assert 'safeExternalUrl' in html and 'escapeDisplayText' in html
         return f'고유 ID {len(ids)}개'
     check('화면 구성',html_check,rows)
     def js_check():
@@ -87,6 +89,24 @@ def main():
             subprocess.run(['bash','-n',script],cwd=ROOT,check=True,capture_output=True,text=True,timeout=10)
         return f'{len(required)}개 · 안드로이드 셸 문법 정상'
     check('PC·태블릿 실행파일',launchers,rows)
+    def tablet_auto_security():
+        import auto_update_all, update_purchase_sources, update_promo_events
+        assert len(auto_update_all.JOBS)==6
+        assert any(job[1]=='update_purchase_sources' for job in auto_update_all.JOBS)
+        for unsafe in ('http://example.com','https://127.0.0.1/private','https://localhost/private','https://user@example.com/path'):
+            try: update_purchase_sources.checked_url(unsafe)
+            except ValueError: pass
+            else: raise AssertionError(f'위험 주소 허용: {unsafe}')
+        update_purchase_sources.checked_url('https://onepiece-cardgame.kr/events/')
+        try: update_promo_events.approved_url('https://example.com/event')
+        except ValueError: pass
+        else: raise AssertionError('비공식 행사 출처 허용')
+        launcher=(ROOT/'START_TCG_UPDATER_ANDROID.sh').read_text(encoding='utf-8')
+        boot=(ROOT/'ANDROID_AUTO_START_INSTALL.sh').read_text(encoding='utf-8')
+        assert 'python tcg_updater.py' in launcher and 'python auto_update_all.py' not in launcher
+        assert 'while true; do' in boot and 'sleep 10' in boot
+        return '6종 자동수집 · 공식 HTTPS 검증 · 서버 우선 시작 · 1분 화면 동기화'
+    check('태블릿 자동수집·링크 보안',tablet_auto_security,rows)
     def startup_safety():
         installer=(ROOT/'PC_SERVER_AUTO_START_INSTALL.bat').read_text(encoding='utf-8')
         runner=(ROOT/'TCG_SERVER_AUTO_RUN.cmd').read_text(encoding='utf-8')
@@ -150,10 +170,13 @@ def main():
             status,learning=get('/api/learning-store');assert status==200 and len(json.loads(learning)['v30_validation'])==1
             status,page=get('/index.html');assert status==200 and 'BOX·박스' in page
             status,purchase=get('/purchase_sources.json');assert status==200 and len(json.loads(purchase)['sources'])>=20
+            status,events=get('/promo_events.json');assert status==200 and len(json.loads(events)['items'])>=5
+            status,auto_status=get('/api/auto-status');assert status==200 and isinstance(json.loads(auto_status),dict)
+            status,report=get('/api/update-report');assert status==200 and isinstance(json.loads(report),dict)
         finally:
             server.shutdown();server.server_close();thread.join(timeout=3);tcg_updater.LEARNING_STORE=original_learning
             Path(learning_tmp.name).unlink(missing_ok=True);Path(learning_tmp.name+'.bak').unlink(missing_ok=True)
-        return 'health·추적목록·OPK-13 가격·구매처·학습 저장·화면 응답 정상'
+        return 'health·자동수집 상태·업데이트 보고·행사·구매처·학습 저장·화면 응답 정상'
     check('PC·태블릿 서버 실제 응답',server_api,rows)
     now=dt.datetime.now(dt.timezone.utc).isoformat(timespec='seconds')
     try: history=json.loads(HISTORY.read_text(encoding='utf-8'))

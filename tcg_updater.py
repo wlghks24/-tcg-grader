@@ -161,16 +161,18 @@ def update_cycle(trigger='manual'):
             market_status=result_map['market_prices.json']['status']
             watch_status=result_map['market_watch.json']['status']
             promo_status=result_map['promo_events.json']['status']
+            purchase_status=result_map['purchase_sources.json']['status']
             fx_status=result_map['exchange_rates.json']['status']
         except Exception as exc:
             message=f'통합 자동업데이트 오류: {type(exc).__name__}'
-            release_status=market_status=watch_status=promo_status=fx_status=message
+            release_status=market_status=watch_status=promo_status=purchase_status=fx_status=message
         data=load_db()
         data['auto_update']={
             'enabled':True,'interval_hours':6,'trigger':trigger,
             'last_run':time.strftime('%Y-%m-%dT%H:%M:%S%z',time.localtime(started)),
             'next_run':time.strftime('%Y-%m-%dT%H:%M:%S%z',time.localtime(started+AUTO_INTERVAL_SECONDS)),
-            'status':release_status,'market_status':market_status,'watch_status':watch_status,'promo_status':promo_status,'fx_status':fx_status,
+            'status':release_status,'market_status':market_status,'watch_status':watch_status,
+            'promo_status':promo_status,'purchase_status':purchase_status,'fx_status':fx_status,
         }
         save_db(data)
         return data
@@ -248,7 +250,7 @@ if __name__=='__main__':
     try: threading.Thread(target=lambda:webbrowser.open(url),daemon=True).start()
     except Exception: pass
     threading.Thread(target=auto_update_loop,daemon=True).start()
-    print('공식자료 자동 확인: 시작 직후 + 6시간마다',flush=True)
+    print('공식자료 자동 확인: 시작 직후 + 6시간마다 · 출시/시세/행사/구매처/환율',flush=True)
     try: server.serve_forever()
     except KeyboardInterrupt: pass
     finally: server.server_close()

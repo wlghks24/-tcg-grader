@@ -13,10 +13,13 @@ if ! command -v python >/dev/null 2>&1; then
 fi
 
 echo "서버를 종료하려면 Ctrl+C를 누르세요."
-python auto_update_all.py || true
-python verify_all.py || echo "검사보고서에서 수정 필요 항목을 확인하세요."
+if [ ! -f "tcg_updater.py" ] || [ ! -f "index.html" ]; then
+  echo "[오류] 프로그램 필수 파일이 없습니다. GitHub 저장소를 다시 다운로드하세요."
+  exit 1
+fi
 if command -v termux-wake-lock >/dev/null 2>&1; then
   termux-wake-lock || true
   trap 'termux-wake-unlock >/dev/null 2>&1 || true' EXIT INT TERM
 fi
+echo "로컬 서버를 먼저 시작합니다. 자료 수집은 백그라운드에서 자동 실행됩니다."
 python tcg_updater.py

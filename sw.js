@@ -1,4 +1,4 @@
-const CACHE='tcg-v31-purchase-centering-ko-33';
+const CACHE='tcg-v31-tablet-auto-secure-34';
 const CORE=['./','./index.html','./manifest.webmanifest','./releases.json','./promo_events.json','./purchase_sources.json','./market_prices.json','./market_watch.json','./exchange_rates.json','./icon.svg'];
 self.addEventListener('install',event=>event.waitUntil(caches.open(CACHE).then(cache=>cache.addAll(CORE)).then(()=>self.skipWaiting())));
 self.addEventListener('activate',event=>event.waitUntil(caches.keys().then(keys=>Promise.all(keys.filter(key=>key!==CACHE).map(key=>caches.delete(key)))).then(()=>self.clients.claim())));

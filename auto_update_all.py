@@ -20,6 +20,7 @@ JOBS = (
     ("판매·재발매 추적", "update_market_watch", "market_watch.json"),
     ("현재 거래시세", "update_market_prices", "market_prices.json"),
     ("프로모·콜라보 행사", "update_promo_events", "promo_events.json"),
+    ("구매처·링크 보안 확인", "update_purchase_sources", "purchase_sources.json"),
     ("원화 환산 환율", "update_exchange_rates", "exchange_rates.json"),
 )
 
@@ -48,6 +49,12 @@ def validate_json(name: str, data: dict) -> None:
                 raise ValueError("판매·재발매 추적 필수값 누락")
     elif name == "promo_events.json" and not isinstance(data.get("items"), list):
         raise ValueError("행사목록 items 누락")
+    elif name == "purchase_sources.json":
+        sources = data.get("sources")
+        if not isinstance(sources, list) or len(sources) < 20:
+            raise ValueError("구매처 목록 누락 또는 대량 감소")
+        if not {"KR", "JP", "US"}.issubset({row.get("region") for row in sources}):
+            raise ValueError("구매처 국가 정보 누락")
     elif name == "exchange_rates.json":
         rates = data.get("rates", {})
         if not (0 < float(rates.get("JPY_KRW", 0)) < 30 and 500 < float(rates.get("USD_KRW", 0)) < 3000):
@@ -66,6 +73,7 @@ def issue_advice(filename: str) -> str:
         "market_prices.json": "가격 출처의 공개 거래표시와 상품명을 확인하세요.",
         "market_watch.json": "국가·상품코드·판매상태와 재발매 출처를 확인하세요.",
         "promo_events.json": "공식 행사 페이지의 기간·수령조건을 확인하세요.",
+        "purchase_sources.json": "공식 구매처 HTTPS 주소·접속 상태를 확인하세요.",
         "exchange_rates.json": "인터넷 연결 후 환율 출처를 다시 확인하세요.",
     }.get(filename, "원출처와 인터넷 연결을 확인하세요.")
 
@@ -127,7 +135,7 @@ def run_all(trigger: str = "manual") -> dict:
                         "name": label, "file": filename, "ok": True,
                         "status": data.get("collection_status", "정상"),
                         "updated_at": data.get("updated_at"),
-                        "count": len(data.get("items", data.get("entries", {}))),
+                        "count": len(data.get("items", data.get("entries", data.get("sources", {})))),
                         "retry_count": attempt,
                         "max_attempts": max_attempts,
                         "auto_action": "자동 재시도 후 정상 반영" if attempt else "검증 후 정상 반영",

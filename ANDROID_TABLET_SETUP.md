@@ -11,16 +11,32 @@
 ```sh
 termux-setup-storage
 pkg update -y
-pkg install python -y
+pkg install python git -y
 ```
 
 3. 저장공간 권한 질문이 나오면 **허용**을 누릅니다.
    권한 창이 안 나오면 설정 → 앱 → Termux → 권한 → 파일 및 미디어를 허용합니다.
-4. ZIP 압축을 풀어 `Download/TCG_GRADER` 폴더에 둡니다.
+4. 아래 명령으로 실제 GitHub 저장소 전체 주소를 복사하여 설치합니다.
+
+```sh
+git clone https://github.com/wlghks24/-tcg-grader.git
+cd ./-tcg-grader
+```
+
+`https://github.com/wlghks24`만 입력하면 저장소 이름이 없어 `repository not found`가 나타납니다. URL을 단독으로 입력하지 말고 반드시 앞에 `git clone`을 붙이세요. 이미 설치한 경우에는 `cd ./-tcg-grader` 다음 `git pull`을 실행해 최신 보안 수정을 받습니다.
+
+ZIP으로 설치하는 경우에만 압축을 풀어 `Download/TCG_GRADER` 폴더에 둡니다.
 
 ## 서버 시작
 
-Termux에서 아래 두 줄을 실행합니다.
+GitHub로 설치했다면 Termux에서 아래 두 줄을 실행합니다.
+
+```sh
+cd ./-tcg-grader
+bash START_TCG_UPDATER_ANDROID.sh
+```
+
+이미 `-tcg-grader` 폴더 안이라면 첫 줄 없이 실행 명령만 입력합니다. ZIP으로 설치한 경우에는 대신 아래 명령을 사용합니다.
 
 ```sh
 cd ~/storage/downloads/TCG_GRADER
@@ -31,6 +47,11 @@ bash START_TCG_UPDATER_ANDROID.sh
 
 정상 확인 주소는 `http://127.0.0.1:8765/api/health`입니다. `{"ok": true}`가 보이면 서버가 정상입니다. 같은 Wi-Fi의 다른 기기에서는 화면에 표시된 `http://192.168.x.x:8765/index.html` 주소를 사용합니다.
 
+서버가 먼저 열리고 자료 수집은 백그라운드에서 시작 직후와 6시간마다 실행됩니다. 출시일, 판매·재발매, 현재 시세, 공식 행사, 구매처 HTTPS 링크, 환율의 6개 항목을 확인합니다. 이미 열린 화면은 1분마다 최신 자료를 자동 반영합니다. 일부 공식 사이트가 일시적으로 접속을 제한하면 기존 정상 자료를 유지하고 다음 주기에 다시 확인합니다.
+
+- 자동수집 상태: `http://127.0.0.1:8765/api/auto-status`
+- 최근 수집 보고: `http://127.0.0.1:8765/api/update-report`
+
 ## 태블릿을 켤 때 자동 실행
 
 1. F-Droid에서 **Termux:Boot**를 설치합니다.
@@ -38,7 +59,7 @@ bash START_TCG_UPDATER_ANDROID.sh
 3. Termux에서 프로그램 폴더로 이동합니다.
 4. `bash ANDROID_AUTO_START_INSTALL.sh`를 한 번 실행합니다.
 5. 태블릿 설정에서 Termux와 Termux:Boot의 배터리를 **제한 없음**으로 설정합니다.
-6. 다음 태블릿 재시작부터 TCG 서버가 자동 실행되고 시작 직후와 6시간마다 자료를 갱신합니다.
+6. 다음 태블릿 재시작부터 TCG 서버가 자동 실행되고 시작 직후와 6시간마다 자료를 갱신합니다. 서버가 예기치 않게 종료되면 10초 후 다시 실행합니다.
 
 자동실행 기록은 `TCG_ANDROID_STARTUP.log`에서 확인합니다. 자동실행을 해제하려면 `bash ANDROID_AUTO_START_REMOVE.sh`를 실행합니다.
 

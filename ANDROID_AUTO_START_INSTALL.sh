@@ -11,7 +11,7 @@ mkdir -p "$BOOT_DIR"
   echo '#!/data/data/com.termux/files/usr/bin/bash'
   echo 'termux-wake-lock >/dev/null 2>&1 || true'
   printf 'cd %q\n' "$PROJECT_DIR"
-  printf 'python tcg_updater.py >> %q 2>&1\n' "$PROJECT_DIR/TCG_ANDROID_STARTUP.log"
+  printf 'while true; do python tcg_updater.py >> %q 2>&1; sleep 10; done\n' "$PROJECT_DIR/TCG_ANDROID_STARTUP.log"
 } > "$BOOT_FILE"
 chmod +x "$BOOT_FILE"
 
