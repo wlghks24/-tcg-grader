@@ -98,6 +98,20 @@ input[type=range]{width:100%}
 </div>
 </section>
 <script>
+const TCG_LOCAL_SERVER='http://127.0.0.1:8765';
+async function useCanonicalLocalServer(){
+ if(location.origin!=="https://wlghks24.github.io")return false;
+ const controller=new AbortController(),timer=setTimeout(()=>controller.abort(),1800);
+ try{
+  const response=await fetch(`${TCG_LOCAL_SERVER}/api/health`,{cache:"no-store",mode:"cors",signal:controller.signal});
+  if(!response.ok)return false;
+  const health=await response.json();
+  if(!health.ok||health.service!=="TCG v31 Updater"||health.api_version!==1)return false;
+  location.replace(`${TCG_LOCAL_SERVER}/index.html${location.hash}`);
+  return true;
+ }catch(e){return false}finally{clearTimeout(timer)}
+}
+useCanonicalLocalServer();
 const RELEASE_FALLBACK={updated_at:"2026-08-21T00:00:00+09:00",items:[
  {game:"ONE PIECE",region:"KR",name:"OPK-14 부스터 팩 창해의 칠걸",release_date:"2026-08-21",price:"₩48,000/BOX",status:"공식 출시",source:"https://onepiece-cardgame.kr/"},
  {game:"ONE PIECE",region:"JP",name:"세계 최강의 전사들 (世界最強の戦士) [OP-17]",release_date:"2026-08-22",price:"¥240/팩",status:"출시예정",source:"https://www.onepiece-cardgame.com/products/?subcategory=boosters"},
@@ -602,7 +616,7 @@ $("analyze").onclick=async()=>{
  $("out").classList.remove("hidden");$("status").textContent="분석 완료";
 }
 </script><script>
-if("serviceWorker" in navigator){window.addEventListener("load",()=>navigator.serviceWorker.register("./sw.js").catch(()=>{}));}
+if("serviceWorker" in navigator){window.addEventListener("load",()=>navigator.serviceWorker.register("./sw.js",{updateViaCache:"none"}).then(reg=>reg.update()).catch(()=>{}));}
 const HKEY="tcg_pregrader_history_v5";
 function renderHistory(){const h=JSON.parse(localStorage.getItem(HKEY)||"[]");document.getElementById("history").innerHTML=h.length?h.slice(0,10).map((x,i)=>`<div class="status" style="margin:6px 0"><b>${i+1}. ${x.game}</b> · ${x.time}<br>${x.summary}</div>`).join(""):"저장된 검사 결과가 없습니다.";}
 document.getElementById("installHelp")?.addEventListener("click",()=>alert("아이폰 사파리 → 공유 버튼(□↑) → 홈 화면에 추가 → 추가. 홈 화면 아이콘으로 실행하세요."));

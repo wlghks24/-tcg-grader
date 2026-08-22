@@ -68,6 +68,8 @@ def main():
         assert 'id="tabletServerGuide"' in html and 'START_TCG_UPDATER_ANDROID.sh' in html
         assert 'setInterval(syncBackgroundData,60000)' in html
         assert 'safeExternalUrl' in html and 'escapeDisplayText' in html
+        assert 'useCanonicalLocalServer' in html and 'http://127.0.0.1:8765' in html
+        assert 'updateViaCache:"none"' in html
         return f'고유 ID {len(ids)}개'
     check('화면 구성',html_check,rows)
     def js_check():
@@ -166,6 +168,15 @@ def main():
             status,health=get('/api/health');health_body=json.loads(health)
             assert status==200 and health_body['ok'] and health_body['service']=='TCG v31 Updater'
             assert health_body['port']==8765 and health_body['api_version']==1 and health_body['platform']
+            trusted=urllib.request.Request(base+'/api/health',headers={'Origin':'https://wlghks24.github.io'})
+            with urllib.request.urlopen(trusted,timeout=5) as response:
+                assert response.headers.get('Access-Control-Allow-Origin')=='https://wlghks24.github.io'
+            untrusted=urllib.request.Request(base+'/api/health',headers={'Origin':'https://example.com'})
+            with urllib.request.urlopen(untrusted,timeout=5) as response:
+                assert response.headers.get('Access-Control-Allow-Origin') is None
+            preflight=urllib.request.Request(base+'/api/health',headers={'Origin':'https://wlghks24.github.io','Access-Control-Request-Private-Network':'true'},method='OPTIONS')
+            with urllib.request.urlopen(preflight,timeout=5) as response:
+                assert response.status==204 and response.headers.get('Access-Control-Allow-Private-Network')=='true'
             status,watch=get('/api/market-watch');assert status==200 and len(json.loads(watch)['items'])>=3
             key=urllib.parse.quote('KR|계승되는 의지|BOX')
             status,price=get('/api/market-price?key='+key);body=json.loads(price)

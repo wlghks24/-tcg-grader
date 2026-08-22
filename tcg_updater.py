@@ -42,6 +42,7 @@ def free_port(start=8765, limit=30):
 
 PORT=8765
 PLATFORM='Android 태블릿' if 'com.termux' in os.environ.get('PREFIX','') else ('Windows PC' if os.name=='nt' else platform.system())
+TRUSTED_PAGES_ORIGIN='https://wlghks24.github.io'
 
 def choose_lan_ip(candidates):
     """Prefer a real home LAN address over VPN/virtual-adapter addresses."""
@@ -187,6 +188,21 @@ def auto_update_loop():
 class Handler(SimpleHTTPRequestHandler):
     def log_message(self, fmt, *args):
         pass
+    def end_headers(self):
+        origin=self.headers.get('Origin','')
+        if origin==TRUSTED_PAGES_ORIGIN:
+            self.send_header('Access-Control-Allow-Origin',origin)
+            self.send_header('Vary','Origin')
+            if self.headers.get('Access-Control-Request-Private-Network','').lower()=='true':
+                self.send_header('Access-Control-Allow-Private-Network','true')
+        super().end_headers()
+    def do_OPTIONS(self):
+        if self.headers.get('Origin','')!=TRUSTED_PAGES_ORIGIN:
+            self.send_response(403);self.end_headers();return
+        self.send_response(204)
+        self.send_header('Access-Control-Allow-Methods','GET, POST, OPTIONS')
+        self.send_header('Access-Control-Allow-Headers','Content-Type')
+        self.end_headers()
     def json(self,data,status=200):
         body=json.dumps(data,ensure_ascii=False).encode('utf-8')
         self.send_response(status); self.send_header('Content-Type','application/json; charset=utf-8')
