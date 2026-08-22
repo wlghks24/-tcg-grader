@@ -7,7 +7,7 @@ from pathlib import Path
 ROOT=Path(__file__).resolve().parent
 HISTORY=ROOT/'verification_history.json'
 PY_FILES=('tcg_updater.py','auto_update_all.py','auto_repair_engine.py','update_releases.py','update_market_prices.py','update_market_watch.py','update_promo_events.py','update_exchange_rates.py','migrate_old_data.py')
-JSON_FILES=('releases.json','market_prices.json','market_watch.json','promo_events.json','exchange_rates.json','auto_update_report.json','auto_update_issues.json','auto_repair_memory.json','learning_store.json')
+JSON_FILES=('releases.json','market_prices.json','market_watch.json','promo_events.json','purchase_sources.json','exchange_rates.json','auto_update_report.json','auto_update_issues.json','auto_repair_memory.json','learning_store.json')
 
 def check(name,fn,rows):
     try: detail=fn() or '정상';rows.append({'name':name,'ok':True,'detail':str(detail)})
@@ -31,6 +31,15 @@ def main():
         assert any('재발매' in x.get('release_type','') for x in watch)
         return f'가격 {len(prices)}개 · 판매/재발매 추적 {len(watch)}개'
     check('국가별 BOX·박스·카드 자료',market_check,rows)
+    def purchase_check():
+        sources=parsed['purchase_sources.json']['sources']
+        assert {'KR','JP','US'} <= {x['region'] for x in sources}
+        assert {'Pokemon','ONE PIECE','NARUTO'} <= {g for x in sources for g in x['games']}
+        assert {'official','marketplace','used','blog'} <= {x['type'] for x in sources}
+        assert all(x.get('url') or '{query}' in x.get('url_template','') for x in sources)
+        assert any(x['name']=='Pokémon Center US' and x['type']=='official' for x in sources)
+        return f'{len(sources)}개 · 한국판/일본판/미국판 · 공식/쇼핑몰/중고/블로그'
+    check('국가별 구매처 검색',purchase_check,rows)
     html=(ROOT/'index.html').read_text(encoding='utf-8')
     def html_check():
         ids=re.findall(r'\bid="([^"]+)"',html);assert len(ids)==len(set(ids))
@@ -42,6 +51,8 @@ def main():
         assert html.index('TCG 등급 사전검사기 v31') < html.index('id="gradeStart"')
         assert html.index('id="gradeStart"') < html.index('id="v30mode"') < html.index('id="precisionHub"') < html.index('id="v30validation"')
         assert 'const grades=window.tcgLastGrades||{}' in html
+        assert all(f'id="{item}"' in html for item in ('purchasePanel','purchaseGame','purchaseQuery','purchaseRegionGrid','guideLeft','guideRight','guideTop','guideBottom','guideCalculate','guideResult'))
+        assert 'applyGuideCenteringCap' in html and 'purchase_sources.json' in html
         return f'고유 ID {len(ids)}개'
     check('화면 구성',html_check,rows)
     def js_check():
@@ -52,7 +63,7 @@ def main():
         return '인라인 JavaScript 문법 정상'
     check('JavaScript 문법',js_check,rows)
     def sw_check():
-        sw=(ROOT/'sw.js').read_text(encoding='utf-8');assert 'market_watch.json' in sw
+        sw=(ROOT/'sw.js').read_text(encoding='utf-8');assert 'market_watch.json' in sw and 'purchase_sources.json' in sw
         subprocess.run(['node','--check','sw.js'],cwd=ROOT,check=True,capture_output=True,text=True,timeout=20)
         return '판매·재발매 자료 캐시 포함'
     check('서비스워커',sw_check,rows)
@@ -122,10 +133,11 @@ def main():
             assert saved['ok'] and saved['saved']==1
             status,learning=get('/api/learning-store');assert status==200 and len(json.loads(learning)['v30_validation'])==1
             status,page=get('/index.html');assert status==200 and 'BOX·박스' in page
+            status,purchase=get('/purchase_sources.json');assert status==200 and len(json.loads(purchase)['sources'])>=20
         finally:
             server.shutdown();server.server_close();thread.join(timeout=3);tcg_updater.LEARNING_STORE=original_learning
             Path(learning_tmp.name).unlink(missing_ok=True);Path(learning_tmp.name+'.bak').unlink(missing_ok=True)
-        return 'health·추적목록·OPK-13 가격·학습 저장·화면 응답 정상'
+        return 'health·추적목록·OPK-13 가격·구매처·학습 저장·화면 응답 정상'
     check('PC·태블릿 서버 실제 응답',server_api,rows)
     now=dt.datetime.now(dt.timezone.utc).isoformat(timespec='seconds')
     try: history=json.loads(HISTORY.read_text(encoding='utf-8'))

@@ -1,0 +1,32 @@
+{
+  "version": 1,
+  "updated_at": "2026-08-22T00:00:00+09:00",
+  "notice": "검색 연결 목록입니다. 재고·가격·정품 여부·배송 가능 국가는 각 판매처에서 최종 확인하세요.",
+  "sources": [
+    {"name":"포켓몬 카드 게임 코리아","region":"KR","games":["Pokemon"],"type":"official","url":"https://pokemoncard.co.kr/","note":"한국 공식 제품·판매점 정보"},
+    {"name":"원피스 카드게임 코리아","region":"KR","games":["ONE PIECE"],"type":"official","url":"https://onepiece-cardgame.kr/","note":"한국 공식 제품·행사 정보"},
+    {"name":"나루토 카드게임 공식","region":"KR","games":["NARUTO"],"type":"official","url":"https://www.naruto-cardgame.com/asia-en/","note":"아시아 공식 출시정보·판매 안내 확인"},
+    {"name":"네이버쇼핑","region":"KR","games":["Pokemon","ONE PIECE","NARUTO"],"type":"marketplace","url_template":"https://search.shopping.naver.com/search/all?query={query}","note":"판매자·정품·국가판 표기를 비교"},
+    {"name":"쿠팡","region":"KR","games":["Pokemon","ONE PIECE","NARUTO"],"type":"marketplace","url_template":"https://www.coupang.com/np/search?q={query}","note":"판매자와 해외판 표기를 확인"},
+    {"name":"번개장터","region":"KR","games":["Pokemon","ONE PIECE","NARUTO"],"type":"used","url_template":"https://m.bunjang.co.kr/search/products?q={query}","note":"중고·개인거래, 실물과 판매자 검증 필요"},
+    {"name":"네이버 블로그","region":"KR","games":["Pokemon","ONE PIECE","NARUTO"],"type":"blog","url_template":"https://search.naver.com/search.naver?where=blog&query={query}","note":"입고·후기 참고용, 판매 재고 보장 아님"},
+
+    {"name":"포켓몬 카드 공식 제품","region":"JP","games":["Pokemon"],"type":"official","url":"https://www.pokemon-card.com/products/","note":"일본 공식 제품·출시정보"},
+    {"name":"포켓몬센터 온라인","region":"JP","games":["Pokemon"],"type":"official","url":"https://www.pokemoncenter-online.com/","note":"일본 공식 온라인 스토어"},
+    {"name":"원피스 카드게임 공식","region":"JP","games":["ONE PIECE"],"type":"official","url":"https://www.onepiece-cardgame.com/products/","note":"일본 공식 제품정보"},
+    {"name":"나루토 카드게임 공식","region":"JP","games":["NARUTO"],"type":"official","url":"https://www.naruto-cardgame.com/asia-en/","note":"공식 출시·지역정보 확인"},
+    {"name":"Amazon 일본","region":"JP","games":["Pokemon","ONE PIECE","NARUTO"],"type":"marketplace","url_template":"https://www.amazon.co.jp/s?k={query}","note":"판매·배송 주체와 정품 여부 확인"},
+    {"name":"라쿠텐시장","region":"JP","games":["Pokemon","ONE PIECE","NARUTO"],"type":"marketplace","url_template":"https://search.rakuten.co.jp/search/mall/{query}/","note":"일본 판매점 비교 검색"},
+    {"name":"메루카리 일본","region":"JP","games":["Pokemon","ONE PIECE","NARUTO"],"type":"used","url_template":"https://jp.mercari.com/search?keyword={query}","note":"중고·개인거래, 상태와 진품 검증 필요"},
+    {"name":"Yahoo! JAPAN 검색","region":"JP","games":["Pokemon","ONE PIECE","NARUTO"],"type":"blog","url_template":"https://search.yahoo.co.jp/search?p={query}","note":"상점·블로그·입고정보 통합 참고"},
+
+    {"name":"Pokémon Center US","region":"US","games":["Pokemon"],"type":"official","url":"https://www.pokemoncenter.com/category/trading-card-game","note":"미국 공식 온라인 스토어"},
+    {"name":"Pokémon 공식 판매점 찾기","region":"US","games":["Pokemon"],"type":"official","url":"https://events.pokemon.com/en-us/locations","note":"미국 공식 취급점 위치 검색"},
+    {"name":"One Piece Card Game 공식","region":"US","games":["ONE PIECE"],"type":"official","url":"https://en.onepiece-cardgame.com/products/","note":"영문판 공식 제품·스토어 안내"},
+    {"name":"Naruto Card Game 공식","region":"US","games":["NARUTO"],"type":"official","url":"https://www.naruto-cardgame.com/asia-en/","note":"공식 글로벌 출시정보 확인"},
+    {"name":"TCGplayer","region":"US","games":["Pokemon","ONE PIECE","NARUTO"],"type":"marketplace","url_template":"https://www.tcgplayer.com/search/all/product?q={query}&view=grid","note":"TCG 전문 마켓, 판본·상태·판매자 확인"},
+    {"name":"eBay","region":"US","games":["Pokemon","ONE PIECE","NARUTO"],"type":"used","url_template":"https://www.ebay.com/sch/i.html?_nkw={query}","note":"신품·중고 혼합, 판매완료·평점 확인"},
+    {"name":"Amazon 미국","region":"US","games":["Pokemon","ONE PIECE","NARUTO"],"type":"marketplace","url_template":"https://www.amazon.com/s?k={query}","note":"판매·배송 주체와 정품 여부 확인"},
+    {"name":"Google 쇼핑·블로그 검색","region":"US","games":["Pokemon","ONE PIECE","NARUTO"],"type":"blog","url_template":"https://www.google.com/search?q={query}","note":"상점·블로그·입고정보 참고용"}
+  ]
+}
