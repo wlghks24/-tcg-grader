@@ -43,6 +43,13 @@ def main():
         offline=sum(x.get('channel')=='offline' for x in sources)
         return f'{len(sources)}개 · 온라인 {len(sources)-offline}개 / 오프라인 {offline}개 · 3개 국가'
     check('국가별 구매처 검색',purchase_check,rows)
+    def promo_check():
+        items=parsed['promo_events.json']['items']
+        assert len(items)>=5
+        assert {'promo','collaboration'} <= {x.get('category','promo') for x in items}
+        assert all(x.get('source','').startswith('https://') and x.get('condition') and x.get('reward') for x in items)
+        return f'{len(items)}개 · 프로모/콜라보·특별행사 · 공식 출처·기간·조건 확인'
+    check('프로모·콜라보 행사',promo_check,rows)
     html=(ROOT/'index.html').read_text(encoding='utf-8')
     def html_check():
         ids=re.findall(r'\bid="([^"]+)"',html);assert len(ids)==len(set(ids))
@@ -57,6 +64,7 @@ def main():
         assert all(f'id="{item}"' in html for item in ('purchasePanel','purchaseGame','purchaseQuery','purchaseRegionGrid','guideLeft','guideRight','guideTop','guideBottom','guideCalculate','guideResult'))
         assert 'applyGuideCenteringCap' in html and 'purchase_sources.json' in html
         assert 'data-purchase-channel="online"' in html and 'data-purchase-channel="offline"' in html
+        assert 'id="promoType"' in html and '콜라보·특별행사' in html
         assert 'id="tabletServerGuide"' in html and 'START_TCG_UPDATER_ANDROID.sh' in html
         return f'고유 ID {len(ids)}개'
     check('화면 구성',html_check,rows)
