@@ -92,7 +92,8 @@ def main():
     def tablet_auto_security():
         import auto_update_all, update_purchase_sources, update_promo_events
         assert len(auto_update_all.JOBS)==6
-        assert any(job[1]=='update_purchase_sources' for job in auto_update_all.JOBS)
+        expected_modules=('update_releases','update_market_watch','update_market_prices','update_promo_events','update_purchase_sources','update_exchange_rates')
+        assert tuple(job[1] for job in auto_update_all.JOBS)==expected_modules
         for unsafe in ('http://example.com','https://127.0.0.1/private','https://localhost/private','https://user@example.com/path'):
             try: update_purchase_sources.checked_url(unsafe)
             except ValueError: pass
@@ -106,6 +107,9 @@ def main():
         assert 'python tcg_updater.py' in launcher and 'python auto_update_all.py' not in launcher
         assert "PORT=8765" in (ROOT/'tcg_updater.py').read_text(encoding='utf-8')
         assert 'while true; do' in boot and 'sleep 10' in boot
+        for pc_script in ('TCG_AUTO_UPDATE.bat','정보자동업데이트.bat'):
+            content=(ROOT/pc_script).read_text(encoding='utf-8')
+            assert 'auto_update_all.py' in content and '6 STEPS' in content
         return '6종 자동수집 · 공식 HTTPS 검증 · 서버 우선 시작 · 1분 화면 동기화'
     check('태블릿 자동수집·링크 보안',tablet_auto_security,rows)
     def startup_safety():

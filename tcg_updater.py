@@ -255,7 +255,8 @@ if __name__=='__main__':
     try: threading.Thread(target=lambda:webbrowser.open(url),daemon=True).start()
     except Exception: pass
     threading.Thread(target=auto_update_loop,daemon=True).start()
-    print('공식자료 자동 확인: 시작 직후 + 6시간마다 · 출시/시세/행사/구매처/환율',flush=True)
+    print('공식자료 6단계 자동 확인: 시작 직후 + 6시간마다',flush=True)
+    print('1 출시일 · 2 판매/재발매 · 3 거래시세 · 4 프로모/콜라보 · 5 구매처/링크 · 6 환율',flush=True)
     try: server.serve_forever()
     except KeyboardInterrupt: pass
     finally: server.server_close()

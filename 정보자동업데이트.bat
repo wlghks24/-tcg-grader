@@ -5,8 +5,13 @@ set "AUTO_MODE=0"
 if /i "%~1"=="/AUTO" set "AUTO_MODE=1"
 title TCG AUTO UPDATE
 echo ========================================
-echo TCG DATA AUTO UPDATE
-echo Release - Market Price - Promo - FX
+echo TCG DATA AUTO UPDATE - 6 STEPS
+echo 1 Release date
+echo 2 Sale and re-release tracking
+echo 3 Current market prices
+echo 4 Promo and collaboration events
+echo 5 Purchase sources and link security
+echo 6 KRW exchange rates
 echo ========================================
 echo.
 where py.exe >nul 2>nul
