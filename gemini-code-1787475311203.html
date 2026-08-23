@@ -1,0 +1,23 @@
+<!-- index.html UI 수정 -->
+<button id="btn-one-click-update" onclick="executeFullUpdateProcess()">
+    🚀 원클릭 최신 시세 & 자료 통합 반영
+</button>
+
+<script>
+async function executeFullUpdateProcess() {
+    const btn = document.getElementById('btn-one-click-update');
+    btn.disabled = true;
+    btn.innerText = "⏳ 수집 및 검증 자동 반영 진행 중...";
+    
+    try {
+        const response = await fetch('/run-auto-update', { method: 'POST' });
+        const resData = await response.json();
+        alert("모든 데이터 업데이트 및 구매처/시세 반영이 성공적으로 완료되었습니다!");
+    } catch (e) {
+        alert("업데이트 진행 중 오류가 발생했습니다.");
+    } finally {
+        btn.disabled = false;
+        btn.innerText = "🚀 원클릭 최신 시세 & 자료 통합 반영";
+    }
+}
+</script>
