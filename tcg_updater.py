@@ -4,6 +4,7 @@ import json, os, re, hashlib, threading, webbrowser, time, socket, ipaddress, su
 from urllib.parse import urlparse, parse_qs
 from http.server import ThreadingHTTPServer, SimpleHTTPRequestHandler
 from urllib.request import Request, urlopen
+from grading_self_learning import append_confirmed_sample, rebuild_store, model_status, calibrate_prediction, sanitize_legacy_rows
 
 BASE=os.path.dirname(os.path.abspath(__file__))
 DB=os.path.join(BASE,'tcg_live_data.json')
@@ -114,19 +115,12 @@ def save_json_atomic(path,data):
     os.replace(temp,path)
 
 def learning_store():
-    return load_json_file(LEARNING_STORE,{'version':1,'updated_at':None,'v30_validation':[],'v11_validation':[]})
+    fallback={'version':2,'updated_at':None,'v30_validation':[],'v11_validation':[],
+              'confirmed_samples':[],'calibration':{}}
+    return rebuild_store(load_json_file(LEARNING_STORE,fallback))
 
 def valid_learning_rows(rows):
-    clean=[]
-    for row in rows[-500:]:
-        if not isinstance(row,dict):continue
-        company=str(row.get('company') or row.get('grader') or '').upper()
-        if company not in ('PSA','BGS','CGC'):continue
-        try:actual=float(row.get('actual'));pred=float(row.get('pred'))
-        except (TypeError,ValueError):continue
-        if not (1<=actual<=10 and 1<=pred<=10):continue
-        clean.append({**row,'company':company,'actual':actual,'pred':pred})
-    return clean
+    return sanitize_legacy_rows(rows)
 
 def fetch(url):
     req=Request(url,headers={'User-Agent':'TCG-Research-Updater/27'})
@@ -218,6 +212,7 @@ class Handler(SimpleHTTPRequestHandler):
         if path=='/api/update-issues': return self.json(load_json_file(AUTO_ISSUES,{'issue_count':0,'issues':[]}))
         if path=='/api/repair-memory': return self.json(load_json_file(AUTO_MEMORY,{'total_runs':0,'patterns':{},'files':{}}))
         if path=='/api/learning-store': return self.json(learning_store())
+        if path=='/api/learning-model-status': return self.json(model_status(learning_store()))
         if path=='/api/market-watch': return self.json(load_market_watch())
         if path=='/api/validation': return self.json({'ok':True,'mode':'pre-grade','probability_claim':False})
         if path=='/api/market-price':
@@ -231,16 +226,39 @@ class Handler(SimpleHTTPRequestHandler):
         return super().do_GET()
     def do_POST(self):
         post_path=self.path.split('?',1)[0]
-        if post_path=='/api/learning-store':
+        if post_path in ('/api/learning-store','/api/learning-sample','/api/grade-calibrate'):
             try:
                 size=int(self.headers.get('Content-Length','0'))
                 if size<=0 or size>1000000:return self.json({'ok':False,'error':'학습자료 크기 오류'},400)
                 incoming=json.loads(self.rfile.read(size).decode('utf-8'))
-                v30=valid_learning_rows(incoming.get('v30_validation',[]));v11=valid_learning_rows(incoming.get('v11_validation',[]))
-                data={'version':1,'updated_at':time.strftime('%Y-%m-%dT%H:%M:%S%z'),'v30_validation':v30,'v11_validation':v11}
-                save_json_atomic(LEARNING_STORE,data)
-                return self.json({'ok':True,'saved':len(v30)+len(v11),'updated_at':data['updated_at']})
-            except (ValueError,TypeError,json.JSONDecodeError):return self.json({'ok':False,'error':'학습자료 형식 오류'},400)
+                if not isinstance(incoming,dict):return self.json({'ok':False,'error':'학습자료 형식 오류'},400)
+                if post_path=='/api/learning-store':
+                    current=learning_store()
+                    current['v30_validation']=valid_learning_rows(incoming.get('v30_validation',[]))
+                    current['v11_validation']=valid_learning_rows(incoming.get('v11_validation',[]))
+                    current['updated_at']=time.strftime('%Y-%m-%dT%H:%M:%S%z')
+                    data=rebuild_store(current)
+                    save_json_atomic(LEARNING_STORE,data)
+                    saved=len(data.get('v30_validation',[]))+len(data.get('v11_validation',[]))+len(data.get('confirmed_samples',[]))
+                    return self.json({'ok':True,'saved':saved,'updated_at':data['updated_at'],'model':model_status(data)})
+                if post_path=='/api/learning-sample':
+                    if incoming.get('verified') is not True:
+                        return self.json({'ok':False,'error':'실제 확정등급 확인(verified=true)이 필요합니다.'},400)
+                    data=append_confirmed_sample(learning_store(),incoming)
+                    save_json_atomic(LEARNING_STORE,data)
+                    return self.json({'ok':True,'saved':len(data.get('confirmed_samples',[])),'model':model_status(data)})
+                company=str(incoming.get('company') or '').upper()
+                prediction=incoming.get('prediction')
+                result=calibrate_prediction(learning_store(),company,prediction,game=incoming.get('game'))
+                return self.json({'ok':True,**result})
+            except (ValueError,TypeError,json.JSONDecodeError):
+                return self.json({'ok':False,'error':'학습자료 형식 오류'},400)
+        if post_path=='/api/learning-rebuild':
+            try:
+                data=learning_store();data['updated_at']=time.strftime('%Y-%m-%dT%H:%M:%S%z')
+                data=rebuild_store(data);save_json_atomic(LEARNING_STORE,data)
+                return self.json(model_status(data))
+            except Exception as exc:return self.json({'ok':False,'error':str(exc)},500)
         if post_path!='/api/apply': return self.json({'ok':False,'error':'없는 API'},404)
         data=load_db(); pending=data.get('pending',[]); now=time.strftime('%Y-%m-%dT%H:%M:%S%z')
         valid=[x for x in pending if x.get('status')!='수집 오류']

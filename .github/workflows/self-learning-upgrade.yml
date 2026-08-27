@@ -1,0 +1,51 @@
+name: Self-learning grading upgrade
+
+on:
+  push:
+    branches:
+      - feature/grading-self-learning-v2
+    paths:
+      - grading_self_learning.py
+      - grading_self_learning.js
+      - test_grading_self_learning.py
+      - upgrade_self_learning.py
+      - .github/workflows/self-learning-upgrade.yml
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  integrate-and-test:
+    if: ${{ github.event_name == 'workflow_dispatch' || !contains(github.event.head_commit.message, '[self-learning-auto]') }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout branch
+        uses: actions/checkout@v4
+        with:
+          ref: feature/grading-self-learning-v2
+          fetch-depth: 0
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Patch existing app safely
+        run: python upgrade_self_learning.py
+      - name: Python self-learning tests
+        run: python -m unittest -v test_grading_self_learning.py
+      - name: Browser JavaScript syntax
+        run: node --check grading_self_learning.js
+      - name: Existing full regression suite
+        run: python verify_all.py
+      - name: Commit integrated files
+        shell: bash
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add index.html sw.js tcg_updater.py migrate_old_data.py learning_store.json
+          if git diff --cached --quiet; then
+            echo "No integration changes needed."
+            exit 0
+          fi
+          git commit -m "[self-learning-auto] integrate grading self-learning v2"
+          git push origin HEAD:feature/grading-self-learning-v2
