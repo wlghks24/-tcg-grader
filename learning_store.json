@@ -1,6 +1,78 @@
 {
-  "version": 1,
+  "version": 2,
   "updated_at": null,
   "v30_validation": [],
-  "v11_validation": []
+  "v11_validation": [],
+  "confirmed_samples": [],
+  "calibration": {
+    "PSA": {
+      "n": 0,
+      "state": "observe",
+      "strength": 0.0,
+      "correction": 0.0,
+      "robust_residual": 0.0,
+      "mae": 0.0,
+      "rmse": 0.0,
+      "exact_rate": 0.0,
+      "within_half_rate": 0.0,
+      "same_card_groups": 0,
+      "game_adjustments": {}
+    },
+    "BGS": {
+      "n": 0,
+      "state": "observe",
+      "strength": 0.0,
+      "correction": 0.0,
+      "robust_residual": 0.0,
+      "mae": 0.0,
+      "rmse": 0.0,
+      "exact_rate": 0.0,
+      "within_half_rate": 0.0,
+      "same_card_groups": 0,
+      "game_adjustments": {}
+    },
+    "CGC": {
+      "n": 0,
+      "state": "observe",
+      "strength": 0.0,
+      "correction": 0.0,
+      "robust_residual": 0.0,
+      "mae": 0.0,
+      "rmse": 0.0,
+      "exact_rate": 0.0,
+      "within_half_rate": 0.0,
+      "same_card_groups": 0,
+      "game_adjustments": {}
+    },
+    "BRG": {
+      "n": 0,
+      "state": "observe",
+      "strength": 0.0,
+      "correction": 0.0,
+      "robust_residual": 0.0,
+      "mae": 0.0,
+      "rmse": 0.0,
+      "exact_rate": 0.0,
+      "within_half_rate": 0.0,
+      "same_card_groups": 0,
+      "game_adjustments": {}
+    },
+    "TAG": {
+      "n": 0,
+      "state": "observe",
+      "strength": 0.0,
+      "correction": 0.0,
+      "robust_residual": 0.0,
+      "mae": 0.0,
+      "rmse": 0.0,
+      "exact_rate": 0.0,
+      "within_half_rate": 0.0,
+      "same_card_groups": 0,
+      "game_adjustments": {}
+    }
+  },
+  "bgs_subgrade_summary": {
+    "n": 0,
+    "note": "BGS 서브그레이드 검증자료 없음"
+  }
 }

@@ -1,5 +1,5 @@
-const CACHE='tcg-v31-pokemon-kr-events-36';
-const CORE=['./','./index.html','./manifest.webmanifest','./releases.json','./promo_events.json','./purchase_sources.json','./market_prices.json','./market_watch.json','./exchange_rates.json','./icon.svg'];
+const CACHE='tcg-v31-self-learning-v2';
+const CORE=['./','./index.html','./grading_self_learning.js','./manifest.webmanifest','./releases.json','./promo_events.json','./purchase_sources.json','./market_prices.json','./market_watch.json','./exchange_rates.json','./icon.svg'];
 self.addEventListener('install',event=>event.waitUntil(caches.open(CACHE).then(cache=>cache.addAll(CORE)).then(()=>self.skipWaiting())));
 self.addEventListener('activate',event=>event.waitUntil(caches.keys().then(keys=>Promise.all(keys.filter(key=>key!==CACHE).map(key=>caches.delete(key)))).then(()=>self.clients.claim())));
 self.addEventListener('fetch',event=>{

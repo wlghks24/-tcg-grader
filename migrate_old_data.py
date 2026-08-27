@@ -3,6 +3,7 @@
 from __future__ import annotations
 import datetime as dt, json, os, shutil, sys
 from pathlib import Path
+from grading_self_learning import rebuild_store
 
 FILES=('learning_store.json','auto_repair_memory.json','verification_history.json','tcg_live_data.json')
 
@@ -22,9 +23,14 @@ def rows_merged(new_rows,old_rows,limit=500):
     return list(unique.values())[-limit:]
 
 def merge_learning(new,old):
-    return {'version':1,'updated_at':max(str(new.get('updated_at') or ''),str(old.get('updated_at') or '')) or None,
-            'v30_validation':rows_merged(new.get('v30_validation',[]),old.get('v30_validation',[])),
-            'v11_validation':rows_merged(new.get('v11_validation',[]),old.get('v11_validation',[]))}
+    base={
+        'version':2,
+        'updated_at':max(str(new.get('updated_at') or ''),str(old.get('updated_at') or '')) or None,
+        'v30_validation':rows_merged(new.get('v30_validation',[]),old.get('v30_validation',[])),
+        'v11_validation':rows_merged(new.get('v11_validation',[]),old.get('v11_validation',[])),
+        'confirmed_samples':rows_merged(new.get('confirmed_samples',[]),old.get('confirmed_samples',[]),limit=2000),
+    }
+    return rebuild_store(base)
 
 def merge_history(new,old):
     unique={}
