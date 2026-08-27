@@ -62,8 +62,14 @@ function localModel(){
     const residuals=r.map(x=>x.actual-x.raw_pred),med=median(residuals);
     const mad=median(residuals.map(x=>Math.abs(x-med)));
     const radius=Math.max(1,3*1.4826*mad);
-    const bounded=residuals.map(x=>clamp(x,med-radius,med+radius));
-    const robust=bounded.length?bounded.reduce((a,b)=>a+b,0)/bounded.length:0;
+    const cardCounts={};
+    r.forEach(x=>{const k=String(x.card_key||"");if(k)cardCounts[k]=(cardCounts[k]||0)+1});
+    let weighted=0,totalWeight=0;
+    residuals.forEach((residual,i)=>{
+      const card=String(r[i].card_key||""),weight=card?1/Math.sqrt(cardCounts[card]||1):1;
+      weighted+=clamp(residual,med-radius,med+radius)*weight;totalWeight+=weight;
+    });
+    const robust=totalWeight?weighted/totalWeight:0;
     const mae=n?r.reduce((s,x)=>s+Math.abs(x.actual-x.raw_pred),0)/n:0;
     const tier=n<5?["observe",0,0]:n<10?["conservative",.25,.25]:n<30?["limited",.5,.5]:n<60?["strong",.75,.75]:["mature",1,.75];
     companies[company]={
@@ -138,18 +144,41 @@ function ensureOptions(select,values){
     const opt=document.createElement("option");opt.value=String(value);opt.textContent=String(value);select.appendChild(opt);
   }
 }
-function replaceGradeOptions(select){
+function setGradeOptions(select,company){
   if(!select)return;
-  const current=select.value,vals=[10,9.5,9,8.5,8,7.5,7,6.5,6,5.5,5];
+  const current=select.value,vals=[...(STEPS[company]||STEPS.BGS)].sort((a,b)=>b-a);
   select.innerHTML="";
   vals.forEach(v=>{const o=document.createElement("option");o.value=String(v);o.textContent=String(v);select.appendChild(o)});
   if(vals.map(String).includes(current))select.value=current;
 }
+function subgradeOptions(){
+  return '<option value="">미입력</option>'+[10,9.5,9,8.5,8,7.5,7,6.5,6,5.5,5,4.5,4,3.5,3,2.5,2,1.5,1].map(x=>`<option value="${x}">${x}</option>`).join("");
+}
+function ensureLearningDetailUI(){
+  if(document.getElementById("selfLearnDetails"))return;
+  const save=document.getElementById("saveValidation");if(!save)return;
+  const details=document.createElement("details");
+  details.id="selfLearnDetails";details.className="compact-details";
+  details.innerHTML=`<summary>🧠 학습자료 상세정보 입력 (선택)</summary>
+  <p class="muted">같은 카드 반복자료를 구분하고 BGS 서브그레이드를 보존할 때 사용합니다. 인증번호가 있으면 중복 학습을 자동 차단합니다.</p>
+  <div class="grid2"><label>카드명<input id="selfLearnCardName" placeholder="예: Umbreon VMAX"></label><label>인증번호<input id="selfLearnCert" placeholder="예: 0016892969"></label></div>
+  <div class="grid2"><label>세트<input id="selfLearnSet" placeholder="예: Evolving Skies"></label><label>카드번호<input id="selfLearnCardNo" placeholder="예: 215/203"></label></div>
+  <div id="selfLearnBgsBox"><div class="muted"><b>BGS 서브그레이드</b> — BGS 카드일 때만 입력</div><div class="guide-unit-grid">
+  <label>Centering<select id="selfLearnCentering">${subgradeOptions()}</select></label><label>Corners<select id="selfLearnCorners">${subgradeOptions()}</select></label><label>Edges<select id="selfLearnEdges">${subgradeOptions()}</select></label><label>Surface<select id="selfLearnSurface">${subgradeOptions()}</select></label>
+  </div></div>`;
+  save.parentNode.insertBefore(details,save);
+}
+function updateCompanyControls(){
+  const company=document.getElementById("actualCompany")?.value||"PSA";
+  setGradeOptions(document.getElementById("actualGrade"),company);
+  const quick=document.getElementById("v11grader")?.value||"PSA";
+  setGradeOptions(document.getElementById("v11actual"),quick);
+  const bgs=document.getElementById("selfLearnBgsBox");if(bgs)bgs.style.display=company==="BGS"?"block":"none";
+}
 function ensureCompanyUI(){
   ensureOptions(document.getElementById("actualCompany"),["BRG","TAG"]);
   ensureOptions(document.getElementById("v11grader"),["BRG","TAG"]);
-  replaceGradeOptions(document.getElementById("actualGrade"));
-  replaceGradeOptions(document.getElementById("v11actual"));
+  ensureLearningDetailUI();
 
   const p10=document.getElementById("p10"),table=p10?.closest("table");
   if(table&&!document.getElementById("brg10")){
@@ -159,7 +188,7 @@ function ensureCompanyUI(){
       for(const id of ids){const td=document.createElement("td");td.id=id;td.textContent="-";rows[rowIndex].appendChild(td)}
     }
     const note=document.createElement("p");note.className="muted";note.id="extraCompanyNote";
-    note.textContent="BRG·TAG는 공개된 확정등급 검증기록을 회사별로 분리해 보수 보정합니다. 표본이 부족하면 공통 결함점수의 참고 후보만 표시합니다.";
+    note.textContent="BRG·TAG는 실제 확정등급 검증기록을 회사별로 분리해 보수 보정합니다. 표본이 부족하면 공통 결함점수의 참고 후보만 표시합니다.";
     table.insertAdjacentElement("afterend",note);
   }
   const stats=document.querySelector("#v30calibration .validation-stats");
@@ -173,7 +202,40 @@ function ensureCompanyUI(){
   if(calibration&&!document.getElementById("selfLearningStatus")){
     const status=document.createElement("div");status.id="selfLearningStatus";status.className="status";status.style.marginTop="8px";calibration.appendChild(status);
   }
+  updateCompanyControls();
 }
+
+function metadata(company){
+  const value=id=>String(document.getElementById(id)?.value||"").trim();
+  const card_name=value("selfLearnCardName"),set_name=value("selfLearnSet"),card_no=value("selfLearnCardNo"),cert_no=value("selfLearnCert");
+  const card_key=[gameName(),set_name,card_name,card_no].filter(Boolean).join("|");
+  const out={game:gameName()};
+  if(card_name)out.card_name=card_name;if(set_name)out.set_name=set_name;if(card_no)out.card_no=card_no;if(cert_no)out.cert_no=cert_no;if(card_key)out.card_key=card_key;
+  if(company==="BGS"){
+    const subgrades={};
+    for(const [key,id] of [["centering","selfLearnCentering"],["corners","selfLearnCorners"],["edges","selfLearnEdges"],["surface","selfLearnSurface"]]){
+      const n=number(document.getElementById(id)?.value);if(n!==null)subgrades[key]=n;
+    }
+    if(Object.keys(subgrades).length)out.subgrades=subgrades;
+  }
+  return out;
+}
+function decorateRow(row,company){
+  const raw=number(window.tcgLastRawGrades?.[company]);
+  if(raw!==null)row.raw_pred=raw;
+  Object.assign(row,metadata(company),{verified:true});
+  return row;
+}
+async function postConfirmedSample(row){
+  if(!row||number(row.raw_pred??row.pred)===null)return {ok:false};
+  const payload={...row,company:String(row.company||row.grader||"").toUpperCase(),actual_grade:row.actual,raw_pred:row.raw_pred??row.pred,verified:true,source:"app_confirmed"};
+  try{
+    const r=await fetch("/api/learning-sample",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(payload)});
+    if(!r.ok)throw new Error("learning-sample");
+    return await r.json();
+  }catch(e){return {ok:false,offline:true}}
+}
+
 function formatGrade(x){return number(x)===null?"-":Number(x).toFixed(Number.isInteger(Number(x))?0:1)}
 function renderExtraGrades(){
   const grades=window.tcgLastGrades||{};
@@ -204,33 +266,56 @@ function renderStatus(){
     const e=m.companies?.[company]||{};
     return `<b>${company}</b> ${e.n||0}건 · ${stateKo[e.state]||"관찰"} · 보정 ${(number(e.correction)||0).toFixed(2)} · MAE ${(number(e.mae)||0).toFixed(2)}`;
   });
-  box.innerHTML=`🧠 <b>자가학습 v2</b> · ${m.source==="server"?"PC·태블릿 중앙 저장":"브라우저 로컬 저장"}<br>${lines.join("<br>")}<br><span class="muted">확정등급만 학습 · 5건 미만 미적용 · 업체별 모델 분리 · 서버에서는 동일 카드 반복표본 영향 완화</span>`;
+  box.innerHTML=`🧠 <b>자가학습 v2</b> · ${m.source==="server"?"PC·태블릿 중앙 저장":"브라우저 로컬 저장"}<br>${lines.join("<br>")}<br><span class="muted">확정등급만 학습 · 5건 미만 미적용 · 업체별 모델 분리 · 인증번호 중복제거 · 동일카드 반복표본 영향 완화</span>`;
 }
 
+async function refreshAfterSave(row){
+  localStorage.setItem(MODELKEY,JSON.stringify(localModel()));renderStatus();
+  await postConfirmedSample(row);
+  if(typeof window.syncLearningToServer==="function")await window.syncLearningToServer().catch(()=>{});
+  await loadServerModel();
+}
 function annotateLatestValidation(){
   let rows=[];try{rows=JSON.parse(localStorage.getItem(V30KEY)||"[]")}catch(e){return}
   if(!rows.length)return;
-  const row=rows[rows.length-1],company=String(row.company||"").toUpperCase(),raw=number(window.tcgLastRawGrades?.[company]);
-  if(raw!==null){row.raw_pred=raw;row.game=gameName();row.verified=true;localStorage.setItem(V30KEY,JSON.stringify(rows.slice(-500)))}
-  localStorage.setItem(MODELKEY,JSON.stringify(localModel()));renderStatus();
-  if(typeof window.syncLearningToServer==="function")window.syncLearningToServer().then(()=>loadServerModel()).catch(()=>{});
+  const row=rows[rows.length-1],company=String(row.company||"").toUpperCase();
+  decorateRow(row,company);localStorage.setItem(V30KEY,JSON.stringify(rows.slice(-500)));
+  refreshAfterSave(row);
+}
+function saveExtraCompanyValidation(event){
+  const company=String(document.getElementById("actualCompany")?.value||"").toUpperCase();
+  if(!["BRG","TAG"].includes(company))return;
+  event.preventDefault();event.stopImmediatePropagation();
+  const actual=number(document.getElementById("actualGrade")?.value),grades=window.tcgLastGrades||{},pred=number(grades[company]);
+  if(actual===null||pred===null){alert("먼저 앞면과 뒷면 사진으로 자동 분석을 완료하세요.");return}
+  let rows=[];try{rows=JSON.parse(localStorage.getItem(V30KEY)||"[]")}catch(e){}
+  const row=decorateRow({time:new Date().toISOString(),company,actual,pred,mode:window.v30Mode||"raw"},company);
+  rows.push(row);localStorage.setItem(V30KEY,JSON.stringify(rows.slice(-500)));
+  if(typeof window.v30RenderValidation==="function")window.v30RenderValidation();
+  refreshAfterSave(row);
+}
+function annotateLatestQuickValidation(){
+  try{
+    const rows=JSON.parse(localStorage.getItem(V11KEY)||"[]");
+    if(!rows.length)return;
+    const row=rows[rows.length-1],company=String(row.grader||row.company||"").toUpperCase();
+    decorateRow(row,company);localStorage.setItem(V11KEY,JSON.stringify(rows.slice(-200)));
+    refreshAfterSave(row);
+  }catch(e){}
 }
 
 function hook(){
   ensureCompanyUI();renderStatus();loadServerModel();
+  document.getElementById("actualCompany")?.addEventListener("change",updateCompanyControls);
+  document.getElementById("v11grader")?.addEventListener("change",updateCompanyControls);
   document.getElementById("analyze")?.addEventListener("click",()=>{window.tcgLastRawGrades={};setTimeout(()=>waitForCoreGrades(),0)});
-  document.getElementById("saveValidation")?.addEventListener("click",()=>setTimeout(annotateLatestValidation,80));
-  document.getElementById("v11save")?.addEventListener("click",()=>setTimeout(()=>{
-    try{
-      const rows=JSON.parse(localStorage.getItem(V11KEY)||"[]");
-      if(rows.length){
-        const row=rows[rows.length-1],company=String(row.grader||row.company||"").toUpperCase(),raw=number(window.tcgLastRawGrades?.[company]);
-        if(raw!==null){row.raw_pred=raw;row.game=gameName();row.verified=true;localStorage.setItem(V11KEY,JSON.stringify(rows.slice(-200)))}
-      }
-    }catch(e){}
-    localStorage.setItem(MODELKEY,JSON.stringify(localModel()));renderStatus();
-    if(typeof window.syncLearningToServer==="function")window.syncLearningToServer().then(()=>loadServerModel()).catch(()=>{});
+  const save=document.getElementById("saveValidation");
+  save?.addEventListener("click",saveExtraCompanyValidation,true);
+  save?.addEventListener("click",()=>setTimeout(()=>{
+    const company=String(document.getElementById("actualCompany")?.value||"").toUpperCase();
+    if(!["BRG","TAG"].includes(company))annotateLatestValidation();
   },80));
+  document.getElementById("v11save")?.addEventListener("click",()=>setTimeout(annotateLatestQuickValidation,80));
   document.getElementById("recalcCalibration")?.addEventListener("click",()=>setTimeout(()=>{localStorage.setItem(MODELKEY,JSON.stringify(localModel()));renderStatus();loadServerModel();},80));
 }
 
