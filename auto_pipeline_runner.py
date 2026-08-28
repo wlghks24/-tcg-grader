@@ -1,21 +1,19 @@
 #!/usr/bin/env python3
-"""Integrated discovery pipeline with adaptive collection learning.
+"""Integrated discovery pipeline with adaptive multi-provider learning.
 
-v112:
-- Pokemon / ONE PIECE / NARUTO use rotating KR/JP/US + official-domain +
-  X/Instagram/YouTube discovery plans.
-- Verified and cross-checked candidates teach useful search terms/source hosts.
-- A small exploration budget remains active so the learner cannot overfit only
-  to historically successful event types.
-- Optional collection_feedback.json corrections are consumed once and become
-  future search hints.
-- Learning failure is isolated from collection data; official verification rules
-  remain owned by the existing official collectors.
+v113:
+- Pokemon / ONE PIECE / NARUTO use adaptive KR/JP/US search plans.
+- Broad search now uses independent no-key providers through MultiChannelCollector.
+- HTTP-success + zero-result is recorded as empty/degraded, not a hard failure.
+- Broad adaptive leads are merged into social_event_candidates.json as low-trust
+  candidates so the event UI can surface them without promoting them to official.
+- Verified/cross-checked candidates still teach future query vocabulary.
 """
 from __future__ import annotations
 
 import concurrent.futures
 import os
+import urllib.parse
 from datetime import datetime
 from pathlib import Path
 
@@ -27,6 +25,13 @@ import social_event_discovery
 
 ROOT = Path(__file__).resolve().parent
 OUT = ROOT / "web_discovery_candidates.json"
+GAME_LABELS = {"포켓몬": "포켓몬 카드", "원피스": "원피스 카드", "나루토": "나루토 카드"}
+SOCIAL_HOST_KIND = {
+    "x.com": "x_public_search", "www.x.com": "x_public_search",
+    "twitter.com": "x_public_search", "www.twitter.com": "x_public_search",
+    "instagram.com": "instagram_public_search", "www.instagram.com": "instagram_public_search",
+    "youtube.com": "youtube_public_search", "www.youtube.com": "youtube_public_search", "youtu.be": "youtube_public_search",
+}
 
 
 def _workers() -> int:
@@ -34,13 +39,90 @@ def _workers() -> int:
     return 2 if is_android else 3
 
 
+def _host(url: str) -> str:
+    try:
+        return (urllib.parse.urlsplit(str(url or "")).hostname or "").lower()
+    except ValueError:
+        return ""
+
+
+def _adaptive_event_rows(candidates: list[dict]) -> list[dict]:
+    """Convert ranked broad-search hits to event candidates without trust escalation."""
+    rows: list[dict] = []
+    now = datetime.now().astimezone().isoformat(timespec="seconds")
+    for block in candidates:
+        keyword = str(block.get("keyword") or "")
+        game = GAME_LABELS.get(keyword, keyword + " 카드" if keyword else "")
+        if not game:
+            continue
+        for item in block.get("results") or []:
+            if not isinstance(item, dict):
+                continue
+            source = str(item.get("url") or "")
+            title = str(item.get("title") or "").strip()
+            if not source.startswith("https://") or not title:
+                continue
+            region = str(item.get("query_region") or "KR")
+            if region not in {"KR", "JP", "US"}:
+                region = "KR"
+            host = _host(source)
+            source_kind = SOCIAL_HOST_KIND.get(host, "adaptive_web_search")
+            official_hint = bool(item.get("official_hint"))
+            provider = str(item.get("search_provider") or "multi_provider")
+            rows.append({
+                "game": game,
+                "region": region,
+                "category": social_event_discovery._category(title),
+                "title": title[:220],
+                "source": source,
+                "source_kind": source_kind,
+                "source_tier": "A-search" if official_hint else "B-search",
+                "source_label": f"자가학습 {provider} · 공식도메인 후보" if official_hint else f"자가학습 {provider} 공개검색 후보",
+                "official_domain_match": official_hint,
+                "official_account_verified": False,
+                "dates": social_event_discovery._dates(title),
+                "excerpt": title[:300],
+                "status": "공식도메인 검색후보 · 내용 재확인 필요" if official_hint else "자가학습 검색후보 · 교차확인 필요",
+                "verified": False,
+                "confidence": 0.78 if official_hint else 0.56,
+                "adaptive_search": True,
+                "query_family": item.get("query_family"),
+                "query_region": region,
+                "search_provider": provider,
+                "collected_at": now,
+            })
+    return rows
+
+
+def _merge_adaptive_into_social(social: dict, candidates: list[dict]) -> tuple[dict, int]:
+    adaptive_rows = _adaptive_event_rows(candidates)
+    current = [x for x in (social.get("items") or []) if isinstance(x, dict)]
+    merged = social_event_discovery.merge_candidates(current + adaptive_rows)
+    out = dict(social)
+    out["items"] = merged
+    out["item_count"] = len(merged)
+    out["official_social_candidate_count"] = sum(1 for x in merged if x.get("official_account_verified") is True)
+    out["official_domain_search_count"] = sum(1 for x in merged if x.get("official_domain_match") is True)
+    out["cross_checked_count"] = sum(1 for x in merged if x.get("cross_checked") is True)
+    status = dict(out.get("channel_status") or {})
+    status["adaptive_multi_provider"] = {
+        "configured": True,
+        "result_count": len(adaptive_rows),
+        "merged_item_count": len(merged),
+        "status": "DuckDuckGo/Bing RSS/Google News RSS + 완화 OR 검색 후보 병합",
+    }
+    out["channel_status"] = status
+    out["adaptive_merge_count"] = len(adaptive_rows)
+    out["updated_at"] = datetime.now().astimezone().isoformat(timespec="seconds")
+    atomic_write_json(social_event_discovery.OUT, out, suffix=".adaptive-social.tmp")
+    return out, len(adaptive_rows)
+
+
 def run_pipeline():
     agent = MultiChannelCollector()
     platform_agent = CrossPlatformSelfHealingEngine()
     keywords = ("포켓몬", "원피스", "나루토")
 
-    # Broad adaptive searches run in parallel, while mutation of the shared learner
-    # is internally serialized by MultiChannelCollector.
     with concurrent.futures.ThreadPoolExecutor(max_workers=_workers(), thread_name_prefix="tcg-web-candidate") as ex:
         futs = {ex.submit(agent.search_web, k): k for k in keywords}
         by_key = {}
@@ -73,9 +155,12 @@ def run_pipeline():
         social = {"items": [], "fresh_collection_ok": False, "degraded": True, "error": f"{type(exc).__name__}: {exc}"}
         extra_errors.append(f"social: {type(exc).__name__}: {exc}")
 
-    # Teach the next run from facts that survived the existing verification/cross-check
-    # layers. Discovery-only community rows receive very small weight and never become
-    # official through this learner.
+    adaptive_merge_count = 0
+    try:
+        social, adaptive_merge_count = _merge_adaptive_into_social(social, candidates)
+    except Exception as exc:
+        extra_errors.append(f"adaptive_social_merge: {type(exc).__name__}: {exc}")
+
     adaptive_learning = {}
     try:
         learned_supplementary = agent.learner.learn_from_payload(supplementary, origin="supplementary")
@@ -87,6 +172,7 @@ def run_pipeline():
             "supplementary_rows": learned_supplementary,
             "social_rows": learned_social,
             "feedback_rows": learned_feedback,
+            "adaptive_merged_rows": adaptive_merge_count,
         }
     except Exception as exc:
         adaptive_learning = {
@@ -104,22 +190,28 @@ def run_pipeline():
             if text and text not in broad_errors:
                 broad_errors.append(f"{row.get('keyword')}: {text}")
     social_degraded = bool(social.get("degraded"))
+    social_hard_failure = bool(
+        not social.get("fresh_collection_ok")
+        and not social.get("items")
+        and (social_errors or social.get("error"))
+    )
     errors = (
         [f"{x.get('keyword')}: {x.get('error', '수집 실패')}" for x in failures]
         + extra_errors
         + broad_errors[:20]
-        + social_errors[:20]
+        + (social_errors[:20] if social_hard_failure else [])
     )
 
     payload = {
-        "version": "v112-adaptive-self-learning-discovery",
+        "version": "v113-resilient-adaptive-discovery",
         "updated_at": datetime.now().astimezone().isoformat(timespec="seconds"),
-        "ok": len(failures) == 0 and not extra_errors,
-        "degraded": bool(failures or broad_degraded or extra_errors or social_degraded),
-        "failure_count": len(failures) + len(extra_errors) + (1 if social_degraded else 0),
+        "ok": len(failures) == 0 and not extra_errors and not social_hard_failure,
+        "degraded": bool(broad_degraded or extra_errors or social_degraded),
+        "failure_count": len(failures) + len(extra_errors) + (1 if social_hard_failure else 0),
+        "empty_search_count": sum(1 for x in candidates if x.get("empty")),
         "errors": errors[:50],
         "notice": "검색/SNS/뉴스 후보 자료입니다. 반복 발견만으로 공식 승격하지 않으며 공식 웹사이트 또는 공식 연결 SNS/복수출처 확인이 필요합니다.",
-        "learning_policy": "성공 검색어·유용 출처·검증 후보에서 수집전략을 학습하되, KR/JP/US 기본 탐색과 저사용 검색어 탐색을 항상 남겨 누락 과적합을 방지합니다.",
+        "learning_policy": "성공 검색어·유용 출처·검증 후보와 검색 제공자 결과를 학습하되, KR/JP/US 기본 탐색과 저사용 검색어 탐색을 항상 남겨 누락 과적합을 방지합니다.",
         "platform": platform_agent.diagnostics(),
         "queries": candidates,
         "supplementary": {
@@ -128,6 +220,7 @@ def run_pipeline():
         },
         "social": {
             "candidate_count": len(social.get("items", [])),
+            "adaptive_merge_count": adaptive_merge_count,
             "official_social_candidate_count": int(social.get("official_social_candidate_count") or 0),
             "official_domain_search_count": int(social.get("official_domain_search_count") or 0),
             "cross_checked_count": int(social.get("cross_checked_count") or 0),
@@ -143,8 +236,11 @@ def run_pipeline():
 
 if __name__ == "__main__":
     result = run_pipeline()
+    total = sum(len(x.get("results", [])) for x in result["queries"])
     print(
-        f"웹 후보 수집 완료: {sum(len(x.get('results', [])) for x in result['queries'])}건"
+        f"웹 후보 수집 완료: {total}건"
         f" · 실패 {result['failure_count']}건"
+        f" · 빈검색 {result.get('empty_search_count', 0)}건"
+        f" · 행사병합 {int((result.get('social') or {}).get('adaptive_merge_count') or 0)}건"
         f" · 학습검색어 {int((result.get('adaptive_learning') or {}).get('learned_queries') or 0)}개"
     )
