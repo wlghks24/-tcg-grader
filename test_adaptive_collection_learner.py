@@ -218,6 +218,63 @@ class AdaptiveCollectionLearnerTests(unittest.TestCase):
         self.assertLess(provider_names.count("bing_rss"), 8)
         self.assertLess(provider_names.count("google_news"), 8)
 
+    def test_final_diversity_survives_relevance_ranking(self):
+        ranked = [
+            {
+                "title": f"Pokemon event Bing {i}",
+                "url": f"https://bing.example/event/{i}",
+                "search_provider": "bing_rss",
+                "relevance_score": 5.0 - i * 0.05,
+                "official_hint": False,
+            }
+            for i in range(8)
+        ]
+        ranked += [
+            {
+                "title": "Pokemon official event Google",
+                "url": "https://google.example/event/1",
+                "search_provider": "google_news",
+                "relevance_score": 3.8,
+                "official_hint": False,
+            },
+            {
+                "title": "Pokemon promo DuckDuckGo",
+                "url": "https://ddg.example/event/1",
+                "search_provider": "duckduckgo",
+                "relevance_score": 3.6,
+                "official_hint": False,
+            },
+        ]
+        mixed = MultiChannelCollector._diversify_ranked(ranked, 8)
+        providers = {row["search_provider"] for row in mixed}
+        self.assertIn("bing_rss", providers)
+        self.assertIn("google_news", providers)
+        self.assertIn("duckduckgo", providers)
+
+    def test_google_news_query_is_region_specific_and_compact(self):
+        with tempfile.TemporaryDirectory() as td:
+            collector = MultiChannelCollector(learner=self.make_learner(Path(td)))
+            kr = collector._compact_news_query("포켓몬 카드 행사 이벤트 프로모 출시", "KR")
+            jp = collector._compact_news_query("ポケモンカード イベント プロモ 発売", "JP")
+            us = collector._compact_news_query("Pokemon TCG event promo release", "US")
+            self.assertIn("when:60d", kr)
+            self.assertIn(" OR ", kr)
+            self.assertIn("ポケモンカード", jp)
+            self.assertIn("Pokemon TCG", us)
+            self.assertEqual(collector.GOOGLE_LOCALE["JP"]["ceid"], "JP:ja")
+            self.assertEqual(collector.GOOGLE_LOCALE["US"]["ceid"], "US:en")
+
+    def test_duckduckgo_lite_parser_accepts_external_result_links(self):
+        with tempfile.TemporaryDirectory() as td:
+            collector = MultiChannelCollector(learner=self.make_learner(Path(td)))
+            target = "https://www.naruto-cardgame.com/en/news/test.php"
+            encoded = __import__("urllib.parse", fromlist=["quote"]).quote(target, safe="")
+            page = f'<html><a rel="nofollow" href="https://lite.duckduckgo.com/l/?uddg={encoded}">NARUTO CARD GAME event</a></html>'
+            rows = collector._parse_ddg_lite(page, 5)
+            self.assertEqual(len(rows), 1)
+            self.assertEqual(rows[0]["url"], target)
+            self.assertEqual(rows[0]["search_provider"], "duckduckgo")
+
 
 if __name__ == "__main__":
     unittest.main()
