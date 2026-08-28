@@ -9,6 +9,8 @@ collection_learning_memory.json
 collection_learning_memory.json.bak
 collection_learning_report.json
 collection_feedback.json
+collection_provider_health.json
+collection_provider_health.json.bak
 
 # Temporary atomic-write/test artifacts
 *.tmp
