@@ -10,12 +10,15 @@ v112:
   not create a blind spot.
 - Network failures are learned separately from relevance; official trust is
   never inferred merely from repeated discovery.
+- Shared learner mutation is locked so parallel Pokemon/ONE PIECE/NARUTO jobs
+  cannot corrupt the persistent learning file.
 """
 from __future__ import annotations
 
 import html
 import os
 import re
+import threading
 import time
 import urllib.error
 import urllib.parse
@@ -32,6 +35,7 @@ class MultiChannelCollector:
 
     def __init__(self, learner: AdaptiveCollectionLearner | None = None):
         self.learner = learner or AdaptiveCollectionLearner()
+        self._learning_lock = threading.RLock()
 
     @staticmethod
     def _timeout() -> int:
@@ -100,7 +104,8 @@ class MultiChannelCollector:
         keyword = str(keyword or "").strip()[:80]
         is_android = "com.termux" in os.environ.get("PREFIX", "") or "ANDROID_ROOT" in os.environ
         query_budget = 5 if is_android else 8
-        plans = self.learner.plan_queries(keyword, max_queries=query_budget)
+        with self._learning_lock:
+            plans = self.learner.plan_queries(keyword, max_queries=query_budget)
         all_rows: list[dict] = []
         errors: list[str] = []
         query_results: list[dict] = []
@@ -113,9 +118,10 @@ class MultiChannelCollector:
             rows, attempt_errors, attempts = self._search_once(query, max(limit, 8))
             total_retries += max(0, attempts - 1)
             error_text = " / ".join(attempt_errors)
-            learned = self.learner.observe_search(
-                keyword, query, rows, error=error_text, family=family, region=region
-            )
+            with self._learning_lock:
+                learned = self.learner.observe_search(
+                    keyword, query, rows, error=error_text, family=family, region=region
+                )
             for row in rows:
                 enriched = dict(row)
                 enriched["query_family"] = family
@@ -132,8 +138,9 @@ class MultiChannelCollector:
                 "learned": learned,
             })
 
-        ranked = self.learner.rank_results(keyword, all_rows, limit=max(limit, 12))
-        self.learner.save()
+        with self._learning_lock:
+            ranked = self.learner.rank_results(keyword, all_rows, limit=max(limit, 12))
+            self.learner.save()
         successful_queries = sum(1 for row in query_results if row["result_count"] > 0 and not row["error"])
         return {
             "ok": bool(successful_queries or ranked),
