@@ -1,0 +1,150 @@
+{
+  "version": "v112-catalog-image-repair",
+  "updated_at": "2026-08-29",
+  "policy": "BOX 화면은 실제 밀봉 BOX/Booster Bundle/ETB 상품 사진을 우선합니다. 공식 상품 이미지가 직접 제공되지 않는 경우 정확한 제품명·판본이 확인되는 판매처 상품 이미지를 사용하며 공식정보 링크와는 분리합니다.",
+  "items": {
+    "테라스탈 페스타 ex": {
+      "url": "https://image.homeplus.kr/td/aaa95b1d-207c-49e5-86d1-b8d5092e1783",
+      "source": "Homeplus Korean retail product image",
+      "region": "KR"
+    },
+    "배틀파트너즈": {
+      "url": "https://thumbnail.coupangcdn.com/thumbnails/remote/492x492ex/image/vendor_inventory/2489/1e4b5fa99dd3d236d7e964bd6c8c8a76100421d45ac5717a437945e76600.jpg",
+      "source": "Coupang Korean retail product image",
+      "region": "KR"
+    },
+    "블랙볼트": {
+      "url": "https://i.ebayimg.com/images/g/LbUAAeSwYIJo7SyP/s-l400.jpg",
+      "source": "Exact Korean sealed booster box reference",
+      "region": "KR",
+      "force_replace": true
+    },
+    "화이트플레어": {
+      "url": "https://static.wixstatic.com/media/5605a8_38b6e362aa78483aa5c40cf6563ce5a7~mv2.jpg/v1/fit/w_500%2Ch_500%2Cq_90/file.jpg",
+      "source": "Exact Korean sealed booster box reference",
+      "region": "KR"
+    },
+    "메가 심포니아 한국판": {
+      "url": "https://www.gate-to-the-games.de/media/image/product/143208/md/pokemon-korean-booster-box-m1s-brave-symphonia.webp",
+      "source": "Exact Korean sealed booster box reference",
+      "region": "KR"
+    },
+    "포켓몬 카드 30주년 기념": {
+      "url": "https://pbs.twimg.com/media/HKRD-N2aIAA5sIu.jpg",
+      "source": "30th CELEBRATION sealed display box reference",
+      "region": "JP",
+      "force_replace": true
+    },
+    "스톰 에메랄드": {
+      "url": "https://cdn11.bigcommerce.com/s-89ffd/images/stencil/1280x1280/products/210226/998451/4521329462233_e9b18bb6e4774a32f8a9b15c44ef4b2b__57531.1785488285.jpg?c=2%3Fimbypass%3Don",
+      "source": "Exact Japanese sealed booster box reference",
+      "region": "JP",
+      "force_replace": true
+    },
+    "세계 최강의 전사들 일본판": {
+      "url": "https://tcgame.com.au/cdn/shop/files/one-piece-op-17-the-world-s-strongest-warriors-japanese-booster-box.jpg?v=1783497576&width=1920",
+      "source": "Exact OP-17 Japanese sealed booster box reference",
+      "region": "JP"
+    },
+    "세계 최강의 전사들 미국판": {
+      "url": "https://cdn11.bigcommerce.com/s-gwt413yhqi/images/stencil/1280x1280/products/34291/62670/BlackBox_-_2026-06-18T193111-733__80331.1783307006.webp?c=1",
+      "source": "Exact OP-17 English sealed booster display reference",
+      "region": "US"
+    },
+    "포켓몬 카드 30주년 엘리트 트레이너 박스": {
+      "url": "https://feenturm.de/cdn/shop/files/Pokemon_TCG_30th_Celebration_ETB_converted.webp?v=1783074720",
+      "source": "30th Celebration Elite Trainer Box product image",
+      "region": "US"
+    },
+    "계승되는 의지": {
+      "url": "https://kream-phinf.pstatic.net/MjAyNjA2MzBfMTkx/MDAxNzgyODAwOTc0NzEw.TnnVMrBVPCnkwV-Z85qg6A6VxqdgEvUizp0rIWEv2w8g.cIeBu8imv_z3BTKbUFbqFYV18H0BB4lD5HnMh-Ibo-gg.PNG/a_ae5d5e46350d4489a6bc3608746ee845.png",
+      "source": "KREAM exact OPK-13 Korean box reference",
+      "region": "KR"
+    },
+    "히로인즈 에디션": {
+      "url": "https://flow.xosoft.kr/fileDownload?downname=20260703_175153_0fd8f46cbbf745dcb5aada091ba94585",
+      "source": "ONE PIECE Card Game Korea official product image",
+      "region": "KR"
+    },
+    "신시대의 주역": {
+      "url": "https://i.ebayimg.com/images/g/N-AAAeSw-Y5pXMCc/s-l1600.jpg",
+      "source": "Exact OPK-05 Korean sealed booster box reference",
+      "region": "KR"
+    },
+    "로맨스 던": {
+      "url": "https://files.cardgameshop.be/cache/products/images/e/h/b/1500x1500/2/7/7ab2fc577996608f3266a6eb05662139b58ca4/one-piece-koreaanse-boosterbox-opk01-romance-dawn-cardgameshop.webp",
+      "source": "Exact OPK-01 Korean sealed booster box reference",
+      "region": "KR"
+    },
+    "메가 심포니아": {
+      "url": "https://cdn.aukro.cz/images/sk1774776831331/pokemon-booster-box-mega-symphonia-japonsky-266107204.jpeg",
+      "source": "Exact Japanese sealed Mega Symphonia box reference",
+      "region": "JP"
+    },
+    "메가 브레이브": {
+      "url": "https://ec.treasure-f.com/images/1074003826645610/1500/1074003826645610_01_6975w.jpeg",
+      "source": "Exact Japanese sealed Mega Brave box reference",
+      "region": "JP"
+    },
+    "메가 드림 ex": {
+      "url": "https://item-shopping.c.yimg.jp/i/n/moetaku_rc-itccnwxh5hvk-roqn",
+      "source": "Exact Japanese sealed MEGA Dream ex box reference",
+      "region": "JP"
+    },
+    "테라스탈 페스타 ex 일본판": {
+      "url": "https://ec.treasure-f.com/images/1087000725019533/1500/1087000725019533_01_6559w.jpeg",
+      "source": "Exact Japanese sealed Terastal Festa ex box reference",
+      "region": "JP"
+    },
+    "배틀파트너즈 일본판": {
+      "url": "https://storage.googleapis.com/pbw-images-stg-mb-automation-prod/v2/packs/brand-5/item-660/pack-wide/c16c2057328fc22b3fe4a0ff6da5c856741ae12a511e880dec3934ec46674289.webp",
+      "source": "Exact Japanese Battle Partners box reference",
+      "region": "JP"
+    },
+    "인페르노 X": {
+      "url": "https://ec.treasure-f.com/images/1108000461773469/1500/1108000461773469_01_7468w.jpeg",
+      "source": "Exact Japanese sealed Inferno X box reference",
+      "region": "JP"
+    },
+    "닌자스피너": {
+      "url": "https://item-shopping.c.yimg.jp/i/n/htw_pmcg-jp-432786-bp",
+      "source": "Exact Japanese sealed Ninja Spinner box reference",
+      "region": "JP"
+    },
+    "스승의 유산": {
+      "url": "https://thecardvault.co.uk/cdn/shop/files/One-Piece_OP-12_Legacy-Of-The-Master_Booster-Box_Closed.png?v=1757724477&width=645",
+      "source": "Exact OP-12 English sealed booster box reference",
+      "region": "US"
+    },
+    "계승되는 의지 미국판": {
+      "url": "https://i.ebayimg.com/images/g/YokAAeSwxSVpyCla/s-l960.jpg",
+      "source": "Exact OP-13 English sealed booster box reference",
+      "region": "US"
+    },
+    "더 베스트 Vol.2": {
+      "url": "https://cdn.shopify.com/s/files/1/1288/8361/files/one-piece-tcg-the-best-premium-booster-box-prb-02-box-cover_83408501-1d3e-4c3d-b431-bc77385afbd6.jpg?v=1759512258",
+      "source": "Exact PRB-02 English booster display reference",
+      "region": "US"
+    },
+    "블랙볼트·화이트플레어 미국판": {
+      "url": "https://packflipps.com/cdn/shop/files/pixelcut_1_11.jpg?v=1752110583",
+      "source": "Exact English Black Bolt and White Flare Booster Bundle reference",
+      "region": "US"
+    },
+    "혼돈의 부상": {
+      "url": "https://collectorstore.com/cdn/shop/files/269c549a-ed2a-452e-b794-e17d777b41b9.jpg?v=1775252321&width=990",
+      "source": "Exact English Chaos Rising Booster Bundle reference",
+      "region": "US"
+    },
+    "칠흑": {
+      "url": "https://tradingcardworld.store/cdn/shop/files/692942_1200x.jpg?v=1777925698",
+      "source": "Exact English Pitch Black Booster Bundle reference",
+      "region": "US"
+    },
+    "프리즈마틱 에볼루션": {
+      "url": "https://i5.walmartimages.com/seo/POKEMON-SV8-5-PRISMATIC-EVO-BST-BUNDLE_3dc7ecba-6ca2-4224-afd9-f396fee5a87b.72fec9d0e025a789a1f9a07b42932271.jpeg?odnBg=FFFFFF&odnHeight=640&odnWidth=640",
+      "source": "Exact English Prismatic Evolutions Booster Bundle reference",
+      "region": "US"
+    }
+  }
+}
