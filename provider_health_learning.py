@@ -22,8 +22,9 @@ def _fresh() -> dict:
     return {"version": 1, "providers": {}, "runs": 0}
 
 
-def _load(path: Path = MEMORY) -> dict:
-    for candidate in (path, BACKUP):
+def _load(path: Path = MEMORY, backup_path: Path | None = None) -> dict:
+    backup = backup_path or path.with_suffix(path.suffix + ".bak")
+    for candidate in (path, backup):
         try:
             data = json.loads(safe_read_text(candidate))
             if isinstance(data, dict) and isinstance(data.get("providers"), dict):
@@ -40,8 +41,10 @@ def _num(value) -> int:
         return 0
 
 
-def observe(provider_rows: list[dict], *, memory_path: Path = MEMORY) -> dict:
-    data = _load(memory_path)
+def observe(provider_rows: list[dict], *, memory_path: Path = MEMORY, backup_path: Path | None = None) -> dict:
+    memory_path = Path(memory_path)
+    backup = Path(backup_path) if backup_path else memory_path.with_suffix(memory_path.suffix + ".bak")
+    data = _load(memory_path, backup)
     data["runs"] = _num(data.get("runs")) + 1
     providers = data.setdefault("providers", {})
     for row in provider_rows:
@@ -66,7 +69,7 @@ def observe(provider_rows: list[dict], *, memory_path: Path = MEMORY) -> dict:
         data["providers"] = dict(ranked[:MAX_PROVIDERS])
     if memory_path.exists():
         try:
-            atomic_write_json(BACKUP, _load(memory_path), suffix=".provider-health.bak.tmp")
+            atomic_write_json(backup, _load(memory_path, backup), suffix=".provider-health.bak.tmp")
         except Exception:
             pass
     atomic_write_json(memory_path, data, suffix=".provider-health.tmp")
