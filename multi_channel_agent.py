@@ -1,16 +1,18 @@
 #!/usr/bin/env python3
 """Adaptive multi-provider public-web candidate collector.
 
-v114:
+v115:
 - Keeps adaptive KR/JP/US + official/social query planning.
-- Queries every no-key provider for each plan instead of stopping after the first
-  provider fills the result limit.
-- Merges provider results in round-robin order so Bing/DDG/Google cannot dominate
-  merely because one provider responds first or returns more rows.
+- DuckDuckGo HTML automatically falls back to DuckDuckGo Lite when the HTML
+  result shape yields zero parsed links.
+- Google News uses region-specific KR/JP/US locale settings and a compact OR
+  query instead of sending one long learned query verbatim.
+- Every no-key provider is queried for each plan and provider results are merged
+  in round-robin order.
+- Final learner ranking is diversified again so one provider cannot re-dominate
+  after relevance scoring when other relevant providers also produced leads.
 - A strict learned query that returns zero is retried with a compact OR query.
 - HTTP-success + zero-result is an EMPTY search, not a hard collection failure.
-- Provider identity is preserved on every result so later learning/reporting can
-  measure which discovery channels actually contribute useful leads.
 - Official trust is never inferred merely from repeated discovery.
 """
 from __future__ import annotations
@@ -31,8 +33,11 @@ from safe_runtime import env_int, safe_urlopen
 
 
 class MultiChannelCollector:
-    HEADERS = {"User-Agent": "Mozilla/5.0 TCG-Grader/114"}
-    DDG_HOSTS = {"html.duckduckgo.com", "duckduckgo.com", "www.duckduckgo.com"}
+    HEADERS = {"User-Agent": "Mozilla/5.0 TCG-Grader/115"}
+    DDG_HOSTS = {
+        "html.duckduckgo.com", "lite.duckduckgo.com",
+        "duckduckgo.com", "www.duckduckgo.com",
+    }
     BING_HOSTS = {"www.bing.com", "bing.com"}
     GOOGLE_NEWS_HOSTS = {"news.google.com"}
     PROVIDER_COUNT = 3
@@ -46,6 +51,11 @@ class MultiChannelCollector:
         "KR": ("행사", "이벤트", "콜라보", "프로모", "프로모카드", "출시", "발매", "재발매", "한정", "증정", "대회", "영화"),
         "JP": ("イベント", "コラボ", "プロモ", "プロモカード", "発売", "再販", "限定", "配布", "大会", "映画"),
         "US": ("event", "collab", "collaboration", "promo", "promo card", "release", "restock", "exclusive", "giveaway", "tournament", "movie"),
+    }
+    GOOGLE_LOCALE = {
+        "KR": {"hl": "ko", "gl": "KR", "ceid": "KR:ko"},
+        "JP": {"hl": "ja", "gl": "JP", "ceid": "JP:ja"},
+        "US": {"hl": "en-US", "gl": "US", "ceid": "US:en"},
     }
 
     def __init__(self, learner: AdaptiveCollectionLearner | None = None):
@@ -98,13 +108,12 @@ class MultiChannelCollector:
                 continue
             seen.add(url)
             out.append(row)
-            if len(out) >= max(3, min(30, int(limit))):
+            if len(out) >= max(3, min(50, int(limit))):
                 break
         return out
 
     @classmethod
     def _round_robin_merge(cls, provider_rows: dict[str, list[dict]], limit: int) -> list[dict]:
-        """Fairly interleave providers before URL de-duplication and final limit."""
         order = ("duckduckgo", "bing_rss", "google_news")
         max_len = max((len(provider_rows.get(name, [])) for name in order), default=0)
         merged: list[dict] = []
@@ -114,6 +123,44 @@ class MultiChannelCollector:
                 if index < len(rows):
                     merged.append(rows[index])
         return cls._dedupe(merged, limit)
+
+    @classmethod
+    def _diversify_ranked(cls, ranked: list[dict], limit: int) -> list[dict]:
+        """Keep relevance ordering within each provider, but prevent provider monopoly."""
+        limit = max(1, min(30, int(limit)))
+        provider_rows: dict[str, list[dict]] = {}
+        leftovers: list[dict] = []
+        for row in ranked:
+            provider = str(row.get("search_provider") or "unknown")
+            score = float(row.get("relevance_score") or 0.0)
+            if score >= 2.0 or row.get("official_hint"):
+                provider_rows.setdefault(provider, []).append(row)
+            else:
+                leftovers.append(row)
+        preferred_order = ("duckduckgo", "google_news", "bing_rss")
+        max_len = max((len(provider_rows.get(name, [])) for name in preferred_order), default=0)
+        mixed: list[dict] = []
+        seen: set[str] = set()
+        for index in range(max_len):
+            for provider in preferred_order:
+                rows = provider_rows.get(provider, [])
+                if index >= len(rows):
+                    continue
+                row = rows[index]
+                url = str(row.get("url") or "")
+                if url and url not in seen:
+                    seen.add(url)
+                    mixed.append(row)
+                    if len(mixed) >= limit:
+                        return mixed
+        for row in ranked + leftovers:
+            url = str(row.get("url") or "")
+            if url and url not in seen:
+                seen.add(url)
+                mixed.append(row)
+                if len(mixed) >= limit:
+                    break
+        return mixed[:limit]
 
     def _fetch_with_retry(self, req: urllib.request.Request, allowed_hosts: set[str], max_bytes: int = 900_000) -> tuple[bytes | None, str | None, int]:
         last_error = None
@@ -130,23 +177,61 @@ class MultiChannelCollector:
                 time.sleep(0.7)
         return None, last_error or "unknown provider error", attempts
 
-    def _search_ddg(self, query: str, limit: int) -> tuple[list[dict], str | None, int, bool]:
-        url = "https://html.duckduckgo.com/html/?" + urllib.parse.urlencode({"q": query})
-        req = urllib.request.Request(url, headers=self.HEADERS)
-        raw, error, attempts = self._fetch_with_retry(req, self.DDG_HOSTS)
-        if raw is None:
-            return [], error, attempts, False
-        text = raw.decode("utf-8", "replace")
-        matches = re.findall(r'<a[^>]+class=["\'][^"\']*result__a[^"\']*["\'][^>]+href=["\']([^"\']+)["\'][^>]*>(.*?)</a>', text, re.I | re.S)
+    def _parse_ddg_html(self, text: str, limit: int) -> list[dict]:
+        matches = re.findall(
+            r'<a[^>]+class=["\'][^"\']*result__a[^"\']*["\'][^>]+href=["\']([^"\']+)["\'][^>]*>(.*?)</a>',
+            text, re.I | re.S,
+        )
         if not matches:
-            matches = re.findall(r'<a[^>]+href=["\']([^"\']+)["\'][^>]+class=["\'][^"\']*result__a[^"\']*["\'][^>]*>(.*?)</a>', text, re.I | re.S)
+            matches = re.findall(
+                r'<a[^>]+href=["\']([^"\']+)["\'][^>]+class=["\'][^"\']*result__a[^"\']*["\'][^>]*>(.*?)</a>',
+                text, re.I | re.S,
+            )
         rows = []
         for href, title in matches:
             target = self._decode_result_url(href)
             clean = self._clean_title(title)
             if target and clean:
                 rows.append({"title": clean, "url": target, "verified": False, "search_provider": "duckduckgo"})
-        return self._dedupe(rows, limit), None, attempts, True
+        return self._dedupe(rows, limit)
+
+    def _parse_ddg_lite(self, text: str, limit: int) -> list[dict]:
+        rows = []
+        for href, title in re.findall(r'<a[^>]+href=["\']([^"\']+)["\'][^>]*>(.*?)</a>', text, re.I | re.S):
+            target = self._decode_result_url(href)
+            clean = self._clean_title(title)
+            if not target or not clean:
+                continue
+            try:
+                host = (urllib.parse.urlsplit(target).hostname or "").lower()
+            except ValueError:
+                continue
+            if host in self.DDG_HOSTS or len(clean) < 4:
+                continue
+            rows.append({"title": clean, "url": target, "verified": False, "search_provider": "duckduckgo"})
+        return self._dedupe(rows, limit)
+
+    def _search_ddg(self, query: str, limit: int) -> tuple[list[dict], str | None, int, bool]:
+        attempts_total = 0
+        html_url = "https://html.duckduckgo.com/html/?" + urllib.parse.urlencode({"q": query})
+        req = urllib.request.Request(html_url, headers=self.HEADERS)
+        raw, error, attempts = self._fetch_with_retry(req, self.DDG_HOSTS)
+        attempts_total += attempts
+        if raw is not None:
+            rows = self._parse_ddg_html(raw.decode("utf-8", "replace"), limit)
+            if rows:
+                return rows, None, attempts_total, True
+        first_error = error
+
+        lite_url = "https://lite.duckduckgo.com/lite/?" + urllib.parse.urlencode({"q": query})
+        req = urllib.request.Request(lite_url, headers=self.HEADERS)
+        raw, lite_error, attempts = self._fetch_with_retry(req, self.DDG_HOSTS)
+        attempts_total += attempts
+        if raw is None:
+            combined = " / ".join(x for x in (first_error, lite_error) if x)
+            return [], combined or "DuckDuckGo unavailable", attempts_total, False
+        rows = self._parse_ddg_lite(raw.decode("utf-8", "replace"), limit)
+        return rows, None, attempts_total, True
 
     def _search_bing_rss(self, query: str, limit: int) -> tuple[list[dict], str | None, int, bool]:
         url = "https://www.bing.com/search?" + urllib.parse.urlencode({"q": query, "format": "rss"})
@@ -166,8 +251,25 @@ class MultiChannelCollector:
                 rows.append({"title": title, "url": link, "verified": False, "search_provider": "bing_rss"})
         return self._dedupe(rows, limit), None, attempts, True
 
-    def _search_google_news(self, query: str, limit: int) -> tuple[list[dict], str | None, int, bool]:
-        url = "https://news.google.com/rss/search?" + urllib.parse.urlencode({"q": query, "hl": "ko", "gl": "KR", "ceid": "KR:ko"})
+    def _detect_game_name(self, query: str, region: str) -> str:
+        low = str(query or "").lower()
+        for game, by_region in self.GAME_NAMES.items():
+            if any(name.lower() in low for name in by_region.values()):
+                return by_region.get(region, by_region["KR"])
+        return re.sub(r"\bsite:[A-Za-z0-9.-]+", "", str(query or "")).strip().split("  ", 1)[0][:80]
+
+    def _compact_news_query(self, query: str, region: str) -> str:
+        region = region if region in self.EVENT_OR else "KR"
+        name = self._detect_game_name(query, region)
+        terms = self.EVENT_OR[region]
+        event_expr = " OR ".join(f'"{term}"' if " " in term else term for term in terms[:6])
+        return f'"{name}" ({event_expr}) when:60d'[:280]
+
+    def _search_google_news(self, query: str, limit: int, region: str = "KR") -> tuple[list[dict], str | None, int, bool]:
+        region = region if region in self.GOOGLE_LOCALE else "KR"
+        locale = self.GOOGLE_LOCALE[region]
+        compact = self._compact_news_query(query, region)
+        url = "https://news.google.com/rss/search?" + urllib.parse.urlencode({"q": compact, **locale})
         req = urllib.request.Request(url, headers=self.HEADERS)
         raw, error, attempts = self._fetch_with_retry(req, self.GOOGLE_NEWS_HOSTS, max_bytes=1_200_000)
         if raw is None:
@@ -184,7 +286,7 @@ class MultiChannelCollector:
                 rows.append({"title": title, "url": link, "verified": False, "search_provider": "google_news"})
         return self._dedupe(rows, limit), None, attempts, True
 
-    def _search_once(self, query: str, limit: int) -> tuple[list[dict], list[str], int]:
+    def _search_once(self, query: str, limit: int, region: str = "KR") -> tuple[list[dict], list[str], int]:
         """Run every independent provider and fairly merge results."""
         query = re.sub(r"\s+", " ", str(query or "")).strip()[:280]
         errors: list[str] = []
@@ -192,9 +294,9 @@ class MultiChannelCollector:
         provider_rows: dict[str, list[dict]] = {}
         successful_provider = False
         providers = (
-            ("duckduckgo", self._search_ddg),
-            ("bing_rss", self._search_bing_rss),
-            ("google_news", self._search_google_news),
+            ("duckduckgo", lambda q, n: self._search_ddg(q, n)),
+            ("bing_rss", lambda q, n: self._search_bing_rss(q, n)),
+            ("google_news", lambda q, n: self._search_google_news(q, n, region)),
         )
         for provider, fn in providers:
             rows, error, used_attempts, responded = fn(query, max(limit, 8))
@@ -235,13 +337,13 @@ class MultiChannelCollector:
             query = str(plan.get("query") or "")
             family = str(plan.get("family") or "web")
             region = str(plan.get("region") or "KR")
-            rows, attempt_errors, attempts = self._search_once(query, max(limit, 8))
+            rows, attempt_errors, attempts = self._search_once(query, max(limit, 8), region)
             used_query = query
             relaxed = False
             if not rows and len(attempt_errors) < self.PROVIDER_COUNT:
                 relaxed_query = self._relaxed_query(keyword, region, family, query)
                 if relaxed_query and relaxed_query != query:
-                    relaxed_rows, relaxed_errors, relaxed_attempts = self._search_once(relaxed_query, max(limit, 8))
+                    relaxed_rows, relaxed_errors, relaxed_attempts = self._search_once(relaxed_query, max(limit, 8), region)
                     attempts += relaxed_attempts
                     attempt_errors.extend(relaxed_errors)
                     if relaxed_rows:
@@ -281,18 +383,21 @@ class MultiChannelCollector:
             })
 
         with self._learning_lock:
-            ranked = self.learner.rank_results(keyword, all_rows, limit=max(limit, 12))
+            ranked_pool = self.learner.rank_results(keyword, all_rows, limit=max(30, int(limit) * 4))
+            final_rows = self._diversify_ranked(ranked_pool, limit)
             self.learner.save()
         successful_queries = sum(1 for row in query_results if row["result_count"] > 0 and row["transport_ok"])
         empty_queries = sum(1 for row in query_results if row["empty"])
-        provider_counts = dict(Counter(str(x.get("search_provider") or "unknown") for x in ranked[: max(1, min(30, int(limit)))]))
+        provider_counts = dict(Counter(str(x.get("search_provider") or "unknown") for x in final_rows))
+        provider_pool_counts = dict(Counter(str(x.get("search_provider") or "unknown") for x in ranked_pool))
         return {
             "ok": bool(transport_successes),
-            "degraded": bool(errors or not ranked),
-            "empty": not bool(ranked),
+            "degraded": bool(errors or not final_rows),
+            "empty": not bool(final_rows),
             "keyword": keyword,
-            "results": ranked[: max(1, min(30, int(limit)))],
+            "results": final_rows,
             "provider_counts": provider_counts,
+            "provider_pool_counts": provider_pool_counts,
             "provider_diversity": len([k for k, v in provider_counts.items() if v > 0]),
             "query_count": len(plans),
             "successful_query_count": successful_queries,
@@ -305,6 +410,6 @@ class MultiChannelCollector:
             "timeout_seconds": self._timeout(),
             "learning": {
                 "memory_file": self.learner.memory_path.name,
-                "strategy": "adaptive KR/JP/US + all-provider round-robin DuckDuckGo/Bing RSS/Google News RSS + compact OR fallback + official/social exploration",
+                "strategy": "adaptive KR/JP/US + DDG HTML/Lite + Bing RSS + regional Google News RSS + double diversity merge + compact OR fallback",
             },
         }
