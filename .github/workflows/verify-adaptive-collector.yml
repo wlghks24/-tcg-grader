@@ -6,10 +6,12 @@ on:
     paths:
       - 'adaptive_collection_learner.py'
       - 'multi_channel_agent.py'
+      - 'official_direct_discovery.py'
       - 'auto_pipeline_runner.py'
       - 'social_event_discovery.py'
       - 'supplementary_discovery.py'
       - 'test_adaptive_collection_learner.py'
+      - 'test_official_direct_discovery.py'
       - '.github/workflows/verify-adaptive-collector.yml'
   workflow_dispatch:
 
@@ -32,8 +34,12 @@ jobs:
           python -m py_compile \
             adaptive_collection_learner.py \
             multi_channel_agent.py \
+            official_direct_discovery.py \
             auto_pipeline_runner.py \
             social_event_discovery.py \
             supplementary_discovery.py
       - name: Run adaptive learner regression tests
-        run: python -m unittest -v test_adaptive_collection_learner.py
+        run: |
+          python -m unittest -v \
+            test_adaptive_collection_learner.py \
+            test_official_direct_discovery.py
