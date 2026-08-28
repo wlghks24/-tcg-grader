@@ -152,14 +152,16 @@ class AdaptiveCollectionLearnerTests(unittest.TestCase):
                     "title": "NARUTO CARD GAME New York event promo card",
                     "url": "https://www.naruto-cardgame.com/en/news/mock.php",
                     "verified": False,
+                    "search_provider": "bing_rss",
                 },
                 {
                     "title": "NARUTO wallpaper download",
                     "url": "https://example.com/wallpaper",
                     "verified": False,
+                    "search_provider": "google_news",
                 },
             ]
-            with patch.object(collector, "_search_once", return_value=(fake_rows, [], 1)):
+            with patch.object(collector, "_search_once", return_value=(fake_rows, [], 3)):
                 result = collector.search_web("나루토", limit=5)
             self.assertTrue(result["ok"])
             self.assertGreaterEqual(result["query_count"], 3)
@@ -195,6 +197,26 @@ class AdaptiveCollectionLearnerTests(unittest.TestCase):
             self.assertIn(" OR ", query)
             self.assertIn("site:x.com", query)
             self.assertIn("원피스", query)
+
+    def test_round_robin_merge_prevents_bing_from_occupying_every_slot(self):
+        providers = {
+            "duckduckgo": [],
+            "bing_rss": [
+                {"title": f"Bing {i}", "url": f"https://bing.example/{i}", "search_provider": "bing_rss"}
+                for i in range(8)
+            ],
+            "google_news": [
+                {"title": f"Google {i}", "url": f"https://google.example/{i}", "search_provider": "google_news"}
+                for i in range(8)
+            ],
+        }
+        merged = MultiChannelCollector._round_robin_merge(providers, 8)
+        provider_names = [row["search_provider"] for row in merged]
+        self.assertEqual(len(merged), 8)
+        self.assertIn("bing_rss", provider_names)
+        self.assertIn("google_news", provider_names)
+        self.assertLess(provider_names.count("bing_rss"), 8)
+        self.assertLess(provider_names.count("google_news"), 8)
 
 
 if __name__ == "__main__":
