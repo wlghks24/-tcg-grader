@@ -1,6 +1,6 @@
 {
   "version": "v110-social-event-hotfix",
-  "updated_at": "2026-08-29T00:39:00+09:00",
+  "updated_at": "2026-08-29T00:45:00+09:00",
   "fresh_collection_ok": true,
   "degraded": true,
   "policy": "공식 웹사이트 우선. 공식 SNS·공식 YouTube 및 복수 공개출처의 최신 후보를 표시하며, TCG 플레이용 카드와 일반 콜라보 포토카드/굿즈를 구분합니다. 자동 채널 장애 시 마지막 검증 후보를 보존합니다.",
@@ -14,7 +14,7 @@
       "source_label": "포켓몬코리아 공식 X", "author": "pokemonkrmkt", "official_account_verified": true,
       "published_at": "2026-08-29T00:00:00+09:00", "dates": ["2026-08-29", "2026-08-31"],
       "excerpt": "2026년 8월 29~31일 WCS 2026 선수 응원 메시지 이벤트. 공식 계정 팔로우와 지정 해시태그 참여 방식이며 관련 기념 경품 안내가 공개됨.",
-      "status": "공식 SNS 확인", "verified": true, "confidence": 0.96, "collected_at": "2026-08-29T00:39:00+09:00"
+      "status": "공식 SNS 확인", "verified": true, "confidence": 0.96, "collected_at": "2026-08-29T00:45:00+09:00"
     },
     {
       "game": "포켓몬 카드", "region": "KR", "category": "promo",
@@ -23,27 +23,36 @@
       "source_label": "포켓몬코리아 공식 YouTube", "author": "PokemonKoreaInc", "official_account_verified": true,
       "published_at": "2026-08-29T00:00:00+09:00", "dates": ["2026-08-29", "2026-08-31"],
       "excerpt": "포켓몬코리아 공식 YouTube 채널에서 포켓몬 카드게임을 포함한 공식 영상과 WCS 관련 생중계 정보를 확인할 수 있음.",
-      "status": "공식 YouTube 확인", "verified": true, "confidence": 0.95, "collected_at": "2026-08-29T00:39:00+09:00"
+      "status": "공식 YouTube 확인", "verified": true, "confidence": 0.95, "collected_at": "2026-08-29T00:45:00+09:00"
+    },
+    {
+      "game": "포켓몬 카드", "region": "KR", "category": "collaboration",
+      "title": "2026 롯데타운 서머 마켓 · 포켓몬 메가페스타 2026: 포켓몬 별빛낙원",
+      "source": "https://www.newspim.com/news/view/20260806000207", "source_kind": "web_crosscheck", "source_tier": "B-news",
+      "source_label": "포켓몬코리아 발표·복수 보도 교차확인", "publisher": "뉴스핌 외 복수 매체", "official_domain_match": false,
+      "published_at": "2026-08-06T14:30:00+09:00", "dates": ["2026-08-16", "2026-08-31"],
+      "excerpt": "잠실 롯데월드타워·롯데월드몰 일대의 포켓몬 30주년 대형 행사. 사전예약 방문자에게 소원 카드 작성 시 프로모 카드 증정, 팝업·브랜드 협업·잉어킹 콘텐츠 운영.",
+      "status": "복수출처 교차확인", "verified": false, "cross_checked": true, "independent_source_count": 4,
+      "confidence": 0.92, "collected_at": "2026-08-29T00:45:00+09:00"
     },
     {
       "game": "포켓몬 카드", "region": "KR", "category": "collaboration",
       "title": "롯데 자이언츠 × 포켓몬 잉어킹 데이",
       "source": "https://www.newspim.com/news/view/20260812001190", "source_kind": "web_crosscheck", "source_tier": "B-news",
       "source_label": "복수 보도 교차확인 · 롯데 자이언츠 제공", "publisher": "뉴스핌 외 복수 매체", "official_domain_match": false,
-      "published_at": "2026-08-12T16:52:00+09:00", "dates": ["2026-08-30", "2026-09-06"],
+      "published_at": "2026-08-12T15:53:00+09:00", "dates": ["2026-08-30", "2026-09-06"],
       "excerpt": "사직야구장에서 8월 30일~9월 6일 잉어킹 테마 행사. 8월 30일 잉어킹 데이, 피카츄 그리팅·미니게임·관중 이벤트가 진행되며 8월 28일부터 콜라보 굿즈도 출시.",
       "status": "복수출처 교차확인", "verified": false, "cross_checked": true, "independent_source_count": 3,
-      "confidence": 0.90, "collected_at": "2026-08-29T00:39:00+09:00"
+      "confidence": 0.90, "collected_at": "2026-08-29T00:45:00+09:00"
     },
     {
       "game": "포켓몬 카드", "region": "KR", "category": "collaboration",
-      "title": "잠실 포켓몬 메가페스타 2026·잉어킹 이벤트",
-      "source": "https://pogomate.com/events", "source_kind": "web_crosscheck", "source_tier": "B-news",
-      "source_label": "공개 일정 교차확인 후보", "publisher": "공개 이벤트 일정", "official_domain_match": false,
-      "published_at": "2026-08-16T00:00:00+09:00", "dates": ["2026-08-16", "2026-08-31"],
-      "excerpt": "2026년 8월 16~31일 잠실 일대에서 포켓몬 메가페스타·잉어킹 관련 이벤트가 진행되는 일정이 공개됨. 공식 행사 페이지 추가 확인 대상으로 유지.",
-      "status": "교차확인 후보", "verified": false, "cross_checked": true, "independent_source_count": 2,
-      "confidence": 0.78, "collected_at": "2026-08-29T00:39:00+09:00"
+      "title": "2026 피카츄의 한국 나들이 · 가을 소풍",
+      "source": "https://pokemongo.com/news/pikachu-autumn-picnic-korea-2026", "source_kind": "official_web", "source_tier": "A-search",
+      "source_label": "Pokémon GO 공식", "publisher": "Pokémon GO", "official_domain_match": true,
+      "published_at": "2026-08-28T00:00:00+09:00", "dates": ["2026-09-18", "2026-10-11"],
+      "excerpt": "2026년 9월 18일 10:00~10월 11일 20:00, 서울 종로구·중구 일부 지역 및 인천국제공항 하이커 스테이션에서 진행. 주황색 한복의 피카츄 등 한국 한정 이벤트 콘텐츠 포함.",
+      "status": "공식 웹 확인 · 예정", "verified": true, "confidence": 0.98, "collected_at": "2026-08-29T00:45:00+09:00"
     },
     {
       "game": "원피스 카드", "region": "KR", "category": "collaboration",
@@ -54,12 +63,12 @@
       "excerpt": "2026년 9월 1일 16:30 온·오프라인 동시 오픈. KT wiz × ONE PIECE 콜라보 재입고 품목과 함께 신규 랜덤 포토카드 팩을 판매. 현재 확인된 안내상 ONE PIECE CARD GAME 플레이용 프로모 카드가 아니라 콜라보 포토카드 굿즈로 구분함.",
       "status": "공식 SNS 확인 · 9/1 판매 예정", "verified": true, "cross_checked": true, "independent_source_count": 3,
       "confidence": 0.98, "verification_source": "https://ktwizstore.co.kr/category/%EC%BD%9C%EB%9D%BC%EB%B3%B4/118/",
-      "collected_at": "2026-08-29T00:39:00+09:00"
+      "collected_at": "2026-08-29T00:45:00+09:00"
     }
   ],
-  "item_count": 5,
+  "item_count": 6,
   "official_social_candidate_count": 3,
-  "official_domain_search_count": 0,
+  "official_domain_search_count": 1,
   "cross_checked_count": 3,
   "channel_status": {
     "public_social_search": {"configured": true, "status": "v110 무키 공개검색 추가 · X/Instagram/YouTube 및 유튜버 후보 탐색"},
