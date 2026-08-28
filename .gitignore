@@ -1,0 +1,15 @@
+# Python runtime
+__pycache__/
+*.pyc
+*.pyo
+
+# Adaptive collection learning is device-local runtime state.
+# Keeping these untracked prevents tablet/PC git updates from overwriting learned strategy.
+collection_learning_memory.json
+collection_learning_memory.json.bak
+collection_learning_report.json
+collection_feedback.json
+
+# Temporary atomic-write/test artifacts
+*.tmp
+*.tmp.json
