@@ -1,0 +1,56 @@
+name: Sync and Verify Catalog Images
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - index.html
+      - catalog_image_manifest.json
+      - apply_catalog_image_patch.py
+      - test_catalog_images.py
+      - .github/workflows/catalog-image-sync.yml
+
+permissions:
+  contents: write
+
+concurrency:
+  group: catalog-image-sync-main
+  cancel-in-progress: false
+
+jobs:
+  sync-and-verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Synchronize reviewed BOX images
+        run: python apply_catalog_image_patch.py
+
+      - name: Verify catalog image coverage
+        run: python -m unittest -v test_catalog_images.py
+
+      - name: Check generated diff
+        run: git diff --check
+
+      - name: Commit synchronized catalog images
+        shell: bash
+        run: |
+          if git diff --quiet -- index.html; then
+            echo "Catalog images already synchronized."
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add index.html
+          git commit -m "data: synchronize verified BOX catalog images"
+          git push origin HEAD:main
