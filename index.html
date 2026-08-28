@@ -69,7 +69,7 @@ input[type=range]{width:100%}
 #legacyGradeArea{display:none!important}
 .simple-grade-card{border:2px solid #dbeafe;background:linear-gradient(180deg,#fff,#f8fbff);border-radius:22px;padding:18px;margin:14px 0;box-shadow:0 10px 30px rgba(15,23,42,.06)}
 .simple-grade-title{font-size:1.45rem;font-weight:900;margin:0 0 5px}.simple-grade-sub{color:#64748b;margin-bottom:14px}
-.simple-game-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}.simple-game{padding:16px 8px;border:2px solid #e2e8f0;border-radius:16px;background:#fff;font-weight:900;font-size:1.05rem}.simple-game.active{border-color:#2563eb;background:#eff6ff;box-shadow:0 0 0 3px rgba(37,99,235,.08)}
+.simple-game-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}.simple-game{padding:14px 10px;border:2px solid #e2e8f0;border-radius:16px;background:#fff;color:#0f172a!important;font-weight:900;font-size:1.05rem;min-height:92px;display:flex;align-items:center;justify-content:center;gap:12px;text-shadow:none!important}.simple-game .game-visual{width:54px;height:54px;flex:0 0 54px;display:grid;place-items:center;border-radius:14px}.simple-game .game-visual svg{width:46px;height:46px;display:block}.simple-game .game-label{display:block;color:#0f172a!important;font-size:1.18rem;font-weight:950;line-height:1.15;letter-spacing:-.02em}.simple-game[data-simple-game="pokemon"]{border-color:#93c5fd;background:#eff6ff}.simple-game[data-simple-game="pokemon"] .game-visual{background:#dbeafe}.simple-game[data-simple-game="onepiece"]{border-color:#fca5a5;background:#fff7f7}.simple-game[data-simple-game="onepiece"] .game-visual{background:#fee2e2}.simple-game[data-simple-game="naruto"]{border-color:#fdba74;background:#fffaf2}.simple-game[data-simple-game="naruto"] .game-visual{background:#ffedd5}.simple-game.active{border-width:3px;border-color:#2563eb!important;background:#eff6ff;box-shadow:0 0 0 3px rgba(37,99,235,.10)}
 .camera-stage{position:relative;background:#0f172a;border-radius:20px;overflow:hidden;min-height:280px;display:flex;align-items:center;justify-content:center}.camera-stage video{width:100%;max-height:62vh;object-fit:cover}.camera-guide{position:absolute;inset:8% 17%;border:3px solid rgba(255,255,255,.88);border-radius:18px;box-shadow:0 0 0 9999px rgba(0,0,0,.28)}.camera-guide:after{content:'';position:absolute;inset:5%;border:2px dashed rgba(96,165,250,.95);border-radius:14px}.camera-status{position:absolute;left:12px;right:12px;bottom:12px;background:rgba(15,23,42,.88);color:white;padding:10px 12px;border-radius:12px;font-weight:800;text-align:center}.simple-action{width:100%;padding:15px;border:0;border-radius:14px;background:#2563eb;color:white;font-weight:900;font-size:1.05rem;margin-top:10px}.simple-action.secondary{background:#111827}.capture-strip{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:10px}.capture-tile{border:1px solid #dbeafe;border-radius:14px;padding:10px;background:#fff}.capture-tile img{width:100%;aspect-ratio:63/88;object-fit:cover;border-radius:10px;background:#e5e7eb}.capture-label{font-weight:900;margin-bottom:6px}.grade-hero{display:grid;grid-template-columns:120px 1fr;gap:16px;align-items:center}.grade-badge{width:110px;height:110px;border-radius:24px;background:#111827;color:white;display:flex;align-items:center;justify-content:center;flex-direction:column}.grade-badge strong{font-size:3rem;line-height:1}.grade-badge small{opacity:.8}.grade-bars{display:grid;gap:7px}.grade-row{display:grid;grid-template-columns:68px 1fr 44px;gap:8px;align-items:center}.grade-bar{height:9px;background:#e5e7eb;border-radius:99px;overflow:hidden}.grade-bar i{display:block;height:100%;background:#2563eb;border-radius:99px}.grade-reasons{margin-top:12px;padding:12px;border-radius:12px;background:#f1f5f9}.price-quick{display:grid;grid-template-columns:1fr 110px;gap:8px;margin-top:10px}.price-quick input{padding:12px;border:1px solid #cbd5e1;border-radius:12px}.price-results{margin-top:10px}.price-item{padding:11px;border:1px solid #e2e8f0;border-radius:12px;margin:7px 0;background:#fff}.simple-note{font-size:.85rem;color:#64748b;margin-top:9px}@media(max-width:640px){.simple-game-grid{grid-template-columns:1fr}.grade-hero{grid-template-columns:92px 1fr}.grade-badge{width:86px;height:86px}.camera-stage{min-height:240px}.camera-guide{inset:7% 14%}}
 </style>
 </head>
@@ -332,10 +332,22 @@ loadReleases();loadPromos();loadPurchaseSources();
 <section class="simple-grade-card" id="simpleGradeV32">
   <div class="simple-grade-title">📷 게임 선택 → 자동촬영 → 1~10 등급 → 시세</div>
   <div class="simple-grade-sub">복잡한 수동 단계 없이 카드게임을 고르고 카메라에 앞·뒷면을 보여주면 자동으로 촬영하고 분석합니다.</div>
-  <div class="simple-game-grid">
-    <button class="simple-game active" data-simple-game="pokemon">🟦 포켓몬</button>
-    <button class="simple-game" data-simple-game="onepiece">🟥 원피스</button>
-    <button class="simple-game" data-simple-game="naruto">🟧 나루토</button>
+  <div class="simple-game-grid" aria-label="카드게임 선택">
+    <button class="simple-game active" data-simple-game="pokemon" type="button" aria-label="포켓몬 카드 선택">
+      <span class="game-visual" aria-hidden="true">
+        <svg viewBox="0 0 64 64" role="img"><rect x="10" y="8" width="44" height="48" rx="8" fill="#fff" stroke="#2563eb" stroke-width="3"/><circle cx="32" cy="32" r="12" fill="#facc15" stroke="#0f172a" stroke-width="3"/><path d="M37 12 30 27h9l-12 24 5-17h-9z" fill="#f59e0b" stroke="#0f172a" stroke-width="1.8"/></svg>
+      </span><span class="game-label">포켓몬</span>
+    </button>
+    <button class="simple-game" data-simple-game="onepiece" type="button" aria-label="원피스 카드 선택">
+      <span class="game-visual" aria-hidden="true">
+        <svg viewBox="0 0 64 64" role="img"><ellipse cx="32" cy="39" rx="24" ry="8" fill="#f59e0b" stroke="#7f1d1d" stroke-width="3"/><path d="M19 38c1-17 5-25 13-25s12 8 13 25z" fill="#fbbf24" stroke="#7f1d1d" stroke-width="3"/><rect x="18" y="30" width="28" height="7" rx="3" fill="#dc2626"/></svg>
+      </span><span class="game-label">원피스</span>
+    </button>
+    <button class="simple-game" data-simple-game="naruto" type="button" aria-label="나루토 카드 선택">
+      <span class="game-visual" aria-hidden="true">
+        <svg viewBox="0 0 64 64" role="img"><path d="M8 24h48v22H8z" rx="6" fill="#475569"/><rect x="15" y="19" width="34" height="30" rx="7" fill="#cbd5e1" stroke="#0f172a" stroke-width="3"/><path d="M38 29c-7-6-17-1-15 7 2 7 13 6 14 0 1-5-7-7-9-2" fill="none" stroke="#f97316" stroke-width="4" stroke-linecap="round"/><path d="M8 28 2 23v24l6-5M56 28l6-5v24l-6-5" fill="#334155"/></svg>
+      </span><span class="game-label">나루토</span>
+    </button>
   </div>
   <div id="simpleProfile" class="status" style="margin-top:10px">포켓몬 기준: 센터링 + 코너 + 엣지 + 홀로/텍스처/인쇄선/표면 위험을 함께 반영합니다.</div>
 
