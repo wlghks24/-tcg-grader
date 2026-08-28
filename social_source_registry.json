@@ -1,64 +1,79 @@
 {
-  "version": 1,
-  "updated_at": "2026-08-28T08:22:49+00:00",
-  "policy": "공식 웹사이트에서 직접 연결된 SNS 계정만 trusted=true로 자동 등록. manual=true 계정은 사용자가 직접 관리.",
-  "accounts": [],
-  "discovery_pages": [
+  "version": 2,
+  "updated_at": "2026-08-29T00:20:00+09:00",
+  "policy": "공식 웹사이트에서 직접 연결된 SNS 계정과 사람이 공개 출처로 검증한 manual=true 계정을 유지합니다. 자동 새로고침 실패 시 manual 계정은 삭제하지 않습니다.",
+  "accounts": [
     {
+      "platform": "x",
+      "username": "pokemonkrmkt",
       "game": "포켓몬 카드",
       "region": "KR",
-      "url": "https://www.pokemonkorea.co.kr/"
+      "profile_url": "https://x.com/pokemonkrmkt",
+      "trusted": true,
+      "manual": true,
+      "verified_via_official_site": "https://www.pokemonkorea.co.kr/company",
+      "verification_note": "포켓몬코리아 공식 프로모션·이벤트·상품 채널로 공개 프로필과 포켓몬코리아 사이트를 교차 확인",
+      "verified_at": "2026-08-29T00:20:00+09:00"
     },
     {
+      "platform": "youtube_handle",
+      "username": "@PokemonKoreaInc",
       "game": "포켓몬 카드",
-      "region": "JP",
-      "url": "https://www.pokemon.co.jp/"
+      "region": "KR",
+      "profile_url": "https://www.youtube.com/@PokemonKoreaInc",
+      "trusted": true,
+      "manual": true,
+      "verified_via_official_site": "https://www.pokemonkorea.co.kr/company",
+      "verification_note": "포켓몬코리아 공식 YouTube 채널. 포켓몬 카드게임 영상 포함",
+      "verified_at": "2026-08-29T00:20:00+09:00"
     },
     {
-      "game": "포켓몬 카드",
-      "region": "US",
-      "url": "https://www.pokemon.com/us"
-    },
-    {
+      "platform": "x",
+      "username": "ONEPIECE_KR_",
       "game": "원피스 카드",
       "region": "KR",
-      "url": "https://onepiece-cardgame.kr/"
+      "profile_url": "https://x.com/ONEPIECE_KR_",
+      "trusted": true,
+      "manual": true,
+      "verification_note": "ONE PIECE KR Official 공개 채널. KT wiz 콜라보 신규 랜덤 포토카드 팩 공지를 교차 확인",
+      "verified_at": "2026-08-29T00:20:00+09:00"
     },
     {
+      "platform": "instagram",
+      "username": "onepiece_korea_official",
       "game": "원피스 카드",
-      "region": "JP",
-      "url": "https://one-piece.com/"
-    },
-    {
-      "game": "원피스 카드",
-      "region": "US",
-      "url": "https://en.onepiece-cardgame.com/"
-    },
-    {
-      "game": "나루토 카드",
-      "region": "JP",
-      "url": "https://naruto-official.com/"
-    },
-    {
-      "game": "나루토 카드",
-      "region": "US",
-      "url": "https://www.naruto-cardgame.com/en/"
-    },
-    {
-      "game": "나루토 카드",
       "region": "KR",
-      "url": "https://www.naruto-cardgame.com/asia-en/"
+      "profile_url": "https://www.instagram.com/onepiece_korea_official/",
+      "trusted": true,
+      "manual": true,
+      "verification_note": "ONE PIECE KR Official 공개 인스타그램 채널로 보도자료 이미지 출처와 교차 확인",
+      "verified_at": "2026-08-29T00:20:00+09:00"
+    },
+    {
+      "platform": "x",
+      "username": "ONEPIECE_tcg_KR",
+      "game": "원피스 카드",
+      "region": "KR",
+      "profile_url": "https://x.com/ONEPIECE_tcg_KR",
+      "trusted": true,
+      "manual": true,
+      "verified_via_official_site": "https://onepiece-cardgame.kr/",
+      "verification_note": "한국 원피스 카드게임 공식 X 채널",
+      "verified_at": "2026-08-29T00:20:00+09:00"
     }
   ],
+  "discovery_pages": [
+    {"game": "포켓몬 카드", "region": "KR", "url": "https://www.pokemonkorea.co.kr/"},
+    {"game": "포켓몬 카드", "region": "JP", "url": "https://www.pokemon.co.jp/"},
+    {"game": "포켓몬 카드", "region": "US", "url": "https://www.pokemon.com/us"},
+    {"game": "원피스 카드", "region": "KR", "url": "https://onepiece-cardgame.kr/"},
+    {"game": "원피스 카드", "region": "JP", "url": "https://one-piece.com/"},
+    {"game": "원피스 카드", "region": "US", "url": "https://en.onepiece-cardgame.com/"},
+    {"game": "나루토 카드", "region": "JP", "url": "https://naruto-official.com/"},
+    {"game": "나루토 카드", "region": "US", "url": "https://www.naruto-cardgame.com/en/"},
+    {"game": "나루토 카드", "region": "KR", "url": "https://www.naruto-cardgame.com/asia-en/"}
+  ],
   "discovery_errors": [
-    "포켓몬 카드/KR: URLError",
-    "포켓몬 카드/JP: URLError",
-    "포켓몬 카드/US: URLError",
-    "원피스 카드/KR: URLError",
-    "원피스 카드/JP: URLError",
-    "원피스 카드/US: URLError",
-    "나루토 카드/JP: URLError",
-    "나루토 카드/KR: URLError",
-    "나루토 카드/US: URLError"
+    "직전 자동 탐색에서는 공식 웹페이지 9개 모두 URLError. manual=true 공식 채널을 안전 폴백으로 유지함"
   ]
 }
