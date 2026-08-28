@@ -1,0 +1,39 @@
+name: Verify Adaptive Collector
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'adaptive_collection_learner.py'
+      - 'multi_channel_agent.py'
+      - 'auto_pipeline_runner.py'
+      - 'social_event_discovery.py'
+      - 'supplementary_discovery.py'
+      - 'test_adaptive_collection_learner.py'
+      - '.github/workflows/verify-adaptive-collector.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Compile adaptive collection modules
+        run: |
+          python -m py_compile \
+            adaptive_collection_learner.py \
+            multi_channel_agent.py \
+            auto_pipeline_runner.py \
+            social_event_discovery.py \
+            supplementary_discovery.py
+      - name: Run adaptive learner regression tests
+        run: python -m unittest -v test_adaptive_collection_learner.py
