@@ -5,8 +5,10 @@ import json
 import tempfile
 import unittest
 from pathlib import Path
+from unittest.mock import patch
 
 from adaptive_collection_learner import AdaptiveCollectionLearner
+from multi_channel_agent import MultiChannelCollector
 
 
 class AdaptiveCollectionLearnerTests(unittest.TestCase):
@@ -45,9 +47,6 @@ class AdaptiveCollectionLearnerTests(unittest.TestCase):
             self.assertEqual(learner.learn_from_payload(payload, origin="test"), 1)
             plan = learner.plan_queries("나루토", max_queries=8)
             joined = "\n".join(row["query"] for row in plan)
-            # Learned vocabulary is score-ranked. It may select the venue/context word
-            # before the character/product token, but at least one event-specific term
-            # from the verified candidate must enter the next query plan.
             self.assertTrue(any(term in joined for term in ("Yankees", "Chakra", "stadium", "Night")))
             report = learner.report()
             learned_terms = {row["term"] for row in report["top_terms"]}
@@ -142,6 +141,37 @@ class AdaptiveCollectionLearnerTests(unittest.TestCase):
             )
             learner = self.make_learner(root)
             self.assertEqual(learner.memory["totals"]["searches"], 7)
+
+    def test_web_collector_routes_mocked_results_through_learning_and_ranking(self):
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            learner = self.make_learner(root)
+            collector = MultiChannelCollector(learner=learner)
+            fake_rows = [
+                {
+                    "title": "NARUTO CARD GAME New York event promo card",
+                    "url": "https://www.naruto-cardgame.com/en/news/mock.php",
+                    "verified": False,
+                },
+                {
+                    "title": "NARUTO wallpaper download",
+                    "url": "https://example.com/wallpaper",
+                    "verified": False,
+                },
+            ]
+            with patch.object(collector, "_search_once", return_value=(fake_rows, [], 1)):
+                result = collector.search_web("나루토", limit=5)
+            self.assertTrue(result["ok"])
+            self.assertGreaterEqual(result["query_count"], 3)
+            self.assertEqual(result["results"][0]["url"], "https://www.naruto-cardgame.com/en/news/mock.php")
+            self.assertTrue(result["results"][0]["official_hint"])
+            self.assertGreater(learner.memory["totals"]["searches"], 0)
+            self.assertTrue((root / "memory.json").exists())
+
+    def test_duckduckgo_redirect_decoder_recovers_real_https_target(self):
+        target = "https://www.naruto-cardgame.com/en/news/test.php"
+        encoded = "https://html.duckduckgo.com/l/?uddg=" + __import__("urllib.parse", fromlist=["quote"]).quote(target, safe="")
+        self.assertEqual(MultiChannelCollector._decode_result_url(encoded), target)
 
 
 if __name__ == "__main__":
