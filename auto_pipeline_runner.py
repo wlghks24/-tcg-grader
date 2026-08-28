@@ -1,14 +1,15 @@
 #!/usr/bin/env python3
-"""Integrated discovery pipeline with adaptive search + direct official crawling.
+"""Integrated adaptive discovery pipeline.
 
-v116:
-- Pokemon / ONE PIECE / NARUTO keep adaptive KR/JP/US multi-provider search.
-- Adds an independent official_direct provider that crawls curated official pages
-  even when Bing/Google/DDG indexing misses a newly posted announcement.
-- Final candidate selection preserves official-direct leads and provider diversity.
-- HTTP-success + zero-result remains an empty search, not a hard failure.
-- Broad/direct leads are merged into social_event_candidates.json as candidates;
-  official status is never granted merely because a crawler found a URL.
+v117:
+- Pokemon / ONE PIECE / NARUTO keep adaptive KR/JP/US public search.
+- Adds three independent official paths: direct page crawl, YouTube Atom feeds,
+  and official sitemap discovery.
+- Final selection preserves provider diversity so one engine/channel cannot occupy
+  every slot merely because it returns more rows.
+- Provider operational health is persisted separately from source trust.
+- All broad/direct/feed leads remain candidates until existing verification rules
+  confirm the event/content. Repeated discovery never grants official status.
 """
 from __future__ import annotations
 
@@ -22,7 +23,10 @@ from pathlib import Path
 from cross_platform_agent import CrossPlatformSelfHealingEngine
 from multi_channel_agent import MultiChannelCollector
 from safe_runtime import atomic_write_json
+import official_channel_feed_discovery
 import official_direct_discovery
+import official_sitemap_discovery
+import provider_health_learning
 import supplementary_discovery
 import social_event_discovery
 
@@ -35,7 +39,8 @@ SOCIAL_HOST_KIND = {
     "instagram.com": "instagram_public_search", "www.instagram.com": "instagram_public_search",
     "youtube.com": "youtube_public_search", "www.youtube.com": "youtube_public_search", "youtu.be": "youtube_public_search",
 }
-PROVIDER_ORDER = ("official_direct", "google_news", "bing_rss", "duckduckgo")
+DIRECT_PROVIDER_ORDER = ("official_youtube_feed", "official_sitemap", "official_direct")
+PROVIDER_ORDER = DIRECT_PROVIDER_ORDER + ("google_news", "bing_rss", "duckduckgo")
 
 
 def _workers() -> int:
@@ -51,7 +56,7 @@ def _host(url: str) -> str:
 
 
 def _diverse_ranked(rows: list[dict], limit: int = 8) -> list[dict]:
-    """Preserve relevance order inside each provider while preventing one-provider lock-in."""
+    """Interleave providers while preserving relevance order within each bucket."""
     buckets: dict[str, list[dict]] = defaultdict(list)
     seen: set[str] = set()
     for row in rows:
@@ -82,42 +87,102 @@ def _diverse_ranked(rows: list[dict], limit: int = 8) -> list[dict]:
     return result[: max(1, limit)]
 
 
-def _merge_direct_into_candidates(agent: MultiChannelCollector, candidates: list[dict], direct_by_key: dict[str, dict]) -> tuple[list[dict], int]:
-    total_direct_selected = 0
+def _collect_provider_for_games(provider: str, fn, keywords: tuple[str, ...]) -> dict[str, dict]:
+    by_key: dict[str, dict] = {}
+    with concurrent.futures.ThreadPoolExecutor(max_workers=_workers(), thread_name_prefix=f"tcg-{provider}") as ex:
+        futs = {ex.submit(fn, k): k for k in keywords}
+        for fut in concurrent.futures.as_completed(futs):
+            key = futs[fut]
+            try:
+                by_key[key] = fut.result()
+            except Exception as exc:
+                by_key[key] = {
+                    "keyword": key,
+                    "ok": False,
+                    "degraded": True,
+                    "results": [],
+                    "errors": [f"{type(exc).__name__}: {exc}"],
+                    "provider": provider,
+                }
+    return by_key
+
+
+def _collect_official_sources(keywords: tuple[str, ...]) -> dict[str, dict[str, dict]]:
+    collectors = (
+        ("official_direct", official_direct_discovery.collect_game),
+        ("official_youtube_feed", official_channel_feed_discovery.collect_game),
+        ("official_sitemap", official_sitemap_discovery.collect_game),
+    )
+    out: dict[str, dict[str, dict]] = {}
+    # Provider groups run sequentially to keep Termux traffic/memory bounded; games run in parallel.
+    for provider, fn in collectors:
+        out[provider] = _collect_provider_for_games(provider, fn, keywords)
+    return out
+
+
+def _merge_official_sources(
+    agent: MultiChannelCollector,
+    candidates: list[dict],
+    official_sources: dict[str, dict[str, dict]],
+) -> tuple[list[dict], dict[str, int]]:
+    selected_totals = {provider: 0 for provider in DIRECT_PROVIDER_ORDER}
     merged_blocks: list[dict] = []
     for block in candidates:
         keyword = str(block.get("keyword") or "")
-        direct = direct_by_key.get(keyword) or {}
-        direct_rows = [dict(x) for x in (direct.get("results") or []) if isinstance(x, dict)]
-        for row in direct_rows:
-            row["official_hint"] = True
-            row["search_provider"] = "official_direct"
-            row.setdefault("query_family", "official-direct")
-            row.setdefault("query_region", "KR")
+        direct_rows: list[dict] = []
+        discovered_counts: dict[str, int] = {}
+        source_errors: dict[str, list[str]] = {}
+        source_status: dict[str, object] = {}
+        for provider in DIRECT_PROVIDER_ORDER:
+            result = (official_sources.get(provider) or {}).get(keyword) or {}
+            rows = [dict(x) for x in (result.get("results") or []) if isinstance(x, dict)]
+            discovered_counts[provider] = len(rows)
+            source_errors[provider] = [str(x) for x in (result.get("errors") or [])][:20]
+            source_status[provider] = {
+                "ok": bool(result.get("ok")),
+                "degraded": bool(result.get("degraded")),
+                "result_count": len(rows),
+                "pages": result.get("pages") or result.get("accounts") or result.get("sitemaps") or [],
+            }
+            for row in rows:
+                row["official_hint"] = True
+                row["search_provider"] = provider
+                row.setdefault("query_family", provider.replace("_", "-"))
+                row.setdefault("query_region", "KR")
+                direct_rows.append(row)
         combined = list(block.get("results") or []) + direct_rows
-        ranked = agent.learner.rank_results(keyword, combined, limit=max(20, len(combined) or 1))
+        ranked = agent.learner.rank_results(keyword, combined, limit=max(30, len(combined) or 1))
         selected = _diverse_ranked(ranked, limit=8)
-        selected_direct = sum(1 for x in selected if x.get("search_provider") == "official_direct")
-        total_direct_selected += selected_direct
+        selected_counts = dict(Counter(str(x.get("search_provider") or "unknown") for x in selected))
+        for provider in DIRECT_PROVIDER_ORDER:
+            selected_totals[provider] += int(selected_counts.get(provider) or 0)
         out = dict(block)
         out["results"] = selected
-        out["provider_counts"] = dict(Counter(str(x.get("search_provider") or "unknown") for x in selected))
-        out["provider_diversity"] = len(out["provider_counts"])
+        out["provider_counts"] = selected_counts
+        out["provider_diversity"] = len(selected_counts)
         out["provider_pool_counts"] = dict(Counter(str(x.get("search_provider") or "unknown") for x in combined))
-        out["official_direct_discovered"] = len(direct_rows)
-        out["official_direct_selected"] = selected_direct
-        out["official_direct_pages"] = direct.get("pages", [])
-        out["official_direct_errors"] = direct.get("errors", [])
+        out["official_source_discovered"] = discovered_counts
+        out["official_source_selected"] = {p: int(selected_counts.get(p) or 0) for p in DIRECT_PROVIDER_ORDER}
+        out["official_source_status"] = source_status
+        out["official_source_errors"] = source_errors
         if direct_rows:
             out["empty"] = False
-            out["degraded"] = bool(out.get("collection_errors")) or bool(direct.get("degraded"))
             out["ok"] = True
         merged_blocks.append(out)
-    return merged_blocks, total_direct_selected
+    return merged_blocks, selected_totals
+
+
+def _provider_label(provider: str) -> tuple[str, str, str, float]:
+    if provider == "official_youtube_feed":
+        return "official_youtube_feed", "공식 YouTube 피드 직접수집 후보", "공식 YouTube 피드 · 내용 재확인 필요", 0.90
+    if provider == "official_sitemap":
+        return "official_sitemap", "공식 사이트맵 직접수집 후보", "공식 사이트맵 · 내용 재확인 필요", 0.88
+    if provider == "official_direct":
+        return "official_direct", "공식사이트 직접수집 후보", "공식사이트 직접수집 · 내용 재확인 필요", 0.86
+    return "", "", "", 0.0
 
 
 def _adaptive_event_rows(candidates: list[dict]) -> list[dict]:
-    """Convert ranked broad/direct-search hits to event candidates without trust escalation."""
     rows: list[dict] = []
     now = datetime.now().astimezone().isoformat(timespec="seconds")
     for block in candidates:
@@ -137,8 +202,19 @@ def _adaptive_event_rows(candidates: list[dict]) -> list[dict]:
                 region = "KR"
             host = _host(source)
             provider = str(item.get("search_provider") or "multi_provider")
-            source_kind = "official_direct" if provider == "official_direct" else SOCIAL_HOST_KIND.get(host, "adaptive_web_search")
+            direct_kind, direct_label, direct_status, direct_confidence = _provider_label(provider)
+            is_youtube_official = provider == "official_youtube_feed"
             official_hint = bool(item.get("official_hint"))
+            if direct_kind:
+                source_kind = direct_kind
+                source_label = direct_label
+                status = direct_status
+                confidence = direct_confidence
+            else:
+                source_kind = SOCIAL_HOST_KIND.get(host, "adaptive_web_search")
+                source_label = f"자가학습 {provider} · 공식도메인 후보" if official_hint else f"자가학습 {provider} 공개검색 후보"
+                status = "공식도메인 검색후보 · 내용 재확인 필요" if official_hint else "자가학습 검색후보 · 교차확인 필요"
+                confidence = 0.78 if official_hint else 0.56
             rows.append({
                 "game": game,
                 "region": region,
@@ -146,23 +222,20 @@ def _adaptive_event_rows(candidates: list[dict]) -> list[dict]:
                 "title": title[:220],
                 "source": source,
                 "source_kind": source_kind,
-                "source_tier": "A-search" if official_hint else "B-search",
-                "source_label": "공식사이트 직접수집 후보" if provider == "official_direct" else (
-                    f"자가학습 {provider} · 공식도메인 후보" if official_hint else f"자가학습 {provider} 공개검색 후보"
-                ),
-                "official_domain_match": official_hint,
-                "official_account_verified": False,
+                "source_tier": "A-social" if is_youtube_official else ("A-search" if official_hint else "B-search"),
+                "source_label": source_label,
+                "official_domain_match": bool(official_hint and not is_youtube_official),
+                "official_account_verified": bool(is_youtube_official),
                 "dates": social_event_discovery._dates(title),
                 "excerpt": title[:300],
-                "status": "공식사이트 직접수집 · 내용 재확인 필요" if provider == "official_direct" else (
-                    "공식도메인 검색후보 · 내용 재확인 필요" if official_hint else "자가학습 검색후보 · 교차확인 필요"
-                ),
+                "status": status,
                 "verified": False,
-                "confidence": 0.86 if provider == "official_direct" else (0.78 if official_hint else 0.56),
+                "confidence": confidence,
                 "adaptive_search": True,
                 "query_family": item.get("query_family"),
                 "query_region": region,
                 "search_provider": provider,
+                "published_at": item.get("published_at"),
                 "collected_at": now,
             })
     return rows
@@ -183,13 +256,73 @@ def _merge_adaptive_into_social(social: dict, candidates: list[dict]) -> tuple[d
         "configured": True,
         "result_count": len(adaptive_rows),
         "merged_item_count": len(merged),
-        "status": "공식사이트 직접수집 + DuckDuckGo/Bing RSS/Google News RSS + 완화 OR 검색 후보 병합",
+        "status": "공식사이트/YouTube/사이트맵 직접수집 + DuckDuckGo/Bing RSS/Google News RSS 후보 병합",
     }
     out["channel_status"] = status
     out["adaptive_merge_count"] = len(adaptive_rows)
     out["updated_at"] = datetime.now().astimezone().isoformat(timespec="seconds")
     atomic_write_json(social_event_discovery.OUT, out, suffix=".adaptive-social.tmp")
     return out, len(adaptive_rows)
+
+
+def _official_source_summary(
+    keywords: tuple[str, ...],
+    candidates: list[dict],
+    official_sources: dict[str, dict[str, dict]],
+    selected_totals: dict[str, int],
+) -> dict:
+    summary = {}
+    for provider in DIRECT_PROVIDER_ORDER:
+        games = {}
+        for key in keywords:
+            raw = (official_sources.get(provider) or {}).get(key) or {}
+            block = next((x for x in candidates if x.get("keyword") == key), {})
+            games[key] = {
+                "result_count": len(raw.get("results") or []),
+                "selected_count": int((block.get("official_source_selected") or {}).get(provider) or 0),
+                "degraded": bool(raw.get("degraded")),
+                "status": raw.get("pages") or raw.get("accounts") or raw.get("sitemaps") or [],
+            }
+        summary[provider] = {"selected_total": int(selected_totals.get(provider) or 0), "games": games}
+    return summary
+
+
+def _health_rows(candidates: list[dict], official_sources: dict[str, dict[str, dict]]) -> list[dict]:
+    rows = []
+    selected = Counter()
+    pool = Counter()
+    for block in candidates:
+        selected.update(block.get("provider_counts") or {})
+        pool.update(block.get("provider_pool_counts") or {})
+    for provider in ("duckduckgo", "bing_rss", "google_news"):
+        error_count = 0
+        for block in candidates:
+            for err in block.get("collection_errors") or []:
+                if provider in str(err):
+                    error_count += 1
+        rows.append({
+            "provider": provider,
+            "responded": bool(pool.get(provider) or not error_count),
+            "results": int(pool.get(provider) or 0),
+            "selected": int(selected.get(provider) or 0),
+            "errors": error_count,
+        })
+    for provider in DIRECT_PROVIDER_ORDER:
+        results = 0
+        errors = 0
+        responded = False
+        for raw in (official_sources.get(provider) or {}).values():
+            results += len(raw.get("results") or [])
+            errors += len(raw.get("errors") or [])
+            responded = responded or bool(raw.get("ok"))
+        rows.append({
+            "provider": provider,
+            "responded": responded,
+            "results": results,
+            "selected": int(selected.get(provider) or 0),
+            "errors": errors,
+        })
+    return rows
 
 
 def run_pipeline():
@@ -201,34 +334,22 @@ def run_pipeline():
         futs = {ex.submit(agent.search_web, k): k for k in keywords}
         by_key = {}
         for fut in concurrent.futures.as_completed(futs):
-            k = futs[fut]
+            key = futs[fut]
             try:
-                by_key[k] = fut.result()
+                by_key[key] = fut.result()
             except Exception as exc:
-                by_key[k] = {
+                by_key[key] = {
                     "ok": False,
                     "degraded": True,
-                    "keyword": k,
+                    "keyword": key,
                     "results": [],
                     "error": f"{type(exc).__name__}: {exc}",
                     "collection_errors": [f"{type(exc).__name__}: {exc}"],
                 }
     candidates = [by_key[k] for k in keywords]
 
-    direct_by_key: dict[str, dict] = {}
-    with concurrent.futures.ThreadPoolExecutor(max_workers=_workers(), thread_name_prefix="tcg-official-direct") as ex:
-        futs = {ex.submit(official_direct_discovery.collect_game, k): k for k in keywords}
-        for fut in concurrent.futures.as_completed(futs):
-            k = futs[fut]
-            try:
-                direct_by_key[k] = fut.result()
-            except Exception as exc:
-                direct_by_key[k] = {
-                    "keyword": k, "ok": False, "degraded": True, "results": [],
-                    "errors": [f"{type(exc).__name__}: {exc}"], "pages": [],
-                }
-
-    candidates, official_direct_selected = _merge_direct_into_candidates(agent, candidates, direct_by_key)
+    official_sources = _collect_official_sources(keywords)
+    candidates, selected_totals = _merge_official_sources(agent, candidates, official_sources)
     failures = [x for x in candidates if not x.get("ok")]
     broad_degraded = [x for x in candidates if x.get("degraded")]
 
@@ -262,7 +383,7 @@ def run_pipeline():
             "social_rows": learned_social,
             "feedback_rows": learned_feedback,
             "adaptive_merged_rows": adaptive_merge_count,
-            "official_direct_selected": official_direct_selected,
+            "official_selected": dict(selected_totals),
         }
     except Exception as exc:
         adaptive_learning = {
@@ -271,6 +392,13 @@ def run_pipeline():
             "safety": "학습기 오류만 격리하고 수집 후보/공식 검증자료는 유지",
         }
         extra_errors.append(f"adaptive_learning: {type(exc).__name__}: {exc}")
+
+    provider_health = {}
+    try:
+        provider_health = provider_health_learning.observe(_health_rows(candidates, official_sources))
+    except Exception as exc:
+        provider_health = {"ok": False, "error": f"{type(exc).__name__}: {exc}"}
+        extra_errors.append(f"provider_health: {type(exc).__name__}: {exc}")
 
     social_errors = [str(x) for x in (social.get("collection_errors") or []) if str(x).strip()]
     broad_errors: list[str] = []
@@ -292,32 +420,23 @@ def run_pipeline():
         + (social_errors[:20] if social_hard_failure else [])
     )
 
-    direct_summary = {
-        k: {
-            "result_count": len((direct_by_key.get(k) or {}).get("results") or []),
-            "selected_count": next((int(x.get("official_direct_selected") or 0) for x in candidates if x.get("keyword") == k), 0),
-            "degraded": bool((direct_by_key.get(k) or {}).get("degraded")),
-            "pages": (direct_by_key.get(k) or {}).get("pages", []),
-        }
-        for k in keywords
-    }
-
+    official_summary = _official_source_summary(keywords, candidates, official_sources, selected_totals)
     payload = {
-        "version": "v116-official-direct-adaptive-discovery",
+        "version": "v117-official-channel-sitemap-health-learning",
         "updated_at": datetime.now().astimezone().isoformat(timespec="seconds"),
         "ok": len(failures) == 0 and not extra_errors and not social_hard_failure,
         "degraded": bool(broad_degraded or extra_errors or social_degraded),
         "failure_count": len(failures) + len(extra_errors) + (1 if social_hard_failure else 0),
         "empty_search_count": sum(1 for x in candidates if x.get("empty")),
         "errors": errors[:50],
-        "notice": "검색/SNS/뉴스/공식사이트 직접수집 후보 자료입니다. 공식 도메인 발견도 페이지 내용 검증 전에는 자동 확정하지 않습니다.",
-        "learning_policy": "성공 검색어·유용 출처·검증 후보·공식 직접수집 결과를 학습하되, KR/JP/US 기본 탐색과 저사용 검색어 탐색을 항상 남겨 누락 과적합을 방지합니다.",
+        "notice": "검색/SNS/뉴스/공식사이트/공식 YouTube/사이트맵 후보 자료입니다. 발견 경로가 공식이어도 내용 검증 전에는 자동 확정하지 않습니다.",
+        "learning_policy": "검색어·출처·검증 후보와 수집경로 건강도를 별도 누적 학습하되, 반복 발견만으로 공식 신뢰를 승격하지 않습니다.",
         "platform": platform_agent.diagnostics(),
         "queries": candidates,
-        "official_direct": {
-            "selected_total": official_direct_selected,
-            "games": direct_summary,
-        },
+        "official_direct": official_summary.get("official_direct", {}),
+        "official_youtube_feed": official_summary.get("official_youtube_feed", {}),
+        "official_sitemap": official_summary.get("official_sitemap", {}),
+        "provider_health": provider_health,
         "supplementary": {
             "candidate_count": len(supplementary.get("items", [])),
             "updated_at": supplementary.get("updated_at"),
@@ -346,6 +465,8 @@ if __name__ == "__main__":
         f" · 실패 {result['failure_count']}건"
         f" · 빈검색 {result.get('empty_search_count', 0)}건"
         f" · 공식직접 {int((result.get('official_direct') or {}).get('selected_total') or 0)}건"
+        f" · YouTube {int((result.get('official_youtube_feed') or {}).get('selected_total') or 0)}건"
+        f" · 사이트맵 {int((result.get('official_sitemap') or {}).get('selected_total') or 0)}건"
         f" · 행사병합 {int((result.get('social') or {}).get('adaptive_merge_count') or 0)}건"
         f" · 학습검색어 {int((result.get('adaptive_learning') or {}).get('learned_queries') or 0)}개"
     )
