@@ -1,65 +1,75 @@
 {
-  "version": 2,
-  "updated_at": "2026-08-29T00:20:00+09:00",
-  "policy": "공식 웹사이트에서 직접 연결된 SNS 계정과 사람이 공개 출처로 검증한 manual=true 계정을 유지합니다. 자동 새로고침 실패 시 manual 계정은 삭제하지 않습니다.",
+  "version": 3,
+  "updated_at": "2026-08-29T00:49:00+09:00",
+  "policy": "공식 웹사이트에서 직접 연결된 SNS 계정과 사람이 공식 출처로 검증한 manual=true 계정을 유지합니다. 자동 새로고침 실패 시 manual 계정은 삭제하지 않습니다.",
   "accounts": [
     {
-      "platform": "x",
-      "username": "pokemonkrmkt",
-      "game": "포켓몬 카드",
-      "region": "KR",
-      "profile_url": "https://x.com/pokemonkrmkt",
-      "trusted": true,
-      "manual": true,
+      "platform": "x", "username": "pokemonkrmkt", "game": "포켓몬 카드", "region": "KR",
+      "profile_url": "https://x.com/pokemonkrmkt", "trusted": true, "manual": true,
       "verified_via_official_site": "https://www.pokemonkorea.co.kr/company",
-      "verification_note": "포켓몬코리아 공식 프로모션·이벤트·상품 채널로 공개 프로필과 포켓몬코리아 사이트를 교차 확인",
+      "verification_note": "포켓몬코리아 공식 프로모션·이벤트·상품 채널",
       "verified_at": "2026-08-29T00:20:00+09:00"
     },
     {
-      "platform": "youtube_handle",
-      "username": "@PokemonKoreaInc",
-      "game": "포켓몬 카드",
-      "region": "KR",
-      "profile_url": "https://www.youtube.com/@PokemonKoreaInc",
-      "trusted": true,
-      "manual": true,
+      "platform": "youtube_handle", "username": "@PokemonKoreaInc", "game": "포켓몬 카드", "region": "KR",
+      "profile_url": "https://www.youtube.com/@PokemonKoreaInc", "trusted": true, "manual": true,
       "verified_via_official_site": "https://www.pokemonkorea.co.kr/company",
-      "verification_note": "포켓몬코리아 공식 YouTube 채널. 포켓몬 카드게임 영상 포함",
+      "verification_note": "포켓몬코리아 공식 YouTube 채널",
       "verified_at": "2026-08-29T00:20:00+09:00"
     },
     {
-      "platform": "x",
-      "username": "ONEPIECE_KR_",
-      "game": "원피스 카드",
-      "region": "KR",
-      "profile_url": "https://x.com/ONEPIECE_KR_",
-      "trusted": true,
-      "manual": true,
-      "verification_note": "ONE PIECE KR Official 공개 채널. KT wiz 콜라보 신규 랜덤 포토카드 팩 공지를 교차 확인",
+      "platform": "x", "username": "ONEPIECE_KR_", "game": "원피스 카드", "region": "KR",
+      "profile_url": "https://x.com/ONEPIECE_KR_", "trusted": true, "manual": true,
+      "verification_note": "ONE PIECE KR Official 공개 채널",
       "verified_at": "2026-08-29T00:20:00+09:00"
     },
     {
-      "platform": "instagram",
-      "username": "onepiece_korea_official",
-      "game": "원피스 카드",
-      "region": "KR",
-      "profile_url": "https://www.instagram.com/onepiece_korea_official/",
-      "trusted": true,
-      "manual": true,
-      "verification_note": "ONE PIECE KR Official 공개 인스타그램 채널로 보도자료 이미지 출처와 교차 확인",
+      "platform": "instagram", "username": "onepiece_korea_official", "game": "원피스 카드", "region": "KR",
+      "profile_url": "https://www.instagram.com/onepiece_korea_official/", "trusted": true, "manual": true,
+      "verification_note": "ONE PIECE KR Official 인스타그램 채널",
       "verified_at": "2026-08-29T00:20:00+09:00"
     },
     {
-      "platform": "x",
-      "username": "ONEPIECE_tcg_KR",
-      "game": "원피스 카드",
-      "region": "KR",
-      "profile_url": "https://x.com/ONEPIECE_tcg_KR",
-      "trusted": true,
-      "manual": true,
+      "platform": "x", "username": "ONEPIECE_tcg_KR", "game": "원피스 카드", "region": "KR",
+      "profile_url": "https://x.com/ONEPIECE_tcg_KR", "trusted": true, "manual": true,
       "verified_via_official_site": "https://onepiece-cardgame.kr/",
       "verification_note": "한국 원피스 카드게임 공식 X 채널",
       "verified_at": "2026-08-29T00:20:00+09:00"
+    },
+    {
+      "platform": "x", "username": "narutotcg_jp", "game": "나루토 카드", "region": "JP",
+      "profile_url": "https://x.com/narutotcg_jp", "trusted": true, "manual": true,
+      "verified_via_official_site": "https://naruto-official.com/news/01_2637",
+      "verification_note": "NARUTO 공식 사이트가 직접 안내한 NARUTO CARD GAME 일본 공식 X",
+      "verified_at": "2026-08-29T00:49:00+09:00"
+    },
+    {
+      "platform": "youtube_handle", "username": "@naruto_tcg_jp", "game": "나루토 카드", "region": "JP",
+      "profile_url": "https://www.youtube.com/@naruto_tcg_jp", "trusted": true, "manual": true,
+      "verified_via_official_site": "https://naruto-official.com/news/01_2637",
+      "verification_note": "NARUTO 공식 사이트가 직접 안내한 NARUTO CARD GAME 일본 공식 YouTube",
+      "verified_at": "2026-08-29T00:49:00+09:00"
+    },
+    {
+      "platform": "x", "username": "narutotcg_eng", "game": "나루토 카드", "region": "US",
+      "profile_url": "https://x.com/narutotcg_eng", "trusted": true, "manual": true,
+      "verified_via_official_site": "https://naruto-official.com/en/news/01_2637",
+      "verification_note": "NARUTO 공식 사이트가 직접 안내한 NARUTO CARD GAME 영어권 공식 X",
+      "verified_at": "2026-08-29T00:49:00+09:00"
+    },
+    {
+      "platform": "instagram", "username": "narutotcg_en", "game": "나루토 카드", "region": "US",
+      "profile_url": "https://www.instagram.com/narutotcg_en/", "trusted": true, "manual": true,
+      "verified_via_official_site": "https://naruto-official.com/en/news/01_2637",
+      "verification_note": "NARUTO 공식 사이트가 직접 안내한 NARUTO CARD GAME 영어권 공식 Instagram",
+      "verified_at": "2026-08-29T00:49:00+09:00"
+    },
+    {
+      "platform": "youtube_handle", "username": "@NARUTO_TCG_EN", "game": "나루토 카드", "region": "US",
+      "profile_url": "https://www.youtube.com/@NARUTO_TCG_EN", "trusted": true, "manual": true,
+      "verified_via_official_site": "https://naruto-official.com/en/news/01_2637",
+      "verification_note": "NARUTO 공식 사이트가 직접 안내한 NARUTO CARD GAME 영어권 공식 YouTube",
+      "verified_at": "2026-08-29T00:49:00+09:00"
     }
   ],
   "discovery_pages": [
@@ -74,6 +84,6 @@
     {"game": "나루토 카드", "region": "KR", "url": "https://www.naruto-cardgame.com/asia-en/"}
   ],
   "discovery_errors": [
-    "직전 자동 탐색에서는 공식 웹페이지 9개 모두 URLError. manual=true 공식 채널을 안전 폴백으로 유지함"
+    "공식사이트 자동 계정탐색 실패 시 manual=true 검증 계정 10개를 유지합니다. 나루토 KR은 전용 한국 SNS가 공식 확인되기 전까지 Asia 공식 웹 + 공개검색으로 탐색합니다."
   ]
 }
