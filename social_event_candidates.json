@@ -1,9 +1,9 @@
 {
-  "version": "v110-social-event-hotfix",
-  "updated_at": "2026-08-29T00:45:00+09:00",
+  "version": "v111-naruto-social-event-upgrade",
+  "updated_at": "2026-08-29T00:53:00+09:00",
   "fresh_collection_ok": true,
   "degraded": true,
-  "policy": "공식 웹사이트 우선. 공식 SNS·공식 YouTube 및 복수 공개출처의 최신 후보를 표시하며, TCG 플레이용 카드와 일반 콜라보 포토카드/굿즈를 구분합니다. 자동 채널 장애 시 마지막 검증 후보를 보존합니다.",
+  "policy": "포켓몬·원피스·나루토를 동일 정책으로 수집합니다. 공식 웹사이트 우선, 공식 X·Instagram·YouTube 및 공개 유튜버/검색 후보를 교차확인하고, TCG 플레이용 카드와 일반 콜라보 포토카드·굿즈를 구분합니다. 자동 채널 장애 시 마지막 검증 후보를 보존합니다.",
   "credential_policy": "토큰/API키는 환경변수에서만 읽고 저장하지 않습니다.",
   "google_policy": "Google News 무키 검색 + X/Instagram/YouTube 무키 공개검색 폴백을 사용하고, 실패 시 마지막 공식·교차확인 후보를 보존합니다.",
   "items": [
@@ -14,7 +14,7 @@
       "source_label": "포켓몬코리아 공식 X", "author": "pokemonkrmkt", "official_account_verified": true,
       "published_at": "2026-08-29T00:00:00+09:00", "dates": ["2026-08-29", "2026-08-31"],
       "excerpt": "2026년 8월 29~31일 WCS 2026 선수 응원 메시지 이벤트. 공식 계정 팔로우와 지정 해시태그 참여 방식이며 관련 기념 경품 안내가 공개됨.",
-      "status": "공식 SNS 확인", "verified": true, "confidence": 0.96, "collected_at": "2026-08-29T00:45:00+09:00"
+      "status": "공식 SNS 확인", "verified": true, "confidence": 0.96, "collected_at": "2026-08-29T00:53:00+09:00"
     },
     {
       "game": "포켓몬 카드", "region": "KR", "category": "promo",
@@ -23,7 +23,7 @@
       "source_label": "포켓몬코리아 공식 YouTube", "author": "PokemonKoreaInc", "official_account_verified": true,
       "published_at": "2026-08-29T00:00:00+09:00", "dates": ["2026-08-29", "2026-08-31"],
       "excerpt": "포켓몬코리아 공식 YouTube 채널에서 포켓몬 카드게임을 포함한 공식 영상과 WCS 관련 생중계 정보를 확인할 수 있음.",
-      "status": "공식 YouTube 확인", "verified": true, "confidence": 0.95, "collected_at": "2026-08-29T00:45:00+09:00"
+      "status": "공식 YouTube 확인", "verified": true, "confidence": 0.95, "collected_at": "2026-08-29T00:53:00+09:00"
     },
     {
       "game": "포켓몬 카드", "region": "KR", "category": "collaboration",
@@ -33,7 +33,7 @@
       "published_at": "2026-08-06T14:30:00+09:00", "dates": ["2026-08-16", "2026-08-31"],
       "excerpt": "잠실 롯데월드타워·롯데월드몰 일대의 포켓몬 30주년 대형 행사. 사전예약 방문자에게 소원 카드 작성 시 프로모 카드 증정, 팝업·브랜드 협업·잉어킹 콘텐츠 운영.",
       "status": "복수출처 교차확인", "verified": false, "cross_checked": true, "independent_source_count": 4,
-      "confidence": 0.92, "collected_at": "2026-08-29T00:45:00+09:00"
+      "confidence": 0.92, "collected_at": "2026-08-29T00:53:00+09:00"
     },
     {
       "game": "포켓몬 카드", "region": "KR", "category": "collaboration",
@@ -43,7 +43,7 @@
       "published_at": "2026-08-12T15:53:00+09:00", "dates": ["2026-08-30", "2026-09-06"],
       "excerpt": "사직야구장에서 8월 30일~9월 6일 잉어킹 테마 행사. 8월 30일 잉어킹 데이, 피카츄 그리팅·미니게임·관중 이벤트가 진행되며 8월 28일부터 콜라보 굿즈도 출시.",
       "status": "복수출처 교차확인", "verified": false, "cross_checked": true, "independent_source_count": 3,
-      "confidence": 0.90, "collected_at": "2026-08-29T00:45:00+09:00"
+      "confidence": 0.90, "collected_at": "2026-08-29T00:53:00+09:00"
     },
     {
       "game": "포켓몬 카드", "region": "KR", "category": "collaboration",
@@ -52,7 +52,7 @@
       "source_label": "Pokémon GO 공식", "publisher": "Pokémon GO", "official_domain_match": true,
       "published_at": "2026-08-28T00:00:00+09:00", "dates": ["2026-09-18", "2026-10-11"],
       "excerpt": "2026년 9월 18일 10:00~10월 11일 20:00, 서울 종로구·중구 일부 지역 및 인천국제공항 하이커 스테이션에서 진행. 주황색 한복의 피카츄 등 한국 한정 이벤트 콘텐츠 포함.",
-      "status": "공식 웹 확인 · 예정", "verified": true, "confidence": 0.98, "collected_at": "2026-08-29T00:45:00+09:00"
+      "status": "공식 웹 확인 · 예정", "verified": true, "confidence": 0.98, "collected_at": "2026-08-29T00:53:00+09:00"
     },
     {
       "game": "원피스 카드", "region": "KR", "category": "collaboration",
@@ -63,23 +63,73 @@
       "excerpt": "2026년 9월 1일 16:30 온·오프라인 동시 오픈. KT wiz × ONE PIECE 콜라보 재입고 품목과 함께 신규 랜덤 포토카드 팩을 판매. 현재 확인된 안내상 ONE PIECE CARD GAME 플레이용 프로모 카드가 아니라 콜라보 포토카드 굿즈로 구분함.",
       "status": "공식 SNS 확인 · 9/1 판매 예정", "verified": true, "cross_checked": true, "independent_source_count": 3,
       "confidence": 0.98, "verification_source": "https://ktwizstore.co.kr/category/%EC%BD%9C%EB%9D%BC%EB%B3%B4/118/",
-      "collected_at": "2026-08-29T00:45:00+09:00"
+      "collected_at": "2026-08-29T00:53:00+09:00"
+    },
+    {
+      "game": "나루토 카드", "region": "US", "category": "collaboration",
+      "title": "NARUTO × New York Yankees Game Night · Yankees 로고 CP-001 Chakra Card 배포",
+      "source": "https://naruto-official.com/en/news/01_2675", "source_kind": "official_web", "source_tier": "A-search",
+      "source_label": "NARUTO 공식", "publisher": "NARUTO OFFICIAL", "official_domain_match": true,
+      "published_at": "2026-08-25T00:00:00+09:00", "dates": ["2026-09-08"],
+      "excerpt": "2026년 9월 8일 Yankee Stadium의 NARUTO x YANKEES GAME NIGHT에서 NARUTO CARD GAME CP-001 Chakra Card -New York Yankees Ver.- 배포. 일반 포토카드가 아니라 NARUTO CARD GAME 공식 Chakra Card로 구분.",
+      "status": "공식 확인 · 한정 카드 배포", "verified": true, "confidence": 1.0,
+      "card_game_item": true, "card_code": "CP-001", "collected_at": "2026-08-29T00:53:00+09:00"
+    },
+    {
+      "game": "나루토 카드", "region": "US", "category": "promo",
+      "title": "NARUTO CARD GAME · New York Comic Con 2026 Tutorial Session",
+      "source": "https://www.naruto-cardgame.com/en/news/nycc-2026.php", "source_kind": "official_web", "source_tier": "A-search",
+      "source_label": "NARUTO CARD GAME 공식", "publisher": "BANDAI CARD GAMES", "official_domain_match": true,
+      "published_at": "2026-08-07T00:00:00+09:00", "dates": ["2026-10-08", "2026-10-11"],
+      "excerpt": "2026년 10월 8~11일 New York Comic Con에서 무료 Tutorial Session 진행. 조건 충족 참가자에게 CP-001 Chakra Card와 로고 스티커 지급. 데모 덱은 반출 불가.",
+      "status": "공식 확인 · 예정", "verified": true, "confidence": 1.0,
+      "card_game_item": true, "card_code": "CP-001", "collected_at": "2026-08-29T00:53:00+09:00"
+    },
+    {
+      "game": "나루토 카드", "region": "US", "category": "promo",
+      "title": "BANDAI CARD GAMES Fest 26-27 Orlando · NARUTO CARD GAME Tutorial Session",
+      "source": "https://www.naruto-cardgame.com/en/news/bcgfes26-27-orlando.php", "source_kind": "official_web", "source_tier": "A-search",
+      "source_label": "NARUTO CARD GAME 공식", "publisher": "BANDAI CARD GAMES", "official_domain_match": true,
+      "published_at": "2026-08-21T00:00:00+09:00", "dates": ["2027-01-07", "2027-01-10"],
+      "excerpt": "2027년 1월 7~10일 Orlando Orange County Convention Center에서 BANDAI CARD GAMES Fest 개최. NARUTO CARD GAME Tutorial Session이 공식 프로그램으로 안내됨. 세부 참가 특전은 추후 발표.",
+      "status": "공식 확인 · 예정", "verified": true, "confidence": 0.99, "collected_at": "2026-08-29T00:53:00+09:00"
+    },
+    {
+      "game": "나루토 카드", "region": "JP", "category": "collaboration",
+      "title": "NARUTO & BORUTO Shinobi-Zato · 카카시 생일 기념 한정 소환술 이벤트",
+      "source": "https://naruto-official.com/en/news/01_2674", "source_kind": "official_web", "source_tier": "A-search",
+      "source_label": "NARUTO 공식", "publisher": "NARUTO OFFICIAL", "official_domain_match": true,
+      "published_at": "2026-08-21T00:00:00+09:00", "dates": ["2026-08-15", "2026-09-15"],
+      "excerpt": "아와지시마 NARUTO & BORUTO Shinobi-Zato에서 카카시 생일을 기념해 팔견 소환 연출을 한정 기간 운영. 카드게임 행사는 아니므로 NARUTO IP 콜라보/현장 행사로 구분.",
+      "status": "공식 확인 · 진행 중", "verified": true, "confidence": 0.98,
+      "card_game_item": false, "collected_at": "2026-08-29T00:53:00+09:00"
+    },
+    {
+      "game": "나루토 카드", "region": "KR", "category": "promo",
+      "title": "NARUTO CARD GAME 2027년 여름 전 세계 동시 출시 · 한국/아시아 추적",
+      "source": "https://www.naruto-cardgame.com/asia-en/", "source_kind": "official_web", "source_tier": "A-search",
+      "source_label": "NARUTO CARD GAME Asia 공식", "publisher": "BANDAI CARD GAMES", "official_domain_match": true,
+      "published_at": "2026-08-29T00:00:00+09:00", "dates": [],
+      "date_precision": "season", "date_label": "2027년 여름 전 세계 동시 출시 · 한국 세부 발매일/한글판 사양은 추가 공식 발표 추적",
+      "excerpt": "NARUTO CARD GAME 공식 사이트는 2027년 여름 전 세계 동시 출시를 안내하고 있습니다. Asia 공식 페이지도 운영 중이며 한국의 정확한 판매 개시일·언어 사양·유통 정보는 공식 발표가 확인되는 즉시 별도 반영합니다.",
+      "status": "공식 출시 추적", "verified": true, "confidence": 0.98,
+      "tracking_only": true, "collected_at": "2026-08-29T00:53:00+09:00"
     }
   ],
-  "item_count": 6,
+  "item_count": 11,
   "official_social_candidate_count": 3,
-  "official_domain_search_count": 1,
+  "official_domain_search_count": 6,
   "cross_checked_count": 3,
   "channel_status": {
-    "public_social_search": {"configured": true, "status": "v110 무키 공개검색 추가 · X/Instagram/YouTube 및 유튜버 후보 탐색"},
-    "x": {"configured": false, "status": "X API 토큰 미설정 시에도 무키 공개검색 폴백 사용"},
-    "youtube": {"configured": true, "status": "공식 YouTube 레지스트리 + 무키 공개검색으로 공식/유튜버 후보 탐색"},
+    "public_social_search": {"configured": true, "status": "v111 무키 공개검색 · 포켓몬/원피스/나루토 X·Instagram·YouTube·유튜버 후보 탐색"},
+    "x": {"configured": false, "status": "API 토큰 미설정 시에도 무키 공개검색 폴백 사용 · 나루토 JP/EN 공식 X 레지스트리 등록"},
+    "youtube": {"configured": true, "status": "공식 YouTube 레지스트리 + 무키 공개검색 · 나루토 JP/EN 공식 채널 등록"},
     "google_cse": {"configured": false, "status": "Google Custom Search 미설정 · Google News/무키 공개검색 사용"},
-    "instagram": {"configured": false, "status": "Instagram API 미설정 시에도 무키 공개검색 폴백 사용"},
-    "google_news": {"configured": true, "query_count": 9, "error_count": 9, "result_count": 0, "success_query_count": 0, "status": "직전 수집 URLError · v110 폴백 적용"}
+    "instagram": {"configured": false, "status": "API 미설정 시에도 무키 공개검색 폴백 · 나루토 EN 공식 Instagram 레지스트리 등록"},
+    "google_news": {"configured": true, "query_count": 9, "error_count": 9, "result_count": 0, "success_query_count": 0, "status": "직전 수집 URLError · v111 폴백 및 검증후보 보존 적용"}
   },
-  "registry_account_count": 5,
-  "collection_errors": ["직전 Google News 9개 질의가 모두 URLError", "X/Instagram API 자격정보는 미설정이나 v110 무키 공개검색 폴백으로 보완"],
+  "registry_account_count": 10,
+  "collection_errors": ["직전 Google News 9개 질의가 모두 URLError", "X/Instagram API 자격정보는 미설정이나 v111 무키 공개검색 폴백으로 보완"],
   "preserved_previous_items": true,
-  "collection_warnings": ["콜라보 포토카드는 TCG 플레이용 카드와 별도 유형으로 표시"]
+  "collection_warnings": ["TCG 플레이용 카드·Chakra Card와 일반 콜라보 포토카드/굿즈를 구분", "한국 나루토 전용 공식 SNS는 확인 전 임의 등록하지 않고 Asia 공식 웹과 공개검색을 사용"]
 }
