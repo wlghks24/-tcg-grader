@@ -7,11 +7,15 @@ on:
       - 'adaptive_collection_learner.py'
       - 'multi_channel_agent.py'
       - 'official_direct_discovery.py'
+      - 'official_channel_feed_discovery.py'
+      - 'official_sitemap_discovery.py'
+      - 'provider_health_learning.py'
       - 'auto_pipeline_runner.py'
       - 'social_event_discovery.py'
       - 'supplementary_discovery.py'
       - 'test_adaptive_collection_learner.py'
       - 'test_official_direct_discovery.py'
+      - 'test_official_channel_health.py'
       - '.github/workflows/verify-adaptive-collector.yml'
   workflow_dispatch:
 
@@ -35,6 +39,9 @@ jobs:
             adaptive_collection_learner.py \
             multi_channel_agent.py \
             official_direct_discovery.py \
+            official_channel_feed_discovery.py \
+            official_sitemap_discovery.py \
+            provider_health_learning.py \
             auto_pipeline_runner.py \
             social_event_discovery.py \
             supplementary_discovery.py
@@ -42,4 +49,5 @@ jobs:
         run: |
           python -m unittest -v \
             test_adaptive_collection_learner.py \
-            test_official_direct_discovery.py
+            test_official_direct_discovery.py \
+            test_official_channel_health.py
