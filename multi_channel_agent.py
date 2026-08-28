@@ -1,13 +1,16 @@
 #!/usr/bin/env python3
 """Adaptive multi-provider public-web candidate collector.
 
-v113:
+v114:
 - Keeps adaptive KR/JP/US + official/social query planning.
-- Uses multiple no-key providers instead of depending on one DuckDuckGo HTML shape:
-  DuckDuckGo HTML -> Bing RSS -> Google News RSS.
+- Queries every no-key provider for each plan instead of stopping after the first
+  provider fills the result limit.
+- Merges provider results in round-robin order so Bing/DDG/Google cannot dominate
+  merely because one provider responds first or returns more rows.
 - A strict learned query that returns zero is retried with a compact OR query.
 - HTTP-success + zero-result is an EMPTY search, not a hard collection failure.
-- Provider success/failure is fed back into the existing adaptive learner by family.
+- Provider identity is preserved on every result so later learning/reporting can
+  measure which discovery channels actually contribute useful leads.
 - Official trust is never inferred merely from repeated discovery.
 """
 from __future__ import annotations
@@ -21,13 +24,14 @@ import urllib.error
 import urllib.parse
 import urllib.request
 import xml.etree.ElementTree as ET
+from collections import Counter
 
 from adaptive_collection_learner import AdaptiveCollectionLearner, canonical_game
 from safe_runtime import env_int, safe_urlopen
 
 
 class MultiChannelCollector:
-    HEADERS = {"User-Agent": "Mozilla/5.0 TCG-Grader/113"}
+    HEADERS = {"User-Agent": "Mozilla/5.0 TCG-Grader/114"}
     DDG_HOSTS = {"html.duckduckgo.com", "duckduckgo.com", "www.duckduckgo.com"}
     BING_HOSTS = {"www.bing.com", "bing.com"}
     GOOGLE_NEWS_HOSTS = {"news.google.com"}
@@ -97,6 +101,19 @@ class MultiChannelCollector:
             if len(out) >= max(3, min(30, int(limit))):
                 break
         return out
+
+    @classmethod
+    def _round_robin_merge(cls, provider_rows: dict[str, list[dict]], limit: int) -> list[dict]:
+        """Fairly interleave providers before URL de-duplication and final limit."""
+        order = ("duckduckgo", "bing_rss", "google_news")
+        max_len = max((len(provider_rows.get(name, [])) for name in order), default=0)
+        merged: list[dict] = []
+        for index in range(max_len):
+            for name in order:
+                rows = provider_rows.get(name, [])
+                if index < len(rows):
+                    merged.append(rows[index])
+        return cls._dedupe(merged, limit)
 
     def _fetch_with_retry(self, req: urllib.request.Request, allowed_hosts: set[str], max_bytes: int = 900_000) -> tuple[bytes | None, str | None, int]:
         last_error = None
@@ -168,36 +185,33 @@ class MultiChannelCollector:
         return self._dedupe(rows, limit), None, attempts, True
 
     def _search_once(self, query: str, limit: int) -> tuple[list[dict], list[str], int]:
-        """Search through independent providers; zero results alone is not an error."""
+        """Run every independent provider and fairly merge results."""
         query = re.sub(r"\s+", " ", str(query or "")).strip()[:280]
-        all_rows: list[dict] = []
         errors: list[str] = []
         attempts = 0
+        provider_rows: dict[str, list[dict]] = {}
+        successful_provider = False
         providers = (
             ("duckduckgo", self._search_ddg),
             ("bing_rss", self._search_bing_rss),
             ("google_news", self._search_google_news),
         )
-        successful_provider = False
         for provider, fn in providers:
             rows, error, used_attempts, responded = fn(query, max(limit, 8))
             attempts += used_attempts
             successful_provider = successful_provider or responded
+            provider_rows[provider] = rows
             if error:
                 errors.append(f"{provider}: {error}"[:600])
-            all_rows.extend(rows)
-            if len(self._dedupe(all_rows, limit)) >= max(3, min(limit, 8)):
-                break
-        # Marker used internally by search_web to distinguish empty-success from hard failure.
-        if successful_provider and not all_rows:
-            errors = [x for x in errors if x]  # other providers may still have failed; empty itself is not an error.
-        return self._dedupe(all_rows, limit), errors, attempts
+        merged = self._round_robin_merge(provider_rows, limit)
+        if successful_provider and not merged:
+            errors = [x for x in errors if x]
+        return merged, errors, attempts
 
     def _relaxed_query(self, keyword: str, region: str, family: str, original: str) -> str:
         game = canonical_game(keyword)
         name = self.GAME_NAMES.get(game, {}).get(region, str(keyword or "").strip())
         terms = self.EVENT_OR.get(region, self.EVENT_OR["KR"])
-        # Four rotated OR terms are broad enough to avoid accidental all-term AND searches.
         rotation = sum(ord(ch) for ch in (family + region + game)) % len(terms)
         chosen = [terms[(rotation + offset) % len(terms)] for offset in range(4)]
         event_expr = " OR ".join(f'"{term}"' if " " in term else term for term in chosen)
@@ -224,8 +238,6 @@ class MultiChannelCollector:
             rows, attempt_errors, attempts = self._search_once(query, max(limit, 8))
             used_query = query
             relaxed = False
-            # Successful HTTP with zero parsed hits is common when a learned query became too strict.
-            # Retry once with a compact OR query before declaring the plan empty.
             if not rows and len(attempt_errors) < self.PROVIDER_COUNT:
                 relaxed_query = self._relaxed_query(keyword, region, family, query)
                 if relaxed_query and relaxed_query != query:
@@ -260,6 +272,7 @@ class MultiChannelCollector:
                 "effective_query": used_query,
                 "relaxed": relaxed,
                 "result_count": len(rows),
+                "provider_counts": dict(Counter(str(x.get("search_provider") or "unknown") for x in rows)),
                 "transport_ok": not hard_failure,
                 "empty": not rows and not hard_failure,
                 "error": error_text if hard_failure else None,
@@ -272,12 +285,15 @@ class MultiChannelCollector:
             self.learner.save()
         successful_queries = sum(1 for row in query_results if row["result_count"] > 0 and row["transport_ok"])
         empty_queries = sum(1 for row in query_results if row["empty"])
+        provider_counts = dict(Counter(str(x.get("search_provider") or "unknown") for x in ranked[: max(1, min(30, int(limit)))]))
         return {
             "ok": bool(transport_successes),
             "degraded": bool(errors or not ranked),
             "empty": not bool(ranked),
             "keyword": keyword,
             "results": ranked[: max(1, min(30, int(limit)))],
+            "provider_counts": provider_counts,
+            "provider_diversity": len([k for k, v in provider_counts.items() if v > 0]),
             "query_count": len(plans),
             "successful_query_count": successful_queries,
             "transport_successful_query_count": transport_successes,
@@ -289,6 +305,6 @@ class MultiChannelCollector:
             "timeout_seconds": self._timeout(),
             "learning": {
                 "memory_file": self.learner.memory_path.name,
-                "strategy": "adaptive KR/JP/US + DuckDuckGo/Bing RSS/Google News RSS + compact OR fallback + official/social exploration",
+                "strategy": "adaptive KR/JP/US + all-provider round-robin DuckDuckGo/Bing RSS/Google News RSS + compact OR fallback + official/social exploration",
             },
         }
