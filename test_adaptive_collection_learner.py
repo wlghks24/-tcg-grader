@@ -173,6 +173,29 @@ class AdaptiveCollectionLearnerTests(unittest.TestCase):
         encoded = "https://html.duckduckgo.com/l/?uddg=" + __import__("urllib.parse", fromlist=["quote"]).quote(target, safe="")
         self.assertEqual(MultiChannelCollector._decode_result_url(encoded), target)
 
+    def test_empty_successful_search_is_not_counted_as_hard_failure(self):
+        with tempfile.TemporaryDirectory() as td:
+            learner = self.make_learner(Path(td))
+            collector = MultiChannelCollector(learner=learner)
+            with patch.object(collector, "_search_once", return_value=([], [], 3)):
+                result = collector.search_web("포켓몬", limit=5)
+            self.assertTrue(result["ok"])
+            self.assertTrue(result["empty"])
+            self.assertEqual(result["collection_errors"], [])
+            self.assertEqual(result["empty_query_count"], result["query_count"])
+
+    def test_relaxed_query_uses_or_terms_and_preserves_social_site(self):
+        with tempfile.TemporaryDirectory() as td:
+            learner = self.make_learner(Path(td))
+            collector = MultiChannelCollector(learner=learner)
+            query = collector._relaxed_query(
+                "원피스", "KR", "social:x.com",
+                "원피스 카드 행사 이벤트 프로모 콜라보 출시 site:x.com",
+            )
+            self.assertIn(" OR ", query)
+            self.assertIn("site:x.com", query)
+            self.assertIn("원피스", query)
+
 
 if __name__ == "__main__":
     unittest.main()
