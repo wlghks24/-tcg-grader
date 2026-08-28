@@ -1,0 +1,56 @@
+name: Apply Game Selection UI Patch
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'apply_game_selection_visual_patch.py'
+      - '.github/workflows/apply-game-selection-ui.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Apply UI patch
+        run: python apply_game_selection_visual_patch.py
+      - name: Validate UI patch
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          t=Path('index.html').read_text(encoding='utf-8')
+          checks=[
+            'color:#0f172a!important',
+            'class="game-visual"',
+            '<span class="game-label">포켓몬</span>',
+            '<span class="game-label">원피스</span>',
+            '<span class="game-label">나루토</span>',
+          ]
+          missing=[x for x in checks if x not in t]
+          if missing:
+              raise SystemExit(f'missing: {missing}')
+          print('PASS: readable labels + coded representative SVG icons')
+          PY
+      - name: Commit generated index
+        run: |
+          if git diff --quiet -- index.html; then
+            echo 'No index change needed.'
+            exit 0
+          fi
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add index.html
+          git commit -m 'ui: show readable game names with representative icons'
+          git push origin HEAD:main
