@@ -1,0 +1,72 @@
+{
+  "version": "v107-full-audit-hardened",
+  "generated_at_utc": "2026-08-28T08:49:29Z",
+  "ok": true,
+  "audit_scope": [
+    "Python and JavaScript runtime code",
+    "local HTTP APIs and public-file boundary",
+    "browser UI, camera, vision and grading logic",
+    "PWA service worker and offline fallback",
+    "Windows and Android launchers",
+    "documentation and dependency behavior",
+    "strict JSON, symlink, secret and dangerous-call scan",
+    "update, error-learning and isolated fault-healing paths"
+  ],
+  "fixed": [
+    "replaced stale current README launcher names with actual English files",
+    "made Node.js optional for end-user verification while preserving TCG_REQUIRE_NODE=1 strict release mode",
+    "redirected verify_all.py to the current v107 gate and isolated historical v79-v99 assertions",
+    "added Content-Security-Policy, Cross-Origin-Opener-Policy and Cross-Origin-Resource-Policy hardening",
+    "unified UI, manifest, service worker, server, auto updater, social collector and fault-healing release versions",
+    "added repository-wide v107 structural, secret, launcher, path and strict-JSON audit"
+  ],
+  "verification": {
+    "strict_release_suites_per_pass": 17,
+    "complete_passes": 5,
+    "successful_passes": 5,
+    "failed_passes": 0,
+    "suite_executions": 85,
+    "skipped_in_strict_mode": 0,
+    "portable_no_node_mode": {"executed": 10, "skipped": 7, "failed": 0, "ok": true},
+    "repository_audit": {"passed": 9, "failed": 0},
+    "runtime_integration": {"passed": 9, "failed": 0},
+    "feature_contract": {"implemented": 24, "total": 24, "failed": 0},
+    "social_source_regression": {"passed": 12, "failed": 0},
+    "market_source_regression": {"passed": 8, "failed": 0},
+    "ebay_provider_learning_regression": {"passed": 11, "failed": 0},
+    "vision_calibration_regression": {"passed": 8, "failed": 0},
+    "fault_healing_regression": {"passed": 5, "failed": 0},
+    "five_grader_cross_runtime": {"vectors": 6051, "comparisons": 18153, "ok": true},
+    "browser_runtime": {"ok": true},
+    "camera_runtime": {"ok": true},
+    "vision_runtime": {"ok": true},
+    "service_worker_runtime": {"ok": true},
+    "python_compileall": {"ok": true}
+  },
+  "security_findings": {
+    "embedded_secret_literals": 0,
+    "dangerous_runtime_patterns": 0,
+    "symlinks": 0,
+    "strict_json_errors": 0,
+    "private_social_registry_publicly_served": false
+  },
+  "platform_scope": [
+    "Windows PC local server",
+    "Android/Termux local server",
+    "GitHub Pages static PWA"
+  ],
+  "grading_scope": ["PSA", "BGS", "CGC", "TAG", "BRG"],
+  "games_and_regions": {
+    "games": ["Pokemon", "ONE PIECE", "NARUTO"],
+    "regions": ["KR", "JP", "US"]
+  },
+  "excluded": [
+    {
+      "id": "iphone_serverless_continuous_collection",
+      "reason": "explicitly excluded by the user"
+    }
+  ],
+  "accuracy_policy": "Photo output is a conservative pre-grade estimate, not an official grade. Hough line evidence remains a defect candidate rather than a confirmed scratch. Thresholds are not described as trained without validated photos and labels.",
+  "live_credential_note": "X and Instagram live credential calls were not executed because no credentials were supplied. Request, response, redaction and fallback behavior were verified with deterministic tests.",
+  "deployment_note": "The corrected v107 artifact is packaged but has not been pushed to the user's GitHub Pages repository."
+}

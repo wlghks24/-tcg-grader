@@ -1,0 +1,74 @@
+{
+  "build": "TCG_Grader_v102_EBAY_PROVIDER_PHOTO_LEARNING_2026-08-28",
+  "ok": true,
+  "successful": 11,
+  "failed": 0,
+  "checks": [
+    {
+      "name": "compileall",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "ebay_collector_self_test",
+      "ok": true,
+      "detail": "{\n  \"ok\": true,\n  \"tests\": 8,\n  \"parsed_company\": \"PSA\",\n  \"card_identity\": \"pokemon|jp|2025 pokemon japanese pikachu promo\",\n  \"policy\": \"cert-verified-only-promotion\"\n}\n"
+    },
+    {
+      "name": "provider_segment_self_test",
+      "ok": true,
+      "detail": "{\n  \"ok\": true,\n  \"tests\": 6,\n  \"profile\": {\n    \"enabled\": false,\n    \"correction\": 0.0,\n    \"rows\": 20,\n    \"unique_artwork_groups\": 10,\n    \"folds\": 5,\n    \"nonworse_folds\": 5,\n    \"baseline_global_correction\": -0.5,\n    \"cv_mae_before\": 0.0,\n    \"cv_mae_after\": 0.0,\n    \"reason\": \"no-safe-improvement\"\n  },\n  \"slab_isolated\": true\n}\n"
+    },
+    {
+      "name": "v102_provider_learning_tests",
+      "ok": true,
+      "detail": "{\"ok\": true, \"tests\": 11, \"failures\": 0, \"errors\": 0}\ntest_browser_wiring_present (__main__.EbayProviderLearningTests.test_browser_wiring_present) ... ok\ntest_cert_must_match_grade (__main__.EbayProviderLearningTests.test_cert_must_match_grade) ... ok\ntest_company_game_segment_improves_only_needed_group (__main__.EbayProviderLearningTests.test_company_game_segment_improves_only_needed_group) ... ok\ntest_conflicting_verified_cert_is_quarantined (__main__.EbayProviderLearningTests.test_conflicting_verified_cert_is_quarantined) ... ok\ntest_same_artwork_never_splits_by_cert (__main__.EbayProviderLearningTests.test_same_artwork_never_splits_by_cert) ... ok\ntest_seller_metadata_not_promoted_without_cert_verification (__main__.EbayProviderLearningTests.test_seller_metadata_not_promoted_without_cert_verification) ... ok\ntest_server_status_does_not_expose_token (__main__.EbayProviderLearningTests.test_server_status_does_not_expose_token) ... ok\ntest_slab_never_changes_raw_segment_population (__main__.EbayProviderLearningTests.test_slab_never_changes_raw_segment_population) ... ok\ntest_structured_ebay_card_parses (__main__.EbayProviderLearningTests.test_structured_ebay_card_parses) ... ok\ntest_ungraded_blocked (__main__.EbayProviderLearningTests.test_ungraded_blocked) ... ok\ntest_wrong_image_host_blocked (__main__.EbayProviderLearningTests.test_wrong_image_host_blocked) ... ok\n\n----------------------------------------------------------------------\nRan 11 tests in 0.015s\n\nOK\n"
+    },
+    {
+      "name": "v101_regression_suite",
+      "ok": true,
+      "detail": "fication_is_quarantined) ... ok\\ntest_consistent_overgrade_enables_downward_holdout_correction (__main__.CalibrationTests.test_consistent_overgrade_enables_downward_holdout_correction) ... ok\\ntest_corrupt_input_produces_safe_empty_calibration (__main__.CalibrationTests.test_corrupt_input_produces_safe_empty_calibration) ... ok\\ntest_invalid_company_grade_step_is_rejected (__main__.CalibrationTests.test_invalid_company_grade_step_is_rejected) ... ok\\ntest_too_few_cards_stays_disabled (__main__.CalibrationTests.test_too_few_cards_stays_disabled) ... ok\\ntest_undergrade_never_creates_upward_correction (__main__.CalibrationTests.test_undergrade_never_creates_upward_correction) ... ok\\ntest_unverified_or_unidentified_labels_are_rejected (__main__.CalibrationTests.test_unverified_or_unidentified_labels_are_rejected) ... ok\\ntest_vision_learns_only_residual_after_global (__main__.CalibrationTests.test_vision_learns_only_residual_after_global) ... ok\\n\\n----------------------------------------------------------------------\\nRan 8 tests in 0.004s\\n\\nOK\\n\"\n    },\n    {\n      \"name\": \"verify_ai_code_improver.py\",\n      \"ok\": true,\n      \"detail\": \"{\\\"ok\\\": true, \\\"tests\\\": 12, \\\"failures\\\": 0, \\\"errors\\\": 0}\\ntest_corrupt_learning_file_is_not_silently_overwritten (__main__.ImproverTests.test_corrupt_learning_file_is_not_silently_overwritten) ... ok\\ntest_docker_command_has_required_isolation_and_no_install (__main__.ImproverTests.test_docker_command_has_required_isolation_and_no_install) ... ok\\ntest_learning_store_concurrent_updates_are_preserved (__main__.ImproverTests.test_learning_store_concurrent_updates_are_preserved) ... ok\\ntest_markdown_single_fence_and_syntax (__main__.ImproverTests.test_markdown_single_fence_and_syntax) ... ok\\ntest_no_sandbox_stops_before_api_call (__main__.ImproverTests.test_no_sandbox_stops_before_api_call) ... ok\\ntest_passed_candidate_saved_for_review_only (__main__.ImproverTests.test_passed_candidate_saved_for_review_only) ... ok\\ntest_responses_api_and_structured_schema_used (__main__.ImproverTests.test_responses_api_and_structured_schema_used) ... ok\\ntest_retry_feedback_and_failure_deduplication (__main__.ImproverTests.test_retry_feedback_and_failure_deduplication) ... ok\\ntest_secret_redaction_and_retry_cap (__main__.ImproverTests.test_secret_redaction_and_retry_cap) ... ok\\ntest_static_security_blocks_dynamic_and_network_code (__main__.ImproverTests.test_static_security_blocks_dynamic_and_network_code) ... ok\\ntest_strict_payload_rejects_extra_and_duplicate_keys (__main__.ImproverTests.test_strict_payload_rejects_extra_and_duplicate_keys) ... ok\\ntest_test_quality_requires_test_and_assertion (__main__.ImproverTests.test_test_quality_requires_test_and_assertion) ... ok\\n\\n----------------------------------------------------------------------\\nRan 12 tests in 0.174s\\n\\nOK\\n\"\n    },\n    {\n      \"name\": \"verify_fault_injection_healing.py\",\n      \"ok\": true,\n      \"detail\": \"{\\\"ok\\\": true, \\\"tests\\\": 5, \\\"failures\\\": 0, \\\"errors\\\": 0}\\ntest_all_faults_are_detected_and_repaired_only_in_lab (__main__.FaultHealingTests.test_all_faults_are_detected_and_repaired_only_in_lab) ... ok\\ntest_invalid_backup_is_never_promoted (__main__.FaultHealingTests.test_invalid_backup_is_never_promoted) ... ok\\ntest_manifest_detects_change_without_auto_rewriting_code (__main__.FaultHealingTests.test_manifest_detects_change_without_auto_rewriting_code) ... ok\\ntest_only_invalid_json_uses_verified_backup (__main__.FaultHealingTests.test_only_invalid_json_uses_verified_backup) ... ok\\ntest_path_escape_is_blocked (__main__.FaultHealingTests.test_path_escape_is_blocked) ... ok\\n\\n----------------------------------------------------------------------\\nRan 5 tests in 0.281s\\n\\nOK\\n\"\n    },\n    {\n      \"name\": \"vision_self_learning_status_api\",\n      \"ok\": true,\n      \"detail\": \"{\\\"version\\\": 1, \\\"engine\\\": \\\"v101-isolated-self-learning-calibration\\\", \\\"adopted\\\": false, \\\"selected_params\\\": {\\\"canny_low\\\": 35, \\\"canny_high\\\": 105, \\\"clahe_clip\\\": 2.0, \\\"hough_threshold\\\": 22, \\\"min_line_ratio\\\": 0.2, \\\"max_line_gap_ratio\\\": 0.02, \\\"scratch_contrast_min\\\": 22.0, \\\"whitening_delta\\\": 28.0, \\\"working_width\\\": 240}, \\\"base_params\\\": {\\\"canny_low\\\": 35, \\\"canny_high\\\": 105, \\\"clahe_clip\\\": 2.0, \\\"hough_threshold\\\": 22, \\\"min_line_ratio\\\": 0.2, \\\"max_line_gap_ratio\\\": 0.02, \\\"scratch_contrast_min\\\": 22.0, \\\"whitening_delta\\\": 28.0, \\\"working_width\\\": 240}, \\\"base_validation\\\": {\\\"score\\\": 1.0, \\\"scratch_recall\\\": 1.0, \\\"scratch_specificity\\\": 1.0, \\\"whitening_recall\\\": 1.0, \\\"whitening_specificity\\\": 1.0, \\\"counts\\\": {\\\"tp\\\": 3, \\\"tn\\\": 6, \\\"fp\\\": 0, \\\"fn\\\": 0, \\\"wtp\\\": 3, \\\"wtn\\\": 6, \\\"wfp\\\": 0, \\\"wfn\\\": 0}}, \\\"candidate_validation\\\": {\\\"score\\\": 1.0, \\\"scratch_recall\\\": 1.0, \\\"scratch_specificity\\\": 1.0, \\\"whitening_recall\\\": 1.0, \\\"whitening_specificity\\\": 1.0, \\\"counts\\\": {\\\"tp\\\": 3, \\\"tn\\\": 6, \\\"fp\\\": 0, \\\"fn\\\": 0, \\\"wtp\\\": 3, \\\"wtn\\\": 6, \\\"wfp\\\": 0, \\\"wfn\\\": 0}}, \\\"\"\n    }\n  ],\n  \"successful\": 9,\n  \"failed\": 0\n}\n"
+    },
+    {
+      "name": "browser_runtime",
+      "ok": true,
+      "detail": "PASS: browser storage recovery, shared image loaders and URL cleanup, all link buttons and safe new-window links, convenience/hypermarket/stationery filters, Ansan distance, explicit offline states, background update contract, grade validation and XSS guards\n"
+    },
+    {
+      "name": "vision_runtime",
+      "ok": true,
+      "detail": "PASS: card mask + CLAHE + Canny hysteresis + Hough line evidence separated artwork/dust/glare from confirmed micro scratches; whitening and centering cross-tests passed; threshold tuning selected 35/105\n"
+    },
+    {
+      "name": "camera_runtime",
+      "ok": true,
+      "detail": "PASS: automatic front/back capture, duplicate-side prevention, manual duplicate-side prevention, iOS file fallback, encode/frame/analysis failures, stop/permission/insecure-context/background/pagehide handling, constraints fallback, video-play failure cleanup, permission timeout, unexpected track ending, previous captures preserved, late-request isolation and camera resource cleanup\n"
+    },
+    {
+      "name": "service_worker_runtime",
+      "ok": true,
+      "detail": "PASS: service-worker error cache isolation, supplementary event freshness, JSON offline responses, same-origin policy and quota fallback\n"
+    },
+    {
+      "name": "v99_cross_runtime",
+      "ok": true,
+      "detail": "{\"ok\": true, \"vectors\": 6051, \"comparisons\": 18153}\n"
+    },
+    {
+      "name": "feature_contract",
+      "ok": true,
+      "detail": "{\"implemented\": 23, \"total\": 23, \"missing\": []}"
+    }
+  ],
+  "new_learning_policy": {
+    "ebay_official_browse_api_only": true,
+    "graded_condition_id": "2750",
+    "seller_label_alone_never_official": true,
+    "official_certification_verification_required": true,
+    "company_game_mode_segmented": true,
+    "raw_slab_isolated": true,
+    "same_artwork_grouped_for_holdout": true,
+    "upward_correction_allowed": false,
+    "max_segment_downward_correction": -0.5
+  }
+}

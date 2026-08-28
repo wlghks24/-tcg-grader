@@ -1,0 +1,282 @@
+#!/usr/bin/env python3
+"""Shared runtime guards for malformed environment values and safe public HTTPS access.
+
+v75 adds pre-follow redirect validation. A post-response ``geturl()`` check is not
+enough because urllib may already have connected to a redirect target. Every redirect
+is therefore validated before it is followed. Authenticated GitHub requests use a
+no-redirect opener so bearer tokens can never be forwarded to another origin.
+"""
+from __future__ import annotations
+import datetime as dt
+import ipaddress
+import html
+import json
+import math
+import os
+from pathlib import Path
+import re
+import secrets
+import socket
+import stat
+from typing import Any, BinaryIO
+import urllib.error
+import urllib.parse
+import urllib.request
+
+MAX_SAFE_FILE_BYTES = 20_000_000
+
+
+def utc_timestamp() -> str:
+    """Return one shared, second-precision UTC timestamp representation."""
+    return dt.datetime.now(dt.timezone.utc).isoformat(timespec="seconds")
+
+
+def bounded_int(value: Any, default: int = 0, low: int = 0, high: int = 1_000_000) -> int:
+    """Convert and clamp an integer without accepting overflow-like values."""
+    try:
+        number = int(value)
+    except (TypeError, ValueError, OverflowError):
+        return default
+    return max(low, min(high, number))
+
+
+def bounded_float(value: Any, default: float = 0.0, low: float = 0.0,
+                  high: float = 300.0) -> float:
+    """Convert and clamp a finite float consistently across collectors and server."""
+    try:
+        number = float(value)
+    except (TypeError, ValueError, OverflowError):
+        return default
+    if not math.isfinite(number):
+        return default
+    return max(low, min(high, number))
+
+
+def html_to_text(raw: str) -> str:
+    """Strip scripts, styles and markup using the shared collector policy."""
+    if not isinstance(raw, str):
+        raise TypeError("HTML text must be a string")
+    raw = re.sub(r"(?is)<script.*?</script>|<style.*?</style>", " ", raw)
+    raw = re.sub(r"(?s)<[^>]+>", " ", raw)
+    return re.sub(r"\s+", " ", html.unescape(raw)).strip()
+
+
+def env_int(name: str, default: int, low: int, high: int) -> int:
+    """Parse an integer-like environment variable safely and clamp it."""
+    try:
+        value = int(float(os.environ.get(name, str(default))))
+    except (TypeError, ValueError, OverflowError):
+        value = default
+    return max(low, min(high, value))
+
+
+def reject_nonstandard_json(value: str) -> None:
+    """Reject JSON NaN/Infinity consistently in every application entry point."""
+    raise ValueError("표준 JSON 숫자만 허용됩니다.")
+
+
+def unique_json_object(pairs: list[tuple[str, Any]]) -> dict[str, Any]:
+    """Reject duplicate JSON keys instead of silently overwriting earlier data."""
+    result: dict[str, Any] = {}
+    for key, value in pairs:
+        if key in result:
+            raise ValueError("중복 JSON 항목은 허용되지 않습니다.")
+        result[key] = value
+    return result
+
+
+def validate_public_https_url(url: str, allowed_hosts: set[str] | None = None) -> str:
+    """Apply the common HTTPS/SSRF syntax policy without performing network I/O."""
+    if not isinstance(url, str) or not url or len(url) > 2048:
+        raise ValueError("invalid url")
+    if any(ord(char) < 33 or ord(char) == 127 for char in url) or "\\" in url:
+        raise ValueError("unsafe url characters")
+    parsed = urllib.parse.urlsplit(url)
+    host = (parsed.hostname or "").rstrip(".").lower()
+    if parsed.scheme != "https" or not host or parsed.username or parsed.password or parsed.port not in (None, 443):
+        raise ValueError("https only")
+    if allowed_hosts is not None:
+        allowed = {str(x).rstrip(".").lower() for x in allowed_hosts}
+        if host not in allowed:
+            raise ValueError("unapproved host")
+    if host in {"localhost", "localhost.localdomain"} or host.endswith(".local") or host.endswith(".localhost"):
+        raise ValueError("local host blocked")
+    try:
+        ip = ipaddress.ip_address(host)
+    except ValueError:
+        ip = None
+    if ip is not None and not ip.is_global:
+        raise ValueError("private ip blocked")
+    return url
+
+
+def require_public_https(url: str, allowed_hosts: set[str] | None = None) -> str:
+    validate_public_https_url(url, allowed_hosts)
+    host = (urllib.parse.urlsplit(url).hostname or "").rstrip(".").lower()
+    try:
+        rows = socket.getaddrinfo(host, 443, type=socket.SOCK_STREAM)
+    except socket.gaierror as exc:
+        raise urllib.error.URLError("dns lookup failed") from exc
+    if not rows:
+        raise urllib.error.URLError("dns lookup empty")
+    usable = 0
+    for row in rows:
+        try:
+            addr = ipaddress.ip_address(row[4][0])
+        except (IndexError, TypeError, ValueError):
+            continue
+        usable += 1
+        if not addr.is_global:
+            raise ValueError("private dns target blocked")
+    if usable == 0:
+        raise urllib.error.URLError("dns lookup unusable")
+    return url
+
+
+def open_safe_binary(
+    path: str | os.PathLike[str],
+    *,
+    max_bytes: int = MAX_SAFE_FILE_BYTES,
+) -> BinaryIO:
+    """Open one bounded regular file without following the final symbolic link."""
+    if isinstance(max_bytes, bool) or not isinstance(max_bytes, int) or max_bytes < 1:
+        raise ValueError("invalid safe-read size limit")
+    target = Path(path)
+    if target.is_symlink() or target.parent.is_symlink():
+        raise ValueError("symbolic-link read target blocked")
+    flags = os.O_RDONLY | getattr(os, "O_NOFOLLOW", 0) | getattr(os, "O_NONBLOCK", 0)
+    descriptor = os.open(target, flags)
+    try:
+        metadata = os.fstat(descriptor)
+        if not stat.S_ISREG(metadata.st_mode):
+            raise ValueError("non-regular read target blocked")
+        if metadata.st_size > max_bytes:
+            raise ValueError("file exceeds safe-read size limit")
+        if target.is_symlink() or target.parent.is_symlink():
+            raise ValueError("symbolic-link read target blocked")
+        return os.fdopen(descriptor, "rb")
+    except BaseException:
+        os.close(descriptor)
+        raise
+
+
+def safe_read_bytes(
+    path: str | os.PathLike[str],
+    *,
+    max_bytes: int = MAX_SAFE_FILE_BYTES,
+) -> bytes:
+    """Read bounded bytes after checking the opened descriptor and file type."""
+    with open_safe_binary(path, max_bytes=max_bytes) as handle:
+        data = handle.read(max_bytes + 1)
+    if len(data) > max_bytes:
+        raise ValueError("file exceeds safe-read size limit")
+    return data
+
+
+def safe_read_text(
+    path: str | os.PathLike[str],
+    *,
+    max_bytes: int = MAX_SAFE_FILE_BYTES,
+) -> str:
+    """Read bounded UTF-8 text through the same descriptor-based no-follow guard."""
+    return safe_read_bytes(path, max_bytes=max_bytes).decode("utf-8")
+
+
+def atomic_write_bytes(
+    path: str | os.PathLike[str],
+    data: bytes | bytearray | memoryview,
+    *,
+    suffix: str = ".tmp",
+) -> None:
+    """Replace a regular file through a private, no-follow, fsynced temporary file."""
+    if not isinstance(data, (bytes, bytearray, memoryview)):
+        raise ValueError("invalid atomic-write input")
+    if not isinstance(suffix, str) or "/" in suffix or "\\" in suffix:
+        raise ValueError("invalid atomic-write input")
+    target = Path(path)
+    target.parent.mkdir(parents=True, exist_ok=True)
+    if target.is_symlink() or target.parent.is_symlink():
+        raise ValueError("symbolic-link write target blocked")
+    temporary = target.parent / f".{target.name}.{secrets.token_hex(12)}{suffix}"
+    flags = os.O_WRONLY | os.O_CREAT | os.O_EXCL | getattr(os, "O_NOFOLLOW", 0)
+    descriptor = os.open(temporary, flags, 0o600)
+    try:
+        with os.fdopen(descriptor, "wb") as handle:
+            handle.write(data)
+            handle.flush()
+            try:
+                os.fsync(handle.fileno())
+            except OSError:
+                pass
+        if target.is_symlink():
+            raise ValueError("symbolic-link write target blocked")
+        os.replace(temporary, target)
+    finally:
+        temporary.unlink(missing_ok=True)
+
+
+def atomic_write_text(path: str | os.PathLike[str], text: str, *, suffix: str = ".tmp") -> None:
+    """Encode UTF-8 text and apply the same protected binary replacement path."""
+    if not isinstance(text, str):
+        raise ValueError("invalid atomic-write input")
+    atomic_write_bytes(path, text.encode("utf-8"), suffix=suffix)
+
+
+def atomic_write_json(
+    path: str | os.PathLike[str],
+    data: Any,
+    *,
+    suffix: str = ".tmp",
+    trailing_newline: bool = True,
+) -> None:
+    """Serialize standard UTF-8 JSON and apply the shared no-follow writer."""
+    if not isinstance(trailing_newline, bool):
+        raise ValueError("invalid JSON newline option")
+    encoded = json.dumps(data, ensure_ascii=False, indent=2, allow_nan=False)
+    atomic_write_text(path, encoded + ("\n" if trailing_newline else ""), suffix=suffix)
+
+
+class PublicHTTPSRedirect(urllib.request.HTTPRedirectHandler):
+    """Validate redirect destination before urllib follows it."""
+    def __init__(self, allowed_hosts: set[str] | None = None, max_redirects: int = 5):
+        super().__init__()
+        self.allowed_hosts = allowed_hosts
+        self.max_redirects = max(0, min(10, int(max_redirects)))
+
+    def redirect_request(self, req, fp, code, msg, headers, newurl):
+        absolute = urllib.parse.urljoin(req.full_url, newurl)
+        count = int(getattr(req, "_tcg_redirect_count", 0)) + 1
+        if count > self.max_redirects:
+            raise urllib.error.HTTPError(absolute, 508, "too many redirects", headers, fp)
+        require_public_https(absolute, self.allowed_hosts)
+        redirected = super().redirect_request(req, fp, code, msg, headers, absolute)
+        if redirected is not None:
+            setattr(redirected, "_tcg_redirect_count", count)
+        return redirected
+
+
+class NoRedirect(urllib.request.HTTPRedirectHandler):
+    """Reject redirects. Used for requests carrying authorization credentials."""
+    def redirect_request(self, req, fp, code, msg, headers, newurl):
+        absolute = urllib.parse.urljoin(req.full_url, newurl)
+        raise urllib.error.HTTPError(absolute, code, "redirect blocked for authenticated request", headers, fp)
+
+
+def safe_urlopen(request_or_url, *, timeout: int, allowed_hosts: set[str] | None = None, max_redirects: int = 5):
+    """Open public HTTPS only, validating the initial URL and every redirect pre-follow."""
+    url = request_or_url.full_url if isinstance(request_or_url, urllib.request.Request) else str(request_or_url)
+    require_public_https(url, allowed_hosts)
+    opener = urllib.request.build_opener(PublicHTTPSRedirect(allowed_hosts, max_redirects=max_redirects))
+    response = opener.open(request_or_url, timeout=timeout)
+    require_public_https(response.geturl(), allowed_hosts)
+    return response
+
+
+def safe_urlopen_no_redirect(request_or_url, *, timeout: int, allowed_hosts: set[str]):
+    """Open an authenticated HTTPS request without following redirects."""
+    url = request_or_url.full_url if isinstance(request_or_url, urllib.request.Request) else str(request_or_url)
+    require_public_https(url, allowed_hosts)
+    opener = urllib.request.build_opener(NoRedirect())
+    response = opener.open(request_or_url, timeout=timeout)
+    require_public_https(response.geturl(), allowed_hosts)
+    return response

@@ -1,0 +1,465 @@
+{
+  "version": 1,
+  "engine": "v109-card-identity-ocr-learning",
+  "generated_at": "2026-08-28T14:11:17+00:00",
+  "files": {
+    "ANDROID_AUTO_START_INSTALL.sh": {
+      "sha256": "498346c7d414b45b0e43719481371222b7258c2df2d8c6ca14f64885363f5117",
+      "bytes": 1271
+    },
+    "ANDROID_AUTO_START_REMOVE.sh": {
+      "sha256": "f422bf8be90056d347702023902a0729c59d0930a9a1a613a7767ffcd5c48dbf",
+      "bytes": 199
+    },
+    "BACKUP_TCG_LEARNING_DATA.bat": {
+      "sha256": "57dec47cf342cc220bf1ee5b275f71b158d56970b238c7d90d08a25fc4de3471",
+      "bytes": 407
+    },
+    "MIGRATE_OLD_TCG_DATA.bat": {
+      "sha256": "44bba1ea7634b645e53d0fb3c29570d0668d6436ff66d360d8e0c36c522e7985",
+      "bytes": 1063
+    },
+    "PC_SERVER_AUTO_START_INSTALL.bat": {
+      "sha256": "11bbfc79a634cea5b80e31e7fe4b34399edb2362c1253822c66275bc20aa5643",
+      "bytes": 1411
+    },
+    "PC_SERVER_AUTO_START_INSTALL_SIMPLE.bat": {
+      "sha256": "6200256cbb886cba2c3cecb1aa9cca4c09156ca0fd0fd802256cf5a663d6616c",
+      "bytes": 79
+    },
+    "PC_SERVER_AUTO_START_REMOVE.bat": {
+      "sha256": "10f12941fb5e324252eec909e10fd3e66f90c4dc99b5fa5e2884d221407a8ae8",
+      "bytes": 504
+    },
+    "RUN_FULL_VERIFICATION.bat": {
+      "sha256": "c9d0d56304a230a18971476069cad6c68dd88f77ad87ab9c41b0f90fbdd6a79e",
+      "bytes": 863
+    },
+    "START_TCG_UPDATER.bat": {
+      "sha256": "dc229d07acc323a35e8fa45d7543e2e069c0a1cee8d6e4acf1c26290d4479a6d",
+      "bytes": 858
+    },
+    "START_TCG_UPDATER.command": {
+      "sha256": "daecddfcfb08682e2f4a62ee2df1a24bd1ec9c6f7756d2dafae850d4d797e7af",
+      "bytes": 54
+    },
+    "START_TCG_UPDATER_ANDROID.sh": {
+      "sha256": "b9205bb83ce94aaffede3a0327e4b11a60028da583b91dfd3d2ecb0e969f826f",
+      "bytes": 920
+    },
+    "TCG_AUTO_UPDATE.bat": {
+      "sha256": "0c80ed7f5a218d52cb6594032fac9180571598c776f786332a7fb53ed89f42da",
+      "bytes": 1696
+    },
+    "TCG_SERVER_AUTO_RUN.cmd": {
+      "sha256": "ec3345d062248d8b0c300d601778b249dc2c46233e7a1dbaacdf70cbdca12e31",
+      "bytes": 2047
+    },
+    "V101_FINAL_VERIFICATION_REPORT.json": {
+      "sha256": "4e4586707f360260a71d5b34d88af903f9d7db1ed8580d823bcb6ac5c26d5202",
+      "bytes": 9951
+    },
+    "V102_FINAL_VERIFICATION_REPORT.json": {
+      "sha256": "b3c5149f185960adf7ea9d8d936e520e32f371ee1194c5745c92cfb9b41ee9f2",
+      "bytes": 10054
+    },
+    "V103_FINAL_VERIFICATION_REPORT.json": {
+      "sha256": "6365e07999dabc2a71ad7905de2fb86efc1057fd47b57fc46590015e6adcff38",
+      "bytes": 1003
+    },
+    "V104_FINAL_VERIFICATION_REPORT.json": {
+      "sha256": "0e00c0a63ffb5b5dfaa8012b3ead49c86bb73a7096b7584a2906148a9e219967",
+      "bytes": 1542
+    },
+    "V105_FINAL_VERIFICATION_REPORT.json": {
+      "sha256": "81e2069f48b829fc11cbe9ca729f5ceda48b4af5280e39a23a94a51a2e97c17e",
+      "bytes": 2203
+    },
+    "V106_CURRENT_VERIFICATION.json": {
+      "sha256": "fd0626b61a587e34c8f889daf9bbfabfa87b79a19da0d450223c20771641f819",
+      "bytes": 1718
+    },
+    "V106_FINAL_VERIFICATION_REPORT.json": {
+      "sha256": "621c0b8d1f2bc4546ac5bfa08c15b4a7b6cc8427e41f8f2b086668af77f2956f",
+      "bytes": 2262
+    },
+    "V107_FINAL_VERIFICATION_REPORT.json": {
+      "sha256": "994b7222a57df096d75c563438815538653cd7644bd72c42b83ceec6e3da1d4d",
+      "bytes": 3437
+    },
+    "V108_FINAL_VERIFICATION_REPORT.json": {
+      "sha256": "84f042edb4cba2d291ceddd8ce236d3f26ecb07942fa5ee6043a300e2165e1c7",
+      "bytes": 1830
+    },
+    "V109_FINAL_VERIFICATION_REPORT.json": {
+      "sha256": "dfbb8696035c1ed206e69c404910164c9374784c65775b7bbb39e67a001365c1",
+      "bytes": 857
+    },
+    "_audit_progress.py": {
+      "sha256": "e4561a89779fc9c8f4b4d474bc2ce4285b65174eb29a6bf20f47a5e30456d674",
+      "bytes": 316
+    },
+    "ai_code_improver.py": {
+      "sha256": "757ff9082b7da1efb4546b831ccf62ec1440cf7e353152209a5031f8908049c8",
+      "bytes": 27384
+    },
+    "ai_code_learning.json": {
+      "sha256": "db84f525f30b6fab3aa09219adda59cc977b594dc4a4b4b4d89665593798f582",
+      "bytes": 336
+    },
+    "auto_pipeline_runner.py": {
+      "sha256": "788fdf0b47eaee70745e109853c481faaf32d3519959acd3c235210d39edc36b",
+      "bytes": 4540
+    },
+    "auto_repair_engine.py": {
+      "sha256": "b4ef61230514f4003be602de39509008ce9a82ab013b96256c9a4462f5007174",
+      "bytes": 133820
+    },
+    "auto_update_all.py": {
+      "sha256": "15717edf4db21f2c3ef3b63dea24b36112889ebc4b692184241181a3960e83aa",
+      "bytes": 56178
+    },
+    "card_grading_valuation.py": {
+      "sha256": "66da5f9fb5d634ece6a1c7e873bdfc67763f5399f5d34bddc7ac6889cfcb3bb0",
+      "bytes": 19432
+    },
+    "card_identity_learning.json": {
+      "sha256": "f74df5e30fb02f4922e76be720581456765d5cdabdaeedd6cb27cfb3b2174408",
+      "bytes": 120
+    },
+    "card_identity_recognition.js": {
+      "sha256": "4160df36695785c4f5879c09ed565ad0abfd8f563c7343c6d3b32057551a7940",
+      "bytes": 8737
+    },
+    "card_identity_recognition.py": {
+      "sha256": "cac4e7d614f3b90f0a598772baa8f0c894979618702e46b39d50d668c0c64598",
+      "bytes": 16095
+    },
+    "card_identity_reference_catalog.json": {
+      "sha256": "45a99a4520d2ccca217e196e49db016481105283e8a53b1e7dec2c11bb4a7c04",
+      "bytes": 3008
+    },
+    "cross_platform_agent.py": {
+      "sha256": "8c6c7e898a6708bd252e65ee8c810421bd6fa971b60399664d9619dfb25595d5",
+      "bytes": 3149
+    },
+    "ebay_grader_candidates.json": {
+      "sha256": "47408933db066e8a9ad1159cbab98041c31145cdf7e180bec83c0bc2656b8472",
+      "bytes": 516
+    },
+    "ebay_grader_learning.py": {
+      "sha256": "3e4020de00758768948eab6d69efa375e52b084af7b3645b1e590e469fa31eff",
+      "bytes": 22770
+    },
+    "error_scenario_lab.py": {
+      "sha256": "dfab211c853d70d1f2c01a11b7c8fab4c2b50ce383073b071b9dfb0d51a82c95",
+      "bytes": 61666
+    },
+    "exchange_rates.json": {
+      "sha256": "1fba8af040a5483cb2c6e289df4abb7c5e6a9a92b7b8017e44936eb0f69dde57",
+      "bytes": 351
+    },
+    "fault_injection_healing.py": {
+      "sha256": "05351706a1891c4937d1fc5b7e2f7fd0d25b4d7c6a4a17d13d2e06b1bd5ffedd",
+      "bytes": 19658
+    },
+    "feature_contract.py": {
+      "sha256": "c34ffdb98524a85a1bbb5a7ac2880e8a342f478c687e5f900022ee0ef8789c97",
+      "bytes": 18215
+    },
+    "github_sync_engine.py": {
+      "sha256": "00b4b68276a53896b89b661b55dfbc694390d9a9b194d6e1b95dfe50efdf1f9a",
+      "bytes": 4395
+    },
+    "grading_accuracy_v99.js": {
+      "sha256": "f674f723e8230d99ff493791bd61457cb9aaeb4c049c1ae51abe79de8e2136fc",
+      "bytes": 4105
+    },
+    "grading_accuracy_v99.py": {
+      "sha256": "7b87bd93c70cb7280a664e685d31dc319b2cde8d5b181cec8309194c6da53008",
+      "bytes": 9066
+    },
+    "grading_vision_engine.js": {
+      "sha256": "e4842541299abbfaa84931979038d309800aae066060f2ffa5f2a32cc2c91a7f",
+      "bytes": 28067
+    },
+    "icon.svg": {
+      "sha256": "5f1845a22916c258919cea9f4c3dac8b72a037b1084b2835869c5568a1f1f5f2",
+      "bytes": 553
+    },
+    "index.html": {
+      "sha256": "8a5a8707438408f2b137cfdf5f433616f64e944aad11476265de9347a050129f",
+      "bytes": 288144
+    },
+    "library_official_cert_registry.json": {
+      "sha256": "8f0695c6fb6f0aa4e541fbf1812f1db714d45921d2d6dc584a2a46230aea86c9",
+      "bytes": 703
+    },
+    "library_slab_candidates.json": {
+      "sha256": "648096a8ef5a640ae3e9f3332f9e085aac5168416501ded362f85aeb092ab14e",
+      "bytes": 217901
+    },
+    "library_slab_corpus.py": {
+      "sha256": "b08aadfe7486b154cfeb8353c8b69b569350c4d017d967506456402a86e5bc72",
+      "bytes": 13520
+    },
+    "library_slab_reviewed_overrides.json": {
+      "sha256": "97558ac1124e8bf04f9756e9c53f77f31d48730caab561e981950f45fed7c664",
+      "bytes": 1084
+    },
+    "library_verified_slab_references.json": {
+      "sha256": "4fa7e5f614d43372d3667d54c4dc5816966ac32c9aa414261a5d65e0c4916264",
+      "bytes": 763
+    },
+    "manifest.webmanifest": {
+      "sha256": "0cad0fb620b90f6b1f214d3a6c084cbc385fad9430df6981df3d34a3865399df",
+      "bytes": 476
+    },
+    "market_prices.json": {
+      "sha256": "3af2d26d4dffc79ae2a404b332724366fb0e1d980da392ff3977e1c5c1c74171",
+      "bytes": 31823
+    },
+    "market_public_crosscheck.py": {
+      "sha256": "5bcc3df35ebfd27b9a91ac922ea678241c08360114acd8125b45800a7e387af7",
+      "bytes": 10613
+    },
+    "market_watch.json": {
+      "sha256": "292ed199463ccd56e2583b88c5e6179697c9c21e40ea523bbc3b783bac010b41",
+      "bytes": 11580
+    },
+    "migrate_old_data.py": {
+      "sha256": "63ab544c5fb2ba8681e5af5af3822b6ffd493d0718ce9747d5f4f122f33f360e",
+      "bytes": 15069
+    },
+    "multi_channel_agent.py": {
+      "sha256": "078a264b7c2053cc60e6f687b7d34d163c651f7f77605786586cc69a502e1f82",
+      "bytes": 2809
+    },
+    "optimized_self_healing.py": {
+      "sha256": "959703142c0ccae1ab905559853d0cb854698c876c272d28c8be1fe563ebc7c2",
+      "bytes": 4471
+    },
+    "promo_events.json": {
+      "sha256": "11ed411e4e6c0b355698c491b5ce1497004a3ce5e9207ebc33bb350589355cc3",
+      "bytes": 42033
+    },
+    "provider_segment_learning.py": {
+      "sha256": "fcaa0fcc517c6e6f6edff2c886fb58b9fecca393f018d8b56bcebdbf67fb055c",
+      "bytes": 10084
+    },
+    "purchase_intelligence.py": {
+      "sha256": "fee6b08a4ee5bb6bbcd5906e3926d68805016435961cd5dbdf3d74adabdefa7d",
+      "bytes": 5992
+    },
+    "purchase_signals.json": {
+      "sha256": "ccbb0e34e678840ff7de15507bbd6e4ac970ba9a58994c282ff244a24812dd4e",
+      "bytes": 216
+    },
+    "purchase_sources.json": {
+      "sha256": "8bc3bee0c3c0308c315e8def735c24db994d8f01ceade7fbb601bd28e708d2b8",
+      "bytes": 231933
+    },
+    "releases.json": {
+      "sha256": "43c125c5325ac8a3fe02b6fe760d5c0ecfbb839e3b9b5036915ec29f79189030",
+      "bytes": 5312
+    },
+    "run_github_pipeline.py": {
+      "sha256": "2682cab4353ff651922c04f2fe58cb0a7fa4e5547298cdd9dac284a830ae8e27",
+      "bytes": 1441
+    },
+    "run_repeated_verification.py": {
+      "sha256": "ddec06fb0d1a532cfd59ad260c01fc23e7a120d48cbcd71b45c9901a31bb4ca1",
+      "bytes": 10174
+    },
+    "safe_runtime.py": {
+      "sha256": "75d38c91c0d5256035413ef19d8d5e9b5d5384a98d46eb3657a36b529088705f",
+      "bytes": 11401
+    },
+    "social_event_discovery.py": {
+      "sha256": "b0adca5c138bd8c3a881442223fa6355368ddf17a6cfb05724584f78ad0a4317",
+      "bytes": 35435
+    },
+    "supplementary_candidates.json": {
+      "sha256": "09efdc54edb1a3e399be5d98554b27ae7026525704ebcab463e51606ff6fcdd4",
+      "bytes": 5641
+    },
+    "supplementary_discovery.py": {
+      "sha256": "0b74fa083171123ba61fb8da124f0e093d8cde7c1fc1168716d1cc90781472b6",
+      "bytes": 11226
+    },
+    "sw.js": {
+      "sha256": "6797d2398a5b5dcdb26e4d39660c4be9ec9a9ae8f19807f13bdf1eeef493257e",
+      "bytes": 2962
+    },
+    "tcg_live_data.json": {
+      "sha256": "7070007ddca04f63406e60c376711c5f9a645c5c99f10a86c19074c728028419",
+      "bytes": 14783
+    },
+    "tcg_updater.py": {
+      "sha256": "c7ec1f43e365acc96aad0afe56f58ec78d55d04ca7a890e1bbc759583e8d9ef4",
+      "bytes": 80355
+    },
+    "update_exchange_rates.py": {
+      "sha256": "8d11e2c66f6d01d06084f52d4b4ec53848751fa892088b761625c1718ac707df",
+      "bytes": 1439
+    },
+    "update_market_prices.py": {
+      "sha256": "8325fac89a9cbc057e1888854f872de33a0d548f1df20cc8ac219d332f422663",
+      "bytes": 16715
+    },
+    "update_market_watch.py": {
+      "sha256": "e443a103f7c34f9bc3f0025238100dd392e384ab0eac7f1e9eb859154e21fbc0",
+      "bytes": 6848
+    },
+    "update_promo_events.py": {
+      "sha256": "f9efe774b04b56d7319e2d3eb7499d7924a658a74724200f2308bb72acbf8487",
+      "bytes": 41844
+    },
+    "update_purchase_sources.py": {
+      "sha256": "d718a1d756653f882f955c02fa2983257dc8247632332f1cecfe375253570cf3",
+      "bytes": 27461
+    },
+    "update_releases.py": {
+      "sha256": "54b714b14289b97f993024060ea9f1eb7c3958001f410ab3f1324b5d92d97903",
+      "bytes": 7395
+    },
+    "v100_reference/V100_FINAL_VERIFICATION_REPORT.json": {
+      "sha256": "d128e71bd187708c5becf47dc7fc1f6d71c34a374182e2fb0929bddd9636d362",
+      "bytes": 4623
+    },
+    "validate_external_links.py": {
+      "sha256": "0f7fc503d9a4a940d5245cf4366bdaabf03f4655d43ce75fec37105d089090f2",
+      "bytes": 13265
+    },
+    "verified_certifications.json": {
+      "sha256": "8218d4862f7e7c207eff599d530414479939773df60f0c7fbaf99aaa648efd60",
+      "bytes": 608
+    },
+    "verify_ai_code_improver.py": {
+      "sha256": "c7aaa3f7b15337147cc539db5a25afc68edd4faccf3cf39f31da6760b5f5b33c",
+      "bytes": 9816
+    },
+    "verify_all.py": {
+      "sha256": "5b2026246412427b5e491f5630c23ed4376865ac915a3f756455b367b94dd1ed",
+      "bytes": 381
+    },
+    "verify_all_legacy_v99.py": {
+      "sha256": "bf445c660ad25d8f54b1dea1ce28a9e0b4253736707d5513f824ad5ebd7bd9f2",
+      "bytes": 258299
+    },
+    "verify_browser_runtime.js": {
+      "sha256": "0468d36afbc0bd8aab40456f7536d0a5f6d28d537288a5fffe73c48976731854",
+      "bytes": 26184
+    },
+    "verify_camera_runtime.js": {
+      "sha256": "a90c55d90f1b135c18f083197d9d520f035a420f7a0f4fea79023129aab71a19",
+      "bytes": 19518
+    },
+    "verify_card_identity_recognition.py": {
+      "sha256": "8acf308fffbbf67e3ef8ea1ca654106d4d2340ab24fd883a3406830c17ead8d7",
+      "bytes": 1388
+    },
+    "verify_fault_injection_healing.py": {
+      "sha256": "520cf7b95b4acbb8d992198fcc23f1a70b1b0e8bb4d730396346707b193cf95d",
+      "bytes": 4465
+    },
+    "verify_library_slab_corpus.py": {
+      "sha256": "0d3c65c0414138ae115f8c926d38fd821470953d947307ac1f3391d4f1b6cb65",
+      "bytes": 1420
+    },
+    "verify_link_runtime.py": {
+      "sha256": "c2bc587b5045a493be2b3fbff03ce7b195f4b06e97602736f87f4446dd80f3ad",
+      "bytes": 10438
+    },
+    "verify_service_worker_runtime.js": {
+      "sha256": "7ab3409f6e6541f87187db58cf00ee692c022905534118ba0f44203e6b0eaf38",
+      "bytes": 5156
+    },
+    "verify_v101_final.py": {
+      "sha256": "fae925bb8405a257067984b508cd2e6c479e3a92358b5289bbf32048ecde5968",
+      "bytes": 2214
+    },
+    "verify_v102_final.py": {
+      "sha256": "bdadac8681c09ecdb4ea7ef786ced8aad290135355ea148eefa045c2a04fceb2",
+      "bytes": 2540
+    },
+    "verify_v102_provider_learning.py": {
+      "sha256": "1a1837a70e5ab32d0b54bebeb85b78c8d43d95292b2447a8516b3d0fd69bb627",
+      "bytes": 6062
+    },
+    "verify_v103_final.py": {
+      "sha256": "624c36274bfa1f9db4912000882694bf8a85de7592cea7c26376cf52f24364f3",
+      "bytes": 1775
+    },
+    "verify_v103_market_sources.py": {
+      "sha256": "98b51cfd9816a72d56b40303d59c6da3265551a8081a2d84f9e02742196cc8a7",
+      "bytes": 2475
+    },
+    "verify_v105_social_sources.py": {
+      "sha256": "eaafe6377e838debb4c91513eee60fbb9f4bf65c6e02eb9df7ed054793e2e410",
+      "bytes": 9874
+    },
+    "verify_v107_code_audit.py": {
+      "sha256": "b97f79d14fdbec73e01a646b03a90a2b2f924e21af5fc4e614c10d76ba378e2f",
+      "bytes": 5229
+    },
+    "verify_v107_final.py": {
+      "sha256": "8a07711c01c62f58988190b59eb54c33a9679df7a69c8cffbca1f71563d2778c",
+      "bytes": 5904
+    },
+    "verify_v107_runtime_integration.py": {
+      "sha256": "d7c15162743fa588f4ea7e11f5934ce81bed46f82776c1bf1f7124887268225c",
+      "bytes": 5691
+    },
+    "verify_v108_final.py": {
+      "sha256": "a1445984203b316e6dfc642ce0df9551fc9aee9a2b7f78b89311709c46258ca3",
+      "bytes": 3115
+    },
+    "verify_v109_card_identity.py": {
+      "sha256": "978e734d07a63366d3c678c06b501751130b6bb380feaa95d5376279c733909e",
+      "bytes": 3321
+    },
+    "verify_v109_final.py": {
+      "sha256": "432feeeb057cd893a1dd9e9d1f0e5e023723a329427f7a0c9259f4b5f139f8ae",
+      "bytes": 1857
+    },
+    "verify_v99_accuracy.py": {
+      "sha256": "303ad14cde0a3ee7e677b7b477c583c048f356d2a57b7b64202a7bf048324765",
+      "bytes": 5755
+    },
+    "verify_v99_browser_accuracy.js": {
+      "sha256": "ece8fdb51e81825ec253c882227025a71badd72535bb06f8213f8537c40e3540",
+      "bytes": 1691
+    },
+    "verify_v99_cross_runtime.py": {
+      "sha256": "82e8fa2fb558fb160fed24cdc4d263756d46c8b91a4f3917b903b0e10b61d6b9",
+      "bytes": 1925
+    },
+    "verify_v99_learning_pipeline.py": {
+      "sha256": "81d002656dc9755dae442be9c60692dd63d5f7008ef2496eb468bbf6506ae6f7",
+      "bytes": 2977
+    },
+    "verify_vision_calibration.py": {
+      "sha256": "4f01f941fc367760e96e4ca3094583d11e5f16396f5adfd4ca32bc30ddd8639e",
+      "bytes": 5189
+    },
+    "verify_vision_runtime.js": {
+      "sha256": "dbf68265ad410fb7753fdf15468dcd44cfefa1ac1ff9a92f9ae44111eb22a531",
+      "bytes": 8003
+    },
+    "vision_calibration.py": {
+      "sha256": "a64c68ae1bc135f94a870001501a097bf543ad7fc2b21f2ca872849ae3e324af",
+      "bytes": 9124
+    },
+    "vision_self_learning.py": {
+      "sha256": "157af075a75b074e18a1facfa4e779951c75c24796ea0814e8df4ed70a03f373",
+      "bytes": 21291
+    }
+  },
+  "policy": {
+    "generated_code_auto_applied": false,
+    "code_corruption_auto_repaired": false,
+    "verified_json_backup_auto_repair_allowed": true,
+    "fault_injection_production_allowed": false
+  }
+}

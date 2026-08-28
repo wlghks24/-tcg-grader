@@ -1,0 +1,332 @@
+{
+  "version": 1,
+  "jobs": {
+    "exchange_rates.json": {
+      "runs": 20,
+      "successes": 1,
+      "failures": 0,
+      "timeouts": 0,
+      "partial_successes": 19,
+      "recovered_successes": 17,
+      "last_seconds": 2.302,
+      "last_ok": false,
+      "last_recovered": true,
+      "success_streak": 0,
+      "consecutive_failures": 19,
+      "success_ewma_seconds": 0.751,
+      "ewma_seconds": 0.751,
+      "last_run": "2026-08-26T10:47:11+00:00",
+      "error_patterns": {
+        "93697047de8f": {
+          "count": 1,
+          "sample": "URLError",
+          "last_seen": "2026-08-24T00:54:49+00:00"
+        },
+        "cf046df2fd42": {
+          "count": 17,
+          "sample": "URLError / URLError",
+          "last_seen": "2026-08-26T10:47:11+00:00"
+        },
+        "72cf0914c6de": {
+          "count": 1,
+          "sample": "NameError",
+          "last_seen": "2026-08-24T03:53:26+00:00"
+        }
+      },
+      "dominant_error_signature": "cf046df2fd42",
+      "timeout_exhaustions": 0,
+      "deferred_attempts": 0,
+      "deferred_successes": 0,
+      "deferred_failures": 0,
+      "last_deferred_budget_seconds": 0,
+      "deferred_recommended_timeout_seconds": 0,
+      "deferred_pending": false
+    },
+    "__integration__": {
+      "runs": 17,
+      "successes": 4,
+      "failures": 13,
+      "timeouts": 0,
+      "partial_successes": 0,
+      "recovered_successes": 0,
+      "last_seconds": 4.655,
+      "last_ok": false,
+      "last_recovered": false,
+      "success_streak": 0,
+      "consecutive_failures": 13,
+      "success_ewma_seconds": 9.366,
+      "ewma_seconds": 9.366,
+      "last_run": "2026-08-26T10:47:15+00:00",
+      "timeout_exhaustions": 0,
+      "deferred_attempts": 0,
+      "deferred_successes": 0,
+      "deferred_failures": 0,
+      "last_deferred_budget_seconds": 0,
+      "deferred_recommended_timeout_seconds": 0,
+      "deferred_pending": false,
+      "error_patterns": {
+        "5af71b60988f": {
+          "count": 13,
+          "sample": " lookup failed> / 원피스: URLError: <urlopen error dns lookup failed> / URLError: <urlopen error dns lookup failed> / 나루토: URLError: <urlopen error dns lookup failed> / URLError: <urlopen error dns lookup failed> / 포켓몬: URLError: <urlopen error dns lookup failed> / URLError: <urlopen error dns lookup failed> / 원피스: URLError: <urlopen error dns lookup failed> / URLError: <urlopen error dns lookup failed> / 나루토: URLError: <urlopen error dns lookup failed> / URLError: <urlopen error dns lookup failed>",
+          "last_seen": "2026-08-26T10:47:15+00:00"
+        }
+      },
+      "dominant_error_signature": "5af71b60988f"
+    },
+    "__link_audit__": {
+      "runs": 17,
+      "successes": 0,
+      "failures": 0,
+      "timeouts": 0,
+      "partial_successes": 17,
+      "recovered_successes": 0,
+      "last_seconds": 0.462,
+      "last_ok": false,
+      "last_recovered": false,
+      "success_streak": 0,
+      "consecutive_failures": 17,
+      "error_patterns": {
+        "355705cf62a5": {
+          "count": 1,
+          "sample": "failure",
+          "last_seen": "2026-08-24T01:11:10+00:00"
+        },
+        "c56faf9210d9": {
+          "count": 3,
+          "sample": "일시 확인불가 112개",
+          "last_seen": "2026-08-24T03:53:37+00:00"
+        },
+        "50f7dcbcfe1b": {
+          "count": 1,
+          "sample": "일시 확인불가 145개",
+          "last_seen": "2026-08-25T07:15:32+00:00"
+        },
+        "a6a70becf54a": {
+          "count": 4,
+          "sample": "일시 확인불가 146개",
+          "last_seen": "2026-08-25T15:30:37+00:00"
+        },
+        "cf8b8ee20def": {
+          "count": 6,
+          "sample": "일시 확인불가 249개",
+          "last_seen": "2026-08-26T05:46:25+00:00"
+        },
+        "df897b195cd4": {
+          "count": 2,
+          "sample": "일시 확인불가 257개",
+          "last_seen": "2026-08-26T10:47:11+00:00"
+        }
+      },
+      "dominant_error_signature": "cf8b8ee20def",
+      "last_run": "2026-08-26T10:47:11+00:00",
+      "timeout_exhaustions": 0,
+      "deferred_attempts": 0,
+      "deferred_successes": 0,
+      "deferred_failures": 0,
+      "last_deferred_budget_seconds": 0,
+      "deferred_recommended_timeout_seconds": 0,
+      "deferred_pending": false
+    },
+    "market_watch.json": {
+      "runs": 13,
+      "successes": 13,
+      "failures": 0,
+      "timeouts": 0,
+      "partial_successes": 0,
+      "recovered_successes": 0,
+      "last_seconds": 0.156,
+      "last_ok": true,
+      "last_recovered": false,
+      "success_streak": 13,
+      "consecutive_failures": 0,
+      "success_ewma_seconds": 0.425,
+      "ewma_seconds": 0.425,
+      "last_run": "2026-08-26T10:47:09+00:00",
+      "timeout_exhaustions": 0,
+      "deferred_attempts": 0,
+      "deferred_successes": 0,
+      "deferred_failures": 0,
+      "last_deferred_budget_seconds": 0,
+      "deferred_recommended_timeout_seconds": 0,
+      "deferred_pending": false,
+      "error_patterns": {}
+    },
+    "releases.json": {
+      "runs": 13,
+      "successes": 0,
+      "failures": 0,
+      "timeouts": 0,
+      "partial_successes": 13,
+      "recovered_successes": 13,
+      "last_seconds": 2.391,
+      "last_ok": false,
+      "last_recovered": true,
+      "success_streak": 0,
+      "consecutive_failures": 13,
+      "error_patterns": {
+        "366db33edeb6": {
+          "count": 1,
+          "sample": "Pokémon JP: URLError / ONE PIECE KR: URLError / ONE PIECE JP: URLError / NARUTO Global: URLError / ONE PIECE US: URLError / ONE PIECE JP: URLError / ONE PIECE KR: URLError / ONE PIECE US: URLError / Pokémon JP: URLError / NARUTO Global: URLError",
+          "last_seen": "2026-08-25T07:15:29+00:00"
+        },
+        "6c367b60d710": {
+          "count": 1,
+          "sample": "NARUTO Global: URLError / Pokémon JP: URLError / ONE PIECE KR: URLError / ONE PIECE JP: URLError / ONE PIECE US: URLError / Pokémon JP: URLError / ONE PIECE KR: URLError / ONE PIECE US: URLError / ONE PIECE JP: URLError / NARUTO Global: URLError",
+          "last_seen": "2026-08-25T08:14:22+00:00"
+        },
+        "494d0fb09c45": {
+          "count": 1,
+          "sample": "ONE PIECE KR: URLError / ONE PIECE JP: URLError / ONE PIECE US: URLError / Pokémon JP: URLError / NARUTO Global: URLError / NARUTO Global: URLError / ONE PIECE KR: URLError / ONE PIECE US: URLError / ONE PIECE JP: URLError / Pokémon JP: URLError",
+          "last_seen": "2026-08-25T13:07:44+00:00"
+        },
+        "acd30b6b0bda": {
+          "count": 1,
+          "sample": "ONE PIECE KR: URLError / ONE PIECE JP: URLError / Pokémon JP: URLError / ONE PIECE US: URLError / NARUTO Global: URLError / NARUTO Global: URLError / ONE PIECE US: URLError / ONE PIECE JP: URLError / ONE PIECE KR: URLError / Pokémon JP: URLError",
+          "last_seen": "2026-08-25T14:31:36+00:00"
+        },
+        "efda98e19345": {
+          "count": 1,
+          "sample": "ONE PIECE JP: URLError / ONE PIECE US: URLError / ONE PIECE KR: URLError / Pokémon JP: URLError / NARUTO Global: URLError / ONE PIECE JP: URLError / Pokémon JP: URLError / ONE PIECE KR: URLError / NARUTO Global: URLError / ONE PIECE US: URLError",
+          "last_seen": "2026-08-25T15:30:35+00:00"
+        },
+        "03c3094f744d": {
+          "count": 1,
+          "sample": "NARUTO Global: URLError / ONE PIECE US: URLError / ONE PIECE KR: URLError / ONE PIECE JP: URLError / Pokémon JP: URLError / Pokémon JP: URLError / ONE PIECE KR: URLError / ONE PIECE JP: URLError / ONE PIECE US: URLError / NARUTO Global: URLError",
+          "last_seen": "2026-08-25T17:54:18+00:00"
+        },
+        "3937de3bf671": {
+          "count": 1,
+          "sample": "ONE PIECE KR: URLError / Pokémon JP: URLError / NARUTO Global: URLError / ONE PIECE US: URLError / ONE PIECE JP: URLError / ONE PIECE KR: URLError / Pokémon JP: URLError / ONE PIECE US: URLError / ONE PIECE JP: URLError / NARUTO Global: URLError",
+          "last_seen": "2026-08-26T00:07:56+00:00"
+        },
+        "c56543c586d5": {
+          "count": 1,
+          "sample": "Pokémon JP: URLError / ONE PIECE KR: URLError / ONE PIECE JP: URLError / NARUTO Global: URLError / ONE PIECE US: URLError / Pokémon JP: URLError / ONE PIECE KR: URLError / ONE PIECE US: URLError / ONE PIECE JP: URLError / NARUTO Global: URLError",
+          "last_seen": "2026-08-26T00:43:20+00:00"
+        },
+        "fcba4cc4c3fd": {
+          "count": 1,
+          "sample": "ONE PIECE JP: URLError / Pokémon JP: URLError / ONE PIECE KR: URLError / ONE PIECE US: URLError / NARUTO Global: URLError / ONE PIECE KR: URLError / Pokémon JP: URLError / ONE PIECE US: URLError / NARUTO Global: URLError / ONE PIECE JP: URLError",
+          "last_seen": "2026-08-26T03:54:30+00:00"
+        },
+        "bd3df934533b": {
+          "count": 1,
+          "sample": "Pokémon JP: URLError / ONE PIECE JP: URLError / ONE PIECE KR: URLError / ONE PIECE US: URLError / NARUTO Global: URLError / Pokémon JP: URLError / ONE PIECE US: URLError / ONE PIECE JP: URLError / ONE PIECE KR: URLError / NARUTO Global: URLError",
+          "last_seen": "2026-08-26T04:39:31+00:00"
+        },
+        "37865a9072e2": {
+          "count": 1,
+          "sample": "ONE PIECE KR: URLError / Pokémon JP: URLError / NARUTO Global: URLError / ONE PIECE JP: URLError / ONE PIECE US: URLError / ONE PIECE KR: URLError / Pokémon JP: URLError / ONE PIECE US: URLError / ONE PIECE JP: URLError / NARUTO Global: URLError",
+          "last_seen": "2026-08-26T05:46:22+00:00"
+        },
+        "5af8f96436e5": {
+          "count": 1,
+          "sample": "Pokémon JP: URLError / ONE PIECE JP: URLError / ONE PIECE KR: URLError / ONE PIECE US: URLError / NARUTO Global: URLError / Pokémon JP: URLError / ONE PIECE US: URLError / ONE PIECE KR: URLError / ONE PIECE JP: URLError / NARUTO Global: URLError",
+          "last_seen": "2026-08-26T09:47:52+00:00"
+        },
+        "00ab5251f88b": {
+          "count": 1,
+          "sample": "ONE PIECE KR: URLError / Pokémon JP: URLError / ONE PIECE US: URLError / ONE PIECE JP: URLError / NARUTO Global: URLError / ONE PIECE US: URLError / ONE PIECE JP: URLError / ONE PIECE KR: URLError / Pokémon JP: URLError / NARUTO Global: URLError",
+          "last_seen": "2026-08-26T10:47:08+00:00"
+        }
+      },
+      "dominant_error_signature": "366db33edeb6",
+      "last_run": "2026-08-26T10:47:08+00:00",
+      "timeout_exhaustions": 0,
+      "deferred_attempts": 0,
+      "deferred_successes": 0,
+      "deferred_failures": 0,
+      "last_deferred_budget_seconds": 0,
+      "deferred_recommended_timeout_seconds": 0,
+      "deferred_pending": false
+    },
+    "market_prices.json": {
+      "runs": 13,
+      "successes": 0,
+      "failures": 0,
+      "timeouts": 0,
+      "partial_successes": 13,
+      "recovered_successes": 13,
+      "last_seconds": 2.401,
+      "last_ok": false,
+      "last_recovered": true,
+      "success_streak": 0,
+      "consecutive_failures": 13,
+      "error_patterns": {
+        "0e8e4bf5d058": {
+          "count": 13,
+          "sample": "NARUTO CP-001: URLError / POKARD BOX: URLError / KREAM HIT: URLError / KREAM 로맨스 던 BOX: URLError / KREAM 블랙볼트 BOX: URLError / Pack Magik OP14-009: URLError / POKARD HIT: URLError / NARUTO CP-001: URLError / POKARD BOX: URLError / KREAM HIT: URLError / KREAM 로맨스 던 BOX: URLError / KREAM 블랙볼트 BOX: URLError / Pack Magik OP14-009: URLError / POKARD HIT: URLError",
+          "last_seen": "2026-08-26T10:47:08+00:00"
+        }
+      },
+      "dominant_error_signature": "0e8e4bf5d058",
+      "last_run": "2026-08-26T10:47:08+00:00",
+      "timeout_exhaustions": 0,
+      "deferred_attempts": 0,
+      "deferred_successes": 0,
+      "deferred_failures": 0,
+      "last_deferred_budget_seconds": 0,
+      "deferred_recommended_timeout_seconds": 0,
+      "deferred_pending": false
+    },
+    "promo_events.json": {
+      "runs": 13,
+      "successes": 0,
+      "failures": 0,
+      "timeouts": 0,
+      "partial_successes": 13,
+      "recovered_successes": 13,
+      "last_seconds": 2.501,
+      "last_ok": false,
+      "last_recovered": true,
+      "success_streak": 0,
+      "consecutive_failures": 13,
+      "error_patterns": {
+        "386416d74406": {
+          "count": 13,
+          "sample": "AN 공식 콜라보 배송: URLError / THE ONE PIECE 공식 애니메이션 영상 공개: URLError / 포켓몬 데크 그대로 배틀 공식 체험 행사: URLError / 한국 나루토 카드게임 행사·정식 출시 공식 발표 추적: URLError / KR 원피스 카드 신규행사 탐색: URLError / KR 포켓몬 카드 신규행사 탐색: URLError / KR 나루토 카드 신규행사 탐색: URLError / JP 포켓몬 카드 신규행사 탐색: URLError / JP 포켓몬 카드 신규행사 탐색: URLError / JP 원피스 카드 신규행사 탐색: URLError / JP 원피스 카드 신규행사 탐색: URLError / US 원피스 카드 신규행사 탐색: URLError / US 포켓몬 카드 신규행사 탐색: URLError / JP 나루토 카드 신규행사 탐색: URLError / JP 나루토 카드 신규행사 탐색: URLError / US 나루토 카드 신규행사 탐색: URLError",
+          "last_seen": "2026-08-26T10:47:08+00:00"
+        }
+      },
+      "dominant_error_signature": "386416d74406",
+      "last_run": "2026-08-26T10:47:08+00:00",
+      "timeout_exhaustions": 0,
+      "deferred_attempts": 0,
+      "deferred_successes": 0,
+      "deferred_failures": 0,
+      "last_deferred_budget_seconds": 0,
+      "deferred_recommended_timeout_seconds": 0,
+      "deferred_pending": false
+    },
+    "purchase_sources.json": {
+      "runs": 13,
+      "successes": 0,
+      "failures": 0,
+      "timeouts": 0,
+      "partial_successes": 13,
+      "recovered_successes": 13,
+      "last_seconds": 2.458,
+      "last_ok": false,
+      "last_recovered": true,
+      "success_streak": 0,
+      "consecutive_failures": 13,
+      "error_patterns": {
+        "763f8bb5b931": {
+          "count": 13,
+          "sample": "rror) / 원피스 카드게임 코리아: 재확인 필요·기존 주소 유지 (URLError) / 나루토 카드게임 공식: 재확인 필요·기존 주소 유지 (URLError) / 포켓몬 카드 공식 제품: 재확인 필요·기존 주소 유지 (URLError) / 포켓몬센터 온라인: 재확인 필요·기존 주소 유지 (URLError) / 원피스 카드게임 공식: 재확인 필요·기존 주소 유지 (URLError) / 나루토 카드게임 공식: 재확인 필요·기존 주소 유지 (URLError) / Pokémon Center US: 재확인 필요·기존 주소 유지 (URLError) / Pokémon 공식 판매점 찾기: 재확인 필요·기존 주소 유지 (URLError) / One Piece Card Game 공식: 재확인 필요·기존 주소 유지 (URLError) / Naruto Card Game 공식: 재확인 필요·기존 주소 유지 (URLError) / 포켓몬 공인 카드샵 안내: 재확인 필요·기존 주소 유지 (URLError)",
+          "last_seen": "2026-08-26T10:47:11+00:00"
+        }
+      },
+      "dominant_error_signature": "763f8bb5b931",
+      "last_run": "2026-08-26T10:47:11+00:00",
+      "timeout_exhaustions": 0,
+      "deferred_attempts": 0,
+      "deferred_successes": 0,
+      "deferred_failures": 0,
+      "last_deferred_budget_seconds": 0,
+      "deferred_recommended_timeout_seconds": 0,
+      "deferred_pending": false
+    }
+  },
+  "updated_at": "2026-08-26T10:47:15+00:00"
+}

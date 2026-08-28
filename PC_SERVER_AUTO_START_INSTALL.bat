@@ -5,8 +5,13 @@ if not exist "tcg_updater.py" goto BAD_FOLDER
 if not exist "index.html" goto BAD_FOLDER
 if not exist "TCG_SERVER_AUTO_RUN.cmd" goto BAD_FOLDER
 where py.exe >nul 2>nul
+if errorlevel 1 goto CHECK_PYTHON
+py.exe -3 -c "import sys; sys.exit(sys.version_info.major != 3)" >nul 2>nul
 if not errorlevel 1 goto PY_OK
+:CHECK_PYTHON
 where python.exe >nul 2>nul
+if errorlevel 1 goto NO_PYTHON
+python.exe -c "import sys; sys.exit(sys.version_info.major != 3)" >nul 2>nul
 if errorlevel 1 goto NO_PYTHON
 :PY_OK
 set "STARTUP=%APPDATA%\Microsoft\Windows\Start Menu\Programs\Startup"

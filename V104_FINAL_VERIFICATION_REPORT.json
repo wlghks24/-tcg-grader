@@ -1,0 +1,35 @@
+{
+  "version": "v104-camera-shake-stability",
+  "date": "2026-08-28",
+  "ok": true,
+  "camera": {
+    "automatic_front_back_capture": "pass",
+    "continuous_focus_request": "pass",
+    "continuous_exposure_request_when_supported": "pass",
+    "continuous_white_balance_request_when_supported": "pass",
+    "shake_withhold": "pass",
+    "shake_recovery": "pass",
+    "pre_capture_last_moment_shake_recheck": "pass",
+    "duplicate_side_prevention": "pass",
+    "manual_duplicate_side_prevention": "pass",
+    "permission_timeout_and_cleanup": "pass",
+    "background_pagehide_cleanup": "pass",
+    "ios_file_fallback": "pass"
+  },
+  "regression": {
+    "browser_runtime": "pass",
+    "service_worker_runtime": "pass",
+    "vision_runtime": "pass",
+    "market_sources": "8/8 pass",
+    "provider_learning": "11/11 pass",
+    "vision_calibration": "8/8 pass"
+  },
+  "note": "Shake handling is capture gating/stability confirmation, not digital deblurring. Actual device OIS/EIS depends on the phone/tablet camera hardware and browser.",
+  "sha256": {
+    "index.html": "27dbe1f7eb3c3f14b967105b89d6f43fbe2b42d0a9a30f95455904309aacee68",
+    "verify_camera_runtime.js": "a90c55d90f1b135c18f083197d9d520f035a420f7a0f4fea79023129aab71a19",
+    "grading_vision_engine.js": "e4842541299abbfaa84931979038d309800aae066060f2ffa5f2a32cc2c91a7f",
+    "market_public_crosscheck.py": "5bcc3df35ebfd27b9a91ac922ea678241c08360114acd8125b45800a7e387af7",
+    "ebay_grader_learning.py": "3e4020de00758768948eab6d69efa375e52b084af7b3645b1e590e469fa31eff"
+  }
+}

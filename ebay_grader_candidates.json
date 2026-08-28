@@ -1,0 +1,13 @@
+{
+  "version": 1,
+  "source": "eBay Browse API",
+  "policy": {
+    "graded_condition_id": "2750",
+    "seller_metadata_is_not_official_grade": true,
+    "certification_verification_required_before_training": true,
+    "slab_images_kept_separate_from_raw_user_photos": true,
+    "same_card_artwork_grouped_for_leakage_safe_validation": true
+  },
+  "counts": {"total": 0, "company": {"PSA": 0, "BGS": 0, "CGC": 0, "TAG": 0, "BRG": 0}, "game": {"pokemon": 0, "onepiece": 0, "naruto": 0, "unknown": 0}},
+  "items": []
+}

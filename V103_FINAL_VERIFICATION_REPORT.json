@@ -1,0 +1,42 @@
+{
+  "build": "TCG_Grader_v103_COLLECTORY_KREAM_CROSSCHECK_2026-08-28",
+  "ok": true,
+  "successful": 3,
+  "failed": 0,
+  "checks": [
+    {
+      "name": "v103_market_source_tests",
+      "ok": true,
+      "detail": "8 passed / 0 failed"
+    },
+    {
+      "name": "v102_regression_suite",
+      "ok": true,
+      "detail": "11 passed / 0 failed"
+    },
+    {
+      "name": "service_worker_cache_bump",
+      "ok": true,
+      "detail": "v103 cache id"
+    }
+  ],
+  "market_policy": {
+    "sources": [
+      "Collectory",
+      "KREAM"
+    ],
+    "automatic_update_integration": true,
+    "public_html_only": true,
+    "login_private_api_or_bypass": false,
+    "match_priority": [
+      "card_number",
+      "product_code",
+      "card_name"
+    ],
+    "crosscheck_values_do_not_overwrite_primary_price": true,
+    "temporary_source_failure_preserves_previous_observation": true,
+    "rotating_targets_per_cycle": 4,
+    "default_source_timeout_seconds": 12,
+    "ui_shows_crosscheck_values": true
+  }
+}

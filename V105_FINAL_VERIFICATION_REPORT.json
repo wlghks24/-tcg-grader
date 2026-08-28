@@ -1,0 +1,63 @@
+{
+  "version": "v105-social-google-event-discovery",
+  "generated_at_kst": "2026-08-28T17:14:57+09:00",
+  "ok": true,
+  "summary": {
+    "new_social_source_tests": {
+      "passed": 12,
+      "failed": 0
+    },
+    "feature_contract": {
+      "implemented": 24,
+      "total": 24,
+      "failed": 0
+    },
+    "market_source_regression": {
+      "passed": 8,
+      "failed": 0
+    },
+    "ebay_provider_learning_regression": {
+      "passed": 11,
+      "failed": 0
+    },
+    "vision_calibration_regression": {
+      "passed": 8,
+      "failed": 0
+    },
+    "fault_healing_regression": {
+      "passed": 5,
+      "failed": 0
+    },
+    "v99_cross_runtime": {
+      "vectors": 6051,
+      "comparisons": 18153,
+      "ok": true
+    },
+    "browser_runtime": {
+      "ok": true
+    },
+    "camera_runtime": {
+      "ok": true
+    },
+    "service_worker_runtime": {
+      "ok": true
+    },
+    "python_compileall": {
+      "ok": true
+    }
+  },
+  "implemented": [
+    "Pokemon/ONE PIECE/NARUTO x KR/JP/US event/collaboration/movie/promo candidate discovery",
+    "Google News baseline discovery without API credentials",
+    "X recent-search integration via X_BEARER_TOKEN when configured",
+    "Instagram professional-account integration via Meta credentials when configured",
+    "legacy Google Custom Search optional integration via GOOGLE_CSE_API_KEY + GOOGLE_CSE_ID",
+    "official-site-linked social account registry and official-social labeling",
+    "cross-source duplicate merge and confidence labels",
+    "candidate quarantine: social/search result cannot overwrite official promo_events.json by itself",
+    "network-first PWA refresh for social_event_candidates.json with offline fallback",
+    "normalized legacy Windows batch filenames and removed one line-ending-only duplicate"
+  ],
+  "live_credential_note": "X/Instagram live API calls were not executed because no user credentials were supplied; API request/response handling, official-label policy, secret redaction, integration execution count and fallback behavior were verified with deterministic mocks.",
+  "google_note": "Google News is the no-key baseline. Google Custom Search remains optional for existing credentials only."
+}

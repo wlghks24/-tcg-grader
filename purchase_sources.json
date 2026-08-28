@@ -1,81 +1,5037 @@
 {
-  "version": 2,
-  "updated_at": "2026-08-22T14:30:00+09:00",
-  "notice": "검색 연결 목록입니다. 재고·가격·정품 여부·배송 가능 국가는 각 판매처에서 최종 확인하세요.",
+  "version": "46",
+  "updated_at": "2026-08-26T10:47:11+00:00",
+  "notice": "포켓몬·원피스·나루토 온라인/오프라인 구매처와 후기·리뷰 신호를 분리합니다. 현재 위치는 저장하지 않으며 실제 재고는 판매처에서 최종 확인하세요.",
   "sources": [
-    {"name":"포켓몬 카드 게임 코리아 제품","region":"KR","games":["Pokemon"],"type":"official","url":"https://pokemoncard.co.kr/card/category/product","note":"한국 공식 제품·출시정보"},
-    {"name":"원피스 카드게임 코리아","region":"KR","games":["ONE PIECE"],"type":"official","url":"https://onepiece-cardgame.kr/","note":"한국 공식 제품·행사 정보"},
-    {"name":"나루토 카드게임 공식","region":"KR","games":["NARUTO"],"type":"official","url":"https://www.naruto-cardgame.com/asia-en/","note":"아시아 공식 출시정보·판매 안내 확인"},
-    {"name":"네이버쇼핑","region":"KR","games":["Pokemon","ONE PIECE","NARUTO"],"type":"marketplace","url_template":"https://search.shopping.naver.com/search/all?query={query}","note":"판매자·정품·국가판 표기를 비교"},
-    {"name":"쿠팡","region":"KR","games":["Pokemon","ONE PIECE","NARUTO"],"type":"marketplace","url_template":"https://www.coupang.com/np/search?q={query}","note":"판매자와 해외판 표기를 확인"},
-    {"name":"번개장터","region":"KR","games":["Pokemon","ONE PIECE","NARUTO"],"type":"used","url_template":"https://m.bunjang.co.kr/search/products?q={query}","note":"중고·개인거래, 실물과 판매자 검증 필요"},
-    {"name":"네이버 블로그","region":"KR","games":["Pokemon","ONE PIECE","NARUTO"],"type":"blog","url_template":"https://search.naver.com/search.naver?where=blog&query={query}","note":"입고·후기 참고용, 판매 재고 보장 아님"},
-
-    {"name":"포켓몬 카드 공식 제품","region":"JP","games":["Pokemon"],"type":"official","url":"https://www.pokemon-card.com/products/","note":"일본 공식 제품·출시정보"},
-    {"name":"포켓몬센터 온라인","region":"JP","games":["Pokemon"],"type":"official","url":"https://www.pokemoncenter-online.com/","note":"일본 공식 온라인 스토어"},
-    {"name":"원피스 카드게임 공식","region":"JP","games":["ONE PIECE"],"type":"official","url":"https://www.onepiece-cardgame.com/products/","note":"일본 공식 제품정보"},
-    {"name":"나루토 카드게임 공식","region":"JP","games":["NARUTO"],"type":"official","url":"https://www.naruto-cardgame.com/asia-en/","note":"공식 출시·지역정보 확인"},
-    {"name":"Amazon 일본","region":"JP","games":["Pokemon","ONE PIECE","NARUTO"],"type":"marketplace","url_template":"https://www.amazon.co.jp/s?k={query}","note":"판매·배송 주체와 정품 여부 확인"},
-    {"name":"라쿠텐시장","region":"JP","games":["Pokemon","ONE PIECE","NARUTO"],"type":"marketplace","url_template":"https://search.rakuten.co.jp/search/mall/{query}/","note":"일본 판매점 비교 검색"},
-    {"name":"메루카리 일본","region":"JP","games":["Pokemon","ONE PIECE","NARUTO"],"type":"used","url_template":"https://jp.mercari.com/search?keyword={query}","note":"중고·개인거래, 상태와 진품 검증 필요"},
-    {"name":"Yahoo! JAPAN 검색","region":"JP","games":["Pokemon","ONE PIECE","NARUTO"],"type":"blog","url_template":"https://search.yahoo.co.jp/search?p={query}","note":"상점·블로그·입고정보 통합 참고"},
-
-    {"name":"Pokémon Center US","region":"US","games":["Pokemon"],"type":"official","url":"https://www.pokemoncenter.com/category/trading-card-game","note":"미국 공식 온라인 스토어"},
-    {"name":"Pokémon 공식 판매점 찾기","region":"US","games":["Pokemon"],"type":"official","url":"https://events.pokemon.com/EventLocator","note":"미국 공식 취급점·행사 위치 검색"},
-    {"name":"One Piece Card Game 공식","region":"US","games":["ONE PIECE"],"type":"official","url":"https://en.onepiece-cardgame.com/products/","note":"영문판 공식 제품·스토어 안내"},
-    {"name":"Naruto Card Game 공식","region":"US","games":["NARUTO"],"type":"official","url":"https://www.naruto-cardgame.com/asia-en/","note":"공식 글로벌 출시정보 확인"},
-    {"name":"TCGplayer","region":"US","games":["Pokemon","ONE PIECE","NARUTO"],"type":"marketplace","url_template":"https://www.tcgplayer.com/search/all/product?q={query}&view=grid","note":"TCG 전문 마켓, 판본·상태·판매자 확인"},
-    {"name":"eBay","region":"US","games":["Pokemon","ONE PIECE","NARUTO"],"type":"used","url_template":"https://www.ebay.com/sch/i.html?_nkw={query}","note":"신품·중고 혼합, 판매완료·평점 확인"},
-    {"name":"Amazon 미국","region":"US","games":["Pokemon","ONE PIECE","NARUTO"],"type":"marketplace","url_template":"https://www.amazon.com/s?k={query}","note":"판매·배송 주체와 정품 여부 확인"},
-    {"name":"Google 쇼핑·블로그 검색","region":"US","games":["Pokemon","ONE PIECE","NARUTO"],"type":"blog","url_template":"https://www.google.com/search?q={query}","note":"상점·블로그·입고정보 참고용"},
-
-    {"name":"네이버지도 주변 판매점","region":"KR","games":["Pokemon","ONE PIECE","NARUTO"],"type":"map","channel":"offline","url_template":"https://map.naver.com/p/search/{query}","note":"현 위치 주변 매장 검색 · 방문 전 전화로 재고 확인"},
-    {"name":"카카오맵 주변 판매점","region":"KR","games":["Pokemon","ONE PIECE","NARUTO"],"type":"map","channel":"offline","url_template":"https://map.kakao.com/?q={query}","note":"한국 오프라인 매장 위치·전화번호 확인"},
-    {"name":"포켓몬 공인 카드샵 안내","region":"KR","games":["Pokemon"],"type":"official","channel":"offline","url":"https://pokemoncard.co.kr/card/225","note":"한국 공식 공인 카드샵 점포 안내"},
-    {"name":"원피스 공인·취급 점포","region":"KR","games":["ONE PIECE"],"type":"official","channel":"offline","url":"https://www.onepiece-cardgame.kr/shoplist.do","note":"한국 공식 원피스 카드게임 점포 검색"},
-    {"name":"Google 지도 일본 매장","region":"JP","games":["Pokemon","ONE PIECE","NARUTO"],"type":"map","channel":"offline","url_template":"https://www.google.com/maps/search/{query}","note":"일본 현지 카드숍 지도 검색 · 영업시간 확인"},
-    {"name":"포켓몬센터 일본 매장","region":"JP","games":["Pokemon"],"type":"official","channel":"offline","url":"https://www.pokemon.co.jp/shop/","note":"일본 공식 포켓몬센터·스토어 매장 안내"},
-    {"name":"원피스 공식 점포·행사","region":"JP","games":["ONE PIECE"],"type":"official","channel":"offline","url":"https://www.onepiece-cardgame.com/events/","note":"일본 공식 행사·취급점 정보 확인"},
-    {"name":"Google Maps 주변 판매점","region":"US","games":["Pokemon","ONE PIECE","NARUTO"],"type":"map","channel":"offline","url_template":"https://www.google.com/maps/search/{query}","note":"미국 주변 카드숍 검색 · 방문 전 재고 확인"},
-    {"name":"Pokémon 공식 매장 찾기","region":"US","games":["Pokemon"],"type":"official","channel":"offline","url":"https://events.pokemon.com/EventLocator","note":"미국 공식 Pokémon 취급점·행사 위치 검색"},
-    {"name":"Bandai TCG+ 매장·행사","region":"US","games":["ONE PIECE"],"type":"official","channel":"offline","url":"https://www.bandai-tcg-plus.com/","note":"공식 앱·웹에서 원피스 취급점과 행사 검색"}
-    ,{"name":"11번가","region":"KR","games":["Pokemon","ONE PIECE","NARUTO"],"type":"marketplace","url_template":"https://search.11st.co.kr/Search.tmall?kwd={query}","note":"국내·해외 판매자와 판본 비교"}
-    ,{"name":"G마켓","region":"KR","games":["Pokemon","ONE PIECE","NARUTO"],"type":"marketplace","url_template":"https://browse.gmarket.co.kr/search?keyword={query}","note":"판매자·배송·국가판 표기 확인"}
-    ,{"name":"옥션","region":"KR","games":["Pokemon","ONE PIECE","NARUTO"],"type":"marketplace","url_template":"https://browse.auction.co.kr/search?keyword={query}","note":"신품·해외구매 상품 비교"}
-    ,{"name":"롯데ON","region":"KR","games":["Pokemon","ONE PIECE","NARUTO"],"type":"marketplace","url_template":"https://www.lotteon.com/search/search/search.ecn?render=search&platform=pc&q={query}","note":"롯데 계열 온라인 판매 검색"}
-    ,{"name":"SSG.COM","region":"KR","games":["Pokemon","ONE PIECE","NARUTO"],"type":"marketplace","url_template":"https://www.ssg.com/search.ssg?target=all&query={query}","note":"신세계·이마트 계열 상품 검색"}
-    ,{"name":"KREAM","region":"KR","games":["Pokemon","ONE PIECE"],"type":"used","url_template":"https://kream.co.kr/search?keyword={query}","note":"검수·거래 상품 검색, 체결가와 판매가 구분"}
-    ,{"name":"중고나라","region":"KR","games":["Pokemon","ONE PIECE","NARUTO"],"type":"used","url_template":"https://web.joongna.com/search/{query}","note":"개인거래 상태·판매자 확인"}
-    ,{"name":"당근","region":"KR","games":["Pokemon","ONE PIECE","NARUTO"],"type":"used","url_template":"https://www.daangn.com/kr/buy-sell/?search={query}","note":"지역 중고거래, 앱에서 위치·판매자 확인"}
-    ,{"name":"Google 쇼핑 한국","region":"KR","games":["Pokemon","ONE PIECE","NARUTO"],"type":"blog","url_template":"https://www.google.com/search?tbm=shop&q={query}","note":"여러 온라인 판매처 가격 비교"}
-    ,{"name":"롯데마트·토이저러스 지도","region":"KR","games":["Pokemon","ONE PIECE"],"type":"map","channel":"offline","url_template":"https://map.naver.com/p/search/롯데마트 토이저러스 {query}","note":"매장 위치 검색 · 카드 입점과 재고는 전화 확인"}
-    ,{"name":"이마트 지도","region":"KR","games":["Pokemon","ONE PIECE"],"type":"map","channel":"offline","url_template":"https://map.naver.com/p/search/이마트 {query}","note":"주변 이마트 위치 검색 · 방문 전 재고 확인"}
-    ,{"name":"홈플러스 지도","region":"KR","games":["Pokemon","ONE PIECE"],"type":"map","channel":"offline","url_template":"https://map.naver.com/p/search/홈플러스 {query}","note":"주변 매장 검색 · 점포별 취급 여부 확인"}
-
-    ,{"name":"Yahoo! 쇼핑 일본","region":"JP","games":["Pokemon","ONE PIECE","NARUTO"],"type":"marketplace","url_template":"https://shopping.yahoo.co.jp/search?p={query}","note":"일본 온라인 판매점 가격 비교"}
-    ,{"name":"요도바시카메라","region":"JP","games":["Pokemon","ONE PIECE"],"type":"marketplace","url_template":"https://www.yodobashi.com/?word={query}","note":"온라인·점포 재고 표시는 사이트에서 확인"}
-    ,{"name":"빅카메라","region":"JP","games":["Pokemon","ONE PIECE"],"type":"marketplace","url_template":"https://www.biccamera.com/bc/category/?q={query}","note":"온라인 판매와 일본 점포 검색"}
-    ,{"name":"스루가야","region":"JP","games":["Pokemon","ONE PIECE","NARUTO"],"type":"used","url_template":"https://www.suruga-ya.jp/search?search_word={query}","note":"신품·중고 혼합, 상태등급 확인"}
-    ,{"name":"카드러시","region":"JP","games":["Pokemon","ONE PIECE"],"type":"marketplace","url_template":"https://www.google.com/search?q=site%3Acardrush-pokemon.jp+{query}","note":"일본 TCG 전문점 상품 검색"}
-    ,{"name":"드래곤스타","region":"JP","games":["Pokemon","ONE PIECE"],"type":"marketplace","url_template":"https://www.google.com/search?q=site%3Adorasuta.jp+{query}","note":"일본 카드 전문점 상품·점포 검색"}
-    ,{"name":"BOOKOFF","region":"JP","games":["Pokemon","ONE PIECE","NARUTO"],"type":"used","url_template":"https://shopping.bookoff.co.jp/search/keyword/{query}","note":"일본 중고 상품 상태와 점포 재고 확인"}
-    ,{"name":"만다라케","region":"JP","games":["Pokemon","ONE PIECE","NARUTO"],"type":"used","url_template":"https://order.mandarake.co.jp/order/listPage/list?keyword={query}&lang=ko", "note":"수집품·중고 카드 검색"}
-    ,{"name":"Yahoo! 옥션 일본","region":"JP","games":["Pokemon","ONE PIECE","NARUTO"],"type":"used","url_template":"https://auctions.yahoo.co.jp/search/search?p={query}","note":"경매·중고 거래, 판매자와 상태 확인"}
-    ,{"name":"일본 카드숍 지도","region":"JP","games":["Pokemon","ONE PIECE","NARUTO"],"type":"map","channel":"offline","url_template":"https://www.google.com/maps/search/トレカショップ+{query}","note":"주변 TCG 전문점과 영업시간 검색"}
-
-    ,{"name":"Target","region":"US","games":["Pokemon","ONE PIECE"],"type":"marketplace","url_template":"https://www.target.com/s?searchTerm={query}","note":"온라인·점포 재고와 구매 제한 확인"}
-    ,{"name":"Walmart","region":"US","games":["Pokemon","ONE PIECE"],"type":"marketplace","url_template":"https://www.walmart.com/search?q={query}","note":"판매 주체가 Walmart인지 제3자인지 확인"}
-    ,{"name":"Best Buy","region":"US","games":["Pokemon","ONE PIECE"],"type":"marketplace","url_template":"https://www.bestbuy.com/site/searchpage.jsp?st={query}","note":"온라인·매장수령 재고 확인"}
-    ,{"name":"GameStop","region":"US","games":["Pokemon","ONE PIECE"],"type":"marketplace","url_template":"https://www.gamestop.com/search/?q={query}","note":"온라인·오프라인 점포 재고 확인"}
-    ,{"name":"Barnes & Noble","region":"US","games":["Pokemon","ONE PIECE"],"type":"marketplace","url_template":"https://www.barnesandnoble.com/s/{query}","note":"매장수령 가능 여부 확인"}
-    ,{"name":"Costco","region":"US","games":["Pokemon"],"type":"marketplace","url_template":"https://www.costco.com/CatalogSearch?keyword={query}","note":"회원 판매·묶음상품 재고 확인"}
-    ,{"name":"Sam's Club","region":"US","games":["Pokemon"],"type":"marketplace","url_template":"https://www.samsclub.com/s/{query}","note":"회원제 묶음상품 검색"}
-    ,{"name":"Troll and Toad","region":"US","games":["Pokemon","ONE PIECE","NARUTO"],"type":"marketplace","url_template":"https://www.trollandtoad.com/category.php?selected-cat=0&search-words={query}","note":"TCG 전문몰, 카드 상태·판본 확인"}
-    ,{"name":"Dave & Adam's","region":"US","games":["Pokemon","ONE PIECE"],"type":"marketplace","url_template":"https://www.dacardworld.com/search?Search={query}","note":"밀봉상품·싱글카드 검색"}
-    ,{"name":"FairFetched 재고 추적","region":"US","games":["Pokemon","ONE PIECE"],"type":"tracker","url":"https://www.fairfetched.com/","note":"여러 대형 판매점의 온라인·점포 재고 참고, 독립 서비스"}
-    ,{"name":"TYPA 재입고 알림","region":"US","games":["Pokemon"],"type":"tracker","url":"https://www.typa.app/brands/pokemon","note":"미국 판매점 재입고 알림, 독립 앱 서비스"}
-    ,{"name":"Target 매장 찾기","region":"US","games":["Pokemon","ONE PIECE"],"type":"map","channel":"offline","url":"https://www.target.com/store-locator/find-stores","note":"가까운 Target 검색 · 방문 전 카드 재고 확인"}
-    ,{"name":"Walmart 매장 찾기","region":"US","games":["Pokemon","ONE PIECE"],"type":"map","channel":"offline","url":"https://www.walmart.com/store/finder","note":"가까운 Walmart 검색 · 점포 재고 확인"}
-    ,{"name":"GameStop 매장 찾기","region":"US","games":["Pokemon","ONE PIECE"],"type":"map","channel":"offline","url":"https://www.gamestop.com/stores","note":"가까운 GameStop과 영업시간 확인"}
-  ]
+    {
+      "name": "포켓몬 카드 게임 코리아 제품",
+      "region": "KR",
+      "games": [
+        "Pokemon"
+      ],
+      "type": "official",
+      "url": "https://pokemoncard.co.kr/card/category/product",
+      "note": "한국 공식 제품·출시정보",
+      "link_status": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인",
+      "last_checked_at": "2026-08-26T10:47:11+00:00",
+      "link_checked_at": "2026-08-26T10:47:11+00:00",
+      "retailer_category": "general",
+      "link_statuses": {
+        "url": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인"
+      }
+    },
+    {
+      "name": "원피스 카드게임 코리아",
+      "region": "KR",
+      "games": [
+        "ONE PIECE"
+      ],
+      "type": "official",
+      "url": "https://onepiece-cardgame.kr/",
+      "note": "한국 공식 제품·행사 정보",
+      "link_status": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인",
+      "last_checked_at": "2026-08-26T10:47:11+00:00",
+      "link_checked_at": "2026-08-26T10:47:11+00:00",
+      "retailer_category": "general",
+      "link_statuses": {
+        "url": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인"
+      }
+    },
+    {
+      "name": "나루토 카드게임 공식",
+      "region": "KR",
+      "games": [
+        "NARUTO"
+      ],
+      "type": "official",
+      "url": "https://www.naruto-cardgame.com/asia-en/",
+      "note": "아시아 공식 출시정보·판매 안내 확인",
+      "link_status": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인",
+      "last_checked_at": "2026-08-26T10:47:11+00:00",
+      "link_checked_at": "2026-08-26T10:47:11+00:00",
+      "retailer_category": "general",
+      "link_statuses": {
+        "url": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인"
+      }
+    },
+    {
+      "name": "네이버쇼핑",
+      "region": "KR",
+      "games": [
+        "Pokemon",
+        "ONE PIECE",
+        "NARUTO"
+      ],
+      "type": "marketplace",
+      "url_template": "https://search.shopping.naver.com/search/all?query={query}",
+      "note": "판매자·정품·국가판 표기를 비교",
+      "link_status": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인",
+      "last_checked_at": "2026-08-26T10:47:11+00:00",
+      "link_checked_at": "2026-08-26T10:47:11+00:00",
+      "retailer_category": "general",
+      "link_statuses": {
+        "url_template": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인"
+      }
+    },
+    {
+      "name": "쿠팡",
+      "region": "KR",
+      "games": [
+        "Pokemon",
+        "ONE PIECE",
+        "NARUTO"
+      ],
+      "type": "marketplace",
+      "url_template": "https://www.coupang.com/np/search?q={query}",
+      "note": "판매자와 해외판 표기를 확인",
+      "link_status": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인",
+      "last_checked_at": "2026-08-26T10:47:11+00:00",
+      "link_checked_at": "2026-08-26T10:47:11+00:00",
+      "retailer_category": "general",
+      "link_statuses": {
+        "url_template": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인"
+      }
+    },
+    {
+      "name": "번개장터",
+      "region": "KR",
+      "games": [
+        "Pokemon",
+        "ONE PIECE",
+        "NARUTO"
+      ],
+      "type": "used",
+      "url_template": "https://m.bunjang.co.kr/search/products?q={query}",
+      "note": "중고·개인거래, 실물과 판매자 검증 필요",
+      "link_status": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인",
+      "last_checked_at": "2026-08-26T10:47:11+00:00",
+      "link_checked_at": "2026-08-26T10:47:11+00:00",
+      "retailer_category": "general",
+      "link_statuses": {
+        "url_template": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인"
+      }
+    },
+    {
+      "name": "네이버 블로그",
+      "region": "KR",
+      "games": [
+        "Pokemon",
+        "ONE PIECE",
+        "NARUTO"
+      ],
+      "type": "blog",
+      "url_template": "https://search.naver.com/search.naver?where=blog&query={query}",
+      "note": "입고·후기 참고용, 판매 재고 보장 아님",
+      "link_status": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인",
+      "last_checked_at": "2026-08-26T10:47:11+00:00",
+      "link_checked_at": "2026-08-26T10:47:11+00:00",
+      "retailer_category": "general",
+      "link_statuses": {
+        "url_template": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인"
+      }
+    },
+    {
+      "name": "포켓몬 카드 공식 제품",
+      "region": "JP",
+      "games": [
+        "Pokemon"
+      ],
+      "type": "official",
+      "url": "https://www.pokemon-card.com/products/",
+      "note": "일본 공식 제품·출시정보",
+      "link_status": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인",
+      "last_checked_at": "2026-08-26T10:47:11+00:00",
+      "link_checked_at": "2026-08-26T10:47:11+00:00",
+      "retailer_category": "general",
+      "link_statuses": {
+        "url": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인"
+      }
+    },
+    {
+      "name": "포켓몬센터 온라인",
+      "region": "JP",
+      "games": [
+        "Pokemon"
+      ],
+      "type": "official",
+      "url": "https://www.pokemoncenter-online.com/",
+      "note": "일본 공식 온라인 스토어",
+      "link_status": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인",
+      "last_checked_at": "2026-08-26T10:47:11+00:00",
+      "link_checked_at": "2026-08-26T10:47:11+00:00",
+      "retailer_category": "general",
+      "link_statuses": {
+        "url": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인"
+      }
+    },
+    {
+      "name": "원피스 카드게임 공식",
+      "region": "JP",
+      "games": [
+        "ONE PIECE"
+      ],
+      "type": "official",
+      "url": "https://www.onepiece-cardgame.com/products/",
+      "note": "일본 공식 제품정보",
+      "link_status": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인",
+      "last_checked_at": "2026-08-26T10:47:11+00:00",
+      "link_checked_at": "2026-08-26T10:47:11+00:00",
+      "retailer_category": "general",
+      "link_statuses": {
+        "url": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인"
+      }
+    },
+    {
+      "name": "나루토 카드게임 공식",
+      "region": "JP",
+      "games": [
+        "NARUTO"
+      ],
+      "type": "official",
+      "url": "https://www.naruto-cardgame.com/asia-en/",
+      "note": "공식 출시·지역정보 확인",
+      "link_status": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인",
+      "last_checked_at": "2026-08-26T10:47:11+00:00",
+      "link_checked_at": "2026-08-26T10:47:11+00:00",
+      "retailer_category": "general",
+      "link_statuses": {
+        "url": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인"
+      }
+    },
+    {
+      "name": "Amazon 일본",
+      "region": "JP",
+      "games": [
+        "Pokemon",
+        "ONE PIECE",
+        "NARUTO"
+      ],
+      "type": "marketplace",
+      "url_template": "https://www.amazon.co.jp/s?k={query}",
+      "note": "판매·배송 주체와 정품 여부 확인",
+      "link_status": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인",
+      "last_checked_at": "2026-08-26T10:47:11+00:00",
+      "link_checked_at": "2026-08-26T10:47:11+00:00",
+      "retailer_category": "general",
+      "link_statuses": {
+        "url_template": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인"
+      }
+    },
+    {
+      "name": "라쿠텐시장",
+      "region": "JP",
+      "games": [
+        "Pokemon",
+        "ONE PIECE",
+        "NARUTO"
+      ],
+      "type": "marketplace",
+      "url_template": "https://search.rakuten.co.jp/search/mall/{query}/",
+      "note": "일본 판매점 비교 검색",
+      "link_status": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인",
+      "last_checked_at": "2026-08-26T10:47:11+00:00",
+      "link_checked_at": "2026-08-26T10:47:11+00:00",
+      "retailer_category": "general",
+      "link_statuses": {
+        "url_template": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인"
+      }
+    },
+    {
+      "name": "메루카리 일본",
+      "region": "JP",
+      "games": [
+        "Pokemon",
+        "ONE PIECE",
+        "NARUTO"
+      ],
+      "type": "used",
+      "url_template": "https://jp.mercari.com/search?keyword={query}",
+      "note": "중고·개인거래, 상태와 진품 검증 필요",
+      "link_status": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인",
+      "last_checked_at": "2026-08-26T10:47:11+00:00",
+      "link_checked_at": "2026-08-26T10:47:11+00:00",
+      "retailer_category": "general",
+      "link_statuses": {
+        "url_template": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인"
+      }
+    },
+    {
+      "name": "Yahoo! JAPAN 검색",
+      "region": "JP",
+      "games": [
+        "Pokemon",
+        "ONE PIECE",
+        "NARUTO"
+      ],
+      "type": "blog",
+      "url_template": "https://search.yahoo.co.jp/search?p={query}",
+      "note": "상점·블로그·입고정보 통합 참고",
+      "link_status": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인",
+      "last_checked_at": "2026-08-26T10:47:11+00:00",
+      "link_checked_at": "2026-08-26T10:47:11+00:00",
+      "retailer_category": "general",
+      "link_statuses": {
+        "url_template": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인"
+      }
+    },
+    {
+      "name": "Pokémon Center US",
+      "region": "US",
+      "games": [
+        "Pokemon"
+      ],
+      "type": "official",
+      "url": "https://www.pokemoncenter.com/category/trading-card-game",
+      "note": "미국 공식 온라인 스토어",
+      "link_status": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인",
+      "last_checked_at": "2026-08-26T10:47:11+00:00",
+      "link_checked_at": "2026-08-26T10:47:11+00:00",
+      "retailer_category": "general",
+      "link_statuses": {
+        "url": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인"
+      }
+    },
+    {
+      "name": "Pokémon 공식 판매점 찾기",
+      "region": "US",
+      "games": [
+        "Pokemon"
+      ],
+      "type": "official",
+      "url": "https://events.pokemon.com/EventLocator",
+      "note": "미국 공식 취급점·행사 위치 검색",
+      "link_status": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인",
+      "last_checked_at": "2026-08-26T10:47:11+00:00",
+      "link_checked_at": "2026-08-26T10:47:11+00:00",
+      "retailer_category": "general",
+      "link_statuses": {
+        "url": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인"
+      }
+    },
+    {
+      "name": "One Piece Card Game 공식",
+      "region": "US",
+      "games": [
+        "ONE PIECE"
+      ],
+      "type": "official",
+      "url": "https://en.onepiece-cardgame.com/products/",
+      "note": "영문판 공식 제품·스토어 안내",
+      "link_status": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인",
+      "last_checked_at": "2026-08-26T10:47:11+00:00",
+      "link_checked_at": "2026-08-26T10:47:11+00:00",
+      "retailer_category": "general",
+      "link_statuses": {
+        "url": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인"
+      }
+    },
+    {
+      "name": "Naruto Card Game 공식",
+      "region": "US",
+      "games": [
+        "NARUTO"
+      ],
+      "type": "official",
+      "url": "https://www.naruto-cardgame.com/asia-en/",
+      "note": "공식 글로벌 출시정보 확인",
+      "link_status": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인",
+      "last_checked_at": "2026-08-26T10:47:11+00:00",
+      "link_checked_at": "2026-08-26T10:47:11+00:00",
+      "retailer_category": "general",
+      "link_statuses": {
+        "url": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인"
+      }
+    },
+    {
+      "name": "TCGplayer",
+      "region": "US",
+      "games": [
+        "Pokemon",
+        "ONE PIECE",
+        "NARUTO"
+      ],
+      "type": "marketplace",
+      "url_template": "https://www.tcgplayer.com/search/all/product?q={query}&view=grid",
+      "note": "TCG 전문 마켓, 판본·상태·판매자 확인",
+      "link_status": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인",
+      "last_checked_at": "2026-08-26T10:47:11+00:00",
+      "link_checked_at": "2026-08-26T10:47:11+00:00",
+      "retailer_category": "general",
+      "link_statuses": {
+        "url_template": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인"
+      }
+    },
+    {
+      "name": "eBay",
+      "region": "US",
+      "games": [
+        "Pokemon",
+        "ONE PIECE",
+        "NARUTO"
+      ],
+      "type": "used",
+      "url_template": "https://www.ebay.com/sch/i.html?_nkw={query}",
+      "note": "신품·중고 혼합, 판매완료·평점 확인",
+      "link_status": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인",
+      "last_checked_at": "2026-08-26T10:47:11+00:00",
+      "link_checked_at": "2026-08-26T10:47:11+00:00",
+      "retailer_category": "general",
+      "link_statuses": {
+        "url_template": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인"
+      }
+    },
+    {
+      "name": "Amazon 미국",
+      "region": "US",
+      "games": [
+        "Pokemon",
+        "ONE PIECE",
+        "NARUTO"
+      ],
+      "type": "marketplace",
+      "url_template": "https://www.amazon.com/s?k={query}",
+      "note": "판매·배송 주체와 정품 여부 확인",
+      "link_status": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인",
+      "last_checked_at": "2026-08-26T10:47:11+00:00",
+      "link_checked_at": "2026-08-26T10:47:11+00:00",
+      "retailer_category": "general",
+      "link_statuses": {
+        "url_template": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인"
+      }
+    },
+    {
+      "name": "Google 쇼핑·블로그 검색",
+      "region": "US",
+      "games": [
+        "Pokemon",
+        "ONE PIECE",
+        "NARUTO"
+      ],
+      "type": "blog",
+      "url_template": "https://www.google.com/search?q={query}",
+      "note": "상점·블로그·입고정보 참고용",
+      "link_status": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인",
+      "last_checked_at": "2026-08-26T10:47:11+00:00",
+      "link_checked_at": "2026-08-26T10:47:11+00:00",
+      "retailer_category": "general",
+      "link_statuses": {
+        "url_template": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인"
+      }
+    },
+    {
+      "name": "네이버지도 주변 판매점",
+      "region": "KR",
+      "games": [
+        "Pokemon",
+        "ONE PIECE",
+        "NARUTO"
+      ],
+      "type": "map",
+      "channel": "offline",
+      "url_template": "https://map.naver.com/p/search/{query}",
+      "note": "현 위치 주변 매장 검색 · 방문 전 전화로 재고 확인",
+      "link_status": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인",
+      "last_checked_at": "2026-08-26T10:47:11+00:00",
+      "link_checked_at": "2026-08-26T10:47:11+00:00",
+      "retailer_category": "general",
+      "inventory_status": "TCG 취급·재고 미확인 · 방문 전 공식 매장/전화 확인",
+      "inventory_checked_at": null,
+      "inventory_verified": false,
+      "link_statuses": {
+        "url_template": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인"
+      }
+    },
+    {
+      "name": "카카오맵 주변 판매점",
+      "region": "KR",
+      "games": [
+        "Pokemon",
+        "ONE PIECE",
+        "NARUTO"
+      ],
+      "type": "map",
+      "channel": "offline",
+      "url_template": "https://map.kakao.com/?q={query}",
+      "note": "한국 오프라인 매장 위치·전화번호 확인",
+      "link_status": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인",
+      "last_checked_at": "2026-08-26T10:47:11+00:00",
+      "link_checked_at": "2026-08-26T10:47:11+00:00",
+      "retailer_category": "general",
+      "inventory_status": "TCG 취급·재고 미확인 · 방문 전 공식 매장/전화 확인",
+      "inventory_checked_at": null,
+      "inventory_verified": false,
+      "link_statuses": {
+        "url_template": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인"
+      }
+    },
+    {
+      "name": "포켓몬 공인 카드샵 안내",
+      "region": "KR",
+      "games": [
+        "Pokemon"
+      ],
+      "type": "official",
+      "channel": "offline",
+      "url": "https://pokemoncard.co.kr/card/225",
+      "note": "한국 공식 공인 카드샵 점포 안내",
+      "link_status": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인",
+      "last_checked_at": "2026-08-26T10:47:11+00:00",
+      "link_checked_at": "2026-08-26T10:47:11+00:00",
+      "retailer_category": "cardshop",
+      "inventory_status": "TCG 취급·재고 미확인 · 방문 전 공식 매장/전화 확인",
+      "inventory_checked_at": null,
+      "inventory_verified": false,
+      "link_statuses": {
+        "url": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인"
+      }
+    },
+    {
+      "name": "원피스 공인·취급 점포",
+      "region": "KR",
+      "games": [
+        "ONE PIECE"
+      ],
+      "type": "official",
+      "channel": "offline",
+      "url": "https://www.onepiece-cardgame.kr/shoplist.do",
+      "note": "한국 공식 원피스 카드게임 점포 검색",
+      "link_status": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인",
+      "last_checked_at": "2026-08-26T10:47:11+00:00",
+      "link_checked_at": "2026-08-26T10:47:11+00:00",
+      "retailer_category": "cardshop",
+      "inventory_status": "TCG 취급·재고 미확인 · 방문 전 공식 매장/전화 확인",
+      "inventory_checked_at": null,
+      "inventory_verified": false,
+      "link_statuses": {
+        "url": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인"
+      }
+    },
+    {
+      "name": "Google 지도 일본 매장",
+      "region": "JP",
+      "games": [
+        "Pokemon",
+        "ONE PIECE",
+        "NARUTO"
+      ],
+      "type": "map",
+      "channel": "offline",
+      "url_template": "https://www.google.com/maps/search/{query}",
+      "note": "일본 현지 카드숍 지도 검색 · 영업시간 확인",
+      "link_status": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인",
+      "last_checked_at": "2026-08-26T10:47:11+00:00",
+      "link_checked_at": "2026-08-26T10:47:11+00:00",
+      "retailer_category": "general",
+      "inventory_status": "TCG 취급·재고 미확인 · 방문 전 공식 매장/전화 확인",
+      "inventory_checked_at": null,
+      "inventory_verified": false,
+      "link_statuses": {
+        "url_template": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인"
+      }
+    },
+    {
+      "name": "포켓몬센터 일본 매장",
+      "region": "JP",
+      "games": [
+        "Pokemon"
+      ],
+      "type": "official",
+      "channel": "offline",
+      "url": "https://www.pokemon.co.jp/shop/",
+      "note": "일본 공식 포켓몬센터·스토어 매장 안내",
+      "link_status": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인",
+      "last_checked_at": "2026-08-26T10:47:11+00:00",
+      "link_checked_at": "2026-08-26T10:47:11+00:00",
+      "retailer_category": "general",
+      "inventory_status": "TCG 취급·재고 미확인 · 방문 전 공식 매장/전화 확인",
+      "inventory_checked_at": null,
+      "inventory_verified": false,
+      "link_statuses": {
+        "url": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인"
+      }
+    },
+    {
+      "name": "원피스 공식 점포·행사",
+      "region": "JP",
+      "games": [
+        "ONE PIECE"
+      ],
+      "type": "official",
+      "channel": "offline",
+      "url": "https://www.onepiece-cardgame.com/events/",
+      "note": "일본 공식 행사·취급점 정보 확인",
+      "link_status": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인",
+      "last_checked_at": "2026-08-26T10:47:11+00:00",
+      "link_checked_at": "2026-08-26T10:47:11+00:00",
+      "retailer_category": "general",
+      "inventory_status": "TCG 취급·재고 미확인 · 방문 전 공식 매장/전화 확인",
+      "inventory_checked_at": null,
+      "inventory_verified": false,
+      "link_statuses": {
+        "url": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인"
+      }
+    },
+    {
+      "name": "Google Maps 주변 판매점",
+      "region": "US",
+      "games": [
+        "Pokemon",
+        "ONE PIECE",
+        "NARUTO"
+      ],
+      "type": "map",
+      "channel": "offline",
+      "url_template": "https://www.google.com/maps/search/{query}",
+      "note": "미국 주변 카드숍 검색 · 방문 전 재고 확인",
+      "link_status": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인",
+      "last_checked_at": "2026-08-26T10:47:11+00:00",
+      "link_checked_at": "2026-08-26T10:47:11+00:00",
+      "retailer_category": "general",
+      "inventory_status": "TCG 취급·재고 미확인 · 방문 전 공식 매장/전화 확인",
+      "inventory_checked_at": null,
+      "inventory_verified": false,
+      "link_statuses": {
+        "url_template": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인"
+      }
+    },
+    {
+      "name": "Pokémon 공식 매장 찾기",
+      "region": "US",
+      "games": [
+        "Pokemon"
+      ],
+      "type": "official",
+      "channel": "offline",
+      "url": "https://events.pokemon.com/EventLocator",
+      "note": "미국 공식 Pokémon 취급점·행사 위치 검색",
+      "link_status": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인",
+      "last_checked_at": "2026-08-26T10:47:11+00:00",
+      "link_checked_at": "2026-08-26T10:47:11+00:00",
+      "retailer_category": "general",
+      "inventory_status": "TCG 취급·재고 미확인 · 방문 전 공식 매장/전화 확인",
+      "inventory_checked_at": null,
+      "inventory_verified": false,
+      "link_statuses": {
+        "url": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인"
+      }
+    },
+    {
+      "name": "Bandai TCG+ 매장·행사",
+      "region": "US",
+      "games": [
+        "ONE PIECE"
+      ],
+      "type": "official",
+      "channel": "offline",
+      "url": "https://www.bandai-tcg-plus.com/",
+      "note": "공식 앱·웹에서 원피스 취급점과 행사 검색",
+      "link_status": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인",
+      "last_checked_at": "2026-08-26T10:47:11+00:00",
+      "link_checked_at": "2026-08-26T10:47:11+00:00",
+      "retailer_category": "general",
+      "inventory_status": "TCG 취급·재고 미확인 · 방문 전 공식 매장/전화 확인",
+      "inventory_checked_at": null,
+      "inventory_verified": false,
+      "link_statuses": {
+        "url": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인"
+      }
+    },
+    {
+      "name": "11번가",
+      "region": "KR",
+      "games": [
+        "Pokemon",
+        "ONE PIECE",
+        "NARUTO"
+      ],
+      "type": "marketplace",
+      "url_template": "https://search.11st.co.kr/Search.tmall?kwd={query}",
+      "note": "국내·해외 판매자와 판본 비교",
+      "link_status": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인",
+      "last_checked_at": "2026-08-26T10:47:11+00:00",
+      "link_checked_at": "2026-08-26T10:47:11+00:00",
+      "retailer_category": "general",
+      "link_statuses": {
+        "url_template": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인"
+      }
+    },
+    {
+      "name": "G마켓",
+      "region": "KR",
+      "games": [
+        "Pokemon",
+        "ONE PIECE",
+        "NARUTO"
+      ],
+      "type": "marketplace",
+      "url_template": "https://browse.gmarket.co.kr/search?keyword={query}",
+      "note": "판매자·배송·국가판 표기 확인",
+      "link_status": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인",
+      "last_checked_at": "2026-08-26T10:47:11+00:00",
+      "link_checked_at": "2026-08-26T10:47:11+00:00",
+      "retailer_category": "general",
+      "link_statuses": {
+        "url_template": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인"
+      }
+    },
+    {
+      "name": "옥션",
+      "region": "KR",
+      "games": [
+        "Pokemon",
+        "ONE PIECE",
+        "NARUTO"
+      ],
+      "type": "marketplace",
+      "url_template": "https://browse.auction.co.kr/search?keyword={query}",
+      "note": "신품·해외구매 상품 비교",
+      "link_status": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인",
+      "last_checked_at": "2026-08-26T10:47:11+00:00",
+      "link_checked_at": "2026-08-26T10:47:11+00:00",
+      "retailer_category": "general",
+      "link_statuses": {
+        "url_template": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인"
+      }
+    },
+    {
+      "name": "롯데ON",
+      "region": "KR",
+      "games": [
+        "Pokemon",
+        "ONE PIECE",
+        "NARUTO"
+      ],
+      "type": "marketplace",
+      "url_template": "https://www.lotteon.com/search/search/search.ecn?render=search&platform=pc&q={query}",
+      "note": "롯데 계열 온라인 판매 검색",
+      "link_status": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인",
+      "last_checked_at": "2026-08-26T10:47:11+00:00",
+      "link_checked_at": "2026-08-26T10:47:11+00:00",
+      "retailer_category": "general",
+      "link_statuses": {
+        "url_template": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인"
+      }
+    },
+    {
+      "name": "SSG.COM",
+      "region": "KR",
+      "games": [
+        "Pokemon",
+        "ONE PIECE",
+        "NARUTO"
+      ],
+      "type": "marketplace",
+      "url_template": "https://www.ssg.com/search.ssg?target=all&query={query}",
+      "note": "신세계·이마트 계열 상품 검색",
+      "link_status": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인",
+      "last_checked_at": "2026-08-26T10:47:11+00:00",
+      "link_checked_at": "2026-08-26T10:47:11+00:00",
+      "retailer_category": "general",
+      "link_statuses": {
+        "url_template": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인"
+      }
+    },
+    {
+      "name": "KREAM",
+      "region": "KR",
+      "games": [
+        "Pokemon",
+        "ONE PIECE"
+      ],
+      "type": "used",
+      "url_template": "https://kream.co.kr/search?keyword={query}",
+      "note": "검수·거래 상품 검색, 체결가와 판매가 구분",
+      "link_status": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인",
+      "last_checked_at": "2026-08-26T10:47:11+00:00",
+      "link_checked_at": "2026-08-26T10:47:11+00:00",
+      "retailer_category": "general",
+      "link_statuses": {
+        "url_template": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인"
+      }
+    },
+    {
+      "name": "중고나라",
+      "region": "KR",
+      "games": [
+        "Pokemon",
+        "ONE PIECE",
+        "NARUTO"
+      ],
+      "type": "used",
+      "url_template": "https://web.joongna.com/search/{query}",
+      "note": "개인거래 상태·판매자 확인",
+      "link_status": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인",
+      "last_checked_at": "2026-08-26T10:47:11+00:00",
+      "link_checked_at": "2026-08-26T10:47:11+00:00",
+      "retailer_category": "general",
+      "link_statuses": {
+        "url_template": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인"
+      }
+    },
+    {
+      "name": "당근",
+      "region": "KR",
+      "games": [
+        "Pokemon",
+        "ONE PIECE",
+        "NARUTO"
+      ],
+      "type": "used",
+      "url_template": "https://www.daangn.com/kr/buy-sell/?search={query}",
+      "note": "지역 중고거래, 앱에서 위치·판매자 확인",
+      "link_status": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인",
+      "last_checked_at": "2026-08-26T10:47:11+00:00",
+      "link_checked_at": "2026-08-26T10:47:11+00:00",
+      "retailer_category": "general",
+      "link_statuses": {
+        "url_template": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인"
+      }
+    },
+    {
+      "name": "Google 쇼핑 한국",
+      "region": "KR",
+      "games": [
+        "Pokemon",
+        "ONE PIECE",
+        "NARUTO"
+      ],
+      "type": "blog",
+      "url_template": "https://www.google.com/search?tbm=shop&q={query}",
+      "note": "여러 온라인 판매처 가격 비교",
+      "link_status": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인",
+      "last_checked_at": "2026-08-26T10:47:11+00:00",
+      "link_checked_at": "2026-08-26T10:47:11+00:00",
+      "retailer_category": "general",
+      "link_statuses": {
+        "url_template": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인"
+      }
+    },
+    {
+      "name": "롯데마트·토이저러스 지도",
+      "region": "KR",
+      "games": [
+        "Pokemon",
+        "ONE PIECE"
+      ],
+      "type": "map",
+      "channel": "offline",
+      "url_template": "https://map.naver.com/p/search/롯데마트%20토이저러스%20{query}",
+      "note": "매장 위치 검색 · 카드 입점과 재고는 전화 확인",
+      "link_status": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인",
+      "last_checked_at": "2026-08-26T10:47:11+00:00",
+      "link_checked_at": "2026-08-26T10:47:11+00:00",
+      "retailer_category": "toy",
+      "inventory_status": "TCG 취급·재고 미확인 · 방문 전 공식 매장/전화 확인",
+      "inventory_checked_at": null,
+      "inventory_verified": false,
+      "link_statuses": {
+        "url_template": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인"
+      }
+    },
+    {
+      "name": "이마트 지도",
+      "region": "KR",
+      "games": [
+        "Pokemon",
+        "ONE PIECE"
+      ],
+      "type": "map",
+      "channel": "offline",
+      "url_template": "https://map.naver.com/p/search/이마트%20{query}",
+      "note": "주변 이마트 위치 검색 · 방문 전 재고 확인",
+      "link_status": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인",
+      "last_checked_at": "2026-08-26T10:47:11+00:00",
+      "link_checked_at": "2026-08-26T10:47:11+00:00",
+      "retailer_category": "hypermarket",
+      "inventory_status": "TCG 취급·재고 미확인 · 방문 전 공식 매장/전화 확인",
+      "inventory_checked_at": null,
+      "inventory_verified": false,
+      "link_statuses": {
+        "url_template": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인"
+      }
+    },
+    {
+      "name": "홈플러스 지도",
+      "region": "KR",
+      "games": [
+        "Pokemon",
+        "ONE PIECE"
+      ],
+      "type": "map",
+      "channel": "offline",
+      "url_template": "https://map.naver.com/p/search/홈플러스%20{query}",
+      "note": "주변 매장 검색 · 점포별 취급 여부 확인",
+      "link_status": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인",
+      "last_checked_at": "2026-08-26T10:47:11+00:00",
+      "link_checked_at": "2026-08-26T10:47:11+00:00",
+      "retailer_category": "hypermarket",
+      "inventory_status": "TCG 취급·재고 미확인 · 방문 전 공식 매장/전화 확인",
+      "inventory_checked_at": null,
+      "inventory_verified": false,
+      "link_statuses": {
+        "url_template": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인"
+      }
+    },
+    {
+      "name": "Yahoo! 쇼핑 일본",
+      "region": "JP",
+      "games": [
+        "Pokemon",
+        "ONE PIECE",
+        "NARUTO"
+      ],
+      "type": "marketplace",
+      "url_template": "https://shopping.yahoo.co.jp/search?p={query}",
+      "note": "일본 온라인 판매점 가격 비교",
+      "link_status": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인",
+      "last_checked_at": "2026-08-26T10:47:11+00:00",
+      "link_checked_at": "2026-08-26T10:47:11+00:00",
+      "retailer_category": "general",
+      "link_statuses": {
+        "url_template": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인"
+      }
+    },
+    {
+      "name": "요도바시카메라",
+      "region": "JP",
+      "games": [
+        "Pokemon",
+        "ONE PIECE"
+      ],
+      "type": "marketplace",
+      "url_template": "https://www.yodobashi.com/?word={query}",
+      "note": "온라인·점포 재고 표시는 사이트에서 확인",
+      "link_status": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인",
+      "last_checked_at": "2026-08-26T10:47:11+00:00",
+      "link_checked_at": "2026-08-26T10:47:11+00:00",
+      "retailer_category": "general",
+      "link_statuses": {
+        "url_template": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인"
+      }
+    },
+    {
+      "name": "빅카메라",
+      "region": "JP",
+      "games": [
+        "Pokemon",
+        "ONE PIECE"
+      ],
+      "type": "marketplace",
+      "url_template": "https://www.biccamera.com/bc/category/?q={query}",
+      "note": "온라인 판매와 일본 점포 검색",
+      "link_status": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인",
+      "last_checked_at": "2026-08-26T10:47:11+00:00",
+      "link_checked_at": "2026-08-26T10:47:11+00:00",
+      "retailer_category": "general",
+      "link_statuses": {
+        "url_template": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인"
+      }
+    },
+    {
+      "name": "스루가야",
+      "region": "JP",
+      "games": [
+        "Pokemon",
+        "ONE PIECE",
+        "NARUTO"
+      ],
+      "type": "used",
+      "url_template": "https://www.suruga-ya.jp/search?search_word={query}",
+      "note": "신품·중고 혼합, 상태등급 확인",
+      "link_status": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인",
+      "last_checked_at": "2026-08-26T10:47:11+00:00",
+      "link_checked_at": "2026-08-26T10:47:11+00:00",
+      "retailer_category": "general",
+      "link_statuses": {
+        "url_template": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인"
+      }
+    },
+    {
+      "name": "카드러시",
+      "region": "JP",
+      "games": [
+        "Pokemon",
+        "ONE PIECE"
+      ],
+      "type": "marketplace",
+      "url_template": "https://www.google.com/search?q=site%3Acardrush-pokemon.jp+{query}",
+      "note": "일본 TCG 전문점 상품 검색",
+      "link_status": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인",
+      "last_checked_at": "2026-08-26T10:47:11+00:00",
+      "link_checked_at": "2026-08-26T10:47:11+00:00",
+      "retailer_category": "general",
+      "link_statuses": {
+        "url_template": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인"
+      }
+    },
+    {
+      "name": "드래곤스타",
+      "region": "JP",
+      "games": [
+        "Pokemon",
+        "ONE PIECE"
+      ],
+      "type": "marketplace",
+      "url_template": "https://www.google.com/search?q=site%3Adorasuta.jp+{query}",
+      "note": "일본 카드 전문점 상품·점포 검색",
+      "link_status": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인",
+      "last_checked_at": "2026-08-26T10:47:11+00:00",
+      "link_checked_at": "2026-08-26T10:47:11+00:00",
+      "retailer_category": "general",
+      "link_statuses": {
+        "url_template": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인"
+      }
+    },
+    {
+      "name": "BOOKOFF",
+      "region": "JP",
+      "games": [
+        "Pokemon",
+        "ONE PIECE",
+        "NARUTO"
+      ],
+      "type": "used",
+      "url_template": "https://shopping.bookoff.co.jp/search/keyword/{query}",
+      "note": "일본 중고 상품 상태와 점포 재고 확인",
+      "link_status": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인",
+      "last_checked_at": "2026-08-26T10:47:11+00:00",
+      "link_checked_at": "2026-08-26T10:47:11+00:00",
+      "retailer_category": "general",
+      "link_statuses": {
+        "url_template": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인"
+      }
+    },
+    {
+      "name": "만다라케",
+      "region": "JP",
+      "games": [
+        "Pokemon",
+        "ONE PIECE",
+        "NARUTO"
+      ],
+      "type": "used",
+      "url_template": "https://order.mandarake.co.jp/order/listPage/list?keyword={query}&lang=ko",
+      "note": "수집품·중고 카드 검색",
+      "link_status": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인",
+      "last_checked_at": "2026-08-26T10:47:11+00:00",
+      "link_checked_at": "2026-08-26T10:47:11+00:00",
+      "retailer_category": "general",
+      "link_statuses": {
+        "url_template": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인"
+      }
+    },
+    {
+      "name": "Yahoo! 옥션 일본",
+      "region": "JP",
+      "games": [
+        "Pokemon",
+        "ONE PIECE",
+        "NARUTO"
+      ],
+      "type": "used",
+      "url_template": "https://auctions.yahoo.co.jp/search/search?p={query}",
+      "note": "경매·중고 거래, 판매자와 상태 확인",
+      "link_status": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인",
+      "last_checked_at": "2026-08-26T10:47:11+00:00",
+      "link_checked_at": "2026-08-26T10:47:11+00:00",
+      "retailer_category": "general",
+      "link_statuses": {
+        "url_template": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인"
+      }
+    },
+    {
+      "name": "일본 카드숍 지도",
+      "region": "JP",
+      "games": [
+        "Pokemon",
+        "ONE PIECE",
+        "NARUTO"
+      ],
+      "type": "map",
+      "channel": "offline",
+      "url_template": "https://www.google.com/maps/search/トレカショップ+{query}",
+      "note": "주변 TCG 전문점과 영업시간 검색",
+      "link_status": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인",
+      "last_checked_at": "2026-08-26T10:47:11+00:00",
+      "link_checked_at": "2026-08-26T10:47:11+00:00",
+      "retailer_category": "general",
+      "inventory_status": "TCG 취급·재고 미확인 · 방문 전 공식 매장/전화 확인",
+      "inventory_checked_at": null,
+      "inventory_verified": false,
+      "link_statuses": {
+        "url_template": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인"
+      }
+    },
+    {
+      "name": "Target",
+      "region": "US",
+      "games": [
+        "Pokemon",
+        "ONE PIECE"
+      ],
+      "type": "marketplace",
+      "url_template": "https://www.target.com/s?searchTerm={query}",
+      "note": "온라인·점포 재고와 구매 제한 확인",
+      "link_status": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인",
+      "last_checked_at": "2026-08-26T10:47:11+00:00",
+      "link_checked_at": "2026-08-26T10:47:11+00:00",
+      "retailer_category": "hypermarket",
+      "link_statuses": {
+        "url_template": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인"
+      }
+    },
+    {
+      "name": "Walmart",
+      "region": "US",
+      "games": [
+        "Pokemon",
+        "ONE PIECE"
+      ],
+      "type": "marketplace",
+      "url_template": "https://www.walmart.com/search?q={query}",
+      "note": "판매 주체가 Walmart인지 제3자인지 확인",
+      "link_status": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인",
+      "last_checked_at": "2026-08-26T10:47:11+00:00",
+      "link_checked_at": "2026-08-26T10:47:11+00:00",
+      "retailer_category": "hypermarket",
+      "link_statuses": {
+        "url_template": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인"
+      }
+    },
+    {
+      "name": "Best Buy",
+      "region": "US",
+      "games": [
+        "Pokemon",
+        "ONE PIECE"
+      ],
+      "type": "marketplace",
+      "url_template": "https://www.bestbuy.com/site/searchpage.jsp?st={query}",
+      "note": "온라인·매장수령 재고 확인",
+      "link_status": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인",
+      "last_checked_at": "2026-08-26T10:47:11+00:00",
+      "link_checked_at": "2026-08-26T10:47:11+00:00",
+      "retailer_category": "general",
+      "link_statuses": {
+        "url_template": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인"
+      }
+    },
+    {
+      "name": "GameStop",
+      "region": "US",
+      "games": [
+        "Pokemon",
+        "ONE PIECE"
+      ],
+      "type": "marketplace",
+      "url_template": "https://www.gamestop.com/search/?q={query}",
+      "note": "온라인·오프라인 점포 재고 확인",
+      "link_status": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인",
+      "last_checked_at": "2026-08-26T10:47:11+00:00",
+      "link_checked_at": "2026-08-26T10:47:11+00:00",
+      "retailer_category": "general",
+      "link_statuses": {
+        "url_template": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인"
+      }
+    },
+    {
+      "name": "Barnes & Noble",
+      "region": "US",
+      "games": [
+        "Pokemon",
+        "ONE PIECE"
+      ],
+      "type": "marketplace",
+      "url_template": "https://www.barnesandnoble.com/s/{query}",
+      "note": "매장수령 가능 여부 확인",
+      "link_status": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인",
+      "last_checked_at": "2026-08-26T10:47:11+00:00",
+      "link_checked_at": "2026-08-26T10:47:11+00:00",
+      "retailer_category": "general",
+      "link_statuses": {
+        "url_template": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인"
+      }
+    },
+    {
+      "name": "Costco",
+      "region": "US",
+      "games": [
+        "Pokemon"
+      ],
+      "type": "marketplace",
+      "url_template": "https://www.costco.com/CatalogSearch?keyword={query}",
+      "note": "회원 판매·묶음상품 재고 확인",
+      "link_status": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인",
+      "last_checked_at": "2026-08-26T10:47:11+00:00",
+      "link_checked_at": "2026-08-26T10:47:11+00:00",
+      "retailer_category": "general",
+      "link_statuses": {
+        "url_template": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인"
+      }
+    },
+    {
+      "name": "Sam's Club",
+      "region": "US",
+      "games": [
+        "Pokemon"
+      ],
+      "type": "marketplace",
+      "url_template": "https://www.samsclub.com/s/{query}",
+      "note": "회원제 묶음상품 검색",
+      "link_status": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인",
+      "last_checked_at": "2026-08-26T10:47:11+00:00",
+      "link_checked_at": "2026-08-26T10:47:11+00:00",
+      "retailer_category": "general",
+      "link_statuses": {
+        "url_template": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인"
+      }
+    },
+    {
+      "name": "Troll and Toad",
+      "region": "US",
+      "games": [
+        "Pokemon",
+        "ONE PIECE",
+        "NARUTO"
+      ],
+      "type": "marketplace",
+      "url_template": "https://www.trollandtoad.com/category.php?selected-cat=0&search-words={query}",
+      "note": "TCG 전문몰, 카드 상태·판본 확인",
+      "link_status": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인",
+      "last_checked_at": "2026-08-26T10:47:11+00:00",
+      "link_checked_at": "2026-08-26T10:47:11+00:00",
+      "retailer_category": "general",
+      "link_statuses": {
+        "url_template": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인"
+      }
+    },
+    {
+      "name": "Dave & Adam's",
+      "region": "US",
+      "games": [
+        "Pokemon",
+        "ONE PIECE"
+      ],
+      "type": "marketplace",
+      "url_template": "https://www.dacardworld.com/search?Search={query}",
+      "note": "밀봉상품·싱글카드 검색",
+      "link_status": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인",
+      "last_checked_at": "2026-08-26T10:47:11+00:00",
+      "link_checked_at": "2026-08-26T10:47:11+00:00",
+      "retailer_category": "general",
+      "link_statuses": {
+        "url_template": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인"
+      }
+    },
+    {
+      "name": "FairFetched 재고 추적",
+      "region": "US",
+      "games": [
+        "Pokemon",
+        "ONE PIECE"
+      ],
+      "type": "tracker",
+      "url": "https://www.fairfetched.com/",
+      "note": "여러 대형 판매점의 온라인·점포 재고 참고, 독립 서비스",
+      "link_status": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인",
+      "last_checked_at": "2026-08-26T10:47:11+00:00",
+      "link_checked_at": "2026-08-26T10:47:11+00:00",
+      "retailer_category": "general",
+      "link_statuses": {
+        "url": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인"
+      }
+    },
+    {
+      "name": "TYPA 재입고 알림",
+      "region": "US",
+      "games": [
+        "Pokemon"
+      ],
+      "type": "tracker",
+      "url": "https://www.typa.app/brands/pokemon",
+      "note": "미국 판매점 재입고 알림, 독립 앱 서비스",
+      "link_status": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인",
+      "last_checked_at": "2026-08-26T10:47:11+00:00",
+      "link_checked_at": "2026-08-26T10:47:11+00:00",
+      "retailer_category": "general",
+      "link_statuses": {
+        "url": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인"
+      }
+    },
+    {
+      "name": "Target 매장 찾기",
+      "region": "US",
+      "games": [
+        "Pokemon",
+        "ONE PIECE"
+      ],
+      "type": "map",
+      "channel": "offline",
+      "url": "https://www.target.com/store-locator/find-stores",
+      "note": "가까운 Target 검색 · 방문 전 카드 재고 확인",
+      "link_status": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인",
+      "last_checked_at": "2026-08-26T10:47:11+00:00",
+      "link_checked_at": "2026-08-26T10:47:11+00:00",
+      "retailer_category": "hypermarket",
+      "inventory_status": "TCG 취급·재고 미확인 · 방문 전 공식 매장/전화 확인",
+      "inventory_checked_at": null,
+      "inventory_verified": false,
+      "link_statuses": {
+        "url": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인"
+      }
+    },
+    {
+      "name": "Walmart 매장 찾기",
+      "region": "US",
+      "games": [
+        "Pokemon",
+        "ONE PIECE"
+      ],
+      "type": "map",
+      "channel": "offline",
+      "url": "https://www.walmart.com/store/finder",
+      "note": "가까운 Walmart 검색 · 점포 재고 확인",
+      "link_status": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인",
+      "last_checked_at": "2026-08-26T10:47:11+00:00",
+      "link_checked_at": "2026-08-26T10:47:11+00:00",
+      "retailer_category": "hypermarket",
+      "inventory_status": "TCG 취급·재고 미확인 · 방문 전 공식 매장/전화 확인",
+      "inventory_checked_at": null,
+      "inventory_verified": false,
+      "link_statuses": {
+        "url": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인"
+      }
+    },
+    {
+      "name": "GameStop 매장 찾기",
+      "region": "US",
+      "games": [
+        "Pokemon",
+        "ONE PIECE"
+      ],
+      "type": "map",
+      "channel": "offline",
+      "url": "https://www.gamestop.com/stores",
+      "note": "가까운 GameStop과 영업시간 확인",
+      "link_status": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인",
+      "last_checked_at": "2026-08-26T10:47:11+00:00",
+      "link_checked_at": "2026-08-26T10:47:11+00:00",
+      "retailer_category": "general",
+      "inventory_status": "TCG 취급·재고 미확인 · 방문 전 공식 매장/전화 확인",
+      "inventory_checked_at": null,
+      "inventory_verified": false,
+      "link_statuses": {
+        "url": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인"
+      }
+    },
+    {
+      "name": "롯데마트 선부점",
+      "region": "KR",
+      "games": [
+        "Pokemon",
+        "ONE PIECE",
+        "NARUTO"
+      ],
+      "type": "map",
+      "channel": "offline",
+      "url": "https://map.naver.com/p/search/%EB%A1%AF%EB%8D%B0%EB%A7%88%ED%8A%B8%20%EC%84%A0%EB%B6%80%EC%A0%90%20%EA%B2%BD%EA%B8%B0%EB%8F%84%20%EC%95%88%EC%82%B0%EC%8B%9C%20%EB%8B%A8%EC%9B%90%EA%B5%AC%20%EB%8B%AC%EB%AF%B8%EB%A1%9C%2064",
+      "address": "경기도 안산시 단원구 달미로 64",
+      "phone": "031-487-2500",
+      "lat": 37.334,
+      "lon": 126.805,
+      "inventory_status": "TCG 재고 미확인 · 방문 전 전화/지도 확인",
+      "inventory_checked_at": null,
+      "note": "경기도 롯데마트·토이저러스 지점 · 포켓몬/원피스/나루토 카드 취급·재고는 점포별 확인",
+      "data_basis": "공개 점포 주소·지도 좌표",
+      "link_status": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인",
+      "last_checked_at": "2026-08-26T10:47:11+00:00",
+      "link_checked_at": "2026-08-26T10:47:11+00:00",
+      "retailer_category": "hypermarket",
+      "inventory_verified": false,
+      "link_statuses": {
+        "url": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인"
+      }
+    },
+    {
+      "name": "롯데마트 상록점",
+      "region": "KR",
+      "games": [
+        "Pokemon",
+        "ONE PIECE",
+        "NARUTO"
+      ],
+      "type": "map",
+      "channel": "offline",
+      "url": "https://map.naver.com/p/search/%EB%A1%AF%EB%8D%B0%EB%A7%88%ED%8A%B8%20%EC%83%81%EB%A1%9D%EC%A0%90%20%EA%B2%BD%EA%B8%B0%EB%8F%84%20%EC%95%88%EC%82%B0%EC%8B%9C%20%EC%83%81%EB%A1%9D%EA%B5%AC%20%EB%B0%98%EC%84%9D%EB%A1%9C%208",
+      "address": "경기도 안산시 상록구 반석로 8",
+      "phone": "031-8086-0800",
+      "lat": 37.3022,
+      "lon": 126.8662,
+      "inventory_status": "TCG 재고 미확인 · 방문 전 전화/지도 확인",
+      "inventory_checked_at": null,
+      "note": "경기도 롯데마트·토이저러스 지점 · 포켓몬/원피스/나루토 카드 취급·재고는 점포별 확인",
+      "data_basis": "공개 점포 주소·지도 좌표",
+      "link_status": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인",
+      "last_checked_at": "2026-08-26T10:47:11+00:00",
+      "link_checked_at": "2026-08-26T10:47:11+00:00",
+      "retailer_category": "hypermarket",
+      "inventory_verified": false,
+      "link_statuses": {
+        "url": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인"
+      }
+    },
+    {
+      "name": "롯데마트 안산점",
+      "region": "KR",
+      "games": [
+        "Pokemon",
+        "ONE PIECE",
+        "NARUTO"
+      ],
+      "type": "map",
+      "channel": "offline",
+      "url": "https://map.naver.com/p/search/%EB%A1%AF%EB%8D%B0%EB%A7%88%ED%8A%B8%20%EC%95%88%EC%82%B0%EC%A0%90%20%EA%B2%BD%EA%B8%B0%EB%8F%84%20%EC%95%88%EC%82%B0%EC%8B%9C%20%EC%83%81%EB%A1%9D%EA%B5%AC%20%ED%95%AD%EA%B0%80%EC%9A%B8%EB%A1%9C%20422",
+      "address": "경기도 안산시 상록구 항가울로 422",
+      "phone": "031-508-2500",
+      "lat": 37.2967,
+      "lon": 126.8658,
+      "inventory_status": "TCG 재고 미확인 · 방문 전 전화/지도 확인",
+      "inventory_checked_at": null,
+      "note": "경기도 롯데마트·토이저러스 지점 · 포켓몬/원피스/나루토 카드 취급·재고는 점포별 확인",
+      "data_basis": "공개 점포 주소·지도 좌표",
+      "link_status": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인",
+      "last_checked_at": "2026-08-26T10:47:11+00:00",
+      "link_checked_at": "2026-08-26T10:47:11+00:00",
+      "retailer_category": "hypermarket",
+      "inventory_verified": false,
+      "link_statuses": {
+        "url": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인"
+      }
+    },
+    {
+      "name": "롯데마트 시화점",
+      "region": "KR",
+      "games": [
+        "Pokemon",
+        "ONE PIECE",
+        "NARUTO"
+      ],
+      "type": "map",
+      "channel": "offline",
+      "url": "https://map.naver.com/p/search/%EB%A1%AF%EB%8D%B0%EB%A7%88%ED%8A%B8%20%EC%8B%9C%ED%99%94%EC%A0%90%20%EA%B2%BD%EA%B8%B0%EB%8F%84%20%EC%8B%9C%ED%9D%A5%EC%8B%9C%20%EB%A7%88%EC%9C%A0%EB%A1%9C%20238%EB%B2%88%EA%B8%B8%2026",
+      "address": "경기도 시흥시 마유로 238번길 26",
+      "phone": "031-496-7700",
+      "lat": 37.3447,
+      "lon": 126.7375,
+      "inventory_status": "TCG 재고 미확인 · 방문 전 전화/지도 확인",
+      "inventory_checked_at": null,
+      "note": "경기도 롯데마트·토이저러스 지점 · 포켓몬/원피스/나루토 카드 취급·재고는 점포별 확인",
+      "data_basis": "공개 점포 주소·지도 좌표",
+      "link_status": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인",
+      "last_checked_at": "2026-08-26T10:47:11+00:00",
+      "link_checked_at": "2026-08-26T10:47:11+00:00",
+      "retailer_category": "hypermarket",
+      "inventory_verified": false,
+      "link_statuses": {
+        "url": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인"
+      }
+    },
+    {
+      "name": "롯데마트 시흥배곧점",
+      "region": "KR",
+      "games": [
+        "Pokemon",
+        "ONE PIECE",
+        "NARUTO"
+      ],
+      "type": "map",
+      "channel": "offline",
+      "url": "https://map.naver.com/p/search/%EB%A1%AF%EB%8D%B0%EB%A7%88%ED%8A%B8%20%EC%8B%9C%ED%9D%A5%EB%B0%B0%EA%B3%A7%EC%A0%90%20%EA%B2%BD%EA%B8%B0%EB%8F%84%20%EC%8B%9C%ED%9D%A5%EC%8B%9C%20%EC%84%9C%EC%9A%B8%EB%8C%80%ED%95%99%EB%A1%9C278%EB%B2%88%EA%B8%B8%2067",
+      "address": "경기도 시흥시 서울대학로278번길 67",
+      "phone": "031-299-2500",
+      "lat": 37.3696,
+      "lon": 126.7292,
+      "inventory_status": "TCG 재고 미확인 · 방문 전 전화/지도 확인",
+      "inventory_checked_at": null,
+      "note": "경기도 롯데마트·토이저러스 지점 · 포켓몬/원피스/나루토 카드 취급·재고는 점포별 확인",
+      "data_basis": "공개 점포 주소·지도 좌표",
+      "link_status": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인",
+      "last_checked_at": "2026-08-26T10:47:11+00:00",
+      "link_checked_at": "2026-08-26T10:47:11+00:00",
+      "retailer_category": "hypermarket",
+      "inventory_verified": false,
+      "link_statuses": {
+        "url": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인"
+      }
+    },
+    {
+      "name": "토이저러스 광명점",
+      "region": "KR",
+      "games": [
+        "Pokemon",
+        "ONE PIECE",
+        "NARUTO"
+      ],
+      "type": "map",
+      "channel": "offline",
+      "url": "https://map.naver.com/p/search/%ED%86%A0%EC%9D%B4%EC%A0%80%EB%9F%AC%EC%8A%A4%20%EA%B4%91%EB%AA%85%EC%A0%90%20%EA%B2%BD%EA%B8%B0%EB%8F%84%20%EA%B4%91%EB%AA%85%EC%8B%9C%20%EC%9D%BC%EC%A7%81%EB%A1%9C%2017%20%EB%A1%AF%EB%8D%B0%EB%AA%B0%20%EA%B4%91%EB%AA%85%EC%A0%90%202%EC%B8%B5",
+      "address": "경기도 광명시 일직로 17 롯데몰 광명점 2층",
+      "phone": "매장 안내 확인",
+      "lat": 37.4242,
+      "lon": 126.8847,
+      "inventory_status": "TCG 재고 미확인 · 방문 전 전화/지도 확인",
+      "inventory_checked_at": null,
+      "note": "경기도 롯데마트·토이저러스 지점 · 포켓몬/원피스/나루토 카드 취급·재고는 점포별 확인",
+      "data_basis": "공개 점포 주소·지도 좌표",
+      "link_status": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인",
+      "last_checked_at": "2026-08-26T10:47:11+00:00",
+      "link_checked_at": "2026-08-26T10:47:11+00:00",
+      "retailer_category": "toy",
+      "inventory_verified": false,
+      "link_statuses": {
+        "url": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인"
+      }
+    },
+    {
+      "name": "롯데마트 의왕점",
+      "region": "KR",
+      "games": [
+        "Pokemon",
+        "ONE PIECE",
+        "NARUTO"
+      ],
+      "type": "map",
+      "channel": "offline",
+      "url": "https://map.naver.com/p/search/%EB%A1%AF%EB%8D%B0%EB%A7%88%ED%8A%B8%20%EC%9D%98%EC%99%95%EC%A0%90%20%EA%B2%BD%EA%B8%B0%EB%8F%84%20%EC%9D%98%EC%99%95%EC%8B%9C%20%EA%B3%84%EC%9B%90%EB%8C%80%ED%95%99%EB%A1%9C%207",
+      "address": "경기도 의왕시 계원대학로 7",
+      "phone": "031-470-2500",
+      "lat": 37.3792,
+      "lon": 126.9768,
+      "inventory_status": "TCG 재고 미확인 · 방문 전 전화/지도 확인",
+      "inventory_checked_at": null,
+      "note": "경기도 롯데마트·토이저러스 지점 · 포켓몬/원피스/나루토 카드 취급·재고는 점포별 확인",
+      "data_basis": "공개 점포 주소·지도 좌표",
+      "link_status": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인",
+      "last_checked_at": "2026-08-26T10:47:11+00:00",
+      "link_checked_at": "2026-08-26T10:47:11+00:00",
+      "retailer_category": "hypermarket",
+      "inventory_verified": false,
+      "link_statuses": {
+        "url": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인"
+      }
+    },
+    {
+      "name": "롯데마트 권선점",
+      "region": "KR",
+      "games": [
+        "Pokemon",
+        "ONE PIECE",
+        "NARUTO"
+      ],
+      "type": "map",
+      "channel": "offline",
+      "url": "https://map.naver.com/p/search/%EB%A1%AF%EB%8D%B0%EB%A7%88%ED%8A%B8%20%EA%B6%8C%EC%84%A0%EC%A0%90%20%EA%B2%BD%EA%B8%B0%EB%8F%84%20%EC%88%98%EC%9B%90%EC%8B%9C%20%EA%B6%8C%EC%84%A0%EA%B5%AC%20%EB%8F%99%EC%88%98%EC%9B%90%EB%A1%9C%20232",
+      "address": "경기도 수원시 권선구 동수원로 232",
+      "phone": "031-229-7700",
+      "lat": 37.2519,
+      "lon": 127.0293,
+      "inventory_status": "TCG 재고 미확인 · 방문 전 전화/지도 확인",
+      "inventory_checked_at": null,
+      "note": "경기도 롯데마트·토이저러스 지점 · 포켓몬/원피스/나루토 카드 취급·재고는 점포별 확인",
+      "data_basis": "공개 점포 주소·지도 좌표",
+      "link_status": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인",
+      "last_checked_at": "2026-08-26T10:47:11+00:00",
+      "link_checked_at": "2026-08-26T10:47:11+00:00",
+      "retailer_category": "hypermarket",
+      "inventory_verified": false,
+      "link_statuses": {
+        "url": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인"
+      }
+    },
+    {
+      "name": "롯데마트 광교점",
+      "region": "KR",
+      "games": [
+        "Pokemon",
+        "ONE PIECE",
+        "NARUTO"
+      ],
+      "type": "map",
+      "channel": "offline",
+      "url": "https://map.naver.com/p/search/%EB%A1%AF%EB%8D%B0%EB%A7%88%ED%8A%B8%20%EA%B4%91%EA%B5%90%EC%A0%90%20%EA%B2%BD%EA%B8%B0%EB%8F%84%20%EC%88%98%EC%9B%90%EC%8B%9C%20%EC%98%81%ED%86%B5%EA%B5%AC%20%EC%84%BC%ED%8A%B8%EB%9F%B4%ED%83%80%EC%9A%B4%EB%A1%9C%2085",
+      "address": "경기도 수원시 영통구 센트럴타운로 85",
+      "phone": "031-410-2500",
+      "lat": 37.285,
+      "lon": 127.0578,
+      "inventory_status": "TCG 재고 미확인 · 방문 전 전화/지도 확인",
+      "inventory_checked_at": null,
+      "note": "경기도 롯데마트·토이저러스 지점 · 포켓몬/원피스/나루토 카드 취급·재고는 점포별 확인",
+      "data_basis": "공개 점포 주소·지도 좌표",
+      "link_status": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인",
+      "last_checked_at": "2026-08-26T10:47:11+00:00",
+      "link_checked_at": "2026-08-26T10:47:11+00:00",
+      "retailer_category": "hypermarket",
+      "inventory_verified": false,
+      "link_statuses": {
+        "url": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인"
+      }
+    },
+    {
+      "name": "롯데마트 천천점",
+      "region": "KR",
+      "games": [
+        "Pokemon",
+        "ONE PIECE",
+        "NARUTO"
+      ],
+      "type": "map",
+      "channel": "offline",
+      "url": "https://map.naver.com/p/search/%EB%A1%AF%EB%8D%B0%EB%A7%88%ED%8A%B8%20%EC%B2%9C%EC%B2%9C%EC%A0%90%20%EA%B2%BD%EA%B8%B0%EB%8F%84%20%EC%88%98%EC%9B%90%EC%8B%9C%20%EC%9E%A5%EC%95%88%EA%B5%AC%20%EB%A7%8C%EC%84%9D%EB%A1%9C19%EB%B2%88%EA%B8%B8%2025-10",
+      "address": "경기도 수원시 장안구 만석로19번길 25-10",
+      "phone": "031-240-2500",
+      "lat": 37.2988,
+      "lon": 126.9822,
+      "inventory_status": "TCG 재고 미확인 · 방문 전 전화/지도 확인",
+      "inventory_checked_at": null,
+      "note": "경기도 롯데마트·토이저러스 지점 · 포켓몬/원피스/나루토 카드 취급·재고는 점포별 확인",
+      "data_basis": "공개 점포 주소·지도 좌표",
+      "link_status": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인",
+      "last_checked_at": "2026-08-26T10:47:11+00:00",
+      "link_checked_at": "2026-08-26T10:47:11+00:00",
+      "retailer_category": "hypermarket",
+      "inventory_verified": false,
+      "link_statuses": {
+        "url": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인"
+      }
+    },
+    {
+      "name": "롯데마트 수원점",
+      "region": "KR",
+      "games": [
+        "Pokemon",
+        "ONE PIECE",
+        "NARUTO"
+      ],
+      "type": "map",
+      "channel": "offline",
+      "url": "https://map.naver.com/p/search/%EB%A1%AF%EB%8D%B0%EB%A7%88%ED%8A%B8%20%EC%88%98%EC%9B%90%EC%A0%90%20%EA%B2%BD%EA%B8%B0%EB%8F%84%20%EC%88%98%EC%9B%90%EC%8B%9C%20%EA%B6%8C%EC%84%A0%EA%B5%AC%20%EC%84%B8%ED%99%94%EB%A1%9C%20134",
+      "address": "경기도 수원시 권선구 세화로 134",
+      "phone": "031-8067-2500",
+      "lat": 37.2643,
+      "lon": 126.9972,
+      "inventory_status": "TCG 재고 미확인 · 방문 전 전화/지도 확인",
+      "inventory_checked_at": null,
+      "note": "경기도 롯데마트·토이저러스 지점 · 포켓몬/원피스/나루토 카드 취급·재고는 점포별 확인",
+      "data_basis": "공개 점포 주소·지도 좌표",
+      "link_status": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인",
+      "last_checked_at": "2026-08-26T10:47:11+00:00",
+      "link_checked_at": "2026-08-26T10:47:11+00:00",
+      "retailer_category": "hypermarket",
+      "inventory_verified": false,
+      "link_statuses": {
+        "url": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인"
+      }
+    },
+    {
+      "name": "롯데마트 롯데몰수지점",
+      "region": "KR",
+      "games": [
+        "Pokemon",
+        "ONE PIECE",
+        "NARUTO"
+      ],
+      "type": "map",
+      "channel": "offline",
+      "url": "https://map.naver.com/p/search/%EB%A1%AF%EB%8D%B0%EB%A7%88%ED%8A%B8%20%EB%A1%AF%EB%8D%B0%EB%AA%B0%EC%88%98%EC%A7%80%EC%A0%90%20%EA%B2%BD%EA%B8%B0%EB%8F%84%20%EC%9A%A9%EC%9D%B8%EC%8B%9C%20%EC%88%98%EC%A7%80%EA%B5%AC%20%EC%84%B1%EB%B3%B52%EB%A1%9C%2038",
+      "address": "경기도 용인시 수지구 성복2로 38",
+      "phone": "031-5174-2500",
+      "lat": 37.3137,
+      "lon": 127.0804,
+      "inventory_status": "TCG 재고 미확인 · 방문 전 전화/지도 확인",
+      "inventory_checked_at": null,
+      "note": "경기도 롯데마트·토이저러스 지점 · 포켓몬/원피스/나루토 카드 취급·재고는 점포별 확인",
+      "data_basis": "공개 점포 주소·지도 좌표",
+      "link_status": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인",
+      "last_checked_at": "2026-08-26T10:47:11+00:00",
+      "link_checked_at": "2026-08-26T10:47:11+00:00",
+      "retailer_category": "hypermarket",
+      "inventory_verified": false,
+      "link_statuses": {
+        "url": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인"
+      }
+    },
+    {
+      "name": "토이저러스 기흥점",
+      "region": "KR",
+      "games": [
+        "Pokemon",
+        "ONE PIECE",
+        "NARUTO"
+      ],
+      "type": "map",
+      "channel": "offline",
+      "url": "https://map.naver.com/p/search/%ED%86%A0%EC%9D%B4%EC%A0%80%EB%9F%AC%EC%8A%A4%20%EA%B8%B0%ED%9D%A5%EC%A0%90%20%EA%B2%BD%EA%B8%B0%EB%8F%84%20%EC%9A%A9%EC%9D%B8%EC%8B%9C%20%EA%B8%B0%ED%9D%A5%EA%B5%AC%20%EC%8B%A0%EA%B3%A0%EB%A7%A4%EB%A1%9C%20124%20%EB%A1%AF%EB%8D%B0%ED%94%84%EB%A6%AC%EB%AF%B8%EC%97%84%EC%95%84%EC%9A%B8%EB%A0%9B",
+      "address": "경기도 용인시 기흥구 신고매로 124 롯데프리미엄아울렛",
+      "phone": "매장 안내 확인",
+      "lat": 37.2257,
+      "lon": 127.1209,
+      "inventory_status": "TCG 재고 미확인 · 방문 전 전화/지도 확인",
+      "inventory_checked_at": null,
+      "note": "경기도 롯데마트·토이저러스 지점 · 포켓몬/원피스/나루토 카드 취급·재고는 점포별 확인",
+      "data_basis": "공개 점포 주소·지도 좌표",
+      "link_status": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인",
+      "last_checked_at": "2026-08-26T10:47:11+00:00",
+      "link_checked_at": "2026-08-26T10:47:11+00:00",
+      "retailer_category": "toy",
+      "inventory_verified": false,
+      "link_statuses": {
+        "url": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인"
+      }
+    },
+    {
+      "name": "롯데마트 오산점",
+      "region": "KR",
+      "games": [
+        "Pokemon",
+        "ONE PIECE",
+        "NARUTO"
+      ],
+      "type": "map",
+      "channel": "offline",
+      "url": "https://map.naver.com/p/search/%EB%A1%AF%EB%8D%B0%EB%A7%88%ED%8A%B8%20%EC%98%A4%EC%82%B0%EC%A0%90%20%EA%B2%BD%EA%B8%B0%EB%8F%84%20%EC%98%A4%EC%82%B0%EC%8B%9C%20%EA%B2%BD%EA%B8%B0%EB%8C%80%EB%A1%9C%20271",
+      "address": "경기도 오산시 경기대로 271",
+      "phone": "031-371-2500",
+      "lat": 37.1448,
+      "lon": 127.0729,
+      "inventory_status": "TCG 재고 미확인 · 방문 전 전화/지도 확인",
+      "inventory_checked_at": null,
+      "note": "경기도 롯데마트·토이저러스 지점 · 포켓몬/원피스/나루토 카드 취급·재고는 점포별 확인",
+      "data_basis": "공개 점포 주소·지도 좌표",
+      "link_status": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인",
+      "last_checked_at": "2026-08-26T10:47:11+00:00",
+      "link_checked_at": "2026-08-26T10:47:11+00:00",
+      "retailer_category": "hypermarket",
+      "inventory_verified": false,
+      "link_statuses": {
+        "url": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인"
+      }
+    },
+    {
+      "name": "롯데마트 서현점",
+      "region": "KR",
+      "games": [
+        "Pokemon",
+        "ONE PIECE",
+        "NARUTO"
+      ],
+      "type": "map",
+      "channel": "offline",
+      "url": "https://map.naver.com/p/search/%EB%A1%AF%EB%8D%B0%EB%A7%88%ED%8A%B8%20%EC%84%9C%ED%98%84%EC%A0%90%20%EA%B2%BD%EA%B8%B0%EB%8F%84%20%EC%84%B1%EB%82%A8%EC%8B%9C%20%EB%B6%84%EB%8B%B9%EA%B5%AC%20%ED%99%A9%EC%83%88%EC%9A%B8%EB%A1%9C311%EB%B2%88%EA%B8%B8%2028",
+      "address": "경기도 성남시 분당구 황새울로311번길 28",
+      "phone": "031-789-2500",
+      "lat": 37.385,
+      "lon": 127.122,
+      "inventory_status": "TCG 재고 미확인 · 방문 전 전화/지도 확인",
+      "inventory_checked_at": null,
+      "note": "경기도 롯데마트·토이저러스 지점 · 포켓몬/원피스/나루토 카드 취급·재고는 점포별 확인",
+      "data_basis": "공개 점포 주소·지도 좌표",
+      "link_status": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인",
+      "last_checked_at": "2026-08-26T10:47:11+00:00",
+      "link_checked_at": "2026-08-26T10:47:11+00:00",
+      "retailer_category": "hypermarket",
+      "inventory_verified": false,
+      "link_statuses": {
+        "url": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인"
+      }
+    },
+    {
+      "name": "롯데마트 김포한강점",
+      "region": "KR",
+      "games": [
+        "Pokemon",
+        "ONE PIECE",
+        "NARUTO"
+      ],
+      "type": "map",
+      "channel": "offline",
+      "url": "https://map.naver.com/p/search/%EB%A1%AF%EB%8D%B0%EB%A7%88%ED%8A%B8%20%EA%B9%80%ED%8F%AC%ED%95%9C%EA%B0%95%EC%A0%90%20%EA%B2%BD%EA%B8%B0%EB%8F%84%20%EA%B9%80%ED%8F%AC%EC%8B%9C%20%EA%B9%80%ED%8F%AC%ED%95%9C%EA%B0%952%EB%A1%9C%2041",
+      "address": "경기도 김포시 김포한강2로 41",
+      "phone": "031-8049-2500",
+      "lat": 37.6445,
+      "lon": 126.6298,
+      "inventory_status": "TCG 재고 미확인 · 방문 전 전화/지도 확인",
+      "inventory_checked_at": null,
+      "note": "경기도 롯데마트·토이저러스 지점 · 포켓몬/원피스/나루토 카드 취급·재고는 점포별 확인",
+      "data_basis": "공개 점포 주소·지도 좌표",
+      "link_status": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인",
+      "last_checked_at": "2026-08-26T10:47:11+00:00",
+      "link_checked_at": "2026-08-26T10:47:11+00:00",
+      "retailer_category": "hypermarket",
+      "inventory_verified": false,
+      "link_statuses": {
+        "url": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인"
+      }
+    },
+    {
+      "name": "롯데마트 고양점",
+      "region": "KR",
+      "games": [
+        "Pokemon",
+        "ONE PIECE",
+        "NARUTO"
+      ],
+      "type": "map",
+      "channel": "offline",
+      "url": "https://map.naver.com/p/search/%EB%A1%AF%EB%8D%B0%EB%A7%88%ED%8A%B8%20%EA%B3%A0%EC%96%91%EC%A0%90%20%EA%B2%BD%EA%B8%B0%EB%8F%84%20%EA%B3%A0%EC%96%91%EC%8B%9C%20%EB%8D%95%EC%96%91%EA%B5%AC%20%EC%B6%A9%EC%9E%A5%EB%A1%9C%20150",
+      "address": "경기도 고양시 덕양구 충장로 150",
+      "phone": "031-930-7000",
+      "lat": 37.6631,
+      "lon": 126.8318,
+      "inventory_status": "TCG 재고 미확인 · 방문 전 전화/지도 확인",
+      "inventory_checked_at": null,
+      "note": "경기도 롯데마트·토이저러스 지점 · 포켓몬/원피스/나루토 카드 취급·재고는 점포별 확인",
+      "data_basis": "공개 점포 주소·지도 좌표",
+      "link_status": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인",
+      "last_checked_at": "2026-08-26T10:47:11+00:00",
+      "link_checked_at": "2026-08-26T10:47:11+00:00",
+      "retailer_category": "hypermarket",
+      "inventory_verified": false,
+      "link_statuses": {
+        "url": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인"
+      }
+    },
+    {
+      "name": "롯데마트 화정점",
+      "region": "KR",
+      "games": [
+        "Pokemon",
+        "ONE PIECE",
+        "NARUTO"
+      ],
+      "type": "map",
+      "channel": "offline",
+      "url": "https://map.naver.com/p/search/%EB%A1%AF%EB%8D%B0%EB%A7%88%ED%8A%B8%20%ED%99%94%EC%A0%95%EC%A0%90%20%EA%B2%BD%EA%B8%B0%EB%8F%84%20%EA%B3%A0%EC%96%91%EC%8B%9C%20%EB%8D%95%EC%96%91%EA%B5%AC%20%ED%99%94%EC%A4%91%EB%A1%9C%2066",
+      "address": "경기도 고양시 덕양구 화중로 66",
+      "phone": "031-947-2500",
+      "lat": 37.6343,
+      "lon": 126.8326,
+      "inventory_status": "TCG 재고 미확인 · 방문 전 전화/지도 확인",
+      "inventory_checked_at": null,
+      "note": "경기도 롯데마트·토이저러스 지점 · 포켓몬/원피스/나루토 카드 취급·재고는 점포별 확인",
+      "data_basis": "공개 점포 주소·지도 좌표",
+      "link_status": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인",
+      "last_checked_at": "2026-08-26T10:47:11+00:00",
+      "link_checked_at": "2026-08-26T10:47:11+00:00",
+      "retailer_category": "hypermarket",
+      "inventory_verified": false,
+      "link_statuses": {
+        "url": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인"
+      }
+    },
+    {
+      "name": "롯데마트 주엽점",
+      "region": "KR",
+      "games": [
+        "Pokemon",
+        "ONE PIECE",
+        "NARUTO"
+      ],
+      "type": "map",
+      "channel": "offline",
+      "url": "https://map.naver.com/p/search/%EB%A1%AF%EB%8D%B0%EB%A7%88%ED%8A%B8%20%EC%A3%BC%EC%97%BD%EC%A0%90%20%EA%B2%BD%EA%B8%B0%EB%8F%84%20%EA%B3%A0%EC%96%91%EC%8B%9C%20%EC%9D%BC%EC%82%B0%EC%84%9C%EA%B5%AC%20%EC%A4%91%EC%95%99%EB%A1%9C%201496",
+      "address": "경기도 고양시 일산서구 중앙로 1496",
+      "phone": "031-913-2500",
+      "lat": 37.6706,
+      "lon": 126.7556,
+      "inventory_status": "TCG 재고 미확인 · 방문 전 전화/지도 확인",
+      "inventory_checked_at": null,
+      "note": "경기도 롯데마트·토이저러스 지점 · 포켓몬/원피스/나루토 카드 취급·재고는 점포별 확인",
+      "data_basis": "공개 점포 주소·지도 좌표",
+      "link_status": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인",
+      "last_checked_at": "2026-08-26T10:47:11+00:00",
+      "link_checked_at": "2026-08-26T10:47:11+00:00",
+      "retailer_category": "hypermarket",
+      "inventory_verified": false,
+      "link_statuses": {
+        "url": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인"
+      }
+    },
+    {
+      "name": "토이저러스 파주점",
+      "region": "KR",
+      "games": [
+        "Pokemon",
+        "ONE PIECE",
+        "NARUTO"
+      ],
+      "type": "map",
+      "channel": "offline",
+      "url": "https://map.naver.com/p/search/%ED%86%A0%EC%9D%B4%EC%A0%80%EB%9F%AC%EC%8A%A4%20%ED%8C%8C%EC%A3%BC%EC%A0%90%20%EA%B2%BD%EA%B8%B0%EB%8F%84%20%ED%8C%8C%EC%A3%BC%EC%8B%9C%20%ED%9A%8C%EB%8F%99%EA%B8%B8%20390%20%EB%A1%AF%EB%8D%B0%ED%94%84%EB%A6%AC%EB%AF%B8%EC%97%84%EC%95%84%EC%9A%B8%EB%A0%9B",
+      "address": "경기도 파주시 회동길 390 롯데프리미엄아울렛",
+      "phone": "매장 안내 확인",
+      "lat": 37.7176,
+      "lon": 126.6932,
+      "inventory_status": "TCG 재고 미확인 · 방문 전 전화/지도 확인",
+      "inventory_checked_at": null,
+      "note": "경기도 롯데마트·토이저러스 지점 · 포켓몬/원피스/나루토 카드 취급·재고는 점포별 확인",
+      "data_basis": "공개 점포 주소·지도 좌표",
+      "link_status": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인",
+      "last_checked_at": "2026-08-26T10:47:11+00:00",
+      "link_checked_at": "2026-08-26T10:47:11+00:00",
+      "retailer_category": "toy",
+      "inventory_verified": false,
+      "link_statuses": {
+        "url": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인"
+      }
+    },
+    {
+      "name": "롯데마트 덕소점",
+      "region": "KR",
+      "games": [
+        "Pokemon",
+        "ONE PIECE",
+        "NARUTO"
+      ],
+      "type": "map",
+      "channel": "offline",
+      "url": "https://map.naver.com/p/search/%EB%A1%AF%EB%8D%B0%EB%A7%88%ED%8A%B8%20%EB%8D%95%EC%86%8C%EC%A0%90%20%EA%B2%BD%EA%B8%B0%EB%8F%84%20%EB%82%A8%EC%96%91%EC%A3%BC%EC%8B%9C%20%EC%99%80%EB%B6%80%EC%9D%8D%20%EC%9B%94%EB%AC%B8%EC%B2%9C%EB%A1%9C%2033",
+      "address": "경기도 남양주시 와부읍 월문천로 33",
+      "phone": "031-579-7700",
+      "lat": 37.5864,
+      "lon": 127.2133,
+      "inventory_status": "TCG 재고 미확인 · 방문 전 전화/지도 확인",
+      "inventory_checked_at": null,
+      "note": "경기도 롯데마트·토이저러스 지점 · 포켓몬/원피스/나루토 카드 취급·재고는 점포별 확인",
+      "data_basis": "공개 점포 주소·지도 좌표",
+      "link_status": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인",
+      "last_checked_at": "2026-08-26T10:47:11+00:00",
+      "link_checked_at": "2026-08-26T10:47:11+00:00",
+      "retailer_category": "hypermarket",
+      "inventory_verified": false,
+      "link_statuses": {
+        "url": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인"
+      }
+    },
+    {
+      "name": "롯데마트 마석점",
+      "region": "KR",
+      "games": [
+        "Pokemon",
+        "ONE PIECE",
+        "NARUTO"
+      ],
+      "type": "map",
+      "channel": "offline",
+      "url": "https://map.naver.com/p/search/%EB%A1%AF%EB%8D%B0%EB%A7%88%ED%8A%B8%20%EB%A7%88%EC%84%9D%EC%A0%90%20%EA%B2%BD%EA%B8%B0%EB%8F%84%20%EB%82%A8%EC%96%91%EC%A3%BC%EC%8B%9C%20%ED%99%94%EB%8F%84%EC%9D%8D%20%EA%B2%BD%EC%B6%98%EB%A1%9C%201992",
+      "address": "경기도 남양주시 화도읍 경춘로 1992",
+      "phone": "031-748-2500",
+      "lat": 37.6522,
+      "lon": 127.3068,
+      "inventory_status": "TCG 재고 미확인 · 방문 전 전화/지도 확인",
+      "inventory_checked_at": null,
+      "note": "경기도 롯데마트·토이저러스 지점 · 포켓몬/원피스/나루토 카드 취급·재고는 점포별 확인",
+      "data_basis": "공개 점포 주소·지도 좌표",
+      "link_status": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인",
+      "last_checked_at": "2026-08-26T10:47:11+00:00",
+      "link_checked_at": "2026-08-26T10:47:11+00:00",
+      "retailer_category": "hypermarket",
+      "inventory_verified": false,
+      "link_statuses": {
+        "url": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인"
+      }
+    },
+    {
+      "name": "롯데마트 장암점",
+      "region": "KR",
+      "games": [
+        "Pokemon",
+        "ONE PIECE",
+        "NARUTO"
+      ],
+      "type": "map",
+      "channel": "offline",
+      "url": "https://map.naver.com/p/search/%EB%A1%AF%EB%8D%B0%EB%A7%88%ED%8A%B8%20%EC%9E%A5%EC%95%94%EC%A0%90%20%EA%B2%BD%EA%B8%B0%EB%8F%84%20%EC%9D%98%EC%A0%95%EB%B6%80%EC%8B%9C%20%EC%9E%A5%EA%B3%A1%EB%A1%9C%20224",
+      "address": "경기도 의정부시 장곡로 224",
+      "phone": "031-849-2500",
+      "lat": 37.7001,
+      "lon": 127.0534,
+      "inventory_status": "TCG 재고 미확인 · 방문 전 전화/지도 확인",
+      "inventory_checked_at": null,
+      "note": "경기도 롯데마트·토이저러스 지점 · 포켓몬/원피스/나루토 카드 취급·재고는 점포별 확인",
+      "data_basis": "공개 점포 주소·지도 좌표",
+      "link_status": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인",
+      "last_checked_at": "2026-08-26T10:47:11+00:00",
+      "link_checked_at": "2026-08-26T10:47:11+00:00",
+      "retailer_category": "hypermarket",
+      "inventory_verified": false,
+      "link_statuses": {
+        "url": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인"
+      }
+    },
+    {
+      "name": "롯데마트 의정부점",
+      "region": "KR",
+      "games": [
+        "Pokemon",
+        "ONE PIECE",
+        "NARUTO"
+      ],
+      "type": "map",
+      "channel": "offline",
+      "url": "https://map.naver.com/p/search/%EB%A1%AF%EB%8D%B0%EB%A7%88%ED%8A%B8%20%EC%9D%98%EC%A0%95%EB%B6%80%EC%A0%90%20%EA%B2%BD%EA%B8%B0%EB%8F%84%20%EC%9D%98%EC%A0%95%EB%B6%80%EC%8B%9C%20%EC%82%B0%EB%8B%A8%EB%A1%9C76%EB%B2%88%EA%B8%B8%20116",
+      "address": "경기도 의정부시 산단로76번길 116",
+      "phone": "031-850-2500",
+      "lat": 37.745,
+      "lon": 127.106,
+      "inventory_status": "TCG 재고 미확인 · 방문 전 전화/지도 확인",
+      "inventory_checked_at": null,
+      "note": "경기도 롯데마트·토이저러스 지점 · 포켓몬/원피스/나루토 카드 취급·재고는 점포별 확인",
+      "data_basis": "공개 점포 주소·지도 좌표",
+      "link_status": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인",
+      "last_checked_at": "2026-08-26T10:47:11+00:00",
+      "link_checked_at": "2026-08-26T10:47:11+00:00",
+      "retailer_category": "hypermarket",
+      "inventory_verified": false,
+      "link_statuses": {
+        "url": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인"
+      }
+    },
+    {
+      "name": "롯데마트 동두천점",
+      "region": "KR",
+      "games": [
+        "Pokemon",
+        "ONE PIECE",
+        "NARUTO"
+      ],
+      "type": "map",
+      "channel": "offline",
+      "url": "https://map.naver.com/p/search/%EB%A1%AF%EB%8D%B0%EB%A7%88%ED%8A%B8%20%EB%8F%99%EB%91%90%EC%B2%9C%EC%A0%90%20%EA%B2%BD%EA%B8%B0%EB%8F%84%20%EB%8F%99%EB%91%90%EC%B2%9C%EC%8B%9C%20%ED%8F%89%ED%99%94%EB%A1%9C2169%EB%B2%88%EA%B8%B8%2021",
+      "address": "경기도 동두천시 평화로2169번길 21",
+      "phone": "031-830-2500",
+      "lat": 37.8927,
+      "lon": 127.0532,
+      "inventory_status": "TCG 재고 미확인 · 방문 전 전화/지도 확인",
+      "inventory_checked_at": null,
+      "note": "경기도 롯데마트·토이저러스 지점 · 포켓몬/원피스/나루토 카드 취급·재고는 점포별 확인",
+      "data_basis": "공개 점포 주소·지도 좌표",
+      "link_status": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인",
+      "last_checked_at": "2026-08-26T10:47:11+00:00",
+      "link_checked_at": "2026-08-26T10:47:11+00:00",
+      "retailer_category": "hypermarket",
+      "inventory_verified": false,
+      "link_statuses": {
+        "url": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인"
+      }
+    },
+    {
+      "name": "롯데마트 경기양평점",
+      "region": "KR",
+      "games": [
+        "Pokemon",
+        "ONE PIECE",
+        "NARUTO"
+      ],
+      "type": "map",
+      "channel": "offline",
+      "url": "https://map.naver.com/p/search/%EB%A1%AF%EB%8D%B0%EB%A7%88%ED%8A%B8%20%EA%B2%BD%EA%B8%B0%EC%96%91%ED%8F%89%EC%A0%90%20%EA%B2%BD%EA%B8%B0%EB%8F%84%20%EC%96%91%ED%8F%89%EA%B5%B0%20%EC%96%91%ED%8F%89%EC%9D%8D%20%EB%82%A8%EB%B6%81%EB%A1%9C%2076",
+      "address": "경기도 양평군 양평읍 남북로 76",
+      "phone": "031-8079-2500",
+      "lat": 37.4919,
+      "lon": 127.4921,
+      "inventory_status": "TCG 재고 미확인 · 방문 전 전화/지도 확인",
+      "inventory_checked_at": null,
+      "note": "경기도 롯데마트·토이저러스 지점 · 포켓몬/원피스/나루토 카드 취급·재고는 점포별 확인",
+      "data_basis": "공개 점포 주소·지도 좌표",
+      "link_status": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인",
+      "last_checked_at": "2026-08-26T10:47:11+00:00",
+      "link_checked_at": "2026-08-26T10:47:11+00:00",
+      "retailer_category": "hypermarket",
+      "inventory_verified": false,
+      "link_statuses": {
+        "url": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인"
+      }
+    },
+    {
+      "name": "토이저러스 이천점",
+      "region": "KR",
+      "games": [
+        "Pokemon",
+        "ONE PIECE",
+        "NARUTO"
+      ],
+      "type": "map",
+      "channel": "offline",
+      "url": "https://map.naver.com/p/search/%ED%86%A0%EC%9D%B4%EC%A0%80%EB%9F%AC%EC%8A%A4%20%EC%9D%B4%EC%B2%9C%EC%A0%90%20%EA%B2%BD%EA%B8%B0%EB%8F%84%20%EC%9D%B4%EC%B2%9C%EC%8B%9C%20%ED%98%B8%EB%B2%95%EB%A9%B4%20%ED%94%84%EB%A6%AC%EB%AF%B8%EC%97%84%EC%95%84%EC%9A%B8%EB%A0%9B%EB%A1%9C%20177-74",
+      "address": "경기도 이천시 호법면 프리미엄아울렛로 177-74",
+      "phone": "매장 안내 확인",
+      "lat": 37.2427,
+      "lon": 127.6124,
+      "inventory_status": "TCG 재고 미확인 · 방문 전 전화/지도 확인",
+      "inventory_checked_at": null,
+      "note": "경기도 롯데마트·토이저러스 지점 · 포켓몬/원피스/나루토 카드 취급·재고는 점포별 확인",
+      "data_basis": "공개 점포 주소·지도 좌표",
+      "link_status": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인",
+      "last_checked_at": "2026-08-26T10:47:11+00:00",
+      "link_checked_at": "2026-08-26T10:47:11+00:00",
+      "retailer_category": "toy",
+      "inventory_verified": false,
+      "link_statuses": {
+        "url": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인"
+      }
+    },
+    {
+      "name": "CU 편의점 주변 매장",
+      "region": "KR",
+      "games": [
+        "Pokemon",
+        "ONE PIECE",
+        "NARUTO"
+      ],
+      "type": "map",
+      "channel": "offline",
+      "retailer_category": "convenience",
+      "chain": "CU",
+      "inventory_status": "TCG 취급·재고 미확인 · 방문 전 공식 매장/전화 확인",
+      "inventory_checked_at": null,
+      "inventory_verified": false,
+      "note": "영업·카드 취급·재고는 점포별로 다르므로 공식 안내 또는 전화 확인",
+      "data_basis": "공식 점포 안내 또는 지역 지도 검색 · 개별 카드 재고 미검증",
+      "url_template": "https://map.naver.com/p/search/CU%20{query}",
+      "official_reference_url": "https://cu.bgfretail.com/",
+      "link_status": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인",
+      "last_checked_at": "2026-08-26T10:47:11+00:00",
+      "link_checked_at": "2026-08-26T10:47:11+00:00",
+      "link_statuses": {
+        "url_template": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인",
+        "official_reference_url": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인"
+      }
+    },
+    {
+      "name": "CU 편의점 공식 매장 안내",
+      "region": "KR",
+      "games": [
+        "Pokemon",
+        "ONE PIECE",
+        "NARUTO"
+      ],
+      "type": "official",
+      "channel": "offline",
+      "retailer_category": "convenience",
+      "chain": "CU",
+      "inventory_status": "TCG 취급·재고 미확인 · 방문 전 공식 매장/전화 확인",
+      "inventory_checked_at": null,
+      "inventory_verified": false,
+      "note": "영업·카드 취급·재고는 점포별로 다르므로 공식 안내 또는 전화 확인",
+      "data_basis": "공식 점포 안내 또는 지역 지도 검색 · 개별 카드 재고 미검증",
+      "url": "https://cu.bgfretail.com/",
+      "official_reference_url": "https://cu.bgfretail.com/",
+      "link_status": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인",
+      "last_checked_at": "2026-08-26T10:47:11+00:00",
+      "link_checked_at": "2026-08-26T10:47:11+00:00",
+      "link_statuses": {
+        "url": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인",
+        "official_reference_url": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인"
+      }
+    },
+    {
+      "name": "GS25 편의점 주변 매장",
+      "region": "KR",
+      "games": [
+        "Pokemon",
+        "ONE PIECE",
+        "NARUTO"
+      ],
+      "type": "map",
+      "channel": "offline",
+      "retailer_category": "convenience",
+      "chain": "GS25",
+      "inventory_status": "TCG 취급·재고 미확인 · 방문 전 공식 매장/전화 확인",
+      "inventory_checked_at": null,
+      "inventory_verified": false,
+      "note": "영업·카드 취급·재고는 점포별로 다르므로 공식 안내 또는 전화 확인",
+      "data_basis": "공식 점포 안내 또는 지역 지도 검색 · 개별 카드 재고 미검증",
+      "url_template": "https://map.naver.com/p/search/GS25%20{query}",
+      "official_reference_url": "https://gs25.gsretail.com/",
+      "link_status": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인",
+      "last_checked_at": "2026-08-26T10:47:11+00:00",
+      "link_checked_at": "2026-08-26T10:47:11+00:00",
+      "link_statuses": {
+        "url_template": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인",
+        "official_reference_url": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인"
+      }
+    },
+    {
+      "name": "GS25 편의점 공식 매장 안내",
+      "region": "KR",
+      "games": [
+        "Pokemon",
+        "ONE PIECE",
+        "NARUTO"
+      ],
+      "type": "official",
+      "channel": "offline",
+      "retailer_category": "convenience",
+      "chain": "GS25",
+      "inventory_status": "TCG 취급·재고 미확인 · 방문 전 공식 매장/전화 확인",
+      "inventory_checked_at": null,
+      "inventory_verified": false,
+      "note": "영업·카드 취급·재고는 점포별로 다르므로 공식 안내 또는 전화 확인",
+      "data_basis": "공식 점포 안내 또는 지역 지도 검색 · 개별 카드 재고 미검증",
+      "url": "https://gs25.gsretail.com/",
+      "official_reference_url": "https://gs25.gsretail.com/",
+      "link_status": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인",
+      "last_checked_at": "2026-08-26T10:47:11+00:00",
+      "link_checked_at": "2026-08-26T10:47:11+00:00",
+      "link_statuses": {
+        "url": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인",
+        "official_reference_url": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인"
+      }
+    },
+    {
+      "name": "세븐일레븐 편의점 주변 매장",
+      "region": "KR",
+      "games": [
+        "Pokemon",
+        "ONE PIECE",
+        "NARUTO"
+      ],
+      "type": "map",
+      "channel": "offline",
+      "retailer_category": "convenience",
+      "chain": "세븐일레븐",
+      "inventory_status": "TCG 취급·재고 미확인 · 방문 전 공식 매장/전화 확인",
+      "inventory_checked_at": null,
+      "inventory_verified": false,
+      "note": "영업·카드 취급·재고는 점포별로 다르므로 공식 안내 또는 전화 확인",
+      "data_basis": "공식 점포 안내 또는 지역 지도 검색 · 개별 카드 재고 미검증",
+      "url_template": "https://map.naver.com/p/search/%EC%84%B8%EB%B8%90%EC%9D%BC%EB%A0%88%EB%B8%90%20{query}",
+      "official_reference_url": "https://www.7-eleven.co.kr/",
+      "link_status": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인",
+      "last_checked_at": "2026-08-26T10:47:11+00:00",
+      "link_checked_at": "2026-08-26T10:47:11+00:00",
+      "link_statuses": {
+        "url_template": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인",
+        "official_reference_url": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인"
+      }
+    },
+    {
+      "name": "세븐일레븐 편의점 공식 매장 안내",
+      "region": "KR",
+      "games": [
+        "Pokemon",
+        "ONE PIECE",
+        "NARUTO"
+      ],
+      "type": "official",
+      "channel": "offline",
+      "retailer_category": "convenience",
+      "chain": "세븐일레븐",
+      "inventory_status": "TCG 취급·재고 미확인 · 방문 전 공식 매장/전화 확인",
+      "inventory_checked_at": null,
+      "inventory_verified": false,
+      "note": "영업·카드 취급·재고는 점포별로 다르므로 공식 안내 또는 전화 확인",
+      "data_basis": "공식 점포 안내 또는 지역 지도 검색 · 개별 카드 재고 미검증",
+      "url": "https://www.7-eleven.co.kr/",
+      "official_reference_url": "https://www.7-eleven.co.kr/",
+      "link_status": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인",
+      "last_checked_at": "2026-08-26T10:47:11+00:00",
+      "link_checked_at": "2026-08-26T10:47:11+00:00",
+      "link_statuses": {
+        "url": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인",
+        "official_reference_url": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인"
+      }
+    },
+    {
+      "name": "이마트24 편의점 주변 매장",
+      "region": "KR",
+      "games": [
+        "Pokemon",
+        "ONE PIECE",
+        "NARUTO"
+      ],
+      "type": "map",
+      "channel": "offline",
+      "retailer_category": "convenience",
+      "chain": "이마트24",
+      "inventory_status": "TCG 취급·재고 미확인 · 방문 전 공식 매장/전화 확인",
+      "inventory_checked_at": null,
+      "inventory_verified": false,
+      "note": "영업·카드 취급·재고는 점포별로 다르므로 공식 안내 또는 전화 확인",
+      "data_basis": "공식 점포 안내 또는 지역 지도 검색 · 개별 카드 재고 미검증",
+      "url_template": "https://map.naver.com/p/search/%EC%9D%B4%EB%A7%88%ED%8A%B824%20{query}",
+      "official_reference_url": "https://m.emart24.co.kr/store",
+      "link_status": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인",
+      "last_checked_at": "2026-08-26T10:47:11+00:00",
+      "link_checked_at": "2026-08-26T10:47:11+00:00",
+      "link_statuses": {
+        "url_template": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인",
+        "official_reference_url": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인"
+      }
+    },
+    {
+      "name": "이마트24 편의점 공식 매장 안내",
+      "region": "KR",
+      "games": [
+        "Pokemon",
+        "ONE PIECE",
+        "NARUTO"
+      ],
+      "type": "official",
+      "channel": "offline",
+      "retailer_category": "convenience",
+      "chain": "이마트24",
+      "inventory_status": "TCG 취급·재고 미확인 · 방문 전 공식 매장/전화 확인",
+      "inventory_checked_at": null,
+      "inventory_verified": false,
+      "note": "영업·카드 취급·재고는 점포별로 다르므로 공식 안내 또는 전화 확인",
+      "data_basis": "공식 점포 안내 또는 지역 지도 검색 · 개별 카드 재고 미검증",
+      "url": "https://m.emart24.co.kr/store",
+      "official_reference_url": "https://m.emart24.co.kr/store",
+      "link_status": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인",
+      "last_checked_at": "2026-08-26T10:47:11+00:00",
+      "link_checked_at": "2026-08-26T10:47:11+00:00",
+      "link_statuses": {
+        "url": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인",
+        "official_reference_url": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인"
+      }
+    },
+    {
+      "name": "씨스페이스 편의점 주변 매장",
+      "region": "KR",
+      "games": [
+        "Pokemon",
+        "ONE PIECE",
+        "NARUTO"
+      ],
+      "type": "map",
+      "channel": "offline",
+      "retailer_category": "convenience",
+      "chain": "씨스페이스",
+      "inventory_status": "TCG 취급·재고 미확인 · 방문 전 공식 매장/전화 확인",
+      "inventory_checked_at": null,
+      "inventory_verified": false,
+      "note": "영업·카드 취급·재고는 점포별로 다르므로 공식 안내 또는 전화 확인",
+      "data_basis": "공식 점포 안내 또는 지역 지도 검색 · 개별 카드 재고 미검증",
+      "url_template": "https://map.naver.com/p/search/%EC%94%A8%EC%8A%A4%ED%8E%98%EC%9D%B4%EC%8A%A4%20{query}",
+      "link_status": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인",
+      "last_checked_at": "2026-08-26T10:47:11+00:00",
+      "link_checked_at": "2026-08-26T10:47:11+00:00",
+      "link_statuses": {
+        "url_template": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인"
+      }
+    },
+    {
+      "name": "동네 개인 편의점 주변 매장",
+      "region": "KR",
+      "games": [
+        "Pokemon",
+        "ONE PIECE",
+        "NARUTO"
+      ],
+      "type": "map",
+      "channel": "offline",
+      "retailer_category": "convenience",
+      "chain": "편의점",
+      "inventory_status": "TCG 취급·재고 미확인 · 방문 전 공식 매장/전화 확인",
+      "inventory_checked_at": null,
+      "inventory_verified": false,
+      "note": "영업·카드 취급·재고는 점포별로 다르므로 공식 안내 또는 전화 확인",
+      "data_basis": "공식 점포 안내 또는 지역 지도 검색 · 개별 카드 재고 미검증",
+      "url_template": "https://map.naver.com/p/search/%ED%8E%B8%EC%9D%98%EC%A0%90%20{query}",
+      "link_status": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인",
+      "last_checked_at": "2026-08-26T10:47:11+00:00",
+      "link_checked_at": "2026-08-26T10:47:11+00:00",
+      "link_statuses": {
+        "url_template": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인"
+      }
+    },
+    {
+      "name": "이마트 대형마트 주변 매장",
+      "region": "KR",
+      "games": [
+        "Pokemon",
+        "ONE PIECE",
+        "NARUTO"
+      ],
+      "type": "map",
+      "channel": "offline",
+      "retailer_category": "hypermarket",
+      "chain": "이마트",
+      "inventory_status": "TCG 취급·재고 미확인 · 방문 전 공식 매장/전화 확인",
+      "inventory_checked_at": null,
+      "inventory_verified": false,
+      "note": "영업·카드 취급·재고는 점포별로 다르므로 공식 안내 또는 전화 확인",
+      "data_basis": "공식 점포 안내 또는 지역 지도 검색 · 개별 카드 재고 미검증",
+      "url_template": "https://map.naver.com/p/search/%EC%9D%B4%EB%A7%88%ED%8A%B8%20{query}",
+      "official_reference_url": "https://store.emart.com/branch/list.do",
+      "link_status": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인",
+      "last_checked_at": "2026-08-26T10:47:11+00:00",
+      "link_checked_at": "2026-08-26T10:47:11+00:00",
+      "link_statuses": {
+        "url_template": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인",
+        "official_reference_url": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인"
+      }
+    },
+    {
+      "name": "이마트 대형마트 공식 매장 안내",
+      "region": "KR",
+      "games": [
+        "Pokemon",
+        "ONE PIECE",
+        "NARUTO"
+      ],
+      "type": "official",
+      "channel": "offline",
+      "retailer_category": "hypermarket",
+      "chain": "이마트",
+      "inventory_status": "TCG 취급·재고 미확인 · 방문 전 공식 매장/전화 확인",
+      "inventory_checked_at": null,
+      "inventory_verified": false,
+      "note": "영업·카드 취급·재고는 점포별로 다르므로 공식 안내 또는 전화 확인",
+      "data_basis": "공식 점포 안내 또는 지역 지도 검색 · 개별 카드 재고 미검증",
+      "url": "https://store.emart.com/branch/list.do",
+      "official_reference_url": "https://store.emart.com/branch/list.do",
+      "link_status": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인",
+      "last_checked_at": "2026-08-26T10:47:11+00:00",
+      "link_checked_at": "2026-08-26T10:47:11+00:00",
+      "link_statuses": {
+        "url": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인",
+        "official_reference_url": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인"
+      }
+    },
+    {
+      "name": "이마트 트레이더스 주변 매장",
+      "region": "KR",
+      "games": [
+        "Pokemon",
+        "ONE PIECE",
+        "NARUTO"
+      ],
+      "type": "map",
+      "channel": "offline",
+      "retailer_category": "hypermarket",
+      "chain": "트레이더스 홀세일 클럽",
+      "inventory_status": "TCG 취급·재고 미확인 · 방문 전 공식 매장/전화 확인",
+      "inventory_checked_at": null,
+      "inventory_verified": false,
+      "note": "영업·카드 취급·재고는 점포별로 다르므로 공식 안내 또는 전화 확인",
+      "data_basis": "공식 점포 안내 또는 지역 지도 검색 · 개별 카드 재고 미검증",
+      "url_template": "https://map.naver.com/p/search/%ED%8A%B8%EB%A0%88%EC%9D%B4%EB%8D%94%EC%8A%A4%20%ED%99%80%EC%84%B8%EC%9D%BC%20%ED%81%B4%EB%9F%BD%20{query}",
+      "official_reference_url": "https://store.emart.com/branch/list.do",
+      "link_status": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인",
+      "last_checked_at": "2026-08-26T10:47:11+00:00",
+      "link_checked_at": "2026-08-26T10:47:11+00:00",
+      "link_statuses": {
+        "official_reference_url": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인",
+        "url_template": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인"
+      }
+    },
+    {
+      "name": "이마트 트레이더스 공식 매장 안내",
+      "region": "KR",
+      "games": [
+        "Pokemon",
+        "ONE PIECE",
+        "NARUTO"
+      ],
+      "type": "official",
+      "channel": "offline",
+      "retailer_category": "hypermarket",
+      "chain": "트레이더스 홀세일 클럽",
+      "inventory_status": "TCG 취급·재고 미확인 · 방문 전 공식 매장/전화 확인",
+      "inventory_checked_at": null,
+      "inventory_verified": false,
+      "note": "영업·카드 취급·재고는 점포별로 다르므로 공식 안내 또는 전화 확인",
+      "data_basis": "공식 점포 안내 또는 지역 지도 검색 · 개별 카드 재고 미검증",
+      "url": "https://store.emart.com/branch/list.do",
+      "official_reference_url": "https://store.emart.com/branch/list.do",
+      "link_status": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인",
+      "last_checked_at": "2026-08-26T10:47:11+00:00",
+      "link_checked_at": "2026-08-26T10:47:11+00:00",
+      "link_statuses": {
+        "url": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인",
+        "official_reference_url": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인"
+      }
+    },
+    {
+      "name": "홈플러스 대형마트 주변 매장",
+      "region": "KR",
+      "games": [
+        "Pokemon",
+        "ONE PIECE",
+        "NARUTO"
+      ],
+      "type": "map",
+      "channel": "offline",
+      "retailer_category": "hypermarket",
+      "chain": "홈플러스",
+      "inventory_status": "TCG 취급·재고 미확인 · 방문 전 공식 매장/전화 확인",
+      "inventory_checked_at": null,
+      "inventory_verified": false,
+      "note": "영업·카드 취급·재고는 점포별로 다르므로 공식 안내 또는 전화 확인",
+      "data_basis": "공식 점포 안내 또는 지역 지도 검색 · 개별 카드 재고 미검증",
+      "url_template": "https://map.naver.com/p/search/%ED%99%88%ED%94%8C%EB%9F%AC%EC%8A%A4%20{query}",
+      "official_reference_url": "https://my.homeplus.co.kr/store",
+      "link_status": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인",
+      "last_checked_at": "2026-08-26T10:47:11+00:00",
+      "link_checked_at": "2026-08-26T10:47:11+00:00",
+      "link_statuses": {
+        "url_template": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인",
+        "official_reference_url": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인"
+      }
+    },
+    {
+      "name": "홈플러스 대형마트 공식 매장 안내",
+      "region": "KR",
+      "games": [
+        "Pokemon",
+        "ONE PIECE",
+        "NARUTO"
+      ],
+      "type": "official",
+      "channel": "offline",
+      "retailer_category": "hypermarket",
+      "chain": "홈플러스",
+      "inventory_status": "TCG 취급·재고 미확인 · 방문 전 공식 매장/전화 확인",
+      "inventory_checked_at": null,
+      "inventory_verified": false,
+      "note": "영업·카드 취급·재고는 점포별로 다르므로 공식 안내 또는 전화 확인",
+      "data_basis": "공식 점포 안내 또는 지역 지도 검색 · 개별 카드 재고 미검증",
+      "url": "https://my.homeplus.co.kr/store",
+      "official_reference_url": "https://my.homeplus.co.kr/store",
+      "link_status": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인",
+      "last_checked_at": "2026-08-26T10:47:11+00:00",
+      "link_checked_at": "2026-08-26T10:47:11+00:00",
+      "link_statuses": {
+        "url": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인",
+        "official_reference_url": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인"
+      }
+    },
+    {
+      "name": "롯데마트 대형마트 주변 매장",
+      "region": "KR",
+      "games": [
+        "Pokemon",
+        "ONE PIECE",
+        "NARUTO"
+      ],
+      "type": "map",
+      "channel": "offline",
+      "retailer_category": "hypermarket",
+      "chain": "롯데마트",
+      "inventory_status": "TCG 취급·재고 미확인 · 방문 전 공식 매장/전화 확인",
+      "inventory_checked_at": null,
+      "inventory_verified": false,
+      "note": "영업·카드 취급·재고는 점포별로 다르므로 공식 안내 또는 전화 확인",
+      "data_basis": "공식 점포 안내 또는 지역 지도 검색 · 개별 카드 재고 미검증",
+      "url_template": "https://map.naver.com/p/search/%EB%A1%AF%EB%8D%B0%EB%A7%88%ED%8A%B8%20{query}",
+      "link_status": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인",
+      "last_checked_at": "2026-08-26T10:47:11+00:00",
+      "link_checked_at": "2026-08-26T10:47:11+00:00",
+      "link_statuses": {
+        "url_template": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인"
+      }
+    },
+    {
+      "name": "코스트코 창고형마트 주변 매장",
+      "region": "KR",
+      "games": [
+        "Pokemon",
+        "ONE PIECE",
+        "NARUTO"
+      ],
+      "type": "map",
+      "channel": "offline",
+      "retailer_category": "hypermarket",
+      "chain": "코스트코",
+      "inventory_status": "TCG 취급·재고 미확인 · 방문 전 공식 매장/전화 확인",
+      "inventory_checked_at": null,
+      "inventory_verified": false,
+      "note": "영업·카드 취급·재고는 점포별로 다르므로 공식 안내 또는 전화 확인",
+      "data_basis": "공식 점포 안내 또는 지역 지도 검색 · 개별 카드 재고 미검증",
+      "url_template": "https://map.naver.com/p/search/%EC%BD%94%EC%8A%A4%ED%8A%B8%EC%BD%94%20{query}",
+      "official_reference_url": "https://www.costco.co.kr/store-finder",
+      "link_status": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인",
+      "last_checked_at": "2026-08-26T10:47:11+00:00",
+      "link_checked_at": "2026-08-26T10:47:11+00:00",
+      "link_statuses": {
+        "url_template": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인",
+        "official_reference_url": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인"
+      }
+    },
+    {
+      "name": "코스트코 창고형마트 공식 매장 안내",
+      "region": "KR",
+      "games": [
+        "Pokemon",
+        "ONE PIECE",
+        "NARUTO"
+      ],
+      "type": "official",
+      "channel": "offline",
+      "retailer_category": "hypermarket",
+      "chain": "코스트코",
+      "inventory_status": "TCG 취급·재고 미확인 · 방문 전 공식 매장/전화 확인",
+      "inventory_checked_at": null,
+      "inventory_verified": false,
+      "note": "영업·카드 취급·재고는 점포별로 다르므로 공식 안내 또는 전화 확인",
+      "data_basis": "공식 점포 안내 또는 지역 지도 검색 · 개별 카드 재고 미검증",
+      "url": "https://www.costco.co.kr/store-finder",
+      "official_reference_url": "https://www.costco.co.kr/store-finder",
+      "link_status": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인",
+      "last_checked_at": "2026-08-26T10:47:11+00:00",
+      "link_checked_at": "2026-08-26T10:47:11+00:00",
+      "link_statuses": {
+        "url": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인",
+        "official_reference_url": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인"
+      }
+    },
+    {
+      "name": "농협 하나로마트 주변 매장",
+      "region": "KR",
+      "games": [
+        "Pokemon",
+        "ONE PIECE",
+        "NARUTO"
+      ],
+      "type": "map",
+      "channel": "offline",
+      "retailer_category": "hypermarket",
+      "chain": "하나로마트",
+      "inventory_status": "TCG 취급·재고 미확인 · 방문 전 공식 매장/전화 확인",
+      "inventory_checked_at": null,
+      "inventory_verified": false,
+      "note": "영업·카드 취급·재고는 점포별로 다르므로 공식 안내 또는 전화 확인",
+      "data_basis": "공식 점포 안내 또는 지역 지도 검색 · 개별 카드 재고 미검증",
+      "url_template": "https://map.naver.com/p/search/%ED%95%98%EB%82%98%EB%A1%9C%EB%A7%88%ED%8A%B8%20{query}",
+      "link_status": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인",
+      "last_checked_at": "2026-08-26T10:47:11+00:00",
+      "link_checked_at": "2026-08-26T10:47:11+00:00",
+      "link_statuses": {
+        "url_template": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인"
+      }
+    },
+    {
+      "name": "이마트 에브리데이 주변 매장",
+      "region": "KR",
+      "games": [
+        "Pokemon",
+        "ONE PIECE",
+        "NARUTO"
+      ],
+      "type": "map",
+      "channel": "offline",
+      "retailer_category": "hypermarket",
+      "chain": "이마트 에브리데이",
+      "inventory_status": "TCG 취급·재고 미확인 · 방문 전 공식 매장/전화 확인",
+      "inventory_checked_at": null,
+      "inventory_verified": false,
+      "note": "영업·카드 취급·재고는 점포별로 다르므로 공식 안내 또는 전화 확인",
+      "data_basis": "공식 점포 안내 또는 지역 지도 검색 · 개별 카드 재고 미검증",
+      "url_template": "https://map.naver.com/p/search/%EC%9D%B4%EB%A7%88%ED%8A%B8%20%EC%97%90%EB%B8%8C%EB%A6%AC%EB%8D%B0%EC%9D%B4%20{query}",
+      "official_reference_url": "https://store.emart.com/branch/list.do",
+      "link_status": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인",
+      "last_checked_at": "2026-08-26T10:47:11+00:00",
+      "link_checked_at": "2026-08-26T10:47:11+00:00",
+      "link_statuses": {
+        "official_reference_url": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인",
+        "url_template": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인"
+      }
+    },
+    {
+      "name": "이마트 에브리데이 공식 매장 안내",
+      "region": "KR",
+      "games": [
+        "Pokemon",
+        "ONE PIECE",
+        "NARUTO"
+      ],
+      "type": "official",
+      "channel": "offline",
+      "retailer_category": "hypermarket",
+      "chain": "이마트 에브리데이",
+      "inventory_status": "TCG 취급·재고 미확인 · 방문 전 공식 매장/전화 확인",
+      "inventory_checked_at": null,
+      "inventory_verified": false,
+      "note": "영업·카드 취급·재고는 점포별로 다르므로 공식 안내 또는 전화 확인",
+      "data_basis": "공식 점포 안내 또는 지역 지도 검색 · 개별 카드 재고 미검증",
+      "url": "https://store.emart.com/branch/list.do",
+      "official_reference_url": "https://store.emart.com/branch/list.do",
+      "link_status": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인",
+      "last_checked_at": "2026-08-26T10:47:11+00:00",
+      "link_checked_at": "2026-08-26T10:47:11+00:00",
+      "link_statuses": {
+        "url": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인",
+        "official_reference_url": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인"
+      }
+    },
+    {
+      "name": "GS THE FRESH 슈퍼마켓 주변 매장",
+      "region": "KR",
+      "games": [
+        "Pokemon",
+        "ONE PIECE",
+        "NARUTO"
+      ],
+      "type": "map",
+      "channel": "offline",
+      "retailer_category": "hypermarket",
+      "chain": "GS THE FRESH",
+      "inventory_status": "TCG 취급·재고 미확인 · 방문 전 공식 매장/전화 확인",
+      "inventory_checked_at": null,
+      "inventory_verified": false,
+      "note": "영업·카드 취급·재고는 점포별로 다르므로 공식 안내 또는 전화 확인",
+      "data_basis": "공식 점포 안내 또는 지역 지도 검색 · 개별 카드 재고 미검증",
+      "url_template": "https://map.naver.com/p/search/GS%20THE%20FRESH%20{query}",
+      "link_status": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인",
+      "last_checked_at": "2026-08-26T10:47:11+00:00",
+      "link_checked_at": "2026-08-26T10:47:11+00:00",
+      "link_statuses": {
+        "url_template": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인"
+      }
+    },
+    {
+      "name": "동네 대형마트·슈퍼마켓 주변 매장",
+      "region": "KR",
+      "games": [
+        "Pokemon",
+        "ONE PIECE",
+        "NARUTO"
+      ],
+      "type": "map",
+      "channel": "offline",
+      "retailer_category": "hypermarket",
+      "chain": "대형마트 슈퍼마켓",
+      "inventory_status": "TCG 취급·재고 미확인 · 방문 전 공식 매장/전화 확인",
+      "inventory_checked_at": null,
+      "inventory_verified": false,
+      "note": "영업·카드 취급·재고는 점포별로 다르므로 공식 안내 또는 전화 확인",
+      "data_basis": "공식 점포 안내 또는 지역 지도 검색 · 개별 카드 재고 미검증",
+      "url_template": "https://map.naver.com/p/search/%EB%8C%80%ED%98%95%EB%A7%88%ED%8A%B8%20%EC%8A%88%ED%8D%BC%EB%A7%88%EC%BC%93%20{query}",
+      "link_status": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인",
+      "last_checked_at": "2026-08-26T10:47:11+00:00",
+      "link_checked_at": "2026-08-26T10:47:11+00:00",
+      "link_statuses": {
+        "url_template": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인"
+      }
+    },
+    {
+      "name": "알파문구 주변 매장",
+      "region": "KR",
+      "games": [
+        "Pokemon",
+        "ONE PIECE",
+        "NARUTO"
+      ],
+      "type": "map",
+      "channel": "offline",
+      "retailer_category": "stationery",
+      "chain": "알파문구",
+      "inventory_status": "TCG 취급·재고 미확인 · 방문 전 공식 매장/전화 확인",
+      "inventory_checked_at": null,
+      "inventory_verified": false,
+      "note": "영업·카드 취급·재고는 점포별로 다르므로 공식 안내 또는 전화 확인",
+      "data_basis": "공식 점포 안내 또는 지역 지도 검색 · 개별 카드 재고 미검증",
+      "url_template": "https://map.naver.com/p/search/%EC%95%8C%ED%8C%8C%EB%AC%B8%EA%B5%AC%20{query}",
+      "official_reference_url": "https://www.alpha.co.kr/",
+      "link_status": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인",
+      "last_checked_at": "2026-08-26T10:47:11+00:00",
+      "link_checked_at": "2026-08-26T10:47:11+00:00",
+      "link_statuses": {
+        "url_template": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인",
+        "official_reference_url": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인"
+      }
+    },
+    {
+      "name": "알파문구 공식 매장 안내",
+      "region": "KR",
+      "games": [
+        "Pokemon",
+        "ONE PIECE",
+        "NARUTO"
+      ],
+      "type": "official",
+      "channel": "offline",
+      "retailer_category": "stationery",
+      "chain": "알파문구",
+      "inventory_status": "TCG 취급·재고 미확인 · 방문 전 공식 매장/전화 확인",
+      "inventory_checked_at": null,
+      "inventory_verified": false,
+      "note": "영업·카드 취급·재고는 점포별로 다르므로 공식 안내 또는 전화 확인",
+      "data_basis": "공식 점포 안내 또는 지역 지도 검색 · 개별 카드 재고 미검증",
+      "url": "https://www.alpha.co.kr/",
+      "official_reference_url": "https://www.alpha.co.kr/",
+      "link_status": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인",
+      "last_checked_at": "2026-08-26T10:47:11+00:00",
+      "link_checked_at": "2026-08-26T10:47:11+00:00",
+      "link_statuses": {
+        "url": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인",
+        "official_reference_url": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인"
+      }
+    },
+    {
+      "name": "모닝글로리 문구점 주변 매장",
+      "region": "KR",
+      "games": [
+        "Pokemon",
+        "ONE PIECE",
+        "NARUTO"
+      ],
+      "type": "map",
+      "channel": "offline",
+      "retailer_category": "stationery",
+      "chain": "모닝글로리 문구",
+      "inventory_status": "TCG 취급·재고 미확인 · 방문 전 공식 매장/전화 확인",
+      "inventory_checked_at": null,
+      "inventory_verified": false,
+      "note": "영업·카드 취급·재고는 점포별로 다르므로 공식 안내 또는 전화 확인",
+      "data_basis": "공식 점포 안내 또는 지역 지도 검색 · 개별 카드 재고 미검증",
+      "url_template": "https://map.naver.com/p/search/%EB%AA%A8%EB%8B%9D%EA%B8%80%EB%A1%9C%EB%A6%AC%20%EB%AC%B8%EA%B5%AC%20{query}",
+      "link_status": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인",
+      "last_checked_at": "2026-08-26T10:47:11+00:00",
+      "link_checked_at": "2026-08-26T10:47:11+00:00",
+      "link_statuses": {
+        "url_template": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인"
+      }
+    },
+    {
+      "name": "오피스디포 문구점 주변 매장",
+      "region": "KR",
+      "games": [
+        "Pokemon",
+        "ONE PIECE",
+        "NARUTO"
+      ],
+      "type": "map",
+      "channel": "offline",
+      "retailer_category": "stationery",
+      "chain": "오피스디포 문구",
+      "inventory_status": "TCG 취급·재고 미확인 · 방문 전 공식 매장/전화 확인",
+      "inventory_checked_at": null,
+      "inventory_verified": false,
+      "note": "영업·카드 취급·재고는 점포별로 다르므로 공식 안내 또는 전화 확인",
+      "data_basis": "공식 점포 안내 또는 지역 지도 검색 · 개별 카드 재고 미검증",
+      "url_template": "https://map.naver.com/p/search/%EC%98%A4%ED%94%BC%EC%8A%A4%EB%94%94%ED%8F%AC%20%EB%AC%B8%EA%B5%AC%20{query}",
+      "link_status": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인",
+      "last_checked_at": "2026-08-26T10:47:11+00:00",
+      "link_checked_at": "2026-08-26T10:47:11+00:00",
+      "link_statuses": {
+        "url_template": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인"
+      }
+    },
+    {
+      "name": "오피스넥스 문구점 주변 매장",
+      "region": "KR",
+      "games": [
+        "Pokemon",
+        "ONE PIECE",
+        "NARUTO"
+      ],
+      "type": "map",
+      "channel": "offline",
+      "retailer_category": "stationery",
+      "chain": "오피스넥스 문구",
+      "inventory_status": "TCG 취급·재고 미확인 · 방문 전 공식 매장/전화 확인",
+      "inventory_checked_at": null,
+      "inventory_verified": false,
+      "note": "영업·카드 취급·재고는 점포별로 다르므로 공식 안내 또는 전화 확인",
+      "data_basis": "공식 점포 안내 또는 지역 지도 검색 · 개별 카드 재고 미검증",
+      "url_template": "https://map.naver.com/p/search/%EC%98%A4%ED%94%BC%EC%8A%A4%EB%84%A5%EC%8A%A4%20%EB%AC%B8%EA%B5%AC%20{query}",
+      "link_status": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인",
+      "last_checked_at": "2026-08-26T10:47:11+00:00",
+      "link_checked_at": "2026-08-26T10:47:11+00:00",
+      "link_statuses": {
+        "url_template": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인"
+      }
+    },
+    {
+      "name": "학교 앞 문구점 주변 매장",
+      "region": "KR",
+      "games": [
+        "Pokemon",
+        "ONE PIECE",
+        "NARUTO"
+      ],
+      "type": "map",
+      "channel": "offline",
+      "retailer_category": "stationery",
+      "chain": "학교 앞 문구점",
+      "inventory_status": "TCG 취급·재고 미확인 · 방문 전 공식 매장/전화 확인",
+      "inventory_checked_at": null,
+      "inventory_verified": false,
+      "note": "영업·카드 취급·재고는 점포별로 다르므로 공식 안내 또는 전화 확인",
+      "data_basis": "공식 점포 안내 또는 지역 지도 검색 · 개별 카드 재고 미검증",
+      "url_template": "https://map.naver.com/p/search/%ED%95%99%EA%B5%90%20%EC%95%9E%20%EB%AC%B8%EA%B5%AC%EC%A0%90%20{query}",
+      "link_status": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인",
+      "last_checked_at": "2026-08-26T10:47:11+00:00",
+      "link_checked_at": "2026-08-26T10:47:11+00:00",
+      "link_statuses": {
+        "url_template": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인"
+      }
+    },
+    {
+      "name": "동네 문구·팬시점 주변 매장",
+      "region": "KR",
+      "games": [
+        "Pokemon",
+        "ONE PIECE",
+        "NARUTO"
+      ],
+      "type": "map",
+      "channel": "offline",
+      "retailer_category": "stationery",
+      "chain": "문구점 팬시점",
+      "inventory_status": "TCG 취급·재고 미확인 · 방문 전 공식 매장/전화 확인",
+      "inventory_checked_at": null,
+      "inventory_verified": false,
+      "note": "영업·카드 취급·재고는 점포별로 다르므로 공식 안내 또는 전화 확인",
+      "data_basis": "공식 점포 안내 또는 지역 지도 검색 · 개별 카드 재고 미검증",
+      "url_template": "https://map.naver.com/p/search/%EB%AC%B8%EA%B5%AC%EC%A0%90%20%ED%8C%AC%EC%8B%9C%EC%A0%90%20{query}",
+      "link_status": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인",
+      "last_checked_at": "2026-08-26T10:47:11+00:00",
+      "link_checked_at": "2026-08-26T10:47:11+00:00",
+      "link_statuses": {
+        "url_template": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인"
+      }
+    },
+    {
+      "name": "무인 문구점 주변 매장",
+      "region": "KR",
+      "games": [
+        "Pokemon",
+        "ONE PIECE",
+        "NARUTO"
+      ],
+      "type": "map",
+      "channel": "offline",
+      "retailer_category": "stationery",
+      "chain": "무인 문구점",
+      "inventory_status": "TCG 취급·재고 미확인 · 방문 전 공식 매장/전화 확인",
+      "inventory_checked_at": null,
+      "inventory_verified": false,
+      "note": "영업·카드 취급·재고는 점포별로 다르므로 공식 안내 또는 전화 확인",
+      "data_basis": "공식 점포 안내 또는 지역 지도 검색 · 개별 카드 재고 미검증",
+      "url_template": "https://map.naver.com/p/search/%EB%AC%B4%EC%9D%B8%20%EB%AC%B8%EA%B5%AC%EC%A0%90%20{query}",
+      "link_status": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인",
+      "last_checked_at": "2026-08-26T10:47:11+00:00",
+      "link_checked_at": "2026-08-26T10:47:11+00:00",
+      "link_statuses": {
+        "url_template": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인"
+      }
+    },
+    {
+      "name": "아트박스 팬시점 주변 매장",
+      "region": "KR",
+      "games": [
+        "Pokemon",
+        "ONE PIECE",
+        "NARUTO"
+      ],
+      "type": "map",
+      "channel": "offline",
+      "retailer_category": "bookstore",
+      "chain": "아트박스",
+      "inventory_status": "TCG 취급·재고 미확인 · 방문 전 공식 매장/전화 확인",
+      "inventory_checked_at": null,
+      "inventory_verified": false,
+      "note": "영업·카드 취급·재고는 점포별로 다르므로 공식 안내 또는 전화 확인",
+      "data_basis": "공식 점포 안내 또는 지역 지도 검색 · 개별 카드 재고 미검증",
+      "url_template": "https://map.naver.com/p/search/%EC%95%84%ED%8A%B8%EB%B0%95%EC%8A%A4%20{query}",
+      "official_reference_url": "https://company.artbox.kr/",
+      "link_status": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인",
+      "last_checked_at": "2026-08-26T10:47:11+00:00",
+      "link_checked_at": "2026-08-26T10:47:11+00:00",
+      "link_statuses": {
+        "url_template": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인",
+        "official_reference_url": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인"
+      }
+    },
+    {
+      "name": "아트박스 팬시점 공식 매장 안내",
+      "region": "KR",
+      "games": [
+        "Pokemon",
+        "ONE PIECE",
+        "NARUTO"
+      ],
+      "type": "official",
+      "channel": "offline",
+      "retailer_category": "bookstore",
+      "chain": "아트박스",
+      "inventory_status": "TCG 취급·재고 미확인 · 방문 전 공식 매장/전화 확인",
+      "inventory_checked_at": null,
+      "inventory_verified": false,
+      "note": "영업·카드 취급·재고는 점포별로 다르므로 공식 안내 또는 전화 확인",
+      "data_basis": "공식 점포 안내 또는 지역 지도 검색 · 개별 카드 재고 미검증",
+      "url": "https://company.artbox.kr/",
+      "official_reference_url": "https://company.artbox.kr/",
+      "link_status": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인",
+      "last_checked_at": "2026-08-26T10:47:11+00:00",
+      "link_checked_at": "2026-08-26T10:47:11+00:00",
+      "link_statuses": {
+        "url": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인",
+        "official_reference_url": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인"
+      }
+    },
+    {
+      "name": "교보문고·핫트랙스 주변 매장",
+      "region": "KR",
+      "games": [
+        "Pokemon",
+        "ONE PIECE",
+        "NARUTO"
+      ],
+      "type": "map",
+      "channel": "offline",
+      "retailer_category": "bookstore",
+      "chain": "교보문고 핫트랙스",
+      "inventory_status": "TCG 취급·재고 미확인 · 방문 전 공식 매장/전화 확인",
+      "inventory_checked_at": null,
+      "inventory_verified": false,
+      "note": "영업·카드 취급·재고는 점포별로 다르므로 공식 안내 또는 전화 확인",
+      "data_basis": "공식 점포 안내 또는 지역 지도 검색 · 개별 카드 재고 미검증",
+      "url_template": "https://map.naver.com/p/search/%EA%B5%90%EB%B3%B4%EB%AC%B8%EA%B3%A0%20%ED%95%AB%ED%8A%B8%EB%9E%99%EC%8A%A4%20{query}",
+      "official_reference_url": "https://store.kyobobook.co.kr/",
+      "link_status": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인",
+      "last_checked_at": "2026-08-26T10:47:11+00:00",
+      "link_checked_at": "2026-08-26T10:47:11+00:00",
+      "link_statuses": {
+        "url_template": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인",
+        "official_reference_url": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인"
+      }
+    },
+    {
+      "name": "교보문고·핫트랙스 공식 매장 안내",
+      "region": "KR",
+      "games": [
+        "Pokemon",
+        "ONE PIECE",
+        "NARUTO"
+      ],
+      "type": "official",
+      "channel": "offline",
+      "retailer_category": "bookstore",
+      "chain": "교보문고 핫트랙스",
+      "inventory_status": "TCG 취급·재고 미확인 · 방문 전 공식 매장/전화 확인",
+      "inventory_checked_at": null,
+      "inventory_verified": false,
+      "note": "영업·카드 취급·재고는 점포별로 다르므로 공식 안내 또는 전화 확인",
+      "data_basis": "공식 점포 안내 또는 지역 지도 검색 · 개별 카드 재고 미검증",
+      "url": "https://store.kyobobook.co.kr/",
+      "official_reference_url": "https://store.kyobobook.co.kr/",
+      "link_status": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인",
+      "last_checked_at": "2026-08-26T10:47:11+00:00",
+      "link_checked_at": "2026-08-26T10:47:11+00:00",
+      "link_statuses": {
+        "url": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인",
+        "official_reference_url": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인"
+      }
+    },
+    {
+      "name": "영풍문고·팬시매장 주변 매장",
+      "region": "KR",
+      "games": [
+        "Pokemon",
+        "ONE PIECE",
+        "NARUTO"
+      ],
+      "type": "map",
+      "channel": "offline",
+      "retailer_category": "bookstore",
+      "chain": "영풍문고",
+      "inventory_status": "TCG 취급·재고 미확인 · 방문 전 공식 매장/전화 확인",
+      "inventory_checked_at": null,
+      "inventory_verified": false,
+      "note": "영업·카드 취급·재고는 점포별로 다르므로 공식 안내 또는 전화 확인",
+      "data_basis": "공식 점포 안내 또는 지역 지도 검색 · 개별 카드 재고 미검증",
+      "url_template": "https://map.naver.com/p/search/%EC%98%81%ED%92%8D%EB%AC%B8%EA%B3%A0%20{query}",
+      "link_status": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인",
+      "last_checked_at": "2026-08-26T10:47:11+00:00",
+      "link_checked_at": "2026-08-26T10:47:11+00:00",
+      "link_statuses": {
+        "url_template": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인"
+      }
+    },
+    {
+      "name": "동네 서점·캐릭터굿즈점 주변 매장",
+      "region": "KR",
+      "games": [
+        "Pokemon",
+        "ONE PIECE",
+        "NARUTO"
+      ],
+      "type": "map",
+      "channel": "offline",
+      "retailer_category": "bookstore",
+      "chain": "서점 캐릭터 굿즈",
+      "inventory_status": "TCG 취급·재고 미확인 · 방문 전 공식 매장/전화 확인",
+      "inventory_checked_at": null,
+      "inventory_verified": false,
+      "note": "영업·카드 취급·재고는 점포별로 다르므로 공식 안내 또는 전화 확인",
+      "data_basis": "공식 점포 안내 또는 지역 지도 검색 · 개별 카드 재고 미검증",
+      "url_template": "https://map.naver.com/p/search/%EC%84%9C%EC%A0%90%20%EC%BA%90%EB%A6%AD%ED%84%B0%20%EA%B5%BF%EC%A6%88%20{query}",
+      "link_status": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인",
+      "last_checked_at": "2026-08-26T10:47:11+00:00",
+      "link_checked_at": "2026-08-26T10:47:11+00:00",
+      "link_statuses": {
+        "url_template": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인"
+      }
+    },
+    {
+      "name": "토이킹덤 완구점 주변 매장",
+      "region": "KR",
+      "games": [
+        "Pokemon",
+        "ONE PIECE",
+        "NARUTO"
+      ],
+      "type": "map",
+      "channel": "offline",
+      "retailer_category": "toy",
+      "chain": "토이킹덤",
+      "inventory_status": "TCG 취급·재고 미확인 · 방문 전 공식 매장/전화 확인",
+      "inventory_checked_at": null,
+      "inventory_verified": false,
+      "note": "영업·카드 취급·재고는 점포별로 다르므로 공식 안내 또는 전화 확인",
+      "data_basis": "공식 점포 안내 또는 지역 지도 검색 · 개별 카드 재고 미검증",
+      "url_template": "https://map.naver.com/p/search/%ED%86%A0%EC%9D%B4%ED%82%B9%EB%8D%A4%20{query}",
+      "official_reference_url": "https://store.emart.com/branch/list.do",
+      "link_status": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인",
+      "last_checked_at": "2026-08-26T10:47:11+00:00",
+      "link_checked_at": "2026-08-26T10:47:11+00:00",
+      "link_statuses": {
+        "official_reference_url": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인",
+        "url_template": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인"
+      }
+    },
+    {
+      "name": "토이킹덤 완구점 공식 매장 안내",
+      "region": "KR",
+      "games": [
+        "Pokemon",
+        "ONE PIECE",
+        "NARUTO"
+      ],
+      "type": "official",
+      "channel": "offline",
+      "retailer_category": "toy",
+      "chain": "토이킹덤",
+      "inventory_status": "TCG 취급·재고 미확인 · 방문 전 공식 매장/전화 확인",
+      "inventory_checked_at": null,
+      "inventory_verified": false,
+      "note": "영업·카드 취급·재고는 점포별로 다르므로 공식 안내 또는 전화 확인",
+      "data_basis": "공식 점포 안내 또는 지역 지도 검색 · 개별 카드 재고 미검증",
+      "url": "https://store.emart.com/branch/list.do",
+      "official_reference_url": "https://store.emart.com/branch/list.do",
+      "link_status": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인",
+      "last_checked_at": "2026-08-26T10:47:11+00:00",
+      "link_checked_at": "2026-08-26T10:47:11+00:00",
+      "link_statuses": {
+        "url": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인",
+        "official_reference_url": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인"
+      }
+    },
+    {
+      "name": "토이저러스 완구점 주변 매장",
+      "region": "KR",
+      "games": [
+        "Pokemon",
+        "ONE PIECE",
+        "NARUTO"
+      ],
+      "type": "map",
+      "channel": "offline",
+      "retailer_category": "toy",
+      "chain": "토이저러스",
+      "inventory_status": "TCG 취급·재고 미확인 · 방문 전 공식 매장/전화 확인",
+      "inventory_checked_at": null,
+      "inventory_verified": false,
+      "note": "영업·카드 취급·재고는 점포별로 다르므로 공식 안내 또는 전화 확인",
+      "data_basis": "공식 점포 안내 또는 지역 지도 검색 · 개별 카드 재고 미검증",
+      "url_template": "https://map.naver.com/p/search/%ED%86%A0%EC%9D%B4%EC%A0%80%EB%9F%AC%EC%8A%A4%20{query}",
+      "link_status": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인",
+      "last_checked_at": "2026-08-26T10:47:11+00:00",
+      "link_checked_at": "2026-08-26T10:47:11+00:00",
+      "link_statuses": {
+        "url_template": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인"
+      }
+    },
+    {
+      "name": "완구할인점 주변 매장",
+      "region": "KR",
+      "games": [
+        "Pokemon",
+        "ONE PIECE",
+        "NARUTO"
+      ],
+      "type": "map",
+      "channel": "offline",
+      "retailer_category": "toy",
+      "chain": "완구할인점",
+      "inventory_status": "TCG 취급·재고 미확인 · 방문 전 공식 매장/전화 확인",
+      "inventory_checked_at": null,
+      "inventory_verified": false,
+      "note": "영업·카드 취급·재고는 점포별로 다르므로 공식 안내 또는 전화 확인",
+      "data_basis": "공식 점포 안내 또는 지역 지도 검색 · 개별 카드 재고 미검증",
+      "url_template": "https://map.naver.com/p/search/%EC%99%84%EA%B5%AC%ED%95%A0%EC%9D%B8%EC%A0%90%20{query}",
+      "link_status": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인",
+      "last_checked_at": "2026-08-26T10:47:11+00:00",
+      "link_checked_at": "2026-08-26T10:47:11+00:00",
+      "link_statuses": {
+        "url_template": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인"
+      }
+    },
+    {
+      "name": "동네 장난감·완구점 주변 매장",
+      "region": "KR",
+      "games": [
+        "Pokemon",
+        "ONE PIECE",
+        "NARUTO"
+      ],
+      "type": "map",
+      "channel": "offline",
+      "retailer_category": "toy",
+      "chain": "장난감 완구점",
+      "inventory_status": "TCG 취급·재고 미확인 · 방문 전 공식 매장/전화 확인",
+      "inventory_checked_at": null,
+      "inventory_verified": false,
+      "note": "영업·카드 취급·재고는 점포별로 다르므로 공식 안내 또는 전화 확인",
+      "data_basis": "공식 점포 안내 또는 지역 지도 검색 · 개별 카드 재고 미검증",
+      "url_template": "https://map.naver.com/p/search/%EC%9E%A5%EB%82%9C%EA%B0%90%20%EC%99%84%EA%B5%AC%EC%A0%90%20{query}",
+      "link_status": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인",
+      "last_checked_at": "2026-08-26T10:47:11+00:00",
+      "link_checked_at": "2026-08-26T10:47:11+00:00",
+      "link_statuses": {
+        "url_template": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인"
+      }
+    },
+    {
+      "name": "포켓몬 카드 전문점 주변 매장",
+      "region": "KR",
+      "games": [
+        "Pokemon",
+        "ONE PIECE",
+        "NARUTO"
+      ],
+      "type": "map",
+      "channel": "offline",
+      "retailer_category": "cardshop",
+      "chain": "포켓몬 카드샵",
+      "inventory_status": "TCG 취급·재고 미확인 · 방문 전 공식 매장/전화 확인",
+      "inventory_checked_at": null,
+      "inventory_verified": false,
+      "note": "영업·카드 취급·재고는 점포별로 다르므로 공식 안내 또는 전화 확인",
+      "data_basis": "공식 점포 안내 또는 지역 지도 검색 · 개별 카드 재고 미검증",
+      "url_template": "https://map.naver.com/p/search/%ED%8F%AC%EC%BC%93%EB%AA%AC%20%EC%B9%B4%EB%93%9C%EC%83%B5%20{query}",
+      "official_reference_url": "https://pokemoncard.co.kr/card/225",
+      "link_status": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인",
+      "last_checked_at": "2026-08-26T10:47:11+00:00",
+      "link_checked_at": "2026-08-26T10:47:11+00:00",
+      "link_statuses": {
+        "official_reference_url": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인",
+        "url_template": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인"
+      }
+    },
+    {
+      "name": "포켓몬 카드 전문점 공식 매장 안내",
+      "region": "KR",
+      "games": [
+        "Pokemon",
+        "ONE PIECE",
+        "NARUTO"
+      ],
+      "type": "official",
+      "channel": "offline",
+      "retailer_category": "cardshop",
+      "chain": "포켓몬 카드샵",
+      "inventory_status": "TCG 취급·재고 미확인 · 방문 전 공식 매장/전화 확인",
+      "inventory_checked_at": null,
+      "inventory_verified": false,
+      "note": "영업·카드 취급·재고는 점포별로 다르므로 공식 안내 또는 전화 확인",
+      "data_basis": "공식 점포 안내 또는 지역 지도 검색 · 개별 카드 재고 미검증",
+      "url": "https://pokemoncard.co.kr/card/225",
+      "official_reference_url": "https://pokemoncard.co.kr/card/225",
+      "link_status": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인",
+      "last_checked_at": "2026-08-26T10:47:11+00:00",
+      "link_checked_at": "2026-08-26T10:47:11+00:00",
+      "link_statuses": {
+        "url": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인",
+        "official_reference_url": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인"
+      }
+    },
+    {
+      "name": "원피스 카드 전문점 주변 매장",
+      "region": "KR",
+      "games": [
+        "Pokemon",
+        "ONE PIECE",
+        "NARUTO"
+      ],
+      "type": "map",
+      "channel": "offline",
+      "retailer_category": "cardshop",
+      "chain": "원피스 카드샵",
+      "inventory_status": "TCG 취급·재고 미확인 · 방문 전 공식 매장/전화 확인",
+      "inventory_checked_at": null,
+      "inventory_verified": false,
+      "note": "영업·카드 취급·재고는 점포별로 다르므로 공식 안내 또는 전화 확인",
+      "data_basis": "공식 점포 안내 또는 지역 지도 검색 · 개별 카드 재고 미검증",
+      "url_template": "https://map.naver.com/p/search/%EC%9B%90%ED%94%BC%EC%8A%A4%20%EC%B9%B4%EB%93%9C%EC%83%B5%20{query}",
+      "official_reference_url": "https://www.onepiece-cardgame.kr/shoplist.do",
+      "link_status": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인",
+      "last_checked_at": "2026-08-26T10:47:11+00:00",
+      "link_checked_at": "2026-08-26T10:47:11+00:00",
+      "link_statuses": {
+        "official_reference_url": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인",
+        "url_template": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인"
+      }
+    },
+    {
+      "name": "원피스 카드 전문점 공식 매장 안내",
+      "region": "KR",
+      "games": [
+        "Pokemon",
+        "ONE PIECE",
+        "NARUTO"
+      ],
+      "type": "official",
+      "channel": "offline",
+      "retailer_category": "cardshop",
+      "chain": "원피스 카드샵",
+      "inventory_status": "TCG 취급·재고 미확인 · 방문 전 공식 매장/전화 확인",
+      "inventory_checked_at": null,
+      "inventory_verified": false,
+      "note": "영업·카드 취급·재고는 점포별로 다르므로 공식 안내 또는 전화 확인",
+      "data_basis": "공식 점포 안내 또는 지역 지도 검색 · 개별 카드 재고 미검증",
+      "url": "https://www.onepiece-cardgame.kr/shoplist.do",
+      "official_reference_url": "https://www.onepiece-cardgame.kr/shoplist.do",
+      "link_status": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인",
+      "last_checked_at": "2026-08-26T10:47:11+00:00",
+      "link_checked_at": "2026-08-26T10:47:11+00:00",
+      "link_statuses": {
+        "url": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인",
+        "official_reference_url": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인"
+      }
+    },
+    {
+      "name": "TCG 트레이딩카드 전문점 주변 매장",
+      "region": "KR",
+      "games": [
+        "Pokemon",
+        "ONE PIECE",
+        "NARUTO"
+      ],
+      "type": "map",
+      "channel": "offline",
+      "retailer_category": "cardshop",
+      "chain": "TCG 카드샵 카드게임",
+      "inventory_status": "TCG 취급·재고 미확인 · 방문 전 공식 매장/전화 확인",
+      "inventory_checked_at": null,
+      "inventory_verified": false,
+      "note": "영업·카드 취급·재고는 점포별로 다르므로 공식 안내 또는 전화 확인",
+      "data_basis": "공식 점포 안내 또는 지역 지도 검색 · 개별 카드 재고 미검증",
+      "url_template": "https://map.naver.com/p/search/TCG%20%EC%B9%B4%EB%93%9C%EC%83%B5%20%EC%B9%B4%EB%93%9C%EA%B2%8C%EC%9E%84%20{query}",
+      "link_status": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인",
+      "last_checked_at": "2026-08-26T10:47:11+00:00",
+      "link_checked_at": "2026-08-26T10:47:11+00:00",
+      "link_statuses": {
+        "url_template": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인"
+      }
+    },
+    {
+      "name": "보드게임·취미 전문점 주변 매장",
+      "region": "KR",
+      "games": [
+        "Pokemon",
+        "ONE PIECE",
+        "NARUTO"
+      ],
+      "type": "map",
+      "channel": "offline",
+      "retailer_category": "cardshop",
+      "chain": "보드게임 카드게임 전문점",
+      "inventory_status": "TCG 취급·재고 미확인 · 방문 전 공식 매장/전화 확인",
+      "inventory_checked_at": null,
+      "inventory_verified": false,
+      "note": "영업·카드 취급·재고는 점포별로 다르므로 공식 안내 또는 전화 확인",
+      "data_basis": "공식 점포 안내 또는 지역 지도 검색 · 개별 카드 재고 미검증",
+      "url_template": "https://map.naver.com/p/search/%EB%B3%B4%EB%93%9C%EA%B2%8C%EC%9E%84%20%EC%B9%B4%EB%93%9C%EA%B2%8C%EC%9E%84%20%EC%A0%84%EB%AC%B8%EC%A0%90%20{query}",
+      "link_status": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인",
+      "last_checked_at": "2026-08-26T10:47:11+00:00",
+      "link_checked_at": "2026-08-26T10:47:11+00:00",
+      "link_statuses": {
+        "url_template": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인"
+      }
+    },
+    {
+      "name": "다이소 생활용품점 주변 매장",
+      "region": "KR",
+      "games": [
+        "Pokemon",
+        "ONE PIECE",
+        "NARUTO"
+      ],
+      "type": "map",
+      "channel": "offline",
+      "retailer_category": "discount",
+      "chain": "다이소",
+      "inventory_status": "TCG 취급·재고 미확인 · 방문 전 공식 매장/전화 확인",
+      "inventory_checked_at": null,
+      "inventory_verified": false,
+      "note": "영업·카드 취급·재고는 점포별로 다르므로 공식 안내 또는 전화 확인",
+      "data_basis": "공식 점포 안내 또는 지역 지도 검색 · 개별 카드 재고 미검증",
+      "url_template": "https://map.naver.com/p/search/%EB%8B%A4%EC%9D%B4%EC%86%8C%20{query}",
+      "official_reference_url": "https://www.daisomall.co.kr/",
+      "link_status": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인",
+      "last_checked_at": "2026-08-26T10:47:11+00:00",
+      "link_checked_at": "2026-08-26T10:47:11+00:00",
+      "link_statuses": {
+        "url_template": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인",
+        "official_reference_url": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인"
+      }
+    },
+    {
+      "name": "다이소 생활용품점 공식 매장 안내",
+      "region": "KR",
+      "games": [
+        "Pokemon",
+        "ONE PIECE",
+        "NARUTO"
+      ],
+      "type": "official",
+      "channel": "offline",
+      "retailer_category": "discount",
+      "chain": "다이소",
+      "inventory_status": "TCG 취급·재고 미확인 · 방문 전 공식 매장/전화 확인",
+      "inventory_checked_at": null,
+      "inventory_verified": false,
+      "note": "영업·카드 취급·재고는 점포별로 다르므로 공식 안내 또는 전화 확인",
+      "data_basis": "공식 점포 안내 또는 지역 지도 검색 · 개별 카드 재고 미검증",
+      "url": "https://www.daisomall.co.kr/",
+      "official_reference_url": "https://www.daisomall.co.kr/",
+      "link_status": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인",
+      "last_checked_at": "2026-08-26T10:47:11+00:00",
+      "link_checked_at": "2026-08-26T10:47:11+00:00",
+      "link_statuses": {
+        "url": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인",
+        "official_reference_url": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인"
+      }
+    },
+    {
+      "name": "노브랜드 생활용품점 주변 매장",
+      "region": "KR",
+      "games": [
+        "Pokemon",
+        "ONE PIECE",
+        "NARUTO"
+      ],
+      "type": "map",
+      "channel": "offline",
+      "retailer_category": "discount",
+      "chain": "노브랜드",
+      "inventory_status": "TCG 취급·재고 미확인 · 방문 전 공식 매장/전화 확인",
+      "inventory_checked_at": null,
+      "inventory_verified": false,
+      "note": "영업·카드 취급·재고는 점포별로 다르므로 공식 안내 또는 전화 확인",
+      "data_basis": "공식 점포 안내 또는 지역 지도 검색 · 개별 카드 재고 미검증",
+      "url_template": "https://map.naver.com/p/search/%EB%85%B8%EB%B8%8C%EB%9E%9C%EB%93%9C%20{query}",
+      "official_reference_url": "https://store.emart.com/branch/list.do",
+      "link_status": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인",
+      "last_checked_at": "2026-08-26T10:47:11+00:00",
+      "link_checked_at": "2026-08-26T10:47:11+00:00",
+      "link_statuses": {
+        "official_reference_url": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인",
+        "url_template": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인"
+      }
+    },
+    {
+      "name": "노브랜드 생활용품점 공식 매장 안내",
+      "region": "KR",
+      "games": [
+        "Pokemon",
+        "ONE PIECE",
+        "NARUTO"
+      ],
+      "type": "official",
+      "channel": "offline",
+      "retailer_category": "discount",
+      "chain": "노브랜드",
+      "inventory_status": "TCG 취급·재고 미확인 · 방문 전 공식 매장/전화 확인",
+      "inventory_checked_at": null,
+      "inventory_verified": false,
+      "note": "영업·카드 취급·재고는 점포별로 다르므로 공식 안내 또는 전화 확인",
+      "data_basis": "공식 점포 안내 또는 지역 지도 검색 · 개별 카드 재고 미검증",
+      "url": "https://store.emart.com/branch/list.do",
+      "official_reference_url": "https://store.emart.com/branch/list.do",
+      "link_status": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인",
+      "last_checked_at": "2026-08-26T10:47:11+00:00",
+      "link_checked_at": "2026-08-26T10:47:11+00:00",
+      "link_statuses": {
+        "url": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인",
+        "official_reference_url": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인"
+      }
+    },
+    {
+      "name": "캐릭터·랜덤카드 할인매장 주변 매장",
+      "region": "KR",
+      "games": [
+        "Pokemon",
+        "ONE PIECE",
+        "NARUTO"
+      ],
+      "type": "map",
+      "channel": "offline",
+      "retailer_category": "discount",
+      "chain": "캐릭터 랜덤카드 할인매장",
+      "inventory_status": "TCG 취급·재고 미확인 · 방문 전 공식 매장/전화 확인",
+      "inventory_checked_at": null,
+      "inventory_verified": false,
+      "note": "영업·카드 취급·재고는 점포별로 다르므로 공식 안내 또는 전화 확인",
+      "data_basis": "공식 점포 안내 또는 지역 지도 검색 · 개별 카드 재고 미검증",
+      "url_template": "https://map.naver.com/p/search/%EC%BA%90%EB%A6%AD%ED%84%B0%20%EB%9E%9C%EB%8D%A4%EC%B9%B4%EB%93%9C%20%ED%95%A0%EC%9D%B8%EB%A7%A4%EC%9E%A5%20{query}",
+      "link_status": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인",
+      "last_checked_at": "2026-08-26T10:47:11+00:00",
+      "link_checked_at": "2026-08-26T10:47:11+00:00",
+      "link_statuses": {
+        "url_template": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인"
+      }
+    },
+    {
+      "name": "이마트 경기광주점",
+      "region": "KR",
+      "games": [
+        "Pokemon",
+        "ONE PIECE",
+        "NARUTO"
+      ],
+      "type": "map",
+      "channel": "offline",
+      "retailer_category": "hypermarket",
+      "chain": "이마트",
+      "inventory_status": "TCG 취급·재고 미확인 · 방문 전 공식 매장/전화 확인",
+      "inventory_checked_at": null,
+      "inventory_verified": false,
+      "note": "영업·카드 취급·재고는 점포별로 다르므로 공식 안내 또는 전화 확인",
+      "data_basis": "공식 점포 안내 또는 지역 지도 검색 · 개별 카드 재고 미검증",
+      "url": "https://map.naver.com/p/search/%EC%9D%B4%EB%A7%88%ED%8A%B8%20%EA%B2%BD%EA%B8%B0%EA%B4%91%EC%A3%BC%EC%A0%90",
+      "official_reference_url": "https://store.emart.com/branch/list.do",
+      "link_status": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인",
+      "last_checked_at": "2026-08-26T10:47:11+00:00",
+      "link_checked_at": "2026-08-26T10:47:11+00:00",
+      "link_statuses": {
+        "official_reference_url": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인",
+        "url": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인"
+      }
+    },
+    {
+      "name": "이마트 과천점",
+      "region": "KR",
+      "games": [
+        "Pokemon",
+        "ONE PIECE",
+        "NARUTO"
+      ],
+      "type": "map",
+      "channel": "offline",
+      "retailer_category": "hypermarket",
+      "chain": "이마트",
+      "inventory_status": "TCG 취급·재고 미확인 · 방문 전 공식 매장/전화 확인",
+      "inventory_checked_at": null,
+      "inventory_verified": false,
+      "note": "영업·카드 취급·재고는 점포별로 다르므로 공식 안내 또는 전화 확인",
+      "data_basis": "공식 점포 안내 또는 지역 지도 검색 · 개별 카드 재고 미검증",
+      "url": "https://map.naver.com/p/search/%EC%9D%B4%EB%A7%88%ED%8A%B8%20%EA%B3%BC%EC%B2%9C%EC%A0%90",
+      "official_reference_url": "https://store.emart.com/branch/list.do",
+      "link_status": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인",
+      "last_checked_at": "2026-08-26T10:47:11+00:00",
+      "link_checked_at": "2026-08-26T10:47:11+00:00",
+      "link_statuses": {
+        "official_reference_url": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인",
+        "url": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인"
+      }
+    },
+    {
+      "name": "이마트 광교점",
+      "region": "KR",
+      "games": [
+        "Pokemon",
+        "ONE PIECE",
+        "NARUTO"
+      ],
+      "type": "map",
+      "channel": "offline",
+      "retailer_category": "hypermarket",
+      "chain": "이마트",
+      "inventory_status": "TCG 취급·재고 미확인 · 방문 전 공식 매장/전화 확인",
+      "inventory_checked_at": null,
+      "inventory_verified": false,
+      "note": "영업·카드 취급·재고는 점포별로 다르므로 공식 안내 또는 전화 확인",
+      "data_basis": "공식 점포 안내 또는 지역 지도 검색 · 개별 카드 재고 미검증",
+      "url": "https://map.naver.com/p/search/%EC%9D%B4%EB%A7%88%ED%8A%B8%20%EA%B4%91%EA%B5%90%EC%A0%90",
+      "official_reference_url": "https://store.emart.com/branch/list.do",
+      "link_status": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인",
+      "last_checked_at": "2026-08-26T10:47:11+00:00",
+      "link_checked_at": "2026-08-26T10:47:11+00:00",
+      "link_statuses": {
+        "official_reference_url": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인",
+        "url": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인"
+      }
+    },
+    {
+      "name": "이마트 광명소하점",
+      "region": "KR",
+      "games": [
+        "Pokemon",
+        "ONE PIECE",
+        "NARUTO"
+      ],
+      "type": "map",
+      "channel": "offline",
+      "retailer_category": "hypermarket",
+      "chain": "이마트",
+      "inventory_status": "TCG 취급·재고 미확인 · 방문 전 공식 매장/전화 확인",
+      "inventory_checked_at": null,
+      "inventory_verified": false,
+      "note": "영업·카드 취급·재고는 점포별로 다르므로 공식 안내 또는 전화 확인",
+      "data_basis": "공식 점포 안내 또는 지역 지도 검색 · 개별 카드 재고 미검증",
+      "url": "https://map.naver.com/p/search/%EC%9D%B4%EB%A7%88%ED%8A%B8%20%EA%B4%91%EB%AA%85%EC%86%8C%ED%95%98%EC%A0%90",
+      "official_reference_url": "https://store.emart.com/branch/list.do",
+      "link_status": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인",
+      "last_checked_at": "2026-08-26T10:47:11+00:00",
+      "link_checked_at": "2026-08-26T10:47:11+00:00",
+      "link_statuses": {
+        "official_reference_url": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인",
+        "url": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인"
+      }
+    },
+    {
+      "name": "이마트 김포한강점",
+      "region": "KR",
+      "games": [
+        "Pokemon",
+        "ONE PIECE",
+        "NARUTO"
+      ],
+      "type": "map",
+      "channel": "offline",
+      "retailer_category": "hypermarket",
+      "chain": "이마트",
+      "inventory_status": "TCG 취급·재고 미확인 · 방문 전 공식 매장/전화 확인",
+      "inventory_checked_at": null,
+      "inventory_verified": false,
+      "note": "영업·카드 취급·재고는 점포별로 다르므로 공식 안내 또는 전화 확인",
+      "data_basis": "공식 점포 안내 또는 지역 지도 검색 · 개별 카드 재고 미검증",
+      "url": "https://map.naver.com/p/search/%EC%9D%B4%EB%A7%88%ED%8A%B8%20%EA%B9%80%ED%8F%AC%ED%95%9C%EA%B0%95%EC%A0%90",
+      "official_reference_url": "https://store.emart.com/branch/list.do",
+      "link_status": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인",
+      "last_checked_at": "2026-08-26T10:47:11+00:00",
+      "link_checked_at": "2026-08-26T10:47:11+00:00",
+      "link_statuses": {
+        "official_reference_url": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인",
+        "url": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인"
+      }
+    },
+    {
+      "name": "이마트 남양주점",
+      "region": "KR",
+      "games": [
+        "Pokemon",
+        "ONE PIECE",
+        "NARUTO"
+      ],
+      "type": "map",
+      "channel": "offline",
+      "retailer_category": "hypermarket",
+      "chain": "이마트",
+      "inventory_status": "TCG 취급·재고 미확인 · 방문 전 공식 매장/전화 확인",
+      "inventory_checked_at": null,
+      "inventory_verified": false,
+      "note": "영업·카드 취급·재고는 점포별로 다르므로 공식 안내 또는 전화 확인",
+      "data_basis": "공식 점포 안내 또는 지역 지도 검색 · 개별 카드 재고 미검증",
+      "url": "https://map.naver.com/p/search/%EC%9D%B4%EB%A7%88%ED%8A%B8%20%EB%82%A8%EC%96%91%EC%A3%BC%EC%A0%90",
+      "official_reference_url": "https://store.emart.com/branch/list.do",
+      "link_status": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인",
+      "last_checked_at": "2026-08-26T10:47:11+00:00",
+      "link_checked_at": "2026-08-26T10:47:11+00:00",
+      "link_statuses": {
+        "official_reference_url": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인",
+        "url": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인"
+      }
+    },
+    {
+      "name": "이마트 다산점",
+      "region": "KR",
+      "games": [
+        "Pokemon",
+        "ONE PIECE",
+        "NARUTO"
+      ],
+      "type": "map",
+      "channel": "offline",
+      "retailer_category": "hypermarket",
+      "chain": "이마트",
+      "inventory_status": "TCG 취급·재고 미확인 · 방문 전 공식 매장/전화 확인",
+      "inventory_checked_at": null,
+      "inventory_verified": false,
+      "note": "영업·카드 취급·재고는 점포별로 다르므로 공식 안내 또는 전화 확인",
+      "data_basis": "공식 점포 안내 또는 지역 지도 검색 · 개별 카드 재고 미검증",
+      "url": "https://map.naver.com/p/search/%EC%9D%B4%EB%A7%88%ED%8A%B8%20%EB%8B%A4%EC%82%B0%EC%A0%90",
+      "official_reference_url": "https://store.emart.com/branch/list.do",
+      "link_status": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인",
+      "last_checked_at": "2026-08-26T10:47:11+00:00",
+      "link_checked_at": "2026-08-26T10:47:11+00:00",
+      "link_statuses": {
+        "official_reference_url": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인",
+        "url": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인"
+      }
+    },
+    {
+      "name": "이마트 동백점",
+      "region": "KR",
+      "games": [
+        "Pokemon",
+        "ONE PIECE",
+        "NARUTO"
+      ],
+      "type": "map",
+      "channel": "offline",
+      "retailer_category": "hypermarket",
+      "chain": "이마트",
+      "inventory_status": "TCG 취급·재고 미확인 · 방문 전 공식 매장/전화 확인",
+      "inventory_checked_at": null,
+      "inventory_verified": false,
+      "note": "영업·카드 취급·재고는 점포별로 다르므로 공식 안내 또는 전화 확인",
+      "data_basis": "공식 점포 안내 또는 지역 지도 검색 · 개별 카드 재고 미검증",
+      "url": "https://map.naver.com/p/search/%EC%9D%B4%EB%A7%88%ED%8A%B8%20%EB%8F%99%EB%B0%B1%EC%A0%90",
+      "official_reference_url": "https://store.emart.com/branch/list.do",
+      "link_status": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인",
+      "last_checked_at": "2026-08-26T10:47:11+00:00",
+      "link_checked_at": "2026-08-26T10:47:11+00:00",
+      "link_statuses": {
+        "official_reference_url": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인",
+        "url": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인"
+      }
+    },
+    {
+      "name": "이마트 별내점",
+      "region": "KR",
+      "games": [
+        "Pokemon",
+        "ONE PIECE",
+        "NARUTO"
+      ],
+      "type": "map",
+      "channel": "offline",
+      "retailer_category": "hypermarket",
+      "chain": "이마트",
+      "inventory_status": "TCG 취급·재고 미확인 · 방문 전 공식 매장/전화 확인",
+      "inventory_checked_at": null,
+      "inventory_verified": false,
+      "note": "영업·카드 취급·재고는 점포별로 다르므로 공식 안내 또는 전화 확인",
+      "data_basis": "공식 점포 안내 또는 지역 지도 검색 · 개별 카드 재고 미검증",
+      "url": "https://map.naver.com/p/search/%EC%9D%B4%EB%A7%88%ED%8A%B8%20%EB%B3%84%EB%82%B4%EC%A0%90",
+      "official_reference_url": "https://store.emart.com/branch/list.do",
+      "link_status": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인",
+      "last_checked_at": "2026-08-26T10:47:11+00:00",
+      "link_checked_at": "2026-08-26T10:47:11+00:00",
+      "link_statuses": {
+        "official_reference_url": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인",
+        "url": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인"
+      }
+    },
+    {
+      "name": "이마트 보라점",
+      "region": "KR",
+      "games": [
+        "Pokemon",
+        "ONE PIECE",
+        "NARUTO"
+      ],
+      "type": "map",
+      "channel": "offline",
+      "retailer_category": "hypermarket",
+      "chain": "이마트",
+      "inventory_status": "TCG 취급·재고 미확인 · 방문 전 공식 매장/전화 확인",
+      "inventory_checked_at": null,
+      "inventory_verified": false,
+      "note": "영업·카드 취급·재고는 점포별로 다르므로 공식 안내 또는 전화 확인",
+      "data_basis": "공식 점포 안내 또는 지역 지도 검색 · 개별 카드 재고 미검증",
+      "url": "https://map.naver.com/p/search/%EC%9D%B4%EB%A7%88%ED%8A%B8%20%EB%B3%B4%EB%9D%BC%EC%A0%90",
+      "official_reference_url": "https://store.emart.com/branch/list.do",
+      "link_status": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인",
+      "last_checked_at": "2026-08-26T10:47:11+00:00",
+      "link_checked_at": "2026-08-26T10:47:11+00:00",
+      "link_statuses": {
+        "official_reference_url": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인",
+        "url": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인"
+      }
+    },
+    {
+      "name": "이마트 부천점",
+      "region": "KR",
+      "games": [
+        "Pokemon",
+        "ONE PIECE",
+        "NARUTO"
+      ],
+      "type": "map",
+      "channel": "offline",
+      "retailer_category": "hypermarket",
+      "chain": "이마트",
+      "inventory_status": "TCG 취급·재고 미확인 · 방문 전 공식 매장/전화 확인",
+      "inventory_checked_at": null,
+      "inventory_verified": false,
+      "note": "영업·카드 취급·재고는 점포별로 다르므로 공식 안내 또는 전화 확인",
+      "data_basis": "공식 점포 안내 또는 지역 지도 검색 · 개별 카드 재고 미검증",
+      "url": "https://map.naver.com/p/search/%EC%9D%B4%EB%A7%88%ED%8A%B8%20%EB%B6%80%EC%B2%9C%EC%A0%90",
+      "official_reference_url": "https://store.emart.com/branch/list.do",
+      "link_status": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인",
+      "last_checked_at": "2026-08-26T10:47:11+00:00",
+      "link_checked_at": "2026-08-26T10:47:11+00:00",
+      "link_statuses": {
+        "official_reference_url": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인",
+        "url": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인"
+      }
+    },
+    {
+      "name": "이마트 분당점",
+      "region": "KR",
+      "games": [
+        "Pokemon",
+        "ONE PIECE",
+        "NARUTO"
+      ],
+      "type": "map",
+      "channel": "offline",
+      "retailer_category": "hypermarket",
+      "chain": "이마트",
+      "inventory_status": "TCG 취급·재고 미확인 · 방문 전 공식 매장/전화 확인",
+      "inventory_checked_at": null,
+      "inventory_verified": false,
+      "note": "영업·카드 취급·재고는 점포별로 다르므로 공식 안내 또는 전화 확인",
+      "data_basis": "공식 점포 안내 또는 지역 지도 검색 · 개별 카드 재고 미검증",
+      "url": "https://map.naver.com/p/search/%EC%9D%B4%EB%A7%88%ED%8A%B8%20%EB%B6%84%EB%8B%B9%EC%A0%90",
+      "official_reference_url": "https://store.emart.com/branch/list.do",
+      "link_status": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인",
+      "last_checked_at": "2026-08-26T10:47:11+00:00",
+      "link_checked_at": "2026-08-26T10:47:11+00:00",
+      "link_statuses": {
+        "official_reference_url": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인",
+        "url": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인"
+      }
+    },
+    {
+      "name": "이마트 산본점",
+      "region": "KR",
+      "games": [
+        "Pokemon",
+        "ONE PIECE",
+        "NARUTO"
+      ],
+      "type": "map",
+      "channel": "offline",
+      "retailer_category": "hypermarket",
+      "chain": "이마트",
+      "inventory_status": "TCG 취급·재고 미확인 · 방문 전 공식 매장/전화 확인",
+      "inventory_checked_at": null,
+      "inventory_verified": false,
+      "note": "영업·카드 취급·재고는 점포별로 다르므로 공식 안내 또는 전화 확인",
+      "data_basis": "공식 점포 안내 또는 지역 지도 검색 · 개별 카드 재고 미검증",
+      "url": "https://map.naver.com/p/search/%EC%9D%B4%EB%A7%88%ED%8A%B8%20%EC%82%B0%EB%B3%B8%EC%A0%90",
+      "official_reference_url": "https://store.emart.com/branch/list.do",
+      "link_status": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인",
+      "last_checked_at": "2026-08-26T10:47:11+00:00",
+      "link_checked_at": "2026-08-26T10:47:11+00:00",
+      "link_statuses": {
+        "official_reference_url": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인",
+        "url": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인"
+      }
+    },
+    {
+      "name": "이마트 서수원점",
+      "region": "KR",
+      "games": [
+        "Pokemon",
+        "ONE PIECE",
+        "NARUTO"
+      ],
+      "type": "map",
+      "channel": "offline",
+      "retailer_category": "hypermarket",
+      "chain": "이마트",
+      "inventory_status": "TCG 취급·재고 미확인 · 방문 전 공식 매장/전화 확인",
+      "inventory_checked_at": null,
+      "inventory_verified": false,
+      "note": "영업·카드 취급·재고는 점포별로 다르므로 공식 안내 또는 전화 확인",
+      "data_basis": "공식 점포 안내 또는 지역 지도 검색 · 개별 카드 재고 미검증",
+      "url": "https://map.naver.com/p/search/%EC%9D%B4%EB%A7%88%ED%8A%B8%20%EC%84%9C%EC%88%98%EC%9B%90%EC%A0%90",
+      "official_reference_url": "https://store.emart.com/branch/list.do",
+      "link_status": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인",
+      "last_checked_at": "2026-08-26T10:47:11+00:00",
+      "link_checked_at": "2026-08-26T10:47:11+00:00",
+      "link_statuses": {
+        "official_reference_url": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인",
+        "url": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인"
+      }
+    },
+    {
+      "name": "이마트 성남점",
+      "region": "KR",
+      "games": [
+        "Pokemon",
+        "ONE PIECE",
+        "NARUTO"
+      ],
+      "type": "map",
+      "channel": "offline",
+      "retailer_category": "hypermarket",
+      "chain": "이마트",
+      "inventory_status": "TCG 취급·재고 미확인 · 방문 전 공식 매장/전화 확인",
+      "inventory_checked_at": null,
+      "inventory_verified": false,
+      "note": "영업·카드 취급·재고는 점포별로 다르므로 공식 안내 또는 전화 확인",
+      "data_basis": "공식 점포 안내 또는 지역 지도 검색 · 개별 카드 재고 미검증",
+      "url": "https://map.naver.com/p/search/%EC%9D%B4%EB%A7%88%ED%8A%B8%20%EC%84%B1%EB%82%A8%EC%A0%90",
+      "official_reference_url": "https://store.emart.com/branch/list.do",
+      "link_status": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인",
+      "last_checked_at": "2026-08-26T10:47:11+00:00",
+      "link_checked_at": "2026-08-26T10:47:11+00:00",
+      "link_statuses": {
+        "official_reference_url": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인",
+        "url": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인"
+      }
+    },
+    {
+      "name": "이마트 수원점",
+      "region": "KR",
+      "games": [
+        "Pokemon",
+        "ONE PIECE",
+        "NARUTO"
+      ],
+      "type": "map",
+      "channel": "offline",
+      "retailer_category": "hypermarket",
+      "chain": "이마트",
+      "inventory_status": "TCG 취급·재고 미확인 · 방문 전 공식 매장/전화 확인",
+      "inventory_checked_at": null,
+      "inventory_verified": false,
+      "note": "영업·카드 취급·재고는 점포별로 다르므로 공식 안내 또는 전화 확인",
+      "data_basis": "공식 점포 안내 또는 지역 지도 검색 · 개별 카드 재고 미검증",
+      "url": "https://map.naver.com/p/search/%EC%9D%B4%EB%A7%88%ED%8A%B8%20%EC%88%98%EC%9B%90%EC%A0%90",
+      "official_reference_url": "https://store.emart.com/branch/list.do",
+      "link_status": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인",
+      "last_checked_at": "2026-08-26T10:47:11+00:00",
+      "link_checked_at": "2026-08-26T10:47:11+00:00",
+      "link_statuses": {
+        "official_reference_url": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인",
+        "url": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인"
+      }
+    },
+    {
+      "name": "이마트 수지점",
+      "region": "KR",
+      "games": [
+        "Pokemon",
+        "ONE PIECE",
+        "NARUTO"
+      ],
+      "type": "map",
+      "channel": "offline",
+      "retailer_category": "hypermarket",
+      "chain": "이마트",
+      "inventory_status": "TCG 취급·재고 미확인 · 방문 전 공식 매장/전화 확인",
+      "inventory_checked_at": null,
+      "inventory_verified": false,
+      "note": "영업·카드 취급·재고는 점포별로 다르므로 공식 안내 또는 전화 확인",
+      "data_basis": "공식 점포 안내 또는 지역 지도 검색 · 개별 카드 재고 미검증",
+      "url": "https://map.naver.com/p/search/%EC%9D%B4%EB%A7%88%ED%8A%B8%20%EC%88%98%EC%A7%80%EC%A0%90",
+      "official_reference_url": "https://store.emart.com/branch/list.do",
+      "link_status": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인",
+      "last_checked_at": "2026-08-26T10:47:11+00:00",
+      "link_checked_at": "2026-08-26T10:47:11+00:00",
+      "link_statuses": {
+        "official_reference_url": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인",
+        "url": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인"
+      }
+    },
+    {
+      "name": "이마트 안산고잔점",
+      "region": "KR",
+      "games": [
+        "Pokemon",
+        "ONE PIECE",
+        "NARUTO"
+      ],
+      "type": "map",
+      "channel": "offline",
+      "retailer_category": "hypermarket",
+      "chain": "이마트",
+      "inventory_status": "TCG 취급·재고 미확인 · 방문 전 공식 매장/전화 확인",
+      "inventory_checked_at": null,
+      "inventory_verified": false,
+      "note": "영업·카드 취급·재고는 점포별로 다르므로 공식 안내 또는 전화 확인",
+      "data_basis": "공식 점포 안내 또는 지역 지도 검색 · 개별 카드 재고 미검증",
+      "url": "https://map.naver.com/p/search/%EC%9D%B4%EB%A7%88%ED%8A%B8%20%EC%95%88%EC%82%B0%EA%B3%A0%EC%9E%94%EC%A0%90%20%EA%B2%BD%EA%B8%B0%EB%8F%84%20%EC%95%88%EC%82%B0%EC%8B%9C%20%EB%8B%A8%EC%9B%90%EA%B5%AC%20%EC%9B%90%ED%8F%AC%EA%B3%B5%EC%9B%901%EB%A1%9C%2046",
+      "official_reference_url": "https://store.emart.com/branch/list.do",
+      "address": "경기도 안산시 단원구 원포공원1로 46",
+      "lat": 37.302925143491,
+      "lon": 126.8132034864,
+      "link_status": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인",
+      "last_checked_at": "2026-08-26T10:47:11+00:00",
+      "link_checked_at": "2026-08-26T10:47:11+00:00",
+      "link_statuses": {
+        "official_reference_url": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인",
+        "url": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인"
+      }
+    },
+    {
+      "name": "이마트 안성점",
+      "region": "KR",
+      "games": [
+        "Pokemon",
+        "ONE PIECE",
+        "NARUTO"
+      ],
+      "type": "map",
+      "channel": "offline",
+      "retailer_category": "hypermarket",
+      "chain": "이마트",
+      "inventory_status": "TCG 취급·재고 미확인 · 방문 전 공식 매장/전화 확인",
+      "inventory_checked_at": null,
+      "inventory_verified": false,
+      "note": "영업·카드 취급·재고는 점포별로 다르므로 공식 안내 또는 전화 확인",
+      "data_basis": "공식 점포 안내 또는 지역 지도 검색 · 개별 카드 재고 미검증",
+      "url": "https://map.naver.com/p/search/%EC%9D%B4%EB%A7%88%ED%8A%B8%20%EC%95%88%EC%84%B1%EC%A0%90",
+      "official_reference_url": "https://store.emart.com/branch/list.do",
+      "link_status": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인",
+      "last_checked_at": "2026-08-26T10:47:11+00:00",
+      "link_checked_at": "2026-08-26T10:47:11+00:00",
+      "link_statuses": {
+        "official_reference_url": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인",
+        "url": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인"
+      }
+    },
+    {
+      "name": "이마트 안양점",
+      "region": "KR",
+      "games": [
+        "Pokemon",
+        "ONE PIECE",
+        "NARUTO"
+      ],
+      "type": "map",
+      "channel": "offline",
+      "retailer_category": "hypermarket",
+      "chain": "이마트",
+      "inventory_status": "TCG 취급·재고 미확인 · 방문 전 공식 매장/전화 확인",
+      "inventory_checked_at": null,
+      "inventory_verified": false,
+      "note": "영업·카드 취급·재고는 점포별로 다르므로 공식 안내 또는 전화 확인",
+      "data_basis": "공식 점포 안내 또는 지역 지도 검색 · 개별 카드 재고 미검증",
+      "url": "https://map.naver.com/p/search/%EC%9D%B4%EB%A7%88%ED%8A%B8%20%EC%95%88%EC%96%91%EC%A0%90",
+      "official_reference_url": "https://store.emart.com/branch/list.do",
+      "link_status": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인",
+      "last_checked_at": "2026-08-26T10:47:11+00:00",
+      "link_checked_at": "2026-08-26T10:47:11+00:00",
+      "link_statuses": {
+        "official_reference_url": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인",
+        "url": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인"
+      }
+    },
+    {
+      "name": "이마트 양주점",
+      "region": "KR",
+      "games": [
+        "Pokemon",
+        "ONE PIECE",
+        "NARUTO"
+      ],
+      "type": "map",
+      "channel": "offline",
+      "retailer_category": "hypermarket",
+      "chain": "이마트",
+      "inventory_status": "TCG 취급·재고 미확인 · 방문 전 공식 매장/전화 확인",
+      "inventory_checked_at": null,
+      "inventory_verified": false,
+      "note": "영업·카드 취급·재고는 점포별로 다르므로 공식 안내 또는 전화 확인",
+      "data_basis": "공식 점포 안내 또는 지역 지도 검색 · 개별 카드 재고 미검증",
+      "url": "https://map.naver.com/p/search/%EC%9D%B4%EB%A7%88%ED%8A%B8%20%EC%96%91%EC%A3%BC%EC%A0%90",
+      "official_reference_url": "https://store.emart.com/branch/list.do",
+      "link_status": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인",
+      "last_checked_at": "2026-08-26T10:47:11+00:00",
+      "link_checked_at": "2026-08-26T10:47:11+00:00",
+      "link_statuses": {
+        "official_reference_url": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인",
+        "url": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인"
+      }
+    },
+    {
+      "name": "이마트 여주점",
+      "region": "KR",
+      "games": [
+        "Pokemon",
+        "ONE PIECE",
+        "NARUTO"
+      ],
+      "type": "map",
+      "channel": "offline",
+      "retailer_category": "hypermarket",
+      "chain": "이마트",
+      "inventory_status": "TCG 취급·재고 미확인 · 방문 전 공식 매장/전화 확인",
+      "inventory_checked_at": null,
+      "inventory_verified": false,
+      "note": "영업·카드 취급·재고는 점포별로 다르므로 공식 안내 또는 전화 확인",
+      "data_basis": "공식 점포 안내 또는 지역 지도 검색 · 개별 카드 재고 미검증",
+      "url": "https://map.naver.com/p/search/%EC%9D%B4%EB%A7%88%ED%8A%B8%20%EC%97%AC%EC%A3%BC%EC%A0%90",
+      "official_reference_url": "https://store.emart.com/branch/list.do",
+      "link_status": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인",
+      "last_checked_at": "2026-08-26T10:47:11+00:00",
+      "link_checked_at": "2026-08-26T10:47:11+00:00",
+      "link_statuses": {
+        "official_reference_url": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인",
+        "url": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인"
+      }
+    },
+    {
+      "name": "이마트 오산점",
+      "region": "KR",
+      "games": [
+        "Pokemon",
+        "ONE PIECE",
+        "NARUTO"
+      ],
+      "type": "map",
+      "channel": "offline",
+      "retailer_category": "hypermarket",
+      "chain": "이마트",
+      "inventory_status": "TCG 취급·재고 미확인 · 방문 전 공식 매장/전화 확인",
+      "inventory_checked_at": null,
+      "inventory_verified": false,
+      "note": "영업·카드 취급·재고는 점포별로 다르므로 공식 안내 또는 전화 확인",
+      "data_basis": "공식 점포 안내 또는 지역 지도 검색 · 개별 카드 재고 미검증",
+      "url": "https://map.naver.com/p/search/%EC%9D%B4%EB%A7%88%ED%8A%B8%20%EC%98%A4%EC%82%B0%EC%A0%90",
+      "official_reference_url": "https://store.emart.com/branch/list.do",
+      "link_status": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인",
+      "last_checked_at": "2026-08-26T10:47:11+00:00",
+      "link_checked_at": "2026-08-26T10:47:11+00:00",
+      "link_statuses": {
+        "official_reference_url": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인",
+        "url": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인"
+      }
+    },
+    {
+      "name": "이마트 용인점",
+      "region": "KR",
+      "games": [
+        "Pokemon",
+        "ONE PIECE",
+        "NARUTO"
+      ],
+      "type": "map",
+      "channel": "offline",
+      "retailer_category": "hypermarket",
+      "chain": "이마트",
+      "inventory_status": "TCG 취급·재고 미확인 · 방문 전 공식 매장/전화 확인",
+      "inventory_checked_at": null,
+      "inventory_verified": false,
+      "note": "영업·카드 취급·재고는 점포별로 다르므로 공식 안내 또는 전화 확인",
+      "data_basis": "공식 점포 안내 또는 지역 지도 검색 · 개별 카드 재고 미검증",
+      "url": "https://map.naver.com/p/search/%EC%9D%B4%EB%A7%88%ED%8A%B8%20%EC%9A%A9%EC%9D%B8%EC%A0%90",
+      "official_reference_url": "https://store.emart.com/branch/list.do",
+      "link_status": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인",
+      "last_checked_at": "2026-08-26T10:47:11+00:00",
+      "link_checked_at": "2026-08-26T10:47:11+00:00",
+      "link_statuses": {
+        "official_reference_url": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인",
+        "url": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인"
+      }
+    },
+    {
+      "name": "이마트 의왕점",
+      "region": "KR",
+      "games": [
+        "Pokemon",
+        "ONE PIECE",
+        "NARUTO"
+      ],
+      "type": "map",
+      "channel": "offline",
+      "retailer_category": "hypermarket",
+      "chain": "이마트",
+      "inventory_status": "TCG 취급·재고 미확인 · 방문 전 공식 매장/전화 확인",
+      "inventory_checked_at": null,
+      "inventory_verified": false,
+      "note": "영업·카드 취급·재고는 점포별로 다르므로 공식 안내 또는 전화 확인",
+      "data_basis": "공식 점포 안내 또는 지역 지도 검색 · 개별 카드 재고 미검증",
+      "url": "https://map.naver.com/p/search/%EC%9D%B4%EB%A7%88%ED%8A%B8%20%EC%9D%98%EC%99%95%EC%A0%90",
+      "official_reference_url": "https://store.emart.com/branch/list.do",
+      "link_status": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인",
+      "last_checked_at": "2026-08-26T10:47:11+00:00",
+      "link_checked_at": "2026-08-26T10:47:11+00:00",
+      "link_statuses": {
+        "official_reference_url": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인",
+        "url": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인"
+      }
+    },
+    {
+      "name": "이마트 의정부점",
+      "region": "KR",
+      "games": [
+        "Pokemon",
+        "ONE PIECE",
+        "NARUTO"
+      ],
+      "type": "map",
+      "channel": "offline",
+      "retailer_category": "hypermarket",
+      "chain": "이마트",
+      "inventory_status": "TCG 취급·재고 미확인 · 방문 전 공식 매장/전화 확인",
+      "inventory_checked_at": null,
+      "inventory_verified": false,
+      "note": "영업·카드 취급·재고는 점포별로 다르므로 공식 안내 또는 전화 확인",
+      "data_basis": "공식 점포 안내 또는 지역 지도 검색 · 개별 카드 재고 미검증",
+      "url": "https://map.naver.com/p/search/%EC%9D%B4%EB%A7%88%ED%8A%B8%20%EC%9D%98%EC%A0%95%EB%B6%80%EC%A0%90",
+      "official_reference_url": "https://store.emart.com/branch/list.do",
+      "link_status": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인",
+      "last_checked_at": "2026-08-26T10:47:11+00:00",
+      "link_checked_at": "2026-08-26T10:47:11+00:00",
+      "link_statuses": {
+        "official_reference_url": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인",
+        "url": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인"
+      }
+    },
+    {
+      "name": "이마트 이천점",
+      "region": "KR",
+      "games": [
+        "Pokemon",
+        "ONE PIECE",
+        "NARUTO"
+      ],
+      "type": "map",
+      "channel": "offline",
+      "retailer_category": "hypermarket",
+      "chain": "이마트",
+      "inventory_status": "TCG 취급·재고 미확인 · 방문 전 공식 매장/전화 확인",
+      "inventory_checked_at": null,
+      "inventory_verified": false,
+      "note": "영업·카드 취급·재고는 점포별로 다르므로 공식 안내 또는 전화 확인",
+      "data_basis": "공식 점포 안내 또는 지역 지도 검색 · 개별 카드 재고 미검증",
+      "url": "https://map.naver.com/p/search/%EC%9D%B4%EB%A7%88%ED%8A%B8%20%EC%9D%B4%EC%B2%9C%EC%A0%90",
+      "official_reference_url": "https://store.emart.com/branch/list.do",
+      "link_status": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인",
+      "last_checked_at": "2026-08-26T10:47:11+00:00",
+      "link_checked_at": "2026-08-26T10:47:11+00:00",
+      "link_statuses": {
+        "official_reference_url": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인",
+        "url": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인"
+      }
+    },
+    {
+      "name": "이마트 일산점",
+      "region": "KR",
+      "games": [
+        "Pokemon",
+        "ONE PIECE",
+        "NARUTO"
+      ],
+      "type": "map",
+      "channel": "offline",
+      "retailer_category": "hypermarket",
+      "chain": "이마트",
+      "inventory_status": "TCG 취급·재고 미확인 · 방문 전 공식 매장/전화 확인",
+      "inventory_checked_at": null,
+      "inventory_verified": false,
+      "note": "영업·카드 취급·재고는 점포별로 다르므로 공식 안내 또는 전화 확인",
+      "data_basis": "공식 점포 안내 또는 지역 지도 검색 · 개별 카드 재고 미검증",
+      "url": "https://map.naver.com/p/search/%EC%9D%B4%EB%A7%88%ED%8A%B8%20%EC%9D%BC%EC%82%B0%EC%A0%90",
+      "official_reference_url": "https://store.emart.com/branch/list.do",
+      "link_status": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인",
+      "last_checked_at": "2026-08-26T10:47:11+00:00",
+      "link_checked_at": "2026-08-26T10:47:11+00:00",
+      "link_statuses": {
+        "official_reference_url": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인",
+        "url": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인"
+      }
+    },
+    {
+      "name": "이마트 중동점",
+      "region": "KR",
+      "games": [
+        "Pokemon",
+        "ONE PIECE",
+        "NARUTO"
+      ],
+      "type": "map",
+      "channel": "offline",
+      "retailer_category": "hypermarket",
+      "chain": "이마트",
+      "inventory_status": "TCG 취급·재고 미확인 · 방문 전 공식 매장/전화 확인",
+      "inventory_checked_at": null,
+      "inventory_verified": false,
+      "note": "영업·카드 취급·재고는 점포별로 다르므로 공식 안내 또는 전화 확인",
+      "data_basis": "공식 점포 안내 또는 지역 지도 검색 · 개별 카드 재고 미검증",
+      "url": "https://map.naver.com/p/search/%EC%9D%B4%EB%A7%88%ED%8A%B8%20%EC%A4%91%EB%8F%99%EC%A0%90",
+      "official_reference_url": "https://store.emart.com/branch/list.do",
+      "link_status": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인",
+      "last_checked_at": "2026-08-26T10:47:11+00:00",
+      "link_checked_at": "2026-08-26T10:47:11+00:00",
+      "link_statuses": {
+        "official_reference_url": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인",
+        "url": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인"
+      }
+    },
+    {
+      "name": "이마트 진접점",
+      "region": "KR",
+      "games": [
+        "Pokemon",
+        "ONE PIECE",
+        "NARUTO"
+      ],
+      "type": "map",
+      "channel": "offline",
+      "retailer_category": "hypermarket",
+      "chain": "이마트",
+      "inventory_status": "TCG 취급·재고 미확인 · 방문 전 공식 매장/전화 확인",
+      "inventory_checked_at": null,
+      "inventory_verified": false,
+      "note": "영업·카드 취급·재고는 점포별로 다르므로 공식 안내 또는 전화 확인",
+      "data_basis": "공식 점포 안내 또는 지역 지도 검색 · 개별 카드 재고 미검증",
+      "url": "https://map.naver.com/p/search/%EC%9D%B4%EB%A7%88%ED%8A%B8%20%EC%A7%84%EC%A0%91%EC%A0%90",
+      "official_reference_url": "https://store.emart.com/branch/list.do",
+      "link_status": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인",
+      "last_checked_at": "2026-08-26T10:47:11+00:00",
+      "link_checked_at": "2026-08-26T10:47:11+00:00",
+      "link_statuses": {
+        "official_reference_url": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인",
+        "url": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인"
+      }
+    },
+    {
+      "name": "이마트 파주운정점",
+      "region": "KR",
+      "games": [
+        "Pokemon",
+        "ONE PIECE",
+        "NARUTO"
+      ],
+      "type": "map",
+      "channel": "offline",
+      "retailer_category": "hypermarket",
+      "chain": "이마트",
+      "inventory_status": "TCG 취급·재고 미확인 · 방문 전 공식 매장/전화 확인",
+      "inventory_checked_at": null,
+      "inventory_verified": false,
+      "note": "영업·카드 취급·재고는 점포별로 다르므로 공식 안내 또는 전화 확인",
+      "data_basis": "공식 점포 안내 또는 지역 지도 검색 · 개별 카드 재고 미검증",
+      "url": "https://map.naver.com/p/search/%EC%9D%B4%EB%A7%88%ED%8A%B8%20%ED%8C%8C%EC%A3%BC%EC%9A%B4%EC%A0%95%EC%A0%90",
+      "official_reference_url": "https://store.emart.com/branch/list.do",
+      "link_status": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인",
+      "last_checked_at": "2026-08-26T10:47:11+00:00",
+      "link_checked_at": "2026-08-26T10:47:11+00:00",
+      "link_statuses": {
+        "official_reference_url": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인",
+        "url": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인"
+      }
+    },
+    {
+      "name": "이마트 파주점",
+      "region": "KR",
+      "games": [
+        "Pokemon",
+        "ONE PIECE",
+        "NARUTO"
+      ],
+      "type": "map",
+      "channel": "offline",
+      "retailer_category": "hypermarket",
+      "chain": "이마트",
+      "inventory_status": "TCG 취급·재고 미확인 · 방문 전 공식 매장/전화 확인",
+      "inventory_checked_at": null,
+      "inventory_verified": false,
+      "note": "영업·카드 취급·재고는 점포별로 다르므로 공식 안내 또는 전화 확인",
+      "data_basis": "공식 점포 안내 또는 지역 지도 검색 · 개별 카드 재고 미검증",
+      "url": "https://map.naver.com/p/search/%EC%9D%B4%EB%A7%88%ED%8A%B8%20%ED%8C%8C%EC%A3%BC%EC%A0%90",
+      "official_reference_url": "https://store.emart.com/branch/list.do",
+      "link_status": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인",
+      "last_checked_at": "2026-08-26T10:47:11+00:00",
+      "link_checked_at": "2026-08-26T10:47:11+00:00",
+      "link_statuses": {
+        "official_reference_url": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인",
+        "url": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인"
+      }
+    },
+    {
+      "name": "이마트 평촌점",
+      "region": "KR",
+      "games": [
+        "Pokemon",
+        "ONE PIECE",
+        "NARUTO"
+      ],
+      "type": "map",
+      "channel": "offline",
+      "retailer_category": "hypermarket",
+      "chain": "이마트",
+      "inventory_status": "TCG 취급·재고 미확인 · 방문 전 공식 매장/전화 확인",
+      "inventory_checked_at": null,
+      "inventory_verified": false,
+      "note": "영업·카드 취급·재고는 점포별로 다르므로 공식 안내 또는 전화 확인",
+      "data_basis": "공식 점포 안내 또는 지역 지도 검색 · 개별 카드 재고 미검증",
+      "url": "https://map.naver.com/p/search/%EC%9D%B4%EB%A7%88%ED%8A%B8%20%ED%8F%89%EC%B4%8C%EC%A0%90",
+      "official_reference_url": "https://store.emart.com/branch/list.do",
+      "link_status": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인",
+      "last_checked_at": "2026-08-26T10:47:11+00:00",
+      "link_checked_at": "2026-08-26T10:47:11+00:00",
+      "link_statuses": {
+        "official_reference_url": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인",
+        "url": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인"
+      }
+    },
+    {
+      "name": "이마트 평택점",
+      "region": "KR",
+      "games": [
+        "Pokemon",
+        "ONE PIECE",
+        "NARUTO"
+      ],
+      "type": "map",
+      "channel": "offline",
+      "retailer_category": "hypermarket",
+      "chain": "이마트",
+      "inventory_status": "TCG 취급·재고 미확인 · 방문 전 공식 매장/전화 확인",
+      "inventory_checked_at": null,
+      "inventory_verified": false,
+      "note": "영업·카드 취급·재고는 점포별로 다르므로 공식 안내 또는 전화 확인",
+      "data_basis": "공식 점포 안내 또는 지역 지도 검색 · 개별 카드 재고 미검증",
+      "url": "https://map.naver.com/p/search/%EC%9D%B4%EB%A7%88%ED%8A%B8%20%ED%8F%89%ED%83%9D%EC%A0%90",
+      "official_reference_url": "https://store.emart.com/branch/list.do",
+      "link_status": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인",
+      "last_checked_at": "2026-08-26T10:47:11+00:00",
+      "link_checked_at": "2026-08-26T10:47:11+00:00",
+      "link_statuses": {
+        "official_reference_url": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인",
+        "url": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인"
+      }
+    },
+    {
+      "name": "이마트 포천점",
+      "region": "KR",
+      "games": [
+        "Pokemon",
+        "ONE PIECE",
+        "NARUTO"
+      ],
+      "type": "map",
+      "channel": "offline",
+      "retailer_category": "hypermarket",
+      "chain": "이마트",
+      "inventory_status": "TCG 취급·재고 미확인 · 방문 전 공식 매장/전화 확인",
+      "inventory_checked_at": null,
+      "inventory_verified": false,
+      "note": "영업·카드 취급·재고는 점포별로 다르므로 공식 안내 또는 전화 확인",
+      "data_basis": "공식 점포 안내 또는 지역 지도 검색 · 개별 카드 재고 미검증",
+      "url": "https://map.naver.com/p/search/%EC%9D%B4%EB%A7%88%ED%8A%B8%20%ED%8F%AC%EC%B2%9C%EC%A0%90",
+      "official_reference_url": "https://store.emart.com/branch/list.do",
+      "link_status": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인",
+      "last_checked_at": "2026-08-26T10:47:11+00:00",
+      "link_checked_at": "2026-08-26T10:47:11+00:00",
+      "link_statuses": {
+        "official_reference_url": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인",
+        "url": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인"
+      }
+    },
+    {
+      "name": "이마트 풍산점",
+      "region": "KR",
+      "games": [
+        "Pokemon",
+        "ONE PIECE",
+        "NARUTO"
+      ],
+      "type": "map",
+      "channel": "offline",
+      "retailer_category": "hypermarket",
+      "chain": "이마트",
+      "inventory_status": "TCG 취급·재고 미확인 · 방문 전 공식 매장/전화 확인",
+      "inventory_checked_at": null,
+      "inventory_verified": false,
+      "note": "영업·카드 취급·재고는 점포별로 다르므로 공식 안내 또는 전화 확인",
+      "data_basis": "공식 점포 안내 또는 지역 지도 검색 · 개별 카드 재고 미검증",
+      "url": "https://map.naver.com/p/search/%EC%9D%B4%EB%A7%88%ED%8A%B8%20%ED%92%8D%EC%82%B0%EC%A0%90",
+      "official_reference_url": "https://store.emart.com/branch/list.do",
+      "link_status": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인",
+      "last_checked_at": "2026-08-26T10:47:11+00:00",
+      "link_checked_at": "2026-08-26T10:47:11+00:00",
+      "link_statuses": {
+        "official_reference_url": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인",
+        "url": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인"
+      }
+    },
+    {
+      "name": "이마트 하남점",
+      "region": "KR",
+      "games": [
+        "Pokemon",
+        "ONE PIECE",
+        "NARUTO"
+      ],
+      "type": "map",
+      "channel": "offline",
+      "retailer_category": "hypermarket",
+      "chain": "이마트",
+      "inventory_status": "TCG 취급·재고 미확인 · 방문 전 공식 매장/전화 확인",
+      "inventory_checked_at": null,
+      "inventory_verified": false,
+      "note": "영업·카드 취급·재고는 점포별로 다르므로 공식 안내 또는 전화 확인",
+      "data_basis": "공식 점포 안내 또는 지역 지도 검색 · 개별 카드 재고 미검증",
+      "url": "https://map.naver.com/p/search/%EC%9D%B4%EB%A7%88%ED%8A%B8%20%ED%95%98%EB%82%A8%EC%A0%90",
+      "official_reference_url": "https://store.emart.com/branch/list.do",
+      "link_status": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인",
+      "last_checked_at": "2026-08-26T10:47:11+00:00",
+      "link_checked_at": "2026-08-26T10:47:11+00:00",
+      "link_statuses": {
+        "official_reference_url": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인",
+        "url": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인"
+      }
+    },
+    {
+      "name": "이마트 화성봉담점",
+      "region": "KR",
+      "games": [
+        "Pokemon",
+        "ONE PIECE",
+        "NARUTO"
+      ],
+      "type": "map",
+      "channel": "offline",
+      "retailer_category": "hypermarket",
+      "chain": "이마트",
+      "inventory_status": "TCG 취급·재고 미확인 · 방문 전 공식 매장/전화 확인",
+      "inventory_checked_at": null,
+      "inventory_verified": false,
+      "note": "영업·카드 취급·재고는 점포별로 다르므로 공식 안내 또는 전화 확인",
+      "data_basis": "공식 점포 안내 또는 지역 지도 검색 · 개별 카드 재고 미검증",
+      "url": "https://map.naver.com/p/search/%EC%9D%B4%EB%A7%88%ED%8A%B8%20%ED%99%94%EC%84%B1%EB%B4%89%EB%8B%B4%EC%A0%90",
+      "official_reference_url": "https://store.emart.com/branch/list.do",
+      "link_status": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인",
+      "last_checked_at": "2026-08-26T10:47:11+00:00",
+      "link_checked_at": "2026-08-26T10:47:11+00:00",
+      "link_statuses": {
+        "official_reference_url": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인",
+        "url": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인"
+      }
+    },
+    {
+      "name": "이마트 화정점",
+      "region": "KR",
+      "games": [
+        "Pokemon",
+        "ONE PIECE",
+        "NARUTO"
+      ],
+      "type": "map",
+      "channel": "offline",
+      "retailer_category": "hypermarket",
+      "chain": "이마트",
+      "inventory_status": "TCG 취급·재고 미확인 · 방문 전 공식 매장/전화 확인",
+      "inventory_checked_at": null,
+      "inventory_verified": false,
+      "note": "영업·카드 취급·재고는 점포별로 다르므로 공식 안내 또는 전화 확인",
+      "data_basis": "공식 점포 안내 또는 지역 지도 검색 · 개별 카드 재고 미검증",
+      "url": "https://map.naver.com/p/search/%EC%9D%B4%EB%A7%88%ED%8A%B8%20%ED%99%94%EC%A0%95%EC%A0%90",
+      "official_reference_url": "https://store.emart.com/branch/list.do",
+      "link_status": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인",
+      "last_checked_at": "2026-08-26T10:47:11+00:00",
+      "link_checked_at": "2026-08-26T10:47:11+00:00",
+      "link_statuses": {
+        "official_reference_url": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인",
+        "url": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인"
+      }
+    },
+    {
+      "name": "이마트 흥덕점",
+      "region": "KR",
+      "games": [
+        "Pokemon",
+        "ONE PIECE",
+        "NARUTO"
+      ],
+      "type": "map",
+      "channel": "offline",
+      "retailer_category": "hypermarket",
+      "chain": "이마트",
+      "inventory_status": "TCG 취급·재고 미확인 · 방문 전 공식 매장/전화 확인",
+      "inventory_checked_at": null,
+      "inventory_verified": false,
+      "note": "영업·카드 취급·재고는 점포별로 다르므로 공식 안내 또는 전화 확인",
+      "data_basis": "공식 점포 안내 또는 지역 지도 검색 · 개별 카드 재고 미검증",
+      "url": "https://map.naver.com/p/search/%EC%9D%B4%EB%A7%88%ED%8A%B8%20%ED%9D%A5%EB%8D%95%EC%A0%90",
+      "official_reference_url": "https://store.emart.com/branch/list.do",
+      "link_status": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인",
+      "last_checked_at": "2026-08-26T10:47:11+00:00",
+      "link_checked_at": "2026-08-26T10:47:11+00:00",
+      "link_statuses": {
+        "official_reference_url": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인",
+        "url": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인"
+      }
+    },
+    {
+      "name": "트레이더스 홀세일 클럽 고양점",
+      "region": "KR",
+      "games": [
+        "Pokemon",
+        "ONE PIECE",
+        "NARUTO"
+      ],
+      "type": "map",
+      "channel": "offline",
+      "retailer_category": "hypermarket",
+      "chain": "트레이더스",
+      "inventory_status": "TCG 취급·재고 미확인 · 방문 전 공식 매장/전화 확인",
+      "inventory_checked_at": null,
+      "inventory_verified": false,
+      "note": "영업·카드 취급·재고는 점포별로 다르므로 공식 안내 또는 전화 확인",
+      "data_basis": "공식 점포 안내 또는 지역 지도 검색 · 개별 카드 재고 미검증",
+      "url": "https://map.naver.com/p/search/%ED%8A%B8%EB%A0%88%EC%9D%B4%EB%8D%94%EC%8A%A4%20%ED%99%80%EC%84%B8%EC%9D%BC%20%ED%81%B4%EB%9F%BD%20%EA%B3%A0%EC%96%91%EC%A0%90",
+      "official_reference_url": "https://store.emart.com/branch/list.do",
+      "link_status": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인",
+      "last_checked_at": "2026-08-26T10:47:11+00:00",
+      "link_checked_at": "2026-08-26T10:47:11+00:00",
+      "link_statuses": {
+        "official_reference_url": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인",
+        "url": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인"
+      }
+    },
+    {
+      "name": "트레이더스 홀세일 클럽 구성점",
+      "region": "KR",
+      "games": [
+        "Pokemon",
+        "ONE PIECE",
+        "NARUTO"
+      ],
+      "type": "map",
+      "channel": "offline",
+      "retailer_category": "hypermarket",
+      "chain": "트레이더스",
+      "inventory_status": "TCG 취급·재고 미확인 · 방문 전 공식 매장/전화 확인",
+      "inventory_checked_at": null,
+      "inventory_verified": false,
+      "note": "영업·카드 취급·재고는 점포별로 다르므로 공식 안내 또는 전화 확인",
+      "data_basis": "공식 점포 안내 또는 지역 지도 검색 · 개별 카드 재고 미검증",
+      "url": "https://map.naver.com/p/search/%ED%8A%B8%EB%A0%88%EC%9D%B4%EB%8D%94%EC%8A%A4%20%ED%99%80%EC%84%B8%EC%9D%BC%20%ED%81%B4%EB%9F%BD%20%EA%B5%AC%EC%84%B1%EC%A0%90",
+      "official_reference_url": "https://store.emart.com/branch/list.do",
+      "link_status": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인",
+      "last_checked_at": "2026-08-26T10:47:11+00:00",
+      "link_checked_at": "2026-08-26T10:47:11+00:00",
+      "link_statuses": {
+        "official_reference_url": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인",
+        "url": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인"
+      }
+    },
+    {
+      "name": "트레이더스 홀세일 클럽 군포점",
+      "region": "KR",
+      "games": [
+        "Pokemon",
+        "ONE PIECE",
+        "NARUTO"
+      ],
+      "type": "map",
+      "channel": "offline",
+      "retailer_category": "hypermarket",
+      "chain": "트레이더스",
+      "inventory_status": "TCG 취급·재고 미확인 · 방문 전 공식 매장/전화 확인",
+      "inventory_checked_at": null,
+      "inventory_verified": false,
+      "note": "영업·카드 취급·재고는 점포별로 다르므로 공식 안내 또는 전화 확인",
+      "data_basis": "공식 점포 안내 또는 지역 지도 검색 · 개별 카드 재고 미검증",
+      "url": "https://map.naver.com/p/search/%ED%8A%B8%EB%A0%88%EC%9D%B4%EB%8D%94%EC%8A%A4%20%ED%99%80%EC%84%B8%EC%9D%BC%20%ED%81%B4%EB%9F%BD%20%EA%B5%B0%ED%8F%AC%EC%A0%90",
+      "official_reference_url": "https://store.emart.com/branch/list.do",
+      "link_status": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인",
+      "last_checked_at": "2026-08-26T10:47:11+00:00",
+      "link_checked_at": "2026-08-26T10:47:11+00:00",
+      "link_statuses": {
+        "official_reference_url": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인",
+        "url": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인"
+      }
+    },
+    {
+      "name": "트레이더스 홀세일 클럽 김포점",
+      "region": "KR",
+      "games": [
+        "Pokemon",
+        "ONE PIECE",
+        "NARUTO"
+      ],
+      "type": "map",
+      "channel": "offline",
+      "retailer_category": "hypermarket",
+      "chain": "트레이더스",
+      "inventory_status": "TCG 취급·재고 미확인 · 방문 전 공식 매장/전화 확인",
+      "inventory_checked_at": null,
+      "inventory_verified": false,
+      "note": "영업·카드 취급·재고는 점포별로 다르므로 공식 안내 또는 전화 확인",
+      "data_basis": "공식 점포 안내 또는 지역 지도 검색 · 개별 카드 재고 미검증",
+      "url": "https://map.naver.com/p/search/%ED%8A%B8%EB%A0%88%EC%9D%B4%EB%8D%94%EC%8A%A4%20%ED%99%80%EC%84%B8%EC%9D%BC%20%ED%81%B4%EB%9F%BD%20%EA%B9%80%ED%8F%AC%EC%A0%90",
+      "official_reference_url": "https://store.emart.com/branch/list.do",
+      "link_status": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인",
+      "last_checked_at": "2026-08-26T10:47:11+00:00",
+      "link_checked_at": "2026-08-26T10:47:11+00:00",
+      "link_statuses": {
+        "official_reference_url": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인",
+        "url": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인"
+      }
+    },
+    {
+      "name": "트레이더스 홀세일 클럽 동탄점",
+      "region": "KR",
+      "games": [
+        "Pokemon",
+        "ONE PIECE",
+        "NARUTO"
+      ],
+      "type": "map",
+      "channel": "offline",
+      "retailer_category": "hypermarket",
+      "chain": "트레이더스",
+      "inventory_status": "TCG 취급·재고 미확인 · 방문 전 공식 매장/전화 확인",
+      "inventory_checked_at": null,
+      "inventory_verified": false,
+      "note": "영업·카드 취급·재고는 점포별로 다르므로 공식 안내 또는 전화 확인",
+      "data_basis": "공식 점포 안내 또는 지역 지도 검색 · 개별 카드 재고 미검증",
+      "url": "https://map.naver.com/p/search/%ED%8A%B8%EB%A0%88%EC%9D%B4%EB%8D%94%EC%8A%A4%20%ED%99%80%EC%84%B8%EC%9D%BC%20%ED%81%B4%EB%9F%BD%20%EB%8F%99%ED%83%84%EC%A0%90",
+      "official_reference_url": "https://store.emart.com/branch/list.do",
+      "link_status": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인",
+      "last_checked_at": "2026-08-26T10:47:11+00:00",
+      "link_checked_at": "2026-08-26T10:47:11+00:00",
+      "link_statuses": {
+        "official_reference_url": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인",
+        "url": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인"
+      }
+    },
+    {
+      "name": "트레이더스 홀세일 클럽 부천점",
+      "region": "KR",
+      "games": [
+        "Pokemon",
+        "ONE PIECE",
+        "NARUTO"
+      ],
+      "type": "map",
+      "channel": "offline",
+      "retailer_category": "hypermarket",
+      "chain": "트레이더스",
+      "inventory_status": "TCG 취급·재고 미확인 · 방문 전 공식 매장/전화 확인",
+      "inventory_checked_at": null,
+      "inventory_verified": false,
+      "note": "영업·카드 취급·재고는 점포별로 다르므로 공식 안내 또는 전화 확인",
+      "data_basis": "공식 점포 안내 또는 지역 지도 검색 · 개별 카드 재고 미검증",
+      "url": "https://map.naver.com/p/search/%ED%8A%B8%EB%A0%88%EC%9D%B4%EB%8D%94%EC%8A%A4%20%ED%99%80%EC%84%B8%EC%9D%BC%20%ED%81%B4%EB%9F%BD%20%EB%B6%80%EC%B2%9C%EC%A0%90",
+      "official_reference_url": "https://store.emart.com/branch/list.do",
+      "link_status": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인",
+      "last_checked_at": "2026-08-26T10:47:11+00:00",
+      "link_checked_at": "2026-08-26T10:47:11+00:00",
+      "link_statuses": {
+        "official_reference_url": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인",
+        "url": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인"
+      }
+    },
+    {
+      "name": "트레이더스 홀세일 클럽 수원점",
+      "region": "KR",
+      "games": [
+        "Pokemon",
+        "ONE PIECE",
+        "NARUTO"
+      ],
+      "type": "map",
+      "channel": "offline",
+      "retailer_category": "hypermarket",
+      "chain": "트레이더스",
+      "inventory_status": "TCG 취급·재고 미확인 · 방문 전 공식 매장/전화 확인",
+      "inventory_checked_at": null,
+      "inventory_verified": false,
+      "note": "영업·카드 취급·재고는 점포별로 다르므로 공식 안내 또는 전화 확인",
+      "data_basis": "공식 점포 안내 또는 지역 지도 검색 · 개별 카드 재고 미검증",
+      "url": "https://map.naver.com/p/search/%ED%8A%B8%EB%A0%88%EC%9D%B4%EB%8D%94%EC%8A%A4%20%ED%99%80%EC%84%B8%EC%9D%BC%20%ED%81%B4%EB%9F%BD%20%EC%88%98%EC%9B%90%EC%A0%90",
+      "official_reference_url": "https://store.emart.com/branch/list.do",
+      "link_status": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인",
+      "last_checked_at": "2026-08-26T10:47:11+00:00",
+      "link_checked_at": "2026-08-26T10:47:11+00:00",
+      "link_statuses": {
+        "official_reference_url": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인",
+        "url": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인"
+      }
+    },
+    {
+      "name": "트레이더스 홀세일 클럽 수원화서점",
+      "region": "KR",
+      "games": [
+        "Pokemon",
+        "ONE PIECE",
+        "NARUTO"
+      ],
+      "type": "map",
+      "channel": "offline",
+      "retailer_category": "hypermarket",
+      "chain": "트레이더스",
+      "inventory_status": "TCG 취급·재고 미확인 · 방문 전 공식 매장/전화 확인",
+      "inventory_checked_at": null,
+      "inventory_verified": false,
+      "note": "영업·카드 취급·재고는 점포별로 다르므로 공식 안내 또는 전화 확인",
+      "data_basis": "공식 점포 안내 또는 지역 지도 검색 · 개별 카드 재고 미검증",
+      "url": "https://map.naver.com/p/search/%ED%8A%B8%EB%A0%88%EC%9D%B4%EB%8D%94%EC%8A%A4%20%ED%99%80%EC%84%B8%EC%9D%BC%20%ED%81%B4%EB%9F%BD%20%EC%88%98%EC%9B%90%ED%99%94%EC%84%9C%EC%A0%90",
+      "official_reference_url": "https://store.emart.com/branch/list.do",
+      "link_status": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인",
+      "last_checked_at": "2026-08-26T10:47:11+00:00",
+      "link_checked_at": "2026-08-26T10:47:11+00:00",
+      "link_statuses": {
+        "official_reference_url": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인",
+        "url": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인"
+      }
+    },
+    {
+      "name": "트레이더스 홀세일 클럽 안산점",
+      "region": "KR",
+      "games": [
+        "Pokemon",
+        "ONE PIECE",
+        "NARUTO"
+      ],
+      "type": "map",
+      "channel": "offline",
+      "retailer_category": "hypermarket",
+      "chain": "트레이더스",
+      "inventory_status": "TCG 취급·재고 미확인 · 방문 전 공식 매장/전화 확인",
+      "inventory_checked_at": null,
+      "inventory_verified": false,
+      "note": "영업·카드 취급·재고는 점포별로 다르므로 공식 안내 또는 전화 확인",
+      "data_basis": "공식 점포 안내 또는 지역 지도 검색 · 개별 카드 재고 미검증",
+      "url": "https://map.naver.com/p/search/%ED%8A%B8%EB%A0%88%EC%9D%B4%EB%8D%94%EC%8A%A4%20%ED%99%80%EC%84%B8%EC%9D%BC%20%ED%81%B4%EB%9F%BD%20%EC%95%88%EC%82%B0%EC%A0%90%20%EA%B2%BD%EA%B8%B0%EB%8F%84%20%EC%95%88%EC%82%B0%EC%8B%9C%20%EB%8B%A8%EC%9B%90%EA%B5%AC%20%EC%A4%91%EC%95%99%EB%8C%80%EB%A1%9C%20397",
+      "official_reference_url": "https://store.emart.com/branch/list.do",
+      "address": "경기도 안산시 단원구 중앙대로 397",
+      "phone": "031-363-1234",
+      "lat": 37.331021166203,
+      "lon": 126.78449703496,
+      "link_status": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인",
+      "last_checked_at": "2026-08-26T10:47:11+00:00",
+      "link_checked_at": "2026-08-26T10:47:11+00:00",
+      "link_statuses": {
+        "official_reference_url": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인",
+        "url": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인"
+      }
+    },
+    {
+      "name": "트레이더스 홀세일 클럽 안성점",
+      "region": "KR",
+      "games": [
+        "Pokemon",
+        "ONE PIECE",
+        "NARUTO"
+      ],
+      "type": "map",
+      "channel": "offline",
+      "retailer_category": "hypermarket",
+      "chain": "트레이더스",
+      "inventory_status": "TCG 취급·재고 미확인 · 방문 전 공식 매장/전화 확인",
+      "inventory_checked_at": null,
+      "inventory_verified": false,
+      "note": "영업·카드 취급·재고는 점포별로 다르므로 공식 안내 또는 전화 확인",
+      "data_basis": "공식 점포 안내 또는 지역 지도 검색 · 개별 카드 재고 미검증",
+      "url": "https://map.naver.com/p/search/%ED%8A%B8%EB%A0%88%EC%9D%B4%EB%8D%94%EC%8A%A4%20%ED%99%80%EC%84%B8%EC%9D%BC%20%ED%81%B4%EB%9F%BD%20%EC%95%88%EC%84%B1%EC%A0%90",
+      "official_reference_url": "https://store.emart.com/branch/list.do",
+      "link_status": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인",
+      "last_checked_at": "2026-08-26T10:47:11+00:00",
+      "link_checked_at": "2026-08-26T10:47:11+00:00",
+      "link_statuses": {
+        "official_reference_url": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인",
+        "url": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인"
+      }
+    },
+    {
+      "name": "트레이더스 홀세일 클럽 위례점",
+      "region": "KR",
+      "games": [
+        "Pokemon",
+        "ONE PIECE",
+        "NARUTO"
+      ],
+      "type": "map",
+      "channel": "offline",
+      "retailer_category": "hypermarket",
+      "chain": "트레이더스",
+      "inventory_status": "TCG 취급·재고 미확인 · 방문 전 공식 매장/전화 확인",
+      "inventory_checked_at": null,
+      "inventory_verified": false,
+      "note": "영업·카드 취급·재고는 점포별로 다르므로 공식 안내 또는 전화 확인",
+      "data_basis": "공식 점포 안내 또는 지역 지도 검색 · 개별 카드 재고 미검증",
+      "url": "https://map.naver.com/p/search/%ED%8A%B8%EB%A0%88%EC%9D%B4%EB%8D%94%EC%8A%A4%20%ED%99%80%EC%84%B8%EC%9D%BC%20%ED%81%B4%EB%9F%BD%20%EC%9C%84%EB%A1%80%EC%A0%90",
+      "official_reference_url": "https://store.emart.com/branch/list.do",
+      "link_status": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인",
+      "last_checked_at": "2026-08-26T10:47:11+00:00",
+      "link_checked_at": "2026-08-26T10:47:11+00:00",
+      "link_statuses": {
+        "official_reference_url": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인",
+        "url": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인"
+      }
+    },
+    {
+      "name": "트레이더스 홀세일 클럽 일산점",
+      "region": "KR",
+      "games": [
+        "Pokemon",
+        "ONE PIECE",
+        "NARUTO"
+      ],
+      "type": "map",
+      "channel": "offline",
+      "retailer_category": "hypermarket",
+      "chain": "트레이더스",
+      "inventory_status": "TCG 취급·재고 미확인 · 방문 전 공식 매장/전화 확인",
+      "inventory_checked_at": null,
+      "inventory_verified": false,
+      "note": "영업·카드 취급·재고는 점포별로 다르므로 공식 안내 또는 전화 확인",
+      "data_basis": "공식 점포 안내 또는 지역 지도 검색 · 개별 카드 재고 미검증",
+      "url": "https://map.naver.com/p/search/%ED%8A%B8%EB%A0%88%EC%9D%B4%EB%8D%94%EC%8A%A4%20%ED%99%80%EC%84%B8%EC%9D%BC%20%ED%81%B4%EB%9F%BD%20%EC%9D%BC%EC%82%B0%EC%A0%90",
+      "official_reference_url": "https://store.emart.com/branch/list.do",
+      "link_status": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인",
+      "last_checked_at": "2026-08-26T10:47:11+00:00",
+      "link_checked_at": "2026-08-26T10:47:11+00:00",
+      "link_statuses": {
+        "official_reference_url": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인",
+        "url": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인"
+      }
+    },
+    {
+      "name": "트레이더스 홀세일 클럽 하남점",
+      "region": "KR",
+      "games": [
+        "Pokemon",
+        "ONE PIECE",
+        "NARUTO"
+      ],
+      "type": "map",
+      "channel": "offline",
+      "retailer_category": "hypermarket",
+      "chain": "트레이더스",
+      "inventory_status": "TCG 취급·재고 미확인 · 방문 전 공식 매장/전화 확인",
+      "inventory_checked_at": null,
+      "inventory_verified": false,
+      "note": "영업·카드 취급·재고는 점포별로 다르므로 공식 안내 또는 전화 확인",
+      "data_basis": "공식 점포 안내 또는 지역 지도 검색 · 개별 카드 재고 미검증",
+      "url": "https://map.naver.com/p/search/%ED%8A%B8%EB%A0%88%EC%9D%B4%EB%8D%94%EC%8A%A4%20%ED%99%80%EC%84%B8%EC%9D%BC%20%ED%81%B4%EB%9F%BD%20%ED%95%98%EB%82%A8%EC%A0%90",
+      "official_reference_url": "https://store.emart.com/branch/list.do",
+      "link_status": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인",
+      "last_checked_at": "2026-08-26T10:47:11+00:00",
+      "link_checked_at": "2026-08-26T10:47:11+00:00",
+      "link_statuses": {
+        "official_reference_url": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인",
+        "url": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인"
+      }
+    },
+    {
+      "name": "알파문구 경기대점",
+      "region": "KR",
+      "games": [
+        "Pokemon",
+        "ONE PIECE",
+        "NARUTO"
+      ],
+      "type": "map",
+      "channel": "offline",
+      "retailer_category": "stationery",
+      "chain": "알파문구",
+      "inventory_status": "TCG 취급·재고 미확인 · 방문 전 공식 매장/전화 확인",
+      "inventory_checked_at": null,
+      "inventory_verified": false,
+      "note": "영업·카드 취급·재고는 점포별로 다르므로 공식 안내 또는 전화 확인",
+      "data_basis": "공식 점포 안내 또는 지역 지도 검색 · 개별 카드 재고 미검증",
+      "url": "https://map.naver.com/p/search/%EC%95%8C%ED%8C%8C%EB%AC%B8%EA%B5%AC%20%EA%B2%BD%EA%B8%B0%EB%8C%80%EC%A0%90%20%EA%B2%BD%EA%B8%B0%EB%8F%84%20%EC%88%98%EC%9B%90%EC%8B%9C%20%EC%98%81%ED%86%B5%EA%B5%AC%20%EB%8C%80%ED%95%993%EB%A1%9C%207%202%EC%B8%B5%20211%ED%98%B8",
+      "official_reference_url": "https://alloffice.alphachain.co.kr/company/storeInfo.do",
+      "address": "경기도 수원시 영통구 대학3로 7 2층 211호",
+      "phone": "031-8007-3172",
+      "lat": 37.2997691086,
+      "lon": 127.04217618519,
+      "link_status": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인",
+      "last_checked_at": "2026-08-26T10:47:11+00:00",
+      "link_checked_at": "2026-08-26T10:47:11+00:00",
+      "link_statuses": {
+        "url": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인",
+        "official_reference_url": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인"
+      }
+    },
+    {
+      "name": "이마트몰 공식 카드·BOX 상품 검색",
+      "region": "KR",
+      "games": [
+        "Pokemon",
+        "ONE PIECE",
+        "NARUTO"
+      ],
+      "type": "marketplace",
+      "channel": "online",
+      "retailer_category": "hypermarket",
+      "chain": "이마트",
+      "url_template": "https://emart.ssg.com/search.ssg?query={query}",
+      "official_reference_url": "https://store.emart.com/branch/list.do",
+      "note": "공식 이마트몰 검색 · 온라인 목록과 오프라인 지점 재고는 별개",
+      "data_basis": "이마트 공식 온라인 검색과 공식 점포 안내",
+      "link_status": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인",
+      "last_checked_at": "2026-08-26T10:47:11+00:00",
+      "link_checked_at": "2026-08-26T10:47:11+00:00",
+      "link_statuses": {
+        "official_reference_url": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인",
+        "url_template": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인"
+      }
+    }
+  ],
+  "collection_status": "일부 구매처 재확인 필요·기존 목록 유지",
+  "collection_errors": [
+    "포켓몬 카드 게임 코리아 제품: 재확인 필요·기존 주소 유지 (URLError)",
+    "원피스 카드게임 코리아: 재확인 필요·기존 주소 유지 (URLError)",
+    "나루토 카드게임 공식: 재확인 필요·기존 주소 유지 (URLError)",
+    "포켓몬 카드 공식 제품: 재확인 필요·기존 주소 유지 (URLError)",
+    "포켓몬센터 온라인: 재확인 필요·기존 주소 유지 (URLError)",
+    "원피스 카드게임 공식: 재확인 필요·기존 주소 유지 (URLError)",
+    "나루토 카드게임 공식: 재확인 필요·기존 주소 유지 (URLError)",
+    "Pokémon Center US: 재확인 필요·기존 주소 유지 (URLError)",
+    "Pokémon 공식 판매점 찾기: 재확인 필요·기존 주소 유지 (URLError)",
+    "One Piece Card Game 공식: 재확인 필요·기존 주소 유지 (URLError)",
+    "Naruto Card Game 공식: 재확인 필요·기존 주소 유지 (URLError)",
+    "포켓몬 공인 카드샵 안내: 재확인 필요·기존 주소 유지 (URLError)"
+  ],
+  "checked_source_count": 205,
+  "online_checked_count": 12,
+  "link_audit_at": "2026-08-26T10:47:11+00:00",
+  "purchase_intelligence": {
+    "live_web_signals": true,
+    "signal_types": [
+      "공식",
+      "쇼핑몰",
+      "중고",
+      "블로그·후기",
+      "지도",
+      "재고알림"
+    ],
+    "geolocation": "브라우저에서만 처리·서버 저장 안 함",
+    "stock_disclaimer": "구매 가능성은 참고 신호이며 실제 재고를 보장하지 않습니다."
+  },
+  "retailer_category_counts": {
+    "bookstore": 6,
+    "cardshop": 8,
+    "convenience": 10,
+    "discount": 5,
+    "general": 60,
+    "hypermarket": 97,
+    "stationery": 9,
+    "toy": 10
+  },
+  "inventory_policy": "개별 오프라인 점포 취급·재고는 검증하지 않았으며 방문 전 확인이 필요합니다."
 }

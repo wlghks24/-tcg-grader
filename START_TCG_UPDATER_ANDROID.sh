@@ -3,7 +3,7 @@ set -u
 cd "$(dirname "$0")"
 
 echo "========================================"
-echo " TCG v31 Android 태블릿 서버 시작"
+echo " TCG v79 Android 태블릿 서버 시작"
 echo "========================================"
 
 if ! command -v python >/dev/null 2>&1; then

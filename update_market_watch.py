@@ -3,6 +3,7 @@
 from __future__ import annotations
 import datetime as dt, json, re
 from pathlib import Path
+from safe_runtime import atomic_write_json, safe_read_text, validate_public_https_url
 
 ROOT=Path(__file__).resolve().parent
 OUT=ROOT/'market_watch.json'
@@ -29,22 +30,60 @@ def package_type(row):
     return '상품 구성 확인'
 
 def main():
-    items={f"{x['region']}|{x['name']}|{x['asset']}":dict(x,package_type=package_type(x)) for x in SEEDS}
     errors=[]
+    current={}
     try:
-        releases=json.loads(RELEASES.read_text(encoding='utf-8')).get('items',[])
+        current=json.loads(safe_read_text(OUT))
+        if not isinstance(current,dict) or not isinstance(current.get('items'),list):
+            raise ValueError('기존 추적자료의 최상위 구조가 잘못되었습니다')
+    except FileNotFoundError:
+        current={'items':[]}
+    except (OSError,ValueError,TypeError) as exc:
+        current={'items':[]}
+        errors.append(f'기존 추적자료 확인 실패: {type(exc).__name__}')
+    items={}
+    for row in current.get('items',[]):
+        if not isinstance(row,dict) or row.get('region') not in {'KR','JP','US'} or row.get('asset') not in {'BOX','HIT'} or not isinstance(row.get('name'),str) or not row['name'].strip():
+            errors.append('기존 추적자료의 잘못된 항목 1건 제외')
+            continue
+        clean=dict(row)
+        clean['package_type']=clean.get('package_type') or package_type(clean)
+        source=clean.get('source')
+        if source:
+            try:validate_public_https_url(source)
+            except (TypeError,ValueError):
+                errors.append(f"{clean['name']}: 안전하지 않은 기존 출처 제외")
+                clean['source']=None
+        items[f"{clean['region']}|{clean['name']}|{clean['asset']}"]=clean
+    for row in SEEDS:
+        key=f"{row['region']}|{row['name']}|{row['asset']}"
+        items.setdefault(key,dict(row,package_type=package_type(row)))
+    try:
+        document=json.loads(safe_read_text(RELEASES))
+        if not isinstance(document,dict) or not isinstance(document.get('items'),list):
+            raise ValueError('출시목록 items 구조 오류')
+        releases=document['items']
         for row in releases:
+            if not isinstance(row,dict):
+                errors.append('출시목록의 잘못된 항목 1건 제외')
+                continue
             region=norm_region(row.get('region'))
             if not region: continue
             name=row.get('name') or row.get('title')
-            if not name: continue
+            if not isinstance(name,str) or not name.strip(): continue
+            source=row.get('source')
+            if source:
+                try:validate_public_https_url(source)
+                except (TypeError,ValueError):
+                    errors.append(f'{name}: 안전하지 않은 출시 출처 제외')
+                    continue
             code_match=re.search(r'\b(?:OPK|EBK|OP|EB|PRB)-?\d{1,2}\b',f"{name} {row.get('code','')}",re.I)
             code=code_match.group(0).upper() if code_match else ''
             key=f'{region}|{name}|BOX'
-            items.setdefault(key,{'region':region,'game':row.get('game','확인 중'),'asset':'BOX','name':name,'native':row.get('native_name') or name,'product_code':code,'package_type':package_type(row),'release_date':row.get('release_date') or row.get('date') or '확인 중','sale_status':'판매·출시 확인 중','release_type':'재발매' if re.search(r'재발매|재입고|再販|reprint|restock',json.dumps(row,ensure_ascii=False),re.I) else '신규·상시 판매','official_price':row.get('official_price') or row.get('price') or '공식가격 확인 중','source':row.get('source')})
-    except Exception as exc: errors.append(f'출시목록 결합 실패: {type(exc).__name__}')
-    payload={'version':1,'updated_at':dt.datetime.now(dt.timezone.utc).isoformat(timespec='seconds'),'items':list(items.values()),'collection_status':'정상' if not errors else '기존 추적자료 유지','collection_errors':errors}
-    tmp=OUT.with_suffix('.json.tmp');tmp.write_text(json.dumps(payload,ensure_ascii=False,indent=2)+'\n',encoding='utf-8');tmp.replace(OUT)
+            items.setdefault(key,{'region':region,'game':row.get('game','확인 중'),'asset':'BOX','name':name,'native':row.get('native_name') or name,'product_code':code,'package_type':package_type(row),'release_date':row.get('release_date') or row.get('date') or '확인 중','sale_status':'판매·출시 확인 중','release_type':'재발매' if re.search(r'재발매|재입고|再販|reprint|restock',json.dumps(row,ensure_ascii=False),re.I) else '신규·상시 판매','official_price':row.get('official_price') or row.get('price') or '공식가격 확인 중','source':source})
+    except (OSError,ValueError,TypeError) as exc: errors.append(f'출시목록 결합 실패: {type(exc).__name__}')
+    payload={**current,'version':1,'updated_at':dt.datetime.now(dt.timezone.utc).isoformat(timespec='seconds'),'items':list(items.values()),'collection_status':'정상' if not errors else '기존 추적자료 유지','collection_errors':errors}
+    atomic_write_json(OUT,payload)
     return payload
 
 if __name__=='__main__': main()

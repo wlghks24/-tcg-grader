@@ -1,0 +1,64 @@
+{
+  "version": 1,
+  "updated_at": "2026-08-28T08:22:49+00:00",
+  "policy": "공식 웹사이트에서 직접 연결된 SNS 계정만 trusted=true로 자동 등록. manual=true 계정은 사용자가 직접 관리.",
+  "accounts": [],
+  "discovery_pages": [
+    {
+      "game": "포켓몬 카드",
+      "region": "KR",
+      "url": "https://www.pokemonkorea.co.kr/"
+    },
+    {
+      "game": "포켓몬 카드",
+      "region": "JP",
+      "url": "https://www.pokemon.co.jp/"
+    },
+    {
+      "game": "포켓몬 카드",
+      "region": "US",
+      "url": "https://www.pokemon.com/us"
+    },
+    {
+      "game": "원피스 카드",
+      "region": "KR",
+      "url": "https://onepiece-cardgame.kr/"
+    },
+    {
+      "game": "원피스 카드",
+      "region": "JP",
+      "url": "https://one-piece.com/"
+    },
+    {
+      "game": "원피스 카드",
+      "region": "US",
+      "url": "https://en.onepiece-cardgame.com/"
+    },
+    {
+      "game": "나루토 카드",
+      "region": "JP",
+      "url": "https://naruto-official.com/"
+    },
+    {
+      "game": "나루토 카드",
+      "region": "US",
+      "url": "https://www.naruto-cardgame.com/en/"
+    },
+    {
+      "game": "나루토 카드",
+      "region": "KR",
+      "url": "https://www.naruto-cardgame.com/asia-en/"
+    }
+  ],
+  "discovery_errors": [
+    "포켓몬 카드/KR: URLError",
+    "포켓몬 카드/JP: URLError",
+    "포켓몬 카드/US: URLError",
+    "원피스 카드/KR: URLError",
+    "원피스 카드/JP: URLError",
+    "원피스 카드/US: URLError",
+    "나루토 카드/JP: URLError",
+    "나루토 카드/KR: URLError",
+    "나루토 카드/US: URLError"
+  ]
+}

@@ -1,0 +1,25 @@
+{
+  "version": "v109-card-identity-ocr-learning",
+  "checked_at": "2026-08-28T14:11:17Z",
+  "ok": true,
+  "passed": 2,
+  "failed": 0,
+  "checks": [
+    {
+      "name": "카드명·번호 OCR·확인학습",
+      "ok": true,
+      "detail": "card identity recognition: 11 checks passed\nv109 card identity: 22 checks passed"
+    },
+    {
+      "name": "v108 슬랩 코퍼스 회귀",
+      "ok": true,
+      "detail": "[PASS] Library 슬랩 파서 회귀\n[PASS] v107 전체 기능 회귀\n[PASS] 슬랩 후보·공식검증·원본학습 격리 정책\n{\"version\": \"v108-library-slab-corpus\", \"ok\": true, \"passed\": 3, \"failed\": 0}"
+    }
+  ],
+  "policy": {
+    "automatic_ocr_predictions_train": false,
+    "user_confirmation_required": true,
+    "similar_visual_learning_min_confirmations": 3,
+    "raw_slab_grade_learning_isolated": true
+  }
+}

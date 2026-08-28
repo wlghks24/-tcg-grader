@@ -1,30 +1,33 @@
 #!/usr/bin/env python3
 """Refresh a small verified public-price cache without bypassing logins or private APIs."""
 from __future__ import annotations
-import datetime as dt, html, json, re, urllib.request
+import os
+import datetime as dt, json, re, urllib.error, urllib.request
 from pathlib import Path
+from safe_runtime import atomic_write_json, env_int, html_to_text, safe_read_text, safe_urlopen
 
 ROOT=Path(__file__).resolve().parent
 DATA=ROOT/'market_prices.json'
 APP=ROOT/'index.html'
 HEADERS={'User-Agent':'TCG-Grader-Public-Price-Checker/1.0'}
+ALLOWED_MARKET={'pokard.io','kream.co.kr','www.kream.co.kr','collectory.cc','www.collectory.cc','www.packmagik.com','packmagik.com','www.tcgplayer.com','tcgplayer.com','psa-index.com','www.psa-index.com','narutomarket.com','www.narutomarket.com'}
+NETWORK_ERRORS=(urllib.error.URLError, TimeoutError, OSError, UnicodeDecodeError, ValueError)
 
 def fetch(url:str)->str:
     if not url.startswith(('https://pokard.io/','https://kream.co.kr/','https://www.packmagik.com/',
-                           'https://www.tcgplayer.com/','https://psa-index.com/')):
+                           'https://www.tcgplayer.com/','https://psa-index.com/','https://narutomarket.com/')):
         raise ValueError('허용되지 않은 가격 출처')
     req=urllib.request.Request(url,headers=HEADERS)
-    with urllib.request.urlopen(req,timeout=20) as r:
+    with safe_urlopen(req,timeout=env_int('TCG_HTTP_TIMEOUT',20,5,60),allowed_hosts=ALLOWED_MARKET) as r:
         return r.read(2_000_000).decode('utf-8','replace')
-
-def textify(raw:str)->str:
-    raw=re.sub(r'(?is)<script.*?</script>|<style.*?</style>',' ',raw)
-    raw=re.sub(r'(?s)<[^>]+>',' ',raw)
-    return re.sub(r'\s+',' ',html.unescape(raw)).strip()
 
 def set_price(db,key,display,kind,market,transactions,source):
     db['entries'][key]={'display':display,'kind':kind,'market':market,'transactions':transactions,
       'source_date':dt.date.today().isoformat(),'source':source}
+
+def blank_grade_prices():
+    return {company:{str(grade):0 for grade in range(1,11)}
+            for company in ('PSA','BGS','CGC','TAG','BRG')}
 
 def keep_verified_seeds(db):
     """공개 상품 페이지에서 확인한 기준값을 보존한다. 수집 실패 때 빈 목록으로 지우지 않는다."""
@@ -37,33 +40,81 @@ def keep_verified_seeds(db):
       'JP|계승되는 의지 일본판 에이스 만화패러렐|HIT':{'display':'₩11,190,000~₩13,000,000','kind':'PSA10 공개 체결가 범위','market':'KREAM 한국 거래','transactions':'공개 체결자료','source':'https://kream.co.kr/products/911415','game':'ONE PIECE','card_name':'포트거스 D. 에이스 만화 패러렐','product_name':'계승되는 의지 일본판'},
       'JP|계승되는 의지 일본판 삼형제 SR|HIT':{'display':'₩20,000','kind':'미감정 A 공개 체결가','market':'KREAM 한국 거래','transactions':'공개 체결자료','source':'https://kream.co.kr/products/991036','game':'ONE PIECE','card_name':'에이스·사보·루피 SR','product_name':'계승되는 의지 일본판'},
       'JP|계승되는 의지 일본판 카무사리|HIT':{'display':'₩43,000','kind':'미감정 A 공개 체결가','market':'KREAM 한국 거래','transactions':'공개 체결자료','source':'https://kream.co.kr/products/911481','game':'ONE PIECE','card_name':'카무사리 R-P','product_name':'계승되는 의지 일본판'}
+      ,'US|NARUTO CP-001 Gen Con 2026|HIT':{'display':'$700~$1,000','kind':'공개 판매목록 최저가~참조가 · 체결 확정가 아님','market':'NARUTOMARKET · eBay 공개 판매목록','transactions':'2026-08-25 공개 판매목록 52건 · PSA 10 등록품 0건','source':'https://narutomarket.com/en/market/chakra-card-cp-001-gen-con-2026','game':'NARUTO','card_name':'Chakra Card CP-001 · Gen Con 2026 Ver.','card_number':'CP-001','product_name':'NARUTO CARD GAME Gen Con 2026 Promo','image_url':'https://narutomarket.com/uploads/8a9ce860-f747-4f68-9082-85b22c39c7e5-237767__carta.webp?v=1786351506'},
+      'KR|릴리에 SM1M 065/060|HIT':{'display':'미등급 ₩300,000 · BRG 9 ₩450,000 · BRG 10 ₩2,000,000','kind':'BRG 공식 페이지 공개 거래 예시','market':'BRG · 2025년 5월 거래플랫폼 P사 자료','transactions':'업체 공개 예시 · 카드·시점 한정','source':'https://break.co.kr/','game':'Pokémon','card_name':'릴리에 Full Art 065/060','card_number':'SM1M 065/060','product_name':'컬렉션 문 한국판'}
     }
     today=dt.date.today().isoformat()
     for key,value in seeds.items():
         current=db['entries'].setdefault(key,{})
         for field,field_value in value.items(): current.setdefault(field,field_value)
         current.setdefault('source_date',today)
+    db.setdefault('graded_prices',{})
+    profiles={
+      'US|NARUTO CP-001 Gen Con 2026|HIT':{
+        'raw_usd_low':700,'raw_usd_reference':1000,'raw_krw':1_179_000,
+        'grade_prices_krw':blank_grade_prices(),
+        'note':'미감정 공개 판매목록만 확인 · 5개 업체 등급별 거래자료 없음 · 확인되지 않은 등급 가격은 직접 입력'
+      },
+      'JP|계승되는 의지 일본판 에이스 만화패러렐|HIT':{
+        'raw_krw':0,'grade_prices_krw':blank_grade_prices(),
+        'note':'PSA 10 공개 체결가 범위 중앙값 · 다른 업체·등급은 자료 확인 후 직접 입력'
+      },
+      'KR|릴리에 SM1M 065/060|HIT':{
+        'raw_krw':300_000,'grade_prices_krw':blank_grade_prices(),
+        'note':'BRG 공식 페이지의 2025년 5월 특정 카드 거래 예시 · 다른 업체·등급에 일반화 금지'
+      }
+    }
+    profiles['JP|계승되는 의지 일본판 에이스 만화패러렐|HIT']['grade_prices_krw']['PSA']['10']=12_095_000
+    profiles['KR|릴리에 SM1M 065/060|HIT']['grade_prices_krw']['BRG']['9']=450_000
+    profiles['KR|릴리에 SM1M 065/060|HIT']['grade_prices_krw']['BRG']['10']=2_000_000
+    for key,value in profiles.items():
+        current=db['graded_prices'].setdefault(key,{})
+        for field,field_value in value.items():
+            if field in ('grade_prices_krw','note'):
+                current[field]=field_value
+            else:
+                current.setdefault(field,field_value)
+        for obsolete in ('psa8_krw','psa9_krw','psa10_krw','aph10_krw'):
+            current.pop(obsolete,None)
+    defaults=db.setdefault('grading_cost_defaults',{})
+    defaults.update({
+      'currency':'KRW','grading_fee_krw':0,'round_trip_shipping_krw':30_000,
+      'selling_fee_percent':6.5,'editable':True,
+      'company_fees_krw':{'PSA':0,'BGS':0,'CGC':0,'TAG':0,'BRG':19_800},
+      'company_fee_basis':{'BRG':'공식 Regular 장당 가격 · 2026-08-25 확인','PSA':'직접 입력','BGS':'직접 입력','CGC':'직접 입력','TAG':'직접 입력'},
+      'notice':'BRG 외 업체는 서비스·보험가액·대행 여부에 따라 달라지므로 현재 실제 비용을 직접 입력'
+    })
 
 def atomic_save(db):
-    tmp=DATA.with_suffix('.json.tmp')
-    tmp.write_text(json.dumps(db,ensure_ascii=False,indent=2)+'\n',encoding='utf-8')
-    tmp.replace(DATA)
+    atomic_write_json(DATA,db,suffix='.json.tmp')
 
 def coverage(db):
-    raw=APP.read_text(encoding='utf-8');block=raw.split('const COUNTRY_BOX_DATA=',1)[1].split('const LEARNING_PRICE_DATA=',1)[0]
+    raw=safe_read_text(APP);block=raw.split('const COUNTRY_BOX_DATA=',1)[1].split('const LEARNING_PRICE_DATA=',1)[0]
     products=re.findall(r'\{country:"(KR|JP|US)",game:"[^"]+",name:"([^"]+)"',block)
     required={f'{region}|{name}|{asset}' for region,name in products for asset in ('BOX','HIT')}
     verified=required & set(db.get('entries',{}));missing=sorted(required-verified)
     return {'total':len(required),'verified':len(verified),'pending':len(missing),'missing_keys':missing}
 
 def main():
-    db=json.loads(DATA.read_text(encoding='utf-8')); db.setdefault('entries',{}); errors=[]
+    db=json.loads(safe_read_text(DATA)); db.setdefault('entries',{}); errors=[]
     keep_verified_seeds(db)
     # 느린 외부 사이트가 응답하지 않아도 확인 완료 기준자료는 즉시 보존한다.
     atomic_save(db)
     try:
+        url='https://narutomarket.com/en/market/chakra-card-cp-001-gen-con-2026';text=html_to_text(fetch(url))
+        reference=re.search(r'Reference listing price\s*\$([0-9,.]+)',text,re.I)
+        cheapest=re.search(r'Cheapest listing\s*\$([0-9,.]+)',text,re.I)
+        listings=re.search(r'Listings\s*([0-9,]+)',text,re.I)
+        if reference and cheapest:
+            low=float(cheapest.group(1).replace(',',''));high=float(reference.group(1).replace(',',''))
+            display=f'${low:,.0f}~${high:,.0f}'
+            set_price(db,'US|NARUTO CP-001 Gen Con 2026|HIT',display,'공개 판매목록 최저가~참조가 · 체결 확정가 아님','NARUTOMARKET · eBay 공개 판매목록',f'공개 판매목록 {listings.group(1) if listings else "확인"}건 · PSA 10 등록품 별도 확인',url)
+            db['entries']['US|NARUTO CP-001 Gen Con 2026|HIT'].update({'game':'NARUTO','card_name':'Chakra Card CP-001 · Gen Con 2026 Ver.','card_number':'CP-001','product_name':'NARUTO CARD GAME Gen Con 2026 Promo','image_url':'https://narutomarket.com/uploads/8a9ce860-f747-4f68-9082-85b22c39c7e5-237767__carta.webp?v=1786351506'})
+        else: errors.append('NARUTO CP-001: 가격 패턴 0건')
+    except NETWORK_ERRORS as e: errors.append('NARUTO CP-001: '+type(e).__name__)
+    try:
         url='https://pokard.io/'
-        text=textify(fetch(url))
+        text=html_to_text(fetch(url))
         boxes={'인페르노X':('JP|인페르노 X|BOX','인페르노 X'),'닌자스피너':('JP|닌자스피너|BOX','닌자스피너'),
           '메가 드림 ex':('JP|메가 드림 ex|BOX','메가 드림 ex'),'메가브레이브':('JP|메가 브레이브|BOX','메가 브레이브'),
           '메가심포니아':('JP|메가 심포니아|BOX','메가 심포니아'),'스타버스':('JP|스타버스|BOX','스타버스'),
@@ -88,44 +139,49 @@ def main():
             if m:
                 set_price(db,key,m.group(1),kind,'POKARD',f'{token} 공개 표시가격',url)
                 db['entries'][key].update({'game':game,'card_name':card_name,'product_name':token})
-    except Exception as e: errors.append('POKARD BOX: '+type(e).__name__)
+    except NETWORK_ERRORS as e: errors.append('POKARD BOX: '+type(e).__name__)
     try:
-        url='https://kream.co.kr/products/959332'; text=textify(fetch(url))
+        url='https://kream.co.kr/products/959332'; text=html_to_text(fetch(url))
         vals=[int(x.replace(',','')) for x in re.findall(r'Ungraded A\s*([0-9,]+)원',text)[:3]]
         if vals:
             vals.sort(); median=vals[len(vals)//2]
             set_price(db,'KR|테라스탈 페스타 ex|HIT',f'₩{median:,}',f'최근 미감정 거래 {len(vals)}건 중앙값','KREAM 한국판','공개 페이지 거래자료',url)
         else: errors.append('KREAM HIT: 거래가격 패턴 0건')
-    except Exception as e: errors.append('KREAM HIT: '+type(e).__name__)
+    except NETWORK_ERRORS as e: errors.append('KREAM HIT: '+type(e).__name__)
     try:
-        url='https://kream.co.kr/products/stock/16256508'; text=textify(fetch(url))
+        url='https://kream.co.kr/products/stock/16256508'; text=html_to_text(fetch(url))
         values=[int(x.replace(',','')) for x in re.findall(r'(?:구매가|즉시 구매가)\s*([0-9,]+)원',text)]
         plausible=[x for x in values if 50_000 <= x <= 500_000]
         if plausible:
             set_price(db,'KR|로맨스 던|BOX',f'₩{plausible[0]:,}','KREAM 공개 상품 구매가','KREAM 한국판','공개 구매가 · 판매완료 체결가 아님',url)
         else: errors.append('KREAM 로맨스 던 BOX: 구매가격 패턴 0건')
-    except Exception as e: errors.append('KREAM 로맨스 던 BOX: '+type(e).__name__)
+    except NETWORK_ERRORS as e: errors.append('KREAM 로맨스 던 BOX: '+type(e).__name__)
     try:
-        url='https://kream.co.kr/products/627575';text=textify(fetch(url))
+        url='https://kream.co.kr/products/627575';text=html_to_text(fetch(url))
         trades=[int(x.replace(',','')) for x in re.findall(r'ONE SIZE\s*([0-9,]+)원',text)[:12]]
         plausible=[x for x in trades if 20_000<=x<=150_000]
         if plausible:
             low,high=min(plausible),max(plausible);display=f'₩{low:,}' if low==high else f'₩{low:,}~₩{high:,}'
             set_price(db,'KR|블랙볼트|BOX',display,'최근 공개 체결가 범위','KREAM 한국판',f'최근 공개 체결 {len(plausible)}건',url)
         else: errors.append('KREAM 블랙볼트 BOX: 체결가격 패턴 0건')
-    except Exception as e: errors.append('KREAM 블랙볼트 BOX: '+type(e).__name__)
+    except NETWORK_ERRORS as e: errors.append('KREAM 블랙볼트 BOX: '+type(e).__name__)
     try:
-        url='https://www.packmagik.com/cards/op-op14-op14-009-p1';text=textify(fetch(url))
+        url='https://www.packmagik.com/cards/op-op14-op14-009-p1';text=html_to_text(fetch(url))
         m=re.search(r'(?:Market|시장가)\s*\$([0-9]+(?:\.[0-9]+)?)',text,re.I)
         if m:set_price(db,'KR|창해의 칠걸|HIT','$'+m.group(1),'OP14-009 패러렐 국제판 참고시세','Pack Magik 국제시장','한국판 실거래 아님 · 국제판 시장가 참고',url)
         else: errors.append('Pack Magik OP14-009: 가격 패턴 0건')
-    except Exception as e: errors.append('Pack Magik OP14-009: '+type(e).__name__)
+    except NETWORK_ERRORS as e: errors.append('Pack Magik OP14-009: '+type(e).__name__)
     try:
-        url='https://pokard.io/jpcard/SV8a-217/'; text=textify(fetch(url))
+        url='https://pokard.io/jpcard/SV8a-217/'; text=html_to_text(fetch(url))
         m=re.search(r'(?:Ungrade|미감정)\s*¥([0-9,]+)',text,re.I)
         if m:set_price(db,'JP|테라스탈 페스타 ex 일본판|HIT','¥'+m.group(1),'미감정 참고가격','POKARD · SNKRDUNK','공개 표시가격',url)
         else: errors.append('POKARD HIT: 가격 패턴 0건')
-    except Exception as e: errors.append('POKARD HIT: '+type(e).__name__)
+    except NETWORK_ERRORS as e: errors.append('POKARD HIT: '+type(e).__name__)
+    try:
+        from market_public_crosscheck import crosscheck_market_db
+        crosscheck_market_db(db)
+    except (OSError, ValueError, TypeError, urllib.error.URLError, TimeoutError) as e:
+        errors.append('Collectory/KREAM 교차확인: '+type(e).__name__)
     db['updated_at']=dt.datetime.now(dt.timezone.utc).isoformat(timespec='seconds')
     db['collection_status']='정상' if not errors else '일부 가격 출처 확인 실패'
     db['collection_errors']=errors

@@ -1,0 +1,19 @@
+{
+  "schema_version": 1,
+  "reviewed_at": "2026-08-28T00:00:00Z",
+  "reviewed_company_labels": [
+    {"source_name": "IMG_6591.jpeg", "company": "TAG", "visual_reviewed": true},
+    {"source_name": "IMG_6596.jpeg", "company": "TAG", "visual_reviewed": true},
+    {"source_name": "이미지(20260827-155443).jpeg", "company": "TAG", "visual_reviewed": true},
+    {"source_name": "이미지(20260827-155443-1).jpeg", "company": "TAG", "visual_reviewed": true},
+    {"source_name": "이미지(20260827-155444).jpeg", "company": "TAG", "visual_reviewed": true},
+    {"source_name": "이미지(20260827-155444-1).jpeg", "company": "TAG", "visual_reviewed": true},
+    {"source_name": "이미지(20260827-155445).jpeg", "company": "TAG", "visual_reviewed": true},
+    {"source_name": "이미지(20260827-160013).jpeg", "company": "TAG", "visual_reviewed": true}
+  ],
+  "policy": {
+    "visual_review_assigns_company_only": true,
+    "visual_review_never_assigns_official_grade": true,
+    "official_registry_still_required": true
+  }
+}

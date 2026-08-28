@@ -1,16 +1,17 @@
 {
-  "version": 1,
-  "updated_at": "2026-08-21T15:01:57+00:00",
-  "total_runs": 2,
+  "version": 4,
+  "updated_at": "2026-08-28T14:06:49+00:00",
+  "total_runs": 280,
+  "invalid_report_count": 0,
   "patterns": {
     "b3dd31df03f05ece": {
       "file": "releases.json",
       "category": "기타 수집 오류",
-      "occurrences": 2,
+      "occurrences": 21,
       "successful_repairs": 0,
       "auto_action": "자동 재시도 · 실패 시 정상본 복원",
       "recommended_action": "오류 상세와 원출처 상태를 확인하세요.",
-      "last_seen": "2026-08-21T15:01:57+00:00",
+      "last_seen": "2026-08-23T15:57:24+00:00",
       "last_detail": "Pokémon JP: RuntimeError"
     },
     "4885262ac70881d2": {
@@ -62,33 +63,1982 @@
       "recommended_action": "인터넷 연결과 공식 사이트 응답을 확인하세요.",
       "last_seen": "2026-08-21T15:01:57+00:00",
       "last_detail": "KREAM 블랙볼트 BOX: TimeoutError"
+    },
+    "bbd026c349f1c13e": {
+      "file": "releases.json",
+      "category": "기타 수집 오류",
+      "occurrences": 18,
+      "successful_repairs": 0,
+      "auto_action": "자동 재시도 · 실패 시 정상본 복원",
+      "recommended_action": "오류 상세와 원출처 상태를 확인하세요.",
+      "last_seen": "2026-08-23T15:57:24+00:00",
+      "last_detail": "ONE PIECE JP: RuntimeError"
+    },
+    "03f9fe9b5f14c310": {
+      "file": "market_prices.json",
+      "category": "통신 오류",
+      "occurrences": 12,
+      "successful_repairs": 0,
+      "auto_action": "재시도 후 기존 검증자료 유지",
+      "recommended_action": "인터넷 연결과 공식 사이트 응답을 확인하세요.",
+      "last_seen": "2026-08-23T07:59:44+00:00",
+      "last_detail": "KREAM HIT: HTTPError"
+    },
+    "9dd2a404fea0c704": {
+      "file": "market_prices.json",
+      "category": "통신 오류",
+      "occurrences": 12,
+      "successful_repairs": 0,
+      "auto_action": "재시도 후 기존 검증자료 유지",
+      "recommended_action": "인터넷 연결과 공식 사이트 응답을 확인하세요.",
+      "last_seen": "2026-08-23T07:59:44+00:00",
+      "last_detail": "KREAM 로맨스 던 BOX: HTTPError"
+    },
+    "1f8a7d9a373f9299": {
+      "file": "market_prices.json",
+      "category": "통신 오류",
+      "occurrences": 12,
+      "successful_repairs": 0,
+      "auto_action": "재시도 후 기존 검증자료 유지",
+      "recommended_action": "인터넷 연결과 공식 사이트 응답을 확인하세요.",
+      "last_seen": "2026-08-23T07:59:44+00:00",
+      "last_detail": "KREAM 블랙볼트 BOX: HTTPError"
+    },
+    "4a164c2543a28cce": {
+      "file": "promo_events.json",
+      "category": "통신 오류",
+      "occurrences": 12,
+      "successful_repairs": 0,
+      "auto_action": "재시도 후 기존 검증자료 유지",
+      "recommended_action": "인터넷 연결과 공식 사이트 응답을 확인하세요.",
+      "last_seen": "2026-08-23T07:59:44+00:00",
+      "last_detail": "KR 포켓몬 카드 신규행사 탐색: HTTPError"
+    },
+    "cff29573027f7222": {
+      "file": "purchase_sources.json",
+      "category": "통신 오류",
+      "occurrences": 19,
+      "successful_repairs": 0,
+      "auto_action": "재시도 후 기존 검증자료 유지",
+      "recommended_action": "인터넷 연결과 공식 사이트 응답을 확인하세요.",
+      "last_seen": "2026-08-23T15:57:24+00:00",
+      "last_detail": "포켓몬 카드 게임 코리아 제품: 재확인 필요·기존 주소 유지 (HTTPError)"
+    },
+    "3e90ee8302c5fec2": {
+      "file": "purchase_sources.json",
+      "category": "통신 오류",
+      "occurrences": 19,
+      "successful_repairs": 0,
+      "auto_action": "재시도 후 기존 검증자료 유지",
+      "recommended_action": "인터넷 연결과 공식 사이트 응답을 확인하세요.",
+      "last_seen": "2026-08-23T15:57:24+00:00",
+      "last_detail": "포켓몬 공인 카드샵 안내: 재확인 필요·기존 주소 유지 (HTTPError)"
+    },
+    "ed48d0bf4d536e7c": {
+      "file": "promo_events.json",
+      "category": "기타 수집 오류",
+      "occurrences": 5,
+      "successful_repairs": 0,
+      "auto_action": "자동 재시도 · 실패 시 정상본 복원",
+      "recommended_action": "오류 상세와 원출처 상태를 확인하세요.",
+      "last_seen": "2026-08-22T14:03:13+00:00",
+      "last_detail": "2026 포켓몬 월드 챔피언십·PokémonXP: ValueError"
+    },
+    "9c6c687eb2091d16": {
+      "file": "releases.json",
+      "category": "통신 오류",
+      "occurrences": 14,
+      "successful_repairs": 13,
+      "auto_action": "재시도 후 기존 검증자료 유지",
+      "recommended_action": "인터넷 연결과 공식 사이트 응답을 확인하세요.",
+      "last_seen": "2026-08-26T10:47:11+00:00",
+      "last_detail": "ONE PIECE JP: URLError",
+      "error_group_id": "819660722644a1bb"
+    },
+    "3f2b70c1122d9af5": {
+      "file": "releases.json",
+      "category": "통신 오류",
+      "occurrences": 1,
+      "successful_repairs": 0,
+      "auto_action": "재시도 후 기존 검증자료 유지",
+      "recommended_action": "인터넷 연결과 공식 사이트 응답을 확인하세요.",
+      "last_seen": "2026-08-23T11:20:32+00:00",
+      "last_detail": "TIMEOUT: update_releases 5초 초과"
+    },
+    "8fe80c8690414bf2": {
+      "file": "market_prices.json",
+      "category": "통신 오류",
+      "occurrences": 8,
+      "successful_repairs": 0,
+      "auto_action": "재시도 후 기존 검증자료 유지",
+      "recommended_action": "인터넷 연결과 공식 사이트 응답을 확인하세요.",
+      "last_seen": "2026-08-23T15:57:24+00:00",
+      "last_detail": "TIMEOUT: update_market_prices 5초 초과"
+    },
+    "1b9de77e3b9aab59": {
+      "file": "promo_events.json",
+      "category": "통신 오류",
+      "occurrences": 8,
+      "successful_repairs": 0,
+      "auto_action": "재시도 후 기존 검증자료 유지",
+      "recommended_action": "인터넷 연결과 공식 사이트 응답을 확인하세요.",
+      "last_seen": "2026-08-23T15:57:24+00:00",
+      "last_detail": "TIMEOUT: update_promo_events 5초 초과"
+    },
+    "792b1e9942d167e1": {
+      "file": "purchase_sources.json",
+      "category": "통신 오류",
+      "occurrences": 1,
+      "successful_repairs": 0,
+      "auto_action": "재시도 후 기존 검증자료 유지",
+      "recommended_action": "인터넷 연결과 공식 사이트 응답을 확인하세요.",
+      "last_seen": "2026-08-23T11:20:32+00:00",
+      "last_detail": "TIMEOUT: update_purchase_sources 5초 초과"
+    },
+    "3358d3d1e6846fdf": {
+      "file": "purchase_sources.json",
+      "category": "통신 오류",
+      "occurrences": 14,
+      "successful_repairs": 13,
+      "auto_action": "재시도 후 기존 검증자료 유지",
+      "recommended_action": "인터넷 연결과 공식 사이트 응답을 확인하세요.",
+      "last_seen": "2026-08-26T10:47:11+00:00",
+      "last_detail": "Pokémon 공식 판매점 찾기: 재확인 필요·기존 주소 유지 (URLError)",
+      "error_group_id": "819660722644a1bb"
+    },
+    "7ff9897a52c79182": {
+      "file": "purchase_sources.json",
+      "category": "기타 수집 오류",
+      "occurrences": 1,
+      "successful_repairs": 0,
+      "auto_action": "자동 재시도 · 실패 시 정상본 복원",
+      "recommended_action": "오류 상세와 원출처 상태를 확인하세요.",
+      "last_seen": "2026-08-23T17:45:01+00:00",
+      "last_detail": "포켓몬 카드 게임 코리아 제품: 재확인 필요·기존 주소 유지 (ValueError)"
+    },
+    "ae3ff02bc6f76b2b": {
+      "file": "purchase_sources.json",
+      "category": "기타 수집 오류",
+      "occurrences": 1,
+      "successful_repairs": 0,
+      "auto_action": "자동 재시도 · 실패 시 정상본 복원",
+      "recommended_action": "오류 상세와 원출처 상태를 확인하세요.",
+      "last_seen": "2026-08-23T17:45:01+00:00",
+      "last_detail": "원피스 카드게임 코리아: 재확인 필요·기존 주소 유지 (ValueError)"
+    },
+    "6dd808d051ba4a25": {
+      "file": "purchase_sources.json",
+      "category": "기타 수집 오류",
+      "occurrences": 2,
+      "successful_repairs": 0,
+      "auto_action": "자동 재시도 · 실패 시 정상본 복원",
+      "recommended_action": "오류 상세와 원출처 상태를 확인하세요.",
+      "last_seen": "2026-08-23T17:45:01+00:00",
+      "last_detail": "나루토 카드게임 공식: 재확인 필요·기존 주소 유지 (ValueError)"
+    },
+    "5d32e85d33255259": {
+      "file": "purchase_sources.json",
+      "category": "기타 수집 오류",
+      "occurrences": 1,
+      "successful_repairs": 0,
+      "auto_action": "자동 재시도 · 실패 시 정상본 복원",
+      "recommended_action": "오류 상세와 원출처 상태를 확인하세요.",
+      "last_seen": "2026-08-23T17:45:01+00:00",
+      "last_detail": "포켓몬 카드 공식 제품: 재확인 필요·기존 주소 유지 (ValueError)"
+    },
+    "a5d1df853b71076b": {
+      "file": "purchase_sources.json",
+      "category": "기타 수집 오류",
+      "occurrences": 1,
+      "successful_repairs": 0,
+      "auto_action": "자동 재시도 · 실패 시 정상본 복원",
+      "recommended_action": "오류 상세와 원출처 상태를 확인하세요.",
+      "last_seen": "2026-08-23T17:45:01+00:00",
+      "last_detail": "포켓몬센터 온라인: 재확인 필요·기존 주소 유지 (ValueError)"
+    },
+    "9c454e9405a1670e": {
+      "file": "purchase_sources.json",
+      "category": "기타 수집 오류",
+      "occurrences": 1,
+      "successful_repairs": 0,
+      "auto_action": "자동 재시도 · 실패 시 정상본 복원",
+      "recommended_action": "오류 상세와 원출처 상태를 확인하세요.",
+      "last_seen": "2026-08-23T17:45:01+00:00",
+      "last_detail": "원피스 카드게임 공식: 재확인 필요·기존 주소 유지 (ValueError)"
+    },
+    "4abf3d2e778d6075": {
+      "file": "purchase_sources.json",
+      "category": "기타 수집 오류",
+      "occurrences": 1,
+      "successful_repairs": 0,
+      "auto_action": "자동 재시도 · 실패 시 정상본 복원",
+      "recommended_action": "오류 상세와 원출처 상태를 확인하세요.",
+      "last_seen": "2026-08-23T17:45:01+00:00",
+      "last_detail": "Pokémon Center US: 재확인 필요·기존 주소 유지 (ValueError)"
+    },
+    "eef62bb42133d7cc": {
+      "file": "purchase_sources.json",
+      "category": "기타 수집 오류",
+      "occurrences": 1,
+      "successful_repairs": 0,
+      "auto_action": "자동 재시도 · 실패 시 정상본 복원",
+      "recommended_action": "오류 상세와 원출처 상태를 확인하세요.",
+      "last_seen": "2026-08-23T17:45:01+00:00",
+      "last_detail": "Pokémon 공식 판매점 찾기: 재확인 필요·기존 주소 유지 (ValueError)"
+    },
+    "bc14012fd30edfd3": {
+      "file": "purchase_sources.json",
+      "category": "기타 수집 오류",
+      "occurrences": 1,
+      "successful_repairs": 0,
+      "auto_action": "자동 재시도 · 실패 시 정상본 복원",
+      "recommended_action": "오류 상세와 원출처 상태를 확인하세요.",
+      "last_seen": "2026-08-23T17:45:01+00:00",
+      "last_detail": "One Piece Card Game 공식: 재확인 필요·기존 주소 유지 (ValueError)"
+    },
+    "7e3c637e568f53f1": {
+      "file": "purchase_sources.json",
+      "category": "기타 수집 오류",
+      "occurrences": 1,
+      "successful_repairs": 0,
+      "auto_action": "자동 재시도 · 실패 시 정상본 복원",
+      "recommended_action": "오류 상세와 원출처 상태를 확인하세요.",
+      "last_seen": "2026-08-23T17:45:01+00:00",
+      "last_detail": "Naruto Card Game 공식: 재확인 필요·기존 주소 유지 (ValueError)"
+    },
+    "eb8a143e96c34ada": {
+      "file": "purchase_sources.json",
+      "category": "기타 수집 오류",
+      "occurrences": 1,
+      "successful_repairs": 0,
+      "auto_action": "자동 재시도 · 실패 시 정상본 복원",
+      "recommended_action": "오류 상세와 원출처 상태를 확인하세요.",
+      "last_seen": "2026-08-23T17:45:01+00:00",
+      "last_detail": "포켓몬 공인 카드샵 안내: 재확인 필요·기존 주소 유지 (ValueError)"
+    },
+    "41c18d952cf981a4": {
+      "file": "exchange_rates.json",
+      "category": "통신 오류",
+      "occurrences": 18,
+      "successful_repairs": 14,
+      "auto_action": "재시도 후 기존 검증자료 유지",
+      "recommended_action": "인터넷 연결과 공식 사이트 응답을 확인하세요.",
+      "last_seen": "2026-08-26T10:47:11+00:00",
+      "last_detail": "URLError",
+      "error_group_id": "819660722644a1bb"
+    },
+    "afa6f2125c84bcc7": {
+      "file": "exchange_rates.json",
+      "category": "기타 수집 오류",
+      "occurrences": 1,
+      "successful_repairs": 0,
+      "auto_action": "자동 재시도 · 실패 시 정상본 복원",
+      "recommended_action": "오류 상세와 원출처 상태를 확인하세요.",
+      "last_seen": "2026-08-24T03:53:26+00:00",
+      "last_detail": "NameError"
+    },
+    "d11ad7594b6838e8": {
+      "file": "releases.json",
+      "category": "통신 오류",
+      "occurrences": 13,
+      "successful_repairs": 13,
+      "auto_action": "재시도 후 기존 검증자료 유지",
+      "recommended_action": "인터넷 연결과 공식 사이트 응답을 확인하세요.",
+      "last_seen": "2026-08-26T10:47:11+00:00",
+      "last_detail": "Pokémon JP: URLError",
+      "error_group_id": "819660722644a1bb"
+    },
+    "aca83ef57f91dca5": {
+      "file": "releases.json",
+      "category": "통신 오류",
+      "occurrences": 13,
+      "successful_repairs": 13,
+      "auto_action": "재시도 후 기존 검증자료 유지",
+      "recommended_action": "인터넷 연결과 공식 사이트 응답을 확인하세요.",
+      "last_seen": "2026-08-26T10:47:11+00:00",
+      "last_detail": "ONE PIECE KR: URLError",
+      "error_group_id": "819660722644a1bb"
+    },
+    "99a979251f0c4455": {
+      "file": "releases.json",
+      "category": "통신 오류",
+      "occurrences": 13,
+      "successful_repairs": 13,
+      "auto_action": "재시도 후 기존 검증자료 유지",
+      "recommended_action": "인터넷 연결과 공식 사이트 응답을 확인하세요.",
+      "last_seen": "2026-08-26T10:47:11+00:00",
+      "last_detail": "NARUTO Global: URLError",
+      "error_group_id": "819660722644a1bb"
+    },
+    "6c46fb172d641538": {
+      "file": "releases.json",
+      "category": "통신 오류",
+      "occurrences": 13,
+      "successful_repairs": 13,
+      "auto_action": "재시도 후 기존 검증자료 유지",
+      "recommended_action": "인터넷 연결과 공식 사이트 응답을 확인하세요.",
+      "last_seen": "2026-08-26T10:47:11+00:00",
+      "last_detail": "ONE PIECE US: URLError",
+      "error_group_id": "819660722644a1bb"
+    },
+    "8a5e8b9d1dc1680c": {
+      "file": "market_prices.json",
+      "category": "통신 오류",
+      "occurrences": 13,
+      "successful_repairs": 13,
+      "auto_action": "재시도 후 기존 검증자료 유지",
+      "recommended_action": "인터넷 연결과 공식 사이트 응답을 확인하세요.",
+      "last_seen": "2026-08-26T10:47:11+00:00",
+      "last_detail": "NARUTO CP-001: URLError",
+      "error_group_id": "819660722644a1bb"
+    },
+    "f6157f3c2e020119": {
+      "file": "market_prices.json",
+      "category": "통신 오류",
+      "occurrences": 13,
+      "successful_repairs": 13,
+      "auto_action": "재시도 후 기존 검증자료 유지",
+      "recommended_action": "인터넷 연결과 공식 사이트 응답을 확인하세요.",
+      "last_seen": "2026-08-26T10:47:11+00:00",
+      "last_detail": "POKARD BOX: URLError",
+      "error_group_id": "819660722644a1bb"
+    },
+    "3685f5870a287790": {
+      "file": "market_prices.json",
+      "category": "통신 오류",
+      "occurrences": 13,
+      "successful_repairs": 13,
+      "auto_action": "재시도 후 기존 검증자료 유지",
+      "recommended_action": "인터넷 연결과 공식 사이트 응답을 확인하세요.",
+      "last_seen": "2026-08-26T10:47:11+00:00",
+      "last_detail": "KREAM HIT: URLError",
+      "error_group_id": "819660722644a1bb"
+    },
+    "2aa2b3d5e2b67a5d": {
+      "file": "market_prices.json",
+      "category": "통신 오류",
+      "occurrences": 13,
+      "successful_repairs": 13,
+      "auto_action": "재시도 후 기존 검증자료 유지",
+      "recommended_action": "인터넷 연결과 공식 사이트 응답을 확인하세요.",
+      "last_seen": "2026-08-26T10:47:11+00:00",
+      "last_detail": "KREAM 로맨스 던 BOX: URLError",
+      "error_group_id": "819660722644a1bb"
+    },
+    "eb46d5bd7569b55f": {
+      "file": "market_prices.json",
+      "category": "통신 오류",
+      "occurrences": 13,
+      "successful_repairs": 13,
+      "auto_action": "재시도 후 기존 검증자료 유지",
+      "recommended_action": "인터넷 연결과 공식 사이트 응답을 확인하세요.",
+      "last_seen": "2026-08-26T10:47:11+00:00",
+      "last_detail": "KREAM 블랙볼트 BOX: URLError",
+      "error_group_id": "819660722644a1bb"
+    },
+    "b643e19108c58946": {
+      "file": "market_prices.json",
+      "category": "통신 오류",
+      "occurrences": 13,
+      "successful_repairs": 13,
+      "auto_action": "재시도 후 기존 검증자료 유지",
+      "recommended_action": "인터넷 연결과 공식 사이트 응답을 확인하세요.",
+      "last_seen": "2026-08-26T10:47:11+00:00",
+      "last_detail": "Pack Magik OP14-009: URLError",
+      "error_group_id": "819660722644a1bb"
+    },
+    "19fa73f2cee1b314": {
+      "file": "market_prices.json",
+      "category": "통신 오류",
+      "occurrences": 13,
+      "successful_repairs": 13,
+      "auto_action": "재시도 후 기존 검증자료 유지",
+      "recommended_action": "인터넷 연결과 공식 사이트 응답을 확인하세요.",
+      "last_seen": "2026-08-26T10:47:11+00:00",
+      "last_detail": "POKARD HIT: URLError",
+      "error_group_id": "819660722644a1bb"
+    },
+    "3794cfae4c13184a": {
+      "file": "promo_events.json",
+      "category": "통신 오류",
+      "occurrences": 13,
+      "successful_repairs": 13,
+      "auto_action": "재시도 후 기존 검증자료 유지",
+      "recommended_action": "인터넷 연결과 공식 사이트 응답을 확인하세요.",
+      "last_seen": "2026-08-26T10:47:11+00:00",
+      "last_detail": "포켓몬 카드짐 엔트리 캠페인 2026 상반기: URLError",
+      "error_group_id": "819660722644a1bb"
+    },
+    "66f51a9c362af652": {
+      "file": "promo_events.json",
+      "category": "통신 오류",
+      "occurrences": 13,
+      "successful_repairs": 13,
+      "auto_action": "재시도 후 기존 검증자료 유지",
+      "recommended_action": "인터넷 연결과 공식 사이트 응답을 확인하세요.",
+      "last_seen": "2026-08-26T10:47:11+00:00",
+      "last_detail": "WCS 2026 기념 피카츄 프로모: URLError",
+      "error_group_id": "819660722644a1bb"
+    },
+    "c3c6ada93f0671e8": {
+      "file": "promo_events.json",
+      "category": "통신 오류",
+      "occurrences": 13,
+      "successful_repairs": 13,
+      "auto_action": "재시도 후 기존 검증자료 유지",
+      "recommended_action": "인터넷 연결과 공식 사이트 응답을 확인하세요.",
+      "last_seen": "2026-08-26T10:47:11+00:00",
+      "last_detail": "친구·가족과 프렌드 배틀: URLError",
+      "error_group_id": "819660722644a1bb"
+    },
+    "81cd57341fab479a": {
+      "file": "promo_events.json",
+      "category": "통신 오류",
+      "occurrences": 13,
+      "successful_repairs": 13,
+      "auto_action": "재시도 후 기존 검증자료 유지",
+      "recommended_action": "인터넷 연결과 공식 사이트 응답을 확인하세요.",
+      "last_seen": "2026-08-26T10:47:11+00:00",
+      "last_detail": "발매기념대회 리미티드 배틀: URLError",
+      "error_group_id": "819660722644a1bb"
+    },
+    "fa831a163fa90629": {
+      "file": "promo_events.json",
+      "category": "통신 오류",
+      "occurrences": 13,
+      "successful_repairs": 13,
+      "auto_action": "재시도 후 기존 검증자료 유지",
+      "recommended_action": "인터넷 연결과 공식 사이트 응답을 확인하세요.",
+      "last_seen": "2026-08-26T10:47:11+00:00",
+      "last_detail": "2026 포켓몬 월드 챔피언십·PokémonXP: URLError",
+      "error_group_id": "819660722644a1bb"
+    },
+    "7e7cd3a6fecb41aa": {
+      "file": "promo_events.json",
+      "category": "통신 오류",
+      "occurrences": 13,
+      "successful_repairs": 13,
+      "auto_action": "재시도 후 기존 검증자료 유지",
+      "recommended_action": "인터넷 연결과 공식 사이트 응답을 확인하세요.",
+      "last_seen": "2026-08-26T10:47:11+00:00",
+      "last_detail": "2026 성남CITY 배틀 토너먼트 × GXG 2026: URLError",
+      "error_group_id": "819660722644a1bb"
+    },
+    "ff2b075301f0d08f": {
+      "file": "promo_events.json",
+      "category": "통신 오류",
+      "occurrences": 13,
+      "successful_repairs": 13,
+      "auto_action": "재시도 후 기존 검증자료 유지",
+      "recommended_action": "인터넷 연결과 공식 사이트 응답을 확인하세요.",
+      "last_seen": "2026-08-26T10:47:11+00:00",
+      "last_detail": "포켓몬 카드짐 엔트리 캠페인 2026 하반기: URLError",
+      "error_group_id": "819660722644a1bb"
+    },
+    "2ddf5c53787e593a": {
+      "file": "promo_events.json",
+      "category": "통신 오류",
+      "occurrences": 13,
+      "successful_repairs": 13,
+      "auto_action": "재시도 후 기존 검증자료 유지",
+      "recommended_action": "인터넷 연결과 공식 사이트 응답을 확인하세요.",
+      "last_seen": "2026-08-26T10:47:11+00:00",
+      "last_detail": "9월 플래그쉽 배틀: URLError",
+      "error_group_id": "819660722644a1bb"
+    },
+    "7368e3bf428b5fef": {
+      "file": "promo_events.json",
+      "category": "통신 오류",
+      "occurrences": 13,
+      "successful_repairs": 13,
+      "auto_action": "재시도 후 기존 검증자료 유지",
+      "recommended_action": "인터넷 연결과 공식 사이트 응답을 확인하세요.",
+      "last_seen": "2026-08-26T10:47:11+00:00",
+      "last_detail": "9월 교류회: URLError",
+      "error_group_id": "819660722644a1bb"
+    },
+    "51e364adba5112f1": {
+      "file": "promo_events.json",
+      "category": "통신 오류",
+      "occurrences": 13,
+      "successful_repairs": 13,
+      "auto_action": "재시도 후 기존 검증자료 유지",
+      "recommended_action": "인터넷 연결과 공식 사이트 응답을 확인하세요.",
+      "last_seen": "2026-08-26T10:47:11+00:00",
+      "last_detail": "초보자 [9월] 원피스 카드게임 스탠다드 배틀 9월 1일 ~ 9월 30일: URLError",
+      "error_group_id": "819660722644a1bb"
+    },
+    "12f5bcf1b82ccf6b": {
+      "file": "promo_events.json",
+      "category": "통신 오류",
+      "occurrences": 13,
+      "successful_repairs": 13,
+      "auto_action": "재시도 후 기존 검증자료 유지",
+      "recommended_action": "인터넷 연결과 공식 사이트 응답을 확인하세요.",
+      "last_seen": "2026-08-26T10:47:11+00:00",
+      "last_detail": "챔피언십 26-27 북미 파이널 시즌 1: URLError",
+      "error_group_id": "819660722644a1bb"
+    },
+    "64b4bc98c5917f43": {
+      "file": "promo_events.json",
+      "category": "통신 오류",
+      "occurrences": 13,
+      "successful_repairs": 13,
+      "auto_action": "재시도 후 기존 검증자료 유지",
+      "recommended_action": "인터넷 연결과 공식 사이트 응답을 확인하세요.",
+      "last_seen": "2026-08-26T10:47:11+00:00",
+      "last_detail": "BANDAI CARD GAMES Fest 26-27 Dallas: URLError",
+      "error_group_id": "819660722644a1bb"
+    },
+    "5a048302d4d7b489": {
+      "file": "promo_events.json",
+      "category": "통신 오류",
+      "occurrences": 13,
+      "successful_repairs": 13,
+      "auto_action": "재시도 후 기존 검증자료 유지",
+      "recommended_action": "인터넷 연결과 공식 사이트 응답을 확인하세요.",
+      "last_seen": "2026-08-26T10:47:11+00:00",
+      "last_detail": "챔피언스리그 2027 요코하마: URLError",
+      "error_group_id": "819660722644a1bb"
+    },
+    "8263f5932f214e80": {
+      "file": "promo_events.json",
+      "category": "통신 오류",
+      "occurrences": 13,
+      "successful_repairs": 13,
+      "auto_action": "재시도 후 기존 검증자료 유지",
+      "recommended_action": "인터넷 연결과 공식 사이트 응답을 확인하세요.",
+      "last_seen": "2026-08-26T10:47:11+00:00",
+      "last_detail": "포켓몬 카드게임 30주년 기념 행사: URLError",
+      "error_group_id": "819660722644a1bb"
+    },
+    "7f880cdbee1e42c9": {
+      "file": "promo_events.json",
+      "category": "통신 오류",
+      "occurrences": 13,
+      "successful_repairs": 13,
+      "auto_action": "재시도 후 기존 검증자료 유지",
+      "recommended_action": "인터넷 연결과 공식 사이트 응답을 확인하세요.",
+      "last_seen": "2026-08-26T10:47:11+00:00",
+      "last_detail": "NARUTO × 뉴욕 양키스 게임 나이트: URLError",
+      "error_group_id": "819660722644a1bb"
+    },
+    "d03c1a308b1e00ce": {
+      "file": "promo_events.json",
+      "category": "통신 오류",
+      "occurrences": 13,
+      "successful_repairs": 13,
+      "auto_action": "재시도 후 기존 검증자료 유지",
+      "recommended_action": "인터넷 연결과 공식 사이트 응답을 확인하세요.",
+      "last_seen": "2026-08-26T10:47:11+00:00",
+      "last_detail": "New York Comic Con 2026 나루토 카드게임 체험회: URLError",
+      "error_group_id": "819660722644a1bb"
+    },
+    "9349ca73a12cee9e": {
+      "file": "promo_events.json",
+      "category": "통신 오류",
+      "occurrences": 13,
+      "successful_repairs": 13,
+      "auto_action": "재시도 후 기존 검증자료 유지",
+      "recommended_action": "인터넷 연결과 공식 사이트 응답을 확인하세요.",
+      "last_seen": "2026-08-26T10:47:11+00:00",
+      "last_detail": "BANDAI CARD GAMES Fest 26-27 Orlando: URLError",
+      "error_group_id": "819660722644a1bb"
+    },
+    "aca3a44c80ee99f5": {
+      "file": "promo_events.json",
+      "category": "통신 오류",
+      "occurrences": 13,
+      "successful_repairs": 13,
+      "auto_action": "재시도 후 기존 검증자료 유지",
+      "recommended_action": "인터넷 연결과 공식 사이트 응답을 확인하세요.",
+      "last_seen": "2026-08-26T10:47:11+00:00",
+      "last_detail": "포켓몬 영화·애니 공식 정보: URLError",
+      "error_group_id": "819660722644a1bb"
+    },
+    "9eda6699078eb08c": {
+      "file": "promo_events.json",
+      "category": "통신 오류",
+      "occurrences": 13,
+      "successful_repairs": 13,
+      "auto_action": "재시도 후 기존 검증자료 유지",
+      "recommended_action": "인터넷 연결과 공식 사이트 응답을 확인하세요.",
+      "last_seen": "2026-08-26T10:47:11+00:00",
+      "last_detail": "한국 포켓몬 영화·극장판 개봉 확인: URLError",
+      "error_group_id": "819660722644a1bb"
+    },
+    "9a5643c922c17590": {
+      "file": "promo_events.json",
+      "category": "통신 오류",
+      "occurrences": 13,
+      "successful_repairs": 13,
+      "auto_action": "재시도 후 기존 검증자료 유지",
+      "recommended_action": "인터넷 연결과 공식 사이트 응답을 확인하세요.",
+      "last_seen": "2026-08-26T10:47:11+00:00",
+      "last_detail": "한국 원피스 극장판 개봉 확인: URLError",
+      "error_group_id": "819660722644a1bb"
+    },
+    "2f23ac55970faf3e": {
+      "file": "promo_events.json",
+      "category": "통신 오류",
+      "occurrences": 13,
+      "successful_repairs": 13,
+      "auto_action": "재시도 후 기존 검증자료 유지",
+      "recommended_action": "인터넷 연결과 공식 사이트 응답을 확인하세요.",
+      "last_seen": "2026-08-26T10:47:11+00:00",
+      "last_detail": "한국 나루토 영화 개봉 확인: URLError",
+      "error_group_id": "819660722644a1bb"
+    },
+    "b598c621d2e16f5a": {
+      "file": "promo_events.json",
+      "category": "통신 오류",
+      "occurrences": 13,
+      "successful_repairs": 13,
+      "auto_action": "재시도 후 기존 검증자료 유지",
+      "recommended_action": "인터넷 연결과 공식 사이트 응답을 확인하세요.",
+      "last_seen": "2026-08-26T10:47:11+00:00",
+      "last_detail": "일본 포켓몬 영화·영상 공개 정보: URLError",
+      "error_group_id": "819660722644a1bb"
+    },
+    "8f265795ad37b440": {
+      "file": "promo_events.json",
+      "category": "통신 오류",
+      "occurrences": 13,
+      "successful_repairs": 13,
+      "auto_action": "재시도 후 기존 검증자료 유지",
+      "recommended_action": "인터넷 연결과 공식 사이트 응답을 확인하세요.",
+      "last_seen": "2026-08-26T10:47:11+00:00",
+      "last_detail": "일본 나루토 영화·영상 공개 정보: URLError",
+      "error_group_id": "819660722644a1bb"
+    },
+    "beeb07352c3e848e": {
+      "file": "promo_events.json",
+      "category": "통신 오류",
+      "occurrences": 13,
+      "successful_repairs": 13,
+      "auto_action": "재시도 후 기존 검증자료 유지",
+      "recommended_action": "인터넷 연결과 공식 사이트 응답을 확인하세요.",
+      "last_seen": "2026-08-26T10:47:11+00:00",
+      "last_detail": "미국 원피스 영화·영상 공개 정보: URLError",
+      "error_group_id": "819660722644a1bb"
+    },
+    "82422eb61faf0d84": {
+      "file": "promo_events.json",
+      "category": "통신 오류",
+      "occurrences": 13,
+      "successful_repairs": 13,
+      "auto_action": "재시도 후 기존 검증자료 유지",
+      "recommended_action": "인터넷 연결과 공식 사이트 응답을 확인하세요.",
+      "last_seen": "2026-08-26T10:47:11+00:00",
+      "last_detail": "미국 나루토 영화·영상 공개 정보: URLError",
+      "error_group_id": "819660722644a1bb"
+    },
+    "8ca0ec3df90d0a22": {
+      "file": "promo_events.json",
+      "category": "통신 오류",
+      "occurrences": 13,
+      "successful_repairs": 13,
+      "auto_action": "재시도 후 기존 검증자료 유지",
+      "recommended_action": "인터넷 연결과 공식 사이트 응답을 확인하세요.",
+      "last_seen": "2026-08-26T10:47:11+00:00",
+      "last_detail": "NARUTO & BORUTO 닌자마을 한여름 수둔 축제: URLError",
+      "error_group_id": "819660722644a1bb"
+    },
+    "e0852ef3611e928f": {
+      "file": "promo_events.json",
+      "category": "통신 오류",
+      "occurrences": 13,
+      "successful_repairs": 13,
+      "auto_action": "재시도 후 기존 검증자료 유지",
+      "recommended_action": "인터넷 연결과 공식 사이트 응답을 확인하세요.",
+      "last_seen": "2026-08-26T10:47:11+00:00",
+      "last_detail": "원피스 밀짚모자 스토어 나고야 공식 개점 행사: URLError",
+      "error_group_id": "819660722644a1bb"
+    },
+    "5db32ab28d09447e": {
+      "file": "promo_events.json",
+      "category": "통신 오류",
+      "occurrences": 13,
+      "successful_repairs": 13,
+      "auto_action": "재시도 후 기존 검증자료 유지",
+      "recommended_action": "인터넷 연결과 공식 사이트 응답을 확인하세요.",
+      "last_seen": "2026-08-26T10:47:11+00:00",
+      "last_detail": "ONE PIECE × NBA HOUSE JAPAN 공식 콜라보 배송: URLError",
+      "error_group_id": "819660722644a1bb"
+    },
+    "f7b1b7b7df2a2594": {
+      "file": "promo_events.json",
+      "category": "통신 오류",
+      "occurrences": 13,
+      "successful_repairs": 13,
+      "auto_action": "재시도 후 기존 검증자료 유지",
+      "recommended_action": "인터넷 연결과 공식 사이트 응답을 확인하세요.",
+      "last_seen": "2026-08-26T10:47:11+00:00",
+      "last_detail": "THE ONE PIECE 공식 애니메이션 영상 공개: URLError",
+      "error_group_id": "819660722644a1bb"
+    },
+    "eb31ce14f7ed93f8": {
+      "file": "promo_events.json",
+      "category": "통신 오류",
+      "occurrences": 13,
+      "successful_repairs": 13,
+      "auto_action": "재시도 후 기존 검증자료 유지",
+      "recommended_action": "인터넷 연결과 공식 사이트 응답을 확인하세요.",
+      "last_seen": "2026-08-26T10:47:11+00:00",
+      "last_detail": "포켓몬 데크 그대로 배틀 공식 체험 행사: URLError",
+      "error_group_id": "819660722644a1bb"
+    },
+    "e2cfe3826331a805": {
+      "file": "promo_events.json",
+      "category": "통신 오류",
+      "occurrences": 13,
+      "successful_repairs": 13,
+      "auto_action": "재시도 후 기존 검증자료 유지",
+      "recommended_action": "인터넷 연결과 공식 사이트 응답을 확인하세요.",
+      "last_seen": "2026-08-26T10:47:11+00:00",
+      "last_detail": "한국 나루토 카드게임 행사·정식 출시 공식 발표 추적: URLError",
+      "error_group_id": "819660722644a1bb"
+    },
+    "176d0783b4ca9761": {
+      "file": "promo_events.json",
+      "category": "통신 오류",
+      "occurrences": 13,
+      "successful_repairs": 13,
+      "auto_action": "재시도 후 기존 검증자료 유지",
+      "recommended_action": "인터넷 연결과 공식 사이트 응답을 확인하세요.",
+      "last_seen": "2026-08-26T10:47:11+00:00",
+      "last_detail": "KR 원피스 카드 신규행사 탐색: URLError",
+      "error_group_id": "819660722644a1bb"
+    },
+    "48f3d06134510969": {
+      "file": "promo_events.json",
+      "category": "통신 오류",
+      "occurrences": 13,
+      "successful_repairs": 13,
+      "auto_action": "재시도 후 기존 검증자료 유지",
+      "recommended_action": "인터넷 연결과 공식 사이트 응답을 확인하세요.",
+      "last_seen": "2026-08-26T10:47:11+00:00",
+      "last_detail": "KR 포켓몬 카드 신규행사 탐색: URLError",
+      "error_group_id": "819660722644a1bb"
+    },
+    "0799fbea6537ecf9": {
+      "file": "promo_events.json",
+      "category": "통신 오류",
+      "occurrences": 13,
+      "successful_repairs": 13,
+      "auto_action": "재시도 후 기존 검증자료 유지",
+      "recommended_action": "인터넷 연결과 공식 사이트 응답을 확인하세요.",
+      "last_seen": "2026-08-26T10:47:11+00:00",
+      "last_detail": "KR 나루토 카드 신규행사 탐색: URLError",
+      "error_group_id": "819660722644a1bb"
+    },
+    "abbb9a888a0357af": {
+      "file": "promo_events.json",
+      "category": "통신 오류",
+      "occurrences": 13,
+      "successful_repairs": 13,
+      "auto_action": "재시도 후 기존 검증자료 유지",
+      "recommended_action": "인터넷 연결과 공식 사이트 응답을 확인하세요.",
+      "last_seen": "2026-08-26T10:47:11+00:00",
+      "last_detail": "JP 포켓몬 카드 신규행사 탐색: URLError",
+      "error_group_id": "819660722644a1bb"
+    },
+    "1a29897112973e3f": {
+      "file": "promo_events.json",
+      "category": "통신 오류",
+      "occurrences": 13,
+      "successful_repairs": 13,
+      "auto_action": "재시도 후 기존 검증자료 유지",
+      "recommended_action": "인터넷 연결과 공식 사이트 응답을 확인하세요.",
+      "last_seen": "2026-08-26T10:47:11+00:00",
+      "last_detail": "JP 원피스 카드 신규행사 탐색: URLError",
+      "error_group_id": "819660722644a1bb"
+    },
+    "6c61faaeffc60d4b": {
+      "file": "promo_events.json",
+      "category": "통신 오류",
+      "occurrences": 13,
+      "successful_repairs": 13,
+      "auto_action": "재시도 후 기존 검증자료 유지",
+      "recommended_action": "인터넷 연결과 공식 사이트 응답을 확인하세요.",
+      "last_seen": "2026-08-26T10:47:11+00:00",
+      "last_detail": "US 원피스 카드 신규행사 탐색: URLError",
+      "error_group_id": "819660722644a1bb"
+    },
+    "595b1b0acb6d1ce0": {
+      "file": "promo_events.json",
+      "category": "통신 오류",
+      "occurrences": 13,
+      "successful_repairs": 13,
+      "auto_action": "재시도 후 기존 검증자료 유지",
+      "recommended_action": "인터넷 연결과 공식 사이트 응답을 확인하세요.",
+      "last_seen": "2026-08-26T10:47:11+00:00",
+      "last_detail": "US 포켓몬 카드 신규행사 탐색: URLError",
+      "error_group_id": "819660722644a1bb"
+    },
+    "a091a5527e0e2ee8": {
+      "file": "promo_events.json",
+      "category": "통신 오류",
+      "occurrences": 13,
+      "successful_repairs": 13,
+      "auto_action": "재시도 후 기존 검증자료 유지",
+      "recommended_action": "인터넷 연결과 공식 사이트 응답을 확인하세요.",
+      "last_seen": "2026-08-26T10:47:11+00:00",
+      "last_detail": "JP 나루토 카드 신규행사 탐색: URLError",
+      "error_group_id": "819660722644a1bb"
+    },
+    "09db7e794ad8b0c7": {
+      "file": "promo_events.json",
+      "category": "통신 오류",
+      "occurrences": 13,
+      "successful_repairs": 13,
+      "auto_action": "재시도 후 기존 검증자료 유지",
+      "recommended_action": "인터넷 연결과 공식 사이트 응답을 확인하세요.",
+      "last_seen": "2026-08-26T10:47:11+00:00",
+      "last_detail": "US 나루토 카드 신규행사 탐색: URLError",
+      "error_group_id": "819660722644a1bb"
+    },
+    "2aadba6b9d0b09a3": {
+      "file": "purchase_sources.json",
+      "category": "통신 오류",
+      "occurrences": 13,
+      "successful_repairs": 13,
+      "auto_action": "재시도 후 기존 검증자료 유지",
+      "recommended_action": "인터넷 연결과 공식 사이트 응답을 확인하세요.",
+      "last_seen": "2026-08-26T10:47:11+00:00",
+      "last_detail": "포켓몬 카드 게임 코리아 제품: 재확인 필요·기존 주소 유지 (URLError)",
+      "error_group_id": "819660722644a1bb"
+    },
+    "6a773a6a819999b5": {
+      "file": "purchase_sources.json",
+      "category": "통신 오류",
+      "occurrences": 13,
+      "successful_repairs": 13,
+      "auto_action": "재시도 후 기존 검증자료 유지",
+      "recommended_action": "인터넷 연결과 공식 사이트 응답을 확인하세요.",
+      "last_seen": "2026-08-26T10:47:11+00:00",
+      "last_detail": "원피스 카드게임 코리아: 재확인 필요·기존 주소 유지 (URLError)",
+      "error_group_id": "819660722644a1bb"
+    },
+    "8ae25e8a43e2e90a": {
+      "file": "purchase_sources.json",
+      "category": "통신 오류",
+      "occurrences": 13,
+      "successful_repairs": 13,
+      "auto_action": "재시도 후 기존 검증자료 유지",
+      "recommended_action": "인터넷 연결과 공식 사이트 응답을 확인하세요.",
+      "last_seen": "2026-08-26T10:47:11+00:00",
+      "last_detail": "나루토 카드게임 공식: 재확인 필요·기존 주소 유지 (URLError)",
+      "error_group_id": "819660722644a1bb"
+    },
+    "68124d00b46614d6": {
+      "file": "purchase_sources.json",
+      "category": "통신 오류",
+      "occurrences": 13,
+      "successful_repairs": 13,
+      "auto_action": "재시도 후 기존 검증자료 유지",
+      "recommended_action": "인터넷 연결과 공식 사이트 응답을 확인하세요.",
+      "last_seen": "2026-08-26T10:47:11+00:00",
+      "last_detail": "포켓몬 카드 공식 제품: 재확인 필요·기존 주소 유지 (URLError)",
+      "error_group_id": "819660722644a1bb"
+    },
+    "b454f762e15b9a66": {
+      "file": "purchase_sources.json",
+      "category": "통신 오류",
+      "occurrences": 13,
+      "successful_repairs": 13,
+      "auto_action": "재시도 후 기존 검증자료 유지",
+      "recommended_action": "인터넷 연결과 공식 사이트 응답을 확인하세요.",
+      "last_seen": "2026-08-26T10:47:11+00:00",
+      "last_detail": "포켓몬센터 온라인: 재확인 필요·기존 주소 유지 (URLError)",
+      "error_group_id": "819660722644a1bb"
+    },
+    "bf6175affa5bcf3f": {
+      "file": "purchase_sources.json",
+      "category": "통신 오류",
+      "occurrences": 13,
+      "successful_repairs": 13,
+      "auto_action": "재시도 후 기존 검증자료 유지",
+      "recommended_action": "인터넷 연결과 공식 사이트 응답을 확인하세요.",
+      "last_seen": "2026-08-26T10:47:11+00:00",
+      "last_detail": "원피스 카드게임 공식: 재확인 필요·기존 주소 유지 (URLError)",
+      "error_group_id": "819660722644a1bb"
+    },
+    "89dd861b49072ac3": {
+      "file": "purchase_sources.json",
+      "category": "통신 오류",
+      "occurrences": 13,
+      "successful_repairs": 13,
+      "auto_action": "재시도 후 기존 검증자료 유지",
+      "recommended_action": "인터넷 연결과 공식 사이트 응답을 확인하세요.",
+      "last_seen": "2026-08-26T10:47:11+00:00",
+      "last_detail": "Pokémon Center US: 재확인 필요·기존 주소 유지 (URLError)",
+      "error_group_id": "819660722644a1bb"
+    },
+    "5976107e29882767": {
+      "file": "purchase_sources.json",
+      "category": "통신 오류",
+      "occurrences": 13,
+      "successful_repairs": 13,
+      "auto_action": "재시도 후 기존 검증자료 유지",
+      "recommended_action": "인터넷 연결과 공식 사이트 응답을 확인하세요.",
+      "last_seen": "2026-08-26T10:47:11+00:00",
+      "last_detail": "One Piece Card Game 공식: 재확인 필요·기존 주소 유지 (URLError)",
+      "error_group_id": "819660722644a1bb"
+    },
+    "824a503bd31db780": {
+      "file": "purchase_sources.json",
+      "category": "통신 오류",
+      "occurrences": 13,
+      "successful_repairs": 13,
+      "auto_action": "재시도 후 기존 검증자료 유지",
+      "recommended_action": "인터넷 연결과 공식 사이트 응답을 확인하세요.",
+      "last_seen": "2026-08-26T10:47:11+00:00",
+      "last_detail": "Naruto Card Game 공식: 재확인 필요·기존 주소 유지 (URLError)",
+      "error_group_id": "819660722644a1bb"
+    },
+    "612ee01e69c0841d": {
+      "file": "purchase_sources.json",
+      "category": "통신 오류",
+      "occurrences": 13,
+      "successful_repairs": 13,
+      "auto_action": "재시도 후 기존 검증자료 유지",
+      "recommended_action": "인터넷 연결과 공식 사이트 응답을 확인하세요.",
+      "last_seen": "2026-08-26T10:47:11+00:00",
+      "last_detail": "포켓몬 공인 카드샵 안내: 재확인 필요·기존 주소 유지 (URLError)",
+      "error_group_id": "819660722644a1bb"
     }
+  },
+  "error_groups": {
+    "c72242c56436f785": {
+      "group_id": "c72242c56436f785",
+      "code": "RUNTIME_ERROR",
+      "title": "실행 중 기능 오류",
+      "category": "기타 수집 오류",
+      "occurrences": 39,
+      "resolved_count": 39,
+      "first_seen": "2026-08-23T15:57:24+00:00",
+      "last_seen": "2026-08-23T15:57:24+00:00",
+      "last_outcome": "resolved",
+      "affected_files": [
+        "releases.json"
+      ],
+      "file_counts": {
+        "releases.json": 39
+      },
+      "file_states": {
+        "releases.json": {
+          "occurrences": 39,
+          "resolved_count": 39,
+          "last_outcome": "resolved",
+          "clean_observations_after_error": 219,
+          "resolution_confirmed": true,
+          "last_seen": "2026-08-23T15:57:24+00:00",
+          "last_clean_seen": "2026-08-28T14:06:49+00:00"
+        }
+      },
+      "sample_details": [
+        "Pokémon JP: RuntimeError",
+        "ONE PIECE JP: RuntimeError"
+      ],
+      "probable_cause": "수집 함수가 안전조건을 충족하지 못해 실행을 중단했을 가능성이 큽니다.",
+      "safe_action": "자동 재시도 · 실패 시 정상본 복원",
+      "recommended_action": "오류 상세와 원출처 상태를 확인하세요.",
+      "resolution_steps": [
+        "오류가 난 함수와 입력자료를 격리합니다.",
+        "동일 입력으로 한 번 재현해 원인을 좁힙니다.",
+        "수정 뒤 해당 기능과 전체 회귀검사를 실행합니다."
+      ],
+      "verification_steps": [
+        "수정 뒤 해당 기능과 전체 회귀검사를 실행합니다.",
+        "기존 정상자료가 손상되지 않았는지 확인합니다."
+      ],
+      "bounded_retry_allowed": false,
+      "automation_policy": "내장된 안전 규칙만 허용 · 기록된 문자열/코드는 실행 금지",
+      "successful_actions": {
+        "동일 파일 2회 연속 정상 실행으로 해결 확인": 1
+      },
+      "resolution_history": [
+        {
+          "timestamp": "2026-08-24T16:16:26+00:00",
+          "file": "releases.json",
+          "origin": "clean-observation",
+          "action": "동일 파일 2회 연속 정상 실행으로 해결 확인",
+          "resolved": true
+        }
+      ],
+      "last_detail": "ONE PIECE JP: RuntimeError",
+      "unresolved_files": [],
+      "unresolved_count": 0,
+      "analysis_status": "해결 확인",
+      "proven_action": "동일 파일 2회 연속 정상 실행으로 해결 확인",
+      "http_status": null,
+      "http_statuses": [],
+      "scenario_prepared": false,
+      "scenario_profile_id": null,
+      "prepared_scenario_count": 0,
+      "diagnostic_priority": 50,
+      "first_checks": [],
+      "fast_resolution_steps": [],
+      "stop_conditions": []
+    },
+    "d2e61d37cad0b492": {
+      "group_id": "d2e61d37cad0b492",
+      "code": "NETWORK_HTTP_ERROR",
+      "title": "HTTP 응답 오류",
+      "category": "통신 오류",
+      "occurrences": 90,
+      "resolved_count": 90,
+      "first_seen": "2026-08-21T15:01:57+00:00",
+      "last_seen": "2026-08-23T15:57:24+00:00",
+      "last_outcome": "resolved",
+      "affected_files": [
+        "releases.json",
+        "market_prices.json",
+        "promo_events.json",
+        "purchase_sources.json"
+      ],
+      "file_counts": {
+        "releases.json": 4,
+        "market_prices.json": 36,
+        "promo_events.json": 12,
+        "purchase_sources.json": 38
+      },
+      "file_states": {
+        "releases.json": {
+          "occurrences": 4,
+          "resolved_count": 4,
+          "last_outcome": "resolved",
+          "clean_observations_after_error": 219,
+          "resolution_confirmed": true,
+          "last_seen": "2026-08-21T15:01:57+00:00",
+          "last_clean_seen": "2026-08-28T14:06:49+00:00"
+        },
+        "market_prices.json": {
+          "occurrences": 36,
+          "resolved_count": 36,
+          "last_outcome": "resolved",
+          "clean_observations_after_error": 219,
+          "resolution_confirmed": true,
+          "last_seen": "2026-08-23T07:59:44+00:00",
+          "last_clean_seen": "2026-08-28T14:06:49+00:00"
+        },
+        "promo_events.json": {
+          "occurrences": 12,
+          "resolved_count": 12,
+          "last_outcome": "resolved",
+          "clean_observations_after_error": 219,
+          "resolution_confirmed": true,
+          "last_seen": "2026-08-23T07:59:44+00:00",
+          "last_clean_seen": "2026-08-28T14:06:49+00:00"
+        },
+        "purchase_sources.json": {
+          "occurrences": 38,
+          "resolved_count": 38,
+          "last_outcome": "resolved",
+          "clean_observations_after_error": 219,
+          "resolution_confirmed": true,
+          "last_seen": "2026-08-23T15:57:24+00:00",
+          "last_clean_seen": "2026-08-28T14:06:49+00:00"
+        }
+      },
+      "sample_details": [
+        "KREAM 로맨스 던 BOX: HTTPError",
+        "KREAM 블랙볼트 BOX: HTTPError",
+        "KR 포켓몬 카드 신규행사 탐색: HTTPError",
+        "포켓몬 카드 게임 코리아 제품: 재확인 필요·기존 주소 유지 (HTTPError)",
+        "포켓몬 공인 카드샵 안내: 재확인 필요·기존 주소 유지 (HTTPError)"
+      ],
+      "probable_cause": "원출처가 오류·차단 응답을 반환했거나 접근 정책이 바뀌었을 가능성이 큽니다.",
+      "safe_action": "재시도 후 기존 검증자료 유지",
+      "recommended_action": "인터넷 연결과 공식 사이트 응답을 확인하세요.",
+      "resolution_steps": [
+        "HTTP 상태와 공식 주소 변경 여부를 확인합니다.",
+        "인증정보 없이 제한된 재시도를 실행합니다.",
+        "기존 정상자료 보존과 다음 실행 결과를 비교합니다."
+      ],
+      "verification_steps": [
+        "기존 정상자료 보존과 다음 실행 결과를 비교합니다.",
+        "기존 정상자료가 손상되지 않았는지 확인합니다."
+      ],
+      "bounded_retry_allowed": true,
+      "automation_policy": "내장된 안전 규칙만 허용 · 기록된 문자열/코드는 실행 금지",
+      "successful_actions": {
+        "동일 파일 2회 연속 정상 실행으로 해결 확인": 4
+      },
+      "resolution_history": [
+        {
+          "timestamp": "2026-08-24T16:16:26+00:00",
+          "file": "releases.json",
+          "origin": "clean-observation",
+          "action": "동일 파일 2회 연속 정상 실행으로 해결 확인",
+          "resolved": true
+        },
+        {
+          "timestamp": "2026-08-24T16:16:26+00:00",
+          "file": "market_prices.json",
+          "origin": "clean-observation",
+          "action": "동일 파일 2회 연속 정상 실행으로 해결 확인",
+          "resolved": true
+        },
+        {
+          "timestamp": "2026-08-24T16:16:26+00:00",
+          "file": "promo_events.json",
+          "origin": "clean-observation",
+          "action": "동일 파일 2회 연속 정상 실행으로 해결 확인",
+          "resolved": true
+        },
+        {
+          "timestamp": "2026-08-24T16:16:26+00:00",
+          "file": "purchase_sources.json",
+          "origin": "clean-observation",
+          "action": "동일 파일 2회 연속 정상 실행으로 해결 확인",
+          "resolved": true
+        }
+      ],
+      "last_detail": "포켓몬 공인 카드샵 안내: 재확인 필요·기존 주소 유지 (HTTPError)",
+      "unresolved_files": [],
+      "unresolved_count": 0,
+      "analysis_status": "해결 확인",
+      "proven_action": "동일 파일 2회 연속 정상 실행으로 해결 확인",
+      "http_status": null,
+      "http_statuses": [],
+      "scenario_prepared": false,
+      "scenario_profile_id": null,
+      "prepared_scenario_count": 0,
+      "diagnostic_priority": 50,
+      "first_checks": [],
+      "fast_resolution_steps": [],
+      "stop_conditions": []
+    },
+    "111a2ddd056db938": {
+      "group_id": "111a2ddd056db938",
+      "code": "NETWORK_TIMEOUT",
+      "title": "네트워크 시간초과",
+      "category": "통신 오류",
+      "occurrences": 24,
+      "resolved_count": 24,
+      "first_seen": "2026-08-21T15:01:57+00:00",
+      "last_seen": "2026-08-23T15:57:24+00:00",
+      "last_outcome": "resolved",
+      "affected_files": [
+        "market_prices.json",
+        "releases.json",
+        "promo_events.json",
+        "purchase_sources.json"
+      ],
+      "file_counts": {
+        "market_prices.json": 14,
+        "releases.json": 1,
+        "promo_events.json": 8,
+        "purchase_sources.json": 1
+      },
+      "file_states": {
+        "market_prices.json": {
+          "occurrences": 14,
+          "resolved_count": 14,
+          "last_outcome": "resolved",
+          "clean_observations_after_error": 219,
+          "resolution_confirmed": true,
+          "last_seen": "2026-08-23T15:57:24+00:00",
+          "last_clean_seen": "2026-08-28T14:06:49+00:00"
+        },
+        "releases.json": {
+          "occurrences": 1,
+          "resolved_count": 1,
+          "last_outcome": "resolved",
+          "clean_observations_after_error": 219,
+          "resolution_confirmed": true,
+          "last_seen": "2026-08-23T11:20:32+00:00",
+          "last_clean_seen": "2026-08-28T14:06:49+00:00"
+        },
+        "promo_events.json": {
+          "occurrences": 8,
+          "resolved_count": 8,
+          "last_outcome": "resolved",
+          "clean_observations_after_error": 219,
+          "resolution_confirmed": true,
+          "last_seen": "2026-08-23T15:57:24+00:00",
+          "last_clean_seen": "2026-08-28T14:06:49+00:00"
+        },
+        "purchase_sources.json": {
+          "occurrences": 1,
+          "resolved_count": 1,
+          "last_outcome": "resolved",
+          "clean_observations_after_error": 219,
+          "resolution_confirmed": true,
+          "last_seen": "2026-08-23T11:20:32+00:00",
+          "last_clean_seen": "2026-08-28T14:06:49+00:00"
+        }
+      },
+      "sample_details": [
+        "KREAM 블랙볼트 BOX: TimeoutError",
+        "TIMEOUT: update_releases 5초 초과",
+        "TIMEOUT: update_market_prices 5초 초과",
+        "TIMEOUT: update_promo_events 5초 초과",
+        "TIMEOUT: update_purchase_sources 5초 초과"
+      ],
+      "probable_cause": "공식 사이트 응답 지연, 연결 불안정 또는 학습된 제한시간 부족 가능성이 큽니다.",
+      "safe_action": "재시도 후 기존 검증자료 유지",
+      "recommended_action": "인터넷 연결과 공식 사이트 응답을 확인하세요.",
+      "resolution_steps": [
+        "공식 출처 연결과 응답시간을 확인합니다.",
+        "제한된 1회 재시도와 확대된 시간예산을 적용합니다.",
+        "실패 시 기존 정상자료가 유지됐는지 확인합니다."
+      ],
+      "verification_steps": [
+        "실패 시 기존 정상자료가 유지됐는지 확인합니다.",
+        "기존 정상자료가 손상되지 않았는지 확인합니다."
+      ],
+      "bounded_retry_allowed": true,
+      "automation_policy": "내장된 안전 규칙만 허용 · 기록된 문자열/코드는 실행 금지",
+      "successful_actions": {
+        "동일 파일 2회 연속 정상 실행으로 해결 확인": 4
+      },
+      "resolution_history": [
+        {
+          "timestamp": "2026-08-24T16:16:26+00:00",
+          "file": "releases.json",
+          "origin": "clean-observation",
+          "action": "동일 파일 2회 연속 정상 실행으로 해결 확인",
+          "resolved": true
+        },
+        {
+          "timestamp": "2026-08-24T16:16:26+00:00",
+          "file": "market_prices.json",
+          "origin": "clean-observation",
+          "action": "동일 파일 2회 연속 정상 실행으로 해결 확인",
+          "resolved": true
+        },
+        {
+          "timestamp": "2026-08-24T16:16:26+00:00",
+          "file": "promo_events.json",
+          "origin": "clean-observation",
+          "action": "동일 파일 2회 연속 정상 실행으로 해결 확인",
+          "resolved": true
+        },
+        {
+          "timestamp": "2026-08-24T16:16:26+00:00",
+          "file": "purchase_sources.json",
+          "origin": "clean-observation",
+          "action": "동일 파일 2회 연속 정상 실행으로 해결 확인",
+          "resolved": true
+        }
+      ],
+      "last_detail": "TIMEOUT: update_purchase_sources 5초 초과",
+      "unresolved_files": [],
+      "unresolved_count": 0,
+      "analysis_status": "해결 확인",
+      "proven_action": "동일 파일 2회 연속 정상 실행으로 해결 확인",
+      "http_status": null,
+      "http_statuses": [],
+      "scenario_prepared": false,
+      "scenario_profile_id": null,
+      "prepared_scenario_count": 0,
+      "diagnostic_priority": 50,
+      "first_checks": [],
+      "fast_resolution_steps": [],
+      "stop_conditions": []
+    },
+    "c9b945a618435a60": {
+      "group_id": "c9b945a618435a60",
+      "code": "DATA_VALUE_ERROR",
+      "title": "입력값·자료형 오류",
+      "category": "기타 수집 오류",
+      "occurrences": 17,
+      "resolved_count": 17,
+      "first_seen": "2026-08-22T14:03:13+00:00",
+      "last_seen": "2026-08-23T17:45:01+00:00",
+      "last_outcome": "resolved",
+      "affected_files": [
+        "promo_events.json",
+        "purchase_sources.json"
+      ],
+      "file_counts": {
+        "promo_events.json": 5,
+        "purchase_sources.json": 12
+      },
+      "file_states": {
+        "promo_events.json": {
+          "occurrences": 5,
+          "resolved_count": 5,
+          "last_outcome": "resolved",
+          "clean_observations_after_error": 219,
+          "resolution_confirmed": true,
+          "last_seen": "2026-08-22T14:03:13+00:00",
+          "last_clean_seen": "2026-08-28T14:06:49+00:00"
+        },
+        "purchase_sources.json": {
+          "occurrences": 12,
+          "resolved_count": 12,
+          "last_outcome": "resolved",
+          "clean_observations_after_error": 219,
+          "resolution_confirmed": true,
+          "last_seen": "2026-08-23T17:45:01+00:00",
+          "last_clean_seen": "2026-08-28T14:06:49+00:00"
+        }
+      },
+      "sample_details": [
+        "Pokémon Center US: 재확인 필요·기존 주소 유지 (ValueError)",
+        "Pokémon 공식 판매점 찾기: 재확인 필요·기존 주소 유지 (ValueError)",
+        "One Piece Card Game 공식: 재확인 필요·기존 주소 유지 (ValueError)",
+        "Naruto Card Game 공식: 재확인 필요·기존 주소 유지 (ValueError)",
+        "포켓몬 공인 카드샵 안내: 재확인 필요·기존 주소 유지 (ValueError)"
+      ],
+      "probable_cause": "수집값의 자료형, 범위 또는 필수값이 처리 규칙과 맞지 않을 가능성이 큽니다.",
+      "safe_action": "자동 재시도 · 실패 시 정상본 복원",
+      "recommended_action": "오류 상세와 원출처 상태를 확인하세요.",
+      "resolution_steps": [
+        "오류가 난 입력값의 자료형과 범위를 확인합니다.",
+        "비정상 값만 격리하고 기존 정상자료를 유지합니다.",
+        "정상·경계·잘못된 입력으로 회귀검사를 실행합니다."
+      ],
+      "verification_steps": [
+        "정상·경계·잘못된 입력으로 회귀검사를 실행합니다.",
+        "기존 정상자료가 손상되지 않았는지 확인합니다."
+      ],
+      "bounded_retry_allowed": false,
+      "automation_policy": "내장된 안전 규칙만 허용 · 기록된 문자열/코드는 실행 금지",
+      "successful_actions": {
+        "동일 파일 2회 연속 정상 실행으로 해결 확인": 2
+      },
+      "resolution_history": [
+        {
+          "timestamp": "2026-08-24T16:16:26+00:00",
+          "file": "promo_events.json",
+          "origin": "clean-observation",
+          "action": "동일 파일 2회 연속 정상 실행으로 해결 확인",
+          "resolved": true
+        },
+        {
+          "timestamp": "2026-08-24T16:16:26+00:00",
+          "file": "purchase_sources.json",
+          "origin": "clean-observation",
+          "action": "동일 파일 2회 연속 정상 실행으로 해결 확인",
+          "resolved": true
+        }
+      ],
+      "last_detail": "포켓몬 공인 카드샵 안내: 재확인 필요·기존 주소 유지 (ValueError)",
+      "unresolved_files": [],
+      "unresolved_count": 0,
+      "analysis_status": "해결 확인",
+      "proven_action": "동일 파일 2회 연속 정상 실행으로 해결 확인",
+      "http_status": null,
+      "http_statuses": [],
+      "scenario_prepared": false,
+      "scenario_profile_id": null,
+      "prepared_scenario_count": 0,
+      "diagnostic_priority": 50,
+      "first_checks": [],
+      "fast_resolution_steps": [],
+      "stop_conditions": []
+    },
+    "59e02f2399bc3513": {
+      "group_id": "59e02f2399bc3513",
+      "code": "NETWORK_CONNECTION_ERROR",
+      "title": "네트워크 연결·DNS 오류",
+      "category": "통신 오류",
+      "occurrences": 7,
+      "resolved_count": 7,
+      "first_seen": "2026-08-23T07:44:34+00:00",
+      "last_seen": "2026-08-24T02:15:50+00:00",
+      "last_outcome": "resolved",
+      "affected_files": [
+        "releases.json",
+        "purchase_sources.json",
+        "exchange_rates.json"
+      ],
+      "file_counts": {
+        "releases.json": 1,
+        "purchase_sources.json": 1,
+        "exchange_rates.json": 5
+      },
+      "file_states": {
+        "releases.json": {
+          "occurrences": 1,
+          "resolved_count": 1,
+          "last_outcome": "resolved",
+          "clean_observations_after_error": 219,
+          "resolution_confirmed": true,
+          "last_seen": "2026-08-23T07:44:34+00:00",
+          "last_clean_seen": "2026-08-28T14:06:49+00:00"
+        },
+        "purchase_sources.json": {
+          "occurrences": 1,
+          "resolved_count": 1,
+          "last_outcome": "resolved",
+          "clean_observations_after_error": 219,
+          "resolution_confirmed": true,
+          "last_seen": "2026-08-23T11:50:59+00:00",
+          "last_clean_seen": "2026-08-28T14:06:49+00:00"
+        },
+        "exchange_rates.json": {
+          "occurrences": 5,
+          "resolved_count": 5,
+          "last_outcome": "resolved",
+          "clean_observations_after_error": 219,
+          "resolution_confirmed": true,
+          "last_seen": "2026-08-24T02:15:50+00:00",
+          "last_clean_seen": "2026-08-28T14:06:49+00:00"
+        }
+      },
+      "sample_details": [
+        "ONE PIECE JP: URLError",
+        "Pokémon 공식 판매점 찾기: 재확인 필요·기존 주소 유지 (URLError)",
+        "URLError"
+      ],
+      "probable_cause": "인터넷, DNS 또는 원출처 연결이 일시적으로 실패했을 가능성이 큽니다.",
+      "safe_action": "재시도 후 기존 검증자료 유지",
+      "recommended_action": "인터넷 연결과 공식 사이트 응답을 확인하세요.",
+      "resolution_steps": [
+        "인터넷과 DNS 상태를 확인합니다.",
+        "공식 HTTPS 주소만 제한적으로 재시도합니다.",
+        "복구되지 않으면 기존 검증자료를 유지합니다."
+      ],
+      "verification_steps": [
+        "복구되지 않으면 기존 검증자료를 유지합니다.",
+        "기존 정상자료가 손상되지 않았는지 확인합니다."
+      ],
+      "bounded_retry_allowed": true,
+      "automation_policy": "내장된 안전 규칙만 허용 · 기록된 문자열/코드는 실행 금지",
+      "successful_actions": {
+        "재시도 후 기존 검증자료 유지": 1,
+        "동일 파일 2회 연속 정상 실행으로 해결 확인": 3
+      },
+      "resolution_history": [
+        {
+          "timestamp": "2026-08-24T16:16:26+00:00",
+          "file": "releases.json",
+          "origin": "clean-observation",
+          "action": "동일 파일 2회 연속 정상 실행으로 해결 확인",
+          "resolved": true
+        },
+        {
+          "timestamp": "2026-08-24T16:16:26+00:00",
+          "file": "purchase_sources.json",
+          "origin": "clean-observation",
+          "action": "동일 파일 2회 연속 정상 실행으로 해결 확인",
+          "resolved": true
+        },
+        {
+          "timestamp": "2026-08-24T16:16:26+00:00",
+          "file": "exchange_rates.json",
+          "origin": "clean-observation",
+          "action": "동일 파일 2회 연속 정상 실행으로 해결 확인",
+          "resolved": true
+        }
+      ],
+      "last_detail": "URLError",
+      "unresolved_files": [],
+      "unresolved_count": 0,
+      "analysis_status": "해결 확인",
+      "proven_action": "동일 파일 2회 연속 정상 실행으로 해결 확인",
+      "http_status": null,
+      "http_statuses": [],
+      "scenario_prepared": false,
+      "scenario_profile_id": null,
+      "prepared_scenario_count": 0,
+      "diagnostic_priority": 50,
+      "first_checks": [],
+      "fast_resolution_steps": [],
+      "stop_conditions": []
+    },
+    "e717373c5d3b3852": {
+      "group_id": "e717373c5d3b3852",
+      "code": "INTERNAL_CODE_ERROR",
+      "title": "내부 코드 이름·가져오기 오류",
+      "category": "내부 코드 오류",
+      "occurrences": 1,
+      "resolved_count": 1,
+      "first_seen": "2026-08-24T03:53:26+00:00",
+      "last_seen": "2026-08-24T03:53:26+00:00",
+      "last_outcome": "resolved",
+      "affected_files": [
+        "exchange_rates.json"
+      ],
+      "file_counts": {
+        "exchange_rates.json": 1
+      },
+      "file_states": {
+        "exchange_rates.json": {
+          "occurrences": 1,
+          "resolved_count": 1,
+          "last_outcome": "resolved",
+          "clean_observations_after_error": 219,
+          "resolution_confirmed": true,
+          "last_seen": "2026-08-24T03:53:26+00:00",
+          "last_clean_seen": "2026-08-28T14:06:49+00:00"
+        }
+      },
+      "sample_details": [
+        "NameError"
+      ],
+      "probable_cause": "필요한 모듈·함수·속성 이름이 코드 변경 과정에서 빠졌거나 달라졌을 가능성이 큽니다.",
+      "safe_action": "자동 재시도 중단 · 기존 검증자료 유지 · 회귀검사 우선",
+      "recommended_action": "누락 import/이름/속성 변경을 코드 검사에서 확인하세요.",
+      "resolution_steps": [
+        "Python 문법과 import를 검사합니다.",
+        "해당 함수를 격리 실행해 같은 예외가 재현되는지 확인합니다.",
+        "수정 후 전체 회귀검사를 실행합니다."
+      ],
+      "verification_steps": [
+        "수정 후 전체 회귀검사를 실행합니다.",
+        "기존 정상자료가 손상되지 않았는지 확인합니다."
+      ],
+      "bounded_retry_allowed": false,
+      "automation_policy": "내장된 안전 규칙만 허용 · 기록된 문자열/코드는 실행 금지",
+      "successful_actions": {
+        "동일 파일 2회 연속 정상 실행으로 해결 확인": 1
+      },
+      "resolution_history": [
+        {
+          "timestamp": "2026-08-24T16:16:26+00:00",
+          "file": "exchange_rates.json",
+          "origin": "clean-observation",
+          "action": "동일 파일 2회 연속 정상 실행으로 해결 확인",
+          "resolved": true
+        }
+      ],
+      "last_detail": "NameError",
+      "unresolved_files": [],
+      "unresolved_count": 0,
+      "analysis_status": "해결 확인",
+      "proven_action": "동일 파일 2회 연속 정상 실행으로 해결 확인",
+      "http_status": null,
+      "http_statuses": [],
+      "scenario_prepared": false,
+      "scenario_profile_id": null,
+      "prepared_scenario_count": 0,
+      "diagnostic_priority": 50,
+      "first_checks": [],
+      "fast_resolution_steps": [],
+      "stop_conditions": []
+    },
+    "819660722644a1bb": {
+      "group_id": "819660722644a1bb",
+      "code": "NETWORK_CONNECTION_ERROR",
+      "title": "네트워크 연결·DNS 오류",
+      "category": "통신 오류",
+      "error_subtype": "url-connection",
+      "http_status": null,
+      "http_statuses": [],
+      "occurrences": 832,
+      "resolved_count": 832,
+      "first_seen": "2026-08-25T07:15:31+00:00",
+      "last_seen": "2026-08-26T10:47:11+00:00",
+      "last_outcome": "resolved",
+      "affected_files": [
+        "releases.json",
+        "market_prices.json",
+        "promo_events.json",
+        "purchase_sources.json",
+        "exchange_rates.json"
+      ],
+      "file_counts": {
+        "releases.json": 65,
+        "market_prices.json": 91,
+        "promo_events.json": 520,
+        "purchase_sources.json": 143,
+        "exchange_rates.json": 13
+      },
+      "file_states": {
+        "releases.json": {
+          "occurrences": 65,
+          "resolved_count": 65,
+          "last_outcome": "resolved",
+          "clean_observations_after_error": 131,
+          "resolution_confirmed": true,
+          "last_seen": "2026-08-26T10:47:11+00:00",
+          "last_clean_seen": "2026-08-28T14:06:49+00:00"
+        },
+        "market_prices.json": {
+          "occurrences": 91,
+          "resolved_count": 91,
+          "last_outcome": "resolved",
+          "clean_observations_after_error": 131,
+          "resolution_confirmed": true,
+          "last_seen": "2026-08-26T10:47:11+00:00",
+          "last_clean_seen": "2026-08-28T14:06:49+00:00"
+        },
+        "promo_events.json": {
+          "occurrences": 520,
+          "resolved_count": 520,
+          "last_outcome": "resolved",
+          "clean_observations_after_error": 131,
+          "resolution_confirmed": true,
+          "last_seen": "2026-08-26T10:47:11+00:00",
+          "last_clean_seen": "2026-08-28T14:06:49+00:00"
+        },
+        "purchase_sources.json": {
+          "occurrences": 143,
+          "resolved_count": 143,
+          "last_outcome": "resolved",
+          "clean_observations_after_error": 131,
+          "resolution_confirmed": true,
+          "last_seen": "2026-08-26T10:47:11+00:00",
+          "last_clean_seen": "2026-08-28T14:06:49+00:00"
+        },
+        "exchange_rates.json": {
+          "occurrences": 13,
+          "resolved_count": 13,
+          "last_outcome": "resolved",
+          "clean_observations_after_error": 131,
+          "resolution_confirmed": true,
+          "last_seen": "2026-08-26T10:47:11+00:00",
+          "last_clean_seen": "2026-08-28T14:06:49+00:00"
+        }
+      },
+      "sample_details": [
+        "Pokémon 공식 판매점 찾기: 재확인 필요·기존 주소 유지 (URLError)",
+        "One Piece Card Game 공식: 재확인 필요·기존 주소 유지 (URLError)",
+        "Naruto Card Game 공식: 재확인 필요·기존 주소 유지 (URLError)",
+        "포켓몬 공인 카드샵 안내: 재확인 필요·기존 주소 유지 (URLError)",
+        "URLError"
+      ],
+      "probable_cause": "인터넷, DNS 또는 원출처 연결이 일시적으로 실패했을 가능성이 큽니다.",
+      "safe_action": "재시도 후 기존 검증자료 유지",
+      "recommended_action": "인터넷 연결과 공식 사이트 응답을 확인하세요.",
+      "resolution_steps": [
+        "인터넷과 DNS 상태를 확인합니다.",
+        "공식 HTTPS 주소만 제한적으로 재시도합니다.",
+        "복구되지 않으면 기존 검증자료를 유지합니다."
+      ],
+      "verification_steps": [
+        "복구되지 않으면 기존 검증자료를 유지합니다.",
+        "기존 정상자료가 손상되지 않았는지 확인합니다."
+      ],
+      "bounded_retry_allowed": true,
+      "automation_policy": "내장된 안전 규칙만 허용 · 기록된 문자열/코드는 실행 금지",
+      "successful_actions": {
+        "일부 출처 오류 격리 · 정상자료 반영 · 다음 실행 제한시간 확대": 832
+      },
+      "resolution_history": [
+        {
+          "timestamp": "2026-08-26T10:47:11+00:00",
+          "file": "promo_events.json",
+          "origin": "update-report",
+          "action": "일부 출처 오류 격리 · 정상자료 반영 · 다음 실행 제한시간 확대",
+          "resolved": true
+        },
+        {
+          "timestamp": "2026-08-26T10:47:11+00:00",
+          "file": "promo_events.json",
+          "origin": "update-report",
+          "action": "일부 출처 오류 격리 · 정상자료 반영 · 다음 실행 제한시간 확대",
+          "resolved": true
+        },
+        {
+          "timestamp": "2026-08-26T10:47:11+00:00",
+          "file": "promo_events.json",
+          "origin": "update-report",
+          "action": "일부 출처 오류 격리 · 정상자료 반영 · 다음 실행 제한시간 확대",
+          "resolved": true
+        },
+        {
+          "timestamp": "2026-08-26T10:47:11+00:00",
+          "file": "promo_events.json",
+          "origin": "update-report",
+          "action": "일부 출처 오류 격리 · 정상자료 반영 · 다음 실행 제한시간 확대",
+          "resolved": true
+        },
+        {
+          "timestamp": "2026-08-26T10:47:11+00:00",
+          "file": "promo_events.json",
+          "origin": "update-report",
+          "action": "일부 출처 오류 격리 · 정상자료 반영 · 다음 실행 제한시간 확대",
+          "resolved": true
+        },
+        {
+          "timestamp": "2026-08-26T10:47:11+00:00",
+          "file": "promo_events.json",
+          "origin": "update-report",
+          "action": "일부 출처 오류 격리 · 정상자료 반영 · 다음 실행 제한시간 확대",
+          "resolved": true
+        },
+        {
+          "timestamp": "2026-08-26T10:47:11+00:00",
+          "file": "promo_events.json",
+          "origin": "update-report",
+          "action": "일부 출처 오류 격리 · 정상자료 반영 · 다음 실행 제한시간 확대",
+          "resolved": true
+        },
+        {
+          "timestamp": "2026-08-26T10:47:11+00:00",
+          "file": "promo_events.json",
+          "origin": "update-report",
+          "action": "일부 출처 오류 격리 · 정상자료 반영 · 다음 실행 제한시간 확대",
+          "resolved": true
+        },
+        {
+          "timestamp": "2026-08-26T10:47:11+00:00",
+          "file": "promo_events.json",
+          "origin": "update-report",
+          "action": "일부 출처 오류 격리 · 정상자료 반영 · 다음 실행 제한시간 확대",
+          "resolved": true
+        },
+        {
+          "timestamp": "2026-08-26T10:47:11+00:00",
+          "file": "promo_events.json",
+          "origin": "update-report",
+          "action": "일부 출처 오류 격리 · 정상자료 반영 · 다음 실행 제한시간 확대",
+          "resolved": true
+        },
+        {
+          "timestamp": "2026-08-26T10:47:11+00:00",
+          "file": "promo_events.json",
+          "origin": "update-report",
+          "action": "일부 출처 오류 격리 · 정상자료 반영 · 다음 실행 제한시간 확대",
+          "resolved": true
+        },
+        {
+          "timestamp": "2026-08-26T10:47:11+00:00",
+          "file": "promo_events.json",
+          "origin": "update-report",
+          "action": "일부 출처 오류 격리 · 정상자료 반영 · 다음 실행 제한시간 확대",
+          "resolved": true
+        },
+        {
+          "timestamp": "2026-08-26T10:47:11+00:00",
+          "file": "promo_events.json",
+          "origin": "update-report",
+          "action": "일부 출처 오류 격리 · 정상자료 반영 · 다음 실행 제한시간 확대",
+          "resolved": true
+        },
+        {
+          "timestamp": "2026-08-26T10:47:11+00:00",
+          "file": "promo_events.json",
+          "origin": "update-report",
+          "action": "일부 출처 오류 격리 · 정상자료 반영 · 다음 실행 제한시간 확대",
+          "resolved": true
+        },
+        {
+          "timestamp": "2026-08-26T10:47:11+00:00",
+          "file": "promo_events.json",
+          "origin": "update-report",
+          "action": "일부 출처 오류 격리 · 정상자료 반영 · 다음 실행 제한시간 확대",
+          "resolved": true
+        },
+        {
+          "timestamp": "2026-08-26T10:47:11+00:00",
+          "file": "promo_events.json",
+          "origin": "update-report",
+          "action": "일부 출처 오류 격리 · 정상자료 반영 · 다음 실행 제한시간 확대",
+          "resolved": true
+        },
+        {
+          "timestamp": "2026-08-26T10:47:11+00:00",
+          "file": "promo_events.json",
+          "origin": "update-report",
+          "action": "일부 출처 오류 격리 · 정상자료 반영 · 다음 실행 제한시간 확대",
+          "resolved": true
+        },
+        {
+          "timestamp": "2026-08-26T10:47:11+00:00",
+          "file": "promo_events.json",
+          "origin": "update-report",
+          "action": "일부 출처 오류 격리 · 정상자료 반영 · 다음 실행 제한시간 확대",
+          "resolved": true
+        },
+        {
+          "timestamp": "2026-08-26T10:47:11+00:00",
+          "file": "purchase_sources.json",
+          "origin": "update-report",
+          "action": "일부 출처 오류 격리 · 정상자료 반영 · 다음 실행 제한시간 확대",
+          "resolved": true
+        },
+        {
+          "timestamp": "2026-08-26T10:47:11+00:00",
+          "file": "purchase_sources.json",
+          "origin": "update-report",
+          "action": "일부 출처 오류 격리 · 정상자료 반영 · 다음 실행 제한시간 확대",
+          "resolved": true
+        },
+        {
+          "timestamp": "2026-08-26T10:47:11+00:00",
+          "file": "purchase_sources.json",
+          "origin": "update-report",
+          "action": "일부 출처 오류 격리 · 정상자료 반영 · 다음 실행 제한시간 확대",
+          "resolved": true
+        },
+        {
+          "timestamp": "2026-08-26T10:47:11+00:00",
+          "file": "purchase_sources.json",
+          "origin": "update-report",
+          "action": "일부 출처 오류 격리 · 정상자료 반영 · 다음 실행 제한시간 확대",
+          "resolved": true
+        },
+        {
+          "timestamp": "2026-08-26T10:47:11+00:00",
+          "file": "purchase_sources.json",
+          "origin": "update-report",
+          "action": "일부 출처 오류 격리 · 정상자료 반영 · 다음 실행 제한시간 확대",
+          "resolved": true
+        },
+        {
+          "timestamp": "2026-08-26T10:47:11+00:00",
+          "file": "purchase_sources.json",
+          "origin": "update-report",
+          "action": "일부 출처 오류 격리 · 정상자료 반영 · 다음 실행 제한시간 확대",
+          "resolved": true
+        },
+        {
+          "timestamp": "2026-08-26T10:47:11+00:00",
+          "file": "purchase_sources.json",
+          "origin": "update-report",
+          "action": "일부 출처 오류 격리 · 정상자료 반영 · 다음 실행 제한시간 확대",
+          "resolved": true
+        },
+        {
+          "timestamp": "2026-08-26T10:47:11+00:00",
+          "file": "purchase_sources.json",
+          "origin": "update-report",
+          "action": "일부 출처 오류 격리 · 정상자료 반영 · 다음 실행 제한시간 확대",
+          "resolved": true
+        },
+        {
+          "timestamp": "2026-08-26T10:47:11+00:00",
+          "file": "purchase_sources.json",
+          "origin": "update-report",
+          "action": "일부 출처 오류 격리 · 정상자료 반영 · 다음 실행 제한시간 확대",
+          "resolved": true
+        },
+        {
+          "timestamp": "2026-08-26T10:47:11+00:00",
+          "file": "purchase_sources.json",
+          "origin": "update-report",
+          "action": "일부 출처 오류 격리 · 정상자료 반영 · 다음 실행 제한시간 확대",
+          "resolved": true
+        },
+        {
+          "timestamp": "2026-08-26T10:47:11+00:00",
+          "file": "purchase_sources.json",
+          "origin": "update-report",
+          "action": "일부 출처 오류 격리 · 정상자료 반영 · 다음 실행 제한시간 확대",
+          "resolved": true
+        },
+        {
+          "timestamp": "2026-08-26T10:47:11+00:00",
+          "file": "exchange_rates.json",
+          "origin": "update-report",
+          "action": "일부 출처 오류 격리 · 정상자료 반영 · 다음 실행 제한시간 확대",
+          "resolved": true
+        }
+      ],
+      "last_detail": "URLError",
+      "unresolved_files": [],
+      "unresolved_count": 0,
+      "analysis_status": "해결 확인",
+      "proven_action": "일부 출처 오류 격리 · 정상자료 반영 · 다음 실행 제한시간 확대",
+      "scenario_prepared": true,
+      "scenario_profile_id": "6c10af0bebb0301c",
+      "prepared_scenario_count": 1,
+      "diagnostic_priority": 20,
+      "first_checks": [
+        "DNS·Wi-Fi·공식 호스트 접근을 분리 확인합니다."
+      ],
+      "fast_resolution_steps": [
+        "인터넷과 DNS 상태를 확인합니다.",
+        "공식 HTTPS 주소만 제한적으로 재시도합니다.",
+        "복구되지 않으면 기존 검증자료를 유지합니다."
+      ],
+      "stop_conditions": [
+        "사설주소 또는 비공식 주소로 우회하지 않습니다."
+      ]
+    }
+  },
+  "new_error_log": [
+    {
+      "code": "NETWORK_CONNECTION_ERROR",
+      "title": "네트워크 연결·DNS 오류",
+      "category": "통신 오류",
+      "error_subtype": "url-connection",
+      "file": "releases.json",
+      "detail": "Pokémon JP: URLError",
+      "probable_cause": "인터넷, DNS 또는 원출처 연결이 일시적으로 실패했을 가능성이 큽니다.",
+      "safe_action": "재시도 후 기존 검증자료 유지",
+      "analysis_status": "해결 확인",
+      "last_outcome": "resolved",
+      "proven_action": "일부 출처 오류 격리 · 정상자료 반영 · 다음 실행 제한시간 확대",
+      "first_seen": "2026-08-25T07:15:31+00:00",
+      "last_seen": "2026-08-26T10:47:11+00:00",
+      "occurrences": 832,
+      "unresolved_count": 0,
+      "http_status": null,
+      "bounded_retry_allowed": true,
+      "http_statuses": [],
+      "resolution_steps": [
+        "인터넷과 DNS 상태를 확인합니다.",
+        "공식 HTTPS 주소만 제한적으로 재시도합니다.",
+        "복구되지 않으면 기존 검증자료를 유지합니다."
+      ],
+      "verification_steps": [
+        "복구되지 않으면 기존 검증자료를 유지합니다.",
+        "기존 정상자료가 손상되지 않았는지 확인합니다."
+      ],
+      "group_id": "819660722644a1bb"
+    }
+  ],
+  "learning_summary": {
+    "error_group_count": 7,
+    "new_group_count": 0,
+    "recurring_group_count": 6,
+    "unresolved_group_count": 0,
+    "resolved_group_count": 7,
+    "verified_solution_group_count": 7,
+    "scenario_prepared_group_count": 1,
+    "consolidated_event_total": 1010
   },
   "files": {
     "releases.json": {
-      "runs": 2,
+      "runs": 254,
       "recent_failures": 0,
-      "successful_repairs": 0
+      "successful_repairs": 13,
+      "clean_success_streak": 39,
+      "last_result": "clean_success"
     },
     "market_watch.json": {
-      "runs": 2,
+      "runs": 254,
       "recent_failures": 0,
-      "successful_repairs": 0
+      "successful_repairs": 0,
+      "clean_success_streak": 232,
+      "last_result": "clean_success"
     },
     "market_prices.json": {
-      "runs": 2,
+      "runs": 254,
       "recent_failures": 0,
-      "successful_repairs": 0
+      "successful_repairs": 13,
+      "clean_success_streak": 39,
+      "last_result": "clean_success"
     },
     "promo_events.json": {
-      "runs": 2,
+      "runs": 254,
       "recent_failures": 0,
-      "successful_repairs": 0
+      "successful_repairs": 13,
+      "clean_success_streak": 39,
+      "last_result": "clean_success"
     },
     "exchange_rates.json": {
-      "runs": 2,
+      "runs": 262,
       "recent_failures": 0,
-      "successful_repairs": 0
+      "successful_repairs": 14,
+      "clean_success_streak": 39,
+      "last_result": "clean_success"
+    },
+    "purchase_sources.json": {
+      "runs": 253,
+      "recent_failures": 0,
+      "successful_repairs": 13,
+      "clean_success_streak": 39,
+      "last_result": "clean_success"
+    },
+    "verification_history.json": {
+      "runs": 237,
+      "recent_failures": 0,
+      "successful_repairs": 0,
+      "clean_success_streak": 237,
+      "last_result": "clean_success"
     }
-  }
+  },
+  "monitor_known_errors": {},
+  "monitor_history": []
 }

@@ -1,0 +1,119 @@
+{
+  "version": 1,
+  "engine": "v101-isolated-self-learning-calibration",
+  "adopted": true,
+  "selected_params": {
+    "canny_low": 35,
+    "canny_high": 105,
+    "clahe_clip": 2.0,
+    "hough_threshold": 18,
+    "min_line_ratio": 0.24,
+    "max_line_gap_ratio": 0.02,
+    "scratch_contrast_min": 30.0,
+    "whitening_delta": 28.0,
+    "working_width": 240
+  },
+  "base_params": {
+    "canny_low": 35,
+    "canny_high": 105,
+    "clahe_clip": 2.0,
+    "hough_threshold": 22,
+    "min_line_ratio": 0.2,
+    "max_line_gap_ratio": 0.02,
+    "scratch_contrast_min": 22.0,
+    "whitening_delta": 28.0,
+    "working_width": 240
+  },
+  "base_validation": {
+    "score": 0.95,
+    "scratch_recall": 1.0,
+    "scratch_specificity": 0.8,
+    "whitening_recall": 1.0,
+    "whitening_specificity": 1.0,
+    "counts": {
+      "tp": 15,
+      "tn": 24,
+      "fp": 6,
+      "fn": 0,
+      "wtp": 15,
+      "wtn": 30,
+      "wfp": 0,
+      "wfn": 0
+    }
+  },
+  "candidate_validation": {
+    "score": 0.991667,
+    "scratch_recall": 1.0,
+    "scratch_specificity": 0.966667,
+    "whitening_recall": 1.0,
+    "whitening_specificity": 1.0,
+    "counts": {
+      "tp": 15,
+      "tn": 29,
+      "fp": 1,
+      "fn": 0,
+      "wtp": 15,
+      "wtn": 30,
+      "wfp": 0,
+      "wfn": 0
+    }
+  },
+  "base_holdout": {
+    "score": 0.935667,
+    "scratch_recall": 1.0,
+    "scratch_specificity": 0.766667,
+    "whitening_recall": 1.0,
+    "whitening_specificity": 0.966667,
+    "counts": {
+      "tp": 15,
+      "tn": 23,
+      "fp": 7,
+      "fn": 0,
+      "wtp": 15,
+      "wtn": 29,
+      "wfp": 1,
+      "wfn": 0
+    }
+  },
+  "candidate_holdout": {
+    "score": 0.994,
+    "scratch_recall": 1.0,
+    "scratch_specificity": 1.0,
+    "whitening_recall": 1.0,
+    "whitening_specificity": 0.966667,
+    "counts": {
+      "tp": 15,
+      "tn": 30,
+      "fp": 0,
+      "fn": 0,
+      "wtp": 15,
+      "wtn": 29,
+      "wfp": 1,
+      "wfn": 0
+    }
+  },
+  "full_metrics": {
+    "score": 0.996417,
+    "scratch_recall": 1.0,
+    "scratch_specificity": 0.991667,
+    "whitening_recall": 1.0,
+    "whitening_specificity": 0.991667,
+    "counts": {
+      "tp": 60,
+      "tn": 119,
+      "fp": 1,
+      "fn": 0,
+      "wtp": 60,
+      "wtn": 119,
+      "wfp": 1,
+      "wfn": 0
+    }
+  },
+  "split_card_counts": {
+    "train": 30,
+    "validation": 15,
+    "holdout": 15
+  },
+  "candidate_count": 13,
+  "safety": "parameters-only; code is never auto-modified"
+}

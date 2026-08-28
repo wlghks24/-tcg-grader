@@ -1,0 +1,17 @@
+{
+  "version": 2,
+  "engine": "v98-camera-resilience-full-runtime",
+  "generated_at": "2026-08-28T09:05:45+00:00",
+  "training_rows": 0,
+  "profiles": {},
+  "policy": {
+    "official_result_required": true,
+    "certification_id_required": true,
+    "card_grouped_holdout": true,
+    "upward_correction_allowed": false,
+    "maximum_downward_correction": -1,
+    "vision_learns_residual_after_global": true,
+    "raw_image_model_retrained": false,
+    "official_grade_guaranteed": false
+  }
+}

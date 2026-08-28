@@ -1,0 +1,83 @@
+{
+  "updated_at": "2026-08-28T17:29:25+09:00",
+  "ok": false,
+  "degraded": true,
+  "failure_count": 4,
+  "errors": [
+    "포켓몬: TimeoutError: simulated",
+    "원피스: TimeoutError: simulated",
+    "나루토: TimeoutError: simulated",
+    "Google News 포켓몬 카드/US: URLError",
+    "Google News 포켓몬 카드/JP: URLError",
+    "Google News 포켓몬 카드/KR: URLError",
+    "Google News 원피스 카드/KR: URLError",
+    "Google News 원피스 카드/JP: URLError",
+    "Google News 원피스 카드/US: URLError",
+    "Google News 나루토 카드/US: URLError",
+    "Google News 나루토 카드/JP: URLError",
+    "Google News 나루토 카드/KR: URLError"
+  ],
+  "notice": "검색/SNS/뉴스 후보 자료입니다. 공식 웹사이트 또는 공식 연결 SNS 확인 전에는 확정 행사 데이터로 승격하지 않습니다.",
+  "platform": {
+    "platform": "Linux",
+    "python": "3.12.13",
+    "data_dir": "<app-data>",
+    "storage_scope": "user-app-data",
+    "writable": true,
+    "checked_at": "2026-08-28T17:29:25+09:00"
+  },
+  "queries": [
+    {
+      "ok": false,
+      "keyword": "포켓몬",
+      "results": [],
+      "error": "TimeoutError: simulated"
+    },
+    {
+      "ok": false,
+      "keyword": "원피스",
+      "results": [],
+      "error": "TimeoutError: simulated"
+    },
+    {
+      "ok": false,
+      "keyword": "나루토",
+      "results": [],
+      "error": "TimeoutError: simulated"
+    }
+  ],
+  "supplementary": {
+    "candidate_count": 8,
+    "updated_at": "2026-08-28T08:29:25+00:00"
+  },
+  "social": {
+    "candidate_count": 0,
+    "official_social_candidate_count": 0,
+    "official_domain_search_count": 0,
+    "cross_checked_count": 0,
+    "updated_at": "2026-08-28T08:29:25+00:00",
+    "channel_status": {
+      "x": {
+        "configured": false,
+        "status": "X_BEARER_TOKEN 미설정 · X API 건너뜀"
+      },
+      "google_cse": {
+        "configured": false,
+        "status": "Google Custom Search 미설정/신규고객 종료 · Google News 사용"
+      },
+      "instagram": {
+        "configured": false,
+        "status": "Instagram API 자격정보 미설정 · 공식계정 후보만 보관"
+      },
+      "google_news": {
+        "configured": true,
+        "query_count": 9,
+        "error_count": 9,
+        "result_count": 0,
+        "success_query_count": 0,
+        "status": "Google News 최근 30일 검색"
+      }
+    },
+    "preserved_previous_items": true
+  }
+}

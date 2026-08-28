@@ -1,0 +1,14 @@
+{
+  "version": 1,
+  "engine": "v98-camera-resilience-full-runtime",
+  "updated_at": null,
+  "total_attempts": 0,
+  "successful_proposals": 0,
+  "failure_groups": {},
+  "recent_events": [],
+  "policy": {
+    "model_training_claimed": false,
+    "generated_code_auto_applied": false,
+    "raw_code_persisted_in_learning_log": false
+  }
+}

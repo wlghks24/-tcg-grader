@@ -1,22 +1,285 @@
 {
-  "updated_at": "2026-08-21T15:01:57+00:00",
-  "issue_count": 2,
+  "updated_at": "2026-08-26T10:47:11+00:00",
+  "issue_count": 7,
   "issues": [
     {
       "name": "출시일",
       "file": "releases.json",
       "severity": "주의",
-      "auto_action": "검증 후 정상 반영",
-      "detail": "Pokémon JP: RuntimeError · ONE PIECE JP: HTTPError · ONE PIECE US: HTTPError",
-      "recommended_action": "공식 상품 페이지 구조와 출시일 표기를 확인하세요."
+      "auto_action": "일부 출처 오류 격리 · 정상자료 반영 · 다음 실행 제한시간 확대",
+      "detail": "ONE PIECE KR: URLError · Pokémon JP: URLError · ONE PIECE US: URLError · ONE PIECE JP: URLError · NARUTO Global: URLError",
+      "recommended_action": "공식 상품 페이지 구조와 출시일 표기를 확인하세요.",
+      "error_group_id": "819660722644a1bb",
+      "error_code": "NETWORK_CONNECTION_ERROR",
+      "error_subtype": "url-connection",
+      "http_status": null,
+      "bounded_retry_allowed": true,
+      "probable_cause": "인터넷, DNS 또는 원출처 연결이 일시적으로 실패했을 가능성이 큽니다.",
+      "resolution_steps": [
+        "인터넷과 DNS 상태를 확인합니다.",
+        "공식 HTTPS 주소만 제한적으로 재시도합니다.",
+        "복구되지 않으면 기존 검증자료를 유지합니다."
+      ],
+      "verification_steps": [
+        "복구되지 않으면 기존 검증자료를 유지합니다.",
+        "기존 정상자료가 손상되지 않았는지 확인합니다."
+      ],
+      "scenario_prepared": true,
+      "scenario_profile_id": "6c10af0bebb0301c",
+      "diagnostic_priority": 20,
+      "first_checks": [
+        "DNS·Wi-Fi·공식 호스트 접근을 분리 확인합니다."
+      ],
+      "fast_resolution_steps": [
+        "인터넷과 DNS 상태를 확인합니다.",
+        "공식 HTTPS 주소만 제한적으로 재시도합니다.",
+        "복구되지 않으면 기존 검증자료를 유지합니다."
+      ],
+      "stop_conditions": [
+        "사설주소 또는 비공식 주소로 우회하지 않습니다."
+      ],
+      "deferred_timeout_attempted": false,
+      "deferred_timeout_recovered": false,
+      "deferred_timeout_pending": false,
+      "deferred_timeout_seconds": 0
     },
     {
       "name": "현재 거래시세",
       "file": "market_prices.json",
       "severity": "주의",
-      "auto_action": "검증 후 정상 반영",
-      "detail": "KREAM HIT: TimeoutError · KREAM 로맨스 던 BOX: TimeoutError · KREAM 블랙볼트 BOX: TimeoutError",
-      "recommended_action": "가격 출처의 공개 거래표시와 상품명을 확인하세요."
+      "auto_action": "일부 출처 오류 격리 · 정상자료 반영 · 다음 실행 제한시간 확대",
+      "detail": "NARUTO CP-001: URLError · POKARD BOX: URLError · KREAM HIT: URLError · KREAM 로맨스 던 BOX: URLError · KREAM 블랙볼트 BOX: URLError · Pack Magik OP14-009: URLError · POKARD HIT: URLError",
+      "recommended_action": "가격 출처의 공개 거래표시와 상품명을 확인하세요.",
+      "error_group_id": "819660722644a1bb",
+      "error_code": "NETWORK_CONNECTION_ERROR",
+      "error_subtype": "url-connection",
+      "http_status": null,
+      "bounded_retry_allowed": true,
+      "probable_cause": "인터넷, DNS 또는 원출처 연결이 일시적으로 실패했을 가능성이 큽니다.",
+      "resolution_steps": [
+        "인터넷과 DNS 상태를 확인합니다.",
+        "공식 HTTPS 주소만 제한적으로 재시도합니다.",
+        "복구되지 않으면 기존 검증자료를 유지합니다."
+      ],
+      "verification_steps": [
+        "복구되지 않으면 기존 검증자료를 유지합니다.",
+        "기존 정상자료가 손상되지 않았는지 확인합니다."
+      ],
+      "scenario_prepared": true,
+      "scenario_profile_id": "6c10af0bebb0301c",
+      "diagnostic_priority": 20,
+      "first_checks": [
+        "DNS·Wi-Fi·공식 호스트 접근을 분리 확인합니다."
+      ],
+      "fast_resolution_steps": [
+        "인터넷과 DNS 상태를 확인합니다.",
+        "공식 HTTPS 주소만 제한적으로 재시도합니다.",
+        "복구되지 않으면 기존 검증자료를 유지합니다."
+      ],
+      "stop_conditions": [
+        "사설주소 또는 비공식 주소로 우회하지 않습니다."
+      ],
+      "deferred_timeout_attempted": false,
+      "deferred_timeout_recovered": false,
+      "deferred_timeout_pending": false,
+      "deferred_timeout_seconds": 0
+    },
+    {
+      "name": "프로모·콜라보 행사",
+      "file": "promo_events.json",
+      "severity": "주의",
+      "auto_action": "일부 출처 오류 격리 · 정상자료 반영 · 다음 실행 제한시간 확대",
+      "detail": "포켓몬 카드짐 엔트리 캠페인 2026 상반기: URLError · WCS 2026 기념 피카츄 프로모: URLError · 친구·가족과 프렌드 배틀: URLError · 발매기념대회 리미티드 배틀: URLError · 2026 포켓몬 월드 챔피언십·PokémonXP: URLError · 2026 성남CITY 배틀 토너먼트 × GXG 2026: URLError · 포켓몬 카드짐 엔트리 캠페인 2026 하반기: URLError · 9월 플래그쉽 배틀: URLError · 9월 교류회: URLError · 초보자 [9월] 원피스 카드게임 스탠다드 배틀 9월 1일 ~ 9월 30일: URLError · 챔피언십 26-27 북미 파이널 시즌 1: URLError · BANDAI CARD GAMES Fest 26-27 Dallas: URLError · 챔피언스리그 2027 요코하마: URLError · 포켓몬 카드게임 30주년 기념 행사: URLError · NARUTO × 뉴욕 양키스 게임 나이트: URLError · New York Comic Con 2026 나루토 카드게임 체험회: URLError · BANDAI CARD GAMES Fest 26-27 Orlando: URLError · 포켓몬 영화·애니 공식 정보: URLError · 한국 포켓몬 영화·극장판 개봉 확인: URLError · 한국 원피스 극장판 개봉 확인: URLError · 한국 나루토 영화 개봉 확인: URLError · 일본 포켓몬 영화·영상 공개 정보: URLError · 일본 나루토 영화·영상 공개 정보: URLError · 미국 원피스 영화·영상 공개 정보: URLError · 미국 나루토 영화·영상 공개 정보: URLError · NARUTO & BORUTO 닌자마을 한여름 수둔 축제: URLError · 원피스 밀짚모자 스토어 나고야 공식 개점 행사: URLError · ONE PIECE × NBA HOUSE JAPAN 공식 콜라보 배송: URLError · THE ONE PIECE 공식 애니메이션 영상 공개: URLError · 포켓몬 데크 그대로 배틀 공식 체험 행사: URLError · 한국 나루토 카드게임 행사·정식 출시 공식 발표 추적: URLError · KR 원피스 카드 신규행사 탐색: URLError · KR 포켓몬 카드 신규행사 탐색: URLError · KR 나루토 카드 신규행사 탐색: URLError · JP 포켓몬 카드 신규행사 탐색: URLError · JP 원피스 카드 신규행사 탐색: URLError · US 원피스 카드 신규행사 탐색: URLError · US 포켓몬 카드 신규행사 탐색: URLError · JP 나루토 카드 신규행사 탐색: URLError · US 나루토 카드 신규행사 탐색: URLError",
+      "recommended_action": "공식 행사 페이지의 기간·수령조건을 확인하세요.",
+      "error_group_id": "819660722644a1bb",
+      "error_code": "NETWORK_CONNECTION_ERROR",
+      "error_subtype": "url-connection",
+      "http_status": null,
+      "bounded_retry_allowed": true,
+      "probable_cause": "인터넷, DNS 또는 원출처 연결이 일시적으로 실패했을 가능성이 큽니다.",
+      "resolution_steps": [
+        "인터넷과 DNS 상태를 확인합니다.",
+        "공식 HTTPS 주소만 제한적으로 재시도합니다.",
+        "복구되지 않으면 기존 검증자료를 유지합니다."
+      ],
+      "verification_steps": [
+        "복구되지 않으면 기존 검증자료를 유지합니다.",
+        "기존 정상자료가 손상되지 않았는지 확인합니다."
+      ],
+      "scenario_prepared": true,
+      "scenario_profile_id": "6c10af0bebb0301c",
+      "diagnostic_priority": 20,
+      "first_checks": [
+        "DNS·Wi-Fi·공식 호스트 접근을 분리 확인합니다."
+      ],
+      "fast_resolution_steps": [
+        "인터넷과 DNS 상태를 확인합니다.",
+        "공식 HTTPS 주소만 제한적으로 재시도합니다.",
+        "복구되지 않으면 기존 검증자료를 유지합니다."
+      ],
+      "stop_conditions": [
+        "사설주소 또는 비공식 주소로 우회하지 않습니다."
+      ],
+      "deferred_timeout_attempted": false,
+      "deferred_timeout_recovered": false,
+      "deferred_timeout_pending": false,
+      "deferred_timeout_seconds": 0
+    },
+    {
+      "name": "구매처·링크 보안 확인",
+      "file": "purchase_sources.json",
+      "severity": "주의",
+      "auto_action": "일부 출처 오류 격리 · 정상자료 반영 · 다음 실행 제한시간 확대",
+      "detail": "포켓몬 카드 게임 코리아 제품: 재확인 필요·기존 주소 유지 (URLError) · 원피스 카드게임 코리아: 재확인 필요·기존 주소 유지 (URLError) · 나루토 카드게임 공식: 재확인 필요·기존 주소 유지 (URLError) · 포켓몬 카드 공식 제품: 재확인 필요·기존 주소 유지 (URLError) · 포켓몬센터 온라인: 재확인 필요·기존 주소 유지 (URLError) · 원피스 카드게임 공식: 재확인 필요·기존 주소 유지 (URLError) · Pokémon Center US: 재확인 필요·기존 주소 유지 (URLError) · Pokémon 공식 판매점 찾기: 재확인 필요·기존 주소 유지 (URLError) · One Piece Card Game 공식: 재확인 필요·기존 주소 유지 (URLError) · Naruto Card Game 공식: 재확인 필요·기존 주소 유지 (URLError) · 포켓몬 공인 카드샵 안내: 재확인 필요·기존 주소 유지 (URLError)",
+      "recommended_action": "공식 구매처 HTTPS 주소·접속 상태를 확인하세요.",
+      "error_group_id": "819660722644a1bb",
+      "error_code": "NETWORK_CONNECTION_ERROR",
+      "error_subtype": "url-connection",
+      "http_status": null,
+      "bounded_retry_allowed": true,
+      "probable_cause": "인터넷, DNS 또는 원출처 연결이 일시적으로 실패했을 가능성이 큽니다.",
+      "resolution_steps": [
+        "인터넷과 DNS 상태를 확인합니다.",
+        "공식 HTTPS 주소만 제한적으로 재시도합니다.",
+        "복구되지 않으면 기존 검증자료를 유지합니다."
+      ],
+      "verification_steps": [
+        "복구되지 않으면 기존 검증자료를 유지합니다.",
+        "기존 정상자료가 손상되지 않았는지 확인합니다."
+      ],
+      "scenario_prepared": true,
+      "scenario_profile_id": "6c10af0bebb0301c",
+      "diagnostic_priority": 20,
+      "first_checks": [
+        "DNS·Wi-Fi·공식 호스트 접근을 분리 확인합니다."
+      ],
+      "fast_resolution_steps": [
+        "인터넷과 DNS 상태를 확인합니다.",
+        "공식 HTTPS 주소만 제한적으로 재시도합니다.",
+        "복구되지 않으면 기존 검증자료를 유지합니다."
+      ],
+      "stop_conditions": [
+        "사설주소 또는 비공식 주소로 우회하지 않습니다."
+      ],
+      "deferred_timeout_attempted": false,
+      "deferred_timeout_recovered": false,
+      "deferred_timeout_pending": false,
+      "deferred_timeout_seconds": 0
+    },
+    {
+      "name": "원화 환산 환율",
+      "file": "exchange_rates.json",
+      "severity": "주의",
+      "auto_action": "일부 출처 오류 격리 · 정상자료 반영 · 다음 실행 제한시간 확대",
+      "detail": "URLError",
+      "recommended_action": "인터넷 연결 후 환율 출처를 다시 확인하세요.",
+      "error_group_id": "819660722644a1bb",
+      "error_code": "NETWORK_CONNECTION_ERROR",
+      "error_subtype": "url-connection",
+      "http_status": null,
+      "bounded_retry_allowed": true,
+      "probable_cause": "인터넷, DNS 또는 원출처 연결이 일시적으로 실패했을 가능성이 큽니다.",
+      "resolution_steps": [
+        "인터넷과 DNS 상태를 확인합니다.",
+        "공식 HTTPS 주소만 제한적으로 재시도합니다.",
+        "복구되지 않으면 기존 검증자료를 유지합니다."
+      ],
+      "verification_steps": [
+        "복구되지 않으면 기존 검증자료를 유지합니다.",
+        "기존 정상자료가 손상되지 않았는지 확인합니다."
+      ],
+      "scenario_prepared": true,
+      "scenario_profile_id": "6c10af0bebb0301c",
+      "diagnostic_priority": 20,
+      "first_checks": [
+        "DNS·Wi-Fi·공식 호스트 접근을 분리 확인합니다."
+      ],
+      "fast_resolution_steps": [
+        "인터넷과 DNS 상태를 확인합니다.",
+        "공식 HTTPS 주소만 제한적으로 재시도합니다.",
+        "복구되지 않으면 기존 검증자료를 유지합니다."
+      ],
+      "stop_conditions": [
+        "사설주소 또는 비공식 주소로 우회하지 않습니다."
+      ],
+      "deferred_timeout_attempted": false,
+      "deferred_timeout_recovered": false,
+      "deferred_timeout_pending": false,
+      "deferred_timeout_seconds": 0
+    },
+    {
+      "name": "보조 후보수집",
+      "file": "__integration__",
+      "severity": "주의",
+      "auto_action": "기존 정상자료 유지 · 다음 실행에서 제한시간 확대 후 재확인",
+      "detail": "포켓몬: URLError: <urlopen error dns lookup failed> / URLError: <urlopen error dns lookup failed> / 원피스: URLError: <urlopen error dns lookup failed> / URLError: <urlopen error dns lookup failed> / 나루토: URLError: <urlopen error dns lookup failed> / URLError: <urlopen error dns lookup failed>",
+      "recommended_action": "보조 후보수집 출처의 응답과 네트워크 상태를 확인하세요.",
+      "error_group_id": "1290c9959924d837",
+      "error_code": "NETWORK_CONNECTION_ERROR",
+      "error_subtype": "dns-resolution",
+      "http_status": null,
+      "bounded_retry_allowed": true,
+      "probable_cause": "인터넷, DNS 또는 원출처 연결이 일시적으로 실패했을 가능성이 큽니다.",
+      "resolution_steps": [
+        "인터넷과 DNS 상태를 확인합니다.",
+        "공식 HTTPS 주소만 제한적으로 재시도합니다.",
+        "복구되지 않으면 기존 검증자료를 유지합니다."
+      ],
+      "verification_steps": [
+        "복구되지 않으면 기존 검증자료를 유지합니다.",
+        "기존 정상자료가 손상되지 않았는지 확인합니다."
+      ],
+      "scenario_prepared": true,
+      "scenario_profile_id": "f813b8e2d69ec2e2",
+      "diagnostic_priority": 20,
+      "first_checks": [
+        "DNS·Wi-Fi·공식 호스트 접근을 분리 확인합니다."
+      ],
+      "fast_resolution_steps": [
+        "인터넷과 DNS 상태를 확인합니다.",
+        "공식 HTTPS 주소만 제한적으로 재시도합니다.",
+        "복구되지 않으면 기존 검증자료를 유지합니다."
+      ],
+      "stop_conditions": [
+        "사설주소 또는 비공식 주소로 우회하지 않습니다."
+      ]
+    },
+    {
+      "name": "외부 링크 검사",
+      "file": "__link_audit__",
+      "severity": "주의",
+      "auto_action": "기존 정상자료 유지 · 다음 실행에서 학습 재시도",
+      "detail": "일시 확인불가 257개",
+      "recommended_action": "외부 링크 검사의 일시적 차단·응답지연 여부를 확인하세요.",
+      "error_group_id": "11d288ddbcb65453",
+      "error_code": "NETWORK_CONNECTION_ERROR",
+      "error_subtype": "temporary-unavailable",
+      "http_status": null,
+      "bounded_retry_allowed": true,
+      "probable_cause": "인터넷, DNS 또는 원출처 연결이 일시적으로 실패했을 가능성이 큽니다.",
+      "resolution_steps": [
+        "인터넷과 DNS 상태를 확인합니다.",
+        "공식 HTTPS 주소만 제한적으로 재시도합니다.",
+        "복구되지 않으면 기존 검증자료를 유지합니다."
+      ],
+      "verification_steps": [
+        "복구되지 않으면 기존 검증자료를 유지합니다.",
+        "기존 정상자료가 손상되지 않았는지 확인합니다."
+      ],
+      "scenario_prepared": true,
+      "scenario_profile_id": "456274d0c082e709",
+      "diagnostic_priority": 20,
+      "first_checks": [
+        "DNS·Wi-Fi·공식 호스트 접근을 분리 확인합니다."
+      ],
+      "fast_resolution_steps": [
+        "인터넷과 DNS 상태를 확인합니다.",
+        "공식 HTTPS 주소만 제한적으로 재시도합니다.",
+        "복구되지 않으면 기존 검증자료를 유지합니다."
+      ],
+      "stop_conditions": [
+        "사설주소 또는 비공식 주소로 우회하지 않습니다."
+      ]
     }
   ]
 }

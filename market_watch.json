@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "updated_at": "2026-08-21T15:00:18+00:00",
+  "updated_at": "2026-08-26T10:47:09+00:00",
   "items": [
     {
       "region": "KR",
@@ -14,7 +14,12 @@
       "release_type": "신규 발매",
       "official_price": "₩48,000/BOX",
       "source": "https://kream.co.kr/products/975577/",
-      "package_type": "박스"
+      "package_type": "박스",
+      "link_checked_at": "2026-08-26T10:47:11+00:00",
+      "link_status": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인",
+      "link_statuses": {
+        "source": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인"
+      }
     },
     {
       "region": "KR",
@@ -28,7 +33,12 @@
       "release_type": "신규 발매",
       "official_price": "8BOX 구성",
       "source": "https://kream.co.kr/products/1015880",
-      "package_type": "박스 묶음·케이스"
+      "package_type": "박스 묶음·케이스",
+      "link_checked_at": "2026-08-26T10:47:11+00:00",
+      "link_status": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인",
+      "link_statuses": {
+        "source": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인"
+      }
     },
     {
       "region": "KR",
@@ -42,7 +52,12 @@
       "release_type": "신규 발매",
       "official_price": "₩48,000/BOX",
       "source": "https://kream.co.kr/products/1044391/",
-      "package_type": "박스"
+      "package_type": "박스",
+      "link_checked_at": "2026-08-26T10:47:11+00:00",
+      "link_status": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인",
+      "link_statuses": {
+        "source": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인"
+      }
     },
     {
       "region": "JP",
@@ -56,7 +71,12 @@
       "release_type": "재발매 관찰중",
       "official_price": "¥5,280/BOX",
       "source": "https://psa-index.com/op/box/f2368df8-afac-4442-b478-207121908a3c",
-      "package_type": "박스"
+      "package_type": "박스",
+      "link_checked_at": "2026-08-26T10:47:11+00:00",
+      "link_status": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인",
+      "link_statuses": {
+        "source": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인"
+      }
     },
     {
       "region": "US",
@@ -70,7 +90,12 @@
       "release_type": "재발매 관찰중",
       "official_price": "$4.99/팩 · 24팩",
       "source": "https://www.tcgplayer.com/content/article/The-Best-Sealed-One-Piece-Buys-for-Mayhem-2026/b0c78d2b-ffdd-4497-b067-387273d8fade/",
-      "package_type": "박스"
+      "package_type": "박스",
+      "link_checked_at": "2026-08-26T10:47:11+00:00",
+      "link_status": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인",
+      "link_statuses": {
+        "source": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인"
+      }
     },
     {
       "region": "US",
@@ -84,7 +109,12 @@
       "release_type": "신규 발매",
       "official_price": "공식 BOX 구성 확인",
       "source": "https://www.tcgplayer.com/content/article/The-10-Cards-Everybody-Wants-from-Premium-Booster-The-Best-Vol-2-PRB-02/5ebe50da-37b7-4be3-a0a2-ab0520a3beb7/",
-      "package_type": "박스"
+      "package_type": "박스",
+      "link_checked_at": "2026-08-26T10:47:11+00:00",
+      "link_status": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인",
+      "link_statuses": {
+        "source": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인"
+      }
     },
     {
       "region": "KR",
@@ -98,21 +128,12 @@
       "sale_status": "판매·출시 확인 중",
       "release_type": "신규·상시 판매",
       "official_price": "₩48,000/BOX",
-      "source": "https://onepiece-cardgame.kr/products.do"
-    },
-    {
-      "region": "KR",
-      "game": "ONE PIECE",
-      "asset": "BOX",
-      "name": "OPK-14 부스터 팩 창해의 칠걸",
-      "native": "OPK-14 부스터 팩 창해의 칠걸",
-      "product_code": "OPK-14",
-      "package_type": "박스",
-      "release_date": "2026-08-21",
-      "sale_status": "판매·출시 확인 중",
-      "release_type": "신규·상시 판매",
-      "official_price": "₩48,000/BOX",
-      "source": "https://onepiece-cardgame.kr/"
+      "source": "https://onepiece-cardgame.kr/products.do",
+      "link_checked_at": "2026-08-26T10:47:11+00:00",
+      "link_status": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인",
+      "link_statuses": {
+        "source": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인"
+      }
     },
     {
       "region": "KR",
@@ -126,7 +147,12 @@
       "sale_status": "판매·출시 확인 중",
       "release_type": "신규·상시 판매",
       "official_price": "₩48,000/BOX",
-      "source": "https://onepiece-cardgame.kr/products.do"
+      "source": "https://onepiece-cardgame.kr/products.do",
+      "link_checked_at": "2026-08-26T10:47:11+00:00",
+      "link_status": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인",
+      "link_statuses": {
+        "source": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인"
+      }
     },
     {
       "region": "JP",
@@ -140,7 +166,12 @@
       "sale_status": "판매·출시 확인 중",
       "release_type": "신규·상시 판매",
       "official_price": "¥240/팩",
-      "source": "https://www.onepiece-cardgame.com/products/?subcategory=boosters"
+      "source": "https://www.onepiece-cardgame.com/products/?subcategory=boosters",
+      "link_checked_at": "2026-08-26T10:47:11+00:00",
+      "link_status": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인",
+      "link_statuses": {
+        "source": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인"
+      }
     },
     {
       "region": "US",
@@ -154,7 +185,12 @@
       "sale_status": "판매·출시 확인 중",
       "release_type": "신규·상시 판매",
       "official_price": "$4.99/팩",
-      "source": "https://en.onepiece-cardgame.com/products/"
+      "source": "https://en.onepiece-cardgame.com/products/",
+      "link_checked_at": "2026-08-26T10:47:11+00:00",
+      "link_status": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인",
+      "link_statuses": {
+        "source": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인"
+      }
     },
     {
       "region": "JP",
@@ -168,7 +204,12 @@
       "sale_status": "판매·출시 확인 중",
       "release_type": "신규·상시 판매",
       "official_price": "¥360/팩",
-      "source": "https://www.pokemon-card.com/products/"
+      "source": "https://www.pokemon-card.com/products/",
+      "link_checked_at": "2026-08-26T10:47:11+00:00",
+      "link_status": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인",
+      "link_statuses": {
+        "source": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인"
+      }
     },
     {
       "region": "US",
@@ -182,7 +223,12 @@
       "sale_status": "판매·출시 확인 중",
       "release_type": "신규·상시 판매",
       "official_price": "공식 상품페이지 확인",
-      "source": "https://www.pokemon.com/us/pokemon-tcg/product-gallery/30th-celebration-elite-trainer-box"
+      "source": "https://www.pokemon.com/us/pokemon-tcg/product-gallery/30th-celebration-elite-trainer-box",
+      "link_checked_at": "2026-08-26T10:47:11+00:00",
+      "link_status": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인",
+      "link_statuses": {
+        "source": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인"
+      }
     },
     {
       "region": "US",
@@ -196,7 +242,12 @@
       "sale_status": "판매·출시 확인 중",
       "release_type": "신규·상시 판매",
       "official_price": "공식 상품페이지 확인",
-      "source": "https://www.pokemon.com/us/pokemon-tcg/product-gallery/30th-celebration-ultra-premium-collections-day-night"
+      "source": "https://www.pokemon.com/us/pokemon-tcg/product-gallery/30th-celebration-ultra-premium-collections-day-night",
+      "link_checked_at": "2026-08-26T10:47:11+00:00",
+      "link_status": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인",
+      "link_statuses": {
+        "source": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인"
+      }
     },
     {
       "region": "US",
@@ -210,9 +261,15 @@
       "sale_status": "판매·출시 확인 중",
       "release_type": "신규·상시 판매",
       "official_price": "가격·제품 구성 미정",
-      "source": "https://www.naruto-cardgame.com/asia-en/"
+      "source": "https://www.naruto-cardgame.com/asia-en/",
+      "link_checked_at": "2026-08-26T10:47:11+00:00",
+      "link_status": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인",
+      "link_statuses": {
+        "source": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인"
+      }
     }
   ],
   "collection_status": "정상",
-  "collection_errors": []
+  "collection_errors": [],
+  "link_audit_at": "2026-08-26T10:47:11+00:00"
 }

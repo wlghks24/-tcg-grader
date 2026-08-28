@@ -1,0 +1,39 @@
+{
+  "version": "v106-runtime-integration-fix",
+  "generated_at_utc": "2026-08-28T08:33:33Z",
+  "ok": true,
+  "root_cause": "social_event_candidates.json was consumed by the UI and cached by the service worker but omitted from the local server public-file allowlist, so local PC/Android sessions silently kept an empty social candidate view.",
+  "fixed": [
+    "local HTTP server now serves social_event_candidates.json",
+    "social_source_registry.json remains private",
+    "UI, manifest, service worker, server status, auto updater and fault-injection release versions are coherent",
+    "19 mojibake Korean guide filenames were restored as UTF-8 사용방법_vNN.md files",
+    "release verification now runs the current v106 gate instead of stale v79-v99 filename/version assertions"
+  ],
+  "verification": {
+    "release_gate_suites_per_pass": 16,
+    "complete_passes": 5,
+    "successful_passes": 5,
+    "failed_passes": 0,
+    "checks_executed": 80,
+    "v106_runtime_integration": {"passed": 6, "failed": 0},
+    "feature_contract": {"implemented": 24, "total": 24, "failed": 0},
+    "social_source_regression": {"passed": 12, "failed": 0},
+    "market_source_regression": {"passed": 8, "failed": 0},
+    "ebay_provider_learning_regression": {"passed": 11, "failed": 0},
+    "vision_calibration_regression": {"passed": 8, "failed": 0},
+    "fault_healing_regression": {"passed": 5, "failed": 0},
+    "five_grader_cross_runtime": {"vectors": 6051, "comparisons": 18153, "ok": true},
+    "browser_runtime": {"ok": true},
+    "camera_runtime": {"ok": true},
+    "vision_runtime": {"ok": true},
+    "service_worker_runtime": {"ok": true},
+    "python_compileall": {"ok": true}
+  },
+  "platform_scope": ["Windows PC local server", "Android/Termux local server", "GitHub Pages static PWA"],
+  "excluded": [
+    {"id": "iphone_serverless_continuous_collection", "reason": "explicitly excluded by the user"}
+  ],
+  "live_credential_note": "X and Instagram live credential calls were not executed because no credentials were supplied. Their request, response, redaction and fallback behavior remain covered by deterministic tests.",
+  "deployment_note": "This artifact is corrected and packaged but has not been pushed to the user's GitHub Pages repository."
+}

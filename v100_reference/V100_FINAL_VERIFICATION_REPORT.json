@@ -1,0 +1,89 @@
+{
+  "version": 1,
+  "build": "TCG_Grader_v100_SELF_LEARNING_CALIBRATION_2026-08-28",
+  "base_runtime": "TCG_Grader_v75_SAFE_REDIRECT_EXCEPTION_LEARNING_2026-08-24",
+  "ok": true,
+  "final_full_verification_passes": [
+    {
+      "pass": 1,
+      "ok": true,
+      "tail": "- 통과: v75 redirect·예외학습·백업보존 보강 · redirect 사전 DNS 검증 · 인증요청 redirect 차단 · 코드오류 오분류 방지 · 정상 backup 보존 · PWA 버전 일치\n- 통과: v100 비전 자가보정·데이터누수 차단 · 자가보정 안전검사 · scratch R=1.000/S=1.000 · whitening R=1.000/S=1.000 · 코드 자동수정 없음\n누적 검사 100회 · 이번 결과 정상"
+    },
+    {
+      "pass": 2,
+      "ok": true,
+      "tail": "- 통과: v75 redirect·예외학습·백업보존 보강 · redirect 사전 DNS 검증 · 인증요청 redirect 차단 · 코드오류 오분류 방지 · 정상 backup 보존 · PWA 버전 일치\n- 통과: v100 비전 자가보정·데이터누수 차단 · 자가보정 안전검사 · scratch R=1.000/S=1.000 · whitening R=1.000/S=1.000 · 코드 자동수정 없음\n누적 검사 100회 · 이번 결과 정상"
+    },
+    {
+      "pass": 3,
+      "ok": true,
+      "tail": "- 통과: v75 redirect·예외학습·백업보존 보강 · redirect 사전 DNS 검증 · 인증요청 redirect 차단 · 코드오류 오분류 방지 · 정상 backup 보존 · PWA 버전 일치\n- 통과: v100 비전 자가보정·데이터누수 차단 · 자가보정 안전검사 · scratch R=1.000/S=1.000 · whitening R=1.000/S=1.000 · 코드 자동수정 없음\n누적 검사 100회 · 이번 결과 정상"
+    },
+    {
+      "pass": 4,
+      "ok": true,
+      "tail": "- 통과: v75 redirect·예외학습·백업보존 보강 · redirect 사전 DNS 검증 · 인증요청 redirect 차단 · 코드오류 오분류 방지 · 정상 backup 보존 · PWA 버전 일치\n- 통과: v100 비전 자가보정·데이터누수 차단 · 자가보정 안전검사 · scratch R=1.000/S=1.000 · whitening R=1.000/S=1.000 · 코드 자동수정 없음\n누적 검사 100회 · 이번 결과 정상"
+    },
+    {
+      "pass": 5,
+      "ok": true,
+      "tail": "- 통과: v75 redirect·예외학습·백업보존 보강 · redirect 사전 DNS 검증 · 인증요청 redirect 차단 · 코드오류 오분류 방지 · 정상 backup 보존 · PWA 버전 일치\n- 통과: v100 비전 자가보정·데이터누수 차단 · 자가보정 안전검사 · scratch R=1.000/S=1.000 · whitening R=1.000/S=1.000 · 코드 자동수정 없음\n누적 검사 100회 · 이번 결과 정상"
+    },
+    {
+      "pass": 6,
+      "ok": true,
+      "tail": "- 통과: v75 redirect·예외학습·백업보존 보강 · redirect 사전 DNS 검증 · 인증요청 redirect 차단 · 코드오류 오분류 방지 · 정상 backup 보존 · PWA 버전 일치\n- 통과: v100 비전 자가보정·데이터누수 차단 · 자가보정 안전검사 · scratch R=1.000/S=1.000 · whitening R=1.000/S=1.000 · 코드 자동수정 없음\n누적 검사 100회 · 이번 결과 정상"
+    }
+  ],
+  "successful_passes": 6,
+  "failed_passes": 0,
+  "vision_self_learning": {
+    "ok": true,
+    "metrics": {
+      "score": 1.0,
+      "scratch_recall": 1.0,
+      "scratch_specificity": 1.0,
+      "whitening_recall": 1.0,
+      "whitening_specificity": 1.0,
+      "counts": {
+        "tp": 12,
+        "tn": 24,
+        "fp": 0,
+        "fn": 0,
+        "wtp": 12,
+        "wtn": 24,
+        "wfp": 0,
+        "wfn": 0
+      }
+    },
+    "leak_blocked": true,
+    "conflict_blocked": true,
+    "calibration_adopted": false,
+    "selected": {
+      "canny_low": 35,
+      "canny_high": 105,
+      "clahe_clip": 2.0,
+      "hough_threshold": 22,
+      "min_line_ratio": 0.2,
+      "max_line_gap_ratio": 0.02,
+      "scratch_contrast_min": 22.0,
+      "whitening_delta": 28.0,
+      "working_width": 240
+    }
+  },
+  "streaming_verifier": "run_full_verification_streamed.py",
+  "safety": {
+    "code_auto_modification": false,
+    "parameter_adoption_requires_validation_improvement": true,
+    "holdout_must_not_regress": true,
+    "same_card_group_split_blocked": true,
+    "duplicate_pixel_cross_card_blocked": true,
+    "conflicting_labels_blocked": true,
+    "atomic_parameter_write": true
+  },
+  "limitations": [
+    "synthetic deterministic cross-test is not a substitute for a large real graded-card dataset",
+    "actual PSA/BGS/CGC/TAG/BRG grade remains uncertain and requires professional grading",
+    "real-photo calibration should use card/cert grouped train-validation-holdout splits"
+  ]
+}

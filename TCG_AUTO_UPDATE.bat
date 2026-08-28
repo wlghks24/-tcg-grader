@@ -2,8 +2,10 @@
 setlocal
 cd /d "%~dp0"
 set "AUTO_MODE=0"
+set "TCG_EXIT_CODE=1"
 if /i "%~1"=="/AUTO" set "AUTO_MODE=1"
 title TCG AUTO UPDATE
+echo Node.js is optional. Python data checks continue when Node.js is not installed.
 echo ========================================
 echo TCG DATA AUTO UPDATE - 6 STEPS
 echo 1 Release date
@@ -15,29 +17,37 @@ echo 6 KRW exchange rates
 echo ========================================
 echo.
 where py.exe >nul 2>nul
-if not errorlevel 1 goto RUN_PY_LAUNCHER
+if errorlevel 1 goto CHECK_PYTHON
+py.exe -3 -c "import sys; sys.exit(sys.version_info.major != 3)" >nul 2>nul
+if errorlevel 1 goto CHECK_PYTHON
+set "TCG_PYTHON_EXE=py.exe"
+set "TCG_PYTHON_ARGS=-3"
+goto RUN_UPDATE
+
+:CHECK_PYTHON
 where python.exe >nul 2>nul
-if not errorlevel 1 goto RUN_PYTHON
+if errorlevel 1 goto NO_PYTHON
+python.exe -c "import sys; sys.exit(sys.version_info.major != 3)" >nul 2>nul
+if errorlevel 1 goto NO_PYTHON
+set "TCG_PYTHON_EXE=python.exe"
+set "TCG_PYTHON_ARGS="
+goto RUN_UPDATE
+
+:NO_PYTHON
 echo [ERROR] Python is not installed or PATH is missing.
 echo Install Python and enable Add Python to PATH.
 goto END
 
-:RUN_PY_LAUNCHER
-py.exe -3 auto_update_all.py
-goto RESULT
-
-:RUN_PYTHON
-python.exe auto_update_all.py
-
-:RESULT
+:RUN_UPDATE
+"%TCG_PYTHON_EXE%" %TCG_PYTHON_ARGS% auto_update_all.py
 if errorlevel 1 goto FAILED
-where py.exe >nul 2>nul
-if not errorlevel 1 py.exe -3 verify_all.py
-if errorlevel 1 python.exe verify_all.py
+"%TCG_PYTHON_EXE%" %TCG_PYTHON_ARGS% run_repeated_verification.py --passes 5
 if errorlevel 1 goto FAILED
+set "TCG_EXIT_CODE=0"
 echo.
 echo [OK] Update completed.
 echo Report: auto_update_report.json
+echo Five-pass verification: verification_cycles.json
 goto END
 
 :FAILED
@@ -49,4 +59,4 @@ echo.
 if "%AUTO_MODE%"=="1" goto AUTO_EXIT
 pause
 :AUTO_EXIT
-endlocal
+endlocal & exit /b %TCG_EXIT_CODE%

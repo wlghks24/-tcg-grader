@@ -1,5 +1,5 @@
 {
-  "updated_at": "2026-08-21T15:00:18+00:00",
+  "updated_at": "2026-08-26T10:47:08+00:00",
   "items": [
     {
       "game": "ONE PIECE",
@@ -8,16 +8,12 @@
       "release_date": "2026-07-24",
       "price": "₩48,000/BOX",
       "status": "공식 확인",
-      "source": "https://onepiece-cardgame.kr/products.do"
-    },
-    {
-      "game": "ONE PIECE",
-      "region": "KR",
-      "name": "OPK-14 부스터 팩 창해의 칠걸",
-      "release_date": "2026-08-21",
-      "price": "₩48,000/BOX",
-      "status": "공식 출시",
-      "source": "https://onepiece-cardgame.kr/"
+      "source": "https://onepiece-cardgame.kr/products.do",
+      "link_checked_at": "2026-08-26T10:47:11+00:00",
+      "link_status": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인",
+      "link_statuses": {
+        "source": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인"
+      }
     },
     {
       "game": "ONE PIECE",
@@ -26,7 +22,12 @@
       "release_date": "2026-08-21",
       "price": "₩48,000/BOX",
       "status": "공식 확인",
-      "source": "https://onepiece-cardgame.kr/products.do"
+      "source": "https://onepiece-cardgame.kr/products.do",
+      "link_checked_at": "2026-08-26T10:47:11+00:00",
+      "link_status": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인",
+      "link_statuses": {
+        "source": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인"
+      }
     },
     {
       "game": "ONE PIECE",
@@ -35,7 +36,12 @@
       "release_date": "2026-08-22",
       "price": "¥240/팩",
       "status": "출시예정",
-      "source": "https://www.onepiece-cardgame.com/products/?subcategory=boosters"
+      "source": "https://www.onepiece-cardgame.com/products/?subcategory=boosters",
+      "link_checked_at": "2026-08-26T10:47:11+00:00",
+      "link_status": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인",
+      "link_statuses": {
+        "source": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인"
+      }
     },
     {
       "game": "ONE PIECE",
@@ -44,7 +50,12 @@
       "release_date": "2026-08-28",
       "price": "$4.99/팩",
       "status": "출시예정",
-      "source": "https://en.onepiece-cardgame.com/products/"
+      "source": "https://en.onepiece-cardgame.com/products/",
+      "link_checked_at": "2026-08-26T10:47:11+00:00",
+      "link_status": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인",
+      "link_statuses": {
+        "source": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인"
+      }
     },
     {
       "game": "Pokémon",
@@ -53,7 +64,12 @@
       "release_date": "2026-09-16",
       "price": "¥360/팩",
       "status": "출시예정",
-      "source": "https://www.pokemon-card.com/products/"
+      "source": "https://www.pokemon-card.com/products/",
+      "link_checked_at": "2026-08-26T10:47:11+00:00",
+      "link_status": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인",
+      "link_statuses": {
+        "source": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인"
+      }
     },
     {
       "game": "Pokémon",
@@ -62,7 +78,12 @@
       "release_date": "2026-09-16",
       "price": "공식 상품페이지 확인",
       "status": "출시예정",
-      "source": "https://www.pokemon.com/us/pokemon-tcg/product-gallery/30th-celebration-elite-trainer-box"
+      "source": "https://www.pokemon.com/us/pokemon-tcg/product-gallery/30th-celebration-elite-trainer-box",
+      "link_checked_at": "2026-08-26T10:47:11+00:00",
+      "link_status": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인",
+      "link_statuses": {
+        "source": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인"
+      }
     },
     {
       "game": "Pokémon",
@@ -71,7 +92,12 @@
       "release_date": "2026-11-06",
       "price": "공식 상품페이지 확인",
       "status": "출시예정",
-      "source": "https://www.pokemon.com/us/pokemon-tcg/product-gallery/30th-celebration-ultra-premium-collections-day-night"
+      "source": "https://www.pokemon.com/us/pokemon-tcg/product-gallery/30th-celebration-ultra-premium-collections-day-night",
+      "link_checked_at": "2026-08-26T10:47:11+00:00",
+      "link_status": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인",
+      "link_statuses": {
+        "source": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인"
+      }
     },
     {
       "game": "NARUTO",
@@ -81,14 +107,22 @@
       "release_window": "2027년 여름",
       "price": "가격·제품 구성 미정",
       "status": "전 세계 동시 출시 예정",
-      "source": "https://www.naruto-cardgame.com/asia-en/"
+      "source": "https://www.naruto-cardgame.com/asia-en/",
+      "link_checked_at": "2026-08-26T10:47:11+00:00",
+      "link_status": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인",
+      "link_statuses": {
+        "source": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인"
+      }
     }
   ],
   "collection_policy": "공식 출처에서 상품명과 출시일 또는 공식 출시시기가 함께 확인된 항목만 자동 반영",
   "collection_status": "일부 출처 확인 실패",
   "collection_errors": [
-    "Pokémon JP: RuntimeError",
-    "ONE PIECE JP: HTTPError",
-    "ONE PIECE US: HTTPError"
-  ]
+    "ONE PIECE US: URLError",
+    "ONE PIECE JP: URLError",
+    "ONE PIECE KR: URLError",
+    "Pokémon JP: URLError",
+    "NARUTO Global: URLError"
+  ],
+  "link_audit_at": "2026-08-26T10:47:11+00:00"
 }

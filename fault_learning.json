@@ -1,0 +1,61 @@
+{
+  "version": 1,
+  "engine": "v98-camera-resilience-full-runtime",
+  "updated_at": "2026-08-27T00:11:52+00:00",
+  "training_only": true,
+  "scenario_count": 21,
+  "successful_scenarios": 21,
+  "profiles": {
+    "syntax": {
+      "attempts": 2,
+      "detected": 2,
+      "repaired": 2
+    },
+    "data": {
+      "attempts": 2,
+      "detected": 2,
+      "repaired": 2
+    },
+    "version": {
+      "attempts": 2,
+      "detected": 2,
+      "repaired": 2
+    },
+    "camera": {
+      "attempts": 5,
+      "detected": 5,
+      "repaired": 5
+    },
+    "vision": {
+      "attempts": 4,
+      "detected": 4,
+      "repaired": 4
+    },
+    "security": {
+      "attempts": 3,
+      "detected": 3,
+      "repaired": 3
+    },
+    "storage": {
+      "attempts": 1,
+      "detected": 1,
+      "repaired": 1
+    },
+    "recovery": {
+      "attempts": 1,
+      "detected": 1,
+      "repaired": 1
+    },
+    "contract": {
+      "attempts": 1,
+      "detected": 1,
+      "repaired": 1
+    }
+  },
+  "safety": {
+    "production_files_modified": false,
+    "scenario_text_executed": false,
+    "network_accessed": false,
+    "generated_code_auto_applied": false
+  }
+}

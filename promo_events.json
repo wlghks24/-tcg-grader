@@ -1,6 +1,6 @@
 {
-  "updated_at": "2026-08-22T23:55:00+09:00",
-  "collection_status": "정상 · 한국·일본·미국 공식 행사 15건 확인 · 한국 포켓몬 2건",
+  "updated_at": "2026-08-26T10:47:08+00:00",
+  "collection_status": "기존 확인자료 유지 · 일부 출처 재확인 필요 · 한·일·미 영화정보 9/9 조합 추적",
   "items": [
     {
       "game": "포켓몬 카드",
@@ -15,7 +15,13 @@
       "condition": "플레이어즈클럽 가입 후 카드짐 공식 행사 QR 체크인. 등록한 마이짐에서 수령",
       "location": "일본 전국 포켓몬 카드짐",
       "status": "진행 중",
-      "source": "https://www.pokemon-card.com/info/005397.html"
+      "source": "https://www.pokemon-card.com/info/005397.html",
+      "link_checked_at": "2026-08-26T10:47:11+00:00",
+      "link_status": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인",
+      "source_grade": "official",
+      "link_statuses": {
+        "source": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인"
+      }
     },
     {
       "game": "포켓몬 카드",
@@ -30,7 +36,13 @@
       "condition": "일본 전국 카드짐의 대상 이벤트 참가 및 행사 조건 충족. 경품 소진 시 종료",
       "location": "일본 전국 포켓몬 카드짐",
       "status": "진행 중",
-      "source": "https://www.pokemon-card.com/info/005516.html"
+      "source": "https://www.pokemon-card.com/info/005516.html",
+      "link_checked_at": "2026-08-26T10:47:11+00:00",
+      "link_status": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인",
+      "source_grade": "official",
+      "link_statuses": {
+        "source": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인"
+      }
     },
     {
       "game": "포켓몬 카드",
@@ -45,52 +57,13 @@
       "condition": "대상 카드짐 행사에 친구 또는 가족과 참가. 경품 소진 시 종료",
       "location": "일본 전국 포켓몬 카드짐",
       "status": "진행 중",
-      "source": "https://www.pokemon-card.com/info/005569.html"
-    },
-    {
-      "game": "포켓몬 카드",
-      "region": "JP",
-      "category": "promo",
-      "name_ko": "포켓몬 카드짐 엔트리 캠페인 2026 하반기",
-      "name_native": "ポケカジムエントリーキャンペーン2026年後期",
-      "start_date": "2026-09-01",
-      "end_date": "2027-02-28",
-      "claim_deadline": "2027-04-30",
-      "reward": "짐 스탬프 수에 따른 하반기 한정 프로모 경품",
-      "condition": "플레이어즈클럽 가입 및 카드짐 행사 QR 체크인 필요. 상세 경품·수령 기한은 공식 안내 확인",
-      "location": "일본 전국 포켓몬 카드짐",
-      "status": "예정",
-      "source": "https://www.pokemon-card.com/info/005614.html"
-    },
-    {
-      "game": "포켓몬 카드",
-      "region": "JP",
-      "category": "collaboration",
-      "name_ko": "챔피언스리그 2027 요코하마",
-      "name_native": "チャンピオンズリーグ2027 横浜",
-      "start_date": "2026-09-20",
-      "end_date": "2026-09-22",
-      "claim_deadline": "2026-09-22",
-      "reward": "대회 성적에 따른 챔피언십 포인트 및 공식 기념품",
-      "condition": "사전 신청·추첨제이며 당일 접수 없음. 참가 부문별 공식 규정 확인",
-      "location": "파시피코 요코하마",
-      "status": "예정",
-      "source": "https://www.pokemon-card.com/info/005563.html"
-    },
-    {
-      "game": "포켓몬 카드",
-      "region": "JP",
-      "category": "collaboration",
-      "name_ko": "포켓몬 카드게임 30주년 기념 행사",
-      "name_native": "ポケモンカードゲーム30th CELEBRATION EVENT",
-      "start_date": "2026-10-25",
-      "end_date": "2026-11-01",
-      "claim_deadline": "2026-11-01",
-      "reward": "30주년 특별 행사·캠페인 예정, 세부 보상은 공식 후속 발표 확인",
-      "condition": "도쿄 10월 25일, 오사카 10월 31일~11월 1일. 참가방법은 공식 발표 확인",
-      "location": "마쿠하리 멧세·인텍스 오사카",
-      "status": "예정",
-      "source": "https://www.30th.pokemon-card.com/event"
+      "source": "https://www.pokemon-card.com/info/005569.html",
+      "link_checked_at": "2026-08-26T10:47:11+00:00",
+      "link_status": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인",
+      "source_grade": "official",
+      "link_statuses": {
+        "source": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인"
+      }
     },
     {
       "game": "원피스 카드",
@@ -105,67 +78,13 @@
       "condition": "한글판 카드로 구성한 지정 리미티드 규정 덱 사용. 점포별 개최 여부와 접수 방식 사전 확인",
       "location": "한국 전국 원피스 카드게임 공인·취급 점포",
       "status": "진행 중",
-      "source": "https://onepiece-cardgame.kr/events.do"
-    },
-    {
-      "game": "포켓몬 카드",
-      "region": "KR",
-      "category": "promo",
-      "name_ko": "스톰에메랄다 발매 기념 토너먼트",
-      "name_native": "MEGA 확장팩 「스톰에메랄다」 발매 기념 토너먼트",
-      "start_date": "2026-08-22",
-      "end_date": "2026-08-23",
-      "claim_deadline": "2026-08-23",
-      "reward": "참가상 프로모 카드 팩 1팩 · TOP 8 프로모 3팩 · TOP 4 스톰에메랄다 1박스+프로모 3팩 · 우승 플레이매트+2박스+프로모 3팩",
-      "condition": "공식 온라인 예약 후 대회 당일 스톰에메랄다 3팩(4,500원) 구매. 60장 덱과 덱 레시피 준비",
-      "location": "전국 포켓몬 카드샵: 수원·평택·용산·원주·목동·대구·천안·부산·구리·울산·광주·대전·인천·역삼",
-      "status": "진행 중",
-      "source": "https://pokemonkorea.co.kr/M6_tournament"
-    },
-    {
-      "game": "포켓몬 카드",
-      "region": "KR",
-      "category": "collaboration",
-      "name_ko": "2026 성남CITY 배틀 토너먼트 × GXG 2026",
-      "name_native": "포켓몬 카드 게임 2026 성남CITY 배틀 토너먼트",
-      "start_date": "2026-08-29",
-      "end_date": "2026-09-12",
-      "claim_deadline": "2026-09-12",
-      "reward": "카드샵 예선 및 현장 예선·본선 대회 보상과 일반 관람객 서브 이벤트는 공식 안내 확인",
-      "condition": "카드샵 예선 8월 29일~9월 5일. 현장 예선 및 본선 9월 12일. 점포별 접수와 참가 조건 확인",
-      "location": "전국 포켓몬 카드샵 14개점 · 본선: 현대백화점 판교점 10층 토파즈홀",
-      "status": "예정",
-      "source": "https://pokemonkorea.co.kr/2026_battle_tournament3"
-    },
-    {
-      "game": "원피스 카드",
-      "region": "KR",
-      "category": "promo",
-      "name_ko": "9월 플래그쉽 배틀",
-      "name_native": "[9월] 원피스 카드게임 플래그쉽 배틀",
-      "start_date": "2026-09-01",
-      "end_date": "2026-09-30",
-      "claim_deadline": "2026-09-30",
-      "reward": "우승자 프로모 카드 OP10-005 상디 및 공식 참가 기념품",
-      "condition": "공인 점포별 일정·정원·접수 방법 확인. 한글판 카드 사용 규정 적용",
-      "location": "한국 전국 원피스 카드게임 공인 점포",
-      "status": "예정",
-      "source": "https://onepiece-cardgame.kr/events/view.do?brdno=6441"
-    },
-    {
-      "game": "원피스 카드",
-      "region": "KR",
-      "category": "collaboration",
-      "name_ko": "9월 교류회",
-      "name_native": "[9월] 원피스 카드게임 교류회",
-      "start_date": "2026-09-01",
-      "end_date": "2026-09-30",
-      "claim_deadline": "2026-09-30",
-      "reward": "참가 기념품 제공(점포별 재고 및 운영 상황에 따라 조기 종료 가능)",
-      "condition": "초보자도 참가 가능한 점포 교류 행사. 개최 시간과 참가 신청은 각 점포에서 확인",
-      "location": "한국 전국 원피스 카드게임 공인·취급 점포",
-      "status": "예정",
-      "source": "https://onepiece-cardgame.kr/events/view.do?brdno=6439"
+      "source": "https://onepiece-cardgame.kr/events/view.do?brdno=6442",
+      "link_checked_at": "2026-08-26T10:47:11+00:00",
+      "link_status": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인",
+      "source_grade": "official",
+      "link_statuses": {
+        "source": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인"
+      }
     },
     {
       "game": "포켓몬 카드",
@@ -180,7 +99,121 @@
       "condition": "경쟁 부문은 초청 자격, 일반 관람은 유효한 패스 필요. 현장별 입장 조건 확인",
       "location": "Moscone Center·Chase Center, San Francisco",
       "status": "예정",
-      "source": "https://www.pokemon.com/us/news/check-out-the-pokemonxp-and-worlds-daily-schedule"
+      "source": "https://www.pokemon.com/us/news/check-out-the-pokemonxp-and-worlds-daily-schedule",
+      "link_checked_at": "2026-08-26T10:47:11+00:00",
+      "link_status": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인",
+      "source_grade": "official",
+      "verification_source": "https://www.pokemon-card.com/info/005605.html",
+      "link_statuses": {
+        "source": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인",
+        "verification_source": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인"
+      }
+    },
+    {
+      "game": "포켓몬 카드",
+      "region": "KR",
+      "category": "collaboration",
+      "name_ko": "2026 성남CITY 배틀 토너먼트 × GXG 2026",
+      "name_native": "포켓몬 카드 게임 2026 성남CITY 배틀 토너먼트",
+      "start_date": "2026-08-29",
+      "end_date": "2026-09-12",
+      "claim_deadline": "2026-09-12",
+      "reward": "카드샵 예선 및 현장 예선·본선 대회 보상과 일반 관람객 서브 이벤트는 공식 안내 확인",
+      "condition": "카드샵 예선 8월 29일~9월 5일. 현장 예선 및 본선 9월 12일. 점포별 접수와 참가 조건 확인",
+      "location": "전국 포켓몬 카드샵 14개점 · 본선: 현대백화점 판교점 10층 토파즈홀",
+      "status": "예정",
+      "source": "https://pokemonkorea.co.kr/2026_battle_tournament3",
+      "link_checked_at": "2026-08-26T10:47:11+00:00",
+      "link_status": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인",
+      "source_grade": "official",
+      "link_statuses": {
+        "source": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인"
+      }
+    },
+    {
+      "game": "포켓몬 카드",
+      "region": "JP",
+      "category": "promo",
+      "name_ko": "포켓몬 카드짐 엔트리 캠페인 2026 하반기",
+      "name_native": "ポケカジムエントリーキャンペーン2026年後期",
+      "start_date": "2026-09-01",
+      "end_date": "2027-02-28",
+      "claim_deadline": "2027-04-30",
+      "reward": "짐 스탬프 수에 따른 하반기 한정 프로모 경품",
+      "condition": "플레이어즈클럽 가입 및 카드짐 행사 QR 체크인 필요. 상세 경품·수령 기한은 공식 안내 확인",
+      "location": "일본 전국 포켓몬 카드짐",
+      "status": "예정",
+      "source": "https://www.pokemon-card.com/info/005614.html",
+      "link_checked_at": "2026-08-26T10:47:11+00:00",
+      "link_status": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인",
+      "source_grade": "official",
+      "link_statuses": {
+        "source": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인"
+      }
+    },
+    {
+      "game": "원피스 카드",
+      "region": "KR",
+      "category": "promo",
+      "name_ko": "9월 플래그쉽 배틀",
+      "name_native": "[9월] 원피스 카드게임 플래그쉽 배틀",
+      "start_date": "2026-09-01",
+      "end_date": "2026-09-30",
+      "claim_deadline": "2026-09-30",
+      "reward": "우승자 프로모 카드 OP10-005 상디 및 공식 참가 기념품",
+      "condition": "공인 점포별 일정·정원·접수 방법 확인. 한글판 카드 사용 규정 적용",
+      "location": "한국 전국 원피스 카드게임 공인 점포",
+      "status": "예정",
+      "source": "https://onepiece-cardgame.kr/events/view.do?brdno=6441",
+      "link_checked_at": "2026-08-26T10:47:11+00:00",
+      "link_status": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인",
+      "source_grade": "official",
+      "link_statuses": {
+        "source": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인"
+      }
+    },
+    {
+      "game": "원피스 카드",
+      "region": "KR",
+      "category": "collaboration",
+      "name_ko": "9월 교류회",
+      "name_native": "[9월] 원피스 카드게임 교류회",
+      "start_date": "2026-09-01",
+      "end_date": "2026-09-30",
+      "claim_deadline": "2026-09-30",
+      "reward": "참가 기념품 제공(점포별 재고 및 운영 상황에 따라 조기 종료 가능)",
+      "condition": "초보자도 참가 가능한 점포 교류 행사. 개최 시간과 참가 신청은 각 점포에서 확인",
+      "location": "한국 전국 원피스 카드게임 공인·취급 점포",
+      "status": "예정",
+      "source": "https://onepiece-cardgame.kr/events/view.do?brdno=6439",
+      "link_checked_at": "2026-08-26T10:47:11+00:00",
+      "link_status": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인",
+      "source_grade": "official",
+      "link_statuses": {
+        "source": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인"
+      }
+    },
+    {
+      "game": "원피스 카드",
+      "region": "KR",
+      "category": "promo",
+      "name_ko": "초보자 [9월] 원피스 카드게임 스탠다드 배틀 9월 1일 ~ 9월 30일",
+      "name_native": "초보자 [9월] 원피스 카드게임 스탠다드 배틀 9월 1일 ~ 9월 30일",
+      "start_date": "2026-09-01",
+      "end_date": "2026-09-30",
+      "claim_deadline": "2026-09-30",
+      "reward": "공식 행사 안내에서 참가·입상 보상 확인",
+      "condition": "공식 안내의 참가 자격·접수 일정·현장 조건을 확인하세요.",
+      "location": "한국 공식 개최점",
+      "status": "예정",
+      "source": "https://onepiece-cardgame.kr/events/view.do?brdno=6440",
+      "discovered_at": "2026-08-22T13:10:51+00:00",
+      "link_checked_at": "2026-08-26T10:47:11+00:00",
+      "link_status": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인",
+      "source_grade": "official",
+      "link_statuses": {
+        "source": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인"
+      }
     },
     {
       "game": "원피스 카드",
@@ -195,22 +228,13 @@
       "condition": "북미 지역 예선·초청 및 대회별 사전등록 조건 적용. 세부 일정은 공식 페이지 확인",
       "location": "미국 북미 파이널 지정 행사장",
       "status": "예정·세부 일정 확인 필요",
-      "source": "https://en.onepiece-cardgame.com/events/2026/championship/"
-    },
-    {
-      "game": "원피스 카드",
-      "region": "US",
-      "category": "collaboration",
-      "name_ko": "Pirates League 공식 숍 대항전 2026",
-      "name_native": "Pirates League: ONE PIECE CARD GAME Official Shop Edition 2026",
-      "start_date": "2026-09-06",
-      "end_date": "2026-11-30",
-      "claim_deadline": "2026-07-24",
-      "reward": "공식 숍 예선·온라인 대항전 참가 보상과 순위별 프로모 상품",
-      "condition": "미국 공식 숍 예선 선발자 대상. 일반 참가 등록은 7월 24일 종료",
-      "location": "미국 ONE PIECE CARD GAME 공식 숍 9곳",
-      "status": "참가접수 종료·대회 예정",
-      "source": "https://shop.bandainamco-am.com/news/detail/pirates-league-one-piece-card-game-official-shop-edition-2026/"
+      "source": "https://en.onepiece-cardgame.com/events/2026/championship/",
+      "link_checked_at": "2026-08-26T10:47:11+00:00",
+      "link_status": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인",
+      "source_grade": "official",
+      "link_statuses": {
+        "source": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인"
+      }
     },
     {
       "game": "원피스 카드",
@@ -225,8 +249,609 @@
       "condition": "사전 등록한 경쟁자 패스 필수. 현장 일반 입장권은 제공되지 않음",
       "location": "Kay Bailey Hutchison Convention Center Dallas",
       "status": "예정",
-      "source": "https://en.onepiece-cardgame.com/events/2026/bcgfest26-27/dallas/"
+      "source": "https://en.onepiece-cardgame.com/events/2026/bcgfest26-27/dallas/",
+      "link_checked_at": "2026-08-26T10:47:11+00:00",
+      "link_status": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인",
+      "source_grade": "official",
+      "link_statuses": {
+        "source": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인"
+      }
+    },
+    {
+      "game": "포켓몬 카드",
+      "region": "JP",
+      "category": "collaboration",
+      "name_ko": "챔피언스리그 2027 요코하마",
+      "name_native": "チャンピオンズリーグ2027 横浜",
+      "start_date": "2026-09-20",
+      "end_date": "2026-09-22",
+      "claim_deadline": "2026-09-22",
+      "reward": "대회 성적에 따른 챔피언십 포인트 및 공식 기념품",
+      "condition": "사전 신청·추첨제이며 당일 접수 없음. 참가 부문별 공식 규정 확인",
+      "location": "파시피코 요코하마",
+      "status": "예정",
+      "source": "https://www.pokemon-card.com/info/005563.html",
+      "link_checked_at": "2026-08-26T10:47:11+00:00",
+      "link_status": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인",
+      "source_grade": "official",
+      "link_statuses": {
+        "source": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인"
+      }
+    },
+    {
+      "game": "포켓몬 카드",
+      "region": "JP",
+      "category": "collaboration",
+      "name_ko": "포켓몬 카드게임 30주년 기념 행사",
+      "name_native": "ポケモンカードゲーム30th CELEBRATION EVENT",
+      "start_date": "2026-10-25",
+      "end_date": "2026-11-01",
+      "claim_deadline": "2026-11-01",
+      "reward": "30주년 특별 행사·캠페인 예정, 세부 보상은 공식 후속 발표 확인",
+      "condition": "도쿄 10월 25일, 오사카 10월 31일~11월 1일. 참가방법은 공식 발표 확인",
+      "location": "마쿠하리 멧세·인텍스 오사카",
+      "status": "예정",
+      "source": "https://www.30th.pokemon-card.com/event",
+      "link_checked_at": "2026-08-26T10:47:11+00:00",
+      "link_status": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인",
+      "source_grade": "official",
+      "link_statuses": {
+        "source": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인"
+      }
+    },
+    {
+      "game": "나루토 카드",
+      "region": "US",
+      "category": "collaboration",
+      "name_ko": "NARUTO × 뉴욕 양키스 게임 나이트",
+      "name_native": "NARUTO Night at Yankee Stadium",
+      "start_date": "2026-09-08",
+      "end_date": "2026-09-08",
+      "claim_deadline": "2026-09-08",
+      "reward": "NARUTO CARD GAME CP-001 Chakra Card -New York Yankees™ Ver.- 배포",
+      "condition": "행사 당일 양키 스타디움의 공식 NARUTO × YANKEES GAME NIGHT 배포 조건 및 수량 제한 확인",
+      "location": "Yankee Stadium, New York, USA",
+      "status": "예정",
+      "source": "https://www.naruto-cardgame.com/en/news/nyy-collab.php",
+      "link_checked_at": "2026-08-26T10:47:11+00:00",
+      "link_status": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인",
+      "source_grade": "official",
+      "link_statuses": {
+        "source": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인"
+      }
+    },
+    {
+      "game": "나루토 카드",
+      "region": "US",
+      "category": "promo",
+      "name_ko": "New York Comic Con 2026 나루토 카드게임 체험회",
+      "name_native": "New York Comic Con 2026 Event Information",
+      "start_date": "2026-10-08",
+      "end_date": "2026-10-11",
+      "claim_deadline": "2026-10-11",
+      "reward": "체험회 참가자 대상 CP-001 Chakra Card 및 로고 스티커",
+      "condition": "현장 체험회 참가 후 TCG+ NARUTO TCG UPDATES CHANNEL 등록 및 설문 완료 등 공식 조건 충족 필요",
+      "location": "Javits Center, New York, USA",
+      "status": "예정",
+      "source": "https://www.naruto-cardgame.com/en/news/nycc-2026.php",
+      "link_checked_at": "2026-08-26T10:47:11+00:00",
+      "link_status": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인",
+      "source_grade": "official",
+      "link_statuses": {
+        "source": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인"
+      }
+    },
+    {
+      "game": "나루토 카드",
+      "region": "US",
+      "category": "collaboration",
+      "name_ko": "BANDAI CARD GAMES Fest 26-27 Orlando",
+      "name_native": "BANDAI CARD GAMES Fest 26-27 in ORLANDO",
+      "start_date": "2027-01-07",
+      "end_date": "2027-01-10",
+      "claim_deadline": "2027-01-10",
+      "reward": "나루토 카드게임 Tutorial Session 및 행사 기념품·상품 정보는 공식 페이지에서 순차 공개",
+      "condition": "행사 입장 및 체험회 참가 조건은 공식 BANDAI CARD GAMES Fest 안내 확인",
+      "location": "Orange County Convention Center, Orlando, USA",
+      "status": "예정",
+      "source": "https://www.naruto-cardgame.com/en/news/bcgfes26-27-orlando.php",
+      "link_checked_at": "2026-08-26T10:47:11+00:00",
+      "link_status": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인",
+      "source_grade": "official",
+      "link_statuses": {
+        "source": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인"
+      }
+    },
+    {
+      "game": "포켓몬 카드",
+      "region": "US",
+      "category": "movie",
+      "name_ko": "포켓몬 영화·애니 공식 정보",
+      "name_native": "Pokémon Movies & Animation",
+      "start_date": "2026-08-23",
+      "end_date": "2027-12-31",
+      "claim_deadline": "2027-12-31",
+      "reward": "포켓몬 공식 영화 백과·애니메이션 공개/배급 정보를 확인",
+      "condition": "새 영화의 미공개 개봉일은 추정하지 않고 Pokémon.com 공식 발표만 표시",
+      "location": "온라인 공식정보",
+      "status": "공식정보",
+      "source": "https://www.pokemon.com/us/animation",
+      "link_status": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인",
+      "link_checked_at": "2026-08-26T10:47:11+00:00",
+      "tracking_only": true,
+      "date_precision": "unannounced",
+      "date_label": "개봉·공개일 공식 미발표 · 공식 발표 추적 중",
+      "source_grade": "official",
+      "link_statuses": {
+        "source": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인"
+      }
+    },
+    {
+      "game": "포켓몬 카드",
+      "region": "KR",
+      "category": "movie",
+      "name_ko": "한국 포켓몬 영화·극장판 개봉 확인",
+      "name_native": "Pokémon Movie Korea Release Watch",
+      "start_date": "2026-08-23",
+      "end_date": "2027-12-31",
+      "claim_deadline": "2027-12-31",
+      "reward": "한국 극장 개봉·재개봉·특별상영 일정이 공식 발표되면 날짜와 극장 정보를 표시",
+      "condition": "포켓몬코리아 및 KOBIS 기준. 현재 확인 가능한 2026년 한국 신작 극장 개봉일은 공식 발표되지 않아 임의 날짜를 만들지 않음.",
+      "location": "대한민국",
+      "status": "한국 개봉일 미발표",
+      "source": "https://www.pokemonkorea.co.kr/",
+      "verification_source": "https://www.kobis.or.kr/kobis/business/mast/mvie/searchMovieList.do",
+      "tracking_only": true,
+      "link_status": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인",
+      "link_checked_at": "2026-08-26T10:47:11+00:00",
+      "date_precision": "unannounced",
+      "date_label": "개봉·공개일 공식 미발표 · 공식 발표 추적 중",
+      "source_grade": "official",
+      "link_statuses": {
+        "source": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인",
+        "verification_source": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인"
+      }
+    },
+    {
+      "game": "원피스 카드",
+      "region": "KR",
+      "category": "movie",
+      "name_ko": "한국 원피스 극장판 개봉 확인",
+      "name_native": "ONE PIECE Movie Korea Release Watch",
+      "start_date": "2026-08-23",
+      "end_date": "2027-12-31",
+      "claim_deadline": "2027-12-31",
+      "reward": "한국 극장 개봉·재개봉·특별상영 일정이 확정되면 개봉일·배급 정보를 표시",
+      "condition": "대원미디어(국내 원피스 IP 사업)와 KOBIS 기준. 현재 확인 가능한 2026년 한국 신작 극장판 개봉일은 공식 발표되지 않음.",
+      "location": "대한민국",
+      "status": "한국 개봉일 미발표",
+      "source": "https://daewonmedia.com/business",
+      "verification_source": "https://www.kobis.or.kr/kobis/business/mast/mvie/searchMovieList.do",
+      "tracking_only": true,
+      "link_status": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인",
+      "link_checked_at": "2026-08-26T10:47:11+00:00",
+      "date_precision": "unannounced",
+      "date_label": "개봉·공개일 공식 미발표 · 공식 발표 추적 중",
+      "source_grade": "official",
+      "link_statuses": {
+        "verification_source": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인",
+        "source": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인"
+      }
+    },
+    {
+      "game": "나루토 카드",
+      "region": "KR",
+      "category": "movie",
+      "name_ko": "한국 나루토 영화 개봉 확인",
+      "name_native": "NARUTO Film Korea Release Watch",
+      "start_date": "2026-08-23",
+      "end_date": "2027-12-31",
+      "claim_deadline": "2027-12-31",
+      "reward": "실사 영화 또는 애니 극장판의 한국 개봉·배급 일정이 확정되면 한국 일정 표시",
+      "condition": "NARUTO 공식 제작 발표와 KOBIS 한국 개봉 등록을 교차 확인. 실사 영화는 제작 진행 중이지만 한국 개봉일은 아직 공식 발표되지 않음.",
+      "location": "대한민국",
+      "status": "한국 개봉일 미발표",
+      "source": "https://www.kobis.or.kr/kobis/business/mast/mvie/searchMovieList.do",
+      "verification_source": "https://naruto-official.com/en/news/01_2649",
+      "tracking_only": true,
+      "link_status": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인",
+      "link_checked_at": "2026-08-26T10:47:11+00:00",
+      "date_precision": "unannounced",
+      "date_label": "개봉·공개일 공식 미발표 · 공식 발표 추적 중",
+      "source_grade": "official",
+      "link_statuses": {
+        "source": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인",
+        "verification_source": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인"
+      }
+    },
+    {
+      "game": "포켓몬 카드",
+      "region": "JP",
+      "category": "movie",
+      "name_ko": "일본 포켓몬 영화·영상 공개 정보",
+      "name_native": "포켓몬 JP Official Film Watch",
+      "start_date": "2026-08-25",
+      "end_date": "2027-12-31",
+      "claim_deadline": "2027-12-31",
+      "date_precision": "unannounced",
+      "date_label": "개봉·공개일 공식 미발표 · 공식 발표 추적 중",
+      "reward": "일본 극장 개봉·공식 영상 공개 일정은 실제 발표 후에만 표시",
+      "condition": "포켓몬 일본 공식 발표를 확인하며 새 극장판 개봉일을 임의로 생성하지 않습니다.",
+      "location": "일본",
+      "status": "일본 개봉일 공식 미발표",
+      "source": "https://www.pokemon.co.jp/info/",
+      "source_grade": "official",
+      "tracking_only": true,
+      "link_checked_at": "2026-08-26T10:47:11+00:00",
+      "link_status": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인",
+      "link_statuses": {
+        "source": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인"
+      }
+    },
+    {
+      "game": "나루토 카드",
+      "region": "JP",
+      "category": "movie",
+      "name_ko": "일본 나루토 영화·영상 공개 정보",
+      "name_native": "나루토 JP Official Film Watch",
+      "start_date": "2026-08-25",
+      "end_date": "2027-12-31",
+      "claim_deadline": "2027-12-31",
+      "date_precision": "unannounced",
+      "date_label": "개봉·공개일 공식 미발표 · 공식 발표 추적 중",
+      "reward": "일본 극장 개봉·공식 영상 공개 일정은 실제 발표 후에만 표시",
+      "condition": "실사 영화의 제작·글로벌 캐스팅만 공식 발표됐으며 일본 개봉일은 발표되지 않았습니다.",
+      "location": "일본",
+      "status": "일본 개봉일 공식 미발표",
+      "source": "https://naruto-official.com/en/news/01_2649",
+      "source_grade": "official",
+      "tracking_only": true,
+      "link_checked_at": "2026-08-26T10:47:11+00:00",
+      "link_status": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인",
+      "link_statuses": {
+        "source": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인"
+      }
+    },
+    {
+      "game": "원피스 카드",
+      "region": "US",
+      "category": "movie",
+      "name_ko": "미국 원피스 영화·영상 공개 정보",
+      "name_native": "원피스 US Official Film Watch",
+      "start_date": "2026-08-25",
+      "end_date": "2027-12-31",
+      "claim_deadline": "2027-12-31",
+      "date_precision": "unannounced",
+      "date_label": "개봉·공개일 공식 미발표 · 공식 발표 추적 중",
+      "reward": "미국 극장 개봉·공식 영상 공개 일정은 실제 발표 후에만 표시",
+      "condition": "미국 극장 개봉 또는 현지 배급 일정은 공식 발표가 확인될 때만 표시합니다.",
+      "location": "미국",
+      "status": "미국 개봉일 공식 미발표",
+      "source": "https://one-piece.com/news/",
+      "source_grade": "official",
+      "tracking_only": true,
+      "link_checked_at": "2026-08-26T10:47:11+00:00",
+      "link_status": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인",
+      "link_statuses": {
+        "source": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인"
+      }
+    },
+    {
+      "game": "나루토 카드",
+      "region": "US",
+      "category": "movie",
+      "name_ko": "미국 나루토 영화·영상 공개 정보",
+      "name_native": "나루토 US Official Film Watch",
+      "start_date": "2026-08-25",
+      "end_date": "2027-12-31",
+      "claim_deadline": "2027-12-31",
+      "date_precision": "unannounced",
+      "date_label": "개봉·공개일 공식 미발표 · 공식 발표 추적 중",
+      "reward": "미국 극장 개봉·공식 영상 공개 일정은 실제 발표 후에만 표시",
+      "condition": "Lionsgate 실사 영화의 제작·글로벌 캐스팅은 공식 발표됐으나 미국 개봉일은 미발표입니다.",
+      "location": "미국",
+      "status": "미국 개봉일 공식 미발표",
+      "source": "https://naruto-official.com/en/news/01_2649",
+      "source_grade": "official",
+      "tracking_only": true,
+      "link_checked_at": "2026-08-26T10:47:11+00:00",
+      "link_status": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인",
+      "link_statuses": {
+        "source": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인"
+      }
+    },
+    {
+      "game": "나루토 카드",
+      "region": "JP",
+      "category": "collaboration",
+      "name_ko": "NARUTO & BORUTO 닌자마을 한여름 수둔 축제",
+      "name_native": "Midsummer Water Style Festival 2026 · Shinobi-Zato",
+      "start_date": "2026-07-10",
+      "end_date": "2026-09-30",
+      "claim_deadline": "2026-09-30",
+      "reward": "수둔 미션 성공자에게 공식 한정 스티커 4종 중 1종 지급 · 소진 시 종료",
+      "condition": "매일 15시 체험. 닌자마을 입장권 별도 필요. 공식 현장 안내를 확인하세요.",
+      "location": "일본 아와지시마 NARUTO & BORUTO Shinobi-Zato",
+      "status": "진행 중",
+      "source": "https://naruto-official.com/en/news/01_2648",
+      "source_grade": "official",
+      "date_precision": "day",
+      "link_checked_at": "2026-08-26T10:47:11+00:00",
+      "link_status": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인",
+      "link_statuses": {
+        "source": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인"
+      }
+    },
+    {
+      "game": "원피스 카드",
+      "region": "JP",
+      "category": "collaboration",
+      "name_ko": "원피스 밀짚모자 스토어 나고야 공식 개점 행사",
+      "name_native": "ONE PIECE 麦わらストア 名古屋店 オープン",
+      "start_date": "2026-09-04",
+      "end_date": "2026-09-04",
+      "claim_deadline": "2026-09-04",
+      "reward": "나고야점 한정 상품과 공식 오픈 기념 이벤트 정보 확인",
+      "condition": "공식 안내 기준 나고야 PARCO 서관 8층에서 2026년 9월 4일 개점합니다.",
+      "location": "일본 나고야 PARCO 서관 8층",
+      "status": "예정",
+      "source": "https://one-piece.com/news/80639/index.html",
+      "source_grade": "official",
+      "date_precision": "day",
+      "link_checked_at": "2026-08-26T10:47:11+00:00",
+      "link_status": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인",
+      "link_statuses": {
+        "source": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인"
+      }
+    },
+    {
+      "game": "원피스 카드",
+      "region": "JP",
+      "category": "collaboration",
+      "name_ko": "ONE PIECE × NBA HOUSE JAPAN 공식 콜라보 배송",
+      "name_native": "LUFFY's NBA HOUSE JAPAN -LOGOTYPE-",
+      "start_date": "2026-09-01",
+      "end_date": "2026-09-30",
+      "claim_deadline": "2026-09-30",
+      "date_precision": "month",
+      "date_label": "2026년 9월 배송 예정 · 정확한 날짜 미발표",
+      "reward": "LUFFY's NBA HOUSE JAPAN 공식 협업 상품 배송 예정월 확인",
+      "condition": "공식 발표상 예약은 2026년 5월 31일 종료됐고 배송은 2026년 9월 예정입니다.",
+      "location": "일본",
+      "status": "예약 종료 · 2026년 9월 배송 예정",
+      "source": "https://one-piece.com/news/79713/index.html",
+      "source_grade": "official",
+      "link_checked_at": "2026-08-26T10:47:11+00:00",
+      "link_status": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인",
+      "link_statuses": {
+        "source": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인"
+      }
+    },
+    {
+      "game": "원피스 카드",
+      "region": "JP",
+      "category": "movie",
+      "name_ko": "THE ONE PIECE 공식 애니메이션 영상 공개",
+      "name_native": "THE ONE PIECE · Netflix 配信予定",
+      "start_date": "2027-02-01",
+      "end_date": "2027-02-28",
+      "claim_deadline": "2027-02-28",
+      "date_precision": "month",
+      "date_label": "2027년 2월 공개 예정 · 정확한 날짜 미발표",
+      "media_type": "streaming_series",
+      "reward": "WIT STUDIO 제작 THE ONE PIECE의 공식 Netflix 공개 예정월 확인",
+      "condition": "공식 발표는 2027년 2월까지이며 공개일의 일자는 발표되지 않았습니다. 극장 영화로 분류하지 않습니다.",
+      "location": "일본 공식 발표 · Netflix",
+      "status": "2027년 2월 공개 예정",
+      "source": "https://one-piece.com/news/79329/index.html",
+      "source_grade": "official",
+      "link_checked_at": "2026-08-26T10:47:11+00:00",
+      "link_status": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인",
+      "link_statuses": {
+        "source": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인"
+      }
+    },
+    {
+      "game": "포켓몬 카드",
+      "region": "JP",
+      "category": "promo",
+      "name_ko": "포켓몬 데크 그대로 배틀 공식 체험 행사",
+      "name_native": "デッキそのままバトル、開催！",
+      "start_date": "2026-09-02",
+      "end_date": "2027-03-02",
+      "claim_deadline": "2027-03-02",
+      "date_precision": "start-only",
+      "date_label": "2026-09-02 시작 · 종료일 공식 미발표",
+      "internal_review_until": "2027-03-02",
+      "reward": "지정 스타터 덱을 사용하는 공식 체험 배틀 참가 조건 확인",
+      "condition": "일본 전국 포켓몬 카드짐·포켓몬센터에서 장기 개최 예정. 종료일은 공식 미발표입니다.",
+      "location": "일본 전국 포켓몬 카드짐·포켓몬센터",
+      "status": "2026-09-02 시작 예정",
+      "source": "https://www.pokemon-card.com/info/005604.html",
+      "source_grade": "official",
+      "link_checked_at": "2026-08-26T10:47:11+00:00",
+      "link_status": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인",
+      "link_statuses": {
+        "source": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인"
+      }
+    },
+    {
+      "game": "나루토 카드",
+      "region": "KR",
+      "category": "promo",
+      "name_ko": "한국 나루토 카드게임 행사·정식 출시 공식 발표 추적",
+      "name_native": "NARUTO CARD GAME Asia · Global Release Watch",
+      "start_date": "2027-06-01",
+      "end_date": "2027-08-31",
+      "claim_deadline": "2027-08-31",
+      "date_precision": "season",
+      "date_label": "2027년 여름 글로벌 출시 예정 · 한국 행사·발매일 미발표",
+      "reward": "한국 출시 여부, 체험회, 프로모 제공 여부를 아시아 공식 공지에서 추적",
+      "condition": "글로벌 동시 출시 예정 계절만 발표됐습니다. 한국 개최·한국판 발매·정확한 날짜는 아직 확인되지 않았습니다.",
+      "location": "대한민국 공식 일정 확인 중",
+      "status": "한국 행사 공식 미발표",
+      "source": "https://www.naruto-cardgame.com/asia-en/",
+      "source_grade": "official",
+      "tracking_only": true,
+      "link_checked_at": "2026-08-26T10:47:11+00:00",
+      "link_status": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인",
+      "link_statuses": {
+        "source": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인"
+      }
     }
   ],
-  "collection_errors": []
+  "collection_errors": [
+    "포켓몬 카드짐 엔트리 캠페인 2026 상반기: URLError",
+    "WCS 2026 기념 피카츄 프로모: URLError",
+    "친구·가족과 프렌드 배틀: URLError",
+    "발매기념대회 리미티드 배틀: URLError",
+    "2026 포켓몬 월드 챔피언십·PokémonXP: URLError",
+    "2026 성남CITY 배틀 토너먼트 × GXG 2026: URLError",
+    "포켓몬 카드짐 엔트리 캠페인 2026 하반기: URLError",
+    "9월 플래그쉽 배틀: URLError",
+    "9월 교류회: URLError",
+    "초보자 [9월] 원피스 카드게임 스탠다드 배틀 9월 1일 ~ 9월 30일: URLError",
+    "챔피언십 26-27 북미 파이널 시즌 1: URLError",
+    "BANDAI CARD GAMES Fest 26-27 Dallas: URLError",
+    "챔피언스리그 2027 요코하마: URLError",
+    "포켓몬 카드게임 30주년 기념 행사: URLError",
+    "NARUTO × 뉴욕 양키스 게임 나이트: URLError",
+    "New York Comic Con 2026 나루토 카드게임 체험회: URLError",
+    "BANDAI CARD GAMES Fest 26-27 Orlando: URLError",
+    "포켓몬 영화·애니 공식 정보: URLError",
+    "한국 포켓몬 영화·극장판 개봉 확인: URLError",
+    "한국 원피스 극장판 개봉 확인: URLError",
+    "한국 나루토 영화 개봉 확인: URLError",
+    "일본 포켓몬 영화·영상 공개 정보: URLError",
+    "일본 나루토 영화·영상 공개 정보: URLError",
+    "미국 원피스 영화·영상 공개 정보: URLError",
+    "미국 나루토 영화·영상 공개 정보: URLError",
+    "NARUTO & BORUTO 닌자마을 한여름 수둔 축제: URLError",
+    "원피스 밀짚모자 스토어 나고야 공식 개점 행사: URLError",
+    "ONE PIECE × NBA HOUSE JAPAN 공식 콜라보 배송: URLError",
+    "THE ONE PIECE 공식 애니메이션 영상 공개: URLError",
+    "포켓몬 데크 그대로 배틀 공식 체험 행사: URLError",
+    "한국 나루토 카드게임 행사·정식 출시 공식 발표 추적: URLError",
+    "KR 원피스 카드 신규행사 탐색: URLError",
+    "KR 포켓몬 카드 신규행사 탐색: URLError",
+    "KR 나루토 카드 신규행사 탐색: URLError",
+    "JP 포켓몬 카드 신규행사 탐색: URLError",
+    "JP 포켓몬 카드 신규행사 탐색: URLError",
+    "JP 원피스 카드 신규행사 탐색: URLError",
+    "JP 원피스 카드 신규행사 탐색: URLError",
+    "US 원피스 카드 신규행사 탐색: URLError",
+    "US 포켓몬 카드 신규행사 탐색: URLError",
+    "JP 나루토 카드 신규행사 탐색: URLError",
+    "JP 나루토 카드 신규행사 탐색: URLError",
+    "US 나루토 카드 신규행사 탐색: URLError"
+  ],
+  "new_event_count": 0,
+  "discovery_sources": 12,
+  "naruto_collection_enabled": true,
+  "naruto_official_sources": [
+    "https://www.naruto-cardgame.com/jp/",
+    "https://www.naruto-cardgame.com/en/"
+  ],
+  "expired_event_count": 0,
+  "repaired_date_count": 0,
+  "expired_event_names": [],
+  "last_expiry_cleanup_at": "2026-08-26T10:47:08+00:00",
+  "expiry_policy": "end_date/claim_deadline 중 더 늦은 날짜가 오늘보다 이전이면 자동 삭제",
+  "link_audit_at": "2026-08-26T10:47:11+00:00",
+  "kr_movie_tracking_count": 3,
+  "supplementary_candidate_count": 8,
+  "startup_expired_removed": 1,
+  "startup_expired_names": [
+    "스톰에메랄다 발매 기념 토너먼트"
+  ],
+  "startup_cleanup_at": "2026-08-24T00:00:00+09:00",
+  "official_seed_refresh_count": 0,
+  "merged_duplicate_event_count": 0,
+  "excluded_outside_region_count": 0,
+  "excluded_outside_region_names": [],
+  "coverage": {
+    "expected_game_region_pairs": 9,
+    "watched_game_region_pairs": 9,
+    "covered_game_region_pairs": 9,
+    "movie_game_region_pairs": 9,
+    "missing_source_pairs": [],
+    "missing_movie_pairs": [],
+    "matrix": [
+      {
+        "game": "포켓몬 카드",
+        "region": "KR",
+        "official_source_count": 1,
+        "official_item_count": 2,
+        "movie_item_count": 1,
+        "status": "공식 정보 확인"
+      },
+      {
+        "game": "포켓몬 카드",
+        "region": "JP",
+        "official_source_count": 2,
+        "official_item_count": 8,
+        "movie_item_count": 1,
+        "status": "공식 정보 확인"
+      },
+      {
+        "game": "포켓몬 카드",
+        "region": "US",
+        "official_source_count": 1,
+        "official_item_count": 2,
+        "movie_item_count": 1,
+        "status": "공식 정보 확인"
+      },
+      {
+        "game": "원피스 카드",
+        "region": "KR",
+        "official_source_count": 1,
+        "official_item_count": 5,
+        "movie_item_count": 1,
+        "status": "공식 정보 확인"
+      },
+      {
+        "game": "원피스 카드",
+        "region": "JP",
+        "official_source_count": 2,
+        "official_item_count": 3,
+        "movie_item_count": 1,
+        "status": "공식 정보 확인"
+      },
+      {
+        "game": "원피스 카드",
+        "region": "US",
+        "official_source_count": 1,
+        "official_item_count": 3,
+        "movie_item_count": 1,
+        "status": "공식 정보 확인"
+      },
+      {
+        "game": "나루토 카드",
+        "region": "KR",
+        "official_source_count": 1,
+        "official_item_count": 2,
+        "movie_item_count": 1,
+        "status": "공식 정보 확인"
+      },
+      {
+        "game": "나루토 카드",
+        "region": "JP",
+        "official_source_count": 2,
+        "official_item_count": 2,
+        "movie_item_count": 1,
+        "status": "공식 정보 확인"
+      },
+      {
+        "game": "나루토 카드",
+        "region": "US",
+        "official_source_count": 1,
+        "official_item_count": 4,
+        "movie_item_count": 1,
+        "status": "공식 정보 확인"
+      }
+    ]
+  },
+  "official_source_policy": "공식 HTTPS 허용목록 + 실제 개최지 판별 + 월/계절/미발표 날짜 정확도 보존",
+  "official_reference_checked_on": "2026-08-25",
+  "supplementary_collection_mode": "deferred-to-integration-stage"
 }

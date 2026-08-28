@@ -1,0 +1,7 @@
+{
+  "version": 1,
+  "confirmed_only": true,
+  "auto_prediction_learning": false,
+  "confirmed": [],
+  "conflicts": []
+}

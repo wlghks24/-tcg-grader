@@ -1,0 +1,29 @@
+{
+  "version": 1,
+  "source": "visually-reviewed Library slab-label references",
+  "reference_only": true,
+  "automatic_confirmation": false,
+  "cards": [
+    {"game":"pokemon","region":"JP","card_name":"Mimikyu","card_number":"SV4A088","aliases":["MIMIKYU","ミミッキュ"]},
+    {"game":"pokemon","region":"JP","card_name":"Espathra ex","card_number":"SV4A323","aliases":["ESPATHRA EX","クエスパトラ EX"]},
+    {"game":"pokemon","region":"JP","card_name":"Xatu","card_number":"SV4A257","aliases":["XATU","ネイティオ"]},
+    {"game":"pokemon","region":"US","card_name":"Charizard Holo","card_number":"4/102","aliases":["CHARIZARD HOLO","리자몽"]},
+    {"game":"pokemon","region":"JP","card_name":"Xerneas EX","card_number":"023/025","aliases":["XERNEAS EX","제르네아스 EX"]},
+    {"game":"pokemon","region":"JP","card_name":"Zekrom Full Art","card_number":"021/025","aliases":["FA/ZEKROM","ZEKROM","제크로무"]},
+    {"game":"pokemon","region":"KR","card_name":"Mega Darkrai ex","card_number":"M5114","aliases":["MEGA DARKRAI EX","메가다크라이 EX"]},
+    {"game":"pokemon","region":"KR","card_name":"Origin Dialga VSTAR","card_number":"S12A260","aliases":["ORIGIN DIALGA VSTAR","오리진 디아루가 VSTAR"]},
+    {"game":"pokemon","region":"KR","card_name":"Charizard ex","card_number":"SV4A331","aliases":["CHARIZARD EX","리자몽 EX"]},
+    {"game":"pokemon","region":"KR","card_name":"Umbreon ex","card_number":"SV8A217","aliases":["UMBREON EX","블래키 EX"]},
+    {"game":"pokemon","region":"KR","card_name":"Lillie","card_number":"SM1M065/060","aliases":["LILLIE","릴리에"]},
+    {"game":"pokemon","region":"KR","card_name":"Lillie's Full Force","card_number":"SM11B067","aliases":["LILLIE'S FULL FORCE","릴리에의 전력"]},
+    {"game":"pokemon","region":"KR","card_name":"Umbreon VMAX","card_number":"S6A095","aliases":["UMBREON VMAX","블래키 VMAX"]},
+    {"game":"pokemon","region":"JP","card_name":"Alakazam Holo","card_number":"65","aliases":["ALAKAZAM-HOLO","후딘"]},
+    {"game":"onepiece","region":"JP","card_name":"Love-Love Mellow","card_number":"017","aliases":["LOVE-LOVE MELLOW","매료매료 멜로우"]},
+    {"game":"onepiece","region":"US","card_name":"Monkey D. Luffy","card_number":"095","aliases":["MONKEY D. LUFFY","몽키 D. 루피"]},
+    {"game":"onepiece","region":"US","card_name":"Ace & Sabo & Luffy","card_number":"OP13-007","aliases":["ACE & SABO & LUFFY","에이스 사보 루피"]},
+    {"game":"onepiece","region":"KR","card_name":"Monkey D. Luffy","card_number":"OP13-118","aliases":["MONKEY.D.LUFFY","몽키 D. 루피"]},
+    {"game":"onepiece","region":"KR","card_name":"Shanks","card_number":"OP01-120","aliases":["SHANKS","샹크스"]},
+    {"game":"onepiece","region":"KR","card_name":"Boa Hancock","card_number":"OP01-078","aliases":["BOA HANCOCK","보아 행콕"]},
+    {"game":"onepiece","region":"JP","card_name":"Monkey D. Luffy Promo","card_number":"041","aliases":["MONKEY.D.LUFFY","루피 프로모"]}
+  ]
+}

@@ -1,0 +1,50 @@
+{
+  "version": "v107-full-audit-hardened",
+  "updated_at": "2026-08-28T08:29:25+00:00",
+  "fresh_collection_ok": false,
+  "degraded": true,
+  "policy": "첫 온라인 통합 갱신 때 Instagram·X·Google News·선택적 Google Custom Search 후보를 수집합니다. 공식 검증 전 자동승격하지 않습니다.",
+  "credential_policy": "토큰/API키는 환경변수에서만 읽고 저장하지 않습니다.",
+  "google_policy": "Google News 기본, 기존 Custom Search 고객만 선택 사용",
+  "items": [],
+  "item_count": 0,
+  "official_social_candidate_count": 0,
+  "official_domain_search_count": 0,
+  "cross_checked_count": 0,
+  "channel_status": {
+    "x": {
+      "configured": false,
+      "status": "X_BEARER_TOKEN 미설정 · X API 건너뜀"
+    },
+    "google_cse": {
+      "configured": false,
+      "status": "Google Custom Search 미설정/신규고객 종료 · Google News 사용"
+    },
+    "instagram": {
+      "configured": false,
+      "status": "Instagram API 자격정보 미설정 · 공식계정 후보만 보관"
+    },
+    "google_news": {
+      "configured": true,
+      "query_count": 9,
+      "error_count": 9,
+      "result_count": 0,
+      "success_query_count": 0,
+      "status": "Google News 최근 30일 검색"
+    }
+  },
+  "registry_account_count": 0,
+  "collection_errors": [
+    "Google News 포켓몬 카드/US: URLError",
+    "Google News 포켓몬 카드/JP: URLError",
+    "Google News 포켓몬 카드/KR: URLError",
+    "Google News 원피스 카드/KR: URLError",
+    "Google News 원피스 카드/JP: URLError",
+    "Google News 원피스 카드/US: URLError",
+    "Google News 나루토 카드/US: URLError",
+    "Google News 나루토 카드/JP: URLError",
+    "Google News 나루토 카드/KR: URLError"
+  ],
+  "preserved_previous_items": true,
+  "collection_warnings": []
+}

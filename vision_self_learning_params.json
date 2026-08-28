@@ -1,0 +1,14 @@
+{
+  "version": 1,
+  "params": {
+    "canny_low": 35,
+    "canny_high": 105,
+    "clahe_clip": 2.0,
+    "hough_threshold": 18,
+    "min_line_ratio": 0.24,
+    "max_line_gap_ratio": 0.02,
+    "scratch_contrast_min": 30.0,
+    "whitening_delta": 28.0,
+    "working_width": 240
+  }
+}
