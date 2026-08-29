@@ -1,0 +1,50 @@
+name: Apply collection meta learning
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'apply_collection_meta_learning.py'
+      - 'collection_meta_learning.py'
+      - 'test_collection_meta_learning.py'
+      - '.github/workflows/apply-collection-meta-learning.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Apply collection learning patch
+        run: python apply_collection_meta_learning.py
+      - name: Verify syntax
+        run: |
+          python -m py_compile collection_meta_learning.py adaptive_collection_learner.py auto_pipeline_runner.py
+      - name: Run meta learner tests
+        run: |
+          python test_collection_meta_learning.py
+          if [ -f test_multi_channel_agent.py ]; then python test_multi_channel_agent.py; fi
+          if [ -f test_fan_social_learning.py ]; then python test_fan_social_learning.py; fi
+      - name: Verify integration markers
+        run: |
+          grep -q 'coverage-gap:' adaptive_collection_learner.py
+          grep -q 'collection_meta_learning.refresh_profile' auto_pipeline_runner.py
+          grep -q 'collection_meta_learning.json' .gitignore
+      - name: Commit integrated changes
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add adaptive_collection_learner.py auto_pipeline_runner.py .gitignore
+          if ! git diff --cached --quiet; then
+            git commit -m 'feat: learn collection diversity and coverage gaps'
+            git push origin main
+          fi
