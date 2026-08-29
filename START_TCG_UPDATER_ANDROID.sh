@@ -25,5 +25,12 @@ if [ -f "storage_optimizer.py" ]; then
   echo "저장공간을 안전하게 최적화합니다..."
   python storage_optimizer.py || echo "[안내] 최적화 일부를 건너뛰고 서버를 시작합니다."
 fi
+# Guarantee one graded-photo discovery pass when the corpus is missing/stale/empty.
+# It runs in background so the local server is not delayed; the regular 7-step 6-hour job remains active.
+if [ -f "graded_photo_bootstrap.py" ] && [ -f "graded_photo_multi_source.py" ]; then
+  echo "7단계 등급사진 수집 상태를 확인합니다..."
+  (python graded_photo_bootstrap.py > graded_photo_bootstrap.log 2>&1) &
+fi
+
 echo "로컬 서버를 먼저 시작합니다. 자료 수집은 백그라운드에서 자동 실행됩니다."
 python tcg_updater.py
