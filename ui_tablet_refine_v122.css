@@ -1,0 +1,125 @@
+/* v122 tablet refinements based on real Android tablet screenshots. Visual-only overrides. */
+
+/* Keep the global update area useful without consuming too much vertical space. */
+#siteUpdateAll{
+  min-height:58px!important;
+  padding:12px 16px!important;
+  border-radius:16px!important;
+  font-size:16px!important;
+}
+.site-update-status{
+  min-height:0!important;
+  padding:10px 12px!important;
+  border-radius:12px!important;
+  line-height:1.45!important;
+}
+
+/* Top release / promo / purchase navigation: tighter and easier to scan. */
+.top-info-tabs{gap:9px!important}
+.top-info-tab{
+  min-height:52px!important;
+  padding:10px 8px!important;
+  border-radius:15px!important;
+  font-size:13px!important;
+}
+.release-tools select,.purchase-controls input,.purchase-controls select,.promo-tools select{
+  min-height:50px!important;
+}
+#refreshReleases,#refreshPromos,#purchaseSearch{
+  min-height:52px!important;
+}
+
+/* Purchase screen: fix washed-out location/status text seen on the tablet. */
+#purchaseLocationStatus{
+  display:block!important;
+  color:#334155!important;
+  background:#f8fafc!important;
+  border:1px solid #dbe3ef!important;
+  border-radius:12px!important;
+  padding:10px 12px!important;
+  font-weight:700!important;
+  line-height:1.5!important;
+  opacity:1!important;
+}
+#purchaseNearby{
+  border:1px solid #dbe3ef!important;
+  box-shadow:0 5px 16px rgba(15,23,42,.05)!important;
+}
+.purchase-maplinks{gap:8px!important}
+.purchase-maplinks a{
+  min-height:44px!important;
+  display:flex!important;
+  align-items:center!important;
+  justify-content:center!important;
+  border-radius:11px!important;
+  font-weight:800!important;
+}
+.purchase-channel-tabs{margin-top:11px!important}
+.purchase-channel{min-height:54px!important}
+
+/* Catalogue: no-image entries should not look like a giant empty product photo. */
+.catalog-main-image:has(.analysis-image-wait){
+  height:118px!important;
+  min-height:118px!important;
+}
+.analysis-image-wait{
+  min-height:118px!important;
+  width:100%!important;
+  display:flex!important;
+  align-items:center!important;
+  justify-content:center!important;
+  gap:8px!important;
+  flex-direction:row!important;
+  padding:14px!important;
+  font-size:12px!important;
+  color:#64748b!important;
+  font-weight:800!important;
+}
+.analysis-image-wait b{
+  display:inline!important;
+  font-size:24px!important;
+  line-height:1!important;
+}
+.analysis-box{overflow:hidden!important}
+.analysis-head{min-height:101px!important}
+.analysis-title{line-height:1.38!important}
+.analysis-native{min-height:0!important;margin-bottom:3px!important}
+.analysis-sub{line-height:1.45!important}
+
+/* Prices and source link get a little more visual hierarchy. */
+.analysis-price,.analysis-box .price,.price-current{
+  font-variant-numeric:tabular-nums!important;
+}
+.analysis-box a{
+  text-underline-offset:2px;
+}
+
+/* Tablet: retain two-column cards but make gutters and card proportions calmer. */
+@media (min-width:651px) and (max-width:1100px){
+  .app{max-width:930px!important;padding-left:18px!important;padding-right:18px!important}
+  .analysis-list{grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:16px!important}
+  .catalog-main-image{height:248px!important}
+  .catalog-main-image:has(.analysis-image-wait){height:124px!important;min-height:124px!important}
+  .analysis-image-wait{min-height:124px!important}
+  .purchase-controls{gap:10px!important}
+  .release-list{gap:11px!important}
+  .release-item{padding:14px 16px!important}
+}
+
+/* Phone: no-image cards can be slightly taller, still much shorter than before. */
+@media(max-width:650px){
+  #siteUpdateAll{min-height:54px!important;font-size:15px!important}
+  .top-info-tab{min-height:48px!important;font-size:12px!important}
+  .catalog-main-image:has(.analysis-image-wait){height:104px!important;min-height:104px!important}
+  .analysis-image-wait{min-height:104px!important}
+}
+
+@media(prefers-color-scheme:dark){
+  #purchaseLocationStatus{
+    color:#e2e8f0!important;
+    background:#172033!important;
+    border-color:#334155!important;
+  }
+  .analysis-image-wait{color:#9aa8bc!important}
+  #purchaseNearby{border-color:#334155!important}
+}
