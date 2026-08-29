@@ -1,0 +1,37 @@
+{
+  "version": 1,
+  "updated_at": "2026-08-29",
+  "policy": "공개 SNS·검색 결과는 재고 제보 발견용입니다. trusted=false 제보는 공식 실시간 재고로 승격하지 않으며 판매처 공식 조회 또는 점포 확인이 필요합니다.",
+  "sources": [
+    {
+      "id": "poke-vending-machine",
+      "platform": "instagram",
+      "username": "poke_vending_machine",
+      "profile_url": "https://www.instagram.com/poke_vending_machine/",
+      "game": "Pokemon",
+      "region": "KR",
+      "role": "community_stock_watch",
+      "trusted": false,
+      "default_location": "건대",
+      "default_product": "포켓몬 카드 자판기 상품",
+      "terms": ["재고", "입고", "품절", "매진", "스톱", "자판기"],
+      "ttl_hours": 24,
+      "verification_note": "커뮤니티 재고·자판기 상태 발견용. 단독으로 공식 재고 확정 금지."
+    },
+    {
+      "id": "ttosatda",
+      "platform": "instagram",
+      "username": "ttosatda",
+      "profile_url": "https://www.instagram.com/ttosatda/",
+      "game": "Pokemon",
+      "region": "KR",
+      "role": "community_stock_watch",
+      "trusted": false,
+      "default_location": "이마트 해운대점",
+      "default_product": "포켓몬 카드 BOX (제품명 미확정)",
+      "terms": ["재고", "입고", "재입고", "품절", "BOX", "박스", "이마트"],
+      "ttl_hours": 24,
+      "verification_note": "커뮤니티 매장 재고 발견용. 제품명·수량·현재 재고는 공식 이마트 재고조회 또는 점포에서 재확인."
+    }
+  ]
+}
