@@ -1,0 +1,37 @@
+name: Apply Auto Market Center
+on:
+  push:
+    branches: [main]
+    paths:
+      - auto_market_center.js
+      - auto_market_center.css
+      - apply_auto_market_center_patch.py
+      - .github/workflows/apply-auto-market-center.yml
+permissions:
+  contents: write
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Apply integration
+        run: python apply_auto_market_center_patch.py
+      - name: Validate integration
+        run: |
+          grep -q 'auto_market_center.css' index.html
+          grep -q 'auto_market_center.js' index.html
+          grep -q 'market12section' index.html
+          grep -q 'identityCardName' index.html
+          grep -q "auto_market_center.js','auto_market_center.css" tcg_updater.py
+          python -m py_compile tcg_updater.py
+      - name: Commit generated integration
+        run: |
+          if git diff --quiet -- index.html tcg_updater.py; then exit 0; fi
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add index.html tcg_updater.py
+          git commit -m 'feat: connect card recognition to automatic v12 market search'
+          git push
