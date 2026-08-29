@@ -1,5 +1,10 @@
 #!/usr/bin/env python3
-"""Conservatively refresh official TCG release data for GitHub Pages."""
+"""Conservatively refresh official TCG release data for GitHub Pages.
+
+Historical release rows are append-only: once an official release was verified it is
+never discarded merely because it became old.  New runs only add/update verified
+official rows and preserve the last known-good archive on network failures.
+"""
 from __future__ import annotations
 
 import datetime as dt
@@ -9,7 +14,6 @@ import re
 import urllib.error
 import urllib.parse
 import urllib.request
-import os
 from pathlib import Path
 from safe_runtime import atomic_write_json, env_int, html_to_text, safe_read_text, safe_urlopen
 
@@ -23,6 +27,11 @@ ALLOWED = {
     "www.onepiece-cardgame.com", "en.onepiece-cardgame.com",
     "www.naruto-cardgame.com",
 }
+
+# Plausibility guard only.  Do NOT use a rolling recent-date window here: that used
+# to delete old official products from the archive on every refresh.
+MIN_RELEASE_DATE = dt.date(1996, 1, 1)
+MAX_FUTURE_YEARS = 5
 
 
 def fetch(url: str) -> str:
@@ -43,12 +52,11 @@ def collect_onepiece(url: str, region: str) -> list[dict]:
     pattern = re.compile(r"(BOOSTER PACK\s*-[^-]{2,100}-\s*\[OP-\d+\]).{0,220}?Release Date\s*([A-Za-z]+\s+\d{1,2},\s+20\d{2}).{0,160}?MSRP\s*USD\s*\$([0-9.]+)", re.I)
     found = []
     for name, date, price in pattern.findall(text):
-        found.append({"game":"ONE PIECE","region":region,"name":re.sub(r"\s+"," ",name).strip(),"release_date":iso_en(date),"price":f"${price}/팩","status":"출시예정","source":url})
+        found.append({"game":"ONE PIECE","region":region,"name":re.sub(r"\s+"," ",name).strip(),"release_date":iso_en(date),"price":f"${price}/팩","status":"공식 확인","source":url})
     return found
 
 
 def collect_onepiece_jp() -> list[dict]:
-    """Read the Japanese booster listing; never label Asia-English data as JP."""
     url = "https://www.onepiece-cardgame.com/products/?subcategory=boosters"
     text = html_to_text(fetch(url))
     pattern = re.compile(
@@ -89,7 +97,7 @@ def collect_pokemon_jp() -> list[dict]:
     found = []
     for name, y, m, d, price in pattern.findall(text):
         date = dt.date(int(y), int(m), int(d)).isoformat()
-        found.append({"game":"Pokémon","region":"JP","name":name.strip(),"release_date":date,"price":f"¥{price}/팩","status":"출시예정","source":url})
+        found.append({"game":"Pokémon","region":"JP","name":name.strip(),"release_date":date,"price":f"¥{price}/팩","status":"공식 확인","source":url})
     return found
 
 
@@ -105,21 +113,36 @@ def valid(item: dict) -> bool:
     if not all(item.get(k) for k in ("game", "region", "name", "source")):
         return False
     host_ok = urllib.parse.urlparse(item["source"]).hostname in ALLOWED
+    if not host_ok:
+        return False
     if item.get("release_window") and not item.get("release_date"):
-        return host_ok
+        return True
     try:
-        date = dt.date.fromisoformat(item["release_date"])
+        date = dt.date.fromisoformat(str(item["release_date"]))
     except (TypeError, ValueError):
         return False
-    return date >= dt.date.today() - dt.timedelta(days=45) and host_ok
+    max_date = dt.date.today().replace(year=dt.date.today().year + MAX_FUTURE_YEARS)
+    return MIN_RELEASE_DATE <= date <= max_date
 
 
 def item_key(item: dict) -> tuple:
-    # 같은 상품이 표기 차이([OPK-14] / OPK-14 등)로 중복되지 않게 상품 코드를 우선 키로 사용한다.
     name = str(item.get("name", ""))
-    m = re.search(r"\b(?:OPK|EBK|OP|SV|MEGA)[- ]?\d+[A-Z]?\b", name, re.I)
+    m = re.search(r"\b(?:OPK|EBK|OP|EB|PRB|SV|MEGA)[- ]?\d+[A-Z]?\b", name, re.I)
     identity = re.sub(r"[^A-Z0-9]", "", m.group(0).upper()) if m else re.sub(r"\s+", " ", name).strip().casefold()
-    return (item["game"], item["region"], identity, item.get("release_date") or item.get("release_window", ""))
+    # Date is intentionally not part of identity.  Re-release/date corrections update
+    # the same product rather than creating endless duplicates.
+    return (item["game"], item["region"], identity)
+
+
+def _prefer_new(old: dict, new: dict) -> dict:
+    """Merge a freshly verified official row without discarding useful history fields."""
+    merged = dict(old or {})
+    for k, v in (new or {}).items():
+        if v not in (None, "", [], {}):
+            merged[k] = v
+    merged.setdefault("first_seen_at", (old or {}).get("first_seen_at") or dt.datetime.now(dt.timezone.utc).isoformat(timespec="seconds"))
+    merged["last_verified_at"] = dt.datetime.now(dt.timezone.utc).isoformat(timespec="seconds")
+    return merged
 
 
 def main() -> None:
@@ -133,7 +156,6 @@ def main() -> None:
         ("ONE PIECE US", lambda: collect_onepiece("https://en.onepiece-cardgame.com/products/", "US")),
         ("NARUTO Global", collect_naruto),
     ]
-    # 공식 출처는 서로 독립적이므로 병렬 확인한다. 한 사이트 지연이 전체 갱신을 막지 않는다.
     with concurrent.futures.ThreadPoolExecutor(max_workers=len(collectors)) as pool:
         futures = {pool.submit(collector): label for label, collector in collectors}
         for future in concurrent.futures.as_completed(futures):
@@ -146,15 +168,22 @@ def main() -> None:
             except (urllib.error.URLError, TimeoutError, OSError, ValueError, UnicodeError) as exc:
                 errors.append(f"{label}: {type(exc).__name__}")
 
-    merged = {item_key(x): x for x in current.get("items", []) if valid(x)}
+    # Preserve ALL previously valid official history, regardless of age.
+    merged: dict[tuple, dict] = {}
+    for x in current.get("items", []):
+        if valid(x):
+            merged[item_key(x)] = dict(x)
     for item in candidates:
         if valid(item):
-            merged[item_key(item)] = item
+            key = item_key(item)
+            merged[key] = _prefer_new(merged.get(key, {}), item)
 
-    current["items"] = sorted(merged.values(), key=lambda x: (x.get("release_date") or "9999-12-31", x["region"], x["name"]))
+    current["items"] = sorted(merged.values(), key=lambda x: (x.get("release_date") or "9999-12-31", x.get("region", ""), x.get("name", "")))
     current["updated_at"] = dt.datetime.now(dt.timezone.utc).isoformat(timespec="seconds")
-    current["collection_status"] = "정상" if not errors else "일부 출처 확인 실패"
+    current["collection_status"] = "정상" if not errors else "일부 출처 확인 실패 · 기존 전체 출시이력 보존"
     current["collection_errors"] = errors
+    current["history_policy"] = "공식 확인된 과거 출시제품은 기간 제한 없이 누적 보존하며 네트워크 실패 시 삭제하지 않음"
+    current["history_count"] = len(current["items"])
     atomic_write_json(DATA,current,suffix=".json.tmp")
 
 
