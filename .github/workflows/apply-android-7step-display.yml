@@ -4,6 +4,7 @@ on:
   push:
     paths:
       - 'apply_android_7step_display_patch.py'
+      - '.github/workflows/apply-android-7step-display.yml'
   workflow_dispatch:
 
 permissions:
