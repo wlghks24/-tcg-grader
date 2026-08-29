@@ -1,0 +1,51 @@
+name: Apply fan social discovery
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'fan_social_learning.py'
+      - 'apply_fan_social_discovery_patch.py'
+      - 'test_fan_social_learning.py'
+      - '.github/workflows/apply-fan-social-discovery.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Apply fan social patch
+        run: python apply_fan_social_discovery_patch.py
+      - name: Verify syntax
+        run: |
+          python -m py_compile fan_social_learning.py social_event_discovery.py multi_route_event_discovery.py
+      - name: Run fan learning and regression tests
+        run: |
+          python -m unittest test_fan_social_learning.py
+          if [ -f test_social_event_discovery.py ]; then python -m unittest test_social_event_discovery.py; fi
+      - name: Verify integration markers
+        run: |
+          grep -q 'fan_social_learning' social_event_discovery.py
+          grep -q 'fan_candidate' social_event_discovery.py
+          grep -q 'fan_social_candidate_count' social_event_discovery.py
+          grep -q 'bing_social' multi_route_event_discovery.py
+          grep -q 'fan_discovery' social_source_registry.json
+          grep -q 'fan_social_learning.json' .gitignore
+      - name: Commit integrated changes
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add social_event_discovery.py multi_route_event_discovery.py social_source_registry.json .gitignore
+          if ! git diff --cached --quiet; then
+            git commit -m 'feat: collect and learn TCG fan social sources safely'
+            git push origin main
+          fi
