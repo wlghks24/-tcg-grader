@@ -1,6 +1,6 @@
-// v118: high-contrast game selector labels + representative category illustrations.
-const CACHE='tcg-v118-game-selector-visual-fix';
-const CORE=['./','./index.html','./grading_vision_engine.js','./grading_accuracy_v99.js','./card_identity_recognition.js','./vision_calibration.json','./manifest.webmanifest','./releases.json','./promo_events.json','./supplementary_candidates.json','./social_event_candidates.json','./purchase_sources.json','./purchase_signals.json','./market_prices.json','./market_watch.json','./exchange_rates.json','./icon.svg'];
+// v121: polished responsive UI + high-contrast game selector labels.
+const CACHE='tcg-v121-ui-polish';
+const CORE=['./','./index.html','./ui_polish_v121.css','./grading_vision_engine.js','./grading_accuracy_v99.js','./card_identity_recognition.js','./vision_calibration.json','./manifest.webmanifest','./releases.json','./promo_events.json','./supplementary_candidates.json','./social_event_candidates.json','./purchase_sources.json','./purchase_signals.json','./market_prices.json','./market_watch.json','./exchange_rates.json','./icon.svg'];
 
 const GAME_SELECTOR_STYLE=`
 <style id="tcg-game-selector-v118">
