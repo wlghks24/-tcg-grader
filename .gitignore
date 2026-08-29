@@ -19,3 +19,5 @@ grading_proxy_costs_cache.json
 # Temporary atomic-write/test artifacts
 *.tmp
 *.tmp.json
+multi_market_price_cache.json
+multi_market_source_learning.json

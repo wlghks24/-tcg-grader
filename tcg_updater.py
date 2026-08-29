@@ -66,7 +66,7 @@ PUBLIC_STATIC_FILES={
     'vision_calibration.json',
     'releases.json','market_prices.json','market_watch.json',
     'promo_events.json','supplementary_candidates.json','social_event_candidates.json',
-    'purchase_sources.json','purchase_signals.json','exchange_rates.json','inventory_lookup.js','inventory_lookup.css','grade_market_flow.js','grade_market_flow.css','auto_market_center.js','auto_market_center.css','grading_proxy_costs.js','grading_proxy_costs.css','grading_total_cost.js','grading_total_cost.css','grading_costs_live.js','grading_costs_live.css'
+    'purchase_sources.json','purchase_signals.json','exchange_rates.json','inventory_lookup.js','inventory_lookup.css','grade_market_flow.js','grade_market_flow.css','auto_market_center.js','auto_market_center.css','multi_market_prices.js','multi_market_prices.css','grading_proxy_costs.js','grading_proxy_costs.css','grading_total_cost.js','grading_total_cost.css','grading_costs_live.js','grading_costs_live.css'
 }
 SOURCES=[
  ('포켓몬 한국 공식','https://pokemoncard.co.kr/card/category/info1','공식'),
@@ -1183,6 +1183,19 @@ class Handler(SimpleHTTPRequestHandler):
             return self.json(load_json_file(os.path.join(BASE,'web_discovery_candidates.json'),{'updated_at':None,'queries':[],'notice':'아직 수집 전'}))
         if path=='/api/purchase-signals':
             return self.json(load_json_file(os.path.join(BASE,'purchase_signals.json'),{'version':1,'updated_at':None,'items':[]}))
+        if path=='/api/multi-market-prices':
+            qs=parse_qs(parsed.query)
+            q=(qs.get('q',[''])[0] or '')[:160]
+            region=(qs.get('region',['ALL'])[0] or 'ALL')[:8]
+            game=(qs.get('game',['ALL'])[0] or 'ALL')[:40]
+            force=qs.get('force',['0'])[0]=='1'
+            if not self._search_origin_allowed():
+                return self.json({'ok':False,'error':'허용되지 않은 요청 출처','items':[]},403)
+            try:
+                from multi_market_price_collector import search_multi_market
+                return self.json(search_multi_market(q,region=region,game=game,force=force))
+            except Exception:
+                return self.json({'ok':False,'error':'다중마켓 시세수집 엔진 오류','items':[]},500)
         if path=='/api/grading-proxy-costs':
             qs=parse_qs(parsed.query)
             force=qs.get('force',['0'])[0]=='1'
