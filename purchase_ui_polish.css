@@ -1,32 +1,60 @@
-/* v120 purchase finder visual polish + truthful capability labels */
-#purchasePanel,
-#purchaseBoard,
-.purchase-panel,
-.purchase-board{color:#0f172a}
-.release-board .purchase-controls,
-.release-board .purchase-channel-tabs,
-.release-board .purchase-region-grid,
-.release-board #purchaseNearby,
-.release-board #purchaseLive,
-.release-board #purchaseLocationStatus,
-.release-board #purchaseUpdated{color:#0f172a}
-.purchase-controls{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin:14px 0;align-items:stretch}
-.purchase-controls input,.purchase-controls select{width:100%;min-width:0;height:54px;margin:0;padding:0 15px;border:1.5px solid #cbd5e1;border-radius:15px;background:#fff;color:#0f172a;font-size:14px;font-weight:650;box-shadow:0 2px 8px rgba(15,23,42,.05);outline:none}
-.purchase-controls input::placeholder{color:#94a3b8;font-weight:550}.purchase-controls input:focus,.purchase-controls select:focus{border-color:#3b82f6;box-shadow:0 0 0 4px rgba(59,130,246,.13)}
-.purchase-controls button{min-height:54px;margin:0;border-radius:15px;font-size:14px;box-shadow:none}
-.purchase-channel-tabs{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin:12px 0 14px;padding:5px;border-radius:18px;background:rgba(255,255,255,.08)}
+/* purchase finder: ordered flow, consistent contrast, tablet-first layout */
+#purchasePanel,#purchaseBoard,.purchase-panel,.purchase-board{color:#0f172a}
+#purchasePanel:not([hidden]){display:flex;flex-direction:column;gap:0}
+#purchasePanel>.purchase-controls{order:10}
+#purchasePanel>.purchase-intel-tools{order:20}
+#purchasePanel>#purchaseLocationStatus{order:30}
+#purchasePanel>.purchase-channel-tabs{order:40}
+#purchasePanel>.muted{order:45}
+#purchasePanel>#purchaseNearby{order:50}
+#purchasePanel>#officialInventoryLookup{order:60}
+#purchasePanel>#purchaseLive{order:70}
+#purchasePanel>#purchaseRegionGrid{order:80}
+#purchasePanel>#purchaseUpdated{order:90}
+#purchasePanel>.purchase-privacy{order:100}
+
+.release-board .purchase-controls,.release-board .purchase-intel-tools,.release-board .purchase-channel-tabs,.release-board .purchase-region-grid,.release-board #purchaseNearby,.release-board #purchaseLive,.release-board #purchaseLocationStatus,.release-board #purchaseUpdated{color:#0f172a}
+
+.purchase-controls,.purchase-intel-tools{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin:12px 0;align-items:stretch}
+.purchase-controls{padding:14px;background:#ffffff10;border:1px solid #ffffff22;border-radius:18px}
+.purchase-intel-tools{padding:14px;background:#f8fafc;border:1px solid #dbe3ef;border-radius:18px}
+.purchase-controls input,.purchase-controls select,.purchase-intel-tools input,.purchase-intel-tools select{width:100%;min-width:0;height:54px;margin:0;padding:0 15px;border:1.5px solid #cbd5e1;border-radius:15px;background:#fff;color:#0f172a;font-size:14px;font-weight:650;box-shadow:0 2px 8px rgba(15,23,42,.05);outline:none}
+.purchase-controls input::placeholder,.purchase-intel-tools input::placeholder{color:#94a3b8;font-weight:550}
+.purchase-controls input:focus,.purchase-controls select:focus,.purchase-intel-tools input:focus,.purchase-intel-tools select:focus{border-color:#3b82f6;box-shadow:0 0 0 4px rgba(59,130,246,.13)}
+.purchase-controls button,.purchase-intel-tools button{min-height:54px;margin:0;border-radius:15px;font-size:14px;box-shadow:none}
+#purchaseSearch{grid-column:1/-1;background:linear-gradient(135deg,#2563eb,#1d4ed8);color:#fff;border:1.5px solid #2563eb}
+#purchaseUseLocation,#purchaseUseAnsan{background:#fff;color:#0f172a;border:1.5px solid #dbe3ef;box-shadow:0 3px 10px rgba(15,23,42,.08)}
+#purchaseUseLocation{color:#991b1b}#purchaseUseAnsan{color:#78350f}
+#purchaseUseLocation:active,#purchaseUseAnsan:active,#purchaseSearch:active{transform:scale(.985)}
+
+#purchaseLocationStatus,#purchaseUpdated{padding:13px 15px;margin:10px 0;border-radius:14px;background:#f8fafc!important;color:#334155!important;border:1px solid #e2e8f0;line-height:1.55;font-size:12px;font-weight:650}
+#purchaseLocationStatus{background:#fff7ed!important;border-color:#fed7aa;color:#9a3412!important}
+
+.purchase-channel-tabs{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin:12px 0 14px;padding:6px;border-radius:18px;background:#ffffff14}
 .purchase-channel{min-height:58px;margin:0;background:#fff;color:#334155;border:1.5px solid #dbe3ef;border-radius:14px;font-size:15px;font-weight:850;box-shadow:0 2px 8px rgba(15,23,42,.07)}
 .purchase-channel.active{background:linear-gradient(135deg,#2563eb,#1d4ed8);color:#fff;border-color:#60a5fa;box-shadow:0 8px 20px rgba(37,99,235,.24)}
-#purchaseLocationStatus,#purchaseUpdated{padding:12px 14px;margin:10px 0;border-radius:14px;background:#f8fafc!important;color:#475569!important;border:1px solid #e2e8f0;line-height:1.55;font-size:12px}
-#purchaseNearby,#purchaseLive{margin:14px 0;padding:16px;border-radius:18px;background:#fff!important;color:#0f172a!important;border:1px solid #e2e8f0;box-shadow:0 8px 24px rgba(15,23,42,.08)}
-#purchaseNearby h4,#purchaseLive h4{margin:0 0 8px;color:#0f172a;font-size:16px}#purchaseNearby .muted,#purchaseLive .muted{color:#64748b!important}#purchaseNearby a,#purchaseLive a{color:#1d4ed8}
-.purchase-region-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin-top:14px}.purchase-region{background:#fff;color:#0f172a;border-radius:18px;padding:14px;border:1px solid #e2e8f0;box-shadow:0 7px 22px rgba(15,23,42,.07)}
+
+#purchasePanel>.muted{margin:0 0 10px;padding:11px 13px;border-radius:13px;background:#eef2ff;color:#475569!important;border:1px solid #c7d2fe;font-size:11px;line-height:1.6}
+#purchaseNearby,#purchaseLive{margin:12px 0;padding:16px;border-radius:18px;background:#fff!important;color:#0f172a!important;border:1px solid #e2e8f0;box-shadow:0 8px 24px rgba(15,23,42,.08)}
+#purchaseNearby{border-left:5px solid #f97316}
+#purchaseLive{border-left:5px solid #f59e0b}
+#purchaseNearby h4,#purchaseLive h4{margin:0 0 8px;color:#111827!important;font-size:16px;font-weight:900}
+#purchaseNearby .muted,#purchaseLive .muted{color:#475569!important;background:transparent!important;border:0!important;padding:0!important;margin:0!important;font-size:12px!important}
+#purchaseNearby a,#purchaseLive a{color:#1d4ed8}
+
+#officialInventoryLookup{margin:12px 0!important;border:1.5px solid #bbf7d0!important;border-left:5px solid #16a34a!important;box-shadow:0 10px 26px rgba(22,163,74,.10)!important}
+#officialInventoryLookup .inventory-lookup-head b{color:#14532d!important;font-size:17px}
+#officialInventoryLookup .inventory-lookup-head small{color:#475569!important;font-size:11px}
+
+.purchase-region-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin-top:14px}
+.purchase-region{background:#fff;color:#0f172a;border-radius:18px;padding:14px;border:1px solid #e2e8f0;box-shadow:0 7px 22px rgba(15,23,42,.07)}
 .purchase-region h3{margin:0 0 10px;padding-bottom:9px;border-bottom:1px solid #e2e8f0;font-size:16px;color:#0f172a}.purchase-group-title{margin:10px 0 7px;padding:0 0 7px;border-bottom:1px solid #e2e8f0;color:#334155;font-size:12px;font-weight:900}
 .purchase-source{display:block;margin:8px 0;padding:12px;border-radius:14px;background:linear-gradient(180deg,#fff,#f8fafc);border:1px solid #dbe3ef;color:#1d4ed8;text-decoration:none;transition:transform .12s ease,border-color .12s ease,box-shadow .12s ease}.purchase-source:active{transform:scale(.99)}.purchase-source:hover{border-color:#93c5fd;box-shadow:0 5px 16px rgba(37,99,235,.10)}
 .purchase-source b{display:block;font-size:13px;line-height:1.65;color:#1e40af}.purchase-source small{display:block;margin-top:5px;color:#64748b;font-size:11px;line-height:1.6}.store-address,.store-stock,.purchase-source-distance{color:#475569}.capability-note{font-weight:700;color:#475569}
 .source-badge{display:inline-flex;align-items:center;padding:3px 7px;margin-left:5px;border-radius:999px;background:#dbeafe;color:#1e40af;font-size:9px;font-weight:850;vertical-align:middle}.source-badge.official{background:#dcfce7;color:#166534}.source-badge.used{background:#fef3c7;color:#92400e}.source-badge.blog{background:#f3e8ff;color:#6b21a8}.source-badge.map{background:#ffe4e6;color:#9f1239}.source-badge.tracker{background:#cffafe;color:#155e75}
 .source-badge.capability.stock{background:#dcfce7;color:#166534}.source-badge.capability.store{background:#ffedd5;color:#9a3412}.source-badge.capability.search{background:#dbeafe;color:#1d4ed8}.source-badge.capability.info{background:#e2e8f0;color:#475569}.source-confidence{display:inline-flex;margin-left:6px;padding:2px 6px;border-radius:999px;background:#f1f5f9;color:#64748b;font-size:9px;font-weight:800}
-#purchaseSearch,#purchaseUseLocation,#purchaseUseAnsan{background:#fff;color:#0f172a;border:1.5px solid #dbe3ef;box-shadow:0 3px 10px rgba(15,23,42,.08)}#purchaseSearch{background:linear-gradient(135deg,#2563eb,#1d4ed8);color:#fff;border-color:#2563eb}#purchaseUseLocation:active,#purchaseUseAnsan:active,#purchaseSearch:active{transform:scale(.985)}
-.release-board label,.release-board .purchase-controls label,.release-board .purchase-controls option{color:#0f172a}.release-board select option{color:#0f172a;background:#fff}
-@media(max-width:650px){.purchase-region-grid{grid-template-columns:1fr}.purchase-controls{grid-template-columns:1fr 1fr}}
-@media(max-width:520px){.purchase-controls{grid-template-columns:1fr}.purchase-channel-tabs{gap:7px}.purchase-channel{min-height:52px;font-size:14px}#purchaseNearby,#purchaseLive{padding:13px}}
+.release-board label,.release-board .purchase-controls label,.release-board .purchase-intel-tools label,.release-board .purchase-controls option,.release-board .purchase-intel-tools option{color:#0f172a}.release-board select option{color:#0f172a;background:#fff}
+.purchase-privacy{margin-top:10px;padding:10px 12px;border-radius:12px;background:#0f172a;color:#cbd5e1;font-size:10px;line-height:1.55}
+
+@media(max-width:650px){.purchase-region-grid{grid-template-columns:1fr}.purchase-controls,.purchase-intel-tools{grid-template-columns:1fr 1fr}}
+@media(max-width:520px){.purchase-controls,.purchase-intel-tools{grid-template-columns:1fr}.purchase-channel-tabs{gap:7px}.purchase-channel{min-height:52px;font-size:14px}#purchaseNearby,#purchaseLive{padding:13px}.purchase-controls,.purchase-intel-tools{padding:12px}}
