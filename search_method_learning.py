@@ -22,7 +22,8 @@ from safe_runtime import atomic_write_json, safe_read_text
 ROOT = Path(__file__).resolve().parent
 MEMORY = ROOT / "search_method_learning.json"
 BACKUP = ROOT / "search_method_learning.json.bak"
-SCHEMA_VERSION = 1
+PROFILE = ROOT / "search_engine_profile.json"
+SCHEMA_VERSION = 2
 MAX_METHODS = 32
 MAX_CONTEXTS = 240
 
@@ -116,21 +117,37 @@ def _cooldown_until(stat: dict) -> dt.datetime | None:
         return None
 
 
-def _score(stat: dict) -> float:
+def _rates(stat: dict) -> dict:
     attempts = max(1, _int(stat.get("attempts"), 1))
-    response_rate = _int(stat.get("responses")) / attempts
-    result_rate = _int(stat.get("nonempty")) / attempts
-    select_rate = _int(stat.get("selected")) / max(1, _int(stat.get("results"), 1))
-    blocks = _int(stat.get("blocked")) + _int(stat.get("rate_limited"))
-    timeouts = _int(stat.get("timeouts"))
-    errors = _int(stat.get("errors"))
-    avg_latency = _float(stat.get("avg_latency_ms"), 0.0, 0.0, 120_000.0)
-    latency_penalty = min(1.4, avg_latency / 25_000.0)
-    exploration = 0.65 / math.sqrt(attempts)
+    results = _int(stat.get("results"))
+    return {
+        "attempts": attempts,
+        "response_rate": _int(stat.get("responses")) / attempts,
+        "nonempty_rate": _int(stat.get("nonempty")) / attempts,
+        "adoption_rate": min(1.0, _int(stat.get("selected")) / max(1, results)),
+        "blocked_rate": _int(stat.get("blocked")) / attempts,
+        "rate_limited_rate": _int(stat.get("rate_limited")) / attempts,
+        "timeout_rate": _int(stat.get("timeouts")) / attempts,
+        "error_rate": _int(stat.get("errors")) / attempts,
+        "avg_latency_ms": _float(stat.get("avg_latency_ms"), 0.0, 0.0, 120_000.0),
+        "failure_streak": _int(stat.get("failure_streak")),
+    }
+
+
+def _score(stat: dict) -> float:
+    r = _rates(stat)
+    latency_penalty = min(1.35, r["avg_latency_ms"] / 25_000.0)
+    block_penalty = min(2.2, (r["blocked_rate"] + r["rate_limited_rate"]) * 3.0)
+    timeout_penalty = min(1.4, r["timeout_rate"] * 2.2)
+    error_penalty = min(1.1, r["error_rate"] * 1.4)
+    streak_penalty = min(1.5, r["failure_streak"] * 0.22)
+    exploration = 0.70 / math.sqrt(r["attempts"])
     return (
-        response_rate * 2.2 + result_rate * 1.7 + select_rate * 1.5 + exploration
-        - min(2.4, blocks * 0.18) - min(1.5, timeouts * 0.10)
-        - min(1.3, errors * 0.05) - latency_penalty
+        r["response_rate"] * 2.3
+        + r["nonempty_rate"] * 1.9
+        + r["adoption_rate"] * 1.7
+        + exploration
+        - block_penalty - timeout_penalty - error_penalty - latency_penalty - streak_penalty
     )
 
 
@@ -163,6 +180,68 @@ class SearchMethodLearner:
         if cooldown and cooldown > _now():
             base -= 5.0
         return base
+
+    def route_policy(self, name: str, *, region: str = "KR", family: str = "web") -> dict:
+        """Turn cumulative health metrics into a concrete runtime policy."""
+        method = self._method(name)
+        context = self._context(name, region, family)
+        # Context statistics become authoritative only after a few samples; before
+        # that, global method history prevents unstable overfitting.
+        source = context if _int(context.get("attempts")) >= 4 else method
+        r = _rates(source)
+        score = self.method_score(name, region, family)
+        avg_seconds = r["avg_latency_ms"] / 1000.0
+        timeout = 20 if avg_seconds <= 0 else int(round(avg_seconds * 2.6 + 4.0))
+        timeout = max(7, min(50, timeout))
+        # A usually-responsive method that occasionally times out gets enough room
+        # to recover; a chronically failing method fails fast so fallbacks can run.
+        if r["timeout_rate"] >= 0.20 and r["response_rate"] >= 0.55:
+            timeout = min(55, max(timeout, int(round(avg_seconds * 3.2 + 6.0))))
+        elif r["timeout_rate"] >= 0.30 and r["response_rate"] < 0.45:
+            timeout = min(timeout, 12)
+        if r["blocked_rate"] + r["rate_limited_rate"] >= 0.20:
+            timeout = min(timeout, 15)
+
+        max_attempts = 2
+        if r["blocked_rate"] + r["rate_limited_rate"] >= 0.08 or r["failure_streak"] >= 2:
+            max_attempts = 1
+        elif r["response_rate"] >= 0.80 and r["timeout_rate"] < 0.10 and r["error_rate"] < 0.12:
+            max_attempts = 2
+
+        return {
+            "method": name,
+            "score": round(score, 4),
+            "timeout_seconds": int(timeout),
+            "max_attempts": int(max_attempts),
+            "response_rate": round(r["response_rate"], 4),
+            "nonempty_rate": round(r["nonempty_rate"], 4),
+            "adoption_rate": round(r["adoption_rate"], 4),
+            "blocked_rate": round(r["blocked_rate"], 4),
+            "rate_limited_rate": round(r["rate_limited_rate"], 4),
+            "timeout_rate": round(r["timeout_rate"], 4),
+            "avg_latency_ms": round(r["avg_latency_ms"], 1),
+            "failure_streak": int(r["failure_streak"]),
+        }
+
+    def recommended_budget(self, names, *, region: str = "KR", family: str = "web", is_android: bool = False) -> int:
+        """Use more independent routes when health/yield is poor, fewer when mature and healthy."""
+        candidates = [str(x) for x in names if str(x)]
+        if not candidates:
+            return 1
+        base_cap = min(len(candidates), 5 if is_android else 7)
+        stats = [self._method(name) for name in candidates]
+        total_attempts = sum(_int(s.get("attempts")) for s in stats)
+        if total_attempts < max(10, len(candidates) * 2):
+            return base_cap  # collect enough baseline evidence first
+        rates = [_rates(s) for s in stats]
+        response = sum(r["response_rate"] for r in rates) / len(rates)
+        yield_rate = sum(r["nonempty_rate"] for r in rates) / len(rates)
+        disruption = sum(r["blocked_rate"] + r["rate_limited_rate"] + r["timeout_rate"] for r in rates) / len(rates)
+        if response >= 0.82 and yield_rate >= 0.45 and disruption < 0.12:
+            return max(3, base_cap - 1)
+        if response < 0.55 or yield_rate < 0.22 or disruption >= 0.25:
+            return base_cap
+        return max(4 if not is_android else 3, base_cap - 1)
 
     def ordered_routes(self, names, *, region: str = "KR", family: str = "web", budget: int | None = None) -> list[str]:
         candidates = [str(x) for x in names if str(x)]
@@ -275,6 +354,7 @@ class SearchMethodLearner:
             except Exception:
                 pass
         atomic_write_json(self.memory_path, self.data, suffix=".search-method.tmp")
+        atomic_write_json(PROFILE, self.report(), suffix=".search-profile.tmp")
 
     def report(self) -> dict:
         now = _now()
@@ -286,16 +366,22 @@ class SearchMethodLearner:
                 "method": name,
                 "score": round(_score(stat), 4),
                 "attempts": _int(stat.get("attempts")),
-                "response_rate": round(_int(stat.get("responses")) / attempts, 4),
-                "nonempty_rate": round(_int(stat.get("nonempty")) / attempts, 4),
+                "response_rate": round(_rates(stat)["response_rate"], 4),
+                "nonempty_rate": round(_rates(stat)["nonempty_rate"], 4),
+                "adoption_rate": round(_rates(stat)["adoption_rate"], 4),
                 "results": _int(stat.get("results")),
                 "selected": _int(stat.get("selected")),
                 "empty": _int(stat.get("empty")),
                 "blocked": _int(stat.get("blocked")),
+                "blocked_rate": round(_rates(stat)["blocked_rate"], 4),
                 "rate_limited": _int(stat.get("rate_limited")),
+                "rate_limited_rate": round(_rates(stat)["rate_limited_rate"], 4),
                 "timeouts": _int(stat.get("timeouts")),
+                "timeout_rate": round(_rates(stat)["timeout_rate"], 4),
                 "avg_latency_ms": round(_float(stat.get("avg_latency_ms")), 1),
                 "failure_streak": _int(stat.get("failure_streak")),
+                "recommended_timeout_seconds": self.route_policy(name).get("timeout_seconds"),
+                "recommended_max_attempts": self.route_policy(name).get("max_attempts"),
                 "cooling_down": bool(cooldown and cooldown > now),
                 "cooldown_until": _iso(cooldown),
                 "last_error_kind": stat.get("last_error_kind"),
@@ -306,7 +392,7 @@ class SearchMethodLearner:
             "updated_at": self.data.get("updated_at"),
             "totals": dict(self.data.get("totals") or {}),
             "methods": rows,
-            "policy": "검색방법의 운영 성공률만 학습하며 출처의 공식성·사실성은 승격하지 않음. 차단 경로는 임시 cooldown 후 재탐색.",
+            "policy": "누적 시도/응답/결과/채택/빈검색/403/429/timeout/지연/연속실패를 비율화해 검색 순서·시간제한·시도예산·재시도를 자동 최적화. 출처 공식성·사실성은 별도 검증.",
         }
 
 

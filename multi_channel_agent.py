@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Adaptive multi-provider public-web candidate collector.
 
-v118:
+v119:
 - Keeps adaptive KR/JP/US + official/social query planning.
 - DuckDuckGo HTML automatically falls back to DuckDuckGo Lite when the HTML
   result shape yields zero parsed links.
@@ -65,6 +65,7 @@ class MultiChannelCollector:
         self.method_learner = SearchMethodLearner()
         self.method_learner.start_run()
         self._learning_lock = threading.RLock()
+        self._route_local = threading.local()
 
     @staticmethod
     def _timeout() -> int:
@@ -169,14 +170,17 @@ class MultiChannelCollector:
     def _fetch_with_retry(self, req: urllib.request.Request, allowed_hosts: set[str], max_bytes: int = 900_000) -> tuple[bytes | None, str | None, int]:
         last_error = None
         attempts = 0
-        for attempt in range(2):
+        runtime = getattr(self._route_local, "policy", {}) if hasattr(self, "_route_local") else {}
+        timeout = int(runtime.get("timeout_seconds") or self._timeout())
+        max_attempts = max(1, min(3, int(runtime.get("max_attempts") or 2)))
+        for attempt in range(max_attempts):
             attempts = attempt + 1
             try:
-                with safe_urlopen(req, timeout=self._timeout(), allowed_hosts=allowed_hosts) as response:
+                with safe_urlopen(req, timeout=timeout, allowed_hosts=allowed_hosts) as response:
                     return response.read(max_bytes), None, attempts
             except (urllib.error.URLError, urllib.error.HTTPError, TimeoutError, OSError, ValueError) as exc:
                 last_error = f"{type(exc).__name__}: {exc}"[:500]
-                if attempt >= 1 or not self._transient(exc):
+                if attempt >= max_attempts - 1 or not self._transient(exc):
                     break
                 time.sleep(0.7)
         return None, last_error or "unknown provider error", attempts
@@ -410,8 +414,8 @@ class MultiChannelCollector:
             "naver_news_html": lambda q, n: self._search_naver_news(q, n),
         }
         is_android = "com.termux" in os.environ.get("PREFIX", "") or "ANDROID_ROOT" in os.environ
-        budget = 5 if is_android else len(routes)
         with self._learning_lock:
+            budget = self.method_learner.recommended_budget(routes.keys(), region=region, family=family, is_android=is_android)
             ordered = self.method_learner.ordered_routes(routes.keys(), region=region, family=family, budget=budget)
         errors: list[str] = []
         attempts = 0
@@ -419,16 +423,23 @@ class MultiChannelCollector:
         responded_any = False
         for method in ordered:
             fn = routes[method]
+            with self._learning_lock:
+                runtime_policy = self.method_learner.route_policy(method, region=region, family=family)
+            self._route_local.policy = runtime_policy
             started = time.monotonic()
             try:
                 rows, error, used_attempts, responded = fn(query, max(limit, 8))
             except Exception as exc:
                 rows, error, used_attempts, responded = [], f"{type(exc).__name__}: {exc}"[:500], 1, False
+            finally:
+                self._route_local.policy = {}
             elapsed_ms = (time.monotonic() - started) * 1000.0
             attempts += max(1, int(used_attempts or 1))
             responded_any = responded_any or responded
             for row in rows:
                 row.setdefault("search_method", method)
+                row.setdefault("route_policy_score", runtime_policy.get("score"))
+                row.setdefault("route_timeout_seconds", runtime_policy.get("timeout_seconds"))
             provider_rows[method] = rows
             with self._learning_lock:
                 self.method_learner.observe(method, responded=responded, result_count=len(rows), error=error or "",
@@ -603,7 +614,8 @@ class MultiChannelCollector:
             "learning": {
                 "memory_file": self.learner.memory_path.name,
                 "method_memory_file": self.method_learner.memory_path.name,
-                "strategy": "adaptive query + adaptive method routing: DDG HTML/Lite, Bing Web/News RSS, Google News compact/broad, Naver News + relaxed/minimal fallback",
+                "engine_profile_file": "search_engine_profile.json",
+                "strategy": "adaptive query + learned meta-search routing: cumulative response/yield/adoption/403/429/timeout/latency/failure metrics drive route order, timeout, attempt budget and recovery exploration",
                 "search_method_health": self.method_learner.report(),
                 "safety": "운영성공률만 학습. 403/429/timeout 경로는 임시 cooldown 후 재탐색하며 CAPTCHA/로그인/비공개 API 우회 금지",
             },
