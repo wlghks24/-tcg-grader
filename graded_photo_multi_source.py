@@ -21,7 +21,10 @@ from pathlib import Path
 from typing import Any
 
 from safe_runtime import atomic_write_json, safe_read_text, safe_urlopen, safe_urlopen_no_redirect
-from detailed_collection_intelligence import build_queries, record_query_result, evidence_confidence, canonical_key, source_priority
+from detailed_collection_intelligence import (
+ build_queries, canonical_key, evidence_confidence, learning_snapshot,
+ record_collection_cycle, record_official_feedback, route_run_count, source_priority,
+)
 from graded_photo_evidence import enrich_rows, normalize_cert
 from grading_cert_verifier import lookup_url, verify_cert
 
@@ -408,7 +411,8 @@ def _queries(src:dict,game:str)->tuple[tuple[str,str],...]:
     # of slow search requests on Android.
     source_index=next((i for i,x in enumerate(SOURCES) if x.get('id')==sid),0)
     game_index=GAMES.index(game)
-    selected=(COMPANIES[(source_index+game_index)%len(COMPANIES)],COMPANIES[(source_index+game_index+2)%len(COMPANIES)])
+    cycle=route_run_count(query_sid,game)
+    selected=(COMPANIES[(source_index+game_index+cycle)%len(COMPANIES)],COMPANIES[(source_index+game_index+cycle+2)%len(COMPANIES)])
     planned=[broad]
     for company,language in zip(selected,names[1:]):
         learned=''
@@ -421,20 +425,27 @@ def _queries(src:dict,game:str)->tuple[tuple[str,str],...]:
     return tuple(planned)
 
 def _discover_source_game(src:dict,game:str)->tuple[list[dict],list[str],int,dict]:
- raw=[];errors=[];queries=0
+ raw=[];errors=[];queries=0;observations=[]
  detailed_started=time.monotonic()
+ query_sid=SOURCE_ID_ALIASES.get(str(src.get('id') or ''),str(src.get('id') or 'unknown'))
  diag={'raw_results':0,'domain_matches':0,'company_matches':0,'resolved_redirects':0,'image_results':0,'google_image_results':0}
  for expected_company,q in _queries(src,game):
-  queries+=1
+  queries+=1;query_started=time.monotonic()
   try:
    qrows,err=_query_rows(q,10)
+   relevant=0
    for rr in qrows:
     if isinstance(rr,dict):
-     item=dict(rr);item['_expected_company']=expected_company;raw.append(item)
+     blob=' '.join([str(rr.get('title') or ''),str(rr.get('snippet') or '')]);company=_company(blob)
+     if company and (expected_company=='ALL' or company==expected_company):relevant+=1
+     item=dict(rr);item['_expected_company']=expected_company;item['_learning_query']=q[:300];raw.append(item)
    errors.extend(err);diag['raw_results']+=len(qrows)
-  except Exception as exc:errors.append(type(exc).__name__)
+   observations.append({'query':q,'raw':len(qrows),'accepted':relevant,'images':sum(bool(row.get('image_url')) for row in qrows if isinstance(row,dict)),'errors':len(err),'elapsed':time.monotonic()-query_started})
+  except Exception as exc:
+   errors.append(type(exc).__name__);observations.append({'query':q,'raw':0,'accepted':0,'images':0,'errors':1,'elapsed':time.monotonic()-query_started})
  # One compact image-search per game/source. Bing image rows expose the actual
  # marketplace page (purl) and source image (murl), which avoids search redirect loss.
+ image_started=time.monotonic();iq=''
  try:
   gname={'pokemon':'Pokemon','onepiece':'One Piece','naruto':'Naruto'}[game]
   iq=f'site:{src["domain"]} {gname} PSA BGS CGC TAG BRG graded card slab'
@@ -454,9 +465,13 @@ def _discover_source_game(src:dict,game:str)->tuple[list[dict],list[str],int,dic
    if isinstance(rr,dict):
     item=dict(rr)
     item['_expected_company']=_company(str(item.get('title') or '')) or 'PSA'
+    item['_learning_query']=iq[:300]
     raw.append(item)
   diag['image_results']+=len(irows);diag['raw_results']+=len(irows)
- except Exception as exc: errors.append('bing_images:'+type(exc).__name__)
+  observations.append({'query':iq,'raw':len(irows),'accepted':sum(bool(_company(str(item.get('title') or ''))) for item in irows if isinstance(item,dict)),'images':sum(bool(item.get('image_url')) for item in irows if isinstance(item,dict)),'errors':0,'elapsed':time.monotonic()-image_started})
+ except Exception as exc:
+  errors.append('bing_images:'+type(exc).__name__)
+  observations.append({'query':iq or f'{game}:image_search','raw':0,'accepted':0,'images':0,'errors':1,'elapsed':time.monotonic()-image_started})
  candidates={}
  for r in raw:
   raw_url=str(r.get('url') or '')
@@ -477,9 +492,9 @@ def _discover_source_game(src:dict,game:str)->tuple[list[dict],list[str],int,dic
   out.append({'source_id':src['id'],'source':src['name'],'search_provider':r.get('search_provider'),'url':url[:1200],
               'title':str(r.get('title') or '')[:260],'snippet':str(r.get('snippet') or '')[:700],'image_url':image[:1200],
               'company':c,'grade':g,'certification_id':cert,'game':_game(blob,game),'mode':'slab','source_weight':src['weight'],
-              'grade_from_search':g is not None})
+              'grade_from_search':g is not None,'_learning_query':str(r.get('_learning_query') or '')[:300]})
  try:
-  record_query_result(str(src.get('id') or 'unknown'), f'{game}:graded_photo', raw=diag.get('raw_results',0), accepted=len(out), images=sum(bool(x.get('image_url')) for x in out), errors=len(errors), elapsed=time.monotonic()-detailed_started)
+  record_collection_cycle(query_sid,game,observations,raw=diag.get('raw_results',0),accepted=len(out),images=sum(bool(x.get('image_url')) for x in out),errors=len(errors),elapsed=time.monotonic()-detailed_started)
  except Exception:
   pass
  return out,errors,queries,diag
@@ -763,10 +778,16 @@ def collect()->dict:
  rows,official_stats=_official_verify_rows(rows,registry,max_live=5 if is_android else 10)
  rows=_resolve_cert_conflicts(rows)
  rows,image_conflict_stats=_resolve_image_conflicts(rows);official_stats.update(image_conflict_stats)
+ try:
+  learning_feedback=record_official_feedback(rows);collection_learning=learning_snapshot()
+ except Exception as exc:
+  learning_feedback={'rows_observed':0,'official_verified':0,'identifiers_learned':0,'error':type(exc).__name__}
+  collection_learning={'version':2,'error':'snapshot_unavailable','policy':{'query_learning_cannot_change_trust':True}}
 
  # Cross-source corroboration remains advisory; only official matching can verify.
  groups={}
  for item in rows:
+  item.pop('_learning_query',None)
   key=canonical_key(str(item.get('title') or ''),str(item.get('url') or ''))
   groups.setdefault(key,set()).update(item.pop('_dedup_sources',[]) or [str(item.get('source_id') or '')])
  for item in rows:
@@ -827,17 +848,20 @@ def collect()->dict:
                      'image_label_conflicts':int(image_conflict_stats.get('image_label_conflicts',0)),
                      'adaptive_timeout_seconds':adaptive_timeout_seconds,'elapsed_seconds':0.0,'next_timeout_seconds':adaptive_timeout_seconds},
           'image_probe_stats':image_stats,'official_verification_stats':official_stats,
+          'collection_learning_stats':collection_learning,'collection_learning_feedback':learning_feedback,
           'game_stats':game_stats,
           'provider_stats':dict(sorted(provider_counts.items(),key=lambda pair:(-pair[1],pair[0]))),
           'source_stats':stats,'errors':errors[:100],
           'configuration':{'google_cse_configured':google_configured,'google_cse_note':'existing customers only; public search fallbacks stay enabled',
                            'ebay_oauth_configured':ebay_configured,'ebay_client_credentials_supported':True,
                            'games_targeted':list(GAMES),'game_collection_balance':'round_robin_per_source',
+                           'collection_learning_version':2,'query_strategy':'verified-feedback bandit with bounded exploration',
                            'amazon_mode':'public search fallback; deprecated PA-API is not called',
                            'kream_daangn_mode':'public search-index candidates only; login bypass disabled'},
           'policy':{'public_only':True,'login_bypass':False,'seller_label_is_official':False,'official_registry_match_required':True,
                     'slab_raw_isolated':True,'raw_calibration_modified':False,'image_bytes_auto_cached':False,
-                    'duplicate_image_training':False,'conflicting_labels_quarantined':True}}
+                    'duplicate_image_training':False,'conflicting_labels_quarantined':True,
+                    'collection_learning_cannot_change_trust':True,'verified_feedback_only':True}}
  elapsed_seconds=round(time.monotonic()-run_started,1);payload['summary']['elapsed_seconds']=elapsed_seconds
  timed_out=int(payload['summary'].get('timed_out_sources',0) or 0)
  learning_state=_load(LEARNING,{})

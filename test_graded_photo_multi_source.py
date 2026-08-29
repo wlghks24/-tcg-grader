@@ -33,6 +33,13 @@ class GradedPhotoMultiSourceTests(unittest.TestCase):
         self.assertTrue(all('site:ebay.com' in query for _,query in queries))
         self.assertEqual({company for company,_ in queries},{'ALL','PSA','CGC'})
 
+    def test_targeted_graders_rotate_after_each_source_game_cycle(self):
+        source=next(x for x in g.SOURCES if x['id']=='ebay_public')
+        with mock.patch.object(g,'route_run_count',return_value=1):
+            queries=g._queries(source,'pokemon')
+        self.assertEqual({company for company,_ in queries},{'ALL','BGS','TAG'})
+        self.assertTrue(any('BGS' in query for company,query in queries if company=='BGS'))
+
     def test_all_games_build_localized_marketplace_queries(self):
         source=next(x for x in g.SOURCES if x['id']=='ebay_public')
         expected={'pokemon':('Pokemon','포켓몬','ポケモン'),

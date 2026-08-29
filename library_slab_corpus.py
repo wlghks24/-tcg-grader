@@ -19,6 +19,7 @@ from __future__ import annotations
 import argparse
 import hashlib
 import json
+import math
 import random
 import re
 import subprocess
@@ -29,6 +30,7 @@ from pathlib import Path
 from typing import Any
 
 from PIL import Image, ImageOps
+from safe_runtime import atomic_write_json, safe_read_text
 
 COMPANIES = ("PSA", "BGS", "CGC", "TAG", "BRG")
 IMAGE_SUFFIXES = {
@@ -64,7 +66,7 @@ def iter_images(input_dir: Path) -> list[Path]:
         raise NotADirectoryError(f"input path is not a directory: {input_dir}")
     return sorted(
         (path for path in input_dir.rglob("*")
-         if path.is_file() and path.suffix.lower() in IMAGE_SUFFIXES),
+         if path.is_file() and not path.is_symlink() and path.suffix.lower() in IMAGE_SUFFIXES),
         key=lambda path: str(path).casefold(),
     )
 
@@ -101,7 +103,7 @@ def detect_company(text: str) -> str | None:
         return "BRG"
     if re.search(
         r"TECHNICAL\s+AUTHENTICATION(?:\s+AND|\s*&)?\s+GRADING"
-        r"|\bTAG\s+(?:GRADING|DIG|AUTHENTICATION)\b",
+        r"|\bTAG\s+(?:GRADING|DIG|AUTHENTICATION|TECHNICAL\s+AUTHENTICATION)\b",
         upper,
     ):
         return "TAG"
@@ -135,7 +137,7 @@ def _numeric_candidates(text: str) -> list[str]:
 
 
 def normalize_cert(company: str | None, text: str) -> str | None:
-    if not company:
+    if company not in CERT_LENGTHS:
         return None
     allowed = CERT_LENGTHS[company]
     candidates = [value for value in _numeric_candidates(text) if len(value) in allowed]
@@ -285,7 +287,7 @@ def ocr_label(path: Path, profile: str = "adaptive") -> tuple[str, str | None, d
 def load_registry(path: Path | None) -> dict[tuple[str, str], dict[str, Any]]:
     if path is None or not path.exists():
         return {}
-    payload = json.loads(path.read_text(encoding="utf-8"))
+    payload = json.loads(safe_read_text(path, max_bytes=5_000_000))
     rows = payload.get("certifications", []) if isinstance(payload, dict) else []
     registry: dict[tuple[str, str], dict[str, Any]] = {}
     for row in rows:
@@ -293,15 +295,25 @@ def load_registry(path: Path | None) -> dict[tuple[str, str], dict[str, Any]]:
             continue
         company = str(row.get("company", "")).upper()
         cert = re.sub(r"\D", "", str(row.get("certification_id", "")))
-        if company in COMPANIES and cert and row.get("officially_verified") is True:
-            registry[(company, cert)] = row
+        url = str(row.get("official_reference_url") or "")
+        try:
+            grade = float(row.get("grade"))
+        except (TypeError, ValueError, OverflowError):
+            continue
+        if (company in COMPANIES and len(cert) in CERT_LENGTHS[company]
+                and math.isfinite(grade) and 1 <= grade <= 10
+                and url.startswith("https://") and row.get("officially_verified") is True):
+            normalized = dict(row)
+            normalized.update({"company": company, "certification_id": cert, "grade": grade,
+                               "official_reference_url": url})
+            registry[(company, cert)] = normalized
     return registry
 
 
 def load_reviewed_overrides(path: Path | None) -> dict[str, str]:
     if path is None or not path.exists():
         return {}
-    payload = json.loads(path.read_text(encoding="utf-8"))
+    payload = json.loads(safe_read_text(path, max_bytes=5_000_000))
     rows = payload.get("reviewed_company_labels", []) if isinstance(payload, dict) else []
     out: dict[str, str] = {}
     for row in rows:
@@ -317,7 +329,7 @@ def load_reviewed_overrides(path: Path | None) -> dict[str, str]:
 def _clone_duplicate_fields(original: dict[str, Any], source_name: str, size: int, digest: str) -> dict[str, Any]:
     """Reuse OCR fields for byte-identical images without claiming extra evidence."""
     reasons = [reason for reason in original.get("quarantine_reasons", []) if reason != "file_read_error"]
-    reasons = sorted(set(reasons + ["exact_duplicate"]))
+    reasons = sorted(set(reasons))
     return {
         "source_name": source_name,
         "sha256": digest,
@@ -332,7 +344,8 @@ def _clone_duplicate_fields(original: dict[str, Any], source_name: str, size: in
         "label_grade": original.get("label_grade"),
         "mode": "slab",
         "ocr_label_text": original.get("ocr_label_text", ""),
-        "ocr_error": "exact_duplicate_inherited",
+        "ocr_error": None,
+        "ocr_reused_from": original.get("source_name"),
         "ocr_diagnostics": {
             "profile": "inherited",
             "passes_used": [],
@@ -345,6 +358,8 @@ def _clone_duplicate_fields(original: dict[str, Any], source_name: str, size: in
         "status": original.get("status", "quarantine"),
         "quarantine_reasons": reasons,
         "official_reference_url": original.get("official_reference_url"),
+        "learning_eligibility": "duplicate_reference_only" if original.get("official_result") else "not_eligible_duplicate",
+        "training_eligible": False,
     }
 
 
@@ -478,6 +493,8 @@ def build(
             "status": status,
             "quarantine_reasons": reasons,
             "official_reference_url": registry_row.get("official_reference_url") if official_match else None,
+            "learning_eligibility": "reference_only_missing_raw_prediction" if official_match else "not_eligible_unverified",
+            "training_eligible": False,
         }
         records.append(row)
         if size:
@@ -640,18 +657,9 @@ def main() -> int:
         sample_seed=args.sample_seed,
         ocr_profile=args.ocr_profile,
     )
-    args.manifest.write_text(
-        json.dumps(manifest, ensure_ascii=False, indent=2) + "\n",
-        encoding="utf-8",
-    )
-    args.verified.write_text(
-        json.dumps(verified, ensure_ascii=False, indent=2) + "\n",
-        encoding="utf-8",
-    )
-    args.verification_queue.write_text(
-        json.dumps(queue, ensure_ascii=False, indent=2) + "\n",
-        encoding="utf-8",
-    )
+    atomic_write_json(args.manifest, manifest, suffix=".slab-manifest.tmp")
+    atomic_write_json(args.verified, verified, suffix=".slab-verified.tmp")
+    atomic_write_json(args.verification_queue, queue, suffix=".slab-queue.tmp")
     print(json.dumps(manifest["summary"], ensure_ascii=False), flush=True)
     return 0
 

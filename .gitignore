@@ -13,6 +13,8 @@ collection_learning_report.json
 collection_feedback.json
 collection_provider_health.json
 collection_provider_health.json.bak
+detailed_collection_learning.json
+detailed_collection_learning.json.bak
 
 # Live grading-cost cache is refreshed from official sources on each device.
 grading_costs_cache.json

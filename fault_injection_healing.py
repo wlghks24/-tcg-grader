@@ -40,7 +40,9 @@ MUTABLE_JSON = {
     "V103_MARKET_SOURCE_TEST_REPORT.json",
     "integrity_manifest.json", "web_discovery_candidates.json", "social_event_candidates.json", "social_source_registry.json",
     "graded_photo_candidates.json", "graded_photo_source_learning.json", "graded_photo_official_cache.json",
-    "graded_photo_reference_learning.json",
+    "graded_photo_reference_learning.json", "detailed_collection_learning.json",
+    "collection_learning_memory.json", "search_method_learning.json", "search_engine_profile.json",
+    "V108_FINAL_VERIFICATION_REPORT.json", "V109_FINAL_VERIFICATION_REPORT.json",
 }
 RECOVERABLE_DATA = {
     "releases.json", "market_watch.json", "market_prices.json",
