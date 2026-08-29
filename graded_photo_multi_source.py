@@ -25,9 +25,12 @@ UA='Mozilla/5.0 TCG-Grader-GradedPhotoCollector/3.0'
 COMPANIES=('PSA','BGS','CGC','TAG','BRG')
 GAMES=('pokemon','onepiece','naruto')
 MAX_ROWS=240
-MAX_PER_SOURCE=18
-MAX_IMAGE_PROBES_PER_SOURCE=8
+MAX_PER_SOURCE=12
+MAX_IMAGE_PROBES_PER_SOURCE=2
 MAX_PAGE_BYTES=1_000_000
+RUN_SOURCE_LIMIT=6
+RUN_WAIT_SECONDS=95
+os.environ.setdefault('TCG_HTTP_TIMEOUT','5')
 
 SOURCES=(
  {'id':'ebay_public','name':'eBay 공개검색','domain':'ebay.com','weight':0.90},
@@ -159,24 +162,20 @@ def _query_rows(query:str,limit:int)->tuple[list[dict],list[str]]:
  if rows:return rows,[]
  errors=[]
  try:
-  s=_searcher();rows,err,_,ok=s._search_ddg(query,limit)
-  if err:errors.append('duckduckgo:'+err[:160])
-  if rows:return rows,errors
- except Exception as exc:errors.append('duckduckgo:'+type(exc).__name__)
- try:
   s=_searcher();rows,err,_,ok=s._search_bing_rss(query,limit)
   if err:errors.append('bing_rss:'+err[:160])
   if rows:return rows,errors
  except Exception as exc:errors.append('bing_rss:'+type(exc).__name__)
+ try:
+  s=_searcher();rows,err,_,ok=s._search_ddg(query,limit)
+  if err:errors.append('duckduckgo:'+err[:160])
+  if rows:return rows,errors
+ except Exception as exc:errors.append('duckduckgo:'+type(exc).__name__)
  return [],errors
 
 def _queries(src:dict,game:str)->tuple[str,...]:
  g={'pokemon':'Pokemon','onepiece':'One Piece','naruto':'Naruto'}[game]
- return (
-  f'site:{src["domain"]} {g} "PSA 10" graded card',
-  f'site:{src["domain"]} {g} (BGS OR CGC) (10 OR 9.5) card',
-  f'site:{src["domain"]} {g} (TAG OR BRG) graded card',
- )
+ return (f'site:{src["domain"]} {g} (PSA OR BGS OR CGC OR TAG OR BRG) (10 OR 9.5 OR graded OR slab)',)
 
 def _discover_source_game(src:dict,game:str)->tuple[list[dict],list[str],int]:
  raw=[];errors=[];queries=0
@@ -240,16 +239,28 @@ def _save_learning(stats:dict):
 def collect()->dict:
  registry=_registry();rows=[];stats={};errors=[]
  e=_ebay_candidates();rows.extend(e);stats['ebay']={'candidates':len(e),'image_hits':sum(bool(x.get('image_url')) for x in e),'verified_hits':0,'errors':0,'queries':0}
- with concurrent.futures.ThreadPoolExecutor(max_workers=3,thread_name_prefix='graded-photo') as pool:
-  futs={pool.submit(_collect_public_source,src):src for src in SOURCES}
-  for fut in concurrent.futures.as_completed(futs):
-   src=futs[fut]
-   try:
-    sid,found,errs,queries=fut.result();rows.extend(found)
-    stats[sid]={'candidates':len(found),'image_hits':sum(bool(x.get('image_url')) for x in found),'verified_hits':0,'errors':len(errs),'queries':queries}
-    errors.extend(f'{sid}:{x}' for x in errs[:3])
-   except Exception as exc:
-    sid=src['id'];stats[sid]={'candidates':0,'image_hits':0,'verified_hits':0,'errors':1,'queries':0};errors.append(sid+':'+type(exc).__name__)
+ state=_load(LEARNING,{})
+ try:cursor=int(state.get('source_cursor',0))%len(SOURCES)
+ except Exception:cursor=0
+ active=[SOURCES[(cursor+i)%len(SOURCES)] for i in range(min(RUN_SOURCE_LIMIT,len(SOURCES)))]
+ state['source_cursor']=(cursor+len(active))%len(SOURCES);state['last_active_sources']=[x['id'] for x in active]
+ atomic_write_json(LEARNING,state,suffix='.graded-photo-cursor.tmp')
+ pool=concurrent.futures.ThreadPoolExecutor(max_workers=3,thread_name_prefix='graded-photo')
+ futs={pool.submit(_collect_public_source,src):src for src in active}
+ done,pending=concurrent.futures.wait(futs,timeout=RUN_WAIT_SECONDS)
+ for fut in done:
+  src=futs[fut]
+  try:
+   sid,found,errs,queries=fut.result();rows.extend(found)
+   stats[sid]={'candidates':len(found),'image_hits':sum(bool(x.get('image_url')) for x in found),'verified_hits':0,'errors':len(errs),'queries':queries}
+   errors.extend(f'{sid}:{x}' for x in errs[:3])
+  except Exception as exc:
+   sid=src['id'];stats[sid]={'candidates':0,'image_hits':0,'verified_hits':0,'errors':1,'queries':0};errors.append(sid+':'+type(exc).__name__)
+ for fut in pending:
+  src=futs[fut];fut.cancel();sid=src['id']
+  stats[sid]={'candidates':0,'image_hits':0,'verified_hits':0,'errors':1,'queries':0,'timed_out':True}
+  errors.append(sid+':run_timeout')
+ pool.shutdown(wait=False,cancel_futures=True)
  dedup={}
  for x in rows:
   cert=x.get('certification_id');key=(x.get('company'),cert) if cert else x.get('url')
@@ -266,7 +277,7 @@ def collect()->dict:
  payload={'schema_version':3,'created_at':_now(),'records':rows,
           'summary':{'total_candidates':len(rows),'with_image_url':sum(bool(x.get('image_url')) for x in rows),'verified_references':verified,
                      'quarantined':len(rows)-verified,'sources':len({x.get('source_id') for x in rows}),
-                     'status':'ok' if rows else 'no_candidates','queries_attempted':sum(int(x.get('queries',0)) for x in stats.values())},
+                     'status':'ok' if rows else 'no_candidates','queries_attempted':sum(int(x.get('queries',0)) for x in stats.values()),'markets_this_run':[x['id'] for x in active],'timed_out_sources':sum(bool(x.get('timed_out')) for x in stats.values())},
           'source_stats':stats,'errors':errors[:80],
           'google_cse_configured':bool(os.environ.get('GOOGLE_CSE_KEY') and os.environ.get('GOOGLE_CSE_CX')),
           'ebay_oauth_configured':bool(os.environ.get('EBAY_OAUTH_TOKEN')),
