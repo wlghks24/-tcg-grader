@@ -202,20 +202,29 @@ def _searcher():
  return _SEARCHER
 
 def _query_rows(query:str,limit:int)->tuple[list[dict],list[str]]:
- rows=_google_cse(query,limit)
- if rows:return rows,[]
- errors=[]
+ errors=[];merged=[];seen=set()
+ def add(rows):
+  for row in rows or []:
+   if not isinstance(row,dict):continue
+   url=str(row.get('url') or '').strip()
+   key=url or (str(row.get('title') or ''),str(row.get('search_provider') or ''))
+   if not key or key in seen:continue
+   seen.add(key);merged.append(row)
+ # Never let one provider suppress the others. Direct marketplace URLs from DDG
+ # are especially useful when Bing RSS returns tracking/search URLs.
+ try:add(_google_cse(query,limit))
+ except Exception as exc:errors.append('google_cse:'+type(exc).__name__)
  try:
   s=_searcher();rows,err,_,ok=s._search_bing_rss(query,limit)
   if err:errors.append('bing_rss:'+err[:160])
-  if rows:return rows,errors
+  add(rows)
  except Exception as exc:errors.append('bing_rss:'+type(exc).__name__)
  try:
   s=_searcher();rows,err,_,ok=s._search_ddg(query,limit)
   if err:errors.append('duckduckgo:'+err[:160])
-  if rows:return rows,errors
+  add(rows)
  except Exception as exc:errors.append('duckduckgo:'+type(exc).__name__)
- return [],errors
+ return merged[:max(limit*3,limit)],errors
 
 def _bing_image_rows(query:str,src:dict,limit:int=10)->list[dict]:
  try:
