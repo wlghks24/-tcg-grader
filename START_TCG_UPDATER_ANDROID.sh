@@ -2,8 +2,22 @@
 set -u
 cd "$(dirname "$0")"
 
+# Do not hard-code an old app version in the startup banner.
+# Show the exact Git commit currently installed on this tablet so users can
+# immediately confirm whether the local server matches the latest checkout.
+if command -v git >/dev/null 2>&1 && git rev-parse --is-inside-work-tree >/dev/null 2>&1; then
+  TCG_BUILD="$(git rev-parse --short=8 HEAD 2>/dev/null || true)"
+  TCG_BRANCH="$(git branch --show-current 2>/dev/null || true)"
+else
+  TCG_BUILD=""
+  TCG_BRANCH=""
+fi
+[ -n "${TCG_BUILD}" ] || TCG_BUILD="local"
+[ -n "${TCG_BRANCH}" ] || TCG_BRANCH="unknown"
+
 echo "========================================"
-echo " TCG v109 Android 태블릿 서버 시작"
+echo " TCG Android 태블릿 서버 시작"
+echo " 현재 빌드: ${TCG_BUILD} · 브랜치: ${TCG_BRANCH}"
 echo "========================================"
 
 if ! command -v python >/dev/null 2>&1; then
