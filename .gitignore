@@ -2,6 +2,8 @@
 __pycache__/
 *.pyc
 *.pyo
+.pytest_cache/
+.mypy_cache/
 
 # Adaptive collection learning is device-local runtime state.
 # Keeping these untracked prevents tablet/PC git updates from overwriting learned strategy.
@@ -19,5 +21,11 @@ grading_proxy_costs_cache.json
 # Temporary atomic-write/test artifacts
 *.tmp
 *.tmp.json
+*.db.tmp
+*.json.tmp
+*.adaptive-social.tmp
 multi_market_price_cache.json
 multi_market_source_learning.json
+
+# Device-local storage optimization status
+storage_optimization_report.json
