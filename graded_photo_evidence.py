@@ -172,6 +172,7 @@ def probe_image(url: str, fallback_company: str = "", timeout: int = 10) -> dict
         if width < 180 or height < 220 or width * height > MAX_IMAGE_PIXELS:
             return {**result, "error": "invalid_image_dimensions", "width": width, "height": height}
         ocr_text, ocr_error = _ocr(image)
+        explicit_company = _company(ocr_text)
         evidence = extract_label_evidence(ocr_text, fallback_company)
         return {
             **result,
@@ -184,6 +185,7 @@ def probe_image(url: str, fallback_company: str = "", timeout: int = 10) -> dict
             "perceptual_hash": _dhash(image),
             "ocr_error": ocr_error,
             "ocr_company": evidence["company"],
+            "ocr_company_explicit": explicit_company,
             "ocr_grade": evidence["grade"],
             "ocr_certification_id": evidence["certification_id"],
             "ocr_text": evidence["ocr_text"],
@@ -212,7 +214,9 @@ def _merge_probe(row: dict[str, Any], probe: dict[str, Any]) -> dict[str, Any]:
         }
     )
     conflicts: list[str] = []
-    ocr_company = str(probe.get("ocr_company") or "")
+    # ``ocr_company`` may contain the search-query fallback. Only an explicit
+    # company marker read from the image may become image identity evidence.
+    ocr_company = str(probe.get("ocr_company_explicit") or "")
     ocr_grade = probe.get("ocr_grade")
     ocr_cert = normalize_cert(probe.get("ocr_certification_id"))
     old_company = str(item.get("company") or "")
@@ -244,10 +248,50 @@ def _merge_probe(row: dict[str, Any], probe: dict[str, Any]) -> dict[str, Any]:
     return item
 
 
-def enrich_rows(rows: list[dict[str, Any]], limit: int = 12, workers: int = 3) -> tuple[list[dict[str, Any]], dict[str, int]]:
-    limit = max(0, min(int(limit), 40))
+def _balanced_probe_selection(
+    priorities: list[tuple[int, dict[str, Any]]], limit: int
+) -> list[tuple[int, dict[str, Any]]]:
+    """Round-robin image probes across grader and game without duplicating URLs."""
+    buckets: dict[tuple[str, str], list[tuple[int, dict[str, Any]]]] = {}
+    for pair in priorities:
+        row = pair[1]
+        company = str(row.get("company") or "unknown").upper()
+        game = str(row.get("game") or "unknown").lower()
+        buckets.setdefault((company, game), []).append(pair)
+    company_order = {name: index for index, name in enumerate((*COMPANIES, "UNKNOWN"))}
+    game_order = {name: index for index, name in enumerate(("pokemon", "onepiece", "naruto", "unknown"))}
+    keys = sorted(
+        buckets,
+        key=lambda key: (company_order.get(key[0], 99), game_order.get(key[1], 99), key),
+    )
+    positions = {key: 0 for key in keys}
     selected: list[tuple[int, dict[str, Any]]] = []
     seen_urls: set[str] = set()
+    while len(selected) < limit:
+        progressed = False
+        for key in keys:
+            rows = buckets[key]
+            position = positions[key]
+            while position < len(rows):
+                pair = rows[position]
+                position += 1
+                url = str(pair[1].get("image_url") or "")
+                if not url or url in seen_urls:
+                    continue
+                seen_urls.add(url)
+                selected.append(pair)
+                progressed = True
+                break
+            positions[key] = position
+            if len(selected) >= limit:
+                break
+        if not progressed:
+            break
+    return selected
+
+
+def enrich_rows(rows: list[dict[str, Any]], limit: int = 12, workers: int = 3) -> tuple[list[dict[str, Any]], dict[str, Any]]:
+    limit = max(0, min(int(limit), 40))
     priorities = sorted(
         enumerate(rows),
         key=lambda pair: (
@@ -256,14 +300,7 @@ def enrich_rows(rows: list[dict[str, Any]], limit: int = 12, workers: int = 3) -
             -_safe_source_weight(pair[1].get("source_weight", 0)),
         ),
     )
-    for index, row in priorities:
-        url = str(row.get("image_url") or "")
-        if not url or url in seen_urls:
-            continue
-        seen_urls.add(url)
-        selected.append((index, row))
-        if len(selected) >= limit:
-            break
+    selected = _balanced_probe_selection(priorities, limit)
     probes: dict[int, dict[str, Any]] = {}
     with concurrent.futures.ThreadPoolExecutor(max_workers=max(1, min(int(workers), 4)), thread_name_prefix="grade-photo-ocr") as pool:
         future_map = {
@@ -276,12 +313,21 @@ def enrich_rows(rows: list[dict[str, Any]], limit: int = 12, workers: int = 3) -
             except Exception as exc:
                 probes[index] = {"ok": False, "error": type(exc).__name__}
     output = [_merge_probe(row, probes[index]) if index in probes else dict(row) for index, row in enumerate(rows)]
+    company_attempted: dict[str, int] = {}
+    game_attempted: dict[str, int] = {}
+    for _, row in selected:
+        company = str(row.get("company") or "unknown").upper()
+        game = str(row.get("game") or "unknown").lower()
+        company_attempted[company] = company_attempted.get(company, 0) + 1
+        game_attempted[game] = game_attempted.get(game, 0) + 1
     return output, {
         "attempted": len(selected),
         "validated": sum(bool(probe.get("ok")) for probe in probes.values()),
         "ocr_readable": sum(bool(probe.get("ocr_text")) for probe in probes.values()),
         "certs_extracted": sum(bool(probe.get("ocr_certification_id")) for probe in probes.values()),
         "failed": sum(not bool(probe.get("ok")) for probe in probes.values()),
+        "company_attempted": company_attempted,
+        "game_attempted": game_attempted,
     }
 
 

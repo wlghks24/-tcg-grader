@@ -1,7 +1,7 @@
 {
   "version": 4,
-  "updated_at": "2026-08-29T23:07:37+00:00",
-  "total_runs": 290,
+  "updated_at": "2026-08-29T23:32:59+00:00",
+  "total_runs": 295,
   "invalid_report_count": 0,
   "patterns": {
     "b3dd31df03f05ece": {
@@ -1031,10 +1031,10 @@
           "occurrences": 39,
           "resolved_count": 39,
           "last_outcome": "resolved",
-          "clean_observations_after_error": 229,
+          "clean_observations_after_error": 234,
           "resolution_confirmed": true,
           "last_seen": "2026-08-23T15:57:24+00:00",
-          "last_clean_seen": "2026-08-29T23:07:37+00:00"
+          "last_clean_seen": "2026-08-29T23:32:59+00:00"
         }
       },
       "sample_details": [
@@ -1109,37 +1109,37 @@
           "occurrences": 4,
           "resolved_count": 4,
           "last_outcome": "resolved",
-          "clean_observations_after_error": 229,
+          "clean_observations_after_error": 234,
           "resolution_confirmed": true,
           "last_seen": "2026-08-21T15:01:57+00:00",
-          "last_clean_seen": "2026-08-29T23:07:37+00:00"
+          "last_clean_seen": "2026-08-29T23:32:59+00:00"
         },
         "market_prices.json": {
           "occurrences": 36,
           "resolved_count": 36,
           "last_outcome": "resolved",
-          "clean_observations_after_error": 229,
+          "clean_observations_after_error": 234,
           "resolution_confirmed": true,
           "last_seen": "2026-08-23T07:59:44+00:00",
-          "last_clean_seen": "2026-08-29T23:07:37+00:00"
+          "last_clean_seen": "2026-08-29T23:32:59+00:00"
         },
         "promo_events.json": {
           "occurrences": 12,
           "resolved_count": 12,
           "last_outcome": "resolved",
-          "clean_observations_after_error": 229,
+          "clean_observations_after_error": 234,
           "resolution_confirmed": true,
           "last_seen": "2026-08-23T07:59:44+00:00",
-          "last_clean_seen": "2026-08-29T23:07:37+00:00"
+          "last_clean_seen": "2026-08-29T23:32:59+00:00"
         },
         "purchase_sources.json": {
           "occurrences": 38,
           "resolved_count": 38,
           "last_outcome": "resolved",
-          "clean_observations_after_error": 229,
+          "clean_observations_after_error": 234,
           "resolution_confirmed": true,
           "last_seen": "2026-08-23T15:57:24+00:00",
-          "last_clean_seen": "2026-08-29T23:07:37+00:00"
+          "last_clean_seen": "2026-08-29T23:32:59+00:00"
         }
       },
       "sample_details": [
@@ -1238,37 +1238,37 @@
           "occurrences": 14,
           "resolved_count": 14,
           "last_outcome": "resolved",
-          "clean_observations_after_error": 229,
+          "clean_observations_after_error": 234,
           "resolution_confirmed": true,
           "last_seen": "2026-08-23T15:57:24+00:00",
-          "last_clean_seen": "2026-08-29T23:07:37+00:00"
+          "last_clean_seen": "2026-08-29T23:32:59+00:00"
         },
         "releases.json": {
           "occurrences": 1,
           "resolved_count": 1,
           "last_outcome": "resolved",
-          "clean_observations_after_error": 229,
+          "clean_observations_after_error": 234,
           "resolution_confirmed": true,
           "last_seen": "2026-08-23T11:20:32+00:00",
-          "last_clean_seen": "2026-08-29T23:07:37+00:00"
+          "last_clean_seen": "2026-08-29T23:32:59+00:00"
         },
         "promo_events.json": {
           "occurrences": 8,
           "resolved_count": 8,
           "last_outcome": "resolved",
-          "clean_observations_after_error": 229,
+          "clean_observations_after_error": 234,
           "resolution_confirmed": true,
           "last_seen": "2026-08-23T15:57:24+00:00",
-          "last_clean_seen": "2026-08-29T23:07:37+00:00"
+          "last_clean_seen": "2026-08-29T23:32:59+00:00"
         },
         "purchase_sources.json": {
           "occurrences": 1,
           "resolved_count": 1,
           "last_outcome": "resolved",
-          "clean_observations_after_error": 229,
+          "clean_observations_after_error": 234,
           "resolution_confirmed": true,
           "last_seen": "2026-08-23T11:20:32+00:00",
-          "last_clean_seen": "2026-08-29T23:07:37+00:00"
+          "last_clean_seen": "2026-08-29T23:32:59+00:00"
         }
       },
       "sample_details": [
@@ -1363,19 +1363,19 @@
           "occurrences": 5,
           "resolved_count": 5,
           "last_outcome": "resolved",
-          "clean_observations_after_error": 229,
+          "clean_observations_after_error": 234,
           "resolution_confirmed": true,
           "last_seen": "2026-08-22T14:03:13+00:00",
-          "last_clean_seen": "2026-08-29T23:07:37+00:00"
+          "last_clean_seen": "2026-08-29T23:32:59+00:00"
         },
         "purchase_sources.json": {
           "occurrences": 12,
           "resolved_count": 12,
           "last_outcome": "resolved",
-          "clean_observations_after_error": 229,
+          "clean_observations_after_error": 234,
           "resolution_confirmed": true,
           "last_seen": "2026-08-23T17:45:01+00:00",
-          "last_clean_seen": "2026-08-29T23:07:37+00:00"
+          "last_clean_seen": "2026-08-29T23:32:59+00:00"
         }
       },
       "sample_details": [
@@ -1458,28 +1458,28 @@
           "occurrences": 1,
           "resolved_count": 1,
           "last_outcome": "resolved",
-          "clean_observations_after_error": 229,
+          "clean_observations_after_error": 234,
           "resolution_confirmed": true,
           "last_seen": "2026-08-23T07:44:34+00:00",
-          "last_clean_seen": "2026-08-29T23:07:37+00:00"
+          "last_clean_seen": "2026-08-29T23:32:59+00:00"
         },
         "purchase_sources.json": {
           "occurrences": 1,
           "resolved_count": 1,
           "last_outcome": "resolved",
-          "clean_observations_after_error": 229,
+          "clean_observations_after_error": 234,
           "resolution_confirmed": true,
           "last_seen": "2026-08-23T11:50:59+00:00",
-          "last_clean_seen": "2026-08-29T23:07:37+00:00"
+          "last_clean_seen": "2026-08-29T23:32:59+00:00"
         },
         "exchange_rates.json": {
           "occurrences": 5,
           "resolved_count": 5,
           "last_outcome": "resolved",
-          "clean_observations_after_error": 229,
+          "clean_observations_after_error": 234,
           "resolution_confirmed": true,
           "last_seen": "2026-08-24T02:15:50+00:00",
-          "last_clean_seen": "2026-08-29T23:07:37+00:00"
+          "last_clean_seen": "2026-08-29T23:32:59+00:00"
         }
       },
       "sample_details": [
@@ -1564,10 +1564,10 @@
           "occurrences": 1,
           "resolved_count": 1,
           "last_outcome": "resolved",
-          "clean_observations_after_error": 229,
+          "clean_observations_after_error": 234,
           "resolution_confirmed": true,
           "last_seen": "2026-08-24T03:53:26+00:00",
-          "last_clean_seen": "2026-08-29T23:07:37+00:00"
+          "last_clean_seen": "2026-08-29T23:32:59+00:00"
         }
       },
       "sample_details": [
@@ -1646,46 +1646,46 @@
           "occurrences": 65,
           "resolved_count": 65,
           "last_outcome": "resolved",
-          "clean_observations_after_error": 141,
+          "clean_observations_after_error": 146,
           "resolution_confirmed": true,
           "last_seen": "2026-08-26T10:47:11+00:00",
-          "last_clean_seen": "2026-08-29T23:07:37+00:00"
+          "last_clean_seen": "2026-08-29T23:32:59+00:00"
         },
         "market_prices.json": {
           "occurrences": 91,
           "resolved_count": 91,
           "last_outcome": "resolved",
-          "clean_observations_after_error": 141,
+          "clean_observations_after_error": 146,
           "resolution_confirmed": true,
           "last_seen": "2026-08-26T10:47:11+00:00",
-          "last_clean_seen": "2026-08-29T23:07:37+00:00"
+          "last_clean_seen": "2026-08-29T23:32:59+00:00"
         },
         "promo_events.json": {
           "occurrences": 520,
           "resolved_count": 520,
           "last_outcome": "resolved",
-          "clean_observations_after_error": 141,
+          "clean_observations_after_error": 146,
           "resolution_confirmed": true,
           "last_seen": "2026-08-26T10:47:11+00:00",
-          "last_clean_seen": "2026-08-29T23:07:37+00:00"
+          "last_clean_seen": "2026-08-29T23:32:59+00:00"
         },
         "purchase_sources.json": {
           "occurrences": 143,
           "resolved_count": 143,
           "last_outcome": "resolved",
-          "clean_observations_after_error": 141,
+          "clean_observations_after_error": 146,
           "resolution_confirmed": true,
           "last_seen": "2026-08-26T10:47:11+00:00",
-          "last_clean_seen": "2026-08-29T23:07:37+00:00"
+          "last_clean_seen": "2026-08-29T23:32:59+00:00"
         },
         "exchange_rates.json": {
           "occurrences": 13,
           "resolved_count": 13,
           "last_outcome": "resolved",
-          "clean_observations_after_error": 141,
+          "clean_observations_after_error": 146,
           "resolution_confirmed": true,
           "last_seen": "2026-08-26T10:47:11+00:00",
-          "last_clean_seen": "2026-08-29T23:07:37+00:00"
+          "last_clean_seen": "2026-08-29T23:32:59+00:00"
         }
       },
       "sample_details": [
@@ -1990,52 +1990,52 @@
   },
   "files": {
     "releases.json": {
-      "runs": 264,
+      "runs": 269,
       "recent_failures": 0,
       "successful_repairs": 13,
-      "clean_success_streak": 49,
+      "clean_success_streak": 54,
       "last_result": "clean_success"
     },
     "market_watch.json": {
-      "runs": 264,
-      "recent_failures": 0,
-      "successful_repairs": 0,
-      "clean_success_streak": 242,
-      "last_result": "clean_success"
-    },
-    "market_prices.json": {
-      "runs": 264,
-      "recent_failures": 0,
-      "successful_repairs": 13,
-      "clean_success_streak": 49,
-      "last_result": "clean_success"
-    },
-    "promo_events.json": {
-      "runs": 264,
-      "recent_failures": 0,
-      "successful_repairs": 13,
-      "clean_success_streak": 49,
-      "last_result": "clean_success"
-    },
-    "exchange_rates.json": {
-      "runs": 272,
-      "recent_failures": 0,
-      "successful_repairs": 14,
-      "clean_success_streak": 49,
-      "last_result": "clean_success"
-    },
-    "purchase_sources.json": {
-      "runs": 263,
-      "recent_failures": 0,
-      "successful_repairs": 13,
-      "clean_success_streak": 49,
-      "last_result": "clean_success"
-    },
-    "verification_history.json": {
-      "runs": 247,
+      "runs": 269,
       "recent_failures": 0,
       "successful_repairs": 0,
       "clean_success_streak": 247,
+      "last_result": "clean_success"
+    },
+    "market_prices.json": {
+      "runs": 269,
+      "recent_failures": 0,
+      "successful_repairs": 13,
+      "clean_success_streak": 54,
+      "last_result": "clean_success"
+    },
+    "promo_events.json": {
+      "runs": 269,
+      "recent_failures": 0,
+      "successful_repairs": 13,
+      "clean_success_streak": 54,
+      "last_result": "clean_success"
+    },
+    "exchange_rates.json": {
+      "runs": 277,
+      "recent_failures": 0,
+      "successful_repairs": 14,
+      "clean_success_streak": 54,
+      "last_result": "clean_success"
+    },
+    "purchase_sources.json": {
+      "runs": 268,
+      "recent_failures": 0,
+      "successful_repairs": 13,
+      "clean_success_streak": 54,
+      "last_result": "clean_success"
+    },
+    "verification_history.json": {
+      "runs": 252,
+      "recent_failures": 0,
+      "successful_repairs": 0,
+      "clean_success_streak": 252,
       "last_result": "clean_success"
     }
   },

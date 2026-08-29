@@ -22,7 +22,7 @@ COLLECTOR_MARKERS=(
     'route_run_count',
     'collection_learning_stats',
     "SOURCE_ID_ALIASES={'ebay_public':'ebay'}",
-    "'query_strategy':'recency-decayed verified-feedback bandit with bounded exploration'",
+    "'query_strategy':'quality-aware recency-decayed verified-feedback bandit with bounded exploration'",
     "'source_selection_strategy':state.get('source_selection_policy')",
 )
 INTELLIGENCE_MARKERS=(
@@ -31,6 +31,7 @@ INTELLIGENCE_MARKERS=(
     'def learning_snapshot(',
     "'query_learning_cannot_change_trust':True",
     "'idempotent_feedback':True",
+    "'measurement_quality_feedback':True",
     "'cross_process_lock':True",
     "SOURCE_ALIASES={'ebay_public':'ebay','ebay_api':'ebay'}",
 )

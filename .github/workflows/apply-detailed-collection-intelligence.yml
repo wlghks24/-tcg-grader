@@ -4,6 +4,7 @@ on:
     paths:
       - detailed_collection_intelligence.py
       - graded_photo_multi_source.py
+      - graded_photo_evidence.py
       - graded_photo_dashboard.js
       - safe_runtime.py
       - apply_detailed_collection_intelligence.py
@@ -14,6 +15,7 @@ on:
     paths:
       - detailed_collection_intelligence.py
       - graded_photo_multi_source.py
+      - graded_photo_evidence.py
       - graded_photo_dashboard.js
       - safe_runtime.py
       - apply_detailed_collection_intelligence.py
@@ -30,5 +32,5 @@ jobs:
       - name: Validate integrated collector
         run: |
           python apply_detailed_collection_intelligence.py
-          python -m py_compile safe_runtime.py graded_photo_multi_source.py detailed_collection_intelligence.py
+          python -m py_compile safe_runtime.py graded_photo_evidence.py graded_photo_multi_source.py detailed_collection_intelligence.py
           python -m unittest -v test_detailed_collection_intelligence test_graded_photo_multi_source

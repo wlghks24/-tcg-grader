@@ -74,6 +74,20 @@ class DetailedCollectionIntelligenceTests(unittest.TestCase):
         self.assertEqual(snapshot['official_feedback'],1)
         self.assertEqual(snapshot['duplicate_feedback_ignored'],1)
 
+    def test_measurement_ready_feedback_improves_only_verified_photo_route(self):
+        good={'source_id':'ebay','game':'pokemon','company':'BGS','title':'BGS Pokemon SV1-001',
+              'certification_id':'12345678','url':'https://www.ebay.com/itm/bgs-1','official_result':True,
+              'measurement_photo_ready':True,'evidence_conflicts':[],'_learning_query':'site:ebay.com BGS Pokemon slab'}
+        unverified={**good,'url':'https://www.ebay.com/itm/bgs-2','official_result':False}
+        with tempfile.TemporaryDirectory() as directory:
+            with self.paths(Path(directory)):
+                result=learning.record_official_feedback([good,unverified])
+                snapshot=learning.learning_snapshot()
+        self.assertEqual(result['measurement_ready'],1)
+        self.assertEqual(snapshot['measurement_ready_feedback'],1)
+        self.assertEqual(snapshot['grader_coverage']['BGS']['measurement_ready'],1)
+        self.assertTrue(snapshot['policy']['measurement_quality_feedback'])
+
     def test_stale_query_yields_to_recent_productive_query(self):
         now=1_800_000_000
         stale={'runs':10,'raw':10,'accepted':10,'images':10,'verified':10,'errors':0,

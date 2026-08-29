@@ -65,6 +65,34 @@ class GradedPhotoMultiSourceTests(unittest.TestCase):
         self.assertEqual(len(rows),g.MAX_PER_SOURCE)
         self.assertEqual(diag['game_candidates'],{'pokemon':8,'onepiece':8,'naruto':8})
 
+    def test_source_cap_is_balanced_across_games_and_graders(self):
+        source=next(x for x in g.SOURCES if x['id']=='ebay_public')
+        def fake_discover(_source,game):
+            companies=['PSA']*20+['BGS','CGC','TAG','BRG']
+            rows=[{'url':f'https://www.ebay.com/itm/{game}-{company}-{i}','game':game,'company':company} for i,company in enumerate(companies)]
+            diag={'raw_results':24,'domain_matches':24,'company_matches':24,'resolved_redirects':0,'image_results':0,'google_image_results':0}
+            return rows,[],3,diag
+        with mock.patch.object(g,'_discover_source_game',side_effect=fake_discover):
+            _,rows,_,_,diag=g._collect_public_source(source)
+        self.assertEqual(len(rows),g.MAX_PER_SOURCE)
+        self.assertEqual(diag['game_candidates'],{'pokemon':8,'onepiece':8,'naruto':8})
+        self.assertEqual(diag['company_candidates'],{'PSA':12,'BGS':3,'CGC':3,'TAG':3,'BRG':3})
+
+    def test_image_search_never_defaults_unknown_grader_to_psa(self):
+        source=next(x for x in g.SOURCES if x['id']=='ebay_public')
+        image_row={'title':'graded card slab','url':'https://www.ebay.com/itm/tag-1','image_url':'https://i.ebayimg.com/tag.jpg'}
+        plan=(('ALL','broad'),('TAG','tag query'),('BGS','bgs query'))
+        with mock.patch.object(g,'_queries',return_value=plan), \
+             mock.patch.object(g,'_query_rows',return_value=([],[])), \
+             mock.patch.object(g,'_bing_image_rows',return_value=[image_row]), \
+             mock.patch.object(g,'_google_cse_images',return_value=[]), \
+             mock.patch.object(g,'_ebay_public_rows',return_value=[]), \
+             mock.patch.object(g,'record_collection_cycle'):
+            rows,_,_,_=g._discover_source_game(source,'pokemon')
+        self.assertEqual(len(rows),1)
+        self.assertEqual(rows[0]['company'],'TAG')
+        self.assertNotEqual(rows[0]['company'],'PSA')
+
     def test_source_selection_keeps_coverage_and_uses_learned_slot(self):
         state={'source_cursor':0}
         def priority(source_id):return 0.99 if source_id=='cardmarket' else 0.1
@@ -99,6 +127,48 @@ class GradedPhotoMultiSourceTests(unittest.TestCase):
         row=evidence.probe_image('http://127.0.0.1/private.jpg')
         self.assertFalse(row['ok'])
         self.assertFalse(row['bytes_persisted'])
+
+    def test_ocr_probe_budget_is_balanced_across_graders(self):
+        rows=[]
+        for index in range(8):rows.append({'company':'PSA','game':'pokemon','image_url':f'https://images.example/psa-{index}.jpg'})
+        for company in ('BGS','CGC','TAG','BRG'):rows.append({'company':company,'game':'pokemon','image_url':f'https://images.example/{company}.jpg'})
+        priorities=list(enumerate(rows))
+        selected=evidence._balanced_probe_selection(priorities,5)
+        self.assertEqual({row['company'] for _,row in selected},set(g.COMPANIES))
+
+    def test_measurement_photo_quality_requires_official_high_resolution_ocr_identity(self):
+        strong={'company':'PSA','company_evidence':'image_ocr','grade':10,'certification_id':'12345678','official_result':True,
+                'image_validated':True,'image_width':1200,'image_height':1600,'ocr_label_text':'PSA 10 CERT 12345678'}
+        weak={**strong,'image_width':240,'image_height':320}
+        scored=g._apply_measurement_photo_quality([strong,weak])
+        self.assertTrue(scored[0]['measurement_photo_ready'])
+        self.assertEqual(scored[0]['measurement_photo_quality'],1.0)
+        self.assertFalse(scored[1]['measurement_photo_ready'])
+
+    def test_reference_learning_keeps_distinct_verified_photo_fingerprints(self):
+        with tempfile.TemporaryDirectory() as directory:
+            path=Path(directory)/'references.json'
+            saved={'company':'BGS','certification_id':'12345678','official_grade':10,'official_result':True,
+                   'game':'pokemon','image_sha256':'a'*64,'measurement_image_url':'https://images.example/a.jpg',
+                   'measurement_photo_quality':.9,'measurement_photo_ready':True,
+                   'learning_scope':'slab_label_and_source_reference_only'}
+            path.write_text(json.dumps({'references':[saved]}),encoding='utf-8')
+            current={**saved,'image_sha256':'b'*64,'image_url':'https://images.example/b.jpg',
+                     'measurement_photo_quality':1.0,'official_reference_url':'https://www.beckett.com/grading/card-lookup'}
+            with mock.patch.object(g,'REFERENCE_LEARNING',path):payload=g._save_reference_learning([current])
+        self.assertEqual(payload['summary']['reference_learning_count'],2)
+        self.assertEqual(payload['summary']['certifications'],1)
+        self.assertEqual(payload['summary']['measurement_photo_ready'],2)
+
+    def test_search_fallback_company_is_not_treated_as_ocr_identity(self):
+        row={'company':'TAG','grade':10,'certification_id':'A1234567'}
+        probe={'ok':True,'width':1200,'height':1600,'sha256':'a'*64,'perceptual_hash':'b'*16,
+               'ocr_text':'10 A1234567','ocr_company':'TAG','ocr_company_explicit':'',
+               'ocr_grade':10,'ocr_certification_id':'A1234567'}
+        merged=evidence._merge_probe(row,probe)
+        self.assertNotIn('company_evidence',merged)
+        merged.update({'official_result':True})
+        self.assertFalse(g._apply_measurement_photo_quality([merged])[0]['measurement_photo_ready'])
 
     def test_google_cse_empty_response_is_empty_not_exception(self):
         class Response:

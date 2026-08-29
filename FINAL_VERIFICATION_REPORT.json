@@ -1,5 +1,5 @@
 {
-  "verified_at": "2026-08-29T23:07:37+00:00",
+  "verified_at": "2026-08-29T23:32:59+00:00",
   "result": "PASS",
   "build": "tcg-v98-camera-resilience-full-runtime",
   "basis": "TCG_Grader_v97_SAFE_SELF_HEALING_VISION_CROSSLEARNING_2026-08-27",
@@ -315,7 +315,7 @@
   },
   "error_learning": {
     "memory_version": 4,
-    "total_runs": 290,
+    "total_runs": 295,
     "legacy_pattern_count": 33,
     "error_group_count": 7,
     "new_group_count": 0,

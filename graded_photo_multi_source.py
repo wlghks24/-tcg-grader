@@ -429,7 +429,8 @@ def _discover_source_game(src:dict,game:str)->tuple[list[dict],list[str],int,dic
  detailed_started=time.monotonic()
  query_sid=SOURCE_ID_ALIASES.get(str(src.get('id') or ''),str(src.get('id') or 'unknown'))
  diag={'raw_results':0,'domain_matches':0,'company_matches':0,'resolved_redirects':0,'image_results':0,'google_image_results':0}
- for expected_company,q in _queries(src,game):
+ query_plan=_queries(src,game)
+ for expected_company,q in query_plan:
   queries+=1;query_started=time.monotonic()
   try:
    qrows,err=_query_rows(q,10)
@@ -440,15 +441,16 @@ def _discover_source_game(src:dict,game:str)->tuple[list[dict],list[str],int,dic
      if company and (expected_company=='ALL' or company==expected_company):relevant+=1
      item=dict(rr);item['_expected_company']=expected_company;item['_learning_query']=q[:300];raw.append(item)
    errors.extend(err);diag['raw_results']+=len(qrows)
-   observations.append({'query':q,'raw':len(qrows),'accepted':relevant,'images':sum(bool(row.get('image_url')) for row in qrows if isinstance(row,dict)),'errors':len(err),'elapsed':time.monotonic()-query_started})
+   observations.append({'query':q,'company':expected_company,'raw':len(qrows),'accepted':relevant,'images':sum(bool(row.get('image_url')) for row in qrows if isinstance(row,dict)),'errors':len(err),'elapsed':time.monotonic()-query_started})
   except Exception as exc:
-   errors.append(type(exc).__name__);observations.append({'query':q,'raw':0,'accepted':0,'images':0,'errors':1,'elapsed':time.monotonic()-query_started})
+   errors.append(type(exc).__name__);observations.append({'query':q,'company':expected_company,'raw':0,'accepted':0,'images':0,'errors':1,'elapsed':time.monotonic()-query_started})
  # One compact image-search per game/source. Bing image rows expose the actual
  # marketplace page (purl) and source image (murl), which avoids search redirect loss.
  image_started=time.monotonic();iq=''
  try:
   gname={'pokemon':'Pokemon','onepiece':'One Piece','naruto':'Naruto'}[game]
-  iq=f'site:{src["domain"]} {gname} PSA BGS CGC TAG BRG graded card slab'
+  image_company=next((company for company,_ in query_plan if company in COMPANIES),'')
+  iq=f'site:{src["domain"]} {gname} {image_company} graded card slab label cert'
   irows=_bing_image_rows(iq,src,12)
   grows=_google_cse_images(iq,10)
   for item in grows:
@@ -464,14 +466,16 @@ def _discover_source_game(src:dict,game:str)->tuple[list[dict],list[str],int,dic
   for rr in irows:
    if isinstance(rr,dict):
     item=dict(rr)
-    item['_expected_company']=_company(str(item.get('title') or '')) or 'PSA'
+    # A targeted query may supply its intended grader, but a broad/unknown image
+    # must never be silently relabelled as PSA.
+    item['_expected_company']=_company(str(item.get('title') or '')) or image_company
     item['_learning_query']=iq[:300]
     raw.append(item)
   diag['image_results']+=len(irows);diag['raw_results']+=len(irows)
-  observations.append({'query':iq,'raw':len(irows),'accepted':sum(bool(_company(str(item.get('title') or ''))) for item in irows if isinstance(item,dict)),'images':sum(bool(item.get('image_url')) for item in irows if isinstance(item,dict)),'errors':0,'elapsed':time.monotonic()-image_started})
+  observations.append({'query':iq,'company':image_company,'raw':len(irows),'accepted':sum(bool(_company(str(item.get('title') or ''))) for item in irows if isinstance(item,dict)),'images':sum(bool(item.get('image_url')) for item in irows if isinstance(item,dict)),'errors':0,'elapsed':time.monotonic()-image_started})
  except Exception as exc:
   errors.append('bing_images:'+type(exc).__name__)
-  observations.append({'query':iq or f'{game}:image_search','raw':0,'accepted':0,'images':0,'errors':1,'elapsed':time.monotonic()-image_started})
+  observations.append({'query':iq or f'{game}:image_search','company':locals().get('image_company',''),'raw':0,'accepted':0,'images':0,'errors':1,'elapsed':time.monotonic()-image_started})
  candidates={}
  for r in raw:
   raw_url=str(r.get('url') or '')
@@ -504,23 +508,48 @@ def _collect_public_source(src:dict):
  for game in GAMES:
   rows,err,q,d=_discover_source_game(src,game);found_by_game[game]=rows;errors.extend(err);queries+=q
   for k in diag: diag[k]+=int(d.get(k,0))
- # A busy Pokemon query must not consume the whole per-source cap before
- # ONE PIECE and NARUTO are considered.  Round-robin across games while still
- # deduplicating the same marketplace page.
- selected=[];seen=set();positions={game:0 for game in GAMES}
+ # A busy Pokemon/PSA query must not consume the cap before another game or
+ # grader is considered. Round-robin across game x grader buckets.
+ buckets={}
+ for game,rows in found_by_game.items():
+  for item in rows:
+   company=str(item.get('company') or 'unknown').upper()
+   buckets.setdefault((game,company),[]).append(item)
+ company_order={name:index for index,name in enumerate((*COMPANIES,'UNKNOWN'))}
+ game_order={name:index for index,name in enumerate((*GAMES,'unknown'))}
+ keys=sorted(buckets,key=lambda key:(game_order.get(key[0],99),company_order.get(key[1],99),key))
+ selected=[];seen=set();positions={key:0 for key in keys}
  while len(selected)<MAX_PER_SOURCE:
   progressed=False
-  for game in GAMES:
-   rows=found_by_game.get(game,[]);pos=positions[game]
+  for key in keys:
+   rows=buckets[key];pos=positions[key]
    while pos<len(rows):
     item=rows[pos];pos+=1;url=str(item.get('url') or '')
     if not url or url in seen:continue
     seen.add(url);selected.append(item);progressed=True;break
-   positions[game]=pos
+   positions[key]=pos
    if len(selected)>=MAX_PER_SOURCE:break
   if not progressed:break
  diag['game_candidates']={game:sum(str(x.get('game') or '')==game for x in selected) for game in GAMES}
+ diag['company_candidates']={company:sum(str(x.get('company') or '').upper()==company for x in selected) for company in COMPANIES}
  return src['id'],selected,errors,queries,diag
+
+def _apply_measurement_photo_quality(rows:list[dict])->list[dict]:
+ """Label image usefulness conservatively; this never creates grade truth."""
+ for raw in rows:
+  validated=raw.get('image_validated') is True
+  width=max(0,int(_finite_number(raw.get('image_width'))));height=max(0,int(_finite_number(raw.get('image_height'))))
+  resolution=min(1.0,min(width/600.0,height/800.0)) if width and height else 0.0
+  company=str(raw.get('company') or '').upper()
+  company_evidence=bool(raw.get('company_evidence')=='image_ocr' and company in COMPANIES)
+  cert=bool(normalize_cert(raw.get('certification_id')));grade=raw.get('grade') is not None
+  official=raw.get('official_result') is True;conflicts=bool(raw.get('evidence_conflicts'))
+  score=(0.25 if validated else 0.0)+0.20*resolution+(0.15 if company_evidence else 0.0)+(0.10 if grade else 0.0)+(0.10 if cert else 0.0)+(0.20 if official else 0.0)
+  if conflicts:score-=0.35
+  raw['measurement_photo_quality']=round(max(0.0,min(1.0,score)),3)
+  raw['measurement_photo_ready']=bool(validated and width>=600 and height>=800 and company_evidence and cert and grade and official and not conflicts and score>=0.85)
+  raw['measurement_photo_policy']='official+validated+high_resolution+ocr_identity+no_conflict'
+ return rows
 
 def _ebay_access_token()->str:
  token=os.environ.get('EBAY_OAUTH_TOKEN','').strip()
@@ -713,19 +742,35 @@ def _save_reference_learning(rows:list[dict])->dict:
  current=_load(REFERENCE_LEARNING,{})
  existing=current.get('references',[]) if isinstance(current.get('references'),list) else []
  merged={}
- for item in existing+rows:
-  if not isinstance(item,dict) or item.get('official_result') is not True:continue
+ for from_saved,item in [(True,x) for x in existing]+[(False,x) for x in rows]:
+  if not isinstance(item,dict):continue
+  if from_saved:
+   if item.get('learning_scope')!='slab_label_and_source_reference_only':continue
+  elif item.get('official_result') is not True:continue
   company=str(item.get('company') or '').upper();cert=normalize_cert(item.get('certification_id'))
   if company not in COMPANIES or not cert or item.get('evidence_conflicts'):continue
   try:grade=float(item.get('official_grade') if item.get('official_grade') is not None else item.get('grade'))
   except (TypeError,ValueError,OverflowError):continue
-  merged[(company,cert)]={'company':company,'certification_id':cert,'official_grade':grade,
-                          'card_name':str(item.get('title') or '')[:260],'game':str(item.get('game') or 'unknown'),
-                          'official_reference_url':str(item.get('official_reference_url') or item.get('url') or '')[:1200],
-                          'image_sha256':str(item.get('image_sha256') or '')[:64],
-                          'learning_scope':'slab_label_and_source_reference_only'}
- payload={'schema_version':1,'updated_at':_now(),'references':list(merged.values())[-500:],
-          'summary':{'reference_learning_count':len(merged),'raw_grade_calibration_rows_written':0},
+  digest=str(item.get('image_sha256') or '')[:64];ready=item.get('measurement_photo_ready') is True
+  image_url=str(item.get('measurement_image_url') or item.get('image_url') or '')[:1200]
+  if not (ready and image_url.startswith('https://')):image_url=''
+  candidate={'company':company,'certification_id':cert,'official_grade':grade,'official_result':True,
+             'card_name':str(item.get('card_name') or item.get('title') or '')[:260],'game':str(item.get('game') or 'unknown'),
+             'official_reference_url':str(item.get('official_reference_url') or item.get('url') or '')[:1200],
+             'image_sha256':digest,'measurement_image_url':image_url,
+             'measurement_photo_quality':_finite_number(item.get('measurement_photo_quality')),
+             'measurement_photo_ready':ready,'learning_scope':'slab_label_and_source_reference_only'}
+  key=(company,cert,digest or 'label_only');old=merged.get(key)
+  if old is None or _finite_number(candidate.get('measurement_photo_quality'))>=_finite_number(old.get('measurement_photo_quality')):merged[key]=candidate
+ # Retain up to three distinct verified photo fingerprints per certification.
+ retained=[];per_cert=collections.Counter()
+ for item in sorted(merged.values(),key=lambda row:(row['company'],row['certification_id'],-_finite_number(row.get('measurement_photo_quality')),str(row.get('image_sha256') or ''))):
+  key=(item['company'],item['certification_id'])
+  if per_cert[key]>=3:continue
+  per_cert[key]+=1;retained.append(item)
+ retained=sorted(retained,key=lambda row:(-_finite_number(row.get('measurement_photo_quality')),row['company'],row['certification_id'],str(row.get('image_sha256') or '')))[:500]
+ payload={'schema_version':2,'updated_at':_now(),'references':retained,
+          'summary':{'reference_learning_count':len(retained),'certifications':len({(item['company'],item['certification_id']) for item in retained}),'measurement_photo_ready':sum(item.get('measurement_photo_ready') is True for item in retained),'raw_grade_calibration_rows_written':0},
           'policy':{'official_match_required':True,'raw_and_slab_isolated':True,'same_image_prediction_training':False}}
  atomic_write_json(REFERENCE_LEARNING,payload,suffix='.reference-learning.tmp');return payload
 
@@ -791,11 +836,12 @@ def _collect_once()->dict:
  rows,official_stats=_official_verify_rows(rows,registry,max_live=5 if is_android else 10)
  rows=_resolve_cert_conflicts(rows)
  rows,image_conflict_stats=_resolve_image_conflicts(rows);official_stats.update(image_conflict_stats)
+ rows=_apply_measurement_photo_quality(rows)
  try:
   learning_feedback=record_official_feedback(rows);collection_learning=learning_snapshot()
  except Exception as exc:
-  learning_feedback={'rows_observed':0,'official_verified':0,'identifiers_learned':0,'error':type(exc).__name__}
-  collection_learning={'version':3,'error':'snapshot_unavailable','policy':{'query_learning_cannot_change_trust':True}}
+  learning_feedback={'rows_observed':0,'official_verified':0,'measurement_ready':0,'identifiers_learned':0,'error':type(exc).__name__}
+  collection_learning={'version':4,'error':'snapshot_unavailable','policy':{'query_learning_cannot_change_trust':True}}
 
  # Cross-source corroboration remains advisory; only official matching can verify.
  groups={}
@@ -826,6 +872,7 @@ def _collect_once()->dict:
 
  reference_learning=_save_reference_learning(rows)
  verified_count=sum(item.get('status')=='verified_reference' for item in rows)
+ measurement_ready_count=sum(item.get('measurement_photo_ready') is True for item in rows)
  game_stats={}
  for game in GAMES:
   game_rows=[item for item in rows if item.get('game')==game]
@@ -833,18 +880,29 @@ def _collect_once()->dict:
                     'with_image_url':sum(bool(item.get('image_url')) for item in game_rows),
                     'validated_images':sum(bool(item.get('image_validated')) for item in game_rows),
                     'ocr_readable':sum(bool(item.get('ocr_label_text')) for item in game_rows),
+                    'measurement_ready':sum(item.get('measurement_photo_ready') is True for item in game_rows),
                     'verified_references':sum(item.get('status')=='verified_reference' for item in game_rows),
                     'quarantined':sum(item.get('status')!='verified_reference' for item in game_rows)}
+ company_stats={}
+ for company in COMPANIES:
+  company_rows=[item for item in rows if str(item.get('company') or '').upper()==company]
+  company_stats[company]={'candidates':len(company_rows),'with_image_url':sum(bool(item.get('image_url')) for item in company_rows),
+                          'validated_images':sum(bool(item.get('image_validated')) for item in company_rows),
+                          'ocr_readable':sum(bool(item.get('ocr_label_text')) for item in company_rows),
+                          'measurement_ready':sum(item.get('measurement_photo_ready') is True for item in company_rows),
+                          'verified_references':sum(item.get('status')=='verified_reference' for item in company_rows),
+                          'quarantined':sum(item.get('status')!='verified_reference' for item in company_rows)}
  provider_counts=collections.Counter(str(item.get('search_provider') or 'unknown') for item in rows)
  for source in SOURCES:
   stats.setdefault(source['id'],{'candidates':0,'image_hits':0,'verified_hits':0,'errors':0,'queries':0,'not_run_this_cycle':True})
  google_configured=bool((os.environ.get('GOOGLE_CSE_KEY') or os.environ.get('GOOGLE_CSE_API_KEY')) and
                         (os.environ.get('GOOGLE_CSE_CX') or os.environ.get('GOOGLE_CSE_ID')))
  ebay_configured=bool(os.environ.get('EBAY_OAUTH_TOKEN') or (os.environ.get('EBAY_CLIENT_ID') and os.environ.get('EBAY_CLIENT_SECRET')))
- payload={'schema_version':4,'engine':'v123-verified-multisource-photo-collection','created_at':_now(),'records':rows,
+ payload={'schema_version':5,'engine':'v124-balanced-measurement-photo-collection','created_at':_now(),'records':rows,
           'summary':{'total_candidates':len(rows),'with_image_url':sum(bool(x.get('image_url')) for x in rows),
                      'validated_images':sum(bool(x.get('image_validated')) for x in rows),'ocr_readable':sum(bool(x.get('ocr_label_text')) for x in rows),
                      'certifications_resolved':sum(bool(x.get('certification_id')) for x in rows),'verified_references':verified_count,
+                     'measurement_photo_ready':measurement_ready_count,
                      'reference_learning_count':int((reference_learning.get('summary') or {}).get('reference_learning_count',0)),
                      'raw_grade_calibration_eligible':0,'quarantined':len(rows)-verified_count,
                      'sources':len({x.get('source_id') for x in rows if x.get('source_id')}),'status':'ok' if rows else 'no_candidates',
@@ -862,19 +920,21 @@ def _collect_once()->dict:
                      'adaptive_timeout_seconds':adaptive_timeout_seconds,'elapsed_seconds':0.0,'next_timeout_seconds':adaptive_timeout_seconds},
           'image_probe_stats':image_stats,'official_verification_stats':official_stats,
           'collection_learning_stats':collection_learning,'collection_learning_feedback':learning_feedback,
-          'game_stats':game_stats,
+          'game_stats':game_stats,'company_stats':company_stats,
           'provider_stats':dict(sorted(provider_counts.items(),key=lambda pair:(-pair[1],pair[0]))),
           'source_stats':stats,'errors':errors[:100],
           'configuration':{'google_cse_configured':google_configured,'google_cse_note':'existing customers only; public search fallbacks stay enabled',
                            'ebay_oauth_configured':ebay_configured,'ebay_client_credentials_supported':True,
-                           'games_targeted':list(GAMES),'game_collection_balance':'round_robin_per_source',
-                           'collection_learning_version':3,'query_strategy':'recency-decayed verified-feedback bandit with bounded exploration',
+                           'games_targeted':list(GAMES),'game_collection_balance':'game_x_grader_round_robin_per_source',
+                           'graders_targeted':list(COMPANIES),'ocr_probe_balance':'game_x_grader_round_robin',
+                           'collection_learning_version':4,'query_strategy':'quality-aware recency-decayed verified-feedback bandit with bounded exploration',
                            'source_selection_strategy':state.get('source_selection_policy'),
                            'amazon_mode':'public search fallback; deprecated PA-API is not called',
                            'kream_daangn_mode':'public search-index candidates only; login bypass disabled'},
           'policy':{'public_only':True,'login_bypass':False,'seller_label_is_official':False,'official_registry_match_required':True,
                     'slab_raw_isolated':True,'raw_calibration_modified':False,'image_bytes_auto_cached':False,
                     'duplicate_image_training':False,'conflicting_labels_quarantined':True,
+                    'measurement_ready_requires_official_and_validated_photo':True,
                     'collection_learning_cannot_change_trust':True,'verified_feedback_only':True}}
  elapsed_seconds=round(time.monotonic()-run_started,1);payload['summary']['elapsed_seconds']=elapsed_seconds
  timed_out=int(payload['summary'].get('timed_out_sources',0) or 0)

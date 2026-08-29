@@ -23,6 +23,7 @@ MAX_VERIFIED_TERMS=60
 MAX_FEEDBACK_EVENTS=2000
 RECENT_HALF_LIFE_SECONDS=14*86400
 SOURCE_ALIASES={'ebay_public':'ebay','ebay_api':'ebay'}
+GRADERS=('PSA','BGS','CGC','TAG','BRG')
 
 GAMES={
  'pokemon':('Pokemon','Pokemon TCG','포켓몬 카드','포켓몬카드','ポケモンカード'),
@@ -97,7 +98,7 @@ def _decay_recent(row:dict,now:int)->dict:
  recent=row.get('recent') if isinstance(row.get('recent'),dict) else {}
  last=max(0,int(_number(recent.get('updated_at') or row.get('last_at'))))
  factor=0.5**(max(0,now-last)/RECENT_HALF_LIFE_SECONDS) if last else 1.0
- for key in ('runs','raw','accepted','images','verified','quarantined','errors','elapsed_total'):
+ for key in ('runs','raw','accepted','images','verified','measurement_ready','quarantined','errors','elapsed_total'):
   recent[key]=round(max(0.0,_number(recent.get(key)))*factor,6)
  recent['updated_at']=now;row['recent']=recent
  return recent
@@ -111,18 +112,19 @@ def _query_score(row:dict,total_runs:int,now:int|None=None)->float:
  metrics=dict(recent) if recent is not None else row
  if recent is not None:
   recent_at=max(0,int(_number(recent.get('updated_at'))));factor=0.5**(max(0,current-recent_at)/RECENT_HALF_LIFE_SECONDS) if recent_at else 1.0
-  for key in ('runs','raw','accepted','images','verified','quarantined','errors','elapsed_total'):metrics[key]=max(0.0,_number(metrics.get(key)))*factor
+  for key in ('runs','raw','accepted','images','verified','measurement_ready','quarantined','errors','elapsed_total'):metrics[key]=max(0.0,_number(metrics.get(key)))*factor
  runs=max(0.0,_number(metrics.get('runs')));raw=max(0.0,_number(metrics.get('raw')))
  accepted=max(0.0,_number(metrics.get('accepted')));images=max(0.0,_number(metrics.get('images')))
  verified=max(0.0,_number(metrics.get('verified')));errors=max(0.0,_number(metrics.get('errors')))
+ measurement_ready=max(0.0,_number(metrics.get('measurement_ready')))
  elapsed=max(0.0,_number(metrics.get('elapsed_total')))
- acceptance=min(1.0,accepted/max(1,raw));image_rate=min(1.0,images/max(1,raw));verified_rate=min(1.0,verified/max(1,accepted))
+ acceptance=min(1.0,accepted/max(1,raw));image_rate=min(1.0,images/max(1,raw));verified_rate=min(1.0,verified/max(1,accepted));quality_rate=min(1.0,measurement_ready/max(1,accepted))
  error_rate=min(1.0,errors/max(1,runs));latency=min(1.0,(elapsed/max(1,runs))/20.0)
  exploration=min(0.45,0.18*math.sqrt(math.log(max(2,total_runs)+1)/(runs+1)))
  unseen_bonus=0.30 if runs==0 else 0.0
  last=max(0,int(_number(row.get('last_feedback_at') or row.get('last_at'))))
  freshness=1.0 if not last else 0.5**(max(0,current-last)/(30*86400))
- empirical=0.40*acceptance+0.18*image_rate+0.28*verified_rate-0.25*error_rate-0.06*latency
+ empirical=0.32*acceptance+0.14*image_rate+0.25*verified_rate+0.19*quality_rate-0.25*error_rate-0.06*latency
  return round(empirical*freshness+exploration+unseen_bonus,6)
 
 def source_by_id(source_id:str):
@@ -213,13 +215,23 @@ def _apply_query_observation(source:dict,observation:dict,now:int):
 def record_collection_cycle(source_id:str,game:str,observations:list[dict],*,raw:int=0,accepted:int=0,images:int=0,errors:int=0,elapsed:float=0.0):
  source_id=_source_id(source_id);game=game if game in GAMES else 'unknown';now=int(time.time())
  with LEARNING_LOCK,exclusive_file_lock(LEARNING):
-  d=_load_path(LEARNING) or _load_path(LEARNING_BACKUP);d['schema_version']=3;d['updated_at']=now
+  d=_load_path(LEARNING) or _load_path(LEARNING_BACKUP);d['schema_version']=4;d['updated_at']=now
   stats=d.setdefault('source_query_stats',{})
   if not isinstance(stats,dict):stats={};d['source_query_stats']=stats
   source=stats.setdefault(source_id,{'runs':0,'raw':0,'accepted':0,'images':0,'errors':0,'elapsed_total':0.0,'score':0.5,'queries':{}})
   if not isinstance(source,dict):source={'runs':0,'raw':0,'accepted':0,'images':0,'errors':0,'elapsed_total':0.0,'score':0.5,'queries':{}};stats[source_id]=source
   for observation in (observations if isinstance(observations,list) else [])[:20]:
-   if isinstance(observation,dict):_apply_query_observation(source,observation,now)
+   if isinstance(observation,dict):
+    _apply_query_observation(source,observation,now)
+    company=str(observation.get('company') or '').upper()
+    if company in GRADERS:
+     grader_routes=d.setdefault('graded_photo_grader_routes',{})
+     if not isinstance(grader_routes,dict):grader_routes={};d['graded_photo_grader_routes']=grader_routes
+     grader_key=f'{source_id}|{game}|{company}'
+     grader=grader_routes.setdefault(grader_key,{'source_id':source_id,'game':game,'company':company,'runs':0,'raw':0,'accepted':0,'images':0,'errors':0,'verified':0,'measurement_ready':0})
+     if not isinstance(grader,dict):grader={'source_id':source_id,'game':game,'company':company,'runs':0,'raw':0,'accepted':0,'images':0,'errors':0,'verified':0,'measurement_ready':0};grader_routes[grader_key]=grader
+     grader['runs']=_add_count(grader.get('runs'),1);grader['raw']=_add_count(grader.get('raw'),observation.get('raw'));grader['accepted']=_add_count(grader.get('accepted'),observation.get('accepted'));grader['images']=_add_count(grader.get('images'),observation.get('images'));grader['errors']=_add_count(grader.get('errors'),observation.get('errors'));grader['last_at']=now
+     _recent_add(grader,now,runs=1,raw=observation.get('raw'),accepted=observation.get('accepted'),images=observation.get('images'),errors=observation.get('errors'),elapsed_total=observation.get('elapsed'))
   queries=source.get('queries',{}) if isinstance(source.get('queries'),dict) else {}
   if len(queries)>MAX_QUERY_HISTORY:
    total_runs=max(1,_bounded_count(source.get('runs')))
@@ -258,10 +270,10 @@ def _verified_identifiers(text:str,certification_id:str='')->list[str]:
 
 def record_official_feedback(rows:Iterable[dict])->dict:
  feedback=[row for row in rows if isinstance(row,dict) and row.get('_learning_query')]
- if not feedback:return {'rows_observed':0,'official_verified':0,'identifiers_learned':0,'duplicates_ignored':0}
- now=int(time.time());verified_count=0;learned_count=0;duplicates=0;observed=0
+ if not feedback:return {'rows_observed':0,'official_verified':0,'measurement_ready':0,'identifiers_learned':0,'duplicates_ignored':0}
+ now=int(time.time());verified_count=0;ready_count=0;learned_count=0;duplicates=0;observed=0
  with LEARNING_LOCK,exclusive_file_lock(LEARNING):
-  d=_load_path(LEARNING) or _load_path(LEARNING_BACKUP);d['schema_version']=3;d['updated_at']=now
+  d=_load_path(LEARNING) or _load_path(LEARNING_BACKUP);d['schema_version']=4;d['updated_at']=now
   stats=d.setdefault('source_query_stats',{});terms=d.setdefault('verified_terms',{})
   events=d.setdefault('official_feedback_events',{})
   if not isinstance(stats,dict):stats={};d['source_query_stats']=stats
@@ -280,9 +292,10 @@ def record_official_feedback(rows:Iterable[dict])->dict:
    if not isinstance(queries,dict):queries={};source['queries']=queries
    query_row=queries.setdefault(query,{'runs':0,'raw':0,'accepted':0,'images':0,'errors':0,'elapsed_total':0.0,'verified':0,'quarantined':0})
    if not isinstance(query_row,dict):query_row={};queries[query]=query_row
-   verified=bool(item.get('official_result') is True and not item.get('evidence_conflicts'))
+   verified=bool(item.get('official_result') is True and not item.get('evidence_conflicts'));measurement_ready=bool(verified and item.get('measurement_photo_ready') is True)
    key='verified' if verified else 'quarantined';query_row[key]=_add_count(query_row.get(key),1);query_row['last_feedback_at']=now
    _recent_add(query_row,now,**{key:1})
+   if measurement_ready:ready_count+=1;query_row['measurement_ready']=_add_count(query_row.get('measurement_ready'),1);_recent_add(query_row,now,measurement_ready=1)
    game=str(item.get('game') or '')
    if game in GAMES:
     routes=d.setdefault('graded_photo_routes',{})
@@ -290,6 +303,14 @@ def record_official_feedback(rows:Iterable[dict])->dict:
     route=routes.setdefault(f'{source_id}|{game}',{'source_id':source_id,'game':game,'runs':0,'raw':0,'accepted':0,'images':0,'errors':0,'verified':0,'consecutive_failures':0})
     if not isinstance(route,dict):route={'source_id':source_id,'game':game,'runs':0,'raw':0,'accepted':0,'images':0,'errors':0,'verified':0,'consecutive_failures':0};routes[f'{source_id}|{game}']=route
     if verified:route['verified']=_add_count(route.get('verified'),1);_recent_add(route,now,verified=1)
+    if measurement_ready:route['measurement_ready']=_add_count(route.get('measurement_ready'),1);_recent_add(route,now,measurement_ready=1)
+   if game in GAMES and company in GRADERS:
+    grader_routes=d.setdefault('graded_photo_grader_routes',{})
+    if not isinstance(grader_routes,dict):grader_routes={};d['graded_photo_grader_routes']=grader_routes
+    grader_key=f'{source_id}|{game}|{company}';grader=grader_routes.setdefault(grader_key,{'source_id':source_id,'game':game,'company':company,'runs':0,'raw':0,'accepted':0,'images':0,'errors':0,'verified':0,'measurement_ready':0})
+    if not isinstance(grader,dict):grader={'source_id':source_id,'game':game,'company':company,'runs':0,'raw':0,'accepted':0,'images':0,'errors':0,'verified':0,'measurement_ready':0};grader_routes[grader_key]=grader
+    if verified:grader['verified']=_add_count(grader.get('verified'),1);_recent_add(grader,now,verified=1)
+    if measurement_ready:grader['measurement_ready']=_add_count(grader.get('measurement_ready'),1);_recent_add(grader,now,measurement_ready=1)
    if not verified:continue
    verified_count+=1;game_terms=terms.setdefault(game,{}) if game in GAMES else None
    if game_terms is not None and not isinstance(game_terms,dict):game_terms={};terms[game]=game_terms
@@ -305,21 +326,26 @@ def record_official_feedback(rows:Iterable[dict])->dict:
    d['official_feedback_events']=dict(sorted(events.items(),key=lambda pair:_number(pair[1]),reverse=True)[:MAX_FEEDBACK_EVENTS])
   totals['rows_observed']=_add_count(totals.get('rows_observed'),observed)
   totals['official_verified']=_add_count(totals.get('official_verified'),verified_count);totals['identifiers_learned']=_add_count(totals.get('identifiers_learned'),learned_count);totals['last_at']=now
+  totals['measurement_ready']=_add_count(totals.get('measurement_ready'),ready_count)
   totals['duplicates_ignored']=_add_count(totals.get('duplicates_ignored'),duplicates)
   _save_unlocked(d)
- return {'rows_observed':observed,'official_verified':verified_count,'identifiers_learned':learned_count,'duplicates_ignored':duplicates}
+ return {'rows_observed':observed,'official_verified':verified_count,'measurement_ready':ready_count,'identifiers_learned':learned_count,'duplicates_ignored':duplicates}
 
 def learning_snapshot()->dict:
  d=_load();stats=d.get('source_query_stats',{}) if isinstance(d.get('source_query_stats'),dict) else {};routes=d.get('graded_photo_routes',{}) if isinstance(d.get('graded_photo_routes'),dict) else {}
+ grader_routes=d.get('graded_photo_grader_routes',{}) if isinstance(d.get('graded_photo_grader_routes'),dict) else {}
  terms=d.get('verified_terms',{}) if isinstance(d.get('verified_terms'),dict) else {};totals=d.get('official_feedback_totals',{}) if isinstance(d.get('official_feedback_totals'),dict) else {}
- return {'version':3,'source_profiles':len(stats),'queries_tracked':sum(len(s.get('queries',{})) for s in stats.values() if isinstance(s,dict) and isinstance(s.get('queries'),dict)),
+ return {'version':4,'source_profiles':len(stats),'queries_tracked':sum(len(s.get('queries',{})) for s in stats.values() if isinstance(s,dict) and isinstance(s.get('queries'),dict)),
          'query_runs':sum(_bounded_count(s.get('runs')) for s in stats.values() if isinstance(s,dict)),'routes_tracked':len(routes),
+         'grader_routes_tracked':len(grader_routes),
+         'grader_coverage':{company:{'runs':sum(_bounded_count(row.get('runs')) for row in grader_routes.values() if isinstance(row,dict) and row.get('company')==company),'images':sum(_bounded_count(row.get('images')) for row in grader_routes.values() if isinstance(row,dict) and row.get('company')==company),'verified':sum(_bounded_count(row.get('verified')) for row in grader_routes.values() if isinstance(row,dict) and row.get('company')==company),'measurement_ready':sum(_bounded_count(row.get('measurement_ready')) for row in grader_routes.values() if isinstance(row,dict) and row.get('company')==company)} for company in GRADERS},
          'productive_routes':sum(_bounded_count(r.get('accepted'))>0 for r in routes.values() if isinstance(r,dict)),
          'recovery_routes':sum(_bounded_count(r.get('consecutive_failures'))>0 for r in routes.values() if isinstance(r,dict)),
          'official_feedback':_bounded_count(totals.get('official_verified')),
+         'measurement_ready_feedback':_bounded_count(totals.get('measurement_ready')),
          'duplicate_feedback_ignored':_bounded_count(totals.get('duplicates_ignored')),
          'verified_identifiers':{game:[term for term,_ in sorted(_dict(terms.get(game)).items(),key=lambda pair:(-_number(pair[1]),pair[0]))[:5]] for game in GAMES},
-         'policy':{'verified_feedback_only':True,'query_learning_cannot_change_trust':True,'exploration_retained':True,'recency_decay_enabled':True,'idempotent_feedback':True,'cross_process_lock':True,'state_backup_enabled':True}}
+         'policy':{'verified_feedback_only':True,'measurement_quality_feedback':True,'query_learning_cannot_change_trust':True,'exploration_retained':True,'recency_decay_enabled':True,'idempotent_feedback':True,'cross_process_lock':True,'state_backup_enabled':True}}
 
 def source_priority(source_id:str)->float:
  source_id=_source_id(source_id)
