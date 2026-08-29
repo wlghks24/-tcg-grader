@@ -1,0 +1,60 @@
+name: Apply social stock and Pokemon event upgrade
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/apply-social-stock-event-upgrade.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Apply integration patch
+        run: python apply_social_stock_event_upgrade.py
+      - name: Verify syntax
+        run: |
+          python -m py_compile \
+            social_stock_discovery.py \
+            purchase_intelligence.py \
+            update_purchase_sources.py \
+            social_event_discovery.py \
+            tcg_updater.py \
+            apply_social_stock_event_upgrade.py
+      - name: Run safety and regression tests
+        run: |
+          python -m unittest -v \
+            test_social_stock_discovery.py \
+            test_social_stock_integration.py \
+            test_inventory_lookup.py
+      - name: Commit integrated changes
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add \
+            .gitignore \
+            social_source_registry.json \
+            social_event_discovery.py \
+            social_event_candidates.json \
+            purchase_intelligence.py \
+            update_purchase_sources.py \
+            purchase_signals.json \
+            index.html \
+            tcg_updater.py \
+            test_social_stock_integration.py
+          if git diff --cached --quiet; then
+            echo "No changes to commit"
+          else
+            git commit -m "feat: integrate social stock and Pokemon event watch"
+            git push
+          fi
