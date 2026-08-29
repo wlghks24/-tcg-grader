@@ -1,5 +1,6 @@
 from pathlib import Path
 
+# Triggered integration patch for the graded-photo learning dashboard.
 idx=Path('index.html')
 text=idx.read_text(encoding='utf-8')
 css='<link rel="stylesheet" href="graded_photo_dashboard.css">'
