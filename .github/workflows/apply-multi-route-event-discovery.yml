@@ -1,0 +1,51 @@
+name: Apply multi-route TCG discovery
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'multi_route_event_discovery.py'
+      - 'test_multi_route_event_discovery.py'
+      - 'apply_multi_route_event_patch.py'
+      - '.github/workflows/apply-multi-route-event-discovery.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Apply integration patch
+        run: python apply_multi_route_event_patch.py
+      - name: Verify syntax
+        run: |
+          python -m py_compile multi_route_event_discovery.py social_event_discovery.py
+      - name: Run route and regression tests
+        run: |
+          python -m unittest -v test_multi_route_event_discovery.py
+          if [ -f test_playgo_event_watch.py ]; then python -m unittest -v test_playgo_event_watch.py; fi
+      - name: Verify integration markers
+        run: |
+          grep -q 'route_diversity' social_event_discovery.py
+          grep -q 'v113-multi-route-resilient-discovery' social_event_discovery.py
+          grep -q 'existing_evidence_host' social_event_discovery.py
+          grep -q 'per_group_floor = 4' social_event_discovery.py
+      - name: Commit integrated changes
+        run: |
+          if git diff --quiet -- social_event_discovery.py; then
+            echo 'Already integrated'
+            exit 0
+          fi
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add social_event_discovery.py
+          git commit -m 'feat: integrate resilient multi-route TCG discovery'
+          git push
