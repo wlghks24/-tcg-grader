@@ -31,8 +31,8 @@ MAX_ROWS=240
 MAX_PER_SOURCE=12
 MAX_IMAGE_PROBES_PER_SOURCE=2
 MAX_PAGE_BYTES=1_000_000
-RUN_SOURCE_LIMIT=6
-RUN_WAIT_SECONDS=95
+RUN_SOURCE_LIMIT=3
+RUN_WAIT_SECONDS=3600
 os.environ.setdefault('TCG_HTTP_TIMEOUT','5')
 
 SOURCES=(
@@ -397,7 +397,38 @@ def _save_learning(stats:dict):
   r['last_at']=_now()
  d['updated_at']=_now();atomic_write_json(LEARNING,d,suffix='.graded-photo-learning.tmp')
 
+def _adaptive_timeout_seconds(state:dict)->int:
+    a=state.get('adaptive_timeout') if isinstance(state.get('adaptive_timeout'),dict) else {}
+    runs=int(a.get('completed_runs',0) or 0)
+    recent=a.get('recent',[]) if isinstance(a.get('recent'),list) else []
+    recent=recent[-8:]
+    timeout_rate=(sum(1 for x in recent if isinstance(x,dict) and int(x.get('timed_out_sources',0) or 0)>0)/len(recent)) if recent else 0.0
+    elapsed=[float(x.get('elapsed_seconds',0) or 0) for x in recent if isinstance(x,dict) and float(x.get('elapsed_seconds',0) or 0)>0]
+    avg=(sum(elapsed)/len(elapsed)) if elapsed else 0.0
+    if runs < 3: base=3600
+    elif runs < 8: base=1800
+    elif runs < 15: base=900
+    elif runs < 30: base=300
+    else: base=120
+    if timeout_rate >= 0.50: base=max(base,3600)
+    elif timeout_rate >= 0.25: base=max(base,1800)
+    if avg>0: base=max(base,min(3600,int(avg*2.2+30)))
+    return max(120,min(3600,int(base)))
+
+def _record_adaptive_timeout(state:dict,elapsed:float,timed_out:int,total_candidates:int,raw_results:int)->int:
+    a=state.setdefault('adaptive_timeout',{})
+    recent=a.setdefault('recent',[])
+    recent.append({'at':_now(),'elapsed_seconds':round(float(elapsed),1),'timed_out_sources':int(timed_out),'total_candidates':int(total_candidates),'raw_results':int(raw_results)})
+    a['recent']=recent[-12:]
+    a['completed_runs']=int(a.get('completed_runs',0) or 0)+1
+    a['last_elapsed_seconds']=round(float(elapsed),1)
+    a['last_timed_out_sources']=int(timed_out)
+    a['last_candidates']=int(total_candidates)
+    a['last_raw_results']=int(raw_results)
+    return _adaptive_timeout_seconds(state)
+
 def collect()->dict:
+ run_started=time.monotonic()
  registry=_registry();stats={};errors=[]
  previous_payload=_load(OUT,{})
  previous_rows=previous_payload.get('records',[]) if isinstance(previous_payload,dict) else []
@@ -407,6 +438,7 @@ def collect()->dict:
  previous_count=len(previous_rows)
  e=_ebay_candidates();rows.extend(e);stats['ebay']={'candidates':len(e),'image_hits':sum(bool(x.get('image_url')) for x in e),'verified_hits':0,'errors':0,'queries':0}
  state=_load(LEARNING,{})
+ adaptive_timeout_seconds=_adaptive_timeout_seconds(state)
  first_full_collection=not bool(state.get('initial_collection_completed'))
  try:cursor=int(state.get('source_cursor',0))%len(SOURCES)
  except Exception:cursor=0
@@ -429,7 +461,7 @@ def collect()->dict:
    done.add(fut)
   pending=set()
  else:
-  done,pending=concurrent.futures.wait(futs,timeout=RUN_WAIT_SECONDS)
+  done,pending=concurrent.futures.wait(futs,timeout=adaptive_timeout_seconds)
  for fut in done:
   src=futs[fut]
   try:
@@ -471,18 +503,30 @@ def collect()->dict:
  payload={'schema_version':3,'created_at':_now(),'records':rows,
           'summary':{'total_candidates':len(rows),'with_image_url':sum(bool(x.get('image_url')) for x in rows),'verified_references':verified,
                      'quarantined':len(rows)-verified,'sources':len({x.get('source_id') for x in rows}),
-                     'status':'ok' if rows else 'no_candidates','queries_attempted':sum(int(x.get('queries',0)) for x in stats.values()),'markets_this_run':[x['id'] for x in active],'timed_out_sources':sum(bool(x.get('timed_out')) for x in stats.values()),'initial_full_collection':first_full_collection,'previous_candidates':previous_count,'raw_results':sum(int(x.get('raw_results',0)) for x in stats.values()),'domain_matches':sum(int(x.get('domain_matches',0)) for x in stats.values()),'company_matches':sum(int(x.get('company_matches',0)) for x in stats.values()),'resolved_redirects':sum(int(x.get('resolved_redirects',0)) for x in stats.values()),'image_results':sum(int(x.get('image_results',0)) for x in stats.values())},
+                     'status':'ok' if rows else 'no_candidates','queries_attempted':sum(int(x.get('queries',0)) for x in stats.values()),'markets_this_run':[x['id'] for x in active],'timed_out_sources':sum(bool(x.get('timed_out')) for x in stats.values()),'initial_full_collection':first_full_collection,'previous_candidates':previous_count,'raw_results':sum(int(x.get('raw_results',0)) for x in stats.values()),'domain_matches':sum(int(x.get('domain_matches',0)) for x in stats.values()),'company_matches':sum(int(x.get('company_matches',0)) for x in stats.values()),'resolved_redirects':sum(int(x.get('resolved_redirects',0)) for x in stats.values()),'image_results':sum(int(x.get('image_results',0)) for x in stats.values()),'adaptive_timeout_seconds':adaptive_timeout_seconds,'elapsed_seconds':0.0,'next_timeout_seconds':adaptive_timeout_seconds},
           'source_stats':stats,'errors':errors[:80],
           'google_cse_configured':bool(os.environ.get('GOOGLE_CSE_KEY') and os.environ.get('GOOGLE_CSE_CX')),
           'ebay_oauth_configured':bool(os.environ.get('EBAY_OAUTH_TOKEN')),
           'policy':{'public_only':True,'login_bypass':False,'seller_label_is_official':False,'official_registry_match_required':True,
                     'slab_raw_isolated':True,'raw_calibration_modified':False,'image_bytes_auto_cached':False}}
+ elapsed_seconds=round(time.monotonic()-run_started,1)
+ payload['summary']['elapsed_seconds']=elapsed_seconds
+ timed_out=int(payload['summary'].get('timed_out_sources',0) or 0)
+ learning_state=_load(LEARNING,{})
+ next_timeout=_record_adaptive_timeout(learning_state,elapsed_seconds,timed_out,len(rows),int(payload['summary'].get('raw_results',0) or 0))
+ payload['summary']['next_timeout_seconds']=next_timeout
+ learning_state['last_adaptive_timeout_seconds']=adaptive_timeout_seconds
+ learning_state['next_adaptive_timeout_seconds']=next_timeout
+ atomic_write_json(LEARNING,learning_state,suffix='.graded-photo-adaptive.tmp')
  atomic_write_json(OUT,payload,suffix='.graded-photo.tmp')
  if first_full_collection:
   done_state=_load(LEARNING,{})
   done_state['initial_collection_completed']=True
   done_state['initial_collection_completed_at']=_now()
   done_state['source_cursor']=0
+  if isinstance(learning_state.get('adaptive_timeout'),dict): done_state['adaptive_timeout']=learning_state['adaptive_timeout']
+  done_state['last_adaptive_timeout_seconds']=learning_state.get('last_adaptive_timeout_seconds',adaptive_timeout_seconds)
+  done_state['next_adaptive_timeout_seconds']=learning_state.get('next_adaptive_timeout_seconds',next_timeout)
   atomic_write_json(LEARNING,done_state,suffix='.graded-photo-first-complete.tmp')
  _save_learning(stats);return payload
 
