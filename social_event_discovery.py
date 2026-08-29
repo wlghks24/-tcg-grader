@@ -26,6 +26,7 @@ import urllib.error
 import urllib.parse
 import urllib.request
 import xml.etree.ElementTree as ET
+import multi_route_event_discovery
 from html.parser import HTMLParser
 from pathlib import Path
 
@@ -598,7 +599,12 @@ def merge_candidates(rows: list[dict]) -> list[dict]:
         kinds = [x for x in existing.get("cross_sources", []) if x]
         if raw.get("source_kind") not in kinds: kinds.append(raw.get("source_kind"))
         sources = max(1, int(existing.get("independent_source_count") or 1))
-        if _host(str(existing.get("source") or "")) != _host(source) or raw.get("source_kind") != existing.get("source_kind"): sources += 1
+        # Different search routes/providers pointing at the same publisher are not
+        # independent corroboration. Prefer publisher_url when Google News exposes it.
+        existing_evidence_host = _host(str(existing.get("publisher_url") or existing.get("source") or ""))
+        new_evidence_host = _host(str(raw.get("publisher_url") or source or ""))
+        if existing_evidence_host and new_evidence_host and existing_evidence_host != new_evidence_host:
+            sources += 1
         winner, other = (raw, existing) if raw["confidence"] > float(existing.get("confidence") or 0.0) else (existing, raw)
         winner = dict(winner); winner["cross_sources"] = kinds; winner["independent_source_count"] = min(9, sources)
         if sources >= 2:
@@ -606,7 +612,22 @@ def merge_candidates(rows: list[dict]) -> list[dict]:
             if winner.get("verified") is not True: winner["status"] = "복수출처 교차확인 후보"
         merged[key] = winner
     result = list(merged.values()); result.sort(key=lambda x: (-float(x.get("confidence") or 0.0), str(x.get("game")), str(x.get("region")), str(x.get("title"))))
-    return result[:MAX_ITEMS]
+    # Preserve coverage across all 3 games x 3 regions so a high-volume franchise
+    # cannot crowd every JP/KR/US lead from another game out of the global cap.
+    selected = []; used = set(); per_group_floor = 4
+    for game_name in GAMES:
+        for region_name in REGION_LANG:
+            group = [row for row in result if row.get("game") == game_name and row.get("region") == region_name]
+            for row in group[:per_group_floor]:
+                marker = id(row)
+                if marker not in used:
+                    selected.append(row); used.add(marker)
+    for row in result:
+        marker = id(row)
+        if marker not in used:
+            selected.append(row); used.add(marker)
+        if len(selected) >= MAX_ITEMS: break
+    return selected[:MAX_ITEMS]
 
 
 def main() -> dict:
@@ -617,6 +638,7 @@ def main() -> dict:
     registry, registry_errors = refresh_registry(force=False)
     collectors = {
         "google_news": lambda: collect_google_news(),
+        "route_diversity": lambda: multi_route_event_discovery.collect_all(),
         "public_social_search": lambda: collect_public_social_search(registry),
         "x": lambda: collect_x(registry),
         "instagram": lambda: collect_instagram(registry),
@@ -634,18 +656,21 @@ def main() -> dict:
                 errors.append(f"{name}: {_secret_safe(f'{type(exc).__name__}: {exc}')}"); channel_status[name] = {"configured": True, "status": "수집기 예외 격리"}
     merged = merge_candidates(rows)
     google_status = channel_status.get("google_news", {}) if isinstance(channel_status.get("google_news"), dict) else {}
+    route_status = channel_status.get("route_diversity", {}) if isinstance(channel_status.get("route_diversity"), dict) else {}
     public_status = channel_status.get("public_social_search", {}) if isinstance(channel_status.get("public_social_search"), dict) else {}
-    baseline_ok = int(google_status.get("success_query_count") or 0) > 0 or int(public_status.get("success_query_count") or 0) > 0
+    baseline_ok = (int(google_status.get("success_query_count") or 0) > 0
+                   or int(route_status.get("success_query_count") or 0) > 0
+                   or int(public_status.get("success_query_count") or 0) > 0)
     usable_channels = [k for k, v in channel_status.items() if isinstance(v, dict) and v.get("configured") is True and int(v.get("success_query_count") or 0) > 0]
     if not merged and previous and isinstance(previous.get("items"), list):
         merged = previous.get("items", [])[:MAX_ITEMS]
     payload = {
-        "version": "v110-no-key-social-youtube-fallback",
+        "version": "v113-multi-route-resilient-discovery",
         "updated_at": _now(), "fresh_collection_ok": bool(baseline_ok or usable_channels),
         "degraded": not baseline_ok,
-        "policy": "공식 웹사이트 우선. X/Instagram/YouTube는 API가 없어도 공개검색 후보를 수집하고 공식계정은 레지스트리로 검증. 이전 공식/교차확인 후보는 새 수집 때도 보존. 공식확정 promo_events 승격은 별도 검증.",
+        "policy": "공식 웹사이트 우선. Google News, Bing RSS 일반/공식/파트너 검색, 공식사이트 직접 링크 스캔, DuckDuckGo 비상 폴백, X/Instagram/YouTube 공개검색을 독립 경로로 운영. 이전 공식/교차확인 후보는 보존하며 공식확정 promo_events 승격은 별도 검증.",
         "credential_policy": "API 자격정보는 환경변수에서만 읽고 저장하지 않음.",
-        "google_policy": "Google News 무키 RSS + 선택적 Google CSE + 공개검색 폴백.",
+        "google_policy": "Google News 무키 RSS + 선택적 Google CSE. Google 장애 시 Bing RSS/공식링크/DDG 경로가 독립적으로 수집을 계속함.",
         "items": merged, "item_count": len(merged),
         "official_social_candidate_count": sum(1 for x in merged if x.get("official_account_verified") is True),
         "official_domain_search_count": sum(1 for x in merged if x.get("official_domain_match") is True),
