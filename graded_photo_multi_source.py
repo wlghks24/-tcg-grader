@@ -175,14 +175,17 @@ def _query_rows(query:str,limit:int)->tuple[list[dict],list[str]]:
 
 def _queries(src:dict,game:str)->tuple[str,...]:
  g={'pokemon':'Pokemon','onepiece':'One Piece','naruto':'Naruto'}[game]
- return (f'site:{src["domain"]} {g} (PSA OR BGS OR CGC OR TAG OR BRG) (10 OR 9.5 OR graded OR slab)',)
+ # Simple per-grader queries are deliberately used here. Public search engines
+ # often return zero or unrelated rows for long nested OR expressions.
+ return tuple(f'site:{src["domain"]} {g} {company} graded card' for company in COMPANIES)
 
-def _discover_source_game(src:dict,game:str)->tuple[list[dict],list[str],int]:
+def _discover_source_game(src:dict,game:str)->tuple[list[dict],list[str],int,dict]:
  raw=[];errors=[];queries=0
+ diag={'raw_results':0,'domain_matches':0,'company_matches':0}
  for q in _queries(src,game):
   queries+=1
   try:
-   rows,err=_query_rows(q,10);raw.extend(rows);errors.extend(err)
+   rows,err=_query_rows(q,10);raw.extend(rows);errors.extend(err);diag['raw_results']+=len(rows)
   except Exception as exc:errors.append(type(exc).__name__)
  candidates={}
  for r in raw:
@@ -191,27 +194,30 @@ def _discover_source_game(src:dict,game:str)->tuple[list[dict],list[str],int]:
   except ValueError:continue
   if p.scheme!='https' or not _allowed_host(p.hostname or '',src['domain']):continue
   candidates.setdefault(url,r)
+ diag['domain_matches']=len(candidates)
  out=[]
  for idx,(url,r) in enumerate(list(candidates.items())[:MAX_PER_SOURCE]):
   blob=' '.join([str(r.get('title') or ''),str(r.get('snippet') or '')])
   c=_company(blob)
   if not c:continue
+  diag['company_matches']+=1
   g=_grade(blob,c);cert=_cert(blob);image=str(r.get('image_url') or '')
   if not image and idx<MAX_IMAGE_PROBES_PER_SOURCE:image=_og_image(url,src['domain'])
   out.append({'source_id':src['id'],'source':src['name'],'search_provider':r.get('search_provider'),'url':url[:1200],
               'title':str(r.get('title') or '')[:260],'snippet':str(r.get('snippet') or '')[:700],'image_url':image[:1200],
               'company':c,'grade':g,'certification_id':cert,'game':_game(blob,game),'mode':'slab','source_weight':src['weight'],
               'grade_from_search':g is not None})
- return out,errors,queries
+ return out,errors,queries,diag
 
 def _collect_public_source(src:dict):
- found=[];errors=[];queries=0
+ found=[];errors=[];queries=0;diag={'raw_results':0,'domain_matches':0,'company_matches':0}
  for game in GAMES:
-  rows,err,q=_discover_source_game(src,game);found.extend(rows);errors.extend(err);queries+=q
+  rows,err,q,d=_discover_source_game(src,game);found.extend(rows);errors.extend(err);queries+=q
+  for k in diag: diag[k]+=int(d.get(k,0))
  seen={}
  for x in found:
   if x.get('url') and x['url'] not in seen:seen[x['url']]=x
- return src['id'],list(seen.values())[:MAX_PER_SOURCE],errors,queries
+ return src['id'],list(seen.values())[:MAX_PER_SOURCE],errors,queries,diag
 
 def _ebay_candidates()->list[dict]:
  token=os.environ.get('EBAY_OAUTH_TOKEN','').strip()
@@ -265,8 +271,8 @@ def collect()->dict:
  for fut in done:
   src=futs[fut]
   try:
-   sid,found,errs,queries=fut.result();rows.extend(found)
-   stats[sid]={'candidates':len(found),'image_hits':sum(bool(x.get('image_url')) for x in found),'verified_hits':0,'errors':len(errs),'queries':queries}
+   sid,found,errs,queries,diag=fut.result();rows.extend(found)
+   stats[sid]={'candidates':len(found),'image_hits':sum(bool(x.get('image_url')) for x in found),'verified_hits':0,'errors':len(errs),'queries':queries,**diag}
    errors.extend(f'{sid}:{x}' for x in errs[:3])
   except Exception as exc:
    sid=src['id'];stats[sid]={'candidates':0,'image_hits':0,'verified_hits':0,'errors':1,'queries':0};errors.append(sid+':'+type(exc).__name__)
