@@ -14,6 +14,7 @@ collection_provider_health.json.bak
 
 # Live grading-cost cache is refreshed from official sources on each device.
 grading_costs_cache.json
+grading_proxy_costs_cache.json
 
 # Temporary atomic-write/test artifacts
 *.tmp
