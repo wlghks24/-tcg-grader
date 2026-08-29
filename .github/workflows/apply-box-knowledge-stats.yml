@@ -1,0 +1,33 @@
+name: Apply BOX knowledge statistics
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'apply_box_knowledge_stats_patch.py'
+      - 'box_knowledge_stats.js'
+      - 'box_knowledge_stats.css'
+      - '.github/workflows/apply-box-knowledge-stats.yml'
+permissions:
+  contents: write
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.x'
+      - run: python apply_box_knowledge_stats_patch.py
+      - name: Commit integration
+        run: |
+          if git diff --quiet -- index.html tcg_updater.py; then
+            echo 'No integration changes needed.'
+            exit 0
+          fi
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add index.html tcg_updater.py
+          git commit -m 'feat: integrate BOX knowledge live statistics'
+          git push
