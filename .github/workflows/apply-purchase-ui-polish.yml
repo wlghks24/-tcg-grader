@@ -1,0 +1,40 @@
+name: Apply Purchase UI Polish
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'purchase_ui_polish.css'
+      - 'apply_purchase_ui_polish.py'
+      - '.github/workflows/apply-purchase-ui-polish.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.x'
+      - name: Apply purchase UI polish
+        run: python apply_purchase_ui_polish.py
+      - name: Validate linked stylesheet
+        run: |
+          grep -q 'purchase_ui_polish.css?v=119' index.html
+          grep -q '.purchase-channel.active' purchase_ui_polish.css
+          grep -q '#purchaseNearby' purchase_ui_polish.css
+      - name: Commit generated index
+        run: |
+          if git diff --quiet; then
+            echo 'No generated changes'
+            exit 0
+          fi
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add index.html
+          git commit -m 'ui: polish purchase finder layout'
+          git push
