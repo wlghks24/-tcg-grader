@@ -12,12 +12,13 @@ from __future__ import annotations
 import concurrent.futures
 import base64
 import html
-import json, os, re, urllib.parse, urllib.request
+import json, os, re, urllib.parse, urllib.request, time
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
 from safe_runtime import atomic_write_json
+from detailed_collection_intelligence import build_queries, record_query_result, evidence_confidence, canonical_key, source_priority
 
 ROOT=Path(__file__).resolve().parent
 OUT=ROOT/'graded_photo_candidates.json'
@@ -47,6 +48,9 @@ SOURCES=(
  {'id':'cardmarket','name':'Cardmarket','domain':'cardmarket.com','weight':0.72},
  {'id':'mercari_jp','name':'Mercari JP','domain':'jp.mercari.com','weight':0.72},
  {'id':'yahoo_jp','name':'Yahoo! Auctions JP','domain':'auctions.yahoo.co.jp','weight':0.70},
+ {'id':'x','name':'X 공개게시물','domain':'x.com','weight':0.48},
+ {'id':'instagram','name':'Instagram 공개게시물','domain':'instagram.com','weight':0.48},
+ {'id':'naver','name':'Naver 공개블로그/카페','domain':'blog.naver.com','weight':0.52},
 )
 
 COMPANY_PATTERNS={
@@ -286,14 +290,26 @@ def _ebay_public_rows(game:str,limit:int=12)->list[dict]:
   if len(out)>=limit:break
  return out
 
-def _queries(src:dict,game:str)->tuple[str,...]:
- g={'pokemon':'Pokemon','onepiece':'One Piece','naruto':'Naruto'}[game]
- # Simple per-grader queries are deliberately used here. Public search engines
- # often return zero or unrelated rows for long nested OR expressions.
- return tuple((company,f'site:{src["domain"]} {g} {company} graded card') for company in COMPANIES)
+def _queries(src:dict,game:str)->tuple[tuple[str,str],...]:
+    sid=str(src.get('id') or '')
+    planned=[]
+    # Detailed multilingual source-specific planner. Keep the run bounded by
+    # prioritising productive sources/queries while still exploring all graders.
+    for company in COMPANIES:
+        for qsid,q in build_queries(game,'graded_photo',company):
+            if qsid==sid:
+                planned.append((company,q))
+                break
+    # Social/community sources get two contextual discovery queries in addition
+    # to grader names, because public posts often omit the word "graded".
+    if sid in {'x','instagram','naver'}:
+        g={'pokemon':'Pokemon 포켓몬','onepiece':'One Piece 원피스','naruto':'Naruto 나루토'}[game]
+        planned.extend([('PSA',f'site:{src["domain"]} {g} PSA 10'),('BGS',f'site:{src["domain"]} {g} slab card')])
+    return tuple(planned[:7])
 
 def _discover_source_game(src:dict,game:str)->tuple[list[dict],list[str],int,dict]:
  raw=[];errors=[];queries=0
+ detailed_started=time.monotonic()
  diag={'raw_results':0,'domain_matches':0,'company_matches':0,'resolved_redirects':0,'image_results':0}
  for expected_company,q in _queries(src,game):
   queries+=1
@@ -342,6 +358,10 @@ def _discover_source_game(src:dict,game:str)->tuple[list[dict],list[str],int,dic
               'title':str(r.get('title') or '')[:260],'snippet':str(r.get('snippet') or '')[:700],'image_url':image[:1200],
               'company':c,'grade':g,'certification_id':cert,'game':_game(blob,game),'mode':'slab','source_weight':src['weight'],
               'grade_from_search':g is not None})
+ try:
+  record_query_result(str(src.get('id') or 'unknown'), f'{game}:graded_photo', raw=diag.get('raw_results',0), accepted=len(out), images=sum(bool(x.get('image_url')) for x in out), errors=len(errors), elapsed=time.monotonic()-detailed_started)
+ except Exception:
+  pass
  return out,errors,queries,diag
 
 def _collect_public_source(src:dict):
@@ -395,7 +415,8 @@ def collect()->dict:
   state['last_active_sources']=[x['id'] for x in active]
   state['initial_collection_started_at']=state.get('initial_collection_started_at') or _now()
  else:
-  active=[SOURCES[(cursor+i)%len(SOURCES)] for i in range(min(RUN_SOURCE_LIMIT,len(SOURCES)))]
+  rotated=[SOURCES[(cursor+i)%len(SOURCES)] for i in range(len(SOURCES))]
+  active=sorted(rotated[:max(RUN_SOURCE_LIMIT*2,RUN_SOURCE_LIMIT)], key=lambda x:source_priority(x['id']), reverse=True)[:min(RUN_SOURCE_LIMIT,len(SOURCES))]
   state['source_cursor']=(cursor+len(active))%len(SOURCES);state['last_active_sources']=[x['id'] for x in active]
  atomic_write_json(LEARNING,state,suffix='.graded-photo-cursor.tmp')
  pool=concurrent.futures.ThreadPoolExecutor(max_workers=3,thread_name_prefix='graded-photo')
@@ -428,10 +449,22 @@ def collect()->dict:
   if not key:continue
   old=dedup.get(key)
   if old is None or float(x.get('source_weight',0))>float(old.get('source_weight',0)):dedup[key]=x
- rows=list(dedup.values())[:MAX_ROWS];verified=0
+ rows=list(dedup.values())[:MAX_ROWS]
+ # Cross-source corroboration: group similar titles across independent sources.
+ groups={}
+ for x in rows:
+  key=canonical_key(str(x.get('title') or ''),str(x.get('url') or ''))
+  groups.setdefault(key,set()).add(str(x.get('source_id') or ''))
+ for x in rows:
+  key=canonical_key(str(x.get('title') or ''),str(x.get('url') or ''))
+  ids=sorted(y for y in groups.get(key,set()) if y)
+  x['cross_source_count']=len(ids);x['cross_sources']=ids[:12]
+  x['evidence_confidence']=evidence_confidence(ids,False)
+ verified=0
  for x in rows:
   ok=_verified_status(x.get('company'),x.get('certification_id'),x.get('grade'),registry)
   x['official_result']=bool(ok);x['status']='verified_reference' if ok else 'quarantine_candidate'
+  x['evidence_confidence']=evidence_confidence(x.get('cross_sources') or [x.get('source_id')],bool(ok))
   x['learning_eligibility']='reference_only_missing_raw_prediction' if ok else 'not_eligible_unverified'
   if ok:
    verified+=1;stats.setdefault(x.get('source_id','unknown'),{'candidates':0,'image_hits':0,'verified_hits':0,'errors':0,'queries':0})['verified_hits']+=1
