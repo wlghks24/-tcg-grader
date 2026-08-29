@@ -70,7 +70,7 @@ REGION_LANG = {
     "US": {"lang": "en", "hl": "en-US", "gl": "US", "ceid": "US:en"},
 }
 EVENT_TERMS = {
-    "ko": "행사 이벤트 콜라보 프로모 팝업 영화 극장판 개봉 예약 발매 출시 대회 야구 KBO 굿즈 포토카드 브랜드데이",
+    "ko": "행사 이벤트 콜라보 프로모 팝업 영화 극장판 개봉 예약 발매 출시 대회 야구 KBO 굿즈 포토카드 브랜드데이 PLAYGO 재배포 재지급 수령 프로모션팩 신사황",
     "ja": "イベント コラボ キャンペーン プロモ ポップアップ 映画 劇場版 発売 大会 グッズ カード",
     "en": "event collaboration collab promo pop-up movie film release tournament preorder merchandise card",
 }
@@ -92,7 +92,7 @@ OFFICIAL_HOSTS = {
     "en.onepiece-cardgame.com", "cp.onepiece-cardgame.com", "one-piece.com", "www.one-piece.com",
     "naruto-cardgame.com", "www.naruto-cardgame.com", "naruto-official.com", "www.naruto-official.com",
     "daewonmedia.com", "www.daewonmedia.com", "kobis.or.kr", "www.kobis.or.kr",
-    "ktwizstore.co.kr", "www.ktwizstore.co.kr",
+    "ktwizstore.co.kr", "www.ktwizstore.co.kr", "playgo.bandainamcokorea.co.kr",
 }
 OFFICIAL_DISCOVERY_PAGES = (
     ("포켓몬 카드", "KR", "https://www.pokemonkorea.co.kr/"),
@@ -195,6 +195,7 @@ def _registry_default() -> dict:
         "version": 2, "updated_at": None,
         "policy": "공식사이트 연결 계정과 manual=true 검증 계정을 유지",
         "accounts": [],
+        "watch_accounts": [],
         "discovery_pages": [{"game": g, "region": r, "url": u} for g, r, u in OFFICIAL_DISCOVERY_PAGES],
     }
 
@@ -282,6 +283,7 @@ def refresh_registry(force: bool = False) -> tuple[dict, list[str]]:
     payload = {"version": 2, "updated_at": _now(),
                "policy": "공식사이트 연결 계정 + manual=true 검증 계정. 자동탐색 실패 시 manual 계정 보존.",
                "accounts": sorted(merged.values(), key=lambda x: (x.get("game", ""), x.get("region", ""), x.get("platform", ""), x.get("username", ""))),
+               "watch_accounts": [x for x in current.get("watch_accounts", []) if isinstance(x, dict)],
                "discovery_pages": [{"game": g, "region": r, "url": u} for g, r, u in OFFICIAL_DISCOVERY_PAGES],
                "discovery_errors": errors[:30]}
     atomic_write_json(REGISTRY, payload, suffix=".registry.tmp")
@@ -303,7 +305,7 @@ def _game_query_terms(game: str, region: str) -> str:
     lang = REGION_LANG[region]["lang"]; names = GAMES[game][lang]
     name_expr = " OR ".join(f'"{name}"' if " " in name else name for name in names[:3])
     event_words = {
-        "ko": "(행사 OR 이벤트 OR 콜라보 OR 프로모 OR 영화 OR 극장판 OR 발매 OR 출시 OR 대회 OR 야구 OR 굿즈 OR 포토카드)",
+        "ko": "(행사 OR 이벤트 OR 콜라보 OR 프로모 OR 영화 OR 극장판 OR 발매 OR 출시 OR 대회 OR 야구 OR 굿즈 OR 포토카드 OR PLAYGO OR 재배포 OR 재지급 OR 수령 OR 프로모션팩 OR 신사황)",
         "ja": "(イベント OR コラボ OR キャンペーン OR プロモ OR 映画 OR 劇場版 OR 発売 OR 大会 OR グッズ)",
         "en": "(event OR collab OR collaboration OR promo OR movie OR film OR release OR tournament OR merchandise)",
     }[lang]
@@ -474,7 +476,18 @@ def _official_social_match(registry: dict, source: str, title: str, game: str, r
 def _ddg_social_one(game: str, region: str, registry: dict) -> tuple[list[dict], str | None]:
     lang = REGION_LANG[region]["lang"]; names = GAMES[game][lang][:2]
     name_expr = " OR ".join(f'"{x}"' for x in names); terms = EVENT_TERMS[lang]
-    query = f"({name_expr}) ({terms}) (site:x.com OR site:instagram.com OR site:youtube.com)"
+    watch_names = []
+    for account in registry.get("watch_accounts", []):
+        if not isinstance(account, dict) or account.get("game") != game or account.get("region") != region:
+            continue
+        username = str(account.get("username") or "").strip().lstrip("@")
+        if username:
+            watch_names.append(username)
+    watch_expr = " OR ".join(f'"{x}"' for x in watch_names[:8])
+    base_expr = f"({name_expr}) ({terms})"
+    if watch_expr:
+        base_expr = f"({base_expr}) OR (({watch_expr}) ({terms}))"
+    query = f"({base_expr}) (site:x.com OR site:instagram.com OR site:youtube.com)"
     url = "https://html.duckduckgo.com/html/?" + urllib.parse.urlencode({"q": query})
     req = urllib.request.Request(url, headers={"User-Agent": "Mozilla/5.0 TCG-Grader-SocialFallback/2.0"})
     try:

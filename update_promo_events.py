@@ -27,7 +27,7 @@ ALLOWED = {
     "onepiece-cardgame.kr", "www.onepiece-cardgame.kr",
     "www.onepiece-cardgame.com", "en.onepiece-cardgame.com",
     "cp.onepiece-cardgame.com", "one-piece.com", "www.one-piece.com",
-    "shop.bandainamco-am.com", "www.pokemon.com",
+    "shop.bandainamco-am.com", "playgo.bandainamcokorea.co.kr", "www.pokemon.com",
     "naruto-cardgame.com", "www.naruto-cardgame.com",
     "naruto-official.com", "www.naruto-official.com",
     "kobis.or.kr", "www.kobis.or.kr",
@@ -35,6 +35,7 @@ ALLOWED = {
 }
 INDEXES = (
     ("KR", "원피스 카드", "https://onepiece-cardgame.kr/events.do"),
+    ("KR", "원피스 카드", "https://onepiece-cardgame.kr/topics.do"),
     ("KR", "포켓몬 카드", "https://pokemonkorea.co.kr/"),
     ("KR", "나루토 카드", "https://www.naruto-cardgame.com/asia-en/"),
     ("JP", "포켓몬 카드", "https://www.pokemon-card.com/info/"),
@@ -129,6 +130,22 @@ REGIONAL_MOVIE_TRACKERS = KR_MOVIE_TRACKERS + (
 # 2026-08-25에 실제 공식 페이지에서 대조한 최소 사실만 유지한다.
 # 월/계절/시작일만 발표된 정보에서 내부 검토 범위를 실제 확정일처럼 표시하지 않는다.
 OFFICIAL_VERIFIED_SEEDS = (
+    {
+        "game": "원피스 카드", "region": "KR", "category": "promo",
+        "name_ko": "PLAYGO 출시 알림 · 신사황 프로모션 팩 재배포",
+        "name_native": "반다이남코코리아 PLAYGO 서비스 출시 알림 프로모션 안내",
+        "start_date": "2026-09-01", "end_date": "2027-12-31", "claim_deadline": "2027-12-31",
+        "date_precision": "start-only",
+        "date_label": "2026년 9월 1일 시작 · PLAYGO 앱 출시 시 종료(종료일 미발표)",
+        "internal_tracking_end": True,
+        "reward": "출시 알림 신청 후 발급되는 QR을 이벤트 진행 점포에서 제시하면 특별 프로모션 팩 수령. FUN EXPO 2026 수령자는 중복 수령 불가.",
+        "condition": "매장별 재고가 다르며 소진 시 종료될 수 있습니다. 공식 공지와 PLAYGO QR 교환 상태를 확인하세요.",
+        "location": "한국 PLAYGO 이벤트 진행 점포",
+        "status": "2026-09-01 시작 예정 · 앱 출시 시까지",
+        "source": "https://onepiece-cardgame.kr/topics/view.do?brdno=6516",
+        "verification_source": "https://playgo.bandainamcokorea.co.kr/",
+        "source_grade": "official",
+    },
     {
         "game": "나루토 카드", "region": "JP", "category": "collaboration",
         "name_ko": "NARUTO & BORUTO 닌자마을 한여름 수둔 축제",
