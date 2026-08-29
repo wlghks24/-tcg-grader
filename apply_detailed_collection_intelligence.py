@@ -22,13 +22,16 @@ COLLECTOR_MARKERS=(
     'route_run_count',
     'collection_learning_stats',
     "SOURCE_ID_ALIASES={'ebay_public':'ebay'}",
-    "'query_strategy':'verified-feedback bandit with bounded exploration'",
+    "'query_strategy':'recency-decayed verified-feedback bandit with bounded exploration'",
+    "'source_selection_strategy':state.get('source_selection_policy')",
 )
 INTELLIGENCE_MARKERS=(
     'def record_collection_cycle(',
     'def record_official_feedback(',
     'def learning_snapshot(',
     "'query_learning_cannot_change_trust':True",
+    "'idempotent_feedback':True",
+    "'cross_process_lock':True",
     "SOURCE_ALIASES={'ebay_public':'ebay','ebay_api':'ebay'}",
 )
 
@@ -46,4 +49,3 @@ def validate()->dict:
 
 if __name__=='__main__':
     print(validate())
-

@@ -65,6 +65,18 @@ class GradedPhotoMultiSourceTests(unittest.TestCase):
         self.assertEqual(len(rows),g.MAX_PER_SOURCE)
         self.assertEqual(diag['game_candidates'],{'pokemon':8,'onepiece':8,'naruto':8})
 
+    def test_source_selection_keeps_coverage_and_uses_learned_slot(self):
+        state={'source_cursor':0}
+        def priority(source_id):return 0.99 if source_id=='cardmarket' else 0.1
+        with mock.patch.object(g,'source_priority',side_effect=priority):
+            active=g._select_active_sources(state,False,False)
+        self.assertEqual(len(active),g.RUN_SOURCE_LIMIT)
+        self.assertEqual([row['id'] for row in active[:g.RUN_SOURCE_LIMIT-1]],
+                         [row['id'] for row in g.SOURCES[:g.RUN_SOURCE_LIMIT-1]])
+        self.assertEqual(active[-1]['id'],'cardmarket')
+        self.assertEqual(state['source_cursor'],g.RUN_SOURCE_LIMIT-1)
+        self.assertEqual(state['source_selection_policy'],'coverage_plus_recency_weighted_exploitation')
+
     def test_ebay_api_rotates_games_before_next_grader(self):
         queries=[]
         def fake_api(url,_token):

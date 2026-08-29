@@ -20,7 +20,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
-from safe_runtime import atomic_write_json, safe_read_text, safe_urlopen, safe_urlopen_no_redirect
+from safe_runtime import atomic_write_json, exclusive_file_lock, safe_read_text, safe_urlopen, safe_urlopen_no_redirect
 from detailed_collection_intelligence import (
  build_queries, canonical_key, evidence_confidence, learning_snapshot,
  record_collection_cycle, record_official_feedback, route_run_count, source_priority,
@@ -591,6 +591,28 @@ def _record_adaptive_timeout(state:dict,elapsed:float,timed_out:int,total_candid
     a['last_raw_results']=int(raw_results)
     return _adaptive_timeout_seconds(state)
 
+def _select_active_sources(state:dict,is_android:bool,first_bootstrap:bool)->list[dict]:
+    """Keep deterministic coverage while reserving one slot for learned quality."""
+    if first_bootstrap:
+        limit=3 if is_android else len(BOOTSTRAP_SOURCE_IDS)
+        active=[next(x for x in SOURCES if x['id']==sid) for sid in BOOTSTRAP_SOURCE_IDS[:limit]]
+        state['source_cursor']=len(active)%len(SOURCES)
+        state['source_selection_policy']='bootstrap_public_sources'
+        return active
+    limit=min(3 if is_android else RUN_SOURCE_LIMIT,len(SOURCES))
+    try:cursor=int(state.get('source_cursor',0))%len(SOURCES)
+    except (TypeError,ValueError,OverflowError):cursor=0
+    coverage_slots=max(1,limit-1)
+    coverage=[SOURCES[(cursor+i)%len(SOURCES)] for i in range(coverage_slots)]
+    used={row['id'] for row in coverage}
+    candidates=[row for row in SOURCES if row['id'] not in used]
+    exploit=max(candidates,key=lambda row:(source_priority(SOURCE_ID_ALIASES.get(row['id'],row['id'])),-SOURCES.index(row))) if candidates and len(coverage)<limit else None
+    active=coverage+([exploit] if exploit else [])
+    state['source_cursor']=(cursor+coverage_slots)%len(SOURCES)
+    state['source_selection_policy']='coverage_plus_recency_weighted_exploitation'
+    state['adaptive_source_slot']=exploit['id'] if exploit else None
+    return active
+
 def _official_verify_rows(rows:list[dict],registry:dict,max_live:int=10)->tuple[list[dict],dict]:
  cache=_load(OFFICIAL_CACHE,{})
  entries=cache.get('entries',{}) if isinstance(cache.get('entries'),dict) else {}
@@ -707,7 +729,7 @@ def _save_reference_learning(rows:list[dict])->dict:
           'policy':{'official_match_required':True,'raw_and_slab_isolated':True,'same_image_prediction_training':False}}
  atomic_write_json(REFERENCE_LEARNING,payload,suffix='.reference-learning.tmp');return payload
 
-def collect()->dict:
+def _collect_once()->dict:
  run_started=time.monotonic();registry=_registry();stats={};errors=[]
  is_android='com.termux' in os.environ.get('PREFIX','')
  previous_payload=_load(OUT,{})
@@ -722,17 +744,8 @@ def collect()->dict:
  state=_load(LEARNING,{})
  adaptive_timeout_seconds=_adaptive_timeout_seconds(state)
  first_bootstrap=not bool(state.get('initial_collection_completed'))
- try:cursor=int(state.get('source_cursor',0))%len(SOURCES)
- except Exception:cursor=0
- if first_bootstrap:
-  bootstrap_limit=3 if is_android else len(BOOTSTRAP_SOURCE_IDS)
-  active=[next(x for x in SOURCES if x['id']==sid) for sid in BOOTSTRAP_SOURCE_IDS[:bootstrap_limit]]
-  state['initial_collection_started_at']=state.get('initial_collection_started_at') or _now()
-  state['source_cursor']=len(active)%len(SOURCES)
- else:
-  batch_limit=3 if is_android else RUN_SOURCE_LIMIT
-  active=[SOURCES[(cursor+i)%len(SOURCES)] for i in range(min(batch_limit,len(SOURCES)))]
-  state['source_cursor']=(cursor+len(active))%len(SOURCES)
+ active=_select_active_sources(state,is_android,first_bootstrap)
+ if first_bootstrap:state['initial_collection_started_at']=state.get('initial_collection_started_at') or _now()
  state['last_active_sources']=[x['id'] for x in active]
  atomic_write_json(LEARNING,state,suffix='.graded-photo-cursor.tmp')
 
@@ -782,7 +795,7 @@ def collect()->dict:
   learning_feedback=record_official_feedback(rows);collection_learning=learning_snapshot()
  except Exception as exc:
   learning_feedback={'rows_observed':0,'official_verified':0,'identifiers_learned':0,'error':type(exc).__name__}
-  collection_learning={'version':2,'error':'snapshot_unavailable','policy':{'query_learning_cannot_change_trust':True}}
+  collection_learning={'version':3,'error':'snapshot_unavailable','policy':{'query_learning_cannot_change_trust':True}}
 
  # Cross-source corroboration remains advisory; only official matching can verify.
  groups={}
@@ -855,7 +868,8 @@ def collect()->dict:
           'configuration':{'google_cse_configured':google_configured,'google_cse_note':'existing customers only; public search fallbacks stay enabled',
                            'ebay_oauth_configured':ebay_configured,'ebay_client_credentials_supported':True,
                            'games_targeted':list(GAMES),'game_collection_balance':'round_robin_per_source',
-                           'collection_learning_version':2,'query_strategy':'verified-feedback bandit with bounded exploration',
+                           'collection_learning_version':3,'query_strategy':'recency-decayed verified-feedback bandit with bounded exploration',
+                           'source_selection_strategy':state.get('source_selection_policy'),
                            'amazon_mode':'public search fallback; deprecated PA-API is not called',
                            'kream_daangn_mode':'public search-index candidates only; login bypass disabled'},
           'policy':{'public_only':True,'login_bypass':False,'seller_label_is_official':False,'official_registry_match_required':True,
@@ -872,6 +886,12 @@ def collect()->dict:
   learning_state['initial_collection_completed']=True;learning_state['initial_collection_completed_at']=_now()
  atomic_write_json(LEARNING,learning_state,suffix='.graded-photo-adaptive.tmp')
  atomic_write_json(OUT,payload,suffix='.graded-photo.tmp');_save_learning(stats);return payload
+
+def collect()->dict:
+ # A local server, Termux scheduler and manual command must not run this costly
+ # stateful collection at the same time. The lock is adjacent to runtime state.
+ with exclusive_file_lock(LEARNING.with_suffix(LEARNING.suffix+'.run'),timeout_seconds=0.05,stale_seconds=28_800):
+  return _collect_once()
 
 def main():
  p=collect();print(json.dumps(p['summary'],ensure_ascii=False));return p

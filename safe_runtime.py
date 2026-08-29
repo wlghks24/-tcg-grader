@@ -7,6 +7,7 @@ is therefore validated before it is followed. Authenticated GitHub requests use 
 no-redirect opener so bearer tokens can never be forwarded to another origin.
 """
 from __future__ import annotations
+from contextlib import contextmanager
 import datetime as dt
 import ipaddress
 import html
@@ -18,12 +19,88 @@ import re
 import secrets
 import socket
 import stat
+import time
 from typing import Any, BinaryIO
 import urllib.error
 import urllib.parse
 import urllib.request
 
 MAX_SAFE_FILE_BYTES = 20_000_000
+
+
+@contextmanager
+def exclusive_file_lock(
+    target: str | os.PathLike[str],
+    *,
+    timeout_seconds: float = 10.0,
+    stale_seconds: float = 21_600.0,
+):
+    """Serialize a load-modify-save transaction across OS processes.
+
+    The lock is an adjacent private file created with ``O_EXCL``.  This works on
+    Windows/Termux/Linux without optional packages and refuses symbolic-link lock
+    paths.  A stale lock is recovered only after its bounded age has elapsed.
+    """
+    path = Path(target)
+    lock_path = path.with_suffix(path.suffix + ".lock")
+    path.parent.mkdir(parents=True, exist_ok=True)
+    timeout = max(0.0, min(60.0, float(timeout_seconds)))
+    stale_after = max(60.0, min(86_400.0, float(stale_seconds)))
+    deadline = time.monotonic() + timeout
+    descriptor: int | None = None
+    owned: tuple[int, int] | None = None
+    while descriptor is None:
+        flags = os.O_WRONLY | os.O_CREAT | os.O_EXCL | getattr(os, "O_NOFOLLOW", 0)
+        try:
+            descriptor = os.open(lock_path, flags, 0o600)
+            try:
+                metadata = os.fstat(descriptor)
+                if not stat.S_ISREG(metadata.st_mode):
+                    raise ValueError("lock target is not a regular file")
+                owned = (metadata.st_dev, metadata.st_ino)
+                payload = json.dumps({"pid": os.getpid(), "created_at": utc_timestamp()}).encode("utf-8")
+                if os.write(descriptor, payload) != len(payload):
+                    raise OSError("incomplete lock metadata write")
+                try:
+                    os.fsync(descriptor)
+                except OSError:
+                    pass
+            except BaseException:
+                os.close(descriptor);descriptor=None
+                try:
+                    current=os.lstat(lock_path)
+                    if owned == (current.st_dev,current.st_ino):os.unlink(lock_path)
+                except FileNotFoundError:pass
+                raise
+        except FileExistsError:
+            try:
+                current = os.lstat(lock_path)
+            except FileNotFoundError:
+                continue
+            if stat.S_ISLNK(current.st_mode) or not stat.S_ISREG(current.st_mode):
+                raise ValueError("unsafe lock target")
+            if time.time() - current.st_mtime >= stale_after:
+                try:
+                    latest=os.lstat(lock_path)
+                    if (latest.st_dev,latest.st_ino)==(current.st_dev,current.st_ino):os.unlink(lock_path)
+                except FileNotFoundError:
+                    pass
+                continue
+            if time.monotonic() >= deadline:
+                raise TimeoutError("another process is updating the same state")
+            time.sleep(0.025)
+    try:
+        yield
+    finally:
+        try:
+            os.close(descriptor)
+        finally:
+            try:
+                current = os.lstat(lock_path)
+                if owned == (current.st_dev, current.st_ino):
+                    os.unlink(lock_path)
+            except FileNotFoundError:
+                pass
 
 
 def utc_timestamp() -> str:
