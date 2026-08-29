@@ -21,5 +21,9 @@ if command -v termux-wake-lock >/dev/null 2>&1; then
   termux-wake-lock || true
   trap 'termux-wake-unlock >/dev/null 2>&1 || true' EXIT INT TERM
 fi
+if [ -f "storage_optimizer.py" ]; then
+  echo "저장공간을 안전하게 최적화합니다..."
+  python storage_optimizer.py || echo "[안내] 최적화 일부를 건너뛰고 서버를 시작합니다."
+fi
 echo "로컬 서버를 먼저 시작합니다. 자료 수집은 백그라운드에서 자동 실행됩니다."
 python tcg_updater.py
