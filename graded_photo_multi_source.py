@@ -177,15 +177,19 @@ def _queries(src:dict,game:str)->tuple[str,...]:
  g={'pokemon':'Pokemon','onepiece':'One Piece','naruto':'Naruto'}[game]
  # Simple per-grader queries are deliberately used here. Public search engines
  # often return zero or unrelated rows for long nested OR expressions.
- return tuple(f'site:{src["domain"]} {g} {company} graded card' for company in COMPANIES)
+ return tuple((company,f'site:{src["domain"]} {g} {company} graded card') for company in COMPANIES)
 
 def _discover_source_game(src:dict,game:str)->tuple[list[dict],list[str],int,dict]:
  raw=[];errors=[];queries=0
  diag={'raw_results':0,'domain_matches':0,'company_matches':0}
- for q in _queries(src,game):
+ for expected_company,q in _queries(src,game):
   queries+=1
   try:
-   rows,err=_query_rows(q,10);raw.extend(rows);errors.extend(err);diag['raw_results']+=len(rows)
+   qrows,err=_query_rows(q,10)
+   for rr in qrows:
+    if isinstance(rr,dict):
+     item=dict(rr);item['_expected_company']=expected_company;raw.append(item)
+   errors.extend(err);diag['raw_results']+=len(qrows)
   except Exception as exc:errors.append(type(exc).__name__)
  candidates={}
  for r in raw:
@@ -198,8 +202,8 @@ def _discover_source_game(src:dict,game:str)->tuple[list[dict],list[str],int,dic
  out=[]
  for idx,(url,r) in enumerate(list(candidates.items())[:MAX_PER_SOURCE]):
   blob=' '.join([str(r.get('title') or ''),str(r.get('snippet') or '')])
-  c=_company(blob)
-  if not c:continue
+  c=_company(blob) or str(r.get('_expected_company') or '').upper()
+  if c not in COMPANIES:continue
   diag['company_matches']+=1
   g=_grade(blob,c);cert=_cert(blob);image=str(r.get('image_url') or '')
   if not image and idx<MAX_IMAGE_PROBES_PER_SOURCE:image=_og_image(url,src['domain'])
@@ -243,7 +247,13 @@ def _save_learning(stats:dict):
  d['updated_at']=_now();atomic_write_json(LEARNING,d,suffix='.graded-photo-learning.tmp')
 
 def collect()->dict:
- registry=_registry();rows=[];stats={};errors=[]
+ registry=_registry();stats={};errors=[]
+ previous_payload=_load(OUT,{})
+ previous_rows=previous_payload.get('records',[]) if isinstance(previous_payload,dict) else []
+ if not isinstance(previous_rows,list): previous_rows=[]
+ previous_rows=[x for x in previous_rows if isinstance(x,dict)]
+ rows=list(previous_rows)
+ previous_count=len(previous_rows)
  e=_ebay_candidates();rows.extend(e);stats['ebay']={'candidates':len(e),'image_hits':sum(bool(x.get('image_url')) for x in e),'verified_hits':0,'errors':0,'queries':0}
  state=_load(LEARNING,{})
  first_full_collection=not bool(state.get('initial_collection_completed'))
@@ -297,7 +307,7 @@ def collect()->dict:
  payload={'schema_version':3,'created_at':_now(),'records':rows,
           'summary':{'total_candidates':len(rows),'with_image_url':sum(bool(x.get('image_url')) for x in rows),'verified_references':verified,
                      'quarantined':len(rows)-verified,'sources':len({x.get('source_id') for x in rows}),
-                     'status':'ok' if rows else 'no_candidates','queries_attempted':sum(int(x.get('queries',0)) for x in stats.values()),'markets_this_run':[x['id'] for x in active],'timed_out_sources':sum(bool(x.get('timed_out')) for x in stats.values()),'initial_full_collection':first_full_collection},
+                     'status':'ok' if rows else 'no_candidates','queries_attempted':sum(int(x.get('queries',0)) for x in stats.values()),'markets_this_run':[x['id'] for x in active],'timed_out_sources':sum(bool(x.get('timed_out')) for x in stats.values()),'initial_full_collection':first_full_collection,'previous_candidates':previous_count,'raw_results':sum(int(x.get('raw_results',0)) for x in stats.values()),'domain_matches':sum(int(x.get('domain_matches',0)) for x in stats.values()),'company_matches':sum(int(x.get('company_matches',0)) for x in stats.values())},
           'source_stats':stats,'errors':errors[:80],
           'google_cse_configured':bool(os.environ.get('GOOGLE_CSE_KEY') and os.environ.get('GOOGLE_CSE_CX')),
           'ebay_oauth_configured':bool(os.environ.get('EBAY_OAUTH_TOKEN')),
