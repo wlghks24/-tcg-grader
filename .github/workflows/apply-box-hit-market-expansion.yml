@@ -1,0 +1,50 @@
+name: Apply BOX HIT market expansion
+
+on:
+  push:
+    paths:
+      - 'box_hit_market_discovery.py'
+      - 'market_catalog_expander.js'
+      - 'test_box_hit_market_discovery.py'
+      - 'apply_box_hit_market_expansion_patch.py'
+      - '.github/workflows/apply-box-hit-market-expansion.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 0
+      - name: Apply integration patch
+        run: python apply_box_hit_market_expansion_patch.py
+      - name: Verify unit tests
+        run: python -m unittest -v test_box_hit_market_discovery.py
+      - name: Verify integration
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          p=Path('update_market_prices.py').read_text(encoding='utf-8')
+          i=Path('index.html').read_text(encoding='utf-8')
+          s=Path('tcg_updater.py').read_text(encoding='utf-8')
+          assert 'merge_market_catalog(db)' in p
+          assert '<script src="market_catalog_expander.js"></script>' in i
+          assert "'market_catalog_expander.js'" in s
+          print('BOX/HIT market expansion integration verified')
+          PY
+      - name: Commit integration
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add update_market_prices.py index.html tcg_updater.py
+          if git diff --cached --quiet; then
+            echo "No changes"
+          else
+            git commit -m "feat: integrate multi-market BOX HIT discovery"
+            git push origin main
+          fi
