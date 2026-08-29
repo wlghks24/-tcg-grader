@@ -23,7 +23,8 @@ from typing import Any
 from safe_runtime import atomic_write_json, exclusive_file_lock, safe_read_text, safe_urlopen, safe_urlopen_no_redirect
 from detailed_collection_intelligence import (
  build_queries, canonical_key, evidence_confidence, learning_snapshot,
- record_collection_cycle, record_official_feedback, route_run_count, source_priority,
+ grader_collection_targets, record_collection_cycle, record_official_feedback,
+ route_run_count, source_priority,
 )
 from graded_photo_evidence import enrich_rows, normalize_cert
 from grading_cert_verifier import lookup_url, verify_cert
@@ -44,6 +45,7 @@ GAME_DISPLAY_NAMES={'pokemon':'포켓몬','onepiece':'원피스','naruto':'나�
 MAX_ROWS=600
 MAX_PER_SOURCE=24
 MAX_IMAGE_PROBES_PER_SOURCE=3
+MAX_RECOVERY_QUERIES_PER_GAME=2
 MAX_PAGE_BYTES=1_000_000
 RUN_SOURCE_LIMIT=6
 RUN_WAIT_SECONDS=300
@@ -412,7 +414,7 @@ def _queries(src:dict,game:str)->tuple[tuple[str,str],...]:
     source_index=next((i for i,x in enumerate(SOURCES) if x.get('id')==sid),0)
     game_index=GAMES.index(game)
     cycle=route_run_count(query_sid,game)
-    selected=(COMPANIES[(source_index+game_index+cycle)%len(COMPANIES)],COMPANIES[(source_index+game_index+cycle+2)%len(COMPANIES)])
+    selected=tuple(grader_collection_targets(query_sid,game,count=2,cycle=source_index+game_index+cycle))
     planned=[broad]
     for company,language in zip(selected,names[1:]):
         learned=''
@@ -428,7 +430,7 @@ def _discover_source_game(src:dict,game:str)->tuple[list[dict],list[str],int,dic
  raw=[];errors=[];queries=0;observations=[]
  detailed_started=time.monotonic()
  query_sid=SOURCE_ID_ALIASES.get(str(src.get('id') or ''),str(src.get('id') or 'unknown'))
- diag={'raw_results':0,'domain_matches':0,'company_matches':0,'resolved_redirects':0,'image_results':0,'google_image_results':0}
+ diag={'raw_results':0,'domain_matches':0,'company_matches':0,'resolved_redirects':0,'image_results':0,'google_image_results':0,'recovery_queries':0,'recovery_company_matches':0}
  query_plan=_queries(src,game)
  for expected_company,q in query_plan:
   queries+=1;query_started=time.monotonic()
@@ -476,6 +478,32 @@ def _discover_source_game(src:dict,game:str)->tuple[list[dict],list[str],int,dic
  except Exception as exc:
   errors.append('bing_images:'+type(exc).__name__)
   observations.append({'query':iq or f'{game}:image_search','company':locals().get('image_company',''),'raw':0,'accepted':0,'images':0,'errors':1,'elapsed':time.monotonic()-image_started})
+ # A source returning only PSA/BGS candidates receives a small bounded recovery
+ # pass for the weakest company routes. Search failure remains diagnostic and no
+ # recovered listing is trusted until image OCR + official certification match.
+ seen_companies={_company(' '.join((str(item.get('title') or ''),str(item.get('snippet') or '')))) for item in raw if isinstance(item,dict)}
+ seen_companies.discard('')
+ recovery_order=grader_collection_targets(query_sid,game,count=len(COMPANIES),cycle=route_run_count(query_sid,game))
+ recovery_budget=1 if 'com.termux' in os.environ.get('PREFIX','') else MAX_RECOVERY_QUERIES_PER_GAME
+ for recovery_company in [company for company in recovery_order if company not in seen_companies][:recovery_budget]:
+  recovery_game_name={'pokemon':'Pokemon','onepiece':'One Piece','naruto':'Naruto'}[game]
+  recovery_query=f'site:{src["domain"]} {recovery_game_name} {recovery_company} graded card slab label cert'
+  recovery_started=time.monotonic();queries+=1;diag['recovery_queries']+=1
+  try:
+   recovered,recovery_errors=_query_rows(recovery_query,8);matched=0
+   for rr in recovered:
+    if not isinstance(rr,dict):continue
+    actual=_company(' '.join((str(rr.get('title') or ''),str(rr.get('snippet') or ''))))
+    if actual==recovery_company:matched+=1
+    item=dict(rr);item['_expected_company']=recovery_company;item['_learning_query']=recovery_query[:300];raw.append(item)
+   errors.extend(recovery_errors);diag['raw_results']+=len(recovered);diag['recovery_company_matches']+=matched
+   observations.append({'query':recovery_query,'company':recovery_company,'raw':len(recovered),'accepted':matched,
+                        'images':sum(bool(item.get('image_url')) for item in recovered if isinstance(item,dict)),
+                        'errors':len(recovery_errors),'elapsed':time.monotonic()-recovery_started,'recovery':True})
+  except Exception as exc:
+   errors.append('recovery:'+type(exc).__name__)
+   observations.append({'query':recovery_query,'company':recovery_company,'raw':0,'accepted':0,'images':0,'errors':1,
+                        'elapsed':time.monotonic()-recovery_started,'recovery':True})
  candidates={}
  for r in raw:
   raw_url=str(r.get('url') or '')
@@ -504,7 +532,7 @@ def _discover_source_game(src:dict,game:str)->tuple[list[dict],list[str],int,dic
  return out,errors,queries,diag
 
 def _collect_public_source(src:dict):
- found_by_game={};errors=[];queries=0;diag={'raw_results':0,'domain_matches':0,'company_matches':0,'resolved_redirects':0,'image_results':0,'google_image_results':0}
+ found_by_game={};errors=[];queries=0;diag={'raw_results':0,'domain_matches':0,'company_matches':0,'resolved_redirects':0,'image_results':0,'google_image_results':0,'recovery_queries':0,'recovery_company_matches':0}
  for game in GAMES:
   rows,err,q,d=_discover_source_game(src,game);found_by_game[game]=rows;errors.extend(err);queries+=q
   for k in diag: diag[k]+=int(d.get(k,0))
@@ -532,6 +560,7 @@ def _collect_public_source(src:dict):
   if not progressed:break
  diag['game_candidates']={game:sum(str(x.get('game') or '')==game for x in selected) for game in GAMES}
  diag['company_candidates']={company:sum(str(x.get('company') or '').upper()==company for x in selected) for company in COMPANIES}
+ diag['company_shortfalls']={company:max(0,1-count) for company,count in diag['company_candidates'].items()}
  return src['id'],selected,errors,queries,diag
 
 def _apply_measurement_photo_quality(rows:list[dict])->list[dict]:
@@ -544,11 +573,20 @@ def _apply_measurement_photo_quality(rows:list[dict])->list[dict]:
   company_evidence=bool(raw.get('company_evidence')=='image_ocr' and company in COMPANIES)
   cert=bool(normalize_cert(raw.get('certification_id')));grade=raw.get('grade') is not None
   official=raw.get('official_result') is True;conflicts=bool(raw.get('evidence_conflicts'))
-  score=(0.25 if validated else 0.0)+0.20*resolution+(0.15 if company_evidence else 0.0)+(0.10 if grade else 0.0)+(0.10 if cert else 0.0)+(0.20 if official else 0.0)
+  ratio=_finite_number(raw.get('photo_aspect_ratio'),width/max(1,height) if width and height else 0.0)
+  geometry_ok=raw.get('photo_geometry_ok') is True if 'photo_geometry_ok' in raw else 0.45<=ratio<=1.05
+  exposure_ok=raw.get('photo_exposure_ok') is True if 'photo_exposure_ok' in raw else True
+  sharpness_ok=raw.get('photo_sharpness_ok') is True if 'photo_sharpness_ok' in raw else True
+  text=' '.join((str(raw.get('title') or ''),str(raw.get('snippet') or '')))
+  back_only=bool(re.search(r'\b(?:back|reverse|rear)\s+(?:only|side|view)\b|(?:card|slab)\s+back\b|뒷면\s*(?:단독|사진)?|裏面',text,re.I))
+  view_ok=bool(geometry_ok and exposure_ok and sharpness_ok and not back_only)
+  score=(0.20 if validated else 0.0)+0.15*resolution+(0.15 if company_evidence else 0.0)+(0.10 if grade else 0.0)+(0.10 if cert else 0.0)+(0.20 if official else 0.0)+(0.10 if view_ok else 0.0)
   if conflicts:score-=0.35
   raw['measurement_photo_quality']=round(max(0.0,min(1.0,score)),3)
-  raw['measurement_photo_ready']=bool(validated and width>=600 and height>=800 and company_evidence and cert and grade and official and not conflicts and score>=0.85)
-  raw['measurement_photo_policy']='official+validated+high_resolution+ocr_identity+no_conflict'
+  raw['measurement_photo_view_ok']=view_ok
+  raw['measurement_photo_view_reason']='front_suitable' if view_ok else ('back_only_listing' if back_only else 'geometry_exposure_or_sharpness_failed')
+  raw['measurement_photo_ready']=bool(validated and width>=600 and height>=800 and company_evidence and cert and grade and official and view_ok and not conflicts and score>=0.85)
+  raw['measurement_photo_policy']='official+validated+high_resolution+ocr_identity+front_view_quality+no_conflict'
  return rows
 
 def _ebay_access_token()->str:
@@ -642,12 +680,44 @@ def _select_active_sources(state:dict,is_android:bool,first_bootstrap:bool)->lis
     state['adaptive_source_slot']=exploit['id'] if exploit else None
     return active
 
+def _balanced_official_verification_indices(rows:list[dict],eligible:set[int],limit:int)->list[int]:
+    """Round-robin scarce live lookups across game and grading company."""
+    buckets={}
+    for index,item in enumerate(rows):
+        if index not in eligible:continue
+        company=str(item.get('company') or '').upper();game=str(item.get('game') or 'unknown').lower()
+        buckets.setdefault((company,game),[]).append(index)
+    company_order={name:index for index,name in enumerate((*COMPANIES,'UNKNOWN'))}
+    game_order={name:index for index,name in enumerate((*GAMES,'unknown'))}
+    keys=sorted(buckets,key=lambda key:(company_order.get(key[0],99),game_order.get(key[1],99),key))
+    positions={key:0 for key in keys};selected=[]
+    while len(selected)<max(0,int(limit)):
+        progressed=False
+        for key in keys:
+            position=positions[key]
+            if position>=len(buckets[key]):continue
+            selected.append(buckets[key][position]);positions[key]=position+1;progressed=True
+            if len(selected)>=limit:break
+        if not progressed:break
+    return selected
+
 def _official_verify_rows(rows:list[dict],registry:dict,max_live:int=10)->tuple[list[dict],dict]:
  cache=_load(OFFICIAL_CACHE,{})
  entries=cache.get('entries',{}) if isinstance(cache.get('entries'),dict) else {}
- now=time.time();live=0;stats={'registry_matches':0,'live_attempts':0,'live_verified':0,'conflicts':0,'unavailable':0}
+ now=time.time();live=0;stats={'registry_matches':0,'live_attempts':0,'live_verified':0,'conflicts':0,'unavailable':0,
+                              'company_live_attempts':{company:0 for company in COMPANIES},
+                              'game_live_attempts':{game:0 for game in GAMES}}
+ eligible=set()
+ for index,item in enumerate(rows):
+  company=str(item.get('company') or '').upper();cert=normalize_cert(item.get('certification_id'))
+  try:grade=float(item.get('grade')) if item.get('grade') is not None else None
+  except (TypeError,ValueError,OverflowError):grade=None
+  if company not in COMPANIES or not cert or grade is None or (company,cert) in registry:continue
+  cached=entries.get(f'{company}:{cert}') if isinstance(entries.get(f'{company}:{cert}'),dict) else None
+  if not (cached and now-float(cached.get('checked_epoch',0) or 0)<7*86400):eligible.add(index)
+ live_targets=set(_balanced_official_verification_indices(rows,eligible,max_live))
  output=[]
- for raw in rows:
+ for index,raw in enumerate(rows):
   item=dict(raw);company=str(item.get('company') or '').upper();cert=normalize_cert(item.get('certification_id'))
   try:grade=float(item.get('grade')) if item.get('grade') is not None else None
   except (TypeError,ValueError,OverflowError):grade=None
@@ -669,8 +739,11 @@ def _official_verify_rows(rows:list[dict],registry:dict,max_live:int=10)->tuple[
   fresh=bool(cached and now-float(cached.get('checked_epoch',0) or 0)<7*86400)
   if fresh:
    result=cached.get('result') if isinstance(cached.get('result'),dict) else {}
-  elif live<max_live:
+  elif index in live_targets and live<max_live:
    result=verify_cert(company,cert,expected_grade=grade,timeout=10);live+=1;stats['live_attempts']+=1
+   stats['company_live_attempts'][company]+=1
+   game=str(item.get('game') or '').lower()
+   if game in GAMES:stats['game_live_attempts'][game]+=1
    entries[key]={'checked_epoch':now,'result':result}
   else:
    result={}
@@ -736,7 +809,40 @@ def _resolve_image_conflicts(rows:list[dict])->tuple[list[dict],dict]:
    existing=item.get('evidence_conflicts') if isinstance(item.get('evidence_conflicts'),list) else []
    item['evidence_conflicts']=sorted(set(str(x) for x in existing+['duplicate_image_label_conflict'] if x))
    item['official_result']=False;conflicts+=1
- return rows,{'exact_duplicate_image_groups':duplicate_groups,'image_label_conflicts':conflicts}
+ near_groups=0;near_conflicts=0
+ hashes=[]
+ for index,item in enumerate(rows):
+  value=str(item.get('image_perceptual_hash') or '').lower()
+  if re.fullmatch(r'[0-9a-f]{16}',value):hashes.append((index,value))
+ seen_pairs=set()
+ for left in range(len(hashes)):
+  left_index,left_hash=hashes[left]
+  for right in range(left+1,len(hashes)):
+   right_index,right_hash=hashes[right]
+   if left_hash==right_hash or _hex_hamming(left_hash,right_hash)>2:continue
+   pair=(left_index,right_index)
+   if pair in seen_pairs:continue
+   seen_pairs.add(pair);near_groups+=1
+   group=[rows[left_index],rows[right_index]];labels=[]
+   for item in group:
+    company=str(item.get('company') or '').upper();cert=normalize_cert(item.get('certification_id'))
+    grade=None if item.get('grade') is None else _finite_number(item.get('grade'),-999.0)
+    labels.append((company,cert,grade))
+   if labels[0]==labels[1]:continue
+   official_positions=[position for position,item in enumerate(group) if item.get('official_result') is True]
+   trusted=official_positions[0] if len(official_positions)==1 else None
+   for position,item in enumerate(group):
+    if trusted is not None and position==trusted:continue
+    existing=item.get('evidence_conflicts') if isinstance(item.get('evidence_conflicts'),list) else []
+    marker='near_duplicate_image_label_conflict'
+    if marker not in existing:near_conflicts+=1
+    item['evidence_conflicts']=sorted(set(str(x) for x in existing+[marker] if x));item['official_result']=False
+ return rows,{'exact_duplicate_image_groups':duplicate_groups,'image_label_conflicts':conflicts,
+              'near_duplicate_image_pairs':near_groups,'near_duplicate_label_conflicts':near_conflicts}
+
+def _hex_hamming(left:str,right:str)->int:
+ try:return (int(left,16)^int(right,16)).bit_count()
+ except (TypeError,ValueError):return 999
 
 def _save_reference_learning(rows:list[dict])->dict:
  current=_load(REFERENCE_LEARNING,{})
@@ -751,27 +857,32 @@ def _save_reference_learning(rows:list[dict])->dict:
   if company not in COMPANIES or not cert or item.get('evidence_conflicts'):continue
   try:grade=float(item.get('official_grade') if item.get('official_grade') is not None else item.get('grade'))
   except (TypeError,ValueError,OverflowError):continue
-  digest=str(item.get('image_sha256') or '')[:64];ready=item.get('measurement_photo_ready') is True
+  digest=str(item.get('image_sha256') or '')[:64];phash=str(item.get('image_perceptual_hash') or '').lower()[:16];ready=item.get('measurement_photo_ready') is True
+  if not re.fullmatch(r'[0-9a-f]{16}',phash):phash=''
   image_url=str(item.get('measurement_image_url') or item.get('image_url') or '')[:1200]
   if not (ready and image_url.startswith('https://')):image_url=''
   candidate={'company':company,'certification_id':cert,'official_grade':grade,'official_result':True,
              'card_name':str(item.get('card_name') or item.get('title') or '')[:260],'game':str(item.get('game') or 'unknown'),
              'official_reference_url':str(item.get('official_reference_url') or item.get('url') or '')[:1200],
-             'image_sha256':digest,'measurement_image_url':image_url,
+             'image_sha256':digest,'image_perceptual_hash':phash,'measurement_image_url':image_url,
              'measurement_photo_quality':_finite_number(item.get('measurement_photo_quality')),
              'measurement_photo_ready':ready,'learning_scope':'slab_label_and_source_reference_only'}
   key=(company,cert,digest or 'label_only');old=merged.get(key)
   if old is None or _finite_number(candidate.get('measurement_photo_quality'))>=_finite_number(old.get('measurement_photo_quality')):merged[key]=candidate
  # Retain up to three distinct verified photo fingerprints per certification.
- retained=[];per_cert=collections.Counter()
+ retained=[];per_cert=collections.Counter();cert_hashes={};near_duplicates_suppressed=0
  for item in sorted(merged.values(),key=lambda row:(row['company'],row['certification_id'],-_finite_number(row.get('measurement_photo_quality')),str(row.get('image_sha256') or ''))):
   key=(item['company'],item['certification_id'])
   if per_cert[key]>=3:continue
+  phash=str(item.get('image_perceptual_hash') or '')
+  if phash and any(_hex_hamming(phash,seen)<=2 for seen in cert_hashes.get(key,[])):
+   near_duplicates_suppressed+=1;continue
   per_cert[key]+=1;retained.append(item)
+  if phash:cert_hashes.setdefault(key,[]).append(phash)
  retained=sorted(retained,key=lambda row:(-_finite_number(row.get('measurement_photo_quality')),row['company'],row['certification_id'],str(row.get('image_sha256') or '')))[:500]
  payload={'schema_version':2,'updated_at':_now(),'references':retained,
-          'summary':{'reference_learning_count':len(retained),'certifications':len({(item['company'],item['certification_id']) for item in retained}),'measurement_photo_ready':sum(item.get('measurement_photo_ready') is True for item in retained),'raw_grade_calibration_rows_written':0},
-          'policy':{'official_match_required':True,'raw_and_slab_isolated':True,'same_image_prediction_training':False}}
+          'summary':{'reference_learning_count':len(retained),'certifications':len({(item['company'],item['certification_id']) for item in retained}),'measurement_photo_ready':sum(item.get('measurement_photo_ready') is True for item in retained),'near_duplicates_suppressed':near_duplicates_suppressed,'raw_grade_calibration_rows_written':0},
+          'policy':{'official_match_required':True,'raw_and_slab_isolated':True,'same_image_prediction_training':False,'near_duplicate_training':False}}
  atomic_write_json(REFERENCE_LEARNING,payload,suffix='.reference-learning.tmp');return payload
 
 def _collect_once()->dict:
@@ -841,7 +952,7 @@ def _collect_once()->dict:
   learning_feedback=record_official_feedback(rows);collection_learning=learning_snapshot()
  except Exception as exc:
   learning_feedback={'rows_observed':0,'official_verified':0,'measurement_ready':0,'identifiers_learned':0,'error':type(exc).__name__}
-  collection_learning={'version':4,'error':'snapshot_unavailable','policy':{'query_learning_cannot_change_trust':True}}
+  collection_learning={'version':5,'error':'snapshot_unavailable','policy':{'query_learning_cannot_change_trust':True}}
 
  # Cross-source corroboration remains advisory; only official matching can verify.
  groups={}
@@ -898,7 +1009,7 @@ def _collect_once()->dict:
  google_configured=bool((os.environ.get('GOOGLE_CSE_KEY') or os.environ.get('GOOGLE_CSE_API_KEY')) and
                         (os.environ.get('GOOGLE_CSE_CX') or os.environ.get('GOOGLE_CSE_ID')))
  ebay_configured=bool(os.environ.get('EBAY_OAUTH_TOKEN') or (os.environ.get('EBAY_CLIENT_ID') and os.environ.get('EBAY_CLIENT_SECRET')))
- payload={'schema_version':5,'engine':'v124-balanced-measurement-photo-collection','created_at':_now(),'records':rows,
+ payload={'schema_version':6,'engine':'v125-adaptive-grader-gallery-quality-collection','created_at':_now(),'records':rows,
           'summary':{'total_candidates':len(rows),'with_image_url':sum(bool(x.get('image_url')) for x in rows),
                      'validated_images':sum(bool(x.get('image_validated')) for x in rows),'ocr_readable':sum(bool(x.get('ocr_label_text')) for x in rows),
                      'certifications_resolved':sum(bool(x.get('certification_id')) for x in rows),'verified_references':verified_count,
@@ -915,8 +1026,13 @@ def _collect_once()->dict:
                      'resolved_redirects':sum(int(x.get('resolved_redirects',0) or 0) for x in stats.values()),
                      'image_results':sum(int(x.get('image_results',0) or 0) for x in stats.values()),
                      'google_image_results':sum(int(x.get('google_image_results',0) or 0) for x in stats.values()),
+                     'undercovered_recovery_queries':sum(int(x.get('recovery_queries',0) or 0) for x in stats.values()),
+                     'recovery_company_matches':sum(int(x.get('recovery_company_matches',0) or 0) for x in stats.values()),
                      'exact_duplicate_image_groups':int(image_conflict_stats.get('exact_duplicate_image_groups',0)),
                      'image_label_conflicts':int(image_conflict_stats.get('image_label_conflicts',0)),
+                     'near_duplicate_image_pairs':int(image_conflict_stats.get('near_duplicate_image_pairs',0)),
+                     'near_duplicate_label_conflicts':int(image_conflict_stats.get('near_duplicate_label_conflicts',0)),
+                     'near_duplicate_references_suppressed':int((reference_learning.get('summary') or {}).get('near_duplicates_suppressed',0)),
                      'adaptive_timeout_seconds':adaptive_timeout_seconds,'elapsed_seconds':0.0,'next_timeout_seconds':adaptive_timeout_seconds},
           'image_probe_stats':image_stats,'official_verification_stats':official_stats,
           'collection_learning_stats':collection_learning,'collection_learning_feedback':learning_feedback,
@@ -927,14 +1043,16 @@ def _collect_once()->dict:
                            'ebay_oauth_configured':ebay_configured,'ebay_client_credentials_supported':True,
                            'games_targeted':list(GAMES),'game_collection_balance':'game_x_grader_round_robin_per_source',
                            'graders_targeted':list(COMPANIES),'ocr_probe_balance':'game_x_grader_round_robin',
-                           'collection_learning_version':4,'query_strategy':'quality-aware recency-decayed verified-feedback bandit with bounded exploration',
+                           'collection_learning_version':5,'query_strategy':'undercovered-grader recovery plus quality-aware recency-decayed verified-feedback bandit',
+                           'company_collection_floor':'one candidate per active source when public results exist',
+                           'gallery_photo_selection':'balanced primary probes plus bounded best-photo alternate probes',
                            'source_selection_strategy':state.get('source_selection_policy'),
                            'amazon_mode':'public search fallback; deprecated PA-API is not called',
                            'kream_daangn_mode':'public search-index candidates only; login bypass disabled'},
           'policy':{'public_only':True,'login_bypass':False,'seller_label_is_official':False,'official_registry_match_required':True,
                     'slab_raw_isolated':True,'raw_calibration_modified':False,'image_bytes_auto_cached':False,
-                    'duplicate_image_training':False,'conflicting_labels_quarantined':True,
-                    'measurement_ready_requires_official_and_validated_photo':True,
+                    'duplicate_image_training':False,'near_duplicate_image_training':False,'conflicting_labels_quarantined':True,
+                    'measurement_ready_requires_official_validated_front_quality_photo':True,
                     'collection_learning_cannot_change_trust':True,'verified_feedback_only':True}}
  elapsed_seconds=round(time.monotonic()-run_started,1);payload['summary']['elapsed_seconds']=elapsed_seconds
  timed_out=int(payload['summary'].get('timed_out_sources',0) or 0)

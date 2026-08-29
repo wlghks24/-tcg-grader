@@ -215,7 +215,7 @@ def _apply_query_observation(source:dict,observation:dict,now:int):
 def record_collection_cycle(source_id:str,game:str,observations:list[dict],*,raw:int=0,accepted:int=0,images:int=0,errors:int=0,elapsed:float=0.0):
  source_id=_source_id(source_id);game=game if game in GAMES else 'unknown';now=int(time.time())
  with LEARNING_LOCK,exclusive_file_lock(LEARNING):
-  d=_load_path(LEARNING) or _load_path(LEARNING_BACKUP);d['schema_version']=4;d['updated_at']=now
+  d=_load_path(LEARNING) or _load_path(LEARNING_BACKUP);d['schema_version']=5;d['updated_at']=now
   stats=d.setdefault('source_query_stats',{})
   if not isinstance(stats,dict):stats={};d['source_query_stats']=stats
   source=stats.setdefault(source_id,{'runs':0,'raw':0,'accepted':0,'images':0,'errors':0,'elapsed_total':0.0,'score':0.5,'queries':{}})
@@ -258,6 +258,34 @@ def route_run_count(source_id:str,game:str)->int:
  source_id=_source_id(source_id);d=_load();routes=_dict(d.get('graded_photo_routes')) if isinstance(d,dict) else {};route=_dict(routes.get(f'{source_id}|{game}'))
  return _bounded_count(route.get('runs')) if isinstance(route,dict) else 0
 
+def grader_collection_targets(source_id:str,game:str,count:int=2,cycle:int=0)->list[str]:
+ """Choose one under-covered grader plus rotating exploration targets.
+
+ Empty learning state keeps the deterministic two-step rotation used by older
+ collectors. Once evidence exists, the first slot repairs the weakest company
+ route while remaining slots continue bounded exploration.
+ """
+ source_id=_source_id(source_id);game=game if game in GAMES else 'unknown'
+ count=max(0,min(len(GRADERS),int(_number(count,2))))
+ if count==0:return []
+ start=_bounded_count(cycle,1_000_000)%len(GRADERS)
+ rotation=[GRADERS[(start+2*offset)%len(GRADERS)] for offset in range(len(GRADERS))]
+ d=_load();routes=_dict(d.get('graded_photo_grader_routes')) if isinstance(d,dict) else {}
+ company_rows={company:_dict(routes.get(f'{source_id}|{game}|{company}')) for company in GRADERS}
+ if not any(_bounded_count(row.get('runs')) for row in company_rows.values()):return rotation[:count]
+ rotation_order={company:index for index,company in enumerate(rotation)}
+ recovery=min(GRADERS,key=lambda company:(
+  _bounded_count(company_rows[company].get('measurement_ready')),
+  _bounded_count(company_rows[company].get('verified')),
+  _bounded_count(company_rows[company].get('images')),
+  _bounded_count(company_rows[company].get('accepted')),
+  _bounded_count(company_rows[company].get('runs')),
+  rotation_order[company],
+ ))
+ selected=[recovery]
+ selected.extend(company for company in rotation if company not in selected)
+ return selected[:count]
+
 def _verified_identifiers(text:str,certification_id:str='')->list[str]:
  values=[];cert=re.sub(r'[^A-Z0-9]','',str(certification_id or '').upper())
  # Require a card-number-like separator, a long promo prefix, or a collector
@@ -273,7 +301,7 @@ def record_official_feedback(rows:Iterable[dict])->dict:
  if not feedback:return {'rows_observed':0,'official_verified':0,'measurement_ready':0,'identifiers_learned':0,'duplicates_ignored':0}
  now=int(time.time());verified_count=0;ready_count=0;learned_count=0;duplicates=0;observed=0
  with LEARNING_LOCK,exclusive_file_lock(LEARNING):
-  d=_load_path(LEARNING) or _load_path(LEARNING_BACKUP);d['schema_version']=4;d['updated_at']=now
+  d=_load_path(LEARNING) or _load_path(LEARNING_BACKUP);d['schema_version']=5;d['updated_at']=now
   stats=d.setdefault('source_query_stats',{});terms=d.setdefault('verified_terms',{})
   events=d.setdefault('official_feedback_events',{})
   if not isinstance(stats,dict):stats={};d['source_query_stats']=stats
@@ -335,7 +363,7 @@ def learning_snapshot()->dict:
  d=_load();stats=d.get('source_query_stats',{}) if isinstance(d.get('source_query_stats'),dict) else {};routes=d.get('graded_photo_routes',{}) if isinstance(d.get('graded_photo_routes'),dict) else {}
  grader_routes=d.get('graded_photo_grader_routes',{}) if isinstance(d.get('graded_photo_grader_routes'),dict) else {}
  terms=d.get('verified_terms',{}) if isinstance(d.get('verified_terms'),dict) else {};totals=d.get('official_feedback_totals',{}) if isinstance(d.get('official_feedback_totals'),dict) else {}
- return {'version':4,'source_profiles':len(stats),'queries_tracked':sum(len(s.get('queries',{})) for s in stats.values() if isinstance(s,dict) and isinstance(s.get('queries'),dict)),
+ return {'version':5,'source_profiles':len(stats),'queries_tracked':sum(len(s.get('queries',{})) for s in stats.values() if isinstance(s,dict) and isinstance(s.get('queries'),dict)),
          'query_runs':sum(_bounded_count(s.get('runs')) for s in stats.values() if isinstance(s,dict)),'routes_tracked':len(routes),
          'grader_routes_tracked':len(grader_routes),
          'grader_coverage':{company:{'runs':sum(_bounded_count(row.get('runs')) for row in grader_routes.values() if isinstance(row,dict) and row.get('company')==company),'images':sum(_bounded_count(row.get('images')) for row in grader_routes.values() if isinstance(row,dict) and row.get('company')==company),'verified':sum(_bounded_count(row.get('verified')) for row in grader_routes.values() if isinstance(row,dict) and row.get('company')==company),'measurement_ready':sum(_bounded_count(row.get('measurement_ready')) for row in grader_routes.values() if isinstance(row,dict) and row.get('company')==company)} for company in GRADERS},
@@ -344,8 +372,9 @@ def learning_snapshot()->dict:
          'official_feedback':_bounded_count(totals.get('official_verified')),
          'measurement_ready_feedback':_bounded_count(totals.get('measurement_ready')),
          'duplicate_feedback_ignored':_bounded_count(totals.get('duplicates_ignored')),
+         'undercovered_recovery_targets':{game:grader_collection_targets('ebay',game,count=1,cycle=route_run_count('ebay',game)) for game in GAMES},
          'verified_identifiers':{game:[term for term,_ in sorted(_dict(terms.get(game)).items(),key=lambda pair:(-_number(pair[1]),pair[0]))[:5]] for game in GAMES},
-         'policy':{'verified_feedback_only':True,'measurement_quality_feedback':True,'query_learning_cannot_change_trust':True,'exploration_retained':True,'recency_decay_enabled':True,'idempotent_feedback':True,'cross_process_lock':True,'state_backup_enabled':True}}
+         'policy':{'verified_feedback_only':True,'measurement_quality_feedback':True,'undercovered_grader_recovery':True,'query_learning_cannot_change_trust':True,'exploration_retained':True,'recency_decay_enabled':True,'idempotent_feedback':True,'cross_process_lock':True,'state_backup_enabled':True}}
 
 def source_priority(source_id:str)->float:
  source_id=_source_id(source_id)

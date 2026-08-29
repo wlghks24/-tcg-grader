@@ -20,18 +20,22 @@ COLLECTOR_MARKERS=(
     'record_collection_cycle',
     'record_official_feedback',
     'route_run_count',
+    'grader_collection_targets',
     'collection_learning_stats',
     "SOURCE_ID_ALIASES={'ebay_public':'ebay'}",
-    "'query_strategy':'quality-aware recency-decayed verified-feedback bandit with bounded exploration'",
+    "'query_strategy':'undercovered-grader recovery plus quality-aware recency-decayed verified-feedback bandit'",
+    "'gallery_photo_selection':'balanced primary probes plus bounded best-photo alternate probes'",
     "'source_selection_strategy':state.get('source_selection_policy')",
 )
 INTELLIGENCE_MARKERS=(
     'def record_collection_cycle(',
     'def record_official_feedback(',
     'def learning_snapshot(',
+    'def grader_collection_targets(',
     "'query_learning_cannot_change_trust':True",
     "'idempotent_feedback':True",
     "'measurement_quality_feedback':True",
+    "'undercovered_grader_recovery':True",
     "'cross_process_lock':True",
     "SOURCE_ALIASES={'ebay_public':'ebay','ebay_api':'ebay'}",
 )

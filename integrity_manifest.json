@@ -1,7 +1,7 @@
 {
   "version": 1,
   "engine": "v109-card-identity-ocr-learning",
-  "generated_at": "2026-08-29T23:33:05+00:00",
+  "generated_at": "2026-08-29T23:46:59+00:00",
   "files": {
     ".github/workflows/apply-android-7step-display.yml": {
       "sha256": "9d0b604bc6f85b3cab37a475b70e17ed2c3ada43aa6ba72a4e57b8436a9baa27",
@@ -312,8 +312,8 @@
       "bytes": 7371
     },
     "apply_detailed_collection_intelligence.py": {
-      "sha256": "828d2b7469b9f1dfb9677db474a589730a83935e391678a8600b8504a4005f9b",
-      "bytes": 1998
+      "sha256": "f060d6ef3370ba7eccaa5566ca72c3a737d45c2dd42b34288deb8a52979f705b",
+      "bytes": 2221
     },
     "apply_fan_social_discovery_patch.py": {
       "sha256": "f3c9ad4b7d03f6a11b8c8065d1bbcafbc4d32e369ace03734c497a722cff9fcc",
@@ -528,8 +528,8 @@
       "bytes": 3149
     },
     "detailed_collection_intelligence.py": {
-      "sha256": "5480a41b0437e82cbfa61c673ee3194dce1bce5bdc55eac032c8071010053f25",
-      "bytes": 26022
+      "sha256": "1625c048b882690fe9fb66fa79fbb401bddd00492cd563e5be1819761b1d8f98",
+      "bytes": 27728
     },
     "ebay_grader_candidates.json": {
       "sha256": "47408933db066e8a9ad1159cbab98041c31145cdf7e180bec83c0bc2656b8472",
@@ -736,16 +736,16 @@
       "bytes": 1455
     },
     "graded_photo_dashboard.js": {
-      "sha256": "8891fc46d535a9de2e62b59e1229748b4609618eab31bb57f401e74c5ef4374f",
-      "bytes": 11345
+      "sha256": "16c98402962ff3f19dbb462881946783e51304ff5878de600190b3c52e8e1e35",
+      "bytes": 11608
     },
     "graded_photo_evidence.py": {
-      "sha256": "87d9c871f5667681e0a1ee7e69c8b66a7d552e24fed5525e237c9f5a407e1238",
-      "bytes": 14554
+      "sha256": "3b096ff0d9f8a4f9fae4e71621c28b724d9704e426410a8141911aa1d0c30694",
+      "bytes": 20043
     },
     "graded_photo_multi_source.py": {
-      "sha256": "f1b746986eee1e3852094e637e8b8a7d0f758e317b12f64c651f8ff4b8a96152",
-      "bytes": 57396
+      "sha256": "91c4b80e7c96d0ba55477abfb1ede45adc689c19305b788d68b7411d46c0e4e6",
+      "bytes": 66066
     },
     "grading_accuracy_v99.js": {
       "sha256": "f674f723e8230d99ff493791bd61457cb9aaeb4c049c1ae51abe79de8e2136fc",
@@ -992,16 +992,16 @@
       "bytes": 2526
     },
     "test_detailed_collection_intelligence.py": {
-      "sha256": "ad44d3e4a49c8212ef7d661b14e0040519843a26552f6bc527a594a9564e7efb",
-      "bytes": 8741
+      "sha256": "b0bd83a05758a03a206f457bedfa7a288c7cde924157e68da772355a6852b26e",
+      "bytes": 9787
     },
     "test_fan_social_learning.py": {
       "sha256": "5d4907ec876083336933d76b6ba9cff0385078fdae99bd4800849360785a9ef6",
       "bytes": 2110
     },
     "test_graded_photo_multi_source.py": {
-      "sha256": "219e7275fc3b96a324e3d9f6b4c2a012e56b299fe746cbbf0c86b833f705ec2a",
-      "bytes": 16669
+      "sha256": "214495c863af085437fc9e01e28beb6ee232e87cbbbf001246ab87f65780789e",
+      "bytes": 22569
     },
     "test_graded_photo_runtime.py": {
       "sha256": "a2def6761fa20b79cdb0636687b60bdb7966e44767d2bd20510545890c802f28",

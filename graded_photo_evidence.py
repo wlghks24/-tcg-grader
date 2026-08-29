@@ -22,7 +22,7 @@ from urllib.request import Request
 
 from safe_runtime import safe_urlopen, validate_public_https_url
 
-UA = "Mozilla/5.0 TCG-Grader-Verified-Photo-Evidence/4.0"
+UA = "Mozilla/5.0 TCG-Grader-Verified-Photo-Evidence/5.0"
 MAX_IMAGE_BYTES = 8_000_000
 MAX_IMAGE_PIXELS = 40_000_000
 SUPPORTED_MIME = {"image/jpeg", "image/png", "image/webp"}
@@ -111,6 +111,38 @@ def _dhash(image) -> str:
     return f"{value:016x}"
 
 
+def _photo_metrics(image) -> dict[str, Any]:
+    """Return bounded, content-only suitability signals for a slab front photo."""
+    from PIL import ImageFilter, ImageStat
+
+    width, height = image.size
+    ratio = width / max(1, height)
+    gray = image.convert("L")
+    gray.thumbnail((512, 768))
+    histogram = gray.histogram()
+    total = max(1, sum(histogram))
+    black_clip = sum(histogram[:8]) / total
+    white_clip = sum(histogram[248:]) / total
+    contrast = float(ImageStat.Stat(gray).stddev[0])
+    edges = gray.filter(ImageFilter.FIND_EDGES)
+    if edges.width > 4 and edges.height > 4:
+        edges = edges.crop((2, 2, edges.width - 2, edges.height - 2))
+    edge_energy = float(ImageStat.Stat(edges).mean[0]) / 255.0
+    geometry_ok = 0.45 <= ratio <= 1.05
+    exposure_ok = black_clip < 0.55 and white_clip < 0.80 and contrast >= 12.0
+    sharpness_ok = edge_energy >= 0.008
+    return {
+        "photo_aspect_ratio": round(ratio, 4),
+        "photo_black_clip_ratio": round(black_clip, 4),
+        "photo_white_clip_ratio": round(white_clip, 4),
+        "photo_contrast": round(contrast, 3),
+        "photo_edge_energy": round(edge_energy, 5),
+        "photo_geometry_ok": geometry_ok,
+        "photo_exposure_ok": exposure_ok,
+        "photo_sharpness_ok": sharpness_ok,
+    }
+
+
 def _ocr(image) -> tuple[str, str | None]:
     binary = shutil.which("tesseract")
     if not binary:
@@ -174,6 +206,7 @@ def probe_image(url: str, fallback_company: str = "", timeout: int = 10) -> dict
         ocr_text, ocr_error = _ocr(image)
         explicit_company = _company(ocr_text)
         evidence = extract_label_evidence(ocr_text, fallback_company)
+        photo_metrics = _photo_metrics(image)
         return {
             **result,
             "ok": True,
@@ -189,6 +222,7 @@ def probe_image(url: str, fallback_company: str = "", timeout: int = 10) -> dict
             "ocr_grade": evidence["grade"],
             "ocr_certification_id": evidence["certification_id"],
             "ocr_text": evidence["ocr_text"],
+            **photo_metrics,
         }
     except ImportError:
         return {**result, "error": "pillow_not_installed"}
@@ -211,6 +245,14 @@ def _merge_probe(row: dict[str, Any], probe: dict[str, Any]) -> dict[str, Any]:
             "image_height": probe.get("height"),
             "ocr_error": probe.get("ocr_error"),
             "ocr_label_text": str(probe.get("ocr_text") or "")[:1200],
+            "photo_aspect_ratio": probe.get("photo_aspect_ratio"),
+            "photo_black_clip_ratio": probe.get("photo_black_clip_ratio"),
+            "photo_white_clip_ratio": probe.get("photo_white_clip_ratio"),
+            "photo_contrast": probe.get("photo_contrast"),
+            "photo_edge_energy": probe.get("photo_edge_energy"),
+            "photo_geometry_ok": probe.get("photo_geometry_ok") is True,
+            "photo_exposure_ok": probe.get("photo_exposure_ok") is True,
+            "photo_sharpness_ok": probe.get("photo_sharpness_ok") is True,
         }
     )
     conflicts: list[str] = []
@@ -290,6 +332,80 @@ def _balanced_probe_selection(
     return selected
 
 
+def _candidate_image_urls(row: dict[str, Any]) -> list[str]:
+    values = [row.get("image_url")]
+    gallery = row.get("image_urls")
+    if isinstance(gallery, list):
+        values.extend(gallery[:6])
+    output: list[str] = []
+    for value in values:
+        url = str(value or "")[:1200]
+        if url and url not in output:
+            output.append(url)
+    return output
+
+
+def _probe_rank(probe: dict[str, Any]) -> tuple[int, int, int, int, int, int, int]:
+    return (
+        int(probe.get("ok") is True),
+        int(bool(probe.get("ocr_company_explicit"))),
+        int(bool(probe.get("ocr_certification_id"))),
+        int(probe.get("ocr_grade") is not None),
+        int(probe.get("photo_geometry_ok") is True),
+        int(probe.get("photo_exposure_ok") is True and probe.get("photo_sharpness_ok") is True),
+        int(probe.get("width") or 0) * int(probe.get("height") or 0),
+    )
+
+
+def _balanced_probe_jobs(
+    priorities: list[tuple[int, dict[str, Any]]], limit: int
+) -> list[tuple[int, dict[str, Any], str]]:
+    """Reserve part of the bounded budget for alternate marketplace photos."""
+    if limit <= 0:
+        return []
+    has_gallery = any(len(_candidate_image_urls(row)) > 1 for _, row in priorities)
+    primary_quota = limit if not has_gallery else max(1, limit - max(1, limit // 4))
+    primary = _balanced_probe_selection(priorities, primary_quota)
+    jobs: list[tuple[int, dict[str, Any], str]] = []
+    seen_urls: set[str] = set()
+    for index, row in primary:
+        urls = _candidate_image_urls(row)
+        if urls and urls[0] not in seen_urls:
+            jobs.append((index, row, urls[0]))
+            seen_urls.add(urls[0])
+    alternate_round = 1
+    while len(jobs) < limit and alternate_round < 6:
+        progressed = False
+        for index, row in primary:
+            urls = _candidate_image_urls(row)
+            if alternate_round >= len(urls):
+                continue
+            url = urls[alternate_round]
+            if url in seen_urls:
+                continue
+            jobs.append((index, row, url))
+            seen_urls.add(url)
+            progressed = True
+            if len(jobs) >= limit:
+                break
+        if not progressed and all(alternate_round >= len(_candidate_image_urls(row)) for _, row in primary):
+            break
+        alternate_round += 1
+    if len(jobs) < limit:
+        selected_indices = {index for index, _, _ in jobs}
+        for index, row in _balanced_probe_selection(priorities, limit):
+            if index in selected_indices:
+                continue
+            urls = _candidate_image_urls(row)
+            if not urls or urls[0] in seen_urls:
+                continue
+            jobs.append((index, row, urls[0]))
+            seen_urls.add(urls[0])
+            if len(jobs) >= limit:
+                break
+    return jobs
+
+
 def enrich_rows(rows: list[dict[str, Any]], limit: int = 12, workers: int = 3) -> tuple[list[dict[str, Any]], dict[str, Any]]:
     limit = max(0, min(int(limit), 40))
     priorities = sorted(
@@ -300,32 +416,49 @@ def enrich_rows(rows: list[dict[str, Any]], limit: int = 12, workers: int = 3) -
             -_safe_source_weight(pair[1].get("source_weight", 0)),
         ),
     )
-    selected = _balanced_probe_selection(priorities, limit)
-    probes: dict[int, dict[str, Any]] = {}
+    selected = _balanced_probe_jobs(priorities, limit)
+    probes: dict[int, list[tuple[str, dict[str, Any]]]] = {}
     with concurrent.futures.ThreadPoolExecutor(max_workers=max(1, min(int(workers), 4)), thread_name_prefix="grade-photo-ocr") as pool:
         future_map = {
-            pool.submit(probe_image, str(row.get("image_url") or ""), str(row.get("company") or "")): index
-            for index, row in selected
+            pool.submit(probe_image, url, str(row.get("company") or "")): (index, url)
+            for index, row, url in selected
         }
-        for future, index in list((future, index) for future, index in future_map.items()):
+        for future in concurrent.futures.as_completed(future_map):
+            index, url = future_map[future]
             try:
-                probes[index] = future.result(timeout=45)
+                result = future.result(timeout=45)
             except Exception as exc:
-                probes[index] = {"ok": False, "error": type(exc).__name__}
-    output = [_merge_probe(row, probes[index]) if index in probes else dict(row) for index, row in enumerate(rows)]
+                result = {"ok": False, "error": type(exc).__name__}
+            probes.setdefault(index, []).append((url, result))
+    output: list[dict[str, Any]] = []
+    for index, row in enumerate(rows):
+        candidates = probes.get(index, [])
+        if not candidates:
+            output.append(dict(row))
+            continue
+        best_url, best_probe = max(candidates, key=lambda pair: _probe_rank(pair[1]))
+        merged = _merge_probe(row, best_probe)
+        if best_probe.get("ok"):
+            merged["image_url"] = best_url
+        merged["image_gallery_candidates"] = len(_candidate_image_urls(row))
+        merged["image_gallery_probed"] = len(candidates)
+        output.append(merged)
     company_attempted: dict[str, int] = {}
     game_attempted: dict[str, int] = {}
-    for _, row in selected:
+    for _, row, _ in selected:
         company = str(row.get("company") or "unknown").upper()
         game = str(row.get("game") or "unknown").lower()
         company_attempted[company] = company_attempted.get(company, 0) + 1
         game_attempted[game] = game_attempted.get(game, 0) + 1
+    all_probes = [probe for candidates in probes.values() for _, probe in candidates]
     return output, {
         "attempted": len(selected),
-        "validated": sum(bool(probe.get("ok")) for probe in probes.values()),
-        "ocr_readable": sum(bool(probe.get("ocr_text")) for probe in probes.values()),
-        "certs_extracted": sum(bool(probe.get("ocr_certification_id")) for probe in probes.values()),
-        "failed": sum(not bool(probe.get("ok")) for probe in probes.values()),
+        "rows_attempted": len(probes),
+        "gallery_alternate_attempts": max(0, len(selected) - len(probes)),
+        "validated": sum(bool(probe.get("ok")) for probe in all_probes),
+        "ocr_readable": sum(bool(probe.get("ocr_text")) for probe in all_probes),
+        "certs_extracted": sum(bool(probe.get("ocr_certification_id")) for probe in all_probes),
+        "failed": sum(not bool(probe.get("ok")) for probe in all_probes),
         "company_attempted": company_attempted,
         "game_attempted": game_attempted,
     }

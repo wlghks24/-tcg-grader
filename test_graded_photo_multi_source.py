@@ -40,6 +40,25 @@ class GradedPhotoMultiSourceTests(unittest.TestCase):
         self.assertEqual({company for company,_ in queries},{'ALL','BGS','TAG'})
         self.assertTrue(any('BGS' in query for company,query in queries if company=='BGS'))
 
+    def test_missing_grader_routes_receive_bounded_recovery_queries(self):
+        source=next(x for x in g.SOURCES if x['id']=='ebay_public')
+        def query_rows(query,_limit):
+            company=next((name for name in ('BGS','CGC') if name in query),'PSA')
+            return ([{'title':f'{company} 10 graded card','url':f'https://www.ebay.com/itm/{company.lower()}'}],[])
+        with mock.patch.object(g,'_queries',return_value=(('ALL','broad'),('PSA','psa query'))), \
+             mock.patch.object(g,'grader_collection_targets',return_value=['PSA','BGS','CGC','TAG','BRG']), \
+             mock.patch.object(g,'_query_rows',side_effect=query_rows), \
+             mock.patch.object(g,'_bing_image_rows',return_value=[]), \
+             mock.patch.object(g,'_google_cse_images',return_value=[]), \
+             mock.patch.object(g,'_ebay_public_rows',return_value=[]), \
+             mock.patch.object(g,'record_collection_cycle'):
+            rows,errors,queries,diag=g._discover_source_game(source,'pokemon')
+        self.assertEqual(errors,[])
+        self.assertEqual(queries,4)
+        self.assertEqual(diag['recovery_queries'],2)
+        self.assertEqual(diag['recovery_company_matches'],2)
+        self.assertTrue({'PSA','BGS','CGC'}.issubset({row['company'] for row in rows}))
+
     def test_all_games_build_localized_marketplace_queries(self):
         source=next(x for x in g.SOURCES if x['id']=='ebay_public')
         expected={'pokemon':('Pokemon','포켓몬','ポケモン'),
@@ -136,6 +155,23 @@ class GradedPhotoMultiSourceTests(unittest.TestCase):
         selected=evidence._balanced_probe_selection(priorities,5)
         self.assertEqual({row['company'] for _,row in selected},set(g.COMPANIES))
 
+    def test_gallery_probe_selects_better_alternate_photo(self):
+        row={'company':'BGS','game':'pokemon','image_url':'https://images.example/primary.jpg',
+             'image_urls':['https://images.example/primary.jpg','https://images.example/front.jpg']}
+        def probe(url,_company):
+            strong=url.endswith('/front.jpg')
+            return {'ok':True,'width':1200 if strong else 300,'height':1600 if strong else 300,
+                    'sha256':('b' if strong else 'a')*64,'perceptual_hash':('2' if strong else '1')*16,
+                    'ocr_text':'BGS 10 CERT 12345678' if strong else '',
+                    'ocr_company_explicit':'BGS' if strong else '','ocr_grade':10 if strong else None,
+                    'ocr_certification_id':'12345678' if strong else '',
+                    'photo_geometry_ok':strong,'photo_exposure_ok':strong,'photo_sharpness_ok':strong}
+        with mock.patch.object(evidence,'probe_image',side_effect=probe):
+            rows,stats=evidence.enrich_rows([row],limit=2,workers=1)
+        self.assertEqual(rows[0]['image_url'],'https://images.example/front.jpg')
+        self.assertEqual(rows[0]['company_evidence'],'image_ocr')
+        self.assertEqual(stats['gallery_alternate_attempts'],1)
+
     def test_measurement_photo_quality_requires_official_high_resolution_ocr_identity(self):
         strong={'company':'PSA','company_evidence':'image_ocr','grade':10,'certification_id':'12345678','official_result':True,
                 'image_validated':True,'image_width':1200,'image_height':1600,'ocr_label_text':'PSA 10 CERT 12345678'}
@@ -144,6 +180,14 @@ class GradedPhotoMultiSourceTests(unittest.TestCase):
         self.assertTrue(scored[0]['measurement_photo_ready'])
         self.assertEqual(scored[0]['measurement_photo_quality'],1.0)
         self.assertFalse(scored[1]['measurement_photo_ready'])
+
+    def test_measurement_photo_rejects_back_only_listing(self):
+        row={'company':'CGC','company_evidence':'image_ocr','grade':10,'certification_id':'12345678','official_result':True,
+             'image_validated':True,'image_width':1200,'image_height':1600,'title':'CGC card back only view',
+             'photo_geometry_ok':True,'photo_exposure_ok':True,'photo_sharpness_ok':True}
+        scored=g._apply_measurement_photo_quality([row])[0]
+        self.assertFalse(scored['measurement_photo_ready'])
+        self.assertEqual(scored['measurement_photo_view_reason'],'back_only_listing')
 
     def test_reference_learning_keeps_distinct_verified_photo_fingerprints(self):
         with tempfile.TemporaryDirectory() as directory:
@@ -159,6 +203,20 @@ class GradedPhotoMultiSourceTests(unittest.TestCase):
         self.assertEqual(payload['summary']['reference_learning_count'],2)
         self.assertEqual(payload['summary']['certifications'],1)
         self.assertEqual(payload['summary']['measurement_photo_ready'],2)
+
+    def test_reference_learning_suppresses_near_duplicate_photos(self):
+        with tempfile.TemporaryDirectory() as directory:
+            path=Path(directory)/'references.json'
+            saved={'company':'TAG','certification_id':'A1234567','official_grade':10,'official_result':True,
+                   'game':'pokemon','image_sha256':'a'*64,'image_perceptual_hash':'0000000000000000',
+                   'measurement_image_url':'https://images.example/a.jpg','measurement_photo_quality':.9,
+                   'measurement_photo_ready':True,'learning_scope':'slab_label_and_source_reference_only'}
+            path.write_text(json.dumps({'references':[saved]}),encoding='utf-8')
+            current={**saved,'image_sha256':'b'*64,'image_perceptual_hash':'0000000000000001',
+                     'image_url':'https://images.example/b.jpg','measurement_photo_quality':1.0}
+            with mock.patch.object(g,'REFERENCE_LEARNING',path):payload=g._save_reference_learning([current])
+        self.assertEqual(payload['summary']['reference_learning_count'],1)
+        self.assertEqual(payload['summary']['near_duplicates_suppressed'],1)
 
     def test_search_fallback_company_is_not_treated_as_ocr_identity(self):
         row={'company':'TAG','grade':10,'certification_id':'A1234567'}
@@ -224,6 +282,33 @@ class GradedPhotoMultiSourceTests(unittest.TestCase):
         self.assertFalse(resolved[1]['official_result'])
         self.assertIn('duplicate_image_label_conflict',resolved[1]['evidence_conflicts'])
         self.assertEqual(stats['image_label_conflicts'],1)
+
+    def test_near_duplicate_image_with_conflicting_label_is_quarantined(self):
+        rows=[
+            {'company':'PSA','certification_id':'12345678','grade':10,'official_result':True,
+             'image_sha256':'a'*64,'image_perceptual_hash':'0000000000000000'},
+            {'company':'BRG','certification_id':'87654321','grade':9,'official_result':False,
+             'image_sha256':'b'*64,'image_perceptual_hash':'0000000000000001'},
+        ]
+        resolved,stats=g._resolve_image_conflicts(rows)
+        self.assertTrue(resolved[0]['official_result'])
+        self.assertFalse(resolved[1]['official_result'])
+        self.assertIn('near_duplicate_image_label_conflict',resolved[1]['evidence_conflicts'])
+        self.assertEqual(stats['near_duplicate_label_conflicts'],1)
+
+    def test_live_official_lookup_budget_is_balanced_by_company(self):
+        rows=[]
+        for company in g.COMPANIES:
+            count=8 if company=='PSA' else 1
+            for index in range(count):
+                rows.append({'company':company,'game':'pokemon','grade':10,
+                             'certification_id':f'{g.COMPANIES.index(company)+1}{index:07d}'})
+        with tempfile.TemporaryDirectory() as directory, \
+             mock.patch.object(g,'OFFICIAL_CACHE',Path(directory)/'cache.json'), \
+             mock.patch.object(g,'verify_cert',return_value={'verified':False,'notice':'not found'}):
+            _,stats=g._official_verify_rows(rows,{},max_live=5)
+        self.assertEqual(stats['live_attempts'],5)
+        self.assertEqual(stats['company_live_attempts'],{company:1 for company in g.COMPANIES})
 
     def test_registry_seed_is_visible_without_marketplace_hit(self):
         seeds=g._registry_seed_rows()

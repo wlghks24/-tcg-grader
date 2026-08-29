@@ -1,7 +1,7 @@
 {
   "version": 1,
   "engine": "v109-card-identity-ocr-learning",
-  "started_at": "2026-08-29T23:31:34+00:00",
+  "started_at": "2026-08-29T23:46:59+00:00",
   "requested_passes": 5,
   "completed_passes": 5,
   "successful_passes": 5,
@@ -10,56 +10,56 @@
   "results": [
     {
       "pass": 1,
-      "checked_at": "2026-08-29T23:31:51+00:00",
+      "checked_at": "2026-08-29T23:47:16+00:00",
       "ok": true,
-      "duration_seconds": 17.342,
+      "duration_seconds": 16.606,
       "checks": 17,
       "failed_checks": 0,
       "history_updated": true,
-      "learned_runs": 291
+      "learned_runs": 296
     },
     {
       "pass": 2,
-      "checked_at": "2026-08-29T23:32:08+00:00",
+      "checked_at": "2026-08-29T23:47:33+00:00",
       "ok": true,
-      "duration_seconds": 16.908,
+      "duration_seconds": 16.521,
       "checks": 17,
       "failed_checks": 0,
       "history_updated": true,
-      "learned_runs": 292
+      "learned_runs": 297
     },
     {
       "pass": 3,
-      "checked_at": "2026-08-29T23:32:25+00:00",
+      "checked_at": "2026-08-29T23:47:49+00:00",
       "ok": true,
-      "duration_seconds": 17.103,
+      "duration_seconds": 16.454,
       "checks": 17,
       "failed_checks": 0,
       "history_updated": true,
-      "learned_runs": 293
+      "learned_runs": 298
     },
     {
       "pass": 4,
-      "checked_at": "2026-08-29T23:32:43+00:00",
+      "checked_at": "2026-08-29T23:48:06+00:00",
       "ok": true,
-      "duration_seconds": 17.149,
+      "duration_seconds": 16.642,
       "checks": 17,
       "failed_checks": 0,
       "history_updated": true,
-      "learned_runs": 294
+      "learned_runs": 299
     },
     {
       "pass": 5,
-      "checked_at": "2026-08-29T23:32:59+00:00",
+      "checked_at": "2026-08-29T23:48:22+00:00",
       "ok": true,
-      "duration_seconds": 16.717,
+      "duration_seconds": 16.637,
       "checks": 17,
       "failed_checks": 0,
       "history_updated": true,
-      "learned_runs": 295
+      "learned_runs": 300
     }
   ],
-  "updated_at": "2026-08-29T23:32:59+00:00",
-  "finished_at": "2026-08-29T23:32:59+00:00",
+  "updated_at": "2026-08-29T23:48:22+00:00",
+  "finished_at": "2026-08-29T23:48:22+00:00",
   "final_report_synced": true
 }

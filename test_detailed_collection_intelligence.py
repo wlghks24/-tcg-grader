@@ -109,6 +109,22 @@ class DetailedCollectionIntelligenceTests(unittest.TestCase):
         self.assertEqual(second['recovery_routes'],0)
         self.assertEqual(second['productive_routes'],1)
 
+    def test_undercovered_grader_is_selected_before_rotation(self):
+        routes={}
+        for index,company in enumerate(learning.GRADERS):
+            routes[f'ebay|pokemon|{company}']={'source_id':'ebay','game':'pokemon','company':company,
+                'runs':4,'accepted':4,'images':4,'verified':2,'measurement_ready':2}
+        routes['ebay|pokemon|BRG'].update({'accepted':0,'images':0,'verified':0,'measurement_ready':0})
+        with tempfile.TemporaryDirectory() as directory:
+            root=Path(directory)
+            with self.paths(root):
+                learning.LEARNING.write_text(json.dumps({'schema_version':5,'graded_photo_grader_routes':routes}),encoding='utf-8')
+                targets=learning.grader_collection_targets('ebay','pokemon',count=2,cycle=0)
+                snapshot=learning.learning_snapshot()
+        self.assertEqual(targets[0],'BRG')
+        self.assertEqual(snapshot['undercovered_recovery_targets']['pokemon'],['BRG'])
+        self.assertTrue(snapshot['policy']['undercovered_grader_recovery'])
+
     def test_concurrent_observations_are_not_lost_or_corrupted(self):
         with tempfile.TemporaryDirectory() as directory:
             root=Path(directory)
