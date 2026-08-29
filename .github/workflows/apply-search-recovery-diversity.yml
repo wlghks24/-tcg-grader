@@ -1,0 +1,45 @@
+name: Apply search recovery diversity
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'apply_search_recovery_diversity_patch.py'
+      - '.github/workflows/apply-search-recovery-diversity.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Apply recovery/diversity patch
+        run: python apply_search_recovery_diversity_patch.py
+      - name: Verify syntax
+        run: python -m py_compile search_method_learning.py multi_channel_agent.py auto_pipeline_runner.py
+      - name: Run search learning regression tests
+        run: |
+          python -m unittest test_search_method_learning.py test_search_recovery_slot.py
+          if [ -f test_adaptive_collection_learner.py ]; then python -m unittest test_adaptive_collection_learner.py; fi
+      - name: Verify markers
+        run: |
+          grep -q 'rotation % 4 == 0' search_method_learning.py
+          grep -q 'bing_news.*naver_news' multi_channel_agent.py
+          grep -q 'search_method_health' auto_pipeline_runner.py
+      - name: Commit changes
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add search_method_learning.py multi_channel_agent.py auto_pipeline_runner.py test_search_recovery_slot.py
+          if ! git diff --cached --quiet; then
+            git commit -m 'feat: add adaptive search recovery exploration'
+            git push origin main
+          fi
