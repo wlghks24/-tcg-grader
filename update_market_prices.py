@@ -178,6 +178,11 @@ def main():
         else: errors.append('POKARD HIT: 가격 패턴 0건')
     except NETWORK_ERRORS as e: errors.append('POKARD HIT: '+type(e).__name__)
     try:
+        from box_hit_market_discovery import merge_market_catalog
+        merge_market_catalog(db)
+    except Exception as e:
+        errors.append('BOX/HIT 다중마켓 자동발견: '+type(e).__name__)
+    try:
         from market_public_crosscheck import crosscheck_market_db
         crosscheck_market_db(db)
     except (OSError, ValueError, TypeError, urllib.error.URLError, TimeoutError) as e:
