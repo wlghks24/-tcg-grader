@@ -1,0 +1,38 @@
+name: Apply Grading Total Cost
+on:
+  push:
+    branches: [main]
+    paths:
+      - grading_total_cost.js
+      - grading_total_cost.css
+      - apply_grading_total_cost_patch.py
+      - .github/workflows/apply-grading-total-cost.yml
+permissions:
+  contents: write
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Apply integration
+        run: python apply_grading_total_cost_patch.py
+      - name: Validate integration
+        run: |
+          grep -q 'grading_total_cost.css' index.html
+          grep -q 'grading_total_cost.js' index.html
+          grep -q "'grading_total_cost.js'" tcg_updater.py
+          grep -q '총 예상비용' grading_total_cost.js
+          grep -q '예상 순이익' grading_total_cost.js
+          grep -q 'total_service_price' grading_total_cost.js
+          grep -q 'proxy_fee_plus_actual' grading_total_cost.js
+      - name: Commit generated integration
+        run: |
+          if git diff --quiet -- index.html tcg_updater.py; then exit 0; fi
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add index.html tcg_updater.py
+          git commit -m 'feat: integrate total grading cost and profit calculator'
+          git push
