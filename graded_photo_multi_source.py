@@ -240,14 +240,28 @@ def collect()->dict:
  registry=_registry();rows=[];stats={};errors=[]
  e=_ebay_candidates();rows.extend(e);stats['ebay']={'candidates':len(e),'image_hits':sum(bool(x.get('image_url')) for x in e),'verified_hits':0,'errors':0,'queries':0}
  state=_load(LEARNING,{})
+ first_full_collection=not bool(state.get('initial_collection_completed'))
  try:cursor=int(state.get('source_cursor',0))%len(SOURCES)
  except Exception:cursor=0
- active=[SOURCES[(cursor+i)%len(SOURCES)] for i in range(min(RUN_SOURCE_LIMIT,len(SOURCES)))]
- state['source_cursor']=(cursor+len(active))%len(SOURCES);state['last_active_sources']=[x['id'] for x in active]
+ if first_full_collection:
+  active=list(SOURCES)
+  state['last_active_sources']=[x['id'] for x in active]
+  state['initial_collection_started_at']=state.get('initial_collection_started_at') or _now()
+ else:
+  active=[SOURCES[(cursor+i)%len(SOURCES)] for i in range(min(RUN_SOURCE_LIMIT,len(SOURCES)))]
+  state['source_cursor']=(cursor+len(active))%len(SOURCES);state['last_active_sources']=[x['id'] for x in active]
  atomic_write_json(LEARNING,state,suffix='.graded-photo-cursor.tmp')
  pool=concurrent.futures.ThreadPoolExecutor(max_workers=3,thread_name_prefix='graded-photo')
  futs={pool.submit(_collect_public_source,src):src for src in active}
- done,pending=concurrent.futures.wait(futs,timeout=RUN_WAIT_SECONDS)
+ if first_full_collection:
+  # Initial population run: no overall RUN_WAIT_SECONDS limit. Each HTTP request still
+  # keeps its own network timeout so an unreachable host cannot block forever.
+  done=set()
+  for fut in concurrent.futures.as_completed(futs):
+   done.add(fut)
+  pending=set()
+ else:
+  done,pending=concurrent.futures.wait(futs,timeout=RUN_WAIT_SECONDS)
  for fut in done:
   src=futs[fut]
   try:
@@ -260,7 +274,7 @@ def collect()->dict:
   src=futs[fut];fut.cancel();sid=src['id']
   stats[sid]={'candidates':0,'image_hits':0,'verified_hits':0,'errors':1,'queries':0,'timed_out':True}
   errors.append(sid+':run_timeout')
- pool.shutdown(wait=False,cancel_futures=True)
+ pool.shutdown(wait=first_full_collection,cancel_futures=not first_full_collection)
  dedup={}
  for x in rows:
   cert=x.get('certification_id');key=(x.get('company'),cert) if cert else x.get('url')
@@ -277,13 +291,20 @@ def collect()->dict:
  payload={'schema_version':3,'created_at':_now(),'records':rows,
           'summary':{'total_candidates':len(rows),'with_image_url':sum(bool(x.get('image_url')) for x in rows),'verified_references':verified,
                      'quarantined':len(rows)-verified,'sources':len({x.get('source_id') for x in rows}),
-                     'status':'ok' if rows else 'no_candidates','queries_attempted':sum(int(x.get('queries',0)) for x in stats.values()),'markets_this_run':[x['id'] for x in active],'timed_out_sources':sum(bool(x.get('timed_out')) for x in stats.values())},
+                     'status':'ok' if rows else 'no_candidates','queries_attempted':sum(int(x.get('queries',0)) for x in stats.values()),'markets_this_run':[x['id'] for x in active],'timed_out_sources':sum(bool(x.get('timed_out')) for x in stats.values()),'initial_full_collection':first_full_collection},
           'source_stats':stats,'errors':errors[:80],
           'google_cse_configured':bool(os.environ.get('GOOGLE_CSE_KEY') and os.environ.get('GOOGLE_CSE_CX')),
           'ebay_oauth_configured':bool(os.environ.get('EBAY_OAUTH_TOKEN')),
           'policy':{'public_only':True,'login_bypass':False,'seller_label_is_official':False,'official_registry_match_required':True,
                     'slab_raw_isolated':True,'raw_calibration_modified':False,'image_bytes_auto_cached':False}}
- atomic_write_json(OUT,payload,suffix='.graded-photo.tmp');_save_learning(stats);return payload
+ atomic_write_json(OUT,payload,suffix='.graded-photo.tmp')
+ if first_full_collection:
+  done_state=_load(LEARNING,{})
+  done_state['initial_collection_completed']=True
+  done_state['initial_collection_completed_at']=_now()
+  done_state['source_cursor']=0
+  atomic_write_json(LEARNING,done_state,suffix='.graded-photo-first-complete.tmp')
+ _save_learning(stats);return payload
 
 def main():
  p=collect();print(json.dumps(p['summary'],ensure_ascii=False));return p
