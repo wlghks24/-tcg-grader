@@ -1,0 +1,25 @@
+name: Apply graded photo provider merge
+on:
+  push:
+    branches: [main]
+    paths:
+      - apply_graded_photo_provider_merge.py
+jobs:
+  apply:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: python apply_graded_photo_provider_merge.py
+      - run: python -m py_compile graded_photo_multi_source.py
+      - name: Commit integrated collector
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add graded_photo_multi_source.py
+          git diff --cached --quiet || git commit -m "fix: merge graded photo search providers"
+          git push
