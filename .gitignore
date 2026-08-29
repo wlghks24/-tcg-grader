@@ -38,3 +38,7 @@ social_stock_learning.json.bak
 search_method_learning.json
 search_method_learning.json.bak
 search_engine_profile.json
+
+# Fan/community social discovery utility learning is device-local.
+fan_social_learning.json
+fan_social_learning.json.bak

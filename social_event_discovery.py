@@ -27,6 +27,7 @@ import urllib.parse
 import urllib.request
 import xml.etree.ElementTree as ET
 import multi_route_event_discovery
+import fan_social_learning
 from html.parser import HTMLParser
 from pathlib import Path
 
@@ -74,6 +75,11 @@ EVENT_TERMS = {
     "ko": "행사 이벤트 콜라보 프로모 팝업 영화 극장판 개봉 예약 발매 출시 대회 야구 KBO 굿즈 포토카드 브랜드데이 PLAYGO 재배포 재지급 수령 프로모션팩 신사황",
     "ja": "イベント コラボ キャンペーン プロモ ポップアップ 映画 劇場版 発売 大会 グッズ カード",
     "en": "event collaboration collab promo pop-up movie film release tournament preorder merchandise card",
+}
+FAN_TERMS = {
+    "ko": "팬 컬렉터 수집 개봉 언박싱 덱 덱리스트 카드샵 매장 재고 입고 품절 시세 후기 대회 프로모 행사 이벤트 신제품 신탄 박스",
+    "ja": "ファン コレクター コレクション 開封 デッキ カードショップ 店舗 在庫 入荷 売り切れ 相場 レビュー 大会 プロモ イベント 新弾 BOX",
+    "en": "fan collector collection opening unboxing deck decklist card shop store stock restock sold out price review tournament promo event new set box",
 }
 CATEGORY_PATTERNS = (
     ("movie", re.compile(r"영화|극장판|개봉|movie|film|cinema|劇場版|映画|上映|netflix|streaming", re.I)),
@@ -281,10 +287,16 @@ def refresh_registry(force: bool = False) -> tuple[dict, list[str]]:
     for row in manual + discovered:
         key = (str(row.get("platform")), str(row.get("username")).lower(), str(row.get("game")), str(row.get("region")))
         if all(key): merged[key] = row
-    payload = {"version": 2, "updated_at": _now(),
-               "policy": "공식사이트 연결 계정 + manual=true 검증 계정. 자동탐색 실패 시 manual 계정 보존.",
+    payload = {"version": 4, "updated_at": _now(),
+               "policy": "공식사이트 연결 계정 + manual=true 검증 계정은 공식층으로 유지하고 팬/커뮤니티 계정은 발견층으로만 분리 운영.",
                "accounts": sorted(merged.values(), key=lambda x: (x.get("game", ""), x.get("region", ""), x.get("platform", ""), x.get("username", ""))),
                "watch_accounts": [x for x in current.get("watch_accounts", []) if isinstance(x, dict)],
+               "fan_discovery": current.get("fan_discovery") or {
+                   "enabled": True,
+                   "platforms": ["x", "instagram", "youtube"],
+                   "roles": ["fan", "collector", "community", "deck", "opening", "event", "stock", "market"],
+                   "trust_policy": "팬 SNS는 발견용 후보이며 공식 웹/SNS/판매처 교차확인 전 verified/trusted 승격 금지",
+               },
                "discovery_pages": [{"game": g, "region": r, "url": u} for g, r, u in OFFICIAL_DISCOVERY_PAGES],
                "discovery_errors": errors[:30]}
     atomic_write_json(REGISTRY, payload, suffix=".registry.tmp")
@@ -474,22 +486,115 @@ def _official_social_match(registry: dict, source: str, title: str, game: str, r
     return False, None
 
 
-def _ddg_social_one(game: str, region: str, registry: dict) -> tuple[list[dict], str | None]:
+def _fan_account_match(registry: dict, source: str, title: str, game: str, region: str) -> tuple[bool, str | None]:
+    source_lower = str(source or "").lower()
+    title_lower = str(title or "").lower()
+    social = _parse_social_link(source)
+    for account in registry.get("watch_accounts", []):
+        if not isinstance(account, dict) or account.get("game") != game or account.get("region") != region:
+            continue
+        if account.get("trusted") is True:
+            continue
+        role = str(account.get("role") or "").lower()
+        if not any(token in role for token in ("community", "fan", "watch", "stock", "collector")):
+            continue
+        username = str(account.get("username") or "").lower().lstrip("@")
+        profile = str(account.get("profile_url") or "").lower().rstrip("/")
+        if social:
+            _, parsed_user = social
+            if username and parsed_user.lower().lstrip("@") == username:
+                return True, str(account.get("username"))
+        if username and (username in title_lower or (profile and source_lower.startswith(profile + "/")) or source_lower.rstrip("/") == profile):
+            return True, str(account.get("username"))
+    return False, None
+
+
+def _fan_source_key(source_kind: str, author: str | None, source: str) -> str:
+    clean_author = str(author or "").strip().lower().lstrip("@")
+    base_kind = str(source_kind or "social").split("_", 1)[0].lower()
+    if clean_author:
+        return f"{base_kind}:{clean_author}"[:140]
+    return f"{base_kind}:{_host(source)}"[:140]
+
+
+def _annotate_social_rows(rows: list[dict], registry: dict) -> list[dict]:
+    out = []
+    for item in rows:
+        if not isinstance(item, dict):
+            continue
+        row = dict(item)
+        source = str(row.get("source") or "")
+        if _host(source) not in SOCIAL_HOSTS:
+            out.append(row)
+            continue
+        game = str(row.get("game") or "")
+        region = str(row.get("region") or "")
+        title = str(row.get("title") or "")
+        official = row.get("official_account_verified") is True
+        official_author = row.get("author")
+        if not official and game in GAMES and region in REGION_LANG:
+            official, official_author = _official_social_match(registry, source, title, game, region)
+        if official:
+            row["official_account_verified"] = True
+            row["verified"] = True
+            row["fan_candidate"] = False
+            row["source_tier"] = "A-social"
+            row["source_label"] = row.get("source_label") or "공식 SNS 후보"
+            row["confidence"] = max(float(row.get("confidence") or 0.0), 0.93)
+            if official_author and not row.get("author"):
+                row["author"] = official_author
+            out.append(row)
+            continue
+        known, known_author = (False, None)
+        if game in GAMES and region in REGION_LANG:
+            known, known_author = _fan_account_match(registry, source, title, game, region)
+        parsed = _parse_social_link(source)
+        inferred_author = known_author or row.get("author") or (parsed[1] if parsed else None)
+        row["author"] = inferred_author
+        row["official_account_verified"] = False
+        row["verified"] = False
+        row["fan_candidate"] = True
+        row["fan_account_known"] = bool(known)
+        row["source_tier"] = "C-community"
+        row["source_label"] = "등록 팬/커뮤니티 SNS" if known else "팬/컬렉터 공개 SNS 후보"
+        row["status"] = "팬 SNS 보조후보 · 공식 교차확인 필요"
+        row["confidence"] = min(0.68, max(float(row.get("confidence") or 0.0), 0.60 if known else 0.52))
+        row["fan_source_key"] = _fan_source_key(str(row.get("source_kind") or "social"), inferred_author, source)
+        out.append(row)
+    return out
+
+
+def _or_terms(value: str, max_terms: int = 18) -> str:
+    tokens = [x.strip() for x in str(value or "").split() if x.strip()]
+    return " OR ".join(f'"{x}"' if " " in x else x for x in tokens[:max_terms])
+
+
+def _ddg_social_one(game: str, region: str, registry: dict, fan_learner=None) -> tuple[list[dict], str | None]:
     lang = REGION_LANG[region]["lang"]; names = GAMES[game][lang][:2]
-    name_expr = " OR ".join(f'"{x}"' for x in names); terms = EVENT_TERMS[lang]
+    name_expr = " OR ".join(f'"{x}"' for x in names)
+    event_expr = _or_terms(EVENT_TERMS[lang], 18)
+    fan_expr = _or_terms(FAN_TERMS[lang], 18)
     watch_names = []
     for account in registry.get("watch_accounts", []):
-        role = str(account.get("role") or "") if isinstance(account, dict) else ""
-        if (not isinstance(account, dict) or account.get("game") != game or account.get("region") != region
-                or "stock" in role):
+        if not isinstance(account, dict) or account.get("game") != game or account.get("region") != region:
+            continue
+        role = str(account.get("role") or "").lower()
+        if not any(token in role for token in ("community", "fan", "watch", "collector", "stock")):
             continue
         username = str(account.get("username") or "").strip().lstrip("@")
         if username:
             watch_names.append(username)
-    watch_expr = " OR ".join(f'"{x}"' for x in watch_names[:8])
-    base_expr = f"({name_expr}) ({terms})"
-    if watch_expr:
-        base_expr = f"({base_expr}) OR (({watch_expr}) ({terms}))"
+    learned_names = []
+    if fan_learner is not None:
+        try:
+            learned_names = fan_learner.preferred_authors(game, region, limit=6)
+        except Exception:
+            learned_names = []
+    account_names = list(dict.fromkeys(watch_names + learned_names))[:10]
+    account_expr = " OR ".join(f'"{x}"' for x in account_names)
+    base_expr = f"({name_expr}) (({event_expr}) OR ({fan_expr}))"
+    if account_expr:
+        base_expr = f"({base_expr}) OR (({account_expr}) (({event_expr}) OR ({fan_expr})))"
     query = f"({base_expr}) (site:x.com OR site:instagram.com OR site:youtube.com)"
     url = "https://html.duckduckgo.com/html/?" + urllib.parse.urlencode({"q": query})
     req = urllib.request.Request(url, headers={"User-Agent": "Mozilla/5.0 TCG-Grader-SocialFallback/2.0"})
@@ -516,17 +621,17 @@ def _ddg_social_one(game: str, region: str, registry: dict) -> tuple[list[dict],
         return [], f"공개 SNS/YouTube 검색 {game}/{region}: {type(exc).__name__}"
 
 
-def collect_public_social_search(registry: dict) -> tuple[list[dict], list[str], dict]:
+def collect_public_social_search(registry: dict, fan_learner=None) -> tuple[list[dict], list[str], dict]:
     jobs = [(g, r) for g in GAMES for r in REGION_LANG]; rows = []; errors = []
     workers = 2 if ('com.termux' in os.environ.get('PREFIX','') or 'ANDROID_ROOT' in os.environ) else 4
     with concurrent.futures.ThreadPoolExecutor(max_workers=workers) as pool:
-        future_map = {pool.submit(_ddg_social_one, g, r, registry): (g, r) for g, r in jobs}
+        future_map = {pool.submit(_ddg_social_one, g, r, registry, fan_learner): (g, r) for g, r in jobs}
         for future in concurrent.futures.as_completed(future_map):
             part, error = future.result(); rows.extend(part)
             if error: errors.append(error)
     return rows, errors, {"configured": True, "query_count": len(jobs), "error_count": len(errors), "result_count": len(rows),
                           "success_query_count": max(0, len(jobs)-len(errors)),
-                          "status": "무키 공개검색 · X/Instagram/YouTube(유튜버 포함) 후보"}
+                          "status": "무키 공개검색 · 공식 SNS + 팬/컬렉터/유튜버 X/Instagram/YouTube 후보"}
 
 
 def _google_cse_one(game: str, region: str, key: str, cx: str) -> tuple[list[dict], str | None]:
@@ -595,7 +700,14 @@ def merge_candidates(rows: list[dict]) -> list[dict]:
         if raw["confidence"] < 0.45 or not raw["title"]: continue
         key = _candidate_key(raw); existing = merged.get(key)
         if existing is None:
-            raw["cross_sources"] = [raw.get("source_kind")]; raw.setdefault("independent_source_count", 1); merged[key] = raw; continue
+            raw["cross_sources"] = [raw.get("source_kind")]
+            raw.setdefault("independent_source_count", 1)
+            fan_key = str(raw.get("fan_source_key") or "").strip().lower()
+            raw["fan_sources"] = [fan_key] if fan_key else []
+            raw["fan_evidence_count"] = len(raw["fan_sources"])
+            raw["has_fan_evidence"] = bool(raw["fan_sources"])
+            merged[key] = raw
+            continue
         kinds = [x for x in existing.get("cross_sources", []) if x]
         if raw.get("source_kind") not in kinds: kinds.append(raw.get("source_kind"))
         sources = max(1, int(existing.get("independent_source_count") or 1))
@@ -607,6 +719,13 @@ def merge_candidates(rows: list[dict]) -> list[dict]:
             sources += 1
         winner, other = (raw, existing) if raw["confidence"] > float(existing.get("confidence") or 0.0) else (existing, raw)
         winner = dict(winner); winner["cross_sources"] = kinds; winner["independent_source_count"] = min(9, sources)
+        fan_sources = [str(x).lower() for x in existing.get("fan_sources", []) if x]
+        new_fan_key = str(raw.get("fan_source_key") or "").strip().lower()
+        if new_fan_key and new_fan_key not in fan_sources:
+            fan_sources.append(new_fan_key)
+        winner["fan_sources"] = fan_sources[:12]
+        winner["fan_evidence_count"] = len(winner["fan_sources"])
+        winner["has_fan_evidence"] = bool(winner["fan_sources"])
         if sources >= 2:
             winner["cross_checked"] = True; winner["confidence"] = min(0.99, max(float(winner.get("confidence") or 0.0), float(other.get("confidence") or 0.0)) + 0.06)
             if winner.get("verified") is not True: winner["status"] = "복수출처 교차확인 후보"
@@ -636,10 +755,12 @@ def main() -> dict:
         try: previous = json.loads(safe_read_text(OUT))
         except (OSError, ValueError, json.JSONDecodeError): previous = None
     registry, registry_errors = refresh_registry(force=False)
+    fan_learner = fan_social_learning.FanSocialLearner()
+    fan_discovered = 0
     collectors = {
         "google_news": lambda: collect_google_news(),
         "route_diversity": lambda: multi_route_event_discovery.collect_all(),
-        "public_social_search": lambda: collect_public_social_search(registry),
+        "public_social_search": lambda: collect_public_social_search(registry, fan_learner),
         "x": lambda: collect_x(registry),
         "instagram": lambda: collect_instagram(registry),
         "google_cse": lambda: collect_google_cse(),
@@ -651,10 +772,16 @@ def main() -> dict:
         for future in concurrent.futures.as_completed(future_map):
             name = future_map[future]
             try:
-                part, part_errors, status = future.result(); rows.extend(part); errors.extend(part_errors); channel_status[name] = status
+                part, part_errors, status = future.result()
+                part = _annotate_social_rows(part, registry)
+                fan_discovered += fan_learner.observe_discovered(part)
+                rows.extend(part); errors.extend(part_errors); channel_status[name] = status
             except Exception as exc:
                 errors.append(f"{name}: {_secret_safe(f'{type(exc).__name__}: {exc}')}"); channel_status[name] = {"configured": True, "status": "수집기 예외 격리"}
     merged = merge_candidates(rows)
+    fan_selected = fan_learner.observe_selected(merged)
+    fan_learner.save()
+    fan_report = fan_learner.report()
     google_status = channel_status.get("google_news", {}) if isinstance(channel_status.get("google_news"), dict) else {}
     route_status = channel_status.get("route_diversity", {}) if isinstance(channel_status.get("route_diversity"), dict) else {}
     public_status = channel_status.get("public_social_search", {}) if isinstance(channel_status.get("public_social_search"), dict) else {}
@@ -665,14 +792,19 @@ def main() -> dict:
     if not merged and previous and isinstance(previous.get("items"), list):
         merged = previous.get("items", [])[:MAX_ITEMS]
     payload = {
-        "version": "v113-multi-route-resilient-discovery",
+        "version": "v119-official-plus-fan-social-learning",
         "updated_at": _now(), "fresh_collection_ok": bool(baseline_ok or usable_channels),
         "degraded": not baseline_ok,
-        "policy": "공식 웹사이트 우선. Google News, Bing RSS 일반/공식/파트너 검색, 공식사이트 직접 링크 스캔, DuckDuckGo 비상 폴백, X/Instagram/YouTube 공개검색을 독립 경로로 운영. 이전 공식/교차확인 후보는 보존하며 공식확정 promo_events 승격은 별도 검증.",
+        "policy": "공식 웹/SNS는 공식확인층, 팬·컬렉터·유튜버 SNS는 발견층으로 분리. Google/Bing/DDG/X/Instagram/YouTube 경로를 병행하며 팬 반복발견만으로 verified/trusted 승격 금지.",
         "credential_policy": "API 자격정보는 환경변수에서만 읽고 저장하지 않음.",
         "google_policy": "Google News 무키 RSS + 선택적 Google CSE. Google 장애 시 Bing RSS/공식링크/DDG 경로가 독립적으로 수집을 계속함.",
         "items": merged, "item_count": len(merged),
         "official_social_candidate_count": sum(1 for x in merged if x.get("official_account_verified") is True),
+        "fan_social_candidate_count": sum(1 for x in merged if x.get("fan_candidate") is True or x.get("has_fan_evidence") is True),
+        "known_fan_account_candidate_count": sum(1 for x in merged if x.get("fan_account_known") is True),
+        "fan_social_discovered_this_run": fan_discovered,
+        "fan_social_selected_this_run": fan_selected,
+        "fan_social_learning": fan_report,
         "official_domain_search_count": sum(1 for x in merged if x.get("official_domain_match") is True),
         "cross_checked_count": sum(1 for x in merged if x.get("cross_checked") is True),
         "channel_status": channel_status, "registry_account_count": len(registry.get("accounts", [])),

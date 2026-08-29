@@ -139,11 +139,13 @@ OFFICIAL_HOSTS = {
     if urllib.parse.urlsplit(url).hostname
 }
 PARTNER_HOSTS = {host for hosts in PARTNER_DOMAINS.values() for host in hosts}
+SOCIAL_DISCOVERY_HOSTS = ("x.com", "instagram.com", "youtube.com")
 
 KEYWORD_RE = re.compile(
     r"행사|이벤트|대회|팝업|페스타|프로모|증정|배포|출시|발매|신탄|부스터|스타터|예약|재발매|재입고|입고|재고|콜라보|협업|영화|극장판|"
     r"イベント|大会|ポップアップ|プロモ|配布|発売|新弾|ブースター|スターター|予約|再販|再入荷|在庫|コラボ|映画|劇場版|"
-    r"event|tournament|pop[- ]?up|promo|giveaway|release|booster|starter|preorder|reprint|restock|in stock|collab|movie|film",
+    r"event|tournament|pop[- ]?up|promo|giveaway|release|booster|starter|preorder|reprint|restock|in stock|collab|movie|film|collector|collection|unboxing|deck|decklist|review|price|"
+    r"개봉|언박싱|덱|덱리스트|수집|컬렉터|카드샵|후기|시세|開封|デッキ|コレクター|コレクション|レビュー|相場",
     re.I,
 )
 
@@ -326,6 +328,7 @@ def collect_all() -> tuple[list[dict], list[str], dict]:
             official_hosts = tuple(dict.fromkeys(_host(u) for u in OFFICIAL_ROUTES.get((game, region), ()) if _host(u)))
             partner_hosts = tuple(PARTNER_DOMAINS.get((game, region), ()))
             jobs.append(("bing_general", _bing_one, (game, region, "general", ())))
+            jobs.append(("bing_social", _bing_one, (game, region, "social", SOCIAL_DISCOVERY_HOSTS)))
             if official_hosts: jobs.append(("bing_official", _bing_one, (game, region, "official", official_hosts)))
             if partner_hosts: jobs.append(("bing_partner", _bing_one, (game, region, "partner", partner_hosts)))
             for url in OFFICIAL_ROUTES.get((game, region), ()):
@@ -374,7 +377,7 @@ def collect_all() -> tuple[list[dict], list[str], dict]:
 
     status = {
         "configured": True,
-        "status": "Bing RSS + 공식사이트 직접스캔 + 파트너검색 + DDG 비상폴백",
+        "status": "Bing RSS 일반/공식/파트너/팬SNS + 공식사이트 직접스캔 + DDG 비상폴백",
         "route_count": len(by_route),
         "query_count": sum(v.get("queries", 0) for v in by_route.values()),
         "success_query_count": successes,

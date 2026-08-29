@@ -1,6 +1,6 @@
 {
-  "version": 3,
-  "updated_at": "2026-08-29T00:49:00+09:00",
+  "version": 4,
+  "updated_at": "2026-08-29T10:21:31+00:00",
   "policy": "공식 웹사이트에서 직접 연결된 SNS 계정과 사람이 공식 출처로 검증한 manual=true 계정을 유지합니다. 자동 새로고침 실패 시 manual 계정은 삭제하지 않습니다.",
   "accounts": [
     {
@@ -219,5 +219,37 @@
       "verification_note": "마트·매장 재고 발견용 커뮤니티 채널. 수량·제품명·현재 재고는 공식 조회 또는 점포에서 재확인."
     }
   ],
-  "watch_policy": "watch_accounts는 최신 행사·재고 발견용 보조채널입니다. trusted=false 항목은 공식 검증 전 확정 행사 또는 공식 실시간 재고로 자동승격하지 않습니다. stock_watch는 행사 후보 검색에서 분리합니다."
+  "watch_policy": "watch_accounts와 동적 팬계정은 최신 행사·재고·개봉·덱·신제품 발견용 보조채널입니다. trusted=false는 공식 검증 전 확정 행사/공식 재고/공식 사실로 자동승격하지 않습니다.",
+  "fan_discovery": {
+    "enabled": true,
+    "platforms": [
+      "x",
+      "instagram",
+      "youtube"
+    ],
+    "games": [
+      "포켓몬 카드",
+      "원피스 카드",
+      "나루토 카드"
+    ],
+    "regions": [
+      "KR",
+      "JP",
+      "US"
+    ],
+    "roles": [
+      "fan",
+      "collector",
+      "community",
+      "deck",
+      "opening",
+      "event",
+      "stock",
+      "market"
+    ],
+    "dynamic_discovery": true,
+    "learn_useful_authors": true,
+    "trust_policy": "공개 팬 SNS는 발견/교차확인 후보로만 사용하고 공식 웹·공식 SNS·공식 판매처 확인 전 trusted/verified 자동승격 금지",
+    "access_policy": "공개 검색/공개 페이지/API 허용범위만 사용. 로그인·CAPTCHA·비공개 API 우회 금지"
+  }
 }
