@@ -1,0 +1,34 @@
+name: Apply graded photo timeout fix
+on:
+  push:
+    branches: [main]
+    paths:
+      - apply_graded_photo_timeout_fix.py
+      - .github/workflows/apply-graded-photo-timeout-fix.yml
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Apply bounded collector patch
+        run: python apply_graded_photo_timeout_fix.py
+      - name: Syntax check
+        run: python -m py_compile graded_photo_multi_source.py
+      - name: Unit tests
+        run: python -m unittest -v test_graded_photo_multi_source.py
+      - name: Commit patched collector
+        run: |
+          if git diff --quiet -- graded_photo_multi_source.py; then
+            echo "No collector changes"
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add graded_photo_multi_source.py
+          git commit -m "fix: bound graded photo collection runtime"
+          git push
