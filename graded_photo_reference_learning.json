@@ -1,0 +1,25 @@
+{
+  "schema_version": 1,
+  "updated_at": "2026-08-29T12:15:26+00:00",
+  "references": [
+    {
+      "company": "PSA",
+      "certification_id": "88411675",
+      "official_grade": 10.0,
+      "card_name": "2023 Pokemon Japanese SV4a Shiny Treasure ex #323 Espathra ex SSR",
+      "game": "pokemon",
+      "official_reference_url": "https://www.psacard.com/cert/88411675/psa",
+      "image_sha256": "b7f85e458c69bef47944a6bf62d65eabdb5780fd5982024a83711363c3070871",
+      "learning_scope": "slab_label_and_source_reference_only"
+    }
+  ],
+  "summary": {
+    "reference_learning_count": 1,
+    "raw_grade_calibration_rows_written": 0
+  },
+  "policy": {
+    "official_match_required": true,
+    "raw_and_slab_isolated": true,
+    "same_image_prediction_training": false
+  }
+}

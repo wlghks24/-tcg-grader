@@ -39,6 +39,8 @@ MUTABLE_JSON = {
     "vision_self_learning_params.json", "vision_self_learning_report.json",
     "V103_MARKET_SOURCE_TEST_REPORT.json",
     "integrity_manifest.json", "web_discovery_candidates.json", "social_event_candidates.json", "social_source_registry.json",
+    "graded_photo_candidates.json", "graded_photo_source_learning.json", "graded_photo_official_cache.json",
+    "graded_photo_reference_learning.json",
 }
 RECOVERABLE_DATA = {
     "releases.json", "market_watch.json", "market_prices.json",
@@ -69,7 +71,13 @@ def _strict_json_bytes(payload: bytes) -> Any:
 
 
 def _safe_file(root: Path, relative: str) -> Path:
-    if not re.fullmatch(r"[A-Za-z0-9가-힣._/-]{1,180}", relative) or relative.startswith("/") or ".." in Path(relative).parts:
+    # Accept both NFC and NFD Korean filenames while retaining a strict
+    # containment check. The old Hangul-syllable-only regex let the manifest
+    # create entries that its own reader could not reopen on NFD filesystems.
+    if (not isinstance(relative, str) or not 1 <= len(relative) <= 180
+            or Path(relative).is_absolute() or ".." in Path(relative).parts
+            or "\\" in relative or ":" in relative
+            or any(ord(char) < 32 or ord(char) == 127 for char in relative)):
         raise ValueError("허용되지 않은 상대경로")
     candidate = (root / relative).resolve()
     if candidate.parent != root.resolve() and root.resolve() not in candidate.parents:
@@ -257,7 +265,7 @@ def _probe(root: Path, scenario: FaultScenario) -> bool:
         "required-hough": "function probabilisticHoughSegments" in text,
         "required-whitening": "function analyzeWhitening" in text,
         "required-noopener": 'rel="noopener noreferrer"' in text and 'rel="opener"' not in text,
-        "required-origin-guard": text.count("if not self._require_mutation_origin()") >= 7,
+        "required-origin-guard": text.count("if not self._require_mutation_origin()") >= 8,
         "required-atomic-write": "os.replace" in text,
         "required-retry-cap": re.search(r"^MAX_RETRIES = 5$",text,re.M) is not None,
         "required-human-review": '"automatic_application": False' in text,

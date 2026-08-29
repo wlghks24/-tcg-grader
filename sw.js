@@ -1,6 +1,6 @@
-// v121: polished responsive UI + high-contrast game selector labels.
-const CACHE='tcg-v122-tablet-refine';
-const CORE=['./','./index.html','./ui_polish_v121.css','./ui_tablet_refine_v122.css','./grading_vision_engine.js','./grading_accuracy_v99.js','./card_identity_recognition.js','./vision_calibration.json','./manifest.webmanifest','./releases.json','./promo_events.json','./supplementary_candidates.json','./social_event_candidates.json','./purchase_sources.json','./purchase_signals.json','./market_prices.json','./market_watch.json','./exchange_rates.json','./icon.svg'];
+// v122 tablet UI retained (tcg-v122-tablet-refine); v123 adds verified multi-source photo collection.
+const CACHE='tcg-v109-card-identity-ocr-learning';
+const CORE=['./','./index.html','./purchase_ui_polish.css','./ui_polish_v121.css','./ui_tablet_refine_v122.css','./graded_photo_dashboard.js','./graded_photo_dashboard.css','./graded_photo_candidates.json','./auto_market_center.js','./auto_market_center.css','./auto_validation_flow.js','./auto_validation_flow.css','./box_knowledge_stats.js','./box_knowledge_stats.css','./grade_market_flow.js','./grade_market_flow.css','./grading_costs_live.js','./grading_costs_live.css','./grading_proxy_costs.js','./grading_proxy_costs.css','./grading_total_cost.js','./grading_total_cost.css','./image_quality_guard.js','./inventory_lookup.js','./inventory_lookup.css','./market_catalog_expander.js','./multi_market_prices.js','./multi_market_prices.css','./grading_vision_engine.js','./grading_accuracy_v99.js','./card_identity_recognition.js','./vision_calibration.json','./manifest.webmanifest','./releases.json','./promo_events.json','./supplementary_candidates.json','./social_event_candidates.json','./purchase_sources.json','./purchase_signals.json','./market_prices.json','./market_watch.json','./exchange_rates.json','./icon.svg'];
 
 const GAME_SELECTOR_STYLE=`
 <style id="tcg-game-selector-v118">
@@ -92,7 +92,7 @@ self.addEventListener('fetch',event=>{
   if(event.request.method!=='GET')return;
   const url=new URL(event.request.url);
   if(url.origin!==self.location.origin||url.pathname.startsWith('/api/'))return;
-  const fresh=event.request.mode==='navigate'||/\/(?:index\.html|releases\.json|promo_events\.json|supplementary_candidates\.json|social_event_candidates\.json|purchase_sources\.json|purchase_signals\.json|market_prices\.json|market_watch\.json|exchange_rates\.json)$/.test(url.pathname);
+  const fresh=event.request.mode==='navigate'||/\/(?:index\.html|graded_photo_candidates\.json|releases\.json|promo_events\.json|supplementary_candidates\.json|social_event_candidates\.json|purchase_sources\.json|purchase_signals\.json|market_prices\.json|market_watch\.json|exchange_rates\.json)$/.test(url.pathname);
   if(fresh){
     event.respondWith(fetch(event.request)
       .then(response=>event.request.mode==='navigate'?enhanceNavigationResponse(response):response)

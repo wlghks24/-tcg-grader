@@ -15,7 +15,7 @@ def test_server_allows_css():
 
 def test_service_worker_caches_css():
     text = (ROOT / "sw.js").read_text(encoding="utf-8")
-    assert "const CACHE='tcg-v121-ui-polish';" in text
+    assert "const CACHE='tcg-v109-card-identity-ocr-learning';" in text
     assert "'./ui_polish_v121.css'" in text
 
 

@@ -61,12 +61,20 @@ UPDATE_JOB={
     'current':0,'total':7,'label':'대기 중','file':None,'message':'대기 중',
     'error':None,'report':None,'retry_only':False,
 }
+GRADED_PHOTO_JOB_LOCK=threading.Lock()
+GRADED_PHOTO_START_LOCK=threading.Lock()
+GRADED_PHOTO_JOB={
+    'id':None,'state':'idle','started_at':None,'finished_at':None,
+    'message':'강화 수집 대기 중','error':None,'summary':None,
+}
+LAST_GRADED_PHOTO_COLLECTION=0.0
+GRADED_PHOTO_COOLDOWN_SECONDS=20
 PUBLIC_STATIC_FILES={
     'index.html','icon.svg','manifest.webmanifest','sw.js','grading_vision_engine.js','grading_accuracy_v99.js','card_identity_recognition.js',
     'vision_calibration.json',
     'releases.json','market_prices.json','market_watch.json',
     'promo_events.json','supplementary_candidates.json','social_event_candidates.json',
-    'purchase_sources.json','purchase_signals.json','social_stock_signals.json','exchange_rates.json','inventory_lookup.js','inventory_lookup.css','grade_market_flow.js','grade_market_flow.css','auto_market_center.js','auto_market_center.css','multi_market_prices.js','multi_market_prices.css','grading_proxy_costs.js','grading_proxy_costs.css','grading_total_cost.js','grading_total_cost.css','grading_costs_live.js','grading_costs_live.css','auto_validation_flow.js','auto_validation_flow.css','graded_photo_dashboard.js','graded_photo_dashboard.css','market_catalog_expander.js','box_knowledge_stats.js','box_knowledge_stats.css','image_quality_guard.js','ui_polish_v121.css','ui_tablet_refine_v122.css'
+    'purchase_sources.json','purchase_signals.json','social_stock_signals.json','exchange_rates.json','purchase_ui_polish.css','inventory_lookup.js','inventory_lookup.css','grade_market_flow.js','grade_market_flow.css','auto_market_center.js','auto_market_center.css','multi_market_prices.js','multi_market_prices.css','grading_proxy_costs.js','grading_proxy_costs.css','grading_total_cost.js','grading_total_cost.css','grading_costs_live.js','grading_costs_live.css','auto_validation_flow.js','auto_validation_flow.css','graded_photo_dashboard.js','graded_photo_dashboard.css','graded_photo_candidates.json','market_catalog_expander.js','box_knowledge_stats.js','box_knowledge_stats.css','image_quality_guard.js','ui_polish_v121.css','ui_tablet_refine_v122.css'
 }
 SOURCES=[
  ('포켓몬 한국 공식','https://pokemoncard.co.kr/card/category/info1','공식'),
@@ -573,6 +581,54 @@ def _job_set(**changes):
         UPDATE_JOB.update(changes)
         return json.loads(json.dumps(UPDATE_JOB, ensure_ascii=False))
 
+def _graded_photo_job_snapshot():
+    with GRADED_PHOTO_JOB_LOCK:
+        return json.loads(json.dumps(GRADED_PHOTO_JOB, ensure_ascii=False))
+
+def _graded_photo_job_set(**changes):
+    with GRADED_PHOTO_JOB_LOCK:
+        GRADED_PHOTO_JOB.update(changes)
+        return json.loads(json.dumps(GRADED_PHOTO_JOB, ensure_ascii=False))
+
+def _background_graded_photo_collection(job_id):
+    try:
+        _graded_photo_job_set(state='running',message='공개 출처 검색 · 사진 검증 · OCR · 공식 인증조회를 진행 중입니다.',error=None)
+        # The full updater runs this same collector. Reusing its global lock keeps
+        # candidate/reference JSON writes atomic and prevents two collection runs
+        # from overwriting each other.
+        with UPDATE_LOCK:
+            import graded_photo_multi_source
+            payload=graded_photo_multi_source.collect()
+        summary=payload.get('summary',{}) if isinstance(payload,dict) else {}
+        message=(f"강화 수집 완료 · 후보 {int(summary.get('total_candidates',0) or 0)}건 · "
+                 f"공식검증 {int(summary.get('verified_references',0) or 0)}건 · "
+                 f"OCR {int(summary.get('ocr_readable',0) or 0)}건")
+        _graded_photo_job_set(state='completed',finished_at=time.strftime('%Y-%m-%dT%H:%M:%S%z'),
+                              message=message,summary=summary,error=None)
+    except Exception as exc:
+        _graded_photo_job_set(state='failed',finished_at=time.strftime('%Y-%m-%dT%H:%M:%S%z'),
+                              message='등급사진 강화 수집 실행 오류',error=f'{type(exc).__name__}: {exc}')
+
+def _start_graded_photo_collection():
+    global LAST_GRADED_PHOTO_COLLECTION
+    now=time.monotonic()
+    with GRADED_PHOTO_START_LOCK:
+        current=_graded_photo_job_snapshot()
+        if current.get('state') in ('queued','running'):
+            return {'ok':False,'error':'이미 등급사진 강화 수집이 진행 중입니다.','job':current},409
+        full=_job_snapshot()
+        if full.get('state') in ('queued','running'):
+            return {'ok':False,'error':'전체 업데이트가 진행 중입니다. 완료 후 다시 실행하세요.','job':current},409
+        wait=GRADED_PHOTO_COOLDOWN_SECONDS-(now-LAST_GRADED_PHOTO_COLLECTION)
+        if wait>0:
+            return {'ok':False,'error':'강화 수집 요청이 너무 빠릅니다.','retry_after_seconds':round(wait,1),'job':current},429
+        LAST_GRADED_PHOTO_COLLECTION=now
+        job_id=f'graded-photo-{int(time.time())}-{os.getpid()}'
+        _graded_photo_job_set(id=job_id,state='queued',started_at=time.strftime('%Y-%m-%dT%H:%M:%S%z'),
+                              finished_at=None,message='등급사진 강화 수집 준비 중',error=None,summary=None)
+    threading.Thread(target=_background_graded_photo_collection,args=(job_id,),daemon=True).start()
+    return {'ok':True,'accepted':True,'job_id':job_id,'job':_graded_photo_job_snapshot()},202
+
 def _progress_update(current,total,label,filename,state,result=None):
     if state=='deferred-running':
         msg=f"[{current}/{total}] {label} · 시간초과 자료만 별도 복구수집 중"
@@ -588,14 +644,14 @@ def _progress_update(current,total,label,filename,state,result=None):
 
 def _background_full_update(job_id):
     try:
-        _job_set(state='running',message='공식자료 6단계 업데이트 시작',current=0,total=6,error=None)
+        _job_set(state='running',message='공식자료 7단계 업데이트 시작',current=0,total=7,error=None)
         data=update_cycle('manual', progress_callback=_progress_update)
         report=load_json_file(AUTO_REPORT,{'ok':False,'results':[]})
         issues=load_json_file(AUTO_ISSUES,{'issue_count':0,'issues':[]})
         deferred=report.get('deferred_timeout_recovery',{}) if isinstance(report,dict) else {}
         deferred_message=(f" · 시간초과 별도수집 {deferred.get('recovered_count',0)}/{deferred.get('attempted_count',0)}건 복구"
                           if deferred.get('attempted_count') else "")
-        _job_set(state='completed',finished_at=time.strftime('%Y-%m-%dT%H:%M:%S%z'),current=6,total=6,
+        _job_set(state='completed',finished_at=time.strftime('%Y-%m-%dT%H:%M:%S%z'),current=7,total=7,
                  label='완료',message='전체 업데이트 완료'+deferred_message,report=report,issues=issues,auto_update=data.get('auto_update',{}))
     except Exception as exc:
         _job_set(state='failed',finished_at=time.strftime('%Y-%m-%dT%H:%M:%S%z'),
@@ -644,7 +700,7 @@ def _start_background_update(retry_only=False):
         LAST_MANUAL_UPDATE=now
         job_id=f"{int(time.time())}-{os.getpid()}"
         _job_set(id=job_id,state='queued',trigger='retry-failed' if retry_only else 'manual',
-                 started_at=time.strftime('%Y-%m-%dT%H:%M:%S%z'),finished_at=None,current=0,total=0 if retry_only else 6,
+                 started_at=time.strftime('%Y-%m-%dT%H:%M:%S%z'),finished_at=None,current=0,total=0 if retry_only else 7,
                  label='대기 중',file=None,message='업데이트 작업 준비 중',error=None,report=None,retry_only=retry_only)
     target=_background_retry_failed if retry_only else _background_full_update
     threading.Thread(target=target,args=(job_id,),daemon=True).start()
@@ -1122,10 +1178,11 @@ class Handler(SimpleHTTPRequestHandler):
             return
         parsed=urlparse(self.path);path=parsed.path
         if path=='/api/health':
-            return self.json({'ok':True,'service':SERVICE_NAME,'platform':PLATFORM,'port':PORT,'api_version':2,'integrated_version':INTEGRATED_VERSION,'learning_version':'v102-ebay-provider-photo-learning'})
+            return self.json({'ok':True,'service':SERVICE_NAME,'platform':PLATFORM,'port':PORT,'api_version':3,'integrated_version':INTEGRATED_VERSION,'learning_version':'v123-verified-multisource-photo-collection'})
         if path=='/api/status': return self.json(load_db())
         if path=='/api/auto-status': return self.json(load_db().get('auto_update',{}))
         if path=='/api/update-job': return self.json({'ok':True,'job':_job_snapshot()})
+        if path=='/api/graded-photo-collection-status': return self.json(_graded_photo_job_snapshot())
         if path=='/api/update-report': return self.json(load_json_file(AUTO_REPORT,{'ok':False,'results':[]}))
         if path=='/api/update-issues': return self.json(load_json_file(AUTO_ISSUES,{'issue_count':0,'issues':[]}))
         if path in {'/api/repair-memory','/api/error-learning-summary'}:
@@ -1260,7 +1317,7 @@ class Handler(SimpleHTTPRequestHandler):
             db=load_market_db(); entry=db.get('entries',{}).get(key)
             return self.json({'ok':True,'found':bool(entry),'key':key,'updated_at':db.get('updated_at'),'collection_status':db.get('collection_status'),'price':entry})
         # Mutating updates are POST-only. This prevents accidental/cross-site GET execution.
-        if path in ('/api/update','/run-auto-update','/api/run-auto-update'):
+        if path in ('/api/update','/run-auto-update','/api/run-auto-update','/api/run-graded-photo-collection'):
             return self.json({'ok':False,'error':'POST 요청만 허용'},405)
         if not self._safe_static(path):
             return self.json({'ok':False,'error':'공개되지 않은 파일'},404)
@@ -1277,6 +1334,11 @@ class Handler(SimpleHTTPRequestHandler):
             if not self._require_mutation_origin():
                 return
             job_id,payload,status=_start_background_update(post_path=='/api/retry-failed')
+            return self.json(payload,status)
+        if post_path=='/api/run-graded-photo-collection':
+            if not self._require_mutation_origin():
+                return
+            payload,status=_start_graded_photo_collection()
             return self.json(payload,status)
         if post_path=='/api/update':
             return self._manual_update()

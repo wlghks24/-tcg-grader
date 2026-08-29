@@ -26,6 +26,15 @@ if ! command -v python >/dev/null 2>&1; then
   pkg install python -y || exit 1
 fi
 
+if ! python -c 'from PIL import Image' >/dev/null 2>&1; then
+  echo "사진 검증용 Pillow를 설치합니다..."
+  python -m pip install -r requirements.txt || echo "[안내] Pillow 설치를 확인하세요. 서버는 계속 시작합니다."
+fi
+if ! command -v tesseract >/dev/null 2>&1; then
+  echo "라벨 OCR용 Tesseract를 설치합니다..."
+  pkg install tesseract -y || echo "[안내] Tesseract 미설치 상태에서는 사진 수집 후 OCR만 보류됩니다."
+fi
+
 echo "서버를 종료하려면 Ctrl+C를 누르세요."
 if [ ! -f "tcg_updater.py" ] || [ ! -f "index.html" ]; then
   echo "[오류] 프로그램 필수 파일이 없습니다. GitHub 저장소를 다시 다운로드하세요."
@@ -39,12 +48,7 @@ if [ -f "storage_optimizer.py" ]; then
   echo "저장공간을 안전하게 최적화합니다..."
   python storage_optimizer.py || echo "[안내] 최적화 일부를 건너뛰고 서버를 시작합니다."
 fi
-# Guarantee one graded-photo discovery pass when the corpus is missing/stale/empty.
-# It runs in background so the local server is not delayed; the regular 7-step 6-hour job remains active.
-if [ -f "graded_photo_bootstrap.py" ] && [ -f "graded_photo_multi_source.py" ]; then
-  echo "7단계 등급사진 수집 상태를 확인합니다..."
-  (python graded_photo_bootstrap.py > graded_photo_bootstrap.log 2>&1) &
-fi
-
-echo "로컬 서버를 먼저 시작합니다. 자료 수집은 백그라운드에서 자동 실행됩니다."
+# tcg_updater performs the initial 7-step run itself. Starting a second collector
+# process here could write the same candidate JSON concurrently.
+echo "로컬 서버를 먼저 시작합니다. 7단계 자료 수집은 서버 안에서 안전하게 순차 실행됩니다."
 python tcg_updater.py

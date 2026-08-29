@@ -21,6 +21,8 @@ REQUIRED_FILES = (
     "verify_link_runtime.py", "verify_camera_runtime.js",
     "grading_vision_engine.js", "grading_accuracy_v99.js", "verify_vision_runtime.js",
     "card_identity_recognition.py", "card_identity_recognition.js", "card_identity_learning.json", "card_identity_reference_catalog.json",
+    "graded_photo_multi_source.py", "graded_photo_evidence.py", "grading_cert_verifier.py",
+    "graded_photo_dashboard.js", "graded_photo_dashboard.css", "graded_photo_candidates.json",
     "fault_injection_healing.py", "verify_fault_injection_healing.py", "fault_learning.json",
     "vision_calibration.py", "verify_vision_calibration.py", "vision_calibration.json",
     "trusted_ai_tests/test_card_name.py",
@@ -156,11 +158,13 @@ def audit_feature_contract(root: str | Path | None = None) -> dict[str, Any]:
                                               "DEFERRED_TIMEOUT_MAX_SECONDS = 600",
                                               "_deferred_timeout_eligible")),
         "시간초과 전용 분리예산")
-    add("six_collection_jobs", "출시·재발매·시세·행사·구매처·환율 6단계 자동수집",
-        "'total':6" in server and len(re.findall(
+    add("six_collection_jobs", "출시·재발매·시세·행사·구매처·환율·등급사진 7단계 자동수집",
+        "'total':7" in server and "graded_photo_multi_source" in automatic
+        and all(token in server for token in ("/api/run-graded-photo-collection", "/api/graded-photo-collection-status"))
+        and len(re.findall(
             r'^\s*\("[^"]+",\s*"update_[^"]+",\s*"[^"]+\.json"\),?$', automatic, re.M
         )) == 6,
-        "6개 통합 수집 작업")
+        "6개 기존 작업 + OCR·공식 인증검증 등급사진 작업")
     add("scheduled_precollection", "6시간 자동반영·30분 전 사전수집",
         "AUTO_INTERVAL_SECONDS=6*60*60" in server and "PRECOLLECT_LEAD_SECONDS=30*60" in server,
         "PC·안드로이드 공통 일정")

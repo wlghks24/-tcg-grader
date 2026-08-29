@@ -4,6 +4,7 @@
 from __future__ import annotations
 import json, time
 from pathlib import Path
+from safe_runtime import safe_read_text
 
 ROOT=Path(__file__).resolve().parent
 OUT=ROOT/'graded_photo_candidates.json'
@@ -13,9 +14,11 @@ def needs_run()->bool:
     try:
         if not OUT.exists(): return True
         age=time.time()-OUT.stat().st_mtime
-        data=json.loads(OUT.read_text(encoding='utf-8'))
-        total=int(((data.get('summary') or {}).get('total_candidates') or 0))
-        return age>MAX_AGE or total<=0
+        data=json.loads(safe_read_text(OUT,max_bytes=20_000_000))
+        summary=data.get('summary') or {}
+        total=int(summary.get('total_candidates') or 0)
+        seed_only=summary.get('status')=='verified_registry_seed' and int(summary.get('queries_attempted') or 0)==0
+        return age>MAX_AGE or total<=0 or seed_only
     except Exception:
         return True
 

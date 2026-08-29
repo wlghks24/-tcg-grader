@@ -1,0 +1,72 @@
+import json
+import threading
+import unittest
+import urllib.error
+import urllib.request
+from functools import partial
+from pathlib import Path
+from unittest import mock
+
+import tcg_updater
+
+
+ROOT=Path(__file__).resolve().parent
+
+
+def request_json(request):
+    try:
+        with urllib.request.urlopen(request,timeout=5) as response:
+            return response.status,json.load(response)
+    except urllib.error.HTTPError as exc:
+        return exc.code,json.loads(exc.read().decode('utf-8'))
+
+
+class GradedPhotoRuntimeTests(unittest.TestCase):
+    @classmethod
+    def setUpClass(cls):
+        handler=partial(tcg_updater.Handler,directory=str(ROOT))
+        cls.server=tcg_updater.QuietThreadingHTTPServer(('127.0.0.1',0),handler)
+        cls.thread=threading.Thread(target=cls.server.serve_forever,daemon=True)
+        cls.thread.start()
+        cls.base=f'http://127.0.0.1:{cls.server.server_address[1]}'
+
+    @classmethod
+    def tearDownClass(cls):
+        cls.server.shutdown();cls.server.server_close();cls.thread.join(timeout=3)
+
+    def test_status_and_static_snapshot_are_available(self):
+        status,payload=request_json(urllib.request.Request(self.base+'/api/graded-photo-collection-status'))
+        self.assertEqual(status,200)
+        self.assertIn(payload['state'],{'idle','queued','running','completed','failed'})
+        status,payload=request_json(urllib.request.Request(self.base+'/graded_photo_candidates.json'))
+        self.assertEqual(status,200)
+        self.assertEqual(payload['engine'],'v123-verified-multisource-photo-collection')
+        self.assertEqual(payload['summary']['raw_grade_calibration_eligible'],0)
+
+    def test_collection_trigger_is_post_only(self):
+        status,payload=request_json(urllib.request.Request(self.base+'/api/run-graded-photo-collection'))
+        self.assertEqual(status,405)
+        self.assertFalse(payload['ok'])
+
+    def test_cross_site_trigger_is_rejected(self):
+        request=urllib.request.Request(self.base+'/api/run-graded-photo-collection',data=b'{}',method='POST',
+                                       headers={'Content-Type':'application/json','Origin':'https://evil.example'})
+        with mock.patch.object(tcg_updater,'_start_graded_photo_collection') as start:
+            status,payload=request_json(request)
+        self.assertEqual(status,403)
+        self.assertFalse(payload['ok'])
+        start.assert_not_called()
+
+    def test_same_origin_trigger_starts_background_job(self):
+        accepted={'ok':True,'accepted':True,'job_id':'test-job','job':{'state':'queued'}}
+        request=urllib.request.Request(self.base+'/api/run-graded-photo-collection',data=b'{}',method='POST',
+                                       headers={'Content-Type':'application/json','Origin':self.base})
+        with mock.patch.object(tcg_updater,'_start_graded_photo_collection',return_value=(accepted,202)) as start:
+            status,payload=request_json(request)
+        self.assertEqual(status,202)
+        self.assertTrue(payload['accepted'])
+        start.assert_called_once_with()
+
+
+if __name__=='__main__':
+    unittest.main()

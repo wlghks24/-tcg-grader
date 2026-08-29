@@ -133,28 +133,53 @@ def t_ui_and_pipeline_contract():
 
 def t_pipeline_exec_once():
     import auto_pipeline_runner as a
-    old_search=a.MultiChannelCollector.search_web
+    old_collector=a.MultiChannelCollector
+    old_official=a._collect_official_sources
     old_supp=a.supplementary_discovery.main
     old_social=a.social_event_discovery.main
     old_diag=a.CrossPlatformSelfHealingEngine.diagnostics
+    old_health=a.provider_health_learning.observe
+    old_meta=a.collection_meta_learning.refresh_profile
+    old_social_out=a.social_event_discovery.OUT
     old_out=a.OUT
     calls={'supp':0,'social':0}
     try:
-        a.MultiChannelCollector.search_web=lambda self,k:{'ok':True,'keyword':k,'results':[{'title':k,'url':'https://example.com','verified':False}]}
+        class Learner:
+            def rank_results(self,keyword,rows,limit=30): return [dict(x,relevance_score=3.0) for x in rows][:limit]
+            def learn_from_payload(self,payload,origin=''): return len(payload.get('items',[]))
+            def learn_feedback_file(self): return 0
+            def save(self): return None
+            def report(self): return {'learned_queries':0,'learned_terms':0,'learned_hosts':0}
+        class MethodLearner:
+            def report(self): return {'providers':[]}
+        class Collector:
+            def __init__(self): self.learner=Learner();self.method_learner=MethodLearner()
+            def search_web(self,k): return {'ok':True,'keyword':k,'results':[{'title':k,'url':'https://example.com/'+k,'verified':False}]}
+        a.MultiChannelCollector=Collector
+        a._collect_official_sources=lambda keywords:{provider:{key:{'ok':True,'degraded':False,'results':[],'errors':[]} for key in keywords} for provider in a.DIRECT_PROVIDER_ORDER}
         def supp(): calls['supp']+=1; return {'updated_at':'x','items':[{'title':'s'}]}
         def social(): calls['social']+=1; return {'updated_at':'x','items':[{'title':'x'}],'degraded':False,'official_social_candidate_count':1,'official_domain_search_count':0,'cross_checked_count':0,'channel_status':{}}
         a.supplementary_discovery.main=supp; a.social_event_discovery.main=social
         a.CrossPlatformSelfHealingEngine.diagnostics=lambda self:{'ok':True}
+        a.provider_health_learning.observe=lambda rows:{'providers':[]}
+        a.collection_meta_learning.refresh_profile=lambda:{'ok':True}
         with tempfile.TemporaryDirectory() as td:
             a.OUT=Path(td)/'out.json'
+            a.social_event_discovery.OUT=Path(td)/'social.json'
             payload=a.run_pipeline()
             assert payload['ok'] is True and payload['degraded'] is False
-            assert payload['social']['candidate_count']==1 and payload['supplementary']['candidate_count']==1
+            # Current pipeline merges one mocked social row with three mocked
+            # adaptive web rows; exact count may grow as independent providers
+            # are added, but both branches must execute once and remain healthy.
+            assert payload['social']['candidate_count']>=1 and payload['social']['adaptive_merge_count']==3
+            assert payload['supplementary']['candidate_count']==1
             assert calls=={'supp':1,'social':1}
             assert a.OUT.is_file()
     finally:
-        a.MultiChannelCollector.search_web=old_search; a.supplementary_discovery.main=old_supp; a.social_event_discovery.main=old_social
-        a.CrossPlatformSelfHealingEngine.diagnostics=old_diag; a.OUT=old_out
+        a.MultiChannelCollector=old_collector;a._collect_official_sources=old_official
+        a.supplementary_discovery.main=old_supp;a.social_event_discovery.main=old_social
+        a.CrossPlatformSelfHealingEngine.diagnostics=old_diag;a.provider_health_learning.observe=old_health
+        a.collection_meta_learning.refresh_profile=old_meta;a.social_event_discovery.OUT=old_social_out;a.OUT=old_out
 
 def t_registry_official_link_only():
     # Parser rejects social action URLs and accepts only profile-like paths.

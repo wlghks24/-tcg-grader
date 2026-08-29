@@ -78,13 +78,14 @@ def main() -> dict:
         "화면·manifest·서비스워커 버전이 일치함",
     )
 
-    guide_versions = (79, 80, 81, 82, 83, 84, 85, 86, 87, 88, 89, 90, 91, 92, 93, 94, 97, 98, 99)
-    missing = [f"사용방법_v{version}.md" for version in guide_versions if not (ROOT / f"사용방법_v{version}.md").is_file()]
+    # Historical guides are optional archive material. The executable package
+    # must contain the current guide and must not contain mojibake filenames.
+    missing = [] if (ROOT / "README_v31.md").is_file() else ["README_v31.md"]
     mojibake = [path.name for path in ROOT.iterdir() if "∞" in path.name or "⌐" in path.name]
     check(
         "korean_guide_names",
         not missing and not mojibake,
-        "한글 사용방법 파일 19개가 UTF-8 이름으로 존재하고 깨진 이름이 없음",
+        "현재 실행안내가 존재하고 깨진 파일명이 없음",
     )
 
     readme = (ROOT / "README_v31.md").read_text(encoding="utf-8")

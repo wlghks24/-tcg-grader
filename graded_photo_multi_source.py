@@ -2,8 +2,10 @@
 # -*- coding: utf-8 -*-
 """Quarantine-first graded-card photo discovery across public marketplaces.
 
-v3 fixes zero-candidate collection on devices without Google CSE/eBay OAuth by
-reusing the project's resilient DuckDuckGo HTML/Lite + Bing RSS search engine.
+v4 combines official APIs when configured, public search fallbacks, bounded image
+validation/OCR and strict grading-company certification lookup.  One failed
+provider cannot suppress the other providers, and every failure is visible in the
+dashboard diagnostics.
 Marketplace/search-visible rows are candidates only.  Nothing becomes calibration
 truth unless the local verified-certification registry matches company+cert+grade.
 """
@@ -11,29 +13,40 @@ from __future__ import annotations
 
 import concurrent.futures
 import base64
+import collections
 import html
-import json, os, re, urllib.parse, urllib.request, time
+import json, math, os, re, urllib.parse, urllib.request, time
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
-from safe_runtime import atomic_write_json
+from safe_runtime import atomic_write_json, safe_read_text, safe_urlopen, safe_urlopen_no_redirect
 from detailed_collection_intelligence import build_queries, record_query_result, evidence_confidence, canonical_key, source_priority
+from graded_photo_evidence import enrich_rows, normalize_cert
+from grading_cert_verifier import lookup_url, verify_cert
 
 ROOT=Path(__file__).resolve().parent
 OUT=ROOT/'graded_photo_candidates.json'
 LEARNING=ROOT/'graded_photo_source_learning.json'
 VERIFIED=ROOT/'verified_certifications.json'
-UA='Mozilla/5.0 TCG-Grader-GradedPhotoCollector/3.0'
+OFFICIAL_CACHE=ROOT/'graded_photo_official_cache.json'
+REFERENCE_LEARNING=ROOT/'graded_photo_reference_learning.json'
+LIBRARY_OFFICIAL=ROOT/'library_official_cert_registry.json'
+LIBRARY_CANDIDATES=ROOT/'library_slab_candidates.json'
+LIBRARY_REFERENCES=ROOT/'library_verified_slab_references.json'
+UA='Mozilla/5.0 TCG-Grader-GradedPhotoCollector/4.0'
 COMPANIES=('PSA','BGS','CGC','TAG','BRG')
 GAMES=('pokemon','onepiece','naruto')
-MAX_ROWS=240
-MAX_PER_SOURCE=12
-MAX_IMAGE_PROBES_PER_SOURCE=2
+MAX_ROWS=600
+MAX_PER_SOURCE=24
+MAX_IMAGE_PROBES_PER_SOURCE=3
 MAX_PAGE_BYTES=1_000_000
-RUN_SOURCE_LIMIT=3
-RUN_WAIT_SECONDS=3600
+RUN_SOURCE_LIMIT=6
+RUN_WAIT_SECONDS=300
 os.environ.setdefault('TCG_HTTP_TIMEOUT','5')
+
+SOURCE_ID_ALIASES={'ebay_public':'ebay'}
+BOOTSTRAP_SOURCE_IDS=('ebay_public','amazon_us','amazon_jp','kream','daangn','collectory')
 
 SOURCES=(
  {'id':'ebay_public','name':'eBay 공개검색','domain':'ebay.com','weight':0.90},
@@ -78,9 +91,21 @@ def _now(): return datetime.now(timezone.utc).isoformat(timespec='seconds')
 
 def _load(path:Path,default):
  try:
-  d=json.loads(path.read_text(encoding='utf-8'))
+  d=json.loads(safe_read_text(path,max_bytes=20_000_000))
   return d if isinstance(d,type(default)) else default
  except Exception:return default
+
+def _finite_number(value,default=0.0):
+ try:number=float(value)
+ except (TypeError,ValueError,OverflowError):return default
+ return number if math.isfinite(number) else default
+
+def _candidate_key(item:dict):
+ company=str(item.get('company') or '').upper();cert=normalize_cert(item.get('certification_id'))
+ if company and cert:
+  grade=item.get('grade');grade_key='unknown' if grade is None else f'{_finite_number(grade,-999.0):.3f}'
+  return ('cert',company,cert,grade_key)
+ return ('url',str(item.get('url') or ''))
 
 def _company(text:str)->str:
  for c,p in COMPANY_PATTERNS.items():
@@ -107,16 +132,70 @@ def _cert(text:str)->str:
  return m.group(1).replace(' ','')[:40] if m else ''
 
 def _registry():
- d=_load(VERIFIED,{})
- rows=d.get('certifications',[]) if isinstance(d,dict) else []
+ rows=[]
+ for path in (VERIFIED,LIBRARY_OFFICIAL):
+  d=_load(path,{})
+  values=d.get('certifications',[]) if isinstance(d,dict) else []
+  if isinstance(values,list):rows.extend(values)
  out={}
- for r in rows if isinstance(rows,list) else []:
+ for r in rows:
   if not isinstance(r,dict):continue
-  c=str(r.get('company') or '').upper();cert=str(r.get('certification_id') or r.get('cert_no') or '').strip()
+  c=str(r.get('company') or '').upper();cert=normalize_cert(r.get('certification_id') or r.get('cert_no'))
   try:g=float(r.get('grade') if r.get('grade') is not None else r.get('actual'))
   except Exception:continue
   if c in COMPANIES and cert and (r.get('verified') is True or r.get('officially_verified') is True or r.get('official_result') is True):out[(c,cert)]=g
  return out
+
+def _library_verified_evidence()->dict[tuple[str,str],dict]:
+ """Return fingerprints/OCR only for library photos already officially verified."""
+ out={}
+ reference_data=_load(LIBRARY_REFERENCES,{})
+ references=reference_data.get('certifications',[]) if isinstance(reference_data,dict) else []
+ for item in references if isinstance(references,list) else []:
+  if not isinstance(item,dict) or item.get('official_result') is not True:continue
+  company=str(item.get('company') or '').upper();cert=normalize_cert(item.get('certification_id'))
+  if company in COMPANIES and cert:
+   out[(company,cert)]={'image_sha256':str(item.get('source_sha256') or '')[:64]}
+ candidate_data=_load(LIBRARY_CANDIDATES,{})
+ candidates=candidate_data.get('records',[]) if isinstance(candidate_data,dict) else []
+ for item in candidates if isinstance(candidates,list) else []:
+  if not isinstance(item,dict) or item.get('official_result') is not True:continue
+  company=str(item.get('company') or '').upper();cert=normalize_cert(item.get('certification_id'))
+  if company not in COMPANIES or not cert:continue
+  evidence=out.setdefault((company,cert),{})
+  evidence.update({'image_sha256':str(item.get('sha256') or evidence.get('image_sha256') or '')[:64],
+                   'image_perceptual_hash':str(item.get('perceptual_hash') or '')[:32],
+                   'ocr_label_text':str(item.get('ocr_label_text') or '')[:1200],
+                   'source_asset_name':str(item.get('source_name') or '')[:180]})
+ return out
+
+def _registry_seed_rows()->list[dict]:
+ rows=[];seen=set();library_evidence=_library_verified_evidence()
+ for path in (VERIFIED,LIBRARY_OFFICIAL):
+  data=_load(path,{})
+  values=data.get('certifications',[]) if isinstance(data,dict) else []
+  for item in values if isinstance(values,list) else []:
+   if not isinstance(item,dict):continue
+   company=str(item.get('company') or '').upper();cert=normalize_cert(item.get('certification_id') or item.get('cert_no'))
+   try:grade=float(item.get('grade') if item.get('grade') is not None else item.get('actual'))
+   except (TypeError,ValueError,OverflowError):continue
+   verified=item.get('verified') is True or item.get('officially_verified') is True or item.get('official_result') is True
+   key=(company,cert)
+   if not verified or company not in COMPANIES or not cert or not 1<=grade<=10 or key in seen:continue
+   seen.add(key)
+   official=str(item.get('official_reference_url') or lookup_url(company,cert))
+   evidence=library_evidence.get(key,{})
+   rows.append({'source_id':'official_registry','source':f'{company} 공식 인증조회','search_provider':'official_registry',
+                'url':official,'title':str(item.get('card_name') or f'{company} cert {cert}')[:260],'snippet':'',
+                'image_url':str(item.get('image_url') or '')[:1200],'company':company,'grade':grade,
+                'certification_id':cert,'game':str(item.get('game') or 'unknown'),'mode':'slab','source_weight':1.0,
+                'official_result':True,'official_reference_url':official,'verification_method':'persisted_official_registry',
+                'status':'verified_reference','learning_eligibility':'reference_learning_only',
+                'image_sha256':evidence.get('image_sha256'),'image_perceptual_hash':evidence.get('image_perceptual_hash'),
+                'image_validated':bool(evidence.get('image_sha256')),'image_probe_status':'validated' if evidence.get('image_sha256') else 'not_available',
+                'ocr_label_text':evidence.get('ocr_label_text',''),'source_asset_name':evidence.get('source_asset_name',''),
+                'image_evidence_source':'prevalidated_library_photo' if evidence.get('image_sha256') else 'not_available'})
+ return rows
 
 def _verified_status(company,cert,grade,registry):
  if not company or not cert or grade is None:return False
@@ -174,7 +253,8 @@ def _og_image(url:str,domain:str)->str:
   u=urllib.parse.urlsplit(url)
   if u.scheme!='https' or not _allowed_host(u.hostname or '',domain):return ''
   req=urllib.request.Request(url,headers={'User-Agent':UA,'Accept-Language':'ko-KR,ko;q=0.9,en;q=0.7,ja;q=0.5'})
-  with urllib.request.urlopen(req,timeout=7) as r:raw=r.read(MAX_PAGE_BYTES+1)
+  allowed={str(u.hostname or '').lower(),domain.lower(),'www.'+domain.lower()}
+  with safe_urlopen(req,timeout=7,allowed_hosts=allowed,max_redirects=2) as r:raw=r.read(MAX_PAGE_BYTES+1)
   if len(raw)>MAX_PAGE_BYTES:return ''
   text=raw.decode('utf-8','ignore');m=OG_IMAGE_RE.search(text) or OG_IMAGE_RE_ALT.search(text)
   if not m:return ''
@@ -183,12 +263,13 @@ def _og_image(url:str,domain:str)->str:
  except Exception:return ''
 
 def _google_cse(query:str,limit:int=10)->list[dict[str,Any]]:
- key=os.environ.get('GOOGLE_CSE_KEY','').strip();cx=os.environ.get('GOOGLE_CSE_CX','').strip()
+ key=(os.environ.get('GOOGLE_CSE_KEY') or os.environ.get('GOOGLE_CSE_API_KEY') or '').strip()
+ cx=(os.environ.get('GOOGLE_CSE_CX') or os.environ.get('GOOGLE_CSE_ID') or '').strip()
  if not key or not cx:return []
  params=urllib.parse.urlencode({'key':key,'cx':cx,'q':query,'num':max(1,min(10,limit))})
  req=urllib.request.Request('https://www.googleapis.com/customsearch/v1?'+params,headers={'User-Agent':UA})
  try:
-  with urllib.request.urlopen(req,timeout=10) as r:d=json.loads(r.read(2_000_000).decode('utf-8','ignore'))
+  with safe_urlopen(req,timeout=10,allowed_hosts={'www.googleapis.com'},max_redirects=1) as r:d=json.loads(r.read(2_000_000).decode('utf-8','ignore'))
  except Exception:return []
  out=[]
  for x in d.get('items',[]) if isinstance(d,dict) else []:
@@ -196,6 +277,26 @@ def _google_cse(query:str,limit:int=10)->list[dict[str,Any]]:
   image='';pm=x.get('pagemap') if isinstance(x.get('pagemap'),dict) else {};imgs=pm.get('cse_image') if isinstance(pm.get('cse_image'),list) else []
   if imgs and isinstance(imgs[0],dict):image=str(imgs[0].get('src') or '')[:1200]
   out.append({'title':str(x.get('title') or '')[:260],'url':str(x.get('link') or '')[:1200],'snippet':str(x.get('snippet') or '')[:700],'image_url':image,'search_provider':'google_cse'})
+ return out
+
+def _google_cse_images(query:str,limit:int=10)->list[dict[str,Any]]:
+ key=(os.environ.get('GOOGLE_CSE_KEY') or os.environ.get('GOOGLE_CSE_API_KEY') or '').strip()
+ cx=(os.environ.get('GOOGLE_CSE_CX') or os.environ.get('GOOGLE_CSE_ID') or '').strip()
+ if not key or not cx:return []
+ params=urllib.parse.urlencode({'key':key,'cx':cx,'q':query,'searchType':'image','safe':'active','num':max(1,min(10,limit))})
+ req=urllib.request.Request('https://www.googleapis.com/customsearch/v1?'+params,headers={'User-Agent':UA})
+ try:
+  with safe_urlopen(req,timeout=10,allowed_hosts={'www.googleapis.com'},max_redirects=1) as r:data=json.loads(r.read(2_000_000).decode('utf-8','ignore'))
+ except Exception:return []
+ out=[]
+ for item in data.get('items',[]) if isinstance(data,dict) else []:
+  if not isinstance(item,dict):continue
+  meta=item.get('image') if isinstance(item.get('image'),dict) else {}
+  page=str(meta.get('contextLink') or '')
+  image=str(item.get('link') or '')
+  if not page.startswith('https://') or not image.startswith('https://'):continue
+  out.append({'title':str(item.get('title') or '')[:260],'url':page[:1200],'snippet':str(item.get('snippet') or '')[:700],
+              'image_url':image[:1200],'search_provider':'google_cse_images'})
  return out
 
 def _searcher():
@@ -214,27 +315,30 @@ def _query_rows(query:str,limit:int)->tuple[list[dict],list[str]]:
    key=url or (str(row.get('title') or ''),str(row.get('search_provider') or ''))
    if not key or key in seen:continue
    seen.add(key);merged.append(row)
- # Never let one provider suppress the others. Direct marketplace URLs from DDG
- # are especially useful when Bing RSS returns tracking/search URLs.
- try:add(_google_cse(query,limit))
- except Exception as exc:errors.append('google_cse:'+type(exc).__name__)
- try:
-  s=_searcher();rows,err,_,ok=s._search_bing_rss(query,limit)
-  if err:errors.append('bing_rss:'+err[:160])
-  add(rows)
- except Exception as exc:errors.append('bing_rss:'+type(exc).__name__)
- try:
-  s=_searcher();rows,err,_,ok=s._search_ddg(query,limit)
-  if err:errors.append('duckduckgo:'+err[:160])
-  add(rows)
- except Exception as exc:errors.append('duckduckgo:'+type(exc).__name__)
+ # Never let one provider suppress the others. Run independent providers in
+ # parallel so a blocked Bing/DDG route does not multiply every source timeout.
+ def google():return _google_cse(query,limit),None
+ def bing():
+  rows,err,_,_= _searcher()._search_bing_rss(query,limit);return rows,err
+ def duck():
+  rows,err,_,_= _searcher()._search_ddg(query,limit);return rows,err
+ providers={'google_cse':google,'bing_rss':bing,'duckduckgo':duck}
+ with concurrent.futures.ThreadPoolExecutor(max_workers=3,thread_name_prefix='graded-photo-search') as pool:
+  future_map={pool.submit(fn):name for name,fn in providers.items()}
+  for future in concurrent.futures.as_completed(future_map):
+   name=future_map[future]
+   try:
+    rows,err=future.result()
+    if err:errors.append(name+':'+str(err)[:160])
+    add(rows)
+   except Exception as exc:errors.append(name+':'+type(exc).__name__)
  return merged[:max(limit*3,limit)],errors
 
 def _bing_image_rows(query:str,src:dict,limit:int=10)->list[dict]:
  try:
   url='https://www.bing.com/images/search?'+urllib.parse.urlencode({'q':query,'form':'HDRSC3'})
   req=urllib.request.Request(url,headers={'User-Agent':UA,'Accept-Language':'ko-KR,ko;q=0.8,en;q=0.7'})
-  with urllib.request.urlopen(req,timeout=8) as r: raw=r.read(1_800_000)
+  with safe_urlopen(req,timeout=8,allowed_hosts={'www.bing.com','bing.com'},max_redirects=2) as r: raw=r.read(1_800_000)
   text=raw.decode('utf-8','ignore')
  except Exception:return []
  out=[];seen=set()
@@ -271,7 +375,7 @@ def _ebay_public_rows(game:str,limit:int=12)->list[dict]:
  try:
   url='https://www.ebay.com/sch/i.html?'+urllib.parse.urlencode({'_nkw':q,'_sacat':'0'})
   req=urllib.request.Request(url,headers={'User-Agent':'Mozilla/5.0','Accept-Language':'en-US,en;q=0.8'})
-  with urllib.request.urlopen(req,timeout=8) as r:text=r.read(1_800_000).decode('utf-8','ignore')
+  with safe_urlopen(req,timeout=8,allowed_hosts={'www.ebay.com','ebay.com'},max_redirects=2) as r:text=r.read(1_800_000).decode('utf-8','ignore')
  except Exception:return []
  out=[];seen=set()
  for block in re.findall(r'<li[^>]+class="[^"]*s-item[^"]*"[^>]*>(.*?)</li>',text,re.I|re.S):
@@ -292,25 +396,33 @@ def _ebay_public_rows(game:str,limit:int=12)->list[dict]:
 
 def _queries(src:dict,game:str)->tuple[tuple[str,str],...]:
     sid=str(src.get('id') or '')
-    planned=[]
-    # Detailed multilingual source-specific planner. Keep the run bounded by
-    # prioritising productive sources/queries while still exploring all graders.
-    for company in COMPANIES:
+    query_sid=SOURCE_ID_ALIASES.get(sid,sid)
+    names={'pokemon':('Pokemon','포켓몬','ポケモン'),
+           'onepiece':('One Piece','원피스','ワンピース'),
+           'naruto':('Naruto','나루토','ナルト')}[game]
+    domain=str(src.get('domain') or '')
+    broad=('ALL',f'site:{domain} {names[0]} (PSA OR BGS OR CGC OR TAG OR BRG) (graded OR slab OR 등급 OR 鑑定)')
+    # Rotate targeted graders by source/game so the 5 companies are all explored
+    # across successive source batches without multiplying each run into hundreds
+    # of slow search requests on Android.
+    source_index=next((i for i,x in enumerate(SOURCES) if x.get('id')==sid),0)
+    game_index=GAMES.index(game)
+    selected=(COMPANIES[(source_index+game_index)%len(COMPANIES)],COMPANIES[(source_index+game_index+2)%len(COMPANIES)])
+    planned=[broad]
+    for company,language in zip(selected,names[1:]):
+        learned=''
         for qsid,q in build_queries(game,'graded_photo',company):
-            if qsid==sid:
-                planned.append((company,q))
-                break
-    # Social/community sources get two contextual discovery queries in addition
-    # to grader names, because public posts often omit the word "graded".
-    if sid in {'x','instagram','naver'}:
-        g={'pokemon':'Pokemon 포켓몬','onepiece':'One Piece 원피스','naruto':'Naruto 나루토'}[game]
-        planned.extend([('PSA',f'site:{src["domain"]} {g} PSA 10'),('BGS',f'site:{src["domain"]} {g} slab card')])
-    return tuple(planned[:7])
+            if qsid==query_sid:
+                learned=q;break
+        planned.append((company,learned or f'site:{domain} {language} {company} 10 graded card'))
+    if sid in {'x','instagram','naver','daangn'}:
+        planned[-1]=(selected[-1],f'site:{domain} {names[1]} {selected[-1]} 등급 카드')
+    return tuple(planned)
 
 def _discover_source_game(src:dict,game:str)->tuple[list[dict],list[str],int,dict]:
  raw=[];errors=[];queries=0
  detailed_started=time.monotonic()
- diag={'raw_results':0,'domain_matches':0,'company_matches':0,'resolved_redirects':0,'image_results':0}
+ diag={'raw_results':0,'domain_matches':0,'company_matches':0,'resolved_redirects':0,'image_results':0,'google_image_results':0}
  for expected_company,q in _queries(src,game):
   queries+=1
   try:
@@ -326,6 +438,13 @@ def _discover_source_game(src:dict,game:str)->tuple[list[dict],list[str],int,dic
   gname={'pokemon':'Pokemon','onepiece':'One Piece','naruto':'Naruto'}[game]
   iq=f'site:{src["domain"]} {gname} PSA BGS CGC TAG BRG graded card slab'
   irows=_bing_image_rows(iq,src,12)
+  grows=_google_cse_images(iq,10)
+  for item in grows:
+   page=str(item.get('url') or '')
+   try:host=(urllib.parse.urlsplit(page).hostname or '').lower()
+   except ValueError:continue
+   if _allowed_host(host,src['domain']):irows.append(item)
+  diag['google_image_results']+=len(grows)
   if src.get('id')=='ebay_public':
    direct=_ebay_public_rows(game,12)
    existing={str(x.get('url') or '') for x in irows}
@@ -365,7 +484,7 @@ def _discover_source_game(src:dict,game:str)->tuple[list[dict],list[str],int,dic
  return out,errors,queries,diag
 
 def _collect_public_source(src:dict):
- found=[];errors=[];queries=0;diag={'raw_results':0,'domain_matches':0,'company_matches':0,'resolved_redirects':0,'image_results':0}
+ found=[];errors=[];queries=0;diag={'raw_results':0,'domain_matches':0,'company_matches':0,'resolved_redirects':0,'image_results':0,'google_image_results':0}
  for game in GAMES:
   rows,err,q,d=_discover_source_game(src,game);found.extend(rows);errors.extend(err);queries+=q
   for k in diag: diag[k]+=int(d.get(k,0))
@@ -374,8 +493,24 @@ def _collect_public_source(src:dict):
   if x.get('url') and x['url'] not in seen:seen[x['url']]=x
  return src['id'],list(seen.values())[:MAX_PER_SOURCE],errors,queries,diag
 
-def _ebay_candidates()->list[dict]:
+def _ebay_access_token()->str:
  token=os.environ.get('EBAY_OAUTH_TOKEN','').strip()
+ if token:return token
+ client_id=os.environ.get('EBAY_CLIENT_ID','').strip();secret=os.environ.get('EBAY_CLIENT_SECRET','').strip()
+ if not client_id or not secret:return ''
+ credentials=base64.b64encode(f'{client_id}:{secret}'.encode('utf-8')).decode('ascii')
+ body=urllib.parse.urlencode({'grant_type':'client_credentials','scope':'https://api.ebay.com/oauth/api_scope'}).encode('ascii')
+ request=urllib.request.Request('https://api.ebay.com/identity/v1/oauth2/token',data=body,method='POST',
+                                headers={'Authorization':'Basic '+credentials,'Content-Type':'application/x-www-form-urlencoded','User-Agent':UA})
+ try:
+  with safe_urlopen_no_redirect(request,timeout=10,allowed_hosts={'api.ebay.com'}) as response:
+   data=json.loads(response.read(200_000).decode('utf-8','ignore'))
+  value=str(data.get('access_token') or '') if isinstance(data,dict) else ''
+  return value[:5000]
+ except Exception:return ''
+
+def _ebay_candidates()->list[dict]:
+ token=_ebay_access_token()
  if not token:return []
  try:
   from ebay_grader_learning import discover
@@ -427,108 +562,267 @@ def _record_adaptive_timeout(state:dict,elapsed:float,timed_out:int,total_candid
     a['last_raw_results']=int(raw_results)
     return _adaptive_timeout_seconds(state)
 
+def _official_verify_rows(rows:list[dict],registry:dict,max_live:int=10)->tuple[list[dict],dict]:
+ cache=_load(OFFICIAL_CACHE,{})
+ entries=cache.get('entries',{}) if isinstance(cache.get('entries'),dict) else {}
+ now=time.time();live=0;stats={'registry_matches':0,'live_attempts':0,'live_verified':0,'conflicts':0,'unavailable':0}
+ output=[]
+ for raw in rows:
+  item=dict(raw);company=str(item.get('company') or '').upper();cert=normalize_cert(item.get('certification_id'))
+  try:grade=float(item.get('grade')) if item.get('grade') is not None else None
+  except (TypeError,ValueError,OverflowError):grade=None
+  if company not in COMPANIES or not cert or grade is None:
+   output.append(item);continue
+  item['certification_id']=cert
+  registered=registry.get((company,cert))
+  if registered is not None:
+   if abs(float(registered)-grade)<1e-9:
+    item.update({'official_result':True,'official_reference_url':lookup_url(company,cert),
+                 'verification_method':'persisted_official_registry','official_grade':float(registered)})
+    stats['registry_matches']+=1
+   else:
+    item['evidence_conflicts']=sorted(set((item.get('evidence_conflicts') or [])+['official_grade_conflict']))
+    item['official_grade']=float(registered);stats['conflicts']+=1
+   output.append(item);continue
+  key=f'{company}:{cert}'
+  cached=entries.get(key) if isinstance(entries.get(key),dict) else None
+  fresh=bool(cached and now-float(cached.get('checked_epoch',0) or 0)<7*86400)
+  if fresh:
+   result=cached.get('result') if isinstance(cached.get('result'),dict) else {}
+  elif live<max_live:
+   result=verify_cert(company,cert,expected_grade=grade,timeout=10);live+=1;stats['live_attempts']+=1
+   entries[key]={'checked_epoch':now,'result':result}
+  else:
+   result={}
+  if result.get('verified') is True:
+   item.update({'official_result':True,'official_reference_url':result.get('official_url') or lookup_url(company,cert),
+                'verification_method':'live_official_lookup','official_grade':float(result.get('grade'))})
+   stats['live_verified']+=1
+  elif result.get('conflict') is True:
+   item['evidence_conflicts']=sorted(set((item.get('evidence_conflicts') or [])+['official_grade_conflict']))
+   item['official_grade']=result.get('grade');stats['conflicts']+=1
+  elif result:
+   item['official_lookup_status']=str(result.get('lookup_error') or result.get('notice') or 'not_verified')[:180]
+   stats['unavailable']+=1
+  output.append(item)
+ cache={'schema_version':1,'updated_at':_now(),'entries':dict(list(entries.items())[-500:])}
+ atomic_write_json(OFFICIAL_CACHE,cache,suffix='.official-cache.tmp')
+ return output,stats
+
+def _resolve_cert_conflicts(rows:list[dict])->list[dict]:
+ groups={}
+ for item in rows:
+  company=str(item.get('company') or '').upper();cert=normalize_cert(item.get('certification_id'))
+  if company in COMPANIES and cert:groups.setdefault((company,cert),[]).append(item)
+ for group in groups.values():
+  official=[x for x in group if x.get('official_result') is True and x.get('official_grade') is not None]
+  official_grade=float(official[0]['official_grade']) if official else None
+  seen_grades=set()
+  for item in group:
+   try:
+    if item.get('grade') is not None:seen_grades.add(float(item.get('grade')))
+   except (TypeError,ValueError,OverflowError):pass
+  if len(seen_grades)<=1:continue
+  for item in group:
+   try:value=float(item.get('grade')) if item.get('grade') is not None else None
+   except (TypeError,ValueError,OverflowError):value=None
+   if official_grade is None or value is None or abs(value-official_grade)>1e-9:
+    item['evidence_conflicts']=sorted(set((item.get('evidence_conflicts') or [])+['cross_source_grade_conflict']))
+    item['official_result']=False
+ return rows
+
+def _resolve_image_conflicts(rows:list[dict])->tuple[list[dict],dict]:
+ groups={}
+ for item in rows:
+  digest=str(item.get('image_sha256') or '').lower()
+  if re.fullmatch(r'[0-9a-f]{64}',digest):groups.setdefault(digest,[]).append(item)
+ duplicate_groups=0;conflicts=0
+ for group in groups.values():
+  if len(group)<2:continue
+  duplicate_groups+=1;labels=set();official_labels=set()
+  for item in group:
+   company=str(item.get('company') or '').upper();cert=normalize_cert(item.get('certification_id'))
+   grade=None if item.get('grade') is None else _finite_number(item.get('grade'),-999.0)
+   label=(company,cert,grade)
+   if company and cert and grade!=-999.0:labels.add(label)
+   if item.get('official_result') is True:official_labels.add(label)
+  if len(labels)<=1:continue
+  trusted_label=next(iter(official_labels)) if len(official_labels)==1 else None
+  for item in group:
+   company=str(item.get('company') or '').upper();cert=normalize_cert(item.get('certification_id'))
+   grade=None if item.get('grade') is None else _finite_number(item.get('grade'),-999.0)
+   label=(company,cert,grade)
+   if trusted_label is not None and item.get('official_result') is True and label==trusted_label:continue
+   existing=item.get('evidence_conflicts') if isinstance(item.get('evidence_conflicts'),list) else []
+   item['evidence_conflicts']=sorted(set(str(x) for x in existing+['duplicate_image_label_conflict'] if x))
+   item['official_result']=False;conflicts+=1
+ return rows,{'exact_duplicate_image_groups':duplicate_groups,'image_label_conflicts':conflicts}
+
+def _save_reference_learning(rows:list[dict])->dict:
+ current=_load(REFERENCE_LEARNING,{})
+ existing=current.get('references',[]) if isinstance(current.get('references'),list) else []
+ merged={}
+ for item in existing+rows:
+  if not isinstance(item,dict) or item.get('official_result') is not True:continue
+  company=str(item.get('company') or '').upper();cert=normalize_cert(item.get('certification_id'))
+  if company not in COMPANIES or not cert or item.get('evidence_conflicts'):continue
+  try:grade=float(item.get('official_grade') if item.get('official_grade') is not None else item.get('grade'))
+  except (TypeError,ValueError,OverflowError):continue
+  merged[(company,cert)]={'company':company,'certification_id':cert,'official_grade':grade,
+                          'card_name':str(item.get('title') or '')[:260],'game':str(item.get('game') or 'unknown'),
+                          'official_reference_url':str(item.get('official_reference_url') or item.get('url') or '')[:1200],
+                          'image_sha256':str(item.get('image_sha256') or '')[:64],
+                          'learning_scope':'slab_label_and_source_reference_only'}
+ payload={'schema_version':1,'updated_at':_now(),'references':list(merged.values())[-500:],
+          'summary':{'reference_learning_count':len(merged),'raw_grade_calibration_rows_written':0},
+          'policy':{'official_match_required':True,'raw_and_slab_isolated':True,'same_image_prediction_training':False}}
+ atomic_write_json(REFERENCE_LEARNING,payload,suffix='.reference-learning.tmp');return payload
+
 def collect()->dict:
- run_started=time.monotonic()
- registry=_registry();stats={};errors=[]
+ run_started=time.monotonic();registry=_registry();stats={};errors=[]
+ is_android='com.termux' in os.environ.get('PREFIX','')
  previous_payload=_load(OUT,{})
  previous_rows=previous_payload.get('records',[]) if isinstance(previous_payload,dict) else []
- if not isinstance(previous_rows,list): previous_rows=[]
- previous_rows=[x for x in previous_rows if isinstance(x,dict)]
- rows=list(previous_rows)
- previous_count=len(previous_rows)
- e=_ebay_candidates();rows.extend(e);stats['ebay']={'candidates':len(e),'image_hits':sum(bool(x.get('image_url')) for x in e),'verified_hits':0,'errors':0,'queries':0}
+ if not isinstance(previous_rows,list):previous_rows=[]
+ previous_rows=[dict(x) for x in previous_rows if isinstance(x,dict)]
+ seeds=_registry_seed_rows();rows=previous_rows+seeds;previous_count=len(previous_rows)
+ ebay_rows=_ebay_candidates();rows.extend(ebay_rows)
+ stats['ebay_api']={'candidates':len(ebay_rows),'image_hits':sum(bool(x.get('image_url')) for x in ebay_rows),
+                    'verified_hits':0,'errors':0,'queries':1 if ebay_rows else 0,
+                    'configured':bool(os.environ.get('EBAY_OAUTH_TOKEN') or (os.environ.get('EBAY_CLIENT_ID') and os.environ.get('EBAY_CLIENT_SECRET')))}
  state=_load(LEARNING,{})
  adaptive_timeout_seconds=_adaptive_timeout_seconds(state)
- first_full_collection=not bool(state.get('initial_collection_completed'))
+ first_bootstrap=not bool(state.get('initial_collection_completed'))
  try:cursor=int(state.get('source_cursor',0))%len(SOURCES)
  except Exception:cursor=0
- if first_full_collection:
-  active=list(SOURCES)
-  state['last_active_sources']=[x['id'] for x in active]
+ if first_bootstrap:
+  bootstrap_limit=3 if is_android else len(BOOTSTRAP_SOURCE_IDS)
+  active=[next(x for x in SOURCES if x['id']==sid) for sid in BOOTSTRAP_SOURCE_IDS[:bootstrap_limit]]
   state['initial_collection_started_at']=state.get('initial_collection_started_at') or _now()
+  state['source_cursor']=len(active)%len(SOURCES)
  else:
-  rotated=[SOURCES[(cursor+i)%len(SOURCES)] for i in range(len(SOURCES))]
-  active=sorted(rotated[:max(RUN_SOURCE_LIMIT*2,RUN_SOURCE_LIMIT)], key=lambda x:source_priority(x['id']), reverse=True)[:min(RUN_SOURCE_LIMIT,len(SOURCES))]
-  state['source_cursor']=(cursor+len(active))%len(SOURCES);state['last_active_sources']=[x['id'] for x in active]
+  batch_limit=3 if is_android else RUN_SOURCE_LIMIT
+  active=[SOURCES[(cursor+i)%len(SOURCES)] for i in range(min(batch_limit,len(SOURCES)))]
+  state['source_cursor']=(cursor+len(active))%len(SOURCES)
+ state['last_active_sources']=[x['id'] for x in active]
  atomic_write_json(LEARNING,state,suffix='.graded-photo-cursor.tmp')
- pool=concurrent.futures.ThreadPoolExecutor(max_workers=3,thread_name_prefix='graded-photo')
- futs={pool.submit(_collect_public_source,src):src for src in active}
- if first_full_collection:
-  # Initial population run: no overall RUN_WAIT_SECONDS limit. Each HTTP request still
-  # keeps its own network timeout so an unreachable host cannot block forever.
-  done=set()
-  for fut in concurrent.futures.as_completed(futs):
-   done.add(fut)
-  pending=set()
- else:
-  done,pending=concurrent.futures.wait(futs,timeout=adaptive_timeout_seconds)
- for fut in done:
-  src=futs[fut]
+
+ pool=concurrent.futures.ThreadPoolExecutor(max_workers=min(len(active),3 if is_android else 6),thread_name_prefix='graded-photo')
+ futures={pool.submit(_collect_public_source,src):src for src in active}
+ run_timeout=max(120,min(RUN_WAIT_SECONDS,adaptive_timeout_seconds))
+ done,pending=concurrent.futures.wait(futures,timeout=run_timeout)
+ for future in done:
+  src=futures[future]
   try:
-   sid,found,errs,queries,diag=fut.result();rows.extend(found)
-   stats[sid]={'candidates':len(found),'image_hits':sum(bool(x.get('image_url')) for x in found),'verified_hits':0,'errors':len(errs),'queries':queries,**diag}
-   errors.extend(f'{sid}:{x}' for x in errs[:3])
+   sid,found,source_errors,queries,diag=future.result();rows.extend(found)
+   stats[sid]={'candidates':len(found),'image_hits':sum(bool(x.get('image_url')) for x in found),
+               'verified_hits':0,'errors':len(source_errors),'queries':queries,**diag}
+   errors.extend(f'{sid}:{value}' for value in source_errors[:4])
   except Exception as exc:
-   sid=src['id'];stats[sid]={'candidates':0,'image_hits':0,'verified_hits':0,'errors':1,'queries':0};errors.append(sid+':'+type(exc).__name__)
- for fut in pending:
-  src=futs[fut];fut.cancel();sid=src['id']
+   sid=src['id'];stats[sid]={'candidates':0,'image_hits':0,'verified_hits':0,'errors':1,'queries':0}
+   errors.append(sid+':'+type(exc).__name__)
+ for future in pending:
+  src=futures[future];future.cancel();sid=src['id']
   stats[sid]={'candidates':0,'image_hits':0,'verified_hits':0,'errors':1,'queries':0,'timed_out':True}
   errors.append(sid+':run_timeout')
- pool.shutdown(wait=first_full_collection,cancel_futures=not first_full_collection)
- dedup={}
- for x in rows:
-  cert=x.get('certification_id');key=(x.get('company'),cert) if cert else x.get('url')
-  if not key:continue
+ pool.shutdown(wait=True,cancel_futures=True)
+
+ # First dedup keeps the best source while retaining every independent source id.
+ dedup={};source_sets={}
+ for raw in rows:
+  item=dict(raw);company=str(item.get('company') or '').upper();cert=normalize_cert(item.get('certification_id'))
+  if cert:item['certification_id']=cert
+  key=_candidate_key(item)
+  if not key[-1]:continue
+  source_sets.setdefault(key,set()).add(str(item.get('source_id') or ''))
   old=dedup.get(key)
-  if old is None or float(x.get('source_weight',0))>float(old.get('source_weight',0)):dedup[key]=x
+  if old is None or _finite_number(item.get('source_weight'))>_finite_number(old.get('source_weight')):dedup[key]=item
  rows=list(dedup.values())[:MAX_ROWS]
- # Cross-source corroboration: group similar titles across independent sources.
+ for item in rows:
+  key=_candidate_key(item)
+  item['_dedup_sources']=sorted(x for x in source_sets.get(key,set()) if x)
+
+ try:probe_limit=int(os.environ.get('TCG_GRADED_IMAGE_PROBE_LIMIT','6' if is_android else '12'))
+ except (TypeError,ValueError,OverflowError):probe_limit=6 if is_android else 12
+ rows,image_stats=enrich_rows(rows,limit=max(0,min(probe_limit,24)),workers=2 if is_android else 4)
+ image_stats['prevalidated_library']=sum(x.get('image_evidence_source')=='prevalidated_library_photo' for x in rows)
+ rows,official_stats=_official_verify_rows(rows,registry,max_live=5 if is_android else 10)
+ rows=_resolve_cert_conflicts(rows)
+ rows,image_conflict_stats=_resolve_image_conflicts(rows);official_stats.update(image_conflict_stats)
+
+ # Cross-source corroboration remains advisory; only official matching can verify.
  groups={}
- for x in rows:
-  key=canonical_key(str(x.get('title') or ''),str(x.get('url') or ''))
-  groups.setdefault(key,set()).add(str(x.get('source_id') or ''))
- for x in rows:
-  key=canonical_key(str(x.get('title') or ''),str(x.get('url') or ''))
-  ids=sorted(y for y in groups.get(key,set()) if y)
-  x['cross_source_count']=len(ids);x['cross_sources']=ids[:12]
-  x['evidence_confidence']=evidence_confidence(ids,False)
- verified=0
- for x in rows:
-  ok=_verified_status(x.get('company'),x.get('certification_id'),x.get('grade'),registry)
-  x['official_result']=bool(ok);x['status']='verified_reference' if ok else 'quarantine_candidate'
-  x['evidence_confidence']=evidence_confidence(x.get('cross_sources') or [x.get('source_id')],bool(ok))
-  x['learning_eligibility']='reference_only_missing_raw_prediction' if ok else 'not_eligible_unverified'
-  if ok:
-   verified+=1;stats.setdefault(x.get('source_id','unknown'),{'candidates':0,'image_hits':0,'verified_hits':0,'errors':0,'queries':0})['verified_hits']+=1
- payload={'schema_version':3,'created_at':_now(),'records':rows,
-          'summary':{'total_candidates':len(rows),'with_image_url':sum(bool(x.get('image_url')) for x in rows),'verified_references':verified,
-                     'quarantined':len(rows)-verified,'sources':len({x.get('source_id') for x in rows}),
-                     'status':'ok' if rows else 'no_candidates','queries_attempted':sum(int(x.get('queries',0)) for x in stats.values()),'markets_this_run':[x['id'] for x in active],'timed_out_sources':sum(bool(x.get('timed_out')) for x in stats.values()),'initial_full_collection':first_full_collection,'previous_candidates':previous_count,'raw_results':sum(int(x.get('raw_results',0)) for x in stats.values()),'domain_matches':sum(int(x.get('domain_matches',0)) for x in stats.values()),'company_matches':sum(int(x.get('company_matches',0)) for x in stats.values()),'resolved_redirects':sum(int(x.get('resolved_redirects',0)) for x in stats.values()),'image_results':sum(int(x.get('image_results',0)) for x in stats.values()),'adaptive_timeout_seconds':adaptive_timeout_seconds,'elapsed_seconds':0.0,'next_timeout_seconds':adaptive_timeout_seconds},
-          'source_stats':stats,'errors':errors[:80],
-          'google_cse_configured':bool(os.environ.get('GOOGLE_CSE_KEY') and os.environ.get('GOOGLE_CSE_CX')),
-          'ebay_oauth_configured':bool(os.environ.get('EBAY_OAUTH_TOKEN')),
+ for item in rows:
+  key=canonical_key(str(item.get('title') or ''),str(item.get('url') or ''))
+  groups.setdefault(key,set()).update(item.pop('_dedup_sources',[]) or [str(item.get('source_id') or '')])
+ for item in rows:
+  key=canonical_key(str(item.get('title') or ''),str(item.get('url') or ''))
+  ids=sorted(value for value in groups.get(key,set()) if value)
+  item['cross_source_count']=len(ids);item['cross_sources']=ids[:16]
+  verified=bool(item.get('official_result') is True and not item.get('evidence_conflicts'))
+  reasons=[]
+  if item.get('evidence_conflicts'):reasons.extend(str(x) for x in item.get('evidence_conflicts') if x)
+  if not item.get('certification_id'):reasons.append('certification_unresolved')
+  if item.get('grade') is None:reasons.append('grade_unresolved')
+  if not item.get('image_url'):reasons.append('image_url_missing')
+  elif item.get('image_probe_status')=='failed':reasons.append('image_validation_failed')
+  if not verified:reasons.append('official_verification_missing')
+  item['quarantine_reasons']=sorted(set(reasons))
+  item['status']='verified_reference' if verified else 'quarantine_candidate'
+  item['learning_eligibility']='reference_learning_only' if verified else 'not_eligible_unverified'
+  item['evidence_confidence']=evidence_confidence(ids or [item.get('source_id')],verified)
+  if verified:
+   sid=str(item.get('source_id') or 'unknown')
+   stats.setdefault(sid,{'candidates':0,'image_hits':0,'verified_hits':0,'errors':0,'queries':0})
+   stats[sid]['verified_hits']=int(stats[sid].get('verified_hits',0))+1
+
+ reference_learning=_save_reference_learning(rows)
+ verified_count=sum(item.get('status')=='verified_reference' for item in rows)
+ provider_counts=collections.Counter(str(item.get('search_provider') or 'unknown') for item in rows)
+ for source in SOURCES:
+  stats.setdefault(source['id'],{'candidates':0,'image_hits':0,'verified_hits':0,'errors':0,'queries':0,'not_run_this_cycle':True})
+ google_configured=bool((os.environ.get('GOOGLE_CSE_KEY') or os.environ.get('GOOGLE_CSE_API_KEY')) and
+                        (os.environ.get('GOOGLE_CSE_CX') or os.environ.get('GOOGLE_CSE_ID')))
+ ebay_configured=bool(os.environ.get('EBAY_OAUTH_TOKEN') or (os.environ.get('EBAY_CLIENT_ID') and os.environ.get('EBAY_CLIENT_SECRET')))
+ payload={'schema_version':4,'engine':'v123-verified-multisource-photo-collection','created_at':_now(),'records':rows,
+          'summary':{'total_candidates':len(rows),'with_image_url':sum(bool(x.get('image_url')) for x in rows),
+                     'validated_images':sum(bool(x.get('image_validated')) for x in rows),'ocr_readable':sum(bool(x.get('ocr_label_text')) for x in rows),
+                     'certifications_resolved':sum(bool(x.get('certification_id')) for x in rows),'verified_references':verified_count,
+                     'reference_learning_count':int((reference_learning.get('summary') or {}).get('reference_learning_count',0)),
+                     'raw_grade_calibration_eligible':0,'quarantined':len(rows)-verified_count,
+                     'sources':len({x.get('source_id') for x in rows if x.get('source_id')}),'status':'ok' if rows else 'no_candidates',
+                     'queries_attempted':sum(int(x.get('queries',0) or 0) for x in stats.values()),'markets_this_run':[x['id'] for x in active],
+                     'timed_out_sources':sum(bool(x.get('timed_out')) for x in stats.values()),'initial_bootstrap_collection':first_bootstrap,
+                     'previous_candidates':previous_count,'registry_seed_count':len(seeds),
+                     'raw_results':sum(int(x.get('raw_results',0) or 0) for x in stats.values()),
+                     'domain_matches':sum(int(x.get('domain_matches',0) or 0) for x in stats.values()),
+                     'company_matches':sum(int(x.get('company_matches',0) or 0) for x in stats.values()),
+                     'resolved_redirects':sum(int(x.get('resolved_redirects',0) or 0) for x in stats.values()),
+                     'image_results':sum(int(x.get('image_results',0) or 0) for x in stats.values()),
+                     'google_image_results':sum(int(x.get('google_image_results',0) or 0) for x in stats.values()),
+                     'exact_duplicate_image_groups':int(image_conflict_stats.get('exact_duplicate_image_groups',0)),
+                     'image_label_conflicts':int(image_conflict_stats.get('image_label_conflicts',0)),
+                     'adaptive_timeout_seconds':adaptive_timeout_seconds,'elapsed_seconds':0.0,'next_timeout_seconds':adaptive_timeout_seconds},
+          'image_probe_stats':image_stats,'official_verification_stats':official_stats,
+          'provider_stats':dict(sorted(provider_counts.items(),key=lambda pair:(-pair[1],pair[0]))),
+          'source_stats':stats,'errors':errors[:100],
+          'configuration':{'google_cse_configured':google_configured,'google_cse_note':'existing customers only; public search fallbacks stay enabled',
+                           'ebay_oauth_configured':ebay_configured,'ebay_client_credentials_supported':True,
+                           'amazon_mode':'public search fallback; deprecated PA-API is not called',
+                           'kream_daangn_mode':'public search-index candidates only; login bypass disabled'},
           'policy':{'public_only':True,'login_bypass':False,'seller_label_is_official':False,'official_registry_match_required':True,
-                    'slab_raw_isolated':True,'raw_calibration_modified':False,'image_bytes_auto_cached':False}}
- elapsed_seconds=round(time.monotonic()-run_started,1)
- payload['summary']['elapsed_seconds']=elapsed_seconds
+                    'slab_raw_isolated':True,'raw_calibration_modified':False,'image_bytes_auto_cached':False,
+                    'duplicate_image_training':False,'conflicting_labels_quarantined':True}}
+ elapsed_seconds=round(time.monotonic()-run_started,1);payload['summary']['elapsed_seconds']=elapsed_seconds
  timed_out=int(payload['summary'].get('timed_out_sources',0) or 0)
  learning_state=_load(LEARNING,{})
  next_timeout=_record_adaptive_timeout(learning_state,elapsed_seconds,timed_out,len(rows),int(payload['summary'].get('raw_results',0) or 0))
  payload['summary']['next_timeout_seconds']=next_timeout
- learning_state['last_adaptive_timeout_seconds']=adaptive_timeout_seconds
- learning_state['next_adaptive_timeout_seconds']=next_timeout
+ learning_state['last_adaptive_timeout_seconds']=adaptive_timeout_seconds;learning_state['next_adaptive_timeout_seconds']=next_timeout
+ if first_bootstrap:
+  learning_state['initial_collection_completed']=True;learning_state['initial_collection_completed_at']=_now()
  atomic_write_json(LEARNING,learning_state,suffix='.graded-photo-adaptive.tmp')
- atomic_write_json(OUT,payload,suffix='.graded-photo.tmp')
- if first_full_collection:
-  done_state=_load(LEARNING,{})
-  done_state['initial_collection_completed']=True
-  done_state['initial_collection_completed_at']=_now()
-  done_state['source_cursor']=0
-  if isinstance(learning_state.get('adaptive_timeout'),dict): done_state['adaptive_timeout']=learning_state['adaptive_timeout']
-  done_state['last_adaptive_timeout_seconds']=learning_state.get('last_adaptive_timeout_seconds',adaptive_timeout_seconds)
-  done_state['next_adaptive_timeout_seconds']=learning_state.get('next_adaptive_timeout_seconds',next_timeout)
-  atomic_write_json(LEARNING,done_state,suffix='.graded-photo-first-complete.tmp')
- _save_learning(stats);return payload
+ atomic_write_json(OUT,payload,suffix='.graded-photo.tmp');_save_learning(stats);return payload
 
 def main():
  p=collect();print(json.dumps(p['summary'],ensure_ascii=False));return p

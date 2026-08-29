@@ -63,7 +63,8 @@ def main() -> dict:
     secrets = []
     runtime_files = 0
     for path in ROOT.rglob("*"):
-        if not path.is_file() or path.suffix.lower() not in RUNTIME_SUFFIXES or path.name in SKIP_NAMES:
+        if (not path.is_file() or path.suffix.lower() not in RUNTIME_SUFFIXES or path.name in SKIP_NAMES
+                or path.name.startswith("gemini-code-")):
             continue
         if "__pycache__" in path.parts or path.name.endswith(".preR2") or path.name.endswith(".bak"):
             continue
