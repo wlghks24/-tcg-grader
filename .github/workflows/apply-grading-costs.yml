@@ -1,0 +1,37 @@
+name: Apply Grading Costs
+on:
+  push:
+    branches: [main]
+    paths:
+      - grading_costs_live.py
+      - grading_costs_live.js
+      - grading_costs_live.css
+      - apply_grading_costs_patch.py
+      - test_grading_costs_live.py
+      - .github/workflows/apply-grading-costs.yml
+permissions:
+  contents: write
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Apply integration
+        run: python apply_grading_costs_patch.py
+      - name: Validate
+        run: |
+          python -m py_compile grading_costs_live.py tcg_updater.py
+          python -m unittest -v test_grading_costs_live.py
+          grep -q 'grading_costs_live.js' index.html
+          grep -q "/api/grading-costs" tcg_updater.py
+      - name: Commit generated files
+        run: |
+          if git diff --quiet -- index.html tcg_updater.py; then exit 0; fi
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add index.html tcg_updater.py
+          git commit -m 'feat: integrate grading fees shipping insurance'
+          git push
