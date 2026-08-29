@@ -11,6 +11,7 @@ from __future__ import annotations
 
 import concurrent.futures
 import base64
+import html
 import json, os, re, urllib.parse, urllib.request
 from datetime import datetime, timezone
 from pathlib import Path
@@ -216,6 +217,34 @@ def _query_rows(query:str,limit:int)->tuple[list[dict],list[str]]:
  except Exception as exc:errors.append('duckduckgo:'+type(exc).__name__)
  return [],errors
 
+def _bing_image_rows(query:str,src:dict,limit:int=10)->list[dict]:
+ try:
+  url='https://www.bing.com/images/search?'+urllib.parse.urlencode({'q':query,'form':'HDRSC3'})
+  req=urllib.request.Request(url,headers={'User-Agent':UA,'Accept-Language':'ko-KR,ko;q=0.8,en;q=0.7'})
+  with urllib.request.urlopen(req,timeout=7) as r:
+   raw=r.read(1_500_000)
+  text=html.unescape(raw.decode('utf-8','ignore'))
+ except Exception:
+  return []
+ out=[]
+ for m in re.finditer(r'\"murl\"\s*:\s*\"([^\"]+)\"',text,re.I):
+  start=max(0,m.start()-1400);end=min(len(text),m.end()+1400);chunk=text[start:end]
+  pm=re.search(r'\"purl\"\s*:\s*\"([^\"]+)\"',chunk,re.I)
+  if not pm: continue
+  img=bytes(m.group(1),'utf-8').decode('unicode_escape')
+  page=bytes(pm.group(1),'utf-8').decode('unicode_escape')
+  try:
+   pu=urllib.parse.urlsplit(page)
+  except ValueError:
+   continue
+  if pu.scheme!='https' or not _allowed_host(pu.hostname or '',src['domain']):
+   continue
+  tm=re.search(r'\"t\"\s*:\s*\"([^\"]+)\"',chunk,re.I)
+  title=bytes(tm.group(1),'utf-8').decode('unicode_escape') if tm else page
+  out.append({'title':title[:260],'url':page[:1200],'snippet':'','image_url':img[:1200] if img.startswith('https://') else '', 'search_provider':'bing_images'})
+  if len(out)>=limit: break
+ return out
+
 def _queries(src:dict,game:str)->tuple[str,...]:
  g={'pokemon':'Pokemon','onepiece':'One Piece','naruto':'Naruto'}[game]
  # Simple per-grader queries are deliberately used here. Public search engines
@@ -224,7 +253,7 @@ def _queries(src:dict,game:str)->tuple[str,...]:
 
 def _discover_source_game(src:dict,game:str)->tuple[list[dict],list[str],int,dict]:
  raw=[];errors=[];queries=0
- diag={'raw_results':0,'domain_matches':0,'company_matches':0,'resolved_redirects':0}
+ diag={'raw_results':0,'domain_matches':0,'company_matches':0,'resolved_redirects':0,'image_results':0}
  for expected_company,q in _queries(src,game):
   queries+=1
   try:
@@ -234,6 +263,16 @@ def _discover_source_game(src:dict,game:str)->tuple[list[dict],list[str],int,dic
      item=dict(rr);item['_expected_company']=expected_company;raw.append(item)
    errors.extend(err);diag['raw_results']+=len(qrows)
   except Exception as exc:errors.append(type(exc).__name__)
+ # One compact image-search per game/source. Bing image rows expose the actual
+ # marketplace page (purl) and source image (murl), which avoids search redirect loss.
+ try:
+  gname={'pokemon':'Pokemon','onepiece':'One Piece','naruto':'Naruto'}[game]
+  iq=f'site:{src["domain"]} {gname} PSA BGS CGC TAG BRG graded card slab'
+  irows=_bing_image_rows(iq,src,12)
+  for rr in irows:
+   if isinstance(rr,dict): raw.append(dict(rr))
+  diag['image_results']+=len(irows);diag['raw_results']+=len(irows)
+ except Exception as exc: errors.append('bing_images:'+type(exc).__name__)
  candidates={}
  for r in raw:
   raw_url=str(r.get('url') or '')
@@ -258,7 +297,7 @@ def _discover_source_game(src:dict,game:str)->tuple[list[dict],list[str],int,dic
  return out,errors,queries,diag
 
 def _collect_public_source(src:dict):
- found=[];errors=[];queries=0;diag={'raw_results':0,'domain_matches':0,'company_matches':0,'resolved_redirects':0}
+ found=[];errors=[];queries=0;diag={'raw_results':0,'domain_matches':0,'company_matches':0,'resolved_redirects':0,'image_results':0}
  for game in GAMES:
   rows,err,q,d=_discover_source_game(src,game);found.extend(rows);errors.extend(err);queries+=q
   for k in diag: diag[k]+=int(d.get(k,0))
@@ -351,7 +390,7 @@ def collect()->dict:
  payload={'schema_version':3,'created_at':_now(),'records':rows,
           'summary':{'total_candidates':len(rows),'with_image_url':sum(bool(x.get('image_url')) for x in rows),'verified_references':verified,
                      'quarantined':len(rows)-verified,'sources':len({x.get('source_id') for x in rows}),
-                     'status':'ok' if rows else 'no_candidates','queries_attempted':sum(int(x.get('queries',0)) for x in stats.values()),'markets_this_run':[x['id'] for x in active],'timed_out_sources':sum(bool(x.get('timed_out')) for x in stats.values()),'initial_full_collection':first_full_collection,'previous_candidates':previous_count,'raw_results':sum(int(x.get('raw_results',0)) for x in stats.values()),'domain_matches':sum(int(x.get('domain_matches',0)) for x in stats.values()),'company_matches':sum(int(x.get('company_matches',0)) for x in stats.values()),'resolved_redirects':sum(int(x.get('resolved_redirects',0)) for x in stats.values())},
+                     'status':'ok' if rows else 'no_candidates','queries_attempted':sum(int(x.get('queries',0)) for x in stats.values()),'markets_this_run':[x['id'] for x in active],'timed_out_sources':sum(bool(x.get('timed_out')) for x in stats.values()),'initial_full_collection':first_full_collection,'previous_candidates':previous_count,'raw_results':sum(int(x.get('raw_results',0)) for x in stats.values()),'domain_matches':sum(int(x.get('domain_matches',0)) for x in stats.values()),'company_matches':sum(int(x.get('company_matches',0)) for x in stats.values()),'resolved_redirects':sum(int(x.get('resolved_redirects',0)) for x in stats.values()),'image_results':sum(int(x.get('image_results',0)) for x in stats.values())},
           'source_stats':stats,'errors':errors[:80],
           'google_cse_configured':bool(os.environ.get('GOOGLE_CSE_KEY') and os.environ.get('GOOGLE_CSE_CX')),
           'ebay_oauth_configured':bool(os.environ.get('EBAY_OAUTH_TOKEN')),
