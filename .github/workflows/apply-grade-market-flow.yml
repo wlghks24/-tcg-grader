@@ -27,11 +27,13 @@ jobs:
           grep -q 'identityCardNumber' index.html
           grep -q 'gradingEconomics' index.html
           grep -q 'tcgLastGrades' index.html
-      - name: Commit generated index
+          grep -q "'grade_market_flow.js'" tcg_updater.py
+          grep -q "'grade_market_flow.css'" tcg_updater.py
+      - name: Commit generated integration
         run: |
-          if git diff --quiet -- index.html; then exit 0; fi
+          if git diff --quiet -- index.html tcg_updater.py; then exit 0; fi
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git add index.html
-          git commit -m 'feat: integrate automatic card grading market flow'
+          git add index.html tcg_updater.py
+          git commit -m 'fix: serve automatic grading market flow assets'
           git push
