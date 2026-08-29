@@ -48,7 +48,8 @@ RECOVERABLE_DATA = {
     "releases.json", "market_watch.json", "market_prices.json",
     "promo_events.json", "purchase_sources.json", "exchange_rates.json",
 }
-TRACKED_SUFFIXES = {".py", ".js", ".html", ".json", ".sh", ".bat", ".cmd", ".command", ".webmanifest", ".svg"}
+TRACKED_SUFFIXES = {".py", ".js", ".html", ".json", ".sh", ".bat", ".cmd", ".command",
+                    ".webmanifest", ".svg", ".yml", ".yaml"}
 MAX_FILE_BYTES = 20 * 1024 * 1024
 
 
@@ -95,7 +96,9 @@ def tracked_files(root: Path = ROOT) -> list[Path]:
         if not path.is_file() or path.is_symlink() or path.name.startswith("."):
             continue
         relative = path.relative_to(root)
-        if any(part.startswith(".") or part in {"__pycache__", ".tcg_ai_proposals", "trusted_ai_tests"} for part in relative.parts):
+        workflow_path=len(relative.parts)>=3 and relative.parts[:2]==(".github","workflows")
+        if (any(part in {"__pycache__", ".tcg_ai_proposals", "trusted_ai_tests"} for part in relative.parts)
+                or (not workflow_path and any(part.startswith(".") for part in relative.parts))):
             continue
         if path.suffix.lower() not in TRACKED_SUFFIXES or path.name in MUTABLE_JSON:
             continue

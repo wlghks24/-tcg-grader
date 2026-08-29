@@ -1,25 +1,31 @@
-name: Apply detailed collection intelligence
+name: Verify detailed collection intelligence
 on:
   push:
     paths:
       - detailed_collection_intelligence.py
+      - graded_photo_multi_source.py
       - apply_detailed_collection_intelligence.py
+      - test_detailed_collection_intelligence.py
+      - test_graded_photo_multi_source.py
+      - .github/workflows/apply-detailed-collection-intelligence.yml
+  pull_request:
+    paths:
+      - detailed_collection_intelligence.py
+      - graded_photo_multi_source.py
+      - apply_detailed_collection_intelligence.py
+      - test_detailed_collection_intelligence.py
+      - test_graded_photo_multi_source.py
       - .github/workflows/apply-detailed-collection-intelligence.yml
 permissions:
-  contents: write
+  contents: read
 jobs:
-  apply:
+  verify:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Apply patch
+      - name: Validate integrated collector
         run: |
           python apply_detailed_collection_intelligence.py
           python -m py_compile graded_photo_multi_source.py detailed_collection_intelligence.py
-      - name: Commit
-        run: |
-          git config user.name github-actions[bot]
-          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
-          git add graded_photo_multi_source.py
-          git diff --cached --quiet || git commit -m "feat: integrate detailed multi-source learning"
-          git push
+          python -m unittest -v test_detailed_collection_intelligence test_graded_photo_multi_source
+

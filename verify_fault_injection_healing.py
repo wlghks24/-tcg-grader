@@ -79,6 +79,13 @@ class FaultHealingTests(unittest.TestCase):
             with self.assertRaises(ValueError):
                 healing._safe_file(Path(directory), "../outside.py")
 
+    def test_github_workflow_is_included_in_integrity_manifest(self):
+        with tempfile.TemporaryDirectory(prefix="tcg-workflow-integrity-") as directory:
+            root=Path(directory);workflow=root/".github"/"workflows"/"verify.yml"
+            workflow.parent.mkdir(parents=True);workflow.write_text("name: verify\n",encoding="utf-8")
+            payload=healing.build_integrity_manifest(root)
+            self.assertIn(".github/workflows/verify.yml",payload["files"])
+
 
 if __name__ == "__main__":
     suite = unittest.defaultTestLoader.loadTestsFromTestCase(FaultHealingTests)

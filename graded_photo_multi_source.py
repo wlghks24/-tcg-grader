@@ -400,20 +400,29 @@ def _ebay_public_rows(game:str,limit:int=12)->list[dict]:
 
 def _queries(src:dict,game:str)->tuple[tuple[str,str],...]:
     sid=str(src.get('id') or '')
-    planned=[]
-    # Detailed multilingual source-specific planner. Keep the run bounded by
-    # prioritising productive sources/queries while still exploring all graders.
-    for company in COMPANIES:
+    query_sid=SOURCE_ID_ALIASES.get(sid,sid)
+    names={'pokemon':('Pokemon','포켓몬','ポケモン'),
+           'onepiece':('One Piece','원피스','ワンピース'),
+           'naruto':('Naruto','나루토','ナルト')}[game]
+    domain=str(src.get('domain') or '')
+    broad=('ALL',f'site:{domain} {names[0]} (PSA OR BGS OR CGC OR TAG OR BRG) (graded OR slab OR 등급 OR 鑑定)')
+    # Rotate targeted graders by source/game so the 5 companies are all explored
+    # across successive source batches without multiplying each run into hundreds
+    # of slow search requests on Android.
+    source_index=next((i for i,x in enumerate(SOURCES) if x.get('id')==sid),0)
+    game_index=GAMES.index(game)
+    cycle=route_run_count(query_sid,game)
+    selected=(COMPANIES[(source_index+game_index+cycle)%len(COMPANIES)],COMPANIES[(source_index+game_index+cycle+2)%len(COMPANIES)])
+    planned=[broad]
+    for company,language in zip(selected,names[1:]):
+        learned=''
         for qsid,q in build_queries(game,'graded_photo',company):
-            if qsid==sid:
-                planned.append((company,q))
-                break
-    # Social/community sources get two contextual discovery queries in addition
-    # to grader names, because public posts often omit the word "graded".
-    if sid in {'x','instagram','naver'}:
-        g={'pokemon':'Pokemon 포켓몬','onepiece':'One Piece 원피스','naruto':'Naruto 나루토'}[game]
-        planned.extend([('PSA',f'site:{src["domain"]} {g} PSA 10'),('BGS',f'site:{src["domain"]} {g} slab card')])
-    return tuple(planned[:7])
+            if qsid==query_sid:
+                learned=q;break
+        planned.append((company,learned or f'site:{domain} {language} {company} 10 graded card'))
+    if sid in {'x','instagram','naver','daangn'}:
+        planned[-1]=(selected[-1],f'site:{domain} {names[1]} {selected[-1]} 등급 카드')
+    return tuple(planned)
 
 def _discover_source_game(src:dict,game:str)->tuple[list[dict],list[str],int,dict]:
  raw=[];errors=[];queries=0;observations=[]
@@ -486,10 +495,6 @@ def _discover_source_game(src:dict,game:str)->tuple[list[dict],list[str],int,dic
               'grade_from_search':g is not None,'_learning_query':str(r.get('_learning_query') or '')[:300]})
  try:
   record_collection_cycle(query_sid,game,observations,raw=diag.get('raw_results',0),accepted=len(out),images=sum(bool(x.get('image_url')) for x in out),errors=len(errors),elapsed=time.monotonic()-detailed_started)
- except Exception:
-  pass
- try:
-  record_query_result(str(src.get('id') or 'unknown'), f'{game}:graded_photo', raw=diag.get('raw_results',0), accepted=len(out), images=sum(bool(x.get('image_url')) for x in out), errors=len(errors), elapsed=time.monotonic()-detailed_started)
  except Exception:
   pass
  return out,errors,queries,diag
