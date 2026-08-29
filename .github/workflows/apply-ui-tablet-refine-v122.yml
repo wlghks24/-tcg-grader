@@ -1,0 +1,46 @@
+name: Apply UI tablet refine v122
+on:
+  push:
+    paths:
+      - 'ui_tablet_refine_v122.css'
+      - 'apply_ui_tablet_refine_v122.py'
+      - 'test_ui_tablet_refine_v122.py'
+      - '.github/workflows/apply-ui-tablet-refine-v122.yml'
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Apply tablet UI patch
+        run: python apply_ui_tablet_refine_v122.py
+      - name: Verify Python syntax
+        run: python -m py_compile tcg_updater.py apply_ui_tablet_refine_v122.py test_ui_tablet_refine_v122.py
+      - name: Run tablet UI tests
+        run: |
+          python - <<'PY'
+          import test_ui_tablet_refine_v122 as t
+          t.test_ui_link_present()
+          t.test_server_allows_css()
+          t.test_service_worker_caches_css()
+          t.test_screenshot_fixes_present()
+          print('v122 tablet UI tests passed')
+          PY
+      - name: Commit integrated files
+        run: |
+          if git diff --quiet -- index.html tcg_updater.py sw.js; then
+            echo 'No integration changes needed'
+            exit 0
+          fi
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add index.html tcg_updater.py sw.js
+          git commit -m 'style: refine tablet layout from real screenshots'
+          git push
