@@ -34,6 +34,7 @@ storage_optimization_report.json
 social_stock_learning.json
 social_stock_learning.json.bak
 
-# Adaptive public-search method health is device-local runtime state.
+# Adaptive public-search method health and optimized engine profile are device-local runtime state.
 search_method_learning.json
 search_method_learning.json.bak
+search_engine_profile.json
