@@ -1,5 +1,6 @@
 from pathlib import Path
 
+# Trigger note: first full graded-photo collection intentionally has no overall run timeout.
 ROOT=Path(__file__).resolve().parent
 P=ROOT/'graded_photo_multi_source.py'
 s=P.read_text(encoding='utf-8')
