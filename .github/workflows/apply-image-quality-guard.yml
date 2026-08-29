@@ -1,0 +1,44 @@
+name: Apply image quality guard
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'image_quality_guard.js'
+      - 'apply_image_quality_guard_patch.py'
+      - 'box_hit_market_discovery.py'
+      - '.github/workflows/apply-image-quality-guard.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Integrate guard
+        run: python apply_image_quality_guard_patch.py
+      - name: Validate Python
+        run: python -m py_compile box_hit_market_discovery.py apply_image_quality_guard_patch.py
+      - name: Validate integration
+        run: |
+          grep -q 'image_quality_guard.js' index.html
+          grep -q "'image_quality_guard.js'" tcg_updater.py
+          grep -q '_page_image' box_hit_market_discovery.py
+      - name: Commit generated integration
+        run: |
+          if git diff --quiet; then
+            echo 'No integration changes needed.'
+            exit 0
+          fi
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add index.html tcg_updater.py
+          git commit -m 'fix: integrate catalog image quality guard'
+          git push
