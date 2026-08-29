@@ -66,7 +66,7 @@ PUBLIC_STATIC_FILES={
     'vision_calibration.json',
     'releases.json','market_prices.json','market_watch.json',
     'promo_events.json','supplementary_candidates.json','social_event_candidates.json',
-    'purchase_sources.json','purchase_signals.json','exchange_rates.json','inventory_lookup.js','inventory_lookup.css','grade_market_flow.js','grade_market_flow.css','auto_market_center.js','auto_market_center.css','multi_market_prices.js','multi_market_prices.css','grading_proxy_costs.js','grading_proxy_costs.css','grading_total_cost.js','grading_total_cost.css','grading_costs_live.js','grading_costs_live.css'
+    'purchase_sources.json','purchase_signals.json','exchange_rates.json','inventory_lookup.js','inventory_lookup.css','grade_market_flow.js','grade_market_flow.css','auto_market_center.js','auto_market_center.css','multi_market_prices.js','multi_market_prices.css','grading_proxy_costs.js','grading_proxy_costs.css','grading_total_cost.js','grading_total_cost.css','grading_costs_live.js','grading_costs_live.css','auto_validation_flow.js','auto_validation_flow.css'
 }
 SOURCES=[
  ('포켓몬 한국 공식','https://pokemoncard.co.kr/card/category/info1','공식'),
@@ -1196,6 +1196,17 @@ class Handler(SimpleHTTPRequestHandler):
                 return self.json(search_multi_market(q,region=region,game=game,force=force))
             except Exception:
                 return self.json({'ok':False,'error':'다중마켓 시세수집 엔진 오류','items':[]},500)
+        if path=='/api/verify-grading-cert':
+            qs=parse_qs(parsed.query)
+            company=(qs.get('company',[''])[0] or '')[:8]
+            cert=(qs.get('cert',[''])[0] or '')[:120]
+            if not self._search_origin_allowed():
+                return self.json({'ok':False,'verified':False,'error':'허용되지 않은 요청 출처'},403)
+            try:
+                from grading_cert_verifier import verify_cert
+                return self.json(verify_cert(company,cert))
+            except Exception:
+                return self.json({'ok':False,'verified':False,'error':'공식 인증번호 검증 엔진 오류'},500)
         if path=='/api/grading-proxy-costs':
             qs=parse_qs(parsed.query)
             force=qs.get('force',['0'])[0]=='1'
