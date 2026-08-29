@@ -168,6 +168,23 @@ def main() -> None:
             except (urllib.error.URLError, TimeoutError, OSError, ValueError, UnicodeError) as exc:
                 errors.append(f"{label}: {type(exc).__name__}")
 
+    # Unified historical backfill: Pokémon / ONE PIECE / NARUTO all use the same
+    # append-only official-history policy.  The backfill is incremental to keep
+    # tablet/network load bounded and never deletes previous verified rows.
+    try:
+        from release_history_backfill import run as run_release_history_backfill
+        history = run_release_history_backfill(
+            fetch, html_to_text, collect_onepiece_kr, collect_onepiece_jp,
+            lambda: collect_onepiece("https://en.onepiece-cardgame.com/products/", "US"),
+            collect_naruto,
+        )
+        candidates.extend(history.get("items", []))
+        errors.extend(history.get("errors", []))
+        current["history_backfill_progress"] = history.get("progress", {})
+        current["unified_history_policy"] = history.get("policy", "")
+    except (OSError, ValueError, TypeError, ImportError) as exc:
+        errors.append(f"통합 과거출시 백필: {type(exc).__name__}")
+
     # Preserve ALL previously valid official history, regardless of age.
     merged: dict[tuple, dict] = {}
     for x in current.get("items", []):
