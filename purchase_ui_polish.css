@@ -1,0 +1,206 @@
+/* v119 purchase finder visual polish - presentation only */
+#purchasePanel,
+#purchaseBoard,
+.purchase-panel,
+.purchase-board{color:#0f172a}
+
+/* Keep the dark top board, but make controls readable and card-like. */
+.release-board .purchase-controls,
+.release-board .purchase-channel-tabs,
+.release-board .purchase-region-grid,
+.release-board #purchaseNearby,
+.release-board #purchaseLive,
+.release-board #purchaseLocationStatus,
+.release-board #purchaseUpdated{color:#0f172a}
+
+.purchase-controls{
+  display:grid;
+  grid-template-columns:repeat(2,minmax(0,1fr));
+  gap:10px;
+  margin:14px 0;
+  align-items:stretch;
+}
+.purchase-controls input,
+.purchase-controls select{
+  width:100%;
+  min-width:0;
+  height:54px;
+  margin:0;
+  padding:0 15px;
+  border:1.5px solid #cbd5e1;
+  border-radius:15px;
+  background:#fff;
+  color:#0f172a;
+  font-size:14px;
+  font-weight:650;
+  box-shadow:0 2px 8px rgba(15,23,42,.05);
+  outline:none;
+}
+.purchase-controls input::placeholder{color:#94a3b8;font-weight:550}
+.purchase-controls input:focus,
+.purchase-controls select:focus{
+  border-color:#3b82f6;
+  box-shadow:0 0 0 4px rgba(59,130,246,.13);
+}
+.purchase-controls button{
+  min-height:54px;
+  margin:0;
+  border-radius:15px;
+  font-size:14px;
+  box-shadow:none;
+}
+
+.purchase-channel-tabs{
+  display:grid;
+  grid-template-columns:repeat(3,1fr);
+  gap:10px;
+  margin:12px 0 14px;
+  padding:5px;
+  border-radius:18px;
+  background:rgba(255,255,255,.08);
+}
+.purchase-channel{
+  min-height:58px;
+  margin:0;
+  background:#fff;
+  color:#334155;
+  border:1.5px solid #dbe3ef;
+  border-radius:14px;
+  font-size:15px;
+  font-weight:850;
+  box-shadow:0 2px 8px rgba(15,23,42,.07);
+}
+.purchase-channel.active{
+  background:linear-gradient(135deg,#2563eb,#1d4ed8);
+  color:#fff;
+  border-color:#60a5fa;
+  box-shadow:0 8px 20px rgba(37,99,235,.24);
+}
+
+#purchaseLocationStatus,
+#purchaseUpdated{
+  padding:12px 14px;
+  margin:10px 0;
+  border-radius:14px;
+  background:#f8fafc !important;
+  color:#475569 !important;
+  border:1px solid #e2e8f0;
+  line-height:1.55;
+  font-size:12px;
+}
+
+#purchaseNearby,
+#purchaseLive{
+  margin:14px 0;
+  padding:16px;
+  border-radius:18px;
+  background:#fff !important;
+  color:#0f172a !important;
+  border:1px solid #e2e8f0;
+  box-shadow:0 8px 24px rgba(15,23,42,.08);
+}
+#purchaseNearby h4,
+#purchaseLive h4{margin:0 0 8px;color:#0f172a;font-size:16px}
+#purchaseNearby .muted,
+#purchaseLive .muted{color:#64748b !important}
+#purchaseNearby a,
+#purchaseLive a{color:#1d4ed8}
+
+.purchase-region-grid{
+  display:grid;
+  grid-template-columns:repeat(3,minmax(0,1fr));
+  gap:12px;
+  margin-top:14px;
+}
+.purchase-region{
+  background:#fff;
+  color:#0f172a;
+  border-radius:18px;
+  padding:14px;
+  border:1px solid #e2e8f0;
+  box-shadow:0 7px 22px rgba(15,23,42,.07);
+}
+.purchase-region h3{
+  margin:0 0 10px;
+  padding-bottom:9px;
+  border-bottom:1px solid #e2e8f0;
+  font-size:16px;
+  color:#0f172a;
+}
+.purchase-group-title{
+  margin:10px 0 7px;
+  padding:0 0 7px;
+  border-bottom:1px solid #e2e8f0;
+  color:#334155;
+  font-size:12px;
+  font-weight:900;
+}
+.purchase-source{
+  display:block;
+  margin:8px 0;
+  padding:12px;
+  border-radius:14px;
+  background:linear-gradient(180deg,#fff,#f8fafc);
+  border:1px solid #dbe3ef;
+  color:#1d4ed8;
+  text-decoration:none;
+  transition:transform .12s ease,border-color .12s ease,box-shadow .12s ease;
+}
+.purchase-source:active{transform:scale(.99)}
+.purchase-source:hover{border-color:#93c5fd;box-shadow:0 5px 16px rgba(37,99,235,.10)}
+.purchase-source b{display:block;font-size:13px;line-height:1.45;color:#1e40af}
+.purchase-source small{display:block;margin-top:5px;color:#64748b;font-size:11px;line-height:1.55}
+.store-address,.store-stock,.purchase-source-distance{color:#475569}
+
+.source-badge{
+  display:inline-flex;
+  align-items:center;
+  padding:3px 7px;
+  margin-left:5px;
+  border-radius:999px;
+  background:#dbeafe;
+  color:#1e40af;
+  font-size:9px;
+  font-weight:850;
+  vertical-align:middle;
+}
+.source-badge.official{background:#dcfce7;color:#166534}
+.source-badge.used{background:#fef3c7;color:#92400e}
+.source-badge.blog{background:#f3e8ff;color:#6b21a8}
+.source-badge.map{background:#ffe4e6;color:#9f1239}
+.source-badge.tracker{background:#cffafe;color:#155e75}
+
+/* Search/nearby action buttons inside the dark board */
+#purchaseSearch,
+#purchaseUseLocation,
+#purchaseUseAnsan{
+  background:#fff;
+  color:#0f172a;
+  border:1.5px solid #dbe3ef;
+  box-shadow:0 3px 10px rgba(15,23,42,.08);
+}
+#purchaseSearch{
+  background:linear-gradient(135deg,#2563eb,#1d4ed8);
+  color:#fff;
+  border-color:#2563eb;
+}
+#purchaseUseLocation:active,
+#purchaseUseAnsan:active,
+#purchaseSearch:active{transform:scale(.985)}
+
+/* Prevent white-on-white labels inherited from generic button styles. */
+.release-board label,
+.release-board .purchase-controls label,
+.release-board .purchase-controls option{color:#0f172a}
+.release-board select option{color:#0f172a;background:#fff}
+
+@media(max-width:650px){
+  .purchase-region-grid{grid-template-columns:1fr}
+  .purchase-controls{grid-template-columns:1fr 1fr}
+}
+@media(max-width:520px){
+  .purchase-controls{grid-template-columns:1fr}
+  .purchase-channel-tabs{gap:7px}
+  .purchase-channel{min-height:52px;font-size:14px}
+  #purchaseNearby,#purchaseLive{padding:13px}
+}
