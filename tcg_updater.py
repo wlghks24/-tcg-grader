@@ -66,7 +66,7 @@ PUBLIC_STATIC_FILES={
     'vision_calibration.json',
     'releases.json','market_prices.json','market_watch.json',
     'promo_events.json','supplementary_candidates.json','social_event_candidates.json',
-    'purchase_sources.json','purchase_signals.json','exchange_rates.json','inventory_lookup.js','inventory_lookup.css','grade_market_flow.js','grade_market_flow.css','auto_market_center.js','auto_market_center.css','multi_market_prices.js','multi_market_prices.css','grading_proxy_costs.js','grading_proxy_costs.css','grading_total_cost.js','grading_total_cost.css','grading_costs_live.js','grading_costs_live.css','auto_validation_flow.js','auto_validation_flow.css'
+    'purchase_sources.json','purchase_signals.json','exchange_rates.json','inventory_lookup.js','inventory_lookup.css','grade_market_flow.js','grade_market_flow.css','auto_market_center.js','auto_market_center.css','multi_market_prices.js','multi_market_prices.css','grading_proxy_costs.js','grading_proxy_costs.css','grading_total_cost.js','grading_total_cost.css','grading_costs_live.js','grading_costs_live.css','auto_validation_flow.js','auto_validation_flow.css','graded_photo_dashboard.js','graded_photo_dashboard.css'
 }
 SOURCES=[
  ('포켓몬 한국 공식','https://pokemoncard.co.kr/card/category/info1','공식'),
