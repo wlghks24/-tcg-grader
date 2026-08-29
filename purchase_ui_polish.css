@@ -56,5 +56,23 @@
 .release-board label,.release-board .purchase-controls label,.release-board .purchase-intel-tools label,.release-board .purchase-controls option,.release-board .purchase-intel-tools option{color:#0f172a}.release-board select option{color:#0f172a;background:#fff}
 .purchase-privacy{margin-top:10px;padding:10px 12px;border-radius:12px;background:#0f172a;color:#cbd5e1;font-size:10px;line-height:1.55}
 
+/* hard override against release-board white text inheritance on tablet */
+.release-board #purchasePanel #purchaseLocationStatus,
+.release-board #purchasePanel #purchaseLocationStatus *{color:#9a3412!important;text-shadow:none!important;opacity:1!important}
+.release-board #purchasePanel #purchaseNearby,
+.release-board #purchasePanel #purchaseNearby *,
+.release-board #purchasePanel #purchaseLive,
+.release-board #purchasePanel #purchaseLive *{text-shadow:none!important;opacity:1!important}
+.release-board #purchasePanel #purchaseNearby h4{color:#9a3412!important}
+.release-board #purchasePanel #purchaseLive h4{color:#92400e!important}
+.release-board #purchasePanel #purchaseNearby .muted,
+.release-board #purchasePanel #purchaseLive .muted{color:#475569!important}
+.release-board #purchasePanel #purchaseNearby a,
+.release-board #purchasePanel #purchaseLive a{color:#1d4ed8!important}
+.release-board #purchasePanel #purchaseNearby{background:#fffaf5!important}
+.release-board #purchasePanel #purchaseLive{background:#fffbeb!important}
+.release-board #purchasePanel #officialInventoryLookup{background:#f0fdf4!important;color:#0f172a!important}
+.release-board #purchasePanel #officialInventoryLookup *{text-shadow:none}
+
 @media(max-width:650px){.purchase-region-grid{grid-template-columns:1fr}.purchase-controls,.purchase-intel-tools{grid-template-columns:1fr 1fr}}
 @media(max-width:520px){.purchase-controls,.purchase-intel-tools{grid-template-columns:1fr}.purchase-channel-tabs{gap:7px}.purchase-channel{min-height:52px;font-size:14px}#purchaseNearby,#purchaseLive{padding:13px}.purchase-controls,.purchase-intel-tools{padding:12px}}
