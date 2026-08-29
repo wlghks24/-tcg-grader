@@ -1,0 +1,39 @@
+name: Apply Multi Market Prices
+on:
+  push:
+    branches: [main]
+    paths:
+      - multi_market_price_collector.py
+      - multi_market_prices.js
+      - multi_market_prices.css
+      - test_multi_market_price_collector.py
+      - apply_multi_market_prices_patch.py
+      - .github/workflows/apply-multi-market-prices.yml
+permissions:
+  contents: write
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Apply integration
+        run: python apply_multi_market_prices_patch.py
+      - name: Validate
+        run: |
+          grep -q 'multi_market_prices.css' index.html
+          grep -q 'multi_market_prices.js' index.html
+          grep -q '/api/multi-market-prices' tcg_updater.py
+          grep -q "multi_market_prices.js','multi_market_prices.css" tcg_updater.py
+          python -m py_compile tcg_updater.py multi_market_price_collector.py
+          python -m unittest -v test_multi_market_price_collector.py
+      - name: Commit generated integration
+        run: |
+          if git diff --quiet -- index.html tcg_updater.py .gitignore; then exit 0; fi
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add index.html tcg_updater.py .gitignore
+          git commit -m 'feat: connect multi-market prices to v12 search'
+          git push
