@@ -29,6 +29,7 @@ from pathlib import Path
 from typing import Iterable
 
 from safe_runtime import atomic_write_json, safe_read_text
+import collection_meta_learning
 
 ROOT = Path(__file__).resolve().parent
 MEMORY = ROOT / "collection_learning_memory.json"
@@ -225,11 +226,19 @@ class AdaptiveCollectionLearner:
     def _query_score(self, query: str) -> float:
         row = self.memory["query_stats"].get(_signature(query), {})
         quality = _bounded_float(row.get("quality"))
-        errors = _bounded_int(row.get("errors"))
-        empty = _bounded_int(row.get("empty"))
         runs = max(1, _bounded_int(row.get("runs"), 1))
-        exploration = 1.0 / math.sqrt(runs)
-        return quality + exploration - errors * 0.35 - empty * 0.08
+        hits = max(1, _bounded_int(row.get("hits"), 1))
+        error_rate = _bounded_int(row.get("errors")) / runs
+        empty_rate = _bounded_int(row.get("empty")) / runs
+        relevant_rate = _bounded_int(row.get("relevant")) / hits
+        official_rate = _bounded_int(row.get("official")) / max(1, _bounded_int(row.get("relevant"), 1))
+        exploration = 0.9 / math.sqrt(runs)
+        # Use rates, not lifetime absolute failures, so mature high-volume queries are
+        # not punished merely because they have been used for a long time.
+        return (
+            quality + exploration + min(1.2, relevant_rate * 0.8) + min(0.8, official_rate * 0.5)
+            - min(1.8, error_rate * 2.0) - min(1.0, empty_rate * 0.8)
+        )
 
     def _learned_terms(self, game: str, region: str, limit: int = 5) -> list[str]:
         prefix = f"{game}|{region}|"
@@ -275,6 +284,26 @@ class AdaptiveCollectionLearner:
             learned = " ".join(self._learned_terms(game, region, 3))
             query = f"{regional_names[region]} {REGION_SEEDS[region]['phrase']} {learned}".strip()
             candidates.append({"query": query, "family": "regional", "region": region})
+
+        # Cross-collector meta learning identifies the most under-covered
+        # game/region/topic from event, stock, market and graded-photo outputs.
+        # Only search-relevant topics are injected here; trust/verification remains separate.
+        try:
+            focus = collection_meta_learning.recommended_focus(game)
+        except Exception:
+            focus = None
+        if isinstance(focus, dict):
+            focus_region = str(focus.get("region") or "KR")
+            if focus_region not in regional_names:
+                focus_region = "KR"
+            focus_topic = str(focus.get("topic") or "event")[:30]
+            focus_terms = str(focus.get("terms") or REGION_SEEDS[focus_region]["phrase"])[:180]
+            candidates.append({
+                "query": f"{regional_names[focus_region]} {focus_terms}",
+                "family": f"coverage-gap:{focus_topic}",
+                "region": focus_region,
+                "coverage_gap_score": float(focus.get("gap_score") or 0.0),
+            })
 
         # Explicit platform probes catch posts/videos that news feeds index late.
         social_region = ("KR", "JP", "US")[rotation % 3]
@@ -337,6 +366,15 @@ class AdaptiveCollectionLearner:
             shift = rotation % len(remainder)
             remainder = remainder[shift:] + remainder[:shift]
         chosen = baseline + remainder[: max(0, budget - len(baseline))]
+        # Reserve one exploration slot for the learned coverage gap when possible.
+        # This prevents historically successful KR/event queries from starving an
+        # under-covered JP/US release/promo/collab/movie combination.
+        focus_rows = [row for row in dedup if str(row.get("family") or "").startswith("coverage-gap:")]
+        if focus_rows and budget > len(baseline) and not any(str(x.get("family") or "").startswith("coverage-gap:") for x in chosen):
+            if len(chosen) >= budget:
+                chosen[-1] = focus_rows[0]
+            else:
+                chosen.append(focus_rows[0])
         return chosen[:budget]
 
     def _is_official(self, game: str, url: str, title: str = "") -> bool:

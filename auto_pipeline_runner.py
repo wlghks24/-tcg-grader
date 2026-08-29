@@ -27,6 +27,7 @@ import official_channel_feed_discovery
 import official_direct_discovery
 import official_sitemap_discovery
 import provider_health_learning
+import collection_meta_learning
 import supplementary_discovery
 import social_event_discovery
 
@@ -400,6 +401,13 @@ def run_pipeline():
         provider_health = {"ok": False, "error": f"{type(exc).__name__}: {exc}"}
         extra_errors.append(f"provider_health: {type(exc).__name__}: {exc}")
 
+    collection_meta = {}
+    try:
+        collection_meta = collection_meta_learning.refresh_profile()
+    except Exception as exc:
+        collection_meta = {"ok": False, "error": f"{type(exc).__name__}: {exc}"}
+        extra_errors.append(f"collection_meta: {type(exc).__name__}: {exc}")
+
     social_errors = [str(x) for x in (social.get("collection_errors") or []) if str(x).strip()]
     broad_errors: list[str] = []
     for row in candidates:
@@ -422,7 +430,7 @@ def run_pipeline():
 
     official_summary = _official_source_summary(keywords, candidates, official_sources, selected_totals)
     payload = {
-        "version": "v118-adaptive-search-method-health",
+        "version": "v120-cross-collector-diversity-learning",
         "updated_at": datetime.now().astimezone().isoformat(timespec="seconds"),
         "ok": len(failures) == 0 and not extra_errors and not social_hard_failure,
         "degraded": bool(broad_degraded or extra_errors or social_degraded),
@@ -430,7 +438,7 @@ def run_pipeline():
         "empty_search_count": sum(1 for x in candidates if x.get("empty")),
         "errors": errors[:50],
         "notice": "검색/SNS/뉴스/공식사이트/공식 YouTube/사이트맵 후보 자료입니다. 발견 경로가 공식이어도 내용 검증 전에는 자동 확정하지 않습니다.",
-        "learning_policy": "검색어·출처·검증 후보와 수집경로 건강도를 별도 누적 학습하되, 반복 발견만으로 공식 신뢰를 승격하지 않습니다.",
+        "learning_policy": "검색어·출처·검증 후보·수집경로 건강도와 함께 게임×국가×정보종류 커버리지, 고유/중복/최신/교차확인 비율을 누적 학습합니다. 반복 발견만으로 공식 신뢰를 승격하지 않습니다.",
         "platform": platform_agent.diagnostics(),
         "queries": candidates,
         "official_direct": official_summary.get("official_direct", {}),
@@ -438,6 +446,7 @@ def run_pipeline():
         "official_sitemap": official_summary.get("official_sitemap", {}),
         "provider_health": provider_health,
         "search_method_health": agent.method_learner.report(),
+        "collection_meta_learning": collection_meta,
         "supplementary": {
             "candidate_count": len(supplementary.get("items", [])),
             "updated_at": supplementary.get("updated_at"),
@@ -448,6 +457,8 @@ def run_pipeline():
             "official_social_candidate_count": int(social.get("official_social_candidate_count") or 0),
             "official_domain_search_count": int(social.get("official_domain_search_count") or 0),
             "cross_checked_count": int(social.get("cross_checked_count") or 0),
+            "fan_social_candidate_count": int(social.get("fan_social_candidate_count") or 0),
+            "known_fan_account_candidate_count": int(social.get("known_fan_account_candidate_count") or 0),
             "updated_at": social.get("updated_at"),
             "channel_status": social.get("channel_status", {}),
             "preserved_previous_items": bool(social.get("preserved_previous_items")),

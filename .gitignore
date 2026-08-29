@@ -42,3 +42,8 @@ search_engine_profile.json
 # Fan/community social discovery utility learning is device-local.
 fan_social_learning.json
 fan_social_learning.json.bak
+
+# Cross-collector coverage/diversity learning is device-local runtime state.
+collection_meta_learning.json
+collection_meta_learning.json.bak
+collection_meta_profile.json
