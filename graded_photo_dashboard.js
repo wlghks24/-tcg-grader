@@ -1,11 +1,13 @@
 (()=>{
 'use strict';
 const COMPANIES=['PSA','BGS','CGC','TAG','BRG'];
+const GAMES={pokemon:'포켓몬',onepiece:'원피스',naruto:'나루토'};
 const esc=v=>String(v??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
 const n=v=>Number.isFinite(Number(v))?Number(v):0;
 const sleep=ms=>new Promise(resolve=>setTimeout(resolve,ms));
 let running=false;
 function companyOf(r){return String(r.company||r.grader||r.grading_company||r.provider||'').toUpperCase()}
+function gameOf(r){const value=String(r.game||'').toLowerCase().replace(/[\s_-]+/g,'');if(value==='onepiece')return 'onepiece';if(value==='naruto')return 'naruto';if(value==='pokemon'||value==='pokémon')return 'pokemon';return 'unknown'}
 function sourceOf(r){return String(r.source||r.market||r.source_name||r.search_provider||'기타')}
 function statusOf(r){return String(r.status||r.verification_status||r.learning_status||'').toLowerCase()}
 function isVerified(r){const s=statusOf(r);return r.official_result===true||r.verified===true||r.official_verified===true||s==='verified_reference'||s.includes('공식검증')}
@@ -37,10 +39,12 @@ function render(payload){
  const rows=Array.isArray(payload.records)?payload.records:Array.isArray(payload.items)?payload.items:[];
  const summary=payload.summary||{};const verified=rows.filter(isVerified).length||n(summary.verified_references);const references=rows.filter(isReferenceLearning).length||n(summary.reference_learning_count);const rawEligible=rows.filter(isRawEligible).length||n(summary.raw_grade_calibration_eligible);const quarantine=rows.filter(isQuarantine).length||n(summary.quarantined);const total=rows.length||n(summary.total_candidates);
  const byCompany=Object.fromEntries(COMPANIES.map(c=>[c,rows.filter(r=>companyOf(r)===c).length]));
+ const gameStats=payload.game_stats&&typeof payload.game_stats==='object'?payload.game_stats:{};const byGame=Object.fromEntries(Object.keys(GAMES).map(g=>[g,rows.filter(r=>gameOf(r)===g).length||n(gameStats[g]?.candidates)]));
  const sourceMap={};rows.forEach(r=>{const s=sourceOf(r);sourceMap[s]=(sourceMap[s]||0)+1});
  const sources=Object.entries(sourceMap).sort((a,b)=>b[1]-a[1]).slice(0,15);const providers=Object.entries(payload.provider_stats||{}).sort((a,b)=>n(b[1])-n(a[1])).slice(0,10);
  body.innerHTML=`<div class="gpd-summary"><div><span>전체 후보</span><b>${total.toLocaleString()}건</b></div><div><span>공식검증</span><b>${verified.toLocaleString()}건</b></div><div><span>참고학습 반영</span><b>${references.toLocaleString()}건</b></div><div><span>원본보정 학습</span><b>${rawEligible.toLocaleString()}건</b></div><div><span>사진 검증</span><b>${n(summary.validated_images).toLocaleString()}건</b></div><div><span>OCR 판독</span><b>${n(summary.ocr_readable).toLocaleString()}건</b></div><div><span>인증번호 확보</span><b>${n(summary.certifications_resolved).toLocaleString()}건</b></div><div><span>격리 후보</span><b>${quarantine.toLocaleString()}건</b></div></div>
  <div class="gpd-section"><h3>등급사별 확보량</h3><div class="gpd-companies">${COMPANIES.map(c=>`<div class="gpd-company"><b>${c}</b><strong>${byCompany[c].toLocaleString()}</strong><span>장</span></div>`).join('')}</div></div>
+ <div class="gpd-section"><h3>게임별 등급사진 확보량</h3><div class="gpd-companies">${Object.entries(GAMES).map(([g,label])=>`<div class="gpd-company"><b>${label}</b><strong>${byGame[g].toLocaleString()}</strong><span>장</span></div>`).join('')}</div></div>
  <div class="gpd-section"><h3>후보 출처별 수집량</h3>${sources.length?`<div class="gpd-sources">${sources.map(([s,c])=>`<div><span>${esc(s)}</span><b>${c.toLocaleString()}건</b></div>`).join('')}</div>`:'<div class="gpd-empty">아직 출처별 후보가 없습니다.</div>'}</div>
  <div class="gpd-section"><h3>검색 공급자별 확보량</h3>${providers.length?`<div class="gpd-providers">${providers.map(([s,c])=>`<span>${esc(s)} <b>${n(c)}건</b></span>`).join('')}</div>`:'<div class="gpd-empty">검색 공급자 기록이 없습니다.</div>'}</div>
  <div class="gpd-section"><h3>출처 실행상태</h3>${sourceHealth(payload)}</div>${diagnosticHtml(payload)}

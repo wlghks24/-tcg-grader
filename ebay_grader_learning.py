@@ -340,9 +340,11 @@ def discover(token: str, companies: Iterable[str] = COMPANIES,
         raise ValueError("EBAY_OAUTH_TOKEN is required")
     candidates: dict[str, Candidate] = {}
     cert_seen: set[tuple[str, str]] = set()
-    for game in games:
-        game_term = {"pokemon": "Pokemon", "onepiece": "One Piece", "naruto": "Naruto"}.get(game, game)
-        for company in companies:
+    # Rotate games inside each grader.  If max_items is reached early, each
+    # game has already received the same number of API query opportunities.
+    for company in companies:
+        for game in games:
+            game_term = {"pokemon": "Pokemon", "onepiece": "One Piece", "naruto": "Naruto"}.get(game, game)
             company = company.upper()
             if company not in COMPANIES:
                 continue

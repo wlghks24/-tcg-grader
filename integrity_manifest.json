@@ -1,7 +1,7 @@
 {
   "version": 1,
   "engine": "v109-card-identity-ocr-learning",
-  "generated_at": "2026-08-29T12:35:24+00:00",
+  "generated_at": "2026-08-29T17:04:56+00:00",
   "files": {
     "ANDROID_AUTO_START_INSTALL.sh": {
       "sha256": "498346c7d414b45b0e43719481371222b7258c2df2d8c6ca14f64885363f5117",
@@ -88,11 +88,11 @@
       "bytes": 3437
     },
     "V108_FINAL_VERIFICATION_REPORT.json": {
-      "sha256": "84f042edb4cba2d291ceddd8ce236d3f26ecb07942fa5ee6043a300e2165e1c7",
+      "sha256": "b94c51bd904540e0d572ae47561465ac2b379ec6937ae19b03173e5fa0e28857",
       "bytes": 1830
     },
     "V109_FINAL_VERIFICATION_REPORT.json": {
-      "sha256": "dfbb8696035c1ed206e69c404910164c9374784c65775b7bbb39e67a001365c1",
+      "sha256": "b6c63201d1e5ad5dfb3a143f3a875f57b5fe13da38508a51fad23da28539f22d",
       "bytes": 857
     },
     "_audit_progress.py": {
@@ -360,8 +360,8 @@
       "bytes": 516
     },
     "ebay_grader_learning.py": {
-      "sha256": "3e4020de00758768948eab6d69efa375e52b084af7b3645b1e590e469fa31eff",
-      "bytes": 22770
+      "sha256": "cf4148f6cddf3c0d4061865067fb430a94266fd43a5ba43fdb878266e6a5f7a1",
+      "bytes": 22926
     },
     "error_scenario_lab.py": {
       "sha256": "dfab211c853d70d1f2c01a11b7c8fab4c2b50ce383073b071b9dfb0d51a82c95",
@@ -560,16 +560,16 @@
       "bytes": 1455
     },
     "graded_photo_dashboard.js": {
-      "sha256": "2f9049d4f7eaa8c71feddf479453993918b3c47e32c8bc600a581520c4930eea",
-      "bytes": 9697
+      "sha256": "dfc9011936642e9ca8230f972f844af806ba406f87ea0eb0f62f86b7285e0cf7",
+      "bytes": 10507
     },
     "graded_photo_evidence.py": {
       "sha256": "6eca5d772eacc75c1b63ae70b94c31ccb62aacbed6df404147da2facc1d767ab",
       "bytes": 12450
     },
     "graded_photo_multi_source.py": {
-      "sha256": "447af8c1fc876f66c756c1271d3312c03bd9156e92b99020f6a0d0cd0448409f",
-      "bytes": 47248
+      "sha256": "9648b2aab60b2f36b477b2c6e4eac54c169c4405dec7edae6dcb8a68fb496f5e",
+      "bytes": 48825
     },
     "grading_accuracy_v99.js": {
       "sha256": "f674f723e8230d99ff493791bd61457cb9aaeb4c049c1ae51abe79de8e2136fc",
@@ -624,8 +624,8 @@
       "bytes": 2161
     },
     "index.html": {
-      "sha256": "0974cf032d033c5bb5ea9482104dcd01c9f59396bedc530cd6eb9de0581d6dca",
-      "bytes": 295942
+      "sha256": "d00f211cf932990d3ac96b3c97fe6ed59e0efb2a3e29fee7fffc6ea6582f901a",
+      "bytes": 295948
     },
     "inventory_lookup.js": {
       "sha256": "a4e5c19c0a9b293a7fe953e2e00a836ac990cdc6d9244bc0aa12ea6eb8f619e6",
@@ -644,8 +644,8 @@
       "bytes": 217901
     },
     "library_slab_corpus.py": {
-      "sha256": "b08aadfe7486b154cfeb8353c8b69b569350c4d017d967506456402a86e5bc72",
-      "bytes": 13520
+      "sha256": "dacff7505f54916b3c21b40db05251bd06470ac8a5232f63c6c3ed9dd7313e57",
+      "bytes": 16077
     },
     "library_slab_reviewed_overrides.json": {
       "sha256": "97558ac1124e8bf04f9756e9c53f77f31d48730caab561e981950f45fed7c664",
@@ -755,6 +755,14 @@
       "sha256": "75d38c91c0d5256035413ef19d8d5e9b5d5384a98d46eb3657a36b529088705f",
       "bytes": 11401
     },
+    "search_engine_profile.json": {
+      "sha256": "8aec9e3443b2b5230d6c849b970e8c9e2983dbbd70c48f5ff1ff3010370fb965",
+      "bytes": 1644
+    },
+    "search_method_learning.json": {
+      "sha256": "ebe5144aae48beb8f05541476e54e81b81ef58601d51b74312415c90d8c051b7",
+      "bytes": 377
+    },
     "search_method_learning.py": {
       "sha256": "a94a43572fadacfb70fa90ef5e1fb2340870db9efdd0b442019578a872099df0",
       "bytes": 18672
@@ -788,8 +796,8 @@
       "bytes": 11226
     },
     "sw.js": {
-      "sha256": "e301b20dc3f28a725a4f1d461e24700f314694a8e9f49d2fc52e6b32cbb369b4",
-      "bytes": 7416
+      "sha256": "4ffa3fa15fc91cdda2b998cfaad96224b845a530aebd20352b2c2ee69c407e03",
+      "bytes": 7401
     },
     "tcg_live_data.json": {
       "sha256": "7070007ddca04f63406e60c376711c5f9a645c5c99f10a86c19074c728028419",
@@ -820,8 +828,8 @@
       "bytes": 2110
     },
     "test_graded_photo_multi_source.py": {
-      "sha256": "a0bf3310fafb5e0739f001323389dc6b3aab974f20fd2f95052655898b53e310",
-      "bytes": 8328
+      "sha256": "1ec7431044c0a223440b422914f9a4fa4c11f8c082742b143e3a40599c37d54a",
+      "bytes": 10493
     },
     "test_graded_photo_runtime.py": {
       "sha256": "a2def6761fa20b79cdb0636687b60bdb7966e44767d2bd20510545890c802f28",

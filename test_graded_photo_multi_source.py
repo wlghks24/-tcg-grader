@@ -1,11 +1,13 @@
 import json
 import tempfile
 import unittest
+import urllib.parse
 from pathlib import Path
 from unittest import mock
 
 import graded_photo_multi_source as g
 import graded_photo_evidence as evidence
+import ebay_grader_learning as ebay
 
 class GradedPhotoMultiSourceTests(unittest.TestCase):
     def test_company_grade_parse(self):
@@ -30,6 +32,43 @@ class GradedPhotoMultiSourceTests(unittest.TestCase):
         self.assertEqual(len(queries),3)
         self.assertTrue(all('site:ebay.com' in query for _,query in queries))
         self.assertEqual({company for company,_ in queries},{'ALL','PSA','CGC'})
+
+    def test_all_games_build_localized_marketplace_queries(self):
+        source=next(x for x in g.SOURCES if x['id']=='ebay_public')
+        expected={'pokemon':('Pokemon','포켓몬','ポケモン'),
+                  'onepiece':('One Piece','원피스','ワンピース'),
+                  'naruto':('Naruto','나루토','ナルト')}
+        for game,names in expected.items():
+            queries=g._queries(source,game)
+            text=' '.join(query for _,query in queries)
+            self.assertEqual(len(queries),3)
+            self.assertTrue(all('site:ebay.com' in query for _,query in queries))
+            self.assertTrue(any(name in text for name in names))
+
+    def test_source_cap_is_balanced_across_three_games(self):
+        source=next(x for x in g.SOURCES if x['id']=='ebay_public')
+        def fake_discover(_source,game):
+            rows=[{'url':f'https://www.ebay.com/itm/{game}-{i}','game':game} for i in range(20)]
+            diag={'raw_results':20,'domain_matches':20,'company_matches':20,'resolved_redirects':0,'image_results':0,'google_image_results':0}
+            return rows,[],3,diag
+        with mock.patch.object(g,'_discover_source_game',side_effect=fake_discover):
+            _,rows,errors,queries,diag=g._collect_public_source(source)
+        self.assertEqual(errors,[])
+        self.assertEqual(queries,9)
+        self.assertEqual(len(rows),g.MAX_PER_SOURCE)
+        self.assertEqual(diag['game_candidates'],{'pokemon':8,'onepiece':8,'naruto':8})
+
+    def test_ebay_api_rotates_games_before_next_grader(self):
+        queries=[]
+        def fake_api(url,_token):
+            if '/item_summary/search?' in url:
+                queries.append(url)
+                return {'itemSummaries':[]}
+            return {}
+        with mock.patch.object(ebay,'_api_get',side_effect=fake_api):
+            ebay.discover('x'*24,per_query=1,max_items=1,pause=0)
+        first=[urllib.parse.parse_qs(urllib.parse.urlsplit(url).query)['q'][0] for url in queries[:3]]
+        self.assertEqual(first,['Pokemon PSA graded card','One Piece PSA graded card','Naruto PSA graded card'])
 
     def test_ocr_label_extracts_company_grade_and_cert(self):
         row=evidence.extract_label_evidence('PSA GEM MT 10 CERT NUMBER 88411675 Pokemon')

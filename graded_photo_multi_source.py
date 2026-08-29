@@ -37,6 +37,7 @@ LIBRARY_REFERENCES=ROOT/'library_verified_slab_references.json'
 UA='Mozilla/5.0 TCG-Grader-GradedPhotoCollector/4.0'
 COMPANIES=('PSA','BGS','CGC','TAG','BRG')
 GAMES=('pokemon','onepiece','naruto')
+GAME_DISPLAY_NAMES={'pokemon':'포켓몬','onepiece':'원피스','naruto':'나루토'}
 MAX_ROWS=600
 MAX_PER_SOURCE=24
 MAX_IMAGE_PROBES_PER_SOURCE=3
@@ -484,14 +485,27 @@ def _discover_source_game(src:dict,game:str)->tuple[list[dict],list[str],int,dic
  return out,errors,queries,diag
 
 def _collect_public_source(src:dict):
- found=[];errors=[];queries=0;diag={'raw_results':0,'domain_matches':0,'company_matches':0,'resolved_redirects':0,'image_results':0,'google_image_results':0}
+ found_by_game={};errors=[];queries=0;diag={'raw_results':0,'domain_matches':0,'company_matches':0,'resolved_redirects':0,'image_results':0,'google_image_results':0}
  for game in GAMES:
-  rows,err,q,d=_discover_source_game(src,game);found.extend(rows);errors.extend(err);queries+=q
+  rows,err,q,d=_discover_source_game(src,game);found_by_game[game]=rows;errors.extend(err);queries+=q
   for k in diag: diag[k]+=int(d.get(k,0))
- seen={}
- for x in found:
-  if x.get('url') and x['url'] not in seen:seen[x['url']]=x
- return src['id'],list(seen.values())[:MAX_PER_SOURCE],errors,queries,diag
+ # A busy Pokemon query must not consume the whole per-source cap before
+ # ONE PIECE and NARUTO are considered.  Round-robin across games while still
+ # deduplicating the same marketplace page.
+ selected=[];seen=set();positions={game:0 for game in GAMES}
+ while len(selected)<MAX_PER_SOURCE:
+  progressed=False
+  for game in GAMES:
+   rows=found_by_game.get(game,[]);pos=positions[game]
+   while pos<len(rows):
+    item=rows[pos];pos+=1;url=str(item.get('url') or '')
+    if not url or url in seen:continue
+    seen.add(url);selected.append(item);progressed=True;break
+   positions[game]=pos
+   if len(selected)>=MAX_PER_SOURCE:break
+  if not progressed:break
+ diag['game_candidates']={game:sum(str(x.get('game') or '')==game for x in selected) for game in GAMES}
+ return src['id'],selected,errors,queries,diag
 
 def _ebay_access_token()->str:
  token=os.environ.get('EBAY_OAUTH_TOKEN','').strip()
@@ -778,6 +792,15 @@ def collect()->dict:
 
  reference_learning=_save_reference_learning(rows)
  verified_count=sum(item.get('status')=='verified_reference' for item in rows)
+ game_stats={}
+ for game in GAMES:
+  game_rows=[item for item in rows if item.get('game')==game]
+  game_stats[game]={'name':GAME_DISPLAY_NAMES[game],'candidates':len(game_rows),
+                    'with_image_url':sum(bool(item.get('image_url')) for item in game_rows),
+                    'validated_images':sum(bool(item.get('image_validated')) for item in game_rows),
+                    'ocr_readable':sum(bool(item.get('ocr_label_text')) for item in game_rows),
+                    'verified_references':sum(item.get('status')=='verified_reference' for item in game_rows),
+                    'quarantined':sum(item.get('status')!='verified_reference' for item in game_rows)}
  provider_counts=collections.Counter(str(item.get('search_provider') or 'unknown') for item in rows)
  for source in SOURCES:
   stats.setdefault(source['id'],{'candidates':0,'image_hits':0,'verified_hits':0,'errors':0,'queries':0,'not_run_this_cycle':True})
@@ -804,10 +827,12 @@ def collect()->dict:
                      'image_label_conflicts':int(image_conflict_stats.get('image_label_conflicts',0)),
                      'adaptive_timeout_seconds':adaptive_timeout_seconds,'elapsed_seconds':0.0,'next_timeout_seconds':adaptive_timeout_seconds},
           'image_probe_stats':image_stats,'official_verification_stats':official_stats,
+          'game_stats':game_stats,
           'provider_stats':dict(sorted(provider_counts.items(),key=lambda pair:(-pair[1],pair[0]))),
           'source_stats':stats,'errors':errors[:100],
           'configuration':{'google_cse_configured':google_configured,'google_cse_note':'existing customers only; public search fallbacks stay enabled',
                            'ebay_oauth_configured':ebay_configured,'ebay_client_credentials_supported':True,
+                           'games_targeted':list(GAMES),'game_collection_balance':'round_robin_per_source',
                            'amazon_mode':'public search fallback; deprecated PA-API is not called',
                            'kream_daangn_mode':'public search-index candidates only; login bypass disabled'},
           'policy':{'public_only':True,'login_bypass':False,'seller_label_is_official':False,'official_registry_match_required':True,
