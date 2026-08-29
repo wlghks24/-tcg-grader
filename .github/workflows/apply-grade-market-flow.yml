@@ -1,0 +1,37 @@
+name: Apply Grade Market Flow
+on:
+  push:
+    branches: [main]
+    paths:
+      - grade_market_flow.js
+      - grade_market_flow.css
+      - apply_grade_market_flow_patch.py
+      - .github/workflows/apply-grade-market-flow.yml
+permissions:
+  contents: write
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Apply UI integration
+        run: python apply_grade_market_flow_patch.py
+      - name: Validate integration
+        run: |
+          grep -q 'grade_market_flow.css' index.html
+          grep -q 'grade_market_flow.js' index.html
+          grep -q 'identityCardName' index.html
+          grep -q 'identityCardNumber' index.html
+          grep -q 'gradingEconomics' index.html
+          grep -q 'tcgLastGrades' index.html
+      - name: Commit generated index
+        run: |
+          if git diff --quiet -- index.html; then exit 0; fi
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add index.html
+          git commit -m 'feat: integrate automatic card grading market flow'
+          git push
