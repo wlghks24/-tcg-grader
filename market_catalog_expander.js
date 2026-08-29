@@ -1,8 +1,8 @@
 (()=>{
 'use strict';
-const esc=v=>String(v??'');
 function prefFromSignal(v){const n=Number(v||0);return n>=82?'매우 높음':n>=68?'높음':n>=52?'보통':'관찰 중'}
-function addOrEnrich(row,key,value){
+function hasPrice(value){const d=String(value?.display||'').trim();return !!d&&!/가격 확인 중|확인 중|미정/.test(d)}
+function addOrEnrich(_row,key,value){
   if(!Array.isArray(window.COUNTRY_BOX_DATA)&&typeof COUNTRY_BOX_DATA==='undefined')return false;
   const arr=typeof COUNTRY_BOX_DATA!=='undefined'?COUNTRY_BOX_DATA:window.COUNTRY_BOX_DATA;
   const [country,name,asset]=key.split('|');if(!country||!name||!asset)return false;
@@ -14,14 +14,17 @@ function addOrEnrich(row,key,value){
     if(asset==='HIT'&&!item.hitName)item.hitName=value.card_name||name;
     if(asset==='HIT'&&!item.hit)item.hit=value.card_name||name;
     if(!item.preference||item.preference==='확인 중')item.preference=prefFromSignal(value.preference_signal);
+    if(asset==='BOX'&&hasPrice(value))item.marketTrading=true;
     return false;
   }
-  if(!value.discovered_market)return false;
   const isBox=asset==='BOX';
-  item={country,game,name,native:value.product_name||name,release:value.source_date||'최근 시장 발견',
-    preference:prefFromSignal(value.preference_signal),reason:`다중마켓 ${Math.max(1,(value.source_crosschecks||[]).length)}개 출처 교차발견`,
+  const isTradingBox=isBox&&hasPrice(value);
+  if(!value.discovered_market&&!isTradingBox)return false;
+  item={country,game,name,native:value.product_name||name,release:value.release_date||value.source_date||'최근 시장 발견',
+    preference:prefFromSignal(value.preference_signal),
+    reason:value.discovered_market?`다중마켓 ${Math.max(1,(value.source_crosschecks||[]).length)}개 출처 교차발견`:'현재 공개 시장 가격 신호 확인',
     hit:isBox?'대표 HIT 자동수집 중':(value.card_name||name),hitName:isBox?'대표 HIT 자동수집 중':(value.card_name||name),
-    source:value.source||'',marketDiscovered:true};
+    source:value.source||'',marketDiscovered:!!value.discovered_market,marketTrading:isTradingBox};
   if(isBox&&value.image_url)item.boxImage=value.image_url;
   if(!isBox&&value.image_url)item.cardImage=value.image_url;
   arr.push(item);return true;
