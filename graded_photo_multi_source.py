@@ -10,6 +10,7 @@ truth unless the local verified-certification registry matches company+cert+grad
 from __future__ import annotations
 
 import concurrent.futures
+import base64
 import json, os, re, urllib.parse, urllib.request
 from datetime import datetime, timezone
 from pathlib import Path
@@ -121,6 +122,48 @@ def _allowed_host(host:str,domain:str)->bool:
  host=(host or '').lower().split(':')[0];domain=domain.lower()
  return host==domain or host.endswith('.'+domain)
 
+def _unwrap_target_url(value:str,domain:str)->tuple[str,bool]:
+ raw=str(value or '').strip()
+ if not raw:return '',False
+ current=raw
+ changed=False
+ for _ in range(4):
+  try:p=urllib.parse.urlsplit(current)
+  except ValueError:return '',changed
+  host=(p.hostname or '').lower()
+  if p.scheme=='https' and _allowed_host(host,domain):return current,changed
+  qs=urllib.parse.parse_qs(p.query)
+  target=''
+  for key in ('uddg','url','target','r','q'):
+   vals=qs.get(key)
+   if vals and str(vals[0]).startswith(('http://','https://')):
+    target=urllib.parse.unquote(str(vals[0]));break
+  if not target and qs.get('u'):
+   cand=str(qs['u'][0])
+   try:
+    decoded=urllib.parse.unquote(cand)
+    if decoded.startswith(('http://','https://')):target=decoded
+    elif decoded.startswith('a1'):
+     token=decoded[2:];token += '='*((4-len(token)%4)%4)
+     b=base64.urlsafe_b64decode(token.encode('ascii')).decode('utf-8','ignore')
+     if b.startswith(('http://','https://')):target=b
+   except Exception:pass
+  if not target:
+   # Last-resort extraction from an encoded tracking URL, still revalidated below.
+   decoded=urllib.parse.unquote(current)
+   m=re.search(r'https%?3A(?:%2F|/){2}[^&\s]+',current,re.I)
+   if m:
+    try:target=urllib.parse.unquote(m.group(0))
+    except Exception:target=''
+   elif 'https://' in decoded and decoded!=current:
+    pos=decoded.find('https://');target=decoded[pos:]
+  if not target or target==current:break
+  current=target;changed=True
+ try:p=urllib.parse.urlsplit(current)
+ except ValueError:return '',changed
+ if p.scheme=='https' and _allowed_host(p.hostname or '',domain):return current,changed
+ return '',changed
+
 def _og_image(url:str,domain:str)->str:
  try:
   u=urllib.parse.urlsplit(url)
@@ -181,7 +224,7 @@ def _queries(src:dict,game:str)->tuple[str,...]:
 
 def _discover_source_game(src:dict,game:str)->tuple[list[dict],list[str],int,dict]:
  raw=[];errors=[];queries=0
- diag={'raw_results':0,'domain_matches':0,'company_matches':0}
+ diag={'raw_results':0,'domain_matches':0,'company_matches':0,'resolved_redirects':0}
  for expected_company,q in _queries(src,game):
   queries+=1
   try:
@@ -193,11 +236,12 @@ def _discover_source_game(src:dict,game:str)->tuple[list[dict],list[str],int,dic
   except Exception as exc:errors.append(type(exc).__name__)
  candidates={}
  for r in raw:
-  url=str(r.get('url') or '')
-  try:p=urllib.parse.urlsplit(url)
-  except ValueError:continue
-  if p.scheme!='https' or not _allowed_host(p.hostname or '',src['domain']):continue
-  candidates.setdefault(url,r)
+  raw_url=str(r.get('url') or '')
+  url,resolved=_unwrap_target_url(raw_url,src['domain'])
+  if not url:continue
+  if resolved:diag['resolved_redirects']+=1
+  item=dict(r);item['url']=url;item['_raw_url']=raw_url
+  candidates.setdefault(url,item)
  diag['domain_matches']=len(candidates)
  out=[]
  for idx,(url,r) in enumerate(list(candidates.items())[:MAX_PER_SOURCE]):
@@ -214,7 +258,7 @@ def _discover_source_game(src:dict,game:str)->tuple[list[dict],list[str],int,dic
  return out,errors,queries,diag
 
 def _collect_public_source(src:dict):
- found=[];errors=[];queries=0;diag={'raw_results':0,'domain_matches':0,'company_matches':0}
+ found=[];errors=[];queries=0;diag={'raw_results':0,'domain_matches':0,'company_matches':0,'resolved_redirects':0}
  for game in GAMES:
   rows,err,q,d=_discover_source_game(src,game);found.extend(rows);errors.extend(err);queries+=q
   for k in diag: diag[k]+=int(d.get(k,0))
@@ -307,7 +351,7 @@ def collect()->dict:
  payload={'schema_version':3,'created_at':_now(),'records':rows,
           'summary':{'total_candidates':len(rows),'with_image_url':sum(bool(x.get('image_url')) for x in rows),'verified_references':verified,
                      'quarantined':len(rows)-verified,'sources':len({x.get('source_id') for x in rows}),
-                     'status':'ok' if rows else 'no_candidates','queries_attempted':sum(int(x.get('queries',0)) for x in stats.values()),'markets_this_run':[x['id'] for x in active],'timed_out_sources':sum(bool(x.get('timed_out')) for x in stats.values()),'initial_full_collection':first_full_collection,'previous_candidates':previous_count,'raw_results':sum(int(x.get('raw_results',0)) for x in stats.values()),'domain_matches':sum(int(x.get('domain_matches',0)) for x in stats.values()),'company_matches':sum(int(x.get('company_matches',0)) for x in stats.values())},
+                     'status':'ok' if rows else 'no_candidates','queries_attempted':sum(int(x.get('queries',0)) for x in stats.values()),'markets_this_run':[x['id'] for x in active],'timed_out_sources':sum(bool(x.get('timed_out')) for x in stats.values()),'initial_full_collection':first_full_collection,'previous_candidates':previous_count,'raw_results':sum(int(x.get('raw_results',0)) for x in stats.values()),'domain_matches':sum(int(x.get('domain_matches',0)) for x in stats.values()),'company_matches':sum(int(x.get('company_matches',0)) for x in stats.values()),'resolved_redirects':sum(int(x.get('resolved_redirects',0)) for x in stats.values())},
           'source_stats':stats,'errors':errors[:80],
           'google_cse_configured':bool(os.environ.get('GOOGLE_CSE_KEY') and os.environ.get('GOOGLE_CSE_CX')),
           'ebay_oauth_configured':bool(os.environ.get('EBAY_OAUTH_TOKEN')),
