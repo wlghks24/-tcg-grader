@@ -66,7 +66,7 @@ PUBLIC_STATIC_FILES={
     'vision_calibration.json',
     'releases.json','market_prices.json','market_watch.json',
     'promo_events.json','supplementary_candidates.json','social_event_candidates.json',
-    'purchase_sources.json','purchase_signals.json','exchange_rates.json','inventory_lookup.js','inventory_lookup.css'
+    'purchase_sources.json','purchase_signals.json','exchange_rates.json','inventory_lookup.js','inventory_lookup.css','grading_costs_live.js','grading_costs_live.css'
 }
 SOURCES=[
  ('포켓몬 한국 공식','https://pokemoncard.co.kr/card/category/info1','공식'),
@@ -1183,6 +1183,14 @@ class Handler(SimpleHTTPRequestHandler):
             return self.json(load_json_file(os.path.join(BASE,'web_discovery_candidates.json'),{'updated_at':None,'queries':[],'notice':'아직 수집 전'}))
         if path=='/api/purchase-signals':
             return self.json(load_json_file(os.path.join(BASE,'purchase_signals.json'),{'version':1,'updated_at':None,'items':[]}))
+        if path=='/api/grading-costs':
+            if not self._search_origin_allowed():
+                return self.json({'ok':False,'error':'허용되지 않은 요청 출처'},403)
+            try:
+                from grading_costs_live import get_grading_costs
+                return self.json(get_grading_costs())
+            except Exception:
+                return self.json({'ok':False,'error':'감정비 조회 엔진 오류'},500)
         if path=='/api/inventory-lookup':
             qs=parse_qs(parsed.query)
             q=qs.get('q',[''])[0].strip(); game=qs.get('game',[''])[0].strip()
