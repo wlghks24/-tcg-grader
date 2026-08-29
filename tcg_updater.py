@@ -58,7 +58,7 @@ SEARCH_LIMIT_WINDOW_SECONDS=10.0
 SEARCH_LIMIT_REQUESTS=12
 UPDATE_JOB={
     'id':None,'state':'idle','trigger':None,'started_at':None,'finished_at':None,
-    'current':0,'total':6,'label':'대기 중','file':None,'message':'대기 중',
+    'current':0,'total':7,'label':'대기 중','file':None,'message':'대기 중',
     'error':None,'report':None,'retry_only':False,
 }
 PUBLIC_STATIC_FILES={
@@ -1138,6 +1138,7 @@ class Handler(SimpleHTTPRequestHandler):
         if path=='/api/learning-store': return self.json(learning_store())
         if path=='/api/vision-self-learning': return self.json(load_json_file(VISION_SELF_LEARNING_REPORT,{'version':1,'engine':'v101-isolated-self-learning-calibration','status':'not-run'}))
         if path=='/api/ebay-grader-learning': return self.json(ebay_grader_learning_status())
+        if path=='/api/graded-photo-learning': return self.json(load_json_file(os.path.join(BASE,'graded_photo_candidates.json'),{'schema_version':1,'records':[],'summary':{'total_candidates':0}}))
         if path=='/api/card-identity-learning':
             try:
                 from card_identity_recognition import learning_payload
