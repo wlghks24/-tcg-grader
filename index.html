@@ -288,11 +288,11 @@ async function refreshReleaseInfo(){
  try{
   server=await releaseServerAvailable();
   if(server){
-   btn.textContent="공식자료 수집 중…";status.textContent="PC·태블릿 서버에서 공식 출시·가격자료를 수집 중입니다. 출처 상황에 따라 잠시 기다려 주세요.";siteStatus.textContent="🖥️ 서버 연결됨 · 출시·재발매·시세·행사·구매처·환율 6단계를 백그라운드에서 수집하고 있습니다.";
+   btn.textContent="공식자료 수집 중…";status.textContent="PC·태블릿 서버에서 공식 출시·가격자료를 수집 중입니다. 출처 상황에 따라 잠시 기다려 주세요.";siteStatus.textContent="🖥️ 서버 연결됨 · 출시·재발매·시세·행사·구매처·환율·등급사진 7단계를 백그라운드에서 수집하고 있습니다.";
    if(typeof window.tcgStartUpdateJob!=="function")throw new Error("background updater unavailable");
    const job=await window.tcgStartUpdateJob("/api/run-auto-update","사이트 전체정보 업데이트");
    if(!job?.ok)throw new Error(job?.error||"server update failed");
-   serverMessage="서버 백그라운드 6단계 수집 완료";
+   serverMessage="서버 백그라운드 7단계 수집 완료";
   }
   btn.textContent="화면 갱신 중…";const [loaded,promos,purchases,prices,rates]=await Promise.all([loadReleases(true),loadPromos(true),loadPurchaseSources(true),loadPopularitySignals(true),loadExchangeRates(true)]);
   if("serviceWorker" in navigator){const reg=await navigator.serviceWorker.getRegistration();if(reg)await reg.update()}
