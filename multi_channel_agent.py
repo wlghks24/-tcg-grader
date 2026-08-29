@@ -118,7 +118,7 @@ class MultiChannelCollector:
 
     @classmethod
     def _round_robin_merge(cls, provider_rows: dict[str, list[dict]], limit: int) -> list[dict]:
-        order = ("duckduckgo", "bing_rss", "google_news")
+        order = ("duckduckgo", "bing_rss", "bing_news", "google_news", "naver_news")
         max_len = max((len(provider_rows.get(name, [])) for name in order), default=0)
         merged: list[dict] = []
         for index in range(max_len):
@@ -141,7 +141,7 @@ class MultiChannelCollector:
                 provider_rows.setdefault(provider, []).append(row)
             else:
                 leftovers.append(row)
-        preferred_order = ("duckduckgo", "google_news", "bing_rss")
+        preferred_order = ("duckduckgo", "google_news", "bing_rss", "bing_news", "naver_news")
         max_len = max((len(provider_rows.get(name, [])) for name in preferred_order), default=0)
         mixed: list[dict] = []
         seen: set[str] = set()

@@ -182,12 +182,18 @@ class SearchMethodLearner:
         healthy.sort(reverse=True)
         cooling.sort(reverse=True)
         ordered = [name for _, name in healthy]
+        recovery = cooling[rotation % len(cooling)][1] if cooling else None
         # If everything is cooling down, retry only the best candidate to detect recovery.
-        if not ordered and cooling:
-            ordered = [cooling[0][1]]
-        elif cooling:
-            # One recovery/exploration slot is allowed when budget has room.
-            ordered += [cooling[rotation % len(cooling)][1]]
+        if not ordered and recovery:
+            ordered = [recovery]
+        elif recovery:
+            # A cooled route is never permanently starved. On every fourth routing
+            # cycle reserve the final budget slot for a recovery probe; otherwise
+            # append it only when capacity remains.
+            if budget is not None and int(budget) > 1 and len(ordered) >= int(budget) and rotation % 4 == 0:
+                ordered = ordered[: int(budget) - 1] + [recovery]
+            else:
+                ordered.append(recovery)
         if budget is None:
             return ordered
         return ordered[: max(1, min(len(ordered), int(budget)))]

@@ -294,7 +294,7 @@ def _health_rows(candidates: list[dict], official_sources: dict[str, dict[str, d
     for block in candidates:
         selected.update(block.get("provider_counts") or {})
         pool.update(block.get("provider_pool_counts") or {})
-    for provider in ("duckduckgo", "bing_rss", "google_news"):
+    for provider in ("duckduckgo", "bing_rss", "bing_news", "google_news", "naver_news"):
         error_count = 0
         for block in candidates:
             for err in block.get("collection_errors") or []:
@@ -422,7 +422,7 @@ def run_pipeline():
 
     official_summary = _official_source_summary(keywords, candidates, official_sources, selected_totals)
     payload = {
-        "version": "v117-official-channel-sitemap-health-learning",
+        "version": "v118-adaptive-search-method-health",
         "updated_at": datetime.now().astimezone().isoformat(timespec="seconds"),
         "ok": len(failures) == 0 and not extra_errors and not social_hard_failure,
         "degraded": bool(broad_degraded or extra_errors or social_degraded),
@@ -437,6 +437,7 @@ def run_pipeline():
         "official_youtube_feed": official_summary.get("official_youtube_feed", {}),
         "official_sitemap": official_summary.get("official_sitemap", {}),
         "provider_health": provider_health,
+        "search_method_health": agent.method_learner.report(),
         "supplementary": {
             "candidate_count": len(supplementary.get("items", [])),
             "updated_at": supplementary.get("updated_at"),
