@@ -6,6 +6,7 @@ on:
     paths:
       - 'search_method_learning.py'
       - 'apply_search_method_learning_patch.py'
+      - 'apply_search_method_compat_patch.py'
       - '.github/workflows/apply-search-method-learning.yml'
   workflow_dispatch:
 
@@ -23,7 +24,9 @@ jobs:
         with:
           python-version: '3.12'
       - name: Apply patch
-        run: python apply_search_method_learning_patch.py
+        run: |
+          python apply_search_method_learning_patch.py
+          python apply_search_method_compat_patch.py
       - name: Verify syntax
         run: |
           python -m py_compile search_method_learning.py multi_channel_agent.py adaptive_collection_learner.py auto_pipeline_runner.py
@@ -38,6 +41,7 @@ jobs:
           grep -q 'google_news_broad' multi_channel_agent.py
           grep -q 'naver_news_html' multi_channel_agent.py
           grep -q 'search_method_health' multi_channel_agent.py
+          grep -q '_normalize_once_result' multi_channel_agent.py
       - name: Commit integrated changes
         run: |
           git config user.name 'github-actions[bot]'
