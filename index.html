@@ -224,7 +224,7 @@ function normalizedSocialEventItems(){
   return {...x,name_ko:x.title||"SNS/Google 정보 후보",name_native:x.author||x.publisher||x.source_label||"SNS/Google",start_date:start,end_date:end,claim_deadline:end,
    reward:x.excerpt||"공식 발표와 추가 교차확인이 필요한 후보입니다.",
    condition:`${x.source_label||x.source_kind||"SNS/Google"} · 신뢰도 ${Math.round(Number(x.confidence||0)*100)}% · ${x.status||"후보"}`,
-   location:x.region==="KR"?"대한민국":x.region==="JP"?"일본":x.region==="US"?"미국":"온라인",status:x.status||"SNS/Google 후보",supplementary:true,
+   location:x.location||(x.region==="KR"?"대한민국":x.region==="JP"?"일본":x.region==="US"?"미국":"온라인"),status:x.status||"SNS/Google 후보",supplementary:true,
    source_grade:official?"official-social":cross?"cross":"supplementary",verification_source:x.verification_origin||x.publisher_url||null}
  })
 }

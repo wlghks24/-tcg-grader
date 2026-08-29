@@ -183,7 +183,41 @@
       "manual": true,
       "role": "community_watch",
       "verification_note": "공개 커뮤니티 정보 발견용 감시채널. 공식 출처가 아니며 단독으로 확정정보 승격 금지."
+    },
+    {
+      "platform": "instagram",
+      "username": "pokemon_korea_official",
+      "game": "포켓몬 카드",
+      "region": "KR",
+      "profile_url": "https://www.instagram.com/pokemon_korea_official/",
+      "trusted": false,
+      "manual": true,
+      "role": "official_candidate_event_watch",
+      "evidence": "user_provided_verified_badge_screenshot",
+      "verification_note": "사용자 제공 Instagram 스토리 캡처에서 인증 배지가 보이는 최신 행사 발견 채널. 공식 웹/공식 API 교차확인 전 trusted=true 또는 공식확정으로 자동승격 금지."
+    },
+    {
+      "platform": "instagram",
+      "username": "poke_vending_machine",
+      "game": "포켓몬 카드",
+      "region": "KR",
+      "profile_url": "https://www.instagram.com/poke_vending_machine/",
+      "trusted": false,
+      "manual": true,
+      "role": "community_stock_watch",
+      "verification_note": "포켓몬 카드 자판기 재고·운영상태 발견용 커뮤니티 채널. 공식 재고로 자동승격 금지."
+    },
+    {
+      "platform": "instagram",
+      "username": "ttosatda",
+      "game": "포켓몬 카드",
+      "region": "KR",
+      "profile_url": "https://www.instagram.com/ttosatda/",
+      "trusted": false,
+      "manual": true,
+      "role": "community_stock_watch",
+      "verification_note": "마트·매장 재고 발견용 커뮤니티 채널. 수량·제품명·현재 재고는 공식 조회 또는 점포에서 재확인."
     }
   ],
-  "watch_policy": "watch_accounts는 최신 정보 발견용 보조채널입니다. trusted=false 항목은 공식 검증 전 promo_events.json의 확정정보로 자동승격하지 않습니다."
+  "watch_policy": "watch_accounts는 최신 행사·재고 발견용 보조채널입니다. trusted=false 항목은 공식 검증 전 확정 행사 또는 공식 실시간 재고로 자동승격하지 않습니다. stock_watch는 행사 후보 검색에서 분리합니다."
 }

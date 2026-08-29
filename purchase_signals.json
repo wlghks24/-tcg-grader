@@ -1,6 +1,65 @@
 {
-  "version": 1,
-  "updated_at": null,
-  "items": [],
-  "notice": "실시간 검색은 사용자가 구매처 검색을 실행할 때 수집합니다. 실제 재고와 후기 신호를 구분해 표시합니다."
+  "version": 2,
+  "updated_at": "2026-08-29",
+  "items": [
+    {
+      "id": "user-20260829-poke-vending-gundae",
+      "game": "Pokemon",
+      "region": "KR",
+      "source_platform": "instagram",
+      "source_username": "poke_vending_machine",
+      "source_url": "https://www.instagram.com/poke_vending_machine/",
+      "location": "건대",
+      "product": "포켓몬 카드 자판기 상품",
+      "status": "operation_stop_report",
+      "status_label": "자판기 스톱·판매중단 제보",
+      "summary": "사용자 제공 Instagram 스토리 캡처에서 '건대 스톱났습니다!' 문구가 확인됨. 기술 오류인지 품절인지 확정하지 않음.",
+      "quantity_claim_min": null,
+      "observed_at": "2026-08-29",
+      "observed_precision": "relative_story_screenshot",
+      "manual_user_evidence": true,
+      "verification_status": "social_unverified",
+      "official_stock": false,
+      "realtime_stock": false,
+      "confidence": 0.55,
+      "score": 48,
+      "ttl_hours": 24,
+      "signals": [
+        "SNS 재고제보",
+        "자판기 스톱 제보",
+        "공식 재고 재확인 필요"
+      ]
+    },
+    {
+      "id": "user-20260829-ttosatda-emart-haeundae",
+      "game": "Pokemon",
+      "region": "KR",
+      "source_platform": "instagram",
+      "source_username": "ttosatda",
+      "source_url": "https://www.instagram.com/ttosatda/",
+      "location": "이마트 해운대점",
+      "product": "포켓몬 카드 BOX (제품명 미확정)",
+      "status": "in_stock_report",
+      "status_label": "재고 있음 제보",
+      "summary": "사용자 제공 Instagram 스토리 캡처에서 '이마트 해운대 20개 이상 재고 있어요' 문구가 확인됨. 사진만으로 정확한 BOX 제품명은 확정하지 않음.",
+      "quantity_claim_min": 20,
+      "quantity_relation": "at_least",
+      "observed_at": "2026-08-29",
+      "observed_precision": "relative_story_screenshot",
+      "manual_user_evidence": true,
+      "verification_status": "social_unverified",
+      "official_stock": false,
+      "realtime_stock": false,
+      "confidence": 0.62,
+      "score": 62,
+      "ttl_hours": 24,
+      "signals": [
+        "SNS 재고제보",
+        "20개 이상 재고 주장",
+        "이마트 공식 재고 재확인 필요"
+      ]
+    }
+  ],
+  "social_stock_signal_count": 2,
+  "notice": "최근 SNS 재고제보 초기자료. 실제 재고는 공식 재고조회·매장 확인이 필요합니다."
 }

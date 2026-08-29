@@ -109,3 +109,88 @@ def search_web_signals(query: str, region: str="KR", game: str="", limit: int=MA
             while len(_CACHE)>MAX_CACHE_ENTRIES:
                 _CACHE.popitem(last=False)
     return result
+
+# v112-social-stock-merge
+# Merge recent social *reports* above public web search results. These rows never
+# become official/realtime inventory; official lookup remains inventory_lookup.py.
+_BASE_SEARCH_WEB_SIGNALS_V112 = search_web_signals
+
+
+def _social_stock_rows_v112(query: str, region: str, game: str, limit: int) -> list[dict]:
+    path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "social_stock_signals.json")
+    try:
+        with open(path, "r", encoding="utf-8") as f:
+            data = json.load(f)
+    except (OSError, ValueError, json.JSONDecodeError):
+        return []
+    items = data.get("items", []) if isinstance(data, dict) else []
+    if not isinstance(items, list):
+        return []
+    tokens = [x.lower() for x in re.findall(r"[0-9A-Za-z가-힣]{2,}", query or "")]
+    common = {"포켓몬","pokemon","카드","cards","card","tcg","box","박스","팩","pack","재고","입고","구매","판매"}
+    meaningful = [x for x in tokens if x not in common]
+    rows = []
+    for raw in items:
+        if not isinstance(raw, dict) or raw.get("stale") is True or raw.get("active") is False:
+            continue
+        if str(raw.get("region") or "") != region:
+            continue
+        if game and str(raw.get("game") or "") != game:
+            continue
+        hay = " ".join(str(raw.get(k) or "") for k in ("product","location","summary","source_username","status_label")).lower()
+        if meaningful and not any(token in hay for token in meaningful):
+            continue
+        score = max(5, min(90, int(raw.get("score") or 50)))
+        qty = raw.get("quantity_claim_min")
+        qty_text = f" · 제보수량 {qty}개 이상" if isinstance(qty, int) else ""
+        label = "높음" if score >= 75 else "보통" if score >= 50 else "낮음"
+        status_label = str(raw.get("status_label") or "SNS 재고제보")
+        location = str(raw.get("location") or "위치 미확정")
+        product = str(raw.get("product") or "제품명 미확정")
+        summary = f"{product} · {status_label}{qty_text}. {str(raw.get('summary') or '')}"[:500]
+        url = str(raw.get("source_url") or raw.get("profile_url") or "")
+        if not url.startswith("https://"):
+            continue
+        rows.append({
+            "title": f"📱 SNS 재고제보 · {location} · {status_label}",
+            "url": url, "summary": summary, "published": str(raw.get("observed_at") or ""),
+            "score": score, "probability": label,
+            "signals": list(raw.get("signals") or ["SNS 재고제보", "공식 재고 재확인 필요"]),
+            "source_type": "SNS 재고제보", "verification_status": "미검증 제보",
+            "official_stock": False, "realtime_stock": False,
+            "source_username": raw.get("source_username"), "location": raw.get("location"),
+            "product": raw.get("product"), "quantity_claim_min": raw.get("quantity_claim_min"),
+        })
+        if len(rows) >= limit:
+            break
+    return rows
+
+
+def search_web_signals(query: str, region: str="KR", game: str="", limit: int=MAX_ITEMS) -> dict:
+    social_rows = _social_stock_rows_v112(query, region, game, max(1, min(int(limit or MAX_ITEMS), MAX_ITEMS)))
+    try:
+        base = _BASE_SEARCH_WEB_SIGNALS_V112(query, region, game, limit)
+    except Exception as exc:
+        if not social_rows:
+            raise
+        base = {"ok": False, "items": [], "error": f"웹검색 오류: {type(exc).__name__}"}
+    base_items = base.get("items", []) if isinstance(base, dict) and isinstance(base.get("items", []), list) else []
+    merged = []
+    seen = set()
+    for row in social_rows + base_items:
+        if not isinstance(row, dict):
+            continue
+        key = (str(row.get("url") or ""), str(row.get("title") or ""))
+        if key in seen:
+            continue
+        seen.add(key); merged.append(row)
+    out = dict(base) if isinstance(base, dict) else {}
+    out["ok"] = bool(out.get("ok") or social_rows)
+    out["items"] = merged[:max(1, min(int(limit or MAX_ITEMS), MAX_ITEMS))]
+    out["social_stock_count"] = len(social_rows)
+    out["social_stock_policy"] = "SNS 재고제보는 공식 실시간 재고가 아니며 공식 재고조회 또는 점포 확인이 필요합니다."
+    if social_rows and not base.get("ok"):
+        out["degraded"] = True
+    out["notice"] = "공식 재고조회와 SNS 제보를 분리합니다. SNS 수량·품절·스톱 정보는 최근 참고 신호이며 판매처에서 최종 확인하세요."
+    return out
+

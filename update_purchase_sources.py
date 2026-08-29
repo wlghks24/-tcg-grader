@@ -479,6 +479,19 @@ def main() -> dict:
         for category in sorted(RETAILER_CATEGORIES)
     }
     current["inventory_policy"] = "개별 오프라인 점포 취급·재고는 검증하지 않았으며 방문 전 확인이 필요합니다."
+    # v112: keep social stock discovery inside existing auto-update step 5.
+    # It produces reference signals only and can never overwrite official inventory capabilities.
+    try:
+        import social_stock_discovery
+        stock = social_stock_discovery.main()
+        summary = stock.get("summary", {}) if isinstance(stock, dict) else {}
+        current["social_stock_signal_count"] = int(summary.get("active_signals") or 0)
+        current["social_stock_stale_count"] = int(summary.get("stale_signals") or 0)
+        current["social_stock_updated_at"] = stock.get("updated_at") if isinstance(stock, dict) else None
+        current["social_stock_collection_mode"] = "step5-public-search-reference-only"
+    except Exception as exc:
+        current["social_stock_collection_mode"] = f"degraded-{type(exc).__name__}"
+        current.setdefault("collection_errors", []).append(f"SNS 재고제보 수집: {type(exc).__name__}")
     atomic_write_json(DATA,current)
     return current
 

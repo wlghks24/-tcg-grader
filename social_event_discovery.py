@@ -478,7 +478,9 @@ def _ddg_social_one(game: str, region: str, registry: dict) -> tuple[list[dict],
     name_expr = " OR ".join(f'"{x}"' for x in names); terms = EVENT_TERMS[lang]
     watch_names = []
     for account in registry.get("watch_accounts", []):
-        if not isinstance(account, dict) or account.get("game") != game or account.get("region") != region:
+        role = str(account.get("role") or "") if isinstance(account, dict) else ""
+        if (not isinstance(account, dict) or account.get("game") != game or account.get("region") != region
+                or "stock" in role):
             continue
         username = str(account.get("username") or "").strip().lstrip("@")
         if username:
@@ -570,7 +572,7 @@ def _previous_rows(previous: dict | None) -> list[dict]:
         if not isinstance(raw, dict): continue
         # Keep manually/officially verified or cross-checked items. Old undated low-confidence
         # search noise expires after refresh rather than accumulating forever.
-        important = raw.get("verified") is True or raw.get("official_account_verified") is True or raw.get("cross_checked") is True
+        important = (raw.get("verified") is True or raw.get("official_account_verified") is True or raw.get("cross_checked") is True or raw.get("manual_user_evidence") is True)
         dates = [x for x in raw.get("dates", []) if isinstance(x, str) and re.fullmatch(r"20\d{2}-\d{2}-\d{2}", x)]
         not_too_old = True
         if dates:
