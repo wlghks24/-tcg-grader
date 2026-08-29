@@ -1,0 +1,29 @@
+name: Apply graded photo Bing image fallback
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'apply_graded_photo_bing_image_fallback.py'
+      - '.github/workflows/apply-graded-photo-bing-image-fallback.yml'
+permissions:
+  contents: write
+jobs:
+  apply:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: python apply_graded_photo_bing_image_fallback.py
+      - run: python -m py_compile graded_photo_multi_source.py
+      - run: |
+          if git diff --quiet; then
+            echo 'No changes'
+            exit 0
+          fi
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add graded_photo_multi_source.py
+          git commit -m 'fix: add Bing image fallback for graded photo collection'
+          git push
