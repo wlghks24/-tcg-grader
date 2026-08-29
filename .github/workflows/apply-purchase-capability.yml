@@ -1,0 +1,32 @@
+name: Apply Purchase Capability Labels
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'apply_purchase_capability_patch.py'
+      - '.github/workflows/apply-purchase-capability.yml'
+permissions:
+  contents: write
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.x'
+      - name: Apply capability patch
+        run: python apply_purchase_capability_patch.py
+      - name: Validate labels
+        run: |
+          grep -q '재고조회 지원' index.html
+          grep -q '매장찾기·전화확인' index.html
+          grep -q '출처 ${score}' index.html
+      - name: Commit generated index
+        run: |
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add index.html
+          git diff --cached --quiet && exit 0
+          git commit -m 'ui: distinguish stock lookup from store information'
+          git push
