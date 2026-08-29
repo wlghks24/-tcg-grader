@@ -33,3 +33,7 @@ storage_optimization_report.json
 # Social stock source performance learning is device-local.
 social_stock_learning.json
 social_stock_learning.json.bak
+
+# Adaptive public-search method health is device-local runtime state.
+search_method_learning.json
+search_method_learning.json.bak
