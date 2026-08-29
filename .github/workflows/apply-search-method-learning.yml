@@ -1,0 +1,49 @@
+name: Apply adaptive search method routing
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'search_method_learning.py'
+      - 'apply_search_method_learning_patch.py'
+      - '.github/workflows/apply-search-method-learning.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Apply patch
+        run: python apply_search_method_learning_patch.py
+      - name: Verify syntax
+        run: |
+          python -m py_compile search_method_learning.py multi_channel_agent.py adaptive_collection_learner.py auto_pipeline_runner.py
+      - name: Run focused tests
+        run: |
+          python -m unittest test_search_method_learning.py
+          if [ -f test_adaptive_collection_learner.py ]; then python -m unittest test_adaptive_collection_learner.py; fi
+      - name: Verify integration markers
+        run: |
+          grep -q 'SearchMethodLearner' multi_channel_agent.py
+          grep -q 'bing_news_rss' multi_channel_agent.py
+          grep -q 'google_news_broad' multi_channel_agent.py
+          grep -q 'naver_news_html' multi_channel_agent.py
+          grep -q 'search_method_health' multi_channel_agent.py
+      - name: Commit integrated changes
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add multi_channel_agent.py .gitignore test_search_method_learning.py
+          if ! git diff --cached --quiet; then
+            git commit -m 'feat: integrate adaptive multi-method search routing'
+            git push origin main
+          fi
