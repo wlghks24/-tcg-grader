@@ -8,6 +8,7 @@ where py.exe >nul 2>nul
 if errorlevel 1 goto CHECK_PYTHON
 py.exe -3 -c "import sys; sys.exit(sys.version_info.major != 3)" >nul 2>nul
 if errorlevel 1 goto CHECK_PYTHON
+if exist "storage_optimizer.py" py.exe -3 storage_optimizer.py
 py.exe -3 tcg_updater.py
 goto FINISH
 :CHECK_PYTHON
@@ -15,6 +16,7 @@ where python.exe >nul 2>nul
 if errorlevel 1 goto NO_PYTHON
 python.exe -c "import sys; sys.exit(sys.version_info.major != 3)" >nul 2>nul
 if errorlevel 1 goto NO_PYTHON
+if exist "storage_optimizer.py" python.exe storage_optimizer.py
 python.exe tcg_updater.py
 goto FINISH
 :MISSING_FILES
