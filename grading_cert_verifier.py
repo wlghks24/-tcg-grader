@@ -3,7 +3,9 @@
 """Conservative official certification lookup for supported grading companies."""
 from __future__ import annotations
 
+from datetime import timezone
 import html
+from email.utils import parsedate_to_datetime
 import re
 import time
 from urllib.error import HTTPError, URLError
@@ -91,9 +93,17 @@ def _request(company, url, timeout=10):
 def _retry_after_seconds(exc):
     try:
         value = (getattr(exc, "headers", None) or {}).get("Retry-After")
-        seconds = float(value)
+        if value is None:
+            return None
+        try:
+            seconds = float(value)
+        except (TypeError, ValueError):
+            retry_at = parsedate_to_datetime(str(value))
+            if retry_at.tzinfo is None:
+                retry_at = retry_at.replace(tzinfo=timezone.utc)
+            seconds = retry_at.timestamp() - time.time()
         return max(0.0, min(seconds, 86400.0))
-    except (AttributeError, TypeError, ValueError):
+    except (AttributeError, OverflowError, TypeError, ValueError):
         return None
 
 
@@ -205,7 +215,13 @@ def verify_cert(company, cert, expected_grade=None, timeout=10):
         "expected_grade": expected_grade, "mode": "official_lookup",
     }
     try:
-        raw, http_status, final_url = _fetch(company, url, timeout=timeout, retries=1)
+        fetched = _fetch(company, url, timeout=timeout, retries=1)
+        # Keep the parser testable with the historical text-only fetch contract
+        # while production requests return body + status + final URL metadata.
+        if isinstance(fetched, tuple) and len(fetched) == 3:
+            raw, http_status, final_url = fetched
+        else:
+            raw, http_status, final_url = fetched, 200, url
         result["http_status"] = http_status
         result["final_url"] = final_url
         evidence = _page_evidence(company, cert, _text(raw))
@@ -230,8 +246,8 @@ def verify_cert(company, cert, expected_grade=None, timeout=10):
     except HTTPError as exc:
         status = int(getattr(exc, "code", 0) or 0)
         retry_after = _retry_after_seconds(exc)
-        # Short fallback delay when the provider gives no Retry-After. This avoids
-        # the old local 30-minute/2-hour lockout while still not hammering a site.
+        # Short conservative fallbacks: the collector persists the exact expiry
+        # and will not retry this company while it is active.
         default_cooldown = 300.0 if status == 429 else (900.0 if status in {401, 403, 407} else 0.0)
         if status in BLOCKING_HTTP_STATUSES:
             recommended = max(default_cooldown, float(retry_after or 0.0))

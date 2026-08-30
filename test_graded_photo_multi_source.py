@@ -44,7 +44,8 @@ class GradedPhotoMultiSourceTests(unittest.TestCase):
         source=next(x for x in g.SOURCES if x['id']=='ebay_public')
         def query_rows(query,_limit):
             company=next((name for name in ('BGS','CGC') if name in query),'PSA')
-            return ([{'title':f'{company} 10 graded card','url':f'https://www.ebay.com/itm/{company.lower()}'}],[])
+            return ([{'title':f'{company} 10 graded card','url':f'https://www.ebay.com/itm/{company.lower()}',
+                       'image_url':f'https://images.example/{company.lower()}.jpg'}],[])
         with mock.patch.object(g,'_queries',return_value=(('ALL','broad'),('PSA','psa query'))), \
              mock.patch.object(g,'grader_collection_targets',return_value=['PSA','BGS','CGC','TAG','BRG']), \
              mock.patch.object(g,'_query_rows',side_effect=query_rows), \
@@ -96,6 +97,23 @@ class GradedPhotoMultiSourceTests(unittest.TestCase):
         self.assertEqual(len(rows),g.MAX_PER_SOURCE)
         self.assertEqual(diag['game_candidates'],{'pokemon':8,'onepiece':8,'naruto':8})
         self.assertEqual(diag['company_candidates'],{'PSA':12,'BGS':3,'CGC':3,'TAG':3,'BRG':3})
+
+    def test_global_candidate_cap_preserves_all_game_grader_buckets(self):
+        rows=[]
+        for company in g.COMPANIES:
+            for game in g.GAMES:
+                rows.append({'company':company,'game':game,'url':f'https://example.com/{company}/{game}',
+                             'image_url':'https://images.example/card.jpg','source_weight':.5})
+        rows.extend({'company':'PSA','game':'pokemon','url':f'https://example.com/psa-extra-{index}',
+                     'image_url':'https://images.example/extra.jpg','source_weight':.1} for index in range(100))
+        preferred={'company':'PSA','game':'pokemon','url':'https://example.com/psa-official','official_result':True,
+                   'certification_id':'12345678','grade':10,'image_url':'https://images.example/official.jpg','source_weight':.9}
+        rows.append(preferred)
+        selected,stats=g._balanced_candidate_selection(rows,15)
+        self.assertEqual(stats['covered_game_grader_buckets'],15)
+        self.assertEqual(len(selected),15)
+        self.assertIn(preferred,selected)
+        self.assertTrue(all(stats['matrix'][company][game]==1 for company in g.COMPANIES for game in g.GAMES))
 
     def test_image_search_never_defaults_unknown_grader_to_psa(self):
         source=next(x for x in g.SOURCES if x['id']=='ebay_public')
@@ -154,6 +172,25 @@ class GradedPhotoMultiSourceTests(unittest.TestCase):
         priorities=list(enumerate(rows))
         selected=evidence._balanced_probe_selection(priorities,5)
         self.assertEqual({row['company'] for _,row in selected},set(g.COMPANIES))
+
+    def test_ocr_budget_interleaves_all_graders_before_second_company_slot(self):
+        rows=[{'company':company,'game':game,'image_url':f'https://images.example/{company}-{game}.jpg'}
+              for company in g.COMPANIES for game in g.GAMES]
+        selected=evidence._balanced_probe_selection(list(enumerate(rows)),5)
+        self.assertEqual({row['company'] for _,row in selected},set(g.COMPANIES))
+        game_counts={game:sum(row['game']==game for _,row in selected) for game in g.GAMES}
+        self.assertLessEqual(max(game_counts.values())-min(game_counts.values()),1)
+
+    def test_ocr_budget_prefers_unvalidated_certified_candidate(self):
+        rows=[
+            {'company':'PSA','game':'pokemon','image_url':'https://images.example/unknown.jpg','source_weight':.9},
+            {'company':'PSA','game':'pokemon','image_url':'https://images.example/certified.jpg','source_weight':.5,
+             'certification_id':'12345678','grade':10},
+        ]
+        probe={'ok':False,'error':'test'}
+        with mock.patch.object(evidence,'probe_image',return_value=probe) as called:
+            evidence.enrich_rows(rows,limit=1,workers=1)
+        self.assertEqual(called.call_args.args[0],'https://images.example/certified.jpg')
 
     def test_gallery_probe_selects_better_alternate_photo(self):
         row={'company':'BGS','game':'pokemon','image_url':'https://images.example/primary.jpg',
@@ -309,6 +346,45 @@ class GradedPhotoMultiSourceTests(unittest.TestCase):
             _,stats=g._official_verify_rows(rows,{},max_live=5)
         self.assertEqual(stats['live_attempts'],5)
         self.assertEqual(stats['company_live_attempts'],{company:1 for company in g.COMPANIES})
+
+    def test_official_cache_429_uses_provider_retry_after(self):
+        self.assertEqual(g._official_cache_ttl_seconds({
+            'http_status':429,'blocked_or_challenged':True,'retry_after_seconds':420,
+        }),420)
+        self.assertEqual(g._official_cache_ttl_seconds({'verified':True}),30*86400)
+
+    def test_fresh_429_cache_defers_without_network_retry(self):
+        row={'company':'PSA','game':'pokemon','grade':10,'certification_id':'12345678'}
+        now=1_000_000.0
+        cached={'schema_version':2,'entries':{'PSA:12345678':{
+            'checked_epoch':now-10,'expires_epoch':now+290,'cache_ttl_seconds':300,
+            'result':{'http_status':429,'blocked_or_challenged':True,
+                      'recommended_cooldown_seconds':300},
+        }}}
+        with tempfile.TemporaryDirectory() as directory, \
+             mock.patch.object(g,'OFFICIAL_CACHE',Path(directory)/'cache.json'), \
+             mock.patch.object(g.time,'time',return_value=now), \
+             mock.patch.object(g,'_load',return_value=cached), \
+             mock.patch.object(g,'verify_cert') as verifier:
+            _,stats=g._official_verify_rows([row],{},max_live=5)
+        verifier.assert_not_called()
+        self.assertEqual(stats['deferred_by_cooldown'],1)
+        self.assertEqual(stats['company_deferred']['PSA'],1)
+        self.assertEqual(stats['next_retry_seconds'],290)
+
+    def test_live_lookup_budget_is_fair_with_all_fifteen_buckets(self):
+        rows=[]
+        for company_index,company in enumerate(g.COMPANIES):
+            for game_index,game in enumerate(g.GAMES):
+                rows.append({'company':company,'game':game,'grade':10,
+                             'certification_id':f'{company_index+1}{game_index+1}000000'})
+        with tempfile.TemporaryDirectory() as directory, \
+             mock.patch.object(g,'OFFICIAL_CACHE',Path(directory)/'cache.json'), \
+             mock.patch.object(g,'verify_cert',return_value={'verified':False,'notice':'not found'}):
+            _,stats=g._official_verify_rows(rows,{},max_live=5)
+        self.assertEqual(stats['company_live_attempts'],{company:1 for company in g.COMPANIES})
+        game_attempts=list(stats['game_live_attempts'].values())
+        self.assertLessEqual(max(game_attempts)-min(game_attempts),1)
 
     def test_registry_seed_is_visible_without_marketplace_hit(self):
         seeds=g._registry_seed_rows()

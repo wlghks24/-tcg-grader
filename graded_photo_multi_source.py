@@ -113,6 +113,49 @@ def _candidate_key(item:dict):
   return ('cert',company,cert,grade_key)
  return ('url',str(item.get('url') or ''))
 
+def _candidate_retention_score(item:dict)->tuple:
+ return (
+  int(item.get('official_result') is True and not item.get('evidence_conflicts')),
+  int(item.get('measurement_photo_ready') is True),
+  int(item.get('image_validated') is True),
+  int(bool(normalize_cert(item.get('certification_id'))) and item.get('grade') is not None),
+  int(bool(item.get('image_url'))),
+  _finite_number(item.get('measurement_photo_quality')),
+  _finite_number(item.get('source_weight')),
+ )
+
+def _fair_company_game_keys(buckets:dict)->list[tuple[str,str]]:
+ companies=COMPANIES;games=GAMES;keys=[]
+ for game_round in range(len(games)):
+  for company_index,company in enumerate(companies):
+   key=(company,games[(game_round+company_index)%len(games)])
+   if key in buckets and key not in keys:keys.append(key)
+ company_order={name:index for index,name in enumerate((*companies,'UNKNOWN'))};game_order={name:index for index,name in enumerate((*games,'unknown'))}
+ keys.extend(key for key in sorted(buckets,key=lambda value:(company_order.get(value[0],99),game_order.get(value[1],99),value)) if key not in keys)
+ return keys
+
+def _balanced_candidate_selection(rows:list[dict],limit:int)->tuple[list[dict],dict]:
+ """Preserve rare game×grader rows when the accumulated 600-row cap is hit."""
+ buckets={}
+ for item in rows:
+  company=str(item.get('company') or 'unknown').upper();game=str(item.get('game') or 'unknown').lower()
+  if company not in COMPANIES:company='UNKNOWN'
+  if game not in GAMES:game='unknown'
+  buckets.setdefault((company,game),[]).append(item)
+ for bucket_rows in buckets.values():bucket_rows.sort(key=_candidate_retention_score,reverse=True)
+ keys=_fair_company_game_keys(buckets);positions={key:0 for key in keys};selected=[]
+ while len(selected)<max(0,int(limit)):
+  progressed=False
+  for key in keys:
+   position=positions[key]
+   if position>=len(buckets[key]):continue
+   selected.append(buckets[key][position]);positions[key]=position+1;progressed=True
+   if len(selected)>=limit:break
+  if not progressed:break
+ matrix={company:{game:sum(str(item.get('company') or '').upper()==company and str(item.get('game') or '').lower()==game for item in selected) for game in GAMES} for company in COMPANIES}
+ return selected,{'input_candidates':len(rows),'retained_candidates':len(selected),'dropped_by_cap':max(0,len(rows)-len(selected)),
+                  'covered_game_grader_buckets':sum(count>0 for games in matrix.values() for count in games.values()),'matrix':matrix}
+
 def _company(text:str)->str:
  for c,p in COMPANY_PATTERNS.items():
   if p.search(text or ''):return c
@@ -481,7 +524,7 @@ def _discover_source_game(src:dict,game:str)->tuple[list[dict],list[str],int,dic
  # A source returning only PSA/BGS candidates receives a small bounded recovery
  # pass for the weakest company routes. Search failure remains diagnostic and no
  # recovered listing is trusted until image OCR + official certification match.
- seen_companies={_company(' '.join((str(item.get('title') or ''),str(item.get('snippet') or '')))) for item in raw if isinstance(item,dict)}
+ seen_companies={_company(' '.join((str(item.get('title') or ''),str(item.get('snippet') or '')))) for item in raw if isinstance(item,dict) and bool(item.get('image_url'))}
  seen_companies.discard('')
  recovery_order=grader_collection_targets(query_sid,game,count=len(COMPANIES),cycle=route_run_count(query_sid,game))
  recovery_budget=1 if 'com.termux' in os.environ.get('PREFIX','') else MAX_RECOVERY_QUERIES_PER_GAME
@@ -687,9 +730,7 @@ def _balanced_official_verification_indices(rows:list[dict],eligible:set[int],li
         if index not in eligible:continue
         company=str(item.get('company') or '').upper();game=str(item.get('game') or 'unknown').lower()
         buckets.setdefault((company,game),[]).append(index)
-    company_order={name:index for index,name in enumerate((*COMPANIES,'UNKNOWN'))}
-    game_order={name:index for index,name in enumerate((*GAMES,'unknown'))}
-    keys=sorted(buckets,key=lambda key:(company_order.get(key[0],99),game_order.get(key[1],99),key))
+    keys=_fair_company_game_keys(buckets)
     positions={key:0 for key in keys};selected=[]
     while len(selected)<max(0,int(limit)):
         progressed=False
@@ -701,10 +742,36 @@ def _balanced_official_verification_indices(rows:list[dict],eligible:set[int],li
         if not progressed:break
     return selected
 
+def _official_cache_ttl_seconds(result:dict)->int:
+    """Choose a result-specific cache TTL instead of hiding every result for 7 days."""
+    result=result if isinstance(result,dict) else {}
+    try:status=int(result.get('http_status') or 0)
+    except (TypeError,ValueError,OverflowError):status=0
+    if result.get('verified') is True:return 30*86400
+    if result.get('conflict') is True:return 7*86400
+    if status==429:
+        value=result.get('retry_after_seconds') or result.get('recommended_cooldown_seconds') or 300
+        return int(max(60,min(_finite_number(value,300),86400)))
+    if status in {401,403,407}:
+        value=result.get('retry_after_seconds') or result.get('recommended_cooldown_seconds') or 900
+        return int(max(300,min(_finite_number(value,900),86400)))
+    if result.get('transient_error') is True:return 15*60
+    if result.get('lookup_error'):return 30*60
+    return 24*60*60
+
+def _official_cache_fresh(entry:dict,now:float)->bool:
+    if not isinstance(entry,dict):return False
+    try:
+        if entry.get('expires_epoch') is not None:return now<float(entry['expires_epoch'])
+        return now-float(entry.get('checked_epoch',0) or 0)<7*86400
+    except (TypeError,ValueError,OverflowError):return False
+
 def _official_verify_rows(rows:list[dict],registry:dict,max_live:int=10)->tuple[list[dict],dict]:
  cache=_load(OFFICIAL_CACHE,{})
  entries=cache.get('entries',{}) if isinstance(cache.get('entries'),dict) else {}
  now=time.time();live=0;stats={'registry_matches':0,'live_attempts':0,'live_verified':0,'conflicts':0,'unavailable':0,
+                              'deferred_by_cooldown':0,'company_deferred':{company:0 for company in COMPANIES},
+                              'next_retry_seconds':None,
                               'company_live_attempts':{company:0 for company in COMPANIES},
                               'game_live_attempts':{game:0 for game in GAMES}}
  eligible=set()
@@ -714,7 +781,7 @@ def _official_verify_rows(rows:list[dict],registry:dict,max_live:int=10)->tuple[
   except (TypeError,ValueError,OverflowError):grade=None
   if company not in COMPANIES or not cert or grade is None or (company,cert) in registry:continue
   cached=entries.get(f'{company}:{cert}') if isinstance(entries.get(f'{company}:{cert}'),dict) else None
-  if not (cached and now-float(cached.get('checked_epoch',0) or 0)<7*86400):eligible.add(index)
+  if not _official_cache_fresh(cached,now):eligible.add(index)
  live_targets=set(_balanced_official_verification_indices(rows,eligible,max_live))
  output=[]
  for index,raw in enumerate(rows):
@@ -736,15 +803,22 @@ def _official_verify_rows(rows:list[dict],registry:dict,max_live:int=10)->tuple[
    output.append(item);continue
   key=f'{company}:{cert}'
   cached=entries.get(key) if isinstance(entries.get(key),dict) else None
-  fresh=bool(cached and now-float(cached.get('checked_epoch',0) or 0)<7*86400)
+  fresh=_official_cache_fresh(cached,now)
   if fresh:
    result=cached.get('result') if isinstance(cached.get('result'),dict) else {}
+   if result.get('blocked_or_challenged') is True or int(result.get('http_status') or 0) in {401,403,407,429}:
+    stats['deferred_by_cooldown']+=1;stats['company_deferred'][company]+=1
+    try:remaining=max(0,int(float(cached.get('expires_epoch',now))-now))
+    except (TypeError,ValueError,OverflowError):remaining=0
+    current=stats['next_retry_seconds']
+    stats['next_retry_seconds']=remaining if current is None else min(current,remaining)
   elif index in live_targets and live<max_live:
    result=verify_cert(company,cert,expected_grade=grade,timeout=10);live+=1;stats['live_attempts']+=1
    stats['company_live_attempts'][company]+=1
    game=str(item.get('game') or '').lower()
    if game in GAMES:stats['game_live_attempts'][game]+=1
-   entries[key]={'checked_epoch':now,'result':result}
+   ttl=_official_cache_ttl_seconds(result)
+   entries[key]={'checked_epoch':now,'expires_epoch':now+ttl,'cache_ttl_seconds':ttl,'result':result}
   else:
    result={}
   if result.get('verified') is True:
@@ -758,7 +832,7 @@ def _official_verify_rows(rows:list[dict],registry:dict,max_live:int=10)->tuple[
    item['official_lookup_status']=str(result.get('lookup_error') or result.get('notice') or 'not_verified')[:180]
    stats['unavailable']+=1
   output.append(item)
- cache={'schema_version':1,'updated_at':_now(),'entries':dict(list(entries.items())[-500:])}
+ cache={'schema_version':2,'updated_at':_now(),'entries':dict(list(entries.items())[-500:])}
  atomic_write_json(OFFICIAL_CACHE,cache,suffix='.official-cache.tmp')
  return output,stats
 
@@ -935,7 +1009,7 @@ def _collect_once()->dict:
   source_sets.setdefault(key,set()).add(str(item.get('source_id') or ''))
   old=dedup.get(key)
   if old is None or _finite_number(item.get('source_weight'))>_finite_number(old.get('source_weight')):dedup[key]=item
- rows=list(dedup.values())[:MAX_ROWS]
+ rows,global_balance_stats=_balanced_candidate_selection(list(dedup.values()),MAX_ROWS)
  for item in rows:
   key=_candidate_key(item)
   item['_dedup_sources']=sorted(x for x in source_sets.get(key,set()) if x)
@@ -997,11 +1071,12 @@ def _collect_once()->dict:
  company_stats={}
  for company in COMPANIES:
   company_rows=[item for item in rows if str(item.get('company') or '').upper()==company]
-  company_stats[company]={'candidates':len(company_rows),'with_image_url':sum(bool(item.get('image_url')) for item in company_rows),
+ company_stats[company]={'candidates':len(company_rows),'with_image_url':sum(bool(item.get('image_url')) for item in company_rows),
                           'validated_images':sum(bool(item.get('image_validated')) for item in company_rows),
                           'ocr_readable':sum(bool(item.get('ocr_label_text')) for item in company_rows),
                           'measurement_ready':sum(item.get('measurement_photo_ready') is True for item in company_rows),
                           'verified_references':sum(item.get('status')=='verified_reference' for item in company_rows),
+                          'games_covered':sum(any(item.get('game')==game for item in company_rows) for game in GAMES),
                           'quarantined':sum(item.get('status')!='verified_reference' for item in company_rows)}
  provider_counts=collections.Counter(str(item.get('search_provider') or 'unknown') for item in rows)
  for source in SOURCES:
@@ -1009,12 +1084,14 @@ def _collect_once()->dict:
  google_configured=bool((os.environ.get('GOOGLE_CSE_KEY') or os.environ.get('GOOGLE_CSE_API_KEY')) and
                         (os.environ.get('GOOGLE_CSE_CX') or os.environ.get('GOOGLE_CSE_ID')))
  ebay_configured=bool(os.environ.get('EBAY_OAUTH_TOKEN') or (os.environ.get('EBAY_CLIENT_ID') and os.environ.get('EBAY_CLIENT_SECRET')))
- payload={'schema_version':6,'engine':'v125-adaptive-grader-gallery-quality-collection','created_at':_now(),'records':rows,
+ payload={'schema_version':7,'engine':'v126-fair-budget-global-balance-collection','created_at':_now(),'records':rows,
           'summary':{'total_candidates':len(rows),'with_image_url':sum(bool(x.get('image_url')) for x in rows),
                      'validated_images':sum(bool(x.get('image_validated')) for x in rows),'ocr_readable':sum(bool(x.get('ocr_label_text')) for x in rows),
                      'certifications_resolved':sum(bool(x.get('certification_id')) for x in rows),'verified_references':verified_count,
                      'measurement_photo_ready':measurement_ready_count,
                      'reference_learning_count':int((reference_learning.get('summary') or {}).get('reference_learning_count',0)),
+                     'game_grader_buckets_covered':int(global_balance_stats.get('covered_game_grader_buckets',0)),
+                     'candidate_cap_dropped':int(global_balance_stats.get('dropped_by_cap',0)),
                      'raw_grade_calibration_eligible':0,'quarantined':len(rows)-verified_count,
                      'sources':len({x.get('source_id') for x in rows if x.get('source_id')}),'status':'ok' if rows else 'no_candidates',
                      'queries_attempted':sum(int(x.get('queries',0) or 0) for x in stats.values()),'markets_this_run':[x['id'] for x in active],
@@ -1034,7 +1111,7 @@ def _collect_once()->dict:
                      'near_duplicate_label_conflicts':int(image_conflict_stats.get('near_duplicate_label_conflicts',0)),
                      'near_duplicate_references_suppressed':int((reference_learning.get('summary') or {}).get('near_duplicates_suppressed',0)),
                      'adaptive_timeout_seconds':adaptive_timeout_seconds,'elapsed_seconds':0.0,'next_timeout_seconds':adaptive_timeout_seconds},
-          'image_probe_stats':image_stats,'official_verification_stats':official_stats,
+          'image_probe_stats':image_stats,'official_verification_stats':official_stats,'global_candidate_balance':global_balance_stats,
           'collection_learning_stats':collection_learning,'collection_learning_feedback':learning_feedback,
           'game_stats':game_stats,'company_stats':company_stats,
           'provider_stats':dict(sorted(provider_counts.items(),key=lambda pair:(-pair[1],pair[0]))),
@@ -1042,7 +1119,9 @@ def _collect_once()->dict:
           'configuration':{'google_cse_configured':google_configured,'google_cse_note':'existing customers only; public search fallbacks stay enabled',
                            'ebay_oauth_configured':ebay_configured,'ebay_client_credentials_supported':True,
                            'games_targeted':list(GAMES),'game_collection_balance':'game_x_grader_round_robin_per_source',
-                           'graders_targeted':list(COMPANIES),'ocr_probe_balance':'game_x_grader_round_robin',
+                           'graders_targeted':list(COMPANIES),'ocr_probe_balance':'latin_interleaved_game_x_grader_fair_budget',
+                           'official_lookup_balance':'latin_interleaved_game_x_grader_fair_budget',
+                           'global_candidate_retention':'quality_first_with_game_x_grader_round_robin',
                            'collection_learning_version':5,'query_strategy':'undercovered-grader recovery plus quality-aware recency-decayed verified-feedback bandit',
                            'company_collection_floor':'one candidate per active source when public results exist',
                            'gallery_photo_selection':'balanced primary probes plus bounded best-photo alternate probes',

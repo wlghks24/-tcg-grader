@@ -17,6 +17,7 @@ import re
 import shutil
 import subprocess
 import tempfile
+from datetime import datetime, timezone
 from typing import Any
 from urllib.request import Request
 
@@ -232,6 +233,12 @@ def probe_image(url: str, fallback_company: str = "", timeout: int = 10) -> dict
 
 def _merge_probe(row: dict[str, Any], probe: dict[str, Any]) -> dict[str, Any]:
     item = dict(row)
+    try:
+        attempts = max(0, min(1000, int(item.get("image_probe_attempts") or 0))) + 1
+    except (TypeError, ValueError, OverflowError):
+        attempts = 1
+    item["image_probe_attempts"] = attempts
+    item["image_probe_last_at"] = datetime.now(timezone.utc).isoformat(timespec="seconds")
     item["image_probe_status"] = "validated" if probe.get("ok") else "failed"
     if not probe.get("ok"):
         item["image_probe_error"] = str(probe.get("error") or "unknown")[:80]
@@ -302,10 +309,15 @@ def _balanced_probe_selection(
         buckets.setdefault((company, game), []).append(pair)
     company_order = {name: index for index, name in enumerate((*COMPANIES, "UNKNOWN"))}
     game_order = {name: index for index, name in enumerate(("pokemon", "onepiece", "naruto", "unknown"))}
-    keys = sorted(
-        buckets,
-        key=lambda key: (company_order.get(key[0], 99), game_order.get(key[1], 99), key),
-    )
+    companies = COMPANIES
+    games = ("pokemon", "onepiece", "naruto")
+    keys: list[tuple[str, str]] = []
+    for game_round in range(len(games)):
+        for company_index, company in enumerate(companies):
+            key = (company, games[(game_round + company_index) % len(games)])
+            if key in buckets and key not in keys:
+                keys.append(key)
+    keys.extend(key for key in sorted(buckets, key=lambda key: (company_order.get(key[0], 99), game_order.get(key[1], 99), key)) if key not in keys)
     positions = {key: 0 for key in keys}
     selected: list[tuple[int, dict[str, Any]]] = []
     seen_urls: set[str] = set()
@@ -412,7 +424,9 @@ def enrich_rows(rows: list[dict[str, Any]], limit: int = 12, workers: int = 3) -
         enumerate(rows),
         key=lambda pair: (
             not bool(pair[1].get("image_url")),
-            bool(pair[1].get("certification_id")) and pair[1].get("grade") is not None,
+            pair[1].get("image_validated") is True,
+            _safe_probe_attempts(pair[1].get("image_probe_attempts")),
+            not (bool(pair[1].get("certification_id")) and pair[1].get("grade") is not None),
             -_safe_source_weight(pair[1].get("source_weight", 0)),
         ),
     )
@@ -470,3 +484,10 @@ def _safe_source_weight(value: Any) -> float:
     except (TypeError, ValueError, OverflowError):
         return 0.0
     return number if math.isfinite(number) else 0.0
+
+
+def _safe_probe_attempts(value: Any) -> int:
+    try:
+        return max(0, min(1000, int(value or 0)))
+    except (TypeError, ValueError, OverflowError):
+        return 1000

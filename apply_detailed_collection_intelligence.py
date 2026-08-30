@@ -21,10 +21,13 @@ COLLECTOR_MARKERS=(
     'record_official_feedback',
     'route_run_count',
     'grader_collection_targets',
+    '_balanced_candidate_selection',
+    '_balanced_official_verification_indices',
     'collection_learning_stats',
     "SOURCE_ID_ALIASES={'ebay_public':'ebay'}",
     "'query_strategy':'undercovered-grader recovery plus quality-aware recency-decayed verified-feedback bandit'",
     "'gallery_photo_selection':'balanced primary probes plus bounded best-photo alternate probes'",
+    "'global_candidate_retention':'quality_first_with_game_x_grader_round_robin'",
     "'source_selection_strategy':state.get('source_selection_policy')",
 )
 INTELLIGENCE_MARKERS=(

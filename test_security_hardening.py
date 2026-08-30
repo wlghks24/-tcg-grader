@@ -5,38 +5,37 @@ from pathlib import Path
 import tempfile
 import unittest
 
-from server_security_guard import OfficialLookupGuard, client_network_allowed
+from server_security_guard import OfficialLookupGuard, client_network_allowed, client_network_classification
 
 
 class ServerSecurityGuardTests(unittest.TestCase):
-    def test_public_source_is_rejected_and_lan_or_tailscale_is_allowed(self):
+    def test_public_source_is_rejected_and_lan_is_allowed(self):
         self.assertTrue(client_network_allowed("127.0.0.1"))
         self.assertTrue(client_network_allowed("192.168.0.20"))
         self.assertTrue(client_network_allowed("10.0.0.20"))
         self.assertTrue(client_network_allowed("100.64.1.2"))
         self.assertTrue(client_network_allowed("100.127.255.254"))
+        self.assertTrue(client_network_allowed("fd7a:115c:a1e0::1"))
+        self.assertEqual(client_network_classification("100.64.1.2")["network_class"], "tailscale_ipv4")
+        self.assertEqual(client_network_classification("fd7a:115c:a1e0::1")["network_class"], "tailscale_ipv6")
         self.assertFalse(client_network_allowed("8.8.8.8"))
         self.assertFalse(client_network_allowed("1.1.1.1"))
         self.assertFalse(client_network_allowed("not-an-ip"))
 
-    def test_lookup_guard_only_blocks_fast_duplicate_bursts_locally(self):
-        guard = OfficialLookupGuard(minimum_interval=2, window_seconds=60, max_attempts_per_window=12)
+    def test_lookup_guard_enforces_60_seconds_and_two_per_window(self):
+        guard = OfficialLookupGuard(minimum_interval=60, window_seconds=180, max_attempts_per_window=2)
         ok, _ = guard.claim("PSA", now=1000.0)
         self.assertTrue(ok)
-        ok, state = guard.claim("PSA", now=1001.0)
+        ok, state = guard.claim("PSA", now=1030.0)
         self.assertFalse(ok)
         self.assertEqual(state["guard_reason"], "duplicate_burst_guard")
-        ok, _ = guard.claim("PSA", now=1002.0)
+        ok, _ = guard.claim("PSA", now=1060.0)
         self.assertTrue(ok)
-        # Normal interactive use should not hit our own previous 60-second gate.
-        for i in range(3, 13):
-            ok, _ = guard.claim("PSA", now=1000.0 + i * 2.0)
-            self.assertTrue(ok)
-        ok, state = guard.claim("PSA", now=1026.0)
+        ok, state = guard.claim("PSA", now=1120.0)
         self.assertFalse(ok)
         self.assertEqual(state["guard_reason"], "local_burst_window")
 
-    def test_actual_403_and_429_create_provider_cooldown(self):
+    def test_403_and_429_create_cooldown_without_network_retry(self):
         guard = OfficialLookupGuard()
         self.assertTrue(guard.claim("BGS", now=1000.0)[0])
         state = guard.record_result("BGS", {"http_status": 403, "blocked_or_challenged": True}, now=1001.0)

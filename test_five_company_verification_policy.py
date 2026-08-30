@@ -48,6 +48,14 @@ class FiveCompanyVerificationPolicyTests(unittest.TestCase):
     def test_403_is_never_retried_inside_verifier(self):
         self._assert_block_is_never_retried(403)
 
+    def test_retry_after_http_date_is_honored(self):
+        error = HTTPError(
+            "https://www.psacard.com/cert/123456/psa", 429, "blocked",
+            {"Retry-After": "Thu, 01 Jan 1970 00:18:40 GMT"}, None,
+        )
+        with mock.patch.object(grading_cert_verifier.time, "time", return_value=1000.0):
+            self.assertEqual(grading_cert_verifier._retry_after_seconds(error), 120.0)
+
     def test_block_runs_local_self_audit_and_active_cooldown(self):
         cooldowns = {}
         cooldown = slab_verification_batch.set_cooldown(
