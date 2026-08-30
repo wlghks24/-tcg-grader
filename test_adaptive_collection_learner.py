@@ -27,6 +27,7 @@ class AdaptiveCollectionLearnerTests(unittest.TestCase):
             self.assertEqual(regions, {"KR", "JP", "US"})
             self.assertTrue(any(row["family"].startswith("social:") for row in plan))
             self.assertTrue(any(row["family"] in {"exploration", "official-site"} for row in plan))
+            self.assertTrue(any(row["family"].startswith("topic:") for row in plan))
 
     def test_verified_candidate_teaches_future_query_vocabulary_without_changing_trust_policy(self):
         with tempfile.TemporaryDirectory() as td:

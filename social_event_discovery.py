@@ -173,6 +173,19 @@ def _host(url: str) -> str:
         return ""
 
 
+def _official_brand_host(game: str, region: str, url: str) -> bool:
+    """Brand authority is scoped; another franchise's official host is not enough."""
+    return multi_route_event_discovery._official_for(game, region, _host(url))
+
+
+def _coverage_topic(row: dict) -> str:
+    topic = str(row.get("topic") or "")
+    if topic in multi_route_event_discovery.COVERAGE_TOPICS:
+        return topic
+    text = f"{row.get('title','')} {row.get('excerpt','')}"
+    return multi_route_event_discovery._topic(text)
+
+
 def _normalize_title(value: str) -> str:
     text = re.sub(r"[^0-9A-Za-z가-힣ぁ-んァ-ヶ一-龠]+", " ", (value or "").lower())
     return re.sub(r"\s+", " ", text).strip()[:180]
@@ -430,7 +443,7 @@ def _google_news_one(game: str, region: str) -> tuple[list[dict], str | None]:
             title = _short(item.findtext("title"), 220); link = _short(item.findtext("link"), 600); description = _short(item.findtext("description"), 500)
             source_node = item.find("source"); publisher_url = source_node.attrib.get("url", "") if source_node is not None else ""; publisher = _short(source_node.text if source_node is not None else "", 120)
             if not title or not link: continue
-            combined = f"{title} {description}"; official = _host(publisher_url) in OFFICIAL_HOSTS
+            combined = f"{title} {description}"; official = _official_brand_host(game, region, publisher_url)
             rows.append({"game": game, "region": region, "category": _category(combined), "title": title, "source": link,
                          "publisher_url": publisher_url or None, "source_kind": "google_news", "source_tier": "A-search" if official else "B-news",
                          "source_label": "Google News · 공식도메인" if official else "Google News 보조탐색", "publisher": publisher,
@@ -646,7 +659,7 @@ def _google_cse_one(game: str, region: str, key: str, cx: str) -> tuple[list[dic
             if not isinstance(item, dict): continue
             title = _short(item.get("title"), 220); link = str(item.get("link") or ""); snippet = _short(item.get("snippet"), 420)
             if not title or not link.startswith("https://"): continue
-            official = _host(link) in OFFICIAL_HOSTS; social_host = _host(link) in SOCIAL_HOSTS
+            official = _official_brand_host(game, region, link); social_host = _host(link) in SOCIAL_HOSTS
             rows.append({"game": game, "region": region, "category": _category(f"{title} {snippet}"), "title": title, "source": link,
                          "source_kind": "google_cse", "source_tier": "A-search" if official else "B-search",
                          "source_label": "Google 검색 · 공식도메인" if official else ("Google 검색 · SNS" if social_host else "Google 검색 보조탐색"),
@@ -731,9 +744,18 @@ def merge_candidates(rows: list[dict]) -> list[dict]:
             if winner.get("verified") is not True: winner["status"] = "복수출처 교차확인 후보"
         merged[key] = winner
     result = list(merged.values()); result.sort(key=lambda x: (-float(x.get("confidence") or 0.0), str(x.get("game")), str(x.get("region")), str(x.get("title"))))
-    # Preserve coverage across all 3 games x 3 regions so a high-volume franchise
-    # cannot crowd every JP/KR/US lead from another game out of the global cap.
+    # Preserve one lead for every populated game/region/topic cell before filling
+    # by confidence. This prevents release/tournament volume from evicting a rare
+    # movie, collaboration, pop-up or reprint lead at the global cap.
     selected = []; used = set(); per_group_floor = 4
+    for game_name in GAMES:
+        for region_name in REGION_LANG:
+            for topic_name in multi_route_event_discovery.COVERAGE_TOPICS:
+                row = next((item for item in result if item.get("game") == game_name
+                            and item.get("region") == region_name
+                            and _coverage_topic(item) == topic_name), None)
+                if row is not None and id(row) not in used:
+                    selected.append(row); used.add(id(row))
     for game_name in GAMES:
         for region_name in REGION_LANG:
             group = [row for row in result if row.get("game") == game_name and row.get("region") == region_name]
@@ -792,7 +814,7 @@ def main() -> dict:
     if not merged and previous and isinstance(previous.get("items"), list):
         merged = previous.get("items", [])[:MAX_ITEMS]
     payload = {
-        "version": "v119-official-plus-fan-social-learning",
+        "version": "v129-topic-matrix-gap-recovery",
         "updated_at": _now(), "fresh_collection_ok": bool(baseline_ok or usable_channels),
         "degraded": not baseline_ok,
         "policy": "공식 웹/SNS는 공식확인층, 팬·컬렉터·유튜버 SNS는 발견층으로 분리. Google/Bing/DDG/X/Instagram/YouTube 경로를 병행하며 팬 반복발견만으로 verified/trusted 승격 금지.",
@@ -807,6 +829,13 @@ def main() -> dict:
         "fan_social_learning": fan_report,
         "official_domain_search_count": sum(1 for x in merged if x.get("official_domain_match") is True),
         "cross_checked_count": sum(1 for x in merged if x.get("cross_checked") is True),
+        "topic_coverage": {
+            f"{game}/{region}/{topic}": sum(1 for row in merged if row.get("game") == game
+                                             and row.get("region") == region
+                                             and _coverage_topic(row) == topic)
+            for game in GAMES for region in REGION_LANG
+            for topic in multi_route_event_discovery.COVERAGE_TOPICS
+        },
         "channel_status": channel_status, "registry_account_count": len(registry.get("accounts", [])),
         "collection_errors": errors[:50], "collection_warnings": warnings[:50],
         "preserved_previous_items": bool(_previous_rows(previous)),

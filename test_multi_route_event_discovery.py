@@ -1,4 +1,7 @@
 import unittest
+import urllib.error
+from email.message import Message
+from pathlib import Path
 import multi_route_event_discovery as routes
 
 
@@ -12,13 +15,13 @@ class MultiRouteEventDiscoveryTests(unittest.TestCase):
 
     def test_query_families_cover_major_information_types(self):
         for lang in ('ko','ja','en'):
-            self.assertTrue({'release','event','promo','collab','stock'}.issubset(routes.QUERY_FAMILIES[lang]))
+            self.assertTrue({'release','reprint','event','tournament','popup','promo','collab','movie','stock'}.issubset(routes.QUERY_FAMILIES[lang]))
 
     def test_independent_provider_routes_exist(self):
         # Search route names are intentionally distinct so one provider outage
         # does not remove all public discovery paths.
-        text=open(routes.__file__,encoding='utf-8').read()
-        for marker in ('bing_general','bing_official','bing_partner','official_anchor','ddg_fallback'):
+        text=Path(routes.__file__).read_text(encoding='utf-8')
+        for marker in ('bing_topic','bing_official','bing_partner','official_anchor','ddg_fallback'):
             self.assertIn(marker,text)
 
     def test_partner_domains_are_not_automatically_official(self):
@@ -32,6 +35,25 @@ class MultiRouteEventDiscoveryTests(unittest.TestCase):
         self.assertIn('출시',q)
         self.assertIn('프로모',q)
         self.assertIn('재입고',q)
+
+    def test_topic_queries_are_isolated_and_have_full_matrix(self):
+        q=routes._query('원피스 카드','US',topic='movie')
+        self.assertIn('movie',q)
+        self.assertNotIn('tournament',q)
+        self.assertEqual(len(routes.COVERAGE_TOPICS),8)
+        self.assertIn('reprint',routes.COVERAGE_TOPICS)
+
+    def test_official_match_is_scoped_to_game_and_region(self):
+        self.assertTrue(routes._official_for('나루토 카드','US','www.naruto-cardgame.com'))
+        self.assertFalse(routes._official_for('포켓몬 카드','US','www.naruto-cardgame.com'))
+
+    def test_rate_limit_reports_retry_after_without_bypass(self):
+        headers=Message(); headers['Retry-After']='120'
+        error=urllib.error.HTTPError('https://www.bing.com',429,'rate limited',headers,None)
+        summary=routes._error_summary('Bing',error)
+        self.assertIn('HTTP 429',summary)
+        self.assertIn('Retry-After=120',summary)
+        self.assertIn('cooldown-required',summary)
 
 
 if __name__=='__main__':

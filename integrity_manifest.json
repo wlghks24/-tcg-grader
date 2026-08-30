@@ -1,7 +1,7 @@
 {
   "version": 1,
   "engine": "v109-card-identity-ocr-learning",
-  "generated_at": "2026-08-30T14:12:49+00:00",
+  "generated_at": "2026-08-30T14:29:22+00:00",
   "files": {
     ".github/workflows/apply-android-7step-display.yml": {
       "sha256": "9d0b604bc6f85b3cab37a475b70e17ed2c3ada43aa6ba72a4e57b8436a9baa27",
@@ -128,8 +128,8 @@
       "bytes": 1485
     },
     ".github/workflows/apply-multi-route-event-discovery.yml": {
-      "sha256": "fd8e8967f7dc5756c8f7acdeb5fda11f590503ab21247272385e048081a3f325",
-      "bytes": 1808
+      "sha256": "6ae2e63aeb674d0497f83b46829307537a0029dee4e30fc18e6a53ef4941e2f5",
+      "bytes": 2159
     },
     ".github/workflows/apply-playgo-event-watch.yml": {
       "sha256": "9eded18bc76b126797d6cded20ca5e9d254032aefbf2df5fccdd1b497fe213ae",
@@ -280,8 +280,8 @@
       "bytes": 316
     },
     "adaptive_collection_learner.py": {
-      "sha256": "d6d64a2ae1a999ae2e2f2bf4049cfd82d05b32416cb74ed28e01105e5d946790",
-      "bytes": 35477
+      "sha256": "409c427a769805a213c3f04a33f1c240aac8c96377e433f8ea4cfe1b3bd35c41",
+      "bytes": 37624
     },
     "ai_code_improver.py": {
       "sha256": "757ff9082b7da1efb4546b831ccf62ec1440cf7e353152209a5031f8908049c8",
@@ -524,8 +524,8 @@
       "bytes": 7606
     },
     "collection_meta_learning.py": {
-      "sha256": "9e9d8e9dc0037d995c46e0abada24f3b23c5fccc2debd5ad9f50c2c62f29a11d",
-      "bytes": 20952
+      "sha256": "7202ea8a6844a76bb82b351e72ecb01041904639f09c6ed3a882b2ba1c052534",
+      "bytes": 22202
     },
     "cross_platform_agent.py": {
       "sha256": "8c6c7e898a6708bd252e65ee8c810421bd6fa971b60399664d9619dfb25595d5",
@@ -876,8 +876,8 @@
       "bytes": 4196
     },
     "multi_route_event_discovery.py": {
-      "sha256": "aebfd31c4cb8f5878d6dab67f9cd9413d8c5a8856135d73d044f9eac6454cf6d",
-      "bytes": 19736
+      "sha256": "8f06575ef73b0f18ed5133883e3310e60b3632e16e19462e4b53173cfa0f102d",
+      "bytes": 25073
     },
     "official_channel_feed_discovery.py": {
       "sha256": "33a83169dd808573fe3fde7c38e5ab222d14ca9b37b0a096e6acb2f506539b64",
@@ -944,7 +944,7 @@
       "bytes": 18672
     },
     "security_audit_report.json": {
-      "sha256": "023b5b794bc1e2c2985a79e4de2d440b4ab3b95987ff1eb367afdfc888294bae",
+      "sha256": "6556a7cc371d2a43db0693e797edd74dd39e34ef08340a16007a7c5b91c07ec0",
       "bytes": 43532
     },
     "security_hardening_apply.py": {
@@ -968,8 +968,8 @@
       "bytes": 24754
     },
     "social_event_discovery.py": {
-      "sha256": "00ea864113c3a751a956a9c2b886624d768b7676f15d05922df47d97708ed91d",
-      "bytes": 48840
+      "sha256": "2417ba7614de8e3e48b81287a907b7d2e0fd733abd4163e385975a65bbcf1d77",
+      "bytes": 50338
     },
     "social_stock_discovery.py": {
       "sha256": "1bb1e730fa14c5661574b69795611c7583cf5fd0ed26dede5dc002ea1cb24766",
@@ -1008,8 +1008,8 @@
       "bytes": 94173
     },
     "test_adaptive_collection_learner.py": {
-      "sha256": "9dc741fa36209f58c87bd8e3c76c50acf9e1c8da9928165af69e619d070b2ed9",
-      "bytes": 14795
+      "sha256": "e998b07bcebb9dd9eabe08e91b464b040d9b127849bb5e8a054e942d9c081391",
+      "bytes": 14880
     },
     "test_box_hit_market_discovery.py": {
       "sha256": "b68e5bdbe0fb919a6779357bafd9f1297fd5bfa53bf4b54b795d17291839220a",
@@ -1076,8 +1076,8 @@
       "bytes": 1146
     },
     "test_multi_route_event_discovery.py": {
-      "sha256": "14e1dd4c4b328698d177749b61dea7dff53a11e96bc81018405fc99a8a778803",
-      "bytes": 1668
+      "sha256": "b9d2dd8f3451dc11f872bb1122f8f6e8fced50eeac93e08f371bdd4bd87eae68",
+      "bytes": 2776
     },
     "test_official_channel_health.py": {
       "sha256": "f2f48cc79713d531905310263147c8aaa2a596a16f50ce4a9fe372f4e23c2faf",
@@ -1106,6 +1106,10 @@
     "test_security_hardening.py": {
       "sha256": "4c622b8fe5436fbc67cb44e39a47fb1ad7f59b431bf72a293ea84e9c7d39df72",
       "bytes": 4352
+    },
+    "test_social_event_topic_coverage.py": {
+      "sha256": "b7275be3b64a7f47ab0b75162ce049d50355309bd43e24b7ba6490c18f51125f",
+      "bytes": 1647
     },
     "test_social_stock_discovery.py": {
       "sha256": "4d12094c5c71e1a05b74740d49eb31c7218a26ca1b149d0ad28157cd7ac7f29f",
@@ -1136,8 +1140,8 @@
       "bytes": 6848
     },
     "update_promo_events.py": {
-      "sha256": "f0eddf164db5a75f2825d1234dc4592ca30f4417108b5c735970e280160381f8",
-      "bytes": 43157
+      "sha256": "b05bcaf4e1d956940c036645e356f69f91a630c2502445e7cd133a1083ddeb2e",
+      "bytes": 43788
     },
     "update_purchase_sources.py": {
       "sha256": "fb5083cd8366e0e621c68553a444ee8edabd861c9b06964202eabde1533a1243",

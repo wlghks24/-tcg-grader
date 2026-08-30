@@ -818,11 +818,20 @@ def main() -> dict:
         data["social_candidate_count"] = len(social.get("items", []))
         data["official_social_candidate_count"] = int(social.get("official_social_candidate_count") or 0)
         data["social_cross_checked_count"] = int(social.get("cross_checked_count") or 0)
+        topic_coverage = social.get("topic_coverage") if isinstance(social.get("topic_coverage"), dict) else {}
+        data["social_topic_coverage"] = topic_coverage
+        data["social_topic_expected_cells"] = 72
+        data["social_topic_covered_cells"] = sum(1 for value in topic_coverage.values() if int(value or 0) > 0)
+        data["social_topic_missing_cells"] = [key for key, value in topic_coverage.items() if int(value or 0) == 0]
         data["social_collection_mode"] = "deferred-to-integration-stage"
     except Exception as exc:
         data["social_candidate_count"] = 0
         data["official_social_candidate_count"] = 0
         data["social_cross_checked_count"] = 0
+        data["social_topic_coverage"] = {}
+        data["social_topic_expected_cells"] = 72
+        data["social_topic_covered_cells"] = 0
+        data["social_topic_missing_cells"] = []
         data["social_collection_mode"] = "deferred-read-error"
         errors.append(f"SNS/Google 후보 DB 읽기: {type(exc).__name__}")
     atomic_write_json(DATA,data,suffix=".json.tmp")

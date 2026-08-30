@@ -5,7 +5,11 @@ on:
     branches: [main]
     paths:
       - 'multi_route_event_discovery.py'
+      - 'social_event_discovery.py'
+      - 'adaptive_collection_learner.py'
+      - 'collection_meta_learning.py'
       - 'test_multi_route_event_discovery.py'
+      - 'test_social_event_topic_coverage.py'
       - 'apply_multi_route_event_patch.py'
       - '.github/workflows/apply-multi-route-event-discovery.yml'
   workflow_dispatch:
@@ -31,11 +35,14 @@ jobs:
       - name: Run route and regression tests
         run: |
           python -m unittest -v test_multi_route_event_discovery.py
+          python -m unittest -v test_social_event_topic_coverage.py
           if [ -f test_playgo_event_watch.py ]; then python -m unittest -v test_playgo_event_watch.py; fi
       - name: Verify integration markers
         run: |
           grep -q 'route_diversity' social_event_discovery.py
-          grep -q 'v113-multi-route-resilient-discovery' social_event_discovery.py
+          grep -q 'v129-topic-matrix-gap-recovery' social_event_discovery.py
+          grep -q 'COVERAGE_TOPICS' multi_route_event_discovery.py
+          grep -q 'topic_coverage' social_event_discovery.py
           grep -q 'existing_evidence_host' social_event_discovery.py
           grep -q 'per_group_floor = 4' social_event_discovery.py
       - name: Commit integrated changes

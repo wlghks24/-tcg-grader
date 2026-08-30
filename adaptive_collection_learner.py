@@ -37,7 +37,7 @@ MEMORY = ROOT / "collection_learning_memory.json"
 BACKUP = ROOT / "collection_learning_memory.json.bak"
 REPORT = ROOT / "collection_learning_report.json"
 FEEDBACK = ROOT / "collection_feedback.json"
-SCHEMA_VERSION = 3
+SCHEMA_VERSION = 4
 MAX_QUERY_STATS = 500
 MAX_TERM_STATS = 500
 MAX_HOST_STATS = 300
@@ -85,6 +85,36 @@ REGION_SEEDS = {
     "US": {
         "event": ("event", "promo", "promo card", "collab", "collaboration", "pop-up", "preorder", "release", "restock", "exclusive", "giveaway", "tournament", "movie"),
         "phrase": "event promo promo-card collab collaboration pop-up preorder release restock exclusive giveaway tournament movie",
+    },
+}
+
+BLINDSPOT_TOPICS = {
+    "KR": {
+        "movie": "영화 극장판 개봉 관람특전 영화특전",
+        "collab": "콜라보 협업 제휴 브랜드데이 야구 카페 편의점",
+        "popup": "팝업 팝업스토어 박람회 전시회 체험회",
+        "tournament": "대회 리그 컵 챔피언십 월드챔피언십 매장대회",
+        "promo": "프로모카드 증정 배포 특전 한정 캠페인",
+        "release": "출시 발매 신탄 부스터 스타터 예약",
+        "reprint": "재발매 재판 복각 추가생산 재입고",
+    },
+    "JP": {
+        "movie": "映画 劇場版 公開 上映 入場者特典",
+        "collab": "コラボ タイアップ カフェ コンビニ ブランド",
+        "popup": "ポップアップ ポップアップストア 展示会 体験会",
+        "tournament": "大会 リーグ カップ チャンピオンシップ 店舗大会",
+        "promo": "プロモカード 配布 特典 限定 キャンペーン",
+        "release": "発売 新弾 ブースター スターター 予約",
+        "reprint": "再販 再版 復刻 追加生産 再入荷",
+    },
+    "US": {
+        "movie": "movie film cinema screening theatrical admission promo",
+        "collab": "collab collaboration partnership cafe retailer brand",
+        "popup": "pop-up popup store expo convention exhibition demo",
+        "tournament": "tournament league cup championship regional worlds",
+        "promo": "promo card giveaway distribution exclusive campaign",
+        "release": "release new set booster starter preorder",
+        "reprint": "reprint re-release restock additional print rerun",
     },
 }
 
@@ -295,6 +325,19 @@ class AdaptiveCollectionLearner:
             query = f"{regional_names[region]} {REGION_SEEDS[region]['phrase']} {learned}".strip()
             candidates.append({"query": query, "family": "regional", "region": region})
 
+        # Run separate low-frequency topic searches so a high-volume tournament
+        # or release page cannot crowd movie/collaboration/pop-up announcements
+        # out of every result page. Rotation covers every topic over later runs.
+        topic_names = tuple(BLINDSPOT_TOPICS["KR"])
+        for offset, region in enumerate(("KR", "JP", "US")):
+            topic = topic_names[(rotation + offset * 2) % len(topic_names)]
+            candidates.append({
+                "query": f"{regional_names[region]} {BLINDSPOT_TOPICS[region][topic]}",
+                "family": f"topic:{topic}",
+                "region": region,
+                "topic": topic,
+            })
+
         # Cross-collector meta learning identifies the most under-covered
         # game/region/topic from event, stock, market and graded-photo outputs.
         # Only search-relevant topics are injected here; trust/verification remains separate.
@@ -369,29 +412,30 @@ class AdaptiveCollectionLearner:
             row = dict(row); row["query"] = q; row["learned_score"] = round(self._query_score(q), 4)
             dedup.append(row)
         baseline = dedup[:3]
-        remainder = dedup[3:]
-        remainder.sort(key=lambda row: row["learned_score"], reverse=True)
-        # Keep most tail slots for proven yield and rotate one bounded exploration
-        # slot. Rotating the whole sorted tail could accidentally replace every
-        # productive route with its lowest-scoring alternatives.
-        tail_budget = max(0, budget - len(baseline))
-        if len(remainder) <= tail_budget:
-            chosen = baseline + remainder
-        else:
-            exploit_count = max(0, tail_budget - 1)
-            chosen = baseline + remainder[:exploit_count]
-            exploration_pool = remainder[exploit_count:]
-            if tail_budget and exploration_pool:
-                chosen.append(exploration_pool[rotation % len(exploration_pool)])
-        # Reserve one exploration slot for the learned coverage gap when possible.
-        # This prevents historically successful KR/event queries from starving an
-        # under-covered JP/US release/promo/collab/movie combination.
-        focus_rows = [row for row in dedup if str(row.get("family") or "").startswith("coverage-gap:")]
-        if focus_rows and budget > len(baseline) and not any(str(x.get("family") or "").startswith("coverage-gap:") for x in chosen):
+        remainder = sorted(dedup[3:], key=lambda row: row["learned_score"], reverse=True)
+        chosen = list(baseline)
+
+        def reserve(pool: list[dict], offset: int = 0) -> None:
+            if not pool or len(chosen) >= budget:
+                return
+            row = pool[(rotation + offset) % len(pool)]
+            if row not in chosen:
+                chosen.append(row)
+
+        # Explicit reservations prevent historical yield from starving a whole
+        # subject, social channel, or controlled exploration path.
+        reserve([row for row in dedup if str(row.get("family") or "").startswith("topic:")])
+        if budget >= 5:
+            reserve([row for row in dedup if str(row.get("family") or "").startswith("social:")])
+        if budget >= 7:
+            reserve([row for row in dedup if row.get("family") in {"exploration", "official-site"}])
+        if budget >= 8:
+            reserve([row for row in dedup if str(row.get("family") or "").startswith("coverage-gap:")])
+        for row in remainder:
             if len(chosen) >= budget:
-                chosen[-1] = focus_rows[0]
-            else:
-                chosen.append(focus_rows[0])
+                break
+            if row not in chosen:
+                chosen.append(row)
         return chosen[:budget]
 
     def _is_official(self, game: str, url: str, title: str = "") -> bool:
@@ -655,7 +699,7 @@ class AdaptiveCollectionLearner:
             "version": SCHEMA_VERSION,
             "updated_at": _now(),
             "policy": "수집전략만 자가학습. 반복 발견만으로 출처를 공식승격하지 않으며 공식도메인/SNS 검증정책은 별도 유지.",
-            "anti_blindspot": "KR/JP/US 기본 검색 + 공식도메인 + X/Instagram/YouTube + 저사용 검색어 탐색을 회전하여 성공기록 과적합 방지.",
+            "anti_blindspot": "KR/JP/US 기본 검색 + 영화/콜라보/팝업/대회/프로모/출시/재발매 독립 회전검색 + 공식도메인 + X/Instagram/YouTube 탐색으로 성공기록 과적합 방지.",
             "memory_file": self.memory_path.name,
             "totals": dict(self.memory.get("totals", {})),
             "learned_queries": len(self.memory.get("query_stats", {})),

@@ -57,25 +57,39 @@ QUERY_FAMILIES = {
     "ko": {
         "release": "출시 발매 신제품 신탄 부스터 스타터 예약 재발매 재판",
         "event": "행사 이벤트 대회 팝업 페스타 체험회 매장대회 월드챔피언십",
+        "tournament": "대회 리그 컵 챔피언십 월드챔피언십 매장대회 배틀",
+        "popup": "팝업 팝업스토어 페스타 박람회 전시회 체험회 카드샵",
         "promo": "프로모 증정 배포 한정 수령 특전 캠페인 프로모션팩",
-        "collab": "콜라보 협업 제휴 브랜드데이 야구 카페 편의점 마트 영화 극장판",
+        "collab": "콜라보 협업 제휴 브랜드데이 야구 카페 편의점 마트",
+        "movie": "영화 극장판 개봉 특별상영 시사회 관람특전 영화특전",
+        "reprint": "재발매 재판 재출시 추가생산 재입고 복각",
         "stock": "재입고 입고 판매 자판기 재고 품절 구매처",
     },
     "ja": {
         "release": "発売 新商品 新弾 ブースター スターター 予約 再販",
         "event": "イベント 大会 ポップアップ フェス 体験会 店舗大会",
+        "tournament": "大会 リーグ カップ チャンピオンシップ 店舗大会 バトル",
+        "popup": "ポップアップ ポップアップストア フェス 展示会 体験会 カードショップ",
         "promo": "プロモ 配布 特典 限定 キャンペーン プレゼント",
-        "collab": "コラボ タイアップ カフェ コンビニ 映画 劇場版",
+        "collab": "コラボ タイアップ カフェ コンビニ ブランド 野球",
+        "movie": "映画 劇場版 公開 上映 試写会 入場者特典 映画特典",
+        "reprint": "再販 再版 復刻 追加生産 再入荷",
         "stock": "再入荷 入荷 在庫 売り切れ 販売 店舗",
     },
     "en": {
         "release": "release new set booster starter preorder reprint",
         "event": "event tournament pop-up festival demo store championship",
+        "tournament": "tournament league cup championship regional worlds store battle",
+        "popup": "pop-up popup store festival expo convention exhibition demo card shop",
         "promo": "promo promotional card giveaway distribution exclusive campaign",
-        "collab": "collaboration collab cafe retailer movie film partnership",
+        "collab": "collaboration collab cafe retailer partnership brand baseball",
+        "movie": "movie film cinema screening premiere theatrical bonus admission promo",
+        "reprint": "reprint re-release restock additional print rerun",
         "stock": "restock in stock sold out retailer store vending",
     },
 }
+
+COVERAGE_TOPICS = ("event", "tournament", "popup", "promo", "collab", "movie", "release", "reprint")
 
 OFFICIAL_ROUTES = {
     ("포켓몬 카드", "KR"): (
@@ -85,6 +99,8 @@ OFFICIAL_ROUTES = {
     ("포켓몬 카드", "JP"): (
         "https://www.pokemon-card.com/info/",
         "https://www.pokemon-card.com/products/",
+        "https://players.pokemon-card.com/",
+        "https://www.30th.pokemon-card.com/event",
         "https://www.pokemon.co.jp/",
     ),
     ("포켓몬 카드", "US"): (
@@ -100,14 +116,17 @@ OFFICIAL_ROUTES = {
         "https://www.onepiece-cardgame.com/",
         "https://www.onepiece-cardgame.com/events/",
         "https://www.onepiece-cardgame.com/products/",
+        "https://one-piece.com/news/",
     ),
     ("원피스 카드", "US"): (
         "https://en.onepiece-cardgame.com/",
         "https://en.onepiece-cardgame.com/events/",
         "https://en.onepiece-cardgame.com/products/",
+        "https://en.onepiece-cardgame.com/events/official-shop.html",
     ),
     ("나루토 카드", "KR"): (
         "https://www.naruto-cardgame.com/asia-en/",
+        "https://www.naruto-cardgame.com/asia-en/news/article-list.php",
         "https://naruto-official.com/",
     ),
     ("나루토 카드", "JP"): (
@@ -116,6 +135,7 @@ OFFICIAL_ROUTES = {
     ),
     ("나루토 카드", "US"): (
         "https://www.naruto-cardgame.com/en/",
+        "https://www.naruto-cardgame.com/en/news/article-list.php",
         "https://naruto-official.com/en/",
     ),
 }
@@ -166,10 +186,45 @@ def _host(url: str) -> str:
 
 
 def _category(text: str) -> str:
-    value = text or ""
-    if re.search(r"영화|극장판|movie|film|映画|劇場版", value, re.I): return "movie"
-    if re.search(r"콜라보|협업|collab|collaboration|コラボ|タイアップ", value, re.I): return "collaboration"
+    topic = _topic(text)
+    if topic == "movie": return "movie"
+    if topic == "collab": return "collaboration"
     return "promo"
+
+
+def _topic(text: str) -> str:
+    value = text or ""
+    patterns = (
+        ("movie", r"영화|극장판|개봉|관람특전|movie|film|cinema|screening|映画|劇場版|上映|入場者特典"),
+        ("collab", r"콜라보|협업|제휴|브랜드데이|collab|collaboration|partnership|コラボ|タイアップ"),
+        ("reprint", r"재발매|재판|복각|reprint|re-release|rerun|再販|再版|復刻"),
+        ("release", r"출시|발매|신탄|부스터|스타터|release|launch|new set|booster|starter|発売|新弾"),
+        ("popup", r"팝업|팝업스토어|박람회|전시회|pop[- ]?up|expo|convention|exhibition|ポップアップ|展示会"),
+        ("tournament", r"대회|리그|챔피언십|월드챔피언십|tournament|league|championship|regional|worlds|大会|リーグ|チャンピオンシップ"),
+        ("promo", r"프로모|증정|배포|특전|한정|promo|giveaway|distribution|exclusive|プロモ|配布|特典|限定"),
+    )
+    for topic, pattern in patterns:
+        if re.search(pattern, value, re.I):
+            return topic
+    return "event"
+
+
+def _official_for(game: str, region: str, host: str) -> bool:
+    normalized = host.lower().removeprefix("www.")
+    allowed = {_host(url).removeprefix("www.") for url in OFFICIAL_ROUTES.get((game, region), ())}
+    return any(normalized == root or normalized.endswith("." + root) for root in allowed)
+
+
+def _error_summary(label: str, exc: Exception) -> str:
+    if isinstance(exc, urllib.error.HTTPError):
+        retry_after = str(exc.headers.get("Retry-After") or "").strip() if exc.headers else ""
+        if exc.code == 429:
+            cooldown = f"Retry-After={retry_after}" if retry_after else "Retry-After=미제공"
+            return f"{label}: HTTP 429 · {cooldown} · cooldown-required"
+        if exc.code == 403:
+            return f"{label}: HTTP 403 · access-denied · no-bypass"
+        return f"{label}: HTTP {exc.code}"
+    return f"{label}: {type(exc).__name__}"
 
 
 def _parse_pubdate(value: str | None) -> str | None:
@@ -182,20 +237,21 @@ def _parse_pubdate(value: str | None) -> str | None:
         return None
 
 
-def _query(game: str, region: str, *, scoped_hosts: tuple[str, ...] = ()) -> str:
+def _query(game: str, region: str, *, scoped_hosts: tuple[str, ...] = (), topic: str | None = None) -> str:
     lang = REGIONS[region]
     names = GAMES[game][lang][:2]
     name_expr = " OR ".join(f'"{x}"' for x in names)
     families = QUERY_FAMILIES[lang]
-    terms = " OR ".join(f"({value.replace(' ', ' OR ')})" for value in families.values())
+    selected = {topic: families[topic]} if topic in families else families
+    terms = " OR ".join(f"({value.replace(' ', ' OR ')})" for value in selected.values())
     site_expr = ""
     if scoped_hosts:
         site_expr = " (" + " OR ".join(f"site:{host}" for host in scoped_hosts[:8]) + ")"
     return f"({name_expr}) ({terms}){site_expr}"
 
 
-def _bing_one(game: str, region: str, route: str, hosts: tuple[str, ...] = ()) -> tuple[list[dict], str | None]:
-    q = _query(game, region, scoped_hosts=hosts)
+def _bing_one(game: str, region: str, route: str, hosts: tuple[str, ...] = (), topic: str | None = None) -> tuple[list[dict], str | None]:
+    q = _query(game, region, scoped_hosts=hosts, topic=topic)
     url = "https://www.bing.com/search?" + urllib.parse.urlencode({"format": "rss", "q": q})
     req = urllib.request.Request(url, headers={"User-Agent": "Mozilla/5.0 TCG-Grader-RouteDiversity/1.0", "Accept": "application/rss+xml,application/xml,text/xml;q=0.9,*/*;q=0.5"})
     try:
@@ -214,23 +270,25 @@ def _bing_one(game: str, region: str, route: str, hosts: tuple[str, ...] = ()) -
             try: validate_public_https_url(link)
             except (TypeError, ValueError): continue
             host = _host(link)
-            official = host in OFFICIAL_HOSTS
-            partner = host in PARTNER_HOSTS
+            official = _official_for(game, region, host)
+            partner = host in set(PARTNER_DOMAINS.get((game, region), ()))
             confidence = 0.91 if official else (0.73 if partner else 0.59)
             rows.append({
                 "game": game, "region": region, "category": _category(f"{title} {desc}"),
+                "topic": _topic(f"{title} {desc}"), "search_topic": topic or "broad",
                 "title": title, "source": link, "source_kind": f"bing_{route}",
                 "source_tier": "A-search" if official else "B-search",
                 "source_label": "Bing RSS · 공식도메인" if official else ("Bing RSS · 파트너/유통처" if partner else "Bing RSS · 공개웹"),
                 "official_domain_match": official, "partner_domain_match": partner,
                 "published_at": _parse_pubdate(item.findtext("pubDate")), "dates": [],
                 "excerpt": desc or title, "status": "공식출처 검색후보" if official else "교차확인 후보",
-                "verified": official, "confidence": confidence, "route_family": route,
+                "verified": official, "confidence": confidence,
+                "route_family": f"{route}:{topic}" if topic else route,
                 "collected_at": _now(),
             })
         return rows, None
     except (urllib.error.URLError, urllib.error.HTTPError, TimeoutError, OSError, ValueError, ET.ParseError, UnicodeDecodeError) as exc:
-        return [], f"Bing {route} {game}/{region}: {type(exc).__name__}"
+        return [], _error_summary(f"Bing {route} {game}/{region}", exc)
 
 
 class _AnchorParser(HTMLParser):
@@ -258,14 +316,15 @@ def _official_scan_one(game: str, region: str, url: str) -> tuple[list[dict], st
             if not text or not KEYWORD_RE.search(text): continue
             target = urllib.parse.urljoin(final, href).split("#", 1)[0]
             host = _host(target)
-            if host not in OFFICIAL_HOSTS or not target.startswith("https://"): continue
+            if not _official_for(game, region, host) or not target.startswith("https://"): continue
             try: validate_public_https_url(target, OFFICIAL_HOSTS)
             except (TypeError, ValueError): continue
             key = (target, text)
             if key in seen: continue
             seen.add(key)
             rows.append({
-                "game": game, "region": region, "category": _category(text), "title": text,
+                "game": game, "region": region, "category": _category(text),
+                "topic": _topic(text), "search_topic": _topic(text), "title": text,
                 "source": target, "source_kind": "official_anchor_scan", "source_tier": "A-search",
                 "source_label": "공식사이트 직접 링크 탐색", "official_domain_match": True,
                 "published_at": None, "dates": [], "excerpt": text,
@@ -275,7 +334,7 @@ def _official_scan_one(game: str, region: str, url: str) -> tuple[list[dict], st
             if len(rows) >= MAX_PER_QUERY: break
         return rows, None
     except (urllib.error.URLError, urllib.error.HTTPError, TimeoutError, OSError, ValueError, UnicodeDecodeError) as exc:
-        return [], f"공식링크 {game}/{region}: {type(exc).__name__}"
+        return [], _error_summary(f"공식링크 {game}/{region}", exc)
 
 
 def _decode_ddg(url: str) -> str | None:
@@ -290,8 +349,8 @@ def _decode_ddg(url: str) -> str | None:
     return value if value.startswith("https://") else None
 
 
-def _ddg_one(game: str, region: str) -> tuple[list[dict], str | None]:
-    q = _query(game, region)
+def _ddg_one(game: str, region: str, topic: str | None = None) -> tuple[list[dict], str | None]:
+    q = _query(game, region, topic=topic)
     url = "https://html.duckduckgo.com/html/?" + urllib.parse.urlencode({"q": q})
     req = urllib.request.Request(url, headers={"User-Agent": "Mozilla/5.0 TCG-Grader-DDGFallback/1.0"})
     try:
@@ -303,21 +362,24 @@ def _ddg_one(game: str, region: str) -> tuple[list[dict], str | None]:
             if not link or not title or not KEYWORD_RE.search(title): continue
             try: validate_public_https_url(link)
             except (TypeError, ValueError): continue
-            host = _host(link); official = host in OFFICIAL_HOSTS; partner = host in PARTNER_HOSTS
+            host = _host(link)
+            official = _official_for(game, region, host)
+            partner = host in set(PARTNER_DOMAINS.get((game, region), ()))
             rows.append({
-                "game": game, "region": region, "category": _category(title), "title": title,
+                "game": game, "region": region, "category": _category(title),
+                "topic": _topic(title), "search_topic": topic or "broad", "title": title,
                 "source": link, "source_kind": "ddg_general_fallback", "source_tier": "A-search" if official else "B-search",
                 "source_label": "DuckDuckGo · 공식도메인" if official else "DuckDuckGo 공개검색 폴백",
                 "official_domain_match": official, "partner_domain_match": partner,
                 "published_at": None, "dates": [], "excerpt": title,
                 "status": "공식출처 검색후보" if official else "검색 교차확인 후보",
                 "verified": official, "confidence": 0.89 if official else 0.56,
-                "route_family": "ddg_fallback", "collected_at": _now(),
+                "route_family": f"ddg_fallback:{topic}" if topic else "ddg_fallback", "collected_at": _now(),
             })
             if len(rows) >= MAX_PER_QUERY: break
         return rows, None
     except (urllib.error.URLError, urllib.error.HTTPError, TimeoutError, OSError, ValueError, UnicodeDecodeError) as exc:
-        return [], f"DDG fallback {game}/{region}: {type(exc).__name__}"
+        return [], _error_summary(f"DDG fallback {game}/{region}", exc)
 
 
 def collect_all() -> tuple[list[dict], list[str], dict]:
@@ -327,7 +389,8 @@ def collect_all() -> tuple[list[dict], list[str], dict]:
         for region in REGIONS:
             official_hosts = tuple(dict.fromkeys(_host(u) for u in OFFICIAL_ROUTES.get((game, region), ()) if _host(u)))
             partner_hosts = tuple(PARTNER_DOMAINS.get((game, region), ()))
-            jobs.append(("bing_general", _bing_one, (game, region, "general", ())))
+            for topic in COVERAGE_TOPICS:
+                jobs.append(("bing_topic", _bing_one, (game, region, "topic", (), topic)))
             jobs.append(("bing_social", _bing_one, (game, region, "social", SOCIAL_DISCOVERY_HOSTS)))
             if official_hosts: jobs.append(("bing_official", _bing_one, (game, region, "official", official_hosts)))
             if partner_hosts: jobs.append(("bing_partner", _bing_one, (game, region, "partner", partner_hosts)))
@@ -353,13 +416,24 @@ def collect_all() -> tuple[list[dict], list[str], dict]:
                 stat["successes"] += 1; successes += 1
             stat["results"] += len(part); rows.extend(part)
 
-    # Search-engine resilience: use a different HTML search provider only when
-    # Bing produced too little useful material. This limits battery/network load.
-    bing_rows = sum(v.get("results", 0) for k, v in by_route.items() if k.startswith("bing_"))
-    if bing_rows < 3:
-        fallback_jobs = [(g, r) for g in GAMES for r in REGIONS]
+    # A broad provider can look healthy while still missing a low-volume subject.
+    # Retry only empty game/region/topic cells through an independent provider,
+    # with a bounded rotating budget to avoid 403/429 pressure.
+    first_topic_coverage = {
+        f"{game}/{region}/{topic}": sum(
+            1 for row in rows
+            if row.get("game") == game and row.get("region") == region and row.get("search_topic") == topic
+        )
+        for game in GAMES for region in REGIONS for topic in COVERAGE_TOPICS
+    }
+    missing_topics = [key for key, count in first_topic_coverage.items() if count == 0]
+    if missing_topics:
+        gap_limit = env_int("TCG_ROUTE_GAP_RETRY_LIMIT", 18, 0, len(missing_topics))
+        rotation = int(dt.datetime.now(dt.timezone.utc).strftime("%j%H")) % max(1, len(missing_topics))
+        rotated = missing_topics[rotation:] + missing_topics[:rotation]
+        fallback_jobs = [tuple(key.split("/", 2)) for key in rotated[:gap_limit]]
         with concurrent.futures.ThreadPoolExecutor(max_workers=workers) as pool:
-            future_map = {pool.submit(_ddg_one, g, r): (g, r) for g, r in fallback_jobs}
+            future_map = {pool.submit(_ddg_one, g, r, topic): (g, r, topic) for g, r, topic in fallback_jobs}
             for future in concurrent.futures.as_completed(future_map):
                 stat = by_route.setdefault("ddg_fallback", {"queries": 0, "successes": 0, "results": 0, "errors": 0})
                 stat["queries"] += 1
@@ -374,10 +448,17 @@ def collect_all() -> tuple[list[dict], list[str], dict]:
         for region in REGIONS:
             key = f"{game}/{region}"
             coverage[key] = sum(1 for row in rows if row.get("game") == game and row.get("region") == region)
+    topic_coverage = {
+        f"{game}/{region}/{topic}": sum(
+            1 for row in rows
+            if row.get("game") == game and row.get("region") == region and row.get("search_topic") == topic
+        )
+        for game in GAMES for region in REGIONS for topic in COVERAGE_TOPICS
+    }
 
     status = {
         "configured": True,
-        "status": "Bing RSS 일반/공식/파트너/팬SNS + 공식사이트 직접스캔 + DDG 비상폴백",
+        "status": "Bing RSS 작품×국가×주제 독립검색 + 공식/파트너/팬SNS + 공식사이트 직접스캔 + 누락주제 DDG 순환폴백",
         "route_count": len(by_route),
         "query_count": sum(v.get("queries", 0) for v in by_route.values()),
         "success_query_count": successes,
@@ -385,6 +466,10 @@ def collect_all() -> tuple[list[dict], list[str], dict]:
         "error_count": len(errors),
         "by_route": by_route,
         "coverage": coverage,
+        "topic_coverage": topic_coverage,
+        "expected_topic_cells": len(GAMES) * len(REGIONS) * len(COVERAGE_TOPICS),
+        "covered_topic_cells": sum(1 for value in topic_coverage.values() if value > 0),
+        "missing_topic_cells": [key for key, value in topic_coverage.items() if value == 0],
     }
     return rows, errors[:60], status
 
