@@ -1,11 +1,13 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 import os
+from email.message import Message
 from pathlib import Path
 import tempfile
 import unittest
 
 from server_security_guard import OfficialLookupGuard, client_network_allowed, client_network_classification
+import tcg_updater
 
 
 class ServerSecurityGuardTests(unittest.TestCase):
@@ -55,6 +57,16 @@ class ServerSecurityGuardTests(unittest.TestCase):
         self.assertTrue(guard.claim("PSA", now=1000.0)[0])
         guard.record_result("PSA", {"http_status": 403, "blocked_or_challenged": True}, now=1001.0)
         self.assertTrue(guard.claim("CGC", now=1002.0)[0])
+
+    def test_tailscale_host_header_uses_same_network_allowlist(self):
+        class Server:
+            server_address = ("0.0.0.0", 8765)
+        class Request:
+            client_address = ("100.64.1.2", 50000)
+            server = Server()
+            headers = Message()
+        Request.headers["Host"] = "100.64.1.2:8765"
+        self.assertTrue(tcg_updater.Handler._request_host_allowed(Request()))
 
 
 class SafeRuntimeSymlinkTests(unittest.TestCase):

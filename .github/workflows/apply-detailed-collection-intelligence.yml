@@ -6,10 +6,15 @@ on:
       - graded_photo_multi_source.py
       - graded_photo_evidence.py
       - graded_photo_dashboard.js
+      - manual_graded_photo_registration.py
+      - tcg_updater.py
+      - index.html
       - safe_runtime.py
       - apply_detailed_collection_intelligence.py
       - test_detailed_collection_intelligence.py
       - test_graded_photo_multi_source.py
+      - test_manual_graded_photo_registration.py
+      - test_graded_photo_runtime.py
       - .github/workflows/apply-detailed-collection-intelligence.yml
   pull_request:
     paths:
@@ -17,10 +22,15 @@ on:
       - graded_photo_multi_source.py
       - graded_photo_evidence.py
       - graded_photo_dashboard.js
+      - manual_graded_photo_registration.py
+      - tcg_updater.py
+      - index.html
       - safe_runtime.py
       - apply_detailed_collection_intelligence.py
       - test_detailed_collection_intelligence.py
       - test_graded_photo_multi_source.py
+      - test_manual_graded_photo_registration.py
+      - test_graded_photo_runtime.py
       - .github/workflows/apply-detailed-collection-intelligence.yml
 permissions:
   contents: read
@@ -32,5 +42,5 @@ jobs:
       - name: Validate integrated collector
         run: |
           python apply_detailed_collection_intelligence.py
-          python -m py_compile safe_runtime.py graded_photo_evidence.py graded_photo_multi_source.py detailed_collection_intelligence.py
-          python -m unittest -v test_detailed_collection_intelligence test_graded_photo_multi_source
+          python -m py_compile safe_runtime.py graded_photo_evidence.py graded_photo_multi_source.py manual_graded_photo_registration.py detailed_collection_intelligence.py tcg_updater.py
+          python -m unittest -v test_detailed_collection_intelligence test_graded_photo_multi_source test_manual_graded_photo_registration test_graded_photo_runtime

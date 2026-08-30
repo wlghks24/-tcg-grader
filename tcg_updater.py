@@ -70,6 +70,10 @@ GRADED_PHOTO_JOB={
 }
 LAST_GRADED_PHOTO_COLLECTION=0.0
 GRADED_PHOTO_COOLDOWN_SECONDS=20
+MANUAL_PHOTO_UPLOAD_LOCK=threading.Lock()
+MANUAL_PHOTO_UPLOAD_BUCKETS={}
+MANUAL_PHOTO_UPLOAD_WINDOW_SECONDS=10*60.0
+MANUAL_PHOTO_UPLOAD_LIMIT=6
 PUBLIC_STATIC_FILES={
     'index.html','icon.svg','manifest.webmanifest','sw.js','grading_vision_engine.js','grading_accuracy_v99.js','card_identity_recognition.js',
     'vision_calibration.json',
@@ -630,6 +634,34 @@ def _start_graded_photo_collection():
     threading.Thread(target=_background_graded_photo_collection,args=(job_id,),daemon=True).start()
     return {'ok':True,'accepted':True,'job_id':job_id,'job':_graded_photo_job_snapshot()},202
 
+def _manual_photo_upload_allowed(client_ip):
+    now=time.monotonic()
+    with MANUAL_PHOTO_UPLOAD_LOCK:
+        recent=[moment for moment in MANUAL_PHOTO_UPLOAD_BUCKETS.get(client_ip,[])
+                if now-moment<MANUAL_PHOTO_UPLOAD_WINDOW_SECONDS]
+        if len(recent)>=MANUAL_PHOTO_UPLOAD_LIMIT:
+            MANUAL_PHOTO_UPLOAD_BUCKETS[client_ip]=recent
+            return False,max(1.0,MANUAL_PHOTO_UPLOAD_WINDOW_SECONDS-(now-recent[0]))
+        recent.append(now);MANUAL_PHOTO_UPLOAD_BUCKETS[client_ip]=recent
+        if len(MANUAL_PHOTO_UPLOAD_BUCKETS)>256:
+            for key in list(MANUAL_PHOTO_UPLOAD_BUCKETS):
+                values=[value for value in MANUAL_PHOTO_UPLOAD_BUCKETS[key]
+                        if now-value<MANUAL_PHOTO_UPLOAD_WINDOW_SECONDS]
+                if values:MANUAL_PHOTO_UPLOAD_BUCKETS[key]=values
+                else:MANUAL_PHOTO_UPLOAD_BUCKETS.pop(key,None)
+        return True,0.0
+
+def _background_manual_photo_processing(registration_id):
+    try:
+        import manual_graded_photo_registration as manual_photo
+        manual_photo.process_registration(registration_id)
+    except Exception:
+        try:
+            import manual_graded_photo_registration as manual_photo
+            manual_photo.mark_processing_failed(registration_id)
+        except Exception:
+            pass
+
 def _progress_update(current,total,label,filename,state,result=None):
     if state=='deferred-running':
         msg=f"[{current}/{total}] {label} · 시간초과 자료만 별도 복구수집 중"
@@ -1029,13 +1061,7 @@ class Handler(SimpleHTTPRequestHandler):
             return False
         if address.is_loopback:
             return True
-        if isinstance(address,ipaddress.IPv4Address):
-            return any(address in network for network in (
-                ipaddress.ip_network('10.0.0.0/8'),
-                ipaddress.ip_network('172.16.0.0/12'),
-                ipaddress.ip_network('192.168.0.0/16'),
-            ))
-        return address in ipaddress.ip_network('fc00::/7')
+        return client_network_allowed(str(address))
     def _require_request_host(self):
         if self._request_host_allowed():
             return True
@@ -1201,6 +1227,12 @@ class Handler(SimpleHTTPRequestHandler):
         if path=='/api/vision-self-learning': return self.json(load_json_file(VISION_SELF_LEARNING_REPORT,{'version':1,'engine':'v101-isolated-self-learning-calibration','status':'not-run'}))
         if path=='/api/ebay-grader-learning': return self.json(ebay_grader_learning_status())
         if path=='/api/graded-photo-learning': return self.json(load_json_file(os.path.join(BASE,'graded_photo_candidates.json'),{'schema_version':1,'records':[],'summary':{'total_candidates':0}}))
+        if path=='/api/graded-photo-manual-registrations':
+            try:
+                import manual_graded_photo_registration as manual_photo
+                return self.json(manual_photo.public_registry())
+            except (ImportError,OSError,ValueError,TypeError,json.JSONDecodeError):
+                return self.json({'ok':False,'error':'수동 등급사진 등록현황을 읽지 못했습니다.'},500)
         if path=='/api/card-identity-learning':
             try:
                 from card_identity_recognition import learning_payload
@@ -1332,7 +1364,8 @@ class Handler(SimpleHTTPRequestHandler):
             db=load_market_db(); entry=db.get('entries',{}).get(key)
             return self.json({'ok':True,'found':bool(entry),'key':key,'updated_at':db.get('updated_at'),'collection_status':db.get('collection_status'),'price':entry})
         # Mutating updates are POST-only. This prevents accidental/cross-site GET execution.
-        if path in ('/api/update','/run-auto-update','/api/run-auto-update','/api/run-graded-photo-collection'):
+        if path in ('/api/update','/run-auto-update','/api/run-auto-update','/api/run-graded-photo-collection',
+                    '/api/graded-photo-manual-registration','/api/retry-graded-photo-manual-verification'):
             return self.json({'ok':False,'error':'POST 요청만 허용'},405)
         if not self._safe_static(path):
             return self.json({'ok':False,'error':'공개되지 않은 파일'},404)
@@ -1355,6 +1388,41 @@ class Handler(SimpleHTTPRequestHandler):
                 return
             payload,status=_start_graded_photo_collection()
             return self.json(payload,status)
+        if post_path=='/api/graded-photo-manual-registration':
+            if not self._require_mutation_origin():
+                return
+            allowed,retry_after=_manual_photo_upload_allowed(self.client_address[0])
+            if not allowed:
+                return self.json({'ok':False,'error':'수동 사진등록 요청이 너무 빠릅니다.',
+                                  'retry_after_seconds':round(retry_after,1)},429)
+            try:
+                import manual_graded_photo_registration as manual_photo
+                with DATA_WRITE_LOCK:
+                    result=manual_photo.register(self._read_json_body(8500000))
+                registration=result.get('registration') if isinstance(result,dict) else {}
+                registration_id=registration.get('registration_id') if isinstance(registration,dict) else None
+                if registration_id and not result.get('duplicate'):
+                    threading.Thread(target=_background_manual_photo_processing,args=(registration_id,),daemon=True).start()
+                return self.json(result,200 if result.get('duplicate') else 202)
+            except ValueError as exc:
+                return self.json({'ok':False,'error':str(exc)[:180] or '수동 등급사진 등록자료 형식 오류'},400)
+            except (TypeError,OverflowError,UnicodeError,RecursionError,OSError):
+                return self.json({'ok':False,'error':'수동 등급사진 등록자료 형식 오류'},400)
+        if post_path=='/api/retry-graded-photo-manual-verification':
+            if not self._require_mutation_origin():
+                return
+            try:
+                incoming=self._read_json_body(2000)
+                registration_id=str(incoming.get('registration_id') or '')[:80]
+                if not re.fullmatch(r'manual-[0-9]{14}-[0-9a-f]{12}',registration_id):
+                    raise ValueError('등록번호 오류')
+                import manual_graded_photo_registration as manual_photo
+                if not manual_photo.registration_exists(registration_id):
+                    raise ValueError('등록번호를 찾을 수 없습니다.')
+                threading.Thread(target=_background_manual_photo_processing,args=(registration_id,),daemon=True).start()
+                return self.json({'ok':True,'accepted':True,'registration_id':registration_id},202)
+            except (ValueError,TypeError,OverflowError,UnicodeError,RecursionError,OSError):
+                return self.json({'ok':False,'error':'수동등록 재검증 요청 형식 오류'},400)
         if post_path=='/api/update':
             return self._manual_update()
         if post_path=='/api/recognize-card':

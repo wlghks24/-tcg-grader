@@ -67,6 +67,35 @@ class GradedPhotoRuntimeTests(unittest.TestCase):
         self.assertTrue(payload['accepted'])
         start.assert_called_once_with()
 
+    def test_manual_registration_status_endpoint(self):
+        expected={'ok':True,'registrations':[],'summary':{'total':0}}
+        with mock.patch('manual_graded_photo_registration.public_registry',return_value=expected):
+            status,payload=request_json(urllib.request.Request(self.base+'/api/graded-photo-manual-registrations'))
+        self.assertEqual(status,200)
+        self.assertEqual(payload['summary']['total'],0)
+
+    def test_manual_registration_is_same_origin_post_only(self):
+        status,payload=request_json(urllib.request.Request(self.base+'/api/graded-photo-manual-registration'))
+        self.assertEqual(status,405)
+        request=urllib.request.Request(self.base+'/api/graded-photo-manual-registration',data=b'{}',method='POST',
+                                       headers={'Content-Type':'application/json','Origin':'https://evil.example'})
+        with mock.patch('manual_graded_photo_registration.register') as register:
+            status,payload=request_json(request)
+        self.assertEqual(status,403)
+        register.assert_not_called()
+
+    def test_same_origin_manual_registration_starts_background_verification(self):
+        registration={'registration_id':'manual-20260830123456-abcdef123456'}
+        request=urllib.request.Request(self.base+'/api/graded-photo-manual-registration',data=b'{"test":true}',method='POST',
+                                       headers={'Content-Type':'application/json','Origin':self.base})
+        with mock.patch('manual_graded_photo_registration.register',return_value={'ok':True,'duplicate':False,'registration':registration}) as register, \
+             mock.patch.object(tcg_updater,'_background_manual_photo_processing') as background:
+            status,payload=request_json(request)
+        self.assertEqual(status,202)
+        self.assertEqual(payload['registration']['registration_id'],registration['registration_id'])
+        register.assert_called_once()
+        background.assert_called_once_with(registration['registration_id'])
+
 
 if __name__=='__main__':
     unittest.main()

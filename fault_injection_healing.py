@@ -270,7 +270,14 @@ def _probe(root: Path, scenario: FaultScenario) -> bool:
         "required-hough": "function probabilisticHoughSegments" in text,
         "required-whitening": "function analyzeWhitening" in text,
         "required-noopener": 'rel="noopener noreferrer"' in text and 'rel="opener"' not in text,
-        "required-origin-guard": text.count("if not self._require_mutation_origin()") >= 8,
+        # The injected mutation targets the first guard, currently the manual
+        # update handler. Counting every guard became blind once new protected
+        # endpoints were added because one removal still left a high count.
+        "required-origin-guard": re.search(
+            r"def _manual_update\(self\):.{0,320}?if not self\._require_mutation_origin\(\)",
+            text,
+            re.S,
+        ) is not None,
         "required-atomic-write": "os.replace" in text,
         "required-retry-cap": re.search(r"^MAX_RETRIES = 5$",text,re.M) is not None,
         "required-human-review": '"automatic_application": False' in text,

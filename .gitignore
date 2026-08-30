@@ -63,3 +63,8 @@ secrets*.json
 oauth_token*.json
 security_learning_memory.json
 security_audit_report.json
+
+# Device-local manually registered slab photos and quarantine/verification state.
+GRADE_TRAINING_INBOX/
+manual_graded_photo_registrations.json
+manual_graded_photo_registrations.json.bak
