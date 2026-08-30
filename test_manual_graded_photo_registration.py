@@ -30,8 +30,10 @@ class ManualGradedPhotoRegistrationTests(unittest.TestCase):
         ]
         for patcher in self.patches:
             patcher.start()
+        manual.PROCESSING_IDS.clear()
 
     def tearDown(self):
+        manual.PROCESSING_IDS.clear()
         for patcher in reversed(self.patches):
             patcher.stop()
         self.temp.cleanup()
@@ -71,6 +73,12 @@ class ManualGradedPhotoRegistrationTests(unittest.TestCase):
         bad = self.payload(); bad["image_data_url"] = "data:image/png;base64," + base64.b64encode(b"x" * 1100).decode()
         with self.assertRaises(ValueError):
             manual.register(bad)
+
+    def test_excessive_decompressed_pixels_are_rejected(self):
+        bad = self.payload()
+        bad["image_data_url"] = png_data_url(width=7000, height=6000)
+        with self.assertRaisesRegex(ValueError, "3600만"):
+            manual.register(bad)
         bad = self.payload(); bad["grade"] = 9.7
         with self.assertRaises(ValueError):
             manual.register(bad)
@@ -100,6 +108,40 @@ class ManualGradedPhotoRegistrationTests(unittest.TestCase):
         self.assertTrue(result["deferred"])
         self.assertEqual(result["registration"]["verification_state"], "deferred_by_cooldown")
         self.assertFalse(result["registration"]["training_eligible"])
+
+    def test_retry_reuses_complete_ocr_identity(self):
+        row = manual.register(self.payload())["registration"]
+        evidence = {"company": "PSA", "grade": 10.0, "certification_id": "12345678"}
+        with mock.patch.object(manual, "_ocr_image", return_value=("PSA 10 CERT 12345678", None, {"pass_count": 1}, evidence)) as ocr, \
+             mock.patch.object(manual.OFFICIAL_LOOKUP_GUARD, "claim", side_effect=[(False, {"retry_after_seconds": 60}), (True, {})]), \
+             mock.patch.object(manual.OFFICIAL_LOOKUP_GUARD, "record_result", return_value={"blocked": False}), \
+             mock.patch.object(manual, "verify_cert", return_value={"verified": True, "grade": 10.0, "official_url": "https://www.psacard.com/cert/12345678/psa"}):
+            first = manual.process_registration(row["registration_id"])
+            second = manual.process_registration(row["registration_id"])
+        self.assertTrue(first["deferred"])
+        self.assertTrue(second["registration"]["official_result"])
+        self.assertTrue(second["registration"]["ocr_cache_hit"])
+        ocr.assert_called_once()
+
+    def test_provider_block_after_lookup_is_deferred(self):
+        row = manual.register(self.payload())["registration"]
+        evidence = {"company": "PSA", "grade": 10.0, "certification_id": "12345678"}
+        with mock.patch.object(manual, "_ocr_image", return_value=("PSA 10 CERT 12345678", None, {}, evidence)), \
+             mock.patch.object(manual.OFFICIAL_LOOKUP_GUARD, "claim", return_value=(True, {})), \
+             mock.patch.object(manual.OFFICIAL_LOOKUP_GUARD, "record_result", return_value={"blocked": True, "cooldown_seconds": 120}), \
+             mock.patch.object(manual, "verify_cert", return_value={"verified": False, "blocked_or_challenged": True, "http_status": 429}):
+            result = manual.process_registration(row["registration_id"])
+        self.assertTrue(result["deferred"])
+        self.assertEqual(result["registration"]["verification_state"], "deferred_by_cooldown")
+        self.assertEqual(result["registration"]["retry_after_seconds"], 120)
+
+    def test_duplicate_processing_request_is_coalesced(self):
+        row = manual.register(self.payload())["registration"]
+        manual.PROCESSING_IDS.add(row["registration_id"])
+        with mock.patch.object(manual, "_ocr_image") as ocr:
+            result = manual.process_registration(row["registration_id"])
+        self.assertTrue(result["already_processing"])
+        ocr.assert_not_called()
 
     def test_ocr_conflict_quarantines_even_when_lookup_claims_verified(self):
         row = manual.register(self.payload())["registration"]

@@ -1,7 +1,7 @@
 {
   "version": 1,
   "engine": "v109-card-identity-ocr-learning",
-  "generated_at": "2026-08-30T04:59:45+00:00",
+  "generated_at": "2026-08-30T09:28:20+00:00",
   "files": {
     "_audit_progress.py": {
       "sha256": "e4561a89779fc9c8f4b4d474bc2ce4285b65174eb29a6bf20f47a5e30456d674",
@@ -764,8 +764,8 @@
       "bytes": 476
     },
     "manual_graded_photo_registration.py": {
-      "sha256": "10aa5029e9ccd3bb315b7d208a3ef55444fc85eb9de62ccdac8ccc80a0647e2c",
-      "bytes": 19750
+      "sha256": "3e45d404fb04d69d9df56c7e2bc114ef652c8da263a5767ac521d2379543b72c",
+      "bytes": 22191
     },
     "market_catalog_expander.js": {
       "sha256": "e9c1e91c077b7cee9077445621520140f1039d4fc8c2c58ce6c8b461adc8e26e",
@@ -1004,8 +1004,8 @@
       "bytes": 4820
     },
     "test_manual_graded_photo_registration.py": {
-      "sha256": "cf45ade42a35da039fd5b90ad57dfa8fb47ad8df393e3a8d4b08f44d06aebef5",
-      "bytes": 7063
+      "sha256": "f9aeea561e192a802e36e545a293056454e483f705a0b3df24dbd436460445f8",
+      "bytes": 9894
     },
     "test_multi_market_price_collector.py": {
       "sha256": "a16c9af8bb42b91a8b49b9b4be9b9a576927bb1cd79b90063474dc97758647c4",

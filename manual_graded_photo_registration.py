@@ -34,8 +34,11 @@ VERIFIED_SLAB_REFERENCES = ROOT / "library_verified_slab_references.json"
 COMPANIES = {"PSA", "BGS", "CGC", "TAG", "BRG"}
 GAMES = {"pokemon", "onepiece", "naruto"}
 MAX_IMAGE_BYTES = 6_000_000
+MAX_IMAGE_PIXELS = 36_000_000
 MAX_REGISTRATIONS = 5000
 LOCK = threading.RLock()
+PROCESS_LOCK = threading.Lock()
+PROCESSING_IDS: set[str] = set()
 
 
 def _now() -> str:
@@ -134,6 +137,8 @@ def _decode_image(data_url: Any) -> tuple[bytes, str, int, int]:
         extension = ".jpg"
     if not 320 <= width <= 12000 or not 320 <= height <= 12000:
         raise ValueError("사진 해상도는 가로·세로 320~12000px 범위여야 합니다.")
+    if width * height > MAX_IMAGE_PIXELS:
+        raise ValueError("사진 전체 해상도는 3600만 픽셀 이하여야 합니다.")
     return data, extension, width, height
 
 
@@ -144,7 +149,7 @@ def _public_row(row: dict[str, Any]) -> dict[str, Any]:
         "image_height", "status", "verification_state", "official_result",
         "official_reference_url", "learning_eligibility", "training_eligible",
         "quarantine_reasons", "ocr_company", "ocr_grade", "ocr_certification_id",
-        "ocr_error", "retry_after_seconds", "duplicate_of",
+        "ocr_error", "ocr_cache_hit", "retry_after_seconds", "duplicate_of",
     )
     return {key: row.get(key) for key in keys if key in row}
 
@@ -308,8 +313,46 @@ def _ocr_image(image_path: Path) -> tuple[str, str | None, dict[str, Any], dict[
         return "", "ocr_unavailable", {}, {}
 
 
-def process_registration(registration_id: Any) -> dict[str, Any]:
-    registration_id = _bounded_text(registration_id, 80)
+def _ocr_for_row(row: dict[str, Any]) -> tuple[str, str | None, dict[str, Any], dict[str, Any], bool]:
+    """Reuse a complete OCR identity on safe retries instead of decoding twice."""
+    cached_identity = {
+        "company": row.get("ocr_company"),
+        "grade": row.get("ocr_grade"),
+        "certification_id": row.get("ocr_certification_id"),
+    }
+    cache_valid = bool(
+        row.get("ocr_cached_sha256") == row.get("image_sha256")
+        and cached_identity["company"]
+        and cached_identity["grade"] is not None
+        and cached_identity["certification_id"]
+    )
+    if cache_valid:
+        diagnostics = row.get("ocr_diagnostics")
+        return (
+            str(row.get("ocr_label_text") or ""),
+            row.get("ocr_error"),
+            dict(diagnostics) if isinstance(diagnostics, dict) else {},
+            cached_identity,
+            True,
+        )
+    text, error, diagnostics, evidence = _ocr_image(ROOT / str(row["image_path"]))
+    return text, error, diagnostics, evidence, False
+
+
+def _claim_processing(registration_id: str) -> bool:
+    with PROCESS_LOCK:
+        if registration_id in PROCESSING_IDS:
+            return False
+        PROCESSING_IDS.add(registration_id)
+        return True
+
+
+def _release_processing(registration_id: str) -> None:
+    with PROCESS_LOCK:
+        PROCESSING_IDS.discard(registration_id)
+
+
+def _process_registration_once(registration_id: str) -> dict[str, Any]:
     with LOCK:
         registry = _registry()
         index, row = _find_row(registry, registration_id)
@@ -317,8 +360,7 @@ def process_registration(registration_id: Any) -> dict[str, Any]:
         registry["registrations"][index] = row
         _save_registry(registry)
 
-    image_path = ROOT / str(row["image_path"])
-    text, ocr_error, diagnostics, evidence = _ocr_image(image_path)
+    text, ocr_error, diagnostics, evidence, ocr_cache_hit = _ocr_for_row(row)
     conflicts = []
     if evidence.get("company") and evidence.get("company") != row["company"]:
         conflicts.append("ocr_company_conflict")
@@ -335,6 +377,7 @@ def process_registration(registration_id: Any) -> dict[str, Any]:
                 "updated_at": _now(), "verification_state": "deferred_by_cooldown",
                 "retry_after_seconds": guard.get("retry_after_seconds"), "ocr_label_text": text[:1800],
                 "ocr_error": ocr_error, "ocr_diagnostics": diagnostics,
+                "ocr_cached_sha256": row.get("image_sha256"), "ocr_cache_hit": ocr_cache_hit,
                 "ocr_company": evidence.get("company"), "ocr_grade": evidence.get("grade"),
                 "ocr_certification_id": evidence.get("certification_id"),
             })
@@ -343,6 +386,7 @@ def process_registration(registration_id: Any) -> dict[str, Any]:
 
     result = verify_cert(row["company"], row["certification_id"], expected_grade=row["claimed_grade"], timeout=10)
     guard_result = OFFICIAL_LOOKUP_GUARD.record_result(row["company"], result)
+    provider_blocked = bool(guard_result.get("blocked") or result.get("blocked_or_challenged"))
     ocr_identity_complete = bool(
         evidence.get("company") == row["company"]
         and _normalized_cert(evidence.get("certification_id")) == row["certification_id"]
@@ -365,15 +409,16 @@ def process_registration(registration_id: Any) -> dict[str, Any]:
         registry = _registry(); index, current = _find_row(registry, registration_id)
         current.update({
             "updated_at": _now(), "status": status,
-            "verification_state": "verified" if official_verified else "completed_unverified",
+            "verification_state": "verified" if official_verified else "deferred_by_cooldown" if provider_blocked else "completed_unverified",
             "official_result": official_verified,
             "official_grade": result.get("grade"),
             "official_reference_url": result.get("official_url") or current.get("official_reference_url"),
             "learning_eligibility": "reference_learning_only" if official_verified else "quarantine_only_until_official_match",
             "training_eligible": False, "raw_grade_calibration_eligible": False,
             "quarantine_reasons": sorted(set(reasons)),
-            "retry_after_seconds": guard_result.get("cooldown_seconds") if guard_result.get("blocked") else None,
+            "retry_after_seconds": (guard_result.get("cooldown_seconds") or result.get("recommended_cooldown_seconds")) if provider_blocked else None,
             "ocr_label_text": text[:1800], "ocr_error": ocr_error, "ocr_diagnostics": diagnostics,
+            "ocr_cached_sha256": row.get("image_sha256"), "ocr_cache_hit": ocr_cache_hit,
             "ocr_company": evidence.get("company"), "ocr_grade": evidence.get("grade"),
             "ocr_certification_id": evidence.get("certification_id"),
             "official_lookup": {key: result.get(key) for key in (
@@ -387,7 +432,21 @@ def process_registration(registration_id: Any) -> dict[str, Any]:
                                 "learning_eligibility": "quarantine_registry_conflict",
                                 "quarantine_reasons": sorted(set(current["quarantine_reasons"] + [str(error)]))})
         registry["registrations"][index] = current; _save_registry(registry)
-    return {"ok": True, "deferred": False, "registration": _public_row(current)}
+    return {"ok": True, "deferred": provider_blocked, "registration": _public_row(current)}
+
+
+def process_registration(registration_id: Any) -> dict[str, Any]:
+    registration_id = _bounded_text(registration_id, 80)
+    with LOCK:
+        registry = _registry()
+        _, current = _find_row(registry, registration_id)
+        public = _public_row(current)
+    if not _claim_processing(registration_id):
+        return {"ok": True, "deferred": True, "already_processing": True, "registration": public}
+    try:
+        return _process_registration_once(registration_id)
+    finally:
+        _release_processing(registration_id)
 
 
 def mark_processing_failed(registration_id: Any) -> None:
