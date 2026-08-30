@@ -7,6 +7,10 @@ verified evidence by itself. The runner records HTTP status details, opens a
 per-company circuit breaker after blocking/rate-limit responses, and persists a
 cooldown so a later mobile/Termux command cannot immediately hammer the same
 protected official site again.
+
+Safety policy: at most two official lookups are attempted per grading company in
+one invocation, even when --limit requests more. This hard cap is intentionally
+not configurable from the command line.
 """
 from __future__ import annotations
 
@@ -20,6 +24,8 @@ from pathlib import Path
 from typing import Any
 
 from grading_cert_verifier import verify_cert
+
+MAX_LOOKUPS_PER_COMPANY = 2
 
 
 def utc_dt() -> datetime:
@@ -74,6 +80,7 @@ def upsert_registry(registry: dict[str, Any], result: dict[str, Any]) -> tuple[b
     grade = result.get("grade")
     if not company or not cert or grade is None:
         return False, "missing_official_fields"
+
     rows = registry.setdefault("certifications", [])
     for row in rows:
         if str(row.get("company") or "").upper() == company and str(row.get("certification_id") or "") == cert:
@@ -87,6 +94,7 @@ def upsert_registry(registry: dict[str, Any], result: dict[str, Any]) -> tuple[b
                 "verification_note": "Official grading-company page matched company, certification and grade via slab verification batch.",
             })
             return True, "registry_updated"
+
     rows.append({
         "company": company,
         "certification_id": cert,
@@ -183,7 +191,12 @@ def main() -> int:
     parser.add_argument("queue", type=Path, help="Verification queue JSON from library_slab_corpus.py")
     parser.add_argument("--registry", type=Path, default=Path("library_official_cert_registry.json"))
     parser.add_argument("--state", type=Path, default=Path("slab_official_verification_state.json"))
-    parser.add_argument("--limit", type=int, default=25, help="Actual official lookups this run; 0 means all eligible candidates.")
+    parser.add_argument(
+        "--limit",
+        type=int,
+        default=25,
+        help="Overall lookup budget. A hard safety cap of 2 lookups per company is always enforced.",
+    )
     parser.add_argument("--delay", type=float, default=1.5, help="Seconds between official-site requests.")
     parser.add_argument("--timeout", type=int, default=10)
     parser.add_argument("--companies", default="", help="Optional comma-separated filter, e.g. PSA,CGC")
@@ -195,17 +208,21 @@ def main() -> int:
     queue_rows = queue_payload.get("records", []) if isinstance(queue_payload, dict) else []
     if not isinstance(queue_rows, list):
         raise SystemExit("queue records must be a list")
+
     registry = load_json(args.registry, {"schema_version": 1, "certifications": []})
     if not isinstance(registry, dict):
         raise SystemExit("registry must be a JSON object")
-    state = load_json(args.state, {"schema_version": 3, "created_at": utc_now(), "results": {}})
+
+    state = load_json(args.state, {"schema_version": 4, "created_at": utc_now(), "results": {}})
     if not isinstance(state, dict):
-        state = {"schema_version": 3, "created_at": utc_now(), "results": {}}
-    state["schema_version"] = 3
+        state = {"schema_version": 4, "created_at": utc_now(), "results": {}}
+    state["schema_version"] = 4
+
     results = state.setdefault("results", {})
     if not isinstance(results, dict):
         results = {}
         state["results"] = results
+
     cooldowns = state.setdefault("company_cooldowns", {})
     if not isinstance(cooldowns, dict):
         cooldowns = {}
@@ -221,6 +238,8 @@ def main() -> int:
 
     candidates: list[dict[str, Any]] = []
     deferred_by_cooldown: Counter[str] = Counter()
+    candidate_counts: Counter[str] = Counter()
+
     for row in queue_rows:
         if not isinstance(row, dict):
             continue
@@ -228,9 +247,11 @@ def main() -> int:
         cert = str(row.get("certification_id") or "")
         if not company or not cert or (company_filter and company not in company_filter):
             continue
+
         key = row_key(company, cert)
         if key in existing_registry:
             continue
+
         previous = results.get(key) if isinstance(results.get(key), dict) else None
         if previous:
             status = previous.get("status")
@@ -241,22 +262,33 @@ def main() -> int:
             retryable = status in {"lookup_error", "not_verified", "site_blocked"}
             if terminal or (retryable and not args.retry_errors):
                 continue
+
         if active_cooldown(cooldowns, company):
             deferred_by_cooldown[company] += 1
             continue
-        candidates.append(row)
 
-    lookup_limit = len(candidates) if args.limit <= 0 else min(args.limit, len(candidates))
+        candidates.append(row)
+        candidate_counts[company] += 1
+
+    possible_with_company_cap = sum(
+        min(MAX_LOOKUPS_PER_COMPANY, count) for count in candidate_counts.values()
+    )
+    requested_limit = possible_with_company_cap if args.limit <= 0 else max(0, args.limit)
+    lookup_limit = min(requested_limit, possible_with_company_cap)
+
     active_cooldowns = {
         company: entry for company in sorted(cooldowns)
         if (entry := active_cooldown(cooldowns, company)) is not None
     }
     state["updated_at"] = utc_now()
     atomic_write_json(args.state, state)
+
     print(json.dumps({
         "queue_records": len(queue_rows),
         "remaining_candidates": len(candidates),
         "lookup_limit_this_run": lookup_limit,
+        "max_lookups_per_company": MAX_LOOKUPS_PER_COMPANY,
+        "eligible_by_company": dict(sorted(candidate_counts.items())),
         "registry_verified_entries": len(existing_registry),
         "delay_seconds": max(0.0, args.delay),
         "company_filter": sorted(company_filter),
@@ -265,7 +297,7 @@ def main() -> int:
         "deferred_by_cooldown": dict(sorted(deferred_by_cooldown.items())),
     }, ensure_ascii=False), flush=True)
 
-    if not candidates:
+    if not candidates or lookup_limit <= 0:
         return 0
 
     run_counts: Counter[str] = Counter()
@@ -273,24 +305,39 @@ def main() -> int:
     consecutive_blocked: Counter[str] = Counter()
     blocked_companies: set[str] = set()
     deferred_by_circuit: Counter[str] = Counter()
+    deferred_by_company_cap: Counter[str] = Counter()
+    run_company_counts: Counter[str] = Counter()
     lookups_done = 0
 
     for row in candidates:
         if lookups_done >= lookup_limit:
             break
+
         company = str(row.get("company") or "").upper()
         cert = str(row.get("certification_id") or "")
+
         if company in blocked_companies:
             deferred_by_circuit[company] += 1
             continue
+
+        if run_company_counts[company] >= MAX_LOOKUPS_PER_COMPANY:
+            deferred_by_company_cap[company] += 1
+            continue
+
         expected = row.get("label_grade_candidate")
         key = row_key(company, cert)
         lookups_done += 1
-        print(f"[official-verify] {lookups_done}/{lookup_limit} {company} {cert}", flush=True)
+        run_company_counts[company] += 1
+        print(
+            f"[official-verify] {lookups_done}/{lookup_limit} {company} {cert} "
+            f"(company {run_company_counts[company]}/{MAX_LOOKUPS_PER_COMPANY})",
+            flush=True,
+        )
 
         result = verify_cert(company, cert, expected_grade=expected, timeout=args.timeout)
         status = classify_result(result)
         run_counts[status] += 1
+
         http_status = result.get("http_status")
         if http_status is not None:
             http_counts[f"{company}:{http_status}"] += 1
@@ -343,9 +390,11 @@ def main() -> int:
             "evidence": result.get("evidence"),
             "registry_action": registry_action,
         }
+
         state["updated_at"] = utc_now()
         state["source_queue"] = str(args.queue)
         atomic_write_json(args.state, state)
+
         if lookups_done < lookup_limit and args.delay > 0:
             time.sleep(max(0.0, args.delay))
 
@@ -357,13 +406,17 @@ def main() -> int:
         company: entry for company in sorted(cooldowns)
         if (entry := active_cooldown(cooldowns, company)) is not None
     }
+
     summary = {
         "processed_this_run": lookups_done,
+        "processed_by_company": dict(sorted(run_company_counts.items())),
+        "max_lookups_per_company": MAX_LOOKUPS_PER_COMPANY,
         "run_status_counts": dict(sorted(run_counts.items())),
         "run_http_status_counts": dict(sorted(http_counts.items())),
         "blocked_companies": sorted(blocked_companies),
         "active_company_cooldowns": active_cooldowns,
         "deferred_by_circuit": dict(sorted(deferred_by_circuit.items())),
+        "deferred_by_company_cap": dict(sorted(deferred_by_company_cap.items())),
         "deferred_by_cooldown": dict(sorted(deferred_by_cooldown.items())),
         "state_status_counts": dict(sorted(all_statuses.items())),
         "state_records": len(results),
