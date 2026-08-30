@@ -123,3 +123,102 @@
   .analysis-image-wait{color:#9aa8bc!important}
   #purchaseNearby{border-color:#334155!important}
 }
+
+/* v123 iPhone/Safari readability patch.
+   Keep the app dark when the device is in dark mode, but light feature panels
+   must explicitly keep dark text so iOS does not inherit the dark-theme text. */
+html,body{
+  -webkit-text-size-adjust:100%;
+  text-size-adjust:100%;
+  overflow-x:hidden;
+}
+.app{
+  padding-top:calc(16px + env(safe-area-inset-top))!important;
+  padding-left:calc(10px + env(safe-area-inset-left))!important;
+  padding-right:calc(10px + env(safe-area-inset-right))!important;
+  padding-bottom:calc(64px + env(safe-area-inset-bottom))!important;
+}
+.app,section,.card,.release-board,.home-launcher{max-width:100%}
+button,input,select,textarea{max-width:100%;min-width:0}
+
+@media(max-width:650px){
+  input,select,textarea{font-size:16px!important}
+  button{font-size:15px!important;line-height:1.35!important}
+  .muted{font-size:13px!important;line-height:1.65!important}
+  .gtc-grid label{font-size:13px!important;line-height:1.45!important}
+  .gtc-summary>div,.gpd-summary>div,.mmp-summary>div{min-width:0;overflow-wrap:anywhere}
+  .gtc-summary b,.gpd-summary b,.mmp-summary b{overflow-wrap:anywhere;word-break:keep-all}
+  .gpd-section h3{font-size:16px!important;line-height:1.4!important}
+  .gpd-company{min-width:0}
+  .gpd-company b,.gpd-company span{overflow-wrap:anywhere}
+  .av-actions a{font-size:15px!important;min-height:48px!important}
+  .market12-auto-status{font-size:13px!important}
+}
+
+@media(prefers-color-scheme:dark){
+  /* These feature modules intentionally use light cards/panels. Force matching
+     dark text on those light surfaces to prevent white-on-white / grey-on-white
+     rendering on iPhone Safari and standalone PWA. */
+  .grading-total-panel,
+  .multi-market-panel,
+  .auto-validation-panel,
+  .graded-photo-dashboard{
+    color:#0f172a!important;
+  }
+  .grading-total-panel{background:linear-gradient(180deg,#fff,#f0fdf4)!important}
+  .multi-market-panel{background:linear-gradient(180deg,#f8fbff,#fff)!important}
+  .auto-validation-panel{background:#f0fdf4!important}
+  .graded-photo-dashboard{background:linear-gradient(180deg,#f8fbff,#fff)!important}
+
+  .grading-total-panel h2,.grading-total-panel h3,.grading-total-panel h4,
+  .multi-market-panel h2,.multi-market-panel h3,.multi-market-panel h4,
+  .auto-validation-panel h2,.auto-validation-panel h3,.auto-validation-panel h4,
+  .graded-photo-dashboard h2,.graded-photo-dashboard h3,.graded-photo-dashboard h4,
+  .gtc-head h3,.gtc-summary b,.mmp-head b,.mmp-summary b,.mmp-title,
+  .av-head b,.gpd-head h2,.gpd-summary b,.gpd-section h3{
+    color:#0f172a!important;
+  }
+
+  .gtc-grid label,.gtc-grid small,.gtc-summary span,.gtc-note,.gtc-head p,
+  .mmp-head small,.mmp-summary span,.mmp-meta,.mmp-note,
+  .av-head small,
+  .gpd-head p,.gpd-summary span,.gpd-sources span,.gpd-health span,
+  .gpd-health small,.gpd-diagnostics b,.gpd-diagnostics span,.gpd-foot{
+    color:#475569!important;
+  }
+
+  .gtc-grid input,.gtc-grid select,.gtc-summary>div,.gtc-note,
+  .mmp-summary>div,.mmp-row,.mmp-empty,
+  .av-actions a,.av-status,
+  .gpd-summary>div,.gpd-sources>div,.gpd-providers>span,.gpd-health>div,
+  .gpd-diagnostics>div{
+    background:#fff!important;
+    border-color:#dbe4ee!important;
+    color:#0f172a!important;
+  }
+
+  .gtc-profit{background:#ecfdf5!important}
+  .mmp-summary.mmp-wait{background:#eff6ff!important}
+  .mmp-summary.mmp-error{background:#fff7ed!important}
+  .gpd-diagnostics .gpd-errors{background:#fff7ed!important;border-color:#fed7aa!important}
+  .av-actions a,.av-status{color:#166534!important;border-color:#86efac!important}
+  .gpd-sources b,.gpd-providers b,.gpd-health b{color:#1d4ed8!important}
+
+  .market12-auto-status{
+    background:#eff6ff!important;
+    border-color:#bfdbfe!important;
+    color:#1e3a8a!important;
+  }
+  .market12-auto-status span{color:#475569!important}
+  .market12-auto-status[data-state="active"]{background:#ecfdf5!important;border-color:#a7f3d0!important}
+  .market12-auto-status[data-state="active"] b{color:#047857!important}
+
+  .boxkb-tab{background:#fff!important;color:#334155!important;border-color:#cbd5e1!important}
+  .boxkb-tab.active{background:#0f172a!important;color:#fff!important;border-color:#0f172a!important}
+  .boxkb-stat-grid article{background:#f8fafc!important;border-color:#dbe4ee!important}
+  .boxkb-stat-grid span{color:#334155!important}
+  .boxkb-stat-grid strong{color:#0f172a!important}
+  .boxkb-stat-grid small{color:#64748b!important}
+  .boxkb-stat-note{background:#eef6ff!important;color:#294b72!important;border-color:#cfe3ff!important}
+  .boxkb-tab-empty{background:#f8fafc!important;color:#64748b!important;border-color:#cbd5e1!important}
+}
