@@ -1,0 +1,52 @@
+name: Apply Security Hardening
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'server_security_guard.py'
+      - 'security_hardening_apply.py'
+      - 'security_self_audit.py'
+      - 'test_security_hardening.py'
+      - '.github/workflows/apply-security-hardening.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: security-hardening-main
+  cancel-in-progress: false
+
+jobs:
+  harden:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      # actions/checkout v4.2.2 pinned to a verified full commit SHA.
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          fetch-depth: 0
+      - name: Apply deterministic security patches
+        run: python security_hardening_apply.py
+      - name: Compile security-sensitive Python
+        run: |
+          python -m py_compile tcg_updater.py safe_runtime.py server_security_guard.py security_hardening_apply.py security_self_audit.py
+      - name: Run security regression tests
+        run: |
+          python -m unittest -v test_security_hardening.py
+          python -m unittest -v test_five_company_verification_policy.py
+          python security_hardening_apply.py --check
+      - name: Run vulnerability audit
+        run: python security_self_audit.py --fail-on high
+      - name: Commit hardened runtime files
+        run: |
+          if git diff --quiet -- tcg_updater.py safe_runtime.py .gitignore; then
+            echo 'No runtime hardening changes required.'
+            exit 0
+          fi
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add tcg_updater.py safe_runtime.py .gitignore
+          git commit -m 'security: harden LAN server, cert pacing, and file paths'
+          git push
