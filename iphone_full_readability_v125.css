@@ -1,4 +1,4 @@
-/* v125 iPhone/Safari full-app readability patch.
+/* v125/v126 iPhone/Safari full-app readability patch.
    Loaded after the existing UI CSS. Targets light surfaces that remain inside
    the app's dark-mode shell without changing the dark buttons themselves. */
 
@@ -140,6 +140,69 @@ html,body{
   .market12-auto-status span{color:#475569!important}
   .market12-auto-status[data-state="active"]{background:#ecfdf5!important;border-color:#a7f3d0!important}
   .market12-auto-status[data-state="active"] b{color:#047857!important}
+
+  /* v126: iOS/Chrome/Safari can keep a dark text-fill color even after color is
+     overridden. Force true light-surface rendering for the grading/camera UI. */
+  .card,.workflow-card,.validation-hub,.precision-hub,.economics-card,
+  .grading-total-panel,.multi-market-panel,.auto-validation-panel,
+  .graded-photo-dashboard{
+    color-scheme:light!important;
+  }
+
+  .card>h1,.card>h2,.card>h3,.card>h4,
+  .workflow-card h1,.workflow-card h2,.workflow-card h3,.workflow-card h4,
+  .validation-hub h1,.validation-hub h2,.validation-hub h3,.validation-hub h4,
+  .precision-hub h1,.precision-hub h2,.precision-hub h3,.precision-hub h4,
+  .economics-card h1,.economics-card h2,.economics-card h3,.economics-card h4,
+  .simple-grade-card h1,.simple-grade-card h2,.simple-grade-card h3,.simple-grade-card h4,
+  #v30validation h1,#v30validation h2,#v30validation h3,#v30validation h4{
+    color:#0f172a!important;
+    -webkit-text-fill-color:#0f172a!important;
+    opacity:1!important;
+  }
+
+  .card>p,.card>.muted,.card>label,.card legend,
+  .workflow-card p,.workflow-card label,.workflow-card legend,
+  .validation-hub p,.validation-hub label,.validation-hub legend,
+  .precision-hub p,.precision-hub label,.precision-hub legend,
+  .economics-card p,.economics-card label,.economics-card legend,
+  .simple-grade-card p,.simple-grade-card label,.simple-grade-card legend,
+  #v30validation p,#v30validation label,#v30validation legend,
+  .capture-label,.capture-placeholder,.capture-status,.capture-help,.camera-guide,.camera-help{
+    color:#475569!important;
+    -webkit-text-fill-color:#475569!important;
+    opacity:1!important;
+  }
+
+  .card input,.card select,.card textarea,
+  .workflow-card input,.workflow-card select,.workflow-card textarea,
+  .validation-hub input,.validation-hub select,.validation-hub textarea,
+  .simple-grade-card input,.simple-grade-card select,.simple-grade-card textarea,
+  #v30validation input,#v30validation select,#v30validation textarea{
+    color:#0f172a!important;
+    -webkit-text-fill-color:#0f172a!important;
+    background:#fff!important;
+    opacity:1!important;
+  }
+
+  .card input::placeholder,.card textarea::placeholder,
+  .workflow-card input::placeholder,.workflow-card textarea::placeholder,
+  .validation-hub input::placeholder,.validation-hub textarea::placeholder,
+  .simple-grade-card input::placeholder,.simple-grade-card textarea::placeholder,
+  #v30validation input::placeholder,#v30validation textarea::placeholder{
+    color:#64748b!important;
+    -webkit-text-fill-color:#64748b!important;
+    opacity:1!important;
+  }
+
+  .card .game,.workflow-card .game,.validation-hub .game{
+    -webkit-text-fill-color:currentColor!important;
+  }
+  .card button:not(.game),.workflow-card button:not(.game),
+  .validation-hub button:not(.game),.simple-grade-card button:not(.game),
+  #v30validation button:not(.game){
+    -webkit-text-fill-color:#fff!important;
+  }
 }
 
 @media(max-width:430px){
