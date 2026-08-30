@@ -1,4 +1,5 @@
 import json
+import tempfile
 import threading
 import unittest
 import urllib.error
@@ -42,6 +43,36 @@ class GradedPhotoRuntimeTests(unittest.TestCase):
         self.assertEqual(status,200)
         self.assertEqual(payload['engine'],'v123-verified-multisource-photo-collection')
         self.assertEqual(payload['summary']['raw_grade_calibration_eligible'],0)
+
+    def test_json_read_cache_reuses_parse_and_returns_isolated_values(self):
+        with tempfile.TemporaryDirectory() as directory:
+            path=Path(directory)/'cached.json'
+            path.write_text('{"items":[{"value":1}]}',encoding='utf-8')
+            tcg_updater.clear_json_file_cache()
+            original=tcg_updater.safe_read_text
+            with mock.patch.object(tcg_updater,'safe_read_text',wraps=original) as reader:
+                first=tcg_updater.load_json_file(path,{})
+                second=tcg_updater.load_json_file(path,{})
+                first['items'][0]['value']=99
+                third=tcg_updater.load_json_file(path,{})
+            self.assertEqual(reader.call_count,1)
+            self.assertEqual(second['items'][0]['value'],1)
+            self.assertEqual(third['items'][0]['value'],1)
+
+    def test_json_read_cache_invalidates_after_file_change(self):
+        with tempfile.TemporaryDirectory() as directory:
+            path=Path(directory)/'changing.json'
+            path.write_text('{"value":1}',encoding='utf-8')
+            tcg_updater.clear_json_file_cache()
+            self.assertEqual(tcg_updater.load_json_file(path,{})['value'],1)
+            path.write_text('{"value":200}',encoding='utf-8')
+            self.assertEqual(tcg_updater.load_json_file(path,{})['value'],200)
+
+    def test_dashboard_avoids_background_refresh_and_stops_finished_polling(self):
+        source=(ROOT/'graded_photo_dashboard.js').read_text(encoding='utf-8')
+        self.assertIn("document.visibilityState==='visible'",source)
+        self.assertIn('manualVerificationFinished(payload,registrationId)',source)
+        self.assertNotIn('rows.filter(r=>companyOf(r)===c)',source)
 
     def test_collection_trigger_is_post_only(self):
         status,payload=request_json(urllib.request.Request(self.base+'/api/run-graded-photo-collection'))

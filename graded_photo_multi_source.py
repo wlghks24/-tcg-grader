@@ -959,6 +959,31 @@ def _save_reference_learning(rows:list[dict])->dict:
           'policy':{'official_match_required':True,'raw_and_slab_isolated':True,'same_image_prediction_training':False,'near_duplicate_training':False}}
  atomic_write_json(REFERENCE_LEARNING,payload,suffix='.reference-learning.tmp');return payload
 
+def _aggregate_dimension_stats(rows:list[dict])->tuple[dict,dict]:
+ game_stats={game:{'name':GAME_DISPLAY_NAMES[game],'candidates':0,'with_image_url':0,
+                   'validated_images':0,'ocr_readable':0,'measurement_ready':0,
+                   'verified_references':0,'quarantined':0} for game in GAMES}
+ company_stats={company:{'candidates':0,'with_image_url':0,'validated_images':0,
+                         'ocr_readable':0,'measurement_ready':0,'verified_references':0,
+                         'games_covered':0,'quarantined':0} for company in COMPANIES}
+ company_games={company:set() for company in COMPANIES}
+ for item in rows:
+  game=str(item.get('game') or '').lower()
+  company=str(item.get('company') or '').upper()
+  verified=item.get('status')=='verified_reference'
+  values={'candidates':1,'with_image_url':int(bool(item.get('image_url'))),
+          'validated_images':int(bool(item.get('image_validated'))),
+          'ocr_readable':int(bool(item.get('ocr_label_text'))),
+          'measurement_ready':int(item.get('measurement_photo_ready') is True),
+          'verified_references':int(verified),'quarantined':int(not verified)}
+  if game in game_stats:
+   for key,value in values.items():game_stats[game][key]+=value
+  if company in company_stats:
+   for key,value in values.items():company_stats[company][key]+=value
+   if game in game_stats:company_games[company].add(game)
+ for company in COMPANIES:company_stats[company]['games_covered']=len(company_games[company])
+ return game_stats,company_stats
+
 def _collect_once()->dict:
  run_started=time.monotonic();registry=_registry();stats={};errors=[]
  is_android='com.termux' in os.environ.get('PREFIX','')
@@ -1058,26 +1083,7 @@ def _collect_once()->dict:
  reference_learning=_save_reference_learning(rows)
  verified_count=sum(item.get('status')=='verified_reference' for item in rows)
  measurement_ready_count=sum(item.get('measurement_photo_ready') is True for item in rows)
- game_stats={}
- for game in GAMES:
-  game_rows=[item for item in rows if item.get('game')==game]
-  game_stats[game]={'name':GAME_DISPLAY_NAMES[game],'candidates':len(game_rows),
-                    'with_image_url':sum(bool(item.get('image_url')) for item in game_rows),
-                    'validated_images':sum(bool(item.get('image_validated')) for item in game_rows),
-                    'ocr_readable':sum(bool(item.get('ocr_label_text')) for item in game_rows),
-                    'measurement_ready':sum(item.get('measurement_photo_ready') is True for item in game_rows),
-                    'verified_references':sum(item.get('status')=='verified_reference' for item in game_rows),
-                    'quarantined':sum(item.get('status')!='verified_reference' for item in game_rows)}
- company_stats={}
- for company in COMPANIES:
-  company_rows=[item for item in rows if str(item.get('company') or '').upper()==company]
- company_stats[company]={'candidates':len(company_rows),'with_image_url':sum(bool(item.get('image_url')) for item in company_rows),
-                          'validated_images':sum(bool(item.get('image_validated')) for item in company_rows),
-                          'ocr_readable':sum(bool(item.get('ocr_label_text')) for item in company_rows),
-                          'measurement_ready':sum(item.get('measurement_photo_ready') is True for item in company_rows),
-                          'verified_references':sum(item.get('status')=='verified_reference' for item in company_rows),
-                          'games_covered':sum(any(item.get('game')==game for item in company_rows) for game in GAMES),
-                          'quarantined':sum(item.get('status')!='verified_reference' for item in company_rows)}
+ game_stats,company_stats=_aggregate_dimension_stats(rows)
  provider_counts=collections.Counter(str(item.get('search_provider') or 'unknown') for item in rows)
  for source in SOURCES:
   stats.setdefault(source['id'],{'candidates':0,'image_hits':0,'verified_hits':0,'errors':0,'queries':0,'not_run_this_cycle':True})

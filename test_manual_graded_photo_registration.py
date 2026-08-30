@@ -31,9 +31,11 @@ class ManualGradedPhotoRegistrationTests(unittest.TestCase):
         for patcher in self.patches:
             patcher.start()
         manual.PROCESSING_IDS.clear()
+        manual._cached_registry_payload.cache_clear()
 
     def tearDown(self):
         manual.PROCESSING_IDS.clear()
+        manual._cached_registry_payload.cache_clear()
         for patcher in reversed(self.patches):
             patcher.stop()
         self.temp.cleanup()
@@ -62,6 +64,19 @@ class ManualGradedPhotoRegistrationTests(unittest.TestCase):
         self.assertTrue(second["duplicate"])
         self.assertEqual(first["registration"]["registration_id"], second["registration"]["registration_id"])
         self.assertEqual(manual.public_registry()["summary"]["total"], 1)
+
+    def test_registry_cache_reuses_parse_but_returns_isolated_rows(self):
+        manual.register(self.payload())
+        manual._cached_registry_payload.cache_clear()
+        original=manual._load
+        with mock.patch.object(manual,"_load",wraps=original) as loader:
+            first=manual._registry()
+            second=manual._registry()
+            first["registrations"][0]["company"]="BGS"
+            third=manual._registry()
+        self.assertEqual(loader.call_count,1)
+        self.assertEqual(second["registrations"][0]["company"],"PSA")
+        self.assertEqual(third["registrations"][0]["company"],"PSA")
 
     def test_same_photo_with_different_claim_is_rejected(self):
         manual.register(self.payload())

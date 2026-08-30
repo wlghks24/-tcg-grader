@@ -2,6 +2,7 @@
 """Repository-wide structural, secret, path and launcher audit for v107."""
 from __future__ import annotations
 
+import ast
 import json
 import re
 from pathlib import Path
@@ -34,6 +35,30 @@ STALE_LAUNCHERS = {
     "정보자동업데이트.bat", "전체프로그램검사.bat", "자동실행_설치.bat",
     "자동실행_해제.bat", "기존버전_학습자료_가져오기.bat", "학습자료_백업.bat",
 }
+
+
+def python_dangerous_labels(text: str) -> set[str]:
+    """Inspect executable calls, not harmless security-rule strings/comments."""
+    try:
+        tree = ast.parse(text)
+    except SyntaxError:
+        return set()
+    labels: set[str] = set()
+    for node in ast.walk(tree):
+        if not isinstance(node, ast.Call):
+            continue
+        try:
+            name = ast.unparse(node.func)
+        except (AttributeError, ValueError):
+            name = ""
+        if name == "os.system": labels.add("os_system")
+        if name in {"pickle.load", "pickle.loads"}: labels.add("pickle_load")
+        if name == "yaml.load": labels.add("yaml_unsafe")
+        if name in {"subprocess.run", "subprocess.Popen", "subprocess.call", "subprocess.check_output"}:
+            if any(keyword.arg == "shell" and isinstance(keyword.value, ast.Constant)
+                   and keyword.value.value is True for keyword in node.keywords):
+                labels.add("shell_true")
+    return labels
 
 
 def main() -> dict:
@@ -74,7 +99,9 @@ def main() -> dict:
         except UnicodeError:
             continue
         relative = str(path.relative_to(ROOT))
-        if not path.name.startswith("verify_"):
+        if path.suffix.lower() == ".py":
+            risky.extend(f"{relative}:{label}" for label in sorted(python_dangerous_labels(text)))
+        elif not path.name.startswith("verify_"):
             for label, pattern in DANGEROUS_PATTERNS.items():
                 if pattern.search(text):
                     risky.append(f"{relative}:{label}")

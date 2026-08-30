@@ -10,6 +10,22 @@ import graded_photo_evidence as evidence
 import ebay_grader_learning as ebay
 
 class GradedPhotoMultiSourceTests(unittest.TestCase):
+    def test_dimension_stats_cover_every_game_and_grader_in_one_pass(self):
+        rows=[
+            {'company':'PSA','game':'pokemon','image_url':'https://images.example/psa.jpg',
+             'image_validated':True,'ocr_label_text':'PSA 10','measurement_photo_ready':True,
+             'status':'verified_reference'},
+            {'company':'BGS','game':'onepiece','status':'quarantine_candidate'},
+        ]
+        games,companies=g._aggregate_dimension_stats(rows)
+        self.assertEqual(set(games),set(g.GAMES))
+        self.assertEqual(set(companies),set(g.COMPANIES))
+        self.assertEqual(games['pokemon']['verified_references'],1)
+        self.assertEqual(games['onepiece']['quarantined'],1)
+        self.assertEqual(companies['PSA']['games_covered'],1)
+        self.assertEqual(companies['BGS']['candidates'],1)
+        self.assertEqual(companies['CGC']['candidates'],0)
+
     def test_company_grade_parse(self):
         self.assertEqual(g._company('Pokemon PSA 10 graded card'),'PSA')
         self.assertEqual(g._grade('Pokemon PSA 10 graded card','PSA'),10.0)

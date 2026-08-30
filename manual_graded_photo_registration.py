@@ -11,6 +11,7 @@ from __future__ import annotations
 import base64
 import binascii
 from datetime import datetime, timezone
+from functools import lru_cache
 import hashlib
 import json
 import math
@@ -52,8 +53,19 @@ def _load(path: Path, default: Any) -> Any:
         return default
 
 
+@lru_cache(maxsize=8)
+def _cached_registry_payload(path_text: str, signature: tuple[int, int, int, int] | None) -> Any:
+    """Cache a parsed registry until its inode, timestamp, or size changes."""
+    return _load(Path(path_text), {})
+
+
 def _registry() -> dict[str, Any]:
-    value = _load(REGISTRY_PATH, {})
+    try:
+        metadata = REGISTRY_PATH.stat()
+        signature = (metadata.st_dev, metadata.st_ino, metadata.st_mtime_ns, metadata.st_size)
+    except OSError:
+        signature = None
+    value = _cached_registry_payload(str(REGISTRY_PATH.absolute()), signature)
     rows = value.get("registrations", []) if isinstance(value, dict) else []
     return {
         "schema_version": 1,
@@ -67,6 +79,7 @@ def _save_registry(payload: dict[str, Any]) -> None:
     payload["updated_at"] = _now()
     payload["registrations"] = payload.get("registrations", [])[-MAX_REGISTRATIONS:]
     atomic_write_json(REGISTRY_PATH, payload, suffix=".manual-photo-registry.tmp")
+    _cached_registry_payload.cache_clear()
 
 
 def _bounded_text(value: Any, limit: int) -> str:
@@ -156,8 +169,14 @@ def _public_row(row: dict[str, Any]) -> dict[str, Any]:
 
 def public_registry() -> dict[str, Any]:
     with LOCK:
-        payload = _registry()
-    rows = [_public_row(row) for row in reversed(payload["registrations"])]
+        try:
+            metadata = REGISTRY_PATH.stat()
+            signature = (metadata.st_dev, metadata.st_ino, metadata.st_mtime_ns, metadata.st_size)
+        except OSError:
+            signature = None
+        payload = _cached_registry_payload(str(REGISTRY_PATH.absolute()), signature)
+        source_rows = payload.get("registrations", []) if isinstance(payload, dict) else []
+        rows = [_public_row(row) for row in reversed(source_rows[-MAX_REGISTRATIONS:]) if isinstance(row, dict)]
     return {
         "ok": True,
         "schema_version": 1,
@@ -181,7 +200,14 @@ def public_registry() -> dict[str, Any]:
 def registration_exists(registration_id: Any) -> bool:
     registration_id = _bounded_text(registration_id, 80)
     with LOCK:
-        return any(row.get("registration_id") == registration_id for row in _registry()["registrations"])
+        try:
+            metadata = REGISTRY_PATH.stat()
+            signature = (metadata.st_dev, metadata.st_ino, metadata.st_mtime_ns, metadata.st_size)
+        except OSError:
+            signature = None
+        payload = _cached_registry_payload(str(REGISTRY_PATH.absolute()), signature)
+        rows = payload.get("registrations", []) if isinstance(payload, dict) else []
+        return any(isinstance(row, dict) and row.get("registration_id") == registration_id for row in rows[-MAX_REGISTRATIONS:])
 
 
 def register(payload: dict[str, Any]) -> dict[str, Any]:
