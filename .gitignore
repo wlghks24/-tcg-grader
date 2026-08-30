@@ -26,6 +26,7 @@ grading_proxy_costs_cache.json
 *.db.tmp
 *.json.tmp
 *.adaptive-social.tmp
+*.before_photo_cleanup_*
 multi_market_price_cache.json
 multi_market_source_learning.json
 
