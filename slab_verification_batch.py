@@ -1,15 +1,11 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-"""Process slab certification candidates against official grading-company pages.
+"""Batch official slab-cert verification with checkpointing and site-block protection.
 
-This is intentionally conservative:
-- only official hosts are queried through grading_cert_verifier.verify_cert;
-- seller/slab OCR alone never becomes verified data;
-- progress is checkpointed after every lookup so mobile/Termux runs can resume;
-- confirmed official grades may be added to the official registry, while OCR-grade
-  conflicts remain explicitly recorded and quarantined for reconciliation.
-
-Run small batches (default 25) to avoid hammering official sites.
+Only official grading-company hosts are queried. OCR/seller text never becomes
+verified evidence by itself. The runner records HTTP status details and opens a
+per-company circuit breaker after repeated blocking/rate-limit responses, so a
+mobile run does not hammer a site protected by CAPTCHA/WAF.
 """
 from __future__ import annotations
 
@@ -63,7 +59,6 @@ def upsert_registry(registry: dict[str, Any], result: dict[str, Any]) -> tuple[b
     grade = result.get("grade")
     if not company or not cert or grade is None:
         return False, "missing_official_fields"
-
     rows = registry.setdefault("certifications", [])
     for row in rows:
         if str(row.get("company") or "").upper() == company and str(row.get("certification_id") or "") == cert:
@@ -77,7 +72,6 @@ def upsert_registry(registry: dict[str, Any], result: dict[str, Any]) -> tuple[b
                 "verification_note": "Official grading-company page matched company, certification and grade via slab verification batch.",
             })
             return True, "registry_updated"
-
     rows.append({
         "company": company,
         "certification_id": cert,
@@ -95,9 +89,9 @@ def classify_result(result: dict[str, Any]) -> str:
     if result.get("verified") is True:
         return "official_verified_match"
     if official_evidence_confirmed(result):
-        if result.get("conflict"):
-            return "official_verified_ocr_grade_conflict"
-        return "official_verified"
+        return "official_verified_ocr_grade_conflict" if result.get("conflict") else "official_verified"
+    if result.get("blocked_or_challenged"):
+        return "site_blocked"
     if result.get("lookup_error"):
         return "lookup_error"
     if (result.get("evidence") or {}).get("failure_marker"):
@@ -110,25 +104,25 @@ def main() -> int:
     parser.add_argument("queue", type=Path, help="Verification queue JSON from library_slab_corpus.py")
     parser.add_argument("--registry", type=Path, default=Path("library_official_cert_registry.json"))
     parser.add_argument("--state", type=Path, default=Path("slab_official_verification_state.json"))
-    parser.add_argument("--limit", type=int, default=25, help="Lookups this run; 0 means all remaining candidates.")
+    parser.add_argument("--limit", type=int, default=25, help="Actual official lookups this run; 0 means all eligible candidates.")
     parser.add_argument("--delay", type=float, default=1.5, help="Seconds between official-site requests.")
     parser.add_argument("--timeout", type=int, default=10)
     parser.add_argument("--companies", default="", help="Optional comma-separated filter, e.g. PSA,CGC")
-    parser.add_argument("--retry-errors", action="store_true", help="Retry prior lookup_error/not_verified rows.")
+    parser.add_argument("--retry-errors", action="store_true", help="Retry prior lookup_error/not_verified/site_blocked rows.")
+    parser.add_argument("--circuit-break", type=int, default=3, help="Pause one company after N consecutive blocked/rate-limited responses; 0 disables.")
     args = parser.parse_args()
 
     queue_payload = load_json(args.queue, {})
     queue_rows = queue_payload.get("records", []) if isinstance(queue_payload, dict) else []
     if not isinstance(queue_rows, list):
         raise SystemExit("queue records must be a list")
-
     registry = load_json(args.registry, {"schema_version": 1, "certifications": []})
     if not isinstance(registry, dict):
         raise SystemExit("registry must be a JSON object")
-
-    state = load_json(args.state, {"schema_version": 1, "created_at": utc_now(), "results": {}})
+    state = load_json(args.state, {"schema_version": 2, "created_at": utc_now(), "results": {}})
     if not isinstance(state, dict):
-        state = {"schema_version": 1, "created_at": utc_now(), "results": {}}
+        state = {"schema_version": 2, "created_at": utc_now(), "results": {}}
+    state["schema_version"] = 2
     results = state.setdefault("results", {})
     if not isinstance(results, dict):
         results = {}
@@ -147,9 +141,7 @@ def main() -> int:
             continue
         company = str(row.get("company") or "").upper()
         cert = str(row.get("certification_id") or "")
-        if not company or not cert:
-            continue
-        if company_filter and company not in company_filter:
+        if not company or not cert or (company_filter and company not in company_filter):
             continue
         key = row_key(company, cert)
         if key in existing_registry:
@@ -158,36 +150,60 @@ def main() -> int:
         if previous:
             status = previous.get("status")
             terminal = status in {
-                "official_verified_match",
-                "official_verified",
-                "official_verified_ocr_grade_conflict",
-                "official_not_found",
+                "official_verified_match", "official_verified",
+                "official_verified_ocr_grade_conflict", "official_not_found",
             }
-            if terminal or (status in {"lookup_error", "not_verified"} and not args.retry_errors):
+            retryable = status in {"lookup_error", "not_verified", "site_blocked"}
+            if terminal or (retryable and not args.retry_errors):
                 continue
         candidates.append(row)
 
-    limit = len(candidates) if args.limit <= 0 else min(args.limit, len(candidates))
-    selected = candidates[:limit]
+    lookup_limit = len(candidates) if args.limit <= 0 else min(args.limit, len(candidates))
     print(json.dumps({
         "queue_records": len(queue_rows),
         "remaining_candidates": len(candidates),
-        "selected_this_run": len(selected),
+        "lookup_limit_this_run": lookup_limit,
         "registry_verified_entries": len(existing_registry),
         "delay_seconds": max(0.0, args.delay),
+        "company_filter": sorted(company_filter),
+        "circuit_break_after": max(0, args.circuit_break),
     }, ensure_ascii=False), flush=True)
 
     run_counts: Counter[str] = Counter()
-    for index, row in enumerate(selected, start=1):
+    http_counts: Counter[str] = Counter()
+    consecutive_blocked: Counter[str] = Counter()
+    blocked_companies: set[str] = set()
+    deferred_by_circuit: Counter[str] = Counter()
+    lookups_done = 0
+
+    for row in candidates:
+        if lookups_done >= lookup_limit:
+            break
         company = str(row.get("company") or "").upper()
         cert = str(row.get("certification_id") or "")
+        if company in blocked_companies:
+            deferred_by_circuit[company] += 1
+            continue
         expected = row.get("label_grade_candidate")
         key = row_key(company, cert)
-        print(f"[official-verify] {index}/{len(selected)} {company} {cert}", flush=True)
+        lookups_done += 1
+        print(f"[official-verify] {lookups_done}/{lookup_limit} {company} {cert}", flush=True)
 
         result = verify_cert(company, cert, expected_grade=expected, timeout=args.timeout)
         status = classify_result(result)
         run_counts[status] += 1
+        http_status = result.get("http_status")
+        if http_status is not None:
+            http_counts[f"{company}:{http_status}"] += 1
+
+        if result.get("blocked_or_challenged"):
+            consecutive_blocked[company] += 1
+            threshold = max(0, args.circuit_break)
+            if threshold and consecutive_blocked[company] >= threshold:
+                blocked_companies.add(company)
+                print(f"[circuit-break] {company} paused after {consecutive_blocked[company]} blocked responses", flush=True)
+        else:
+            consecutive_blocked[company] = 0
 
         registry_action = None
         if official_evidence_confirmed(result):
@@ -207,9 +223,13 @@ def main() -> int:
             "attempts": int(previous.get("attempts", 0)) + 1,
             "official_grade": result.get("grade"),
             "official_url": result.get("official_url"),
+            "final_url": result.get("final_url"),
             "verified": bool(result.get("verified")),
             "conflict": bool(result.get("conflict")),
             "lookup_error": result.get("lookup_error"),
+            "http_status": result.get("http_status"),
+            "blocked_or_challenged": bool(result.get("blocked_or_challenged")),
+            "transient_error": bool(result.get("transient_error")),
             "notice": result.get("notice"),
             "evidence": result.get("evidence"),
             "registry_action": registry_action,
@@ -217,22 +237,23 @@ def main() -> int:
         state["updated_at"] = utc_now()
         state["source_queue"] = str(args.queue)
         atomic_write_json(args.state, state)
-
-        if index < len(selected) and args.delay > 0:
+        if lookups_done < lookup_limit and args.delay > 0:
             time.sleep(max(0.0, args.delay))
 
     all_statuses = Counter(
-        value.get("status")
-        for value in results.values()
+        value.get("status") for value in results.values()
         if isinstance(value, dict) and value.get("status")
     )
     summary = {
-        "processed_this_run": len(selected),
+        "processed_this_run": lookups_done,
         "run_status_counts": dict(sorted(run_counts.items())),
+        "run_http_status_counts": dict(sorted(http_counts.items())),
+        "blocked_companies": sorted(blocked_companies),
+        "deferred_by_circuit": dict(sorted(deferred_by_circuit.items())),
         "state_status_counts": dict(sorted(all_statuses.items())),
         "state_records": len(results),
         "registry_certifications": len(registry.get("certifications", [])),
-        "remaining_after_run": max(0, len(candidates) - len(selected)),
+        "remaining_eligible_estimate": max(0, len(candidates) - lookups_done),
     }
     print(json.dumps(summary, ensure_ascii=False), flush=True)
     return 0
