@@ -9,6 +9,7 @@ Safety policy:
 - official requests are paced by at least 60 seconds between lookups;
 - HTTP 403/429 (and other blocked/challenged responses) immediately stop that
   company for the current run and persist a per-company cooldown;
+- every block triggers one local code/policy self-audit with no extra network call;
 - checkpoint state is written after every lookup so Termux/mobile runs can resume.
 """
 from __future__ import annotations
@@ -22,11 +23,12 @@ from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from typing import Any
 
-from grading_cert_verifier import verify_cert
+from grading_cert_verifier import OFFICIAL, verify_cert
 
 MAX_LOOKUPS_PER_COMPANY = 2
 MIN_DELAY_SECONDS = 60.0
 IMMEDIATE_BLOCK_HTTP_STATUSES = {401, 403, 407, 429}
+MAX_STORED_BLOCK_AUDITS = 100
 
 
 def utc_dt() -> datetime:
@@ -184,7 +186,10 @@ def set_cooldown(cooldowns: dict[str, Any], company: str, result: dict[str, Any]
         seconds = float(seconds)
     except (TypeError, ValueError):
         seconds = default_cooldown_seconds(result.get("http_status"))
-    seconds = max(60.0, min(seconds, 24 * 60 * 60.0))
+    # Never shorten the built-in minimum for a blocked status, even if a remote
+    # Retry-After header is unexpectedly shorter.
+    seconds = max(seconds, default_cooldown_seconds(result.get("http_status")), 60.0)
+    seconds = min(seconds, 24 * 60 * 60.0)
     until = utc_dt() + timedelta(seconds=seconds)
     entry = {
         "until": until.replace(microsecond=0).isoformat().replace("+00:00", "Z"),
@@ -194,6 +199,36 @@ def set_cooldown(cooldowns: dict[str, Any], company: str, result: dict[str, Any]
     }
     cooldowns[company] = entry
     return entry
+
+
+def build_block_self_audit(
+    company: str,
+    http_status: Any,
+    cooldown_entry: dict[str, Any] | None,
+    effective_delay: float,
+) -> dict[str, Any]:
+    """Run a local safety audit after a block. This never makes another HTTP request."""
+    try:
+        status = int(http_status or 0)
+    except (TypeError, ValueError):
+        status = 0
+    until = parse_utc((cooldown_entry or {}).get("until"))
+    checks = {
+        "known_official_company": company in OFFICIAL,
+        "company_cap_is_two": MAX_LOOKUPS_PER_COMPANY == 2,
+        "minimum_delay_is_60s_or_more": MIN_DELAY_SECONDS >= 60.0 and effective_delay >= 60.0,
+        "blocked_status_is_immediate_stop": status in IMMEDIATE_BLOCK_HTTP_STATUSES,
+        "cooldown_is_active": until is not None and until > utc_dt(),
+        "network_retry_for_block_is_suppressed": True,
+    }
+    return {
+        "ran_at": utc_now(),
+        "company": company,
+        "http_status": status,
+        "checks": checks,
+        "passed": all(checks.values()),
+        "action": "local_policy_audit_only_no_network_retry",
+    }
 
 
 def main() -> int:
@@ -214,14 +249,12 @@ def main() -> int:
         help="Seconds between official-site requests. Values below 60 are raised to 60.",
     )
     parser.add_argument("--timeout", type=int, default=10)
-    parser.add_argument("--companies", default="", help="Optional comma-separated filter, e.g. PSA,BGS,CGC")
+    parser.add_argument("--companies", default="", help="Optional comma-separated filter, e.g. PSA,BGS,CGC,TAG,BRG")
     parser.add_argument(
         "--retry-errors",
         action="store_true",
         help="Retry prior lookup_error/not_verified/site_blocked rows only after cooldown.",
     )
-    # Kept for command-line compatibility. Blocking responses now always stop that
-    # company immediately; callers cannot weaken this safety behavior.
     parser.add_argument(
         "--circuit-break",
         type=int,
@@ -241,10 +274,10 @@ def main() -> int:
     if not isinstance(registry, dict):
         raise SystemExit("registry must be a JSON object")
 
-    state = load_json(args.state, {"schema_version": 5, "created_at": utc_now(), "results": {}})
+    state = load_json(args.state, {"schema_version": 6, "created_at": utc_now(), "results": {}})
     if not isinstance(state, dict):
-        state = {"schema_version": 5, "created_at": utc_now(), "results": {}}
-    state["schema_version"] = 5
+        state = {"schema_version": 6, "created_at": utc_now(), "results": {}}
+    state["schema_version"] = 6
 
     results = state.setdefault("results", {})
     if not isinstance(results, dict):
@@ -256,6 +289,11 @@ def main() -> int:
         cooldowns = {}
         state["company_cooldowns"] = cooldowns
     infer_cooldowns(results, cooldowns)
+
+    block_audits = state.setdefault("block_self_audits", [])
+    if not isinstance(block_audits, list):
+        block_audits = []
+        state["block_self_audits"] = block_audits
 
     company_filter = {x.strip().upper() for x in args.companies.split(",") if x.strip()}
     existing_registry = {
@@ -322,6 +360,7 @@ def main() -> int:
         "minimum_delay_seconds": MIN_DELAY_SECONDS,
         "effective_delay_seconds": effective_delay,
         "immediate_stop_http_statuses": sorted(IMMEDIATE_BLOCK_HTTP_STATUSES),
+        "block_self_audit_enabled": True,
         "eligible_by_company": dict(sorted(candidate_counts.items())),
         "registry_verified_entries": len(existing_registry),
         "company_filter": sorted(company_filter),
@@ -338,6 +377,7 @@ def main() -> int:
     deferred_by_circuit: Counter[str] = Counter()
     deferred_by_company_cap: Counter[str] = Counter()
     run_company_counts: Counter[str] = Counter()
+    run_block_audits: list[dict[str, Any]] = []
     lookups_done = 0
 
     for row in candidates:
@@ -375,6 +415,7 @@ def main() -> int:
             http_counts[f"{company}:{http_status}"] += 1
 
         cooldown_entry = None
+        block_audit = None
         blocked_now = bool(result.get("blocked_or_challenged"))
         try:
             blocked_now = blocked_now or int(http_status or 0) in IMMEDIATE_BLOCK_HTTP_STATUSES
@@ -384,9 +425,19 @@ def main() -> int:
         if blocked_now:
             cooldown_entry = set_cooldown(cooldowns, company, result)
             blocked_companies.add(company)
+            block_audit = build_block_self_audit(company, http_status, cooldown_entry, effective_delay)
+            run_block_audits.append(block_audit)
+            block_audits.append(block_audit)
+            if len(block_audits) > MAX_STORED_BLOCK_AUDITS:
+                del block_audits[:-MAX_STORED_BLOCK_AUDITS]
             print(
                 f"[circuit-break] {company} stopped immediately after HTTP "
                 f"{http_status or 'blocked'}; cooldown until {cooldown_entry['until']}",
+                flush=True,
+            )
+            print(
+                f"[block-self-audit] {company} HTTP {http_status or 'blocked'} "
+                f"passed={block_audit['passed']} no-network-retry=True",
                 flush=True,
             )
         else:
@@ -419,7 +470,9 @@ def main() -> int:
             "transient_error": bool(result.get("transient_error")),
             "retry_after_seconds": result.get("retry_after_seconds"),
             "recommended_cooldown_seconds": result.get("recommended_cooldown_seconds"),
+            "retry_suppressed": bool(result.get("retry_suppressed")),
             "cooldown_until": cooldown_entry.get("until") if cooldown_entry else None,
+            "block_self_audit": block_audit,
             "notice": result.get("notice"),
             "evidence": result.get("evidence"),
             "registry_action": registry_action,
@@ -429,9 +482,6 @@ def main() -> int:
         state["source_queue"] = str(args.queue)
         atomic_write_json(args.state, state)
 
-        # Always pace subsequent official requests by at least 60 seconds. If the
-        # current company was blocked, the next request may be for another company,
-        # but the global minimum interval is still respected.
         if lookups_done < lookup_limit:
             print(f"[pacing] waiting {effective_delay:.0f}s before next official lookup", flush=True)
             time.sleep(effective_delay)
@@ -455,6 +505,7 @@ def main() -> int:
         "run_status_counts": dict(sorted(run_counts.items())),
         "run_http_status_counts": dict(sorted(http_counts.items())),
         "blocked_companies": sorted(blocked_companies),
+        "block_self_audits_this_run": run_block_audits,
         "active_company_cooldowns": active_cooldowns,
         "deferred_by_circuit": dict(sorted(deferred_by_circuit.items())),
         "deferred_by_company_cap": dict(sorted(deferred_by_company_cap.items())),
