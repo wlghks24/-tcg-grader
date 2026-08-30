@@ -1,21 +1,24 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-"""Fail-closed, verified-photo-preserving cleanup for TCG Grader device-local images.
+"""Fail-closed photo cleanup for TCG Grader.
 
-Safety model:
-- Never delete officially verified/manual reference images.
-- Never delete images referenced by verified-cert/reference registries.
-- Never delete train/validation/holdout/reference/official folders.
-- Keep pending/manual-review images, including duplicate pending uploads.
-- Respect quarantine grace periods before any generic duplicate/cache cleanup.
-- If an existing protection registry is unreadable/invalid, disable destructive cleanup.
-- Default is dry-run. ``run(apply=True)`` performs only classified safe removals.
+v133 safety policy:
+- User/manual uploads and training/reference/validation/holdout folders are never auto-deleted.
+- Every local photo reference found in protection/candidate registries is protected,
+  even when the candidate is still unverified or quarantined.
+- Automatic deletion is restricted to explicitly disposable cache/download folders.
+- Cache files must be old enough before deletion; fresh duplicates are kept.
+- Hash/read failures keep the photo.
+- If an existing protection registry is unreadable or structurally invalid, destructive
+  cleanup is disabled for that run.
+- Dry-run is the default.
 """
 
 from __future__ import annotations
 
 import hashlib
 import json
+import os
 import re
 from datetime import datetime, timezone
 from pathlib import Path
@@ -27,11 +30,13 @@ MANUAL_REGISTRY = ROOT / "manual_graded_photo_registrations.json"
 VERIFIED_CERTS = ROOT / "verified_certifications.json"
 VERIFIED_REFS = ROOT / "library_verified_slab_references.json"
 LIBRARY_CANDIDATES = ROOT / "library_slab_candidates.json"
+GRADED_PHOTO_CANDIDATES = ROOT / "graded_photo_candidates.json"
+EBAY_CANDIDATES = ROOT / "ebay_grader_candidates.json"
 
 IMAGE_EXTS = {".jpg", ".jpeg", ".png", ".webp"}
 PROTECTED_DIR_TOKENS = {
     "train", "training", "validation", "validate", "holdout", "reference", "references",
-    "verified", "official", "gold", "groundtruth", "calibration",
+    "verified", "official", "gold", "groundtruth", "calibration", "manual",
 }
 CACHE_DIR_TOKENS = {
     "cache", "cached", "candidate", "candidates", "download", "downloads", "downloaded",
@@ -46,9 +51,26 @@ SCAN_ROOT_NAMES = (
     "GRADE_PHOTO_CACHE",
     "downloaded_graded_photos",
 )
+DISPOSABLE_ROOT_NAMES = {
+    "graded_photo_cache", "grade_photo_cache", "downloaded_graded_photos",
+}
+CRITICAL_REGISTRIES = (
+    (VERIFIED_REFS, ("certifications", "records", "items")),
+    (LIBRARY_CANDIDATES, ("records", "certifications", "items")),
+    (VERIFIED_CERTS, ("certifications", "records", "items")),
+    (GRADED_PHOTO_CANDIDATES, ("records", "items", "certifications")),
+    (EBAY_CANDIDATES, ("items", "records", "certifications")),
+)
 DEFAULT_GRACE_DAYS = 14
-DEFAULT_CACHE_DAYS = 7
-MAX_HASH_BYTES = 20_000_000
+DEFAULT_CACHE_DAYS = 14
+MAX_HASH_BYTES = 64_000_000
+MAX_REGISTRY_BYTES = 32_000_000
+
+_HASH_KEYS = ("image_sha256", "source_sha256", "sha256")
+_PATH_KEYS = (
+    "image_path", "source_path", "source_name", "source_asset_name",
+    "local_path", "cached_path", "download_path",
+)
 
 
 def _now() -> str:
@@ -62,6 +84,9 @@ def _load_checked(path: Path) -> tuple[dict[str, Any], str | None]:
             return {}, None
         if path.is_symlink() or not path.is_file():
             return {}, f"{path.name}:unsafe_path"
+        size = path.stat().st_size
+        if size > MAX_REGISTRY_BYTES:
+            return {}, f"{path.name}:too_large"
         raw = path.read_text(encoding="utf-8")
         value = json.loads(raw)
         if not isinstance(value, dict):
@@ -86,13 +111,15 @@ def _is_inside_root(path: Path) -> bool:
         return False
 
 
-def _relative_folder_parts(path: Path) -> tuple[str, ...]:
-    """Return directory parts below the configured scan root, excluding the filename."""
+def _relative_parts(path: Path) -> tuple[str, ...]:
     try:
-        rel = path.resolve().relative_to(ROOT.resolve())
+        return path.resolve().relative_to(ROOT.resolve()).parts
     except (OSError, ValueError):
         return ()
-    parts = list(rel.parts[:-1])
+
+
+def _relative_folder_parts(path: Path) -> tuple[str, ...]:
+    parts = list(_relative_parts(path)[:-1])
     if parts and parts[0].lower() in {name.lower() for name in SCAN_ROOT_NAMES}:
         parts = parts[1:]
     return tuple(parts)
@@ -109,21 +136,26 @@ def _tokens_from_parts(parts: tuple[str, ...]) -> set[str]:
     return tokens
 
 
-def _protected_by_folder(path: Path) -> bool:
+def _protected_by_location(path: Path) -> bool:
+    parts = _relative_parts(path)
+    if not parts:
+        return True
+    root_name = parts[0].lower()
+    # The training inbox is user/evidence storage, never disposable cache.
+    if root_name == "grade_training_inbox":
+        return True
     return bool(_tokens_from_parts(_relative_folder_parts(path)) & PROTECTED_DIR_TOKENS)
 
 
-def _cache_by_folder(path: Path) -> bool:
-    try:
-        rel = path.resolve().relative_to(ROOT.resolve())
-        root_name = rel.parts[0].lower() if rel.parts else ""
-    except (OSError, ValueError):
+def _disposable_by_location(path: Path) -> bool:
+    parts = _relative_parts(path)
+    if not parts:
         return False
-    cache_roots = {
-        "graded_photo_cache", "grade_photo_cache", "downloaded_graded_photos",
-    }
-    if root_name in cache_roots:
+    root_name = parts[0].lower()
+    if root_name in DISPOSABLE_ROOT_NAMES:
         return True
+    # Generic photo roots are not disposable unless the user/code explicitly placed
+    # the image under a cache/candidate/download/tmp subfolder.
     return bool(_tokens_from_parts(_relative_folder_parts(path)) & CACHE_DIR_TOKENS)
 
 
@@ -156,10 +188,59 @@ def _normalize_registry_path(value: Any) -> str:
     return text.lstrip("/")
 
 
+def _add_reference(
+    row: dict[str, Any],
+    protected_paths: set[str],
+    protected_names: set[str],
+    protected_hashes: set[str],
+) -> None:
+    for key in _HASH_KEYS:
+        digest = str(row.get(key) or "").strip().lower()
+        if re.fullmatch(r"[0-9a-f]{64}", digest):
+            protected_hashes.add(digest)
+    for key in _PATH_KEYS:
+        rel = _normalize_registry_path(row.get(key))
+        if not rel or rel.startswith(("http://", "https://", "data:")):
+            continue
+        # A basename-only source_name cannot be matched as a full relative path;
+        # protect the basename conservatively instead.
+        if "/" in rel:
+            protected_paths.add(rel)
+            protected_names.add(Path(rel).name)
+        else:
+            protected_names.add(rel)
+
+
+def _rows_from_registry(
+    path: Path,
+    payload: dict[str, Any],
+    keys: tuple[str, ...],
+    *,
+    require_one_key_when_present: bool = True,
+) -> tuple[list[dict[str, Any]], list[str]]:
+    errors: list[str] = []
+    values: list[dict[str, Any]] = []
+    present_keys = [key for key in keys if key in payload]
+    if path.exists() and require_one_key_when_present and not present_keys:
+        return [], [f"{path.name}:expected_list_key_missing"]
+    for key in present_keys:
+        current = payload.get(key)
+        if not isinstance(current, list):
+            errors.append(f"{path.name}:{key}_not_list")
+            continue
+        for index, row in enumerate(current):
+            if not isinstance(row, dict):
+                errors.append(f"{path.name}:{key}[{index}]_not_object")
+                continue
+            values.append(row)
+    return values, errors
+
+
 def _collect_registry_protection() -> tuple[
-    set[str], set[str], dict[str, dict[str, Any]], list[str]
+    set[str], set[str], set[str], dict[str, dict[str, Any]], list[str]
 ]:
     protected_paths: set[str] = set()
+    protected_names: set[str] = set()
     protected_hashes: set[str] = set()
     manual_by_path: dict[str, dict[str, Any]] = {}
     registry_errors: list[str] = []
@@ -167,58 +248,46 @@ def _collect_registry_protection() -> tuple[
     manual, error = _load_checked(MANUAL_REGISTRY)
     if error:
         registry_errors.append(error)
-    rows = manual.get("registrations", []) if isinstance(manual, dict) else []
-    if rows is not None and not isinstance(rows, list):
-        registry_errors.append(f"{MANUAL_REGISTRY.name}:registrations_not_list")
-        rows = []
-    for row in rows:
-        if not isinstance(row, dict):
-            continue
+    if MANUAL_REGISTRY.exists():
+        if "registrations" not in manual:
+            registry_errors.append(f"{MANUAL_REGISTRY.name}:registrations_key_missing")
+            manual_rows: list[dict[str, Any]] = []
+        else:
+            manual_rows, row_errors = _rows_from_registry(
+                MANUAL_REGISTRY, manual, ("registrations",), require_one_key_when_present=True
+            )
+            registry_errors.extend(row_errors)
+    else:
+        manual_rows = []
+
+    for row in manual_rows:
         rel = _normalize_registry_path(row.get("image_path"))
-        digest = str(row.get("image_sha256") or "").strip().lower()
         if rel:
             manual_by_path[rel] = row
-        official = row.get("official_result") is True or str(row.get("status") or "") == "verified_reference"
-        if official:
-            if rel:
-                protected_paths.add(rel)
-            if len(digest) == 64:
-                protected_hashes.add(digest)
+        # Every manual registration is user evidence, not only officially verified rows.
+        _add_reference(row, protected_paths, protected_names, protected_hashes)
 
-    for registry_path in (VERIFIED_REFS, LIBRARY_CANDIDATES, VERIFIED_CERTS):
+    for registry_path, keys in CRITICAL_REGISTRIES:
         payload, error = _load_checked(registry_path)
         if error:
             registry_errors.append(error)
             continue
-        values: list[Any] = []
-        for key in ("certifications", "records", "items"):
-            current = payload.get(key)
-            if current is None:
-                continue
-            if not isinstance(current, list):
-                registry_errors.append(f"{registry_path.name}:{key}_not_list")
-                continue
-            values.extend(current)
+        if not registry_path.exists():
+            continue
+        values, row_errors = _rows_from_registry(registry_path, payload, keys)
+        registry_errors.extend(row_errors)
+        # Any locally referenced candidate remains protected until its registry entry
+        # is intentionally pruned. Verification status does not matter for cleanup.
         for row in values:
-            if not isinstance(row, dict):
-                continue
-            official = (
-                row.get("official_result") is True
-                or row.get("verified") is True
-                or row.get("officially_verified") is True
-            )
-            if not official:
-                continue
-            for key in ("image_sha256", "source_sha256", "sha256"):
-                digest = str(row.get(key) or "").strip().lower()
-                if len(digest) == 64:
-                    protected_hashes.add(digest)
-            for key in ("image_path", "source_name", "source_asset_name"):
-                rel = _normalize_registry_path(row.get(key))
-                if rel and not rel.startswith(("http://", "https://")):
-                    protected_paths.add(rel)
+            _add_reference(row, protected_paths, protected_names, protected_hashes)
 
-    return protected_paths, protected_hashes, manual_by_path, sorted(set(registry_errors))
+    return (
+        protected_paths,
+        protected_names,
+        protected_hashes,
+        manual_by_path,
+        sorted(set(registry_errors)),
+    )
 
 
 def _scan_roots() -> list[Path]:
@@ -231,50 +300,48 @@ def _scan_roots() -> list[Path]:
 
 
 def _candidate_files() -> list[Path]:
+    """Walk known roots without ever following directory symlinks."""
     files: list[Path] = []
     seen: set[str] = set()
     for root in _scan_roots():
-        for path in root.rglob("*"):
-            if not path.is_file() or path.is_symlink() or path.suffix.lower() not in IMAGE_EXTS:
-                continue
-            try:
-                resolved = str(path.resolve())
-            except OSError:
-                continue
-            if resolved in seen or not _is_inside_root(path):
-                continue
-            seen.add(resolved)
-            files.append(path)
+        for current, dirs, names in os.walk(root, topdown=True, followlinks=False):
+            current_path = Path(current)
+            # Explicitly prune symlink directories even on Python versions where
+            # pathlib/os traversal behavior differs.
+            dirs[:] = [
+                name for name in dirs
+                if not (current_path / name).is_symlink()
+            ]
+            for name in names:
+                path = current_path / name
+                if path.is_symlink() or path.suffix.lower() not in IMAGE_EXTS:
+                    continue
+                try:
+                    if not path.is_file():
+                        continue
+                    resolved = str(path.resolve())
+                except OSError:
+                    continue
+                if resolved in seen or not _is_inside_root(path):
+                    continue
+                seen.add(resolved)
+                files.append(path)
     return sorted(files, key=lambda p: p.as_posix())
-
-
-def _manual_state(rel: str, manual_by_path: dict[str, dict[str, Any]]) -> tuple[str, bool, bool]:
-    row = manual_by_path.get(rel)
-    if not row:
-        return "", False, False
-    status = str(row.get("status") or "")
-    verification = str(row.get("verification_state") or "")
-    reasons = {str(x) for x in (row.get("quarantine_reasons") or []) if x}
-    pending = status == "pending_official_verification" or verification in {
-        "queued", "processing", "manual_input_required", "deferred_by_cooldown", "processing_failed"
-    }
-    hard_rejected = status == "quarantine" and (
-        verification == "completed_unverified"
-        or any(
-            token in reason.lower()
-            for reason in reasons
-            for token in ("conflict", "mismatch", "invalid", "duplicate")
-        )
-    )
-    registered = bool(status or verification or row)
-    return status, bool(hard_rejected and not pending), registered
 
 
 def run(*, apply: bool = False, grace_days: int = DEFAULT_GRACE_DAYS,
         cache_days: int = DEFAULT_CACHE_DAYS) -> dict[str, Any]:
+    # grace_days remains in the report/API for backward compatibility. v133 no longer
+    # auto-deletes manually registered rejected photos at any age.
     grace_days = max(1, min(365, int(grace_days)))
     cache_days = max(1, min(365, int(cache_days)))
-    protected_paths, protected_hashes, manual_by_path, registry_errors = _collect_registry_protection()
+    (
+        protected_paths,
+        protected_names,
+        protected_hashes,
+        manual_by_path,
+        registry_errors,
+    ) = _collect_registry_protection()
     destructive_allowed = not registry_errors
     now_ts = datetime.now(timezone.utc).timestamp()
     files = _candidate_files()
@@ -285,52 +352,63 @@ def run(*, apply: bool = False, grace_days: int = DEFAULT_GRACE_DAYS,
     protected_count = 0
     review_count = 0
     guarded_count = 0
+    hash_guarded_count = 0
 
     for path in files:
         rel = _safe_rel(path)
         if not rel:
             continue
         try:
-            size = path.stat().st_size
+            metadata = os.stat(path, follow_symlinks=False)
+            size = metadata.st_size
+            signature = (
+                metadata.st_dev, metadata.st_ino, metadata.st_mtime_ns, metadata.st_size
+            )
         except OSError:
             continue
         age = _age_days(path, now_ts)
         decision = "keep"
         action = "keep"
-        reason = "pending_or_unclassified_keep"
+        reason = "non_disposable_photo_root_keep"
         digest = ""
-        status, hard_rejected, registered = _manual_state(rel, manual_by_path)
+        hash_error = False
 
-        if rel in protected_paths or _protected_by_folder(path):
-            reason = "verified_or_dataset_protected"
+        if (
+            rel in protected_paths
+            or path.name in protected_names
+            or rel in manual_by_path
+            or _protected_by_location(path)
+        ):
+            reason = "registry_or_dataset_protected"
             protected_count += 1
         else:
-            try:
-                digest = _sha256(path) if size > 0 else ""
-            except (OSError, ValueError):
-                digest = ""
-
-            if digest and digest in protected_hashes:
-                reason = "verified_hash_protected"
-                protected_count += 1
-            elif registered:
-                if hard_rejected and age >= grace_days:
-                    decision = "delete"
-                    reason = f"explicit_quarantine_older_than_{grace_days}d"
-                else:
-                    reason = "manual_registry_pending_or_grace_protected"
-                    protected_count += 1
-            elif size == 0:
-                decision = "delete"
-                reason = "empty_unreferenced_image"
-            elif digest and digest in seen_hash:
-                decision = "delete"
-                reason = f"duplicate_of:{seen_hash[digest]}"
-            elif _cache_by_folder(path) and age >= cache_days:
-                decision = "delete"
-                reason = f"stale_unreferenced_cache_older_than_{cache_days}d"
-            else:
+            if size > 0:
+                try:
+                    digest = _sha256(path)
+                except (OSError, ValueError):
+                    hash_error = True
+            if hash_error:
+                reason = "hash_unavailable_keep"
+                hash_guarded_count += 1
                 review_count += 1
+            elif digest and digest in protected_hashes:
+                reason = "registry_hash_protected"
+                protected_count += 1
+            elif not _disposable_by_location(path):
+                # Do not auto-clean generic grading/training photo roots.
+                reason = "non_disposable_photo_root_keep"
+                review_count += 1
+            elif age < cache_days:
+                reason = f"fresh_disposable_cache_younger_than_{cache_days}d"
+                review_count += 1
+            else:
+                decision = "delete"
+                if size == 0:
+                    reason = f"stale_empty_cache_older_than_{cache_days}d"
+                elif digest and digest in seen_hash:
+                    reason = f"stale_duplicate_cache_of:{seen_hash[digest]}"
+                else:
+                    reason = f"stale_unreferenced_cache_older_than_{cache_days}d"
 
         if digest and decision == "keep":
             seen_hash.setdefault(digest, rel)
@@ -341,10 +419,26 @@ def run(*, apply: bool = False, grace_days: int = DEFAULT_GRACE_DAYS,
                 guarded_count += 1
             elif apply:
                 try:
-                    path.unlink()
-                    action = "deleted"
-                    removed += 1
-                    freed += size
+                    # Revalidate immediately before unlink so a collector cannot replace
+                    # or update a stale cache file between classification and deletion.
+                    current = os.stat(path, follow_symlinks=False)
+                    current_signature = (
+                        current.st_dev, current.st_ino, current.st_mtime_ns, current.st_size
+                    )
+                    if (
+                        path.is_symlink()
+                        or current_signature != signature
+                        or not _is_inside_root(path)
+                        or not _disposable_by_location(path)
+                    ):
+                        action = "guarded_keep"
+                        reason = "changed_or_unsafe_before_delete_keep"
+                        guarded_count += 1
+                    else:
+                        path.unlink()
+                        action = "deleted"
+                        removed += 1
+                        freed += size
                 except OSError:
                     action = "delete_failed"
             else:
@@ -366,7 +460,7 @@ def run(*, apply: bool = False, grace_days: int = DEFAULT_GRACE_DAYS,
         mode = "apply_guarded_no_delete"
 
     report = {
-        "version": 2,
+        "version": 3,
         "updated_at": _now(),
         "mode": mode,
         "registry_guard": {
@@ -374,20 +468,26 @@ def run(*, apply: bool = False, grace_days: int = DEFAULT_GRACE_DAYS,
             "errors": registry_errors,
         },
         "policy": {
+            "manual_and_training_photos_never_auto_deleted": True,
+            "all_registry_local_references_protected": True,
             "verified_reference_never_deleted": True,
             "verified_hash_never_deleted": True,
-            "train_validation_holdout_never_deleted": True,
-            "pending_manual_review_never_deleted": True,
-            "manual_registry_outranks_duplicate_cleanup": True,
+            "generic_photo_roots_are_non_disposable": True,
+            "destructive_cleanup_restricted_to_cache_locations": True,
+            "fresh_cache_never_deleted": True,
+            "hash_failure_keeps_photo": True,
+            "symlink_directories_never_traversed": True,
+            "file_change_before_delete_keeps_photo": True,
             "registry_parse_failure_disables_delete": True,
             "external_personal_folders_scanned": False,
-            "grace_days": grace_days,
+            "grace_days_legacy": grace_days,
             "cache_days": cache_days,
         },
         "summary": {
             "scanned_images": len(rows),
             "protected_images": protected_count,
             "review_keep_images": review_count,
+            "hash_guarded_images": hash_guarded_count,
             "delete_candidates": sum(row["decision"] == "delete" for row in rows),
             "guarded_keep_images": guarded_count,
             "deleted_images": removed,
@@ -396,7 +496,11 @@ def run(*, apply: bool = False, grace_days: int = DEFAULT_GRACE_DAYS,
         "items": rows[-2000:],
     }
     try:
-        REPORT_PATH.write_text(json.dumps(report, ensure_ascii=False, separators=(",", ":")), encoding="utf-8")
+        if not REPORT_PATH.is_symlink():
+            encoded = json.dumps(report, ensure_ascii=False, separators=(",", ":"))
+            tmp = REPORT_PATH.with_name(REPORT_PATH.name + ".tmp")
+            tmp.write_text(encoded, encoding="utf-8")
+            tmp.replace(REPORT_PATH)
     except OSError:
         pass
     return report
@@ -404,8 +508,9 @@ def run(*, apply: bool = False, grace_days: int = DEFAULT_GRACE_DAYS,
 
 if __name__ == "__main__":
     import argparse
+
     parser = argparse.ArgumentParser(description="TCG 학습사진 안전 정리")
-    parser.add_argument("--apply", action="store_true", help="안전 판정된 사진만 실제 삭제")
+    parser.add_argument("--apply", action="store_true", help="안전 판정된 오래된 캐시만 실제 삭제")
     parser.add_argument("--grace-days", type=int, default=DEFAULT_GRACE_DAYS)
     parser.add_argument("--cache-days", type=int, default=DEFAULT_CACHE_DAYS)
     args = parser.parse_args()
