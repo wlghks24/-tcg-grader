@@ -230,7 +230,9 @@ def verify_cert(company, cert, expected_grade=None, timeout=10):
     except HTTPError as exc:
         status = int(getattr(exc, "code", 0) or 0)
         retry_after = _retry_after_seconds(exc)
-        default_cooldown = 1800.0 if status == 429 else (7200.0 if status in {401, 403, 407} else 0.0)
+        # Short fallback delay when the provider gives no Retry-After. This avoids
+        # the old local 30-minute/2-hour lockout while still not hammering a site.
+        default_cooldown = 300.0 if status == 429 else (900.0 if status in {401, 403, 407} else 0.0)
         if status in BLOCKING_HTTP_STATUSES:
             recommended = max(default_cooldown, float(retry_after or 0.0))
         else:
@@ -246,9 +248,9 @@ def verify_cert(company, cert, expected_grade=None, timeout=10):
             "recovery": _block_recovery_metadata(company, status, retry_after),
         })
         if status == 429:
-            result["notice"] = "공식 사이트 요청 제한(429)입니다. Retry-After가 있으면 존중하고, 없으면 안전 쿨다운 후에만 재시도합니다."
+            result["notice"] = "공식 사이트 요청 제한(429)입니다. Retry-After가 있으면 그 시간을 따르고, 없으면 5분 후 재시도할 수 있습니다."
         elif status in {401, 403, 407}:
-            result["notice"] = "공식 사이트 접근제어 응답입니다. 자동 우회나 즉시 재시도 없이 쿨다운하고, 반복되면 공식 조회 페이지에서 수동 확인 대상으로 전환합니다."
+            result["notice"] = "공식 사이트 접근제어 응답입니다. 15분 쿨다운 후 다시 확인하고, 계속 차단되면 공식 조회 페이지를 직접 열어 확인합니다."
         elif status == 404:
             result["notice"] = "공식 조회 URL이 HTTP 404를 반환했습니다. 인증 실패로 단정하지 않고 수동 확인 대상으로 보존합니다."
         else:
