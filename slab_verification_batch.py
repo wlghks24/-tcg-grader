@@ -1,16 +1,15 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-"""Batch official slab-cert verification with checkpointing and site-block protection.
+"""Batch official slab-cert verification with strict pacing and site protection.
 
-Only official grading-company hosts are queried. OCR/seller text never becomes
-verified evidence by itself. The runner records HTTP status details, opens a
-per-company circuit breaker after blocking/rate-limit responses, and persists a
-cooldown so a later mobile/Termux command cannot immediately hammer the same
-protected official site again.
-
-Safety policy: at most two official lookups are attempted per grading company in
-one invocation, even when --limit requests more. This hard cap is intentionally
-not configurable from the command line.
+Safety policy:
+- only official grading-company hosts are queried through grading_cert_verifier;
+- OCR/seller text never becomes verified evidence by itself;
+- at most two official lookups are attempted per grading company per invocation;
+- official requests are paced by at least 60 seconds between lookups;
+- HTTP 403/429 (and other blocked/challenged responses) immediately stop that
+  company for the current run and persist a per-company cooldown;
+- checkpoint state is written after every lookup so Termux/mobile runs can resume.
 """
 from __future__ import annotations
 
@@ -26,6 +25,8 @@ from typing import Any
 from grading_cert_verifier import verify_cert
 
 MAX_LOOKUPS_PER_COMPANY = 2
+MIN_DELAY_SECONDS = 60.0
+IMMEDIATE_BLOCK_HTTP_STATUSES = {401, 403, 407, 429}
 
 
 def utc_dt() -> datetime:
@@ -83,7 +84,10 @@ def upsert_registry(registry: dict[str, Any], result: dict[str, Any]) -> tuple[b
 
     rows = registry.setdefault("certifications", [])
     for row in rows:
-        if str(row.get("company") or "").upper() == company and str(row.get("certification_id") or "") == cert:
+        if (
+            str(row.get("company") or "").upper() == company
+            and str(row.get("certification_id") or "") == cert
+        ):
             old_grade = row.get("grade")
             if old_grade is not None and abs(float(old_grade) - float(grade)) > 1e-9:
                 return False, "registry_grade_conflict"
@@ -91,7 +95,10 @@ def upsert_registry(registry: dict[str, Any], result: dict[str, Any]) -> tuple[b
                 "grade": float(grade),
                 "officially_verified": True,
                 "official_reference_url": result.get("official_url"),
-                "verification_note": "Official grading-company page matched company, certification and grade via slab verification batch.",
+                "verification_note": (
+                    "Official grading-company page matched company, certification "
+                    "and grade via slab verification batch."
+                ),
             })
             return True, "registry_updated"
 
@@ -103,7 +110,10 @@ def upsert_registry(registry: dict[str, Any], result: dict[str, Any]) -> tuple[b
         "game": "unknown",
         "officially_verified": True,
         "official_reference_url": result.get("official_url"),
-        "verification_note": "Official grading-company page matched company, certification and grade via slab verification batch.",
+        "verification_note": (
+            "Official grading-company page matched company, certification and grade "
+            "via slab verification batch."
+        ),
     })
     return True, "registry_added"
 
@@ -195,14 +205,32 @@ def main() -> int:
         "--limit",
         type=int,
         default=25,
-        help="Overall lookup budget. A hard safety cap of 2 lookups per company is always enforced.",
+        help="Overall lookup budget; hard cap of 2 lookups per company is always enforced.",
     )
-    parser.add_argument("--delay", type=float, default=1.5, help="Seconds between official-site requests.")
+    parser.add_argument(
+        "--delay",
+        type=float,
+        default=MIN_DELAY_SECONDS,
+        help="Seconds between official-site requests. Values below 60 are raised to 60.",
+    )
     parser.add_argument("--timeout", type=int, default=10)
-    parser.add_argument("--companies", default="", help="Optional comma-separated filter, e.g. PSA,CGC")
-    parser.add_argument("--retry-errors", action="store_true", help="Retry prior lookup_error/not_verified/site_blocked rows after cooldown.")
-    parser.add_argument("--circuit-break", type=int, default=3, help="Pause one company after N consecutive blocked/rate-limited responses; 0 disables.")
+    parser.add_argument("--companies", default="", help="Optional comma-separated filter, e.g. PSA,BGS,CGC")
+    parser.add_argument(
+        "--retry-errors",
+        action="store_true",
+        help="Retry prior lookup_error/not_verified/site_blocked rows only after cooldown.",
+    )
+    # Kept for command-line compatibility. Blocking responses now always stop that
+    # company immediately; callers cannot weaken this safety behavior.
+    parser.add_argument(
+        "--circuit-break",
+        type=int,
+        default=1,
+        help="Compatibility option. 403/429/blocked responses always stop the company immediately.",
+    )
     args = parser.parse_args()
+
+    effective_delay = max(MIN_DELAY_SECONDS, float(args.delay or 0.0))
 
     queue_payload = load_json(args.queue, {})
     queue_rows = queue_payload.get("records", []) if isinstance(queue_payload, dict) else []
@@ -213,10 +241,10 @@ def main() -> int:
     if not isinstance(registry, dict):
         raise SystemExit("registry must be a JSON object")
 
-    state = load_json(args.state, {"schema_version": 4, "created_at": utc_now(), "results": {}})
+    state = load_json(args.state, {"schema_version": 5, "created_at": utc_now(), "results": {}})
     if not isinstance(state, dict):
-        state = {"schema_version": 4, "created_at": utc_now(), "results": {}}
-    state["schema_version"] = 4
+        state = {"schema_version": 5, "created_at": utc_now(), "results": {}}
+    state["schema_version"] = 5
 
     results = state.setdefault("results", {})
     if not isinstance(results, dict):
@@ -256,8 +284,10 @@ def main() -> int:
         if previous:
             status = previous.get("status")
             terminal = status in {
-                "official_verified_match", "official_verified",
-                "official_verified_ocr_grade_conflict", "official_not_found",
+                "official_verified_match",
+                "official_verified",
+                "official_verified_ocr_grade_conflict",
+                "official_not_found",
             }
             retryable = status in {"lookup_error", "not_verified", "site_blocked"}
             if terminal or (retryable and not args.retry_errors):
@@ -277,7 +307,8 @@ def main() -> int:
     lookup_limit = min(requested_limit, possible_with_company_cap)
 
     active_cooldowns = {
-        company: entry for company in sorted(cooldowns)
+        company: entry
+        for company in sorted(cooldowns)
         if (entry := active_cooldown(cooldowns, company)) is not None
     }
     state["updated_at"] = utc_now()
@@ -288,11 +319,12 @@ def main() -> int:
         "remaining_candidates": len(candidates),
         "lookup_limit_this_run": lookup_limit,
         "max_lookups_per_company": MAX_LOOKUPS_PER_COMPANY,
+        "minimum_delay_seconds": MIN_DELAY_SECONDS,
+        "effective_delay_seconds": effective_delay,
+        "immediate_stop_http_statuses": sorted(IMMEDIATE_BLOCK_HTTP_STATUSES),
         "eligible_by_company": dict(sorted(candidate_counts.items())),
         "registry_verified_entries": len(existing_registry),
-        "delay_seconds": max(0.0, args.delay),
         "company_filter": sorted(company_filter),
-        "circuit_break_after": max(0, args.circuit_break),
         "active_company_cooldowns": active_cooldowns,
         "deferred_by_cooldown": dict(sorted(deferred_by_cooldown.items())),
     }, ensure_ascii=False), flush=True)
@@ -302,7 +334,6 @@ def main() -> int:
 
     run_counts: Counter[str] = Counter()
     http_counts: Counter[str] = Counter()
-    consecutive_blocked: Counter[str] = Counter()
     blocked_companies: set[str] = set()
     deferred_by_circuit: Counter[str] = Counter()
     deferred_by_company_cap: Counter[str] = Counter()
@@ -328,6 +359,7 @@ def main() -> int:
         key = row_key(company, cert)
         lookups_done += 1
         run_company_counts[company] += 1
+
         print(
             f"[official-verify] {lookups_done}/{lookup_limit} {company} {cert} "
             f"(company {run_company_counts[company]}/{MAX_LOOKUPS_PER_COMPANY})",
@@ -343,19 +375,21 @@ def main() -> int:
             http_counts[f"{company}:{http_status}"] += 1
 
         cooldown_entry = None
-        if result.get("blocked_or_challenged"):
-            consecutive_blocked[company] += 1
+        blocked_now = bool(result.get("blocked_or_challenged"))
+        try:
+            blocked_now = blocked_now or int(http_status or 0) in IMMEDIATE_BLOCK_HTTP_STATUSES
+        except (TypeError, ValueError):
+            pass
+
+        if blocked_now:
             cooldown_entry = set_cooldown(cooldowns, company, result)
-            threshold = max(0, args.circuit_break)
-            if threshold and consecutive_blocked[company] >= threshold:
-                blocked_companies.add(company)
-                print(
-                    f"[circuit-break] {company} paused after {consecutive_blocked[company]} blocked responses; "
-                    f"cooldown until {cooldown_entry['until']}",
-                    flush=True,
-                )
+            blocked_companies.add(company)
+            print(
+                f"[circuit-break] {company} stopped immediately after HTTP "
+                f"{http_status or 'blocked'}; cooldown until {cooldown_entry['until']}",
+                flush=True,
+            )
         else:
-            consecutive_blocked[company] = 0
             cooldowns.pop(company, None)
 
         registry_action = None
@@ -381,7 +415,7 @@ def main() -> int:
             "conflict": bool(result.get("conflict")),
             "lookup_error": result.get("lookup_error"),
             "http_status": result.get("http_status"),
-            "blocked_or_challenged": bool(result.get("blocked_or_challenged")),
+            "blocked_or_challenged": blocked_now,
             "transient_error": bool(result.get("transient_error")),
             "retry_after_seconds": result.get("retry_after_seconds"),
             "recommended_cooldown_seconds": result.get("recommended_cooldown_seconds"),
@@ -395,15 +429,21 @@ def main() -> int:
         state["source_queue"] = str(args.queue)
         atomic_write_json(args.state, state)
 
-        if lookups_done < lookup_limit and args.delay > 0:
-            time.sleep(max(0.0, args.delay))
+        # Always pace subsequent official requests by at least 60 seconds. If the
+        # current company was blocked, the next request may be for another company,
+        # but the global minimum interval is still respected.
+        if lookups_done < lookup_limit:
+            print(f"[pacing] waiting {effective_delay:.0f}s before next official lookup", flush=True)
+            time.sleep(effective_delay)
 
     all_statuses = Counter(
-        value.get("status") for value in results.values()
+        value.get("status")
+        for value in results.values()
         if isinstance(value, dict) and value.get("status")
     )
     active_cooldowns = {
-        company: entry for company in sorted(cooldowns)
+        company: entry
+        for company in sorted(cooldowns)
         if (entry := active_cooldown(cooldowns, company)) is not None
     }
 
@@ -411,6 +451,7 @@ def main() -> int:
         "processed_this_run": lookups_done,
         "processed_by_company": dict(sorted(run_company_counts.items())),
         "max_lookups_per_company": MAX_LOOKUPS_PER_COMPANY,
+        "effective_delay_seconds": effective_delay,
         "run_status_counts": dict(sorted(run_counts.items())),
         "run_http_status_counts": dict(sorted(http_counts.items())),
         "blocked_companies": sorted(blocked_companies),
@@ -423,6 +464,7 @@ def main() -> int:
         "registry_certifications": len(registry.get("certifications", [])),
         "remaining_eligible_estimate": max(0, len(candidates) - lookups_done),
     }
+
     state["updated_at"] = utc_now()
     atomic_write_json(args.state, state)
     print(json.dumps(summary, ensure_ascii=False), flush=True)
