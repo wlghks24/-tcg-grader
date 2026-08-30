@@ -960,7 +960,10 @@ def _save_reference_learning(rows:list[dict])->dict:
  atomic_write_json(REFERENCE_LEARNING,payload,suffix='.reference-learning.tmp');return payload
 
 def _aggregate_dimension_stats(rows:list[dict])->tuple[dict,dict]:
-    """Aggregate all dashboard dimensions in one pass to keep refresh cost O(n)."""
+    """Aggregate all dashboard dimensions in one pass to keep refresh cost O(n).
+
+    Avoid repeated full-list filters as the verified photo corpus grows.
+    """
     game_stats={game:{'name':GAME_DISPLAY_NAMES[game],'candidates':0,'with_image_url':0,
                    'validated_images':0,'ocr_readable':0,'measurement_ready':0,
                    'verified_references':0,'quarantined':0} for game in GAMES}
