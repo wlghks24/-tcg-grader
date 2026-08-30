@@ -1,21 +1,22 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-"""Verified-photo-preserving cleanup for TCG Grader device-local images.
+"""Fail-closed, verified-photo-preserving cleanup for TCG Grader device-local images.
 
 Safety model:
 - Never delete officially verified/manual reference images.
 - Never delete images referenced by verified-cert/reference registries.
 - Never delete train/validation/holdout/reference/official folders.
-- Keep pending/manual-review images.
-- Remove only proven duplicates, corrupt/empty images, explicit rejected/quarantine
-  images after a grace period, and stale cache/candidate images.
-- Default is dry-run. ``run(apply=True)`` performs only the classified safe removals.
+- Keep pending/manual-review images, including duplicate pending uploads.
+- Respect quarantine grace periods before any generic duplicate/cache cleanup.
+- If an existing protection registry is unreadable/invalid, disable destructive cleanup.
+- Default is dry-run. ``run(apply=True)`` performs only classified safe removals.
 """
 
 from __future__ import annotations
 
 import hashlib
 import json
+import re
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
@@ -30,11 +31,11 @@ LIBRARY_CANDIDATES = ROOT / "library_slab_candidates.json"
 IMAGE_EXTS = {".jpg", ".jpeg", ".png", ".webp"}
 PROTECTED_DIR_TOKENS = {
     "train", "training", "validation", "validate", "holdout", "reference", "references",
-    "verified", "official", "gold", "ground_truth", "ground-truth", "calibration",
+    "verified", "official", "gold", "groundtruth", "calibration",
 }
 CACHE_DIR_TOKENS = {
-    "cache", "cached", "candidate", "candidates", "download", "downloads", "tmp", "temp",
-    "scrape", "search_results", "search-results",
+    "cache", "cached", "candidate", "candidates", "download", "downloads", "downloaded",
+    "tmp", "temp", "scrape", "searchresults",
 }
 SCAN_ROOT_NAMES = (
     "GRADE_TRAINING_INBOX",
@@ -54,11 +55,20 @@ def _now() -> str:
     return datetime.now(timezone.utc).replace(microsecond=0).isoformat().replace("+00:00", "Z")
 
 
-def _load(path: Path, default: Any) -> Any:
+def _load_checked(path: Path) -> tuple[dict[str, Any], str | None]:
+    """Return parsed dict and an error string. Missing registries are not errors."""
     try:
-        return json.loads(path.read_text(encoding="utf-8"))
-    except (OSError, ValueError, TypeError, UnicodeError, json.JSONDecodeError):
-        return default
+        if not path.exists():
+            return {}, None
+        if path.is_symlink() or not path.is_file():
+            return {}, f"{path.name}:unsafe_path"
+        raw = path.read_text(encoding="utf-8")
+        value = json.loads(raw)
+        if not isinstance(value, dict):
+            return {}, f"{path.name}:root_not_object"
+        return value, None
+    except (OSError, ValueError, TypeError, UnicodeError, json.JSONDecodeError) as exc:
+        return {}, f"{path.name}:{type(exc).__name__}"
 
 
 def _safe_rel(path: Path) -> str:
@@ -76,18 +86,45 @@ def _is_inside_root(path: Path) -> bool:
         return False
 
 
-def _parts_lower(path: Path) -> set[str]:
-    return {part.lower() for part in path.parts}
+def _relative_folder_parts(path: Path) -> tuple[str, ...]:
+    """Return directory parts below the configured scan root, excluding the filename."""
+    try:
+        rel = path.resolve().relative_to(ROOT.resolve())
+    except (OSError, ValueError):
+        return ()
+    parts = list(rel.parts[:-1])
+    if parts and parts[0].lower() in {name.lower() for name in SCAN_ROOT_NAMES}:
+        parts = parts[1:]
+    return tuple(parts)
+
+
+def _tokens_from_parts(parts: tuple[str, ...]) -> set[str]:
+    tokens: set[str] = set()
+    for part in parts:
+        lower = part.lower()
+        compact = re.sub(r"[^a-z0-9]+", "", lower)
+        if compact:
+            tokens.add(compact)
+        tokens.update(x for x in re.split(r"[^a-z0-9]+", lower) if x)
+    return tokens
 
 
 def _protected_by_folder(path: Path) -> bool:
-    parts = _parts_lower(path)
-    return any(token in parts for token in PROTECTED_DIR_TOKENS)
+    return bool(_tokens_from_parts(_relative_folder_parts(path)) & PROTECTED_DIR_TOKENS)
 
 
 def _cache_by_folder(path: Path) -> bool:
-    parts = _parts_lower(path)
-    return any(token in parts for token in CACHE_DIR_TOKENS)
+    try:
+        rel = path.resolve().relative_to(ROOT.resolve())
+        root_name = rel.parts[0].lower() if rel.parts else ""
+    except (OSError, ValueError):
+        return False
+    cache_roots = {
+        "graded_photo_cache", "grade_photo_cache", "downloaded_graded_photos",
+    }
+    if root_name in cache_roots:
+        return True
+    return bool(_tokens_from_parts(_relative_folder_parts(path)) & CACHE_DIR_TOKENS)
 
 
 def _sha256(path: Path) -> str:
@@ -112,17 +149,32 @@ def _age_days(path: Path, now_ts: float) -> float:
         return 0.0
 
 
-def _collect_registry_protection() -> tuple[set[str], set[str], dict[str, dict[str, Any]]]:
+def _normalize_registry_path(value: Any) -> str:
+    text = str(value or "").strip().replace("\\", "/")
+    while text.startswith("./"):
+        text = text[2:]
+    return text.lstrip("/")
+
+
+def _collect_registry_protection() -> tuple[
+    set[str], set[str], dict[str, dict[str, Any]], list[str]
+]:
     protected_paths: set[str] = set()
     protected_hashes: set[str] = set()
     manual_by_path: dict[str, dict[str, Any]] = {}
+    registry_errors: list[str] = []
 
-    manual = _load(MANUAL_REGISTRY, {})
+    manual, error = _load_checked(MANUAL_REGISTRY)
+    if error:
+        registry_errors.append(error)
     rows = manual.get("registrations", []) if isinstance(manual, dict) else []
-    for row in rows if isinstance(rows, list) else []:
+    if rows is not None and not isinstance(rows, list):
+        registry_errors.append(f"{MANUAL_REGISTRY.name}:registrations_not_list")
+        rows = []
+    for row in rows:
         if not isinstance(row, dict):
             continue
-        rel = str(row.get("image_path") or "").strip().replace("\\", "/")
+        rel = _normalize_registry_path(row.get("image_path"))
         digest = str(row.get("image_sha256") or "").strip().lower()
         if rel:
             manual_by_path[rel] = row
@@ -134,12 +186,19 @@ def _collect_registry_protection() -> tuple[set[str], set[str], dict[str, dict[s
                 protected_hashes.add(digest)
 
     for registry_path in (VERIFIED_REFS, LIBRARY_CANDIDATES, VERIFIED_CERTS):
-        payload = _load(registry_path, {})
-        values = []
-        if isinstance(payload, dict):
-            for key in ("certifications", "records", "items"):
-                if isinstance(payload.get(key), list):
-                    values.extend(payload[key])
+        payload, error = _load_checked(registry_path)
+        if error:
+            registry_errors.append(error)
+            continue
+        values: list[Any] = []
+        for key in ("certifications", "records", "items"):
+            current = payload.get(key)
+            if current is None:
+                continue
+            if not isinstance(current, list):
+                registry_errors.append(f"{registry_path.name}:{key}_not_list")
+                continue
+            values.extend(current)
         for row in values:
             if not isinstance(row, dict):
                 continue
@@ -155,10 +214,11 @@ def _collect_registry_protection() -> tuple[set[str], set[str], dict[str, dict[s
                 if len(digest) == 64:
                     protected_hashes.add(digest)
             for key in ("image_path", "source_name", "source_asset_name"):
-                rel = str(row.get(key) or "").strip().replace("\\", "/")
+                rel = _normalize_registry_path(row.get(key))
                 if rel and not rel.startswith(("http://", "https://")):
                     protected_paths.add(rel)
-    return protected_paths, protected_hashes, manual_by_path
+
+    return protected_paths, protected_hashes, manual_by_path, sorted(set(registry_errors))
 
 
 def _scan_roots() -> list[Path]:
@@ -167,7 +227,6 @@ def _scan_roots() -> list[Path]:
         path = ROOT / name
         if path.is_dir() and not path.is_symlink():
             roots.append(path)
-    # Never scan personal folders outside the program directory automatically.
     return roots
 
 
@@ -189,10 +248,10 @@ def _candidate_files() -> list[Path]:
     return sorted(files, key=lambda p: p.as_posix())
 
 
-def _manual_state(rel: str, manual_by_path: dict[str, dict[str, Any]]) -> tuple[str, bool]:
+def _manual_state(rel: str, manual_by_path: dict[str, dict[str, Any]]) -> tuple[str, bool, bool]:
     row = manual_by_path.get(rel)
     if not row:
-        return "", False
+        return "", False, False
     status = str(row.get("status") or "")
     verification = str(row.get("verification_state") or "")
     reasons = {str(x) for x in (row.get("quarantine_reasons") or []) if x}
@@ -207,14 +266,16 @@ def _manual_state(rel: str, manual_by_path: dict[str, dict[str, Any]]) -> tuple[
             for token in ("conflict", "mismatch", "invalid", "duplicate")
         )
     )
-    return status, bool(hard_rejected and not pending)
+    registered = bool(status or verification or row)
+    return status, bool(hard_rejected and not pending), registered
 
 
 def run(*, apply: bool = False, grace_days: int = DEFAULT_GRACE_DAYS,
         cache_days: int = DEFAULT_CACHE_DAYS) -> dict[str, Any]:
     grace_days = max(1, min(365, int(grace_days)))
     cache_days = max(1, min(365, int(cache_days)))
-    protected_paths, protected_hashes, manual_by_path = _collect_registry_protection()
+    protected_paths, protected_hashes, manual_by_path, registry_errors = _collect_registry_protection()
+    destructive_allowed = not registry_errors
     now_ts = datetime.now(timezone.utc).timestamp()
     files = _candidate_files()
     seen_hash: dict[str, str] = {}
@@ -223,6 +284,7 @@ def run(*, apply: bool = False, grace_days: int = DEFAULT_GRACE_DAYS,
     freed = 0
     protected_count = 0
     review_count = 0
+    guarded_count = 0
 
     for path in files:
         rel = _safe_rel(path)
@@ -233,10 +295,11 @@ def run(*, apply: bool = False, grace_days: int = DEFAULT_GRACE_DAYS,
         except OSError:
             continue
         age = _age_days(path, now_ts)
-        reason = "keep_review"
+        decision = "keep"
         action = "keep"
+        reason = "pending_or_unclassified_keep"
         digest = ""
-        status, hard_rejected = _manual_state(rel, manual_by_path)
+        status, hard_rejected, registered = _manual_state(rel, manual_by_path)
 
         if rel in protected_paths or _protected_by_folder(path):
             reason = "verified_or_dataset_protected"
@@ -246,48 +309,77 @@ def run(*, apply: bool = False, grace_days: int = DEFAULT_GRACE_DAYS,
                 digest = _sha256(path) if size > 0 else ""
             except (OSError, ValueError):
                 digest = ""
+
             if digest and digest in protected_hashes:
                 reason = "verified_hash_protected"
                 protected_count += 1
+            elif registered:
+                if hard_rejected and age >= grace_days:
+                    decision = "delete"
+                    reason = f"explicit_quarantine_older_than_{grace_days}d"
+                else:
+                    reason = "manual_registry_pending_or_grace_protected"
+                    protected_count += 1
             elif size == 0:
-                reason = "empty_image"
-                action = "delete"
+                decision = "delete"
+                reason = "empty_unreferenced_image"
             elif digest and digest in seen_hash:
+                decision = "delete"
                 reason = f"duplicate_of:{seen_hash[digest]}"
-                action = "delete"
-            elif hard_rejected and age >= grace_days:
-                reason = f"explicit_quarantine_older_than_{grace_days}d"
-                action = "delete"
-            elif _cache_by_folder(path) and age >= cache_days and not status:
+            elif _cache_by_folder(path) and age >= cache_days:
+                decision = "delete"
                 reason = f"stale_unreferenced_cache_older_than_{cache_days}d"
-                action = "delete"
             else:
-                reason = "pending_or_unclassified_keep"
                 review_count += 1
 
-        if digest and action == "keep":
+        if digest and decision == "keep":
             seen_hash.setdefault(digest, rel)
-        if action == "delete" and apply:
-            try:
-                path.unlink()
-                removed += 1
-                freed += size
-            except OSError:
-                action = "delete_failed"
+
+        if decision == "delete":
+            if apply and not destructive_allowed:
+                action = "guarded_keep"
+                guarded_count += 1
+            elif apply:
+                try:
+                    path.unlink()
+                    action = "deleted"
+                    removed += 1
+                    freed += size
+                except OSError:
+                    action = "delete_failed"
+            else:
+                action = "delete_candidate"
+
         rows.append({
-            "path": rel, "bytes": size, "age_days": round(age, 2),
-            "action": action, "reason": reason,
+            "path": rel,
+            "bytes": size,
+            "age_days": round(age, 2),
+            "decision": decision,
+            "action": action,
+            "reason": reason,
         })
 
+    mode = "dry_run"
+    if apply and destructive_allowed:
+        mode = "apply"
+    elif apply and not destructive_allowed:
+        mode = "apply_guarded_no_delete"
+
     report = {
-        "version": 1,
+        "version": 2,
         "updated_at": _now(),
-        "mode": "apply" if apply else "dry_run",
+        "mode": mode,
+        "registry_guard": {
+            "destructive_allowed": destructive_allowed,
+            "errors": registry_errors,
+        },
         "policy": {
             "verified_reference_never_deleted": True,
             "verified_hash_never_deleted": True,
             "train_validation_holdout_never_deleted": True,
             "pending_manual_review_never_deleted": True,
+            "manual_registry_outranks_duplicate_cleanup": True,
+            "registry_parse_failure_disables_delete": True,
             "external_personal_folders_scanned": False,
             "grace_days": grace_days,
             "cache_days": cache_days,
@@ -296,7 +388,8 @@ def run(*, apply: bool = False, grace_days: int = DEFAULT_GRACE_DAYS,
             "scanned_images": len(rows),
             "protected_images": protected_count,
             "review_keep_images": review_count,
-            "delete_candidates": sum(row["action"] == "delete" for row in rows),
+            "delete_candidates": sum(row["decision"] == "delete" for row in rows),
+            "guarded_keep_images": guarded_count,
             "deleted_images": removed,
             "freed_bytes": freed,
         },
