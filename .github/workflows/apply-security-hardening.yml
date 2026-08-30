@@ -38,7 +38,18 @@ jobs:
           python -m unittest -v test_five_company_verification_policy.py
           python security_hardening_apply.py --check
       - name: Run vulnerability audit
-        run: python security_self_audit.py --fail-on high
+        run: |
+          if ! python security_self_audit.py --fail-on high; then
+            python - <<'PY'
+          import json
+          from pathlib import Path
+          report=json.loads(Path('security_audit_report.json').read_text(encoding='utf-8'))
+          for item in report.get('findings',[]):
+              if item.get('severity') in {'high','critical'}:
+                  print(json.dumps(item,ensure_ascii=False))
+          raise SystemExit(1)
+          PY
+          fi
       - name: Commit hardened runtime files
         run: |
           if git diff --quiet -- tcg_updater.py safe_runtime.py .gitignore; then
