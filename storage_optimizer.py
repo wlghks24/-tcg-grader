@@ -1,11 +1,13 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-"""Reduce local storage without deleting user data or learning history.
+"""Reduce local storage while preserving verified grading evidence.
 
 Safe policy:
 - compact valid JSON/JSON backups by removing indentation only;
 - remove Python caches and temporary atomic-write files;
-- never delete release history, market data, grading learning, photos, or backups;
+- run verified-photo-aware cleanup: verified/reference/train/validation/holdout and pending review photos are never deleted;
+- only empty, proven duplicate, old explicit-rejection, and stale unreferenced cache photos are eligible;
+- never delete release history, market data, grading learning JSON, or backups;
 - run `git gc --auto` only (no history rewriting/prune-now).
 """
 from __future__ import annotations
@@ -119,17 +121,34 @@ def git_gc_auto() -> str:
         return "skipped"
 
 
+def safe_photo_cleanup_result() -> dict:
+    """Run conservative photo cleanup; failure must never block server startup."""
+    try:
+        from safe_photo_cleanup import run as cleanup_photos
+        return cleanup_photos(apply=True)
+    except (ImportError, OSError, ValueError, TypeError) as exc:
+        return {
+            "mode": "skipped",
+            "summary": {"deleted_images": 0, "freed_bytes": 0},
+            "error": type(exc).__name__,
+        }
+
+
 def run() -> dict:
     json_result = compact_known_json()
     removed, cache_saved = remove_caches()
+    photo_result = safe_photo_cleanup_result()
+    photo_summary = photo_result.get("summary", {}) if isinstance(photo_result, dict) else {}
+    photo_saved = int(photo_summary.get("freed_bytes") or 0)
     git_result = git_gc_auto()
     result = {
         "updated_at": datetime.now(timezone.utc).isoformat(timespec="seconds"),
-        "policy": "학습/출시/시세/백업 데이터 삭제 없음 · JSON 공백압축 + 캐시/임시파일 정리 + git gc --auto",
+        "policy": "검증/학습/보류 사진 보호 · 명확한 중복/손상/오래된 거부·캐시 사진만 안전정리 · JSON 공백압축 + 캐시/임시파일 정리 + git gc --auto",
         "json": json_result,
         "cache_temp_removed": removed,
         "cache_temp_saved_bytes": cache_saved,
-        "estimated_saved_bytes": json_result["saved_bytes"] + cache_saved,
+        "photo_cleanup": photo_result,
+        "estimated_saved_bytes": json_result["saved_bytes"] + cache_saved + photo_saved,
         "git_gc": git_result,
     }
     try:
@@ -142,4 +161,4 @@ def run() -> dict:
 if __name__ == "__main__":
     result = run()
     mb = result["estimated_saved_bytes"] / (1024*1024)
-    print(f"저장공간 최적화 완료 · 약 {mb:.2f} MB 절감 · 학습/출시/시세 데이터 보존")
+    print(f"저장공간 최적화 완료 · 약 {mb:.2f} MB 절감 · 검증/학습사진 보호")
