@@ -1,0 +1,153 @@
+/* v125 iPhone/Safari full-app readability patch.
+   Loaded after the existing UI CSS. Targets light surfaces that remain inside
+   the app's dark-mode shell without changing the dark buttons themselves. */
+
+html,body{
+  -webkit-text-size-adjust:100%;
+  text-size-adjust:100%;
+  overflow-x:hidden;
+}
+
+@supports(padding:max(0px)){
+  .app{
+    padding-top:max(22px,calc(16px + env(safe-area-inset-top)))!important;
+    padding-left:max(10px,calc(10px + env(safe-area-inset-left)))!important;
+    padding-right:max(10px,calc(10px + env(safe-area-inset-right)))!important;
+    padding-bottom:max(64px,calc(64px + env(safe-area-inset-bottom)))!important;
+  }
+}
+
+@media(max-width:650px){
+  body::before{
+    content:"";
+    position:fixed;
+    inset:0 0 auto 0;
+    height:max(20px,env(safe-area-inset-top));
+    background:#fff;
+    z-index:2147483646;
+    pointer-events:none;
+  }
+  input,select,textarea{font-size:16px!important}
+  button{line-height:1.35!important}
+}
+
+@media(prefers-color-scheme:dark){
+  /* Major light shells */
+  .validation-hub,.workflow-card,.precision-hub,.economics-card,
+  .grading-total-panel,.multi-market-panel,.auto-validation-panel,
+  .graded-photo-dashboard,.home-launcher,.update-panel,.site-update-box,
+  .purchase-region,.purchase-nearby,.purchase-live,.release-item,
+  .analysis-box,.analysis-head,.box-price-edition,.box-price-result,
+  .v13-result-card,.compact-details,.workflow-part,.precision-step,
+  .precision-tool,.economics-result,.purchase-live-item{
+    color:#0f172a!important;
+  }
+
+  .validation-hub{background:linear-gradient(180deg,#fff,#f0fdf4)!important}
+  .workflow-card,.precision-hub{background:linear-gradient(180deg,#fff,#f8fbff)!important}
+  .economics-card{background:linear-gradient(180deg,#fff,#fffbeb)!important}
+  .grading-total-panel{background:linear-gradient(180deg,#fff,#f0fdf4)!important}
+  .multi-market-panel,.graded-photo-dashboard{background:linear-gradient(180deg,#f8fbff,#fff)!important}
+  .auto-validation-panel{background:#f0fdf4!important}
+  .home-launcher,.update-panel,.purchase-region,.purchase-nearby,.purchase-live,
+  .release-item,.analysis-box,.analysis-head,.box-price-edition,.box-price-result,
+  .v13-result-card,.compact-details,.workflow-part,.precision-step,
+  .precision-tool,.economics-result,.purchase-live-item{
+    background:#fff!important;
+    border-color:#dbe4ee!important;
+  }
+
+  /* Titles and ordinary text on light surfaces */
+  .validation-hub h2,.validation-hub h3,.validation-hub h4,
+  .workflow-card h2,.workflow-card h3,.workflow-card h4,
+  .precision-hub h2,.precision-hub h3,.precision-hub h4,
+  .economics-card h2,.economics-card h3,.economics-card h4,
+  .grading-total-panel h2,.grading-total-panel h3,.grading-total-panel h4,
+  .multi-market-panel h2,.multi-market-panel h3,.multi-market-panel h4,
+  .auto-validation-panel h2,.auto-validation-panel h3,.auto-validation-panel h4,
+  .graded-photo-dashboard h2,.graded-photo-dashboard h3,.graded-photo-dashboard h4,
+  .home-launcher h2,.update-panel h4,.purchase-region h3,
+  .purchase-nearby h4,.purchase-live h4,.analysis-title,.box-price-edition h4,
+  .v13-result-title,.precision-step-title,.precision-tool h4{
+    color:#0f172a!important;
+  }
+
+  .validation-hub label,.workflow-card label,.precision-hub label,.economics-card label,
+  .validation-hub .muted,.workflow-card .muted,.precision-hub .muted,.economics-card .muted,
+  .grading-total-panel .muted,.multi-market-panel .muted,.auto-validation-panel .muted,
+  .graded-photo-dashboard .muted,.update-step-note,.promo-condition,
+  .analysis-native,.analysis-sub,.rank-note,.box-price-korea-note,
+  .purchase-source small,.purchase-live-item small,.image-source-note,
+  .v13-result-native,.v13-result-item,.precision-tool p,.guide-note{
+    color:#475569!important;
+    opacity:1!important;
+  }
+
+  /* Forms */
+  .validation-hub input,.validation-hub select,.validation-hub textarea,
+  .workflow-card input,.workflow-card select,.workflow-card textarea,
+  .precision-hub input,.precision-hub select,.precision-hub textarea,
+  .economics-card input,.economics-card select,.economics-card textarea,
+  .grading-total-panel input,.grading-total-panel select,
+  .purchase-controls input,.purchase-controls select,.promo-tools select,
+  .analysis-filter select,.guide-unit-grid select{
+    background:#fff!important;
+    color:#0f172a!important;
+    border-color:#94a3b8!important;
+    opacity:1!important;
+  }
+  input::placeholder,textarea::placeholder{
+    color:#64748b!important;
+    opacity:1!important;
+  }
+
+  /* Status/metric/result boxes */
+  .validation-stats .metric,.gtc-summary>div,.gpd-summary>div,
+  .mmp-summary>div,.economics-result,.v13-result-item,
+  .site-update-status,.purchase-location-status,.status{
+    color:#334155!important;
+  }
+  .validation-stats .metric b,.gtc-summary b,.gpd-summary b,
+  .mmp-summary b,.economics-result b,.v13-result-item b{
+    color:#0f172a!important;
+  }
+
+  /* White navigation/control cards */
+  .box-menu-btn,.catalog-mode-btn,.country-tab,.purchase-channel,.boxkb-tab{
+    background:#fff!important;
+    color:#334155!important;
+    border-color:#cbd5e1!important;
+  }
+  .box-menu-btn.active,.catalog-mode-btn.active,.country-tab.active,
+  .purchase-channel.active,.boxkb-tab.active{
+    background:#1d4ed8!important;
+    color:#fff!important;
+    border-color:#2563eb!important;
+  }
+
+  /* Preserve intentionally dark action buttons. */
+  button:not(.game):not(.box-menu-btn):not(.catalog-mode-btn):not(.country-tab):not(.purchase-channel):not(.boxkb-tab){
+    color:#fff;
+  }
+
+  /* Light links/badges */
+  .purchase-source,.purchase-maplinks a,.analysis-box a,.release-meta a,
+  .av-actions a,.mmp-row a{
+    opacity:1!important;
+  }
+
+  .market12-auto-status{background:#eff6ff!important;border-color:#bfdbfe!important;color:#1e3a8a!important}
+  .market12-auto-status span{color:#475569!important}
+  .market12-auto-status[data-state="active"]{background:#ecfdf5!important;border-color:#a7f3d0!important}
+  .market12-auto-status[data-state="active"] b{color:#047857!important}
+}
+
+@media(max-width:430px){
+  .validation-actions,.validation-stats,.grade-price-grid{min-width:0}
+  .grid2,.grid3{min-width:0}
+  .validation-hub .grid2,.workflow-card .grid2{grid-template-columns:1fr!important}
+  .validation-stats{grid-template-columns:1fr!important}
+  .grade-price-grid{grid-template-columns:1fr 1fr!important}
+  .purchase-controls,.promo-tools{grid-template-columns:1fr!important}
+  .purchase-controls button,.promo-tools button{grid-column:auto!important}
+}
