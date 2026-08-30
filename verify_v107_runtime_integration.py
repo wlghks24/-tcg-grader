@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import re
 import threading
 import urllib.error
 import urllib.request
@@ -70,12 +71,14 @@ def main() -> dict:
     index = (ROOT / "index.html").read_text(encoding="utf-8")
     manifest = json.loads((ROOT / "manifest.webmanifest").read_text(encoding="utf-8"))
     service_worker = (ROOT / "sw.js").read_text(encoding="utf-8")
+    cache_match = re.search(r"const CACHE='tcg-v(\d+)(?:-[a-z0-9-]+)?'", service_worker, re.I)
     check(
         "ui_pwa_version",
         "사전검사기 v109" in index
         and manifest.get("name") == "TCG 등급 사전검사기 v109"
-        and "tcg-v109-card-identity-ocr-learning" in service_worker,
-        "화면·manifest·서비스워커 버전이 일치함",
+        and cache_match is not None and int(cache_match.group(1)) >= 109
+        and "./index.html" in service_worker and "./manifest.webmanifest" in service_worker,
+        "화면·manifest 앱버전 일치 + 서비스워커 캐시 revision 정상",
     )
 
     # Historical guides are optional archive material. The executable package

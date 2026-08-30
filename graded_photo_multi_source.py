@@ -20,7 +20,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
-from safe_runtime import atomic_write_json, exclusive_file_lock, safe_read_text, safe_urlopen, safe_urlopen_no_redirect
+from safe_runtime import atomic_write_json, diagnostic_exception, exclusive_file_lock, safe_read_text, safe_urlopen, safe_urlopen_no_redirect
 from detailed_collection_intelligence import (
  build_queries, canonical_key, evidence_confidence, learning_snapshot,
  grader_collection_targets, record_collection_cycle, record_official_feedback,
@@ -364,13 +364,31 @@ def _query_rows(query:str,limit:int)->tuple[list[dict],list[str]]:
    key=url or (str(row.get('title') or ''),str(row.get('search_provider') or ''))
    if not key or key in seen:continue
    seen.add(key);merged.append(row)
- # Never let one provider suppress the others. Run independent providers in
- # parallel so a blocked Bing/DDG route does not multiply every source timeout.
+ searcher=_searcher()
+ learned_exact=getattr(searcher,'search_exact',None)
+ if callable(learned_exact):
+  # Search health is learned across calls. Repeated DDG/Bing timeouts therefore
+  # enter cooldown instead of being paid again for every marketplace/game query.
+  def google():return _google_cse(query,limit),[]
+  def adaptive():
+   rows,errs,_,_=learned_exact(query,limit,region='US',family='graded_photo',route_budget=3)
+   return rows,list(errs or [])
+  with concurrent.futures.ThreadPoolExecutor(max_workers=2,thread_name_prefix='graded-photo-search') as pool:
+   future_map={pool.submit(google):'google_cse',pool.submit(adaptive):'adaptive_search'}
+   for future in concurrent.futures.as_completed(future_map):
+    name=future_map[future]
+    try:
+     rows,errs=future.result();add(rows)
+     errors.extend(f'{name}:{str(err)[:240]}' for err in errs if str(err).strip())
+    except Exception as exc:errors.append(name+':'+diagnostic_exception(exc))
+  return merged[:max(limit*3,limit)],errors
+ # Compatibility fallback for small extensions/mocks without the learned route.
+ # Never let one provider suppress the others.
  def google():return _google_cse(query,limit),None
  def bing():
-  rows,err,_,_= _searcher()._search_bing_rss(query,limit);return rows,err
+  rows,err,_,_= searcher._search_bing_rss(query,limit);return rows,err
  def duck():
-  rows,err,_,_= _searcher()._search_ddg(query,limit);return rows,err
+  rows,err,_,_= searcher._search_ddg(query,limit);return rows,err
  providers={'google_cse':google,'bing_rss':bing,'duckduckgo':duck}
  with concurrent.futures.ThreadPoolExecutor(max_workers=3,thread_name_prefix='graded-photo-search') as pool:
   future_map={pool.submit(fn):name for name,fn in providers.items()}
@@ -380,7 +398,7 @@ def _query_rows(query:str,limit:int)->tuple[list[dict],list[str]]:
     rows,err=future.result()
     if err:errors.append(name+':'+str(err)[:160])
     add(rows)
-   except Exception as exc:errors.append(name+':'+type(exc).__name__)
+   except Exception as exc:errors.append(name+':'+diagnostic_exception(exc))
  return merged[:max(limit*3,limit)],errors
 
 def _bing_image_rows(query:str,src:dict,limit:int=10)->list[dict]:
@@ -488,7 +506,7 @@ def _discover_source_game(src:dict,game:str)->tuple[list[dict],list[str],int,dic
    errors.extend(err);diag['raw_results']+=len(qrows)
    observations.append({'query':q,'company':expected_company,'raw':len(qrows),'accepted':relevant,'images':sum(bool(row.get('image_url')) for row in qrows if isinstance(row,dict)),'errors':len(err),'elapsed':time.monotonic()-query_started})
   except Exception as exc:
-   errors.append(type(exc).__name__);observations.append({'query':q,'company':expected_company,'raw':0,'accepted':0,'images':0,'errors':1,'elapsed':time.monotonic()-query_started})
+   errors.append(diagnostic_exception(exc));observations.append({'query':q,'company':expected_company,'raw':0,'accepted':0,'images':0,'errors':1,'elapsed':time.monotonic()-query_started})
  # One compact image-search per game/source. Bing image rows expose the actual
  # marketplace page (purl) and source image (murl), which avoids search redirect loss.
  image_started=time.monotonic();iq=''
@@ -519,7 +537,7 @@ def _discover_source_game(src:dict,game:str)->tuple[list[dict],list[str],int,dic
   diag['image_results']+=len(irows);diag['raw_results']+=len(irows)
   observations.append({'query':iq,'company':image_company,'raw':len(irows),'accepted':sum(bool(_company(str(item.get('title') or ''))) for item in irows if isinstance(item,dict)),'images':sum(bool(item.get('image_url')) for item in irows if isinstance(item,dict)),'errors':0,'elapsed':time.monotonic()-image_started})
  except Exception as exc:
-  errors.append('bing_images:'+type(exc).__name__)
+  errors.append('bing_images:'+diagnostic_exception(exc))
   observations.append({'query':iq or f'{game}:image_search','company':locals().get('image_company',''),'raw':0,'accepted':0,'images':0,'errors':1,'elapsed':time.monotonic()-image_started})
  # A source returning only PSA/BGS candidates receives a small bounded recovery
  # pass for the weakest company routes. Search failure remains diagnostic and no
@@ -544,7 +562,7 @@ def _discover_source_game(src:dict,game:str)->tuple[list[dict],list[str],int,dic
                         'images':sum(bool(item.get('image_url')) for item in recovered if isinstance(item,dict)),
                         'errors':len(recovery_errors),'elapsed':time.monotonic()-recovery_started,'recovery':True})
   except Exception as exc:
-   errors.append('recovery:'+type(exc).__name__)
+   errors.append('recovery:'+diagnostic_exception(exc))
    observations.append({'query':recovery_query,'company':recovery_company,'raw':0,'accepted':0,'images':0,'errors':1,
                         'elapsed':time.monotonic()-recovery_started,'recovery':True})
  candidates={}
@@ -1022,7 +1040,7 @@ def _collect_once()->dict:
    errors.extend(f'{sid}:{value}' for value in source_errors[:4])
   except Exception as exc:
    sid=src['id'];stats[sid]={'candidates':0,'image_hits':0,'verified_hits':0,'errors':1,'queries':0}
-   errors.append(sid+':'+type(exc).__name__)
+   errors.append(sid+':'+diagnostic_exception(exc))
  for future in pending:
   src=futures[future];future.cancel();sid=src['id']
   stats[sid]={'candidates':0,'image_hits':0,'verified_hits':0,'errors':1,'queries':0,'timed_out':True}
@@ -1055,7 +1073,7 @@ def _collect_once()->dict:
  try:
   learning_feedback=record_official_feedback(rows);collection_learning=learning_snapshot()
  except Exception as exc:
-  learning_feedback={'rows_observed':0,'official_verified':0,'measurement_ready':0,'identifiers_learned':0,'error':type(exc).__name__}
+  learning_feedback={'rows_observed':0,'official_verified':0,'measurement_ready':0,'identifiers_learned':0,'error':diagnostic_exception(exc)}
   collection_learning={'version':5,'error':'snapshot_unavailable','policy':{'query_learning_cannot_change_trust':True}}
 
  # Cross-source corroboration remains advisory; only official matching can verify.

@@ -11,7 +11,7 @@
     {
       "name": "both_sources_collected",
       "ok": true,
-      "detail": "[{'source': 'Collectory', 'price_krw': 120000, 'display': '₩120,000', 'grade_hint': 10, 'confidence': 0.99, 'matched_by': 'card_number+card_name', 'url': 'https://collectory.cc/cards?search=%ED%94%BC%EC%B9%B4%EC%B8%84+001%2F100', 'excerpt': '피카츄 001/100 현재 시세 ₩120,000 🏅10', 'observed_at': '2026-08-29T23:48:22+00:00', 'query': '피카츄 001/100'}, {'source': 'KREAM', 'price_krw': 125000, 'display': '₩125,000', 'trades': 7, 'confidence': 0.99, 'matched_by': 'card_number+card_name', 'url': 'https://kream.co.kr/search?keyword=%ED%94%BC%EC%B9%B4%EC%B8%84+001%2F100', 'excerpt': 'Pokemon TCG 피카츄 001/100 125,000원 관심 10 · 거래 7', 'observed_at': '2026-08-29T23:48:22+00:00', 'query': '피카츄 001/100'}]"
+      "detail": "[{'source': 'Collectory', 'price_krw': 120000, 'display': '₩120,000', 'grade_hint': 10, 'confidence': 0.99, 'matched_by': 'card_number+card_name', 'url': 'https://collectory.cc/cards?search=%ED%94%BC%EC%B9%B4%EC%B8%84+001%2F100', 'excerpt': '피카츄 001/100 현재 시세 ₩120,000 🏅10', 'observed_at': '2026-08-30T23:14:47+00:00', 'query': '피카츄 001/100'}, {'source': 'KREAM', 'price_krw': 125000, 'display': '₩125,000', 'trades': 7, 'confidence': 0.99, 'matched_by': 'card_number+card_name', 'url': 'https://kream.co.kr/search?keyword=%ED%94%BC%EC%B9%B4%EC%B8%84+001%2F100', 'excerpt': 'Pokemon TCG 피카츄 001/100 125,000원 관심 10 · 거래 7', 'observed_at': '2026-08-30T23:14:47+00:00', 'query': '피카츄 001/100'}]"
     },
     {
       "name": "no_primary_price_overwrite",
@@ -21,7 +21,7 @@
     {
       "name": "summary_counts",
       "ok": true,
-      "detail": "{'updated_at': '2026-08-29T23:48:22+00:00', 'targets_total': 1, 'targets_checked': 1, 'requests_checked': 2, 'matches': 2, 'sources': {'Collectory': {'checked': 1, 'matched': 1, 'errors': 0}, 'KREAM': {'checked': 1, 'matched': 1, 'errors': 0}}, 'errors': [], 'policy': '공개 HTML 교차확인 · 로그인/비공개 API/우회 없음 · 단독값으로 주 시세 자동 덮어쓰기 금지'}"
+      "detail": "{'updated_at': '2026-08-30T23:14:47+00:00', 'targets_total': 1, 'targets_checked': 1, 'requests_checked': 2, 'matches': 2, 'sources': {'Collectory': {'checked': 1, 'matched': 1, 'errors': 0}, 'KREAM': {'checked': 1, 'matched': 1, 'errors': 0}}, 'errors': [], 'policy': '공개 HTML 교차확인 · 로그인/비공개 API/우회 없음 · 단독값으로 주 시세 자동 덮어쓰기 금지'}"
     },
     {
       "name": "market_updater_integration",

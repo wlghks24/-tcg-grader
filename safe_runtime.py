@@ -28,6 +28,46 @@ import urllib.request
 MAX_SAFE_FILE_BYTES = 20_000_000
 
 
+def diagnostic_exception(exc: BaseException, limit: int = 320) -> str:
+    """Return a bounded, secret-safe exception description for collector logs.
+
+    Older collectors stored only ``ValueError``/``HTTPError``.  That erased the
+    status code or validation reason and made unrelated failures look identical
+    to the learning engine.  Keep only the small part needed for deterministic
+    root-cause routing; URLs, credentials, control characters and filesystem
+    paths are removed before the value reaches persistent state.
+    """
+    bounded = max(40, min(800, int(limit)))
+    name = type(exc).__name__
+    if isinstance(exc, urllib.error.HTTPError):
+        code = int(getattr(exc, "code", 0) or 0)
+        retry_after = ""
+        try:
+            raw_retry = exc.headers.get("Retry-After") if exc.headers else None
+            if raw_retry is not None and re.fullmatch(r"\s*\d{1,7}\s*", str(raw_retry)):
+                retry_after = f"; Retry-After {int(str(raw_retry).strip())}s"
+        except (AttributeError, TypeError, ValueError, OverflowError):
+            retry_after = ""
+        return f"HTTPError: status {code or 'unknown'}{retry_after}"[:bounded]
+
+    reason: Any = getattr(exc, "reason", None) if isinstance(exc, urllib.error.URLError) else None
+    detail = str(reason if reason not in (None, "") else exc)
+    detail = re.sub(r"https?://[^\s\"'<>]+", "<url>", detail, flags=re.IGNORECASE)
+    detail = re.sub(r"\bBearer\s+[A-Za-z0-9._~+/=-]+", "Bearer <redacted>", detail, flags=re.IGNORECASE)
+    detail = re.sub(
+        r"\b(api[_-]?key|access[_-]?token|refresh[_-]?token|token|password|passwd|secret)"
+        r"\s*[=:]\s*[^\s,;]+",
+        lambda match: match.group(1) + "=<redacted>",
+        detail,
+        flags=re.IGNORECASE,
+    )
+    detail = re.sub(r"\b[A-Za-z]:[\\/](?:[^\s\\/]+[\\/])+[^\s,;]+", "<path>", detail)
+    detail = re.sub(r"(?<![:\w])/(?:[^/\s]+/)+[^/\s:,;]+", "<path>", detail)
+    detail = re.sub(r"[\x00-\x1f\x7f]+", " ", detail)
+    detail = re.sub(r"\s+", " ", detail).strip()
+    return (f"{name}: {detail}" if detail and detail != name else name)[:bounded]
+
+
 def assert_no_symlink_components(path: str | os.PathLike[str], *, allow_missing: bool = False) -> None:
     """Reject symbolic links in every existing component of a filesystem path.
 

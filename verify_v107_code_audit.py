@@ -116,16 +116,20 @@ def main() -> dict:
     add("current_docs_no_stale_alias", not any(name in readme for name in STALE_LAUNCHERS),
         "현재 안내서의 삭제된 한글 실행파일 참조 0건")
 
-    version_sources = {
-        "server": (ROOT / "tcg_updater.py").read_text(encoding="utf-8"),
-        "auto": (ROOT / "auto_update_all.py").read_text(encoding="utf-8"),
-        "worker": (ROOT / "sw.js").read_text(encoding="utf-8"),
-        "fault": (ROOT / "fault_injection_healing.py").read_text(encoding="utf-8"),
-        "page": (ROOT / "index.html").read_text(encoding="utf-8"),
-    }
-    version_ok = all(VERSION in text or (name == "page" and "사전검사기 v109" in text)
-                     for name, text in version_sources.items())
-    add("release_version_coherence", version_ok, "서버·자동수집·PWA·고장주입·화면 v109 일치")
+    server_source = (ROOT / "tcg_updater.py").read_text(encoding="utf-8")
+    automatic_source = (ROOT / "auto_update_all.py").read_text(encoding="utf-8")
+    worker_source = (ROOT / "sw.js").read_text(encoding="utf-8")
+    fault_source = (ROOT / "fault_injection_healing.py").read_text(encoding="utf-8")
+    page_source = (ROOT / "index.html").read_text(encoding="utf-8")
+    cache_match = re.search(r"const CACHE='tcg-v(\d+)(?:-[a-z0-9-]+)?'", worker_source, re.I)
+    version_ok = bool(
+        VERSION in server_source and VERSION in automatic_source
+        and "사전검사기 v109" in page_source
+        and cache_match and int(cache_match.group(1)) >= 109
+        and "pwa-cache-version-skew" in fault_source and "required-current-cache" in fault_source
+    )
+    add("release_version_coherence", version_ok,
+        "서버·자동수집·화면 v109 일치 + PWA 캐시 revision·고장주입 계약 정상")
 
     public_files = __import__("tcg_updater").PUBLIC_STATIC_FILES
     missing_public = sorted(name for name in public_files if not (ROOT / name).is_file())

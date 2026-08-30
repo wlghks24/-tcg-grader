@@ -75,7 +75,7 @@ SAFE_JSON_FILES = {
     "learning_store.json", "verification_history.json", "auto_update_report.json",
     "auto_update_issues.json", "adaptive_collection_stats.json", "source_collection_stats.json",
     "link_health_report.json", "tcg_live_data.json", "auto_repair_memory.json",
-    "verification_cycles.json",
+    "verification_cycles.json", "graded_photo_candidates.json",
 }
 
 REQUIRED_JSON_FIELDS = {
@@ -97,6 +97,7 @@ REQUIRED_JSON_FIELDS = {
     "tcg_live_data.json": {"sources": dict, "pending": list, "applied": list},
     "auto_repair_memory.json": {"patterns": dict, "files": dict},
     "verification_cycles.json": {"results": list},
+    "graded_photo_candidates.json": {"records": list, "summary": dict},
 }
 
 
@@ -200,6 +201,32 @@ def _valid_project_payload(filename: str, data: Any) -> bool:
                 return False
             if not (0 < values[0] < 30 and 500 < values[1] < 3000):
                 return False
+        elif filename == "graded_photo_candidates.json":
+            records = data["records"]
+            if len(records) > 2_000:
+                return False
+            for row in records:
+                if not isinstance(row, dict):
+                    return False
+                company = str(row.get("company") or "").upper()
+                game = str(row.get("game") or "").lower()
+                url = row.get("url")
+                if company not in {"PSA", "BGS", "CGC", "TAG", "BRG"}:
+                    return False
+                if game not in {"pokemon", "onepiece", "naruto", "unknown"}:
+                    return False
+                if not isinstance(url, str):
+                    return False
+                validate_public_https_url(url)
+                if row.get("official_result") is True:
+                    cert = re.sub(r"[^A-Z0-9]", "", str(row.get("certification_id") or "").upper())
+                    grade = row.get("official_grade", row.get("grade"))
+                    if not cert or isinstance(grade, bool) or not isinstance(grade, (int, float)):
+                        return False
+                    if not math.isfinite(float(grade)) or not 1 <= float(grade) <= 10:
+                        return False
+                    if row.get("evidence_conflicts"):
+                        return False
     except (KeyError, TypeError, ValueError):
         return False
     pending = [data]
@@ -718,7 +745,7 @@ def _root_cause_subtype(code: str, lowered: str, normalized: str) -> tuple[str, 
         field_match = re.search(r"keyerror\s*:\s*['\"]([^'\"]+)['\"]", lowered)
         if field_match:
             return f"missing-field:{_safe_signature_token(field_match.group(1))}", None
-        if any(value in lowered for value in ("필수값", "required field", "missing field", "누락")):
+        if any(value in lowered for value in ("필수값", "필수 자료", "required field", "missing field", "누락")):
             return "missing-required-field", None
         return "schema", None
     if code == "DATA_VALUE_ERROR":
@@ -1162,11 +1189,11 @@ def analyze_error(detail: Any, error_type: str | None = None, *, use_scenario_pr
          "SOURCE_CONTENT_TYPE_ERROR", "원출처 콘텐츠 형식 불일치",
          "JSON을 기대한 수집기가 HTML 또는 지원하지 않는 미디어 형식을 받았을 가능성이 큽니다.",
          ("응답 Content-Type과 실제 본문 첫 부분을 확인합니다.", "로그인·차단 HTML을 JSON으로 저장하지 않습니다.", "공식 JSON 응답과 오류 HTML 회귀검사를 실행합니다."), False),
-        (("jsondecodeerror", "keyerror", "json decode", "json", "구조 오류", "필수값", "누락", "top-level list", "top-level array", "root must be object", "최상위 배열"),
+        (("jsondecodeerror", "keyerror", "json decode", "json", "구조 오류", "필수값", "필수 자료", "누락", "top-level list", "top-level array", "root must be object", "최상위 배열"),
          "DATA_SCHEMA_ERROR", "JSON·자료 구조 오류",
          "수집 결과가 표준 JSON 또는 파일별 필수 구조와 맞지 않을 가능성이 큽니다.",
          ("표준 JSON과 필수 필드를 검사합니다.", "손상 결과를 폐기하고 검증된 정상 백업만 확인합니다.", "복원 후 전체 데이터 회귀검사를 실행합니다."), False),
-        (("parser", "parse", "패턴 <n>건", "확인 실패", "읽지 못함"),
+        (("parser", "parse", "패턴 <n>건", "확인 실패", "읽지 못"),
          "SOURCE_STRUCTURE_CHANGED", "원출처 표시 구조 변경",
          "공식 페이지의 상품명·가격·날짜 표시 방식이 달라졌을 가능성이 큽니다.",
          ("원출처의 현재 표시 구조를 확인합니다.", "기존 파서와 후보 패턴을 비교합니다.", "검증된 필드가 없으면 기존 정상자료를 유지합니다."), False),
@@ -1883,6 +1910,38 @@ def _report_error_details(result: dict, ok: bool) -> tuple[list[str], int]:
     return details[:50], invalid
 
 
+def _remaining_report_errors(result: dict) -> tuple[set[str], int, bool]:
+    """Return unresolved diagnostics explicitly reported by the final attempt.
+
+    ``collection_errors`` includes earlier failed attempts as useful history.
+    Treating every such row as repaired merely because the JSON fallback stayed
+    readable produced false "해결 확인" counts.  Newer collectors expose the
+    final-attempt subset in ``remaining_collection_errors``; its presence is an
+    outcome contract, including an intentionally empty list after recovery.
+    """
+    if "remaining_collection_errors" not in result:
+        return set(), 0, False
+    raw = result.get("remaining_collection_errors")
+    if raw is None:
+        values: list[Any] = []
+    elif isinstance(raw, (list, tuple)):
+        values = list(raw[:50])
+    elif isinstance(raw, str):
+        values = [raw]
+    else:
+        return set(), 1, True
+    remaining: set[str] = set()
+    invalid = 0
+    for value in values:
+        if not isinstance(value, str):
+            invalid += 1
+            continue
+        safe = redact_sensitive(value).strip().casefold()
+        if safe:
+            remaining.add(safe)
+    return remaining, invalid, True
+
+
 def learn(report: dict, path: Path | None = None) -> dict:
     path = Path(path or MEMORY)
     if not isinstance(report, dict) or not isinstance(report.get("results", []), list):
@@ -1928,21 +1987,38 @@ def learn(report: dict, path: Path | None = None) -> dict:
                 continue
             recovered_after_retry = result.get("recovered_after_retry") is True
             recovered_after_deferred = result.get("recovered_after_deferred_timeout") is True
-            resolved_by_recovery = bool(ok_value and (recovered_after_retry or recovered_after_deferred))
             file_state = memory.setdefault("files", {}).setdefault(filename, {"runs": 0, "recent_failures": 0, "successful_repairs": 0})
             file_state["runs"] = min(1_000_000, _safe_int(file_state.get("runs"), 0) + 1)
             details, invalid_detail_count = _report_error_details(result, ok_value)
+            remaining, invalid_remaining_count, has_remaining_contract = _remaining_report_errors(result)
+            invalid_detail_count += invalid_remaining_count
+            recovery_claimed = bool(ok_value and (recovered_after_retry or recovered_after_deferred))
+            resolved_by_recovery = bool(recovery_claimed and (not has_remaining_contract or not remaining))
+            detail_outcomes = {
+                detail.casefold(): bool(
+                    recovery_claimed
+                    and (not has_remaining_contract or detail.casefold() not in remaining)
+                )
+                for detail in details
+            }
+            unresolved_details = [detail for detail in details if not detail_outcomes.get(detail.casefold(), False)]
+            resolved_details = [detail for detail in details if detail_outcomes.get(detail.casefold(), False)]
             if invalid_detail_count:
                 memory["invalid_report_count"] = min(
                     1_000_000,
                     _safe_int(memory.get("invalid_report_count"), 0) + invalid_detail_count,
                 )
-            had_problem = (not ok_value) or bool(details) or bool(invalid_detail_count) or resolved_by_recovery
-            if had_problem:
+            had_problem = (not ok_value) or bool(details) or bool(invalid_detail_count) or recovery_claimed
+            has_unresolved_problem = (not ok_value) or bool(unresolved_details) or bool(invalid_detail_count)
+            if has_unresolved_problem:
                 file_state["recent_failures"] = min(4, _safe_int(file_state.get("recent_failures"), 0) + 1)
                 file_state["clean_success_streak"] = 0
-                file_state["last_result"] = "recovered_or_failed" if ok_value else "failed"
-                if resolved_by_recovery:
+                file_state["last_result"] = "partial_unresolved" if ok_value else "failed"
+            elif had_problem:
+                file_state["recent_failures"] = max(0, _safe_int(file_state.get("recent_failures"), 0) - 1)
+                file_state["clean_success_streak"] = 0
+                file_state["last_result"] = "recovered_verified"
+                if resolved_details or resolved_by_recovery:
                     file_state["successful_repairs"] = min(1_000_000, _safe_int(file_state.get("successful_repairs"), 0) + 1)
             else:
                 file_state["recent_failures"] = max(0, _safe_int(file_state.get("recent_failures"), 0) - 1)
@@ -1953,10 +2029,11 @@ def learn(report: dict, path: Path | None = None) -> dict:
                 category, action, advice = classify(detail)
                 key = fingerprint(filename, category, detail)
                 recorded_action = result.get("auto_action")
-                learned_action = recorded_action if resolved_by_recovery and isinstance(recorded_action, str) and recorded_action.strip() else action
+                detail_resolved = detail_outcomes.get(detail.casefold(), False)
+                learned_action = recorded_action if detail_resolved and isinstance(recorded_action, str) and recorded_action.strip() else action
                 group_id, _ = _record_error_group(
                     memory, filename=filename, detail=detail, timestamp=event_timestamp,
-                    resolved=resolved_by_recovery,
+                    resolved=detail_resolved,
                     action=learned_action, origin="update-report",
                 )
                 row = memory.setdefault("patterns", {}).setdefault(key, {
@@ -1967,7 +2044,7 @@ def learn(report: dict, path: Path | None = None) -> dict:
                 row["last_seen"] = event_timestamp
                 row["last_detail"] = redact_sensitive(detail)
                 row["error_group_id"] = group_id
-                if resolved_by_recovery:
+                if detail_resolved:
                     row["successful_repairs"] = min(1_000_000, _safe_int(row.get("successful_repairs"), 0) + 1)
         _atomic_save_memory(memory, path)
         return memory

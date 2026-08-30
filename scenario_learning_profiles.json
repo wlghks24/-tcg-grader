@@ -1,13 +1,13 @@
 {
   "version": 1,
-  "engine": "v98-camera-resilience-full-runtime",
-  "generated_at": "2026-08-27T00:10:38+00:00",
+  "engine": "v134-root-cause-partial-outcome",
+  "generated_at": "2026-08-30T23:07:52+00:00",
   "training_only": true,
-  "scenario_count": 310,
-  "successful_scenarios": 310,
+  "scenario_count": 313,
+  "successful_scenarios": 313,
   "failed_scenarios": [],
   "family_count": 33,
-  "verified_profile_count": 164,
+  "verified_profile_count": 165,
   "profiles": {
     "NETWORK_TIMEOUT|general": {
       "profile_id": "8f2964a4e191d68f",
@@ -1418,9 +1418,10 @@
       "http_status": null,
       "http_statuses": [],
       "verified": true,
-      "scenario_count": 1,
+      "scenario_count": 2,
       "scenario_ids": [
-        "schema-required"
+        "schema-required",
+        "promo-required-official-fields"
       ],
       "families": [
         "data_schema"
@@ -1702,6 +1703,38 @@
       ],
       "bounded_retry_allowed": false
     },
+    "SOURCE_STRUCTURE_CHANGED|valueerror": {
+      "profile_id": "49cd2b361e8e37ef",
+      "code": "SOURCE_STRUCTURE_CHANGED",
+      "error_subtype": "valueerror",
+      "http_status": null,
+      "http_statuses": [],
+      "verified": true,
+      "scenario_count": 1,
+      "scenario_ids": [
+        "release-official-page-empty"
+      ],
+      "families": [
+        "source_structure"
+      ],
+      "diagnostic_priority": 15,
+      "first_checks": [
+        "공식 페이지의 현재 구조와 기존 선택자를 비교합니다."
+      ],
+      "fast_resolution_steps": [
+        "원출처의 현재 표시 구조를 확인합니다.",
+        "기존 파서와 후보 패턴을 비교합니다.",
+        "검증된 필드가 없으면 기존 정상자료를 유지합니다."
+      ],
+      "verification_steps": [
+        "검증된 필드가 없으면 기존 정상자료를 유지합니다.",
+        "기존 정상자료가 손상되지 않았는지 확인합니다."
+      ],
+      "stop_conditions": [
+        "검증 필드가 없으면 기존 정상자료를 유지합니다."
+      ],
+      "bounded_retry_allowed": false
+    },
     "EXCHANGE_RATE_VALIDATION|general": {
       "profile_id": "ec109ef3dfe9f377",
       "code": "EXCHANGE_RATE_VALIDATION",
@@ -1709,10 +1742,11 @@
       "http_status": null,
       "http_statuses": [],
       "verified": true,
-      "scenario_count": 2,
+      "scenario_count": 3,
       "scenario_ids": [
         "exchange-jpy",
-        "exchange-usd"
+        "exchange-usd",
+        "exchange-collected-value"
       ],
       "families": [
         "exchange_rate"
@@ -5444,5 +5478,5 @@
     "retry_permission_can_only_be_narrowed": true
   },
   "automation_policy": "검증된 안내만 제공 · 문자열/생성코드 실행 금지",
-  "results_sha256": "039b0ca8e660f58bd9620afcc44c7520bf10d3c7177610ddf688c65fb7457e0b"
+  "results_sha256": "8878fa11f173e47a6b9df5dd612f3aede3c139a3a8c274ed599613c0c6e9b6aa"
 }

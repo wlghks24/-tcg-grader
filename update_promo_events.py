@@ -13,7 +13,7 @@ import urllib.parse
 import urllib.request
 from html.parser import HTMLParser
 from pathlib import Path
-from safe_runtime import atomic_write_json, env_int, require_public_https, safe_read_text, validate_public_https_url
+from safe_runtime import atomic_write_json, diagnostic_exception, env_int, require_public_https, safe_read_text, validate_public_https_url
 
 import supplementary_discovery
 
@@ -657,7 +657,7 @@ def discover(index: tuple[str, str, str]) -> tuple[list[dict], list[str]]:
                 "discovered_at": dt.datetime.now(dt.timezone.utc).isoformat(timespec="seconds"),
             })
     except (urllib.error.URLError, TimeoutError, OSError, ValueError, UnicodeDecodeError) as exc:
-        errors.append(f"{region} {game} 신규행사 탐색: {type(exc).__name__}")
+        errors.append(f"{region} {game} 신규행사 탐색: {diagnostic_exception(exc)}")
     return rows, errors
 
 
@@ -673,7 +673,7 @@ def check_existing(item: dict) -> tuple[dict, str | None]:
                     raise ValueError("행사명 확인 실패")
         return item, None
     except (urllib.error.URLError, TimeoutError, OSError, ValueError, UnicodeDecodeError) as exc:
-        return item, f"{item['name_ko']}: {type(exc).__name__}"
+        return item, f"{item['name_ko']}: {diagnostic_exception(exc)}"
 
 
 def main() -> dict:
@@ -811,7 +811,7 @@ def main() -> dict:
     except Exception as exc:
         data["supplementary_candidate_count"] = 0
         data["supplementary_collection_mode"] = "deferred-read-error"
-        errors.append(f"보조후보 DB 읽기: {type(exc).__name__}")
+        errors.append(f"보조후보 DB 읽기: {diagnostic_exception(exc)}")
     try:
         social_path = ROOT / "social_event_candidates.json"
         social = json.loads(safe_read_text(social_path)) if social_path.exists() else {}
@@ -833,7 +833,7 @@ def main() -> dict:
         data["social_topic_covered_cells"] = 0
         data["social_topic_missing_cells"] = []
         data["social_collection_mode"] = "deferred-read-error"
-        errors.append(f"SNS/Google 후보 DB 읽기: {type(exc).__name__}")
+        errors.append(f"SNS/Google 후보 DB 읽기: {diagnostic_exception(exc)}")
     atomic_write_json(DATA,data,suffix=".json.tmp")
     return data
 

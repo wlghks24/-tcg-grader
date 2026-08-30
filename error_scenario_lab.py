@@ -19,7 +19,7 @@ from safe_runtime import atomic_write_json, safe_read_bytes
 
 ROOT = Path(__file__).resolve().parent
 PROFILE_PATH = ROOT / "scenario_learning_profiles.json"
-ENGINE_VERSION = "v98-camera-resilience-full-runtime"
+ENGINE_VERSION = "v134-root-cause-partial-outcome"
 
 
 def _case(case_id: str, family: str, detail: str, code: str, subtype: str | None,
@@ -81,6 +81,7 @@ SCENARIOS = (
     _case("schema-key-name", "data_schema", "KeyError: 'name' required field", "DATA_SCHEMA_ERROR", "missing-field:name", False),
     _case("schema-key-region", "data_schema", "KeyError: 'region' required field", "DATA_SCHEMA_ERROR", "missing-field:region", False),
     _case("schema-required", "data_schema", "필수값 누락 in collected JSON", "DATA_SCHEMA_ERROR", "missing-required-field", False),
+    _case("promo-required-official-fields", "data_schema", "ValueError: 행사 공식 출처·국가·날짜 정확도 또는 필수 자료가 잘못되었습니다", "DATA_SCHEMA_ERROR", "missing-required-field", False),
     _case("schema-general", "data_schema", "JSON 구조 오류", "DATA_SCHEMA_ERROR", "schema", False),
     _case("value-type", "data_value", "TypeError: expected number but received list", "DATA_VALUE_ERROR", "typeerror", False),
     _case("value-range", "data_value", "ValueError: number outside allowed range", "DATA_VALUE_ERROR", "range", False),
@@ -89,8 +90,10 @@ SCENARIOS = (
     _case("source-parser-price", "source_structure", "price parser 패턴 0건", "SOURCE_STRUCTURE_CHANGED", None, False),
     _case("source-parser-event", "source_structure", "event parser 확인 실패", "SOURCE_STRUCTURE_CHANGED", None, False),
     _case("source-parser-read", "source_structure", "official product page parse 읽지 못함", "SOURCE_STRUCTURE_CHANGED", None, False),
+    _case("release-official-page-empty", "source_structure", "ValueError: 공식 페이지에서 신뢰 가능한 출시정보를 읽지 못했습니다", "SOURCE_STRUCTURE_CHANGED", None, False),
     _case("exchange-jpy", "exchange_rate", "환율 JPY_KRW 범위 오류", "EXCHANGE_RATE_VALIDATION", "general", False),
     _case("exchange-usd", "exchange_rate", "exchange rate USD_KRW invalid unit", "EXCHANGE_RATE_VALIDATION", "general", False),
+    _case("exchange-collected-value", "exchange_rate", "ValueError: 원화 환산 환율 수집값이 허용 범위를 벗어났습니다", "EXCHANGE_RATE_VALIDATION", "general", False),
     _case("lock-database", "concurrency", "database is locked during atomic save", "CONCURRENCY_CONFLICT", "database-lock", True),
     _case("lock-process", "concurrency", "다른 프로세스의 오류학습 저장 잠금 대기", "CONCURRENCY_CONFLICT", "process-lock", True),
     _case("lock-write", "concurrency", "concurrent write conflict while replacing report", "CONCURRENCY_CONFLICT", "write-conflict", True),

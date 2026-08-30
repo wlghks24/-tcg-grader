@@ -4,7 +4,7 @@ from __future__ import annotations
 import os
 import datetime as dt, json, re, urllib.error, urllib.request
 from pathlib import Path
-from safe_runtime import atomic_write_json, env_int, html_to_text, safe_read_text, safe_urlopen
+from safe_runtime import atomic_write_json, diagnostic_exception, env_int, html_to_text, safe_read_text, safe_urlopen
 
 ROOT=Path(__file__).resolve().parent
 DATA=ROOT/'market_prices.json'
@@ -111,7 +111,7 @@ def main():
             set_price(db,'US|NARUTO CP-001 Gen Con 2026|HIT',display,'공개 판매목록 최저가~참조가 · 체결 확정가 아님','NARUTOMARKET · eBay 공개 판매목록',f'공개 판매목록 {listings.group(1) if listings else "확인"}건 · PSA 10 등록품 별도 확인',url)
             db['entries']['US|NARUTO CP-001 Gen Con 2026|HIT'].update({'game':'NARUTO','card_name':'Chakra Card CP-001 · Gen Con 2026 Ver.','card_number':'CP-001','product_name':'NARUTO CARD GAME Gen Con 2026 Promo','image_url':'https://narutomarket.com/uploads/8a9ce860-f747-4f68-9082-85b22c39c7e5-237767__carta.webp?v=1786351506'})
         else: errors.append('NARUTO CP-001: 가격 패턴 0건')
-    except NETWORK_ERRORS as e: errors.append('NARUTO CP-001: '+type(e).__name__)
+    except NETWORK_ERRORS as e: errors.append('NARUTO CP-001: '+diagnostic_exception(e))
     try:
         url='https://pokard.io/'
         text=html_to_text(fetch(url))
@@ -139,7 +139,7 @@ def main():
             if m:
                 set_price(db,key,m.group(1),kind,'POKARD',f'{token} 공개 표시가격',url)
                 db['entries'][key].update({'game':game,'card_name':card_name,'product_name':token})
-    except NETWORK_ERRORS as e: errors.append('POKARD BOX: '+type(e).__name__)
+    except NETWORK_ERRORS as e: errors.append('POKARD BOX: '+diagnostic_exception(e))
     try:
         url='https://kream.co.kr/products/959332'; text=html_to_text(fetch(url))
         vals=[int(x.replace(',','')) for x in re.findall(r'Ungraded A\s*([0-9,]+)원',text)[:3]]
@@ -147,7 +147,7 @@ def main():
             vals.sort(); median=vals[len(vals)//2]
             set_price(db,'KR|테라스탈 페스타 ex|HIT',f'₩{median:,}',f'최근 미감정 거래 {len(vals)}건 중앙값','KREAM 한국판','공개 페이지 거래자료',url)
         else: errors.append('KREAM HIT: 거래가격 패턴 0건')
-    except NETWORK_ERRORS as e: errors.append('KREAM HIT: '+type(e).__name__)
+    except NETWORK_ERRORS as e: errors.append('KREAM HIT: '+diagnostic_exception(e))
     try:
         url='https://kream.co.kr/products/stock/16256508'; text=html_to_text(fetch(url))
         values=[int(x.replace(',','')) for x in re.findall(r'(?:구매가|즉시 구매가)\s*([0-9,]+)원',text)]
@@ -155,7 +155,7 @@ def main():
         if plausible:
             set_price(db,'KR|로맨스 던|BOX',f'₩{plausible[0]:,}','KREAM 공개 상품 구매가','KREAM 한국판','공개 구매가 · 판매완료 체결가 아님',url)
         else: errors.append('KREAM 로맨스 던 BOX: 구매가격 패턴 0건')
-    except NETWORK_ERRORS as e: errors.append('KREAM 로맨스 던 BOX: '+type(e).__name__)
+    except NETWORK_ERRORS as e: errors.append('KREAM 로맨스 던 BOX: '+diagnostic_exception(e))
     try:
         url='https://kream.co.kr/products/627575';text=html_to_text(fetch(url))
         trades=[int(x.replace(',','')) for x in re.findall(r'ONE SIZE\s*([0-9,]+)원',text)[:12]]
@@ -164,29 +164,29 @@ def main():
             low,high=min(plausible),max(plausible);display=f'₩{low:,}' if low==high else f'₩{low:,}~₩{high:,}'
             set_price(db,'KR|블랙볼트|BOX',display,'최근 공개 체결가 범위','KREAM 한국판',f'최근 공개 체결 {len(plausible)}건',url)
         else: errors.append('KREAM 블랙볼트 BOX: 체결가격 패턴 0건')
-    except NETWORK_ERRORS as e: errors.append('KREAM 블랙볼트 BOX: '+type(e).__name__)
+    except NETWORK_ERRORS as e: errors.append('KREAM 블랙볼트 BOX: '+diagnostic_exception(e))
     try:
         url='https://www.packmagik.com/cards/op-op14-op14-009-p1';text=html_to_text(fetch(url))
         m=re.search(r'(?:Market|시장가)\s*\$([0-9]+(?:\.[0-9]+)?)',text,re.I)
         if m:set_price(db,'KR|창해의 칠걸|HIT','$'+m.group(1),'OP14-009 패러렐 국제판 참고시세','Pack Magik 국제시장','한국판 실거래 아님 · 국제판 시장가 참고',url)
         else: errors.append('Pack Magik OP14-009: 가격 패턴 0건')
-    except NETWORK_ERRORS as e: errors.append('Pack Magik OP14-009: '+type(e).__name__)
+    except NETWORK_ERRORS as e: errors.append('Pack Magik OP14-009: '+diagnostic_exception(e))
     try:
         url='https://pokard.io/jpcard/SV8a-217/'; text=html_to_text(fetch(url))
         m=re.search(r'(?:Ungrade|미감정)\s*¥([0-9,]+)',text,re.I)
         if m:set_price(db,'JP|테라스탈 페스타 ex 일본판|HIT','¥'+m.group(1),'미감정 참고가격','POKARD · SNKRDUNK','공개 표시가격',url)
         else: errors.append('POKARD HIT: 가격 패턴 0건')
-    except NETWORK_ERRORS as e: errors.append('POKARD HIT: '+type(e).__name__)
+    except NETWORK_ERRORS as e: errors.append('POKARD HIT: '+diagnostic_exception(e))
     try:
         from box_hit_market_discovery import merge_market_catalog
         merge_market_catalog(db)
     except Exception as e:
-        errors.append('BOX/HIT 다중마켓 자동발견: '+type(e).__name__)
+        errors.append('BOX/HIT 다중마켓 자동발견: '+diagnostic_exception(e))
     try:
         from market_public_crosscheck import crosscheck_market_db
         crosscheck_market_db(db)
     except (OSError, ValueError, TypeError, urllib.error.URLError, TimeoutError) as e:
-        errors.append('Collectory/KREAM 교차확인: '+type(e).__name__)
+        errors.append('Collectory/KREAM 교차확인: '+diagnostic_exception(e))
     db['updated_at']=dt.datetime.now(dt.timezone.utc).isoformat(timespec='seconds')
     db['collection_status']='정상' if not errors else '일부 가격 출처 확인 실패'
     db['collection_errors']=errors

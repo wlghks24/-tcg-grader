@@ -13,7 +13,7 @@ import urllib.error
 import urllib.parse
 import urllib.request
 from pathlib import Path
-from safe_runtime import atomic_write_json, env_int, require_public_https, safe_read_text, validate_public_https_url
+from safe_runtime import atomic_write_json, diagnostic_exception, env_int, require_public_https, safe_read_text, validate_public_https_url
 
 ROOT = Path(__file__).resolve().parent
 DATA = ROOT / "purchase_sources.json"
@@ -411,9 +411,9 @@ def probe(source: dict) -> tuple[str, str]:
     try:
         resolve_public_host(host)
     except urllib.error.URLError as exc:
-        return source['name'], f'재확인 필요·기존 주소 유지 ({type(exc).__name__})'
+        return source['name'], f'재확인 필요·기존 주소 유지 ({diagnostic_exception(exc)})'
     except ValueError as exc:
-        return source['name'], f'보안 검증 실패·기존 주소 유지 ({type(exc).__name__})'
+        return source['name'], f'보안 검증 실패·기존 주소 유지 ({diagnostic_exception(exc)})'
     opener = urllib.request.build_opener(SafeRedirect)
     headers = {"User-Agent": "Mozilla/5.0 TCG-Grader-Link-Checker/1.0"}
     try:
@@ -429,7 +429,7 @@ def probe(source: dict) -> tuple[str, str]:
             require_public_https(response.geturl())
             return source["name"], "정상"
     except (urllib.error.URLError, TimeoutError, OSError, ValueError, socket.timeout) as exc:
-        return source["name"], f"재확인 필요·기존 주소 유지 ({type(exc).__name__})"
+        return source["name"], f"재확인 필요·기존 주소 유지 ({diagnostic_exception(exc)})"
 
 
 def main() -> dict:
@@ -491,7 +491,7 @@ def main() -> dict:
         current["social_stock_collection_mode"] = "step5-public-search-reference-only"
     except Exception as exc:
         current["social_stock_collection_mode"] = f"degraded-{type(exc).__name__}"
-        current.setdefault("collection_errors", []).append(f"SNS 재고제보 수집: {type(exc).__name__}")
+        current.setdefault("collection_errors", []).append(f"SNS 재고제보 수집: {diagnostic_exception(exc)}")
     atomic_write_json(DATA,current)
     return current
 

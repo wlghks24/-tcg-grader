@@ -29,7 +29,7 @@ import xml.etree.ElementTree as ET
 from collections import Counter
 
 from adaptive_collection_learner import AdaptiveCollectionLearner, canonical_game
-from safe_runtime import env_int, safe_urlopen
+from safe_runtime import diagnostic_exception, env_int, safe_urlopen
 from search_method_learning import SearchMethodLearner
 
 
@@ -401,7 +401,8 @@ class MultiChannelCollector:
         selected = [terms[rotation], terms[(rotation + 3) % len(terms)]]
         return f'{name} "{selected[0]}" "{selected[1]}"'[:220]
 
-    def _search_once(self, query: str, limit: int, region: str = "KR", family: str = "web") -> tuple[list[dict], list[str], int, bool, int]:
+    def _search_once(self, query: str, limit: int, region: str = "KR", family: str = "web",
+                     route_budget: int | None = None) -> tuple[list[dict], list[str], int, bool, int]:
         """Run multiple public methods in learned order and isolate blocked routes."""
         query = re.sub(r"\s+", " ", str(query or "")).strip()[:280]
         routes = {
@@ -416,6 +417,8 @@ class MultiChannelCollector:
         is_android = "com.termux" in os.environ.get("PREFIX", "") or "ANDROID_ROOT" in os.environ
         with self._learning_lock:
             budget = self.method_learner.recommended_budget(routes.keys(), region=region, family=family, is_android=is_android)
+            if route_budget is not None:
+                budget = max(1, min(budget, int(route_budget)))
             ordered = self.method_learner.ordered_routes(routes.keys(), region=region, family=family, budget=budget)
         errors: list[str] = []
         attempts = 0
@@ -480,6 +483,32 @@ class MultiChannelCollector:
             hard = not rows and len(errors) >= 3
             return list(rows or []), errors, int(attempts or 0), hard, 3
         raise ValueError("invalid _search_once result contract")
+
+    def search_exact(self, query: str, limit: int = 10, *, region: str = "US",
+                     family: str = "web", route_budget: int = 3) -> tuple[list[dict], list[str], int, bool]:
+        """Run a caller-supplied query through learned health/cooldown routing.
+
+        Graded-photo discovery historically called DDG/Bing private methods
+        directly, so repeated timeouts never reached ``SearchMethodLearner`` and
+        every later source paid the same timeout again.  This bounded entry point
+        records latency/outcome, honors circuit-breaker cooldowns, keeps one
+        recovery probe, and persists only operational search quality—not truth.
+        """
+        normalized = re.sub(r"\s+", " ", str(query or "")).strip()[:280]
+        if not normalized:
+            return [], ["empty search query"], 0, True
+        result = self._search_once(
+            normalized, max(3, min(50, int(limit))), region, str(family or "web")[:80],
+            route_budget=max(1, min(4, int(route_budget))),
+        )
+        rows, errors, attempts, hard, _ = self._normalize_once_result(result)
+        try:
+            with self._learning_lock:
+                self.method_learner.observe_selected(rows)
+                self.method_learner.save()
+        except Exception as exc:
+            errors = list(errors) + ["search_learning: " + diagnostic_exception(exc)]
+        return rows, list(errors), attempts, hard
 
     def _relaxed_query(self, keyword: str, region: str, family: str, original: str) -> str:
         game = canonical_game(keyword)

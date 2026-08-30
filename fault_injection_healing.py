@@ -207,12 +207,17 @@ class FaultScenario:
     description: str
 
 
+_CACHE_SOURCE = (ROOT / "sw.js").read_bytes()
+_CACHE_TOKEN_MATCH = re.search(rb"const CACHE='(tcg-v\d+(?:-[a-z0-9-]+)?)'", _CACHE_SOURCE, re.I)
+CURRENT_CACHE_TOKEN = _CACHE_TOKEN_MATCH.group(1) if _CACHE_TOKEN_MATCH else b"tcg-cache-token-missing"
+
+
 SCENARIOS = (
     FaultScenario("python-syntax-token", "syntax", "auto_repair_engine.py", b"from __future__ import annotations", b"from __future__ import (", "python", "Python 구문 손상"),
     FaultScenario("javascript-syntax-token", "syntax", "grading_vision_engine.js", b"'use strict';", b"'use strict';}", "javascript", "JavaScript 구문 손상"),
     FaultScenario("json-truncated", "data", "market_prices.json", b"{", b"", "json", "JSON 시작문자 유실"),
     FaultScenario("json-duplicate-key", "data", "exchange_rates.json", b"{", b'{"version":1,"version":2,', "json", "JSON 중복 키 주입"),
-    FaultScenario("pwa-cache-version-skew", "version", "sw.js", b"tcg-v109-card-identity-ocr-learning", b"tcg-stale-cache", "required-current-cache", "PWA 캐시 버전 불일치"),
+    FaultScenario("pwa-cache-version-skew", "version", "sw.js", CURRENT_CACHE_TOKEN, b"tcg-stale-cache", "required-current-cache", "PWA 캐시 버전 불일치"),
     FaultScenario("server-version-skew", "version", "tcg_updater.py", b"v109-card-identity-ocr-learning", b"v00-stale-runtime", "required-current-engine", "서버 통합버전 불일치"),
     FaultScenario("camera-policy-removed", "camera", "tcg_updater.py", b"camera=(self)", b"camera=()", "required-camera-policy", "카메라 권한 정책 차단"),
     FaultScenario("camera-duplicate-guard-removed", "camera", "index.html", b"sceneDistance(metric,frontMetric)>=12", b"sceneDistance(metric,frontMetric)>=-1", "required-camera-guard", "같은 면 중복촬영 보호 제거"),
@@ -257,8 +262,10 @@ def _probe(root: Path, scenario: FaultScenario) -> bool:
         except (OSError, ValueError, TypeError, UnicodeError):
             return False
     text = path.read_text(encoding="utf-8")
+    cache_match = re.search(r"const CACHE='tcg-v(\d+)(?:-[a-z0-9-]+)?'", text, re.I)
     contracts = {
-        "required-current-cache": "tcg-v109-card-identity-ocr-learning" in text,
+        "required-current-cache": bool(cache_match and int(cache_match.group(1)) >= 109
+                                       and "./index.html" in text and "./manifest.webmanifest" in text),
         "required-current-engine": ENGINE_VERSION in text,
         "required-camera-policy": "camera=(self)" in text,
         "required-camera-guard": "sceneDistance(metric,frontMetric)>=12" in text,

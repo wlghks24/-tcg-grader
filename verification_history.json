@@ -1,483 +1,13 @@
 {
   "version": 5,
-  "updated_at": "2026-08-29T23:48:22+00:00",
+  "updated_at": "2026-08-30T23:14:50+00:00",
   "retention_limit": 24,
   "full_detail_limit": 8,
-  "lifetime_runs": 270,
-  "lifetime_passed_checks": 19472,
-  "lifetime_failed_checks": 250,
-  "pruned_runs": 305,
+  "lifetime_runs": 275,
+  "lifetime_passed_checks": 19539,
+  "lifetime_failed_checks": 268,
+  "pruned_runs": 315,
   "runs": [
-    {
-      "checked_at": "2026-08-28T14:11:17+00:00",
-      "ok": true,
-      "pass_count": 17,
-      "failure_count": 0,
-      "checks": [
-        {
-          "name": "Python 전체 문법",
-          "ok": true,
-          "detail": "통과"
-        },
-        {
-          "name": "v107 서버·PWA 통합",
-          "ok": true,
-          "detail": "통과"
-        },
-        {
-          "name": "화면·링크 런타임",
-          "ok": true,
-          "detail": "통과"
-        },
-        {
-          "name": "24개 기능 계약",
-          "ok": true,
-          "detail": "통과"
-        },
-        {
-          "name": "전체 코드·자료 감사",
-          "ok": true,
-          "detail": "통과"
-        },
-        {
-          "name": "SNS·Google 수집",
-          "ok": true,
-          "detail": "통과"
-        },
-        {
-          "name": "브라우저 런타임",
-          "ok": true,
-          "detail": "통과"
-        },
-        {
-          "name": "카메라 런타임",
-          "ok": true,
-          "detail": "통과"
-        },
-        {
-          "name": "서비스워커 런타임",
-          "ok": true,
-          "detail": "통과"
-        },
-        {
-          "name": "비전 런타임",
-          "ok": true,
-          "detail": "통과"
-        },
-        {
-          "name": "5개 감정사 브라우저 정확도",
-          "ok": true,
-          "detail": "통과"
-        },
-        {
-          "name": "5개 감정사 교차런타임",
-          "ok": true,
-          "detail": "통과"
-        },
-        {
-          "name": "등급 학습 파이프라인",
-          "ok": true,
-          "detail": "통과"
-        },
-        {
-          "name": "시세 출처 회귀",
-          "ok": true,
-          "detail": "통과"
-        },
-        {
-          "name": "eBay 등급학습 회귀",
-          "ok": true,
-          "detail": "통과"
-        },
-        {
-          "name": "비전 보정 회귀",
-          "ok": true,
-          "detail": "통과"
-        },
-        {
-          "name": "격리 고장주입·자가복구",
-          "ok": true,
-          "detail": "통과"
-        }
-      ],
-      "release_gate": "v107-full-audit-hardened"
-    },
-    {
-      "checked_at": "2026-08-29T17:01:48+00:00",
-      "ok": true,
-      "pass_count": 17,
-      "failure_count": 0,
-      "checks": [
-        {
-          "name": "Python 전체 문법",
-          "ok": true,
-          "detail": "통과"
-        },
-        {
-          "name": "v107 서버·PWA 통합",
-          "ok": true,
-          "detail": "통과"
-        },
-        {
-          "name": "화면·링크 런타임",
-          "ok": true,
-          "detail": "통과"
-        },
-        {
-          "name": "24개 기능 계약",
-          "ok": true,
-          "detail": "통과"
-        },
-        {
-          "name": "전체 코드·자료 감사",
-          "ok": true,
-          "detail": "통과"
-        },
-        {
-          "name": "SNS·Google 수집",
-          "ok": true,
-          "detail": "통과"
-        },
-        {
-          "name": "브라우저 런타임",
-          "ok": true,
-          "detail": "통과"
-        },
-        {
-          "name": "카메라 런타임",
-          "ok": true,
-          "detail": "통과"
-        },
-        {
-          "name": "서비스워커 런타임",
-          "ok": true,
-          "detail": "통과"
-        },
-        {
-          "name": "비전 런타임",
-          "ok": true,
-          "detail": "통과"
-        },
-        {
-          "name": "5개 감정사 브라우저 정확도",
-          "ok": true,
-          "detail": "통과"
-        },
-        {
-          "name": "5개 감정사 교차런타임",
-          "ok": true,
-          "detail": "통과"
-        },
-        {
-          "name": "등급 학습 파이프라인",
-          "ok": true,
-          "detail": "통과"
-        },
-        {
-          "name": "시세 출처 회귀",
-          "ok": true,
-          "detail": "통과"
-        },
-        {
-          "name": "eBay 등급학습 회귀",
-          "ok": true,
-          "detail": "통과"
-        },
-        {
-          "name": "비전 보정 회귀",
-          "ok": true,
-          "detail": "통과"
-        },
-        {
-          "name": "격리 고장주입·자가복구",
-          "ok": true,
-          "detail": "통과"
-        }
-      ],
-      "release_gate": "v107-full-audit-hardened"
-    },
-    {
-      "checked_at": "2026-08-29T17:02:10+00:00",
-      "ok": true,
-      "pass_count": 17,
-      "failure_count": 0,
-      "checks": [
-        {
-          "name": "Python 전체 문법",
-          "ok": true,
-          "detail": "통과"
-        },
-        {
-          "name": "v107 서버·PWA 통합",
-          "ok": true,
-          "detail": "통과"
-        },
-        {
-          "name": "화면·링크 런타임",
-          "ok": true,
-          "detail": "통과"
-        },
-        {
-          "name": "24개 기능 계약",
-          "ok": true,
-          "detail": "통과"
-        },
-        {
-          "name": "전체 코드·자료 감사",
-          "ok": true,
-          "detail": "통과"
-        },
-        {
-          "name": "SNS·Google 수집",
-          "ok": true,
-          "detail": "통과"
-        },
-        {
-          "name": "브라우저 런타임",
-          "ok": true,
-          "detail": "통과"
-        },
-        {
-          "name": "카메라 런타임",
-          "ok": true,
-          "detail": "통과"
-        },
-        {
-          "name": "서비스워커 런타임",
-          "ok": true,
-          "detail": "통과"
-        },
-        {
-          "name": "비전 런타임",
-          "ok": true,
-          "detail": "통과"
-        },
-        {
-          "name": "5개 감정사 브라우저 정확도",
-          "ok": true,
-          "detail": "통과"
-        },
-        {
-          "name": "5개 감정사 교차런타임",
-          "ok": true,
-          "detail": "통과"
-        },
-        {
-          "name": "등급 학습 파이프라인",
-          "ok": true,
-          "detail": "통과"
-        },
-        {
-          "name": "시세 출처 회귀",
-          "ok": true,
-          "detail": "통과"
-        },
-        {
-          "name": "eBay 등급학습 회귀",
-          "ok": true,
-          "detail": "통과"
-        },
-        {
-          "name": "비전 보정 회귀",
-          "ok": true,
-          "detail": "통과"
-        },
-        {
-          "name": "격리 고장주입·자가복구",
-          "ok": true,
-          "detail": "통과"
-        }
-      ],
-      "release_gate": "v107-full-audit-hardened"
-    },
-    {
-      "checked_at": "2026-08-29T17:02:30+00:00",
-      "ok": true,
-      "pass_count": 17,
-      "failure_count": 0,
-      "checks": [
-        {
-          "name": "Python 전체 문법",
-          "ok": true,
-          "detail": "통과"
-        },
-        {
-          "name": "v107 서버·PWA 통합",
-          "ok": true,
-          "detail": "통과"
-        },
-        {
-          "name": "화면·링크 런타임",
-          "ok": true,
-          "detail": "통과"
-        },
-        {
-          "name": "24개 기능 계약",
-          "ok": true,
-          "detail": "통과"
-        },
-        {
-          "name": "전체 코드·자료 감사",
-          "ok": true,
-          "detail": "통과"
-        },
-        {
-          "name": "SNS·Google 수집",
-          "ok": true,
-          "detail": "통과"
-        },
-        {
-          "name": "브라우저 런타임",
-          "ok": true,
-          "detail": "통과"
-        },
-        {
-          "name": "카메라 런타임",
-          "ok": true,
-          "detail": "통과"
-        },
-        {
-          "name": "서비스워커 런타임",
-          "ok": true,
-          "detail": "통과"
-        },
-        {
-          "name": "비전 런타임",
-          "ok": true,
-          "detail": "통과"
-        },
-        {
-          "name": "5개 감정사 브라우저 정확도",
-          "ok": true,
-          "detail": "통과"
-        },
-        {
-          "name": "5개 감정사 교차런타임",
-          "ok": true,
-          "detail": "통과"
-        },
-        {
-          "name": "등급 학습 파이프라인",
-          "ok": true,
-          "detail": "통과"
-        },
-        {
-          "name": "시세 출처 회귀",
-          "ok": true,
-          "detail": "통과"
-        },
-        {
-          "name": "eBay 등급학습 회귀",
-          "ok": true,
-          "detail": "통과"
-        },
-        {
-          "name": "비전 보정 회귀",
-          "ok": true,
-          "detail": "통과"
-        },
-        {
-          "name": "격리 고장주입·자가복구",
-          "ok": true,
-          "detail": "통과"
-        }
-      ],
-      "release_gate": "v107-full-audit-hardened"
-    },
-    {
-      "checked_at": "2026-08-29T17:02:59+00:00",
-      "ok": true,
-      "pass_count": 17,
-      "failure_count": 0,
-      "checks": [
-        {
-          "name": "Python 전체 문법",
-          "ok": true,
-          "detail": "통과"
-        },
-        {
-          "name": "v107 서버·PWA 통합",
-          "ok": true,
-          "detail": "통과"
-        },
-        {
-          "name": "화면·링크 런타임",
-          "ok": true,
-          "detail": "통과"
-        },
-        {
-          "name": "24개 기능 계약",
-          "ok": true,
-          "detail": "통과"
-        },
-        {
-          "name": "전체 코드·자료 감사",
-          "ok": true,
-          "detail": "통과"
-        },
-        {
-          "name": "SNS·Google 수집",
-          "ok": true,
-          "detail": "통과"
-        },
-        {
-          "name": "브라우저 런타임",
-          "ok": true,
-          "detail": "통과"
-        },
-        {
-          "name": "카메라 런타임",
-          "ok": true,
-          "detail": "통과"
-        },
-        {
-          "name": "서비스워커 런타임",
-          "ok": true,
-          "detail": "통과"
-        },
-        {
-          "name": "비전 런타임",
-          "ok": true,
-          "detail": "통과"
-        },
-        {
-          "name": "5개 감정사 브라우저 정확도",
-          "ok": true,
-          "detail": "통과"
-        },
-        {
-          "name": "5개 감정사 교차런타임",
-          "ok": true,
-          "detail": "통과"
-        },
-        {
-          "name": "등급 학습 파이프라인",
-          "ok": true,
-          "detail": "통과"
-        },
-        {
-          "name": "시세 출처 회귀",
-          "ok": true,
-          "detail": "통과"
-        },
-        {
-          "name": "eBay 등급학습 회귀",
-          "ok": true,
-          "detail": "통과"
-        },
-        {
-          "name": "비전 보정 회귀",
-          "ok": true,
-          "detail": "통과"
-        },
-        {
-          "name": "격리 고장주입·자가복구",
-          "ok": true,
-          "detail": "통과"
-        }
-      ],
-      "release_gate": "v107-full-audit-hardened"
-    },
     {
       "checked_at": "2026-08-29T17:03:20+00:00",
       "ok": true,
@@ -2172,6 +1702,476 @@
     },
     {
       "checked_at": "2026-08-29T23:48:22+00:00",
+      "ok": true,
+      "pass_count": 17,
+      "failure_count": 0,
+      "checks": [
+        {
+          "name": "Python 전체 문법",
+          "ok": true,
+          "detail": "통과"
+        },
+        {
+          "name": "v107 서버·PWA 통합",
+          "ok": true,
+          "detail": "통과"
+        },
+        {
+          "name": "화면·링크 런타임",
+          "ok": true,
+          "detail": "통과"
+        },
+        {
+          "name": "24개 기능 계약",
+          "ok": true,
+          "detail": "통과"
+        },
+        {
+          "name": "전체 코드·자료 감사",
+          "ok": true,
+          "detail": "통과"
+        },
+        {
+          "name": "SNS·Google 수집",
+          "ok": true,
+          "detail": "통과"
+        },
+        {
+          "name": "브라우저 런타임",
+          "ok": true,
+          "detail": "통과"
+        },
+        {
+          "name": "카메라 런타임",
+          "ok": true,
+          "detail": "통과"
+        },
+        {
+          "name": "서비스워커 런타임",
+          "ok": true,
+          "detail": "통과"
+        },
+        {
+          "name": "비전 런타임",
+          "ok": true,
+          "detail": "통과"
+        },
+        {
+          "name": "5개 감정사 브라우저 정확도",
+          "ok": true,
+          "detail": "통과"
+        },
+        {
+          "name": "5개 감정사 교차런타임",
+          "ok": true,
+          "detail": "통과"
+        },
+        {
+          "name": "등급 학습 파이프라인",
+          "ok": true,
+          "detail": "통과"
+        },
+        {
+          "name": "시세 출처 회귀",
+          "ok": true,
+          "detail": "통과"
+        },
+        {
+          "name": "eBay 등급학습 회귀",
+          "ok": true,
+          "detail": "통과"
+        },
+        {
+          "name": "비전 보정 회귀",
+          "ok": true,
+          "detail": "통과"
+        },
+        {
+          "name": "격리 고장주입·자가복구",
+          "ok": true,
+          "detail": "통과"
+        }
+      ],
+      "release_gate": "v107-full-audit-hardened"
+    },
+    {
+      "checked_at": "2026-08-30T22:55:36+00:00",
+      "ok": false,
+      "pass_count": 12,
+      "failure_count": 5,
+      "checks": [
+        {
+          "name": "Python 전체 문법",
+          "ok": true,
+          "detail": "통과"
+        },
+        {
+          "name": "v107 서버·PWA 통합",
+          "ok": false,
+          "detail": "Traceback (most recent call last):\nFile \"/workspace/scratch/8297d71e6515/tcg-grader/verify_v107_runtime_integration.py\", line 145, in <module>\nreport = main()\n^^^^^^\nFile \"/workspace/scratch/8297d71e6515/tcg-grader/verify_v107_runtime_integration.py\", line 73, in main\ncheck(\nFile \"/workspace/scratch/8297d71e6515/tcg-grader/verify_v107_runtime_integration.py\", line 33, in check\nraise AssertionError(f\"{name}: {detail}\")\nAssertionError: ui_pwa_version: 화면·manifest·서비스워커 버전이 일치함"
+        },
+        {
+          "name": "화면·링크 런타임",
+          "ok": false,
+          "detail": "Traceback (most recent call last):\nFile \"/workspace/scratch/8297d71e6515/tcg-grader/verify_link_runtime.py\", line 213, in <module>\nprint(json.dumps(audit_link_contract(), ensure_ascii=False, indent=2))\n^^^^^^^^^^^^^^^^^^^^^\nFile \"/workspace/scratch/8297d71e6515/tcg-grader/verify_link_runtime.py\", line 120, in audit_link_contract\nraise AssertionError(f\"존재하지 않는 화면 ID 참조: {missing_ids}\")\nAssertionError: 존재하지 않는 화면 ID 참조: ['gpdManualGame', 'gpdManualPhoto', 'gradedPhotoDashboard']"
+        },
+        {
+          "name": "24개 기능 계약",
+          "ok": false,
+          "detail": "{\n\"ok\": false,\n\"version\": 3,\n\"total\": 25,\n\"implemented\": 24,\n\"missing\": [\n\"version_coherence\"\n],\n\"features\": [\n{\n\"id\": \"five_company_grading\",\n\"title\": \"PSA·BGS·CGC·TAG·BRG 사진 사전측정\",\n\"implemented\": true,\n\"evidence\": \"5개 업체 결과 UI와 공통 측정 목록\"\n},\n{\n\"id\": \"official_grade_rules\",\n\"title\": \"PSA·TAG 공식 공개기준과 BRG 비공개 기준 보호\",\n\"implemented\": true,\n\"evidence\": \"공식 점수표 API와 사진 참고표시\"\n},\n{\n\"id\": \"photo_front_back\",\n\"title\": \"앞·뒷면 사진·센터링·코너·엣지·표면 분석\",\n\"implemented\": true,\n\"evidence\": \"앞·뒤 파일입력·자동촬영·내부 보더·Hough 선형 결함·백화·카메라 수명주기\"\n},\n{\n\"id\": \"card_identity_ocr_learning\",\n\"title\": \"카드명·카드번호 자동인식·확인형 이미지학습\",\n\"implemented\": true,\n\"evidence\": \"앞면 OCR·카드번호 우선 매칭·사용자 확인 후 동일사진/3회 유사사진 학습\"\n},\n{\n\"id\": \"exact_grade_prices\",\n\"title\": \"업체별 1~10 정확한 등급가격·판매가·순수익\",\n\"implemented\": true,\n\"evidence\": \"5업체×10등급 가격구조와 수익계산\"\n},\n{\n\"id\": \"grade_cross_validation\",\n\"title\": \"강화 서버 등급·시세 교차검증\",\n\"implemented\": true,\n\"evidence\": \"동일 출처 보호 POST API\"\n},\n{\n\"id\": \"calibration_learning\",\n\"title\": \"실제 확정등급 저장·보수 자동보정\",\n\"implemented\": true,\n\"evidence\": \"공식 인증번호 결과만 카드 단위 보류검증 · 개선 시 최대 1등급 하향 보정\"\n},\n{\n\"id\": \"error_root_cause_learning\",\n\"title\": \"동일 오류 통합·신규 오류 분리·해결방법 기록\",\n\"implemented\": true,\n\"evidence\": \"원인 그룹·해결·재검증 계약\"\n},\n{\n\"id\": \"scenario_error_training\",\n\"title\": \"다중 오류상황 사전학습·빠른 해결프로필\",\n\"implemented\": true,\n\"evidence\": \"310개 상황·33개 계열·164개 검증 프로필·카메라/링크/버튼/API/PWA·운영기록 비오염\"\n},\n{\n\"id\": \"approved_ai_code_improvement\",\n\"title\": \"구조화 코드후보·격리검사·오류통합·승인형 반영\",\n\"implemented\": true,\n\"evidence\": \"Responses 승인형 후보 + 임시 복제본 고장주입 21종 + 운영 코드는 진단만 + 검증 JSON만 제한복구\"\n},\n{\n\"id\": \"timeout_deferred_collection\",\n\"title\": \"시간초과 자료만 3~10분 별도 복구수집\",\n\"implemented\": true,\n\"evidence\": \"시간초과 전용 분리예산\"\n},\n{\n\"id\": \"six_collection_jobs\",\n\"title\": \"출시·재발매·시세·행사·구매처·환율·등급사진 7단계 자동수집\",\n\"implemented\": true,\n\"evidence\": \"6개 기존 작업 + OCR·공식 인증검증 등급사진 작업\"\n},\n{\n\"id\": \"scheduled_precollection\",\n\"title\": \"6시간 자동반영·30분 전 사전수집\",\n\"implemented\": true,\n\"evidence\": \"PC·안드로이드 공통 일정\"\n},\n{\n\"id\": \"background_manual_update\",\n\"title\": \"화면 전체 업데이트·백그라운드 진행·재연결\",\n\"implemented\": true,\n\"evidence\": \"POST 백그라운드 작업과 진행상태 재연결\"\n},\n{\n\"id\": \"three_country_market\",\n\"title\": \"한국·일본·미국 카드·BOX 시세와 원화환산\",\n\"implemented\": true,\n\"evidence\": \"3국·3작품·BOX/HIT·환율\"\n},\n{\n\"id\": \"release_and_resale\",\n\"title\": \"사전예약·출시일·재발매 추적\",\n\"implemented\": true,\n\"evidence\": \"출시·재발매 자료와 화면\"\n},\n{\n\"id\": \"promo_collab_movies\",\n\"title\": \"한·일·미 포켓몬·원피스·나루토 행사·콜라보·영화\",\n\"implemented\": true,\n\"evidence\": \"3작품×3국 공식출처 9조합\"\n},\n{\n\"id\": \"social_google_event_discovery\",\n\"title\": \"Instagram·X·Google 기반 행사·콜라보·영화 보조수집\",\n\"implemented\": true,\n\"evidence\": \"Google News 기본 + X/Instagram 공식 API 선택 + 공식사이트 연결계정 우선 + 후보층 격리\"\n},\n{\n\"id\": \"purchase_sources\",\n\"title\": \"온라인·오프라인 구매처와 실시간 참고신호\",\n\"implemented\": true,\n\"evidence\": \"국가별 구매처·최근 신호\"\n},\n{\n\"id\": \"diverse_retail_channels\",\n\"title\": \"편의점·이마트·대형마트·문구점·완구점·카드샵\",\n\"implemented\": true,\n\"evidence\": \"한국 오프라인 142곳 · 매장 분류 8종 · 점포 재고 미확인\"\n},\n{\n\"id\": \"ansan_distance\",\n\"title\": \"경기도 매장·안산 기준 거리순\",\n\"implemented\": true,\n\"evidence\": \"경기도 좌표 매장 30개\"\n},\n{\n\"id\": \"catalog_images_search\",\n\"title\": \"국가·게임·BOX/HIT 이미지·검색·정렬\",\n\"implemented\": true,\n\"evidence\": \"카탈로그·HTTPS 이미지·필터\"\n},\n{\n\"id\": \"pc_android_autostart\",\n\"title\": \"Windows PC·Android 태블릿 서버·재부팅 자동시작\",\n\"implemented\": true,\n\"evidence\": \"Windows·Termux 실행기 4종\"\n},\n{\n\"id\": \"version_coherence\",\n\"title\": \"로컬·PWA·서버·자동수집 버전 일치\",\n\"implemented\": false,\n\"evidence\": \"필수 연결 또는 자료 누락\"\n},\n{\n\"id\": \"safe_update_fallback\",\n\"title\": \"통신 실패 시 마지막 정상자료 유지·허위정보 생성 금지\",\n\"implemented\": true,\n\"evidence\": \"원자저장·검증 실패 격리\"\n}\n],\n\"excluded\": [\n{\n\"id\": \"iphone_serverless_continuous_collection\",\n\"reason\": \"사용자가 구현 제외를 요청한 기능\"\n}\n],\n\"learning_policy\": \"누락은 verify_all 실패로 기록되어 동일 원인 통합·신규 원인 분리 학습에 전달\"\n}"
+        },
+        {
+          "name": "전체 코드·자료 감사",
+          "ok": false,
+          "detail": "{\n\"version\": \"v109-card-identity-ocr-learning\",\n\"ok\": false,\n\"passed\": 8,\n\"failed\": 1,\n\"checks\": [\n{\n\"name\": \"symlink_free\",\n\"ok\": true,\n\"detail\": \"심볼릭 링크 0개\"\n},\n{\n\"name\": \"strict_json\",\n\"ok\": true,\n\"detail\": \"검사 JSON 60개 · 오류 []\"\n},\n{\n\"name\": \"dangerous_runtime_patterns\",\n\"ok\": true,\n\"detail\": \"실행파일 215개 · 위험패턴 []\"\n},\n{\n\"name\": \"embedded_secret_literals\",\n\"ok\": true,\n\"detail\": \"하드코딩 민감값 []\"\n},\n{\n\"name\": \"current_launchers_present\",\n\"ok\": true,\n\"detail\": \"Windows·Android·백업·이전 실행파일 존재\"\n},\n{\n\"name\": \"current_docs_no_stale_alias\",\n\"ok\": true,\n\"detail\": \"현재 안내서의 삭제된 한글 실행파일 참조 0건\"\n},\n{\n\"name\": \"release_version_coherence\",\n\"ok\": false,\n\"detail\": \"서버·자동수집·PWA·고장주입·화면 v109 일치\"\n},\n{\n\"name\": \"public_allowlist_targets\",\n\"ok\": true,\n\"detail\": \"공개목록 누락 []\"\n},\n{\n\"name\": \"private_registry\",\n\"ok\": true,\n\"detail\": \"공식 SNS 내부 레지스트리 비공개\"\n}\n]\n}"
+        },
+        {
+          "name": "SNS·Google 수집",
+          "ok": true,
+          "detail": "통과"
+        },
+        {
+          "name": "브라우저 런타임",
+          "ok": true,
+          "detail": "통과"
+        },
+        {
+          "name": "카메라 런타임",
+          "ok": true,
+          "detail": "통과"
+        },
+        {
+          "name": "서비스워커 런타임",
+          "ok": true,
+          "detail": "통과"
+        },
+        {
+          "name": "비전 런타임",
+          "ok": true,
+          "detail": "통과"
+        },
+        {
+          "name": "5개 감정사 브라우저 정확도",
+          "ok": true,
+          "detail": "통과"
+        },
+        {
+          "name": "5개 감정사 교차런타임",
+          "ok": true,
+          "detail": "통과"
+        },
+        {
+          "name": "등급 학습 파이프라인",
+          "ok": true,
+          "detail": "통과"
+        },
+        {
+          "name": "시세 출처 회귀",
+          "ok": true,
+          "detail": "통과"
+        },
+        {
+          "name": "eBay 등급학습 회귀",
+          "ok": true,
+          "detail": "통과"
+        },
+        {
+          "name": "비전 보정 회귀",
+          "ok": true,
+          "detail": "통과"
+        },
+        {
+          "name": "격리 고장주입·자가복구",
+          "ok": false,
+          "detail": "test_all_faults_are_detected_and_repaired_only_in_lab (__main__.FaultHealingTests.test_all_faults_are_detected_and_repaired_only_in_lab) ... FAIL\ntest_github_workflow_is_included_in_integrity_manifest (__main__.FaultHealingTests.test_github_workflow_is_included_in_integrity_manifest) ... ok\ntest_invalid_backup_is_never_promoted (__main__.FaultHealingTests.test_invalid_backup_is_never_promoted) ... ok\ntest_manifest_detects_change_without_auto_rewriting_code (__main__.FaultHealingTests.test_manifest_detects_change_without_auto_rewriting_code) ... ok\ntest_only_invalid_json_uses_verified_backup (__main__.FaultHealingTests.test_only_invalid_json_uses_verified_backup) ... ok\ntest_path_escape_is_blocked (__main__.FaultHealingTests.test_path_escape_is_blocked) ... ok\n======================================================================\nFAIL: test_all_faults_are_detected_and_repaired_only_in_lab (__main__.FaultHealingTests.test_all_faults_are_detected_and_repaired_only_in_lab)\n----------------------------------------------------------------------\nTraceback (most recent call last):\nFile \"/workspace/scratch/8297d71e6515/tcg-grader/verify_fault_injection_healing.py\", line 29, in test_all_faults_are_detected_and_repaired_only_in_lab\nself.assertTrue(report[\"ok\"], [row for row in report[\"results\"] if not row[\"ok\"]])\nAssertionError: False is not true : [{'id': 'pwa-cache-version-skew', 'family': 'version', 'description': 'PWA 캐시 버전 불일치', 'baseline_ok': False, 'fault_detected': False, 'repair_verified': False, 'ok': False, 'error': 'ValueError:기준 코드가 이미 계약을 통과하지 못함'}]\n----------------------------------------------------------------------\nRan 6 tests in 1.943s\nFAILED (failures=1)"
+        }
+      ],
+      "release_gate": "v107-full-audit-hardened"
+    },
+    {
+      "checked_at": "2026-08-30T22:56:54+00:00",
+      "ok": false,
+      "pass_count": 12,
+      "failure_count": 5,
+      "checks": [
+        {
+          "name": "Python 전체 문법",
+          "ok": true,
+          "detail": "통과"
+        },
+        {
+          "name": "v107 서버·PWA 통합",
+          "ok": false,
+          "detail": "Traceback (most recent call last):\nFile \"/workspace/scratch/8297d71e6515/tcg-grader/verify_v107_runtime_integration.py\", line 145, in <module>\nreport = main()\n^^^^^^\nFile \"/workspace/scratch/8297d71e6515/tcg-grader/verify_v107_runtime_integration.py\", line 73, in main\ncheck(\nFile \"/workspace/scratch/8297d71e6515/tcg-grader/verify_v107_runtime_integration.py\", line 33, in check\nraise AssertionError(f\"{name}: {detail}\")\nAssertionError: ui_pwa_version: 화면·manifest·서비스워커 버전이 일치함"
+        },
+        {
+          "name": "화면·링크 런타임",
+          "ok": false,
+          "detail": "Traceback (most recent call last):\nFile \"/workspace/scratch/8297d71e6515/tcg-grader/verify_link_runtime.py\", line 213, in <module>\nprint(json.dumps(audit_link_contract(), ensure_ascii=False, indent=2))\n^^^^^^^^^^^^^^^^^^^^^\nFile \"/workspace/scratch/8297d71e6515/tcg-grader/verify_link_runtime.py\", line 120, in audit_link_contract\nraise AssertionError(f\"존재하지 않는 화면 ID 참조: {missing_ids}\")\nAssertionError: 존재하지 않는 화면 ID 참조: ['gpdManualGame', 'gpdManualPhoto', 'gradedPhotoDashboard']"
+        },
+        {
+          "name": "24개 기능 계약",
+          "ok": false,
+          "detail": "{\n\"ok\": false,\n\"version\": 3,\n\"total\": 25,\n\"implemented\": 24,\n\"missing\": [\n\"version_coherence\"\n],\n\"features\": [\n{\n\"id\": \"five_company_grading\",\n\"title\": \"PSA·BGS·CGC·TAG·BRG 사진 사전측정\",\n\"implemented\": true,\n\"evidence\": \"5개 업체 결과 UI와 공통 측정 목록\"\n},\n{\n\"id\": \"official_grade_rules\",\n\"title\": \"PSA·TAG 공식 공개기준과 BRG 비공개 기준 보호\",\n\"implemented\": true,\n\"evidence\": \"공식 점수표 API와 사진 참고표시\"\n},\n{\n\"id\": \"photo_front_back\",\n\"title\": \"앞·뒷면 사진·센터링·코너·엣지·표면 분석\",\n\"implemented\": true,\n\"evidence\": \"앞·뒤 파일입력·자동촬영·내부 보더·Hough 선형 결함·백화·카메라 수명주기\"\n},\n{\n\"id\": \"card_identity_ocr_learning\",\n\"title\": \"카드명·카드번호 자동인식·확인형 이미지학습\",\n\"implemented\": true,\n\"evidence\": \"앞면 OCR·카드번호 우선 매칭·사용자 확인 후 동일사진/3회 유사사진 학습\"\n},\n{\n\"id\": \"exact_grade_prices\",\n\"title\": \"업체별 1~10 정확한 등급가격·판매가·순수익\",\n\"implemented\": true,\n\"evidence\": \"5업체×10등급 가격구조와 수익계산\"\n},\n{\n\"id\": \"grade_cross_validation\",\n\"title\": \"강화 서버 등급·시세 교차검증\",\n\"implemented\": true,\n\"evidence\": \"동일 출처 보호 POST API\"\n},\n{\n\"id\": \"calibration_learning\",\n\"title\": \"실제 확정등급 저장·보수 자동보정\",\n\"implemented\": true,\n\"evidence\": \"공식 인증번호 결과만 카드 단위 보류검증 · 개선 시 최대 1등급 하향 보정\"\n},\n{\n\"id\": \"error_root_cause_learning\",\n\"title\": \"동일 오류 통합·신규 오류 분리·해결방법 기록\",\n\"implemented\": true,\n\"evidence\": \"원인 그룹·해결·재검증 계약\"\n},\n{\n\"id\": \"scenario_error_training\",\n\"title\": \"다중 오류상황 사전학습·빠른 해결프로필\",\n\"implemented\": true,\n\"evidence\": \"310개 상황·33개 계열·164개 검증 프로필·카메라/링크/버튼/API/PWA·운영기록 비오염\"\n},\n{\n\"id\": \"approved_ai_code_improvement\",\n\"title\": \"구조화 코드후보·격리검사·오류통합·승인형 반영\",\n\"implemented\": true,\n\"evidence\": \"Responses 승인형 후보 + 임시 복제본 고장주입 21종 + 운영 코드는 진단만 + 검증 JSON만 제한복구\"\n},\n{\n\"id\": \"timeout_deferred_collection\",\n\"title\": \"시간초과 자료만 3~10분 별도 복구수집\",\n\"implemented\": true,\n\"evidence\": \"시간초과 전용 분리예산\"\n},\n{\n\"id\": \"six_collection_jobs\",\n\"title\": \"출시·재발매·시세·행사·구매처·환율·등급사진 7단계 자동수집\",\n\"implemented\": true,\n\"evidence\": \"6개 기존 작업 + OCR·공식 인증검증 등급사진 작업\"\n},\n{\n\"id\": \"scheduled_precollection\",\n\"title\": \"6시간 자동반영·30분 전 사전수집\",\n\"implemented\": true,\n\"evidence\": \"PC·안드로이드 공통 일정\"\n},\n{\n\"id\": \"background_manual_update\",\n\"title\": \"화면 전체 업데이트·백그라운드 진행·재연결\",\n\"implemented\": true,\n\"evidence\": \"POST 백그라운드 작업과 진행상태 재연결\"\n},\n{\n\"id\": \"three_country_market\",\n\"title\": \"한국·일본·미국 카드·BOX 시세와 원화환산\",\n\"implemented\": true,\n\"evidence\": \"3국·3작품·BOX/HIT·환율\"\n},\n{\n\"id\": \"release_and_resale\",\n\"title\": \"사전예약·출시일·재발매 추적\",\n\"implemented\": true,\n\"evidence\": \"출시·재발매 자료와 화면\"\n},\n{\n\"id\": \"promo_collab_movies\",\n\"title\": \"한·일·미 포켓몬·원피스·나루토 행사·콜라보·영화\",\n\"implemented\": true,\n\"evidence\": \"3작품×3국 공식출처 9조합\"\n},\n{\n\"id\": \"social_google_event_discovery\",\n\"title\": \"Instagram·X·Google 기반 행사·콜라보·영화 보조수집\",\n\"implemented\": true,\n\"evidence\": \"Google News 기본 + X/Instagram 공식 API 선택 + 공식사이트 연결계정 우선 + 후보층 격리\"\n},\n{\n\"id\": \"purchase_sources\",\n\"title\": \"온라인·오프라인 구매처와 실시간 참고신호\",\n\"implemented\": true,\n\"evidence\": \"국가별 구매처·최근 신호\"\n},\n{\n\"id\": \"diverse_retail_channels\",\n\"title\": \"편의점·이마트·대형마트·문구점·완구점·카드샵\",\n\"implemented\": true,\n\"evidence\": \"한국 오프라인 142곳 · 매장 분류 8종 · 점포 재고 미확인\"\n},\n{\n\"id\": \"ansan_distance\",\n\"title\": \"경기도 매장·안산 기준 거리순\",\n\"implemented\": true,\n\"evidence\": \"경기도 좌표 매장 30개\"\n},\n{\n\"id\": \"catalog_images_search\",\n\"title\": \"국가·게임·BOX/HIT 이미지·검색·정렬\",\n\"implemented\": true,\n\"evidence\": \"카탈로그·HTTPS 이미지·필터\"\n},\n{\n\"id\": \"pc_android_autostart\",\n\"title\": \"Windows PC·Android 태블릿 서버·재부팅 자동시작\",\n\"implemented\": true,\n\"evidence\": \"Windows·Termux 실행기 4종\"\n},\n{\n\"id\": \"version_coherence\",\n\"title\": \"로컬·PWA·서버·자동수집 버전 일치\",\n\"implemented\": false,\n\"evidence\": \"필수 연결 또는 자료 누락\"\n},\n{\n\"id\": \"safe_update_fallback\",\n\"title\": \"통신 실패 시 마지막 정상자료 유지·허위정보 생성 금지\",\n\"implemented\": true,\n\"evidence\": \"원자저장·검증 실패 격리\"\n}\n],\n\"excluded\": [\n{\n\"id\": \"iphone_serverless_continuous_collection\",\n\"reason\": \"사용자가 구현 제외를 요청한 기능\"\n}\n],\n\"learning_policy\": \"누락은 verify_all 실패로 기록되어 동일 원인 통합·신규 원인 분리 학습에 전달\"\n}"
+        },
+        {
+          "name": "전체 코드·자료 감사",
+          "ok": false,
+          "detail": "{\n\"version\": \"v109-card-identity-ocr-learning\",\n\"ok\": false,\n\"passed\": 8,\n\"failed\": 1,\n\"checks\": [\n{\n\"name\": \"symlink_free\",\n\"ok\": true,\n\"detail\": \"심볼릭 링크 0개\"\n},\n{\n\"name\": \"strict_json\",\n\"ok\": true,\n\"detail\": \"검사 JSON 60개 · 오류 []\"\n},\n{\n\"name\": \"dangerous_runtime_patterns\",\n\"ok\": true,\n\"detail\": \"실행파일 215개 · 위험패턴 []\"\n},\n{\n\"name\": \"embedded_secret_literals\",\n\"ok\": true,\n\"detail\": \"하드코딩 민감값 []\"\n},\n{\n\"name\": \"current_launchers_present\",\n\"ok\": true,\n\"detail\": \"Windows·Android·백업·이전 실행파일 존재\"\n},\n{\n\"name\": \"current_docs_no_stale_alias\",\n\"ok\": true,\n\"detail\": \"현재 안내서의 삭제된 한글 실행파일 참조 0건\"\n},\n{\n\"name\": \"release_version_coherence\",\n\"ok\": false,\n\"detail\": \"서버·자동수집·PWA·고장주입·화면 v109 일치\"\n},\n{\n\"name\": \"public_allowlist_targets\",\n\"ok\": true,\n\"detail\": \"공개목록 누락 []\"\n},\n{\n\"name\": \"private_registry\",\n\"ok\": true,\n\"detail\": \"공식 SNS 내부 레지스트리 비공개\"\n}\n]\n}"
+        },
+        {
+          "name": "SNS·Google 수집",
+          "ok": true,
+          "detail": "통과"
+        },
+        {
+          "name": "브라우저 런타임",
+          "ok": true,
+          "detail": "통과"
+        },
+        {
+          "name": "카메라 런타임",
+          "ok": true,
+          "detail": "통과"
+        },
+        {
+          "name": "서비스워커 런타임",
+          "ok": true,
+          "detail": "통과"
+        },
+        {
+          "name": "비전 런타임",
+          "ok": true,
+          "detail": "통과"
+        },
+        {
+          "name": "5개 감정사 브라우저 정확도",
+          "ok": true,
+          "detail": "통과"
+        },
+        {
+          "name": "5개 감정사 교차런타임",
+          "ok": true,
+          "detail": "통과"
+        },
+        {
+          "name": "등급 학습 파이프라인",
+          "ok": true,
+          "detail": "통과"
+        },
+        {
+          "name": "시세 출처 회귀",
+          "ok": true,
+          "detail": "통과"
+        },
+        {
+          "name": "eBay 등급학습 회귀",
+          "ok": true,
+          "detail": "통과"
+        },
+        {
+          "name": "비전 보정 회귀",
+          "ok": true,
+          "detail": "통과"
+        },
+        {
+          "name": "격리 고장주입·자가복구",
+          "ok": false,
+          "detail": "test_all_faults_are_detected_and_repaired_only_in_lab (__main__.FaultHealingTests.test_all_faults_are_detected_and_repaired_only_in_lab) ... FAIL\ntest_github_workflow_is_included_in_integrity_manifest (__main__.FaultHealingTests.test_github_workflow_is_included_in_integrity_manifest) ... ok\ntest_invalid_backup_is_never_promoted (__main__.FaultHealingTests.test_invalid_backup_is_never_promoted) ... ok\ntest_manifest_detects_change_without_auto_rewriting_code (__main__.FaultHealingTests.test_manifest_detects_change_without_auto_rewriting_code) ... ok\ntest_only_invalid_json_uses_verified_backup (__main__.FaultHealingTests.test_only_invalid_json_uses_verified_backup) ... ok\ntest_path_escape_is_blocked (__main__.FaultHealingTests.test_path_escape_is_blocked) ... ok\n======================================================================\nFAIL: test_all_faults_are_detected_and_repaired_only_in_lab (__main__.FaultHealingTests.test_all_faults_are_detected_and_repaired_only_in_lab)\n----------------------------------------------------------------------\nTraceback (most recent call last):\nFile \"/workspace/scratch/8297d71e6515/tcg-grader/verify_fault_injection_healing.py\", line 29, in test_all_faults_are_detected_and_repaired_only_in_lab\nself.assertTrue(report[\"ok\"], [row for row in report[\"results\"] if not row[\"ok\"]])\nAssertionError: False is not true : [{'id': 'pwa-cache-version-skew', 'family': 'version', 'description': 'PWA 캐시 버전 불일치', 'baseline_ok': False, 'fault_detected': False, 'repair_verified': False, 'ok': False, 'error': 'ValueError:기준 코드가 이미 계약을 통과하지 못함'}]\n----------------------------------------------------------------------\nRan 6 tests in 1.702s\nFAILED (failures=1)"
+        }
+      ],
+      "release_gate": "v107-full-audit-hardened"
+    },
+    {
+      "checked_at": "2026-08-30T23:09:56+00:00",
+      "ok": false,
+      "pass_count": 13,
+      "failure_count": 4,
+      "checks": [
+        {
+          "name": "Python 전체 문법",
+          "ok": true,
+          "detail": "통과"
+        },
+        {
+          "name": "v107 서버·PWA 통합",
+          "ok": false,
+          "detail": "Traceback (most recent call last):\nFile \"/workspace/scratch/8297d71e6515/tcg-grader/verify_v107_runtime_integration.py\", line 145, in <module>\nreport = main()\n^^^^^^\nFile \"/workspace/scratch/8297d71e6515/tcg-grader/verify_v107_runtime_integration.py\", line 73, in main\ncheck(\nFile \"/workspace/scratch/8297d71e6515/tcg-grader/verify_v107_runtime_integration.py\", line 33, in check\nraise AssertionError(f\"{name}: {detail}\")\nAssertionError: ui_pwa_version: 화면·manifest·서비스워커 버전이 일치함"
+        },
+        {
+          "name": "화면·링크 런타임",
+          "ok": false,
+          "detail": "Traceback (most recent call last):\nFile \"/workspace/scratch/8297d71e6515/tcg-grader/verify_link_runtime.py\", line 213, in <module>\nprint(json.dumps(audit_link_contract(), ensure_ascii=False, indent=2))\n^^^^^^^^^^^^^^^^^^^^^\nFile \"/workspace/scratch/8297d71e6515/tcg-grader/verify_link_runtime.py\", line 120, in audit_link_contract\nraise AssertionError(f\"존재하지 않는 화면 ID 참조: {missing_ids}\")\nAssertionError: 존재하지 않는 화면 ID 참조: ['gpdManualGame', 'gpdManualPhoto', 'gradedPhotoDashboard']"
+        },
+        {
+          "name": "24개 기능 계약",
+          "ok": true,
+          "detail": "통과"
+        },
+        {
+          "name": "전체 코드·자료 감사",
+          "ok": false,
+          "detail": "{\n\"version\": \"v109-card-identity-ocr-learning\",\n\"ok\": false,\n\"passed\": 8,\n\"failed\": 1,\n\"checks\": [\n{\n\"name\": \"symlink_free\",\n\"ok\": true,\n\"detail\": \"심볼릭 링크 0개\"\n},\n{\n\"name\": \"strict_json\",\n\"ok\": true,\n\"detail\": \"검사 JSON 60개 · 오류 []\"\n},\n{\n\"name\": \"dangerous_runtime_patterns\",\n\"ok\": true,\n\"detail\": \"실행파일 216개 · 위험패턴 []\"\n},\n{\n\"name\": \"embedded_secret_literals\",\n\"ok\": true,\n\"detail\": \"하드코딩 민감값 []\"\n},\n{\n\"name\": \"current_launchers_present\",\n\"ok\": true,\n\"detail\": \"Windows·Android·백업·이전 실행파일 존재\"\n},\n{\n\"name\": \"current_docs_no_stale_alias\",\n\"ok\": true,\n\"detail\": \"현재 안내서의 삭제된 한글 실행파일 참조 0건\"\n},\n{\n\"name\": \"release_version_coherence\",\n\"ok\": false,\n\"detail\": \"서버·자동수집·PWA·고장주입·화면 v109 일치\"\n},\n{\n\"name\": \"public_allowlist_targets\",\n\"ok\": true,\n\"detail\": \"공개목록 누락 []\"\n},\n{\n\"name\": \"private_registry\",\n\"ok\": true,\n\"detail\": \"공식 SNS 내부 레지스트리 비공개\"\n}\n]\n}"
+        },
+        {
+          "name": "SNS·Google 수집",
+          "ok": true,
+          "detail": "통과"
+        },
+        {
+          "name": "브라우저 런타임",
+          "ok": true,
+          "detail": "통과"
+        },
+        {
+          "name": "카메라 런타임",
+          "ok": true,
+          "detail": "통과"
+        },
+        {
+          "name": "서비스워커 런타임",
+          "ok": true,
+          "detail": "통과"
+        },
+        {
+          "name": "비전 런타임",
+          "ok": true,
+          "detail": "통과"
+        },
+        {
+          "name": "5개 감정사 브라우저 정확도",
+          "ok": true,
+          "detail": "통과"
+        },
+        {
+          "name": "5개 감정사 교차런타임",
+          "ok": true,
+          "detail": "통과"
+        },
+        {
+          "name": "등급 학습 파이프라인",
+          "ok": true,
+          "detail": "통과"
+        },
+        {
+          "name": "시세 출처 회귀",
+          "ok": true,
+          "detail": "통과"
+        },
+        {
+          "name": "eBay 등급학습 회귀",
+          "ok": true,
+          "detail": "통과"
+        },
+        {
+          "name": "비전 보정 회귀",
+          "ok": true,
+          "detail": "통과"
+        },
+        {
+          "name": "격리 고장주입·자가복구",
+          "ok": false,
+          "detail": "test_all_faults_are_detected_and_repaired_only_in_lab (__main__.FaultHealingTests.test_all_faults_are_detected_and_repaired_only_in_lab) ... FAIL\ntest_github_workflow_is_included_in_integrity_manifest (__main__.FaultHealingTests.test_github_workflow_is_included_in_integrity_manifest) ... ok\ntest_invalid_backup_is_never_promoted (__main__.FaultHealingTests.test_invalid_backup_is_never_promoted) ... ok\ntest_manifest_detects_change_without_auto_rewriting_code (__main__.FaultHealingTests.test_manifest_detects_change_without_auto_rewriting_code) ... ok\ntest_only_invalid_json_uses_verified_backup (__main__.FaultHealingTests.test_only_invalid_json_uses_verified_backup) ... ok\ntest_path_escape_is_blocked (__main__.FaultHealingTests.test_path_escape_is_blocked) ... ok\n======================================================================\nFAIL: test_all_faults_are_detected_and_repaired_only_in_lab (__main__.FaultHealingTests.test_all_faults_are_detected_and_repaired_only_in_lab)\n----------------------------------------------------------------------\nTraceback (most recent call last):\nFile \"/workspace/scratch/8297d71e6515/tcg-grader/verify_fault_injection_healing.py\", line 29, in test_all_faults_are_detected_and_repaired_only_in_lab\nself.assertTrue(report[\"ok\"], [row for row in report[\"results\"] if not row[\"ok\"]])\nAssertionError: False is not true : [{'id': 'pwa-cache-version-skew', 'family': 'version', 'description': 'PWA 캐시 버전 불일치', 'baseline_ok': False, 'fault_detected': False, 'repair_verified': False, 'ok': False, 'error': 'ValueError:기준 코드가 이미 계약을 통과하지 못함'}]\n----------------------------------------------------------------------\nRan 6 tests in 1.748s\nFAILED (failures=1)"
+        }
+      ],
+      "release_gate": "v107-full-audit-hardened"
+    },
+    {
+      "checked_at": "2026-08-30T23:11:24+00:00",
+      "ok": false,
+      "pass_count": 13,
+      "failure_count": 4,
+      "checks": [
+        {
+          "name": "Python 전체 문법",
+          "ok": true,
+          "detail": "통과"
+        },
+        {
+          "name": "v107 서버·PWA 통합",
+          "ok": false,
+          "detail": "Traceback (most recent call last):\nFile \"/workspace/scratch/8297d71e6515/tcg-grader/verify_v107_runtime_integration.py\", line 145, in <module>\nreport = main()\n^^^^^^\nFile \"/workspace/scratch/8297d71e6515/tcg-grader/verify_v107_runtime_integration.py\", line 73, in main\ncheck(\nFile \"/workspace/scratch/8297d71e6515/tcg-grader/verify_v107_runtime_integration.py\", line 33, in check\nraise AssertionError(f\"{name}: {detail}\")\nAssertionError: ui_pwa_version: 화면·manifest·서비스워커 버전이 일치함"
+        },
+        {
+          "name": "화면·링크 런타임",
+          "ok": false,
+          "detail": "Traceback (most recent call last):\nFile \"/workspace/scratch/8297d71e6515/tcg-grader/verify_link_runtime.py\", line 213, in <module>\nprint(json.dumps(audit_link_contract(), ensure_ascii=False, indent=2))\n^^^^^^^^^^^^^^^^^^^^^\nFile \"/workspace/scratch/8297d71e6515/tcg-grader/verify_link_runtime.py\", line 120, in audit_link_contract\nraise AssertionError(f\"존재하지 않는 화면 ID 참조: {missing_ids}\")\nAssertionError: 존재하지 않는 화면 ID 참조: ['gpdManualGame', 'gpdManualPhoto', 'gradedPhotoDashboard']"
+        },
+        {
+          "name": "24개 기능 계약",
+          "ok": true,
+          "detail": "통과"
+        },
+        {
+          "name": "전체 코드·자료 감사",
+          "ok": false,
+          "detail": "{\n\"version\": \"v109-card-identity-ocr-learning\",\n\"ok\": false,\n\"passed\": 8,\n\"failed\": 1,\n\"checks\": [\n{\n\"name\": \"symlink_free\",\n\"ok\": true,\n\"detail\": \"심볼릭 링크 0개\"\n},\n{\n\"name\": \"strict_json\",\n\"ok\": true,\n\"detail\": \"검사 JSON 60개 · 오류 []\"\n},\n{\n\"name\": \"dangerous_runtime_patterns\",\n\"ok\": true,\n\"detail\": \"실행파일 216개 · 위험패턴 []\"\n},\n{\n\"name\": \"embedded_secret_literals\",\n\"ok\": true,\n\"detail\": \"하드코딩 민감값 []\"\n},\n{\n\"name\": \"current_launchers_present\",\n\"ok\": true,\n\"detail\": \"Windows·Android·백업·이전 실행파일 존재\"\n},\n{\n\"name\": \"current_docs_no_stale_alias\",\n\"ok\": true,\n\"detail\": \"현재 안내서의 삭제된 한글 실행파일 참조 0건\"\n},\n{\n\"name\": \"release_version_coherence\",\n\"ok\": false,\n\"detail\": \"서버·자동수집·PWA·고장주입·화면 v109 일치\"\n},\n{\n\"name\": \"public_allowlist_targets\",\n\"ok\": true,\n\"detail\": \"공개목록 누락 []\"\n},\n{\n\"name\": \"private_registry\",\n\"ok\": true,\n\"detail\": \"공식 SNS 내부 레지스트리 비공개\"\n}\n]\n}"
+        },
+        {
+          "name": "SNS·Google 수집",
+          "ok": true,
+          "detail": "통과"
+        },
+        {
+          "name": "브라우저 런타임",
+          "ok": true,
+          "detail": "통과"
+        },
+        {
+          "name": "카메라 런타임",
+          "ok": true,
+          "detail": "통과"
+        },
+        {
+          "name": "서비스워커 런타임",
+          "ok": true,
+          "detail": "통과"
+        },
+        {
+          "name": "비전 런타임",
+          "ok": true,
+          "detail": "통과"
+        },
+        {
+          "name": "5개 감정사 브라우저 정확도",
+          "ok": true,
+          "detail": "통과"
+        },
+        {
+          "name": "5개 감정사 교차런타임",
+          "ok": true,
+          "detail": "통과"
+        },
+        {
+          "name": "등급 학습 파이프라인",
+          "ok": true,
+          "detail": "통과"
+        },
+        {
+          "name": "시세 출처 회귀",
+          "ok": true,
+          "detail": "통과"
+        },
+        {
+          "name": "eBay 등급학습 회귀",
+          "ok": true,
+          "detail": "통과"
+        },
+        {
+          "name": "비전 보정 회귀",
+          "ok": true,
+          "detail": "통과"
+        },
+        {
+          "name": "격리 고장주입·자가복구",
+          "ok": false,
+          "detail": "test_all_faults_are_detected_and_repaired_only_in_lab (__main__.FaultHealingTests.test_all_faults_are_detected_and_repaired_only_in_lab) ... FAIL\ntest_github_workflow_is_included_in_integrity_manifest (__main__.FaultHealingTests.test_github_workflow_is_included_in_integrity_manifest) ... ok\ntest_invalid_backup_is_never_promoted (__main__.FaultHealingTests.test_invalid_backup_is_never_promoted) ... ok\ntest_manifest_detects_change_without_auto_rewriting_code (__main__.FaultHealingTests.test_manifest_detects_change_without_auto_rewriting_code) ... ok\ntest_only_invalid_json_uses_verified_backup (__main__.FaultHealingTests.test_only_invalid_json_uses_verified_backup) ... ok\ntest_path_escape_is_blocked (__main__.FaultHealingTests.test_path_escape_is_blocked) ... ok\n======================================================================\nFAIL: test_all_faults_are_detected_and_repaired_only_in_lab (__main__.FaultHealingTests.test_all_faults_are_detected_and_repaired_only_in_lab)\n----------------------------------------------------------------------\nTraceback (most recent call last):\nFile \"/workspace/scratch/8297d71e6515/tcg-grader/verify_fault_injection_healing.py\", line 29, in test_all_faults_are_detected_and_repaired_only_in_lab\nself.assertTrue(report[\"ok\"], [row for row in report[\"results\"] if not row[\"ok\"]])\nAssertionError: False is not true : [{'id': 'pwa-cache-version-skew', 'family': 'version', 'description': 'PWA 캐시 버전 불일치', 'baseline_ok': False, 'fault_detected': False, 'repair_verified': False, 'ok': False, 'error': 'ValueError:기준 코드가 이미 계약을 통과하지 못함'}]\n----------------------------------------------------------------------\nRan 6 tests in 1.648s\nFAILED (failures=1)"
+        }
+      ],
+      "release_gate": "v107-full-audit-hardened"
+    },
+    {
+      "checked_at": "2026-08-30T23:14:50+00:00",
       "ok": true,
       "pass_count": 17,
       "failure_count": 0,

@@ -101,14 +101,19 @@ def _validate_external_url(url: str) -> str:
 def audit_link_contract(root: str | Path | None = None) -> dict[str, Any]:
     base = Path(root).resolve() if root is not None else ROOT
     page = safe_read_text(base / "index.html")
-    external_handlers = safe_read_text(base / "card_identity_recognition.js") if (base / "card_identity_recognition.js").is_file() else ""
-    handler_source = page + "\n" + external_handlers
+    identity_handlers = safe_read_text(base / "card_identity_recognition.js") if (base / "card_identity_recognition.js").is_file() else ""
+    dynamic_templates = safe_read_text(base / "graded_photo_dashboard.js") if (base / "graded_photo_dashboard.js").is_file() else ""
+    handler_source = page + "\n" + identity_handlers
     server = safe_read_text(base / "tcg_updater.py")
     worker = safe_read_text(base / "sw.js")
     manifest = json.loads(safe_read_text(base / "manifest.webmanifest"))
 
     parser = _Inventory()
     parser.feed(page)
+    # The graded-photo dashboard is intentionally created after page load by a
+    # local, service-worker-pinned script. Include literal IDs from that trusted
+    # template so real dynamic controls are not reported as missing elements.
+    parser.ids.update(re.findall(r"\bid=['\"]([A-Za-z][A-Za-z0-9_.:-]{0,79})['\"]", dynamic_templates))
     if parser.unsafe_schemes:
         raise AssertionError(f"위험한 화면 링크: {parser.unsafe_schemes[:3]}")
 

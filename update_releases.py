@@ -15,7 +15,7 @@ import urllib.error
 import urllib.parse
 import urllib.request
 from pathlib import Path
-from safe_runtime import atomic_write_json, env_int, html_to_text, safe_read_text, safe_urlopen
+from safe_runtime import atomic_write_json, diagnostic_exception, env_int, html_to_text, safe_read_text, safe_urlopen
 
 ROOT = Path(__file__).resolve().parent
 DATA = ROOT / "releases.json"
@@ -166,7 +166,7 @@ def main() -> None:
                     raise ValueError("공식 페이지에서 검증 가능한 상품을 1건도 읽지 못함")
                 candidates.extend(batch)
             except (urllib.error.URLError, TimeoutError, OSError, ValueError, UnicodeError) as exc:
-                errors.append(f"{label}: {type(exc).__name__}")
+                errors.append(f"{label}: {diagnostic_exception(exc)}")
 
     # Unified historical backfill: Pokémon / ONE PIECE / NARUTO all use the same
     # append-only official-history policy.  The backfill is incremental to keep
@@ -183,7 +183,7 @@ def main() -> None:
         current["history_backfill_progress"] = history.get("progress", {})
         current["unified_history_policy"] = history.get("policy", "")
     except (OSError, ValueError, TypeError, ImportError) as exc:
-        errors.append(f"통합 과거출시 백필: {type(exc).__name__}")
+        errors.append(f"통합 과거출시 백필: {diagnostic_exception(exc)}")
 
     # Preserve ALL previously valid official history, regardless of age.
     merged: dict[tuple, dict] = {}

@@ -238,12 +238,22 @@ def audit_feature_contract(root: str | Path | None = None) -> dict[str, Any]:
     app_name = str(manifest.get("name", ""))
     cache_match = re.search(r"const CACHE='([^']+)'", worker)
     version_match = re.search(r"INTEGRATED_VERSION\s*=\s*['\"]([^'\"]+)['\"]", server)
+    app_version_match = re.search(r"\bv(\d+)\b", app_name, re.I)
+    cache_version_match = (re.fullmatch(r"tcg-v(\d+)(?:-[a-z0-9-]+)?", cache_match.group(1), re.I)
+                           if cache_match else None)
     health_uses_version = "'integrated_version':INTEGRATED_VERSION" in server
-    coherent = bool(app_name and app_name in page and cache_match and version_match and health_uses_version
+    # 앱 기능 버전과 서비스워커 캐시 개정번호는 수명주기가 다르다. 캐시
+    # 개정번호를 서버의 긴 통합 버전 문자열과 동일하다고 강제하면 정상 배포도
+    # 실패한다. 대신 앱 버전이 서버·자동수집·화면에 일치하고, 캐시는 그보다
+    # 오래되지 않은 정규화된 revision인지 각각 검증한다.
+    coherent = bool(app_name and app_name in page and app_version_match
+                    and cache_match and cache_version_match and version_match and health_uses_version
+                    and f"v{app_version_match.group(1)}" in version_match.group(1)
                     and version_match.group(1) in automatic
-                    and cache_match.group(1).replace("tcg-", "") == version_match.group(1))
+                    and int(cache_version_match.group(1)) >= int(app_version_match.group(1))
+                    and "./index.html" in worker and "./manifest.webmanifest" in worker)
     add("version_coherence", "로컬·PWA·서버·자동수집 버전 일치",
-        coherent, "화면·manifest·서비스워커·서버 엔진 일치")
+        coherent, "앱 기능버전·서버 엔진 일치 + 서비스워커 캐시 revision 검증")
     add("safe_update_fallback", "통신 실패 시 마지막 정상자료 유지·허위정보 생성 금지",
         "기존 정상자료 유지" in automatic and "advisory_text_or_generated_code_executed" in safe_read_text(base / "FINAL_VERIFICATION_REPORT.json"),
         "원자저장·검증 실패 격리")
