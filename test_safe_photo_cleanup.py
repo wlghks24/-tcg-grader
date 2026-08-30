@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-import hashlib
+"""Compatibility smoke tests for the current v133 cleanup policy."""
 import json
 import os
 import tempfile
@@ -13,6 +13,14 @@ import safe_photo_cleanup as cleanup
 
 class SafePhotoCleanupTests(unittest.TestCase):
     def setUp(self):
+        self.originals = {
+            name: getattr(cleanup, name)
+            for name in (
+                "ROOT", "REPORT_PATH", "MANUAL_REGISTRY", "VERIFIED_CERTS",
+                "VERIFIED_REFS", "LIBRARY_CANDIDATES", "GRADED_PHOTO_CANDIDATES",
+                "EBAY_CANDIDATES", "CRITICAL_REGISTRIES",
+            )
+        }
         self.temp = tempfile.TemporaryDirectory()
         root = Path(self.temp.name)
         cleanup.ROOT = root
@@ -21,80 +29,53 @@ class SafePhotoCleanupTests(unittest.TestCase):
         cleanup.VERIFIED_CERTS = root / "verified_certifications.json"
         cleanup.VERIFIED_REFS = root / "library_verified_slab_references.json"
         cleanup.LIBRARY_CANDIDATES = root / "library_slab_candidates.json"
-        self.photos = root / "GRADE_TRAINING_INBOX" / "manual" / "202608"
-        self.photos.mkdir(parents=True)
+        cleanup.GRADED_PHOTO_CANDIDATES = root / "graded_photo_candidates.json"
+        cleanup.EBAY_CANDIDATES = root / "ebay_grader_candidates.json"
+        cleanup.CRITICAL_REGISTRIES = (
+            (cleanup.VERIFIED_REFS, ("certifications", "records", "items")),
+            (cleanup.LIBRARY_CANDIDATES, ("records", "certifications", "items")),
+            (cleanup.VERIFIED_CERTS, ("certifications", "records", "items")),
+            (cleanup.GRADED_PHOTO_CANDIDATES, ("records", "items", "certifications")),
+            (cleanup.EBAY_CANDIDATES, ("items", "records", "certifications")),
+        )
+        self.manual = root / "GRADE_TRAINING_INBOX" / "manual" / "202608"
+        self.cache = root / "graded_photo_cache"
+        self.manual.mkdir(parents=True)
+        self.cache.mkdir(parents=True)
+        cleanup.MANUAL_REGISTRY.write_text(json.dumps({"registrations": []}), encoding="utf-8")
 
     def tearDown(self):
+        for name, value in self.originals.items():
+            setattr(cleanup, name, value)
         self.temp.cleanup()
 
-    def _write(self, name, data, age_days=0):
-        path = self.photos / name
-        path.write_bytes(data)
-        if age_days:
-            stamp = time.time() - age_days * 86400
-            os.utime(path, (stamp, stamp))
-        return path
+    @staticmethod
+    def _age(path: Path, days: int) -> None:
+        stamp = time.time() - days * 86400
+        os.utime(path, (stamp, stamp))
 
-    def _sha(self, path):
-        return hashlib.sha256(path.read_bytes()).hexdigest()
-
-    def _registry(self, rows):
-        cleanup.MANUAL_REGISTRY.write_text(
-            json.dumps({"registrations": rows}), encoding="utf-8"
-        )
-
-    def test_verified_and_pending_survive_apply(self):
-        verified = self._write("verified.jpg", b"v" * 2048, 30)
-        pending = self._write("pending.jpg", b"p" * 2048, 30)
-        self._registry([
-            {
-                "image_path": verified.relative_to(cleanup.ROOT).as_posix(),
-                "image_sha256": self._sha(verified),
-                "official_result": True,
-                "status": "verified_reference",
-            },
-            {
-                "image_path": pending.relative_to(cleanup.ROOT).as_posix(),
-                "image_sha256": self._sha(pending),
-                "official_result": False,
-                "status": "pending_official_verification",
-                "verification_state": "queued",
-            },
-        ])
-        result = cleanup.run(apply=True)
-        self.assertTrue(verified.exists())
-        self.assertTrue(pending.exists())
+    def test_manual_photo_is_never_auto_deleted(self):
+        photo = self.manual / "manual.jpg"
+        photo.write_bytes(b"m" * 2048)
+        self._age(photo, 90)
+        result = cleanup.run(apply=True, cache_days=14)
+        self.assertTrue(photo.exists())
         self.assertEqual(result["summary"]["deleted_images"], 0)
 
-    def test_duplicate_empty_and_old_rejected_are_removed(self):
-        a = self._write("a.jpg", b"d" * 2048)
-        b = self._write("b.jpg", b"d" * 2048)
-        empty = self._write("empty.jpg", b"")
-        rejected = self._write("rejected.jpg", b"r" * 2048, 20)
-        self._registry([
-            {
-                "image_path": rejected.relative_to(cleanup.ROOT).as_posix(),
-                "image_sha256": self._sha(rejected),
-                "official_result": False,
-                "status": "quarantine",
-                "verification_state": "completed_unverified",
-                "quarantine_reasons": ["grade_mismatch"],
-            }
-        ])
-        result = cleanup.run(apply=True)
-        self.assertTrue(a.exists())
-        self.assertFalse(b.exists())
-        self.assertFalse(empty.exists())
-        self.assertFalse(rejected.exists())
-        self.assertEqual(result["summary"]["deleted_images"], 3)
+    def test_old_unreferenced_cache_can_be_deleted(self):
+        photo = self.cache / "stale.jpg"
+        photo.write_bytes(b"c" * 2048)
+        self._age(photo, 30)
+        result = cleanup.run(apply=True, cache_days=14)
+        self.assertFalse(photo.exists())
+        self.assertEqual(result["summary"]["deleted_images"], 1)
 
     def test_dry_run_never_deletes(self):
-        self._registry([])
-        a = self._write("a.jpg", b"x" * 2048)
-        b = self._write("b.jpg", b"x" * 2048)
-        result = cleanup.run(apply=False)
-        self.assertTrue(a.exists())
-        self.assertTrue(b.exists())
+        photo = self.cache / "stale.jpg"
+        photo.write_bytes(b"d" * 2048)
+        self._age(photo, 30)
+        result = cleanup.run(apply=False, cache_days=14)
+        self.assertTrue(photo.exists())
         self.assertEqual(result["summary"]["deleted_images"], 0)
         self.assertEqual(result["summary"]["delete_candidates"], 1)
 
