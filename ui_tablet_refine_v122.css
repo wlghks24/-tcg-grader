@@ -222,3 +222,103 @@ button,input,select,textarea{max-width:100%;min-width:0}
   .boxkb-stat-note{background:#eef6ff!important;color:#294b72!important;border-color:#cfe3ff!important}
   .boxkb-tab-empty{background:#f8fafc!important;color:#64748b!important;border-color:#cbd5e1!important}
 }
+
+/* v124 iPhone/PWA validation contrast + fixed status-bar shield. */
+@media(max-width:650px){
+  body::before{
+    content:"";
+    position:fixed;
+    top:0;left:0;right:0;
+    height:env(safe-area-inset-top);
+    background:#ffffff;
+    z-index:2147483646;
+    pointer-events:none;
+  }
+}
+
+@media(prefers-color-scheme:dark){
+  .validation-hub,
+  .workflow-card,
+  .precision-hub,
+  .economics-card{
+    color:#0f172a!important;
+  }
+
+  .validation-hub{background:linear-gradient(180deg,#fff,#f0fdf4)!important}
+  .workflow-card,.precision-hub{background:linear-gradient(180deg,#fff,#f8fbff)!important}
+  .economics-card{background:linear-gradient(180deg,#fff,#fffbeb)!important}
+
+  .validation-hub>h2,
+  .workflow-card>h2,
+  .precision-hub>h2,
+  .economics-card>h2,
+  .validation-hub .workflow-part h3,
+  .workflow-card .workflow-part h3,
+  .precision-hub .precision-step-title,
+  .precision-hub .precision-tool h4,
+  .economics-card h3,
+  .economics-card h4{
+    color:#0f172a!important;
+  }
+
+  .validation-hub>.muted,
+  .workflow-card>.muted,
+  .precision-hub>.muted,
+  .economics-card>.muted,
+  .validation-hub .workflow-part .muted,
+  .workflow-card .workflow-part .muted,
+  .precision-hub .precision-tool p,
+  .economics-card .economics-inputs label{
+    color:#475569!important;
+  }
+
+  .validation-hub .workflow-part,
+  .workflow-card .workflow-part,
+  .precision-hub .precision-step,
+  .precision-hub .precision-tool,
+  .validation-hub .compact-details,
+  .economics-card .economics-result{
+    background:#fff!important;
+    color:#0f172a!important;
+    border-color:#dbe4ee!important;
+  }
+
+  .validation-hub .workflow-part label,
+  .workflow-card .workflow-part label,
+  .validation-hub .compact-details,
+  .precision-hub .precision-step,
+  .precision-hub .precision-tool,
+  .economics-card .economics-result{
+    color:#334155!important;
+  }
+
+  .validation-hub input,
+  .validation-hub select,
+  .workflow-card input,
+  .workflow-card select,
+  .precision-hub input,
+  .precision-hub select,
+  .economics-card input,
+  .economics-card select{
+    background:#fff!important;
+    color:#0f172a!important;
+    border-color:#94a3b8!important;
+  }
+
+  .validation-hub input::placeholder,
+  .workflow-card input::placeholder,
+  .precision-hub input::placeholder,
+  .economics-card input::placeholder{
+    color:#64748b!important;
+    opacity:1!important;
+  }
+
+  .validation-hub .validation-stats .metric{
+    background:#f8fafc!important;
+    color:#334155!important;
+    border-color:#cbd5e1!important;
+  }
+  .validation-hub .validation-stats .metric b{
+    color:#0f172a!important;
+  }
+}
