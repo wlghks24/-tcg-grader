@@ -49,3 +49,17 @@ fan_social_learning.json.bak
 collection_meta_learning.json
 collection_meta_learning.json.bak
 collection_meta_profile.json
+
+# Security-sensitive local credentials and audit state
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+*.p12
+*.pfx
+credentials*.json
+secrets*.json
+oauth_token*.json
+security_learning_memory.json
+security_audit_report.json

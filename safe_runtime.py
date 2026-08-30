@@ -28,6 +28,37 @@ import urllib.request
 MAX_SAFE_FILE_BYTES = 20_000_000
 
 
+def assert_no_symlink_components(path: str | os.PathLike[str], *, allow_missing: bool = False) -> None:
+    """Reject symbolic links in every existing component of a filesystem path.
+
+    Checking only the final path and its immediate parent misses cases such as
+    ``base/link/sub/file`` where ``link`` is a symlink.  This lexical walk does
+    not resolve links and is repeated around sensitive create/replace steps.
+    """
+    target = Path(path)
+    if target.is_absolute():
+        current = Path(target.anchor)
+        parts = target.parts[1:]
+    else:
+        current = Path.cwd()
+        parts = target.parts
+    for part in parts:
+        if part in ("", "."):
+            continue
+        if part == "..":
+            current = current.parent
+            continue
+        current = current / part
+        try:
+            metadata = os.lstat(current)
+        except FileNotFoundError:
+            if allow_missing:
+                continue
+            raise
+        if stat.S_ISLNK(metadata.st_mode):
+            raise ValueError("symbolic-link path component blocked")
+
+
 @contextmanager
 def exclusive_file_lock(
     target: str | os.PathLike[str],
@@ -42,8 +73,11 @@ def exclusive_file_lock(
     paths.  A stale lock is recovered only after its bounded age has elapsed.
     """
     path = Path(target)
-    lock_path = path.with_suffix(path.suffix + ".lock")
+    assert_no_symlink_components(path.parent, allow_missing=True)
     path.parent.mkdir(parents=True, exist_ok=True)
+    assert_no_symlink_components(path.parent)
+    lock_path = path.with_suffix(path.suffix + ".lock")
+    assert_no_symlink_components(lock_path, allow_missing=True)
     timeout = max(0.0, min(60.0, float(timeout_seconds)))
     stale_after = max(60.0, min(86_400.0, float(stale_seconds)))
     deadline = time.monotonic() + timeout
@@ -219,8 +253,7 @@ def open_safe_binary(
     if isinstance(max_bytes, bool) or not isinstance(max_bytes, int) or max_bytes < 1:
         raise ValueError("invalid safe-read size limit")
     target = Path(path)
-    if target.is_symlink() or target.parent.is_symlink():
-        raise ValueError("symbolic-link read target blocked")
+    assert_no_symlink_components(target)
     flags = os.O_RDONLY | getattr(os, "O_NOFOLLOW", 0) | getattr(os, "O_NONBLOCK", 0)
     descriptor = os.open(target, flags)
     try:
@@ -229,8 +262,7 @@ def open_safe_binary(
             raise ValueError("non-regular read target blocked")
         if metadata.st_size > max_bytes:
             raise ValueError("file exceeds safe-read size limit")
-        if target.is_symlink() or target.parent.is_symlink():
-            raise ValueError("symbolic-link read target blocked")
+        assert_no_symlink_components(target)
         return os.fdopen(descriptor, "rb")
     except BaseException:
         os.close(descriptor)
@@ -271,9 +303,10 @@ def atomic_write_bytes(
     if not isinstance(suffix, str) or "/" in suffix or "\\" in suffix:
         raise ValueError("invalid atomic-write input")
     target = Path(path)
+    assert_no_symlink_components(target.parent, allow_missing=True)
     target.parent.mkdir(parents=True, exist_ok=True)
-    if target.is_symlink() or target.parent.is_symlink():
-        raise ValueError("symbolic-link write target blocked")
+    assert_no_symlink_components(target.parent)
+    assert_no_symlink_components(target, allow_missing=True)
     temporary = target.parent / f".{target.name}.{secrets.token_hex(12)}{suffix}"
     flags = os.O_WRONLY | os.O_CREAT | os.O_EXCL | getattr(os, "O_NOFOLLOW", 0)
     descriptor = os.open(temporary, flags, 0o600)
@@ -285,6 +318,8 @@ def atomic_write_bytes(
                 os.fsync(handle.fileno())
             except OSError:
                 pass
+        assert_no_symlink_components(target.parent)
+        assert_no_symlink_components(target, allow_missing=True)
         if target.is_symlink():
             raise ValueError("symbolic-link write target blocked")
         os.replace(temporary, target)

@@ -8,6 +8,7 @@ from urllib.parse import urlparse, parse_qs
 from http.server import ThreadingHTTPServer, SimpleHTTPRequestHandler
 from urllib.request import Request, urlopen
 from grading_accuracy_v99 import valid_actual_grade
+from server_security_guard import OFFICIAL_LOOKUP_GUARD, client_network_allowed
 from safe_runtime import (
     MAX_SAFE_FILE_BYTES,
     atomic_write_bytes,
@@ -1001,7 +1002,11 @@ class Handler(SimpleHTTPRequestHandler):
         self.end_headers()
         if self.command!='HEAD':self.wfile.write(body)
     def _request_host_allowed(self):
-        """Reject DNS-rebinding/forged public Host values while keeping LAN access."""
+        """Reject public-source clients and forged Host values while keeping LAN access."""
+        # Host validation alone is insufficient if the server is accidentally
+        # exposed by port-forwarding.  Reject public source addresses first.
+        if not client_network_allowed(self.client_address[0]):
+            return False
         hosts=self.headers.get_all('Host') or []
         if len(hosts)!=1:
             return False
@@ -1256,13 +1261,23 @@ class Handler(SimpleHTTPRequestHandler):
                 return self.json({'ok':False,'error':'다중마켓 시세수집 엔진 오류','items':[]},500)
         if path=='/api/verify-grading-cert':
             qs=parse_qs(parsed.query)
-            company=(qs.get('company',[''])[0] or '')[:8]
-            cert=(qs.get('cert',[''])[0] or '')[:120]
+            company=(qs.get('company',[''])[0] or '')[:8].upper()
+            cert=(qs.get('cert',[''])[0] or '')[:120].strip()
             if not self._search_origin_allowed():
                 return self.json({'ok':False,'verified':False,'error':'허용되지 않은 요청 출처'},403)
+            if company not in ('PSA','BGS','CGC','TAG','BRG') or len(cert)<6:
+                return self.json({'ok':False,'verified':False,'error':'등급사 또는 인증번호 형식 오류'},400)
+            allowed,guard_info=OFFICIAL_LOOKUP_GUARD.claim(company)
+            if not allowed:
+                return self.json({'ok':False,'verified':False,'error':'공식 인증조회 안전 대기 중',
+                                  'local_safety_guard':guard_info},429)
             try:
                 from grading_cert_verifier import verify_cert
-                return self.json(verify_cert(company,cert))
+                result=verify_cert(company,cert)
+                local_guard=OFFICIAL_LOOKUP_GUARD.record_result(company,result)
+                if isinstance(result,dict):
+                    result=dict(result);result['local_safety_guard']=local_guard
+                return self.json(result)
             except Exception:
                 return self.json({'ok':False,'verified':False,'error':'공식 인증번호 검증 엔진 오류'},500)
         if path=='/api/grading-proxy-costs':
