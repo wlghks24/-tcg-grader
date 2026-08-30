@@ -8,8 +8,6 @@ import tempfile
 import unittest
 from unittest import mock
 
-import graded_photo_evidence
-import library_slab_corpus
 import manual_graded_photo_registration as manual
 
 
@@ -79,8 +77,7 @@ class ManualGradedPhotoRegistrationTests(unittest.TestCase):
 
     def test_verified_official_match_publishes_reference_only(self):
         row = manual.register(self.payload())["registration"]
-        with mock.patch.object(library_slab_corpus, "ocr_label", return_value=("PSA 10 CERT 12345678", None, {"pass_count": 1})), \
-             mock.patch.object(graded_photo_evidence, "extract_label_evidence", return_value={"company": "PSA", "grade": 10.0, "certification_id": "12345678"}), \
+        with mock.patch.object(manual, "_ocr_image", return_value=("PSA 10 CERT 12345678", None, {"pass_count": 1}, {"company": "PSA", "grade": 10.0, "certification_id": "12345678"})), \
              mock.patch.object(manual.OFFICIAL_LOOKUP_GUARD, "claim", return_value=(True, {"guard_reason": "allowed"})), \
              mock.patch.object(manual.OFFICIAL_LOOKUP_GUARD, "record_result", return_value={"blocked": False}), \
              mock.patch.object(manual, "verify_cert", return_value={"verified": True, "grade": 10.0, "official_url": "https://www.psacard.com/cert/12345678/psa", "http_status": 200}):
@@ -95,8 +92,7 @@ class ManualGradedPhotoRegistrationTests(unittest.TestCase):
 
     def test_cooldown_defers_without_official_network_call(self):
         row = manual.register(self.payload())["registration"]
-        with mock.patch.object(library_slab_corpus, "ocr_label", return_value=("", "tesseract_not_installed", {})), \
-             mock.patch.object(graded_photo_evidence, "extract_label_evidence", return_value={}), \
+        with mock.patch.object(manual, "_ocr_image", return_value=("", "tesseract_not_installed", {}, {})), \
              mock.patch.object(manual.OFFICIAL_LOOKUP_GUARD, "claim", return_value=(False, {"retry_after_seconds": 300})), \
              mock.patch.object(manual, "verify_cert") as verifier:
             result = manual.process_registration(row["registration_id"])
@@ -107,8 +103,7 @@ class ManualGradedPhotoRegistrationTests(unittest.TestCase):
 
     def test_ocr_conflict_quarantines_even_when_lookup_claims_verified(self):
         row = manual.register(self.payload())["registration"]
-        with mock.patch.object(library_slab_corpus, "ocr_label", return_value=("BGS 9 CERT 87654321", None, {})), \
-             mock.patch.object(graded_photo_evidence, "extract_label_evidence", return_value={"company": "BGS", "grade": 9.0, "certification_id": "87654321"}), \
+        with mock.patch.object(manual, "_ocr_image", return_value=("BGS 9 CERT 87654321", None, {}, {"company": "BGS", "grade": 9.0, "certification_id": "87654321"})), \
              mock.patch.object(manual.OFFICIAL_LOOKUP_GUARD, "claim", return_value=(True, {})), \
              mock.patch.object(manual.OFFICIAL_LOOKUP_GUARD, "record_result", return_value={"blocked": False}), \
              mock.patch.object(manual, "verify_cert", return_value={"verified": True, "grade": 10.0, "official_url": "https://www.psacard.com/cert/12345678/psa"}):
@@ -118,8 +113,7 @@ class ManualGradedPhotoRegistrationTests(unittest.TestCase):
 
     def test_official_lookup_without_ocr_identity_never_publishes_photo(self):
         row = manual.register(self.payload())["registration"]
-        with mock.patch.object(library_slab_corpus, "ocr_label", return_value=("", "tesseract_not_installed", {})), \
-             mock.patch.object(graded_photo_evidence, "extract_label_evidence", return_value={}), \
+        with mock.patch.object(manual, "_ocr_image", return_value=("", "tesseract_not_installed", {}, {})), \
              mock.patch.object(manual.OFFICIAL_LOOKUP_GUARD, "claim", return_value=(True, {})), \
              mock.patch.object(manual.OFFICIAL_LOOKUP_GUARD, "record_result", return_value={"blocked": False}), \
              mock.patch.object(manual, "verify_cert", return_value={"verified": True, "grade": 10.0, "official_url": "https://www.psacard.com/cert/12345678/psa"}):

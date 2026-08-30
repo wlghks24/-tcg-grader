@@ -297,6 +297,17 @@ def _publish_verified(row: dict[str, Any]) -> tuple[bool, str | None]:
     return True, None
 
 
+def _ocr_image(image_path: Path) -> tuple[str, str | None, dict[str, Any], dict[str, Any]]:
+    """Keep Pillow/Tesseract optional so registration still queues safely."""
+    try:
+        from library_slab_corpus import ocr_label
+        from graded_photo_evidence import extract_label_evidence
+        text, error, diagnostics = ocr_label(image_path, profile="fast")
+        return text, error, diagnostics, extract_label_evidence(text)
+    except (ImportError, OSError, ValueError, TypeError):
+        return "", "ocr_unavailable", {}, {}
+
+
 def process_registration(registration_id: Any) -> dict[str, Any]:
     registration_id = _bounded_text(registration_id, 80)
     with LOCK:
@@ -307,13 +318,7 @@ def process_registration(registration_id: Any) -> dict[str, Any]:
         _save_registry(registry)
 
     image_path = ROOT / str(row["image_path"])
-    try:
-        from library_slab_corpus import ocr_label
-        from graded_photo_evidence import extract_label_evidence
-        text, ocr_error, diagnostics = ocr_label(image_path, profile="fast")
-        evidence = extract_label_evidence(text)
-    except (ImportError, OSError, ValueError, TypeError):
-        text, ocr_error, diagnostics, evidence = "", "ocr_unavailable", {}, {}
+    text, ocr_error, diagnostics, evidence = _ocr_image(image_path)
     conflicts = []
     if evidence.get("company") and evidence.get("company") != row["company"]:
         conflicts.append("ocr_company_conflict")
