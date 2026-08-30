@@ -1,7 +1,7 @@
 {
   "version": 1,
   "engine": "v109-card-identity-ocr-learning",
-  "generated_at": "2026-08-30T10:07:33+00:00",
+  "generated_at": "2026-08-30T10:13:59+00:00",
   "files": {
     "_audit_progress.py": {
       "sha256": "e4561a89779fc9c8f4b4d474bc2ce4285b65174eb29a6bf20f47a5e30456d674",
@@ -976,8 +976,8 @@
       "bytes": 28264
     },
     "test_graded_photo_runtime.py": {
-      "sha256": "e5f6a51db4a924a987a57371330caad9250691b14f209559cf874f39f3931e8e",
-      "bytes": 6862
+      "sha256": "1adc1d8de9c7e1e74dcc3fe60d6cfe7c3973508a96de752f1004bc357407f54c",
+      "bytes": 7031
     },
     "test_grading_cert_verifier.py": {
       "sha256": "d76e5602120ab12f6d4e0af6fc24cce1dddbc8806e09874601f9590f189c3113",

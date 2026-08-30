@@ -74,6 +74,10 @@ class GradedPhotoRuntimeTests(unittest.TestCase):
         self.assertIn('manualVerificationFinished(payload,registrationId)',source)
         self.assertNotIn('rows.filter(r=>companyOf(r)===c)',source)
 
+    def test_updater_source_is_valid_utf8(self):
+        source=(ROOT/'tcg_updater.py').read_text(encoding='utf-8')
+        self.assertIn('def load_json_file(',source)
+
     def test_collection_trigger_is_post_only(self):
         status,payload=request_json(urllib.request.Request(self.base+'/api/run-graded-photo-collection'))
         self.assertEqual(status,405)
