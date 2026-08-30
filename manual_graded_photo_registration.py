@@ -168,6 +168,18 @@ def _public_row(row: dict[str, Any]) -> dict[str, Any]:
     return {key: row.get(key) for key in keys if key in row}
 
 
+def _record_collection_gap(row: dict[str, Any], *, verified: bool = False) -> None:
+    """Teach coverage priority without allowing a manual claim to change trust."""
+    try:
+        from detailed_collection_intelligence import record_manual_recovery
+        record_manual_recovery(
+            str(row.get("registration_id") or ""), str(row.get("game") or ""),
+            str(row.get("company") or row.get("ocr_company") or ""), verified=verified,
+        )
+    except (ImportError, OSError, ValueError, TypeError, TimeoutError):
+        pass
+
+
 def public_registry() -> dict[str, Any]:
     with LOCK:
         try:
@@ -305,6 +317,7 @@ def register(payload: dict[str, Any]) -> dict[str, Any]:
         }
         registry["registrations"].append(row)
         _save_registry(registry)
+    _record_collection_gap(row)
     return {"ok": True, "duplicate": False, "registration": _public_row(row)}
 
 
@@ -483,6 +496,7 @@ def _process_registration_once(registration_id: str) -> dict[str, Any]:
                 "ocr_certification_id": ocr_cert or None,
             })
             registry["registrations"][index] = current; _save_registry(registry)
+        _record_collection_gap(current)
         return {"ok": True, "deferred": True, "registration": _public_row(current)}
 
     result = verify_cert(resolved_company, resolved_cert, expected_grade=resolved_grade, timeout=10)
@@ -535,6 +549,7 @@ def _process_registration_once(registration_id: str) -> dict[str, Any]:
                                 "learning_eligibility": "quarantine_registry_conflict",
                                 "quarantine_reasons": sorted(set(current["quarantine_reasons"] + [str(error)]))})
         registry["registrations"][index] = current; _save_registry(registry)
+    _record_collection_gap(current, verified=current.get("official_result") is True)
     return {"ok": True, "deferred": provider_blocked, "registration": _public_row(current)}
 
 

@@ -27,6 +27,7 @@ class ManualGradedPhotoRegistrationTests(unittest.TestCase):
             mock.patch.object(manual, "INBOX_ROOT", root / "inbox"),
             mock.patch.object(manual, "VERIFIED_CERTIFICATIONS", root / "verified.json"),
             mock.patch.object(manual, "VERIFIED_SLAB_REFERENCES", root / "references.json"),
+            mock.patch.object(manual, "_record_collection_gap"),
         ]
         for patcher in self.patches:
             patcher.start()

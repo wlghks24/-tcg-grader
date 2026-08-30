@@ -81,6 +81,15 @@ class GradedPhotoRuntimeTests(unittest.TestCase):
         source=(ROOT/'tcg_updater.py').read_text(encoding='utf-8')
         self.assertIn('def load_json_file(',source)
 
+    def test_grade_result_exposes_safe_correction_and_manual_photo_buttons(self):
+        source=(ROOT/'index.html').read_text(encoding='utf-8')
+        self.assertIn('id="openGradeCorrection"',source)
+        self.assertIn('id="openManualGradedPhoto"',source)
+        self.assertIn('function openGradeCorrectionRegistration()',source)
+        self.assertIn('누적 오차 보정자료는 공식 감정 결과 확인이 필요합니다.',source)
+        self.assertIn('manual_fallback_guides_coverage_only',
+                      (ROOT/'detailed_collection_intelligence.py').read_text(encoding='utf-8'))
+
     def test_collection_trigger_is_post_only(self):
         status,payload=request_json(urllib.request.Request(self.base+'/api/run-graded-photo-collection'))
         self.assertEqual(status,405)

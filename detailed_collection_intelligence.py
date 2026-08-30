@@ -289,10 +289,14 @@ def grader_collection_targets(source_id:str,game:str,count:int=2,cycle:int=0)->l
  start=_bounded_count(cycle,1_000_000)%len(GRADERS)
  rotation=[GRADERS[(start+2*offset)%len(GRADERS)] for offset in range(len(GRADERS))]
  d=_load();routes=_dict(d.get('graded_photo_grader_routes')) if isinstance(d,dict) else {}
+ manual_gaps=_dict(d.get('manual_recovery_gaps')) if isinstance(d,dict) else {}
  company_rows={company:_dict(routes.get(f'{source_id}|{game}|{company}')) for company in GRADERS}
- if not any(_bounded_count(row.get('runs')) for row in company_rows.values()):return rotation[:count]
+ if not any(_bounded_count(row.get('runs')) for row in company_rows.values()) and not any(
+  _bounded_count(_dict(manual_gaps.get(f'{game}|{company}')).get('unresolved')) for company in GRADERS
+ ):return rotation[:count]
  rotation_order={company:index for index,company in enumerate(rotation)}
  recovery=min(GRADERS,key=lambda company:(
+  -_bounded_count(_dict(manual_gaps.get(f'{game}|{company}')).get('unresolved')),
   _bounded_count(company_rows[company].get('measurement_ready')),
   _bounded_count(company_rows[company].get('verified')),
   _bounded_count(company_rows[company].get('images')),
@@ -303,6 +307,33 @@ def grader_collection_targets(source_id:str,game:str,count:int=2,cycle:int=0)->l
  selected=[recovery]
  selected.extend(company for company in rotation if company not in selected)
  return selected[:count]
+
+def record_manual_recovery(registration_id:str,game:str,company:str,*,verified:bool=False)->dict:
+ """Use manual fallbacks only as collection-gap signals, never as grade truth."""
+ registration_id=str(registration_id or '')[:96];game=str(game or '').lower();company=str(company or '').upper()
+ if not registration_id or game not in GAMES or company not in GRADERS:
+  return {'recorded':False,'reason':'invalid_manual_recovery'}
+ now=int(time.time())
+ with LEARNING_LOCK,exclusive_file_lock(LEARNING):
+  d=_load_path(LEARNING) or _load_path(LEARNING_BACKUP);d['schema_version']=5;d['updated_at']=now
+  events=d.setdefault('manual_recovery_events',{});gaps=d.setdefault('manual_recovery_gaps',{})
+  if not isinstance(events,dict):events={};d['manual_recovery_events']=events
+  if not isinstance(gaps,dict):gaps={};d['manual_recovery_gaps']=gaps
+  previous=_dict(events.get(registration_id));was_verified=previous.get('verified') is True
+  key=f'{game}|{company}';row=gaps.setdefault(key,{'game':game,'company':company,'registrations':0,'verified':0,'unresolved':0})
+  if not isinstance(row,dict):row={'game':game,'company':company,'registrations':0,'verified':0,'unresolved':0};gaps[key]=row
+  created=not bool(previous)
+  if created:
+   row['registrations']=_add_count(row.get('registrations'),1);row['unresolved']=_add_count(row.get('unresolved'),1)
+  promoted=bool(verified and not was_verified)
+  if promoted:
+   row['verified']=_add_count(row.get('verified'),1);row['unresolved']=max(0,_bounded_count(row.get('unresolved'))-1)
+  row['last_at']=now;events[registration_id]={'game':game,'company':company,'verified':bool(verified or was_verified),'last_at':now}
+  if len(events)>MAX_FEEDBACK_EVENTS:
+   d['manual_recovery_events']=dict(sorted(events.items(),key=lambda pair:_number(_dict(pair[1]).get('last_at')),reverse=True)[:MAX_FEEDBACK_EVENTS])
+  _save_unlocked(d)
+ return {'recorded':created or promoted,'created':created,'promoted':promoted,'game':game,'company':company,
+         'unresolved':_bounded_count(row.get('unresolved'))}
 
 def _verified_identifiers(text:str,certification_id:str='')->list[str]:
  values=[];cert=re.sub(r'[^A-Z0-9]','',str(certification_id or '').upper())
@@ -380,7 +411,7 @@ def record_official_feedback(rows:Iterable[dict])->dict:
 def learning_snapshot()->dict:
  d=_load();stats=d.get('source_query_stats',{}) if isinstance(d.get('source_query_stats'),dict) else {};routes=d.get('graded_photo_routes',{}) if isinstance(d.get('graded_photo_routes'),dict) else {}
  grader_routes=d.get('graded_photo_grader_routes',{}) if isinstance(d.get('graded_photo_grader_routes'),dict) else {}
- terms=d.get('verified_terms',{}) if isinstance(d.get('verified_terms'),dict) else {};totals=d.get('official_feedback_totals',{}) if isinstance(d.get('official_feedback_totals'),dict) else {}
+ terms=d.get('verified_terms',{}) if isinstance(d.get('verified_terms'),dict) else {};totals=d.get('official_feedback_totals',{}) if isinstance(d.get('official_feedback_totals'),dict) else {};manual_gaps=d.get('manual_recovery_gaps',{}) if isinstance(d.get('manual_recovery_gaps'),dict) else {}
  return {'version':5,'source_profiles':len(stats),'queries_tracked':sum(len(s.get('queries',{})) for s in stats.values() if isinstance(s,dict) and isinstance(s.get('queries'),dict)),
          'query_runs':sum(_bounded_count(s.get('runs')) for s in stats.values() if isinstance(s,dict)),'routes_tracked':len(routes),
          'grader_routes_tracked':len(grader_routes),
@@ -390,9 +421,13 @@ def learning_snapshot()->dict:
          'official_feedback':_bounded_count(totals.get('official_verified')),
          'measurement_ready_feedback':_bounded_count(totals.get('measurement_ready')),
          'duplicate_feedback_ignored':_bounded_count(totals.get('duplicates_ignored')),
+         'manual_recovery':{'registrations':sum(_bounded_count(_dict(row).get('registrations')) for row in manual_gaps.values()),
+                            'verified':sum(_bounded_count(_dict(row).get('verified')) for row in manual_gaps.values()),
+                            'unresolved':sum(_bounded_count(_dict(row).get('unresolved')) for row in manual_gaps.values()),
+                            'buckets':len(manual_gaps)},
          'undercovered_recovery_targets':{game:grader_collection_targets('ebay',game,count=1,cycle=route_run_count('ebay',game)) for game in GAMES},
          'verified_identifiers':{game:[term for term,_ in sorted(_dict(terms.get(game)).items(),key=lambda pair:(-_number(pair[1]),pair[0]))[:5]] for game in GAMES},
-         'policy':{'verified_feedback_only':True,'measurement_quality_feedback':True,'undercovered_grader_recovery':True,'query_learning_cannot_change_trust':True,'exploration_retained':True,'recency_decay_enabled':True,'idempotent_feedback':True,'cross_process_lock':True,'state_backup_enabled':True}}
+         'policy':{'verified_feedback_only':True,'measurement_quality_feedback':True,'undercovered_grader_recovery':True,'manual_fallback_guides_coverage_only':True,'query_learning_cannot_change_trust':True,'exploration_retained':True,'recency_decay_enabled':True,'idempotent_feedback':True,'cross_process_lock':True,'state_backup_enabled':True}}
 
 def source_priority(source_id:str,learning_state:dict|None=None)->float:
  source_id=_source_id(source_id)

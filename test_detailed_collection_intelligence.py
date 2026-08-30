@@ -125,6 +125,24 @@ class DetailedCollectionIntelligenceTests(unittest.TestCase):
         self.assertEqual(snapshot['undercovered_recovery_targets']['pokemon'],['BRG'])
         self.assertTrue(snapshot['policy']['undercovered_grader_recovery'])
 
+    def test_manual_fallback_prioritizes_coverage_without_changing_trust(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root=Path(directory)
+            with self.paths(root):
+                learning.LEARNING.write_text(json.dumps({'schema_version':5}),encoding='utf-8')
+                first=learning.record_manual_recovery('manual-1','onepiece','TAG')
+                duplicate=learning.record_manual_recovery('manual-1','onepiece','TAG')
+                targets=learning.grader_collection_targets('ebay','onepiece',count=2,cycle=0)
+                promoted=learning.record_manual_recovery('manual-1','onepiece','TAG',verified=True)
+                snapshot=learning.learning_snapshot()
+        self.assertTrue(first['created'])
+        self.assertFalse(duplicate['recorded'])
+        self.assertEqual(targets[0],'TAG')
+        self.assertTrue(promoted['promoted'])
+        self.assertEqual(snapshot['manual_recovery'],{'registrations':1,'verified':1,'unresolved':0,'buckets':1})
+        self.assertTrue(snapshot['policy']['manual_fallback_guides_coverage_only'])
+        self.assertEqual(snapshot['official_feedback'],0)
+
     def test_read_cache_reuses_learning_parse_and_batch_scores_sources(self):
         with tempfile.TemporaryDirectory() as directory:
             root=Path(directory)

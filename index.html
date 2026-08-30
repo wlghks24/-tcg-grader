@@ -399,6 +399,10 @@ loadReleases();loadPromos();loadPurchaseSources();
   <div id="simpleGradeReasons" class="grade-reasons"></div>
   <div class="simple-note">표시 등급은 사진 기반 사전등급(1~10)입니다. 실제 PSA/BGS/CGC/TAG/BRG 등급을 보장하지 않으며 진위·미세 스크래치·압흔은 실물 확대검사가 필요합니다.</div>
 
+  <h3 style="margin:18px 0 6px">🧠 등급사진·누적오차 보정 등록</h3>
+  <div class="grid2"><button id="openGradeCorrection" type="button">✅ 실제등급 등록·보정값 계산</button><button id="openManualGradedPhoto" type="button">📷 자동수집 실패 사진 등록</button></div>
+  <div id="gradeCorrectionQuickStatus" class="simple-note">공식 감정이 끝난 뒤 등급사·실제등급·인증번호를 등록하면 예측 오차를 누적합니다. 검증 표본이 충분하고 교차검증 오차가 줄어들 때만 보수적으로 적용합니다.</div>
+
   <h3 style="margin:18px 0 6px">🔤 카드명·카드번호 자동 인식</h3>
   <div id="identityStatus" class="status">등급 분석 후 앞면 사진에서 카드명과 번호를 자동 인식합니다.</div>
   <label>인식 후보<select id="identityCandidates"><option value="">분석 대기</option></select></label>
@@ -1276,7 +1280,7 @@ async function syncLearningToServer(){
 }
 function mergeLearning(local,remote){
  const map=new Map();
- for(const row of [...safeGradeRows(remote),...safeGradeRows(local)])map.set(`${row.time||""}|${row.company||row.grader||""}|${row.actual}|${row.pred}`,row);
+ for(const row of [...safeGradeRows(remote),...safeGradeRows(local)]){const key=row.official_result?`${row.company}|${row.certification_id}`:`${row.time||""}|${row.company||row.grader||""}|${row.actual}|${row.pred}|${row.card_key||""}`;map.set(key,row)}
  return [...map.values()].slice(-500);
 }
 async function syncLearningFromServer(){
@@ -2219,10 +2223,11 @@ function v30RenderValidation(){
     document.getElementById("validationSummary").textContent="검증 기록 없음";
     document.getElementById("validationLog").innerHTML=""; return;
   }
-  const mae=a.reduce((s,x)=>s+Math.abs((x.pred??x.actual)-x.actual),0)/a.length;
-  const exact=a.filter(x=>x.pred===x.actual).length;
+  const verified=a.filter(x=>x.official_result===true&&x.certification_id);
+  const mae=verified.length?verified.reduce((s,x)=>s+Math.abs((x.pred??x.actual)-x.actual),0)/verified.length:0;
+  const exact=verified.filter(x=>x.pred===x.actual).length;
   document.getElementById("validationSummary").innerHTML=
-    `누적 ${a.length}건 · 정확 일치 ${exact}건 · 평균 절대오차 ${mae.toFixed(2)}`;
+    `공식 보정자료 ${verified.length}건 · 참고기록 ${a.length-verified.length}건 · 정확 일치 ${exact}건 · 평균 절대오차 ${verified.length?mae.toFixed(2):"-"}`;
   document.getElementById("validationLog").innerHTML=a.slice(-8).reverse().map(x=>
     `<div class="logitem"><span class="badge">${escapeDisplayText(x.company)}</span> 실제 ${escapeDisplayText(x.actual)} / 예측 ${escapeDisplayText(x.pred??"없음")} / ${escapeDisplayText(x.mode)}</div>`
   ).join("");
@@ -2239,14 +2244,15 @@ document.getElementById("saveValidation")?.addEventListener("click",()=>{
   const actual=parseFloat(document.getElementById("actualGrade").value);
   const officialResult=document.getElementById("officialResult")?.checked===true,certificationId=String(document.getElementById("certificationId")?.value||"").trim(),learningCardKey=String(document.getElementById("learningCardKey")?.value||"").trim().slice(0,180);
   if(!validCompanyActual(company,actual)){alert("선택한 등급사의 실제 등급축에 없는 값입니다.");return}
-  if(officialResult&&!/^[A-Za-z0-9._/-]{4,120}$/.test(certificationId)){alert("공식 결과 학습에는 4~120자의 올바른 인증번호가 필요합니다.");return}
+  if(!officialResult){alert("누적 오차 보정자료는 공식 감정 결과 확인이 필요합니다.");return}
+  if(!/^[A-Za-z0-9._/-]{4,120}$/.test(certificationId)){alert("공식 결과 학습에는 4~120자의 올바른 인증번호가 필요합니다.");return}
   const predObj=v30CollectVisiblePrediction();
   const pred=predObj[company.toLowerCase()];
   const rawPred=Number(window.tcgLastRawGrades?.[company]);
   if(pred===null || pred===undefined){alert("먼저 앞면과 뒷면 사진으로 자동 분석을 완료하세요.");return;}
   const a=safeGradeRows(safeStoredJson(V29KEY,[]));
   const snapshot=window.tcgVisionSnapshot,vision=snapshot?safeVisionFeatures({engine:snapshot.engine,analysisConfidence:snapshot.analysisConfidence,frontCenter:snapshot.frontCenter?.worst,backCenter:snapshot.backCenter?.worst,surfaceRisk:Math.max(snapshot.frontSurface?.risk||0,snapshot.backSurface?.risk||0),edgeRisk:Math.max(snapshot.frontWhitening?.edgeRisk||0,snapshot.backWhitening?.edgeRisk||0),cornerRisk:Math.max(snapshot.frontWhitening?.cornerRisk||0,snapshot.backWhitening?.cornerRisk||0),surfaceConfidence:Math.min(snapshot.frontSurface?.confidence||0,snapshot.backSurface?.confidence||0),multiAngle:!!(snapshot.frontSurface?.multiAngle&&snapshot.backSurface?.multiAngle)}):null;
-  a.push({time:new Date().toISOString(),company,actual,pred,raw_pred:Number.isFinite(rawPred)?rawPred:pred,mode:v30Mode,game:typeof game==="string"?game:"unknown",...(learningCardKey?{card_key:learningCardKey}:{}),...(officialResult?{official_result:true,certification_id:certificationId,card_id:learningCardKey||certificationId}:{}),...(vision?{vision}:{})});
+  a.push({time:new Date().toISOString(),company,actual,pred,raw_pred:Number.isFinite(rawPred)?rawPred:pred,mode:v30Mode,game:typeof game==="string"?game:"unknown",...(learningCardKey?{card_key:learningCardKey}:{}),official_result:true,certification_id:certificationId,card_id:learningCardKey||certificationId,...(vision?{vision}:{})});
   localStorage.setItem(V29KEY,JSON.stringify(a.slice(-500)));
   v30Compute();if(typeof v97ComputeVisionCalibration==="function")v97ComputeVisionCalibration();
   v30RenderValidation();
@@ -2342,7 +2348,7 @@ function v30Render(){
     const el=document.getElementById("cal"+g);
     if(el) el.textContent=((c[g]?.correction)||0).toFixed(2);
   }
-  const usable=rows.filter(r=>r.pred!==null&&r.pred!==undefined).length;
+  const usable=rows.filter(r=>r.official_result===true&&r.certification_id&&r.pred!==null&&r.pred!==undefined).length;
   const q=document.getElementById("qualityStatus");
   if(q){
     const visionRows=rows.filter(row=>row.vision).length;
@@ -2368,6 +2374,26 @@ document.getElementById("resetCalibration")?.addEventListener("click",()=>{
   document.getElementById("calibrationStatus").textContent="보정값 초기화 완료";
 });
 v30Render();
+</script>
+
+<script>
+function openGradeCorrectionRegistration(){
+ const grades=window.tcgLastGrades||{},status=document.getElementById("gradeCorrectionQuickStatus");
+ if(!GRADING_COMPANIES.some(company=>Number.isFinite(Number(grades[company])))){status.textContent="먼저 카드 앞·뒷면을 촬영해 자동 분석을 완료하세요.";return}
+ const cardName=String(document.getElementById("identityCardName")?.value||"").trim(),cardNumber=String(document.getElementById("identityCardNumber")?.value||"").trim(),gameName=typeof game==="string"?game:"unknown";
+ const key=[gameName,cardName,cardNumber].filter(Boolean).join("|").slice(0,180);if(key)document.getElementById("learningCardKey").value=key;
+ v30SetMode("raw");document.getElementById("officialResult").checked=false;document.getElementById("certificationId").value="";
+ document.getElementById("v30validation").scrollIntoView({behavior:"smooth",block:"start"});document.getElementById("actualCompany").focus();
+ status.textContent="아래 자동보정 센터에서 등급사·실제등급·공식 인증번호를 입력하고 저장하세요.";
+}
+function openManualGradedPhotoRegistration(){
+ const panel=document.getElementById("gradedPhotoDashboard"),details=panel?.querySelector("details.gpd-manual"),status=document.getElementById("gradeCorrectionQuickStatus");
+ if(!panel||!details){status.textContent="수동등록 화면을 준비하지 못했습니다. 페이지를 새로고침한 뒤 다시 눌러주세요.";return}
+ details.open=true;const gameSelect=document.getElementById("gpdManualGame");if(gameSelect&&typeof game==="string"&&[...gameSelect.options].some(option=>option.value===game))gameSelect.value=game;
+ details.scrollIntoView({behavior:"smooth",block:"start"});document.getElementById("gpdManualPhoto")?.focus();status.textContent="자동수집 실패 사진 등록 화면을 열었습니다.";
+}
+document.getElementById("openGradeCorrection")?.addEventListener("click",openGradeCorrectionRegistration);
+document.getElementById("openManualGradedPhoto")?.addEventListener("click",openManualGradedPhotoRegistration);
 </script>
 
 <script>
@@ -2474,7 +2500,7 @@ document.querySelectorAll(".update-panel-close").forEach(btn=>btn.addEventListen
 <script src="grading_costs_live.js"></script>
 <script src="grading_proxy_costs.js"></script>
 <script src="grading_total_cost.js"></script>
-<script src="graded_photo_dashboard.js?v=127"></script>
+<script src="graded_photo_dashboard.js?v=128"></script>
 <script src="market_catalog_expander.js"></script>
 <script src="image_quality_guard.js"></script>
 <script src="box_knowledge_stats.js"></script>

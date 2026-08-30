@@ -1,7 +1,7 @@
 {
   "version": 1,
   "engine": "v109-card-identity-ocr-learning",
-  "generated_at": "2026-08-30T14:02:59+00:00",
+  "generated_at": "2026-08-30T14:12:49+00:00",
   "files": {
     ".github/workflows/apply-android-7step-display.yml": {
       "sha256": "9d0b604bc6f85b3cab37a475b70e17ed2c3ada43aa6ba72a4e57b8436a9baa27",
@@ -532,8 +532,8 @@
       "bytes": 3149
     },
     "detailed_collection_intelligence.py": {
-      "sha256": "d3f4c07aad948b412c92c4bde73c4f09d7a409eda59ee3808f28e117421b0856",
-      "bytes": 28800
+      "sha256": "2c81995b2edec7299092ecb26d6956bea7f532743a15b21b8f7bac5e231239c8",
+      "bytes": 31701
     },
     "ebay_grader_candidates.json": {
       "sha256": "47408933db066e8a9ad1159cbab98041c31145cdf7e180bec83c0bc2656b8472",
@@ -740,8 +740,8 @@
       "bytes": 1455
     },
     "graded_photo_dashboard.js": {
-      "sha256": "03aff42b4ca4c2bacb4cf01bf42661180b3d1200504d0d073a0aa321982f577f",
-      "bytes": 23704
+      "sha256": "6bcc68fbc97b9b88dffb97be30895bfc5462c65a6ec28de9c1a6c405e12bd7bc",
+      "bytes": 23869
     },
     "graded_photo_evidence.py": {
       "sha256": "f2daf114fd25fae20213b4dc9ff90512676e4f3747be8b93bfa27853034c6754",
@@ -804,8 +804,8 @@
       "bytes": 2161
     },
     "index.html": {
-      "sha256": "5f2078e3b7ff8a7547ab61714dbb0a07e81694a5ab006722065cc9512c6abe2a",
-      "bytes": 295948
+      "sha256": "d7de46e44622dec34fb8ed92a9bd6266b640d2ff2a2104a834138bc2485f3061",
+      "bytes": 299060
     },
     "inventory_lookup.js": {
       "sha256": "a4e5c19c0a9b293a7fe953e2e00a836ac990cdc6d9244bc0aa12ea6eb8f619e6",
@@ -840,8 +840,8 @@
       "bytes": 476
     },
     "manual_graded_photo_registration.py": {
-      "sha256": "4a521157ab32fb073a58eb090d658286df8028d18b48911ed56c642066302a41",
-      "bytes": 28574
+      "sha256": "d1c0c042f3c4e6d813e704e767ec6714342e510df23f18303fe2d78fb6ca034e",
+      "bytes": 29279
     },
     "market_catalog_expander.js": {
       "sha256": "e9c1e91c077b7cee9077445621520140f1039d4fc8c2c58ce6c8b461adc8e26e",
@@ -944,7 +944,7 @@
       "bytes": 18672
     },
     "security_audit_report.json": {
-      "sha256": "5ed7991c07fcacb19601d40426fa19e178f95548bf152c99a20c0793bc71e649",
+      "sha256": "023b5b794bc1e2c2985a79e4de2d440b4ab3b95987ff1eb367afdfc888294bae",
       "bytes": 43532
     },
     "security_hardening_apply.py": {
@@ -996,8 +996,8 @@
       "bytes": 11226
     },
     "sw.js": {
-      "sha256": "3f097e6ed6e0c63cecd656aaa63bd3e6c8678d4aa0c7cb8c2188adc35841c6d0",
-      "bytes": 7398
+      "sha256": "28e5199b6e0a523dd2e37fa94cd9c3be96b2968361aacb2b8f33c685856f6a47",
+      "bytes": 7396
     },
     "tcg_live_data.json": {
       "sha256": "7070007ddca04f63406e60c376711c5f9a645c5c99f10a86c19074c728028419",
@@ -1024,8 +1024,8 @@
       "bytes": 2526
     },
     "test_detailed_collection_intelligence.py": {
-      "sha256": "7806accf85d9632200bdf3d5e66155d1f6eda09943307e8f8de612edb9140a0a",
-      "bytes": 11549
+      "sha256": "290970d60edc54300d68e20cb4f500d44de7f0e1870e4346a66382a325ddb83c",
+      "bytes": 12704
     },
     "test_fan_social_learning.py": {
       "sha256": "5d4907ec876083336933d76b6ba9cff0385078fdae99bd4800849360785a9ef6",
@@ -1040,8 +1040,8 @@
       "bytes": 28313
     },
     "test_graded_photo_runtime.py": {
-      "sha256": "3b38ae45e1e57a8d64bd00c710436119e026200a99009c0f53e8e7c229d4c6d0",
-      "bytes": 7236
+      "sha256": "85fc5ed9036ee8d2aa6e00957546e2b5d42c8d5cf79fed0f6692814741b5e3b0",
+      "bytes": 7841
     },
     "test_grading_cert_verifier.py": {
       "sha256": "d76e5602120ab12f6d4e0af6fc24cce1dddbc8806e09874601f9590f189c3113",
@@ -1068,8 +1068,8 @@
       "bytes": 4820
     },
     "test_manual_graded_photo_registration.py": {
-      "sha256": "d84a7fcd38391b44091d12aa697287c388e1c06d50dcc77a35f75b616ae0cd5e",
-      "bytes": 13875
+      "sha256": "582232482f6845e89621a0ada1bb3554d2ecc5470d5fd79cd8a0c968b9561988",
+      "bytes": 13940
     },
     "test_multi_market_price_collector.py": {
       "sha256": "a16c9af8bb42b91a8b49b9b4be9b9a576927bb1cd79b90063474dc97758647c4",
@@ -1116,7 +1116,7 @@
       "bytes": 2065
     },
     "test_ui_polish_v121.py": {
-      "sha256": "ccdb29850fad76ba80c8709d9d4711e40a93850ba072985c397b60ae9d5bb684",
+      "sha256": "10e4ac9ee57e726bb382a5ab1ada010795a7c1f5f191b60cc23bb33480e278ae",
       "bytes": 951
     },
     "test_ui_tablet_refine_v122.py": {
