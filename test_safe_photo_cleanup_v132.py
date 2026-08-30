@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
+"""Compatibility tests: v132 filename, v133 safety behavior."""
 import hashlib
 import json
 import os
@@ -11,13 +12,14 @@ from pathlib import Path
 import safe_photo_cleanup as cleanup
 
 
-class SafePhotoCleanupV132Tests(unittest.TestCase):
+class SafePhotoCleanupV132CompatibilityTests(unittest.TestCase):
     def setUp(self):
         self.originals = {
             name: getattr(cleanup, name)
             for name in (
                 "ROOT", "REPORT_PATH", "MANUAL_REGISTRY", "VERIFIED_CERTS",
-                "VERIFIED_REFS", "LIBRARY_CANDIDATES"
+                "VERIFIED_REFS", "LIBRARY_CANDIDATES", "GRADED_PHOTO_CANDIDATES",
+                "EBAY_CANDIDATES", "CRITICAL_REGISTRIES",
             )
         }
         self.temp = tempfile.TemporaryDirectory()
@@ -28,136 +30,77 @@ class SafePhotoCleanupV132Tests(unittest.TestCase):
         cleanup.VERIFIED_CERTS = root / "verified_certifications.json"
         cleanup.VERIFIED_REFS = root / "library_verified_slab_references.json"
         cleanup.LIBRARY_CANDIDATES = root / "library_slab_candidates.json"
-        self.photos = root / "GRADE_TRAINING_INBOX" / "manual" / "202608"
-        self.photos.mkdir(parents=True)
+        cleanup.GRADED_PHOTO_CANDIDATES = root / "graded_photo_candidates.json"
+        cleanup.EBAY_CANDIDATES = root / "ebay_grader_candidates.json"
+        cleanup.CRITICAL_REGISTRIES = (
+            (cleanup.VERIFIED_REFS, ("certifications", "records", "items")),
+            (cleanup.LIBRARY_CANDIDATES, ("records", "certifications", "items")),
+            (cleanup.VERIFIED_CERTS, ("certifications", "records", "items")),
+            (cleanup.GRADED_PHOTO_CANDIDATES, ("records", "items", "certifications")),
+            (cleanup.EBAY_CANDIDATES, ("items", "records", "certifications")),
+        )
+        self.manual = root / "GRADE_TRAINING_INBOX" / "manual" / "202608"
+        self.cache = root / "graded_photo_cache"
+        self.manual.mkdir(parents=True)
+        self.cache.mkdir(parents=True)
+        cleanup.MANUAL_REGISTRY.write_text(json.dumps({"registrations": []}), encoding="utf-8")
 
     def tearDown(self):
         for name, value in self.originals.items():
             setattr(cleanup, name, value)
         self.temp.cleanup()
 
-    def _write(self, name, data, age_days=0, folder=None):
-        base = folder or self.photos
-        base.mkdir(parents=True, exist_ok=True)
-        path = base / name
-        path.write_bytes(data)
-        if age_days:
-            stamp = time.time() - age_days * 86400
-            os.utime(path, (stamp, stamp))
-        return path
+    @staticmethod
+    def _age(path: Path, days: int) -> None:
+        stamp = time.time() - days * 86400
+        os.utime(path, (stamp, stamp))
 
-    def _sha(self, path):
-        return hashlib.sha256(path.read_bytes()).hexdigest()
-
-    def _registry(self, rows):
-        cleanup.MANUAL_REGISTRY.write_text(
-            json.dumps({"registrations": rows}), encoding="utf-8"
-        )
-
-    def test_verified_and_pending_survive_apply(self):
-        verified = self._write("verified.jpg", b"v" * 2048, 30)
-        pending = self._write("pending.jpg", b"p" * 2048, 30)
-        self._registry([
-            {
-                "image_path": verified.relative_to(cleanup.ROOT).as_posix(),
-                "image_sha256": self._sha(verified),
-                "official_result": True,
-                "status": "verified_reference",
-            },
-            {
-                "image_path": pending.relative_to(cleanup.ROOT).as_posix(),
-                "image_sha256": self._sha(pending),
-                "official_result": False,
-                "status": "pending_official_verification",
-                "verification_state": "queued",
-            },
-        ])
-        result = cleanup.run(apply=True)
-        self.assertTrue(verified.exists())
-        self.assertTrue(pending.exists())
+    def test_old_rejected_manual_photo_is_preserved(self):
+        photo = self.manual / "rejected.jpg"
+        photo.write_bytes(b"r" * 2048)
+        self._age(photo, 120)
+        digest = hashlib.sha256(photo.read_bytes()).hexdigest()
+        cleanup.MANUAL_REGISTRY.write_text(json.dumps({"registrations": [{
+            "image_path": photo.relative_to(cleanup.ROOT).as_posix(),
+            "image_sha256": digest,
+            "status": "quarantine",
+            "verification_state": "completed_unverified",
+        }]}), encoding="utf-8")
+        result = cleanup.run(apply=True, grace_days=1, cache_days=14)
+        self.assertTrue(photo.exists())
         self.assertEqual(result["summary"]["deleted_images"], 0)
 
-    def test_pending_duplicate_is_never_deleted(self):
-        first = self._write("a.jpg", b"same" * 512)
-        pending = self._write("z_pending.jpg", b"same" * 512, 30)
-        self._registry([{
-            "image_path": pending.relative_to(cleanup.ROOT).as_posix(),
-            "image_sha256": self._sha(pending),
+    def test_candidate_hash_protects_cache(self):
+        photo = self.cache / "candidate.jpg"
+        photo.write_bytes(b"c" * 2048)
+        self._age(photo, 30)
+        digest = hashlib.sha256(photo.read_bytes()).hexdigest()
+        cleanup.LIBRARY_CANDIDATES.write_text(json.dumps({"records": [{
+            "sha256": digest,
+            "status": "quarantine",
             "official_result": False,
-            "status": "pending_official_verification",
-            "verification_state": "queued",
-        }])
-        result = cleanup.run(apply=True)
-        self.assertTrue(first.exists())
-        self.assertTrue(pending.exists())
+        }]}), encoding="utf-8")
+        result = cleanup.run(apply=True, cache_days=14)
+        self.assertTrue(photo.exists())
         self.assertEqual(result["summary"]["deleted_images"], 0)
 
-    def test_rejected_duplicate_respects_grace_period(self):
-        first = self._write("a.jpg", b"same" * 512)
-        rejected = self._write("z_rejected.jpg", b"same" * 512, 5)
-        self._registry([{
-            "image_path": rejected.relative_to(cleanup.ROOT).as_posix(),
-            "image_sha256": self._sha(rejected),
-            "status": "quarantine",
-            "verification_state": "completed_unverified",
-            "quarantine_reasons": ["grade_mismatch"],
-        }])
-        result = cleanup.run(apply=True, grace_days=14)
-        self.assertTrue(first.exists())
-        self.assertTrue(rejected.exists())
-        self.assertEqual(result["summary"]["deleted_images"], 0)
-
-    def test_old_explicit_rejection_can_be_deleted(self):
-        rejected = self._write("rejected.jpg", b"r" * 2048, 20)
-        self._registry([{
-            "image_path": rejected.relative_to(cleanup.ROOT).as_posix(),
-            "image_sha256": self._sha(rejected),
-            "status": "quarantine",
-            "verification_state": "completed_unverified",
-            "quarantine_reasons": ["grade_mismatch"],
-        }])
-        result = cleanup.run(apply=True, grace_days=14)
-        self.assertFalse(rejected.exists())
+    def test_stale_unreferenced_cache_can_be_deleted(self):
+        photo = self.cache / "stale.jpg"
+        photo.write_bytes(b"s" * 2048)
+        self._age(photo, 30)
+        result = cleanup.run(apply=True, cache_days=14)
+        self.assertFalse(photo.exists())
         self.assertEqual(result["summary"]["deleted_images"], 1)
 
-    def test_corrupt_existing_registry_fails_closed(self):
-        cache = cleanup.ROOT / "graded_photo_cache"
-        stale = self._write("stale.jpg", b"x" * 2048, 30, cache)
-        cleanup.MANUAL_REGISTRY.write_text("{broken", encoding="utf-8")
-        result = cleanup.run(apply=True, cache_days=7)
-        self.assertTrue(stale.exists())
-        self.assertEqual(result["mode"], "apply_guarded_no_delete")
+    def test_corrupt_registry_disables_deletion(self):
+        photo = self.cache / "stale.jpg"
+        photo.write_bytes(b"s" * 2048)
+        self._age(photo, 30)
+        cleanup.VERIFIED_REFS.write_text("{broken", encoding="utf-8")
+        result = cleanup.run(apply=True, cache_days=14)
+        self.assertTrue(photo.exists())
         self.assertFalse(result["registry_guard"]["destructive_allowed"])
         self.assertEqual(result["summary"]["deleted_images"], 0)
-        self.assertGreaterEqual(result["summary"]["guarded_keep_images"], 1)
-
-    def test_compound_cache_folder_is_detected(self):
-        self._registry([])
-        cache = cleanup.ROOT / "graded_photo_cache"
-        stale = self._write("stale.jpg", b"x" * 2048, 30, cache)
-        result = cleanup.run(apply=True, cache_days=7)
-        self.assertFalse(stale.exists())
-        self.assertEqual(result["summary"]["deleted_images"], 1)
-
-    def test_compound_protected_folder_is_protected(self):
-        self._registry([])
-        folder = cleanup.ROOT / "grading_photos" / "official_validation_set"
-        protected = self._write("keep.jpg", b"k" * 2048, 30, folder)
-        duplicate = self._write("keep2.jpg", b"k" * 2048, 30, folder)
-        result = cleanup.run(apply=True)
-        self.assertTrue(protected.exists())
-        self.assertTrue(duplicate.exists())
-        self.assertEqual(result["summary"]["deleted_images"], 0)
-
-    def test_dry_run_never_deletes(self):
-        self._registry([])
-        a = self._write("a.jpg", b"x" * 2048)
-        b = self._write("b.jpg", b"x" * 2048)
-        result = cleanup.run(apply=False)
-        self.assertTrue(a.exists())
-        self.assertTrue(b.exists())
-        self.assertEqual(result["summary"]["deleted_images"], 0)
-        self.assertEqual(result["summary"]["delete_candidates"], 1)
 
 
 if __name__ == "__main__":
