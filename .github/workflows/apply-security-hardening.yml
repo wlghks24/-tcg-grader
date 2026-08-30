@@ -5,9 +5,11 @@ on:
     branches: [main]
     paths:
       - 'server_security_guard.py'
+      - 'grading_cert_verifier.py'
       - 'security_hardening_apply.py'
       - 'security_self_audit.py'
       - 'test_security_hardening.py'
+      - 'test_five_company_verification_policy.py'
       - 'gemini-code-1787475308276.py'
       - 'gemini-code-1787475504812.py'
       - '.github/workflows/apply-security-hardening.yml'
@@ -33,7 +35,7 @@ jobs:
         run: python security_hardening_apply.py
       - name: Compile security-sensitive Python
         run: |
-          python -m py_compile tcg_updater.py safe_runtime.py server_security_guard.py security_hardening_apply.py security_self_audit.py
+          python -m py_compile tcg_updater.py safe_runtime.py server_security_guard.py grading_cert_verifier.py security_hardening_apply.py security_self_audit.py
       - name: Run security regression tests
         run: |
           python -m unittest -v test_security_hardening.py
