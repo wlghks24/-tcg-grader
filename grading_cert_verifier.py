@@ -88,6 +88,15 @@ def _request(company, url, timeout=10):
     return raw.decode(charset, "ignore"), status, final_url
 
 
+def _retry_after_seconds(exc):
+    try:
+        value = (getattr(exc, "headers", None) or {}).get("Retry-After")
+        seconds = float(value)
+        return max(0.0, min(seconds, 86400.0))
+    except (AttributeError, TypeError, ValueError):
+        return None
+
+
 def _fetch(company, url, timeout=10, retries=1):
     attempt = 0
     while True:
@@ -97,11 +106,7 @@ def _fetch(company, url, timeout=10, retries=1):
             status = int(getattr(exc, "code", 0) or 0)
             if attempt >= retries or status not in TRANSIENT_HTTP_STATUSES:
                 raise
-            retry_after = 0.0
-            try:
-                retry_after = float((exc.headers or {}).get("Retry-After") or 0)
-            except (TypeError, ValueError):
-                pass
+            retry_after = _retry_after_seconds(exc) or 0.0
             time.sleep(min(8.0, max(1.5, retry_after)))
             attempt += 1
         except (URLError, TimeoutError, OSError):
@@ -194,14 +199,18 @@ def verify_cert(company, cert, expected_grade=None, timeout=10):
         return result
     except HTTPError as exc:
         status = int(getattr(exc, "code", 0) or 0)
+        retry_after = _retry_after_seconds(exc)
+        default_cooldown = 1800.0 if status == 429 else (7200.0 if status in {401, 403, 407} else 0.0)
         result.update({
             "lookup_error": "HTTPError",
             "http_status": status,
             "blocked_or_challenged": status in BLOCKING_HTTP_STATUSES,
             "transient_error": status in TRANSIENT_HTTP_STATUSES,
+            "retry_after_seconds": retry_after,
+            "recommended_cooldown_seconds": retry_after if retry_after is not None else default_cooldown,
         })
         if status in BLOCKING_HTTP_STATUSES:
-            result["notice"] = "공식 사이트가 자동 요청을 차단하거나 속도 제한했습니다. 공식 조회 링크를 보존합니다."
+            result["notice"] = "공식 사이트가 자동 요청을 차단하거나 속도 제한했습니다. 공식 조회 링크를 보존하고 재시도 전 대기합니다."
         elif status == 404:
             result["notice"] = "공식 조회 URL이 HTTP 404를 반환했습니다. 인증 실패로 단정하지 않고 수동 확인 대상으로 보존합니다."
         else:
