@@ -72,6 +72,9 @@ class GradedPhotoRuntimeTests(unittest.TestCase):
         source=(ROOT/'graded_photo_dashboard.js').read_text(encoding='utf-8')
         self.assertIn("document.visibilityState==='visible'",source)
         self.assertIn('manualVerificationFinished(payload,registrationId)',source)
+        self.assertIn('사진 1장으로 간편등록',source)
+        self.assertIn("grade:gradeText===''?null:Number(gradeText)",source)
+        self.assertNotIn('id="gpdManualCompany" required',source)
         self.assertNotIn('rows.filter(r=>companyOf(r)===c)',source)
 
     def test_updater_source_is_valid_utf8(self):

@@ -57,6 +57,57 @@ class ManualGradedPhotoRegistrationTests(unittest.TestCase):
         self.assertNotIn("user.png", stored["image_path"])
         self.assertTrue((manual.ROOT / stored["image_path"]).exists())
 
+    def test_quick_registration_requires_only_game_and_photo(self):
+        result = manual.register({
+            "game": "onepiece", "image_data_url": png_data_url(marker=b"q"),
+            "filename": "quick.png",
+        })
+        row = result["registration"]
+        self.assertEqual(row["entry_mode"], "ocr_first")
+        self.assertFalse(row["manual_identity_complete"])
+        self.assertEqual(set(row["missing_identity_fields"]), {"company", "grade", "certification_id"})
+        self.assertIsNone(row["official_reference_url"])
+
+    def test_quick_registration_ocr_autofills_then_officially_verifies(self):
+        row = manual.register({
+            "game": "naruto", "image_data_url": png_data_url(marker=b"n")
+        })["registration"]
+        evidence = {"company": "CGC", "grade": 9.5, "certification_id": "CGC123456"}
+        with mock.patch.object(manual, "_ocr_image", return_value=("CGC 9.5 CGC123456", None, {}, evidence)), \
+             mock.patch.object(manual.OFFICIAL_LOOKUP_GUARD, "claim", return_value=(True, {})), \
+             mock.patch.object(manual.OFFICIAL_LOOKUP_GUARD, "record_result", return_value={"blocked": False}), \
+             mock.patch.object(manual, "verify_cert", return_value={"verified": True, "grade": 9.5, "official_url": "https://www.cgccards.com/certlookup/CGC123456"}) as verifier:
+            result = manual.process_registration(row["registration_id"])
+        verified = result["registration"]
+        self.assertTrue(verified["official_result"])
+        self.assertEqual((verified["company"], verified["claimed_grade"], verified["certification_id"]),
+                         ("CGC", 9.5, "CGC123456"))
+        verifier.assert_called_once_with("CGC", "CGC123456", expected_grade=9.5, timeout=10)
+
+    def test_incomplete_ocr_requests_manual_input_without_official_lookup(self):
+        row = manual.register({
+            "game": "pokemon", "image_data_url": png_data_url(marker=b"m")
+        })["registration"]
+        with mock.patch.object(manual, "_ocr_image", return_value=("PSA label", None, {}, {"company": "PSA"})), \
+             mock.patch.object(manual.OFFICIAL_LOOKUP_GUARD, "claim") as claim, \
+             mock.patch.object(manual, "verify_cert") as verifier:
+            result = manual.process_registration(row["registration_id"])
+        self.assertTrue(result["manual_input_required"])
+        self.assertEqual(result["registration"]["verification_state"], "manual_input_required")
+        self.assertEqual(set(result["registration"]["missing_identity_fields"]), {"grade", "certification_id"})
+        claim.assert_not_called()
+        verifier.assert_not_called()
+
+    def test_same_quick_photo_can_be_completed_with_manual_identity(self):
+        quick = {"game": "pokemon", "image_data_url": png_data_url(marker=b"r")}
+        first = manual.register(quick)
+        completed = dict(quick, company="BGS", grade=9, certification_id="BGS123456")
+        second = manual.register(completed)
+        self.assertFalse(second["duplicate"])
+        self.assertTrue(second["resumed"])
+        self.assertEqual(second["registration"]["registration_id"], first["registration"]["registration_id"])
+        self.assertTrue(second["registration"]["manual_identity_complete"])
+
     def test_exact_duplicate_is_idempotent(self):
         first = manual.register(self.payload())
         second = manual.register(self.payload())

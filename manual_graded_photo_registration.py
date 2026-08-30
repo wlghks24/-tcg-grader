@@ -163,6 +163,7 @@ def _public_row(row: dict[str, Any]) -> dict[str, Any]:
         "official_reference_url", "learning_eligibility", "training_eligible",
         "quarantine_reasons", "ocr_company", "ocr_grade", "ocr_certification_id",
         "ocr_error", "ocr_cache_hit", "retry_after_seconds", "duplicate_of",
+        "entry_mode", "manual_identity_complete", "missing_identity_fields",
     )
     return {key: row.get(key) for key in keys if key in row}
 
@@ -216,13 +217,15 @@ def register(payload: dict[str, Any]) -> dict[str, Any]:
     company = _bounded_text(payload.get("company"), 8).upper()
     game = _bounded_text(payload.get("game"), 16).lower().replace("_", "").replace("-", "")
     cert = _normalized_cert(payload.get("certification_id"))
-    grade = _grade(payload.get("grade"))
-    if company not in COMPANIES:
+    grade_value = payload.get("grade")
+    grade = None if grade_value in (None, "") else _grade(grade_value)
+    if company and company not in COMPANIES:
         raise ValueError("지원 등급사는 PSA·BGS·CGC·TAG·BRG입니다.")
     if game not in GAMES:
         raise ValueError("게임은 포켓몬·원피스·나루토 중에서 선택하세요.")
-    if len(cert) < 6:
+    if cert and len(cert) < 6:
         raise ValueError("인증번호를 6자 이상 입력하세요.")
+    manual_identity_complete = bool(company and cert and grade is not None)
     image, extension, width, height = _decode_image(payload.get("image_data_url"))
     digest = hashlib.sha256(image).hexdigest()
     now = _now()
@@ -230,14 +233,38 @@ def register(payload: dict[str, Any]) -> dict[str, Any]:
         registry = _registry()
         for existing in registry["registrations"]:
             if existing.get("image_sha256") == digest:
-                same_claim = (
-                    existing.get("company") == company
-                    and existing.get("game") == game
-                    and _normalized_cert(existing.get("certification_id")) == cert
-                    and abs(float(existing.get("claimed_grade")) - grade) < 1e-9
-                )
+                existing_grade = existing.get("claimed_grade")
+                same_claim = existing.get("game") == game
+                for provided, stored in ((company, existing.get("company")), (cert, _normalized_cert(existing.get("certification_id")))):
+                    if provided and stored and provided != stored:
+                        same_claim = False
+                if grade is not None and existing_grade is not None and abs(float(existing_grade) - grade) >= 1e-9:
+                    same_claim = False
                 if not same_claim:
                     raise ValueError("같은 사진이 다른 업체·인증번호·등급으로 이미 등록되어 있습니다.")
+                supplied_identity = bool(company or cert or grade is not None)
+                existing_incomplete = not bool(
+                    existing.get("company") and _normalized_cert(existing.get("certification_id"))
+                    and existing.get("claimed_grade") is not None
+                )
+                if supplied_identity and existing_incomplete:
+                    existing["company"] = existing.get("company") or company
+                    existing["certification_id"] = _normalized_cert(existing.get("certification_id")) or cert
+                    existing["claimed_grade"] = existing.get("claimed_grade") if existing.get("claimed_grade") is not None else grade
+                    existing["manual_identity_complete"] = bool(
+                        existing["company"] and existing["certification_id"] and existing["claimed_grade"] is not None
+                    )
+                    existing["missing_identity_fields"] = [name for name, value in (
+                        ("company", existing["company"]), ("grade", existing["claimed_grade"]),
+                        ("certification_id", existing["certification_id"])
+                    ) if value in (None, "")]
+                    existing.update({"updated_at": now, "verification_state": "queued",
+                                     "status": "pending_official_verification"})
+                    if existing["company"] and existing["certification_id"]:
+                        existing["official_reference_url"] = lookup_url(existing["company"], existing["certification_id"])
+                    _save_registry(registry)
+                    return {"ok": True, "duplicate": False, "resumed": True,
+                            "registration": _public_row(existing)}
                 return {"ok": True, "duplicate": True, "registration": _public_row(existing)}
         registration_id = f"manual-{datetime.now(timezone.utc):%Y%m%d%H%M%S}-{secrets.token_hex(6)}"
         folder = INBOX_ROOT / datetime.now(timezone.utc).strftime("%Y%m")
@@ -263,12 +290,18 @@ def register(payload: dict[str, Any]) -> dict[str, Any]:
             "status": "pending_official_verification",
             "verification_state": "queued",
             "official_result": False,
-            "official_reference_url": lookup_url(company, cert),
+            "official_reference_url": lookup_url(company, cert) if company and cert else None,
             "learning_eligibility": "quarantine_only_until_official_match",
             "training_eligible": False,
             "raw_grade_calibration_eligible": False,
-            "quarantine_reasons": ["manual_claim_unverified", "official_lookup_required"],
-            "audit": {"manual_upload": True, "image_magic_checked": True, "path_generated_server_side": True},
+            "quarantine_reasons": ["manual_claim_unverified", "official_lookup_required", "ocr_identity_required"],
+            "entry_mode": "manual_identity" if manual_identity_complete else "ocr_first",
+            "manual_identity_complete": manual_identity_complete,
+            "missing_identity_fields": [name for name, value in (
+                ("company", company), ("grade", grade), ("certification_id", cert)
+            ) if value in (None, "")],
+            "audit": {"manual_upload": True, "image_magic_checked": True, "path_generated_server_side": True,
+                      "manual_claim_is_truth": False, "ocr_autofill_requires_official_match": True},
         }
         registry["registrations"].append(row)
         _save_registry(registry)
@@ -387,15 +420,55 @@ def _process_registration_once(registration_id: str) -> dict[str, Any]:
         _save_registry(registry)
 
     text, ocr_error, diagnostics, evidence, ocr_cache_hit = _ocr_for_row(row)
+    manual_company = str(row.get("company") or "").upper()
+    manual_cert = _normalized_cert(row.get("certification_id"))
+    manual_grade = row.get("claimed_grade")
+    ocr_company = str(evidence.get("company") or "").upper()
+    if ocr_company not in COMPANIES:
+        ocr_company = ""
+    ocr_cert = _normalized_cert(evidence.get("certification_id"))
+    if len(ocr_cert) < 6:
+        ocr_cert = ""
+    try:
+        ocr_grade = _grade(evidence.get("grade")) if evidence.get("grade") is not None else None
+    except ValueError:
+        ocr_grade = None
     conflicts = []
-    if evidence.get("company") and evidence.get("company") != row["company"]:
+    if manual_company and ocr_company and ocr_company != manual_company:
         conflicts.append("ocr_company_conflict")
-    if evidence.get("certification_id") and _normalized_cert(evidence.get("certification_id")) != row["certification_id"]:
+    if manual_cert and ocr_cert and ocr_cert != manual_cert:
         conflicts.append("ocr_certification_conflict")
-    if evidence.get("grade") is not None and abs(float(evidence["grade"]) - float(row["claimed_grade"])) > 1e-9:
+    if manual_grade is not None and ocr_grade is not None and abs(ocr_grade - float(manual_grade)) > 1e-9:
         conflicts.append("ocr_grade_conflict")
 
-    allowed, guard = OFFICIAL_LOOKUP_GUARD.claim(row["company"])
+    resolved_company = manual_company or ocr_company
+    resolved_cert = manual_cert or ocr_cert
+    resolved_grade = float(manual_grade) if manual_grade is not None else ocr_grade
+    missing = [name for name, value in (
+        ("company", resolved_company), ("grade", resolved_grade), ("certification_id", resolved_cert)
+    ) if value in (None, "")]
+    if missing:
+        with LOCK:
+            registry = _registry(); index, current = _find_row(registry, registration_id)
+            current.update({
+                "updated_at": _now(), "status": "pending_official_verification",
+                "verification_state": "manual_input_required", "missing_identity_fields": missing,
+                "official_result": False,
+                "quarantine_reasons": sorted(set(conflicts + ["ocr_identity_not_confirmed", "manual_identity_required"])),
+                "ocr_label_text": text[:1800], "ocr_error": ocr_error, "ocr_diagnostics": diagnostics,
+                "ocr_cached_sha256": row.get("image_sha256"), "ocr_cache_hit": ocr_cache_hit,
+                "ocr_company": ocr_company or None, "ocr_grade": ocr_grade,
+                "ocr_certification_id": ocr_cert or None,
+            })
+            registry["registrations"][index] = current; _save_registry(registry)
+        return {"ok": True, "deferred": True, "manual_input_required": True,
+                "registration": _public_row(current)}
+
+    row.update({"company": resolved_company, "certification_id": resolved_cert,
+                "claimed_grade": resolved_grade, "missing_identity_fields": [],
+                "official_reference_url": lookup_url(resolved_company, resolved_cert)})
+
+    allowed, guard = OFFICIAL_LOOKUP_GUARD.claim(resolved_company)
     if not allowed:
         with LOCK:
             registry = _registry(); index, current = _find_row(registry, registration_id)
@@ -404,20 +477,22 @@ def _process_registration_once(registration_id: str) -> dict[str, Any]:
                 "retry_after_seconds": guard.get("retry_after_seconds"), "ocr_label_text": text[:1800],
                 "ocr_error": ocr_error, "ocr_diagnostics": diagnostics,
                 "ocr_cached_sha256": row.get("image_sha256"), "ocr_cache_hit": ocr_cache_hit,
-                "ocr_company": evidence.get("company"), "ocr_grade": evidence.get("grade"),
-                "ocr_certification_id": evidence.get("certification_id"),
+                "company": resolved_company, "claimed_grade": resolved_grade,
+                "certification_id": resolved_cert, "official_reference_url": row["official_reference_url"],
+                "missing_identity_fields": [], "ocr_company": ocr_company or None, "ocr_grade": ocr_grade,
+                "ocr_certification_id": ocr_cert or None,
             })
             registry["registrations"][index] = current; _save_registry(registry)
         return {"ok": True, "deferred": True, "registration": _public_row(current)}
 
-    result = verify_cert(row["company"], row["certification_id"], expected_grade=row["claimed_grade"], timeout=10)
-    guard_result = OFFICIAL_LOOKUP_GUARD.record_result(row["company"], result)
+    result = verify_cert(resolved_company, resolved_cert, expected_grade=resolved_grade, timeout=10)
+    guard_result = OFFICIAL_LOOKUP_GUARD.record_result(resolved_company, result)
     provider_blocked = bool(guard_result.get("blocked") or result.get("blocked_or_challenged"))
     ocr_identity_complete = bool(
-        evidence.get("company") == row["company"]
-        and _normalized_cert(evidence.get("certification_id")) == row["certification_id"]
-        and evidence.get("grade") is not None
-        and abs(float(evidence["grade"]) - float(row["claimed_grade"])) < 1e-9
+        ocr_company == resolved_company
+        and ocr_cert == resolved_cert
+        and ocr_grade is not None
+        and abs(ocr_grade - resolved_grade) < 1e-9
     )
     official_verified = result.get("verified") is True and ocr_identity_complete and not conflicts
     status = "verified_reference" if official_verified else "quarantine" if result.get("conflict") or conflicts else "pending_official_verification"
@@ -435,6 +510,8 @@ def _process_registration_once(registration_id: str) -> dict[str, Any]:
         registry = _registry(); index, current = _find_row(registry, registration_id)
         current.update({
             "updated_at": _now(), "status": status,
+            "company": resolved_company, "claimed_grade": resolved_grade,
+            "certification_id": resolved_cert, "missing_identity_fields": [],
             "verification_state": "verified" if official_verified else "deferred_by_cooldown" if provider_blocked else "completed_unverified",
             "official_result": official_verified,
             "official_grade": result.get("grade"),
@@ -445,8 +522,8 @@ def _process_registration_once(registration_id: str) -> dict[str, Any]:
             "retry_after_seconds": (guard_result.get("cooldown_seconds") or result.get("recommended_cooldown_seconds")) if provider_blocked else None,
             "ocr_label_text": text[:1800], "ocr_error": ocr_error, "ocr_diagnostics": diagnostics,
             "ocr_cached_sha256": row.get("image_sha256"), "ocr_cache_hit": ocr_cache_hit,
-            "ocr_company": evidence.get("company"), "ocr_grade": evidence.get("grade"),
-            "ocr_certification_id": evidence.get("certification_id"),
+            "ocr_company": ocr_company or None, "ocr_grade": ocr_grade,
+            "ocr_certification_id": ocr_cert or None,
             "official_lookup": {key: result.get(key) for key in (
                 "http_status", "verified", "conflict", "lookup_error", "notice", "recommended_cooldown_seconds"
             )},
