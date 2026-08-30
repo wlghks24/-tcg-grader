@@ -1,12 +1,14 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-"""Reduce local storage while preserving verified grading evidence.
+"""Reduce local storage while preserving grading evidence.
 
 Safe policy:
 - compact valid JSON/JSON backups by removing indentation only;
 - remove Python caches and temporary atomic-write files;
-- run verified-photo-aware cleanup: verified/reference/train/validation/holdout and pending review photos are never deleted;
-- only empty, proven duplicate, old explicit-rejection, and stale unreferenced cache photos are eligible;
+- never auto-delete manual uploads, training/reference/validation/holdout photos;
+- protect every local image reference present in grading/candidate registries;
+- photo deletion is limited to old, unreferenced files inside explicit cache/download folders;
+- registry/hash/read failures keep photos instead of deleting them;
 - never delete release history, market data, grading learning JSON, or backups;
 - run `git gc --auto` only (no history rewriting/prune-now).
 """
@@ -143,7 +145,7 @@ def run() -> dict:
     git_result = git_gc_auto()
     result = {
         "updated_at": datetime.now(timezone.utc).isoformat(timespec="seconds"),
-        "policy": "검증/학습/보류 사진 보호 · 명확한 중복/손상/오래된 거부·캐시 사진만 안전정리 · JSON 공백압축 + 캐시/임시파일 정리 + git gc --auto",
+        "policy": "수동등록/학습/검증사진 전부 보호 · 레지스트리 참조사진 보호 · 14일 이상 지난 미참조 캐시만 정리 · 오류 시 삭제중지 · JSON 공백압축 + 임시캐시 정리 + git gc --auto",
         "json": json_result,
         "cache_temp_removed": removed,
         "cache_temp_saved_bytes": cache_saved,
@@ -161,4 +163,4 @@ def run() -> dict:
 if __name__ == "__main__":
     result = run()
     mb = result["estimated_saved_bytes"] / (1024*1024)
-    print(f"저장공간 최적화 완료 · 약 {mb:.2f} MB 절감 · 검증/학습사진 보호")
+    print(f"저장공간 최적화 완료 · 약 {mb:.2f} MB 절감 · 수동등록/학습/검증사진 보호")
