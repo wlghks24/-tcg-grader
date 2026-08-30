@@ -15,6 +15,7 @@ Persistent learning goals
 - Keep bounded, atomic, backup-protected memory suitable for Termux tablets.
 - Accept an optional collection_feedback.json file so future "missed event"
   corrections can immediately teach the next search cycle.
+- Ignore identical payloads while allowing later official/cross-check promotion.
 """
 from __future__ import annotations
 
@@ -36,10 +37,11 @@ MEMORY = ROOT / "collection_learning_memory.json"
 BACKUP = ROOT / "collection_learning_memory.json.bak"
 REPORT = ROOT / "collection_learning_report.json"
 FEEDBACK = ROOT / "collection_feedback.json"
-SCHEMA_VERSION = 2
+SCHEMA_VERSION = 3
 MAX_QUERY_STATS = 500
 MAX_TERM_STATS = 500
 MAX_HOST_STATS = 300
+MAX_PAYLOAD_SEEN = 1000
 
 GAME_CONFIG = {
     "포켓몬": {
@@ -93,6 +95,11 @@ STOPWORDS = {
     "について", "公式", "カード", "ゲーム", "イベント", "発売",
 }
 TOKEN_RE = re.compile(r"[A-Za-z][A-Za-z0-9_-]{2,24}|[가-힣]{2,12}|[ァ-ヶ一-龠]{2,12}")
+EVENT_TERMS = tuple(dict.fromkeys(x.lower() for seed in REGION_SEEDS.values() for x in seed["event"]))
+GAME_ALIAS_TOKENS = {
+    game: frozenset(x.lower() for alias in cfg["aliases"] for x in TOKEN_RE.findall(alias))
+    for game, cfg in GAME_CONFIG.items()
+}
 
 
 def _now() -> str:
@@ -150,6 +157,7 @@ def _fresh_memory() -> dict:
         "host_stats": {},
         "channel_stats": {},
         "feedback_seen": [],
+        "payload_seen": [],
         "totals": {"searches": 0, "results": 0, "relevant": 0, "official": 0, "errors": 0},
     }
 
@@ -186,6 +194,8 @@ def sanitize_memory(data: object) -> dict:
     out["channel_stats"] = _sanitize_stat_map(data.get("channel_stats"), kind="host")
     seen = data.get("feedback_seen") if isinstance(data.get("feedback_seen"), list) else []
     out["feedback_seen"] = [str(x)[:80] for x in seen[-300:]]
+    payload_seen = data.get("payload_seen") if isinstance(data.get("payload_seen"), list) else []
+    out["payload_seen"] = [str(x)[:80] for x in payload_seen[-MAX_PAYLOAD_SEEN:]]
     totals = data.get("totals") if isinstance(data.get("totals"), dict) else {}
     out["totals"] = {k: _bounded_int(totals.get(k)) for k in ("searches", "results", "relevant", "official", "errors")}
     out["updated_at"] = data.get("updated_at") if isinstance(data.get("updated_at"), str) else None
@@ -361,11 +371,18 @@ class AdaptiveCollectionLearner:
         baseline = dedup[:3]
         remainder = dedup[3:]
         remainder.sort(key=lambda row: row["learned_score"], reverse=True)
-        # Rotate the tail before slicing to guarantee exploration over repeated runs.
-        if remainder:
-            shift = rotation % len(remainder)
-            remainder = remainder[shift:] + remainder[:shift]
-        chosen = baseline + remainder[: max(0, budget - len(baseline))]
+        # Keep most tail slots for proven yield and rotate one bounded exploration
+        # slot. Rotating the whole sorted tail could accidentally replace every
+        # productive route with its lowest-scoring alternatives.
+        tail_budget = max(0, budget - len(baseline))
+        if len(remainder) <= tail_budget:
+            chosen = baseline + remainder
+        else:
+            exploit_count = max(0, tail_budget - 1)
+            chosen = baseline + remainder[:exploit_count]
+            exploration_pool = remainder[exploit_count:]
+            if tail_budget and exploration_pool:
+                chosen.append(exploration_pool[rotation % len(exploration_pool)])
         # Reserve one exploration slot for the learned coverage gap when possible.
         # This prevents historically successful KR/event queries from starving an
         # under-covered JP/US release/promo/collab/movie combination.
@@ -385,27 +402,30 @@ class AdaptiveCollectionLearner:
         hay = f"{url} {title}".lower()
         return any(name in hay for name in cfg.get("official_social") or ())
 
-    def relevance_score(self, game: str, title: str, url: str) -> float:
+    def _result_features(self, game: str, title: str, url: str) -> tuple[float, bool]:
         cfg = GAME_CONFIG.get(game, {})
         text = f"{title} {url}".lower()
         aliases = cfg.get("aliases") or ()
         score = 0.0
         if any(alias.lower() in text for alias in aliases):
             score += 2.5
-        event_terms = tuple(x.lower() for seed in REGION_SEEDS.values() for x in seed["event"])
-        matches = sum(1 for term in event_terms if term in text)
+        matches = sum(1 for term in EVENT_TERMS if term in text)
         score += min(3.0, matches * 0.55)
         host = _host(url)
         host_stat = self.memory["host_stats"].get(host, {})
         score += max(-1.0, min(2.0, _bounded_float(host_stat.get("score")) * 0.2))
-        if self._is_official(game, url, title):
+        official = self._is_official(game, url, title)
+        if official:
             score += 4.0
         if host in SOCIAL_SITES:
             score += 0.4
         negative = ("wallpaper", "fanart", "cosplay only", "download apk", "torrent", "wiki fandom")
         if any(x in text for x in negative):
             score -= 2.0
-        return round(score, 4)
+        return round(score, 4), official
+
+    def relevance_score(self, game: str, title: str, url: str) -> float:
+        return self._result_features(game, title, url)[0]
 
     def rank_results(self, keyword: str, rows: Iterable[dict], limit: int = 10) -> list[dict]:
         game = canonical_game(keyword)
@@ -419,8 +439,7 @@ class AdaptiveCollectionLearner:
                 continue
             key = re.sub(r"[#?].*$", "", url).rstrip("/").lower()
             row = dict(raw)
-            row["relevance_score"] = self.relevance_score(game, title, url)
-            row["official_hint"] = self._is_official(game, url, title)
+            row["relevance_score"], row["official_hint"] = self._result_features(game, title, url)
             old = merged.get(key)
             if old is None or row["relevance_score"] > old["relevance_score"]:
                 merged[key] = row
@@ -430,8 +449,17 @@ class AdaptiveCollectionLearner:
     def observe_search(self, keyword: str, query: str, rows: Iterable[dict], *, error: str = "", family: str = "web", region: str = "KR") -> dict:
         game = canonical_game(keyword)
         rows = list(rows)
-        relevant_rows = [r for r in rows if self.relevance_score(game, str(r.get("title", "")), str(r.get("url", ""))) >= 2.6]
-        official_rows = [r for r in relevant_rows if self._is_official(game, str(r.get("url", "")), str(r.get("title", "")))]
+        relevant_rows = []
+        official_rows = []
+        for row in rows:
+            if not isinstance(row, dict):
+                continue
+            score, official = self._result_features(game, str(row.get("title", "")), str(row.get("url", "")))
+            if score < 2.6:
+                continue
+            relevant_rows.append(row)
+            if official:
+                official_rows.append(row)
         qkey = _signature(query)
         qrow = self.memory["query_stats"].setdefault(qkey, {"query": query[:280], "family": family, "region": region, "game": game})
         qrow["runs"] = _bounded_int(qrow.get("runs")) + 1
@@ -472,7 +500,7 @@ class AdaptiveCollectionLearner:
 
     def _extract_terms(self, game: str, text: str) -> list[str]:
         cfg = GAME_CONFIG.get(game, {})
-        alias_tokens = {x.lower() for alias in cfg.get("aliases") or () for x in TOKEN_RE.findall(alias)}
+        alias_tokens = GAME_ALIAS_TOKENS.get(game, frozenset())
         terms = []
         for token in TOKEN_RE.findall(_norm(text)):
             low = token.lower()
@@ -520,6 +548,8 @@ class AdaptiveCollectionLearner:
         if not isinstance(rows, list):
             return 0
         learned = 0
+        seen_order = [str(x)[:80] for x in self.memory.get("payload_seen", [])]
+        seen = set(seen_order)
         for raw in rows[:250]:
             if not isinstance(raw, dict):
                 continue
@@ -531,10 +561,20 @@ class AdaptiveCollectionLearner:
                 region = "KR"
             verified = bool(raw.get("verified") is True or raw.get("source_grade") == "official" or raw.get("official_domain_match") is True or raw.get("official_account_verified") is True)
             cross_checked = bool(raw.get("cross_checked") is True or _bounded_int(raw.get("independent_source_count")) >= 2)
+            marker = _signature(json.dumps({
+                "origin": str(origin)[:40], "game": game, "region": region,
+                "identity": raw.get("id") or raw.get("url") or raw.get("source") or raw.get("title"),
+                "title": raw.get("title"), "excerpt": raw.get("excerpt"),
+                "verified": verified, "cross_checked": cross_checked,
+            }, ensure_ascii=False, sort_keys=True, default=str))
+            if marker in seen:
+                continue
             weight = 1.5 if verified else 0.9 if cross_checked else 0.25
             # Weak discovery-only rows may teach vocabulary a little, never authority.
             self._learn_row(game, region, raw, weight=weight, verified=verified, cross_checked=cross_checked)
+            seen.add(marker);seen_order.append(marker)
             learned += 1
+        self.memory["payload_seen"] = seen_order[-MAX_PAYLOAD_SEEN:]
         channel = self.memory["channel_stats"].setdefault(f"payload:{origin[:40]}", {})
         channel["runs"] = _bounded_int(channel.get("runs")) + 1
         channel["hits"] = _bounded_int(channel.get("hits")) + learned
@@ -621,6 +661,7 @@ class AdaptiveCollectionLearner:
             "learned_queries": len(self.memory.get("query_stats", {})),
             "learned_terms": len(self.memory.get("term_stats", {})),
             "learned_hosts": len(self.memory.get("host_stats", {})),
+            "payload_events_seen": len(self.memory.get("payload_seen", [])),
             "top_queries": query_rows[:15],
             "top_terms": terms[:30],
             "top_hosts": hosts[:20],

@@ -148,8 +148,8 @@ class GradedPhotoMultiSourceTests(unittest.TestCase):
 
     def test_source_selection_keeps_coverage_and_uses_learned_slot(self):
         state={'source_cursor':0}
-        def priority(source_id):return 0.99 if source_id=='cardmarket' else 0.1
-        with mock.patch.object(g,'source_priority',side_effect=priority):
+        def priorities(source_ids):return {source_id:(0.99 if source_id=='cardmarket' else 0.1) for source_id in source_ids}
+        with mock.patch.object(g,'source_priorities',side_effect=priorities):
             active=g._select_active_sources(state,False,False)
         self.assertEqual(len(active),g.RUN_SOURCE_LIMIT)
         self.assertEqual([row['id'] for row in active[:g.RUN_SOURCE_LIMIT-1]],

@@ -54,6 +54,33 @@ class AdaptiveCollectionLearnerTests(unittest.TestCase):
             self.assertGreaterEqual(report["learned_terms"], 1)
             self.assertTrue(any(row["host"] == "naruto-official.com" for row in report["top_hosts"]))
 
+    def test_repeated_payload_is_idempotent_but_verified_promotion_relearns(self):
+        with tempfile.TemporaryDirectory() as td:
+            learner = self.make_learner(Path(td))
+            row = {
+                "id": "event-1", "game": "원피스", "region": "KR",
+                "title": "원피스 야구장 한정 프로모카드",
+                "source": "https://example.com/event-1",
+            }
+            self.assertEqual(learner.learn_from_payload({"items": [row]}, origin="events"), 1)
+            self.assertEqual(learner.learn_from_payload({"items": [dict(row)]}, origin="events"), 0)
+            promoted = dict(row, verified=True, official_domain_match=True)
+            self.assertEqual(learner.learn_from_payload({"items": [promoted]}, origin="events"), 1)
+            learner.save()
+            reloaded = self.make_learner(Path(td))
+            self.assertEqual(reloaded.learn_from_payload({"items": [promoted]}, origin="events"), 0)
+
+    def test_search_observation_scores_each_result_once(self):
+        with tempfile.TemporaryDirectory() as td:
+            learner = self.make_learner(Path(td))
+            rows = [
+                {"title": f"Pokemon official event promo {index}", "url": f"https://pokemon.com/event/{index}"}
+                for index in range(50)
+            ]
+            with patch.object(learner, "_result_features", wraps=learner._result_features) as features:
+                learner.observe_search("포켓몬", "pokemon event promo", rows)
+            self.assertEqual(features.call_count, len(rows))
+
     def test_search_observation_rewards_relevant_official_hits_and_persists(self):
         with tempfile.TemporaryDirectory() as td:
             root = Path(td)

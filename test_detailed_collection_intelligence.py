@@ -125,6 +125,37 @@ class DetailedCollectionIntelligenceTests(unittest.TestCase):
         self.assertEqual(snapshot['undercovered_recovery_targets']['pokemon'],['BRG'])
         self.assertTrue(snapshot['policy']['undercovered_grader_recovery'])
 
+    def test_read_cache_reuses_learning_parse_and_batch_scores_sources(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root=Path(directory)
+            with self.paths(root):
+                learning.LEARNING.write_text(json.dumps({'schema_version':5,'source_query_stats':{
+                    'ebay':{'runs':10,'score':0.9,'queries':{}},
+                    'kream':{'runs':10,'score':0.2,'queries':{}},
+                }}),encoding='utf-8')
+                learning.clear_learning_cache()
+                original=learning._load_path
+                with mock.patch.object(learning,'_load_path',wraps=original) as reader:
+                    first=learning.source_priorities(['ebay','kream'])
+                    second=learning.source_priorities(['ebay','kream'])
+                self.assertEqual(reader.call_count,1)
+                self.assertEqual(first,second)
+                self.assertGreater(first['ebay'],first['kream'])
+
+    def test_read_cache_invalidates_after_external_state_change(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root=Path(directory)
+            with self.paths(root):
+                learning.LEARNING.write_text(json.dumps({'schema_version':5,'graded_photo_routes':{
+                    'ebay|pokemon':{'runs':1}
+                }}),encoding='utf-8')
+                learning.clear_learning_cache()
+                self.assertEqual(learning.route_run_count('ebay','pokemon'),1)
+                learning.LEARNING.write_text(json.dumps({'schema_version':5,'graded_photo_routes':{
+                    'ebay|pokemon':{'runs':200}
+                },'padding':'changed-size'}),encoding='utf-8')
+                self.assertEqual(learning.route_run_count('ebay','pokemon'),200)
+
     def test_concurrent_observations_are_not_lost_or_corrupted(self):
         with tempfile.TemporaryDirectory() as directory:
             root=Path(directory)

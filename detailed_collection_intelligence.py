@@ -18,6 +18,7 @@ ROOT=Path(__file__).resolve().parent
 LEARNING=ROOT/'detailed_collection_learning.json'
 LEARNING_BACKUP=ROOT/'detailed_collection_learning.json.bak'
 LEARNING_LOCK=threading.RLock()
+LEARNING_CACHE={'signature':None,'data':None}
 MAX_QUERY_HISTORY=240
 MAX_VERIFIED_TERMS=60
 MAX_FEEDBACK_EVENTS=2000
@@ -68,16 +69,33 @@ def _load_path(path:Path)->dict:
   return d if isinstance(d,dict) else {}
  except Exception:return {}
 
+def _learning_signature(path:Path):
+ try:
+  stat=path.stat()
+  return (str(path.resolve()),stat.st_dev,stat.st_ino,stat.st_mtime_ns,stat.st_size)
+ except OSError:return None
+
+def clear_learning_cache():
+ with LEARNING_LOCK:
+  LEARNING_CACHE['signature']=None;LEARNING_CACHE['data']=None
+
 def _load():
  with LEARNING_LOCK:
+  signature=(_learning_signature(LEARNING),_learning_signature(LEARNING_BACKUP))
+  if signature==LEARNING_CACHE.get('signature') and isinstance(LEARNING_CACHE.get('data'),dict):
+   return LEARNING_CACHE['data']
   primary=_load_path(LEARNING)
-  return primary or _load_path(LEARNING_BACKUP)
+  data=primary or _load_path(LEARNING_BACKUP)
+  LEARNING_CACHE['signature']=signature
+  LEARNING_CACHE['data']=data
+  return data
 
 def _save_unlocked(d:dict):
  previous=_load_path(LEARNING)
  if previous:
   atomic_write_text(LEARNING_BACKUP,json.dumps(previous,ensure_ascii=False,separators=(',',':'))+'\n',suffix='.learning-backup.tmp')
  atomic_write_json(LEARNING,d,suffix='.detailed-learning.tmp')
+ LEARNING_CACHE['signature']=(_learning_signature(LEARNING),_learning_signature(LEARNING_BACKUP));LEARNING_CACHE['data']=d
 
 def _save(d):
  with LEARNING_LOCK,exclusive_file_lock(LEARNING):_save_unlocked(d)
@@ -376,10 +394,15 @@ def learning_snapshot()->dict:
          'verified_identifiers':{game:[term for term,_ in sorted(_dict(terms.get(game)).items(),key=lambda pair:(-_number(pair[1]),pair[0]))[:5]] for game in GAMES},
          'policy':{'verified_feedback_only':True,'measurement_quality_feedback':True,'undercovered_grader_recovery':True,'query_learning_cannot_change_trust':True,'exploration_retained':True,'recency_decay_enabled':True,'idempotent_feedback':True,'cross_process_lock':True,'state_backup_enabled':True}}
 
-def source_priority(source_id:str)->float:
+def source_priority(source_id:str,learning_state:dict|None=None)->float:
  source_id=_source_id(source_id)
  s=source_by_id(source_id);base=float(s['weight']) if s else 0.4
- d=_load();learned=_dict(_dict(d.get('source_query_stats')).get(source_id)) if isinstance(d,dict) else {}
+ d=learning_state if isinstance(learning_state,dict) else _load();learned=_dict(_dict(d.get('source_query_stats')).get(source_id)) if isinstance(d,dict) else {}
  last=max(0,int(_number(learned.get('last_at'))));freshness=1.0 if not last else 0.5**(max(0,int(time.time())-last)/(30*86400))
  learned_score=0.5+(_number(learned.get('score'),0.5)-0.5)*freshness
  return round(base*0.65+max(0.05,min(0.99,learned_score))*0.35,4)
+
+def source_priorities(source_ids:Iterable[str])->dict[str,float]:
+ """Score many sources from one immutable learning snapshot."""
+ state=_load()
+ return {str(source_id):source_priority(str(source_id),state) for source_id in source_ids}

@@ -1,7 +1,7 @@
 {
   "version": 1,
   "engine": "v109-card-identity-ocr-learning",
-  "generated_at": "2026-08-30T10:21:50+00:00",
+  "generated_at": "2026-08-30T13:52:33+00:00",
   "files": {
     "_audit_progress.py": {
       "sha256": "e4561a89779fc9c8f4b4d474bc2ce4285b65174eb29a6bf20f47a5e30456d674",
@@ -192,8 +192,8 @@
       "bytes": 1628
     },
     "adaptive_collection_learner.py": {
-      "sha256": "7ba2b63669f36548592fb26febdad3519e4347a124713826bd49cbd8c333c2d2",
-      "bytes": 33556
+      "sha256": "d6d64a2ae1a999ae2e2f2bf4049cfd82d05b32416cb74ed28e01105e5d946790",
+      "bytes": 35477
     },
     "ai_code_improver.py": {
       "sha256": "757ff9082b7da1efb4546b831ccf62ec1440cf7e353152209a5031f8908049c8",
@@ -456,8 +456,8 @@
       "bytes": 3149
     },
     "detailed_collection_intelligence.py": {
-      "sha256": "1625c048b882690fe9fb66fa79fbb401bddd00492cd563e5be1819761b1d8f98",
-      "bytes": 27728
+      "sha256": "d3f4c07aad948b412c92c4bde73c4f09d7a409eda59ee3808f28e117421b0856",
+      "bytes": 28800
     },
     "ebay_grader_candidates.json": {
       "sha256": "47408933db066e8a9ad1159cbab98041c31145cdf7e180bec83c0bc2656b8472",
@@ -672,8 +672,8 @@
       "bytes": 20043
     },
     "graded_photo_multi_source.py": {
-      "sha256": "17ba3ce2275a85075378b4e031b1a1c316b176c05e6f37dc2797b4e47355363c",
-      "bytes": 70883
+      "sha256": "fa16a6e2458076d31cb52562805b54d7194373e94ae93e65f9ab8c6a309fa4a4",
+      "bytes": 71004
     },
     "grading_accuracy_v99.js": {
       "sha256": "f674f723e8230d99ff493791bd61457cb9aaeb4c049c1ae51abe79de8e2136fc",
@@ -948,8 +948,8 @@
       "bytes": 94173
     },
     "test_adaptive_collection_learner.py": {
-      "sha256": "720f3d8161d44e14968cb69bb94c2b4281fa337d949d2b7738897bff80474e7f",
-      "bytes": 13232
+      "sha256": "9dc741fa36209f58c87bd8e3c76c50acf9e1c8da9928165af69e619d070b2ed9",
+      "bytes": 14795
     },
     "test_box_hit_market_discovery.py": {
       "sha256": "b68e5bdbe0fb919a6779357bafd9f1297fd5bfa53bf4b54b795d17291839220a",
@@ -964,16 +964,16 @@
       "bytes": 2526
     },
     "test_detailed_collection_intelligence.py": {
-      "sha256": "b0bd83a05758a03a206f457bedfa7a288c7cde924157e68da772355a6852b26e",
-      "bytes": 9787
+      "sha256": "7806accf85d9632200bdf3d5e66155d1f6eda09943307e8f8de612edb9140a0a",
+      "bytes": 11549
     },
     "test_fan_social_learning.py": {
       "sha256": "5d4907ec876083336933d76b6ba9cff0385078fdae99bd4800849360785a9ef6",
       "bytes": 2110
     },
     "test_graded_photo_multi_source.py": {
-      "sha256": "0309f377a3e33b02584296fc4b61a673215d7ae1c10c30a11266a3bb53c5a00e",
-      "bytes": 28264
+      "sha256": "9ef7ac0b2308279016de0ba3a7ee77654ef8897fc607c13d8a9e436fe80d68cb",
+      "bytes": 28313
     },
     "test_graded_photo_runtime.py": {
       "sha256": "1adc1d8de9c7e1e74dcc3fe60d6cfe7c3973508a96de752f1004bc357407f54c",

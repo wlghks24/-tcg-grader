@@ -24,7 +24,7 @@ from safe_runtime import atomic_write_json, exclusive_file_lock, safe_read_text,
 from detailed_collection_intelligence import (
  build_queries, canonical_key, evidence_confidence, learning_snapshot,
  grader_collection_targets, record_collection_cycle, record_official_feedback,
- route_run_count, source_priority,
+ route_run_count, source_priorities, source_priority,
 )
 from graded_photo_evidence import enrich_rows, normalize_cert
 from grading_cert_verifier import lookup_url, verify_cert
@@ -716,7 +716,8 @@ def _select_active_sources(state:dict,is_android:bool,first_bootstrap:bool)->lis
     coverage=[SOURCES[(cursor+i)%len(SOURCES)] for i in range(coverage_slots)]
     used={row['id'] for row in coverage}
     candidates=[row for row in SOURCES if row['id'] not in used]
-    exploit=max(candidates,key=lambda row:(source_priority(SOURCE_ID_ALIASES.get(row['id'],row['id'])),-SOURCES.index(row))) if candidates and len(coverage)<limit else None
+    priorities=source_priorities(SOURCE_ID_ALIASES.get(row['id'],row['id']) for row in candidates)
+    exploit=max(candidates,key=lambda row:(priorities.get(SOURCE_ID_ALIASES.get(row['id'],row['id']),0.0),-SOURCES.index(row))) if candidates and len(coverage)<limit else None
     active=coverage+([exploit] if exploit else [])
     state['source_cursor']=(cursor+coverage_slots)%len(SOURCES)
     state['source_selection_policy']='coverage_plus_recency_weighted_exploitation'
