@@ -31,6 +31,7 @@ multi_market_source_learning.json
 
 # Device-local storage optimization status
 storage_optimization_report.json
+photo_cleanup_report.json
 
 # Social stock source performance learning is device-local.
 social_stock_learning.json
