@@ -98,15 +98,13 @@ def _retry_after_seconds(exc):
 
 
 def _fetch(company, url, timeout=10, retries=1):
-    """Fetch an official page without ever retrying access-control/rate-limit blocks."""
+    """Fetch an official page without retrying access-control/rate-limit blocks."""
     attempt = 0
     while True:
         try:
             return _request(company, url, timeout=timeout)
         except HTTPError as exc:
             status = int(getattr(exc, "code", 0) or 0)
-            # 401/403/407/429 must propagate immediately. Retrying these inside
-            # this helper would defeat the batch-level circuit breaker/cooldown.
             if status in BLOCKING_HTTP_STATUSES:
                 raise
             if attempt >= retries or status not in TRANSIENT_HTTP_STATUSES:
@@ -165,6 +163,33 @@ def _page_evidence(company, cert, text):
     }
 
 
+def _block_recovery_metadata(company, status, retry_after):
+    cfg = OFFICIAL[company]
+    if status == 429:
+        return {
+            "block_kind": "rate_limit",
+            "resolution_action": "respect_retry_after_then_retry_later",
+            "manual_verification_url": cfg["home"],
+            "do_not_bypass": True,
+            "retry_after_honored": retry_after is not None,
+        }
+    if status in {401, 403, 407}:
+        return {
+            "block_kind": "access_control",
+            "resolution_action": "cooldown_then_manual_official_lookup_if_block_persists",
+            "manual_verification_url": cfg["home"],
+            "do_not_bypass": True,
+            "retry_after_honored": retry_after is not None,
+        }
+    return {
+        "block_kind": "http_error",
+        "resolution_action": "preserve_official_link_and_review",
+        "manual_verification_url": cfg["home"],
+        "do_not_bypass": True,
+        "retry_after_honored": retry_after is not None,
+    }
+
+
 def verify_cert(company, cert, expected_grade=None, timeout=10):
     company = str(company or "").upper()
     cert = _clean_cert(cert)
@@ -218,9 +243,12 @@ def verify_cert(company, cert, expected_grade=None, timeout=10):
             "retry_after_seconds": retry_after,
             "recommended_cooldown_seconds": recommended,
             "retry_suppressed": status in BLOCKING_HTTP_STATUSES,
+            "recovery": _block_recovery_metadata(company, status, retry_after),
         })
-        if status in BLOCKING_HTTP_STATUSES:
-            result["notice"] = "공식 사이트가 자동 요청을 차단하거나 속도 제한했습니다. 같은 요청을 즉시 재시도하지 않고 공식 조회 링크와 쿨다운을 보존합니다."
+        if status == 429:
+            result["notice"] = "공식 사이트 요청 제한(429)입니다. Retry-After가 있으면 존중하고, 없으면 안전 쿨다운 후에만 재시도합니다."
+        elif status in {401, 403, 407}:
+            result["notice"] = "공식 사이트 접근제어 응답입니다. 자동 우회나 즉시 재시도 없이 쿨다운하고, 반복되면 공식 조회 페이지에서 수동 확인 대상으로 전환합니다."
         elif status == 404:
             result["notice"] = "공식 조회 URL이 HTTP 404를 반환했습니다. 인증 실패로 단정하지 않고 수동 확인 대상으로 보존합니다."
         else:
