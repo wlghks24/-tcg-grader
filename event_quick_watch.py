@@ -54,6 +54,17 @@ def _same_manual_fact(existing: dict, seed: dict) -> bool:
     return any(term in current for term in terms)
 
 
+def _category_names() -> set[str]:
+    patterns = getattr(social_event_discovery, "CATEGORY_PATTERNS", ())
+    if isinstance(patterns, dict):
+        return {str(name) for name in patterns}
+    names: set[str] = set()
+    for row in patterns:
+        if isinstance(row, (tuple, list)) and row:
+            names.add(str(row[0]))
+    return names
+
+
 def _load_manual_seeds() -> list[dict]:
     if not MANUAL_EVIDENCE.exists() or MANUAL_EVIDENCE.is_symlink():
         return []
@@ -62,13 +73,14 @@ def _load_manual_seeds() -> list[dict]:
     except (OSError, ValueError, TypeError, json.JSONDecodeError):
         return []
     rows = payload.get("items", []) if isinstance(payload, dict) else []
+    valid_categories = _category_names()
     valid = []
     for row in rows:
         if not isinstance(row, dict) or row.get("manual_evidence") is not True:
             continue
         if row.get("game") not in social_event_discovery.GAMES or row.get("region") not in social_event_discovery.REGION_LANG:
             continue
-        if row.get("category") not in social_event_discovery.CATEGORY_PATTERNS:
+        if row.get("category") not in valid_categories:
             continue
         source = str(row.get("source") or "")
         if not source.startswith("https://"):
