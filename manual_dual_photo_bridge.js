@@ -1,19 +1,19 @@
 (()=>{
 'use strict';
-const GLOBAL_KEY='__TCG_DUAL_PHOTO_BRIDGE_V150__';
+const GLOBAL_KEY='__TCG_DUAL_PHOTO_BRIDGE_V153__';
 if(globalThis[GLOBAL_KEY]?.loaded){
  globalThis[GLOBAL_KEY].duplicate_loads=(globalThis[GLOBAL_KEY].duplicate_loads||0)+1;
  return;
 }
-const bridgeState=globalThis[GLOBAL_KEY]={loaded:true,version:150,enhanced:false,duplicate_loads:0};
+const bridgeState=globalThis[GLOBAL_KEY]={loaded:true,version:153,enhanced:false,duplicate_loads:0,manualProofStatusSync:true};
 if(!document.getElementById('gpdDualBridgeForceV150')){
  const marker=document.createElement('meta');
  marker.id='gpdDualBridgeForceV150';
  marker.name='tcg-dual-photo-bridge';
- marker.content='inline-v150';
+ marker.content='inline-v153';
  document.head?.appendChild(marker);
 }
-let installed=false,submitting=false;
+let installed=false,submitting=false,proofSyncing=false,proofObserverInstalled=false;
 const previewUrls={front:null,back:null};
 const sleep=ms=>new Promise(r=>setTimeout(r,ms));
 function fileDataUrl(file){return new Promise((resolve,reject)=>{const reader=new FileReader();reader.onload=()=>resolve(String(reader.result||''));reader.onerror=()=>reject(new Error('파일을 읽지 못했습니다.'));reader.readAsDataURL(file)})}
@@ -62,10 +62,35 @@ function showPreview(side,file,{registered=false}={}){
  clearPreviewUrl(side);previewUrls[side]=URL.createObjectURL(file);img.src=previewUrls[side];box.classList.add('has-image');meta.textContent=`${file.name||'사진'} · ${formatBytes(file.size)}`;state.textContent=registered?'등록 완료':'선택됨';state.classList.add('ready');
 }
 function markPreviewRegistered(){for(const side of ['front','back']){const state=document.querySelector(`[data-preview-state="${side}"]`);if(state&&document.querySelector(`[data-preview-box="${side}"]`)?.classList.contains('has-image')){state.textContent='등록 완료';state.classList.add('ready')}}}
+async function syncRecentManualProofState(){
+ if(proofSyncing)return;
+ const host=document.getElementById('gpdManualRows');if(!host)return;
+ proofSyncing=true;
+ try{
+  const response=await fetch('/api/graded-photo-manual-registrations?_proof_state='+Date.now(),{cache:'no-store'});if(!response.ok)return;
+  const payload=await response.json();const rows=Array.isArray(payload.registrations)?payload.registrations.slice(0,10):[];const domRows=[...host.querySelectorAll('.gpd-manual-row')];
+  domRows.forEach((element,index)=>{
+   const row=rows[index];if(!row)return;
+   if(row.registration_id)element.dataset.registrationId=row.registration_id;
+   const manualDone=row.manual_official_proof_registered===true&&(row.manual_official_proof_state==='matched'||row.verification_state==='manual_official_proof_matched');
+   if(!manualDone)return;
+   const strong=element.querySelector('strong');if(strong&&strong.textContent!=='수동검증 완료 · 참고학습'){strong.textContent='수동검증 완료 · 참고학습';strong.className='ok';}
+   const badge=element.querySelector('.gpd-manual-only-badge');if(badge&&badge.textContent!=='수동검증 완료'){badge.textContent='수동검증 완료';}
+  });
+ }catch(_){}finally{proofSyncing=false}
+}
+function installProofStateSync(){
+ if(proofObserverInstalled)return;
+ const host=document.getElementById('gpdManualRows');if(!host)return;
+ proofObserverInstalled=true;
+ let timer=0;const schedule=()=>{clearTimeout(timer);timer=setTimeout(syncRecentManualProofState,120)};
+ const observer=new MutationObserver(schedule);observer.observe(host,{childList:true,subtree:true});
+ schedule();setInterval(syncRecentManualProofState,4000);
+}
 function enhance(){
  const form=document.getElementById('gpdManualForm');if(!form)return false;
  const existingBack=document.getElementById('gpdManualBackPhoto');
- if(existingBack){installed=true;bridgeState.enhanced=true;return true;}
+ if(existingBack){installed=true;bridgeState.enhanced=true;installProofStateSync();return true;}
  if(installed)return true;
  const front=document.getElementById('gpdManualPhoto');if(!front)return false;
  installed=true;
@@ -79,7 +104,7 @@ function enhance(){
  back?.addEventListener('change',()=>showPreview('back',back.files?.[0]||null));
  const policy=form.querySelector('.gpd-manual-policy');if(policy)policy.innerHTML='카드게임을 선택하고 <b>등급 슬랩 앞면 + 뒷면 사진 2장</b>을 모두 등록합니다. 선택 즉시 아래 미리보기에서 실제 올릴 사진을 확인할 수 있습니다. 앞면은 등급사·등급·인증번호 OCR에 사용하고, 뒷면은 같은 등록건의 별도 증빙사진으로 저장합니다. 두 사진이 모두 있어야 수동등록을 진행하며, 공식사이트 확인 전에는 RAW 등급 보정학습에 사용하지 않습니다.';
  const button=document.getElementById('gpdManualSubmit');if(button)button.textContent='앞면 + 뒷면 2장으로 수동등록';
- form.addEventListener('submit',submit,true);
+ form.addEventListener('submit',submit,true);installProofStateSync();
  bridgeState.enhanced=true;
  return true;
 }
@@ -99,7 +124,7 @@ async function submit(event){
   const response=await fetch('/api/graded-photo-manual-registration',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body),cache:'no-store'});
   const data=await response.json().catch(()=>({}));if(!response.ok)throw new Error(data.error||`등록 실패(${response.status})`);
   markPreviewRegistered();if(status)status.textContent=data.duplicate?'기존 앞면 등록건에 뒷면 사진을 확인했습니다. 아래 미리보기는 방금 선택한 사진입니다.':'앞면·뒷면 2장 등록 완료 · 아래에서 방금 등록한 사진을 확인할 수 있습니다.';
-  document.getElementById('gpdManualPhoto').value='';document.getElementById('gpdManualBackPhoto').value='';if(typeof window.loadManualRegistrations==='function')await window.loadManualRegistrations();await sleep(500);
+  document.getElementById('gpdManualPhoto').value='';document.getElementById('gpdManualBackPhoto').value='';if(typeof window.loadManualRegistrations==='function')await window.loadManualRegistrations();await sleep(500);await syncRecentManualProofState();
  }catch(error){if(status)status.textContent=location.hostname.endsWith('github.io')?'PC·태블릿 로컬/Tailscale 서버 주소에서 등록하세요.':String(error?.message||'앞뒤 사진 등록 실패');}
  finally{submitting=false;if(button)button.disabled=false;}
 }
