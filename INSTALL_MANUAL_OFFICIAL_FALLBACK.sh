@@ -2,7 +2,7 @@
 set -eu
 cd "$(dirname "$0")"
 
-printf '\n=== 등급사진 수동검증 전용 + 인증번호 앞뒤사진 게임별 분류 설치 ===\n'
+printf '\n=== 등급사진 수동검증 전용 + 앞뒤사진 2장 등록 설치 ===\n'
 
 export TCG_DISABLE_AUTO_GRADER_LOOKUP=1
 
@@ -10,6 +10,7 @@ python -m py_compile \
   tcg_updater_v135.py \
   manual_official_proof.py \
   manual_collection_mode.py \
+  manual_dual_photo_registration.py \
   graded_photo_manual_pair_queue.py \
   grading_cert_verifier.py \
   runtime_bundle_guard_v143.py \
@@ -43,6 +44,8 @@ assert verifier.automatic_lookup_disabled() is True
 assert mode.get('collector_manual_only') is True, mode
 assert mode.get('manual_registration_manual_only') is True, mode
 assert mode.get('collector_syncs_manual_pairs') is True, mode
+assert mode.get('manual_front_back_upload') is True, mode
+assert mode.get('back_stored_separately') is True, mode
 assert mode.get('grouped_by_game_only') is True, mode
 assert mode.get('grader_subfolders_created') is False, mode
 assert str(pair_queue.ANDROID_ROOT) == '/storage/emulated/0/Download/TCG등급학습'
@@ -50,17 +53,39 @@ assert '/sdcard' not in str(pair_queue.ANDROID_ROOT)
 probe=pair_queue._pair_folder(pair_queue.ANDROID_ROOT,'pokemon','0123456789abcdefabcd')
 assert str(probe).endswith('/pokemon/수동등록대기/0123456789abcdefabcd')
 assert '/pokemon/PSA/' not in str(probe)
-print('[OK] 자동 등급사 조회 OFF + 인증번호/앞뒤사진 + 게임별 폴더 계약 정상')
-print('[OK] PSA/BGS/CGC/TAG/BRG는 폴더가 아니라 pair.json/수동등록목록.json 메타데이터로 보존')
-print('[OK] Android 저장경로는 /sdcard 심볼릭링크 대신 /storage/emulated/0 사용')
+print('[OK] 수동등록 앞면+뒷면 2장 저장 계약 정상')
+print('[OK] 앞면은 OCR, 뒷면은 같은 등록건의 별도 증빙파일로 저장')
+print('[OK] 게임별 폴더만 사용하고 등급사는 메타데이터로 보존')
+PY
+
+# 현재 index.html에 앞뒤사진 업로드 UI 브리지를 중복 없이 추가합니다.
+python - <<'PY'
+from pathlib import Path
+p=Path('index.html')
+text=p.read_text(encoding='utf-8')
+tag='<script src="./manual_dual_photo_bridge.js?v=146"></script>'
+if 'manual_dual_photo_bridge.js' not in text:
+    if '</body>' in text:
+        text=text.replace('</body>',tag+'\n</body>',1)
+    elif '</html>' in text:
+        text=text.replace('</html>',tag+'\n</html>',1)
+    else:
+        text += '\n'+tag+'\n'
+    p.write_text(text,encoding='utf-8')
+print('[OK] 앞뒤사진 UI 브리지:', text.count('manual_dual_photo_bridge.js'))
 PY
 
 if command -v node >/dev/null 2>&1; then
   node --check graded_photo_dashboard.js
   node --check manual_official_verify_bridge.js
+  node --check manual_dual_photo_bridge.js
 else
   echo '[INFO] node 없음 · JS는 브라우저 로드 시 확인합니다.'
 fi
+
+test -s manual_dual_photo_registration.py
+test -s manual_dual_photo_bridge.js
+grep -q 'manual_dual_photo_bridge.js' index.html
 
 pkill -f 'graded_photo_manual_pair_queue.py --watch' 2>/dev/null || true
 pkill -f 'python.*tcg_updater_v135.py' 2>/dev/null || true
@@ -96,7 +121,6 @@ printf '%s\n' "$PAIR_OUTPUT"
 if ! printf '%s' "$PAIR_OUTPUT" | grep -Fq '/storage/emulated/0/Download/TCG등급학습'; then
   echo '[오류] Android Download 폴더 안전쓰기 검사에 실패했습니다.'
   echo '[조치] Termux에서 termux-setup-storage 실행 → 파일/사진 접근 허용 → 이 설치 스크립트를 다시 실행하세요.'
-  echo '[안전] 앱 내부 임시폴더로 조용히 폴백한 상태를 설치완료로 처리하지 않습니다.'
   exit 1
 fi
 if ! printf '%s' "$PAIR_OUTPUT" | grep -Fq 'PSA/BGS 등급사 하위폴더 없음'; then
@@ -105,14 +129,11 @@ if ! printf '%s' "$PAIR_OUTPUT" | grep -Fq 'PSA/BGS 등급사 하위폴더 없�
 fi
 
 printf '\n[OK] 설치 완료\n'
+printf '%s\n' '- 수동등록 화면에서 등급 슬랩 앞면 + 뒷면 사진을 모두 필수 선택'
+printf '%s\n' '- 앞면은 OCR용, 뒷면은 같은 등록번호의 별도 증빙사진으로 안전 저장'
+printf '%s\n' '- 동일한 앞/뒤 사진 선택은 거절'
 printf '%s\n' '- PSA/BGS/CGC/TAG/BRG 자동 인증사이트 조회 완전 비활성화'
-printf '%s\n' '- 포켓몬/원피스/나루토 중 인증번호 + 앞면 + 뒷면이 모두 확인된 후보만 저장'
-printf '%s\n' '- 저장: /storage/emulated/0/Download/TCG등급학습/pokemon/수동등록대기/<카드>/'
-printf '%s\n' '- 저장: /storage/emulated/0/Download/TCG등급학습/onepiece/수동등록대기/<카드>/'
-printf '%s\n' '- 저장: /storage/emulated/0/Download/TCG등급학습/naruto/수동등록대기/<카드>/'
-printf '%s\n' '- pokemon/PSA, onepiece/BGS 같은 등급사 하위폴더는 만들지 않음'
-printf '%s\n' '- 등급사 정보는 각 게임의 수동등록목록.json과 카드별 pair.json 안에 보존'
-printf '%s\n' '- 기존에 자동 생성된 <게임>/<등급사>/수동등록대기 자료는 가능한 경우 게임 폴더로 안전 이동'
-printf '%s\n' '- 단일사진·인증번호 없음·지원하지 않는 등급사는 자동 저장하지 않음'
+printf '%s\n' '- 포켓몬/원피스/나루토 중 인증번호 + 앞면 + 뒷면이 모두 확인된 자동수집 후보만 저장'
+printf '%s\n' '- 저장은 pokemon / onepiece / naruto 게임별 폴더만 사용'
 printf '%s\n' '- 공식사이트는 사용자가 직접 열어 확인하고 확인화면을 수동등록'
 printf '%s\n' '- 수동 확인자료는 RAW 등급 보정학습으로 자동 승격하지 않음'
