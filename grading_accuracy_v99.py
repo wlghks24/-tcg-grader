@@ -132,7 +132,17 @@ def _fold(card_id:str)->int:return int(hashlib.sha256(card_id.encode()).hexdiges
 
 def _tier(n:int)->float:return 0 if n<5 else .25 if n<10 else .5 if n<30 else .75 if n<60 else 1
 
-def _candidate(rows:list[dict[str,Any]])->float:
+def _candidate(rows:list[dict[str,Any]],evidence_n:int|None=None)->float:
+ """Build a downward-only candidate without using holdout labels.
+
+ ``evidence_n`` controls only the conservative strength tier. During grouped
+ cross-validation we use the size of the full verified company dataset for
+ that tier while computing the residual exclusively from the training fold.
+ This avoids a boundary bug where a 10-row model could never prove a -0.5
+ correction because every training fold temporarily fell below 10 rows and
+ produced a no-op -0.25 correction. Holdout outcomes still decide whether the
+ candidate is allowed to activate.
+ """
  if not rows:return 0.0
  residual=[r['actual']-r['raw_pred'] for r in rows]
  med=statistics.median(residual)
@@ -140,7 +150,8 @@ def _candidate(rows:list[dict[str,Any]])->float:
  radius=max(.5,3*1.4826*mad)
  clipped=[clamp(x,med-radius,med+radius) for x in residual]
  robust=statistics.median(clipped)
- return round(clamp(min(0,robust)*_tier(len(rows)),-.75,0)*20)/20
+ support=max(len(rows),int(evidence_n or len(rows)))
+ return round(clamp(min(0,robust)*_tier(support),-.75,0)*20)/20
 
 def apply_downward_correction(company:str,raw:Any,correction:Any)->float:
  company=str(company or '').upper();raw_value=finite(raw);corr=finite(correction)
@@ -166,11 +177,13 @@ def train_company_calibration(rows:Iterable[dict[str,Any]])->dict[str,dict[str,A
   for fold in range(5):
    hold=[r for r in group if _fold(r['card_id'])==fold];train=[r for r in group if _fold(r['card_id'])!=fold]
    if not hold or len(train)<5:continue
-   corr=_candidate(train);b,_=_metrics(hold,0,company);a,_=_metrics(hold,corr,company)
+   # Strength is based on total independently verified evidence, while the
+   # candidate residual itself is computed only from this training fold.
+   corr=_candidate(train,evidence_n=n);b,_=_metrics(hold,0,company);a,_=_metrics(hold,corr,company)
    before_all.extend(abs(apply_downward_correction(company,r['raw_pred'],0)-r['actual']) for r in hold)
    after_all.extend(abs(apply_downward_correction(company,r['raw_pred'],corr)-r['actual']) for r in hold)
    nonworse+=int(a<=b+1e-9);used+=1
-  correction=_candidate(group)
+  correction=_candidate(group,evidence_n=n)
   before=sum(before_all)/len(before_all) if before_all else math.inf
   after=sum(after_all)/len(after_all) if after_all else math.inf
   enabled=n>=10 and unique>=8 and used>=2 and correction<0 and after+.03<=before and nonworse/max(1,used)>=.6
