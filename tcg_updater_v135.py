@@ -63,6 +63,7 @@ class Handler(core.Handler):
                 'unverified_search_host_term_learning_weight': 0.0,
                 'unique_evidence_host_counting': True,
                 'fan_reuse_requires_corroboration_or_watch': True,
+                'strict_official_social_url_match': True,
                 'base_service': getattr(core, 'SERVICE_NAME', 'TCG updater'),
             })
         if path == '/api/learning-model-status':
