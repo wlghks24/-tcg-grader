@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 from __future__ import annotations
 
+import os
 import unittest
 
 import manual_collection_mode as mode
@@ -12,9 +13,22 @@ class ManualCollectionModeTests(unittest.TestCase):
         self.assertTrue(status["ok"], status)
         self.assertFalse(status["automatic_official_lookup"])
         self.assertFalse(status["manual_registration_auto_official_lookup"])
+        self.assertTrue(status["certification_front_back_pair_required"])
+        self.assertTrue(status["grouped_by_game_and_grader"])
+        self.assertEqual(os.environ.get("TCG_DISABLE_AUTO_GRADER_LOOKUP"), "1")
         runtime = mode.status()
         self.assertTrue(runtime["collector_manual_only"], runtime)
         self.assertTrue(runtime["manual_registration_manual_only"], runtime)
+        self.assertTrue(runtime["collector_syncs_manual_pairs"], runtime)
+        self.assertTrue(runtime["environment_no_network_gate"], runtime)
+
+    def test_apply_is_idempotent(self):
+        first = mode.apply()
+        second = mode.apply()
+        self.assertTrue(first["ok"] and second["ok"])
+        runtime = mode.status()
+        self.assertTrue(runtime["ok"], runtime)
+        self.assertTrue(runtime["collector_syncs_manual_pairs"], runtime)
 
     def test_registry_only_verifier_never_calls_live_lookup(self):
         rows = [{
