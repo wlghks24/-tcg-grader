@@ -1,0 +1,11 @@
+Run on Termux:
+cd ~/-tcg-grader
+curl -L --fail "https://raw.githubusercontent.com/wlghks24/-tcg-grader/main/FIX_GRADE_LEARNING_V136.sh?$(date +%s)" -o FIX_GRADE_LEARNING_V136.sh
+bash FIX_GRADE_LEARNING_V136.sh
+
+Expected success markers:
+[OK] v136 10건 경계 교차검증 직접 회귀검사 통과
+Ran 12 tests
+OK
+[OK] v136 서버 API 3종 정상
+[OK] v136 hotfix 완료
