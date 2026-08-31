@@ -16,6 +16,7 @@ import threading
 import time
 from pathlib import Path
 
+import event_collection_hardening_v139 as hardening
 import social_event_discovery
 from safe_runtime import atomic_write_json, env_int, safe_read_text
 
@@ -36,6 +37,9 @@ START_DELAY_SECONDS = env_int(
     60 * 60,
 )
 _RUN_LOCK = threading.Lock()
+
+# Keep standalone executions identical to the main updater runtime.
+hardening.apply()
 
 
 def _text(row: dict) -> str:
@@ -133,6 +137,7 @@ def run_once(shared_lock=None) -> dict:
         return {"ok": True, "skipped": True, "reason": "event quick scan already running"}
     started = time.monotonic()
     try:
+        hardening.apply()
         if shared_lock is None:
             result = social_event_discovery.main()
             result, manual_added = _merge_manual_evidence(result)
@@ -148,6 +153,7 @@ def run_once(shared_lock=None) -> dict:
         return {
             "ok": bool(result.get("fresh_collection_ok", False)),
             "degraded": bool(result.get("degraded", False)),
+            "event_collection_patch": hardening.PATCH_ID,
             "item_count": len(items),
             "movie_candidate_count": movie_count,
             "manual_evidence_count": int(result.get("manual_evidence_count") or 0),
@@ -161,6 +167,7 @@ def run_once(shared_lock=None) -> dict:
         return {
             "ok": False,
             "degraded": True,
+            "event_collection_patch": hardening.PATCH_ID,
             "error": f"{type(exc).__name__}: event quick scan failed",
             "elapsed_seconds": round(time.monotonic() - started, 2),
         }
