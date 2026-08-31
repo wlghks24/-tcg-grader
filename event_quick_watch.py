@@ -8,7 +8,8 @@ module only refreshes social/event discovery so newly announced movies,
 collaborations, promos, reward/giveaway notices and events can reach
 social_event_candidates.json much sooner. It also preserves narrowly scoped
 manual official evidence when a fresh announcement is reported before search
-engines/API feeds have indexed it.
+engines/API feeds have indexed it. v142 prevents unverified candidates from
+poisoning persistent host/term learning.
 """
 from __future__ import annotations
 
@@ -17,7 +18,7 @@ import threading
 import time
 from pathlib import Path
 
-import event_collection_hardening_v141 as hardening
+import collection_learning_hardening_v142 as hardening
 import social_event_discovery
 from safe_runtime import atomic_write_json, env_int, safe_read_text
 
