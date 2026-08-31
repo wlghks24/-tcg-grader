@@ -5,9 +5,10 @@
 The normal updater intentionally remains conservative because price, image and
 full-catalog collection is expensive and can trigger 403/429 responses. This
 module only refreshes social/event discovery so newly announced movies,
-collaborations, promos and events can reach social_event_candidates.json much
-sooner. It also preserves narrowly scoped manual official evidence when a fresh
-announcement is reported before search engines/API feeds have indexed it.
+collaborations, promos, reward/giveaway notices and events can reach
+social_event_candidates.json much sooner. It also preserves narrowly scoped
+manual official evidence when a fresh announcement is reported before search
+engines/API feeds have indexed it.
 """
 from __future__ import annotations
 
@@ -16,7 +17,7 @@ import threading
 import time
 from pathlib import Path
 
-import event_collection_hardening_v139 as hardening
+import event_collection_hardening_v141 as hardening
 import social_event_discovery
 from safe_runtime import atomic_write_json, env_int, safe_read_text
 
@@ -112,6 +113,7 @@ def _merge_manual_evidence(result: dict) -> tuple[dict, int]:
     payload["item_count"] = len(items)
     payload["manual_evidence_count"] = sum(1 for row in items if row.get("manual_evidence") is True)
     payload["official_social_candidate_count"] = sum(1 for row in items if row.get("official_account_verified") is True)
+    payload["reward_watch_count"] = sum(1 for row in items if row.get("reward_watch") is True)
     payload["cross_checked_count"] = sum(1 for row in items if row.get("cross_checked") is True)
     try:
         payload["topic_coverage"] = {
@@ -150,12 +152,17 @@ def run_once(shared_lock=None) -> dict:
             1 for row in items
             if isinstance(row, dict) and row.get("category") == "movie"
         )
+        reward_count = sum(
+            1 for row in items
+            if isinstance(row, dict) and row.get("reward_watch") is True
+        )
         return {
             "ok": bool(result.get("fresh_collection_ok", False)),
             "degraded": bool(result.get("degraded", False)),
             "event_collection_patch": hardening.PATCH_ID,
             "item_count": len(items),
             "movie_candidate_count": movie_count,
+            "reward_candidate_count": reward_count,
             "manual_evidence_count": int(result.get("manual_evidence_count") or 0),
             "manual_evidence_added_this_run": manual_added,
             "official_social_candidate_count": int(result.get("official_social_candidate_count") or 0),
@@ -182,7 +189,7 @@ def loop(shared_lock=None) -> None:
         started = time.monotonic()
         summary = run_once(shared_lock)
         print(
-            "행사·영화 긴급탐색: " + json.dumps(summary, ensure_ascii=False),
+            "행사·영화·증정 긴급탐색: " + json.dumps(summary, ensure_ascii=False),
             flush=True,
         )
         elapsed = time.monotonic() - started
