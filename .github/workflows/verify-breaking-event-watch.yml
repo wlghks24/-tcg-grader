@@ -5,6 +5,7 @@ on:
     paths:
       - 'event_collection_hardening_v139.py'
       - 'event_collection_hardening_v140.py'
+      - 'event_collection_hardening_v141.py'
       - 'event_priority_watch.py'
       - 'event_quick_watch.py'
       - 'event_gap_learning.py'
@@ -34,6 +35,7 @@ jobs:
           python -m py_compile
           event_collection_hardening_v139.py
           event_collection_hardening_v140.py
+          event_collection_hardening_v141.py
           event_priority_watch.py
           event_quick_watch.py
           event_gap_learning.py
