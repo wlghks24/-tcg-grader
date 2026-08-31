@@ -72,7 +72,7 @@ REGION_LANG = {
     "US": {"lang": "en", "hl": "en-US", "gl": "US", "ceid": "US:en"},
 }
 EVENT_TERMS = {
-    "ko": "행사 이벤트 콜라보 프로모 팝업 영화 극장판 개봉 예약 발매 출시 대회 야구 KBO 굿즈 포토카드 브랜드데이 PLAYGO 재배포 재지급 수령 프로모션팩 신사황",
+    "ko": "행사 이벤트 콜라보 프로모 팝업 팝업스토어 점프샵 JUMP SHOP 슈에이샤 신세계 영화 극장판 개봉 예약 발매 출시 대회 야구 KBO 굿즈 포토카드 브랜드데이 PLAYGO 재배포 재지급 수령 프로모션팩 신사황",
     "ja": "イベント コラボ キャンペーン プロモ ポップアップ 映画 劇場版 発売 大会 グッズ カード",
     "en": "event collaboration collab promo pop-up movie film release tournament preorder merchandise card",
 }

@@ -1,6 +1,6 @@
 {
   "version": 4,
-  "updated_at": "2026-08-29T10:21:31+00:00",
+  "updated_at": "2026-08-31T02:35:00+00:00",
   "policy": "공식 웹사이트에서 직접 연결된 SNS 계정과 사람이 공식 출처로 검증한 manual=true 계정을 유지합니다. 자동 새로고침 실패 시 manual 계정은 삭제하지 않습니다.",
   "accounts": [
     {
@@ -60,6 +60,30 @@
       "verified_via_official_site": "https://onepiece-cardgame.kr/",
       "verification_note": "한국 원피스 카드게임 공식 X 채널",
       "verified_at": "2026-08-29T00:20:00+09:00"
+    },
+    {
+      "platform": "x",
+      "username": "smg_comic",
+      "game": "원피스 카드",
+      "region": "KR",
+      "profile_url": "https://x.com/smg_comic",
+      "trusted": true,
+      "manual": true,
+      "verified_via_official_site": "https://www.seoulmediacomics.com/",
+      "verification_note": "서울미디어코믹스 해외만화팀 공식 채널 · 슈에이샤 라이선스 JUMP SHOP 행사 확인용",
+      "verified_at": "2026-08-31T11:30:00+09:00"
+    },
+    {
+      "platform": "x",
+      "username": "smg_comic",
+      "game": "나루토 카드",
+      "region": "KR",
+      "profile_url": "https://x.com/smg_comic",
+      "trusted": true,
+      "manual": true,
+      "verified_via_official_site": "https://www.seoulmediacomics.com/",
+      "verification_note": "서울미디어코믹스 해외만화팀 공식 채널 · 슈에이샤 라이선스 JUMP SHOP 행사 확인용",
+      "verified_at": "2026-08-31T11:30:00+09:00"
     },
     {
       "platform": "x",

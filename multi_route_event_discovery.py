@@ -20,6 +20,7 @@ import email.utils
 import html
 import os
 import re
+import shlex
 import urllib.error
 import urllib.parse
 import urllib.request
@@ -58,7 +59,7 @@ QUERY_FAMILIES = {
         "release": "출시 발매 신제품 신탄 부스터 스타터 예약 재발매 재판",
         "event": "행사 이벤트 대회 팝업 페스타 체험회 매장대회 월드챔피언십",
         "tournament": "대회 리그 컵 챔피언십 월드챔피언십 매장대회 배틀",
-        "popup": "팝업 팝업스토어 페스타 박람회 전시회 체험회 카드샵",
+        "popup": "팝업 팝업스토어 점프샵 \"JUMP SHOP\" 슈에이샤 신세계 페스타 박람회 전시회 체험회 카드샵",
         "promo": "프로모 증정 배포 한정 수령 특전 캠페인 프로모션팩",
         "collab": "콜라보 협업 제휴 브랜드데이 야구 카페 편의점 마트",
         "movie": "영화 극장판 개봉 특별상영 시사회 관람특전 영화특전",
@@ -145,10 +146,10 @@ PARTNER_DOMAINS = {
     ("포켓몬 카드", "KR"): ("musinsa.com", "lotte.co.kr", "emart.ssg.com", "pokemon-go.com"),
     ("포켓몬 카드", "JP"): ("pokemoncenter-online.com", "pokemon.co.jp"),
     ("포켓몬 카드", "US"): ("pokemoncenter.com", "events.pokemon.com"),
-    ("원피스 카드", "KR"): ("playgo.bandainamcokorea.co.kr", "ktwizstore.co.kr"),
+    ("원피스 카드", "KR"): ("playgo.bandainamcokorea.co.kr", "ktwizstore.co.kr", "seoulmediacomics.com", "www.seoulmediacomics.com", "shinsegae.com", "www.shinsegae.com"),
     ("원피스 카드", "JP"): ("p-bandai.jp", "one-piece.com"),
     ("원피스 카드", "US"): ("bandai.com",),
-    ("나루토 카드", "KR"): ("bandainamcokorea.co.kr",),
+    ("나루토 카드", "KR"): ("bandainamcokorea.co.kr", "seoulmediacomics.com", "www.seoulmediacomics.com", "shinsegae.com", "www.shinsegae.com"),
     ("나루토 카드", "JP"): ("bandai.co.jp",),
     ("나루토 카드", "US"): ("bandai.com",),
 }
@@ -243,7 +244,10 @@ def _query(game: str, region: str, *, scoped_hosts: tuple[str, ...] = (), topic:
     name_expr = " OR ".join(f'"{x}"' for x in names)
     families = QUERY_FAMILIES[lang]
     selected = {topic: families[topic]} if topic in families else families
-    terms = " OR ".join(f"({value.replace(' ', ' OR ')})" for value in selected.values())
+    terms = " OR ".join(
+        "(" + " OR ".join(f'\"{token}\"' if " " in token else token for token in shlex.split(value)) + ")"
+        for value in selected.values()
+    )
     site_expr = ""
     if scoped_hosts:
         site_expr = " (" + " OR ".join(f"site:{host}" for host in scoped_hosts[:8]) + ")"

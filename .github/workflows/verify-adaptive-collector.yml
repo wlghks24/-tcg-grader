@@ -11,11 +11,16 @@ on:
       - 'official_sitemap_discovery.py'
       - 'provider_health_learning.py'
       - 'auto_pipeline_runner.py'
+      - 'multi_route_event_discovery.py'
       - 'social_event_discovery.py'
+      - 'update_promo_events.py'
+      - 'promo_events.json'
+      - 'social_source_registry.json'
       - 'supplementary_discovery.py'
       - 'test_adaptive_collection_learner.py'
       - 'test_official_direct_discovery.py'
       - 'test_official_channel_health.py'
+      - 'test_jump_shop_event_watch.py'
       - '.github/workflows/verify-adaptive-collector.yml'
   workflow_dispatch:
 
@@ -43,11 +48,14 @@ jobs:
             official_sitemap_discovery.py \
             provider_health_learning.py \
             auto_pipeline_runner.py \
+            multi_route_event_discovery.py \
             social_event_discovery.py \
+            update_promo_events.py \
             supplementary_discovery.py
       - name: Run adaptive learner regression tests
         run: |
           python -m unittest -v \
             test_adaptive_collection_learner.py \
             test_official_direct_discovery.py \
-            test_official_channel_health.py
+            test_official_channel_health.py \
+            test_jump_shop_event_watch.py
