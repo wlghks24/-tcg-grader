@@ -42,6 +42,15 @@ REQUIRED_FILES = (
     "collection_learning_hardening_v142.py",
     "event_priority_watch.py",
     "event_quick_watch.py",
+    # Manual graded-photo / official-site fallback must travel with the wrapper.
+    "manual_graded_photo_registration.py",
+    "manual_official_proof.py",
+    "manual_official_verify_bridge.js",
+    "graded_photo_dashboard.js",
+    "vision_calibration.py",
+    "library_slab_corpus.py",
+    "IMPORT_GRADED_LEARNING_FILES.py",
+    "START_GRADED_FILE_LEARNING.sh",
 )
 
 EXPECTED_JOB_FILES = {
@@ -52,6 +61,13 @@ EXPECTED_JOB_FILES = {
     "purchase_sources.json",
     "exchange_rates.json",
     "graded_photo_candidates.json",
+}
+
+MANUAL_REQUIRED = {
+    "manual_graded_photo_registration.py",
+    "manual_official_proof.py",
+    "manual_official_verify_bridge.js",
+    "graded_photo_dashboard.js",
 }
 
 
@@ -83,6 +99,7 @@ def audit() -> dict:
         "multi_channel_agent",
         "search_method_learning",
         "collection_learning_hardening_v142",
+        "manual_official_proof",
     ):
         try:
             modules[name] = _load(name)
@@ -163,6 +180,30 @@ def audit() -> dict:
         except Exception:
             issues.append("v142 자료수집 자가학습 보안 계약 검사 실패")
 
+    manual = modules.get("manual_official_proof")
+    if manual is not None:
+        try:
+            status = manual.public_status()
+            policy = status.get("policy", {}) if isinstance(status, dict) else {}
+            if policy.get("manual_screenshot_sets_official_result") is not False:
+                issues.append("수동 공식확인 캡처가 공식검증 결과로 승격될 위험이 있습니다")
+            if policy.get("manual_screenshot_trains_raw_grade_calibration") is not False:
+                issues.append("수동 공식확인 캡처가 RAW 등급 보정학습에 섞일 위험이 있습니다")
+            if policy.get("rejected_screenshot_bytes_retained") is not False:
+                issues.append("수동 공식확인 불일치 캡처 원본이 불필요하게 보존됩니다")
+            if policy.get("valid_proof_cannot_be_downgraded_by_later_bad_upload") is not True:
+                issues.append("정상 수동 참고등록이 이후 불일치 업로드로 덮일 수 있습니다")
+            if policy.get("proof_upload_rate_limited") is not True:
+                issues.append("수동 공식확인 OCR 업로드 속도 제한이 없습니다")
+        except Exception:
+            issues.append("수동 공식확인 보안 계약 검사 실패")
+
+    manual_missing = sorted(name for name in MANUAL_REQUIRED if name in missing)
+    manual_issues = [
+        item for item in issues
+        if "수동 공식확인" in item or "manual_official_proof" in item
+    ]
+
     return {
         "ok": not issues,
         "patch": PATCH_ID,
@@ -175,6 +216,9 @@ def audit() -> dict:
             "graded_photo_preflight_allowlisted": not any("등급사진 후보 JSON" in x for x in issues),
             "source_structure_classification": not any("출처 구조변경" in x for x in issues),
             "search_timeout_circuit_breaker": not any("search_exact" in x or "cooldown" in x for x in issues),
+            "manual_official_fallback": not manual_missing and not manual_issues,
+            "manual_proof_raw_calibration": False,
+            "manual_proof_rejected_bytes_retained": False,
             "event_coverage_cells": 90,
             "unverified_learning_weight": 0.0,
         },
