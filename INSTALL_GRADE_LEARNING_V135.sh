@@ -14,6 +14,7 @@ for name in \
   index.html \
   START_TCG_UPDATER_ANDROID.sh \
   vision_calibration.json \
+  grading_accuracy_v99.py \
   verified_grade_learning_v135.py \
   verified_grade_learning_v135_safe.py \
   tcg_updater_v135.py \
@@ -25,6 +26,7 @@ done
 
 for name in \
   START_TCG_UPDATER_ANDROID.sh \
+  grading_accuracy_v99.py \
   verified_grade_learning_v135.py \
   verified_grade_learning_v135_safe.py \
   tcg_updater_v135.py \
@@ -40,6 +42,7 @@ for name in \
 done
 
 python -m py_compile \
+  grading_accuracy_v99.py \
   verified_grade_learning_v135.py \
   verified_grade_learning_v135_safe.py \
   tcg_updater_v135.py \
@@ -124,6 +127,7 @@ echo "- PSA/BGS/CGC/TAG/BRG 공식 인증조회 성공자료만 로컬 검증레
 echo "- 공식 레지스트리 company+인증번호+실제등급이 정확히 일치해야 보정 학습 가능"
 echo "- RAW 원시예측(raw_pred) 필수 · 슬랩/마켓 사진은 RAW 보정에서 제외"
 echo "- 회사별 분리 · 카드단위 교차검증 · 오차 개선 시에만 하향보정 · 상향보정 금지"
+echo "- 10건 경계에서도 교차검증 후보 보정이 무효화되지 않도록 검증강도 계산 오류 수정"
 echo "- 비전 잔차보정도 v135 레지스트리 통과 행만 사용"
 echo "- 과거 eBay 격리사진/백업사진은 이동·삭제·학습하지 않음"
 echo "- 현재 사진 원본/백업 폴더는 변경하지 않음"
