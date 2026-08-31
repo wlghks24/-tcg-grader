@@ -42,26 +42,34 @@ for required in \
   event_collection_hardening_v139.py \
   event_collection_hardening_v140.py \
   event_collection_hardening_v141.py \
+  collection_learning_hardening_v142.py \
   event_gap_learning.py \
   event_priority_watch.py \
   event_quick_watch.py \
   social_event_discovery.py \
-  multi_route_event_discovery.py; do
+  multi_route_event_discovery.py \
+  adaptive_collection_learner.py \
+  fan_social_learning.py; do
   if [ ! -s "$required" ]; then
-    echo "[오류] v141 안전서버 필수파일 누락: $required"
+    echo "[오류] v142 안전서버 필수파일 누락: $required"
     echo "[안전] 구버전 서버로 폴백하지 않습니다. 최신 설치/갱신 스크립트를 다시 실행하세요."
     exit 1
   fi
 done
 
-# Fail early on partial tablet updates. This catches a missing v141 dependency
-# before the background server starts and silently loses reward/event learning.
+# Fail early on partial tablet updates. This catches a missing v142 dependency
+# before the background server starts and silently loses collection-learning safety.
 if ! python - <<'PY' >/dev/null 2>&1
-import event_collection_hardening_v141 as h
-assert int(h.PATCH_ID) == 141
+import collection_learning_hardening_v142 as h
+status=h.apply()
+assert int(status.get('patch') or 0) == 142
+assert status.get('unique_evidence_host_counting') is True
+assert status.get('strict_official_social_url_match') is True
+assert float(status.get('unverified_payload_learning_weight', -1)) == 0.0
+assert float(status.get('unverified_search_host_term_learning_weight', -1)) == 0.0
 PY
 then
-  echo "[오류] v141 행사·증정 학습 모듈 연결 검사 실패"
+  echo "[오류] v142 자료수집·자가학습 보안 모듈 연결 검사 실패"
   echo "[안전] 부분 업데이트 상태로 서버를 시작하지 않습니다."
   exit 1
 fi
@@ -77,5 +85,5 @@ fi
 
 echo "로컬 서버를 먼저 시작합니다. 자료 수집은 서버 안에서 안전하게 순차 실행됩니다."
 echo "등급학습 안전게이트 사용: 공식인증 + RAW 원시예측 + 교차검증 + 하향보정만"
-echo "행사학습 v141: 범위외 카드/프로모/한정품 증정 탐색 + 검증정보만 검색어 학습"
+echo "자료수집 자가학습 v142: 고유출처 교차검증 + 미검증 host/검색어 학습 차단 + 공식 SNS URL 엄격검증"
 exec python tcg_updater_v135.py
