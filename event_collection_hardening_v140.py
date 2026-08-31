@@ -13,7 +13,7 @@ only existing official-account/domain/cross-check rules may mark it verified.
 from __future__ import annotations
 
 import datetime as dt
-import html
+import hashlib
 import json
 import os
 import re
@@ -70,6 +70,11 @@ REWARD_ITEM_RE = re.compile(
     r"card|promo|pack|exclusive|limited(?:[- ]edition)?|collab|collaboration|photocard|commemorative|special\s+item|merch",
     re.I,
 )
+# One regex for collectors that accept only a Pattern object. Both semantics must
+# occur somewhere in the same title/caption; a bare "card" or "limited" is not enough.
+REWARD_BOTH_PATTERN = (
+    r"(?=.*(?:" + REWARD_ACTION_RE.pattern + r"))(?=.*(?:" + REWARD_ITEM_RE.pattern + r"))"
+)
 
 
 def _append_terms(existing: str, additions) -> str:
@@ -111,7 +116,7 @@ def _annotate_reward_row(raw: dict) -> dict:
         confidence = float(row.get("confidence") or 0.0)
     except (TypeError, ValueError, OverflowError):
         confidence = 0.0
-    # Discovery priority only. This does NOT set verified/trusted.
+    # Discovery priority only. This DOES NOT set verified/trusted.
     row["confidence"] = max(confidence, 0.64)
     current_status = str(row.get("status") or "후보")
     if "증정" not in current_status and "reward" not in current_status.lower():
@@ -133,21 +138,21 @@ def _harden_vocab() -> None:
         families["event"] = _append_terms(families.get("event", ""), compact.split())
         families["collab"] = _append_terms(families.get("collab", ""), compact.split())
 
-    reward_pattern = REWARD_ACTION_RE.pattern + "|" + REWARD_ITEM_RE.pattern
     rebuilt = []
     for category, pattern in social_event_discovery.CATEGORY_PATTERNS:
         if category == "promo":
-            pattern = re.compile(pattern.pattern + "|" + reward_pattern, re.I)
+            pattern = re.compile(pattern.pattern + "|" + REWARD_BOTH_PATTERN, re.I)
         rebuilt.append((category, pattern))
     social_event_discovery.CATEGORY_PATTERNS = tuple(rebuilt)
     multi_route_event_discovery.KEYWORD_RE = re.compile(
-        multi_route_event_discovery.KEYWORD_RE.pattern + "|" + reward_pattern,
+        multi_route_event_discovery.KEYWORD_RE.pattern + "|" + REWARD_BOTH_PATTERN,
         re.I,
     )
 
 
 def _reward_query_terms(lang: str) -> str:
-    # Keep the public query bounded; the local post/title filter uses the full regex.
+    # Keep the public query bounded; the local post/title filter enforces both
+    # reward-action and relevant-item semantics before a candidate is accepted.
     tokens = []
     for phrase in REWARD_TERMS[lang]:
         phrase = str(phrase).strip()
@@ -249,9 +254,48 @@ def _reward_ddg_social_one(game: str, region: str, registry: dict, fan_learner=N
     return rows, error or reward_error
 
 
+def _row_identity(row: dict) -> str:
+    source = str(row.get("source") or "").strip().lower()
+    title = re.sub(r"\s+", " ", str(row.get("title") or "").strip().lower())
+    raw = f"{row.get('game')}|{row.get('region')}|{row.get('category')}|{source}|{title}"
+    return hashlib.sha256(raw.encode("utf-8", "ignore")).hexdigest()[:24]
+
+
+def _reward_priority(row: dict) -> tuple[int, int, float, str]:
+    official = int(row.get("official_account_verified") is True or row.get("official_domain_match") is True)
+    cross = int(row.get("cross_checked") is True or int(row.get("independent_source_count") or 0) >= 2)
+    try:
+        confidence = float(row.get("confidence") or 0.0)
+    except (TypeError, ValueError, OverflowError):
+        confidence = 0.0
+    return official, cross, confidence, str(row.get("collected_at") or row.get("published_at") or "")
+
+
 def _reward_merge(rows: list[dict]):
     annotated = [_annotate_reward_row(row) if isinstance(row, dict) else row for row in rows]
-    return _ORIGINAL_MERGE(annotated)
+    normal_result = _ORIGINAL_MERGE(annotated)
+    reward_inputs = [row for row in annotated if isinstance(row, dict) and row.get("must_show_candidate") is True]
+    if not reward_inputs:
+        return normal_result
+
+    # Merge reward rows on their own so the general topic-volume cap cannot evict
+    # a giveaway merely because release/tournament news is more numerous.
+    reward_result = _ORIGINAL_MERGE(reward_inputs)
+    reward_result.sort(key=_reward_priority, reverse=True)
+    cap = max(10, int(social_event_discovery.MAX_ITEMS))
+    selected = []
+    seen = set()
+    for row in reward_result + normal_result:
+        if not isinstance(row, dict):
+            continue
+        marker = _row_identity(row)
+        if marker in seen:
+            continue
+        seen.add(marker)
+        selected.append(row)
+        if len(selected) >= cap:
+            break
+    return selected
 
 
 def _reward_main() -> dict:
@@ -297,6 +341,7 @@ def apply() -> dict:
         "reward_terms_ja": len(REWARD_TERMS["ja"]),
         "reward_terms_en": len(REWARD_TERMS["en"]),
         "candidate_cap": social_event_discovery.MAX_ITEMS,
+        "reward_candidates_prioritized": True,
         "trust_auto_promotion": False,
     }
 
