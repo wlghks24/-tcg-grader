@@ -3,10 +3,14 @@ name: Verify breaking event watch
 on:
   push:
     paths:
+      - 'event_collection_hardening_v139.py'
+      - 'event_priority_watch.py'
       - 'event_quick_watch.py'
+      - 'event_gap_learning.py'
       - 'manual_event_evidence.json'
       - 'social_source_registry.json'
       - 'social_event_discovery.py'
+      - 'multi_route_event_discovery.py'
       - 'tcg_updater_v135.py'
       - 'test_event_quick_watch.py'
       - '.github/workflows/verify-breaking-event-watch.yml'
@@ -25,6 +29,14 @@ jobs:
         with:
           python-version: '3.12'
       - name: Compile changed runtime
-        run: python -m py_compile event_quick_watch.py tcg_updater_v135.py social_event_discovery.py
+        run: >-
+          python -m py_compile
+          event_collection_hardening_v139.py
+          event_priority_watch.py
+          event_quick_watch.py
+          event_gap_learning.py
+          tcg_updater_v135.py
+          social_event_discovery.py
+          multi_route_event_discovery.py
       - name: Run breaking-event regression tests
         run: python -m unittest -v test_event_quick_watch.py
