@@ -35,7 +35,6 @@ class ManualOfficialProofTests(unittest.TestCase):
         return mock.patch.multiple(
             proof.manual_photo,
             _registry=mock.Mock(return_value=registry),
-            _save_registry=mock.Mock(),
             _decode_image=mock.Mock(return_value=(b"x" * 2048, ".jpg", 900, 1400)),
             _ocr_image=mock.Mock(return_value=("OCR", None, {}, evidence)),
         )
@@ -44,11 +43,13 @@ class ManualOfficialProofTests(unittest.TestCase):
         registry = {"registrations": [row_template()]}
         evidence = {"company": "PSA", "grade": 10.0, "certification_id": "12345678"}
         with self._patch_common(registry, evidence), \
+             mock.patch.object(proof.manual_photo, "_save_registry") as save_registry, \
              mock.patch.object(proof, "_claim_proof_upload"), \
              mock.patch.object(proof, "atomic_write_bytes"), \
              mock.patch.object(proof, "_append_reference") as append_reference, \
              mock.patch.object(proof, "_remove_proof_file"):
             result = proof.submit({"registration_id": REGISTRATION_ID, "proof_image_data_url": "ignored"})
+            save_registry.assert_called_once()
         self.assertTrue(result["accepted"], result)
         self.assertFalse(result["policy"]["official_result"])
         self.assertFalse(result["policy"]["raw_grade_calibration"])
@@ -70,27 +71,30 @@ class ManualOfficialProofTests(unittest.TestCase):
         registry = {"registrations": [existing]}
         evidence = {"company": "PSA", "grade": 10.0, "certification_id": "87654321"}
         with self._patch_common(registry, evidence), \
+             mock.patch.object(proof.manual_photo, "_save_registry") as save_registry, \
              mock.patch.object(proof, "_claim_proof_upload"), \
              mock.patch.object(proof, "atomic_write_bytes"), \
              mock.patch.object(proof, "_append_reference") as append_reference, \
              mock.patch.object(proof, "_remove_proof_file") as remove_proof:
             result = proof.submit({"registration_id": REGISTRATION_ID, "proof_image_data_url": "ignored"})
+            save_registry.assert_not_called()
         self.assertFalse(result["accepted"], result)
         self.assertTrue(result["registration"]["manual_official_proof_registered"])
         self.assertEqual(existing["verification_state"], "manual_official_proof_matched")
         append_reference.assert_not_called()
         remove_proof.assert_called_once()
-        proof.manual_photo._save_registry.assert_not_called()
 
     def test_rejected_proof_bytes_are_deleted_and_not_persisted_as_path(self):
         registry = {"registrations": [row_template()]}
         evidence = {"company": "BGS", "grade": 9.5, "certification_id": "87654321"}
         with self._patch_common(registry, evidence), \
+             mock.patch.object(proof.manual_photo, "_save_registry") as save_registry, \
              mock.patch.object(proof, "_claim_proof_upload"), \
              mock.patch.object(proof, "atomic_write_bytes"), \
              mock.patch.object(proof, "_append_reference") as append_reference, \
              mock.patch.object(proof, "_remove_proof_file") as remove_proof:
             result = proof.submit({"registration_id": REGISTRATION_ID, "proof_image_data_url": "ignored"})
+            save_registry.assert_called_once()
         self.assertFalse(result["accepted"], result)
         saved = registry["registrations"][0]
         self.assertIsNone(saved["manual_official_proof_path"])
