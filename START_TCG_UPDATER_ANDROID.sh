@@ -51,4 +51,10 @@ fi
 # tcg_updater performs the initial 7-step run itself. Starting a second collector
 # process here could write the same candidate JSON concurrently.
 echo "로컬 서버를 먼저 시작합니다. 7단계 자료 수집은 서버 안에서 안전하게 순차 실행됩니다."
-python tcg_updater.py
+if [ -f "tcg_updater_v135.py" ] && [ -f "verified_grade_learning_v135.py" ]; then
+  echo "등급학습 v135 안전게이트 사용: 공식인증 + RAW 원시예측 + 교차검증 + 하향보정만"
+  python tcg_updater_v135.py
+else
+  echo "[안내] v135 모듈이 없어 기존 서버로 안전하게 폴백합니다."
+  python tcg_updater.py
+fi
