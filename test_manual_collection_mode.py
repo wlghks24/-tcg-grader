@@ -36,16 +36,19 @@ class ManualCollectionModeTests(unittest.TestCase):
         self.assertTrue(runtime["collector_syncs_manual_pairs"], runtime)
         self.assertTrue(runtime["manual_front_back_upload"], runtime)
 
-    def test_ocr_v147_is_applied_with_manual_mode(self):
+    def test_ocr_v148_is_applied_with_manual_mode(self):
         mode.apply()
         import manual_dual_photo_registration as dual
         import ocr_accuracy_boost_v147 as ocr
         import public_ocr_accuracy_boost_v147 as public_ocr
+        import ocr_front_back_fallback_v148 as back_ocr
         dual_status = dual.status()
         self.assertTrue(dual_status["ocr_accuracy_boost"], dual_status)
         self.assertTrue(dual_status["public_ocr_accuracy_boost"], dual_status)
+        self.assertTrue(dual_status["back_ocr_fallback"], dual_status)
         self.assertTrue(ocr.status()["ok"])
         self.assertTrue(public_ocr.status()["ok"])
+        self.assertTrue(back_ocr.status()["ok"])
 
     def test_registry_only_verifier_never_calls_live_lookup(self):
         rows = [{
