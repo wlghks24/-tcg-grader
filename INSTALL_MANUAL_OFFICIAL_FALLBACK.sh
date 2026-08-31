@@ -2,7 +2,7 @@
 set -eu
 cd "$(dirname "$0")"
 
-printf '\n=== 등급사진 수동검증 전용 + 앞뒤사진 2장 등록 설치 ===\n'
+printf '\n=== 등급사진 수동검증 전용 + 앞뒤사진 2장 + OCR v147 설치 ===\n'
 
 export TCG_DISABLE_AUTO_GRADER_LOOKUP=1
 
@@ -11,15 +11,19 @@ python -m py_compile \
   manual_official_proof.py \
   manual_collection_mode.py \
   manual_dual_photo_registration.py \
+  ocr_accuracy_boost_v147.py \
+  public_ocr_accuracy_boost_v147.py \
   graded_photo_manual_pair_queue.py \
   grading_cert_verifier.py \
   runtime_bundle_guard_v143.py \
   test_manual_official_proof.py \
   test_manual_collection_mode.py \
   test_manual_pair_queue.py \
-  test_grading_cert_verifier.py
+  test_grading_cert_verifier.py \
+  test_ocr_accuracy_boost_v147.py
 
 python -m unittest -v \
+  test_ocr_accuracy_boost_v147.py \
   test_grading_cert_verifier.py \
   test_manual_collection_mode.py \
   test_manual_pair_queue.py \
@@ -29,11 +33,17 @@ python -m unittest -v \
 python - <<'PY'
 import grading_cert_verifier as verifier
 import manual_collection_mode as manual_mode
+import manual_dual_photo_registration as dual_photo
+import ocr_accuracy_boost_v147 as ocr_boost
+import public_ocr_accuracy_boost_v147 as public_ocr
 import runtime_bundle_guard_v143 as guard
 import graded_photo_manual_pair_queue as pair_queue
 status=guard.require_compatible()
 contracts=status.get('contracts',{})
 mode=manual_mode.status()
+dual=dual_photo.status()
+ocr=ocr_boost.status()
+public=public_ocr.status()
 assert contracts.get('manual_official_fallback') is True, status
 assert contracts.get('manual_proof_raw_calibration') is False, status
 assert contracts.get('manual_proof_rejected_bytes_retained') is False, status
@@ -48,31 +58,40 @@ assert mode.get('manual_front_back_upload') is True, mode
 assert mode.get('back_stored_separately') is True, mode
 assert mode.get('grouped_by_game_only') is True, mode
 assert mode.get('grader_subfolders_created') is False, mode
+assert dual.get('ocr_accuracy_boost') is True, dual
+assert dual.get('public_ocr_accuracy_boost') is True, dual
+assert ocr.get('ok') is True and ocr.get('engine') == 'slab-ocr-accuracy-v147', ocr
+assert public.get('ok') is True, public
 assert str(pair_queue.ANDROID_ROOT) == '/storage/emulated/0/Download/TCG등급학습'
 assert '/sdcard' not in str(pair_queue.ANDROID_ROOT)
 probe=pair_queue._pair_folder(pair_queue.ANDROID_ROOT,'pokemon','0123456789abcdefabcd')
 assert str(probe).endswith('/pokemon/수동등록대기/0123456789abcdefabcd')
 assert '/pokemon/PSA/' not in str(probe)
 print('[OK] 수동등록 앞면+뒷면 2장 저장 계약 정상')
-print('[OK] 앞면은 OCR, 뒷면은 같은 등록건의 별도 증빙파일로 저장')
+print('[OK] OCR v147: 적응형 다중크롭 + 등급사별 인증번호 길이 + OCR 오인문자 보정')
+print('[OK] 수동등록/자동수집 등급사진 모두 OCR v147 적용')
 print('[OK] 게임별 폴더만 사용하고 등급사는 메타데이터로 보존')
 PY
 
-# 현재 index.html에 앞뒤사진 업로드 UI 브리지를 중복 없이 추가합니다.
+# 현재 index.html에 앞뒤사진 업로드 UI 브리지를 중복 없이 추가하고
+# 버전 쿼리를 갱신해 Android/WebView 브라우저 캐시가 구버전 JS를 잡지 않게 합니다.
 python - <<'PY'
 from pathlib import Path
+import re
 p=Path('index.html')
 text=p.read_text(encoding='utf-8')
-tag='<script src="./manual_dual_photo_bridge.js?v=146"></script>'
-if 'manual_dual_photo_bridge.js' not in text:
-    if '</body>' in text:
-        text=text.replace('</body>',tag+'\n</body>',1)
-    elif '</html>' in text:
-        text=text.replace('</html>',tag+'\n</html>',1)
-    else:
-        text += '\n'+tag+'\n'
-    p.write_text(text,encoding='utf-8')
-print('[OK] 앞뒤사진 UI 브리지:', text.count('manual_dual_photo_bridge.js'))
+tag='<script src="./manual_dual_photo_bridge.js?v=147"></script>'
+pattern=r'<script\s+src=["\']\./manual_dual_photo_bridge\.js(?:\?v=\d+)?["\']\s*></script>'
+if re.search(pattern,text):
+    text=re.sub(pattern,tag,text,count=1)
+elif '</body>' in text:
+    text=text.replace('</body>',tag+'\n</body>',1)
+elif '</html>' in text:
+    text=text.replace('</html>',tag+'\n</html>',1)
+else:
+    text += '\n'+tag+'\n'
+p.write_text(text,encoding='utf-8')
+print('[OK] 앞뒤사진 UI 브리지:', text.count('manual_dual_photo_bridge.js'), 'v147')
 PY
 
 if command -v node >/dev/null 2>&1; then
@@ -85,7 +104,9 @@ fi
 
 test -s manual_dual_photo_registration.py
 test -s manual_dual_photo_bridge.js
-grep -q 'manual_dual_photo_bridge.js' index.html
+test -s ocr_accuracy_boost_v147.py
+test -s public_ocr_accuracy_boost_v147.py
+grep -q 'manual_dual_photo_bridge.js?v=147' index.html
 
 pkill -f 'graded_photo_manual_pair_queue.py --watch' 2>/dev/null || true
 pkill -f 'python.*tcg_updater_v135.py' 2>/dev/null || true
@@ -129,6 +150,9 @@ if ! printf '%s' "$PAIR_OUTPUT" | grep -Fq 'PSA/BGS 등급사 하위폴더 없�
 fi
 
 printf '\n[OK] 설치 완료\n'
+printf '%s\n' '- OCR v147: 라벨 위치별 다중크롭을 필요한 만큼만 실행하여 인식률 향상'
+printf '%s\n' '- O/0, I/1, L/1, S/5, B/8 등 인증번호 OCR 혼동을 숫자 후보 안에서만 안전 보정'
+printf '%s\n' '- PSA/BGS/CGC/TAG/BRG별 인증번호 길이 규칙으로 엉뚱한 숫자 채택 감소'
 printf '%s\n' '- 수동등록 화면에서 등급 슬랩 앞면 + 뒷면 사진을 모두 필수 선택'
 printf '%s\n' '- 앞면은 OCR용, 뒷면은 같은 등록번호의 별도 증빙사진으로 안전 저장'
 printf '%s\n' '- 동일한 앞/뒤 사진 선택은 거절'
