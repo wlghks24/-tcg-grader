@@ -12,6 +12,8 @@ on:
       - 'provider_health_learning.py'
       - 'auto_pipeline_runner.py'
       - 'multi_route_event_discovery.py'
+      - 'event_gap_learning.py'
+      - 'collection_meta_learning.py'
       - 'social_event_discovery.py'
       - 'update_promo_events.py'
       - 'promo_events.json'
@@ -21,6 +23,7 @@ on:
       - 'test_official_direct_discovery.py'
       - 'test_official_channel_health.py'
       - 'test_jump_shop_event_watch.py'
+      - 'test_event_gap_learning.py'
       - '.github/workflows/verify-adaptive-collector.yml'
   workflow_dispatch:
 
@@ -49,6 +52,8 @@ jobs:
             provider_health_learning.py \
             auto_pipeline_runner.py \
             multi_route_event_discovery.py \
+            event_gap_learning.py \
+            collection_meta_learning.py \
             social_event_discovery.py \
             update_promo_events.py \
             supplementary_discovery.py
@@ -58,4 +63,5 @@ jobs:
             test_adaptive_collection_learner.py \
             test_official_direct_discovery.py \
             test_official_channel_health.py \
-            test_jump_shop_event_watch.py
+            test_jump_shop_event_watch.py \
+            test_event_gap_learning.py

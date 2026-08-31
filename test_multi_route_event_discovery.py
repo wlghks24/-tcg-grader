@@ -40,8 +40,19 @@ class MultiRouteEventDiscoveryTests(unittest.TestCase):
         q=routes._query('원피스 카드','US',topic='movie')
         self.assertIn('movie',q)
         self.assertNotIn('tournament',q)
-        self.assertEqual(len(routes.COVERAGE_TOPICS),8)
+        self.assertEqual(len(routes.COVERAGE_TOPICS),10)
         self.assertIn('reprint',routes.COVERAGE_TOPICS)
+        self.assertIn('merch',routes.COVERAGE_TOPICS)
+        self.assertIn('anniversary',routes.COVERAGE_TOPICS)
+
+    def test_verified_learned_terms_can_expand_a_topic_query(self):
+        q=routes._query('원피스 카드','KR',topic='merch',extra_terms=('JUMP SHOP','센트럴'))
+        self.assertIn('"JUMP SHOP"',q)
+        self.assertIn('센트럴',q)
+
+    def test_press_routes_remain_discovery_only(self):
+        for host in routes.PRESS_HOSTS:
+            self.assertNotIn(host,routes.OFFICIAL_HOSTS)
 
     def test_official_match_is_scoped_to_game_and_region(self):
         self.assertTrue(routes._official_for('나루토 카드','US','www.naruto-cardgame.com'))
