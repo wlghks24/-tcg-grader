@@ -56,8 +56,10 @@ function suppressAutoRetry(){
 }
 function eligible(row){return row&&row.official_result!==true&&row.identity_complete&&row.official_reference_url}
 function stateText(row){
- if(row.manual_official_proof_registered)return '공식 페이지 캡처 일치 · 수동 참고등록 완료';
- if(row.manual_official_proof_state==='conflict')return '캡처의 등급사·인증번호·등급이 불일치';
+ if(row.manual_official_proof_registered)return row.manual_official_proof_match_mode==='official_page_company_cert_plus_exact_slab_ocr_grade'?'공식페이지 인증번호 + 슬랩 등급 OCR 일치 · 참고등록 완료':'공식 페이지 캡처 일치 · 수동 참고등록 완료';
+ if(row.manual_official_proof_state==='ocr_incomplete_needs_review'||row.verification_state==='manual_official_proof_needs_review')return '공식페이지 OCR 일부 누락 · 다시 등록 가능 (카드 격리 안함)';
+ if(row.manual_official_proof_state==='conflict_needs_review'||row.verification_state==='manual_official_proof_conflict_needs_review')return '확인화면 OCR 충돌 후보 · 다시 확인 필요 (카드 격리 안함)';
+ if(row.manual_official_proof_state==='conflict')return '이전 확인화면 OCR 불일치 기록 · 재등록 가능';
  if(row.verification_state==='manual_official_verification_required')return '공식사이트 수동확인 대기';
  if(row.verification_state==='manual_input_required')return '등급사·인증번호·등급 직접입력 필요';
  if(row.verification_state==='deferred_by_cooldown')return '기존 자동조회 대기자료 · 수동확인으로 전환';
@@ -74,7 +76,7 @@ async function render(){
  let box=document.getElementById('gpdOfficialFallback');if(!box){box=document.createElement('div');box.id='gpdOfficialFallback';box.className='gpd-official-fallback';host.insertAdjacentElement('afterend',box)}
  const payload=await loadStatus();if(!payload){box.innerHTML='<h4>🔐 공식사이트 수동확인</h4><p>수동확인 상태를 불러오지 못했습니다.</p>';return}
  const rows=(Array.isArray(payload.registrations)?payload.registrations:[]).filter(eligible).slice(0,10);
- box.innerHTML=`<h4>🔐 자동 인증조회 OFF · 공식사이트 직접확인</h4><p>PSA/BGS/CGC/TAG/BRG 자동 인증조회는 사용하지 않습니다. 인증번호가 있는 자료는 공식 등급사 페이지를 사용자가 직접 열어 확인한 뒤 결과 화면을 등록합니다.</p>${rows.length?rows.map(row=>`<div class="gpd-official-row" data-official-row="${esc(row.registration_id)}"><div class="gpd-official-id"><b>${esc(row.company)} ${esc(row.grade)} · 인증 ${esc(row.certification_id)}</b><span>${esc(stateText(row))}</span>${row.manual_official_proof_registered?'<div class="gpd-official-state">✓ 수동 공식확인 참고등록 완료</div>':''}</div><div class="gpd-official-actions"><a class="gpd-official-open" href="${esc(row.official_reference_url)}" target="_blank" rel="noopener noreferrer">① 공식조회 열기</a><label class="gpd-official-proof">② 확인화면 등록<input class="gpd-official-file" type="file" accept="image/jpeg,image/png" data-proof="${esc(row.registration_id)}"></label></div></div>`).join(''):'<div class="gpd-official-help">현재 직접확인이 필요한 완성된 인증정보 항목이 없습니다.</div>'}<div class="gpd-official-help"><b>수집 저장 기준:</b> 포켓몬·원피스·나루토 + PSA/BGS/CGC/TAG/BRG + 인증번호 + 앞면/뒷면이 모두 확인된 자료만 <b>pokemon / onepiece / naruto 게임 폴더별</b> 수동등록 대기영역에 저장합니다. PSA/BGS 같은 등급사 하위폴더는 만들지 않습니다.<br>캡처 OCR에서 <b>등급사 + 인증번호 + 등급</b>이 현재 등록자료와 모두 일치해야 참고등록됩니다. 수동 캡처만으로 RAW 카드 등급 보정값을 바꾸지 않습니다.</div>`;
+ box.innerHTML=`<h4>🔐 자동 인증조회 OFF · 공식사이트 직접확인</h4><p>PSA/BGS/CGC/TAG/BRG 자동 인증조회는 사용하지 않습니다. 인증번호가 있는 자료는 공식 등급사 페이지를 사용자가 직접 열어 확인한 뒤 결과 화면을 등록합니다.</p>${rows.length?rows.map(row=>`<div class="gpd-official-row" data-official-row="${esc(row.registration_id)}"><div class="gpd-official-id"><b>${esc(row.company)} ${esc(row.grade)} · 인증 ${esc(row.certification_id)}</b><span>${esc(stateText(row))}</span>${row.manual_official_proof_registered?'<div class="gpd-official-state">✓ 수동 공식확인 참고등록 완료</div>':''}</div><div class="gpd-official-actions"><a class="gpd-official-open" href="${esc(row.official_reference_url)}" target="_blank" rel="noopener noreferrer">① 공식조회 열기</a><label class="gpd-official-proof">② 확인화면 등록<input class="gpd-official-file" type="file" accept="image/jpeg,image/png" data-proof="${esc(row.registration_id)}"></label></div></div>`).join(''):'<div class="gpd-official-help">현재 직접확인이 필요한 완성된 인증정보 항목이 없습니다.</div>'}<div class="gpd-official-help"><b>수동확인 v3:</b> 공식페이지 캡처에서 <b>등급사/공식도메인 + 인증번호</b>를 우선 확인합니다. 현재 화면에 등급이 안 보이더라도 등록된 슬랩 앞면 OCR의 <b>등급사 + 인증번호 + 등급</b>이 정확히 일치하면 참고등록할 수 있습니다. OCR 누락이나 한 번의 캡처 불일치만으로 카드 자체를 격리하지 않습니다.<br>수동 캡처는 참고자료일 뿐이며 RAW 카드 등급 보정값을 바꾸지 않습니다.</div>`;
  box.querySelectorAll('[data-proof]').forEach(input=>input.addEventListener('change',submitProof));
  suppressAutoRetry();
 }
@@ -87,8 +89,12 @@ async function submitProof(event){
   const response=await fetch('/api/manual-official-proof',{method:'POST',headers:{'Content-Type':'application/json'},cache:'no-store',body:JSON.stringify({registration_id:registrationId,proof_image_data_url:image,filename:file.name||''})});
   const data=await response.json().catch(()=>({}));
   if(!response.ok)throw new Error(data.error||`등록 실패(${response.status})`);
-  if(!data.accepted){const conflicts=data.proof?.conflicts||[];throw new Error('공식 조회 화면 정보 불일치: '+conflicts.join(', '))}
-  if(label)label.textContent='공식 페이지 캡처 일치 · 수동 참고등록 완료';
+  if(!data.accepted){
+   const conflicts=data.proof?.conflicts||[],missing=data.proof?.missing||[];
+   if(data.reason==='official_page_screenshot_ocr_incomplete')throw new Error(`공식페이지 OCR 정보 부족(${missing.join(', ')||'일부 항목'}) · 카드 격리 안함. 주소창/인증번호가 보이게 캡처해 다시 등록하세요.`);
+   throw new Error(`확인화면 OCR 충돌 후보(${conflicts.join(', ')||'일부 항목'}) · 카드 격리 안함. 공식페이지와 슬랩 인증번호를 다시 확인하세요.`);
+  }
+  if(label)label.textContent=data.proof?.slab_grade_fallback?'공식페이지 인증번호 일치 + 슬랩 등급 OCR 일치 · 참고등록 완료':'공식 페이지 캡처 일치 · 수동 참고등록 완료';
   input.value='';await sleep(500);await render();
  }catch(error){if(label)label.textContent=String(error?.message||'공식 확인화면 등록 실패');input.value=''}
 }
