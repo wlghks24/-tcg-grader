@@ -2,7 +2,7 @@
 set -u
 cd "$(dirname "$0")"
 
-# v146 manual-only graded-photo policy. Child collection processes inherit this
+# Manual-only graded-photo policy. Child collection processes inherit this
 # and therefore cannot make automatic PSA/BGS/CGC/TAG/BRG certification requests.
 export TCG_DISABLE_AUTO_GRADER_LOOKUP=1
 
@@ -62,6 +62,7 @@ for required in \
   ocr_accuracy_boost_v147.py \
   public_ocr_accuracy_boost_v147.py \
   ocr_front_back_fallback_v148.py \
+  legacy_ocr_registry_cleanup_v149.py \
   release_tcg_port.py \
   multi_channel_agent.py \
   search_method_learning.py \
@@ -79,7 +80,7 @@ for required in \
   adaptive_collection_learner.py \
   fan_social_learning.py; do
   if [ ! -s "$required" ]; then
-    echo "[오류] v148 안전서버 필수파일 누락: $required"
+    echo "[오류] v149 안전서버 필수파일 누락: $required"
     echo "[안전] 구버전/혼합 버전 서버로 폴백하지 않습니다. 최신 설치/갱신 스크립트를 다시 실행하세요."
     exit 1
   fi
@@ -98,6 +99,7 @@ import collection_learning_hardening_v142 as learning_guard
 import runtime_bundle_guard_v143 as bundle_guard
 import manual_collection_mode as manual_mode
 import graded_photo_manual_pair_queue as pair_queue
+import legacy_ocr_registry_cleanup_v149 as legacy_cleanup
 learning=learning_guard.apply()
 bundle=bundle_guard.require_compatible()
 contracts=bundle.get('contracts',{})
@@ -116,16 +118,25 @@ assert mode.get('manual_front_back_upload') is True
 assert mode.get('back_stored_separately') is True
 assert mode.get('grouped_by_game_only') is True
 assert mode.get('grader_subfolders_created') is False
+assert legacy_cleanup.PATCH_ID == 149
 probe=pair_queue._pair_folder(pair_queue.ANDROID_ROOT,'pokemon','0123456789abcdefabcd')
 assert str(probe).endswith('/pokemon/수동등록대기/0123456789abcdefabcd')
 assert '/pokemon/PSA/' not in str(probe)
 PY
 then
-  echo "[오류] v148 전체 런타임/앞뒤사진 수동등록 정책 검사 실패"
+  echo "[오류] v149 전체 런타임/앞뒤사진 수동등록 정책 검사 실패"
   echo "[원인] 일부 파일만 최신이거나 앞면+뒷면/OCR 기능이 빠졌을 수 있습니다."
   echo "[안전] 혼합 업데이트 상태로 서버를 시작하지 않습니다. INSTALL_MANUAL_OFFICIAL_FALLBACK.sh를 다시 실행하세요."
   exit 1
 fi
+
+# Remove only stale, unverified OCR certification fragments before the server
+# exposes them in the manual-official-review UI. Trusted/live-verified rows are
+# intentionally left untouched by the cleanup module.
+python legacy_ocr_registry_cleanup_v149.py --quiet || {
+  echo "[오류] 레거시 OCR 인증번호 정리에 실패했습니다. 안전을 위해 서버를 시작하지 않습니다."
+  exit 1
+}
 
 if command -v termux-wake-lock >/dev/null 2>&1; then
   termux-wake-lock || true
@@ -155,5 +166,5 @@ echo "로컬 서버를 먼저 시작합니다. 자료 수집은 서버 안에서
 echo "등급학습 안전게이트 사용: 공식인증 + RAW 원시예측 + 교차검증 + 하향보정만"
 echo "수동등록 정책: 앞면+뒷면 2장 필수 · 앞면 OCR · 뒷면 별도 증빙 저장"
 echo "등급사진 정책: 자동 등급사 조회 OFF · 공식사이트 직접확인/수동등록 · 인증번호+앞뒤사진만 게임폴더에 보관"
-echo "자료수집 자가학습 v142 + 런타임 번들 v143 + OCR v148: 고유출처 검증 + timeout circuit-breaker + 혼합버전 차단"
+echo "자료수집 자가학습 v142 + 런타임 번들 v143 + OCR v149: 고유출처 검증 + timeout circuit-breaker + 혼합버전 차단"
 exec python tcg_updater_v135.py
