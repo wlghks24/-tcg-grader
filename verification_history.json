@@ -1,295 +1,13 @@
 {
   "version": 5,
-  "updated_at": "2026-08-31T09:20:36+00:00",
+  "updated_at": "2026-08-31T12:53:19+00:00",
   "retention_limit": 24,
   "full_detail_limit": 8,
-  "lifetime_runs": 282,
-  "lifetime_passed_checks": 19655,
-  "lifetime_failed_checks": 271,
-  "pruned_runs": 329,
+  "lifetime_runs": 285,
+  "lifetime_passed_checks": 19705,
+  "lifetime_failed_checks": 272,
+  "pruned_runs": 335,
   "runs": [
-    {
-      "checked_at": "2026-08-29T23:07:20+00:00",
-      "ok": true,
-      "pass_count": 17,
-      "failure_count": 0,
-      "checks": [
-        {
-          "name": "Python 전체 문법",
-          "ok": true,
-          "detail": "통과"
-        },
-        {
-          "name": "v107 서버·PWA 통합",
-          "ok": true,
-          "detail": "통과"
-        },
-        {
-          "name": "화면·링크 런타임",
-          "ok": true,
-          "detail": "통과"
-        },
-        {
-          "name": "24개 기능 계약",
-          "ok": true,
-          "detail": "통과"
-        },
-        {
-          "name": "전체 코드·자료 감사",
-          "ok": true,
-          "detail": "통과"
-        },
-        {
-          "name": "SNS·Google 수집",
-          "ok": true,
-          "detail": "통과"
-        },
-        {
-          "name": "브라우저 런타임",
-          "ok": true,
-          "detail": "통과"
-        },
-        {
-          "name": "카메라 런타임",
-          "ok": true,
-          "detail": "통과"
-        },
-        {
-          "name": "서비스워커 런타임",
-          "ok": true,
-          "detail": "통과"
-        },
-        {
-          "name": "비전 런타임",
-          "ok": true,
-          "detail": "통과"
-        },
-        {
-          "name": "5개 감정사 브라우저 정확도",
-          "ok": true,
-          "detail": "통과"
-        },
-        {
-          "name": "5개 감정사 교차런타임",
-          "ok": true,
-          "detail": "통과"
-        },
-        {
-          "name": "등급 학습 파이프라인",
-          "ok": true,
-          "detail": "통과"
-        },
-        {
-          "name": "시세 출처 회귀",
-          "ok": true,
-          "detail": "통과"
-        },
-        {
-          "name": "eBay 등급학습 회귀",
-          "ok": true,
-          "detail": "통과"
-        },
-        {
-          "name": "비전 보정 회귀",
-          "ok": true,
-          "detail": "통과"
-        },
-        {
-          "name": "격리 고장주입·자가복구",
-          "ok": true,
-          "detail": "통과"
-        }
-      ],
-      "release_gate": "v107-full-audit-hardened"
-    },
-    {
-      "checked_at": "2026-08-29T23:07:37+00:00",
-      "ok": true,
-      "pass_count": 17,
-      "failure_count": 0,
-      "checks": [
-        {
-          "name": "Python 전체 문법",
-          "ok": true,
-          "detail": "통과"
-        },
-        {
-          "name": "v107 서버·PWA 통합",
-          "ok": true,
-          "detail": "통과"
-        },
-        {
-          "name": "화면·링크 런타임",
-          "ok": true,
-          "detail": "통과"
-        },
-        {
-          "name": "24개 기능 계약",
-          "ok": true,
-          "detail": "통과"
-        },
-        {
-          "name": "전체 코드·자료 감사",
-          "ok": true,
-          "detail": "통과"
-        },
-        {
-          "name": "SNS·Google 수집",
-          "ok": true,
-          "detail": "통과"
-        },
-        {
-          "name": "브라우저 런타임",
-          "ok": true,
-          "detail": "통과"
-        },
-        {
-          "name": "카메라 런타임",
-          "ok": true,
-          "detail": "통과"
-        },
-        {
-          "name": "서비스워커 런타임",
-          "ok": true,
-          "detail": "통과"
-        },
-        {
-          "name": "비전 런타임",
-          "ok": true,
-          "detail": "통과"
-        },
-        {
-          "name": "5개 감정사 브라우저 정확도",
-          "ok": true,
-          "detail": "통과"
-        },
-        {
-          "name": "5개 감정사 교차런타임",
-          "ok": true,
-          "detail": "통과"
-        },
-        {
-          "name": "등급 학습 파이프라인",
-          "ok": true,
-          "detail": "통과"
-        },
-        {
-          "name": "시세 출처 회귀",
-          "ok": true,
-          "detail": "통과"
-        },
-        {
-          "name": "eBay 등급학습 회귀",
-          "ok": true,
-          "detail": "통과"
-        },
-        {
-          "name": "비전 보정 회귀",
-          "ok": true,
-          "detail": "통과"
-        },
-        {
-          "name": "격리 고장주입·자가복구",
-          "ok": true,
-          "detail": "통과"
-        }
-      ],
-      "release_gate": "v107-full-audit-hardened"
-    },
-    {
-      "checked_at": "2026-08-29T23:31:51+00:00",
-      "ok": true,
-      "pass_count": 17,
-      "failure_count": 0,
-      "checks": [
-        {
-          "name": "Python 전체 문법",
-          "ok": true,
-          "detail": "통과"
-        },
-        {
-          "name": "v107 서버·PWA 통합",
-          "ok": true,
-          "detail": "통과"
-        },
-        {
-          "name": "화면·링크 런타임",
-          "ok": true,
-          "detail": "통과"
-        },
-        {
-          "name": "24개 기능 계약",
-          "ok": true,
-          "detail": "통과"
-        },
-        {
-          "name": "전체 코드·자료 감사",
-          "ok": true,
-          "detail": "통과"
-        },
-        {
-          "name": "SNS·Google 수집",
-          "ok": true,
-          "detail": "통과"
-        },
-        {
-          "name": "브라우저 런타임",
-          "ok": true,
-          "detail": "통과"
-        },
-        {
-          "name": "카메라 런타임",
-          "ok": true,
-          "detail": "통과"
-        },
-        {
-          "name": "서비스워커 런타임",
-          "ok": true,
-          "detail": "통과"
-        },
-        {
-          "name": "비전 런타임",
-          "ok": true,
-          "detail": "통과"
-        },
-        {
-          "name": "5개 감정사 브라우저 정확도",
-          "ok": true,
-          "detail": "통과"
-        },
-        {
-          "name": "5개 감정사 교차런타임",
-          "ok": true,
-          "detail": "통과"
-        },
-        {
-          "name": "등급 학습 파이프라인",
-          "ok": true,
-          "detail": "통과"
-        },
-        {
-          "name": "시세 출처 회귀",
-          "ok": true,
-          "detail": "통과"
-        },
-        {
-          "name": "eBay 등급학습 회귀",
-          "ok": true,
-          "detail": "통과"
-        },
-        {
-          "name": "비전 보정 회귀",
-          "ok": true,
-          "detail": "통과"
-        },
-        {
-          "name": "격리 고장주입·자가복구",
-          "ok": true,
-          "detail": "통과"
-        }
-      ],
-      "release_gate": "v107-full-audit-hardened"
-    },
     {
       "checked_at": "2026-08-29T23:32:08+00:00",
       "ok": true,
@@ -2172,6 +1890,288 @@
     },
     {
       "checked_at": "2026-08-31T09:20:36+00:00",
+      "ok": true,
+      "pass_count": 17,
+      "failure_count": 0,
+      "checks": [
+        {
+          "name": "Python 전체 문법",
+          "ok": true,
+          "detail": "통과"
+        },
+        {
+          "name": "v107 서버·PWA 통합",
+          "ok": true,
+          "detail": "통과"
+        },
+        {
+          "name": "화면·링크 런타임",
+          "ok": true,
+          "detail": "통과"
+        },
+        {
+          "name": "24개 기능 계약",
+          "ok": true,
+          "detail": "통과"
+        },
+        {
+          "name": "전체 코드·자료 감사",
+          "ok": true,
+          "detail": "통과"
+        },
+        {
+          "name": "SNS·Google 수집",
+          "ok": true,
+          "detail": "통과"
+        },
+        {
+          "name": "브라우저 런타임",
+          "ok": true,
+          "detail": "통과"
+        },
+        {
+          "name": "카메라 런타임",
+          "ok": true,
+          "detail": "통과"
+        },
+        {
+          "name": "서비스워커 런타임",
+          "ok": true,
+          "detail": "통과"
+        },
+        {
+          "name": "비전 런타임",
+          "ok": true,
+          "detail": "통과"
+        },
+        {
+          "name": "5개 감정사 브라우저 정확도",
+          "ok": true,
+          "detail": "통과"
+        },
+        {
+          "name": "5개 감정사 교차런타임",
+          "ok": true,
+          "detail": "통과"
+        },
+        {
+          "name": "등급 학습 파이프라인",
+          "ok": true,
+          "detail": "통과"
+        },
+        {
+          "name": "시세 출처 회귀",
+          "ok": true,
+          "detail": "통과"
+        },
+        {
+          "name": "eBay 등급학습 회귀",
+          "ok": true,
+          "detail": "통과"
+        },
+        {
+          "name": "비전 보정 회귀",
+          "ok": true,
+          "detail": "통과"
+        },
+        {
+          "name": "격리 고장주입·자가복구",
+          "ok": true,
+          "detail": "통과"
+        }
+      ],
+      "release_gate": "v107-full-audit-hardened"
+    },
+    {
+      "checked_at": "2026-08-31T12:51:58+00:00",
+      "ok": true,
+      "pass_count": 17,
+      "failure_count": 0,
+      "checks": [
+        {
+          "name": "Python 전체 문법",
+          "ok": true,
+          "detail": "통과"
+        },
+        {
+          "name": "v107 서버·PWA 통합",
+          "ok": true,
+          "detail": "통과"
+        },
+        {
+          "name": "화면·링크 런타임",
+          "ok": true,
+          "detail": "통과"
+        },
+        {
+          "name": "24개 기능 계약",
+          "ok": true,
+          "detail": "통과"
+        },
+        {
+          "name": "전체 코드·자료 감사",
+          "ok": true,
+          "detail": "통과"
+        },
+        {
+          "name": "SNS·Google 수집",
+          "ok": true,
+          "detail": "통과"
+        },
+        {
+          "name": "브라우저 런타임",
+          "ok": true,
+          "detail": "통과"
+        },
+        {
+          "name": "카메라 런타임",
+          "ok": true,
+          "detail": "통과"
+        },
+        {
+          "name": "서비스워커 런타임",
+          "ok": true,
+          "detail": "통과"
+        },
+        {
+          "name": "비전 런타임",
+          "ok": true,
+          "detail": "통과"
+        },
+        {
+          "name": "5개 감정사 브라우저 정확도",
+          "ok": true,
+          "detail": "통과"
+        },
+        {
+          "name": "5개 감정사 교차런타임",
+          "ok": true,
+          "detail": "통과"
+        },
+        {
+          "name": "등급 학습 파이프라인",
+          "ok": true,
+          "detail": "통과"
+        },
+        {
+          "name": "시세 출처 회귀",
+          "ok": true,
+          "detail": "통과"
+        },
+        {
+          "name": "eBay 등급학습 회귀",
+          "ok": true,
+          "detail": "통과"
+        },
+        {
+          "name": "비전 보정 회귀",
+          "ok": true,
+          "detail": "통과"
+        },
+        {
+          "name": "격리 고장주입·자가복구",
+          "ok": true,
+          "detail": "통과"
+        }
+      ],
+      "release_gate": "v107-full-audit-hardened"
+    },
+    {
+      "checked_at": "2026-08-31T12:52:38+00:00",
+      "ok": false,
+      "pass_count": 16,
+      "failure_count": 1,
+      "checks": [
+        {
+          "name": "Python 전체 문법",
+          "ok": true,
+          "detail": "통과"
+        },
+        {
+          "name": "v107 서버·PWA 통합",
+          "ok": true,
+          "detail": "통과"
+        },
+        {
+          "name": "화면·링크 런타임",
+          "ok": true,
+          "detail": "통과"
+        },
+        {
+          "name": "24개 기능 계약",
+          "ok": true,
+          "detail": "통과"
+        },
+        {
+          "name": "전체 코드·자료 감사",
+          "ok": true,
+          "detail": "통과"
+        },
+        {
+          "name": "SNS·Google 수집",
+          "ok": true,
+          "detail": "통과"
+        },
+        {
+          "name": "브라우저 런타임",
+          "ok": true,
+          "detail": "통과"
+        },
+        {
+          "name": "카메라 런타임",
+          "ok": false,
+          "detail": "AssertionError [ERR_ASSERTION]: automatic analysis did not finish\n'none' !== 'block'\nat main (/workspace/scratch/0c111ebefbe5/tcg-grader/verify_camera_runtime.js:246:10) {\ngeneratedMessage: false,\ncode: 'ERR_ASSERTION',\nactual: 'none',\nexpected: 'block',\noperator: 'strictEqual',\ndiff: 'simple'\n}"
+        },
+        {
+          "name": "서비스워커 런타임",
+          "ok": true,
+          "detail": "통과"
+        },
+        {
+          "name": "비전 런타임",
+          "ok": true,
+          "detail": "통과"
+        },
+        {
+          "name": "5개 감정사 브라우저 정확도",
+          "ok": true,
+          "detail": "통과"
+        },
+        {
+          "name": "5개 감정사 교차런타임",
+          "ok": true,
+          "detail": "통과"
+        },
+        {
+          "name": "등급 학습 파이프라인",
+          "ok": true,
+          "detail": "통과"
+        },
+        {
+          "name": "시세 출처 회귀",
+          "ok": true,
+          "detail": "통과"
+        },
+        {
+          "name": "eBay 등급학습 회귀",
+          "ok": true,
+          "detail": "통과"
+        },
+        {
+          "name": "비전 보정 회귀",
+          "ok": true,
+          "detail": "통과"
+        },
+        {
+          "name": "격리 고장주입·자가복구",
+          "ok": true,
+          "detail": "통과"
+        }
+      ],
+      "release_gate": "v107-full-audit-hardened"
+    },
+    {
+      "checked_at": "2026-08-31T12:53:19+00:00",
       "ok": true,
       "pass_count": 17,
       "failure_count": 0,

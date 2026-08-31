@@ -1,7 +1,7 @@
 {
   "version": 1,
   "engine": "v138-screenshot-regression-learning",
-  "generated_at": "2026-08-31T09:00:30+00:00",
+  "generated_at": "2026-08-31T12:53:34+00:00",
   "training_only": true,
   "scenario_count": 316,
   "successful_scenarios": 316,

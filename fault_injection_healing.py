@@ -44,6 +44,16 @@ MUTABLE_JSON = {
     "graded_photo_reference_learning.json", "detailed_collection_learning.json",
     "collection_learning_memory.json", "search_method_learning.json", "search_engine_profile.json",
     "V108_FINAL_VERIFICATION_REPORT.json", "V109_FINAL_VERIFICATION_REPORT.json",
+    "security_audit_report.json", "security_learning_memory.json",
+}
+STRUCTURED_MUTABLE_JSON = {
+    "security_audit_report.json": {
+        "schema_version": "int", "generated_at": "str", "scope": "str",
+        "finding_counts": "dict", "findings": "list", "note": "str",
+    },
+    "security_learning_memory.json": {
+        "schema_version": "int", "findings": "dict", "updated_at": "str",
+    },
 }
 RECOVERABLE_DATA = {
     "releases.json", "market_watch.json", "market_prices.json",
@@ -93,20 +103,79 @@ def _safe_file(root: Path, relative: str) -> Path:
 
 def tracked_files(root: Path = ROOT) -> list[Path]:
     result: list[Path] = []
-    for path in root.rglob("*"):
-        if not path.is_file() or path.is_symlink() or path.name.startswith("."):
+    root = root.resolve()
+    blocked = {"__pycache__", ".tcg_ai_proposals", "trusted_ai_tests"}
+    for current, directories, filenames in os.walk(root, topdown=True, followlinks=False):
+        current_path = Path(current)
+        relative_dir = current_path.relative_to(root)
+        if not relative_dir.parts:
+            directories[:] = [
+                name for name in directories
+                if name == ".github" or (not name.startswith(".") and name not in blocked)
+            ]
+        elif relative_dir.parts == (".github",):
+            directories[:] = [name for name in directories if name == "workflows"]
+        else:
+            directories[:] = [
+                name for name in directories
+                if not name.startswith(".") and name not in blocked
+            ]
+        directories[:] = [
+            name for name in directories if not (current_path / name).is_symlink()
+        ]
+        workflow_dir = relative_dir.parts[:2] == (".github", "workflows")
+        if relative_dir.parts and not workflow_dir and any(part.startswith(".") for part in relative_dir.parts):
             continue
-        relative = path.relative_to(root)
-        workflow_path=len(relative.parts)>=3 and relative.parts[:2]==(".github","workflows")
-        if (any(part in {"__pycache__", ".tcg_ai_proposals", "trusted_ai_tests"} for part in relative.parts)
-                or (not workflow_path and any(part.startswith(".") for part in relative.parts))):
-            continue
-        if path.suffix.lower() not in TRACKED_SUFFIXES or path.name in MUTABLE_JSON:
-            continue
-        if path.stat().st_size > MAX_FILE_BYTES:
-            continue
-        result.append(path)
+        for filename in filenames:
+            path = current_path / filename
+            if filename.startswith(".") or path.is_symlink():
+                continue
+            if path.suffix.lower() not in TRACKED_SUFFIXES or filename in MUTABLE_JSON:
+                continue
+            try:
+                if not path.is_file() or path.stat().st_size > MAX_FILE_BYTES:
+                    continue
+            except OSError:
+                continue
+            result.append(path)
     return sorted(result, key=lambda item: item.as_posix())
+
+
+def _mutable_json_manifest(root: Path) -> dict[str, Any]:
+    result: dict[str, Any] = {}
+    for relative, required in STRUCTURED_MUTABLE_JSON.items():
+        try:
+            path = _safe_file(root, relative)
+            info = path.lstat()
+            if stat.S_ISREG(info.st_mode) and not path.is_symlink() and info.st_size <= MAX_FILE_BYTES:
+                result[relative] = {"required": dict(required), "max_bytes": MAX_FILE_BYTES}
+        except (OSError, ValueError):
+            continue
+    return result
+
+
+def _validate_mutable_json(path: Path, contract: Any) -> bool:
+    if not isinstance(contract, dict) or not isinstance(contract.get("required"), dict):
+        return False
+    info = path.lstat()
+    max_bytes = min(MAX_FILE_BYTES, max(1, int(contract.get("max_bytes", MAX_FILE_BYTES))))
+    if not stat.S_ISREG(info.st_mode) or path.is_symlink() or info.st_size > max_bytes:
+        return False
+    payload = _strict_json_bytes(path.read_bytes())
+    if not isinstance(payload, dict):
+        return False
+    type_map = {"int": int, "str": str, "dict": dict, "list": list, "bool": bool}
+    for key, type_name in contract["required"].items():
+        expected_type = type_map.get(str(type_name))
+        if expected_type is None or key not in payload:
+            return False
+        value = payload[key]
+        if expected_type in {int, bool}:
+            if type(value) is not expected_type:
+                return False
+        elif not isinstance(value, expected_type):
+            return False
+    return True
 
 
 def build_integrity_manifest(root: Path = ROOT, target: Path | None = None) -> dict[str, Any]:
@@ -115,16 +184,19 @@ def build_integrity_manifest(root: Path = ROOT, target: Path | None = None) -> d
         path.relative_to(root).as_posix(): {"sha256": _sha256(path), "bytes": path.stat().st_size}
         for path in tracked_files(root)
     }
+    mutable_json = _mutable_json_manifest(root)
     payload = {
-        "version": 1,
+        "version": 2,
         "engine": ENGINE_VERSION,
         "generated_at": _utc_now(),
         "files": files,
+        "mutable_json": mutable_json,
         "policy": {
             "generated_code_auto_applied": False,
             "code_corruption_auto_repaired": False,
             "verified_json_backup_auto_repair_allowed": True,
             "fault_injection_production_allowed": False,
+            "mutable_runtime_json_validation": "strict-schema-without-fixed-hash",
         },
     }
     if target is not None:
@@ -148,11 +220,24 @@ def diagnose_integrity(root: Path = ROOT, manifest_path: Path | None = None) -> 
             path = _safe_file(root, relative)
             info = path.lstat()
             regular = stat.S_ISREG(info.st_mode) and not path.is_symlink()
-            actual_hash = _sha256(path) if regular and info.st_size <= MAX_FILE_BYTES else None
-            ok = regular and info.st_size == int(expected["bytes"]) and actual_hash == expected["sha256"]
+            expected_bytes = int(expected["bytes"])
+            size_matches = regular and info.st_size == expected_bytes and info.st_size <= MAX_FILE_BYTES
+            actual_hash = _sha256(path) if size_matches else None
+            ok = size_matches and actual_hash == expected["sha256"]
             rows.append({"file": relative, "ok": ok, "reason": "정상" if ok else "누락·변경·형식 이상"})
         except (OSError, ValueError, TypeError, KeyError, OverflowError):
             rows.append({"file": str(relative)[:180], "ok": False, "reason": "읽기 또는 무결성 검사 실패"})
+    mutable_json = manifest.get("mutable_json", {}) if isinstance(manifest, dict) else {}
+    if not isinstance(mutable_json, dict):
+        return {"ok": False, "engine": ENGINE_VERSION, "error": "manifest:mutable-schema", "files": rows}
+    for relative, contract in mutable_json.items():
+        try:
+            path = _safe_file(root, relative)
+            ok = _validate_mutable_json(path, contract)
+            rows.append({"file": relative, "ok": ok,
+                         "reason": "정상(가변 JSON 구조검사)" if ok else "가변 JSON 구조 이상"})
+        except (OSError, ValueError, TypeError, KeyError, OverflowError, UnicodeError):
+            rows.append({"file": str(relative)[:180], "ok": False, "reason": "가변 JSON 검사 실패"})
     return {"ok": bool(rows) and all(row["ok"] for row in rows), "engine": ENGINE_VERSION,
             "checked": len(rows), "failed": sum(not row["ok"] for row in rows), "files": rows}
 

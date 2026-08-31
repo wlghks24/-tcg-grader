@@ -1,7 +1,7 @@
 {
-  "version": 1,
+  "version": 2,
   "engine": "v109-card-identity-ocr-learning",
-  "generated_at": "2026-08-31T09:20:36+00:00",
+  "generated_at": "2026-08-31T12:54:19+00:00",
   "files": {
     ".github/workflows/apply-android-7step-display.yml": {
       "sha256": "5104aa4ae7e00d85d41ec9f3ef82c14579df80221b19c295051be0d7c3d28786",
@@ -624,8 +624,8 @@
       "bytes": 7585
     },
     "fault_injection_healing.py": {
-      "sha256": "fa11f9931e2d53d30dc71967a98aa5ddd0c48f9bcde35c25f69de918ed22c4d1",
-      "bytes": 21436
+      "sha256": "fb887c45461f1370f58fa55f164bde2c125d865396c8cdf3025edafa90e1862d",
+      "bytes": 25316
     },
     "feature_contract.py": {
       "sha256": "5a78e5e95d6f294b12805365fb25e24f231ed8527405ad8cb66e20ae6b1b3b03",
@@ -1027,17 +1027,9 @@
       "sha256": "a94a43572fadacfb70fa90ef5e1fb2340870db9efdd0b442019578a872099df0",
       "bytes": 18672
     },
-    "security_audit_report.json": {
-      "sha256": "f601b4282dc0f65f0c2270c22df1894fc392600e82b7af94acc1d83430153b3f",
-      "bytes": 15030
-    },
     "security_hardening_apply.py": {
       "sha256": "dfc14be06f2365dafa7f3a8481d954a1765b61ce37d6a1ffd925d1f7980fdeb9",
       "bytes": 10542
-    },
-    "security_learning_memory.json": {
-      "sha256": "5f6cfea6a083c74774efaef6cac783d366ea6cda66a1f31b39ace4cee0a6b7f1",
-      "bytes": 57153
     },
     "security_self_audit.py": {
       "sha256": "0f8d78388293723248382ac241a14ca0ae74e63ec10477fd3c63f0b3e708f677",
@@ -1352,8 +1344,8 @@
       "bytes": 1388
     },
     "verify_fault_injection_healing.py": {
-      "sha256": "bddf7aab974a9b07f093c0dbb7e1d26911f5682319d874f3c741d4d91d464623",
-      "bytes": 4944
+      "sha256": "40f0d3565ea8094b4deb2cf407550eaf41928f3f7fbfc2863ead0053f7cb25f8",
+      "bytes": 7538
     },
     "verify_library_slab_corpus.py": {
       "sha256": "0d3c65c0414138ae115f8c926d38fd821470953d947307ac1f3391d4f1b6cb65",
@@ -1472,10 +1464,32 @@
       "bytes": 396
     }
   },
+  "mutable_json": {
+    "security_audit_report.json": {
+      "required": {
+        "schema_version": "int",
+        "generated_at": "str",
+        "scope": "str",
+        "finding_counts": "dict",
+        "findings": "list",
+        "note": "str"
+      },
+      "max_bytes": 20971520
+    },
+    "security_learning_memory.json": {
+      "required": {
+        "schema_version": "int",
+        "findings": "dict",
+        "updated_at": "str"
+      },
+      "max_bytes": 20971520
+    }
+  },
   "policy": {
     "generated_code_auto_applied": false,
     "code_corruption_auto_repaired": false,
     "verified_json_backup_auto_repair_allowed": true,
-    "fault_injection_production_allowed": false
+    "fault_injection_production_allowed": false,
+    "mutable_runtime_json_validation": "strict-schema-without-fixed-hash"
   }
 }

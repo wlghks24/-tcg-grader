@@ -7,6 +7,7 @@ import json
 import tempfile
 import unittest
 from pathlib import Path
+from unittest import mock
 
 import fault_injection_healing as healing
 
@@ -47,6 +48,52 @@ class FaultHealingTests(unittest.TestCase):
             self.assertFalse(result["ok"])
             self.assertEqual(result["failed"], 1)
             self.assertEqual((root / "sample.py").read_text(encoding="utf-8"), "VALUE = 2\n")
+
+    def test_mutable_security_reports_use_strict_schema_not_fixed_hash(self):
+        with tempfile.TemporaryDirectory(prefix="tcg-mutable-integrity-") as directory:
+            root = Path(directory)
+            (root / "sample.py").write_text("VALUE = 1\n", encoding="utf-8")
+            report = root / "security_audit_report.json"
+            memory = root / "security_learning_memory.json"
+            report.write_text(json.dumps({
+                "schema_version": 1, "generated_at": "before", "scope": "test",
+                "finding_counts": {}, "findings": [], "note": "test",
+            }), encoding="utf-8")
+            memory.write_text(json.dumps({
+                "schema_version": 1, "findings": {}, "updated_at": "before",
+            }), encoding="utf-8")
+            manifest = root / "integrity_manifest.json"
+            payload = healing.build_integrity_manifest(root, manifest)
+            self.assertNotIn(report.name, payload["files"])
+            self.assertNotIn(memory.name, payload["files"])
+            self.assertIn(report.name, payload["mutable_json"])
+            self.assertIn(memory.name, payload["mutable_json"])
+
+            report_payload = json.loads(report.read_text(encoding="utf-8"))
+            report_payload["generated_at"] = "after"
+            report.write_text(json.dumps(report_payload), encoding="utf-8")
+            memory_payload = json.loads(memory.read_text(encoding="utf-8"))
+            memory_payload["updated_at"] = "after"
+            memory.write_text(json.dumps(memory_payload), encoding="utf-8")
+            self.assertTrue(healing.diagnose_integrity(root, manifest)["ok"])
+
+            report.write_text('{"schema_version":1}', encoding="utf-8")
+            result = healing.diagnose_integrity(root, manifest)
+            self.assertFalse(result["ok"])
+            self.assertEqual(result["failed"], 1)
+
+    def test_size_mismatch_skips_unnecessary_hashing(self):
+        with tempfile.TemporaryDirectory(prefix="tcg-integrity-size-") as directory:
+            root = Path(directory)
+            source = root / "sample.py"
+            source.write_text("A=1\n", encoding="utf-8")
+            manifest = root / "integrity_manifest.json"
+            healing.build_integrity_manifest(root, manifest)
+            source.write_text("A=123456789\n", encoding="utf-8")
+            with mock.patch.object(healing, "_sha256", wraps=healing._sha256) as digest:
+                result = healing.diagnose_integrity(root, manifest)
+            self.assertFalse(result["ok"])
+            digest.assert_not_called()
 
     def test_only_invalid_json_uses_verified_backup(self):
         with tempfile.TemporaryDirectory(prefix="tcg-data-heal-") as directory:
