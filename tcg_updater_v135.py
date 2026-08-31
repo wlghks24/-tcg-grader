@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-"""TCG updater v135 wrapper with explicit verified-learning runtime identity."""
+"""TCG updater v135 wrapper with verified-learning and v143 runtime bundle guard."""
 from __future__ import annotations
 
 import os
@@ -11,7 +11,8 @@ from urllib.parse import parse_qs, urlparse
 import tcg_updater as core
 
 RUNTIME_ID = "tcg-updater-v135-verified-learning"
-RUNTIME_PATCH = 142
+RUNTIME_PATCH = 143
+RUNTIME_BUNDLE_STATUS = {"ok": False, "patch": 143, "issues": ["startup audit not completed"]}
 
 
 class Handler(core.Handler):
@@ -47,10 +48,19 @@ class Handler(core.Handler):
         parsed = urlparse(self.path)
         path = parsed.path
         if path == '/api/v135-health':
+            bundle = RUNTIME_BUNDLE_STATUS if isinstance(RUNTIME_BUNDLE_STATUS, dict) else {}
+            contracts = bundle.get('contracts') if isinstance(bundle.get('contracts'), dict) else {}
             return self.json({
                 'ok': True,
                 'runtime': RUNTIME_ID,
                 'patch': RUNTIME_PATCH,
+                'runtime_bundle_patch': int(bundle.get('patch') or 143),
+                'runtime_bundle_compatible': bundle.get('ok') is True,
+                'runtime_bundle_issue_count': int(bundle.get('issue_count') or 0),
+                'runtime_bundle_required_files': int(bundle.get('required_file_count') or 0),
+                'search_timeout_circuit_breaker': contracts.get('search_timeout_circuit_breaker') is True,
+                'graded_photo_preflight_allowlisted': contracts.get('graded_photo_preflight_allowlisted') is True,
+                'source_structure_classification': contracts.get('source_structure_classification') is True,
                 'learning_api': 135,
                 'event_collection_patch': 142,
                 'priority_event_watch_minutes': 30,
@@ -165,12 +175,32 @@ class Handler(core.Handler):
 
 
 def main() -> int:
+    global RUNTIME_BUNDLE_STATUS
     os.chdir(core.BASE)
     housekeeping = core.local_startup_housekeeping()
     if housekeeping.get('removed'):
         print(f"시작 전 만료정보 자동정리: {housekeeping['removed']}건", flush=True)
     elif not housekeeping.get('ok', True):
         print(f"시작 전 정리 경고: {housekeeping.get('error', 'unknown')} · 기존 자료 유지", flush=True)
+
+    # Refuse a mixed tablet install before binding a port. A recent wrapper with
+    # an old collector/recovery module is more dangerous than a visible startup
+    # failure because it can resurrect already-fixed validation/network behavior.
+    try:
+        import runtime_bundle_guard_v143 as bundle_guard
+        RUNTIME_BUNDLE_STATUS = bundle_guard.require_compatible()
+        print(
+            f"런타임 번들 검사: v{RUNTIME_BUNDLE_STATUS.get('patch', 143)} · "
+            f"필수파일 {RUNTIME_BUNDLE_STATUS.get('required_file_count', 0)}개 · 의미계약 정상",
+            flush=True,
+        )
+    except (ImportError, RuntimeError, OSError, ValueError, TypeError) as exc:
+        raise SystemExit(
+            '[오류] v143 전체 런타임 호환성 검사 실패. '
+            'INSTALL_GRADE_LEARNING_V135.sh로 전체 갱신 후 다시 시작하세요: '
+            + str(exc)[:500]
+        )
+
     try:
         server = core.QuietThreadingHTTPServer(('0.0.0.0', core.PORT), Handler)
     except OSError as exc:
