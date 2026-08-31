@@ -2,7 +2,7 @@
 set -eu
 cd "$(dirname "$0")"
 
-printf '\n=== 등급사진 수동검증 전용 + 인증번호 앞뒤사진 분류 설치 ===\n'
+printf '\n=== 등급사진 수동검증 전용 + 인증번호 앞뒤사진 게임별 분류 설치 ===\n'
 
 export TCG_DISABLE_AUTO_GRADER_LOOKUP=1
 
@@ -39,14 +39,19 @@ assert contracts.get('manual_proof_rejected_bytes_retained') is False, status
 assert contracts.get('automatic_grader_lookup_disabled') is True, status
 assert contracts.get('manual_registration_auto_lookup_disabled') is True, status
 assert contracts.get('certified_front_back_pair_only') is True, status
-assert contracts.get('manual_pair_grouped_by_game_and_grader') is True, status
 assert verifier.automatic_lookup_disabled() is True
 assert mode.get('collector_manual_only') is True, mode
 assert mode.get('manual_registration_manual_only') is True, mode
 assert mode.get('collector_syncs_manual_pairs') is True, mode
+assert mode.get('grouped_by_game_only') is True, mode
+assert mode.get('grader_subfolders_created') is False, mode
 assert str(pair_queue.ANDROID_ROOT) == '/storage/emulated/0/Download/TCG등급학습'
 assert '/sdcard' not in str(pair_queue.ANDROID_ROOT)
-print('[OK] 자동 등급사 조회 OFF + 인증번호/앞뒤사진 + 게임/등급사 분류 계약 정상')
+probe=pair_queue._pair_folder(pair_queue.ANDROID_ROOT,'pokemon','0123456789abcdefabcd')
+assert str(probe).endswith('/pokemon/수동등록대기/0123456789abcdefabcd')
+assert '/pokemon/PSA/' not in str(probe)
+print('[OK] 자동 등급사 조회 OFF + 인증번호/앞뒤사진 + 게임별 폴더 계약 정상')
+print('[OK] PSA/BGS/CGC/TAG/BRG는 폴더가 아니라 pair.json/수동등록목록.json 메타데이터로 보존')
 print('[OK] Android 저장경로는 /sdcard 심볼릭링크 대신 /storage/emulated/0 사용')
 PY
 
@@ -81,7 +86,7 @@ printf '%s' "$MANUAL" | grep -q '"manual_screenshot_trains_raw_grade_calibration
 printf '%s' "$MANUAL" | grep -q '"rejected_screenshot_bytes_retained": false'
 printf '%s' "$MANUAL" | grep -q '"proof_upload_rate_limited": true'
 
-printf '\n=== 앞뒤사진 수동대기 분류기 ===\n'
+printf '\n=== 앞뒤사진 수동대기 게임별 분류기 ===\n'
 PAIR_OUTPUT="$(python graded_photo_manual_pair_queue.py 2>&1)" || {
   printf '%s\n' "$PAIR_OUTPUT"
   echo '[오류] 앞뒤사진 수동대기 분류기 실행 실패'
@@ -94,13 +99,20 @@ if ! printf '%s' "$PAIR_OUTPUT" | grep -Fq '/storage/emulated/0/Download/TCG등�
   echo '[안전] 앱 내부 임시폴더로 조용히 폴백한 상태를 설치완료로 처리하지 않습니다.'
   exit 1
 fi
+if ! printf '%s' "$PAIR_OUTPUT" | grep -Fq 'PSA/BGS 등급사 하위폴더 없음'; then
+  echo '[오류] 게임별 단순 폴더 정책이 적용되지 않았습니다.'
+  exit 1
+fi
 
 printf '\n[OK] 설치 완료\n'
 printf '%s\n' '- PSA/BGS/CGC/TAG/BRG 자동 인증사이트 조회 완전 비활성화'
 printf '%s\n' '- 포켓몬/원피스/나루토 중 인증번호 + 앞면 + 뒷면이 모두 확인된 후보만 저장'
-printf '%s\n' '- /storage/emulated/0/Download/TCG등급학습/<게임>/<등급사>/수동등록대기/<카드>/ 로 자동 분류'
-printf '%s\n' '- /sdcard 심볼릭링크 별칭은 보안 atomic writer와 충돌하므로 사용하지 않음'
-printf '%s\n' '- 각 게임/등급사 폴더에 수동등록목록.json 생성'
+printf '%s\n' '- 저장: /storage/emulated/0/Download/TCG등급학습/pokemon/수동등록대기/<카드>/'
+printf '%s\n' '- 저장: /storage/emulated/0/Download/TCG등급학습/onepiece/수동등록대기/<카드>/'
+printf '%s\n' '- 저장: /storage/emulated/0/Download/TCG등급학습/naruto/수동등록대기/<카드>/'
+printf '%s\n' '- pokemon/PSA, onepiece/BGS 같은 등급사 하위폴더는 만들지 않음'
+printf '%s\n' '- 등급사 정보는 각 게임의 수동등록목록.json과 카드별 pair.json 안에 보존'
+printf '%s\n' '- 기존에 자동 생성된 <게임>/<등급사>/수동등록대기 자료는 가능한 경우 게임 폴더로 안전 이동'
 printf '%s\n' '- 단일사진·인증번호 없음·지원하지 않는 등급사는 자동 저장하지 않음'
 printf '%s\n' '- 공식사이트는 사용자가 직접 열어 확인하고 확인화면을 수동등록'
 printf '%s\n' '- 수동 확인자료는 RAW 등급 보정학습으로 자동 승격하지 않음'
