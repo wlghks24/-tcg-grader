@@ -9,9 +9,12 @@ It deliberately removes automatic PSA/BGS/CGC/TAG/BRG HTTP verification from:
 
 The collector may still use already-persisted officially verified registry rows.
 New/unverified rows are sent to the user-browser manual verification workflow.
+After each in-process graded-photo collection, only certification-bearing front
++ back pairs are copied to the game/grader manual-review folders.
 """
 from __future__ import annotations
 
+import os
 from typing import Any
 
 from graded_photo_evidence import normalize_cert
@@ -19,6 +22,7 @@ from grading_cert_verifier import lookup_url
 
 PATCH_ID = 144
 _APPLIED = False
+_ORIGINAL_COLLECT = None
 
 
 def _finite_grade(value: Any) -> float | None:
@@ -214,13 +218,46 @@ def _manual_only_process_registration_once(registration_id: str):
 _manual_only_process_registration_once._manual_only_policy = True
 
 
+def _collect_and_sync_manual_pairs():
+    """Run the normal public collector, then export only cert+front/back pairs."""
+    import graded_photo_multi_source as collector
+    import graded_photo_manual_pair_queue as pair_queue
+
+    original = _ORIGINAL_COLLECT or collector.collect
+    payload = original()
+    try:
+        pair_status = pair_queue.sync_once()
+        if isinstance(payload, dict):
+            payload = dict(payload)
+            summary = dict(payload.get("summary") or {})
+            pair_summary = pair_status.get("summary") if isinstance(pair_status, dict) else {}
+            summary["manual_certified_front_back_pairs"] = int((pair_summary or {}).get("total_manual_pairs", 0) or 0)
+            summary["manual_pairs_newly_saved"] = int((pair_summary or {}).get("newly_saved_pairs", 0) or 0)
+            summary["automatic_official_lookup_attempts"] = 0
+            payload["summary"] = summary
+            payload["manual_pair_queue"] = pair_status
+    except (ImportError, OSError, ValueError, TypeError, TimeoutError):
+        pass
+    return payload
+
+
+_collect_and_sync_manual_pairs._manual_only_policy = True
+
+
 def apply() -> dict[str, Any]:
-    global _APPLIED
+    global _APPLIED, _ORIGINAL_COLLECT
     import graded_photo_multi_source as collector
     import manual_graded_photo_registration as manual_photo
 
+    # Child collectors launched by the normal updater inherit this variable.
+    # grading_cert_verifier treats it as a hard no-network gate.
+    os.environ["TCG_DISABLE_AUTO_GRADER_LOOKUP"] = "1"
+
     collector._official_verify_rows = _registry_only_official_verify_rows
     manual_photo._process_registration_once = _manual_only_process_registration_once
+    if _ORIGINAL_COLLECT is None:
+        _ORIGINAL_COLLECT = collector.collect
+    collector.collect = _collect_and_sync_manual_pairs
     _APPLIED = True
     return {
         "ok": True,
@@ -229,6 +266,8 @@ def apply() -> dict[str, Any]:
         "collector_uses_persisted_registry_only": True,
         "manual_registration_auto_official_lookup": False,
         "manual_user_browser_verification_required": True,
+        "certification_front_back_pair_required": True,
+        "grouped_by_game_and_grader": True,
         "front_back_pair_queue_module": "graded_photo_manual_pair_queue.py",
     }
 
@@ -240,10 +279,13 @@ def status() -> dict[str, Any]:
         "ok": bool(
             getattr(collector._official_verify_rows, "_manual_only_policy", False)
             and getattr(manual_photo._process_registration_once, "_manual_only_policy", False)
+            and getattr(collector.collect, "_manual_only_policy", False)
         ),
         "patch": PATCH_ID,
         "applied": _APPLIED,
         "automatic_official_lookup": False,
+        "environment_no_network_gate": os.environ.get("TCG_DISABLE_AUTO_GRADER_LOOKUP") == "1",
         "collector_manual_only": bool(getattr(collector._official_verify_rows, "_manual_only_policy", False)),
         "manual_registration_manual_only": bool(getattr(manual_photo._process_registration_once, "_manual_only_policy", False)),
+        "collector_syncs_manual_pairs": bool(getattr(collector.collect, "_manual_only_policy", False)),
     }
