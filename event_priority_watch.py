@@ -5,9 +5,8 @@
 Unlike the hourly full discovery pass, this watcher only performs account-targeted
 public searches against already trusted official SNS accounts. It is intentionally
 small so it can run every 30 minutes without duplicating the heavy price/catalog
-update or the full 10-topic search matrix. v141 includes out-of-scope card,
-promo, limited-edition and collaboration giveaway/reward announcements and keeps
-verified reward anchors eligible for bounded search-term learning.
+update or the full 10-topic search matrix. v142 keeps reward discovery but only
+feeds verified/independently corroborated anchors back into persistent learning.
 """
 from __future__ import annotations
 
@@ -17,7 +16,8 @@ import os
 import threading
 import time
 
-import event_collection_hardening_v141 as hardening
+import collection_learning_hardening_v142 as hardening
+import event_gap_learning
 import social_event_discovery
 from safe_runtime import atomic_write_json, env_int, safe_read_text
 
@@ -91,6 +91,17 @@ def _collect(registry: dict, jobs: list[tuple[str, str]]) -> tuple[list[dict], l
     return rows, errors
 
 
+def _learn_priority_rewards() -> int:
+    """Persist newly verified reward anchors immediately after the 30-minute scan."""
+    try:
+        learner = event_gap_learning.EventGapLearner()
+        learned = hardening.learn_verified_reward_candidates(learner, social_event_discovery.OUT)
+        learner.save()
+        return int(learned)
+    except (OSError, ValueError, TypeError, UnicodeError, json.JSONDecodeError, AttributeError):
+        return 0
+
+
 def _run_locked(started: float) -> dict:
     hardening.apply()
     registry = social_event_discovery.load_registry()
@@ -135,6 +146,9 @@ def _run_locked(started: float) -> dict:
     except (ImportError, AttributeError, OSError, ValueError, TypeError):
         manual_added = 0
     atomic_write_json(social_event_discovery.OUT, payload, suffix=".priority.tmp")
+    reward_learned = _learn_priority_rewards()
+    payload.setdefault("priority_watch", {})["reward_anchors_learned_this_run"] = reward_learned
+    atomic_write_json(social_event_discovery.OUT, payload, suffix=".priority-learning.tmp")
     return {
         "ok": True,
         "patch": hardening.PATCH_ID,
@@ -142,6 +156,7 @@ def _run_locked(started: float) -> dict:
         "result_count": len(annotated),
         "official_result_count": sum(1 for x in annotated if x.get("official_account_verified") is True),
         "reward_result_count": sum(1 for x in annotated if x.get("reward_watch") is True),
+        "reward_anchors_learned_this_run": reward_learned,
         "manual_evidence_added": manual_added,
         "priority_gap_count": len(payload.get("priority_gap_cells", []) or []),
         "error_count": len(errors),
