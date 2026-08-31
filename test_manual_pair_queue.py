@@ -1,7 +1,10 @@
 #!/usr/bin/env python3
 from __future__ import annotations
 
+import tempfile
 import unittest
+from pathlib import Path
+from unittest import mock
 
 import graded_photo_manual_pair_queue as queue
 
@@ -47,6 +50,32 @@ class ManualPairQueueTests(unittest.TestCase):
         one = queue._pair_key(row, "https://example.com/front.jpg", "https://example.com/back.jpg", "PSA", "12345678")
         two = queue._pair_key(row, "https://example.com/front.jpg", "https://example.com/back.jpg", "PSA", "87654321")
         self.assertNotEqual(one, two)
+
+    def test_android_root_uses_canonical_storage_not_sdcard_symlink(self):
+        self.assertEqual(str(queue.ANDROID_ROOT), "/storage/emulated/0/Download/TCG등급학습")
+        self.assertNotIn("/sdcard", str(queue.ANDROID_ROOT))
+
+    def test_target_root_preflights_with_atomic_writer(self):
+        with tempfile.TemporaryDirectory() as directory:
+            base = Path(directory)
+            android = base / "Download" / "TCG등급학습"
+            android.parent.mkdir(parents=True)
+            local = base / "local"
+            original = queue.atomic_write_json
+            calls = []
+
+            def tracked(path, payload, **kwargs):
+                calls.append(Path(path))
+                return original(path, payload, **kwargs)
+
+            with mock.patch.object(queue, "ANDROID_ROOT", android), \
+                 mock.patch.object(queue, "LOCAL_ROOT", local), \
+                 mock.patch.object(queue, "atomic_write_json", side_effect=tracked):
+                root, mode = queue._target_root()
+
+            self.assertEqual(root, android)
+            self.assertEqual(mode, "android_download")
+            self.assertTrue(any(path.name == ".tcg_pair_atomic_write_test.json" for path in calls))
 
 
 if __name__ == "__main__":
