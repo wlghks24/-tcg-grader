@@ -3,6 +3,17 @@ name: Verify breaking event watch
 on:
   push:
     paths:
+      - 'runtime_bundle_guard_v143.py'
+      - 'safe_runtime.py'
+      - 'auto_repair_engine.py'
+      - 'auto_update_all.py'
+      - 'update_releases.py'
+      - 'update_market_prices.py'
+      - 'update_promo_events.py'
+      - 'update_exchange_rates.py'
+      - 'graded_photo_multi_source.py'
+      - 'multi_channel_agent.py'
+      - 'search_method_learning.py'
       - 'event_collection_hardening_v139.py'
       - 'event_collection_hardening_v140.py'
       - 'event_collection_hardening_v141.py'
@@ -13,14 +24,12 @@ on:
       - 'adaptive_collection_learner.py'
       - 'fan_social_learning.py'
       - 'auto_pipeline_runner.py'
-      - 'update_promo_events.py'
       - 'manual_event_evidence.json'
       - 'social_source_registry.json'
-      - 'social_event_discovery.py'
-      - 'multi_route_event_discovery.py'
       - 'tcg_updater_v135.py'
       - 'test_event_quick_watch.py'
       - 'test_collection_learning_hardening_v142.py'
+      - 'test_runtime_bundle_guard_v143.py'
       - 'START_TCG_UPDATER_ANDROID.sh'
       - 'INSTALL_GRADE_LEARNING_V135.sh'
       - '.github/workflows/verify-breaking-event-watch.yml'
@@ -32,7 +41,7 @@ permissions:
 jobs:
   verify:
     runs-on: ubuntu-latest
-    timeout-minutes: 5
+    timeout-minutes: 7
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
@@ -41,6 +50,17 @@ jobs:
       - name: Compile changed runtime
         run: >-
           python -m py_compile
+          runtime_bundle_guard_v143.py
+          safe_runtime.py
+          auto_repair_engine.py
+          auto_update_all.py
+          update_releases.py
+          update_market_prices.py
+          update_promo_events.py
+          update_exchange_rates.py
+          graded_photo_multi_source.py
+          multi_channel_agent.py
+          search_method_learning.py
           event_collection_hardening_v139.py
           event_collection_hardening_v140.py
           event_collection_hardening_v141.py
@@ -51,44 +71,65 @@ jobs:
           adaptive_collection_learner.py
           fan_social_learning.py
           auto_pipeline_runner.py
-          update_promo_events.py
           tcg_updater_v135.py
           social_event_discovery.py
           multi_route_event_discovery.py
           test_event_quick_watch.py
           test_collection_learning_hardening_v142.py
-      - name: Run collection learning regression tests
+          test_runtime_bundle_guard_v143.py
+      - name: Run collection and runtime regression tests
         run: >-
           python -m unittest -v
           test_event_quick_watch.py
           test_collection_learning_hardening_v142.py
-      - name: Verify coverage and subprocess wiring
+          test_runtime_bundle_guard_v143.py
+      - name: Verify v143 semantic runtime bundle
         shell: bash
         run: |
           python - <<'PY'
           import collection_learning_hardening_v142 as h
+          import runtime_bundle_guard_v143 as bundle
           import update_promo_events as promo
           status=h.apply()
+          audit=bundle.require_compatible()
           assert status['patch'] == 142, status
+          assert audit['patch'] == 143, audit
+          assert audit['issue_count'] == 0, audit
+          assert audit['missing_file_count'] == 0, audit
+          assert audit['contracts']['graded_photo_preflight_allowlisted'] is True, audit
+          assert audit['contracts']['source_structure_classification'] is True, audit
+          assert audit['contracts']['search_timeout_circuit_breaker'] is True, audit
           assert status['strict_official_social_url_match'] is True, status
           assert status['unverified_payload_learning_weight'] == 0.0, status
           assert status['unverified_search_host_term_learning_weight'] == 0.0, status
           assert len(promo.social_topic_expected_keys()) == 90, len(promo.social_topic_expected_keys())
-          print('[OK] v142 learning guard + 90-cell social coverage matrix')
+          print('[OK] v143 runtime bundle + v142 learning guard + 90-cell coverage')
           PY
           grep -q 'collection_learning_hardening_v142.apply()' auto_pipeline_runner.py
           grep -q 'v142-verified-collection-learning' auto_pipeline_runner.py
-      - name: Verify Android v142 install wiring
+      - name: Verify Android v143 install wiring
         shell: bash
         run: |
           bash -n START_TCG_UPDATER_ANDROID.sh
           bash -n INSTALL_GRADE_LEARNING_V135.sh
-          grep -q 'collection_learning_hardening_v142.py' START_TCG_UPDATER_ANDROID.sh
-          grep -q 'collection_learning_hardening_v142.py' INSTALL_GRADE_LEARNING_V135.sh
-          grep -q 'event_priority_watch.py' INSTALL_GRADE_LEARNING_V135.sh
-          grep -q 'event_quick_watch.py' INSTALL_GRADE_LEARNING_V135.sh
-          grep -q 'adaptive_collection_learner.py' INSTALL_GRADE_LEARNING_V135.sh
-          grep -q 'fan_social_learning.py' INSTALL_GRADE_LEARNING_V135.sh
-          grep -q 'auto_pipeline_runner.py' INSTALL_GRADE_LEARNING_V135.sh
+          for required in \
+            runtime_bundle_guard_v143.py \
+            auto_repair_engine.py \
+            auto_update_all.py \
+            update_releases.py \
+            update_market_prices.py \
+            update_promo_events.py \
+            update_exchange_rates.py \
+            graded_photo_multi_source.py \
+            multi_channel_agent.py \
+            search_method_learning.py \
+            collection_learning_hardening_v142.py; do
+            grep -q "$required" START_TCG_UPDATER_ANDROID.sh
+            grep -q "$required" INSTALL_GRADE_LEARNING_V135.sh
+          done
+          grep -q 'test_runtime_bundle_guard_v143.py' INSTALL_GRADE_LEARNING_V135.sh
+          grep -q 'runtime_bundle_patch' tcg_updater_v135.py
+          grep -q 'runtime_bundle_compatible' tcg_updater_v135.py
+          grep -q "RUNTIME_PATCH = 143" tcg_updater_v135.py
           grep -q "event_collection_patch.*142" tcg_updater_v135.py
           grep -q "strict_official_social_url_match.*True" tcg_updater_v135.py
