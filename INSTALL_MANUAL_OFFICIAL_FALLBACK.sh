@@ -4,7 +4,8 @@ cd "$(dirname "$0")"
 
 printf '\n=== 등급사 403/429 수동 공식확인 보강 설치 ===\n'
 
-python -m py_compile tcg_updater_v135.py manual_official_proof.py runtime_bundle_guard_v143.py
+python -m py_compile tcg_updater_v135.py manual_official_proof.py runtime_bundle_guard_v143.py test_manual_official_proof.py
+python -m unittest -v test_manual_official_proof.py test_runtime_bundle_guard_v143.py
 python - <<'PY'
 import runtime_bundle_guard_v143 as guard
 status=guard.require_compatible()
@@ -45,6 +46,7 @@ printf '%s' "$MANUAL" | grep -q '"rejected_screenshot_bytes_retained": false'
 printf '%s' "$MANUAL" | grep -q '"proof_upload_rate_limited": true'
 
 printf '\n[OK] 설치 완료\n'
+printf '%s\n' '- 수동 공식확인 회귀테스트 + 런타임 계약 검사 통과 후 서버 시작'
 printf '%s\n' '- 등급사 자동조회 쿨다운 시 공식사이트 직접 열기 버튼 표시'
 printf '%s\n' '- 공식 조회 결과 화면 캡처는 등급사+인증번호+등급 OCR 정확일치 검사'
 printf '%s\n' '- 불일치 캡처 원본은 삭제하고 OCR/해시 감사정보만 유지'
