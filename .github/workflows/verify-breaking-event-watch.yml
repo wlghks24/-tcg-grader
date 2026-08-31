@@ -1,0 +1,30 @@
+name: Verify breaking event watch
+
+on:
+  push:
+    paths:
+      - 'event_quick_watch.py'
+      - 'manual_event_evidence.json'
+      - 'social_source_registry.json'
+      - 'social_event_discovery.py'
+      - 'tcg_updater_v135.py'
+      - 'test_event_quick_watch.py'
+      - '.github/workflows/verify-breaking-event-watch.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Compile changed runtime
+        run: python -m py_compile event_quick_watch.py tcg_updater_v135.py social_event_discovery.py
+      - name: Run breaking-event regression tests
+        run: python -m unittest -v test_event_quick_watch.py
