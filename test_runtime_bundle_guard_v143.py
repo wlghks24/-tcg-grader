@@ -35,6 +35,21 @@ class RuntimeBundleGuardV143Tests(unittest.TestCase):
     def test_graded_photo_uses_learned_exact_search(self):
         self.assertTrue(callable(getattr(MultiChannelCollector, "search_exact", None)))
 
+    def test_manual_official_fallback_is_complete_and_reference_only(self):
+        result = guard.audit()
+        self.assertTrue(result["contracts"]["manual_official_fallback"], result)
+        self.assertIs(result["contracts"]["manual_proof_raw_calibration"], False)
+        self.assertIs(result["contracts"]["manual_proof_rejected_bytes_retained"], False)
+        for name in (
+            "manual_graded_photo_registration.py",
+            "manual_official_proof.py",
+            "manual_official_verify_bridge.js",
+            "graded_photo_dashboard.js",
+            "IMPORT_GRADED_LEARNING_FILES.py",
+            "START_GRADED_FILE_LEARNING.sh",
+        ):
+            self.assertIn(name, guard.REQUIRED_FILES)
+
 
 if __name__ == "__main__":
     unittest.main()
