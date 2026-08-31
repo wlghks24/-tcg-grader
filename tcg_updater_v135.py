@@ -11,7 +11,7 @@ from urllib.parse import parse_qs, urlparse
 import tcg_updater as core
 
 RUNTIME_ID = "tcg-updater-v135-verified-learning"
-RUNTIME_PATCH = 140
+RUNTIME_PATCH = 141
 
 
 class Handler(core.Handler):
@@ -52,9 +52,13 @@ class Handler(core.Handler):
                 'runtime': RUNTIME_ID,
                 'patch': RUNTIME_PATCH,
                 'learning_api': 135,
-                'event_collection_patch': 140,
+                'event_collection_patch': 141,
                 'priority_event_watch_minutes': 30,
                 'reward_scope_override': True,
+                'verified_reward_term_learning': True,
+                'official_reward_learning_weight': 1.35,
+                'cross_checked_reward_learning_weight': 0.90,
+                'unverified_reward_learning_weight': 0.0,
                 'base_service': getattr(core, 'SERVICE_NAME', 'TCG updater'),
             })
         if path == '/api/learning-model-status':
@@ -72,7 +76,7 @@ class Handler(core.Handler):
         if path == '/api/verify-grading-cert':
             qs = parse_qs(parsed.query)
             company = (qs.get('company', [''])[0] or '')[:8].upper()
-            cert = (qs.get('cert', [''])[0] or '')[:120].strip()
+            cert = (qs.get('cert', [''])[0] or '').strip()[:120]
             if not self._search_origin_allowed():
                 return self.json({'ok': False, 'verified': False, 'error': '허용되지 않은 요청 출처'}, 403)
             if company not in ('PSA', 'BGS', 'CGC', 'TAG', 'BRG') or len(cert) < 6:
@@ -179,11 +183,11 @@ def main() -> int:
         pass
 
     try:
-        import event_collection_hardening_v140
-        hardening_status = event_collection_hardening_v140.apply()
+        import event_collection_hardening_v141
+        hardening_status = event_collection_hardening_v141.apply()
         print(
-            f"행사·증정 수집 강화: v{hardening_status.get('patch', 140)} · "
-            "공식SNS 표적탐색 + 카드/프로모/한정품 증정 범위외 수집 + 검증제보 검색어 학습",
+            f"행사·증정 수집 강화: v{hardening_status.get('patch', 141)} · "
+            "공식SNS 표적탐색 + 카드/프로모/한정품 증정 범위외 수집 + 검증된 증정정보 검색어 가중학습",
             flush=True,
         )
     except ImportError:
@@ -198,7 +202,7 @@ def main() -> int:
             args=(core.UPDATE_LOCK,),
             daemon=True,
         ).start()
-        print('공식 SNS 우선탐색: 시작 3분 후 첫 실행 · 이후 30분 간격 · 증정/한정품 포함', flush=True)
+        print('공식 SNS 우선탐색: 시작 3분 후 첫 실행 · 이후 30분 간격 · 증정/한정품 포함 · v141 검증학습 연동', flush=True)
     except ImportError:
         print('[안내] 공식 SNS 우선탐색 모듈을 찾지 못해 1시간 긴급탐색만 사용합니다.', flush=True)
 
@@ -209,7 +213,7 @@ def main() -> int:
             args=(core.UPDATE_LOCK,),
             daemon=True,
         ).start()
-        print('행사·영화·증정 전체 긴급탐색: 시작 10분 후 첫 실행 · 이후 1시간 간격', flush=True)
+        print('행사·영화·증정 전체 긴급탐색: 시작 10분 후 첫 실행 · 이후 1시간 간격 · 검증 증정 검색어 학습', flush=True)
     except ImportError:
         print('[안내] 행사·영화 긴급탐색 모듈을 찾지 못해 6시간 정규수집만 사용합니다.', flush=True)
     try:
