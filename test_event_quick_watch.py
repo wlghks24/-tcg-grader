@@ -42,12 +42,12 @@ class BreakingEventWatchTests(unittest.TestCase):
         self.assertEqual(180, event_priority_watch.DEFAULT_START_DELAY_SECONDS)
         self.assertLess(event_priority_watch.DEFAULT_INTERVAL_SECONDS, event_quick_watch.DEFAULT_INTERVAL_SECONDS)
 
-    def test_v141_watchers_share_reward_learning_patch(self):
-        self.assertEqual(141, event_priority_watch.hardening.PATCH_ID)
-        self.assertEqual(141, event_quick_watch.hardening.PATCH_ID)
+    def test_watchers_use_v142_collection_learning_guard(self):
+        self.assertEqual(142, event_priority_watch.hardening.PATCH_ID)
+        self.assertEqual(142, event_quick_watch.hardening.PATCH_ID)
         self.assertIs(event_priority_watch.hardening.focused_official_social_search, hardening.focused_official_social_search)
 
-    def test_v141_keeps_v140_and_v139_vocabulary(self):
+    def test_v141_vocabulary_is_preserved_under_v142_runtime(self):
         status = hardening.apply()
         self.assertEqual(141, status["patch"])
         self.assertEqual("movie", social_event_discovery._category("슈퍼 티저 비주얼과 예고편 공개"))
@@ -101,7 +101,7 @@ class BreakingEventWatchTests(unittest.TestCase):
         self.assertIs(marked.get("official_account_verified"), False)
         self.assertGreaterEqual(float(marked.get("confidence") or 0), 0.64)
 
-    def test_v141_verified_reward_learning_is_guarded_and_weighted(self):
+    def test_v142_verified_reward_learning_is_guarded_and_weighted(self):
         official = {
             "game": "포켓몬 카드",
             "region": "KR",
@@ -115,6 +115,7 @@ class BreakingEventWatchTests(unittest.TestCase):
             "official_account_verified": True,
             "official_domain_match": False,
             "cross_checked": False,
+            "confidence": 0.99,
         }
         cross = {
             "game": "원피스 카드",
@@ -122,14 +123,15 @@ class BreakingEventWatchTests(unittest.TestCase):
             "category": "promo",
             "title": "GRAND HARBOR 한정 프로모 카드 무료 배포",
             "excerpt": "독립된 두 공식 발표에서 행사 특전 확인",
-            "source": "https://www.instagram.com/partner_example/",
+            "source": "https://partner-a.example/event",
             "source_label": "교차확인 증정정보",
             "reward_watch": True,
-            "verified": True,
+            "verified": False,
             "official_account_verified": False,
             "official_domain_match": False,
             "cross_checked": True,
             "independent_source_count": 2,
+            "confidence": 0.90,
         }
         unverified = {
             "game": "나루토 카드",
@@ -143,6 +145,7 @@ class BreakingEventWatchTests(unittest.TestCase):
             "verified": False,
             "official_account_verified": False,
             "cross_checked": False,
+            "confidence": 0.68,
         }
         with tempfile.TemporaryDirectory() as td:
             root = Path(td)
@@ -150,7 +153,7 @@ class BreakingEventWatchTests(unittest.TestCase):
             memory = root / "event_gap_learning.json"
             evidence.write_text(json.dumps({"items": [official, cross, unverified]}, ensure_ascii=False), encoding="utf-8")
             learner = event_gap_learning.EventGapLearner(memory_path=memory)
-            learned = hardening.learn_verified_reward_candidates(learner, evidence)
+            learned = event_priority_watch.hardening.learn_verified_reward_candidates(learner, evidence)
             self.assertEqual(2, learned)
             official_stats = [
                 stat for key, stat in learner.data.get("terms", {}).items()
