@@ -16,7 +16,12 @@ jobs:
         with:
           python-version: '3.12'
       - name: Apply bounded collector patch
-        run: python apply_graded_photo_timeout_fix.py
+        run: |
+          if grep -q 'adaptive_timeout_seconds=_adaptive_timeout_seconds' graded_photo_multi_source.py; then
+            echo 'Bounded collector already integrated; validation only'
+          else
+            python apply_graded_photo_timeout_fix.py
+          fi
       - name: Syntax check
         run: python -m py_compile graded_photo_multi_source.py
       - name: Unit tests

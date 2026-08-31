@@ -20,7 +20,12 @@ jobs:
         with:
           python-version: '3.12'
       - name: Apply tablet UI patch
-        run: python apply_ui_tablet_refine_v122.py
+        run: |
+          if grep -q 'ui_tablet_refine_v122.css?v=122' index.html; then
+            echo 'Tablet UI already integrated; validation only'
+          else
+            python apply_ui_tablet_refine_v122.py
+          fi
       - name: Verify Python syntax
         run: python -m py_compile tcg_updater.py apply_ui_tablet_refine_v122.py test_ui_tablet_refine_v122.py
       - name: Run tablet UI tests

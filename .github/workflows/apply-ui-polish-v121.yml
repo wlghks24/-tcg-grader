@@ -20,7 +20,12 @@ jobs:
         with:
           python-version: '3.12'
       - name: Apply UI patch
-        run: python apply_ui_polish_v121.py
+        run: |
+          if grep -q 'ui_polish_v121.css?v=121' index.html; then
+            echo 'UI polish already integrated; validation only'
+          else
+            python apply_ui_polish_v121.py
+          fi
       - name: Verify Python syntax
         run: python -m py_compile tcg_updater.py apply_ui_polish_v121.py test_ui_polish_v121.py
       - name: Run UI integration tests

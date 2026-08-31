@@ -25,8 +25,12 @@ jobs:
           python-version: '3.12'
       - name: Apply patch
         run: |
-          python apply_search_method_learning_patch.py
-          python apply_search_method_compat_patch.py
+          if grep -q 'SearchMethodLearner' multi_channel_agent.py; then
+            echo 'Adaptive search routing already integrated; validation only'
+          else
+            python apply_search_method_learning_patch.py
+            python apply_search_method_compat_patch.py
+          fi
       - name: Verify syntax
         run: |
           python -m py_compile search_method_learning.py multi_channel_agent.py adaptive_collection_learner.py auto_pipeline_runner.py

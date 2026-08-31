@@ -21,7 +21,12 @@ jobs:
         with:
           python-version: '3.12'
       - name: Apply patch
-        run: python apply_graded_photo_cumulative_patch.py
+        run: |
+          if grep -q "previous_payload=_load(OUT,{})" graded_photo_multi_source.py; then
+            echo 'Cumulative candidate preservation already integrated; validation only'
+          else
+            python apply_graded_photo_cumulative_patch.py
+          fi
       - name: Validate syntax
         run: python -m py_compile graded_photo_multi_source.py
       - name: Commit

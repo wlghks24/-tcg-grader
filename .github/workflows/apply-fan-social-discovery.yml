@@ -24,7 +24,12 @@ jobs:
         with:
           python-version: '3.12'
       - name: Apply fan social patch
-        run: python apply_fan_social_discovery_patch.py
+        run: |
+          if grep -q '^import fan_social_learning' social_event_discovery.py; then
+            echo 'Fan social discovery already integrated; validation only'
+          else
+            python apply_fan_social_discovery_patch.py
+          fi
       - name: Verify syntax
         run: |
           python -m py_compile fan_social_learning.py social_event_discovery.py multi_route_event_discovery.py

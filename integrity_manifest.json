@@ -1,11 +1,11 @@
 {
   "version": 1,
   "engine": "v109-card-identity-ocr-learning",
-  "generated_at": "2026-08-31T09:05:34+00:00",
+  "generated_at": "2026-08-31T09:16:35+00:00",
   "files": {
     ".github/workflows/apply-android-7step-display.yml": {
-      "sha256": "d54565730547b1e74fe4583f04058e8df52290c3339b5d94239c11e51577f16a",
-      "bytes": 1270
+      "sha256": "5104aa4ae7e00d85d41ec9f3ef82c14579df80221b19c295051be0d7c3d28786",
+      "bytes": 1466
     },
     ".github/workflows/apply-auto-market-center.yml": {
       "sha256": "c6c4468abecc1941c399ec43e9321c50364f8e1c980257dda2e5bfb93b005caa",
@@ -32,8 +32,8 @@
       "bytes": 1831
     },
     ".github/workflows/apply-fan-social-discovery.yml": {
-      "sha256": "5a5ce2b8378520f097252ce90e1d65f733b21c0b03c4b50fe5bbb44718a3969e",
-      "bytes": 1993
+      "sha256": "bc152297e2798b96cca067315af7df591e93ecda0d9238124877d766f568ae1b",
+      "bytes": 2194
     },
     ".github/workflows/apply-final-graded-photo-integration.yml": {
       "sha256": "5f32a6f0dfd1b0664179de6a3e1b4071ecbc08fd26fb5669f527e17cc9e68162",
@@ -56,16 +56,16 @@
       "bytes": 985
     },
     ".github/workflows/apply-graded-photo-bing-image-fallback.yml": {
-      "sha256": "11bc13de7c547d6f3a4446cb8fdff0e6818329d067cf4ad166005b68f3cffaab",
-      "bytes": 1015
+      "sha256": "b739ecb4b0d5589636a6667f821d70d72cb47b1597a5a862d0984bc3990f432d",
+      "bytes": 1264
     },
     ".github/workflows/apply-graded-photo-collection.yml": {
       "sha256": "120cb012264f511564203f97b6a576fae6ee26eb8c719e22623393db1ad0ba16",
       "bytes": 1393
     },
     ".github/workflows/apply-graded-photo-cumulative-patch.yml": {
-      "sha256": "26a01dcf4b5800be6352ab5020b372d48b126a719546e641e2fc604df0a2963b",
-      "bytes": 1164
+      "sha256": "51197aad54bf965361a560742a16def5290e272c4231b886dd9656f726ceb645",
+      "bytes": 1384
     },
     ".github/workflows/apply-graded-photo-dashboard.yml": {
       "sha256": "dcf148bac16421b5e9b7a60dfd05d8ae7b8f006ecd98fb1433c16ce507e3adf7",
@@ -76,8 +76,8 @@
       "bytes": 1147
     },
     ".github/workflows/apply-graded-photo-image-parser-v2.yml": {
-      "sha256": "5dc5415aad020341fd300af101d17c26531ed23efe208300da13c2b67ef53dd0",
-      "bytes": 986
+      "sha256": "0423642e8a6f56deb6ac18173a1b299d8e236c985a8c259a32dde4ffe8c0e377",
+      "bytes": 1228
     },
     ".github/workflows/apply-graded-photo-provider-merge-v2.yml": {
       "sha256": "a77bf5d2d21bc76af78aeafba8fd805cab095bc574e9466b8ca48798dac17d83",
@@ -88,20 +88,20 @@
       "bytes": 896
     },
     ".github/workflows/apply-graded-photo-redirect-unwrap.yml": {
-      "sha256": "57421db4f14fd1bbec7df7338f67bb17caccdca1e841675c81e7f0a8af2d1b52",
-      "bytes": 988
+      "sha256": "be4571b081f630186943d90cc7e862d1a578d07b422e89687abe4ea3c1f7e631",
+      "bytes": 1231
     },
     ".github/workflows/apply-graded-photo-runtime-balance.yml": {
       "sha256": "d7611c25d6cd6b7f17a0e8ad6c87c1043982b72d6bb04c16dd2300dfae0c32af",
       "bytes": 882
     },
     ".github/workflows/apply-graded-photo-simple-queries.yml": {
-      "sha256": "4b1e779d13e31a1242b6b01223444e54a50ede8de69ee4361982eb714c9dcbb5",
-      "bytes": 1057
+      "sha256": "003db3c78f3d8c16eb56e0c5ca387821f1d8e2d46a8d53447f22d370a2d10e08",
+      "bytes": 1319
     },
     ".github/workflows/apply-graded-photo-timeout-fix.yml": {
-      "sha256": "cf03ad1bb30e9537817ff2d50fbd0b99766eff5bfe6be1d003b58de7b8d7a384",
-      "bytes": 1223
+      "sha256": "0edc2f0a62b4a6659d3059edbfff598b280ce68ddb58be5cfe7273453ee64bb6",
+      "bytes": 1447
     },
     ".github/workflows/apply-grading-costs.yml": {
       "sha256": "3057fa534fb843f89dc1d5245fa62fc3e9275c94b0d245daddbbc0c841db3f30",
@@ -132,12 +132,12 @@
       "bytes": 2609
     },
     ".github/workflows/apply-playgo-event-watch.yml": {
-      "sha256": "934822e1a44dda2ec5d890ea3f9322179e713acc638608b3c4d7c71bf4807327",
-      "bytes": 1499
+      "sha256": "b00c78477252a27d2bc4446e668522660879781082a07027362b96afc142fd8c",
+      "bytes": 1675
     },
     ".github/workflows/apply-purchase-capability.yml": {
-      "sha256": "9b72ca730e4fed489b7d29d91fc49f6c2e8ec1055bd6bf28455b1bcf86da05ad",
-      "bytes": 1118
+      "sha256": "66b75228184f1d8ec54dce22f219208b209f5a24853bc8b05a00bc4dcadf54e3",
+      "bytes": 1302
     },
     ".github/workflows/apply-purchase-ui-polish.yml": {
       "sha256": "1fdb8a556d54dd8f9183568fd50281f6fbc6b7354b226298f8e84556018c8ee8",
@@ -148,12 +148,12 @@
       "bytes": 994
     },
     ".github/workflows/apply-search-engine-optimizer.yml": {
-      "sha256": "76699881eb1382ddd0a49c18ea1607b03c6c53c0de510f4c99525f4c5f215038",
-      "bytes": 2038
+      "sha256": "a96c186939131dd8b8853d2f2c1c89e8bb263267a0fe4e0837725fa1f07e9397",
+      "bytes": 2224
     },
     ".github/workflows/apply-search-method-learning.yml": {
-      "sha256": "a0177d6110b121de35988c18567e48f0fc6a16afcbe9d60ace8b9b75e2621cce",
-      "bytes": 2049
+      "sha256": "44bcd3595f711f22e2911c495f6e690cc5b853e500706313405da3ac413b7b5f",
+      "bytes": 2232
     },
     ".github/workflows/apply-search-recovery-diversity.yml": {
       "sha256": "d61d8aa047051270ecbf3de434f6a3a7f5c4e20e006b595eddb99627dc67da80",
@@ -164,20 +164,20 @@
       "bytes": 2454
     },
     ".github/workflows/apply-social-stock-event-upgrade.yml": {
-      "sha256": "814097f24668a115df3686c42d9e4c83d0defb2b45115fb06bd5deb9031b185d",
-      "bytes": 1929
+      "sha256": "c96cd2c44c7914b646c0fe8ea32d42eb0612313a76dc1e0f9aefba0e70853caa",
+      "bytes": 2128
     },
     ".github/workflows/apply-top-7step-ui.yml": {
       "sha256": "3aa3969749e8c245e15347c885b125aa123dc87842ad2d7b2a43f4abfc4f3e10",
       "bytes": 1396
     },
     ".github/workflows/apply-ui-polish-v121.yml": {
-      "sha256": "59fd21d07f3e077fd826bd8c7573b60e31871b50564df6bfd845e6789c5a0607",
-      "bytes": 1575
+      "sha256": "4034aa5c8c8a2b54b0a8ef4dbb86328a4d8eb120d0f9b693ccfecd5982f311cc",
+      "bytes": 1747
     },
     ".github/workflows/apply-ui-tablet-refine-v122.yml": {
-      "sha256": "fce15041f26c84d5e118f7ce3884413a83d7e6b9efdb212f88588cd26673d005",
-      "bytes": 1641
+      "sha256": "2d8f10dc05ebac52b993a55c76c49c1d15c1c7f3b147cd10c013dffac7e35a75",
+      "bytes": 1820
     },
     ".github/workflows/catalog-image-sync.yml": {
       "sha256": "6df575edbbfdc318fb6c56a9309b3ea41bb3b0cdedd1597a5c268ab790508a75",
@@ -876,8 +876,8 @@
       "bytes": 2161
     },
     "index.html": {
-      "sha256": "17db57ce002edd9c13dce0227c93b65653bc81501d39de70c1d1544dfb4cb22f",
-      "bytes": 299072
+      "sha256": "c32619a09eee075e850fa08c0feb75ba3acde88c5246adf94bf838eef711d817",
+      "bytes": 299174
     },
     "inventory_lookup.js": {
       "sha256": "a4e5c19c0a9b293a7fe953e2e00a836ac990cdc6d9244bc0aa12ea6eb8f619e6",
@@ -1028,7 +1028,7 @@
       "bytes": 18672
     },
     "security_audit_report.json": {
-      "sha256": "12abe32d35a02e62c89ba5b9e50b408fe6cdbcdef6ebf2629d86ca93e67bace4",
+      "sha256": "f601b4282dc0f65f0c2270c22df1894fc392600e82b7af94acc1d83430153b3f",
       "bytes": 15030
     },
     "security_hardening_apply.py": {

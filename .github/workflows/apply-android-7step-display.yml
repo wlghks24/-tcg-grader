@@ -19,7 +19,12 @@ jobs:
           ref: main
           fetch-depth: 0
       - name: Apply patch
-        run: python apply_android_7step_display_patch.py
+        run: |
+          if grep -q '7 업체별 등급카드 사진' tcg_updater.py; then
+            echo 'Android 7-step display already integrated; validation only'
+          else
+            python apply_android_7step_display_patch.py
+          fi
       - name: Verify 7-step display
         run: |
           python - <<'PY'

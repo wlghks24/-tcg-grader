@@ -16,7 +16,12 @@ jobs:
         with:
           python-version: '3.x'
       - name: Apply capability patch
-        run: python apply_purchase_capability_patch.py
+        run: |
+          if grep -q '재고조회 지원' index.html; then
+            echo 'Purchase capability labels already integrated; validation only'
+          else
+            python apply_purchase_capability_patch.py
+          fi
       - name: Validate labels
         run: |
           grep -q '재고조회 지원' index.html

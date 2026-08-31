@@ -22,7 +22,12 @@ jobs:
         with:
           python-version: '3.12'
       - name: Apply collector patch
-        run: python apply_playgo_event_watch_patch.py
+        run: |
+          if grep -q 'PLAYGO' social_event_discovery.py; then
+            echo 'PLAYGO collector already integrated; validation only'
+          else
+            python apply_playgo_event_watch_patch.py
+          fi
       - name: Sync current official event data
         run: python apply_playgo_event_data_sync.py
       - name: Verify syntax and tests

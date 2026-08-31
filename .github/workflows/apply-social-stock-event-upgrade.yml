@@ -21,7 +21,12 @@ jobs:
         with:
           python-version: '3.12'
       - name: Apply integration patch
-        run: python apply_social_stock_event_upgrade.py
+        run: |
+          if grep -q '# v112-social-stock-merge' purchase_intelligence.py; then
+            echo 'Social stock integration already present; validation only'
+          else
+            python apply_social_stock_event_upgrade.py
+          fi
       - name: Verify syntax
         run: |
           python -m py_compile \
