@@ -4,6 +4,9 @@ const esc=v=>String(v??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&
 const sleep=ms=>new Promise(r=>setTimeout(r,ms));
 let installed=false;
 let recentDeleteSync=false;
+let rendering=false;
+let summaryObserverInstalled=false;
+
 function ensureDualPhotoBridge(){
  if(document.getElementById('gpdManualBackPhoto'))return;
  if(document.getElementById('gpdDualBridgeForceV150'))return;
@@ -14,6 +17,7 @@ function ensureDualPhotoBridge(){
  script.setAttribute('data-purpose','force-front-back-manual-upload');
  document.head.appendChild(script);
 }
+
 function fileDataUrl(file){return new Promise((resolve,reject)=>{const reader=new FileReader();reader.onload=()=>resolve(String(reader.result||''));reader.onerror=()=>reject(new Error('파일을 읽지 못했습니다.'));reader.readAsDataURL(file)})}
 async function normalize(file){
  if(!file||!['image/jpeg','image/png'].includes(file.type))throw new Error('공식 조회 결과 화면을 JPG 또는 PNG로 선택하세요.');
@@ -28,6 +32,7 @@ async function normalize(file){
   throw new Error('공식 조회 화면을 6MB 이하로 줄이지 못했습니다.');
  }finally{bitmap.close?.()}
 }
+
 function style(){
  if(document.getElementById('gpdOfficialFallbackStyle'))return;
  const el=document.createElement('style');el.id='gpdOfficialFallbackStyle';el.textContent=`
@@ -43,25 +48,42 @@ function style(){
  @media(max-width:420px){.gpd-manual-row .gpd-recent-delete{grid-column:1/-1;width:100%}}
  `;document.head.appendChild(el);
 }
+
 function countFromCard(card){
  const text=String(card?.querySelector('b')?.textContent||'').replace(/[^0-9]/g,'');
- return Number.isFinite(Number(text))?Number(text):0;
+ const value=Number(text);return Number.isFinite(value)?value:0;
 }
 function mergeVerifiedLearningSummary(){
  const summary=document.querySelector('#gpdBody .gpd-summary');if(!summary)return false;
  const cards=[...summary.children];
- const official=cards.find(card=>String(card.querySelector('span')?.textContent||'').trim()==='공식검증'||String(card.querySelector('span')?.textContent||'').trim()==='공식검증·학습반영');
+ const official=cards.find(card=>['공식검증','공식검증·학습반영'].includes(String(card.querySelector('span')?.textContent||'').trim()));
  const reference=cards.find(card=>String(card.querySelector('span')?.textContent||'').trim()==='참고학습 반영');
  if(!official)return false;
- const officialCount=countFromCard(official),referenceCount=countFromCard(reference),merged=Math.max(officialCount,referenceCount);
- const label=official.querySelector('span'),value=official.querySelector('b');
- if(label)label.textContent='공식검증·학습반영';
- if(value)value.textContent=`${merged.toLocaleString()}건`;
+ const merged=Math.max(countFromCard(official),countFromCard(reference));
+ const label=official.querySelector('span'),value=official.querySelector('b'),mergedText=`${merged.toLocaleString()}건`;
+ if(label&&label.textContent!=='공식검증·학습반영')label.textContent='공식검증·학습반영';
+ if(value&&value.textContent!==mergedText)value.textContent=mergedText;
  if(reference)reference.remove();
  const footer=document.querySelector('#gpdBody .gpd-foot .gpd-safe');
- if(footer)footer.textContent='공식검증 완료자료는 통합학습 관리 · RAW 보정은 안전게이트 적용';
+ const footerText='공식검증 완료자료는 통합학습 관리 · RAW 보정은 안전게이트 적용';
+ if(footer&&footer.textContent!==footerText)footer.textContent=footerText;
  return true;
 }
+function installSummaryObserver(){
+ if(summaryObserverInstalled)return;
+ const body=document.getElementById('gpdBody');if(!body)return;
+ summaryObserverInstalled=true;
+ let timer=0;
+ const observer=new MutationObserver(()=>{
+  clearTimeout(timer);
+  timer=setTimeout(()=>mergeVerifiedLearningSummary(),40);
+ });
+ observer.observe(body,{childList:true,subtree:false});
+ setTimeout(mergeVerifiedLearningSummary,200);
+ setTimeout(mergeVerifiedLearningSummary,800);
+ setTimeout(mergeVerifiedLearningSummary,1800);
+}
+
 function suppressAutoRetry(){
  const host=document.getElementById('gpdManualRows');if(!host)return;
  host.querySelectorAll('button').forEach(button=>{
@@ -91,6 +113,7 @@ async function injectRecentDeleteButtons(){
   });
  }catch(_){}finally{recentDeleteSync=false}
 }
+
 function eligible(row){return row&&row.official_result!==true&&row.identity_complete&&row.official_reference_url}
 function stateText(row){
  if(row.manual_official_proof_registered)return row.manual_official_proof_match_mode==='official_page_company_cert_plus_exact_slab_ocr_grade'?'공식페이지 인증번호 + 슬랩 등급 OCR 일치 · 공식검증 완료':'공식 페이지 캡처 일치 · 공식검증 완료';
@@ -106,22 +129,22 @@ function stateText(row){
 async function loadStatus(){
  try{const response=await fetch('/api/manual-official-proof-status?_='+Date.now(),{cache:'no-store'});if(!response.ok)return null;return await response.json()}catch(_){return null}
 }
+
 async function render(){
- ensureDualPhotoBridge();
- mergeVerifiedLearningSummary();
- suppressAutoRetry();
- injectRecentDeleteButtons();
- const host=document.getElementById('gpdManualRows');if(!host)return;
- let box=document.getElementById('gpdOfficialFallback');if(!box){box=document.createElement('div');box.id='gpdOfficialFallback';box.className='gpd-official-fallback';host.insertAdjacentElement('afterend',box)}
- const payload=await loadStatus();if(!payload){box.innerHTML='<h4>🔐 공식사이트 수동확인</h4><p>수동확인 상태를 불러오지 못했습니다.</p>';return}
- const rows=(Array.isArray(payload.registrations)?payload.registrations:[]).filter(eligible).slice(0,10);
- box.innerHTML=`<h4>🔐 자동 인증조회 OFF · 공식사이트 직접확인</h4><p>PSA/BGS/CGC/TAG/BRG 자동 인증조회는 사용하지 않습니다. 인증번호가 있는 자료는 공식 등급사 페이지를 사용자가 직접 열어 확인한 뒤 결과 화면을 등록합니다.</p>${rows.length?rows.map(row=>`<div class="gpd-official-row" data-official-row="${esc(row.registration_id)}"><div class="gpd-official-id"><b>${esc(row.company)} ${esc(row.grade)} · 인증 ${esc(row.certification_id)}</b><span>${esc(stateText(row))}</span>${row.manual_official_proof_registered?'<div class="gpd-official-state">✓ 공식검증 완료 · 통합학습 반영</div>':''}</div><div class="gpd-official-actions"><a class="gpd-official-open" href="${esc(row.official_reference_url)}" target="_blank" rel="noopener noreferrer">① 공식조회 열기</a><label class="gpd-official-proof">② 확인화면 등록<input class="gpd-official-file" type="file" accept="image/jpeg,image/png" data-proof="${esc(row.registration_id)}"></label><button type="button" class="gpd-official-delete" data-delete-registration="${esc(row.registration_id)}">🗑 잘못등록 삭제/취소</button></div></div>`).join(''):'<div class="gpd-official-help">현재 직접확인이 필요한 완성된 인증정보 항목이 없습니다.</div>'}<div class="gpd-official-help"><b>수동확인 통합관리:</b> 잘못 올린 미검증 자료는 <b>최근 수동등록</b>과 <b>공식사이트 직접확인</b> 양쪽의 삭제/취소 버튼으로 제거할 수 있습니다. 삭제하면 앞면·뒷면·수동 확인화면과 해당 등록목록을 함께 정리합니다. 공식검증 완료 자료는 삭제할 수 없습니다.<br>공식사이트 일치가 확인된 앞면·뒷면은 공식검증 자료로 통합관리하며 card-only ROI 방식의 RAW 결함/등급 보정학습 후보에도 사용합니다.</div>`;
- box.querySelectorAll('[data-proof]').forEach(input=>input.addEventListener('change',submitProof));
- box.querySelectorAll('[data-delete-registration]').forEach(button=>button.addEventListener('click',deleteRegistration));
- mergeVerifiedLearningSummary();
- suppressAutoRetry();
- injectRecentDeleteButtons();
+ if(rendering)return;rendering=true;
+ try{
+  ensureDualPhotoBridge();mergeVerifiedLearningSummary();suppressAutoRetry();injectRecentDeleteButtons();
+  const host=document.getElementById('gpdManualRows');if(!host)return;
+  let box=document.getElementById('gpdOfficialFallback');if(!box){box=document.createElement('div');box.id='gpdOfficialFallback';box.className='gpd-official-fallback';host.insertAdjacentElement('afterend',box)}
+  const payload=await loadStatus();if(!payload){box.innerHTML='<h4>🔐 공식사이트 수동확인</h4><p>수동확인 상태를 불러오지 못했습니다.</p>';return}
+  const rows=(Array.isArray(payload.registrations)?payload.registrations:[]).filter(eligible).slice(0,10);
+  box.innerHTML=`<h4>🔐 자동 인증조회 OFF · 공식사이트 직접확인</h4><p>PSA/BGS/CGC/TAG/BRG 자동 인증조회는 사용하지 않습니다. 인증번호가 있는 자료는 공식 등급사 페이지를 사용자가 직접 열어 확인한 뒤 결과 화면을 등록합니다.</p>${rows.length?rows.map(row=>`<div class="gpd-official-row" data-official-row="${esc(row.registration_id)}"><div class="gpd-official-id"><b>${esc(row.company)} ${esc(row.grade)} · 인증 ${esc(row.certification_id)}</b><span>${esc(stateText(row))}</span>${row.manual_official_proof_registered?'<div class="gpd-official-state">✓ 공식검증 완료 · 통합학습 반영</div>':''}</div><div class="gpd-official-actions"><a class="gpd-official-open" href="${esc(row.official_reference_url)}" target="_blank" rel="noopener noreferrer">① 공식조회 열기</a><label class="gpd-official-proof">② 확인화면 등록<input class="gpd-official-file" type="file" accept="image/jpeg,image/png" data-proof="${esc(row.registration_id)}"></label><button type="button" class="gpd-official-delete" data-delete-registration="${esc(row.registration_id)}">🗑 잘못등록 삭제/취소</button></div></div>`).join(''):'<div class="gpd-official-help">현재 직접확인이 필요한 완성된 인증정보 항목이 없습니다.</div>'}<div class="gpd-official-help"><b>수동확인 통합관리:</b> 잘못 올린 미검증 자료는 <b>최근 수동등록</b>과 <b>공식사이트 직접확인</b> 양쪽의 삭제/취소 버튼으로 제거할 수 있습니다. 삭제하면 앞면·뒷면·수동 확인화면과 해당 등록목록을 함께 정리합니다. 공식검증 완료 자료는 삭제할 수 없습니다.<br>공식사이트 일치가 확인된 앞면·뒷면은 공식검증 자료로 통합관리하며 card-only ROI 방식의 RAW 결함/등급 보정학습 후보에도 사용합니다.</div>`;
+  box.querySelectorAll('[data-proof]').forEach(input=>input.addEventListener('change',submitProof));
+  box.querySelectorAll('[data-delete-registration]').forEach(button=>button.addEventListener('click',deleteRegistration));
+  mergeVerifiedLearningSummary();suppressAutoRetry();injectRecentDeleteButtons();
+ }finally{rendering=false}
 }
+
 async function deleteRegistration(event){
  const button=event.currentTarget,registrationId=button.dataset.deleteRegistration,row=button.closest('.gpd-official-row,.gpd-manual-row');
  const title=row?.querySelector('b')?.textContent||registrationId||'이 자료';
@@ -153,9 +176,11 @@ async function submitProof(event){
   input.value='';await sleep(500);await render();
  }catch(error){if(label)label.textContent=String(error?.message||'공식 확인화면 등록 실패');input.value=''}
 }
+
 async function install(){
- if(installed)return;const host=document.getElementById('gpdManualRows');if(!host)return;installed=true;ensureDualPhotoBridge();style();mergeVerifiedLearningSummary();suppressAutoRetry();injectRecentDeleteButtons();await render();
- const observer=new MutationObserver(()=>{ensureDualPhotoBridge();mergeVerifiedLearningSummary();suppressAutoRetry();injectRecentDeleteButtons();if(document.getElementById('gpdManualRows'))render()});observer.observe(document.getElementById('gpdBody')||host,{childList:true,subtree:true});
+ if(installed)return;const host=document.getElementById('gpdManualRows');if(!host)return;
+ installed=true;ensureDualPhotoBridge();style();installSummaryObserver();mergeVerifiedLearningSummary();suppressAutoRetry();injectRecentDeleteButtons();await render();
+ const observer=new MutationObserver(()=>{ensureDualPhotoBridge();suppressAutoRetry();injectRecentDeleteButtons()});observer.observe(host,{childList:true,subtree:true});
  setInterval(()=>{mergeVerifiedLearningSummary();render()},30000);
 }
 function boot(){let tries=0;const timer=setInterval(()=>{tries++;if(document.getElementById('gpdManualRows')){clearInterval(timer);ensureDualPhotoBridge();install()}else if(tries>80)clearInterval(timer)},250)}
