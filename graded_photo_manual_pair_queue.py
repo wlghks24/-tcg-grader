@@ -1,16 +1,20 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-"""Save only graded-card listings that contain both front and back photos.
+"""Save only certification-bearing front/back graded-card photo pairs.
 
-The collector keeps discovering public candidates, but this module is the only
-automatic bridge into the user's manual-review folder. It never submits a
-certification request and never marks a grade as verified.
+Automatic collection is deliberately conservative:
+- supported game must be Pokemon / One Piece / Naruto
+- supported grader must be PSA / BGS / CGC / TAG / BRG
+- a certification number must already be resolved from listing/OCR evidence
+- both front and back photos must be present with explicit pair evidence
+- files are saved only to the manual-review area; nothing is auto-registered
+- no grading-company certification website is contacted by this module
 
-Accepted pair evidence:
-- explicit front_image_url + back_image_url fields, or
-- at least two distinct gallery images plus listing text that explicitly says
-  front/back (English/Korean/Japanese), or
-- URL/file names that clearly identify one front and one back image.
+Android layout:
+  Download/TCG등급학습/<game>/<grader>/수동등록대기/<pair_id>/
+      front_candidate.jpg
+      back_candidate.jpg
+      pair.json
 """
 from __future__ import annotations
 
@@ -25,6 +29,7 @@ import time
 from typing import Any
 from urllib.request import Request
 
+from graded_photo_evidence import normalize_cert
 from safe_runtime import (
     atomic_write_bytes,
     atomic_write_json,
@@ -41,10 +46,11 @@ LOCK_PATH = ROOT / ".manual_pair_queue.watch.lock"
 LOCAL_ROOT = ROOT / "GRADE_TRAINING_INBOX" / "collected_pairs"
 ANDROID_ROOT = Path("/sdcard/Download/TCG등급학습")
 GAMES = {"pokemon", "onepiece", "naruto"}
+COMPANIES = {"PSA", "BGS", "CGC", "TAG", "BRG"}
 MAX_QUEUE = 1000
 MAX_IMAGE_BYTES = 8_000_000
 MAX_IMAGE_PIXELS = 36_000_000
-UA = "Mozilla/5.0 TCG-Grader-ManualPairQueue/1.0"
+UA = "Mozilla/5.0 TCG-Grader-ManualPairQueue/2.0"
 
 PAIR_TEXT_RE = re.compile(
     r"(?:front.{0,40}back|back.{0,40}front|front\s*[/&+]\s*back|"
@@ -76,6 +82,14 @@ def _clean_url(value: Any) -> str:
     except (OSError, ValueError, TypeError):
         return ""
     return text
+
+
+def _identity(row: dict[str, Any]) -> tuple[str, str]:
+    company = str(row.get("company") or row.get("ocr_company") or "").upper().strip()[:8]
+    cert = normalize_cert(row.get("certification_id") or row.get("ocr_certification_id"))
+    if company not in COMPANIES or len(cert) < 6:
+        return "", ""
+    return company, cert
 
 
 def _distinct_urls(row: dict[str, Any]) -> list[str]:
@@ -124,14 +138,10 @@ def _pair_from_row(row: dict[str, Any]) -> tuple[str, str, str] | None:
     return None
 
 
-def _pair_key(row: dict[str, Any], front: str, back: str) -> str:
+def _pair_key(row: dict[str, Any], front: str, back: str, company: str, cert: str) -> str:
     seed = "\n".join((
-        str(row.get("game") or ""),
-        str(row.get("company") or ""),
-        str(row.get("certification_id") or ""),
-        str(row.get("url") or ""),
-        front,
-        back,
+        str(row.get("game") or ""), company, cert,
+        str(row.get("url") or ""), front, back,
     )).encode("utf-8", "ignore")
     return hashlib.sha256(seed).hexdigest()[:20]
 
@@ -196,6 +206,41 @@ def _existing_entries() -> dict[str, dict[str, Any]]:
     }
 
 
+def _write_group_indexes(target_root: Path, pairs: list[dict[str, Any]]) -> None:
+    grouped: dict[tuple[str, str], list[dict[str, Any]]] = {}
+    for row in pairs:
+        if not isinstance(row, dict):
+            continue
+        game = str(row.get("game") or "").lower()
+        company = str(row.get("company") or "").upper()
+        if game in GAMES and company in COMPANIES:
+            grouped.setdefault((game, company), []).append(row)
+    for game in GAMES:
+        for company in COMPANIES:
+            folder = target_root / game / company
+            folder.mkdir(parents=True, exist_ok=True)
+            rows = grouped.get((game, company), [])
+            index = {
+                "ok": True,
+                "updated_at": _now(),
+                "game": game,
+                "company": company,
+                "count": len(rows),
+                "manual_registration_required": True,
+                "automatic_registration": False,
+                "automatic_official_lookup": False,
+                "pairs": [{
+                    "pair_id": row.get("pair_id"),
+                    "certification_id": row.get("certification_id"),
+                    "grade": row.get("grade"),
+                    "card_name": row.get("card_name"),
+                    "folder": row.get("folder"),
+                    "source_listing_url": row.get("source_listing_url"),
+                } for row in rows[:500]],
+            }
+            atomic_write_json(folder / "수동등록목록.json", index, suffix=".manual-index.tmp")
+
+
 def sync_once() -> dict[str, Any]:
     payload = _load(SOURCE, {})
     rows = payload.get("records", []) if isinstance(payload, dict) else []
@@ -207,6 +252,8 @@ def sync_once() -> dict[str, Any]:
     pair_candidates = 0
     newly_saved = 0
     skipped_existing = 0
+    skipped_missing_identity = 0
+    skipped_missing_pair = 0
     failed = 0
     errors: list[dict[str, Any]] = []
 
@@ -217,17 +264,22 @@ def sync_once() -> dict[str, Any]:
         if game not in GAMES:
             continue
         seen_candidates += 1
+        company, cert = _identity(raw)
+        if not company or not cert:
+            skipped_missing_identity += 1
+            continue
         pair = _pair_from_row(raw)
         if pair is None:
+            skipped_missing_pair += 1
             continue
         front_url, back_url, evidence = pair
         pair_candidates += 1
-        pair_id = _pair_key(raw, front_url, back_url)
+        pair_id = _pair_key(raw, front_url, back_url, company, cert)
         if pair_id in existing and existing[pair_id].get("downloaded") is True:
             skipped_existing += 1
             continue
 
-        folder = target_root / game / "수동등록대기" / pair_id
+        folder = target_root / game / company / "수동등록대기" / pair_id
         front_path = folder / "front_candidate.jpg"
         back_path = folder / "back_candidate.jpg"
         manifest_path = folder / "pair.json"
@@ -243,9 +295,9 @@ def sync_once() -> dict[str, Any]:
                 "pair_id": pair_id,
                 "created_at": _now(),
                 "game": game,
-                "company": str(raw.get("company") or "").upper()[:8],
+                "company": company,
                 "grade": raw.get("grade"),
-                "certification_id": str(raw.get("certification_id") or "")[:40],
+                "certification_id": cert,
                 "card_name": str(raw.get("card_name") or raw.get("title") or "")[:260],
                 "source": str(raw.get("source") or "")[:120],
                 "source_listing_url": str(raw.get("url") or "")[:1600],
@@ -256,8 +308,11 @@ def sync_once() -> dict[str, Any]:
                 "front_local_path": str(front_path),
                 "back_local_path": str(back_path),
                 "manifest_local_path": str(manifest_path),
+                "folder": str(folder),
                 "storage_mode": storage_mode,
                 "downloaded": True,
+                "identity_gate": "supported_grader_plus_certification_number",
+                "front_back_gate": "both_required",
                 "manual_registration_required": True,
                 "automatic_registration": False,
                 "automatic_official_lookup": False,
@@ -270,28 +325,26 @@ def sync_once() -> dict[str, Any]:
         except (OSError, ValueError, TypeError, TimeoutError) as exc:
             failed += 1
             errors.append({
-                "pair_id": pair_id,
-                "game": game,
-                "error": type(exc).__name__,
+                "pair_id": pair_id, "game": game, "company": company,
+                "certification_id": cert, "error": type(exc).__name__,
                 "reason": str(exc)[:160],
             })
 
-    pairs = sorted(
-        existing.values(),
-        key=lambda row: str(row.get("created_at") or ""),
-        reverse=True,
-    )[:MAX_QUEUE]
+    pairs = sorted(existing.values(), key=lambda row: str(row.get("created_at") or ""), reverse=True)[:MAX_QUEUE]
+    _write_group_indexes(target_root, pairs)
     result = {
         "ok": True,
-        "schema_version": 1,
+        "schema_version": 2,
         "updated_at": _now(),
         "storage_mode": storage_mode,
         "target_root": str(target_root),
         "summary": {
             "game_candidates_seen": seen_candidates,
-            "front_back_pair_candidates": pair_candidates,
+            "certified_front_back_pair_candidates": pair_candidates,
             "newly_saved_pairs": newly_saved,
             "existing_pairs_skipped": skipped_existing,
+            "missing_grader_or_cert_skipped": skipped_missing_identity,
+            "missing_front_back_pair_skipped": skipped_missing_pair,
             "failed_pairs": failed,
             "total_manual_pairs": len(pairs),
             "automatic_registration_attempts": 0,
@@ -300,11 +353,15 @@ def sync_once() -> dict[str, Any]:
         "pairs": pairs,
         "errors": errors[:100],
         "policy": {
+            "supported_game_required": True,
+            "supported_grader_required": True,
+            "certification_number_required": True,
             "front_and_back_required": True,
             "single_photo_candidate_saved": False,
             "automatic_registration": False,
             "automatic_official_lookup": False,
             "manual_site_verification_required": True,
+            "grouped_by_game_and_grader": True,
             "raw_grade_calibration_eligible": False,
         },
     }
@@ -333,7 +390,7 @@ def watch(interval: int) -> int:
 
 
 def main() -> int:
-    parser = argparse.ArgumentParser(description="앞면+뒷면 등급사진만 수동등록 대기 폴더로 저장합니다.")
+    parser = argparse.ArgumentParser(description="인증번호가 있는 앞면+뒷면 등급사진만 게임/등급사별 수동등록 폴더로 저장합니다.")
     parser.add_argument("--watch", action="store_true", help="graded_photo_candidates.json 변경을 계속 감시")
     parser.add_argument("--interval", type=int, default=60, help="감시 간격(초)")
     args = parser.parse_args()
