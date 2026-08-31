@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 from __future__ import annotations
 
+import json
 import tempfile
 import unittest
 from pathlib import Path
@@ -50,6 +51,50 @@ class ManualPairQueueTests(unittest.TestCase):
         one = queue._pair_key(row, "https://example.com/front.jpg", "https://example.com/back.jpg", "PSA", "12345678")
         two = queue._pair_key(row, "https://example.com/front.jpg", "https://example.com/back.jpg", "PSA", "87654321")
         self.assertNotEqual(one, two)
+
+    def test_pair_folder_is_game_only_without_grader_subfolder(self):
+        root = Path("/tmp/tcg")
+        folder = queue._pair_folder(root, "pokemon", "0123456789abcdefabcd")
+        self.assertEqual(folder, root / "pokemon" / "수동등록대기" / "0123456789abcdefabcd")
+        self.assertNotIn("PSA", folder.parts)
+
+    def test_game_index_preserves_grader_as_metadata_only(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            pairs = [{
+                "pair_id": "0123456789abcdefabcd",
+                "game": "pokemon",
+                "company": "PSA",
+                "certification_id": "12345678",
+                "grade": 10,
+                "card_name": "Pikachu",
+                "folder": str(root / "pokemon" / "수동등록대기" / "0123456789abcdefabcd"),
+            }]
+            queue._write_group_indexes(root, pairs)
+            index_path = root / "pokemon" / "수동등록목록.json"
+            self.assertTrue(index_path.is_file())
+            payload = json.loads(index_path.read_text(encoding="utf-8"))
+            self.assertEqual(payload["storage_layout"], "game_only")
+            self.assertEqual(payload["pairs"][0]["company"], "PSA")
+            self.assertFalse((root / "pokemon" / "PSA").exists())
+
+    def test_legacy_grader_folder_is_migrated_to_game_folder(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            pair_id = "0123456789abcdefabcd"
+            legacy = root / "pokemon" / "PSA" / "수동등록대기" / pair_id
+            legacy.mkdir(parents=True)
+            (legacy / "pair.json").write_text("{}", encoding="utf-8")
+            (legacy / "front_candidate.jpg").write_bytes(b"front")
+            (legacy / "back_candidate.jpg").write_bytes(b"back")
+            old_index = root / "pokemon" / "PSA" / "수동등록목록.json"
+            old_index.write_text("{}", encoding="utf-8")
+
+            result = queue._migrate_legacy_grader_layout(root)
+            moved = root / "pokemon" / "수동등록대기" / pair_id
+            self.assertEqual(result["legacy_pairs_moved"], 1)
+            self.assertTrue((moved / "pair.json").is_file())
+            self.assertFalse((root / "pokemon" / "PSA").exists())
 
     def test_android_root_uses_canonical_storage_not_sdcard_symlink(self):
         self.assertEqual(str(queue.ANDROID_ROOT), "/storage/emulated/0/Download/TCG등급학습")
