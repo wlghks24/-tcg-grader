@@ -1,6 +1,6 @@
 {
-  "version": 4,
-  "updated_at": "2026-08-31T02:35:00+00:00",
+  "version": 5,
+  "updated_at": "2026-08-31T05:03:00+00:00",
   "policy": "공식 웹사이트에서 직접 연결된 SNS 계정과 사람이 공식 출처로 검증한 manual=true 계정을 유지합니다. 자동 새로고침 실패 시 manual 계정은 삭제하지 않습니다.",
   "accounts": [
     {
@@ -26,6 +26,18 @@
       "verified_via_official_site": "https://www.pokemonkorea.co.kr/company",
       "verification_note": "포켓몬코리아 공식 YouTube 채널",
       "verified_at": "2026-08-29T00:20:00+09:00"
+    },
+    {
+      "platform": "instagram",
+      "username": "pokemon_korea_official",
+      "game": "포켓몬 카드",
+      "region": "KR",
+      "profile_url": "https://www.instagram.com/pokemon_korea_official/",
+      "trusted": true,
+      "manual": true,
+      "evidence": "user_provided_official_post_screenshots_2026-08-31_and_public_official_channel_crosscheck",
+      "verification_note": "포켓몬코리아 공식 Instagram 채널 · 영화·행사·콜라보 최신 공지 직접수집용. 사용자 제공 공식 게시물 화면과 공개 공식채널 교차확인으로 수동 검증.",
+      "verified_at": "2026-08-31T14:03:00+09:00"
     },
     {
       "platform": "x",
@@ -194,7 +206,7 @@
     }
   ],
   "discovery_errors": [
-    "공식사이트 자동 계정탐색 실패 시 manual=true 검증 계정 10개를 유지합니다. 나루토 KR은 전용 한국 SNS가 공식 확인되기 전까지 Asia 공식 웹 + 공개검색으로 탐색합니다."
+    "공식사이트 자동 계정탐색 실패 시 manual=true 검증 계정을 유지합니다. 나루토 KR은 전용 한국 SNS가 공식 확인되기 전까지 Asia 공식 웹 + 공개검색으로 탐색합니다."
   ],
   "watch_accounts": [
     {
@@ -207,18 +219,6 @@
       "manual": true,
       "role": "community_watch",
       "verification_note": "공개 커뮤니티 정보 발견용 감시채널. 공식 출처가 아니며 단독으로 확정정보 승격 금지."
-    },
-    {
-      "platform": "instagram",
-      "username": "pokemon_korea_official",
-      "game": "포켓몬 카드",
-      "region": "KR",
-      "profile_url": "https://www.instagram.com/pokemon_korea_official/",
-      "trusted": false,
-      "manual": true,
-      "role": "official_candidate_event_watch",
-      "evidence": "user_provided_verified_badge_screenshot",
-      "verification_note": "사용자 제공 Instagram 스토리 캡처에서 인증 배지가 보이는 최신 행사 발견 채널. 공식 웹/공식 API 교차확인 전 trusted=true 또는 공식확정으로 자동승격 금지."
     },
     {
       "platform": "instagram",
