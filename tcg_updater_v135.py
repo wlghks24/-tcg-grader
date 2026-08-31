@@ -1,11 +1,6 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-"""TCG updater v135 wrapper.
-
-Keeps the existing updater intact while adding a verified-only grade-learning
-API. This makes rollback trivial: START_TCG_UPDATER_ANDROID.sh can fall back to
-``tcg_updater.py`` if this wrapper is absent.
-"""
+"""TCG updater v135 wrapper with explicit verified-learning runtime identity."""
 from __future__ import annotations
 
 import os
@@ -14,6 +9,9 @@ import webbrowser
 from urllib.parse import parse_qs, urlparse
 
 import tcg_updater as core
+
+RUNTIME_ID = "tcg-updater-v135-verified-learning"
+RUNTIME_PATCH = 137
 
 
 class Handler(core.Handler):
@@ -48,6 +46,14 @@ class Handler(core.Handler):
             return
         parsed = urlparse(self.path)
         path = parsed.path
+        if path == '/api/v135-health':
+            return self.json({
+                'ok': True,
+                'runtime': RUNTIME_ID,
+                'patch': RUNTIME_PATCH,
+                'learning_api': 135,
+                'base_service': getattr(core, 'SERVICE_NAME', 'TCG updater'),
+            })
         if path == '/api/learning-model-status':
             try:
                 import verified_grade_learning_v135_safe as learning
@@ -70,7 +76,6 @@ class Handler(core.Handler):
                 return self.json({'ok': False, 'verified': False, 'error': '등급사 또는 인증번호 형식 오류'}, 400)
             try:
                 result = self._guarded_official_lookup(company, cert)
-                # A successful official lookup becomes a local reusable trust anchor.
                 if isinstance(result, dict) and result.get('verified') is True:
                     import verified_grade_learning_v135_safe as learning
                     grade = learning._finite(result.get('grade'), 1, 10)
@@ -164,7 +169,7 @@ def main() -> int:
     url = f'http://127.0.0.1:{core.PORT}/index.html'
     print('이 기기 접속 주소:', url, flush=True)
     print(f'다른 기기 접속 주소(같은 Wi-Fi): http://{lan_ip}:{core.PORT}/index.html', flush=True)
-    print('등급학습 안전게이트: v135 · 공식 인증레지스트리 일치 + RAW 원시예측 + 교차검증 + 하향보정만', flush=True)
+    print(f'등급학습 안전게이트: v135 / runtime patch {RUNTIME_PATCH} · 공식 인증레지스트리 일치 + RAW 원시예측 + 교차검증 + 하향보정만', flush=True)
     try:
         threading.Thread(target=lambda: webbrowser.open(url), daemon=True).start()
     except Exception:
