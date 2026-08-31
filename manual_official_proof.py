@@ -62,6 +62,28 @@ def _load_json(path: Path, fallback: Any) -> Any:
         return fallback
 
 
+def _remove_proof_file(relative_path: Any) -> None:
+    """Delete only a regular file inside the generated proof directory.
+
+    Rejected screenshots can contain browser/account details. They are not needed
+    after the OCR mismatch has been recorded, so keep only bounded OCR evidence
+    and a hash. This helper refuses symlinks and path escapes.
+    """
+    text = str(relative_path or "").strip()
+    if not text:
+        return
+    try:
+        root = PROOF_ROOT.resolve()
+        candidate = (ROOT / text).resolve()
+        if candidate == root or root not in candidate.parents:
+            return
+        if candidate.is_symlink() or not candidate.is_file():
+            return
+        candidate.unlink(missing_ok=True)
+    except (OSError, ValueError, RuntimeError):
+        return
+
+
 def _proof_public(row: dict[str, Any]) -> dict[str, Any]:
     company = str(row.get("company") or row.get("ocr_company") or "").upper()
     cert = _clean_cert(row.get("certification_id") or row.get("ocr_certification_id"))
@@ -97,7 +119,7 @@ def public_status() -> dict[str, Any]:
     public = [_proof_public(row) for row in reversed(rows[-200:])]
     return {
         "ok": True,
-        "version": 1,
+        "version": 2,
         "registrations": public,
         "summary": {
             "total": len(public),
@@ -114,6 +136,8 @@ def public_status() -> dict[str, Any]:
             "manual_screenshot_requires_exact_ocr_identity_match": True,
             "manual_screenshot_sets_official_result": False,
             "manual_screenshot_trains_raw_grade_calibration": False,
+            "rejected_screenshot_bytes_retained": False,
+            "valid_proof_cannot_be_downgraded_by_later_bad_upload": True,
             "later_live_official_lookup_can_promote": True,
             "access_control_bypass_used": False,
         },
@@ -121,9 +145,9 @@ def public_status() -> dict[str, Any]:
 
 
 def _append_reference(row: dict[str, Any]) -> None:
-    payload = _load_json(REFERENCE_PATH, {"schema_version": 1, "references": []})
+    payload = _load_json(REFERENCE_PATH, {"schema_version": 2, "references": []})
     if not isinstance(payload, dict):
-        payload = {"schema_version": 1, "references": []}
+        payload = {"schema_version": 2, "references": []}
     values = payload.get("references", [])
     if not isinstance(values, list):
         values = []
@@ -152,7 +176,7 @@ def _append_reference(row: dict[str, Any]) -> None:
         "raw_grade_calibration_eligible": False,
     })
     payload.update({
-        "schema_version": 1,
+        "schema_version": 2,
         "updated_at": _now(),
         "references": kept[-MAX_REFERENCES:],
         "policy": {
@@ -173,7 +197,7 @@ def submit(payload: dict[str, Any]) -> dict[str, Any]:
 
     with manual_photo.LOCK:
         registry = manual_photo._registry()
-        index, row = manual_photo._find_row(registry, registration_id)
+        _, row = manual_photo._find_row(registry, registration_id)
         row = dict(row)
 
     company = str(row.get("company") or row.get("ocr_company") or "").upper()
@@ -186,6 +210,15 @@ def submit(payload: dict[str, Any]) -> dict[str, Any]:
 
     image, extension, width, height = manual_photo._decode_image(payload.get("proof_image_data_url"))
     digest = hashlib.sha256(image).hexdigest()
+    if row.get("manual_official_proof_registered") is True and row.get("manual_official_proof_sha256") == digest:
+        return {
+            "ok": True,
+            "accepted": True,
+            "duplicate": True,
+            "registration": _proof_public(row),
+            "policy": {"reference_only": True, "official_result": False, "raw_grade_calibration": False},
+        }
+
     folder = PROOF_ROOT / datetime.now(timezone.utc).strftime("%Y%m")
     target = folder / f"{registration_id}-{digest[:12]}{extension}"
     atomic_write_bytes(target, image, suffix=".official-proof.tmp")
@@ -204,15 +237,35 @@ def submit(payload: dict[str, Any]) -> dict[str, Any]:
 
     matched = not conflicts
     now = _now()
+    existing_matched = row.get("manual_official_proof_registered") is True
+    if not matched and existing_matched:
+        _remove_proof_file(target.relative_to(ROOT).as_posix())
+        return {
+            "ok": True,
+            "accepted": False,
+            "reason": "official_page_screenshot_identity_mismatch_existing_valid_proof_preserved",
+            "registration": _proof_public(row),
+            "proof": {
+                "company": proof_company or None,
+                "grade": proof_grade,
+                "certification_id": proof_cert or None,
+                "ocr_error": ocr_error,
+                "conflicts": conflicts,
+            },
+            "policy": {"reference_only": True, "official_result": False, "raw_grade_calibration": False},
+        }
+
+    old_path = ""
     with manual_photo.LOCK:
         registry = manual_photo._registry()
         index, current = manual_photo._find_row(registry, registration_id)
+        old_path = str(current.get("manual_official_proof_path") or "")
         current.update({
             "updated_at": now,
             "manual_official_proof_state": "matched" if matched else "conflict",
             "manual_official_proof_registered": matched,
             "manual_official_proof_at": now,
-            "manual_official_proof_path": target.relative_to(ROOT).as_posix(),
+            "manual_official_proof_path": target.relative_to(ROOT).as_posix() if matched else None,
             "manual_official_proof_sha256": digest,
             "manual_official_proof_width": width,
             "manual_official_proof_height": height,
@@ -248,8 +301,15 @@ def submit(payload: dict[str, Any]) -> dict[str, Any]:
         registry["registrations"][index] = current
         manual_photo._save_registry(registry)
 
+    new_path = target.relative_to(ROOT).as_posix()
     if matched:
         _append_reference(current)
+        if old_path and old_path != new_path:
+            _remove_proof_file(old_path)
+    else:
+        # Keep only the hash/OCR conflict audit; rejected screenshot bytes are not retained.
+        _remove_proof_file(new_path)
+
     return {
         "ok": True,
         "accepted": matched,
@@ -266,6 +326,7 @@ def submit(payload: dict[str, Any]) -> dict[str, Any]:
             "reference_only": True,
             "official_result": False,
             "raw_grade_calibration": False,
+            "rejected_screenshot_bytes_retained": False,
             "later_live_lookup_required": True,
         },
     }
