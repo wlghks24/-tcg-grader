@@ -15,12 +15,15 @@ to the normal verified reference path.
 """
 from __future__ import annotations
 
+from collections import deque
 from datetime import datetime, timezone
 import hashlib
 import json
 import math
 from pathlib import Path
 import re
+import threading
+import time
 from typing import Any
 
 import manual_graded_photo_registration as manual_photo
@@ -31,7 +34,11 @@ ROOT = Path(__file__).resolve().parent
 PROOF_ROOT = ROOT / "GRADE_TRAINING_INBOX" / "manual_official_proof"
 REFERENCE_PATH = ROOT / "manual_official_proof_references.json"
 MAX_REFERENCES = 2000
+PROOF_RATE_WINDOW_SECONDS = 10 * 60.0
+PROOF_RATE_MAX = 12
 _REGISTRATION_RE = re.compile(r"^manual-[0-9]{14}-[0-9a-f]{12}$")
+_PROOF_RATE_LOCK = threading.Lock()
+_PROOF_ATTEMPTS: deque[float] = deque()
 
 
 def _now() -> str:
@@ -50,6 +57,19 @@ def _grade(value: Any) -> float | None:
     if not math.isfinite(number) or not 1 <= number <= 10:
         return None
     return number
+
+
+def _claim_proof_upload() -> None:
+    """Bound CPU/disk-heavy OCR screenshot submissions for this local server."""
+    now = time.monotonic()
+    with _PROOF_RATE_LOCK:
+        cutoff = now - PROOF_RATE_WINDOW_SECONDS
+        while _PROOF_ATTEMPTS and _PROOF_ATTEMPTS[0] <= cutoff:
+            _PROOF_ATTEMPTS.popleft()
+        if len(_PROOF_ATTEMPTS) >= PROOF_RATE_MAX:
+            retry = max(1, int(PROOF_RATE_WINDOW_SECONDS - (now - _PROOF_ATTEMPTS[0])))
+            raise ValueError(f"수동 공식확인 등록 요청이 너무 빠릅니다. 약 {retry}초 후 다시 시도하세요.")
+        _PROOF_ATTEMPTS.append(now)
 
 
 def _load_json(path: Path, fallback: Any) -> Any:
@@ -138,6 +158,8 @@ def public_status() -> dict[str, Any]:
             "manual_screenshot_trains_raw_grade_calibration": False,
             "rejected_screenshot_bytes_retained": False,
             "valid_proof_cannot_be_downgraded_by_later_bad_upload": True,
+            "proof_upload_rate_limited": True,
+            "proof_upload_max_per_10_minutes": PROOF_RATE_MAX,
             "later_live_official_lookup_can_promote": True,
             "access_control_bypass_used": False,
         },
@@ -194,6 +216,7 @@ def submit(payload: dict[str, Any]) -> dict[str, Any]:
     registration_id = str(payload.get("registration_id") or "").strip()[:80]
     if not _REGISTRATION_RE.fullmatch(registration_id):
         raise ValueError("수동등록 번호 형식 오류")
+    _claim_proof_upload()
 
     with manual_photo.LOCK:
         registry = manual_photo._registry()
