@@ -17,6 +17,7 @@ PY_RUNTIME_FILES=(
   grading_accuracy_v99.py
   verified_grade_learning_v135.py
   verified_grade_learning_v135_safe.py
+  vision_calibration.py
   safe_runtime.py
   server_security_guard.py
   auto_repair_engine.py
@@ -38,6 +39,10 @@ PY_RUNTIME_FILES=(
   graded_photo_evidence.py
   detailed_collection_intelligence.py
   grading_cert_verifier.py
+  manual_graded_photo_registration.py
+  manual_official_proof.py
+  library_slab_corpus.py
+  IMPORT_GRADED_LEARNING_FILES.py
   multi_channel_agent.py
   search_method_learning.py
   provider_health_learning.py
@@ -68,7 +73,11 @@ PY_RUNTIME_FILES=(
 
 TEXT_RUNTIME_FILES=(
   START_TCG_UPDATER_ANDROID.sh
+  START_GRADED_FILE_LEARNING.sh
+  INSTALL_MANUAL_OFFICIAL_FALLBACK.sh
   grade_learning_guard_v135.js
+  graded_photo_dashboard.js
+  manual_official_verify_bridge.js
 )
 
 REFERENCE_FILES=(
@@ -145,23 +154,28 @@ assert int(status.get('patch') or 0) == 142, status
 assert int(bundle.get('patch') or 0) == 143, bundle
 assert bundle.get('missing_file_count') == 0, bundle
 assert bundle.get('issue_count') == 0, bundle
+assert bundle.get('contracts',{}).get('manual_official_fallback') is True, bundle
+assert bundle.get('contracts',{}).get('manual_proof_raw_calibration') is False, bundle
+assert bundle.get('contracts',{}).get('manual_proof_rejected_bytes_retained') is False, bundle
 assert event_priority_watch.hardening.PATCH_ID == 142
 assert event_quick_watch.hardening.PATCH_ID == 142
 assert status.get('verified_reward_term_learning') is True
 assert status.get('unique_evidence_host_counting') is True
 assert status.get('strict_official_social_url_match') is True
-assert status.get('fan_reuse_requires_corroboration_or_watch') is True
+assert status.get('fan_reuse_requires_corrob​​oration_or_watch', status.get('fan_reuse_requires_corroboration_or_watch')) is True
 assert float(status.get('official_reward_learning_weight') or 0) == 1.35
 assert float(status.get('cross_checked_reward_learning_weight') or 0) == 0.90
 assert float(status.get('unverified_reward_learning_weight', -1)) == 0.0
 assert float(status.get('unverified_payload_learning_weight', -1)) == 0.0
 assert float(status.get('unverified_search_host_term_learning_weight', -1)) == 0.0
-print('[OK] v143 전체 런타임 + v142 자료수집 자가학습 연결 정상')
+print('[OK] v143 전체 런타임 + v142 자료수집 자가학습 + 수동 공식확인 계약 정상')
 print(json.dumps(bundle,ensure_ascii=False))
 PY
 
 if command -v node >/dev/null 2>&1; then
   node --check grade_learning_guard_v135.js
+  node --check graded_photo_dashboard.js
+  node --check manual_official_verify_bridge.js
 else
   echo "[INFO] node 없음 · JS 문법검사는 브라우저 로드/서버 정적검사에서 확인"
 fi
@@ -172,6 +186,10 @@ grep -n 'tcg_updater_v135.py' START_TCG_UPDATER_ANDROID.sh | head -1
 grep -n 'runtime_bundle_guard_v143.py' START_TCG_UPDATER_ANDROID.sh | head -1
 grep -n 'collection_learning_hardening_v142.py' START_TCG_UPDATER_ANDROID.sh | head -1
 grep -n 'collection_learning_hardening_v142' auto_pipeline_runner.py | head -1
+test -s manual_official_proof.py
+test -s manual_official_verify_bridge.js
+test -s IMPORT_GRADED_LEARNING_FILES.py
+test -s START_GRADED_FILE_LEARNING.sh
 
 echo "=== 서버 재시작 ==="
 pkill -f 'python.*tcg_updater_v135.py' 2>/dev/null || true
@@ -183,23 +201,26 @@ sleep 5
 HEALTH="$(curl -s --max-time 5 http://127.0.0.1:8765/api/v135-health || true)"
 MODEL="$(curl -s --max-time 5 http://127.0.0.1:8765/api/learning-model-status || true)"
 AUDIT="$(curl -s --max-time 5 http://127.0.0.1:8765/api/grade-learning-audit || true)"
+MANUAL="$(curl -s --max-time 5 http://127.0.0.1:8765/api/manual-official-proof-status || true)"
 
 echo "HEALTH: $HEALTH"
 echo "MODEL: $MODEL"
 echo "AUDIT: $AUDIT"
+echo "MANUAL: $MANUAL"
 
 python - <<'PY'
 import json, urllib.request
 checks=(
- ('http://127.0.0.1:8765/api/v135-health','v143'),
+ ('http://127.0.0.1:8765/api/v135-health','health'),
  ('http://127.0.0.1:8765/api/learning-model-status',None),
  ('http://127.0.0.1:8765/api/grade-learning-audit',None),
+ ('http://127.0.0.1:8765/api/manual-official-proof-status','manual'),
 )
 for url, marker in checks:
     with urllib.request.urlopen(url,timeout=5) as r:
         data=json.loads(r.read().decode('utf-8'))
     assert data.get('ok') is True, (url,data)
-    if marker:
+    if marker == 'health':
         assert int(data.get('patch') or 0) >= 143, data
         assert int(data.get('runtime_bundle_patch') or 0) >= 143, data
         assert int(data.get('event_collection_patch') or 0) >= 142, data
@@ -210,10 +231,18 @@ for url, marker in checks:
         assert data.get('unique_evidence_host_counting') is True, data
         assert data.get('strict_official_social_url_match') is True, data
         assert data.get('fan_reuse_requires_corroboration_or_watch') is True, data
+        assert data.get('manual_official_browser_fallback') is True, data
+        assert data.get('manual_official_proof_raw_calibration') is False, data
         assert float(data.get('unverified_reward_learning_weight', -1)) == 0.0, data
         assert float(data.get('unverified_payload_learning_weight', -1)) == 0.0, data
         assert float(data.get('unverified_search_host_term_learning_weight', -1)) == 0.0, data
-print('[OK] v143 서버 API + 전체 런타임 + 자료수집 자가학습 보안 정상')
+    if marker == 'manual':
+        policy=data.get('policy',{})
+        assert policy.get('manual_screenshot_sets_official_result') is False, data
+        assert policy.get('manual_screenshot_trains_raw_grade_calibration') is False, data
+        assert policy.get('rejected_screenshot_bytes_retained') is False, data
+        assert policy.get('proof_upload_rate_limited') is True, data
+print('[OK] v143 서버 API + 전체 런타임 + 자료수집/등급사진 수동검증 보안 정상')
 PY
 
 echo "[OK] v143 등급측정 + 전체 자료수집/오류복구/행사 검증학습 업그레이드 설치 완료"
@@ -221,6 +250,10 @@ echo "- 업데이트 래퍼만 새 버전이고 실제 수집기가 구버전인
 echo "- eBay/Amazon 공개검색은 search_exact 경로로 timeout/403/429를 학습하고 불량 경로를 임시 cooldown"
 echo "- 같은 검색경로의 반복 timeout을 매 상품마다 무한 반복하지 않고 정상 대체 경로를 우선"
 echo "- graded_photo_candidates.json은 자동복구 안전목록/필수 구조 계약을 확인한 뒤 실행"
+echo "- 등급사진 수동등록·공식사이트 직접확인·등급완료 파일학습 모듈도 전체 런타임 번들에 포함"
+echo "- 수동 공식확인 불일치 캡처 원본은 보존하지 않고 OCR/해시 감사정보만 유지"
+echo "- 정상 수동 참고등록은 이후 잘못된 캡처 업로드로 덮어쓰지 않음"
+echo "- 수동 공식확인 캡처는 공식검증/RAW 보정학습으로 자동 승격하지 않음"
 echo "- 출시 페이지 파서 0건은 입력값 오류가 아니라 원출처 구조변경으로 진단"
 echo "- 시장가격/행사/환율은 비정상 신규 결과를 격리하고 기존 검증자료를 유지"
 echo "- 포켓몬/원피스/나루토 카드·프로모·한정판·콜라보 증정은 기존 행사 범위 밖이어도 후보 수집"
