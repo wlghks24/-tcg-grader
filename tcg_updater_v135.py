@@ -50,13 +50,13 @@ class Handler(core.Handler):
         path = parsed.path
         if path == '/api/learning-model-status':
             try:
-                import verified_grade_learning_v135 as learning
+                import verified_grade_learning_v135_safe as learning
                 return self.json(learning.model_status())
             except (ImportError, OSError, ValueError, TypeError):
                 return self.json({'ok': False, 'error': 'v135 검증학습 모델 상태 오류'}, 500)
         if path == '/api/grade-learning-audit':
             try:
-                import verified_grade_learning_v135 as learning
+                import verified_grade_learning_v135_safe as learning
                 return self.json(learning.audit())
             except (ImportError, OSError, ValueError, TypeError):
                 return self.json({'ok': False, 'error': 'v135 검증학습 감사 오류'}, 500)
@@ -71,10 +71,8 @@ class Handler(core.Handler):
             try:
                 result = self._guarded_official_lookup(company, cert)
                 # A successful official lookup becomes a local reusable trust anchor.
-                # This prevents the following learning-save from hitting the official
-                # site a second time and avoids unnecessary 429 responses.
                 if isinstance(result, dict) and result.get('verified') is True:
-                    import verified_grade_learning_v135 as learning
+                    import verified_grade_learning_v135_safe as learning
                     grade = learning._finite(result.get('grade'), 1, 10)
                     if grade is not None:
                         with core.DATA_WRITE_LOCK:
@@ -84,7 +82,6 @@ class Handler(core.Handler):
                 return self.json(result, status)
             except (ImportError, OSError, ValueError, TypeError):
                 return self.json({'ok': False, 'verified': False, 'error': '공식 인증번호 검증 엔진 오류'}, 500)
-        # The parent repeats Host validation; this is intentional defense-in-depth.
         return super().do_GET()
 
     def do_POST(self):
@@ -96,16 +93,12 @@ class Handler(core.Handler):
                 return
             try:
                 incoming = self._read_json_body(1000000)
-                import verified_grade_learning_v135 as learning
+                import verified_grade_learning_v135_safe as learning
                 rows, audit = learning.eligible_training_rows(incoming)
                 with core.DATA_WRITE_LOCK:
                     for row in rows:
                         learning._append_store_row(dict(row))
-                    try:
-                        from vision_calibration import train_file
-                        train_file(learning.LEARNING_STORE, learning.VISION_CALIBRATION)
-                    except (ImportError, OSError, ValueError, TypeError):
-                        pass
+                    learning.rebuild_safe_vision_calibration()
                     core.clear_json_file_cache()
                 return self.json({
                     'ok': True,
@@ -128,7 +121,7 @@ class Handler(core.Handler):
             if company not in ('PSA', 'BGS', 'CGC', 'TAG', 'BRG'):
                 raise ValueError('unsupported company')
 
-            import verified_grade_learning_v135 as learning
+            import verified_grade_learning_v135_safe as learning
             registry = learning.registry_index()
             key = learning._cert_key(company, cert) if cert else ''
             already_verified = bool(key and key in registry)
