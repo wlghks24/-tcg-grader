@@ -16,6 +16,12 @@ from safe_runtime import diagnostic_exception
 
 
 class ErrorRecoveryLearningV134Tests(unittest.TestCase):
+    def test_diagnostic_literal_fast_path_preserves_winerror_boundaries(self):
+        self.assertTrue(repair._diagnostic_needle_matches("timeout", "network timeout"))
+        self.assertFalse(repair._diagnostic_needle_matches("timeout", "network healthy"))
+        self.assertTrue(repair._diagnostic_needle_matches("winerror 2", "failed [winerror 2]"))
+        self.assertFalse(repair._diagnostic_needle_matches("winerror 2", "failed [winerror 206]"))
+
     def test_http_diagnostic_keeps_status_and_retry_after_without_url(self):
         error = urllib.error.HTTPError(
             "https://user:secret@example.invalid/private?token=SECRET",

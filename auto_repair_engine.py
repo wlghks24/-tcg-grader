@@ -493,6 +493,11 @@ def _http_status_from_error(text: str) -> int | None:
 
 def _diagnostic_needle_matches(needle: str, text: str) -> bool:
     """Match fixed diagnostics without confusing WinError 2 with WinError 206."""
+    # Almost all diagnostic needles are literal substrings. Avoid running a
+    # regular expression for each of them; only WinError rules need a numeric
+    # boundary so code 2 cannot match code 206.
+    if not needle.startswith("winerror"):
+        return needle in text
     windows_code = re.fullmatch(r"winerror\s+(\d+)", needle)
     if windows_code:
         return re.search(rf"\bwinerror\s+{re.escape(windows_code.group(1))}\b", text) is not None

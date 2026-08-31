@@ -13,6 +13,7 @@ import ast
 from datetime import datetime, timezone
 import hashlib
 import json
+import os
 from pathlib import Path
 import re
 from typing import Any
@@ -61,17 +62,25 @@ def add(findings: list[dict[str, Any]], rule: str, severity: str, path: str, lin
 
 def iter_text_files(root: Path):
     excluded_dirs = {".git", "__pycache__", ".pytest_cache", "node_modules", "GRADE_TRAINING_INBOX"}
-    for path in root.rglob("*"):
-        if not path.is_file() or path.suffix.lower() not in TEXT_EXTENSIONS:
-            continue
-        if any(part in excluded_dirs for part in path.parts):
-            continue
-        try:
-            if path.stat().st_size > MAX_SCAN_BYTES:
+    # Prune excluded trees before walking them.  Path.rglob() still enumerates
+    # every descendant and only lets us discard the result afterwards, which is
+    # needlessly expensive for caches, dependencies and the photo inbox.
+    for current, directories, filenames in os.walk(root, topdown=True, followlinks=False):
+        current_path = Path(current)
+        directories[:] = [
+            name for name in directories
+            if name not in excluded_dirs and not (current_path / name).is_symlink()
+        ]
+        for filename in filenames:
+            path = current_path / filename
+            if path.suffix.lower() not in TEXT_EXTENSIONS or path.is_symlink():
                 continue
-            yield path, path.read_text(encoding="utf-8", errors="replace")
-        except OSError:
-            continue
+            try:
+                if not path.is_file() or path.stat().st_size > MAX_SCAN_BYTES:
+                    continue
+                yield path, path.read_text(encoding="utf-8", errors="replace")
+            except OSError:
+                continue
 
 
 def scan_python(path: Path, text: str, findings: list[dict[str, Any]], rel: str) -> None:
@@ -79,6 +88,11 @@ def scan_python(path: Path, text: str, findings: list[dict[str, Any]], rel: str)
         tree = ast.parse(text, filename=rel)
     except SyntaxError as exc:
         add(findings, "PY_SYNTAX", "high", rel, exc.lineno or 1, "Python syntax error prevents reliable security analysis.", str(exc))
+        return
+    # Parsing every Python file still preserves full syntax coverage.  Only
+    # walk the much larger AST when the source can contain a call recognized by
+    # the rules below; every recognized AST name includes one of these tokens.
+    if not any(token in text for token in ("eval", "exec", "system", "subprocess")):
         return
     for node in ast.walk(tree):
         if isinstance(node, ast.Call):
