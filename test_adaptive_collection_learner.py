@@ -198,6 +198,22 @@ class AdaptiveCollectionLearnerTests(unittest.TestCase):
             self.assertGreater(learner.memory["totals"]["searches"], 0)
             self.assertTrue((root / "memory.json").exists())
 
+    def test_exact_search_attributes_selection_to_explicit_context(self):
+        with tempfile.TemporaryDirectory() as td:
+            collector = MultiChannelCollector(learner=self.make_learner(Path(td)))
+            rows = [{
+                "title": "PSA Pokemon graded card",
+                "url": "https://example.com/graded/1",
+                "search_method": "bing_web_rss",
+            }]
+            with patch.object(collector, "_search_once", return_value=(rows, [], 1, False, 1)), \
+                 patch.object(collector.method_learner, "save"):
+                collector.search_exact(
+                    "PSA Pokemon graded card", region="US", family="graded_photo", route_budget=2
+                )
+            context = collector.method_learner.data["contexts"]["bing_web_rss|US|graded_photo"]
+            self.assertEqual(context["selected"], 1)
+
     def test_duckduckgo_redirect_decoder_recovers_real_https_target(self):
         target = "https://www.naruto-cardgame.com/en/news/test.php"
         encoded = "https://html.duckduckgo.com/l/?uddg=" + __import__("urllib.parse", fromlist=["quote"]).quote(target, safe="")

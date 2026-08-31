@@ -49,6 +49,36 @@ class SearchMethodLearningTests(unittest.TestCase):
         self.assertEqual(row["selected"], 1)
         self.assertNotIn("verified", row)
 
+    def test_selection_is_learned_for_region_and_query_family(self):
+        learner = self.make_learner()
+        learner.observe(
+            "google_news_rss", responded=True, result_count=4, elapsed_ms=100,
+            region="JP", family="topic:promo",
+        )
+        learner.observe_selected([{
+            "search_method": "google_news_rss",
+            "query_region": "JP",
+            "query_family": "topic:promo",
+            "verified": False,
+        }])
+        context = learner.data["contexts"]["google_news_rss|JP|topic:promo"]
+        self.assertEqual(context["selected"], 1)
+        report_context = next(
+            row for row in learner.report()["top_contexts"]
+            if row["method"] == "google_news_rss" and row["region"] == "JP"
+            and row["family"] == "topic:promo"
+        )
+        self.assertEqual(report_context["selected"], 1)
+        self.assertEqual(report_context["adoption_rate"], 0.25)
+        self.assertNotIn("verified", context)
+
+    def test_reporting_does_not_create_unused_contexts(self):
+        learner = self.make_learner()
+        learner.observe("bing_news_rss", responded=True, result_count=2, region="US", family="movie")
+        before = set(learner.data["contexts"])
+        learner.report()
+        self.assertEqual(before, set(learner.data["contexts"]))
+
 
 if __name__ == "__main__":
     unittest.main()

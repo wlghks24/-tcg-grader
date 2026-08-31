@@ -1,6 +1,6 @@
 {
   "version": "v108-library-slab-corpus",
-  "checked_at": "2026-08-31T13:11:17Z",
+  "checked_at": "2026-08-31T13:29:09Z",
   "ok": true,
   "passed": 3,
   "failed": 0,
@@ -18,7 +18,7 @@
     {
       "name": "v107 전체 기능 회귀",
       "ok": true,
-      "detail": "[PASS] Python 전체 문법\n[PASS] v107 서버·PWA 통합\n[PASS] 화면·링크 런타임\n[PASS] 24개 기능 계약\n[PASS] 전체 코드·자료 감사\n[PASS] SNS·Google 수집\n[PASS] 브라우저 런타임\n[PASS] 카메라 런타임\n[PASS] 서비스워커 런타임\n[PASS] 비전 런타임\n[PASS] 5개 감정사 브라우저 정확도\n[PASS] 5개 감정사 교차런타임\n[PASS] 등급 학습 파이프라인\n[PASS] 시세 출처 회귀\n[PASS] eBay 등급학습 회귀\n[PASS] 비전 보정 회귀\n[PASS] 격리 고장주입·자가복구\n{\"version\": \"v107-full-audit-hardened\", \"checked_at\": \"2026-08-31T13:11:17+00:00\", \"ok\": true, \"passed\": 17, \"failed\": 0, \"skipped\": 0}"
+      "detail": "[PASS] Python 전체 문법\n[PASS] v107 서버·PWA 통합\n[PASS] 화면·링크 런타임\n[PASS] 24개 기능 계약\n[PASS] 전체 코드·자료 감사\n[PASS] SNS·Google 수집\n[PASS] 브라우저 런타임\n[PASS] 카메라 런타임\n[PASS] 서비스워커 런타임\n[PASS] 비전 런타임\n[PASS] 5개 감정사 브라우저 정확도\n[PASS] 5개 감정사 교차런타임\n[PASS] 등급 학습 파이프라인\n[PASS] 시세 출처 회귀\n[PASS] eBay 등급학습 회귀\n[PASS] 비전 보정 회귀\n[PASS] 격리 고장주입·자가복구\n{\"version\": \"v107-full-audit-hardened\", \"checked_at\": \"2026-08-31T13:29:09+00:00\", \"ok\": true, \"passed\": 17, \"failed\": 0, \"skipped\": 0}"
     }
   ],
   "safety": {

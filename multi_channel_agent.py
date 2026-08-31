@@ -13,6 +13,7 @@ v119:
   after relevance scoring when other relevant providers also produced leads.
 - A strict learned query that returns zero is retried with a compact OR query.
 - HTTP-success + zero-result is an EMPTY search, not a hard collection failure.
+- Selected results teach method utility separately for each region/query family.
 - Official trust is never inferred merely from repeated discovery.
 """
 from __future__ import annotations
@@ -504,7 +505,7 @@ class MultiChannelCollector:
         rows, errors, attempts, hard, _ = self._normalize_once_result(result)
         try:
             with self._learning_lock:
-                self.method_learner.observe_selected(rows)
+                self.method_learner.observe_selected(rows, region=region, family=family)
                 self.method_learner.save()
         except Exception as exc:
             errors = list(errors) + ["search_learning: " + diagnostic_exception(exc)]

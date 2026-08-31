@@ -64,6 +64,30 @@ class SearchEngineOptimizerTests(unittest.TestCase):
         self.assertEqual(learner.recommended_budget(names, is_android=False), 7)
         self.assertEqual(learner.recommended_budget(names, is_android=True), 5)
 
+    def test_context_adoption_selects_different_best_routes_by_region(self):
+        learner = self.make_learner()
+        for _ in range(4):
+            for region in ("KR", "JP"):
+                learner.observe("route_a", responded=True, result_count=4, elapsed_ms=500,
+                                region=region, family="event")
+                learner.observe("route_b", responded=True, result_count=4, elapsed_ms=500,
+                                region=region, family="event")
+        learner.observe_selected([
+            {"search_method": "route_a", "query_region": "KR", "query_family": "event"}
+            for _ in range(8)
+        ] + [
+            {"search_method": "route_b", "query_region": "JP", "query_family": "event"}
+            for _ in range(8)
+        ])
+        self.assertEqual(
+            learner.ordered_routes(["route_a", "route_b"], region="KR", family="event", budget=2)[0],
+            "route_a",
+        )
+        self.assertEqual(
+            learner.ordered_routes(["route_a", "route_b"], region="JP", family="event", budget=2)[0],
+            "route_b",
+        )
+
 
 if __name__ == "__main__":
     unittest.main()

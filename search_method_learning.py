@@ -170,9 +170,17 @@ class SearchMethodLearner:
         contexts = self.data.setdefault("contexts", {})
         return contexts.setdefault(_context_key(name, region, family), {})
 
+    def _existing_context(self, name: str, region: str, family: str) -> dict:
+        """Read context health without creating empty records during ranking/reporting."""
+        contexts = self.data.get("contexts") if isinstance(self.data, dict) else None
+        if not isinstance(contexts, dict):
+            return {}
+        row = contexts.get(_context_key(name, region, family))
+        return row if isinstance(row, dict) else {}
+
     def method_score(self, name: str, region: str = "KR", family: str = "web") -> float:
         method = self._method(name)
-        context = self._context(name, region, family)
+        context = self._existing_context(name, region, family)
         base = _score(method)
         if _int(context.get("attempts")):
             base = base * 0.7 + _score(context) * 0.3
@@ -184,7 +192,7 @@ class SearchMethodLearner:
     def route_policy(self, name: str, *, region: str = "KR", family: str = "web") -> dict:
         """Turn cumulative health metrics into a concrete runtime policy."""
         method = self._method(name)
-        context = self._context(name, region, family)
+        context = self._existing_context(name, region, family)
         # Context statistics become authoritative only after a few samples; before
         # that, global method history prevents unstable overfitting.
         source = context if _int(context.get("attempts")) >= 4 else method
@@ -322,16 +330,32 @@ class SearchMethodLearner:
         totals["errors"] = _int(totals.get("errors")) + (1 if kind != "none" else 0)
         return {"method": method, "error_kind": kind, "score": round(self.method_score(method, region, family), 4)}
 
-    def observe_selected(self, rows: list[dict]) -> None:
-        counts = {}
+    def observe_selected(self, rows: list[dict], *, region: str | None = None,
+                         family: str | None = None) -> None:
+        """Learn selected-result utility globally and for its search context.
+
+        Selection is an operational relevance signal only. It never changes a
+        source's verified/official status.
+        """
+        counts: dict[str, int] = {}
+        context_counts: dict[tuple[str, str, str], int] = {}
         for row in rows:
             if not isinstance(row, dict):
                 continue
             method = str(row.get("search_method") or row.get("search_provider") or "")
             if method:
                 counts[method] = counts.get(method, 0) + 1
+                selected_region = str(row.get("query_region") or region or "")[:8]
+                selected_family = str(row.get("query_family") or family or "")[:80]
+                if selected_region and selected_family:
+                    key = (method, selected_region, selected_family)
+                    context_counts[key] = context_counts.get(key, 0) + 1
         for method, count in counts.items():
             stat = self._method(method)
+            stat["selected"] = _int(stat.get("selected")) + _int(count)
+            stat["score"] = round(_score(stat), 5)
+        for (method, selected_region, selected_family), count in context_counts.items():
+            stat = self._context(method, selected_region, selected_family)
             stat["selected"] = _int(stat.get("selected")) + _int(count)
             stat["score"] = round(_score(stat), 5)
         totals = self.data.setdefault("totals", {})
@@ -387,12 +411,33 @@ class SearchMethodLearner:
                 "last_error_kind": stat.get("last_error_kind"),
             })
         rows.sort(key=lambda x: x["score"], reverse=True)
+        context_rows = []
+        for key, stat in self.data.get("contexts", {}).items():
+            if not isinstance(key, str) or not isinstance(stat, dict):
+                continue
+            parts = key.split("|", 2)
+            if len(parts) != 3 or _int(stat.get("attempts")) <= 0:
+                continue
+            rates = _rates(stat)
+            context_rows.append({
+                "method": parts[0], "region": parts[1], "family": parts[2],
+                "score": round(_score(stat), 4),
+                "attempts": _int(stat.get("attempts")),
+                "results": _int(stat.get("results")),
+                "selected": _int(stat.get("selected")),
+                "response_rate": round(rates["response_rate"], 4),
+                "nonempty_rate": round(rates["nonempty_rate"], 4),
+                "adoption_rate": round(rates["adoption_rate"], 4),
+            })
+        context_rows.sort(key=lambda x: (x["score"], x["selected"], x["attempts"]), reverse=True)
         return {
             "version": SCHEMA_VERSION,
             "updated_at": self.data.get("updated_at"),
             "totals": dict(self.data.get("totals") or {}),
             "methods": rows,
-            "policy": "누적 시도/응답/결과/채택/빈검색/403/429/timeout/지연/연속실패를 비율화해 검색 순서·시간제한·시도예산·재시도를 자동 최적화. 출처 공식성·사실성은 별도 검증.",
+            "context_count": len(context_rows),
+            "top_contexts": context_rows[:40],
+            "policy": "누적 시도/응답/결과/채택/빈검색/403/429/timeout/지연/연속실패와 국가×검색주제별 채택률을 비율화해 검색 순서·시간제한·시도예산·재시도를 자동 최적화. 출처 공식성·사실성은 별도 검증.",
         }
 
 
