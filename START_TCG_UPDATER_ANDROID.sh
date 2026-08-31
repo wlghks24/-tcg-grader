@@ -2,7 +2,7 @@
 set -u
 cd "$(dirname "$0")"
 
-# v145 manual-only graded-photo policy. Child collection processes inherit this
+# v146 manual-only graded-photo policy. Child collection processes inherit this
 # and therefore cannot make automatic PSA/BGS/CGC/TAG/BRG certification requests.
 export TCG_DISABLE_AUTO_GRADER_LOOKUP=1
 
@@ -56,6 +56,8 @@ for required in \
   grading_cert_verifier.py \
   manual_collection_mode.py \
   manual_graded_photo_registration.py \
+  manual_dual_photo_registration.py \
+  manual_dual_photo_bridge.js \
   manual_official_proof.py \
   multi_channel_agent.py \
   search_method_learning.py \
@@ -73,14 +75,20 @@ for required in \
   adaptive_collection_learner.py \
   fan_social_learning.py; do
   if [ ! -s "$required" ]; then
-    echo "[오류] v143 안전서버 필수파일 누락: $required"
+    echo "[오류] v146 안전서버 필수파일 누락: $required"
     echo "[안전] 구버전/혼합 버전 서버로 폴백하지 않습니다. 최신 설치/갱신 스크립트를 다시 실행하세요."
     exit 1
   fi
 done
 
-# Verify semantic contracts, including manual-only grader lookup and the current
-# game-only manual pair layout (pokemon / onepiece / naruto only).
+if ! grep -q 'manual_dual_photo_bridge.js' index.html; then
+  echo "[오류] index.html에 앞면+뒷면 수동등록 UI가 설치되지 않았습니다."
+  echo "[조치] bash INSTALL_MANUAL_OFFICIAL_FALLBACK.sh 를 다시 실행하세요."
+  exit 1
+fi
+
+# Verify semantic contracts, including manual-only grader lookup, game-only
+# storage and dual front/back manual upload.
 if ! python - <<'PY' >/dev/null 2>&1
 import collection_learning_hardening_v142 as learning_guard
 import runtime_bundle_guard_v143 as bundle_guard
@@ -100,6 +108,8 @@ assert contracts.get('search_timeout_circuit_breaker') is True
 assert contracts.get('automatic_grader_lookup_disabled') is True
 assert contracts.get('manual_registration_auto_lookup_disabled') is True
 assert contracts.get('certified_front_back_pair_only') is True
+assert mode.get('manual_front_back_upload') is True
+assert mode.get('back_stored_separately') is True
 assert mode.get('grouped_by_game_only') is True
 assert mode.get('grader_subfolders_created') is False
 probe=pair_queue._pair_folder(pair_queue.ANDROID_ROOT,'pokemon','0123456789abcdefabcd')
@@ -107,8 +117,8 @@ assert str(probe).endswith('/pokemon/수동등록대기/0123456789abcdefabcd')
 assert '/pokemon/PSA/' not in str(probe)
 PY
 then
-  echo "[오류] v143 전체 런타임 호환성/수동 등급사진 정책 검사 실패"
-  echo "[원인] 일부 파일만 최신이거나 게임별 수동등록 폴더 정책이 빠졌을 수 있습니다."
+  echo "[오류] v146 전체 런타임/앞뒤사진 수동등록 정책 검사 실패"
+  echo "[원인] 일부 파일만 최신이거나 앞면+뒷면 등록 기능이 빠졌을 수 있습니다."
   echo "[안전] 혼합 업데이트 상태로 서버를 시작하지 않습니다. INSTALL_MANUAL_OFFICIAL_FALLBACK.sh를 다시 실행하세요."
   exit 1
 fi
@@ -122,8 +132,6 @@ if [ -f "storage_optimizer.py" ]; then
   python storage_optimizer.py || echo "[안내] 최적화 일부를 건너뛰고 서버를 시작합니다."
 fi
 
-# Watch graded_photo_candidates.json and copy only supported-game + supported-
-# grader + certification-number + front/back pairs into the GAME folder only.
 pkill -f 'graded_photo_manual_pair_queue.py --watch' 2>/dev/null || true
 nohup python graded_photo_manual_pair_queue.py --watch --interval 60 \
   > TCG_MANUAL_PAIR_QUEUE.log 2>&1 &
@@ -131,6 +139,7 @@ echo "등급사진 수동대기 자동분류 시작: 인증번호+앞뒤사진�
 
 echo "로컬 서버를 먼저 시작합니다. 자료 수집은 서버 안에서 안전하게 순차 실행됩니다."
 echo "등급학습 안전게이트 사용: 공식인증 + RAW 원시예측 + 교차검증 + 하향보정만"
+echo "수동등록 정책: 앞면+뒷면 2장 필수 · 앞면 OCR · 뒷면 별도 증빙 저장"
 echo "등급사진 정책: 자동 등급사 조회 OFF · 공식사이트 직접확인/수동등록 · 인증번호+앞뒤사진만 게임폴더에 보관"
 echo "자료수집 자가학습 v142 + 런타임 번들 v143: 고유출처 검증 + timeout circuit-breaker + 혼합버전 차단"
 exec python tcg_updater_v135.py
