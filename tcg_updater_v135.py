@@ -18,13 +18,36 @@ RUNTIME_BUNDLE_STATUS = {"ok": False, "patch": 143, "issues": ["startup audit no
 class Handler(core.Handler):
     def _safe_static(self, path):
         name = path.lstrip('/') or 'index.html'
-        if name == 'grade_learning_guard_v135.js':
+        if name in {'grade_learning_guard_v135.js', 'manual_official_verify_bridge.js'}:
             target = core.Path(self.directory) / name
             try:
                 return not target.is_symlink() and not target.parent.is_symlink() and target.is_file()
             except (OSError, ValueError):
                 return False
         return super()._safe_static(path)
+
+    def _serve_dashboard_with_manual_fallback(self):
+        """Serve the existing dashboard plus the local manual-official fallback UI.
+
+        GitHub Pages keeps the normal static dashboard. The bridge is appended only
+        by the local/Tailscale v135 server where mutation APIs are available.
+        """
+        try:
+            base = core.Path(self.directory) / 'graded_photo_dashboard.js'
+            bridge = core.Path(self.directory) / 'manual_official_verify_bridge.js'
+            if any(path.is_symlink() or path.parent.is_symlink() or not path.is_file() for path in (base, bridge)):
+                return self.json({'ok': False, 'error': '등급사진 대시보드 파일 오류'}, 404)
+            text = base.read_text(encoding='utf-8') + '\n\n' + bridge.read_text(encoding='utf-8') + '\n'
+            body = text.encode('utf-8')
+        except (OSError, UnicodeError, ValueError):
+            return self.json({'ok': False, 'error': '등급사진 대시보드 로드 오류'}, 500)
+        self.send_response(200)
+        self.send_header('Content-Type', 'application/javascript; charset=utf-8')
+        self.send_header('Cache-Control', 'no-store, max-age=0')
+        self.send_header('X-Content-Type-Options', 'nosniff')
+        self.send_header('Content-Length', str(len(body)))
+        self.end_headers()
+        self.wfile.write(body)
 
     def _guarded_official_lookup(self, company, cert, expected_grade=None):
         allowed, guard_info = core.OFFICIAL_LOOKUP_GUARD.claim(company)
@@ -47,6 +70,8 @@ class Handler(core.Handler):
             return
         parsed = urlparse(self.path)
         path = parsed.path
+        if path == '/graded_photo_dashboard.js':
+            return self._serve_dashboard_with_manual_fallback()
         if path == '/api/v135-health':
             bundle = RUNTIME_BUNDLE_STATUS if isinstance(RUNTIME_BUNDLE_STATUS, dict) else {}
             contracts = bundle.get('contracts') if isinstance(bundle.get('contracts'), dict) else {}
@@ -74,6 +99,8 @@ class Handler(core.Handler):
                 'unique_evidence_host_counting': True,
                 'fan_reuse_requires_corroboration_or_watch': True,
                 'strict_official_social_url_match': True,
+                'manual_official_browser_fallback': True,
+                'manual_official_proof_raw_calibration': False,
                 'base_service': getattr(core, 'SERVICE_NAME', 'TCG updater'),
             })
         if path == '/api/learning-model-status':
@@ -88,6 +115,14 @@ class Handler(core.Handler):
                 return self.json(learning.audit())
             except (ImportError, OSError, ValueError, TypeError):
                 return self.json({'ok': False, 'error': 'v135 검증학습 감사 오류'}, 500)
+        if path == '/api/manual-official-proof-status':
+            if not self._search_origin_allowed():
+                return self.json({'ok': False, 'error': '허용되지 않은 요청 출처'}, 403)
+            try:
+                import manual_official_proof
+                return self.json(manual_official_proof.public_status())
+            except (ImportError, OSError, ValueError, TypeError):
+                return self.json({'ok': False, 'error': '공식사이트 수동확인 상태 오류'}, 500)
         if path == '/api/verify-grading-cert':
             qs = parse_qs(parsed.query)
             company = (qs.get('company', [''])[0] or '')[:8].upper()
@@ -115,6 +150,20 @@ class Handler(core.Handler):
         if not self._require_request_host():
             return
         path = self.path.split('?', 1)[0]
+        if path == '/api/manual-official-proof':
+            if not self._require_mutation_origin():
+                return
+            try:
+                incoming = self._read_json_body(8500000)
+                import manual_official_proof
+                with core.DATA_WRITE_LOCK:
+                    result = manual_official_proof.submit(incoming)
+                    core.clear_json_file_cache()
+                return self.json(result, 200 if result.get('accepted') else 409)
+            except ValueError as exc:
+                return self.json({'ok': False, 'accepted': False, 'error': str(exc)[:220]}, 400)
+            except (ImportError, OSError, TypeError, OverflowError, UnicodeError, RecursionError):
+                return self.json({'ok': False, 'accepted': False, 'error': '공식사이트 수동확인 등록 처리 오류'}, 500)
         if path == '/api/learning-store':
             if not self._require_mutation_origin():
                 return
@@ -212,6 +261,7 @@ def main() -> int:
     print('이 기기 접속 주소:', url, flush=True)
     print(f'다른 기기 접속 주소(같은 Wi-Fi): http://{lan_ip}:{core.PORT}/index.html', flush=True)
     print(f'등급학습 안전게이트: v135 / runtime patch {RUNTIME_PATCH} · 공식 인증레지스트리 일치 + RAW 원시예측 + 교차검증 + 하향보정만', flush=True)
+    print('등급사 쿨다운 수동확인: 공식 조회페이지 직접 열기 + 결과화면 OCR 일치 참고등록 · RAW 보정학습 제외', flush=True)
     try:
         threading.Thread(target=lambda: webbrowser.open(url), daemon=True).start()
     except Exception:
