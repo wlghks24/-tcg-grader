@@ -35,8 +35,21 @@ fi
 echo "서버를 종료하려면 Ctrl+C를 누르세요."
 for required in \
   index.html \
+  safe_runtime.py \
+  auto_repair_engine.py \
+  auto_update_all.py \
   tcg_updater.py \
   tcg_updater_v135.py \
+  runtime_bundle_guard_v143.py \
+  update_releases.py \
+  update_market_watch.py \
+  update_market_prices.py \
+  update_promo_events.py \
+  update_purchase_sources.py \
+  update_exchange_rates.py \
+  graded_photo_multi_source.py \
+  multi_channel_agent.py \
+  search_method_learning.py \
   verified_grade_learning_v135.py \
   verified_grade_learning_v135_safe.py \
   event_collection_hardening_v139.py \
@@ -51,26 +64,31 @@ for required in \
   adaptive_collection_learner.py \
   fan_social_learning.py; do
   if [ ! -s "$required" ]; then
-    echo "[오류] v142 안전서버 필수파일 누락: $required"
-    echo "[안전] 구버전 서버로 폴백하지 않습니다. 최신 설치/갱신 스크립트를 다시 실행하세요."
+    echo "[오류] v143 안전서버 필수파일 누락: $required"
+    echo "[안전] 구버전/혼합 버전 서버로 폴백하지 않습니다. 최신 설치/갱신 스크립트를 다시 실행하세요."
     exit 1
   fi
 done
 
-# Fail early on partial tablet updates. This catches a missing v142 dependency
-# before the background server starts and silently loses collection-learning safety.
+# v143: filenames alone are not enough. Verify semantic contracts that directly
+# correspond to the collector failures shown in the runtime dashboard.
 if ! python - <<'PY' >/dev/null 2>&1
-import collection_learning_hardening_v142 as h
-status=h.apply()
-assert int(status.get('patch') or 0) == 142
-assert status.get('unique_evidence_host_counting') is True
-assert status.get('strict_official_social_url_match') is True
-assert float(status.get('unverified_payload_learning_weight', -1)) == 0.0
-assert float(status.get('unverified_search_host_term_learning_weight', -1)) == 0.0
+import collection_learning_hardening_v142 as learning_guard
+import runtime_bundle_guard_v143 as bundle_guard
+learning=learning_guard.apply()
+bundle=bundle_guard.require_compatible()
+assert int(learning.get('patch') or 0) == 142
+assert int(bundle.get('patch') or 0) == 143
+assert bundle.get('missing_file_count') == 0
+assert bundle.get('issue_count') == 0
+assert bundle.get('contracts',{}).get('graded_photo_preflight_allowlisted') is True
+assert bundle.get('contracts',{}).get('source_structure_classification') is True
+assert bundle.get('contracts',{}).get('search_timeout_circuit_breaker') is True
 PY
 then
-  echo "[오류] v142 자료수집·자가학습 보안 모듈 연결 검사 실패"
-  echo "[안전] 부분 업데이트 상태로 서버를 시작하지 않습니다."
+  echo "[오류] v143 전체 런타임 호환성/자료수집 자가학습 보안 검사 실패"
+  echo "[원인] 일부 파일만 최신이고 실제 수집기·복구기·검색학습기가 구버전일 수 있습니다."
+  echo "[안전] 혼합 업데이트 상태로 서버를 시작하지 않습니다. INSTALL_GRADE_LEARNING_V135.sh를 다시 실행하세요."
   exit 1
 fi
 
@@ -85,5 +103,5 @@ fi
 
 echo "로컬 서버를 먼저 시작합니다. 자료 수집은 서버 안에서 안전하게 순차 실행됩니다."
 echo "등급학습 안전게이트 사용: 공식인증 + RAW 원시예측 + 교차검증 + 하향보정만"
-echo "자료수집 자가학습 v142: 고유출처 교차검증 + 미검증 host/검색어 학습 차단 + 공식 SNS URL 엄격검증"
+echo "자료수집 자가학습 v142 + 런타임 번들 v143: 고유출처 검증 + timeout circuit-breaker + 혼합버전 차단"
 exec python tcg_updater_v135.py
