@@ -21,7 +21,7 @@ from typing import Any
 from graded_photo_evidence import normalize_cert
 from grading_cert_verifier import lookup_url
 
-PATCH_ID = 145
+PATCH_ID = 146
 _APPLIED = False
 _ORIGINAL_COLLECT = None
 
@@ -99,7 +99,7 @@ _registry_only_official_verify_rows._manual_only_policy = True
 
 
 def _manual_only_process_registration_once(registration_id: str):
-    """OCR the uploaded slab, then stop before any official-site network call."""
+    """OCR the uploaded slab front, then stop before any official-site network call."""
     import manual_graded_photo_registration as manual_photo
 
     now = manual_photo._now()
@@ -249,11 +249,13 @@ def apply() -> dict[str, Any]:
     global _APPLIED, _ORIGINAL_COLLECT
     import graded_photo_multi_source as collector
     import manual_graded_photo_registration as manual_photo
+    import manual_dual_photo_registration as dual_photo
 
     os.environ["TCG_DISABLE_AUTO_GRADER_LOOKUP"] = "1"
 
     collector._official_verify_rows = _registry_only_official_verify_rows
     manual_photo._process_registration_once = _manual_only_process_registration_once
+    dual_status = dual_photo.apply()
     if _ORIGINAL_COLLECT is None:
         _ORIGINAL_COLLECT = collector.collect
     collector.collect = _collect_and_sync_manual_pairs
@@ -265,6 +267,8 @@ def apply() -> dict[str, Any]:
         "collector_uses_persisted_registry_only": True,
         "manual_registration_auto_official_lookup": False,
         "manual_user_browser_verification_required": True,
+        "manual_front_back_upload": dual_status.get("manual_front_back_upload") is True,
+        "back_stored_separately": dual_status.get("back_stored_separately") is True,
         "certification_front_back_pair_required": True,
         "grouped_by_game_only": True,
         "grader_subfolders_created": False,
@@ -275,11 +279,14 @@ def apply() -> dict[str, Any]:
 def status() -> dict[str, Any]:
     import graded_photo_multi_source as collector
     import manual_graded_photo_registration as manual_photo
+    import manual_dual_photo_registration as dual_photo
+    dual_status = dual_photo.status()
     return {
         "ok": bool(
             getattr(collector._official_verify_rows, "_manual_only_policy", False)
             and getattr(manual_photo._process_registration_once, "_manual_only_policy", False)
             and getattr(collector.collect, "_manual_only_policy", False)
+            and dual_status.get("ok") is True
         ),
         "patch": PATCH_ID,
         "applied": _APPLIED,
@@ -288,6 +295,8 @@ def status() -> dict[str, Any]:
         "collector_manual_only": bool(getattr(collector._official_verify_rows, "_manual_only_policy", False)),
         "manual_registration_manual_only": bool(getattr(manual_photo._process_registration_once, "_manual_only_policy", False)),
         "collector_syncs_manual_pairs": bool(getattr(collector.collect, "_manual_only_policy", False)),
+        "manual_front_back_upload": dual_status.get("manual_front_back_upload") is True,
+        "back_stored_separately": dual_status.get("back_stored_separately") is True,
         "grouped_by_game_only": True,
         "grader_subfolders_created": False,
     }
