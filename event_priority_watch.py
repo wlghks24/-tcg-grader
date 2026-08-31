@@ -1,11 +1,12 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-"""Lightweight priority watch for official movie/collab/event announcements.
+"""Lightweight priority watch for official movie/collab/event/reward announcements.
 
 Unlike the hourly full discovery pass, this watcher only performs account-targeted
 public searches against already trusted official SNS accounts. It is intentionally
 small so it can run every 30 minutes without duplicating the heavy price/catalog
-update or the full 10-topic search matrix.
+update or the full 10-topic search matrix. v140 also includes out-of-scope card,
+promo, limited-edition and collaboration giveaway/reward announcements.
 """
 from __future__ import annotations
 
@@ -15,7 +16,7 @@ import os
 import threading
 import time
 
-import event_collection_hardening_v139 as hardening
+import event_collection_hardening_v140 as hardening
 import social_event_discovery
 from safe_runtime import atomic_write_json, env_int, safe_read_text
 
@@ -113,6 +114,7 @@ def _run_locked(started: float) -> dict:
             "trusted_account_groups": len(jobs),
             "result_count": len(annotated),
             "official_result_count": sum(1 for x in annotated if x.get("official_account_verified") is True),
+            "reward_result_count": sum(1 for x in annotated if x.get("reward_watch") is True),
             "targeted_candidate_count": sum(1 for x in annotated if x.get("official_query_target") is True),
             "error_count": len(errors),
             "errors": errors[:20],
@@ -120,6 +122,7 @@ def _run_locked(started: float) -> dict:
         },
         "priority_gap_cells": _priority_gaps(merged, registry),
         "official_social_candidate_count": sum(1 for x in merged if x.get("official_account_verified") is True),
+        "reward_watch_count": sum(1 for x in merged if x.get("reward_watch") is True),
         "cross_checked_count": sum(1 for x in merged if x.get("cross_checked") is True),
     })
 
@@ -137,6 +140,7 @@ def _run_locked(started: float) -> dict:
         "trusted_account_groups": len(jobs),
         "result_count": len(annotated),
         "official_result_count": sum(1 for x in annotated if x.get("official_account_verified") is True),
+        "reward_result_count": sum(1 for x in annotated if x.get("reward_watch") is True),
         "manual_evidence_added": manual_added,
         "priority_gap_count": len(payload.get("priority_gap_cells", []) or []),
         "error_count": len(errors),
