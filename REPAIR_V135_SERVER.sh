@@ -5,6 +5,7 @@ cd "$(dirname "$0")"
 export TCG_DISABLE_AUTO_GRADER_LOOKUP=1
 PORT=8765
 HEALTH_URL="http://127.0.0.1:${PORT}/api/v135-health"
+DASHBOARD_URL="http://127.0.0.1:${PORT}/graded_photo_dashboard.js"
 NO_BOOT_UPDATE=0
 [ "${1:-}" = "--no-boot-update" ] && NO_BOOT_UPDATE=1
 
@@ -76,6 +77,21 @@ fi
 
 echo "[OK] v135 건강검사 정상"
 echo "$HEALTH"
+
+# 건강검사만 200이어도 예전 1장 대시보드가 남을 수 있으므로 실제 전달 JS까지 확인한다.
+if ! printf '%s' "$HEALTH" | grep -q '"manual_dual_photo_ui": true'; then
+  echo "[오류] v135 건강검사에 앞면+뒷면 UI 계약이 없습니다. 최신 main을 다시 pull 하세요."
+  exit 1
+fi
+if ! curl -fsS --max-time 6 "${DASHBOARD_URL}?v=150&check=$(date +%s)" | grep -q 'gpdManualBackPhoto'; then
+  echo "[오류] 브라우저용 대시보드에 뒷면 사진 입력 UI가 전달되지 않습니다."
+  exit 1
+fi
+if ! curl -fsS --max-time 6 "${DASHBOARD_URL}?v=150&check=$(date +%s)" | grep -q '앞면 + 뒷면 2장으로 수동등록'; then
+  echo "[오류] 앞면+뒷면 2장 등록 브리지가 실제 대시보드 응답에 포함되지 않았습니다."
+  exit 1
+fi
+echo "[OK] 앞면+뒷면 2장 UI 실전달 확인"
 
 # 사용자가 이미 Termux:Boot를 쓰는 경우 다음 재부팅부터도 동일한 복구 경로를 사용한다.
 if [ "$NO_BOOT_UPDATE" -eq 0 ]; then
