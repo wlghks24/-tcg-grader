@@ -1,16 +1,16 @@
 (()=>{
 'use strict';
-const GLOBAL_KEY='__TCG_DUAL_PHOTO_BRIDGE_V153__';
+const GLOBAL_KEY='__TCG_DUAL_PHOTO_BRIDGE_V154__';
 if(globalThis[GLOBAL_KEY]?.loaded){
  globalThis[GLOBAL_KEY].duplicate_loads=(globalThis[GLOBAL_KEY].duplicate_loads||0)+1;
  return;
 }
-const bridgeState=globalThis[GLOBAL_KEY]={loaded:true,version:153,enhanced:false,duplicate_loads:0,manualProofStatusSync:true};
+const bridgeState=globalThis[GLOBAL_KEY]={loaded:true,version:154,enhanced:false,duplicate_loads:0,manualProofStatusSync:true,integratedOfficialVerification:true};
 if(!document.getElementById('gpdDualBridgeForceV150')){
  const marker=document.createElement('meta');
  marker.id='gpdDualBridgeForceV150';
  marker.name='tcg-dual-photo-bridge';
- marker.content='inline-v153';
+ marker.content='inline-v154';
  document.head?.appendChild(marker);
 }
 let installed=false,submitting=false,proofSyncing=false,proofObserverInstalled=false;
@@ -72,10 +72,11 @@ async function syncRecentManualProofState(){
   domRows.forEach((element,index)=>{
    const row=rows[index];if(!row)return;
    if(row.registration_id)element.dataset.registrationId=row.registration_id;
-   const manualDone=row.manual_official_proof_registered===true&&(row.manual_official_proof_state==='matched'||row.verification_state==='manual_official_proof_matched');
-   if(!manualDone)return;
-   const strong=element.querySelector('strong');if(strong&&strong.textContent!=='수동검증 완료 · 참고학습'){strong.textContent='수동검증 완료 · 참고학습';strong.className='ok';}
-   const badge=element.querySelector('.gpd-manual-only-badge');if(badge&&badge.textContent!=='수동검증 완료'){badge.textContent='수동검증 완료';}
+   const manualDone=row.manual_official_proof_registered===true&&(row.manual_official_proof_state==='matched'||row.verification_state==='manual_official_proof_matched'||row.verification_state==='verified_manual_official_page');
+   const integratedOfficial=row.official_result===true&&(row.official_verification_source==='user_browser_official_page'||manualDone);
+   if(!integratedOfficial)return;
+   const strong=element.querySelector('strong');if(strong&&strong.textContent!=='공식검증 완료 · 통합관리'){strong.textContent='공식검증 완료 · 통합관리';strong.className='ok';}
+   const badge=element.querySelector('.gpd-manual-only-badge');if(badge&&badge.textContent!=='공식검증 완료'){badge.textContent='공식검증 완료';}
   });
  }catch(_){}finally{proofSyncing=false}
 }
