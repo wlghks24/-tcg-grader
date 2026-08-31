@@ -133,6 +133,11 @@ def t_ui_and_pipeline_contract():
 
 def t_pipeline_exec_once():
     import auto_pipeline_runner as a
+    # run_pipeline() applies this hardening layer before it calls the
+    # collectors. Apply it before installing test doubles as well; otherwise a
+    # clean Python process replaces the mocked social collector during the
+    # test and accidentally performs live collection.
+    a.collection_learning_hardening_v142.apply()
     old_collector=a.MultiChannelCollector
     old_official=a._collect_official_sources
     old_supp=a.supplementary_discovery.main

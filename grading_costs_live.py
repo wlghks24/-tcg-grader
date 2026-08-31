@@ -7,9 +7,16 @@ from html import unescape
 from pathlib import Path
 import json,re,time,urllib.request
 
+from safe_runtime import atomic_write_json, safe_read_text, safe_urlopen
+
 CACHE=Path(__file__).with_name('grading_costs_cache.json')
 CACHE_TTL=6*60*60
 UA='Mozilla/5.0 TCG-Grader/1.0'
+ALLOWED_HOSTS={
+ 'www.psacard.com','psacard.com','www.beckett.com','beckett.com',
+ 'www.cgccards.com','cgccards.com','taggrading.com','www.taggrading.com',
+ 'break.co.kr','www.break.co.kr',
+}
 
 # Official-source baseline verified 2026-08-29. Variable checkout shipping is never fabricated.
 COMPANIES={
@@ -44,7 +51,7 @@ def _text(html:str)->str:
 
 def _fetch(url:str)->str:
     req=urllib.request.Request(url,headers={'User-Agent':UA,'Accept-Language':'en-US,en;q=0.8,ko;q=0.6'})
-    with urllib.request.urlopen(req,timeout=12) as r:
+    with safe_urlopen(req,timeout=12,allowed_hosts=ALLOWED_HOSTS,max_redirects=2) as r:
         return _text(r.read(2_000_000).decode('utf-8','ignore'))
 
 def _near_price(text,name,currency):
@@ -79,15 +86,15 @@ def _refresh_company(name,cfg):
 
 def _load_cache():
     try:
-        d=json.loads(CACHE.read_text(encoding='utf-8'))
+        d=json.loads(safe_read_text(CACHE,max_bytes=2_000_000))
         if time.time()-float(d.get('_epoch',0))<CACHE_TTL:return d
-    except Exception:pass
+    except (OSError,ValueError,TypeError,UnicodeError):pass
     return None
 
 def _save_cache(data):
     try:
-        tmp=CACHE.with_suffix('.json.tmp');tmp.write_text(json.dumps(data,ensure_ascii=False,indent=2),encoding='utf-8');tmp.replace(CACHE)
-    except Exception:pass
+        atomic_write_json(CACHE,data,suffix='.grading-costs.tmp')
+    except (OSError,ValueError,TypeError):pass
 
 def get_grading_costs(force:bool=False):
     if not force:

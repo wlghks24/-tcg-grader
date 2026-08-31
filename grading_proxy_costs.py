@@ -3,13 +3,20 @@
 from __future__ import annotations
 from datetime import datetime, timezone
 from html import unescape
-import json, os, re, time
-from urllib.request import Request, urlopen
-from urllib.error import URLError, HTTPError
+import json, re, time
+from pathlib import Path
+from urllib.request import Request
 
-BASE=os.path.dirname(os.path.abspath(__file__))
-CACHE=os.path.join(BASE,'grading_proxy_costs_cache.json')
+from safe_runtime import atomic_write_json, safe_read_text, safe_urlopen
+
+BASE=Path(__file__).resolve().parent
+CACHE=BASE/'grading_proxy_costs_cache.json'
 REFRESH_SECONDS=6*60*60
+ALLOWED_HOSTS={
+ 'hobbykorea.com','www.hobbykorea.com',
+ 'tradingcardsvault.com','www.tradingcardsvault.com',
+ 'cardlabbusan.com','www.cardlabbusan.com',
+}
 
 # Publicly visible Korean submission/proxy services. Numeric values are only
 # stored when the provider publicly exposes them. Dynamic/login quotes stay null.
@@ -52,7 +59,7 @@ def _strip_html(raw:str)->str:
 
 def _fetch(url:str)->str:
     req=Request(url,headers={'User-Agent':'Mozilla/5.0 TCG-Grader/1.0','Accept-Language':'ko,en;q=0.8'})
-    with urlopen(req,timeout=12) as r:
+    with safe_urlopen(req,timeout=12,allowed_hosts=ALLOWED_HOSTS,max_redirects=2) as r:
         return r.read(1_500_000).decode('utf-8','ignore')
 
 def _clone():
@@ -99,8 +106,9 @@ def _refresh_public_prices(rows):
 
 def _load_cache():
     try:
-        with open(CACHE,encoding='utf-8') as f: return json.load(f)
-    except Exception: return None
+        value=json.loads(safe_read_text(CACHE,max_bytes=2_000_000))
+        return value if isinstance(value,dict) else None
+    except (OSError,ValueError,TypeError,UnicodeError): return None
 
 def get_proxy_costs(force=False):
     now=time.time(); cached=_load_cache()
@@ -110,10 +118,8 @@ def get_proxy_costs(force=False):
     data={'ok':True,'checked_at':datetime.now(timezone.utc).isoformat(timespec='seconds'),'refresh_hours':6,'providers':rows,'refreshed':refreshed,'errors':errors,
           'notice':'대행사 공개가격만 표시합니다. 로그인/동적 견적·환율·업차지·국제운임·보험 실비는 임의 생성하지 않습니다. 접수 전 대행사 결제화면을 최종 확인하세요.','_epoch':now}
     try:
-        tmp=CACHE+'.tmp'
-        with open(tmp,'w',encoding='utf-8') as f: json.dump(data,f,ensure_ascii=False,indent=2)
-        os.replace(tmp,CACHE)
-    except OSError: pass
+        atomic_write_json(CACHE,data,suffix='.grading-proxy.tmp')
+    except (OSError,ValueError,TypeError): pass
     return data
 
 if __name__=='__main__':

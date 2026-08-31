@@ -102,7 +102,12 @@ def scan_workflow(text: str, findings: list[dict[str, Any]], rel: str) -> None:
     if re.search(r"(?m)^\s*permissions\s*:\s*write-all\s*$", text):
         add(findings, "GHA_WRITE_ALL", "high", rel, 1, "GitHub Actions write-all permission is broader than necessary.", "permissions: write-all")
     if re.search(r"(?ms)^permissions\s*:\s*.*?^\s*contents\s*:\s*write\s*$", text):
-        add(findings, "GHA_CONTENTS_WRITE", "medium", rel, 1, "Workflow can write repository contents; keep triggers narrow and trusted.", "contents: write")
+        untrusted_trigger=bool(re.search(r"(?m)^\s*(?:pull_request|pull_request_target)\s*:",text))
+        severity="high" if untrusted_trigger else "low"
+        message=("Write permission is reachable from a pull-request trigger."
+                 if untrusted_trigger else
+                 "Write permission is limited to trusted push/manual/scheduled automation; keep the trigger narrow.")
+        add(findings, "GHA_CONTENTS_WRITE", severity, rel, 1, message, "contents: write")
     for lineno, line in enumerate(text.splitlines(), 1):
         match = re.search(r"\buses:\s*([^\s#]+)", line)
         if match:

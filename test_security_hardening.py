@@ -5,6 +5,10 @@ from email.message import Message
 from pathlib import Path
 import tempfile
 import unittest
+from unittest import mock
+
+import grading_costs_live
+import grading_proxy_costs
 
 from server_security_guard import OfficialLookupGuard, client_network_allowed, client_network_classification
 import tcg_updater
@@ -89,6 +93,30 @@ class SafeRuntimeSymlinkTests(unittest.TestCase):
                 safe_read_text(link / "inside.txt")
             with self.assertRaises((ValueError, OSError)):
                 atomic_write_text(link / "new.txt", "blocked")
+
+
+class CollectorSecurityTests(unittest.TestCase):
+    def test_cost_collectors_use_shared_https_guard(self):
+        cases=(
+            (grading_costs_live,next(iter(grading_costs_live.COMPANIES.values()))["source"]),
+            (grading_proxy_costs,"https://hobbykorea.com/GRADING"),
+        )
+        for module,url in cases:
+            with self.subTest(module=module.__name__), mock.patch.object(
+                module,"safe_urlopen",side_effect=ValueError("blocked")
+            ) as guarded:
+                with self.assertRaises(ValueError):
+                    module._fetch(url)
+                self.assertTrue(guarded.called)
+
+    def test_all_external_actions_are_pinned_to_full_sha(self):
+        workflows=Path(__file__).resolve().parent/".github"/"workflows"
+        for path in workflows.glob("*.y*ml"):
+            for line in path.read_text(encoding="utf-8").splitlines():
+                if "uses:" not in line or "uses: ./" in line:
+                    continue
+                ref=line.split("uses:",1)[1].split("#",1)[0].strip().rsplit("@",1)[-1]
+                self.assertRegex(ref,r"^[0-9a-fA-F]{40}$",f"mutable action ref: {path.name}: {line.strip()}")
 
 
 if __name__ == "__main__":
