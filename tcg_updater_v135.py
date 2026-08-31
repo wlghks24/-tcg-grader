@@ -11,7 +11,7 @@ from urllib.parse import parse_qs, urlparse
 import tcg_updater as core
 
 RUNTIME_ID = "tcg-updater-v135-verified-learning"
-RUNTIME_PATCH = 137
+RUNTIME_PATCH = 138
 
 
 class Handler(core.Handler):
@@ -175,6 +175,16 @@ def main() -> int:
     except Exception:
         pass
     threading.Thread(target=core.auto_update_loop, daemon=True).start()
+    try:
+        import event_quick_watch
+        threading.Thread(
+            target=event_quick_watch.loop,
+            args=(core.UPDATE_LOCK,),
+            daemon=True,
+        ).start()
+        print('행사·영화 긴급탐색: 시작 10분 후 첫 실행 · 이후 1시간 간격', flush=True)
+    except ImportError:
+        print('[안내] 행사·영화 긴급탐색 모듈을 찾지 못해 6시간 정규수집만 사용합니다.', flush=True)
     try:
         server.serve_forever()
     except KeyboardInterrupt:
