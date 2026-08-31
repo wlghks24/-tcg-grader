@@ -34,6 +34,20 @@ class BreakingEventWatchTests(unittest.TestCase):
         self.assertEqual(3600, event_quick_watch.DEFAULT_INTERVAL_SECONDS)
         self.assertLessEqual(event_quick_watch.DEFAULT_START_DELAY_SECONDS, 600)
 
+    def test_repository_keeps_current_wild_card_gap_as_manual_evidence(self):
+        payload = json.loads(Path("manual_event_evidence.json").read_text(encoding="utf-8"))
+        matches = [
+            row for row in payload.get("items", [])
+            if row.get("game") == "포켓몬 카드"
+            and row.get("region") == "KR"
+            and row.get("category") == "movie"
+            and "와일드카드" in str(row.get("title") or "")
+        ]
+        self.assertEqual(1, len(matches))
+        self.assertIs(matches[0].get("manual_evidence"), True)
+        self.assertIs(matches[0].get("official_account_verified"), True)
+        self.assertIn("wild card", [str(x).lower() for x in matches[0].get("dedupe_terms", [])])
+
     def test_manual_movie_evidence_is_merged_and_later_deduped(self):
         seed = {
             "game": "포켓몬 카드",
