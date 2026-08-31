@@ -1,11 +1,18 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-"""Conservative official certification lookup for supported grading companies."""
+"""Conservative official certification lookup for supported grading companies.
+
+Automatic official-site requests are disabled by default. The application uses
+persisted verified registry rows plus a user-browser manual confirmation flow.
+Set TCG_DISABLE_AUTO_GRADER_LOOKUP=0 only for an explicitly supervised diagnostic
+session; normal collection/registration must leave it disabled.
+"""
 from __future__ import annotations
 
 from datetime import timezone
 import html
 from email.utils import parsedate_to_datetime
+import os
 import re
 import time
 from urllib.error import HTTPError, URLError
@@ -53,6 +60,12 @@ FAILURE_MARKERS = (
 )
 BLOCKING_HTTP_STATUSES = {401, 403, 407, 429}
 TRANSIENT_HTTP_STATUSES = {408, 425, 429, 500, 502, 503, 504}
+DISABLE_AUTO_LOOKUP_ENV = "TCG_DISABLE_AUTO_GRADER_LOOKUP"
+
+
+def automatic_lookup_disabled() -> bool:
+    value = str(os.environ.get(DISABLE_AUTO_LOOKUP_ENV, "1") or "1").strip().lower()
+    return value not in {"0", "false", "no", "off"}
 
 
 def _clean_cert(value):
@@ -209,6 +222,23 @@ def verify_cert(company, cert, expected_grade=None, timeout=10):
         return {"ok": False, "verified": False, "error": "인증번호를 확인하세요", "official_url": OFFICIAL[company]["home"]}
 
     url = lookup_url(company, cert)
+    if automatic_lookup_disabled():
+        return {
+            "ok": True,
+            "verified": False,
+            "company": company,
+            "certification_id": cert,
+            "official_url": url,
+            "grade": None,
+            "expected_grade": expected_grade,
+            "mode": "manual_user_browser_required",
+            "automatic_lookup_disabled": True,
+            "manual_verification_required": True,
+            "manual_verification_url": url,
+            "retry_suppressed": True,
+            "notice": "자동 등급사 인증조회는 비활성화되어 있습니다. 공식 사이트를 직접 열어 확인 후 수동등록하세요.",
+        }
+
     result = {
         "ok": True, "verified": False, "company": company,
         "certification_id": cert, "official_url": url, "grade": None,
@@ -216,8 +246,6 @@ def verify_cert(company, cert, expected_grade=None, timeout=10):
     }
     try:
         fetched = _fetch(company, url, timeout=timeout, retries=1)
-        # Keep the parser testable with the historical text-only fetch contract
-        # while production requests return body + status + final URL metadata.
         if isinstance(fetched, tuple) and len(fetched) == 3:
             raw, http_status, final_url = fetched
         else:
@@ -246,8 +274,6 @@ def verify_cert(company, cert, expected_grade=None, timeout=10):
     except HTTPError as exc:
         status = int(getattr(exc, "code", 0) or 0)
         retry_after = _retry_after_seconds(exc)
-        # Short conservative fallbacks: the collector persists the exact expiry
-        # and will not retry this company while it is active.
         default_cooldown = 300.0 if status == 429 else (900.0 if status in {401, 403, 407} else 0.0)
         if status in BLOCKING_HTTP_STATUSES:
             recommended = max(default_cooldown, float(retry_after or 0.0))
@@ -266,7 +292,7 @@ def verify_cert(company, cert, expected_grade=None, timeout=10):
         if status == 429:
             result["notice"] = "공식 사이트 요청 제한(429)입니다. Retry-After가 있으면 그 시간을 따르고, 없으면 5분 후 재시도할 수 있습니다."
         elif status in {401, 403, 407}:
-            result["notice"] = "공식 사이트 접근제어 응답입니다. 15분 쿨다운 후 다시 확인하고, 계속 차단되면 공식 조회 페이지를 직접 열어 확인합니다."
+            result["notice"] = "공식 사이트 접근제어 응답입니다. 자동우회하지 않고 공식 조회 페이지를 직접 열어 확인합니다."
         elif status == 404:
             result["notice"] = "공식 조회 URL이 HTTP 404를 반환했습니다. 인증 실패로 단정하지 않고 수동 확인 대상으로 보존합니다."
         else:
