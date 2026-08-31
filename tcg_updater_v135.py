@@ -11,7 +11,7 @@ from urllib.parse import parse_qs, urlparse
 import tcg_updater as core
 
 RUNTIME_ID = "tcg-updater-v135-verified-learning"
-RUNTIME_PATCH = 139
+RUNTIME_PATCH = 140
 
 
 class Handler(core.Handler):
@@ -52,8 +52,9 @@ class Handler(core.Handler):
                 'runtime': RUNTIME_ID,
                 'patch': RUNTIME_PATCH,
                 'learning_api': 135,
-                'event_collection_patch': 139,
+                'event_collection_patch': 140,
                 'priority_event_watch_minutes': 30,
+                'reward_scope_override': True,
                 'base_service': getattr(core, 'SERVICE_NAME', 'TCG updater'),
             })
         if path == '/api/learning-model-status':
@@ -178,11 +179,15 @@ def main() -> int:
         pass
 
     try:
-        import event_collection_hardening_v139
-        hardening_status = event_collection_hardening_v139.apply()
-        print(f"행사·영화 수집 강화: v{hardening_status.get('patch', 139)} · 공식SNS 표적탐색 + 검증제보 검색어 학습", flush=True)
+        import event_collection_hardening_v140
+        hardening_status = event_collection_hardening_v140.apply()
+        print(
+            f"행사·증정 수집 강화: v{hardening_status.get('patch', 140)} · "
+            "공식SNS 표적탐색 + 카드/프로모/한정품 증정 범위외 수집 + 검증제보 검색어 학습",
+            flush=True,
+        )
     except ImportError:
-        print('[안내] 행사 수집 강화 모듈을 찾지 못해 기본 수집정책으로 실행합니다.', flush=True)
+        print('[안내] 행사·증정 수집 강화 모듈을 찾지 못해 기본 수집정책으로 실행합니다.', flush=True)
 
     threading.Thread(target=core.auto_update_loop, daemon=True).start()
 
@@ -193,7 +198,7 @@ def main() -> int:
             args=(core.UPDATE_LOCK,),
             daemon=True,
         ).start()
-        print('공식 SNS 우선탐색: 시작 3분 후 첫 실행 · 이후 30분 간격', flush=True)
+        print('공식 SNS 우선탐색: 시작 3분 후 첫 실행 · 이후 30분 간격 · 증정/한정품 포함', flush=True)
     except ImportError:
         print('[안내] 공식 SNS 우선탐색 모듈을 찾지 못해 1시간 긴급탐색만 사용합니다.', flush=True)
 
@@ -204,7 +209,7 @@ def main() -> int:
             args=(core.UPDATE_LOCK,),
             daemon=True,
         ).start()
-        print('행사·영화 전체 긴급탐색: 시작 10분 후 첫 실행 · 이후 1시간 간격', flush=True)
+        print('행사·영화·증정 전체 긴급탐색: 시작 10분 후 첫 실행 · 이후 1시간 간격', flush=True)
     except ImportError:
         print('[안내] 행사·영화 긴급탐색 모듈을 찾지 못해 6시간 정규수집만 사용합니다.', flush=True)
     try:
