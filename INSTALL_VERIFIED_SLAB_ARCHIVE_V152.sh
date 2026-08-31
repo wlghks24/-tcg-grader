@@ -2,7 +2,7 @@
 set -eu
 cd "$(dirname "$0")"
 
-printf '\n=== 검증완료 등급사진 업체별 자동정리 v152 ===\n'
+printf '\n=== 검증완료 등급사진 업체별 자동정리 v153 ===\n'
 
 if [ ! -d /storage/emulated/0/Download ]; then
   printf '[안내] Android Download 폴더 권한을 확인하지 못했습니다. 필요하면 termux-setup-storage 를 한 번 실행하세요.\n'
@@ -12,7 +12,7 @@ python -m unittest -v test_verified_slab_training_archive_v152.py
 python verified_slab_training_archive_v152.py --sync
 
 pkill -f '[v]erified_slab_training_archive_v152.py --watch' 2>/dev/null || true
-nohup python verified_slab_training_archive_v152.py --watch --interval 60 \
+nohup python verified_slab_training_archive_v152.py --watch --interval 30 \
   > TCG_VERIFIED_SLAB_ARCHIVE.log 2>&1 &
 printf '%s\n' "$!" > .verified_slab_archive.pid
 
@@ -22,12 +22,12 @@ cat > "$HOME/.termux/boot/start-tcg-verified-archive.sh" <<'EOF'
 sleep 35
 cd "$HOME/-tcg-grader" || exit 1
 pkill -f '[v]erified_slab_training_archive_v152.py --watch' 2>/dev/null || true
-nohup python verified_slab_training_archive_v152.py --watch --interval 60 \
+nohup python verified_slab_training_archive_v152.py --watch --interval 30 \
   >> TCG_VERIFIED_SLAB_ARCHIVE.log 2>&1 &
 EOF
 chmod +x "$HOME/.termux/boot/start-tcg-verified-archive.sh"
 
-printf '\n[OK] 자동정리 감시 시작\n'
+printf '\n[OK] 자동정리 감시 시작 (등록목록 변경 시 최대 약 30초 내 반영)\n'
 printf '[OK] 재부팅 후에도 Termux:Boot에서 자동 시작\n'
 printf '[폴더] /storage/emulated/0/Download/TCG등급학습/검증완료\n'
 printf '[구조] PSA/BGS/CGC/TAG/BRG → pokemon/onepiece/naruto → 카드별 앞면·뒷면·학습정보\n'
