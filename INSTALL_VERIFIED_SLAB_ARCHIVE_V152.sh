@@ -8,7 +8,9 @@ if [ ! -d /storage/emulated/0/Download ]; then
   printf '[안내] Android Download 폴더 권한을 확인하지 못했습니다. 필요하면 termux-setup-storage 를 한 번 실행하세요.\n'
 fi
 
-python -m unittest -v test_verified_slab_training_archive_v152.py
+python -m unittest -v \
+  test_verified_slab_training_archive_v152.py \
+  test_manual_proof_archive_status_v153.py
 python verified_slab_training_archive_v152.py --sync
 
 pkill -f '[v]erified_slab_training_archive_v152.py --watch' 2>/dev/null || true
