@@ -2,6 +2,10 @@
 set -u
 cd "$(dirname "$0")"
 
+# v144 manual-only graded-photo policy. Child collection processes inherit this
+# and therefore cannot make automatic PSA/BGS/CGC/TAG/BRG certification requests.
+export TCG_DISABLE_AUTO_GRADER_LOOKUP=1
+
 if command -v git >/dev/null 2>&1 && git rev-parse --is-inside-work-tree >/dev/null 2>&1; then
   TCG_BUILD="$(git rev-parse --short=8 HEAD 2>/dev/null || true)"
   TCG_BRANCH="$(git branch --show-current 2>/dev/null || true)"
@@ -48,6 +52,11 @@ for required in \
   update_purchase_sources.py \
   update_exchange_rates.py \
   graded_photo_multi_source.py \
+  graded_photo_manual_pair_queue.py \
+  grading_cert_verifier.py \
+  manual_collection_mode.py \
+  manual_graded_photo_registration.py \
+  manual_official_proof.py \
   multi_channel_agent.py \
   search_method_learning.py \
   verified_grade_learning_v135.py \
@@ -70,24 +79,29 @@ for required in \
   fi
 done
 
-# v143: filenames alone are not enough. Verify semantic contracts that directly
-# correspond to the collector failures shown in the runtime dashboard.
+# Filenames alone are not enough. Verify semantic contracts including the new
+# certification-number + front/back manual queue and no-auto-grader-lookup gate.
 if ! python - <<'PY' >/dev/null 2>&1
 import collection_learning_hardening_v142 as learning_guard
 import runtime_bundle_guard_v143 as bundle_guard
 learning=learning_guard.apply()
 bundle=bundle_guard.require_compatible()
+contracts=bundle.get('contracts',{})
 assert int(learning.get('patch') or 0) == 142
 assert int(bundle.get('patch') or 0) == 143
 assert bundle.get('missing_file_count') == 0
 assert bundle.get('issue_count') == 0
-assert bundle.get('contracts',{}).get('graded_photo_preflight_allowlisted') is True
-assert bundle.get('contracts',{}).get('source_structure_classification') is True
-assert bundle.get('contracts',{}).get('search_timeout_circuit_breaker') is True
+assert contracts.get('graded_photo_preflight_allowlisted') is True
+assert contracts.get('source_structure_classification') is True
+assert contracts.get('search_timeout_circuit_breaker') is True
+assert contracts.get('automatic_grader_lookup_disabled') is True
+assert contracts.get('manual_registration_auto_lookup_disabled') is True
+assert contracts.get('certified_front_back_pair_only') is True
+assert contracts.get('manual_pair_grouped_by_game_and_grader') is True
 PY
 then
-  echo "[오류] v143 전체 런타임 호환성/자료수집 자가학습 보안 검사 실패"
-  echo "[원인] 일부 파일만 최신이고 실제 수집기·복구기·검색학습기가 구버전일 수 있습니다."
+  echo "[오류] v143 전체 런타임 호환성/수동 등급사진 정책 검사 실패"
+  echo "[원인] 일부 파일만 최신이거나 인증번호+앞뒤사진 수동등록 정책이 빠졌을 수 있습니다."
   echo "[안전] 혼합 업데이트 상태로 서버를 시작하지 않습니다. INSTALL_GRADE_LEARNING_V135.sh를 다시 실행하세요."
   exit 1
 fi
@@ -101,7 +115,16 @@ if [ -f "storage_optimizer.py" ]; then
   python storage_optimizer.py || echo "[안내] 최적화 일부를 건너뛰고 서버를 시작합니다."
 fi
 
+# Keep one lightweight watcher. It reacts whenever graded_photo_candidates.json
+# changes (including a subprocess auto-update) and copies ONLY supported-game +
+# supported-grader + certification-number + front/back pairs to the manual folders.
+pkill -f 'graded_photo_manual_pair_queue.py --watch' 2>/dev/null || true
+nohup python graded_photo_manual_pair_queue.py --watch --interval 60 \
+  > TCG_MANUAL_PAIR_QUEUE.log 2>&1 &
+echo "등급사진 수동대기 자동분류 시작: 인증번호+앞뒤사진만 게임/등급사별 저장"
+
 echo "로컬 서버를 먼저 시작합니다. 자료 수집은 서버 안에서 안전하게 순차 실행됩니다."
 echo "등급학습 안전게이트 사용: 공식인증 + RAW 원시예측 + 교차검증 + 하향보정만"
+echo "등급사진 정책: 자동 등급사 조회 OFF · 공식사이트 직접확인/수동등록 · 인증번호+앞뒤사진만 보관"
 echo "자료수집 자가학습 v142 + 런타임 번들 v143: 고유출처 검증 + timeout circuit-breaker + 혼합버전 차단"
 exec python tcg_updater_v135.py
