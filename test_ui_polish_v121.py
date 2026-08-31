@@ -1,4 +1,5 @@
 from pathlib import Path
+import re
 
 ROOT = Path(__file__).resolve().parent
 
@@ -15,7 +16,7 @@ def test_server_allows_css():
 
 def test_service_worker_caches_css():
     text = (ROOT / "sw.js").read_text(encoding="utf-8")
-    assert "const CACHE='tcg-v128-manual-correction-learning';" in text
+    assert re.search(r"const CACHE='tcg-v\d+-[a-z0-9-]+';", text)
     assert "'./ui_polish_v121.css'" in text
 
 

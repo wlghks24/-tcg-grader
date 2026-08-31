@@ -1,7 +1,7 @@
 {
   "version": 1,
   "engine": "v109-card-identity-ocr-learning",
-  "generated_at": "2026-08-31T09:16:35+00:00",
+  "generated_at": "2026-08-31T09:20:36+00:00",
   "files": {
     ".github/workflows/apply-android-7step-display.yml": {
       "sha256": "5104aa4ae7e00d85d41ec9f3ef82c14579df80221b19c295051be0d7c3d28786",
@@ -972,8 +972,8 @@
       "bytes": 4471
     },
     "promo_events.json": {
-      "sha256": "d8d39fb569ce63cf6ec4df141b91d8ca0c1e4bf4e8e58048ab8dba915370a140",
-      "bytes": 45633
+      "sha256": "61ccb41a469fb1f2c70a957c896f9f2991b8d26c972c613e89eed79499fa6894",
+      "bytes": 45670
     },
     "provider_health_learning.py": {
       "sha256": "97f97c8d9266c88f5f2baacdf4706387ad10b1ec5716d91b140916b18b933faf",
@@ -1256,12 +1256,12 @@
       "bytes": 2252
     },
     "test_ui_polish_v121.py": {
-      "sha256": "10e4ac9ee57e726bb382a5ab1ada010795a7c1f5f191b60cc23bb33480e278ae",
-      "bytes": 951
+      "sha256": "553ecd004fb6e967bffb66b0c3f5ff4f6257c9efc7f0f14f9a421576dac75615",
+      "bytes": 955
     },
     "test_ui_tablet_refine_v122.py": {
-      "sha256": "70e5001b9b5742e8e3fb733db315c8266340488a0db0f37e933082d7a53c73be",
-      "bytes": 815
+      "sha256": "cd962584be4c73b550b843b340469d212e381702a642724e4ea35edc75709010",
+      "bytes": 846
     },
     "test_verified_grade_learning_v135.py": {
       "sha256": "d0a4c03d9ca34c5c107ef6fb95b172676b81e8e83e5b16ae647c8a183ac63659",
