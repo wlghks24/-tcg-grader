@@ -10,7 +10,8 @@ It deliberately removes automatic PSA/BGS/CGC/TAG/BRG HTTP verification from:
 The collector may still use already-persisted officially verified registry rows.
 New/unverified rows are sent to the user-browser manual verification workflow.
 After each in-process graded-photo collection, only certification-bearing front
-+ back pairs are copied to the game/grader manual-review folders.
++ back pairs are copied to the game-only manual-review folders. The grader stays
+in metadata, but no PSA/BGS/CGC/TAG/BRG subfolder is created below each game.
 """
 from __future__ import annotations
 
@@ -20,7 +21,7 @@ from typing import Any
 from graded_photo_evidence import normalize_cert
 from grading_cert_verifier import lookup_url
 
-PATCH_ID = 144
+PATCH_ID = 145
 _APPLIED = False
 _ORIGINAL_COLLECT = None
 
@@ -249,8 +250,6 @@ def apply() -> dict[str, Any]:
     import graded_photo_multi_source as collector
     import manual_graded_photo_registration as manual_photo
 
-    # Child collectors launched by the normal updater inherit this variable.
-    # grading_cert_verifier treats it as a hard no-network gate.
     os.environ["TCG_DISABLE_AUTO_GRADER_LOOKUP"] = "1"
 
     collector._official_verify_rows = _registry_only_official_verify_rows
@@ -267,7 +266,8 @@ def apply() -> dict[str, Any]:
         "manual_registration_auto_official_lookup": False,
         "manual_user_browser_verification_required": True,
         "certification_front_back_pair_required": True,
-        "grouped_by_game_and_grader": True,
+        "grouped_by_game_only": True,
+        "grader_subfolders_created": False,
         "front_back_pair_queue_module": "graded_photo_manual_pair_queue.py",
     }
 
@@ -288,4 +288,6 @@ def status() -> dict[str, Any]:
         "collector_manual_only": bool(getattr(collector._official_verify_rows, "_manual_only_policy", False)),
         "manual_registration_manual_only": bool(getattr(manual_photo._process_registration_once, "_manual_only_policy", False)),
         "collector_syncs_manual_pairs": bool(getattr(collector.collect, "_manual_only_policy", False)),
+        "grouped_by_game_only": True,
+        "grader_subfolders_created": False,
     }
