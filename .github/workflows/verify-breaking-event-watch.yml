@@ -6,15 +6,21 @@ on:
       - 'event_collection_hardening_v139.py'
       - 'event_collection_hardening_v140.py'
       - 'event_collection_hardening_v141.py'
+      - 'collection_learning_hardening_v142.py'
       - 'event_priority_watch.py'
       - 'event_quick_watch.py'
       - 'event_gap_learning.py'
+      - 'adaptive_collection_learner.py'
+      - 'fan_social_learning.py'
+      - 'auto_pipeline_runner.py'
+      - 'update_promo_events.py'
       - 'manual_event_evidence.json'
       - 'social_source_registry.json'
       - 'social_event_discovery.py'
       - 'multi_route_event_discovery.py'
       - 'tcg_updater_v135.py'
       - 'test_event_quick_watch.py'
+      - 'test_collection_learning_hardening_v142.py'
       - 'START_TCG_UPDATER_ANDROID.sh'
       - 'INSTALL_GRADE_LEARNING_V135.sh'
       - '.github/workflows/verify-breaking-event-watch.yml'
@@ -38,22 +44,51 @@ jobs:
           event_collection_hardening_v139.py
           event_collection_hardening_v140.py
           event_collection_hardening_v141.py
+          collection_learning_hardening_v142.py
           event_priority_watch.py
           event_quick_watch.py
           event_gap_learning.py
+          adaptive_collection_learner.py
+          fan_social_learning.py
+          auto_pipeline_runner.py
+          update_promo_events.py
           tcg_updater_v135.py
           social_event_discovery.py
           multi_route_event_discovery.py
-      - name: Run breaking-event regression tests
-        run: python -m unittest -v test_event_quick_watch.py
-      - name: Verify Android v141 install wiring
+          test_event_quick_watch.py
+          test_collection_learning_hardening_v142.py
+      - name: Run collection learning regression tests
+        run: >-
+          python -m unittest -v
+          test_event_quick_watch.py
+          test_collection_learning_hardening_v142.py
+      - name: Verify coverage and subprocess wiring
+        shell: bash
+        run: |
+          python - <<'PY'
+          import collection_learning_hardening_v142 as h
+          import update_promo_events as promo
+          status=h.apply()
+          assert status['patch'] == 142, status
+          assert status['strict_official_social_url_match'] is True, status
+          assert status['unverified_payload_learning_weight'] == 0.0, status
+          assert status['unverified_search_host_term_learning_weight'] == 0.0, status
+          assert len(promo.social_topic_expected_keys()) == 90, len(promo.social_topic_expected_keys())
+          print('[OK] v142 learning guard + 90-cell social coverage matrix')
+          PY
+          grep -q 'collection_learning_hardening_v142.apply()' auto_pipeline_runner.py
+          grep -q 'v142-verified-collection-learning' auto_pipeline_runner.py
+      - name: Verify Android v142 install wiring
         shell: bash
         run: |
           bash -n START_TCG_UPDATER_ANDROID.sh
           bash -n INSTALL_GRADE_LEARNING_V135.sh
-          grep -q 'event_collection_hardening_v141.py' START_TCG_UPDATER_ANDROID.sh
-          grep -q 'event_collection_hardening_v141.py' INSTALL_GRADE_LEARNING_V135.sh
+          grep -q 'collection_learning_hardening_v142.py' START_TCG_UPDATER_ANDROID.sh
+          grep -q 'collection_learning_hardening_v142.py' INSTALL_GRADE_LEARNING_V135.sh
           grep -q 'event_priority_watch.py' INSTALL_GRADE_LEARNING_V135.sh
           grep -q 'event_quick_watch.py' INSTALL_GRADE_LEARNING_V135.sh
-          grep -q 'event_gap_learning.py' INSTALL_GRADE_LEARNING_V135.sh
-          grep -q "event_collection_patch.*141" tcg_updater_v135.py
+          grep -q 'adaptive_collection_learner.py' INSTALL_GRADE_LEARNING_V135.sh
+          grep -q 'fan_social_learning.py' INSTALL_GRADE_LEARNING_V135.sh
+          grep -q 'auto_pipeline_runner.py' INSTALL_GRADE_LEARNING_V135.sh
+          grep -q "event_collection_patch.*142" tcg_updater_v135.py
+          grep -q "strict_official_social_url_match.*True" tcg_updater_v135.py
