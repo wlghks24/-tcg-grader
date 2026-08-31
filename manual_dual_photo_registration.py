@@ -13,6 +13,12 @@ Compatibility note:
 v147 ``status()`` used strict function identity, so the wrapper made a healthy
 OCR stack report ``ok=False``.  This module installs a narrow status adapter that
 recognises the intentional v148 wrapper while keeping all real apply checks.
+
+v153 UI/status consistency:
+Manual official-page proof state is exposed through the same public row used by
+the recent-registration panel. This does not promote a manual proof to
+``official_result=True``; it only lets the UI distinguish a completed manual
+reference check from an actually pending record.
 """
 from __future__ import annotations
 
@@ -26,7 +32,7 @@ import public_ocr_accuracy_boost_v147 as public_ocr_boost
 import ocr_front_back_fallback_v148 as front_back_ocr
 from safe_runtime import atomic_write_bytes
 
-PATCH_ID = 148
+PATCH_ID = 153
 _APPLIED = False
 _ORIGINAL_REGISTER = None
 _ORIGINAL_PUBLIC_ROW = None
@@ -38,6 +44,10 @@ def _public_row_with_pair(row: dict[str, Any]) -> dict[str, Any]:
     for key in (
         "back_image_sha256", "back_image_width", "back_image_height", "back_image_bytes",
         "front_back_pair_complete", "back_original_filename", "pair_upload_mode",
+        "manual_official_proof_state", "manual_official_proof_registered",
+        "manual_official_proof_at", "manual_official_proof_match_mode",
+        "manual_official_proof_ocr_company", "manual_official_proof_ocr_grade",
+        "manual_official_proof_ocr_certification_id",
     ):
         if key in row:
             base[key] = row.get(key)
@@ -159,6 +169,7 @@ def apply() -> dict[str, Any]:
         "manual_front_back_upload": True,
         "front_used_for_ocr": True,
         "back_stored_separately": True,
+        "manual_proof_state_exposed": True,
         "ocr_accuracy_boost": ocr_boost.status().get("ok") is True,
         "public_ocr_accuracy_boost": public_status.get("ok") is True,
         "back_ocr_fallback": front_back_status.get("ok") is True,
@@ -184,6 +195,7 @@ def status() -> dict[str, Any]:
         "manual_front_back_upload": True,
         "front_used_for_ocr": True,
         "back_stored_separately": True,
+        "manual_proof_state_exposed": True,
         "ocr_accuracy_boost": ocr_status.get("ok") is True,
         "public_ocr_accuracy_boost": public_status.get("ok") is True,
         "back_ocr_fallback": front_back_status.get("ok") is True,
