@@ -8,6 +8,7 @@
       "region": "KR",
       "category": "movie",
       "title": "THE MOVIE 「포켓몬: 와일드카드」 · 2027년 극장 개봉 발표",
+      "dedupe_terms": ["와일드카드", "wild card", "wildcard"],
       "source": "https://www.instagram.com/pokemon_korea_official/",
       "source_kind": "instagram",
       "source_tier": "A-social-manual-evidence",
