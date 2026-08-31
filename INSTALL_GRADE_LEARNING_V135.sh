@@ -110,7 +110,7 @@ assert event_quick_watch.hardening.PATCH_ID == 141
 assert status.get('verified_reward_term_learning') is True
 assert float(status.get('official_reward_learning_weight') or 0) == 1.35
 assert float(status.get('cross_checked_reward_learning_weight') or 0) == 0.90
-assert float(status.get('unverified_reward_learning_weight') or -1) == 0.0
+assert float(status.get('unverified_reward_learning_weight', -1)) == 0.0
 print('[OK] v141 행사·증정 검증학습 연결 정상')
 PY
 
@@ -155,7 +155,7 @@ for url, marker in checks:
         assert int(data.get('patch') or 0) >= 141, data
         assert int(data.get('event_collection_patch') or 0) >= 141, data
         assert data.get('verified_reward_term_learning') is True, data
-        assert float(data.get('unverified_reward_learning_weight') or -1) == 0.0, data
+        assert float(data.get('unverified_reward_learning_weight', -1)) == 0.0, data
 print('[OK] v141 서버 API + 행사 검증학습 정상')
 PY
 
