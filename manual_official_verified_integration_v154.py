@@ -1,17 +1,16 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-"""Promote strict user-browser official-page matches into official slab verification.
+"""Promote strict user-browser official-page matches into official verification.
 
-The project intentionally keeps automatic PSA/BGS/CGC/TAG/BRG HTTP lookup off.
-When the user opens the official grader page in the browser and uploads a proof
-screenshot, ``manual_official_proof`` already checks company + certificate and
-requires the grade either on the official page or from the exact OCR-confirmed
-slab identity.  v154 treats that strict matched proof as an official verification
-source and integrates it with the same verified-certification registry used by
-other verified slab records.
+Automatic PSA/BGS/CGC/TAG/BRG HTTP lookup stays disabled. When the user opens an
+official grader page and uploads a matching proof screenshot, the existing proof
+matcher checks company + certificate and requires the grade either on the page
+or from the exact OCR-confirmed slab identity. v154 promotes that strict match
+into the integrated official slab-verification registry.
 
-Safety boundary: this promotes only slab/reference identity.  It never makes the
-slab image eligible for RAW card defect/grade calibration.
+This changes slab identity trust only. It never makes slab photos eligible for
+RAW card defect/grade calibration, and official rows are not counted as the old
+"reference learning" bucket in the dashboard.
 """
 from __future__ import annotations
 
@@ -36,6 +35,7 @@ _ALLOWED_MATCH_MODES = {
     "official_page_company_cert_plus_exact_slab_ocr_grade",
 }
 _MANUAL_OFFICIAL_SOURCE = "user_browser_official_page"
+_OFFICIAL_LEARNING_STATE = "official_verified_slab"
 
 
 def _finite_grade(value: Any) -> float | None:
@@ -100,13 +100,9 @@ def _stored_evidence_present(row: dict[str, Any]) -> bool:
 
 def _clean_reasons(row: dict[str, Any]) -> list[str]:
     remove = {
-        "manual_claim_unverified",
-        "official_lookup_required",
-        "official_lookup_not_confirmed",
-        "manual_official_verification_required",
-        "manual_official_page_proof_only",
-        "live_official_lookup_pending",
-        "ocr_identity_required",
+        "manual_claim_unverified", "official_lookup_required", "official_lookup_not_confirmed",
+        "manual_official_verification_required", "manual_official_page_proof_only",
+        "live_official_lookup_pending", "ocr_identity_required",
     }
     return sorted(
         reason for reason in set(row.get("quarantine_reasons") or [])
@@ -131,7 +127,7 @@ def _promote_reference_file(row: dict[str, Any]) -> None:
                 "official_result": True,
                 "official_verification_source": _MANUAL_OFFICIAL_SOURCE,
                 "verification_method": row.get("official_verification_method"),
-                "learning_eligibility": "verified_slab_reference",
+                "learning_eligibility": _OFFICIAL_LEARNING_STATE,
                 "raw_grade_calibration_eligible": False,
             })
             changed = True
@@ -180,7 +176,7 @@ def promote_registration(registration_id: str) -> dict[str, Any]:
             "official_verification_method": "manual_user_browser_official_page_exact_match",
             "official_verification_source": _MANUAL_OFFICIAL_SOURCE,
             "official_verified_at": row.get("manual_official_proof_at") or manual_photo._now(),
-            "learning_eligibility": "verified_slab_reference",
+            "learning_eligibility": _OFFICIAL_LEARNING_STATE,
             "training_eligible": False,
             "raw_grade_calibration_eligible": False,
             "retry_after_seconds": None,
@@ -344,6 +340,7 @@ def status() -> dict[str, Any]:
         "applied": _APPLIED,
         "manual_official_page_promotes_to_official": True,
         "integrated_verified_registry": True,
+        "counts_as_reference_learning": False,
         "raw_grade_calibration_eligible": False,
         "last_migration": dict(_LAST_MIGRATION),
     }
