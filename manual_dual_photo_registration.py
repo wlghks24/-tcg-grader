@@ -4,9 +4,8 @@
 
 The existing manual registration keeps the front slab image as the primary OCR
 source. This patch accepts an additional back image, stores it beside the front
-image, and records pair metadata without changing RAW-learning trust rules.
-OCR accuracy v147 is applied to manual/public label OCR, and v148 may use the
-back only when front identity OCR is incomplete.
+image, and records pair metadata. OCR accuracy v147 is applied to manual/public
+label OCR, and v148 may use the back only when front identity OCR is incomplete.
 
 Compatibility note:
 ``ocr_front_back_fallback_v148`` wraps the v147 row-level OCR function. The old
@@ -14,10 +13,11 @@ v147 ``status()`` used strict function identity, so the wrapper made a healthy
 OCR stack report ``ok=False``. This module installs a narrow status adapter that
 recognises the intentional v148 wrapper while keeping all real apply checks.
 
-v154 official integration:
-A strict user-browser official-page proof matched by company + certificate +
-grade is promoted into the integrated official slab-verification registry. The
-slab remains isolated from RAW card defect/grade calibration.
+v155 learning integration:
+Strict official verification remains required first. After that,
+``verified_slab_raw_learning_v155`` crops away the grader label/outer holder and
+uses only card-only ROI features as a conservative RAW defect/grade proxy. The
+public registration row exposes that learning state to the tablet UI.
 """
 from __future__ import annotations
 
@@ -31,7 +31,7 @@ import public_ocr_accuracy_boost_v147 as public_ocr_boost
 import ocr_front_back_fallback_v148 as front_back_ocr
 from safe_runtime import atomic_write_bytes
 
-PATCH_ID = 154
+PATCH_ID = 155
 _APPLIED = False
 _ORIGINAL_REGISTER = None
 _ORIGINAL_PUBLIC_ROW = None
@@ -48,6 +48,9 @@ def _public_row_with_pair(row: dict[str, Any]) -> dict[str, Any]:
         "manual_official_proof_ocr_company", "manual_official_proof_ocr_grade",
         "manual_official_proof_ocr_certification_id",
         "official_verification_source", "official_verification_method", "official_verified_at",
+        "training_eligible", "raw_grade_calibration_eligible", "raw_defect_learning_eligible",
+        "raw_proxy_learning_state", "raw_proxy_learning_engine", "raw_proxy_raw_pred",
+        "raw_proxy_min_company_rows",
     ):
         if key in row:
             base[key] = row.get(key)
@@ -177,13 +180,14 @@ def apply() -> dict[str, Any]:
         "back_stored_separately": True,
         "manual_proof_state_exposed": True,
         "manual_official_integrated_verification": True,
+        "verified_slab_raw_proxy_learning": True,
+        "raw_learning_requires_official_verification": True,
         "manual_official_migration": integration_status.get("last_migration"),
         "ocr_accuracy_boost": ocr_boost.status().get("ok") is True,
         "public_ocr_accuracy_boost": public_status.get("ok") is True,
         "back_ocr_fallback": front_back_status.get("ok") is True,
         "ocr_engine": ocr_status.get("engine"),
         "ocr_adaptive_multi_crop": ocr_status.get("adaptive_multi_crop") is True,
-        "raw_grade_calibration_eligible": False,
     }
 
 
@@ -211,6 +215,8 @@ def status() -> dict[str, Any]:
         "back_stored_separately": True,
         "manual_proof_state_exposed": True,
         "manual_official_integrated_verification": integration_status.get("ok") is True,
+        "verified_slab_raw_proxy_learning": True,
+        "raw_learning_requires_official_verification": True,
         "ocr_accuracy_boost": ocr_status.get("ok") is True,
         "public_ocr_accuracy_boost": public_status.get("ok") is True,
         "back_ocr_fallback": front_back_status.get("ok") is True,
