@@ -5,8 +5,9 @@
 Unlike the hourly full discovery pass, this watcher only performs account-targeted
 public searches against already trusted official SNS accounts. It is intentionally
 small so it can run every 30 minutes without duplicating the heavy price/catalog
-update or the full 10-topic search matrix. v140 also includes out-of-scope card,
-promo, limited-edition and collaboration giveaway/reward announcements.
+update or the full 10-topic search matrix. v141 includes out-of-scope card,
+promo, limited-edition and collaboration giveaway/reward announcements and keeps
+verified reward anchors eligible for bounded search-term learning.
 """
 from __future__ import annotations
 
@@ -16,7 +17,7 @@ import os
 import threading
 import time
 
-import event_collection_hardening_v140 as hardening
+import event_collection_hardening_v141 as hardening
 import social_event_discovery
 from safe_runtime import atomic_write_json, env_int, safe_read_text
 
