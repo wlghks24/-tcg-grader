@@ -5,19 +5,19 @@
 The existing manual registration keeps the front slab image as the OCR source.
 This patch accepts an additional back image, stores it beside the front image,
 and records pair metadata without changing official-verification or RAW-learning
-trust rules.
+trust rules. OCR accuracy v147 is applied in the same process before manual OCR.
 """
 from __future__ import annotations
 
-from datetime import datetime, timezone
 import hashlib
 from pathlib import Path
 from typing import Any
 
 import manual_graded_photo_registration as manual_photo
+import ocr_accuracy_boost_v147 as ocr_boost
 from safe_runtime import atomic_write_bytes
 
-PATCH_ID = 146
+PATCH_ID = 147
 _APPLIED = False
 _ORIGINAL_REGISTER = None
 _ORIGINAL_PUBLIC_ROW = None
@@ -96,6 +96,9 @@ _register_with_optional_back._dual_photo_policy = True
 
 def apply() -> dict[str, Any]:
     global _APPLIED, _ORIGINAL_REGISTER, _ORIGINAL_PUBLIC_ROW
+    ocr_status = ocr_boost.apply()
+    if ocr_status.get("ok") is not True:
+        raise RuntimeError("OCR accuracy boost v147 failed to apply")
     if _ORIGINAL_REGISTER is None:
         _ORIGINAL_REGISTER = manual_photo.register
     if _ORIGINAL_PUBLIC_ROW is None:
@@ -109,16 +112,22 @@ def apply() -> dict[str, Any]:
         "manual_front_back_upload": True,
         "front_used_for_ocr": True,
         "back_stored_separately": True,
+        "ocr_accuracy_boost": ocr_status.get("ok") is True,
+        "ocr_engine": ocr_status.get("engine"),
+        "ocr_adaptive_multi_crop": ocr_status.get("adaptive_multi_crop") is True,
         "raw_grade_calibration_eligible": False,
     }
 
 
 def status() -> dict[str, Any]:
+    ocr_status = ocr_boost.status()
     return {
-        "ok": bool(getattr(manual_photo.register, "_dual_photo_policy", False)),
+        "ok": bool(getattr(manual_photo.register, "_dual_photo_policy", False) and ocr_status.get("ok") is True),
         "patch": PATCH_ID,
         "applied": _APPLIED,
         "manual_front_back_upload": True,
         "front_used_for_ocr": True,
         "back_stored_separately": True,
+        "ocr_accuracy_boost": ocr_status.get("ok") is True,
+        "ocr_engine": ocr_status.get("engine"),
     }
