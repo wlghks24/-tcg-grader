@@ -3,6 +3,16 @@
 const esc=v=>String(v??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
 const sleep=ms=>new Promise(r=>setTimeout(r,ms));
 let installed=false;
+function ensureDualPhotoBridge(){
+ if(document.getElementById('gpdManualBackPhoto'))return;
+ if(document.getElementById('gpdDualBridgeForceV150'))return;
+ const script=document.createElement('script');
+ script.id='gpdDualBridgeForceV150';
+ script.src='./manual_dual_photo_bridge.js?v=150&force='+Date.now();
+ script.async=false;
+ script.setAttribute('data-purpose','force-front-back-manual-upload');
+ document.head.appendChild(script);
+}
 function fileDataUrl(file){return new Promise((resolve,reject)=>{const reader=new FileReader();reader.onload=()=>resolve(String(reader.result||''));reader.onerror=()=>reject(new Error('파일을 읽지 못했습니다.'));reader.readAsDataURL(file)})}
 async function normalize(file){
  if(!file||!['image/jpeg','image/png'].includes(file.type))throw new Error('공식 조회 결과 화면을 JPG 또는 PNG로 선택하세요.');
@@ -58,6 +68,7 @@ async function loadStatus(){
  try{const response=await fetch('/api/manual-official-proof-status?_='+Date.now(),{cache:'no-store'});if(!response.ok)return null;return await response.json()}catch(_){return null}
 }
 async function render(){
+ ensureDualPhotoBridge();
  suppressAutoRetry();
  const host=document.getElementById('gpdManualRows');if(!host)return;
  let box=document.getElementById('gpdOfficialFallback');if(!box){box=document.createElement('div');box.id='gpdOfficialFallback';box.className='gpd-official-fallback';host.insertAdjacentElement('afterend',box)}
@@ -82,10 +93,10 @@ async function submitProof(event){
  }catch(error){if(label)label.textContent=String(error?.message||'공식 확인화면 등록 실패');input.value=''}
 }
 async function install(){
- if(installed)return;const host=document.getElementById('gpdManualRows');if(!host)return;installed=true;style();suppressAutoRetry();await render();
- const observer=new MutationObserver(()=>{suppressAutoRetry();if(document.getElementById('gpdManualRows'))render()});observer.observe(host,{childList:true,subtree:true});
+ if(installed)return;const host=document.getElementById('gpdManualRows');if(!host)return;installed=true;ensureDualPhotoBridge();style();suppressAutoRetry();await render();
+ const observer=new MutationObserver(()=>{ensureDualPhotoBridge();suppressAutoRetry();if(document.getElementById('gpdManualRows'))render()});observer.observe(host,{childList:true,subtree:true});
  setInterval(render,30000);
 }
-function boot(){let tries=0;const timer=setInterval(()=>{tries++;if(document.getElementById('gpdManualRows')){clearInterval(timer);install()}else if(tries>80)clearInterval(timer)},250)}
+function boot(){let tries=0;const timer=setInterval(()=>{tries++;if(document.getElementById('gpdManualRows')){clearInterval(timer);ensureDualPhotoBridge();install()}else if(tries>80)clearInterval(timer)},250)}
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',boot,{once:true});else boot();
 })();
