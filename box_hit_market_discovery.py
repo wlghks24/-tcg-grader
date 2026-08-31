@@ -6,10 +6,12 @@ from collections import defaultdict
 from datetime import datetime, timezone
 from pathlib import Path
 from urllib.parse import quote_plus, urlparse, urljoin
-from urllib.request import Request, urlopen
+from urllib.request import Request
 from xml.etree import ElementTree as ET
 from html import unescape
 import json, os, re
+
+from safe_runtime import safe_urlopen
 
 BASE=Path(__file__).resolve().parent
 OUT=BASE/'box_hit_market_candidates.json'
@@ -21,6 +23,8 @@ SOURCES=[
  ('kream','KREAM','kream.co.kr',0.93),('daangn','당근','daangn.com',0.78),('bunjang','번개장터','bunjang.co.kr',0.84),
  ('joongna','중고나라','joongna.com',0.82),('collectory','Collectory','collectory.cc',0.91),('tcgplayer','TCGplayer','tcgplayer.com',0.90),
  ('cardmarket','Cardmarket','cardmarket.com',0.87),('mercari_jp','Mercari JP','jp.mercari.com',0.85),('yahoo_jp','Yahoo Japan','auctions.yahoo.co.jp',0.83),
+ ('snkrdunk','SNKRDUNK','snkrdunk.com',0.91),('justtcg','JustTCG','justtcg.com',0.91),
+ ('tcgdex','TCGdex','tcgdex.net',0.89),('pavilion','Pavilion TCG','pavilion-tcg.com',0.90),
 ]
 SOURCE_HOSTS={sid:domain for sid,_name,domain,_weight in SOURCES}
 GAMES={
@@ -45,7 +49,7 @@ def _atomic(path,data):
 def _rss(query,limit=12):
     url='https://www.bing.com/search?format=rss&q='+quote_plus(query)
     req=Request(url,headers={'User-Agent':UA,'Accept-Language':'ko-KR,ko;q=0.9,en;q=0.8,ja;q=0.7'})
-    with urlopen(req,timeout=12) as r:raw=r.read(1_500_000)
+    with safe_urlopen(req,timeout=12,allowed_hosts={'www.bing.com','bing.com'}) as r:raw=r.read(1_500_000)
     root=ET.fromstring(raw);out=[]
     for item in root.findall('.//item')[:limit]:
         title=unescape(item.findtext('title') or '').strip();link=(item.findtext('link') or '').strip()
@@ -95,7 +99,7 @@ def _ebay_api(query):
     if not token:return []
     url='https://api.ebay.com/buy/browse/v1/item_summary/search?q='+quote_plus(query)+'&limit=50'
     req=Request(url,headers={'Authorization':'Bearer '+token,'X-EBAY-C-MARKETPLACE-ID':'EBAY_US','User-Agent':UA})
-    with urlopen(req,timeout=15) as r:d=json.loads(r.read(2_000_000).decode('utf-8','ignore'))
+    with safe_urlopen(req,timeout=15,allowed_hosts={'api.ebay.com'}) as r:d=json.loads(r.read(2_000_000).decode('utf-8','ignore'))
     out=[]
     for x in d.get('itemSummaries') or []:
         image=((x.get('image') or {}).get('imageUrl') or '')
@@ -107,10 +111,10 @@ def _page_image(url,source_id):
     """Best-effort public product image recovery from ordinary metadata only."""
     if not url.startswith('https://'):return ''
     host=(urlparse(url).hostname or '').lower();expected=SOURCE_HOSTS.get(source_id,'')
-    if expected not in host:return ''
+    if host!=expected and not host.endswith('.'+expected):return ''
     try:
         req=Request(url,headers={'User-Agent':UA,'Accept-Language':'ko-KR,ko;q=0.8,en;q=0.7,ja;q=0.6'})
-        with urlopen(req,timeout=8) as r:
+        with safe_urlopen(req,timeout=8,allowed_hosts={host,expected}) as r:
             ctype=(r.headers.get('Content-Type') or '').lower()
             if 'html' not in ctype:return ''
             raw=r.read(700_000).decode('utf-8','ignore')
@@ -145,6 +149,11 @@ def _queries(game,wanted):
         else:base += ['나루토 희귀 프로모 카드','Naruto rare promo card']
     return list(dict.fromkeys(base))
 
+def _source_supports_game(source_id,game):
+    if source_id=='tcgdex':return game=='Pokémon'
+    if source_id in ('justtcg','pavilion','snkrdunk'):return game in ('Pokémon','ONE PIECE')
+    return True
+
 def discover_market_catalog():
     raw=[];errors=[];source_stats=defaultdict(lambda:{'queries':0,'results':0,'accepted':0,'images':0,'errors':0})
     for game in GAMES:
@@ -154,6 +163,7 @@ def discover_market_catalog():
                     for r in _ebay_api(base):raw.append({**r,'source_id':'ebay','source':'eBay','weight':0.96,'query_asset':wanted})
                 except Exception as e:errors.append('eBay API:'+type(e).__name__)
                 for sid,name,domain,weight in SOURCES:
+                    if not _source_supports_game(sid,game):continue
                     source_stats[sid]['queries']+=1
                     try:rows=_rss(f'site:{domain} {base}',12)
                     except Exception as e:
@@ -161,7 +171,7 @@ def discover_market_catalog():
                     source_stats[sid]['results']+=len(rows)
                     for r in rows:
                         host=(urlparse(r.get('url','')).hostname or '').lower()
-                        if domain not in host:continue
+                        if host!=domain and not host.endswith('.'+domain):continue
                         raw.append({**r,'source_id':sid,'source':name,'weight':weight,'query_asset':wanted})
     grouped={}
     for r in raw:
@@ -182,7 +192,7 @@ def discover_market_catalog():
     for rec in sorted(grouped.values(),key=lambda x:-len(x['sources'])):
         if rec['images'] or image_budget<=0:continue
         for u in rec['urls'][:3]:
-            host=(urlparse(u).hostname or '').lower();sid=next((s for s,d in SOURCE_HOSTS.items() if d in host),'')
+            host=(urlparse(u).hostname or '').lower();sid=next((s for s,d in SOURCE_HOSTS.items() if host==d or host.endswith('.'+d)),'')
             if not sid:continue
             img=_page_image(u,sid)
             if img:

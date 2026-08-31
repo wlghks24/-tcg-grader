@@ -101,6 +101,11 @@ SOURCES=[
  ('BRG 공식 등급','https://break.co.kr/','등급'),
  ('Collectory 공개 카드시세','https://collectory.cc/cards','시세'),
  ('KREAM 공개 TCG 시세','https://kream.co.kr/search?keyword=%ED%8F%AC%EC%BC%93%EB%AA%AC+TCG','시세'),
+ ('SNKRDUNK 포켓몬 공개 TCG 시세','https://snkrdunk.com/en/brands/pokemon/trading-cards?categoryId=25','참고시세'),
+ ('SNKRDUNK 원피스 공개 TCG 시세','https://snkrdunk.com/en/brands/onepiece/trading-cards?categoryId=14','참고시세'),
+ ('JustTCG 가격 API 문서','https://justtcg.com/docs/quickstart','참고시세'),
+ ('TCGdex 포켓몬 가격 API','https://tcgdex.dev/markets-prices','참고시세'),
+ ('Pavilion TCG 통합 참고시세','https://pavilion-tcg.com/search?language=ko','참고시세'),
 ]
 
 def free_port(start=8765, limit=30):

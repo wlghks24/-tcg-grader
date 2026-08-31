@@ -1,5 +1,5 @@
-// v129 injects a cache-independent iPhone/readability fix into every HTML navigation.
-const CACHE='tcg-v129-iphone-contrast';
+// v136 refreshes the multi-source price collector and Pavilion-style grade price view.
+const CACHE='tcg-v136-market-reference';
 const CORE=['./','./index.html','./purchase_ui_polish.css','./ui_polish_v121.css','./ui_tablet_refine_v122.css','./graded_photo_dashboard.js','./graded_photo_dashboard.css','./graded_photo_candidates.json','./auto_market_center.js','./auto_market_center.css','./auto_validation_flow.js','./auto_validation_flow.css','./box_knowledge_stats.js','./box_knowledge_stats.css','./grade_market_flow.js','./grade_market_flow.css','./grading_costs_live.js','./grading_costs_live.css','./grading_proxy_costs.js','./grading_proxy_costs.css','./grading_total_cost.js','./grading_total_cost.css','./image_quality_guard.js','./inventory_lookup.js','./inventory_lookup.css','./market_catalog_expander.js','./multi_market_prices.js','./multi_market_prices.css','./grading_vision_engine.js','./grading_accuracy_v99.js','./card_identity_recognition.js','./vision_calibration.json','./manifest.webmanifest','./releases.json','./promo_events.json','./supplementary_candidates.json','./social_event_candidates.json','./purchase_sources.json','./purchase_signals.json','./market_prices.json','./market_watch.json','./exchange_rates.json','./icon.svg'];
 
 const GAME_SELECTOR_STYLE=`
