@@ -18,7 +18,7 @@ fi
 cleanup_lock(){ rmdir "$LOCK_DIR" 2>/dev/null || true; }
 trap cleanup_lock EXIT INT TERM
 
-echo "=== TCG v135 서버 복구 ==="
+echo "=== TCG v135 서버 복구 + v155 RAW학습 ==="
 
 health_now(){ curl -sS --max-time 2 "$HEALTH_URL" 2>/dev/null || true; }
 health_is_current(){
@@ -78,12 +78,8 @@ stop_known_servers(){
   python release_tcg_port.py 2>/dev/null || true
 }
 
-# 이전 실행에서 남긴 정확한 PID를 먼저 정리한다. Android에서는 소켓→PID 역조회가
-# 제한될 수 있으므로 PID 파일이 가장 신뢰할 수 있는 종료 경로다.
 stop_known_servers
 
-# 포트가 실제로 비워질 때까지 기다린다. 다른 복구 프로세스가 먼저 최신 서버를
-# 띄운 경우에는 그 서버를 재사용하고 중복 실행하지 않는다.
 REUSE_EXISTING=0
 for attempt in 1 2 3 4 5 6 7 8; do
   if ! port_is_open; then
@@ -122,10 +118,18 @@ if [ "$REUSE_EXISTING" -eq 0 ] && port_is_open; then
   fi
 fi
 
-# 등급사진 게임별 수동대기 감시는 한 개만 유지한다.
 pkill -f '[g]raded_photo_manual_pair_queue\.py --watch' 2>/dev/null || true
 nohup python graded_photo_manual_pair_queue.py --watch --interval 60 \
   > TCG_MANUAL_PAIR_QUEUE.log 2>&1 &
+
+# 검증완료 슬랩은 공식검증 이후 card-only ROI로만 RAW 학습에 전달한다.
+if [ -f verified_slab_raw_learning_v155.py ]; then
+  python verified_slab_raw_learning_v155.py --sync > TCG_VERIFIED_SLAB_RAW_LEARNING.log 2>&1 || true
+  pkill -f '[v]erified_slab_raw_learning_v155\.py --watch' 2>/dev/null || true
+  nohup python verified_slab_raw_learning_v155.py --watch --interval 30 \
+    >> TCG_VERIFIED_SLAB_RAW_LEARNING.log 2>&1 &
+  printf '%s\n' "$!" > .verified_slab_raw_learning.pid
+fi
 
 SERVER_PID=""
 if [ "$REUSE_EXISTING" -eq 0 ]; then
@@ -146,8 +150,6 @@ for attempt in $(seq 1 20); do
     break
   fi
   if [ -n "$SERVER_PID" ] && ! kill -0 "$SERVER_PID" 2>/dev/null; then
-    # 시작 경쟁에서 우리가 띄운 프로세스가 Address already in use로 끝났더라도
-    # 다른 최신 서버가 포트를 정상 점유했다면 성공으로 처리한다.
     HEALTH="$(health_now)"
     if health_is_current "$HEALTH"; then
       READY=1
@@ -170,16 +172,20 @@ fi
 echo "[OK] v135 건강검사 정상"
 echo "$HEALTH"
 
-# 건강검사만 정상이어도 예전 1장 대시보드가 남지 않도록 실제 전달 JS까지 확인한다.
-if ! curl -fsS --max-time 6 "${DASHBOARD_URL}?v=150&check=$(date +%s)" | grep -q 'gpdManualBackPhoto'; then
+DASHBOARD="$(curl -fsS --max-time 6 "${DASHBOARD_URL}?v=155&check=$(date +%s)")"
+if ! printf '%s' "$DASHBOARD" | grep -q 'gpdManualBackPhoto'; then
   echo "[오류] 브라우저용 대시보드에 뒷면 사진 입력 UI가 전달되지 않습니다."
   exit 1
 fi
-if ! curl -fsS --max-time 6 "${DASHBOARD_URL}?v=150&check=$(date +%s)" | grep -q '앞면 + 뒷면 2장으로 수동등록'; then
+if ! printf '%s' "$DASHBOARD" | grep -q '앞면 + 뒷면 2장으로 수동등록'; then
   echo "[오류] 앞면+뒷면 2장 등록 브리지가 실제 대시보드 응답에 포함되지 않았습니다."
   exit 1
 fi
-echo "[OK] 앞면+뒷면 2장 UI 실전달 확인"
+if ! printf '%s' "$DASHBOARD" | grep -q 'verifiedSlabRawLearning:true'; then
+  echo "[오류] 공식검증 슬랩 RAW학습 v155 브리지가 실제 대시보드 응답에 포함되지 않았습니다."
+  exit 1
+fi
+echo "[OK] 앞면+뒷면 2장 UI + 공식검증 RAW학습 v155 실전달 확인"
 
 if [ "$NO_BOOT_UPDATE" -eq 0 ]; then
   mkdir -p "$HOME/.termux/boot"
@@ -192,7 +198,7 @@ nohup bash "$HOME/-tcg-grader/REPAIR_V135_SERVER.sh" --no-boot-update \
   >> "$HOME/-tcg-grader/TCG_ANDROID_BOOT.log" 2>&1 &
 EOF
   chmod +x "$HOME/.termux/boot/start-tcg.sh"
-  echo "[OK] Termux:Boot도 v135 복구 런처로 갱신"
+  echo "[OK] Termux:Boot도 v135 + v155 RAW학습 복구 런처로 갱신"
 fi
 
 echo "[완료] http://127.0.0.1:${PORT}/index.html"
