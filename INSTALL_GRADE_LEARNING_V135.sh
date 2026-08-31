@@ -4,15 +4,16 @@ cd "$(dirname "$0")"
 BASE_URL="https://raw.githubusercontent.com/wlghks24/-tcg-grader/main"
 STAMP="$(date +%Y%m%d_%H%M%S)"
 
+# Normal operation never calls PSA/BGS/CGC/TAG/BRG certification pages automatically.
+export TCG_DISABLE_AUTO_GRADER_LOOKUP=1
+
 backup_if_exists() {
   if [ -f "$1" ]; then
     cp -p "$1" "$1.before_grade_learning_v143_${STAMP}"
   fi
 }
 
-# v143: the tablet must update the whole executable collector/recovery bundle.
-# Updating only tcg_updater_v135.py left old auto_update_all/auto_repair/search
-# modules behind, so already-fixed failures could reappear on the tablet.
+# v143 runtime + v144 manual-photo behavior: update the whole executable bundle.
 PY_RUNTIME_FILES=(
   grading_accuracy_v99.py
   verified_grade_learning_v135.py
@@ -37,8 +38,10 @@ PY_RUNTIME_FILES=(
   validate_external_links.py
   graded_photo_multi_source.py
   graded_photo_evidence.py
+  graded_photo_manual_pair_queue.py
   detailed_collection_intelligence.py
   grading_cert_verifier.py
+  manual_collection_mode.py
   manual_graded_photo_registration.py
   manual_official_proof.py
   library_slab_corpus.py
@@ -69,6 +72,10 @@ PY_RUNTIME_FILES=(
   test_runtime_bundle_guard_v143.py
   test_verified_grade_learning_v135.py
   test_verified_grade_learning_v135_safe.py
+  test_grading_cert_verifier.py
+  test_manual_collection_mode.py
+  test_manual_pair_queue.py
+  test_manual_official_proof.py
 )
 
 TEXT_RUNTIME_FILES=(
@@ -105,6 +112,10 @@ python -m py_compile "${PY_RUNTIME_FILES[@]}"
 python -m unittest -v \
   test_event_quick_watch.py \
   test_collection_learning_hardening_v142.py \
+  test_grading_cert_verifier.py \
+  test_manual_collection_mode.py \
+  test_manual_pair_queue.py \
+  test_manual_official_proof.py \
   test_runtime_bundle_guard_v143.py \
   test_verified_grade_learning_v135.py \
   test_verified_grade_learning_v135_safe.py
@@ -150,25 +161,30 @@ import runtime_bundle_guard_v143 as bundle_guard
 import event_priority_watch, event_quick_watch
 status=learning_guard.apply()
 bundle=bundle_guard.require_compatible()
+contracts=bundle.get('contracts',{})
 assert int(status.get('patch') or 0) == 142, status
 assert int(bundle.get('patch') or 0) == 143, bundle
 assert bundle.get('missing_file_count') == 0, bundle
 assert bundle.get('issue_count') == 0, bundle
-assert bundle.get('contracts',{}).get('manual_official_fallback') is True, bundle
-assert bundle.get('contracts',{}).get('manual_proof_raw_calibration') is False, bundle
-assert bundle.get('contracts',{}).get('manual_proof_rejected_bytes_retained') is False, bundle
+assert contracts.get('manual_official_fallback') is True, bundle
+assert contracts.get('manual_proof_raw_calibration') is False, bundle
+assert contracts.get('manual_proof_rejected_bytes_retained') is False, bundle
+assert contracts.get('automatic_grader_lookup_disabled') is True, bundle
+assert contracts.get('manual_registration_auto_lookup_disabled') is True, bundle
+assert contracts.get('certified_front_back_pair_only') is True, bundle
+assert contracts.get('manual_pair_grouped_by_game_and_grader') is True, bundle
 assert event_priority_watch.hardening.PATCH_ID == 142
 assert event_quick_watch.hardening.PATCH_ID == 142
 assert status.get('verified_reward_term_learning') is True
 assert status.get('unique_evidence_host_counting') is True
 assert status.get('strict_official_social_url_match') is True
-assert status.get('fan_reuse_requires_corrob​​oration_or_watch', status.get('fan_reuse_requires_corroboration_or_watch')) is True
+assert status.get('fan_reuse_requires_corroboration_or_watch') is True
 assert float(status.get('official_reward_learning_weight') or 0) == 1.35
 assert float(status.get('cross_checked_reward_learning_weight') or 0) == 0.90
 assert float(status.get('unverified_reward_learning_weight', -1)) == 0.0
 assert float(status.get('unverified_payload_learning_weight', -1)) == 0.0
 assert float(status.get('unverified_search_host_term_learning_weight', -1)) == 0.0
-print('[OK] v143 전체 런타임 + v142 자료수집 자가학습 + 수동 공식확인 계약 정상')
+print('[OK] v143 전체 런타임 + v142 자료수집 + 자동등급사조회OFF + 인증번호앞뒤사진 수동분류 정상')
 print(json.dumps(bundle,ensure_ascii=False))
 PY
 
@@ -185,18 +201,23 @@ grep -n 'grade_learning_guard_v135.js' index.html | head -1
 grep -n 'tcg_updater_v135.py' START_TCG_UPDATER_ANDROID.sh | head -1
 grep -n 'runtime_bundle_guard_v143.py' START_TCG_UPDATER_ANDROID.sh | head -1
 grep -n 'collection_learning_hardening_v142.py' START_TCG_UPDATER_ANDROID.sh | head -1
+grep -n 'graded_photo_manual_pair_queue.py' START_TCG_UPDATER_ANDROID.sh | head -1
+grep -n 'TCG_DISABLE_AUTO_GRADER_LOOKUP' START_TCG_UPDATER_ANDROID.sh | head -1
 grep -n 'collection_learning_hardening_v142' auto_pipeline_runner.py | head -1
 test -s manual_official_proof.py
 test -s manual_official_verify_bridge.js
+test -s manual_collection_mode.py
+test -s graded_photo_manual_pair_queue.py
 test -s IMPORT_GRADED_LEARNING_FILES.py
 test -s START_GRADED_FILE_LEARNING.sh
 
 echo "=== 서버 재시작 ==="
+pkill -f 'graded_photo_manual_pair_queue.py --watch' 2>/dev/null || true
 pkill -f 'python.*tcg_updater_v135.py' 2>/dev/null || true
 pkill -f 'python.*tcg_updater.py' 2>/dev/null || true
 sleep 2
 nohup bash START_TCG_UPDATER_ANDROID.sh > TCG_ANDROID_STARTUP.log 2>&1 &
-sleep 5
+sleep 7
 
 HEALTH="$(curl -s --max-time 5 http://127.0.0.1:8765/api/v135-health || true)"
 MODEL="$(curl -s --max-time 5 http://127.0.0.1:8765/api/learning-model-status || true)"
@@ -245,21 +266,18 @@ for url, marker in checks:
 print('[OK] v143 서버 API + 전체 런타임 + 자료수집/등급사진 수동검증 보안 정상')
 PY
 
+python graded_photo_manual_pair_queue.py || true
+
 echo "[OK] v143 등급측정 + 전체 자료수집/오류복구/행사 검증학습 업그레이드 설치 완료"
+echo "- PSA/BGS/CGC/TAG/BRG 자동 인증사이트 조회 OFF · 공식사이트 직접확인/수동등록"
+echo "- 포켓몬/원피스/나루토에서 인증번호 + 앞면 + 뒷면이 모두 있는 등급사진만 수동대기 저장"
+echo "- Download/TCG등급학습/<게임>/<등급사>/수동등록대기/ 구조로 자동 분류"
+echo "- 단일사진·인증번호 없는 후보·지원하지 않는 등급사는 수동대기 폴더에 저장하지 않음"
 echo "- 업데이트 래퍼만 새 버전이고 실제 수집기가 구버전인 혼합 설치를 시작 전에 차단"
 echo "- eBay/Amazon 공개검색은 search_exact 경로로 timeout/403/429를 학습하고 불량 경로를 임시 cooldown"
-echo "- 같은 검색경로의 반복 timeout을 매 상품마다 무한 반복하지 않고 정상 대체 경로를 우선"
 echo "- graded_photo_candidates.json은 자동복구 안전목록/필수 구조 계약을 확인한 뒤 실행"
-echo "- 등급사진 수동등록·공식사이트 직접확인·등급완료 파일학습 모듈도 전체 런타임 번들에 포함"
 echo "- 수동 공식확인 불일치 캡처 원본은 보존하지 않고 OCR/해시 감사정보만 유지"
-echo "- 정상 수동 참고등록은 이후 잘못된 캡처 업로드로 덮어쓰지 않음"
 echo "- 수동 공식확인 캡처는 공식검증/RAW 보정학습으로 자동 승격하지 않음"
-echo "- 출시 페이지 파서 0건은 입력값 오류가 아니라 원출처 구조변경으로 진단"
 echo "- 시장가격/행사/환율은 비정상 신규 결과를 격리하고 기존 검증자료를 유지"
-echo "- 포켓몬/원피스/나루토 카드·프로모·한정판·콜라보 증정은 기존 행사 범위 밖이어도 후보 수집"
-echo "- 같은 출처의 중복 경로는 독립 출처 수를 부풀리지 않음"
 echo "- 미검증 커뮤니티/SNS/검색 후보의 지속 host·검색어 학습 가중치 0.00"
-echo "- 공식 SNS는 실제 계정 URL이 일치할 때만 공식 힌트 인정"
-echo "- 사용자 체크박스만으로는 등급 학습하지 않음"
-echo "- PSA/BGS/CGC/TAG/BRG 공식 인증조회 성공자료만 로컬 검증레지스트리에 저장"
 echo "- 기존 로컬 후보/수집이력/학습 JSON은 덮어쓰지 않음"
