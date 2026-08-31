@@ -18,7 +18,8 @@ for name in \
   verified_grade_learning_v135_safe.py \
   tcg_updater_v135.py \
   grade_learning_guard_v135.js \
-  test_verified_grade_learning_v135.py; do
+  test_verified_grade_learning_v135.py \
+  test_verified_grade_learning_v135_safe.py; do
   backup_if_exists "$name"
 done
 
@@ -28,7 +29,8 @@ for name in \
   verified_grade_learning_v135_safe.py \
   tcg_updater_v135.py \
   grade_learning_guard_v135.js \
-  test_verified_grade_learning_v135.py; do
+  test_verified_grade_learning_v135.py \
+  test_verified_grade_learning_v135_safe.py; do
   tmp=".${name}.download.tmp"
   rm -f "$tmp"
   curl -L --fail --retry 3 --retry-delay 2 -H 'Cache-Control: no-cache' \
@@ -41,9 +43,12 @@ python -m py_compile \
   verified_grade_learning_v135.py \
   verified_grade_learning_v135_safe.py \
   tcg_updater_v135.py \
-  test_verified_grade_learning_v135.py
+  test_verified_grade_learning_v135.py \
+  test_verified_grade_learning_v135_safe.py
 
-python -m unittest -v test_verified_grade_learning_v135.py
+python -m unittest -v \
+  test_verified_grade_learning_v135.py \
+  test_verified_grade_learning_v135_safe.py
 
 # Add the verified-model browser guard without replacing the user's current
 # locally patched index.html (iPhone contrast fixes and other local changes stay intact).
