@@ -115,7 +115,7 @@ class Handler(core.Handler):
                 'unverified_payload_learning_weight': 0.0,
                 'unverified_search_host_term_learning_weight': 0.0,
                 'unique_evidence_host_counting': True,
-                'fan_reuse_requires_corboration_or_watch': True,
+                'fan_reuse_requires_corroboration_or_watch': True,
                 'strict_official_social_url_match': True,
                 'manual_official_browser_fallback': True,
                 'manual_official_proof_raw_calibration': False,
