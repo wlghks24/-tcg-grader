@@ -2,11 +2,11 @@
 # -*- coding: utf-8 -*-
 """Front/back pair support for manual graded-slab registration.
 
-The existing manual registration keeps the front slab image as the OCR source.
-This patch accepts an additional back image, stores it beside the front image,
-and records pair metadata without changing official-verification or RAW-learning
-trust rules. OCR accuracy v147 is applied in the same process before manual OCR
-and to public graded-photo evidence extraction.
+The existing manual registration keeps the front slab image as the primary OCR
+source. This patch accepts an additional back image, stores it beside the front
+image, and records pair metadata without changing official-verification or
+RAW-learning trust rules. OCR accuracy v147 is applied to manual/public label
+OCR, and v148 may use the back only when front identity OCR is incomplete.
 """
 from __future__ import annotations
 
@@ -17,9 +17,10 @@ from typing import Any
 import manual_graded_photo_registration as manual_photo
 import ocr_accuracy_boost_v147 as ocr_boost
 import public_ocr_accuracy_boost_v147 as public_ocr_boost
+import ocr_front_back_fallback_v148 as front_back_ocr
 from safe_runtime import atomic_write_bytes
 
-PATCH_ID = 147
+PATCH_ID = 148
 _APPLIED = False
 _ORIGINAL_REGISTER = None
 _ORIGINAL_PUBLIC_ROW = None
@@ -100,8 +101,13 @@ def apply() -> dict[str, Any]:
     global _APPLIED, _ORIGINAL_REGISTER, _ORIGINAL_PUBLIC_ROW
     ocr_status = ocr_boost.apply()
     public_status = public_ocr_boost.apply()
-    if ocr_status.get("ok") is not True or public_status.get("ok") is not True:
-        raise RuntimeError("OCR accuracy boost v147 failed to apply")
+    front_back_status = front_back_ocr.apply()
+    if (
+        ocr_status.get("ok") is not True
+        or public_status.get("ok") is not True
+        or front_back_status.get("ok") is not True
+    ):
+        raise RuntimeError("OCR accuracy boost v148 failed to apply")
     if _ORIGINAL_REGISTER is None:
         _ORIGINAL_REGISTER = manual_photo.register
     if _ORIGINAL_PUBLIC_ROW is None:
@@ -117,6 +123,7 @@ def apply() -> dict[str, Any]:
         "back_stored_separately": True,
         "ocr_accuracy_boost": ocr_status.get("ok") is True,
         "public_ocr_accuracy_boost": public_status.get("ok") is True,
+        "back_ocr_fallback": front_back_status.get("ok") is True,
         "ocr_engine": ocr_status.get("engine"),
         "ocr_adaptive_multi_crop": ocr_status.get("adaptive_multi_crop") is True,
         "raw_grade_calibration_eligible": False,
@@ -126,10 +133,13 @@ def apply() -> dict[str, Any]:
 def status() -> dict[str, Any]:
     ocr_status = ocr_boost.status()
     public_status = public_ocr_boost.status()
+    front_back_status = front_back_ocr.status()
     return {
         "ok": bool(
             getattr(manual_photo.register, "_dual_photo_policy", False)
-            and ocr_status.get("ok") is True and public_status.get("ok") is True
+            and ocr_status.get("ok") is True
+            and public_status.get("ok") is True
+            and front_back_status.get("ok") is True
         ),
         "patch": PATCH_ID,
         "applied": _APPLIED,
@@ -138,5 +148,6 @@ def status() -> dict[str, Any]:
         "back_stored_separately": True,
         "ocr_accuracy_boost": ocr_status.get("ok") is True,
         "public_ocr_accuracy_boost": public_status.get("ok") is True,
+        "back_ocr_fallback": front_back_status.get("ok") is True,
         "ocr_engine": ocr_status.get("engine"),
     }
