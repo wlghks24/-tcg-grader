@@ -10,11 +10,16 @@ Automatic collection is deliberately conservative:
 - files are saved only to the manual-review area; nothing is auto-registered
 - no grading-company certification website is contacted by this module
 
-Android layout:
-  Download/TCG등급학습/<game>/<grader>/수동등록대기/<pair_id>/
-      front_candidate.jpg
-      back_candidate.jpg
-      pair.json
+Android layout (game-only, no grader subfolder):
+  Download/TCG등급학습/<game>/
+      수동등록목록.json
+      수동등록대기/<pair_id>/
+          front_candidate.jpg
+          back_candidate.jpg
+          pair.json
+
+The grader remains in pair.json and the game-level index so PSA/BGS/CGC/TAG/BRG
+can still be filtered during manual verification without creating PSA/BGS folders.
 
 Important Android detail:
 ``/sdcard`` is normally a symbolic-link alias. The shared atomic writer correctly
@@ -30,6 +35,7 @@ import io
 import json
 from pathlib import Path
 import re
+import shutil
 import time
 from typing import Any
 from urllib.request import Request
@@ -57,7 +63,7 @@ COMPANIES = {"PSA", "BGS", "CGC", "TAG", "BRG"}
 MAX_QUEUE = 1000
 MAX_IMAGE_BYTES = 8_000_000
 MAX_IMAGE_PIXELS = 36_000_000
-UA = "Mozilla/5.0 TCG-Grader-ManualPairQueue/2.1"
+UA = "Mozilla/5.0 TCG-Grader-ManualPairQueue/2.2"
 
 PAIR_TEXT_RE = re.compile(
     r"(?:front.{0,40}back|back.{0,40}front|front\s*[/&+]\s*back|"
@@ -153,6 +159,17 @@ def _pair_key(row: dict[str, Any], front: str, back: str, company: str, cert: st
     return hashlib.sha256(seed).hexdigest()[:20]
 
 
+def _pair_folder(target_root: Path, game: str, pair_id: str) -> Path:
+    """Return the game-only manual-review folder; never add a grader directory."""
+    game = str(game or "").lower()
+    if game not in GAMES:
+        raise ValueError("unsupported_game")
+    pair_id = str(pair_id or "").strip()
+    if not re.fullmatch(r"[0-9a-f]{20}", pair_id):
+        raise ValueError("invalid_pair_id")
+    return target_root / game / "수동등록대기" / pair_id
+
+
 def _target_root() -> tuple[Path, str]:
     """Choose storage only after an atomic-write preflight succeeds.
 
@@ -228,39 +245,91 @@ def _existing_entries() -> dict[str, dict[str, Any]]:
     }
 
 
+def _migrate_legacy_grader_layout(target_root: Path) -> dict[str, int]:
+    """Move prior <game>/<grader>/수동등록대기 pairs into the game-only layout.
+
+    Only generated pair folders are moved. Unexpected files are never deleted.
+    Generated per-grader indexes are removed, and empty legacy directories are
+    cleaned up so the user sees only pokemon / onepiece / naruto at the top level.
+    """
+    moved = 0
+    collisions = 0
+    removed_indexes = 0
+    for game in sorted(GAMES):
+        game_root = target_root / game
+        game_root.mkdir(parents=True, exist_ok=True)
+        new_wait = game_root / "수동등록대기"
+        new_wait.mkdir(parents=True, exist_ok=True)
+        for company in sorted(COMPANIES):
+            legacy = game_root / company
+            legacy_wait = legacy / "수동등록대기"
+            if legacy_wait.is_dir():
+                for child in list(legacy_wait.iterdir()):
+                    if not child.is_dir() or not re.fullmatch(r"[0-9a-f]{20}", child.name):
+                        continue
+                    destination = new_wait / child.name
+                    if destination.exists():
+                        collisions += 1
+                        continue
+                    try:
+                        shutil.move(str(child), str(destination))
+                        moved += 1
+                    except OSError:
+                        continue
+            legacy_index = legacy / "수동등록목록.json"
+            try:
+                if legacy_index.is_file() and not legacy_index.is_symlink():
+                    legacy_index.unlink()
+                    removed_indexes += 1
+            except OSError:
+                pass
+            for folder in (legacy_wait, legacy):
+                try:
+                    folder.rmdir()
+                except OSError:
+                    pass
+    return {"legacy_pairs_moved": moved, "legacy_collisions": collisions, "legacy_indexes_removed": removed_indexes}
+
+
 def _write_group_indexes(target_root: Path, pairs: list[dict[str, Any]]) -> None:
-    grouped: dict[tuple[str, str], list[dict[str, Any]]] = {}
+    grouped: dict[str, list[dict[str, Any]]] = {game: [] for game in GAMES}
     for row in pairs:
         if not isinstance(row, dict):
             continue
         game = str(row.get("game") or "").lower()
         company = str(row.get("company") or "").upper()
         if game in GAMES and company in COMPANIES:
-            grouped.setdefault((game, company), []).append(row)
-    for game in GAMES:
-        for company in COMPANIES:
-            folder = target_root / game / company
-            folder.mkdir(parents=True, exist_ok=True)
-            rows = grouped.get((game, company), [])
-            index = {
-                "ok": True,
-                "updated_at": _now(),
-                "game": game,
-                "company": company,
-                "count": len(rows),
-                "manual_registration_required": True,
-                "automatic_registration": False,
-                "automatic_official_lookup": False,
-                "pairs": [{
-                    "pair_id": row.get("pair_id"),
-                    "certification_id": row.get("certification_id"),
-                    "grade": row.get("grade"),
-                    "card_name": row.get("card_name"),
-                    "folder": row.get("folder"),
-                    "source_listing_url": row.get("source_listing_url"),
-                } for row in rows[:500]],
-            }
-            atomic_write_json(folder / "수동등록목록.json", index, suffix=".manual-index.tmp")
+            grouped[game].append(row)
+    for game in sorted(GAMES):
+        folder = target_root / game
+        folder.mkdir(parents=True, exist_ok=True)
+        rows = grouped.get(game, [])
+        by_company = {company: 0 for company in sorted(COMPANIES)}
+        for row in rows:
+            company = str(row.get("company") or "").upper()
+            if company in by_company:
+                by_company[company] += 1
+        index = {
+            "ok": True,
+            "updated_at": _now(),
+            "game": game,
+            "count": len(rows),
+            "by_company": by_company,
+            "manual_registration_required": True,
+            "automatic_registration": False,
+            "automatic_official_lookup": False,
+            "storage_layout": "game_only",
+            "pairs": [{
+                "pair_id": row.get("pair_id"),
+                "company": row.get("company"),
+                "certification_id": row.get("certification_id"),
+                "grade": row.get("grade"),
+                "card_name": row.get("card_name"),
+                "folder": row.get("folder"),
+                "source_listing_url": row.get("source_listing_url"),
+            } for row in rows[:500]],
+        }
+        atomic_write_json(folder / "수동등록목록.json", index, suffix=".manual-index.tmp")
 
 
 def sync_once() -> dict[str, Any]:
@@ -269,6 +338,7 @@ def sync_once() -> dict[str, Any]:
     if not isinstance(rows, list):
         rows = []
     target_root, storage_mode = _target_root()
+    migration = _migrate_legacy_grader_layout(target_root)
     existing = _existing_entries()
     seen_candidates = 0
     pair_candidates = 0
@@ -301,7 +371,7 @@ def sync_once() -> dict[str, Any]:
             skipped_existing += 1
             continue
 
-        folder = target_root / game / company / "수동등록대기" / pair_id
+        folder = _pair_folder(target_root, game, pair_id)
         front_path = folder / "front_candidate.jpg"
         back_path = folder / "back_candidate.jpg"
         manifest_path = folder / "pair.json"
@@ -332,6 +402,7 @@ def sync_once() -> dict[str, Any]:
                 "manifest_local_path": str(manifest_path),
                 "folder": str(folder),
                 "storage_mode": storage_mode,
+                "storage_layout": "game_only",
                 "downloaded": True,
                 "identity_gate": "supported_grader_plus_certification_number",
                 "front_back_gate": "both_required",
@@ -353,10 +424,23 @@ def sync_once() -> dict[str, Any]:
             })
 
     pairs = sorted(existing.values(), key=lambda row: str(row.get("created_at") or ""), reverse=True)[:MAX_QUEUE]
+    # Re-point migrated queue metadata to the current game-only path so the index
+    # does not keep stale <game>/<grader> folder strings from previous versions.
+    for row in pairs:
+        pair_id = str(row.get("pair_id") or "")
+        game = str(row.get("game") or "").lower()
+        if game in GAMES and re.fullmatch(r"[0-9a-f]{20}", pair_id):
+            current_folder = _pair_folder(target_root, game, pair_id)
+            if current_folder.is_dir():
+                row["folder"] = str(current_folder)
+                row["front_local_path"] = str(current_folder / "front_candidate.jpg")
+                row["back_local_path"] = str(current_folder / "back_candidate.jpg")
+                row["manifest_local_path"] = str(current_folder / "pair.json")
+                row["storage_layout"] = "game_only"
     _write_group_indexes(target_root, pairs)
     result = {
         "ok": True,
-        "schema_version": 3,
+        "schema_version": 4,
         "updated_at": _now(),
         "storage_mode": storage_mode,
         "target_root": str(target_root),
@@ -371,6 +455,7 @@ def sync_once() -> dict[str, Any]:
             "total_manual_pairs": len(pairs),
             "automatic_registration_attempts": 0,
             "automatic_official_lookup_attempts": 0,
+            **migration,
         },
         "pairs": pairs,
         "errors": errors[:100],
@@ -383,7 +468,9 @@ def sync_once() -> dict[str, Any]:
             "automatic_registration": False,
             "automatic_official_lookup": False,
             "manual_site_verification_required": True,
-            "grouped_by_game_and_grader": True,
+            "grouped_by_game_only": True,
+            "grader_subfolders_created": False,
+            "grader_preserved_in_manifest_and_index": True,
             "android_symlink_alias_avoided": True,
             "atomic_storage_preflight_required": True,
             "raw_grade_calibration_eligible": False,
@@ -414,7 +501,7 @@ def watch(interval: int) -> int:
 
 
 def main() -> int:
-    parser = argparse.ArgumentParser(description="인증번호가 있는 앞면+뒷면 등급사진만 게임/등급사별 수동등록 폴더로 저장합니다.")
+    parser = argparse.ArgumentParser(description="인증번호가 있는 앞면+뒷면 등급사진만 pokemon/onepiece/naruto 게임 폴더별로 저장합니다.")
     parser.add_argument("--watch", action="store_true", help="graded_photo_candidates.json 변경을 계속 감시")
     parser.add_argument("--interval", type=int, default=60, help="감시 간격(초)")
     args = parser.parse_args()
@@ -423,6 +510,7 @@ def main() -> int:
     result = sync_once()
     print(json.dumps(result["summary"], ensure_ascii=False))
     print("수동등록 폴더:", result["target_root"])
+    print("저장 구조: <게임>/수동등록대기/<카드> (PSA/BGS 등급사 하위폴더 없음)")
     if result["storage_mode"] != "android_download":
         print("[경고] Android Download 저장소를 사용할 수 없어 앱 내부 폴더를 사용 중입니다. Termux 저장소 권한을 확인하세요.")
     return 0
