@@ -1,0 +1,28 @@
+{
+  "version": 1,
+  "updated_at": "2026-08-31T05:03:00+00:00",
+  "policy": "자동수집이 놓친 공식 발표를 사용자가 공식 화면으로 제보한 경우에만 임시 보존합니다. 이후 자동 공개검색/공식 API가 같은 사실을 발견하면 중복 병합하고, 이 파일 자체는 일반 커뮤니티 제보를 공식 사실로 승격시키지 않습니다.",
+  "items": [
+    {
+      "game": "포켓몬 카드",
+      "region": "KR",
+      "category": "movie",
+      "title": "THE MOVIE 「포켓몬: 와일드카드」 · 2027년 극장 개봉 발표",
+      "source": "https://www.instagram.com/pokemon_korea_official/",
+      "source_kind": "instagram",
+      "source_tier": "A-social-manual-evidence",
+      "source_label": "포켓몬코리아 공식 Instagram · 사용자 제보 공식 게시물",
+      "author": "pokemon_korea_official",
+      "official_account_verified": true,
+      "published_at": "2026-08-31T14:02:00+09:00",
+      "dates": [],
+      "excerpt": "포켓몬코리아 공식 계정이 신작 장편 애니메이션 영화 THE MOVIE 「포켓몬: 와일드카드」의 2027년 극장 개봉과 슈퍼 티저 비주얼·티저 예고를 공개. 포켓몬 카드 플레이 장면과 따라큐가 등장하는 TCG 연계 영화 공지.",
+      "status": "공식 SNS 화면 확인 · 자동수집 누락 보정",
+      "verified": true,
+      "confidence": 0.99,
+      "manual_evidence": true,
+      "evidence_kind": "user_provided_official_post_screenshot",
+      "collected_at": "2026-08-31T14:03:00+09:00"
+    }
+  ]
+}
