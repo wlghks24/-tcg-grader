@@ -2,7 +2,7 @@
 set -eu
 cd "$(dirname "$0")"
 
-printf '\n=== 등급사진 수동검증 전용 + 앞뒤사진 2장 + OCR v148 설치 ===\n'
+printf '\n=== 등급사진 수동검증 전용 + 앞뒤사진 2장 + OCR v149 설치 ===\n'
 
 export TCG_DISABLE_AUTO_GRADER_LOOKUP=1
 
@@ -14,6 +14,7 @@ python -m py_compile \
   ocr_accuracy_boost_v147.py \
   public_ocr_accuracy_boost_v147.py \
   ocr_front_back_fallback_v148.py \
+  legacy_ocr_registry_cleanup_v149.py \
   graded_photo_manual_pair_queue.py \
   grading_cert_verifier.py \
   runtime_bundle_guard_v143.py \
@@ -22,11 +23,13 @@ python -m py_compile \
   test_manual_pair_queue.py \
   test_grading_cert_verifier.py \
   test_ocr_accuracy_boost_v147.py \
-  test_ocr_front_back_fallback_v148.py
+  test_ocr_front_back_fallback_v148.py \
+  test_legacy_ocr_registry_cleanup_v149.py
 
 python -m unittest -v \
   test_ocr_accuracy_boost_v147.py \
   test_ocr_front_back_fallback_v148.py \
+  test_legacy_ocr_registry_cleanup_v149.py \
   test_grading_cert_verifier.py \
   test_manual_collection_mode.py \
   test_manual_pair_queue.py \
@@ -40,6 +43,7 @@ import manual_dual_photo_registration as dual_photo
 import ocr_accuracy_boost_v147 as ocr_boost
 import public_ocr_accuracy_boost_v147 as public_ocr
 import ocr_front_back_fallback_v148 as back_ocr
+import legacy_ocr_registry_cleanup_v149 as legacy_cleanup
 import runtime_bundle_guard_v143 as guard
 import graded_photo_manual_pair_queue as pair_queue
 status=guard.require_compatible()
@@ -69,6 +73,7 @@ assert dual.get('back_ocr_fallback') is True, dual
 assert ocr.get('ok') is True and ocr.get('engine') == 'slab-ocr-accuracy-v147', ocr
 assert public.get('ok') is True, public
 assert back.get('ok') is True, back
+assert legacy_cleanup.PATCH_ID == 149
 assert str(pair_queue.ANDROID_ROOT) == '/storage/emulated/0/Download/TCG등급학습'
 assert '/sdcard' not in str(pair_queue.ANDROID_ROOT)
 probe=pair_queue._pair_folder(pair_queue.ANDROID_ROOT,'pokemon','0123456789abcdefabcd')
@@ -77,6 +82,7 @@ assert '/pokemon/PSA/' not in str(probe)
 print('[OK] 수동등록 앞면+뒷면 2장 저장 계약 정상')
 print('[OK] OCR v147: 적응형 다중크롭 + 등급사별 인증번호 길이 + OCR 오인문자 보정')
 print('[OK] OCR v148: 앞면 OCR 미완성 때만 뒷면에서 등급사/인증번호 보조 복구')
+print('[OK] OCR v149: 과거 IFICATE 같은 잘못된 OCR 인증번호를 학습/수동확인 후보에서 제거')
 print('[OK] 뒷면 OCR 등급값은 앞면 등급을 덮어쓰지 않음')
 print('[OK] 수동등록/자동수집 등급사진 모두 강화 OCR 적용')
 print('[OK] 게임별 폴더만 사용하고 등급사는 메타데이터로 보존')
@@ -88,7 +94,7 @@ from pathlib import Path
 import re
 p=Path('index.html')
 text=p.read_text(encoding='utf-8')
-tag='<script src="./manual_dual_photo_bridge.js?v=148"></script>'
+tag='<script src="./manual_dual_photo_bridge.js?v=149"></script>'
 pattern=r'<script\s+src=["\']\./manual_dual_photo_bridge\.js(?:\?v=\d+)?["\']\s*></script>'
 if re.search(pattern,text):
     text=re.sub(pattern,tag,text,count=1)
@@ -99,7 +105,7 @@ elif '</html>' in text:
 else:
     text += '\n'+tag+'\n'
 p.write_text(text,encoding='utf-8')
-print('[OK] 앞뒤사진 UI 브리지:', text.count('manual_dual_photo_bridge.js'), 'v148')
+print('[OK] 앞뒤사진 UI 브리지:', text.count('manual_dual_photo_bridge.js'), 'v149')
 PY
 
 if command -v node >/dev/null 2>&1; then
@@ -115,7 +121,11 @@ test -s manual_dual_photo_bridge.js
 test -s ocr_accuracy_boost_v147.py
 test -s public_ocr_accuracy_boost_v147.py
 test -s ocr_front_back_fallback_v148.py
-grep -q 'manual_dual_photo_bridge.js?v=148' index.html
+test -s legacy_ocr_registry_cleanup_v149.py
+grep -q 'manual_dual_photo_bridge.js?v=149' index.html
+
+printf '\n=== 레거시 OCR 인증번호 정리 ===\n'
+python legacy_ocr_registry_cleanup_v149.py
 
 pkill -f 'graded_photo_manual_pair_queue.py --watch' 2>/dev/null || true
 pkill -f 'python.*tcg_updater_v135.py' 2>/dev/null || true
@@ -163,6 +173,7 @@ printf '%s\n' '- OCR v147: 라벨 위치별 다중크롭을 필요한 만큼만 
 printf '%s\n' '- O/0, I/1, L/1, S/5, B/8 등 인증번호 OCR 혼동을 숫자 후보 안에서만 안전 보정'
 printf '%s\n' '- PSA/BGS/CGC/TAG/BRG별 인증번호 길이 규칙으로 엉뚱한 숫자 채택 감소'
 printf '%s\n' '- OCR v148: 앞면에서 정보가 부족할 때만 뒷면 OCR로 등급사/인증번호 보조 복구'
+printf '%s\n' '- OCR v149: 예전 OCR이 IFICATE 같은 문자를 인증번호로 저장한 미검증 자료 자동 정리'
 printf '%s\n' '- 뒷면에서 읽힌 등급 숫자는 앞면 등급을 자동 덮어쓰지 않음'
 printf '%s\n' '- 수동등록 화면에서 등급 슬랩 앞면 + 뒷면 사진을 모두 필수 선택'
 printf '%s\n' '- 동일한 앞/뒤 사진 선택은 거절'
