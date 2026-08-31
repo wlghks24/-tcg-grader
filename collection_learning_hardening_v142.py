@@ -2,19 +2,20 @@
 # -*- coding: utf-8 -*-
 """v142 collection/self-learning hardening.
 
-This layer keeps v141 event/reward discovery while closing four learning gaps:
-1. repeated routes from the same publisher cannot inflate independent-source count;
-2. unverified social/supplementary rows cannot poison persistent learned hosts/terms;
-3. broad search results may still teach query health, but only official results teach
-   persistent host/term vocabulary;
-4. fan accounts are re-used automatically only after corroboration or explicit watch
-   registration.
+This layer keeps v141 event/reward discovery while closing collection-learning gaps:
+- repeated routes from the same publisher cannot inflate independent-source count;
+- unverified social/supplementary/search rows cannot poison persistent host/term memory;
+- query yield may still be measured without teaching unverified vocabulary;
+- fan accounts are re-used automatically only after corroboration or explicit watch;
+- adaptive official-social detection requires a real social profile/account URL,
+  never a mere username mention in an arbitrary page title.
 
 Trust is never auto-promoted. Verified/cross-checked signals only influence future
 search priority and vocabulary.
 """
 from __future__ import annotations
 
+import hashlib
 import json
 import urllib.parse
 from pathlib import Path
@@ -40,6 +41,7 @@ _annotate_reward_row = base._annotate_reward_row
 _APPLIED = False
 _ORIGINAL_MERGE_CANDIDATES = None
 _ORIGINAL_ADAPTIVE_INIT = None
+_ORIGINAL_ADAPTIVE_IS_OFFICIAL = None
 _ORIGINAL_OBSERVE_SEARCH = None
 _ORIGINAL_LEARN_FROM_PAYLOAD = None
 _ORIGINAL_PREFERRED_AUTHORS = None
@@ -59,6 +61,7 @@ def _status(*, already_applied: bool = False) -> dict:
         "unverified_search_host_term_learning_weight": 0.0,
         "unique_evidence_host_counting": True,
         "fan_reuse_requires_corroboration_or_watch": True,
+        "strict_official_social_url_match": True,
         "max_learned_terms": event_gap_learning.MAX_TERMS,
         "max_seen_verified": event_gap_learning.MAX_SEEN,
         "trust_auto_promotion": False,
@@ -70,6 +73,41 @@ def _host(url: object) -> str:
         return (urllib.parse.urlsplit(str(url or "")).hostname or "").lower()
     except ValueError:
         return ""
+
+
+def _social_account_from_url(url: object) -> str | None:
+    try:
+        parsed = urllib.parse.urlsplit(str(url or ""))
+    except ValueError:
+        return None
+    host = (parsed.hostname or "").lower().removeprefix("www.")
+    parts = [urllib.parse.unquote(x).strip() for x in parsed.path.split("/") if x.strip()]
+    if not parts:
+        return None
+    if host in {"x.com", "twitter.com"}:
+        candidate = parts[0].lstrip("@").lower()
+        if candidate not in {"home", "search", "share", "intent", "i"}:
+            return candidate
+    if host == "instagram.com":
+        candidate = parts[0].lstrip("@").lower()
+        if candidate not in {"p", "reel", "explore", "stories"}:
+            return candidate
+    if host == "youtube.com" and parts[0].startswith("@"):
+        return parts[0].lstrip("@").lower()
+    return None
+
+
+def _hardened_is_official(self, game: str, url: str, title: str = "") -> bool:
+    """Official domains are exact-host; social authority requires the URL account."""
+    cfg = adaptive_collection_learner.GAME_CONFIG.get(game, {})
+    host = _host(url)
+    if host in set(cfg.get("official_hosts") or ()):
+        return True
+    account = _social_account_from_url(url)
+    if not account:
+        return False
+    trusted = {str(x).lower().lstrip("@") for x in (cfg.get("official_social") or ()) if str(x).strip()}
+    return account in trusted
 
 
 def _evidence_hosts(row: dict) -> set[str]:
@@ -204,11 +242,13 @@ def _hardened_observe_search(self, keyword: str, query: str, rows, *, error: str
     totals["official"] = adaptive_collection_learner._bounded_int(totals.get("official")) + len(official_rows)
     totals["errors"] = adaptive_collection_learner._bounded_int(totals.get("errors")) + (1 if error else 0)
 
+    # Persistent host/term vocabulary changes only after official proof.
     for row in official_rows:
         self._learn_row(game, region, row, weight=1.0, verified=True)
-    for term in adaptive_collection_learner.REGION_SEEDS.get(region, adaptive_collection_learner.REGION_SEEDS["KR"])["event"]:
-        if term.lower() in query.lower():
-            self._bump_term(game, region, term, relevant=len(official_rows), official=len(official_rows), weight=0.05, run=True)
+    if official_rows:
+        for term in adaptive_collection_learner.REGION_SEEDS.get(region, adaptive_collection_learner.REGION_SEEDS["KR"])["event"]:
+            if term.lower() in query.lower():
+                self._bump_term(game, region, term, relevant=len(official_rows), official=len(official_rows), weight=0.05, run=True)
     safety = self.memory["channel_stats"].setdefault("v142_learning_safety", {})
     safety["ignored_unverified_search_rows"] = adaptive_collection_learner._bounded_int(safety.get("ignored_unverified_search_rows")) + max(0, len(relevant_rows) - len(official_rows))
     safety["last_seen"] = adaptive_collection_learner._now()
@@ -305,7 +345,7 @@ def learn_verified_reward_candidates(learner: event_gap_learning.EventGapLearner
         source = str(row.get("source") or "")
         if game not in social_event_discovery.GAMES or region not in social_event_discovery.REGION_LANG or not source.startswith("https://"):
             continue
-        marker = base.hashlib.sha256(f"reward|{game}|{region}|{source}|{row.get('title')}".encode("utf-8", "ignore")).hexdigest()[:24]
+        marker = hashlib.sha256(f"reward|{game}|{region}|{source}|{row.get('title')}".encode("utf-8", "ignore")).hexdigest()[:24]
         if marker in seen:
             continue
         try:
@@ -339,7 +379,7 @@ def learn_verified_reward_candidates(learner: event_gap_learning.EventGapLearner
 
 
 def apply() -> dict:
-    global _APPLIED, _ORIGINAL_MERGE_CANDIDATES, _ORIGINAL_ADAPTIVE_INIT
+    global _APPLIED, _ORIGINAL_MERGE_CANDIDATES, _ORIGINAL_ADAPTIVE_INIT, _ORIGINAL_ADAPTIVE_IS_OFFICIAL
     global _ORIGINAL_OBSERVE_SEARCH, _ORIGINAL_LEARN_FROM_PAYLOAD, _ORIGINAL_PREFERRED_AUTHORS
     if _APPLIED:
         return _status(already_applied=True)
@@ -358,9 +398,11 @@ def apply() -> dict:
     social_event_discovery.merge_candidates = _hardened_merge_candidates
 
     _ORIGINAL_ADAPTIVE_INIT = adaptive_collection_learner.AdaptiveCollectionLearner.__init__
+    _ORIGINAL_ADAPTIVE_IS_OFFICIAL = adaptive_collection_learner.AdaptiveCollectionLearner._is_official
     _ORIGINAL_OBSERVE_SEARCH = adaptive_collection_learner.AdaptiveCollectionLearner.observe_search
     _ORIGINAL_LEARN_FROM_PAYLOAD = adaptive_collection_learner.AdaptiveCollectionLearner.learn_from_payload
     adaptive_collection_learner.AdaptiveCollectionLearner.__init__ = _hardened_adaptive_init
+    adaptive_collection_learner.AdaptiveCollectionLearner._is_official = _hardened_is_official
     adaptive_collection_learner.AdaptiveCollectionLearner.observe_search = _hardened_observe_search
     adaptive_collection_learner.AdaptiveCollectionLearner.learn_from_payload = _hardened_learn_from_payload
 
