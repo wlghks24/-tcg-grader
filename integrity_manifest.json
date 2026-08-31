@@ -1,7 +1,7 @@
 {
   "version": 1,
   "engine": "v109-card-identity-ocr-learning",
-  "generated_at": "2026-08-31T07:53:41+00:00",
+  "generated_at": "2026-08-31T08:19:29+00:00",
   "files": {
     ".github/workflows/apply-android-7step-display.yml": {
       "sha256": "9d0b604bc6f85b3cab37a475b70e17ed2c3ada43aa6ba72a4e57b8436a9baa27",
@@ -348,8 +348,8 @@
       "bytes": 5027
     },
     "apply_collection_meta_learning.py": {
-      "sha256": "f22e08d07ee9c054b6cd5392e447eae734cfa06967803e1bfdbb48900fb3ffed",
-      "bytes": 7371
+      "sha256": "7ab073d9116b2c302c3d72d024c2579075c0a00c175cd4d75d21100efd8504b1",
+      "bytes": 8284
     },
     "apply_detailed_collection_intelligence.py": {
       "sha256": "2be4f8485e6145cefcef9df61eb731e27b43e3a2356129a30fa69166250c57b2",
@@ -452,8 +452,8 @@
       "bytes": 2473
     },
     "apply_multi_route_event_patch.py": {
-      "sha256": "27b2e96b27c65fe54409802d6355c22df035d22b6acef60594a95daa0d7afa8a",
-      "bytes": 5576
+      "sha256": "d6cca0903a1630b68b3a9d218c2b8dd3bb1a1de9fccb2e42ea47a5eaeee25d2f",
+      "bytes": 6071
     },
     "apply_playgo_event_data_sync.py": {
       "sha256": "ae9baf3b8368bd902b1f7c2a8776d47d45e1487a9cb38f05c343b2b7d45cb3d9",
@@ -1090,6 +1090,10 @@
     "test_adaptive_collection_learner.py": {
       "sha256": "e998b07bcebb9dd9eabe08e91b464b040d9b127849bb5e8a054e942d9c081391",
       "bytes": 14880
+    },
+    "test_apply_patch_idempotency.py": {
+      "sha256": "ef9e78e594c1b48cef5e0eb6a950920d28b54b7e586bfe82cf4737e30d70ec42",
+      "bytes": 1157
     },
     "test_box_hit_market_discovery.py": {
       "sha256": "b0fe92aaf79de7ad5931c51339f3f2cfc87173a2efcdc837d3f867aaab591b9e",

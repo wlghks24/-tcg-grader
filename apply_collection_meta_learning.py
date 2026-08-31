@@ -3,11 +3,28 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent
 
+APPLIED_MARKERS = {
+    "adaptive import": "import collection_meta_learning",
+    "ratio query score": "error_rate = _bounded_int(row.get(\"errors\")) / runs",
+    "coverage gap query": '"family": f"coverage-gap:{focus_topic}"',
+    "reserve focus slot": 'reserve([row for row in dedup if str(row.get("family") or "").startswith("coverage-gap:")])',
+    "pipeline meta import": "import collection_meta_learning",
+    "pipeline meta refresh": "collection_meta_learning.refresh_profile()",
+    "pipeline version": '"version": "v142-verified-collection-learning"',
+    "pipeline learning policy": '"learning_policy": "v142:',
+    "pipeline meta output": '"collection_meta_learning": collection_meta',
+    "pipeline fan counters": '"fan_social_candidate_count":',
+}
+
 
 def patch(path: Path, old: str, new: str, label: str) -> None:
     text = path.read_text(encoding="utf-8")
     if new in text:
         print(label, "already applied")
+        return
+    marker = APPLIED_MARKERS.get(label)
+    if marker and marker in text:
+        print(label, "already applied by newer integration")
         return
     if old not in text:
         raise SystemExit(f"{label}: target not found")

@@ -4,9 +4,21 @@ from pathlib import Path
 ROOT=Path(__file__).resolve().parent
 PATH=ROOT/'social_event_discovery.py'
 
+APPLIED_MARKERS = {
+    'multi route import': 'import multi_route_event_discovery',
+    'collector registration': '"route_diversity":',
+    'independent-source counting': 'existing_evidence_host =',
+    'balanced game-region merge': 'per_group_floor = 4',
+    'resilient baseline': 'route_status = channel_status.get("route_diversity"',
+}
+
 
 def replace_once(text,old,new,label):
     if new in text:
+        return text
+    marker = APPLIED_MARKERS.get(label)
+    if marker and marker in text:
+        print(label, 'already applied by newer integration')
         return text
     if old not in text:
         raise RuntimeError(f'patch anchor not found: {label}')
