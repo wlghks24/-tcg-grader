@@ -14,13 +14,18 @@ class ManualCollectionModeTests(unittest.TestCase):
         self.assertFalse(status["automatic_official_lookup"])
         self.assertFalse(status["manual_registration_auto_official_lookup"])
         self.assertTrue(status["certification_front_back_pair_required"])
-        self.assertTrue(status["grouped_by_game_and_grader"])
+        self.assertTrue(status["grouped_by_game_only"])
+        self.assertFalse(status["grader_subfolders_created"])
+        self.assertTrue(status["manual_front_back_upload"])
+        self.assertTrue(status["back_stored_separately"])
         self.assertEqual(os.environ.get("TCG_DISABLE_AUTO_GRADER_LOOKUP"), "1")
         runtime = mode.status()
         self.assertTrue(runtime["collector_manual_only"], runtime)
         self.assertTrue(runtime["manual_registration_manual_only"], runtime)
         self.assertTrue(runtime["collector_syncs_manual_pairs"], runtime)
         self.assertTrue(runtime["environment_no_network_gate"], runtime)
+        self.assertTrue(runtime["grouped_by_game_only"], runtime)
+        self.assertFalse(runtime["grader_subfolders_created"], runtime)
 
     def test_apply_is_idempotent(self):
         first = mode.apply()
@@ -29,6 +34,18 @@ class ManualCollectionModeTests(unittest.TestCase):
         runtime = mode.status()
         self.assertTrue(runtime["ok"], runtime)
         self.assertTrue(runtime["collector_syncs_manual_pairs"], runtime)
+        self.assertTrue(runtime["manual_front_back_upload"], runtime)
+
+    def test_ocr_v147_is_applied_with_manual_mode(self):
+        mode.apply()
+        import manual_dual_photo_registration as dual
+        import ocr_accuracy_boost_v147 as ocr
+        import public_ocr_accuracy_boost_v147 as public_ocr
+        dual_status = dual.status()
+        self.assertTrue(dual_status["ocr_accuracy_boost"], dual_status)
+        self.assertTrue(dual_status["public_ocr_accuracy_boost"], dual_status)
+        self.assertTrue(ocr.status()["ok"])
+        self.assertTrue(public_ocr.status()["ok"])
 
     def test_registry_only_verifier_never_calls_live_lookup(self):
         rows = [{
