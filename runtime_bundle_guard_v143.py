@@ -4,11 +4,17 @@
 
 The updater is intentionally split across many modules. Updating only the newest
 wrapper can leave an older collector or recovery engine on a tablet, which makes
-already-fixed bugs reappear (repeated DDG timeouts, generic ValueError diagnosis,
-or graded-photo preflight rejection). This guard verifies *behavioral contracts*
-rather than trusting filenames or a single version string.
+already-fixed bugs reappear. This guard verifies behavioral contracts rather than
+trusting filenames or a single version string.
 
-No network request is made here and no learned JSON is modified.
+Manual-photo policy extension (v144 behavior on the v143 runtime contract):
+- no new PSA/BGS/CGC/TAG/BRG certification HTTP lookup is attempted automatically
+- manual photo registration performs OCR then waits for user-browser verification
+- only supported-game + supported-grader + certification-number + front/back pairs
+  can be copied into the manual-review folder
+
+No learned grade JSON is modified here. Applying manual_collection_mode only
+patches in-process call paths so they cannot contact grader certification sites.
 """
 from __future__ import annotations
 
@@ -42,7 +48,6 @@ REQUIRED_FILES = (
     "collection_learning_hardening_v142.py",
     "event_priority_watch.py",
     "event_quick_watch.py",
-    # Manual graded-photo / official-site fallback must travel with the wrapper.
     "manual_graded_photo_registration.py",
     "manual_official_proof.py",
     "manual_official_verify_bridge.js",
@@ -51,6 +56,8 @@ REQUIRED_FILES = (
     "library_slab_corpus.py",
     "IMPORT_GRADED_LEARNING_FILES.py",
     "START_GRADED_FILE_LEARNING.sh",
+    "manual_collection_mode.py",
+    "graded_photo_manual_pair_queue.py",
 )
 
 EXPECTED_JOB_FILES = {
@@ -68,6 +75,8 @@ MANUAL_REQUIRED = {
     "manual_official_proof.py",
     "manual_official_verify_bridge.js",
     "graded_photo_dashboard.js",
+    "manual_collection_mode.py",
+    "graded_photo_manual_pair_queue.py",
 }
 
 
@@ -100,10 +109,12 @@ def audit() -> dict:
         "search_method_learning",
         "collection_learning_hardening_v142",
         "manual_official_proof",
+        "manual_collection_mode",
+        "graded_photo_manual_pair_queue",
     ):
         try:
             modules[name] = _load(name)
-        except Exception as exc:  # import compatibility is exactly what this audit checks
+        except Exception as exc:
             issues.append(f"{name} 불러오기 실패: {type(exc).__name__}")
 
     safe = modules.get("safe_runtime")
@@ -198,10 +209,44 @@ def audit() -> dict:
         except Exception:
             issues.append("수동 공식확인 보안 계약 검사 실패")
 
+    manual_mode = modules.get("manual_collection_mode")
+    manual_mode_status = {}
+    if manual_mode is not None:
+        try:
+            applied = manual_mode.apply()
+            manual_mode_status = manual_mode.status()
+            if applied.get("automatic_official_lookup") is not False:
+                issues.append("등급사진 자동 등급사 인증조회가 비활성화되지 않았습니다")
+            if applied.get("manual_registration_auto_official_lookup") is not False:
+                issues.append("수동등록 백그라운드 공식조회가 비활성화되지 않았습니다")
+            if manual_mode_status.get("collector_manual_only") is not True:
+                issues.append("등급사진 수집기가 수동검증 전용 모드가 아닙니다")
+            if manual_mode_status.get("manual_registration_manual_only") is not True:
+                issues.append("수동등록기가 OCR 후 수동검증 대기로 전환되지 않았습니다")
+        except Exception:
+            issues.append("등급사진 수동검증 전용 정책 적용 실패")
+
+    pair_queue = modules.get("graded_photo_manual_pair_queue")
+    pair_queue_ok = False
+    if pair_queue is not None:
+        try:
+            identity_ok = pair_queue._identity({"company": "PSA", "certification_id": "12345678"}) == ("PSA", "12345678")
+            no_cert_rejected = pair_queue._identity({"company": "PSA", "certification_id": ""}) == ("", "")
+            pair_ok = pair_queue._pair_from_row({
+                "front_image_url": "https://example.com/front.jpg",
+                "back_image_url": "https://example.com/back.jpg",
+            }) is not None
+            single_rejected = pair_queue._pair_from_row({"image_url": "https://example.com/front.jpg"}) is None
+            pair_queue_ok = bool(identity_ok and no_cert_rejected and pair_ok and single_rejected)
+            if not pair_queue_ok:
+                issues.append("인증번호+앞뒤사진 수동등록 대기큐 계약이 맞지 않습니다")
+        except Exception:
+            issues.append("인증번호+앞뒤사진 수동등록 대기큐 검사 실패")
+
     manual_missing = sorted(name for name in MANUAL_REQUIRED if name in missing)
     manual_issues = [
         item for item in issues
-        if "수동 공식확인" in item or "manual_official_proof" in item
+        if "수동" in item or "manual_" in item or "앞뒤사진" in item or "인증번호+" in item
     ]
 
     return {
@@ -217,6 +262,10 @@ def audit() -> dict:
             "source_structure_classification": not any("출처 구조변경" in x for x in issues),
             "search_timeout_circuit_breaker": not any("search_exact" in x or "cooldown" in x for x in issues),
             "manual_official_fallback": not manual_missing and not manual_issues,
+            "automatic_grader_lookup_disabled": manual_mode_status.get("automatic_official_lookup") is False,
+            "manual_registration_auto_lookup_disabled": manual_mode_status.get("manual_registration_manual_only") is True,
+            "certified_front_back_pair_only": pair_queue_ok,
+            "manual_pair_grouped_by_game_and_grader": pair_queue_ok,
             "manual_proof_raw_calibration": False,
             "manual_proof_rejected_bytes_retained": False,
             "event_coverage_cells": 90,
