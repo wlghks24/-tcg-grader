@@ -6,6 +6,13 @@ if(globalThis[GLOBAL_KEY]?.loaded){
  return;
 }
 const bridgeState=globalThis[GLOBAL_KEY]={loaded:true,version:150,enhanced:false,duplicate_loads:0};
+if(!document.getElementById('gpdDualBridgeForceV150')){
+ const marker=document.createElement('meta');
+ marker.id='gpdDualBridgeForceV150';
+ marker.name='tcg-dual-photo-bridge';
+ marker.content='inline-v150';
+ document.head?.appendChild(marker);
+}
 let installed=false,submitting=false;
 const previewUrls={front:null,back:null};
 const sleep=ms=>new Promise(r=>setTimeout(r,ms));
