@@ -1,13 +1,15 @@
 #!/usr/bin/env python3
 """Integrated adaptive discovery pipeline.
 
-v117:
+v142:
 - Pokemon / ONE PIECE / NARUTO keep adaptive KR/JP/US public search.
 - Adds three independent official paths: direct page crawl, YouTube Atom feeds,
   and official sitemap discovery.
 - Final selection preserves provider diversity so one engine/channel cannot occupy
   every slot merely because it returns more rows.
 - Provider operational health is persisted separately from source trust.
+- The v142 collection-learning guard is applied inside this process before any
+  adaptive collector is created, so subprocess runs cannot bypass learning safety.
 - All broad/direct/feed leads remain candidates until existing verification rules
   confirm the event/content. Repeated discovery never grants official status.
 """
@@ -23,6 +25,7 @@ from pathlib import Path
 from cross_platform_agent import CrossPlatformSelfHealingEngine
 from multi_channel_agent import MultiChannelCollector
 from safe_runtime import atomic_write_json
+import collection_learning_hardening_v142
 import official_channel_feed_discovery
 import official_direct_discovery
 import official_sitemap_discovery
@@ -115,7 +118,6 @@ def _collect_official_sources(keywords: tuple[str, ...]) -> dict[str, dict[str, 
         ("official_sitemap", official_sitemap_discovery.collect_game),
     )
     out: dict[str, dict[str, dict]] = {}
-    # Provider groups run sequentially to keep Termux traffic/memory bounded; games run in parallel.
     for provider, fn in collectors:
         out[provider] = _collect_provider_for_games(provider, fn, keywords)
     return out
@@ -327,6 +329,10 @@ def _health_rows(candidates: list[dict], official_sources: dict[str, dict[str, d
 
 
 def run_pipeline():
+    # auto_update_all.py launches this module in a fresh subprocess. Apply v142
+    # here before constructing MultiChannelCollector so the subprocess cannot
+    # silently fall back to the older permissive learning methods.
+    collection_learning_hardening = collection_learning_hardening_v142.apply()
     agent = MultiChannelCollector()
     platform_agent = CrossPlatformSelfHealingEngine()
     keywords = ("포켓몬", "원피스", "나루토")
@@ -430,7 +436,7 @@ def run_pipeline():
 
     official_summary = _official_source_summary(keywords, candidates, official_sources, selected_totals)
     payload = {
-        "version": "v120-cross-collector-diversity-learning",
+        "version": "v142-verified-collection-learning",
         "updated_at": datetime.now().astimezone().isoformat(timespec="seconds"),
         "ok": len(failures) == 0 and not extra_errors and not social_hard_failure,
         "degraded": bool(broad_degraded or extra_errors or social_degraded),
@@ -438,7 +444,8 @@ def run_pipeline():
         "empty_search_count": sum(1 for x in candidates if x.get("empty")),
         "errors": errors[:50],
         "notice": "검색/SNS/뉴스/공식사이트/공식 YouTube/사이트맵 후보 자료입니다. 발견 경로가 공식이어도 내용 검증 전에는 자동 확정하지 않습니다.",
-        "learning_policy": "검색어·출처·검증 후보·수집경로 건강도와 함께 게임×국가×정보종류 커버리지, 고유/중복/최신/교차확인 비율을 누적 학습합니다. 반복 발견만으로 공식 신뢰를 승격하지 않습니다.",
+        "learning_policy": "v142: 미검증 검색/SNS 후보는 수집 후보로 보존할 수 있지만 지속 host/검색어 학습에는 사용하지 않습니다. 공식 검증 또는 독립 교차확인된 자료만 학습하며 반복 발견만으로 공식 신뢰를 승격하지 않습니다.",
+        "collection_learning_hardening": collection_learning_hardening,
         "platform": platform_agent.diagnostics(),
         "queries": candidates,
         "official_direct": official_summary.get("official_direct", {}),
