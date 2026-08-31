@@ -11,6 +11,7 @@ from __future__ import annotations
 
 import concurrent.futures
 import json
+import os
 import threading
 import time
 
@@ -58,12 +59,8 @@ def _priority_gaps(items: list[dict], registry: dict) -> list[str]:
                 for row in items:
                     if not isinstance(row, dict) or row.get("game") != game or row.get("region") != region:
                         continue
-                    resolved = social_event_discovery._coverage_topic(row)
-                    if resolved != topic:
-                        if topic == "collab" and resolved == "collaboration":
-                            pass
-                        else:
-                            continue
+                    if social_event_discovery._coverage_topic(row) != topic:
+                        continue
                     if row.get("official_account_verified") is True or row.get("official_domain_match") is True or row.get("cross_checked") is True:
                         count += 1
                 if count == 0:
@@ -71,90 +68,91 @@ def _priority_gaps(items: list[dict], registry: dict) -> list[str]:
     return gaps[:80]
 
 
+def _collect(registry: dict, jobs: list[tuple[str, str]]) -> tuple[list[dict], list[str]]:
+    rows: list[dict] = []
+    errors: list[str] = []
+    is_android = 'com.termux' in os.environ.get('PREFIX', '') or 'ANDROID_ROOT' in os.environ
+    workers = 2 if is_android else 3
+    with concurrent.futures.ThreadPoolExecutor(max_workers=workers) as pool:
+        future_map = {
+            pool.submit(hardening.focused_official_social_search, game, region, registry): (game, region)
+            for game, region in jobs
+        }
+        for future in concurrent.futures.as_completed(future_map):
+            try:
+                part, error = future.result()
+            except Exception as exc:
+                part, error = [], f"priority watch: {type(exc).__name__}"
+            rows.extend(part)
+            if error:
+                errors.append(error)
+    return rows, errors
+
+
+def _run_locked(started: float) -> dict:
+    hardening.apply()
+    registry = social_event_discovery.load_registry()
+    jobs = [
+        (game, region)
+        for game in social_event_discovery.GAMES
+        for region in social_event_discovery.REGION_LANG
+        if hardening._trusted_accounts(registry, game, region)
+    ]
+    new_rows, errors = _collect(registry, jobs)
+    previous = _load_previous()
+    existing = [dict(x) for x in previous.get("items", []) if isinstance(x, dict)]
+    annotated = social_event_discovery._annotate_social_rows(new_rows, registry)
+    merged = social_event_discovery.merge_candidates(existing + annotated)
+    payload = dict(previous)
+    payload.update({
+        "items": merged,
+        "item_count": len(merged),
+        "priority_watch": {
+            "patch": hardening.PATCH_ID,
+            "interval_seconds": INTERVAL_SECONDS,
+            "trusted_account_groups": len(jobs),
+            "result_count": len(annotated),
+            "official_result_count": sum(1 for x in annotated if x.get("official_account_verified") is True),
+            "targeted_candidate_count": sum(1 for x in annotated if x.get("official_query_target") is True),
+            "error_count": len(errors),
+            "errors": errors[:20],
+            "elapsed_seconds": round(time.monotonic() - started, 2),
+        },
+        "priority_gap_cells": _priority_gaps(merged, registry),
+        "official_social_candidate_count": sum(1 for x in merged if x.get("official_account_verified") is True),
+        "cross_checked_count": sum(1 for x in merged if x.get("cross_checked") is True),
+    })
+
+    # Keep the manually verified official announcement visible until indexed
+    # discovery catches up; this never promotes unverified community evidence.
+    try:
+        import event_quick_watch
+        payload, manual_added = event_quick_watch._merge_manual_evidence(payload)
+    except (ImportError, AttributeError, OSError, ValueError, TypeError):
+        manual_added = 0
+    atomic_write_json(social_event_discovery.OUT, payload, suffix=".priority.tmp")
+    return {
+        "ok": True,
+        "patch": hardening.PATCH_ID,
+        "trusted_account_groups": len(jobs),
+        "result_count": len(annotated),
+        "official_result_count": sum(1 for x in annotated if x.get("official_account_verified") is True),
+        "manual_evidence_added": manual_added,
+        "priority_gap_count": len(payload.get("priority_gap_cells", []) or []),
+        "error_count": len(errors),
+        "elapsed_seconds": round(time.monotonic() - started, 2),
+    }
+
+
 def run_once(shared_lock=None) -> dict:
     if not _RUN_LOCK.acquire(blocking=False):
         return {"ok": True, "skipped": True, "reason": "priority watch already running"}
     started = time.monotonic()
     try:
-        hardening.apply()
-        registry = social_event_discovery.load_registry()
-        jobs = [
-            (game, region)
-            for game in social_event_discovery.GAMES
-            for region in social_event_discovery.REGION_LANG
-            if hardening._trusted_accounts(registry, game, region)
-        ]
-
-        def collect() -> tuple[list[dict], list[str]]:
-            rows: list[dict] = []
-            errors: list[str] = []
-            is_android = 'com.termux' in __import__('os').environ.get('PREFIX', '') or 'ANDROID_ROOT' in __import__('os').environ
-            workers = 2 if is_android else 3
-            with concurrent.futures.ThreadPoolExecutor(max_workers=workers) as pool:
-                future_map = {
-                    pool.submit(hardening.focused_official_social_search, game, region, registry): (game, region)
-                    for game, region in jobs
-                }
-                for future in concurrent.futures.as_completed(future_map):
-                    try:
-                        part, error = future.result()
-                    except Exception as exc:
-                        part, error = [], f"priority watch: {type(exc).__name__}"
-                    rows.extend(part)
-                    if error:
-                        errors.append(error)
-            return rows, errors
-
         if shared_lock is None:
-            new_rows, errors = collect()
-            previous = _load_previous()
-        else:
-            with shared_lock:
-                new_rows, errors = collect()
-                previous = _load_previous()
-
-        existing = [dict(x) for x in previous.get("items", []) if isinstance(x, dict)]
-        annotated = social_event_discovery._annotate_social_rows(new_rows, registry)
-        merged = social_event_discovery.merge_candidates(existing + annotated)
-        payload = dict(previous)
-        payload.update({
-            "items": merged,
-            "item_count": len(merged),
-            "priority_watch": {
-                "patch": hardening.PATCH_ID,
-                "interval_seconds": INTERVAL_SECONDS,
-                "trusted_account_groups": len(jobs),
-                "result_count": len(annotated),
-                "official_result_count": sum(1 for x in annotated if x.get("official_account_verified") is True),
-                "targeted_candidate_count": sum(1 for x in annotated if x.get("official_query_target") is True),
-                "error_count": len(errors),
-                "errors": errors[:20],
-                "elapsed_seconds": round(time.monotonic() - started, 2),
-            },
-            "priority_gap_cells": _priority_gaps(merged, registry),
-            "official_social_candidate_count": sum(1 for x in merged if x.get("official_account_verified") is True),
-            "cross_checked_count": sum(1 for x in merged if x.get("cross_checked") is True),
-        })
-
-        # Keep the manually verified official announcement visible until indexed
-        # discovery catches up; this never promotes unverified community evidence.
-        try:
-            import event_quick_watch
-            payload, manual_added = event_quick_watch._merge_manual_evidence(payload)
-        except (ImportError, AttributeError, OSError, ValueError, TypeError):
-            manual_added = 0
-        atomic_write_json(social_event_discovery.OUT, payload, suffix=".priority.tmp")
-        return {
-            "ok": True,
-            "patch": hardening.PATCH_ID,
-            "trusted_account_groups": len(jobs),
-            "result_count": len(annotated),
-            "official_result_count": sum(1 for x in annotated if x.get("official_account_verified") is True),
-            "manual_evidence_added": manual_added,
-            "priority_gap_count": len(payload.get("priority_gap_cells", []) or []),
-            "error_count": len(errors),
-            "elapsed_seconds": round(time.monotonic() - started, 2),
-        }
+            return _run_locked(started)
+        with shared_lock:
+            return _run_locked(started)
     except Exception as exc:
         return {
             "ok": False,
