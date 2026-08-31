@@ -2,17 +2,48 @@
 set -eu
 cd "$(dirname "$0")"
 
-printf '\n=== 등급사 403/429 수동 공식확인 보강 설치 ===\n'
+printf '\n=== 등급사진 수동검증 전용 + 인증번호 앞뒤사진 분류 설치 ===\n'
 
-python -m py_compile tcg_updater_v135.py manual_official_proof.py runtime_bundle_guard_v143.py test_manual_official_proof.py
-python -m unittest -v test_manual_official_proof.py test_runtime_bundle_guard_v143.py
+export TCG_DISABLE_AUTO_GRADER_LOOKUP=1
+
+python -m py_compile \
+  tcg_updater_v135.py \
+  manual_official_proof.py \
+  manual_collection_mode.py \
+  graded_photo_manual_pair_queue.py \
+  grading_cert_verifier.py \
+  runtime_bundle_guard_v143.py \
+  test_manual_official_proof.py \
+  test_manual_collection_mode.py \
+  test_manual_pair_queue.py \
+  test_grading_cert_verifier.py
+
+python -m unittest -v \
+  test_grading_cert_verifier.py \
+  test_manual_collection_mode.py \
+  test_manual_pair_queue.py \
+  test_manual_official_proof.py \
+  test_runtime_bundle_guard_v143.py
+
 python - <<'PY'
+import grading_cert_verifier as verifier
+import manual_collection_mode as manual_mode
 import runtime_bundle_guard_v143 as guard
 status=guard.require_compatible()
-assert status.get('contracts',{}).get('manual_official_fallback') is True, status
-assert status.get('contracts',{}).get('manual_proof_raw_calibration') is False, status
-assert status.get('contracts',{}).get('manual_proof_rejected_bytes_retained') is False, status
-print('[OK] 수동 공식확인 런타임 계약 검사 정상')
+contracts=status.get('contracts',{})
+mode=manual_mode.status()
+assert contracts.get('manual_official_fallback') is True, status
+assert contracts.get('manual_proof_raw_calibration') is False, status
+assert contracts.get('manual_proof_rejected_bytes_retained') is False, status
+assert contracts.get('automatic_grader_lookup_disabled') is True, status
+assert contracts.get('manual_registration_auto_lookup_disabled') is True, status
+assert contracts.get('certified_front_back_pair_only') is True, status
+assert contracts.get('manual_pair_grouped_by_game_and_grader') is True, status
+assert verifier.automatic_lookup_disabled() is True
+assert mode.get('collector_manual_only') is True, mode
+assert mode.get('manual_registration_manual_only') is True, mode
+assert mode.get('collector_syncs_manual_pairs') is True, mode
+print('[OK] 자동 등급사 조회 OFF + 인증번호/앞뒤사진 + 게임/등급사 분류 계약 정상')
 PY
 
 if command -v node >/dev/null 2>&1; then
@@ -22,11 +53,12 @@ else
   echo '[INFO] node 없음 · JS는 브라우저 로드 시 확인합니다.'
 fi
 
+pkill -f 'graded_photo_manual_pair_queue.py --watch' 2>/dev/null || true
 pkill -f 'python.*tcg_updater_v135.py' 2>/dev/null || true
 pkill -f 'python.*tcg_updater.py' 2>/dev/null || true
 sleep 2
-nohup python tcg_updater_v135.py > TCG_ANDROID_STARTUP.log 2>&1 &
-sleep 6
+nohup bash START_TCG_UPDATER_ANDROID.sh > TCG_ANDROID_STARTUP.log 2>&1 &
+sleep 7
 
 printf '\n=== 건강검사 ===\n'
 HEALTH="$(curl -fsS --max-time 6 http://127.0.0.1:8765/api/v135-health)"
@@ -45,11 +77,14 @@ printf '%s' "$MANUAL" | grep -q '"manual_screenshot_trains_raw_grade_calibration
 printf '%s' "$MANUAL" | grep -q '"rejected_screenshot_bytes_retained": false'
 printf '%s' "$MANUAL" | grep -q '"proof_upload_rate_limited": true'
 
+printf '\n=== 앞뒤사진 수동대기 분류기 ===\n'
+python graded_photo_manual_pair_queue.py || true
+
 printf '\n[OK] 설치 완료\n'
-printf '%s\n' '- 수동 공식확인 회귀테스트 + 런타임 계약 검사 통과 후 서버 시작'
-printf '%s\n' '- 등급사 자동조회 쿨다운 시 공식사이트 직접 열기 버튼 표시'
-printf '%s\n' '- 공식 조회 결과 화면 캡처는 등급사+인증번호+등급 OCR 정확일치 검사'
-printf '%s\n' '- 불일치 캡처 원본은 삭제하고 OCR/해시 감사정보만 유지'
-printf '%s\n' '- 정상 수동 참고등록은 이후 잘못된 캡처로 덮어쓰지 않음'
-printf '%s\n' '- 캡처 일치 자료는 참고등록만 허용하고 RAW 등급 보정학습에는 사용하지 않음'
-printf '%s\n' '- 나중에 라이브 공식조회 성공 시 정상 공식검증 레퍼런스로 승격 가능'
+printf '%s\n' '- PSA/BGS/CGC/TAG/BRG 자동 인증사이트 조회 완전 비활성화'
+printf '%s\n' '- 포켓몬/원피스/나루토 중 인증번호 + 앞면 + 뒷면이 모두 확인된 후보만 저장'
+printf '%s\n' '- Download/TCG등급학습/<게임>/<등급사>/수동등록대기/<카드>/ 로 자동 분류'
+printf '%s\n' '- 각 게임/등급사 폴더에 수동등록목록.json 생성'
+printf '%s\n' '- 단일사진·인증번호 없음·지원하지 않는 등급사는 자동 저장하지 않음'
+printf '%s\n' '- 공식사이트는 사용자가 직접 열어 확인하고 확인화면을 수동등록'
+printf '%s\n' '- 수동 확인자료는 RAW 등급 보정학습으로 자동 승격하지 않음'
