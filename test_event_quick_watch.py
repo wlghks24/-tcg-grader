@@ -8,7 +8,7 @@ import unittest
 from pathlib import Path
 from unittest import mock
 
-import event_collection_hardening_v139 as hardening
+import event_collection_hardening_v140 as hardening
 import event_gap_learning
 import event_priority_watch
 import event_quick_watch
@@ -42,19 +42,63 @@ class BreakingEventWatchTests(unittest.TestCase):
         self.assertEqual(180, event_priority_watch.DEFAULT_START_DELAY_SECONDS)
         self.assertLess(event_priority_watch.DEFAULT_INTERVAL_SECONDS, event_quick_watch.DEFAULT_INTERVAL_SECONDS)
 
-    def test_v139_expands_teaser_movie_vocabulary(self):
+    def test_v140_keeps_v139_teaser_movie_vocabulary(self):
         status = hardening.apply()
-        self.assertEqual(139, status["patch"])
+        self.assertEqual(140, status["patch"])
         self.assertEqual("movie", social_event_discovery._category("슈퍼 티저 비주얼과 예고편 공개"))
         self.assertIn("티저", social_event_discovery.EVENT_TERMS["ko"])
         self.assertIn("trailer", social_event_discovery.EVENT_TERMS["en"].lower())
 
-    def test_v139_targets_trusted_official_accounts(self):
+    def test_v140_targets_trusted_official_accounts(self):
         registry = json.loads(Path("social_source_registry.json").read_text(encoding="utf-8"))
         rows = hardening._trusted_accounts(registry, "포켓몬 카드", "KR")
         names = {str(row.get("username") or "").lower() for row in rows}
         self.assertIn("pokemon_korea_official", names)
         self.assertNotIn("poke_vending_machine", names)
+
+    def test_v140_detects_out_of_scope_card_and_limited_giveaways(self):
+        hardening.apply()
+        examples = (
+            "포켓몬 카드 구매 시 한정 프로모 카드 1장 선착순 증정",
+            "원피스 콜라보 한정판 카드를 방문 고객에게 무료 배포",
+            "나루토 프로모션 팩을 참가자에게 지급합니다",
+            "限定プロモカードを来場者に無料配布",
+            "Receive an exclusive promo card while supplies last",
+        )
+        for text in examples:
+            with self.subTest(text=text):
+                self.assertTrue(hardening.reward_signal(text))
+        self.assertFalse(hardening.reward_signal("포켓몬 신작 애니메이션 영상 공개"))
+        self.assertFalse(hardening.reward_signal("원피스 한정판 카드 일반 판매 시작"))
+        self.assertEqual("promo", social_event_discovery._category("프로모 카드 선착순 증정"))
+        self.assertIn("선착순", social_event_discovery.EVENT_TERMS["ko"])
+        self.assertIn("한정판", social_event_discovery.EVENT_TERMS["ko"])
+
+    def test_v140_reward_annotation_preserves_unverified_candidate_status(self):
+        row = {
+            "game": "원피스 카드",
+            "region": "KR",
+            "category": "promo",
+            "title": "콜라보 한정 카드를 선착순 증정",
+            "excerpt": "매장 방문 고객에게 한정 프로모 카드 무료 증정",
+            "source": "https://www.instagram.com/community_example/",
+            "source_kind": "instagram_public_search",
+            "source_tier": "C-community",
+            "verified": False,
+            "official_account_verified": False,
+            "confidence": 0.52,
+        }
+        marked = hardening._annotate_reward_row(row)
+        self.assertIs(marked.get("reward_watch"), True)
+        self.assertIs(marked.get("must_show_candidate"), True)
+        self.assertEqual("tcg_reward_or_giveaway", marked.get("collection_scope_override"))
+        self.assertIs(marked.get("verified"), False)
+        self.assertIs(marked.get("official_account_verified"), False)
+        self.assertGreaterEqual(float(marked.get("confidence") or 0), 0.64)
+
+    def test_v140_broadens_candidate_cap_without_overriding_explicit_environment(self):
+        hardening.apply()
+        self.assertGreaterEqual(social_event_discovery.MAX_ITEMS, 180)
 
     def test_repository_keeps_current_wild_card_gap_as_manual_evidence(self):
         payload = json.loads(Path("manual_event_evidence.json").read_text(encoding="utf-8"))
@@ -93,7 +137,7 @@ class BreakingEventWatchTests(unittest.TestCase):
             memory = root / "event_gap_learning.json"
             evidence.write_text(json.dumps({"items": [good, bad]}, ensure_ascii=False), encoding="utf-8")
             learner = event_gap_learning.EventGapLearner(memory_path=memory)
-            learned = hardening.learn_manual_official_evidence(learner, evidence)
+            learned = hardening.base.learn_manual_official_evidence(learner, evidence)
             self.assertEqual(1, learned)
             terms = learner.terms_for("포켓몬 카드", "KR", "movie", limit=8)
             self.assertTrue(any(term in terms for term in ("와일드카드", "CloverWorks", "티저")))
