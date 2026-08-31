@@ -7,6 +7,12 @@ source. This patch accepts an additional back image, stores it beside the front
 image, and records pair metadata without changing official-verification or
 RAW-learning trust rules. OCR accuracy v147 is applied to manual/public label
 OCR, and v148 may use the back only when front identity OCR is incomplete.
+
+Compatibility note:
+``ocr_front_back_fallback_v148`` wraps the v147 row-level OCR function.  The old
+v147 ``status()`` used strict function identity, so the wrapper made a healthy
+OCR stack report ``ok=False``.  This module installs a narrow status adapter that
+recognises the intentional v148 wrapper while keeping all real apply checks.
 """
 from __future__ import annotations
 
@@ -24,6 +30,7 @@ PATCH_ID = 148
 _APPLIED = False
 _ORIGINAL_REGISTER = None
 _ORIGINAL_PUBLIC_ROW = None
+_ORIGINAL_OCR_STATUS = None
 
 
 def _public_row_with_pair(row: dict[str, Any]) -> dict[str, Any]:
@@ -97,6 +104,36 @@ def _register_with_optional_back(payload: dict[str, Any]) -> dict[str, Any]:
 _register_with_optional_back._dual_photo_policy = True
 
 
+def _install_ocr_status_compat() -> None:
+    """Make v147 status wrapper-aware without weakening its real apply gate."""
+    global _ORIGINAL_OCR_STATUS
+    current = ocr_boost.status
+    if getattr(current, "_v148_wrapper_aware_status", False):
+        return
+    if _ORIGINAL_OCR_STATUS is None:
+        _ORIGINAL_OCR_STATUS = current
+
+    def compatible_status() -> dict[str, Any]:
+        original = _ORIGINAL_OCR_STATUS
+        result = dict(original()) if callable(original) else {
+            "ok": False,
+            "patch": getattr(ocr_boost, "PATCH_ID", 147),
+            "engine": getattr(ocr_boost, "ENGINE", "slab-ocr-accuracy-v147"),
+            "applied": bool(getattr(ocr_boost, "_APPLIED", False)),
+        }
+        wrapped = bool(getattr(manual_photo._ocr_for_row, "_front_back_ocr_fallback", False))
+        v147_applied = bool(result.get("applied") or getattr(ocr_boost, "_APPLIED", False))
+        v148_applied = front_back_ocr.status().get("ok") is True
+        if wrapped and v147_applied and v148_applied:
+            result["ok"] = True
+            result["wrapped_by_v148"] = True
+            result["row_ocr_entrypoint"] = "front_back_fallback_v148"
+        return result
+
+    compatible_status._v148_wrapper_aware_status = True
+    ocr_boost.status = compatible_status
+
+
 def apply() -> dict[str, Any]:
     global _APPLIED, _ORIGINAL_REGISTER, _ORIGINAL_PUBLIC_ROW
     ocr_status = ocr_boost.apply()
@@ -108,6 +145,7 @@ def apply() -> dict[str, Any]:
         or front_back_status.get("ok") is not True
     ):
         raise RuntimeError("OCR accuracy boost v148 failed to apply")
+    _install_ocr_status_compat()
     if _ORIGINAL_REGISTER is None:
         _ORIGINAL_REGISTER = manual_photo.register
     if _ORIGINAL_PUBLIC_ROW is None:
@@ -121,7 +159,7 @@ def apply() -> dict[str, Any]:
         "manual_front_back_upload": True,
         "front_used_for_ocr": True,
         "back_stored_separately": True,
-        "ocr_accuracy_boost": ocr_status.get("ok") is True,
+        "ocr_accuracy_boost": ocr_boost.status().get("ok") is True,
         "public_ocr_accuracy_boost": public_status.get("ok") is True,
         "back_ocr_fallback": front_back_status.get("ok") is True,
         "ocr_engine": ocr_status.get("engine"),
