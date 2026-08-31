@@ -74,6 +74,12 @@ def _diverse_ranked(rows: list[dict], limit: int = 8) -> list[dict]:
         buckets[provider].append(row)
     order = [name for name in PROVIDER_ORDER if buckets.get(name)]
     order += [name for name in buckets if name not in order]
+    # Retain each provider's relevance order while rotating regions inside it.
+    # This keeps a high-volume KR page from consuming every slot before JP/US.
+    for provider in order:
+        buckets[provider] = official_direct_discovery.balance_regions(
+            buckets[provider], len(buckets[provider]) or 1
+        )
     result: list[dict] = []
     index = 0
     while len(result) < max(1, limit) and order:
@@ -222,6 +228,9 @@ def _adaptive_event_rows(candidates: list[dict]) -> list[dict]:
                 "game": game,
                 "region": region,
                 "category": social_event_discovery._category(title),
+                "topic": str(item.get("topic") or collection_meta_learning.classify_topic(
+                    {"title": title, "summary": item.get("excerpt")}, provider
+                )),
                 "title": title[:220],
                 "source": source,
                 "source_kind": source_kind,

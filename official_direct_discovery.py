@@ -28,7 +28,8 @@ OFFICIAL_ENTRY_PAGES = {
         ),
         "JP": (
             "https://www.pokemon-card.com/info/",
-            "https://www.pokemon-card.com/",
+            "https://www.pokemon-card.com/products/",
+            "https://www.30th.pokemon-card.com/",
         ),
         "US": (
             "https://www.pokemon.com/us/pokemon-news",
@@ -36,13 +37,19 @@ OFFICIAL_ENTRY_PAGES = {
     },
     "원피스": {
         "KR": (
-            "https://onepiece-cardgame.kr/",
+            "https://onepiece-cardgame.kr/topics.do",
+            "https://onepiece-cardgame.kr/events.do",
+            "https://onepiece-cardgame.kr/products.do",
         ),
         "JP": (
-            "https://www.onepiece-cardgame.com/",
+            "https://www.onepiece-cardgame.com/news/",
+            "https://www.onepiece-cardgame.com/events/",
+            "https://www.onepiece-cardgame.com/products/",
         ),
         "US": (
-            "https://en.onepiece-cardgame.com/",
+            "https://en.onepiece-cardgame.com/topics/",
+            "https://en.onepiece-cardgame.com/events/",
+            "https://en.onepiece-cardgame.com/products/",
         ),
     },
     "나루토": {
@@ -64,14 +71,16 @@ EVENT_TERMS = (
     "news", "event", "events", "campaign", "promo", "promotion", "tournament",
     "release", "product", "products", "collab", "collaboration", "popup", "pop-up",
     "giveaway", "preorder", "restock", "limited", "exclusive", "movie", "film",
+    "merch", "merchandise", "goods", "official shop", "anniversary", "commemorative",
     "행사", "이벤트", "프로모", "콜라보", "팝업", "출시", "발매", "재발매", "한정",
-    "증정", "대회", "사전예약", "영화",
+    "증정", "대회", "사전예약", "영화", "굿즈", "공식숍", "공식샵", "기념", "주년",
     "ニュース", "イベント", "キャンペーン", "プロモ", "コラボ", "発売", "再販",
-    "限定", "配布", "大会", "映画", "商品",
+    "限定", "配布", "大会", "映画", "商品", "グッズ", "公式ショップ", "周年", "記念",
 )
 PATH_HINTS = (
     "/news", "/event", "/events", "/campaign", "/promo", "/product", "/products",
     "/tournament", "/release", "/info", "/topics", "/article", "/articles",
+    "/shop", "/goods", "/anniversary", "/special",
 )
 
 
@@ -129,6 +138,38 @@ def _looks_relevant(title: str, url: str) -> bool:
         return True
     path = urllib.parse.urlsplit(url).path.lower()
     return any(hint in path for hint in PATH_HINTS)
+
+
+def balance_regions(rows: list[dict], limit: int) -> list[dict]:
+    """Round-robin KR/JP/US so an earlier or noisier region cannot starve another."""
+    cap = max(1, int(limit))
+    buckets = {region: [] for region in ("KR", "JP", "US", "OTHER")}
+    seen: set[str] = set()
+    for row in rows:
+        if not isinstance(row, dict):
+            continue
+        url = str(row.get("url") or "").strip()
+        if not url.startswith("https://") or url in seen:
+            continue
+        seen.add(url)
+        region = str(row.get("query_region") or row.get("region") or "OTHER")
+        buckets[region if region in {"KR", "JP", "US"} else "OTHER"].append(row)
+    selected: list[dict] = []
+    index = 0
+    order = ("KR", "JP", "US", "OTHER")
+    while len(selected) < cap:
+        progressed = False
+        for region in order:
+            bucket = buckets[region]
+            if index < len(bucket):
+                selected.append(bucket[index])
+                progressed = True
+                if len(selected) >= cap:
+                    break
+        if not progressed:
+            break
+        index += 1
+    return selected
 
 
 def parse_official_links(game: str, region: str, base_url: str, raw_html: str, limit: int = 12) -> list[dict]:
@@ -190,21 +231,15 @@ def collect_game(keyword: str, limit: int = 8) -> dict:
                 errors.append(f"{game}/{region} {page}: {type(exc).__name__}: {exc}"[:700])
                 page_status.append({"region": region, "url": page, "ok": False, "result_count": 0, "error": type(exc).__name__})
         # Keep scanning all three regions even when one region has no results.
-    deduped: list[dict] = []
-    seen: set[str] = set()
-    for row in rows:
-        url = str(row.get("url") or "")
-        if url in seen:
-            continue
-        seen.add(url)
-        deduped.append(row)
+    result_limit = max(3, min(30, int(limit)))
+    selected = balance_regions(rows, result_limit)
     return {
         "keyword": keyword,
         "game": game,
-        "ok": bool(deduped) or any(x.get("ok") for x in page_status),
+        "ok": bool(selected) or any(x.get("ok") for x in page_status),
         "degraded": bool(errors),
-        "results": deduped[: max(3, min(30, int(limit)))],
-        "result_count": len(deduped[: max(3, min(30, int(limit)))]),
+        "results": selected,
+        "result_count": len(selected),
         "errors": errors[:20],
         "pages": page_status,
         "provider": "official_direct",

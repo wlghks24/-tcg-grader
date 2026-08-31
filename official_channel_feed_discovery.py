@@ -22,6 +22,7 @@ import xml.etree.ElementTree as ET
 from pathlib import Path
 
 from adaptive_collection_learner import canonical_game
+from official_direct_discovery import balance_regions
 from safe_runtime import env_int, safe_read_text, safe_urlopen
 
 ROOT = Path(__file__).resolve().parent
@@ -178,21 +179,15 @@ def collect_game(keyword: str, limit: int = 6) -> dict:
                 "result_count": 0,
                 "mode": "registry-covered/public-search-fallback",
             })
-    deduped = []
-    seen = set()
-    for row in rows:
-        url = str(row.get("url") or "")
-        if url in seen:
-            continue
-        seen.add(url)
-        deduped.append(row)
+    result_limit = max(2, min(20, int(limit)))
+    selected = balance_regions(rows, result_limit)
     return {
         "keyword": keyword,
         "game": game,
-        "ok": bool(deduped) or any(x.get("ok") for x in status),
+        "ok": bool(selected) or any(x.get("ok") for x in status),
         "degraded": bool(errors),
-        "results": deduped[: max(2, min(20, int(limit)))],
-        "result_count": len(deduped[: max(2, min(20, int(limit)))]),
+        "results": selected,
+        "result_count": len(selected),
         "accounts": status,
         "errors": errors[:20],
         "provider": "official_youtube_feed",

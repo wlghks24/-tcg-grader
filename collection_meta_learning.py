@@ -54,6 +54,10 @@ GAMES = {
 REGIONS = ("KR", "JP", "US")
 TOPICS = ("release", "reprint", "event", "tournament", "popup", "promo", "collab", "movie", "merch", "anniversary", "stock", "market", "graded_photo")
 SEARCH_TOPICS = ("release", "reprint", "event", "tournament", "popup", "promo", "collab", "movie", "merch", "anniversary")
+TOPIC_PRECEDENCE = (
+    "graded_photo", "market", "stock", "movie", "anniversary", "merch",
+    "collab", "reprint", "release", "popup", "tournament", "promo", "event",
+)
 
 TOPIC_PATTERNS = {
     "graded_photo": re.compile(r"psa|bgs|cgc|tag|brg|graded|slab|등급\s*카드|감정\s*카드|鑑定", re.I),
@@ -188,7 +192,8 @@ def _region(row: dict) -> str:
     return "KR"
 
 
-def _topic(row: dict, origin: str) -> str:
+def classify_topic(row: dict, origin: str = "") -> str:
+    """Classify collection coverage without letting broad event words hide rare topics."""
     explicit = str(row.get("category") or row.get("purpose") or "").lower()
     aliases = {"collaboration": "collab", "graded": "graded_photo", "price": "market"}
     explicit = aliases.get(explicit, explicit)
@@ -199,10 +204,14 @@ def _topic(row: dict, origin: str) -> str:
     if "stock" in origin or "purchase" in origin: return "stock"
     if "release" in origin: return "release"
     text = _norm(" ".join(str(row.get(k) or "") for k in ("title", "name_ko", "name_native", "product", "summary", "excerpt", "status")))
-    for name in ("graded_photo", "market", "stock", "movie", "collab", "reprint", "release", "popup", "tournament", "promo", "event"):
+    for name in TOPIC_PRECEDENCE:
         if TOPIC_PATTERNS[name].search(text):
             return name
     return "event"
+
+
+# Backward-compatible private name used by existing diagnostics/tests.
+_topic = classify_topic
 
 
 def _source_name(row: dict, origin: str) -> str:

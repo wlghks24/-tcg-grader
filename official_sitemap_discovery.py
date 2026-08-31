@@ -16,7 +16,7 @@ import urllib.request
 import xml.etree.ElementTree as ET
 
 from adaptive_collection_learner import GAME_CONFIG, canonical_game
-from official_direct_discovery import OFFICIAL_ENTRY_PAGES, PATH_HINTS, EVENT_TERMS
+from official_direct_discovery import OFFICIAL_ENTRY_PAGES, PATH_HINTS, EVENT_TERMS, balance_regions
 from safe_runtime import env_int, safe_urlopen
 
 TIMEOUT = env_int("TCG_HTTP_TIMEOUT", 20, 5, 60)
@@ -170,21 +170,15 @@ def collect_game(keyword: str, limit: int = 6) -> dict:
             })
             if sum(1 for x in discovered if x.get("query_region") == region) >= max(2, min(8, int(limit))):
                 break
-    deduped = []
-    seen = set()
-    for row in discovered:
-        url = str(row.get("url") or "")
-        if url in seen:
-            continue
-        seen.add(url)
-        deduped.append(row)
+    result_limit = max(2, min(20, int(limit)))
+    selected = balance_regions(discovered, result_limit)
     return {
         "keyword": keyword,
         "game": game,
-        "ok": bool(deduped) or any(x.get("ok") for x in status),
+        "ok": bool(selected) or any(x.get("ok") for x in status),
         "degraded": bool(errors),
-        "results": deduped[: max(2, min(20, int(limit)))],
-        "result_count": len(deduped[: max(2, min(20, int(limit)))]),
+        "results": selected,
+        "result_count": len(selected),
         "sitemaps": status,
         "errors": errors[:30],
         "provider": "official_sitemap",

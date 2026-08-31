@@ -1,7 +1,7 @@
 {
   "version": 1,
   "engine": "v109-card-identity-ocr-learning",
-  "updated_at": "2026-08-31T13:29:39+00:00",
+  "updated_at": "2026-08-31T13:47:48+00:00",
   "training_only": true,
   "scenario_count": 21,
   "successful_scenarios": 21,
