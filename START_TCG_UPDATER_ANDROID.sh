@@ -33,13 +33,38 @@ if ! command -v tesseract >/dev/null 2>&1; then
 fi
 
 echo "서버를 종료하려면 Ctrl+C를 누르세요."
-for required in index.html tcg_updater.py tcg_updater_v135.py verified_grade_learning_v135.py verified_grade_learning_v135_safe.py; do
+for required in \
+  index.html \
+  tcg_updater.py \
+  tcg_updater_v135.py \
+  verified_grade_learning_v135.py \
+  verified_grade_learning_v135_safe.py \
+  event_collection_hardening_v139.py \
+  event_collection_hardening_v140.py \
+  event_collection_hardening_v141.py \
+  event_gap_learning.py \
+  event_priority_watch.py \
+  event_quick_watch.py \
+  social_event_discovery.py \
+  multi_route_event_discovery.py; do
   if [ ! -s "$required" ]; then
-    echo "[오류] v135 안전서버 필수파일 누락: $required"
-    echo "[안전] 구버전 서버로 폴백하지 않습니다. 설치 스크립트를 다시 실행하세요."
+    echo "[오류] v141 안전서버 필수파일 누락: $required"
+    echo "[안전] 구버전 서버로 폴백하지 않습니다. 최신 설치/갱신 스크립트를 다시 실행하세요."
     exit 1
   fi
 done
+
+# Fail early on partial tablet updates. This catches a missing v141 dependency
+# before the background server starts and silently loses reward/event learning.
+if ! python - <<'PY' >/dev/null 2>&1
+import event_collection_hardening_v141 as h
+assert int(h.PATCH_ID) == 141
+PY
+then
+  echo "[오류] v141 행사·증정 학습 모듈 연결 검사 실패"
+  echo "[안전] 부분 업데이트 상태로 서버를 시작하지 않습니다."
+  exit 1
+fi
 
 if command -v termux-wake-lock >/dev/null 2>&1; then
   termux-wake-lock || true
@@ -52,4 +77,5 @@ fi
 
 echo "로컬 서버를 먼저 시작합니다. 자료 수집은 서버 안에서 안전하게 순차 실행됩니다."
 echo "등급학습 안전게이트 사용: 공식인증 + RAW 원시예측 + 교차검증 + 하향보정만"
+echo "행사학습 v141: 범위외 카드/프로모/한정품 증정 탐색 + 검증정보만 검색어 학습"
 exec python tcg_updater_v135.py
