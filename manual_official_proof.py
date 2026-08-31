@@ -6,14 +6,16 @@ A user may open the official PSA/BGS/CGC/TAG/BRG lookup page and upload a
 screenshot. The screenshot is reference-only evidence: it never sets
 official_result=True and never enters RAW grade calibration.
 
-v150 hardening:
+v151 hardening:
 - certificate number is the primary page-identity key;
 - official-company text/domain evidence is required;
 - grade may be recovered from the already OCR-confirmed slab when the official
   page screenshot does not expose the grade in the current viewport;
 - OCR omissions do not quarantine the underlying card;
 - explicit proof conflicts are recorded on the proof attempt but do not
-  downgrade an otherwise valid pending registration.
+  downgrade an otherwise valid pending registration;
+- a mistaken unverified manual registration can be cancelled by the user and
+  its stored front/back/proof files are removed safely.
 """
 from __future__ import annotations
 
@@ -29,6 +31,7 @@ import time
 from typing import Any
 
 import manual_graded_photo_registration as manual_photo
+import manual_registration_delete_v151 as manual_delete
 from grading_cert_verifier import lookup_url
 from safe_runtime import atomic_write_bytes, atomic_write_json
 
@@ -133,6 +136,7 @@ def _proof_public(row: dict[str, Any]) -> dict[str, Any]:
         "manual_official_proof_match_mode": row.get("manual_official_proof_match_mode"),
         "manual_reference_only": row.get("manual_official_proof_registered") is True and row.get("official_result") is not True,
         "identity_complete": bool(company and cert and grade is not None),
+        "user_cancel_allowed": row.get("official_result") is not True,
     }
 
 
@@ -143,7 +147,7 @@ def public_status() -> dict[str, Any]:
     public = [_proof_public(row) for row in reversed(rows[-200:])]
     return {
         "ok": True,
-        "version": 3,
+        "version": 4,
         "registrations": public,
         "summary": {
             "total": len(public),
@@ -171,6 +175,8 @@ def public_status() -> dict[str, Any]:
             "proof_upload_rate_limited": True,
             "proof_upload_max_per_10_minutes": PROOF_RATE_MAX,
             "later_live_official_lookup_can_promote": True,
+            "user_can_cancel_unverified_registration": True,
+            "user_cannot_delete_live_official_verified_registration": True,
             "access_control_bypass_used": False,
         },
     }
@@ -368,6 +374,8 @@ def submit(payload: dict[str, Any]) -> dict[str, Any]:
     registration_id = str(payload.get("registration_id") or "").strip()[:80]
     if not _REGISTRATION_RE.fullmatch(registration_id):
         raise ValueError("수동등록 번호 형식 오류")
+    if str(payload.get("action") or "").strip().lower() == "delete_registration":
+        return manual_delete.delete_registration(registration_id)
     _claim_proof_upload()
 
     with manual_photo.LOCK:
