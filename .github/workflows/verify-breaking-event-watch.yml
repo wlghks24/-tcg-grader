@@ -15,6 +15,8 @@ on:
       - 'multi_route_event_discovery.py'
       - 'tcg_updater_v135.py'
       - 'test_event_quick_watch.py'
+      - 'START_TCG_UPDATER_ANDROID.sh'
+      - 'INSTALL_GRADE_LEARNING_V135.sh'
       - '.github/workflows/verify-breaking-event-watch.yml'
   workflow_dispatch:
 
@@ -44,3 +46,14 @@ jobs:
           multi_route_event_discovery.py
       - name: Run breaking-event regression tests
         run: python -m unittest -v test_event_quick_watch.py
+      - name: Verify Android v141 install wiring
+        shell: bash
+        run: |
+          bash -n START_TCG_UPDATER_ANDROID.sh
+          bash -n INSTALL_GRADE_LEARNING_V135.sh
+          grep -q 'event_collection_hardening_v141.py' START_TCG_UPDATER_ANDROID.sh
+          grep -q 'event_collection_hardening_v141.py' INSTALL_GRADE_LEARNING_V135.sh
+          grep -q 'event_priority_watch.py' INSTALL_GRADE_LEARNING_V135.sh
+          grep -q 'event_quick_watch.py' INSTALL_GRADE_LEARNING_V135.sh
+          grep -q 'event_gap_learning.py' INSTALL_GRADE_LEARNING_V135.sh
+          grep -q "event_collection_patch.*141" tcg_updater_v135.py
