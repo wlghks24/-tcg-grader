@@ -92,7 +92,9 @@ BLINDSPOT_TOPICS = {
     "KR": {
         "movie": "영화 극장판 개봉 관람특전 영화특전",
         "collab": "콜라보 협업 제휴 브랜드데이 야구 카페 편의점",
-        "popup": "팝업 팝업스토어 박람회 전시회 체험회",
+        "popup": "팝업 팝업스토어 점프샵 JUMP SHOP 박람회 전시회 체험회",
+        "merch": "굿즈 공식숍 점프샵 JUMP SHOP 한정판매 특설매장 백화점",
+        "anniversary": "기념 주년 기념전 전시 페어 축제",
         "tournament": "대회 리그 컵 챔피언십 월드챔피언십 매장대회",
         "promo": "프로모카드 증정 배포 특전 한정 캠페인",
         "release": "출시 발매 신탄 부스터 스타터 예약",
@@ -106,6 +108,8 @@ BLINDSPOT_TOPICS = {
         "promo": "プロモカード 配布 特典 限定 キャンペーン",
         "release": "発売 新弾 ブースター スターター 予約",
         "reprint": "再販 再版 復刻 追加生産 再入荷",
+        "merch": "グッズ 公式ショップ ジャンプショップ 限定販売 百貨店",
+        "anniversary": "記念 周年 記念展 フェア 祭典",
     },
     "US": {
         "movie": "movie film cinema screening theatrical admission promo",
@@ -115,6 +119,8 @@ BLINDSPOT_TOPICS = {
         "promo": "promo card giveaway distribution exclusive campaign",
         "release": "release new set booster starter preorder",
         "reprint": "reprint re-release restock additional print rerun",
+        "merch": "merch merchandise official shop limited store",
+        "anniversary": "anniversary celebration commemorative exhibition fair",
     },
 }
 

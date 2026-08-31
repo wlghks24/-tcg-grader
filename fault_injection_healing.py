@@ -39,6 +39,7 @@ MUTABLE_JSON = {
     "vision_self_learning_params.json", "vision_self_learning_report.json",
     "V103_MARKET_SOURCE_TEST_REPORT.json",
     "integrity_manifest.json", "web_discovery_candidates.json", "social_event_candidates.json", "social_source_registry.json",
+    "event_gap_learning.json", "event_gap_learning.json.bak",
     "graded_photo_candidates.json", "graded_photo_source_learning.json", "graded_photo_official_cache.json",
     "graded_photo_reference_learning.json", "detailed_collection_learning.json",
     "collection_learning_memory.json", "search_method_learning.json", "search_engine_profile.json",

@@ -32,7 +32,11 @@ ALLOWED = {
     "naruto-official.com", "www.naruto-official.com",
     "kobis.or.kr", "www.kobis.or.kr",
     "daewonmedia.com", "www.daewonmedia.com",
+    "seoulmediacomics.com", "www.seoulmediacomics.com",
 }
+OFFICIAL_SOCIAL_HOSTS = {"x.com", "www.x.com"}
+OFFICIAL_SOCIAL_POSTS = {("smg_comic", "2081560207646441942")}
+FETCH_ALLOWED = ALLOWED | OFFICIAL_SOCIAL_HOSTS
 INDEXES = (
     ("KR", "원피스 카드", "https://onepiece-cardgame.kr/events.do"),
     ("KR", "원피스 카드", "https://onepiece-cardgame.kr/topics.do"),
@@ -130,6 +134,34 @@ REGIONAL_MOVIE_TRACKERS = KR_MOVIE_TRACKERS + (
 # 2026-08-25에 실제 공식 페이지에서 대조한 최소 사실만 유지한다.
 # 월/계절/시작일만 발표된 정보에서 내부 검토 범위를 실제 확정일처럼 표시하지 않는다.
 OFFICIAL_VERIFIED_SEEDS = (
+    {
+        "game": "원피스 카드", "region": "KR", "category": "collaboration",
+        "name_ko": "JUMP SHOP in SEOUL 제3탄 · 원피스 포함 공식 팝업",
+        "name_native": "期間限定 JUMP SHOP in SEOUL 第3弾",
+        "start_date": "2026-09-23", "end_date": "2026-10-06", "claim_deadline": "2026-10-06",
+        "date_precision": "day",
+        "reward": "ONE PIECE·NARUTO 등 점프 작품의 슈에이샤 공식 라이선스 굿즈 판매. 카드 프로모 증정은 공식 공지에서 별도 확인되지 않음.",
+        "condition": "운영시간 10:00~21:00. 상품·재고·입장 방식은 서울미디어코믹스 공식 공지와 현장 안내를 확인하세요.",
+        "location": "신세계백화점 강남점 센트럴 1F 오픈 스테이지 · 서울 서초구 신반포로 176",
+        "status": "2026-09-23 시작 예정",
+        "source": "https://x.com/smg_comic/status/2081560207646441942",
+        "verification_source": "https://www.seoulmediacomics.com/",
+        "source_grade": "official", "event_scope": "licensed_ip_popup_not_tcg_tournament",
+    },
+    {
+        "game": "나루토 카드", "region": "KR", "category": "collaboration",
+        "name_ko": "JUMP SHOP in SEOUL 제3탄 · 나루토 포함 공식 팝업",
+        "name_native": "期間限定 JUMP SHOP in SEOUL 第3弾",
+        "start_date": "2026-09-23", "end_date": "2026-10-06", "claim_deadline": "2026-10-06",
+        "date_precision": "day",
+        "reward": "ONE PIECE·NARUTO 등 점프 작품의 슈에이샤 공식 라이선스 굿즈 판매. 카드 프로모 증정은 공식 공지에서 별도 확인되지 않음.",
+        "condition": "운영시간 10:00~21:00. 상품·재고·입장 방식은 서울미디어코믹스 공식 공지와 현장 안내를 확인하세요.",
+        "location": "신세계백화점 강남점 센트럴 1F 오픈 스테이지 · 서울 서초구 신반포로 176",
+        "status": "2026-09-23 시작 예정",
+        "source": "https://x.com/smg_comic/status/2081560207646441942",
+        "verification_source": "https://www.seoulmediacomics.com/",
+        "source_grade": "official", "event_scope": "licensed_ip_popup_not_tcg_tournament",
+    },
     {
         "game": "원피스 카드", "region": "KR", "category": "promo",
         "name_ko": "PLAYGO 출시 알림 · 신사황 프로모션 팩 재배포",
@@ -234,7 +266,7 @@ TARGET_REGION_HINTS = {
 TIMEOUT_SECONDS = env_int('TCG_HTTP_TIMEOUT',20,5,60)
 MAX_DISCOVERED_PER_INDEX = 2
 EVENT_WORDS = re.compile(
-    r"이벤트|행사|배틀|교류회|챔피언|토너먼트|프로모|"
+    r"이벤트|행사|배틀|교류회|챔피언|토너먼트|프로모|팝업|팝업스토어|점프샵|JUMP SHOP|"
     r"イベント|バトル|キャンペーン|チャンピオン|"
     r"event|battle|championship|tournament|promo|league|cup|tutorial|fest|comic con|game night|night|giveaway|teaching session|collab|collaboration|convention|expo",
     re.I,
@@ -242,25 +274,32 @@ EVENT_WORDS = re.compile(
 
 
 def approved_url(url: str) -> str:
-    return validate_public_https_url(url, ALLOWED)
+    value = validate_public_https_url(url, FETCH_ALLOWED)
+    parsed = urllib.parse.urlsplit(value)
+    host = (parsed.hostname or "").lower()
+    if host in OFFICIAL_SOCIAL_HOSTS:
+        parts = [urllib.parse.unquote(part) for part in parsed.path.split("/") if part]
+        if len(parts) != 3 or parts[1] != "status" or (parts[0].lower(), parts[2]) not in OFFICIAL_SOCIAL_POSTS:
+            raise ValueError("승인되지 않은 공식 SNS 게시물")
+    return value
 
 
 class OfficialRedirect(urllib.request.HTTPRedirectHandler):
     def redirect_request(self, req, fp, code, msg, headers, newurl):
         absolute = urllib.parse.urljoin(req.full_url, newurl)
         approved_url(absolute)
-        require_public_https(absolute, ALLOWED)
+        require_public_https(absolute, FETCH_ALLOWED)
         return super().redirect_request(req, fp, code, msg, headers, absolute)
 
 
 def fetch(url: str) -> str:
     approved_url(url)
-    require_public_https(url, ALLOWED)
+    require_public_https(url, FETCH_ALLOWED)
     request = urllib.request.Request(url, headers={"User-Agent": "Mozilla/5.0 TCG-Grader-Promo-Checker/2.0"})
     opener = urllib.request.build_opener(OfficialRedirect)
     with opener.open(request, timeout=TIMEOUT_SECONDS) as response:
         approved_url(response.geturl())
-        require_public_https(response.geturl(), ALLOWED)
+        require_public_https(response.geturl(), FETCH_ALLOWED)
         return response.read(1_500_000).decode("utf-8", "replace")
 
 
@@ -790,8 +829,8 @@ def main() -> dict:
     data["expiry_policy"] = "end_date/claim_deadline 중 더 늦은 날짜가 오늘보다 이전이면 자동 삭제"
     data["discovery_sources"] = len(INDEXES)
     data["coverage"] = coverage_summary(checked)
-    data["official_source_policy"] = "공식 HTTPS 허용목록 + 실제 개최지 판별 + 월/계절/미발표 날짜 정확도 보존 + SNS/Google 후보는 공식 검증 전 자동승격 금지"
-    data["official_reference_checked_on"] = "2026-08-25"
+    data["official_source_policy"] = "공식 HTTPS 허용목록 + 정확히 승인된 공식 SNS 게시물 + 실제 개최지 판별 + 월/계절/미발표 날짜 정확도 보존 + 일반 SNS/Google 후보는 공식 검증 전 자동승격 금지"
+    data["official_reference_checked_on"] = "2026-08-31"
     kr_movie_count = sum(1 for x in checked if x.get("region") == "KR" and x.get("category") == "movie")
     data["kr_movie_tracking_count"] = kr_movie_count
     movie_pairs = data["coverage"]["movie_game_region_pairs"]

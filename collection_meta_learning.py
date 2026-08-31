@@ -52,14 +52,16 @@ GAMES = {
     "나루토": ("나루토", "naruto", "ナルト"),
 }
 REGIONS = ("KR", "JP", "US")
-TOPICS = ("release", "reprint", "event", "tournament", "popup", "promo", "collab", "movie", "stock", "market", "graded_photo")
-SEARCH_TOPICS = ("release", "reprint", "event", "tournament", "popup", "promo", "collab", "movie")
+TOPICS = ("release", "reprint", "event", "tournament", "popup", "promo", "collab", "movie", "merch", "anniversary", "stock", "market", "graded_photo")
+SEARCH_TOPICS = ("release", "reprint", "event", "tournament", "popup", "promo", "collab", "movie", "merch", "anniversary")
 
 TOPIC_PATTERNS = {
     "graded_photo": re.compile(r"psa|bgs|cgc|tag|brg|graded|slab|등급\s*카드|감정\s*카드|鑑定", re.I),
     "market": re.compile(r"시세|가격|실거래|거래|판매가|price|sold|market|相場|落札|価格", re.I),
     "stock": re.compile(r"재고|입고|재입고|품절|매진|자판기|in stock|restock|sold out|在庫|再入荷|売り切れ", re.I),
     "movie": re.compile(r"영화|극장판|movie|film|cinema|映画|劇場版", re.I),
+    "anniversary": re.compile(r"기념|주년|anniversary|commemorative|周年|記念", re.I),
+    "merch": re.compile(r"굿즈|공식숍|점프샵|JUMP SHOP|merch|merchandise|official shop|グッズ|公式ショップ", re.I),
     "collab": re.compile(r"콜라보|협업|제휴|브랜드데이|collab|collaboration|partnership|コラボ|タイアップ", re.I),
     "reprint": re.compile(r"재발매|재판|복각|reprint|re-release|rerun|再販|再版|復刻", re.I),
     "release": re.compile(r"출시|발매|신탄|신제품|부스터|스타터|예약|재발매|release|launch|new set|booster|starter|preorder|reprint|発売|新弾|再販", re.I),
@@ -75,7 +77,9 @@ FOCUS_TERMS = {
         "reprint": "재발매 재판 복각 추가생산 재입고",
         "event": "행사 이벤트 대회 팝업 페스타 체험회",
         "tournament": "대회 리그 컵 챔피언십 월드챔피언십 매장대회",
-        "popup": "팝업 팝업스토어 박람회 전시회 체험회 카드샵",
+        "popup": "팝업 팝업스토어 점프샵 JUMP SHOP 박람회 전시회 체험회 카드샵",
+        "merch": "굿즈 공식숍 점프샵 JUMP SHOP 한정판매 특설매장 백화점",
+        "anniversary": "기념 주년 기념전 전시 페어 축제",
         "promo": "프로모 프로모카드 증정 배포 특전 한정",
         "collab": "콜라보 협업 제휴 브랜드데이 카페 편의점 마트",
         "movie": "영화 극장판 개봉 특별상영",
@@ -89,6 +93,8 @@ FOCUS_TERMS = {
         "promo": "プロモ プロモカード 配布 特典 限定 キャンペーン",
         "collab": "コラボ タイアップ カフェ コンビニ",
         "movie": "映画 劇場版 上映",
+        "merch": "グッズ 公式ショップ ジャンプショップ 限定販売 百貨店",
+        "anniversary": "記念 周年 記念展 フェア 祭典",
     },
     "US": {
         "release": "release new set booster starter preorder reprint",
@@ -99,6 +105,8 @@ FOCUS_TERMS = {
         "promo": "promo promo card giveaway distribution exclusive",
         "collab": "collab collaboration partnership cafe retailer",
         "movie": "movie film cinema screening",
+        "merch": "merch merchandise official shop limited store",
+        "anniversary": "anniversary celebration commemorative exhibition fair",
     },
 }
 
