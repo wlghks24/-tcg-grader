@@ -6,13 +6,16 @@ ROOT = Path(__file__).resolve().parent
 
 
 class SocialStockIntegrationTests(unittest.TestCase):
-    def test_watch_accounts_are_untrusted_and_role_separated(self):
+    def test_official_and_watch_accounts_keep_separate_trust_roles(self):
         data=json.loads((ROOT/'social_source_registry.json').read_text(encoding='utf-8'))
-        by={x.get('username'):x for x in data.get('watch_accounts',[]) if isinstance(x,dict)}
-        for name in ('pokemon_korea_official','poke_vending_machine','ttosatda'):
-            self.assertIn(name,by); self.assertFalse(by[name].get('trusted'))
-        self.assertIn('event',by['pokemon_korea_official'].get('role',''))
-        self.assertIn('stock',by['poke_vending_machine'].get('role',''))
+        official={x.get('username'):x for x in data.get('accounts',[]) if isinstance(x,dict)}
+        watch={x.get('username'):x for x in data.get('watch_accounts',[]) if isinstance(x,dict)}
+        self.assertIn('pokemon_korea_official',official)
+        self.assertTrue(official['pokemon_korea_official'].get('trusted'))
+        self.assertNotIn('pokemon_korea_official',watch)
+        for name in ('poke_vending_machine','ttosatda'):
+            self.assertIn(name,watch); self.assertFalse(watch[name].get('trusted'))
+            self.assertIn('stock',watch[name].get('role',''))
 
     def test_pokopia_user_evidence_is_visible_but_unverified(self):
         data=json.loads((ROOT/'social_event_candidates.json').read_text(encoding='utf-8'))

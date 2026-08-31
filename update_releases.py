@@ -47,12 +47,43 @@ def iso_en(value: str) -> str:
     return dt.datetime.strptime(value, "%B %d, %Y").date().isoformat()
 
 
+def _english_release_fields(value: str) -> dict:
+    """Parse an official English day or month without inventing a day."""
+    normalized = re.sub(r"\s+", " ", str(value or "")).strip()
+    for fmt in ("%B %d, %Y", "%b %d, %Y"):
+        try:
+            return {"release_date": dt.datetime.strptime(normalized, fmt).date().isoformat()}
+        except ValueError:
+            pass
+    for fmt in ("%B %Y", "%b %Y"):
+        try:
+            month = dt.datetime.strptime(normalized, fmt).date()
+            return {
+                "release_date": None,
+                "release_window": month.strftime("%Y-%m"),
+                "release_precision": "month",
+                "release_label": normalized,
+            }
+        except ValueError:
+            pass
+    raise ValueError(f"공식 출시일 형식을 읽지 못했습니다: {normalized[:40]}")
+
+
 def collect_onepiece(url: str, region: str) -> list[dict]:
     text = html_to_text(fetch(url))
-    pattern = re.compile(r"(BOOSTER PACK\s*-[^-]{2,100}-\s*\[OP-\d+\]).{0,220}?Release Date\s*([A-Za-z]+\s+\d{1,2},\s+20\d{2}).{0,160}?MSRP\s*USD\s*\$([0-9.]+)", re.I)
+    pattern = re.compile(
+        r"((?:(?:EXTRA|PREMIUM)\s+)?BOOSTER(?:\s+PACK)?\s+.{2,130}?"
+        r"\[(?:OP|EB|PRB)[A-Z0-9-]+\])\s*"
+        r"Release\s*Date\s*([A-Za-z]+\s+(?:\d{1,2},\s*)?20\d{2})\s*"
+        r"MSRP\s*USD\s*\$([0-9]+(?:\.[0-9]+)?)",
+        re.I,
+    )
     found = []
     for name, date, price in pattern.findall(text):
-        found.append({"game":"ONE PIECE","region":region,"name":re.sub(r"\s+"," ",name).strip(),"release_date":iso_en(date),"price":f"${price}/팩","status":"공식 확인","source":url})
+        row={"game":"ONE PIECE","region":region,"name":re.sub(r"\s+"," ",name).strip(),
+             "price":f"${price}/팩","status":"공식 확인","source":url}
+        row.update(_english_release_fields(date))
+        found.append(row)
     return found
 
 
@@ -62,18 +93,24 @@ def collect_onepiece_jp() -> list[dict]:
     pattern = re.compile(
         r"(?:ブースターパック|エクストラブースター|プレミアムブースター)\s*"
         r"(.{2,90}?)\s*〖(OP-\d+|EB-\d+|PRB-\d+)〗\s*"
-        r"発売日\s*(20\d{2})\.(\d{1,2})\.(\d{1,2})(?:\([^)]*\))?\s*"
+        r"発売日\s*(20\d{2})\s*[.年]\s*(\d{1,2})"
+        r"(?:\s*[.月]\s*(\d{1,2})\s*日?)?(?:\([^)]*\))?\s*"
         r"メーカー希望小売価格\s*([0-9,]+)円",
         re.I,
     )
     found = []
     for title, code, y, m, d, price in pattern.findall(text):
-        found.append({
+        row={
             "game":"ONE PIECE", "region":"JP",
             "name":f"{title.strip()} [{code}]",
-            "release_date":dt.date(int(y), int(m), int(d)).isoformat(),
             "price":f"¥{price}/팩", "status":"공식 확인", "source":url,
-        })
+        }
+        if d:
+            row["release_date"]=dt.date(int(y),int(m),int(d)).isoformat()
+        else:
+            row.update({"release_date":None,"release_window":f"{int(y):04d}-{int(m):02d}",
+                        "release_precision":"month","release_label":f"{int(y):04d}년 {int(m)}월"})
+        found.append(row)
     return found
 
 
@@ -93,7 +130,11 @@ def collect_onepiece_kr() -> list[dict]:
 def collect_pokemon_jp() -> list[dict]:
     url = "https://www.pokemon-card.com/products/index.html?productType=expansion"
     text = html_to_text(fetch(url))
-    pattern = re.compile(r"(?:拡張パック|ハイクラスパック)\s*[「『]?(.{2,55}?)[」』]?\s*(?:拡張パック)?\s*販売日\s*(20\d{2})年\s*(\d{1,2})月\s*(\d{1,2})日.{0,130}?希望小売価格\s*([0-9,]+)円")
+    pattern = re.compile(
+        r"(?:拡張パック|ハイクラスパック)\s*[「『]?\s*(.{2,55}?)\s*[」』]?\s*"
+        r"(?:拡張パック\s*)?販売日\s*(20\d{2})\s*年\s*(\d{1,2})\s*月\s*"
+        r"(\d{1,2})\s*日.{0,160}?希望小売価格\s*([0-9,]+)\s*円"
+    )
     found = []
     for name, y, m, d, price in pattern.findall(text):
         date = dt.date(int(y), int(m), int(d)).isoformat()
@@ -116,7 +157,14 @@ def valid(item: dict) -> bool:
     if not host_ok:
         return False
     if item.get("release_window") and not item.get("release_date"):
-        return True
+        window = str(item["release_window"]).strip()
+        month_match = re.fullmatch(r"(20\d{2})-(0[1-9]|1[0-2])", window)
+        seasonal_match = re.fullmatch(r"(20\d{2})년\s*(봄|여름|가을|겨울)", window)
+        match = month_match or seasonal_match
+        if not match:
+            return False
+        year = int(match.group(1))
+        return MIN_RELEASE_DATE.year <= year <= dt.date.today().year + MAX_FUTURE_YEARS
     try:
         date = dt.date.fromisoformat(str(item["release_date"]))
     except (TypeError, ValueError):

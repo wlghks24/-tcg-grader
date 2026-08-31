@@ -455,17 +455,39 @@ def _count_payload(data: dict) -> int:
     try: return len(value)
     except Exception: return 0
 
+
+def _contextualize_collection_warning(filename: str, value: object) -> str:
+    """Add a bounded job-specific cause when an old collector returned only an exception name.
+
+    Older tablet data can contain ``Pokémon JP: ValueError`` or a lone
+    ``ValueError``.  Those strings lose the distinction between a changed source
+    page, an invalid JSON payload and an exchange-rate range failure, which in
+    turn teaches the wrong recovery group.  Do not rewrite detailed errors.
+    """
+    text=auto_repair_engine.redact_sensitive(value,800).strip()
+    if not re.search(r"(?:^|:\s*)(?:ValueError|TypeError)\s*$",text,re.I):
+        return text
+    context={
+        "releases.json":"공식 페이지에서 검증 가능한 출시정보를 읽지 못했습니다",
+        "market_prices.json":"공개 가격 페이지의 상품명·가격 표시 구조를 읽지 못했습니다",
+        "promo_events.json":"공식 행사 페이지에서 검증 가능한 행사정보를 읽지 못했습니다",
+        "exchange_rates.json":"원화 환산 환율 응답의 통화값·단위를 검증하지 못했습니다",
+        "graded_photo_candidates.json":"등급카드 사진 후보의 인증·이미지 증거 구조를 검증하지 못했습니다",
+    }.get(filename,"수집 결과의 필수 구조를 검증하지 못했습니다")
+    return f"{text}: {context}"
+
+
 def validate_json(name: str, data: dict) -> None:
     if not isinstance(data, dict):
         raise ValueError("최상위 JSON 형식 오류")
-    if name in auto_repair_engine.SAFE_JSON_FILES and not auto_repair_engine._valid_project_payload(name,data):
-        raise ValueError(f"{name} 파일의 필수 구조·자료값·보안 주소가 잘못되었습니다")
     if name == "releases.json":
         if not isinstance(data.get("items"), list):
             raise ValueError("출시목록 items 누락")
-        for item in data["items"]:
-            if not all(item.get(k) for k in ("game", "region", "name", "source")):
-                raise ValueError("출시상품 필수값 누락")
+        import update_releases
+        for index,item in enumerate(data["items"]):
+            if not update_releases.valid(item):
+                label=item.get("name","이름 없음") if isinstance(item,dict) else "객체 아님"
+                raise ValueError(f"출시상품 #{index + 1}({label}) 공식 출처·날짜 형식 또는 필수값 오류")
     elif name == "market_prices.json":
         entries = data.get("entries")
         if not isinstance(entries, dict):
@@ -483,9 +505,10 @@ def validate_json(name: str, data: dict) -> None:
         if not isinstance(data.get("items"), list):
             raise ValueError("행사목록 items 누락")
         import update_promo_events
-        for item in data["items"]:
+        for index,item in enumerate(data["items"]):
             if not update_promo_events.valid(item):
-                raise ValueError("행사 공식 출처·국가·날짜 정확도 또는 필수 자료가 잘못되었습니다")
+                label=(item.get("name_ko") or item.get("name_native") or "이름 없음") if isinstance(item,dict) else "객체 아님"
+                raise ValueError(f"행사 #{index + 1}({label}) 공식 출처·국가·날짜 정확도 또는 필수 자료가 잘못되었습니다")
     elif name == "purchase_sources.json":
         sources = data.get("sources")
         if not isinstance(sources, list) or len(sources) < 20:
@@ -511,8 +534,24 @@ def validate_json(name: str, data: dict) -> None:
             raise ValueError("편의점·대형마트·문구점 등 필수 오프라인 구매처 분류 누락")
     elif name == "exchange_rates.json":
         rates = data.get("rates", {})
-        if not (0 < float(rates.get("JPY_KRW", 0)) < 30 and 500 < float(rates.get("USD_KRW", 0)) < 3000):
+        if not isinstance(rates,dict):
+            raise ValueError("환율 rates 구조 오류")
+        if any(isinstance(rates.get(key),bool) for key in ("JPY_KRW","USD_KRW")):
+            raise ValueError("환율 값은 숫자여야 합니다")
+        try:
+            jpy_krw=float(rates.get("JPY_KRW",0));usd_krw=float(rates.get("USD_KRW",0))
+        except (TypeError,ValueError,OverflowError) as exc:
+            raise ValueError("환율 값은 유한한 숫자여야 합니다") from exc
+        if not (0 < jpy_krw < 30 and 500 < usd_krw < 3000):
             raise ValueError("환율 범위 오류")
+    elif name == "graded_photo_candidates.json":
+        if not isinstance(data.get("records"),list) or not isinstance(data.get("summary"),dict):
+            raise ValueError("등급카드 사진 후보 records·summary 구조 오류")
+    # Run the shared security/integrity gate after the detailed schema checks so
+    # the learning engine receives a useful field/index cause instead of one
+    # generic ValueError.  The gate remains authoritative.
+    if name in auto_repair_engine.SAFE_JSON_FILES and not auto_repair_engine._valid_project_payload(name,data):
+        raise ValueError(f"{name} 파일의 세부 보안·무결성 검증에 실패했습니다")
 
 
 def atomic_report(report: dict) -> None:
@@ -696,7 +735,10 @@ def run_all(trigger: str = "manual", selected_files=None, progress_callback=None
                 # Some collectors preserve the previous verified payload and expose the
                 # fetch failure only through a singular collection_error field. Treat
                 # that as a partial/recovered run so it can never shrink the timeout.
-                warnings=[str(x) for x in warnings if str(x).strip()]
+                warnings=list(dict.fromkeys(
+                    _contextualize_collection_warning(filename,x)
+                    for x in warnings if str(x).strip()
+                ))
                 # 프로세스가 0으로 끝나도 출처별 오류가 있으면 깨끗한 성공으로 학습하지 않는다.
                 # 일시 오류라면 한 번 더 수집하여 다음 실행의 오류율을 낮춘다.
                 if warnings and attempts < max_attempts and _should_retry(stats.get('jobs',{}).get(filename,{}),False,' / '.join(map(str,warnings))):

@@ -1,4 +1,5 @@
 import io
+import json
 import tempfile
 import unittest
 import urllib.error
@@ -6,7 +7,11 @@ from pathlib import Path
 from unittest import mock
 
 import auto_repair_engine as repair
+import auto_update_all as update_all
 import graded_photo_multi_source as photos
+import update_exchange_rates as exchange
+import update_promo_events as promo
+import update_releases as releases
 from safe_runtime import diagnostic_exception
 
 
@@ -104,6 +109,91 @@ class ErrorRecoveryLearningV134Tests(unittest.TestCase):
             repair.analyze_error("ValueError: 행사 공식 출처·국가·날짜 정확도 또는 필수 자료가 잘못되었습니다")["code"],
             "DATA_SCHEMA_ERROR",
         )
+        self.assertEqual(
+            repair.analyze_error("업체별 등급카드 사진 후보 — 허용되지 않은 파일")["code"],
+            "INTERNAL_CODE_ERROR",
+        )
+
+    def test_screenshot_bare_value_errors_gain_job_context(self):
+        self.assertIn("출시정보", update_all._contextualize_collection_warning(
+            "releases.json", "Pokémon JP: ValueError"))
+        self.assertIn("환율", update_all._contextualize_collection_warning(
+            "exchange_rates.json", "ValueError"))
+        detailed="ValueError: 가격자료 구조 오류: KR|상품"
+        self.assertEqual(update_all._contextualize_collection_warning("market_prices.json",detailed),detailed)
+
+    def test_current_promo_seed_passes_strict_date_precision(self):
+        playgo=next(item for item in promo.OFFICIAL_VERIFIED_SEEDS if "PLAYGO" in item["name_ko"])
+        self.assertEqual(playgo["internal_review_until"],playgo["end_date"])
+        self.assertTrue(promo.valid(playgo))
+
+    def test_current_onepiece_listing_formats_are_parsed(self):
+        us=("BOOSTERS EXTRA BOOSTER -ONE PIECE HEROINES EDITION vol.2- [EB-05] "
+            "Release DateOctober 2026 MSRPUSD $4.99 per pack "
+            "BOOSTERS BOOSTER PACK -THE WORLD'S STRONGEST WARRIORS- [OP-17] "
+            "Release DateAugust 28, 2026 MSRPUSD $4.99 per pack")
+        with mock.patch.object(releases,"fetch",return_value=us):
+            rows=releases.collect_onepiece("https://en.onepiece-cardgame.com/products/","US")
+        self.assertEqual(len(rows),2)
+        self.assertEqual(rows[0]["release_window"],"2026-10")
+        self.assertIsNone(rows[0]["release_date"])
+        self.assertEqual(rows[1]["release_date"],"2026-08-28")
+
+        jp=("エクストラブースター ONE PIECE Heroines Edition vol.2〖EB-05〗 "
+            "発売日2026.10 メーカー希望小売価格240円(税込) "
+            "ブースターパック 世界最強の戦士〖OP-17〗 "
+            "発売日2026.08.22(土) メーカー希望小売価格240円(税込)")
+        with mock.patch.object(releases,"fetch",return_value=jp):
+            rows=releases.collect_onepiece_jp()
+        self.assertEqual(len(rows),2)
+        self.assertEqual(rows[0]["release_window"],"2026-10")
+        self.assertEqual(rows[1]["release_date"],"2026-08-22")
+
+    def test_current_pokemon_jp_whitespace_format_is_parsed(self):
+        page=("拡張パック 『 테스트 팩 』  拡張パック  販売日 2026 年 9 月 18 日 "
+              "商品情報 希望小売価格 180 円")
+        with mock.patch.object(releases,"fetch",return_value=page):
+            rows=releases.collect_pokemon_jp()
+        self.assertEqual(len(rows),1)
+        self.assertEqual(rows[0]["release_date"],"2026-09-18")
+        self.assertTrue(releases.valid(rows[0]))
+
+    def test_release_month_window_is_strict_and_error_is_specific(self):
+        row={"game":"ONE PIECE","region":"US","name":"[EB-05]",
+             "source":"https://en.onepiece-cardgame.com/products/",
+             "release_date":None,"release_window":"2026-13"}
+        self.assertFalse(releases.valid(row))
+        with self.assertRaisesRegex(ValueError,r"출시상품 #1.*날짜 형식"):
+            update_all.validate_json("releases.json",{"items":[row]})
+
+    def test_exchange_v1_v2_payloads_and_fallback(self):
+        self.assertEqual(exchange.parse_rates({"rates":{"KRW":1400,"JPY":150}}),(1400.0,150.0))
+        self.assertEqual(exchange.parse_rates([
+            {"base":"USD","quote":"KRW","rate":1400},
+            {"base":"USD","quote":"JPY","rate":150},
+        ]),(1400.0,150.0))
+
+    def test_exchange_main_uses_fallback_and_preserves_last_good(self):
+        initial={"rates":{"JPY_KRW":9.0,"USD_KRW":1350.0},"source":"old"}
+        with tempfile.TemporaryDirectory() as directory:
+            data=Path(directory)/"exchange_rates.json"
+            data.write_text(json.dumps(initial),encoding="utf-8")
+            with mock.patch.object(exchange,"DATA",data), mock.patch.object(
+                exchange,"fetch",side_effect=[TimeoutError("timeout"),{"rates":{"KRW":1400,"JPY":140}}]
+            ):
+                result=exchange.main()
+            self.assertEqual(result["source_route"],"frankfurter-v1")
+            self.assertEqual(result["rates"],{"JPY_KRW":10.0,"USD_KRW":1400.0})
+
+            data.write_text(json.dumps(initial),encoding="utf-8")
+            with mock.patch.object(exchange,"DATA",data), mock.patch.object(
+                exchange,"fetch",side_effect=TimeoutError("timeout")
+            ):
+                result=exchange.main()
+            self.assertEqual(result["rates"],initial["rates"])
+            self.assertEqual(result["collection_status"],"기존 확인환율 유지")
+            self.assertEqual(len(result["collection_errors"]),len(exchange.SOURCES))
+            self.assertIn(result["collection_error"],result["collection_errors"])
 
     def test_photo_search_uses_learned_circuit_breaker_entry_point(self):
         class FakeSearcher:

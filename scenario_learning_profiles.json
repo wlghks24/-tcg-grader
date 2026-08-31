@@ -1,13 +1,13 @@
 {
   "version": 1,
-  "engine": "v134-root-cause-partial-outcome",
-  "generated_at": "2026-08-30T23:07:52+00:00",
+  "engine": "v138-screenshot-regression-learning",
+  "generated_at": "2026-08-31T07:53:31+00:00",
   "training_only": true,
-  "scenario_count": 313,
-  "successful_scenarios": 313,
+  "scenario_count": 316,
+  "successful_scenarios": 316,
   "failed_scenarios": [],
   "family_count": 33,
-  "verified_profile_count": 165,
+  "verified_profile_count": 166,
   "profiles": {
     "NETWORK_TIMEOUT|general": {
       "profile_id": "8f2964a4e191d68f",
@@ -846,6 +846,38 @@
       ],
       "bounded_retry_allowed": false
     },
+    "INTERNAL_CODE_ERROR|code-error": {
+      "profile_id": "f60ef27f199106a5",
+      "code": "INTERNAL_CODE_ERROR",
+      "error_subtype": "code-error",
+      "http_status": null,
+      "http_statuses": [],
+      "verified": true,
+      "scenario_count": 1,
+      "scenario_ids": [
+        "code-stale-photo-allowlist"
+      ],
+      "families": [
+        "internal_code"
+      ],
+      "diagnostic_priority": 5,
+      "first_checks": [
+        "문법·import 검사 후 실패 함수를 격리 실행합니다."
+      ],
+      "fast_resolution_steps": [
+        "실행기와 자동복구 모듈의 배포 버전을 대조합니다.",
+        "정상 프로젝트 파일 허용목록과 스키마를 함께 갱신합니다.",
+        "수정 후 사진후보 사전검증과 전체 회귀검사를 실행합니다."
+      ],
+      "verification_steps": [
+        "수정 후 사진후보 사전검증과 전체 회귀검사를 실행합니다.",
+        "기존 정상자료가 손상되지 않았는지 확인합니다."
+      ],
+      "stop_conditions": [
+        "같은 결정적 예외는 네트워크 재시도하지 않습니다."
+      ],
+      "bounded_retry_allowed": false
+    },
     "INTERNAL_SYNTAX_ERROR|syntax": {
       "profile_id": "4c194c6bda29919a",
       "code": "INTERNAL_SYNTAX_ERROR",
@@ -1418,10 +1450,11 @@
       "http_status": null,
       "http_statuses": [],
       "verified": true,
-      "scenario_count": 2,
+      "scenario_count": 3,
       "scenario_ids": [
         "schema-required",
-        "promo-required-official-fields"
+        "promo-required-official-fields",
+        "promo-start-only-contract"
       ],
       "families": [
         "data_schema"
@@ -1742,11 +1775,12 @@
       "http_status": null,
       "http_statuses": [],
       "verified": true,
-      "scenario_count": 3,
+      "scenario_count": 4,
       "scenario_ids": [
         "exchange-jpy",
         "exchange-usd",
-        "exchange-collected-value"
+        "exchange-collected-value",
+        "exchange-payload-shape"
       ],
       "families": [
         "exchange_rate"
@@ -5478,5 +5512,5 @@
     "retry_permission_can_only_be_narrowed": true
   },
   "automation_policy": "검증된 안내만 제공 · 문자열/생성코드 실행 금지",
-  "results_sha256": "8878fa11f173e47a6b9df5dd612f3aede3c139a3a8c274ed599613c0c6e9b6aa"
+  "results_sha256": "fb3acb3307fc91fd990270b6e42c80f47a9eb049a1accea0baeb423ca32d4da1"
 }

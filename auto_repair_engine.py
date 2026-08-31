@@ -1048,7 +1048,18 @@ def analyze_error(detail: Any, error_type: str | None = None, *, use_scenario_pr
     lowered = raw.lower()
     normalized = _clean_error_template(raw)
     matching_text = f"{lowered}\n{normalized}"
+    # A known project file rejected by an older/stale allowlist is an internal
+    # version-contract defect, not an unsafe user path and not a photo-content
+    # failure.  Preserve that distinction for the screenshot-era v135 reports.
+    if "허용되지 않은 파일" in lowered and (
+        known_files or "등급카드 사진 후보" in lowered or "graded photo" in lowered
+    ):
+        matching_text += "\nknown safe project file rejected by stale allowlist"
     rules = (
+        (("known safe project file rejected by stale allowlist",),
+         "INTERNAL_CODE_ERROR", "내부 파일 허용목록 버전 불일치",
+         "업데이트 실행기와 자동복구 모듈의 버전이 달라 정상 프로젝트 파일을 차단했을 가능성이 큽니다.",
+         ("실행기와 자동복구 모듈의 배포 버전을 대조합니다.", "정상 프로젝트 파일 허용목록과 스키마를 함께 갱신합니다.", "수정 후 사진후보 사전검증과 전체 회귀검사를 실행합니다."), False),
         (("syntaxerror", "indentationerror", "taberror"),
          "INTERNAL_SYNTAX_ERROR", "Python 문법·들여쓰기 오류",
          "코드 편집 중 문법 또는 들여쓰기 구조가 잘못됐을 가능성이 큽니다.",

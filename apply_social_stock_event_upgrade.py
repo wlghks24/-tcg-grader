@@ -19,6 +19,17 @@ def patch_registry() -> None:
     path = ROOT / "social_source_registry.json"
     data = json.loads(path.read_text(encoding="utf-8"))
     rows = data.setdefault("watch_accounts", [])
+    trusted_accounts = {
+        row.get("username") for row in data.get("accounts", [])
+        if isinstance(row, dict) and row.get("trusted") is True
+    }
+    # A later official-site verification can promote a candidate into accounts.
+    # Never recreate a contradictory trusted=false duplicate when this older
+    # installer is re-run on a newer tablet bundle.
+    if "pokemon_korea_official" in trusted_accounts:
+        rows[:] = [row for row in rows if not (
+            isinstance(row, dict) and row.get("username") == "pokemon_korea_official"
+        )]
     additions = [
         {
             "platform": "instagram", "username": "pokemon_korea_official", "game": "포켓몬 카드", "region": "KR",
@@ -40,6 +51,8 @@ def patch_registry() -> None:
         },
     ]
     for addition in additions:
+        if addition["username"] in trusted_accounts:
+            continue
         key = (addition["platform"], addition["username"], addition["game"], addition["region"])
         found = None
         for row in rows:
@@ -252,7 +265,7 @@ def sync_purchase_signals() -> None:
 
 def write_integration_test() -> None:
     path = ROOT / "test_social_stock_integration.py"
-    path.write_text('''import json\nimport unittest\nfrom pathlib import Path\n\nROOT = Path(__file__).resolve().parent\n\n\nclass SocialStockIntegrationTests(unittest.TestCase):\n    def test_watch_accounts_are_untrusted_and_role_separated(self):\n        data=json.loads((ROOT/'social_source_registry.json').read_text(encoding='utf-8'))\n        by={x.get('username'):x for x in data.get('watch_accounts',[]) if isinstance(x,dict)}\n        for name in ('pokemon_korea_official','poke_vending_machine','ttosatda'):\n            self.assertIn(name,by); self.assertFalse(by[name].get('trusted'))\n        self.assertIn('event',by['pokemon_korea_official'].get('role',''))\n        self.assertIn('stock',by['poke_vending_machine'].get('role',''))\n\n    def test_pokopia_user_evidence_is_visible_but_unverified(self):\n        data=json.loads((ROOT/'social_event_candidates.json').read_text(encoding='utf-8'))\n        row=next(x for x in data.get('items',[]) if 'Pokopia' in str(x.get('title','')))\n        self.assertEqual(row.get('dates'),['2026-09-12','2026-09-29'])\n        self.assertEqual(row.get('location'),'무신사 메가스토어 성수')\n        self.assertTrue(row.get('manual_user_evidence'))\n        self.assertFalse(row.get('verified'))\n        self.assertFalse(row.get('official_account_verified'))\n\n    def test_step5_runs_social_stock_without_adding_job8(self):\n        text=(ROOT/'update_purchase_sources.py').read_text(encoding='utf-8')\n        self.assertIn('social_stock_discovery.main()',text)\n        auto=(ROOT/'auto_update_all.py').read_text(encoding='utf-8')\n        self.assertIn('(\"구매처·링크 보안 확인\", \"update_purchase_sources\", \"purchase_sources.json\")',auto)\n        self.assertNotIn('(\"SNS 재고',auto)\n\n    def test_live_purchase_merges_social_but_keeps_unverified_label(self):\n        text=(ROOT/'purchase_intelligence.py').read_text(encoding='utf-8')\n        self.assertIn('# v112-social-stock-merge',text)\n        self.assertIn('official_stock\": False',text)\n        self.assertIn('SNS 재고제보',text)\n\n\nif __name__=='__main__':\n    unittest.main()\n''', encoding="utf-8")
+    path.write_text('''import json\nimport unittest\nfrom pathlib import Path\n\nROOT = Path(__file__).resolve().parent\n\n\nclass SocialStockIntegrationTests(unittest.TestCase):\n    def test_official_and_watch_accounts_keep_separate_trust_roles(self):\n        data=json.loads((ROOT/'social_source_registry.json').read_text(encoding='utf-8'))\n        official={x.get('username'):x for x in data.get('accounts',[]) if isinstance(x,dict)}\n        watch={x.get('username'):x for x in data.get('watch_accounts',[]) if isinstance(x,dict)}\n        self.assertIn('pokemon_korea_official',official)\n        self.assertTrue(official['pokemon_korea_official'].get('trusted'))\n        self.assertNotIn('pokemon_korea_official',watch)\n        for name in ('poke_vending_machine','ttosatda'):\n            self.assertIn(name,watch); self.assertFalse(watch[name].get('trusted'))\n            self.assertIn('stock',watch[name].get('role',''))\n\n    def test_pokopia_user_evidence_is_visible_but_unverified(self):\n        data=json.loads((ROOT/'social_event_candidates.json').read_text(encoding='utf-8'))\n        row=next(x for x in data.get('items',[]) if 'Pokopia' in str(x.get('title','')))\n        self.assertEqual(row.get('dates'),['2026-09-12','2026-09-29'])\n        self.assertEqual(row.get('location'),'무신사 메가스토어 성수')\n        self.assertTrue(row.get('manual_user_evidence'))\n        self.assertFalse(row.get('verified'))\n        self.assertFalse(row.get('official_account_verified'))\n\n    def test_step5_runs_social_stock_without_adding_job8(self):\n        text=(ROOT/'update_purchase_sources.py').read_text(encoding='utf-8')\n        self.assertIn('social_stock_discovery.main()',text)\n        auto=(ROOT/'auto_update_all.py').read_text(encoding='utf-8')\n        self.assertIn('(\"구매처·링크 보안 확인\", \"update_purchase_sources\", \"purchase_sources.json\")',auto)\n        self.assertNotIn('(\"SNS 재고',auto)\n\n    def test_live_purchase_merges_social_but_keeps_unverified_label(self):\n        text=(ROOT/'purchase_intelligence.py').read_text(encoding='utf-8')\n        self.assertIn('# v112-social-stock-merge',text)\n        self.assertIn('official_stock\": False',text)\n        self.assertIn('SNS 재고제보',text)\n\n\nif __name__=='__main__':\n    unittest.main()\n''', encoding="utf-8")
 
 
 def main() -> None:

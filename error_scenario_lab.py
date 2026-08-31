@@ -19,7 +19,7 @@ from safe_runtime import atomic_write_json, safe_read_bytes
 
 ROOT = Path(__file__).resolve().parent
 PROFILE_PATH = ROOT / "scenario_learning_profiles.json"
-ENGINE_VERSION = "v134-root-cause-partial-outcome"
+ENGINE_VERSION = "v138-screenshot-regression-learning"
 
 
 def _case(case_id: str, family: str, detail: str, code: str, subtype: str | None,
@@ -62,6 +62,7 @@ SCENARIOS = (
     _case("code-attribute", "internal_code", "AttributeError: module has no attribute 'collect_prices'", "INTERNAL_CODE_ERROR", "attributeerror:collect_prices", False),
     _case("code-index", "internal_code", "IndexError: list index out of range", "INTERNAL_CODE_ERROR", "indexerror", False),
     _case("code-assert", "internal_code", "AssertionError: release contract failed", "INTERNAL_CODE_ERROR", "assertionerror", False),
+    _case("code-stale-photo-allowlist", "internal_code", "업체별 등급카드 사진 후보 — 허용되지 않은 파일", "INTERNAL_CODE_ERROR", "code-error", False),
     _case("syntax-basic", "syntax", "SyntaxError: invalid syntax at line 18", "INTERNAL_SYNTAX_ERROR", "syntax", False, "syntax"),
     _case("syntax-indent", "syntax", "IndentationError: unexpected indent", "INTERNAL_SYNTAX_ERROR", "indentation", False),
     _case("syntax-tabs", "syntax", "TabError: inconsistent use of tabs and spaces", "INTERNAL_SYNTAX_ERROR", "mixed-indentation", False),
@@ -82,6 +83,7 @@ SCENARIOS = (
     _case("schema-key-region", "data_schema", "KeyError: 'region' required field", "DATA_SCHEMA_ERROR", "missing-field:region", False),
     _case("schema-required", "data_schema", "필수값 누락 in collected JSON", "DATA_SCHEMA_ERROR", "missing-required-field", False),
     _case("promo-required-official-fields", "data_schema", "ValueError: 행사 공식 출처·국가·날짜 정확도 또는 필수 자료가 잘못되었습니다", "DATA_SCHEMA_ERROR", "missing-required-field", False),
+    _case("promo-start-only-contract", "data_schema", "ValueError: 행사 #21(PLAYGO) 공식 출처·국가·날짜 정확도 또는 필수 자료가 잘못되었습니다", "DATA_SCHEMA_ERROR", "missing-required-field", False, "promo-required-official-fields"),
     _case("schema-general", "data_schema", "JSON 구조 오류", "DATA_SCHEMA_ERROR", "schema", False),
     _case("value-type", "data_value", "TypeError: expected number but received list", "DATA_VALUE_ERROR", "typeerror", False),
     _case("value-range", "data_value", "ValueError: number outside allowed range", "DATA_VALUE_ERROR", "range", False),
@@ -94,6 +96,7 @@ SCENARIOS = (
     _case("exchange-jpy", "exchange_rate", "환율 JPY_KRW 범위 오류", "EXCHANGE_RATE_VALIDATION", "general", False),
     _case("exchange-usd", "exchange_rate", "exchange rate USD_KRW invalid unit", "EXCHANGE_RATE_VALIDATION", "general", False),
     _case("exchange-collected-value", "exchange_rate", "ValueError: 원화 환산 환율 수집값이 허용 범위를 벗어났습니다", "EXCHANGE_RATE_VALIDATION", "general", False),
+    _case("exchange-payload-shape", "exchange_rate", "ValueError: 원화 환산 환율 응답의 통화값·단위를 검증하지 못했습니다", "EXCHANGE_RATE_VALIDATION", "general", False, "exchange-collected-value"),
     _case("lock-database", "concurrency", "database is locked during atomic save", "CONCURRENCY_CONFLICT", "database-lock", True),
     _case("lock-process", "concurrency", "다른 프로세스의 오류학습 저장 잠금 대기", "CONCURRENCY_CONFLICT", "process-lock", True),
     _case("lock-write", "concurrency", "concurrent write conflict while replacing report", "CONCURRENCY_CONFLICT", "write-conflict", True),

@@ -170,7 +170,10 @@ OFFICIAL_VERIFIED_SEEDS = (
         "start_date": "2026-09-01", "end_date": "2027-12-31", "claim_deadline": "2027-12-31",
         "date_precision": "start-only",
         "date_label": "2026년 9월 1일 시작 · PLAYGO 앱 출시 시 종료(종료일 미발표)",
-        "internal_tracking_end": True,
+        # ``end_date`` is an internal re-check horizon, not an announced end date.
+        # Keep the field name aligned with ``valid()`` so this official seed can
+        # repair an older row instead of being rejected by the preflight gate.
+        "internal_review_until": "2027-12-31",
         "reward": "출시 알림 신청 후 발급되는 QR을 이벤트 진행 점포에서 제시하면 특별 프로모션 팩 수령. FUN EXPO 2026 수령자는 중복 수령 불가.",
         "condition": "매장별 재고가 다르며 소진 시 종료될 수 있습니다. 공식 공지와 PLAYGO QR 교환 상태를 확인하세요.",
         "location": "한국 PLAYGO 이벤트 진행 점포",

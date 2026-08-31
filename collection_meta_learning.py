@@ -503,6 +503,21 @@ def recommended_focus(game: str) -> dict | None:
     if not isinstance(profile, dict):
         return None
     rows = [x for x in profile.get("top_gaps", []) if isinstance(x, dict) and x.get("game") == canonical and x.get("topic") in SEARCH_TOPICS]
+    # ``top_gaps`` is deliberately bounded.  When many empty cells tie, a plain
+    # global slice can contain only the games encountered first and make another
+    # game (typically Naruto) return no recommendation.  Fall back to the full
+    # bounded coverage matrix for that requested game; trust/evidence scores are
+    # unchanged and this affects collection priority only.
+    if not rows:
+        rows = [dict(x) for x in profile.get("coverage", [])
+                if isinstance(x,dict) and x.get("game") == canonical and x.get("topic") in SEARCH_TOPICS]
+        for row in rows:
+            gap=max(0.0,4.2-_float(row.get("score")))
+            if _int(row.get("items")) == 0: gap += 1.8
+            if _float(row.get("fresh_ratio")) < 0.35: gap += 0.7
+            if _int(row.get("source_diversity")) < 2: gap += 0.5
+            row["gap_score"]=round(gap,4)
+        rows.sort(key=lambda x:(x.get("gap_score",0),-_int(x.get("items"))),reverse=True)
     if not rows:
         return None
     row = dict(rows[0])
