@@ -11,7 +11,7 @@ from urllib.parse import parse_qs, urlparse
 import tcg_updater as core
 
 RUNTIME_ID = "tcg-updater-v135-verified-learning"
-RUNTIME_PATCH = 141
+RUNTIME_PATCH = 142
 
 
 class Handler(core.Handler):
@@ -52,13 +52,17 @@ class Handler(core.Handler):
                 'runtime': RUNTIME_ID,
                 'patch': RUNTIME_PATCH,
                 'learning_api': 135,
-                'event_collection_patch': 141,
+                'event_collection_patch': 142,
                 'priority_event_watch_minutes': 30,
                 'reward_scope_override': True,
                 'verified_reward_term_learning': True,
                 'official_reward_learning_weight': 1.35,
                 'cross_checked_reward_learning_weight': 0.90,
                 'unverified_reward_learning_weight': 0.0,
+                'unverified_payload_learning_weight': 0.0,
+                'unverified_search_host_term_learning_weight': 0.0,
+                'unique_evidence_host_counting': True,
+                'fan_reuse_requires_corroboration_or_watch': True,
                 'base_service': getattr(core, 'SERVICE_NAME', 'TCG updater'),
             })
         if path == '/api/learning-model-status':
@@ -183,15 +187,15 @@ def main() -> int:
         pass
 
     try:
-        import event_collection_hardening_v141
-        hardening_status = event_collection_hardening_v141.apply()
+        import collection_learning_hardening_v142
+        hardening_status = collection_learning_hardening_v142.apply()
         print(
-            f"행사·증정 수집 강화: v{hardening_status.get('patch', 141)} · "
-            "공식SNS 표적탐색 + 카드/프로모/한정품 증정 범위외 수집 + 검증된 증정정보 검색어 가중학습",
+            f"자료수집·행사 자가학습 강화: v{hardening_status.get('patch', 142)} · "
+            "공식SNS 표적탐색 + 고유 출처수 교차검증 + 미검증 후보 host/검색어 학습 차단 + 검증 증정정보 가중학습",
             flush=True,
         )
     except ImportError:
-        print('[안내] 행사·증정 수집 강화 모듈을 찾지 못해 기본 수집정책으로 실행합니다.', flush=True)
+        print('[안내] v142 자료수집 학습 강화 모듈을 찾지 못해 기본 수집정책으로 실행합니다.', flush=True)
 
     threading.Thread(target=core.auto_update_loop, daemon=True).start()
 
@@ -202,7 +206,7 @@ def main() -> int:
             args=(core.UPDATE_LOCK,),
             daemon=True,
         ).start()
-        print('공식 SNS 우선탐색: 시작 3분 후 첫 실행 · 이후 30분 간격 · 증정/한정품 포함 · v141 검증학습 연동', flush=True)
+        print('공식 SNS 우선탐색: 시작 3분 후 첫 실행 · 이후 30분 간격 · 증정/한정품 포함 · v142 검증학습 즉시 반영', flush=True)
     except ImportError:
         print('[안내] 공식 SNS 우선탐색 모듈을 찾지 못해 1시간 긴급탐색만 사용합니다.', flush=True)
 
@@ -213,7 +217,7 @@ def main() -> int:
             args=(core.UPDATE_LOCK,),
             daemon=True,
         ).start()
-        print('행사·영화·증정 전체 긴급탐색: 시작 10분 후 첫 실행 · 이후 1시간 간격 · 검증 증정 검색어 학습', flush=True)
+        print('행사·영화·증정 전체 긴급탐색: 시작 10분 후 첫 실행 · 이후 1시간 간격 · v142 오염방지 자가학습', flush=True)
     except ImportError:
         print('[안내] 행사·영화 긴급탐색 모듈을 찾지 못해 6시간 정규수집만 사용합니다.', flush=True)
     try:
