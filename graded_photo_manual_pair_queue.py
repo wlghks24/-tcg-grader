@@ -15,6 +15,11 @@ Android layout:
       front_candidate.jpg
       back_candidate.jpg
       pair.json
+
+Important Android detail:
+``/sdcard`` is normally a symbolic-link alias. The shared atomic writer correctly
+rejects symlink path components, so this module uses the canonical Android storage
+path ``/storage/emulated/0`` and verifies it with the same atomic writer before use.
 """
 from __future__ import annotations
 
@@ -44,13 +49,15 @@ SOURCE = ROOT / "graded_photo_candidates.json"
 QUEUE = ROOT / "manual_collected_pair_queue.json"
 LOCK_PATH = ROOT / ".manual_pair_queue.watch.lock"
 LOCAL_ROOT = ROOT / "GRADE_TRAINING_INBOX" / "collected_pairs"
-ANDROID_ROOT = Path("/sdcard/Download/TCG등급학습")
+# Do not use /sdcard here. On Android it is normally a symlink and the shared
+# atomic writer intentionally blocks any symlink component for safety.
+ANDROID_ROOT = Path("/storage/emulated/0/Download/TCG등급학습")
 GAMES = {"pokemon", "onepiece", "naruto"}
 COMPANIES = {"PSA", "BGS", "CGC", "TAG", "BRG"}
 MAX_QUEUE = 1000
 MAX_IMAGE_BYTES = 8_000_000
 MAX_IMAGE_PIXELS = 36_000_000
-UA = "Mozilla/5.0 TCG-Grader-ManualPairQueue/2.0"
+UA = "Mozilla/5.0 TCG-Grader-ManualPairQueue/2.1"
 
 PAIR_TEXT_RE = re.compile(
     r"(?:front.{0,40}back|back.{0,40}front|front\s*[/&+]\s*back|"
@@ -147,16 +154,31 @@ def _pair_key(row: dict[str, Any], front: str, back: str, company: str, cert: st
 
 
 def _target_root() -> tuple[Path, str]:
+    """Choose storage only after an atomic-write preflight succeeds.
+
+    A plain ``Path.write_text`` check is insufficient on Android because /sdcard
+    can be writable while still being a symlink alias rejected by the secure
+    atomic writer. Test the exact writer used for indexes/manifests instead.
+    """
+    probe: Path | None = None
     try:
         if ANDROID_ROOT.parent.is_dir() and ANDROID_ROOT.parent.exists():
             ANDROID_ROOT.mkdir(parents=True, exist_ok=True)
-            probe = ANDROID_ROOT / ".tcg_pair_write_test"
-            probe.write_text("ok", encoding="utf-8")
+            probe = ANDROID_ROOT / ".tcg_pair_atomic_write_test.json"
+            atomic_write_json(probe, {"ok": True, "probe": "manual_pair_storage"}, suffix=".probe.tmp")
             probe.unlink(missing_ok=True)
             return ANDROID_ROOT, "android_download"
-    except OSError:
-        pass
+    except (OSError, ValueError, TypeError, TimeoutError):
+        if probe is not None:
+            try:
+                probe.unlink(missing_ok=True)
+            except OSError:
+                pass
+
     LOCAL_ROOT.mkdir(parents=True, exist_ok=True)
+    local_probe = LOCAL_ROOT / ".tcg_pair_atomic_write_test.json"
+    atomic_write_json(local_probe, {"ok": True, "probe": "manual_pair_storage"}, suffix=".probe.tmp")
+    local_probe.unlink(missing_ok=True)
     return LOCAL_ROOT, "local_inbox"
 
 
@@ -334,7 +356,7 @@ def sync_once() -> dict[str, Any]:
     _write_group_indexes(target_root, pairs)
     result = {
         "ok": True,
-        "schema_version": 2,
+        "schema_version": 3,
         "updated_at": _now(),
         "storage_mode": storage_mode,
         "target_root": str(target_root),
@@ -362,6 +384,8 @@ def sync_once() -> dict[str, Any]:
             "automatic_official_lookup": False,
             "manual_site_verification_required": True,
             "grouped_by_game_and_grader": True,
+            "android_symlink_alias_avoided": True,
+            "atomic_storage_preflight_required": True,
             "raw_grade_calibration_eligible": False,
         },
     }
@@ -399,6 +423,8 @@ def main() -> int:
     result = sync_once()
     print(json.dumps(result["summary"], ensure_ascii=False))
     print("수동등록 폴더:", result["target_root"])
+    if result["storage_mode"] != "android_download":
+        print("[경고] Android Download 저장소를 사용할 수 없어 앱 내부 폴더를 사용 중입니다. Termux 저장소 권한을 확인하세요.")
     return 0
 
 
