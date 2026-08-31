@@ -18,7 +18,11 @@ RUNTIME_BUNDLE_STATUS = {"ok": False, "patch": 143, "issues": ["startup audit no
 class Handler(core.Handler):
     def _safe_static(self, path):
         name = path.lstrip('/') or 'index.html'
-        if name in {'grade_learning_guard_v135.js', 'manual_official_verify_bridge.js'}:
+        if name in {
+            'grade_learning_guard_v135.js',
+            'manual_official_verify_bridge.js',
+            'manual_dual_photo_bridge.js',
+        }:
             target = core.Path(self.directory) / name
             try:
                 return not target.is_symlink() and not target.parent.is_symlink() and target.is_file()
@@ -27,24 +31,38 @@ class Handler(core.Handler):
         return super()._safe_static(path)
 
     def _serve_dashboard_with_manual_fallback(self):
-        """Serve the existing dashboard plus the local manual-official fallback UI.
+        """Serve dashboard + dual-photo uploader + manual-official fallback.
 
-        GitHub Pages keeps the normal static dashboard. The bridge is appended only
-        by the local/Tailscale v135 server where mutation APIs are available.
+        The local/Tailscale v135 server injects both bridges directly into the
+        dashboard response. This avoids Android/WebView cache races and prevents
+        the old one-photo form from surviving when a dynamic bridge request is
+        blocked or served from a stale cache.
         """
         try:
             base = core.Path(self.directory) / 'graded_photo_dashboard.js'
-            bridge = core.Path(self.directory) / 'manual_official_verify_bridge.js'
-            if any(path.is_symlink() or path.parent.is_symlink() or not path.is_file() for path in (base, bridge)):
-                return self.json({'ok': False, 'error': '등급사진 대시보드 파일 오류'}, 404)
-            text = base.read_text(encoding='utf-8') + '\n\n' + bridge.read_text(encoding='utf-8') + '\n'
+            dual_bridge = core.Path(self.directory) / 'manual_dual_photo_bridge.js'
+            official_bridge = core.Path(self.directory) / 'manual_official_verify_bridge.js'
+            files = (base, dual_bridge, official_bridge)
+            if any(path.is_symlink() or path.parent.is_symlink() or not path.is_file() for path in files):
+                return self.json({'ok': False, 'error': '등급사진 대시보드/앞뒤사진 브리지 파일 오류'}, 404)
+            text = (
+                base.read_text(encoding='utf-8')
+                + '\n\n/* v150 dual-photo bridge: served inline by v135 */\n'
+                + dual_bridge.read_text(encoding='utf-8')
+                + '\n\n/* manual official verification bridge */\n'
+                + official_bridge.read_text(encoding='utf-8')
+                + '\n'
+            )
             body = text.encode('utf-8')
         except (OSError, UnicodeError, ValueError):
             return self.json({'ok': False, 'error': '등급사진 대시보드 로드 오류'}, 500)
         self.send_response(200)
         self.send_header('Content-Type', 'application/javascript; charset=utf-8')
-        self.send_header('Cache-Control', 'no-store, max-age=0')
+        self.send_header('Cache-Control', 'no-store, no-cache, must-revalidate, max-age=0')
+        self.send_header('Pragma', 'no-cache')
+        self.send_header('Expires', '0')
         self.send_header('X-Content-Type-Options', 'nosniff')
+        self.send_header('X-TCG-Dual-Photo-UI', 'v150-inline')
         self.send_header('Content-Length', str(len(body)))
         self.end_headers()
         self.wfile.write(body)
@@ -97,10 +115,13 @@ class Handler(core.Handler):
                 'unverified_payload_learning_weight': 0.0,
                 'unverified_search_host_term_learning_weight': 0.0,
                 'unique_evidence_host_counting': True,
-                'fan_reuse_requires_corroboration_or_watch': True,
+                'fan_reuse_requires_corboration_or_watch': True,
                 'strict_official_social_url_match': True,
                 'manual_official_browser_fallback': True,
                 'manual_official_proof_raw_calibration': False,
+                'manual_dual_photo_ui': True,
+                'manual_dual_photo_bridge_inline': True,
+                'manual_dual_photo_bridge_version': 150,
                 'base_service': getattr(core, 'SERVICE_NAME', 'TCG updater'),
             })
         if path == '/api/learning-model-status':
@@ -232,9 +253,6 @@ def main() -> int:
     elif not housekeeping.get('ok', True):
         print(f"시작 전 정리 경고: {housekeeping.get('error', 'unknown')} · 기존 자료 유지", flush=True)
 
-    # Refuse a mixed tablet install before binding a port. A recent wrapper with
-    # an old collector/recovery module is more dangerous than a visible startup
-    # failure because it can resurrect already-fixed validation/network behavior.
     try:
         import runtime_bundle_guard_v143 as bundle_guard
         RUNTIME_BUNDLE_STATUS = bundle_guard.require_compatible()
@@ -262,6 +280,7 @@ def main() -> int:
     print(f'다른 기기 접속 주소(같은 Wi-Fi): http://{lan_ip}:{core.PORT}/index.html', flush=True)
     print(f'등급학습 안전게이트: v135 / runtime patch {RUNTIME_PATCH} · 공식 인증레지스트리 일치 + RAW 원시예측 + 교차검증 + 하향보정만', flush=True)
     print('등급사 쿨다운 수동확인: 공식 조회페이지 직접 열기 + 결과화면 OCR 일치 참고등록 · RAW 보정학습 제외', flush=True)
+    print('수동등록 UI: 앞면+뒷면 2장 브리지를 대시보드 응답에 직접 포함 · 캐시 우회 v150', flush=True)
     try:
         threading.Thread(target=lambda: webbrowser.open(url), daemon=True).start()
     except Exception:
