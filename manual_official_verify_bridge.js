@@ -50,22 +50,29 @@ function style(){
 }
 
 function countFromCard(card){
- const text=String(card?.querySelector('b')?.textContent||'').replace(/[^0-9]/g,'');
- const value=Number(text);return Number.isFinite(value)?value:0;
+ const text=String(card?.querySelector('b')?.textContent||'');
+ const match=text.match(/\d[\d,]*/);if(!match)return 0;
+ const value=Number(match[0].replace(/,/g,''));return Number.isFinite(value)?value:0;
 }
 function mergeVerifiedLearningSummary(){
  const summary=document.querySelector('#gpdBody .gpd-summary');if(!summary)return false;
  const cards=[...summary.children];
  const official=cards.find(card=>['공식검증','공식검증·학습반영'].includes(String(card.querySelector('span')?.textContent||'').trim()));
  const reference=cards.find(card=>String(card.querySelector('span')?.textContent||'').trim()==='참고학습 반영');
+ const cert=cards.find(card=>String(card.querySelector('span')?.textContent||'').trim()==='인증번호 확보');
  if(!official)return false;
  const merged=Math.max(countFromCard(official),countFromCard(reference));
- const label=official.querySelector('span'),value=official.querySelector('b'),mergedText=`${merged.toLocaleString()}건`;
+ const label=official.querySelector('span'),value=official.querySelector('b');
+ const mergedText=`${merged.toLocaleString()}세트 · 사진 ${(merged*2).toLocaleString()}장`;
  if(label&&label.textContent!=='공식검증·학습반영')label.textContent='공식검증·학습반영';
  if(value&&value.textContent!==mergedText)value.textContent=mergedText;
  if(reference)reference.remove();
+ if(cert){
+  const certCount=countFromCard(cert),certValue=cert.querySelector('b'),certText=`${certCount.toLocaleString()}개`;
+  if(certValue&&certValue.textContent!==certText)certValue.textContent=certText;
+ }
  const footer=document.querySelector('#gpdBody .gpd-foot .gpd-safe');
- const footerText='공식검증 완료자료는 통합학습 관리 · RAW 보정은 안전게이트 적용';
+ const footerText='공식검증은 카드 세트 기준 · 앞면+뒷면 사진은 모두 학습에 사용 · 인증번호는 고유번호 기준';
  if(footer&&footer.textContent!==footerText)footer.textContent=footerText;
  return true;
 }
