@@ -54,6 +54,12 @@ function ensurePreviewArea(form){
  const quick=form.querySelector('.gpd-manual-quick');if(quick)quick.insertAdjacentElement('afterend',area);else form.prepend(area);
  return area;
 }
+function ensureRegistrationPanelPresentation(form){
+ const details=form?.closest('details.gpd-manual');if(!details)return;
+ details.open=true;
+ const summary=details.querySelector(':scope > summary');
+ if(summary&&summary.textContent!=='📷 등급사진 간편등록')summary.textContent='📷 등급사진 간편등록';
+}
 function clearPreviewUrl(side){if(previewUrls[side]){try{URL.revokeObjectURL(previewUrls[side])}catch(_){}previewUrls[side]=null}}
 function showPreview(side,file,{registered=false}={}){
  const box=document.querySelector(`[data-preview-box="${side}"]`),img=document.querySelector(`[data-preview-img="${side}"]`),meta=document.querySelector(`[data-preview-meta="${side}"]`),state=document.querySelector(`[data-preview-state="${side}"]`);
@@ -94,6 +100,7 @@ function installProofStateSync(){
 }
 function enhance(){
  const form=document.getElementById('gpdManualForm');if(!form)return false;
+ ensureRegistrationPanelPresentation(form);
  const existingBack=document.getElementById('gpdManualBackPhoto');
  if(existingBack){installed=true;bridgeState.enhanced=true;installProofStateSync();return true;}
  if(installed)return true;
@@ -107,8 +114,8 @@ function enhance(){
  ensurePreviewStyle();ensurePreviewArea(form);
  front.addEventListener('change',()=>showPreview('front',front.files?.[0]||null));
  back?.addEventListener('change',()=>showPreview('back',back.files?.[0]||null));
- const policy=form.querySelector('.gpd-manual-policy');if(policy)policy.innerHTML='카드게임을 선택하고 <b>등급 슬랩 앞면 + 뒷면 사진 2장</b>을 모두 등록합니다. 앞면은 등급사·등급·인증번호 OCR에 사용하고 뒷면은 같은 등록건의 증빙사진으로 저장합니다. <b>공식검증 완료 전에는 RAW 학습에 사용하지 않으며</b>, 공식검증 완료 후에는 슬랩 라벨과 바깥 홀더를 제외한 카드 영역만 따로 추출해 결함·등급 보정학습 자료로 누적합니다.';
- const button=document.getElementById('gpdManualSubmit');if(button)button.textContent='앞면 + 뒷면 2장으로 수동등록';
+ const policy=form.querySelector('.gpd-manual-policy');if(policy)policy.innerHTML='카드게임을 선택하고 <b>등급 슬랩 앞면 + 뒷면 사진 2장</b>을 등록하세요. 앞면은 등급사·등급·인증번호 OCR에 사용하고 뒷면은 같은 카드의 증빙사진으로 저장합니다. <b>공식검증 완료 후에는 카드 영역만 추출해 RAW 결함·등급 보정학습에도 사용합니다.</b>';
+ const button=document.getElementById('gpdManualSubmit');if(button)button.textContent='앞면 + 뒷면 2장 등록하기';
  form.addEventListener('submit',submit,true);installProofStateSync();
  bridgeState.enhanced=true;
  return true;
