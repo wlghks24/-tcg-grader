@@ -15,6 +15,7 @@ from html.parser import HTMLParser
 from pathlib import Path
 from safe_runtime import atomic_write_json, diagnostic_exception, env_int, require_public_https, safe_read_text, validate_public_https_url
 
+import multi_route_event_discovery
 import supplementary_discovery
 
 ROOT = Path(__file__).resolve().parent
@@ -352,7 +353,6 @@ def explicit_local_date_range(text: str) -> tuple[str, str] | None:
             start = dt.date(int(year), int(month), int(start_day))
             end = dt.date(int(year), int(end_month or month), int(end_day))
             if end < start and not end_month:
-                # December -> January style range with omitted year/month.
                 end = dt.date(int(year) + 1, 1, int(end_day))
             return start.isoformat(), end.isoformat()
         except ValueError:
@@ -411,7 +411,6 @@ def detail_date_range(text: str) -> tuple[str, str] | None:
     if explicit:
         return explicit
     cleaned = plain(text)
-    # Official franchise articles: Event Dates: July 10th to September 30th, 2026.
     cross_month = re.search(
         r"(?:Event\s+Dates?|Period|Date)\s*:?\s*([A-Za-z]+)\s+(\d{1,2})(?:st|nd|rd|th)?"
         r"\s*(?:to|[-–~])\s*([A-Za-z]+)\s+(\d{1,2})(?:st|nd|rd|th)?,?\s+(20\d{2})",
@@ -426,7 +425,6 @@ def detail_date_range(text: str) -> tuple[str, str] | None:
                 return start.isoformat(), end.isoformat()
         except ValueError:
             pass
-    # English NARUTO/event pages: Period October 8 – 11, 2026 / Date January 7-10, 2027
     m = re.search(r"(?:Period|Date)\s+([A-Za-z]+)\s+(\d{1,2})\s*[-–~]\s*(\d{1,2}),?\s+(20\d{2})", cleaned, re.I)
     if m:
         month, start_day, end_day, year = m.groups()
@@ -444,7 +442,6 @@ def detail_date_range(text: str) -> tuple[str, str] | None:
             return value.isoformat(), value.isoformat()
         except ValueError:
             pass
-    # Japanese pages: 2026.10.08 - 10.11 / 2026年10月8日～11日
     m = re.search(r"(20\d{2})[./年](\d{1,2})[./月](\d{1,2})\s*(?:日)?\s*[-–~〜～]\s*(?:(\d{1,2})[./月])?(\d{1,2})\s*(?:日)?", cleaned)
     if m:
         year, month, start_day, end_month, end_day = m.groups()
@@ -458,7 +455,6 @@ def detail_date_range(text: str) -> tuple[str, str] | None:
 
 
 def _parse_date(value: object) -> dt.date | None:
-    """Return an ISO date or None. Never guesses malformed dates."""
     if not value:
         return None
     try:
@@ -468,11 +464,6 @@ def _parse_date(value: object) -> dt.date | None:
 
 
 def normalize_event_dates(item: dict) -> dict:
-    """Repair obviously truncated stored dates from the event title itself.
-
-    This prevents an active event from being deleted when an older collector saved
-    only the first day of a range such as '8월 22일 ~ 9월 4일'.
-    """
     repaired = dict(item)
     text = " ".join(str(repaired.get(k, "")) for k in ("name_native", "name_ko"))
     parsed = explicit_local_date_range(text)
@@ -496,7 +487,6 @@ def normalize_event_dates(item: dict) -> dict:
 
 
 def event_region(default: str, *values: object) -> str | None:
-    """Classify the actual venue, never the language of the publisher's website."""
     evidence = " ".join(str(value or "") for value in values)
     if OUTSIDE_TARGET_REGION.search(evidence):
         return None
@@ -528,7 +518,6 @@ def event_key(item: dict) -> tuple[str, str, str, str, str]:
 
 
 def merge_duplicate_events(items: list[dict]) -> tuple[list[dict], int]:
-    """Merge index/detail duplicates while preserving the best official details."""
     rows: dict[tuple[str, str, str, str, str], dict] = {}
     removed = 0
     for item in items:
@@ -580,12 +569,17 @@ def coverage_summary(items: list[dict]) -> dict:
             "matrix": matrix}
 
 
-def effective_expiry(item: dict) -> dt.date | None:
-    """Last date on which an event still has user value.
+def social_topic_expected_keys() -> list[str]:
+    """Derive the full matrix from the shared discovery topics, never a stale constant."""
+    return [
+        f"{game}/{region}/{topic}"
+        for game in GAMES
+        for region in REGIONS
+        for topic in multi_route_event_discovery.COVERAGE_TOPICS
+    ]
 
-    If a reward/claim deadline exists after the event end, keep the item until
-    that deadline so users do not lose still-actionable redemption info.
-    """
+
+def effective_expiry(item: dict) -> dt.date | None:
     end = _parse_date(item.get("end_date"))
     claim = _parse_date(item.get("claim_deadline"))
     if end and claim:
@@ -600,7 +594,6 @@ def is_expired(item: dict, today: dt.date | None = None) -> bool:
 
 
 def purge_expired(items: list[dict], today: dt.date | None = None) -> tuple[list[dict], list[dict]]:
-    """Split records into active/actionable and expired records."""
     today = today or dt.date.today()
     kept, removed = [], []
     for item in items:
@@ -744,8 +737,6 @@ def main() -> dict:
         else:
             errors.append(f"구조 오류: {item.get('name_ko', '이름 없음')}")
 
-    # 한국·일본·미국 영화 항목을 보장하되, 날짜가 발표되지 않은 상태를
-    # 내부 검토 기한과 분리해서 화면에 정확하게 표시한다.
     movie_tracker_key = {(x.get("game"), x.get("region"), x.get("category"), x.get("name_ko")) for x in valid_original}
     for tracker in REGIONAL_MOVIE_TRACKERS:
         key = (tracker["game"], tracker["region"], tracker["category"], tracker["name_ko"])
@@ -766,23 +757,17 @@ def main() -> dict:
         else:
             valid_original[found] = {**valid_original[found], **seed}
 
-    # 일본 공식 기사도 샌프란시스코 개최를 독립적으로 확인한다.
     for item in valid_original:
         if item.get("region") == "US" and item.get("game") == "포켓몬 카드" \
                 and "world" in str(item.get("name_native", "")).lower():
             item["verification_source"] = "https://www.pokemon-card.com/info/005605.html"
 
     valid_original, merged_existing = merge_duplicate_events(valid_original)
-
-    # 네트워크 확인 전에 날짜가 지난 항목을 먼저 제거한다. 행사 종료 뒤
-    # 수령 기한이 더 늦으면 그 수령 기한까지는 유지한다.
     existing, expired = purge_expired(valid_original)
     expired_names = [item.get("name_ko", "이름 없음") for item in expired]
     if original and not existing and not expired:
         raise ValueError("기존 행사 대량 삭제 방지")
 
-    # 기존 행사 재확인과 신규 행사 탐색을 동시에 수행한다.
-    # 느린 공식 사이트 하나 때문에 전체 업데이트가 직렬로 지연되지 않도록 격리한다.
     with concurrent.futures.ThreadPoolExecutor(max_workers=16) as pool:
         checked_futures = [pool.submit(check_existing, item) for item in existing]
         discovery_futures = [pool.submit(discover, idx) for idx in INDEXES]
@@ -811,7 +796,6 @@ def main() -> dict:
 
     data["items"] = checked
     data["updated_at"] = dt.datetime.now(dt.timezone.utc).isoformat(timespec="seconds")
-    # 발견 직후에도 방어적으로 한 번 더 만료 필터를 적용한다.
     checked, newly_expired = purge_expired(checked)
     if newly_expired:
         expired.extend(newly_expired)
@@ -830,7 +814,10 @@ def main() -> dict:
     data["discovery_sources"] = len(INDEXES)
     data["coverage"] = coverage_summary(checked)
     data["official_source_policy"] = "공식 HTTPS 허용목록 + 정확히 승인된 공식 SNS 게시물 + 실제 개최지 판별 + 월/계절/미발표 날짜 정확도 보존 + 일반 SNS/Google 후보는 공식 검증 전 자동승격 금지"
-    data["official_reference_checked_on"] = "2026-08-31"
+    today_iso = dt.date.today().isoformat()
+    data["official_reference_check_attempted_on"] = today_iso
+    if not errors:
+        data["official_reference_checked_on"] = today_iso
     kr_movie_count = sum(1 for x in checked if x.get("region") == "KR" and x.get("category") == "movie")
     data["kr_movie_tracking_count"] = kr_movie_count
     movie_pairs = data["coverage"]["movie_game_region_pairs"]
@@ -839,9 +826,6 @@ def main() -> dict:
         else f"기존 확인자료 유지 · 일부 출처 재확인 필요 · 한·일·미 영화정보 {movie_pairs}/9 조합 추적"
     )
     data["collection_errors"] = errors
-    # v64: 보조출처 탐색은 auto_update_all의 통합 보조작업에서 별도로 1회 실행한다.
-    # 프로모 수집기 안에서 다시 네트워크 탐색하면 동일 출처를 중복 요청해 지연/429를 늘릴 수 있으므로
-    # 여기서는 직전 후보 DB의 개수만 읽어 표시한다. 통합 보조작업 실패 시에도 기존 후보는 유지된다.
     try:
         supplementary_path = ROOT / "supplementary_candidates.json"
         supplementary = json.loads(safe_read_text(supplementary_path)) if supplementary_path.exists() else {}
@@ -858,19 +842,20 @@ def main() -> dict:
         data["official_social_candidate_count"] = int(social.get("official_social_candidate_count") or 0)
         data["social_cross_checked_count"] = int(social.get("cross_checked_count") or 0)
         topic_coverage = social.get("topic_coverage") if isinstance(social.get("topic_coverage"), dict) else {}
+        expected_keys = social_topic_expected_keys()
         data["social_topic_coverage"] = topic_coverage
-        data["social_topic_expected_cells"] = 72
-        data["social_topic_covered_cells"] = sum(1 for value in topic_coverage.values() if int(value or 0) > 0)
-        data["social_topic_missing_cells"] = [key for key, value in topic_coverage.items() if int(value or 0) == 0]
+        data["social_topic_expected_cells"] = len(expected_keys)
+        data["social_topic_covered_cells"] = sum(1 for key in expected_keys if int(topic_coverage.get(key) or 0) > 0)
+        data["social_topic_missing_cells"] = [key for key in expected_keys if int(topic_coverage.get(key) or 0) == 0]
         data["social_collection_mode"] = "deferred-to-integration-stage"
     except Exception as exc:
         data["social_candidate_count"] = 0
         data["official_social_candidate_count"] = 0
         data["social_cross_checked_count"] = 0
         data["social_topic_coverage"] = {}
-        data["social_topic_expected_cells"] = 72
+        data["social_topic_expected_cells"] = len(social_topic_expected_keys())
         data["social_topic_covered_cells"] = 0
-        data["social_topic_missing_cells"] = []
+        data["social_topic_missing_cells"] = social_topic_expected_keys()
         data["social_collection_mode"] = "deferred-read-error"
         errors.append(f"SNS/Google 후보 DB 읽기: {diagnostic_exception(exc)}")
     atomic_write_json(DATA,data,suffix=".json.tmp")
