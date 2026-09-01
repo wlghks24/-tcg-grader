@@ -1,16 +1,16 @@
 (()=>{
 'use strict';
-const GLOBAL_KEY='__TCG_DUAL_PHOTO_BRIDGE_V155__';
+const GLOBAL_KEY='__TCG_DUAL_PHOTO_BRIDGE_V156__';
 if(globalThis[GLOBAL_KEY]?.loaded){
  globalThis[GLOBAL_KEY].duplicate_loads=(globalThis[GLOBAL_KEY].duplicate_loads||0)+1;
  return;
 }
-const bridgeState=globalThis[GLOBAL_KEY]={loaded:true,version:155,enhanced:false,duplicate_loads:0,manualProofStatusSync:true,integratedOfficialVerification:true,verifiedSlabRawLearning:true};
+const bridgeState=globalThis[GLOBAL_KEY]={loaded:true,version:156,enhanced:false,duplicate_loads:0,manualProofStatusSync:true,integratedOfficialVerification:true,verifiedSlabRawLearning:true,recentManualToggle:true};
 if(!document.getElementById('gpdDualBridgeForceV150')){
  const marker=document.createElement('meta');
  marker.id='gpdDualBridgeForceV150';
  marker.name='tcg-dual-photo-bridge';
- marker.content='inline-v155';
+ marker.content='inline-v156';
  document.head?.appendChild(marker);
 }
 let installed=false,submitting=false,proofSyncing=false,proofObserverInstalled=false;
@@ -43,6 +43,10 @@ function ensurePreviewStyle(){
  .gpd-photo-preview-imgbox img{width:100%;height:100%;object-fit:contain;display:none}.gpd-photo-preview-imgbox.has-image img{display:block}
  .gpd-photo-preview-empty{color:#cbd5e1;text-align:center;font-size:11px;line-height:1.55;padding:12px}.gpd-photo-preview-imgbox.has-image .gpd-photo-preview-empty{display:none}
  .gpd-photo-preview-meta{padding:8px 9px;font-size:10px;color:#475569;line-height:1.45;min-height:48px;word-break:break-all}
+ .gpd-recent-toggle-head{margin:13px 0 7px!important}
+ .gpd-recent-toggle{width:100%;margin:0!important;padding:10px 12px!important;border:1px solid #cbd5e1!important;border-radius:10px!important;background:#f8fafc!important;color:#0f172a!important;font-weight:900!important;font-size:12px!important;text-align:left!important;cursor:pointer}
+ .gpd-recent-toggle[aria-expanded="true"]{background:#eef2ff!important;color:#1e3a8a!important}
+ .gpd-manual-rows.gpd-recent-collapsed>.gpd-manual-row{display:none!important}
  @media(max-width:520px){.gpd-dual-preview{grid-template-columns:1fr 1fr}.gpd-photo-preview-imgbox{height:190px}}
  @media(max-width:390px){.gpd-dual-preview{grid-template-columns:1fr}.gpd-photo-preview-imgbox{height:260px}}
  `;document.head.appendChild(style);
@@ -68,9 +72,28 @@ function showPreview(side,file,{registered=false}={}){
  clearPreviewUrl(side);previewUrls[side]=URL.createObjectURL(file);img.src=previewUrls[side];box.classList.add('has-image');meta.textContent=`${file.name||'사진'} · ${formatBytes(file.size)}`;state.textContent=registered?'등록 완료':'선택됨';state.classList.add('ready');
 }
 function markPreviewRegistered(){for(const side of ['front','back']){const state=document.querySelector(`[data-preview-state="${side}"]`);if(state&&document.querySelector(`[data-preview-box="${side}"]`)?.classList.contains('has-image')){state.textContent='등록 완료';state.classList.add('ready')}}}
+function ensureRecentManualToggle(){
+ const host=document.getElementById('gpdManualRows');if(!host)return false;
+ const heading=host.querySelector(':scope > h4');if(!heading)return false;
+ const rows=[...host.querySelectorAll(':scope > .gpd-manual-row')];
+ heading.classList.add('gpd-recent-toggle-head');
+ let button=heading.querySelector('.gpd-recent-toggle');
+ if(!button){
+  heading.textContent='';
+  button=document.createElement('button');button.type='button';button.className='gpd-recent-toggle';button.setAttribute('aria-controls','gpdManualRows');
+  button.addEventListener('click',()=>{const open=host.dataset.recentOpen!=='1';host.dataset.recentOpen=open?'1':'0';ensureRecentManualToggle()});
+  heading.appendChild(button);
+ }
+ const open=host.dataset.recentOpen==='1';
+ host.classList.toggle('gpd-recent-collapsed',!open);
+ button.setAttribute('aria-expanded',open?'true':'false');
+ const text=`${open?'▼':'▶'} 최근 수동등록 ${rows.length}건 ${open?'닫기':'보기'}`;if(button.textContent!==text)button.textContent=text;
+ return true;
+}
 async function syncRecentManualProofState(){
  if(proofSyncing)return;
  const host=document.getElementById('gpdManualRows');if(!host)return;
+ ensureRecentManualToggle();
  proofSyncing=true;
  try{
   const response=await fetch('/api/graded-photo-manual-registrations?_proof_state='+Date.now(),{cache:'no-store'});if(!response.ok)return;
@@ -88,21 +111,21 @@ async function syncRecentManualProofState(){
    const strong=element.querySelector('strong');if(strong&&strong.textContent!==label){strong.textContent=label;strong.className='ok';}
    const badge=element.querySelector('.gpd-manual-only-badge');if(badge&&badge.textContent!==badgeText){badge.textContent=badgeText;}
   });
- }catch(_){}finally{proofSyncing=false}
+ }catch(_){}finally{ensureRecentManualToggle();proofSyncing=false}
 }
 function installProofStateSync(){
  if(proofObserverInstalled)return;
  const host=document.getElementById('gpdManualRows');if(!host)return;
  proofObserverInstalled=true;
- let timer=0;const schedule=()=>{clearTimeout(timer);timer=setTimeout(syncRecentManualProofState,120)};
+ let timer=0;const schedule=()=>{clearTimeout(timer);timer=setTimeout(()=>{ensureRecentManualToggle();syncRecentManualProofState()},120)};
  const observer=new MutationObserver(schedule);observer.observe(host,{childList:true,subtree:true});
- schedule();setInterval(syncRecentManualProofState,4000);
+ ensureRecentManualToggle();schedule();setInterval(()=>{ensureRecentManualToggle();syncRecentManualProofState()},4000);
 }
 function enhance(){
  const form=document.getElementById('gpdManualForm');if(!form)return false;
- ensureRegistrationPanelPresentation(form);
+ ensureRegistrationPanelPresentation(form);ensurePreviewStyle();
  const existingBack=document.getElementById('gpdManualBackPhoto');
- if(existingBack){installed=true;bridgeState.enhanced=true;installProofStateSync();return true;}
+ if(existingBack){installed=true;bridgeState.enhanced=true;installProofStateSync();ensureRecentManualToggle();return true;}
  if(installed)return true;
  const front=document.getElementById('gpdManualPhoto');if(!front)return false;
  installed=true;
@@ -110,35 +133,33 @@ function enhance(){
  const backLabel=document.createElement('label');backLabel.setAttribute('data-dual-back-label','1');backLabel.innerHTML='③ 등급 슬랩 뒷면 사진<input id="gpdManualBackPhoto" type="file" accept="image/jpeg,image/png" required>';
  frontLabel?.insertAdjacentElement('afterend',backLabel);
  const back=document.getElementById('gpdManualBackPhoto');
- const quick=form.querySelector('.gpd-manual-quick');if(quick){quick.style.gridTemplateColumns='minmax(120px,.55fr) minmax(0,1fr) minmax(0,1fr)';}
- ensurePreviewStyle();ensurePreviewArea(form);
+ const quick=form.querySelector('.gpd-manual-quick');if(quick)quick.style.gridTemplateColumns='minmax(120px,.55fr) minmax(0,1fr) minmax(0,1fr)';
+ ensurePreviewArea(form);
  front.addEventListener('change',()=>showPreview('front',front.files?.[0]||null));
  back?.addEventListener('change',()=>showPreview('back',back.files?.[0]||null));
  const policy=form.querySelector('.gpd-manual-policy');if(policy)policy.innerHTML='카드게임을 선택하고 <b>등급 슬랩 앞면 + 뒷면 사진 2장</b>을 등록하세요. 앞면은 등급사·등급·인증번호 OCR에 사용하고 뒷면은 같은 카드의 증빙사진으로 저장합니다. <b>공식검증 완료 후에는 카드 영역만 추출해 RAW 결함·등급 보정학습에도 사용합니다.</b>';
  const button=document.getElementById('gpdManualSubmit');if(button)button.textContent='앞면 + 뒷면 2장 등록하기';
- form.addEventListener('submit',submit,true);installProofStateSync();
+ form.addEventListener('submit',submit,true);installProofStateSync();ensureRecentManualToggle();
  bridgeState.enhanced=true;
  return true;
 }
 async function submit(event){
  event.preventDefault();event.stopImmediatePropagation();if(submitting)return;
- const front=document.getElementById('gpdManualPhoto')?.files?.[0];
- const back=document.getElementById('gpdManualBackPhoto')?.files?.[0];
+ const front=document.getElementById('gpdManualPhoto')?.files?.[0],back=document.getElementById('gpdManualBackPhoto')?.files?.[0];
  const status=document.getElementById('gpdManualStatus'),button=document.getElementById('gpdManualSubmit');
  if(!front||!back){if(status)status.textContent='앞면과 뒷면 사진을 모두 선택하세요.';return;}
  submitting=true;if(button)button.disabled=true;if(status)status.textContent='앞면·뒷면 사진 메타데이터 제거·용량 최적화 중…';
  try{
-  const [frontImage,backImage]=await Promise.all([normalize(front),normalize(back)]);
-  if(frontImage===backImage)throw new Error('앞면과 뒷면에 같은 사진을 선택했습니다.');
+  const [frontImage,backImage]=await Promise.all([normalize(front),normalize(back)]);if(frontImage===backImage)throw new Error('앞면과 뒷면에 같은 사진을 선택했습니다.');
   const gradeText=document.getElementById('gpdManualGrade')?.value.trim()||'';
   const body={entry_mode:'ocr_first_front_back',company:document.getElementById('gpdManualCompany')?.value||'',game:document.getElementById('gpdManualGame')?.value||'',grade:gradeText===''?null:Number(gradeText),certification_id:document.getElementById('gpdManualCert')?.value||'',card_name:document.getElementById('gpdManualCardName')?.value||'',card_number:document.getElementById('gpdManualCardNumber')?.value||'',filename:front.name||'',back_filename:back.name||'',image_data_url:frontImage,back_image_data_url:backImage,note:'manual_front_back_pair'};
   if(status)status.textContent='앞면 OCR + 뒷면 증빙사진을 같은 등록건으로 저장 중…';
   const response=await fetch('/api/graded-photo-manual-registration',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body),cache:'no-store'});
   const data=await response.json().catch(()=>({}));if(!response.ok)throw new Error(data.error||`등록 실패(${response.status})`);
   markPreviewRegistered();if(status)status.textContent=data.duplicate?'기존 앞면 등록건에 뒷면 사진을 확인했습니다. 아래 미리보기는 방금 선택한 사진입니다.':'앞면·뒷면 2장 등록 완료 · 아래에서 방금 등록한 사진을 확인할 수 있습니다.';
-  document.getElementById('gpdManualPhoto').value='';document.getElementById('gpdManualBackPhoto').value='';if(typeof window.loadManualRegistrations==='function')await window.loadManualRegistrations();await sleep(500);await syncRecentManualProofState();
- }catch(error){if(status)status.textContent=location.hostname.endsWith('github.io')?'PC·태블릿 로컬/Tailscale 서버 주소에서 등록하세요.':String(error?.message||'앞뒤 사진 등록 실패');}
- finally{submitting=false;if(button)button.disabled=false;}
+  document.getElementById('gpdManualPhoto').value='';document.getElementById('gpdManualBackPhoto').value='';if(typeof window.loadManualRegistrations==='function')await window.loadManualRegistrations();await sleep(500);ensureRecentManualToggle();await syncRecentManualProofState();
+ }catch(error){if(status)status.textContent=location.hostname.endsWith('github.io')?'PC·태블릿 로컬/Tailscale 서버 주소에서 등록하세요.':String(error?.message||'앞뒤 사진 등록 실패')}
+ finally{submitting=false;if(button)button.disabled=false}
 }
 function boot(){let tries=0;const timer=setInterval(()=>{tries++;if(enhance()||tries>100)clearInterval(timer)},250)}
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',boot,{once:true});else boot();
