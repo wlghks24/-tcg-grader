@@ -76,6 +76,7 @@ SAFE_JSON_FILES = {
     "auto_update_issues.json", "adaptive_collection_stats.json", "source_collection_stats.json",
     "link_health_report.json", "tcg_live_data.json", "auto_repair_memory.json",
     "verification_cycles.json", "graded_photo_candidates.json",
+    "collector_self_heal_memory.json",
 }
 
 REQUIRED_JSON_FIELDS = {
@@ -98,6 +99,7 @@ REQUIRED_JSON_FIELDS = {
     "auto_repair_memory.json": {"patterns": dict, "files": dict},
     "verification_cycles.json": {"results": list},
     "graded_photo_candidates.json": {"records": list, "summary": dict},
+    "collector_self_heal_memory.json": {"files": dict, "events": list, "quarantine": list},
 }
 
 

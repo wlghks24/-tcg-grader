@@ -1810,9 +1810,13 @@ document.getElementById("reset15")?.addEventListener("click",()=>{
 	 const deferred=report?.deferred_timeout_recovery&&typeof report.deferred_timeout_recovery==="object"?report.deferred_timeout_recovery:{};
 	 const deferredSummary=Number(deferred.attempted_count||0)>0
 	   ?`<br>⏱️ 시간초과 자료만 별도수집 ${esc(deferred.attempted_count)}건 · 복구 ${esc(deferred.recovered_count||0)}건 · 다음 실행 대기 ${esc(deferred.pending_count||0)}건<br>`:"";
+	 const healing=report?.self_healing&&typeof report.self_healing==="object"?report.self_healing:{};
+	 const healingSummary=(Number(healing.policy_applied||0)||Number(healing.next_policy_prepared||0)||Number(healing.quarantined_for_code_repair||0))
+	   ?`<br>🧠 자가복구 학습 · 적용 ${esc(healing.policy_applied||0)} · 해결 ${esc(healing.policy_recovered||0)} · 다음 복구 준비 ${esc(healing.next_policy_prepared||0)} · 코드검증 격리 ${esc(healing.quarantined_for_code_repair||0)}<br>`:"";
 	 return `<b>${report.ok && degraded===0?"✅ 전체 최신수집 완료":"⚠️ 일부 항목 확인 필요"}</b><br>`+
-	   `신규 정상 ${fresh} · 부분/복구 ${degraded} · 기존자료 유지 ${restored} · 실패 ${failed}${deferredSummary}<br>`+
+	   `신규 정상 ${fresh} · 부분/복구 ${degraded} · 기존자료 유지 ${restored} · 실패 ${failed}${deferredSummary}${healingSummary}<br>`+
 	   rows.map(x=>`${x.ok?"✅":"❌"} <b>${esc(x.name)}</b> — ${esc(x.status||"")} ${Number.isFinite(x.count)?`(${x.count}건)`:""}`+
+	     `${x.self_heal_policy?`<br><span class="muted">↳ 🧠 ${esc(x.self_heal_action||x.self_heal_policy)} 적용</span>`:""}`+
 	     `${x.deferred_timeout_attempted?`<br><span class="muted">↳ 시간초과 별도수집 ${x.deferred_timeout_recovered?"복구 완료":"다음 실행 대기"} · 확대 제한 ${esc(x.deferred_timeout_seconds||0)}초</span>`:""}`+
 	     `${(x.collection_errors||[]).length?`<br><span class="muted">↳ ${esc((x.collection_errors||[]).join(" · "))}</span>`:""}`).join("<br>");
  };

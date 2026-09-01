@@ -1318,6 +1318,12 @@ class Handler(SimpleHTTPRequestHandler):
                 return self.json(repair.public_error_learning_summary(repair.load_memory(Path(AUTO_MEMORY))))
             except (OSError,ValueError,TypeError):
                 return self.json({'ok':False,'error':'오류학습 요약을 읽지 못했습니다.'},500)
+        if path=='/api/collector-self-healing':
+            try:
+                import collector_self_healing
+                return self.json(collector_self_healing.public_status())
+            except (OSError,ValueError,TypeError,json.JSONDecodeError):
+                return self.json({'ok':False,'error':'수집기 자가복구 상태를 읽지 못했습니다.'},500)
         if path=='/api/verification-cycles': return self.json(load_json_file(os.path.join(BASE,'verification_cycles.json'),{'completed_passes':0,'successful_passes':0,'results':[]}))
         if path=='/api/learning-store': return self.json(learning_store())
         if path=='/api/vision-self-learning': return self.json(load_json_file(VISION_SELF_LEARNING_REPORT,{'version':1,'engine':'v101-isolated-self-learning-calibration','status':'not-run'}))

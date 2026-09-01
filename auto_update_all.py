@@ -16,6 +16,7 @@ import re
 import signal
 from pathlib import Path
 import auto_repair_engine
+import collector_self_healing
 from safe_runtime import (
     atomic_write_bytes, atomic_write_json, atomic_write_text,
     bounded_float as _safe_float, bounded_int as _safe_int,
@@ -657,6 +658,7 @@ def run_all(trigger: str = "manual", selected_files=None, progress_callback=None
     total_jobs = len(jobs)
     memory = auto_repair_engine.load_memory(MEMORY)
     stats = _load_adaptive_stats()
+    self_heal_plans = {job[2]: collector_self_healing.plan_for(job[2]) for job in jobs}
     LAST_GOOD.mkdir(exist_ok=True)
     # v58: 전체 수집 전에 핵심 JSON을 감시 점검한다. 손상/누락 파일은
     # 빈 객체로 덮어쓰지 않고 .tcg_last_good의 검증된 정상본이 있을 때만 복원한다.
@@ -683,6 +685,7 @@ def run_all(trigger: str = "manual", selected_files=None, progress_callback=None
 
     def one_job(job, backup_root: Path, *, deferred_budget: int | None = None):
         label,module_name,filename=job
+        heal_plan=self_heal_plans.get(filename) or {}
         is_deferred=deferred_budget is not None
         emit(label,filename,'deferred-running' if is_deferred else 'running')
         gate = preflight_by_file.get(filename, {'ok': True})
@@ -704,9 +707,10 @@ def run_all(trigger: str = "manual", selected_files=None, progress_callback=None
                     _copy_snapshot(persistent,target); _copy_snapshot(persistent,backup)
         learned_timeout=_job_timeout(filename,stats)
         timeout_s=(max(DEFERRED_TIMEOUT_MIN_SECONDS,min(DEFERRED_TIMEOUT_MAX_SECONDS,int(deferred_budget)))
-                   if is_deferred else learned_timeout)
+                   if is_deferred else max(learned_timeout,_safe_int(heal_plan.get('timeout_floor'),0,0,300)))
         errors=[]; timed_out=False
-        row=None; attempts=0; max_attempts=1 if is_deferred else 2
+        row=None; attempts=0
+        max_attempts=1 if is_deferred else _safe_int(heal_plan.get('max_attempts'),2,2,3)
         # 일반 단계는 최대 300초, 분리 복구 단계는 해당 파일에만 학습된 180~600초를 부여한다.
         deadline=t0+(timeout_s if is_deferred else 300)
         runner="import importlib; m=importlib.import_module(%r); m.main()" % module_name
@@ -723,6 +727,9 @@ def run_all(trigger: str = "manual", selected_files=None, progress_callback=None
                 # 하위 수집기의 HTTP timeout도 바깥 학습 timeout과 연동한다.
                 # 너무 짧은 고정 2~4초 때문에 외부 300초 예산이 무의미해지는 오류를 방지한다.
                 child_env['TCG_HTTP_TIMEOUT']=str(max(5, min(60, int(attempt_timeout*0.45))))
+                for env_key,env_value in (heal_plan.get('env') or {}).items():
+                    if env_key.startswith('TCG_HEAL_') and isinstance(env_value,str):
+                        child_env[env_key]=env_value
                 proc=_run_managed_process([sys.executable,'-c',runner],cwd=str(ROOT),timeout=attempt_timeout,env=child_env)
                 if proc.returncode != 0:
                     detail=(proc.stderr or proc.stdout or '하위 모듈 실행 실패').strip()[-1200:]
@@ -766,6 +773,9 @@ def run_all(trigger: str = "manual", selected_files=None, progress_callback=None
                      "last_attempt_timeout_seconds":attempt_timeout,
                      "collection_stage":"deferred-timeout" if is_deferred else "primary",
                      "timeout_exhausted":bool(any(_is_timeout_error(value) for value in warnings))}
+                if heal_plan.get('policy_id'):
+                    row['self_heal_policy']=heal_plan['policy_id']
+                    row['self_heal_action']=heal_plan.get('label')
                 _copy_snapshot(target,persistent)
                 _record_job_stat(stats,filename,elapsed,True,error=learning_error,partial=partial,recovered=bool(recovered or is_deferred))
                 break
@@ -780,7 +790,7 @@ def run_all(trigger: str = "manual", selected_files=None, progress_callback=None
             if attempts>=max_attempts or not _should_retry(statrow,timed_out,errors[-1]):
                 break
             # 즉시 연타 대신 짧은 지수 백오프. 총 5분 예산에는 포함된다.
-            time.sleep(min(4, 2**attempts))
+            time.sleep(min(10,max(_safe_int(heal_plan.get('retry_delay'),2,1,10),2**attempts)))
         if row is None:
             elapsed=time.monotonic()-t0
             _record_job_stat(stats,filename,elapsed,False,timed_out,error=' / '.join(errors))
@@ -809,6 +819,9 @@ def run_all(trigger: str = "manual", selected_files=None, progress_callback=None
                      "collection_stage":"deferred-timeout" if is_deferred else "primary",
                      "timeout_exhausted":bool(any(_is_timeout_error(value) for value in errors))}
         emit(label,filename,'deferred-done' if is_deferred else 'done',row)
+        if heal_plan.get('policy_id') and isinstance(row,dict):
+            row.setdefault('self_heal_policy',heal_plan['policy_id'])
+            row.setdefault('self_heal_action',heal_plan.get('label'))
         return row
 
     with tempfile.TemporaryDirectory(prefix='tcg-update-') as td:
@@ -975,6 +988,7 @@ def run_all(trigger: str = "manual", selected_files=None, progress_callback=None
         'top_groups':public_learning.get('groups',[])[:10],
         'safety':public_learning.get('safety'),
     }
+    report['self_healing']=collector_self_healing.observe(report)
     atomic_report(report)
     return report
 

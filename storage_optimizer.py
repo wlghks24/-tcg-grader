@@ -33,7 +33,7 @@ JSON_NAMES = {
     "source_collection_stats.json","collection_learning_memory.json","collection_learning_report.json",
     "collection_feedback.json","collection_provider_health.json","multi_market_source_learning.json",
     "graded_photo_candidates.json","graded_photo_source_learning.json","box_hit_market_candidates.json",
-    "box_hit_market_learning.json","precollect_status.json"
+    "box_hit_market_learning.json","precollect_status.json","collector_self_heal_memory.json"
 }
 
 TEMP_GLOBS = ("*.tmp", "*.tmp.json", "*.db.tmp", "*.json.tmp", "*.adaptive-social.tmp")
