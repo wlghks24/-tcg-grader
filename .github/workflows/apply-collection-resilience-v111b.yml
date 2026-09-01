@@ -1,0 +1,50 @@
+name: Apply collection resilience v111b
+on:
+  push:
+    branches: [main]
+    paths:
+      - apply_collection_resilience_v111b.py
+      - .github/workflows/apply-collection-resilience-v111b.yml
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
+        with:
+          python-version: '3.12'
+      - name: Patch collectors
+        run: |
+          python -m py_compile apply_collection_resilience_v111.py apply_collection_resilience_v111b.py
+          python apply_collection_resilience_v111.py
+          python apply_collection_resilience_v111b.py
+      - name: Runtime syntax check
+        run: python -m py_compile update_releases.py graded_photo_multi_source.py
+      - name: Parser and baseline smoke tests
+        run: |
+          python - <<'PY'
+          import update_releases as r
+          op='エクストラブースター ONE PIECE Heroines Edition vol.2 【EB-05】 商品情報 発売日 : 2026.10 メーカー希望小売価格 240円(税込)'
+          rows=r._parse_onepiece_jp_segmented(op,'https://www.onepiece-cardgame.com/products/')
+          assert rows and rows[0]['release_window']=='2026-10'
+          pk='拡張パック 「ストームエメラルダ」 商品情報 販売日 2026年7月31日（金） 希望小売価格 200円（税込）'
+          rows=r._parse_pokemon_jp_segmented(pk,'https://www.pokemon-card.com/products/')
+          assert rows and rows[0]['release_date']=='2026-07-31'
+          import graded_photo_multi_source as g
+          assert any(x.get('certification_id')=='88411675' for x in g._registry_seed_rows())
+          PY
+      - name: Existing graded-photo regression tests
+        run: python -m unittest -v test_graded_photo_multi_source.py
+      - name: Commit patched collectors
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add update_releases.py graded_photo_multi_source.py graded_photo_verified_seed_baseline.json
+          if git diff --cached --quiet; then
+            echo "Collection resilience v111b already integrated"
+            exit 0
+          fi
+          git commit -m "fix: resilient release parsing and verified photo fallback v111b"
+          git push
