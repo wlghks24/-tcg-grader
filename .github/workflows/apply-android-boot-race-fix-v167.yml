@@ -1,0 +1,94 @@
+name: Fix Android boot restart race v167
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/apply-android-boot-race-fix-v167.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Patch canonical Android boot launcher
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+
+          installer = Path('ANDROID_AUTO_START_INSTALL.sh')
+          text = installer.read_text(encoding='utf-8')
+          old = "  printf 'while true; do python tcg_updater.py >> %q 2>&1; sleep 10; done\\n' \"$PROJECT_DIR/TCG_ANDROID_STARTUP.log\"\n"
+          new = "  echo 'while true; do bash START_TCG_UPDATER_ANDROID.sh >> TCG_ANDROID_STARTUP.log 2>&1; sleep 10; done'\n"
+          if old in text:
+              text = text.replace(old, new, 1)
+          elif 'bash START_TCG_UPDATER_ANDROID.sh >> TCG_ANDROID_STARTUP.log' not in text:
+              raise SystemExit('auto-start loop anchor not found')
+          installer.write_text(text, encoding='utf-8')
+
+          launcher = Path('START_TCG_UPDATER_ANDROID.sh')
+          text = launcher.read_text(encoding='utf-8')
+          anchor = '''echo "========================================"\necho " TCG Android 태블릿 서버 시작"\necho " 현재 빌드: ${TCG_BUILD} · 브랜치: ${TCG_BRANCH}"\necho "========================================"\n'''
+          block = anchor + r'''
+# Older tablet installs used a boot loop that directly relaunched
+# `python tcg_updater.py` every 10 seconds. When a manual v135 restart killed
+# that process, the old boot loop revived it during startup and stole port
+# 8765. Migrate that boot file before touching the port, and terminate only the
+# legacy wrapper process. The canonical installer now launches this guarded
+# START script instead.
+LEGACY_BOOT_FILE="$HOME/.termux/boot/TCG_AUTO_START.sh"
+if [ -f "$LEGACY_BOOT_FILE" ] && grep -Fq 'python tcg_updater.py' "$LEGACY_BOOT_FILE"; then
+  echo "[복구] 구형 Android 자동시작 루프를 발견했습니다. v167 단일서버 방식으로 전환합니다."
+  pkill -f '[T]CG_AUTO_START.sh' 2>/dev/null || true
+  sleep 1
+  if [ -s "ANDROID_AUTO_START_INSTALL.sh" ]; then
+    bash ANDROID_AUTO_START_INSTALL.sh || {
+      echo "[오류] Android 자동시작 v167 전환에 실패했습니다."
+      exit 1
+    }
+  else
+    echo "[오류] ANDROID_AUTO_START_INSTALL.sh 파일이 없어 구형 자동시작을 안전하게 전환할 수 없습니다."
+    exit 1
+  fi
+fi
+'''
+          if 'LEGACY_BOOT_FILE="$HOME/.termux/boot/TCG_AUTO_START.sh"' not in text:
+              if anchor not in text:
+                  raise SystemExit('launcher build banner anchor not found')
+              text = text.replace(anchor, block, 1)
+          launcher.write_text(text, encoding='utf-8')
+          PY
+
+      - name: Regression checks
+        shell: bash
+        run: |
+          bash -n ANDROID_AUTO_START_INSTALL.sh
+          bash -n START_TCG_UPDATER_ANDROID.sh
+          grep -F 'bash START_TCG_UPDATER_ANDROID.sh >> TCG_ANDROID_STARTUP.log' ANDROID_AUTO_START_INSTALL.sh
+          if grep -Fq 'while true; do python tcg_updater.py' ANDROID_AUTO_START_INSTALL.sh; then
+            echo 'legacy direct tcg_updater boot loop still present' >&2
+            exit 1
+          fi
+          grep -F 'LEGACY_BOOT_FILE="$HOME/.termux/boot/TCG_AUTO_START.sh"' START_TCG_UPDATER_ANDROID.sh
+          grep -F "pkill -f '[T]CG_AUTO_START.sh'" START_TCG_UPDATER_ANDROID.sh
+          grep -F 'v167 단일서버 방식으로 전환' START_TCG_UPDATER_ANDROID.sh
+
+      - name: Commit patch
+        shell: bash
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add START_TCG_UPDATER_ANDROID.sh ANDROID_AUTO_START_INSTALL.sh
+          if git diff --cached --quiet; then
+            echo 'Already patched'
+            exit 0
+          fi
+          git commit -m 'fix: migrate legacy Android boot loop to singleton launcher v167'
+          git push origin HEAD:main
