@@ -493,6 +493,21 @@ def _http_status_from_error(text: str) -> int | None:
     return status if 100 <= status <= 599 else None
 
 
+def _retry_after_seconds_from_error(text: str) -> int | None:
+    """Extract a bounded Retry-After delay from a redacted diagnostic."""
+    matches = re.findall(
+        r"\bretry[- ]after\s*(?:[=:]\s*)?(\d{1,7})\s*(?:s|sec(?:onds?)?|초)?\b",
+        str(text or ""),
+        flags=re.IGNORECASE,
+    )
+    if not matches:
+        return None
+    try:
+        return max(1, min(86_400, int(matches[-1])))
+    except (TypeError, ValueError, OverflowError):
+        return None
+
+
 def _diagnostic_needle_matches(needle: str, text: str) -> bool:
     """Match fixed diagnostics without confusing WinError 2 with WinError 206."""
     # Almost all diagnostic needles are literal substrings. Avoid running a
@@ -1276,6 +1291,7 @@ def analyze_error(detail: Any, error_type: str | None = None, *, use_scenario_pr
         "code": code, "title": title, "category": category,
         "canonical_template": template, "error_subtype": subtype,
         "http_status": http_status, "probable_cause": cause,
+        "retry_after_seconds": _retry_after_seconds_from_error(lowered),
         "safe_action": safe_action, "recommended_action": recommendation,
         "resolution_steps": list(steps),
         "verification_steps": [steps[-1], "기존 정상자료가 손상되지 않았는지 확인합니다."],
