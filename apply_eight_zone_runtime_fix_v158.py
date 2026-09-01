@@ -74,3 +74,4 @@ if "'graded_photo_eight_zone_ui': True" not in text or "'existing_photo_revalida
 wrapper.write_text(text, encoding='utf-8')
 
 print('eight-zone runtime fix v158 applied')
+# rerun marker: 2026-09-01
