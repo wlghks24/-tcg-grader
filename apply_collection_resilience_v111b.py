@@ -15,8 +15,8 @@ def replace_once(text,old,new,label):
 
 def main():
     text=PATH.read_text(encoding='utf-8')
-    # A project baseline is emergency bootstrap only. It must not add an extra
-    # verified row when a device/test already has a valid local registry.
+    # The immutable baseline is an emergency bootstrap only. It must not add an
+    # extra verified row when the device/test already has a valid local registry.
     text=replace_once(text,
         "for path in (VERIFIED,LIBRARY_OFFICIAL,BASELINE_VERIFIED):\n  d=_load(path,{})",
         "for path in (VERIFIED,LIBRARY_OFFICIAL):\n  d=_load(path,{})",
@@ -41,9 +41,8 @@ def _library_verified_evidence"""
         "for path in (VERIFIED,LIBRARY_OFFICIAL,BASELINE_VERIFIED):\n  data=_load(path,{})",
         "for path in (VERIFIED,LIBRARY_OFFICIAL):\n  data=_load(path,{})",
         'seed path')
-    anchor="                'image_evidence_source':'prevalidated_library_photo' if evidence.get('image_sha256') else 'not_available'})\n return rows\n\ndef _reference_learning_seed_rows"
-    replacement="""                'image_evidence_source':'prevalidated_library_photo' if evidence.get('image_sha256') else 'not_available'})
- if not rows:
+    anchor=" return rows\n\ndef _reference_learning_seed_rows"
+    replacement=""" if not rows:
   data=_load(BASELINE_VERIFIED,{})
   values=data.get('certifications',[]) if isinstance(data,dict) else []
   for item in values if isinstance(values,list) else []:
