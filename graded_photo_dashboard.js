@@ -115,7 +115,7 @@ function render(payload){
  <div class="gpd-section"><h3>게임별 등급사진 확보량</h3><div class="gpd-companies">${Object.entries(GAMES).map(([g,label])=>`<div class="gpd-company"><b>${label}</b><strong>${byGame[g].toLocaleString()}</strong><span>장</span></div>`).join('')}</div></div>
  <div class="gpd-section"><h3>후보 출처별 수집량</h3>${sources.length?`<div class="gpd-sources">${sources.map(([s,c])=>`<div><span>${esc(s)}</span><b>${c.toLocaleString()}건</b></div>`).join('')}</div>`:'<div class="gpd-empty">아직 출처별 후보가 없습니다.</div>'}</div>
  <div class="gpd-section"><h3>검색 공급자별 확보량</h3>${providers.length?`<div class="gpd-providers">${providers.map(([s,c])=>`<span>${esc(s)} <b>${n(c)}건</b></span>`).join('')}</div>`:'<div class="gpd-empty">검색 공급자 기록이 없습니다.</div>'}</div>
- <div class="gpd-section"><h3>출처 실행상태</h3>${sourceHealth(payload)}</div>${diagnosticHtml(payload)}
+ <details class="gpd-section gpd-source-details"><summary style="cursor:pointer;list-style:none;background:#1d4ed8;color:#fff;border-radius:14px;padding:14px 16px;font-weight:850;text-align:center">출처 실행상태 보기</summary><div style="margin-top:12px"><h3>출처 실행상태</h3>${sourceHealth(payload)}</div></details>${diagnosticHtml(payload)}
  <div class="gpd-foot"><span>최근 수집: ${esc(latestOf(rows,payload))}</span><span class="gpd-safe">공식검증 참고학습과 원본 결함 보정학습은 완전히 분리</span></div>`;
 }
 async function load(){
