@@ -1007,6 +1007,88 @@ def _aggregate_dimension_stats(rows:list[dict])->tuple[dict,dict]:
  for company in COMPANIES:company_stats[company]['games_covered']=len(company_games[company])
  return game_stats,company_stats
 
+
+def _cleanup_candidate_key_v157(item:dict)->str:
+ """Stable local key used only to count quarantine review passes."""
+ url=str(item.get('url') or '').strip()
+ if url:return 'url:'+url
+ company=str(item.get('company') or '').upper();cert=normalize_cert(item.get('certification_id'))
+ if company and cert:return f'cert:{company}:{cert}:{item.get("grade")}'
+ image=str(item.get('image_url') or '').strip()
+ if image:return 'image:'+image
+ return 'fallback:'+canonical_key(str(item.get('title') or ''),str(item.get('source_id') or ''))
+
+
+def _quarantine_review_value_v157(value)->int:
+ try:return max(0,int(value or 0))
+ except (TypeError,ValueError,OverflowError):return 0
+
+
+def _review_and_prune_quarantine_v157(rows:list[dict],previous_rows:list[dict])->tuple[list[dict],dict,list[dict]]:
+ """Re-review old quarantine rows and remove only repeat-confirmed unusable candidates.
+
+ A candidate gets one grace pass. Existing quarantine rows therefore need a fresh
+ current pass before deletion. Temporary official-site failures (403/429/404,
+ cooldowns, network failures, manual-browser mode) are never treated as proof that
+ a certification is invalid. Verified references are never deleted here.
+ """
+ previous_counts={}
+ for old in previous_rows or []:
+  if not isinstance(old,dict) or old.get('official_result') is True:continue
+  key=_cleanup_candidate_key_v157(old)
+  count=max(1,_quarantine_review_value_v157(old.get('quarantine_review_count')))
+  previous_counts[key]=max(previous_counts.get(key,0),count)
+
+ kept=[];audit=[];reason_counts=collections.Counter();reviewed=0;retryable_kept=0;grace_kept=0
+ now=_now()
+ hard_conflicts={'official_grade_conflict','duplicate_image_label_conflict','near_duplicate_image_label_conflict','cross_source_grade_conflict'}
+ transient_tokens=('httperror','urlerror','timeout','timed out','rate_limit','rate limit','cooldown','blocked','challenge','access_control',
+                   '요청 제한','접근제어','자동확인하지 못','자동 등급사 인증조회','직접 열어','네트워크 오류','http 404')
+ hard_lookup_tokens=('해당 인증번호를 찾지 못했습니다','등급사·인증번호 일치를 확인하지 못했습니다')
+
+ for item in rows:
+  if not isinstance(item,dict):continue
+  conflicts={str(x) for x in (item.get('evidence_conflicts') or []) if x}
+  verified=bool(item.get('official_result') is True and not conflicts)
+  if verified:
+   item.pop('quarantine_review_count',None);item.pop('last_quarantine_review_at',None)
+   kept.append(item);continue
+
+  reviewed+=1;key=_cleanup_candidate_key_v157(item)
+  reviews=max(previous_counts.get(key,0),_quarantine_review_value_v157(item.get('quarantine_review_count')))+1
+  item['quarantine_review_count']=reviews;item['last_quarantine_review_at']=now
+  image_url=str(item.get('image_url') or '').strip();probe_status=str(item.get('image_probe_status') or '').lower()
+  image_validated=item.get('image_validated') is True;ocr=bool(str(item.get('ocr_label_text') or '').strip())
+  cert=normalize_cert(item.get('certification_id'));grade=item.get('grade')
+  lookup=str(item.get('official_lookup_status') or '').lower()
+  transient=any(token in lookup for token in transient_tokens)
+  hard_lookup=any(token in lookup for token in hard_lookup_tokens) and not transient
+  prune_reason=''
+
+  if reviews>=2:
+   if conflicts & hard_conflicts:prune_reason='evidence_conflict'
+   elif probe_status=='failed':prune_reason='image_validation_failed'
+   elif not image_url:prune_reason='image_url_missing'
+   elif image_validated and not ocr:prune_reason='ocr_unreadable'
+   elif ocr and not cert:prune_reason='certification_unresolved'
+   elif ocr and grade is None:prune_reason='grade_unresolved'
+   elif hard_lookup:prune_reason='official_not_found_or_mismatch'
+
+  if prune_reason:
+   reason_counts[prune_reason]+=1
+   audit.append({'at':now,'key':key[:240],'company':str(item.get('company') or '').upper(),
+                 'certification_id':cert,'grade':grade,'source_id':str(item.get('source_id') or '')[:80],
+                 'reason':prune_reason,'title':str(item.get('title') or '')[:160],'url':str(item.get('url') or '')[:600]})
+   continue
+
+  if cert and grade is not None and image_url and probe_status!='failed':retryable_kept+=1
+  elif reviews<2:grace_kept+=1
+  kept.append(item)
+
+ stats={'reviewed':reviewed,'pruned':len(audit),'retained_retryable':retryable_kept,'retained_grace':grace_kept,
+        'pruned_reasons':dict(sorted(reason_counts.items())),'policy':'two_pass_confirmed_unusable_only'}
+ return kept,stats,audit
+
 def _collect_once()->dict:
  run_started=time.monotonic();registry=_registry();stats={};errors=[]
  is_android='com.termux' in os.environ.get('PREFIX','')
@@ -1103,6 +1185,7 @@ def _collect_once()->dict:
    stats.setdefault(sid,{'candidates':0,'image_hits':0,'verified_hits':0,'errors':0,'queries':0})
    stats[sid]['verified_hits']=int(stats[sid].get('verified_hits',0))+1
 
+ rows,cleanup_stats,cleanup_audit=_review_and_prune_quarantine_v157(rows,previous_rows)
  reference_learning=_save_reference_learning(rows)
  verified_count=sum(item.get('status')=='verified_reference' for item in rows)
  measurement_ready_count=sum(item.get('measurement_photo_ready') is True for item in rows)
@@ -1113,7 +1196,7 @@ def _collect_once()->dict:
  google_configured=bool((os.environ.get('GOOGLE_CSE_KEY') or os.environ.get('GOOGLE_CSE_API_KEY')) and
                         (os.environ.get('GOOGLE_CSE_CX') or os.environ.get('GOOGLE_CSE_ID')))
  ebay_configured=bool(os.environ.get('EBAY_OAUTH_TOKEN') or (os.environ.get('EBAY_CLIENT_ID') and os.environ.get('EBAY_CLIENT_SECRET')))
- payload={'schema_version':7,'engine':'v126-fair-budget-global-balance-collection','created_at':_now(),'records':rows,
+ payload={'schema_version':8,'engine':'v157-reverify-prune-fair-budget-collection','created_at':_now(),'records':rows,
           'summary':{'total_candidates':len(rows),'with_image_url':sum(bool(x.get('image_url')) for x in rows),
                      'validated_images':sum(bool(x.get('image_validated')) for x in rows),'ocr_readable':sum(bool(x.get('ocr_label_text')) for x in rows),
                      'certifications_resolved':sum(bool(x.get('certification_id')) for x in rows),'verified_references':verified_count,
@@ -1122,6 +1205,8 @@ def _collect_once()->dict:
                      'game_grader_buckets_covered':int(global_balance_stats.get('covered_game_grader_buckets',0)),
                      'candidate_cap_dropped':int(global_balance_stats.get('dropped_by_cap',0)),
                      'raw_grade_calibration_eligible':0,'quarantined':len(rows)-verified_count,
+                     'quarantine_reviewed':int(cleanup_stats.get('reviewed',0)),'quarantine_pruned':int(cleanup_stats.get('pruned',0)),
+                     'quarantine_retryable_kept':int(cleanup_stats.get('retained_retryable',0)),'quarantine_grace_kept':int(cleanup_stats.get('retained_grace',0)),
                      'sources':len({x.get('source_id') for x in rows if x.get('source_id')}),'status':'ok' if rows else 'no_candidates',
                      'queries_attempted':sum(int(x.get('queries',0) or 0) for x in stats.values()),'markets_this_run':[x['id'] for x in active],
                      'timed_out_sources':sum(bool(x.get('timed_out')) for x in stats.values()),'initial_bootstrap_collection':first_bootstrap,
@@ -1140,7 +1225,8 @@ def _collect_once()->dict:
                      'near_duplicate_label_conflicts':int(image_conflict_stats.get('near_duplicate_label_conflicts',0)),
                      'near_duplicate_references_suppressed':int((reference_learning.get('summary') or {}).get('near_duplicates_suppressed',0)),
                      'adaptive_timeout_seconds':adaptive_timeout_seconds,'elapsed_seconds':0.0,'next_timeout_seconds':adaptive_timeout_seconds},
-          'image_probe_stats':image_stats,'official_verification_stats':official_stats,'global_candidate_balance':global_balance_stats,
+          'image_probe_stats':image_stats,'official_verification_stats':official_stats,'quarantine_cleanup_stats':cleanup_stats,
+          'quarantine_cleanup_audit':cleanup_audit[:100],'global_candidate_balance':global_balance_stats,
           'collection_learning_stats':collection_learning,'collection_learning_feedback':learning_feedback,
           'game_stats':game_stats,'company_stats':company_stats,
           'provider_stats':dict(sorted(provider_counts.items(),key=lambda pair:(-pair[1],pair[0]))),
@@ -1161,7 +1247,8 @@ def _collect_once()->dict:
                     'slab_raw_isolated':True,'raw_calibration_modified':False,'image_bytes_auto_cached':False,
                     'duplicate_image_training':False,'near_duplicate_image_training':False,'conflicting_labels_quarantined':True,
                     'measurement_ready_requires_official_validated_front_quality_photo':True,
-                    'collection_learning_cannot_change_trust':True,'verified_feedback_only':True}}
+                    'collection_learning_cannot_change_trust':True,'verified_feedback_only':True,
+                    'unusable_quarantine_pruned_after_reverification':True,'temporary_official_failures_preserved':True}}
  elapsed_seconds=round(time.monotonic()-run_started,1);payload['summary']['elapsed_seconds']=elapsed_seconds
  timed_out=int(payload['summary'].get('timed_out_sources',0) or 0)
  learning_state=_load(LEARNING,{})
