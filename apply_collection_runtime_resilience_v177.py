@@ -48,30 +48,37 @@ replace_once(market, old_market, new_market, "KREAM transient 5xx separation")
 auto = ROOT / "auto_update_all.py"
 text = auto.read_text(encoding="utf-8")
 if "deferred_timeout_pending" not in text:
-    needle = """    elapsed=time.monotonic()-started_aux
-    msg=' / '.join(errors) or f'{stat_key} failed'
-    _record_job_stat(stats,stat_key,elapsed,False,timed_out=last_timed_out,error=msg)
+    needle = """        elapsed=time.monotonic()-started_aux
+        msg=' / '.join(errors) or f'{stat_key} 보조작업 실패'
+        _record_job_stat(stats,stat_key,elapsed,False,timed_out=last_timed_out,error=msg)
+        return {'ok':False,'error':msg,'duration_seconds':round(elapsed,2),
+                'adaptive_timeout_seconds':learned_timeout,'retry_count':max(0,attempts-1),
+                'auto_action':'오류 격리 · 기존 정상자료 유지 · 다음 실행 제한시간 자동 확대'}
 """
-    replacement = """    elapsed=time.monotonic()-started_aux
-    msg=' / '.join(errors) or f'{stat_key} failed'
-    if stat_key == '__integration__' and last_timed_out:
-        cache=ROOT/'web_discovery_candidates.json'
-        try:
-            usable_cache=cache.exists() and cache.stat().st_size > 64
-        except OSError:
-            usable_cache=False
-        if usable_cache:
-            _record_job_stat(stats,stat_key,elapsed,True,timed_out=True,error=msg,recovered=True)
-            return {
-                'ok':True,
-                'degraded':False,
-                'deferred_timeout_pending':True,
-                'warning':'보조 후보수집 시간예산 초과 · 기존 후보자료 유지 · 다음 업데이트에서 재수집',
-                'duration_seconds':round(elapsed,3),
-                'retry_count':max(0,attempts-1),
-                'auto_action':'기존 검증 후보자료 유지 · 다음 업데이트 재수집',
-            }
-    _record_job_stat(stats,stat_key,elapsed,False,timed_out=last_timed_out,error=msg)
+    replacement = """        elapsed=time.monotonic()-started_aux
+        msg=' / '.join(errors) or f'{stat_key} 보조작업 실패'
+        if stat_key == '__integration__' and last_timed_out:
+            cache=ROOT/'web_discovery_candidates.json'
+            try:
+                usable_cache=cache.exists() and cache.stat().st_size > 64
+            except OSError:
+                usable_cache=False
+            if usable_cache:
+                _record_job_stat(stats,stat_key,elapsed,True,timed_out=True,error=msg,recovered=True)
+                return {
+                    'ok':True,
+                    'degraded':False,
+                    'deferred_timeout_pending':True,
+                    'warning':'보조 후보수집 시간예산 초과 · 기존 후보자료 유지 · 다음 업데이트에서 재수집',
+                    'duration_seconds':round(elapsed,3),
+                    'adaptive_timeout_seconds':learned_timeout,
+                    'retry_count':max(0,attempts-1),
+                    'auto_action':'기존 검증 후보자료 유지 · 다음 업데이트 재수집',
+                }
+        _record_job_stat(stats,stat_key,elapsed,False,timed_out=last_timed_out,error=msg)
+        return {'ok':False,'error':msg,'duration_seconds':round(elapsed,2),
+                'adaptive_timeout_seconds':learned_timeout,'retry_count':max(0,attempts-1),
+                'auto_action':'오류 격리 · 기존 정상자료 유지 · 다음 실행 제한시간 자동 확대'}
 """
     if needle not in text:
         raise SystemExit("auto_update_all.py: auxiliary failure block not found")
@@ -86,36 +93,25 @@ else:
 # failures. Do not count repaired broken links or transient probes as unresolved.
 text = auto.read_text(encoding="utf-8")
 if "unresolved_broken=max(0,broken-repaired)" not in text:
-    old = """        broken=int(lr.get('broken',0) or 0)
-        transient=int(lr.get('transient',0) or 0)
+    old = """        broken=int(lr.get('broken',0) or 0); transient=int(lr.get('transient',0) or 0)
         degraded=bool(broken or transient)
         warning=''
         if broken: warning+=f'깨진 링크 {broken}개'
         if transient: warning+=(' · ' if warning else '')+f'일시 확인불가 {transient}개'
+        return {\"ok\":True,\"degraded\":degraded,\"warning\":warning,\"reachable_count\":reachable_count,**lr}
 """
-    new = """        broken=int(lr.get('broken',0) or 0)
-        repaired=int(lr.get('repaired',0) or 0)
-        transient=int(lr.get('transient',0) or 0)
+    new = """        broken=int(lr.get('broken',0) or 0); repaired=int(lr.get('repaired',0) or 0); transient=int(lr.get('transient',0) or 0)
         unresolved_broken=max(0,broken-repaired)
         degraded=bool(unresolved_broken)
         warning=f'미보정 깨진 링크 {unresolved_broken}개' if unresolved_broken else ''
         transient_notice=f'일시 확인불가 {transient}개 · 기존 링크 유지 · 다음 업데이트 재확인' if transient else ''
+        return {\"ok\":True,\"degraded\":degraded,\"warning\":warning,\"reachable_count\":reachable_count,
+                \"transient_deferred\":bool(transient),\"transient_notice\":transient_notice,
+                \"unresolved_broken\":unresolved_broken,**lr}
 """
     if old not in text:
         raise SystemExit("auto_update_all.py: link audit summary block not found")
     text=text.replace(old,new,1)
-    # Add informational fields to the returned link result without changing the
-    # existing hard-warning contract.
-    anchor="""            'warning':warning,
-"""
-    addition="""            'warning':warning,
-            'transient_deferred':bool(transient),
-            'transient_notice':transient_notice,
-            'unresolved_broken':unresolved_broken,
-"""
-    if anchor not in text:
-        raise SystemExit("auto_update_all.py: link audit return warning field not found")
-    text=text.replace(anchor,addition,1)
     auto.write_text(text,encoding="utf-8")
     print("auto_update_all.py: patched (link transient/repaired classification)")
 else:
