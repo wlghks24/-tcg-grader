@@ -1,0 +1,110 @@
+name: Fix PSA manual proof matching v166
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/apply-psa-manual-proof-match-v166.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Patch PSA translated proof matching
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+
+          pending = Path('pending_official_candidate_v161.py')
+          ptext = pending.read_text(encoding='utf-8')
+          old = '''        match = manual_proof._match_proof(\n            row={}, text=text, evidence=evidence if isinstance(evidence, dict) else {},\n            company=company, cert=cert, expected_grade=float(grade),\n        )'''
+          new = '''        match = manual_proof._match_proof(\n            row=target, text=text, evidence=evidence if isinstance(evidence, dict) else {},\n            company=company, cert=cert, expected_grade=float(grade),\n        )'''
+          if old in ptext:
+              ptext = ptext.replace(old, new, 1)
+          elif 'row=target, text=text' not in ptext:
+              raise SystemExit('pending proof match anchor not found')
+
+          old_error = '''                "error": "공식 조회 화면에서 등급사·인증번호·등급의 정확한 일치를 확인하지 못했습니다.",'''
+          new_error = '''                "error": "공식 조회 화면 일치검사 실패: " + ", ".join(match.get("missing") or match.get("explicit_conflicts") or ["OCR 판독 불충분"]),'''
+          if old_error in ptext:
+              ptext = ptext.replace(old_error, new_error, 1)
+          pending.write_text(ptext, encoding='utf-8')
+
+          proof = Path('manual_official_proof.py')
+          text = proof.read_text(encoding='utf-8')
+          anchor = '''    patterns = [\n        r"\\bGRADE\\s*[:#-]?\\s*(10|[1-9](?:\\.5)?)\\b",\n        r"\\b(?:GEM\\s*MT|GEM\\s*MINT|PRISTINE|MINT|NM[\\s-]*MT|NEAR\\s*MINT)\\s*(10|[1-9](?:\\.5)?)\\b",\n        r"\\b(10|[1-9](?:\\.5)?)\\s*(?:GEM\\s*MT|GEM\\s*MINT|PRISTINE|MINT|NM[\\s-]*MT|NEAR\\s*MINT)\\b",\n    ]'''
+          replacement = '''    patterns = [\n        r"\\bGRADE\\s*[:#-]?\\s*(10|[1-9](?:\\.5)?)\\b",\n        r"\\b(?:GEM\\s*MT|GEM\\s*MINT|PRISTINE|MINT|NM[\\s-]*MT|NEAR\\s*MINT)\\s*(10|[1-9](?:\\.5)?)\\b",\n        r"\\b(10|[1-9](?:\\.5)?)\\s*(?:GEM\\s*MT|GEM\\s*MINT|PRISTINE|MINT|NM[\\s-]*MT|NEAR\\s*MINT)\\b",\n        # Chrome/Android may translate PSA's English grade label while leaving\n        # the official PSA page, certificate number and score unchanged.\n        r"(?:젬|젬\\s*민트|GEM)\\s*(?:MT|MINT)?\\s*(10|[1-9](?:\\.5)?)",\n        r"(?:민트|MINT)\\s*(10|[1-9](?:\\.5)?)",\n        r"(?:품목\\s*등급|등급)\\s*[:#-]?\\s*(10|[1-9](?:\\.5)?)",\n    ]'''
+          if anchor in text:
+              text = text.replace(anchor, replacement, 1)
+          elif 'Chrome/Android may translate PSA' not in text:
+              raise SystemExit('grade pattern anchor not found')
+          proof.write_text(text, encoding='utf-8')
+          PY
+
+      - name: Add regression test
+        shell: bash
+        run: |
+          cat > test_psa_manual_proof_match_v166.py <<'PY'
+          import unittest
+          import manual_official_proof as proof
+
+          class PsaManualProofV166Tests(unittest.TestCase):
+              def test_korean_translated_psa_gem_mt_10_matches(self):
+                  text = 'PSA 인증번호 87105158 품목 등급 젬 MT 10 PSA 추정치 75.00달러'
+                  result = proof._match_proof(
+                      row={}, text=text, evidence={}, company='PSA', cert='87105158', expected_grade=10.0
+                  )
+                  self.assertTrue(result['company_match'])
+                  self.assertTrue(result['cert_match'])
+                  self.assertTrue(result['grade_match'])
+                  self.assertTrue(result['matched'])
+
+              def test_pending_candidate_can_use_exact_existing_slab_grade_fallback(self):
+                  text = 'PSA Certification 87105158'
+                  row = {'ocr_company':'PSA','ocr_certification_id':'87105158','ocr_grade':10.0}
+                  result = proof._match_proof(
+                      row=row, text=text, evidence={}, company='PSA', cert='87105158', expected_grade=10.0
+                  )
+                  self.assertTrue(result['matched'])
+                  self.assertTrue(result['slab_grade_fallback'])
+
+              def test_wrong_cert_still_rejected(self):
+                  text = 'PSA 인증번호 87105159 품목 등급 젬 MT 10'
+                  result = proof._match_proof(
+                      row={}, text=text, evidence={}, company='PSA', cert='87105158', expected_grade=10.0
+                  )
+                  self.assertFalse(result['cert_match'])
+                  self.assertFalse(result['matched'])
+
+          if __name__ == '__main__':
+              unittest.main()
+          PY
+
+      - name: Regression checks
+        shell: bash
+        run: |
+          python -m py_compile manual_official_proof.py pending_official_candidate_v161.py
+          python -m unittest -v test_psa_manual_proof_match_v166.py
+          grep -F 'row=target, text=text' pending_official_candidate_v161.py
+          grep -F 'Chrome/Android may translate PSA' manual_official_proof.py
+
+      - name: Commit patch
+        shell: bash
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add manual_official_proof.py pending_official_candidate_v161.py test_psa_manual_proof_match_v166.py
+          if git diff --cached --quiet; then
+            echo 'Already patched'
+            exit 0
+          fi
+          git commit -m 'fix: accept exact PSA translated proof screenshots v166'
+          git push origin HEAD:main
