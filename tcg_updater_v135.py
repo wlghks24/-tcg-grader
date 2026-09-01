@@ -124,6 +124,7 @@ class Handler(core.Handler):
                 'manual_dual_photo_bridge_version': 158,
                 'graded_photo_eight_zone_ui': True,
                 'existing_photo_revalidation': True,
+                'existing_candidate_revalidation': True,
                 'base_service': getattr(core, 'SERVICE_NAME', 'TCG updater'),
             })
         if path == '/api/learning-model-status':
@@ -282,7 +283,7 @@ def main() -> int:
     print(f'다른 기기 접속 주소(같은 Wi-Fi): http://{lan_ip}:{core.PORT}/index.html', flush=True)
     print(f'등급학습 안전게이트: v135 / runtime patch {RUNTIME_PATCH} · 공식 인증레지스트리 일치 + RAW 원시예측 + 교차검증 + 하향보정만', flush=True)
     print('등급사 쿨다운 수동확인: 공식 조회페이지 직접 열기 + 결과화면 OCR 일치 참고등록 · RAW 보정학습 제외', flush=True)
-    print('수동등록 UI: 앞면+뒷면 8구역 정밀검사 + 기존 등록사진 전체 재검증 · 캐시 우회 v158', flush=True)
+    print('수동등록 UI: 앞면+뒷면 8구역 정밀검사 + 기존 등록사진·후보 전체 재검증 · 캐시 우회 v159', flush=True)
     try:
         threading.Thread(target=lambda: webbrowser.open(url), daemon=True).start()
     except Exception:

@@ -673,20 +673,41 @@ def _photo_revalidation_job_set(**changes):
 
 def _background_existing_photo_revalidation(job_id):
     try:
-        _photo_revalidation_job_set(state='running',message='기존 등록사진 무결성·앞뒤 8구역·사선광을 재검증 중입니다.',error=None)
+        _photo_revalidation_job_set(state='running',message='1/2 등록한 앞·뒤 사진의 무결성·8구역·사선광을 재검증 중입니다.',error=None)
         with UPDATE_LOCK:
             import verified_slab_raw_learning_v155 as verified_raw
-            payload=verified_raw.revalidate_existing()
-        summary=payload.get('summary',{}) if isinstance(payload,dict) else {}
-        message=(f"재검증 완료 · 전체 {int(summary.get('total',0) or 0)}건 · "
-                 f"8구역 {int(summary.get('eight_zone_complete',0) or 0)}건 · "
-                 f"앞면만 {int(summary.get('legacy_front_only',0) or 0)}건 · "
-                 f"학습가능 {int(summary.get('official_learning_ready',0) or 0)}건")
+            manual_payload=verified_raw.revalidate_existing()
+            _photo_revalidation_job_set(state='running',message='2/2 저장된 전체 후보의 사진·OCR·인증번호·공식검증을 다시 확인하고 있습니다.',error=None)
+            import graded_photo_existing_revalidation_v159 as candidate_revalidation
+            candidate_payload=candidate_revalidation.revalidate_existing_candidates()
+            clear_json_file_cache()
+        manual_summary=manual_payload.get('summary',{}) if isinstance(manual_payload,dict) else {}
+        candidate_summary=candidate_payload.get('summary',{}) if isinstance(candidate_payload,dict) else {}
+        summary=dict(manual_summary)
+        summary.update({
+            'candidate_revalidation': True,
+            'candidate_existing_only': True,
+            'candidate_total_before': int(candidate_summary.get('existing_candidates_before',0) or 0),
+            'candidate_reviewed': int(candidate_summary.get('existing_candidates_reviewed',0) or 0),
+            'candidate_total_after': int(candidate_summary.get('existing_candidates_after',0) or 0),
+            'candidate_verified': int(candidate_summary.get('verified_references',0) or 0),
+            'candidate_learning': int(candidate_summary.get('reference_learning_count',0) or 0),
+            'candidate_promoted_verified': int(candidate_summary.get('promoted_verified',0) or 0),
+            'candidate_promoted_learning': int(candidate_summary.get('promoted_learning',0) or 0),
+            'candidate_pruned': int(candidate_summary.get('quarantine_pruned',0) or 0),
+            'candidate_retryable_kept': int(candidate_summary.get('quarantine_retryable_kept',0) or 0),
+            'candidate_quarantined_after': int(candidate_summary.get('quarantined',0) or 0),
+        })
+        message=(f"통합 재검증 완료 · 등록 {int(manual_summary.get('total',0) or 0)}건 · "
+                 f"8구역 {int(manual_summary.get('eight_zone_complete',0) or 0)}건 · "
+                 f"후보 {summary['candidate_reviewed']}건 · 공식검증 {summary['candidate_verified']}건 · "
+                 f"학습 {summary['candidate_learning']}건 · 삭제 {summary['candidate_pruned']}건 · "
+                 f"재시도보존 {summary['candidate_retryable_kept']}건")
         _photo_revalidation_job_set(state='completed',finished_at=time.strftime('%Y-%m-%dT%H:%M:%S%z'),
                                     message=message,summary=summary,error=None)
     except Exception as exc:
         _photo_revalidation_job_set(state='failed',finished_at=time.strftime('%Y-%m-%dT%H:%M:%S%z'),
-                                    message='기존 등록사진 재검증 오류',error=f'{type(exc).__name__}: {exc}')
+                                    message='기존 등록사진·후보 통합 재검증 오류',error=f'{type(exc).__name__}: {exc}')
 
 def _start_existing_photo_revalidation():
     with PHOTO_REVALIDATION_START_LOCK:
