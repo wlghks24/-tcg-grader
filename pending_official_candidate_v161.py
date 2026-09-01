@@ -372,7 +372,9 @@ def submit(incoming: dict[str, Any]) -> dict[str, Any]:
     proof_path = folder / f"{cert}-{digest[:12]}{extension}"
     atomic_write_bytes(proof_path, image, suffix=".pending-official.tmp")
     try:
-        text, ocr_error, diagnostics, evidence = manual_photo._ocr_image(proof_path)
+        text, ocr_error, diagnostics, evidence = manual_proof._ocr_official_page(
+            proof_path, expected_company=company, expected_cert=cert,
+        )
         match = manual_proof._match_proof(
             row=target, text=text, evidence=evidence if isinstance(evidence, dict) else {},
             company=company, cert=cert, expected_grade=float(grade),
