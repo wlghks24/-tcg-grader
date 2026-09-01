@@ -78,6 +78,9 @@ class GradedPhotoRuntimeTests(unittest.TestCase):
         self.assertIn('총 8구역 정밀검사',source)
         self.assertIn('기존 등록사진 전체 재검증',source)
         self.assertIn('/api/run-existing-photo-revalidation',source)
+        self.assertIn("credentials:'same-origin'",source)
+        self.assertIn('재검증 상태 응답 형식 오류',source)
+        self.assertIn('재검증 제한시간 초과',source)
         self.assertIn("grade:gradeText===''?null:Number(gradeText)",source)
         self.assertNotIn('id="gpdManualCompany" required',source)
         self.assertNotIn('rows.filter(r=>companyOf(r)===c)',source)
@@ -118,6 +121,15 @@ class GradedPhotoRuntimeTests(unittest.TestCase):
         request=urllib.request.Request(self.base+'/api/run-graded-photo-collection',data=b'{}',method='POST',
                                        headers={'Content-Type':'application/json','Origin':'https://evil.example'})
         with mock.patch.object(tcg_updater,'_start_graded_photo_collection') as start:
+            status,payload=request_json(request)
+        self.assertEqual(status,403)
+        self.assertFalse(payload['ok'])
+        start.assert_not_called()
+
+    def test_cross_site_existing_photo_revalidation_is_rejected(self):
+        request=urllib.request.Request(self.base+'/api/run-existing-photo-revalidation',data=b'{}',method='POST',
+                                       headers={'Content-Type':'application/json','Origin':'https://evil.example'})
+        with mock.patch.object(tcg_updater,'_start_existing_photo_revalidation') as start:
             status,payload=request_json(request)
         self.assertEqual(status,403)
         self.assertFalse(payload['ok'])
