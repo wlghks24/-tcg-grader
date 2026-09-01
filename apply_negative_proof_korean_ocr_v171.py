@@ -107,3 +107,4 @@ new_negative = '''    if not signal.get("negative_text_detected"):\n        proo
 replace_once(path, old_negative, new_negative)
 
 print("Korean official no-record OCR v171 applied")
+# trigger-v171
