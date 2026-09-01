@@ -1,6 +1,6 @@
 (()=>{
 'use strict';
-const esc=v=>String(v??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
+const esc=v=>String(v??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot',"'":'&#39;'}[m]));
 const sleep=ms=>new Promise(r=>setTimeout(r,ms));
 let installed=false;
 let recentDeleteSync=false;
@@ -36,7 +36,7 @@ async function normalize(file){
 function style(){
  if(document.getElementById('gpdOfficialFallbackStyle'))return;
  const el=document.createElement('style');el.id='gpdOfficialFallbackStyle';el.textContent=`
- .gpd-official-fallback{margin-top:12px;border:1px solid #0f766e55;background:#f0fdfa;border-radius:13px;padding:11px;color:#134e4a}
+ .gpd-official-fallback{display:none!important;margin-top:12px;border:1px solid #0f766e55;background:#f0fdfa;border-radius:13px;padding:11px;color:#134e4a}
  .gpd-official-fallback h4{margin:0 0 5px;font-size:13px}.gpd-official-fallback p{font-size:10px;line-height:1.55;margin:4px 0;color:#115e59}
  .gpd-official-row{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:8px;padding:10px 0;border-top:1px solid #99f6e4;align-items:center}.gpd-official-row:first-of-type{margin-top:8px}
  .gpd-official-id{min-width:0}.gpd-official-id b,.gpd-official-id span,.gpd-official-id small{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.gpd-official-id b{font-size:12px}.gpd-official-id span,.gpd-official-id small{font-size:10px;color:#115e59;margin-top:2px}
