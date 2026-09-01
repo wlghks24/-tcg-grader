@@ -1420,7 +1420,9 @@ class Handler(SimpleHTTPRequestHandler):
             try:
                 import manual_graded_photo_registration as manual_photo
                 with DATA_WRITE_LOCK:
-                    result=manual_photo.register(self._read_json_body(8500000))
+                    # Four normalized photos (front/back + two optional oblique angles)
+                    # are individually capped and magic-checked by the registration module.
+                    result=manual_photo.register(self._read_json_body(33000000))
                 registration=result.get('registration') if isinstance(result,dict) else {}
                 registration_id=registration.get('registration_id') if isinstance(registration,dict) else None
                 if registration_id and not result.get('duplicate'):

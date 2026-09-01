@@ -17,6 +17,20 @@ def png_data_url(width=800, height=1100, marker=b"a"):
     return "data:image/png;base64," + base64.b64encode(data).decode("ascii")
 
 
+def quadrant_preview():
+    row = {
+        "scratchRisk": 8, "surfaceRisk": 12, "edgeRisk": 5, "cornerRisk": 4,
+        "whiteningRisk": 5, "combinedRisk": 12, "confidence": 88,
+        "confirmedSegments": 1, "obliqueStatus": "confirmed",
+    }
+    side = {"quadrants": {zone: dict(row) for zone in ("tl", "tr", "bl", "br")}}
+    return {
+        "version": 1, "engine": "v159-eight-zone-oblique-crosscheck", "zone_count": 8,
+        "oblique_crosscheck_complete": True, "authoritative_for_training": False,
+        "front": side, "back": side,
+    }
+
+
 class ManualGradedPhotoRegistrationTests(unittest.TestCase):
     def setUp(self):
         self.temp = tempfile.TemporaryDirectory()
@@ -48,6 +62,15 @@ class ManualGradedPhotoRegistrationTests(unittest.TestCase):
             "image_data_url": png_data_url(marker=marker), "filename": "user.png",
         }
 
+    def test_dashboard_keeps_front_back_registration_and_renders_eight_zone_checks(self):
+        source = Path(__file__).with_name("graded_photo_dashboard.js").read_text(encoding="utf-8")
+        for token in (
+            "gpdManualPhoto", "gpdManualBackPhoto", "gpdManualFrontOblique", "gpdManualBackOblique",
+            "총 8구역 정밀검사", "스크래치", "표면", "엣지", "코너", "백화",
+            "oblique_crosscheck_complete", "authoritative_for_training:false",
+        ):
+            self.assertIn(token, source)
+
     def test_registration_is_quarantined_and_server_generates_path(self):
         result = manual.register(self.payload())
         row = result["registration"]
@@ -68,6 +91,35 @@ class ManualGradedPhotoRegistrationTests(unittest.TestCase):
         self.assertFalse(row["manual_identity_complete"])
         self.assertEqual(set(row["missing_identity_fields"]), {"company", "grade", "certification_id"})
         self.assertIsNone(row["official_reference_url"])
+
+    def test_front_back_pair_and_oblique_evidence_are_stored_as_eight_zones(self):
+        payload = self.payload()
+        payload.update({
+            "back_image_data_url": png_data_url(marker=b"b"),
+            "front_oblique_image_data_url": png_data_url(marker=b"c"),
+            "back_oblique_image_data_url": png_data_url(marker=b"d"),
+            "client_quadrant_preview": quadrant_preview(),
+        })
+        row = manual.register(payload)["registration"]
+        self.assertTrue(row["front_back_pair_complete"])
+        self.assertTrue(row["oblique_crosscheck_complete"])
+        self.assertEqual(row["quadrant_zone_count"], 8)
+        self.assertEqual(row["quadrant_inspection_state"], "crosscheck_captured")
+        self.assertFalse(row["client_preview_training_eligible"])
+        stored = json.loads(manual.REGISTRY_PATH.read_text(encoding="utf-8"))["registrations"][0]
+        for key in ("image_path", "back_image_path", "front_oblique_image_path", "back_oblique_image_path"):
+            self.assertTrue((manual.ROOT / stored[key]).exists())
+        self.assertFalse(stored["client_quadrant_preview"]["authoritative_for_training"])
+
+    def test_oblique_crosscheck_requires_both_sides_and_a_different_angle(self):
+        payload = self.payload()
+        payload["back_image_data_url"] = png_data_url(marker=b"b")
+        payload["front_oblique_image_data_url"] = png_data_url(marker=b"c")
+        with self.assertRaisesRegex(ValueError, "앞면·뒷면"):
+            manual.register(payload)
+        payload["back_oblique_image_data_url"] = payload["back_image_data_url"]
+        with self.assertRaisesRegex(ValueError, "다른 각도"):
+            manual.register(payload)
 
     def test_quick_registration_ocr_autofills_then_officially_verifies(self):
         row = manual.register({
@@ -151,7 +203,9 @@ class ManualGradedPhotoRegistrationTests(unittest.TestCase):
             manual.register(bad)
 
     def test_verified_official_match_publishes_reference_only(self):
-        row = manual.register(self.payload())["registration"]
+        payload = self.payload()
+        payload["back_image_data_url"] = png_data_url(marker=b"z")
+        row = manual.register(payload)["registration"]
         with mock.patch.object(manual, "_ocr_image", return_value=("PSA 10 CERT 12345678", None, {"pass_count": 1}, {"company": "PSA", "grade": 10.0, "certification_id": "12345678"})), \
              mock.patch.object(manual.OFFICIAL_LOOKUP_GUARD, "claim", return_value=(True, {"guard_reason": "allowed"})), \
              mock.patch.object(manual.OFFICIAL_LOOKUP_GUARD, "record_result", return_value={"blocked": False}), \
@@ -161,9 +215,12 @@ class ManualGradedPhotoRegistrationTests(unittest.TestCase):
         self.assertTrue(verified["official_result"])
         self.assertEqual(verified["learning_eligibility"], "reference_learning_only")
         self.assertFalse(verified["training_eligible"])
+        self.assertTrue(verified["measurement_learning_eligible"])
         references = json.loads(manual.VERIFIED_SLAB_REFERENCES.read_text(encoding="utf-8"))
         self.assertEqual(references["training_rows_written"], 0)
         self.assertEqual(references["certifications"][0]["source_sha256"], verified["image_sha256"])
+        self.assertEqual(references["certifications"][0]["back_source_sha256"], verified["back_image_sha256"])
+        self.assertTrue(references["certifications"][0]["front_back_pair_complete"])
 
     def test_cooldown_defers_without_official_network_call(self):
         row = manual.register(self.payload())["registration"]

@@ -68,14 +68,14 @@ def _registry() -> dict[str, Any]:
     value = _cached_registry_payload(str(REGISTRY_PATH.absolute()), signature)
     rows = value.get("registrations", []) if isinstance(value, dict) else []
     return {
-        "schema_version": 1,
+        "schema_version": 2,
         "updated_at": value.get("updated_at") if isinstance(value, dict) else None,
         "registrations": [dict(row) for row in rows if isinstance(row, dict)][-MAX_REGISTRATIONS:],
     }
 
 
 def _save_registry(payload: dict[str, Any]) -> None:
-    payload["schema_version"] = 1
+    payload["schema_version"] = 2
     payload["updated_at"] = _now()
     payload["registrations"] = payload.get("registrations", [])[-MAX_REGISTRATIONS:]
     atomic_write_json(REGISTRY_PATH, payload, suffix=".manual-photo-registry.tmp")
@@ -155,6 +155,68 @@ def _decode_image(data_url: Any) -> tuple[bytes, str, int, int]:
     return data, extension, width, height
 
 
+def _decode_optional_image(payload: dict[str, Any], key: str) -> tuple[bytes, str, int, int] | None:
+    value = payload.get(key)
+    if value in (None, ""):
+        return None
+    return _decode_image(value)
+
+
+def _safe_client_quadrant_preview(value: Any) -> dict[str, Any] | None:
+    """Keep bounded UI diagnostics for audit; never accept them as training truth."""
+    if not isinstance(value, dict) or value.get("zone_count") != 8:
+        return None
+    sides: dict[str, Any] = {}
+    for side in ("front", "back"):
+        source = value.get(side)
+        quadrants = source.get("quadrants") if isinstance(source, dict) else None
+        if not isinstance(quadrants, dict) or set(quadrants) != {"tl", "tr", "bl", "br"}:
+            return None
+        rows: dict[str, Any] = {}
+        for zone in ("tl", "tr", "bl", "br"):
+            source_row = quadrants.get(zone)
+            if not isinstance(source_row, dict):
+                return None
+            row: dict[str, Any] = {}
+            for name in ("scratchRisk", "surfaceRisk", "edgeRisk", "cornerRisk", "whiteningRisk",
+                         "combinedRisk", "confidence", "confirmedSegments"):
+                try:
+                    number = float(source_row.get(name, 0))
+                except (TypeError, ValueError, OverflowError):
+                    return None
+                high = 100.0 if name != "confirmedSegments" else 500.0
+                if not math.isfinite(number) or not 0 <= number <= high:
+                    return None
+                row[name] = round(number, 2)
+            status = str(source_row.get("obliqueStatus") or "not_captured")
+            row["obliqueStatus"] = status if status in {
+                "not_captured", "confirmed", "clear_both_angles", "angle_mismatch"
+            } else "invalid"
+            rows[zone] = row
+        sides[side] = {"quadrants": rows}
+    return {
+        "version": 1,
+        "engine": _bounded_text(value.get("engine"), 96),
+        "zone_count": 8,
+        "oblique_crosscheck_complete": value.get("oblique_crosscheck_complete") is True,
+        "authoritative_for_training": False,
+        **sides,
+    }
+
+
+def _store_registration_image(folder: Path, stem: str, decoded: tuple[bytes, str, int, int]) -> dict[str, Any]:
+    image, extension, width, height = decoded
+    target = folder / f"{stem}{extension}"
+    atomic_write_bytes(target, image, suffix=".manual-photo.tmp")
+    return {
+        "path": target.relative_to(ROOT).as_posix(),
+        "sha256": hashlib.sha256(image).hexdigest(),
+        "width": width,
+        "height": height,
+        "bytes": len(image),
+    }
+
+
 def _public_row(row: dict[str, Any]) -> dict[str, Any]:
     keys = (
         "registration_id", "created_at", "updated_at", "company", "game", "claimed_grade",
@@ -164,6 +226,10 @@ def _public_row(row: dict[str, Any]) -> dict[str, Any]:
         "quarantine_reasons", "ocr_company", "ocr_grade", "ocr_certification_id",
         "ocr_error", "ocr_cache_hit", "retry_after_seconds", "duplicate_of",
         "entry_mode", "manual_identity_complete", "missing_identity_fields",
+        "back_image_sha256", "back_image_width", "back_image_height", "front_back_pair_complete",
+        "front_oblique_image_sha256", "back_oblique_image_sha256", "oblique_crosscheck_complete",
+        "quadrant_zone_count", "quadrant_inspection_state", "measurement_learning_eligible",
+        "client_preview_training_eligible",
     )
     return {key: row.get(key) for key in keys if key in row}
 
@@ -192,7 +258,7 @@ def public_registry() -> dict[str, Any]:
         rows = [_public_row(row) for row in reversed(source_rows[-MAX_REGISTRATIONS:]) if isinstance(row, dict)]
     return {
         "ok": True,
-        "schema_version": 1,
+        "schema_version": 2,
         "updated_at": payload.get("updated_at"),
         "registrations": rows[:200],
         "summary": {
@@ -239,12 +305,30 @@ def register(payload: dict[str, Any]) -> dict[str, Any]:
         raise ValueError("인증번호를 6자 이상 입력하세요.")
     manual_identity_complete = bool(company and cert and grade is not None)
     image, extension, width, height = _decode_image(payload.get("image_data_url"))
+    back_decoded = _decode_optional_image(payload, "back_image_data_url")
+    front_oblique_decoded = _decode_optional_image(payload, "front_oblique_image_data_url")
+    back_oblique_decoded = _decode_optional_image(payload, "back_oblique_image_data_url")
     digest = hashlib.sha256(image).hexdigest()
+    back_digest = hashlib.sha256(back_decoded[0]).hexdigest() if back_decoded else ""
+    front_oblique_digest = hashlib.sha256(front_oblique_decoded[0]).hexdigest() if front_oblique_decoded else ""
+    back_oblique_digest = hashlib.sha256(back_oblique_decoded[0]).hexdigest() if back_oblique_decoded else ""
+    if back_digest and back_digest == digest:
+        raise ValueError("앞면과 뒷면은 서로 다른 사진이어야 합니다.")
+    if bool(front_oblique_decoded) != bool(back_oblique_decoded):
+        raise ValueError("사선광 교차검증 사진은 앞면·뒷면을 함께 등록하세요.")
+    if front_oblique_digest and front_oblique_digest == digest:
+        raise ValueError("앞면 사선광 사진은 기본광 사진과 다른 각도로 촬영하세요.")
+    if back_oblique_digest and back_oblique_digest == back_digest:
+        raise ValueError("뒷면 사선광 사진은 기본광 사진과 다른 각도로 촬영하세요.")
+    client_preview = _safe_client_quadrant_preview(payload.get("client_quadrant_preview"))
     now = _now()
     with LOCK:
         registry = _registry()
         for existing in registry["registrations"]:
             if existing.get("image_sha256") == digest:
+                stored_back = str(existing.get("back_image_sha256") or "")
+                if stored_back and back_digest and stored_back != back_digest:
+                    raise ValueError("같은 앞면 사진이 다른 뒷면 사진과 이미 등록되어 있습니다.")
                 existing_grade = existing.get("claimed_grade")
                 same_claim = existing.get("game") == game
                 for provided, stored in ((company, existing.get("company")), (cert, _normalized_cert(existing.get("certification_id")))):
@@ -254,6 +338,31 @@ def register(payload: dict[str, Any]) -> dict[str, Any]:
                     same_claim = False
                 if not same_claim:
                     raise ValueError("같은 사진이 다른 업체·인증번호·등급으로 이미 등록되어 있습니다.")
+                if back_decoded and not stored_back:
+                    folder = (ROOT / str(existing["image_path"])).parent
+                    registration_id = str(existing["registration_id"])
+                    back_info = _store_registration_image(folder, f"{registration_id}_back", back_decoded)
+                    existing.update({
+                        "back_image_path": back_info["path"], "back_image_sha256": back_info["sha256"],
+                        "back_image_width": back_info["width"], "back_image_height": back_info["height"],
+                        "back_image_bytes": back_info["bytes"], "back_original_filename": _bounded_text(payload.get("back_filename"), 120),
+                        "front_back_pair_complete": True, "quadrant_zone_count": 8,
+                    })
+                    if front_oblique_decoded and back_oblique_decoded:
+                        front_angle = _store_registration_image(folder, f"{registration_id}_front_oblique", front_oblique_decoded)
+                        back_angle = _store_registration_image(folder, f"{registration_id}_back_oblique", back_oblique_decoded)
+                        existing.update({
+                            "front_oblique_image_path": front_angle["path"], "front_oblique_image_sha256": front_angle["sha256"],
+                            "back_oblique_image_path": back_angle["path"], "back_oblique_image_sha256": back_angle["sha256"],
+                            "oblique_crosscheck_complete": True,
+                        })
+                    existing.update({
+                        "quadrant_inspection_state": "crosscheck_captured" if existing.get("oblique_crosscheck_complete") else "base_pair_captured",
+                        "client_quadrant_preview": client_preview, "client_preview_training_eligible": False,
+                        "updated_at": now, "verification_state": "queued", "status": "pending_official_verification",
+                    })
+                    _save_registry(registry)
+                    return {"ok": True, "duplicate": False, "resumed": True, "registration": _public_row(existing)}
                 supplied_identity = bool(company or cert or grade is not None)
                 existing_incomplete = not bool(
                     existing.get("company") and _normalized_cert(existing.get("certification_id"))
@@ -282,6 +391,11 @@ def register(payload: dict[str, Any]) -> dict[str, Any]:
         folder = INBOX_ROOT / datetime.now(timezone.utc).strftime("%Y%m")
         target = folder / f"{registration_id}{extension}"
         atomic_write_bytes(target, image, suffix=".manual-photo.tmp")
+        back_info = _store_registration_image(folder, f"{registration_id}_back", back_decoded) if back_decoded else None
+        front_angle = _store_registration_image(folder, f"{registration_id}_front_oblique", front_oblique_decoded) if front_oblique_decoded else None
+        back_angle = _store_registration_image(folder, f"{registration_id}_back_oblique", back_oblique_decoded) if back_oblique_decoded else None
+        pair_complete = back_info is not None
+        oblique_complete = front_angle is not None and back_angle is not None
         row = {
             "registration_id": registration_id,
             "created_at": now,
@@ -299,6 +413,25 @@ def register(payload: dict[str, Any]) -> dict[str, Any]:
             "image_width": width,
             "image_height": height,
             "image_bytes": len(image),
+            "back_original_filename": _bounded_text(payload.get("back_filename"), 120),
+            "back_image_path": back_info["path"] if back_info else None,
+            "back_image_sha256": back_info["sha256"] if back_info else None,
+            "back_image_width": back_info["width"] if back_info else None,
+            "back_image_height": back_info["height"] if back_info else None,
+            "back_image_bytes": back_info["bytes"] if back_info else None,
+            "front_oblique_original_filename": _bounded_text(payload.get("front_oblique_filename"), 120),
+            "front_oblique_image_path": front_angle["path"] if front_angle else None,
+            "front_oblique_image_sha256": front_angle["sha256"] if front_angle else None,
+            "back_oblique_original_filename": _bounded_text(payload.get("back_oblique_filename"), 120),
+            "back_oblique_image_path": back_angle["path"] if back_angle else None,
+            "back_oblique_image_sha256": back_angle["sha256"] if back_angle else None,
+            "front_back_pair_complete": pair_complete,
+            "oblique_crosscheck_complete": oblique_complete,
+            "quadrant_zone_count": 8 if pair_complete else 4,
+            "quadrant_inspection_state": "crosscheck_captured" if oblique_complete else "base_pair_captured" if pair_complete else "front_only_legacy",
+            "client_quadrant_preview": client_preview,
+            "client_preview_training_eligible": False,
+            "measurement_learning_eligible": False,
             "status": "pending_official_verification",
             "verification_state": "queued",
             "official_result": False,
@@ -306,14 +439,17 @@ def register(payload: dict[str, Any]) -> dict[str, Any]:
             "learning_eligibility": "quarantine_only_until_official_match",
             "training_eligible": False,
             "raw_grade_calibration_eligible": False,
-            "quarantine_reasons": ["manual_claim_unverified", "official_lookup_required", "ocr_identity_required"],
+            "quarantine_reasons": ["manual_claim_unverified", "official_lookup_required", "ocr_identity_required"]
+                                  + ([] if pair_complete else ["front_back_pair_required_for_measurement_learning"]),
             "entry_mode": "manual_identity" if manual_identity_complete else "ocr_first",
             "manual_identity_complete": manual_identity_complete,
             "missing_identity_fields": [name for name, value in (
                 ("company", company), ("grade", grade), ("certification_id", cert)
             ) if value in (None, "")],
             "audit": {"manual_upload": True, "image_magic_checked": True, "path_generated_server_side": True,
-                      "manual_claim_is_truth": False, "ocr_autofill_requires_official_match": True},
+                      "manual_claim_is_truth": False, "ocr_autofill_requires_official_match": True,
+                      "client_quadrant_preview_is_training_truth": False,
+                      "server_remeasurement_required_before_learning": True},
         }
         registry["registrations"].append(row)
         _save_registry(registry)
@@ -363,6 +499,14 @@ def _publish_verified(row: dict[str, Any]) -> tuple[bool, str | None]:
             "card_name": row.get("card_name"), "game": row.get("game"), "mode": "slab",
             "official_result": True, "official_reference_url": row["official_reference_url"],
             "source_sha256": row["image_sha256"], "source_name": row["image_path"],
+            "back_source_sha256": row.get("back_image_sha256"), "back_source_name": row.get("back_image_path"),
+            "front_oblique_source_sha256": row.get("front_oblique_image_sha256"),
+            "front_oblique_source_name": row.get("front_oblique_image_path"),
+            "back_oblique_source_sha256": row.get("back_oblique_image_sha256"),
+            "back_oblique_source_name": row.get("back_oblique_image_path"),
+            "front_back_pair_complete": row.get("front_back_pair_complete") is True,
+            "oblique_crosscheck_complete": row.get("oblique_crosscheck_complete") is True,
+            "quadrant_zone_count": row.get("quadrant_zone_count"),
             "learning_eligibility": "reference_only_missing_raw_prediction",
         })
         references = {
@@ -532,6 +676,7 @@ def _process_registration_once(registration_id: str) -> dict[str, Any]:
             "official_reference_url": result.get("official_url") or current.get("official_reference_url"),
             "learning_eligibility": "reference_learning_only" if official_verified else "quarantine_only_until_official_match",
             "training_eligible": False, "raw_grade_calibration_eligible": False,
+            "measurement_learning_eligible": bool(official_verified and current.get("front_back_pair_complete") is True),
             "quarantine_reasons": sorted(set(reasons)),
             "retry_after_seconds": (guard_result.get("cooldown_seconds") or result.get("recommended_cooldown_seconds")) if provider_blocked else None,
             "ocr_label_text": text[:1800], "ocr_error": ocr_error, "ocr_diagnostics": diagnostics,

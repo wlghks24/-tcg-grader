@@ -72,7 +72,10 @@ class GradedPhotoRuntimeTests(unittest.TestCase):
         source=(ROOT/'graded_photo_dashboard.js').read_text(encoding='utf-8')
         self.assertIn("document.visibilityState==='visible'",source)
         self.assertIn('manualVerificationFinished(payload,registrationId)',source)
-        self.assertIn('사진 1장으로 간편등록',source)
+        self.assertIn('앞면 + 뒷면 8구역 등록하기',source)
+        self.assertIn('gpdManualBackPhoto',source)
+        self.assertIn('gpdManualFrontOblique',source)
+        self.assertIn('총 8구역 정밀검사',source)
         self.assertIn("grade:gradeText===''?null:Number(gradeText)",source)
         self.assertNotIn('id="gpdManualCompany" required',source)
         self.assertNotIn('rows.filter(r=>companyOf(r)===c)',source)
@@ -80,6 +83,7 @@ class GradedPhotoRuntimeTests(unittest.TestCase):
     def test_updater_source_is_valid_utf8(self):
         source=(ROOT/'tcg_updater.py').read_text(encoding='utf-8')
         self.assertIn('def load_json_file(',source)
+        self.assertIn('self._read_json_body(33000000)',source)
 
     def test_grade_result_exposes_safe_correction_and_manual_photo_buttons(self):
         source=(ROOT/'index.html').read_text(encoding='utf-8')

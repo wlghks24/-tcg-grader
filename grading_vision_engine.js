@@ -5,7 +5,7 @@
 })(typeof globalThis!=='undefined'?globalThis:this,function(){
   'use strict';
 
-  const ENGINE_VERSION='v158-four-quadrant-precision-learning';
+  const ENGINE_VERSION='v159-eight-zone-oblique-crosscheck';
   const MAX_PIXELS=16000000;
   const DEFAULT_CONFIG=Object.freeze({
     maskInset:.025,cornerRadius:.045,claheClipLimit:2,claheTiles:8,
@@ -323,10 +323,19 @@
     for(let x=x0;x<=x1;x+=step)reference.push(sample(x,topHalf?bounds.top+band:bounds.bottom-band));
     for(let y=y0;y<=y1;y+=step)reference.push(sample(leftHalf?bounds.left+band:bounds.right-band,y));
     const refLum=median(reference.map(row=>row.lum)),refChroma=median(reference.map(row=>row.chr)),natural=refLum>=215&&refChroma<=25;
-    let n=0,white=0;const inspect=(x,y)=>{const row=sample(x,y);n++;if(!natural&&refLum<225&&row.lum>=Math.max(175,refLum+28)&&row.chr<=Math.max(10,Math.min(36,refChroma*.72+10)))white++};
-    for(let x=x0;x<=x1;x+=step)for(let d=0;d<band;d+=step)inspect(x,topHalf?bounds.top+d:bounds.bottom-d);
-    for(let y=y0;y<=y1;y+=step)for(let d=0;d<band;d+=step)inspect(leftHalf?bounds.left+d:bounds.right-d,y);
-    const ratio=white/Math.max(1,n);return {ratio,whitePixels:white,samplePixels:n,risk:Math.round(clamp(ratio*1700,0,100)),naturallyWhite:natural};
+    const cornerSpan=Math.max(band*2,Math.round(Math.min(bounds.width,bounds.height)*.13));
+    let n=0,white=0,cornerN=0,cornerWhite=0;
+    const inspect=(x,y,isCorner)=>{const row=sample(x,y),flag=!natural&&refLum<225&&row.lum>=Math.max(175,refLum+28)&&row.chr<=Math.max(10,Math.min(36,refChroma*.72+10));n++;if(isCorner)cornerN++;if(flag){white++;if(isCorner)cornerWhite++}};
+    for(let x=x0;x<=x1;x+=step)for(let d=0;d<band;d+=step){const corner=leftHalf?x-x0<cornerSpan:x1-x<cornerSpan;inspect(x,topHalf?bounds.top+d:bounds.bottom-d,corner)}
+    for(let y=y0;y<=y1;y+=step)for(let d=0;d<band;d+=step){const corner=topHalf?y-y0<cornerSpan:y1-y<cornerSpan;inspect(leftHalf?bounds.left+d:bounds.right-d,y,corner)}
+    const ratio=white/Math.max(1,n),cornerRatio=cornerWhite/Math.max(1,cornerN),edgeRisk=Math.round(clamp(ratio*1700,0,100)),cornerRisk=Math.round(clamp(cornerRatio*1500,0,100));
+    return {ratio,cornerRatio,whitePixels:white,cornerWhitePixels:cornerWhite,samplePixels:n,cornerSamplePixels:cornerN,risk:Math.max(edgeRisk,cornerRisk),edgeRisk,cornerRisk,naturallyWhite:natural};
+  }
+  function quadrantTextureRisk(input,bounds,id){
+    const {width,height,data}=validateImage(input),leftHalf=id.endsWith('l'),topHalf=id.startsWith('t'),mx=Math.round(bounds.left+bounds.width*.5),my=Math.round(bounds.top+bounds.height*.5),pad=Math.max(3,Math.round(Math.min(bounds.width,bounds.height)*.035));
+    const x0=(leftHalf?bounds.left:mx)+pad,x1=(leftHalf?mx:bounds.right)-pad,y0=(topHalf?bounds.top:my)+pad,y1=(topHalf?my:bounds.bottom)-pad,step=Math.max(1,Math.round(Math.min(bounds.width,bounds.height)/360));
+    let total=0,samples=0,strong=0;for(let y=y0;y<y1-step;y+=step)for(let x=x0;x<x1-step;x+=step){const p=pixelIndex(width,x,y),px=pixelIndex(width,x+step,y),py=pixelIndex(width,x,y+step),delta=(Math.abs(luminance(data,p)-luminance(data,px))+Math.abs(luminance(data,p)-luminance(data,py)))/2;total+=delta;samples++;if(delta>=30)strong++}
+    const mean=total/Math.max(1,samples),ratio=strong/Math.max(1,samples),risk=Math.round(clamp(Math.max(0,mean-9)*2.1+Math.max(0,ratio-.025)*180,0,100));return {risk,meanGradient:Math.round(mean*100)/100,strongDetailRatio:Math.round(ratio*10000)/10000,samples};
   }
   function quadrantMatches(baseSegments,obliqueSegments,id){
     let matches=0;for(const left of baseSegments||[]){if(quadrantId(left.midX,left.midY)!==id)continue;if((obliqueSegments||[]).some(right=>quadrantId(right.midX,right.midY)===id&&left.angleIndex===right.angleIndex&&Math.hypot(left.midX-right.midX,left.midY-right.midY)<=.13&&Math.abs(left.lengthRatio-right.lengthRatio)<=.22))matches++}return matches;
@@ -335,12 +344,12 @@
     const profile=gameProfile(providedConfig.game),config={...DEFAULT_CONFIG,...providedConfig},bounds=providedBounds||detectOuterBounds(baseInput),quality=analyzeQuality(baseInput),surface=providedSurface||analyzeSurface(baseInput,obliqueInput,bounds,config),precisionConfig={...config,minLineRatio:Math.max(.10,config.minLineRatio*.50),houghVoteThreshold:Math.max(18,config.houghVoteThreshold),scratchContrastMin:Math.max(30,config.scratchContrastMin)},precisionBase=detectScratchCandidates(baseInput,bounds,precisionConfig),precisionOblique=obliqueInput?detectScratchCandidates(obliqueInput,detectOuterBounds(obliqueInput),precisionConfig):null,ids=['tl','tr','bl','br'],rows={};
     for(const id of ids){
       const baseSegments=(precisionBase.segments||[]).filter(row=>quadrantId(row.midX,row.midY)===id),obliqueSegments=(precisionOblique?.segments||[]).filter(row=>quadrantId(row.midX,row.midY)===id),confirmed=obliqueInput?quadrantMatches(baseSegments,obliqueSegments,id):0;
-      const baseRisk=quadrantSegmentRisk(baseSegments),obliqueRisk=quadrantSegmentRisk(obliqueSegments),candidateRisk=obliqueInput?Math.max(baseRisk,obliqueRisk):baseRisk,surfaceRisk=Math.round(clamp(obliqueInput?(confirmed?candidateRisk*.82+confirmed*5:candidateRisk*.15):candidateRisk*.58,0,100)),whitening=quadrantWhitening(baseInput,bounds,id);
-      const risk=Math.round(clamp(Math.max(surfaceRisk,whitening.risk),0,100)),confidence=Math.round(clamp((obliqueInput?58:40)+quality.score*.32+bounds.confidence*.18+Math.min(12,confirmed*4)-(profile.id==='naruto'?8:0),8,profile.confidenceCap));
-      rows[id]={id,surfaceRisk,edgeRisk:whitening.risk,cornerRisk:whitening.risk,combinedRisk:risk,confidence,confirmedSegments:confirmed,candidateSegments:baseSegments.length+(obliqueSegments.length||0),whitening};
+      const baseRisk=quadrantSegmentRisk(baseSegments),obliqueRisk=quadrantSegmentRisk(obliqueSegments),candidateRisk=obliqueInput?Math.max(baseRisk,obliqueRisk):baseRisk,scratchRisk=Math.round(clamp(obliqueInput?(confirmed?candidateRisk*.82+confirmed*5:candidateRisk*.15):candidateRisk*.58,0,100)),texture=quadrantTextureRisk(baseInput,bounds,id),surfaceRisk=Math.max(scratchRisk,texture.risk),whitening=quadrantWhitening(baseInput,bounds,id);
+      const candidateSegments=baseSegments.length+obliqueSegments.length,obliqueStatus=!obliqueInput?'not_captured':confirmed?'confirmed':candidateSegments===0?'clear_both_angles':'angle_mismatch',risk=Math.round(clamp(Math.max(surfaceRisk,whitening.edgeRisk,whitening.cornerRisk),0,100)),confidence=Math.round(clamp((obliqueInput?58:40)+quality.score*.32+bounds.confidence*.18+Math.min(12,confirmed*4)-(profile.id==='naruto'?8:0),8,profile.confidenceCap));
+      rows[id]={id,scratchRisk,surfaceRisk,edgeRisk:whitening.edgeRisk,cornerRisk:whitening.cornerRisk,whiteningRisk:whitening.risk,combinedRisk:risk,confidence,confirmedSegments:confirmed,candidateSegments,baseCandidateSegments:baseSegments.length,obliqueCandidateSegments:obliqueSegments.length,obliqueStatus,obliqueCrossChecked:Boolean(obliqueInput),texture,whitening};
     }
     const risks=ids.map(id=>rows[id].combinedRisk),surfaceRisks=ids.map(id=>rows[id].surfaceRisk),edgeRisks=ids.map(id=>rows[id].edgeRisk),confidences=ids.map(id=>rows[id].confidence),worstRisk=Math.max(...risks),surfaceWorstRisk=Math.max(...surfaceRisks),edgeWorstRisk=Math.max(...edgeRisks),meanRisk=risks.reduce((a,b)=>a+b,0)/4,imbalance=Math.max(...risks)-Math.min(...risks),confidence=Math.round(Math.min(...confidences));
-    return {version:1,mode:'four-quadrant',gameProfile:profile.id,precisionConfig:{minLineRatio:precisionConfig.minLineRatio,houghVoteThreshold:precisionConfig.houghVoteThreshold,scratchContrastMin:precisionConfig.scratchContrastMin},quadrants:rows,worstQuadrant:ids.find(id=>rows[id].combinedRisk===worstRisk),worstRisk,surfaceWorstRisk,edgeWorstRisk,meanRisk:Math.round(meanRisk*10)/10,imbalance,confidence,allQuadrantsMeasured:ids.every(id=>rows[id].confidence>=55),learningFeatures:{quadrantWorstRisk:worstRisk,quadrantSurfaceWorstRisk:surfaceWorstRisk,quadrantEdgeWorstRisk:edgeWorstRisk,quadrantMeanRisk:Math.round(meanRisk*10)/10,quadrantImbalance:imbalance,quadrantConfidence:confidence}};
+    return {version:2,mode:'four-quadrant-oblique-crosscheck',gameProfile:profile.id,precisionConfig:{minLineRatio:precisionConfig.minLineRatio,houghVoteThreshold:precisionConfig.houghVoteThreshold,scratchContrastMin:precisionConfig.scratchContrastMin},quadrants:rows,worstQuadrant:ids.find(id=>rows[id].combinedRisk===worstRisk),worstRisk,surfaceWorstRisk,edgeWorstRisk,meanRisk:Math.round(meanRisk*10)/10,imbalance,confidence,obliqueCrossChecked:Boolean(obliqueInput),allQuadrantsMeasured:ids.every(id=>rows[id].confidence>=55),learningFeatures:{quadrantWorstRisk:worstRisk,quadrantSurfaceWorstRisk:surfaceWorstRisk,quadrantEdgeWorstRisk:edgeWorstRisk,quadrantMeanRisk:Math.round(meanRisk*10)/10,quadrantImbalance:imbalance,quadrantConfidence:confidence}};
   }
 
   function imageElementData(image,maxDimension=1400){

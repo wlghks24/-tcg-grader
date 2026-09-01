@@ -44,7 +44,7 @@ function trapezoid(){
   return im;
 }
 
-assert.strictEqual(vision.ENGINE_VERSION,'v158-four-quadrant-precision-learning');
+assert.strictEqual(vision.ENGINE_VERSION,'v159-eight-zone-oblique-crosscheck');
 assert.deepStrictEqual({low:vision.DEFAULT_CONFIG.cannyLow,high:vision.DEFAULT_CONFIG.cannyHigh},{low:35,high:105});
 
 const clean=card({artwork:true}),quality=vision.analyzeQuality(clean),outer=vision.detectOuterBounds(clean),center=vision.measureCentering(clean,outer,quality);

@@ -38,8 +38,8 @@ import verified_grade_learning_v135_safe as grade_learning_safe
 from grading_accuracy_v99 import estimate_raw_grade, valid_actual_grade
 from safe_runtime import atomic_write_bytes, atomic_write_json, atomic_write_text
 
-PATCH_ID = 158
-ENGINE = "v158-slab-card-roi-four-quadrant-proxy"
+PATCH_ID = 159
+ENGINE = "v159-slab-card-roi-eight-zone-oblique-crosscheck"
 ROOT = Path(__file__).resolve().parent
 STATE_PATH = ROOT / "verified_slab_raw_learning_v155.json"
 PROXY_ROOT = ROOT / "GRADE_TRAINING_INBOX" / "verified_raw_proxy"
@@ -310,9 +310,40 @@ def _one_side_features(path: Path) -> tuple[dict[str, Any], Image.Image]:
     }, roi
 
 
-def _extract_pair_features(front_path: Path, back_path: Path, company: str) -> tuple[dict[str, Any], float, Image.Image, Image.Image]:
+def _angle_crosscheck(base: dict[str, Any], angled: dict[str, Any] | None) -> dict[str, Any]:
+    rows: dict[str, Any] = {}
+    if angled is None:
+        return {"captured": False, "quadrants": rows, "confidence": 0.0}
+    confidences: list[float] = []
+    for zone in ("tl", "tr", "bl", "br"):
+        normal = base["quadrants"][zone]
+        oblique = angled["quadrants"][zone]
+        deltas = {
+            name: round(abs(float(normal[name]) - float(oblique[name])), 2)
+            for name in ("surfaceRisk", "edgeRisk", "cornerRisk", "combinedRisk")
+        }
+        confidence = round(_clamp(100.0 - max(deltas.values()) * 2.0, 20.0, 100.0), 2)
+        rows[zone] = {
+            "base": normal, "oblique": oblique, "absoluteDelta": deltas,
+            "repeatRisk": round(min(float(normal["combinedRisk"]), float(oblique["combinedRisk"])), 2),
+            "status": "consistent" if max(deltas.values()) <= 18.0 else "review_required",
+            "confidence": confidence,
+        }
+        confidences.append(confidence)
+    return {"captured": True, "quadrants": rows, "confidence": min(confidences)}
+
+
+def _extract_pair_features(
+    front_path: Path, back_path: Path, company: str,
+    front_oblique_path: Path | None = None, back_oblique_path: Path | None = None,
+) -> tuple[dict[str, Any], float, Image.Image, Image.Image]:
     front, front_roi = _one_side_features(front_path)
     back, back_roi = _one_side_features(back_path)
+    front_oblique = _one_side_features(front_oblique_path)[0] if front_oblique_path else None
+    back_oblique = _one_side_features(back_oblique_path)[0] if back_oblique_path else None
+    front_crosscheck = _angle_crosscheck(front, front_oblique)
+    back_crosscheck = _angle_crosscheck(back, back_oblique)
+    multi_angle = front_crosscheck["captured"] and back_crosscheck["captured"]
     vision = {
         "analysisConfidence": round(min(front["analysisConfidence"], back["analysisConfidence"]), 2),
         "frontCenter": front["centering"],
@@ -329,7 +360,9 @@ def _extract_pair_features(front_path: Path, back_path: Path, company: str) -> t
         "quadrantConfidence": round(min(front["surfaceConfidence"], back["surfaceConfidence"]), 2),
         "frontQuadrants": front["quadrants"],
         "backQuadrants": back["quadrants"],
-        "multiAngle": False,
+        "multiAngle": multi_angle,
+        "obliqueCrossCheck": {"complete": multi_angle, "front": front_crosscheck, "back": back_crosscheck,
+                              "confidence": round(min(front_crosscheck["confidence"], back_crosscheck["confidence"]), 2) if multi_angle else 0.0},
         "engine": ENGINE,
     }
     raw_pred = estimate_raw_grade(
@@ -391,9 +424,13 @@ def _build_candidate(row: dict[str, Any], registry: dict[str, dict[str, Any]]) -
     company, cert, actual, game = identity
     front_path = _safe_source(row.get("image_path"))
     back_path = _safe_source(row.get("back_image_path"))
+    front_oblique_path = _safe_source(row.get("front_oblique_image_path")) if row.get("oblique_crosscheck_complete") is True else None
+    back_oblique_path = _safe_source(row.get("back_oblique_image_path")) if row.get("oblique_crosscheck_complete") is True else None
     assert front_path is not None and back_path is not None
     try:
-        vision, raw_pred, front_roi, back_roi = _extract_pair_features(front_path, back_path, company)
+        vision, raw_pred, front_roi, back_roi = _extract_pair_features(
+            front_path, back_path, company, front_oblique_path, back_oblique_path
+        )
     except (OSError, ValueError, TypeError):
         return None
     if (
@@ -443,6 +480,8 @@ def _build_candidate(row: dict[str, Any], registry: dict[str, dict[str, Any]]) -
             "quadrant_edge_worst_risk": vision["quadrantEdgeWorstRisk"],
             "quadrant_mean_risk": vision["quadrantMeanRisk"],
             "quadrant_imbalance": vision["quadrantImbalance"],
+            "oblique_crosscheck_complete": vision["obliqueCrossCheck"]["complete"],
+            "oblique_crosscheck_confidence": vision["obliqueCrossCheck"]["confidence"],
             "official_grade_target": float(actual),
             "hard_defect_type_label": None,
         },
@@ -450,6 +489,8 @@ def _build_candidate(row: dict[str, Any], registry: dict[str, dict[str, Any]]) -
         "roi_back_path": (folder / "raw_card_back_roi.jpg").relative_to(ROOT).as_posix(),
         "source_front_sha256": row.get("image_sha256"),
         "source_back_sha256": row.get("back_image_sha256"),
+        "source_front_oblique_sha256": row.get("front_oblique_image_sha256"),
+        "source_back_oblique_sha256": row.get("back_oblique_image_sha256"),
         "official_verification_source": row.get("official_verification_source"),
         "official_verification_method": row.get("official_verification_method"),
         "created_at": _now(),
@@ -628,6 +669,8 @@ def sync_rows(rows: Iterable[dict[str, Any]]) -> dict[str, Any]:
         if (
             old and old.get("source_front_sha256") == row.get("image_sha256")
             and old.get("source_back_sha256") == row.get("back_image_sha256")
+            and old.get("source_front_oblique_sha256") == row.get("front_oblique_image_sha256")
+            and old.get("source_back_oblique_sha256") == row.get("back_oblique_image_sha256")
             and old.get("source") == SOURCE_TAG
         ):
             candidates.append(old)
@@ -681,6 +724,8 @@ def sync_rows(rows: Iterable[dict[str, Any]]) -> dict[str, Any]:
             "independent_raw_prediction_before_official_target": True,
             "raw_defect_weak_supervision": True,
             "four_quadrant_features_extracted_before_target": True,
+            "eight_front_back_zones_required": True,
+            "oblique_crosscheck_used_when_captured": True,
             "hard_defect_type_inferred_from_grade": False,
             "proxy_training_eligible": True,
             "genuine_raw_sample_has_priority_on_same_cert": True,
