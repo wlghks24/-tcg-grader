@@ -27,13 +27,30 @@ jobs:
         run: python -m py_compile update_market_prices.py auto_update_all.py validate_external_links.py
       - name: Verify v177 safety markers
         run: |
-          grep -q "collection_warnings" update_market_prices.py
-          grep -q "KREAM 원출처 5xx" update_market_prices.py
-          grep -q "deferred_timeout_pending" auto_update_all.py
-          grep -q "web_discovery_candidates.json" auto_update_all.py
-          grep -q "unresolved_broken=max(0,broken-repaired)" auto_update_all.py
-          grep -q "transient_deferred" auto_update_all.py
-          grep -q "exc.code in {404,410}" validate_external_links.py
+          python - <<'PY'
+          from pathlib import Path
+          checks={
+              'update_market_prices.py':[
+                  'collection_warnings',
+                  'KREAM 원출처 5xx',
+              ],
+              'auto_update_all.py':[
+                  'deferred_timeout_pending',
+                  'web_discovery_candidates.json',
+                  'unresolved_broken=max(0,broken-repaired)',
+                  'transient_deferred',
+              ],
+              'validate_external_links.py':[
+                  'exc.code in {404,410}',
+              ],
+          }
+          for filename, markers in checks.items():
+              text=Path(filename).read_text(encoding='utf-8')
+              missing=[m for m in markers if m not in text]
+              if missing:
+                  raise SystemExit(f'{filename}: missing markers: {missing}')
+          print('v177 markers verified')
+          PY
       - name: Commit changes
         run: |
           git config user.name 'github-actions[bot]'
