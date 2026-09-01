@@ -202,12 +202,36 @@ def _prepare_crop(source: Image.Image, top_fraction: float, scale: float, thresh
     return crop.resize((target_w, target_h))
 
 
-def _run_tesseract(image: Image.Image, psm: int) -> tuple[str, str | None]:
+def _prepare_region_crop(
+    source: Image.Image, left: float, top: float, right: float, bottom: float,
+    target_width: int, threshold: bool = False,
+) -> Image.Image:
+    """Prepare a bounded label sub-region for grader-specific OCR recovery."""
+    width, height = source.size
+    x0 = max(0, min(width - 1, int(width * left)))
+    y0 = max(0, min(height - 1, int(height * top)))
+    x1 = max(x0 + 1, min(width, int(width * right)))
+    y1 = max(y0 + 1, min(height, int(height * bottom)))
+    crop = source.crop((x0, y0, x1, y1))
+    crop = ImageOps.autocontrast(ImageOps.grayscale(crop))
+    if threshold:
+        crop = crop.point(lambda p: 255 if p > 172 else 0)
+    target_w = max(900, int(target_width))
+    ratio = target_w / max(1, crop.width)
+    return crop.resize((target_w, max(240, int(crop.height * ratio))))
+
+
+def _run_tesseract(
+    image: Image.Image, psm: int, whitelist: str | None = None,
+) -> tuple[str, str | None]:
     try:
         with tempfile.NamedTemporaryFile(suffix=".png") as tmp:
             image.save(tmp.name)
+            command = ["tesseract", tmp.name, "stdout", "--psm", str(psm), "-l", "eng"]
+            if whitelist:
+                command += ["-c", f"tessedit_char_whitelist={whitelist}"]
             run = subprocess.run(
-                ["tesseract", tmp.name, "stdout", "--psm", str(psm), "-l", "eng"],
+                command,
                 capture_output=True,
                 text=True,
                 encoding="utf-8",
@@ -223,8 +247,16 @@ def _run_tesseract(image: Image.Image, psm: int) -> tuple[str, str | None]:
         return "", "TimeoutExpired"
 
 
+def _looks_like_bgs_label(text: str) -> bool:
+    upper = _normalized_ocr(text)
+    markers = sum(token in upper for token in ("CENTERING", "CORNERS", "EDGES", "SURFACE"))
+    return ("BECKETT" in upper or " BGS " in f" {upper} " or "PRISTINE" in upper) and markers >= 2
+
+
 def _fields_from_text(text: str) -> tuple[str | None, str | None, float | None]:
     company = detect_company(text)
+    if company is None and _looks_like_bgs_label(text):
+        company = "BGS"
     cert = normalize_cert(company, text)
     grade = normalize_grade(text, company)
     return company, cert, grade
@@ -248,6 +280,7 @@ def ocr_label(path: Path, profile: str = "adaptive") -> tuple[str, str | None, d
             texts: list[str] = []
             errors: list[str] = []
             used: list[str] = []
+            bgs_cert_targeted = False
             for name, fraction, scale, threshold, psm in passes:
                 crop = _prepare_crop(source, fraction, scale, threshold)
                 text, error = _run_tesseract(crop, psm)
@@ -259,6 +292,38 @@ def ocr_label(path: Path, profile: str = "adaptive") -> tuple[str, str | None, d
 
                 combined = " | ".join(texts)
                 company, cert, grade = _fields_from_text(combined)
+
+                # Beckett/BGS labels place a small serial at the far-right of the
+                # top label. On Android/Termux the normal PSM-6 pass can read the
+                # large grade/subgrades yet skip this small leading-zero number.
+                # Run a narrow digits-only recovery pass only when BGS identity is
+                # already visually supported and the certificate is unresolved.
+                if not bgs_cert_targeted and cert is None and (company == "BGS" or _looks_like_bgs_label(combined)):
+                    bgs_cert_targeted = True
+                    cert_crop = _prepare_region_crop(source, 0.48, 0.00, 1.00, 0.20, 1700, False)
+                    cert_text, cert_error = _run_tesseract(
+                        cert_crop, 6, whitelist="0123456789"
+                    )
+                    used.append("bgs_top_right_digits_psm6")
+                    if cert_error:
+                        errors.append(cert_error)
+                    recovered = normalize_cert("BGS", cert_text or "")
+                    if recovered is None:
+                        cert_text2, cert_error2 = _run_tesseract(
+                            cert_crop, 11, whitelist="0123456789"
+                        )
+                        used.append("bgs_top_right_digits_psm11")
+                        if cert_error2:
+                            errors.append(cert_error2)
+                        recovered = normalize_cert("BGS", cert_text2 or "")
+                    if recovered:
+                        # Synthetic CERT context is created only from a valid BGS
+                        # length candidate, preserving leading zeroes and making
+                        # downstream evidence extraction deterministic.
+                        texts.append(f"BECKETT CERT {recovered}")
+                    combined = " | ".join(texts)
+                    company, cert, grade = _fields_from_text(combined)
+
                 if profile == "adaptive" and company and cert and grade is not None:
                     break
 
