@@ -66,6 +66,26 @@ echo " TCG Android 태블릿 서버 시작"
 echo " 현재 빌드: ${TCG_BUILD} · 브랜치: ${TCG_BRANCH}"
 echo "========================================"
 
+# v167: migrate older Termux:Boot installs that directly relaunched
+# `python tcg_updater.py` every 10 seconds. That legacy parent could revive the
+# old server after pkill and steal port 8765 while the v135 launcher was still
+# running its startup checks.
+LEGACY_BOOT_FILE="$HOME/.termux/boot/TCG_AUTO_START.sh"
+if [ -f "$LEGACY_BOOT_FILE" ] && grep -Fq 'python tcg_updater.py' "$LEGACY_BOOT_FILE"; then
+  echo "[복구] 구형 Android 자동시작 루프를 발견했습니다. v167 단일서버 방식으로 전환합니다."
+  pkill -f '[T]CG_AUTO_START.sh' 2>/dev/null || true
+  sleep 1
+  if [ -s "ANDROID_AUTO_START_INSTALL.sh" ]; then
+    bash ANDROID_AUTO_START_INSTALL.sh || {
+      echo "[오류] Android 자동시작 v167 전환에 실패했습니다."
+      exit 1
+    }
+  else
+    echo "[오류] ANDROID_AUTO_START_INSTALL.sh 파일이 없어 구형 자동시작을 안전하게 전환할 수 없습니다."
+    exit 1
+  fi
+fi
+
 if ! command -v python >/dev/null 2>&1; then
   echo "Python을 처음 설치합니다. 잠시 기다려 주세요."
   pkg update -y || exit 1
