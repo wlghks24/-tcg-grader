@@ -1,0 +1,104 @@
+name: Apply graded photo integrity v112
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - apply_graded_photo_integrity_v112.py
+      - .github/workflows/apply-graded-photo-integrity-v112.yml
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          fetch-depth: 1
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
+        with:
+          python-version: '3.12'
+      - name: Patch syntax check
+        run: python -m py_compile apply_graded_photo_integrity_v112.py
+      - name: Apply integrity patch
+        run: python apply_graded_photo_integrity_v112.py
+      - name: Runtime syntax check
+        run: python -m py_compile auto_repair_engine.py auto_update_all.py graded_photo_multi_source.py
+      - name: Candidate integrity regression checks
+        run: |
+          python - <<'PY'
+          import copy
+          import auto_repair_engine as repair
+          import auto_update_all as update
+
+          local = {
+              'records': [{
+                  'source_id': 'library_candidate',
+                  'source': '기존 등록사진 검증대기',
+                  'search_provider': 'library_manifest',
+                  'url': '',
+                  'image_url': '',
+                  'company': 'PSA',
+                  'game': 'pokemon',
+                  'grade': 10.0,
+                  'certification_id': '12345678',
+                  'official_result': False,
+                  'learning_eligibility': 'not_eligible_unverified',
+                  'image_sha256': 'a' * 64,
+                  'image_validated': True,
+                  'image_probe_status': 'manifest_only',
+              }],
+              'summary': {'total': 1},
+          }
+          assert repair._valid_project_payload('graded_photo_candidates.json', local)
+          update.validate_json('graded_photo_candidates.json', local)
+          assert update._count_payload(local) == 1
+
+          bad = copy.deepcopy(local)
+          bad['records'][0]['image_sha256'] = ''
+          assert not repair._valid_project_payload('graded_photo_candidates.json', bad)
+
+          bad = copy.deepcopy(local)
+          bad['records'][0]['source_id'] = 'remote_unknown'
+          assert not repair._valid_project_payload('graded_photo_candidates.json', bad)
+
+          remote = copy.deepcopy(local)
+          remote['records'][0].update({
+              'source_id': 'ebay_public',
+              'search_provider': 'test',
+              'url': 'https://www.ebay.com/itm/123',
+              'image_sha256': '',
+              'image_validated': False,
+              'image_probe_status': 'not_attempted',
+          })
+          assert repair._valid_project_payload('graded_photo_candidates.json', remote)
+
+          private = copy.deepcopy(remote)
+          private['records'][0]['url'] = 'http://127.0.0.1/private'
+          assert not repair._valid_project_payload('graded_photo_candidates.json', private)
+
+          assert update._count_payload({'records': [{}, {}, {}]}) == 3
+          print('graded-photo integrity/count regression checks passed')
+          PY
+      - name: Existing focused tests when present
+        run: |
+          set -e
+          for test_file in test_auto_update_all.py test_auto_repair_engine.py test_graded_photo_multi_source.py; do
+            if [ -f "$test_file" ]; then
+              python -m unittest -v "${test_file%.py}"
+            fi
+          done
+      - name: Commit patched runtime
+        run: |
+          if git diff --quiet -- auto_repair_engine.py auto_update_all.py; then
+            echo "No runtime changes needed"
+            exit 0
+          fi
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add auto_repair_engine.py auto_update_all.py
+          git commit -m "fix: accept validated local graded-photo manifests v112"
+          git push
