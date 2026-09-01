@@ -264,7 +264,10 @@ def _integrated_public_status() -> dict[str, Any]:
     policy = dict(payload.get("policy") or {})
     policy.update({
         "manual_screenshot_sets_official_result": True,
+        "manual_screenshot_alone_sets_official_result": False,
         "matched_user_browser_official_page_is_official_verification": True,
+        "strict_identity_front_back_and_stored_proof_required": True,
+        "registry_conflict_blocks_promotion": True,
         "automatic_official_lookup_required_for_manual_match": False,
         "manual_screenshot_trains_raw_grade_calibration": False,
         "later_live_official_lookup_can_promote": False,
@@ -339,6 +342,9 @@ def status() -> dict[str, Any]:
         "patch": PATCH_ID,
         "applied": _APPLIED,
         "manual_official_page_promotes_to_official": True,
+        "manual_screenshot_alone_sets_official_result": False,
+        "strict_identity_front_back_and_stored_proof_required": True,
+        "registry_conflict_blocks_promotion": True,
         "integrated_verified_registry": True,
         "counts_as_reference_learning": False,
         "raw_grade_calibration_eligible": False,
