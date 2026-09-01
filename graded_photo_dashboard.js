@@ -2,7 +2,7 @@
 'use strict';
 const COMPANIES=['PSA','BGS','CGC','TAG','BRG'];
 const GAMES={pokemon:'포켓몬',onepiece:'원피스',naruto:'나루토'};
-const esc=v=>String(v??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
+const esc=v=>String(v??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot',"'":'&#39;'}[m]));
 const n=v=>Number.isFinite(Number(v))?Number(v):0;
 const sleep=ms=>new Promise(resolve=>setTimeout(resolve,ms));
 let running=false;
@@ -90,14 +90,26 @@ function diagnosticHtml(payload){
 }
 function render(payload){
  const body=document.getElementById('gpdBody');if(!body)return;
+ const rowsProvided=Array.isArray(payload.records)||Array.isArray(payload.items);
  const rows=Array.isArray(payload.records)?payload.records:Array.isArray(payload.items)?payload.items:[];
- const summary=payload.summary||{};const verified=rows.filter(isVerified).length||n(summary.verified_references);const references=rows.filter(isReferenceLearning).length||n(summary.reference_learning_count);const rawEligible=rows.filter(isRawEligible).length||n(summary.raw_grade_calibration_eligible);const quarantine=rows.filter(isQuarantine).length||n(summary.quarantined);const total=rows.length||n(summary.total_candidates);
+ const summary=payload.summary||{};
+ const verified=rowsProvided?rows.filter(isVerified).length:n(summary.verified_references);
+ const references=rowsProvided?rows.filter(isReferenceLearning).length:n(summary.reference_learning_count);
+ const rawEligible=rowsProvided?rows.filter(isRawEligible).length:n(summary.raw_grade_calibration_eligible);
+ const quarantine=rowsProvided?rows.filter(isQuarantine).length:n(summary.quarantined);
+ const total=rowsProvided?rows.length:n(summary.total_candidates);
+ const measurementReady=rowsProvided?rows.filter(r=>r.measurement_photo_ready===true).length:n(summary.measurement_photo_ready);
+ const validatedImages=rowsProvided?rows.filter(r=>r.image_validated===true).length:n(summary.validated_images);
+ const ocrReadable=rowsProvided?rows.filter(r=>String(r.ocr_label_text||'').trim()).length:n(summary.ocr_readable);
+ const certificationsResolved=rowsProvided?new Set(rows.map(r=>String(r.certification_id||r.cert_no||'').replace(/[^A-Za-z0-9]/g,'').toUpperCase()).filter(Boolean)).size:n(summary.certifications_resolved);
  const companyStats=payload.company_stats&&typeof payload.company_stats==='object'?payload.company_stats:{};const byCompany=Object.fromEntries(COMPANIES.map(c=>[c,0]));
  const gameStats=payload.game_stats&&typeof payload.game_stats==='object'?payload.game_stats:{};const byGame=Object.fromEntries(Object.keys(GAMES).map(g=>[g,0]));
- const sourceMap={};rows.forEach(r=>{const company=companyOf(r),game=gameOf(r),source=sourceOf(r);if(company in byCompany)byCompany[company]++;if(game in byGame)byGame[game]++;sourceMap[source]=(sourceMap[source]||0)+1});COMPANIES.forEach(c=>{if(!byCompany[c])byCompany[c]=n(companyStats[c]?.candidates)});Object.keys(GAMES).forEach(g=>{if(!byGame[g])byGame[g]=n(gameStats[g]?.candidates)});
+ const sourceMap={};rows.forEach(r=>{const company=companyOf(r),game=gameOf(r),source=sourceOf(r);if(company in byCompany)byCompany[company]++;if(game in byGame)byGame[game]++;sourceMap[source]=(sourceMap[source]||0)+1});
+ if(!rowsProvided){COMPANIES.forEach(c=>{byCompany[c]=n(companyStats[c]?.candidates)});Object.keys(GAMES).forEach(g=>{byGame[g]=n(gameStats[g]?.candidates)})}
+ const liveCompanyStats=Object.fromEntries(COMPANIES.map(c=>{const companyRows=rows.filter(r=>companyOf(r)===c);return [c,{games_covered:new Set(companyRows.map(gameOf).filter(g=>g in GAMES)).size,validated_images:companyRows.filter(r=>r.image_validated===true).length,measurement_ready:companyRows.filter(r=>r.measurement_photo_ready===true).length,verified_references:companyRows.filter(isVerified).length}]}));
  const sources=Object.entries(sourceMap).sort((a,b)=>b[1]-a[1]).slice(0,15);const providers=Object.entries(payload.provider_stats||{}).sort((a,b)=>n(b[1])-n(a[1])).slice(0,10);
- body.innerHTML=`<div class="gpd-summary"><div><span>전체 후보</span><b>${total.toLocaleString()}건</b></div><div><span>공식검증</span><b>${verified.toLocaleString()}건</b></div><div><span>측정용 앞면</span><b>${n(summary.measurement_photo_ready).toLocaleString()}건</b></div><div><span>참고학습 반영</span><b>${references.toLocaleString()}건</b></div><div><span>원본보정 학습</span><b>${rawEligible.toLocaleString()}건</b></div><div><span>사진 검증</span><b>${n(summary.validated_images).toLocaleString()}건</b></div><div><span>OCR 판독</span><b>${n(summary.ocr_readable).toLocaleString()}건</b></div><div><span>인증번호 확보</span><b>${n(summary.certifications_resolved).toLocaleString()}건</b></div><div><span>격리 후보</span><b>${quarantine.toLocaleString()}건</b></div></div>
- <div class="gpd-section"><h3>등급사별 확보량</h3><div class="gpd-companies">${COMPANIES.map(c=>`<div class="gpd-company"><b>${c}</b><strong>${byCompany[c].toLocaleString()}</strong><span>장 · 게임 ${n(companyStats[c]?.games_covered)}/3 · 사진검증 ${n(companyStats[c]?.validated_images)} · 측정참고 ${n(companyStats[c]?.measurement_ready)} · 공식 ${n(companyStats[c]?.verified_references)}</span></div>`).join('')}</div></div>
+ body.innerHTML=`<div class="gpd-summary"><div><span>전체 후보</span><b>${total.toLocaleString()}건</b></div><div><span>공식검증</span><b>${verified.toLocaleString()}건</b></div><div><span>측정용 앞면</span><b>${measurementReady.toLocaleString()}건</b></div><div><span>참고학습 반영</span><b>${references.toLocaleString()}건</b></div><div><span>원본보정 학습</span><b>${rawEligible.toLocaleString()}건</b></div><div><span>사진 검증</span><b>${validatedImages.toLocaleString()}건</b></div><div><span>OCR 판독</span><b>${ocrReadable.toLocaleString()}건</b></div><div><span>인증번호 확보</span><b>${certificationsResolved.toLocaleString()}개</b></div><div><span>격리 후보</span><b>${quarantine.toLocaleString()}건</b></div></div>
+ <div class="gpd-section"><h3>등급사별 확보량</h3><div class="gpd-companies">${COMPANIES.map(c=>{const s=rowsProvided?liveCompanyStats[c]:(companyStats[c]||{});return `<div class="gpd-company"><b>${c}</b><strong>${byCompany[c].toLocaleString()}</strong><span>장 · 게임 ${n(s?.games_covered)}/3 · 사진검증 ${n(s?.validated_images)} · 측정참고 ${n(s?.measurement_ready)} · 공식 ${n(s?.verified_references)}</span></div>`}).join('')}</div></div>
  <div class="gpd-section"><h3>게임별 등급사진 확보량</h3><div class="gpd-companies">${Object.entries(GAMES).map(([g,label])=>`<div class="gpd-company"><b>${label}</b><strong>${byGame[g].toLocaleString()}</strong><span>장</span></div>`).join('')}</div></div>
  <div class="gpd-section"><h3>후보 출처별 수집량</h3>${sources.length?`<div class="gpd-sources">${sources.map(([s,c])=>`<div><span>${esc(s)}</span><b>${c.toLocaleString()}건</b></div>`).join('')}</div>`:'<div class="gpd-empty">아직 출처별 후보가 없습니다.</div>'}</div>
  <div class="gpd-section"><h3>검색 공급자별 확보량</h3>${providers.length?`<div class="gpd-providers">${providers.map(([s,c])=>`<span>${esc(s)} <b>${n(c)}건</b></span>`).join('')}</div>`:'<div class="gpd-empty">검색 공급자 기록이 없습니다.</div>'}</div>
