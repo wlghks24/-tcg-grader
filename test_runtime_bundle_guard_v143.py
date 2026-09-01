@@ -5,6 +5,7 @@ import unittest
 
 import auto_repair_engine
 import auto_update_all
+import manual_official_proof
 import runtime_bundle_guard_v143 as guard
 from multi_channel_agent import MultiChannelCollector
 
@@ -36,13 +37,21 @@ class RuntimeBundleGuardV143Tests(unittest.TestCase):
         self.assertTrue(callable(getattr(MultiChannelCollector, "search_exact", None)))
 
     def test_manual_official_fallback_is_complete_and_reference_only(self):
-        result = guard.audit()
-        self.assertTrue(result["contracts"]["manual_official_fallback"], result)
-        self.assertIs(result["contracts"]["manual_proof_raw_calibration"], False)
-        self.assertIs(result["contracts"]["manual_proof_rejected_bytes_retained"], False)
+        first = guard.audit()
+        second = guard.audit()
+        for result in (first, second):
+            self.assertTrue(result["contracts"]["manual_official_fallback"], result)
+            self.assertIs(result["contracts"]["manual_proof_raw_calibration"], False)
+            self.assertIs(result["contracts"]["manual_proof_rejected_bytes_retained"], False)
+        policy = manual_official_proof.public_status()["policy"]
+        if policy["manual_screenshot_sets_official_result"]:
+            self.assertFalse(policy["manual_screenshot_alone_sets_official_result"])
+            self.assertTrue(policy["strict_identity_front_back_and_stored_proof_required"])
+            self.assertTrue(policy["registry_conflict_blocks_promotion"])
         for name in (
             "manual_graded_photo_registration.py",
             "manual_official_proof.py",
+            "manual_official_verified_integration_v154.py",
             "manual_official_verify_bridge.js",
             "graded_photo_dashboard.js",
             "IMPORT_GRADED_LEARNING_FILES.py",
