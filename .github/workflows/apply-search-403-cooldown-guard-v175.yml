@@ -1,0 +1,44 @@
+name: Apply search 403 cooldown guard v175
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'apply_search_403_cooldown_guard_v175.py'
+      - '.github/workflows/apply-search-403-cooldown-guard-v175.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          ref: main
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
+        with:
+          python-version: '3.12'
+      - name: Apply v175 patch
+        run: python apply_search_403_cooldown_guard_v175.py
+      - name: Verify syntax
+        run: python -m py_compile search_method_learning.py multi_channel_agent.py
+      - name: Run search regression tests
+        run: python -m unittest test_search_method_learning.py test_search_recovery_slot.py
+      - name: Verify v175 markers
+        run: |
+          grep -q 'blocked_cooling' search_method_learning.py
+          grep -q 'self.assertNotIn("blocked", ordered)' test_search_recovery_slot.py
+          grep -q 'Naver 뉴스 공개검색: HTTP 403 차단 감지' graded_photo_dashboard.js
+          grep -q 'graded_photo_dashboard.js?v=175' index.html
+      - name: Commit changes
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add search_method_learning.py test_search_method_learning.py test_search_recovery_slot.py graded_photo_dashboard.js index.html
+          if ! git diff --cached --quiet; then
+            git commit -m 'fix: quarantine blocked search routes during cooldown'
+            git push origin main
+          fi
