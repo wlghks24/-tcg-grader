@@ -76,6 +76,8 @@ class GradedPhotoRuntimeTests(unittest.TestCase):
         self.assertIn('gpdManualBackPhoto',source)
         self.assertIn('gpdManualFrontOblique',source)
         self.assertIn('총 8구역 정밀검사',source)
+        self.assertIn('기존 등록사진 전체 재검증',source)
+        self.assertIn('/api/run-existing-photo-revalidation',source)
         self.assertIn("grade:gradeText===''?null:Number(gradeText)",source)
         self.assertNotIn('id="gpdManualCompany" required',source)
         self.assertNotIn('rows.filter(r=>companyOf(r)===c)',source)
@@ -98,6 +100,19 @@ class GradedPhotoRuntimeTests(unittest.TestCase):
         status,payload=request_json(urllib.request.Request(self.base+'/api/run-graded-photo-collection'))
         self.assertEqual(status,405)
         self.assertFalse(payload['ok'])
+
+    def test_existing_photo_revalidation_status_and_same_origin_trigger(self):
+        status,payload=request_json(urllib.request.Request(self.base+'/api/graded-photo-revalidation-status'))
+        self.assertEqual(status,200)
+        self.assertIn(payload['state'],{'idle','queued','running','completed','failed'})
+        accepted={'ok':True,'accepted':True,'job_id':'revalidation-test','job':{'state':'queued'}}
+        request=urllib.request.Request(self.base+'/api/run-existing-photo-revalidation',data=b'{}',method='POST',
+                                       headers={'Content-Type':'application/json','Origin':self.base})
+        with mock.patch.object(tcg_updater,'_start_existing_photo_revalidation',return_value=(accepted,202)) as start:
+            status,payload=request_json(request)
+        self.assertEqual(status,202)
+        self.assertEqual(payload['job_id'],'revalidation-test')
+        start.assert_called_once_with()
 
     def test_cross_site_trigger_is_rejected(self):
         request=urllib.request.Request(self.base+'/api/run-graded-photo-collection',data=b'{}',method='POST',

@@ -74,6 +74,12 @@ GRADED_PHOTO_JOB={
 }
 LAST_GRADED_PHOTO_COLLECTION=0.0
 GRADED_PHOTO_COOLDOWN_SECONDS=20
+PHOTO_REVALIDATION_JOB_LOCK=threading.Lock()
+PHOTO_REVALIDATION_START_LOCK=threading.Lock()
+PHOTO_REVALIDATION_JOB={
+    'id':None,'state':'idle','started_at':None,'finished_at':None,
+    'message':'기존 등록사진 재검증 대기 중','error':None,'summary':None,
+}
 MANUAL_PHOTO_UPLOAD_LOCK=threading.Lock()
 MANUAL_PHOTO_UPLOAD_BUCKETS={}
 MANUAL_PHOTO_UPLOAD_WINDOW_SECONDS=10*60.0
@@ -656,6 +662,45 @@ def _start_graded_photo_collection():
     threading.Thread(target=_background_graded_photo_collection,args=(job_id,),daemon=True).start()
     return {'ok':True,'accepted':True,'job_id':job_id,'job':_graded_photo_job_snapshot()},202
 
+def _photo_revalidation_job_snapshot():
+    with PHOTO_REVALIDATION_JOB_LOCK:
+        return json.loads(json.dumps(PHOTO_REVALIDATION_JOB,ensure_ascii=False))
+
+def _photo_revalidation_job_set(**changes):
+    with PHOTO_REVALIDATION_JOB_LOCK:
+        PHOTO_REVALIDATION_JOB.update(changes)
+        return json.loads(json.dumps(PHOTO_REVALIDATION_JOB,ensure_ascii=False))
+
+def _background_existing_photo_revalidation(job_id):
+    try:
+        _photo_revalidation_job_set(state='running',message='기존 등록사진 무결성·앞뒤 8구역·사선광을 재검증 중입니다.',error=None)
+        with UPDATE_LOCK:
+            import verified_slab_raw_learning_v155 as verified_raw
+            payload=verified_raw.revalidate_existing()
+        summary=payload.get('summary',{}) if isinstance(payload,dict) else {}
+        message=(f"재검증 완료 · 전체 {int(summary.get('total',0) or 0)}건 · "
+                 f"8구역 {int(summary.get('eight_zone_complete',0) or 0)}건 · "
+                 f"앞면만 {int(summary.get('legacy_front_only',0) or 0)}건 · "
+                 f"학습가능 {int(summary.get('official_learning_ready',0) or 0)}건")
+        _photo_revalidation_job_set(state='completed',finished_at=time.strftime('%Y-%m-%dT%H:%M:%S%z'),
+                                    message=message,summary=summary,error=None)
+    except Exception as exc:
+        _photo_revalidation_job_set(state='failed',finished_at=time.strftime('%Y-%m-%dT%H:%M:%S%z'),
+                                    message='기존 등록사진 재검증 오류',error=f'{type(exc).__name__}: {exc}')
+
+def _start_existing_photo_revalidation():
+    with PHOTO_REVALIDATION_START_LOCK:
+        current=_photo_revalidation_job_snapshot()
+        if current.get('state') in ('queued','running'):
+            return {'ok':False,'error':'기존 등록사진 재검증이 이미 진행 중입니다.','job':current},409
+        if _graded_photo_job_snapshot().get('state') in ('queued','running') or _job_snapshot().get('state') in ('queued','running'):
+            return {'ok':False,'error':'다른 업데이트가 진행 중입니다. 완료 후 다시 실행하세요.','job':current},409
+        job_id=f'photo-revalidation-{int(time.time())}-{os.getpid()}'
+        _photo_revalidation_job_set(id=job_id,state='queued',started_at=time.strftime('%Y-%m-%dT%H:%M:%S%z'),
+                                    finished_at=None,message='기존 등록사진 재검증 준비 중',error=None,summary=None)
+    threading.Thread(target=_background_existing_photo_revalidation,args=(job_id,),daemon=True).start()
+    return {'ok':True,'accepted':True,'job_id':job_id,'job':_photo_revalidation_job_snapshot()},202
+
 def _manual_photo_upload_allowed(client_ip):
     now=time.monotonic()
     with MANUAL_PHOTO_UPLOAD_LOCK:
@@ -1236,6 +1281,7 @@ class Handler(SimpleHTTPRequestHandler):
         if path=='/api/auto-status': return self.json(load_db().get('auto_update',{}))
         if path=='/api/update-job': return self.json({'ok':True,'job':_job_snapshot()})
         if path=='/api/graded-photo-collection-status': return self.json(_graded_photo_job_snapshot())
+        if path=='/api/graded-photo-revalidation-status': return self.json(_photo_revalidation_job_snapshot())
         if path=='/api/update-report': return self.json(load_json_file(AUTO_REPORT,{'ok':False,'results':[]}))
         if path=='/api/update-issues': return self.json(load_json_file(AUTO_ISSUES,{'issue_count':0,'issues':[]}))
         if path in {'/api/repair-memory','/api/error-learning-summary'}:
@@ -1387,7 +1433,8 @@ class Handler(SimpleHTTPRequestHandler):
             return self.json({'ok':True,'found':bool(entry),'key':key,'updated_at':db.get('updated_at'),'collection_status':db.get('collection_status'),'price':entry})
         # Mutating updates are POST-only. This prevents accidental/cross-site GET execution.
         if path in ('/api/update','/run-auto-update','/api/run-auto-update','/api/run-graded-photo-collection',
-                    '/api/graded-photo-manual-registration','/api/retry-graded-photo-manual-verification'):
+                    '/api/run-existing-photo-revalidation','/api/graded-photo-manual-registration',
+                    '/api/retry-graded-photo-manual-verification'):
             return self.json({'ok':False,'error':'POST 요청만 허용'},405)
         if not self._safe_static(path):
             return self.json({'ok':False,'error':'공개되지 않은 파일'},404)
@@ -1409,6 +1456,11 @@ class Handler(SimpleHTTPRequestHandler):
             if not self._require_mutation_origin():
                 return
             payload,status=_start_graded_photo_collection()
+            return self.json(payload,status)
+        if post_path=='/api/run-existing-photo-revalidation':
+            if not self._require_mutation_origin():
+                return
+            payload,status=_start_existing_photo_revalidation()
             return self.json(payload,status)
         if post_path=='/api/graded-photo-manual-registration':
             if not self._require_mutation_origin():

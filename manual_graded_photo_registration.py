@@ -229,7 +229,7 @@ def _public_row(row: dict[str, Any]) -> dict[str, Any]:
         "back_image_sha256", "back_image_width", "back_image_height", "front_back_pair_complete",
         "front_oblique_image_sha256", "back_oblique_image_sha256", "oblique_crosscheck_complete",
         "quadrant_zone_count", "quadrant_inspection_state", "measurement_learning_eligible",
-        "client_preview_training_eligible",
+        "client_preview_training_eligible", "photo_revalidation",
     )
     return {key: row.get(key) for key in keys if key in row}
 

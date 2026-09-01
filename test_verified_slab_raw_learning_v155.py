@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 from pathlib import Path
+import hashlib
 import tempfile
 import unittest
 from unittest.mock import patch
@@ -91,6 +92,39 @@ class VerifiedSlabRawLearningV155Tests(unittest.TestCase):
             "hard_defect_type_label": None,
         }
         self.assertIsNone(weak["hard_defect_type_label"])
+
+    def test_existing_pair_is_revalidated_to_eight_zones_and_front_only_is_preserved(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            front = root / "front.jpg"
+            back = root / "back.jpg"
+            legacy = root / "legacy.jpg"
+            for path, color in ((front, (90, 105, 120)), (back, (70, 85, 100)), (legacy, (80, 90, 110))):
+                Image.new("RGB", (900, 1500), color).save(path)
+            sha = lambda path: hashlib.sha256(path.read_bytes()).hexdigest()
+            rows = [
+                {"registration_id": "pair", "image_path": "front.jpg", "back_image_path": "back.jpg",
+                 "image_sha256": sha(front), "back_image_sha256": sha(back), "official_result": False},
+                {"registration_id": "legacy", "image_path": "legacy.jpg", "image_sha256": sha(legacy),
+                 "official_result": False},
+            ]
+            paths = {"front.jpg": front, "back.jpg": back, "legacy.jpg": legacy}
+            payload = {"registrations": rows}
+            with patch.object(raw, "REVALIDATION_PATH", root / "revalidation.json"), \
+                 patch.object(raw, "_safe_source", side_effect=lambda value: paths.get(value)), \
+                 patch.object(raw.manual_photo, "_registry", return_value=payload), \
+                 patch.object(raw.manual_photo, "_save_registry") as save_registry, \
+                 patch.object(raw.grade_learning, "registry_index", return_value={}), \
+                 patch.object(raw, "sync_rows", return_value={"summary": {"proxy_candidates": 0}}):
+                state = raw.revalidate_existing()
+        self.assertEqual(state["summary"]["eight_zone_complete"], 1)
+        self.assertEqual(state["summary"]["legacy_front_only"], 1)
+        result = {row["registration_id"]: row for row in state["results"]}
+        self.assertEqual(result["pair"]["quadrant_zone_count"], 8)
+        self.assertEqual(set(result["pair"]["frontQuadrants"]), {"tl", "tr", "bl", "br"})
+        self.assertEqual(result["legacy"]["disposition"], "legacy_front_only_needs_back")
+        self.assertTrue(result["legacy"]["original_preserved"])
+        save_registry.assert_called_once()
 
 
 if __name__ == "__main__":

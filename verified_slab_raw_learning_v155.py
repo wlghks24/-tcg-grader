@@ -22,6 +22,7 @@ from __future__ import annotations
 import argparse
 from datetime import datetime, timezone
 from io import BytesIO
+import hashlib
 import json
 import math
 import os
@@ -36,12 +37,13 @@ import manual_graded_photo_registration as manual_photo
 import verified_grade_learning_v135 as grade_learning
 import verified_grade_learning_v135_safe as grade_learning_safe
 from grading_accuracy_v99 import estimate_raw_grade, valid_actual_grade
-from safe_runtime import atomic_write_bytes, atomic_write_json, atomic_write_text
+from safe_runtime import atomic_write_bytes, atomic_write_json, atomic_write_text, safe_read_bytes, safe_read_text
 
 PATCH_ID = 159
 ENGINE = "v159-slab-card-roi-eight-zone-oblique-crosscheck"
 ROOT = Path(__file__).resolve().parent
 STATE_PATH = ROOT / "verified_slab_raw_learning_v155.json"
+REVALIDATION_PATH = ROOT / "existing_photo_revalidation_v160.json"
 PROXY_ROOT = ROOT / "GRADE_TRAINING_INBOX" / "verified_raw_proxy"
 ANDROID_ARCHIVE = Path("/storage/emulated/0/Download/TCG등급학습/검증완료")
 COMPANIES = ("PSA", "BGS", "CGC", "TAG", "BRG")
@@ -378,6 +380,117 @@ def _encode_jpeg(image: Image.Image) -> bytes:
     stream = BytesIO()
     image.save(stream, format="JPEG", quality=90, optimize=True)
     return stream.getvalue()
+
+
+def _file_integrity(path: Path | None, expected_sha256: Any) -> dict[str, Any]:
+    if path is None:
+        return {"available": False, "hash_match": False, "sha256": None}
+    try:
+        digest = hashlib.sha256(safe_read_bytes(path, max_bytes=MAX_IMAGE_BYTES)).hexdigest()
+    except (OSError, ValueError, TypeError):
+        return {"available": False, "hash_match": False, "sha256": None}
+    expected = str(expected_sha256 or "").lower()
+    return {"available": True, "hash_match": len(expected) == 64 and digest == expected, "sha256": digest}
+
+
+def revalidate_existing() -> dict[str, Any]:
+    """Re-measure saved photos without replacing originals or trusting old preview values."""
+    with manual_photo.LOCK:
+        payload = manual_photo._registry()
+        source_rows = [dict(row) for row in payload.get("registrations", []) if isinstance(row, dict)]
+    official_registry = grade_learning.registry_index()
+    try:
+        previous = json.loads(safe_read_text(REVALIDATION_PATH, max_bytes=16_000_000))
+    except (OSError, ValueError, TypeError, UnicodeError, json.JSONDecodeError):
+        previous = {}
+    previous_runs = [dict(row) for row in previous.get("runs", []) if isinstance(row, dict)] if isinstance(previous, dict) else []
+    results: list[dict[str, Any]] = []
+    summaries: dict[str, dict[str, Any]] = {}
+    counts = {"total": 0, "eight_zone_complete": 0, "legacy_front_only": 0, "oblique_complete": 0,
+              "official_learning_ready": 0, "official_pending": 0, "invalid_or_changed": 0}
+    for source in source_rows:
+        counts["total"] += 1
+        registration_id = str(source.get("registration_id") or "")[:80]
+        front_path = _safe_source(source.get("image_path"))
+        back_path = _safe_source(source.get("back_image_path"))
+        front_integrity = _file_integrity(front_path, source.get("image_sha256"))
+        back_integrity = _file_integrity(back_path, source.get("back_image_sha256"))
+        pair = bool(front_integrity["hash_match"] and back_integrity["hash_match"] and
+                    front_integrity["sha256"] != back_integrity["sha256"])
+        front_angle_path = _safe_source(source.get("front_oblique_image_path"))
+        back_angle_path = _safe_source(source.get("back_oblique_image_path"))
+        front_angle_integrity = _file_integrity(front_angle_path, source.get("front_oblique_image_sha256"))
+        back_angle_integrity = _file_integrity(back_angle_path, source.get("back_oblique_image_sha256"))
+        oblique = bool(pair and front_angle_integrity["hash_match"] and back_angle_integrity["hash_match"])
+        front_features = back_features = None
+        front_crosscheck = back_crosscheck = {"captured": False, "quadrants": {}, "confidence": 0.0}
+        measurement_error = None
+        try:
+            if not front_integrity["hash_match"] or front_path is None:
+                raise ValueError("front_missing_or_changed")
+            front_features = _one_side_features(front_path)[0]
+            if pair and back_path is not None:
+                back_features = _one_side_features(back_path)[0]
+            if oblique and front_angle_path is not None and back_angle_path is not None:
+                front_crosscheck = _angle_crosscheck(front_features, _one_side_features(front_angle_path)[0])
+                back_crosscheck = _angle_crosscheck(back_features, _one_side_features(back_angle_path)[0])
+        except (OSError, ValueError, TypeError) as exc:
+            measurement_error = str(exc)[:80] or "measurement_failed"
+        exact_official = _identity(source, official_registry) is not None
+        measured_pair = bool(pair and front_features and back_features and not measurement_error)
+        if measurement_error or not front_integrity["hash_match"]:
+            disposition = "invalid_or_changed_file"
+            counts["invalid_or_changed"] += 1
+        elif not measured_pair:
+            disposition = "legacy_front_only_needs_back"
+            counts["legacy_front_only"] += 1
+        elif exact_official:
+            disposition = "official_pair_ready_for_server_learning"
+            counts["eight_zone_complete"] += 1
+            counts["official_learning_ready"] += 1
+        else:
+            disposition = "eight_zone_inspection_official_pending"
+            counts["eight_zone_complete"] += 1
+            counts["official_pending"] += 1
+        if oblique:
+            counts["oblique_complete"] += 1
+        result = {
+            "registration_id": registration_id, "revalidated_at": _now(), "disposition": disposition,
+            "original_preserved": True, "front_back_pair_complete": measured_pair,
+            "quadrant_zone_count": 8 if measured_pair else 4 if front_features else 0,
+            "oblique_crosscheck_complete": bool(oblique and front_crosscheck["captured"] and back_crosscheck["captured"]),
+            "official_gate_passed": exact_official, "learning_eligible": bool(exact_official and measured_pair),
+            "integrity": {"front": front_integrity, "back": back_integrity,
+                          "front_oblique": front_angle_integrity, "back_oblique": back_angle_integrity},
+            "frontQuadrants": front_features.get("quadrants") if front_features else None,
+            "backQuadrants": back_features.get("quadrants") if back_features else None,
+            "obliqueCrossCheck": {"front": front_crosscheck, "back": back_crosscheck},
+            "measurement_error": measurement_error,
+        }
+        results.append(result)
+        summaries[registration_id] = {key: result[key] for key in (
+            "revalidated_at", "disposition", "quadrant_zone_count", "oblique_crosscheck_complete",
+            "official_gate_passed", "learning_eligible", "measurement_error"
+        )}
+    with manual_photo.LOCK:
+        latest = manual_photo._registry()
+        for row in latest.get("registrations", []):
+            registration_id = str(row.get("registration_id") or "")
+            summary = summaries.get(registration_id)
+            if summary is not None:
+                row["photo_revalidation"] = summary
+        manual_photo._save_registry(latest)
+    run = {"completed_at": _now(), **counts}
+    state = {"schema_version": 1, "engine": ENGINE, "updated_at": _now(),
+             "runs": (previous_runs + [run])[-100:], "results": results[-manual_photo.MAX_REGISTRATIONS:], "summary": counts,
+             "policy": {"originals_preserved": True, "legacy_front_only_not_rejected": True,
+                        "official_exact_match_required_for_learning": True,
+                        "old_browser_preview_not_used_as_training_truth": True}}
+    atomic_write_json(REVALIDATION_PATH, state, suffix=".existing-photo-revalidation.tmp")
+    learning = sync_rows(source_rows)
+    state["learning_sync_summary"] = learning.get("summary", {}) if isinstance(learning, dict) else {}
+    atomic_write_json(REVALIDATION_PATH, state, suffix=".existing-photo-revalidation.tmp")
+    return state
 
 
 def _proxy_folder(company: str, game: str, cert: str) -> Path:
