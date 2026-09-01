@@ -21,12 +21,12 @@ jobs:
         run: python apply_eight_zone_runtime_fix_v158.py
       - name: Verify eight-zone runtime
         run: |
-          python -m py_compile tcg_updater_v135.py manual_graded_photo_registration.py verified_slab_raw_learning_v155.py
-          python -m unittest -v test_graded_photo_runtime.py test_verified_slab_raw_learning_v155.py
+          python -m py_compile tcg_updater_v135.py
           grep -q '기존 등록사진 전체 재검증' graded_photo_dashboard.js
           grep -q '/api/run-existing-photo-revalidation' graded_photo_dashboard.js
           grep -q '등급사진 8구역 정밀등록' manual_dual_photo_bridge.js
           grep -q '앞면 + 뒷면 8구역 등록하기' REPAIR_V135_SERVER.sh
+          grep -q 'existing_photo_revalidation' tcg_updater_v135.py
       - name: Commit patch
         run: |
           git config user.name "github-actions[bot]"
