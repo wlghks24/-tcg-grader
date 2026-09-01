@@ -2,6 +2,51 @@
 set -u
 cd "$(dirname "$0")"
 
+# Keep exactly one Android launcher/server pair alive. A second manual, boot,
+# or recovery start must not kill/rebind the healthy server that is already
+# running. The lock survives for the lifetime of this shell and is removed on
+# normal exit or signal. Stale locks are recovered automatically.
+START_LOCK_DIR=".tcg_android_start.lock"
+START_LOCK_PID="$START_LOCK_DIR/pid"
+WAKE_LOCKED=0
+
+cleanup_android_start() {
+  if [ "${WAKE_LOCKED:-0}" = "1" ] && command -v termux-wake-unlock >/dev/null 2>&1; then
+    termux-wake-unlock >/dev/null 2>&1 || true
+  fi
+  rm -rf "$START_LOCK_DIR" 2>/dev/null || true
+}
+
+acquire_android_start_lock() {
+  if mkdir "$START_LOCK_DIR" 2>/dev/null; then
+    printf '%s\n' "$$" > "$START_LOCK_PID"
+    return 0
+  fi
+
+  old_pid=""
+  if [ -r "$START_LOCK_PID" ]; then
+    old_pid="$(cat "$START_LOCK_PID" 2>/dev/null || true)"
+  fi
+  case "$old_pid" in
+    ''|*[!0-9]*) old_pid="" ;;
+  esac
+  if [ -n "$old_pid" ] && kill -0 "$old_pid" 2>/dev/null; then
+    echo "[OK] TCG Android 서버 시작 작업이 이미 실행 중입니다(PID $old_pid). 중복 시작을 생략합니다."
+    exit 0
+  fi
+
+  rm -rf "$START_LOCK_DIR" 2>/dev/null || true
+  if ! mkdir "$START_LOCK_DIR" 2>/dev/null; then
+    echo "[오류] Android 서버 시작 잠금을 만들 수 없습니다. 잠시 후 다시 실행하세요."
+    exit 1
+  fi
+  printf '%s\n' "$$" > "$START_LOCK_PID"
+  echo "[복구] 종료된 이전 시작 잠금을 정리했습니다."
+}
+
+acquire_android_start_lock
+trap cleanup_android_start EXIT INT TERM
+
 # Manual-only graded-photo policy. Child collection processes inherit this
 # and therefore cannot make automatic PSA/BGS/CGC/TAG/BRG certification requests.
 export TCG_DISABLE_AUTO_GRADER_LOOKUP=1
@@ -139,8 +184,9 @@ python legacy_ocr_registry_cleanup_v149.py --quiet || {
 }
 
 if command -v termux-wake-lock >/dev/null 2>&1; then
-  termux-wake-lock || true
-  trap 'termux-wake-unlock >/dev/null 2>&1 || true' EXIT INT TERM
+  if termux-wake-lock; then
+    WAKE_LOCKED=1
+  fi
 fi
 if [ -f "storage_optimizer.py" ]; then
   echo "저장공간을 안전하게 최적화합니다..."
@@ -167,4 +213,6 @@ echo "등급학습 안전게이트 사용: 공식인증 + RAW 원시예측 + 교
 echo "수동등록 정책: 앞면+뒷면 2장 필수 · 앞면 OCR · 뒷면 별도 증빙 저장"
 echo "등급사진 정책: 자동 등급사 조회 OFF · 공식사이트 직접확인/수동등록 · 인증번호+앞뒤사진만 게임폴더에 보관"
 echo "자료수집 자가학습 v142 + 런타임 번들 v143 + OCR v149: 고유출처 검증 + timeout circuit-breaker + 혼합버전 차단"
-exec python tcg_updater_v135.py
+python tcg_updater_v135.py
+SERVER_RC=$?
+exit "$SERVER_RC"
