@@ -987,12 +987,14 @@ def run_all(trigger: str = "manual", selected_files=None, progress_callback=None
         reachable_count=int(lr.pop('ok',0) or 0)
         if proc.returncode!=0:
             return {"ok":False,"status":(proc.stderr or proc.stdout or '링크검사 오류').strip()[-1200:],"reachable_count":reachable_count,**lr}
-        broken=int(lr.get('broken',0) or 0); transient=int(lr.get('transient',0) or 0)
-        degraded=bool(broken or transient)
-        warning=''
-        if broken: warning+=f'깨진 링크 {broken}개'
-        if transient: warning+=(' · ' if warning else '')+f'일시 확인불가 {transient}개'
-        return {"ok":True,"degraded":degraded,"warning":warning,"reachable_count":reachable_count,**lr}
+        broken=int(lr.get('broken',0) or 0); repaired=int(lr.get('repaired',0) or 0); transient=int(lr.get('transient',0) or 0)
+        unresolved_broken=max(0,broken-repaired)
+        degraded=bool(unresolved_broken)
+        warning=f'미보정 깨진 링크 {unresolved_broken}개' if unresolved_broken else ''
+        transient_notice=f'일시 확인불가 {transient}개 · 기존 링크 유지 · 다음 업데이트 재확인' if transient else ''
+        return {"ok":True,"degraded":degraded,"warning":warning,"reachable_count":reachable_count,
+                "transient_deferred":bool(transient),"transient_notice":transient_notice,
+                "unresolved_broken":unresolved_broken,**lr}
 
     with concurrent.futures.ThreadPoolExecutor(max_workers=2) as ex:
         fi=ex.submit(_run_aux_task,'__integration__',integration_runner)

@@ -237,9 +237,19 @@ def main():
     repaired_entries=initial_repairs+late_repairs
     if repaired_entries:
         db['market_entry_repair']={'repaired_count':repaired_entries,'action':'malformed rows quarantined; verified rows preserved'}
+    transient_market_errors=[]
+    hard_market_errors=[]
+    for item in errors:
+        text=str(item)
+        if re.search(r'^KREAM .*HTTPError: status 5(?:00|02|03|04)\b',text,re.I):
+            transient_market_errors.append(text)
+        else:
+            hard_market_errors.append(text)
     db['updated_at']=dt.datetime.now(dt.timezone.utc).isoformat(timespec='seconds')
-    db['collection_status']='정상' if not errors else '일부 가격 출처 확인 실패'
-    db['collection_errors']=errors
+    db['collection_status']='정상' if not hard_market_errors else '일부 가격 출처 확인 실패'
+    db['collection_errors']=hard_market_errors
+    db['collection_warnings']=transient_market_errors
+    db['collection_note']='KREAM 원출처 5xx 시 직전 검증자료 유지 · 다음 업데이트에서 재확인' if transient_market_errors else ''
     db['catalog_price_coverage']=coverage(db)
     atomic_save(db)
     return db
