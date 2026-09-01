@@ -58,6 +58,36 @@ class CollectorSelfHealingTests(unittest.TestCase):
             self.assertIsNone(plan["policy_id"])
             self.assertEqual(plan["env"], {})
 
+    def test_rate_limit_honors_retry_after_as_active_cooldown(self):
+        with tempfile.TemporaryDirectory() as td:
+            path = Path(td) / "memory.json"
+            report = {"results": [{
+                "file": "market_prices.json", "ok": True,
+                "collection_errors": ["HTTPError: status 429; Retry-After 120s"],
+                "remaining_collection_errors": ["HTTPError: status 429; Retry-After 120s"],
+            }]}
+            healing.observe(report, path)
+            plan = healing.plan_for("market_prices.json", path)
+            self.assertTrue(plan["cooldown_active"])
+            self.assertEqual(plan["cooldown_kind"], "retry_after")
+            self.assertGreaterEqual(plan["cooldown_remaining_seconds"], 118)
+            self.assertLessEqual(plan["cooldown_remaining_seconds"], 120)
+
+    def test_403_is_access_control_not_rate_limit_cooldown(self):
+        with tempfile.TemporaryDirectory() as td:
+            path = Path(td) / "memory.json"
+            report = {"results": [{
+                "file": "market_prices.json", "ok": True,
+                "collection_errors": ["HTTPError: status 403"],
+                "remaining_collection_errors": ["HTTPError: status 403"],
+            }]}
+            healing.observe(report, path)
+            plan = healing.plan_for("market_prices.json", path)
+            self.assertFalse(plan["cooldown_active"])
+            self.assertTrue(plan["access_control_blocked"])
+            active = healing.public_status(path)["active"]
+            self.assertEqual(active[0]["label"], "접근제어 차단 · 자동 우회 금지")
+
 
 if __name__ == "__main__":
     unittest.main()

@@ -76,6 +76,25 @@ def _default() -> dict:
     }
 
 
+def _file_row() -> dict:
+    return {
+        "signatures": {}, "pending_policy": None, "last_applied_policy": None,
+        "cooldown_until": None, "cooldown_kind": None, "access_control_blocked": False,
+    }
+
+
+def _parse_utc(value) -> dt.datetime | None:
+    if not isinstance(value, str) or len(value) > 80:
+        return None
+    try:
+        parsed = dt.datetime.fromisoformat(value.replace("Z", "+00:00"))
+    except ValueError:
+        return None
+    if parsed.tzinfo is None:
+        parsed = parsed.replace(tzinfo=dt.timezone.utc)
+    return parsed.astimezone(dt.timezone.utc)
+
+
 def _safe_int(value: Any, default: int = 0, maximum: int = 1_000_000) -> int:
     return bounded_int(value, default, 0, maximum)
 
@@ -93,7 +112,7 @@ def _load(path: Path = MEMORY) -> dict:
     for filename, raw in list(value["files"].items())[:MAX_FILES]:
         if not isinstance(filename, str) or Path(filename).name != filename or not isinstance(raw, dict):
             continue
-        row = {"signatures": {}, "pending_policy": None, "last_applied_policy": None}
+        row = _file_row()
         signatures = raw.get("signatures") if isinstance(raw.get("signatures"), dict) else {}
         for signature, stat in list(signatures.items())[:MAX_SIGNATURES_PER_FILE]:
             if not isinstance(signature, str) or len(signature) > 120 or not isinstance(stat, dict):
@@ -117,6 +136,12 @@ def _load(path: Path = MEMORY) -> dict:
             candidate = raw.get(field)
             if candidate in POLICIES:
                 row[field] = candidate
+        cooldown_until = _parse_utc(raw.get("cooldown_until"))
+        if cooldown_until is not None:
+            row["cooldown_until"] = cooldown_until.isoformat(timespec="seconds")
+        if raw.get("cooldown_kind") in {"retry_after", "default_rate_limit"}:
+            row["cooldown_kind"] = raw["cooldown_kind"]
+        row["access_control_blocked"] = raw.get("access_control_blocked") is True
         clean["files"][filename] = row
     clean["events"] = [x for x in (value.get("events") or [])[-MAX_EVENTS:] if isinstance(x, dict)]
     clean["quarantine"] = [x for x in (value.get("quarantine") or [])[-MAX_EVENTS:] if isinstance(x, dict)]
@@ -173,9 +198,17 @@ def plan_for(filename: str, path: Path = MEMORY) -> dict:
     row = memory.get("files", {}).get(filename, {})
     policy_id = row.get("pending_policy")
     policy = POLICIES.get(policy_id)
+    until = _parse_utc(row.get("cooldown_until"))
+    remaining = max(0, int((until - dt.datetime.now(dt.timezone.utc)).total_seconds())) if until else 0
+    cooldown = {
+        "cooldown_active": remaining > 0,
+        "cooldown_remaining_seconds": remaining,
+        "cooldown_kind": row.get("cooldown_kind"),
+        "access_control_blocked": row.get("access_control_blocked") is True,
+    }
     if not policy:
-        return {"policy_id": None, "max_attempts": 2, "timeout_floor": 0, "retry_delay": 2, "env": {}}
-    return {"policy_id": policy_id, **policy, "env": dict(policy.get("env") or {})}
+        return {"policy_id": None, "max_attempts": 2, "timeout_floor": 0, "retry_delay": 2, "env": {}, **cooldown}
+    return {"policy_id": policy_id, **policy, "env": dict(policy.get("env") or {}), **cooldown}
 
 
 def observe(report: dict, path: Path = MEMORY) -> dict:
@@ -189,9 +222,14 @@ def observe(report: dict, path: Path = MEMORY) -> dict:
         filename = result.get("file")
         if not isinstance(filename, str) or Path(filename).name != filename:
             continue
-        file_row = memory.setdefault("files", {}).setdefault(
-            filename, {"signatures": {}, "pending_policy": None, "last_applied_policy": None}
-        )
+        file_row = memory.setdefault("files", {}).setdefault(filename, _file_row())
+        if result.get("cooldown_deferred") is True:
+            memory.setdefault("events", []).append({
+                "timestamp": _now(), "file": filename, "ok": bool(result.get("ok")),
+                "unresolved": True, "applied_policy": None,
+                "next_policy": file_row.get("pending_policy"), "cooldown_deferred": True,
+            })
+            continue
         applied_policy = result.get("self_heal_policy")
         remaining = result.get("remaining_collection_errors")
         unresolved = bool(remaining) or not bool(result.get("ok"))
@@ -218,6 +256,9 @@ def observe(report: dict, path: Path = MEMORY) -> dict:
                 recovered += 1
 
         next_policy = None
+        next_cooldown_seconds = None
+        next_cooldown_kind = None
+        access_control_blocked = False
         for detail, analysis in zip(details, analyses):
             sig = _signature(filename, analysis)
             stat = file_row.setdefault("signatures", {}).setdefault(sig, {
@@ -238,8 +279,23 @@ def observe(report: dict, path: Path = MEMORY) -> dict:
             candidate = _choose_policy(stat, _policy_candidates(analysis))
             if candidate:
                 next_policy = candidate
+            if analysis.get("http_status") == 429:
+                retry_after = _safe_int(analysis.get("retry_after_seconds"), 0, 86_400)
+                next_cooldown_seconds = retry_after or 300
+                next_cooldown_kind = "retry_after" if retry_after else "default_rate_limit"
+            elif analysis.get("http_status") in {401, 403}:
+                access_control_blocked = True
+            if candidate or next_cooldown_seconds or access_control_blocked:
                 break
         file_row["pending_policy"] = next_policy if unresolved else None
+        if unresolved and next_cooldown_seconds:
+            until = dt.datetime.now(dt.timezone.utc) + dt.timedelta(seconds=next_cooldown_seconds)
+            file_row["cooldown_until"] = until.isoformat(timespec="seconds")
+            file_row["cooldown_kind"] = next_cooldown_kind
+        elif not unresolved:
+            file_row["cooldown_until"] = None
+            file_row["cooldown_kind"] = None
+        file_row["access_control_blocked"] = bool(unresolved and access_control_blocked)
         if next_policy:
             prepared += 1
         memory.setdefault("events", []).append({
@@ -263,8 +319,15 @@ def public_status(path: Path = MEMORY) -> dict:
     active = []
     for filename, row in memory.get("files", {}).items():
         policy_id = row.get("pending_policy")
-        if policy_id in POLICIES:
-            active.append({"file": filename, "policy_id": policy_id, "label": POLICIES[policy_id]["label"]})
+        plan = plan_for(filename, path)
+        if policy_id in POLICIES or plan.get("cooldown_active") or plan.get("access_control_blocked"):
+            label = (POLICIES[policy_id]["label"] if policy_id in POLICIES
+                     else "접근제어 차단 · 자동 우회 금지")
+            active.append({"file": filename, "policy_id": policy_id, "label": label,
+                           "cooldown_active": plan.get("cooldown_active", False),
+                           "cooldown_remaining_seconds": plan.get("cooldown_remaining_seconds", 0),
+                           "cooldown_kind": plan.get("cooldown_kind"),
+                           "access_control_blocked": plan.get("access_control_blocked", False)})
     return {
         "ok": True, "runs": memory.get("runs", 0), "active": active,
         "quarantine_count": len(memory.get("quarantine", [])),

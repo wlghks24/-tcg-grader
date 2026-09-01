@@ -34,6 +34,14 @@ class ErrorRecoveryLearningV134Tests(unittest.TestCase):
         self.assertEqual(detail, "HTTPError: status 429; Retry-After 120s")
         self.assertNotIn("SECRET", detail)
         self.assertNotIn("example.invalid", detail)
+        analysis = repair.analyze_error(detail)
+        self.assertEqual(analysis["http_status"], 429)
+        self.assertEqual(analysis["retry_after_seconds"], 120)
+
+    def test_access_control_and_rate_limit_are_not_immediately_retried(self):
+        self.assertFalse(update_all._should_retry({}, False, "HTTPError: status 403"))
+        self.assertFalse(update_all._should_retry({}, False, "HTTPError: status 429; Retry-After 120s"))
+        self.assertTrue(update_all._should_retry({}, False, "HTTPError: status 503"))
 
     def test_value_diagnostic_keeps_bounded_root_cause(self):
         detail = diagnostic_exception(ValueError("공식 페이지에서 출시정보를 읽지 못했습니다"))
