@@ -1,0 +1,40 @@
+name: Apply eight-zone runtime fix v158
+
+on:
+  push:
+    paths:
+      - 'apply_eight_zone_runtime_fix_v158.py'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          ref: main
+          fetch-depth: 0
+      - name: Apply eight-zone runtime fix
+        run: python apply_eight_zone_runtime_fix_v158.py
+      - name: Verify eight-zone runtime
+        run: |
+          python -m py_compile tcg_updater_v135.py manual_graded_photo_registration.py verified_slab_raw_learning_v155.py
+          python -m unittest -v test_graded_photo_runtime.py test_verified_slab_raw_learning_v155.py
+          grep -q '기존 등록사진 전체 재검증' graded_photo_dashboard.js
+          grep -q '/api/run-existing-photo-revalidation' graded_photo_dashboard.js
+          grep -q '등급사진 8구역 정밀등록' manual_dual_photo_bridge.js
+          grep -q '앞면 + 뒷면 8구역 등록하기' REPAIR_V135_SERVER.sh
+      - name: Commit patch
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add manual_dual_photo_bridge.js REPAIR_V135_SERVER.sh tcg_updater_v135.py
+          if git diff --cached --quiet; then
+            echo "No changes"
+          else
+            git commit -m "fix: expose eight-zone existing-photo revalidation on tablet"
+            git push origin main
+          fi
