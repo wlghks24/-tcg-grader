@@ -456,7 +456,9 @@ def _run_deferred_timeout_recovery(results: list[dict], jobs, stats: dict, run_j
     }
 
 def _count_payload(data: dict) -> int:
-    value=data.get('items', data.get('entries', data.get('sources', data.get('rates', {}))))
+    # Graded-photo output uses ``records`` rather than items/entries.  Omitting it
+    # made every successful candidate collection display as 0건 in the tablet UI.
+    value=data.get('records', data.get('items', data.get('entries', data.get('sources', data.get('rates', {})))))
     try: return len(value)
     except Exception: return 0
 
