@@ -1,0 +1,41 @@
+name: Apply full existing photo revalidation v159
+
+on:
+  push:
+    paths:
+      - 'apply_full_existing_photo_revalidation_v159.py'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          ref: main
+          fetch-depth: 0
+      - name: Apply integrated existing-photo and candidate revalidation
+        run: python apply_full_existing_photo_revalidation_v159.py
+      - name: Verify integrated revalidation
+        run: |
+          python -m py_compile graded_photo_existing_revalidation_v159.py tcg_updater.py tcg_updater_v135.py
+          python -m unittest -v test_graded_photo_existing_revalidation_v159.py
+          grep -q 'graded_photo_existing_revalidation_v159' tcg_updater.py
+          grep -q 'existing_candidates_reviewed' tcg_updater.py
+          grep -q '기존 등록사진·후보 전체 재검증' graded_photo_dashboard.js
+          grep -q 'existing_candidate_revalidation' tcg_updater_v135.py
+          grep -q '기존 등록사진·후보 전체 재검증' REPAIR_V135_SERVER.sh
+      - name: Commit integrated runtime patch
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add tcg_updater.py tcg_updater_v135.py graded_photo_dashboard.js REPAIR_V135_SERVER.sh
+          if git diff --cached --quiet; then
+            echo "No changes"
+          else
+            git commit -m "feat: revalidate all saved graded-photo candidates"
+            git push origin main
+          fi
