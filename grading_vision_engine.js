@@ -5,11 +5,16 @@
 })(typeof globalThis!=='undefined'?globalThis:this,function(){
   'use strict';
 
-  const ENGINE_VERSION='v98-camera-resilience-full-runtime';
+  const ENGINE_VERSION='v158-four-quadrant-precision-learning';
   const MAX_PIXELS=16000000;
   const DEFAULT_CONFIG=Object.freeze({
     maskInset:.025,cornerRadius:.045,claheClipLimit:2,claheTiles:8,
-    cannyLow:35,cannyHigh:105,houghVoteThreshold:8,minLineRatio:.06,maxLineGap:10,
+    cannyLow:35,cannyHigh:105,houghVoteThreshold:18,minLineRatio:.24,maxLineGap:10,scratchContrastMin:30,
+  });
+  const GAME_PROFILES=Object.freeze({
+    pokemon:Object.freeze({id:'pokemon',label:'포켓몬',textureAware:true,darkBorderAware:false,confidenceCap:96}),
+    onepiece:Object.freeze({id:'onepiece',label:'원피스',textureAware:true,darkBorderAware:true,confidenceCap:96}),
+    naruto:Object.freeze({id:'naruto',label:'나루토',textureAware:true,darkBorderAware:true,confidenceCap:84}),
   });
   const clamp=(value,low,high)=>Math.max(low,Math.min(high,value));
   const finite=value=>Number.isFinite(Number(value));
@@ -227,7 +232,7 @@
     return {edges,magnitude,direction,low,high};
   }
 
-  function segmentEvidence(segment,values,chroma,width,height){
+  function segmentEvidence(segment,values,chroma,width,height,config=DEFAULT_CONFIG){
     const samples=Math.max(8,Math.min(32,Math.round(segment.length/5))),contrasts=[],neutral=[];
     for(let i=0;i<samples;i++){
       const t=segment.start+(segment.end-segment.start)*(i+.5)/samples,x=Math.round(t*segment.dx+segment.rho*segment.nx),y=Math.round(t*segment.dy+segment.rho*segment.ny);
@@ -237,7 +242,9 @@
       contrasts.push(Math.abs(a-b));neutral.push(Math.min(chroma[p],chroma[p1],chroma[p2])<32?1:0);
     }
     const mean=contrasts.reduce((a,b)=>a+b,0)/Math.max(1,contrasts.length),variance=contrasts.reduce((sum,value)=>sum+(value-mean)*(value-mean),0)/Math.max(1,contrasts.length),cv=Math.sqrt(variance)/Math.max(1,mean),neutralRatio=neutral.reduce((a,b)=>a+b,0)/Math.max(1,neutral.length);
-    return {contrastMean:mean,contrastCv:cv,neutralRatio,accepted:mean>=5&&cv<=1.2&&neutralRatio>=.42};
+    const contrastMin=clamp(Number(config.scratchContrastMin)||DEFAULT_CONFIG.scratchContrastMin,4,64);
+    const neutralThinLine=neutralRatio>=.72&&segment.lengthRatio>=config.minLineRatio&&mean>=contrastMin*.60;
+    return {contrastMean:mean,contrastCv:cv,neutralRatio,accepted:(mean>=contrastMin||neutralThinLine)&&cv<=1.2&&neutralRatio>=.42};
   }
 
   function probabilisticHoughSegments(canny,values,chroma,width,height,mask,config=DEFAULT_CONFIG){
@@ -250,7 +257,7 @@
       const selected=[...bins.entries()].filter(([,points])=>points.length>=config.houghVoteThreshold).sort((a,b)=>b[1].length-a[1].length).slice(0,80);
       for(const [rho,points] of selected){points.sort((a,b)=>a-b);let start=points[0],previous=points[0];
         for(let i=1;i<=points.length;i++){const current=points[i];if(i<points.length&&current-previous<=config.maxLineGap){previous=current;continue}const length=previous-start;
-          if(length>=minimum){const raw={angleIndex,angle,rho,start,end:previous,length,dx,dy,nx,ny,midX:((start+previous)/2*dx+rho*nx)/width,midY:((start+previous)/2*dy+rho*ny)/height,lengthRatio:length/Math.max(width,height)},evidence=segmentEvidence(raw,values,chroma,width,height);segments.push({...raw,...evidence})}
+          if(length>=minimum){const raw={angleIndex,angle,rho,start,end:previous,length,dx,dy,nx,ny,midX:((start+previous)/2*dx+rho*nx)/width,midY:((start+previous)/2*dy+rho*ny)/height,lengthRatio:length/Math.max(width,height)},evidence=segmentEvidence(raw,values,chroma,width,height,config);segments.push({...raw,...evidence})}
           start=current;previous=current;
         }
       }
@@ -295,6 +302,47 @@
     return {edgeRisk,cornerRisk,risk:Math.max(edgeRisk,cornerRisk),edgeWhiteningPixels:edgeWhite,cornerWhiteningPixels:cornerWhite,edgeRatio,cornerRatio,baseline:{luminance:refLum,chroma:refChroma,naturallyWhite:baselineWhite}};
   }
 
+  function gameProfile(value){
+    const key=String(value||'').trim().toLowerCase().replace(/\s+/g,'');
+    if(key==='pokemon'||key==='pokémon'||key==='포켓몬')return GAME_PROFILES.pokemon;
+    if(key==='onepiece'||key==='원피스')return GAME_PROFILES.onepiece;
+    if(key==='naruto'||key==='나루토')return GAME_PROFILES.naruto;
+    return Object.freeze({id:'generic',label:'일반 TCG',textureAware:true,darkBorderAware:false,confidenceCap:82});
+  }
+
+  function quadrantId(x,y){return `${y<.5?'t':'b'}${x<.5?'l':'r'}`}
+  function quadrantSegmentRisk(segments){
+    const weighted=(segments||[]).reduce((sum,row)=>sum+row.lengthRatio*Math.min(1.5,row.contrastMean/30)*(1-Math.min(.65,row.contrastCv*.45)),0);
+    return Math.round(clamp(weighted*50+Math.min(22,(segments||[]).length*3),0,100));
+  }
+  function quadrantWhitening(input,bounds,id){
+    const {width,height,data}=validateImage(input),leftHalf=id.endsWith('l'),topHalf=id.startsWith('t'),mx=Math.round(bounds.left+bounds.width*.5),my=Math.round(bounds.top+bounds.height*.5);
+    const x0=leftHalf?bounds.left:mx,x1=leftHalf?mx:bounds.right,y0=topHalf?bounds.top:my,y1=topHalf?my:bounds.bottom;
+    const band=Math.max(2,Math.round(Math.min(bounds.width,bounds.height)*.035)),step=Math.max(1,Math.round(Math.min(bounds.width,bounds.height)/420)),reference=[];
+    const sample=(x,y)=>{const p=pixelIndex(width,clamp(Math.round(x),0,width-1),clamp(Math.round(y),0,height-1)),lum=luminance(data,p),chr=Math.max(data[p],data[p+1],data[p+2])-Math.min(data[p],data[p+1],data[p+2]);return {lum,chr}};
+    for(let x=x0;x<=x1;x+=step)reference.push(sample(x,topHalf?bounds.top+band:bounds.bottom-band));
+    for(let y=y0;y<=y1;y+=step)reference.push(sample(leftHalf?bounds.left+band:bounds.right-band,y));
+    const refLum=median(reference.map(row=>row.lum)),refChroma=median(reference.map(row=>row.chr)),natural=refLum>=215&&refChroma<=25;
+    let n=0,white=0;const inspect=(x,y)=>{const row=sample(x,y);n++;if(!natural&&refLum<225&&row.lum>=Math.max(175,refLum+28)&&row.chr<=Math.max(10,Math.min(36,refChroma*.72+10)))white++};
+    for(let x=x0;x<=x1;x+=step)for(let d=0;d<band;d+=step)inspect(x,topHalf?bounds.top+d:bounds.bottom-d);
+    for(let y=y0;y<=y1;y+=step)for(let d=0;d<band;d+=step)inspect(leftHalf?bounds.left+d:bounds.right-d,y);
+    const ratio=white/Math.max(1,n);return {ratio,whitePixels:white,samplePixels:n,risk:Math.round(clamp(ratio*1700,0,100)),naturallyWhite:natural};
+  }
+  function quadrantMatches(baseSegments,obliqueSegments,id){
+    let matches=0;for(const left of baseSegments||[]){if(quadrantId(left.midX,left.midY)!==id)continue;if((obliqueSegments||[]).some(right=>quadrantId(right.midX,right.midY)===id&&left.angleIndex===right.angleIndex&&Math.hypot(left.midX-right.midX,left.midY-right.midY)<=.13&&Math.abs(left.lengthRatio-right.lengthRatio)<=.22))matches++}return matches;
+  }
+  function analyzeFourQuadrants(baseInput,obliqueInput=null,providedBounds=null,providedConfig={},providedSurface=null){
+    const profile=gameProfile(providedConfig.game),config={...DEFAULT_CONFIG,...providedConfig},bounds=providedBounds||detectOuterBounds(baseInput),quality=analyzeQuality(baseInput),surface=providedSurface||analyzeSurface(baseInput,obliqueInput,bounds,config),precisionConfig={...config,minLineRatio:Math.max(.10,config.minLineRatio*.50),houghVoteThreshold:Math.max(18,config.houghVoteThreshold),scratchContrastMin:Math.max(30,config.scratchContrastMin)},precisionBase=detectScratchCandidates(baseInput,bounds,precisionConfig),precisionOblique=obliqueInput?detectScratchCandidates(obliqueInput,detectOuterBounds(obliqueInput),precisionConfig):null,ids=['tl','tr','bl','br'],rows={};
+    for(const id of ids){
+      const baseSegments=(precisionBase.segments||[]).filter(row=>quadrantId(row.midX,row.midY)===id),obliqueSegments=(precisionOblique?.segments||[]).filter(row=>quadrantId(row.midX,row.midY)===id),confirmed=obliqueInput?quadrantMatches(baseSegments,obliqueSegments,id):0;
+      const baseRisk=quadrantSegmentRisk(baseSegments),obliqueRisk=quadrantSegmentRisk(obliqueSegments),candidateRisk=obliqueInput?Math.max(baseRisk,obliqueRisk):baseRisk,surfaceRisk=Math.round(clamp(obliqueInput?(confirmed?candidateRisk*.82+confirmed*5:candidateRisk*.15):candidateRisk*.58,0,100)),whitening=quadrantWhitening(baseInput,bounds,id);
+      const risk=Math.round(clamp(Math.max(surfaceRisk,whitening.risk),0,100)),confidence=Math.round(clamp((obliqueInput?58:40)+quality.score*.32+bounds.confidence*.18+Math.min(12,confirmed*4)-(profile.id==='naruto'?8:0),8,profile.confidenceCap));
+      rows[id]={id,surfaceRisk,edgeRisk:whitening.risk,cornerRisk:whitening.risk,combinedRisk:risk,confidence,confirmedSegments:confirmed,candidateSegments:baseSegments.length+(obliqueSegments.length||0),whitening};
+    }
+    const risks=ids.map(id=>rows[id].combinedRisk),surfaceRisks=ids.map(id=>rows[id].surfaceRisk),edgeRisks=ids.map(id=>rows[id].edgeRisk),confidences=ids.map(id=>rows[id].confidence),worstRisk=Math.max(...risks),surfaceWorstRisk=Math.max(...surfaceRisks),edgeWorstRisk=Math.max(...edgeRisks),meanRisk=risks.reduce((a,b)=>a+b,0)/4,imbalance=Math.max(...risks)-Math.min(...risks),confidence=Math.round(Math.min(...confidences));
+    return {version:1,mode:'four-quadrant',gameProfile:profile.id,precisionConfig:{minLineRatio:precisionConfig.minLineRatio,houghVoteThreshold:precisionConfig.houghVoteThreshold,scratchContrastMin:precisionConfig.scratchContrastMin},quadrants:rows,worstQuadrant:ids.find(id=>rows[id].combinedRisk===worstRisk),worstRisk,surfaceWorstRisk,edgeWorstRisk,meanRisk:Math.round(meanRisk*10)/10,imbalance,confidence,allQuadrantsMeasured:ids.every(id=>rows[id].confidence>=55),learningFeatures:{quadrantWorstRisk:worstRisk,quadrantSurfaceWorstRisk:surfaceWorstRisk,quadrantEdgeWorstRisk:edgeWorstRisk,quadrantMeanRisk:Math.round(meanRisk*10)/10,quadrantImbalance:imbalance,quadrantConfidence:confidence}};
+  }
+
   function imageElementData(image,maxDimension=1400){
     if(typeof document==='undefined'||!image)throw new Error('VisionBrowserCanvasUnavailable');
     const naturalWidth=Number(image.naturalWidth||image.width),naturalHeight=Number(image.naturalHeight||image.height);
@@ -306,5 +354,5 @@
     return {width:imageData.width,height:imageData.height,data:imageData.data,canvas};
   }
 
-  return Object.freeze({ENGINE_VERSION,DEFAULT_CONFIG,analyzeQuality,detectOuterBounds,measureCentering,detectScratchCandidates,analyzeSurface,analyzeWhitening,imageElementData});
+  return Object.freeze({ENGINE_VERSION,DEFAULT_CONFIG,GAME_PROFILES,gameProfile,analyzeQuality,detectOuterBounds,measureCentering,detectScratchCandidates,analyzeSurface,analyzeWhitening,analyzeFourQuadrants,imageElementData});
 });

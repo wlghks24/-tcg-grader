@@ -20,17 +20,25 @@ def row(index: int, *, company: str = "PSA", actual: float = 9, pred: float = 10
         "vision": {
             "frontCenter": 48, "backCenter": 48, "surfaceRisk": 8,
             "surfaceConfidence": 88, "analysisConfidence": 90, "multiAngle": True,
+            "quadrantWorstRisk": 8, "quadrantSurfaceWorstRisk": 8,
+            "quadrantEdgeWorstRisk": 4, "quadrantMeanRisk": 5,
+            "quadrantImbalance": 6, "quadrantConfidence": 86,
             "engine": calibration.ENGINE_VERSION,
         },
     }
 
 
 class CalibrationTests(unittest.TestCase):
+    def test_four_quadrant_bucket_preserves_local_defect_signal(self):
+        vision = row(1)["vision"]
+        vision.update({"quadrantWorstRisk": 62, "quadrantSurfaceWorstRisk": 48, "quadrantImbalance": 54})
+        self.assertEqual(calibration.vision_bucket(vision), "centered|surface-high|q-local-defect|multi")
+
     def test_consistent_overgrade_enables_downward_holdout_correction(self):
         rows = [row(index) for index in range(20)]
         clean = calibration.sanitize_rows({"v30_validation": rows})
         trained = calibration.train_calibration(clean)
-        profile = trained["profiles"]["PSA|centered|surface-low|multi"]
+        profile = trained["profiles"]["PSA|centered|surface-low|q-balanced|multi"]
         self.assertTrue(profile["enabled"])
         self.assertEqual(profile["correction"], -1)
         self.assertLess(profile["corrected_mae"], profile["baseline_mae"])
@@ -41,7 +49,7 @@ class CalibrationTests(unittest.TestCase):
     def test_undergrade_never_creates_upward_correction(self):
         rows = [row(index, company="BGS", actual=9, pred=8) for index in range(20)]
         trained = calibration.train_calibration(calibration.sanitize_rows({"v30_validation": rows}))
-        profile = trained["profiles"]["BGS|centered|surface-low|multi"]
+        profile = trained["profiles"]["BGS|centered|surface-low|q-balanced|multi"]
         self.assertFalse(profile["enabled"])
         self.assertEqual(profile["correction"], 0)
 
@@ -59,7 +67,7 @@ class CalibrationTests(unittest.TestCase):
     def test_too_few_cards_stays_disabled(self):
         rows = [row(index) for index in range(5)]
         trained = calibration.train_calibration(calibration.sanitize_rows({"v30_validation": rows}))
-        profile = trained["profiles"]["PSA|centered|surface-low|multi"]
+        profile = trained["profiles"]["PSA|centered|surface-low|q-balanced|multi"]
         self.assertFalse(profile["enabled"])
         self.assertEqual(profile["reason"], "insufficient-official-labels")
 
@@ -80,7 +88,7 @@ class CalibrationTests(unittest.TestCase):
         global_models = train_company_calibration(global_rows(payload))
         self.assertTrue(global_models["PSA"]["enabled"])
         trained = calibration.train_calibration(calibration.sanitize_rows(payload), global_models)
-        profile = trained["profiles"]["PSA|centered|surface-low|multi"]
+        profile = trained["profiles"]["PSA|centered|surface-low|q-balanced|multi"]
         self.assertEqual(profile["baseline_global_correction"], global_models["PSA"]["correction"])
         self.assertFalse(profile["enabled"])
         self.assertEqual(profile["correction"], 0)

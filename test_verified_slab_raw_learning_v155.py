@@ -33,6 +33,18 @@ class VerifiedSlabRawLearningV155Tests(unittest.TestCase):
         self.assertEqual(pred1, pred2)
         self.assertEqual(vision1, vision2)
         self.assertNotIn("official_grade", vision1)
+        self.assertEqual(set(vision1["frontQuadrants"]), {"tl", "tr", "bl", "br"})
+        self.assertIn("quadrantWorstRisk", vision1)
+
+    def test_four_quadrant_features_localize_corner_damage(self):
+        image = Image.new("RGB", (600, 840), (70, 85, 100))
+        for y in range(0, 34):
+            for x in range(0, 34):
+                image.putpixel((x, y), (255, 255, 255))
+        result = raw._quadrant_features(image)
+        self.assertEqual(set(result["quadrants"]), {"tl", "tr", "bl", "br"})
+        self.assertGreater(result["quadrants"]["tl"]["cornerRisk"], result["quadrants"]["br"]["cornerRisk"])
+        self.assertGreater(result["quadrantImbalance"], 0)
 
     def test_manual_browser_official_source_requires_strict_matched_proof(self):
         row = {

@@ -44,7 +44,7 @@ function trapezoid(){
   return im;
 }
 
-assert.strictEqual(vision.ENGINE_VERSION,'v98-camera-resilience-full-runtime');
+assert.strictEqual(vision.ENGINE_VERSION,'v158-four-quadrant-precision-learning');
 assert.deepStrictEqual({low:vision.DEFAULT_CONFIG.cannyLow,high:vision.DEFAULT_CONFIG.cannyHigh},{low:35,high:105});
 
 const clean=card({artwork:true}),quality=vision.analyzeQuality(clean),outer=vision.detectOuterBounds(clean),center=vision.measureCentering(clean,outer,quality);
@@ -52,6 +52,16 @@ assert(quality.measurable&&quality.score>=55,JSON.stringify(quality));
 assert(!outer.fallback&&outer.confidence>=55,JSON.stringify(outer));
 assert(center.valid&&center.confidence>=55,JSON.stringify(center));
 assert(Math.abs(center.lr-50)<5&&Math.abs(center.tb-50)<5,JSON.stringify(center));
+for(const game of ['pokemon','onepiece','naruto']){
+  const quadrants=vision.analyzeFourQuadrants(clean,clean,outer,{game});
+  assert.deepStrictEqual(Object.keys(quadrants.quadrants),['tl','tr','bl','br']);
+  assert(quadrants.allQuadrantsMeasured&&quadrants.confidence>=55,JSON.stringify(quadrants));
+  assert.strictEqual(quadrants.gameProfile,game);
+}
+const localScratch=card();line(localScratch,245,145,305,205,[246,246,244],2);
+const localQuadrants=vision.analyzeFourQuadrants(localScratch,localScratch,null,{game:'pokemon'});
+assert.strictEqual(localQuadrants.worstQuadrant,'tl',JSON.stringify(localQuadrants));
+assert(localQuadrants.quadrants.tl.surfaceRisk>localQuadrants.quadrants.br.surfaceRisk,JSON.stringify(localQuadrants));
 
 const off=card({leftBorder:14,rightBorder:34,topBorder:16,bottomBorder:36}),offCenter=vision.measureCentering(off);
 assert(offCenter.valid,JSON.stringify(offCenter));

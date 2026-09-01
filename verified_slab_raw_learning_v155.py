@@ -38,8 +38,8 @@ import verified_grade_learning_v135_safe as grade_learning_safe
 from grading_accuracy_v99 import estimate_raw_grade, valid_actual_grade
 from safe_runtime import atomic_write_bytes, atomic_write_json, atomic_write_text
 
-PATCH_ID = 155
-ENGINE = "v155-slab-card-roi-proxy"
+PATCH_ID = 158
+ENGINE = "v158-slab-card-roi-four-quadrant-proxy"
 ROOT = Path(__file__).resolve().parent
 STATE_PATH = ROOT / "verified_slab_raw_learning_v155.json"
 PROXY_ROOT = ROOT / "GRADE_TRAINING_INBOX" / "verified_raw_proxy"
@@ -51,7 +51,7 @@ MAX_CANDIDATES = 1500
 MIN_COMPANY_PROXY_ROWS = 20
 MIN_ANALYSIS_CONFIDENCE = 70.0
 MIN_SURFACE_CONFIDENCE = 58.0
-SOURCE_TAG = "verified_slab_card_roi_v155"
+SOURCE_TAG = "verified_slab_card_roi_v158"
 STRICT_MANUAL_MATCH_MODES = {
     "official_page_company_cert_grade_ocr",
     "official_page_company_cert_plus_exact_slab_ocr_grade",
@@ -249,7 +249,46 @@ def _centering_proxy(image: Image.Image) -> float:
     return round(_clamp(49.2 - asymmetry * 4.2, 42.0, 49.2), 2)
 
 
-def _one_side_features(path: Path) -> tuple[dict[str, float], Image.Image]:
+def _quadrant_features(image: Image.Image) -> dict[str, Any]:
+    """Measure four card regions independently without using the slab grade."""
+    w, h = image.size
+    mx, my = w // 2, h // 2
+    boxes = {"tl": (0, 0, mx, my), "tr": (mx, 0, w, my),
+             "bl": (0, my, mx, h), "br": (mx, my, w, h)}
+    rows: dict[str, dict[str, float]] = {}
+    for key, box in boxes.items():
+        crop = image.crop(box)
+        cw, ch = crop.size
+        ix, iy = max(2, round(cw * 0.10)), max(2, round(ch * 0.08))
+        inner = crop.crop((ix, iy, max(ix + 1, cw - ix), max(iy + 1, ch - iy)))
+        detail = _surface_detail_ratio(inner)
+        surface = _clamp(max(0.0, detail - 0.035) * 145.0, 0.0, 72.0)
+        side_band = max(3, round(min(w, h) * 0.045))
+        top_or_bottom = crop.crop((0, 0, cw, side_band)) if key.startswith("t") else crop.crop((0, ch - side_band, cw, ch))
+        left_or_right = crop.crop((0, 0, side_band, ch)) if key.endswith("l") else crop.crop((cw - side_band, 0, cw, ch))
+        edge_bright = (_bright_ratio(top_or_bottom) + _bright_ratio(left_or_right)) / 2.0
+        inner_mean = _gray_mean(inner)
+        edge_mean = (_gray_mean(top_or_bottom) + _gray_mean(left_or_right)) / 2.0
+        edge = _clamp(max(0.0, edge_mean - inner_mean - 7.0) * 1.7 + edge_bright * 70.0, 0.0, 72.0)
+        corner_w, corner_h = max(12, round(cw * 0.24)), max(12, round(ch * 0.20))
+        corner_box = ((0, 0, corner_w, corner_h) if key == "tl" else
+                      (cw - corner_w, 0, cw, corner_h) if key == "tr" else
+                      (0, ch - corner_h, corner_w, ch) if key == "bl" else
+                      (cw - corner_w, ch - corner_h, cw, ch))
+        corner_crop = crop.crop(corner_box)
+        corner = _clamp(_bright_ratio(corner_crop) * 65.0 + max(0.0, abs(_gray_mean(corner_crop) - inner_mean) - 22.0) * 0.55, 0.0, 72.0)
+        rows[key] = {"surfaceRisk": round(surface, 2), "edgeRisk": round(edge, 2),
+                     "cornerRisk": round(corner, 2), "combinedRisk": round(max(surface, edge, corner), 2)}
+    combined = [row["combinedRisk"] for row in rows.values()]
+    surfaces = [row["surfaceRisk"] for row in rows.values()]
+    edges = [max(row["edgeRisk"], row["cornerRisk"]) for row in rows.values()]
+    return {"quadrants": rows, "quadrantWorstRisk": max(combined),
+            "quadrantSurfaceWorstRisk": max(surfaces), "quadrantEdgeWorstRisk": max(edges),
+            "quadrantMeanRisk": round(sum(combined) / 4.0, 2),
+            "quadrantImbalance": round(max(combined) - min(combined), 2)}
+
+
+def _one_side_features(path: Path) -> tuple[dict[str, Any], Image.Image]:
     image, original_size = _load_rgb(path)
     roi = _prepare_card_roi(image)
     min_side = min(original_size)
@@ -259,6 +298,7 @@ def _one_side_features(path: Path) -> tuple[dict[str, float], Image.Image]:
     inner = roi.crop((round(rw * 0.10), round(rh * 0.08), round(rw * 0.90), round(rh * 0.92)))
     detail = _surface_detail_ratio(inner)
     surface = _clamp(max(0.0, detail - 0.035) * 145.0, 0.0, 62.0)
+    quadrants = _quadrant_features(roi)
     return {
         "analysisConfidence": round(analysis_conf, 2),
         "surfaceConfidence": round(surface_conf, 2),
@@ -266,6 +306,7 @@ def _one_side_features(path: Path) -> tuple[dict[str, float], Image.Image]:
         "surfaceRisk": round(surface, 2),
         "edgeRisk": round(_edge_risk(roi), 2),
         "cornerRisk": round(_corner_risk(roi), 2),
+        **quadrants,
     }, roi
 
 
@@ -280,12 +321,22 @@ def _extract_pair_features(front_path: Path, back_path: Path, company: str) -> t
         "edgeRisk": round(max(front["edgeRisk"], back["edgeRisk"]), 2),
         "cornerRisk": round(max(front["cornerRisk"], back["cornerRisk"]), 2),
         "surfaceConfidence": round(min(front["surfaceConfidence"], back["surfaceConfidence"]), 2),
+        "quadrantWorstRisk": round(max(front["quadrantWorstRisk"], back["quadrantWorstRisk"]), 2),
+        "quadrantSurfaceWorstRisk": round(max(front["quadrantSurfaceWorstRisk"], back["quadrantSurfaceWorstRisk"]), 2),
+        "quadrantEdgeWorstRisk": round(max(front["quadrantEdgeWorstRisk"], back["quadrantEdgeWorstRisk"]), 2),
+        "quadrantMeanRisk": round(max(front["quadrantMeanRisk"], back["quadrantMeanRisk"]), 2),
+        "quadrantImbalance": round(max(front["quadrantImbalance"], back["quadrantImbalance"]), 2),
+        "quadrantConfidence": round(min(front["surfaceConfidence"], back["surfaceConfidence"]), 2),
+        "frontQuadrants": front["quadrants"],
+        "backQuadrants": back["quadrants"],
         "multiAngle": False,
         "engine": ENGINE,
     }
     raw_pred = estimate_raw_grade(
-        vision["frontCenter"], vision["backCenter"], vision["surfaceRisk"],
-        vision["edgeRisk"], vision["cornerRisk"], company,
+        vision["frontCenter"], vision["backCenter"],
+        max(vision["surfaceRisk"], vision["quadrantSurfaceWorstRisk"]),
+        max(vision["edgeRisk"], vision["quadrantEdgeWorstRisk"]),
+        max(vision["cornerRisk"], vision["quadrantEdgeWorstRisk"]), company,
     )
     return vision, float(raw_pred), front_roi, back_roi
 
@@ -387,6 +438,11 @@ def _build_candidate(row: dict[str, Any], registry: dict[str, dict[str, Any]]) -
             "surface_risk": vision["surfaceRisk"],
             "edge_risk": vision["edgeRisk"],
             "corner_risk": vision["cornerRisk"],
+            "quadrant_worst_risk": vision["quadrantWorstRisk"],
+            "quadrant_surface_worst_risk": vision["quadrantSurfaceWorstRisk"],
+            "quadrant_edge_worst_risk": vision["quadrantEdgeWorstRisk"],
+            "quadrant_mean_risk": vision["quadrantMeanRisk"],
+            "quadrant_imbalance": vision["quadrantImbalance"],
             "official_grade_target": float(actual),
             "hard_defect_type_label": None,
         },
@@ -624,6 +680,7 @@ def sync_rows(rows: Iterable[dict[str, Any]]) -> dict[str, Any]:
             "holder_outer_frame_excluded_from_features": True,
             "independent_raw_prediction_before_official_target": True,
             "raw_defect_weak_supervision": True,
+            "four_quadrant_features_extracted_before_target": True,
             "hard_defect_type_inferred_from_grade": False,
             "proxy_training_eligible": True,
             "genuine_raw_sample_has_priority_on_same_cert": True,

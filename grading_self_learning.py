@@ -104,6 +104,8 @@ def _features(sample: Mapping[str, Any]) -> Dict[str, float]:
     allowed = (
         "front_centering_worst", "back_centering_worst",
         "surface_risk", "edge_risk", "corner_risk",
+        "quadrant_worst_risk", "quadrant_surface_worst_risk", "quadrant_edge_worst_risk",
+        "quadrant_mean_risk", "quadrant_imbalance", "quadrant_confidence",
         "photo_quality", "confidence",
     )
     out: Dict[str, float] = {}

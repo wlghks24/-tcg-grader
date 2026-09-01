@@ -48,6 +48,14 @@ _VISION_FIELDS = {
     "cornerRisk": (0.0, 100.0),
     "surfaceConfidence": (0.0, 100.0),
 }
+_OPTIONAL_VISION_FIELDS = {
+    "quadrantWorstRisk": (0.0, 100.0),
+    "quadrantSurfaceWorstRisk": (0.0, 100.0),
+    "quadrantEdgeWorstRisk": (0.0, 100.0),
+    "quadrantMeanRisk": (0.0, 100.0),
+    "quadrantImbalance": (0.0, 100.0),
+    "quadrantConfidence": (0.0, 100.0),
+}
 
 
 def _now() -> str:
@@ -162,6 +170,12 @@ def _clean_vision(value: Any) -> dict[str, Any] | None:
         raw = value.get(key)
         if raw is None and key in {"edgeRisk", "cornerRisk"}:
             raw = 0
+        number = _finite(raw, low, high)
+        if number is None:
+            return None
+        out[key] = round(number, 2)
+    for key, (low, high) in _OPTIONAL_VISION_FIELDS.items():
+        raw = value.get(key, 0)
         number = _finite(raw, low, high)
         if number is None:
             return None
