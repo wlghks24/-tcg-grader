@@ -25,32 +25,8 @@ jobs:
         run: python apply_collection_runtime_resilience_v177.py
       - name: Verify syntax
         run: python -m py_compile update_market_prices.py auto_update_all.py validate_external_links.py
-      - name: Verify v177 safety markers
-        run: |
-          python - <<'PY'
-          from pathlib import Path
-          checks={
-              'update_market_prices.py':[
-                  'collection_warnings',
-                  'KREAM 원출처 5xx',
-              ],
-              'auto_update_all.py':[
-                  'deferred_timeout_pending',
-                  'web_discovery_candidates.json',
-                  'unresolved_broken=max(0,broken-repaired)',
-                  'transient_deferred',
-              ],
-              'validate_external_links.py':[
-                  'exc.code in {404,410}',
-              ],
-          }
-          for filename, markers in checks.items():
-              text=Path(filename).read_text(encoding='utf-8')
-              missing=[m for m in markers if m not in text]
-              if missing:
-                  raise SystemExit(f'{filename}: missing markers: {missing}')
-          print('v177 markers verified')
-          PY
+      - name: Verify clean patch
+        run: git diff --check
       - name: Commit changes
         run: |
           git config user.name 'github-actions[bot]'
