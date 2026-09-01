@@ -20,7 +20,7 @@ import collector_self_healing
 from safe_runtime import (
     atomic_write_bytes, atomic_write_json, atomic_write_text,
     bounded_float as _safe_float, bounded_int as _safe_int,
-    safe_read_bytes, safe_read_text,
+    diagnostic_exception, safe_read_bytes, safe_read_text,
 )
 
 ROOT = Path(__file__).resolve().parent
@@ -240,7 +240,11 @@ def _should_retry(row: dict, timed_out: bool, message: str) -> bool:
     if timed_out:
         return True
     text=(message or '').lower()
-    transient=('timeout','timed out','connection','urlerror','name resolution','temporary failure','temporar','429','503','502','remote end closed')
+    # 401/403 are access-control responses. 429 must wait for the recorded
+    # Retry-After/cooldown instead of being hammered again in the same run.
+    if any(token in text for token in ('status 401','http 401','status 403','http 403','status 429','http 429','httperror: 429','retry-after')):
+        return False
+    transient=('timeout','timed out','connection','urlerror','name resolution','temporary failure','temporar','503','502','remote end closed')
     structural=('valueerror','필수값 누락','구조 오류','jsondecodeerror')
     programming=('nameerror','unboundlocalerror','importerror','modulenotfounderror','attributeerror','syntaxerror')
     if any(x in text for x in structural) or any(x in text for x in programming):
@@ -694,6 +698,29 @@ def run_all(trigger: str = "manual", selected_files=None, progress_callback=None
                  'error':gate.get('error') or gate.get('action') or 'preflight failed',
                  'retry_count':0,'max_attempts':0,'auto_action':'정상 백업 확보 전 자동수정 중단'}
             emit(label,filename,'deferred-done' if is_deferred else 'done',row)
+            return row
+        if not is_deferred and heal_plan.get('cooldown_active'):
+            target=ROOT/filename
+            try:
+                data=json.loads(safe_read_text(target)); validate_json(filename,data)
+                row={'name':label,'file':filename,'ok':True,
+                     'status':'Retry-After 쿨다운 중 · 외부 재요청 없이 기존 검증자료 유지',
+                     'updated_at':data.get('updated_at'),'count':_count_payload(data),
+                     'retry_count':0,'max_attempts':0,'cooldown_deferred':True,
+                     'retry_after_seconds':_safe_int(heal_plan.get('cooldown_remaining_seconds'),0,0,86_400),
+                     'cooldown_kind':heal_plan.get('cooldown_kind'),
+                     'collection_errors':['HTTPError: status 429; Retry-After cooldown active'],
+                     'remaining_collection_errors':['HTTPError: status 429; Retry-After cooldown active'],
+                     'auto_action':'원출처 Retry-After 준수 · 쿨다운 종료 후 다음 실행에서 재확인'}
+            except Exception as exc:
+                row={'name':label,'file':filename,'ok':False,
+                     'status':'Retry-After 쿨다운 중 · 보존할 정상자료 없음',
+                     'error':diagnostic_exception(exc),'retry_count':0,'max_attempts':0,
+                     'cooldown_deferred':True,
+                     'retry_after_seconds':_safe_int(heal_plan.get('cooldown_remaining_seconds'),0,0,86_400),
+                     'cooldown_kind':heal_plan.get('cooldown_kind'),
+                     'auto_action':'외부 재요청 중단 · 정상 백업 확인 필요'}
+            emit(label,filename,'done',row)
             return row
         t0=time.monotonic()
         target=ROOT/filename; backup=backup_root/filename; persistent=LAST_GOOD/filename
