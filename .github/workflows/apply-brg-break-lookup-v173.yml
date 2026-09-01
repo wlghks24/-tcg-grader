@@ -1,0 +1,42 @@
+name: Apply BRG Break Korea lookup v173
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'apply_brg_break_lookup_v173.py'
+      - 'test_brg_break_lookup_v173.py'
+      - '.github/workflows/apply-brg-break-lookup-v173.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Install test dependency
+        run: python -m pip install --disable-pip-version-check pillow
+      - name: Apply patch
+        run: python apply_brg_break_lookup_v173.py
+      - name: Verify
+        run: |
+          python -m py_compile grading_cert_verifier.py manual_official_proof.py pending_official_candidate_v161.py
+          python -m unittest -v test_brg_break_lookup_v173.py
+          grep -F 'https://break.co.kr/certification/{cert}' grading_cert_verifier.py
+          grep -F '"BRG": ("BRG", "BREAK", "BREAK.CO.KR")' manual_official_proof.py
+      - name: Commit
+        run: |
+          if git diff --quiet -- grading_cert_verifier.py manual_official_proof.py pending_official_candidate_v161.py; then
+            echo 'No patch changes needed.'
+            exit 0
+          fi
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add grading_cert_verifier.py manual_official_proof.py pending_official_candidate_v161.py
+          git commit -m 'fix: use Break Korea BRG certification route v173'
+          git push origin HEAD:main
