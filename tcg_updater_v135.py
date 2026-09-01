@@ -47,7 +47,7 @@ class Handler(core.Handler):
                 return self.json({'ok': False, 'error': '등급사진 대시보드/앞뒤사진 브리지 파일 오류'}, 404)
             text = (
                 base.read_text(encoding='utf-8')
-                + '\n\n/* v150 dual-photo bridge: served inline by v135 */\n'
+                + '\n\n/* v158 dual-photo/eight-zone bridge: served inline by v135 */\n'
                 + dual_bridge.read_text(encoding='utf-8')
                 + '\n\n/* manual official verification bridge */\n'
                 + official_bridge.read_text(encoding='utf-8')
@@ -62,7 +62,7 @@ class Handler(core.Handler):
         self.send_header('Pragma', 'no-cache')
         self.send_header('Expires', '0')
         self.send_header('X-Content-Type-Options', 'nosniff')
-        self.send_header('X-TCG-Dual-Photo-UI', 'v150-inline')
+        self.send_header('X-TCG-Dual-Photo-UI', 'v158-eight-zone-inline')
         self.send_header('Content-Length', str(len(body)))
         self.end_headers()
         self.wfile.write(body)
@@ -121,7 +121,9 @@ class Handler(core.Handler):
                 'manual_official_proof_raw_calibration': False,
                 'manual_dual_photo_ui': True,
                 'manual_dual_photo_bridge_inline': True,
-                'manual_dual_photo_bridge_version': 150,
+                'manual_dual_photo_bridge_version': 158,
+                'graded_photo_eight_zone_ui': True,
+                'existing_photo_revalidation': True,
                 'base_service': getattr(core, 'SERVICE_NAME', 'TCG updater'),
             })
         if path == '/api/learning-model-status':
@@ -280,7 +282,7 @@ def main() -> int:
     print(f'다른 기기 접속 주소(같은 Wi-Fi): http://{lan_ip}:{core.PORT}/index.html', flush=True)
     print(f'등급학습 안전게이트: v135 / runtime patch {RUNTIME_PATCH} · 공식 인증레지스트리 일치 + RAW 원시예측 + 교차검증 + 하향보정만', flush=True)
     print('등급사 쿨다운 수동확인: 공식 조회페이지 직접 열기 + 결과화면 OCR 일치 참고등록 · RAW 보정학습 제외', flush=True)
-    print('수동등록 UI: 앞면+뒷면 2장 브리지를 대시보드 응답에 직접 포함 · 캐시 우회 v150', flush=True)
+    print('수동등록 UI: 앞면+뒷면 8구역 정밀검사 + 기존 등록사진 전체 재검증 · 캐시 우회 v158', flush=True)
     try:
         threading.Thread(target=lambda: webbrowser.open(url), daemon=True).start()
     except Exception:

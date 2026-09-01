@@ -177,15 +177,27 @@ if ! printf '%s' "$DASHBOARD" | grep -q 'gpdManualBackPhoto'; then
   echo "[오류] 브라우저용 대시보드에 뒷면 사진 입력 UI가 전달되지 않습니다."
   exit 1
 fi
-if ! printf '%s' "$DASHBOARD" | grep -q '앞면 + 뒷면 2장으로 수동등록'; then
-  echo "[오류] 앞면+뒷면 2장 등록 브리지가 실제 대시보드 응답에 포함되지 않았습니다."
+if ! printf '%s' "$DASHBOARD" | grep -q '앞면 + 뒷면 8구역 등록하기'; then
+  echo "[오류] 앞면+뒷면 8구역 등록 UI가 실제 대시보드 응답에 포함되지 않았습니다."
+  exit 1
+fi
+if ! printf '%s' "$DASHBOARD" | grep -q '총 8구역 정밀검사'; then
+  echo "[오류] 8구역 정밀검사 UI가 실제 대시보드 응답에 포함되지 않았습니다."
+  exit 1
+fi
+if ! printf '%s' "$DASHBOARD" | grep -q '기존 등록사진 전체 재검증'; then
+  echo "[오류] 기존 등록사진 전체 재검증 버튼이 실제 대시보드 응답에 포함되지 않았습니다."
+  exit 1
+fi
+if ! printf '%s' "$DASHBOARD" | grep -q '/api/run-existing-photo-revalidation'; then
+  echo "[오류] 기존 등록사진 재검증 API 호출 코드가 실제 대시보드 응답에 포함되지 않았습니다."
   exit 1
 fi
 if ! printf '%s' "$DASHBOARD" | grep -q 'verifiedSlabRawLearning:true'; then
   echo "[오류] 공식검증 슬랩 RAW학습 v155 브리지가 실제 대시보드 응답에 포함되지 않았습니다."
   exit 1
 fi
-echo "[OK] 앞면+뒷면 2장 UI + 공식검증 RAW학습 v155 실전달 확인"
+echo "[OK] 앞면+뒷면 8구역 UI + 기존사진 전체 재검증 + 공식검증 RAW학습 실전달 확인"
 
 if [ "$NO_BOOT_UPDATE" -eq 0 ]; then
   mkdir -p "$HOME/.termux/boot"

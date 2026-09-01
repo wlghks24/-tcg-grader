@@ -1,16 +1,16 @@
 (()=>{
 'use strict';
-const GLOBAL_KEY='__TCG_DUAL_PHOTO_BRIDGE_V156__';
+const GLOBAL_KEY='__TCG_DUAL_PHOTO_BRIDGE_V158__';
 if(globalThis[GLOBAL_KEY]?.loaded){
  globalThis[GLOBAL_KEY].duplicate_loads=(globalThis[GLOBAL_KEY].duplicate_loads||0)+1;
  return;
 }
-const bridgeState=globalThis[GLOBAL_KEY]={loaded:true,version:156,enhanced:false,duplicate_loads:0,manualProofStatusSync:true,integratedOfficialVerification:true,verifiedSlabRawLearning:true,recentManualToggle:true};
+const bridgeState=globalThis[GLOBAL_KEY]={loaded:true,version:158,enhanced:false,duplicate_loads:0,manualProofStatusSync:true,integratedOfficialVerification:true,verifiedSlabRawLearning:true,recentManualToggle:true};
 if(!document.getElementById('gpdDualBridgeForceV150')){
  const marker=document.createElement('meta');
  marker.id='gpdDualBridgeForceV150';
  marker.name='tcg-dual-photo-bridge';
- marker.content='inline-v156';
+ marker.content='inline-v158';
  document.head?.appendChild(marker);
 }
 let installed=false,submitting=false,proofSyncing=false,proofObserverInstalled=false;
@@ -62,7 +62,10 @@ function ensureRegistrationPanelPresentation(form){
  const details=form?.closest('details.gpd-manual');if(!details)return;
  details.open=true;
  const summary=details.querySelector(':scope > summary');
- if(summary&&summary.textContent!=='📷 등급사진 간편등록')summary.textContent='📷 등급사진 간편등록';
+ const eightZoneReady=Boolean(document.getElementById('gpdZonePanel')&&document.getElementById('gpdRevalidateExisting'));
+ const label=eightZoneReady?'📷 등급사진 8구역 정밀등록':'📷 등급사진 간편등록';
+ if(summary&&summary.textContent!==label)summary.textContent=label;
+ bridgeState.eightZoneCompatible=eightZoneReady;
 }
 function clearPreviewUrl(side){if(previewUrls[side]){try{URL.revokeObjectURL(previewUrls[side])}catch(_){}previewUrls[side]=null}}
 function showPreview(side,file,{registered=false}={}){
