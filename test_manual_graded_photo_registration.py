@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 import base64
+import importlib
 import json
 from pathlib import Path
 import struct
@@ -32,6 +33,13 @@ def quadrant_preview():
 
 
 class ManualGradedPhotoRegistrationTests(unittest.TestCase):
+    @classmethod
+    def setUpClass(cls):
+        global manual
+        # Runtime-policy suites deliberately patch this shared module for the
+        # process lifetime. Exercise the base contract regardless of discovery order.
+        manual = importlib.reload(manual)
+
     def setUp(self):
         self.temp = tempfile.TemporaryDirectory()
         root = Path(self.temp.name)
