@@ -1,0 +1,42 @@
+name: Apply official proof fullscreen OCR v168b
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - '.github/workflows/apply-official-proof-fullscreen-ocr-v168b.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Apply patch
+        run: python apply_official_proof_fullscreen_ocr_v168.py
+      - name: Verify
+        run: |
+          python -m py_compile manual_official_proof.py pending_official_candidate_v161.py
+          python - <<'PY'
+          import manual_official_proof as p
+          r=p._match_proof(row={}, text='PSA 87105158 MT 10 PSA POPULATION', evidence={}, company='PSA', cert='87105158', expected_grade=10.0)
+          assert r['matched'], r
+          r=p._match_proof(row={}, text='PSA 87105159 MT 10 PSA POPULATION', evidence={}, company='PSA', cert='87105158', expected_grade=10.0)
+          assert not r['matched'], r
+          assert callable(p._ocr_official_page)
+          print('v168 regression ok')
+          PY
+          grep -F 'manual_proof._ocr_official_page(' pending_official_candidate_v161.py
+      - name: Commit
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add manual_official_proof.py pending_official_candidate_v161.py
+          if git diff --cached --quiet; then exit 0; fi
+          git commit -m 'fix: OCR full official-page screenshots v168'
+          git push origin HEAD:main
