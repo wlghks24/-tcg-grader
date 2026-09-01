@@ -1,0 +1,124 @@
+name: Prevent duplicate Android TCG server starts v165
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/apply-android-singleton-server-v165.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Patch Android singleton launcher
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+
+          path = Path('START_TCG_UPDATER_ANDROID.sh')
+          text = path.read_text(encoding='utf-8')
+
+          anchor = 'set -u\ncd "$(dirname "$0")"\n'
+          block = r'''set -u
+cd "$(dirname "$0")"
+
+# Keep exactly one Android launcher/server pair alive. A second manual, boot,
+# or recovery start must not kill/rebind the healthy server that is already
+# running. The lock survives for the lifetime of this shell and is removed on
+# normal exit or signal. Stale locks are recovered automatically.
+START_LOCK_DIR=".tcg_android_start.lock"
+START_LOCK_PID="$START_LOCK_DIR/pid"
+WAKE_LOCKED=0
+
+cleanup_android_start() {
+  if [ "${WAKE_LOCKED:-0}" = "1" ] && command -v termux-wake-unlock >/dev/null 2>&1; then
+    termux-wake-unlock >/dev/null 2>&1 || true
+  fi
+  rm -rf "$START_LOCK_DIR" 2>/dev/null || true
+}
+
+acquire_android_start_lock() {
+  if mkdir "$START_LOCK_DIR" 2>/dev/null; then
+    printf '%s\n' "$$" > "$START_LOCK_PID"
+    return 0
+  fi
+
+  old_pid=""
+  if [ -r "$START_LOCK_PID" ]; then
+    old_pid="$(cat "$START_LOCK_PID" 2>/dev/null || true)"
+  fi
+  case "$old_pid" in
+    ''|*[!0-9]*) old_pid="" ;;
+  esac
+  if [ -n "$old_pid" ] && kill -0 "$old_pid" 2>/dev/null; then
+    echo "[OK] TCG Android 서버 시작 작업이 이미 실행 중입니다(PID $old_pid). 중복 시작을 생략합니다."
+    exit 0
+  fi
+
+  rm -rf "$START_LOCK_DIR" 2>/dev/null || true
+  if ! mkdir "$START_LOCK_DIR" 2>/dev/null; then
+    echo "[오류] Android 서버 시작 잠금을 만들 수 없습니다. 잠시 후 다시 실행하세요."
+    exit 1
+  fi
+  printf '%s\n' "$$" > "$START_LOCK_PID"
+  echo "[복구] 종료된 이전 시작 잠금을 정리했습니다."
+}
+
+acquire_android_start_lock
+trap cleanup_android_start EXIT INT TERM
+'''
+          if 'START_LOCK_DIR=".tcg_android_start.lock"' not in text:
+              if anchor not in text:
+                  raise SystemExit('launcher header anchor not found')
+              text = text.replace(anchor, block, 1)
+
+          old_wake = '''if command -v termux-wake-lock >/dev/null 2>&1; then\n  termux-wake-lock || true\n  trap 'termux-wake-unlock >/dev/null 2>&1 || true' EXIT INT TERM\nfi'''
+          new_wake = '''if command -v termux-wake-lock >/dev/null 2>&1; then\n  if termux-wake-lock; then\n    WAKE_LOCKED=1\n  fi\nfi'''
+          if old_wake in text:
+              text = text.replace(old_wake, new_wake, 1)
+          elif 'WAKE_LOCKED=1' not in text:
+              raise SystemExit('wake lock anchor not found')
+
+          old_tail = 'exec python tcg_updater_v135.py\n'
+          new_tail = '''python tcg_updater_v135.py\nSERVER_RC=$?\nexit "$SERVER_RC"\n'''
+          if old_tail in text:
+              text = text.replace(old_tail, new_tail, 1)
+          elif 'SERVER_RC=$?' not in text:
+              raise SystemExit('server launch tail anchor not found')
+
+          path.write_text(text, encoding='utf-8')
+          PY
+
+      - name: Regression checks
+        shell: bash
+        run: |
+          bash -n START_TCG_UPDATER_ANDROID.sh
+          grep -F 'START_LOCK_DIR=".tcg_android_start.lock"' START_TCG_UPDATER_ANDROID.sh
+          grep -F '중복 시작을 생략합니다' START_TCG_UPDATER_ANDROID.sh
+          grep -F 'trap cleanup_android_start EXIT INT TERM' START_TCG_UPDATER_ANDROID.sh
+          grep -F 'SERVER_RC=$?' START_TCG_UPDATER_ANDROID.sh
+          if grep -Fq 'exec python tcg_updater_v135.py' START_TCG_UPDATER_ANDROID.sh; then
+            echo 'launcher still execs away the singleton lock' >&2
+            exit 1
+          fi
+
+      - name: Commit patch
+        shell: bash
+        run: |
+          if git diff --quiet -- START_TCG_UPDATER_ANDROID.sh; then
+            echo 'Already patched'
+            exit 0
+          fi
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add START_TCG_UPDATER_ANDROID.sh
+          git commit -m 'fix: keep one Android TCG server instance v165'
+          git push origin HEAD:main
