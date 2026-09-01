@@ -54,6 +54,36 @@ class RetryReasonV160Tests(unittest.TestCase):
         self.assertIn('등급사 조회 쿨다운', labels)
         self.assertNotIn('공식검증 미완료', labels)
 
+    def test_legacy_status_nonverified_row_is_still_explained(self):
+        rows = [{
+            'status': 'candidate',
+            'official_result': False,
+            'company': 'PSA',
+            'game': 'pokemon',
+            'certification_id': '12345678',
+            'grade': 10,
+            'ocr_label_text': 'PSA 10 12345678',
+        }]
+        result = rr.summarize_rows(rows)
+        self.assertEqual(result['retryable_count'], 1)
+        self.assertIn('공식검증 미완료', result['reason_text'])
+        self.assertEqual(len(result['details']), 1)
+
+    def test_403_is_detected_even_if_probe_status_was_normalized(self):
+        rows = [{
+            'status': 'candidate',
+            'official_result': False,
+            'image_probe_status': 'failed_once',
+            'image_probe_error': 'HTTPError 403 access blocked',
+            'company': 'CGC',
+            'game': 'pokemon',
+            'certification_id': '98765432',
+            'grade': 9,
+            'ocr_label_text': 'CGC 9 98765432',
+        }]
+        result = rr.summarize_rows(rows)
+        self.assertIn('사이트 403/접근제한', result['reason_text'])
+
 
 if __name__ == '__main__':
     unittest.main()
