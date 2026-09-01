@@ -47,10 +47,12 @@ OFFICIAL = {
         "marker": re.compile(r"\bTAG\b|TECHNICAL\s+AUTHENTICATION", re.I),
     },
     "BRG": {
-        "home": "https://www.brgcard.com/certification",
-        "direct": "https://www.brgcard.com/certification?cert={cert}",
-        "hosts": {"brgcard.com", "www.brgcard.com", "tw.brgcard.com"},
-        "marker": re.compile(r"\bBRG\b|BREAK\s+GRADING", re.I),
+        # Current Korean BRG/Break certification route. The older brgcard.com
+        # Next.js route can return a server-side exception even for valid certs.
+        "home": "https://break.co.kr/certification",
+        "direct": "https://break.co.kr/certification/{cert}",
+        "hosts": {"break.co.kr", "www.break.co.kr"},
+        "marker": re.compile(r"\bBRG\b|BREAK(?:\s+GRADING)?", re.I),
     },
 }
 

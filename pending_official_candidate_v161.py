@@ -66,7 +66,7 @@ _COMPANY_BRANDS = {
     "BGS": ("BGS", "BECKETT", "비그스"),
     "CGC": ("CGC",),
     "TAG": ("TAG",),
-    "BRG": ("BRG",),
+    "BRG": ("BRG", "BREAK", "BREAK.CO.KR"),
 }
 
 

@@ -54,7 +54,7 @@ _COMPANY_HINTS = {
     "BGS": ("BECKETT", "BGS"),
     "CGC": ("CGCCARDS", "CGC"),
     "TAG": ("TAGGRADING", "TAG"),
-    "BRG": ("BRG",),
+    "BRG": ("BRG", "BREAK", "BREAK.CO.KR"),
 }
 _DIGIT_CONFUSION = str.maketrans({"O": "0", "Q": "0", "I": "1", "L": "1", "S": "5", "B": "8", "G": "6", "Z": "2"})
 
@@ -130,7 +130,7 @@ def _proof_public(row: dict[str, Any]) -> dict[str, Any]:
         "status": row.get("status"),
         "verification_state": row.get("verification_state"),
         "retry_after_seconds": row.get("retry_after_seconds"),
-        "official_reference_url": row.get("official_reference_url") or (lookup_url(company, cert) if company and cert else None),
+        "official_reference_url": (lookup_url(company, cert) if company == "BRG" and cert else (row.get("official_reference_url") or (lookup_url(company, cert) if company and cert else None))),
         "manual_official_proof_state": row.get("manual_official_proof_state"),
         "manual_official_proof_registered": row.get("manual_official_proof_registered") is True,
         "manual_official_proof_at": row.get("manual_official_proof_at"),
