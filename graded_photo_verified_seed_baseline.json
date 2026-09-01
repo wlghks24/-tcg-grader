@@ -1,0 +1,16 @@
+{
+  "version": 1,
+  "certifications": [
+    {
+      "company": "PSA",
+      "certification_id": "88411675",
+      "grade": 10,
+      "verified": true,
+      "official_reference_url": "https://www.psacard.com/cert/88411675/psa",
+      "card_name": "2023 Pokemon Japanese SV4a Shiny Treasure ex #323 Espathra ex SSR",
+      "game": "pokemon",
+      "source": "immutable verified bootstrap copied from project verified registry"
+    }
+  ],
+  "policy": "Known official-verified bootstrap only. Never add marketplace labels without official certification verification."
+}

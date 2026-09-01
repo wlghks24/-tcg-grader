@@ -146,12 +146,74 @@ def _parse_onepiece_jp_fallback(text: str, url: str) -> list[dict]:
     return found
 
 
+
+def _parse_onepiece_jp_segmented(text: str, url: str) -> list[dict]:
+    """Parse current/future JP product cards without depending on one DOM text order.
+
+    Official pages have changed spacing, punctuation and label order several times.
+    Anchor on the stable product code, then read only a bounded neighborhood for
+    発売日 and the manufacturer price. This is a conservative third parser: a row
+    is emitted only when code + date/month + JPY price are all present together.
+    """
+    normalized = re.sub(r"\s+", " ", str(text or "")).strip()
+    found = []
+    seen = set()
+    code_re = re.compile(r"\b(OP-\d+|EB-\d+|PRB-\d+)\b", re.I)
+    date_re = re.compile(
+        r"発売日.{0,90}?(20\d{2})\s*(?:[./年-])\s*(\d{1,2})"
+        r"(?:\s*(?:[./月-])\s*(\d{1,2})\s*日?)?",
+        re.I,
+    )
+    price_re = re.compile(r"(?:メーカー希望小売価格|希望小売価格|価格).{0,100}?([0-9][0-9,]{1,7})\s*円", re.I)
+    product_words = re.compile(r"(?:ブースターパック|エクストラブースター|プレミアムブースター|ブースター)", re.I)
+    for match in code_re.finditer(normalized):
+        code = match.group(1).upper()
+        left = max(0, match.start() - 180)
+        right = min(len(normalized), match.end() + 520)
+        segment = normalized[left:right]
+        dm = date_re.search(segment)
+        pm = price_re.search(segment)
+        if not dm or not pm:
+            continue
+        y, m, d = dm.groups()
+        try:
+            year, month = int(y), int(m)
+            day = int(d) if d else None
+            price = int(pm.group(1).replace(",", ""))
+            if not (1 <= month <= 12 and 1 <= price <= 1_000_000):
+                continue
+            if day is not None:
+                dt.date(year, month, day)
+        except (TypeError, ValueError):
+            continue
+        before = normalized[max(left, match.start() - 150):match.start()]
+        words = list(product_words.finditer(before))
+        title_start = words[-1].start() if words else max(0, len(before) - 100)
+        title = re.sub(r"\s+", " ", before[title_start:]).strip(" -|:：/・")
+        title = product_words.sub("", title, count=1).strip(" -|:：/・")
+        if len(title) < 2:
+            title = f"ONE PIECE {code}"
+        key = (code, year, month, day, price)
+        if key in seen:
+            continue
+        seen.add(key)
+        row = {"game": "ONE PIECE", "region": "JP", "name": f"{title} [{code}]",
+               "price": f"¥{price:,}/팩", "status": "공식 확인", "source": url,
+               "parser": "segmented-code-date-price-v111"}
+        if day is None:
+            row.update({"release_date": None, "release_window": f"{year:04d}-{month:02d}",
+                        "release_precision": "month", "release_label": f"{year:04d}년 {month}월"})
+        else:
+            row["release_date"] = dt.date(year, month, day).isoformat()
+        found.append(row)
+    return found
+
 def collect_onepiece_jp() -> list[dict]:
     last_error: Exception | None = None
     fetched_official_page = False
     for url in ONEPIECE_JP_PRODUCT_URLS:
         try:
-            text = html_to_text(fetch(url)); found = _parse_onepiece_jp(text, url) or _parse_onepiece_jp_fallback(text, url)
+            text = html_to_text(fetch(url)); found = (_parse_onepiece_jp(text, url) or _parse_onepiece_jp_fallback(text, url) or _parse_onepiece_jp_segmented(text, url))
         except (urllib.error.URLError, TimeoutError, OSError, ValueError, UnicodeError) as exc:
             last_error = exc
             continue
@@ -209,12 +271,59 @@ def _parse_pokemon_jp_fallback(text: str, url: str) -> list[dict]:
     return found
 
 
+
+def _parse_pokemon_jp_segmented(text: str, url: str) -> list[dict]:
+    """Conservative JP Pokémon parser resilient to whitespace/label-order drift."""
+    normalized = re.sub(r"\s+", " ", str(text or "")).strip()
+    product_re = re.compile(r"(?:強化拡張パック|拡張パック|ハイクラスパック|コンセプトパック)", re.I)
+    date_re = re.compile(
+        r"(?:販売日|発売日).{0,90}?(20\d{2})\s*(?:年|[./-])\s*(\d{1,2})\s*(?:月|[./-])\s*(\d{1,2})\s*日?",
+        re.I,
+    )
+    price_re = re.compile(r"(?:希望小売価格|メーカー希望小売価格|価格).{0,100}?([0-9][0-9,]{1,7})\s*円", re.I)
+    found = []
+    seen = set()
+    for product in product_re.finditer(normalized):
+        left = max(0, product.start() - 20)
+        right = min(len(normalized), product.end() + 620)
+        segment = normalized[left:right]
+        dm = date_re.search(segment)
+        pm = price_re.search(segment)
+        if not dm or not pm:
+            continue
+        try:
+            y, m, d = (int(value) for value in dm.groups())
+            date = dt.date(y, m, d).isoformat()
+            price = int(pm.group(1).replace(",", ""))
+            if not (1 <= price <= 1_000_000):
+                continue
+        except (TypeError, ValueError):
+            continue
+        after = normalized[product.end():min(len(normalized), product.end() + 170)]
+        quoted = re.search(r"[「『]\s*([^」』]{2,90})\s*[」』]", after)
+        if quoted:
+            name = re.sub(r"\s+", " ", quoted.group(1)).strip()
+        else:
+            stop = re.search(r"(?:販売日|発売日|希望小売価格|メーカー希望小売価格)", after)
+            name = (after[:stop.start()] if stop else after[:100]).strip(" -|:：/・")
+            name = re.sub(r"\s+", " ", name)
+        if len(name) < 2:
+            continue
+        key = (name.casefold(), date, price)
+        if key in seen:
+            continue
+        seen.add(key)
+        found.append({"game": "Pokémon", "region": "JP", "name": name,
+                      "release_date": date, "price": f"¥{price:,}/팩", "status": "공식 확인",
+                      "source": url, "parser": "segmented-label-date-price-v111"})
+    return found
+
 def collect_pokemon_jp() -> list[dict]:
     last_error: Exception | None = None
     fetched_official_page = False
     for url in POKEMON_JP_PRODUCT_URLS:
         try:
-            text = html_to_text(fetch(url)); found = _parse_pokemon_jp(text, url) or _parse_pokemon_jp_fallback(text, url)
+            text = html_to_text(fetch(url)); found = (_parse_pokemon_jp(text, url) or _parse_pokemon_jp_fallback(text, url) or _parse_pokemon_jp_segmented(text, url))
         except (urllib.error.URLError, TimeoutError, OSError, ValueError, UnicodeError) as exc:
             last_error = exc
             continue

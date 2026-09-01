@@ -35,6 +35,8 @@ LEARNING=ROOT/'graded_photo_source_learning.json'
 VERIFIED=ROOT/'verified_certifications.json'
 OFFICIAL_CACHE=ROOT/'graded_photo_official_cache.json'
 REFERENCE_LEARNING=ROOT/'graded_photo_reference_learning.json'
+BASELINE_VERIFIED=ROOT/'graded_photo_verified_seed_baseline.json'
+LAST_GOOD_CANDIDATES=ROOT/'.graded_photo_candidates.last_good.json'
 LIBRARY_OFFICIAL=ROOT/'library_official_cert_registry.json'
 LIBRARY_CANDIDATES=ROOT/'library_slab_candidates.json'
 LIBRARY_REFERENCES=ROOT/'library_verified_slab_references.json'
@@ -195,6 +197,15 @@ def _registry():
   try:g=float(r.get('grade') if r.get('grade') is not None else r.get('actual'))
   except Exception:continue
   if c in COMPANIES and cert and (r.get('verified') is True or r.get('officially_verified') is True or r.get('official_result') is True):out[(c,cert)]=g
+ if not out:
+  d=_load(BASELINE_VERIFIED,{})
+  values=d.get('certifications',[]) if isinstance(d,dict) else []
+  for r in values if isinstance(values,list) else []:
+   if not isinstance(r,dict):continue
+   c=str(r.get('company') or '').upper();cert=normalize_cert(r.get('certification_id') or r.get('cert_no'))
+   try:g=float(r.get('grade') if r.get('grade') is not None else r.get('actual'))
+   except (TypeError,ValueError,OverflowError):continue
+   if c in COMPANIES and cert and 1<=g<=10 and (r.get('verified') is True or r.get('officially_verified') is True or r.get('official_result') is True):out[(c,cert)]=g
  return out
 
 def _library_verified_evidence()->dict[tuple[str,str],dict]:
@@ -246,6 +257,55 @@ def _registry_seed_rows()->list[dict]:
                 'image_validated':bool(evidence.get('image_sha256')),'image_probe_status':'validated' if evidence.get('image_sha256') else 'not_available',
                 'ocr_label_text':evidence.get('ocr_label_text',''),'source_asset_name':evidence.get('source_asset_name',''),
                 'image_evidence_source':'prevalidated_library_photo' if evidence.get('image_sha256') else 'not_available'})
+ if not rows:
+  data=_load(BASELINE_VERIFIED,{})
+  values=data.get('certifications',[]) if isinstance(data,dict) else []
+  for item in values if isinstance(values,list) else []:
+   if not isinstance(item,dict):continue
+   company=str(item.get('company') or '').upper();cert=normalize_cert(item.get('certification_id') or item.get('cert_no'))
+   try:grade=float(item.get('grade') if item.get('grade') is not None else item.get('actual'))
+   except (TypeError,ValueError,OverflowError):continue
+   verified=item.get('verified') is True or item.get('officially_verified') is True or item.get('official_result') is True
+   if not verified or company not in COMPANIES or not cert or not 1<=grade<=10:continue
+   official=str(item.get('official_reference_url') or lookup_url(company,cert))
+   rows.append({'source_id':'official_registry','source':f'{company} 공식 인증조회','search_provider':'official_registry',
+                'url':official,'title':str(item.get('card_name') or f'{company} cert {cert}')[:260],'snippet':'','image_url':'',
+                'company':company,'grade':grade,'certification_id':cert,'game':str(item.get('game') or 'unknown').lower(),
+                'mode':'slab','source_weight':1.0,'official_result':True,'official_grade':grade,
+                'official_reference_url':official,'verification_method':'immutable_verified_baseline_fallback',
+                'status':'verified_reference','learning_eligibility':'reference_learning_only','image_validated':False,
+                'image_probe_status':'not_available','ocr_label_text':'','image_evidence_source':'not_available',
+                'baseline_bootstrap':True})
+ return rows
+
+def _reference_learning_seed_rows()->list[dict]:
+ """Rehydrate previously verified references if a mutable local registry was reset.
+
+ The reference-learning file contains only rows that passed official verification;
+ it is never used to promote an unverified marketplace label. This prevents a
+ successful zero-result public search from erasing the last trustworthy candidate.
+ """
+ data=_load(REFERENCE_LEARNING,{})
+ values=data.get('references',[]) if isinstance(data,dict) else []
+ rows=[];seen=set()
+ for item in values if isinstance(values,list) else []:
+  if not isinstance(item,dict) or item.get('learning_scope')!='slab_label_and_source_reference_only':continue
+  company=str(item.get('company') or '').upper();cert=normalize_cert(item.get('certification_id'))
+  try:grade=float(item.get('official_grade'))
+  except (TypeError,ValueError,OverflowError):continue
+  if company not in COMPANIES or not cert or not 1<=grade<=10 or (company,cert) in seen:continue
+  seen.add((company,cert));official=str(item.get('official_reference_url') or lookup_url(company,cert))
+  image_url=str(item.get('measurement_image_url') or '')[:1200]
+  rows.append({'source_id':'reference_learning','source':f'{company} 이전 공식검증 참조','search_provider':'reference_learning',
+               'url':official,'title':str(item.get('card_name') or f'{company} cert {cert}')[:260],'snippet':'',
+               'image_url':image_url if image_url.startswith('https://') else '','company':company,'grade':grade,
+               'certification_id':cert,'game':str(item.get('game') or 'unknown').lower(),'mode':'slab','source_weight':0.99,
+               'official_result':True,'official_grade':grade,'official_reference_url':official,
+               'verification_method':'persisted_reference_learning','status':'verified_reference',
+               'learning_eligibility':'reference_learning_only','image_sha256':str(item.get('image_sha256') or '')[:64],
+               'image_perceptual_hash':str(item.get('image_perceptual_hash') or '')[:32],
+               'image_validated':bool(item.get('image_sha256')),'image_probe_status':'validated' if item.get('image_sha256') else 'not_available',
+               'ocr_label_text':'','image_evidence_source':'persisted_verified_reference'})
  return rows
 
 def _library_candidate_seed_rows()->list[dict]:
@@ -1126,7 +1186,11 @@ def _collect_once()->dict:
  previous_rows=previous_payload.get('records',[]) if isinstance(previous_payload,dict) else []
  if not isinstance(previous_rows,list):previous_rows=[]
  previous_rows=[dict(x) for x in previous_rows if isinstance(x,dict)]
- seeds=_registry_seed_rows();library_seeds=_library_candidate_seed_rows();rows=previous_rows+seeds+library_seeds;previous_count=len(previous_rows)
+ if not previous_rows:
+  last_good=_load(LAST_GOOD_CANDIDATES,{})
+  fallback_rows=last_good.get('records',[]) if isinstance(last_good,dict) else []
+  if isinstance(fallback_rows,list):previous_rows=[dict(x) for x in fallback_rows if isinstance(x,dict)]
+ seeds=_registry_seed_rows();reference_seeds=_reference_learning_seed_rows();library_seeds=_library_candidate_seed_rows();rows=previous_rows+seeds+reference_seeds+library_seeds;previous_count=len(previous_rows)
  ebay_rows=_ebay_candidates();rows.extend(ebay_rows)
  stats['ebay_api']={'candidates':len(ebay_rows),'image_hits':sum(bool(x.get('image_url')) for x in ebay_rows),
                     'verified_hits':0,'errors':0,'queries':1 if ebay_rows else 0,
@@ -1242,6 +1306,8 @@ def _collect_once()->dict:
                      'queries_attempted':sum(int(x.get('queries',0) or 0) for x in stats.values()),'markets_this_run':[x['id'] for x in active],
                      'timed_out_sources':sum(bool(x.get('timed_out')) for x in stats.values()),'initial_bootstrap_collection':first_bootstrap,
                      'previous_candidates':previous_count,'registry_seed_count':len(seeds),
+                     'reference_learning_seed_count':len(reference_seeds),
+                     'baseline_verified_seed_count':sum(1 for x in seeds if x.get('baseline_bootstrap') is True),
                      'library_candidate_seed_count':len(library_seeds),
                      'raw_results':sum(int(x.get('raw_results',0) or 0) for x in stats.values()),
                      'domain_matches':sum(int(x.get('domain_matches',0) or 0) for x in stats.values()),
@@ -1291,6 +1357,8 @@ def _collect_once()->dict:
  if first_bootstrap:
   learning_state['initial_collection_completed']=True;learning_state['initial_collection_completed_at']=_now()
  atomic_write_json(LEARNING,learning_state,suffix='.graded-photo-adaptive.tmp')
+ if rows:
+  atomic_write_json(LAST_GOOD_CANDIDATES,payload,suffix='.graded-photo-last-good.tmp')
  atomic_write_json(OUT,payload,suffix='.graded-photo.tmp');_save_learning(stats);return payload
 
 def collect()->dict:
