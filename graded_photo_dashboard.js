@@ -2,7 +2,7 @@
 'use strict';
 const COMPANIES=['PSA','BGS','CGC','TAG','BRG'];
 const GAMES={pokemon:'포켓몬',onepiece:'원피스',naruto:'나루토'};
-const esc=v=>String(v??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot',"'":'&#39;'}[m]));
+const esc=v=>String(v??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
 const n=v=>Number.isFinite(Number(v))?Number(v):0;
 const sleep=ms=>new Promise(resolve=>setTimeout(resolve,ms));
 let running=false;
@@ -17,6 +17,7 @@ function isVerified(r){const s=statusOf(r);return r.official_result===true||r.ve
 function isReferenceLearning(r){return isVerified(r)&&String(r.learning_eligibility||'').includes('reference')}
 function isRawEligible(r){return ['calibration_eligible','training_eligible'].includes(String(r.learning_eligibility||''))||r.calibration_eligible===true}
 function isQuarantine(r){return !isVerified(r)||Boolean(r.evidence_conflicts?.length)||statusOf(r).includes('quarantine')}
+function isInactiveCandidate(r){const s=statusOf(r),d=String(r.disposition||r.rejection_reason||'').toLowerCase();return r.deleted===true||r.rejected===true||r.active===false||s.includes('deleted')||s.includes('rejected')||d.includes('official_record_not_found')||d.includes('rejected')||d.includes('deleted')}
 function latestOf(rows,payload){const vals=rows.map(r=>r.collected_at||r.updated_at||r.verified_at||r.created_at).filter(Boolean).sort();return vals.at(-1)||payload.created_at||payload.updated_at||'-'}
 function insertPanel(){
  if(document.getElementById('gradedPhotoDashboard'))return document.getElementById('gradedPhotoDashboard');
@@ -91,7 +92,8 @@ function diagnosticHtml(payload){
 function render(payload){
  const body=document.getElementById('gpdBody');if(!body)return;
  const rowsProvided=Array.isArray(payload.records)||Array.isArray(payload.items);
- const rows=Array.isArray(payload.records)?payload.records:Array.isArray(payload.items)?payload.items:[];
+ const sourceRows=Array.isArray(payload.records)?payload.records:Array.isArray(payload.items)?payload.items:[];
+ const rows=sourceRows.filter(r=>r&&typeof r==='object'&&!isInactiveCandidate(r));
  const summary=payload.summary||{};
  const verified=rowsProvided?rows.filter(isVerified).length:n(summary.verified_references);
  const references=rowsProvided?rows.filter(isReferenceLearning).length:n(summary.reference_learning_count);
