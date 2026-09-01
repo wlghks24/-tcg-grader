@@ -1,0 +1,122 @@
+name: Stabilize Android manual proof registration v164
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/apply-android-manual-proof-input-v164.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Patch Android gallery and submit interaction
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+
+          path = Path('pending_official_candidate_bridge_v161.js')
+          text = path.read_text(encoding='utf-8')
+
+          # 1) Keep the DOM stable while Android's system photo picker is open.
+          if 'let pickerOpen=false;' not in text:
+              text = text.replace('let busy=false;\nconst proofFiles=new Map();', 'let busy=false;\nlet pickerOpen=false;\nconst proofFiles=new Map();', 1)
+
+          # 2) Never rebuild the manual verification rows while the picker is open.
+          text = text.replace('if(busy)return;busy=true;', 'if(busy||pickerOpen)return;busy=true;', 1)
+
+          old_pick = "pick?.addEventListener('click',e=>{e.preventDefault();e.stopPropagation();try{input.value=''}catch(_){}input?.removeAttribute('capture');input?.click()});"
+          new_pick = "pick?.addEventListener('click',e=>{e.preventDefault();e.stopPropagation();try{input.value=''}catch(_){}input?.removeAttribute('capture');pickerOpen=true;const releasePicker=()=>setTimeout(()=>{pickerOpen=false},350);window.addEventListener('focus',releasePicker,{once:true});setTimeout(()=>{pickerOpen=false},30000);input?.click()});"
+          if old_pick in text:
+              text = text.replace(old_pick, new_pick, 1)
+          elif new_pick not in text:
+              raise SystemExit('picker click contract not found')
+
+          # 3) Selection completion immediately releases the picker lock.
+          old_change = "input?.addEventListener('change',()=>{const file=input.files?.[0]||null;"
+          new_change = "input?.addEventListener('change',()=>{pickerOpen=false;const file=input.files?.[0]||null;"
+          if old_change in text:
+              text = text.replace(old_change, new_change, 1)
+          elif new_change not in text:
+              raise SystemExit('file change contract not found')
+
+          # 4) Most important Android fix: once a screenshot is selected, do not
+          # periodically replace the active buttons/input element before the user
+          # presses step 3.  This was cancelling taps on some Android photo-picker flows.
+          old_interval = "setInterval(()=>{if(!document.hidden)render()},12000);"
+          new_interval = "setInterval(()=>{if(!document.hidden&&!pickerOpen&&proofFiles.size===0)render()},12000);"
+          if old_interval in text:
+              text = text.replace(old_interval, new_interval, 1)
+          elif new_interval not in text:
+              raise SystemExit('refresh interval contract not found')
+
+          old_obs = "const obs=new MutationObserver(muts=>{if(busy)return;const box=document.getElementById('gpdPendingOfficialV161');"
+          new_obs = "const obs=new MutationObserver(muts=>{if(busy||pickerOpen||proofFiles.size)return;const box=document.getElementById('gpdPendingOfficialV161');"
+          if old_obs in text:
+              text = text.replace(old_obs, new_obs, 1)
+          elif new_obs not in text:
+              raise SystemExit('mutation observer contract not found')
+
+          # 5) Make step 3 explicitly touch-friendly and visibly responsive.
+          css_old = ".gpd-pending-submit{background:#0f766e;color:#fff;cursor:pointer}"
+          css_new = ".gpd-pending-submit{background:#0f766e;color:#fff;cursor:pointer;touch-action:manipulation;pointer-events:auto}"
+          if css_old in text:
+              text = text.replace(css_old, css_new, 1)
+          elif css_new not in text:
+              raise SystemExit('submit css contract not found')
+
+          # Add an immediate tap acknowledgement before image normalization/OCR.
+          old_submit = "button?.addEventListener('click',async()=>{const file=currentProof(row,input);if(!file){setState(state,'② 확인화면을 먼저 선택하세요.','error');return}button.disabled=true;reject.disabled=true;setState(state,'공식 조회 화면 OCR 일치검사 중…','waiting');"
+          new_submit = "button?.addEventListener('click',async e=>{e.preventDefault();e.stopPropagation();const file=currentProof(row,input);if(!file){setState(state,'② 확인화면을 먼저 선택하세요.','error');return}button.disabled=true;reject.disabled=true;setState(state,'③ 등록 요청 접수 · 공식 조회 화면 OCR 일치검사 중…','waiting');"
+          if old_submit in text:
+              text = text.replace(old_submit, new_submit, 1)
+          elif new_submit not in text:
+              raise SystemExit('submit click contract not found')
+
+          path.write_text(text, encoding='utf-8')
+          print('[OK] Android 갤러리 선택 후 ③ 등록 버튼 DOM 고정/터치 안정화')
+          PY
+
+      - name: Regression checks
+        shell: bash
+        run: |
+          node --check pending_official_candidate_bridge_v161.js
+          python - <<'PY'
+          from pathlib import Path
+          s = Path('pending_official_candidate_bridge_v161.js').read_text(encoding='utf-8')
+          required = (
+              'let pickerOpen=false;',
+              'if(busy||pickerOpen)return;busy=true;',
+              'proofFiles.size===0',
+              'if(busy||pickerOpen||proofFiles.size)return;',
+              "pickerOpen=false;const file=input.files?.[0]||null;",
+              'touch-action:manipulation;pointer-events:auto',
+              '③ 등록 요청 접수 · 공식 조회 화면 OCR 일치검사 중…',
+              '/api/pending-official-candidate-proof',
+              '③ 검증완료 등록',
+          )
+          missing = [x for x in required if x not in s]
+          assert not missing, missing
+          print('[OK] Android 수동검증 입력/등록 UI 회귀검사 정상')
+          PY
+
+      - name: Commit patch
+        shell: bash
+        run: |
+          if git diff --quiet -- pending_official_candidate_bridge_v161.js; then
+            echo 'Already patched'
+            exit 0
+          fi
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add pending_official_candidate_bridge_v161.js
+          git commit -m 'fix: keep Android manual proof input stable v164'
+          git push origin HEAD:main
