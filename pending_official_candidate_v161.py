@@ -33,7 +33,7 @@ import manual_official_proof as manual_proof
 from grading_cert_verifier import lookup_url
 from safe_runtime import atomic_write_bytes
 
-ENGINE = "v162-pending-official-candidate-manual-verification"
+ENGINE = "v163-pending-official-candidate-manual-verification"
 ROOT = Path(__file__).resolve().parent
 PROOF_ROOT = ROOT / "GRADE_TRAINING_INBOX" / "pending_official_candidate_proof"
 NEGATIVE_PROOF_ROOT = ROOT / "GRADE_TRAINING_INBOX" / "pending_official_candidate_negative_proof"
@@ -47,6 +47,16 @@ _NEGATIVE_PATTERNS = (
     re.compile(r"no\s+records?\s+(?:were\s+)?found", re.I),
     re.compile(r"no\s+results?\s+(?:were\s+)?found", re.I),
     re.compile(r"(?:certificate|certification|cert(?:ificate)?\s*number)\s+(?:was\s+)?not\s+found", re.I),
+    re.compile(r"(?:検索|照会).*?(?:結果|記録).*?(?:ありません|見つかりません)", re.I),
+    re.compile(r"(?:查無|找不到|沒有).*?(?:紀錄|記錄|結果|認證|认证)", re.I),
+)
+_SITE_ERROR_PATTERNS = (
+    re.compile(r"application\s+error", re.I),
+    re.compile(r"server[-\s]*side\s+exception", re.I),
+    re.compile(r"internal\s+server\s+error", re.I),
+    re.compile(r"service\s+unavailable", re.I),
+    re.compile(r"\bdigest\s*:\s*\d+", re.I),
+    re.compile(r"서버\s*(?:오류|에러)", re.I),
 )
 _COMPANY_BRANDS = {
     "PSA": ("PSA",),
@@ -192,6 +202,7 @@ def _find_unverified_target(rows: list[dict[str, Any]], candidate_id: str) -> di
 def _negative_ocr(text: Any, evidence: Any, company: str) -> dict[str, Any]:
     raw = " ".join(str(text or "").replace("\x00", " ").split())
     negative = any(pattern.search(raw) for pattern in _NEGATIVE_PATTERNS)
+    site_error = any(pattern.search(raw) for pattern in _SITE_ERROR_PATTERNS)
     upper = raw.upper()
     brands = _COMPANY_BRANDS.get(company, (company,))
     brand = any(str(token).upper() in upper for token in brands if token)
@@ -201,6 +212,7 @@ def _negative_ocr(text: Any, evidence: Any, company: str) -> dict[str, Any]:
     return {
         "negative_text_detected": negative,
         "company_brand_detected": brand,
+        "site_error_detected": site_error,
         "ocr_text": raw[:1800],
     }
 
@@ -263,6 +275,15 @@ def _submit_not_found(incoming: dict[str, Any]) -> dict[str, Any]:
     except Exception as exc:
         ocr_error = type(exc).__name__
     signal = _negative_ocr(text, evidence, company)
+    if signal.get("site_error_detected"):
+        proof_path.unlink(missing_ok=True)
+        raise ValueError("공식사이트 서버 오류 화면은 '조회결과 없음' 증거가 아닙니다. 후보는 유지됩니다. 잠시 후 공식사이트에서 다시 확인하세요.")
+    if not signal.get("negative_text_detected"):
+        proof_path.unlink(missing_ok=True)
+        raise ValueError("공식사이트에 '조회 결과 없음/인증번호 없음' 문구가 확인된 화면만 후보삭제에 사용할 수 있습니다.")
+    if not signal.get("company_brand_detected"):
+        proof_path.unlink(missing_ok=True)
+        raise ValueError("공식 등급사 화면임을 확인할 수 없습니다. 등급사 로고/명칭과 조회결과 없음 문구가 함께 보이도록 캡처하세요.")
 
     rejected_at = _now()
     rejection = {
