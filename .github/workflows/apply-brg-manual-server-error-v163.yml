@@ -1,0 +1,138 @@
+name: Harden BRG manual verification server-error flow v163
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/apply-brg-manual-server-error-v163.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  patch-and-test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Patch BRG manual verification flow
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+
+          py = Path('pending_official_candidate_v161.py')
+          text = py.read_text(encoding='utf-8')
+
+          text = text.replace(
+              'ENGINE = "v162-pending-official-candidate-manual-verification"',
+              'ENGINE = "v163-pending-official-candidate-manual-verification"'
+          )
+
+          marker = '''_NEGATIVE_PATTERNS = (\n    re.compile(r"검색된\\s*기록이\\s*없습니다", re.I),\n    re.compile(r"검색(?:된)?\\s*결과가\\s*없습니다", re.I),\n    re.compile(r"조회(?:된)?\\s*기록이\\s*없습니다", re.I),\n    re.compile(r"no\\s+records?\\s+(?:were\\s+)?found", re.I),\n    re.compile(r"no\\s+results?\\s+(?:were\\s+)?found", re.I),\n    re.compile(r"(?:certificate|certification|cert(?:ificate)?\\s*number)\\s+(?:was\\s+)?not\\s+found", re.I),\n)\n'''
+          replacement = '''_NEGATIVE_PATTERNS = (\n    re.compile(r"검색된\\s*기록이\\s*없습니다", re.I),\n    re.compile(r"검색(?:된)?\\s*결과가\\s*없습니다", re.I),\n    re.compile(r"조회(?:된)?\\s*기록이\\s*없습니다", re.I),\n    re.compile(r"no\\s+records?\\s+(?:were\\s+)?found", re.I),\n    re.compile(r"no\\s+results?\\s+(?:were\\s+)?found", re.I),\n    re.compile(r"(?:certificate|certification|cert(?:ificate)?\\s*number)\\s+(?:was\\s+)?not\\s+found", re.I),\n    re.compile(r"(?:検索|照会).*?(?:結果|記録).*?(?:ありません|見つかりません)", re.I),\n    re.compile(r"(?:查無|找不到|沒有).*?(?:紀錄|記錄|結果|認證|认证)", re.I),\n)\n_SITE_ERROR_PATTERNS = (\n    re.compile(r"application\\s+error", re.I),\n    re.compile(r"server[-\\s]*side\\s+exception", re.I),\n    re.compile(r"internal\\s+server\\s+error", re.I),\n    re.compile(r"service\\s+unavailable", re.I),\n    re.compile(r"\\bdigest\\s*:\\s*\\d+", re.I),\n    re.compile(r"서버\\s*(?:오류|에러)", re.I),\n)\n'''
+          if '_SITE_ERROR_PATTERNS' not in text:
+              if marker not in text:
+                  raise SystemExit('negative pattern marker not found')
+              text = text.replace(marker, replacement, 1)
+
+          old = '''    negative = any(pattern.search(raw) for pattern in _NEGATIVE_PATTERNS)\n    upper = raw.upper()\n'''
+          new = '''    negative = any(pattern.search(raw) for pattern in _NEGATIVE_PATTERNS)\n    site_error = any(pattern.search(raw) for pattern in _SITE_ERROR_PATTERNS)\n    upper = raw.upper()\n'''
+          if 'site_error = any(pattern.search(raw)' not in text:
+              if old not in text:
+                  raise SystemExit('negative OCR marker not found')
+              text = text.replace(old, new, 1)
+
+          old = '''        "negative_text_detected": negative,\n        "company_brand_detected": brand,\n        "ocr_text": raw[:1800],\n'''
+          new = '''        "negative_text_detected": negative,\n        "company_brand_detected": brand,\n        "site_error_detected": site_error,\n        "ocr_text": raw[:1800],\n'''
+          if '"site_error_detected": site_error' not in text:
+              if old not in text:
+                  raise SystemExit('negative OCR return marker not found')
+              text = text.replace(old, new, 1)
+
+          gate_marker = '''    signal = _negative_ocr(text, evidence, company)\n\n    rejected_at = _now()\n'''
+          gate = '''    signal = _negative_ocr(text, evidence, company)\n    if signal.get("site_error_detected"):\n        proof_path.unlink(missing_ok=True)\n        raise ValueError("공식사이트 서버 오류 화면은 '조회결과 없음' 증거가 아닙니다. 후보는 유지됩니다. 잠시 후 공식사이트에서 다시 확인하세요.")\n    if not signal.get("negative_text_detected"):\n        proof_path.unlink(missing_ok=True)\n        raise ValueError("공식사이트에 '조회 결과 없음/인증번호 없음' 문구가 확인된 화면만 후보삭제에 사용할 수 있습니다.")\n    if not signal.get("company_brand_detected"):\n        proof_path.unlink(missing_ok=True)\n        raise ValueError("공식 등급사 화면임을 확인할 수 없습니다. 등급사 로고/명칭과 조회결과 없음 문구가 함께 보이도록 캡처하세요.")\n\n    rejected_at = _now()\n'''
+          if '공식사이트 서버 오류 화면은' not in text:
+              if gate_marker not in text:
+                  raise SystemExit('negative proof gate marker not found')
+              text = text.replace(gate_marker, gate, 1)
+
+          py.write_text(text, encoding='utf-8')
+
+          js = Path('pending_official_candidate_bridge_v161.js')
+          text = js.read_text(encoding='utf-8')
+
+          old = "function bgsDirect(url,cert,company){if(String(company||'').toUpperCase()!=='BGS')return url;try{const u=new URL(url,location.href);u.searchParams.set('flag','1');u.searchParams.set('item_id',cert);u.searchParams.set('item_type','BGS');return u.toString()}catch(_){return url}}"
+          new = "function officialOpenUrl(url,cert,company){const c=String(company||'').toUpperCase();if(c==='BRG')return 'https://www.brgcard.com/certification';if(c!=='BGS')return url;try{const u=new URL(url,location.href);u.searchParams.set('flag','1');u.searchParams.set('item_id',cert);u.searchParams.set('item_type','BGS');return u.toString()}catch(_){return url}}"
+          if 'function officialOpenUrl(' not in text:
+              if old not in text:
+                  raise SystemExit('BGS direct helper marker not found')
+              text = text.replace(old, new, 1)
+
+          text = text.replace("const url=bgsDirect(String(row.official_reference_url||''),cert,row.company);", "const url=officialOpenUrl(String(row.official_reference_url||''),cert,row.company);")
+
+          old_note = '공식 등급사 사이트에서 확인한 뒤 <b>② 갤러리에서 확인화면 선택</b>으로 저장된 캡처를 고르세요. 선택한 캡처는 화면 자동갱신 중에도 유지되며 <b>③ 검증완료 등록</b>과 <b>④ 조회결과 없음 → 후보삭제</b>가 활성화됩니다.'
+          new_note = old_note + ' <b>BRG 안내:</b> 인증번호가 포함된 직접 URL에서 서버 오류가 날 수 있어 BRG는 조회 폼만 열고 인증번호를 자동복사합니다. 붙여넣어 조회하세요. <b>Application error / server-side exception / Digest 화면은 조회결과 없음이 아니므로 ④로 삭제하지 마세요.</b>'
+          if 'Application error / server-side exception / Digest' not in text:
+              if old_note not in text:
+                  raise SystemExit('UI note marker not found')
+              text = text.replace(old_note, new_note, 1)
+
+          js.write_text(text, encoding='utf-8')
+
+          test = Path('test_brg_manual_server_error_v163.py')
+          test.write_text(r'''import unittest
+from pathlib import Path
+
+import pending_official_candidate_v161 as pending
+
+
+class BRGManualServerErrorV163Tests(unittest.TestCase):
+    def test_server_exception_is_not_no_record(self):
+        signal = pending._negative_ocr(
+            "Application error: a server-side exception has occurred. Digest: 3089131211",
+            {},
+            "BRG",
+        )
+        self.assertTrue(signal["site_error_detected"])
+        self.assertFalse(signal["negative_text_detected"])
+
+    def test_real_no_record_signal_is_distinct(self):
+        signal = pending._negative_ocr("BRG no records found", {}, "BRG")
+        self.assertFalse(signal["site_error_detected"])
+        self.assertTrue(signal["negative_text_detected"])
+        self.assertTrue(signal["company_brand_detected"])
+
+    def test_bridge_uses_brg_form_without_query_parameter(self):
+        source = Path("pending_official_candidate_bridge_v161.js").read_text(encoding="utf-8")
+        self.assertIn("if(c==='BRG')return 'https://www.brgcard.com/certification'", source)
+        self.assertIn("Application error / server-side exception / Digest", source)
+        self.assertNotIn("const url=bgsDirect(", source)
+
+
+if __name__ == '__main__':
+    unittest.main()
+''', encoding='utf-8')
+          PY
+
+      - name: Validate syntax and targeted tests
+        shell: bash
+        run: |
+          python -m py_compile pending_official_candidate_v161.py
+          node --check pending_official_candidate_bridge_v161.js
+          python -m unittest -v test_brg_manual_server_error_v163.py
+
+      - name: Commit patch
+        shell: bash
+        run: |
+          if git diff --quiet -- pending_official_candidate_v161.py pending_official_candidate_bridge_v161.js test_brg_manual_server_error_v163.py; then
+            echo 'No patch changes needed.'
+            exit 0
+          fi
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add pending_official_candidate_v161.py pending_official_candidate_bridge_v161.js test_brg_manual_server_error_v163.py
+          git commit -m 'fix: handle BRG official-site server errors safely v163'
+          git push origin HEAD:main
