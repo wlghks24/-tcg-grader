@@ -255,6 +255,11 @@ def _explicit_grade_candidates(text: Any, company: str) -> set[float]:
         r"\bGRADE\s*[:#-]?\s*(10|[1-9](?:\.5)?)\b",
         r"\b(?:GEM\s*MT|GEM\s*MINT|PRISTINE|MINT|NM[\s-]*MT|NEAR\s*MINT)\s*(10|[1-9](?:\.5)?)\b",
         r"\b(10|[1-9](?:\.5)?)\s*(?:GEM\s*MT|GEM\s*MINT|PRISTINE|MINT|NM[\s-]*MT|NEAR\s*MINT)\b",
+        # Chrome/Android may translate PSA's English grade label while leaving
+        # the official PSA page, certificate number and score unchanged.
+        r"(?:젬|젬\s*민트|GEM)\s*(?:MT|MINT)?\s*(10|[1-9](?:\.5)?)",
+        r"(?:민트|MINT)\s*(10|[1-9](?:\.5)?)",
+        r"(?:품목\s*등급|등급)\s*[:#-]?\s*(10|[1-9](?:\.5)?)",
     ]
     for pattern in patterns:
         for value in re.findall(pattern, upper):

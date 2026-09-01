@@ -374,7 +374,7 @@ def submit(incoming: dict[str, Any]) -> dict[str, Any]:
     try:
         text, ocr_error, diagnostics, evidence = manual_photo._ocr_image(proof_path)
         match = manual_proof._match_proof(
-            row={}, text=text, evidence=evidence if isinstance(evidence, dict) else {},
+            row=target, text=text, evidence=evidence if isinstance(evidence, dict) else {},
             company=company, cert=cert, expected_grade=float(grade),
         )
         if not bool(match.get("matched")):
@@ -383,7 +383,7 @@ def submit(incoming: dict[str, Any]) -> dict[str, Any]:
                 "ok": True,
                 "accepted": False,
                 "candidate_id": candidate_id,
-                "error": "공식 조회 화면에서 등급사·인증번호·등급의 정확한 일치를 확인하지 못했습니다.",
+                "error": "공식 조회 화면 일치검사 실패: " + ", ".join(match.get("missing") or match.get("explicit_conflicts") or ["OCR 판독 불충분"]),
                 "ocr_error": str(ocr_error or "")[:160] or None,
                 "match": {
                     "company_match": bool(match.get("company_match")),
