@@ -24,6 +24,9 @@ import hashlib
 import math
 from pathlib import Path
 import re
+import shutil
+import subprocess
+import tempfile
 from typing import Any
 
 import graded_photo_multi_source as gp
@@ -33,7 +36,7 @@ import manual_official_proof as manual_proof
 from grading_cert_verifier import lookup_url
 from safe_runtime import atomic_write_bytes
 
-ENGINE = "v163-pending-official-candidate-manual-verification"
+ENGINE = "v171-pending-official-candidate-korean-negative-proof-ocr"
 ROOT = Path(__file__).resolve().parent
 PROOF_ROOT = ROOT / "GRADE_TRAINING_INBOX" / "pending_official_candidate_proof"
 NEGATIVE_PROOF_ROOT = ROOT / "GRADE_TRAINING_INBOX" / "pending_official_candidate_negative_proof"
@@ -41,9 +44,9 @@ REJECTION_LOG = ROOT / "pending_official_candidate_rejections.json"
 MAX_PROOF_BYTES = 8_000_000
 _DATA_URL_RE = re.compile(r"^data:(image/(?:jpeg|png));base64,([A-Za-z0-9+/=\r\n]+)$", re.I)
 _NEGATIVE_PATTERNS = (
-    re.compile(r"검색된\s*기록이\s*없습니다", re.I),
-    re.compile(r"검색(?:된)?\s*결과가\s*없습니다", re.I),
-    re.compile(r"조회(?:된)?\s*기록이\s*없습니다", re.I),
+    re.compile(r"검색\s*(?:된)?\s*(?:기록|결과)\s*(?:이|가)?\s*없(?:습니다|음)", re.I),
+    re.compile(r"조회\s*(?:된)?\s*(?:기록|결과)\s*(?:이|가)?\s*없(?:습니다|음)", re.I),
+    re.compile(r"(?:일치하는|해당)\s*(?:기록|결과|인증번호)\s*(?:이|가)?\s*없(?:습니다|음)", re.I),
     re.compile(r"no\s+records?\s+(?:were\s+)?found", re.I),
     re.compile(r"no\s+results?\s+(?:were\s+)?found", re.I),
     re.compile(r"(?:certificate|certification|cert(?:ificate)?\s*number)\s+(?:was\s+)?not\s+found", re.I),
@@ -217,6 +220,69 @@ def _negative_ocr(text: Any, evidence: Any, company: str) -> dict[str, Any]:
     }
 
 
+def _tesseract_languages() -> set[str]:
+    binary = shutil.which("tesseract")
+    if not binary:
+        return set()
+    try:
+        run = subprocess.run(
+            [binary, "--list-langs"], capture_output=True, text=True,
+            encoding="utf-8", errors="replace", timeout=8, check=False,
+        )
+    except (OSError, subprocess.SubprocessError):
+        return set()
+    raw = "\n".join((run.stdout or "", run.stderr or ""))
+    return {
+        line.strip().lower() for line in raw.splitlines()
+        if line.strip() and not line.lower().startswith("list of available languages")
+    }
+
+
+def _multilang_negative_ocr(image_path: Path) -> tuple[str, str | None]:
+    """OCR browser proof with Korean support without weakening delete policy."""
+    binary = shutil.which("tesseract")
+    if not binary:
+        return "", "tesseract_not_installed"
+    languages = _tesseract_languages()
+    if "kor" not in languages:
+        return "", "korean_tessdata_missing"
+    language = "kor+eng" if "eng" in languages else "kor"
+    try:
+        from PIL import Image, ImageOps
+        with Image.open(image_path) as opened:
+            source = ImageOps.exif_transpose(opened).convert("RGB")
+        width, height = source.size
+        regions = (
+            ("full", source),
+            ("upper72", source.crop((0, 0, width, max(1, int(height * 0.72))))),
+            ("upper45", source.crop((0, 0, width, max(1, int(height * 0.45))))),
+        )
+        chunks: list[str] = []
+        with tempfile.TemporaryDirectory(prefix="tcg-negative-proof-") as directory:
+            for name, region in regions:
+                gray = ImageOps.autocontrast(ImageOps.grayscale(region))
+                target_w = max(1400, min(2400, gray.width * 2))
+                if gray.width != target_w:
+                    ratio = target_w / max(1, gray.width)
+                    gray = gray.resize((target_w, max(300, int(gray.height * ratio))))
+                file_path = Path(directory) / f"{name}.png"
+                gray.save(file_path, format="PNG")
+                for psm in (6, 11):
+                    run = subprocess.run(
+                        [binary, str(file_path), "stdout", "--psm", str(psm), "-l", language],
+                        capture_output=True, text=True, encoding="utf-8", errors="replace",
+                        timeout=18, check=False,
+                    )
+                    if run.returncode == 0 and run.stdout.strip():
+                        chunks.append(run.stdout.strip())
+        text = "\n".join(dict.fromkeys(chunks))
+        return text[:8000], None if text else "ocr_empty"
+    except ImportError:
+        return "", "pillow_not_installed"
+    except (OSError, ValueError, subprocess.SubprocessError):
+        return "", "multilang_ocr_failed"
+
+
 def _save_candidate_payload(payload: dict[str, Any], rows: list[dict[str, Any]], *, promoted_delta: int = 0,
                             rejected_delta: int = 0, timestamp_key: str | None = None) -> dict[str, Any]:
     existing._apply_current_disposition(rows)
@@ -275,11 +341,20 @@ def _submit_not_found(incoming: dict[str, Any]) -> dict[str, Any]:
     except Exception as exc:
         ocr_error = type(exc).__name__
     signal = _negative_ocr(text, evidence, company)
+    multilang_error = None
+    if (not signal.get("site_error_detected")
+            and (not signal.get("negative_text_detected") or not signal.get("company_brand_detected"))):
+        extra_text, multilang_error = _multilang_negative_ocr(proof_path)
+        if extra_text:
+            text = "\n".join(part for part in (text, extra_text) if part)
+            signal = _negative_ocr(text, evidence, company)
     if signal.get("site_error_detected"):
         proof_path.unlink(missing_ok=True)
         raise ValueError("공식사이트 서버 오류 화면은 '조회결과 없음' 증거가 아닙니다. 후보는 유지됩니다. 잠시 후 공식사이트에서 다시 확인하세요.")
     if not signal.get("negative_text_detected"):
         proof_path.unlink(missing_ok=True)
+        if multilang_error == "korean_tessdata_missing":
+            raise ValueError("한글 공식조회 결과를 읽기 위한 OCR 언어자료가 없습니다. Termux에서 pkg install tesseract-data-kor -y 실행 후 다시 선택하세요.")
         raise ValueError("공식사이트에 '조회 결과 없음/인증번호 없음' 문구가 확인된 화면만 후보삭제에 사용할 수 있습니다.")
     if not signal.get("company_brand_detected"):
         proof_path.unlink(missing_ok=True)
