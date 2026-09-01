@@ -2,6 +2,7 @@
 'use strict';
 const esc=v=>String(v??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
 let busy=false;
+let pickerOpen=false;
 const proofFiles=new Map();
 function style(){
   if(document.getElementById('gpdPendingOfficialV164Style'))return;
@@ -17,7 +18,7 @@ function style(){
 .gpd-pending-copy{border:0;border-radius:8px;padding:7px 9px;background:#e0e7ff;color:#3730a3;font-size:10px;font-weight:900;cursor:pointer}
 .gpd-pending-actions{display:grid;grid-template-columns:1fr 1fr;gap:7px;margin-top:8px;align-items:center}
 .gpd-pending-open,.gpd-pending-pick,.gpd-pending-submit,.gpd-pending-notfound{border:0;border-radius:9px;padding:10px;font-size:10px;font-weight:900;text-decoration:none;display:flex;align-items:center;justify-content:center;white-space:nowrap;min-height:40px}
-.gpd-pending-open{background:#2563eb;color:#fff}.gpd-pending-pick{background:#2563eb;color:#fff;cursor:pointer}.gpd-pending-submit{background:#0f766e;color:#fff;cursor:pointer}.gpd-pending-notfound{background:#fee2e2;color:#b91c1c;cursor:pointer}
+.gpd-pending-open{background:#2563eb;color:#fff}.gpd-pending-pick{background:#2563eb;color:#fff;cursor:pointer}.gpd-pending-submit{background:#0f766e;color:#fff;cursor:pointer;touch-action:manipulation;pointer-events:auto}.gpd-pending-notfound{background:#fee2e2;color:#b91c1c;cursor:pointer}
 .gpd-pending-submit:disabled,.gpd-pending-notfound:disabled{opacity:.38;cursor:not-allowed;filter:grayscale(.15)}
 .gpd-pending-file{position:absolute!important;width:1px!important;height:1px!important;opacity:.001!important;pointer-events:none!important}
 .gpd-pending-state{font-size:10px;margin-top:7px;color:#0f766e;font-weight:800;line-height:1.45;padding:6px 8px;border-radius:8px;background:#ecfdf5}
@@ -52,7 +53,7 @@ async function postProof(payload){const r=await fetch('/api/pending-official-can
 function setState(el,text,kind=''){el.className='gpd-pending-state'+(kind?' '+kind:'');el.textContent=text}
 function currentProof(row,input){return input?.files?.[0]||proofFiles.get(row.dataset.candidate)?.file||null}
 async function render(){
-  if(busy)return;busy=true;
+  if(busy||pickerOpen)return;busy=true;
   try{
     style();const a=anchor();if(!a)return;
     let box=document.getElementById('gpdPendingOfficialV161');
@@ -63,19 +64,19 @@ async function render(){
     box.querySelector('.gpd-pending-toggle')?.addEventListener('click',()=>{box.dataset.expanded=expanded?'0':'1';render()});
     box.querySelectorAll('.gpd-pending-row').forEach(row=>{
       const input=row.querySelector('.gpd-pending-file'),pick=row.querySelector('.gpd-pending-pick'),button=row.querySelector('.gpd-pending-submit'),reject=row.querySelector('.gpd-pending-notfound'),state=row.querySelector('.gpd-pending-state'),copy=row.querySelector('.gpd-pending-copy'),open=row.querySelector('.gpd-pending-open'),cert=row.dataset.cert||'',cid=row.dataset.candidate||'';
-      pick?.addEventListener('click',e=>{e.preventDefault();e.stopPropagation();try{input.value=''}catch(_){}input?.removeAttribute('capture');input?.click()});
+      pick?.addEventListener('click',e=>{e.preventDefault();e.stopPropagation();try{input.value=''}catch(_){}input?.removeAttribute('capture');pickerOpen=true;const releasePicker=()=>setTimeout(()=>{pickerOpen=false},350);window.addEventListener('focus',releasePicker,{once:true});setTimeout(()=>{pickerOpen=false},30000);input?.click()});
       copy?.addEventListener('click',async()=>{const ok=await copyText(cert);setState(state,ok?`인증번호 ${cert} 복사 완료 · 공식사이트 입력칸에 붙여넣기`:'인증번호 복사 실패 · 번호를 길게 눌러 직접 복사하세요.',ok?'':'error')});
       open?.addEventListener('click',()=>{copyText(cert).then(ok=>setState(state,ok?`인증번호 ${cert} 자동복사 완료 · 공식사이트에서 조회 후 화면을 캡처하세요.`:'공식사이트 열림 · 인증번호 자동복사 실패','waiting'))});
-      input?.addEventListener('change',()=>{const file=input.files?.[0]||null;if(file){proofFiles.set(cid,{file,name:file.name||'공식조회화면'});button.disabled=false;reject.disabled=false;pick.textContent='② 확인화면 다시선택';setState(state,`✓ 확인화면 선택 완료: ${file.name||'선택한 이미지'} · ③/④ 활성화됨`)}else{proofFiles.delete(cid);button.disabled=true;reject.disabled=true;setState(state,'사진이 선택되지 않았습니다. ②를 다시 누르세요.','waiting')}});
-      button?.addEventListener('click',async()=>{const file=currentProof(row,input);if(!file){setState(state,'② 확인화면을 먼저 선택하세요.','error');return}button.disabled=true;reject.disabled=true;setState(state,'공식 조회 화면 OCR 일치검사 중…','waiting');try{const proof_image=await normalize(file);const data=await postProof({candidate_id:cid,proof_image});if(!data.accepted){setState(state,'미등록: '+String(data.error||'정보 불일치'),'error');button.disabled=false;reject.disabled=false;return}proofFiles.delete(cid);setState(state,'✓ 공식검증 완료 · 학습자료 승격');setTimeout(()=>location.reload(),900)}catch(e){setState(state,'오류: '+String(e?.message||e),'error');button.disabled=false;reject.disabled=false}});
+      input?.addEventListener('change',()=>{pickerOpen=false;const file=input.files?.[0]||null;if(file){proofFiles.set(cid,{file,name:file.name||'공식조회화면'});button.disabled=false;reject.disabled=false;pick.textContent='② 확인화면 다시선택';setState(state,`✓ 확인화면 선택 완료: ${file.name||'선택한 이미지'} · ③/④ 활성화됨`)}else{proofFiles.delete(cid);button.disabled=true;reject.disabled=true;setState(state,'사진이 선택되지 않았습니다. ②를 다시 누르세요.','waiting')}});
+      button?.addEventListener('click',async e=>{e.preventDefault();e.stopPropagation();const file=currentProof(row,input);if(!file){setState(state,'② 확인화면을 먼저 선택하세요.','error');return}button.disabled=true;reject.disabled=true;setState(state,'③ 등록 요청 접수 · 공식 조회 화면 OCR 일치검사 중…','waiting');try{const proof_image=await normalize(file);const data=await postProof({candidate_id:cid,proof_image});if(!data.accepted){setState(state,'미등록: '+String(data.error||'정보 불일치'),'error');button.disabled=false;reject.disabled=false;return}proofFiles.delete(cid);setState(state,'✓ 공식검증 완료 · 학습자료 승격');setTimeout(()=>location.reload(),900)}catch(e){setState(state,'오류: '+String(e?.message||e),'error');button.disabled=false;reject.disabled=false}});
       reject?.addEventListener('click',async()=>{const file=currentProof(row,input);if(!file){setState(state,'②에서 "검색된 기록이 없습니다" 화면을 먼저 선택하세요.','error');return}const typed=prompt(`공식사이트에서 검색 기록이 없음을 확인했습니다.\n삭제 확인을 위해 인증번호 ${cert} 를 정확히 입력하세요.`,'');if(typed===null)return;const normalized=String(typed).replace(/[^A-Za-z0-9]/g,'').toUpperCase();const expected=String(cert).replace(/[^A-Za-z0-9]/g,'').toUpperCase();if(normalized!==expected){setState(state,'삭제 취소: 입력한 인증번호가 일치하지 않습니다.','error');return}if(!confirm('공식검증 완료 자료가 아닌 이 후보만 삭제합니다. 조회결과 없음 화면은 감사 증거로 보관됩니다. 계속할까요?'))return;button.disabled=true;reject.disabled=true;setState(state,'조회결과 없음 증거 보관 + 미검증 후보 삭제 중…','waiting');try{const proof_image=await normalize(file);const data=await postProof({action:'official_not_found',candidate_id:cid,proof_image,certification_id_confirmation:typed,confirm_no_record:true});if(!data.accepted||!data.deleted)throw new Error(data.error||'후보 삭제 실패');proofFiles.delete(cid);setState(state,`✓ 공식조회 결과 없음 확인 · 후보 ${Number(data.deleted_rows||1)}건 삭제 · 증거 보관 완료`);setTimeout(()=>location.reload(),900)}catch(e){setState(state,'삭제 실패: '+String(e?.message||e),'error');button.disabled=false;reject.disabled=false}});
     });
   }finally{busy=false}
 }
 function install(){
   render();
-  setInterval(()=>{if(!document.hidden)render()},12000);
-  const obs=new MutationObserver(muts=>{if(busy)return;const box=document.getElementById('gpdPendingOfficialV161');if(box&&muts.every(m=>box.contains(m.target)))return;setTimeout(render,250)});
+  setInterval(()=>{if(!document.hidden&&!pickerOpen&&proofFiles.size===0)render()},12000);
+  const obs=new MutationObserver(muts=>{if(busy||pickerOpen||proofFiles.size)return;const box=document.getElementById('gpdPendingOfficialV161');if(box&&muts.every(m=>box.contains(m.target)))return;setTimeout(render,250)});
   obs.observe(document.documentElement,{childList:true,subtree:true});
 }
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',install,{once:true});else install();
