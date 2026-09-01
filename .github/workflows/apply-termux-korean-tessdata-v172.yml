@@ -1,0 +1,42 @@
+name: Apply Termux Korean tessdata bootstrap v172
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'ensure_tesseract_kor.sh'
+      - 'apply_termux_korean_tessdata_v172.py'
+      - '.github/workflows/apply-termux-korean-tessdata-v172.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Apply patch
+        run: python apply_termux_korean_tessdata_v172.py
+      - name: Verify
+        run: |
+          python -m py_compile pending_official_candidate_v161.py
+          bash -n START_TCG_UPDATER_ANDROID.sh
+          bash -n ensure_tesseract_kor.sh
+          grep -F 'bash ensure_tesseract_kor.sh' pending_official_candidate_v161.py
+          grep -F 'ensure_tesseract_kor.sh' START_TCG_UPDATER_ANDROID.sh
+          ! grep -F 'pkg install tesseract-data-kor' pending_official_candidate_v161.py
+      - name: Commit
+        run: |
+          if git diff --quiet -- START_TCG_UPDATER_ANDROID.sh pending_official_candidate_v161.py; then
+            echo 'No patch changes needed.'
+            exit 0
+          fi
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add START_TCG_UPDATER_ANDROID.sh pending_official_candidate_v161.py
+          git commit -m 'fix: auto-install Korean Tesseract data on Termux v172'
+          git push origin HEAD:main
