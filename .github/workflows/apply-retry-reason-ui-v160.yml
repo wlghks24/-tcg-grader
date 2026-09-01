@@ -1,82 +1,44 @@
-name: Apply retry reason UI v160
+name: Verify retry reason UI v160
 
 on:
   push:
+    branches: [main]
     paths:
       - '.github/workflows/apply-retry-reason-ui-v160.yml'
       - 'graded_photo_retry_reason_v160.py'
       - 'test_graded_photo_retry_reason_v160.py'
+      - 'graded_photo_existing_revalidation_v159.py'
+      - 'test_graded_photo_existing_revalidation_v159.py'
+      - 'tcg_updater.py'
+      - 'tcg_updater_v135.py'
+      - 'REPAIR_V135_SERVER.sh'
+  pull_request:
+    paths:
+      - '.github/workflows/apply-retry-reason-ui-v160.yml'
+      - 'graded_photo_retry_reason_v160.py'
+      - 'test_graded_photo_retry_reason_v160.py'
+      - 'graded_photo_existing_revalidation_v159.py'
+      - 'test_graded_photo_existing_revalidation_v159.py'
+      - 'tcg_updater.py'
+      - 'tcg_updater_v135.py'
+      - 'REPAIR_V135_SERVER.sh'
   workflow_dispatch:
 
 permissions:
-  contents: write
+  contents: read
 
 jobs:
-  patch:
+  verify:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
-        with:
-          fetch-depth: 0
       - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
         with:
           python-version: '3.12'
-      - name: Patch server status with retry reasons
+      - name: Verify retry reason integration
         run: |
-          python - <<'PY'
-          from pathlib import Path
-
-          p = Path('tcg_updater.py')
-          text = p.read_text(encoding='utf-8')
-
-          old = """            import graded_photo_existing_revalidation_v159 as candidate_revalidation\n            candidate_payload=candidate_revalidation.revalidate_existing_candidates()\n            clear_json_file_cache()\n"""
-          new = """            import graded_photo_existing_revalidation_v159 as candidate_revalidation\n            candidate_payload=candidate_revalidation.revalidate_existing_candidates()\n            import graded_photo_retry_reason_v160 as retry_reason_v160\n            retry_reason_payload=retry_reason_v160.summarize_current_candidates(max_details=8)\n            clear_json_file_cache()\n"""
-          if old not in text and new not in text:
-              raise SystemExit('candidate revalidation hook not found')
-          text = text.replace(old, new)
-
-          old2 = """            'candidate_quarantined_after': int(candidate_summary.get('quarantined',0) or 0),\n        })\n        message=(f\"통합 재검증 완료 · 등록 {int(manual_summary.get('total',0) or 0)}건 · \"\n                 f\"8구역 {int(manual_summary.get('eight_zone_complete',0) or 0)}건 · \"\n                 f\"후보 {summary['candidate_reviewed']}건 · 공식검증 {summary['candidate_verified']}건 · \"\n                 f\"학습 {summary['candidate_learning']}건 · 삭제 {summary['candidate_pruned']}건 · \"\n                 f\"재시도보존 {summary['candidate_retryable_kept']}건\")\n"""
-          new2 = """            'candidate_quarantined_after': int(candidate_summary.get('quarantined',0) or 0),\n            'candidate_retry_reason_counts': retry_reason_payload.get('reason_counts', []),\n            'candidate_retry_reason_text': str(retry_reason_payload.get('reason_text') or ''),\n            'candidate_retry_details': retry_reason_payload.get('details', []),\n        })\n        message=(f\"통합 재검증 완료 · 등록 {int(manual_summary.get('total',0) or 0)}건 · \"\n                 f\"8구역 {int(manual_summary.get('eight_zone_complete',0) or 0)}건 · \"\n                 f\"후보 {summary['candidate_reviewed']}건 · 공식검증 {summary['candidate_verified']}건 · \"\n                 f\"학습 {summary['candidate_learning']}건 · 삭제 {summary['candidate_pruned']}건 · \"\n                 f\"재시도보존 {summary['candidate_retryable_kept']}건\")\n        if summary['candidate_retryable_kept'] and summary['candidate_retry_reason_text']:\n            message += f\" · 재시도원인: {summary['candidate_retry_reason_text']}\"\n"""
-          if old2 not in text and new2 not in text:
-              raise SystemExit('summary/message hook not found')
-          text = text.replace(old2, new2)
-          p.write_text(text, encoding='utf-8')
-
-          p = Path('tcg_updater_v135.py')
-          text = p.read_text(encoding='utf-8')
-          old = """                'existing_candidate_revalidation': True,\n                'base_service': getattr(core, 'SERVICE_NAME', 'TCG updater'),\n"""
-          new = """                'existing_candidate_revalidation': True,\n                'retry_reason_explainer': True,\n                'retry_reason_explainer_version': 160,\n                'base_service': getattr(core, 'SERVICE_NAME', 'TCG updater'),\n"""
-          if old not in text and new not in text:
-              raise SystemExit('health hook not found')
-          text = text.replace(old, new)
-          p.write_text(text, encoding='utf-8')
-
-          p = Path('REPAIR_V135_SERVER.sh')
-          text = p.read_text(encoding='utf-8')
-          marker = "if [ ! -f graded_photo_existing_revalidation_v159.py ]; then\n"
-          addition = """if [ ! -f graded_photo_retry_reason_v160.py ]; then\n  echo \"[오류] 재시도보존 원인표시 v160 모듈이 없습니다.\"\n  exit 1\nfi\n"""
-          if addition not in text:
-              if marker not in text:
-                  raise SystemExit('repair module hook not found')
-              text = text.replace(marker, addition + marker)
-          old = 'echo "[OK] 앞면+뒷면 8구역 UI + 기존사진·후보 전체 재검증 + 공식검증 RAW학습 실전달 확인"'
-          new = 'echo "[OK] 8구역 + 후보 전체 재검증 + 재시도원인 v160 + 공식검증 RAW학습 실전달 확인"'
-          if old in text:
-              text = text.replace(old, new)
-          p.write_text(text, encoding='utf-8')
-          PY
-      - name: Tests
-        run: |
-          python -m py_compile graded_photo_retry_reason_v160.py tcg_updater.py tcg_updater_v135.py
+          python -m py_compile graded_photo_retry_reason_v160.py graded_photo_existing_revalidation_v159.py tcg_updater.py tcg_updater_v135.py
           python -m unittest -v test_graded_photo_retry_reason_v160.py test_graded_photo_existing_revalidation_v159.py
-      - name: Commit generated patch
-        run: |
-          if git diff --quiet; then
-            echo 'No patch changes needed.'
-            exit 0
-          fi
-          git config user.name github-actions[bot]
-          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
-          git add tcg_updater.py tcg_updater_v135.py REPAIR_V135_SERVER.sh
-          git commit -m 'feat: show retry-preserved candidate reasons v160'
-          git push
+          grep -q 'graded_photo_retry_reason_v160' tcg_updater.py
+          grep -q "'retry_reason_explainer': True" tcg_updater_v135.py
+          grep -q 'graded_photo_retry_reason_v160.py' REPAIR_V135_SERVER.sh
