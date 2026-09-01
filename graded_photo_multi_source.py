@@ -111,6 +111,8 @@ def _candidate_key(item:dict):
  if company and cert:
   grade=item.get('grade');grade_key='unknown' if grade is None else f'{_finite_number(grade,-999.0):.3f}'
   return ('cert',company,cert,grade_key)
+ digest=str(item.get('image_sha256') or '').lower()
+ if re.fullmatch(r'[0-9a-f]{64}',digest):return ('image',digest)
  return ('url',str(item.get('url') or ''))
 
 def _candidate_retention_score(item:dict)->tuple:
@@ -244,6 +246,32 @@ def _registry_seed_rows()->list[dict]:
                 'image_validated':bool(evidence.get('image_sha256')),'image_probe_status':'validated' if evidence.get('image_sha256') else 'not_available',
                 'ocr_label_text':evidence.get('ocr_label_text',''),'source_asset_name':evidence.get('source_asset_name',''),
                 'image_evidence_source':'prevalidated_library_photo' if evidence.get('image_sha256') else 'not_available'})
+ return rows
+
+def _library_candidate_seed_rows()->list[dict]:
+ """Requeue useful existing photo manifests without promoting them to truth."""
+ data=_load(LIBRARY_CANDIDATES,{})
+ values=data.get('records',[]) if isinstance(data,dict) else []
+ rows=[];seen=set()
+ for item in values if isinstance(values,list) else []:
+  if not isinstance(item,dict) or item.get('official_result') is True:continue
+  company=str(item.get('company') or '').upper();cert=normalize_cert(item.get('certification_id'))
+  grade=item.get('label_grade') if item.get('label_grade') is not None else item.get('grade')
+  try:grade=float(grade) if grade is not None else None
+  except (TypeError,ValueError,OverflowError):grade=None
+  digest=str(item.get('sha256') or item.get('image_sha256') or '').lower()
+  if company not in COMPANIES or (not cert and grade is None):continue
+  if not re.fullmatch(r'[0-9a-f]{64}',digest) or digest in seen:continue
+  seen.add(digest)
+  rows.append({'source_id':'library_candidate','source':'기존 등록사진 검증대기','search_provider':'library_manifest',
+               'url':'','title':str(item.get('source_name') or f'{company} 기존 등록사진')[:260],'snippet':'','image_url':'',
+               'company':company,'grade':grade,'certification_id':cert,'game':str(item.get('game') or 'unknown').lower(),
+               'mode':'slab','source_weight':0.72,'official_result':False,'verification_method':'library_manifest_pending',
+               'status':'quarantine_candidate','learning_eligibility':'not_eligible_unverified','image_sha256':digest,
+               'image_perceptual_hash':str(item.get('perceptual_hash') or '')[:32],'image_validated':True,
+               'image_probe_status':'manifest_only','ocr_label_text':str(item.get('ocr_label_text') or '')[:1200],
+               'source_asset_name':str(item.get('source_name') or '')[:180],
+               'image_evidence_source':'prevalidated_library_manifest','image_revalidation_retryable':True})
  return rows
 
 def _verified_status(company,cert,grade,registry):
@@ -1065,10 +1093,12 @@ def _review_and_prune_quarantine_v157(rows:list[dict],previous_rows:list[dict])-
   hard_lookup=any(token in lookup for token in hard_lookup_tokens) and not transient
   prune_reason=''
 
+  manifest_only=bool(item.get('source_id')=='library_candidate' and re.fullmatch(r'[0-9a-f]{64}',str(item.get('image_sha256') or '').lower()))
   if reviews>=2:
    if conflicts & hard_conflicts:prune_reason='evidence_conflict'
+   elif manifest_only:pass
    elif probe_status=='failed':prune_reason='image_validation_failed'
-   elif not image_url:prune_reason='image_url_missing'
+   elif not image_url and not manifest_only:prune_reason='image_url_missing'
    elif image_validated and not ocr:prune_reason='ocr_unreadable'
    elif ocr and not cert:prune_reason='certification_unresolved'
    elif ocr and grade is None:prune_reason='grade_unresolved'
@@ -1081,7 +1111,7 @@ def _review_and_prune_quarantine_v157(rows:list[dict],previous_rows:list[dict])-
                  'reason':prune_reason,'title':str(item.get('title') or '')[:160],'url':str(item.get('url') or '')[:600]})
    continue
 
-  if cert and grade is not None and image_url and probe_status!='failed':retryable_kept+=1
+  if manifest_only or (cert and grade is not None and image_url and probe_status!='failed'):retryable_kept+=1
   elif reviews<2:grace_kept+=1
   kept.append(item)
 
@@ -1096,7 +1126,7 @@ def _collect_once()->dict:
  previous_rows=previous_payload.get('records',[]) if isinstance(previous_payload,dict) else []
  if not isinstance(previous_rows,list):previous_rows=[]
  previous_rows=[dict(x) for x in previous_rows if isinstance(x,dict)]
- seeds=_registry_seed_rows();rows=previous_rows+seeds;previous_count=len(previous_rows)
+ seeds=_registry_seed_rows();library_seeds=_library_candidate_seed_rows();rows=previous_rows+seeds+library_seeds;previous_count=len(previous_rows)
  ebay_rows=_ebay_candidates();rows.extend(ebay_rows)
  stats['ebay_api']={'candidates':len(ebay_rows),'image_hits':sum(bool(x.get('image_url')) for x in ebay_rows),
                     'verified_hits':0,'errors':0,'queries':1 if ebay_rows else 0,
@@ -1173,7 +1203,8 @@ def _collect_once()->dict:
   if item.get('evidence_conflicts'):reasons.extend(str(x) for x in item.get('evidence_conflicts') if x)
   if not item.get('certification_id'):reasons.append('certification_unresolved')
   if item.get('grade') is None:reasons.append('grade_unresolved')
-  if not item.get('image_url'):reasons.append('image_url_missing')
+  if not item.get('image_url'):
+   reasons.append('local_source_attachment_required' if item.get('source_id')=='library_candidate' else 'image_url_missing')
   elif item.get('image_probe_status')=='failed':reasons.append('image_validation_failed')
   if not verified:reasons.append('official_verification_missing')
   item['quarantine_reasons']=sorted(set(reasons))
@@ -1211,6 +1242,7 @@ def _collect_once()->dict:
                      'queries_attempted':sum(int(x.get('queries',0) or 0) for x in stats.values()),'markets_this_run':[x['id'] for x in active],
                      'timed_out_sources':sum(bool(x.get('timed_out')) for x in stats.values()),'initial_bootstrap_collection':first_bootstrap,
                      'previous_candidates':previous_count,'registry_seed_count':len(seeds),
+                     'library_candidate_seed_count':len(library_seeds),
                      'raw_results':sum(int(x.get('raw_results',0) or 0) for x in stats.values()),
                      'domain_matches':sum(int(x.get('domain_matches',0) or 0) for x in stats.values()),
                      'company_matches':sum(int(x.get('company_matches',0) or 0) for x in stats.values()),
@@ -1248,7 +1280,8 @@ def _collect_once()->dict:
                     'duplicate_image_training':False,'near_duplicate_image_training':False,'conflicting_labels_quarantined':True,
                     'measurement_ready_requires_official_validated_front_quality_photo':True,
                     'collection_learning_cannot_change_trust':True,'verified_feedback_only':True,
-                    'unusable_quarantine_pruned_after_reverification':True,'temporary_official_failures_preserved':True}}
+                    'unusable_quarantine_pruned_after_reverification':True,'temporary_official_failures_preserved':True,
+                    'library_manifest_candidates_quarantined_until_official_verification':True}}
  elapsed_seconds=round(time.monotonic()-run_started,1);payload['summary']['elapsed_seconds']=elapsed_seconds
  timed_out=int(payload['summary'].get('timed_out_sources',0) or 0)
  learning_state=_load(LEARNING,{})

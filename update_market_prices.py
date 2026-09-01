@@ -2,6 +2,7 @@
 """Refresh a small verified public-price cache without bypassing logins or private APIs."""
 from __future__ import annotations
 import os
+import time
 import datetime as dt, json, re, urllib.error, urllib.request
 from pathlib import Path
 from safe_runtime import atomic_write_json, diagnostic_exception, env_int, html_to_text, safe_read_text, safe_urlopen
@@ -9,7 +10,11 @@ from safe_runtime import atomic_write_json, diagnostic_exception, env_int, html_
 ROOT=Path(__file__).resolve().parent
 DATA=ROOT/'market_prices.json'
 APP=ROOT/'index.html'
-HEADERS={'User-Agent':'TCG-Grader-Public-Price-Checker/1.0'}
+HEADERS={
+ 'User-Agent':'Mozilla/5.0 (Linux; Android 15) AppleWebKit/537.36 Chrome/126.0 Safari/537.36 TCG-Grader/2.0',
+ 'Accept':'text/html,application/xhtml+xml;q=0.9,*/*;q=0.7',
+ 'Accept-Language':'ko-KR,ko;q=0.9,en;q=0.7',
+}
 ALLOWED_MARKET={'pokard.io','kream.co.kr','www.kream.co.kr','collectory.cc','www.collectory.cc','www.packmagik.com','packmagik.com','www.tcgplayer.com','tcgplayer.com','psa-index.com','www.psa-index.com','narutomarket.com','www.narutomarket.com'}
 NETWORK_ERRORS=(urllib.error.URLError, TimeoutError, OSError, UnicodeDecodeError, ValueError)
 
@@ -17,9 +22,27 @@ def fetch(url:str)->str:
     if not url.startswith(('https://pokard.io/','https://kream.co.kr/','https://www.packmagik.com/',
                            'https://www.tcgplayer.com/','https://psa-index.com/','https://narutomarket.com/')):
         raise ValueError('허용되지 않은 가격 출처')
-    req=urllib.request.Request(url,headers=HEADERS)
-    with safe_urlopen(req,timeout=env_int('TCG_HTTP_TIMEOUT',20,5,60),allowed_hosts=ALLOWED_MARKET) as r:
-        return r.read(2_000_000).decode('utf-8','replace')
+    attempts=(url, url+'/' if 'kream.co.kr/products/' in url and not url.endswith('/') else url)
+    last_error=None
+    for index,target in enumerate(attempts):
+        req=urllib.request.Request(target,headers=HEADERS)
+        try:
+            with safe_urlopen(req,timeout=env_int('TCG_HTTP_TIMEOUT',20,5,60),allowed_hosts=ALLOWED_MARKET) as r:
+                return r.read(2_000_000).decode('utf-8','replace')
+        except urllib.error.HTTPError as exc:
+            last_error=exc
+            if exc.code not in {500,502,503,504} or index+1>=len(attempts):raise
+            time.sleep(0.35)
+        except (urllib.error.URLError,TimeoutError,OSError,ValueError) as exc:
+            last_error=exc
+            if index+1>=len(attempts):raise
+    if last_error is not None:raise last_error
+    raise urllib.error.URLError('empty fetch attempt')
+
+def kream_label_prices(text:str,label_pattern:str,low:int,high:int,limit:int=12)->list[int]:
+    """Read public KREAM transaction rows without mistaking release/shipping prices."""
+    values=[int(value.replace(',','')) for value in re.findall(label_pattern+r'\s*([0-9,]+)원',text,re.I)]
+    return [value for value in values if low<=value<=high][:max(1,min(int(limit),30))]
 
 def set_price(db,key,display,kind,market,transactions,source):
     db['entries'][key]={'display':display,'kind':kind,'market':market,'transactions':transactions,
@@ -142,24 +165,22 @@ def main():
     except NETWORK_ERRORS as e: errors.append('POKARD BOX: '+diagnostic_exception(e))
     try:
         url='https://kream.co.kr/products/959332'; text=html_to_text(fetch(url))
-        vals=[int(x.replace(',','')) for x in re.findall(r'Ungraded A\s*([0-9,]+)원',text)[:3]]
+        vals=kream_label_prices(text,r'Ungraded A',30_000,2_000_000,3)
         if vals:
             vals.sort(); median=vals[len(vals)//2]
             set_price(db,'KR|테라스탈 페스타 ex|HIT',f'₩{median:,}',f'최근 미감정 거래 {len(vals)}건 중앙값','KREAM 한국판','공개 페이지 거래자료',url)
         else: errors.append('KREAM HIT: 거래가격 패턴 0건')
     except NETWORK_ERRORS as e: errors.append('KREAM HIT: '+diagnostic_exception(e))
     try:
-        url='https://kream.co.kr/products/stock/16256508'; text=html_to_text(fetch(url))
-        values=[int(x.replace(',','')) for x in re.findall(r'(?:구매가|즉시 구매가)\s*([0-9,]+)원',text)]
-        plausible=[x for x in values if 50_000 <= x <= 500_000]
+        url='https://kream.co.kr/products/290634'; text=html_to_text(fetch(url))
+        plausible=kream_label_prices(text,r'ONE SIZE',50_000,500_000,12)
         if plausible:
             set_price(db,'KR|로맨스 던|BOX',f'₩{plausible[0]:,}','KREAM 공개 상품 구매가','KREAM 한국판','공개 구매가 · 판매완료 체결가 아님',url)
         else: errors.append('KREAM 로맨스 던 BOX: 구매가격 패턴 0건')
     except NETWORK_ERRORS as e: errors.append('KREAM 로맨스 던 BOX: '+diagnostic_exception(e))
     try:
         url='https://kream.co.kr/products/627575';text=html_to_text(fetch(url))
-        trades=[int(x.replace(',','')) for x in re.findall(r'ONE SIZE\s*([0-9,]+)원',text)[:12]]
-        plausible=[x for x in trades if 20_000<=x<=150_000]
+        plausible=kream_label_prices(text,r'ONE SIZE',20_000,150_000,12)
         if plausible:
             low,high=min(plausible),max(plausible);display=f'₩{low:,}' if low==high else f'₩{low:,}~₩{high:,}'
             set_price(db,'KR|블랙볼트|BOX',display,'최근 공개 체결가 범위','KREAM 한국판',f'최근 공개 체결 {len(plausible)}건',url)

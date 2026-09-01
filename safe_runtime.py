@@ -261,6 +261,41 @@ def validate_public_https_url(url: str, allowed_hosts: set[str] | None = None) -
     return url
 
 
+def normalize_public_https_redirect(
+    current_url: str,
+    redirect_url: str,
+    allowed_hosts: set[str] | None = None,
+) -> str:
+    """Upgrade a trusted HTTP redirect target before any network connection.
+
+    Some official sites still emit an ``http://`` Location header even though the
+    same endpoint is available over HTTPS.  Following that redirect would violate
+    the collector policy, while rejecting it produces a misleading ``https only``
+    warning.  Only same-host or explicitly allowlisted hosts are upgraded; userinfo,
+    unusual ports and every unapproved host remain rejected by the normal validator.
+    """
+    absolute = urllib.parse.urljoin(str(current_url or ""), str(redirect_url or ""))
+    try:
+        parsed = urllib.parse.urlsplit(absolute)
+        current = urllib.parse.urlsplit(str(current_url or ""))
+    except ValueError:
+        return absolute
+    if parsed.scheme.lower() != "http":
+        return absolute
+    host = (parsed.hostname or "").rstrip(".").lower()
+    current_host = (current.hostname or "").rstrip(".").lower()
+    allowed = {str(value).rstrip(".").lower() for value in (allowed_hosts or set())}
+    trusted_host = bool(host and (host == current_host or host in allowed))
+    try:
+        unsafe_authority = bool(parsed.username or parsed.password or parsed.port not in (None, 80))
+    except ValueError:
+        return absolute
+    if not trusted_host or unsafe_authority:
+        return absolute
+    netloc = f"[{host}]" if ":" in host else host
+    return urllib.parse.urlunsplit(("https", netloc, parsed.path, parsed.query, parsed.fragment))
+
+
 def require_public_https(url: str, allowed_hosts: set[str] | None = None) -> str:
     validate_public_https_url(url, allowed_hosts)
     host = (urllib.parse.urlsplit(url).hostname or "").rstrip(".").lower()
@@ -396,7 +431,7 @@ class PublicHTTPSRedirect(urllib.request.HTTPRedirectHandler):
         self.max_redirects = max(0, min(10, int(max_redirects)))
 
     def redirect_request(self, req, fp, code, msg, headers, newurl):
-        absolute = urllib.parse.urljoin(req.full_url, newurl)
+        absolute = normalize_public_https_redirect(req.full_url, newurl, self.allowed_hosts)
         count = int(getattr(req, "_tcg_redirect_count", 0)) + 1
         if count > self.max_redirects:
             raise urllib.error.HTTPError(absolute, 508, "too many redirects", headers, fp)

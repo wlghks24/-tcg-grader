@@ -48,11 +48,13 @@ def pokemon_jp_years(fetch, html_to_text, years_per_run=2):
         r'.{0,180}?(?:発売日|販売日)\s*(20\d{2})年\s*(\d{1,2})月\s*(\d{1,2})日'
         r'(?:.{0,220}?(?:希望小売価格|価格)\s*([0-9,]+)円)?',re.I)
     for year in years:
-        url=(f'https://www.pokemon-card.com/products/index.html?productType=expansion&'
+        url=(f'https://www.pokemon-card.com/products/?productType=expansion&'
              f'dateLowerY={year}&dateLowerM=1&dateLowerD=1&dateUpperY={year}&dateUpperM=12&dateUpperD=31')
         try:text=html_to_text(fetch(url))
         except Exception as e:errors.append(f'Pokémon JP {year}: {type(e).__name__}');continue
         for name,yy,mm,dd,price in pat.findall(text):
+            if int(yy) != year:
+                continue
             row={'game':'Pokémon','region':'JP','name':_norm(name),'release_date':dt.date(int(yy),int(mm),int(dd)).isoformat(),
                  'price':f'¥{price}/팩' if price else '공식 가격 확인','status':'공식 과거출시 확인','source':url,'archive_year':year}
             out.append(row)

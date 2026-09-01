@@ -19,7 +19,12 @@ from safe_runtime import atomic_write_json, diagnostic_exception, env_int, html_
 
 ROOT = Path(__file__).resolve().parent
 DATA = ROOT / "releases.json"
-HEADERS = {"User-Agent": "TCG-Grader-Release-Checker/1.0 (+GitHub Pages; official pages only)"}
+HEADERS = {
+    "User-Agent": "Mozilla/5.0 (Linux; Android 15) AppleWebKit/537.36 "
+                  "Chrome/126.0 Safari/537.36 TCG-Grader-Release-Checker/2.0",
+    "Accept": "text/html,application/xhtml+xml,application/json;q=0.9,*/*;q=0.7",
+    "Accept-Language": "ko-KR,ko;q=0.9,ja-JP;q=0.8,en;q=0.6",
+}
 ALLOWED = {
     "pokemoncard.co.kr", "www.pokemoncard.co.kr",
     "www.pokemon-card.com", "www.30th.pokemon-card.com", "www.pokemon.com",
@@ -32,6 +37,14 @@ ALLOWED = {
 # to delete old official products from the archive on every refresh.
 MIN_RELEASE_DATE = dt.date(1996, 1, 1)
 MAX_FUTURE_YEARS = 5
+POKEMON_JP_PRODUCT_URLS = (
+    "https://www.pokemon-card.com/products/",
+    "https://www.pokemon-card.com/products/index.html?productType=expansion",
+)
+ONEPIECE_JP_PRODUCT_URLS = (
+    "https://www.onepiece-cardgame.com/products/?subcategory=boosters",
+    "https://www.onepiece-cardgame.com/products/",
+)
 
 
 def fetch(url: str) -> str:
@@ -87,14 +100,12 @@ def collect_onepiece(url: str, region: str) -> list[dict]:
     return found
 
 
-def collect_onepiece_jp() -> list[dict]:
-    url = "https://www.onepiece-cardgame.com/products/?subcategory=boosters"
-    text = html_to_text(fetch(url))
+def _parse_onepiece_jp(text: str, url: str) -> list[dict]:
     pattern = re.compile(
-        r"(?:ブースターパック|エクストラブースター|プレミアムブースター)\s*"
-        r"(.{2,90}?)\s*〖(OP-\d+|EB-\d+|PRB-\d+)〗\s*"
-        r"発売日\s*(20\d{2})\s*[.年]\s*(\d{1,2})"
-        r"(?:\s*[.月]\s*(\d{1,2})\s*日?)?(?:\([^)]*\))?\s*"
+        r"(?:ブースター\s+)?(?:ブースターパック|エクストラブースター|プレミアムブースター)\s*"
+        r"(.{2,90}?)\s*[〖【](OP-\d+|EB-\d+|PRB-\d+)[〗】]\s*"
+        r"発売日\s*(20\d{2})\s*[./年]\s*(\d{1,2})"
+        r"(?:\s*[./月]\s*(\d{1,2})\s*日?)?(?:\([^)]*\))?\s*"
         r"メーカー希望小売価格\s*([0-9,]+)円",
         re.I,
     )
@@ -114,6 +125,25 @@ def collect_onepiece_jp() -> list[dict]:
     return found
 
 
+def collect_onepiece_jp() -> list[dict]:
+    last_error: Exception | None = None
+    fetched_official_page = False
+    for url in ONEPIECE_JP_PRODUCT_URLS:
+        try:
+            found = _parse_onepiece_jp(html_to_text(fetch(url)), url)
+        except (urllib.error.URLError, TimeoutError, OSError, ValueError, UnicodeError) as exc:
+            last_error = exc
+            continue
+        fetched_official_page = True
+        if found:
+            return found
+    if fetched_official_page:
+        return []
+    if last_error is not None:
+        raise last_error
+    return []
+
+
 def collect_onepiece_kr() -> list[dict]:
     url = "https://onepiece-cardgame.kr/products.do"
     text = html_to_text(fetch(url))
@@ -127,19 +157,39 @@ def collect_onepiece_kr() -> list[dict]:
     return found
 
 
-def collect_pokemon_jp() -> list[dict]:
-    url = "https://www.pokemon-card.com/products/index.html?productType=expansion"
-    text = html_to_text(fetch(url))
+def _parse_pokemon_jp(text: str, url: str) -> list[dict]:
     pattern = re.compile(
-        r"(?:拡張パック|ハイクラスパック)\s*[「『]?\s*(.{2,55}?)\s*[」』]?\s*"
-        r"(?:拡張パック\s*)?販売日\s*(20\d{2})\s*年\s*(\d{1,2})\s*月\s*"
-        r"(\d{1,2})\s*日.{0,160}?希望小売価格\s*([0-9,]+)\s*円"
+        r"(?:強化拡張パック|拡張パック|ハイクラスパック|コンセプトパック)\s*"
+        r"[「『]?\s*(.{2,70}?)\s*[」』]?\s*"
+        r"(?:強化拡張パック|拡張パック|ハイクラスパック)?\s*(?:販売日|発売日)\s*"
+        r"(20\d{2})\s*年\s*(\d{1,2})\s*月\s*(\d{1,2})\s*日"
+        r".{0,180}?希望小売価格\s*([0-9,]+)\s*円",
+        re.I,
     )
     found = []
     for name, y, m, d, price in pattern.findall(text):
         date = dt.date(int(y), int(m), int(d)).isoformat()
         found.append({"game":"Pokémon","region":"JP","name":name.strip(),"release_date":date,"price":f"¥{price}/팩","status":"공식 확인","source":url})
     return found
+
+
+def collect_pokemon_jp() -> list[dict]:
+    last_error: Exception | None = None
+    fetched_official_page = False
+    for url in POKEMON_JP_PRODUCT_URLS:
+        try:
+            found = _parse_pokemon_jp(html_to_text(fetch(url)), url)
+        except (urllib.error.URLError, TimeoutError, OSError, ValueError, UnicodeError) as exc:
+            last_error = exc
+            continue
+        fetched_official_page = True
+        if found:
+            return found
+    if fetched_official_page:
+        return []
+    if last_error is not None:
+        raise last_error
+    return []
 
 
 def collect_naruto() -> list[dict]:

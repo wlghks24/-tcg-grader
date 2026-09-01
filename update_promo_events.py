@@ -13,7 +13,9 @@ import urllib.parse
 import urllib.request
 from html.parser import HTMLParser
 from pathlib import Path
-from safe_runtime import atomic_write_json, diagnostic_exception, env_int, require_public_https, safe_read_text, validate_public_https_url
+from safe_runtime import (atomic_write_json, diagnostic_exception, env_int,
+                          normalize_public_https_redirect, require_public_https,
+                          safe_read_text, validate_public_https_url)
 
 import multi_route_event_discovery
 import supplementary_discovery
@@ -290,7 +292,7 @@ def approved_url(url: str) -> str:
 
 class OfficialRedirect(urllib.request.HTTPRedirectHandler):
     def redirect_request(self, req, fp, code, msg, headers, newurl):
-        absolute = urllib.parse.urljoin(req.full_url, newurl)
+        absolute = normalize_public_https_redirect(req.full_url, newurl, FETCH_ALLOWED)
         approved_url(absolute)
         require_public_https(absolute, FETCH_ALLOWED)
         return super().redirect_request(req, fp, code, msg, headers, absolute)
