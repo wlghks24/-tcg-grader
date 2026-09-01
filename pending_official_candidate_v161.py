@@ -36,7 +36,7 @@ import manual_official_proof as manual_proof
 from grading_cert_verifier import lookup_url
 from safe_runtime import atomic_write_bytes
 
-ENGINE = "v171-pending-official-candidate-korean-negative-proof-ocr"
+ENGINE = "v172-pending-official-candidate-termux-korean-tessdata-bootstrap"
 ROOT = Path(__file__).resolve().parent
 PROOF_ROOT = ROOT / "GRADE_TRAINING_INBOX" / "pending_official_candidate_proof"
 NEGATIVE_PROOF_ROOT = ROOT / "GRADE_TRAINING_INBOX" / "pending_official_candidate_negative_proof"
@@ -354,7 +354,7 @@ def _submit_not_found(incoming: dict[str, Any]) -> dict[str, Any]:
     if not signal.get("negative_text_detected"):
         proof_path.unlink(missing_ok=True)
         if multilang_error == "korean_tessdata_missing":
-            raise ValueError("한글 공식조회 결과를 읽기 위한 OCR 언어자료가 없습니다. Termux에서 pkg install tesseract-data-kor -y 실행 후 다시 선택하세요.")
+            raise ValueError("한글 공식조회 결과를 읽기 위한 OCR 언어자료가 없습니다. Termux에서 bash ensure_tesseract_kor.sh 실행 후 다시 선택하세요.")
         raise ValueError("공식사이트에 '조회 결과 없음/인증번호 없음' 문구가 확인된 화면만 후보삭제에 사용할 수 있습니다.")
     if not signal.get("company_brand_detected"):
         proof_path.unlink(missing_ok=True)

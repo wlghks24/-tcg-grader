@@ -100,6 +100,15 @@ if ! command -v tesseract >/dev/null 2>&1; then
   echo "라벨 OCR용 Tesseract를 설치합니다..."
   pkg install tesseract -y || echo "[안내] Tesseract 미설치 상태에서는 사진 수집 후 OCR만 보류됩니다."
 fi
+if command -v tesseract >/dev/null 2>&1; then
+  if ! tesseract --list-langs 2>/dev/null | grep -Fxq 'kor'; then
+    if [ -s "ensure_tesseract_kor.sh" ]; then
+      bash ensure_tesseract_kor.sh || echo "[안내] 한글 OCR 설치를 완료하지 못했습니다. 공식 조회결과 한글 인식만 보류됩니다."
+    else
+      echo "[안내] ensure_tesseract_kor.sh가 없어 한글 OCR 자동설치를 건너뜁니다."
+    fi
+  fi
+fi
 
 echo "서버를 종료하려면 Ctrl+C를 누르세요."
 for required in \
