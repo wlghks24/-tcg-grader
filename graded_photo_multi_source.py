@@ -1294,10 +1294,34 @@ def _collect_once()->dict:
  atomic_write_json(OUT,payload,suffix='.graded-photo.tmp');_save_learning(stats);return payload
 
 def collect()->dict:
- # A local server, Termux scheduler and manual command must not run this costly
- # stateful collection at the same time. The lock is adjacent to runtime state.
- with exclusive_file_lock(LEARNING.with_suffix(LEARNING.suffix+'.run'),timeout_seconds=0.05,stale_seconds=28_800):
-  return _collect_once()
+ # A local server, Termux scheduler and manual command can overlap. Only one run
+ # mutates learning state; followers reuse the last validated payload instead of
+ # turning benign lock contention into a collector failure.
+ lock_target=LEARNING.with_suffix(LEARNING.suffix+'.run')
+ try:
+  with exclusive_file_lock(lock_target,timeout_seconds=1.5,stale_seconds=28_800):
+   return _collect_once()
+ except TimeoutError:
+  previous=_load(OUT,{})
+  if isinstance(previous,dict) and isinstance(previous.get('summary'),dict):
+   recovered=dict(previous);summary=dict(previous['summary'])
+   summary['concurrent_run_reused']=True
+   summary['lock_contention_recovered']=True
+   summary['status']='동일 수집이 이미 실행 중 · 마지막 검증 후보 재사용'
+   recovered['summary']=summary
+   return recovered
+  # Fresh installs may not have a previous payload yet. Wait once, bounded, for
+  # the active collector to finish; never spin or launch a duplicate writer.
+  with exclusive_file_lock(lock_target,timeout_seconds=8.0,stale_seconds=28_800):
+   previous=_load(OUT,{})
+   if isinstance(previous,dict) and isinstance(previous.get('summary'),dict):
+    recovered=dict(previous);summary=dict(previous['summary'])
+    summary['concurrent_run_reused']=True
+    summary['lock_contention_recovered']=True
+    summary['status']='동일 수집 완료 · 방금 생성된 검증 후보 재사용'
+    recovered['summary']=summary
+    return recovered
+   return _collect_once()
 
 def main():
  p=collect();print(json.dumps(p['summary'],ensure_ascii=False));return p

@@ -48,7 +48,7 @@ INDEXES = (
     ("JP", "포켓몬 카드", "https://www.pokemon-card.com/info/"),
     ("JP", "포켓몬 카드", "https://www.pokemon.co.jp/info/"),
     ("JP", "원피스 카드", "https://www.onepiece-cardgame.com/events/"),
-    ("JP", "원피스 카드", "https://one-piece.com/news/"),
+    ("JP", "원피스 카드", "https://one-piece.com/news/index.html"),
     ("US", "원피스 카드", "https://en.onepiece-cardgame.com/events/"),
     ("US", "포켓몬 카드", "https://www.pokemon.com/us/play-pokemon"),
     ("JP", "나루토 카드", "https://www.naruto-cardgame.com/jp/"),
@@ -128,7 +128,7 @@ REGIONAL_MOVIE_TRACKERS = KR_MOVIE_TRACKERS + (
                   condition="포켓몬 일본 공식 발표를 확인하며 새 극장판 개봉일을 임의로 생성하지 않습니다."),
     movie_tracker("나루토 카드", "JP", "https://naruto-official.com/en/news/01_2649",
                   condition="실사 영화의 제작·글로벌 캐스팅만 공식 발표됐으며 일본 개봉일은 발표되지 않았습니다."),
-    movie_tracker("원피스 카드", "US", "https://one-piece.com/news/",
+    movie_tracker("원피스 카드", "US", "https://one-piece.com/news/index.html",
                   condition="미국 극장 개봉 또는 현지 배급 일정은 공식 발표가 확인될 때만 표시합니다."),
     movie_tracker("나루토 카드", "US", "https://naruto-official.com/en/news/01_2649",
                   condition="Lionsgate 실사 영화의 제작·글로벌 캐스팅은 공식 발표됐으나 미국 개봉일은 미발표입니다."),
@@ -745,9 +745,18 @@ def main() -> dict:
     movie_tracker_key = {(x.get("game"), x.get("region"), x.get("category"), x.get("name_ko")) for x in valid_original}
     for tracker in REGIONAL_MOVIE_TRACKERS:
         key = (tracker["game"], tracker["region"], tracker["category"], tracker["name_ko"])
-        if key not in movie_tracker_key:
+        found = next((i for i,x in enumerate(valid_original)
+                      if (x.get("game"),x.get("region"),x.get("category"),x.get("name_ko")) == key), None)
+        if found is None:
             valid_original.append(normalize_event_dates(dict(tracker)))
             movie_tracker_key.add(key)
+        else:
+            previous=valid_original[found]
+            refreshed={**previous,**tracker}
+            for field in ("link_checked_at","link_status","link_statuses"):
+                if field in previous:
+                    refreshed[field]=previous[field]
+            valid_original[found]=normalize_event_dates(refreshed)
 
     seeded_count = 0
     for seed in OFFICIAL_VERIFIED_SEEDS:

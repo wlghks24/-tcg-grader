@@ -862,7 +862,7 @@ def run_all(trigger: str = "manual", selected_files=None, progress_callback=None
     # 보조 후보수집과 링크검사도 핵심 작업과 동일한 학습형 timeout을 사용한다.
     # v55의 고정 8초/12초 제한은 정상 작업을 실패로 오판할 수 있어 v56에서 제거했다.
     def _run_aux_task(stat_key, runner):
-        """보조작업도 핵심 작업과 동일하게 300초 총예산 내에서 1회 복구 재시도한다.
+        """보조작업은 1회 복구 재시도한다. 통합 후보수집은 Termux용 480초, 나머지는 300초 총예산을 사용한다.
 
         v57: v56은 보조작업에 학습 timeout만 적용하고 실제 재시도는 하지 않았다.
         일시 Timeout/연결 오류는 두 번째 시도에 최소 90초(또는 학습값 2배)를
@@ -873,7 +873,7 @@ def run_all(trigger: str = "manual", selected_files=None, progress_callback=None
         # 일반 보조수집은 기존 학습단계를 쓰되 링크감사만 최소 120초를 확보한다.
         if stat_key == '__link_audit__':
             learned_timeout=max(120, learned_timeout)
-        started_aux=time.monotonic(); deadline=started_aux+300
+        started_aux=time.monotonic(); total_budget=480 if stat_key == '__integration__' else 300; deadline=started_aux+total_budget
         attempts=0; errors=[]; last_timed_out=False
         while attempts < 2 and time.monotonic() < deadline:
             attempts += 1

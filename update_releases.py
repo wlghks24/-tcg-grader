@@ -21,7 +21,7 @@ ROOT = Path(__file__).resolve().parent
 DATA = ROOT / "releases.json"
 HEADERS = {
     "User-Agent": "Mozilla/5.0 (Linux; Android 15) AppleWebKit/537.36 "
-                  "Chrome/126.0 Safari/537.36 TCG-Grader-Release-Checker/2.0",
+                  "(KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36",
     "Accept": "text/html,application/xhtml+xml,application/json;q=0.9,*/*;q=0.7",
     "Accept-Language": "ko-KR,ko;q=0.9,ja-JP;q=0.8,en;q=0.6",
 }
@@ -125,12 +125,33 @@ def _parse_onepiece_jp(text: str, url: str) -> list[dict]:
     return found
 
 
+def _parse_onepiece_jp_fallback(text: str, url: str) -> list[dict]:
+    pattern = re.compile(
+        r"(?:ブースター\s+)?(?:ブースターパック|エクストラブースター|プレミアムブースター)\s+"
+        r"(.{2,100}?)\s*[〖【](OP-\d+|EB-\d+|PRB-\d+)[〗】]"
+        r".{0,120}?発売日\s*(20\d{2})\s*[./年]\s*(\d{1,2})"
+        r"(?:\s*[./月]\s*(\d{1,2}))?.{0,160}?メーカー希望小売価格\s*([0-9,]+)\s*円",
+        re.I | re.S,
+    )
+    found=[]
+    for title,code,y,m,d,price in pattern.findall(text):
+        row={"game":"ONE PIECE","region":"JP","name":f"{re.sub(r'\s+',' ',title).strip()} [{code}]",
+             "price":f"¥{price}/팩","status":"공식 확인","source":url}
+        if d:
+            row["release_date"]=dt.date(int(y),int(m),int(d)).isoformat()
+        else:
+            row.update({"release_date":None,"release_window":f"{int(y):04d}-{int(m):02d}",
+                        "release_precision":"month","release_label":f"{int(y):04d}년 {int(m)}월"})
+        found.append(row)
+    return found
+
+
 def collect_onepiece_jp() -> list[dict]:
     last_error: Exception | None = None
     fetched_official_page = False
     for url in ONEPIECE_JP_PRODUCT_URLS:
         try:
-            found = _parse_onepiece_jp(html_to_text(fetch(url)), url)
+            text = html_to_text(fetch(url)); found = _parse_onepiece_jp(text, url) or _parse_onepiece_jp_fallback(text, url)
         except (urllib.error.URLError, TimeoutError, OSError, ValueError, UnicodeError) as exc:
             last_error = exc
             continue
@@ -173,12 +194,27 @@ def _parse_pokemon_jp(text: str, url: str) -> list[dict]:
     return found
 
 
+def _parse_pokemon_jp_fallback(text: str, url: str) -> list[dict]:
+    pattern = re.compile(
+        r"(?:強化拡張パック|拡張パック|ハイクラスパック|コンセプトパック)\s*[「『]\s*([^」』]{2,70})[」』]"
+        r".{0,140}?(?:販売日|発売日)\s*(20\d{2})\s*年\s*(\d{1,2})\s*月\s*(\d{1,2})\s*日"
+        r".{0,180}?希望小売価格\s*([0-9,]+)\s*円",
+        re.I | re.S,
+    )
+    found=[]
+    for name,y,m,d,price in pattern.findall(text):
+        found.append({"game":"Pokémon","region":"JP","name":re.sub(r'\s+',' ',name).strip(),
+                      "release_date":dt.date(int(y),int(m),int(d)).isoformat(),"price":f"¥{price}/팩",
+                      "status":"공식 확인","source":url})
+    return found
+
+
 def collect_pokemon_jp() -> list[dict]:
     last_error: Exception | None = None
     fetched_official_page = False
     for url in POKEMON_JP_PRODUCT_URLS:
         try:
-            found = _parse_pokemon_jp(html_to_text(fetch(url)), url)
+            text = html_to_text(fetch(url)); found = _parse_pokemon_jp(text, url) or _parse_pokemon_jp_fallback(text, url)
         except (urllib.error.URLError, TimeoutError, OSError, ValueError, UnicodeError) as exc:
             last_error = exc
             continue
@@ -247,6 +283,7 @@ def main() -> None:
     current = json.loads(safe_read_text(DATA))
     candidates: list[dict] = []
     errors: list[str] = []
+    parser_drift_warnings: list[str] = []
     collectors = [
         ("Pokémon JP", collect_pokemon_jp),
         ("ONE PIECE KR", collect_onepiece_kr),
@@ -261,6 +298,19 @@ def main() -> None:
             try:
                 batch = future.result()
                 if not batch:
+                    coverage_map={
+                        'Pokémon JP':('Pokémon','JP'),'ONE PIECE KR':('ONE PIECE','KR'),
+                        'ONE PIECE JP':('ONE PIECE','JP'),'ONE PIECE US':('ONE PIECE','US'),
+                        'NARUTO Global':('NARUTO','GLOBAL'),
+                    }
+                    expected=coverage_map.get(label)
+                    has_history=bool(expected and any(
+                        isinstance(x,dict) and x.get('game')==expected[0] and x.get('region')==expected[1] and valid(x)
+                        for x in current.get('items',[])
+                    ))
+                    if has_history:
+                        parser_drift_warnings.append(f"{label}: 공식 페이지 0건 · 기존 검증 이력 유지 · 다음 실행에서 재파싱")
+                        continue
                     raise ValueError("공식 페이지에서 검증 가능한 상품을 1건도 읽지 못함")
                 candidates.extend(batch)
             except (urllib.error.URLError, TimeoutError, OSError, ValueError, UnicodeError) as exc:
@@ -295,8 +345,14 @@ def main() -> None:
 
     current["items"] = sorted(merged.values(), key=lambda x: (x.get("release_date") or "9999-12-31", x.get("region", ""), x.get("name", "")))
     current["updated_at"] = dt.datetime.now(dt.timezone.utc).isoformat(timespec="seconds")
-    current["collection_status"] = "정상" if not errors else "일부 출처 확인 실패 · 기존 전체 출시이력 보존"
+    if errors:
+        current["collection_status"] = "일부 출처 확인 실패 · 기존 전체 출시이력 보존"
+    elif parser_drift_warnings:
+        current["collection_status"] = "정상 · 기존 검증자료 유지 · 파서 드리프트 자가복구 대기"
+    else:
+        current["collection_status"] = "정상"
     current["collection_errors"] = errors
+    current["parser_drift_warnings"] = parser_drift_warnings
     current["history_policy"] = "공식 확인된 과거 출시제품은 기간 제한 없이 누적 보존하며 네트워크 실패 시 삭제하지 않음"
     current["history_count"] = len(current["items"])
     atomic_write_json(DATA,current,suffix=".json.tmp")

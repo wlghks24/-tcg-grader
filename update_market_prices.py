@@ -111,6 +111,31 @@ def keep_verified_seeds(db):
 def atomic_save(db):
     atomic_write_json(DATA,db,suffix='.json.tmp')
 
+def _sanitize_entries(db):
+    entries=db.get('entries')
+    if not isinstance(entries,dict):
+        bad={'__entries__':entries}
+        db['entries']={}
+        quarantine=db.setdefault('invalid_entries_quarantine',{})
+        quarantine.update(bad)
+        return 1
+    quarantine=db.setdefault('invalid_entries_quarantine',{})
+    repaired=0
+    for key,value in list(entries.items()):
+        valid_key=isinstance(key,str) and key.count('|')==2
+        valid_value=isinstance(value,dict) and bool(value.get('display'))
+        if valid_key and valid_value:
+            continue
+        quarantine[str(key)]={'value':value,'reason':'invalid market entry quarantined'}
+        entries.pop(key,None)
+        repaired+=1
+    # Keep quarantine bounded: it is diagnostic memory, not a second market DB.
+    if len(quarantine)>100:
+        for key in list(quarantine)[:-100]:
+            quarantine.pop(key,None)
+    return repaired
+
+
 def coverage(db):
     raw=safe_read_text(APP);block=raw.split('const COUNTRY_BOX_DATA=',1)[1].split('const LEARNING_PRICE_DATA=',1)[0]
     products=re.findall(r'\{country:"(KR|JP|US)",game:"[^"]+",name:"([^"]+)"',block)
@@ -119,7 +144,7 @@ def coverage(db):
     return {'total':len(required),'verified':len(verified),'pending':len(missing),'missing_keys':missing}
 
 def main():
-    db=json.loads(safe_read_text(DATA)); db.setdefault('entries',{}); errors=[]
+    db=json.loads(safe_read_text(DATA)); errors=[]; initial_repairs=_sanitize_entries(db)
     keep_verified_seeds(db)
     # 느린 외부 사이트가 응답하지 않아도 확인 완료 기준자료는 즉시 보존한다.
     atomic_save(db)
@@ -208,6 +233,10 @@ def main():
         crosscheck_market_db(db)
     except (OSError, ValueError, TypeError, urllib.error.URLError, TimeoutError) as e:
         errors.append('Collectory/KREAM 교차확인: '+diagnostic_exception(e))
+    late_repairs=_sanitize_entries(db)
+    repaired_entries=initial_repairs+late_repairs
+    if repaired_entries:
+        db['market_entry_repair']={'repaired_count':repaired_entries,'action':'malformed rows quarantined; verified rows preserved'}
     db['updated_at']=dt.datetime.now(dt.timezone.utc).isoformat(timespec='seconds')
     db['collection_status']='정상' if not errors else '일부 가격 출처 확인 실패'
     db['collection_errors']=errors
