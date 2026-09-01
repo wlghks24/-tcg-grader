@@ -1,0 +1,67 @@
+name: Apply runtime self-heal v110
+on:
+  push:
+    branches: [main]
+    paths:
+      - apply_runtime_self_heal_v110.py
+      - .github/workflows/apply-runtime-self-heal-v110.yml
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
+        with:
+          python-version: '3.12'
+      - name: Wait for patch file
+        id: patchfile
+        run: |
+          if [ -f apply_runtime_self_heal_v110.py ]; then
+            echo "ready=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "ready=false" >> "$GITHUB_OUTPUT"
+            echo "Patch file not committed yet; next push will apply it."
+          fi
+      - name: Apply runtime recovery patch
+        if: steps.patchfile.outputs.ready == 'true'
+        run: python apply_runtime_self_heal_v110.py
+      - name: Syntax check
+        if: steps.patchfile.outputs.ready == 'true'
+        run: python -m py_compile graded_photo_multi_source.py auto_update_all.py update_market_prices.py update_releases.py update_promo_events.py
+      - name: Parser and repair smoke tests
+        if: steps.patchfile.outputs.ready == 'true'
+        run: |
+          python - <<'PY'
+          import update_releases as r
+          p='拡張パック「ストームエメラルダ」 拡張パック 販売日 2026年 7月31日（金） 希望小売価格 200円（税込）'
+          rows=r._parse_pokemon_jp(p,'https://www.pokemon-card.com/products/index.html?productType=expansion')
+          if not rows:
+              rows=r._parse_pokemon_jp_fallback(p,'https://www.pokemon-card.com/products/index.html?productType=expansion')
+          assert rows and rows[0]['release_date']=='2026-07-31'
+          o='ブースター エクストラブースター ONE PIECE Heroines Edition vol.2〖EB-05〗 発売日2026.10 メーカー希望小売価格240円(税込)'
+          rows=r._parse_onepiece_jp(o,'https://www.onepiece-cardgame.com/products/?subcategory=boosters')
+          if not rows:
+              rows=r._parse_onepiece_jp_fallback(o,'https://www.onepiece-cardgame.com/products/?subcategory=boosters')
+          assert rows and rows[0].get('release_window')=='2026-10'
+          import update_market_prices as m
+          db={'entries':{'KR|bad|BOX':None,'KR|bad2|BOX':{},'KR|good|BOX':{'display':'₩1'}}}
+          repaired=m._sanitize_entries(db)
+          assert repaired==2 and list(db['entries'])==['KR|good|BOX'] and len(db['invalid_entries_quarantine'])==2
+          PY
+      - name: Existing graded-photo regression tests
+        if: steps.patchfile.outputs.ready == 'true'
+        run: python -m unittest -v test_graded_photo_multi_source.py
+      - name: Commit patched runtime
+        if: steps.patchfile.outputs.ready == 'true'
+        run: |
+          if git diff --quiet -- graded_photo_multi_source.py auto_update_all.py update_market_prices.py update_releases.py update_promo_events.py; then
+            echo "Runtime self-heal v110 already integrated"
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add graded_photo_multi_source.py auto_update_all.py update_market_prices.py update_releases.py update_promo_events.py
+          git commit -m "fix: self-heal runtime collector failures v110"
+          git push
