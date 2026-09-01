@@ -7,6 +7,11 @@ opens the official grader page in their own browser and uploads a screenshot.
 The screenshot must OCR-match company + certificate + grade before the candidate
 is promoted to an official reference-learning row.
 
+A separate negative-proof path is provided when the official grader page says
+that no record exists.  Negative proof can only remove an *unverified* candidate,
+requires an exact certification-number confirmation, archives the screenshot and
+never creates grading truth or RAW calibration data.
+
 This path is intentionally separate from live automated lookup/cooldown. It does
 not bypass grader-site access controls and it never makes a candidate eligible
 for RAW grade calibration by itself.
@@ -28,11 +33,28 @@ import manual_official_proof as manual_proof
 from grading_cert_verifier import lookup_url
 from safe_runtime import atomic_write_bytes
 
-ENGINE = "v161-pending-official-candidate-manual-verification"
+ENGINE = "v162-pending-official-candidate-manual-verification"
 ROOT = Path(__file__).resolve().parent
 PROOF_ROOT = ROOT / "GRADE_TRAINING_INBOX" / "pending_official_candidate_proof"
+NEGATIVE_PROOF_ROOT = ROOT / "GRADE_TRAINING_INBOX" / "pending_official_candidate_negative_proof"
+REJECTION_LOG = ROOT / "pending_official_candidate_rejections.json"
 MAX_PROOF_BYTES = 8_000_000
 _DATA_URL_RE = re.compile(r"^data:(image/(?:jpeg|png));base64,([A-Za-z0-9+/=\r\n]+)$", re.I)
+_NEGATIVE_PATTERNS = (
+    re.compile(r"검색된\s*기록이\s*없습니다", re.I),
+    re.compile(r"검색(?:된)?\s*결과가\s*없습니다", re.I),
+    re.compile(r"조회(?:된)?\s*기록이\s*없습니다", re.I),
+    re.compile(r"no\s+records?\s+(?:were\s+)?found", re.I),
+    re.compile(r"no\s+results?\s+(?:were\s+)?found", re.I),
+    re.compile(r"(?:certificate|certification|cert(?:ificate)?\s*number)\s+(?:was\s+)?not\s+found", re.I),
+)
+_COMPANY_BRANDS = {
+    "PSA": ("PSA",),
+    "BGS": ("BGS", "BECKETT", "비그스"),
+    "CGC": ("CGC",),
+    "TAG": ("TAG",),
+    "BRG": ("BRG",),
+}
 
 
 def _now() -> str:
@@ -63,12 +85,15 @@ def _pending_rows(payload: dict[str, Any]) -> list[dict[str, Any]]:
     out: list[dict[str, Any]] = []
     if not isinstance(rows, list):
         return out
+    rejected = _rejected_cert_keys()
     for row in rows:
         if not isinstance(row, dict) or row.get("official_result") is True:
             continue
         company = str(row.get("company") or "").upper().strip()
         cert = gp.normalize_cert(row.get("certification_id"))
         grade = _grade(row.get("grade"))
+        if (company, cert) in rejected:
+            continue
         if company not in gp.COMPANIES or not cert or grade is None:
             continue
         reasons = {str(v) for v in (row.get("quarantine_reasons") or []) if v}
@@ -96,6 +121,26 @@ def _public_row(row: dict[str, Any]) -> dict[str, Any]:
     }
 
 
+def _rejection_payload() -> dict[str, Any]:
+    value = gp._load(REJECTION_LOG, {})
+    rows = value.get("rejections", []) if isinstance(value, dict) else []
+    return {
+        "schema_version": 1,
+        "updated_at": value.get("updated_at") if isinstance(value, dict) else None,
+        "rejections": [dict(row) for row in rows if isinstance(row, dict)][-5000:],
+    }
+
+
+def _rejected_cert_keys() -> set[tuple[str, str]]:
+    out: set[tuple[str, str]] = set()
+    for row in _rejection_payload()["rejections"]:
+        company = str(row.get("company") or "").upper().strip()
+        cert = gp.normalize_cert(row.get("certification_id"))
+        if company in gp.COMPANIES and cert and row.get("reason") == "official_record_not_found_user_confirmed":
+            out.add((company, cert))
+    return out
+
+
 def public_status() -> dict[str, Any]:
     payload = gp._load(gp.OUT, {})
     rows = _pending_rows(payload)
@@ -110,6 +155,9 @@ def public_status() -> dict[str, Any]:
             "screenshot_required": True,
             "exact_company_certificate_grade_ocr_required": True,
             "manual_exact_match_can_promote_reference": True,
+            "manual_no_record_can_remove_unverified_candidate": True,
+            "negative_proof_exact_cert_confirmation_required": True,
+            "negative_proof_is_archived": True,
             "raw_grade_calibration_eligible": False,
             "access_control_bypass_used": False,
         },
@@ -134,9 +182,156 @@ def _decode_proof(value: Any) -> tuple[bytes, str]:
     return data, ".jpg" if mime == "image/jpeg" else ".png"
 
 
+def _find_unverified_target(rows: list[dict[str, Any]], candidate_id: str) -> dict[str, Any]:
+    matches = [row for row in rows if row.get("official_result") is not True and _candidate_id(row) == candidate_id]
+    if not matches:
+        raise ValueError("공식검증 미완료 후보를 찾지 못했습니다. 화면을 새로고침하세요.")
+    return matches[0]
+
+
+def _negative_ocr(text: Any, evidence: Any, company: str) -> dict[str, Any]:
+    raw = " ".join(str(text or "").replace("\x00", " ").split())
+    negative = any(pattern.search(raw) for pattern in _NEGATIVE_PATTERNS)
+    upper = raw.upper()
+    brands = _COMPANY_BRANDS.get(company, (company,))
+    brand = any(str(token).upper() in upper for token in brands if token)
+    evidence_company = str((evidence or {}).get("company") or "").upper() if isinstance(evidence, dict) else ""
+    if evidence_company == company:
+        brand = True
+    return {
+        "negative_text_detected": negative,
+        "company_brand_detected": brand,
+        "ocr_text": raw[:1800],
+    }
+
+
+def _save_candidate_payload(payload: dict[str, Any], rows: list[dict[str, Any]], *, promoted_delta: int = 0,
+                            rejected_delta: int = 0, timestamp_key: str | None = None) -> dict[str, Any]:
+    existing._apply_current_disposition(rows)
+    reference_learning = gp._save_reference_learning(rows)
+    reference_summary = reference_learning.get("summary", {}) if isinstance(reference_learning, dict) else {}
+    summary = dict(payload.get("summary") or {}) if isinstance(payload, dict) else {}
+    verified_count = sum(row.get("official_result") is True and not row.get("evidence_conflicts") for row in rows)
+    summary.update({
+        "total_candidates": len(rows),
+        "verified_references": verified_count,
+        "reference_learning_count": int(reference_summary.get("reference_learning_count", 0) or 0),
+        "quarantined": len(rows) - verified_count,
+        "manual_official_candidate_promoted": int(summary.get("manual_official_candidate_promoted", 0) or 0) + promoted_delta,
+        "manual_official_candidate_rejected_not_found": int(summary.get("manual_official_candidate_rejected_not_found", 0) or 0) + rejected_delta,
+    })
+    current = dict(payload) if isinstance(payload, dict) else {}
+    current["records"] = rows
+    current["summary"] = summary
+    if timestamp_key:
+        current[timestamp_key] = _now()
+    gp.atomic_write_json(gp.OUT, current, suffix=".manual-official-candidate.tmp")
+    return summary
+
+
+def _submit_not_found(incoming: dict[str, Any]) -> dict[str, Any]:
+    candidate_id = str(incoming.get("candidate_id") or "").strip()[:64]
+    if not candidate_id:
+        raise ValueError("후보 식별정보가 없습니다.")
+    if incoming.get("confirm_no_record") is not True:
+        raise ValueError("공식사이트에서 검색 기록이 없음을 확인해야 삭제할 수 있습니다.")
+    image, extension = _decode_proof(incoming.get("proof_image"))
+
+    payload = gp._load(gp.OUT, {})
+    rows = [dict(row) for row in payload.get("records", []) if isinstance(row, dict)] if isinstance(payload, dict) else []
+    target = _find_unverified_target(rows, candidate_id)
+    company = str(target.get("company") or "").upper().strip()
+    cert = gp.normalize_cert(target.get("certification_id"))
+    grade = _grade(target.get("grade"))
+    confirmation = gp.normalize_cert(incoming.get("certification_id_confirmation"))
+    if company not in gp.COMPANIES or not cert or grade is None:
+        raise ValueError("등급사·인증번호·등급이 모두 확인된 후보만 정리할 수 있습니다.")
+    if confirmation != cert:
+        raise ValueError(f"삭제 확인 인증번호가 일치하지 않습니다. {cert}를 정확히 입력하세요.")
+
+    digest = hashlib.sha256(image).hexdigest()
+    folder = NEGATIVE_PROOF_ROOT / company
+    proof_path = folder / f"{cert}-{digest[:12]}{extension}"
+    atomic_write_bytes(proof_path, image, suffix=".pending-official-negative.tmp")
+
+    text = ""
+    ocr_error = None
+    evidence: dict[str, Any] = {}
+    try:
+        text, ocr_error, _diagnostics, raw_evidence = manual_photo._ocr_image(proof_path)
+        evidence = raw_evidence if isinstance(raw_evidence, dict) else {}
+    except Exception as exc:
+        ocr_error = type(exc).__name__
+    signal = _negative_ocr(text, evidence, company)
+
+    rejected_at = _now()
+    rejection = {
+        "rejected_at": rejected_at,
+        "candidate_id": candidate_id,
+        "company": company,
+        "game": str(target.get("game") or "unknown").lower(),
+        "grade": grade,
+        "certification_id": cert,
+        "source": str(target.get("source") or target.get("source_name") or "공개후보")[:120],
+        "title": str(target.get("title") or "")[:220],
+        "reason": "official_record_not_found_user_confirmed",
+        "verification_method": "user_browser_official_page_no_record_screenshot_exact_cert_confirmation",
+        "official_reference_url": lookup_url(company, cert),
+        "negative_proof_path": str(proof_path.relative_to(ROOT)),
+        "negative_proof_sha256": digest,
+        "manual_cert_confirmation_exact": True,
+        "ocr_negative_text_detected": signal["negative_text_detected"],
+        "ocr_company_brand_detected": signal["company_brand_detected"],
+        "ocr_text": signal["ocr_text"],
+        "ocr_error": str(ocr_error or "")[:180] or None,
+        "raw_grade_calibration_eligible": False,
+        "learning_eligible": False,
+    }
+    rejection_payload = _rejection_payload()
+    rejection_payload["updated_at"] = rejected_at
+    rejection_payload["rejections"].append(rejection)
+    rejection_payload["rejections"] = rejection_payload["rejections"][-5000:]
+    gp.atomic_write_json(REJECTION_LOG, rejection_payload, suffix=".official-negative-proof.tmp")
+
+    removed = 0
+    remaining: list[dict[str, Any]] = []
+    for row in rows:
+        if row.get("official_result") is True or _candidate_id(row) != candidate_id:
+            remaining.append(row)
+            continue
+        removed += 1
+    if removed < 1:
+        raise ValueError("삭제할 미검증 후보가 없습니다.")
+    summary = _save_candidate_payload(payload, remaining, rejected_delta=removed,
+                                      timestamp_key="manual_official_candidate_last_rejected_at")
+    try:
+        gp.record_official_feedback(remaining)
+    except Exception:
+        pass
+    return {
+        "ok": True,
+        "accepted": True,
+        "deleted": True,
+        "candidate_id": candidate_id,
+        "company": company,
+        "certification_id": cert,
+        "grade": grade,
+        "deleted_rows": removed,
+        "reason": "official_record_not_found_user_confirmed",
+        "negative_proof_archived": True,
+        "ocr_negative_text_detected": signal["negative_text_detected"],
+        "ocr_company_brand_detected": signal["company_brand_detected"],
+        "remaining_candidates": int(summary.get("total_candidates", len(remaining)) or 0),
+        "raw_grade_calibration_eligible": False,
+    }
+
+
 def submit(incoming: dict[str, Any]) -> dict[str, Any]:
     if not isinstance(incoming, dict):
         raise ValueError("등록자료 형식 오류")
+    if str(incoming.get("action") or "").strip().lower() == "official_not_found":
+        return _submit_not_found(incoming)
+
     candidate_id = str(incoming.get("candidate_id") or "").strip()[:64]
     if not candidate_id:
         raise ValueError("후보 식별정보가 없습니다.")
@@ -144,10 +339,7 @@ def submit(incoming: dict[str, Any]) -> dict[str, Any]:
 
     payload = gp._load(gp.OUT, {})
     rows = [dict(row) for row in payload.get("records", []) if isinstance(row, dict)] if isinstance(payload, dict) else []
-    matches = [row for row in rows if row.get("official_result") is not True and _candidate_id(row) == candidate_id]
-    if not matches:
-        raise ValueError("공식검증 미완료 후보를 찾지 못했습니다. 화면을 새로고침하세요.")
-    target = matches[0]
+    target = _find_unverified_target(rows, candidate_id)
     company = str(target.get("company") or "").upper().strip()
     cert = gp.normalize_cert(target.get("certification_id"))
     grade = _grade(target.get("grade"))
@@ -207,23 +399,8 @@ def submit(incoming: dict[str, Any]) -> dict[str, Any]:
         })
         promoted += 1
 
-    existing._apply_current_disposition(rows)
-    reference_learning = gp._save_reference_learning(rows)
-    reference_summary = reference_learning.get("summary", {}) if isinstance(reference_learning, dict) else {}
-    summary = dict(payload.get("summary") or {}) if isinstance(payload, dict) else {}
-    verified_count = sum(row.get("official_result") is True and not row.get("evidence_conflicts") for row in rows)
-    summary.update({
-        "total_candidates": len(rows),
-        "verified_references": verified_count,
-        "reference_learning_count": int(reference_summary.get("reference_learning_count", 0) or 0),
-        "quarantined": len(rows) - verified_count,
-        "manual_official_candidate_promoted": int(summary.get("manual_official_candidate_promoted", 0) or 0) + promoted,
-    })
-    current = dict(payload) if isinstance(payload, dict) else {}
-    current["records"] = rows
-    current["summary"] = summary
-    current["manual_official_candidate_last_verified_at"] = verified_at
-    gp.atomic_write_json(gp.OUT, current, suffix=".manual-official-candidate.tmp")
+    summary = _save_candidate_payload(payload, rows, promoted_delta=promoted,
+                                      timestamp_key="manual_official_candidate_last_verified_at")
     try:
         gp.record_official_feedback(rows)
     except Exception:
