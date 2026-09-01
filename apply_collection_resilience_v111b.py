@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+import re
 from pathlib import Path
 
 ROOT=Path(__file__).resolve().parent
@@ -15,8 +16,8 @@ def replace_once(text,old,new,label):
 
 def main():
     text=PATH.read_text(encoding='utf-8')
-    # The immutable baseline is an emergency bootstrap only. It must not add an
-    # extra verified row when the device/test already has a valid local registry.
+    # The immutable baseline is emergency bootstrap only. It must not add an extra
+    # verified row when a device/test already has a valid local registry.
     text=replace_once(text,
         "for path in (VERIFIED,LIBRARY_OFFICIAL,BASELINE_VERIFIED):\n  d=_load(path,{})",
         "for path in (VERIFIED,LIBRARY_OFFICIAL):\n  d=_load(path,{})",
@@ -41,8 +42,8 @@ def _library_verified_evidence"""
         "for path in (VERIFIED,LIBRARY_OFFICIAL,BASELINE_VERIFIED):\n  data=_load(path,{})",
         "for path in (VERIFIED,LIBRARY_OFFICIAL):\n  data=_load(path,{})",
         'seed path')
-    anchor=" return rows\n\ndef _reference_learning_seed_rows"
-    replacement=""" if not rows:
+
+    fallback=""" if not rows:
   data=_load(BASELINE_VERIFIED,{})
   values=data.get('certifications',[]) if isinstance(data,dict) else []
   for item in values if isinstance(values,list) else []:
@@ -62,9 +63,13 @@ def _library_verified_evidence"""
                 'image_probe_status':'not_available','ocr_label_text':'','image_evidence_source':'not_available',
                 'baseline_bootstrap':True})
  return rows
+"""
+    pattern=r"\n return rows\n\n+(?=def _reference_learning_seed_rows\(\)->list\[dict\]:)"
+    if 'immutable_verified_baseline_fallback' not in text:
+        text,count=re.subn(pattern,'\n'+fallback+'\n',text,count=1)
+        if count!=1:
+            raise RuntimeError('missing seed fallback')
 
-def _reference_learning_seed_rows"""
-    text=replace_once(text,anchor,replacement,'seed fallback')
     text=text.replace("'baseline_verified_seed_count':sum(1 for x in seeds if str(x.get('source_id'))=='official_registry'),",
                       "'baseline_verified_seed_count':sum(1 for x in seeds if x.get('baseline_bootstrap') is True),",1)
     PATH.write_text(text,encoding='utf-8')
