@@ -1,0 +1,42 @@
+name: Apply CGC certificate OCR v170
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'apply_cgc_cert_ocr_v170.py'
+      - 'test_cgc_cert_ocr_v170.py'
+      - '.github/workflows/apply-cgc-cert-ocr-v170.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Install test dependency
+        run: python -m pip install --disable-pip-version-check pillow
+      - name: Apply patch
+        run: python apply_cgc_cert_ocr_v170.py
+      - name: Verify
+        run: |
+          python -m py_compile library_slab_corpus.py graded_photo_evidence.py manual_graded_photo_registration.py
+          python -m unittest -v test_cgc_cert_ocr_v170.py
+          grep -F 'cgc_center_label_digits_psm6' library_slab_corpus.py
+          grep -F 'CGC CERT' library_slab_corpus.py
+      - name: Commit
+        run: |
+          if git diff --quiet -- library_slab_corpus.py graded_photo_evidence.py; then
+            echo 'No patch changes needed.'
+            exit 0
+          fi
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add library_slab_corpus.py graded_photo_evidence.py
+          git commit -m 'fix: recover CGC certificates from slab labels v170'
+          git push origin HEAD:main
