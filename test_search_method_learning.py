@@ -28,7 +28,8 @@ class SearchMethodLearningTests(unittest.TestCase):
         self.assertTrue(row["cooling_down"])
         ordered = learner.ordered_routes(["ddg_html", "bing_web_rss"], budget=2)
         self.assertIn("bing_web_rss", ordered)
-        # Recovery is possible: a successful observation clears cooldown.
+        self.assertNotIn("ddg_html", ordered)
+        # Recovery is possible after the cooldown/transport condition clears: a successful observation clears cooldown.
         learner.observe("ddg_html", responded=True, result_count=2, error="", elapsed_ms=80)
         row = next(x for x in learner.report()["methods"] if x["method"] == "ddg_html")
         self.assertFalse(row["cooling_down"])

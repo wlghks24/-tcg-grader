@@ -257,7 +257,7 @@ class SearchMethodLearner:
             return []
         now = _now()
         rotation = _int(self.data.get("rotation"))
-        healthy, cooling = [], []
+        healthy, cooling, blocked_cooling = [], [], []
         for index, name in enumerate(candidates):
             stat = self._method(name)
             score = self.method_score(name, region, family)
@@ -265,10 +265,23 @@ class SearchMethodLearner:
             bonus = ((rotation + index * 3) % max(2, len(candidates))) * 0.015
             cooldown = _cooldown_until(stat)
             row = (score + bonus, name)
-            (cooling if cooldown and cooldown > now else healthy).append(row)
+            if cooldown and cooldown > now:
+                # HTTP 403/429 means the public endpoint is actively refusing us.
+                # Do not use the generic recovery probe while that cooldown is active;
+                # other independent public routes can continue without hammering it.
+                kind = str(stat.get("last_error_kind") or "")
+                if kind in {"blocked", "rate_limited"}:
+                    blocked_cooling.append(row)
+                else:
+                    cooling.append(row)
+            else:
+                healthy.append(row)
         healthy.sort(reverse=True)
         cooling.sort(reverse=True)
+        blocked_cooling.sort(reverse=True)
         ordered = [name for _, name in healthy]
+        # Recovery probes are only for transient timeout/network style failures.
+        # Blocked/rate-limited routes wait until their cooldown actually expires.
         recovery = cooling[rotation % len(cooling)][1] if cooling else None
         # If everything is cooling down, retry only the best candidate to detect recovery.
         if not ordered and recovery:
