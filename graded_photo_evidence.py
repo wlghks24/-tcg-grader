@@ -40,6 +40,7 @@ GRADE_PATTERNS = (
     re.compile(r"\b(?:PSA|BGS|CGC|TAG|BRG|BECKETT)\s*(?:GRADE\s*)?(?:(?:GEM\s*(?:MT|MINT)|PRISTINE|BLACK\s+LABEL|MINT|NM-MT|NEAR\s+MINT)\s*)?(10|9\.5|9|8\.5|8|7\.5|7|6\.5|6|5\.5|5|4\.5|4|3\.5|3|2\.5|2|1\.5|1)\b", re.I),
     re.compile(r"\b(?:FINAL\s+GRADE|CARD\s+GRADE|ITEM\s+GRADE|GRADE)\s*(?:GEM\s*MT|GEM\s*MINT|PRISTINE|MINT|NM-MT)?\s*(10|9\.5|9|8\.5|8|7\.5|7|6\.5|6|5\.5|5|4\.5|4|3\.5|3|2\.5|2|1\.5|1)\b", re.I),
     re.compile(r"\b(10|9\.5|9|8\.5|8|7\.5|7|6\.5|6|5\.5|5|4\.5|4|3\.5|3|2\.5|2|1\.5|1)\s*(?:PRISTINE|BLACK\s+LABEL|GEM\s*(?:MT|MINT)|MINT|NM-MT|NEAR\s+MINT)\b", re.I),
+    re.compile(r"\b(?:GEM\s*(?:MT|MINT)|PRISTINE|BLACK\s+LABEL|MINT|NM-MT|NEAR\s+MINT)\s*(10|9\.5|9|8\.5|8|7\.5|7|6\.5|6|5\.5|5|4\.5|4|3\.5|3|2\.5|2|1\.5|1)\b", re.I),
     re.compile(r"(?:등급|그레이드|감정)\s*(10|9\.5|9|8\.5|8|7\.5|7|6\.5|6|5\.5|5|4\.5|4|3\.5|3|2\.5|2|1\.5|1)", re.I),
 )
 CERT_CONTEXT_RE = re.compile(

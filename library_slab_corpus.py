@@ -281,6 +281,7 @@ def ocr_label(path: Path, profile: str = "adaptive") -> tuple[str, str | None, d
             errors: list[str] = []
             used: list[str] = []
             bgs_cert_targeted = False
+            cgc_cert_targeted = False
             for name, fraction, scale, threshold, psm in passes:
                 crop = _prepare_crop(source, fraction, scale, threshold)
                 text, error = _run_tesseract(crop, psm)
@@ -321,6 +322,35 @@ def ocr_label(path: Path, profile: str = "adaptive") -> tuple[str, str | None, d
                         # length candidate, preserving leading zeroes and making
                         # downstream evidence extraction deterministic.
                         texts.append(f"BECKETT CERT {recovered}")
+                    combined = " | ".join(texts)
+                    company, cert, grade = _fields_from_text(combined)
+
+                # CGC labels commonly print the certification number as a small
+                # 10+ digit line near the center/bottom of the white top label.
+                # Android/Termux fast OCR can read CGC + GEM MINT 10 while skipping
+                # that serial. Run a digits-only label-band recovery pass only
+                # after CGC identity is already supported and the cert is missing.
+                if not cgc_cert_targeted and cert is None and company == "CGC":
+                    cgc_cert_targeted = True
+                    recovered = None
+                    cgc_regions = (
+                        ("cgc_center_label_digits_psm6", 0.25, 0.05, 0.78, 0.23, 2200, 6, False),
+                        ("cgc_center_label_digits_psm11", 0.34, 0.08, 0.74, 0.22, 2400, 11, True),
+                    )
+                    for pass_name, left, top, right, bottom, target_width, cert_psm, threshold2 in cgc_regions:
+                        cert_crop = _prepare_region_crop(
+                            source, left, top, right, bottom, target_width, threshold2
+                        )
+                        cert_text, cert_error = _run_tesseract(
+                            cert_crop, cert_psm, whitelist="0123456789"
+                        )
+                        used.append(pass_name)
+                        if cert_error:
+                            errors.append(cert_error)
+                        recovered = normalize_cert("CGC", cert_text or "")
+                        if recovered:
+                            texts.append(f"CGC CERT {recovered}")
+                            break
                     combined = " | ".join(texts)
                     company, cert, grade = _fields_from_text(combined)
 
