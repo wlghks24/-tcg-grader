@@ -125,6 +125,8 @@ class Handler(core.Handler):
                 'graded_photo_eight_zone_ui': True,
                 'existing_photo_revalidation': True,
                 'existing_candidate_revalidation': True,
+                'retry_reason_explainer': True,
+                'retry_reason_explainer_version': 160,
                 'base_service': getattr(core, 'SERVICE_NAME', 'TCG updater'),
             })
         if path == '/api/learning-model-status':

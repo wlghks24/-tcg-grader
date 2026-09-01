@@ -680,6 +680,8 @@ def _background_existing_photo_revalidation(job_id):
             _photo_revalidation_job_set(state='running',message='2/2 저장된 전체 후보의 사진·OCR·인증번호·공식검증을 다시 확인하고 있습니다.',error=None)
             import graded_photo_existing_revalidation_v159 as candidate_revalidation
             candidate_payload=candidate_revalidation.revalidate_existing_candidates()
+            import graded_photo_retry_reason_v160 as retry_reason_v160
+            retry_reason_payload=retry_reason_v160.summarize_current_candidates(max_details=8)
             clear_json_file_cache()
         manual_summary=manual_payload.get('summary',{}) if isinstance(manual_payload,dict) else {}
         candidate_summary=candidate_payload.get('summary',{}) if isinstance(candidate_payload,dict) else {}
@@ -697,12 +699,17 @@ def _background_existing_photo_revalidation(job_id):
             'candidate_pruned': int(candidate_summary.get('quarantine_pruned',0) or 0),
             'candidate_retryable_kept': int(candidate_summary.get('quarantine_retryable_kept',0) or 0),
             'candidate_quarantined_after': int(candidate_summary.get('quarantined',0) or 0),
+            'candidate_retry_reason_counts': retry_reason_payload.get('reason_counts', []),
+            'candidate_retry_reason_text': str(retry_reason_payload.get('reason_text') or ''),
+            'candidate_retry_details': retry_reason_payload.get('details', []),
         })
         message=(f"통합 재검증 완료 · 등록 {int(manual_summary.get('total',0) or 0)}건 · "
                  f"8구역 {int(manual_summary.get('eight_zone_complete',0) or 0)}건 · "
                  f"후보 {summary['candidate_reviewed']}건 · 공식검증 {summary['candidate_verified']}건 · "
                  f"학습 {summary['candidate_learning']}건 · 삭제 {summary['candidate_pruned']}건 · "
                  f"재시도보존 {summary['candidate_retryable_kept']}건")
+        if summary['candidate_retryable_kept'] and summary['candidate_retry_reason_text']:
+            message += f" · 재시도원인: {summary['candidate_retry_reason_text']}"
         _photo_revalidation_job_set(state='completed',finished_at=time.strftime('%Y-%m-%dT%H:%M:%S%z'),
                                     message=message,summary=summary,error=None)
     except Exception as exc:

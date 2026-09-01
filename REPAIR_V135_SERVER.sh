@@ -173,6 +173,10 @@ echo "[OK] v135 건강검사 정상"
 echo "$HEALTH"
 
 DASHBOARD="$(curl -fsS --max-time 6 "${DASHBOARD_URL}?v=155&check=$(date +%s)")"
+if [ ! -f graded_photo_retry_reason_v160.py ]; then
+  echo "[오류] 재시도보존 원인표시 v160 모듈이 없습니다."
+  exit 1
+fi
 if [ ! -f graded_photo_existing_revalidation_v159.py ]; then
   echo "[오류] 기존 후보 전체 재검증 v159 모듈이 없습니다."
   exit 1
@@ -201,7 +205,7 @@ if ! printf '%s' "$DASHBOARD" | grep -q 'verifiedSlabRawLearning:true'; then
   echo "[오류] 공식검증 슬랩 RAW학습 v155 브리지가 실제 대시보드 응답에 포함되지 않았습니다."
   exit 1
 fi
-echo "[OK] 앞면+뒷면 8구역 UI + 기존사진·후보 전체 재검증 + 공식검증 RAW학습 실전달 확인"
+echo "[OK] 8구역 + 후보 전체 재검증 + 재시도원인 v160 + 공식검증 RAW학습 실전달 확인"
 
 if [ "$NO_BOOT_UPDATE" -eq 0 ]; then
   mkdir -p "$HOME/.termux/boot"
