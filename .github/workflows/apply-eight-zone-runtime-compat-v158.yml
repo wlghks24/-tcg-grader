@@ -1,91 +1,41 @@
-name: Apply eight-zone runtime compatibility v158
+name: Verify eight-zone runtime compatibility v158
 
 on:
   push:
     branches: [main]
     paths:
       - '.github/workflows/apply-eight-zone-runtime-compat-v158.yml'
+      - 'graded_photo_dashboard.js'
+      - 'manual_dual_photo_bridge.js'
+      - 'manual_graded_photo_registration.py'
+      - 'tcg_updater_v135.py'
+      - 'REPAIR_V135_SERVER.sh'
+      - 'test_graded_photo_runtime.py'
+      - 'test_verified_slab_raw_learning_v155.py'
+  pull_request:
+    paths:
+      - '.github/workflows/apply-eight-zone-runtime-compat-v158.yml'
+      - 'graded_photo_dashboard.js'
+      - 'manual_dual_photo_bridge.js'
+      - 'manual_graded_photo_registration.py'
+      - 'tcg_updater_v135.py'
+      - 'REPAIR_V135_SERVER.sh'
+      - 'test_graded_photo_runtime.py'
+      - 'test_verified_slab_raw_learning_v155.py'
+  workflow_dispatch:
 
 permissions:
-  contents: write
+  contents: read
 
 jobs:
-  patch:
+  verify:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
         with:
-          ref: main
-          fetch-depth: 0
-      - name: Patch bridge and repair checks
-        shell: bash
-        run: |
-          python - <<'PY'
-          from pathlib import Path
-
-          bridge = Path('manual_dual_photo_bridge.js')
-          text = bridge.read_text(encoding='utf-8')
-          text = text.replace("const GLOBAL_KEY='__TCG_DUAL_PHOTO_BRIDGE_V156__';", "const GLOBAL_KEY='__TCG_DUAL_PHOTO_BRIDGE_V158__';")
-          text = text.replace("version:156,enhanced:false", "version:158,enhanced:false")
-          text = text.replace("marker.content='inline-v156';", "marker.content='inline-v158';")
-          old = """function ensureRegistrationPanelPresentation(form){
- const details=form?.closest('details.gpd-manual');if(!details)return;
- details.open=true;
- const summary=details.querySelector(':scope > summary');
- if(summary&&summary.textContent!=='📷 등급사진 간편등록')summary.textContent='📷 등급사진 간편등록';
-}"""
-          new = """function ensureRegistrationPanelPresentation(form){
- const details=form?.closest('details.gpd-manual');if(!details)return;
- details.open=true;
- const summary=details.querySelector(':scope > summary');
- const eightZoneReady=Boolean(document.getElementById('gpdZonePanel')&&document.getElementById('gpdRevalidateExisting'));
- const label=eightZoneReady?'📷 등급사진 8구역 정밀등록':'📷 등급사진 간편등록';
- if(summary&&summary.textContent!==label)summary.textContent=label;
- bridgeState.eightZoneCompatible=eightZoneReady;
-}"""
-          if old not in text:
-              raise SystemExit('manual_dual_photo_bridge presentation block not found')
-          text = text.replace(old, new)
-          bridge.write_text(text, encoding='utf-8')
-
-          repair = Path('REPAIR_V135_SERVER.sh')
-          text = repair.read_text(encoding='utf-8')
-          old = """if ! printf '%s' \"$DASHBOARD\" | grep -q '앞면 + 뒷면 2장으로 수동등록'; then
-  echo \"[오류] 앞면+뒷면 2장 등록 브리지가 실제 대시보드 응답에 포함되지 않았습니다.\"
-  exit 1
-fi"""
-          new = """if ! printf '%s' \"$DASHBOARD\" | grep -q '앞면 + 뒷면 8구역 등록하기'; then
-  echo \"[오류] 앞면+뒷면 8구역 등록 UI가 실제 대시보드 응답에 포함되지 않았습니다.\"
-  exit 1
-fi
-if ! printf '%s' \"$DASHBOARD\" | grep -q '총 8구역 정밀검사'; then
-  echo \"[오류] 8구역 정밀검사 UI가 실제 대시보드 응답에 포함되지 않았습니다.\"
-  exit 1
-fi
-if ! printf '%s' \"$DASHBOARD\" | grep -q '기존 등록사진 전체 재검증'; then
-  echo \"[오류] 기존 등록사진 전체 재검증 버튼이 실제 대시보드 응답에 포함되지 않았습니다.\"
-  exit 1
-fi
-if ! printf '%s' \"$DASHBOARD\" | grep -q '/api/run-existing-photo-revalidation'; then
-  echo \"[오류] 기존 등록사진 재검증 API 호출 코드가 실제 대시보드 응답에 포함되지 않았습니다.\"
-  exit 1
-fi"""
-          if old not in text:
-              raise SystemExit('REPAIR old dual-photo check not found')
-          text = text.replace(old, new)
-          text = text.replace('echo "[OK] 앞면+뒷면 2장 UI + 공식검증 RAW학습 v155 실전달 확인"', 'echo "[OK] 앞면+뒷면 8구역 UI + 기존사진 전체 재검증 + 공식검증 RAW학습 실전달 확인"')
-          repair.write_text(text, encoding='utf-8')
-
-          wrapper = Path('tcg_updater_v135.py')
-          text = wrapper.read_text(encoding='utf-8')
-          text = text.replace("/* v150 dual-photo bridge: served inline by v135 */", "/* v158 dual-photo/eight-zone bridge: served inline by v135 */")
-          text = text.replace("self.send_header('X-TCG-Dual-Photo-UI', 'v150-inline')", "self.send_header('X-TCG-Dual-Photo-UI', 'v158-eight-zone-inline')")
-          text = text.replace("'manual_dual_photo_bridge_version': 150,", "'manual_dual_photo_bridge_version': 158,\n                'graded_photo_eight_zone_ui': True,\n                'existing_photo_revalidation': True,")
-          text = text.replace("print('수동등록 UI: 앞면+뒷면 2장 브리지를 대시보드 응답에 직접 포함 · 캐시 우회 v150', flush=True)", "print('수동등록 UI: 앞면+뒷면 8구역 정밀검사 + 기존 등록사진 전체 재검증 · 캐시 우회 v158', flush=True)")
-          wrapper.write_text(text, encoding='utf-8')
-          PY
+          python-version: '3.12'
       - name: Verify runtime contract
-        shell: bash
         run: |
           python -m py_compile tcg_updater_v135.py manual_graded_photo_registration.py verified_slab_raw_learning_v155.py
           python -m unittest -v test_graded_photo_runtime.py test_verified_slab_raw_learning_v155.py
@@ -93,15 +43,3 @@ fi"""
           grep -q '/api/run-existing-photo-revalidation' graded_photo_dashboard.js
           grep -q '등급사진 8구역 정밀등록' manual_dual_photo_bridge.js
           grep -q '앞면 + 뒷면 8구역 등록하기' REPAIR_V135_SERVER.sh
-      - name: Commit patch
-        shell: bash
-        run: |
-          if git diff --quiet; then
-            echo 'No changes needed'
-            exit 0
-          fi
-          git config user.name 'github-actions[bot]'
-          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git add manual_dual_photo_bridge.js REPAIR_V135_SERVER.sh tcg_updater_v135.py
-          git commit -m 'fix: keep eight-zone revalidation visible on tablet runtime'
-          git push origin HEAD:main
