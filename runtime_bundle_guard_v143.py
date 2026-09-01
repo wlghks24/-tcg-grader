@@ -50,6 +50,7 @@ REQUIRED_FILES = (
     "event_quick_watch.py",
     "manual_graded_photo_registration.py",
     "manual_official_proof.py",
+    "manual_official_verified_integration_v154.py",
     "manual_official_verify_bridge.js",
     "graded_photo_dashboard.js",
     "vision_calibration.py",
@@ -196,8 +197,22 @@ def audit() -> dict:
         try:
             status = manual.public_status()
             policy = status.get("policy", {}) if isinstance(status, dict) else {}
-            if policy.get("manual_screenshot_sets_official_result") is not False:
-                issues.append("수동 공식확인 캡처가 공식검증 결과로 승격될 위험이 있습니다")
+            sets_official = policy.get("manual_screenshot_sets_official_result")
+            if sets_official is False:
+                if policy.get("later_live_official_lookup_can_promote") is not True:
+                    issues.append("수동 참고증거의 후속 공식조회 승격 계약이 맞지 않습니다")
+            elif sets_official is True:
+                strict_promotion = bool(
+                    policy.get("manual_screenshot_alone_sets_official_result") is False
+                    and policy.get("matched_user_browser_official_page_is_official_verification") is True
+                    and policy.get("strict_identity_front_back_and_stored_proof_required") is True
+                    and policy.get("registry_conflict_blocks_promotion") is True
+                    and policy.get("automatic_official_lookup_required_for_manual_match") is False
+                )
+                if not strict_promotion:
+                    issues.append("수동 공식확인 승격의 인증번호·앞뒤사진·저장증거 안전게이트가 불완전합니다")
+            else:
+                issues.append("수동 공식확인 승격 정책이 명시되지 않았습니다")
             if policy.get("manual_screenshot_trains_raw_grade_calibration") is not False:
                 issues.append("수동 공식확인 캡처가 RAW 등급 보정학습에 섞일 위험이 있습니다")
             if policy.get("rejected_screenshot_bytes_retained") is not False:

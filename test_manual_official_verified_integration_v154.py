@@ -92,6 +92,15 @@ class ManualOfficialVerifiedIntegrationV154Tests(unittest.TestCase):
         self.assertFalse(saved[-1]["registrations"][0]["official_result"])
         self.assertEqual(saved[-1]["registrations"][0]["status"], "quarantine")
 
+    def test_public_policy_exposes_strict_promotion_gates(self):
+        integration.apply()
+        policy = integration.proof.public_status()["policy"]
+        self.assertTrue(policy["manual_screenshot_sets_official_result"])
+        self.assertFalse(policy["manual_screenshot_alone_sets_official_result"])
+        self.assertTrue(policy["strict_identity_front_back_and_stored_proof_required"])
+        self.assertTrue(policy["registry_conflict_blocks_promotion"])
+        self.assertFalse(policy["manual_screenshot_trains_raw_grade_calibration"])
+
 
 if __name__ == "__main__":
     unittest.main()

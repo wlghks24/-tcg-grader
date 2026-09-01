@@ -160,7 +160,12 @@ class ManualOfficialProofTests(unittest.TestCase):
         with mock.patch.object(proof.manual_photo, "_registry", return_value=copy.deepcopy(registry)):
             status = proof.public_status()
         policy = status["policy"]
-        self.assertFalse(policy["manual_screenshot_sets_official_result"])
+        if policy["manual_screenshot_sets_official_result"]:
+            self.assertFalse(policy["manual_screenshot_alone_sets_official_result"])
+            self.assertTrue(policy["strict_identity_front_back_and_stored_proof_required"])
+            self.assertTrue(policy["registry_conflict_blocks_promotion"])
+        else:
+            self.assertTrue(policy["later_live_official_lookup_can_promote"])
         self.assertFalse(policy["manual_screenshot_trains_raw_grade_calibration"])
         self.assertFalse(policy["rejected_screenshot_bytes_retained"])
         self.assertTrue(policy["valid_proof_cannot_be_downgraded_by_later_bad_upload"])
