@@ -50,3 +50,9 @@ jobs:
           bash -n START_TCG_UPDATER_ANDROID.sh
           node --check multi_market_prices.js
           node --check sw.js
+      - name: Verify generated Termux boot supervisor
+        run: |
+          bash ANDROID_AUTO_START_INSTALL.sh
+          bash -n "$HOME/.termux/boot/TCG_AUTO_START.sh"
+          grep -q 'api/v135-health' "$HOME/.termux/boot/TCG_AUTO_START.sh"
+          grep -q 'sleep 60' "$HOME/.termux/boot/TCG_AUTO_START.sh"
