@@ -187,6 +187,53 @@ def _record_status(row:dict,key:str,status:str)->None:
         row["link_status"]=status
 
 
+def _same_host_home(url:str)->str:
+    concrete=url.replace("{query}","TCG")
+    parsed=urllib.parse.urlsplit(concrete)
+    if not parsed.hostname:
+        return ""
+    home=urllib.parse.urlunsplit(("https",parsed.hostname,"/","",""))
+    try:
+        _safe(home)
+    except ValueError:
+        return ""
+    return home if home!=concrete else ""
+
+
+def _attach_same_host_fallbacks(tasks:dict,results:dict,request_timeout:int)->dict:
+    """Verify a same-domain homepage before using it to repair a dead deep link.
+
+    Dynamic homepage repair is intentionally skipped for url_template fields because
+    replacing a search template with a homepage would silently remove search behavior.
+    Only GET-confirmed 404/410 rows reach this function, and a homepage is accepted only
+    when its own probe is OK or merely automation-restricted.
+    """
+    cache={};probes=0;eligible=0
+    for url,refs in tasks.items():
+        result=results.get(url)
+        if not isinstance(result,dict) or result.get("state")!="broken":
+            continue
+        host=(urllib.parse.urlsplit(url.replace("{query}","TCG")).hostname or "").lower()
+        if FALLBACKS.get(host) or any(key=="url_template" for _fn,_row,key in refs):
+            continue
+        home=_same_host_home(url)
+        if not home:
+            continue
+        eligible+=1
+        root_result=results.get(home)
+        if root_result is None:
+            root_result=cache.get(home)
+        if root_result is None:
+            probes+=1
+            root_result=probe(home,request_timeout=max(5,int(request_timeout or _request_timeout())))
+            cache[home]=root_result
+        if root_result.get("state") in {"ok","restricted"}:
+            result["fallback_url"]=home
+            result["fallback_kind"]="same_host_home"
+            result["fallback_probe_state"]=root_result.get("state")
+    return {"eligible":eligible,"probes":probes,"verified":sum(1 for row in results.values() if isinstance(row,dict) and row.get("fallback_kind")=="same_host_home")}
+
+
 def _apply_results(tasks:dict, results:dict, now:str)->tuple[dict,list[dict]]:
     """Apply unique-URL audit results and return unit-consistent counters.
 
@@ -205,13 +252,15 @@ def _apply_results(tasks:dict, results:dict, now:str)->tuple[dict,list[dict]]:
 
         if state=="broken":
             host=urllib.parse.urlsplit(url.replace('{query}','TCG')).hostname or ''
-            fallback=FALLBACKS.get(host.lower())
+            fallback=FALLBACKS.get(host.lower()) or result.get("fallback_url")
             if fallback and fallback!=url:
+                dynamic=result.get("fallback_kind")=="same_host_home"
                 for fn,row,key in refs:
                     row["link_checked_at"]=now
                     row.setdefault("original_source" if key=="source" else "original_url",url)
                     row[key]=fallback
-                    _record_status(row,key,f"깨진 링크 자동보정 · 공식 홈으로 대체 (HTTP {result.get('code')})")
+                    label="동일 도메인 홈" if dynamic else "공식 홈"
+                    _record_status(row,key,f"깨진 링크 자동보정 · {label}으로 대체 (HTTP {result.get('code')})")
                 counts["repaired"]+=1
             else:
                 for fn,row,key in refs:
@@ -297,12 +346,14 @@ def main()->dict:
             raise
         finally:
             pool.join()
+    same_host_fallback_stats=_attach_same_host_fallbacks(tasks,results,request_timeout)
     counts, unresolved_details=_apply_results(tasks,results,now)
     for fn,data in loaded.items():
         data["link_audit_at"]=now
         atomic_write_json(ROOT/fn,data,suffix='.audit.tmp')
     report={"updated_at":now,"checked":len(tasks),"audit_timeout_seconds":audit_timeout,
             "request_timeout_seconds":request_timeout,**counts,
+            "same_host_fallback_stats":same_host_fallback_stats,
             "unresolved_details":unresolved_details}
     atomic_write_json(ROOT/"link_health_report.json",report,suffix='.report.tmp')
     print(json.dumps(report,ensure_ascii=False))
