@@ -47,6 +47,8 @@ SCENARIOS = (
                  status in {408, 425, 429, 500, 502, 503, 504},
                  "http-transient" if status in {408, 425, 500, 502, 503, 504} else None)
            for status in (400, 401, 403, 404, 408, 410, 425, 429, 500, 501, 502, 503, 504)),
+    _case("external-link-unrepaired", "http_response", "외부 링크 검사 — 미보정 깨진 링크 4개", "NETWORK_HTTP_ERROR", "broken-link-no-status", False, "http-broken-link"),
+    _case("external-link-broken", "http_response", "broken external link remains unrepaired", "NETWORK_HTTP_ERROR", "broken-link-no-status", False, "http-broken-link"),
     _case("conn-dns-gai", "network_connection", "gaierror: DNS name resolution failed", "NETWORK_CONNECTION_ERROR", "dns-resolution", True, "dns"),
     _case("conn-dns-text", "network_connection", "DNS lookup failed for official host", "NETWORK_CONNECTION_ERROR", "dns-resolution", True, "dns"),
     _case("conn-refused", "network_connection", "ConnectionError: connection refused", "NETWORK_CONNECTION_ERROR", "connection-refused", True),

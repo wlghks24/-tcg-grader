@@ -550,6 +550,10 @@ def _root_cause_subtype(code: str, lowered: str, normalized: str) -> tuple[str, 
     if code == "NETWORK_HTTP_ERROR":
         if "redirect loop" in lowered or "too many redirects" in lowered:
             return "redirect-loop", http_status
+        if http_status is None and any(value in lowered for value in (
+            "미보정 깨진 링크", "깨진 링크", "unrepaired broken link", "broken external link"
+        )):
+            return "broken-link-no-status", None
         if http_status is None and any(value in lowered for value in ("rate limit", "too many requests", "요청 제한")):
             return "rate-limit-no-status", None
         if http_status == 429:
@@ -1205,7 +1209,8 @@ def analyze_error(detail: Any, error_type: str | None = None, *, use_scenario_pr
          "NETWORK_TIMEOUT", "네트워크 시간초과",
          "공식 사이트 응답 지연, 연결 불안정 또는 학습된 제한시간 부족 가능성이 큽니다.",
          ("공식 출처 연결과 응답시간을 확인합니다.", "제한된 1회 재시도와 확대된 시간예산을 적용합니다.", "실패 시 기존 정상자료가 유지됐는지 확인합니다."), True),
-        (("httperror", "http error", "http <n>", "status code", "rate limit", "too many requests", "요청 제한", "redirect loop", "too many redirects"),
+        (("httperror", "http error", "http <n>", "status code", "rate limit", "too many requests", "요청 제한", "redirect loop", "too many redirects",
+          "미보정 깨진 링크", "깨진 링크", "unrepaired broken link", "broken external link"),
          "NETWORK_HTTP_ERROR", "HTTP 응답 오류",
          "원출처가 오류·차단 응답을 반환했거나 접근 정책이 바뀌었을 가능성이 큽니다.",
          ("HTTP 상태와 공식 주소 변경 여부를 확인합니다.", "인증정보 없이 제한된 재시도를 실행합니다.", "기존 정상자료 보존과 다음 실행 결과를 비교합니다."), True),
@@ -1297,7 +1302,11 @@ def analyze_error(detail: Any, error_type: str | None = None, *, use_scenario_pr
     )
     if code == "NETWORK_HTTP_ERROR":
         retry_allowed = http_status in {408, 425, 429, 500, 502, 503, 504} or subtype == "rate-limit-no-status"
-        if http_status in {401, 403}:
+        if subtype == "broken-link-no-status":
+            title = "외부 링크 주소 소멸·변경 오류"
+            cause = "GET 재확인까지 거친 외부 링크가 보정되지 않은 상태로 남아 공식 주소 변경 또는 삭제 확인이 필요합니다."
+            steps = ("미보정 URL과 참조 파일·필드를 확인합니다.", "공식 사이트의 현재 공개 주소를 검증합니다.", "검증된 대체 주소가 없으면 기존 자료를 유지하고 해당 링크만 확인 필요로 남깁니다.")
+        elif http_status in {401, 403}:
             title = "HTTP 접근 권한 오류"
             cause = "원출처가 인증 또는 접근 권한 부족 응답을 반환했습니다. 같은 요청을 반복해도 해결되지 않습니다."
             steps = ("공식 주소와 공개 접근 가능 여부를 확인합니다.", "인증정보를 자동 생성하거나 우회하지 않습니다.", "접근 가능한 공식 대체 출처와 기존 정상자료를 검증합니다.")

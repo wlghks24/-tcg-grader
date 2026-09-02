@@ -1,13 +1,13 @@
 {
   "version": 1,
   "engine": "v138-screenshot-regression-learning",
-  "generated_at": "2026-08-31T13:47:47+00:00",
+  "generated_at": "2026-09-02T04:43:32+00:00",
   "training_only": true,
-  "scenario_count": 316,
-  "successful_scenarios": 316,
+  "scenario_count": 318,
+  "successful_scenarios": 318,
   "failed_scenarios": [],
   "family_count": 33,
-  "verified_profile_count": 166,
+  "verified_profile_count": 167,
   "profiles": {
     "NETWORK_TIMEOUT|general": {
       "profile_id": "8f2964a4e191d68f",
@@ -419,6 +419,39 @@
       ],
       "verification_steps": [
         "기존 정상자료 보존과 다음 실행 결과를 비교합니다.",
+        "기존 정상자료가 손상되지 않았는지 확인합니다."
+      ],
+      "stop_conditions": [
+        "401·403·404·410은 같은 주소를 자동 재시도하지 않습니다."
+      ],
+      "bounded_retry_allowed": false
+    },
+    "NETWORK_HTTP_ERROR|broken-link-no-status": {
+      "profile_id": "32e2ed1346972e3e",
+      "code": "NETWORK_HTTP_ERROR",
+      "error_subtype": "broken-link-no-status",
+      "http_status": null,
+      "http_statuses": [],
+      "verified": true,
+      "scenario_count": 2,
+      "scenario_ids": [
+        "external-link-unrepaired",
+        "external-link-broken"
+      ],
+      "families": [
+        "http_response"
+      ],
+      "diagnostic_priority": 20,
+      "first_checks": [
+        "HTTP 상태와 Retry-After 존재 여부를 먼저 확인합니다."
+      ],
+      "fast_resolution_steps": [
+        "미보정 URL과 참조 파일·필드를 확인합니다.",
+        "공식 사이트의 현재 공개 주소를 검증합니다.",
+        "검증된 대체 주소가 없으면 기존 자료를 유지하고 해당 링크만 확인 필요로 남깁니다."
+      ],
+      "verification_steps": [
+        "검증된 대체 주소가 없으면 기존 자료를 유지하고 해당 링크만 확인 필요로 남깁니다.",
         "기존 정상자료가 손상되지 않았는지 확인합니다."
       ],
       "stop_conditions": [
@@ -5512,5 +5545,5 @@
     "retry_permission_can_only_be_narrowed": true
   },
   "automation_policy": "검증된 안내만 제공 · 문자열/생성코드 실행 금지",
-  "results_sha256": "fb3acb3307fc91fd990270b6e42c80f47a9eb049a1accea0baeb423ca32d4da1"
+  "results_sha256": "4efe332de2ab129a02513e535bae5594cb4cce8dd75bbbc2634912c829b10660"
 }
