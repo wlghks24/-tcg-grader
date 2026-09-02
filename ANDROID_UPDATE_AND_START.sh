@@ -46,6 +46,11 @@ after="local"
 updated=0
 
 if command -v git >/dev/null 2>&1 && git rev-parse --is-inside-work-tree >/dev/null 2>&1; then
+  # Android/Termux needs executable bits locally, while GitHub Contents API stores
+  # these shell files as regular 100644 blobs. Ignore permission-only chmod noise
+  # so it can never be mistaken for a user code edit.
+  git config --local core.fileMode false >/dev/null 2>&1 || true
+
   before="$(git rev-parse --short=8 HEAD 2>/dev/null || echo local)"
   branch="$(git branch --show-current 2>/dev/null || true)"
   can_update=1
@@ -62,7 +67,7 @@ if command -v git >/dev/null 2>&1 && git rev-parse --is-inside-work-tree >/dev/n
       while IFS= read -r changed; do
         [ -z "$changed" ] && continue
         case "$changed" in
-          tcg_live_data.json|releases.json|market_watch.json|market_prices.json|promo_events.json|purchase_sources.json|purchase_signals.json|social_stock_signals.json|exchange_rates.json|graded_photo_candidates.json|supplementary_candidates.json|social_event_candidates.json|web_discovery_candidates.json|link_health_report.json|auto_update_report.json|auto_update_issues.json|auto_repair_memory.json|adaptive_collection_stats.json|adaptive_collection_stats.json.bak|verified_certifications.json|learning_store.json|vision_self_learning_report.json|ebay_grader_candidates.json|card_identity_learning.json|source_collection_stats.json|source_collection_stats.json.bak|precollect_status.json)
+          tcg_live_data.json|releases.json|market_watch.json|market_prices.json|promo_events.json|purchase_sources.json|purchase_signals.json|social_stock_signals.json|exchange_rates.json|graded_photo_candidates.json|supplementary_candidates.json|social_event_candidates.json|web_discovery_candidates.json|link_health_report.json|auto_update_report.json|auto_update_issues.json|auto_repair_memory.json|adaptive_collection_stats.json|adaptive_collection_stats.json.bak|verified_certifications.json|learning_store.json|vision_self_learning_report.json|vision_calibration.json|ebay_grader_candidates.json|card_identity_learning.json|source_collection_stats.json|source_collection_stats.json.bak|precollect_status.json|graded_photo_reference_learning.json|library_verified_slab_references.json|graded_photo_source_learning.json|verified_slab_raw_learning_v155.json|verified_slab_training_archive.json|event_gap_learning.json|existing_photo_revalidation_v160.json|manual_collected_pair_queue.json|manual_official_proof_references.json|market_public_crosscheck_state.json|pending_official_candidate_rejections.json|box_hit_market_candidates.json|box_hit_market_learning.json|collector_self_heal_memory.json|graded_file_learning_report.json|graded_photo_official_cache.json|release_history_progress.json|manual_event_evidence.json)
             ;;
           *) unsafe_paths="${unsafe_paths}${unsafe_paths:+, }$changed" ;;
         esac
@@ -74,7 +79,7 @@ EOF
       echo "[안전] 코드/설정 추적파일에 로컬 수정이 있어 자동 업데이트를 건너뜁니다: $unsafe_paths"
       can_update=0
     elif [ -n "$dirty_paths" ]; then
-      echo "[OK] 정상 수집으로 변경된 런타임 JSON만 감지했습니다. Git이 덮어쓰지 않는 범위에서 fast-forward를 시도합니다."
+      echo "[OK] 정상 수집/학습으로 변경된 런타임 JSON만 감지했습니다. 자료를 유지한 채 fast-forward를 시도합니다."
     fi
   fi
 
