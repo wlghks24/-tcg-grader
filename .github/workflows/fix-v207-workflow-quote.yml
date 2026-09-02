@@ -30,3 +30,4 @@ jobs:
           git add .github/workflows/apply-release-parser-recovery-v207.yml
           git commit -m 'fix: correct v207 generated parser quote'
           git push origin HEAD:main
+# trigger 2
