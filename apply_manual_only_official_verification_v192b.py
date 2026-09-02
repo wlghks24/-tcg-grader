@@ -11,12 +11,11 @@ p=Path('manual_official_proof.py'); text=p.read_text(encoding='utf-8')
 text=one(text,
 '''            "manual_screenshot_requires_official_company_and_certificate": True,\n            "manual_screenshot_grade_may_use_exact_slab_ocr_fallback": True,\n''',
 '''            "manual_screenshot_requires_official_company_and_certificate": True,\n            "manual_screenshot_requires_company_certificate_and_grade_match": True,\n            "manual_screenshot_alone_without_identity_match_sets_official_result": False,\n            "manual_screenshot_grade_may_use_exact_slab_ocr_fallback": True,\n''','public policy identity')
-text=one(text,
-'''            "policy": {"reference_only": True, "official_result": False, "raw_grade_calibration": False},\n''',
-'''            "policy": {\n                "manual_only": True,\n                "official_result": row.get("official_result") is True,\n                "raw_grade_calibration": False,\n                "later_live_lookup_required": False,\n            },\n''','duplicate response policy')
-text=one(text,
-'''            "policy": {"reference_only": True, "official_result": False, "raw_grade_calibration": False},\n        }\n\n    old_path = ""\n''',
-'''            "policy": {\n                "manual_only": True,\n                "official_result": row.get("official_result") is True,\n                "raw_grade_calibration": False,\n                "later_live_lookup_required": False,\n            },\n        }\n\n    old_path = ""\n''','preserved valid response policy')
+legacy='''            "policy": {"reference_only": True, "official_result": False, "raw_grade_calibration": False},\n'''
+replacement='''            "policy": {\n                "manual_only": True,\n                "official_result": row.get("official_result") is True,\n                "raw_grade_calibration": False,\n                "later_live_lookup_required": False,\n            },\n'''
+if text.count(legacy) != 2:
+    raise SystemExit(f'legacy response policy: expected 2, got {text.count(legacy)}')
+text=text.replace(legacy,replacement)
 text=one(text,
 '''        "policy": {\n            "reference_only": True,\n            "official_result": False,\n            "raw_grade_calibration": False,\n            "rejected_screenshot_bytes_retained": False,\n            "ocr_miss_does_not_quarantine_card": True,\n            "later_live_lookup_required": True,\n        },\n''',
 '''        "policy": {\n            "manual_only": True,\n            "official_result": bool(matched),\n            "official_reference": bool(matched),\n            "raw_grade_calibration": False,\n            "rejected_screenshot_bytes_retained": False,\n            "ocr_miss_does_not_quarantine_card": True,\n            "later_live_lookup_required": False,\n            "automatic_live_lookup_used": False,\n        },\n''','final response policy')
