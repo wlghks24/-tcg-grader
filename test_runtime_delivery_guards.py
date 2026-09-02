@@ -34,6 +34,12 @@ def main():
     assert 'vision_calibration.json' in updater
     assert 'git config --local core.fileMode false' in updater
     assert 'reset --hard' not in updater
+    # The update lock must never survive the final exec handoff. exec preserves
+    # the PID, so a stale lock would make the server look like an active updater.
+    handoff=updater.rfind('exec bash START_TCG_UPDATER_ANDROID.sh')
+    cleanup=updater.rfind('cleanup_update_lock', 0, handoff)
+    unlock=updater.rfind('LOCKED=0', 0, handoff)
+    assert handoff > 0 and cleanup > 0 and unlock > cleanup
 
     boot=text('ANDROID_AUTO_START_INSTALL.sh')
     assert 'api/v135-health' in boot
@@ -52,7 +58,7 @@ def main():
     market=text('update_market_prices.py')
     assert 'catalog_marker_missing' in market
     assert 'kream_transient=(' in market
-    print('[OK] runtime delivery guards v183')
+    print('[OK] runtime delivery guards v185')
 
 
 if __name__=='__main__':
