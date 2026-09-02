@@ -48,6 +48,16 @@ JSON_FILE_CACHE={}
 JSON_FILE_CACHE_LIMIT=48
 AUTO_INTERVAL_SECONDS=6*60*60
 PRECOLLECT_LEAD_SECONDS=30*60
+
+
+def next_update_due(previous_due, now=None):
+    """Return the next future cadence slot without replaying missed cycles."""
+    moment=time.time() if now is None else float(now)
+    candidate=float(previous_due)+AUTO_INTERVAL_SECONDS
+    if candidate<=moment:
+        skipped=int((moment-candidate)//AUTO_INTERVAL_SECONDS)+1
+        candidate+=skipped*AUTO_INTERVAL_SECONDS
+    return candidate
 PRECOLLECT_STAGE=os.path.join(BASE,'.precollect_stage')
 PRECOLLECT_STATUS=os.path.join(BASE,'precollect_status.json')
 UPDATE_LOCK=threading.Lock()
@@ -1043,7 +1053,7 @@ def finalize_precollected_cycle(due_at):
         if normal:
             applied.extend({**x,'approved':True,'apply_mode':'30분 사전수집 + 6시간 최종검증','applied_at':now_text} for x in normal)
             applied=applied[-300:]
-        next_due=due_at+AUTO_INTERVAL_SECONDS
+        next_due=next_update_due(due_at,time.time())
         data['applied']=applied; data['pending']=errors
         data['auto_update']={'enabled':True,'interval_hours':6,'precollect_lead_minutes':30,'trigger':trigger,
             'last_run':time.strftime('%Y-%m-%dT%H:%M:%S%z',time.localtime(started)),
@@ -1080,7 +1090,7 @@ def auto_update_loop():
             # stage 반영에 실패하면 기존 정규 전체업데이트로 안전하게 폴백한다.
             try: update_cycle('automatic-fallback')
             except Exception: pass
-        due += AUTO_INTERVAL_SECONDS
+        due = next_update_due(due,time.time())
 
 class Handler(SimpleHTTPRequestHandler):
     def __init__(self, *args, directory=None, **kwargs):
@@ -1681,7 +1691,40 @@ def local_startup_housekeeping():
         return {'ok':False,'removed':0,'error':type(exc).__name__}
 
 class QuietThreadingHTTPServer(ThreadingHTTPServer):
-    """브라우저가 응답 중 연결을 닫을 때 생기는 정상적인 reset/broken-pipe 로그를 억제한다."""
+    """Bounded local HTTP worker pool with quiet normal disconnect handling."""
+    daemon_threads = True
+    block_on_close = False
+    allow_reuse_address = True
+    request_queue_size = 32
+    max_request_threads = env_int('TCG_HTTP_MAX_THREADS', 32, 8, 128)
+
+    def __init__(self, *args, **kwargs):
+        self._request_slots = threading.BoundedSemaphore(self.max_request_threads)
+        super().__init__(*args, **kwargs)
+
+    def process_request(self, request, client_address):
+        if not self._request_slots.acquire(blocking=False):
+            try:
+                request.sendall(
+                    b'HTTP/1.1 503 Service Unavailable\r\n'
+                    b'Connection: close\r\nRetry-After: 1\r\nContent-Length: 0\r\n\r\n'
+                )
+            except OSError:
+                pass
+            self.shutdown_request(request)
+            return
+        try:
+            super().process_request(request, client_address)
+        except BaseException:
+            self._request_slots.release()
+            raise
+
+    def process_request_thread(self, request, client_address):
+        try:
+            super().process_request_thread(request, client_address)
+        finally:
+            self._request_slots.release()
+
     def handle_error(self, request, client_address):
         exc=sys.exc_info()[1]
         if isinstance(exc,(BrokenPipeError,ConnectionResetError)):

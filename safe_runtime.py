@@ -366,6 +366,25 @@ def safe_read_text(
     return safe_read_bytes(path, max_bytes=max_bytes).decode("utf-8")
 
 
+def _fsync_parent_directory(path: str | os.PathLike[str]) -> None:
+    """Best-effort directory fsync so an atomic rename survives sudden power loss."""
+    if os.name == 'nt':
+        return
+    flags = os.O_RDONLY | getattr(os, 'O_DIRECTORY', 0)
+    descriptor = None
+    try:
+        descriptor = os.open(os.fspath(path), flags)
+        os.fsync(descriptor)
+    except OSError:
+        pass
+    finally:
+        if descriptor is not None:
+            try:
+                os.close(descriptor)
+            except OSError:
+                pass
+
+
 def atomic_write_bytes(
     path: str | os.PathLike[str],
     data: bytes | bytearray | memoryview,
@@ -398,6 +417,7 @@ def atomic_write_bytes(
         if target.is_symlink():
             raise ValueError("symbolic-link write target blocked")
         os.replace(temporary, target)
+        _fsync_parent_directory(target.parent)
     finally:
         temporary.unlink(missing_ok=True)
 

@@ -12,6 +12,7 @@ import tcg_updater as core
 
 RUNTIME_ID = "tcg-updater-v135-verified-learning"
 RUNTIME_PATCH = 143
+RUNTIME_DELIVERY_PATCH = 182
 RUNTIME_BUNDLE_STATUS = {"ok": False, "patch": 143, "issues": ["startup audit not completed"]}
 
 
@@ -100,6 +101,10 @@ class Handler(core.Handler):
                 'ok': True,
                 'runtime': RUNTIME_ID,
                 'patch': RUNTIME_PATCH,
+                'runtime_delivery_patch': RUNTIME_DELIVERY_PATCH,
+                'bounded_http_workers': True,
+                'sleep_resume_catchup_guard': True,
+                'atomic_parent_directory_fsync': True,
                 'runtime_bundle_patch': int(bundle.get('patch') or 143),
                 'runtime_bundle_compatible': bundle.get('ok') is True,
                 'runtime_bundle_issue_count': int(bundle.get('issue_count') or 0),
@@ -296,7 +301,7 @@ def main() -> int:
     except (ImportError, RuntimeError, OSError, ValueError, TypeError) as exc:
         raise SystemExit(
             '[오류] v143 전체 런타임 호환성 검사 실패. '
-            'INSTALL_GRADE_LEARNING_V135.sh로 전체 갱신 후 다시 시작하세요: '
+            'GitHub main 전체 갱신 후 다시 시작하세요(태블릿: bash ANDROID_UPDATE_AND_START.sh): '
             + str(exc)[:500]
         )
 
