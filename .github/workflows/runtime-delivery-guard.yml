@@ -32,6 +32,7 @@ on:
       - 'test_psa_official_proof_grade_v187.py'
       - 'test_graded_photo_game_inference_v188.py'
       - 'test_manual_only_official_verification_v192.py'
+      - 'test_manual_official_proof.py'
       - 'test_pending_official_candidate_v161.py'
       - 'test_runtime_delivery_guards.py'
       - 'test_runtime_resilience_v182.py'
@@ -66,6 +67,7 @@ on:
       - 'test_psa_official_proof_grade_v187.py'
       - 'test_graded_photo_game_inference_v188.py'
       - 'test_manual_only_official_verification_v192.py'
+      - 'test_manual_official_proof.py'
       - 'test_pending_official_candidate_v161.py'
       - 'test_runtime_delivery_guards.py'
       - 'test_runtime_resilience_v182.py'
@@ -97,6 +99,7 @@ jobs:
           python test_psa_official_proof_grade_v187.py
           python test_graded_photo_game_inference_v188.py
           python test_manual_only_official_verification_v192.py
+          python test_manual_official_proof.py
           python test_pending_official_candidate_v161.py
           python -m py_compile safe_runtime.py tcg_updater.py tcg_updater_v135.py update_market_prices.py validate_external_links.py grading_cert_verifier.py manual_graded_photo_registration.py manual_official_proof.py pending_official_candidate_v161.py graded_photo_multi_source.py auto_update_all.py auto_repair_engine.py error_scenario_lab.py
           bash -n ANDROID_UPDATE_AND_START.sh
