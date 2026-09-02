@@ -29,10 +29,14 @@ def main():
     updater=text('ANDROID_UPDATE_AND_START.sh')
     assert '정상 수집으로 변경된 런타임 JSON만 감지했습니다' in updater
     assert 'market_prices.json' in updater and 'graded_photo_candidates.json' in updater
+    assert 'reset --hard' not in updater
 
     boot=text('ANDROID_AUTO_START_INSTALL.sh')
+    assert 'api/v135-health' in boot
+    assert 'sleep 60; continue' in boot
     assert 'retrying in ${delay}s' in boot
     assert 'sleep 10; done' not in boot
+    assert "pgrep -f '[p]ython.*tcg_updater_v135.py'" not in boot
 
     launcher=text('START_TCG_UPDATER_ANDROID.sh')
     assert 'PAIR_QUEUE_PID=$!' in launcher
