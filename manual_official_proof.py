@@ -252,6 +252,17 @@ def _company_in_text(text: Any, company: str) -> bool:
     return any(hint in upper or hint in compact for hint in _COMPANY_HINTS.get(company, (company,)))
 
 
+def _game_from_official_text(text: Any) -> str:
+    upper = _text_upper(text)
+    if any(token in upper for token in ("POKEMON", "POKÉMON", "ポケモン", "포켓몬")):
+        return "pokemon"
+    if any(token in upper for token in ("ONE PIECE", "ONEPIECE", "ワンピース", "원피스")):
+        return "onepiece"
+    if any(token in upper for token in ("NARUTO", "ナルト", "나루토")):
+        return "naruto"
+    return ""
+
+
 def _explicit_grade_candidates(text: Any, company: str) -> set[float]:
     upper = _text_upper(text)
     found: set[float] = set()
@@ -286,6 +297,36 @@ def _explicit_grade_candidates(text: Any, company: str) -> set[float]:
             if any(re.search(pat, upper) for pat in pats):
                 found.add(grade)
     return found
+
+
+def _contextual_grade_candidates(
+    text: Any, company: str, *, company_match: bool, cert_match: bool
+) -> set[float]:
+    """Recover a grader descriptor only after exact official-page identity matched.
+
+    Mobile OCR can read PSA's `GEM MT` and the certification number while
+    dropping or reordering the tiny numeric grade. PSA descriptors themselves
+    map to a single numeric grade, but we only trust that mapping when company
+    and certificate have already matched the same official-page screenshot.
+    Explicit numeric OCR always takes precedence and disables this fallback.
+    """
+    if company != "PSA" or not company_match or not cert_match:
+        return set()
+    upper = _text_upper(text)
+    # Order matters because MINT is a substring of GEM MINT / NEAR MINT.
+    if re.search(r"\bGEM\s*(?:MT|MINT)\b", upper):
+        return {10.0}
+    if re.search(r"\b(?:NM[\s-]*MT|NEAR\s+MINT)\b", upper):
+        return {8.0}
+    if re.search(r"\bEX[\s-]*MT\b", upper):
+        return {6.0}
+    if re.search(r"\bMINT\b", upper):
+        return {9.0}
+    if re.search(r"\bNM\b", upper):
+        return {7.0}
+    if re.search(r"\bEX\b", upper):
+        return {5.0}
+    return set()
 
 
 def _slab_identity_exact(row: dict[str, Any], company: str, cert: str, expected_grade: float) -> bool:
@@ -366,6 +407,7 @@ def _ocr_official_page(
             variants = (
                 ("full_psm11", _prepare_page_crop(source, 0.0, 1.0, 1800), 11, False),
                 ("identity_band_psm11", _prepare_page_crop(source, 0.06, 0.72, 2200), 11, False),
+                ("slab_descriptor_band_psm6", _prepare_page_crop(source, 0.34, 0.84, 2400), 6, False),
                 ("lower_grade_psm11", _prepare_page_crop(source, 0.48, 1.0, 2000), 11, False),
                 ("identity_digits_psm11", _prepare_page_crop(source, 0.08, 0.74, 2400), 11, True),
             )
@@ -426,9 +468,15 @@ def _match_proof(*, row: dict[str, Any], text: str, evidence: dict[str, Any], co
     cert_match = proof_cert == cert or cert_text_match
 
     explicit_grades = _explicit_grade_candidates(text, company)
+    contextual_grades: set[float] = set()
+    if proof_grade is None and not explicit_grades:
+        contextual_grades = _contextual_grade_candidates(
+            text, company, company_match=company_match, cert_match=cert_match,
+        )
     grade_match = (
         proof_grade is not None and abs(proof_grade - expected_grade) < 1e-9
-    ) or any(abs(value - expected_grade) < 1e-9 for value in explicit_grades)
+    ) or any(abs(value - expected_grade) < 1e-9 for value in explicit_grades) \
+      or any(abs(value - expected_grade) < 1e-9 for value in contextual_grades)
 
     explicit_conflicts: list[str] = []
     if proof_company and proof_company != company and not company_text_match:
@@ -466,6 +514,7 @@ def _match_proof(*, row: dict[str, Any], text: str, evidence: dict[str, Any], co
         "grade_match": grade_match,
         "slab_grade_fallback": slab_fallback,
         "explicit_grade_candidates": sorted(explicit_grades),
+        "contextual_grade_candidates": sorted(contextual_grades),
         "conflicts": explicit_conflicts,
         "missing": missing,
     }
@@ -540,6 +589,8 @@ def submit(payload: dict[str, Any]) -> dict[str, Any]:
         "certification_match": match["cert_match"],
         "grade_match": match["grade_match"],
         "slab_grade_fallback": match["slab_grade_fallback"],
+        "contextual_grade_candidates": match.get("contextual_grade_candidates", []),
+        "game_hint": _game_from_official_text(text) if matched else "",
     }
 
     if not matched and existing_matched:
@@ -560,6 +611,7 @@ def submit(payload: dict[str, Any]) -> dict[str, Any]:
         proof_state = "matched" if matched else (
             "conflict_needs_review" if match["conflicts"] else "ocr_incomplete_needs_review"
         )
+        official_game_hint = _game_from_official_text(text) if matched else ""
         current.update({
             "updated_at": now,
             "manual_official_proof_state": proof_state,
@@ -583,6 +635,10 @@ def submit(payload: dict[str, Any]) -> dict[str, Any]:
             "training_eligible": False,
             "raw_grade_calibration_eligible": False,
         })
+        if matched and str(current.get("game") or "").lower() not in manual_photo.GAMES and official_game_hint in manual_photo.GAMES:
+            current["game"] = official_game_hint
+            current["manual_official_proof_game_inferred"] = True
+            current["manual_official_proof_game_evidence"] = "official_page_text"
         reasons = _proof_reason_cleanup(set(current.get("quarantine_reasons") or []))
         if matched:
             reasons.discard("official_lookup_not_confirmed")
