@@ -15,7 +15,12 @@ on:
       - 'error_scenario_lab.py'
       - 'scenario_learning_profiles.json'
       - 'validate_external_links.py'
+      - 'grading_cert_verifier.py'
+      - 'manual_graded_photo_registration.py'
       - 'manual_official_proof.py'
+      - 'manual_official_verify_bridge.js'
+      - 'pending_official_candidate_v161.py'
+      - 'pending_official_candidate_bridge_v161.js'
       - 'graded_photo_multi_source.py'
       - 'card_identity_reference_catalog.json'
       - 'ANDROID_UPDATE_AND_START.sh'
@@ -26,6 +31,8 @@ on:
       - 'test_link_same_host_fallback_v189.py'
       - 'test_psa_official_proof_grade_v187.py'
       - 'test_graded_photo_game_inference_v188.py'
+      - 'test_manual_only_official_verification_v192.py'
+      - 'test_pending_official_candidate_v161.py'
       - 'test_runtime_delivery_guards.py'
       - 'test_runtime_resilience_v182.py'
       - '.github/workflows/runtime-delivery-guard.yml'
@@ -42,7 +49,12 @@ on:
       - 'error_scenario_lab.py'
       - 'scenario_learning_profiles.json'
       - 'validate_external_links.py'
+      - 'grading_cert_verifier.py'
+      - 'manual_graded_photo_registration.py'
       - 'manual_official_proof.py'
+      - 'manual_official_verify_bridge.js'
+      - 'pending_official_candidate_v161.py'
+      - 'pending_official_candidate_bridge_v161.js'
       - 'graded_photo_multi_source.py'
       - 'card_identity_reference_catalog.json'
       - 'ANDROID_UPDATE_AND_START.sh'
@@ -53,8 +65,11 @@ on:
       - 'test_link_same_host_fallback_v189.py'
       - 'test_psa_official_proof_grade_v187.py'
       - 'test_graded_photo_game_inference_v188.py'
+      - 'test_manual_only_official_verification_v192.py'
+      - 'test_pending_official_candidate_v161.py'
       - 'test_runtime_delivery_guards.py'
       - 'test_runtime_resilience_v182.py'
+      - '.github/workflows/runtime-delivery-guard.yml'
 
 permissions:
   contents: read
@@ -81,11 +96,15 @@ jobs:
           python test_link_same_host_fallback_v189.py
           python test_psa_official_proof_grade_v187.py
           python test_graded_photo_game_inference_v188.py
-          python -m py_compile safe_runtime.py tcg_updater.py tcg_updater_v135.py update_market_prices.py validate_external_links.py manual_official_proof.py graded_photo_multi_source.py auto_update_all.py auto_repair_engine.py error_scenario_lab.py
+          python test_manual_only_official_verification_v192.py
+          python test_pending_official_candidate_v161.py
+          python -m py_compile safe_runtime.py tcg_updater.py tcg_updater_v135.py update_market_prices.py validate_external_links.py grading_cert_verifier.py manual_graded_photo_registration.py manual_official_proof.py pending_official_candidate_v161.py graded_photo_multi_source.py auto_update_all.py auto_repair_engine.py error_scenario_lab.py
           bash -n ANDROID_UPDATE_AND_START.sh
           bash -n ANDROID_AUTO_START_INSTALL.sh
           bash -n START_TCG_UPDATER_ANDROID.sh
           node --check multi_market_prices.js
+          node --check manual_official_verify_bridge.js
+          node --check pending_official_candidate_bridge_v161.js
           node --check sw.js
       - name: Verify generated Termux boot supervisor
         run: |
