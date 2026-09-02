@@ -1,0 +1,53 @@
+name: Apply integration timeout cache fallback v178
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'apply_integration_timeout_cache_v178.py'
+      - '.github/workflows/apply-integration-timeout-cache-v178.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          ref: main
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
+        with:
+          python-version: '3.12'
+      - name: Apply v178 patch
+        run: python apply_integration_timeout_cache_v178.py
+      - name: Verify syntax
+        run: python -m py_compile auto_update_all.py auto_pipeline_runner.py
+      - name: Verify integration fallback markers
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          text=Path('auto_update_all.py').read_text(encoding='utf-8')
+          required=[
+              'integration_cache_deferred_v178',
+              "cache=ROOT/'web_discovery_candidates.json'",
+              "'deferred_timeout_pending':True",
+              "'stale_cache_preserved':True",
+              "and isinstance(cached.get('queries'),list)",
+          ]
+          missing=[x for x in required if x not in text]
+          if missing:
+              raise SystemExit(f'missing v178 markers: {missing}')
+          print('v178 integration timeout fallback verified')
+          PY
+      - name: Commit changes
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add auto_update_all.py
+          if ! git diff --cached --quiet; then
+            git commit -m 'fix: preserve integration cache on bounded timeout v178'
+            git push origin main
+          fi
