@@ -1,0 +1,52 @@
+name: Runtime delivery guard
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'index.html'
+      - 'sw.js'
+      - 'multi_market_prices.js'
+      - 'tcg_updater.py'
+      - 'ANDROID_UPDATE_AND_START.sh'
+      - 'ANDROID_AUTO_START_INSTALL.sh'
+      - 'START_TCG_UPDATER_ANDROID.sh'
+      - 'update_market_prices.py'
+      - 'test_runtime_delivery_guards.py'
+      - '.github/workflows/runtime-delivery-guard.yml'
+  pull_request:
+    paths:
+      - 'index.html'
+      - 'sw.js'
+      - 'multi_market_prices.js'
+      - 'tcg_updater.py'
+      - 'ANDROID_UPDATE_AND_START.sh'
+      - 'ANDROID_AUTO_START_INSTALL.sh'
+      - 'START_TCG_UPDATER_ANDROID.sh'
+      - 'update_market_prices.py'
+      - 'test_runtime_delivery_guards.py'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: runtime-delivery-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Verify runtime delivery invariants
+        run: |
+          python test_runtime_delivery_guards.py
+          python -m py_compile tcg_updater.py update_market_prices.py
+          bash -n ANDROID_UPDATE_AND_START.sh
+          bash -n ANDROID_AUTO_START_INSTALL.sh
+          bash -n START_TCG_UPDATER_ANDROID.sh
+          node --check multi_market_prices.js
+          node --check sw.js
