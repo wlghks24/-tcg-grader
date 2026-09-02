@@ -1,0 +1,57 @@
+name: Apply Release Parser Recovery v210
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/apply-release-parser-recovery-v210.yml'
+permissions:
+  contents: write
+jobs:
+  apply:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Apply parser recovery and learning compatibility
+        run: |
+          python fix_release_parser_learning_label_v209.py
+          python apply_release_parser_recovery_v208.py
+      - name: Compile and unit test
+        run: |
+          python -m py_compile update_releases.py release_parser_learning.py
+          python -m unittest -v test_release_parser_learning.py
+      - name: Live recovery smoke test
+        env:
+          TCG_HTTP_TIMEOUT: '30'
+        run: |
+          python - <<'PY'
+          import tempfile
+          from pathlib import Path
+          import update_releases as u
+          u.PARSER_MEMORY = Path(tempfile.mkdtemp()) / 'parser-memory.json'
+          u.PARSER_RUN_EVENTS.clear()
+          rows = u.collect_pokemon_jp()
+          assert rows and any(r.get('name') == '30th CELEBRATION' for r in rows), rows[:5]
+          summary = u.parser_public_summary(u.PARSER_MEMORY, {'Pokémon JP': u.POKEMON_JP_STRATEGIES})
+          assert summary['sources']['Pokémon JP']['preferred_strategy'] == 'official_result_api_v1', summary
+          first = list(u.PARSER_RUN_EVENTS)
+          u.PARSER_RUN_EVENTS.clear()
+          rows2 = u.collect_pokemon_jp()
+          assert rows2 and u.PARSER_RUN_EVENTS[0]['strategy'] == 'official_result_api_v1', u.PARSER_RUN_EVENTS
+          print('first_events=', first)
+          print('learned_events=', u.PARSER_RUN_EVENTS)
+          print('rows=', len(rows2))
+          PY
+      - name: Commit recovery implementation
+        run: |
+          if git diff --quiet; then exit 0; fi
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add update_releases.py release_parser_learning.py
+          git commit -m 'fix: learn and auto-recover release parser drift v210'
+          git push origin HEAD:main
