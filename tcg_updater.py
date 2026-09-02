@@ -1409,27 +1409,6 @@ class Handler(SimpleHTTPRequestHandler):
                 return self.json(search_multi_market(q,region=region,game=game,force=force))
             except Exception:
                 return self.json({'ok':False,'error':'다중마켓 시세수집 엔진 오류','items':[]},500)
-        if path=='/api/verify-grading-cert':
-            qs=parse_qs(parsed.query)
-            company=(qs.get('company',[''])[0] or '')[:8].upper()
-            cert=(qs.get('cert',[''])[0] or '')[:120].strip()
-            if not self._search_origin_allowed():
-                return self.json({'ok':False,'verified':False,'error':'허용되지 않은 요청 출처'},403)
-            if company not in ('PSA','BGS','CGC','TAG','BRG') or len(cert)<6:
-                return self.json({'ok':False,'verified':False,'error':'등급사 또는 인증번호 형식 오류'},400)
-            allowed,guard_info=OFFICIAL_LOOKUP_GUARD.claim(company)
-            if not allowed:
-                return self.json({'ok':False,'verified':False,'error':'공식 인증조회 안전 대기 중',
-                                  'local_safety_guard':guard_info},429)
-            try:
-                from grading_cert_verifier import verify_cert
-                result=verify_cert(company,cert)
-                local_guard=OFFICIAL_LOOKUP_GUARD.record_result(company,result)
-                if isinstance(result,dict):
-                    result=dict(result);result['local_safety_guard']=local_guard
-                return self.json(result)
-            except Exception:
-                return self.json({'ok':False,'verified':False,'error':'공식 인증번호 검증 엔진 오류'},500)
         if path=='/api/grading-proxy-costs':
             qs=parse_qs(parsed.query)
             force=qs.get('force',['0'])[0]=='1'
