@@ -27,7 +27,7 @@ from detailed_collection_intelligence import (
  route_run_count, source_priorities, source_priority,
 )
 from graded_photo_evidence import enrich_rows, normalize_cert
-from grading_cert_verifier import lookup_url, verify_cert
+from grading_cert_verifier import lookup_url
 
 ROOT=Path(__file__).resolve().parent
 OUT=ROOT/'graded_photo_candidates.json'
@@ -944,78 +944,64 @@ def _official_cache_fresh(entry:dict,now:float)->bool:
         return now-float(entry.get('checked_epoch',0) or 0)<7*86400
     except (TypeError,ValueError,OverflowError):return False
 
-def _official_verify_rows(rows:list[dict],registry:dict,max_live:int=10)->tuple[list[dict],dict]:
- # v192: runtime candidate collection is manual-only.  Previously cached live
- # lookup responses are intentionally ignored so an old automatic response
- # cannot promote a new candidate after this policy change.
- cache={}
- entries={}
- max_live=0
- now=time.time();live=0;stats={'registry_matches':0,'live_attempts':0,'live_verified':0,'conflicts':0,'unavailable':0,
-                              'deferred_by_cooldown':0,'company_deferred':{company:0 for company in COMPANIES},
-                              'next_retry_seconds':None,
-                              'company_live_attempts':{company:0 for company in COMPANIES},
-                              'game_live_attempts':{game:0 for game in GAMES}}
- eligible=set()
- for index,item in enumerate(rows):
-  company=str(item.get('company') or '').upper();cert=normalize_cert(item.get('certification_id'))
-  try:grade=float(item.get('grade')) if item.get('grade') is not None else None
-  except (TypeError,ValueError,OverflowError):grade=None
-  if company not in COMPANIES or not cert or grade is None or (company,cert) in registry:continue
-  cached=entries.get(f'{company}:{cert}') if isinstance(entries.get(f'{company}:{cert}'),dict) else None
-  if not _official_cache_fresh(cached,now):eligible.add(index)
- live_targets=set()  # v192 manual-only: no automatic official HTTP requests
+def _official_verify_rows(rows:list[dict],registry:dict,max_live:int=0)->tuple[list[dict],dict]:
+ # v194: manual-only means the collector cannot call grader certification sites.
+ # Only a persisted manual-verified registry entry may set official_result=True.
+ # max_live remains only for call-site compatibility and is intentionally ignored.
+ _=max_live
+ stats={'registry_matches':0,'live_attempts':0,'live_verified':0,'conflicts':0,'unavailable':0,
+        'deferred_by_cooldown':0,'company_deferred':{company:0 for company in COMPANIES},
+        'next_retry_seconds':None,
+        'company_live_attempts':{company:0 for company in COMPANIES},
+        'game_live_attempts':{game:0 for game in GAMES}}
  output=[]
- for index,raw in enumerate(rows):
-  item=dict(raw);company=str(item.get('company') or '').upper();cert=normalize_cert(item.get('certification_id'))
+ for raw in rows:
+  item=dict(raw)
+  company=str(item.get('company') or '').upper()
+  cert=normalize_cert(item.get('certification_id'))
   try:grade=float(item.get('grade')) if item.get('grade') is not None else None
   except (TypeError,ValueError,OverflowError):grade=None
+
+  # Stale automatic-verification flags from older candidate/cache generations
+  # must never survive the manual-only policy boundary.
+  item['official_result']=False
+  item['verification_method']=None
+  item.pop('official_grade',None)
+  item.pop('official_lookup_status',None)
+  item['official_lookup_suppressed']=True
+  item['automatic_official_lookup_used']=False
+
   if company not in COMPANIES or not cert or grade is None:
-   output.append(item);continue
+   item['manual_official_verification_required']=True
+   item['official_verification']='manual_verification_required'
+   output.append(item)
+   continue
+
   item['certification_id']=cert
+  item['official_reference_url']=lookup_url(company,cert)
   registered=registry.get((company,cert))
   if registered is not None:
    if abs(float(registered)-grade)<1e-9:
-    item.update({'official_result':True,'official_reference_url':lookup_url(company,cert),
-                 'verification_method':'persisted_official_registry','official_grade':float(registered)})
+    item.update({'official_result':True,
+                 'verification_method':'persisted_manual_verified_registry',
+                 'official_verification':'validated_manual_registry',
+                 'official_grade':float(registered),
+                 'manual_official_verification_required':False})
     stats['registry_matches']+=1
    else:
     item['evidence_conflicts']=sorted(set((item.get('evidence_conflicts') or [])+['official_grade_conflict']))
-    item['official_grade']=float(registered);stats['conflicts']+=1
-   output.append(item);continue
-  key=f'{company}:{cert}'
-  cached=entries.get(key) if isinstance(entries.get(key),dict) else None
-  fresh=_official_cache_fresh(cached,now)
-  if fresh:
-   result=cached.get('result') if isinstance(cached.get('result'),dict) else {}
-   if result.get('blocked_or_challenged') is True or int(result.get('http_status') or 0) in {401,403,407,429}:
-    stats['deferred_by_cooldown']+=1;stats['company_deferred'][company]+=1
-    try:remaining=max(0,int(float(cached.get('expires_epoch',now))-now))
-    except (TypeError,ValueError,OverflowError):remaining=0
-    current=stats['next_retry_seconds']
-    stats['next_retry_seconds']=remaining if current is None else min(current,remaining)
-  elif index in live_targets and live<max_live:
-   result=verify_cert(company,cert,expected_grade=grade,timeout=10);live+=1;stats['live_attempts']+=1
-   stats['company_live_attempts'][company]+=1
-   game=str(item.get('game') or '').lower()
-   if game in GAMES:stats['game_live_attempts'][game]+=1
-   ttl=_official_cache_ttl_seconds(result)
-   entries[key]={'checked_epoch':now,'expires_epoch':now+ttl,'cache_ttl_seconds':ttl,'result':result}
+    item['official_grade']=float(registered)
+    item['official_verification']='manual_registry_grade_conflict'
+    item['manual_official_verification_required']=True
+    stats['conflicts']+=1
   else:
-   result={}
-  if result.get('verified') is True:
-   item.update({'official_result':True,'official_reference_url':result.get('official_url') or lookup_url(company,cert),
-                'verification_method':'live_official_lookup','official_grade':float(result.get('grade'))})
-   stats['live_verified']+=1
-  elif result.get('conflict') is True:
-   item['evidence_conflicts']=sorted(set((item.get('evidence_conflicts') or [])+['official_grade_conflict']))
-   item['official_grade']=result.get('grade');stats['conflicts']+=1
-  elif result:
-   item['official_lookup_status']=str(result.get('lookup_error') or result.get('notice') or 'not_verified')[:180]
-   stats['unavailable']+=1
+   item['official_verification']='manual_verification_required'
+   item['manual_official_verification_required']=True
   output.append(item)
- cache={'schema_version':2,'updated_at':_now(),'entries':dict(list(entries.items())[-500:])}
- atomic_write_json(OFFICIAL_CACHE,cache,suffix='.official-cache.tmp')
+
+ # Keep the legacy cache file structurally valid but deliberately empty so no
+ # previous automatic response can be reused after a restart or upgrade.
+ atomic_write_json(OFFICIAL_CACHE,{'schema_version':2,'updated_at':_now(),'entries':{}},suffix='.official-cache.tmp')
  return output,stats
 
 def _resolve_cert_conflicts(rows:list[dict])->list[dict]:

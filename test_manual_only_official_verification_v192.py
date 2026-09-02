@@ -18,14 +18,26 @@ class ManualOnlyOfficialVerificationV192Tests(unittest.TestCase):
         self.assertFalse(result.get('verified'))
         self.assertEqual(result.get('official_url'),'https://break.co.kr/certification/0346643')
 
-    def test_candidate_collection_makes_zero_live_cert_requests(self):
-        rows=[{'company':'BRG','game':'pokemon','grade':10.0,'certification_id':'0346643'}]
-        with mock.patch.object(gp,'verify_cert') as live, \
-             mock.patch.object(gp,'_load',return_value={}), \
-             mock.patch.object(gp,'atomic_write_json'):
-            _rows,stats=gp._official_verify_rows(rows,{},max_live=10)
-        live.assert_not_called()
+    def test_candidate_collection_has_no_live_cert_path_and_scrubs_stale_trust(self):
+        rows=[{'company':'BRG','game':'pokemon','grade':10.0,'certification_id':'0346643',
+               'official_result':True,'verification_method':'live_official_lookup','official_grade':10.0}]
+        with mock.patch.object(gp,'atomic_write_json'):
+            out,stats=gp._official_verify_rows(rows,{},max_live=10)
+        source=inspect.getsource(gp._official_verify_rows)
+        self.assertNotIn('verify_cert(',source)
+        self.assertFalse(out[0].get('official_result'),out[0])
+        self.assertTrue(out[0].get('manual_official_verification_required'),out[0])
+        self.assertEqual(out[0].get('official_verification'),'manual_verification_required')
         self.assertEqual(int(stats.get('live_attempts') or 0),0)
+
+    def test_manual_verified_registry_is_the_only_collector_promotion(self):
+        rows=[{'company':'BRG','game':'pokemon','grade':10.0,'certification_id':'0346643'}]
+        with mock.patch.object(gp,'atomic_write_json'):
+            out,stats=gp._official_verify_rows(rows,{('BRG','0346643'):10.0},max_live=99)
+        self.assertTrue(out[0].get('official_result'),out[0])
+        self.assertEqual(out[0].get('verification_method'),'persisted_manual_verified_registry')
+        self.assertFalse(out[0].get('manual_official_verification_required'),out[0])
+        self.assertEqual(int(stats.get('registry_matches') or 0),1)
 
     def test_manual_proof_is_final_official_reference_but_not_raw(self):
         source=inspect.getsource(proof)
