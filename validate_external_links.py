@@ -80,9 +80,25 @@ FALLBACKS={
 }
 
 
+TEMPLATE_PLACEHOLDER_PROBES = {
+    "{query}": "TCG card",
+    "{card_no}": "OP01-001",
+    "{set_code}": "OP01",
+}
+
+
+def _render_template_probe(url: str) -> str:
+    """Render known URL-template placeholders to safe probe values."""
+    concrete = url
+    for token, sample in TEMPLATE_PLACEHOLDER_PROBES.items():
+        concrete = concrete.replace(token, urllib.parse.quote(sample, safe=''))
+    if '{' in concrete or '}' in concrete:
+        raise ValueError("unknown url template placeholder")
+    return concrete
+
 def _safe(url:str)->str:
     if not isinstance(url,str) or not url or len(url)>2048: raise ValueError("invalid url")
-    probe=url.replace("{query}","TCG")
+    probe=_render_template_probe(url)
     validate_public_https_url(probe)
     p=urllib.parse.urlsplit(probe)
     if p.scheme!="https" or not p.hostname or p.username or p.password or p.port not in (None,443): raise ValueError("https only")
@@ -94,7 +110,6 @@ def _safe(url:str)->str:
     except ValueError as exc:
         if "blocked" in str(exc): raise
     return url
-
 
 def _resolve_public(host:str):
     rows=socket.getaddrinfo(host,443,type=socket.SOCK_STREAM)
@@ -120,7 +135,7 @@ class Redirect(urllib.request.HTTPRedirectHandler):
 
 
 def probe(url:str, request_timeout:int|None=None)->dict:
-    url=_safe(url); concrete=url.replace("{query}",urllib.parse.quote("TCG card"))
+    url=_safe(url); concrete=_render_template_probe(url)
     host=urllib.parse.urlsplit(concrete).hostname
     try:
         _resolve_public(host)
@@ -188,7 +203,7 @@ def _record_status(row:dict,key:str,status:str)->None:
 
 
 def _same_host_home(url:str)->str:
-    concrete=url.replace("{query}","TCG")
+    concrete=_render_template_probe(url)
     parsed=urllib.parse.urlsplit(concrete)
     if not parsed.hostname:
         return ""
@@ -213,7 +228,7 @@ def _attach_same_host_fallbacks(tasks:dict,results:dict,request_timeout:int)->di
         result=results.get(url)
         if not isinstance(result,dict) or result.get("state")!="broken":
             continue
-        host=(urllib.parse.urlsplit(url.replace("{query}","TCG")).hostname or "").lower()
+        host=(urllib.parse.urlsplit(_render_template_probe(url)).hostname or "").lower()
         if FALLBACKS.get(host) or any(key=="url_template" for _fn,_row,key in refs):
             continue
         home=_same_host_home(url)
@@ -234,6 +249,37 @@ def _attach_same_host_fallbacks(tasks:dict,results:dict,request_timeout:int)->di
     return {"eligible":eligible,"probes":probes,"verified":sum(1 for row in results.values() if isinstance(row,dict) and row.get("fallback_kind")=="same_host_home")}
 
 
+def _classify_template_route_failures(tasks:dict,results:dict,request_timeout:int)->dict:
+    """Learn a safe recovery for search-template 404/410 responses."""
+    cache={}; probes=0; eligible=0; recovered=0
+    for url,refs in tasks.items():
+        result=results.get(url)
+        if not isinstance(result,dict) or result.get('state')!='broken':
+            continue
+        if not any(key=='url_template' for _fn,_row,key in refs):
+            continue
+        home=_same_host_home(url)
+        if not home:
+            continue
+        eligible+=1
+        root_result=results.get(home)
+        if root_result is None:
+            root_result=cache.get(home)
+        if root_result is None:
+            probes+=1
+            root_result=probe(home,request_timeout=max(5,int(request_timeout or _request_timeout())))
+            cache[home]=root_result
+        if root_result.get('state') in {'ok','restricted'}:
+            original_code=result.get('code')
+            result['state']='restricted'
+            result['template_route_degraded']=True
+            result['template_http_code']=original_code
+            result['template_home_state']=root_result.get('state')
+            result['template_home_code']=root_result.get('code')
+            result['recovery_profile']='TEMPLATE_ROUTE_CHANGED_HOME_ALIVE'
+            recovered+=1
+    return {'eligible':eligible,'probes':probes,'recovered':recovered}
+
 def _apply_results(tasks:dict, results:dict, now:str)->tuple[dict,list[dict]]:
     """Apply unique-URL audit results and return unit-consistent counters.
 
@@ -251,7 +297,7 @@ def _apply_results(tasks:dict, results:dict, now:str)->tuple[dict,list[dict]]:
         counts[state]+=1
 
         if state=="broken":
-            host=urllib.parse.urlsplit(url.replace('{query}','TCG')).hostname or ''
+            host=urllib.parse.urlsplit(_render_template_probe(url)).hostname or ''
             fallback=FALLBACKS.get(host.lower()) or result.get("fallback_url")
             if fallback and fallback!=url:
                 dynamic=result.get("fallback_kind")=="same_host_home"
@@ -280,7 +326,11 @@ def _apply_results(tasks:dict, results:dict, now:str)->tuple[dict,list[dict]]:
             if state=="ok":
                 _record_status(row,key,"정상")
             elif state=="restricted":
-                _record_status(row,key,f"사이트 접속 제한 · 브라우저 이용 가능 (HTTP {result.get('code')})")
+                if result.get("template_route_degraded"):
+                    code=result.get("template_http_code")
+                    _record_status(row,key,f"검색경로 자동검사 제한 · 구매처 도메인 응답 확인 · 기존 검색링크 유지 · 대체 구매처 병행 (검색 HTTP {code})")
+                else:
+                    _record_status(row,key,f"사이트 접속 제한 · 브라우저 이용 가능 (HTTP {result.get('code')})")
             elif state=="blocked":
                 _record_status(row,key,"보안 차단 · DNS가 사설/로컬 주소를 가리킴")
             else:
@@ -347,6 +397,7 @@ def main()->dict:
         finally:
             pool.join()
     same_host_fallback_stats=_attach_same_host_fallbacks(tasks,results,request_timeout)
+    template_route_recovery_stats=_classify_template_route_failures(tasks,results,request_timeout)
     counts, unresolved_details=_apply_results(tasks,results,now)
     for fn,data in loaded.items():
         data["link_audit_at"]=now
@@ -354,6 +405,7 @@ def main()->dict:
     report={"updated_at":now,"checked":len(tasks),"audit_timeout_seconds":audit_timeout,
             "request_timeout_seconds":request_timeout,**counts,
             "same_host_fallback_stats":same_host_fallback_stats,
+            "template_route_recovery_stats":template_route_recovery_stats,
             "unresolved_details":unresolved_details}
     atomic_write_json(ROOT/"link_health_report.json",report,suffix='.report.tmp')
     print(json.dumps(report,ensure_ascii=False))
