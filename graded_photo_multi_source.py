@@ -86,6 +86,9 @@ GAME_PATTERNS={
  'onepiece':re.compile(r'one\s*piece|원피스|ワンピース',re.I),
  'naruto':re.compile(r'naruto|나루토|ナルト',re.I),
 }
+CARD_IDENTITY_CATALOG=ROOT/'card_identity_reference_catalog.json'
+ONEPIECE_CARD_CODE_RE=re.compile(r'(?<![A-Z0-9])(?:OP|EB|PRB)\d{2}[\s_-]*\d{3}(?![A-Z0-9])',re.I)
+_GAME_REFERENCE_CACHE=None
 DIRECT_GRADE_RE=re.compile(r'\b(?:PSA|BGS|CGC|TAG|BRG|BECKETT)\s*(?:GRADE\s*)?(10|9\.5|9|8\.5|8|7\.5|7|6\.5|6|5\.5|5|4\.5|4|3\.5|3|2\.5|2|1\.5|1)\b',re.I)
 LABEL_GRADE_RE=re.compile(r'\b(?:GEM\s*MINT|PRISTINE|BLACK\s*LABEL|MINT|NEAR\s*MINT)\s*(10|9\.5|9|8\.5|8|7\.5|7|6\.5|6|5\.5|5|4\.5|4|3\.5|3|2\.5|2|1\.5|1)\b',re.I)
 KOREAN_GRADE_RE=re.compile(r'(?:등급|그레이드|감정)\s*(10|9\.5|9|8\.5|8|7\.5|7|6\.5|6|5\.5|5|4\.5|4|3\.5|3|2\.5|2|1\.5|1)',re.I)
@@ -176,9 +179,77 @@ def _grade(text:str,company:str)->float|None:
  return None
 
 def _game(text:str,expected:str='')->str:
- for g,p in GAME_PATTERNS.items():
-  if p.search(text or ''):return g
+ matches=[g for g,p in GAME_PATTERNS.items() if p.search(text or '')]
+ if len(matches)==1:return matches[0]
  return expected if expected in GAMES else 'unknown'
+
+def _compact_identity_text(value:Any)->str:
+ return re.sub(r'[^A-Z0-9가-힣ぁ-んァ-ヶ一-龯]', '', str(value or '').upper())[:6000]
+
+def _reviewed_game_reference_rows()->list[dict]:
+ global _GAME_REFERENCE_CACHE
+ if _GAME_REFERENCE_CACHE is not None:return _GAME_REFERENCE_CACHE
+ data=_load(CARD_IDENTITY_CATALOG,{})
+ rows=[]
+ for item in data.get('cards',[]) if isinstance(data,dict) else []:
+  if not isinstance(item,dict):continue
+  game=str(item.get('game') or '').lower()
+  if game not in GAMES:continue
+  number=_compact_identity_text(item.get('card_number'))
+  if len(number)<4:continue
+  aliases=[]
+  for value in [item.get('card_name'),*(item.get('aliases') or [])]:
+   alias=_compact_identity_text(value)
+   if len(alias)>=4 and alias not in aliases:aliases.append(alias)
+  if aliases:rows.append({'game':game,'card_number':number,'aliases':aliases})
+ _GAME_REFERENCE_CACHE=rows
+ return rows
+
+def _game_signal_map(text:Any)->dict[str,set[str]]:
+ raw=str(text or '')[:12000]
+ signals={game:set() for game in GAMES}
+ for game,pattern in GAME_PATTERNS.items():
+  if pattern.search(raw):signals[game].add('explicit_game_token')
+ if ONEPIECE_CARD_CODE_RE.search(raw):signals['onepiece'].add('onepiece_card_code')
+ compact=_compact_identity_text(raw)
+ if compact:
+  for ref in _reviewed_game_reference_rows():
+   if ref['card_number'] not in compact:continue
+   if any(alias in compact for alias in ref['aliases']):
+    signals[ref['game']].add('reviewed_card_name_number_pair')
+ return {game:reasons for game,reasons in signals.items() if reasons}
+
+def _recover_candidate_game(item:dict)->tuple[dict,bool]:
+ current=str(item.get('game') or '').lower()
+ if current in GAMES:return item,False
+ fields=('title','snippet','ocr_label_text','source_asset_name','card_name','card_number','product_name','official_title','url')
+ text=' | '.join(str(item.get(field) or '')[:1800] for field in fields if item.get(field))
+ signals=_game_signal_map(text)
+ if len(signals)!=1:
+  if len(signals)>1:
+   item=dict(item);item['game_inference_conflict']=sorted(signals)
+  return item,False
+ game=next(iter(signals));reasons=sorted(signals[game])
+ confidence=0.995 if 'explicit_game_token' in reasons else (0.985 if 'reviewed_card_name_number_pair' in reasons else 0.98)
+ item=dict(item);item['game']=game
+ item['game_inference_source']='+'.join(reasons)[:120]
+ item['game_inference_confidence']=confidence
+ item['game_inference_evidence']=reasons[:4]
+ item.pop('game_inference_conflict',None)
+ return item,True
+
+def _recover_unknown_games(rows:list[dict])->tuple[list[dict],dict]:
+ out=[];recovered=0;conflicts=0;by_game={game:0 for game in GAMES}
+ for source in rows:
+  item=dict(source)
+  item,changed=_recover_candidate_game(item)
+  if changed:
+   recovered+=1;by_game[str(item.get('game'))]+=1
+  if item.get('game_inference_conflict'):conflicts+=1
+  out.append(item)
+ remaining=sum(str(item.get('game') or '').lower() not in GAMES for item in out)
+ return out,{'recovered':recovered,'conflicts':conflicts,'remaining_unknown':remaining,'by_game':by_game,
+             'policy':'existing_game_first; unique_strong_signal_only; no_grade_or_official_promotion'}
 
 def _cert(text:str)->str:
  m=CERT_RE.search(text or '')
@@ -1238,9 +1309,20 @@ def _collect_once()->dict:
   key=_candidate_key(item)
   item['_dedup_sources']=sorted(x for x in source_sets.get(key,set()) if x)
 
+ rows,game_inference_pre_stats=_recover_unknown_games(rows)
  try:probe_limit=int(os.environ.get('TCG_GRADED_IMAGE_PROBE_LIMIT','6' if is_android else '12'))
  except (TypeError,ValueError,OverflowError):probe_limit=6 if is_android else 12
  rows,image_stats=enrich_rows(rows,limit=max(0,min(probe_limit,24)),workers=2 if is_android else 4)
+ rows,game_inference_post_stats=_recover_unknown_games(rows)
+ game_inference_stats={
+  'recovered':int(game_inference_pre_stats.get('recovered',0))+int(game_inference_post_stats.get('recovered',0)),
+  'before_ocr_recovered':int(game_inference_pre_stats.get('recovered',0)),
+  'after_ocr_recovered':int(game_inference_post_stats.get('recovered',0)),
+  'conflicts':int(game_inference_post_stats.get('conflicts',0)),
+  'remaining_unknown':int(game_inference_post_stats.get('remaining_unknown',0)),
+  'by_game':{game:int(game_inference_pre_stats.get('by_game',{}).get(game,0))+int(game_inference_post_stats.get('by_game',{}).get(game,0)) for game in GAMES},
+  'policy':game_inference_post_stats.get('policy'),
+ }
  image_stats['prevalidated_library']=sum(x.get('image_evidence_source')=='prevalidated_library_photo' for x in rows)
  rows,official_stats=_official_verify_rows(rows,registry,max_live=5 if is_android else 10)
  rows=_resolve_cert_conflicts(rows)
@@ -1323,7 +1405,7 @@ def _collect_once()->dict:
                      'near_duplicate_label_conflicts':int(image_conflict_stats.get('near_duplicate_label_conflicts',0)),
                      'near_duplicate_references_suppressed':int((reference_learning.get('summary') or {}).get('near_duplicates_suppressed',0)),
                      'adaptive_timeout_seconds':adaptive_timeout_seconds,'elapsed_seconds':0.0,'next_timeout_seconds':adaptive_timeout_seconds},
-          'image_probe_stats':image_stats,'official_verification_stats':official_stats,'quarantine_cleanup_stats':cleanup_stats,
+          'image_probe_stats':image_stats,'game_inference_stats':game_inference_stats,'official_verification_stats':official_stats,'quarantine_cleanup_stats':cleanup_stats,
           'quarantine_cleanup_audit':cleanup_audit[:100],'global_candidate_balance':global_balance_stats,
           'collection_learning_stats':collection_learning,'collection_learning_feedback':learning_feedback,
           'game_stats':game_stats,'company_stats':company_stats,
