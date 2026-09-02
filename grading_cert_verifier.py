@@ -2,10 +2,10 @@
 # -*- coding: utf-8 -*-
 """Conservative official certification lookup for supported grading companies.
 
-Automatic official-site requests are disabled by default. The application uses
+Automatic official-site requests are permanently disabled in normal application code. The application uses
 persisted verified registry rows plus a user-browser manual confirmation flow.
-Set TCG_DISABLE_AUTO_GRADER_LOOKUP=0 only for an explicitly supervised diagnostic
-session; normal collection/registration must leave it disabled.
+All certification confirmation uses the user-browser screenshot workflow; environment
+variables cannot re-enable automatic certification requests.
 """
 from __future__ import annotations
 
@@ -66,8 +66,14 @@ DISABLE_AUTO_LOOKUP_ENV = "TCG_DISABLE_AUTO_GRADER_LOOKUP"
 
 
 def automatic_lookup_disabled() -> bool:
-    value = str(os.environ.get(DISABLE_AUTO_LOOKUP_ENV, "1") or "1").strip().lower()
-    return value not in {"0", "false", "no", "off"}
+    """v192: official certification verification is always user-browser/manual.
+
+    The application may still build the official URL, but it must never request
+    PSA/BGS/CGC/TAG/BRG certification pages programmatically.  Keeping this as
+    a hard guard prevents a stale environment variable from silently re-enabling
+    the error-prone automatic path on Android/Termux.
+    """
+    return True
 
 
 def _clean_cert(value):

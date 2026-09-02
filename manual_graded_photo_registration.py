@@ -22,9 +22,8 @@ import struct
 import threading
 from typing import Any
 
-from grading_cert_verifier import lookup_url, verify_cert
+from grading_cert_verifier import lookup_url
 from safe_runtime import atomic_write_bytes, atomic_write_json, safe_read_text
-from server_security_guard import OFFICIAL_LOOKUP_GUARD
 
 
 ROOT = Path(__file__).resolve().parent
@@ -229,7 +228,7 @@ def _public_row(row: dict[str, Any]) -> dict[str, Any]:
         "back_image_sha256", "back_image_width", "back_image_height", "front_back_pair_complete",
         "front_oblique_image_sha256", "back_oblique_image_sha256", "oblique_crosscheck_complete",
         "quadrant_zone_count", "quadrant_inspection_state", "measurement_learning_eligible",
-        "client_preview_training_eligible", "photo_revalidation",
+        "client_preview_training_eligible", "photo_revalidation", "manual_official_proof_required",
     )
     public = {key: row.get(key) for key in keys if key in row}
     # v190: Older tablet-local BRG registrations may still contain the retired
@@ -282,6 +281,8 @@ def public_registry() -> dict[str, Any]:
             "manual_claim_is_truth": False,
             "official_company_cert_grade_match_required": True,
             "raw_and_slab_learning_isolated": True,
+            "automatic_official_lookup_enabled": False,
+            "manual_official_screenshot_required": True,
         },
     }
 
@@ -635,77 +636,52 @@ def _process_registration_once(registration_id: str) -> dict[str, Any]:
                 "claimed_grade": resolved_grade, "missing_identity_fields": [],
                 "official_reference_url": lookup_url(resolved_company, resolved_cert)})
 
-    allowed, guard = OFFICIAL_LOOKUP_GUARD.claim(resolved_company)
-    if not allowed:
-        with LOCK:
-            registry = _registry(); index, current = _find_row(registry, registration_id)
-            current.update({
-                "updated_at": _now(), "verification_state": "deferred_by_cooldown",
-                "retry_after_seconds": guard.get("retry_after_seconds"), "ocr_label_text": text[:1800],
-                "ocr_error": ocr_error, "ocr_diagnostics": diagnostics,
-                "ocr_cached_sha256": row.get("image_sha256"), "ocr_cache_hit": ocr_cache_hit,
-                "company": resolved_company, "claimed_grade": resolved_grade,
-                "certification_id": resolved_cert, "official_reference_url": row["official_reference_url"],
-                "missing_identity_fields": [], "ocr_company": ocr_company or None, "ocr_grade": ocr_grade,
-                "ocr_certification_id": ocr_cert or None,
-            })
-            registry["registrations"][index] = current; _save_registry(registry)
-        _record_collection_gap(current)
-        return {"ok": True, "deferred": True, "registration": _public_row(current)}
-
-    result = verify_cert(resolved_company, resolved_cert, expected_grade=resolved_grade, timeout=10)
-    guard_result = OFFICIAL_LOOKUP_GUARD.record_result(resolved_company, result)
-    provider_blocked = bool(guard_result.get("blocked") or result.get("blocked_or_challenged"))
-    ocr_identity_complete = bool(
-        ocr_company == resolved_company
-        and ocr_cert == resolved_cert
-        and ocr_grade is not None
-        and abs(ocr_grade - resolved_grade) < 1e-9
-    )
-    official_verified = result.get("verified") is True and ocr_identity_complete and not conflicts
-    status = "verified_reference" if official_verified else "quarantine" if result.get("conflict") or conflicts else "pending_official_verification"
-    reasons = []
-    if conflicts:
-        reasons.extend(conflicts)
-    if not result.get("verified"):
-        reasons.append("official_lookup_not_confirmed")
-    if not ocr_identity_complete:
-        reasons.append("ocr_identity_not_confirmed")
-    if result.get("blocked_or_challenged"):
-        reasons.append("official_provider_cooldown")
-
+    # v192: company/certificate/grade identity is only a queue key.  Do not call
+    # the grading-company website from the server.  The user must open the
+    # official page in a browser, verify the cert, attach the result screenshot,
+    # and explicitly complete verification through manual_official_proof.py.
     with LOCK:
-        registry = _registry(); index, current = _find_row(registry, registration_id)
+        registry = _registry()
+        index, current = _find_row(registry, registration_id)
         current.update({
-            "updated_at": _now(), "status": status,
-            "company": resolved_company, "claimed_grade": resolved_grade,
-            "certification_id": resolved_cert, "missing_identity_fields": [],
-            "verification_state": "verified" if official_verified else "deferred_by_cooldown" if provider_blocked else "completed_unverified",
-            "official_result": official_verified,
-            "official_grade": result.get("grade"),
-            "official_reference_url": result.get("official_url") or current.get("official_reference_url"),
-            "learning_eligibility": "reference_learning_only" if official_verified else "quarantine_only_until_official_match",
-            "training_eligible": False, "raw_grade_calibration_eligible": False,
-            "measurement_learning_eligible": bool(official_verified and current.get("front_back_pair_complete") is True),
-            "quarantine_reasons": sorted(set(reasons)),
-            "retry_after_seconds": (guard_result.get("cooldown_seconds") or result.get("recommended_cooldown_seconds")) if provider_blocked else None,
-            "ocr_label_text": text[:1800], "ocr_error": ocr_error, "ocr_diagnostics": diagnostics,
-            "ocr_cached_sha256": row.get("image_sha256"), "ocr_cache_hit": ocr_cache_hit,
-            "ocr_company": ocr_company or None, "ocr_grade": ocr_grade,
+            "updated_at": _now(),
+            "status": "pending_official_verification",
+            "verification_state": "manual_official_verification_required",
+            "official_result": False,
+            "official_grade": None,
+            "official_reference_url": lookup_url(resolved_company, resolved_cert),
+            "learning_eligibility": "manual_official_proof_required",
+            "training_eligible": False,
+            "raw_grade_calibration_eligible": False,
+            "retry_after_seconds": None,
+            "company": resolved_company,
+            "claimed_grade": resolved_grade,
+            "certification_id": resolved_cert,
+            "missing_identity_fields": [],
+            "ocr_label_text": text[:1800],
+            "ocr_error": ocr_error,
+            "ocr_diagnostics": diagnostics,
+            "ocr_cached_sha256": row.get("image_sha256"),
+            "ocr_cache_hit": ocr_cache_hit,
+            "ocr_company": ocr_company or None,
+            "ocr_grade": ocr_grade,
             "ocr_certification_id": ocr_cert or None,
-            "official_lookup": {key: result.get(key) for key in (
-                "http_status", "verified", "conflict", "lookup_error", "notice", "recommended_cooldown_seconds"
-            )},
+            "manual_official_proof_required": True,
+            "automatic_official_lookup_used": False,
         })
-        if official_verified:
-            published, error = _publish_verified(current)
-            if not published:
-                current.update({"status": "quarantine", "official_result": False,
-                                "learning_eligibility": "quarantine_registry_conflict",
-                                "quarantine_reasons": sorted(set(current["quarantine_reasons"] + [str(error)]))})
-        registry["registrations"][index] = current; _save_registry(registry)
-    _record_collection_gap(current, verified=current.get("official_result") is True)
-    return {"ok": True, "deferred": provider_blocked, "registration": _public_row(current)}
+        reasons = set(current.get("quarantine_reasons") or [])
+        reasons.discard("official_lookup_not_confirmed")
+        reasons.discard("official_provider_blocked")
+        reasons.add("manual_official_proof_required")
+        current["quarantine_reasons"] = sorted(reasons)
+        registry["registrations"][index] = current
+        _save_registry(registry)
+    _record_collection_gap(current)
+    return {
+        "ok": True, "deferred": True, "manual_official_proof_required": True,
+        "automatic_official_lookup_used": False,
+        "registration": _public_row(current),
+    }
 
 
 def process_registration(registration_id: Any) -> dict[str, Any]:

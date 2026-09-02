@@ -945,8 +945,12 @@ def _official_cache_fresh(entry:dict,now:float)->bool:
     except (TypeError,ValueError,OverflowError):return False
 
 def _official_verify_rows(rows:list[dict],registry:dict,max_live:int=10)->tuple[list[dict],dict]:
- cache=_load(OFFICIAL_CACHE,{})
- entries=cache.get('entries',{}) if isinstance(cache.get('entries'),dict) else {}
+ # v192: runtime candidate collection is manual-only.  Previously cached live
+ # lookup responses are intentionally ignored so an old automatic response
+ # cannot promote a new candidate after this policy change.
+ cache={}
+ entries={}
+ max_live=0
  now=time.time();live=0;stats={'registry_matches':0,'live_attempts':0,'live_verified':0,'conflicts':0,'unavailable':0,
                               'deferred_by_cooldown':0,'company_deferred':{company:0 for company in COMPANIES},
                               'next_retry_seconds':None,
@@ -960,7 +964,7 @@ def _official_verify_rows(rows:list[dict],registry:dict,max_live:int=10)->tuple[
   if company not in COMPANIES or not cert or grade is None or (company,cert) in registry:continue
   cached=entries.get(f'{company}:{cert}') if isinstance(entries.get(f'{company}:{cert}'),dict) else None
   if not _official_cache_fresh(cached,now):eligible.add(index)
- live_targets=set(_balanced_official_verification_indices(rows,eligible,max_live))
+ live_targets=set()  # v192 manual-only: no automatic official HTTP requests
  output=[]
  for index,raw in enumerate(rows):
   item=dict(raw);company=str(item.get('company') or '').upper();cert=normalize_cert(item.get('certification_id'))

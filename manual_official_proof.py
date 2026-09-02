@@ -3,8 +3,9 @@
 """Manual official-page proof fallback for graded-photo registration.
 
 A user may open the official PSA/BGS/CGC/TAG/BRG lookup page and upload a
-screenshot. The screenshot is reference-only evidence: it never sets
-official_result=True and never enters RAW grade calibration.
+screenshot. The screenshot is the authoritative official-reference evidence after exact
+company + certificate + grade matching. It sets official_result=True but never
+enters RAW grade calibration.
 
 v151 hardening:
 - certificate number is the primary page-identity key;
@@ -172,13 +173,15 @@ def public_status() -> dict[str, Any]:
             "manual_screenshot_requires_official_company_and_certificate": True,
             "manual_screenshot_grade_may_use_exact_slab_ocr_fallback": True,
             "manual_screenshot_missing_ocr_does_not_quarantine_card": True,
-            "manual_screenshot_sets_official_result": False,
+            "manual_screenshot_sets_official_result": True,
             "manual_screenshot_trains_raw_grade_calibration": False,
             "rejected_screenshot_bytes_retained": False,
             "valid_proof_cannot_be_downgraded_by_later_bad_upload": True,
             "proof_upload_rate_limited": True,
             "proof_upload_max_per_10_minutes": PROOF_RATE_MAX,
-            "later_live_official_lookup_can_promote": True,
+            "later_live_official_lookup_can_promote": False,
+            "automatic_live_lookup_used": False,
+            "verification_is_manual_only": True,
             "user_can_cancel_unverified_registration": True,
             "user_cannot_delete_live_official_verified_registration": True,
             "access_control_bypass_used": False,
@@ -212,9 +215,9 @@ def _append_reference(row: dict[str, Any]) -> None:
         "proof_path": row.get("manual_official_proof_path"),
         "verified_at": row.get("manual_official_proof_at"),
         "verification_method": row.get("manual_official_proof_match_mode") or "user_browser_official_page_reference",
-        "official_result": False,
+        "official_result": True,
         "manual_official_proof_matched": True,
-        "learning_eligibility": "reference_only_pending_live_official_verification",
+        "learning_eligibility": "official_reference_manual_screenshot",
         "raw_grade_calibration_eligible": False,
     })
     payload.update({
@@ -222,9 +225,10 @@ def _append_reference(row: dict[str, Any]) -> None:
         "updated_at": _now(),
         "references": kept[-MAX_REFERENCES:],
         "policy": {
-            "manual_proof_is_live_official_truth": False,
+            "manual_proof_is_live_official_truth": True,
             "raw_calibration_allowed": False,
-            "later_live_lookup_required_for_official_result": True,
+            "later_live_lookup_required_for_official_result": False,
+            "automatic_live_lookup_used": False,
         },
     })
     atomic_write_json(REFERENCE_PATH, payload, suffix=".manual-official-proof.tmp")
@@ -631,9 +635,13 @@ def submit(payload: dict[str, Any]) -> dict[str, Any]:
             "manual_official_proof_missing_fields": match["missing"],
             "manual_official_proof_conflicts": match["conflicts"],
             "official_reference_url": current.get("official_reference_url") or lookup_url(company, cert),
-            "official_result": False,
-            "training_eligible": False,
+            "official_result": bool(matched),
+            "official_grade": expected_grade if matched else None,
+            "official_verification_method": "user_browser_official_page_exact_screenshot" if matched else None,
+            "official_verified_at": now if matched else None,
+            "training_eligible": bool(matched),
             "raw_grade_calibration_eligible": False,
+            "automatic_official_lookup_used": False,
         })
         if matched and str(current.get("game") or "").lower() not in manual_photo.GAMES and official_game_hint in manual_photo.GAMES:
             current["game"] = official_game_hint
@@ -642,12 +650,14 @@ def submit(payload: dict[str, Any]) -> dict[str, Any]:
         reasons = _proof_reason_cleanup(set(current.get("quarantine_reasons") or []))
         if matched:
             reasons.discard("official_lookup_not_confirmed")
-            reasons.add("manual_official_page_proof_only")
-            reasons.add("live_official_lookup_pending")
+            reasons.discard("manual_official_proof_required")
+            reasons.discard("manual_official_page_proof_only")
+            reasons.discard("live_official_lookup_pending")
             current.update({
-                "status": "manual_official_reference",
-                "verification_state": "manual_official_proof_matched",
-                "learning_eligibility": "reference_only_pending_live_official_verification",
+                "status": "verified_reference",
+                "verification_state": "manual_official_verified",
+                "learning_eligibility": "official_reference_manual_screenshot",
+                "manual_official_proof_required": False,
             })
         else:
             reasons.add("official_lookup_not_confirmed")
