@@ -88,24 +88,14 @@ print('[OK] 수동등록/자동수집 등급사진 모두 강화 OCR 적용')
 print('[OK] 게임별 폴더만 사용하고 등급사는 메타데이터로 보존')
 PY
 
-# Android/WebView가 오래된 앞뒤 업로드 UI JS를 잡지 않도록 캐시 버전도 갱신합니다.
+# index.html은 GitHub main의 추적 파일이므로 태블릿에서 직접 수정하지 않습니다.
+# 로컬 수정은 다음 안전 업데이트를 막을 수 있으므로 연결 존재만 검증합니다.
 python - <<'PY'
 from pathlib import Path
-import re
-p=Path('index.html')
-text=p.read_text(encoding='utf-8')
-tag='<script src="./manual_dual_photo_bridge.js?v=149"></script>'
-pattern=r'<script\s+src=["\']\./manual_dual_photo_bridge\.js(?:\?v=\d+)?["\']\s*></script>'
-if re.search(pattern,text):
-    text=re.sub(pattern,tag,text,count=1)
-elif '</body>' in text:
-    text=text.replace('</body>',tag+'\n</body>',1)
-elif '</html>' in text:
-    text=text.replace('</html>',tag+'\n</html>',1)
-else:
-    text += '\n'+tag+'\n'
-p.write_text(text,encoding='utf-8')
-print('[OK] 앞뒤사진 UI 브리지:', text.count('manual_dual_photo_bridge.js'), 'v149')
+text=Path('index.html').read_text(encoding='utf-8')
+if 'manual_dual_photo_bridge.js' not in text:
+    raise SystemExit('[오류] index.html에 manual_dual_photo_bridge.js 연결이 없습니다. GitHub main 최신본으로 갱신하세요.')
+print('[OK] 앞뒤사진 UI 브리지 연결 확인 · index.html 무수정')
 PY
 
 if command -v node >/dev/null 2>&1; then
@@ -122,7 +112,7 @@ test -s ocr_accuracy_boost_v147.py
 test -s public_ocr_accuracy_boost_v147.py
 test -s ocr_front_back_fallback_v148.py
 test -s legacy_ocr_registry_cleanup_v149.py
-grep -q 'manual_dual_photo_bridge.js?v=149' index.html
+grep -q 'manual_dual_photo_bridge.js' index.html
 
 printf '\n=== 레거시 OCR 인증번호 정리 ===\n'
 python legacy_ocr_registry_cleanup_v149.py

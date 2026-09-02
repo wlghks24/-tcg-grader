@@ -162,7 +162,7 @@ done
 
 if ! grep -q 'manual_dual_photo_bridge.js' index.html; then
   echo "[오류] index.html에 앞면+뒷면 수동등록 UI가 설치되지 않았습니다."
-  echo "[조치] bash INSTALL_MANUAL_OFFICIAL_FALLBACK.sh 를 다시 실행하세요."
+  echo "[조치] 로컬 index.html을 직접 수정하지 말고 GitHub main 최신본으로 갱신하세요: bash ANDROID_UPDATE_AND_START.sh"
   exit 1
 fi
 
