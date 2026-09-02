@@ -135,7 +135,8 @@ def _parse_onepiece_jp_fallback(text: str, url: str) -> list[dict]:
     )
     found=[]
     for title,code,y,m,d,price in pattern.findall(text):
-        row={"game":"ONE PIECE","region":"JP","name":f"{re.sub(r'\s+',' ',title).strip()} [{code}]",
+        clean_title=re.sub(r"\s+", " ", title).strip()
+        row={"game":"ONE PIECE","region":"JP","name":f"{clean_title} [{code}]",
              "price":f"¥{price}/팩","status":"공식 확인","source":url}
         if d:
             row["release_date"]=dt.date(int(y),int(m),int(d)).isoformat()
