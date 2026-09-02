@@ -1,0 +1,57 @@
+name: Apply BRG registered link normalization v190
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'apply_brg_registered_link_normalization_v190.py'
+      - '.github/workflows/apply-brg-registered-link-normalization-v190.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  apply:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Apply v190 patch
+        run: python apply_brg_registered_link_normalization_v190.py
+      - name: Verify BRG registered links
+        run: |
+          python -m py_compile grading_cert_verifier.py manual_graded_photo_registration.py
+          python - <<'PY'
+          import manual_graded_photo_registration as m
+          row = {
+              'company': 'BRG',
+              'certification_id': '0390653',
+              'official_reference_url': 'https://www.brgcard.com/certification?cert=0390653',
+          }
+          out = m._public_row(row)
+          expected = 'https://break.co.kr/certification/0390653'
+          assert out['official_reference_url'] == expected, out
+          row2 = {
+              'ocr_company': 'BRG',
+              'ocr_certification_id': '0390653',
+              'official_reference_url': 'https://broken.example/old',
+          }
+          assert m._public_row(row2)['official_reference_url'] == expected
+          assert m.lookup_url('BRG', '0390653') == expected
+          print('BRG v190 link normalization OK')
+          PY
+          git diff --check
+      - name: Commit v190 runtime change
+        run: |
+          if git diff --quiet -- manual_graded_photo_registration.py; then
+            echo 'No runtime changes needed.'
+            exit 0
+          fi
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add manual_graded_photo_registration.py
+          git commit -m 'fix: normalize registered BRG certification links v190'
+          git pull --rebase origin main
+          git push origin HEAD:main
