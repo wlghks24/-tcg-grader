@@ -198,21 +198,25 @@ def audit() -> dict:
             status = manual.public_status()
             policy = status.get("policy", {}) if isinstance(status, dict) else {}
             sets_official = policy.get("manual_screenshot_sets_official_result")
-            if sets_official is False:
-                if policy.get("later_live_official_lookup_can_promote") is not True:
-                    issues.append("수동 참고증거의 후속 공식조회 승격 계약이 맞지 않습니다")
-            elif sets_official is True:
+            if sets_official is True:
+                # v195: manual-only verification is the final authority.  The
+                # user must open the official grader page and upload a screenshot
+                # whose grader + certificate + grade all match.  No live HTTP
+                # lookup may be required later and slab OCR may not fill a grade
+                # missing from the official-page proof.
                 strict_promotion = bool(
-                    policy.get("manual_screenshot_alone_sets_official_result") is False
-                    and policy.get("matched_user_browser_official_page_is_official_verification") is True
-                    and policy.get("strict_identity_front_back_and_stored_proof_required") is True
-                    and policy.get("registry_conflict_blocks_promotion") is True
-                    and policy.get("automatic_official_lookup_required_for_manual_match") is False
+                    policy.get("verification_is_manual_only") is True
+                    and policy.get("manual_screenshot_requires_official_company_and_certificate") is True
+                    and policy.get("manual_screenshot_requires_company_certificate_and_grade_match") is True
+                    and policy.get("manual_screenshot_alone_without_identity_match_sets_official_result") is False
+                    and policy.get("manual_screenshot_grade_may_use_exact_slab_ocr_fallback") is False
+                    and policy.get("later_live_official_lookup_can_promote") is False
+                    and policy.get("automatic_live_lookup_used") is False
                 )
                 if not strict_promotion:
-                    issues.append("수동 공식확인 승격의 인증번호·앞뒤사진·저장증거 안전게이트가 불완전합니다")
+                    issues.append("수동 공식확인 승격의 등급사·인증번호·등급 일치/자동조회차단 안전게이트가 불완전합니다")
             else:
-                issues.append("수동 공식확인 승격 정책이 명시되지 않았습니다")
+                issues.append("수동 공식확인 승격 정책이 수동전용 방식으로 명시되지 않았습니다")
             if policy.get("manual_screenshot_trains_raw_grade_calibration") is not False:
                 issues.append("수동 공식확인 캡처가 RAW 등급 보정학습에 섞일 위험이 있습니다")
             if policy.get("rejected_screenshot_bytes_retained") is not False:
@@ -238,6 +242,8 @@ def audit() -> dict:
                 issues.append("등급사진 수집기가 수동검증 전용 모드가 아닙니다")
             if manual_mode_status.get("manual_registration_manual_only") is not True:
                 issues.append("수동등록기가 OCR 후 수동검증 대기로 전환되지 않았습니다")
+            if manual_mode_status.get("environment_no_network_gate") is not True:
+                issues.append("등급사 자동조회 네트워크 차단 환경게이트가 비활성입니다")
         except Exception:
             issues.append("등급사진 수동검증 전용 정책 적용 실패")
 
