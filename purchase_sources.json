@@ -1,6 +1,6 @@
 {
-  "version": "46",
-  "updated_at": "2026-08-26T10:47:11+00:00",
+  "version": "47",
+  "updated_at": "2026-09-02T17:34:58+00:00",
   "notice": "포켓몬·원피스·나루토 온라인/오프라인 구매처와 후기·리뷰 신호를 분리합니다. 현재 위치는 저장하지 않으며 실제 재고는 판매처에서 최종 확인하세요.",
   "sources": [
     {
@@ -1142,14 +1142,14 @@
         "ONE PIECE"
       ],
       "type": "marketplace",
-      "url_template": "https://www.barnesandnoble.com/s/{query}",
-      "note": "매장수령 가능 여부 확인",
-      "link_status": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인",
-      "last_checked_at": "2026-08-26T10:47:11+00:00",
-      "link_checked_at": "2026-08-26T10:47:11+00:00",
+      "url_template": "https://www.barnesandnoble.com/search?q={query}",
+      "note": "공식 검색폼(/search?q=) 사용 · 매장수령 가능 여부 확인",
+      "link_status": "공식 검색폼 경로로 자동복구 · 다음 링크검사에서 재확인",
+      "last_checked_at": null,
+      "link_checked_at": null,
       "retailer_category": "general",
       "link_statuses": {
-        "url_template": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인"
+        "url_template": "공식 검색폼 경로로 자동복구 · 다음 링크검사에서 재확인"
       }
     },
     {
