@@ -71,22 +71,6 @@ class Handler(core.Handler):
         self.end_headers()
         self.wfile.write(body)
 
-    def _guarded_official_lookup(self, company, cert, expected_grade=None):
-        allowed, guard_info = core.OFFICIAL_LOOKUP_GUARD.claim(company)
-        if not allowed:
-            return {
-                'ok': False, 'verified': False,
-                'error': '공식 인증조회 안전 대기 중',
-                'local_safety_guard': guard_info,
-            }
-        from grading_cert_verifier import verify_cert
-        result = verify_cert(company, cert, expected_grade=expected_grade)
-        local_guard = core.OFFICIAL_LOOKUP_GUARD.record_result(company, result)
-        if isinstance(result, dict):
-            result = dict(result)
-            result['local_safety_guard'] = local_guard
-        return result
-
     def do_GET(self):
         if not self._require_request_host():
             return
@@ -167,27 +151,6 @@ class Handler(core.Handler):
                 return self.json(manual_official_proof.public_status())
             except (ImportError, OSError, ValueError, TypeError):
                 return self.json({'ok': False, 'error': '공식사이트 수동확인 상태 오류'}, 500)
-        if path == '/api/verify-grading-cert':
-            qs = parse_qs(parsed.query)
-            company = (qs.get('company', [''])[0] or '')[:8].upper()
-            cert = (qs.get('cert', [''])[0] or '').strip()[:120]
-            if not self._search_origin_allowed():
-                return self.json({'ok': False, 'verified': False, 'error': '허용되지 않은 요청 출처'}, 403)
-            if company not in ('PSA', 'BGS', 'CGC', 'TAG', 'BRG') or len(cert) < 6:
-                return self.json({'ok': False, 'verified': False, 'error': '등급사 또는 인증번호 형식 오류'}, 400)
-            try:
-                result = self._guarded_official_lookup(company, cert)
-                if isinstance(result, dict) and result.get('verified') is True:
-                    import verified_grade_learning_v135_safe as learning
-                    grade = learning._finite(result.get('grade'), 1, 10)
-                    if grade is not None:
-                        with core.DATA_WRITE_LOCK:
-                            learning._persist_verified_cert(company, cert, float(grade), result)
-                            core.clear_json_file_cache()
-                status = 429 if isinstance(result, dict) and result.get('error') == '공식 인증조회 안전 대기 중' else 200
-                return self.json(result, status)
-            except (ImportError, OSError, ValueError, TypeError):
-                return self.json({'ok': False, 'verified': False, 'error': '공식 인증번호 검증 엔진 오류'}, 500)
         return super().do_GET()
 
     def do_POST(self):
@@ -256,24 +219,14 @@ class Handler(core.Handler):
                 raise ValueError('unsupported company')
 
             import verified_grade_learning_v135_safe as learning
-            registry = learning.registry_index()
-            key = learning._cert_key(company, cert) if cert else ''
-            already_verified = bool(key and key in registry)
-
-            def guarded_verifier(c, n, expected_grade):
-                return self._guarded_official_lookup(c, n, expected_grade)
-
             with core.DATA_WRITE_LOCK:
                 result = learning.submit_verified_sample(
                     incoming,
-                    verifier=None if already_verified else guarded_verifier,
+                    verifier=None,
                 )
                 core.clear_json_file_cache()
             if result.get('accepted'):
                 return self.json(result, 200)
-            verification = result.get('verification') if isinstance(result, dict) else {}
-            if isinstance(verification, dict) and verification.get('error') == '공식 인증조회 안전 대기 중':
-                return self.json(result, 429)
             return self.json(result, 409)
         except ValueError as exc:
             return self.json({'ok': False, 'accepted': False, 'error': str(exc)[:180]}, 400)

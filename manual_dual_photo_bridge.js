@@ -5,7 +5,7 @@ if(globalThis[GLOBAL_KEY]?.loaded){
  globalThis[GLOBAL_KEY].duplicate_loads=(globalThis[GLOBAL_KEY].duplicate_loads||0)+1;
  return;
 }
-const bridgeState=globalThis[GLOBAL_KEY]={loaded:true,version:158,enhanced:false,duplicate_loads:0,manualProofStatusSync:true,integratedOfficialVerification:true,verifiedSlabRawLearning:true,recentManualToggle:true};
+const bridgeState=globalThis[GLOBAL_KEY]={loaded:true,version:158,enhanced:false,duplicate_loads:0,manualProofStatusSync:true,integratedOfficialVerification:true,verifiedSlabRawLearning:false,recentManualToggle:true};
 if(!document.getElementById('gpdDualBridgeForceV150')){
  const marker=document.createElement('meta');
  marker.id='gpdDualBridgeForceV150';
@@ -107,10 +107,8 @@ async function syncRecentManualProofState(){
    const manualDone=row.manual_official_proof_registered===true&&(row.manual_official_proof_state==='matched'||row.verification_state==='manual_official_proof_matched'||row.verification_state==='verified_manual_official_page');
    const integratedOfficial=row.official_result===true&&(row.official_verification_source==='user_browser_official_page'||manualDone);
    if(!integratedOfficial)return;
-   const rawReady=row.raw_grade_calibration_eligible===true&&row.raw_defect_learning_eligible===true;
-   const rawActive=rawReady&&row.raw_proxy_learning_state==='active';
-   const label=rawActive?'공식검증 완료 · RAW학습 활성':rawReady?'공식검증 완료 · RAW학습 누적':'공식검증 완료 · 통합관리';
-   const badgeText=rawActive?'RAW학습 활성':rawReady?'RAW학습 누적':'공식검증 완료';
+   const label='공식검증 완료 · 통합관리';
+   const badgeText='공식검증 완료';
    const strong=element.querySelector('strong');if(strong&&strong.textContent!==label){strong.textContent=label;strong.className='ok';}
    const badge=element.querySelector('.gpd-manual-only-badge');if(badge&&badge.textContent!==badgeText){badge.textContent=badgeText;}
   });
@@ -140,7 +138,7 @@ function enhance(){
  ensurePreviewArea(form);
  front.addEventListener('change',()=>showPreview('front',front.files?.[0]||null));
  back?.addEventListener('change',()=>showPreview('back',back.files?.[0]||null));
- const policy=form.querySelector('.gpd-manual-policy');if(policy)policy.innerHTML='카드게임을 선택하고 <b>등급 슬랩 앞면 + 뒷면 사진 2장</b>을 등록하세요. 앞면은 등급사·등급·인증번호 OCR에 사용하고 뒷면은 같은 카드의 증빙사진으로 저장합니다. <b>공식검증 완료 후에는 카드 영역만 추출해 RAW 결함·등급 보정학습에도 사용합니다.</b>';
+ const policy=form.querySelector('.gpd-manual-policy');if(policy)policy.innerHTML='카드게임을 선택하고 <b>등급 슬랩 앞면 + 뒷면 사진 2장</b>을 등록하세요. 앞면은 등급사·등급·인증번호 OCR에 사용하고 뒷면은 같은 카드의 증빙사진으로 저장합니다. 공식 홈페이지에서 직접 조회한 결과화면을 별도로 첨부해 검증하며, <b>수동 공식검증 캡처는 RAW 등급 보정값에 직접 투입하지 않습니다.</b>';
  const button=document.getElementById('gpdManualSubmit');if(button)button.textContent='앞면 + 뒷면 2장 등록하기';
  form.addEventListener('submit',submit,true);installProofStateSync();ensureRecentManualToggle();
  bridgeState.enhanced=true;
