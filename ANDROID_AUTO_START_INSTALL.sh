@@ -11,6 +11,13 @@ if ! command -v python >/dev/null 2>&1; then
   exit 1
 fi
 
+# Termux needs executable permission locally, but GitHub Contents API commonly
+# materializes shell files as 100644. Do not let chmod-only mode changes appear
+# as source-code edits and block later safe updates.
+if command -v git >/dev/null 2>&1 && git rev-parse --is-inside-work-tree >/dev/null 2>&1; then
+  git config --local core.fileMode false >/dev/null 2>&1 || true
+fi
+
 PROJECT_DIR="$(pwd)"
 BOOT_DIR="$HOME/.termux/boot"
 BOOT_FILE="$BOOT_DIR/TCG_AUTO_START.sh"
@@ -42,9 +49,10 @@ mv -f "$BOOT_TEMP" "$BOOT_FILE"
 chmod +x "$BOOT_FILE"
 chmod +x "$PROJECT_DIR/ANDROID_UPDATE_AND_START.sh" "$PROJECT_DIR/START_TCG_UPDATER_ANDROID.sh" 2>/dev/null || true
 
-echo "[OK] Android boot auto-start installed (v181 health-supervised safe updater)."
+echo "[OK] Android boot auto-start installed (v183 health-supervised safe updater)."
 echo "Boot file: $BOOT_FILE"
 echo "Log file: $PROJECT_DIR/TCG_ANDROID_STARTUP.log"
 echo "At reboot it checks origin/main before startup; while healthy it only checks local /api/v135-health every 60 seconds."
 echo "Collector-written runtime JSON is preserved; code/config edits are never reset or overwritten automatically."
+echo "Termux chmod-only permission changes are ignored by Git so they cannot block safe updates."
 echo "Install Termux:Boot from F-Droid and open it once."
