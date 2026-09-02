@@ -115,6 +115,15 @@ if [ ! -s "START_TCG_UPDATER_ANDROID.sh" ]; then
   exit 1
 fi
 
+# The update lock belongs only to the fetch/fast-forward phase. `exec` keeps the
+# same PID, so leaving this lock behind would make the long-running server look
+# like an active updater forever. Release it explicitly before handing control
+# to the independent server singleton launcher.
+if [ "${LOCKED:-0}" = "1" ]; then
+  cleanup_update_lock
+  LOCKED=0
+fi
+
 # The launcher itself owns the server singleton lock and safely releases stale
 # port 8765 processes, so this wrapper never uses broad kill/reset commands.
 exec bash START_TCG_UPDATER_ANDROID.sh
