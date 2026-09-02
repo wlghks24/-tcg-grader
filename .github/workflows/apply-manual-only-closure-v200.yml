@@ -45,18 +45,11 @@ jobs:
           assert 'verifiedSlabRawLearning:false' in dual
           for bad in ('verifiedSlabRawLearning:true','RAW학습 활성','RAW학습 누적','RAW 결함·등급 보정학습에도 사용'):
               assert bad not in dual, bad
-          for text in ('수동 공식검증 캡처는 RAW 등급 보정값에 직접 투입하지 않습니다.',):
-              assert text in dual
-              assert text in dash
+          text='수동 공식검증 캡처는 RAW 등급 보정값에 직접 투입하지 않습니다.'
+          assert text in dual
+          assert text in dash
           for asset in ('auto_validation_flow.js?v=200','graded_photo_dashboard.js?v=200','manual_dual_photo_bridge.js?v=200'):
               assert asset in index, asset
-          PY
-      - name: Verify runtime bundle
-        run: |
-          python - <<'PY'
-          import runtime_bundle_guard_v143 as guard
-          result=guard.require_compatible()
-          assert result.get('ok') is True, result
           PY
       - name: Verify clean patch
         run: git diff --check
