@@ -8,6 +8,11 @@ on:
       - 'grading_cert_verifier.py'
       - 'test_grading_cert_verifier.py'
       - 'tcg_updater.py'
+      - 'tcg_updater_v135.py'
+      - 'manual_dual_photo_bridge.js'
+      - 'graded_photo_dashboard.js'
+      - 'manual_official_verify_bridge.js'
+      - 'index.html'
       - '.github/workflows/apply-auto-validation-flow.yml'
 permissions:
   contents: read
@@ -22,7 +27,10 @@ jobs:
       - name: Validate manual-only certification contract
         run: |
           node --check auto_validation_flow.js
-          python -m py_compile tcg_updater.py grading_cert_verifier.py test_grading_cert_verifier.py
+          node --check manual_dual_photo_bridge.js
+          node --check graded_photo_dashboard.js
+          node --check manual_official_verify_bridge.js
+          python -m py_compile tcg_updater.py tcg_updater_v135.py grading_cert_verifier.py test_grading_cert_verifier.py
           python -m unittest -v test_grading_cert_verifier.py
           python - <<'PY'
           from pathlib import Path
@@ -30,18 +38,44 @@ jobs:
 
           ui=Path('auto_validation_flow.js').read_text(encoding='utf-8')
           server=Path('tcg_updater.py').read_text(encoding='utf-8')
+          wrapper=Path('tcg_updater_v135.py').read_text(encoding='utf-8')
+          dual=Path('manual_dual_photo_bridge.js').read_text(encoding='utf-8')
+          dash=Path('graded_photo_dashboard.js').read_text(encoding='utf-8')
+          bridge=Path('manual_official_verify_bridge.js').read_text(encoding='utf-8')
+          index=Path('index.html').read_text(encoding='utf-8')
+
           assert g.automatic_lookup_disabled() is True
           assert '/api/verify-grading-cert' not in ui
           assert "if path=='/api/verify-grading-cert':" not in server
+          assert "if path == '/api/verify-grading-cert':" not in wrapper
+          assert '_guarded_official_lookup' not in wrapper
+          assert 'guarded_verifier' not in wrapper
+          assert 'verifier=None' in wrapper
+
           for forbidden in ('인증번호 자동검증','인증번호 공식 자동확인'):
               assert forbidden not in ui, forbidden
           for required in ('🔐 공식 인증 수동확인','공식 조회 열기','자동 인증조회는 사용하지 않습니다.'):
               assert required in ui, required
+
+          assert 'verifiedSlabRawLearning:false' in dual
+          for forbidden in ('verifiedSlabRawLearning:true','RAW학습 활성','RAW학습 누적','RAW 결함·등급 보정학습에도 사용'):
+              assert forbidden not in dual, forbidden
+          policy='수동 공식검증 캡처는 RAW 등급 보정값에 직접 투입하지 않습니다.'
+          assert policy in dual
+          assert policy in dash
+
+          for forbidden in ('자동 인증조회 OFF · 공식사이트 직접확인','현재 직접확인이 필요한 완성된 인증정보 항목이 없습니다.','수동확인 통합관리:'):
+              assert forbidden not in bridge, forbidden
+          for required in ('① 공식조회 열기','② 확인화면 선택','③ 검증완료 등록','잘못등록 삭제/취소'):
+              assert required in bridge, required
+
+          for asset in ('auto_validation_flow.js?v=200','graded_photo_dashboard.js?v=200','manual_dual_photo_bridge.js?v=200'):
+              assert asset in index, asset
+
           for company in ('PSA','BGS','CGC','TAG','BRG'):
               result=g.verify_cert(company,'12345678',expected_grade=10)
               assert result.get('verified') is False
               assert result.get('automatic_lookup_disabled') is True
               assert result.get('manual_verification_required') is True
           PY
-          grep -q 'auto_validation_flow.js' index.html
           grep -q 'auto_validation_flow.css' index.html
