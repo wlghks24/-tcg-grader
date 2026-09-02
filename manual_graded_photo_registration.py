@@ -231,7 +231,17 @@ def _public_row(row: dict[str, Any]) -> dict[str, Any]:
         "quadrant_zone_count", "quadrant_inspection_state", "measurement_learning_eligible",
         "client_preview_training_eligible", "photo_revalidation",
     )
-    return {key: row.get(key) for key in keys if key in row}
+    public = {key: row.get(key) for key in keys if key in row}
+    # v190: Older tablet-local BRG registrations may still contain the retired
+    # brgcard.com URL. Never expose that stale stored URL when the registration
+    # already has a certificate identity; regenerate the current Break Korea
+    # direct certification URL instead. This repairs existing rows at read time
+    # without rewriting or deleting the user's local registration history.
+    company = str(row.get("company") or row.get("ocr_company") or "").upper()
+    cert = _normalized_cert(row.get("certification_id") or row.get("ocr_certification_id"))
+    if company == "BRG" and cert:
+        public["official_reference_url"] = lookup_url("BRG", cert)
+    return public
 
 
 def _record_collection_gap(row: dict[str, Any], *, verified: bool = False) -> None:
