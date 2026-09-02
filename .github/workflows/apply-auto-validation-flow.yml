@@ -1,4 +1,4 @@
-name: Apply Auto Validation Flow
+name: Validate Manual Certification Flow
 on:
   push:
     branches: [main]
@@ -7,48 +7,40 @@ on:
       - 'auto_validation_flow.css'
       - 'grading_cert_verifier.py'
       - 'test_grading_cert_verifier.py'
+      - 'tcg_updater.py'
       - '.github/workflows/apply-auto-validation-flow.yml'
 permissions:
-  contents: write
+  contents: read
 jobs:
-  apply:
+  validate:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
-      - name: Patch index and server
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Validate manual-only certification contract
         run: |
+          node --check auto_validation_flow.js
+          python -m py_compile tcg_updater.py grading_cert_verifier.py
           python - <<'PY'
           from pathlib import Path
-          p=Path('index.html'); s=p.read_text(encoding='utf-8')
-          if 'auto_validation_flow.css' not in s:
-              s=s.replace('</head>','<link rel="stylesheet" href="auto_validation_flow.css">\n</head>')
-          if 'auto_validation_flow.js' not in s:
-              marker='<script src="grading_costs_live.js"></script>'
-              s=s.replace(marker,'<script src="auto_validation_flow.js"></script>\n'+marker)
-          p.write_text(s,encoding='utf-8')
+          import grading_cert_verifier as g
 
-          p=Path('tcg_updater.py'); s=p.read_text(encoding='utf-8')
-          if "'auto_validation_flow.js'" not in s:
-              s=s.replace("'grading_costs_live.js','grading_costs_live.css'", "'grading_costs_live.js','grading_costs_live.css','auto_validation_flow.js','auto_validation_flow.css'")
-          if "if path=='/api/verify-grading-cert':" not in s:
-              marker="        if path=='/api/grading-proxy-costs':"
-              block="""        if path=='/api/verify-grading-cert':\n            qs=parse_qs(parsed.query)\n            company=(qs.get('company',[''])[0] or '')[:8]\n            cert=(qs.get('cert',[''])[0] or '')[:120]\n            if not self._search_origin_allowed():\n                return self.json({'ok':False,'verified':False,'error':'허용되지 않은 요청 출처'},403)\n            try:\n                from grading_cert_verifier import verify_cert\n                return self.json(verify_cert(company,cert))\n            except Exception:\n                return self.json({'ok':False,'verified':False,'error':'공식 인증번호 검증 엔진 오류'},500)\n"""
-              if marker not in s: raise SystemExit('server marker missing')
-              s=s.replace(marker,block+marker)
-          p.write_text(s,encoding='utf-8')
+          ui=Path('auto_validation_flow.js').read_text(encoding='utf-8')
+          server=Path('tcg_updater.py').read_text(encoding='utf-8')
+          assert g.automatic_lookup_disabled() is True
+          assert '/api/verify-grading-cert' not in ui
+          assert "if path=='/api/verify-grading-cert':" not in server
+          for forbidden in ('인증번호 자동검증','인증번호 공식 자동확인'):
+              assert forbidden not in ui, forbidden
+          for required in ('🔐 공식 인증 수동확인','공식 조회 열기','자동 인증조회는 사용하지 않습니다.'):
+              assert required in ui, required
+          for company in ('PSA','BGS','CGC','TAG','BRG'):
+              result=g.verify_cert(company,'12345678',expected_grade=10)
+              assert result.get('verified') is False
+              assert result.get('automatic_lookup_disabled') is True
+              assert result.get('manual_verification_required') is True
           PY
-      - name: Validate
-        run: |
-          python -m py_compile tcg_updater.py grading_cert_verifier.py
-          python -m unittest -v test_grading_cert_verifier.py
           grep -q 'auto_validation_flow.js' index.html
           grep -q 'auto_validation_flow.css' index.html
-          grep -q '/api/verify-grading-cert' tcg_updater.py
-      - name: Commit integration
-        run: |
-          if git diff --quiet; then exit 0; fi
-          git config user.name 'github-actions[bot]'
-          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git add index.html tcg_updater.py
-          git commit -m 'feat: connect automatic official grade validation'
-          git push
