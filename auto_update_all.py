@@ -1021,11 +1021,33 @@ def run_all(trigger: str = "manual", selected_files=None, progress_callback=None
         broken=int(lr.get('broken',0) or 0); repaired=int(lr.get('repaired',0) or 0); transient=int(lr.get('transient',0) or 0)
         unresolved_broken=int(lr.get('unresolved_broken',max(0,broken-repaired)) or 0)
         degraded=bool(unresolved_broken)
+        unresolved_details=lr.get('unresolved_details') if isinstance(lr.get('unresolved_details'),list) else []
+        detail_parts=[]
+        for item in unresolved_details[:3]:
+            if not isinstance(item,dict):
+                continue
+            url=str(item.get('url') or '').strip()[:220]
+            refs=item.get('references') if isinstance(item.get('references'),list) else []
+            locations=[]
+            for ref in refs[:3]:
+                if not isinstance(ref,dict):
+                    continue
+                fn=str(ref.get('file') or '').strip()
+                field=str(ref.get('field') or '').strip()
+                if fn or field:
+                    locations.append(f"{fn}:{field}".strip(':'))
+            location=', '.join(locations)
+            if url and location:
+                detail_parts.append(f'{url} [{location}]')
+            elif url:
+                detail_parts.append(url)
         warning=f'미보정 깨진 링크 {unresolved_broken}개' if unresolved_broken else ''
+        if warning and detail_parts:
+            warning += ' · ' + ' | '.join(detail_parts)
         transient_notice=f'일시 확인불가 {transient}개 · 기존 링크 유지 · 다음 업데이트 재확인' if transient else ''
         return {"ok":True,"degraded":degraded,"warning":warning,"reachable_count":reachable_count,
                 "transient_deferred":bool(transient),"transient_notice":transient_notice,
-                "unresolved_broken":unresolved_broken,**lr}
+                "unresolved_broken":unresolved_broken,"unresolved_summary":detail_parts,**lr}
 
     with concurrent.futures.ThreadPoolExecutor(max_workers=2) as ex:
         fi=ex.submit(_run_aux_task,'__integration__',integration_runner)
