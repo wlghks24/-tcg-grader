@@ -36,6 +36,18 @@ def _clean_token(value: object, *, limit: int) -> str:
     return text
 
 
+def _clean_label(value: object, *, limit: int) -> str:
+    """Allow human-readable Unicode source labels without allowing path/control syntax."""
+    text = str(value or "").strip()[:limit]
+    if not text or any(ord(ch) < 32 or ord(ch) == 127 for ch in text):
+        return ""
+    if any(ch in "/\\" for ch in text):
+        return ""
+    if not all(ch.isalnum() or ch in " _.:-" for ch in text):
+        return ""
+    return text
+
+
 def _empty_memory() -> dict:
     return {"version": MEMORY_VERSION, "updated_at": None, "sources": {}}
 
@@ -54,7 +66,7 @@ def load_memory(path: Path) -> dict:
     clean = _empty_memory()
     clean["updated_at"] = raw.get("updated_at") if isinstance(raw.get("updated_at"), str) else None
     for label, source in list(sources.items())[:MAX_SOURCES]:
-        clean_label = _clean_token(label, limit=MAX_LABEL_LEN)
+        clean_label = _clean_label(label, limit=MAX_LABEL_LEN)
         if not clean_label or not isinstance(source, dict):
             continue
         entry = {
@@ -113,7 +125,7 @@ def strategy_order(
             defaults.append(token)
     if not defaults:
         return []
-    label = _clean_token(source_label, limit=MAX_LABEL_LEN)
+    label = _clean_label(source_label, limit=MAX_LABEL_LEN)
     memory = load_memory(path)
     source = memory.get("sources", {}).get(label, {}) if label else {}
     preferred = _clean_token(source.get("last_successful_strategy"), limit=MAX_STRATEGY_LEN) if isinstance(source, dict) else ""
@@ -138,7 +150,7 @@ def record_attempt(
     Failure to write learning state never breaks collection; verified data remains the
     priority on read-only or constrained devices.
     """
-    label = _clean_token(source_label, limit=MAX_LABEL_LEN)
+    label = _clean_label(source_label, limit=MAX_LABEL_LEN)
     strategy_id = _clean_token(strategy, limit=MAX_STRATEGY_LEN)
     allowed = {_clean_token(x, limit=MAX_STRATEGY_LEN) for x in allowed_strategies}
     allowed.discard("")
@@ -196,7 +208,7 @@ def public_summary(path: Path, allowed_by_source: dict[str, Iterable[str]]) -> d
     memory = load_memory(path)
     out = {"version": MEMORY_VERSION, "updated_at": memory.get("updated_at"), "sources": {}}
     for label, allowed_values in allowed_by_source.items():
-        clean_label = _clean_token(label, limit=MAX_LABEL_LEN)
+        clean_label = _clean_label(label, limit=MAX_LABEL_LEN)
         allowed = {_clean_token(x, limit=MAX_STRATEGY_LEN) for x in allowed_values}
         allowed.discard("")
         source = memory.get("sources", {}).get(clean_label)
