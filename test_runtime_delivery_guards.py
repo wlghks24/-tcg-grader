@@ -52,7 +52,13 @@ def main():
 
     launcher=text('START_TCG_UPDATER_ANDROID.sh')
     assert 'PAIR_QUEUE_PID=$!' in launcher
-    assert 'kill "$PAIR_QUEUE_PID"' in launcher
+    assert 'kill -TERM "$PAIR_QUEUE_PID"' in launcher
+    assert 'SERVER_PID=$!' in launcher
+    assert 'kill -TERM "$SERVER_PID"' in launcher
+    assert "trap 'handle_android_signal 130' INT" in launcher
+    assert "trap 'handle_android_signal 143' TERM" in launcher
+    assert "trap 'handle_android_signal 129' HUP" in launcher
+    assert 'trap cleanup_android_start EXIT INT TERM' not in launcher
     assert '혼합 업데이트 상태로 서버를 시작하지 않습니다. INSTALL_MANUAL_OFFICIAL_FALLBACK.sh' not in launcher
 
     market=text('update_market_prices.py')

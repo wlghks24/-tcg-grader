@@ -10,16 +10,52 @@ START_LOCK_DIR=".tcg_android_start.lock"
 START_LOCK_PID="$START_LOCK_DIR/pid"
 WAKE_LOCKED=0
 PAIR_QUEUE_PID=""
+SERVER_PID=""
+CLEANUP_RUNNING=0
 
 cleanup_android_start() {
+  # v186: cleanup may be reached from a signal and again from EXIT. Make it
+  # idempotent so children are never signalled twice or a fresh lock removed.
+  if [ "${CLEANUP_RUNNING:-0}" = "1" ]; then
+    return 0
+  fi
+  CLEANUP_RUNNING=1
+
+  # Track the real Python server explicitly. Sending TERM only to the launcher
+  # shell must not leave tcg_updater_v135.py orphaned in the background.
+  if [ -n "${SERVER_PID:-}" ] && kill -0 "$SERVER_PID" 2>/dev/null; then
+    kill -TERM "$SERVER_PID" 2>/dev/null || true
+    for _wait_i in 1 2 3 4 5; do
+      kill -0 "$SERVER_PID" 2>/dev/null || break
+      sleep 1
+    done
+    if kill -0 "$SERVER_PID" 2>/dev/null; then
+      kill -KILL "$SERVER_PID" 2>/dev/null || true
+    fi
+    wait "$SERVER_PID" 2>/dev/null || true
+  fi
+  SERVER_PID=""
+
   if [ -n "${PAIR_QUEUE_PID:-}" ] && kill -0 "$PAIR_QUEUE_PID" 2>/dev/null; then
-    kill "$PAIR_QUEUE_PID" 2>/dev/null || true
+    kill -TERM "$PAIR_QUEUE_PID" 2>/dev/null || true
     wait "$PAIR_QUEUE_PID" 2>/dev/null || true
   fi
+  PAIR_QUEUE_PID=""
+
   if [ "${WAKE_LOCKED:-0}" = "1" ] && command -v termux-wake-unlock >/dev/null 2>&1; then
     termux-wake-unlock >/dev/null 2>&1 || true
   fi
+  WAKE_LOCKED=0
   rm -rf "$START_LOCK_DIR" 2>/dev/null || true
+}
+
+handle_android_signal() {
+  exit_code="$1"
+  # TERM/INT traps do not exit automatically in bash. Disable traps first,
+  # perform one deterministic cleanup, then exit with the conventional code.
+  trap - EXIT INT TERM HUP
+  cleanup_android_start
+  exit "$exit_code"
 }
 
 acquire_android_start_lock() {
@@ -50,7 +86,10 @@ acquire_android_start_lock() {
 }
 
 acquire_android_start_lock
-trap cleanup_android_start EXIT INT TERM
+trap cleanup_android_start EXIT
+trap 'handle_android_signal 130' INT
+trap 'handle_android_signal 143' TERM
+trap 'handle_android_signal 129' HUP
 
 # Manual-only graded-photo policy. Child collection processes inherit this
 # and therefore cannot make automatic PSA/BGS/CGC/TAG/BRG certification requests.
@@ -248,6 +287,9 @@ echo "등급학습 안전게이트 사용: 공식인증 + RAW 원시예측 + 교
 echo "수동등록 정책: 앞면+뒷면 2장 필수 · 앞면 OCR · 뒷면 별도 증빙 저장"
 echo "등급사진 정책: 자동 등급사 조회 OFF · 공식사이트 직접확인/수동등록 · 인증번호+앞뒤사진만 게임폴더에 보관"
 echo "자료수집 자가학습 v142 + 런타임 번들 v143 + OCR v149: 고유출처 검증 + timeout circuit-breaker + 혼합버전 차단"
-python tcg_updater_v135.py
+python tcg_updater_v135.py &
+SERVER_PID=$!
+wait "$SERVER_PID"
 SERVER_RC=$?
+SERVER_PID=""
 exit "$SERVER_RC"
