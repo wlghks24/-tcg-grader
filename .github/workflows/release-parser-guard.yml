@@ -1,0 +1,54 @@
+name: Release Parser Guard
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'update_releases.py'
+      - 'release_parser_learning.py'
+      - 'test_release_parser_learning.py'
+      - 'test_update_releases_parser_recovery.py'
+      - 'safe_runtime.py'
+      - '.github/workflows/release-parser-guard.yml'
+  schedule:
+    - cron: '17 3 * * *'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  guard:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Compile parser modules
+        run: python -m py_compile update_releases.py release_parser_learning.py safe_runtime.py
+      - name: Run bounded-learning regression tests
+        run: python -m unittest -v test_release_parser_learning.py test_update_releases_parser_recovery.py
+      - name: Live official-source smoke test
+        env:
+          TCG_HTTP_TIMEOUT: '30'
+        run: |
+          python - <<'PY'
+          import tempfile
+          from pathlib import Path
+          import update_releases as u
+
+          u.PARSER_MEMORY = Path(tempfile.mkdtemp()) / 'release_parser_learning.json'
+          u.PARSER_RUN_EVENTS.clear()
+          rows = u.collect_pokemon_jp()
+          assert rows, 'Pokémon JP: every verified parser/transport strategy returned zero rows'
+          assert all(r.get('source','').startswith('https://www.pokemon-card.com/') for r in rows), rows[:3]
+          assert all(r.get('release_date') and r.get('price') for r in rows), rows[:3]
+          summary = u.parser_public_summary(
+              u.PARSER_MEMORY,
+              {'Pokémon JP': u.POKEMON_JP_STRATEGIES},
+          )
+          preferred = summary.get('sources',{}).get('Pokémon JP',{}).get('preferred_strategy')
+          assert preferred in u.POKEMON_JP_STRATEGIES, summary
+          print('rows=', len(rows))
+          print('events=', u.PARSER_RUN_EVENTS)
+          print('preferred=', preferred)
+          PY
