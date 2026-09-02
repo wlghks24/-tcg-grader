@@ -1,0 +1,33 @@
+{
+  "version": 1,
+  "updated_at": "2026-09-02T17:54:04+00:00",
+  "sources": {
+    "Pokémon JP": {
+      "last_successful_strategy": "official_result_api_v1",
+      "last_outcome": "recovered",
+      "last_row_count": 20,
+      "consecutive_failures": 0,
+      "last_success_at": "2026-09-02T17:54:04+00:00",
+      "last_attempt_at": "2026-09-02T17:54:04+00:00",
+      "last_fingerprint": "b34565ee569b3a64",
+      "strategies": {
+        "html_chain_v1": {
+          "successes": 0,
+          "failures": 1,
+          "last_row_count": 0,
+          "last_success_at": null,
+          "last_attempt_at": "2026-09-02T17:54:03+00:00",
+          "last_outcome": "zero_verified_rows"
+        },
+        "official_result_api_v1": {
+          "successes": 1,
+          "failures": 0,
+          "last_row_count": 20,
+          "last_success_at": "2026-09-02T17:54:04+00:00",
+          "last_attempt_at": "2026-09-02T17:54:04+00:00",
+          "last_outcome": "recovered"
+        }
+      }
+    }
+  }
+}

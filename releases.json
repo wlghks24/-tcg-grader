@@ -1,6 +1,335 @@
 {
-  "updated_at": "2026-08-26T10:47:08+00:00",
+  "updated_at": "2026-09-02T17:54:09+00:00",
   "items": [
+    {
+      "game": "Pokémon",
+      "region": "JP",
+      "name": "ステラミラクル",
+      "release_date": "2024-07-19",
+      "price": "¥180/팩",
+      "status": "공식 확인",
+      "source": "https://www.pokemon-card.com/products/index.html?productType=expansion",
+      "parser": "official-result-api-v1",
+      "transport_source": "https://www.pokemon-card.com/products/resultAPI.php?productType=expansion&page=1",
+      "first_seen_at": "2026-09-02T17:54:09+00:00",
+      "last_verified_at": "2026-09-02T17:54:09+00:00"
+    },
+    {
+      "game": "Pokémon",
+      "region": "JP",
+      "name": "楽園ドラゴーナ",
+      "release_date": "2024-09-13",
+      "price": "¥180/팩",
+      "status": "공식 확인",
+      "source": "https://www.pokemon-card.com/products/index.html?productType=expansion",
+      "parser": "official-result-api-v1",
+      "transport_source": "https://www.pokemon-card.com/products/resultAPI.php?productType=expansion&page=1",
+      "first_seen_at": "2026-09-02T17:54:09+00:00",
+      "last_verified_at": "2026-09-02T17:54:09+00:00"
+    },
+    {
+      "game": "Pokémon",
+      "region": "JP",
+      "name": "超電ブレイカー",
+      "release_date": "2024-10-18",
+      "price": "¥180/팩",
+      "status": "공식 확인",
+      "source": "https://www.pokemon-card.com/products/index.html?productType=expansion",
+      "parser": "official-result-api-v1",
+      "transport_source": "https://www.pokemon-card.com/products/resultAPI.php?productType=expansion&page=1",
+      "first_seen_at": "2026-09-02T17:54:09+00:00",
+      "last_verified_at": "2026-09-02T17:54:09+00:00"
+    },
+    {
+      "game": "Pokémon",
+      "region": "JP",
+      "name": "テラスタルフェスex",
+      "release_date": "2024-12-06",
+      "price": "¥550/팩",
+      "status": "공식 확인",
+      "source": "https://www.pokemon-card.com/products/index.html?productType=expansion",
+      "parser": "official-result-api-v1",
+      "transport_source": "https://www.pokemon-card.com/products/resultAPI.php?productType=expansion&page=1",
+      "first_seen_at": "2026-09-02T17:54:09+00:00",
+      "last_verified_at": "2026-09-02T17:54:09+00:00"
+    },
+    {
+      "game": "Pokémon",
+      "region": "JP",
+      "name": "バトルパートナーズ",
+      "release_date": "2025-01-24",
+      "price": "¥180/팩",
+      "status": "공식 확인",
+      "source": "https://www.pokemon-card.com/products/index.html?productType=expansion",
+      "parser": "official-result-api-v1",
+      "transport_source": "https://www.pokemon-card.com/products/resultAPI.php?productType=expansion&page=1",
+      "first_seen_at": "2026-09-02T17:54:09+00:00",
+      "last_verified_at": "2026-09-02T17:54:09+00:00"
+    },
+    {
+      "game": "ONE PIECE",
+      "region": "JP",
+      "name": "Anime 25th collection [EB-02]",
+      "price": "¥220/팩",
+      "status": "공식 확인",
+      "source": "https://www.onepiece-cardgame.com/products/?subcategory=boosters",
+      "release_date": "2025-01-25",
+      "first_seen_at": "2026-09-02T17:54:09+00:00",
+      "last_verified_at": "2026-09-02T17:54:09+00:00"
+    },
+    {
+      "game": "ONE PIECE",
+      "region": "JP",
+      "name": "神速の拳 [OP-11]",
+      "price": "¥220/팩",
+      "status": "공식 확인",
+      "source": "https://www.onepiece-cardgame.com/products/?subcategory=boosters",
+      "release_date": "2025-03-01",
+      "first_seen_at": "2026-09-02T17:54:09+00:00",
+      "last_verified_at": "2026-09-02T17:54:09+00:00"
+    },
+    {
+      "game": "Pokémon",
+      "region": "JP",
+      "name": "熱風のアリーナ",
+      "release_date": "2025-03-14",
+      "price": "¥180/팩",
+      "status": "공식 확인",
+      "source": "https://www.pokemon-card.com/products/index.html?productType=expansion",
+      "parser": "official-result-api-v1",
+      "transport_source": "https://www.pokemon-card.com/products/resultAPI.php?productType=expansion&page=1",
+      "first_seen_at": "2026-09-02T17:54:09+00:00",
+      "last_verified_at": "2026-09-02T17:54:09+00:00"
+    },
+    {
+      "game": "Pokémon",
+      "region": "JP",
+      "name": "ロケット団の栄光",
+      "release_date": "2025-04-18",
+      "price": "¥180/팩",
+      "status": "공식 확인",
+      "source": "https://www.pokemon-card.com/products/index.html?productType=expansion",
+      "parser": "official-result-api-v1",
+      "transport_source": "https://www.pokemon-card.com/products/resultAPI.php?productType=expansion&page=1",
+      "first_seen_at": "2026-09-02T17:54:09+00:00",
+      "last_verified_at": "2026-09-02T17:54:09+00:00"
+    },
+    {
+      "game": "ONE PIECE",
+      "region": "JP",
+      "name": "師弟の絆 [OP-12]",
+      "price": "¥220/팩",
+      "status": "공식 확인",
+      "source": "https://www.onepiece-cardgame.com/products/?subcategory=boosters",
+      "release_date": "2025-05-31",
+      "first_seen_at": "2026-09-02T17:54:09+00:00",
+      "last_verified_at": "2026-09-02T17:54:09+00:00"
+    },
+    {
+      "game": "Pokémon",
+      "region": "JP",
+      "name": "ブラックボルト",
+      "release_date": "2025-06-06",
+      "price": "¥1,450/팩",
+      "status": "공식 확인",
+      "source": "https://www.pokemon-card.com/products/index.html?productType=expansion",
+      "parser": "official-result-api-v1",
+      "transport_source": "https://www.pokemon-card.com/products/resultAPI.php?productType=expansion&page=1",
+      "first_seen_at": "2026-09-02T17:54:09+00:00",
+      "last_verified_at": "2026-09-02T17:54:09+00:00"
+    },
+    {
+      "game": "Pokémon",
+      "region": "JP",
+      "name": "ホワイトフレア",
+      "release_date": "2025-06-06",
+      "price": "¥1,450/팩",
+      "status": "공식 확인",
+      "source": "https://www.pokemon-card.com/products/index.html?productType=expansion",
+      "parser": "official-result-api-v1",
+      "transport_source": "https://www.pokemon-card.com/products/resultAPI.php?productType=expansion&page=1",
+      "first_seen_at": "2026-09-02T17:54:09+00:00",
+      "last_verified_at": "2026-09-02T17:54:09+00:00"
+    },
+    {
+      "game": "ONE PIECE",
+      "region": "JP",
+      "name": "ONE PIECE CARD THE BEST vol.2 [PRB-02]",
+      "price": "¥550/팩",
+      "status": "공식 확인",
+      "source": "https://www.onepiece-cardgame.com/products/?subcategory=boosters",
+      "release_date": "2025-07-26",
+      "first_seen_at": "2026-09-02T17:54:09+00:00",
+      "last_verified_at": "2026-09-02T17:54:09+00:00"
+    },
+    {
+      "game": "Pokémon",
+      "region": "JP",
+      "name": "メガシンフォニア",
+      "release_date": "2025-08-01",
+      "price": "¥180/팩",
+      "status": "공식 확인",
+      "source": "https://www.pokemon-card.com/products/index.html?productType=expansion",
+      "parser": "official-result-api-v1",
+      "transport_source": "https://www.pokemon-card.com/products/resultAPI.php?productType=expansion&page=1",
+      "first_seen_at": "2026-09-02T17:54:09+00:00",
+      "last_verified_at": "2026-09-02T17:54:09+00:00"
+    },
+    {
+      "game": "Pokémon",
+      "region": "JP",
+      "name": "メガブレイブ",
+      "release_date": "2025-08-01",
+      "price": "¥180/팩",
+      "status": "공식 확인",
+      "source": "https://www.pokemon-card.com/products/index.html?productType=expansion",
+      "parser": "official-result-api-v1",
+      "transport_source": "https://www.pokemon-card.com/products/resultAPI.php?productType=expansion&page=1",
+      "first_seen_at": "2026-09-02T17:54:09+00:00",
+      "last_verified_at": "2026-09-02T17:54:09+00:00"
+    },
+    {
+      "game": "ONE PIECE",
+      "region": "JP",
+      "name": "受け継がれる意志 [OP-13]",
+      "price": "¥220/팩",
+      "status": "공식 확인",
+      "source": "https://www.onepiece-cardgame.com/products/?subcategory=boosters",
+      "release_date": "2025-08-23",
+      "first_seen_at": "2026-09-02T17:54:09+00:00",
+      "last_verified_at": "2026-09-02T17:54:09+00:00"
+    },
+    {
+      "game": "Pokémon",
+      "region": "JP",
+      "name": "インフェルノX",
+      "release_date": "2025-09-26",
+      "price": "¥180/팩",
+      "status": "공식 확인",
+      "source": "https://www.pokemon-card.com/products/index.html?productType=expansion",
+      "parser": "official-result-api-v1",
+      "transport_source": "https://www.pokemon-card.com/products/resultAPI.php?productType=expansion&page=1",
+      "first_seen_at": "2026-09-02T17:54:09+00:00",
+      "last_verified_at": "2026-09-02T17:54:09+00:00"
+    },
+    {
+      "game": "ONE PIECE",
+      "region": "JP",
+      "name": "ONE PIECE Heroines Edition [EB-03]",
+      "price": "¥220/팩",
+      "status": "공식 확인",
+      "source": "https://www.onepiece-cardgame.com/products/?subcategory=boosters",
+      "release_date": "2025-10-25",
+      "first_seen_at": "2026-09-02T17:54:09+00:00",
+      "last_verified_at": "2026-09-02T17:54:09+00:00"
+    },
+    {
+      "game": "ONE PIECE",
+      "region": "JP",
+      "name": "蒼海の七傑 [OP-14]",
+      "price": "¥220/팩",
+      "status": "공식 확인",
+      "source": "https://www.onepiece-cardgame.com/products/?subcategory=boosters",
+      "release_date": "2025-11-22",
+      "first_seen_at": "2026-09-02T17:54:09+00:00",
+      "last_verified_at": "2026-09-02T17:54:09+00:00"
+    },
+    {
+      "game": "Pokémon",
+      "region": "JP",
+      "name": "MEGAドリームex",
+      "release_date": "2025-11-28",
+      "price": "¥550/팩",
+      "status": "공식 확인",
+      "source": "https://www.pokemon-card.com/products/index.html?productType=expansion",
+      "parser": "official-result-api-v1",
+      "transport_source": "https://www.pokemon-card.com/products/resultAPI.php?productType=expansion&page=1",
+      "first_seen_at": "2026-09-02T17:54:09+00:00",
+      "last_verified_at": "2026-09-02T17:54:09+00:00"
+    },
+    {
+      "game": "Pokémon",
+      "region": "JP",
+      "name": "ムニキスゼロ",
+      "release_date": "2026-01-23",
+      "price": "¥180/팩",
+      "status": "공식 확인",
+      "source": "https://www.pokemon-card.com/products/index.html?productType=expansion",
+      "parser": "official-result-api-v1",
+      "transport_source": "https://www.pokemon-card.com/products/resultAPI.php?productType=expansion&page=1",
+      "first_seen_at": "2026-09-02T17:54:09+00:00",
+      "last_verified_at": "2026-09-02T17:54:09+00:00"
+    },
+    {
+      "game": "ONE PIECE",
+      "region": "JP",
+      "name": "EGGHEAD CRISIS [EB-04]",
+      "price": "¥220/팩",
+      "status": "공식 확인",
+      "source": "https://www.onepiece-cardgame.com/products/?subcategory=boosters",
+      "release_date": "2026-01-31",
+      "first_seen_at": "2026-09-02T17:54:09+00:00",
+      "last_verified_at": "2026-09-02T17:54:09+00:00"
+    },
+    {
+      "game": "ONE PIECE",
+      "region": "JP",
+      "name": "神の島の冒険 [OP-15]",
+      "price": "¥220/팩",
+      "status": "공식 확인",
+      "source": "https://www.onepiece-cardgame.com/products/?subcategory=boosters",
+      "release_date": "2026-02-28",
+      "first_seen_at": "2026-09-02T17:54:09+00:00",
+      "last_verified_at": "2026-09-02T17:54:09+00:00"
+    },
+    {
+      "game": "Pokémon",
+      "region": "JP",
+      "name": "ニンジャスピナー",
+      "release_date": "2026-03-13",
+      "price": "¥180/팩",
+      "status": "공식 확인",
+      "source": "https://www.pokemon-card.com/products/index.html?productType=expansion",
+      "parser": "official-result-api-v1",
+      "transport_source": "https://www.pokemon-card.com/products/resultAPI.php?productType=expansion&page=1",
+      "first_seen_at": "2026-09-02T17:54:09+00:00",
+      "last_verified_at": "2026-09-02T17:54:09+00:00"
+    },
+    {
+      "game": "Pokémon",
+      "region": "JP",
+      "name": "アビスアイ",
+      "release_date": "2026-05-22",
+      "price": "¥200/팩",
+      "status": "공식 확인",
+      "source": "https://www.pokemon-card.com/products/index.html?productType=expansion",
+      "parser": "official-result-api-v1",
+      "transport_source": "https://www.pokemon-card.com/products/resultAPI.php?productType=expansion&page=1",
+      "first_seen_at": "2026-09-02T17:54:09+00:00",
+      "last_verified_at": "2026-09-02T17:54:09+00:00"
+    },
+    {
+      "game": "ONE PIECE",
+      "region": "JP",
+      "name": "決戦の刻 [OP-16]",
+      "price": "¥220/팩",
+      "status": "공식 확인",
+      "source": "https://www.onepiece-cardgame.com/products/?subcategory=boosters",
+      "release_date": "2026-05-30",
+      "first_seen_at": "2026-09-02T17:54:09+00:00",
+      "last_verified_at": "2026-09-02T17:54:09+00:00"
+    },
+    {
+      "game": "ONE PIECE",
+      "region": "KR",
+      "name": "[OPK-13] 부스터 팩 계승되는 의지",
+      "release_date": "2026-06-26",
+      "price": "₩48,000/BOX",
+      "status": "공식 확인",
+      "source": "https://onepiece-cardgame.kr/products.do",
+      "first_seen_at": "2026-09-02T17:54:09+00:00",
+      "last_verified_at": "2026-09-02T17:54:09+00:00"
+    },
     {
       "game": "ONE PIECE",
       "region": "KR",
@@ -13,7 +342,22 @@
       "link_status": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인",
       "link_statuses": {
         "source": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인"
-      }
+      },
+      "first_seen_at": "2026-09-02T17:54:09+00:00",
+      "last_verified_at": "2026-09-02T17:54:09+00:00"
+    },
+    {
+      "game": "Pokémon",
+      "region": "JP",
+      "name": "ストームエメラルダ",
+      "release_date": "2026-07-31",
+      "price": "¥200/팩",
+      "status": "공식 확인",
+      "source": "https://www.pokemon-card.com/products/index.html?productType=expansion",
+      "parser": "official-result-api-v1",
+      "transport_source": "https://www.pokemon-card.com/products/resultAPI.php?productType=expansion&page=1",
+      "first_seen_at": "2026-09-02T17:54:09+00:00",
+      "last_verified_at": "2026-09-02T17:54:09+00:00"
     },
     {
       "game": "ONE PIECE",
@@ -27,21 +371,25 @@
       "link_status": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인",
       "link_statuses": {
         "source": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인"
-      }
+      },
+      "first_seen_at": "2026-09-02T17:54:09+00:00",
+      "last_verified_at": "2026-09-02T17:54:09+00:00"
     },
     {
       "game": "ONE PIECE",
       "region": "JP",
-      "name": "세계 최강의 전사들 (世界最強の戦士) [OP-17]",
+      "name": "世界最強の戦士 [OP-17]",
       "release_date": "2026-08-22",
       "price": "¥240/팩",
-      "status": "출시예정",
+      "status": "공식 확인",
       "source": "https://www.onepiece-cardgame.com/products/?subcategory=boosters",
       "link_checked_at": "2026-08-26T10:47:11+00:00",
       "link_status": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인",
       "link_statuses": {
         "source": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인"
-      }
+      },
+      "first_seen_at": "2026-09-02T17:54:09+00:00",
+      "last_verified_at": "2026-09-02T17:54:09+00:00"
     },
     {
       "game": "ONE PIECE",
@@ -63,13 +411,17 @@
       "name": "30th CELEBRATION",
       "release_date": "2026-09-16",
       "price": "¥360/팩",
-      "status": "출시예정",
-      "source": "https://www.pokemon-card.com/products/",
+      "status": "공식 확인",
+      "source": "https://www.pokemon-card.com/products/index.html?productType=expansion",
       "link_checked_at": "2026-08-26T10:47:11+00:00",
       "link_status": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인",
       "link_statuses": {
         "source": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인"
-      }
+      },
+      "parser": "official-result-api-v1",
+      "transport_source": "https://www.pokemon-card.com/products/resultAPI.php?productType=expansion&page=1",
+      "first_seen_at": "2026-09-02T17:54:09+00:00",
+      "last_verified_at": "2026-09-02T17:54:09+00:00"
     },
     {
       "game": "Pokémon",
@@ -112,17 +464,91 @@
       "link_status": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인",
       "link_statuses": {
         "source": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인"
-      }
+      },
+      "first_seen_at": "2026-09-02T17:54:09+00:00",
+      "last_verified_at": "2026-09-02T17:54:09+00:00"
+    },
+    {
+      "game": "ONE PIECE",
+      "region": "JP",
+      "name": "ONE PIECE Heroines Edition vol.2 [EB-05]",
+      "price": "¥240/팩",
+      "status": "공식 확인",
+      "source": "https://www.onepiece-cardgame.com/products/?subcategory=boosters",
+      "release_window": "2026-10",
+      "release_precision": "month",
+      "release_label": "2026년 10월",
+      "first_seen_at": "2026-09-02T17:54:09+00:00",
+      "last_verified_at": "2026-09-02T17:54:09+00:00"
+    },
+    {
+      "game": "ONE PIECE",
+      "region": "US",
+      "name": "EXTRA BOOSTER -ONE PIECE HEROINES EDITION vol.2- [EB-05]",
+      "price": "$4.99/팩",
+      "status": "공식 확인",
+      "source": "https://en.onepiece-cardgame.com/products/",
+      "release_window": "2026-10",
+      "release_precision": "month",
+      "release_label": "October 2026",
+      "first_seen_at": "2026-09-02T17:54:09+00:00",
+      "last_verified_at": "2026-09-02T17:54:09+00:00"
     }
   ],
   "collection_policy": "공식 출처에서 상품명과 출시일 또는 공식 출시시기가 함께 확인된 항목만 자동 반영",
-  "collection_status": "일부 출처 확인 실패",
-  "collection_errors": [
-    "ONE PIECE US: URLError",
-    "ONE PIECE JP: URLError",
-    "ONE PIECE KR: URLError",
-    "Pokémon JP: URLError",
-    "NARUTO Global: URLError"
+  "collection_status": "정상",
+  "collection_errors": [],
+  "link_audit_at": "2026-08-26T10:47:11+00:00",
+  "history_backfill_progress": {
+    "pokemon_jp_next_year": 2024,
+    "pokemon_jp_last_run": "2026-09-02T17:54:05+00:00"
+  },
+  "unified_history_policy": "Pokémon/ONE PIECE/NARUTO 동일 append-only 누적정책 · 공식출처만 반영 · 실패 시 기존 이력 보존",
+  "parser_drift_warnings": [],
+  "history_policy": "공식 확인된 과거 출시제품은 기간 제한 없이 누적 보존하며 네트워크 실패 시 삭제하지 않음",
+  "history_count": 38,
+  "parser_recovery_events": [
+    {
+      "source": "Pokémon JP",
+      "strategy": "html_chain_v1",
+      "outcome": "zero_verified_rows",
+      "rows": 0
+    },
+    {
+      "source": "Pokémon JP",
+      "strategy": "official_result_api_v1",
+      "outcome": "recovered",
+      "rows": 20
+    }
   ],
-  "link_audit_at": "2026-08-26T10:47:11+00:00"
+  "parser_learning": {
+    "version": 1,
+    "updated_at": "2026-09-02T17:54:04+00:00",
+    "sources": {
+      "Pokémon JP": {
+        "preferred_strategy": "official_result_api_v1",
+        "last_outcome": "recovered",
+        "last_row_count": 20,
+        "consecutive_failures": 0,
+        "last_success_at": "2026-09-02T17:54:04+00:00",
+        "last_fingerprint": "b34565ee569b3a64",
+        "strategies": {
+          "html_chain_v1": {
+            "successes": 0,
+            "failures": 1,
+            "last_row_count": 0,
+            "last_success_at": null,
+            "last_outcome": "zero_verified_rows"
+          },
+          "official_result_api_v1": {
+            "successes": 1,
+            "failures": 0,
+            "last_row_count": 20,
+            "last_success_at": "2026-09-02T17:54:04+00:00",
+            "last_outcome": "recovered"
+          }
+        }
+      }
+    }
+  }
 }
