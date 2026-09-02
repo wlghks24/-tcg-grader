@@ -1,9 +1,10 @@
 #!/usr/bin/env python3
 """External link health audit with SSRF protection, retries and safe fallbacks.
 
-Only confirmed HTTP 404/410 is treated as broken. 403/405/429 mean the site
-exists but blocks automated probes. Timeouts/DNS failures are transient and do
-not overwrite a previously working link.
+Only GET-confirmed HTTP 404/410 is treated as broken. Some otherwise healthy
+sites reject or mis-handle HEAD, so a HEAD 404/410 is always rechecked with GET.
+403/405/429 mean the site exists but blocks automated probes. Timeouts/DNS
+failures are transient and do not overwrite a previously working link.
 """
 from __future__ import annotations
 import datetime as dt, ipaddress, json, os, socket, urllib.error, urllib.parse, urllib.request, multiprocessing as mp
@@ -139,14 +140,22 @@ def probe(url:str, request_timeout:int|None=None)->dict:
                 code=getattr(r,"status",200)
                 return {"state":"ok","code":code,"final_url":r.geturl()}
         except urllib.error.HTTPError as exc:
-            if exc.code in {401,403,405,406,409,429}: return {"state":"restricted","code":exc.code}
-            if exc.code in {404,410}: return {"state":"broken","code":exc.code}
-            if method=="GET": return {"state":"transient","code":exc.code}
+            if exc.code in {401,403,405,406,409,429}:
+                return {"state":"restricted","code":exc.code}
+            if exc.code in {404,410}:
+                # v184: HEAD is only a hint. Several healthy commerce/TCG sites
+                # return 404/410 to HEAD while serving the same URL via GET.
+                if method=="HEAD":
+                    continue
+                return {"state":"broken","code":exc.code,"confirmed_by":"GET"}
+            if method=="GET":
+                return {"state":"transient","code":exc.code}
         except ValueError as exc:
             # v68: SSRF/security validation failures are blocked, never learned as transient network errors.
             return {"state":"blocked","detail":f"SECURITY:{type(exc).__name__}"}
         except (urllib.error.URLError,TimeoutError,OSError,socket.timeout) as exc:
-            if method=="GET": return {"state":"transient","detail":type(exc).__name__}
+            if method=="GET":
+                return {"state":"transient","detail":type(exc).__name__}
     return {"state":"transient","detail":"unknown"}
 
 
@@ -178,6 +187,59 @@ def _record_status(row:dict,key:str,status:str)->None:
         row["link_status"]=status
 
 
+def _apply_results(tasks:dict, results:dict, now:str)->tuple[dict,list[dict]]:
+    """Apply unique-URL audit results and return unit-consistent counters.
+
+    `broken`, `repaired`, and `unresolved_broken` are all counts of unique URLs,
+    never row/reference counts. This keeps downstream `broken - repaired`
+    compatibility correct even when one URL appears in several JSON rows.
+    """
+    counts={"ok":0,"restricted":0,"broken":0,"transient":0,"blocked":0,
+            "repaired":0,"unresolved_broken":0}
+    unresolved_details=[]
+    for url,refs in tasks.items():
+        result=results.get(url,{"state":"transient"}); state=result["state"]
+        if state not in {"ok","restricted","broken","transient","blocked"}:
+            state="transient"
+        counts[state]+=1
+
+        if state=="broken":
+            host=urllib.parse.urlsplit(url.replace('{query}','TCG')).hostname or ''
+            fallback=FALLBACKS.get(host.lower())
+            if fallback and fallback!=url:
+                for fn,row,key in refs:
+                    row["link_checked_at"]=now
+                    row.setdefault("original_source" if key=="source" else "original_url",url)
+                    row[key]=fallback
+                    _record_status(row,key,f"깨진 링크 자동보정 · 공식 홈으로 대체 (HTTP {result.get('code')})")
+                counts["repaired"]+=1
+            else:
+                for fn,row,key in refs:
+                    row["link_checked_at"]=now
+                    _record_status(row,key,f"접속 불가 확인 (HTTP {result.get('code')})")
+                counts["unresolved_broken"]+=1
+                unresolved_details.append({
+                    "url":url,
+                    "http_code":result.get("code"),
+                    "confirmed_by":result.get("confirmed_by") or "GET",
+                    "references":[{"file":fn,"field":key} for fn,_row,key in refs[:20]],
+                })
+            continue
+
+        for fn,row,key in refs:
+            row["link_checked_at"]=now
+            if state=="ok":
+                _record_status(row,key,"정상")
+            elif state=="restricted":
+                _record_status(row,key,f"사이트 접속 제한 · 브라우저 이용 가능 (HTTP {result.get('code')})")
+            elif state=="blocked":
+                _record_status(row,key,"보안 차단 · DNS가 사설/로컬 주소를 가리킴")
+            else:
+                # Never destroy working data on timeout/DNS/network filtering.
+                _record_status(row,key,"네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인")
+    return counts, unresolved_details[:50]
+
+
 def main()->dict:
     now=dt.datetime.now(dt.timezone.utc).isoformat(timespec="seconds")
     loaded={}; tasks={}
@@ -193,6 +255,7 @@ def main()->dict:
             tasks.setdefault(url,[]).append((fn,row,key))
     results={}
     urls=list(tasks)
+    audit_timeout=0; request_timeout=0
     # Process workers are intentionally used instead of threads: DNS/socket calls can
     # ignore Python-level timeouts on some Windows/Android networks. The pool can be
     # terminated as a whole so a bad DNS server never freezes the one-click update.
@@ -234,34 +297,13 @@ def main()->dict:
             raise
         finally:
             pool.join()
-    counts={"ok":0,"restricted":0,"broken":0,"transient":0,"blocked":0,"repaired":0}
-    for url,refs in tasks.items():
-        result=results.get(url,{"state":"transient"}); state=result["state"]; counts[state]+=1
-        for fn,row,key in refs:
-            row["link_checked_at"]=now
-            if state=="ok":
-                _record_status(row,key,"정상")
-            elif state=="restricted":
-                _record_status(row,key,f"사이트 접속 제한 · 브라우저 이용 가능 (HTTP {result.get('code')})")
-            elif state=="blocked":
-                _record_status(row,key,"보안 차단 · DNS가 사설/로컬 주소를 가리킴")
-            elif state=="broken":
-                host=urllib.parse.urlsplit(url.replace('{query}','TCG')).hostname or ''
-                fallback=FALLBACKS.get(host.lower())
-                if fallback and fallback!=url:
-                    row.setdefault("original_source" if key=="source" else "original_url",url)
-                    row[key]=fallback
-                    _record_status(row,key,f"깨진 링크 자동보정 · 공식 홈으로 대체 (HTTP {result.get('code')})")
-                    counts["repaired"]+=1
-                else:
-                    _record_status(row,key,f"접속 불가 확인 (HTTP {result.get('code')})")
-            else:
-                # Never destroy working data on timeout/DNS/network filtering.
-                _record_status(row,key,"네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인")
+    counts, unresolved_details=_apply_results(tasks,results,now)
     for fn,data in loaded.items():
         data["link_audit_at"]=now
         atomic_write_json(ROOT/fn,data,suffix='.audit.tmp')
-    report={"updated_at":now,"checked":len(tasks),"audit_timeout_seconds":audit_timeout if urls else 0,"request_timeout_seconds":request_timeout if urls else 0,**counts}
+    report={"updated_at":now,"checked":len(tasks),"audit_timeout_seconds":audit_timeout,
+            "request_timeout_seconds":request_timeout,**counts,
+            "unresolved_details":unresolved_details}
     atomic_write_json(ROOT/"link_health_report.json",report,suffix='.report.tmp')
     print(json.dumps(report,ensure_ascii=False))
     return report
