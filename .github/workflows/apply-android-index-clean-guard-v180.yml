@@ -22,34 +22,38 @@ jobs:
         run: |
           python - <<'PY'
           from pathlib import Path
-          import re
 
           start = Path('START_TCG_UPDATER_ANDROID.sh')
           text = start.read_text(encoding='utf-8')
-          old = '''if ! grep -q 'manual_dual_photo_bridge.js' index.html; then
-  echo "[오류] index.html에 앞면+뒷면 수동등록 UI가 설치되지 않았습니다."
-  echo "[조치] bash INSTALL_MANUAL_OFFICIAL_FALLBACK.sh 를 다시 실행하세요."
-  exit 1
-fi'''
-          new = '''if ! grep -q 'manual_dual_photo_bridge.js' index.html; then
-  echo "[오류] index.html에 앞면+뒷면 수동등록 UI 연결이 없습니다."
-  echo "[조치] 로컬 index.html을 직접 수정하지 말고 GitHub main 최신본으로 갱신하세요: bash ANDROID_UPDATE_AND_START.sh"
-  exit 1
-fi'''
-          if old in text:
-              text = text.replace(old, new, 1)
-          elif 'bash INSTALL_MANUAL_OFFICIAL_FALLBACK.sh 를 다시 실행하세요.' in text:
-              text = text.replace('bash INSTALL_MANUAL_OFFICIAL_FALLBACK.sh 를 다시 실행하세요.', '로컬 index.html을 직접 수정하지 말고 GitHub main 최신본으로 갱신하세요: bash ANDROID_UPDATE_AND_START.sh')
+          text = text.replace(
+              'echo "[조치] bash INSTALL_MANUAL_OFFICIAL_FALLBACK.sh 를 다시 실행하세요."',
+              'echo "[조치] 로컬 index.html을 직접 수정하지 말고 GitHub main 최신본으로 갱신하세요: bash ANDROID_UPDATE_AND_START.sh"',
+          )
           start.write_text(text, encoding='utf-8')
 
           installer = Path('INSTALL_MANUAL_OFFICIAL_FALLBACK.sh')
           text = installer.read_text(encoding='utf-8')
-          pattern = re.compile(r'''# Android/WebView가 오래된 앞뒤 업로드 UI JS를 잡지 않도록 캐시 버전도 갱신합니다\.\npython - <<'PY'\n.*?\nPY\n''', re.S)
-          replacement = '''# index.html은 GitHub main의 추적 파일이므로 태블릿에서 직접 수정하지 않습니다.\n# 로컬 수정을 만들면 다음 안전 업데이트가 중단될 수 있어 연결 존재만 검증합니다.\npython - <<'PY'\nfrom pathlib import Path\np=Path('index.html')\ntext=p.read_text(encoding='utf-8')\nif 'manual_dual_photo_bridge.js' not in text:\n    raise SystemExit('[오류] index.html에 manual_dual_photo_bridge.js 연결이 없습니다. GitHub main 최신본으로 갱신하세요.')\nprint('[OK] 앞뒤사진 UI 브리지 연결 확인 · index.html 무수정')\nPY\n'''
-          text, count = pattern.subn(replacement, text, count=1)
-          if count != 1:
-              raise SystemExit('legacy index mutation block not found exactly once')
-          text = text.replace("grep -q 'manual_dual_photo_bridge.js?v=149' index.html", "grep -q 'manual_dual_photo_bridge.js' index.html")
+          marker = '# Android/WebView가 오래된 앞뒤 업로드 UI JS를 잡지 않도록 캐시 버전도 갱신합니다.'
+          end_marker = 'if command -v node >/dev/null 2>&1; then'
+          if marker in text:
+              start_at = text.index(marker)
+              end_at = text.index(end_marker, start_at)
+              replacement = (
+                  '# index.html은 GitHub main의 추적 파일이므로 태블릿에서 직접 수정하지 않습니다.\n'
+                  '# 로컬 수정은 다음 안전 업데이트를 막을 수 있으므로 연결 존재만 검증합니다.\n'
+                  'python - <<\'PY\'\n'
+                  'from pathlib import Path\n'
+                  'text=Path(\'index.html\').read_text(encoding=\'utf-8\')\n'
+                  'if \'manual_dual_photo_bridge.js\' not in text:\n'
+                  '    raise SystemExit(\'[오류] index.html에 manual_dual_photo_bridge.js 연결이 없습니다. GitHub main 최신본으로 갱신하세요.\')\n'
+                  'print(\'[OK] 앞뒤사진 UI 브리지 연결 확인 · index.html 무수정\')\n'
+                  'PY\n\n'
+              )
+              text = text[:start_at] + replacement + text[end_at:]
+          text = text.replace(
+              "grep -q 'manual_dual_photo_bridge.js?v=149' index.html",
+              "grep -q 'manual_dual_photo_bridge.js' index.html",
+          )
           installer.write_text(text, encoding='utf-8')
 
           start_text = start.read_text(encoding='utf-8')
@@ -62,7 +66,6 @@ fi'''
           bash -n START_TCG_UPDATER_ANDROID.sh
           bash -n INSTALL_MANUAL_OFFICIAL_FALLBACK.sh
           grep -q 'manual_dual_photo_bridge.js' index.html
-          grep -q 'manual_dual_photo_bridge.js' manual_dual_photo_bridge.js || true
       - name: Commit guard
         shell: bash
         run: |
