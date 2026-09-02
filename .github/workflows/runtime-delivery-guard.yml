@@ -10,10 +10,16 @@ on:
       - 'safe_runtime.py'
       - 'tcg_updater.py'
       - 'tcg_updater_v135.py'
+      - 'auto_update_all.py'
+      - 'auto_repair_engine.py'
+      - 'error_scenario_lab.py'
+      - 'scenario_learning_profiles.json'
+      - 'validate_external_links.py'
       - 'ANDROID_UPDATE_AND_START.sh'
       - 'ANDROID_AUTO_START_INSTALL.sh'
       - 'START_TCG_UPDATER_ANDROID.sh'
       - 'update_market_prices.py'
+      - 'test_link_audit_hardening_v184.py'
       - 'test_runtime_delivery_guards.py'
       - 'test_runtime_resilience_v182.py'
       - '.github/workflows/runtime-delivery-guard.yml'
@@ -25,10 +31,16 @@ on:
       - 'safe_runtime.py'
       - 'tcg_updater.py'
       - 'tcg_updater_v135.py'
+      - 'auto_update_all.py'
+      - 'auto_repair_engine.py'
+      - 'error_scenario_lab.py'
+      - 'scenario_learning_profiles.json'
+      - 'validate_external_links.py'
       - 'ANDROID_UPDATE_AND_START.sh'
       - 'ANDROID_AUTO_START_INSTALL.sh'
       - 'START_TCG_UPDATER_ANDROID.sh'
       - 'update_market_prices.py'
+      - 'test_link_audit_hardening_v184.py'
       - 'test_runtime_delivery_guards.py'
       - 'test_runtime_resilience_v182.py'
 
@@ -51,7 +63,8 @@ jobs:
         run: |
           python test_runtime_delivery_guards.py
           python test_runtime_resilience_v182.py
-          python -m py_compile safe_runtime.py tcg_updater.py tcg_updater_v135.py update_market_prices.py
+          python test_link_audit_hardening_v184.py
+          python -m py_compile safe_runtime.py tcg_updater.py tcg_updater_v135.py update_market_prices.py validate_external_links.py auto_update_all.py auto_repair_engine.py error_scenario_lab.py
           bash -n ANDROID_UPDATE_AND_START.sh
           bash -n ANDROID_AUTO_START_INSTALL.sh
           bash -n START_TCG_UPDATER_ANDROID.sh
