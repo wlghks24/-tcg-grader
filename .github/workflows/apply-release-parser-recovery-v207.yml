@@ -1,0 +1,91 @@
+name: Apply Release Parser Recovery v207
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/apply-release-parser-recovery-v207.yml'
+permissions:
+  contents: write
+jobs:
+  apply:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Apply verified parser transport recovery
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          import re
+
+          p=Path('update_releases.py')
+          s=p.read_text(encoding='utf-8')
+
+          old_import="from safe_runtime import atomic_write_json, diagnostic_exception, env_int, html_to_text, safe_read_text, safe_urlopen\n"
+          new_import=old_import+"from release_parser_learning import fingerprint_text, public_summary as parser_public_summary, record_attempt as record_parser_attempt, strategy_order as parser_strategy_order\n"
+          if 'from release_parser_learning import ' not in s:
+              if old_import not in s: raise SystemExit('safe_runtime import marker missing')
+              s=s.replace(old_import,new_import,1)
+
+          constants='''POKEMON_JP_PRODUCT_URLS = (\n    "https://www.pokemon-card.com/products/",\n    "https://www.pokemon-card.com/products/index.html?productType=expansion",\n)\n'''
+          extended=constants+'''POKEMON_JP_SOURCE_PAGE = "https://www.pokemon-card.com/products/index.html?productType=expansion"\nPOKEMON_JP_RESULT_API = "https://www.pokemon-card.com/products/resultAPI.php"\nPARSER_MEMORY = ROOT / "release_parser_learning.json"\nPOKEMON_JP_STRATEGIES = ("html_chain_v1", "official_result_api_v1")\nPARSER_RUN_EVENTS: list[dict] = []\n'''
+          if 'POKEMON_JP_RESULT_API' not in s:
+              if constants not in s: raise SystemExit('Pokemon constants marker missing')
+              s=s.replace(constants,extended,1)
+
+          fetch_marker='''def iso_en(value: str) -> str:\n'''
+          fetch_json='''def fetch_json(url: str) -> tuple[dict, str]:\n    """Fetch bounded JSON only from the same official allowlist used by HTML collectors."""\n    host = urllib.parse.urlparse(url).hostname\n    if host not in ALLOWED:\n        raise ValueError(f"unapproved host: {host}")\n    headers = dict(HEADERS)\n    headers["Accept"] = "application/json,text/plain,*/*"\n    headers["Referer"] = POKEMON_JP_SOURCE_PAGE\n    req = urllib.request.Request(url, headers=headers)\n    with safe_urlopen(req, timeout=env_int('TCG_HTTP_TIMEOUT',20,5,60), allowed_hosts=ALLOWED) as response:\n        content_type = str(response.headers.get("Content-Type", "")).lower()\n        raw = response.read(2_000_000).decode("utf-8", "replace")\n    if "json" not in content_type and not raw.lstrip().startswith(("{", "[")):\n        raise ValueError("official product API returned non-JSON content")\n    data = json.loads(raw)\n    if not isinstance(data, dict):\n        raise ValueError("official product API root is not an object")\n    return data, raw\n\n\n'''
+          if 'def fetch_json(' not in s:
+              if fetch_marker not in s: raise SystemExit('iso_en marker missing')
+              s=s.replace(fetch_marker,fetch_json+fetch_marker,1)
+
+          pattern=re.compile(r'def collect_pokemon_jp\(\) -> list\[dict\]:\n.*?\n\ndef collect_naruto',re.S)
+          replacement=r'''def _clean_pokemon_jp_api_title(value: str) -> str:\n    title = re.sub(r"\\s+", " ", str(value or "")).strip()\n    title = re.sub(\n        r"^(?:強化拡張パック|拡張パックデラックス|拡張パック|ハイクラスパック|コンセプトパック)\\s*",\n        "", title, flags=re.I,\n    ).strip()\n    return title.strip(" \\t\\r\\n「」『』\\\"")\n\n\ndef _parse_pokemon_jp_api_payload(data: dict, *, transport_url: str) -> list[dict]:\n    """Validate the official dynamic result API before any row is promoted."""\n    if not isinstance(data, dict) or data.get("result") != 1:\n        raise ValueError("official product API reported failure")\n    products = data.get("products")\n    if not isinstance(products, list) or len(products) > 60:\n        raise ValueError("official product API products shape invalid")\n    try:\n        hit_count = int(data.get("hitCnt", len(products)) or 0)\n        max_page = int(data.get("maxPage", 1) or 1)\n        this_page = int(data.get("thisPage", 1) or 1)\n    except (TypeError, ValueError, OverflowError) as exc:\n        raise ValueError("official product API pagination invalid") from exc\n    if not (0 <= hit_count <= 10_000 and 0 <= max_page <= 100 and 0 <= this_page <= max(100, max_page)):\n        raise ValueError("official product API pagination out of bounds")\n    found: list[dict] = []\n    seen: set[tuple[str, str, int]] = set()\n    date_re = re.compile(r"(20\\d{2})\\s*年\\s*(\\d{1,2})\\s*月\\s*(\\d{1,2})\\s*日")\n    price_re = re.compile(r"([0-9][0-9,]{0,8})\\s*円")\n    for product in products:\n        if not isinstance(product, dict):\n            continue\n        if str(product.get("productType", "")).strip() != "拡張パック":\n            continue\n        name = _clean_pokemon_jp_api_title(product.get("productTitle", ""))\n        dm = date_re.search(str(product.get("releaseDate", "")))\n        pm = price_re.search(str(product.get("priceTxt", "")))\n        if not (2 <= len(name) <= 140 and dm and pm):\n            continue\n        try:\n            date = dt.date(int(dm.group(1)), int(dm.group(2)), int(dm.group(3)))\n            price = int(pm.group(1).replace(",", ""))\n        except (TypeError, ValueError, OverflowError):\n            continue\n        max_date = dt.date.today().replace(year=dt.date.today().year + MAX_FUTURE_YEARS)\n        if not (MIN_RELEASE_DATE <= date <= max_date and 1 <= price <= 1_000_000):\n            continue\n        key = (name.casefold(), date.isoformat(), price)\n        if key in seen:\n            continue\n        seen.add(key)\n        found.append({\n            "game": "Pokémon", "region": "JP", "name": name,\n            "release_date": date.isoformat(), "price": f"¥{price:,}/팩",\n            "status": "공식 확인", "source": POKEMON_JP_SOURCE_PAGE,\n            "parser": "official-result-api-v1", "transport_source": transport_url,\n        })\n    return found\n\n\ndef _collect_pokemon_jp_api() -> tuple[list[dict], str]:\n    query = urllib.parse.urlencode({"productType": "expansion", "page": 1})\n    url = f"{POKEMON_JP_RESULT_API}?{query}"\n    data, raw = fetch_json(url)\n    return _parse_pokemon_jp_api_payload(data, transport_url=url), fingerprint_text(raw)\n\n\ndef _collect_pokemon_jp_html() -> tuple[list[dict], str]:\n    last_error: Exception | None = None\n    fetched_official_page = False\n    last_fingerprint = ""\n    for url in POKEMON_JP_PRODUCT_URLS:\n        try:\n            raw = fetch(url)\n            last_fingerprint = fingerprint_text(raw)\n            text = html_to_text(raw)\n            found = (_parse_pokemon_jp(text, url) or _parse_pokemon_jp_fallback(text, url) or _parse_pokemon_jp_segmented(text, url))\n        except (urllib.error.URLError, TimeoutError, OSError, ValueError, UnicodeError) as exc:\n            last_error = exc\n            continue\n        fetched_official_page = True\n        if found:\n            return found, last_fingerprint\n    if fetched_official_page:\n        return [], last_fingerprint\n    if last_error is not None:\n        raise last_error\n    return [], last_fingerprint\n\n\ndef collect_pokemon_jp() -> list[dict]:\n    """Recover transport/parser drift using only verified, hard-coded strategies.\n\n    On a fresh installation the legacy HTML chain is tried first.  If it returns\n    zero because the official page became JavaScript-rendered, the verified official\n    JSON transport is tried immediately.  The successful allowlisted strategy is\n    remembered and preferred on later runs.  Unknown memory values can never execute.\n    """\n    strategies = {\n        "html_chain_v1": _collect_pokemon_jp_html,\n        "official_result_api_v1": _collect_pokemon_jp_api,\n    }\n    order = parser_strategy_order(PARSER_MEMORY, "Pokémon JP", strategies.keys(), POKEMON_JP_STRATEGIES)\n    last_error: Exception | None = None\n    attempted_failure = False\n    for strategy_id in order:\n        collector = strategies.get(strategy_id)\n        if collector is None:\n            continue\n        try:\n            rows, fingerprint = collector()\n        except (urllib.error.URLError, TimeoutError, OSError, ValueError, UnicodeError, json.JSONDecodeError) as exc:\n            last_error = exc\n            attempted_failure = True\n            record_parser_attempt(\n                PARSER_MEMORY, "Pokémon JP", strategy_id, allowed_strategies=strategies.keys(),\n                success=False, row_count=0, outcome="transport_or_parse_error",\n            )\n            PARSER_RUN_EVENTS.append({"source": "Pokémon JP", "strategy": strategy_id, "outcome": "failed", "rows": 0})\n            continue\n        if rows:\n            recovered = attempted_failure\n            record_parser_attempt(\n                PARSER_MEMORY, "Pokémon JP", strategy_id, allowed_strategies=strategies.keys(),\n                success=True, row_count=len(rows), outcome="recovered" if recovered else "success",\n                fingerprint=fingerprint,\n            )\n            PARSER_RUN_EVENTS.append({\n                "source": "Pokémon JP", "strategy": strategy_id,\n                "outcome": "recovered" if recovered else "success", "rows": len(rows),\n            })\n            return rows\n        attempted_failure = True\n        record_parser_attempt(\n            PARSER_MEMORY, "Pokémon JP", strategy_id, allowed_strategies=strategies.keys(),\n            success=False, row_count=0, outcome="zero_verified_rows", fingerprint=fingerprint,\n        )\n        PARSER_RUN_EVENTS.append({"source": "Pokémon JP", "strategy": strategy_id, "outcome": "zero_verified_rows", "rows": 0})\n    if attempted_failure:\n        return []\n    if last_error is not None:\n        raise last_error\n    return []\n\n\ndef collect_naruto'''
+          if not pattern.search(s): raise SystemExit('collect_pokemon_jp block not found')
+          s=pattern.sub(replacement,s,count=1)
+
+          s=s.replace(
+              'parser_drift_warnings.append(f"{label}: 공식 페이지 0건 · 기존 검증 이력 유지 · 다음 실행에서 재파싱")',
+              'parser_drift_warnings.append(f"{label}: 모든 검증 파서·전송전략 0건 · 기존 검증 이력 유지 · 자동복구 미해결")',
+          )
+          s=s.replace(
+              'current["collection_status"] = "정상 · 기존 검증자료 유지 · 파서 드리프트 자가복구 대기"',
+              'current["collection_status"] = "일부 파서 자동복구 미해결 · 기존 검증자료 보존"',
+          )
+          write_marker='''    current["history_count"] = len(current["items"])\n    atomic_write_json(DATA,current,suffix=".json.tmp")\n'''
+          write_new='''    current["history_count"] = len(current["items"])\n    current["parser_recovery_events"] = PARSER_RUN_EVENTS[-20:]\n    current["parser_learning"] = parser_public_summary(\n        PARSER_MEMORY, {"Pokémon JP": POKEMON_JP_STRATEGIES}\n    )\n    atomic_write_json(DATA,current,suffix=".json.tmp")\n'''
+          if 'current["parser_recovery_events"]' not in s:
+              if write_marker not in s: raise SystemExit('write marker missing')
+              s=s.replace(write_marker,write_new,1)
+
+          p.write_text(s,encoding='utf-8')
+          PY
+      - name: Compile changed collectors
+        run: python -m py_compile update_releases.py release_parser_learning.py
+      - name: Smoke-test verified Pokemon API parser
+        run: |
+          python - <<'PY'
+          import tempfile
+          from pathlib import Path
+          import update_releases as u
+          u.PARSER_MEMORY=Path(tempfile.mkdtemp())/'parser-memory.json'
+          u.PARSER_RUN_EVENTS.clear()
+          rows=u.collect_pokemon_jp()
+          assert rows, 'Pokemon JP recovery produced zero rows'
+          assert all(r.get('source','').startswith('https://www.pokemon-card.com/') for r in rows)
+          assert any(r.get('name')=='30th CELEBRATION' for r in rows), rows[:3]
+          print('pokemon_rows',len(rows),'events',u.PARSER_RUN_EVENTS)
+          PY
+      - name: Commit parser recovery
+        run: |
+          if git diff --quiet; then exit 0; fi
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add update_releases.py
+          git commit -m 'fix: auto-recover learned release parser drift v207'
+          git push origin HEAD:main
