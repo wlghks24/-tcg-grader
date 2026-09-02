@@ -22,7 +22,8 @@ jobs:
       - name: Validate manual-only certification contract
         run: |
           node --check auto_validation_flow.js
-          python -m py_compile tcg_updater.py grading_cert_verifier.py
+          python -m py_compile tcg_updater.py grading_cert_verifier.py test_grading_cert_verifier.py
+          python -m unittest -v test_grading_cert_verifier.py
           python - <<'PY'
           from pathlib import Path
           import grading_cert_verifier as g
