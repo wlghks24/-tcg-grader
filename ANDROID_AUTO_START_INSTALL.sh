@@ -23,13 +23,23 @@ mkdir -p "$BOOT_DIR"
   echo 'set -u'
   printf 'cd %q\n' "$PROJECT_DIR"
   echo 'if [ ! -f ANDROID_UPDATE_AND_START.sh ]; then echo "[ERROR] ANDROID_UPDATE_AND_START.sh missing; auto-start stopped."; exit 1; fi'
-  echo 'while true; do bash ANDROID_UPDATE_AND_START.sh >> TCG_ANDROID_STARTUP.log 2>&1; sleep 10; done'
+  echo 'LOG=TCG_ANDROID_STARTUP.log'
+  echo 'if [ -f "$LOG" ] && [ "$(wc -c < "$LOG" 2>/dev/null || echo 0)" -gt 2097152 ]; then mv -f "$LOG" "$LOG.1"; fi'
+  echo 'delay=30'
+  echo 'while true; do'
+  echo '  bash ANDROID_UPDATE_AND_START.sh >> "$LOG" 2>&1'
+  echo '  rc=$?'
+  echo "  if pgrep -f '[p]ython.*tcg_updater_v135.py' >/dev/null 2>&1; then exit 0; fi"
+  echo '  echo "[WARN] TCG server stopped (rc=$rc); retrying in ${delay}s." >> "$LOG"'
+  echo '  sleep "$delay"'
+  echo '  if [ "$delay" -lt 300 ]; then delay=$((delay*2)); [ "$delay" -gt 300 ] && delay=300; fi'
+  echo 'done'
 } > "$BOOT_TEMP"
 mv -f "$BOOT_TEMP" "$BOOT_FILE"
 chmod +x "$BOOT_FILE"
 chmod +x "$PROJECT_DIR/ANDROID_UPDATE_AND_START.sh" "$PROJECT_DIR/START_TCG_UPDATER_ANDROID.sh" 2>/dev/null || true
 
-echo "[OK] Android boot auto-start installed (v176 safe update + singleton launcher)."
+echo "[OK] Android boot auto-start installed (v181 safe update + singleton supervisor)."
 echo "Boot file: $BOOT_FILE"
 echo "Log file: $PROJECT_DIR/TCG_ANDROID_STARTUP.log"
 echo "At every reboot it checks origin/main and fast-forwards only when tracked files are clean."

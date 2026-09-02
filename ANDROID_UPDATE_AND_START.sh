@@ -48,11 +48,37 @@ updated=0
 if command -v git >/dev/null 2>&1 && git rev-parse --is-inside-work-tree >/dev/null 2>&1; then
   before="$(git rev-parse --short=8 HEAD 2>/dev/null || echo local)"
   branch="$(git branch --show-current 2>/dev/null || true)"
+  can_update=1
   if [ "$branch" != "main" ]; then
     echo "[안내] 현재 브랜치가 main이 아닙니다(${branch:-detached}). 자동 업데이트는 건너뜁니다."
-  elif ! git diff --quiet --ignore-submodules -- || ! git diff --cached --quiet --ignore-submodules --; then
-    echo "[안전] 추적 파일에 로컬 수정이 있어 자동 업데이트를 건너뜁니다. 파일은 삭제/초기화하지 않습니다."
+    can_update=0
+  elif ! git diff --cached --quiet --ignore-submodules --; then
+    echo "[안전] staged 변경이 있어 자동 업데이트를 건너뜁니다. 사용자가 준비한 변경은 자동으로 건드리지 않습니다."
+    can_update=0
   else
+    dirty_paths="$(git diff --name-only --ignore-submodules --)"
+    unsafe_paths=""
+    if [ -n "$dirty_paths" ]; then
+      while IFS= read -r changed; do
+        [ -z "$changed" ] && continue
+        case "$changed" in
+          tcg_live_data.json|releases.json|market_watch.json|market_prices.json|promo_events.json|purchase_sources.json|purchase_signals.json|social_stock_signals.json|exchange_rates.json|graded_photo_candidates.json|supplementary_candidates.json|social_event_candidates.json|web_discovery_candidates.json|link_health_report.json|auto_update_report.json|auto_update_issues.json|auto_repair_memory.json|adaptive_collection_stats.json|adaptive_collection_stats.json.bak|verified_certifications.json|learning_store.json|vision_self_learning_report.json|ebay_grader_candidates.json|card_identity_learning.json|source_collection_stats.json|source_collection_stats.json.bak|precollect_status.json)
+            ;;
+          *) unsafe_paths="${unsafe_paths}${unsafe_paths:+, }$changed" ;;
+        esac
+      done <<EOF
+$dirty_paths
+EOF
+    fi
+    if [ -n "$unsafe_paths" ]; then
+      echo "[안전] 코드/설정 추적파일에 로컬 수정이 있어 자동 업데이트를 건너뜁니다: $unsafe_paths"
+      can_update=0
+    elif [ -n "$dirty_paths" ]; then
+      echo "[OK] 정상 수집으로 변경된 런타임 JSON만 감지했습니다. Git이 덮어쓰지 않는 범위에서 fast-forward를 시도합니다."
+    fi
+  fi
+
+  if [ "$can_update" = "1" ]; then
     echo "[업데이트] GitHub main 최신 상태를 확인합니다..."
     if git fetch origin main --prune; then
       local_head="$(git rev-parse HEAD 2>/dev/null || true)"
@@ -61,7 +87,7 @@ if command -v git >/dev/null 2>&1 && git rev-parse --is-inside-work-tree >/dev/n
         if git merge --ff-only origin/main; then
           updated=1
         else
-          echo "[안전] fast-forward 업데이트가 불가능해 현재 버전을 유지합니다. reset/강제병합은 하지 않습니다."
+          echo "[안전] 원격 변경과 로컬 런타임 자료가 같은 파일을 건드려 자동 병합을 중단했습니다. 로컬 자료는 그대로 보존합니다."
         fi
       else
         echo "[OK] 이미 최신 main입니다."

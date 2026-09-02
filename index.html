@@ -2499,18 +2499,18 @@ document.querySelectorAll(".update-panel-close").forEach(btn=>btn.addEventListen
  async function quickPrice(){const q=S('quickCardQuery').value.trim().toLowerCase();if(!q){S('quickPriceResults').textContent='카드명 또는 카드번호를 입력하세요.';return}S('quickPriceResults').textContent='시세자료 검색 중…';try{const r=await fetch(`market_prices.json?t=${Date.now()}`,{cache:'no-store'}),d=await r.json(),entries=d.entries&&typeof d.entries==='object'?d.entries:{};const gameNeed=simpleGame==='pokemon'?'pok':simpleGame==='onepiece'?'one':'nar';let hits=[];for(const [k,v] of Object.entries(entries)){const blob=(k+' '+JSON.stringify(v)).toLowerCase();if(blob.includes(q)&&(!gameNeed||blob.includes(gameNeed)||blob.includes(profiles[simpleGame].name.toLowerCase())))hits.push([k,v]);}if(!hits.length){for(const [k,v] of Object.entries(entries)){const blob=(k+' '+JSON.stringify(v)).toLowerCase();if(blob.includes(q))hits.push([k,v]);}}hits=hits.slice(0,12);if(!hits.length){S('quickPriceResults').innerHTML='저장된 시세자료에서 일치 항목을 찾지 못했습니다. <b>카드번호까지 같이 입력</b>하면 정확도가 올라갑니다.';return}S('quickPriceResults').innerHTML=hits.map(([k,v])=>`<div class="price-item"><b>${escapeDisplayText(k)}</b><br><span class="muted">${Object.entries(v&&typeof v==='object'?v:{}).filter(([a,b])=>['string','number'].includes(typeof b)).slice(0,8).map(([a,b])=>`${escapeDisplayText(a)}: ${escapeDisplayText(b)}`).join(' · ')}</span></div>`).join('');}catch(e){S('quickPriceResults').textContent='시세자료를 불러오지 못했습니다. 업데이트 후 다시 시도하세요.'}}
  S('startAutoCamera').onclick=start;S('stopAutoCamera').onclick=()=>stopCamera('카메라를 중지했습니다. 촬영을 다시 시작하거나 사진 파일을 선택할 수 있습니다.');S('manualCapture').onclick=()=>capture(frameMetric(),true);S('quickPriceSearch').onclick=quickPrice;S('quickCardQuery').addEventListener('keydown',e=>{if(e.key==='Enter')quickPrice()});window.addEventListener('pagehide',()=>stopCamera('',true));document.addEventListener('visibilitychange',()=>{if(document.hidden&&stream)stopCamera('앱이 백그라운드로 이동해 카메라를 안전하게 중지했습니다.')});window.tcgCameraRuntime=Object.freeze({version:'v104-camera-shake-stability',stop:()=>stopCamera('카메라를 중지했습니다.'),state:()=>({active:!!stream,stage,capturing,stableFrames:stable,frontReady:!!S('front')._tcgCapturedFile,backReady:!!S('back')._tcgCapturedFile})});
 })();
-</script><script src="card_identity_recognition.js"></script>\n<script src="inventory_lookup.js"></script>
+</script><script src="card_identity_recognition.js?v=181"></script>
+<script src="inventory_lookup.js"></script>
 <script src="grade_market_flow.js"></script>
 <script src="auto_market_center.js"></script>
-<script src="multi_market_prices.js"></script>
-<script src="multi_market_prices.js?v=136"></script>
-<script src="auto_validation_flow.js"></script>
+<script src="multi_market_prices.js?v=181"></script>
+<script src="auto_validation_flow.js?v=181"></script>
 <script src="grading_costs_live.js"></script>
 <script src="grading_proxy_costs.js"></script>
 <script src="grading_total_cost.js"></script>
-<script src="graded_photo_dashboard.js?v=175"></script>
+<script src="graded_photo_dashboard.js?v=181"></script>
 <script src="market_catalog_expander.js"></script>
 <script src="image_quality_guard.js"></script>
 <script src="box_knowledge_stats.js"></script>
-<script src="./manual_dual_photo_bridge.js?v=158"></script>
+<script src="./manual_dual_photo_bridge.js?v=181"></script>
 </body></html>

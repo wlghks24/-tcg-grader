@@ -1,5 +1,8 @@
 (()=>{
 'use strict';
+const GLOBAL_KEY='__TCG_MULTI_MARKET_PRICES__';
+if(globalThis[GLOBAL_KEY]?.loaded)return;
+globalThis[GLOBAL_KEY]={loaded:true,version:181};
 const $=id=>document.getElementById(id);
 const krw=n=>Number(n)>0?`₩${Math.round(Number(n)).toLocaleString('ko-KR')}`:'—';
 const esc=value=>String(value??'').replace(/[&<>"']/g,ch=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));

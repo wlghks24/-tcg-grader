@@ -1,5 +1,5 @@
 // v160 adds safe batch revalidation for previously registered grading photos.
-const CACHE='tcg-v160-existing-photo-revalidation';
+const CACHE='tcg-v181-network-first-runtime';
 const CORE=['./','./index.html','./purchase_ui_polish.css','./ui_polish_v121.css','./ui_tablet_refine_v122.css','./graded_photo_dashboard.js','./graded_photo_dashboard.css','./graded_photo_candidates.json','./auto_market_center.js','./auto_market_center.css','./auto_validation_flow.js','./auto_validation_flow.css','./box_knowledge_stats.js','./box_knowledge_stats.css','./grade_market_flow.js','./grade_market_flow.css','./grading_costs_live.js','./grading_costs_live.css','./grading_proxy_costs.js','./grading_proxy_costs.css','./grading_total_cost.js','./grading_total_cost.css','./image_quality_guard.js','./inventory_lookup.js','./inventory_lookup.css','./market_catalog_expander.js','./multi_market_prices.js','./multi_market_prices.css','./grading_vision_engine.js','./grading_accuracy_v99.js','./card_identity_recognition.js','./vision_calibration.json','./manifest.webmanifest','./releases.json','./promo_events.json','./supplementary_candidates.json','./social_event_candidates.json','./purchase_sources.json','./purchase_signals.json','./market_prices.json','./market_watch.json','./exchange_rates.json','./icon.svg'];
 
 const GAME_SELECTOR_STYLE=`
@@ -138,9 +138,16 @@ const READABILITY_STYLE=`
 }
 </style>`;
 
-self.addEventListener('install',event=>event.waitUntil(
-  caches.open(CACHE).then(cache=>cache.addAll(CORE)).then(()=>self.skipWaiting())
-));
+self.addEventListener('install',event=>event.waitUntil((async()=>{
+  const cache=await caches.open(CACHE);
+  await Promise.allSettled(CORE.map(async asset=>{
+    try{
+      const response=await fetch(asset,{cache:'no-store'});
+      if(response&&response.ok)await cache.put(asset,response.clone());
+    }catch(_){/* one optional asset must never block a service-worker upgrade */}
+  }));
+  await self.skipWaiting();
+})()));
 
 self.addEventListener('activate',event=>event.waitUntil(
   caches.keys().then(keys=>Promise.all(keys.filter(key=>key!==CACHE).map(key=>caches.delete(key))))
@@ -177,7 +184,7 @@ async function rememberSuccessfulResponse(request,response){
 }
 
 async function unavailableResponse(request){
-  const cached=await caches.match(request);
+  const cached=await caches.match(request,{ignoreSearch:true});
   if(cached)return request.mode==='navigate'?enhanceNavigationResponse(cached):cached;
   if(request.mode==='navigate'){
     const page=await caches.match('./index.html');
@@ -200,15 +207,15 @@ self.addEventListener('fetch',event=>{
   if(event.request.method!=='GET')return;
   const url=new URL(event.request.url);
   if(url.origin!==self.location.origin||url.pathname.startsWith('/api/'))return;
-  const fresh=event.request.mode==='navigate'||/\/(?:index\.html|graded_photo_candidates\.json|releases\.json|promo_events\.json|supplementary_candidates\.json|social_event_candidates\.json|purchase_sources\.json|purchase_signals\.json|market_prices\.json|market_watch\.json|exchange_rates\.json)$/.test(url.pathname);
-  if(fresh){
-    event.respondWith(fetch(event.request)
+  const mutable=event.request.mode==='navigate'||/\.(?:html|js|css|json|webmanifest)$/i.test(url.pathname);
+  if(mutable){
+    event.respondWith(fetch(event.request,{cache:'no-store'})
       .then(response=>event.request.mode==='navigate'?enhanceNavigationResponse(response):response)
       .then(response=>rememberSuccessfulResponse(event.request,response))
       .catch(()=>unavailableResponse(event.request)));
     return;
   }
-  event.respondWith(caches.match(event.request).then(cached=>cached||fetch(event.request)
+  event.respondWith(caches.match(event.request,{ignoreSearch:true}).then(cached=>cached||fetch(event.request,{cache:'no-store'})
     .then(response=>rememberSuccessfulResponse(event.request,response))
     .catch(()=>unavailableResponse(event.request))));
 });

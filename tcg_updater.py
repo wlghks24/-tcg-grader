@@ -1283,6 +1283,12 @@ class Handler(SimpleHTTPRequestHandler):
             self.send_header('Content-type',self.guess_type(str(target)))
             self.send_header('Content-Length',str(metadata.st_size))
             self.send_header('Last-Modified',self.date_time_string(metadata.st_mtime))
+            if target.suffix.lower() in {'.html','.js','.css','.json','.webmanifest'}:
+                self.send_header('Cache-Control','no-store, no-cache, must-revalidate, max-age=0')
+                self.send_header('Pragma','no-cache')
+                self.send_header('Expires','0')
+            else:
+                self.send_header('Cache-Control','public, max-age=3600')
             self.end_headers()
             return handle
         except BaseException:

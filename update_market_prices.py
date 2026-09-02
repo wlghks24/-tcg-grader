@@ -137,8 +137,17 @@ def _sanitize_entries(db):
 
 
 def coverage(db):
-    raw=safe_read_text(APP);block=raw.split('const COUNTRY_BOX_DATA=',1)[1].split('const LEARNING_PRICE_DATA=',1)[0]
-    products=re.findall(r'\{country:"(KR|JP|US)",game:"[^"]+",name:"([^"]+)"',block)
+    raw=safe_read_text(APP)
+    start='const COUNTRY_BOX_DATA='; end='const LEARNING_PRICE_DATA='
+    if start not in raw or end not in raw:
+        return {'total':0,'verified':0,'pending':0,'missing_keys':[],
+                'warning':'catalog_marker_missing · 가격자료는 유지하고 UI 카탈로그 커버리지 계산만 보류'}
+    try:
+        block=raw.split(start,1)[1].split(end,1)[0]
+        products=re.findall(r'\{country:"(KR|JP|US)",game:"[^"]+",name:"([^"]+)"',block)
+    except (IndexError,TypeError,ValueError):
+        return {'total':0,'verified':0,'pending':0,'missing_keys':[],
+                'warning':'catalog_parse_failed · 가격자료는 유지하고 UI 카탈로그 커버리지 계산만 보류'}
     required={f'{region}|{name}|{asset}' for region,name in products for asset in ('BOX','HIT')}
     verified=required & set(db.get('entries',{}));missing=sorted(required-verified)
     return {'total':len(required),'verified':len(verified),'pending':len(missing),'missing_keys':missing}
@@ -241,7 +250,13 @@ def main():
     hard_market_errors=[]
     for item in errors:
         text=str(item)
-        if re.search(r'^KREAM .*HTTPError: status 5(?:00|02|03|04)\b',text,re.I):
+        kream_transient=(
+            re.search(r'^KREAM ',text,re.I) is not None and (
+                re.search(r'HTTPError: status (?:403|429|5(?:00|02|03|04))\b',text,re.I) is not None
+                or re.search(r'(?:URLError|TimeoutError|timed out|temporary failure|connection reset|name resolution|DNS)',text,re.I) is not None
+            )
+        )
+        if kream_transient:
             transient_market_errors.append(text)
         else:
             hard_market_errors.append(text)
@@ -249,7 +264,7 @@ def main():
     db['collection_status']='정상' if not hard_market_errors else '일부 가격 출처 확인 실패'
     db['collection_errors']=hard_market_errors
     db['collection_warnings']=transient_market_errors
-    db['collection_note']='KREAM 원출처 5xx 시 직전 검증자료 유지 · 다음 업데이트에서 재확인' if transient_market_errors else ''
+    db['collection_note']='KREAM 원출처 403/429/5xx/네트워크 지연 시 직전 검증자료 유지 · 다음 업데이트에서 재확인' if transient_market_errors else ''
     db['catalog_price_coverage']=coverage(db)
     atomic_save(db)
     return db

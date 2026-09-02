@@ -9,8 +9,13 @@ cd "$(dirname "$0")"
 START_LOCK_DIR=".tcg_android_start.lock"
 START_LOCK_PID="$START_LOCK_DIR/pid"
 WAKE_LOCKED=0
+PAIR_QUEUE_PID=""
 
 cleanup_android_start() {
+  if [ -n "${PAIR_QUEUE_PID:-}" ] && kill -0 "$PAIR_QUEUE_PID" 2>/dev/null; then
+    kill "$PAIR_QUEUE_PID" 2>/dev/null || true
+    wait "$PAIR_QUEUE_PID" 2>/dev/null || true
+  fi
   if [ "${WAKE_LOCKED:-0}" = "1" ] && command -v termux-wake-unlock >/dev/null 2>&1; then
     termux-wake-unlock >/dev/null 2>&1 || true
   fi
@@ -200,7 +205,7 @@ PY
 then
   echo "[오류] v149 전체 런타임/앞뒤사진 수동등록 정책 검사 실패"
   echo "[원인] 일부 파일만 최신이거나 앞면+뒷면/OCR 기능이 빠졌을 수 있습니다."
-  echo "[안전] 혼합 업데이트 상태로 서버를 시작하지 않습니다. INSTALL_MANUAL_OFFICIAL_FALLBACK.sh를 다시 실행하세요."
+  echo "[안전] 혼합 업데이트 상태로 서버를 시작하지 않습니다. bash ANDROID_UPDATE_AND_START.sh 로 GitHub main을 다시 확인하세요."
   exit 1
 fi
 
@@ -235,6 +240,7 @@ sleep 1
 pkill -f 'graded_photo_manual_pair_queue.py --watch' 2>/dev/null || true
 nohup python graded_photo_manual_pair_queue.py --watch --interval 60 \
   > TCG_MANUAL_PAIR_QUEUE.log 2>&1 &
+PAIR_QUEUE_PID=$!
 echo "등급사진 수동대기 자동분류 시작: 인증번호+앞뒤사진만 pokemon/onepiece/naruto 게임별 저장"
 
 echo "로컬 서버를 먼저 시작합니다. 자료 수집은 서버 안에서 안전하게 순차 실행됩니다."
