@@ -64,7 +64,7 @@ class ManualOfficialProofTests(unittest.TestCase):
         self.assertEqual(saved["manual_official_proof_match_mode"], "official_page_company_cert_grade_ocr")
         append_reference.assert_called_once()
 
-    def test_psa_page_cert_match_can_use_exact_slab_ocr_when_grade_not_in_viewport(self):
+    def test_psa_page_cert_match_without_official_grade_stays_pending(self):
         registry = {"registrations": [row_template()]}
         evidence = {"company": "PSA", "grade": None, "certification_id": "160600294"}
         text = "PSA PSACARD.COM/CERT/160600294 #160600294 2026 ONE PIECE MONKEY D LUFFY"
@@ -72,12 +72,14 @@ class ManualOfficialProofTests(unittest.TestCase):
              mock.patch.object(proof.manual_photo, "_save_registry"), \
              mock.patch.object(proof, "_claim_proof_upload"), \
              mock.patch.object(proof, "atomic_write_bytes"), \
-             mock.patch.object(proof, "_append_reference"), \
+             mock.patch.object(proof, "_append_reference") as append_reference, \
              mock.patch.object(proof, "_remove_proof_file"):
             result = proof.submit({"registration_id": REGISTRATION_ID, "proof_image_data_url": "ignored"})
-        self.assertTrue(result["accepted"], result)
-        self.assertTrue(result["proof"]["slab_grade_fallback"], result)
-        self.assertEqual(result["proof"]["match_mode"], "official_page_company_cert_plus_exact_slab_ocr_grade")
+        self.assertFalse(result["accepted"], result)
+        self.assertFalse(result["proof"]["slab_grade_fallback"], result)
+        self.assertIn("grade", result["proof"]["missing"], result)
+        self.assertFalse(registry["registrations"][0]["official_result"])
+        append_reference.assert_not_called()
 
     def test_missing_grade_without_exact_slab_ocr_does_not_quarantine(self):
         registry = {"registrations": [row_template(ocr_company=None, ocr_grade=None, ocr_certification_id=None, image_path="")]}
@@ -97,7 +99,7 @@ class ManualOfficialProofTests(unittest.TestCase):
         self.assertNotIn("official_proof_grade_mismatch", saved["quarantine_reasons"])
         append_reference.assert_not_called()
 
-    def test_card_number_or_cost_does_not_create_false_grade_conflict(self):
+    def test_card_number_or_cost_does_not_create_false_grade_acceptance(self):
         registry = {"registrations": [row_template()]}
         evidence = {"company": "PSA", "grade": 4.0, "certification_id": "160600294"}
         text = "PSA PSACARD.COM/CERT/160600294 #160600294 #055 4 ONE PIECE"
@@ -105,12 +107,13 @@ class ManualOfficialProofTests(unittest.TestCase):
              mock.patch.object(proof.manual_photo, "_save_registry"), \
              mock.patch.object(proof, "_claim_proof_upload"), \
              mock.patch.object(proof, "atomic_write_bytes"), \
-             mock.patch.object(proof, "_append_reference"), \
+             mock.patch.object(proof, "_append_reference") as append_reference, \
              mock.patch.object(proof, "_remove_proof_file"):
             result = proof.submit({"registration_id": REGISTRATION_ID, "proof_image_data_url": "ignored"})
-        self.assertTrue(result["accepted"], result)
-        self.assertFalse(result["proof"]["conflicts"], result)
-        self.assertTrue(result["proof"]["slab_grade_fallback"], result)
+        self.assertFalse(result["accepted"], result)
+        self.assertFalse(result["proof"]["slab_grade_fallback"], result)
+        self.assertIn("grade", result["proof"]["missing"], result)
+        append_reference.assert_not_called()
 
     def test_conflicting_new_proof_does_not_downgrade_existing_valid_reference(self):
         existing = row_template(
@@ -172,7 +175,7 @@ class ManualOfficialProofTests(unittest.TestCase):
         self.assertTrue(policy["valid_proof_cannot_be_downgraded_by_later_bad_upload"])
         self.assertTrue(policy["proof_upload_rate_limited"])
         self.assertTrue(policy["manual_screenshot_missing_ocr_does_not_quarantine_card"])
-        self.assertTrue(policy["manual_screenshot_grade_may_use_exact_slab_ocr_fallback"])
+        self.assertFalse(policy["manual_screenshot_grade_may_use_exact_slab_ocr_fallback"])
 
 
 if __name__ == "__main__":

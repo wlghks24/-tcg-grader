@@ -10,8 +10,8 @@ enters RAW grade calibration.
 v151 hardening:
 - certificate number is the primary page-identity key;
 - official-company text/domain evidence is required;
-- grade may be recovered from the already OCR-confirmed slab when the official
-  page screenshot does not expose the grade in the current viewport;
+- grade must be visible or safely derivable from the official-page screenshot itself;
+- slab OCR never substitutes for a missing official-page grade;
 - OCR omissions do not quarantine the underlying card;
 - explicit proof conflicts are recorded on the proof attempt but do not
   downgrade an otherwise valid pending registration;
@@ -173,7 +173,7 @@ def public_status() -> dict[str, Any]:
             "manual_screenshot_requires_official_company_and_certificate": True,
             "manual_screenshot_requires_company_certificate_and_grade_match": True,
             "manual_screenshot_alone_without_identity_match_sets_official_result": False,
-            "manual_screenshot_grade_may_use_exact_slab_ocr_fallback": True,
+            "manual_screenshot_grade_may_use_exact_slab_ocr_fallback": False,
             "manual_screenshot_missing_ocr_does_not_quarantine_card": True,
             "manual_screenshot_sets_official_result": True,
             "manual_screenshot_trains_raw_grade_calibration": False,
@@ -335,31 +335,6 @@ def _contextual_grade_candidates(
     return set()
 
 
-def _slab_identity_exact(row: dict[str, Any], company: str, cert: str, expected_grade: float) -> bool:
-    ocr_company = str(row.get("ocr_company") or "").upper()
-    ocr_cert = _clean_cert(row.get("ocr_certification_id"))
-    ocr_grade = _grade(row.get("ocr_grade"))
-    if ocr_company == company and ocr_cert == cert and ocr_grade is not None and abs(ocr_grade - expected_grade) < 1e-9:
-        return True
-    image_path = str(row.get("image_path") or "").strip()
-    if image_path:
-        try:
-            _, _, _, evidence = manual_photo._ocr_image(ROOT / image_path)
-            retry_company = str(evidence.get("company") or "").upper()
-            retry_cert = _clean_cert(evidence.get("certification_id"))
-            retry_grade = _grade(evidence.get("grade"))
-            return (
-                retry_company == company
-                and retry_cert == cert
-                and retry_grade is not None
-                and abs(retry_grade - expected_grade) < 1e-9
-            )
-        except (OSError, ValueError, TypeError):
-            return False
-    return False
-
-
-
 def _tesseract_page_pass(image: Image.Image, *, psm: int = 11, digits_only: bool = False) -> tuple[str, str | None]:
     """OCR one official-page viewport pass; optimized for Latin grader tokens and cert digits."""
     try:
@@ -496,17 +471,13 @@ def _match_proof(*, row: dict[str, Any], text: str, evidence: dict[str, Any], co
     match_mode = None
     if company_match and cert_match and grade_match and not explicit_conflicts:
         match_mode = "official_page_company_cert_grade_ocr"
-    elif company_match and cert_match and not explicit_conflicts:
-        slab_fallback = _slab_identity_exact(row, company, cert, expected_grade)
-        if slab_fallback:
-            match_mode = "official_page_company_cert_plus_exact_slab_ocr_grade"
 
     missing: list[str] = []
     if not company_match:
         missing.append("company")
     if not cert_match:
         missing.append("certification_id")
-    if not grade_match and not slab_fallback:
+    if not grade_match:
         missing.append("grade")
 
     return {

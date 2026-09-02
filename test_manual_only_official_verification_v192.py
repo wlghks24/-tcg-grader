@@ -34,6 +34,8 @@ class ManualOnlyOfficialVerificationV192Tests(unittest.TestCase):
         self.assertIn('"verification_state": "manual_official_verified"',source)
         self.assertIn('"raw_grade_calibration_eligible": False',source)
         self.assertIn('"automatic_live_lookup_used": False',source)
+        self.assertIn('"manual_screenshot_grade_may_use_exact_slab_ocr_fallback": False',source)
+        self.assertNotIn('def _slab_identity_exact(',source)
 
     def test_ui_requires_explicit_third_step(self):
         bridge=open('manual_official_verify_bridge.js',encoding='utf-8').read()
