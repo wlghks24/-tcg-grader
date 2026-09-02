@@ -22,31 +22,28 @@ jobs:
         run: |
           python - <<'PY'
           from pathlib import Path
-          import re
-          p=Path('index.html')
-          text=p.read_text(encoding='utf-8')
-          tag='<script src="./manual_dual_photo_bridge.js?v=158"></script>'
-          pattern=r'<script\s+src=["\']\./manual_dual_photo_bridge\.js(?:\?v=\d+)?["\']\s*></script>'
-          if re.search(pattern,text):
-              text=re.sub(pattern,tag,text,count=1)
-          elif '</body>' in text:
-              text=text.replace('</body>',tag+'\n</body>',1)
-          elif '</html>' in text:
-              text=text.replace('</html>',tag+'\n</html>',1)
-          else:
-              text += '\n'+tag+'\n'
-          p.write_text(text,encoding='utf-8')
+          p = Path('index.html')
+          text = p.read_text(encoding='utf-8')
+          tag = '<script src="./manual_dual_photo_bridge.js?v=158"></script>'
+          if 'manual_dual_photo_bridge.js' not in text:
+              if '</body>' in text:
+                  text = text.replace('</body>', tag + '\n</body>', 1)
+              elif '</html>' in text:
+                  text = text.replace('</html>', tag + '\n</html>', 1)
+              else:
+                  text += '\n' + tag + '\n'
+              p.write_text(text, encoding='utf-8')
           assert text.count('manual_dual_photo_bridge.js') == 1
-          print('[OK] manual_dual_photo_bridge.js linked once')
+          print('[OK] manual dual-photo bridge linked exactly once')
           PY
-          grep -q 'manual_dual_photo_bridge.js?v=158' index.html
-      - name: Commit fix
+          grep -Fq 'manual_dual_photo_bridge.js?v=158' index.html
+      - name: Commit repair
         shell: bash
         run: |
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           if git diff --quiet -- index.html; then
-            echo 'index already correct'
+            echo '[OK] index already contains bridge'
             exit 0
           fi
           git add index.html
