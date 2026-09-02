@@ -41,7 +41,7 @@ class ManualOfficialProofTests(unittest.TestCase):
             _ocr_image=mock.Mock(return_value=(text, None, {}, evidence)),
         )
 
-    def test_exact_match_is_reference_only_never_official_or_raw(self):
+    def test_exact_match_is_manual_official_reference_never_raw(self):
         registry = {"registrations": [row_template()]}
         evidence = {"company": "PSA", "grade": 10.0, "certification_id": "160600294"}
         with self._patch_common(registry, evidence, "PSA #160600294 GEM MT 10"), \
@@ -53,13 +53,14 @@ class ManualOfficialProofTests(unittest.TestCase):
             result = proof.submit({"registration_id": REGISTRATION_ID, "proof_image_data_url": "ignored"})
             save_registry.assert_called_once()
         self.assertTrue(result["accepted"], result)
-        self.assertFalse(result["policy"]["official_result"])
+        self.assertTrue(result["policy"]["official_result"])
         self.assertFalse(result["policy"]["raw_grade_calibration"])
+        self.assertFalse(result["policy"]["later_live_lookup_required"])
         saved = registry["registrations"][0]
-        self.assertFalse(saved["official_result"])
-        self.assertFalse(saved["training_eligible"])
+        self.assertTrue(saved["official_result"])
+        self.assertTrue(saved["training_eligible"])
         self.assertFalse(saved["raw_grade_calibration_eligible"])
-        self.assertEqual(saved["verification_state"], "manual_official_proof_matched")
+        self.assertEqual(saved["verification_state"], "manual_official_verified")
         self.assertEqual(saved["manual_official_proof_match_mode"], "official_page_company_cert_grade_ocr")
         append_reference.assert_called_once()
 
@@ -160,12 +161,12 @@ class ManualOfficialProofTests(unittest.TestCase):
         with mock.patch.object(proof.manual_photo, "_registry", return_value=copy.deepcopy(registry)):
             status = proof.public_status()
         policy = status["policy"]
-        if policy["manual_screenshot_sets_official_result"]:
-            self.assertFalse(policy["manual_screenshot_alone_sets_official_result"])
-            self.assertTrue(policy["strict_identity_front_back_and_stored_proof_required"])
-            self.assertTrue(policy["registry_conflict_blocks_promotion"])
-        else:
-            self.assertTrue(policy["later_live_official_lookup_can_promote"])
+        self.assertTrue(policy["manual_screenshot_sets_official_result"])
+        self.assertTrue(policy["manual_screenshot_requires_company_certificate_and_grade_match"])
+        self.assertFalse(policy["manual_screenshot_alone_without_identity_match_sets_official_result"])
+        self.assertFalse(policy["later_live_official_lookup_can_promote"])
+        self.assertFalse(policy["automatic_live_lookup_used"])
+        self.assertTrue(policy["verification_is_manual_only"])
         self.assertFalse(policy["manual_screenshot_trains_raw_grade_calibration"])
         self.assertFalse(policy["rejected_screenshot_bytes_retained"])
         self.assertTrue(policy["valid_proof_cannot_be_downgraded_by_later_bad_upload"])

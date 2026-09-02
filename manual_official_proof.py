@@ -171,6 +171,8 @@ def public_status() -> dict[str, Any]:
         "policy": {
             "opens_official_site_in_user_browser": True,
             "manual_screenshot_requires_official_company_and_certificate": True,
+            "manual_screenshot_requires_company_certificate_and_grade_match": True,
+            "manual_screenshot_alone_without_identity_match_sets_official_result": False,
             "manual_screenshot_grade_may_use_exact_slab_ocr_fallback": True,
             "manual_screenshot_missing_ocr_does_not_quarantine_card": True,
             "manual_screenshot_sets_official_result": True,
@@ -563,7 +565,12 @@ def submit(payload: dict[str, Any]) -> dict[str, Any]:
         return {
             "ok": True, "accepted": True, "duplicate": True,
             "registration": _proof_public(row),
-            "policy": {"reference_only": True, "official_result": False, "raw_grade_calibration": False},
+            "policy": {
+                "manual_only": True,
+                "official_result": row.get("official_result") is True,
+                "raw_grade_calibration": False,
+                "later_live_lookup_required": False,
+            },
         }
 
     folder = PROOF_ROOT / datetime.now(timezone.utc).strftime("%Y%m")
@@ -604,7 +611,12 @@ def submit(payload: dict[str, Any]) -> dict[str, Any]:
             "reason": "official_page_screenshot_needs_review_existing_valid_proof_preserved",
             "registration": _proof_public(row),
             "proof": proof_payload,
-            "policy": {"reference_only": True, "official_result": False, "raw_grade_calibration": False},
+            "policy": {
+                "manual_only": True,
+                "official_result": row.get("official_result") is True,
+                "raw_grade_calibration": False,
+                "later_live_lookup_required": False,
+            },
         }
 
     old_path = ""
@@ -703,11 +715,13 @@ def submit(payload: dict[str, Any]) -> dict[str, Any]:
         "registration": _proof_public(current),
         "proof": proof_payload,
         "policy": {
-            "reference_only": True,
-            "official_result": False,
+            "manual_only": True,
+            "official_result": bool(matched),
+            "official_reference": bool(matched),
             "raw_grade_calibration": False,
             "rejected_screenshot_bytes_retained": False,
             "ocr_miss_does_not_quarantine_card": True,
-            "later_live_lookup_required": True,
+            "later_live_lookup_required": False,
+            "automatic_live_lookup_used": False,
         },
     }
