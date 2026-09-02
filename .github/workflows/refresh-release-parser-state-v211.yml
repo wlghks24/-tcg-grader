@@ -1,0 +1,53 @@
+name: Refresh Release Parser State v211
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/refresh-release-parser-state-v211.yml'
+permissions:
+  contents: write
+jobs:
+  refresh:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Run learning tests
+        run: |
+          python -m py_compile update_releases.py release_parser_learning.py
+          python -m unittest -v test_release_parser_learning.py
+      - name: Refresh official release state
+        env:
+          TCG_HTTP_TIMEOUT: '30'
+        run: python update_releases.py
+      - name: Verify parser drift recovered
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          data=json.loads(Path('releases.json').read_text(encoding='utf-8'))
+          warnings=data.get('parser_drift_warnings') or []
+          assert not any('Pokémon JP' in str(x) for x in warnings), warnings
+          events=data.get('parser_recovery_events') or []
+          jp=[x for x in events if x.get('source')=='Pokémon JP']
+          assert jp and any(x.get('strategy')=='official_result_api_v1' and x.get('rows',0)>0 for x in jp), events
+          learning=data.get('parser_learning',{}).get('sources',{}).get('Pokémon JP',{})
+          assert learning.get('preferred_strategy')=='official_result_api_v1', learning
+          print('collection_status=',data.get('collection_status'))
+          print('parser_warnings=',warnings)
+          print('pokemon_events=',jp)
+          print('pokemon_learning=',learning)
+          PY
+      - name: Commit refreshed verified state
+        run: |
+          if git diff --quiet -- releases.json release_parser_learning.json; then exit 0; fi
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add releases.json release_parser_learning.json
+          git commit -m 'data: record recovered release parser state v211'
+          git push origin HEAD:main
