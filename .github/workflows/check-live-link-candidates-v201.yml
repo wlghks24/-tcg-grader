@@ -1,0 +1,26 @@
+name: Check Live Link Candidates v201
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/check-live-link-candidates-v201.yml'
+permissions:
+  contents: read
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Probe current retailer routes
+        shell: bash
+        run: |
+          set +e
+          probe() {
+            label="$1"; url="$2"
+            echo "=== ${label} ==="
+            curl -A 'Mozilla/5.0 TCG-Grader-Link-Checker/1.0' -L -sS --max-time 20 -o /dev/null \
+              -w 'http=%{http_code}\nfinal=%{url_effective}\nredirects=%{num_redirects}\n' "$url" || echo 'curl_failed=1'
+          }
+          probe 'B&N generic search' 'https://www.barnesandnoble.com/s/pokemon%20cards'
+          probe 'B&N Pokemon category' 'https://www.barnesandnoble.com/b/pokemon-trading-cards/_/N-1p611nbb'
+          probe 'B&N home' 'https://www.barnesandnoble.com/'
+          probe 'Pokemon Center JP' 'https://www.pokemoncenter-online.com/'
