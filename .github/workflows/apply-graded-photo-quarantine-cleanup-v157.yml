@@ -2,6 +2,7 @@ name: Apply graded photo quarantine cleanup v157
 
 on:
   push:
+    branches: [main]
     paths:
       - 'apply_graded_photo_quarantine_cleanup_v157.py'
   workflow_dispatch:
