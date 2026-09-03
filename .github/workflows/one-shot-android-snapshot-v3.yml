@@ -1,0 +1,61 @@
+name: One Shot Android Snapshot V3
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'ONE_SHOT_ANDROID_SNAPSHOT_V3.py'
+      - '.github/workflows/one-shot-android-snapshot-v3.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  patch-verify-push:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          fetch-depth: 0
+      - name: Apply Android snapshot integrity hardening
+        run: |
+          python -m py_compile ONE_SHOT_ANDROID_SNAPSHOT_V3.py
+          python ONE_SHOT_ANDROID_SNAPSHOT_V3.py
+          bash -n ANDROID_UPDATE_AND_START.sh
+          bash -n VERIFY_TABLET_FINAL.sh
+      - name: Verify snapshot restore fail-closed contracts
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          source=Path('ANDROID_UPDATE_AND_START.sh').read_text(encoding='utf-8')
+          required=(
+              '[ -d "$snapshot" ] && [ ! -L "$snapshot" ] || return 1',
+              '[ -f "$manifest" ] && [ ! -L "$manifest" ] || return 1',
+              'if ! is_runtime_path "$changed"; then',
+              'if [ -L "$source_file" ] || [ ! -f "$source_file" ]; then',
+              'restore_tmp=".${changed}.tcg-restore.$$"',
+              'mv -f "$restore_tmp" "$changed"',
+              'if [ -L "$RUNTIME_BACKUP_DIR" ]; then',
+          )
+          for marker in required:
+              assert marker in source, marker
+          assert 'find "$RUNTIME_BACKUP_DIR"' not in source
+          print('Android snapshot restore integrity v3: OK')
+          PY
+      - name: Run final tablet preflight
+        env:
+          TCG_FINAL_SKIP_HEAD_MATCH: '1'
+        run: bash VERIFY_TABLET_FINAL.sh
+      - name: Verify formatting
+        run: git diff --check
+      - name: Commit non-workflow source changes
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add ANDROID_UPDATE_AND_START.sh VERIFY_TABLET_FINAL.sh
+          git diff --cached --quiet && { echo 'No source changes to commit'; exit 0; }
+          git commit -m 'fix: fail closed on corrupted Android runtime snapshots'
+          git pull --rebase origin main
+          git push origin HEAD:main
