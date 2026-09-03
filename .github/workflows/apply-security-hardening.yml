@@ -62,14 +62,15 @@ jobs:
           raise SystemExit(1)
           PY
           fi
-      - name: Commit hardened runtime files
+      - name: Commit deterministic hardening changes
         run: |
-          if git diff --quiet -- tcg_updater.py safe_runtime.py .gitignore; then
-            echo 'No runtime hardening changes required.'
+          if git diff --quiet -- tcg_updater.py safe_runtime.py .gitignore .github/workflows; then
+            echo 'No deterministic hardening changes required.'
             exit 0
           fi
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git add tcg_updater.py safe_runtime.py .gitignore
-          git commit -m 'security: harden LAN server, cert pacing, and file paths'
-          git push
+          git add tcg_updater.py safe_runtime.py .gitignore .github/workflows
+          git commit -m 'security: apply deterministic repository hardening'
+          git pull --rebase origin main
+          git push origin HEAD:main
