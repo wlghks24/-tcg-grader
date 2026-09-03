@@ -65,14 +65,14 @@ def patch_meta():
 def patch_multi_channel():
     p="multi_channel_agent.py"; t=read(p)
     t=replace_once(t,
-      '"LINE", "BANDAI TCG+", "TCG+")',
-      '"LINE", "BANDAI TCG+", "TCG+", "룰", "규칙", "금지", "제한", "에라타", "체크인", "참가자격", "입장권", "패스", "대기명단", "플레이어ID", "덱리스트", "RK9", "PLAYGO")', "mc KR")
+      '        "KR": ("행사", "이벤트", "챌린지", "도전", "개최", "콜라보", "프로모", "프로모카드", "출시", "발매", "재발매", "재입고", "재고", "품절", "한정", "증정", "배포", "특전", "응모", "신청", "등록", "추첨", "당첨", "라이브", "생방송", "스트리밍", "시청", "코드", "대회", "영화", "마감", "기한", "변경", "취소", "연기", "LINE", "BANDAI TCG+", "TCG+"),',
+      '        "KR": ("행사", "이벤트", "챌린지", "도전", "개최", "콜라보", "프로모", "프로모카드", "출시", "발매", "재발매", "재입고", "재고", "품절", "한정", "증정", "배포", "특전", "응모", "신청", "등록", "추첨", "당첨", "라이브", "생방송", "스트리밍", "시청", "코드", "대회", "영화", "마감", "기한", "변경", "취소", "연기", "LINE", "BANDAI TCG+", "TCG+", "룰", "규칙", "금지", "제한", "에라타", "체크인", "참가자격", "입장권", "패스", "대기명단", "플레이어ID", "덱리스트", "RK9", "PLAYGO"),', "mc KR")
     t=replace_once(t,
-      '"LINE", "BANDAI TCG+", "TCG+")',
-      '"LINE", "BANDAI TCG+", "TCG+", "ルール", "禁止", "制限", "エラッタ", "チェックイン", "参加資格", "入場券", "パス", "キャンセル待ち", "プレイヤーID", "デッキリスト", "RK9")', "mc JP")
+      '        "JP": ("イベント", "チャレンジ", "開催", "コラボ", "プロモ", "プロモカード", "発売", "再販", "再入荷", "在庫", "売り切れ", "限定", "配布", "特典", "応募", "申込", "登録", "抽選", "当選", "ライブ配信", "生配信", "視聴", "コード", "大会", "映画", "締切", "期限", "変更", "中止", "延期", "LINE", "BANDAI TCG+", "TCG+"),',
+      '        "JP": ("イベント", "チャレンジ", "開催", "コラボ", "プロモ", "プロモカード", "発売", "再販", "再入荷", "在庫", "売り切れ", "限定", "配布", "特典", "応募", "申込", "登録", "抽選", "当選", "ライブ配信", "生配信", "視聴", "コード", "大会", "映画", "締切", "期限", "変更", "中止", "延期", "LINE", "BANDAI TCG+", "TCG+", "ルール", "禁止", "制限", "エラッタ", "チェックイン", "参加資格", "入場券", "パス", "キャンセル待ち", "プレイヤーID", "デッキリスト", "RK9"),', "mc JP")
     t=replace_once(t,
-      '"LINE", "BANDAI TCG+", "TCG+")',
-      '"LINE", "BANDAI TCG+", "TCG+", "rules", "banned", "restricted", "errata", "legality", "check-in", "eligibility", "spectator", "pass", "badge", "waitlist", "interest list", "player id", "deck list", "entry fee", "RK9", "PLAYGO")', "mc US")
+      '        "US": ("event", "challenge", "special mission", "distribution", "collab", "collaboration", "promo", "promo card", "release", "reprint", "restock", "in stock", "sold out", "exclusive", "giveaway", "entry", "application", "registration", "lottery", "livestream", "broadcast", "streaming", "twitch drops", "redeem", "code", "tournament", "movie", "deadline", "apply by", "change", "cancelled", "canceled", "postponed", "rescheduled", "LINE", "BANDAI TCG+", "TCG+"),',
+      '        "US": ("event", "challenge", "special mission", "distribution", "collab", "collaboration", "promo", "promo card", "release", "reprint", "restock", "in stock", "sold out", "exclusive", "giveaway", "entry", "application", "registration", "lottery", "livestream", "broadcast", "streaming", "twitch drops", "redeem", "code", "tournament", "movie", "deadline", "apply by", "change", "cancelled", "canceled", "postponed", "rescheduled", "LINE", "BANDAI TCG+", "TCG+", "rules", "banned", "restricted", "errata", "legality", "check-in", "eligibility", "spectator", "pass", "badge", "waitlist", "interest list", "player id", "deck list", "entry fee", "RK9", "PLAYGO"),', "mc US")
     write(p,t)
 
 def patch_routes():
