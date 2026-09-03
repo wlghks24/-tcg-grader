@@ -1,16 +1,19 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
+import json
 import os
 import re
 from email.message import Message
 from pathlib import Path
 import tempfile
+import time
 import unittest
 from unittest import mock
 
 import grading_costs_live
 import grading_proxy_costs
 import security_hardening_apply as hardening
+import security_self_audit
 
 from server_security_guard import OfficialLookupGuard, client_network_allowed, client_network_classification
 import tcg_updater
@@ -220,7 +223,39 @@ class SafeRuntimeSymlinkTests(unittest.TestCase):
                 atomic_write_text(link / "new.txt", "blocked")
 
 
+    def test_stale_lock_owned_by_live_process_is_not_stolen(self):
+        from safe_runtime import exclusive_file_lock
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            target = root / "state.json"
+            lock = target.with_suffix(target.suffix + ".lock")
+            lock.write_text(json.dumps({"pid": os.getpid(), "created_at": "2000-01-01T00:00:00Z"}), encoding="utf-8")
+            old = time.time() - 120.0
+            os.utime(lock, (old, old))
+            with self.assertRaises(TimeoutError):
+                with exclusive_file_lock(target, timeout_seconds=0.05, stale_seconds=60.0):
+                    self.fail("live owner lock must never be stolen")
+            self.assertTrue(lock.exists())
+
+
 class CollectorSecurityTests(unittest.TestCase):
+    def test_security_audit_detects_job_level_contents_write(self):
+        workflow = """name: synthetic
+on:
+  push:
+    branches: [main]
+jobs:
+  patch:
+    permissions:
+      contents: write
+    runs-on: ubuntu-latest
+    steps:
+      - run: echo ok
+"""
+        findings = []
+        security_self_audit.scan_workflow(workflow, findings, ".github/workflows/synthetic.yml")
+        self.assertTrue(any(item.get("rule") == "GHA_CONTENTS_WRITE" for item in findings), findings)
+
     def test_cost_collectors_use_shared_https_guard(self):
         cases=(
             (grading_costs_live,next(iter(grading_costs_live.COMPANIES.values()))["source"]),

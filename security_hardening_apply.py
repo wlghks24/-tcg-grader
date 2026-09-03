@@ -109,6 +109,51 @@ def patch_safe_runtime(text: str) -> str:
             raise RuntimeError("safe runtime helper insertion marker missing")
         text = text.replace(marker, helper, 1)
 
+    if "def _read_lock_pid(" not in text:
+        lock_helpers = '''def _read_lock_pid(lock_path: Path) -> int | None:\n    \"\"\"Read a bounded PID from an existing regular lock without following links.\"\"\"\n    descriptor: int | None = None\n    try:\n        flags = os.O_RDONLY | getattr(os, \"O_NOFOLLOW\", 0) | getattr(os, \"O_NONBLOCK\", 0)\n        descriptor = os.open(lock_path, flags)\n        metadata = os.fstat(descriptor)\n        if not stat.S_ISREG(metadata.st_mode):\n            return None\n        raw = os.read(descriptor, 1024).decode(\"utf-8\", \"strict\")\n        payload = json.loads(raw)\n        if not isinstance(payload, dict):\n            return None\n        pid = int(payload.get(\"pid\", 0))\n        return pid if 0 < pid <= 2_147_483_647 else None\n    except (OSError, UnicodeError, ValueError, TypeError, json.JSONDecodeError):\n        return None\n    finally:\n        if descriptor is not None:\n            try:\n                os.close(descriptor)\n            except OSError:\n                pass\n\n\ndef _process_is_alive(pid: int) -> bool | None:\n    \"\"\"Return process liveness when the operating system can answer safely.\"\"\"\n    try:\n        os.kill(int(pid), 0)\n        return True\n    except ProcessLookupError:\n        return False\n    except PermissionError:\n        return True\n    except (OSError, TypeError, ValueError, OverflowError):\n        return None\n\n\n'''
+        text = _replace_once(
+            text,
+            "@contextmanager\ndef exclusive_file_lock(\n",
+            lock_helpers + "@contextmanager\ndef exclusive_file_lock(\n",
+            "live lock-owner helper insertion",
+        )
+
+    if "owner_alive = _process_is_alive" not in text:
+        text = _replace_once(
+            text,
+            "            if time.time() - current.st_mtime >= stale_after:\n"
+            "                try:\n"
+            "                    latest=os.lstat(lock_path)\n"
+            "                    if (latest.st_dev,latest.st_ino)==(current.st_dev,current.st_ino):os.unlink(lock_path)\n"
+            "                except FileNotFoundError:\n"
+            "                    pass\n"
+            "                continue\n"
+            "            if time.monotonic() >= deadline:\n"
+            "                raise TimeoutError(\"another process is updating the same state\")\n"
+            "            time.sleep(0.025)\n",
+            "            age = max(0.0, time.time() - current.st_mtime)\n"
+            "            if age >= stale_after:\n"
+            "                owner_pid = _read_lock_pid(lock_path)\n"
+            "                owner_alive = _process_is_alive(owner_pid) if owner_pid is not None else None\n"
+            "                # A lock can be old while its owner is still legitimately working.\n"
+            "                # Never steal it merely because wall-clock age crossed the stale threshold.\n"
+            "                if owner_alive is not True:\n"
+            "                    recovered = False\n"
+            "                    try:\n"
+            "                        latest = os.lstat(lock_path)\n"
+            "                        if (latest.st_dev, latest.st_ino) == (current.st_dev, current.st_ino):\n"
+            "                            os.unlink(lock_path)\n"
+            "                            recovered = True\n"
+            "                    except FileNotFoundError:\n"
+            "                        recovered = True\n"
+            "                    if recovered:\n"
+            "                        continue\n"
+            "            if time.monotonic() >= deadline:\n"
+            "                raise TimeoutError(\"another process is updating the same state\")\n"
+            "            time.sleep(0.025)\n",
+            "live owner stale-lock policy",
+        )
+
     if "assert_no_symlink_components(path.parent, allow_missing=True)" not in text:
         text = _replace_once(
             text,

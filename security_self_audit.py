@@ -18,6 +18,8 @@ from pathlib import Path
 import re
 from typing import Any
 
+from safe_runtime import atomic_write_json, safe_read_text
+
 ROOT = Path(__file__).resolve().parent
 REPORT = ROOT / "security_audit_report.json"
 MEMORY = ROOT / "security_learning_memory.json"
@@ -32,15 +34,13 @@ def utc_now() -> str:
 
 def load_json(path: Path, default: Any) -> Any:
     try:
-        return json.loads(path.read_text(encoding="utf-8"))
-    except (OSError, ValueError, TypeError):
+        return json.loads(safe_read_text(path, max_bytes=2_000_000))
+    except (OSError, UnicodeError, ValueError, TypeError):
         return default
 
 
 def write_json(path: Path, payload: Any) -> None:
-    tmp = path.with_name(path.name + ".tmp")
-    tmp.write_text(json.dumps(payload, ensure_ascii=False, indent=2, allow_nan=False) + "\n", encoding="utf-8")
-    tmp.replace(path)
+    atomic_write_json(path, payload)
 
 
 def finding_id(rule: str, path: str, line: int, evidence: str) -> str:
@@ -112,7 +112,13 @@ def scan_workflow(text: str, findings: list[dict[str, Any]], rel: str) -> None:
         add(findings, "GHA_PR_TARGET", "critical", rel, 1, "pull_request_target has a high trust boundary and requires strict review.", "pull_request_target")
     if re.search(r"(?m)^\s*permissions\s*:\s*write-all\s*$", text):
         add(findings, "GHA_WRITE_ALL", "high", rel, 1, "GitHub Actions write-all permission is broader than necessary.", "permissions: write-all")
-    if re.search(r"(?ms)^permissions\s*:\s*.*?^\s*contents\s*:\s*write\s*$", text):
+    write_lines = [
+        lineno for lineno, line in enumerate(text.splitlines(), 1)
+        if re.match(r"^\s*contents\s*:\s*write\s*(?:#.*)?$", line)
+    ]
+    if write_lines:
+        # permissions may be declared at workflow scope or under an individual job.
+        # Audit both; job-scoped write tokens are just as security-sensitive.
         untrusted_trigger = bool(re.search(r"(?m)^\s*(?:pull_request|pull_request_target)\s*:", text))
         severity = "high" if untrusted_trigger else "low"
         message = (
@@ -120,7 +126,7 @@ def scan_workflow(text: str, findings: list[dict[str, Any]], rel: str) -> None:
             if untrusted_trigger else
             "Write permission is limited to trusted push/manual/scheduled automation; keep the trigger narrow."
         )
-        add(findings, "GHA_CONTENTS_WRITE", severity, rel, 1, message, "contents: write")
+        add(findings, "GHA_CONTENTS_WRITE", severity, rel, write_lines[0], message, "contents: write")
     for lineno, line in enumerate(text.splitlines(), 1):
         match = re.search(r"\buses:\s*([^\s#]+)", line)
         if match:
@@ -170,6 +176,8 @@ def scan_repository(root: Path = ROOT) -> list[dict[str, Any]]:
         add(findings, "CERT_API_RATE_GUARD", "high", "tcg_updater.py", 1, "Web cert endpoint can bypass the provider pacing/cooldown policy.")
     if "def assert_no_symlink_components(" not in runtime:
         add(findings, "ANCESTOR_SYMLINK_GUARD", "high", "safe_runtime.py", 1, "Safe file helpers check too few path components for ancestor symlinks.")
+    if "def _read_lock_pid(" not in runtime or "owner_alive = _process_is_alive" not in runtime:
+        add(findings, "LIVE_LOCK_OWNER_GUARD", "medium", "safe_runtime.py", 1, "Stale lock recovery can steal an old lock without proving that its owner is gone.")
     for required in (".env", "*.pem", "*.key", "credentials*.json", "security_learning_memory.json"):
         if required not in gitignore.splitlines():
             add(findings, "SECRET_GITIGNORE", "medium", ".gitignore", 1, f"Sensitive local pattern is not ignored: {required}", required)

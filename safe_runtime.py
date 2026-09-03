@@ -99,6 +99,44 @@ def assert_no_symlink_components(path: str | os.PathLike[str], *, allow_missing:
             raise ValueError("symbolic-link path component blocked")
 
 
+def _read_lock_pid(lock_path: Path) -> int | None:
+    """Read a bounded PID from an existing regular lock without following links."""
+    descriptor: int | None = None
+    try:
+        flags = os.O_RDONLY | getattr(os, "O_NOFOLLOW", 0) | getattr(os, "O_NONBLOCK", 0)
+        descriptor = os.open(lock_path, flags)
+        metadata = os.fstat(descriptor)
+        if not stat.S_ISREG(metadata.st_mode):
+            return None
+        raw = os.read(descriptor, 1024).decode("utf-8", "strict")
+        payload = json.loads(raw)
+        if not isinstance(payload, dict):
+            return None
+        pid = int(payload.get("pid", 0))
+        return pid if 0 < pid <= 2_147_483_647 else None
+    except (OSError, UnicodeError, ValueError, TypeError, json.JSONDecodeError):
+        return None
+    finally:
+        if descriptor is not None:
+            try:
+                os.close(descriptor)
+            except OSError:
+                pass
+
+
+def _process_is_alive(pid: int) -> bool | None:
+    """Return process liveness when the operating system can answer safely."""
+    try:
+        os.kill(int(pid), 0)
+        return True
+    except ProcessLookupError:
+        return False
+    except PermissionError:
+        return True
+    except (OSError, TypeError, ValueError, OverflowError):
+        return None
+
+
 @contextmanager
 def exclusive_file_lock(
     target: str | os.PathLike[str],
@@ -153,13 +191,23 @@ def exclusive_file_lock(
                 continue
             if stat.S_ISLNK(current.st_mode) or not stat.S_ISREG(current.st_mode):
                 raise ValueError("unsafe lock target")
-            if time.time() - current.st_mtime >= stale_after:
-                try:
-                    latest=os.lstat(lock_path)
-                    if (latest.st_dev,latest.st_ino)==(current.st_dev,current.st_ino):os.unlink(lock_path)
-                except FileNotFoundError:
-                    pass
-                continue
+            age = max(0.0, time.time() - current.st_mtime)
+            if age >= stale_after:
+                owner_pid = _read_lock_pid(lock_path)
+                owner_alive = _process_is_alive(owner_pid) if owner_pid is not None else None
+                # A lock can be old while its owner is still legitimately working.
+                # Never steal it merely because wall-clock age crossed the stale threshold.
+                if owner_alive is not True:
+                    recovered = False
+                    try:
+                        latest = os.lstat(lock_path)
+                        if (latest.st_dev, latest.st_ino) == (current.st_dev, current.st_ino):
+                            os.unlink(lock_path)
+                            recovered = True
+                    except FileNotFoundError:
+                        recovered = True
+                    if recovered:
+                        continue
             if time.monotonic() >= deadline:
                 raise TimeoutError("another process is updating the same state")
             time.sleep(0.025)
