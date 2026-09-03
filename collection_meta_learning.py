@@ -52,17 +52,20 @@ GAMES = {
     "나루토": ("나루토", "naruto", "ナルト"),
 }
 REGIONS = ("KR", "JP", "US")
-TOPICS = ("release", "reprint", "event", "tournament", "popup", "promo", "collab", "movie", "merch", "anniversary", "stock", "entry", "broadcast", "deadline", "status_update", "rules", "access", "market", "graded_photo")
-SEARCH_TOPICS = ("release", "reprint", "event", "tournament", "popup", "promo", "collab", "movie", "merch", "anniversary", "stock", "entry", "broadcast", "deadline", "status_update", "rules", "access")
+TOPICS = ("release", "reprint", "event", "tournament", "popup", "promo", "collab", "movie", "merch", "anniversary", "stock", "entry", "broadcast", "deadline", "status_update", "rules", "access", "results", "purchase_policy", "service_status", "market", "graded_photo")
+SEARCH_TOPICS = ("release", "reprint", "event", "tournament", "popup", "promo", "collab", "movie", "merch", "anniversary", "stock", "entry", "broadcast", "deadline", "status_update", "rules", "access", "results", "purchase_policy", "service_status")
 TOPIC_PRECEDENCE = (
-    "graded_photo", "market", "status_update", "rules", "deadline", "access", "stock", "broadcast", "entry",
+    "graded_photo", "market", "service_status", "results", "purchase_policy", "status_update", "rules", "deadline", "access", "stock", "broadcast", "entry",
     "movie", "anniversary", "merch", "collab", "reprint", "release", "popup",
     "tournament", "promo", "event",
 )
 
 TOPIC_PATTERNS = {
-    "graded_photo": re.compile(r"psa|bgs|cgc|tag|brg|graded|slab|등급\s*카드|감정\s*카드|鑑定", re.I),
+    "graded_photo": re.compile(r"\bpsa(?:\s?\d{1,2})?\b|\bbgs(?:\s?\d{1,2}(?:\.\d)?)?\b|\bcgc(?:\s?\d{1,2}(?:\.\d)?)?\b|\btag(?:\s?\d{1,2})?\b|\bbrg(?:\s?\d{1,2})?\b|\bgraded\b|\bslab\b|등급\s*카드|감정\s*카드|鑑定", re.I),
     "market": re.compile(r"시세|가격|실거래|거래|판매가|price|sold|market|相場|落札|価格", re.I),
+    "service_status": re.compile(r"점검|서비스\s*장애|접속\s*(?:장애|오류)|로그인\s*(?:불가|장애)|복구\s*완료|maintenance|service\s+(?:outage|unavailable|disruption)|login\s+(?:issue|failure|unavailable)|incident|resolved|メンテナンス|障害|不具合|ログインできない|利用できません|復旧", re.I),
+    "results": re.compile(r"대회\s*결과|경기\s*결과|결과\s*발표|우승자\s*발표|입상자|최종\s*순위|우승\s*덱|상위\s*덱|tournament\s+results?|event\s+results?|match\s+results?|final\s+standings?|top\s+finishers?|winning\s+deck|champion\s+deck|大会結果|試合結果|結果発表|優勝者発表|入賞者|最終順位|優勝デッキ|上位デッキ", re.I),
+    "purchase_policy": re.compile(r"추첨\s*판매|구매\s*제한|판매\s*제한|1인\s*\d+개|본인\s*인증.{0,20}(?:판매|구매)|구매권|구매\s*티켓|가상\s*대기열|lottery\s+sale|purchase\s+limit|sales?\s+limit|limited\s+to\s+(?:one|\d+)\s+items?\s+per\s+person|identity\s+verification.{0,30}(?:sale|purchase)|virtual\s+queue|purchase\s+(?:ticket|voucher)|抽選販売|購入制限|販売制限|お一人様\s*\d+点|本人認証.{0,20}(?:販売|購入)|購入券|購入チケット|仮想待機列", re.I),
     "status_update": re.compile(r"취소|연기|일정\s*변경|시간\s*변경|장소\s*변경|갱신내용|cancel(?:led|ed|ation)?|postpon(?:e|ed|ement)|reschedul(?:e|ed|ing)|schedule\s+change|venue\s+change|中止|延期|日程変更|時間変更|会場変更|内容変更", re.I),
     "deadline": re.compile(r"마감|신청\s*기한|응모\s*기한|접수\s*기한|신청기간|응모기간|접수기간|deadline|apply\s+by|registration\s+closes?|application\s+period|締切|期限|応募期間|申込期間|受付期間", re.I),
     "access": re.compile(r"참가\s*자격|참가조건|체크인|입장권|관람객|패스|정원|대기\s*명단|플레이어\s*ID|덱\s*리스트|참가비|eligib(?:le|ility)|check[- ]?in|waitlist|interest\s+list|spectator|admission|entry\s+fee|player\s+id|deck\s+list|seating|capacity|\bbadge\b|\bpass\b|参加資格|参加条件|チェックイン|入場券|観戦|パス|定員|キャンセル待ち|プレイヤーID|デッキリスト|参加費", re.I),
@@ -101,6 +104,9 @@ FOCUS_TERMS = {
         "status_update": "변경 취소 연기 일정변경 시간변경 장소변경 갱신내용",
         "rules": "룰 규칙 금지 제한 금지페어 에라타 사용규정 레귤레이션",
         "access": "참가자격 체크인 입장권 관람객 패스 정원 대기명단 플레이어ID 덱리스트 참가비 RK9 PLAYGO",
+        "results": "대회결과 경기결과 결과발표 우승자발표 입상자 최종순위 우승덱 상위덱",
+        "purchase_policy": "추첨판매 구매제한 판매제한 1인1개 본인인증 구매권 구매티켓 가상대기열",
+        "service_status": "점검 서비스장애 접속장애 접속오류 로그인불가 복구완료",
     },
     "JP": {
         "release": "発売 新弾 新商品 ブースター スターター 予約 再販",
@@ -120,6 +126,9 @@ FOCUS_TERMS = {
         "status_update": "変更 中止 延期 日程変更 時間変更 会場変更",
         "rules": "ルール 禁止 制限 禁止カード 制限カード エラッタ レギュレーション 使用可能",
         "access": "参加資格 チェックイン 入場券 観戦 パス 定員 キャンセル待ち プレイヤーID デッキリスト 参加費",
+        "results": "大会結果 試合結果 結果発表 優勝者発表 入賞者 最終順位 優勝デッキ 上位デッキ",
+        "purchase_policy": "抽選販売 購入制限 販売制限 お一人様1点 本人認証 購入券 購入チケット 仮想待機列",
+        "service_status": "メンテナンス 障害 不具合 ログインできない 利用できません 復旧",
     },
     "US": {
         "release": "release new set booster starter preorder reprint",
@@ -139,6 +148,9 @@ FOCUS_TERMS = {
         "status_update": "change cancelled canceled postponed rescheduled schedule change venue change",
         "rules": "rules banned restricted restriction errata legality legal date regulation rulebook",
         "access": "eligibility check-in spectator pass badge waitlist interest list player ID deck list entry fee capacity RK9",
+        "results": "tournament results event results match results final standings top finishers winning deck champion deck",
+        "purchase_policy": "lottery sale purchase limit sales limit one item per person identity verification virtual queue purchase ticket voucher",
+        "service_status": "maintenance service outage unavailable disruption login issue incident resolved",
     },
 }
 
