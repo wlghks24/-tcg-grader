@@ -1,0 +1,46 @@
+name: Final Tablet Guard
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'VERIFY_TABLET_FINAL.sh'
+      - 'ANDROID_RECOVER_UPDATE.sh'
+      - 'ANDROID_UPDATE_AND_START.sh'
+      - 'START_TCG_UPDATER_ANDROID.sh'
+      - 'runtime_bundle_guard_v143.py'
+      - 'safe_runtime.py'
+      - 'auto_repair_engine.py'
+      - 'auto_update_all.py'
+      - 'collector_self_healing.py'
+      - 'tcg_code_repair_learning.py'
+      - 'GRAPHIFY_UPDATE.sh'
+      - 'GRAPHIFY_SELF_HEAL.py'
+      - 'SETUP_GRAPHIFY_TERMUX.sh'
+      - '.gitignore'
+      - '.github/workflows/final-tablet-guard.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Run final tablet release preflight
+        env:
+          TCG_FINAL_SKIP_HEAD_MATCH: '1'
+        run: bash VERIFY_TABLET_FINAL.sh
+      - name: Verify tablet recovery entrypoint exists
+        run: |
+          test -s ANDROID_RECOVER_UPDATE.sh
+          grep -Fq 'ANDROID_UPDATE_AND_START.sh' ANDROID_RECOVER_UPDATE.sh
+      - name: Verify learning files remain device local
+        run: |
+          grep -Fq 'tcg_code_repair_learning.json' .gitignore
+          grep -Fq 'tcg_code_repair_candidates.json' .gitignore
+          grep -Fq 'tcg_code_repair_report.json' .gitignore
+          grep -Fq 'graphify_self_heal_memory.json' .gitignore
