@@ -22,13 +22,14 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
-SCHEMA = 2
+SCHEMA = 3
 PINNED_VERSION = os.environ.get("GRAPHIFY_VERSION", "0.9.53")
 GRAPHIFY_BIN = os.environ.get("GRAPHIFY_BIN", "graphify")
 MEMORY_PATH = Path(os.environ.get("GRAPHIFY_SELF_HEAL_MEMORY", "graphify_self_heal_memory.json"))
 REPORT_PATH = Path(os.environ.get("GRAPHIFY_SELF_HEAL_REPORT", "graphify_self_heal_report.json"))
 CANDIDATE_PATH = Path(os.environ.get("GRAPHIFY_SELF_HEAL_CANDIDATES", "graphify_self_heal_candidates.json"))
 RECOVERY_ROOT = Path(os.environ.get("GRAPHIFY_RECOVERY_DIR", ".graphify_recovery"))
+AUDIT_SCRIPT = Path(os.environ.get("GRAPHIFY_AUDIT_SCRIPT", "GRAPHIFY_AUDIT.py"))
 COMMAND_TIMEOUT = int(os.environ.get("GRAPHIFY_HEAL_COMMAND_TIMEOUT", "180"))
 MAX_HISTORY = 160
 MAX_CANDIDATES = 40
@@ -40,6 +41,7 @@ REQUIRED_OUTPUTS = (
     Path("graphify-out/GRAPH_REPORT.md"),
     Path("graphify-out/graph.html"),
 )
+CLUSTER_ARGS = ("cluster-only", ".", "--no-label", "--exclude-hubs", "99")
 
 APPROVED_STRATEGIES = {
     "repair_path",
@@ -57,6 +59,7 @@ DEFAULT_STRATEGIES = {
     "version_mismatch": ["repair_install"],
     "missing_outputs": ["materialize_outputs", "rebuild_from_scratch", "repair_install_and_rebuild"],
     "invalid_outputs": ["rebuild_from_scratch", "repair_install_and_rebuild"],
+    "map_audit_failed": ["rebuild_from_scratch", "repair_install_and_rebuild"],
     "update_failed": ["rebuild_from_scratch", "repair_install_and_rebuild"],
     "extract_failed": ["rebuild_from_scratch", "repair_install_and_rebuild"],
     "cluster_failed": ["materialize_outputs", "rebuild_from_scratch", "repair_install_and_rebuild"],
@@ -76,6 +79,7 @@ FAILURE_CODE_CATEGORY = {
     22: "extract_failed",
     23: "cluster_failed",
     24: "missing_outputs",
+    25: "map_audit_failed",
     31: "update_failed",
     32: "extract_failed",
     33: "cluster_failed",
@@ -137,6 +141,19 @@ def validate_outputs_detail() -> tuple[bool, str]:
         return False, "graph.html does not look like HTML"
 
     return True, "all Graphify outputs are structurally valid"
+
+
+def validate_map_health() -> tuple[bool, str]:
+    valid, detail = validate_outputs_detail()
+    if not valid:
+        return False, detail
+    if not AUDIT_SCRIPT.is_file():
+        return True, detail + "\nmap audit script not present; structural validation only"
+    proc = safe_run([sys.executable, str(AUDIT_SCRIPT), "--strict", "--no-write"])
+    audit_text = ((proc.stdout or "") + (proc.stderr or "")).strip()
+    if proc.returncode != 0:
+        return False, detail + "\nmap audit failed:\n" + audit_text[-4000:]
+    return True, detail + "\nmap audit passed"
 
 
 def atomic_json_write(path: Path, data: dict[str, Any]) -> None:
@@ -206,6 +223,8 @@ def classify_failure(text: str, failure_code: int = 0, reason: str = "") -> str:
         return "command_missing"
     if "pinned version" in haystack or "version mismatch" in haystack or "unsupported version" in haystack:
         return "version_mismatch"
+    if any(k in haystack for k in ("map audit failed", "path leak", "scope leak", "지도 구조/범위")):
+        return "map_audit_failed"
     if any(k in haystack for k in (
         "invalid graph.json", "invalid graph.json root type",
         "graph_report.md is unexpectedly small", "graph.html does not look like html",
@@ -239,8 +258,8 @@ def normalize_failure_text(text: str) -> str:
     for raw in text.splitlines():
         line = " ".join(raw.split())
         if line and any(t in line for t in (
-            "error", "fail", "오류", "missing", "not found", "denied",
-            "timeout", "graphify", "version", "429", "network", "invalid",
+            "error", "fail", "오류", "missing", "not found", "denied", "timeout",
+            "graphify", "version", "429", "network", "invalid", "audit", "leak", "scope",
         )):
             keep.append(line[:300])
     return "\n".join(keep[-16:]) if keep else " ".join(text.split())[-1200:]
@@ -258,14 +277,12 @@ def strategy_score(stats: dict[str, Any]) -> int:
 def learned_order(memory: dict[str, Any], category: str, signature: str) -> list[str]:
     base = list(DEFAULT_STRATEGIES.get(category, DEFAULT_STRATEGIES["unknown"]))
     preferred: list[str] = []
-
     sig_pref = memory.get("signatures", {}).get(signature, {}).get("preferred_strategy")
     cat = memory.get("categories", {}).get(category, {})
     cat_pref = cat.get("preferred_strategy")
     for value in (sig_pref, cat_pref):
         if value in APPROVED_STRATEGIES and value in base:
             preferred.append(value)
-
     ranked = sorted(
         base,
         key=lambda strategy: strategy_score(cat.get("strategies", {}).get(strategy, {})),
@@ -296,7 +313,6 @@ def record_result(
 ) -> None:
     cat = memory.setdefault("categories", {}).setdefault(category, {"strategies": {}, "preferred_strategy": None})
     _record(cat, strategy, success)
-
     sig = memory.setdefault("signatures", {}).setdefault(signature, {
         "category": category, "first_seen_at": utc_now(), "last_seen_at": utc_now(),
         "hits": 0, "strategies": {}, "preferred_strategy": None,
@@ -304,7 +320,6 @@ def record_result(
     sig["last_seen_at"] = utc_now()
     sig["hits"] = int(sig.get("hits", 0)) + 1
     _record(sig, strategy, success)
-
     history = memory.setdefault("history", [])
     history.append({
         "at": utc_now(), "category": category, "signature": signature,
@@ -339,7 +354,6 @@ def repair_path() -> tuple[bool, str]:
     local_bin = str(Path.home() / ".local" / "bin")
     if local_bin not in os.environ.get("PATH", "").split(os.pathsep):
         os.environ["PATH"] = local_bin + os.pathsep + os.environ.get("PATH", "")
-
     bashrc = Path.home() / ".bashrc"
     marker = "# TCG_GRAPHIFY_PATH"
     try:
@@ -349,7 +363,6 @@ def repair_path() -> tuple[bool, str]:
                 handle.write('\n# TCG_GRAPHIFY_PATH\nexport PATH="$HOME/.local/bin:$PATH"\n')
     except OSError as exc:
         return False, f"failed to persist PATH: {exc}"
-
     found = shutil.which("graphify")
     return bool(found), f"PATH repaired; graphify={found or 'not installed'}"
 
@@ -358,7 +371,6 @@ def repair_install() -> tuple[bool, str]:
     current = version_text()
     if version_matches(current):
         return True, f"already pinned: {current}"
-
     spec = f"graphifyy=={PINNED_VERSION}"
     details: list[str] = []
     if shutil.which("uv"):
@@ -374,7 +386,6 @@ def repair_install() -> tuple[bool, str]:
     details.append((proc.stdout or "") + (proc.stderr or ""))
     if proc.returncode != 0:
         return False, "\n".join(details)
-
     repair_path()
     current = version_text()
     ok = version_matches(current)
@@ -424,8 +435,8 @@ def materialize_outputs() -> tuple[bool, str]:
     graph_json = Path("graphify-out/graph.json")
     if not graph_json.is_file() or graph_json.stat().st_size <= 0:
         return False, "graph.json missing; materialize cannot run"
-    proc = graphify_cmd("cluster-only", ".", "--no-label")
-    valid, validation = validate_outputs_detail()
+    proc = graphify_cmd(*CLUSTER_ARGS)
+    valid, validation = validate_map_health()
     detail = (proc.stdout or "") + (proc.stderr or "") + "\n" + validation
     return proc.returncode == 0 and valid, detail
 
@@ -434,7 +445,6 @@ def rebuild_from_scratch() -> tuple[bool, str]:
     ok, backup, detail = quarantine_outputs()
     if not ok:
         return False, detail
-
     proc = graphify_cmd("extract", ".", "--code-only")
     detail += "\n" + (proc.stdout or "") + (proc.stderr or "")
     if proc.returncode != 0:
@@ -442,15 +452,15 @@ def rebuild_from_scratch() -> tuple[bool, str]:
 
     valid, validation = validate_outputs_detail()
     if not valid:
-        proc2 = graphify_cmd("cluster-only", ".", "--no-label")
+        proc2 = graphify_cmd(*CLUSTER_ARGS)
         detail += "\n" + (proc2.stdout or "") + (proc2.stderr or "")
         if proc2.returncode != 0:
             return False, detail + "\n" + restore_quarantined(backup)
-        valid, validation = validate_outputs_detail()
 
-    if not valid:
-        return False, detail + "\n" + validation + "\n" + restore_quarantined(backup)
-    return True, detail + "\n" + validation
+    healthy, health_detail = validate_map_health()
+    if not healthy:
+        return False, detail + "\n" + health_detail + "\n" + restore_quarantined(backup)
+    return True, detail + "\n" + health_detail
 
 
 def reinstall_hooks() -> tuple[bool, str]:
@@ -505,7 +515,6 @@ def repair(log_path: Path, failure_code: int, reason: str) -> int:
     signature = failure_signature(category, log_text, failure_code, reason)
     memory = load_memory()
     strategies = learned_order(memory, category, signature)
-
     report: dict[str, Any] = {
         "schema": SCHEMA, "started_at": utc_now(), "category": category,
         "signature": signature, "failure_code": failure_code, "reason": reason,
@@ -518,10 +527,7 @@ def repair(log_path: Path, failure_code: int, reason: str) -> int:
         atomic_json_write(MEMORY_PATH, memory)
         report["attempts"].append({"strategy": strategy, "success": success, "detail": detail[-2200:]})
         if success:
-            report.update({
-                "success": True, "successful_strategy": strategy,
-                "completed_at": utc_now(),
-            })
+            report.update({"success": True, "successful_strategy": strategy, "completed_at": utc_now()})
             atomic_json_write(REPORT_PATH, report)
             print(f"[Graphify 자가복구] {category}/{signature} → {strategy} 성공")
             return 0
@@ -544,7 +550,9 @@ def self_test() -> int:
     assert classify_failure("invalid graph.json: broken") == "invalid_outputs"
     assert classify_failure("HTTP 429 too many requests") == "rate_limited"
     assert classify_failure("permission denied") == "permission_denied"
+    assert classify_failure("", 25, "map audit failed") == "map_audit_failed"
     assert classify_failure("", 40, "codex setup failed") == "codex_install_failed"
+    assert CLUSTER_ARGS[-2:] == ("--exclude-hubs", "99")
 
     s1 = failure_signature("update_failed", "error /tmp/a.py line 123", 21, "update failed")
     s2 = failure_signature("update_failed", "error /tmp/b.py line 999", 21, "update failed")
