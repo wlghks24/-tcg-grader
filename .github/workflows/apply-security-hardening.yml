@@ -8,8 +8,11 @@ on:
       - 'grading_cert_verifier.py'
       - 'security_hardening_apply.py'
       - 'security_self_audit.py'
+      - 'csp_hash_hardening.py'
+      - 'test_csp_hash_hardening.py'
       - 'test_security_hardening.py'
       - 'test_five_company_verification_policy.py'
+      - 'index.html'
       - 'ai_code_improver.py'
       - 'tcg_code_repair_learning.py'
       - 'GRAPHIFY_SELF_HEAL.py'
@@ -40,37 +43,41 @@ jobs:
         with:
           fetch-depth: 0
       - name: Apply deterministic security patches
-        run: python security_hardening_apply.py
+        run: |
+          python security_hardening_apply.py
+          python csp_hash_hardening.py
       - name: Compile security-sensitive Python
         run: |
-          python -m py_compile tcg_updater.py safe_runtime.py server_security_guard.py grading_cert_verifier.py security_hardening_apply.py security_self_audit.py
+          python -m py_compile tcg_updater.py safe_runtime.py server_security_guard.py grading_cert_verifier.py security_hardening_apply.py security_self_audit.py csp_hash_hardening.py test_csp_hash_hardening.py
       - name: Run security regression tests
         run: |
           python -m unittest -v test_security_hardening.py
+          python -m unittest -v test_csp_hash_hardening.py
           python -m unittest -v test_five_company_verification_policy.py
           python security_hardening_apply.py --check
+          python csp_hash_hardening.py --check
       - name: Run vulnerability audit
         run: |
-          if ! python security_self_audit.py --fail-on high; then
+          if ! python security_self_audit.py --fail-on medium; then
             python - <<'PY'
           import json
           from pathlib import Path
           report=json.loads(Path('security_audit_report.json').read_text(encoding='utf-8'))
           for item in report.get('findings',[]):
-              if item.get('severity') in {'high','critical'}:
+              if item.get('severity') in {'medium','high','critical'}:
                   print(json.dumps(item,ensure_ascii=False))
           raise SystemExit(1)
           PY
           fi
       - name: Commit deterministic hardening changes
         run: |
-          if git diff --quiet -- tcg_updater.py safe_runtime.py .gitignore .github/workflows; then
+          if git diff --quiet -- index.html tcg_updater.py safe_runtime.py .gitignore .github/workflows; then
             echo 'No deterministic hardening changes required.'
             exit 0
           fi
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git add tcg_updater.py safe_runtime.py .gitignore .github/workflows
+          git add index.html tcg_updater.py safe_runtime.py .gitignore .github/workflows
           git commit -m 'security: apply deterministic repository hardening'
           git pull --rebase origin main
           git push origin HEAD:main
