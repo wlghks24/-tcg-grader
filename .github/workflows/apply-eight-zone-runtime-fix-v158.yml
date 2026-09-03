@@ -2,6 +2,7 @@ name: Apply eight-zone runtime fix v158
 
 on:
   push:
+    branches: [main]
     paths:
       - 'apply_eight_zone_runtime_fix_v158.py'
   workflow_dispatch:
