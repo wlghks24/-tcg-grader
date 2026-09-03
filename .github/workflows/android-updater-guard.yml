@@ -5,6 +5,7 @@ on:
     paths:
       - 'ANDROID_UPDATE_AND_START.sh'
       - 'ANDROID_RECOVER_UPDATE.sh'
+      - 'ANDROID_AUTO_START_INSTALL.sh'
       - 'VERIFY_TABLET_FINAL.sh'
       - '.github/workflows/android-updater-guard.yml'
   workflow_dispatch:
@@ -20,6 +21,7 @@ jobs:
         run: |
           bash -n ANDROID_UPDATE_AND_START.sh
           bash -n ANDROID_RECOVER_UPDATE.sh
+          bash -n ANDROID_AUTO_START_INSTALL.sh
           bash -n VERIFY_TABLET_FINAL.sh
       - name: Verify runtime-conflict recovery guards are present
         run: |
@@ -27,6 +29,10 @@ jobs:
           grep -Fq 'git restore --worktree --source=HEAD' ANDROID_UPDATE_AND_START.sh
           grep -Fq 'git merge --ff-only origin/main' ANDROID_UPDATE_AND_START.sh
           grep -Fq 'restore_runtime_snapshot' ANDROID_UPDATE_AND_START.sh
+          grep -Fq 'mktemp -d "$RUNTIME_BACKUP_DIR/' ANDROID_UPDATE_AND_START.sh
+          grep -Fq 'if [ -L "$changed" ]; then' ANDROID_UPDATE_AND_START.sh
+          grep -Fq 'fatal_restore_error=1' ANDROID_UPDATE_AND_START.sh
+          ! grep -Fq 'find "$RUNTIME_BACKUP_DIR"' ANDROID_UPDATE_AND_START.sh
       - name: Verify updater self-bootstrap recovery guard
         run: |
           grep -Fq 'SELF_PATH="ANDROID_UPDATE_AND_START.sh"' ANDROID_UPDATE_AND_START.sh
@@ -42,6 +48,20 @@ jobs:
           grep -Fq "OFFICIAL_HTTPS='https://github.com/wlghks24/-tcg-grader.git'" ANDROID_RECOVER_UPDATE.sh
           grep -Fq 'git fetch --prune "$OFFICIAL_HTTPS" main:refs/remotes/origin/main' ANDROID_RECOVER_UPDATE.sh
           grep -Fq '공식 GitHub origin 확인: OK' VERIFY_TABLET_FINAL.sh
+      - name: Verify fail-closed snapshot restore contracts
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          source=Path('ANDROID_UPDATE_AND_START.sh').read_text(encoding='utf-8')
+          assert 'restore_ok=1' in source
+          assert '[ "$restore_ok" = "1" ]' in source
+          assert 'rm -f "$changed" 2>/dev/null || restore_ok=0' in source
+          assert 'cp -p "$snapshot/files/$changed" "$changed" 2>/dev/null || restore_ok=0' in source
+          assert 'if [ "$fatal_restore_error" = "1" ]; then' in source
+          assert '서버 시작을 중단합니다' in source
+          assert 'find "$RUNTIME_BACKUP_DIR"' not in source
+          print('Android exact snapshot + fail-closed restore contracts: OK')
+          PY
       - name: Prove recovery refuses an altered origin before network execution
         shell: bash
         run: |
