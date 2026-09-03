@@ -947,7 +947,7 @@ def run_all(trigger: str = "manual", selected_files=None, progress_callback=None
                 last_timed_out=True
                 msg=f'TIMEOUT: {stat_key} {attempt_timeout}초 초과'; errors.append(msg)
             except Exception as exc:
-                msg=f'{type(exc).__name__}: {exc}'; errors.append(msg)
+                msg=diagnostic_exception(exc,1200); errors.append(msg)
             if attempts>=2 or not _should_retry(stats.get('jobs',{}).get(stat_key,{}),last_timed_out,errors[-1]):
                 break
             time.sleep(min(4,2**attempts))
@@ -1005,7 +1005,7 @@ def run_all(trigger: str = "manual", selected_files=None, progress_callback=None
         extra=json.loads(safe_read_text(integration_out)); integration_out.unlink(missing_ok=True)
         ok=bool(extra.get('ok', True))
         degraded=bool(extra.get('degraded', False))
-        errors=[str(x) for x in (extra.get('errors') or []) if str(x).strip()]
+        errors=[auto_repair_engine.redact_sensitive(x,600) for x in (extra.get('errors') or []) if str(x).strip()]
         return {"ok":ok,"degraded":degraded,
                 "candidate_count":sum(len(x.get('results',[])) for x in extra.get('queries',[]))
                     + int((extra.get('supplementary') or {}).get('candidate_count') or 0)
