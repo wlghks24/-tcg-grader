@@ -58,9 +58,16 @@ jobs:
           grep -Fq 'blocked unapproved strategy' GRAPHIFY_SELF_HEAL.py
           grep -Fq 'failure_signature' GRAPHIFY_SELF_HEAL.py
           grep -Fq 'restore_quarantined' GRAPHIFY_SELF_HEAL.py
-          grep -Fq 'FORBIDDEN_RUNTIME_BASENAMES' GRAPHIFY_AUDIT.py
+          grep -Fq '25: "map_audit_failed"' GRAPHIFY_SELF_HEAL.py
+          grep -Fq 'CLUSTER_ARGS = ("cluster-only", ".", "--no-label", "--exclude-hubs", "99")' GRAPHIFY_SELF_HEAL.py
+          grep -Fq 'validate_map_health' GRAPHIFY_SELF_HEAL.py
+          grep -Fq 'IGNORE_FILES = (ROOT / ".graphifyignore", ROOT / ".gitignore")' GRAPHIFY_AUDIT.py
+          grep -Fq 'ignore_policy_synced' GRAPHIFY_AUDIT.py
           grep -Fq 'dangling_link_count' GRAPHIFY_AUDIT.py
           grep -Fq 'top_hub_edge_ratio' GRAPHIFY_AUDIT.py
+          grep -Fxq '.codex/' .graphifyignore
+          grep -Fxq '.agents/' .graphifyignore
+          grep -Fxq 'AGENTS.md' .graphifyignore
           grep -Fq 'graphify_self_heal_memory.json' .gitignore
           grep -Fq 'graphify_self_heal_candidates.json' .gitignore
           grep -Fq 'graphify-out/graph_audit.json' .gitignore
@@ -78,6 +85,25 @@ jobs:
           graphify codex install --help >/dev/null
           graphify agents install --help >/dev/null
 
+      - name: Prove ignore-policy audit catches control-plane leaks
+        shell: bash
+        run: |
+          set -euo pipefail
+          cat > /tmp/graphify-leak.json <<'JSON'
+          {
+            "nodes": [
+              {"id": "leak", "source_file": ".codex/skills/graphify/SKILL.md"}
+            ],
+            "links": []
+          }
+          JSON
+          set +e
+          python ./GRAPHIFY_AUDIT.py --graph /tmp/graphify-leak.json --strict --no-write >/tmp/leak-audit.txt 2>&1
+          rc=$?
+          set -e
+          test "$rc" -ne 0
+          grep -Fq '.codex/' /tmp/leak-audit.txt
+
       - name: Build and audit the real repository code map
         shell: bash
         run: |
@@ -89,6 +115,14 @@ jobs:
           test -s graphify-out/GRAPH_REPORT.md
           test -s graphify-out/graph.html
           test -s graphify-out/graph_audit.json
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          audit = json.loads(Path('graphify-out/graph_audit.json').read_text())
+          assert audit['ok'] is True, audit
+          assert audit['path_leak_count'] == 0, audit
+          assert audit['policy']['ignore_policy_synced'] is True, audit
+          PY
 
       - name: Prepare Graphify fixture repository
         shell: bash
@@ -123,6 +157,8 @@ jobs:
           cp "$GITHUB_WORKSPACE/GRAPHIFY_UPDATE.sh" .
           cp "$GITHUB_WORKSPACE/GRAPHIFY_SELF_HEAL.py" .
           cp "$GITHUB_WORKSPACE/GRAPHIFY_AUDIT.py" .
+          cp "$GITHUB_WORKSPACE/.graphifyignore" .
+          cp "$GITHUB_WORKSPACE/.gitignore" .
 
       - name: Exercise Codex and Agent Skills project install
         shell: bash
@@ -145,6 +181,13 @@ jobs:
           test -s graphify-out/GRAPH_REPORT.md
           test -s graphify-out/graph.html
           test -s graphify-out/graph_audit.json
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          audit = json.loads(Path('graphify-out/graph_audit.json').read_text())
+          assert audit['path_leak_count'] == 0, audit
+          assert audit['policy']['ignore_policy_synced'] is True, audit
+          PY
 
       - name: Exercise incremental wrapper refresh
         shell: bash
@@ -209,6 +252,7 @@ jobs:
             --failure-code 24 \
             --reason 'required missing output GRAPH_REPORT.md graph.html'
           python ./GRAPHIFY_SELF_HEAL.py --validate-only
+          python ./GRAPHIFY_AUDIT.py --strict
           test -s /tmp/graphify-memory.json
           test -s /tmp/graphify-report.json
           python - <<'PY'
