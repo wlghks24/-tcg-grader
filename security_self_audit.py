@@ -3,7 +3,7 @@
 """Defensive repository vulnerability audit with persistent learning memory.
 
 The "learning" here is intentionally conservative: the tool remembers each finding,
-how often it has appeared, and when it was resolved.  It never learns executable
+how often it has appeared, and when it was resolved. It never learns executable
 code from untrusted input and never auto-applies approximate fixes.
 """
 from __future__ import annotations
@@ -61,10 +61,11 @@ def add(findings: list[dict[str, Any]], rule: str, severity: str, path: str, lin
 
 
 def iter_text_files(root: Path):
-    excluded_dirs = {".git", "__pycache__", ".pytest_cache", "node_modules", "GRADE_TRAINING_INBOX"}
-    # Prune excluded trees before walking them.  Path.rglob() still enumerates
-    # every descendant and only lets us discard the result afterwards, which is
-    # needlessly expensive for caches, dependencies and the photo inbox.
+    excluded_dirs = {
+        ".git", ".codex", ".agents", ".tcg_ai_proposals", ".graphify_recovery",
+        "graphify-out", "__pycache__", ".pytest_cache", "node_modules", "GRADE_TRAINING_INBOX",
+    }
+    # Prune generated, dependency, proposal and photo trees before walking them.
     for current, directories, filenames in os.walk(root, topdown=True, followlinks=False):
         current_path = Path(current)
         directories[:] = [
@@ -89,9 +90,8 @@ def scan_python(path: Path, text: str, findings: list[dict[str, Any]], rel: str)
     except SyntaxError as exc:
         add(findings, "PY_SYNTAX", "high", rel, exc.lineno or 1, "Python syntax error prevents reliable security analysis.", str(exc))
         return
-    # Parsing every Python file still preserves full syntax coverage.  Only
-    # walk the much larger AST when the source can contain a call recognized by
-    # the rules below; every recognized AST name includes one of these tokens.
+    # Parsing every Python file preserves full syntax coverage. Only walk the much
+    # larger AST when the source can contain a call recognized by the rules below.
     if not any(token in text for token in ("eval", "exec", "system", "subprocess")):
         return
     for node in ast.walk(tree):
@@ -116,11 +116,13 @@ def scan_workflow(text: str, findings: list[dict[str, Any]], rel: str) -> None:
     if re.search(r"(?m)^\s*permissions\s*:\s*write-all\s*$", text):
         add(findings, "GHA_WRITE_ALL", "high", rel, 1, "GitHub Actions write-all permission is broader than necessary.", "permissions: write-all")
     if re.search(r"(?ms)^permissions\s*:\s*.*?^\s*contents\s*:\s*write\s*$", text):
-        untrusted_trigger=bool(re.search(r"(?m)^\s*(?:pull_request|pull_request_target)\s*:",text))
-        severity="high" if untrusted_trigger else "low"
-        message=("Write permission is reachable from a pull-request trigger."
-                 if untrusted_trigger else
-                 "Write permission is limited to trusted push/manual/scheduled automation; keep the trigger narrow.")
+        untrusted_trigger = bool(re.search(r"(?m)^\s*(?:pull_request|pull_request_target)\s*:", text))
+        severity = "high" if untrusted_trigger else "low"
+        message = (
+            "Write permission is reachable from a pull-request trigger."
+            if untrusted_trigger else
+            "Write permission is limited to trusted push/manual/scheduled automation; keep the trigger narrow."
+        )
         add(findings, "GHA_CONTENTS_WRITE", severity, rel, 1, message, "contents: write")
     for lineno, line in enumerate(text.splitlines(), 1):
         match = re.search(r"\buses:\s*([^\s#]+)", line)
@@ -153,8 +155,8 @@ def scan_repository(root: Path = ROOT) -> list[dict[str, Any]]:
 
     if "client_network_allowed(self.client_address[0])" not in updater:
         add(findings, "SERVER_PUBLIC_SOURCE_GUARD", "high", "tcg_updater.py", 1, "0.0.0.0 LAN server lacks a public-source client IP rejection guard.")
-    if "OFFICIAL_LOOKUP_GUARD.claim(company)" not in updater:
-        add(findings, "CERT_API_RATE_GUARD", "high", "tcg_updater.py", 1, "Web cert endpoint can bypass the batch 60s/max-2/cooldown policy.")
+    if "/api/verify-grading-cert" in updater and "OFFICIAL_LOOKUP_GUARD.claim(company)" not in updater:
+        add(findings, "CERT_API_RATE_GUARD", "high", "tcg_updater.py", 1, "Web cert endpoint can bypass the provider pacing/cooldown policy.")
     if "def assert_no_symlink_components(" not in runtime:
         add(findings, "ANCESTOR_SYMLINK_GUARD", "high", "safe_runtime.py", 1, "Safe file helpers check too few path components for ancestor symlinks.")
     for required in (".env", "*.pem", "*.key", "credentials*.json", "security_learning_memory.json"):
