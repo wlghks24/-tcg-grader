@@ -8,6 +8,7 @@ on:
       - 'runtime_bundle_guard_v143.py'
       - 'VERIFY_TABLET_FINAL.sh'
       - 'safe_runtime.py'
+      - '.github/workflows/runtime-correctness-guard.yml'
   workflow_dispatch:
 
 permissions:
@@ -45,11 +46,21 @@ jobs:
               'TIMEOUT: source 30초 초과',
               'ValueError: malformed data',
           ])
+          assert not updater._timeout_only_errors(['ValueError: malformed data after timeout'])
+          assert not updater._timeout_only_errors(['HTTPError: status 429 after timeout'])
+          assert not updater._deferred_timeout_eligible({
+              'ok': False,
+              'timeout_exhausted': True,
+              'collection_errors': ['ValueError: malformed data after timeout'],
+          })
           source = Path('auto_update_all.py').read_text(encoding='utf-8')
           assert source.count('diagnostic_exception(exc,1200)') >= 1
           assert 'safe_error=diagnostic_exception(exc,600)' in source
           assert "'degraded':True" in source
           assert 'timeout_only_cache_fallback' in source
+          assert '"timeout_exhausted":_timeout_only_errors(warnings)' in source
+          assert 'timeout_only_failure=_timeout_only_errors(errors)' in source
+          assert 'timed_out=_timeout_only_errors(errors)' in source
 
           result = bundle.audit()
           relevant = [
@@ -58,10 +69,13 @@ jobs:
                   '자동수집 복구 완료 오류',
                   '보조 후보수집',
                   '재시도/복구오류 필터',
+                  '한 오류문자열',
+                  '429/Retry-After',
+                  '장시간 분리 재수집',
               ))
           ]
           assert not relevant, relevant
-          print('runtime recovered-error + timeout-only stale-cache contracts: OK')
+          print('runtime recovered-error + strict timeout-only contracts: OK')
           PY
       - name: Run final tablet preflight
         env:
