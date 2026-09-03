@@ -12,6 +12,10 @@ recognizes that complete contract as already hardened, while failing closed when
 only a subset of v2 markers is present. Older bundles still use the exact-marker
 v1 migration below. v2.1 additionally counts a verified-fix regression once per
 unresolved regression episode instead of once per repeated observation.
+
+The collector self-healing layer also recognizes the refined allocation-safe
+implementation so deterministic hardening remains idempotent after performance
+refactors instead of trying to reapply legacy exact-text patches.
 """
 from __future__ import annotations
 
@@ -185,6 +189,25 @@ def patch_code_repair_learning(text: str) -> str:
 
 
 def patch_collector_self_healing(text: str) -> str:
+    # A later SELFREFINE pass keeps the same safety contract while reducing
+    # allocations/lookups. Recognize that implementation before the legacy exact
+    # patches so this optimizer stays idempotent instead of treating harmless
+    # performance refactors as an unpatched old bundle.
+    refined_markers = (
+        "from itertools import islice",
+        'for filename, raw in islice(value["files"].items(), MAX_FILES):',
+        "for signature, stat in islice(signatures.items(), MAX_SIGNATURES_PER_FILE):",
+        "def _signature_stat(",
+        "observed_now = dt.datetime.now(dt.timezone.utc)",
+        "if until is None:",
+        "policy = POLICIES.get(policy_id)",
+    )
+    if "from itertools import islice" in text:
+        missing = [marker for marker in refined_markers if marker not in text]
+        if missing:
+            raise RuntimeError("collector refined hardening markers incomplete: " + ", ".join(missing))
+        return text
+
     old_plan = '''def plan_for(filename: str, path: Path = MEMORY) -> dict:
     """Return a defensive copy of the pending allow-listed plan for one job."""
     memory = _load(path)
