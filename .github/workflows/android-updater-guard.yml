@@ -5,6 +5,7 @@ on:
     paths:
       - 'ANDROID_UPDATE_AND_START.sh'
       - 'ANDROID_RECOVER_UPDATE.sh'
+      - 'VERIFY_TABLET_FINAL.sh'
       - '.github/workflows/android-updater-guard.yml'
   workflow_dispatch:
 permissions:
@@ -19,6 +20,7 @@ jobs:
         run: |
           bash -n ANDROID_UPDATE_AND_START.sh
           bash -n ANDROID_RECOVER_UPDATE.sh
+          bash -n VERIFY_TABLET_FINAL.sh
       - name: Verify runtime-conflict recovery guards are present
         run: |
           grep -Fq '.tcg_runtime_preserved' ANDROID_UPDATE_AND_START.sh
@@ -31,6 +33,57 @@ jobs:
           grep -Fq 'git diff --quiet origin/main -- "$changed"' ANDROID_UPDATE_AND_START.sh
           grep -Fq '자기복구용 변경으로 안전하게 인정합니다.' ANDROID_UPDATE_AND_START.sh
           grep -Fq 'Android 업데이트 스크립트 자기복구 완료' ANDROID_UPDATE_AND_START.sh
+      - name: Verify official remote pinning contracts
+        run: |
+          grep -Fq 'OFFICIAL_REPO="wlghks24/-tcg-grader"' ANDROID_UPDATE_AND_START.sh
+          grep -Fq 'OFFICIAL_HTTPS="https://github.com/wlghks24/-tcg-grader.git"' ANDROID_UPDATE_AND_START.sh
+          grep -Fq 'git fetch --prune "$OFFICIAL_HTTPS" main:refs/remotes/origin/main' ANDROID_UPDATE_AND_START.sh
+          grep -Fq "OFFICIAL_REPO='wlghks24/-tcg-grader'" ANDROID_RECOVER_UPDATE.sh
+          grep -Fq "OFFICIAL_HTTPS='https://github.com/wlghks24/-tcg-grader.git'" ANDROID_RECOVER_UPDATE.sh
+          grep -Fq 'git fetch --prune "$OFFICIAL_HTTPS" main:refs/remotes/origin/main' ANDROID_RECOVER_UPDATE.sh
+          grep -Fq '공식 GitHub origin 확인: OK' VERIFY_TABLET_FINAL.sh
+      - name: Prove recovery refuses an altered origin before network execution
+        shell: bash
+        run: |
+          set -euo pipefail
+          fixture="$(mktemp -d)"
+          cp ANDROID_RECOVER_UPDATE.sh "$fixture/"
+          cd "$fixture"
+          git init -q -b main
+          git config user.name guard
+          git config user.email guard@example.invalid
+          git remote add origin https://example.invalid/attacker/repo.git
+          git add ANDROID_RECOVER_UPDATE.sh
+          git commit -qm fixture
+          set +e
+          bash ./ANDROID_RECOVER_UPDATE.sh >out.txt 2>&1
+          rc=$?
+          set -e
+          test "$rc" -eq 12
+          grep -Fq '공식 TCG 저장소' out.txt
+          ! grep -Fq '[복구] GitHub main 최신 업데이트 스크립트를 준비합니다' out.txt
+      - name: Prove normal updater skips an altered origin but keeps local startup available
+        shell: bash
+        run: |
+          set -euo pipefail
+          fixture="$(mktemp -d)"
+          cp ANDROID_UPDATE_AND_START.sh "$fixture/"
+          cat > "$fixture/START_TCG_UPDATER_ANDROID.sh" <<'SH'
+          #!/usr/bin/env bash
+          echo '[FIXTURE] local server start preserved'
+          exit 0
+          SH
+          chmod +x "$fixture/START_TCG_UPDATER_ANDROID.sh"
+          cd "$fixture"
+          git init -q -b main
+          git config user.name guard
+          git config user.email guard@example.invalid
+          git remote add origin https://example.invalid/attacker/repo.git
+          git add ANDROID_UPDATE_AND_START.sh START_TCG_UPDATER_ANDROID.sh
+          git commit -qm fixture
+          bash ./ANDROID_UPDATE_AND_START.sh >out.txt 2>&1
+          grep -Fq '원격 코드는 받지 않고 현재 검증된 로컬 버전으로 시작합니다.' out.txt
+          grep -Fq '[FIXTURE] local server start preserved' out.txt
       - name: Verify one-shot recovery bootstrap
         run: |
           grep -Fq 'git show origin/main:ANDROID_UPDATE_AND_START.sh' ANDROID_RECOVER_UPDATE.sh
