@@ -79,15 +79,18 @@ restore_runtime_snapshot() {
   snapshot="$1"
   manifest="$snapshot/manifest.tsv"
   [ -f "$manifest" ] || return 0
+  restore_ok=1
   while IFS='|' read -r kind changed; do
     [ -n "$changed" ] || continue
     if [ "$kind" = "FILE" ]; then
-      mkdir -p "$(dirname "$changed")" 2>/dev/null || true
-      cp -p "$snapshot/files/$changed" "$changed" 2>/dev/null || true
+      mkdir -p "$(dirname "$changed")" 2>/dev/null || restore_ok=0
+      rm -f "$changed" 2>/dev/null || restore_ok=0
+      cp -p "$snapshot/files/$changed" "$changed" 2>/dev/null || restore_ok=0
     elif [ "$kind" = "DELETED" ]; then
-      rm -f "$changed" 2>/dev/null || true
+      rm -f "$changed" 2>/dev/null || restore_ok=0
     fi
   done < "$manifest"
+  [ "$restore_ok" = "1" ]
 }
 
 backup_and_normalize_runtime() {
@@ -97,7 +100,8 @@ backup_and_normalize_runtime() {
   [ -n "$runtime_paths" ] || return 0
 
   stamp="$(date +%Y%m%d_%H%M%S 2>/dev/null || date +%s)"
-  snapshot="$RUNTIME_BACKUP_DIR/${stamp}_${before}_to_${remote_short}"
+  mkdir -p "$RUNTIME_BACKUP_DIR" || return 1
+  snapshot="$(mktemp -d "$RUNTIME_BACKUP_DIR/${stamp}_${before}_to_${remote_short}_XXXXXX")" || return 1
   mkdir -p "$snapshot/files" || return 1
   : > "$snapshot/manifest.tsv"
   printf 'from=%s\nto=%s\ncreated_at=%s\n' "$before" "$remote_short" "$stamp" > "$snapshot/meta.txt"
@@ -105,7 +109,11 @@ backup_and_normalize_runtime() {
   snapshot_ok=1
   while IFS= read -r changed; do
     [ -n "$changed" ] || continue
-    if [ -e "$changed" ]; then
+    if [ -L "$changed" ]; then
+      echo "[안전] 런타임 추적파일이 심볼릭 링크라 백업/업데이트를 중단합니다: $changed"
+      snapshot_ok=0
+      continue
+    elif [ -e "$changed" ]; then
       mkdir -p "$snapshot/files/$(dirname "$changed")" || snapshot_ok=0
       cp -p "$changed" "$snapshot/files/$changed" || snapshot_ok=0
       printf 'FILE|%s\n' "$changed" >> "$snapshot/manifest.tsv"
@@ -126,7 +134,9 @@ EOF
     [ -n "$changed" ] || continue
     if ! git restore --worktree --source=HEAD -- "$changed"; then
       echo "[안전] $changed 기준복원 실패 · 원본 자료를 되돌리고 업데이트를 중단합니다."
-      restore_runtime_snapshot "$snapshot"
+      if ! restore_runtime_snapshot "$snapshot"; then
+        fatal_restore_error=1
+      fi
       return 1
     fi
   done <<EOF
@@ -145,6 +155,7 @@ before="local"
 after="local"
 updated=0
 snapshot=""
+fatal_restore_error=0
 
 if command -v git >/dev/null 2>&1 && git rev-parse --is-inside-work-tree >/dev/null 2>&1; then
   git config --local core.fileMode false >/dev/null 2>&1 || true
@@ -224,8 +235,9 @@ EOF
       if [ -n "$runtime_dirty_paths" ]; then
         if ! backup_and_normalize_runtime "$runtime_dirty_paths" "$remote_short"; then
           can_update=0
-        else
-          snapshot="$(find "$RUNTIME_BACKUP_DIR" -mindepth 1 -maxdepth 1 -type d 2>/dev/null | sort | tail -n 1)"
+        elif [ -z "$snapshot" ] || [ ! -d "$snapshot" ]; then
+          echo "[안전] 방금 생성한 런타임 보존 경로를 확인할 수 없어 업데이트를 중단합니다."
+          can_update=0
         fi
       fi
 
@@ -254,8 +266,9 @@ EOF
           fi
         else
           echo "[안전] main fast-forward 실패. 보존한 로컬 런타임 자료를 원래 상태로 복원합니다."
-          if [ -n "$snapshot" ]; then
-            restore_runtime_snapshot "$snapshot"
+          if [ -n "$snapshot" ] && ! restore_runtime_snapshot "$snapshot"; then
+            echo "[오류] fast-forward 실패 후 런타임 보존본 복원까지 실패했습니다."
+            fatal_restore_error=1
           fi
           if [ -n "$bootstrap_dirty_paths" ]; then
             git restore --worktree --source=origin/main -- "$SELF_PATH" 2>/dev/null || true
@@ -274,6 +287,11 @@ if [ "$updated" = "1" ]; then
   echo "[OK] Android 코드 업데이트 완료: $before -> $after"
 else
   echo "[OK] Android 실행 빌드: $after"
+fi
+
+if [ "$fatal_restore_error" = "1" ]; then
+  echo "[오류] 로컬 런타임 자료를 안전하게 복원하지 못해 서버 시작을 중단합니다. 보존본을 확인하세요."
+  exit 2
 fi
 
 if [ ! -s "START_TCG_UPDATER_ANDROID.sh" ]; then

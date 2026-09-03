@@ -291,10 +291,51 @@ def _is_timeout_error(value) -> bool:
     ))
 
 
+_NON_TIMEOUT_FAILURE_CODES = frozenset({
+    'INTERNAL_CODE_ERROR','INTERNAL_SYNTAX_ERROR','PROCESS_EXECUTION_ERROR','PROCESS_CANCELLED',
+    'RESOURCE_EXHAUSTION','CONCURRENCY_CONFLICT','DATA_LIMIT_ERROR','DATA_INTEGRITY_ERROR',
+    'DATA_COMPRESSION_ERROR','STORAGE_CORRUPTION_ERROR','DEPENDENCY_ERROR','SECURITY_POLICY_BLOCK',
+    'NETWORK_HTTP_ERROR','NETWORK_CONNECTION_ERROR','NETWORK_TLS_ERROR','DATA_TIME_ERROR',
+    'DATA_ENCODING_ERROR','SOURCE_CONTENT_TYPE_ERROR','CONFIGURATION_ERROR','DATA_SCHEMA_ERROR',
+    'DATA_VALUE_ERROR','FILE_MISSING','FILE_PERMISSION_ERROR','FILE_PATH_ERROR',
+    'SOURCE_ACCESS_CHALLENGE','SOURCE_STRUCTURE_CHANGED','CAMERA_RUNTIME_ERROR',
+    'VISION_MEASUREMENT_ERROR','LINK_RUNTIME_ERROR',
+})
+_NON_TIMEOUT_FAILURE_MARKERS = (
+    'nameerror','unboundlocalerror','importerror','modulenotfounderror','attributeerror',
+    'syntaxerror','indentationerror','taberror','keyerror','jsondecodeerror','valueerror',
+    'typeerror','overflowerror','indexerror','assertionerror','zerodivisionerror',
+    'notimplementederror','filenotfounderror','permissionerror','permission denied',
+    'private ip','private dns','ssrf','security policy','security:','blocked',
+    '허용되지 않은','보안 차단','필수값 누락','구조 오류','권한 오류',
+    'status 401','http 401','status 403','http 403','status 429','http 429','retry-after',
+)
+
+
 def _timeout_only_errors(values) -> bool:
-    """True only when every recorded failure is a timeout-family failure."""
+    """Return True only for failures that are purely timeout-family failures.
+
+    A deterministic/code/security error can mention an earlier timeout in the same
+    diagnostic string.  Substring-only matching would incorrectly preserve stale
+    cache or inflate timeout learning for those mixed failures, so deterministic
+    markers and root-cause families are rejected before accepting a timeout.
+    """
     rows=[str(value).strip() for value in (values or []) if str(value).strip()]
-    return bool(rows) and all(_is_timeout_error(value) for value in rows)
+    if not rows:
+        return False
+    for value in rows:
+        lowered=value.lower()
+        if any(marker in lowered for marker in _NON_TIMEOUT_FAILURE_MARKERS):
+            return False
+        try:
+            analysis=auto_repair_engine.analyze_error(value)
+        except Exception:
+            return False
+        if analysis.get('code') in _NON_TIMEOUT_FAILURE_CODES:
+            return False
+        if not _is_timeout_error(value):
+            return False
+    return True
 
 
 def _deferred_timeout_eligible(result: dict) -> bool:
@@ -305,22 +346,13 @@ def _deferred_timeout_eligible(result: dict) -> bool:
     if not details:
         return False
     analyses=[auto_repair_engine.analyze_error(detail) for detail in details]
-    blocked={'INTERNAL_CODE_ERROR','SECURITY_POLICY_BLOCK','DATA_SCHEMA_ERROR',
-             'FILE_MISSING','FILE_PERMISSION_ERROR','DATA_VALUE_ERROR'}
-    if any(row.get('code') in blocked for row in analyses):
+    if any(row.get('code') in _NON_TIMEOUT_FAILURE_CODES for row in analyses):
         return False
     # analyze_error는 하나의 대표 원인만 반환한다. 예를 들어
     # "KeyError ... after timeout"은 timeout 규칙이 먼저 일치할 수 있으므로,
     # 장시간 재시도로 고칠 수 없는 혼합 오류 표지도 별도로 차단한다.
     lowered='\n'.join(details).lower()
-    blocked_markers=(
-        'nameerror','unboundlocalerror','importerror','modulenotfounderror','attributeerror',
-        'syntaxerror','keyerror','jsondecodeerror','valueerror','typeerror','overflowerror',
-        'filenotfounderror','permissionerror','permission denied','private ip','private dns',
-        'ssrf','security policy','security:','blocked','허용되지 않은','보안 차단',
-        '필수값 누락','구조 오류','권한 오류',
-    )
-    if any(marker in lowered for marker in blocked_markers):
+    if any(marker in lowered for marker in _NON_TIMEOUT_FAILURE_MARKERS):
         return False
     return any(row.get('code')=='NETWORK_TIMEOUT' or _is_timeout_error(detail)
                for row,detail in zip(analyses,details))
@@ -813,7 +845,7 @@ def run_all(trigger: str = "manual", selected_files=None, progress_callback=None
                      "duration_seconds":round(elapsed,2),"adaptive_timeout_seconds":timeout_s,
                      "last_attempt_timeout_seconds":attempt_timeout,
                      "collection_stage":"deferred-timeout" if is_deferred else "primary",
-                     "timeout_exhausted":bool(any(_is_timeout_error(value) for value in warnings))}
+                     "timeout_exhausted":_timeout_only_errors(warnings)}
                 if heal_plan.get('policy_id'):
                     row['self_heal_policy']=heal_plan['policy_id']
                     row['self_heal_action']=heal_plan.get('label')
@@ -832,9 +864,11 @@ def run_all(trigger: str = "manual", selected_files=None, progress_callback=None
                 break
             # 즉시 연타 대신 짧은 지수 백오프. 총 5분 예산에는 포함된다.
             time.sleep(min(10,max(_safe_int(heal_plan.get('retry_delay'),2,1,10),2**attempts)))
+        timeout_only_failure=False
         if row is None:
             elapsed=time.monotonic()-t0
-            _record_job_stat(stats,filename,elapsed,False,timed_out,error=' / '.join(errors))
+            timeout_only_failure=_timeout_only_errors(errors)
+            _record_job_stat(stats,filename,elapsed,False,timeout_only_failure,error=' / '.join(errors))
         if row is None:
             restored=False
             if persistent.exists(): _copy_snapshot(persistent,target); restored=True
@@ -850,7 +884,7 @@ def run_all(trigger: str = "manual", selected_files=None, progress_callback=None
                      "duration_seconds":round(elapsed,2),"adaptive_timeout_seconds":timeout_s,
                      "last_attempt_timeout_seconds":timeout_s,
                      "collection_stage":"deferred-timeout" if is_deferred else "primary",
-                     "timeout_exhausted":bool(any(_is_timeout_error(value) for value in errors))}
+                     "timeout_exhausted":timeout_only_failure}
             else:
                 row={"name":label,"file":filename,"ok":False,"status":"갱신 실패 · 정상 백업 없음",
                      "error":" / ".join(errors),"retry_count":max(0,attempts-1),"max_attempts":max_attempts,"auto_action":"반영 중단",
@@ -858,7 +892,7 @@ def run_all(trigger: str = "manual", selected_files=None, progress_callback=None
                      "duration_seconds":round(elapsed,2),"adaptive_timeout_seconds":timeout_s,
                      "last_attempt_timeout_seconds":timeout_s,
                      "collection_stage":"deferred-timeout" if is_deferred else "primary",
-                     "timeout_exhausted":bool(any(_is_timeout_error(value) for value in errors))}
+                     "timeout_exhausted":timeout_only_failure}
         emit(label,filename,'deferred-done' if is_deferred else 'done',row)
         if heal_plan.get('policy_id') and isinstance(row,dict):
             row.setdefault('self_heal_policy',heal_plan['policy_id'])
@@ -985,7 +1019,7 @@ def run_all(trigger: str = "manual", selected_files=None, progress_callback=None
                     'retry_count':max(0,attempts-1),
                     'auto_action':'기존 검증 후보자료 유지 · 다음 업데이트에서 보조 후보만 재수집',
                 }
-        _record_job_stat(stats,stat_key,elapsed,False,timed_out=last_timed_out,error=msg)
+        _record_job_stat(stats,stat_key,elapsed,False,timed_out=_timeout_only_errors(errors),error=msg)
         return {'ok':False,'error':msg,'duration_seconds':round(elapsed,2),
                 'adaptive_timeout_seconds':learned_timeout,'retry_count':max(0,attempts-1),
                 'auto_action':'오류 격리 · 기존 정상자료 유지 · 다음 실행 제한시간 자동 확대'}

@@ -20,6 +20,7 @@ echo "========================================"
 required_files="
 ANDROID_RECOVER_UPDATE.sh
 ANDROID_UPDATE_AND_START.sh
+ANDROID_AUTO_START_INSTALL.sh
 START_TCG_UPDATER_ANDROID.sh
 runtime_bundle_guard_v143.py
 runtime_optimization_hardening.py
@@ -51,6 +52,7 @@ echo "[1/9] 필수 파일 확인: OK"
 
 bash -n ANDROID_RECOVER_UPDATE.sh
 bash -n ANDROID_UPDATE_AND_START.sh
+bash -n ANDROID_AUTO_START_INSTALL.sh
 bash -n START_TCG_UPDATER_ANDROID.sh
 bash -n GRAPHIFY_UPDATE.sh
 bash -n SETUP_GRAPHIFY_TERMUX.sh
@@ -115,12 +117,22 @@ assert auto_update_all._timeout_only_errors(["TIMEOUT: source 30초 초과"])
 assert not auto_update_all._timeout_only_errors([
     "TIMEOUT: source 30초 초과", "ValueError: malformed data"
 ])
+assert not auto_update_all._timeout_only_errors(["ValueError: malformed data after timeout"])
+assert not auto_update_all._timeout_only_errors(["HTTPError: status 429 after timeout"])
+assert not auto_update_all._deferred_timeout_eligible({
+    "ok": False,
+    "timeout_exhausted": True,
+    "collection_errors": ["ValueError: malformed data after timeout"],
+})
 update_source = Path("auto_update_all.py").read_text(encoding="utf-8")
 assert "msg=f'{type(exc).__name__}: {exc}'; errors.append(msg)" not in update_source
 assert "msg=diagnostic_exception(exc,1200); errors.append(msg)" in update_source
 assert "errors=[auto_repair_engine.redact_sensitive(x,600) for x in (extra.get('errors') or [])" in update_source
 assert "if stat_key == '__integration__' and _timeout_only_errors(errors):" in update_source
 assert "'timeout_only_cache_fallback':True" in update_source
+assert '"timeout_exhausted":_timeout_only_errors(warnings)' in update_source
+assert "timeout_only_failure=_timeout_only_errors(errors)" in update_source
+assert "timed_out=_timeout_only_errors(errors)" in update_source
 
 # A recovered row may keep old diagnostics for display, but it must not be
 # quarantined again as a current failure. Use a temporary memory file so the
@@ -165,6 +177,13 @@ grep -Fxq '.codex/' .graphifyignore
 grep -Fxq '.agents/' .graphifyignore
 grep -Fxq 'AGENTS.md' .graphifyignore
 grep -Fq 'OFFICIAL_HTTPS="https://github.com/wlghks24/-tcg-grader.git"' ANDROID_UPDATE_AND_START.sh
+grep -Fq 'mktemp -d "$RUNTIME_BACKUP_DIR/' ANDROID_UPDATE_AND_START.sh
+grep -Fq 'if [ -L "$changed" ]; then' ANDROID_UPDATE_AND_START.sh
+grep -Fq 'fatal_restore_error=1' ANDROID_UPDATE_AND_START.sh
+if grep -F 'find "$RUNTIME_BACKUP_DIR"' ANDROID_UPDATE_AND_START.sh >/dev/null; then
+  echo "[오류] Android 런타임 복원본을 실제 생성 경로가 아닌 디렉터리 정렬로 다시 선택합니다."
+  exit 17
+fi
 grep -Fq "OFFICIAL_HTTPS='https://github.com/wlghks24/-tcg-grader.git'" ANDROID_RECOVER_UPDATE.sh
 grep -Fq "script-src 'self' 'sha256-" index.html
 if grep -F "script-src 'self' 'unsafe-inline'" index.html >/dev/null; then

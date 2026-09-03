@@ -166,6 +166,16 @@ def audit() -> dict:
                 issues.append("보조 후보수집 timeout 전용 캐시 fallback 판정이 비활성입니다")
             if update_all._timeout_only_errors(["TIMEOUT: source 30초 초과", "ValueError: malformed data"]):
                 issues.append("보조 후보수집 혼합 코드/데이터 오류가 stale cache 성공으로 숨겨질 수 있습니다")
+            if update_all._timeout_only_errors(["ValueError: malformed data after timeout"]):
+                issues.append("한 오류문자열 안의 결정적 오류+timeout 혼합 원인이 timeout 전용으로 오인됩니다")
+            if update_all._timeout_only_errors(["HTTPError: status 429 after timeout"]):
+                issues.append("429/Retry-After 오류가 timeout 전용 stale cache 경로로 잘못 승격됩니다")
+            if update_all._deferred_timeout_eligible({
+                "ok": False,
+                "timeout_exhausted": True,
+                "collection_errors": ["ValueError: malformed data after timeout"],
+            }):
+                issues.append("결정적 오류가 timeout 문구 때문에 장시간 분리 재수집 대상으로 잘못 승격됩니다")
         except Exception:
             issues.append("자동수집 재시도/복구오류 필터 계약 검사 실패")
 
