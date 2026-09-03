@@ -140,16 +140,24 @@ def _load_ignore_rules() -> tuple[list[tuple[bool, str, str]], list[str]]:
     return rules, errors
 
 
+def _strip_explicit_dot_slash(path: str) -> str:
+    """Remove only literal './' prefixes without destroying dotfile names."""
+    value = path
+    while value.startswith("./"):
+        value = value[2:]
+    return value
+
+
 def _path_candidates(path: str) -> list[str]:
     normalized = path.replace("\\", "/")
-    candidates = [normalized, normalized.lstrip("./")]
+    candidates = [normalized, _strip_explicit_dot_slash(normalized)]
     try:
         absolute = Path(normalized)
         if absolute.is_absolute():
             candidates.append(absolute.relative_to(ROOT).as_posix())
     except (OSError, ValueError):
         pass
-    # Stable de-duplication.
+    # Stable de-duplication. Do not use lstrip('./'): it corrupts .codex/.env paths.
     return list(dict.fromkeys(candidate for candidate in candidates if candidate))
 
 
@@ -166,7 +174,7 @@ def _rule_matches(path: str, pattern: str) -> bool:
     core = pattern.rstrip("/")
 
     for candidate in candidates:
-        clean = candidate.lstrip("./")
+        clean = _strip_explicit_dot_slash(candidate)
         parts = [part for part in clean.split("/") if part]
         basename = parts[-1] if parts else clean
 
