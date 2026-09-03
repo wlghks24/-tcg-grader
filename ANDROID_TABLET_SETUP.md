@@ -52,6 +52,28 @@ bash START_TCG_UPDATER_ANDROID.sh
 - 자동수집 상태: `http://127.0.0.1:8765/api/auto-status`
 - 최근 수집 보고: `http://127.0.0.1:8765/api/update-report`
 
+## 선택 기능: Graphify 코드 지도
+
+이 태블릿은 Mac/Windows가 아니라 **Android + Termux**이므로 Graphify도 Termux 방식으로 설치합니다. 프로젝트 폴더에서 아래 한 줄을 실행하면 Python 3.10+ 확인, `uv` 또는 `pipx` 설치 경로 선택, `graphify --version` 검증, OpenAI/Codex 프로젝트 연동, 최초 코드 지도 생성, Git 자동 갱신 훅 설치까지 순서대로 진행합니다.
+
+```sh
+bash SETUP_GRAPHIFY_TERMUX.sh
+```
+
+설치 후 코드 지도 갱신:
+
+```sh
+bash GRAPHIFY_UPDATE.sh
+```
+
+또는 Graphify CLI 직접 사용:
+
+```sh
+graphify update .
+```
+
+Codex 프로젝트에서는 Graphify 스킬 호출 문법이 `/graphify`가 아니라 `$graphify`입니다. 자세한 초보자용 설명과 PATH 오류 해결은 `GRAPHIFY_CHATGPT_GUIDE.md`를 확인하세요.
+
 ## 태블릿을 켤 때 자동 실행
 
 1. F-Droid에서 **Termux:Boot**를 설치합니다.
