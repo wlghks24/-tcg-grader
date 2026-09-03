@@ -60,9 +60,9 @@ def _push_branch_allowlist(text: str) -> set[str] | None:
     block=_push_block(text)
     if block is None:
         return None
-    if re.search(r"(?m)^[ \t]*branches-ignore[ \t]*:",block):
+    if re.search(r"(?m)^[ \t]*['\"]?branches-ignore['\"]?[ \t]*:",block):
         return set()
-    match=re.search(r"(?m)^[ \t]*branches[ \t]*:[ \t]*(.*)$",block)
+    match=re.search(r"(?m)^[ \t]*['\"]?branches['\"]?[ \t]*:[ \t]*(.*)$",block)
     if not match:
         return set()
     tail=match.group(1).split('#',1)[0].strip()
@@ -73,7 +73,7 @@ def _push_branch_allowlist(text: str) -> set[str] | None:
         values.append(tail.strip("'\""))
     else:
         lines=block.splitlines()
-        start=next((i for i,line in enumerate(lines) if re.match(r"^[ \t]*branches[ \t]*:[ \t]*$",line)),None)
+        start=next((i for i,line in enumerate(lines) if re.match(r"^[ \t]*['\"]?branches['\"]?[ \t]*:[ \t]*$",line)),None)
         if start is not None:
             for line in lines[start+1:]:
                 m=re.match(r"^[ \t]*-[ \t]*([^#]+?)(?:[ \t]+#.*)?$",line)
@@ -130,6 +130,15 @@ class WorkflowHardenerTests(unittest.TestCase):
             "      - run: git push origin HEAD:feature/grading-self-learning-v2\n",
         )
         self.assertEqual(hardening.patch_write_workflow_push_scope(text,label='synthetic'),text)
+
+    def test_quoted_branches_allowlist_is_preserved(self):
+        text=self._workflow("  push:\n    \"branches\": [main]\n")
+        self.assertEqual(hardening.patch_write_workflow_push_scope(text,label='synthetic'),text)
+
+    def test_quoted_branches_ignore_is_rejected(self):
+        text=self._workflow("  push:\n    'branches-ignore': [experimental]\n")
+        with self.assertRaises(RuntimeError):
+            hardening.patch_write_workflow_push_scope(text,label='synthetic')
 
     def test_unscoped_write_push_is_restricted_to_main(self):
         text=self._workflow("  push:\n    paths:\n      - app.py\n")
@@ -326,6 +335,33 @@ jobs:
                 findings=[]
                 security_self_audit.scan_workflow(workflow,findings,'.github/workflows/synthetic.yml')
                 self.assertTrue(any(item.get('rule')=='GHA_CONTENTS_WRITE' for item in findings),findings)
+
+    def test_security_audit_rejects_unscoped_write_push(self):
+        workflow=(
+            "name: synthetic\n"
+            "on:\n"
+            "  push:\n"
+            "    paths: [app.py]\n"
+            "permissions: {contents: write}\n"
+        )
+        findings=[]
+        security_self_audit.scan_workflow(workflow,findings,'.github/workflows/synthetic.yml')
+        self.assertTrue(
+            any(item.get('rule')=='GHA_WRITE_PUSH_SCOPE' and item.get('severity')=='high' for item in findings),
+            findings,
+        )
+
+    def test_security_audit_accepts_scoped_write_push(self):
+        workflow=(
+            "name: synthetic\n"
+            "on:\n"
+            "  push:\n"
+            "    branches: [main]\n"
+            "permissions: {contents: write}\n"
+        )
+        findings=[]
+        security_self_audit.scan_workflow(workflow,findings,'.github/workflows/synthetic.yml')
+        self.assertFalse(any(item.get('rule')=='GHA_WRITE_PUSH_SCOPE' for item in findings),findings)
 
     def test_security_audit_detects_aliased_shell_execution(self):
         samples=(

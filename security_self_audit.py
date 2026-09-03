@@ -18,6 +18,7 @@ from pathlib import Path
 import re
 from typing import Any
 
+import security_hardening_apply as workflow_hardening
 from safe_runtime import atomic_write_json, safe_read_text
 
 ROOT = Path(__file__).resolve().parent
@@ -165,6 +166,20 @@ def scan_workflow(text: str, findings: list[dict[str, Any]], rel: str) -> None:
             "Write permission is limited to trusted push/manual/scheduled automation; keep the trigger narrow."
         )
         add(findings, "GHA_CONTENTS_WRITE", severity, rel, write_lines[0], message, "contents: write")
+        try:
+            hardened = workflow_hardening.patch_write_workflow_push_scope(text, label=rel)
+        except RuntimeError as exc:
+            add(
+                findings, "GHA_WRITE_PUSH_SCOPE", "high", rel, write_lines[0],
+                "Write-permission workflow has an unsafe or ambiguous push trigger.", str(exc),
+            )
+        else:
+            if hardened != text:
+                add(
+                    findings, "GHA_WRITE_PUSH_SCOPE", "high", rel, write_lines[0],
+                    "Write-permission push workflow is not restricted by an explicit finite branch allowlist.",
+                    "contents: write + unscoped push",
+                )
     for lineno, line in enumerate(text.splitlines(), 1):
         match = re.search(r"\buses:\s*([^\s#]+)", line)
         if match:
