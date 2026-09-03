@@ -8,8 +8,10 @@ module only refreshes social/event discovery so newly announced movies,
 collaborations, promos, reward/giveaway notices and events can reach
 social_event_candidates.json much sooner. It also preserves narrowly scoped
 manual official evidence when a fresh announcement is reported before search
-engines/API feeds have indexed it. v142 prevents unverified candidates from
-poisoning persistent host/term learning.
+engines/API feeds have indexed it.
+
+v144 preloads verified miss-recovery learning before each scan, broadens
+cross-region watch discovery, and keeps all v142 anti-poisoning rules.
 """
 from __future__ import annotations
 
@@ -19,6 +21,9 @@ import time
 from pathlib import Path
 
 import collection_learning_hardening_v142 as hardening
+import collection_learning_hardening_v144 as miss_hardening
+import event_gap_learning
+import event_source_overlay_v144 as source_overlay
 import social_event_discovery
 from safe_runtime import atomic_write_json, env_int, safe_read_text
 
@@ -42,6 +47,8 @@ _RUN_LOCK = threading.Lock()
 
 # Keep standalone executions identical to the main updater runtime.
 hardening.apply()
+source_overlay.apply()
+miss_hardening.apply()
 
 
 def _text(row: dict) -> str:
@@ -134,6 +141,27 @@ def _merge_manual_evidence(result: dict) -> tuple[dict, int]:
     return payload, added
 
 
+def _prelearn_verified_misses() -> dict:
+    try:
+        learner = event_gap_learning.EventGapLearner()
+        learned = miss_hardening.learn_verified_miss_evidence(learner)
+        learner.save()
+        report = learner.report()
+        return {
+            "learned_this_run": int(learned),
+            "learned_terms": int(report.get("learned_terms") or 0),
+            "learned_region_hints": int(report.get("learned_region_hints") or 0),
+            "verified_miss_recoveries": int(report.get("verified_miss_recoveries") or 0),
+        }
+    except (OSError, ValueError, TypeError, UnicodeError, json.JSONDecodeError, AttributeError):
+        return {
+            "learned_this_run": 0,
+            "learned_terms": 0,
+            "learned_region_hints": 0,
+            "verified_miss_recoveries": 0,
+        }
+
+
 def run_once(shared_lock=None) -> dict:
     """Refresh only event/social candidates and return a small health summary."""
     if not _RUN_LOCK.acquire(blocking=False):
@@ -141,6 +169,9 @@ def run_once(shared_lock=None) -> dict:
     started = time.monotonic()
     try:
         hardening.apply()
+        source_overlay.apply()
+        miss_hardening.apply()
+        miss_learning = _prelearn_verified_misses()
         if shared_lock is None:
             result = social_event_discovery.main()
             result, manual_added = _merge_manual_evidence(result)
@@ -161,11 +192,16 @@ def run_once(shared_lock=None) -> dict:
             "ok": bool(result.get("fresh_collection_ok", False)),
             "degraded": bool(result.get("degraded", False)),
             "event_collection_patch": hardening.PATCH_ID,
+            "miss_recovery_patch": miss_hardening.PATCH_ID,
             "item_count": len(items),
             "movie_candidate_count": movie_count,
             "reward_candidate_count": reward_count,
             "manual_evidence_count": int(result.get("manual_evidence_count") or 0),
             "manual_evidence_added_this_run": manual_added,
+            "verified_misses_learned_this_run": int(miss_learning.get("learned_this_run") or 0),
+            "learned_search_terms": int(miss_learning.get("learned_terms") or 0),
+            "learned_region_hints": int(miss_learning.get("learned_region_hints") or 0),
+            "verified_miss_recoveries": int(miss_learning.get("verified_miss_recoveries") or 0),
             "official_social_candidate_count": int(result.get("official_social_candidate_count") or 0),
             "cross_checked_count": int(result.get("cross_checked_count") or 0),
             "error_count": len(result.get("collection_errors", []) or []),
@@ -176,6 +212,7 @@ def run_once(shared_lock=None) -> dict:
             "ok": False,
             "degraded": True,
             "event_collection_patch": hardening.PATCH_ID,
+            "miss_recovery_patch": miss_hardening.PATCH_ID,
             "error": f"{type(exc).__name__}: event quick scan failed",
             "elapsed_seconds": round(time.monotonic() - started, 2),
         }
