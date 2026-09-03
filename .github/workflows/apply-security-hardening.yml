@@ -16,6 +16,8 @@ on:
       - 'test_five_company_verification_policy.py'
       - 'index.html'
       - 'ai_code_improver.py'
+      - 'auto_repair_engine.py'
+      - 'collector_self_healing.py'
       - 'tcg_code_repair_learning.py'
       - 'GRAPHIFY_SELF_HEAL.py'
       - 'GRAPHIFY_AUDIT.py'
@@ -50,7 +52,28 @@ jobs:
           python csp_hash_hardening.py
       - name: Compile security-sensitive Python
         run: |
-          python -m py_compile tcg_updater.py safe_runtime.py server_security_guard.py grading_cert_verifier.py security_hardening_apply.py security_self_audit.py csp_hash_hardening.py repository_integrity_guard.py test_csp_hash_hardening.py
+          python -m py_compile tcg_updater.py safe_runtime.py server_security_guard.py grading_cert_verifier.py security_hardening_apply.py security_self_audit.py csp_hash_hardening.py repository_integrity_guard.py auto_repair_engine.py collector_self_healing.py tcg_code_repair_learning.py runtime_optimization_hardening.py test_csp_hash_hardening.py
+      - name: Verify bounded self-learning safety
+        run: |
+          python tcg_code_repair_learning.py --self-test
+          python runtime_optimization_hardening.py --check
+          python - <<'PY'
+          import collector_self_healing as collector
+          import tcg_code_repair_learning as repair
+          collector_contracts = collector.safety_contract_status()
+          repair_contracts = repair.safety_contract_status()
+          assert collector_contracts and all(collector_contracts.values()), collector_contracts
+          assert repair_contracts and all(repair_contracts.values()), repair_contracts
+          assert set(repair._required_check_ids('INTERNAL_CODE_ERROR')) == {
+              'graphify_map_review', 'python_compile', 'collector_smoke', 'runtime_bundle_guard'
+          }
+          safety = repair._default_memory()['safety']
+          assert safety['learned_text_executable'] is False
+          assert safety['source_rewrite'] is False
+          assert safety['git_write'] is False
+          assert safety['unverified_data_promotion'] is False
+          print('bounded self-learning security contracts: OK')
+          PY
       - name: Run repository integrity guard
         run: python repository_integrity_guard.py
       - name: Run security regression tests
