@@ -23,6 +23,9 @@ ANDROID_UPDATE_AND_START.sh
 ANDROID_AUTO_START_INSTALL.sh
 START_TCG_UPDATER_ANDROID.sh
 runtime_bundle_guard_v143.py
+collection_learning_hardening_v144.py
+event_source_overlay_v144.py
+event_source_expansion_v145.py
 runtime_optimization_hardening.py
 safe_runtime.py
 auto_repair_engine.py
@@ -68,7 +71,10 @@ python -m py_compile \
   csp_hash_hardening.py \
   GRAPHIFY_SELF_HEAL.py \
   GRAPHIFY_AUDIT.py \
-  runtime_bundle_guard_v143.py
+  runtime_bundle_guard_v143.py \
+  collection_learning_hardening_v144.py \
+  event_source_overlay_v144.py \
+  event_source_expansion_v145.py
 echo "[3/9] 핵심 Python 문법/컴파일: OK"
 
 python runtime_optimization_hardening.py --check >/dev/null
@@ -88,6 +94,7 @@ import auto_update_all
 import collector_self_healing
 import tcg_code_repair_learning
 import runtime_bundle_guard_v143
+import event_source_expansion_v145
 import GRAPHIFY_AUDIT
 import GRAPHIFY_SELF_HEAL
 
@@ -98,6 +105,13 @@ assert "SOURCE_STRUCTURE_CHANGED" in collector_self_healing.QUARANTINE_CODES
 assert callable(getattr(collector_self_healing, "_plan_from_row", None))
 assert "collector_self_healing.py" in runtime_bundle_guard_v143.REQUIRED_FILES
 assert "tcg_code_repair_learning.py" in runtime_bundle_guard_v143.REQUIRED_FILES
+source_expansion=event_source_expansion_v145.apply()
+assert source_expansion.get('patch') == 145
+assert source_expansion.get('static_target_cells') == 9
+assert source_expansion.get('scoped_learned_host_queries') is True
+assert source_expansion.get('trust_auto_promotion') is False
+assert float(source_expansion.get('unverified_source_learning_weight',-1)) == 0.0
+assert int(source_expansion.get('max_hosts_per_scoped_query') or 0) <= 8
 recovered = {
     "file": "releases.json",
     "ok": True,

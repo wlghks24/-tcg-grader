@@ -23,6 +23,7 @@ import collection_learning_hardening_v142 as hardening
 import collection_learning_hardening_v144 as miss_hardening
 import event_gap_learning
 import event_source_overlay_v144 as source_overlay
+import event_source_expansion_v145 as source_expansion
 import social_event_discovery
 from safe_runtime import atomic_write_json, env_int, safe_read_text
 
@@ -132,6 +133,7 @@ def _learn_priority_rewards() -> int:
 def _run_locked(started: float) -> dict:
     hardening.apply()
     source_overlay.apply()
+    source_expansion.apply()
     miss_hardening.apply()
     miss_learning = _prelearn_verified_misses()
 

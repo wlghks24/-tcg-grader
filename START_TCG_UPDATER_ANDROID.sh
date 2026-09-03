@@ -192,6 +192,9 @@ for required in \
   event_collection_hardening_v140.py \
   event_collection_hardening_v141.py \
   collection_learning_hardening_v142.py \
+  collection_learning_hardening_v144.py \
+  event_source_overlay_v144.py \
+  event_source_expansion_v145.py \
   event_gap_learning.py \
   event_priority_watch.py \
   event_quick_watch.py \
@@ -216,15 +219,21 @@ fi
 # storage and dual front/back manual upload.
 if ! python - <<'PY' >/dev/null 2>&1
 import collection_learning_hardening_v142 as learning_guard
+import event_source_expansion_v145 as source_expansion
 import runtime_bundle_guard_v143 as bundle_guard
 import manual_collection_mode as manual_mode
 import graded_photo_manual_pair_queue as pair_queue
 import legacy_ocr_registry_cleanup_v149 as legacy_cleanup
 learning=learning_guard.apply()
+expansion=source_expansion.apply()
 bundle=bundle_guard.require_compatible()
 contracts=bundle.get('contracts',{})
 mode=manual_mode.status()
 assert int(learning.get('patch') or 0) == 142
+assert int(expansion.get('patch') or 0) == 145
+assert expansion.get('scoped_learned_host_queries') is True
+assert expansion.get('trust_auto_promotion') is False
+assert float(expansion.get('unverified_source_learning_weight',-1)) == 0.0
 assert int(bundle.get('patch') or 0) == 143
 assert bundle.get('missing_file_count') == 0
 assert bundle.get('issue_count') == 0

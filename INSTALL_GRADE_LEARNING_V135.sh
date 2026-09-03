@@ -56,6 +56,9 @@ PY_RUNTIME_FILES=(
   event_collection_hardening_v140.py
   event_collection_hardening_v141.py
   collection_learning_hardening_v142.py
+  collection_learning_hardening_v144.py
+  event_source_overlay_v144.py
+  event_source_expansion_v145.py
   event_gap_learning.py
   event_priority_watch.py
   event_quick_watch.py
@@ -68,6 +71,8 @@ PY_RUNTIME_FILES=(
   official_direct_discovery.py
   official_sitemap_discovery.py
   test_event_quick_watch.py
+  test_event_miss_learning_v144.py
+  test_event_source_expansion_v145.py
   test_collection_learning_hardening_v142.py
   test_runtime_bundle_guard_v143.py
   test_verified_grade_learning_v135.py
@@ -111,6 +116,8 @@ python -m py_compile "${PY_RUNTIME_FILES[@]}"
 
 python -m unittest -v \
   test_event_quick_watch.py \
+  test_event_miss_learning_v144.py \
+  test_event_source_expansion_v145.py \
   test_collection_learning_hardening_v142.py \
   test_grading_cert_verifier.py \
   test_manual_collection_mode.py \
@@ -157,12 +164,18 @@ PY
 python - <<'PY'
 import json
 import collection_learning_hardening_v142 as learning_guard
+import event_source_expansion_v145 as source_expansion
 import runtime_bundle_guard_v143 as bundle_guard
 import event_priority_watch, event_quick_watch
 status=learning_guard.apply()
+expansion=source_expansion.apply()
 bundle=bundle_guard.require_compatible()
 contracts=bundle.get('contracts',{})
 assert int(status.get('patch') or 0) == 142, status
+assert int(expansion.get('patch') or 0) == 145, expansion
+assert expansion.get('scoped_learned_host_queries') is True, expansion
+assert expansion.get('trust_auto_promotion') is False, expansion
+assert float(expansion.get('unverified_source_learning_weight',-1)) == 0.0, expansion
 assert int(bundle.get('patch') or 0) == 143, bundle
 assert bundle.get('missing_file_count') == 0, bundle
 assert bundle.get('issue_count') == 0, bundle

@@ -44,7 +44,7 @@ class EventSourceExpansionV145Tests(unittest.TestCase):
     def test_verified_nike_recovery_teaches_source_targets_without_relabeling_official(self):
         targets = expansion._verified_file_targets()
         onepiece_jp = targets.get(("원피스 카드", "JP"), set())
-        self.assertIn("shonenjump.com", onepiece_jp)
+        self.assertIn("shonenjump.com", {host.removeprefix("www.") for host in onepiece_jp})
         self.assertNotIn("one-piece.com", onepiece_jp)
         self.assertFalse(multi_route_event_discovery._official_for("원피스 카드", "JP", "shonenjump.com"))
 

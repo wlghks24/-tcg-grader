@@ -48,6 +48,9 @@ REQUIRED_FILES = (
     "search_method_learning.py",
     "adaptive_collection_learner.py",
     "collection_learning_hardening_v142.py",
+    "collection_learning_hardening_v144.py",
+    "event_source_overlay_v144.py",
+    "event_source_expansion_v145.py",
     "event_priority_watch.py",
     "event_quick_watch.py",
     "manual_graded_photo_registration.py",
@@ -113,6 +116,7 @@ def audit() -> dict:
         "multi_channel_agent",
         "search_method_learning",
         "collection_learning_hardening_v142",
+        "event_source_expansion_v145",
         "manual_official_proof",
         "manual_collection_mode",
         "graded_photo_manual_pair_queue",
@@ -243,6 +247,25 @@ def audit() -> dict:
                 issues.append("미검증 후보의 지속학습 가중치가 0이 아닙니다")
         except Exception:
             issues.append("v142 자료수집 자가학습 보안 계약 검사 실패")
+
+    expansion = modules.get("event_source_expansion_v145")
+    if expansion is not None:
+        try:
+            status = expansion.apply()
+            if int(status.get("patch") or 0) != 145:
+                issues.append("행사 수집원 확장 패치가 v145가 아닙니다")
+            if int(status.get("static_target_cells") or 0) != 9:
+                issues.append("수집원 확장이 3게임×3국가 전체에 적용되지 않았습니다")
+            if status.get("scoped_learned_host_queries") is not True:
+                issues.append("학습 출처가 게임+국가 범위로 제한되지 않는 구버전입니다")
+            if float(status.get("unverified_source_learning_weight", -1)) != 0.0:
+                issues.append("미검증 수집원 학습 가중치가 0이 아닙니다")
+            if status.get("trust_auto_promotion") is not False:
+                issues.append("학습 수집원이 공식 신뢰도로 자동승격될 수 있습니다")
+            if int(status.get("max_hosts_per_scoped_query") or 0) > 8:
+                issues.append("수집원 확장 쿼리가 과도한 사이트를 동시에 조회합니다")
+        except Exception:
+            issues.append("v145 수집원 확장/자가학습 계약 검사 실패")
 
     manual = modules.get("manual_official_proof")
     if manual is not None:

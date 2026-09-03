@@ -26,6 +26,7 @@ import datetime as dt
 import ipaddress
 import json
 import math
+import os
 import re
 import urllib.parse
 from pathlib import Path
@@ -240,7 +241,11 @@ def _verified_file_targets() -> dict[tuple[str, str], set[str]]:
             bucket = out.setdefault(key, set())
             for value in _source_values(row):
                 host = _host(value)
-                if host and host not in EXCLUDED_LEARNED_HOSTS:
+                if (
+                    host
+                    and host not in EXCLUDED_LEARNED_HOSTS
+                    and not multi_route_event_discovery._official_for(game, region, host)
+                ):
                     bucket.add(host)
     return out
 
@@ -383,6 +388,7 @@ def _regional_name(game: str, region: str) -> str:
 
 def _v145_plan_queries(self, keyword: str, max_queries: int | None = None) -> list[dict]:
     rows = [dict(row) for row in _ORIGINAL_ADAPTIVE_PLAN(self, keyword, max_queries=max_queries)]
+    original_count = len(rows)
     game = adaptive_collection_learner.canonical_game(keyword)
     if game not in adaptive_collection_learner.GAME_CONFIG:
         return rows
@@ -403,17 +409,17 @@ def _v145_plan_queries(self, keyword: str, max_queries: int | None = None) -> li
             "source_scope_verified": True,
             "learned_score": round(float(score), 4),
         }
-        budget = max_queries or (5 if ("com.termux" in __import__("os").environ.get("PREFIX", "") or "ANDROID_ROOT" in __import__("os").environ) else 8)
+        budget = max_queries or (5 if ("com.termux" in os.environ.get("PREFIX", "") or "ANDROID_ROOT" in os.environ) else 8)
         budget = max(3, min(12, int(budget)))
         if removed or len(rows) < budget:
             rows.append(candidate)
         elif budget >= 6:
             # Replace only a low-priority exploration row; never remove the three
             # regional baselines or a reserved social/coverage-gap query.
-            replace = next((i for i in range(len(rows) - 1, 2, -1) if rows[i].get("family") == "exploration"), None)
+            replace = next((i for i in range(len(rows) - 1, 2, -1) if rows[i].get("family") in {"exploration", "official-site"}), None)
             if replace is not None:
                 rows[replace] = candidate
-    return rows[: max(1, len(_ORIGINAL_ADAPTIVE_PLAN(self, keyword, max_queries=max_queries)))]
+    return rows[: max(1, original_count)]
 
 
 def _site_host_from_query(query: str) -> str:
