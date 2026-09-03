@@ -165,9 +165,9 @@ def patch_routes():
 def patch_social():
     p = "social_event_discovery.py"
     t = read(p)
-    t = append_string_dict_line(t, '    "ko": "', "대회결과 결과발표 우승자발표 최종순위 우승덱 추첨판매 구매제한 본인인증 가상대기열 점검 서비스장애 로그인불가 복구완료", "social terms KR")
-    t = append_string_dict_line(t, '    "ja": "', "大会結果 結果発表 優勝者発表 最終順位 優勝デッキ 抽選販売 購入制限 本人認証 メンテナンス 障害 不具合 復旧", "social terms JP")
-    t = append_string_dict_line(t, '    "en": "', "tournament-results event-results top-finishers final-standings winning-deck lottery-sale purchase-limit identity-verification virtual-queue maintenance service-outage login-issue resolved", "social terms EN")
+    t = append_string_dict_line(t, '    "ko": "행사 이벤트', "대회결과 결과발표 우승자발표 최종순위 우승덱 추첨판매 구매제한 본인인증 가상대기열 점검 서비스장애 로그인불가 복구완료", "social terms KR")
+    t = append_string_dict_line(t, '    "ja": "イベント チャレンジ', "大会結果 結果発表 優勝者発表 最終順位 優勝デッキ 抽選販売 購入制限 本人認証 メンテナンス 障害 不具合 復旧", "social terms JP")
+    t = append_string_dict_line(t, '    "en": "event challenge', "tournament-results event-results top-finishers final-standings winning-deck lottery-sale purchase-limit identity-verification virtual-queue maintenance service-outage login-issue resolved", "social terms EN")
     t = one(t,
         '("promo", re.compile(r"프로모|',
         '("promo", re.compile(r"대회결과|결과발표|우승자발표|최종순위|우승덱|추첨판매|구매제한|본인인증|가상대기열|점검|서비스장애|로그인불가|복구완료|大会結果|結果発表|優勝者発表|最終順位|優勝デッキ|抽選販売|購入制限|本人認証|メンテナンス|障害|不具合|復旧|tournament results?|event results?|top finishers?|final standings?|winning deck|lottery sale|purchase limit|identity verification|virtual queue|maintenance|service outage|login issue|resolved|프로모|',
