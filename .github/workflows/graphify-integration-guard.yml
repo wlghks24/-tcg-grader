@@ -7,6 +7,7 @@ on:
       - 'GRAPHIFY_UPDATE.sh'
       - 'GRAPHIFY_CHATGPT_GUIDE.md'
       - '.graphifyignore'
+      - 'ANDROID_UPDATE_AND_START.sh'
       - '.github/workflows/graphify-integration-guard.yml'
   workflow_dispatch:
 permissions:
@@ -24,6 +25,7 @@ jobs:
         run: |
           bash -n SETUP_GRAPHIFY_TERMUX.sh
           bash -n GRAPHIFY_UPDATE.sh
+          bash -n ANDROID_UPDATE_AND_START.sh
       - name: Verify required Graphify workflow commands
         run: |
           grep -Fq 'graphify --version' SETUP_GRAPHIFY_TERMUX.sh
@@ -34,10 +36,49 @@ jobs:
           grep -Fq 'graphify update . --force' GRAPHIFY_UPDATE.sh
           grep -Fq 'graphify extract . --code-only' GRAPHIFY_UPDATE.sh
           grep -Fq 'graphify-out/' .graphifyignore
-      - name: Verify Graphify CLI package and command shape
+      - name: Install verified Graphify CLI line
         run: |
           python -m pip install --disable-pip-version-check 'graphifyy>=0.9.38,<1'
           graphify --version
           graphify hook --help >/dev/null
           graphify update --help >/dev/null
           graphify extract --help >/dev/null
+          graphify codex install --help >/dev/null
+          graphify agents install --help >/dev/null
+      - name: Exercise project install, map build, refresh, and hooks
+        shell: bash
+        run: |
+          set -euo pipefail
+          tmp="$(mktemp -d)"
+          trap 'rm -rf "$tmp"' EXIT
+          cd "$tmp"
+          git init -q
+          git config user.name graphify-guard
+          git config user.email graphify-guard@example.invalid
+          cat > sample.py <<'PY'
+          def card_grade(score: float) -> str:
+              return "high" if score >= 9.0 else "review"
+
+          def summarize(score: float) -> str:
+              return card_grade(score)
+          PY
+          git add sample.py
+          git commit -qm initial
+
+          graphify codex install --project
+          graphify agents install --project
+          test -f AGENTS.md
+
+          graphify extract . --code-only
+          test -s graphify-out/graph.json
+          test -s graphify-out/GRAPH_REPORT.md
+          test -s graphify-out/graph.html
+
+          printf '\n# changed\n' >> sample.py
+          graphify update . --force
+          test -s graphify-out/graph.json
+
+          graphify hook install
+          graphify hook status
+          test -x .git/hooks/post-commit
+          test -x .git/hooks/post-checkout
