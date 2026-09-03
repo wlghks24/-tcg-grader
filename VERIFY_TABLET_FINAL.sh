@@ -82,6 +82,7 @@ import json
 import tempfile
 from pathlib import Path
 
+import auto_update_all
 import collector_self_healing
 import tcg_code_repair_learning
 import runtime_bundle_guard_v143
@@ -104,6 +105,16 @@ recovered = {
     "self_heal_policy": "transient_balanced",
 }
 assert tcg_code_repair_learning._details(recovered) == []
+assert auto_update_all._result_error_details({
+    "ok": True,
+    "collection_errors": ["TIMEOUT: historical diagnostic"],
+    "remaining_collection_errors": [],
+    "error": "TIMEOUT: historical diagnostic",
+}) == []
+assert auto_update_all._timeout_only_errors(["TIMEOUT: source 30초 초과"])
+assert not auto_update_all._timeout_only_errors([
+    "TIMEOUT: source 30초 초과", "ValueError: malformed data"
+])
 
 # A recovered row may keep old diagnostics for display, but it must not be
 # quarantined again as a current failure. Use a temporary memory file so the
