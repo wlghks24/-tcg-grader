@@ -1,0 +1,88 @@
+name: Code Repair Learning Guard
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'tcg_code_repair_learning.py'
+      - 'collector_self_healing.py'
+      - 'auto_repair_engine.py'
+      - 'safe_runtime.py'
+      - '.gitignore'
+      - '.github/workflows/code-repair-learning-guard.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Compile bounded repair modules
+        run: |
+          python -m py_compile \
+            auto_repair_engine.py \
+            safe_runtime.py \
+            collector_self_healing.py \
+            tcg_code_repair_learning.py
+
+      - name: Exercise TCG-wide repair learning self-test
+        run: |
+          python tcg_code_repair_learning.py --self-test
+
+      - name: Prove collector structural failures feed code-repair learning
+        run: |
+          rm -f tcg_code_repair_learning.json tcg_code_repair_candidates.json tcg_code_repair_report.json
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          import collector_self_healing
+
+          detail = "NameError: name 'parse_release_card' is not defined"
+          report = {
+              "results": [{
+                  "file": "releases.json",
+                  "ok": False,
+                  "error": detail,
+                  "collection_errors": [detail],
+                  "remaining_collection_errors": [detail],
+              }]
+          }
+          result = collector_self_healing.observe(report, path=Path('/tmp/collector-self-heal-memory.json'))
+          assert result['quarantined_for_code_repair'] >= 1, result
+          learned = result['code_repair_learning']
+          assert learned['ok'] is True, learned
+          assert learned['open_candidates'] >= 1, learned
+
+          candidates = json.loads(Path('tcg_code_repair_candidates.json').read_text())
+          item = candidates['items'][-1]
+          assert item['file'] == 'releases.json', item
+          assert item['error_code'] == 'INTERNAL_CODE_ERROR', item
+          assert item['source_auto_rewrite_allowed'] is False, item
+          assert item['requires_verified_tests_before_release'] is True, item
+          assert 'graphify_map_review' in item['verification_check_ids'], item
+          PY
+
+      - name: Prove learned text cannot become executable repair
+        run: |
+          python - <<'PY'
+          import tcg_code_repair_learning as learning
+          assert learning._default_memory()['safety']['learned_text_executable'] is False
+          assert learning._default_memory()['safety']['source_rewrite'] is False
+          assert learning._default_memory()['safety']['git_write'] is False
+          assert 'rm_everything' not in learning.VERIFICATION_CHECKS
+          assert 'SOURCE_STRUCTURE_CHANGED' in learning.CODE_REPAIR_CODES
+          PY
+
+      - name: Verify device-local learning files remain untracked
+        run: |
+          grep -Fq 'tcg_code_repair_learning.json' .gitignore
+          grep -Fq 'tcg_code_repair_candidates.json' .gitignore
+          grep -Fq 'tcg_code_repair_report.json' .gitignore
