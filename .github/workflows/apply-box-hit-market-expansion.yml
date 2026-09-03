@@ -2,6 +2,7 @@ name: Apply BOX HIT market expansion
 
 on:
   push:
+    branches: [main]
     paths:
       - 'box_hit_market_discovery.py'
       - 'market_catalog_expander.js'
