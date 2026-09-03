@@ -115,6 +115,12 @@ assert auto_update_all._timeout_only_errors(["TIMEOUT: source 30초 초과"])
 assert not auto_update_all._timeout_only_errors([
     "TIMEOUT: source 30초 초과", "ValueError: malformed data"
 ])
+update_source = Path("auto_update_all.py").read_text(encoding="utf-8")
+assert "msg=f'{type(exc).__name__}: {exc}'; errors.append(msg)" not in update_source
+assert "msg=diagnostic_exception(exc,1200); errors.append(msg)" in update_source
+assert "errors=[auto_repair_engine.redact_sensitive(x,600) for x in (extra.get('errors') or [])" in update_source
+assert "if stat_key == '__integration__' and _timeout_only_errors(errors):" in update_source
+assert "'timeout_only_cache_fallback':True" in update_source
 
 # A recovered row may keep old diagnostics for display, but it must not be
 # quarantined again as a current failure. Use a temporary memory file so the
