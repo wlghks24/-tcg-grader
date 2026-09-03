@@ -205,14 +205,24 @@ def _safe_filename(value: Any) -> str:
 
 
 def _details(result: dict[str, Any]) -> list[str]:
+    """Return only errors that are still active for this observation.
+
+    A recovered collector may retain historical ``collection_errors`` for
+    diagnostics while publishing an explicit empty ``remaining_collection_errors``.
+    Treating both lists as current errors reopens already-recovered code-repair
+    candidates and wastes analysis/I/O. When the remaining-errors key exists it
+    is authoritative; legacy results without that key still fall back to the
+    historical field. A stale top-level error on a successful result is ignored.
+    """
     values: list[Any] = []
-    for key in ("remaining_collection_errors", "collection_errors"):
+    keys = ("remaining_collection_errors",) if "remaining_collection_errors" in result else ("collection_errors",)
+    for key in keys:
         raw = result.get(key)
         if isinstance(raw, (list, tuple)):
             values.extend(list(raw)[:MAX_DETAILS_PER_RESULT])
         elif raw:
             values.append(raw)
-    if result.get("error"):
+    if result.get("error") and not bool(result.get("ok")):
         values.append(result["error"])
     out: list[str] = []
     for value in values[:MAX_DETAILS_PER_RESULT]:
@@ -275,7 +285,6 @@ def observe(report: dict[str, Any], *, memory_path: Path = MEMORY,
     now = _now()
     memory["runs"] = min(1_000_000, _safe_int(memory.get("runs")) + 1)
 
-    files_seen: set[str] = set()
     signatures_seen: set[str] = set()
     new_count = repeated_count = resolved_count = 0
 
@@ -287,7 +296,6 @@ def observe(report: dict[str, Any], *, memory_path: Path = MEMORY,
 
     for result in results:
         filename = _safe_filename(result.get("file"))
-        files_seen.add(filename)
         details = _details(result)
         relevant = False
         for detail in details:
@@ -449,7 +457,15 @@ def self_test() -> int:
         assert "graphify_map_review" in item["verification_check_ids"]
         signature = item["signature"]
 
-        clean = {"results": [{"file": "releases.json", "ok": True, "collection_errors": []}]}
+        # A successful recovery can retain historical diagnostics. The explicit
+        # empty remaining list must win, otherwise the same candidate is reopened
+        # forever and clean-run resolution never advances.
+        clean = {"results": [{
+            "file": "releases.json", "ok": True,
+            "collection_errors": ["NameError: name 'parse_release_card' is not defined"],
+            "remaining_collection_errors": [],
+            "error": "NameError: name 'parse_release_card' is not defined",
+        }]}
         observe(clean, memory_path=memory, candidates_path=candidates, report_path=report_path)
         observe(clean, memory_path=memory, candidates_path=candidates, report_path=report_path)
         payload = json.loads(candidates.read_text(encoding="utf-8"))

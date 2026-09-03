@@ -160,6 +160,8 @@ for required in \
   safe_runtime.py \
   auto_repair_engine.py \
   auto_update_all.py \
+  collector_self_healing.py \
+  tcg_code_repair_learning.py \
   tcg_updater.py \
   tcg_updater_v135.py \
   runtime_bundle_guard_v143.py \

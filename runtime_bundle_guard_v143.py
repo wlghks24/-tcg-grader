@@ -28,6 +28,8 @@ REQUIRED_FILES = (
     "safe_runtime.py",
     "auto_repair_engine.py",
     "auto_update_all.py",
+    "collector_self_healing.py",
+    "tcg_code_repair_learning.py",
     "tcg_updater.py",
     "tcg_updater_v135.py",
     "update_releases.py",
@@ -104,6 +106,8 @@ def audit() -> dict:
         "safe_runtime",
         "auto_repair_engine",
         "auto_update_all",
+        "collector_self_healing",
+        "tcg_code_repair_learning",
         "update_promo_events",
         "graded_photo_multi_source",
         "multi_channel_agent",
@@ -152,6 +156,30 @@ def audit() -> dict:
                 issues.append("결정적 ValueError가 네트워크 재시도로 잘못 처리됩니다")
         except Exception:
             issues.append("자동수집 재시도 정책 계약 검사 실패")
+
+    healing = modules.get("collector_self_healing")
+    if healing is not None:
+        if not getattr(healing, "POLICIES", None):
+            issues.append("수집기 자가복구 정책이 비어 있거나 구버전입니다")
+        if "SOURCE_STRUCTURE_CHANGED" not in getattr(healing, "QUARANTINE_CODES", set()):
+            issues.append("출처 구조변경이 코드수정 격리 대상으로 보호되지 않습니다")
+
+    code_learning = modules.get("tcg_code_repair_learning")
+    if code_learning is not None:
+        try:
+            safety = code_learning._default_memory().get("safety", {})
+            if safety.get("source_rewrite") is not False or safety.get("git_write") is not False:
+                issues.append("코드수정 학습기의 자동 소스수정/git 쓰기 안전계약이 약화되었습니다")
+            recovered_probe = {
+                "ok": True,
+                "collection_errors": ["NameError: historical diagnostic"],
+                "remaining_collection_errors": [],
+                "error": "NameError: historical diagnostic",
+            }
+            if code_learning._details(recovered_probe):
+                issues.append("복구 완료된 과거 오류가 현재 코드오류로 다시 학습되는 구버전입니다")
+        except Exception:
+            issues.append("코드수정 학습기 복구오류 필터 계약 검사 실패")
 
     promo = modules.get("update_promo_events")
     if promo is not None:
