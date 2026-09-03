@@ -22,6 +22,7 @@ ANDROID_RECOVER_UPDATE.sh
 ANDROID_UPDATE_AND_START.sh
 START_TCG_UPDATER_ANDROID.sh
 runtime_bundle_guard_v143.py
+runtime_optimization_hardening.py
 safe_runtime.py
 auto_repair_engine.py
 auto_update_all.py
@@ -61,15 +62,17 @@ python -m py_compile \
   auto_update_all.py \
   collector_self_healing.py \
   tcg_code_repair_learning.py \
+  runtime_optimization_hardening.py \
   csp_hash_hardening.py \
   GRAPHIFY_SELF_HEAL.py \
   GRAPHIFY_AUDIT.py \
   runtime_bundle_guard_v143.py
 echo "[3/9] 핵심 Python 문법/컴파일: OK"
 
+python runtime_optimization_hardening.py --check >/dev/null
 python tcg_code_repair_learning.py --self-test >/dev/null
 python GRAPHIFY_SELF_HEAL.py --self-test >/dev/null
-echo "[4/9] 오류학습/자가복구 자체시험: OK"
+echo "[4/9] 최적화 하드닝/오류학습/자가복구 자체시험: OK"
 
 python csp_hash_hardening.py --check >/dev/null
 echo "[5/9] 브라우저 인라인 스크립트 CSP 해시: OK"
@@ -77,6 +80,7 @@ echo "[5/9] 브라우저 인라인 스크립트 CSP 해시: OK"
 python - <<'PY'
 import collector_self_healing
 import tcg_code_repair_learning
+import runtime_bundle_guard_v143
 import GRAPHIFY_AUDIT
 import GRAPHIFY_SELF_HEAL
 
@@ -84,6 +88,14 @@ assert tcg_code_repair_learning.CODE_REPAIR_CODES
 assert tcg_code_repair_learning.PLAYBOOKS
 assert collector_self_healing.POLICIES
 assert "SOURCE_STRUCTURE_CHANGED" in collector_self_healing.QUARANTINE_CODES
+assert "collector_self_healing.py" in runtime_bundle_guard_v143.REQUIRED_FILES
+assert "tcg_code_repair_learning.py" in runtime_bundle_guard_v143.REQUIRED_FILES
+assert tcg_code_repair_learning._details({
+    "ok": True,
+    "collection_errors": ["NameError: historical diagnostic"],
+    "remaining_collection_errors": [],
+    "error": "NameError: historical diagnostic",
+}) == []
 
 safety = tcg_code_repair_learning._default_memory()["safety"]
 assert safety["learned_text_executable"] is False
