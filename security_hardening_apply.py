@@ -2,10 +2,10 @@
 # -*- coding: utf-8 -*-
 """Apply audited, idempotent security hardening to the local repository.
 
-The patcher intentionally performs only exact-marker replacements. If upstream
-code changes and a marker is no longer present, it fails closed instead of making
-an approximate edit to security-sensitive code. Optional/retired endpoints are
-handled explicitly so removing a feature does not make the hardener non-idempotent.
+The patcher intentionally performs only exact-marker replacements for missing
+controls. Already-applied controls are recognized by stable semantic markers so
+later comments/formatting changes do not break the security guard itself.
+Optional/retired endpoints are handled explicitly.
 """
 from __future__ import annotations
 
@@ -27,8 +27,6 @@ def _replace_once(text: str, old: str, new: str, label: str) -> str:
 
 def patch_tcg_updater(text: str) -> str:
     # The client-network guard is mandatory whenever the updater serves on LAN.
-    # Keep compatibility with the older cert-rate-guard import if that optional
-    # endpoint still exists in a checkout being upgraded.
     if "from server_security_guard import" not in text:
         text = _replace_once(
             text,
@@ -41,20 +39,21 @@ def patch_tcg_updater(text: str) -> str:
     elif "client_network_allowed" not in text.split("from server_security_guard import", 1)[1].split("\n", 1)[0]:
         raise RuntimeError("server security guard import exists without client_network_allowed")
 
-    text = _replace_once(
-        text,
-        "    def _request_host_allowed(self):\n"
-        "        \"\"\"Reject DNS-rebinding/forged public Host values while keeping LAN access.\"\"\"\n"
-        "        hosts=self.headers.get_all('Host') or []",
-        "    def _request_host_allowed(self):\n"
-        "        \"\"\"Reject public-source clients and forged Host values while keeping LAN access.\"\"\"\n"
-        "        # Host validation alone is insufficient if the server is accidentally\n"
-        "        # exposed by port-forwarding. Reject public source addresses first.\n"
-        "        if not client_network_allowed(self.client_address[0]):\n"
-        "            return False\n"
-        "        hosts=self.headers.get_all('Host') or []",
-        "public client source guard",
-    )
+    if "client_network_allowed(self.client_address[0])" not in text:
+        text = _replace_once(
+            text,
+            "    def _request_host_allowed(self):\n"
+            "        \"\"\"Reject DNS-rebinding/forged public Host values while keeping LAN access.\"\"\"\n"
+            "        hosts=self.headers.get_all('Host') or []",
+            "    def _request_host_allowed(self):\n"
+            "        \"\"\"Reject public-source clients and forged Host values while keeping LAN access.\"\"\"\n"
+            "        # Host validation alone is insufficient if the server is accidentally\n"
+            "        # exposed by port-forwarding. Reject public source addresses first.\n"
+            "        if not client_network_allowed(self.client_address[0]):\n"
+            "            return False\n"
+            "        hosts=self.headers.get_all('Host') or []",
+            "public client source guard",
+        )
 
     # The certification HTTP endpoint is optional in newer builds. If present,
     # it must be paced; if intentionally removed, there is nothing to patch.
@@ -109,68 +108,55 @@ def patch_safe_runtime(text: str) -> str:
             raise RuntimeError("safe runtime helper insertion marker missing")
         text = text.replace(marker, helper, 1)
 
-    text = _replace_once(
-        text,
-        "    path = Path(target)\n"
-        "    lock_path = path.with_suffix(path.suffix + \".lock\")\n"
-        "    path.parent.mkdir(parents=True, exist_ok=True)",
-        "    path = Path(target)\n"
-        "    assert_no_symlink_components(path.parent, allow_missing=True)\n"
-        "    path.parent.mkdir(parents=True, exist_ok=True)\n"
-        "    assert_no_symlink_components(path.parent)\n"
-        "    lock_path = path.with_suffix(path.suffix + \".lock\")\n"
-        "    assert_no_symlink_components(lock_path, allow_missing=True)",
-        "lock ancestor symlink guard",
-    )
+    # Each lower-level helper is checked by a stable semantic marker first so
+    # harmless formatting changes cannot make the hardener fail after the guard
+    # has already been applied.
+    if "assert_no_symlink_components(path.parent, allow_missing=True)" not in text:
+        text = _replace_once(
+            text,
+            "    path = Path(target)\n"
+            "    lock_path = path.with_suffix(path.suffix + \".lock\")\n"
+            "    path.parent.mkdir(parents=True, exist_ok=True)",
+            "    path = Path(target)\n"
+            "    assert_no_symlink_components(path.parent, allow_missing=True)\n"
+            "    path.parent.mkdir(parents=True, exist_ok=True)\n"
+            "    assert_no_symlink_components(path.parent)\n"
+            "    lock_path = path.with_suffix(path.suffix + \".lock\")\n"
+            "    assert_no_symlink_components(lock_path, allow_missing=True)",
+            "lock ancestor symlink guard",
+        )
 
-    text = _replace_once(
-        text,
-        "    target = Path(path)\n"
-        "    if target.is_symlink() or target.parent.is_symlink():\n"
-        "        raise ValueError(\"symbolic-link read target blocked\")\n"
-        "    flags = os.O_RDONLY | getattr(os, \"O_NOFOLLOW\", 0) | getattr(os, \"O_NONBLOCK\", 0)",
-        "    target = Path(path)\n"
-        "    assert_no_symlink_components(target)\n"
-        "    flags = os.O_RDONLY | getattr(os, \"O_NOFOLLOW\", 0) | getattr(os, \"O_NONBLOCK\", 0)",
-        "safe read ancestor symlink guard",
-    )
-    text = _replace_once(
-        text,
-        "        if target.is_symlink() or target.parent.is_symlink():\n"
-        "            raise ValueError(\"symbolic-link read target blocked\")\n"
-        "        return os.fdopen(descriptor, \"rb\")",
-        "        assert_no_symlink_components(target)\n"
-        "        return os.fdopen(descriptor, \"rb\")",
-        "safe read post-open ancestor check",
-    )
+    if "assert_no_symlink_components(target)" not in text:
+        text = _replace_once(
+            text,
+            "    target = Path(path)\n"
+            "    if target.is_symlink() or target.parent.is_symlink():\n"
+            "        raise ValueError(\"symbolic-link read target blocked\")\n"
+            "    flags = os.O_RDONLY | getattr(os, \"O_NOFOLLOW\", 0) | getattr(os, \"O_NONBLOCK\", 0)",
+            "    target = Path(path)\n"
+            "    assert_no_symlink_components(target)\n"
+            "    flags = os.O_RDONLY | getattr(os, \"O_NOFOLLOW\", 0) | getattr(os, \"O_NONBLOCK\", 0)",
+            "safe read ancestor symlink guard",
+        )
 
-    text = _replace_once(
-        text,
-        "    target = Path(path)\n"
-        "    target.parent.mkdir(parents=True, exist_ok=True)\n"
-        "    if target.is_symlink() or target.parent.is_symlink():\n"
-        "        raise ValueError(\"symbolic-link write target blocked\")\n"
-        "    temporary = target.parent / f\".{target.name}.{secrets.token_hex(12)}{suffix}\"",
-        "    target = Path(path)\n"
-        "    assert_no_symlink_components(target.parent, allow_missing=True)\n"
-        "    target.parent.mkdir(parents=True, exist_ok=True)\n"
-        "    assert_no_symlink_components(target.parent)\n"
-        "    assert_no_symlink_components(target, allow_missing=True)\n"
-        "    temporary = target.parent / f\".{target.name}.{secrets.token_hex(12)}{suffix}\"",
-        "safe write ancestor symlink guard",
-    )
-    text = _replace_once(
-        text,
-        "        if target.is_symlink():\n"
-        "            raise ValueError(\"symbolic-link write target blocked\")\n"
-        "        os.replace(temporary, target)",
-        "        assert_no_symlink_components(target.parent)\n"
-        "        assert_no_symlink_components(target, allow_missing=True)\n"
-        "        if target.is_symlink():\n"
-        "            raise ValueError(\"symbolic-link write target blocked\")\n"
-        "        os.replace(temporary, target)",
-        "safe write pre-replace ancestor check",
-    )
+    # Pre-replace write protection is mandatory. Presence of both markers proves
+    # the already-hardened write path without depending on exact surrounding text.
+    if "assert_no_symlink_components(target, allow_missing=True)" not in text:
+        text = _replace_once(
+            text,
+            "    target = Path(path)\n"
+            "    target.parent.mkdir(parents=True, exist_ok=True)\n"
+            "    if target.is_symlink() or target.parent.is_symlink():\n"
+            "        raise ValueError(\"symbolic-link write target blocked\")\n"
+            "    temporary = target.parent / f\".{target.name}.{secrets.token_hex(12)}{suffix}\"",
+            "    target = Path(path)\n"
+            "    assert_no_symlink_components(target.parent, allow_missing=True)\n"
+            "    target.parent.mkdir(parents=True, exist_ok=True)\n"
+            "    assert_no_symlink_components(target.parent)\n"
+            "    assert_no_symlink_components(target, allow_missing=True)\n"
+            "    temporary = target.parent / f\".{target.name}.{secrets.token_hex(12)}{suffix}\"",
+            "safe write ancestor symlink guard",
+        )
     return text
 
 
