@@ -227,7 +227,7 @@ def patch_runtime_bundle_guard(text: str) -> str:
 
     promo = modules.get("update_promo_events")
 '''
-    if contract not in text:
+    if '    healing = modules.get("collector_self_healing")\n' not in text:
         text = _replace_once(text, marker, contract, "runtime code-repair contract checks")
 
     old_healing_check = '''        if "SOURCE_STRUCTURE_CHANGED" not in getattr(healing, "QUARANTINE_CODES", set()):
