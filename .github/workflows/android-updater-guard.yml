@@ -30,7 +30,9 @@ jobs:
           grep -Fq 'git merge --ff-only origin/main' ANDROID_UPDATE_AND_START.sh
           grep -Fq 'restore_runtime_snapshot' ANDROID_UPDATE_AND_START.sh
           grep -Fq 'mktemp -d "$RUNTIME_BACKUP_DIR/' ANDROID_UPDATE_AND_START.sh
+          grep -Fq 'if [ -L "$RUNTIME_BACKUP_DIR" ]; then' ANDROID_UPDATE_AND_START.sh
           grep -Fq 'if [ -L "$changed" ]; then' ANDROID_UPDATE_AND_START.sh
+          grep -Fq 'if ! is_runtime_path "$changed"; then' ANDROID_UPDATE_AND_START.sh
           grep -Fq 'fatal_restore_error=1' ANDROID_UPDATE_AND_START.sh
           ! grep -Fq 'find "$RUNTIME_BACKUP_DIR"' ANDROID_UPDATE_AND_START.sh
       - name: Verify updater self-bootstrap recovery guard
@@ -53,14 +55,23 @@ jobs:
           python - <<'PY'
           from pathlib import Path
           source=Path('ANDROID_UPDATE_AND_START.sh').read_text(encoding='utf-8')
-          assert 'restore_ok=1' in source
-          assert '[ "$restore_ok" = "1" ]' in source
-          assert 'rm -f "$changed" 2>/dev/null || restore_ok=0' in source
-          assert 'cp -p "$snapshot/files/$changed" "$changed" 2>/dev/null || restore_ok=0' in source
-          assert 'if [ "$fatal_restore_error" = "1" ]; then' in source
-          assert '서버 시작을 중단합니다' in source
+          required=(
+              'restore_ok=1',
+              '[ "$restore_ok" = "1" ]',
+              '[ -d "$snapshot" ] && [ ! -L "$snapshot" ] || return 1',
+              '[ -f "$manifest" ] && [ ! -L "$manifest" ] || return 1',
+              'if ! is_runtime_path "$changed"; then',
+              'if [ -L "$source_file" ] || [ ! -f "$source_file" ]; then',
+              'restore_tmp=".${changed}.tcg-restore.$$"',
+              'mv -f "$restore_tmp" "$changed"',
+              'if [ -L "$RUNTIME_BACKUP_DIR" ]; then',
+              'if [ "$fatal_restore_error" = "1" ]; then',
+              '서버 시작을 중단합니다',
+          )
+          for marker in required:
+              assert marker in source, marker
           assert 'find "$RUNTIME_BACKUP_DIR"' not in source
-          print('Android exact snapshot + fail-closed restore contracts: OK')
+          print('Android snapshot manifest + exact restore contracts: OK')
           PY
       - name: Prove recovery refuses an altered origin before network execution
         shell: bash
