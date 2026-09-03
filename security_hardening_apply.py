@@ -2,9 +2,10 @@
 # -*- coding: utf-8 -*-
 """Apply audited, idempotent security hardening to the local repository.
 
-The patcher intentionally performs only exact-marker replacements.  If upstream
+The patcher intentionally performs only exact-marker replacements. If upstream
 code changes and a marker is no longer present, it fails closed instead of making
-an approximate edit to security-sensitive code.
+an approximate edit to security-sensitive code. Optional/retired endpoints are
+handled explicitly so removing a feature does not make the hardener non-idempotent.
 """
 from __future__ import annotations
 
@@ -25,14 +26,21 @@ def _replace_once(text: str, old: str, new: str, label: str) -> str:
 
 
 def patch_tcg_updater(text: str) -> str:
-    text = _replace_once(
-        text,
-        "from grading_accuracy_v99 import valid_actual_grade\nfrom safe_runtime import (",
-        "from grading_accuracy_v99 import valid_actual_grade\n"
-        "from server_security_guard import OFFICIAL_LOOKUP_GUARD, client_network_allowed\n"
-        "from safe_runtime import (",
-        "server security guard import",
-    )
+    # The client-network guard is mandatory whenever the updater serves on LAN.
+    # Keep compatibility with the older cert-rate-guard import if that optional
+    # endpoint still exists in a checkout being upgraded.
+    if "from server_security_guard import" not in text:
+        text = _replace_once(
+            text,
+            "from grading_accuracy_v99 import valid_actual_grade\nfrom safe_runtime import (",
+            "from grading_accuracy_v99 import valid_actual_grade\n"
+            "from server_security_guard import client_network_allowed\n"
+            "from safe_runtime import (",
+            "server security guard import",
+        )
+    elif "client_network_allowed" not in text.split("from server_security_guard import", 1)[1].split("\n", 1)[0]:
+        raise RuntimeError("server security guard import exists without client_network_allowed")
+
     text = _replace_once(
         text,
         "    def _request_host_allowed(self):\n"
@@ -41,13 +49,17 @@ def patch_tcg_updater(text: str) -> str:
         "    def _request_host_allowed(self):\n"
         "        \"\"\"Reject public-source clients and forged Host values while keeping LAN access.\"\"\"\n"
         "        # Host validation alone is insufficient if the server is accidentally\n"
-        "        # exposed by port-forwarding.  Reject public source addresses first.\n"
+        "        # exposed by port-forwarding. Reject public source addresses first.\n"
         "        if not client_network_allowed(self.client_address[0]):\n"
         "            return False\n"
         "        hosts=self.headers.get_all('Host') or []",
         "public client source guard",
     )
-    old = """        if path=='/api/verify-grading-cert':
+
+    # The certification HTTP endpoint is optional in newer builds. If present,
+    # it must be paced; if intentionally removed, there is nothing to patch.
+    if "/api/verify-grading-cert" in text and "OFFICIAL_LOOKUP_GUARD.claim(company)" not in text:
+        old = """        if path=='/api/verify-grading-cert':
             qs=parse_qs(parsed.query)
             company=(qs.get('company',[''])[0] or '')[:8]
             cert=(qs.get('cert',[''])[0] or '')[:120]
@@ -59,7 +71,7 @@ def patch_tcg_updater(text: str) -> str:
             except Exception:
                 return self.json({'ok':False,'verified':False,'error':'공식 인증번호 검증 엔진 오류'},500)
 """
-    new = """        if path=='/api/verify-grading-cert':
+        new = """        if path=='/api/verify-grading-cert':
             qs=parse_qs(parsed.query)
             company=(qs.get('company',[''])[0] or '')[:8].upper()
             cert=(qs.get('cert',[''])[0] or '')[:120].strip()
@@ -81,13 +93,17 @@ def patch_tcg_updater(text: str) -> str:
             except Exception:
                 return self.json({'ok':False,'verified':False,'error':'공식 인증번호 검증 엔진 오류'},500)
 """
-    text = _replace_once(text, old, new, "official cert API pacing guard")
+        if "OFFICIAL_LOOKUP_GUARD" not in text.split("from server_security_guard import", 1)[1].split("\n", 1)[0]:
+            current = "from server_security_guard import client_network_allowed"
+            replacement = "from server_security_guard import OFFICIAL_LOOKUP_GUARD, client_network_allowed"
+            text = _replace_once(text, current, replacement, "official lookup guard import")
+        text = _replace_once(text, old, new, "official cert API pacing guard")
     return text
 
 
 def patch_safe_runtime(text: str) -> str:
     marker = "MAX_SAFE_FILE_BYTES = 20_000_000\n\n\n"
-    helper = '''MAX_SAFE_FILE_BYTES = 20_000_000\n\n\ndef assert_no_symlink_components(path: str | os.PathLike[str], *, allow_missing: bool = False) -> None:\n    """Reject symbolic links in every existing component of a filesystem path.\n\n    Checking only the final path and its immediate parent misses cases such as\n    ``base/link/sub/file`` where ``link`` is a symlink.  This lexical walk does\n    not resolve links and is repeated around sensitive create/replace steps.\n    """\n    target = Path(path)\n    if target.is_absolute():\n        current = Path(target.anchor)\n        parts = target.parts[1:]\n    else:\n        current = Path.cwd()\n        parts = target.parts\n    for part in parts:\n        if part in ("", "."):\n            continue\n        if part == "..":\n            current = current.parent\n            continue\n        current = current / part\n        try:\n            metadata = os.lstat(current)\n        except FileNotFoundError:\n            if allow_missing:\n                continue\n            raise\n        if stat.S_ISLNK(metadata.st_mode):\n            raise ValueError("symbolic-link path component blocked")\n\n\n'''
+    helper = '''MAX_SAFE_FILE_BYTES = 20_000_000\n\n\ndef assert_no_symlink_components(path: str | os.PathLike[str], *, allow_missing: bool = False) -> None:\n    """Reject symbolic links in every existing component of a filesystem path.\n\n    Checking only the final path and its immediate parent misses cases such as\n    ``base/link/sub/file`` where ``link`` is a symlink. This lexical walk does\n    not resolve links and is repeated around sensitive create/replace steps.\n    """\n    target = Path(path)\n    if target.is_absolute():\n        current = Path(target.anchor)\n        parts = target.parts[1:]\n    else:\n        current = Path.cwd()\n        parts = target.parts\n    for part in parts:\n        if part in ("", "."):\n            continue\n        if part == "..":\n            current = current.parent\n            continue\n        current = current / part\n        try:\n            metadata = os.lstat(current)\n        except FileNotFoundError:\n            if allow_missing:\n                continue\n            raise\n        if stat.S_ISLNK(metadata.st_mode):\n            raise ValueError("symbolic-link path component blocked")\n\n\n'''
     if "def assert_no_symlink_components(" not in text:
         if marker not in text:
             raise RuntimeError("safe runtime helper insertion marker missing")
