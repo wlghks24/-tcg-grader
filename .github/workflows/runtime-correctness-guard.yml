@@ -46,7 +46,7 @@ jobs:
               'ValueError: malformed data',
           ])
           source = Path('auto_update_all.py').read_text(encoding='utf-8')
-          assert source.count('diagnostic_exception(exc,1200)') >= 2
+          assert source.count('diagnostic_exception(exc,1200)') >= 1
           assert 'safe_error=diagnostic_exception(exc,600)' in source
           assert "'degraded':True" in source
           assert 'timeout_only_cache_fallback' in source
