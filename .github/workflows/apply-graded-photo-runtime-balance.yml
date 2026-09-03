@@ -1,6 +1,7 @@
 name: Apply graded photo runtime balance
 on:
   push:
+    branches: [main]
     paths:
       - 'apply_graded_photo_runtime_balance.py'
   workflow_dispatch:
