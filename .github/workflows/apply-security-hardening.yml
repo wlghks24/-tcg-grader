@@ -9,6 +9,7 @@ on:
       - 'security_hardening_apply.py'
       - 'security_self_audit.py'
       - 'csp_hash_hardening.py'
+      - 'runtime_optimization_hardening.py'
       - 'test_csp_hash_hardening.py'
       - 'test_security_hardening.py'
       - 'test_five_company_verification_policy.py'
