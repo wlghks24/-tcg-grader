@@ -82,7 +82,9 @@ invoke_self_heal() {
 }
 
 say "[Graphify] 코드 지도 갱신을 시작합니다..."
-{
+# Run the internal sequence in a subshell so its explicit exit code is captured
+# here instead of terminating this wrapper before the final user-facing result.
+(
   printf '\n===== %s =====\n' "$(date '+%Y-%m-%d %H:%M:%S' 2>/dev/null || date)"
 
   resolve_graphify
@@ -108,7 +110,7 @@ say "[Graphify] 코드 지도 갱신을 시작합니다..."
 
   printf '[Graphify] 최종 status=%s\n' "$status"
   exit "$status"
-} >> "$LOG_FILE" 2>&1
+) >> "$LOG_FILE" 2>&1
 status=$?
 
 if [ "$status" -eq 0 ]; then
