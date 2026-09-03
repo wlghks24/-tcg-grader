@@ -5,8 +5,11 @@
 Unlike the hourly full discovery pass, this watcher only performs account-targeted
 public searches against already trusted official SNS accounts. It is intentionally
 small so it can run every 30 minutes without duplicating the heavy price/catalog
-update or the full 10-topic search matrix. v142 keeps reward discovery but only
-feeds verified/independently corroborated anchors back into persistent learning.
+update or the full 10-topic search matrix.
+
+v144 adds a verified missed-event feedback loop before each scan. Officially
+verified manual misses teach bounded search vocabulary and region hints, then the
+same run can reuse them. Community evidence never changes trust or verified state.
 """
 from __future__ import annotations
 
@@ -17,7 +20,9 @@ import threading
 import time
 
 import collection_learning_hardening_v142 as hardening
+import collection_learning_hardening_v144 as miss_hardening
 import event_gap_learning
+import event_source_overlay_v144 as source_overlay
 import social_event_discovery
 from safe_runtime import atomic_write_json, env_int, safe_read_text
 
@@ -91,6 +96,28 @@ def _collect(registry: dict, jobs: list[tuple[str, str]]) -> tuple[list[dict], l
     return rows, errors
 
 
+def _prelearn_verified_misses() -> dict:
+    """Load newly verified recovery cases before the network scan."""
+    try:
+        learner = event_gap_learning.EventGapLearner()
+        learned = miss_hardening.learn_verified_miss_evidence(learner)
+        learner.save()
+        report = learner.report()
+        return {
+            "learned_this_run": int(learned),
+            "learned_terms": int(report.get("learned_terms") or 0),
+            "learned_region_hints": int(report.get("learned_region_hints") or 0),
+            "verified_miss_recoveries": int(report.get("verified_miss_recoveries") or 0),
+        }
+    except (OSError, ValueError, TypeError, UnicodeError, json.JSONDecodeError, AttributeError):
+        return {
+            "learned_this_run": 0,
+            "learned_terms": 0,
+            "learned_region_hints": 0,
+            "verified_miss_recoveries": 0,
+        }
+
+
 def _learn_priority_rewards() -> int:
     """Persist newly verified reward anchors immediately after the 30-minute scan."""
     try:
@@ -104,6 +131,10 @@ def _learn_priority_rewards() -> int:
 
 def _run_locked(started: float) -> dict:
     hardening.apply()
+    source_overlay.apply()
+    miss_hardening.apply()
+    miss_learning = _prelearn_verified_misses()
+
     registry = social_event_discovery.load_registry()
     jobs = [
         (game, region)
@@ -122,12 +153,14 @@ def _run_locked(started: float) -> dict:
         "item_count": len(merged),
         "priority_watch": {
             "patch": hardening.PATCH_ID,
+            "miss_recovery_patch": miss_hardening.PATCH_ID,
             "interval_seconds": INTERVAL_SECONDS,
             "trusted_account_groups": len(jobs),
             "result_count": len(annotated),
             "official_result_count": sum(1 for x in annotated if x.get("official_account_verified") is True),
             "reward_result_count": sum(1 for x in annotated if x.get("reward_watch") is True),
             "targeted_candidate_count": sum(1 for x in annotated if x.get("official_query_target") is True),
+            "verified_miss_learning": miss_learning,
             "error_count": len(errors),
             "errors": errors[:20],
             "elapsed_seconds": round(time.monotonic() - started, 2),
@@ -138,25 +171,32 @@ def _run_locked(started: float) -> dict:
         "cross_checked_count": sum(1 for x in merged if x.get("cross_checked") is True),
     })
 
-    # Keep the manually verified official announcement visible until indexed
-    # discovery catches up; this never promotes unverified community evidence.
+    # Keep manually recovered official announcements visible until indexed
+    # discovery catches up; unverified community evidence is never promoted.
     try:
         import event_quick_watch
         payload, manual_added = event_quick_watch._merge_manual_evidence(payload)
     except (ImportError, AttributeError, OSError, ValueError, TypeError):
         manual_added = 0
     atomic_write_json(social_event_discovery.OUT, payload, suffix=".priority.tmp")
+
     reward_learned = _learn_priority_rewards()
     payload.setdefault("priority_watch", {})["reward_anchors_learned_this_run"] = reward_learned
+    payload.setdefault("priority_watch", {})["verified_misses_learned_this_run"] = int(miss_learning.get("learned_this_run") or 0)
     atomic_write_json(social_event_discovery.OUT, payload, suffix=".priority-learning.tmp")
     return {
         "ok": True,
         "patch": hardening.PATCH_ID,
+        "miss_recovery_patch": miss_hardening.PATCH_ID,
         "trusted_account_groups": len(jobs),
         "result_count": len(annotated),
         "official_result_count": sum(1 for x in annotated if x.get("official_account_verified") is True),
         "reward_result_count": sum(1 for x in annotated if x.get("reward_watch") is True),
         "reward_anchors_learned_this_run": reward_learned,
+        "verified_misses_learned_this_run": int(miss_learning.get("learned_this_run") or 0),
+        "learned_search_terms": int(miss_learning.get("learned_terms") or 0),
+        "learned_region_hints": int(miss_learning.get("learned_region_hints") or 0),
+        "verified_miss_recoveries": int(miss_learning.get("verified_miss_recoveries") or 0),
         "manual_evidence_added": manual_added,
         "priority_gap_count": len(payload.get("priority_gap_cells", []) or []),
         "error_count": len(errors),
@@ -177,6 +217,7 @@ def run_once(shared_lock=None) -> dict:
         return {
             "ok": False,
             "patch": hardening.PATCH_ID,
+            "miss_recovery_patch": miss_hardening.PATCH_ID,
             "error": f"{type(exc).__name__}: priority event watch failed",
             "elapsed_seconds": round(time.monotonic() - started, 2),
         }
