@@ -90,6 +90,10 @@ def patch_meta():
     p = "collection_meta_learning.py"
     t = read(p)
     t = one(t,
+        '    "graded_photo": re.compile(r"psa|bgs|cgc|tag|brg|graded|slab|등급\\s*카드|감정\\s*카드|鑑定", re.I),',
+        '    "graded_photo": re.compile(r"\\bpsa(?:\\s?\\d{1,2})?\\b|\\bbgs(?:\\s?\\d{1,2}(?:\\.\\d)?)?\\b|\\bcgc(?:\\s?\\d{1,2}(?:\\.\\d)?)?\\b|\\btag(?:\\s?\\d{1,2})?\\b|\\bbrg(?:\\s?\\d{1,2})?\\b|\\bgraded\\b|\\bslab\\b|등급\\s*카드|감정\\s*카드|鑑定", re.I),',
+        "meta graded company boundaries")
+    t = one(t,
         'TOPICS = ("release", "reprint", "event", "tournament", "popup", "promo", "collab", "movie", "merch", "anniversary", "stock", "entry", "broadcast", "deadline", "status_update", "rules", "access", "market", "graded_photo")',
         'TOPICS = ("release", "reprint", "event", "tournament", "popup", "promo", "collab", "movie", "merch", "anniversary", "stock", "entry", "broadcast", "deadline", "status_update", "rules", "access", "results", "purchase_policy", "service_status", "market", "graded_photo")',
         "meta topics")
