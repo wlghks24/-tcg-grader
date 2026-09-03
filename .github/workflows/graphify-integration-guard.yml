@@ -1,0 +1,41 @@
+name: Graphify Integration Guard
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'SETUP_GRAPHIFY_TERMUX.sh'
+      - 'GRAPHIFY_UPDATE.sh'
+      - 'GRAPHIFY_CHATGPT_GUIDE.md'
+      - '.graphifyignore'
+      - '.github/workflows/graphify-integration-guard.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Validate shell syntax
+        run: |
+          bash -n SETUP_GRAPHIFY_TERMUX.sh
+          bash -n GRAPHIFY_UPDATE.sh
+      - name: Verify required Graphify workflow commands
+        run: |
+          grep -Fq 'graphify --version' SETUP_GRAPHIFY_TERMUX.sh
+          grep -Fq 'graphify codex install --project' SETUP_GRAPHIFY_TERMUX.sh
+          grep -Fq 'graphify hook install' SETUP_GRAPHIFY_TERMUX.sh
+          grep -Fq 'graphify update . --force' GRAPHIFY_UPDATE.sh
+          grep -Fq 'graphify extract . --code-only' GRAPHIFY_UPDATE.sh
+          grep -Fq 'graphify-out/' .graphifyignore
+      - name: Verify Graphify CLI package and command shape
+        run: |
+          python -m pip install --disable-pip-version-check 'graphifyy>=0.9.38,<1'
+          graphify --version
+          graphify hook --help >/dev/null
+          graphify update --help >/dev/null
+          graphify extract --help >/dev/null
