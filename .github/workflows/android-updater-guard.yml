@@ -22,3 +22,9 @@ jobs:
           grep -Fq 'git restore --worktree --source=HEAD' ANDROID_UPDATE_AND_START.sh
           grep -Fq 'git merge --ff-only origin/main' ANDROID_UPDATE_AND_START.sh
           grep -Fq 'restore_runtime_snapshot' ANDROID_UPDATE_AND_START.sh
+      - name: Verify updater self-bootstrap recovery guard
+        run: |
+          grep -Fq 'SELF_PATH="ANDROID_UPDATE_AND_START.sh"' ANDROID_UPDATE_AND_START.sh
+          grep -Fq 'git diff --quiet origin/main -- "$changed"' ANDROID_UPDATE_AND_START.sh
+          grep -Fq '자기복구용 변경으로 안전하게 인정합니다.' ANDROID_UPDATE_AND_START.sh
+          grep -Fq 'Android 업데이트 스크립트 자기복구 완료' ANDROID_UPDATE_AND_START.sh
