@@ -195,14 +195,15 @@ def _choose_policy(stat: dict, candidates: list[str]) -> str | None:
     return max(scored)[1] if scored else None
 
 
-def plan_for(filename: str, path: Path = MEMORY) -> dict:
-    """Return a defensive copy of the pending allow-listed plan for one job."""
-    memory = _load(path)
-    row = memory.get("files", {}).get(filename, {})
+def _plan_from_row(row: dict, *, now: dt.datetime | None = None) -> dict:
+    """Build one defensive recovery plan from an already-loaded memory row."""
+    if not isinstance(row, dict):
+        row = {}
     policy_id = row.get("pending_policy")
     policy = POLICIES.get(policy_id)
     until = _parse_utc(row.get("cooldown_until"))
-    remaining = max(0, int((until - dt.datetime.now(dt.timezone.utc)).total_seconds())) if until else 0
+    current = now or dt.datetime.now(dt.timezone.utc)
+    remaining = max(0, int((until - current).total_seconds())) if until else 0
     cooldown = {
         "cooldown_active": remaining > 0,
         "cooldown_remaining_seconds": remaining,
@@ -212,6 +213,12 @@ def plan_for(filename: str, path: Path = MEMORY) -> dict:
     if not policy:
         return {"policy_id": None, "max_attempts": 2, "timeout_floor": 0, "retry_delay": 2, "env": {}, **cooldown}
     return {"policy_id": policy_id, **policy, "env": dict(policy.get("env") or {}), **cooldown}
+
+
+def plan_for(filename: str, path: Path = MEMORY) -> dict:
+    """Return a defensive copy of the pending allow-listed plan for one job."""
+    memory = _load(path)
+    return _plan_from_row(memory.get("files", {}).get(filename, {}))
 
 
 def observe(report: dict, path: Path = MEMORY) -> dict:
@@ -237,7 +244,11 @@ def observe(report: dict, path: Path = MEMORY) -> dict:
         remaining = result.get("remaining_collection_errors")
         unresolved = bool(remaining) or not bool(result.get("ok"))
         details = auto_repair_engine._report_error_details(result, bool(result.get("ok")))[0]
-        analyses = [auto_repair_engine.analyze_error(detail) for detail in details]
+        # Historical collection_errors are useful for rewarding a policy that
+        # recovered a job, but they must never be re-planned or quarantined as
+        # active failures after the result is clean.
+        should_analyze = unresolved or applied_policy in POLICIES
+        analyses = [auto_repair_engine.analyze_error(detail) for detail in details] if should_analyze else []
         if applied_policy in POLICIES:
             applied += 1
             file_row["last_applied_policy"] = applied_policy
@@ -262,7 +273,8 @@ def observe(report: dict, path: Path = MEMORY) -> dict:
         next_cooldown_seconds = None
         next_cooldown_kind = None
         access_control_blocked = False
-        for detail, analysis in zip(details, analyses):
+        active_pairs = zip(details, analyses) if unresolved else ()
+        for detail, analysis in active_pairs:
             sig = _signature(filename, analysis)
             stat = file_row.setdefault("signatures", {}).setdefault(sig, {
                 "code": str(analysis.get("code") or ""), "occurrences": 0,
@@ -330,9 +342,12 @@ def observe(report: dict, path: Path = MEMORY) -> dict:
 def public_status(path: Path = MEMORY) -> dict:
     memory = _load(path)
     active = []
+    now = dt.datetime.now(dt.timezone.utc)
     for filename, row in memory.get("files", {}).items():
         policy_id = row.get("pending_policy")
-        plan = plan_for(filename, path)
+        # Reuse the already-loaded memory snapshot instead of rereading the same
+        # JSON file once per active collector.
+        plan = _plan_from_row(row, now=now)
         if policy_id in POLICIES or plan.get("cooldown_active") or plan.get("access_control_blocked"):
             label = (POLICIES[policy_id]["label"] if policy_id in POLICIES
                      else "접근제어 차단 · 자동 우회 금지")

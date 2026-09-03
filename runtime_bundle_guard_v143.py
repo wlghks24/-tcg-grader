@@ -163,6 +163,8 @@ def audit() -> dict:
             issues.append("수집기 자가복구 정책이 비어 있거나 구버전입니다")
         if "SOURCE_STRUCTURE_CHANGED" not in getattr(healing, "QUARANTINE_CODES", set()):
             issues.append("출처 구조변경이 코드수정 격리 대상으로 보호되지 않습니다")
+        if not callable(getattr(healing, "_plan_from_row", None)):
+            issues.append("수집기 상태조회가 자가복구 메모리를 반복 로드하는 구버전입니다")
 
     code_learning = modules.get("tcg_code_repair_learning")
     if code_learning is not None:
