@@ -16,6 +16,8 @@ jobs:
   verify:
     runs-on: ubuntu-latest
     timeout-minutes: 8
+    env:
+      GRAPHIFY_FIXTURE: ${{ runner.temp }}/graphify-fixture
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
       - uses: actions/setup-python@v5
@@ -45,13 +47,13 @@ jobs:
           graphify extract --help >/dev/null
           graphify codex install --help >/dev/null
           graphify agents install --help >/dev/null
-      - name: Exercise project install, map build, refresh, and hooks
+      - name: Prepare Graphify fixture repository
         shell: bash
         run: |
           set -euo pipefail
-          tmp="$(mktemp -d)"
-          trap 'rm -rf "$tmp"' EXIT
-          cd "$tmp"
+          rm -rf "$GRAPHIFY_FIXTURE"
+          mkdir -p "$GRAPHIFY_FIXTURE"
+          cd "$GRAPHIFY_FIXTURE"
           git init -q
           git config user.name graphify-guard
           git config user.email graphify-guard@example.invalid
@@ -64,21 +66,42 @@ jobs:
           PY
           git add sample.py
           git commit -qm initial
-
+      - name: Exercise Codex and Agent Skills project install
+        shell: bash
+        run: |
+          set -euo pipefail
+          cd "$GRAPHIFY_FIXTURE"
           graphify codex install --project
           graphify agents install --project
+          echo 'Created project integration files:'
+          find . -maxdepth 4 -type f -not -path './.git/*' -print | sort
           test -f AGENTS.md
-
+      - name: Exercise local code-only map build
+        shell: bash
+        run: |
+          set -euo pipefail
+          cd "$GRAPHIFY_FIXTURE"
           graphify extract . --code-only
+          echo 'Generated Graphify outputs:'
+          find graphify-out -maxdepth 2 -type f -print | sort
           test -s graphify-out/graph.json
           test -s graphify-out/GRAPH_REPORT.md
           test -s graphify-out/graph.html
-
+      - name: Exercise incremental forced refresh
+        shell: bash
+        run: |
+          set -euo pipefail
+          cd "$GRAPHIFY_FIXTURE"
           printf '\n# changed\n' >> sample.py
           graphify update . --force
           test -s graphify-out/graph.json
-
+      - name: Exercise Graphify git hooks
+        shell: bash
+        run: |
+          set -euo pipefail
+          cd "$GRAPHIFY_FIXTURE"
           graphify hook install
           graphify hook status
+          ls -l .git/hooks/post-commit .git/hooks/post-checkout
           test -x .git/hooks/post-commit
           test -x .git/hooks/post-checkout
