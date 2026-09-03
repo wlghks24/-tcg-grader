@@ -68,8 +68,10 @@ QUERY_FAMILIES = {
         "merch": "굿즈 공식숍 공식샵 점프샵 \"JUMP SHOP\" 한정판매 예약판매 특설매장 백화점",
         "anniversary": "기념 주년 기념전 전시 페어 축제 생일 anniversary",
         "stock": "재입고 입고 판매 자판기 재고 품절 구매처",
-        "entry": "응모 신청 접수 등록 추첨 당첨 참가신청 사전신청 엔트리",
+        "entry": "응모 신청 접수 등록 추첨 당첨 참가신청 사전신청 엔트리 LINE BANDAI TCG+ TCG+",
         "broadcast": "라이브 생방송 방송 스트리밍 시청 트위치 Twitch 드롭 드롭스 코드 교환 리딤",
+        "deadline": "마감 신청마감 응모마감 접수마감 신청기한 응모기한 접수기한 신청기간",
+        "status_update": "변경 취소 연기 일정변경 시간변경 장소변경 갱신내용",
     },
     "ja": {
         "release": "発売 新商品 新弾 ブースター スターター 予約 再販",
@@ -83,8 +85,10 @@ QUERY_FAMILIES = {
         "merch": "グッズ 公式ショップ ジャンプショップ 限定販売 予約販売 百貨店",
         "anniversary": "記念 周年 記念展 フェア 祭典 anniversary",
         "stock": "再入荷 入荷 在庫 売り切れ 販売 店舗",
-        "entry": "応募 申込 申し込み 受付 登録 抽選 当選 エントリー 事前応募",
+        "entry": "応募 申込 申し込み 受付 登録 抽選 当選 エントリー 事前応募 LINE BANDAI TCG+ TCG+",
         "broadcast": "ライブ ライブ配信 生配信 配信 視聴 Twitch ドロップ コード シリアルコード",
+        "deadline": "締切 期限 応募期間 申込期間 受付期間 締め切り",
+        "status_update": "変更 中止 延期 日程変更 時間変更 会場変更 内容変更",
     },
     "en": {
         "release": "release new set booster starter preorder reprint",
@@ -98,12 +102,14 @@ QUERY_FAMILIES = {
         "merch": "merch merchandise official shop limited store department store",
         "anniversary": "anniversary celebration commemorative exhibition fair festival",
         "stock": "restock in stock sold out retailer store vending",
-        "entry": "entry application apply registration register lottery drawing winner signup sign-up",
+        "entry": "entry application apply registration register lottery drawing winner signup sign-up LINE BANDAI TCG+ TCG+",
         "broadcast": "livestream live stream broadcast streaming watch twitch drops reward code redeem redemption",
+        "deadline": "deadline apply-by registration-closes application-period entry-period closing-date",
+        "status_update": "change cancelled canceled postponed rescheduled schedule-change time-change venue-change location-change",
     },
 }
 
-COVERAGE_TOPICS = ("event", "tournament", "popup", "promo", "collab", "movie", "release", "reprint", "merch", "anniversary", "stock", "entry", "broadcast")
+COVERAGE_TOPICS = ("event", "tournament", "popup", "promo", "collab", "movie", "release", "reprint", "merch", "anniversary", "stock", "entry", "broadcast", "deadline", "status_update")
 
 OFFICIAL_ROUTES = {
     ("포켓몬 카드", "KR"): (
@@ -180,11 +186,13 @@ PRESS_DOMAINS = {
 }
 PRESS_HOSTS = {host for hosts in PRESS_DOMAINS.values() for host in hosts}
 SOCIAL_DISCOVERY_HOSTS = ("x.com", "instagram.com", "youtube.com", "tiktok.com", "twitch.tv", "facebook.com")
+SERVICE_DISCOVERY_HOSTS = ("lin.ee", "line.me", "www.line.me", "bandai-tcg-plus.com", "www.bandai-tcg-plus.com")
+COMMUNITY_DISCOVERY_HOSTS = ("namu.wiki", "www.namu.wiki", "namu.moe", "www.namu.moe")
 
 KEYWORD_RE = re.compile(
-    r"행사|이벤트|대회|팝업|페스타|프로모|증정|배포|출시|발매|신탄|부스터|스타터|예약|재발매|재입고|입고|재고|품절|구매처|콜라보|협업|영화|극장판|굿즈|공식숍|점프샵|기념|주년|응모|신청|접수|등록|추첨|당첨|엔트리|라이브|생방송|방송|스트리밍|시청|코드|리딤|"
-    r"イベント|大会|ポップアップ|プロモ|配布|発売|新弾|ブースター|スターター|予約|再販|再入荷|入荷|在庫|売り切れ|コラボ|映画|劇場版|グッズ|公式ショップ|記念|周年|応募|申込|受付|登録|抽選|当選|エントリー|ライブ配信|生配信|配信|視聴|ドロップ|コード|プレゼント|"
-    r"event|tournament|pop[- ]?up|promo|giveaway|release|booster|starter|preorder|reprint|restock|in stock|sold out|availability|retailer|entry|application|apply|registration|register|lottery|drawing|signup|livestream|live stream|broadcast|streaming|watch|twitch drops|reward code|redeem|redemption|collab|movie|film|merch|official shop|anniversary|commemorative|collector|collection|unboxing|deck|decklist|review|price|"
+    r"행사|이벤트|대회|팝업|페스타|프로모|증정|배포|출시|발매|신탄|부스터|스타터|예약|재발매|재입고|입고|재고|품절|구매처|콜라보|협업|영화|극장판|굿즈|공식숍|점프샵|기념|주년|응모|신청|접수|등록|추첨|당첨|엔트리|라이브|생방송|방송|스트리밍|시청|코드|리딤|마감|기한|취소|연기|일정변경|시간변경|장소변경|갱신내용|\bLINE\b|BANDAI\s*TCG\+|TCG\+|"
+    r"イベント|大会|ポップアップ|プロモ|配布|発売|新弾|ブースター|スターター|予約|再販|再入荷|入荷|在庫|売り切れ|コラボ|映画|劇場版|グッズ|公式ショップ|記念|周年|応募|申込|受付|登録|抽選|当選|エントリー|ライブ配信|生配信|配信|視聴|ドロップ|コード|プレゼント|締切|期限|変更|中止|延期|日程変更|時間変更|会場変更|内容変更|\bLINE\b|BANDAI\s*TCG\+|TCG\+|"
+    r"event|tournament|pop[- ]?up|promo|giveaway|release|booster|starter|preorder|reprint|restock|in stock|sold out|availability|retailer|entry|application|apply|registration|register|lottery|drawing|signup|livestream|live stream|broadcast|streaming|watch|twitch drops|reward code|redeem|redemption|deadline|apply by|registration closes?|application period|cancelled|canceled|postponed|rescheduled|schedule change|venue change|\bLINE\b|BANDAI\s*TCG\+|TCG\+|collab|movie|film|merch|official shop|anniversary|commemorative|collector|collection|unboxing|deck|decklist|review|price|"
     r"개봉|언박싱|덱|덱리스트|수집|컬렉터|카드샵|후기|시세|開封|デッキ|コレクター|コレクション|レビュー|相場",
     re.I,
 )
@@ -215,6 +223,8 @@ def _category(text: str) -> str:
 def _topic(text: str) -> str:
     value = text or ""
     patterns = (
+        ("status_update", r"취소|연기|일정\s*변경|시간\s*변경|장소\s*변경|갱신내용|cancel(?:led|ed|ation)?|postpon(?:e|ed|ement)|reschedul(?:e|ed|ing)|schedule\s+change|time\s+change|venue\s+change|location\s+change|中止|延期|日程変更|時間変更|会場変更|内容変更"),
+        ("deadline", r"마감|신청\s*기한|응모\s*기한|접수\s*기한|신청기간|응모기간|접수기간|deadline|apply\s+by|registration\s+closes?|application\s+period|entry\s+period|closing\s+date|締切|期限|応募期間|申込期間|受付期間"),
         ("movie", r"영화|극장판|개봉|관람특전|movie|film|cinema|screening|映画|劇場版|上映|入場者特典"),
         ("broadcast", r"라이브|생방송|방송|스트리밍|시청|twitch\s*drops?|live[ -]?stream|broadcast|streaming|watch\s+live|redeem|redemption|ライブ配信|生配信|配信|視聴|Twitch|ドロップ|コード|シリアルコード"),
         ("anniversary", r"기념|주년|기념전|anniversary|commemorative|周年|記念"),
@@ -306,16 +316,19 @@ def _bing_one(game: str, region: str, route: str, hosts: tuple[str, ...] = (), t
             official = _official_for(game, region, host)
             partner = host in set(PARTNER_DOMAINS.get((game, region), ()))
             press = host in set(PRESS_DOMAINS.get(region, ()))
-            confidence = 0.91 if official else (0.73 if partner else 0.64 if press else 0.59)
+            service = host in SERVICE_DISCOVERY_HOSTS
+            community = host in COMMUNITY_DISCOVERY_HOSTS
+            confidence = 0.91 if official else (0.73 if partner else 0.66 if service else 0.64 if press else 0.48 if community else 0.59)
             rows.append({
                 "game": game, "region": region, "category": _category(f"{title} {desc}"),
                 "topic": _topic(f"{title} {desc}"), "search_topic": topic or "broad",
                 "title": title, "source": link, "source_kind": f"bing_{route}",
-                "source_tier": "A-search" if official else ("B-news" if press else "B-search"),
-                "source_label": "Bing RSS · 공식도메인" if official else ("Bing RSS · 파트너/유통처" if partner else "Bing RSS · 보도/전문매체" if press else "Bing RSS · 공개웹"),
+                "source_tier": "A-search" if official else ("C-community" if community else "B-service" if service else "B-news" if press else "B-search"),
+                "source_label": "Bing RSS · 공식도메인" if official else ("Bing RSS · 나무위키/커뮤니티 발견층" if community else "Bing RSS · 공식 서비스 경로 공개검색" if service else "Bing RSS · 파트너/유통처" if partner else "Bing RSS · 보도/전문매체" if press else "Bing RSS · 공개웹"),
                 "official_domain_match": official, "partner_domain_match": partner, "press_domain_match": press,
+                "official_service_candidate": service, "community_discovery_only": community,
                 "published_at": _parse_pubdate(item.findtext("pubDate")), "dates": [],
-                "excerpt": desc or title, "status": "공식출처 검색후보" if official else "교차확인 후보",
+                "excerpt": desc or title, "status": "공식출처 검색후보" if official else ("커뮤니티 보조후보 · 공식 교차확인 필요" if community else "서비스 경로 후보 · 공식페이지 교차확인 필요" if service else "교차확인 후보"),
                 "verified": official, "confidence": confidence,
                 "route_family": f"{route}:{topic}" if topic else route,
                 "collected_at": _now(),
@@ -450,6 +463,8 @@ def collect_all() -> tuple[list[dict], list[str], dict]:
             for topic in COVERAGE_TOPICS:
                 jobs.append(("bing_topic", _bing_one, (game, region, "topic", (), topic, learner.terms_for(game, region, topic))))
             jobs.append(("bing_social", _bing_one, (game, region, "social", SOCIAL_DISCOVERY_HOSTS)))
+            jobs.append(("bing_service", _bing_one, (game, region, "service", SERVICE_DISCOVERY_HOSTS)))
+            jobs.append(("bing_community", _bing_one, (game, region, "community", COMMUNITY_DISCOVERY_HOSTS)))
             if official_hosts: jobs.append(("bing_official", _bing_one, (game, region, "official", official_hosts)))
             if partner_hosts: jobs.append(("bing_partner", _bing_one, (game, region, "partner", partner_hosts)))
             press_hosts = tuple(PRESS_DOMAINS.get(region, ()))
@@ -512,7 +527,7 @@ def collect_all() -> tuple[list[dict], list[str], dict]:
 
     status = {
         "configured": True,
-        "status": "Bing RSS 작품×국가×10주제 독립검색 + 공식/파트너/보도/팬SNS + 공식사이트 직접스캔 + 검증근거 기준 학습형 누락주제 DDG 폴백",
+        "status": f"Bing RSS 작품×국가×{len(COVERAGE_TOPICS)}주제 독립검색 + 공식/서비스/파트너/보도/팬SNS/나무위키 커뮤니티 발견층 + 공식사이트 직접스캔 + 검증근거 기준 학습형 누락주제 DDG 폴백",
         "route_count": len(by_route),
         "query_count": sum(v.get("queries", 0) for v in by_route.values()),
         "success_query_count": successes,
