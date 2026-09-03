@@ -11,13 +11,23 @@ fi
 # Safe tablet updater. Device-local ignored learning/photos are never reset.
 # Tracked runtime JSON may change while the server is running. Before a fast-
 # forward those known runtime files are snapshotted, restored to the tracked
-# baseline, then the checkout advances to origin/main. A remotely bootstrapped
-# copy of this updater is also recognized as safe so an old tablet can repair
-# the updater itself without being trapped by its own local modification.
+# baseline, then the checkout advances to the verified official main. A remotely
+# bootstrapped copy of this updater is also recognized as safe so an old tablet
+# can repair the updater itself without being trapped by its own local modification.
 UPDATE_LOCK_DIR=".tcg_android_update.lock"
 UPDATE_LOCK_PID="$UPDATE_LOCK_DIR/pid"
 RUNTIME_BACKUP_DIR=".tcg_runtime_preserved"
 SELF_PATH="ANDROID_UPDATE_AND_START.sh"
+OFFICIAL_REPO="wlghks24/-tcg-grader"
+OFFICIAL_HTTPS="https://github.com/wlghks24/-tcg-grader.git"
+
+is_official_origin() {
+  case "${1:-}" in
+    https://github.com/wlghks24/-tcg-grader|https://github.com/wlghks24/-tcg-grader.git|https://github.com/wlghks24/-tcg-grader/|https://github.com/wlghks24/-tcg-grader.git/|git@github.com:wlghks24/-tcg-grader|git@github.com:wlghks24/-tcg-grader.git|ssh://git@github.com/wlghks24/-tcg-grader|ssh://git@github.com/wlghks24/-tcg-grader.git)
+      return 0 ;;
+    *) return 1 ;;
+  esac
+}
 
 cleanup_update_lock() {
   rm -rf "$UPDATE_LOCK_DIR" 2>/dev/null || true
@@ -155,8 +165,19 @@ if command -v git >/dev/null 2>&1 && git rev-parse --is-inside-work-tree >/dev/n
   fi
 
   if [ "$can_update" = "1" ]; then
-    echo "[업데이트] GitHub main 최신 상태를 확인합니다..."
-    if git fetch origin main --prune; then
+    origin_url="$(git remote get-url origin 2>/dev/null || true)"
+    if ! is_official_origin "$origin_url"; then
+      echo "[안전] origin 원격 저장소가 공식 TCG 저장소($OFFICIAL_REPO)가 아닙니다."
+      echo "       현재 origin: ${origin_url:-없음}"
+      echo "       원격 코드는 받지 않고 현재 검증된 로컬 버전으로 시작합니다."
+      can_update=0
+    fi
+  fi
+
+  if [ "$can_update" = "1" ]; then
+    echo "[업데이트] 공식 GitHub main 최신 상태를 확인합니다..."
+    # Fetch from the pinned canonical repository URL, not a mutable local remote.
+    if git fetch --prune "$OFFICIAL_HTTPS" main:refs/remotes/origin/main; then
       remote_ready=1
     else
       echo "[안내] 네트워크/GitHub 연결 문제로 업데이트 확인을 건너뜁니다. 현재 버전으로 시작합니다."
