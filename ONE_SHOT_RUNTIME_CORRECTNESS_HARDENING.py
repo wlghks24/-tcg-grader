@@ -127,7 +127,7 @@ def _timeout_only_errors(values) -> bool:
                 msg=diagnostic_exception(exc,1200)
                 errors.append(msg)
 """
-    text = replace_exact_count(text, old_generic_exc, new_generic_exc, 2, "collector/aux exception redaction")
+    text = replace_exact_count(text, old_generic_exc, new_generic_exc, 1, "collector/aux exception redaction")
 
     old_integration_raise = """        if proc.returncode!=0 or not integration_out.exists():
             raise RuntimeError((proc.stderr or proc.stdout or '통합 후보수집 실패').strip()[-1200:])
