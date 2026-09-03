@@ -233,31 +233,43 @@ def _workflow_has_contents_write(text: str) -> bool:
         text,
     )
     inline = re.search(
-        r"(?m)^\s*permissions\s*:\s*\{[^}\n]*['\"]?contents['\"]?\s*:\s*['\"]?write['\"]?(?:\s*,|\s*\})",
+        r"(?m)^\s*['\"]?permissions['\"]?\s*:\s*\{[^}\n]*['\"]?contents['\"]?\s*:\s*['\"]?write['\"]?(?:\s*,|\s*\})",
         text,
     )
     return bool(block or inline)
 
 
 def _push_block_bounds(lines: list[str]) -> tuple[int, int] | None:
+    """Return a block-style top-level on.push section, including quoted YAML keys."""
     in_on = False
+    on_block = re.compile(r"^[\'\"]?on[\'\"]?\s*:\s*$")
+    push_key = re.compile(r"^  [\'\"]?push[\'\"]?\s*:(.*)$")
+    event_key = re.compile(r"^  [\'\"]?[A-Za-z_][A-Za-z0-9_-]*[\'\"]?\s*:\s*")
     for index, line in enumerate(lines):
+        logical = line.rstrip("\r\n")
         if not in_on:
-            if line.startswith("on:"):
+            if on_block.fullmatch(logical):
                 in_on = True
             continue
-        if line.strip() and not line.startswith(" "):
+        if logical.strip() and not logical.startswith(" "):
             return None
-        if line.startswith("  push:"):
+        if push_key.match(logical):
             end = index + 1
             while end < len(lines):
-                candidate = lines[end]
+                candidate = lines[end].rstrip("\r\n")
                 if candidate.strip() and not candidate.startswith(" "):
                     break
-                if re.match(r"^  [A-Za-z_][A-Za-z0-9_-]*:\s*", candidate):
+                if event_key.match(candidate):
                     break
                 end += 1
             return index, end
+    return None
+
+
+def _top_level_on_line(text: str) -> str | None:
+    for line in text.splitlines():
+        if re.match(r"^[\'\"]?on[\'\"]?\s*:", line):
+            return line
     return None
 
 
@@ -315,10 +327,16 @@ def patch_write_workflow_push_scope(text: str, *, label: str = "workflow") -> st
     lines = text.splitlines(keepends=True)
     bounds = _push_block_bounds(lines)
     if bounds is None:
+        on_line = _top_level_on_line(text)
+        if on_line and re.search(r"(?<![A-Za-z0-9_-])push(?![A-Za-z0-9_-])", on_line):
+            raise RuntimeError(f"{label}: inline/flow push trigger on a write workflow requires manual review")
         return text
     start, end = bounds
     first = lines[start]
-    tail = first.split("push:", 1)[1].strip()
+    push_match = re.match(r"^  [\'\"]?push[\'\"]?\s*:(.*)$", first.rstrip("\r\n"))
+    if not push_match:
+        raise RuntimeError(f"{label}: unable to parse top-level push trigger")
+    tail = push_match.group(1).strip()
     block = "".join(lines[start:end])
 
     branches = _branch_allowlist_from_push_block(block)

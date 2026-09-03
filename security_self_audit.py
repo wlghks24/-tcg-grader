@@ -145,19 +145,19 @@ def scan_python(path: Path, text: str, findings: list[dict[str, Any]], rel: str)
 
 
 def scan_workflow(text: str, findings: list[dict[str, Any]], rel: str) -> None:
-    if re.search(r"(?m)^\s*pull_request_target\s*:", text):
+    if re.search(r"(?m)^\s*['\"]?pull_request_target['\"]?\s*:", text):
         add(findings, "GHA_PR_TARGET", "critical", rel, 1, "pull_request_target has a high trust boundary and requires strict review.", "pull_request_target")
-    if re.search(r"(?m)^\s*permissions\s*:\s*write-all\s*$", text):
+    if re.search(r"(?m)^\s*['\"]?permissions['\"]?\s*:\s*['\"]?write-all['\"]?\s*$", text):
         add(findings, "GHA_WRITE_ALL", "high", rel, 1, "GitHub Actions write-all permission is broader than necessary.", "permissions: write-all")
     write_lines = [
         lineno for lineno, line in enumerate(text.splitlines(), 1)
         if re.match(r"^\s*['\"]?contents['\"]?\s*:\s*['\"]?write['\"]?\s*(?:#.*)?$", line)
-        or re.match(r"^\s*permissions\s*:\s*\{[^}]*['\"]?contents['\"]?\s*:\s*['\"]?write['\"]?(?:\s*,|\s*\})", line)
+        or re.match(r"^\s*['\"]?permissions['\"]?\s*:\s*\{[^}]*['\"]?contents['\"]?\s*:\s*['\"]?write['\"]?(?:\s*,|\s*\})", line)
     ]
     if write_lines:
         # permissions may be declared at workflow scope or under an individual job.
         # Audit both; job-scoped write tokens are just as security-sensitive.
-        untrusted_trigger = bool(re.search(r"(?m)^\s*(?:pull_request|pull_request_target)\s*:", text))
+        untrusted_trigger = bool(re.search(r"(?m)^\s*['\"]?(?:pull_request|pull_request_target)['\"]?\s*:", text))
         severity = "high" if untrusted_trigger else "low"
         message = (
             "Write permission is reachable from a pull-request trigger."

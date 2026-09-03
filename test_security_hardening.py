@@ -20,29 +20,40 @@ import tcg_updater
 
 
 def _push_block(text: str) -> str | None:
-    """Return the top-level `on.push` YAML block using conservative indentation parsing."""
+    """Return the top-level `on.push` YAML block, including quoted YAML keys."""
     lines=text.splitlines()
     in_on=False
     capture=False
     out=[]
+    on_block=re.compile(r"^[\'\"]?on[\'\"]?\s*:\s*$")
+    push_key=re.compile(r"^  [\'\"]?push[\'\"]?\s*:(.*)$")
+    event_key=re.compile(r"^  [\'\"]?[A-Za-z_][A-Za-z0-9_-]*[\'\"]?\s*:\s*")
     for line in lines:
         if not in_on:
-            if line.startswith("on:"):
+            if on_block.fullmatch(line):
                 in_on=True
             continue
         if line and not line.startswith(" "):
             break
-        if line.startswith("  push:"):
+        match=push_key.match(line)
+        if match:
             capture=True
-            tail=line.split("push:",1)[1].strip()
+            tail=match.group(1).strip()
             if tail:
                 out.append(tail)
             continue
         if capture:
-            if re.match(r"^  [A-Za-z_][A-Za-z0-9_-]*:\s*",line):
+            if event_key.match(line):
                 break
             out.append(line)
     return "\n".join(out) if capture else None
+
+
+def _inline_top_level_push(text: str) -> bool:
+    for line in text.splitlines():
+        if re.match(r"^[\'\"]?on[\'\"]?\s*:",line) and not re.match(r"^[\'\"]?on[\'\"]?\s*:\s*$",line):
+            return bool(re.search(r"(?<![A-Za-z0-9_-])push(?![A-Za-z0-9_-])",line))
+    return False
 
 
 def _push_branch_allowlist(text: str) -> set[str] | None:
@@ -75,6 +86,8 @@ def _push_branch_allowlist(text: str) -> set[str] | None:
 
 
 def _write_push_scope_is_explicit(text: str) -> bool:
+    if _inline_top_level_push(text):
+        return False
     branches=_push_branch_allowlist(text)
     if branches is None:
         return True
@@ -141,6 +154,32 @@ class WorkflowHardenerTests(unittest.TestCase):
         )
         patched=hardening.patch_write_workflow_push_scope(text,label='synthetic')
         self.assertIn("  push:\n    branches: [main]\n    paths:",patched)
+
+    def test_quoted_on_push_and_permissions_keys_are_scoped(self):
+        text=(
+            "name: synthetic\n"
+            "'on':\n"
+            "  \"push\":\n"
+            "    paths: [app.py]\n"
+            "'permissions': {contents: 'write'}\n"
+            "jobs:\n"
+            "  test:\n"
+            "    runs-on: ubuntu-latest\n"
+        )
+        patched=hardening.patch_write_workflow_push_scope(text,label='synthetic')
+        self.assertIn("    branches: [main]",patched)
+
+    def test_inline_on_push_for_write_workflow_fails_closed(self):
+        text=(
+            "name: synthetic\n"
+            "on: [push, workflow_dispatch]\n"
+            "permissions: {contents: write}\n"
+            "jobs:\n"
+            "  test:\n"
+            "    runs-on: ubuntu-latest\n"
+        )
+        with self.assertRaises(RuntimeError):
+            hardening.patch_write_workflow_push_scope(text,label='synthetic')
 
     def test_wildcard_branch_is_rejected(self):
         text=self._workflow("  push:\n    branches: ['*']\n")
