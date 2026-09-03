@@ -10,6 +10,7 @@ from unittest import mock
 
 import grading_costs_live
 import grading_proxy_costs
+import security_hardening_apply as hardening
 
 from server_security_guard import OfficialLookupGuard, client_network_allowed, client_network_classification
 import tcg_updater
@@ -45,7 +46,9 @@ def _push_branch_allowlist(text: str) -> set[str] | None:
     block=_push_block(text)
     if block is None:
         return None
-    match=re.search(r"(?m)^\s*branches\s*:\s*(.*)$",block)
+    if re.search(r"(?m)^[ \t]*branches-ignore[ \t]*:",block):
+        return set()
+    match=re.search(r"(?m)^[ \t]*branches[ \t]*:[ \t]*(.*)$",block)
     if not match:
         return set()
     tail=match.group(1).split('#',1)[0].strip()
@@ -56,10 +59,10 @@ def _push_branch_allowlist(text: str) -> set[str] | None:
         values.append(tail.strip("'\""))
     else:
         lines=block.splitlines()
-        start=next((i for i,line in enumerate(lines) if re.match(r"^\s*branches\s*:\s*$",line)),None)
+        start=next((i for i,line in enumerate(lines) if re.match(r"^[ \t]*branches[ \t]*:[ \t]*$",line)),None)
         if start is not None:
             for line in lines[start+1:]:
-                m=re.match(r"^\s*-\s*([^#]+?)(?:\s+#.*)?$",line)
+                m=re.match(r"^[ \t]*-[ \t]*([^#]+?)(?:[ \t]+#.*)?$",line)
                 if not m:
                     if line.strip():
                         break
@@ -74,13 +77,66 @@ def _write_push_scope_is_explicit(text: str) -> bool:
         return True
     if not branches:
         return False
-    # A write-token workflow should use a finite branch allowlist, not wildcard
-    # patterns that effectively restore an all-branches trigger.
-    return not any(any(ch in branch for ch in ('*','?','[')) for branch in branches)
+    for branch in branches:
+        if not re.fullmatch(r"[A-Za-z0-9._/-]+",branch):
+            return False
+        if '..' in branch or branch.startswith('/') or branch.endswith('/'):
+            return False
+    return True
 
 
 def _explicit_push_targets(text: str) -> set[str]:
     return set(re.findall(r"\bHEAD:([A-Za-z0-9._/-]+)",text))
+
+
+class WorkflowHardenerTests(unittest.TestCase):
+    def _workflow(self, push_block: str, body: str = "") -> str:
+        return (
+            "name: synthetic\n"
+            "on:\n"
+            f"{push_block}"
+            "permissions:\n"
+            "  contents: write\n"
+            "jobs:\n"
+            "  test:\n"
+            "    runs-on: ubuntu-latest\n"
+            "    steps:\n"
+            f"{body}"
+        )
+
+    def test_multiline_main_allowlist_is_preserved(self):
+        text=self._workflow("  push:\n    branches:\n      - main\n")
+        self.assertEqual(hardening.patch_write_workflow_push_scope(text,label='synthetic'),text)
+
+    def test_explicit_feature_branch_allowlist_is_preserved(self):
+        text=self._workflow(
+            "  push:\n    branches:\n      - feature/grading-self-learning-v2\n",
+            "      - run: git push origin HEAD:feature/grading-self-learning-v2\n",
+        )
+        self.assertEqual(hardening.patch_write_workflow_push_scope(text,label='synthetic'),text)
+
+    def test_unscoped_write_push_is_restricted_to_main(self):
+        text=self._workflow("  push:\n    paths:\n      - app.py\n")
+        patched=hardening.patch_write_workflow_push_scope(text,label='synthetic')
+        self.assertIn("  push:\n    branches: [main]\n    paths:",patched)
+
+    def test_wildcard_branch_is_rejected(self):
+        text=self._workflow("  push:\n    branches: ['*']\n")
+        with self.assertRaises(RuntimeError):
+            hardening.patch_write_workflow_push_scope(text,label='synthetic')
+
+    def test_branches_ignore_is_rejected(self):
+        text=self._workflow("  push:\n    branches-ignore: [experimental]\n")
+        with self.assertRaises(RuntimeError):
+            hardening.patch_write_workflow_push_scope(text,label='synthetic')
+
+    def test_explicit_push_target_cannot_escape_allowlist(self):
+        text=self._workflow(
+            "  push:\n    branches: [main]\n",
+            "      - run: git push origin HEAD:other-branch\n",
+        )
+        with self.assertRaises(RuntimeError):
+            hardening.patch_write_workflow_push_scope(text,label='synthetic')
 
 
 class ServerSecurityGuardTests(unittest.TestCase):
@@ -206,7 +262,7 @@ class CollectorSecurityTests(unittest.TestCase):
             targets=_explicit_push_targets(text)
             if branches and targets and not targets.issubset(branches):
                 mismatched.append(f"{path.name}: trigger={sorted(branches)} push_targets={sorted(targets)}")
-        self.assertFalse(unsafe,"write-permission workflows with unrestricted/wildcard push trigger:\n"+"\n".join(unsafe))
+        self.assertFalse(unsafe,"write-permission workflows with unrestricted/dynamic/wildcard push trigger:\n"+"\n".join(unsafe))
         self.assertFalse(mismatched,"write workflow explicit push target escapes trigger branch allowlist:\n"+"\n".join(mismatched))
 
 
