@@ -2,15 +2,16 @@
 # -*- coding: utf-8 -*-
 """Apply audited, idempotent security hardening to the local repository.
 
-The patcher intentionally performs only exact-marker replacements for missing
-controls. Already-applied controls are recognized by stable semantic markers so
-later comments/formatting changes do not break the security guard itself.
+The patcher intentionally performs only exact/conservative replacements for
+missing controls. Already-applied controls are recognized by stable semantic
+markers so later comments/formatting changes do not break the guard itself.
 Optional/retired endpoints are handled explicitly.
 """
 from __future__ import annotations
 
 import argparse
 from pathlib import Path
+import re
 
 
 ROOT = Path(__file__).resolve().parent
@@ -108,9 +109,6 @@ def patch_safe_runtime(text: str) -> str:
             raise RuntimeError("safe runtime helper insertion marker missing")
         text = text.replace(marker, helper, 1)
 
-    # Each lower-level helper is checked by a stable semantic marker first so
-    # harmless formatting changes cannot make the hardener fail after the guard
-    # has already been applied.
     if "assert_no_symlink_components(path.parent, allow_missing=True)" not in text:
         text = _replace_once(
             text,
@@ -139,8 +137,6 @@ def patch_safe_runtime(text: str) -> str:
             "safe read ancestor symlink guard",
         )
 
-    # Pre-replace write protection is mandatory. Presence of both markers proves
-    # the already-hardened write path without depending on exact surrounding text.
     if "assert_no_symlink_components(target, allow_missing=True)" not in text:
         text = _replace_once(
             text,
@@ -181,15 +177,85 @@ security_audit_report.json
     return text
 
 
-def apply(root: Path = ROOT) -> list[str]:
-    changed: list[str] = []
-    patches = {
+def _workflow_has_contents_write(text: str) -> bool:
+    return bool(re.search(r"(?m)^\s*contents\s*:\s*write\s*$", text))
+
+
+def _push_block_bounds(lines: list[str]) -> tuple[int, int] | None:
+    in_on = False
+    for index, line in enumerate(lines):
+        if not in_on:
+            if line.startswith("on:"):
+                in_on = True
+            continue
+        if line.strip() and not line.startswith(" "):
+            return None
+        if line.startswith("  push:"):
+            end = index + 1
+            while end < len(lines):
+                candidate = lines[end]
+                if candidate.strip() and not candidate.startswith(" "):
+                    break
+                if re.match(r"^  [A-Za-z_][A-Za-z0-9_-]*:\s*", candidate):
+                    break
+                end += 1
+            return index, end
+    return None
+
+
+def patch_write_workflow_push_scope(text: str, *, label: str = "workflow") -> str:
+    """Restrict write-permission push workflows to main, conservatively.
+
+    Manual-only/scheduled write workflows are unchanged. Existing branch rules are
+    never rewritten automatically; an unexpected non-main branch rule fails closed.
+    """
+    if not _workflow_has_contents_write(text):
+        return text
+    lines = text.splitlines(keepends=True)
+    bounds = _push_block_bounds(lines)
+    if bounds is None:
+        return text
+    start, end = bounds
+    first = lines[start]
+    tail = first.split("push:", 1)[1].strip()
+    block = "".join(lines[start:end])
+
+    if "branches" in block:
+        if re.search(r"(?:^|[\s\[,\-])main(?:[\s\],#]|$)", block):
+            return text
+        raise RuntimeError(f"{label}: write workflow push branch rule exists but is not main")
+    if "branches-ignore" in block:
+        raise RuntimeError(f"{label}: write workflow uses branches-ignore; manual review required")
+
+    if not tail:
+        lines.insert(start + 1, "    branches: [main]\n")
+        return "".join(lines)
+    if tail in {"{}", "null", "~"}:
+        newline = "\n" if first.endswith("\n") else ""
+        lines[start] = "  push:" + newline
+        lines.insert(start + 1, "    branches: [main]\n")
+        return "".join(lines)
+    raise RuntimeError(f"{label}: unsupported inline push trigger for write workflow")
+
+
+def iter_patches(root: Path):
+    fixed = {
         "tcg_updater.py": patch_tcg_updater,
         "safe_runtime.py": patch_safe_runtime,
         ".gitignore": patch_gitignore,
     }
-    for relative, patcher in patches.items():
-        path = root / relative
+    for relative, patcher in fixed.items():
+        yield relative, root / relative, patcher
+    workflow_root = root / ".github" / "workflows"
+    if workflow_root.is_dir():
+        for path in sorted(workflow_root.glob("*.y*ml")):
+            relative = path.relative_to(root).as_posix()
+            yield relative, path, lambda text, label=relative: patch_write_workflow_push_scope(text, label=label)
+
+
+def apply(root: Path = ROOT) -> list[str]:
+    changed: list[str] = []
+    for relative, path, patcher in iter_patches(root):
         original = path.read_text(encoding="utf-8")
         updated = patcher(original)
         if updated != original:
@@ -198,23 +264,23 @@ def apply(root: Path = ROOT) -> list[str]:
     return changed
 
 
+def pending(root: Path = ROOT) -> list[str]:
+    result: list[str] = []
+    for relative, path, patcher in iter_patches(root):
+        original = path.read_text(encoding="utf-8")
+        if patcher(original) != original:
+            result.append(relative)
+    return result
+
+
 def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--check", action="store_true", help="Fail if hardening changes would still be required.")
     args = parser.parse_args()
     if args.check:
-        pending = []
-        for relative, patcher in {
-            "tcg_updater.py": patch_tcg_updater,
-            "safe_runtime.py": patch_safe_runtime,
-            ".gitignore": patch_gitignore,
-        }.items():
-            path = ROOT / relative
-            original = path.read_text(encoding="utf-8")
-            if patcher(original) != original:
-                pending.append(relative)
-        if pending:
-            print("security hardening pending:", ", ".join(pending))
+        remaining = pending()
+        if remaining:
+            print("security hardening pending:", ", ".join(remaining))
             return 1
         print("security hardening already applied")
         return 0
