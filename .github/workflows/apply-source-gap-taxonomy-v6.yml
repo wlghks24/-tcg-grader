@@ -24,25 +24,73 @@ jobs:
       - name: Patch missing source and topic coverage
         run: |
           python - <<'PY'
+          import re
           from pathlib import Path
 
           def replace_once(path, old, new):
               p = Path(path)
               text = p.read_text(encoding='utf-8')
               if old not in text:
-                  raise SystemExit(f'{path}: expected block not found: {old[:120]!r}')
+                  raise SystemExit(f'{path}: expected text not found: {old[:100]!r}')
               p.write_text(text.replace(old, new, 1), encoding='utf-8')
 
-          # provider health: expand 90 -> 117 verified-gap cells.
-          replace_once('provider_health_learning.py',
-              'TOPICS = ("event", "tournament", "popup", "promo", "collab", "movie", "release", "reprint", "merch", "anniversary")',
-              'TOPICS = ("event", "tournament", "popup", "promo", "collab", "movie", "release", "reprint", "merch", "anniversary", "stock", "entry", "broadcast")')
-          replace_once('provider_health_learning.py', '''_TOPIC_RULES = (\n    ("movie", re.compile(r"영화|극장판|개봉|movie|film|cinema|映画|劇場版|上映", re.I)),\n    ("anniversary", re.compile(r"기념|주년|anniversary|周年|記念", re.I)),\n    ("merch", re.compile(r"굿즈|점프샵|JUMP SHOP|official shop|merch|グッズ|ショップ", re.I)),\n    ("popup", re.compile(r"팝업|pop[- ]?up|ポップアップ", re.I)),\n    ("tournament", re.compile(r"대회|리그|championship|tournament|大会|リーグ|battle|배틀", re.I)),\n    ("reprint", re.compile(r"재발매|재판|재출시|추가생산|재입고|reprint|re-release|restock|再販|再版|再入荷", re.I)),\n    ("release", re.compile(r"신제품|신탄|부스터|스타터|출시|발매|release|new set|booster|starter|発売|新商品|新弾", re.I)),\n    ("promo", re.compile(r"프로모|증정|배포|특전|응모|promo|giveaway|distribution|キャンペーン|配布|特典", re.I)),\n    ("collab", re.compile(r"콜라보|협업|collab|collaboration|partnership|コラボ|タイアップ", re.I)),\n)''', '''_TOPIC_RULES = (\n    ("movie", re.compile(r"영화|극장판|개봉|movie|film|cinema|映画|劇場版|上映", re.I)),\n    ("broadcast", re.compile(r"라이브|생방송|방송|스트리밍|시청|twitch\\s*drops?|live[ -]?stream|broadcast|streaming|watch\\s+live|redeem|redemption|ライブ配信|生配信|配信|視聴|Twitch|ドロップ|コード|シリアルコード", re.I)),\n    ("anniversary", re.compile(r"기념|주년|anniversary|周年|記念", re.I)),\n    ("merch", re.compile(r"굿즈|점프샵|JUMP SHOP|official shop|merch|グッズ|ショップ", re.I)),\n    ("popup", re.compile(r"팝업|pop[- ]?up|ポップアップ", re.I)),\n    ("entry", re.compile(r"응모|신청|접수|등록|추첨|당첨|엔트리|사전신청|entry|application|apply|registration|register|lottery|drawing|sign[- ]?up|応募|申込|申し込み|受付|登録|抽選|当選|エントリー|事前応募", re.I)),\n    ("tournament", re.compile(r"대회|리그|championship|tournament|大会|リーグ|battle|배틀", re.I)),\n    ("stock", re.compile(r"재입고|입고|재고|품절|구매처|restock|in stock|sold out|availability|retailer|再入荷|入荷|在庫|売り切れ|販売店舗", re.I)),\n    ("reprint", re.compile(r"재발매|재판|재출시|추가생산|복각|reprint|re-release|additional print|rerun|再販|再版|復刻|追加生産", re.I)),\n    ("release", re.compile(r"신제품|신탄|부스터|스타터|출시|발매|release|new set|booster|starter|発売|新商品|新弾", re.I)),\n    ("promo", re.compile(r"프로모|증정|배포|특전|캠페인|promo|giveaway|distribution|campaign|キャンペーン|配布|特典|プレゼント", re.I)),\n    ("collab", re.compile(r"콜라보|협업|collab|collaboration|partnership|コラボ|タイアップ", re.I)),\n)''')
-          replace_once('provider_health_learning.py', '        "version": 2,', '        "version": 3,')
-          replace_once('provider_health_learning.py', '        "version": 2,\n        "runs": _num(data.get("runs")),', '        "version": 3,\n        "runs": _num(data.get("runs")),')
-          replace_once('provider_health_learning.py', '''        priority = round(\n            miss_streak * 4.0\n            + verification_gap_streak * 2.0\n            + discovery_gap_streak\n            + min(3.0, _num(stat.get("misses")) * 0.08),\n            3,\n        )''', '''        topic = key.rsplit("/", 1)[-1]\n        urgency = {"entry": 3.0, "broadcast": 3.0, "stock": 2.0}.get(topic, 0.0)\n        priority = round(\n            miss_streak * 4.0\n            + verification_gap_streak * 2.0\n            + discovery_gap_streak\n            + min(3.0, _num(stat.get("misses")) * 0.08)\n            + urgency,\n            3,\n        )''')
+          def sub_once(path, pattern, replacement):
+              p = Path(path)
+              text = p.read_text(encoding='utf-8')
+              new_text, count = re.subn(pattern, lambda _m: replacement, text, count=1, flags=re.S)
+              if count != 1:
+                  raise SystemExit(f'{path}: expected regex block not found: {pattern[:100]!r}')
+              p.write_text(new_text, encoding='utf-8')
 
-          # route diversity: track stock, entry/application and broadcast/reward separately.
+          # 1) Persistent verified-gap learner: 90 -> 117 cells.
+          p = Path('provider_health_learning.py')
+          text = p.read_text(encoding='utf-8')
+          text = text.replace(
+              'TOPICS = ("event", "tournament", "popup", "promo", "collab", "movie", "release", "reprint", "merch", "anniversary")',
+              'TOPICS = ("event", "tournament", "popup", "promo", "collab", "movie", "release", "reprint", "merch", "anniversary", "stock", "entry", "broadcast")',
+              1,
+          )
+          rules = '''_TOPIC_RULES = (
+              ("movie", re.compile(r"영화|극장판|개봉|movie|film|cinema|映画|劇場版|上映", re.I)),
+              ("broadcast", re.compile(r"라이브|생방송|방송|스트리밍|시청|twitch\s*drops?|live[ -]?stream|broadcast|streaming|watch\s+live|redeem|redemption|ライブ配信|生配信|配信|視聴|Twitch|ドロップ|コード|シリアルコード", re.I)),
+              ("anniversary", re.compile(r"기념|주년|anniversary|周年|記念", re.I)),
+              ("merch", re.compile(r"굿즈|점프샵|JUMP SHOP|official shop|merch|グッズ|ショップ", re.I)),
+              ("popup", re.compile(r"팝업|pop[- ]?up|ポップアップ", re.I)),
+              ("entry", re.compile(r"응모|신청|접수|등록|추첨|당첨|엔트리|사전신청|entry|application|apply|registration|register|lottery|drawing|sign[- ]?up|応募|申込|申し込み|受付|登録|抽選|当選|エントリー|事前応募", re.I)),
+              ("tournament", re.compile(r"대회|리그|championship|tournament|大会|リーグ|battle|배틀", re.I)),
+              ("stock", re.compile(r"재입고|입고|재고|품절|구매처|restock|in stock|sold out|availability|retailer|再入荷|入荷|在庫|売り切れ|販売店舗", re.I)),
+              ("reprint", re.compile(r"재발매|재판|재출시|추가생산|복각|reprint|re-release|additional print|rerun|再販|再版|復刻|追加生産", re.I)),
+              ("release", re.compile(r"신제품|신탄|부스터|스타터|출시|발매|release|new set|booster|starter|発売|新商品|新弾", re.I)),
+              ("promo", re.compile(r"프로모|증정|배포|특전|캠페인|promo|giveaway|distribution|campaign|キャンペーン|配布|特典|プレゼント", re.I)),
+              ("collab", re.compile(r"콜라보|협업|collab|collaboration|partnership|コラボ|タイアップ", re.I)),
+          )'''
+          text, n = re.subn(r'_TOPIC_RULES = \(.*?\n\)\n\n\ndef _now', lambda _m: rules + '\n\n\ndef _now', text, count=1, flags=re.S)
+          if n != 1:
+              raise SystemExit('provider_health_learning.py: topic rules block not found')
+          text = text.replace('"version": 2', '"version": 3')
+          old_priority = '''        priority = round(
+              miss_streak * 4.0
+              + verification_gap_streak * 2.0
+              + discovery_gap_streak
+              + min(3.0, _num(stat.get("misses")) * 0.08),
+              3,
+          )'''
+          new_priority = '''        topic = key.rsplit("/", 1)[-1]
+          urgency = {"entry": 3.0, "broadcast": 3.0, "stock": 2.0}.get(topic, 0.0)
+          priority = round(
+              miss_streak * 4.0
+              + verification_gap_streak * 2.0
+              + discovery_gap_streak
+              + min(3.0, _num(stat.get("misses")) * 0.08)
+              + urgency,
+              3,
+          )'''
+          if old_priority not in text:
+              raise SystemExit('provider_health_learning.py: priority block not found')
+          text = text.replace(old_priority, new_priority, 1)
+          p.write_text(text, encoding='utf-8')
+
+          # 2) Route taxonomy and headline filter.
           for old, new in (
               ('        "stock": "재입고 입고 판매 자판기 재고 품절 구매처",', '        "stock": "재입고 입고 판매 자판기 재고 품절 구매처",\n        "entry": "응모 신청 접수 등록 추첨 당첨 참가신청 사전신청 엔트리",\n        "broadcast": "라이브 생방송 방송 스트리밍 시청 트위치 Twitch 드롭 드롭스 코드 교환 리딤",'),
               ('        "stock": "再入荷 入荷 在庫 売り切れ 販売 店舗",', '        "stock": "再入荷 入荷 在庫 売り切れ 販売 店舗",\n        "entry": "応募 申込 申し込み 受付 登録 抽選 当選 エントリー 事前応募",\n        "broadcast": "ライブ ライブ配信 生配信 配信 視聴 Twitch ドロップ コード シリアルコード",'),
@@ -55,40 +103,148 @@ jobs:
           replace_once('multi_route_event_discovery.py',
               'SOCIAL_DISCOVERY_HOSTS = ("x.com", "instagram.com", "youtube.com")',
               'SOCIAL_DISCOVERY_HOSTS = ("x.com", "instagram.com", "youtube.com", "tiktok.com", "twitch.tv", "facebook.com")')
-          replace_once('multi_route_event_discovery.py', '''    r"행사|이벤트|대회|팝업|페스타|프로모|증정|배포|출시|발매|신탄|부스터|스타터|예약|재발매|재입고|입고|재고|콜라보|협업|영화|극장판|굿즈|공식숍|점프샵|기념|주년|"\n    r"イベント|大会|ポップアップ|プロモ|配布|発売|新弾|ブースター|スターター|予約|再販|再入荷|在庫|コラボ|映画|劇場版|グッズ|公式ショップ|記念|周年|"\n    r"event|tournament|pop[- ]?up|promo|giveaway|release|booster|starter|preorder|reprint|restock|in stock|collab|movie|film|merch|official shop|anniversary|commemorative|collector|collection|unboxing|deck|decklist|review|price|"''', '''    r"행사|이벤트|대회|팝업|페스타|프로모|증정|배포|출시|발매|신탄|부스터|스타터|예약|재발매|재입고|입고|재고|품절|구매처|콜라보|협업|영화|극장판|굿즈|공식숍|점프샵|기념|주년|응모|신청|접수|등록|추첨|당첨|엔트리|라이브|생방송|방송|스트리밍|시청|코드|리딤|"\n    r"イベント|大会|ポップアップ|プロモ|配布|発売|新弾|ブースター|スターター|予約|再販|再入荷|入荷|在庫|売り切れ|コラボ|映画|劇場版|グッズ|公式ショップ|記念|周年|応募|申込|受付|登録|抽選|当選|エントリー|ライブ配信|生配信|配信|視聴|ドロップ|コード|プレゼント|"\n    r"event|tournament|pop[- ]?up|promo|giveaway|release|booster|starter|preorder|reprint|restock|in stock|sold out|availability|retailer|entry|application|apply|registration|register|lottery|drawing|signup|livestream|live stream|broadcast|streaming|watch|twitch drops|reward code|redeem|redemption|collab|movie|film|merch|official shop|anniversary|commemorative|collector|collection|unboxing|deck|decklist|review|price|"''')
-          replace_once('multi_route_event_discovery.py', '''    patterns = (\n        ("movie", r"영화|극장판|개봉|관람특전|movie|film|cinema|screening|映画|劇場版|上映|入場者特典"),\n        ("anniversary", r"기념|주년|기념전|anniversary|commemorative|周年|記念"),\n        ("merch", r"굿즈|공식숍|공식샵|점프샵|JUMP SHOP|merch|merchandise|official shop|グッズ|公式ショップ"),\n        ("collab", r"콜라보|협업|제휴|브랜드데이|collab|collaboration|partnership|コラボ|タイアップ"),\n        ("reprint", r"재발매|재판|복각|reprint|re-release|rerun|再販|再版|復刻"),\n        ("release", r"출시|발매|신탄|부스터|스타터|release|launch|new set|booster|starter|発売|新弾"),\n        ("popup", r"팝업|팝업스토어|박람회|전시회|pop[- ]?up|expo|convention|exhibition|ポップアップ|展示会"),\n        ("tournament", r"대회|리그|챔피언십|월드챔피언십|tournament|league|championship|regional|worlds|大会|リーグ|チャンピオンシップ"),\n        ("promo", r"프로모|증정|배포|특전|한정|promo|giveaway|distribution|exclusive|プロモ|配布|特典|限定"),\n    )''', '''    patterns = (\n        ("movie", r"영화|극장판|개봉|관람특전|movie|film|cinema|screening|映画|劇場版|上映|入場者特典"),\n        ("broadcast", r"라이브|생방송|방송|스트리밍|시청|twitch\\s*drops?|live[ -]?stream|broadcast|streaming|watch\\s+live|redeem|redemption|ライブ配信|生配信|配信|視聴|Twitch|ドロップ|コード|シリアルコード"),\n        ("anniversary", r"기념|주년|기념전|anniversary|commemorative|周年|記念"),\n        ("merch", r"굿즈|공식숍|공식샵|점프샵|JUMP SHOP|merch|merchandise|official shop|グッズ|公式ショップ"),\n        ("collab", r"콜라보|협업|제휴|브랜드데이|collab|collaboration|partnership|コラボ|タイアップ"),\n        ("entry", r"응모|신청|접수|등록|추첨|당첨|엔트리|사전신청|entry|application|apply|registration|register|lottery|drawing|sign[- ]?up|応募|申込|申し込み|受付|登録|抽選|当選|エントリー|事前応募"),\n        ("stock", r"재입고|입고|재고|품절|구매처|restock|in stock|sold out|availability|retailer|再入荷|入荷|在庫|売り切れ|販売店舗"),\n        ("reprint", r"재발매|재판|복각|추가생산|reprint|re-release|additional print|rerun|再販|再版|復刻|追加生産"),\n        ("release", r"출시|발매|신탄|부스터|스타터|release|launch|new set|booster|starter|発売|新弾"),\n        ("popup", r"팝업|팝업스토어|박람회|전시회|pop[- ]?up|expo|convention|exhibition|ポップアップ|展示会"),\n        ("tournament", r"대회|리그|챔피언십|월드챔피언십|tournament|league|championship|regional|worlds|大会|リーグ|チャンピオンシップ"),\n        ("promo", r"프로모|증정|배포|특전|한정|캠페인|promo|giveaway|distribution|exclusive|campaign|プロモ|配布|特典|限定|キャンペーン|プレゼント"),\n    )''')
+          keyword_block = '''KEYWORD_RE = re.compile(
+              r"행사|이벤트|대회|팝업|페스타|프로모|증정|배포|출시|발매|신탄|부스터|스타터|예약|재발매|재입고|입고|재고|품절|구매처|콜라보|협업|영화|극장판|굿즈|공식숍|점프샵|기념|주년|응모|신청|접수|등록|추첨|당첨|엔트리|라이브|생방송|방송|스트리밍|시청|코드|리딤|"
+              r"イベント|大会|ポップアップ|プロモ|配布|発売|新弾|ブースター|スターター|予約|再販|再入荷|入荷|在庫|売り切れ|コラボ|映画|劇場版|グッズ|公式ショップ|記念|周年|応募|申込|受付|登録|抽選|当選|エントリー|ライブ配信|生配信|配信|視聴|ドロップ|コード|プレゼント|"
+              r"event|tournament|pop[- ]?up|promo|giveaway|release|booster|starter|preorder|reprint|restock|in stock|sold out|availability|retailer|entry|application|apply|registration|register|lottery|drawing|signup|livestream|live stream|broadcast|streaming|watch|twitch drops|reward code|redeem|redemption|collab|movie|film|merch|official shop|anniversary|commemorative|collector|collection|unboxing|deck|decklist|review|price|"
+              r"개봉|언박싱|덱|덱리스트|수집|컬렉터|카드샵|후기|시세|開封|デッキ|コレクター|コレクション|レビュー|相場",
+              re.I,
+          )'''
+          sub_once('multi_route_event_discovery.py', r'KEYWORD_RE = re\.compile\(.*?\n\)\n\n\ndef _now', keyword_block + '\n\n\ndef _now')
+          topic_func = '''def _topic(text: str) -> str:
+              value = text or ""
+              patterns = (
+                  ("movie", r"영화|극장판|개봉|관람특전|movie|film|cinema|screening|映画|劇場版|上映|入場者特典"),
+                  ("broadcast", r"라이브|생방송|방송|스트리밍|시청|twitch\s*drops?|live[ -]?stream|broadcast|streaming|watch\s+live|redeem|redemption|ライブ配信|生配信|配信|視聴|Twitch|ドロップ|コード|シリアルコード"),
+                  ("anniversary", r"기념|주년|기념전|anniversary|commemorative|周年|記念"),
+                  ("merch", r"굿즈|공식숍|공식샵|점프샵|JUMP SHOP|merch|merchandise|official shop|グッズ|公式ショップ"),
+                  ("collab", r"콜라보|협업|제휴|브랜드데이|collab|collaboration|partnership|コラボ|タイアップ"),
+                  ("entry", r"응모|신청|접수|등록|추첨|당첨|엔트리|사전신청|entry|application|apply|registration|register|lottery|drawing|sign[- ]?up|応募|申込|申し込み|受付|登録|抽選|当選|エントリー|事前応募"),
+                  ("stock", r"재입고|입고|재고|품절|구매처|restock|in stock|sold out|availability|retailer|再入荷|入荷|在庫|売り切れ|販売店舗"),
+                  ("reprint", r"재발매|재판|복각|추가생산|reprint|re-release|additional print|rerun|再販|再版|復刻|追加生産"),
+                  ("release", r"출시|발매|신탄|부스터|스타터|release|launch|new set|booster|starter|発売|新弾"),
+                  ("popup", r"팝업|팝업스토어|박람회|전시회|pop[- ]?up|expo|convention|exhibition|ポップアップ|展示会"),
+                  ("tournament", r"대회|리그|챔피언십|월드챔피언십|tournament|league|championship|regional|worlds|大会|リーグ|チャンピオンシップ"),
+                  ("promo", r"프로모|증정|배포|특전|한정|캠페인|promo|giveaway|distribution|exclusive|campaign|プロモ|配布|特典|限定|キャンペーン|プレゼント"),
+              )
+              for topic, pattern in patterns:
+                  if re.search(pattern, value, re.I):
+                      return topic
+              return "event"
+          '''
+          sub_once('multi_route_event_discovery.py', r'def _topic\(text: str\) -> str:.*?\n\ndef _official_for', topic_func + '\n\ndef _official_for')
 
-          # multi-channel broad web query vocabulary.
-          replace_once('multi_channel_agent.py', '''    EVENT_OR = {\n        "KR": ("행사", "이벤트", "챌린지", "도전", "개최", "콜라보", "프로모", "프로모카드", "출시", "발매", "재발매", "한정", "증정", "배포", "특전", "대회", "영화"),\n        "JP": ("イベント", "チャレンジ", "開催", "コラボ", "プロモ", "プロモカード", "発売", "再販", "限定", "配布", "特典", "大会", "映画"),\n        "US": ("event", "challenge", "special mission", "distribution", "collab", "collaboration", "promo", "promo card", "release", "restock", "exclusive", "giveaway", "tournament", "movie"),\n    }''', '''    EVENT_OR = {\n        "KR": ("행사", "이벤트", "챌린지", "도전", "개최", "콜라보", "프로모", "프로모카드", "출시", "발매", "재발매", "재입고", "재고", "품절", "한정", "증정", "배포", "특전", "응모", "신청", "등록", "추첨", "당첨", "라이브", "생방송", "스트리밍", "시청", "코드", "대회", "영화"),\n        "JP": ("イベント", "チャレンジ", "開催", "コラボ", "プロモ", "プロモカード", "発売", "再販", "再入荷", "在庫", "売り切れ", "限定", "配布", "特典", "応募", "申込", "登録", "抽選", "当選", "ライブ配信", "生配信", "視聴", "コード", "大会", "映画"),\n        "US": ("event", "challenge", "special mission", "distribution", "collab", "collaboration", "promo", "promo card", "release", "reprint", "restock", "in stock", "sold out", "exclusive", "giveaway", "entry", "application", "registration", "lottery", "livestream", "broadcast", "streaming", "twitch drops", "redeem", "code", "tournament", "movie"),\n    }''')
+          # 3) General web provider vocabulary.
+          event_or = '''    EVENT_OR = {
+              "KR": ("행사", "이벤트", "챌린지", "도전", "개최", "콜라보", "프로모", "프로모카드", "출시", "발매", "재발매", "재입고", "재고", "품절", "한정", "증정", "배포", "특전", "응모", "신청", "등록", "추첨", "당첨", "라이브", "생방송", "스트리밍", "시청", "코드", "대회", "영화"),
+              "JP": ("イベント", "チャレンジ", "開催", "コラボ", "プロモ", "プロモカード", "発売", "再販", "再入荷", "在庫", "売り切れ", "限定", "配布", "特典", "応募", "申込", "登録", "抽選", "当選", "ライブ配信", "生配信", "視聴", "コード", "大会", "映画"),
+              "US": ("event", "challenge", "special mission", "distribution", "collab", "collaboration", "promo", "promo card", "release", "reprint", "restock", "in stock", "sold out", "exclusive", "giveaway", "entry", "application", "registration", "lottery", "livestream", "broadcast", "streaming", "twitch drops", "redeem", "code", "tournament", "movie"),
+          }'''
+          sub_once('multi_channel_agent.py', r'    EVENT_OR = \{.*?\n    \}\n    GOOGLE_LOCALE', event_or + '\n    GOOGLE_LOCALE')
 
-          # social discovery: Facebook + new time-sensitive vocabulary, while preserving trust separation.
-          for old, new in (
-              ('    "ko": "행사 이벤트 챌린지 도전 개최 특전 배포 콜라보 프로모 팝업 팝업스토어 점프샵 JUMP SHOP 슈에이샤 신세계 영화 극장판 개봉 예약 발매 출시 대회 야구 KBO 굿즈 포토카드 브랜드데이 PLAYGO 재배포 재지급 수령 프로모션팩 신사황",', '    "ko": "행사 이벤트 챌린지 도전 개최 특전 배포 콜라보 프로모 팝업 팝업스토어 점프샵 JUMP SHOP 슈에이샤 신세계 영화 극장판 개봉 예약 발매 출시 재발매 재입고 재고 품절 대회 응모 신청 등록 추첨 당첨 라이브 생방송 스트리밍 시청 트위치 드롭 코드 리딤 야구 KBO 굿즈 포토카드 브랜드데이 PLAYGO 재배포 재지급 수령 프로모션팩 신사황",'),
-              ('    "ja": "イベント チャレンジ 開催 特典 配布 コラボ キャンペーン プロモ ポップアップ 映画 劇場版 発売 大会 グッズ カード",', '    "ja": "イベント チャレンジ 開催 特典 配布 コラボ キャンペーン プロモ ポップアップ 映画 劇場版 発売 再販 再入荷 在庫 売り切れ 大会 応募 申込 登録 抽選 当選 ライブ配信 生配信 視聴 Twitch ドロップ コード グッズ カード",'),
-              ('    "en": "event challenge special mission collaboration collab promo distribution giveaway pop-up movie film release tournament preorder merchandise card streaming twitch tiktok",', '    "en": "event challenge special mission collaboration collab promo distribution giveaway pop-up movie film release reprint restock in stock sold out tournament preorder entry application registration lottery livestream broadcast streaming twitch drops redeem code merchandise card tiktok facebook",'),
-          ):
-              replace_once('social_event_discovery.py', old, new)
-          replace_once('social_event_discovery.py', '''    ("promo", re.compile(r"프로모|증정|이벤트|행사|대회|배틀|예약|발매|출시|포토카드|promo|event|campaign|tournament|battle|release|preorder|キャンペーン|イベント|大会|発売|予約", re.I)),''', '''    ("promo", re.compile(r"프로모|증정|이벤트|행사|대회|배틀|예약|발매|출시|재입고|재고|품절|응모|신청|등록|추첨|당첨|라이브|생방송|스트리밍|시청|코드|포토카드|promo|event|campaign|tournament|battle|release|preorder|restock|sold out|entry|application|registration|lottery|livestream|broadcast|streaming|twitch drops|redeem|code|キャンペーン|イベント|大会|発売|予約|再入荷|在庫|売り切れ|応募|申込|登録|抽選|当選|ライブ配信|生配信|配信|視聴|ドロップ|コード|プレゼント", re.I)),''')
-          replace_once('social_event_discovery.py', '''    "twitch.tv", "www.twitch.tv",\n}''', '''    "twitch.tv", "www.twitch.tv",\n    "facebook.com", "www.facebook.com", "m.facebook.com",\n}''')
-          replace_once('social_event_discovery.py', '''    if host in {"instagram.com", "www.instagram.com"}:\n        user = path.split("/", 1)[0]\n        if user and user.lower() not in {"p", "reel", "explore", "stories"} and re.fullmatch(r"[A-Za-z0-9_.]{1,30}", user):\n            return "instagram", user\n    if host in {"youtube.com", "www.youtube.com"}:''', '''    if host in {"instagram.com", "www.instagram.com"}:\n        user = path.split("/", 1)[0]\n        if user and user.lower() not in {"p", "reel", "explore", "stories"} and re.fullmatch(r"[A-Za-z0-9_.]{1,30}", user):\n            return "instagram", user\n    if host in {"facebook.com", "www.facebook.com", "m.facebook.com"}:\n        user = path.split("/", 1)[0]\n        if user and user.lower() not in {"share", "sharer", "plugins", "watch", "reel", "groups", "events", "login"} and re.fullmatch(r"[A-Za-z0-9_.-]{2,80}", user):\n            return "facebook", user\n    if host in {"youtube.com", "www.youtube.com"}:''')
+          # 4) Social discovery: Facebook and time-sensitive announcement vocabulary.
+          event_terms = '''EVENT_TERMS = {
+              "ko": "행사 이벤트 챌린지 도전 개최 특전 배포 콜라보 프로모 팝업 팝업스토어 점프샵 JUMP SHOP 슈에이샤 신세계 영화 극장판 개봉 예약 발매 출시 재발매 재입고 재고 품절 대회 응모 신청 등록 추첨 당첨 라이브 생방송 스트리밍 시청 트위치 드롭 코드 리딤 야구 KBO 굿즈 포토카드 브랜드데이 PLAYGO 재배포 재지급 수령 프로모션팩 신사황",
+              "ja": "イベント チャレンジ 開催 特典 配布 コラボ キャンペーン プロモ ポップアップ 映画 劇場版 発売 再販 再入荷 在庫 売り切れ 大会 応募 申込 登録 抽選 当選 ライブ配信 生配信 視聴 Twitch ドロップ コード グッズ カード",
+              "en": "event challenge special mission collaboration collab promo distribution giveaway pop-up movie film release reprint restock in-stock sold-out tournament preorder entry application registration lottery livestream broadcast streaming twitch drops redeem code merchandise card tiktok facebook",
+          }'''
+          sub_once('social_event_discovery.py', r'EVENT_TERMS = \{.*?\n\}\nFAN_TERMS', event_terms + '\nFAN_TERMS')
+          category_patterns = '''CATEGORY_PATTERNS = (
+              ("movie", re.compile(r"영화|극장판|개봉|movie|film|cinema|劇場版|映画|上映|netflix", re.I)),
+              ("collaboration", re.compile(r"콜라보|협업|브랜드데이|야구|kbo|wiz|giants|collab|collaboration|コラボ|タイアップ|popup|pop-up|ポップアップ", re.I)),
+              ("promo", re.compile(r"프로모|증정|이벤트|행사|대회|배틀|예약|발매|출시|재입고|재고|품절|응모|신청|등록|추첨|당첨|라이브|생방송|스트리밍|시청|코드|포토카드|promo|event|campaign|tournament|battle|release|preorder|restock|sold out|entry|application|registration|lottery|livestream|broadcast|streaming|twitch drops|redeem|code|キャンペーン|イベント|大会|発売|予約|再入荷|在庫|売り切れ|応募|申込|登録|抽選|当選|ライブ配信|生配信|配信|視聴|ドロップ|コード|プレゼント", re.I)),
+          )'''
+          sub_once('social_event_discovery.py', r'CATEGORY_PATTERNS = \(.*?\n\)\nDATE_RE', category_patterns + '\nDATE_RE')
+          social_hosts = '''SOCIAL_HOSTS = {
+              "x.com", "www.x.com", "twitter.com", "www.twitter.com",
+              "instagram.com", "www.instagram.com",
+              "youtube.com", "www.youtube.com", "youtu.be",
+              "tiktok.com", "www.tiktok.com",
+              "twitch.tv", "www.twitch.tv",
+              "facebook.com", "www.facebook.com", "m.facebook.com",
+          }'''
+          sub_once('social_event_discovery.py', r'SOCIAL_HOSTS = \{.*?\n\}\nGOOGLE_NEWS_HOSTS', social_hosts + '\nGOOGLE_NEWS_HOSTS')
+          parse_social = '''def _parse_social_link(link: str) -> tuple[str, str] | None:
+              try:
+                  parsed = urllib.parse.urlsplit(link)
+              except ValueError:
+                  return None
+              host = (parsed.hostname or "").lower(); path = parsed.path.strip("/")
+              if host in {"x.com", "www.x.com", "twitter.com", "www.twitter.com"}:
+                  user = path.split("/", 1)[0]
+                  if user and user.lower() not in {"home", "search", "share", "intent", "i"} and re.fullmatch(r"[A-Za-z0-9_]{1,15}", user):
+                      return "x", user
+              if host in {"instagram.com", "www.instagram.com"}:
+                  user = path.split("/", 1)[0]
+                  if user and user.lower() not in {"p", "reel", "explore", "stories"} and re.fullmatch(r"[A-Za-z0-9_.]{1,30}", user):
+                      return "instagram", user
+              if host in {"facebook.com", "www.facebook.com", "m.facebook.com"}:
+                  user = path.split("/", 1)[0]
+                  if user and user.lower() not in {"share", "sharer", "plugins", "watch", "reel", "groups", "events", "login"} and re.fullmatch(r"[A-Za-z0-9_.-]{2,80}", user):
+                      return "facebook", user
+              if host in {"youtube.com", "www.youtube.com"}:
+                  if path.startswith("channel/UC"):
+                      return "youtube_channel", path.split("/", 1)[1]
+                  if path.startswith("@"):
+                      return "youtube_handle", path.split("/", 1)[0]
+              if host in {"tiktok.com", "www.tiktok.com"}:
+                  user = path.split("/", 1)[0].lstrip("@")
+                  if user and re.fullmatch(r"[A-Za-z0-9_.]{2,30}", user):
+                      return "tiktok", user
+              if host in {"twitch.tv", "www.twitch.tv"}:
+                  user = path.split("/", 1)[0]
+                  if user and user.lower() not in {"directory", "downloads", "jobs", "p", "videos"} and re.fullmatch(r"[A-Za-z0-9_]{2,30}", user):
+                      return "twitch", user
+              return None
+          '''
+          sub_once('social_event_discovery.py', r'def _parse_social_link\(link: str\).*?\n\ndef _fetch_official_page', parse_social + '\n\ndef _fetch_official_page')
           replace_once('social_event_discovery.py', '                   "platforms": ["x", "instagram", "youtube", "tiktok", "twitch"],', '                   "platforms": ["x", "instagram", "youtube", "tiktok", "twitch", "facebook"],')
-          replace_once('social_event_discovery.py', '''    event_words = {\n        "ko": "(행사 OR 이벤트 OR 콜라보 OR 프로모 OR 영화 OR 극장판 OR 발매 OR 출시 OR 대회 OR 야구 OR 굿즈 OR 포토카드 OR PLAYGO OR 재배포 OR 재지급 OR 수령 OR 프로모션팩 OR 신사황)",\n        "ja": "(イベント OR コラボ OR キャンペーン OR プロモ OR 映画 OR 劇場版 OR 発売 OR 大会 OR グッズ)",\n        "en": "(event OR collab OR collaboration OR promo OR movie OR film OR release OR tournament OR merchandise)",\n    }[lang]''', '''    event_words = {\n        "ko": "(행사 OR 이벤트 OR 챌린지 OR 콜라보 OR 프로모 OR 영화 OR 극장판 OR 발매 OR 출시 OR 재발매 OR 재입고 OR 재고 OR 품절 OR 응모 OR 신청 OR 등록 OR 추첨 OR 당첨 OR 라이브 OR 생방송 OR 스트리밍 OR 시청 OR 코드 OR 대회 OR 야구 OR 굿즈 OR 포토카드 OR PLAYGO OR 재배포 OR 재지급 OR 수령 OR 프로모션팩 OR 신사황)",\n        "ja": "(イベント OR チャレンジ OR コラボ OR キャンペーン OR プロモ OR 映画 OR 劇場版 OR 発売 OR 再販 OR 再入荷 OR 在庫 OR 売り切れ OR 応募 OR 申込 OR 登録 OR 抽選 OR 当選 OR ライブ配信 OR 生配信 OR 配信 OR 視聴 OR コード OR 大会 OR グッズ)",\n        "en": "(event OR challenge OR collab OR collaboration OR promo OR movie OR film OR release OR reprint OR restock OR \"in stock\" OR \"sold out\" OR entry OR application OR registration OR lottery OR livestream OR broadcast OR streaming OR twitch OR drops OR redeem OR code OR tournament OR merchandise)",\n    }[lang]''')
+          game_query = '''def _game_query_terms(game: str, region: str) -> str:
+              lang = REGION_LANG[region]["lang"]; names = GAMES[game][lang]
+              name_expr = " OR ".join(f'"{name}"' if " " in name else name for name in names[:3])
+              event_words = {
+                  "ko": "(행사 OR 이벤트 OR 챌린지 OR 콜라보 OR 프로모 OR 영화 OR 극장판 OR 발매 OR 출시 OR 재발매 OR 재입고 OR 재고 OR 품절 OR 응모 OR 신청 OR 등록 OR 추첨 OR 당첨 OR 라이브 OR 생방송 OR 스트리밍 OR 시청 OR 코드 OR 대회 OR 야구 OR 굿즈 OR 포토카드 OR PLAYGO OR 재배포 OR 재지급 OR 수령 OR 프로모션팩 OR 신사황)",
+                  "ja": "(イベント OR チャレンジ OR コラボ OR キャンペーン OR プロモ OR 映画 OR 劇場版 OR 発売 OR 再販 OR 再入荷 OR 在庫 OR 売り切れ OR 応募 OR 申込 OR 登録 OR 抽選 OR 当選 OR ライブ配信 OR 生配信 OR 配信 OR 視聴 OR コード OR 大会 OR グッズ)",
+                  "en": "(event OR challenge OR collab OR collaboration OR promo OR movie OR film OR release OR reprint OR restock OR in-stock OR sold-out OR entry OR application OR registration OR lottery OR livestream OR broadcast OR streaming OR twitch OR drops OR redeem OR code OR tournament OR merchandise)",
+              }[lang]
+              return f"({name_expr}) {event_words} lang:{lang} -is:retweet"
+          '''
+          sub_once('social_event_discovery.py', r'def _game_query_terms\(game: str, region: str\) -> str:.*?\n\ndef _x_request', game_query + '\n\ndef _x_request')
           replace_once('social_event_discovery.py',
               '    query = f"({base_expr}) (site:x.com OR site:instagram.com OR site:youtube.com OR site:tiktok.com OR site:twitch.tv)"',
               '    query = f"({base_expr}) (site:x.com OR site:instagram.com OR site:youtube.com OR site:tiktok.com OR site:twitch.tv OR site:facebook.com)"')
-          replace_once('social_event_discovery.py', '''            elif "twitch.tv" in host:\n                kind = "twitch"\n            else:\n                kind = "youtube"''', '''            elif "twitch.tv" in host:\n                kind = "twitch"\n            elif "facebook.com" in host:\n                kind = "facebook"\n            else:\n                kind = "youtube"''')
+          replace_once('social_event_discovery.py', '''            elif "twitch.tv" in host:
+              kind = "twitch"
+          else:
+              kind = "youtube"''', '''            elif "twitch.tv" in host:
+              kind = "twitch"
+          elif "facebook.com" in host:
+              kind = "facebook"
+          else:
+              kind = "youtube"''')
           replace_once('social_event_discovery.py',
               '                          "status": "무키 공개검색 · 공식 SNS + 팬/컬렉터/크리에이터 X/Instagram/YouTube/TikTok/Twitch 후보"}',
               '                          "status": "무키 공개검색 · 공식 SNS + 팬/컬렉터/크리에이터 X/Instagram/YouTube/TikTok/Twitch/Facebook 후보"}')
 
-          replace_once('auto_pipeline_runner.py', '''    "twitch.tv": "twitch_public_search", "www.twitch.tv": "twitch_public_search",\n}''', '''    "twitch.tv": "twitch_public_search", "www.twitch.tv": "twitch_public_search",\n    "facebook.com": "facebook_public_search", "www.facebook.com": "facebook_public_search", "m.facebook.com": "facebook_public_search",\n}''')
+          # 5) Integrated provider attribution.
+          replace_once('auto_pipeline_runner.py', '''    "twitch.tv": "twitch_public_search", "www.twitch.tv": "twitch_public_search",
+          }''', '''    "twitch.tv": "twitch_public_search", "www.twitch.tv": "twitch_public_search",
+              "facebook.com": "facebook_public_search", "www.facebook.com": "facebook_public_search", "m.facebook.com": "facebook_public_search",
+          }''')
 
-          # permanent guard includes the new taxonomy regression.
+          # 6) Permanent regression guard.
           wf = Path('.github/workflows/provider-source-gap-learning-guard.yml')
           text = wf.read_text(encoding='utf-8')
-          text = text.replace("      - 'test_extended_discovery_channels_v5.py'\n      - '.github/workflows/provider-source-gap-learning-guard.yml'", "      - 'test_extended_discovery_channels_v5.py'\n      - 'test_source_gap_taxonomy_v6.py'\n      - '.github/workflows/provider-source-gap-learning-guard.yml'")
-          text = text.replace("            test_extended_discovery_channels_v5.py\n", "            test_extended_discovery_channels_v5.py \\\n            test_source_gap_taxonomy_v6.py\n")
-          text = text.replace("      - name: Verify extended public discovery remains discovery-only\n        run: python -m unittest -v test_extended_discovery_channels_v5.py", "      - name: Verify extended public discovery remains discovery-only\n        run: python -m unittest -v test_extended_discovery_channels_v5.py\n      - name: Verify stock entry broadcast and Facebook gap taxonomy\n        run: python -m unittest -v test_source_gap_taxonomy_v6.py")
+          marker = "      - 'test_extended_discovery_channels_v5.py'\n"
+          if "test_source_gap_taxonomy_v6.py" not in text:
+              text = text.replace(marker, marker + "      - 'test_source_gap_taxonomy_v6.py'\n")
+              text = text.replace(marker, marker + "      - 'test_source_gap_taxonomy_v6.py'\n", 1)
+          compile_marker = "            test_extended_discovery_channels_v5.py\n"
+          if "            test_source_gap_taxonomy_v6.py" not in text:
+              text = text.replace(compile_marker, "            test_extended_discovery_channels_v5.py \\\n            test_source_gap_taxonomy_v6.py\n", 1)
+          run_marker = "      - name: Verify extended public discovery remains discovery-only\n        run: python -m unittest -v test_extended_discovery_channels_v5.py"
+          if "Verify stock entry broadcast and Facebook gap taxonomy" not in text:
+              text = text.replace(run_marker, run_marker + "\n      - name: Verify stock entry broadcast and Facebook gap taxonomy\n        run: python -m unittest -v test_source_gap_taxonomy_v6.py")
           wf.write_text(text, encoding='utf-8')
           PY
       - name: Compile and run source-gap regressions
