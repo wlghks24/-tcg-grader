@@ -1,0 +1,89 @@
+name: One Shot Runtime Correctness Hardening
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'ONE_SHOT_RUNTIME_CORRECTNESS_HARDENING.py'
+      - '.github/workflows/one-shot-runtime-correctness-hardening.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: one-shot-runtime-correctness-main
+  cancel-in-progress: false
+
+jobs:
+  patch-and-verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
+        with:
+          python-version: '3.11'
+      - name: Compile deterministic one-shot patcher
+        run: python -m py_compile ONE_SHOT_RUNTIME_CORRECTNESS_HARDENING.py
+      - name: Apply deep runtime correctness hardening
+        run: python ONE_SHOT_RUNTIME_CORRECTNESS_HARDENING.py
+      - name: Compile patched runtime
+        run: |
+          python -m py_compile safe_runtime.py auto_repair_engine.py auto_update_all.py runtime_bundle_guard_v143.py
+          bash -n VERIFY_TABLET_FINAL.sh
+      - name: Verify corrected behavior
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          import auto_update_all as updater
+          import runtime_bundle_guard_v143 as bundle
+
+          recovered = {
+              'ok': True,
+              'collection_errors': ['TIMEOUT: historical diagnostic'],
+              'remaining_collection_errors': [],
+              'error': 'TIMEOUT: historical diagnostic',
+          }
+          assert updater._result_error_details(recovered) == []
+          assert updater._timeout_only_errors(['TIMEOUT: source 30초 초과'])
+          assert not updater._timeout_only_errors([
+              'TIMEOUT: source 30초 초과',
+              'ValueError: malformed data',
+          ])
+          source = Path('auto_update_all.py').read_text(encoding='utf-8')
+          assert source.count('diagnostic_exception(exc,1200)') >= 2
+          assert 'safe_error=diagnostic_exception(exc,600)' in source
+          assert "if stat_key == '__integration__' and _timeout_only_errors(errors):" in source
+          assert "'degraded':True" in source
+          assert 'timeout_only_cache_fallback' in source
+
+          result = bundle.audit()
+          relevant = [
+              item for item in result.get('issues', [])
+              if any(token in item for token in (
+                  '자동수집 복구 완료 오류',
+                  '보조 후보수집',
+                  '재시도/복구오류 필터',
+              ))
+          ]
+          assert not relevant, relevant
+          print('deep runtime correctness behavior: OK')
+          PY
+      - name: Run tablet preflight against patched tree
+        env:
+          TCG_FINAL_SKIP_HEAD_MATCH: '1'
+        run: bash VERIFY_TABLET_FINAL.sh
+      - name: Verify clean patch formatting
+        run: git diff --check
+      - name: Commit verified patch and remove one-shot files
+        run: |
+          git rm ONE_SHOT_RUNTIME_CORRECTNESS_HARDENING.py .github/workflows/one-shot-runtime-correctness-hardening.yml
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add auto_update_all.py runtime_bundle_guard_v143.py VERIFY_TABLET_FINAL.sh
+          git commit -m 'fix: harden timeout recovery and aux error reporting'
+          git pull --rebase origin main
+          git push origin HEAD:main
