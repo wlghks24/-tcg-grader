@@ -72,9 +72,9 @@ REGION_LANG = {
     "US": {"lang": "en", "hl": "en-US", "gl": "US", "ceid": "US:en"},
 }
 EVENT_TERMS = {
-    "ko": "행사 이벤트 콜라보 프로모 팝업 팝업스토어 점프샵 JUMP SHOP 슈에이샤 신세계 영화 극장판 개봉 예약 발매 출시 대회 야구 KBO 굿즈 포토카드 브랜드데이 PLAYGO 재배포 재지급 수령 프로모션팩 신사황",
-    "ja": "イベント コラボ キャンペーン プロモ ポップアップ 映画 劇場版 発売 大会 グッズ カード",
-    "en": "event collaboration collab promo pop-up movie film release tournament preorder merchandise card",
+    "ko": "행사 이벤트 챌린지 도전 개최 특전 배포 콜라보 프로모 팝업 팝업스토어 점프샵 JUMP SHOP 슈에이샤 신세계 영화 극장판 개봉 예약 발매 출시 대회 야구 KBO 굿즈 포토카드 브랜드데이 PLAYGO 재배포 재지급 수령 프로모션팩 신사황",
+    "ja": "イベント チャレンジ 開催 特典 配布 コラボ キャンペーン プロモ ポップアップ 映画 劇場版 発売 大会 グッズ カード",
+    "en": "event challenge special mission collaboration collab promo distribution giveaway pop-up movie film release tournament preorder merchandise card streaming twitch tiktok",
 }
 FAN_TERMS = {
     "ko": "팬 컬렉터 수집 개봉 언박싱 덱 덱리스트 카드샵 매장 재고 입고 품절 시세 후기 대회 프로모 행사 이벤트 신제품 신탄 박스",
@@ -116,6 +116,8 @@ SOCIAL_HOSTS = {
     "x.com", "www.x.com", "twitter.com", "www.twitter.com",
     "instagram.com", "www.instagram.com",
     "youtube.com", "www.youtube.com", "youtu.be",
+    "tiktok.com", "www.tiktok.com",
+    "twitch.tv", "www.twitch.tv",
 }
 GOOGLE_NEWS_HOSTS = {"news.google.com"}
 GOOGLE_API_HOSTS = {"www.googleapis.com"}
@@ -262,6 +264,14 @@ def _parse_social_link(link: str) -> tuple[str, str] | None:
             return "youtube_channel", path.split("/", 1)[1]
         if path.startswith("@"):
             return "youtube_handle", path.split("/", 1)[0]
+    if host in {"tiktok.com", "www.tiktok.com"}:
+        user = path.split("/", 1)[0].lstrip("@")
+        if user and re.fullmatch(r"[A-Za-z0-9_.]{2,30}", user):
+            return "tiktok", user
+    if host in {"twitch.tv", "www.twitch.tv"}:
+        user = path.split("/", 1)[0]
+        if user and user.lower() not in {"directory", "downloads", "jobs", "p", "videos"} and re.fullmatch(r"[A-Za-z0-9_]{2,30}", user):
+            return "twitch", user
     return None
 
 
@@ -306,7 +316,7 @@ def refresh_registry(force: bool = False) -> tuple[dict, list[str]]:
                "watch_accounts": [x for x in current.get("watch_accounts", []) if isinstance(x, dict)],
                "fan_discovery": current.get("fan_discovery") or {
                    "enabled": True,
-                   "platforms": ["x", "instagram", "youtube"],
+                   "platforms": ["x", "instagram", "youtube", "tiktok", "twitch"],
                    "roles": ["fan", "collector", "community", "deck", "opening", "event", "stock", "market"],
                    "trust_policy": "팬 SNS는 발견용 후보이며 공식 웹/SNS/판매처 교차확인 전 verified/trusted 승격 금지",
                },
@@ -608,7 +618,7 @@ def _ddg_social_one(game: str, region: str, registry: dict, fan_learner=None) ->
     base_expr = f"({name_expr}) (({event_expr}) OR ({fan_expr}))"
     if account_expr:
         base_expr = f"({base_expr}) OR (({account_expr}) (({event_expr}) OR ({fan_expr})))"
-    query = f"({base_expr}) (site:x.com OR site:instagram.com OR site:youtube.com)"
+    query = f"({base_expr}) (site:x.com OR site:instagram.com OR site:youtube.com OR site:tiktok.com OR site:twitch.tv)"
     url = "https://html.duckduckgo.com/html/?" + urllib.parse.urlencode({"q": query})
     req = urllib.request.Request(url, headers={"User-Agent": "Mozilla/5.0 TCG-Grader-SocialFallback/2.0"})
     try:
@@ -621,7 +631,17 @@ def _ddg_social_one(game: str, region: str, registry: dict, fan_learner=None) ->
             title = _short(re.sub(r"<[^>]+>", " ", raw_title), 220)
             if not title: continue
             official, author = _official_social_match(registry, source, title, game, region)
-            host = _host(source); kind = "x" if "x.com" in host or "twitter.com" in host else ("instagram" if "instagram.com" in host else "youtube")
+            host = _host(source)
+            if "x.com" in host or "twitter.com" in host:
+                kind = "x"
+            elif "instagram.com" in host:
+                kind = "instagram"
+            elif "tiktok.com" in host:
+                kind = "tiktok"
+            elif "twitch.tv" in host:
+                kind = "twitch"
+            else:
+                kind = "youtube"
             rows.append({"game": game, "region": region, "category": _category(title), "title": title, "source": source,
                          "source_kind": f"{kind}_public_search", "source_tier": "A-social" if official else "B-social",
                          "source_label": f"{kind.upper()} 공식채널 검색" if official else f"{kind.upper()} 공개검색 후보",
@@ -644,7 +664,7 @@ def collect_public_social_search(registry: dict, fan_learner=None) -> tuple[list
             if error: errors.append(error)
     return rows, errors, {"configured": True, "query_count": len(jobs), "error_count": len(errors), "result_count": len(rows),
                           "success_query_count": max(0, len(jobs)-len(errors)),
-                          "status": "무키 공개검색 · 공식 SNS + 팬/컬렉터/유튜버 X/Instagram/YouTube 후보"}
+                          "status": "무키 공개검색 · 공식 SNS + 팬/컬렉터/크리에이터 X/Instagram/YouTube/TikTok/Twitch 후보"}
 
 
 def _google_cse_one(game: str, region: str, key: str, cx: str) -> tuple[list[dict], str | None]:

@@ -58,7 +58,7 @@ REGIONS = {"KR": "ko", "JP": "ja", "US": "en"}
 QUERY_FAMILIES = {
     "ko": {
         "release": "출시 발매 신제품 신탄 부스터 스타터 예약 재발매 재판",
-        "event": "행사 이벤트 대회 팝업 페스타 체험회 매장대회 월드챔피언십",
+        "event": "행사 이벤트 챌린지 도전 개최 대회 팝업 페스타 체험회 매장대회 월드챔피언십",
         "tournament": "대회 리그 컵 챔피언십 월드챔피언십 매장대회 배틀",
         "popup": "팝업 팝업스토어 점프샵 \"JUMP SHOP\" 슈에이샤 신세계 페스타 박람회 전시회 체험회 카드샵",
         "promo": "프로모 증정 배포 한정 수령 특전 캠페인 프로모션팩",
@@ -71,7 +71,7 @@ QUERY_FAMILIES = {
     },
     "ja": {
         "release": "発売 新商品 新弾 ブースター スターター 予約 再販",
-        "event": "イベント 大会 ポップアップ フェス 体験会 店舗大会",
+        "event": "イベント チャレンジ 開催 大会 ポップアップ フェス 体験会 店舗大会",
         "tournament": "大会 リーグ カップ チャンピオンシップ 店舗大会 バトル",
         "popup": "ポップアップ ポップアップストア フェス 展示会 体験会 カードショップ",
         "promo": "プロモ 配布 特典 限定 キャンペーン プレゼント",
@@ -84,7 +84,7 @@ QUERY_FAMILIES = {
     },
     "en": {
         "release": "release new set booster starter preorder reprint",
-        "event": "event tournament pop-up festival demo store championship",
+        "event": "event challenge special mission tournament pop-up festival demo store championship",
         "tournament": "tournament league cup championship regional worlds store battle",
         "popup": "pop-up popup store festival expo convention exhibition demo card shop",
         "promo": "promo promotional card giveaway distribution exclusive campaign",
