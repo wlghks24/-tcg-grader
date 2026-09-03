@@ -71,7 +71,11 @@ GRADE_TRAINING_INBOX/
 manual_graded_photo_registrations.json
 manual_graded_photo_registrations.json.bak
 
-# Graphify local-only diagnostics/cache. The main graph/report may be committed deliberately.
+# Graphify local diagnostics / bounded repair learning.
 GRAPHIFY_UPDATE.log
+graphify_self_heal_memory.json
+graphify_self_heal_memory.json.corrupt.*
+graphify_self_heal_report.json
+.graphify_recovery/
 graphify-out/cost.json
 graphify-out/cache/
