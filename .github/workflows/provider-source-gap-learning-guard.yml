@@ -8,8 +8,11 @@ on:
       - 'social_event_discovery.py'
       - 'supplementary_discovery.py'
       - 'multi_route_event_discovery.py'
+      - 'multi_channel_agent.py'
+      - 'auto_pipeline_runner.py'
       - 'update_promo_events.py'
       - 'test_promo_event_keyword_coverage_v5.py'
+      - 'test_extended_discovery_channels_v5.py'
       - '.github/workflows/provider-source-gap-learning-guard.yml'
   push:
     branches: [main]
@@ -19,8 +22,11 @@ on:
       - 'social_event_discovery.py'
       - 'supplementary_discovery.py'
       - 'multi_route_event_discovery.py'
+      - 'multi_channel_agent.py'
+      - 'auto_pipeline_runner.py'
       - 'update_promo_events.py'
       - 'test_promo_event_keyword_coverage_v5.py'
+      - 'test_extended_discovery_channels_v5.py'
       - '.github/workflows/provider-source-gap-learning-guard.yml'
   workflow_dispatch:
 
@@ -30,20 +36,27 @@ permissions:
 jobs:
   verified-gap-learning:
     runs-on: ubuntu-latest
-    timeout-minutes: 5
+    timeout-minutes: 6
     steps:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
       - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
         with:
           python-version: '3.11'
-      - name: Compile source-gap learner and promo headline guard
+      - name: Compile source-gap and discovery guards
         run: |
           python -m py_compile \
             provider_health_learning.py \
+            multi_channel_agent.py \
+            multi_route_event_discovery.py \
+            social_event_discovery.py \
+            auto_pipeline_runner.py \
             update_promo_events.py \
             test_provider_source_gap_learning_v5.py \
-            test_promo_event_keyword_coverage_v5.py
+            test_promo_event_keyword_coverage_v5.py \
+            test_extended_discovery_channels_v5.py
       - name: Verify candidate and official coverage stay separated
         run: python -m unittest -v test_provider_source_gap_learning_v5.py
       - name: Verify challenge-style official event headlines remain discoverable
         run: python -m unittest -v test_promo_event_keyword_coverage_v5.py
+      - name: Verify extended public discovery remains discovery-only
+        run: python -m unittest -v test_extended_discovery_channels_v5.py
