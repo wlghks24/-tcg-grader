@@ -178,7 +178,11 @@ grep -Fxq '.agents/' .graphifyignore
 grep -Fxq 'AGENTS.md' .graphifyignore
 grep -Fq 'OFFICIAL_HTTPS="https://github.com/wlghks24/-tcg-grader.git"' ANDROID_UPDATE_AND_START.sh
 grep -Fq 'mktemp -d "$RUNTIME_BACKUP_DIR/' ANDROID_UPDATE_AND_START.sh
+grep -Fq 'if [ -L "$RUNTIME_BACKUP_DIR" ]; then' ANDROID_UPDATE_AND_START.sh
 grep -Fq 'if [ -L "$changed" ]; then' ANDROID_UPDATE_AND_START.sh
+grep -Fq 'if ! is_runtime_path "$changed"; then' ANDROID_UPDATE_AND_START.sh
+grep -Fq '[ -f "$manifest" ] && [ ! -L "$manifest" ] || return 1' ANDROID_UPDATE_AND_START.sh
+grep -Fq 'restore_tmp=".${changed}.tcg-restore.$$"' ANDROID_UPDATE_AND_START.sh
 grep -Fq 'fatal_restore_error=1' ANDROID_UPDATE_AND_START.sh
 if grep -F 'find "$RUNTIME_BACKUP_DIR"' ANDROID_UPDATE_AND_START.sh >/dev/null; then
   echo "[오류] Android 런타임 복원본을 실제 생성 경로가 아닌 디렉터리 정렬로 다시 선택합니다."
