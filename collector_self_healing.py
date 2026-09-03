@@ -244,7 +244,18 @@ def _normalized_results(report: Any) -> list[dict]:
     rows = report.get("results")
     if not isinstance(rows, (list, tuple)):
         return []
-    return [row for row in list(rows)[:MAX_RESULTS_PER_RUN] if isinstance(row, dict)]
+    return [row for row in rows[:MAX_RESULTS_PER_RUN] if isinstance(row, dict)]
+
+
+def _signature_stat(file_row: dict, signature: str, analysis: dict, now: str) -> dict:
+    """Return/create one normalized signature row without duplicating setup logic."""
+    signatures = file_row.setdefault("signatures", {})
+    return signatures.setdefault(signature, {
+        "code": str(analysis.get("code") or ""),
+        "occurrences": 0,
+        "last_seen": now,
+        "policies": {},
+    })
 
 
 def observe(report: dict, path: Path = MEMORY) -> dict:
@@ -268,6 +279,9 @@ def observe(report: dict, path: Path = MEMORY) -> dict:
 def _observe_locked(report: Any, path: Path) -> dict:
     memory = _load(path)
     memory["runs"] = min(1_000_000, _safe_int(memory.get("runs")) + 1)
+    files = memory.setdefault("files", {})
+    events = memory.setdefault("events", [])
+    quarantine_items = memory.setdefault("quarantine", [])
     applied = recovered = quarantined = prepared = 0
     duplicate_active_suppressed = duplicate_policy_suppressed = 0
     active_seen: set[tuple[str, str]] = set()
@@ -277,10 +291,11 @@ def _observe_locked(report: Any, path: Path) -> dict:
         filename = result.get("file")
         if not isinstance(filename, str) or Path(filename).name != filename:
             continue
-        file_row = memory.setdefault("files", {}).setdefault(filename, _file_row())
+        observed_at = _now()
+        file_row = files.setdefault(filename, _file_row())
         if result.get("cooldown_deferred") is True:
-            memory.setdefault("events", []).append({
-                "timestamp": _now(), "file": filename, "ok": bool(result.get("ok")),
+            events.append({
+                "timestamp": observed_at, "file": filename, "ok": bool(result.get("ok")),
                 "unresolved": True, "applied_policy": None,
                 "next_policy": file_row.get("pending_policy"), "cooldown_deferred": True,
             })
@@ -307,10 +322,7 @@ def _observe_locked(report: Any, path: Path) -> dict:
                     duplicate_policy_suppressed += 1
                     continue
                 policy_seen.add(policy_key)
-                stat = file_row.setdefault("signatures", {}).setdefault(sig, {
-                    "code": str(analysis.get("code") or ""), "occurrences": 0,
-                    "last_seen": _now(), "policies": {},
-                })
+                stat = _signature_stat(file_row, sig, analysis, observed_at)
                 score = stat.setdefault("policies", {}).setdefault(
                     applied_policy, {"runs": 0, "successes": 0, "failures": 0}
                 )
@@ -332,15 +344,12 @@ def _observe_locked(report: Any, path: Path) -> dict:
                 duplicate_active_suppressed += 1
                 continue
             active_seen.add(active_key)
-            stat = file_row.setdefault("signatures", {}).setdefault(sig, {
-                "code": str(analysis.get("code") or ""), "occurrences": 0,
-                "last_seen": _now(), "policies": {},
-            })
+            stat = _signature_stat(file_row, sig, analysis, observed_at)
             stat["occurrences"] = min(1_000_000, _safe_int(stat.get("occurrences")) + 1)
-            stat["last_seen"] = _now()
+            stat["last_seen"] = observed_at
             if analysis.get("code") in QUARANTINE_CODES:
-                memory.setdefault("quarantine", []).append({
-                    "timestamp": _now(), "file": filename, "signature": sig,
+                quarantine_items.append({
+                    "timestamp": observed_at, "file": filename, "signature": sig,
                     "code": analysis.get("code"),
                     "reason": "검증된 코드·파서 수정 필요; 자동 데이터 승격 금지",
                     "detail": auto_repair_engine.redact_sensitive(detail, 500),
@@ -369,8 +378,8 @@ def _observe_locked(report: Any, path: Path) -> dict:
         file_row["access_control_blocked"] = bool(unresolved and access_control_blocked)
         if next_policy:
             prepared += 1
-        memory.setdefault("events", []).append({
-            "timestamp": _now(), "file": filename, "ok": bool(result.get("ok")),
+        events.append({
+            "timestamp": observed_at, "file": filename, "ok": bool(result.get("ok")),
             "unresolved": unresolved, "applied_policy": applied_policy if applied_policy in POLICIES else None,
             "next_policy": file_row.get("pending_policy"),
         })
@@ -393,7 +402,7 @@ def _observe_locked(report: Any, path: Path) -> dict:
         "quarantined_for_code_repair": quarantined,
         "duplicate_active_signatures_suppressed": duplicate_active_suppressed,
         "duplicate_policy_observations_suppressed": duplicate_policy_suppressed,
-        "active_files": sum(1 for row in memory.get("files", {}).values() if row.get("pending_policy")),
+        "active_files": sum(1 for row in files.values() if row.get("pending_policy")),
         "code_repair_learning": code_repair,
         "safety": memory["safety"],
     }
