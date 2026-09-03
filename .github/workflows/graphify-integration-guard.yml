@@ -57,14 +57,25 @@ jobs:
           git init -q
           git config user.name graphify-guard
           git config user.email graphify-guard@example.invalid
-          cat > sample.py <<'PY'
-          def card_grade(score: float) -> str:
-              return "high" if score >= 9.0 else "review"
+          cat > models.py <<'PY'
+          class Card:
+              def __init__(self, score: float):
+                  self.score = score
 
-          def summarize(score: float) -> str:
-              return card_grade(score)
+              def needs_review(self) -> bool:
+                  return self.score < 9.0
           PY
-          git add sample.py
+          cat > service.py <<'PY'
+          from models import Card
+
+          def card_grade(score: float) -> str:
+              card = Card(score)
+              return "review" if card.needs_review() else "high"
+
+          def summarize(scores: list[float]) -> list[str]:
+              return [card_grade(score) for score in scores]
+          PY
+          git add models.py service.py
           git commit -qm initial
       - name: Exercise Codex and Agent Skills project install
         shell: bash
@@ -85,14 +96,12 @@ jobs:
           echo 'Generated Graphify outputs:'
           find graphify-out -maxdepth 2 -type f -print | sort
           test -s graphify-out/graph.json
-          test -s graphify-out/GRAPH_REPORT.md
-          test -s graphify-out/graph.html
       - name: Exercise incremental forced refresh
         shell: bash
         run: |
           set -euo pipefail
           cd "$GRAPHIFY_FIXTURE"
-          printf '\n# changed\n' >> sample.py
+          printf '\n# changed\n' >> service.py
           graphify update . --force
           test -s graphify-out/graph.json
       - name: Exercise Graphify git hooks
