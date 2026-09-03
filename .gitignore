@@ -52,6 +52,12 @@ collection_meta_learning.json
 collection_meta_learning.json.bak
 collection_meta_profile.json
 
+# TCG-wide code-repair learning is advisory device-local runtime state.
+# It may rank verified playbooks/checks but is never executable source code.
+tcg_code_repair_learning.json
+tcg_code_repair_candidates.json
+tcg_code_repair_report.json
+
 # Security-sensitive local credentials and audit state
 .env
 .env.*
