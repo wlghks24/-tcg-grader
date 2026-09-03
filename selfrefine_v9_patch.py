@@ -69,7 +69,7 @@ def patch_provider():
     marker = '_TOPIC_RULES = (\n    ("status_update",'
     insert = '_TOPIC_RULES = (\n' +         f'    ("service_status", re.compile(r"{SERVICE_RE}", re.I)),\n' +         f'    ("results", re.compile(r"{RESULTS_RE}", re.I)),\n' +         f'    ("purchase_policy", re.compile(r"{PURCHASE_RE}", re.I)),\n' +         '    ("status_update",'
     t = one(t, marker, insert, "provider rules")
-    t = one(t, '"version": 3,', '"version": 4,', "provider schema")
+    t = one(t, '"version": 3,\n        "providers": {},', '"version": 4,\n        "providers": {},', "provider schema")
     t = one(t,
         'urgency = {"status_update": 5.0, "rules": 4.5, "deadline": 4.0, "access": 4.0, "entry": 3.0, "broadcast": 3.0, "stock": 2.0}.get(topic, 0.0)',
         'urgency = {"service_status": 5.5, "status_update": 5.0, "rules": 4.5, "purchase_policy": 4.5, "deadline": 4.0, "access": 4.0, "entry": 3.0, "broadcast": 3.0, "results": 2.5, "stock": 2.0}.get(topic, 0.0)',
