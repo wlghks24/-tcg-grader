@@ -20,6 +20,7 @@ on:
       - 'collection_learning_hardening_v142.py'
       - 'collection_learning_hardening_v144.py'
       - 'event_source_overlay_v144.py'
+      - 'event_source_expansion_v145.py'
       - 'event_priority_watch.py'
       - 'event_quick_watch.py'
       - 'event_gap_learning.py'
@@ -32,6 +33,7 @@ on:
       - 'requirements.txt'
       - 'test_event_quick_watch.py'
       - 'test_event_miss_learning_v144.py'
+      - 'test_event_source_expansion_v145.py'
       - 'test_collection_learning_hardening_v142.py'
       - 'test_runtime_bundle_guard_v143.py'
       - 'START_TCG_UPDATER_ANDROID.sh'
@@ -45,10 +47,10 @@ permissions:
 jobs:
   verify:
     runs-on: ubuntu-latest
-    timeout-minutes: 7
+    timeout-minutes: 8
     steps:
-      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
-      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
+      - uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1
         with:
           python-version: '3.12'
       - name: Install runtime test dependency
@@ -73,6 +75,7 @@ jobs:
           collection_learning_hardening_v142.py
           collection_learning_hardening_v144.py
           event_source_overlay_v144.py
+          event_source_expansion_v145.py
           event_priority_watch.py
           event_quick_watch.py
           event_gap_learning.py
@@ -84,6 +87,7 @@ jobs:
           multi_route_event_discovery.py
           test_event_quick_watch.py
           test_event_miss_learning_v144.py
+          test_event_source_expansion_v145.py
           test_collection_learning_hardening_v142.py
           test_runtime_bundle_guard_v143.py
       - name: Run collection and runtime regression tests
@@ -91,24 +95,42 @@ jobs:
           python -m unittest -v
           test_event_quick_watch.py
           test_event_miss_learning_v144.py
+          test_event_source_expansion_v145.py
           test_collection_learning_hardening_v142.py
           test_runtime_bundle_guard_v143.py
-      - name: Verify v144 semantic runtime bundle
+      - name: Verify v145 semantic runtime bundle
         shell: bash
         run: |
           python - <<'PY'
+          import adaptive_collection_learner as adaptive
           import collection_learning_hardening_v142 as h
           import collection_learning_hardening_v144 as miss
           import event_source_overlay_v144 as overlay
+          import event_source_expansion_v145 as expansion
+          import multi_route_event_discovery as routes
           import runtime_bundle_guard_v143 as bundle
           import update_promo_events as promo
           source_status = overlay.apply()
           status = h.apply()
+          expansion_status = expansion.apply()
           miss_status = miss.apply()
           audit = bundle.require_compatible()
           assert source_status['patch'] == 144, source_status
           assert source_status['distinctive_verified_term_ranking'] is True, source_status
           assert status['patch'] == 142, status
+          assert expansion_status['patch'] == 145, expansion_status
+          assert expansion_status['static_target_cells'] == 9, expansion_status
+          assert expansion_status['scoped_learned_host_queries'] is True, expansion_status
+          assert expansion_status['verified_evidence_source_learning'] is True, expansion_status
+          assert expansion_status['source_health_feedback'] is True, expansion_status
+          assert expansion_status['rotating_target_windows'] is True, expansion_status
+          assert expansion_status['max_hosts_per_scoped_query'] <= 8, expansion_status
+          assert expansion_status['unverified_source_learning_weight'] == 0.0, expansion_status
+          assert expansion_status['trust_auto_promotion'] is False, expansion_status
+          assert 'pokemoncenter.com' in routes.PARTNER_DOMAINS[('포켓몬 카드','US')]
+          assert 'shonenjump.com' in routes.PARTNER_DOMAINS[('원피스 카드','JP')]
+          assert 'bandai-tcg-plus.com' in routes.PARTNER_DOMAINS[('나루토 카드','JP')]
+          assert 'shonenjump.com' not in adaptive.GAME_CONFIG['원피스']['official_hosts']
           assert miss_status['patch'] == 144, miss_status
           assert miss_status['verified_miss_learning'] is True, miss_status
           assert miss_status['cross_region_watch_search'] is True, miss_status
@@ -126,15 +148,17 @@ jobs:
           assert status['unverified_payload_learning_weight'] == 0.0, status
           assert status['unverified_search_host_term_learning_weight'] == 0.0, status
           assert len(promo.social_topic_expected_keys()) == 90, len(promo.social_topic_expected_keys())
-          print('[OK] v144 miss recovery + distinctive anchors + v143 runtime bundle + v142 learning guard + 90-cell coverage')
+          print('[OK] v145 source expansion + v144 miss recovery + v143 runtime bundle + v142 learning guard + 90-cell coverage')
           PY
-          grep -q 'collection_learning_hardening_v142.apply()' auto_pipeline_runner.py
+          grep -q 'event_source_expansion_v145.apply()' auto_pipeline_runner.py
           grep -q 'v142-verified-collection-learning' auto_pipeline_runner.py
+          grep -q 'event_source_expansion_v145' event_priority_watch.py
+          grep -q 'event_source_expansion_v145' event_quick_watch.py
           grep -q 'collection_learning_hardening_v144' event_priority_watch.py
           grep -q 'collection_learning_hardening_v144' event_quick_watch.py
           grep -q 'event_source_overlay_v144' event_priority_watch.py
           grep -q 'event_source_overlay_v144' event_quick_watch.py
-      - name: Verify Android v143 install wiring
+      - name: Verify Android v145 install wiring
         shell: bash
         run: |
           bash -n START_TCG_UPDATER_ANDROID.sh
@@ -150,13 +174,19 @@ jobs:
             graded_photo_multi_source.py \
             multi_channel_agent.py \
             search_method_learning.py \
-            collection_learning_hardening_v142.py; do
+            collection_learning_hardening_v142.py \
+            collection_learning_hardening_v144.py \
+            event_source_overlay_v144.py \
+            event_source_expansion_v145.py; do
             grep -q "$required" START_TCG_UPDATER_ANDROID.sh
             grep -q "$required" INSTALL_GRADE_LEARNING_V135.sh
           done
+          grep -q 'test_event_source_expansion_v145.py' INSTALL_GRADE_LEARNING_V135.sh
           grep -q 'test_runtime_bundle_guard_v143.py' INSTALL_GRADE_LEARNING_V135.sh
           grep -q 'runtime_bundle_patch' tcg_updater_v135.py
           grep -q 'runtime_bundle_compatible' tcg_updater_v135.py
           grep -q "RUNTIME_PATCH = 143" tcg_updater_v135.py
           grep -q "event_collection_patch.*142" tcg_updater_v135.py
+          grep -q "event_source_expansion_patch.*145" tcg_updater_v135.py
+          grep -q "source_learning_scoped_by_game_region.*True" tcg_updater_v135.py
           grep -q "strict_official_social_url_match.*True" tcg_updater_v135.py
