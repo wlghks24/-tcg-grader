@@ -2,6 +2,7 @@ name: Apply Android 7-step display
 
 on:
   push:
+    branches: [main]
     paths:
       - 'apply_android_7step_display_patch.py'
       - '.github/workflows/apply-android-7step-display.yml'
