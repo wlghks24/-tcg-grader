@@ -76,6 +76,7 @@ GRAPHIFY_UPDATE.log
 graphify_self_heal_memory.json
 graphify_self_heal_memory.json.corrupt.*
 graphify_self_heal_report.json
+graphify_self_heal_candidates.json
 .graphify_recovery/
 graphify-out/cost.json
 graphify-out/cache/
