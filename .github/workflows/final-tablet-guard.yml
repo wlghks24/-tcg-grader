@@ -15,7 +15,9 @@ on:
       - 'tcg_code_repair_learning.py'
       - 'GRAPHIFY_UPDATE.sh'
       - 'GRAPHIFY_SELF_HEAL.py'
+      - 'GRAPHIFY_AUDIT.py'
       - 'SETUP_GRAPHIFY_TERMUX.sh'
+      - '.graphifyignore'
       - '.gitignore'
       - '.github/workflows/final-tablet-guard.yml'
   workflow_dispatch:
@@ -44,3 +46,11 @@ jobs:
           grep -Fq 'tcg_code_repair_candidates.json' .gitignore
           grep -Fq 'tcg_code_repair_report.json' .gitignore
           grep -Fq 'graphify_self_heal_memory.json' .gitignore
+          grep -Fq 'graphify-out/graph_audit.json' .gitignore
+      - name: Verify Graphify control-plane files stay out of map
+        run: |
+          grep -Fxq '.codex/' .graphifyignore
+          grep -Fxq '.agents/' .graphifyignore
+          grep -Fxq 'AGENTS.md' .graphifyignore
+          grep -Fq '25: "map_audit_failed"' GRAPHIFY_SELF_HEAL.py
+          grep -Fq 'ignore_policy_synced' GRAPHIFY_AUDIT.py
