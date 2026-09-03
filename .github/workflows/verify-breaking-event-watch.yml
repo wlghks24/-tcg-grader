@@ -18,6 +18,8 @@ on:
       - 'event_collection_hardening_v140.py'
       - 'event_collection_hardening_v141.py'
       - 'collection_learning_hardening_v142.py'
+      - 'collection_learning_hardening_v144.py'
+      - 'event_source_overlay_v144.py'
       - 'event_priority_watch.py'
       - 'event_quick_watch.py'
       - 'event_gap_learning.py'
@@ -28,6 +30,7 @@ on:
       - 'social_source_registry.json'
       - 'tcg_updater_v135.py'
       - 'test_event_quick_watch.py'
+      - 'test_event_miss_learning_v144.py'
       - 'test_collection_learning_hardening_v142.py'
       - 'test_runtime_bundle_guard_v143.py'
       - 'START_TCG_UPDATER_ANDROID.sh'
@@ -65,6 +68,8 @@ jobs:
           event_collection_hardening_v140.py
           event_collection_hardening_v141.py
           collection_learning_hardening_v142.py
+          collection_learning_hardening_v144.py
+          event_source_overlay_v144.py
           event_priority_watch.py
           event_quick_watch.py
           event_gap_learning.py
@@ -75,24 +80,38 @@ jobs:
           social_event_discovery.py
           multi_route_event_discovery.py
           test_event_quick_watch.py
+          test_event_miss_learning_v144.py
           test_collection_learning_hardening_v142.py
           test_runtime_bundle_guard_v143.py
       - name: Run collection and runtime regression tests
         run: >-
           python -m unittest -v
           test_event_quick_watch.py
+          test_event_miss_learning_v144.py
           test_collection_learning_hardening_v142.py
           test_runtime_bundle_guard_v143.py
-      - name: Verify v143 semantic runtime bundle
+      - name: Verify v144 semantic runtime bundle
         shell: bash
         run: |
           python - <<'PY'
           import collection_learning_hardening_v142 as h
+          import collection_learning_hardening_v144 as miss
+          import event_source_overlay_v144 as overlay
           import runtime_bundle_guard_v143 as bundle
           import update_promo_events as promo
-          status=h.apply()
-          audit=bundle.require_compatible()
+          source_status = overlay.apply()
+          status = h.apply()
+          miss_status = miss.apply()
+          audit = bundle.require_compatible()
+          assert source_status['patch'] == 144, source_status
           assert status['patch'] == 142, status
+          assert miss_status['patch'] == 144, miss_status
+          assert miss_status['verified_miss_learning'] is True, miss_status
+          assert miss_status['cross_region_watch_search'] is True, miss_status
+          assert miss_status['multilingual_watch_query'] is True, miss_status
+          assert miss_status['learned_region_inference'] is True, miss_status
+          assert miss_status['unverified_learning_weight'] == 0.0, miss_status
+          assert miss_status['trust_auto_promotion'] is False, miss_status
           assert audit['patch'] == 143, audit
           assert audit['issue_count'] == 0, audit
           assert audit['missing_file_count'] == 0, audit
@@ -103,10 +122,14 @@ jobs:
           assert status['unverified_payload_learning_weight'] == 0.0, status
           assert status['unverified_search_host_term_learning_weight'] == 0.0, status
           assert len(promo.social_topic_expected_keys()) == 90, len(promo.social_topic_expected_keys())
-          print('[OK] v143 runtime bundle + v142 learning guard + 90-cell coverage')
+          print('[OK] v144 miss recovery + v143 runtime bundle + v142 learning guard + 90-cell coverage')
           PY
           grep -q 'collection_learning_hardening_v142.apply()' auto_pipeline_runner.py
           grep -q 'v142-verified-collection-learning' auto_pipeline_runner.py
+          grep -q 'collection_learning_hardening_v144' event_priority_watch.py
+          grep -q 'collection_learning_hardening_v144' event_quick_watch.py
+          grep -q 'event_source_overlay_v144' event_priority_watch.py
+          grep -q 'event_source_overlay_v144' event_quick_watch.py
       - name: Verify Android v143 install wiring
         shell: bash
         run: |
