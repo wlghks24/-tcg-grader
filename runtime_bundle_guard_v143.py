@@ -154,8 +154,20 @@ def audit() -> dict:
         try:
             if update_all._should_retry({}, False, "ValueError: malformed data"):
                 issues.append("결정적 ValueError가 네트워크 재시도로 잘못 처리됩니다")
+            recovered_probe = {
+                "ok": True,
+                "collection_errors": ["TIMEOUT: historical diagnostic"],
+                "remaining_collection_errors": [],
+                "error": "TIMEOUT: historical diagnostic",
+            }
+            if update_all._result_error_details(recovered_probe):
+                issues.append("자동수집 복구 완료 오류가 별도 timeout 재수집 대상으로 다시 열립니다")
+            if not update_all._timeout_only_errors(["TIMEOUT: source 30초 초과"]):
+                issues.append("보조 후보수집 timeout 전용 캐시 fallback 판정이 비활성입니다")
+            if update_all._timeout_only_errors(["TIMEOUT: source 30초 초과", "ValueError: malformed data"]):
+                issues.append("보조 후보수집 혼합 코드/데이터 오류가 stale cache 성공으로 숨겨질 수 있습니다")
         except Exception:
-            issues.append("자동수집 재시도 정책 계약 검사 실패")
+            issues.append("자동수집 재시도/복구오류 필터 계약 검사 실패")
 
     healing = modules.get("collector_self_healing")
     if healing is not None:

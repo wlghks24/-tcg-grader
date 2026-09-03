@@ -253,10 +253,17 @@ def _should_retry(row: dict, timed_out: bool, message: str) -> bool:
 
 
 def _result_error_details(result: dict) -> list[str]:
-    """Return bounded, redacted problem details from one collection result."""
+    """Return only currently unresolved, bounded and redacted problem details.
+
+    Recovered collectors intentionally retain historical ``collection_errors``
+    for diagnostics. When ``remaining_collection_errors`` exists it is the
+    authoritative current-error list. A stale top-level error on a successful
+    result is diagnostic-only and must not reopen timeout recovery.
+    """
     if not isinstance(result,dict):
         return []
-    raw=result.get('collection_errors')
+    key='remaining_collection_errors' if 'remaining_collection_errors' in result else 'collection_errors'
+    raw=result.get(key)
     if isinstance(raw,(list,tuple)):
         values=list(raw[:50])
     elif raw:
@@ -268,10 +275,8 @@ def _result_error_details(result: dict) -> list[str]:
         text=auto_repair_engine.redact_sensitive(value,1200).strip()
         if text and text not in details:
             details.append(text)
-    # 실패 행의 ``error``는 collection_errors를 " / "로 합친 값인 경우가
-    # 많다. 같은 시도들을 한 번 더 학습하지 않되, NameError/보안차단처럼
-    # collection_errors에 없던 추가 원인은 반드시 보존한다.
-    error=auto_repair_engine.redact_sensitive(result.get('error'),1200).strip() if result.get('error') else ''
+    error=(auto_repair_engine.redact_sensitive(result.get('error'),1200).strip()
+           if result.get('error') and not bool(result.get('ok')) else '')
     error_parts=[part.strip() for part in re.split(r'\s+(?:/|·)\s+',error) if part.strip()]
     duplicate_join=bool(error_parts) and all(part in details for part in error_parts)
     if error and error not in details and not duplicate_join:
@@ -284,6 +289,12 @@ def _is_timeout_error(value) -> bool:
     return any(marker in text for marker in (
         'timeouterror','timeout','timed out','deadline exceeded','시간초과','시간 초과','초 초과'
     ))
+
+
+def _timeout_only_errors(values) -> bool:
+    """True only when every recorded failure is a timeout-family failure."""
+    rows=[str(value).strip() for value in (values or []) if str(value).strip()]
+    return bool(rows) and all(_is_timeout_error(value) for value in rows)
 
 
 def _deferred_timeout_eligible(result: dict) -> bool:
@@ -375,8 +386,9 @@ def _run_deferred_timeout_recovery(results: list[dict], jobs, stats: dict, run_j
         try:
             retry_result=run_job(job,budget)
         except Exception as exc:
+            safe_error=diagnostic_exception(exc,600)
             retry_result={'name':job[0],'file':filename,'ok':False,
-                          'error':f'{type(exc).__name__}: {exc}','collection_errors':[f'{type(exc).__name__}: {exc}']}
+                          'error':safe_error,'collection_errors':[safe_error]}
         duration=time.monotonic()-began
         remaining=_result_error_details(retry_result)
         recovered=bool(retry_result.get('ok')) and not remaining
@@ -813,7 +825,7 @@ def run_all(trigger: str = "manual", selected_files=None, progress_callback=None
                 msg=f'TIMEOUT: {module_name} {attempt_timeout}초 초과'
                 errors.append(msg)
             except Exception as exc:
-                msg=f'{type(exc).__name__}: {exc}'
+                msg=diagnostic_exception(exc,1200)
                 errors.append(msg)
             statrow=stats.get('jobs',{}).get(filename,{})
             if attempts>=max_attempts or not _should_retry(statrow,timed_out,errors[-1]):
@@ -946,7 +958,7 @@ def run_all(trigger: str = "manual", selected_files=None, progress_callback=None
         # atomically only after a complete run.  If both bounded attempts time out,
         # a previously valid cache is therefore safer than turning a transient
         # network delay into an unresolved data-integrity issue.
-        if stat_key == '__integration__' and last_timed_out:
+        if stat_key == '__integration__' and _timeout_only_errors(errors):
             cache=ROOT/'web_discovery_candidates.json'
             cached={}
             try:
@@ -962,9 +974,10 @@ def run_all(trigger: str = "manual", selected_files=None, progress_callback=None
                 _record_job_stat(stats,stat_key,elapsed,True,timed_out=True,error=msg,recovered=True)
                 return {
                     'ok':True,
-                    'degraded':False,
+                    'degraded':True,
                     'deferred_timeout_pending':True,
                     'stale_cache_preserved':True,
+                    'timeout_only_cache_fallback':True,
                     'warning':'보조 후보수집 시간예산 초과 · 기존 검증 후보자료 유지 · 다음 업데이트에서 재수집',
                     'cache_updated_at':cached.get('updated_at'),
                     'duration_seconds':round(elapsed,2),
@@ -985,7 +998,10 @@ def run_all(trigger: str = "manual", selected_files=None, progress_callback=None
               f"atomic_write_json({str(integration_out)!r},r,suffix='.integration.tmp')")
         aux_env=os.environ.copy(); aux_env['TCG_HTTP_TIMEOUT']=str(max(5,min(60,int(timeout_s*0.45)))); proc=_run_managed_process([sys.executable,'-c',code],cwd=str(ROOT),timeout=timeout_s,env=aux_env)
         if proc.returncode!=0 or not integration_out.exists():
-            raise RuntimeError((proc.stderr or proc.stdout or '통합 후보수집 실패').strip()[-1200:])
+            detail=auto_repair_engine.redact_sensitive(
+                (proc.stderr or proc.stdout or '통합 후보수집 실패').strip()[-2400:],1200
+            )
+            raise RuntimeError(detail)
         extra=json.loads(safe_read_text(integration_out)); integration_out.unlink(missing_ok=True)
         ok=bool(extra.get('ok', True))
         degraded=bool(extra.get('degraded', False))
@@ -1017,7 +1033,10 @@ def run_all(trigger: str = "manual", selected_files=None, progress_callback=None
         lr=json.loads(safe_read_text(link_report)) if link_report.exists() and proc.returncode==0 else {}
         reachable_count=int(lr.pop('ok',0) or 0)
         if proc.returncode!=0:
-            return {"ok":False,"status":(proc.stderr or proc.stdout or '링크검사 오류').strip()[-1200:],"reachable_count":reachable_count,**lr}
+            status=auto_repair_engine.redact_sensitive(
+                (proc.stderr or proc.stdout or '링크검사 오류').strip()[-2400:],1200
+            )
+            return {"ok":False,"status":status,"reachable_count":reachable_count,**lr}
         broken=int(lr.get('broken',0) or 0); repaired=int(lr.get('repaired',0) or 0); transient=int(lr.get('transient',0) or 0)
         unresolved_broken=int(lr.get('unresolved_broken',max(0,broken-repaired)) or 0)
         degraded=bool(unresolved_broken)
