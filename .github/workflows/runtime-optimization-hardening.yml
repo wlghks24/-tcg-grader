@@ -44,22 +44,70 @@ jobs:
             auto_update_all.py \
             runtime_bundle_guard_v143.py
           bash -n START_TCG_UPDATER_ANDROID.sh
-      - name: Run recovered-error regression tests
+      - name: Run recovered-error and status-I/O regression tests
         run: |
           python tcg_code_repair_learning.py --self-test
           python - <<'PY'
+          import json
+          import tempfile
+          from pathlib import Path
+
+          import collector_self_healing as healing
           import tcg_code_repair_learning as learning
           import runtime_bundle_guard_v143 as bundle
 
           recovered = {
+              'file': 'releases.json',
               'ok': True,
               'collection_errors': ['NameError: historical diagnostic'],
               'remaining_collection_errors': [],
               'error': 'NameError: historical diagnostic',
+              'self_heal_policy': 'transient_balanced',
           }
           assert learning._details(recovered) == []
+          assert callable(getattr(healing, '_plan_from_row', None))
           assert 'collector_self_healing.py' in bundle.REQUIRED_FILES
           assert 'tcg_code_repair_learning.py' in bundle.REQUIRED_FILES
+
+          with tempfile.TemporaryDirectory() as tmp:
+              memory = Path(tmp) / 'collector_self_heal_memory.json'
+              original_code_observe = healing.tcg_code_repair_learning.observe
+              original_code_status = healing.tcg_code_repair_learning.public_status
+              healing.tcg_code_repair_learning.observe = lambda report: {'ok': True}
+              healing.tcg_code_repair_learning.public_status = lambda: {'ok': True}
+              try:
+                  observed = healing.observe({'results': [recovered]}, path=memory)
+                  payload = json.loads(memory.read_text(encoding='utf-8'))
+                  assert observed['quarantined_for_code_repair'] == 0, observed
+                  assert payload.get('quarantine') == [], payload.get('quarantine')
+
+                  payload = healing._default()
+                  first = healing._file_row()
+                  first['pending_policy'] = 'transient_balanced'
+                  second = healing._file_row()
+                  second['access_control_blocked'] = True
+                  payload['files'] = {
+                      'releases.json': first,
+                      'promo_events.json': second,
+                  }
+                  memory.write_text(json.dumps(payload), encoding='utf-8')
+
+                  original_load = healing._load
+                  calls = {'count': 0}
+                  def counting_load(path=healing.MEMORY):
+                      calls['count'] += 1
+                      return original_load(path)
+                  healing._load = counting_load
+                  try:
+                      status = healing.public_status(memory)
+                  finally:
+                      healing._load = original_load
+                  assert calls['count'] == 1, calls
+                  assert len(status['active']) == 2, status
+              finally:
+                  healing.tcg_code_repair_learning.observe = original_code_observe
+                  healing.tcg_code_repair_learning.public_status = original_code_status
+
           result = bundle.audit()
           assert result.get('missing_file_count') == 0, result
           optimized_contract_failures = [
@@ -69,22 +117,23 @@ jobs:
                   '출처 구조변경이 코드수정 격리',
                   '코드수정 학습기',
                   '복구 완료된 과거 오류',
+                  '반복 로드',
               ))
           ]
           assert not optimized_contract_failures, optimized_contract_failures
-          print('recovered-error filtering + runtime bundle contracts: OK')
+          print('recovered-error gating + single-read self-heal status + bundle contracts: OK')
           PY
       - name: Verify hardening is idempotent
         run: python runtime_optimization_hardening.py --check
       - name: Commit optimized runtime changes
         run: |
-          if git diff --quiet -- tcg_code_repair_learning.py runtime_bundle_guard_v143.py START_TCG_UPDATER_ANDROID.sh; then
+          if git diff --quiet -- collector_self_healing.py tcg_code_repair_learning.py runtime_bundle_guard_v143.py START_TCG_UPDATER_ANDROID.sh; then
             echo 'No runtime optimization changes required.'
             exit 0
           fi
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git add tcg_code_repair_learning.py runtime_bundle_guard_v143.py START_TCG_UPDATER_ANDROID.sh
-          git commit -m 'optimize: fix recovered-error learning and runtime bundle guard'
+          git add collector_self_healing.py tcg_code_repair_learning.py runtime_bundle_guard_v143.py START_TCG_UPDATER_ANDROID.sh
+          git commit -m 'optimize: gate recovered collector errors and status reads'
           git pull --rebase origin main
           git push origin HEAD:main
