@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Integrated adaptive discovery pipeline.
 
-v142:
+v146:
 - Pokemon / ONE PIECE / NARUTO keep adaptive KR/JP/US public search.
 - Adds three independent official paths: direct page crawl, YouTube Atom feeds,
   and official sitemap discovery.
@@ -10,8 +10,11 @@ v142:
 - Provider operational health is persisted separately from source trust.
 - The v142 collection-learning guard is applied inside this process before any
   adaptive collector is created, so subprocess runs cannot bypass learning safety.
-- All broad/direct/feed leads remain candidates until existing verification rules
-  confirm the event/content. Repeated discovery never grants official status.
+- v145 keeps bounded publisher/retailer/press discovery expansion.
+- v146 audits game × region × topic source gaps and performs a bounded secondary
+  public-index search for high-risk unverified leads without auto-promoting them.
+- All broad/direct/feed/social/wiki/community leads remain candidates until the
+  existing verification rules confirm the event/content.
 """
 from __future__ import annotations
 
@@ -34,6 +37,7 @@ import provider_health_learning
 import collection_meta_learning
 import supplementary_discovery
 import social_event_discovery
+import source_gap_intelligence
 
 ROOT = Path(__file__).resolve().parent
 OUT = ROOT / "web_discovery_candidates.json"
@@ -278,6 +282,25 @@ def _merge_adaptive_into_social(social: dict, candidates: list[dict]) -> tuple[d
     return out, len(adaptive_rows)
 
 
+def _merge_gap_rows_into_social(social: dict, rows: list[dict], gap_status: dict) -> tuple[dict, int]:
+    """Merge secondary discovery leads without changing their verification state."""
+    safe_rows = [dict(x) for x in rows if isinstance(x, dict) and x.get("verified") is not True]
+    current = [x for x in (social.get("items") or []) if isinstance(x, dict)]
+    merged = social_event_discovery.merge_candidates(current + safe_rows)
+    out = dict(social)
+    out["items"] = merged
+    out["item_count"] = len(merged)
+    status = dict(out.get("channel_status") or {})
+    status["source_gap_secondary"] = dict(gap_status or {})
+    status["source_gap_secondary"]["merged_item_count"] = len(merged)
+    status["source_gap_secondary"]["verified_promotion_count"] = 0
+    out["channel_status"] = status
+    out["source_gap_secondary_count"] = len(safe_rows)
+    out["updated_at"] = datetime.now().astimezone().isoformat(timespec="seconds")
+    atomic_write_json(social_event_discovery.OUT, out, suffix=".source-gap-social.tmp")
+    return out, len(safe_rows)
+
+
 def _official_source_summary(
     keywords: tuple[str, ...],
     candidates: list[dict],
@@ -389,6 +412,40 @@ def run_pipeline():
     except Exception as exc:
         extra_errors.append(f"adaptive_social_merge: {type(exc).__name__}: {exc}")
 
+    # v146: inspect what the broad/social/supplementary collectors actually found.
+    # Only high-risk cells with an unverified lead receive a bounded secondary
+    # public-index search. The discovered page is never fetched here and every
+    # resulting row remains verified=False until the existing official verifier
+    # confirms it.
+    source_gap = {}
+    source_gap_secondary_count = 0
+    source_gap_secondary_status: dict = {}
+    try:
+        pre_gap = source_gap_intelligence.audit_pipeline(social, supplementary, candidates)
+        gap_rows, source_gap_secondary_status = source_gap_intelligence.collect_secondary_leads(
+            pre_gap.get("priority_cells") or []
+        )
+        if gap_rows:
+            social, source_gap_secondary_count = _merge_gap_rows_into_social(
+                social, gap_rows, source_gap_secondary_status
+            )
+        else:
+            status = dict(social.get("channel_status") or {})
+            status["source_gap_secondary"] = dict(source_gap_secondary_status or {})
+            status["source_gap_secondary"]["verified_promotion_count"] = 0
+            social["channel_status"] = status
+        source_gap = source_gap_intelligence.observe_pipeline(
+            social, supplementary, candidates,
+            secondary_status=source_gap_secondary_status,
+        )
+    except Exception as exc:
+        source_gap = {
+            "ok": False,
+            "error": f"{type(exc).__name__}: {exc}",
+            "safety": "공백 학습기 오류만 격리 · 기존 공식/검증자료와 수집기는 유지",
+        }
+        extra_errors.append(f"source_gap_intelligence: {type(exc).__name__}: {exc}")
+
     adaptive_learning = {}
     try:
         learned_supplementary = agent.learner.learn_from_payload(supplementary, origin="supplementary")
@@ -401,6 +458,7 @@ def run_pipeline():
             "social_rows": learned_social,
             "feedback_rows": learned_feedback,
             "adaptive_merged_rows": adaptive_merge_count,
+            "source_gap_secondary_rows": source_gap_secondary_count,
             "official_selected": dict(selected_totals),
         }
     except Exception as exc:
@@ -447,17 +505,18 @@ def run_pipeline():
 
     official_summary = _official_source_summary(keywords, candidates, official_sources, selected_totals)
     payload = {
-        "version": "v142-verified-collection-learning",
+        "version": "v146-source-gap-intelligence",
         "updated_at": datetime.now().astimezone().isoformat(timespec="seconds"),
         "ok": len(failures) == 0 and not extra_errors and not social_hard_failure,
         "degraded": bool(broad_degraded or extra_errors or social_degraded),
         "failure_count": len(failures) + len(extra_errors) + (1 if social_hard_failure else 0),
         "empty_search_count": sum(1 for x in candidates if x.get("empty")),
         "errors": errors[:50],
-        "notice": "검색/SNS/뉴스/공식사이트/공식 YouTube/사이트맵 후보 자료입니다. 발견 경로가 공식이어도 내용 검증 전에는 자동 확정하지 않습니다.",
-        "learning_policy": "v142: 미검증 검색/SNS 후보는 수집 후보로 보존할 수 있지만 지속 host/검색어 학습에는 사용하지 않습니다. 공식 검증 또는 독립 교차확인된 자료만 학습하며 반복 발견만으로 공식 신뢰를 승격하지 않습니다.",
+        "notice": "검색/SNS/뉴스/공식사이트/공식 YouTube/사이트맵/보조 커뮤니티 후보 자료입니다. 발견 경로가 공식이어도 내용 검증 전에는 자동 확정하지 않습니다.",
+        "learning_policy": "v146: 기존 v142 검증학습 원칙을 유지하며, 출처공백 학습은 고정된 출처군의 발견 유용성/누락위험만 학습합니다. 미검증 X·Instagram·Google 검색·나무위키·Reddit·블로그 후보는 신뢰/공식성/도메인 허용목록/코드를 변경할 수 없습니다.",
         "collection_learning_hardening": collection_learning_hardening,
         "source_expansion_v145": source_expansion,
+        "source_gap_intelligence": source_gap,
         "platform": platform_agent.diagnostics(),
         "queries": candidates,
         "official_direct": official_summary.get("official_direct", {}),
@@ -473,6 +532,7 @@ def run_pipeline():
         "social": {
             "candidate_count": len(social.get("items", [])),
             "adaptive_merge_count": adaptive_merge_count,
+            "source_gap_secondary_count": source_gap_secondary_count,
             "official_social_candidate_count": int(social.get("official_social_candidate_count") or 0),
             "official_domain_search_count": int(social.get("official_domain_search_count") or 0),
             "cross_checked_count": int(social.get("cross_checked_count") or 0),
@@ -499,5 +559,6 @@ if __name__ == "__main__":
         f" · YouTube {int((result.get('official_youtube_feed') or {}).get('selected_total') or 0)}건"
         f" · 사이트맵 {int((result.get('official_sitemap') or {}).get('selected_total') or 0)}건"
         f" · 행사병합 {int((result.get('social') or {}).get('adaptive_merge_count') or 0)}건"
+        f" · 공백보조 {int((result.get('social') or {}).get('source_gap_secondary_count') or 0)}건"
         f" · 학습검색어 {int((result.get('adaptive_learning') or {}).get('learned_queries') or 0)}개"
     )

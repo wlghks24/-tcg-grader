@@ -15,6 +15,7 @@ on:
       - 'event_gap_learning.py'
       - 'collection_meta_learning.py'
       - 'social_event_discovery.py'
+      - 'source_gap_intelligence.py'
       - 'update_promo_events.py'
       - 'promo_events.json'
       - 'social_source_registry.json'
@@ -24,6 +25,32 @@ on:
       - 'test_official_channel_health.py'
       - 'test_jump_shop_event_watch.py'
       - 'test_event_gap_learning.py'
+      - 'test_source_gap_intelligence.py'
+      - '.github/workflows/verify-adaptive-collector.yml'
+  pull_request:
+    paths:
+      - 'adaptive_collection_learner.py'
+      - 'multi_channel_agent.py'
+      - 'official_direct_discovery.py'
+      - 'official_channel_feed_discovery.py'
+      - 'official_sitemap_discovery.py'
+      - 'provider_health_learning.py'
+      - 'auto_pipeline_runner.py'
+      - 'multi_route_event_discovery.py'
+      - 'event_gap_learning.py'
+      - 'collection_meta_learning.py'
+      - 'social_event_discovery.py'
+      - 'source_gap_intelligence.py'
+      - 'update_promo_events.py'
+      - 'promo_events.json'
+      - 'social_source_registry.json'
+      - 'supplementary_discovery.py'
+      - 'test_adaptive_collection_learner.py'
+      - 'test_official_direct_discovery.py'
+      - 'test_official_channel_health.py'
+      - 'test_jump_shop_event_watch.py'
+      - 'test_event_gap_learning.py'
+      - 'test_source_gap_intelligence.py'
       - '.github/workflows/verify-adaptive-collector.yml'
   workflow_dispatch:
 
@@ -33,7 +60,7 @@ permissions:
 jobs:
   verify:
     runs-on: ubuntu-latest
-    timeout-minutes: 5
+    timeout-minutes: 7
     steps:
       - name: Checkout
         uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
@@ -55,6 +82,7 @@ jobs:
             event_gap_learning.py \
             collection_meta_learning.py \
             social_event_discovery.py \
+            source_gap_intelligence.py \
             update_promo_events.py \
             supplementary_discovery.py
       - name: Run adaptive learner regression tests
@@ -64,4 +92,5 @@ jobs:
             test_official_direct_discovery.py \
             test_official_channel_health.py \
             test_jump_shop_event_watch.py \
-            test_event_gap_learning.py
+            test_event_gap_learning.py \
+            test_source_gap_intelligence.py
