@@ -209,9 +209,9 @@ def _branch_allowlist_from_push_block(block: str) -> set[str] | None:
     Returns None when no branches rule exists. Dynamic expressions, wildcard
     patterns, malformed lists, and branches-ignore are rejected by the caller.
     """
-    if re.search(r"(?m)^\s*branches-ignore\s*:", block):
+    if re.search(r"(?m)^[ \t]*branches-ignore[ \t]*:", block):
         return set()
-    match = re.search(r"(?m)^\s*branches\s*:\s*(.*)$", block)
+    match = re.search(r"(?m)^[ \t]*branches[ \t]*:[ \t]*(.*)$", block)
     if not match:
         return None
     tail = match.group(1).split("#", 1)[0].strip()
@@ -222,10 +222,10 @@ def _branch_allowlist_from_push_block(block: str) -> set[str] | None:
         values.append(tail.strip("'\""))
     else:
         block_lines = block.splitlines()
-        start = next((i for i, line in enumerate(block_lines) if re.match(r"^\s*branches\s*:\s*$", line)), None)
+        start = next((i for i, line in enumerate(block_lines) if re.match(r"^[ \t]*branches[ \t]*:[ \t]*$", line)), None)
         if start is not None:
             for line in block_lines[start + 1:]:
-                item = re.match(r"^\s*-\s*([^#]+?)(?:\s+#.*)?$", line)
+                item = re.match(r"^[ \t]*-[ \t]*([^#]+?)(?:[ \t]+#.*)?$", line)
                 if item:
                     values.append(item.group(1).strip().strip("'\""))
                     continue
