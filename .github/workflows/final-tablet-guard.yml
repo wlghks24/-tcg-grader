@@ -6,6 +6,7 @@ on:
       - 'VERIFY_TABLET_FINAL.sh'
       - 'ANDROID_RECOVER_UPDATE.sh'
       - 'ANDROID_UPDATE_AND_START.sh'
+      - 'ANDROID_AUTO_START_INSTALL.sh'
       - 'START_TCG_UPDATER_ANDROID.sh'
       - 'runtime_bundle_guard_v143.py'
       - 'runtime_optimization_hardening.py'
@@ -40,6 +41,8 @@ jobs:
       - name: Verify tablet recovery entrypoint exists
         run: |
           test -s ANDROID_RECOVER_UPDATE.sh
+          test -s ANDROID_AUTO_START_INSTALL.sh
+          bash -n ANDROID_AUTO_START_INSTALL.sh
           grep -Fq 'ANDROID_UPDATE_AND_START.sh' ANDROID_RECOVER_UPDATE.sh
       - name: Verify learning files remain device local
         run: |
