@@ -8,13 +8,14 @@ The audit is intentionally local and deterministic:
 - no source-code writes
 - no Git writes
 
-It checks that the graph is structurally usable, that paths intentionally excluded
-from the TCG architecture map did not leak back in, and reports graph size / hub
-concentration so tablet-side map bloat is visible before it becomes a problem.
+It verifies graph structure, checks that files excluded by .graphifyignore/.gitignore
+did not leak into the architecture map, and reports map size / hub concentration so
+tablet-side bloat is visible before it becomes a problem.
 """
 from __future__ import annotations
 
 import argparse
+import fnmatch
 import json
 from collections import Counter
 from pathlib import Path
@@ -23,37 +24,18 @@ from typing import Any, Iterable
 ROOT = Path(__file__).resolve().parent
 DEFAULT_GRAPH = ROOT / "graphify-out" / "graph.json"
 DEFAULT_REPORT = ROOT / "graphify-out" / "graph_audit.json"
+IGNORE_FILES = (ROOT / ".graphifyignore", ROOT / ".gitignore")
 
-FORBIDDEN_PATH_PARTS = (
+# These are safety backstops even if an ignore file is accidentally edited.
+ALWAYS_FORBIDDEN_PATTERNS = (
     "graphify-out/",
+    ".git/",
     ".tcg_runtime_preserved/",
     "GRADE_TRAINING_INBOX/",
-    "node_modules/",
     "__pycache__/",
     ".pytest_cache/",
-    ".git/",
+    "node_modules/",
 )
-
-# High-churn runtime state is deliberately absent from the architecture map.
-# Keep this list aligned with the important runtime exclusions in .graphifyignore.
-FORBIDDEN_RUNTIME_BASENAMES = {
-    "tcg_live_data.json",
-    "releases.json",
-    "market_watch.json",
-    "market_prices.json",
-    "promo_events.json",
-    "purchase_sources.json",
-    "purchase_signals.json",
-    "social_stock_signals.json",
-    "exchange_rates.json",
-    "release_parser_learning.json",
-    "graphify_self_heal_memory.json",
-    "graphify_self_heal_candidates.json",
-    "graphify_self_heal_report.json",
-    "tcg_code_repair_learning.json",
-    "tcg_code_repair_candidates.json",
-    "tcg_code_repair_report.json",
-}
 
 NODE_PATH_KEYS = (
     "source_file",
@@ -114,8 +96,6 @@ def _normalize_path(value: Any) -> str | None:
     text = value.strip().replace("\\", "/")
     if not text:
         return None
-    # Graphify may store an absolute source path.  Lower-case comparison is only
-    # used for leak detection; the original path is retained in the report.
     return text
 
 
@@ -130,21 +110,101 @@ def _node_paths(nodes: Iterable[dict[str, Any]]) -> list[str]:
     return paths
 
 
-def _path_leaks(paths: Iterable[str]) -> list[str]:
+def _load_ignore_rules() -> tuple[list[tuple[bool, str, str]], list[str]]:
+    """Return ordered (negated, pattern, source) rules plus read errors.
+
+    Ordered evaluation gives basic gitignore-compatible negation behavior, e.g.
+    `.env.*` followed by `!.env.example`.
+    """
+    rules: list[tuple[bool, str, str]] = []
+    errors: list[str] = []
+    for pattern in ALWAYS_FORBIDDEN_PATTERNS:
+        rules.append((False, pattern, "built-in safety"))
+
+    for ignore_path in IGNORE_FILES:
+        try:
+            text = ignore_path.read_text(encoding="utf-8", errors="replace")
+        except OSError as exc:
+            errors.append(f"cannot read {ignore_path.name}: {type(exc).__name__}: {exc}")
+            continue
+        for raw in text.splitlines():
+            line = raw.strip()
+            if not line or line.startswith("#"):
+                continue
+            negated = line.startswith("!")
+            if negated:
+                line = line[1:].strip()
+            if not line:
+                continue
+            rules.append((negated, line.replace("\\", "/"), ignore_path.name))
+    return rules, errors
+
+
+def _path_candidates(path: str) -> list[str]:
+    normalized = path.replace("\\", "/")
+    candidates = [normalized, normalized.lstrip("./")]
+    try:
+        absolute = Path(normalized)
+        if absolute.is_absolute():
+            candidates.append(absolute.relative_to(ROOT).as_posix())
+    except (OSError, ValueError):
+        pass
+    # Stable de-duplication.
+    return list(dict.fromkeys(candidate for candidate in candidates if candidate))
+
+
+def _rule_matches(path: str, pattern: str) -> bool:
+    pattern = pattern.replace("\\", "/")
+    anchored = pattern.startswith("/")
+    if anchored:
+        pattern = pattern[1:]
+    if not pattern:
+        return False
+
+    candidates = _path_candidates(path)
+    directory_rule = pattern.endswith("/")
+    core = pattern.rstrip("/")
+
+    for candidate in candidates:
+        clean = candidate.lstrip("./")
+        parts = [part for part in clean.split("/") if part]
+        basename = parts[-1] if parts else clean
+
+        if directory_rule:
+            if anchored:
+                if clean == core or clean.startswith(core + "/"):
+                    return True
+            elif clean == core or clean.startswith(core + "/") or f"/{core}/" in f"/{clean}/":
+                return True
+            continue
+
+        if "/" in core:
+            if fnmatch.fnmatch(clean, core) or (not anchored and fnmatch.fnmatch(clean, f"*/{core}")):
+                return True
+        else:
+            if fnmatch.fnmatch(basename, core) or any(fnmatch.fnmatch(part, core) for part in parts):
+                return True
+    return False
+
+
+def _ignored_reason(path: str, rules: list[tuple[bool, str, str]]) -> str | None:
+    ignored = False
+    reason: str | None = None
+    for negated, pattern, source in rules:
+        if _rule_matches(path, pattern):
+            ignored = not negated
+            reason = None if negated else f"{source}:{pattern}"
+    return reason if ignored else None
+
+
+def _path_leaks(
+    paths: Iterable[str], rules: list[tuple[bool, str, str]],
+) -> list[str]:
     leaks: list[str] = []
     for path in paths:
-        normalized = path.replace("\\", "/")
-        lowered = normalized.lower()
-        basename = Path(normalized).name
-        reason = None
-        for token in FORBIDDEN_PATH_PARTS:
-            if token.lower() in lowered:
-                reason = token
-                break
-        if reason is None and basename in FORBIDDEN_RUNTIME_BASENAMES:
-            reason = basename
+        reason = _ignored_reason(path, rules)
         if reason:
-            leaks.append(f"{normalized} [{reason}]")
+            leaks.append(f"{path} [{reason}]")
     # Stable de-duplication; cap report size in case a malformed graph repeats paths.
     return list(dict.fromkeys(leaks))[:100]
 
@@ -156,6 +216,10 @@ def audit(graph_path: Path) -> dict[str, Any]:
 
     errors: list[str] = []
     warnings: list[str] = []
+
+    rules, ignore_errors = _load_ignore_rules()
+    if ignore_errors:
+        errors.extend(ignore_errors)
 
     if not nodes:
         errors.append("graph has no nodes")
@@ -195,9 +259,9 @@ def audit(graph_path: Path) -> dict[str, Any]:
         errors.append(f"dangling links: {dangling_links} samples={dangling_samples}")
 
     paths = _node_paths(nodes)
-    leaks = _path_leaks(paths)
+    leaks = _path_leaks(paths, rules)
     if leaks:
-        errors.append(f"excluded/runtime paths leaked into code map: {leaks[:20]}")
+        errors.append(f"ignored/runtime/control-plane paths leaked into code map: {leaks[:20]}")
 
     unique_files = sorted(set(paths))
     graph_bytes = graph_path.stat().st_size
@@ -218,7 +282,7 @@ def audit(graph_path: Path) -> dict[str, Any]:
             )
 
     if graph_bytes > 25 * 1024 * 1024:
-        warnings.append("graph.json exceeds 25 MiB; review .graphifyignore scope for tablet efficiency")
+        warnings.append("graph.json exceeds 25 MiB; review ignore scope for tablet efficiency")
     if node_count >= 100 and edge_count == 0:
         warnings.append("large graph has no links; call/dependency extraction may be incomplete")
     if nodes and not paths:
@@ -233,6 +297,8 @@ def audit(graph_path: Path) -> dict[str, Any]:
         "graph_bytes": graph_bytes,
         "top_hub_edge_ratio": round(hub_ratio, 4),
         "top_hubs": top_hubs,
+        "ignore_rule_count": len(rules),
+        "ignore_sources": [path.name for path in IGNORE_FILES],
         "path_leak_count": len(leaks),
         "path_leaks": leaks,
         "malformed_link_count": malformed_links,
@@ -244,6 +310,7 @@ def audit(graph_path: Path) -> dict[str, Any]:
             "source_code_written": False,
             "git_written": False,
             "runtime_state_excluded": True,
+            "ignore_policy_synced": not ignore_errors,
         },
     }
 
