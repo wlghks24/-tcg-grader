@@ -4,6 +4,7 @@ on:
     branches: [main]
     paths:
       - 'ANDROID_UPDATE_AND_START.sh'
+      - 'ANDROID_RECOVER_UPDATE.sh'
       - '.github/workflows/android-updater-guard.yml'
   workflow_dispatch:
 permissions:
@@ -15,7 +16,9 @@ jobs:
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
       - name: Validate Android updater shell syntax
-        run: bash -n ANDROID_UPDATE_AND_START.sh
+        run: |
+          bash -n ANDROID_UPDATE_AND_START.sh
+          bash -n ANDROID_RECOVER_UPDATE.sh
       - name: Verify runtime-conflict recovery guards are present
         run: |
           grep -Fq '.tcg_runtime_preserved' ANDROID_UPDATE_AND_START.sh
@@ -28,3 +31,8 @@ jobs:
           grep -Fq 'git diff --quiet origin/main -- "$changed"' ANDROID_UPDATE_AND_START.sh
           grep -Fq '자기복구용 변경으로 안전하게 인정합니다.' ANDROID_UPDATE_AND_START.sh
           grep -Fq 'Android 업데이트 스크립트 자기복구 완료' ANDROID_UPDATE_AND_START.sh
+      - name: Verify one-shot recovery bootstrap
+        run: |
+          grep -Fq 'git show origin/main:ANDROID_UPDATE_AND_START.sh' ANDROID_RECOVER_UPDATE.sh
+          grep -Fq 'git restore --worktree --source=origin/main -- ANDROID_UPDATE_AND_START.sh' ANDROID_RECOVER_UPDATE.sh
+          grep -Fq 'TCG_REPO_DIR="$repo" bash "$tmp"' ANDROID_RECOVER_UPDATE.sh
