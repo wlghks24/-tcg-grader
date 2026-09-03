@@ -174,7 +174,7 @@ def patch_social():
         "social filter")
     t = append_query_line(t, '        "ko": "(', "대회결과 OR 결과발표 OR 우승자발표 OR 최종순위 OR 우승덱 OR 추첨판매 OR 구매제한 OR 본인인증 OR 가상대기열 OR 점검 OR 서비스장애 OR 로그인불가 OR 복구완료", "social query KR")
     t = append_query_line(t, '        "ja": "(', "大会結果 OR 結果発表 OR 優勝者発表 OR 最終順位 OR 優勝デッキ OR 抽選販売 OR 購入制限 OR 本人認証 OR メンテナンス OR 障害 OR 不具合 OR 復旧", "social query JP")
-    t = append_query_line(t, '        "en": "(', '"tournament results" OR "top finishers" OR "final standings" OR "winning deck" OR "lottery sale" OR "purchase limit" OR "identity verification" OR "virtual queue" OR maintenance OR "service outage" OR "login issue" OR resolved', "social query EN")
+    t = append_query_line(t, '        "en": "(', r'\"tournament results\" OR \"top finishers\" OR \"final standings\" OR \"winning deck\" OR \"lottery sale\" OR \"purchase limit\" OR \"identity verification\" OR \"virtual queue\" OR maintenance OR \"service outage\" OR \"login issue\" OR resolved', "social query EN")
     t = one(t, '    "www.pokemon.com", "pokemon.com",\n',
             '    "www.pokemon.com", "pokemon.com", "support.pokemon.com",\n',
             "social support host")
