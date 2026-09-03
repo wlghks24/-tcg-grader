@@ -1,6 +1,7 @@
 name: Apply graded photo provider merge v2
 on:
   push:
+    branches: [main]
     paths:
       - 'apply_graded_photo_provider_merge_v2.py'
       - '.github/workflows/apply-graded-photo-provider-merge-v2.yml'
