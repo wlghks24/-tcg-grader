@@ -1,0 +1,67 @@
+name: TCG Code Repair Learning Guard
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'tcg_code_repair_learning.py'
+      - 'collector_self_healing.py'
+      - 'auto_repair_engine.py'
+      - 'safe_runtime.py'
+      - '.gitignore'
+      - '.github/workflows/tcg-code-repair-learning-guard.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Compile bounded learning modules
+        run: |
+          python -m py_compile safe_runtime.py auto_repair_engine.py collector_self_healing.py tcg_code_repair_learning.py
+      - name: Run code-repair learning self-test
+        run: |
+          python tcg_code_repair_learning.py --self-test
+      - name: Verify safety contracts
+        run: |
+          grep -Fq 'source_auto_rewrite_allowed": False' tcg_code_repair_learning.py
+          grep -Fq 'allowlisted_playbooks_only' tcg_code_repair_learning.py
+          grep -Fq 'requires_verified_tests_before_release' tcg_code_repair_learning.py
+          grep -Fq 'register_verified_fix' tcg_code_repair_learning.py
+          grep -Fq 'tcg_code_repair_learning.observe(report)' collector_self_healing.py
+          grep -Fq 'tcg_code_repair_learning.json' .gitignore
+          grep -Fq 'tcg_code_repair_candidates.json' .gitignore
+          grep -Fq 'tcg_code_repair_report.json' .gitignore
+      - name: Prove structural error becomes a candidate, not source rewrite
+        run: |
+          python - <<'PY'
+          import json
+          import tempfile
+          from pathlib import Path
+          import tcg_code_repair_learning as learning
+
+          with tempfile.TemporaryDirectory() as tmp:
+              root = Path(tmp)
+              memory = root / 'memory.json'
+              candidates = root / 'candidates.json'
+              report = root / 'report.json'
+              result = learning.observe({
+                  'results': [{
+                      'file': 'promo_events.json',
+                      'ok': False,
+                      'collection_errors': ['AttributeError: parser has no attribute event_rows'],
+                  }]
+              }, memory_path=memory, candidates_path=candidates, report_path=report)
+              assert result['open_candidates'] == 1
+              payload = json.loads(candidates.read_text())
+              item = payload['items'][0]
+              assert item['error_code'] == 'INTERNAL_CODE_ERROR'
+              assert item['source_auto_rewrite_allowed'] is False
+              assert item['requires_verified_tests_before_release'] is True
+              assert 'update_promo_events.py' in item['repair_targets']
+          PY
