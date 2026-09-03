@@ -181,6 +181,9 @@ assert collector_contracts and all(collector_contracts.values()), collector_cont
 assert set(tcg_code_repair_learning._required_check_ids("INTERNAL_CODE_ERROR")) == {
     "graphify_map_review", "python_compile", "collector_smoke", "runtime_bundle_guard"
 }
+repair_source = Path("tcg_code_repair_learning.py").read_text(encoding="utf-8")
+assert "regression_episode = bool(" in repair_source
+assert 'same_episode["verified_fix_regressions"] == 0' in repair_source
 
 rules, ignore_errors = GRAPHIFY_AUDIT._load_ignore_rules()
 assert not ignore_errors, ignore_errors
