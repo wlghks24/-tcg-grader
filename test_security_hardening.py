@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 import os
+import re
 from email.message import Message
 from pathlib import Path
 import tempfile
@@ -12,6 +13,44 @@ import grading_proxy_costs
 
 from server_security_guard import OfficialLookupGuard, client_network_allowed, client_network_classification
 import tcg_updater
+
+
+def _push_block(text: str) -> str | None:
+    """Return the top-level `on.push` YAML block using conservative indentation parsing."""
+    lines=text.splitlines()
+    in_on=False
+    capture=False
+    out=[]
+    for line in lines:
+        stripped=line.strip()
+        if not in_on:
+            if line.startswith("on:"):
+                in_on=True
+            continue
+        if line and not line.startswith(" "):
+            break
+        if line.startswith("  push:"):
+            capture=True
+            tail=line.split("push:",1)[1].strip()
+            if tail:
+                out.append(tail)
+            continue
+        if capture:
+            if re.match(r"^  [A-Za-z_][A-Za-z0-9_-]*:\s*",line):
+                break
+            out.append(line)
+    return "\n".join(out) if capture else None
+
+
+def _push_restricted_to_main(text: str) -> bool:
+    block=_push_block(text)
+    if block is None:
+        return True
+    # `push: {}` / empty push means every branch and is not acceptable for a
+    # workflow with repository write permission.
+    if "branches" not in block:
+        return False
+    return bool(re.search(r"(?:^|[\s\[,\-])main(?:[\s\],#]|$)",block))
 
 
 class ServerSecurityGuardTests(unittest.TestCase):
@@ -118,9 +157,20 @@ class CollectorSecurityTests(unittest.TestCase):
                     continue
                 value=line.split("uses:",1)[1].split("#",1)[0].strip()
                 ref=value.rsplit("@",1)[-1] if "@" in value else ""
-                if not __import__("re").fullmatch(r"[0-9a-fA-F]{40}",ref):
+                if not re.fullmatch(r"[0-9a-fA-F]{40}",ref):
                     mutable.append(f"{path.name}:{lineno}: {value}")
         self.assertFalse(mutable,"mutable action refs:\n"+"\n".join(mutable))
+
+    def test_write_workflow_pushes_are_restricted_to_main(self):
+        workflows=Path(__file__).resolve().parent/".github"/"workflows"
+        unsafe=[]
+        for path in sorted(workflows.glob("*.y*ml")):
+            text=path.read_text(encoding="utf-8")
+            if not re.search(r"(?m)^\s*contents\s*:\s*write\s*$",text):
+                continue
+            if _push_block(text) is not None and not _push_restricted_to_main(text):
+                unsafe.append(path.name)
+        self.assertFalse(unsafe,"write-permission workflows with unrestricted push trigger:\n"+"\n".join(unsafe))
 
 
 if __name__ == "__main__":
