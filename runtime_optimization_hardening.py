@@ -6,6 +6,11 @@ The patch is intentionally narrow and idempotent. It fixes recovered-error
 classification in both code-repair and collector self-healing, prevents mixed
 tablet bundles from starting without required healing modules, and removes
 repeated self-heal memory reads from status rendering.
+
+The code-repair learner now also has a native v2 hardening layer. The optimizer
+recognizes that complete contract as already hardened, while failing closed when
+only a subset of v2 markers is present. Older bundles still use the exact-marker
+v1 migration below.
 """
 from __future__ import annotations
 
@@ -25,6 +30,26 @@ def _replace_once(text: str, old: str, new: str, label: str) -> str:
 
 
 def patch_code_repair_learning(text: str) -> str:
+    # v2 supersedes the older exact text patch below. Do not silently accept a
+    # half-applied v2 file: partial safety markers indicate a mixed/broken bundle.
+    v2_markers = (
+        "PROCESS_SAFE_TRANSACTIONS = True",
+        "UNIQUE_SIGNATURE_OCCURRENCE_PER_RUN = True",
+        "WHOLE_FILE_CLEAN_REQUIRED = True",
+        "REQUIRED_VERIFICATION_CHECKS_ENFORCED = True",
+        "def safety_contract_status()",
+        "def _required_check_ids(code: str)",
+        "def _observe_locked(",
+        "verified_fix_requires_full_playbook",
+        "duplicate_signatures_suppressed",
+    )
+    v2_present = tuple(marker in text for marker in v2_markers)
+    if all(v2_present):
+        return text
+    if any(v2_present):
+        missing = [marker for marker, present in zip(v2_markers, v2_present) if not present]
+        raise RuntimeError("code-repair v2 hardening markers incomplete: " + ", ".join(missing))
+
     old_details = '''def _details(result: dict[str, Any]) -> list[str]:
     values: list[Any] = []
     for key in ("remaining_collection_errors", "collection_errors"):
