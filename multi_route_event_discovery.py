@@ -72,6 +72,8 @@ QUERY_FAMILIES = {
         "broadcast": "라이브 생방송 방송 스트리밍 시청 트위치 Twitch 드롭 드롭스 코드 교환 리딤",
         "deadline": "마감 신청마감 응모마감 접수마감 신청기한 응모기한 접수기한 신청기간",
         "status_update": "변경 취소 연기 일정변경 시간변경 장소변경 갱신내용",
+        "rules": "룰 규칙 금지 제한 금지카드 제한카드 금지페어 에라타 사용규정 레귤레이션",
+        "access": "참가자격 참가조건 체크인 입장권 관람객 패스 정원 대기명단 플레이어ID 덱리스트 참가비 RK9 PLAYGO",
     },
     "ja": {
         "release": "発売 新商品 新弾 ブースター スターター 予約 再販",
@@ -89,6 +91,8 @@ QUERY_FAMILIES = {
         "broadcast": "ライブ ライブ配信 生配信 配信 視聴 Twitch ドロップ コード シリアルコード",
         "deadline": "締切 期限 応募期間 申込期間 受付期間 締め切り",
         "status_update": "変更 中止 延期 日程変更 時間変更 会場変更 内容変更",
+        "rules": "ルール 禁止 制限 禁止カード 制限カード 禁止ペア エラッタ レギュレーション 使用可能",
+        "access": "参加資格 参加条件 チェックイン 入場券 観戦 パス 定員 キャンセル待ち プレイヤーID デッキリスト 参加費 RK9",
     },
     "en": {
         "release": "release new set booster starter preorder reprint",
@@ -106,10 +110,12 @@ QUERY_FAMILIES = {
         "broadcast": "livestream live stream broadcast streaming watch twitch drops reward code redeem redemption",
         "deadline": "deadline apply-by registration-closes application-period entry-period closing-date",
         "status_update": "change cancelled canceled postponed rescheduled schedule-change time-change venue-change location-change",
+        "rules": "rules banned restricted restriction errata legality legal-date regulation rulebook floor-rules",
+        "access": "eligibility check-in spectator pass badge waitlist interest-list player-ID deck-list entry-fee capacity RK9 PLAYGO",
     },
 }
 
-COVERAGE_TOPICS = ("event", "tournament", "popup", "promo", "collab", "movie", "release", "reprint", "merch", "anniversary", "stock", "entry", "broadcast", "deadline", "status_update")
+COVERAGE_TOPICS = ("event", "tournament", "popup", "promo", "collab", "movie", "release", "reprint", "merch", "anniversary", "stock", "entry", "broadcast", "deadline", "status_update", "rules", "access")
 
 OFFICIAL_ROUTES = {
     ("포켓몬 카드", "KR"): (
@@ -126,22 +132,28 @@ OFFICIAL_ROUTES = {
     ("포켓몬 카드", "US"): (
         "https://www.pokemon.com/us/pokemon-news",
         "https://www.pokemon.com/us/pokemon-tcg/",
+        "https://play.pokemon.com/en-us/news/",
+        "https://support.play.pokemon.com/hc/en-us",
+        "https://community.pokemon.com/en-us/categories/news-announcements?sort=new",
     ),
     ("원피스 카드", "KR"): (
         "https://onepiece-cardgame.kr/events.do",
         "https://onepiece-cardgame.kr/topics.do",
         "https://onepiece-cardgame.kr/products.do",
+        "https://onepiece-cardgame.kr/rules.do",
     ),
     ("원피스 카드", "JP"): (
         "https://www.onepiece-cardgame.com/",
         "https://www.onepiece-cardgame.com/events/",
         "https://www.onepiece-cardgame.com/products/",
+        "https://www.onepiece-cardgame.com/rules/",
         "https://one-piece.com/news/",
     ),
     ("원피스 카드", "US"): (
         "https://en.onepiece-cardgame.com/",
         "https://en.onepiece-cardgame.com/events/",
         "https://en.onepiece-cardgame.com/products/",
+        "https://en.onepiece-cardgame.com/rules/",
         "https://en.onepiece-cardgame.com/events/official-shop.html",
     ),
     ("나루토 카드", "KR"): (
@@ -164,7 +176,7 @@ OFFICIAL_ROUTES = {
 PARTNER_DOMAINS = {
     ("포켓몬 카드", "KR"): ("musinsa.com", "lotte.co.kr", "emart.ssg.com", "pokemon-go.com"),
     ("포켓몬 카드", "JP"): ("pokemoncenter-online.com", "pokemon.co.jp"),
-    ("포켓몬 카드", "US"): ("pokemoncenter.com", "events.pokemon.com"),
+    ("포켓몬 카드", "US"): ("pokemoncenter.com", "events.pokemon.com", "rk9.gg", "www.rk9.gg"),
     ("원피스 카드", "KR"): ("playgo.bandainamcokorea.co.kr", "ktwizstore.co.kr", "seoulmediacomics.com", "www.seoulmediacomics.com", "shinsegae.com", "www.shinsegae.com"),
     ("원피스 카드", "JP"): ("p-bandai.jp", "one-piece.com"),
     ("원피스 카드", "US"): ("bandai.com",),
@@ -186,13 +198,13 @@ PRESS_DOMAINS = {
 }
 PRESS_HOSTS = {host for hosts in PRESS_DOMAINS.values() for host in hosts}
 SOCIAL_DISCOVERY_HOSTS = ("x.com", "instagram.com", "youtube.com", "tiktok.com", "twitch.tv", "facebook.com")
-SERVICE_DISCOVERY_HOSTS = ("lin.ee", "line.me", "www.line.me", "bandai-tcg-plus.com", "www.bandai-tcg-plus.com")
-COMMUNITY_DISCOVERY_HOSTS = ("namu.wiki", "www.namu.wiki", "namu.moe", "www.namu.moe")
+SERVICE_DISCOVERY_HOSTS = ("lin.ee", "line.me", "www.line.me", "bandai-tcg-plus.com", "www.bandai-tcg-plus.com", "rk9.gg", "www.rk9.gg", "playgo.bandainamcokorea.co.kr")
+COMMUNITY_DISCOVERY_HOSTS = ("namu.wiki", "www.namu.wiki", "namu.moe", "www.namu.moe", "reddit.com", "www.reddit.com")
 
 KEYWORD_RE = re.compile(
-    r"행사|이벤트|대회|팝업|페스타|프로모|증정|배포|출시|발매|신탄|부스터|스타터|예약|재발매|재입고|입고|재고|품절|구매처|콜라보|협업|영화|극장판|굿즈|공식숍|점프샵|기념|주년|응모|신청|접수|등록|추첨|당첨|엔트리|라이브|생방송|방송|스트리밍|시청|코드|리딤|마감|기한|취소|연기|일정변경|시간변경|장소변경|갱신내용|\bLINE\b|BANDAI\s*TCG\+|TCG\+|"
-    r"イベント|大会|ポップアップ|プロモ|配布|発売|新弾|ブースター|スターター|予約|再販|再入荷|入荷|在庫|売り切れ|コラボ|映画|劇場版|グッズ|公式ショップ|記念|周年|応募|申込|受付|登録|抽選|当選|エントリー|ライブ配信|生配信|配信|視聴|ドロップ|コード|プレゼント|締切|期限|変更|中止|延期|日程変更|時間変更|会場変更|内容変更|\bLINE\b|BANDAI\s*TCG\+|TCG\+|"
-    r"event|tournament|pop[- ]?up|promo|giveaway|release|booster|starter|preorder|reprint|restock|in stock|sold out|availability|retailer|entry|application|apply|registration|register|lottery|drawing|signup|livestream|live stream|broadcast|streaming|watch|twitch drops|reward code|redeem|redemption|deadline|apply by|registration closes?|application period|cancelled|canceled|postponed|rescheduled|schedule change|venue change|\bLINE\b|BANDAI\s*TCG\+|TCG\+|collab|movie|film|merch|official shop|anniversary|commemorative|collector|collection|unboxing|deck|decklist|review|price|"
+    r"행사|이벤트|대회|팝업|페스타|프로모|증정|배포|출시|발매|신탄|부스터|스타터|예약|재발매|재입고|입고|재고|품절|구매처|콜라보|협업|영화|극장판|굿즈|공식숍|점프샵|기념|주년|응모|신청|접수|등록|추첨|당첨|엔트리|라이브|생방송|방송|스트리밍|시청|코드|리딤|마감|기한|취소|연기|일정변경|시간변경|장소변경|갱신내용|룰|규칙|금지|제한|금지카드|제한카드|금지페어|에라타|체크인|참가자격|입장권|패스|대기명단|플레이어ID|덱리스트|RK9|PLAYGO|\bLINE\b|BANDAI\s*TCG\+|TCG\+|"
+    r"イベント|大会|ポップアップ|プロモ|配布|発売|新弾|ブースター|スターター|予約|再販|再入荷|入荷|在庫|売り切れ|コラボ|映画|劇場版|グッズ|公式ショップ|記念|周年|応募|申込|受付|登録|抽選|当選|エントリー|ライブ配信|生配信|配信|視聴|ドロップ|コード|プレゼント|締切|期限|変更|中止|延期|日程変更|時間変更|会場変更|内容変更|ルール|禁止|制限|禁止カード|制限カード|エラッタ|チェックイン|参加資格|入場券|パス|キャンセル待ち|プレイヤーID|デッキリスト|RK9|\bLINE\b|BANDAI\s*TCG\+|TCG\+|"
+    r"event|tournament|pop[- ]?up|promo|giveaway|release|booster|starter|preorder|reprint|restock|in stock|sold out|availability|retailer|entry|application|apply|registration|register|lottery|drawing|signup|livestream|live stream|broadcast|streaming|watch|twitch drops|reward code|redeem|redemption|deadline|apply by|registration closes?|application period|cancelled|canceled|postponed|rescheduled|schedule change|venue change|rules?|banned|restricted|restriction|errata|legality|check[- ]?in|eligibility|spectator|waitlist|interest list|player id|deck list|entry fee|\bbadge\b|\bpass\b|RK9|PLAYGO|\bLINE\b|BANDAI\s*TCG\+|TCG\+|collab|movie|film|merch|official shop|anniversary|commemorative|collector|collection|unboxing|deck|decklist|review|price|"
     r"개봉|언박싱|덱|덱리스트|수집|컬렉터|카드샵|후기|시세|開封|デッキ|コレクター|コレクション|レビュー|相場",
     re.I,
 )
@@ -225,6 +237,8 @@ def _topic(text: str) -> str:
     patterns = (
         ("status_update", r"취소|연기|일정\s*변경|시간\s*변경|장소\s*변경|갱신내용|cancel(?:led|ed|ation)?|postpon(?:e|ed|ement)|reschedul(?:e|ed|ing)|schedule\s+change|time\s+change|venue\s+change|location\s+change|中止|延期|日程変更|時間変更|会場変更|内容変更"),
         ("deadline", r"마감|신청\s*기한|응모\s*기한|접수\s*기한|신청기간|응모기간|접수기간|deadline|apply\s+by|registration\s+closes?|application\s+period|entry\s+period|closing\s+date|締切|期限|応募期間|申込期間|受付期間"),
+        ("access", r"참가\s*자격|참가조건|체크인|입장권|관람객|패스|정원|대기\s*명단|플레이어\s*ID|덱\s*리스트|참가비|eligib(?:le|ility)|check[- ]?in|waitlist|interest\s+list|spectator|admission|entry\s+fee|player\s+id|deck\s+list|seating|capacity|\bbadge\b|\bpass\b|参加資格|参加条件|チェックイン|入場券|観戦|パス|定員|キャンセル待ち|プレイヤーID|デッキリスト|参加費"),
+        ("rules", r"금지\s*/?\s*제한|금지카드|제한카드|금지\s*페어|에라타|사용\s*규정|룰|규칙|banned|restricted|restriction|errata|legality|legal\s+date|regulation|rulebook|floor\s+rules?|\brules?\b|禁止|制限|禁止カード|制限カード|禁止ペア|エラッタ|ルール|レギュレーション|使用可能"),
         ("movie", r"영화|극장판|개봉|관람특전|movie|film|cinema|screening|映画|劇場版|上映|入場者特典"),
         ("broadcast", r"라이브|생방송|방송|스트리밍|시청|twitch\s*drops?|live[ -]?stream|broadcast|streaming|watch\s+live|redeem|redemption|ライブ配信|生配信|配信|視聴|Twitch|ドロップ|コード|シリアルコード"),
         ("anniversary", r"기념|주년|기념전|anniversary|commemorative|周年|記念"),

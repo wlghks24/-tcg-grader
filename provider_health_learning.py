@@ -34,11 +34,13 @@ MAX_SOURCE_KINDS = 80
 MAX_SOURCE_KINDS_PER_CELL = 12
 GAMES = ("포켓몬 카드", "원피스 카드", "나루토 카드")
 REGIONS = ("KR", "JP", "US")
-TOPICS = ("event", "tournament", "popup", "promo", "collab", "movie", "release", "reprint", "merch", "anniversary", "stock", "entry", "broadcast", "deadline", "status_update")
+TOPICS = ("event", "tournament", "popup", "promo", "collab", "movie", "release", "reprint", "merch", "anniversary", "stock", "entry", "broadcast", "deadline", "status_update", "rules", "access")
 
 _TOPIC_RULES = (
     ("status_update", re.compile(r"취소|연기|일정\s*변경|시간\s*변경|장소\s*변경|변경\s*공지|갱신내용|cancel(?:led|ed|ation)?|postpon(?:e|ed|ement)|reschedul(?:e|ed|ing)|schedule\s+change|time\s+change|venue\s+change|location\s+change|中止|延期|日程変更|時間変更|会場変更|内容変更|変更のお知らせ", re.I)),
     ("deadline", re.compile(r"마감|신청\s*기한|응모\s*기한|접수\s*기한|신청기간|응모기간|접수기간|deadline|apply\s+by|registration\s+closes?|application\s+period|entry\s+period|entries\s+close|closing\s+date|締切|期限|応募期間|申込期間|受付期間|締め切り", re.I)),
+    ("access", re.compile(r"참가\s*자격|참가조건|체크인|입장|관람객|관람권|입장권|패스|정원|대기\s*명단|현장\s*접수|플레이어\s*ID|선수\s*ID|덱\s*리스트|참가비|eligib(?:le|ility)|check[- ]?in|waitlist|interest\s+list|spectator|admission|entry\s+fee|player\s+id|deck\s+list|seating|capacity|\bbadge\b|\bpass\b|参加資格|参加条件|チェックイン|入場|観戦|入場券|パス|定員|キャンセル待ち|当日受付|プレイヤーID|デッキリスト|参加費", re.I)),
+    ("rules", re.compile(r"금지\s*/?\s*제한|금지카드|제한카드|금지\s*페어|에라타|사용\s*규정|사용가능|룰|규칙|banned|restricted|restriction|errata|legality|legal\s+date|regulation|rulebook|floor\s+rules?|card\s+q&a|\brules?\b|禁止|制限|禁止カード|制限カード|禁止ペア|エラッタ|ルール|レギュレーション|使用可能|Q&A", re.I)),
     ("movie", re.compile(r"영화|극장판|개봉|movie|film|cinema|映画|劇場版|上映", re.I)),
     ("broadcast", re.compile(r"라이브|생방송|방송|스트리밍|시청|twitch\s*drops?|live[ -]?stream|broadcast|streaming|watch\s+live|redeem|redemption|ライブ配信|生配信|配信|視聴|Twitch|ドロップ|コード|シリアルコード", re.I)),
     ("anniversary", re.compile(r"기념|주년|anniversary|周年|記念", re.I)),
@@ -421,7 +423,7 @@ def _coverage_report(data: dict) -> dict:
         verification_gap_streak = _num(stat.get("verification_gap_streak"))
         discovery_gap_streak = _num(stat.get("discovery_gap_streak"))
         topic = key.rsplit("/", 1)[-1]
-        urgency = {"status_update": 5.0, "deadline": 4.0, "entry": 3.0, "broadcast": 3.0, "stock": 2.0}.get(topic, 0.0)
+        urgency = {"status_update": 5.0, "rules": 4.5, "deadline": 4.0, "access": 4.0, "entry": 3.0, "broadcast": 3.0, "stock": 2.0}.get(topic, 0.0)
         priority = round(
             miss_streak * 4.0
             + verification_gap_streak * 2.0
