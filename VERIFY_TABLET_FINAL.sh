@@ -27,6 +27,8 @@ auto_repair_engine.py
 auto_update_all.py
 collector_self_healing.py
 tcg_code_repair_learning.py
+csp_hash_hardening.py
+index.html
 GRAPHIFY_UPDATE.sh
 GRAPHIFY_SELF_HEAL.py
 GRAPHIFY_AUDIT.py
@@ -44,14 +46,14 @@ for file in $required_files; do
 done
 [ "$missing" -eq 0 ] || exit 10
 
-echo "[1/8] 필수 파일 확인: OK"
+echo "[1/9] 필수 파일 확인: OK"
 
 bash -n ANDROID_RECOVER_UPDATE.sh
 bash -n ANDROID_UPDATE_AND_START.sh
 bash -n START_TCG_UPDATER_ANDROID.sh
 bash -n GRAPHIFY_UPDATE.sh
 bash -n SETUP_GRAPHIFY_TERMUX.sh
-echo "[2/8] Android/Graphify 셸 문법: OK"
+echo "[2/9] Android/Graphify 셸 문법: OK"
 
 python -m py_compile \
   safe_runtime.py \
@@ -59,14 +61,18 @@ python -m py_compile \
   auto_update_all.py \
   collector_self_healing.py \
   tcg_code_repair_learning.py \
+  csp_hash_hardening.py \
   GRAPHIFY_SELF_HEAL.py \
   GRAPHIFY_AUDIT.py \
   runtime_bundle_guard_v143.py
-echo "[3/8] 핵심 Python 문법/컴파일: OK"
+echo "[3/9] 핵심 Python 문법/컴파일: OK"
 
 python tcg_code_repair_learning.py --self-test >/dev/null
 python GRAPHIFY_SELF_HEAL.py --self-test >/dev/null
-echo "[4/8] 오류학습/자가복구 자체시험: OK"
+echo "[4/9] 오류학습/자가복구 자체시험: OK"
+
+python csp_hash_hardening.py --check >/dev/null
+echo "[5/9] 브라우저 인라인 스크립트 CSP 해시: OK"
 
 python - <<'PY'
 import collector_self_healing
@@ -108,7 +114,12 @@ grep -Fxq '.agents/' .graphifyignore
 grep -Fxq 'AGENTS.md' .graphifyignore
 grep -Fq 'OFFICIAL_HTTPS="https://github.com/wlghks24/-tcg-grader.git"' ANDROID_UPDATE_AND_START.sh
 grep -Fq "OFFICIAL_HTTPS='https://github.com/wlghks24/-tcg-grader.git'" ANDROID_RECOVER_UPDATE.sh
-echo "[5/8] 통합/보안/코드지도 범위 계약: OK"
+grep -Fq "script-src 'self' 'sha256-" index.html
+if grep -F "script-src 'self' 'unsafe-inline'" index.html >/dev/null; then
+  echo "[오류] script-src에 unsafe-inline이 다시 활성화되었습니다."
+  exit 16
+fi
+echo "[6/9] 통합/보안/코드지도 범위 계약: OK"
 
 if [ -s graphify-out/graph.json ] || [ -s graphify-out/GRAPH_REPORT.md ] || [ -s graphify-out/graph.html ]; then
   if [ ! -s graphify-out/graph.json ] || [ ! -s graphify-out/GRAPH_REPORT.md ] || [ ! -s graphify-out/graph.html ]; then
@@ -117,9 +128,9 @@ if [ -s graphify-out/graph.json ] || [ -s graphify-out/GRAPH_REPORT.md ] || [ -s
   fi
   python GRAPHIFY_SELF_HEAL.py --validate-only >/dev/null
   python GRAPHIFY_AUDIT.py --strict --no-write >/dev/null
-  echo "[6/8] 기존 코드지도 무결성/범위 감사: OK"
+  echo "[7/9] 기존 코드지도 무결성/범위 감사: OK"
 else
-  echo "[6/8] 기존 코드지도 없음: 최초 SETUP_GRAPHIFY_TERMUX.sh에서 생성 예정"
+  echo "[7/9] 기존 코드지도 없음: 최초 SETUP_GRAPHIFY_TERMUX.sh에서 생성 예정"
 fi
 
 if command -v git >/dev/null 2>&1 && git rev-parse --is-inside-work-tree >/dev/null 2>&1; then
@@ -129,7 +140,7 @@ if command -v git >/dev/null 2>&1 && git rev-parse --is-inside-work-tree >/dev/n
     echo "       현재 origin: ${origin_url:-없음}"
     exit 21
   fi
-  echo "[7/8] 공식 GitHub origin 확인: OK"
+  echo "[8/9] 공식 GitHub origin 확인: OK"
 
   local_head="$(git rev-parse HEAD)"
   echo "현재 로컬 빌드: ${local_head:0:12}"
@@ -147,7 +158,7 @@ else
   exit 22
 fi
 
-echo "[8/8] Git 최신본 일치 검사: OK"
+echo "[9/9] Git 최신본 일치 검사: OK"
 echo "========================================"
 echo "[OK] 태블릿 최종 적용 사전검사 통과"
 echo "========================================"
