@@ -1,6 +1,7 @@
 name: Apply graded photo adaptive timeout
 on:
   push:
+    branches: [main]
     paths:
       - 'apply_graded_photo_adaptive_timeout.py'
   workflow_dispatch:
