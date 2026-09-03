@@ -22,7 +22,6 @@ def _push_block(text: str) -> str | None:
     capture=False
     out=[]
     for line in lines:
-        stripped=line.strip()
         if not in_on:
             if line.startswith("on:"):
                 in_on=True
@@ -42,15 +41,46 @@ def _push_block(text: str) -> str | None:
     return "\n".join(out) if capture else None
 
 
-def _push_restricted_to_main(text: str) -> bool:
+def _push_branch_allowlist(text: str) -> set[str] | None:
     block=_push_block(text)
     if block is None:
+        return None
+    match=re.search(r"(?m)^\s*branches\s*:\s*(.*)$",block)
+    if not match:
+        return set()
+    tail=match.group(1).split('#',1)[0].strip()
+    values=[]
+    if tail.startswith('[') and tail.endswith(']'):
+        values.extend(part.strip().strip("'\"") for part in tail[1:-1].split(',') if part.strip())
+    elif tail:
+        values.append(tail.strip("'\""))
+    else:
+        lines=block.splitlines()
+        start=next((i for i,line in enumerate(lines) if re.match(r"^\s*branches\s*:\s*$",line)),None)
+        if start is not None:
+            for line in lines[start+1:]:
+                m=re.match(r"^\s*-\s*([^#]+?)(?:\s+#.*)?$",line)
+                if not m:
+                    if line.strip():
+                        break
+                    continue
+                values.append(m.group(1).strip().strip("'\""))
+    return {value for value in values if value}
+
+
+def _write_push_scope_is_explicit(text: str) -> bool:
+    branches=_push_branch_allowlist(text)
+    if branches is None:
         return True
-    # `push: {}` / empty push means every branch and is not acceptable for a
-    # workflow with repository write permission.
-    if "branches" not in block:
+    if not branches:
         return False
-    return bool(re.search(r"(?:^|[\s\[,\-])main(?:[\s\],#]|$)",block))
+    # A write-token workflow should use a finite branch allowlist, not wildcard
+    # patterns that effectively restore an all-branches trigger.
+    return not any(any(ch in branch for ch in ('*','?','[')) for branch in branches)
+
+
+def _explicit_push_targets(text: str) -> set[str]:
+    return set(re.findall(r"\bHEAD:([A-Za-z0-9._/-]+)",text))
 
 
 class ServerSecurityGuardTests(unittest.TestCase):
@@ -161,16 +191,23 @@ class CollectorSecurityTests(unittest.TestCase):
                     mutable.append(f"{path.name}:{lineno}: {value}")
         self.assertFalse(mutable,"mutable action refs:\n"+"\n".join(mutable))
 
-    def test_write_workflow_pushes_are_restricted_to_main(self):
+    def test_write_workflow_pushes_use_explicit_branch_allowlist(self):
         workflows=Path(__file__).resolve().parent/".github"/"workflows"
         unsafe=[]
+        mismatched=[]
         for path in sorted(workflows.glob("*.y*ml")):
             text=path.read_text(encoding="utf-8")
             if not re.search(r"(?m)^\s*contents\s*:\s*write\s*$",text):
                 continue
-            if _push_block(text) is not None and not _push_restricted_to_main(text):
+            if not _write_push_scope_is_explicit(text):
                 unsafe.append(path.name)
-        self.assertFalse(unsafe,"write-permission workflows with unrestricted push trigger:\n"+"\n".join(unsafe))
+                continue
+            branches=_push_branch_allowlist(text)
+            targets=_explicit_push_targets(text)
+            if branches and targets and not targets.issubset(branches):
+                mismatched.append(f"{path.name}: trigger={sorted(branches)} push_targets={sorted(targets)}")
+        self.assertFalse(unsafe,"write-permission workflows with unrestricted/wildcard push trigger:\n"+"\n".join(unsafe))
+        self.assertFalse(mismatched,"write workflow explicit push target escapes trigger branch allowlist:\n"+"\n".join(mismatched))
 
 
 if __name__ == "__main__":
