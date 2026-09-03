@@ -203,11 +203,54 @@ def _push_block_bounds(lines: list[str]) -> tuple[int, int] | None:
     return None
 
 
-def patch_write_workflow_push_scope(text: str, *, label: str = "workflow") -> str:
-    """Restrict write-permission push workflows to main, conservatively.
+def _branch_allowlist_from_push_block(block: str) -> set[str] | None:
+    """Parse a finite YAML `branches` allowlist from a top-level push block.
 
-    Manual-only/scheduled write workflows are unchanged. Existing branch rules are
-    never rewritten automatically; an unexpected non-main branch rule fails closed.
+    Returns None when no branches rule exists. Dynamic expressions, wildcard
+    patterns, malformed lists, and branches-ignore are rejected by the caller.
+    """
+    if re.search(r"(?m)^\s*branches-ignore\s*:", block):
+        return set()
+    match = re.search(r"(?m)^\s*branches\s*:\s*(.*)$", block)
+    if not match:
+        return None
+    tail = match.group(1).split("#", 1)[0].strip()
+    values: list[str] = []
+    if tail.startswith("[") and tail.endswith("]"):
+        values.extend(part.strip().strip("'\"") for part in tail[1:-1].split(",") if part.strip())
+    elif tail:
+        values.append(tail.strip("'\""))
+    else:
+        block_lines = block.splitlines()
+        start = next((i for i, line in enumerate(block_lines) if re.match(r"^\s*branches\s*:\s*$", line)), None)
+        if start is not None:
+            for line in block_lines[start + 1:]:
+                item = re.match(r"^\s*-\s*([^#]+?)(?:\s+#.*)?$", line)
+                if item:
+                    values.append(item.group(1).strip().strip("'\""))
+                    continue
+                if line.strip():
+                    break
+    return {value for value in values if value}
+
+
+def _validate_finite_branch_allowlist(branches: set[str], *, label: str) -> None:
+    if not branches:
+        raise RuntimeError(f"{label}: write workflow branch allowlist is empty or uses branches-ignore")
+    for branch in branches:
+        if not re.fullmatch(r"[A-Za-z0-9._/-]+", branch):
+            raise RuntimeError(f"{label}: dynamic/wildcard write-workflow branch rule requires manual review: {branch}")
+        if ".." in branch or branch.startswith("/") or branch.endswith("/"):
+            raise RuntimeError(f"{label}: malformed write-workflow branch rule: {branch}")
+
+
+def patch_write_workflow_push_scope(text: str, *, label: str = "workflow") -> str:
+    """Require an explicit finite branch allowlist on write-permission push workflows.
+
+    Manual-only/scheduled write workflows are unchanged. An existing finite branch
+    allowlist is preserved (including intentionally branch-specific maintenance
+    workflows). Unscoped push triggers are deterministically restricted to main.
+    Dynamic/wildcard/branches-ignore rules fail closed for manual review.
     """
     if not _workflow_has_contents_write(text):
         return text
@@ -220,12 +263,16 @@ def patch_write_workflow_push_scope(text: str, *, label: str = "workflow") -> st
     tail = first.split("push:", 1)[1].strip()
     block = "".join(lines[start:end])
 
-    if "branches" in block:
-        if re.search(r"(?:^|[\s\[,\-])main(?:[\s\],#]|$)", block):
-            return text
-        raise RuntimeError(f"{label}: write workflow push branch rule exists but is not main")
-    if "branches-ignore" in block:
-        raise RuntimeError(f"{label}: write workflow uses branches-ignore; manual review required")
+    branches = _branch_allowlist_from_push_block(block)
+    if branches is not None:
+        _validate_finite_branch_allowlist(branches, label=label)
+        targets = set(re.findall(r"\bHEAD:([A-Za-z0-9._/-]+)", text))
+        if targets and not targets.issubset(branches):
+            raise RuntimeError(
+                f"{label}: explicit push target escapes trigger branch allowlist: "
+                f"branches={sorted(branches)} targets={sorted(targets)}"
+            )
+        return text
 
     if not tail:
         lines.insert(start + 1, "    branches: [main]\n")
