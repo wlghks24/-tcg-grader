@@ -2,6 +2,7 @@ name: Apply BRG manual verification fix v163
 
 on:
   push:
+    branches: [main]
     paths:
       - '.github/workflows/apply-brg-manual-server-error-v163.yml'
 
