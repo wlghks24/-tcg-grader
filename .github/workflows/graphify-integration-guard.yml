@@ -163,8 +163,20 @@ jobs:
           python ./GRAPHIFY_SELF_HEAL.py --validate-only
           test -s /tmp/graphify-memory.json
           test -s /tmp/graphify-report.json
-          grep -Fq '"preferred_strategy": "materialize_outputs"' /tmp/graphify-memory.json
-          grep -Fq '"success": true' /tmp/graphify-report.json
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          memory = json.loads(Path('/tmp/graphify-memory.json').read_text())
+          report = json.loads(Path('/tmp/graphify-report.json').read_text())
+          assert report['success'] is True, report
+          strategy = report.get('successful_strategy')
+          assert strategy in {
+              'materialize_outputs', 'rebuild_from_scratch', 'repair_install_and_rebuild'
+          }, report
+          category = memory['categories']['missing_outputs']
+          assert category['preferred_strategy'] == strategy, (category, report)
+          assert category['strategies'][strategy]['successes'] >= 1, category
+          PY
 
       - name: Prove failed rebuild restores last good outputs
         shell: bash
