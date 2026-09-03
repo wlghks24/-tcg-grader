@@ -1,6 +1,7 @@
 name: Apply unified release history backfill
 on:
   push:
+    branches: [main]
     paths:
       - 'apply_release_history_backfill_patch.py'
       - 'release_history_backfill.py'
