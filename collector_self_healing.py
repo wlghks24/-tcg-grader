@@ -8,6 +8,10 @@ Structural/source changes are quarantined for a code-and-test repair instead of 
 allowed to teach unverified data as truth. Structural/code failures are also sent to
 tcg_code_repair_learning, which builds a bounded code+test candidate queue without
 automatically editing source files.
+
+Collector policy learning is serialized across processes. Duplicate copies of the
+same error inside one report count as one observation, preventing retry wrappers or
+merged diagnostics from artificially inflating a policy's confidence/failure score.
 """
 from __future__ import annotations
 
@@ -26,6 +30,9 @@ MEMORY = ROOT / "collector_self_heal_memory.json"
 MAX_FILES = 64
 MAX_EVENTS = 300
 MAX_SIGNATURES_PER_FILE = 80
+MAX_RESULTS_PER_RUN = 100
+PROCESS_SAFE_TRANSACTIONS = True
+UNIQUE_POLICY_OBSERVATION_PER_RUN = True
 
 # These are code-defined capabilities, not commands loaded from the learning file.
 POLICIES = {
@@ -68,14 +75,23 @@ def _now() -> str:
 
 def _default() -> dict:
     return {
-        "version": 1, "updated_at": None, "runs": 0, "files": {},
+        "version": 2, "updated_at": None, "runs": 0, "files": {},
         "events": [], "quarantine": [],
         "safety": {
             "learned_text_executable": False,
             "source_rewrite": False,
             "unverified_data_promotion": False,
             "allowlisted_policy_only": True,
+            "process_safe_transactions": True,
+            "one_policy_observation_per_signature_per_run": True,
         },
+    }
+
+
+def safety_contract_status() -> dict[str, bool]:
+    return {
+        "process_safe_transactions": PROCESS_SAFE_TRANSACTIONS,
+        "unique_policy_observation_per_run": UNIQUE_POLICY_OBSERVATION_PER_RUN,
     }
 
 
@@ -121,7 +137,8 @@ def _load(path: Path = MEMORY) -> dict:
             if not isinstance(signature, str) or len(signature) > 120 or not isinstance(stat, dict):
                 continue
             policies = {}
-            for policy_id, score in (stat.get("policies") or {}).items():
+            policy_rows = stat.get("policies") if isinstance(stat.get("policies"), dict) else {}
+            for policy_id, score in policy_rows.items():
                 if policy_id not in POLICIES or not isinstance(score, dict):
                     continue
                 policies[policy_id] = {
@@ -132,7 +149,7 @@ def _load(path: Path = MEMORY) -> dict:
             row["signatures"][signature] = {
                 "code": str(stat.get("code") or "UNCLASSIFIED_ERROR")[:80],
                 "occurrences": _safe_int(stat.get("occurrences")),
-                "last_seen": stat.get("last_seen"),
+                "last_seen": stat.get("last_seen") if isinstance(stat.get("last_seen"), str) else None,
                 "policies": policies,
             }
         for field in ("pending_policy", "last_applied_policy"):
@@ -221,14 +238,42 @@ def plan_for(filename: str, path: Path = MEMORY) -> dict:
     return _plan_from_row(memory.get("files", {}).get(filename, {}))
 
 
+def _normalized_results(report: Any) -> list[dict]:
+    if not isinstance(report, dict):
+        return []
+    rows = report.get("results")
+    if not isinstance(rows, (list, tuple)):
+        return []
+    return [row for row in list(rows)[:MAX_RESULTS_PER_RUN] if isinstance(row, dict)]
+
+
 def observe(report: dict, path: Path = MEMORY) -> dict:
-    """Reward applied policies and prepare the next bounded recovery plan."""
+    """Reward policies and prepare the next plan in one process-safe transaction."""
+    try:
+        with auto_repair_engine._memory_process_lock(Path(path)):
+            return _observe_locked(report, Path(path))
+    except (TimeoutError, OSError, ValueError) as exc:
+        return {
+            "ok": False,
+            "error": auto_repair_engine.redact_sensitive(
+                f"{type(exc).__name__}: collector self-learning transaction unavailable", 300
+            ),
+            "quarantined_for_code_repair": 0,
+            "next_policy_prepared": 0,
+            "code_repair_learning": {"ok": False, "safety": {"source_rewrite": False, "git_write": False}},
+            "safety": _default()["safety"],
+        }
+
+
+def _observe_locked(report: Any, path: Path) -> dict:
     memory = _load(path)
     memory["runs"] = min(1_000_000, _safe_int(memory.get("runs")) + 1)
     applied = recovered = quarantined = prepared = 0
-    for result in (report.get("results") or [])[:100]:
-        if not isinstance(result, dict):
-            continue
+    duplicate_active_suppressed = duplicate_policy_suppressed = 0
+    active_seen: set[tuple[str, str]] = set()
+    policy_seen: set[tuple[str, str, str]] = set()
+
+    for result in _normalized_results(report):
         filename = result.get("file")
         if not isinstance(filename, str) or Path(filename).name != filename:
             continue
@@ -252,10 +297,16 @@ def observe(report: dict, path: Path = MEMORY) -> dict:
         if applied_policy in POLICIES:
             applied += 1
             file_row["last_applied_policy"] = applied_policy
-            # Attribute the outcome to every matching signature seen in this run.
+            # Attribute one outcome per signature/policy/report. Merged retry
+            # diagnostics can repeat the same error text many times.
             targets = analyses or [{"code": "RECOVERY_CHECK", "error_subtype": "clean"}]
             for analysis in targets:
                 sig = _signature(filename, analysis)
+                policy_key = (filename, sig, applied_policy)
+                if policy_key in policy_seen:
+                    duplicate_policy_suppressed += 1
+                    continue
+                policy_seen.add(policy_key)
                 stat = file_row.setdefault("signatures", {}).setdefault(sig, {
                     "code": str(analysis.get("code") or ""), "occurrences": 0,
                     "last_seen": _now(), "policies": {},
@@ -276,6 +327,11 @@ def observe(report: dict, path: Path = MEMORY) -> dict:
         active_pairs = zip(details, analyses) if unresolved else ()
         for detail, analysis in active_pairs:
             sig = _signature(filename, analysis)
+            active_key = (filename, sig)
+            if active_key in active_seen:
+                duplicate_active_suppressed += 1
+                continue
+            active_seen.add(active_key)
             stat = file_row.setdefault("signatures", {}).setdefault(sig, {
                 "code": str(analysis.get("code") or ""), "occurrences": 0,
                 "last_seen": _now(), "policies": {},
@@ -321,6 +377,8 @@ def observe(report: dict, path: Path = MEMORY) -> dict:
 
     _save(memory, path)
     try:
+        # Separate memory lock; no reverse call from the code-repair learner back
+        # into collector policy learning, so lock order stays acyclic.
         code_repair = tcg_code_repair_learning.observe(report)
     except Exception as exc:
         # Code-repair learning is advisory. It must never make collection fail.
@@ -333,6 +391,8 @@ def observe(report: dict, path: Path = MEMORY) -> dict:
         "ok": True, "runs": memory["runs"], "policy_applied": applied,
         "policy_recovered": recovered, "next_policy_prepared": prepared,
         "quarantined_for_code_repair": quarantined,
+        "duplicate_active_signatures_suppressed": duplicate_active_suppressed,
+        "duplicate_policy_observations_suppressed": duplicate_policy_suppressed,
         "active_files": sum(1 for row in memory.get("files", {}).values() if row.get("pending_policy")),
         "code_repair_learning": code_repair,
         "safety": memory["safety"],
