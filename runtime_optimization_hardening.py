@@ -10,7 +10,8 @@ repeated self-heal memory reads from status rendering.
 The code-repair learner now also has a native v2 hardening layer. The optimizer
 recognizes that complete contract as already hardened, while failing closed when
 only a subset of v2 markers is present. Older bundles still use the exact-marker
-v1 migration below.
+v1 migration below. v2.1 additionally counts a verified-fix regression once per
+unresolved regression episode instead of once per repeated observation.
 """
 from __future__ import annotations
 
@@ -29,6 +30,70 @@ def _replace_once(text: str, old: str, new: str, label: str) -> str:
     return text.replace(old, new, 1)
 
 
+def _patch_v2_regression_episode(text: str) -> str:
+    old_episode = '''            regressed = bool(stat.get("last_outcome") == "verified" or previous_verified)
+            if regressed:
+                stat["verified_regression_count"] = min(
+                    1000, _safe_int(stat.get("verified_regression_count"), 0, 1000) + 1
+                )
+                regression_count += 1
+'''
+    new_episode = '''            # Count one verified-fix regression episode when the candidate
+            # transitions out of verified_fixed. Repeated observations while that
+            # regression remains unresolved keep high priority, but do not inflate
+            # the regression counter as if multiple independent fixes had failed.
+            regression_episode = bool(
+                stat.get("last_outcome") == "verified"
+                or (isinstance(old_candidate, dict) and old_candidate.get("status") == "verified_fixed")
+            )
+            regression_active = bool(
+                regression_episode
+                or (isinstance(old_candidate, dict) and old_candidate.get("regression_after_verified_fix") is True)
+            )
+            if regression_episode:
+                stat["verified_regression_count"] = min(
+                    1000, _safe_int(stat.get("verified_regression_count"), 0, 1000) + 1
+                )
+                regression_count += 1
+'''
+    text = _replace_once(text, old_episode, new_episode, "verified regression episode counting")
+    text = _replace_once(
+        text,
+        "                regression_after_verified_fix=regressed,\n",
+        "                regression_after_verified_fix=regression_active,\n",
+        "verified regression active priority",
+    )
+    text = _replace_once(
+        text,
+        '                "outcome": "regression" if regressed else "error",\n',
+        '                "outcome": "regression" if regression_episode else "error",\n',
+        "verified regression history episode",
+    )
+
+    old_test = '''        assert item["regression_after_verified_fix"] is True
+        assert item.get("previous_verified_fix", {}).get("fix_id") == "test-fix-001"
+
+        try:
+'''
+    new_test = '''        assert item["regression_after_verified_fix"] is True
+        assert item.get("previous_verified_fix", {}).get("fix_id") == "test-fix-001"
+
+        # More failures before a new verified fix are the same unresolved
+        # regression episode, not additional verified-fix regressions.
+        same_episode = observe(broken, memory_path=memory, candidates_path=candidates, report_path=report_path)
+        assert same_episode["verified_fix_regressions"] == 0
+        payload = json.loads(candidates.read_text(encoding="utf-8"))
+        item = next(x for x in payload["items"] if x["signature"] == signature)
+        assert item["verified_regression_count"] == 1
+        assert item["regression_after_verified_fix"] is True
+        assert item["priority"] == "high"
+
+        try:
+'''
+    text = _replace_once(text, old_test, new_test, "verified regression episode self-test")
+    return text
+
+
 def patch_code_repair_learning(text: str) -> str:
     # v2 supersedes the older exact text patch below. Do not silently accept a
     # half-applied v2 file: partial safety markers indicate a mixed/broken bundle.
@@ -45,7 +110,7 @@ def patch_code_repair_learning(text: str) -> str:
     )
     v2_present = tuple(marker in text for marker in v2_markers)
     if all(v2_present):
-        return text
+        return _patch_v2_regression_episode(text)
     if any(v2_present):
         missing = [marker for marker, present in zip(v2_markers, v2_present) if not present]
         raise RuntimeError("code-repair v2 hardening markers incomplete: " + ", ".join(missing))
