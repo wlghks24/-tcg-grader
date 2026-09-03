@@ -5,8 +5,10 @@ on:
     paths:
       - 'SETUP_GRAPHIFY_TERMUX.sh'
       - 'GRAPHIFY_UPDATE.sh'
+      - 'GRAPHIFY_SELF_HEAL.py'
       - 'GRAPHIFY_CHATGPT_GUIDE.md'
       - '.graphifyignore'
+      - '.gitignore'
       - 'ANDROID_UPDATE_AND_START.sh'
       - '.github/workflows/graphify-integration-guard.yml'
   workflow_dispatch:
@@ -18,37 +20,49 @@ jobs:
     timeout-minutes: 8
     env:
       GRAPHIFY_FIXTURE: /tmp/graphify-fixture
+      GRAPHIFY_VERSION: '0.9.53'
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
       - uses: actions/setup-python@v5
         with:
           python-version: '3.11'
-      - name: Validate shell syntax
+
+      - name: Validate shell and Python syntax
         run: |
           bash -n SETUP_GRAPHIFY_TERMUX.sh
           bash -n GRAPHIFY_UPDATE.sh
           bash -n ANDROID_UPDATE_AND_START.sh
-      - name: Verify required Graphify workflow commands
+          python -m py_compile GRAPHIFY_SELF_HEAL.py
+          python GRAPHIFY_SELF_HEAL.py --self-test
+
+      - name: Verify required safety contracts
         run: |
-          grep -Fq 'graphify --version' SETUP_GRAPHIFY_TERMUX.sh
+          grep -Fq 'GRAPHIFY_VERSION="${GRAPHIFY_VERSION:-0.9.53}"' SETUP_GRAPHIFY_TERMUX.sh
           grep -Fq 'graphify codex install --project' SETUP_GRAPHIFY_TERMUX.sh
           grep -Fq 'graphify hook install' SETUP_GRAPHIFY_TERMUX.sh
           grep -Fq 'TCG_GRAPHIFY_POST_MERGE' SETUP_GRAPHIFY_TERMUX.sh
           grep -Fq 'GRAPHIFY_UPDATE.sh --quiet' SETUP_GRAPHIFY_TERMUX.sh
-          grep -Fq 'graphify update . --force' GRAPHIFY_UPDATE.sh
-          grep -Fq 'graphify extract . --code-only' GRAPHIFY_UPDATE.sh
-          grep -Fq 'graphify cluster-only . --no-label' GRAPHIFY_UPDATE.sh
-          grep -Fq 'graphify-out/' .graphifyignore
-      - name: Install verified Graphify CLI line
+          grep -Fq 'run_graphify update . --force || return 21' GRAPHIFY_UPDATE.sh
+          grep -Fq 'run_graphify extract . --code-only || return 22' GRAPHIFY_UPDATE.sh
+          grep -Fq 'run_graphify cluster-only . --no-label || return 23' GRAPHIFY_UPDATE.sh
+          grep -Fq 'GRAPHIFY_DISABLE_SELF_HEAL' GRAPHIFY_UPDATE.sh
+          grep -Fq 'APPROVED_STRATEGIES' GRAPHIFY_SELF_HEAL.py
+          grep -Fq 'blocked unapproved strategy' GRAPHIFY_SELF_HEAL.py
+          grep -Fq 'graphify_self_heal_memory.json' .gitignore
+          grep -Fq '.graphify_recovery/' .gitignore
+
+      - name: Install repository-verified Graphify version
         run: |
-          python -m pip install --disable-pip-version-check 'graphifyy>=0.9.38,<1'
-          graphify --version
+          python -m pip install --disable-pip-version-check "graphifyy==$GRAPHIFY_VERSION"
+          graphify --version | tee /tmp/graphify-version.txt
+          grep -Eq "(^|[^0-9])${GRAPHIFY_VERSION//./\\.}([^0-9]|$)" /tmp/graphify-version.txt
           graphify hook --help >/dev/null
           graphify update --help >/dev/null
           graphify extract --help >/dev/null
           graphify cluster-only --help >/dev/null
           graphify codex install --help >/dev/null
           graphify agents install --help >/dev/null
+
       - name: Prepare Graphify fixture repository
         shell: bash
         run: |
@@ -79,6 +93,7 @@ jobs:
           PY
           git add models.py service.py
           git commit -qm initial
+
       - name: Exercise Codex and Agent Skills project install
         shell: bash
         run: |
@@ -87,27 +102,59 @@ jobs:
           graphify codex install --project
           graphify agents install --project
           test -f AGENTS.md
+
       - name: Exercise complete project map wrapper
         shell: bash
         run: |
           set -euo pipefail
           cp "$GITHUB_WORKSPACE/GRAPHIFY_UPDATE.sh" "$GRAPHIFY_FIXTURE/GRAPHIFY_UPDATE.sh"
+          cp "$GITHUB_WORKSPACE/GRAPHIFY_SELF_HEAL.py" "$GRAPHIFY_FIXTURE/GRAPHIFY_SELF_HEAL.py"
           cd "$GRAPHIFY_FIXTURE"
           bash ./GRAPHIFY_UPDATE.sh
-          find graphify-out -maxdepth 2 -type f -print | sort
           test -s graphify-out/graph.json
           test -s graphify-out/GRAPH_REPORT.md
           test -s graphify-out/graph.html
+
       - name: Exercise incremental wrapper refresh
         shell: bash
         run: |
           set -euo pipefail
           cd "$GRAPHIFY_FIXTURE"
-          printf '\n# changed\n' >> service.py
+          python - <<'PY'
+          from pathlib import Path
+          p = Path('service.py')
+          text = p.read_text()
+          p.write_text(text.replace('score >= 9.0', 'score >= 9.1') if 'score >= 9.0' in text else text + '\ndef health_probe():\n    return card_grade(9.1)\n')
+          PY
           bash ./GRAPHIFY_UPDATE.sh
           test -s graphify-out/graph.json
           test -s graphify-out/GRAPH_REPORT.md
           test -s graphify-out/graph.html
+
+      - name: Prove primary Graphify failures cannot be masked
+        shell: bash
+        run: |
+          set -euo pipefail
+          cat > /tmp/fake-graphify-fail <<'SH'
+          #!/usr/bin/env bash
+          if [ "${1:-}" = "--version" ]; then
+            echo 'graphify 0.9.53'
+            exit 0
+          fi
+          case "${1:-}" in
+            update|extract|cluster-only) echo 'forced graphify failure' >&2; exit 42 ;;
+            *) exit 0 ;;
+          esac
+          SH
+          chmod +x /tmp/fake-graphify-fail
+          cd "$GRAPHIFY_FIXTURE"
+          set +e
+          GRAPHIFY_BIN=/tmp/fake-graphify-fail GRAPHIFY_DISABLE_SELF_HEAL=1 bash ./GRAPHIFY_UPDATE.sh
+          rc=$?
+          set -e
+          test "$rc" -ne 0
+          grep -Fq '최종 status=' GRAPHIFY_UPDATE.log
+
       - name: Exercise Graphify git hooks
         shell: bash
         run: |
