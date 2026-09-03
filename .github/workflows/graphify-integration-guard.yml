@@ -37,6 +37,7 @@ jobs:
           grep -Fq 'GRAPHIFY_UPDATE.sh --quiet' SETUP_GRAPHIFY_TERMUX.sh
           grep -Fq 'graphify update . --force' GRAPHIFY_UPDATE.sh
           grep -Fq 'graphify extract . --code-only' GRAPHIFY_UPDATE.sh
+          grep -Fq 'graphify cluster-only . --no-label' GRAPHIFY_UPDATE.sh
           grep -Fq 'graphify-out/' .graphifyignore
       - name: Install verified Graphify CLI line
         run: |
@@ -45,6 +46,7 @@ jobs:
           graphify hook --help >/dev/null
           graphify update --help >/dev/null
           graphify extract --help >/dev/null
+          graphify cluster-only --help >/dev/null
           graphify codex install --help >/dev/null
           graphify agents install --help >/dev/null
       - name: Prepare Graphify fixture repository
@@ -84,26 +86,28 @@ jobs:
           cd "$GRAPHIFY_FIXTURE"
           graphify codex install --project
           graphify agents install --project
-          echo 'Created project integration files:'
-          find . -maxdepth 4 -type f -not -path './.git/*' -print | sort
           test -f AGENTS.md
-      - name: Exercise local code-only map build
+      - name: Exercise complete project map wrapper
         shell: bash
         run: |
           set -euo pipefail
+          cp "$GITHUB_WORKSPACE/GRAPHIFY_UPDATE.sh" "$GRAPHIFY_FIXTURE/GRAPHIFY_UPDATE.sh"
           cd "$GRAPHIFY_FIXTURE"
-          graphify extract . --code-only
-          echo 'Generated Graphify outputs:'
+          bash ./GRAPHIFY_UPDATE.sh
           find graphify-out -maxdepth 2 -type f -print | sort
           test -s graphify-out/graph.json
-      - name: Exercise incremental forced refresh
+          test -s graphify-out/GRAPH_REPORT.md
+          test -s graphify-out/graph.html
+      - name: Exercise incremental wrapper refresh
         shell: bash
         run: |
           set -euo pipefail
           cd "$GRAPHIFY_FIXTURE"
           printf '\n# changed\n' >> service.py
-          graphify update . --force
+          bash ./GRAPHIFY_UPDATE.sh
           test -s graphify-out/graph.json
+          test -s graphify-out/GRAPH_REPORT.md
+          test -s graphify-out/graph.html
       - name: Exercise Graphify git hooks
         shell: bash
         run: |
@@ -111,6 +115,5 @@ jobs:
           cd "$GRAPHIFY_FIXTURE"
           graphify hook install
           graphify hook status
-          ls -l .git/hooks/post-commit .git/hooks/post-checkout
           test -x .git/hooks/post-commit
           test -x .git/hooks/post-checkout
