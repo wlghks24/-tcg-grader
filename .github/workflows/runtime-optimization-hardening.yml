@@ -1,0 +1,81 @@
+name: Runtime Optimization Hardening
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'runtime_optimization_hardening.py'
+      - 'tcg_code_repair_learning.py'
+      - 'collector_self_healing.py'
+      - 'runtime_bundle_guard_v143.py'
+      - 'START_TCG_UPDATER_ANDROID.sh'
+      - '.github/workflows/runtime-optimization-hardening.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: runtime-optimization-hardening-main
+  cancel-in-progress: false
+
+jobs:
+  optimize-and-verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
+        with:
+          python-version: '3.11'
+      - name: Compile deterministic optimizer
+        run: python -m py_compile runtime_optimization_hardening.py
+      - name: Apply runtime optimization hardening
+        run: python runtime_optimization_hardening.py
+      - name: Compile optimized runtime
+        run: |
+          python -m py_compile \
+            safe_runtime.py \
+            auto_repair_engine.py \
+            collector_self_healing.py \
+            tcg_code_repair_learning.py \
+            auto_update_all.py \
+            runtime_bundle_guard_v143.py
+          bash -n START_TCG_UPDATER_ANDROID.sh
+      - name: Run recovered-error regression tests
+        run: |
+          python tcg_code_repair_learning.py --self-test
+          python - <<'PY'
+          import tcg_code_repair_learning as learning
+          import runtime_bundle_guard_v143 as bundle
+
+          recovered = {
+              'ok': True,
+              'collection_errors': ['NameError: historical diagnostic'],
+              'remaining_collection_errors': [],
+              'error': 'NameError: historical diagnostic',
+          }
+          assert learning._details(recovered) == []
+          assert 'collector_self_healing.py' in bundle.REQUIRED_FILES
+          assert 'tcg_code_repair_learning.py' in bundle.REQUIRED_FILES
+          result = bundle.audit()
+          assert result.get('missing_file_count') == 0, result
+          assert result.get('issue_count') == 0, result
+          print('recovered-error filtering + runtime bundle contracts: OK')
+          PY
+      - name: Verify hardening is idempotent
+        run: python runtime_optimization_hardening.py --check
+      - name: Commit optimized runtime changes
+        run: |
+          if git diff --quiet -- tcg_code_repair_learning.py runtime_bundle_guard_v143.py START_TCG_UPDATER_ANDROID.sh; then
+            echo 'No runtime optimization changes required.'
+            exit 0
+          fi
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add tcg_code_repair_learning.py runtime_bundle_guard_v143.py START_TCG_UPDATER_ANDROID.sh
+          git commit -m 'optimize: fix recovered-error learning and runtime bundle guard'
+          git pull --rebase origin main
+          git push origin HEAD:main
