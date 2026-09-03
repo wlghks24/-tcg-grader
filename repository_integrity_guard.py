@@ -4,7 +4,8 @@
 This guard is intentionally read-only. It catches syntax damage and audit blind spots
 that targeted runtime tests can miss: unresolved merge markers, Trojan Source bidi
 controls, oversized executable text that the security scanner would otherwise skip,
-malformed/duplicate-key JSON, and Python syntax errors across the whole tracked tree.
+malformed/duplicate-key JSON, Python syntax errors, unsafe tracked symlinks, and
+cross-platform filename collisions that can break the Windows/Android deployment path.
 """
 from __future__ import annotations
 
@@ -24,9 +25,16 @@ BIDI_CONTROLS = {chr(code) for code in (*range(0x202A, 0x202F), *range(0x2066, 0
 # Match actual Git conflict marker lines, not decorative separators such as
 # "========================================" in shell output banners.
 MERGE_MARKER_RE = re.compile(r"^(?:<{7}(?: .*)?|\|{7}(?: .*)?|={7}|>{7}(?: .*)?)\s*$")
+WINDOWS_RESERVED = {
+    "CON", "PRN", "AUX", "NUL",
+    *(f"COM{i}" for i in range(1, 10)),
+    *(f"LPT{i}" for i in range(1, 10)),
+}
+WINDOWS_FORBIDDEN = set('<>:"\\|?*')
 
 
-def tracked_files() -> list[Path]:
+def tracked_entries() -> list[tuple[str, Path, bool]]:
+    """Return every tracked path without silently following or omitting symlinks."""
     result = subprocess.run(
         ["git", "ls-files", "-z"],
         cwd=ROOT,
@@ -34,16 +42,27 @@ def tracked_files() -> list[Path]:
         stderr=subprocess.PIPE,
         check=True,
     )
-    paths: list[Path] = []
+    entries: list[tuple[str, Path, bool]] = []
     for raw in result.stdout.split(b"\0"):
         if not raw:
             continue
         relative = raw.decode("utf-8", "strict")
         path = ROOT / relative
-        if path.is_symlink() or not path.is_file():
-            continue
-        paths.append(path)
-    return paths
+        entries.append((relative, path, path.is_symlink()))
+    return entries
+
+
+def unsafe_windows_component(component: str) -> str | None:
+    if component in {"", ".", ".."}:
+        return "invalid path component"
+    if component.endswith((" ", ".")):
+        return "trailing space/dot is not portable to Windows"
+    if any(char in WINDOWS_FORBIDDEN or ord(char) < 32 for char in component):
+        return "Windows-forbidden filename character"
+    stem = component.split(".", 1)[0].upper()
+    if stem in WINDOWS_RESERVED:
+        return "Windows reserved device name"
+    return None
 
 
 def unique_object(pairs: list[tuple[str, Any]]) -> dict[str, Any]:
@@ -62,13 +81,38 @@ def reject_constant(value: str) -> None:
 def main() -> int:
     findings: list[str] = []
     checked = 0
-    for path in tracked_files():
-        relative = path.relative_to(ROOT).as_posix()
+    entries = tracked_entries()
+
+    # A case-insensitive checkout (the user's Windows PC) cannot safely represent
+    # two different tracked paths that case-fold to the same value.
+    folded: dict[str, str] = {}
+    for relative, _path, _is_symlink in entries:
+        key = relative.casefold()
+        previous = folded.get(key)
+        if previous is not None and previous != relative:
+            findings.append(f"case-insensitive path collision: {previous} <-> {relative}")
+        else:
+            folded[key] = relative
+        if any(char in BIDI_CONTROLS or ord(char) < 32 or ord(char) == 127 for char in relative):
+            findings.append(f"{relative!r}: control/bidi character in tracked filename")
+        for component in Path(relative).parts:
+            reason = unsafe_windows_component(component)
+            if reason:
+                findings.append(f"{relative}: {reason}: {component!r}")
+                break
+
+    for relative, path, is_symlink in entries:
         suffix = path.suffix.lower()
         if suffix not in TEXT_SUFFIXES:
             continue
         checked += 1
+        if is_symlink:
+            findings.append(f"{relative}: tracked text/config symlink is not allowed")
+            continue
         try:
+            if not path.is_file():
+                findings.append(f"{relative}: tracked text path is not a regular file")
+                continue
             size = path.stat().st_size
         except OSError as exc:
             findings.append(f"{relative}: stat failed: {exc.__class__.__name__}")
@@ -116,7 +160,7 @@ def main() -> int:
         for item in findings:
             print(f" - {item}", file=sys.stderr)
         return 1
-    print(f"Repository integrity guard: OK ({checked} tracked text files checked)")
+    print(f"Repository integrity guard: OK ({checked} tracked text files checked; {len(entries)} tracked paths checked)")
     return 0
 
 
