@@ -2,6 +2,7 @@ name: Apply pending official candidate verification v161
 
 on:
   push:
+    branches: [main]
     paths:
       - '.github/workflows/apply-pending-official-candidate-v161.yml'
       - 'pending_official_candidate_v161.py'
