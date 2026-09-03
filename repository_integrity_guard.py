@@ -10,6 +10,7 @@ from __future__ import annotations
 
 import json
 from pathlib import Path
+import re
 import subprocess
 import sys
 from typing import Any
@@ -20,7 +21,9 @@ TEXT_SUFFIXES = EXECUTABLE_TEXT_SUFFIXES | {".json", ".md", ".txt", ".css"}
 SECURITY_SCAN_LIMIT = 2_000_000
 MAX_JSON_BYTES = 20_000_000
 BIDI_CONTROLS = {chr(code) for code in (*range(0x202A, 0x202F), *range(0x2066, 0x206A))}
-MERGE_MARKERS = ("<<<<<<< ", "=======", ">>>>>>> ")
+# Match actual Git conflict marker lines, not decorative separators such as
+# "========================================" in shell output banners.
+MERGE_MARKER_RE = re.compile(r"^(?:<{7}(?: .*)?|\|{7}(?: .*)?|={7}|>{7}(?: .*)?)\s*$")
 
 
 def tracked_files() -> list[Path]:
@@ -93,8 +96,7 @@ def main() -> int:
             findings.append(f"{relative}: bidi control character in executable text")
         if suffix in EXECUTABLE_TEXT_SUFFIXES:
             for lineno, line in enumerate(text.splitlines(), 1):
-                stripped = line.lstrip()
-                if any(stripped.startswith(marker) for marker in MERGE_MARKERS):
+                if MERGE_MARKER_RE.fullmatch(line.lstrip()):
                     findings.append(f"{relative}:{lineno}: unresolved merge marker")
 
         if suffix == ".py":
