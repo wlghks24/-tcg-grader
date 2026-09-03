@@ -1,6 +1,7 @@
 name: Apply UI polish v121
 on:
   push:
+    branches: [main]
     paths:
       - 'ui_polish_v121.css'
       - 'apply_ui_polish_v121.py'
