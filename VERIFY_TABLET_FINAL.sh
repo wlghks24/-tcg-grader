@@ -78,6 +78,10 @@ python csp_hash_hardening.py --check >/dev/null
 echo "[5/9] 브라우저 인라인 스크립트 CSP 해시: OK"
 
 python - <<'PY'
+import json
+import tempfile
+from pathlib import Path
+
 import collector_self_healing
 import tcg_code_repair_learning
 import runtime_bundle_guard_v143
@@ -88,14 +92,33 @@ assert tcg_code_repair_learning.CODE_REPAIR_CODES
 assert tcg_code_repair_learning.PLAYBOOKS
 assert collector_self_healing.POLICIES
 assert "SOURCE_STRUCTURE_CHANGED" in collector_self_healing.QUARANTINE_CODES
+assert callable(getattr(collector_self_healing, "_plan_from_row", None))
 assert "collector_self_healing.py" in runtime_bundle_guard_v143.REQUIRED_FILES
 assert "tcg_code_repair_learning.py" in runtime_bundle_guard_v143.REQUIRED_FILES
-assert tcg_code_repair_learning._details({
+recovered = {
+    "file": "releases.json",
     "ok": True,
     "collection_errors": ["NameError: historical diagnostic"],
     "remaining_collection_errors": [],
     "error": "NameError: historical diagnostic",
-}) == []
+    "self_heal_policy": "transient_balanced",
+}
+assert tcg_code_repair_learning._details(recovered) == []
+
+# A recovered row may keep old diagnostics for display, but it must not be
+# quarantined again as a current failure. Use a temporary memory file so the
+# tablet's learned runtime state is never changed by this preflight.
+with tempfile.TemporaryDirectory() as tmp:
+    memory = Path(tmp) / "collector_self_heal_memory.json"
+    original_observe = collector_self_healing.tcg_code_repair_learning.observe
+    collector_self_healing.tcg_code_repair_learning.observe = lambda report: {"ok": True}
+    try:
+        observed = collector_self_healing.observe({"results": [recovered]}, path=memory)
+    finally:
+        collector_self_healing.tcg_code_repair_learning.observe = original_observe
+    payload = json.loads(memory.read_text(encoding="utf-8"))
+    assert observed["quarantined_for_code_repair"] == 0
+    assert payload.get("quarantine") == []
 
 safety = tcg_code_repair_learning._default_memory()["safety"]
 assert safety["learned_text_executable"] is False
