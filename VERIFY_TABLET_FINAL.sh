@@ -170,6 +170,18 @@ assert safety["git_write"] is False
 assert safety["unverified_data_promotion"] is False
 assert safety["allowlisted_playbooks_only"] is True
 
+# Self-learning may rank code-defined policies/playbooks, but it must never turn
+# learned text into executable repair code or close a fix without the complete
+# verification playbook. These contracts also ensure concurrent tablet/PC jobs
+# serialize their learning-memory transactions rather than overwriting each other.
+repair_contracts = tcg_code_repair_learning.safety_contract_status()
+collector_contracts = collector_self_healing.safety_contract_status()
+assert repair_contracts and all(repair_contracts.values()), repair_contracts
+assert collector_contracts and all(collector_contracts.values()), collector_contracts
+assert set(tcg_code_repair_learning._required_check_ids("INTERNAL_CODE_ERROR")) == {
+    "graphify_map_review", "python_compile", "collector_smoke", "runtime_bundle_guard"
+}
+
 rules, ignore_errors = GRAPHIFY_AUDIT._load_ignore_rules()
 assert not ignore_errors, ignore_errors
 assert GRAPHIFY_AUDIT._ignored_reason('.codex/skills/graphify/SKILL.md', rules)
