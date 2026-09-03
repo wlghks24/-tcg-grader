@@ -2,6 +2,7 @@ name: Apply graded photo cumulative patch
 
 on:
   push:
+    branches: [main]
     paths:
       - 'apply_graded_photo_cumulative_patch.py'
       - '.github/workflows/apply-graded-photo-cumulative-patch.yml'
