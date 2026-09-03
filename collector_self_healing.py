@@ -5,7 +5,9 @@ The module never executes text learned from errors and never rewrites Python sou
 It learns which allow-listed recovery policy worked for each collector/error family,
 applies that policy on the next run, and retires policies that repeatedly fail.
 Structural/source changes are quarantined for a code-and-test repair instead of being
-allowed to teach unverified data as truth.
+allowed to teach unverified data as truth. Structural/code failures are also sent to
+tcg_code_repair_learning, which builds a bounded code+test candidate queue without
+automatically editing source files.
 """
 from __future__ import annotations
 
@@ -16,6 +18,7 @@ from pathlib import Path
 from typing import Any
 
 import auto_repair_engine
+import tcg_code_repair_learning
 from safe_runtime import atomic_write_json, bounded_int, safe_read_text
 
 ROOT = Path(__file__).resolve().parent
@@ -305,11 +308,21 @@ def observe(report: dict, path: Path = MEMORY) -> dict:
         })
 
     _save(memory, path)
+    try:
+        code_repair = tcg_code_repair_learning.observe(report)
+    except Exception as exc:
+        # Code-repair learning is advisory. It must never make collection fail.
+        code_repair = {
+            "ok": False,
+            "error": auto_repair_engine.redact_sensitive(f"{type(exc).__name__}: {exc}", 500),
+            "safety": {"source_rewrite": False, "git_write": False},
+        }
     return {
         "ok": True, "runs": memory["runs"], "policy_applied": applied,
         "policy_recovered": recovered, "next_policy_prepared": prepared,
         "quarantined_for_code_repair": quarantined,
         "active_files": sum(1 for row in memory.get("files", {}).values() if row.get("pending_policy")),
+        "code_repair_learning": code_repair,
         "safety": memory["safety"],
     }
 
@@ -328,9 +341,14 @@ def public_status(path: Path = MEMORY) -> dict:
                            "cooldown_remaining_seconds": plan.get("cooldown_remaining_seconds", 0),
                            "cooldown_kind": plan.get("cooldown_kind"),
                            "access_control_blocked": plan.get("access_control_blocked", False)})
+    try:
+        code_repair = tcg_code_repair_learning.public_status()
+    except Exception as exc:
+        code_repair = {"ok": False, "error": auto_repair_engine.redact_sensitive(f"{type(exc).__name__}: {exc}", 500)}
     return {
         "ok": True, "runs": memory.get("runs", 0), "active": active,
         "quarantine_count": len(memory.get("quarantine", [])),
         "recent_quarantine": memory.get("quarantine", [])[-10:],
+        "code_repair_learning": code_repair,
         "safety": memory.get("safety", {}),
     }
