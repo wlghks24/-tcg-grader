@@ -86,3 +86,4 @@ graphify_self_heal_candidates.json
 .graphify_recovery/
 graphify-out/cost.json
 graphify-out/cache/
+graphify-out/graph_audit.json
