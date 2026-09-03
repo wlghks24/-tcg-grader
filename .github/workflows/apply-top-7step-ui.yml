@@ -2,6 +2,7 @@ name: Apply top 7-step UI wording
 
 on:
   push:
+    branches: [main]
     paths:
       - 'apply_top_7step_ui_patch.py'
       - '.github/workflows/apply-top-7step-ui.yml'
