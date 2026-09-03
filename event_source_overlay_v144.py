@@ -6,16 +6,24 @@ The base registry stays backward-compatible. This overlay adds verified publishe
 ONE PIECE official JP accounts and marks the existing Korean community watcher as
 cross-region discovery-only. It changes discovery coverage only; it never makes the
 community watcher trusted or verified.
+
+The overlay also ranks *verified learned* event anchors by distinctiveness. Brand,
+campaign, venue and publisher phrases therefore outrank generic words such as
+"promo" or "event" when the bounded learner builds the next search query. This is
+ranking only: it never changes source trust or verification.
 """
 from __future__ import annotations
 
 import json
+import re
 
+import event_gap_learning
 import social_event_discovery
 
 PATCH_ID = 144
 _APPLIED = False
 _ORIGINAL_LOAD_REGISTRY = None
+_ORIGINAL_TOP_TERMS_FOR_REGION = None
 
 OFFICIAL_ACCOUNT_OVERLAY = (
     {
@@ -56,6 +64,16 @@ WATCH_OVERRIDES = {
             "trusted=false를 유지하고 공식 웹·공식 SNS 교차확인 전 확정정보 승격 금지."
         ),
     },
+}
+
+_GENERIC_LEARNED_TERMS = {
+    "카드", "카드게임", "원피스", "포켓몬", "나루토", "콜라보", "프로모", "프로모션",
+    "증정", "배포", "응모", "응모자", "전원", "서비스", "대상상품", "구매", "구매와",
+    "특전", "행사", "이벤트", "공식", "발표", "안내", "한정", "무료", "상품",
+    "CARD", "CARDS", "GAME", "EVENT", "OFFICIAL", "PROMO", "PROMOTIONAL", "COLLAB",
+    "COLLABORATION", "GIVEAWAY", "APPLICATION", "SUBSCRIPTION", "SUBSCRIBER", "PURCHASE",
+    "プロモ", "カード", "イベント", "コラボ", "配布", "応募", "購入", "特典", "限定",
+    "サービス", "対象商品", "商品", "公式", "発表",
 }
 
 
@@ -100,6 +118,7 @@ def merge_registry(registry: dict) -> dict:
         "patch": PATCH_ID,
         "official_accounts_added": len(OFFICIAL_ACCOUNT_OVERLAY),
         "cross_region_watch_overrides": len(WATCH_OVERRIDES),
+        "distinctive_verified_term_ranking": True,
         "trust_auto_promotion": False,
     }
     return out
@@ -109,18 +128,76 @@ def _v144_load_registry() -> dict:
     return merge_registry(_ORIGINAL_LOAD_REGISTRY())
 
 
+def _v144_top_terms_for_region(self, game, region, limit=8):
+    """Prefer distinctive verified anchors over generic event vocabulary.
+
+    The underlying memory remains unchanged. This only changes which already-safe
+    learned terms are selected for the next query. Unverified rows cannot reach
+    this memory because v142/v144 learning gates reject them before persistence.
+    """
+    prefix = f"{game}|{region}|"
+    ranked = []
+    for key, stat in (self.data.get("terms") or {}).items():
+        if not isinstance(stat, dict) or not str(key).startswith(prefix):
+            continue
+        parts = str(key).split("|", 3)
+        if len(parts) != 4:
+            continue
+        term = parts[3].strip()
+        if len(term) < 2:
+            continue
+        score = event_gap_learning._float(stat.get("score"))
+        score += event_gap_learning._int(stat.get("verified_events")) * 0.35
+        learned_from = str(stat.get("learned_from") or "")
+        if learned_from == "official_manual_miss_recovery":
+            score += 0.75
+
+        upper = term.upper()
+        if term in _GENERIC_LEARNED_TERMS or upper in _GENERIC_LEARNED_TERMS:
+            score -= 2.0
+        # Mixed-case brand/campaign tokens (Nike, Jump+, etc.) are unusually
+        # informative and should survive a noisy long announcement.
+        if re.fullmatch(r"[A-Z][A-Za-z0-9.&'+/-]{2,32}", term):
+            score += 1.20
+        elif " " in term and len(term) >= 6:
+            score += 0.65
+        elif re.search(r"[ァ-ヶ一-龠]", term) and len(term) >= 6:
+            score += 0.45
+        if score > 0:
+            ranked.append((score, term))
+
+    ranked.sort(key=lambda row: (row[0], len(row[1]), row[1].lower()), reverse=True)
+    out = []
+    cap = max(0, min(16, int(limit)))
+    for _, term in ranked:
+        if term not in out:
+            out.append(term)
+        if len(out) >= cap:
+            break
+    return tuple(out)
+
+
 def apply() -> dict:
-    global _APPLIED, _ORIGINAL_LOAD_REGISTRY
+    global _APPLIED, _ORIGINAL_LOAD_REGISTRY, _ORIGINAL_TOP_TERMS_FOR_REGION
     if _APPLIED:
-        return {"ok": True, "patch": PATCH_ID, "already_applied": True, "trust_auto_promotion": False}
+        return {
+            "ok": True,
+            "patch": PATCH_ID,
+            "already_applied": True,
+            "distinctive_verified_term_ranking": True,
+            "trust_auto_promotion": False,
+        }
     _ORIGINAL_LOAD_REGISTRY = social_event_discovery.load_registry
+    _ORIGINAL_TOP_TERMS_FOR_REGION = event_gap_learning.EventGapLearner.top_terms_for_region
     social_event_discovery.load_registry = _v144_load_registry
+    event_gap_learning.EventGapLearner.top_terms_for_region = _v144_top_terms_for_region
     _APPLIED = True
     return {
         "ok": True,
         "patch": PATCH_ID,
         "official_accounts_added": len(OFFICIAL_ACCOUNT_OVERLAY),
         "cross_region_watch_overrides": len(WATCH_OVERRIDES),
+        "distinctive_verified_term_ranking": True,
         "trust_auto_promotion": False,
     }
 
