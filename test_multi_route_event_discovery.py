@@ -66,6 +66,34 @@ class MultiRouteEventDiscoveryTests(unittest.TestCase):
         self.assertIn('Retry-After=120',summary)
         self.assertIn('cooldown-required',summary)
 
+    def test_unverified_candidate_does_not_resolve_verified_gap(self):
+        rows=[{
+            'game':'원피스 카드','region':'KR','search_topic':'reprint',
+            'source':'https://example.com/reprint-rumor','verified':False,
+        }]
+        candidate=routes._topic_coverage(rows)
+        verified=routes._topic_coverage(rows,verified_only=True)
+        key='원피스 카드/KR/reprint'
+        self.assertEqual(candidate[key],1)
+        self.assertEqual(verified[key],0)
+
+    def test_verified_official_candidate_resolves_verified_gap(self):
+        rows=[{
+            'game':'원피스 카드','region':'KR','search_topic':'reprint',
+            'source':'https://onepiece-cardgame.kr/topics.do','verified':True,
+            'official_domain_match':True,
+        }]
+        verified=routes._topic_coverage(rows,verified_only=True)
+        self.assertEqual(verified['원피스 카드/KR/reprint'],1)
+
+    def test_verified_coverage_matrix_keeps_all_expected_cells(self):
+        coverage=routes._topic_coverage([],verified_only=True)
+        self.assertEqual(
+            len(coverage),
+            len(routes.GAMES)*len(routes.REGIONS)*len(routes.COVERAGE_TOPICS),
+        )
+        self.assertTrue(all(value==0 for value in coverage.values()))
+
 
 if __name__=='__main__':
     unittest.main()
