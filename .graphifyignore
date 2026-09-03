@@ -1,5 +1,5 @@
 # TCG Grader Graphify scope
-# Keep the code map focused on architecture and stable documentation.
+# Keep the code map focused on application architecture and stable source/docs.
 # Graphify also respects .gitignore; these are additional project-specific excludes.
 
 graphify-out/
@@ -11,6 +11,12 @@ node_modules/
 *.log
 *.tmp
 *.tmp.json
+
+# Graphify/Codex integration metadata is control-plane material, not TCG architecture.
+# Excluding it prevents the map from recursively describing its own skills/instructions.
+.codex/
+.agents/
+AGENTS.md
 
 # High-churn runtime/data outputs: useful to the app, noisy in a code architecture map.
 tcg_live_data.json
