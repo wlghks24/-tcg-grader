@@ -65,7 +65,6 @@ def iter_text_files(root: Path):
         ".git", ".codex", ".agents", ".tcg_ai_proposals", ".graphify_recovery",
         "graphify-out", "__pycache__", ".pytest_cache", "node_modules", "GRADE_TRAINING_INBOX",
     }
-    # Prune generated, dependency, proposal and photo trees before walking them.
     for current, directories, filenames in os.walk(root, topdown=True, followlinks=False):
         current_path = Path(current)
         directories[:] = [
@@ -90,8 +89,6 @@ def scan_python(path: Path, text: str, findings: list[dict[str, Any]], rel: str)
     except SyntaxError as exc:
         add(findings, "PY_SYNTAX", "high", rel, exc.lineno or 1, "Python syntax error prevents reliable security analysis.", str(exc))
         return
-    # Parsing every Python file preserves full syntax coverage. Only walk the much
-    # larger AST when the source can contain a call recognized by the rules below.
     if not any(token in text for token in ("eval", "exec", "system", "subprocess")):
         return
     for node in ast.walk(tree):
@@ -137,14 +134,28 @@ def scan_workflow(text: str, findings: list[dict[str, Any]], rel: str) -> None:
             add(findings, "GHA_REMOTE_PIPE_SHELL", "critical", rel, lineno, "Remote content is piped directly to a shell.", line.strip())
 
 
+def _csp_directive(text: str, name: str) -> str:
+    meta = re.search(r'http-equiv=["\']Content-Security-Policy["\'][^>]*content="([^"]*)"', text, re.I)
+    if not meta:
+        return ""
+    policy = meta.group(1)
+    match = re.search(rf"(?:^|;)\s*{re.escape(name)}\s+([^;]*)", policy, re.I)
+    return match.group(1).strip() if match else ""
+
+
 def scan_js_html(text: str, findings: list[dict[str, Any]], rel: str) -> None:
     for lineno, line in enumerate(text.splitlines(), 1):
         if re.search(r"\beval\s*\(|\bnew\s+Function\s*\(", line):
             add(findings, "JS_DYNAMIC_CODE", "critical", rel, lineno, "Dynamic JavaScript execution requires manual review.", line.strip())
         if "document.write(" in line:
             add(findings, "JS_DOCUMENT_WRITE", "medium", rel, lineno, "document.write can create DOM injection risk.", line.strip())
-    if rel == "index.html" and "'unsafe-inline'" in text:
-        add(findings, "CSP_UNSAFE_INLINE", "medium", rel, 1, "CSP still permits inline script/style; migrate to hashes/nonces when the UI is refactored.", "'unsafe-inline'")
+    if rel == "index.html":
+        script_src = _csp_directive(text, "script-src")
+        style_src = _csp_directive(text, "style-src")
+        if "'unsafe-inline'" in script_src:
+            add(findings, "CSP_SCRIPT_UNSAFE_INLINE", "medium", rel, 1, "CSP permits arbitrary inline script execution; replace it with exact script hashes/nonces.", script_src)
+        if "'unsafe-inline'" in style_src:
+            add(findings, "CSP_STYLE_UNSAFE_INLINE", "low", rel, 1, "Inline styles remain enabled for the legacy UI; keep script-src independently hash-restricted.", style_src)
 
 
 def scan_repository(root: Path = ROOT) -> list[dict[str, Any]]:
