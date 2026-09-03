@@ -1,6 +1,7 @@
 name: Apply final graded photo integration
 on:
   push:
+    branches: [main]
     paths:
       - 'apply_final_graded_photo_integration.py'
       - '.github/workflows/apply-final-graded-photo-integration.yml'
