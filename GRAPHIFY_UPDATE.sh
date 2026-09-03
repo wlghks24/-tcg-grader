@@ -19,6 +19,14 @@ run_graphify() {
 }
 
 validate_outputs() {
+  if [ -f "$SELF_HEAL" ] && command -v python >/dev/null 2>&1; then
+    if python "$SELF_HEAL" --validate-only; then
+      return 0
+    fi
+    echo "[Graphify] 필수 지도 산출물 무결성 검증 실패"
+    return 24
+  fi
+
   missing=""
   for required in graphify-out/graph.json graphify-out/GRAPH_REPORT.md graphify-out/graph.html; do
     if [ ! -s "$required" ]; then
@@ -73,8 +81,8 @@ invoke_self_heal() {
   [ -f "$SELF_HEAL" ] || return 1
   command -v python >/dev/null 2>&1 || return 1
 
-  echo "[Graphify] 오류코드 $failure_code 감지 → 검증된 자가복구 전략을 시도합니다."
-  python "$SELF_HEAL" \
+  echo "[Graphify] 오류코드 $failure_code 감지 → 오류서명 학습 + 검증된 자가수정 전략을 시도합니다."
+  GRAPHIFY_BIN="$GRAPHIFY_BIN" python "$SELF_HEAL" \
     --repair \
     --log "$LOG_FILE" \
     --failure-code "$failure_code" \
@@ -82,8 +90,6 @@ invoke_self_heal() {
 }
 
 say "[Graphify] 코드 지도 갱신을 시작합니다..."
-# Run the internal sequence in a subshell so its explicit exit code is captured
-# here instead of terminating this wrapper before the final user-facing result.
 (
   printf '\n===== %s =====\n' "$(date '+%Y-%m-%d %H:%M:%S' 2>/dev/null || date)"
 
@@ -97,13 +103,26 @@ say "[Graphify] 코드 지도 갱신을 시작합니다..."
   fi
 
   if [ "$status" -ne 0 ]; then
-    echo "[Graphify] 1차 지도 갱신 실패(status=$status)"
-    if invoke_self_heal "$status" "GRAPHIFY_UPDATE.sh primary refresh failed"; then
-      if validate_outputs; then
-        echo "[Graphify] 자가복구 후 필수 산출물 검증 성공"
-        status=0
+    first_status="$status"
+    echo "[Graphify] 1차 지도 갱신 실패(status=$first_status)"
+    if invoke_self_heal "$first_status" "GRAPHIFY_UPDATE.sh primary refresh failed status=$first_status"; then
+      echo "[Graphify] 자가복구 적용 후 실제 지도 갱신을 1회 재검증합니다."
+      resolve_graphify
+      retry_preflight=$?
+      if [ "$retry_preflight" -ne 0 ]; then
+        status="$retry_preflight"
       else
-        status=34
+        perform_update
+        status=$?
+      fi
+      if [ "$status" -eq 0 ]; then
+        if validate_outputs; then
+          echo "[Graphify] 자가복구 후 실제 갱신 + 산출물 무결성 검증 성공"
+        else
+          status=34
+        fi
+      else
+        echo "[Graphify] 자가복구 후 실제 지도 갱신 재시도 실패(status=$status)"
       fi
     fi
   fi
@@ -124,6 +143,7 @@ if [ "$status" -eq 0 ]; then
 else
   say "[오류] Graphify 지도 갱신 실패(status=$status) · $LOG_FILE 마지막 내용을 확인하세요."
   [ -s graphify_self_heal_report.json ] && say "       자가복구 리포트: graphify_self_heal_report.json"
+  [ -s graphify_self_heal_candidates.json ] && say "       미해결 오류후보: graphify_self_heal_candidates.json"
 fi
 
 exit "$status"
