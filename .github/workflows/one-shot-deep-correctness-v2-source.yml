@@ -1,0 +1,86 @@
+name: One Shot Deep Correctness V2 Source
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'ONE_SHOT_DEEP_CORRECTNESS_V2_SOURCE.py'
+      - '.github/workflows/one-shot-deep-correctness-v2-source.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: one-shot-deep-correctness-v2-source-main
+  cancel-in-progress: false
+
+jobs:
+  patch-verify-push:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
+        with:
+          python-version: '3.11'
+      - name: Apply source-only hardening
+        run: |
+          python -m py_compile ONE_SHOT_DEEP_CORRECTNESS_V2.py ONE_SHOT_DEEP_CORRECTNESS_V2_SOURCE.py
+          python ONE_SHOT_DEEP_CORRECTNESS_V2_SOURCE.py
+      - name: Compile and syntax-check patched runtime
+        run: |
+          python -m py_compile safe_runtime.py auto_repair_engine.py auto_update_all.py runtime_bundle_guard_v143.py
+          bash -n ANDROID_UPDATE_AND_START.sh
+          bash -n ANDROID_RECOVER_UPDATE.sh
+          bash -n ANDROID_AUTO_START_INSTALL.sh
+          bash -n VERIFY_TABLET_FINAL.sh
+      - name: Verify corrected behavior
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          import auto_update_all as updater
+          import runtime_bundle_guard_v143 as bundle
+
+          assert updater._timeout_only_errors(['TIMEOUT: source 30초 초과'])
+          for row in (
+              'ValueError: malformed data after timeout',
+              'HTTPError: status 429 after timeout',
+              'PermissionError: denied after timeout',
+          ):
+              assert not updater._timeout_only_errors([row]), row
+          assert not updater._timeout_only_errors(['TIMEOUT: source 30초 초과','ValueError: malformed data'])
+          assert not updater._deferred_timeout_eligible({
+              'ok':False,'timeout_exhausted':True,
+              'collection_errors':['ValueError: malformed data after timeout'],
+          })
+          source=Path('auto_update_all.py').read_text(encoding='utf-8')
+          assert '"timeout_exhausted":_timeout_only_errors(warnings)' in source
+          assert 'timeout_only_failure=_timeout_only_errors(errors)' in source
+          assert 'timed_out=_timeout_only_errors(errors)' in source
+          android=Path('ANDROID_UPDATE_AND_START.sh').read_text(encoding='utf-8')
+          assert 'mktemp -d "$RUNTIME_BACKUP_DIR/' in android
+          assert 'if [ -L "$changed" ]; then' in android
+          assert 'fatal_restore_error=1' in android
+          assert 'find "$RUNTIME_BACKUP_DIR"' not in android
+          result=bundle.audit()
+          assert result.get('ok'), result.get('issues')
+          print('source-only deep correctness v2: OK')
+          PY
+      - name: Run final tablet preflight
+        env:
+          TCG_FINAL_SKIP_HEAD_MATCH: '1'
+        run: bash VERIFY_TABLET_FINAL.sh
+      - name: Verify clean patch formatting
+        run: git diff --check
+      - name: Commit only non-workflow source changes
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add auto_update_all.py runtime_bundle_guard_v143.py VERIFY_TABLET_FINAL.sh ANDROID_UPDATE_AND_START.sh
+          git diff --cached --quiet && { echo 'No source changes to commit'; exit 0; }
+          git commit -m 'fix: harden mixed timeout recovery and Android snapshots'
+          git pull --rebase origin main
+          git push origin HEAD:main
