@@ -1,10 +1,11 @@
 #!/usr/bin/env python3
-"""Bounded, learning-based self-healing for the local Graphify integration.
+"""Bounded learned repair for Graphify on the TCG Grader tablet.
 
-The engine may repair only explicitly approved Graphify/Termux integration state.
-It never generates arbitrary Python/shell patches from logs, never edits TCG source
-code, and never commits/pushes to git. Learning only changes the priority of
-pre-approved recovery strategies for a normalized failure signature.
+Safety contract:
+- never generates commands or source patches from logs/memory;
+- never edits TCG application source or commits/pushes git;
+- may only run the fixed APPROVED_STRATEGIES below;
+- learns which approved strategy works best for each normalized error signature.
 """
 from __future__ import annotations
 
@@ -23,16 +24,16 @@ from typing import Any
 
 SCHEMA = 2
 PINNED_VERSION = os.environ.get("GRAPHIFY_VERSION", "0.9.53")
+GRAPHIFY_BIN = os.environ.get("GRAPHIFY_BIN", "graphify")
 MEMORY_PATH = Path(os.environ.get("GRAPHIFY_SELF_HEAL_MEMORY", "graphify_self_heal_memory.json"))
 REPORT_PATH = Path(os.environ.get("GRAPHIFY_SELF_HEAL_REPORT", "graphify_self_heal_report.json"))
 CANDIDATE_PATH = Path(os.environ.get("GRAPHIFY_SELF_HEAL_CANDIDATES", "graphify_self_heal_candidates.json"))
 RECOVERY_ROOT = Path(os.environ.get("GRAPHIFY_RECOVERY_DIR", ".graphify_recovery"))
-GRAPHIFY_BIN = os.environ.get("GRAPHIFY_BIN", "graphify")
+COMMAND_TIMEOUT = int(os.environ.get("GRAPHIFY_HEAL_COMMAND_TIMEOUT", "180"))
 MAX_HISTORY = 160
 MAX_CANDIDATES = 40
 MAX_RECOVERY_DIRS = 6
-MAX_STRATEGIES_PER_RUN = 4
-SUBPROCESS_TIMEOUT = int(os.environ.get("GRAPHIFY_HEAL_COMMAND_TIMEOUT", "180"))
+MAX_STRATEGIES = 4
 
 REQUIRED_OUTPUTS = (
     Path("graphify-out/graph.json"),
@@ -68,15 +69,29 @@ DEFAULT_STRATEGIES = {
     "unknown": ["rebuild_from_scratch", "repair_install_and_rebuild"],
 }
 
+FAILURE_CODE_CATEGORY = {
+    10: "command_missing",
+    11: "version_mismatch",
+    21: "update_failed",
+    22: "extract_failed",
+    23: "cluster_failed",
+    24: "missing_outputs",
+    31: "update_failed",
+    32: "extract_failed",
+    33: "cluster_failed",
+    34: "invalid_outputs",
+    40: "codex_install_failed",
+    41: "hook_failed",
+}
+
 
 def utc_now() -> str:
     return datetime.now(timezone.utc).isoformat(timespec="seconds")
 
 
-def safe_run(args: list[str], *, timeout: int | None = None) -> subprocess.CompletedProcess[str]:
-    timeout = timeout or SUBPROCESS_TIMEOUT
+def safe_run(args: list[str]) -> subprocess.CompletedProcess[str]:
     try:
-        return subprocess.run(args, text=True, capture_output=True, timeout=timeout)
+        return subprocess.run(args, text=True, capture_output=True, timeout=COMMAND_TIMEOUT)
     except FileNotFoundError as exc:
         return subprocess.CompletedProcess(args, 127, "", str(exc))
     except PermissionError as exc:
@@ -84,7 +99,7 @@ def safe_run(args: list[str], *, timeout: int | None = None) -> subprocess.Compl
     except subprocess.TimeoutExpired as exc:
         stdout = exc.stdout if isinstance(exc.stdout, str) else ""
         stderr = exc.stderr if isinstance(exc.stderr, str) else ""
-        return subprocess.CompletedProcess(args, 124, stdout, stderr + f"\ntimeout after {timeout}s")
+        return subprocess.CompletedProcess(args, 124, stdout, stderr + f"\ntimeout after {COMMAND_TIMEOUT}s")
 
 
 def graphify_cmd(*args: str) -> subprocess.CompletedProcess[str]:
@@ -97,14 +112,11 @@ def version_text() -> str:
 
 
 def version_matches(text: str) -> bool:
-    if not text:
-        return False
-    pattern = rf"(?<!\d){re.escape(PINNED_VERSION)}(?!\d)"
-    return re.search(pattern, text) is not None
+    return bool(text and re.search(rf"(?<!\d){re.escape(PINNED_VERSION)}(?!\d)", text))
 
 
 def validate_outputs_detail() -> tuple[bool, str]:
-    missing = [str(path) for path in REQUIRED_OUTPUTS if not path.is_file() or path.stat().st_size <= 0]
+    missing = [str(p) for p in REQUIRED_OUTPUTS if not p.is_file() or p.stat().st_size <= 0]
     if missing:
         return False, "missing outputs: " + ", ".join(missing)
 
@@ -116,58 +128,15 @@ def validate_outputs_detail() -> tuple[bool, str]:
     if not isinstance(graph, (dict, list)):
         return False, f"invalid graph.json root type: {type(graph).__name__}"
 
-    try:
-        report = report_path.read_text(encoding="utf-8", errors="replace").strip()
-    except OSError as exc:
-        return False, f"cannot read GRAPH_REPORT.md: {exc}"
+    report = report_path.read_text(encoding="utf-8", errors="replace").strip()
     if len(report) < 20:
         return False, "GRAPH_REPORT.md is unexpectedly small"
 
-    try:
-        html = html_path.read_text(encoding="utf-8", errors="replace").lower()
-    except OSError as exc:
-        return False, f"cannot read graph.html: {exc}"
+    html = html_path.read_text(encoding="utf-8", errors="replace").lower()
     if len(html) < 80 or ("<html" not in html and "<!doctype" not in html):
         return False, "graph.html does not look like HTML"
 
     return True, "all Graphify outputs are structurally valid"
-
-
-def outputs_ok() -> bool:
-    return validate_outputs_detail()[0]
-
-
-def default_memory() -> dict[str, Any]:
-    return {
-        "schema": SCHEMA,
-        "updated_at": None,
-        "categories": {},
-        "signatures": {},
-        "history": [],
-    }
-
-
-def load_memory(path: Path = MEMORY_PATH) -> dict[str, Any]:
-    if not path.exists():
-        return default_memory()
-    try:
-        data = json.loads(path.read_text(encoding="utf-8"))
-        if not isinstance(data, dict):
-            raise ValueError("memory root must be an object")
-        data.setdefault("schema", SCHEMA)
-        data.setdefault("categories", {})
-        data.setdefault("signatures", {})
-        data.setdefault("history", [])
-        data["schema"] = SCHEMA
-        return data
-    except Exception:
-        stamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-        corrupt = path.with_name(f"{path.name}.corrupt.{stamp}")
-        try:
-            path.replace(corrupt)
-        except OSError:
-            pass
-        return default_memory()
 
 
 def atomic_json_write(path: Path, data: dict[str, Any]) -> None:
@@ -185,63 +154,78 @@ def atomic_json_write(path: Path, data: dict[str, Any]) -> None:
             pass
 
 
+def default_memory() -> dict[str, Any]:
+    return {"schema": SCHEMA, "updated_at": None, "categories": {}, "signatures": {}, "history": []}
+
+
+def load_memory(path: Path = MEMORY_PATH) -> dict[str, Any]:
+    if not path.exists():
+        return default_memory()
+    try:
+        data = json.loads(path.read_text(encoding="utf-8"))
+        if not isinstance(data, dict):
+            raise ValueError("memory root must be object")
+        data.setdefault("categories", {})
+        data.setdefault("signatures", {})
+        data.setdefault("history", [])
+        data["schema"] = SCHEMA
+        return data
+    except Exception:
+        stamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+        try:
+            path.replace(path.with_name(f"{path.name}.corrupt.{stamp}"))
+        except OSError:
+            pass
+        return default_memory()
+
+
 def tail_text(path: Path, limit: int = 20000) -> str:
     try:
-        raw = path.read_text(encoding="utf-8", errors="replace")
+        return path.read_text(encoding="utf-8", errors="replace")[-limit:]
     except OSError:
         return ""
-    return raw[-limit:]
 
 
 def classify_failure(text: str, failure_code: int = 0, reason: str = "") -> str:
-    haystack = f"{reason}\n{text}".lower()
+    if failure_code in FAILURE_CODE_CATEGORY:
+        return FAILURE_CODE_CATEGORY[failure_code]
 
-    if failure_code == 40 or "codex install" in haystack and any(k in haystack for k in ("fail", "error", "오류")):
-        return "codex_install_failed"
-    if failure_code == 41 or "hook" in haystack and any(k in haystack for k in ("fail", "error", "오류")):
-        return "hook_failed"
+    haystack = f"{reason}\n{text}".lower()
     if "429" in haystack or "too many requests" in haystack or "rate limit" in haystack:
         return "rate_limited"
     if any(k in haystack for k in ("timed out", "timeout", "시간 초과")):
         return "timeout"
     if any(k in haystack for k in (
-        "temporary failure in name resolution",
-        "network is unreachable",
-        "connection reset",
-        "connection refused",
-        "ssl error",
-        "name or service not known",
+        "temporary failure in name resolution", "network is unreachable",
+        "connection reset", "connection refused", "ssl error", "name or service not known",
     )):
         return "network_failure"
     if "permission denied" in haystack or "operation not permitted" in haystack:
         return "permission_denied"
     if "command not found" in haystack or ("no such file or directory" in haystack and "graphify" in haystack):
         return "command_missing"
-    if "path" in haystack and "graphify" in haystack and any(k in haystack for k in ("not found", "missing", "없")):
-        return "path_missing"
-    if "version mismatch" in haystack or "unsupported version" in haystack or "pinned version" in haystack:
+    if "pinned version" in haystack or "version mismatch" in haystack or "unsupported version" in haystack:
         return "version_mismatch"
-    if "invalid graph.json" in haystack or "does not look like html" in haystack or "structurally valid" in haystack and "not" in haystack:
+    if any(k in haystack for k in (
+        "invalid graph.json", "invalid graph.json root type",
+        "graph_report.md is unexpectedly small", "graph.html does not look like html",
+        "필수 지도 산출물 무결성 검증 실패",
+    )):
         return "invalid_outputs"
-    if "필수 지도 산출물" in haystack or "missing output" in haystack or ("graph_report.md" in haystack and "없" in haystack):
+    if "missing output" in haystack or "필수 지도 산출물 누락" in haystack:
         return "missing_outputs"
+    if "codex install" in haystack and any(k in haystack for k in ("fail", "error", "오류")):
+        return "codex_install_failed"
+    if "hook" in haystack and any(k in haystack for k in ("fail", "error", "오류")):
+        return "hook_failed"
     if "cluster-only" in haystack and any(k in haystack for k in ("fail", "error", "오류")):
         return "cluster_failed"
     if "extract" in haystack and any(k in haystack for k in ("fail", "error", "오류")):
         return "extract_failed"
-    if failure_code in (21, 31) or ("update" in haystack and any(k in haystack for k in ("fail", "error", "오류"))):
+    if "update" in haystack and any(k in haystack for k in ("fail", "error", "오류")):
         return "update_failed"
-
-    if failure_code == 10:
-        return "command_missing"
-    if failure_code == 11:
-        return "version_mismatch"
-    if failure_code in (22, 32):
-        return "extract_failed"
-    if failure_code in (23, 33):
-        return "cluster_failed"
-    if failure_code in (24, 34):
-        return "missing_outputs"
+    if "path" in haystack and "graphify" in haystack and any(k in haystack for k in ("not found", "missing", "없")):
+        return "path_missing"
     return "unknown"
 
 
@@ -251,63 +235,51 @@ def normalize_failure_text(text: str) -> str:
     text = re.sub(r"\b\d{4}-\d{2}-\d{2}[t ][0-9:.+\-z]+\b", "<time>", text)
     text = re.sub(r"/(?:[^/\s]+/)+[^/\s]+", "<path>", text)
     text = re.sub(r"\b\d+\b", "<n>", text)
-    lines = []
+    keep: list[str] = []
     for raw in text.splitlines():
         line = " ".join(raw.split())
-        if not line:
-            continue
-        if any(token in line for token in (
-            "error", "fail", "오류", "missing", "not found", "denied", "timeout",
-            "graphify", "version", "429", "network", "invalid",
+        if line and any(t in line for t in (
+            "error", "fail", "오류", "missing", "not found", "denied",
+            "timeout", "graphify", "version", "429", "network", "invalid",
         )):
-            lines.append(line[:300])
-    if not lines:
-        lines = [" ".join(text.split())[-1200:]]
-    return "\n".join(lines[-16:])
+            keep.append(line[:300])
+    return "\n".join(keep[-16:]) if keep else " ".join(text.split())[-1200:]
 
 
 def failure_signature(category: str, text: str, failure_code: int, reason: str) -> str:
     normalized = normalize_failure_text(f"{reason}\n{text}")
-    payload = f"{category}|{failure_code}|{normalized}".encode("utf-8", errors="replace")
-    return hashlib.sha256(payload).hexdigest()[:16]
+    return hashlib.sha256(f"{category}|{failure_code}|{normalized}".encode()).hexdigest()[:16]
 
 
 def strategy_score(stats: dict[str, Any]) -> int:
     return int(stats.get("successes", 0)) * 3 - int(stats.get("failures", 0)) * 2
 
 
-def learned_order(memory: dict[str, Any], category: str, signature: str = "") -> list[str]:
+def learned_order(memory: dict[str, Any], category: str, signature: str) -> list[str]:
     base = list(DEFAULT_STRATEGIES.get(category, DEFAULT_STRATEGIES["unknown"]))
-
     preferred: list[str] = []
-    if signature:
-        sig_data = memory.get("signatures", {}).get(signature, {})
-        sig_pref = sig_data.get("preferred_strategy")
-        if sig_pref in APPROVED_STRATEGIES:
-            preferred.append(sig_pref)
 
-    cat_data = memory.get("categories", {}).get(category, {})
-    cat_pref = cat_data.get("preferred_strategy")
-    if cat_pref in APPROVED_STRATEGIES:
-        preferred.append(cat_pref)
+    sig_pref = memory.get("signatures", {}).get(signature, {}).get("preferred_strategy")
+    cat = memory.get("categories", {}).get(category, {})
+    cat_pref = cat.get("preferred_strategy")
+    for value in (sig_pref, cat_pref):
+        if value in APPROVED_STRATEGIES and value in base:
+            preferred.append(value)
 
-    ranked = []
-    strategy_stats = cat_data.get("strategies", {})
-    for strategy in base:
-        stats = strategy_stats.get(strategy, {})
-        ranked.append((strategy_score(stats), strategy))
-    ranked.sort(key=lambda item: item[0], reverse=True)
-
+    ranked = sorted(
+        base,
+        key=lambda strategy: strategy_score(cat.get("strategies", {}).get(strategy, {})),
+        reverse=True,
+    )
     result: list[str] = []
-    for strategy in preferred + [name for _, name in ranked]:
+    for strategy in preferred + ranked:
         if strategy in APPROVED_STRATEGIES and strategy in base and strategy not in result:
             result.append(strategy)
-    return result[:MAX_STRATEGIES_PER_RUN]
+    return result[:MAX_STRATEGIES]
 
 
-def _record_strategy(bucket: dict[str, Any], strategy: str, success: bool) -> None:
-    strategies = bucket.setdefault("strategies", {})
-    stats = strategies.setdefault(strategy, {"successes": 0, "failures": 0})
+def _record(bucket: dict[str, Any], strategy: str, success: bool) -> None:
+    stats = bucket.setdefault("strategies", {}).setdefault(strategy, {"successes": 0, "failures": 0})
     key = "successes" if success else "failures"
     stats[key] = int(stats.get(key, 0)) + 1
     stats["last_result_at"] = utc_now()
@@ -319,100 +291,70 @@ def _record_strategy(bucket: dict[str, Any], strategy: str, success: bool) -> No
 
 
 def record_result(
-    memory: dict[str, Any], *,
-    category: str,
-    signature: str,
-    strategy: str,
-    success: bool,
-    failure_code: int,
-    reason: str,
-    detail: str,
+    memory: dict[str, Any], category: str, signature: str, strategy: str,
+    success: bool, failure_code: int, reason: str, detail: str,
 ) -> None:
-    categories = memory.setdefault("categories", {})
-    cat = categories.setdefault(category, {"strategies": {}, "preferred_strategy": None})
-    _record_strategy(cat, strategy, success)
+    cat = memory.setdefault("categories", {}).setdefault(category, {"strategies": {}, "preferred_strategy": None})
+    _record(cat, strategy, success)
 
-    signatures = memory.setdefault("signatures", {})
-    sig = signatures.setdefault(signature, {
-        "category": category,
-        "first_seen_at": utc_now(),
-        "last_seen_at": utc_now(),
-        "hits": 0,
-        "strategies": {},
-        "preferred_strategy": None,
+    sig = memory.setdefault("signatures", {}).setdefault(signature, {
+        "category": category, "first_seen_at": utc_now(), "last_seen_at": utc_now(),
+        "hits": 0, "strategies": {}, "preferred_strategy": None,
     })
     sig["last_seen_at"] = utc_now()
     sig["hits"] = int(sig.get("hits", 0)) + 1
-    _record_strategy(sig, strategy, success)
+    _record(sig, strategy, success)
 
     history = memory.setdefault("history", [])
     history.append({
-        "at": utc_now(),
-        "category": category,
-        "signature": signature,
-        "strategy": strategy,
-        "success": success,
-        "failure_code": failure_code,
-        "reason": reason[:300],
-        "detail": detail[-1400:],
+        "at": utc_now(), "category": category, "signature": signature,
+        "strategy": strategy, "success": success, "failure_code": failure_code,
+        "reason": reason[:300], "detail": detail[-1400:],
     })
     del history[:-MAX_HISTORY]
     memory["updated_at"] = utc_now()
 
 
 def write_candidate(category: str, signature: str, failure_code: int, reason: str, log_text: str) -> None:
-    data: dict[str, Any]
-    if CANDIDATE_PATH.exists():
-        try:
-            loaded = json.loads(CANDIDATE_PATH.read_text(encoding="utf-8"))
-            data = loaded if isinstance(loaded, dict) else {}
-        except Exception:
+    try:
+        data = json.loads(CANDIDATE_PATH.read_text(encoding="utf-8")) if CANDIDATE_PATH.exists() else {}
+        if not isinstance(data, dict):
             data = {}
-    else:
+    except Exception:
         data = {}
-    data.setdefault("schema", 1)
-    data.setdefault("items", [])
-    items = data["items"]
-
-    candidate = {
-        "at": utc_now(),
-        "category": category,
-        "signature": signature,
-        "failure_code": failure_code,
-        "reason": reason[:500],
+    items = data.setdefault("items", [])
+    items[:] = [item for item in items if item.get("signature") != signature]
+    items.append({
+        "at": utc_now(), "category": category, "signature": signature,
+        "failure_code": failure_code, "reason": reason[:500],
         "normalized_excerpt": normalize_failure_text(log_text)[-1800:],
         "status": "needs_code_review",
-    }
-    items[:] = [item for item in items if item.get("signature") != signature]
-    items.append(candidate)
+    })
     del items[:-MAX_CANDIDATES]
-    data["updated_at"] = utc_now()
+    data.update({"schema": 1, "updated_at": utc_now()})
     atomic_json_write(CANDIDATE_PATH, data)
 
 
 def repair_path() -> tuple[bool, str]:
     local_bin = str(Path.home() / ".local" / "bin")
-    parts = os.environ.get("PATH", "").split(os.pathsep)
-    if local_bin not in parts:
+    if local_bin not in os.environ.get("PATH", "").split(os.pathsep):
         os.environ["PATH"] = local_bin + os.pathsep + os.environ.get("PATH", "")
 
     bashrc = Path.home() / ".bashrc"
     marker = "# TCG_GRAPHIFY_PATH"
-    line = 'export PATH="$HOME/.local/bin:$PATH"'
     try:
         existing = bashrc.read_text(encoding="utf-8", errors="replace") if bashrc.exists() else ""
         if marker not in existing:
             with bashrc.open("a", encoding="utf-8") as handle:
-                handle.write(f"\n{marker}\n{line}\n")
+                handle.write('\n# TCG_GRAPHIFY_PATH\nexport PATH="$HOME/.local/bin:$PATH"\n')
     except OSError as exc:
         return False, f"failed to persist PATH: {exc}"
 
-    found = shutil.which("graphify") or (str(Path.home() / ".local" / "bin" / "graphify")
-                                         if (Path.home() / ".local" / "bin" / "graphify").exists() else "")
+    found = shutil.which("graphify")
     return bool(found), f"PATH repaired; graphify={found or 'not installed'}"
 
 
-def ensure_pinned_install() -> tuple[bool, str]:
+def repair_install() -> tuple[bool, str]:
     current = version_text()
     if version_matches(current):
         return True, f"already pinned: {current}"
@@ -421,26 +363,22 @@ def ensure_pinned_install() -> tuple[bool, str]:
     details: list[str] = []
     if shutil.which("uv"):
         proc = safe_run(["uv", "tool", "install", "--force", spec])
-        details.append((proc.stdout or "") + (proc.stderr or ""))
-        if proc.returncode != 0:
-            return False, "\n".join(details)
     else:
         if not shutil.which("pipx"):
-            proc = safe_run([sys.executable, "-m", "pip", "install", "pipx"])
-            details.append((proc.stdout or "") + (proc.stderr or ""))
-            if proc.returncode != 0:
+            proc0 = safe_run([sys.executable, "-m", "pip", "install", "pipx"])
+            details.append((proc0.stdout or "") + (proc0.stderr or ""))
+            if proc0.returncode != 0:
                 return False, "\n".join(details)
         safe_run([sys.executable, "-m", "pipx", "ensurepath"])
         proc = safe_run([sys.executable, "-m", "pipx", "install", "--force", spec])
-        details.append((proc.stdout or "") + (proc.stderr or ""))
-        if proc.returncode != 0:
-            return False, "\n".join(details)
+    details.append((proc.stdout or "") + (proc.stderr or ""))
+    if proc.returncode != 0:
+        return False, "\n".join(details)
 
     repair_path()
     current = version_text()
-    if not version_matches(current):
-        return False, "\n".join(details) + f"\nversion mismatch after repair: {current or 'unavailable'}"
-    return True, "\n".join(details) + f"\ninstalled pinned version: {current}"
+    ok = version_matches(current)
+    return ok, "\n".join(details) + f"\nversion after repair: {current or 'unavailable'}"
 
 
 def prune_recovery_dirs() -> None:
@@ -448,10 +386,10 @@ def prune_recovery_dirs() -> None:
         return
     try:
         dirs = sorted((p for p in RECOVERY_ROOT.iterdir() if p.is_dir()), key=lambda p: p.stat().st_mtime)
+        for old in dirs[:-MAX_RECOVERY_DIRS]:
+            shutil.rmtree(old, ignore_errors=True)
     except OSError:
-        return
-    for old in dirs[:-MAX_RECOVERY_DIRS]:
-        shutil.rmtree(old, ignore_errors=True)
+        pass
 
 
 def quarantine_outputs() -> tuple[bool, Path | None, str]:
@@ -472,8 +410,8 @@ def quarantine_outputs() -> tuple[bool, Path | None, str]:
 def restore_quarantined(target: Path | None) -> str:
     if target is None or not target.exists():
         return "no preserved outputs to restore"
-    out = Path("graphify-out")
     try:
+        out = Path("graphify-out")
         if out.exists():
             shutil.rmtree(out)
         shutil.move(str(target), str(out))
@@ -487,18 +425,18 @@ def materialize_outputs() -> tuple[bool, str]:
     if not graph_json.is_file() or graph_json.stat().st_size <= 0:
         return False, "graph.json missing; materialize cannot run"
     proc = graphify_cmd("cluster-only", ".", "--no-label")
-    detail = (proc.stdout or "") + (proc.stderr or "")
     valid, validation = validate_outputs_detail()
-    return proc.returncode == 0 and valid, (detail or "cluster-only completed") + "\n" + validation
+    detail = (proc.stdout or "") + (proc.stderr or "") + "\n" + validation
+    return proc.returncode == 0 and valid, detail
 
 
 def rebuild_from_scratch() -> tuple[bool, str]:
-    ok, backup, preserved = quarantine_outputs()
+    ok, backup, detail = quarantine_outputs()
     if not ok:
-        return False, preserved
+        return False, detail
 
     proc = graphify_cmd("extract", ".", "--code-only")
-    detail = preserved + "\n" + (proc.stdout or "") + (proc.stderr or "")
+    detail += "\n" + (proc.stdout or "") + (proc.stderr or "")
     if proc.returncode != 0:
         return False, detail + "\n" + restore_quarantined(backup)
 
@@ -516,13 +454,12 @@ def rebuild_from_scratch() -> tuple[bool, str]:
 
 
 def reinstall_hooks() -> tuple[bool, str]:
-    proc = graphify_cmd("hook", "install")
-    detail = (proc.stdout or "") + (proc.stderr or "")
-    if proc.returncode != 0:
-        return False, detail
-    status = graphify_cmd("hook", "status")
-    detail += "\n" + (status.stdout or "") + (status.stderr or "")
-    return status.returncode == 0, detail
+    install = graphify_cmd("hook", "install")
+    status = graphify_cmd("hook", "status") if install.returncode == 0 else None
+    detail = (install.stdout or "") + (install.stderr or "")
+    if status is not None:
+        detail += "\n" + (status.stdout or "") + (status.stderr or "")
+    return bool(status is not None and status.returncode == 0), detail
 
 
 def repair_codex_integration() -> tuple[bool, str]:
@@ -533,7 +470,6 @@ def repair_codex_integration() -> tuple[bool, str]:
         detail += "\n" + (fallback.stdout or "") + (fallback.stderr or "")
         if fallback.returncode != 0:
             return False, detail
-
     agents = graphify_cmd("agents", "install", "--project")
     detail += "\n" + (agents.stdout or "") + (agents.stderr or "")
     return Path("AGENTS.md").is_file(), detail
@@ -545,17 +481,17 @@ def execute_strategy(strategy: str) -> tuple[bool, str]:
     if strategy == "repair_path":
         return repair_path()
     if strategy == "repair_install":
-        return ensure_pinned_install()
+        return repair_install()
     if strategy == "materialize_outputs":
         return materialize_outputs()
     if strategy == "rebuild_from_scratch":
         return rebuild_from_scratch()
     if strategy == "repair_install_and_rebuild":
-        ok, detail = ensure_pinned_install()
+        ok, detail = repair_install()
         if not ok:
             return False, detail
-        rebuilt, rebuild_detail = rebuild_from_scratch()
-        return rebuilt, detail + "\n" + rebuild_detail
+        rebuilt, detail2 = rebuild_from_scratch()
+        return rebuilt, detail + "\n" + detail2
     if strategy == "reinstall_hooks":
         return reinstall_hooks()
     if strategy == "repair_codex_integration":
@@ -565,87 +501,64 @@ def execute_strategy(strategy: str) -> tuple[bool, str]:
 
 def repair(log_path: Path, failure_code: int, reason: str) -> int:
     log_text = tail_text(log_path)
-    category = classify_failure(log_text, failure_code=failure_code, reason=reason)
+    category = classify_failure(log_text, failure_code, reason)
     signature = failure_signature(category, log_text, failure_code, reason)
     memory = load_memory()
     strategies = learned_order(memory, category, signature)
 
     report: dict[str, Any] = {
-        "schema": 2,
-        "started_at": utc_now(),
-        "category": category,
-        "signature": signature,
-        "failure_code": failure_code,
-        "reason": reason,
-        "pinned_version": PINNED_VERSION,
-        "attempts": [],
-        "success": False,
+        "schema": SCHEMA, "started_at": utc_now(), "category": category,
+        "signature": signature, "failure_code": failure_code, "reason": reason,
+        "pinned_version": PINNED_VERSION, "attempts": [], "success": False,
     }
 
     for strategy in strategies:
         success, detail = execute_strategy(strategy)
-        record_result(
-            memory,
-            category=category,
-            signature=signature,
-            strategy=strategy,
-            success=success,
-            failure_code=failure_code,
-            reason=reason,
-            detail=detail,
-        )
+        record_result(memory, category, signature, strategy, success, failure_code, reason, detail)
         atomic_json_write(MEMORY_PATH, memory)
-        report["attempts"].append({
-            "strategy": strategy,
-            "success": success,
-            "detail": detail[-2200:],
-        })
+        report["attempts"].append({"strategy": strategy, "success": success, "detail": detail[-2200:]})
         if success:
-            report["success"] = True
-            report["successful_strategy"] = strategy
-            report["completed_at"] = utc_now()
+            report.update({
+                "success": True, "successful_strategy": strategy,
+                "completed_at": utc_now(),
+            })
             atomic_json_write(REPORT_PATH, report)
             print(f"[Graphify 자가복구] {category}/{signature} → {strategy} 성공")
             return 0
 
-    report["completed_at"] = utc_now()
-    report["needs_code_review"] = True
+    report.update({"completed_at": utc_now(), "needs_code_review": True})
     atomic_json_write(REPORT_PATH, report)
     write_candidate(category, signature, failure_code, reason, log_text)
     print(
         f"[Graphify 자가복구] {category}/{signature} 자동복구 실패 · "
-        f"후보를 {CANDIDATE_PATH}에 기록했습니다.",
+        f"{CANDIDATE_PATH}에 검토 후보를 기록했습니다.",
         file=sys.stderr,
     )
     return 1
 
 
 def self_test() -> int:
+    assert classify_failure("old invalid graph.json", 24, "required missing output") == "missing_outputs"
+    assert classify_failure("old hook error", 21, "update failed") == "update_failed"
     assert classify_failure("graphify: command not found") == "command_missing"
-    assert classify_failure("required missing output GRAPH_REPORT.md") == "missing_outputs"
     assert classify_failure("invalid graph.json: broken") == "invalid_outputs"
-    assert classify_failure("extract error") == "extract_failed"
-    assert classify_failure("hook error") == "hook_failed"
     assert classify_failure("HTTP 429 too many requests") == "rate_limited"
     assert classify_failure("permission denied") == "permission_denied"
-    assert classify_failure("", failure_code=40, reason="codex setup failed") == "codex_install_failed"
+    assert classify_failure("", 40, "codex setup failed") == "codex_install_failed"
 
-    sig1 = failure_signature("update_failed", "error at /tmp/a.py line 123", 21, "update failed")
-    sig2 = failure_signature("update_failed", "error at /tmp/b.py line 999", 21, "update failed")
-    assert sig1 == sig2
+    s1 = failure_signature("update_failed", "error /tmp/a.py line 123", 21, "update failed")
+    s2 = failure_signature("update_failed", "error /tmp/b.py line 999", 21, "update failed")
+    assert s1 == s2
 
     memory = default_memory()
     memory["categories"]["update_failed"] = {
-        "preferred_strategy": "repair_install_and_rebuild",
-        "strategies": {},
+        "preferred_strategy": "repair_install_and_rebuild", "strategies": {}
     }
-    order = learned_order(memory, "update_failed")
-    assert order[0] == "repair_install_and_rebuild"
-
+    assert learned_order(memory, "update_failed", "none")[0] == "repair_install_and_rebuild"
     memory["categories"]["update_failed"]["preferred_strategy"] = "rm_everything"
-    assert learned_order(memory, "update_failed")[0] != "rm_everything"
-
+    assert learned_order(memory, "update_failed", "none")[0] != "rm_everything"
     assert execute_strategy("rm_everything")[0] is False
+
     print("Graphify self-heal bounded-learning self-test: OK")
     return 0
 
@@ -668,7 +581,6 @@ def main() -> int:
         return 0 if valid else 1
     if args.repair:
         return repair(Path(args.log), args.failure_code, args.reason)
-
     parser.error("use --repair, --validate-only, or --self-test")
     return 2
 
