@@ -111,12 +111,16 @@ class CollectorSecurityTests(unittest.TestCase):
 
     def test_all_external_actions_are_pinned_to_full_sha(self):
         workflows=Path(__file__).resolve().parent/".github"/"workflows"
-        for path in workflows.glob("*.y*ml"):
-            for line in path.read_text(encoding="utf-8").splitlines():
+        mutable=[]
+        for path in sorted(workflows.glob("*.y*ml")):
+            for lineno,line in enumerate(path.read_text(encoding="utf-8").splitlines(),1):
                 if "uses:" not in line or "uses: ./" in line:
                     continue
-                ref=line.split("uses:",1)[1].split("#",1)[0].strip().rsplit("@",1)[-1]
-                self.assertRegex(ref,r"^[0-9a-fA-F]{40}$",f"mutable action ref: {path.name}: {line.strip()}")
+                value=line.split("uses:",1)[1].split("#",1)[0].strip()
+                ref=value.rsplit("@",1)[-1] if "@" in value else ""
+                if not __import__("re").fullmatch(r"[0-9a-fA-F]{40}",ref):
+                    mutable.append(f"{path.name}:{lineno}: {value}")
+        self.assertFalse(mutable,"mutable action refs:\n"+"\n".join(mutable))
 
 
 if __name__ == "__main__":
