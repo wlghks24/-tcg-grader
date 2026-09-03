@@ -51,9 +51,9 @@ class MultiChannelCollector:
         "나루토": {"KR": "나루토 카드게임", "JP": "NARUTO カードゲーム", "US": "NARUTO CARD GAME"},
     }
     EVENT_OR = {
-        "KR": ("행사", "이벤트", "챌린지", "도전", "개최", "콜라보", "프로모", "프로모카드", "출시", "발매", "재발매", "한정", "증정", "배포", "특전", "대회", "영화"),
-        "JP": ("イベント", "チャレンジ", "開催", "コラボ", "プロモ", "プロモカード", "発売", "再販", "限定", "配布", "特典", "大会", "映画"),
-        "US": ("event", "challenge", "special mission", "distribution", "collab", "collaboration", "promo", "promo card", "release", "restock", "exclusive", "giveaway", "tournament", "movie"),
+        "KR": ("행사", "이벤트", "챌린지", "도전", "개최", "콜라보", "프로모", "프로모카드", "출시", "발매", "재발매", "재입고", "재고", "품절", "한정", "증정", "배포", "특전", "응모", "신청", "등록", "추첨", "당첨", "라이브", "생방송", "스트리밍", "시청", "코드", "대회", "영화"),
+        "JP": ("イベント", "チャレンジ", "開催", "コラボ", "プロモ", "プロモカード", "発売", "再販", "再入荷", "在庫", "売り切れ", "限定", "配布", "特典", "応募", "申込", "登録", "抽選", "当選", "ライブ配信", "生配信", "視聴", "コード", "大会", "映画"),
+        "US": ("event", "challenge", "special mission", "distribution", "collab", "collaboration", "promo", "promo card", "release", "reprint", "restock", "in stock", "sold out", "exclusive", "giveaway", "entry", "application", "registration", "lottery", "livestream", "broadcast", "streaming", "twitch drops", "redeem", "code", "tournament", "movie"),
     }
     GOOGLE_LOCALE = {
         "KR": {"hl": "ko", "gl": "KR", "ceid": "KR:ko"},

@@ -34,17 +34,20 @@ MAX_SOURCE_KINDS = 80
 MAX_SOURCE_KINDS_PER_CELL = 12
 GAMES = ("포켓몬 카드", "원피스 카드", "나루토 카드")
 REGIONS = ("KR", "JP", "US")
-TOPICS = ("event", "tournament", "popup", "promo", "collab", "movie", "release", "reprint", "merch", "anniversary")
+TOPICS = ("event", "tournament", "popup", "promo", "collab", "movie", "release", "reprint", "merch", "anniversary", "stock", "entry", "broadcast")
 
 _TOPIC_RULES = (
     ("movie", re.compile(r"영화|극장판|개봉|movie|film|cinema|映画|劇場版|上映", re.I)),
+    ("broadcast", re.compile(r"라이브|생방송|방송|스트리밍|시청|twitch\s*drops?|live[ -]?stream|broadcast|streaming|watch\s+live|redeem|redemption|ライブ配信|生配信|配信|視聴|Twitch|ドロップ|コード|シリアルコード", re.I)),
     ("anniversary", re.compile(r"기념|주년|anniversary|周年|記念", re.I)),
     ("merch", re.compile(r"굿즈|점프샵|JUMP SHOP|official shop|merch|グッズ|ショップ", re.I)),
     ("popup", re.compile(r"팝업|pop[- ]?up|ポップアップ", re.I)),
+    ("entry", re.compile(r"응모|신청|접수|등록|추첨|당첨|엔트리|사전신청|entry|application|apply|registration|register|lottery|drawing|sign[- ]?up|応募|申込|申し込み|受付|登録|抽選|当選|エントリー|事前応募", re.I)),
     ("tournament", re.compile(r"대회|리그|championship|tournament|大会|リーグ|battle|배틀", re.I)),
-    ("reprint", re.compile(r"재발매|재판|재출시|추가생산|재입고|reprint|re-release|restock|再販|再版|再入荷", re.I)),
+    ("stock", re.compile(r"재입고|입고|재고|품절|구매처|restock|in stock|sold out|availability|retailer|再入荷|入荷|在庫|売り切れ|販売店舗", re.I)),
+    ("reprint", re.compile(r"재발매|재판|재출시|추가생산|복각|reprint|re-release|additional print|rerun|再販|再版|復刻|追加生産", re.I)),
     ("release", re.compile(r"신제품|신탄|부스터|스타터|출시|발매|release|new set|booster|starter|発売|新商品|新弾", re.I)),
-    ("promo", re.compile(r"프로모|증정|배포|특전|응모|promo|giveaway|distribution|キャンペーン|配布|特典", re.I)),
+    ("promo", re.compile(r"프로모|증정|배포|특전|캠페인|promo|giveaway|distribution|campaign|キャンペーン|配布|特典|プレゼント", re.I)),
     ("collab", re.compile(r"콜라보|협업|collab|collaboration|partnership|コラボ|タイアップ", re.I)),
 )
 
@@ -55,7 +58,7 @@ def _now() -> str:
 
 def _fresh() -> dict:
     return {
-        "version": 2,
+        "version": 3,
         "providers": {},
         "coverage_cells": {},
         "source_kinds": {},
@@ -415,11 +418,14 @@ def _coverage_report(data: dict) -> dict:
         miss_streak = _num(stat.get("miss_streak"))
         verification_gap_streak = _num(stat.get("verification_gap_streak"))
         discovery_gap_streak = _num(stat.get("discovery_gap_streak"))
+        topic = key.rsplit("/", 1)[-1]
+        urgency = {"entry": 3.0, "broadcast": 3.0, "stock": 2.0}.get(topic, 0.0)
         priority = round(
             miss_streak * 4.0
             + verification_gap_streak * 2.0
             + discovery_gap_streak
-            + min(3.0, _num(stat.get("misses")) * 0.08),
+            + min(3.0, _num(stat.get("misses")) * 0.08)
+            + urgency,
             3,
         )
         rows.append({
@@ -545,7 +551,7 @@ def report(data: dict | None = None) -> dict:
     rows.sort(key=lambda x: (x["score"], x["selected"], x["results"]), reverse=True)
     coverage = _coverage_report(data)
     return {
-        "version": 2,
+        "version": 3,
         "runs": _num(data.get("runs")),
         "updated_at": data.get("updated_at"),
         "providers": rows,

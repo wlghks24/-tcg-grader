@@ -72,9 +72,9 @@ REGION_LANG = {
     "US": {"lang": "en", "hl": "en-US", "gl": "US", "ceid": "US:en"},
 }
 EVENT_TERMS = {
-    "ko": "행사 이벤트 챌린지 도전 개최 특전 배포 콜라보 프로모 팝업 팝업스토어 점프샵 JUMP SHOP 슈에이샤 신세계 영화 극장판 개봉 예약 발매 출시 대회 야구 KBO 굿즈 포토카드 브랜드데이 PLAYGO 재배포 재지급 수령 프로모션팩 신사황",
-    "ja": "イベント チャレンジ 開催 特典 配布 コラボ キャンペーン プロモ ポップアップ 映画 劇場版 発売 大会 グッズ カード",
-    "en": "event challenge special mission collaboration collab promo distribution giveaway pop-up movie film release tournament preorder merchandise card streaming twitch tiktok",
+    "ko": "행사 이벤트 챌린지 도전 개최 특전 배포 콜라보 프로모 팝업 팝업스토어 점프샵 JUMP SHOP 슈에이샤 신세계 영화 극장판 개봉 예약 발매 출시 재발매 재입고 재고 품절 대회 응모 신청 등록 추첨 당첨 라이브 생방송 스트리밍 시청 트위치 드롭 코드 리딤 야구 KBO 굿즈 포토카드 브랜드데이 PLAYGO 재배포 재지급 수령 프로모션팩 신사황",
+    "ja": "イベント チャレンジ 開催 特典 配布 コラボ キャンペーン プロモ ポップアップ 映画 劇場版 発売 再販 再入荷 在庫 売り切れ 大会 応募 申込 登録 抽選 当選 ライブ配信 生配信 視聴 Twitch ドロップ コード グッズ カード",
+    "en": "event challenge special mission collaboration collab promo distribution giveaway pop-up movie film release reprint restock in-stock sold-out tournament preorder entry application registration lottery livestream broadcast streaming twitch drops redeem code merchandise card tiktok facebook",
 }
 FAN_TERMS = {
     "ko": "팬 컬렉터 수집 개봉 언박싱 덱 덱리스트 카드샵 매장 재고 입고 품절 시세 후기 대회 프로모 행사 이벤트 신제품 신탄 박스",
@@ -82,9 +82,9 @@ FAN_TERMS = {
     "en": "fan collector collection opening unboxing deck decklist card shop store stock restock sold out price review tournament promo event new set box",
 }
 CATEGORY_PATTERNS = (
-    ("movie", re.compile(r"영화|극장판|개봉|movie|film|cinema|劇場版|映画|上映|netflix|streaming", re.I)),
+    ("movie", re.compile(r"영화|극장판|개봉|movie|film|cinema|劇場版|映画|上映|netflix", re.I)),
     ("collaboration", re.compile(r"콜라보|협업|브랜드데이|야구|kbo|wiz|giants|collab|collaboration|コラボ|タイアップ|popup|pop-up|ポップアップ", re.I)),
-    ("promo", re.compile(r"프로모|증정|이벤트|행사|대회|배틀|예약|발매|출시|포토카드|promo|event|campaign|tournament|battle|release|preorder|キャンペーン|イベント|大会|発売|予約", re.I)),
+    ("promo", re.compile(r"프로모|증정|이벤트|행사|대회|배틀|예약|발매|출시|재입고|재고|품절|응모|신청|등록|추첨|당첨|라이브|생방송|스트리밍|시청|코드|포토카드|promo|event|campaign|tournament|battle|release|preorder|restock|sold out|entry|application|registration|lottery|livestream|broadcast|streaming|twitch drops|redeem|code|キャンペーン|イベント|大会|発売|予約|再入荷|在庫|売り切れ|応募|申込|登録|抽選|当選|ライブ配信|生配信|配信|視聴|ドロップ|コード|プレゼント", re.I)),
 )
 DATE_RE = re.compile(
     r"(?<!\d)(20\d{2})\s*(?:[년./-]|年)\s*(\d{1,2})\s*(?:[월./-]|月)\s*(\d{1,2})\s*(?:일|日)?",
@@ -118,6 +118,7 @@ SOCIAL_HOSTS = {
     "youtube.com", "www.youtube.com", "youtu.be",
     "tiktok.com", "www.tiktok.com",
     "twitch.tv", "www.twitch.tv",
+    "facebook.com", "www.facebook.com", "m.facebook.com",
 }
 GOOGLE_NEWS_HOSTS = {"news.google.com"}
 GOOGLE_API_HOSTS = {"www.googleapis.com"}
@@ -253,25 +254,22 @@ def _parse_social_link(link: str) -> tuple[str, str] | None:
     host = (parsed.hostname or "").lower(); path = parsed.path.strip("/")
     if host in {"x.com", "www.x.com", "twitter.com", "www.twitter.com"}:
         user = path.split("/", 1)[0]
-        if user and user.lower() not in {"home", "search", "share", "intent", "i"} and re.fullmatch(r"[A-Za-z0-9_]{1,15}", user):
-            return "x", user
+        if user and user.lower() not in {"home", "search", "share", "intent", "i"} and re.fullmatch(r"[A-Za-z0-9_]{1,15}", user): return "x", user
     if host in {"instagram.com", "www.instagram.com"}:
         user = path.split("/", 1)[0]
-        if user and user.lower() not in {"p", "reel", "explore", "stories"} and re.fullmatch(r"[A-Za-z0-9_.]{1,30}", user):
-            return "instagram", user
+        if user and user.lower() not in {"p", "reel", "explore", "stories"} and re.fullmatch(r"[A-Za-z0-9_.]{1,30}", user): return "instagram", user
+    if host in {"facebook.com", "www.facebook.com", "m.facebook.com"}:
+        user = path.split("/", 1)[0]
+        if user and user.lower() not in {"share", "sharer", "plugins", "watch", "reel", "groups", "events", "login"} and re.fullmatch(r"[A-Za-z0-9_.-]{2,80}", user): return "facebook", user
     if host in {"youtube.com", "www.youtube.com"}:
-        if path.startswith("channel/UC"):
-            return "youtube_channel", path.split("/", 1)[1]
-        if path.startswith("@"):
-            return "youtube_handle", path.split("/", 1)[0]
+        if path.startswith("channel/UC"): return "youtube_channel", path.split("/", 1)[1]
+        if path.startswith("@"): return "youtube_handle", path.split("/", 1)[0]
     if host in {"tiktok.com", "www.tiktok.com"}:
         user = path.split("/", 1)[0].lstrip("@")
-        if user and re.fullmatch(r"[A-Za-z0-9_.]{2,30}", user):
-            return "tiktok", user
+        if user and re.fullmatch(r"[A-Za-z0-9_.]{2,30}", user): return "tiktok", user
     if host in {"twitch.tv", "www.twitch.tv"}:
         user = path.split("/", 1)[0]
-        if user and user.lower() not in {"directory", "downloads", "jobs", "p", "videos"} and re.fullmatch(r"[A-Za-z0-9_]{2,30}", user):
-            return "twitch", user
+        if user and user.lower() not in {"directory", "downloads", "jobs", "p", "videos"} and re.fullmatch(r"[A-Za-z0-9_]{2,30}", user): return "twitch", user
     return None
 
 
@@ -316,7 +314,7 @@ def refresh_registry(force: bool = False) -> tuple[dict, list[str]]:
                "watch_accounts": [x for x in current.get("watch_accounts", []) if isinstance(x, dict)],
                "fan_discovery": current.get("fan_discovery") or {
                    "enabled": True,
-                   "platforms": ["x", "instagram", "youtube", "tiktok", "twitch"],
+                   "platforms": ["x", "instagram", "youtube", "tiktok", "twitch", "facebook"],
                    "roles": ["fan", "collector", "community", "deck", "opening", "event", "stock", "market"],
                    "trust_policy": "팬 SNS는 발견용 후보이며 공식 웹/SNS/판매처 교차확인 전 verified/trusted 승격 금지",
                },
@@ -341,9 +339,9 @@ def _game_query_terms(game: str, region: str) -> str:
     lang = REGION_LANG[region]["lang"]; names = GAMES[game][lang]
     name_expr = " OR ".join(f'"{name}"' if " " in name else name for name in names[:3])
     event_words = {
-        "ko": "(행사 OR 이벤트 OR 콜라보 OR 프로모 OR 영화 OR 극장판 OR 발매 OR 출시 OR 대회 OR 야구 OR 굿즈 OR 포토카드 OR PLAYGO OR 재배포 OR 재지급 OR 수령 OR 프로모션팩 OR 신사황)",
-        "ja": "(イベント OR コラボ OR キャンペーン OR プロモ OR 映画 OR 劇場版 OR 発売 OR 大会 OR グッズ)",
-        "en": "(event OR collab OR collaboration OR promo OR movie OR film OR release OR tournament OR merchandise)",
+        "ko": "(행사 OR 이벤트 OR 챌린지 OR 콜라보 OR 프로모 OR 영화 OR 극장판 OR 발매 OR 출시 OR 재발매 OR 재입고 OR 재고 OR 품절 OR 응모 OR 신청 OR 등록 OR 추첨 OR 당첨 OR 라이브 OR 생방송 OR 스트리밍 OR 시청 OR 코드 OR 대회 OR 야구 OR 굿즈 OR 포토카드 OR PLAYGO OR 재배포 OR 재지급 OR 수령 OR 프로모션팩 OR 신사황)",
+        "ja": "(イベント OR チャレンジ OR コラボ OR キャンペーン OR プロモ OR 映画 OR 劇場版 OR 発売 OR 再販 OR 再入荷 OR 在庫 OR 売り切れ OR 応募 OR 申込 OR 登録 OR 抽選 OR 当選 OR ライブ配信 OR 生配信 OR 配信 OR 視聴 OR コード OR 大会 OR グッズ)",
+        "en": "(event OR challenge OR collab OR collaboration OR promo OR movie OR film OR release OR reprint OR restock OR in-stock OR sold-out OR entry OR application OR registration OR lottery OR livestream OR broadcast OR streaming OR twitch OR drops OR redeem OR code OR tournament OR merchandise)",
     }[lang]
     return f"({name_expr}) {event_words} lang:{lang} -is:retweet"
 
@@ -618,7 +616,7 @@ def _ddg_social_one(game: str, region: str, registry: dict, fan_learner=None) ->
     base_expr = f"({name_expr}) (({event_expr}) OR ({fan_expr}))"
     if account_expr:
         base_expr = f"({base_expr}) OR (({account_expr}) (({event_expr}) OR ({fan_expr})))"
-    query = f"({base_expr}) (site:x.com OR site:instagram.com OR site:youtube.com OR site:tiktok.com OR site:twitch.tv)"
+    query = f"({base_expr}) (site:x.com OR site:instagram.com OR site:youtube.com OR site:tiktok.com OR site:twitch.tv OR site:facebook.com)"
     url = "https://html.duckduckgo.com/html/?" + urllib.parse.urlencode({"q": query})
     req = urllib.request.Request(url, headers={"User-Agent": "Mozilla/5.0 TCG-Grader-SocialFallback/2.0"})
     try:
@@ -640,6 +638,8 @@ def _ddg_social_one(game: str, region: str, registry: dict, fan_learner=None) ->
                 kind = "tiktok"
             elif "twitch.tv" in host:
                 kind = "twitch"
+            elif "facebook.com" in host:
+                kind = "facebook"
             else:
                 kind = "youtube"
             rows.append({"game": game, "region": region, "category": _category(title), "title": title, "source": source,
@@ -664,7 +664,7 @@ def collect_public_social_search(registry: dict, fan_learner=None) -> tuple[list
             if error: errors.append(error)
     return rows, errors, {"configured": True, "query_count": len(jobs), "error_count": len(errors), "result_count": len(rows),
                           "success_query_count": max(0, len(jobs)-len(errors)),
-                          "status": "무키 공개검색 · 공식 SNS + 팬/컬렉터/크리에이터 X/Instagram/YouTube/TikTok/Twitch 후보"}
+                          "status": "무키 공개검색 · 공식 SNS + 팬/컬렉터/크리에이터 X/Instagram/YouTube/TikTok/Twitch/Facebook 후보"}
 
 
 def _google_cse_one(game: str, region: str, key: str, cx: str) -> tuple[list[dict], str | None]:
