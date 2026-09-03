@@ -1,6 +1,7 @@
 name: Apply UI tablet refine v122
 on:
   push:
+    branches: [main]
     paths:
       - 'ui_tablet_refine_v122.css'
       - 'apply_ui_tablet_refine_v122.py'
