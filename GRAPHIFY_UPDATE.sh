@@ -6,6 +6,7 @@ SCRIPT_DIR="$(CDPATH= cd -- "$(dirname -- "$0")" 2>/dev/null && pwd)"
 
 LOG_FILE="${GRAPHIFY_LOG_FILE:-GRAPHIFY_UPDATE.log}"
 SELF_HEAL="GRAPHIFY_SELF_HEAL.py"
+AUDIT_SCRIPT="GRAPHIFY_AUDIT.py"
 GRAPHIFY_BIN="${GRAPHIFY_BIN:-graphify}"
 QUIET=0
 [ "${1:-}" = "--quiet" ] && QUIET=1
@@ -40,6 +41,14 @@ validate_outputs() {
   return 0
 }
 
+run_map_audit() {
+  [ -f "$AUDIT_SCRIPT" ] || return 0
+  command -v python >/dev/null 2>&1 || return 0
+  echo "[Graphify] 코드 지도 구조/범위 최적화 검사"
+  python "$AUDIT_SCRIPT" --strict || return 25
+  return 0
+}
+
 resolve_graphify() {
   if command -v "$GRAPHIFY_BIN" >/dev/null 2>&1; then
     return 0
@@ -58,19 +67,27 @@ perform_update() {
   mkdir -p graphify-out || return 20
 
   if [ -s "graphify-out/graph.json" ]; then
-    echo "[Graphify] 변경분 지도 갱신: update --force"
-    run_graphify update . --force || return 21
+    # Normal update is Graphify's fast incremental path.  Do not disable its
+    # shrink-safety guard pre-emptively on every tablet refresh.  --force is a
+    # bounded fallback for legitimate refactors/deletions that make the graph
+    # smaller.
+    echo "[Graphify] 변경분 지도 갱신: incremental update"
+    if ! run_graphify update .; then
+      echo "[Graphify] 일반 증분갱신 실패 → 삭제/축소 리팩터링용 --force 1회 재시도"
+      run_graphify update . --force || return 21
+    fi
   else
     echo "[Graphify] 최초 코드 지도 생성: extract --code-only"
     run_graphify extract . --code-only || return 22
   fi
 
   if [ -s "graphify-out/graph.json" ] && { [ ! -s "graphify-out/GRAPH_REPORT.md" ] || [ ! -s "graphify-out/graph.html" ]; }; then
-    echo "[Graphify] 보고서/HTML 보완 생성: cluster-only --no-label"
-    run_graphify cluster-only . --no-label || return 23
+    echo "[Graphify] 보고서/HTML 보완 생성: cluster-only --no-label --exclude-hubs 99"
+    run_graphify cluster-only . --no-label --exclude-hubs 99 || return 23
   fi
 
   validate_outputs || return $?
+  run_map_audit || return $?
   return 0
 }
 
@@ -116,8 +133,8 @@ say "[Graphify] 코드 지도 갱신을 시작합니다..."
         status=$?
       fi
       if [ "$status" -eq 0 ]; then
-        if validate_outputs; then
-          echo "[Graphify] 자가복구 후 실제 갱신 + 산출물 무결성 검증 성공"
+        if validate_outputs && run_map_audit; then
+          echo "[Graphify] 자가복구 후 실제 갱신 + 산출물/지도범위 무결성 검증 성공"
         else
           status=34
         fi
@@ -137,11 +154,13 @@ if [ "$status" -eq 0 ]; then
   say "     보고서: graphify-out/GRAPH_REPORT.md"
   say "     지도:   graphify-out/graph.html"
   say "     데이터: graphify-out/graph.json"
+  [ -s graphify-out/graph_audit.json ] && say "     최적화검사: graphify-out/graph_audit.json"
   if [ -s graphify_self_heal_report.json ]; then
     say "     자가복구 리포트: graphify_self_heal_report.json"
   fi
 else
   say "[오류] Graphify 지도 갱신 실패(status=$status) · $LOG_FILE 마지막 내용을 확인하세요."
+  [ -s graphify-out/graph_audit.json ] && say "       지도검사: graphify-out/graph_audit.json"
   [ -s graphify_self_heal_report.json ] && say "       자가복구 리포트: graphify_self_heal_report.json"
   [ -s graphify_self_heal_candidates.json ] && say "       미해결 오류후보: graphify_self_heal_candidates.json"
 fi
