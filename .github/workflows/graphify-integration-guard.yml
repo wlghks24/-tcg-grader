@@ -29,6 +29,8 @@ jobs:
           grep -Fq 'graphify --version' SETUP_GRAPHIFY_TERMUX.sh
           grep -Fq 'graphify codex install --project' SETUP_GRAPHIFY_TERMUX.sh
           grep -Fq 'graphify hook install' SETUP_GRAPHIFY_TERMUX.sh
+          grep -Fq 'TCG_GRAPHIFY_POST_MERGE' SETUP_GRAPHIFY_TERMUX.sh
+          grep -Fq 'GRAPHIFY_UPDATE.sh --quiet' SETUP_GRAPHIFY_TERMUX.sh
           grep -Fq 'graphify update . --force' GRAPHIFY_UPDATE.sh
           grep -Fq 'graphify extract . --code-only' GRAPHIFY_UPDATE.sh
           grep -Fq 'graphify-out/' .graphifyignore
