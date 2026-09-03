@@ -8,6 +8,7 @@ on:
       - 'ANDROID_UPDATE_AND_START.sh'
       - 'START_TCG_UPDATER_ANDROID.sh'
       - 'runtime_bundle_guard_v143.py'
+      - 'runtime_optimization_hardening.py'
       - 'safe_runtime.py'
       - 'auto_repair_engine.py'
       - 'auto_update_all.py'
