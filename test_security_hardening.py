@@ -123,6 +123,25 @@ class WorkflowHardenerTests(unittest.TestCase):
         patched=hardening.patch_write_workflow_push_scope(text,label='synthetic')
         self.assertIn("  push:\n    branches: [main]\n    paths:",patched)
 
+    def test_quoted_write_permission_is_scoped(self):
+        text=self._workflow("  push:\n    paths:\n      - app.py\n").replace("contents: write", "contents: 'write'")
+        patched=hardening.patch_write_workflow_push_scope(text,label='synthetic')
+        self.assertIn("  push:\n    branches: [main]\n    paths:",patched)
+
+    def test_inline_write_permission_is_scoped(self):
+        text=(
+            "name: synthetic\n"
+            "on:\n"
+            "  push:\n"
+            "    paths: [app.py]\n"
+            "permissions: {contents: write}\n"
+            "jobs:\n"
+            "  test:\n"
+            "    runs-on: ubuntu-latest\n"
+        )
+        patched=hardening.patch_write_workflow_push_scope(text,label='synthetic')
+        self.assertIn("  push:\n    branches: [main]\n    paths:",patched)
+
     def test_wildcard_branch_is_rejected(self):
         text=self._workflow("  push:\n    branches: ['*']\n")
         with self.assertRaises(RuntimeError):
@@ -256,6 +275,31 @@ jobs:
         security_self_audit.scan_workflow(workflow, findings, ".github/workflows/synthetic.yml")
         self.assertTrue(any(item.get("rule") == "GHA_CONTENTS_WRITE" for item in findings), findings)
 
+    def test_security_audit_detects_quoted_and_inline_contents_write(self):
+        cases=(
+            "permissions:\n  contents: 'write'\n",
+            "permissions: {contents: write}\n",
+            "jobs:\n  patch:\n    permissions: {contents: 'write'}\n",
+        )
+        for permission in cases:
+            with self.subTest(permission=permission):
+                workflow="name: synthetic\non:\n  push:\n    branches: [main]\n"+permission
+                findings=[]
+                security_self_audit.scan_workflow(workflow,findings,'.github/workflows/synthetic.yml')
+                self.assertTrue(any(item.get('rule')=='GHA_CONTENTS_WRITE' for item in findings),findings)
+
+    def test_security_audit_detects_aliased_shell_execution(self):
+        samples=(
+            "import subprocess as sp\nsp.run(['echo','x'], shell=True)\n",
+            "from subprocess import Popen as launch\nlaunch(['echo','x'], shell=True)\n",
+            "from os import system as run_system\nrun_system('echo x')\n",
+        )
+        for source in samples:
+            with self.subTest(source=source):
+                findings=[]
+                security_self_audit.scan_python(Path('synthetic.py'),source,findings,'synthetic.py')
+                self.assertTrue(any(item.get('rule') in {'PY_SHELL_TRUE','PY_DANGEROUS_EXEC'} for item in findings),findings)
+
     def test_cost_collectors_use_shared_https_guard(self):
         cases=(
             (grading_costs_live,next(iter(grading_costs_live.COMPANIES.values()))["source"]),
@@ -288,7 +332,7 @@ jobs:
         mismatched=[]
         for path in sorted(workflows.glob("*.y*ml")):
             text=path.read_text(encoding="utf-8")
-            if not re.search(r"(?m)^\s*contents\s*:\s*write\s*$",text):
+            if not hardening._workflow_has_contents_write(text):
                 continue
             if not _write_push_scope_is_explicit(text):
                 unsafe.append(path.name)

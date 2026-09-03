@@ -223,7 +223,20 @@ security_audit_report.json
 
 
 def _workflow_has_contents_write(text: str) -> bool:
-    return bool(re.search(r"(?m)^\s*contents\s*:\s*write\s*$", text))
+    """Detect block or inline GitHub Actions contents:write permissions.
+
+    YAML quotes and flow mappings are semantically equivalent to the common
+    block form and must not bypass write-workflow branch hardening.
+    """
+    block = re.search(
+        r"(?m)^\s*['\"]?contents['\"]?\s*:\s*['\"]?write['\"]?\s*(?:#.*)?$",
+        text,
+    )
+    inline = re.search(
+        r"(?m)^\s*permissions\s*:\s*\{[^}\n]*['\"]?contents['\"]?\s*:\s*['\"]?write['\"]?(?:\s*,|\s*\})",
+        text,
+    )
+    return bool(block or inline)
 
 
 def _push_block_bounds(lines: list[str]) -> tuple[int, int] | None:

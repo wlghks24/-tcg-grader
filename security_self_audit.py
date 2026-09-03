@@ -91,20 +91,57 @@ def scan_python(path: Path, text: str, findings: list[dict[str, Any]], rel: str)
         return
     if not any(token in text for token in ("eval", "exec", "system", "subprocess")):
         return
+
+    subprocess_modules = {"subprocess"}
+    os_modules = {"os"}
+    subprocess_functions: set[str] = set()
+    os_system_functions: set[str] = set()
+    builtin_exec_functions = {"eval", "exec"}
+    subprocess_calls = {"run", "Popen", "call", "check_output"}
+
+    # Resolve ordinary import aliases before evaluating call sites. Without this,
+    # `import subprocess as sp` or `from os import system as s` silently bypasses
+    # the shell-execution audit even though the behavior is identical.
     for node in ast.walk(tree):
-        if isinstance(node, ast.Call):
-            name = ""
-            if isinstance(node.func, ast.Name):
-                name = node.func.id
-            elif isinstance(node.func, ast.Attribute):
-                owner = node.func.value.id if isinstance(node.func.value, ast.Name) else ""
-                name = f"{owner}.{node.func.attr}" if owner else node.func.attr
-            if name in {"eval", "exec", "os.system"}:
-                add(findings, "PY_DANGEROUS_EXEC", "critical", rel, getattr(node, "lineno", 1), "Dynamic code/shell execution requires manual review.", name)
-            if name in {"subprocess.run", "subprocess.Popen", "subprocess.call", "subprocess.check_output"}:
-                for keyword in node.keywords:
-                    if keyword.arg == "shell" and isinstance(keyword.value, ast.Constant) and keyword.value.value is True:
-                        add(findings, "PY_SHELL_TRUE", "critical", rel, getattr(node, "lineno", 1), "subprocess shell=True can enable command injection.", name)
+        if isinstance(node, ast.Import):
+            for alias in node.names:
+                if alias.name == "subprocess":
+                    subprocess_modules.add(alias.asname or alias.name)
+                elif alias.name == "os":
+                    os_modules.add(alias.asname or alias.name)
+        elif isinstance(node, ast.ImportFrom):
+            module = node.module or ""
+            for alias in node.names:
+                local = alias.asname or alias.name
+                if module == "subprocess" and alias.name in subprocess_calls:
+                    subprocess_functions.add(local)
+                elif module == "os" and alias.name == "system":
+                    os_system_functions.add(local)
+                elif module == "builtins" and alias.name in {"eval", "exec"}:
+                    builtin_exec_functions.add(local)
+
+    for node in ast.walk(tree):
+        if not isinstance(node, ast.Call):
+            continue
+        display = ""
+        dangerous_exec = False
+        subprocess_call = False
+        if isinstance(node.func, ast.Name):
+            display = node.func.id
+            dangerous_exec = display in builtin_exec_functions or display in os_system_functions
+            subprocess_call = display in subprocess_functions
+        elif isinstance(node.func, ast.Attribute) and isinstance(node.func.value, ast.Name):
+            owner = node.func.value.id
+            attr = node.func.attr
+            display = f"{owner}.{attr}"
+            dangerous_exec = owner in os_modules and attr == "system"
+            subprocess_call = owner in subprocess_modules and attr in subprocess_calls
+        if dangerous_exec:
+            add(findings, "PY_DANGEROUS_EXEC", "critical", rel, getattr(node, "lineno", 1), "Dynamic code/shell execution requires manual review.", display)
+        if subprocess_call:
+            for keyword in node.keywords:
+                if keyword.arg == "shell" and isinstance(keyword.value, ast.Constant) and keyword.value.value is True:
+                    add(findings, "PY_SHELL_TRUE", "critical", rel, getattr(node, "lineno", 1), "subprocess shell=True can enable command injection.", display)
 
 
 def scan_workflow(text: str, findings: list[dict[str, Any]], rel: str) -> None:
@@ -114,7 +151,8 @@ def scan_workflow(text: str, findings: list[dict[str, Any]], rel: str) -> None:
         add(findings, "GHA_WRITE_ALL", "high", rel, 1, "GitHub Actions write-all permission is broader than necessary.", "permissions: write-all")
     write_lines = [
         lineno for lineno, line in enumerate(text.splitlines(), 1)
-        if re.match(r"^\s*contents\s*:\s*write\s*(?:#.*)?$", line)
+        if re.match(r"^\s*['\"]?contents['\"]?\s*:\s*['\"]?write['\"]?\s*(?:#.*)?$", line)
+        or re.match(r"^\s*permissions\s*:\s*\{[^}]*['\"]?contents['\"]?\s*:\s*['\"]?write['\"]?(?:\s*,|\s*\})", line)
     ]
     if write_lines:
         # permissions may be declared at workflow scope or under an individual job.
