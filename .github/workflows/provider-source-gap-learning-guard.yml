@@ -18,6 +18,7 @@ on:
       - 'test_source_gap_taxonomy_v6.py'
       - 'test_source_gap_taxonomy_v7.py'
       - 'test_source_gap_taxonomy_v8.py'
+      - 'test_source_gap_taxonomy_v9.py'
       - '.github/workflows/provider-source-gap-learning-guard.yml'
   push:
     branches: [main]
@@ -37,6 +38,7 @@ on:
       - 'test_source_gap_taxonomy_v6.py'
       - 'test_source_gap_taxonomy_v7.py'
       - 'test_source_gap_taxonomy_v8.py'
+      - 'test_source_gap_taxonomy_v9.py'
       - '.github/workflows/provider-source-gap-learning-guard.yml'
   workflow_dispatch:
 
@@ -68,7 +70,8 @@ jobs:
             test_extended_discovery_channels_v5.py \
             test_source_gap_taxonomy_v6.py \
             test_source_gap_taxonomy_v7.py \
-            test_source_gap_taxonomy_v8.py
+            test_source_gap_taxonomy_v8.py \
+            test_source_gap_taxonomy_v9.py
       - name: Verify candidate and official coverage stay separated
         run: python -m unittest -v test_provider_source_gap_learning_v5.py
       - name: Verify challenge-style official event headlines remain discoverable
@@ -81,3 +84,5 @@ jobs:
         run: python -m unittest -v test_source_gap_taxonomy_v7.py
       - name: Verify rules access registration services and community taxonomy
         run: python -m unittest -v test_source_gap_taxonomy_v8.py
+      - name: Verify results purchase policy and service status gap taxonomy
+        run: python -m unittest -v test_source_gap_taxonomy_v9.py
