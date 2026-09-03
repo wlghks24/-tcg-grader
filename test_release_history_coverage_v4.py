@@ -18,21 +18,39 @@ class ReleaseHistoryCoverageV4Tests(unittest.TestCase):
         self.assertEqual(len(rows), 1)
         self.assertEqual(rows[0]['region'], 'KR')
         self.assertEqual(rows[0]['release_date'], '2026-09-16')
+        self.assertEqual(rows[0]['price'], '₩30,000')
+
+    def test_korean_official_hyphen_release_date_is_kept(self):
+        rows = backfill.parse_pokemon_kr(
+            'MEGA 확장팩 「어비스아이」 발매일 2026-06-26 가격 1,500원'
+        )
+        self.assertEqual(len(rows), 1)
+        self.assertEqual(rows[0]['release_date'], '2026-06-26')
+        self.assertEqual(rows[0]['price'], '₩1,500')
 
     def test_korean_pokemon_month_does_not_invent_a_day(self):
-        rows = backfill.parse_pokemon_kr(
-            'MEGA 확장팩 「테스트팩」 2027년 3월 발매 예정'
-        )
+        rows = backfill.parse_pokemon_kr('MEGA 확장팩 「테스트팩」 2027년 3월 발매 예정')
         self.assertEqual(len(rows), 1)
         self.assertIsNone(rows[0].get('release_date'))
         self.assertEqual(rows[0]['release_window'], '2027-03')
         self.assertEqual(rows[0]['release_precision'], 'month')
 
     def test_event_only_korean_date_is_not_a_release(self):
-        rows = backfill.parse_pokemon_kr(
-            '포켓몬 카드 게임 챔피언십 2026년 9월 16일 개최 참가 접수 이벤트'
+        self.assertEqual(
+            backfill.parse_pokemon_kr('포켓몬 카드 게임 챔피언십 2026년 9월 16일 개최 참가 접수 이벤트'),
+            [],
         )
-        self.assertEqual(rows, [])
+
+    def test_official_detail_link_extraction_rejects_cross_host(self):
+        raw = (
+            '<a href="/card/907">ok</a>'
+            '<a href="https://evil.example/card/999">bad</a>'
+            '<a href="/cards/detail/BS2026001">not-product</a>'
+        )
+        links = backfill._official_detail_links(
+            raw, 'https://pokemoncard.co.kr/card/category/info1', r'^/card/\d{1,8}/?$'
+        )
+        self.assertEqual(links, ['https://pokemoncard.co.kr/card/907'])
 
     def test_us_pokemon_launch_date_is_parsed(self):
         rows = backfill.parse_pokemon_us(
@@ -52,9 +70,21 @@ class ReleaseHistoryCoverageV4Tests(unittest.TestCase):
         self.assertEqual(rows[0]['release_window'], '2027년 여름')
         self.assertEqual(rows[0]['region'], 'US')
 
+    def test_global_naruto_announcement_does_not_fabricate_korean_release(self):
+        rows = backfill.parse_naruto_region(
+            'Arriving in Summer 2027 NARUTO CARD GAME GLOBAL RELEASE CONFIRMED', 'KR'
+        )
+        self.assertEqual(rows, [])
+        explicit = backfill.parse_naruto_region(
+            'South Korea Arriving in Summer 2027 NARUTO CARD GAME GLOBAL RELEASE CONFIRMED', 'KR'
+        )
+        self.assertEqual(len(explicit), 1)
+        self.assertEqual(explicit[0]['region'], 'KR')
+
     def test_progress_reports_missing_cells_without_fabricating_rows(self):
         progress = backfill.coverage_progress([])
         self.assertEqual(progress['expected_cells'], 9)
+        self.assertEqual(progress['configured_cells'], 9)
         self.assertEqual(progress['verified_cells'], 0)
         self.assertEqual(len(progress['missing_verified_cells']), 9)
 
