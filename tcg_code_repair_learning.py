@@ -482,8 +482,19 @@ def _observe_locked(report: Any, *, memory_path: Path, candidates_path: Path,
             old_candidate = by_signature.get(signature)
             if previous_verified is None and isinstance(old_candidate, dict):
                 previous_verified = _safe_verified_fix(old_candidate.get("verified_fix"))
-            regressed = bool(stat.get("last_outcome") == "verified" or previous_verified)
-            if regressed:
+            # Count one verified-fix regression episode when the candidate
+            # transitions out of verified_fixed. Repeated observations while that
+            # regression remains unresolved keep high priority, but do not inflate
+            # the regression counter as if multiple independent fixes had failed.
+            regression_episode = bool(
+                stat.get("last_outcome") == "verified"
+                or (isinstance(old_candidate, dict) and old_candidate.get("status") == "verified_fixed")
+            )
+            regression_active = bool(
+                regression_episode
+                or (isinstance(old_candidate, dict) and old_candidate.get("regression_after_verified_fix") is True)
+            )
+            if regression_episode:
                 stat["verified_regression_count"] = min(
                     1000, _safe_int(stat.get("verified_regression_count"), 0, 1000) + 1
                 )
@@ -501,7 +512,7 @@ def _observe_locked(report: Any, *, memory_path: Path, candidates_path: Path,
                 stat["occurrences"],
                 stat.get("first_seen"),
                 now,
-                regression_after_verified_fix=regressed,
+                regression_after_verified_fix=regression_active,
             )
             if previous_verified:
                 candidate["previous_verified_fix"] = previous_verified
@@ -516,7 +527,7 @@ def _observe_locked(report: Any, *, memory_path: Path, candidates_path: Path,
                 "signature": signature,
                 "file": filename,
                 "code": code,
-                "outcome": "regression" if regressed else "error",
+                "outcome": "regression" if regression_episode else "error",
                 "occurrences": stat["occurrences"],
             })
 
@@ -794,6 +805,16 @@ def self_test() -> int:
         assert item["priority"] == "high"
         assert item["regression_after_verified_fix"] is True
         assert item.get("previous_verified_fix", {}).get("fix_id") == "test-fix-001"
+
+        # More failures before a new verified fix are the same unresolved
+        # regression episode, not additional verified-fix regressions.
+        same_episode = observe(broken, memory_path=memory, candidates_path=candidates, report_path=report_path)
+        assert same_episode["verified_fix_regressions"] == 0
+        payload = json.loads(candidates.read_text(encoding="utf-8"))
+        item = next(x for x in payload["items"] if x["signature"] == signature)
+        assert item["verified_regression_count"] == 1
+        assert item["regression_after_verified_fix"] is True
+        assert item["priority"] == "high"
 
         try:
             register_verified_fix(
