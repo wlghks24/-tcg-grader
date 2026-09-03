@@ -2,9 +2,10 @@
 # -*- coding: utf-8 -*-
 """Apply deterministic runtime/error-learning optimizations.
 
-The patch is intentionally narrow and idempotent. It fixes a recovered-error
-classification bug in the code-repair learner and prevents mixed tablet bundles
-from starting without the self-healing modules that auto_update_all imports.
+The patch is intentionally narrow and idempotent. It fixes recovered-error
+classification in both code-repair and collector self-healing, prevents mixed
+tablet bundles from starting without required healing modules, and removes
+repeated self-heal memory reads from status rendering.
 """
 from __future__ import annotations
 
@@ -93,6 +94,94 @@ def patch_code_repair_learning(text: str) -> str:
     return text
 
 
+def patch_collector_self_healing(text: str) -> str:
+    old_plan = '''def plan_for(filename: str, path: Path = MEMORY) -> dict:
+    """Return a defensive copy of the pending allow-listed plan for one job."""
+    memory = _load(path)
+    row = memory.get("files", {}).get(filename, {})
+    policy_id = row.get("pending_policy")
+    policy = POLICIES.get(policy_id)
+    until = _parse_utc(row.get("cooldown_until"))
+    remaining = max(0, int((until - dt.datetime.now(dt.timezone.utc)).total_seconds())) if until else 0
+    cooldown = {
+        "cooldown_active": remaining > 0,
+        "cooldown_remaining_seconds": remaining,
+        "cooldown_kind": row.get("cooldown_kind"),
+        "access_control_blocked": row.get("access_control_blocked") is True,
+    }
+    if not policy:
+        return {"policy_id": None, "max_attempts": 2, "timeout_floor": 0, "retry_delay": 2, "env": {}, **cooldown}
+    return {"policy_id": policy_id, **policy, "env": dict(policy.get("env") or {}), **cooldown}
+'''
+    new_plan = '''def _plan_from_row(row: dict, *, now: dt.datetime | None = None) -> dict:
+    """Build one defensive recovery plan from an already-loaded memory row."""
+    if not isinstance(row, dict):
+        row = {}
+    policy_id = row.get("pending_policy")
+    policy = POLICIES.get(policy_id)
+    until = _parse_utc(row.get("cooldown_until"))
+    current = now or dt.datetime.now(dt.timezone.utc)
+    remaining = max(0, int((until - current).total_seconds())) if until else 0
+    cooldown = {
+        "cooldown_active": remaining > 0,
+        "cooldown_remaining_seconds": remaining,
+        "cooldown_kind": row.get("cooldown_kind"),
+        "access_control_blocked": row.get("access_control_blocked") is True,
+    }
+    if not policy:
+        return {"policy_id": None, "max_attempts": 2, "timeout_floor": 0, "retry_delay": 2, "env": {}, **cooldown}
+    return {"policy_id": policy_id, **policy, "env": dict(policy.get("env") or {}), **cooldown}
+
+
+def plan_for(filename: str, path: Path = MEMORY) -> dict:
+    """Return a defensive copy of the pending allow-listed plan for one job."""
+    memory = _load(path)
+    return _plan_from_row(memory.get("files", {}).get(filename, {}))
+'''
+    text = _replace_once(text, old_plan, new_plan, "single-load self-heal plan builder")
+
+    old_analysis = '''        details = auto_repair_engine._report_error_details(result, bool(result.get("ok")))[0]
+        analyses = [auto_repair_engine.analyze_error(detail) for detail in details]
+        if applied_policy in POLICIES:
+'''
+    new_analysis = '''        details = auto_repair_engine._report_error_details(result, bool(result.get("ok")))[0]
+        # Historical collection_errors are useful for rewarding a policy that
+        # recovered a job, but they must never be re-planned or quarantined as
+        # active failures after the result is clean.
+        should_analyze = unresolved or applied_policy in POLICIES
+        analyses = [auto_repair_engine.analyze_error(detail) for detail in details] if should_analyze else []
+        if applied_policy in POLICIES:
+'''
+    text = _replace_once(text, old_analysis, new_analysis, "recovered collector analysis gating")
+
+    old_loop = '''        for detail, analysis in zip(details, analyses):
+'''
+    new_loop = '''        active_pairs = zip(details, analyses) if unresolved else ()
+        for detail, analysis in active_pairs:
+'''
+    text = _replace_once(text, old_loop, new_loop, "active-only collector recovery planning")
+
+    old_status = '''def public_status(path: Path = MEMORY) -> dict:
+    memory = _load(path)
+    active = []
+    for filename, row in memory.get("files", {}).items():
+        policy_id = row.get("pending_policy")
+        plan = plan_for(filename, path)
+'''
+    new_status = '''def public_status(path: Path = MEMORY) -> dict:
+    memory = _load(path)
+    active = []
+    now = dt.datetime.now(dt.timezone.utc)
+    for filename, row in memory.get("files", {}).items():
+        policy_id = row.get("pending_policy")
+        # Reuse the already-loaded memory snapshot instead of rereading the same
+        # JSON file once per active collector.
+        plan = _plan_from_row(row, now=now)
+'''
+    text = _replace_once(text, old_status, new_status, "single-read self-heal public status")
+    return text
+
+
 def patch_runtime_bundle_guard(text: str) -> str:
     if '"collector_self_healing.py"' not in text:
         text = _replace_once(
@@ -140,6 +229,16 @@ def patch_runtime_bundle_guard(text: str) -> str:
 '''
     if contract not in text:
         text = _replace_once(text, marker, contract, "runtime code-repair contract checks")
+
+    old_healing_check = '''        if "SOURCE_STRUCTURE_CHANGED" not in getattr(healing, "QUARANTINE_CODES", set()):
+            issues.append("출처 구조변경이 코드수정 격리 대상으로 보호되지 않습니다")
+'''
+    new_healing_check = '''        if "SOURCE_STRUCTURE_CHANGED" not in getattr(healing, "QUARANTINE_CODES", set()):
+            issues.append("출처 구조변경이 코드수정 격리 대상으로 보호되지 않습니다")
+        if not callable(getattr(healing, "_plan_from_row", None)):
+            issues.append("수집기 상태조회가 자가복구 메모리를 반복 로드하는 구버전입니다")
+'''
+    text = _replace_once(text, old_healing_check, new_healing_check, "self-heal status read contract")
     return text
 
 
@@ -156,6 +255,7 @@ def patch_android_start(text: str) -> str:
 
 PATCHES = {
     "tcg_code_repair_learning.py": patch_code_repair_learning,
+    "collector_self_healing.py": patch_collector_self_healing,
     "runtime_bundle_guard_v143.py": patch_runtime_bundle_guard,
     "START_TCG_UPDATER_ANDROID.sh": patch_android_start,
 }
