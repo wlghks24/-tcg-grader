@@ -1,0 +1,54 @@
+name: Apply SELFREFINE V9
+
+on:
+  push:
+    branches: [selfrefine/results-purchase-service-v9]
+    paths:
+      - 'selfrefine_v9_patch.py'
+      - '.github/workflows/apply-selfrefine-v9.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  patch-test-commit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          ref: selfrefine/results-purchase-service-v9
+          fetch-depth: 0
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
+        with:
+          python-version: '3.11'
+      - name: Validate patch and test
+        run: python -m py_compile selfrefine_v9_patch.py test_source_gap_taxonomy_v9.py
+      - name: Apply source patch
+        run: python selfrefine_v9_patch.py
+      - name: Compile collectors learners and guards
+        run: |
+          python -m py_compile provider_health_learning.py event_gap_learning.py collection_meta_learning.py \
+            multi_channel_agent.py multi_route_event_discovery.py social_event_discovery.py auto_pipeline_runner.py \
+            test_provider_source_gap_learning_v5.py test_promo_event_keyword_coverage_v5.py \
+            test_extended_discovery_channels_v5.py test_source_gap_taxonomy_v6.py \
+            test_source_gap_taxonomy_v7.py test_source_gap_taxonomy_v8.py test_source_gap_taxonomy_v9.py
+      - name: Run v5 to v9 regression
+        run: |
+          python -m unittest -v test_provider_source_gap_learning_v5.py
+          python -m unittest -v test_promo_event_keyword_coverage_v5.py
+          python -m unittest -v test_extended_discovery_channels_v5.py
+          python -m unittest -v test_source_gap_taxonomy_v6.py
+          python -m unittest -v test_source_gap_taxonomy_v7.py
+          python -m unittest -v test_source_gap_taxonomy_v8.py
+          python -m unittest -v test_source_gap_taxonomy_v9.py
+      - name: Commit verified source changes
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add provider_health_learning.py event_gap_learning.py collection_meta_learning.py \
+            multi_channel_agent.py multi_route_event_discovery.py social_event_discovery.py test_source_gap_taxonomy_v8.py
+          git diff --cached --check
+          git commit -m 'selfrefine: track results purchase policy and service status gaps'
+          git push origin HEAD:selfrefine/results-purchase-service-v9
