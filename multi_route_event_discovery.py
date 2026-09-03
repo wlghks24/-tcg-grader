@@ -408,6 +408,27 @@ def _ddg_one(game: str, region: str, topic: str | None = None,
         return [], _error_summary(f"DDG fallback {game}/{region}", exc)
 
 
+def _topic_coverage(rows: list[dict], *, verified_only: bool = False) -> dict[str, int]:
+    """Return game/region/topic coverage without letting discovery-only hits hide gaps.
+
+    Candidate rows remain useful for cross-checking and are still reported separately,
+    but only rows explicitly marked verified may resolve a learned coverage gap. This
+    prevents a press/social/retail search hit from resetting miss_streak before an
+    official-source result has actually been found.
+    """
+    return {
+        f"{game}/{region}/{topic}": sum(
+            1 for row in rows
+            if isinstance(row, dict)
+            and row.get("game") == game
+            and row.get("region") == region
+            and row.get("search_topic") == topic
+            and (not verified_only or row.get("verified") is True)
+        )
+        for game in GAMES for region in REGIONS for topic in COVERAGE_TOPICS
+    }
+
+
 def collect_all() -> tuple[list[dict], list[str], dict]:
     """Collect candidates through independent routes with bounded concurrency."""
     learner = EventGapLearner()
@@ -447,16 +468,10 @@ def collect_all() -> tuple[list[dict], list[str], dict]:
             stat["results"] += len(part); rows.extend(part)
 
     # A broad provider can look healthy while still missing a low-volume subject.
-    # Retry only empty game/region/topic cells through an independent provider,
-    # with a bounded rotating budget to avoid 403/429 pressure.
-    first_topic_coverage = {
-        f"{game}/{region}/{topic}": sum(
-            1 for row in rows
-            if row.get("game") == game and row.get("region") == region and row.get("search_topic") == topic
-        )
-        for game in GAMES for region in REGIONS for topic in COVERAGE_TOPICS
-    }
-    missing_topics = [key for key, count in first_topic_coverage.items() if count == 0]
+    # Retry cells that still lack verified-source coverage through an independent
+    # provider. Unverified candidates remain visible but never suppress gap retry.
+    first_verified_topic_coverage = _topic_coverage(rows, verified_only=True)
+    missing_topics = [key for key, count in first_verified_topic_coverage.items() if count == 0]
     if missing_topics:
         gap_limit = env_int("TCG_ROUTE_GAP_RETRY_LIMIT", 18, 0, len(missing_topics))
         fallback_jobs = [tuple(key.split("/", 2)) for key in learner.prioritize(missing_topics, gap_limit)]
@@ -479,19 +494,16 @@ def collect_all() -> tuple[list[dict], list[str], dict]:
         for region in REGIONS:
             key = f"{game}/{region}"
             coverage[key] = sum(1 for row in rows if row.get("game") == game and row.get("region") == region)
-    topic_coverage = {
-        f"{game}/{region}/{topic}": sum(
-            1 for row in rows
-            if row.get("game") == game and row.get("region") == region and row.get("search_topic") == topic
-        )
-        for game in GAMES for region in REGIONS for topic in COVERAGE_TOPICS
-    }
-    learner.observe(topic_coverage)
+    topic_coverage = _topic_coverage(rows)
+    verified_topic_coverage = _topic_coverage(rows, verified_only=True)
+    # Only verified-source coverage changes the learner's hit/miss streak. Discovery
+    # candidates can guide human/independent verification but cannot teach a gap as solved.
+    learner.observe(verified_topic_coverage)
     learner.save()
 
     status = {
         "configured": True,
-        "status": "Bing RSS 작품×국가×10주제 독립검색 + 공식/파트너/보도/팬SNS + 공식사이트 직접스캔 + 학습형 누락주제 DDG 폴백",
+        "status": "Bing RSS 작품×국가×10주제 독립검색 + 공식/파트너/보도/팬SNS + 공식사이트 직접스캔 + 검증근거 기준 학습형 누락주제 DDG 폴백",
         "route_count": len(by_route),
         "query_count": sum(v.get("queries", 0) for v in by_route.values()),
         "success_query_count": successes,
@@ -500,9 +512,13 @@ def collect_all() -> tuple[list[dict], list[str], dict]:
         "by_route": by_route,
         "coverage": coverage,
         "topic_coverage": topic_coverage,
+        "verified_topic_coverage": verified_topic_coverage,
         "expected_topic_cells": len(GAMES) * len(REGIONS) * len(COVERAGE_TOPICS),
         "covered_topic_cells": sum(1 for value in topic_coverage.values() if value > 0),
         "missing_topic_cells": [key for key, value in topic_coverage.items() if value == 0],
+        "verified_covered_topic_cells": sum(1 for value in verified_topic_coverage.values() if value > 0),
+        "verified_missing_topic_cells": [key for key, value in verified_topic_coverage.items() if value == 0],
+        "gap_learning_coverage_basis": "verified-source-only",
         "gap_learning": learner.report(),
         "verified_events_learned_this_run": learned_verified,
     }
