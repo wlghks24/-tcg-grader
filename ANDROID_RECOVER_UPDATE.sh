@@ -36,7 +36,7 @@ if ! is_official_origin "$origin_url"; then
 fi
 
 echo "[복구] GitHub main 최신 업데이트 스크립트를 준비합니다..."
-git fetch "$OFFICIAL_HTTPS" main:refs/remotes/origin/main --prune
+git fetch --prune "$OFFICIAL_HTTPS" main:refs/remotes/origin/main
 
 tmp="$(mktemp "${TMPDIR:-/tmp}/tcg-android-updater.XXXXXX.sh")"
 cleanup() { rm -f "$tmp" 2>/dev/null || true; }
