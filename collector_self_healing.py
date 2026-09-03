@@ -18,6 +18,7 @@ from __future__ import annotations
 import datetime as dt
 import hashlib
 import json
+from itertools import islice
 from pathlib import Path
 from typing import Any
 
@@ -128,12 +129,12 @@ def _load(path: Path = MEMORY) -> dict:
     clean = _default()
     clean["updated_at"] = value.get("updated_at") if isinstance(value.get("updated_at"), str) else None
     clean["runs"] = _safe_int(value.get("runs"))
-    for filename, raw in list(value["files"].items())[:MAX_FILES]:
+    for filename, raw in islice(value["files"].items(), MAX_FILES):
         if not isinstance(filename, str) or Path(filename).name != filename or not isinstance(raw, dict):
             continue
         row = _file_row()
         signatures = raw.get("signatures") if isinstance(raw.get("signatures"), dict) else {}
-        for signature, stat in list(signatures.items())[:MAX_SIGNATURES_PER_FILE]:
+        for signature, stat in islice(signatures.items(), MAX_SIGNATURES_PER_FILE):
             if not isinstance(signature, str) or len(signature) > 120 or not isinstance(stat, dict):
                 continue
             policies = {}
@@ -200,7 +201,8 @@ def _choose_policy(stat: dict, candidates: list[str]) -> str | None:
     scored = []
     policies = stat.setdefault("policies", {})
     for index, policy_id in enumerate(candidates):
-        score = policies.get(policy_id) if isinstance(policies.get(policy_id), dict) else {}
+        raw_score = policies.get(policy_id)
+        score = raw_score if isinstance(raw_score, dict) else {}
         runs = _safe_int(score.get("runs"))
         successes = _safe_int(score.get("successes"))
         failures = _safe_int(score.get("failures"))
@@ -219,8 +221,11 @@ def _plan_from_row(row: dict, *, now: dt.datetime | None = None) -> dict:
     policy_id = row.get("pending_policy")
     policy = POLICIES.get(policy_id)
     until = _parse_utc(row.get("cooldown_until"))
-    current = now or dt.datetime.now(dt.timezone.utc)
-    remaining = max(0, int((until - current).total_seconds())) if until else 0
+    if until is None:
+        remaining = 0
+    else:
+        current = now or dt.datetime.now(dt.timezone.utc)
+        remaining = max(0, int((until - current).total_seconds()))
     cooldown = {
         "cooldown_active": remaining > 0,
         "cooldown_remaining_seconds": remaining,
@@ -291,19 +296,21 @@ def _observe_locked(report: Any, path: Path) -> dict:
         filename = result.get("file")
         if not isinstance(filename, str) or Path(filename).name != filename:
             continue
-        observed_at = _now()
+        observed_now = dt.datetime.now(dt.timezone.utc)
+        observed_at = observed_now.isoformat(timespec="seconds")
+        ok = bool(result.get("ok"))
         file_row = files.setdefault(filename, _file_row())
         if result.get("cooldown_deferred") is True:
             events.append({
-                "timestamp": observed_at, "file": filename, "ok": bool(result.get("ok")),
+                "timestamp": observed_at, "file": filename, "ok": ok,
                 "unresolved": True, "applied_policy": None,
                 "next_policy": file_row.get("pending_policy"), "cooldown_deferred": True,
             })
             continue
         applied_policy = result.get("self_heal_policy")
         remaining = result.get("remaining_collection_errors")
-        unresolved = bool(remaining) or not bool(result.get("ok"))
-        details = auto_repair_engine._report_error_details(result, bool(result.get("ok")))[0]
+        unresolved = bool(remaining) or not ok
+        details = auto_repair_engine._report_error_details(result, ok)[0]
         # Historical collection_errors are useful for rewarding a policy that
         # recovered a job, but they must never be re-planned or quarantined as
         # active failures after the result is clean.
@@ -347,10 +354,11 @@ def _observe_locked(report: Any, path: Path) -> dict:
             stat = _signature_stat(file_row, sig, analysis, observed_at)
             stat["occurrences"] = min(1_000_000, _safe_int(stat.get("occurrences")) + 1)
             stat["last_seen"] = observed_at
-            if analysis.get("code") in QUARANTINE_CODES:
+            code = analysis.get("code")
+            if code in QUARANTINE_CODES:
                 quarantine_items.append({
                     "timestamp": observed_at, "file": filename, "signature": sig,
-                    "code": analysis.get("code"),
+                    "code": code,
                     "reason": "검증된 코드·파서 수정 필요; 자동 데이터 승격 금지",
                     "detail": auto_repair_engine.redact_sensitive(detail, 500),
                 })
@@ -359,17 +367,18 @@ def _observe_locked(report: Any, path: Path) -> dict:
             candidate = _choose_policy(stat, _policy_candidates(analysis))
             if candidate:
                 next_policy = candidate
-            if analysis.get("http_status") == 429:
+            http_status = analysis.get("http_status")
+            if http_status == 429:
                 retry_after = _safe_int(analysis.get("retry_after_seconds"), 0, 86_400)
                 next_cooldown_seconds = retry_after or 300
                 next_cooldown_kind = "retry_after" if retry_after else "default_rate_limit"
-            elif analysis.get("http_status") in {401, 403}:
+            elif http_status in {401, 403}:
                 access_control_blocked = True
             if candidate or next_cooldown_seconds or access_control_blocked:
                 break
         file_row["pending_policy"] = next_policy if unresolved else None
         if unresolved and next_cooldown_seconds:
-            until = dt.datetime.now(dt.timezone.utc) + dt.timedelta(seconds=next_cooldown_seconds)
+            until = observed_now + dt.timedelta(seconds=next_cooldown_seconds)
             file_row["cooldown_until"] = until.isoformat(timespec="seconds")
             file_row["cooldown_kind"] = next_cooldown_kind
         elif not unresolved:
@@ -379,7 +388,7 @@ def _observe_locked(report: Any, path: Path) -> dict:
         if next_policy:
             prepared += 1
         events.append({
-            "timestamp": observed_at, "file": filename, "ok": bool(result.get("ok")),
+            "timestamp": observed_at, "file": filename, "ok": ok,
             "unresolved": unresolved, "applied_policy": applied_policy if applied_policy in POLICIES else None,
             "next_policy": file_row.get("pending_policy"),
         })
@@ -417,9 +426,9 @@ def public_status(path: Path = MEMORY) -> dict:
         # Reuse the already-loaded memory snapshot instead of rereading the same
         # JSON file once per active collector.
         plan = _plan_from_row(row, now=now)
-        if policy_id in POLICIES or plan.get("cooldown_active") or plan.get("access_control_blocked"):
-            label = (POLICIES[policy_id]["label"] if policy_id in POLICIES
-                     else "접근제어 차단 · 자동 우회 금지")
+        policy = POLICIES.get(policy_id)
+        if policy is not None or plan.get("cooldown_active") or plan.get("access_control_blocked"):
+            label = policy["label"] if policy is not None else "접근제어 차단 · 자동 우회 금지"
             active.append({"file": filename, "policy_id": policy_id, "label": label,
                            "cooldown_active": plan.get("cooldown_active", False),
                            "cooldown_remaining_seconds": plan.get("cooldown_remaining_seconds", 0),
@@ -429,10 +438,11 @@ def public_status(path: Path = MEMORY) -> dict:
         code_repair = tcg_code_repair_learning.public_status()
     except Exception as exc:
         code_repair = {"ok": False, "error": auto_repair_engine.redact_sensitive(f"{type(exc).__name__}: {exc}", 500)}
+    quarantine_items = memory.get("quarantine", [])
     return {
         "ok": True, "runs": memory.get("runs", 0), "active": active,
-        "quarantine_count": len(memory.get("quarantine", [])),
-        "recent_quarantine": memory.get("quarantine", [])[-10:],
+        "quarantine_count": len(quarantine_items),
+        "recent_quarantine": quarantine_items[-10:],
         "code_repair_learning": code_repair,
         "safety": memory.get("safety", {}),
     }
