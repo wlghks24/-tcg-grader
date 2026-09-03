@@ -1,14 +1,29 @@
 {
-  "version": 1,
-  "updated_at": "2026-08-31T05:03:00+00:00",
-  "policy": "자동수집이 놓친 공식 발표를 사용자가 공식 화면으로 제보한 경우에만 임시 보존합니다. 이후 자동 공개검색/공식 API가 같은 사실을 발견하면 중복 병합하고, 이 파일 자체는 일반 커뮤니티 제보를 공식 사실로 승격시키지 않습니다.",
+  "version": 2,
+  "updated_at": "2026-09-03T19:21:00+09:00",
+  "policy": "자동수집이 놓친 공식 발표를 사용자가 공식 화면으로 제보한 경우 임시 보존하고 공식 계정/공식 웹으로 교차검증합니다. verified=true 이면서 공식 계정/공식 도메인 근거가 있는 누락사례만 검색어·지역힌트 자가학습에 사용합니다. 일반 커뮤니티 제보는 공식 사실 또는 학습 근거로 자동승격하지 않습니다.",
   "items": [
     {
       "game": "포켓몬 카드",
       "region": "KR",
       "category": "movie",
       "title": "THE MOVIE 「포켓몬: 와일드카드」 · 2027년 극장 개봉 발표",
-      "dedupe_terms": ["와일드카드", "wild card", "wildcard"],
+      "dedupe_terms": [
+        "와일드카드",
+        "wild card",
+        "wildcard"
+      ],
+      "learning_terms": [
+        "와일드카드",
+        "Wild Card",
+        "THE MOVIE",
+        "슈퍼 티저",
+        "CloverWorks"
+      ],
+      "region_anchors": [
+        "한국",
+        "Korea"
+      ],
       "source": "https://www.instagram.com/pokemon_korea_official/",
       "source_kind": "instagram",
       "source_tier": "A-social-manual-evidence",
@@ -23,7 +38,80 @@
       "confidence": 0.99,
       "manual_evidence": true,
       "evidence_kind": "user_provided_official_post_screenshot",
+      "recovery_case_id": "pokemon-kr-wild-card-movie-2026-08-31",
       "collected_at": "2026-08-31T14:03:00+09:00"
+    },
+    {
+      "game": "원피스 카드",
+      "region": "JP",
+      "category": "collaboration",
+      "topic": "promo",
+      "title": "『ONE PIECE』 프리미엄 카드 컬렉션 Nike 콜라보 에디션 · 일본 배포/응모자 전원 서비스",
+      "dedupe_terms": [
+        "Nike",
+        "나이키",
+        "Nikeコラボ",
+        "プレミアムカードコレクション",
+        "Dr. B's RESEARCH LAB",
+        "応募者全員サービス",
+        "P-099"
+      ],
+      "learning_terms": [
+        "Nike",
+        "나이키",
+        "Dr. B's RESEARCH LAB",
+        "週刊少年ジャンプ",
+        "応募者全員サービス",
+        "定期購読",
+        "対象商品",
+        "P-099"
+      ],
+      "region_anchors": [
+        "日本",
+        "Japan",
+        "東京",
+        "Tokyo",
+        "原宿",
+        "Harajuku",
+        "渋谷",
+        "Shibuya",
+        "集英社",
+        "Shueisha",
+        "週刊少年ジャンプ"
+      ],
+      "location": "일본 도쿄 하라주쿠 Dr. B's RESEARCH LAB / 디지털판 주간소년점프 정기구독자 응모",
+      "source": "https://x.com/Eiichiro_Staff",
+      "source_kind": "x",
+      "source_tier": "A-social-manual-evidence",
+      "source_label": "ONE PIECE 스태프 공식 X · 사용자 제보 화면 + 공식 계정/공식 웹 교차검증",
+      "author": "Eiichiro_Staff",
+      "official_account_verified": true,
+      "published_at": "2026-09-03T14:00:00+09:00",
+      "dates": [
+        "2026-09-03",
+        "2026-09-04",
+        "2026-09-18",
+        "2026-10-18"
+      ],
+      "excerpt": "ONE PIECE 스태프 공식 계정과 주간소년점프 편집부 공식 계정이 『ONE PIECE』 프리미엄 카드 컬렉션 Nike 콜라보 에디션 배포/응모 안내를 공개. 일본 Nike Tokyo 팝업 Dr. B's RESEARCH LAB 대상상품 구매 배포와 디지털판 주간소년점프 정기구독자 응모자 전원 서비스가 포함되며, 특제 DON!! 카드와 P-099 몽키 D. 루피 프로모 카드가 안내됨.",
+      "status": "공식 SNS 화면 확인 + 공식 ONE PIECE/주간소년점프 계정 교차검증 · 자동수집 누락 보정",
+      "verified": true,
+      "confidence": 0.99,
+      "manual_evidence": true,
+      "evidence_kind": "user_provided_official_post_screenshot_plus_official_account_crosscheck",
+      "evidence_sources": [
+        "https://one-piece.com/index.html",
+        "https://one-piece.com/news/81800/index.html",
+        "https://www.shonenjump.com/j/",
+        "https://x.com/Eiichiro_Staff",
+        "https://x.com/jump_henshubu"
+      ],
+      "reward_watch": true,
+      "must_show_candidate": true,
+      "collection_scope_override": "tcg_reward_or_giveaway",
+      "event_scope": "official_tcg_promo_collaboration",
+      "recovery_case_id": "onepiece-jp-nike-promo-2026-09-03",
+      "collected_at": "2026-09-03T19:21:00+09:00"
     }
   ]
 }
