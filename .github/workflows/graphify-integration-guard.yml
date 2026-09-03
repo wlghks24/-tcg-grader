@@ -12,17 +12,21 @@ on:
       - 'ANDROID_UPDATE_AND_START.sh'
       - '.github/workflows/graphify-integration-guard.yml'
   workflow_dispatch:
+
 permissions:
   contents: read
+
 jobs:
   verify:
     runs-on: ubuntu-latest
-    timeout-minutes: 8
+    timeout-minutes: 10
     env:
       GRAPHIFY_FIXTURE: /tmp/graphify-fixture
       GRAPHIFY_VERSION: '0.9.53'
+
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+
       - uses: actions/setup-python@v5
         with:
           python-version: '3.11'
@@ -46,9 +50,13 @@ jobs:
           grep -Fq 'run_graphify extract . --code-only || return 22' GRAPHIFY_UPDATE.sh
           grep -Fq 'run_graphify cluster-only . --no-label || return 23' GRAPHIFY_UPDATE.sh
           grep -Fq 'GRAPHIFY_DISABLE_SELF_HEAL' GRAPHIFY_UPDATE.sh
+          grep -Fq '자가복구 적용 후 실제 지도 갱신을 1회 재검증' GRAPHIFY_UPDATE.sh
           grep -Fq 'APPROVED_STRATEGIES' GRAPHIFY_SELF_HEAL.py
           grep -Fq 'blocked unapproved strategy' GRAPHIFY_SELF_HEAL.py
+          grep -Fq 'failure_signature' GRAPHIFY_SELF_HEAL.py
+          grep -Fq 'restore_quarantined' GRAPHIFY_SELF_HEAL.py
           grep -Fq 'graphify_self_heal_memory.json' .gitignore
+          grep -Fq 'graphify_self_heal_candidates.json' .gitignore
           grep -Fq '.graphify_recovery/' .gitignore
 
       - name: Install repository-verified Graphify version
@@ -93,6 +101,8 @@ jobs:
           PY
           git add models.py service.py
           git commit -qm initial
+          cp "$GITHUB_WORKSPACE/GRAPHIFY_UPDATE.sh" .
+          cp "$GITHUB_WORKSPACE/GRAPHIFY_SELF_HEAL.py" .
 
       - name: Exercise Codex and Agent Skills project install
         shell: bash
@@ -107,11 +117,9 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          cp "$GITHUB_WORKSPACE/GRAPHIFY_UPDATE.sh" "$GRAPHIFY_FIXTURE/GRAPHIFY_UPDATE.sh"
-          cp "$GITHUB_WORKSPACE/GRAPHIFY_SELF_HEAL.py" "$GRAPHIFY_FIXTURE/GRAPHIFY_SELF_HEAL.py"
           cd "$GRAPHIFY_FIXTURE"
-          bash ./GRAPHIFY_UPDATE.sh | tee /tmp/graphify-wrapper-success.txt
-          grep -Fq '[OK] Graphify 코드 지도 갱신 완료' /tmp/graphify-wrapper-success.txt
+          bash ./GRAPHIFY_UPDATE.sh
+          python ./GRAPHIFY_SELF_HEAL.py --validate-only
           test -s graphify-out/graph.json
           test -s graphify-out/GRAPH_REPORT.md
           test -s graphify-out/graph.html
@@ -121,15 +129,24 @@ jobs:
         run: |
           set -euo pipefail
           cd "$GRAPHIFY_FIXTURE"
-          cat >> service.py <<'PY'
-
-          def health_probe() -> str:
-              return card_grade(9.1)
-          PY
+          printf '\ndef health_probe():\n    return card_grade(9.1)\n' >> service.py
           bash ./GRAPHIFY_UPDATE.sh
-          test -s graphify-out/graph.json
-          test -s graphify-out/GRAPH_REPORT.md
-          test -s graphify-out/graph.html
+          python ./GRAPHIFY_SELF_HEAL.py --validate-only
+
+      - name: Prove structural validation detects corrupt outputs
+        shell: bash
+        run: |
+          set -euo pipefail
+          cd "$GRAPHIFY_FIXTURE"
+          cp graphify-out/graph.json /tmp/graphify-valid.json
+          printf '{broken json' > graphify-out/graph.json
+          set +e
+          python ./GRAPHIFY_SELF_HEAL.py --validate-only
+          rc=$?
+          set -e
+          test "$rc" -ne 0
+          mv /tmp/graphify-valid.json graphify-out/graph.json
+          python ./GRAPHIFY_SELF_HEAL.py --validate-only
 
       - name: Prove bounded self-heal repairs and learns missing outputs
         shell: bash
@@ -137,26 +154,53 @@ jobs:
           set -euo pipefail
           cd "$GRAPHIFY_FIXTURE"
           rm -f graphify-out/GRAPH_REPORT.md graphify-out/graph.html
-          python GRAPHIFY_SELF_HEAL.py \
+          GRAPHIFY_SELF_HEAL_MEMORY=/tmp/graphify-memory.json \
+          GRAPHIFY_SELF_HEAL_REPORT=/tmp/graphify-report.json \
+          python ./GRAPHIFY_SELF_HEAL.py \
             --repair \
-            --log GRAPHIFY_UPDATE.log \
             --failure-code 24 \
             --reason 'required missing output GRAPH_REPORT.md graph.html'
-          test -s graphify-out/graph.json
-          test -s graphify-out/GRAPH_REPORT.md
-          test -s graphify-out/graph.html
-          test -s graphify_self_heal_memory.json
-          test -s graphify_self_heal_report.json
-          python - <<'PY'
-          import json
-          from pathlib import Path
-          mem = json.loads(Path('graphify_self_heal_memory.json').read_text())
-          cat = mem['categories']['missing_outputs']
-          assert cat['preferred_strategy'] == 'materialize_outputs', cat
-          assert cat['successes']['materialize_outputs'] >= 1, cat
-          report = json.loads(Path('graphify_self_heal_report.json').read_text())
-          assert report['success'] is True, report
-          PY
+          python ./GRAPHIFY_SELF_HEAL.py --validate-only
+          test -s /tmp/graphify-memory.json
+          test -s /tmp/graphify-report.json
+          grep -Fq '"preferred_strategy": "materialize_outputs"' /tmp/graphify-memory.json
+          grep -Fq '"success": true' /tmp/graphify-report.json
+
+      - name: Prove failed rebuild restores last good outputs
+        shell: bash
+        run: |
+          set -euo pipefail
+          cd "$GRAPHIFY_FIXTURE"
+          cp graphify-out/graph.json /tmp/graph-before-failed-heal.json
+          cat > /tmp/fake-graphify-rebuild-fail <<'SH'
+          #!/usr/bin/env bash
+          if [ "${1:-}" = "--version" ]; then
+            echo 'graphify 0.9.53'
+            exit 0
+          fi
+          case "${1:-}" in
+            extract|cluster-only|update) echo 'forced repair failure' >&2; exit 42 ;;
+            hook) exit 0 ;;
+            *) exit 0 ;;
+          esac
+          SH
+          chmod +x /tmp/fake-graphify-rebuild-fail
+          set +e
+          GRAPHIFY_BIN=/tmp/fake-graphify-rebuild-fail \
+          GRAPHIFY_SELF_HEAL_MEMORY=/tmp/graphify-failed-memory.json \
+          GRAPHIFY_SELF_HEAL_REPORT=/tmp/graphify-failed-report.json \
+          GRAPHIFY_SELF_HEAL_CANDIDATES=/tmp/graphify-candidates.json \
+          python ./GRAPHIFY_SELF_HEAL.py \
+            --repair \
+            --failure-code 21 \
+            --reason 'update failed'
+          rc=$?
+          set -e
+          test "$rc" -ne 0
+          cmp /tmp/graph-before-failed-heal.json graphify-out/graph.json
+          python ./GRAPHIFY_SELF_HEAL.py --validate-only
+          test -s /tmp/graphify-candidates.json
+          grep -Fq '"needs_code_review"' /tmp/graphify-candidates.json
 
       - name: Prove primary Graphify failures cannot be masked
         shell: bash
