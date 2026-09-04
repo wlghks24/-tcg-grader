@@ -1,0 +1,36 @@
+name: SELFREFINE Module Separation Guard
+
+on:
+  pull_request:
+    paths:
+      - 'selfrefine_modules/**'
+      - 'test_selfrefine_module_registry_v18.py'
+      - 'selfrefine_domain_policy.json'
+      - '.github/workflows/selfrefine-module-separation-guard.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'selfrefine_modules/**'
+      - 'test_selfrefine_module_registry_v18.py'
+      - 'selfrefine_domain_policy.json'
+      - '.github/workflows/selfrefine-module-separation-guard.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  ownership:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97
+        with:
+          python-version: '3.11'
+      - name: Validate subsystem ownership
+        run: |
+          python -m selfrefine_modules.registry
+          python -m unittest -v test_selfrefine_module_registry_v18.py
+      - name: Compile separated management code
+        run: python -m py_compile selfrefine_modules/__init__.py selfrefine_modules/registry.py test_selfrefine_module_registry_v18.py
