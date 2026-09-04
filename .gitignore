@@ -87,3 +87,4 @@ graphify_self_heal_candidates.json
 graphify-out/cost.json
 graphify-out/cache/
 graphify-out/graph_audit.json
+SELFREFINE_ERROR_LEDGER.json
