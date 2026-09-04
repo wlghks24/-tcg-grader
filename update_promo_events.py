@@ -503,6 +503,97 @@ def event_region(default: str, *values: object) -> str | None:
     return None
 
 
+def _normalized_category(item: dict) -> str:
+    category = str(item.get("category", "promo"))
+    return "event" if category in {"promo", "collaboration"} else category
+
+
+def _stable_source(value: object) -> str:
+    text = str(value or "").strip()
+    if not text:
+        return ""
+    try:
+        parsed = urllib.parse.urlsplit(text)
+    except ValueError:
+        return text
+    # Keep query parameters because board-style official sites often use them
+    # as the actual article id. Only fragments are presentation state.
+    return urllib.parse.urlunsplit((parsed.scheme.lower(), (parsed.netloc or "").lower(),
+                                    parsed.path.rstrip("/") or "/", parsed.query, ""))
+
+
+def event_identity_key(item: dict) -> tuple[str, str, str, str, str]:
+    """Stable identity used only for superseding changed versions of one URL.
+
+    It intentionally differs from event_key(): dates are excluded so a schedule
+    update on the same official article can replace the old row, but the exact
+    source URL and normalized event title remain required so unrelated recurring
+    events are not collapsed.
+    """
+    title = str(item.get("name_native") or item.get("name_ko") or "").lower()
+    title = re.sub(
+        r"일정\s*(?:변경|연기|취소)\s*(?:안내|공지)?|시간\s*변경|장소\s*변경|"
+        r"schedule\s*(?:change|update)|reschedul(?:e|ed|ing)|postpon(?:e|ed|ement)|cancel(?:led|ed|ation)?|"
+        r"日程変更|時間変更|会場変更|延期|中止|変更のお知らせ",
+        " ", title, flags=re.I,
+    )
+    normalized = re.sub(r"[^0-9a-z가-힣ぁ-ゟ゠-ヿ一-鿿]+", "", title)
+    return (
+        str(item.get("game", "")), str(item.get("region", "")),
+        _normalized_category(item), _stable_source(item.get("source")), normalized,
+    )
+
+
+def _version_stamp(item: dict) -> dt.datetime:
+    best = dt.datetime.min.replace(tzinfo=dt.timezone.utc)
+    for field in ("discovered_at", "updated_at", "collected_at", "published_at"):
+        raw = str(item.get(field) or "").strip()
+        if not raw:
+            continue
+        try:
+            stamp = dt.datetime.fromisoformat(raw.replace("Z", "+00:00"))
+            if stamp.tzinfo is None:
+                stamp = stamp.replace(tzinfo=dt.timezone.utc)
+            stamp = stamp.astimezone(dt.timezone.utc)
+            if stamp > best:
+                best = stamp
+        except ValueError:
+            continue
+    return best
+
+
+def _supersede_event(previous: dict, newer: dict) -> dict:
+    combined = dict(previous)
+    combined.update(newer)
+    history = [x for x in (previous.get("change_history") or []) if isinstance(x, dict)][-9:]
+    prior_state = {
+        "start_date": previous.get("start_date"),
+        "end_date": previous.get("end_date"),
+        "claim_deadline": previous.get("claim_deadline"),
+        "status": previous.get("status"),
+        "source": previous.get("source"),
+    }
+    current_state = {
+        "start_date": newer.get("start_date"),
+        "end_date": newer.get("end_date"),
+        "claim_deadline": newer.get("claim_deadline"),
+        "status": newer.get("status"),
+        "source": newer.get("source"),
+    }
+    if prior_state != current_state and prior_state not in history:
+        history.append(prior_state)
+    if history:
+        combined["change_history"] = history[-10:]
+        combined["superseded_version_count"] = max(
+            int(previous.get("superseded_version_count") or 0) + 1, len(history)
+        )
+        combined["latest_version_wins"] = True
+    for field in ("link_checked_at", "link_status", "link_statuses"):
+        if field not in combined and field in previous:
+            combined[field] = previous[field]
+    return combined
+
+
 def event_key(item: dict) -> tuple[str, str, str, str, str]:
     title = str(item.get("name_native") or item.get("name_ko") or "").lower()
     aliases = (
@@ -515,23 +606,43 @@ def event_key(item: dict) -> tuple[str, str, str, str, str]:
     normalized = next((key for key, pattern in aliases if re.search(pattern, title, re.I)), "")
     if not normalized:
         normalized = re.sub(r"[^0-9a-z가-힣ぁ-ゟ゠-ヿ一-鿿]+", "", title)
-    category = str(item.get("category", "promo"))
-    if category in {"promo", "collaboration"}:
-        category = "event"
+    category = _normalized_category(item)
     return (str(item.get("game", "")), str(item.get("region", "")),
             category, str(item.get("start_date", "")), normalized)
 
 
 def merge_duplicate_events(items: list[dict]) -> tuple[list[dict], int]:
     rows: dict[tuple[str, str, str, str, str], dict] = {}
+    identities: dict[tuple[str, str, str, str, str], tuple[str, str, str, str, str]] = {}
     removed = 0
     for item in items:
         key = event_key(item)
-        previous = rows.get(key)
+        identity = event_identity_key(item)
+        previous_key = identities.get(identity) if identity[3] and identity[4] else None
+        previous = rows.get(previous_key) if previous_key is not None else rows.get(key)
+
         if previous is None:
             rows[key] = dict(item)
+            if identity[3] and identity[4]:
+                identities[identity] = key
             continue
+
         removed += 1
+        same_event_changed_version = previous_key is not None and previous_key != key
+        if same_event_changed_version:
+            # Discovery rows carry a collection timestamp. If both versions have
+            # timestamps, the newer official observation wins. If only the
+            # incoming row has one, it is also the newly observed version.
+            previous_stamp = _version_stamp(previous)
+            incoming_stamp = _version_stamp(item)
+            newer = item if incoming_stamp >= previous_stamp else previous
+            older = previous if newer is item else item
+            combined = _supersede_event(older, newer)
+            rows.pop(previous_key, None)
+            rows[event_key(combined)] = combined
+            identities[identity] = event_key(combined)
+            continue
+
         combined = dict(previous)
         if len(str(item.get("source", ""))) > len(str(previous.get("source", ""))):
             combined["source"] = item["source"]
@@ -545,6 +656,8 @@ def merge_duplicate_events(items: list[dict]) -> tuple[list[dict], int]:
         if next_claim and (not previous_claim or next_claim > previous_claim):
             combined["claim_deadline"] = next_claim.isoformat()
         rows[key] = combined
+        if identity[3] and identity[4]:
+            identities[identity] = key
     return list(rows.values()), removed
 
 
@@ -790,21 +903,29 @@ def main() -> dict:
 
     checked = []
     known_keys = set()
+    known_identities = set()
     for item, error in checked_results:
         checked.append(item)
         known_keys.add(event_key(item))
+        known_identities.add(event_identity_key(item))
         if error:
             errors.append(error)
 
     added = 0
+    updated = 0
     for discovered, discovery_errors in discovery_results:
         errors.extend(discovery_errors)
         for item in discovered:
             key = event_key(item)
+            identity = event_identity_key(item)
             if key not in known_keys and valid(item):
                 checked.append(item)
                 known_keys.add(key)
-                added += 1
+                if identity in known_identities:
+                    updated += 1
+                else:
+                    added += 1
+                known_identities.add(identity)
 
     checked, merged_discovered = merge_duplicate_events(checked)
 
@@ -816,6 +937,8 @@ def main() -> dict:
         expired_names.extend(item.get("name_ko", "이름 없음") for item in newly_expired)
     data["items"] = checked
     data["new_event_count"] = added
+    data["updated_event_count"] = updated
+    data["event_supersession_policy"] = "same game/region/category + exact official source URL + stable event title: newest observed schedule/status replaces stale duplicate while change_history is retained"
     data["official_seed_refresh_count"] = seeded_count
     data["merged_duplicate_event_count"] = merged_existing + merged_discovered
     data["excluded_outside_region_count"] = len(outside_region_names)
