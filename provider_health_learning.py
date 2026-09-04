@@ -325,9 +325,10 @@ def _social_topic_coverage(items: list[dict], *, verified_only: bool) -> dict[st
         region = str(row.get("region") or "")
         if game not in GAMES or region not in REGIONS:
             continue
-        if verified_only and row.get("verified") is not True:
+        row_verified = row.get("verified") is True
+        if verified_only and not row_verified:
             continue
-        topics = _topics(row, verified=verified_only)
+        topics = _topics(row, verified=row_verified)
         for topic in topics:
             key = f"{game}/{region}/{topic}"
             if key in coverage:
