@@ -3,7 +3,8 @@ name: Code Repair Learning Guard
 on:
   pull_request:
     paths:
-      - 'test_secure_self_modify_v21.py'\n      - 'selfrefine_domain_policy.json'
+      - 'test_secure_self_modify_v21.py'
+      - 'selfrefine_domain_policy.json'
       - 'test_selfrefine_error_quarantine_v20.py'
       - 'selfrefine_error_quarantine.py'
       - 'tcg_code_repair_learning.py'
@@ -19,7 +20,8 @@ on:
   push:
     branches: [main]
     paths:
-      - 'test_secure_self_modify_v21.py'\n      - 'selfrefine_domain_policy.json'
+      - 'test_secure_self_modify_v21.py'
+      - 'selfrefine_domain_policy.json'
       - 'test_selfrefine_error_quarantine_v20.py'
       - 'selfrefine_error_quarantine.py'
       - 'tcg_code_repair_learning.py'
