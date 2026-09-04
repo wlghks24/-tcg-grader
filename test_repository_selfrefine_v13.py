@@ -42,6 +42,38 @@ class RepositorySelfrefineV13Tests(unittest.TestCase):
             )
         )
 
+    def test_read_only_workflow_may_replay_patcher_for_deterministic_validation(self):
+        safe = """name: validate
+on:
+  pull_request:
+permissions:
+  contents: read
+jobs:
+  check:
+    steps:
+      - run: python apply_catalog_image_patch.py
+"""
+        self.assertIsNone(
+            guard.legacy_runtime_reference(".github/workflows/catalog-image-sync.yml", safe)
+        )
+
+    def test_hidden_write_workflow_cannot_execute_patcher(self):
+        unsafe = """name: mutate
+on:
+  push:
+    branches: [main]
+permissions:
+  contents: write
+jobs:
+  patch:
+    steps:
+      - run: python apply_hidden_patch.py
+      - run: git push origin HEAD:main
+"""
+        self.assertIsNotNone(
+            guard.legacy_runtime_reference(".github/workflows/hidden-sync.yml", unsafe)
+        )
+
     def test_current_runtime_cannot_reference_archived_gemini_sources(self):
         self.assertIsNotNone(
             guard.legacy_runtime_reference(
