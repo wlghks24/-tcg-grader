@@ -19,7 +19,7 @@ SKIP_DIRS = {'.git', '.venv', 'venv', 'node_modules', '__pycache__', 'dist', 'bu
 MAX_FILE_BYTES = 2_000_000
 LEDGER_PATH = ROOT / 'SELFREFINE_ERROR_LEDGER.json'
 
-# Different acquisition implementations remain independent collectors.  Files can
+# Different acquisition implementations remain independent collectors. Files can
 # still be grouped by the kind of information they collect so cross-source
 # comparison happens at the data layer instead of by merging collector code.
 COLLECTOR_HINTS = (
@@ -29,11 +29,11 @@ COLLECTOR_HINTS = (
 )
 INFO_FAMILY_RULES = (
     ('graded_photo', ('graded_photo', 'grade_photo', 'slab', 'cert_photo')),
-    ('completed_sale', ('completed_sale', 'sold', 'ebay', 'auction_sale')),
-    ('market_price', ('market', 'price', 'pricing', 'pricecharting', 'justtcg', 'pavilion', 'kream', 'snkrdunk')),
+    ('completed_sale', ('completed_sale', 'completed-sales', 'completed_sales', 'sold_listing', 'sold-listing', 'auction_sale')),
     ('promo_event', ('promo', 'event', 'collab', 'movie', 'campaign')),
     ('release_reprint', ('release', 'reprint', 'launch', 'product')),
     ('card_identity', ('identity', 'ocr', 'card_number', 'catalog')),
+    ('market_price', ('market', 'price', 'pricing', 'pricecharting', 'justtcg', 'pavilion', 'kream', 'snkrdunk', 'ebay')),
 )
 
 
@@ -221,16 +221,22 @@ def merge_ledger(current: list[dict]) -> dict:
 
 
 def self_test_collector_isolation() -> None:
-    a = ROOT / 'collectors' / 'ebay_market_price.py'
-    b = ROOT / 'collectors' / 'pricecharting_market_price.py'
-    ia = collector_identity(a)
-    ib = collector_identity(b)
+    market_a = ROOT / 'collectors' / 'ebay_market_price.py'
+    market_b = ROOT / 'collectors' / 'pricecharting_market_price.py'
+    ia = collector_identity(market_a)
+    ib = collector_identity(market_b)
     assert ia['collector_id'] != ib['collector_id']
     assert ia['provider_id'] != ib['provider_id']
     assert ia['information_family'] == ib['information_family'] == 'market_price'
-    sa = signature('NETWORK_TIMEOUT', str(a), 'timeout', collector_id=ia['collector_id'], provider_id=ia['provider_id'])
-    sb = signature('NETWORK_TIMEOUT', str(b), 'timeout', collector_id=ib['collector_id'], provider_id=ib['provider_id'])
+    sa = signature('NETWORK_TIMEOUT', str(market_a), 'timeout', collector_id=ia['collector_id'], provider_id=ia['provider_id'])
+    sb = signature('NETWORK_TIMEOUT', str(market_b), 'timeout', collector_id=ib['collector_id'], provider_id=ib['provider_id'])
     assert sa != sb
+
+    sale_a = ROOT / 'collectors' / 'ebay_completed_sale.py'
+    sale_b = ROOT / 'collectors' / 'auction_completed_sales.py'
+    assert collector_identity(sale_a)['information_family'] == 'completed_sale'
+    assert collector_identity(sale_b)['information_family'] == 'completed_sale'
+
     sample = {'game': 'pokemon', 'entity_type': 'card', 'card_number': '215', 'name': 'Umbreon VMAX', 'language': 'EN', 'variant': 'alt', 'grader': 'PSA', 'grade': '10', 'currency': 'USD'}
     assert canonical_result_key(sample) == canonical_result_key(dict(sample))
     assert lineage_key(sample, collector_id=ia['collector_id'], provider_id=ia['provider_id']) != lineage_key(sample, collector_id=ib['collector_id'], provider_id=ib['provider_id'])
