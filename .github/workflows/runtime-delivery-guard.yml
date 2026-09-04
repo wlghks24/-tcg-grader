@@ -23,6 +23,13 @@ on:
       - 'pending_official_candidate_bridge_v161.js'
       - 'graded_photo_multi_source.py'
       - 'card_identity_reference_catalog.json'
+      - 'card_identity_recognition.js'
+      - 'card_identity_recognition.py'
+      - 'verify_card_identity_recognition.py'
+      - 'verify_browser_runtime.js'
+      - 'verify_camera_runtime.js'
+      - 'verify_service_worker_runtime.js'
+      - 'verify_link_runtime.py'
       - 'ANDROID_UPDATE_AND_START.sh'
       - 'ANDROID_AUTO_START_INSTALL.sh'
       - 'START_TCG_UPDATER_ANDROID.sh'
@@ -58,6 +65,13 @@ on:
       - 'pending_official_candidate_bridge_v161.js'
       - 'graded_photo_multi_source.py'
       - 'card_identity_reference_catalog.json'
+      - 'card_identity_recognition.js'
+      - 'card_identity_recognition.py'
+      - 'verify_card_identity_recognition.py'
+      - 'verify_browser_runtime.js'
+      - 'verify_camera_runtime.js'
+      - 'verify_service_worker_runtime.js'
+      - 'verify_link_runtime.py'
       - 'ANDROID_UPDATE_AND_START.sh'
       - 'ANDROID_AUTO_START_INSTALL.sh'
       - 'START_TCG_UPDATER_ANDROID.sh'
@@ -111,6 +125,14 @@ jobs:
           node --check manual_official_verify_bridge.js
           node --check pending_official_candidate_bridge_v161.js
           node --check sw.js
+          node --check card_identity_recognition.js
+      - name: Verify browser UI, controls, camera, service worker and links
+        run: |
+          node verify_browser_runtime.js
+          node verify_camera_runtime.js
+          node verify_service_worker_runtime.js
+          python verify_link_runtime.py
+          python verify_card_identity_recognition.py
       - name: Verify generated Termux boot supervisor
         run: |
           bash ANDROID_AUTO_START_INSTALL.sh
