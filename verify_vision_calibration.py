@@ -21,8 +21,12 @@ def row(index: int, *, company: str = "PSA", actual: float = 9, pred: float = 10
             "frontCenter": 48, "backCenter": 48, "surfaceRisk": 8,
             "surfaceConfidence": 88, "analysisConfidence": 90, "multiAngle": True,
             "quadrantWorstRisk": 8, "quadrantSurfaceWorstRisk": 8,
-            "quadrantEdgeWorstRisk": 4, "quadrantMeanRisk": 5,
-            "quadrantImbalance": 6, "quadrantConfidence": 86,
+            "quadrantEdgeWorstRisk": 4, "quadrantCornerWorstRisk": 3,
+            "quadrantMeanRisk": 5, "quadrantImbalance": 6, "quadrantConfidence": 86,
+            "eightZoneWorstRisk": 7, "eightZoneSurfaceWorstRisk": 7,
+            "eightZoneEdgeWorstRisk": 3, "eightZoneCornerWorstRisk": 2,
+            "eightZoneMeanRisk": 4, "eightZoneImbalance": 5, "eightZoneConfidence": 82,
+            "hierarchyDefectRisk": 8, "hierarchyConfidence": 82,
             "engine": calibration.ENGINE_VERSION,
         },
     }
@@ -33,6 +37,32 @@ class CalibrationTests(unittest.TestCase):
         vision = row(1)["vision"]
         vision.update({"quadrantWorstRisk": 62, "quadrantSurfaceWorstRisk": 48, "quadrantImbalance": 54})
         self.assertEqual(calibration.vision_bucket(vision), "centered|surface-high|q-local-defect|multi")
+
+    def test_eight_zone_bucket_preserves_micro_local_defect_signal(self):
+        vision = row(1)["vision"]
+        vision.update({
+            "quadrantWorstRisk": 8,
+            "quadrantSurfaceWorstRisk": 8,
+            "quadrantImbalance": 6,
+            "eightZoneWorstRisk": 63,
+            "eightZoneSurfaceWorstRisk": 47,
+            "eightZoneImbalance": 58,
+            "hierarchyDefectRisk": 63,
+        })
+        self.assertEqual(
+            calibration.vision_bucket(vision),
+            "centered|surface-high|q-local-defect|multi",
+        )
+
+    def test_legacy_four_quadrant_row_keeps_compatible_bucket(self):
+        vision = row(1)["vision"]
+        for key in list(vision):
+            if key.startswith("eightZone") or key.startswith("hierarchy"):
+                vision.pop(key)
+        self.assertEqual(
+            calibration.vision_bucket(vision),
+            "centered|surface-low|q-balanced|multi",
+        )
 
     def test_consistent_overgrade_enables_downward_holdout_correction(self):
         rows = [row(index) for index in range(20)]

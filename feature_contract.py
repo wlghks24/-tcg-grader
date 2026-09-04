@@ -50,6 +50,7 @@ def audit_feature_contract(root: str | Path | None = None) -> dict[str, Any]:
                 "features": [], "excluded": ["iphone_serverless_continuous_collection"]}
 
     page = safe_read_text(base / "index.html")
+    vision_engine = safe_read_text(base / "grading_vision_engine.js")
     server = safe_read_text(base / "tcg_updater.py")
     automatic = safe_read_text(base / "auto_update_all.py")
     pipeline = safe_read_text(base / "auto_pipeline_runner.py")
@@ -94,8 +95,14 @@ def audit_feature_contract(root: str | Path | None = None) -> dict[str, Any]:
         all(f'id="{item}"' in page for item in ("front", "back", "corner", "edge", "surface", "annot",
                                                   "startAutoCamera", "stopAutoCamera", "manualCapture"))
         and all(token in page for token in ("sceneDistance", "Camera", "_tcgCapturedFile", "visibilitychange",
-                                             "analyzeWhitening", "confirmedSegments")),
-        "앞·뒤 파일입력·자동촬영·내부 보더·Hough 선형 결함·백화·카메라 수명주기")
+                                             "confirmedSegments", "hierarchyDefectRisk", "eightZoneWorstRisk"))
+        and all(token in vision_engine for token in (
+            "analyzeWhitening",
+            "quadrantCornerWorstRisk",
+            "eightZoneWorst",
+            "hierarchyDefectRisk",
+        )),
+        "앞·뒤 파일입력·자동촬영·1→4→8 비전·독립 코너/엣지·백화·사선광·카메라 수명주기")
     add("card_identity_ocr_learning", "카드명·카드번호 자동인식·확인형 이미지학습",
         all(token in page for token in ("identityCardName", "identityCardNumber", "identityConfirm",
                                          "card_identity_recognition.js", "tcgRecognizeCurrentCard"))

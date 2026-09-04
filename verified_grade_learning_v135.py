@@ -52,9 +52,19 @@ _OPTIONAL_VISION_FIELDS = {
     "quadrantWorstRisk": (0.0, 100.0),
     "quadrantSurfaceWorstRisk": (0.0, 100.0),
     "quadrantEdgeWorstRisk": (0.0, 100.0),
+    "quadrantCornerWorstRisk": (0.0, 100.0),
     "quadrantMeanRisk": (0.0, 100.0),
     "quadrantImbalance": (0.0, 100.0),
     "quadrantConfidence": (0.0, 100.0),
+    "eightZoneWorstRisk": (0.0, 100.0),
+    "eightZoneSurfaceWorstRisk": (0.0, 100.0),
+    "eightZoneEdgeWorstRisk": (0.0, 100.0),
+    "eightZoneCornerWorstRisk": (0.0, 100.0),
+    "eightZoneMeanRisk": (0.0, 100.0),
+    "eightZoneImbalance": (0.0, 100.0),
+    "eightZoneConfidence": (0.0, 100.0),
+    "hierarchyDefectRisk": (0.0, 100.0),
+    "hierarchyConfidence": (0.0, 100.0),
 }
 
 

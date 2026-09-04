@@ -35,7 +35,10 @@ def main() -> None:
     assert all(token in page for token in ("identityCardName", "identityCardNumber", "identityCandidates",
                                            "identityConfirm", "tcgRecognizeCurrentCard"))
     contract = audit_feature_contract(ROOT)
-    assert contract["ok"] and contract["implemented"] == contract["total"] == 25
+    assert (
+        contract["ok"]
+        and contract["implemented"] == contract["total"] == len(contract["features"])
+    ), json.dumps(contract, ensure_ascii=False, sort_keys=True)
     with tempfile.TemporaryDirectory(prefix="tcg-v109-api-") as td, patch.object(identity, "LEARNING", Path(td) / "identity.json"):
         server = updater.QuietThreadingHTTPServer(("127.0.0.1", 0), updater.Handler)
         thread = threading.Thread(target=server.serve_forever, daemon=True); thread.start()
