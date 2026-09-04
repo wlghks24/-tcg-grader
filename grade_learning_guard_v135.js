@@ -20,24 +20,42 @@ function readJson(key,fallback){try{const value=JSON.parse(localStorage.getItem(
 function writeJson(key,value){try{localStorage.setItem(key,JSON.stringify(value))}catch(_){}}
 function validModel(value){return value&&value.ok===true&&Number(value.version)>=135&&value.companies&&typeof value.companies==='object'}
 
-function currentVisionBucket(){
- const s=window.tcgVisionSnapshot;if(!s)return null;
+function currentVisionBuckets(){
+ const s=window.tcgVisionSnapshot;if(!s)return [];
  const front=number(s.frontCenter?.worst),back=number(s.backCenter?.worst);
- const surface=Math.max(number(s.frontSurface?.risk)||0,number(s.backSurface?.risk)||0);
- if(front===null||back===null||!Number.isFinite(surface))return null;
+ const qf=s.frontQuadrants?.learningFeatures||{},qb=s.backQuadrants?.learningFeatures||{};
+ const zf=s.frontZones?.learningFeatures||{},zb=s.backZones?.learningFeatures||{};
+ const surface=Math.max(
+   number(s.frontHierarchy?.surfaceRisk)||number(s.frontSurface?.risk)||0,
+   number(s.backHierarchy?.surfaceRisk)||number(s.backSurface?.risk)||0,
+   number(qf.quadrantSurfaceWorstRisk)||0,number(qb.quadrantSurfaceWorstRisk)||0,
+   number(zf.eightZoneSurfaceWorstRisk)||0,number(zb.eightZoneSurfaceWorstRisk)||0
+ );
+ if(front===null||back===null||!Number.isFinite(surface))return [];
  const center=Math.min(front,back),centerBand=center>=47?'centered':center>=44?'minor-offcenter':'offcenter';
  const surfaceBand=surface<15?'surface-low':surface<35?'surface-medium':'surface-high';
- const multi=!!(s.frontSurface?.multiAngle&&s.backSurface?.multiAngle);
- return `${centerBand}|${surfaceBand}|${multi?'multi':'single'}`;
+ const localWorst=Math.max(
+   number(qf.quadrantWorstRisk)||0,number(qb.quadrantWorstRisk)||0,
+   number(zf.eightZoneWorstRisk)||0,number(zb.eightZoneWorstRisk)||0,
+   number(s.frontHierarchy?.defectRisk)||0,number(s.backHierarchy?.defectRisk)||0
+ );
+ const imbalance=Math.max(
+   number(qf.quadrantImbalance)||0,number(qb.quadrantImbalance)||0,
+   number(zf.eightZoneImbalance)||0,number(zb.eightZoneImbalance)||0
+ );
+ const localBand=localWorst<15&&imbalance<20?'q-balanced':localWorst<40?'q-watch':'q-local-defect';
+ const multi=!!(s.frontSurface?.multiAngle&&s.backSurface?.multiAngle),angle=multi?'multi':'single';
+ // Modern four-part bucket matches vision_calibration.py. The three-part bucket
+ // remains a read-only fallback for previously persisted calibration profiles.
+ return [`${centerBand}|${surfaceBand}|${localBand}|${angle}`,`${centerBand}|${surfaceBand}|${angle}`];
 }
 
 function safeCorrection(company){
  const entry=safeModel?.companies?.[company];
  let correction=entry?.enabled===true&&Number.isFinite(Number(entry.correction))?Number(entry.correction):0;
- const bucket=currentVisionBucket();
- if(bucket){
+ for(const bucket of currentVisionBuckets()){
    const profile=safeModel?.vision_profiles?.[`${company}|${bucket}`];
-   if(profile?.enabled===true&&Number.isFinite(Number(profile.correction)))correction+=Number(profile.correction);
+   if(profile?.enabled===true&&Number.isFinite(Number(profile.correction))){correction+=Number(profile.correction);break}
  }
  return Math.max(-1,Math.min(0,correction));
 }
