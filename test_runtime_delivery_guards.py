@@ -17,13 +17,13 @@ def main():
         'manual_dual_photo_bridge.js',
     )
     for asset in runtime_assets:
-        matches=re.findall(re.escape(asset)+r'\\?v=(\\d+)',index)
+        matches=re.findall(re.escape(asset)+r'\?v=(\d+)',index)
         assert len(matches)==1, f'{asset} must load exactly once with one numeric cache-buster'
         assert int(matches[0])>=181, f'{asset} cache-buster regressed: {matches[0]}'
     assert '__TCG_MULTI_MARKET_PRICES__' in text('multi_market_prices.js')
 
     sw=text('sw.js')
-    cache_match=re.search(r"const CACHE='tcg-v(\\d+)-network-first-runtime';",sw)
+    cache_match=re.search(r"const CACHE='tcg-v(\d+)-network-first-runtime';",sw)
     assert cache_match and int(cache_match.group(1))>=181, 'service-worker runtime cache id regressed'
     assert "cache:'no-store'" in sw
     assert 'Promise.allSettled(CORE.map' in sw
