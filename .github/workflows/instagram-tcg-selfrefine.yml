@@ -25,6 +25,11 @@ jobs:
           python-version: '3.11'
       - name: Enforce Main vs Instagram domain boundary
         run: python selfrefine_domain_boundary_guard.py
+      - name: Run diversified source verification regression
+        working-directory: instagram_tcg_content
+        run: python test_source_verification_engine.py
+      - name: Validate source route policy JSON
+        run: python -m json.tool instagram_tcg_content/source_routes.json >/dev/null
       - name: Run Instagram TCG Content SELFREFINE only
         run: python instagram_tcg_content/selfrefine_gate.py
       - name: Upload Instagram TCG SELFREFINE ledger
