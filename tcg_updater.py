@@ -95,7 +95,7 @@ MANUAL_PHOTO_UPLOAD_BUCKETS={}
 MANUAL_PHOTO_UPLOAD_WINDOW_SECONDS=10*60.0
 MANUAL_PHOTO_UPLOAD_LIMIT=6
 PUBLIC_STATIC_FILES={
-    'index.html','icon.svg','manifest.webmanifest','sw.js','grading_vision_engine.js','grading_accuracy_v99.js','card_identity_recognition.js',
+    'index.html','icon.svg','manifest.webmanifest','sw.js','grading_vision_engine.js','grading_accuracy_v99.js','card_identity_recognition.js','manual_dual_photo_bridge.js',
     'vision_calibration.json',
     'releases.json','market_prices.json','market_watch.json',
     'promo_events.json','supplementary_candidates.json','social_event_candidates.json',

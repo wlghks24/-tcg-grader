@@ -24,6 +24,7 @@ on:
       - 'graded_photo_multi_source.py'
       - 'card_identity_reference_catalog.json'
       - 'card_identity_recognition.js'
+      - 'manual_dual_photo_bridge.js'
       - 'card_identity_recognition.py'
       - 'verify_card_identity_recognition.py'
       - 'verify_browser_runtime.js'
@@ -66,6 +67,7 @@ on:
       - 'graded_photo_multi_source.py'
       - 'card_identity_reference_catalog.json'
       - 'card_identity_recognition.js'
+      - 'manual_dual_photo_bridge.js'
       - 'card_identity_recognition.py'
       - 'verify_card_identity_recognition.py'
       - 'verify_browser_runtime.js'
@@ -126,6 +128,7 @@ jobs:
           node --check pending_official_candidate_bridge_v161.js
           node --check sw.js
           node --check card_identity_recognition.js
+          node --check manual_dual_photo_bridge.js
       - name: Verify browser UI, controls, camera, service worker and links
         run: |
           node verify_browser_runtime.js
