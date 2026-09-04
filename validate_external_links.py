@@ -399,6 +399,24 @@ def main()->dict:
     same_host_fallback_stats=_attach_same_host_fallbacks(tasks,results,request_timeout)
     template_route_recovery_stats=_classify_template_route_failures(tasks,results,request_timeout)
     counts, unresolved_details=_apply_results(tasks,results,now)
+    blocked_details=[]
+    transient_details=[]
+    for url,refs in tasks.items():
+        result=results.get(url,{})
+        state=result.get("state")
+        if state=="blocked":
+            blocked_details.append({
+                "url":url,
+                "detail":result.get("detail"),
+                "references":[{"file":fn,"field":key} for fn,_row,key in refs[:20]],
+            })
+        elif state=="transient":
+            transient_details.append({
+                "url":url,
+                "detail":result.get("detail"),
+                "code":result.get("code"),
+                "references":[{"file":fn,"field":key} for fn,_row,key in refs[:10]],
+            })
     for fn,data in loaded.items():
         data["link_audit_at"]=now
         atomic_write_json(ROOT/fn,data,suffix='.audit.tmp')
@@ -406,7 +424,9 @@ def main()->dict:
             "request_timeout_seconds":request_timeout,**counts,
             "same_host_fallback_stats":same_host_fallback_stats,
             "template_route_recovery_stats":template_route_recovery_stats,
-            "unresolved_details":unresolved_details}
+            "unresolved_details":unresolved_details,
+            "blocked_details":blocked_details[:50],
+            "transient_details":transient_details[:50]}
     atomic_write_json(ROOT/"link_health_report.json",report,suffix='.report.tmp')
     print(json.dumps(report,ensure_ascii=False))
     return report

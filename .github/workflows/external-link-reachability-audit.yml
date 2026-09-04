@@ -51,9 +51,11 @@ jobs:
           if int(report.get('unresolved_broken') or 0) > 0:
               raise SystemExit('confirmed unresolved 404/410 links remain')
           if int(report.get('blocked') or 0) > 0:
+              print(json.dumps(report.get('blocked_details') or [],ensure_ascii=False,indent=2))
               raise SystemExit('DNS/security-blocked external links remain')
           PY
       - name: Upload live link report
+        if: always()
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
         with:
           name: external-link-reachability-report
