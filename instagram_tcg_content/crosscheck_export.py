@@ -36,7 +36,7 @@ def self_test() -> None:
         "confidence": 0.7,
         "lineage_key": "instagram-lineage",
         "retry_count": 7,
-        "learning_state": {"bad": true}
+        "learning_state": {"bad": True}
     }
     row = normalize_crosscheck_record("instagram_content", sample)
     assert row["domain"] == "instagram_content"
