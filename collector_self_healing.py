@@ -340,6 +340,7 @@ def _observe_locked(report: Any, path: Path) -> dict:
                 recovered += 1
 
         next_policy = None
+        rate_limit_policy = None
         next_cooldown_seconds = None
         next_cooldown_kind = None
         access_control_blocked = False
@@ -365,17 +366,24 @@ def _observe_locked(report: Any, path: Path) -> dict:
                 quarantined += 1
                 continue
             candidate = _choose_policy(stat, _policy_candidates(analysis))
-            if candidate:
+            if candidate and next_policy is None:
                 next_policy = candidate
             http_status = analysis.get("http_status")
             if http_status == 429:
                 retry_after = _safe_int(analysis.get("retry_after_seconds"), 0, 86_400)
-                next_cooldown_seconds = retry_after or 300
-                next_cooldown_kind = "retry_after" if retry_after else "default_rate_limit"
+                cooldown_seconds = retry_after or 300
+                if next_cooldown_seconds is None or cooldown_seconds > next_cooldown_seconds:
+                    next_cooldown_seconds = cooldown_seconds
+                    next_cooldown_kind = "retry_after" if retry_after else "default_rate_limit"
+                if candidate:
+                    rate_limit_policy = candidate
             elif http_status in {401, 403}:
                 access_control_blocked = True
-            if candidate or next_cooldown_seconds or access_control_blocked:
-                break
+
+        if access_control_blocked:
+            next_policy = None
+        elif next_cooldown_seconds and rate_limit_policy:
+            next_policy = rate_limit_policy
         file_row["pending_policy"] = next_policy if unresolved else None
         if unresolved and next_cooldown_seconds:
             until = observed_now + dt.timedelta(seconds=next_cooldown_seconds)
@@ -384,6 +392,11 @@ def _observe_locked(report: Any, path: Path) -> dict:
         elif not unresolved:
             file_row["cooldown_until"] = None
             file_row["cooldown_kind"] = None
+        else:
+            previous_until = _parse_utc(file_row.get("cooldown_until"))
+            if previous_until is not None and previous_until <= observed_now:
+                file_row["cooldown_until"] = None
+                file_row["cooldown_kind"] = None
         file_row["access_control_blocked"] = bool(unresolved and access_control_blocked)
         if next_policy:
             prepared += 1
@@ -405,13 +418,23 @@ def _observe_locked(report: Any, path: Path) -> dict:
             "error": auto_repair_engine.redact_sensitive(f"{type(exc).__name__}: {exc}", 500),
             "safety": {"source_rewrite": False, "git_write": False},
         }
+    status_now = dt.datetime.now(dt.timezone.utc)
+    active_files = 0
+    for row in files.values():
+        plan = _plan_from_row(row, now=status_now)
+        if (
+            row.get("pending_policy") in POLICIES
+            or plan.get("cooldown_active")
+            or plan.get("access_control_blocked")
+        ):
+            active_files += 1
     return {
         "ok": True, "runs": memory["runs"], "policy_applied": applied,
         "policy_recovered": recovered, "next_policy_prepared": prepared,
         "quarantined_for_code_repair": quarantined,
         "duplicate_active_signatures_suppressed": duplicate_active_suppressed,
         "duplicate_policy_observations_suppressed": duplicate_policy_suppressed,
-        "active_files": sum(1 for row in files.values() if row.get("pending_policy")),
+        "active_files": active_files,
         "code_repair_learning": code_repair,
         "safety": memory["safety"],
     }

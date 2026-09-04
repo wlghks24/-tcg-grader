@@ -66,8 +66,9 @@ class CollectorSelfHealingTests(unittest.TestCase):
                 "collection_errors": ["HTTPError: status 429; Retry-After 120s"],
                 "remaining_collection_errors": ["HTTPError: status 429; Retry-After 120s"],
             }]}
-            healing.observe(report, path)
+            summary = healing.observe(report, path)
             plan = healing.plan_for("market_prices.json", path)
+            self.assertEqual(summary["active_files"], 1)
             self.assertTrue(plan["cooldown_active"])
             self.assertEqual(plan["cooldown_kind"], "retry_after")
             self.assertGreaterEqual(plan["cooldown_remaining_seconds"], 118)
@@ -81,12 +82,94 @@ class CollectorSelfHealingTests(unittest.TestCase):
                 "collection_errors": ["HTTPError: status 403"],
                 "remaining_collection_errors": ["HTTPError: status 403"],
             }]}
-            healing.observe(report, path)
+            summary = healing.observe(report, path)
             plan = healing.plan_for("market_prices.json", path)
+            self.assertEqual(summary["active_files"], 1)
             self.assertFalse(plan["cooldown_active"])
             self.assertTrue(plan["access_control_blocked"])
             active = healing.public_status(path)["active"]
             self.assertEqual(active[0]["label"], "접근제어 차단 · 자동 우회 금지")
+
+    def test_mixed_503_then_429_still_records_rate_limit_cooldown(self):
+        with tempfile.TemporaryDirectory() as td:
+            path = Path(td) / "memory.json"
+            report = {"results": [{
+                "file": "market_prices.json", "ok": True,
+                "collection_errors": [
+                    "HTTPError: status 503",
+                    "HTTPError: status 429; Retry-After 120s",
+                ],
+                "remaining_collection_errors": [
+                    "HTTPError: status 503",
+                    "HTTPError: status 429; Retry-After 120s",
+                ],
+            }]}
+            summary = healing.observe(report, path)
+            plan = healing.plan_for("market_prices.json", path)
+            self.assertEqual(summary["active_files"], 1)
+            self.assertTrue(plan["cooldown_active"])
+            self.assertEqual(plan["cooldown_kind"], "retry_after")
+            self.assertGreaterEqual(plan["cooldown_remaining_seconds"], 118)
+            self.assertIn(plan["policy_id"], {"rate_limit_cooldown", "transient_patient"})
+
+    def test_mixed_503_then_403_access_control_has_safety_precedence(self):
+        with tempfile.TemporaryDirectory() as td:
+            path = Path(td) / "memory.json"
+            report = {"results": [{
+                "file": "market_prices.json", "ok": True,
+                "collection_errors": [
+                    "HTTPError: status 503",
+                    "HTTPError: status 403",
+                ],
+                "remaining_collection_errors": [
+                    "HTTPError: status 503",
+                    "HTTPError: status 403",
+                ],
+            }]}
+            summary = healing.observe(report, path)
+            plan = healing.plan_for("market_prices.json", path)
+            self.assertEqual(summary["active_files"], 1)
+            self.assertTrue(plan["access_control_blocked"])
+            self.assertIsNone(plan["policy_id"])
+
+    def test_multiple_429_uses_longest_retry_after(self):
+        with tempfile.TemporaryDirectory() as td:
+            path = Path(td) / "memory.json"
+            report = {"results": [{
+                "file": "market_prices.json", "ok": True,
+                "collection_errors": [
+                    "HTTPError: status 429; Retry-After 60s",
+                    "HTTPError: status 429; Retry-After 300s",
+                ],
+                "remaining_collection_errors": [
+                    "HTTPError: status 429; Retry-After 60s",
+                    "HTTPError: status 429; Retry-After 300s",
+                ],
+            }]}
+            healing.observe(report, path)
+            plan = healing.plan_for("market_prices.json", path)
+            self.assertGreaterEqual(plan["cooldown_remaining_seconds"], 298)
+            self.assertLessEqual(plan["cooldown_remaining_seconds"], 300)
+
+    def test_expired_rate_limit_metadata_is_cleared_on_new_non_429_failure(self):
+        with tempfile.TemporaryDirectory() as td:
+            path = Path(td) / "memory.json"
+            path.write_text(
+                '{"version":2,"files":{"market_prices.json":{'
+                '"signatures":{},"pending_policy":null,"last_applied_policy":null,'
+                '"cooldown_until":"2000-01-01T00:00:00+00:00",'
+                '"cooldown_kind":"retry_after","access_control_blocked":false}}}',
+                encoding="utf-8",
+            )
+            report = {"results": [{
+                "file": "market_prices.json", "ok": True,
+                "collection_errors": ["HTTPError: status 503"],
+                "remaining_collection_errors": ["HTTPError: status 503"],
+            }]}
+            healing.observe(report, path)
+            plan = healing.plan_for("market_prices.json", path)
+            self.assertFalse(plan["cooldown_active"])
+            self.assertIsNone(plan["cooldown_kind"])
 
 
 if __name__ == "__main__":
