@@ -346,6 +346,20 @@ def _observe_locked(report: Any, path: Path) -> dict:
         access_control_blocked = False
         active_pairs = zip(details, analyses) if unresolved else ()
         for detail, analysis in active_pairs:
+            # Cooldown/access-control evidence is request-specific. Multiple 429
+            # diagnostics may share one learned signature but carry different
+            # Retry-After values, so preserve the longest value before signature
+            # deduplication suppresses duplicate learning observations.
+            http_status = analysis.get("http_status")
+            if http_status == 429:
+                retry_after = _safe_int(analysis.get("retry_after_seconds"), 0, 86_400)
+                cooldown_seconds = retry_after or 300
+                if next_cooldown_seconds is None or cooldown_seconds > next_cooldown_seconds:
+                    next_cooldown_seconds = cooldown_seconds
+                    next_cooldown_kind = "retry_after" if retry_after else "default_rate_limit"
+            elif http_status in {401, 403}:
+                access_control_blocked = True
+
             sig = _signature(filename, analysis)
             active_key = (filename, sig)
             if active_key in active_seen:
@@ -368,17 +382,8 @@ def _observe_locked(report: Any, path: Path) -> dict:
             candidate = _choose_policy(stat, _policy_candidates(analysis))
             if candidate and next_policy is None:
                 next_policy = candidate
-            http_status = analysis.get("http_status")
-            if http_status == 429:
-                retry_after = _safe_int(analysis.get("retry_after_seconds"), 0, 86_400)
-                cooldown_seconds = retry_after or 300
-                if next_cooldown_seconds is None or cooldown_seconds > next_cooldown_seconds:
-                    next_cooldown_seconds = cooldown_seconds
-                    next_cooldown_kind = "retry_after" if retry_after else "default_rate_limit"
-                if candidate:
-                    rate_limit_policy = candidate
-            elif http_status in {401, 403}:
-                access_control_blocked = True
+            if http_status == 429 and candidate:
+                rate_limit_policy = candidate
 
         if access_control_blocked:
             next_policy = None

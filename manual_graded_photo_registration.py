@@ -672,6 +672,7 @@ def _process_registration_once(registration_id: str) -> dict[str, Any]:
         reasons = set(current.get("quarantine_reasons") or [])
         reasons.discard("official_lookup_not_confirmed")
         reasons.discard("official_provider_blocked")
+        reasons.update(conflicts)
         reasons.add("manual_official_proof_required")
         current["quarantine_reasons"] = sorted(reasons)
         registry["registrations"][index] = current
