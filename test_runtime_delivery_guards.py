@@ -1,4 +1,5 @@
 from pathlib import Path
+import re
 
 ROOT=Path(__file__).resolve().parent
 
@@ -9,15 +10,21 @@ def text(name):
 
 def main():
     index=text('index.html')
-    assert index.count('multi_market_prices.js') == 1, 'multi-market script must load exactly once'
-    assert 'multi_market_prices.js?v=181' in index
-    assert 'auto_validation_flow.js?v=181' in index
-    assert 'graded_photo_dashboard.js?v=181' in index
-    assert 'manual_dual_photo_bridge.js?v=181' in index
+    runtime_assets=(
+        'multi_market_prices.js',
+        'auto_validation_flow.js',
+        'graded_photo_dashboard.js',
+        'manual_dual_photo_bridge.js',
+    )
+    for asset in runtime_assets:
+        matches=re.findall(re.escape(asset)+r'\\?v=(\\d+)',index)
+        assert len(matches)==1, f'{asset} must load exactly once with one numeric cache-buster'
+        assert int(matches[0])>=181, f'{asset} cache-buster regressed: {matches[0]}'
     assert '__TCG_MULTI_MARKET_PRICES__' in text('multi_market_prices.js')
 
     sw=text('sw.js')
-    assert 'tcg-v181-network-first-runtime' in sw
+    cache_match=re.search(r"const CACHE='tcg-v(\\d+)-network-first-runtime';",sw)
+    assert cache_match and int(cache_match.group(1))>=181, 'service-worker runtime cache id regressed'
     assert "cache:'no-store'" in sw
     assert 'Promise.allSettled(CORE.map' in sw
     assert '(?:html|js|css|json|webmanifest)' in sw
