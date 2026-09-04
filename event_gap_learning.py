@@ -25,7 +25,7 @@ ROOT = Path(__file__).resolve().parent
 MEMORY = ROOT / "event_gap_learning.json"
 PROMO = ROOT / "promo_events.json"
 MANUAL_EVIDENCE = ROOT / "manual_event_evidence.json"
-MAX_CELLS, MAX_TERMS, MAX_SEEN = 120, 600, 500
+MAX_CELLS, MAX_TERMS, MAX_SEEN = 180, 600, 500
 MAX_REGION_HINTS, MAX_RECOVERIES = 360, 240
 TOKEN_RE = re.compile(r"[A-Za-z][A-Za-z0-9_.&'/-]{2,32}|[가-힣]{2,18}|[ァ-ヶ一-龠]{2,18}")
 PHRASE_RE = re.compile(r"\b[A-Z][A-Z0-9&'./-]{2,}(?:\s+[A-Z][A-Z0-9&'./-]{2,}){1,4}\b")
@@ -142,12 +142,17 @@ def _topic(row):
         )
     )
     checks = (
+        ("status_update", r"취소|연기|일정\s*변경|시간\s*변경|장소\s*변경|갱신내용|cancel(?:led|ed|ation)?|postpon(?:e|ed|ement)|reschedul(?:e|ed|ing)|schedule\s+change|venue\s+change|中止|延期|日程変更|時間変更|会場変更|内容変更"),
+        ("deadline", r"마감|신청\s*기한|응모\s*기한|접수\s*기한|신청기간|응모기간|접수기간|deadline|apply\s+by|registration\s+closes?|application\s+period|締切|期限|応募期間|申込期間|受付期間"),
         ("movie", r"영화|극장판|movie|film|映画|劇場版"),
+        ("broadcast", r"라이브|생방송|스트리밍|시청|twitch\s*drops?|live[ -]?stream|broadcast|streaming|redeem|ライブ配信|生配信|配信|視聴|ドロップ|コード"),
         ("anniversary", r"기념|주년|anniversary|周年|記念"),
         ("merch", r"굿즈|점프샵|JUMP SHOP|공식숍|official shop|merch|グッズ|ショップ"),
         ("popup", r"팝업|pop[- ]?up|ポップアップ|RESEARCH LAB"),
+        ("entry", r"응모|신청|접수|등록|추첨|당첨|엔트리|entry|application|registration|register|lottery|drawing|応募|申込|受付|登録|抽選|当選|エントリー"),
         ("tournament", r"대회|리그|championship|tournament|大会|リーグ"),
-        ("promo", r"프로모|증정|배포|특전|응모|전원서비스|promo|giveaway|distribution|応募|配布|特典|全員サービス"),
+        ("stock", r"재입고|입고|재고|품절|구매처|restock|in stock|sold out|availability|retailer|再入荷|入荷|在庫|売り切れ"),
+        ("promo", r"프로모|증정|배포|특전|전원서비스|promo|giveaway|distribution|配布|特典|全員サービス"),
         ("collab", r"콜라보|협업|collab|partnership|コラボ"),
         ("reprint", r"재발매|재판|reprint|再販|再版"),
         ("release", r"출시|발매|release|発売"),

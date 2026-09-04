@@ -52,17 +52,22 @@ GAMES = {
     "나루토": ("나루토", "naruto", "ナルト"),
 }
 REGIONS = ("KR", "JP", "US")
-TOPICS = ("release", "reprint", "event", "tournament", "popup", "promo", "collab", "movie", "merch", "anniversary", "stock", "market", "graded_photo")
-SEARCH_TOPICS = ("release", "reprint", "event", "tournament", "popup", "promo", "collab", "movie", "merch", "anniversary")
+TOPICS = ("release", "reprint", "event", "tournament", "popup", "promo", "collab", "movie", "merch", "anniversary", "stock", "entry", "broadcast", "deadline", "status_update", "market", "graded_photo")
+SEARCH_TOPICS = ("release", "reprint", "event", "tournament", "popup", "promo", "collab", "movie", "merch", "anniversary", "stock", "entry", "broadcast", "deadline", "status_update")
 TOPIC_PRECEDENCE = (
-    "graded_photo", "market", "stock", "movie", "anniversary", "merch",
-    "collab", "reprint", "release", "popup", "tournament", "promo", "event",
+    "graded_photo", "market", "status_update", "deadline", "stock", "broadcast", "entry",
+    "movie", "anniversary", "merch", "collab", "reprint", "release", "popup",
+    "tournament", "promo", "event",
 )
 
 TOPIC_PATTERNS = {
     "graded_photo": re.compile(r"psa|bgs|cgc|tag|brg|graded|slab|등급\s*카드|감정\s*카드|鑑定", re.I),
     "market": re.compile(r"시세|가격|실거래|거래|판매가|price|sold|market|相場|落札|価格", re.I),
+    "status_update": re.compile(r"취소|연기|일정\s*변경|시간\s*변경|장소\s*변경|갱신내용|cancel(?:led|ed|ation)?|postpon(?:e|ed|ement)|reschedul(?:e|ed|ing)|schedule\s+change|venue\s+change|中止|延期|日程変更|時間変更|会場変更|内容変更", re.I),
+    "deadline": re.compile(r"마감|신청\s*기한|응모\s*기한|접수\s*기한|신청기간|응모기간|접수기간|deadline|apply\s+by|registration\s+closes?|application\s+period|締切|期限|応募期間|申込期間|受付期間", re.I),
     "stock": re.compile(r"재고|입고|재입고|품절|매진|자판기|in stock|restock|sold out|在庫|再入荷|売り切れ", re.I),
+    "broadcast": re.compile(r"라이브|생방송|스트리밍|시청|twitch\s*drops?|live[ -]?stream|broadcast|streaming|redeem|ライブ配信|生配信|配信|視聴|ドロップ|コード", re.I),
+    "entry": re.compile(r"응모|신청|접수|등록|추첨|당첨|엔트리|entry|application|registration|register|lottery|drawing|応募|申込|受付|登録|抽選|当選|エントリー", re.I),
     "movie": re.compile(r"영화|극장판|movie|film|cinema|映画|劇場版", re.I),
     "anniversary": re.compile(r"기념|주년|anniversary|commemorative|周年|記念", re.I),
     "merch": re.compile(r"굿즈|공식숍|점프샵|JUMP SHOP|merch|merchandise|official shop|グッズ|公式ショップ", re.I),
@@ -87,6 +92,11 @@ FOCUS_TERMS = {
         "promo": "프로모 프로모카드 증정 배포 특전 한정",
         "collab": "콜라보 협업 제휴 브랜드데이 카페 편의점 마트",
         "movie": "영화 극장판 개봉 특별상영",
+        "stock": "재입고 입고 재고 품절 구매처",
+        "entry": "응모 신청 접수 등록 추첨 당첨 LINE BANDAI TCG+",
+        "broadcast": "라이브 생방송 스트리밍 시청 Twitch Drops 코드",
+        "deadline": "마감 신청마감 응모마감 접수마감 신청기한 응모기한",
+        "status_update": "변경 취소 연기 일정변경 시간변경 장소변경 갱신내용",
     },
     "JP": {
         "release": "発売 新弾 新商品 ブースター スターター 予約 再販",
@@ -99,6 +109,11 @@ FOCUS_TERMS = {
         "movie": "映画 劇場版 上映",
         "merch": "グッズ 公式ショップ ジャンプショップ 限定販売 百貨店",
         "anniversary": "記念 周年 記念展 フェア 祭典",
+        "stock": "再入荷 入荷 在庫 売り切れ 販売店舗",
+        "entry": "応募 申込 受付 登録 抽選 当選 LINE BANDAI TCG+",
+        "broadcast": "ライブ配信 生配信 配信 視聴 Twitch ドロップ コード",
+        "deadline": "締切 期限 応募期間 申込期間 受付期間",
+        "status_update": "変更 中止 延期 日程変更 時間変更 会場変更",
     },
     "US": {
         "release": "release new set booster starter preorder reprint",
@@ -111,6 +126,11 @@ FOCUS_TERMS = {
         "movie": "movie film cinema screening",
         "merch": "merch merchandise official shop limited store",
         "anniversary": "anniversary celebration commemorative exhibition fair",
+        "stock": "restock in stock sold out retailer availability",
+        "entry": "entry application registration lottery LINE BANDAI TCG+",
+        "broadcast": "livestream broadcast streaming Twitch Drops reward code",
+        "deadline": "deadline apply by registration closes application period",
+        "status_update": "change cancelled canceled postponed rescheduled schedule change venue change",
     },
 }
 

@@ -46,7 +46,13 @@ SOCIAL_HOST_KIND = {
     "tiktok.com": "tiktok_public_search", "www.tiktok.com": "tiktok_public_search",
     "twitch.tv": "twitch_public_search", "www.twitch.tv": "twitch_public_search",
     "facebook.com": "facebook_public_search", "www.facebook.com": "facebook_public_search", "m.facebook.com": "facebook_public_search",
+    "lin.ee": "line_official_service_search", "line.me": "line_official_service_search", "www.line.me": "line_official_service_search",
+    "bandai-tcg-plus.com": "bandai_tcg_plus_service_search", "www.bandai-tcg-plus.com": "bandai_tcg_plus_service_search",
+    "namu.wiki": "namuwiki_community_search", "www.namu.wiki": "namuwiki_community_search",
+    "namu.moe": "namuwiki_community_search", "www.namu.moe": "namuwiki_community_search",
 }
+SERVICE_DISCOVERY_HOSTS = {"lin.ee", "line.me", "www.line.me", "bandai-tcg-plus.com", "www.bandai-tcg-plus.com"}
+COMMUNITY_DISCOVERY_HOSTS = {"namu.wiki", "www.namu.wiki", "namu.moe", "www.namu.moe"}
 DIRECT_PROVIDER_ORDER = ("official_youtube_feed", "official_sitemap", "official_direct")
 PROVIDER_ORDER = DIRECT_PROVIDER_ORDER + ("google_news", "bing_rss", "duckduckgo")
 
@@ -225,9 +231,18 @@ def _adaptive_event_rows(candidates: list[dict]) -> list[dict]:
                 confidence = direct_confidence
             else:
                 source_kind = SOCIAL_HOST_KIND.get(host, "adaptive_web_search")
-                source_label = f"자가학습 {provider} · 공식도메인 후보" if official_hint else f"자가학습 {provider} 공개검색 후보"
-                status = "공식도메인 검색후보 · 내용 재확인 필요" if official_hint else "자가학습 검색후보 · 교차확인 필요"
-                confidence = 0.78 if official_hint else 0.56
+                if host in COMMUNITY_DISCOVERY_HOSTS:
+                    source_label = "자가학습 나무위키/커뮤니티 발견 후보"
+                    status = "커뮤니티 보조후보 · 공식 교차확인 필요"
+                    confidence = 0.48
+                elif host in SERVICE_DISCOVERY_HOSTS:
+                    source_label = "자가학습 공식 서비스 경로 공개검색 후보"
+                    status = "서비스 경로 후보 · 공식페이지 교차확인 필요"
+                    confidence = 0.66
+                else:
+                    source_label = f"자가학습 {provider} · 공식도메인 후보" if official_hint else f"자가학습 {provider} 공개검색 후보"
+                    status = "공식도메인 검색후보 · 내용 재확인 필요" if official_hint else "자가학습 검색후보 · 교차확인 필요"
+                    confidence = 0.78 if official_hint else 0.56
             rows.append({
                 "game": game,
                 "region": region,
@@ -238,7 +253,7 @@ def _adaptive_event_rows(candidates: list[dict]) -> list[dict]:
                 "title": title[:220],
                 "source": source,
                 "source_kind": source_kind,
-                "source_tier": "A-social" if is_youtube_official else ("A-search" if official_hint else "B-search"),
+                "source_tier": "A-social" if is_youtube_official else ("C-community" if host in COMMUNITY_DISCOVERY_HOSTS else "B-service" if host in SERVICE_DISCOVERY_HOSTS else "A-search" if official_hint else "B-search"),
                 "source_label": source_label,
                 "official_domain_match": bool(official_hint and not is_youtube_official),
                 "official_account_verified": bool(is_youtube_official),

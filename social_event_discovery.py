@@ -72,9 +72,9 @@ REGION_LANG = {
     "US": {"lang": "en", "hl": "en-US", "gl": "US", "ceid": "US:en"},
 }
 EVENT_TERMS = {
-    "ko": "행사 이벤트 챌린지 도전 개최 특전 배포 콜라보 프로모 팝업 팝업스토어 점프샵 JUMP SHOP 슈에이샤 신세계 영화 극장판 개봉 예약 발매 출시 재발매 재입고 재고 품절 대회 응모 신청 등록 추첨 당첨 라이브 생방송 스트리밍 시청 트위치 드롭 코드 리딤 야구 KBO 굿즈 포토카드 브랜드데이 PLAYGO 재배포 재지급 수령 프로모션팩 신사황",
-    "ja": "イベント チャレンジ 開催 特典 配布 コラボ キャンペーン プロモ ポップアップ 映画 劇場版 発売 再販 再入荷 在庫 売り切れ 大会 応募 申込 登録 抽選 当選 ライブ配信 生配信 視聴 Twitch ドロップ コード グッズ カード",
-    "en": "event challenge special mission collaboration collab promo distribution giveaway pop-up movie film release reprint restock in-stock sold-out tournament preorder entry application registration lottery livestream broadcast streaming twitch drops redeem code merchandise card tiktok facebook",
+    "ko": "행사 이벤트 챌린지 도전 개최 특전 배포 콜라보 프로모 팝업 팝업스토어 점프샵 JUMP SHOP 슈에이샤 신세계 영화 극장판 개봉 예약 발매 출시 재발매 재입고 재고 품절 대회 응모 신청 등록 추첨 당첨 라이브 생방송 스트리밍 시청 트위치 드롭 코드 리딤 야구 KBO 굿즈 포토카드 브랜드데이 PLAYGO 재배포 재지급 수령 프로모션팩 신사황 마감 기한 변경 취소 연기 일정변경 시간변경 장소변경 LINE BANDAI TCG+ TCG+",
+    "ja": "イベント チャレンジ 開催 特典 配布 コラボ キャンペーン プロモ ポップアップ 映画 劇場版 発売 再販 再入荷 在庫 売り切れ 大会 応募 申込 登録 抽選 当選 ライブ配信 生配信 視聴 Twitch ドロップ コード グッズ カード 締切 期限 変更 中止 延期 日程変更 時間変更 会場変更 LINE BANDAI TCG+ TCG+",
+    "en": "event challenge special mission collaboration collab promo distribution giveaway pop-up movie film release reprint restock in-stock sold-out tournament preorder entry application registration lottery livestream broadcast streaming twitch drops redeem code merchandise card tiktok facebook deadline apply-by change cancelled canceled postponed rescheduled LINE BANDAI TCG+ TCG+",
 }
 FAN_TERMS = {
     "ko": "팬 컬렉터 수집 개봉 언박싱 덱 덱리스트 카드샵 매장 재고 입고 품절 시세 후기 대회 프로모 행사 이벤트 신제품 신탄 박스",
@@ -84,7 +84,7 @@ FAN_TERMS = {
 CATEGORY_PATTERNS = (
     ("movie", re.compile(r"영화|극장판|개봉|movie|film|cinema|劇場版|映画|上映|netflix", re.I)),
     ("collaboration", re.compile(r"콜라보|협업|브랜드데이|야구|kbo|wiz|giants|collab|collaboration|コラボ|タイアップ|popup|pop-up|ポップアップ", re.I)),
-    ("promo", re.compile(r"프로모|증정|이벤트|행사|대회|배틀|예약|발매|출시|재입고|재고|품절|응모|신청|등록|추첨|당첨|라이브|생방송|스트리밍|시청|코드|포토카드|promo|event|campaign|tournament|battle|release|preorder|restock|sold out|entry|application|registration|lottery|livestream|broadcast|streaming|twitch drops|redeem|code|キャンペーン|イベント|大会|発売|予約|再入荷|在庫|売り切れ|応募|申込|登録|抽選|当選|ライブ配信|生配信|配信|視聴|ドロップ|コード|プレゼント", re.I)),
+    ("promo", re.compile(r"프로모|증정|이벤트|행사|대회|배틀|예약|발매|출시|재입고|재고|품절|응모|신청|등록|추첨|당첨|마감|기한|변경|취소|연기|일정변경|라이브|생방송|스트리밍|시청|코드|포토카드|promo|event|campaign|tournament|battle|release|preorder|restock|sold out|entry|application|registration|lottery|deadline|apply by|registration closes|cancelled|canceled|postponed|rescheduled|schedule change|livestream|broadcast|streaming|twitch drops|redeem|code|キャンペーン|イベント|大会|発売|予約|再入荷|在庫|売り切れ|応募|申込|登録|抽選|当選|締切|期限|変更|中止|延期|日程変更|ライブ配信|生配信|配信|視聴|ドロップ|コード|プレゼント", re.I)),
 )
 DATE_RE = re.compile(
     r"(?<!\d)(20\d{2})\s*(?:[년./-]|年)\s*(\d{1,2})\s*(?:[월./-]|月)\s*(\d{1,2})\s*(?:일|日)?",
@@ -339,9 +339,9 @@ def _game_query_terms(game: str, region: str) -> str:
     lang = REGION_LANG[region]["lang"]; names = GAMES[game][lang]
     name_expr = " OR ".join(f'"{name}"' if " " in name else name for name in names[:3])
     event_words = {
-        "ko": "(행사 OR 이벤트 OR 챌린지 OR 콜라보 OR 프로모 OR 영화 OR 극장판 OR 발매 OR 출시 OR 재발매 OR 재입고 OR 재고 OR 품절 OR 응모 OR 신청 OR 등록 OR 추첨 OR 당첨 OR 라이브 OR 생방송 OR 스트리밍 OR 시청 OR 코드 OR 대회 OR 야구 OR 굿즈 OR 포토카드 OR PLAYGO OR 재배포 OR 재지급 OR 수령 OR 프로모션팩 OR 신사황)",
-        "ja": "(イベント OR チャレンジ OR コラボ OR キャンペーン OR プロモ OR 映画 OR 劇場版 OR 発売 OR 再販 OR 再入荷 OR 在庫 OR 売り切れ OR 応募 OR 申込 OR 登録 OR 抽選 OR 当選 OR ライブ配信 OR 生配信 OR 配信 OR 視聴 OR コード OR 大会 OR グッズ)",
-        "en": "(event OR challenge OR collab OR collaboration OR promo OR movie OR film OR release OR reprint OR restock OR in-stock OR sold-out OR entry OR application OR registration OR lottery OR livestream OR broadcast OR streaming OR twitch OR drops OR redeem OR code OR tournament OR merchandise)",
+        "ko": "(행사 OR 이벤트 OR 챌린지 OR 콜라보 OR 프로모 OR 영화 OR 극장판 OR 발매 OR 출시 OR 재발매 OR 재입고 OR 재고 OR 품절 OR 응모 OR 신청 OR 등록 OR 추첨 OR 당첨 OR 라이브 OR 생방송 OR 스트리밍 OR 시청 OR 코드 OR 대회 OR 야구 OR 굿즈 OR 포토카드 OR PLAYGO OR 재배포 OR 재지급 OR 수령 OR 프로모션팩 OR 신사황 OR 마감 OR 기한 OR 변경 OR 취소 OR 연기 OR LINE OR \"BANDAI TCG+\")",
+        "ja": "(イベント OR チャレンジ OR コラボ OR キャンペーン OR プロモ OR 映画 OR 劇場版 OR 発売 OR 再販 OR 再入荷 OR 在庫 OR 売り切れ OR 応募 OR 申込 OR 登録 OR 抽選 OR 当選 OR ライブ配信 OR 生配信 OR 配信 OR 視聴 OR コード OR 大会 OR グッズ OR 締切 OR 期限 OR 変更 OR 中止 OR 延期 OR LINE OR \"BANDAI TCG+\")",
+        "en": "(event OR challenge OR collab OR collaboration OR promo OR movie OR film OR release OR reprint OR restock OR in-stock OR sold-out OR entry OR application OR registration OR lottery OR livestream OR broadcast OR streaming OR twitch OR drops OR redeem OR code OR tournament OR merchandise OR deadline OR change OR cancelled OR canceled OR postponed OR rescheduled OR LINE OR \"BANDAI TCG+\")",
     }[lang]
     return f"({name_expr}) {event_words} lang:{lang} -is:retweet"
 
