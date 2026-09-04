@@ -1,27 +1,41 @@
 {
-  "version": 2,
+  "version": 3,
   "domains": {
     "main": {
       "root": ".",
       "exclude_prefixes": [
         "instagram_tcg_content/"
       ],
-      "ledger": "MAIN_SELFREFINE_ERROR_LEDGER.json"
+      "ledger": "MAIN_SELFREFINE_ERROR_LEDGER.json",
+      "learning_namespace": "main"
     },
     "instagram_content": {
       "root": "instagram_tcg_content/",
-      "ledger": "INSTAGRAM_TCG_SELFREFINE_ERROR_LEDGER.json"
+      "ledger": "INSTAGRAM_TCG_SELFREFINE_ERROR_LEDGER.json",
+      "learning_namespace": "instagram_content"
     },
     "shared_self_learning": {
       "root": "shared_self_learning/",
-      "purpose": "shared algorithms and contracts only; no domain runtime or persisted state"
+      "purpose": "pure shared algorithms/contracts only; no file IO, network, domain runtime, provider state, retry state, or persisted learning state"
+    },
+    "crosscheck_exchange": {
+      "root": "crosscheck_exchange/",
+      "purpose": "passive JSON/JSONL factual exchange only"
     }
   },
+  "shared_algorithms": [
+    "observation_fingerprint",
+    "priority_score",
+    "retry_bucket",
+    "error_enrichment",
+    "factual_crosscheck"
+  ],
   "rules": {
     "shared_error_ledger": false,
     "shared_retry_history": false,
     "shared_learning_state": false,
     "shared_collector_registry": false,
+    "shared_provider_health": false,
     "shared_render_state": false,
     "shared_self_learning_code": true,
     "shared_self_learning_state": false,
@@ -31,6 +45,11 @@
     "instagram_content_may_import_shared_self_learning": true,
     "shared_self_learning_may_import_main_runtime": false,
     "shared_self_learning_may_import_instagram_content": false,
-    "cross_domain_result_exchange": "explicit_json_contract_only"
+    "cross_domain_result_exchange": "explicit_json_contract_only",
+    "cross_domain_verification_promotion": false,
+    "cross_domain_provider_state_merge": false,
+    "cross_domain_retry_state_merge": false,
+    "cross_domain_learning_state_merge": false,
+    "cross_domain_lineage_preserved": true
   }
 }
