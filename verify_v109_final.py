@@ -25,6 +25,9 @@ def main() -> int:
         run("카드명·번호 OCR·확인학습", [sys.executable, "verify_v109_card_identity.py"]),
         run("v108 슬랩 코퍼스 회귀", [sys.executable, "verify_v108_final.py"]),
     ]
+    for row in rows:
+        if not row["ok"]:
+            print(f"[DETAIL] {row['name']}: {row.get('detail','')}", flush=True)
     payload = {
         "version": "v109-card-identity-ocr-learning",
         "checked_at": datetime.now(timezone.utc).replace(microsecond=0).isoformat().replace("+00:00", "Z"),
