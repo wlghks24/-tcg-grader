@@ -1,4 +1,5 @@
 name: Runtime delivery guard
+# SELFREFINE final same-SHA cross-check trigger
 
 on:
   push:

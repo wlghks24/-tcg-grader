@@ -1,4 +1,5 @@
 name: Verify detailed collection intelligence
+# SELFREFINE final same-SHA cross-check trigger
 on:
   push:
     paths:
