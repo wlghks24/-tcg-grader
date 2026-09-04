@@ -24,6 +24,7 @@ from typing import Iterable
 
 import repository_integrity_guard as integrity
 import security_self_audit
+import verified_code_repair_rules as verified_repairs
 from safe_runtime import atomic_write_json
 
 ROOT = Path(__file__).resolve().parent
@@ -223,6 +224,14 @@ def scan_file(relative: str, path: Path) -> list[dict]:
                     "JS_SYNTAX", relative, "node --check failure", proc.stderr or proc.stdout,
                     "JavaScript 문법을 수정하고 node --check를 재실행",
                 ))
+    for diagnostic in verified_repairs.detect_text_issues(relative, text):
+        errors.append(make_issue(
+            diagnostic["stage"],
+            relative,
+            diagnostic["root_cause"],
+            diagnostic["evidence"],
+            diagnostic["fix_rule"],
+        ))
     return errors
 
 

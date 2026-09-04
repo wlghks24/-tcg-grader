@@ -7,6 +7,7 @@ from pathlib import Path
 
 import security_self_audit
 import selfrefine_full_repo as core
+import verified_code_repair_rules as verified_repairs
 from shared_self_learning import SHARED_SELF_LEARNING_CONTRACT_VERSION
 from shared_self_learning.engine import enrich_error
 
@@ -14,6 +15,7 @@ ROOT = Path(__file__).resolve().parent
 POLICY = json.loads((ROOT / "selfrefine_domain_policy.json").read_text(encoding="utf-8"))
 EXCLUDES = tuple(POLICY["domains"]["main"]["exclude_prefixes"])
 LEDGER = ROOT / POLICY["domains"]["main"]["ledger"]
+REPAIR_STATE = ROOT / POLICY["domains"]["main"]["state_files"]["verified_repair"]
 
 
 def _is_main_path(relative: str) -> bool:
@@ -68,7 +70,42 @@ def run(cycles: int):
     try:
         core.scan_once = scan_once
         core.LEDGER_PATH = LEDGER
-        return core.run(cycles, path=LEDGER)
+        result = core.run(cycles, path=LEDGER)
+        open_errors = [
+            row for row in result.get("errors", [])
+            if isinstance(row, dict) and row.get("state") == "open"
+        ]
+        repair = verified_repairs.apply_issues(
+            open_errors,
+            root=ROOT,
+            state_path=REPAIR_STATE,
+        )
+        if repair.get("applied_count"):
+            result = core.run(1, path=LEDGER)
+            verification = verified_repairs.record_verification(
+                repair.get("applied", []),
+                result.get("errors", []),
+                state_path=REPAIR_STATE,
+            )
+        else:
+            verification = {
+                "verified_pass": 0,
+                "verification_failed": 0,
+                "quarantined": 0,
+                "state_path": REPAIR_STATE.name,
+            }
+        result["verified_self_heal"] = {
+            "repair": repair,
+            "verification": verification,
+        }
+        result.setdefault("safety", {}).update({
+            "verified_code_defined_auto_repair": True,
+            "learned_patch_text_used": False,
+            "learned_text_executable": False,
+            "git_write": False,
+            "repair_quarantine_after_consecutive_failures": 2,
+        })
+        return result
     finally:
         core.scan_once = original_scan_once
         core.LEDGER_PATH = original_ledger
@@ -79,6 +116,7 @@ def self_test():
     assert _is_main_path("shared_self_learning/engine.py")
     assert not _is_main_path("instagram_tcg_content/selfrefine_gate.py")
     assert LEDGER.name == "MAIN_SELFREFINE_ERROR_LEDGER.json"
+    assert REPAIR_STATE.name == "MAIN_SELFREFINE_VERIFIED_REPAIR_STATE.json"
     assert POLICY["rules"]["shared_self_learning_code"] is True
     assert POLICY["rules"]["shared_self_learning_state"] is False
     assert POLICY["rules"]["cross_domain_learning_state_merge"] is False

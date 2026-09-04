@@ -1,0 +1,392 @@
+#!/usr/bin/env python3
+"""Bounded code-defined SELFREFINE repairs for known regressions.
+
+Only code-defined transformations may edit a local working tree. Error evidence,
+ledger text, learned strings, JSON payloads, and external content are never
+executed or converted into patches. Git is never written here.
+
+A repair is attempted at most once per invocation. Its result is immediately
+re-scanned by Main SELFREFINE. Two consecutive verification failures quarantine
+that rule until the code-defined rule itself is reviewed.
+"""
+from __future__ import annotations
+
+import argparse
+import hashlib
+import json
+import re
+import tempfile
+from pathlib import Path
+from typing import Any
+
+from safe_runtime import atomic_write_json, atomic_write_text, safe_read_text
+
+ROOT = Path(__file__).resolve().parent
+STATE = ROOT / "MAIN_SELF_SELFREFINE_VERIFIED_REPAIR_STATE.json"
+SCHEMA = 1
+MAX_REPAIRS_PER_RUN = 3
+MAX_HISTORY = 100
+MAX_TEXT_BYTES = 4_000_000
+
+NODE24_ACTION_PINS = {
+    "actions/checkout": "3d3c42e5aac5ba805825da76410c181273ba90b1",
+    "actions/setup-python": "5fda3b95a4ea91299a34e894583c3862153e4b97",
+    "actions/upload-artifact": "043fb46d1a93c77aae656e7c1c64a875d1fc6a0a",
+}
+
+CORE_WORKFLOWS = {
+    ".github/workflows/selfrefine-full-repo.yml",
+    ".github/workflows/repository-integrity-guard.yml",
+    ".github/workflows/runtime-delivery-guard.yml",
+    ".github/workflows/instagram-tcg-selfrefine.yml",
+    ".github/workflows/code-repair-learning-guard.yml",
+    ".github/workflows/tcg-code-repair-learning-guard.yml",
+}
+RESOURCE_GUARD_PATH = "test_manual_only_official_verification_v192.py"
+
+ACTION_RULE_ID = "upgrade-core-actions-node24-v1"
+RESOURCE_RULE_ID = "close-literal-read-handles-v1"
+
+_ACTION_RE = re.compile(
+    r"(?P<action>actions/(?:checkout|setup-python|upload-artifact))@(?P<sha>[0-9a-f]{40})"
+)
+_RESOURCE_READ_RE = re.compile(
+    r"open\(\s*(?P<quote>['\"])(?P<path>[^'\"]+)(?P=quote)\s*,\s*"
+    r"encoding\s*=\s*['\"]utf-8['\"]\s*\)\.read\(\)"
+)
+
+
+def _normalized(relative: str) -> str:
+    return str(relative).replace("\\", "/")
+
+
+def detect_text_issues(relative: str, text: str) -> list[dict[str, str]]:
+    relative = _normalized(relative)
+    issues: list[dict[str, str]] = []
+
+    if relative == RESOURCE_GUARD_PATH and _RESOURCE_READ_RE.search(text):
+        issues.append({
+            "stage": "RESOURCE_HANDLE_LEAK_RISK",
+            "root_cause": "unclosed literal text read",
+            "evidence": "open(..., encoding='utf-8').read() can leave a file handle for GC",
+            "fix_rule": RESOURCE_RULE_ID,
+        })
+
+    if relative in CORE_WORKFLOWS:
+        stale = []
+        for match in _ACTION_RE.finditer(text):
+            action = match.group("action")
+            expected = NODE24_ACTION_PINS[action]
+            if match.group("sha") != expected:
+                stale.append(action)
+        if stale:
+            issues.append({
+                "stage": "CI_ACTION_RUNTIME_DEPRECATED",
+                "root_cause": "core GitHub Action not pinned to current Node 24 action release",
+                "evidence": ", ".join(sorted(set(stale))),
+                "fix_rule": ACTION_RULE_ID,
+            })
+    return issues
+
+
+def rule_for_issue(issue: dict[str, Any]) -> str | None:
+    stage = str(issue.get("stage") or "")
+    path = _normalized(str(issue.get("path") or ""))
+    if stage == "RESOURCE_HANDLE_LEAK_RISK" and path == RESOURCE_GUARD_PATH:
+        return RESOURCE_RULE_ID
+    if stage == "CI_ACTION_RUNTIME_DEPRECATED" and path in CORE_WORKFLOWS:
+        return ACTION_RULE_ID
+    return None
+
+
+def _default_state() -> dict[str, Any]:
+    return {
+        "schema": SCHEMA,
+        "rules": {},
+        "history": [],
+        "safety": {
+            "learned_text_executable": False,
+            "learned_patch_text_used": False,
+            "git_write": False,
+            "code_defined_rules_only": True,
+            "max_repairs_per_run": MAX_REPAIRS_PER_RUN,
+            "quarantine_after_consecutive_failures": 2,
+        },
+    }
+
+
+def _load_state(path: Path) -> dict[str, Any]:
+    try:
+        value = json.loads(safe_read_text(path, max_bytes=1_000_000))
+    except (OSError, ValueError, TypeError, UnicodeError):
+        return _default_state()
+    if not isinstance(value, dict):
+        return _default_state()
+    state = _default_state()
+    raw_rules = value.get("rules") if isinstance(value.get("rules"), dict) else {}
+    for rule_id in (ACTION_RULE_ID, RESOURCE_RULE_ID):
+        raw = raw_rules.get(rule_id) if isinstance(raw_rules.get(rule_id), dict) else {}
+        state["rules"][rule_id] = {
+            "attempts": max(0, min(1000, int(raw.get("attempts") or 0))),
+            "successes": max(0, min(1000, int(raw.get("successes") or 0))),
+            "failures": max(0, min(1000, int(raw.get("failures") or 0))),
+            "consecutive_failures": max(0, min(100, int(raw.get("consecutive_failures") or 0))),
+            "quarantined": raw.get("quarantined") is True,
+        }
+    state["history"] = [x for x in (value.get("history") or [])[-MAX_HISTORY:] if isinstance(x, dict)]
+    return state
+
+
+def _save_state(path: Path, state: dict[str, Any]) -> None:
+    state["history"] = state.get("history", [])[-MAX_HISTORY:]
+    atomic_write_json(path, state, suffix=".verified-repair.tmp")
+
+
+def _hash(text: str) -> str:
+    return hashlib.sha256(text.encode("utf-8", "replace")).hexdigest()[:20]
+
+
+def _transform_resource(relative: str, text: str) -> str:
+    if _normalized(relative) != RESOURCE_GUARD_PATH:
+        return text
+    updated = text
+    if _RESOURCE_READ_RE.search(updated) and "from pathlib import Path" not in updated:
+        if "import unittest\n" in updated:
+            updated = updated.replace("import unittest\n", "import unittest\nfrom pathlib import Path\n", 1)
+        else:
+            return text
+
+    def repl(match: re.Match[str]) -> str:
+        literal = repr(match.group("path"))
+        return f"Path({literal}).read_text(encoding='utf-8')"
+
+    return _RESOURCE_READ_RE.sub(repl, updated)
+
+
+def _transform_actions(relative: str, text: str) -> str:
+    if _normalized(relative) not in CORE_WORKFLOWS:
+        return text
+
+    def repl(match: re.Match[str]) -> str:
+        action = match.group("action")
+        return f"{action}@{NODE24_ACTIONS[action]}" if False else f"{action}@{NODE24_ACTION_PINS[action]}"
+
+    return _ACTION_RE.sub(repl, text)
+
+
+def transform_for_rule(rule_id: str, relative: str, text: str) -> str:
+    if rule_id == RESOURCE_RULE_ID:
+        return _transform_resource(relative, text)
+    if rule_id == ACTION_RULE_ID:
+        return _transform_actions(relative, text)
+    return text
+
+
+def apply_issues(
+    issues: list[dict[str, Any]],
+    *,
+    root: Path = ROOT,
+    state_path: Path = STATE,
+    max_repairs: int = MAX_REPAIRS_PER_RUN,
+) -> dict[str, Any]:
+    state = _load_state(state_path)
+    applied: list[dict[str, str]] = []
+    skipped: list[dict[str, str]] = []
+    seen: set[tuple[str, str]] = set()
+    limit = max(0, min(MAX_REPAIRS_PER_RUN, int(max_repairs)))
+
+    for issue in issues:
+        if len(applied) >= limit:
+            break
+        if issue.get("state") not in {None, "open"}:
+            continue
+        rule_id = rule_for_issue(issue)
+        relative = _normalized(str(issue.get("path") or ""))
+        if not rule_id:
+            continue
+        key = (rule_id, relative)
+        if key in seen:
+            continue
+        seen.add(key)
+
+        stats = state.setdefault("rules", {}).setdefault(rule_id, {
+            "attempts": 0, "successes": 0, "failures": 0,
+            "consecutive_failures": 0, "quarantined": False,
+        })
+        if stats.get("quarantined") is True or int(stats.get("consecutive_failures") or 0) >= 2:
+            skipped.append({"rule_id": rule_id, "path": relative, "reason": "quarantined"})
+            continue
+
+        if rule_id == ACTION_RULE_ID and relative not in CORE_WORKFLOWS:
+            skipped.append({"rule_id": rule_id, "path": relative, "reason": "path_not_allowlisted"})
+            continue
+        if rule_id == RESOURCE_RULE_ID and relative != RESOURCE_GUARD_PATH:
+            skipped.append({"rule_id": rule_id, "path": relative, "reason": "path_not_allowlisted"})
+            continue
+
+        target = root / relative
+        try:
+            if target.is_symlink() or not target.is_file():
+                raise OSError("target is not a regular file")
+            before = safe_read_text(target, max_bytes=MAX_TEXT_BYTES)
+        except (OSError, ValueError, UnicodeError):
+            skipped.append({"rule_id": rule_id, "path": relative, "reason": "unsafe_or_unreadable"})
+            continue
+
+        after = transform_for_rule(rule_id, relative, before)
+        if after == before:
+            skipped.append({"rule_id": rule_id, "path": relative, "reason": "precondition_not_met"})
+            continue
+
+        atomic_write_text(target, after, suffix=".verified-self-heal.tmp")
+        applied.append({
+            "rule_id": rule_id,
+            "path": relative,
+            "stage": str(issue.get("stage") or ""),
+            "before_hash": _hash(before),
+            "after_hash": _hash(after),
+        })
+
+    return {
+        "applied_count": len(applied),
+        "applied": applied,
+        "skipped": skipped,
+        "learned_text_executable": False,
+        "learned_patch_text_used": False,
+        "git_write": False,
+        "code_defined_rules_only": True,
+    }
+
+
+def record_verification(
+    applied: list[dict[str, Any]],
+    remaining_errors: list[dict[str, Any]],
+    *,
+    state_path: Path = STATE,
+) -> dict[str, Any]:
+    state = _load_state(state_path)
+    open_keys = {
+        (str(row.get("stage") or ""), _normalized(str(row.get("path") or "")))
+        for row in remaining_errors
+        if isinstance(row, dict) and row.get("state") == "open"
+    }
+    passed = failed = quarantined = 0
+
+    for item in applied:
+        rule_id = str(item.get("rule_id") or "")
+        path = _normalized(str(item.get("path") or ""))
+        stage = str(item.get("stage") or "")
+        if rule_id not in {ACTION_RULE_ID, RESOURCE_RULE_ID}:
+            continue
+        stats = state.setdefault("rules", {}).setdefault(rule_id, {
+            "attempts": 0, "successes": 0, "failures": 0,
+            "consecutive_failures": 0, "quarantined": False,
+        })
+        stats["attempts"] = min(1000, int(stats.get("attempts") or 0) + 1)
+        ok = (stage, path) not in open_keys
+        if ok:
+            stats["successes"] = min(1000, int(stats.get("successes") or 0) + 1)
+            stats["consecutive_failures"] = 0
+            stats["quarantined"] = False
+            passed += 1
+            outcome = "verified_pass"
+        else:
+            stats["failures"] = min(1000, int(stats.get("failures") or 0) + 1)
+            stats["consecutive_failures"] = min(100, int(stats.get("consecutive_failures") or 0) + 1)
+            stats["quarantined"] = stats["consecutive_failures"] >= 2
+            failed += 1
+            quarantined += int(stats["quarantined"])
+            outcome = "verification_failed"
+
+        attempts = max(1, int(stats.get("attempts") or 0))
+        stats["confidence"] = round((int(stats.get("successes") or 0) + 1) / (attempts + 2), 4)
+        state.setdefault("history", []).append({
+            "rule_id": rule_id,
+            "path": path,
+            "stage": stage,
+            "outcome": outcome,
+            "before_hash": str(item.get("before_hash") or "")[:20],
+            "after_hash": str(item.get("after_hash") or "")[:20],
+        })
+
+    _save_state(state_path, state)
+    return {
+        "verified_pass": passed,
+        "verification_failed": failed,
+        "quarantined": quarantined,
+        "state_path": state_path.name,
+        "learned_text_executable": False,
+        "code_defined_rules_only": True,
+    }
+
+
+def self_test() -> int:
+    with tempfile.TemporaryDirectory() as tmp:
+        root = Path(tmp)
+        resource = root / RESOURCE_GUARD_PATH
+        resource.write_text(
+            "import unittest\n\n"
+            "x=open('a.js',encoding='utf-8').read()\n",
+            encoding="utf-8",
+        )
+        workflow_rel = ".github/workflows/selfrefine-full-repo.yml"
+        workflow = root / workflow_rel
+        workflow.parent.mkdir(parents=True)
+        workflow.write_text(
+            "steps:\n"
+            "  - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262\n"
+            "  - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065\n",
+            encoding="utf-8",
+        )
+        state = root / "state.json"
+        issues = []
+        for relative, target in ((RESOURCE_GUARD_PATH, resource), (workflow_rel, workflow)):
+            for item in detect_text_issues(relative, target.read_text(encoding="utf-8")):
+                issues.append({"path": relative, "state": "open", **item})
+        result = apply_issues(issues, root=root, state_path=state)
+        assert result["applied_count"] == 2, result
+        assert "Path('a.js').read_text" in resource.read_text(encoding="utf-8")
+        updated_workflow = workflow.read_text(encoding="utf-8")
+        assert NODE24_ACTION_PINS["actions/checkout"] in updated_workflow
+        assert NODE24_ACTION_PINS["actions/setup-python"] in updated_workflow
+        assert not detect_text_issues(RESOURCE_GUARD_PATH, resource.read_text(encoding="utf-8"))
+        assert not detect_text_issues(workflow_rel, updated_workflow)
+
+        verified = record_verification(result["applied"], [], state_path=state)
+        assert verified["verified_pass"] == 2
+
+        action_item = next(x for x in result["applied"] if x["rule_id"] == ACTION_RULE_ID)
+        remaining = [{"stage": action_item["stage"], "path": action_item["path"], "state": "open"}]
+        record_verification([action_item], remaining, state_path=state)
+        record_verification([action_item], remaining, state_path=state)
+        state_payload = json.loads(state.read_text(encoding="utf-8"))
+        assert state_payload["rules"][ACTION_RULE_ID]["quarantined"] is True
+
+        workflow.write_text(
+            "steps:\n  - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262\n",
+            encoding="utf-8",
+        )
+        stale_issue = [{
+            "path": workflow_rel,
+            "state": "open",
+            **detect_text_issues(workflow_rel, workflow.read_text(encoding="utf-8"))[0],
+        }]
+        blocked = apply_issues(stale_issue, root=root, state_path=state)
+        assert blocked["applied_count"] == 0
+        assert blocked["skipped"][0]["reason"] == "quarantined"
+
+    print("Verified code-defined SELFREFINE repair rules: PASS")
+    return 0
+
+
+def main() -> int:
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--self-test", action="store_true")
+    args = parser.parse_args()
+    if args.self_test:
+        return self_test()
+    raise SystemExit("Use through Main SELFREFINE; direct arbitrary patch input is not supported.")
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

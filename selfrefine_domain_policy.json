@@ -1,5 +1,5 @@
 {
-  "version": 4,
+  "version": 5,
   "domains": {
     "main": {
       "root": ".",
@@ -12,7 +12,8 @@
         "ledger": "MAIN_SELFREFINE_ERROR_LEDGER.json",
         "learning": "MAIN_SELFREFINE_LEARNING_STATE.json",
         "retry": "MAIN_SELFREFINE_RETRY_STATE.json",
-        "provider": "MAIN_SELFREFINE_PROVIDER_STATE.json"
+        "provider": "MAIN_SELFREFINE_PROVIDER_STATE.json",
+        "verified_repair": "MAIN_SELFREFINE_VERIFIED_REPAIR_STATE.json"
       }
     },
     "instagram_content": {
@@ -23,7 +24,8 @@
         "ledger": "INSTAGRAM_TCG_SELFREFINE_ERROR_LEDGER.json",
         "learning": "INSTAGRAM_TCG_SELFREFINE_LEARNING_STATE.json",
         "retry": "INSTAGRAM_TCG_SELFREFINE_RETRY_STATE.json",
-        "provider": "INSTAGRAM_TCG_SELFREFINE_PROVIDER_STATE.json"
+        "provider": "INSTAGRAM_TCG_SELFREFINE_PROVIDER_STATE.json",
+        "verified_repair": "INSTAGRAM_TCG_SELFREFINE_VERIFIED_REPAIR_STATE.json"
       }
     },
     "shared_self_learning": {
@@ -74,6 +76,9 @@
     "cross_domain_lineage_preserved": true,
     "cross_domain_value_averaging": false,
     "cross_domain_conflicts_require_reverification": true,
-    "crosscheck_fail_closed_on_execution_markers": true
+    "crosscheck_fail_closed_on_execution_markers": true,
+    "main_verified_code_defined_auto_repair": true,
+    "instagram_verified_code_defined_auto_repair": false,
+    "learned_patch_text_executable": false
   }
 }
