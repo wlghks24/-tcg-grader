@@ -1,9 +1,12 @@
 #!/usr/bin/env python3
-"""Bounded whole-repository SELFREFINE audit with a non-executable error ledger.
+"""Bounded whole-repository SELFREFINE audit with collector isolation.
 
 This audit never edits source code. It reuses the repository's fail-closed tracked-file
 scope and strict JSON policy, records only bounded diagnostic evidence, preserves
 resolved history, and stops early when repeated cycles produce the same failure set.
+Independent acquisition collectors keep separate error/retry history even when they
+collect the same information family. Cross-source comparison happens only at the
+normalized result layer with canonical identity and preserved lineage.
 """
 from __future__ import annotations
 
@@ -11,6 +14,7 @@ import argparse
 import ast
 import hashlib
 import json
+import re
 import shutil
 import subprocess
 import tempfile
@@ -32,13 +36,68 @@ SHELL_SUFFIXES = {".sh", ".command"}
 JSON_SUFFIXES = set(integrity.JSON_TEXT_SUFFIXES)
 AUDIT_SUFFIXES = set(integrity.TEXT_SUFFIXES) | JS_SUFFIXES
 
+COLLECTOR_HINTS = (
+    "collector", "collect_", "fetch_", "scrape", "crawler", "provider", "source_",
+    "market", "price", "promo", "event", "release", "graded_photo", "grade_photo",
+    "tcgdex", "ebay", "kream", "snkrdunk", "pricecharting", "justtcg", "pavilion",
+)
+INFO_FAMILY_RULES = (
+    ("graded_photo", ("graded_photo", "grade_photo", "slab", "cert_photo")),
+    ("completed_sale", ("completed_sale", "completed-sales", "completed_sales", "sold_listing", "sold-listing", "auction_sale")),
+    ("promo_event", ("promo", "event", "collab", "movie", "campaign")),
+    ("release_reprint", ("release", "reprint", "launch", "product")),
+    ("card_identity", ("identity", "ocr", "card_number", "catalog")),
+    ("market_price", ("market", "price", "pricing", "pricecharting", "justtcg", "pavilion", "kream", "snkrdunk", "ebay")),
+)
+PROVIDER_TOKENS = (
+    "ebay", "pricecharting", "tcgdex", "justtcg", "pavilion", "kream",
+    "snkrdunk", "google", "amazon",
+)
+
 
 def now_kst() -> str:
     return datetime.now(KST).isoformat(timespec="seconds")
 
 
-def error_signature(stage: str, path: str, evidence: str) -> str:
-    raw = f"{stage}|{path}|{evidence[:240]}"
+def _slug(value: str) -> str:
+    value = re.sub(r"[^a-z0-9._-]+", "-", value.lower()).strip("-")
+    return value[:120] or "unknown"
+
+
+def collector_identity(relative: str) -> dict[str, str]:
+    """Return path-stable collector identity and broader information family.
+
+    collector_id is intentionally path-specific. It keeps one acquisition code's
+    403/429/timeout/parser history from affecting another acquisition code.
+    information_family may match across collectors and is used only after collection.
+    """
+    low = str(relative).replace("\\", "/").lower()
+    is_collector = any(hint in low for hint in COLLECTOR_HINTS)
+    collector_id = f"collector:{_slug(low)}" if is_collector else "repo:general"
+
+    parts = re.split(r"[/_.-]+", low)
+    provider_id = "local"
+    for token in PROVIDER_TOKENS:
+        if token in parts or token in low:
+            provider_id = token
+            break
+    if provider_id == "local" and is_collector:
+        provider_id = _slug(Path(relative).stem)
+
+    information_family = "general"
+    for family, hints in INFO_FAMILY_RULES:
+        if any(hint in low for hint in hints):
+            information_family = family
+            break
+    return {
+        "collector_id": collector_id,
+        "provider_id": provider_id,
+        "information_family": information_family,
+    }
+
+
+def error_signature(stage: str, path: str, evidence: str, *, collector_id: str, provider_id: str) -> str:
+    raw = f"{collector_id}|{provider_id}|{stage}|{path}|{evidence[:240]}"
     return hashlib.sha256(raw.encode("utf-8", "replace")).hexdigest()[:20]
 
 
@@ -53,10 +112,20 @@ def tracked_code_files() -> Iterable[tuple[str, Path]]:
 def make_issue(stage: str, relative: str, root_cause: str, evidence: str, fix_rule: str) -> dict:
     stamp = now_kst()
     clean = " ".join(str(evidence or "").replace("\x00", " ").split())[:MAX_EVIDENCE]
+    ident = collector_identity(relative)
     return {
-        "error_signature": error_signature(stage, relative, clean or root_cause),
+        "error_signature": error_signature(
+            stage,
+            relative,
+            clean or root_cause,
+            collector_id=ident["collector_id"],
+            provider_id=ident["provider_id"],
+        ),
         "stage": stage,
         "path": relative,
+        "collector_id": ident["collector_id"],
+        "provider_id": ident["provider_id"],
+        "information_family": ident["information_family"],
         "root_cause": str(root_cause)[:160],
         "evidence": clean,
         "fix_rule": str(fix_rule)[:300],
@@ -66,6 +135,43 @@ def make_issue(stage: str, relative: str, root_cause: str, evidence: str, fix_ru
         "first_seen_at_kst": stamp,
         "last_seen_at_kst": stamp,
     }
+
+
+def canonical_result_key(record: dict) -> str:
+    """Identity key for result-layer comparison, not collector-state merging."""
+    fields = (
+        record.get("game"), record.get("entity_type"), record.get("card_number"),
+        record.get("name"), record.get("language"), record.get("variant"),
+        record.get("grader"), record.get("grade"), record.get("currency"),
+    )
+    return "|".join(_slug(str(value or "")) for value in fields)
+
+
+def lineage_key(record: dict, *, collector_id: str, provider_id: str) -> str:
+    raw = (
+        f"{collector_id}|{provider_id}|{canonical_result_key(record)}|"
+        f"{record.get('source_locator') or ''}"
+    )
+    return hashlib.sha256(raw.encode("utf-8", "replace")).hexdigest()[:24]
+
+
+def normalize_acquired_result(
+    record: dict,
+    *,
+    collector_id: str,
+    provider_id: str,
+    information_family: str,
+) -> dict:
+    """Attach shared comparison identity while preserving independent lineage."""
+    normalized = dict(record)
+    normalized["collector_id"] = collector_id
+    normalized["provider_id"] = provider_id
+    normalized["information_family"] = information_family
+    normalized["canonical_key"] = canonical_result_key(record)
+    normalized["lineage_key"] = lineage_key(
+        record, collector_id=collector_id, provider_id=provider_id
+    )
+    return normalized
 
 
 def scan_file(relative: str, path: Path) -> list[dict]:
@@ -185,14 +291,25 @@ def merge_ledger(current: list[dict], files_scanned: int, cycle: int, *, path: P
     merged.sort(key=lambda row: (row.get("state") != "open", str(row.get("path")), str(row.get("stage"))))
     merged = merged[:MAX_ERRORS]
     open_count = sum(1 for row in merged if row.get("state") == "open")
+    family_errors: dict[str, int] = {}
+    collector_domains: set[str] = set()
+    for row in merged:
+        if row.get("state") != "open":
+            continue
+        family = str(row.get("information_family") or "general")
+        family_errors[family] = family_errors.get(family, 0) + 1
+        collector_domains.add(str(row.get("collector_id") or "repo:general"))
+
     return {
-        "version": 2,
+        "version": 3,
         "updated_at_kst": stamp,
         "cycle": cycle,
         "summary": {
             "files_scanned": files_scanned,
             "open_errors": open_count,
             "resolved_errors_retained": sum(1 for row in merged if row.get("state") == "resolved"),
+            "collector_error_domains": len(collector_domains),
+            "information_family_errors": family_errors,
             "status": "pass" if open_count == 0 else "fail",
         },
         "safety": {
@@ -202,6 +319,12 @@ def merge_ledger(current: list[dict], files_scanned: int, cycle: int, *, path: P
             "tracked_files_only": True,
             "strict_json": True,
             "stable_failure_stops_early": True,
+            "collector_code_merged": False,
+            "collector_error_history_shared": False,
+            "same_information_family_cross_checked_at_result_layer": True,
+            "canonical_key_requires_identity_fields": True,
+            "lineage_preserved_per_collector_provider": True,
+            "completed_sale_separate_from_market_price": True,
         },
         "errors": merged,
     }
@@ -254,6 +377,45 @@ def self_test() -> None:
         assert second["summary"]["open_errors"] == 0
         assert second["summary"]["resolved_errors_retained"] == 1
         assert second["errors"][0]["regression_result"] == "passed"
+
+        # Two different acquisition codes that collect the same kind of market
+        # information keep independent error histories but share a result family.
+        ia = collector_identity("collectors/ebay_market_price.py")
+        ib = collector_identity("collectors/pricecharting_market_price.py")
+        assert ia["collector_id"] != ib["collector_id"]
+        assert ia["provider_id"] != ib["provider_id"]
+        assert ia["information_family"] == ib["information_family"] == "market_price"
+        sig_a = error_signature(
+            "NETWORK_TIMEOUT", "collectors/ebay_market_price.py", "timeout",
+            collector_id=ia["collector_id"], provider_id=ia["provider_id"],
+        )
+        sig_b = error_signature(
+            "NETWORK_TIMEOUT", "collectors/pricecharting_market_price.py", "timeout",
+            collector_id=ib["collector_id"], provider_id=ib["provider_id"],
+        )
+        assert sig_a != sig_b
+
+        assert collector_identity("collectors/ebay_completed_sale.py")["information_family"] == "completed_sale"
+        assert collector_identity("collectors/auction_completed_sales.py")["information_family"] == "completed_sale"
+
+        sample = {
+            "game": "pokemon", "entity_type": "card", "card_number": "215",
+            "name": "Umbreon VMAX", "language": "EN", "variant": "alt",
+            "grader": "PSA", "grade": "10", "currency": "USD",
+        }
+        row_a = normalize_acquired_result(
+            sample,
+            collector_id=ia["collector_id"], provider_id=ia["provider_id"],
+            information_family=ia["information_family"],
+        )
+        row_b = normalize_acquired_result(
+            sample,
+            collector_id=ib["collector_id"], provider_id=ib["provider_id"],
+            information_family=ib["information_family"],
+        )
+        assert row_a["canonical_key"] == row_b["canonical_key"]
+        assert row_a["lineage_key"] != row_b["lineage_key"]
+        assert row_a["collector_id"] != row_b["collector_id"]
 
 
 def main() -> int:
