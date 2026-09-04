@@ -1,1 +1,1 @@
-"""Instagram TCG Content domain package. Runtime state is domain-local."""\n
+"""Instagram TCG Content domain package. Runtime state is domain-local."""
