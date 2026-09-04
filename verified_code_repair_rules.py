@@ -22,7 +22,7 @@ from typing import Any
 from safe_runtime import atomic_write_json, atomic_write_text, safe_read_text
 
 ROOT = Path(__file__).resolve().parent
-STATE = ROOT / "MAIN_SELF_SELFREFINE_VERIFIED_REPAIR_STATE.json"
+STATE = ROOT / "MAIN_SELFREFINE_VERIFIED_REPAIR_STATE.json"
 SCHEMA = 1
 MAX_REPAIRS_PER_RUN = 3
 MAX_HISTORY = 100
@@ -169,7 +169,7 @@ def _transform_actions(relative: str, text: str) -> str:
 
     def repl(match: re.Match[str]) -> str:
         action = match.group("action")
-        return f"{action}@{NODE24_ACTIONS[action]}" if False else f"{action}@{NODE24_ACTION_PINS[action]}"
+        return f"{action}@{NODE24_ACTION_PINS[action]}"
 
     return _ACTION_RE.sub(repl, text)
 

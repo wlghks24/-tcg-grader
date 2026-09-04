@@ -20,6 +20,10 @@ on:
       - 'collector_self_healing.py'
       - 'auto_repair_engine.py'
       - 'safe_runtime.py'
+      - 'selfrefine_full_repo.py'
+      - 'main_selfrefine_gate.py'
+      - 'test_verified_code_repair_rules_v19.py'
+      - 'verified_code_repair_rules.py'
       - '.gitignore'
       - '.github/workflows/code-repair-learning-guard.yml'
   workflow_dispatch:
@@ -43,7 +47,9 @@ jobs:
             auto_repair_engine.py \
             safe_runtime.py \
             collector_self_healing.py \
-            tcg_code_repair_learning.py
+            tcg_code_repair_learning.py \
+            verified_code_repair_rules.py \
+            test_verified_code_repair_rules_v19.py
 
       - name: Exercise TCG-wide repair learning self-test
         run: |
