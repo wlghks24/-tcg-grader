@@ -453,7 +453,10 @@ def _run_card_tesseract(
 
 
 def _high_confidence_identity(text: str, game: str, region: str) -> bool:
-    hits = match_catalog(text, game, limit=1, region=region)
+    # Region is a ranking hint, not an OCR-text sufficiency requirement. An exact
+    # card number + name remains sufficient even when the caller's region hint is
+    # UNKNOWN or stale; final candidate ranking still applies the region signal.
+    hits = match_catalog(text, game, limit=1, region="UNKNOWN")
     if not hits:
         return False
     best = hits[0]
