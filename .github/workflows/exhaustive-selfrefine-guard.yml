@@ -41,21 +41,33 @@ jobs:
           python - <<'PY'
           import re
           from pathlib import Path
+          import yaml
+
+          action_key = "u" + "ses"
           bad=[]
           total=0
+
+          def walk(value,path):
+              global total
+              if isinstance(value,dict):
+                  for key,item in value.items():
+                      if key == action_key and isinstance(item,str):
+                          total += 1
+                          if item.startswith('./') or item.startswith('docker://'):
+                              continue
+                          ref=item.rsplit('@',1)[1] if '@' in item else ''
+                          if not re.fullmatch(r'[0-9a-fA-F]{40}',ref):
+                              bad.append((str(path),item))
+                      else:
+                          walk(item,path)
+              elif isinstance(value,list):
+                  for item in value:
+                      walk(item,path)
+
           for path in sorted(Path('.github/workflows').glob('*.y*ml')):
-              for lineno,line in enumerate(path.read_text(encoding='utf-8-sig').splitlines(),1):
-                  m=re.match(r'\s*-\s*uses:\s*([^#\s]+)',line)
-                  if not m:
-                      continue
-                  spec=m.group(1)
-                  total+=1
-                  if spec.startswith('./') or spec.startswith('docker://'):
-                      continue
-                  ref=spec.rsplit('@',1)[1] if '@' in spec else ''
-                  if not re.fullmatch(r'[0-9a-fA-F]{40}',ref):
-                      bad.append((str(path),lineno,spec))
-          print(f'external/local action uses checked: {total}')
+              payload=yaml.safe_load(path.read_text(encoding='utf-8-sig'))
+              walk(payload,path)
+          print(f'external/local action references checked: {total}')
           for row in bad:
               print('UNPINNED',*row)
           if bad:
