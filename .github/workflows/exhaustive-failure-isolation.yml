@@ -1,0 +1,35 @@
+name: Exhaustive Failure Isolation
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/exhaustive-failure-isolation.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  isolate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 18
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97
+        with:
+          python-version: '3.12'
+      - run: python -m pip install --disable-pip-version-check -r requirements.txt
+      - name: Run previously failing modules in isolated interpreters
+        run: |
+          set +e
+          failed=0
+          for mod in             test_extended_discovery_channels_v5             test_source_gap_taxonomy_v6             test_graded_photo_multi_source             test_library_slab_corpus             test_manual_graded_photo_registration             test_manual_official_proof             test_brg_manual_server_error_v163             test_collector_recovery_v161             test_collector_self_healing             test_error_recovery_learning_v134             test_jump_shop_event_watch             test_manual_only_official_verification_v192             test_psa_manual_proof_match_v166             test_security_hardening
+          do
+            echo "===== $mod ====="
+            python -m unittest -v "$mod"
+            rc=$?
+            if [ "$rc" -ne 0 ]; then failed=$((failed+1)); fi
+          done
+          echo "isolated failing modules: $failed"
+          exit "$failed"
