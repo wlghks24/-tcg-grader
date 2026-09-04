@@ -238,8 +238,16 @@ def _tesseract_languages() -> set[str]:
     }
 
 
-def _multilang_negative_ocr(image_path: Path) -> tuple[str, str | None]:
-    """OCR browser proof with Korean support without weakening delete policy."""
+def _multilang_negative_ocr(
+    image_path: Path, company: str = ""
+) -> tuple[str, str | None]:
+    """OCR browser proof with Korean support and evidence-driven early stop.
+
+    When the expected grader is known, stop as soon as the same OCR chunk set
+    contains either a server-error signal or both the grader brand and an
+    explicit no-record signal. With no company hint, preserve the legacy full
+    pass behavior for compatibility and diagnostics.
+    """
     binary = shutil.which("tesseract")
     if not binary:
         return "", "tesseract_not_installed"
@@ -275,6 +283,14 @@ def _multilang_negative_ocr(image_path: Path) -> tuple[str, str | None]:
                     )
                     if run.returncode == 0 and run.stdout.strip():
                         chunks.append(run.stdout.strip())
+                        if company:
+                            partial = "\n".join(dict.fromkeys(chunks))
+                            signal = _negative_ocr(partial, {}, company)
+                            if signal.get("site_error_detected") or (
+                                signal.get("negative_text_detected")
+                                and signal.get("company_brand_detected")
+                            ):
+                                return partial[:8000], None
         text = "\n".join(dict.fromkeys(chunks))
         return text[:8000], None if text else "ocr_empty"
     except ImportError:
@@ -344,7 +360,7 @@ def _submit_not_found(incoming: dict[str, Any]) -> dict[str, Any]:
     multilang_error = None
     if (not signal.get("site_error_detected")
             and (not signal.get("negative_text_detected") or not signal.get("company_brand_detected"))):
-        extra_text, multilang_error = _multilang_negative_ocr(proof_path)
+        extra_text, multilang_error = _multilang_negative_ocr(proof_path, company)
         if extra_text:
             text = "\n".join(part for part in (text, extra_text) if part)
             signal = _negative_ocr(text, evidence, company)
