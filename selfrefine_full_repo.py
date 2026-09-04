@@ -19,9 +19,6 @@ SKIP_DIRS = {'.git', '.venv', 'venv', 'node_modules', '__pycache__', 'dist', 'bu
 MAX_FILE_BYTES = 2_000_000
 LEDGER_PATH = ROOT / 'SELFREFINE_ERROR_LEDGER.json'
 
-# Different acquisition implementations remain independent collectors. Files can
-# still be grouped by the kind of information they collect so cross-source
-# comparison happens at the data layer instead of by merging collector code.
 COLLECTOR_HINTS = (
     'collector', 'collect_', 'fetch_', 'scrape', 'crawler', 'provider', 'source_',
     'market', 'price', 'promo', 'event', 'release', 'graded_photo', 'grade_photo',
@@ -47,12 +44,6 @@ def _slug(value: str) -> str:
 
 
 def collector_identity(path: Path) -> dict[str, str]:
-    """Return stable acquisition identity without merging independent code paths.
-
-    collector_id is path-specific so two collectors that gather the same data do
-    not share retry/error history. information_family is deliberately broader and
-    may match across collectors; it is for result-layer normalization/comparison.
-    """
     rel = str(path.relative_to(ROOT)).replace('\\', '/')
     low = rel.lower()
     is_collector = any(hint in low for hint in COLLECTOR_HINTS)
@@ -72,11 +63,7 @@ def collector_identity(path: Path) -> dict[str, str]:
         if any(h in low for h in hints):
             information_family = family
             break
-    return {
-        'collector_id': collector_id,
-        'provider_id': provider_id,
-        'information_family': information_family,
-    }
+    return {'collector_id': collector_id, 'provider_id': provider_id, 'information_family': information_family}
 
 
 def signature(stage: str, path: str, evidence: str, *, collector_id: str, provider_id: str) -> str:
@@ -103,10 +90,7 @@ def issue(stage: str, path: Path, root_cause: str, evidence: str, fix_rule: str)
     ts = now_kst()
     ident = collector_identity(path)
     return {
-        'error_signature': signature(
-            stage, rel, evidence,
-            collector_id=ident['collector_id'], provider_id=ident['provider_id'],
-        ),
+        'error_signature': signature(stage, rel, evidence, collector_id=ident['collector_id'], provider_id=ident['provider_id']),
         'stage': stage,
         'path': rel,
         'collector_id': ident['collector_id'],
@@ -124,8 +108,7 @@ def issue(stage: str, path: Path, root_cause: str, evidence: str, fix_rule: str)
 
 def check_python(path: Path) -> list[dict]:
     try:
-        text = path.read_text(encoding='utf-8')
-        ast.parse(text, filename=str(path))
+        ast.parse(path.read_text(encoding='utf-8'), filename=str(path))
         return []
     except Exception as exc:
         return [issue('PYTHON_SYNTAX', path, type(exc).__name__, repr(exc), '수정 후 ast.parse 및 회귀검사를 다시 실행')]
@@ -159,11 +142,6 @@ def check_js(path: Path) -> list[dict]:
 
 
 def canonical_result_key(record: dict) -> str:
-    """Build a conservative result-layer key for cross-collector comparison.
-
-    This never merges collector state. It only describes when two acquired rows
-    are candidates for comparison/deduplication after collection.
-    """
     fields = (
         record.get('game'), record.get('entity_type'), record.get('card_number'),
         record.get('name'), record.get('language'), record.get('variant'),
@@ -175,6 +153,17 @@ def canonical_result_key(record: dict) -> str:
 def lineage_key(record: dict, *, collector_id: str, provider_id: str) -> str:
     raw = f'{collector_id}|{provider_id}|{canonical_result_key(record)}|{record.get("source_locator") or ""}'
     return hashlib.sha256(raw.encode('utf-8', 'replace')).hexdigest()[:24]
+
+
+def normalize_acquired_result(record: dict, *, collector_id: str, provider_id: str, information_family: str) -> dict:
+    """Attach shared comparison identity while preserving independent acquisition lineage."""
+    normalized = dict(record)
+    normalized['collector_id'] = collector_id
+    normalized['provider_id'] = provider_id
+    normalized['information_family'] = information_family
+    normalized['canonical_key'] = canonical_result_key(record)
+    normalized['lineage_key'] = lineage_key(record, collector_id=collector_id, provider_id=provider_id)
+    return normalized
 
 
 def load_previous() -> dict:
@@ -198,7 +187,8 @@ def merge_ledger(current: list[dict]) -> dict:
     families: dict[str, int] = {}
     collectors: set[str] = set()
     for row in merged:
-        families[row.get('information_family') or 'general'] = families.get(row.get('information_family') or 'general', 0) + 1
+        family = row.get('information_family') or 'general'
+        families[family] = families.get(family, 0) + 1
         collectors.add(row.get('collector_id') or 'repo:general')
     return {
         'version': 2,
@@ -215,6 +205,7 @@ def merge_ledger(current: list[dict]) -> dict:
             'same_information_family_cross_checked_at_result_layer': True,
             'canonical_key_requires_identity_fields': True,
             'lineage_preserved_per_collector_provider': True,
+            'completed_sale_separate_from_market_price': True,
         },
         'errors': merged,
     }
@@ -238,8 +229,11 @@ def self_test_collector_isolation() -> None:
     assert collector_identity(sale_b)['information_family'] == 'completed_sale'
 
     sample = {'game': 'pokemon', 'entity_type': 'card', 'card_number': '215', 'name': 'Umbreon VMAX', 'language': 'EN', 'variant': 'alt', 'grader': 'PSA', 'grade': '10', 'currency': 'USD'}
-    assert canonical_result_key(sample) == canonical_result_key(dict(sample))
-    assert lineage_key(sample, collector_id=ia['collector_id'], provider_id=ia['provider_id']) != lineage_key(sample, collector_id=ib['collector_id'], provider_id=ib['provider_id'])
+    na = normalize_acquired_result(sample, collector_id=ia['collector_id'], provider_id=ia['provider_id'], information_family=ia['information_family'])
+    nb = normalize_acquired_result(sample, collector_id=ib['collector_id'], provider_id=ib['provider_id'], information_family=ib['information_family'])
+    assert na['canonical_key'] == nb['canonical_key']
+    assert na['lineage_key'] != nb['lineage_key']
+    assert na['collector_id'] != nb['collector_id']
 
 
 def run_once() -> dict:
