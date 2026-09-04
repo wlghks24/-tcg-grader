@@ -1,5 +1,5 @@
 {
-  "version": 7,
+  "version": 8,
   "domains": {
     "main": {
       "root": ".",
@@ -37,6 +37,38 @@
     "crosscheck_exchange": {
       "root": "crosscheck_exchange/",
       "purpose": "passive JSON/JSONL factual exchange only; never executable"
+    }
+  },
+  "module_management": {
+    "version": 1,
+    "registry": "selfrefine_modules/registry.py",
+    "exclusive_source_ownership": true,
+    "exclusive_state_ownership": true,
+    "legacy_root_entrypoints_preserved": true,
+    "modules": {
+      "grading_vision": {
+        "state_files": [
+          "vision_calibration.json"
+        ]
+      },
+      "collection": {
+        "state_files": [
+          "MAIN_SELFREFINE_PROVIDER_STATE.json"
+        ]
+      },
+      "repair_security": {
+        "state_files": [
+          "MAIN_SELFREFINE_VERIFIED_REPAIR_STATE.json",
+          "MAIN_SELFREFINE_ERROR_QUARANTINE_STATE.json",
+          "MAIN_SELFREFINE_LEARNING_STATE.json",
+          "MAIN_SELFREFINE_RETRY_STATE.json"
+        ]
+      },
+      "orchestration": {
+        "state_files": [
+          "MAIN_SELFREFINE_ERROR_LEDGER.json"
+        ]
+      }
     }
   },
   "shared_algorithms": [
@@ -91,6 +123,8 @@
     "repair_rule_fingerprint_required": true,
     "process_safe_selfrefine_state": true,
     "self_modify_max_files_per_run": 3,
-    "self_modify_git_write": false
+    "self_modify_git_write": false,
+    "module_source_ownership_exclusive": true,
+    "module_state_ownership_exclusive": true
   }
 }
