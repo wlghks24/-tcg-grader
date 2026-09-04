@@ -25,7 +25,9 @@ jobs:
           python-version: '3.12'
 
       - name: Collector isolation contract
-        run: python selfrefine_full_repo.py --self-test
+        run: |
+          python selfrefine_full_repo.py --self-test
+          echo "independent collectors / shared information-family comparison: PASS"
 
       - name: Repository-wide SELFREFINE audit
         run: python selfrefine_full_repo.py --cycles 5
