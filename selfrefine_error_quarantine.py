@@ -14,11 +14,11 @@ from pathlib import Path
 from typing import Any
 
 import verified_code_repair_rules as verified_repairs
-from safe_runtime import atomic_write_json, safe_read_text
+from safe_runtime import atomic_write_json, exclusive_file_lock, safe_read_text
 
 ROOT = Path(__file__).resolve().parent
 STATE = ROOT / "MAIN_SELFREFINE_ERROR_QUARANTINE_STATE.json"
-SCHEMA = 1
+SCHEMA = 2
 MAX_ENTRIES = 500
 MAX_HISTORY = 200
 MAX_TEXT = 240
@@ -87,6 +87,8 @@ def _default() -> dict[str, Any]:
             "cross_domain_state_merge": False,
             "unknown_error_auto_repair": False,
             "verification_failure_quarantine_threshold": 2,
+            "process_safe_state_transaction": True,
+            "failed_repair_auto_rollback": True,
         },
     }
 
@@ -152,7 +154,7 @@ def _confidence(entry: dict[str, Any]) -> float:
     return round((successes + 1.0) / (successes + failures + 2.0), 4)
 
 
-def observe_open_errors(
+def _observe_open_errors_unlocked(
     errors: list[dict[str, Any]],
     *,
     state_path: Path = STATE,
@@ -262,7 +264,16 @@ def observe_open_errors(
     }
 
 
-def record_repair_outcomes(
+
+def observe_open_errors(
+    errors: list[dict[str, Any]],
+    *,
+    state_path: Path = STATE,
+) -> dict[str, Any]:
+    with exclusive_file_lock(state_path):
+        return _observe_open_errors_unlocked(errors, state_path=state_path)
+
+def _record_repair_outcomes_unlocked(
     applied: list[dict[str, Any]],
     remaining_errors: list[dict[str, Any]],
     *,
@@ -288,7 +299,10 @@ def record_repair_outcomes(
         if not isinstance(entry, dict):
             continue
 
-        resolved = signature not in open_signatures
+        resolved = (
+            signature not in open_signatures
+            and item.get("verification_forced_failed") is not True
+        )
         if resolved:
             entry["verified_successes"] = min(
                 10000, _safe_int(entry.get("verified_successes"), 10000) + 1
@@ -338,8 +352,21 @@ def record_repair_outcomes(
     }
 
 
+
+def record_repair_outcomes(
+    applied: list[dict[str, Any]],
+    remaining_errors: list[dict[str, Any]],
+    *,
+    state_path: Path = STATE,
+) -> dict[str, Any]:
+    with exclusive_file_lock(state_path):
+        return _record_repair_outcomes_unlocked(
+            applied, remaining_errors, state_path=state_path
+        )
+
 def public_status(*, state_path: Path = STATE) -> dict[str, Any]:
-    state = _load(state_path)
+    with exclusive_file_lock(state_path):
+        state = _load(state_path)
     entries = list(state.get("entries", {}).values())
     return {
         "ok": True,

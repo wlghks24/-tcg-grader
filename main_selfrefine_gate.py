@@ -87,18 +87,36 @@ def run(cycles: int):
             state_path=REPAIR_STATE,
         )
         if repair.get("applied_count"):
-            result = core.run(1, path=LEDGER)
+            post_repair_result = core.run(1, path=LEDGER)
+            rollback = verified_repairs.rollback_failed_repairs(
+                repair.get("applied", []),
+                open_errors,
+                post_repair_result.get("errors", []),
+                root=ROOT,
+            )
             verification = verified_repairs.record_verification(
                 repair.get("applied", []),
-                result.get("errors", []),
+                post_repair_result.get("errors", []),
                 state_path=REPAIR_STATE,
             )
             resolution_learning = error_quarantine.record_repair_outcomes(
                 repair.get("applied", []),
-                result.get("errors", []),
+                post_repair_result.get("errors", []),
                 state_path=ERROR_QUARANTINE_STATE,
             )
+            result = (
+                core.run(1, path=LEDGER)
+                if rollback.get("restored") or rollback.get("rollback_conflicts")
+                else post_repair_result
+            )
         else:
+            rollback = {
+                "restored": 0,
+                "verified_kept": 0,
+                "rollback_conflicts": 0,
+                "new_regressions": [],
+                "fail_closed": True,
+            }
             verification = {
                 "verified_pass": 0,
                 "verification_failed": 0,
@@ -114,6 +132,7 @@ def run(cycles: int):
         result["verified_self_heal"] = {
             "isolation": isolation,
             "repair": repair,
+            "rollback": rollback,
             "verification": verification,
             "resolution_learning": resolution_learning,
         }
@@ -122,6 +141,8 @@ def run(cycles: int):
             "learned_solution_reuse": isolation.get("summary", {}).get("learned_solution_reuse", 0),
             "quarantined_error_codes": isolation.get("summary", {}).get("quarantined_count", 0),
             "verified_resolutions_learned": resolution_learning.get("verified_resolution_learned", 0),
+            "self_modify_rollbacks": rollback.get("restored", 0),
+            "self_modify_rollback_conflicts": rollback.get("rollback_conflicts", 0),
         })
         result.setdefault("safety", {}).update({
             "verified_code_defined_auto_repair": True,
@@ -132,6 +153,10 @@ def run(cycles: int):
             "error_code_isolation": True,
             "verified_resolution_learning": True,
             "unknown_error_auto_repair": False,
+            "failed_repair_auto_rollback": True,
+            "new_regression_auto_rollback": True,
+            "repair_rule_fingerprint_required": True,
+            "process_safe_learning_state": True,
         })
         return result
     finally:
@@ -149,6 +174,9 @@ def self_test():
     assert POLICY["rules"]["shared_self_learning_code"] is True
     assert POLICY["rules"]["shared_self_learning_state"] is False
     assert POLICY["rules"]["cross_domain_learning_state_merge"] is False
+    assert POLICY["rules"]["failed_self_modify_auto_rollback"] is True
+    assert POLICY["rules"]["repair_rule_fingerprint_required"] is True
+    assert POLICY["rules"]["process_safe_selfrefine_state"] is True
     assert SHARED_SELF_LEARNING_CONTRACT_VERSION >= 3
     left = enrich_error("main", {"stage": "HTTP_429", "path": "a.py", "evidence": "rate limited"})
     right = enrich_error("instagram_content", {"stage": "HTTP_429", "path": "a.py", "evidence": "rate limited"})

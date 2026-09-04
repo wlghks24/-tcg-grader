@@ -2,7 +2,7 @@ name: TCG Code Repair Learning Guard
 on:
   pull_request:
     paths:
-      - 'selfrefine_domain_policy.json'
+      - 'test_secure_self_modify_v21.py'\n      - 'selfrefine_domain_policy.json'
       - 'test_selfrefine_error_quarantine_v20.py'
       - 'selfrefine_error_quarantine.py'
       - 'tcg_code_repair_learning.py'
@@ -18,7 +18,7 @@ on:
   push:
     branches: [main]
     paths:
-      - 'selfrefine_domain_policy.json'
+      - 'test_secure_self_modify_v21.py'\n      - 'selfrefine_domain_policy.json'
       - 'test_selfrefine_error_quarantine_v20.py'
       - 'selfrefine_error_quarantine.py'
       - 'tcg_code_repair_learning.py'
@@ -45,12 +45,12 @@ jobs:
           python-version: '3.11'
       - name: Compile bounded learning modules
         run: |
-          python -m py_compile safe_runtime.py auto_repair_engine.py collector_self_healing.py tcg_code_repair_learning.py verified_code_repair_rules.py selfrefine_error_quarantine.py test_selfrefine_error_quarantine_v20.py
+          python -m py_compile safe_runtime.py auto_repair_engine.py collector_self_healing.py tcg_code_repair_learning.py verified_code_repair_rules.py selfrefine_error_quarantine.py test_selfrefine_error_quarantine_v20.py test_secure_self_modify_v21.py
       - name: Run code-repair learning self-test
         run: |
           python tcg_code_repair_learning.py --self-test
           python verified_code_repair_rules.py --self-test
-          python -m unittest -v test_verified_code_repair_rules_v19.py test_selfrefine_error_quarantine_v20.py
+          python -m unittest -v test_verified_code_repair_rules_v19.py test_selfrefine_error_quarantine_v20.py test_secure_self_modify_v21.py
       - name: Verify safety contracts
         run: |
           grep -Fq 'source_auto_rewrite_allowed": False' tcg_code_repair_learning.py

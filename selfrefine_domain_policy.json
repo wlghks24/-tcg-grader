@@ -1,5 +1,5 @@
 {
-  "version": 6,
+  "version": 7,
   "domains": {
     "main": {
       "root": ".",
@@ -85,6 +85,12 @@
     "error_code_isolation": true,
     "verified_resolution_learning": true,
     "unknown_error_auto_repair": false,
-    "repair_rule_quarantine_after_failures": 2
+    "repair_rule_quarantine_after_failures": 2,
+    "failed_self_modify_auto_rollback": true,
+    "new_regression_auto_rollback": true,
+    "repair_rule_fingerprint_required": true,
+    "process_safe_selfrefine_state": true,
+    "self_modify_max_files_per_run": 3,
+    "self_modify_git_write": false
   }
 }

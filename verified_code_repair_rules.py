@@ -15,18 +15,20 @@ import argparse
 import hashlib
 import json
 import re
+import secrets
 import tempfile
 from pathlib import Path
 from typing import Any
 
-from safe_runtime import atomic_write_json, atomic_write_text, safe_read_text
+from safe_runtime import atomic_write_json, atomic_write_text, exclusive_file_lock, safe_read_text
 
 ROOT = Path(__file__).resolve().parent
 STATE = ROOT / "MAIN_SELFREFINE_VERIFIED_REPAIR_STATE.json"
-SCHEMA = 1
+SCHEMA = 2
 MAX_REPAIRS_PER_RUN = 3
 MAX_HISTORY = 100
 MAX_TEXT_BYTES = 4_000_000
+_ROLLBACK_CACHE: dict[str, dict[str, str]] = {}
 
 NODE24_ACTION_PINS = {
     "actions/checkout": "3d3c42e5aac5ba805825da76410c181273ba90b1",
@@ -158,6 +160,57 @@ def rule_for_issue(issue: dict[str, Any]) -> str | None:
     return None
 
 
+
+def rule_fingerprint(rule_id: str) -> str:
+    """Fingerprint the executable definition of one allowlisted repair rule.
+
+    Historical success is trusted only while this fingerprint is unchanged.
+    """
+    if rule_id == ACTION_RULE_ID:
+        payload: Any = {
+            "rule_id": rule_id,
+            "paths": sorted(RULE_PATHS[rule_id]),
+            "pins": NODE24_ACTION_PINS,
+        }
+    elif rule_id == RESOURCE_RULE_ID:
+        payload = {
+            "rule_id": rule_id,
+            "paths": sorted(RULE_PATHS[rule_id]),
+            "pattern": _RESOURCE_READ_RE.pattern,
+            "replacement": "Path(...).read_text(encoding='utf-8')",
+        }
+    elif rule_id == FEATURE_VISION_RULE_ID:
+        payload = {
+            "rule_id": rule_id,
+            "paths": sorted(RULE_PATHS[rule_id]),
+            "before": STALE_FEATURE_BLOCK,
+            "after": CURRENT_FEATURE_BLOCK,
+        }
+    elif rule_id == OCR_COUNT_RULE_ID:
+        payload = {
+            "rule_id": rule_id,
+            "paths": sorted(RULE_PATHS[rule_id]),
+            "before": STALE_OCR_COUNT,
+            "after": CURRENT_OCR_COUNT,
+        }
+    else:
+        raise ValueError("unknown repair rule")
+    raw = json.dumps(payload, ensure_ascii=False, sort_keys=True, separators=(",", ":"))
+    return hashlib.sha256(raw.encode("utf-8", "replace")).hexdigest()[:24]
+
+
+def _empty_rule_stats(rule_id: str) -> dict[str, Any]:
+    return {
+        "fingerprint": rule_fingerprint(rule_id),
+        "attempts": 0,
+        "successes": 0,
+        "failures": 0,
+        "consecutive_failures": 0,
+        "quarantined": False,
+        "confidence": 0.5,
+    }
+
+
 def _default_state() -> dict[str, Any]:
     return {
         "schema": SCHEMA,
@@ -170,6 +223,10 @@ def _default_state() -> dict[str, Any]:
             "code_defined_rules_only": True,
             "max_repairs_per_run": MAX_REPAIRS_PER_RUN,
             "quarantine_after_consecutive_failures": 2,
+            "failed_repair_auto_rollback": True,
+            "new_regression_auto_rollback": True,
+            "rule_fingerprint_required": True,
+            "process_safe_state_transaction": True,
         },
     }
 
@@ -177,24 +234,37 @@ def _default_state() -> dict[str, Any]:
 def _load_state(path: Path) -> dict[str, Any]:
     try:
         value = json.loads(safe_read_text(path, max_bytes=1_000_000))
-    except (OSError, ValueError, TypeError, UnicodeError):
+    except (OSError, ValueError, TypeError, UnicodeError, json.JSONDecodeError):
         return _default_state()
     if not isinstance(value, dict):
         return _default_state()
     state = _default_state()
     raw_rules = value.get("rules") if isinstance(value.get("rules"), dict) else {}
     for rule_id in ALL_RULE_IDS:
+        current_fingerprint = rule_fingerprint(rule_id)
         raw = raw_rules.get(rule_id) if isinstance(raw_rules.get(rule_id), dict) else {}
+        if raw.get("fingerprint") != current_fingerprint:
+            state["rules"][rule_id] = _empty_rule_stats(rule_id)
+            continue
+        try:
+            attempts = max(0, min(1000, int(raw.get("attempts") or 0)))
+            successes = max(0, min(1000, int(raw.get("successes") or 0)))
+            failures = max(0, min(1000, int(raw.get("failures") or 0)))
+            consecutive = max(0, min(100, int(raw.get("consecutive_failures") or 0)))
+        except (TypeError, ValueError, OverflowError):
+            state["rules"][rule_id] = _empty_rule_stats(rule_id)
+            continue
         state["rules"][rule_id] = {
-            "attempts": max(0, min(1000, int(raw.get("attempts") or 0))),
-            "successes": max(0, min(1000, int(raw.get("successes") or 0))),
-            "failures": max(0, min(1000, int(raw.get("failures") or 0))),
-            "consecutive_failures": max(0, min(100, int(raw.get("consecutive_failures") or 0))),
+            "fingerprint": current_fingerprint,
+            "attempts": attempts,
+            "successes": successes,
+            "failures": failures,
+            "consecutive_failures": consecutive,
             "quarantined": raw.get("quarantined") is True,
+            "confidence": round((successes + 1) / (max(1, attempts) + 2), 4),
         }
     state["history"] = [x for x in (value.get("history") or [])[-MAX_HISTORY:] if isinstance(x, dict)]
     return state
-
 
 def _save_state(path: Path, state: dict[str, Any]) -> None:
     state["history"] = state.get("history", [])[-MAX_HISTORY:]
@@ -271,8 +341,9 @@ def apply_issues(
     state_path: Path = STATE,
     max_repairs: int = MAX_REPAIRS_PER_RUN,
 ) -> dict[str, Any]:
-    state = _load_state(state_path)
-    applied: list[dict[str, str]] = []
+    with exclusive_file_lock(state_path):
+        state = _load_state(state_path)
+    applied: list[dict[str, Any]] = []
     skipped: list[dict[str, str]] = []
     seen: set[tuple[str, str]] = set()
     limit = max(0, min(MAX_REPAIRS_PER_RUN, int(max_repairs)))
@@ -308,10 +379,7 @@ def apply_issues(
             continue
         seen.add(key)
 
-        stats = state.setdefault("rules", {}).setdefault(rule_id, {
-            "attempts": 0, "successes": 0, "failures": 0,
-            "consecutive_failures": 0, "quarantined": False,
-        })
+        stats = state.setdefault("rules", {}).setdefault(rule_id, _empty_rule_stats(rule_id))
         if stats.get("quarantined") is True or int(stats.get("consecutive_failures") or 0) >= 2:
             skipped.append({"rule_id": rule_id, "path": relative, "reason": "quarantined"})
             continue
@@ -335,6 +403,12 @@ def apply_issues(
             continue
 
         atomic_write_text(target, after, suffix=".verified-self-heal.tmp")
+        rollback_token = secrets.token_hex(16)
+        _ROLLBACK_CACHE[rollback_token] = {
+            "path": relative,
+            "before": before,
+            "after_hash": _hash(after),
+        }
         applied.append({
             "rule_id": rule_id,
             "path": relative,
@@ -343,6 +417,8 @@ def apply_issues(
             "error_code": str(issue.get("error_code") or "")[:160],
             "error_family": str(issue.get("error_family") or "")[:80],
             "learned_solution_reuse": issue.get("learned_solution_reuse") is True,
+            "rule_fingerprint": rule_fingerprint(rule_id),
+            "rollback_token": rollback_token,
             "before_hash": _hash(before),
             "after_hash": _hash(after),
         })
@@ -355,6 +431,87 @@ def apply_issues(
         "learned_patch_text_used": False,
         "git_write": False,
         "code_defined_rules_only": True,
+        "failed_repair_auto_rollback": True,
+        "new_regression_auto_rollback": True,
+    }
+
+
+def _open_error_keys(rows: list[dict[str, Any]]) -> set[tuple[str, str]]:
+    return {
+        (str(row.get("stage") or ""), _normalized(str(row.get("path") or "")))
+        for row in rows
+        if isinstance(row, dict) and row.get("state") == "open"
+    }
+
+
+def rollback_failed_repairs(
+    applied: list[dict[str, Any]],
+    baseline_errors: list[dict[str, Any]],
+    remaining_errors: list[dict[str, Any]],
+    *,
+    root: Path = ROOT,
+) -> dict[str, Any]:
+    """Rollback any self-modification that failed verification or introduced regression."""
+    baseline_keys = _open_error_keys(baseline_errors)
+    remaining_keys = _open_error_keys(remaining_errors)
+    new_regressions = sorted(remaining_keys - baseline_keys)
+    restored = kept = conflicts = 0
+    failed_tokens: list[str] = []
+
+    for item in applied:
+        token = str(item.get("rollback_token") or "")
+        backup = _ROLLBACK_CACHE.pop(token, None) if token else None
+        key = (str(item.get("stage") or ""), _normalized(str(item.get("path") or "")))
+        failed = key in remaining_keys or bool(new_regressions)
+        if not failed:
+            kept += 1
+            item["rollback_outcome"] = "verified_kept"
+            continue
+
+        item["verification_forced_failed"] = True
+        failed_tokens.append(token)
+        if not isinstance(backup, dict):
+            item["rollback_outcome"] = "rollback_backup_missing"
+            conflicts += 1
+            continue
+
+        relative = _normalized(str(item.get("path") or ""))
+        rule_id = str(item.get("rule_id") or "")
+        if relative not in RULE_PATHS.get(rule_id, frozenset()):
+            item["rollback_outcome"] = "rollback_path_not_allowlisted"
+            conflicts += 1
+            continue
+
+        target = root / relative
+        try:
+            if target.is_symlink() or not target.is_file():
+                raise OSError("target is not a regular file")
+            current = safe_read_text(target, max_bytes=MAX_TEXT_BYTES)
+            if _hash(current) != str(backup.get("after_hash") or ""):
+                item["rollback_outcome"] = "rollback_conflict_current_file_changed"
+                conflicts += 1
+                continue
+            before = str(backup.get("before") or "")
+            if _hash(before) != str(item.get("before_hash") or ""):
+                item["rollback_outcome"] = "rollback_backup_hash_mismatch"
+                conflicts += 1
+                continue
+            atomic_write_text(target, before, suffix=".verified-self-heal-rollback.tmp")
+            item["rollback_outcome"] = "restored_after_failed_verification"
+            restored += 1
+        except (OSError, ValueError, UnicodeError):
+            item["rollback_outcome"] = "rollback_io_failure"
+            conflicts += 1
+
+    return {
+        "restored": restored,
+        "verified_kept": kept,
+        "rollback_conflicts": conflicts,
+        "new_regressions": [
+            {"stage": stage, "path": path} for stage, path in new_regressions
+        ],
+        "failed_repair_tokens": [token for token in failed_tokens if token],
+        "fail_closed": True,
     }
 
 
@@ -364,52 +521,61 @@ def record_verification(
     *,
     state_path: Path = STATE,
 ) -> dict[str, Any]:
-    state = _load_state(state_path)
-    open_keys = {
-        (str(row.get("stage") or ""), _normalized(str(row.get("path") or "")))
-        for row in remaining_errors
-        if isinstance(row, dict) and row.get("state") == "open"
-    }
+    open_keys = _open_error_keys(remaining_errors)
     passed = failed = quarantined = 0
 
-    for item in applied:
-        rule_id = str(item.get("rule_id") or "")
-        path = _normalized(str(item.get("path") or ""))
-        stage = str(item.get("stage") or "")
-        if rule_id not in ALL_RULE_IDS:
-            continue
-        stats = state.setdefault("rules", {}).setdefault(rule_id, {
-            "attempts": 0, "successes": 0, "failures": 0,
-            "consecutive_failures": 0, "quarantined": False,
-        })
-        stats["attempts"] = min(1000, int(stats.get("attempts") or 0) + 1)
-        ok = (stage, path) not in open_keys
-        if ok:
-            stats["successes"] = min(1000, int(stats.get("successes") or 0) + 1)
-            stats["consecutive_failures"] = 0
-            stats["quarantined"] = False
-            passed += 1
-            outcome = "verified_pass"
-        else:
-            stats["failures"] = min(1000, int(stats.get("failures") or 0) + 1)
-            stats["consecutive_failures"] = min(100, int(stats.get("consecutive_failures") or 0) + 1)
-            stats["quarantined"] = stats["consecutive_failures"] >= 2
-            failed += 1
-            quarantined += int(stats["quarantined"])
-            outcome = "verification_failed"
+    with exclusive_file_lock(state_path):
+        state = _load_state(state_path)
+        for item in applied:
+            rule_id = str(item.get("rule_id") or "")
+            path = _normalized(str(item.get("path") or ""))
+            stage = str(item.get("stage") or "")
+            if rule_id not in ALL_RULE_IDS:
+                continue
+            stats = state.setdefault("rules", {}).setdefault(rule_id, _empty_rule_stats(rule_id))
+            current_fingerprint = rule_fingerprint(rule_id)
+            if stats.get("fingerprint") != current_fingerprint:
+                stats = _empty_rule_stats(rule_id)
+                state["rules"][rule_id] = stats
 
-        attempts = max(1, int(stats.get("attempts") or 0))
-        stats["confidence"] = round((int(stats.get("successes") or 0) + 1) / (attempts + 2), 4)
-        state.setdefault("history", []).append({
-            "rule_id": rule_id,
-            "path": path,
-            "stage": stage,
-            "outcome": outcome,
-            "before_hash": str(item.get("before_hash") or "")[:20],
-            "after_hash": str(item.get("after_hash") or "")[:20],
-        })
+            stats["attempts"] = min(1000, int(stats.get("attempts") or 0) + 1)
+            ok = (
+                item.get("verification_forced_failed") is not True
+                and (stage, path) not in open_keys
+            )
+            if ok:
+                stats["successes"] = min(1000, int(stats.get("successes") or 0) + 1)
+                stats["consecutive_failures"] = 0
+                stats["quarantined"] = False
+                passed += 1
+                outcome = "verified_pass"
+            else:
+                stats["failures"] = min(1000, int(stats.get("failures") or 0) + 1)
+                stats["consecutive_failures"] = min(100, int(stats.get("consecutive_failures") or 0) + 1)
+                stats["quarantined"] = stats["consecutive_failures"] >= 2
+                failed += 1
+                quarantined += int(stats["quarantined"])
+                outcome = "verification_failed"
 
-    _save_state(state_path, state)
+            attempts = max(1, int(stats.get("attempts") or 0))
+            stats["fingerprint"] = current_fingerprint
+            stats["confidence"] = round((int(stats.get("successes") or 0) + 1) / (attempts + 2), 4)
+            state.setdefault("history", []).append({
+                "rule_id": rule_id,
+                "rule_fingerprint": current_fingerprint,
+                "path": path,
+                "stage": stage,
+                "outcome": outcome,
+                "rollback_outcome": str(item.get("rollback_outcome") or "")[:80],
+                "before_hash": str(item.get("before_hash") or "")[:20],
+                "after_hash": str(item.get("after_hash") or "")[:20],
+            })
+            token = str(item.get("rollback_token") or "")
+            if token:
+                _ROLLBACK_CACHE.pop(token, None)
+
+        _save_state(state_path, state)
+
     return {
         "verified_pass": passed,
         "verification_failed": failed,
@@ -417,8 +583,9 @@ def record_verification(
         "state_path": state_path.name,
         "learned_text_executable": False,
         "code_defined_rules_only": True,
+        "rule_fingerprint_required": True,
+        "process_safe_state_transaction": True,
     }
-
 
 def self_test() -> int:
     with tempfile.TemporaryDirectory() as tmp:
@@ -452,6 +619,8 @@ def self_test() -> int:
         assert not detect_text_issues(RESOURCE_GUARD_PATH, resource.read_text(encoding="utf-8"))
         assert not detect_text_issues(workflow_rel, updated_workflow)
 
+        finalized = rollback_failed_repairs(result["applied"], issues, [], root=root)
+        assert finalized["verified_kept"] == 2, finalized
         verified = record_verification(result["applied"], [], state_path=state)
         assert verified["verified_pass"] == 2
 
