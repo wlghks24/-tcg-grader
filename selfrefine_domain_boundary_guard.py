@@ -75,12 +75,8 @@ def called_names(path: Path) -> set[str]:
     tree = ast.parse(path.read_text(encoding="utf-8"), filename=str(path))
     names = set()
     for node in ast.walk(tree):
-        if not isinstance(node, ast.Call):
-            continue
-        if isinstance(node.func, ast.Name):
+        if isinstance(node, ast.Call) and isinstance(node.func, ast.Name):
             names.add(node.func.id)
-        elif isinstance(node.func, ast.Attribute):
-            names.add(node.func.attr)
     return names
 
 
