@@ -48,11 +48,14 @@ SOCIAL_HOST_KIND = {
     "facebook.com": "facebook_public_search", "www.facebook.com": "facebook_public_search", "m.facebook.com": "facebook_public_search",
     "lin.ee": "line_official_service_search", "line.me": "line_official_service_search", "www.line.me": "line_official_service_search",
     "bandai-tcg-plus.com": "bandai_tcg_plus_service_search", "www.bandai-tcg-plus.com": "bandai_tcg_plus_service_search",
+    "rk9.gg": "rk9_registration_service_search", "www.rk9.gg": "rk9_registration_service_search",
+    "playgo.bandainamcokorea.co.kr": "playgo_service_search",
     "namu.wiki": "namuwiki_community_search", "www.namu.wiki": "namuwiki_community_search",
     "namu.moe": "namuwiki_community_search", "www.namu.moe": "namuwiki_community_search",
+    "reddit.com": "reddit_community_search", "www.reddit.com": "reddit_community_search",
 }
-SERVICE_DISCOVERY_HOSTS = {"lin.ee", "line.me", "www.line.me", "bandai-tcg-plus.com", "www.bandai-tcg-plus.com"}
-COMMUNITY_DISCOVERY_HOSTS = {"namu.wiki", "www.namu.wiki", "namu.moe", "www.namu.moe"}
+SERVICE_DISCOVERY_HOSTS = {"lin.ee", "line.me", "www.line.me", "bandai-tcg-plus.com", "www.bandai-tcg-plus.com", "rk9.gg", "www.rk9.gg", "playgo.bandainamcokorea.co.kr"}
+COMMUNITY_DISCOVERY_HOSTS = {"namu.wiki", "www.namu.wiki", "namu.moe", "www.namu.moe", "reddit.com", "www.reddit.com"}
 DIRECT_PROVIDER_ORDER = ("official_youtube_feed", "official_sitemap", "official_direct")
 PROVIDER_ORDER = DIRECT_PROVIDER_ORDER + ("google_news", "bing_rss", "duckduckgo")
 

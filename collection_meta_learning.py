@@ -52,10 +52,10 @@ GAMES = {
     "나루토": ("나루토", "naruto", "ナルト"),
 }
 REGIONS = ("KR", "JP", "US")
-TOPICS = ("release", "reprint", "event", "tournament", "popup", "promo", "collab", "movie", "merch", "anniversary", "stock", "entry", "broadcast", "deadline", "status_update", "market", "graded_photo")
-SEARCH_TOPICS = ("release", "reprint", "event", "tournament", "popup", "promo", "collab", "movie", "merch", "anniversary", "stock", "entry", "broadcast", "deadline", "status_update")
+TOPICS = ("release", "reprint", "event", "tournament", "popup", "promo", "collab", "movie", "merch", "anniversary", "stock", "entry", "broadcast", "deadline", "status_update", "rules", "access", "market", "graded_photo")
+SEARCH_TOPICS = ("release", "reprint", "event", "tournament", "popup", "promo", "collab", "movie", "merch", "anniversary", "stock", "entry", "broadcast", "deadline", "status_update", "rules", "access")
 TOPIC_PRECEDENCE = (
-    "graded_photo", "market", "status_update", "deadline", "stock", "broadcast", "entry",
+    "graded_photo", "market", "status_update", "rules", "deadline", "access", "stock", "broadcast", "entry",
     "movie", "anniversary", "merch", "collab", "reprint", "release", "popup",
     "tournament", "promo", "event",
 )
@@ -65,6 +65,8 @@ TOPIC_PATTERNS = {
     "market": re.compile(r"시세|가격|실거래|거래|판매가|price|sold|market|相場|落札|価格", re.I),
     "status_update": re.compile(r"취소|연기|일정\s*변경|시간\s*변경|장소\s*변경|갱신내용|cancel(?:led|ed|ation)?|postpon(?:e|ed|ement)|reschedul(?:e|ed|ing)|schedule\s+change|venue\s+change|中止|延期|日程変更|時間変更|会場変更|内容変更", re.I),
     "deadline": re.compile(r"마감|신청\s*기한|응모\s*기한|접수\s*기한|신청기간|응모기간|접수기간|deadline|apply\s+by|registration\s+closes?|application\s+period|締切|期限|応募期間|申込期間|受付期間", re.I),
+    "access": re.compile(r"참가\s*자격|참가조건|체크인|입장권|관람객|패스|정원|대기\s*명단|플레이어\s*ID|덱\s*리스트|참가비|eligib(?:le|ility)|check[- ]?in|waitlist|interest\s+list|spectator|admission|entry\s+fee|player\s+id|deck\s+list|seating|capacity|\bbadge\b|\bpass\b|参加資格|参加条件|チェックイン|入場券|観戦|パス|定員|キャンセル待ち|プレイヤーID|デッキリスト|参加費", re.I),
+    "rules": re.compile(r"금지\s*/?\s*제한|금지카드|제한카드|금지\s*페어|에라타|사용\s*규정|룰|규칙|banned|restricted|restriction|errata|legality|legal\s+date|regulation|rulebook|floor\s+rules?|\brules?\b|禁止|制限|禁止カード|制限カード|禁止ペア|エラッタ|ルール|レギュレーション|使用可能", re.I),
     "stock": re.compile(r"재고|입고|재입고|품절|매진|자판기|in stock|restock|sold out|在庫|再入荷|売り切れ", re.I),
     "broadcast": re.compile(r"라이브|생방송|스트리밍|시청|twitch\s*drops?|live[ -]?stream|broadcast|streaming|redeem|ライブ配信|生配信|配信|視聴|ドロップ|コード", re.I),
     "entry": re.compile(r"응모|신청|접수|등록|추첨|당첨|엔트리|entry|application|registration|register|lottery|drawing|応募|申込|受付|登録|抽選|当選|エントリー", re.I),
@@ -97,6 +99,8 @@ FOCUS_TERMS = {
         "broadcast": "라이브 생방송 스트리밍 시청 Twitch Drops 코드",
         "deadline": "마감 신청마감 응모마감 접수마감 신청기한 응모기한",
         "status_update": "변경 취소 연기 일정변경 시간변경 장소변경 갱신내용",
+        "rules": "룰 규칙 금지 제한 금지페어 에라타 사용규정 레귤레이션",
+        "access": "참가자격 체크인 입장권 관람객 패스 정원 대기명단 플레이어ID 덱리스트 참가비 RK9 PLAYGO",
     },
     "JP": {
         "release": "発売 新弾 新商品 ブースター スターター 予約 再販",
@@ -114,6 +118,8 @@ FOCUS_TERMS = {
         "broadcast": "ライブ配信 生配信 配信 視聴 Twitch ドロップ コード",
         "deadline": "締切 期限 応募期間 申込期間 受付期間",
         "status_update": "変更 中止 延期 日程変更 時間変更 会場変更",
+        "rules": "ルール 禁止 制限 禁止カード 制限カード エラッタ レギュレーション 使用可能",
+        "access": "参加資格 チェックイン 入場券 観戦 パス 定員 キャンセル待ち プレイヤーID デッキリスト 参加費",
     },
     "US": {
         "release": "release new set booster starter preorder reprint",
@@ -131,6 +137,8 @@ FOCUS_TERMS = {
         "broadcast": "livestream broadcast streaming Twitch Drops reward code",
         "deadline": "deadline apply by registration closes application period",
         "status_update": "change cancelled canceled postponed rescheduled schedule change venue change",
+        "rules": "rules banned restricted restriction errata legality legal date regulation rulebook",
+        "access": "eligibility check-in spectator pass badge waitlist interest list player ID deck list entry fee capacity RK9",
     },
 }
 
