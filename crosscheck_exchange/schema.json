@@ -1,0 +1,43 @@
+{
+  "version": 1,
+  "description": "Passive result exchange contract. Runtime/provider/retry/learning state is forbidden.",
+  "required": [
+    "information_family",
+    "canonical_key",
+    "value",
+    "source_code",
+    "source_locator",
+    "checked_at_kst",
+    "verification",
+    "confidence",
+    "lineage_key"
+  ],
+  "verification_values": [
+    "candidate",
+    "corroborated",
+    "verified"
+  ],
+  "domain_values": [
+    "main",
+    "instagram_content"
+  ],
+  "forbidden_fields": [
+    "retry_count",
+    "cooldown",
+    "provider_score",
+    "provider_health",
+    "learning_state",
+    "error_ledger",
+    "render_state",
+    "collector_state"
+  ],
+  "rules": {
+    "canonical_key_match_required": true,
+    "information_family_match_required": true,
+    "currency_language_variant_match_required": true,
+    "lineage_must_be_preserved": true,
+    "conflicts_are_not_averaged": true,
+    "verification_is_not_promoted_cross_domain": true,
+    "provider_retry_learning_state_is_not_merged": true
+  }
+}
