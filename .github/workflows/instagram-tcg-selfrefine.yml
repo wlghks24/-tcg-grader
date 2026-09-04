@@ -4,6 +4,8 @@ on:
   pull_request:
     paths:
       - 'instagram_tcg_content/**'
+      - 'shared_self_learning/**'
+      - 'crosscheck_exchange/**'
       - 'selfrefine_domain_policy.json'
       - 'selfrefine_domain_boundary_guard.py'
       - '.github/workflows/instagram-tcg-selfrefine.yml'
@@ -31,4 +33,4 @@ jobs:
         with:
           name: instagram-tcg-selfrefine-error-ledger
           path: INSTAGRAM_TCG_SELFREFINE_ERROR_LEDGER.json
-          if-no-files-found: error
+          if-no-files-found: ignore
