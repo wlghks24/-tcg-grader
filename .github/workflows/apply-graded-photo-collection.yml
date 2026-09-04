@@ -18,6 +18,8 @@ jobs:
       - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97
         with:
           python-version: '3.12'
+      - name: Install current collection test dependencies
+        run: python -m pip install --disable-pip-version-check -r requirements.txt
       - name: Current graded-photo contracts
         run: |
           python - <<'PY'
