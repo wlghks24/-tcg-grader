@@ -5,16 +5,20 @@ import ast
 import json
 from pathlib import Path
 
+from shared_self_learning import SHARED_SELF_LEARNING_CONTRACT_VERSION
+from shared_self_learning.contracts import namespaced_signature
+
 ROOT = Path(__file__).resolve().parents[1]
 DOMAIN = ROOT / 'instagram_tcg_content'
+SHARED = ROOT / 'shared_self_learning'
 LEDGER = ROOT / 'INSTAGRAM_TCG_SELFREFINE_ERROR_LEDGER.json'
 TEXT_SUFFIXES = {'.py', '.json', '.md', '.yml', '.yaml', '.html', '.css', '.js'}
 
 
-def scan():
+def _scan_root(root: Path):
     errors = []
     files = []
-    for path in DOMAIN.rglob('*'):
+    for path in root.rglob('*'):
         if not path.is_file() or path.suffix.lower() not in TEXT_SUFFIXES:
             continue
         files.append(path)
@@ -27,15 +31,31 @@ def scan():
                 json.loads(text)
         except Exception as exc:
             errors.append({'path': rel, 'stage': type(exc).__name__, 'evidence': repr(exc)[:600]})
+    return files, errors
+
+
+def scan():
+    domain_files, errors = _scan_root(DOMAIN)
+    shared_files, shared_errors = _scan_root(SHARED)
+    errors.extend(shared_errors)
     payload = {
-        'version': 1,
+        'version': 2,
         'domain': 'instagram_tcg_content',
-        'summary': {'files_scanned': len(files), 'open_errors': len(errors), 'status': 'pass' if not errors else 'fail'},
+        'summary': {
+            'domain_files_scanned': len(domain_files),
+            'shared_learning_files_scanned': len(shared_files),
+            'open_errors': len(errors),
+            'status': 'pass' if not errors else 'fail'
+        },
         'safety': {
             'main_selfrefine_ledger_shared': False,
             'main_retry_history_shared': False,
             'main_learning_state_shared': False,
             'main_collector_registry_shared': False,
+            'shared_self_learning_code': True,
+            'shared_self_learning_state': False,
+            'shared_contract_version': SHARED_SELF_LEARNING_CONTRACT_VERSION,
+            'instagram_signature_namespace': namespaced_signature('instagram_content', 'probe'),
         },
         'errors': errors,
     }
