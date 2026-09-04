@@ -336,15 +336,48 @@ def _trusted_accounts(registry: dict, platform: str, game: str | None = None, re
 
 
 def _game_query_terms(game: str, region: str) -> str:
-    lang = REGION_LANG[region]["lang"]; names = GAMES[game][lang]
-    name_expr = " OR ".join(f'"{name}"' if " " in name else name for name in names[:3])
-    event_words = {
-        "ko": "(행사 OR 이벤트 OR 챌린지 OR 콜라보 OR 프로모 OR 영화 OR 극장판 OR 발매 OR 출시 OR 재발매 OR 재입고 OR 재고 OR 품절 OR 응모 OR 신청 OR 등록 OR 추첨 OR 당첨 OR 라이브 OR 생방송 OR 스트리밍 OR 시청 OR 코드 OR 대회 OR 야구 OR 굿즈 OR 포토카드 OR PLAYGO OR 재배포 OR 재지급 OR 수령 OR 프로모션팩 OR 신사황 OR 마감 OR 기한 OR 변경 OR 취소 OR 연기 OR LINE OR \"BANDAI TCG+\" OR 룰 OR 규칙 OR 금지 OR 제한 OR 에라타 OR 체크인 OR 참가자격 OR 입장권 OR 패스 OR 대기명단 OR 플레이어ID OR 덱리스트 OR RK9 OR PLAYGO OR 대회결과 OR 결과발표 OR 우승자발표 OR 최종순위 OR 우승덱 OR 추첨판매 OR 구매제한 OR 본인인증 OR 가상대기열 OR 점검 OR 서비스장애 OR 로그인불가 OR 복구완료 OR 가격개정 OR 가격변경 OR 가격인상 OR 가격인하 OR 봉입오류 OR 내용물누락 OR 제품불량 OR 제조불량 OR 인쇄오류 OR 가공오류 OR 교환대응 OR 상품회수 OR 리콜 OR 위조품 OR 가품 OR 모조품 OR 복제품 OR 레플리카 OR 비정규카드 OR 오리파 OR 서치팩 OR 서치박스 OR 사기주의)",
-        "ja": "(イベント OR チャレンジ OR コラボ OR キャンペーン OR プロモ OR 映画 OR 劇場版 OR 発売 OR 再販 OR 再入荷 OR 在庫 OR 売り切れ OR 応募 OR 申込 OR 登録 OR 抽選 OR 当選 OR ライブ配信 OR 生配信 OR 配信 OR 視聴 OR コード OR 大会 OR グッズ OR 締切 OR 期限 OR 変更 OR 中止 OR 延期 OR LINE OR \"BANDAI TCG+\" OR ルール OR 禁止 OR 制限 OR エラッタ OR チェックイン OR 参加資格 OR 入場券 OR パス OR キャンセル待ち OR プレイヤーID OR デッキリスト OR RK9 OR 大会結果 OR 結果発表 OR 優勝者発表 OR 最終順位 OR 優勝デッキ OR 抽選販売 OR 購入制限 OR 本人認証 OR メンテナンス OR 障害 OR 不具合 OR 復旧 OR 価格改定 OR 価格変更 OR 値上げ OR 値下げ OR 封入内容の誤り OR 表面加工の誤り OR イラストの誤り OR 製造不良 OR 交換対応 OR 回収 OR リコール OR 偽造品 OR 模倣品 OR 偽物 OR レプリカ OR 非正規カード OR オリパ OR サーチ済み)",
-        "en": "(event OR challenge OR collab OR collaboration OR promo OR movie OR film OR release OR reprint OR restock OR in-stock OR sold-out OR entry OR application OR registration OR lottery OR livestream OR broadcast OR streaming OR twitch OR drops OR redeem OR code OR tournament OR merchandise OR deadline OR change OR cancelled OR canceled OR postponed OR rescheduled OR LINE OR \"BANDAI TCG+\" OR rules OR banned OR restricted OR errata OR legality OR \"check-in\" OR eligibility OR spectator OR pass OR badge OR waitlist OR \"interest list\" OR \"player id\" OR \"deck list\" OR RK9 OR PLAYGO OR \"tournament results\" OR \"top finishers\" OR \"final standings\" OR \"winning deck\" OR \"lottery sale\" OR \"purchase limit\" OR \"identity verification\" OR \"virtual queue\" OR maintenance OR \"service outage\" OR \"login issue\" OR resolved OR \"price revision\" OR \"price change\" OR \"price increase\" OR \"price decrease\" OR \"manufacturing error\" OR \"printing error\" OR \"packaging error\" OR \"incorrect contents\" OR \"missing contents\" OR \"defective product\" OR \"product replacement\" OR \"exchange program\" OR \"product recall\" OR counterfeit OR \"fake cards\" OR replica OR knockoff OR \"unauthorized reproduction\" OR \"searched packs\" OR repacked OR \"scam warning\")",
-    }[lang]
-    return f"({name_expr}) {event_words} lang:{lang} -is:retweet"
+    """Build one X recent-search query within the platform's bounded query size.
 
+    Broad discovery continues through Google/public-search routes. X gets a
+    balanced high-value subset so query growth can never silently exceed the
+    recent-search contract.
+    """
+    lang = REGION_LANG[region]["lang"]
+    names = GAMES[game][lang]
+    name_expr = " OR ".join(f'"{name}"' if " " in name else name for name in names[:3])
+    priority_terms = {
+        "ko": [
+            "행사", "이벤트", "콜라보", "프로모", "영화", "극장판", "발매", "출시",
+            "재발매", "재입고", "품절", "응모", "추첨", "대회", "마감", "기한",
+            "룰", "금지", "제한", "에라타", "대회결과", "우승덱", "서비스장애",
+            "복구완료", "가격변경", "제품불량", "리콜", "위조품",
+        ],
+        "ja": [
+            "イベント", "コラボ", "キャンペーン", "プロモ", "映画", "劇場版", "発売",
+            "再販", "再入荷", "売り切れ", "応募", "抽選", "大会", "締切", "期限",
+            "ルール", "禁止", "制限", "エラッタ", "大会結果", "優勝デッキ",
+            "障害", "復旧", "価格変更", "製造不良", "リコール", "偽造品",
+        ],
+        "en": [
+            "event", "collab", "collaboration", "promo", "movie", "film", "release",
+            "reprint", "restock", "sold-out", "entry", "lottery", "tournament",
+            "deadline", "rules", "banned", "restricted", "errata", "tournament results",
+            "winning deck", "service outage", "resolved", "price change",
+            "manufacturing error", "product recall", "counterfeit",
+        ],
+    }[lang]
+    suffix = f" lang:{lang} -is:retweet"
+    selected: list[str] = []
+    for term in priority_terms:
+        rendered = f'"{term}"' if " " in term else term
+        candidate_terms = selected + [rendered]
+        candidate = f"({name_expr}) ({' OR '.join(candidate_terms)}){suffix}"
+        if len(candidate) >= 500:
+            break
+        selected.append(rendered)
+    if not selected:
+        selected = ["event" if lang == "en" else ("イベント" if lang == "ja" else "이벤트")]
+    return f"({name_expr}) ({' OR '.join(selected)}){suffix}"
 
 def _x_request(query: str) -> dict:
     token = os.environ.get("X_BEARER_TOKEN", "").strip()
