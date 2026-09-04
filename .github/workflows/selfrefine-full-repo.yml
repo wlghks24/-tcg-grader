@@ -1,0 +1,67 @@
+name: SELFREFINE Full Repository
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - selfrefine-full-repo-20260904
+  pull_request:
+    branches:
+      - main
+
+permissions:
+  contents: read
+
+jobs:
+  selfrefine:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Repository-wide SELFREFINE audit
+        run: python selfrefine_full_repo.py --cycles 5
+
+      - name: Python compile regression
+        run: |
+          python - <<'PY'
+          import compileall, pathlib, sys
+          root = pathlib.Path('.')
+          ok = compileall.compile_dir(root, quiet=1, maxlevels=20)
+          raise SystemExit(0 if ok else 1)
+          PY
+
+      - name: Core self-healing safety contracts
+        run: |
+          python - <<'PY'
+          import collector_self_healing as c
+          s = c.safety_contract_status()
+          assert s.get('process_safe_transactions') is True
+          assert s.get('unique_policy_observation_per_run') is True
+          assert c.QUARANTINE_CODES
+          print('collector safety contract: PASS')
+          PY
+
+      - name: Runtime hardening idempotence smoke test
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          import runtime_optimization_hardening as r
+          p = Path('collector_self_healing.py')
+          text = p.read_text(encoding='utf-8')
+          assert r.patch_collector_self_healing(text) == text
+          print('runtime hardening idempotence: PASS')
+          PY
+
+      - name: Upload SELFREFINE ledger
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: selfrefine-error-ledger
+          path: SELFREFINE_ERROR_LEDGER.json
+          if-no-files-found: ignore
