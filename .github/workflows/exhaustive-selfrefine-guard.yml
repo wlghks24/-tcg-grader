@@ -91,6 +91,45 @@ jobs:
             echo "===== isolated root test: $file ====="
             python -m unittest discover -v -s . -p "$file"
             rc=$?
+            if [ "$rc" -eq 5 ]; then
+              echo "SELFREFINE_FALLBACK file=$file mode=standalone"
+              python - "$file" <<'PY'
+import importlib.util
+import inspect
+import pathlib
+import sys
+
+path=pathlib.Path(sys.argv[1]).resolve()
+spec=importlib.util.spec_from_file_location("_selfrefine_"+path.stem, path)
+if spec is None or spec.loader is None:
+    raise SystemExit("cannot load standalone test module: "+str(path))
+module=importlib.util.module_from_spec(spec)
+spec.loader.exec_module(module)
+
+main=getattr(module,"main",None)
+if callable(main):
+    main()
+else:
+    tests=[]
+    for name,value in sorted(vars(module).items()):
+        if not name.startswith("test_") or not callable(value):
+            continue
+        if getattr(value,"__module__",None) != module.__name__:
+            continue
+        signature=inspect.signature(value)
+        required=[p for p in signature.parameters.values() if p.default is inspect.Parameter.empty and p.kind in (inspect.Parameter.POSITIONAL_ONLY,inspect.Parameter.POSITIONAL_OR_KEYWORD,inspect.Parameter.KEYWORD_ONLY)]
+        if required:
+            raise SystemExit("standalone test requires unsupported fixtures: "+path.name+":"+name)
+        tests.append((name,value))
+    if not tests:
+        raise SystemExit("no runnable tests in standalone module: "+path.name)
+    for name,value in tests:
+        print("RUN_STANDALONE "+path.name+":"+name)
+        value()
+    print("standalone function tests passed:",len(tests))
+PY
+              rc=$?
+            fi
             echo "SELFREFINE_MODULE_RC file=$file rc=$rc"
             if [ "$rc" -ne 0 ]; then
               failed_count=$((failed_count+1))
