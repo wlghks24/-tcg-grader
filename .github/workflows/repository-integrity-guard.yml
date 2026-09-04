@@ -1,18 +1,9 @@
 name: Repository Integrity Guard
 
 on:
+  pull_request:
   push:
     branches: [main]
-    paths:
-      - '**/*.py'
-      - '**/*.sh'
-      - '**/*.js'
-      - '**/*.json'
-      - '**/*.html'
-      - '**/*.yml'
-      - '**/*.yaml'
-      - 'repository_integrity_guard.py'
-      - '.github/workflows/repository-integrity-guard.yml'
   workflow_dispatch:
 
 permissions:
@@ -21,7 +12,7 @@ permissions:
 jobs:
   verify:
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 12
     steps:
       - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
       - uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1
@@ -29,13 +20,13 @@ jobs:
           python-version: '3.11'
       - name: Run tracked repository integrity checks
         run: python repository_integrity_guard.py
-      - name: Validate all tracked shell scripts
+      - name: Validate all tracked shell entrypoints
         shell: bash
         run: |
           set -euo pipefail
           while IFS= read -r -d '' path; do
             bash -n -- "$path"
-          done < <(git ls-files -z -- '*.sh')
+          done < <(git ls-files -z -- '*.sh' '*.command')
       - name: Validate all tracked JavaScript syntax
         shell: bash
         run: |
@@ -43,3 +34,11 @@ jobs:
           while IFS= read -r -d '' path; do
             node --check "$path"
           done < <(git ls-files -z -- '*.js')
+      - name: Run defensive repository security audit
+        run: python security_self_audit.py --no-memory --fail-on high
+      - name: Verify security hardening is already applied
+        run: python security_hardening_apply.py --check
+      - name: Run cross-cutting SELFREFINE contracts
+        run: |
+          python -m unittest -v             test_security_self_audit.py             test_security_hardening.py             test_runtime_bundle_guard_v143.py             test_verified_gap_priority_v11.py             test_gap_result_event_supersession_v12.py
+          python test_runtime_delivery_guards.py
