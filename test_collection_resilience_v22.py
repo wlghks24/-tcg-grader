@@ -68,7 +68,8 @@ class CollectionResilienceV22Tests(unittest.TestCase):
         def discover(_src, game):
             return ([{"url": f"https://example.com/{game}", "company": "PSA", "game": game}], [], 1, {})
         with mock.patch.object(graded, "route_plan", side_effect=plan),              mock.patch.object(graded, "_discover_source_game", side_effect=discover) as call:
-            rows, errors, queries, diag = graded._collect_public_source(src)
+            source_id, rows, errors, queries, diag = graded._collect_public_source(src)
+        self.assertEqual(source_id, "ebay_public")
         called_games = [args.args[1] for args in call.call_args_list]
         self.assertNotIn("pokemon", called_games)
         self.assertIn("onepiece", called_games)
