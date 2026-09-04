@@ -14,12 +14,14 @@ on:
       - 'test_promo_event_keyword_coverage_v5.py'
       - 'multi_channel_agent.py'
       - 'auto_pipeline_runner.py'
+      - 'adaptive_collection_learner.py'
       - 'test_extended_discovery_channels_v5.py'
       - 'test_source_gap_taxonomy_v6.py'
       - 'test_source_gap_taxonomy_v7.py'
       - 'test_source_gap_taxonomy_v8.py'
       - 'test_source_gap_taxonomy_v9.py'
       - 'test_source_gap_taxonomy_v10.py'
+      - 'test_verified_gap_priority_v11.py'
       - '.github/workflows/provider-source-gap-learning-guard.yml'
   push:
     branches: [main]
@@ -35,12 +37,14 @@ on:
       - 'test_promo_event_keyword_coverage_v5.py'
       - 'multi_channel_agent.py'
       - 'auto_pipeline_runner.py'
+      - 'adaptive_collection_learner.py'
       - 'test_extended_discovery_channels_v5.py'
       - 'test_source_gap_taxonomy_v6.py'
       - 'test_source_gap_taxonomy_v7.py'
       - 'test_source_gap_taxonomy_v8.py'
       - 'test_source_gap_taxonomy_v9.py'
       - 'test_source_gap_taxonomy_v10.py'
+      - 'test_verified_gap_priority_v11.py'
       - '.github/workflows/provider-source-gap-learning-guard.yml'
   workflow_dispatch:
 
@@ -67,6 +71,7 @@ jobs:
             multi_route_event_discovery.py \
             social_event_discovery.py \
             auto_pipeline_runner.py \
+            adaptive_collection_learner.py \
             test_provider_source_gap_learning_v5.py \
             test_promo_event_keyword_coverage_v5.py \
             test_extended_discovery_channels_v5.py \
@@ -74,7 +79,8 @@ jobs:
             test_source_gap_taxonomy_v7.py \
             test_source_gap_taxonomy_v8.py \
             test_source_gap_taxonomy_v9.py \
-            test_source_gap_taxonomy_v10.py
+            test_source_gap_taxonomy_v10.py \
+            test_verified_gap_priority_v11.py
       - name: Verify candidate and official coverage stay separated
         run: python -m unittest -v test_provider_source_gap_learning_v5.py
       - name: Verify challenge-style official event headlines remain discoverable
@@ -91,3 +97,5 @@ jobs:
         run: python -m unittest -v test_source_gap_taxonomy_v9.py
       - name: Verify official price product issue and authenticity gap taxonomy
         run: python -m unittest -v test_source_gap_taxonomy_v10.py
+      - name: Verify verified-gap priority consumption and freshness aging
+        run: python -m unittest -v test_verified_gap_priority_v11.py
