@@ -102,7 +102,15 @@ def legacy_runtime_reference(relative: str, text: str) -> str | None:
         return "current runtime references archived gemini-code source"
     if re.search(r"(?m)^\s*(?:from|import)\s+apply_[A-Za-z0-9_]+", text):
         return "current runtime imports one-shot apply_* patch module"
-    if re.search(r"\bpython(?:3(?:\.\d+)?)?\s+apply_[A-Za-z0-9_]+\.py\b", text):
+    patch_exec = re.search(r"\bpython(?:3(?:\.\d+)?)?\s+apply_[A-Za-z0-9_]+\.py\b", text)
+    if patch_exec:
+        if relative.startswith(".github/workflows/"):
+            write_permission = bool(re.search(
+                r"(?m)^\s*['\"]?contents['\"]?\s*:\s*['\"]?write['\"]?\s*(?:#.*)?$", text
+            ))
+            pushes_code = bool(re.search(r"(?m)^\s*(?:run:\s*)?.*\bgit\s+push\b", text))
+            if not write_permission and not pushes_code:
+                return None
         return "current runtime executes one-shot apply_* patch script"
     return None
 
