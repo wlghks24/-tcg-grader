@@ -24,7 +24,7 @@ from grading_accuracy_v99 import (
 
 
 ROOT = Path(__file__).resolve().parent
-ENGINE_VERSION = "v158-four-quadrant-precision-learning"
+ENGINE_VERSION = "v160-grading-hierarchy-1-4-8-learning"
 INPUT_PATH = ROOT / "learning_store.json"
 OUTPUT_PATH = ROOT / "vision_calibration.json"
 COMPANIES = {"PSA", "BGS", "CGC", "TAG", "BRG"}
@@ -50,19 +50,36 @@ def _number(value: Any, low: float, high: float) -> float | None:
 
 
 def vision_bucket(vision: dict[str, Any]) -> str | None:
+    """Bucket verified RAW rows with whole-card + 4-way + 8-way defect evidence.
+
+    Missing v160 fields default to zero so existing verified rows keep their
+    historical bucket instead of being discarded during migration.
+    """
     front = _number(vision.get("frontCenter"), 0, 50)
     back = _number(vision.get("backCenter"), 0, 50)
     surface = _number(vision.get("surfaceRisk"), 0, 100)
     quadrant_surface = _number(vision.get("quadrantSurfaceWorstRisk", 0), 0, 100) or 0
     quadrant_worst = _number(vision.get("quadrantWorstRisk", 0), 0, 100) or 0
     quadrant_imbalance = _number(vision.get("quadrantImbalance", 0), 0, 100) or 0
+    zone_surface = _number(vision.get("eightZoneSurfaceWorstRisk", 0), 0, 100) or 0
+    zone_worst = _number(vision.get("eightZoneWorstRisk", 0), 0, 100) or 0
+    zone_imbalance = _number(vision.get("eightZoneImbalance", 0), 0, 100) or 0
+    hierarchy_defect = _number(vision.get("hierarchyDefectRisk", 0), 0, 100) or 0
     if None in (front, back, surface):
         return None
     center = min(front, back)
     center_band = "centered" if center >= 47 else "minor-offcenter" if center >= 44 else "offcenter"
-    surface = max(surface, quadrant_surface)
+    surface = max(surface, quadrant_surface, zone_surface)
     surface_band = "surface-low" if surface < 15 else "surface-medium" if surface < 35 else "surface-high"
-    quadrant_band = "q-balanced" if quadrant_worst < 15 and quadrant_imbalance < 20 else "q-watch" if quadrant_worst < 40 else "q-local-defect"
+    local_worst = max(quadrant_worst, zone_worst, hierarchy_defect)
+    local_imbalance = max(quadrant_imbalance, zone_imbalance)
+    quadrant_band = (
+        "q-balanced"
+        if local_worst < 15 and local_imbalance < 20
+        else "q-watch"
+        if local_worst < 40
+        else "q-local-defect"
+    )
     return f"{center_band}|{surface_band}|{quadrant_band}|{'multi' if vision.get('multiAngle') is True else 'single'}"
 
 
@@ -162,7 +179,7 @@ def train_calibration(rows: list[dict[str, Any]], global_models: dict[str, dict[
                       "insufficient-official-labels" if not enough else "no-safe-improvement",
         }
     return {
-        "version": 3, "engine": ENGINE_VERSION,
+        "version": 4, "engine": ENGINE_VERSION,
         "generated_at": datetime.now(timezone.utc).isoformat(timespec="seconds"),
         "training_rows": len(rows), "profiles": profiles,
         "policy": {
@@ -173,6 +190,9 @@ def train_calibration(rows: list[dict[str, Any]], global_models: dict[str, dict[
             "maximum_downward_correction": -1,
             "vision_learns_residual_after_global": True,
             "four_quadrant_features_isolated": True,
+            "eight_zone_features_isolated": True,
+            "grading_hierarchy_1_4_8": True,
+            "legacy_verified_rows_backward_compatible": True,
             "raw_image_model_retrained": False,
             "official_grade_guaranteed": False,
         },
