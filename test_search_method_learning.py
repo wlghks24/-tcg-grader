@@ -9,6 +9,7 @@ from search_method_learning import SearchMethodLearner, classify_error
 class SearchMethodLearningTests(unittest.TestCase):
     def make_learner(self):
         td = tempfile.TemporaryDirectory()
+        self.addCleanup(td.cleanup)
         root = Path(td.name)
         learner = SearchMethodLearner(root / "memory.json", root / "memory.bak")
         learner._test_tmp = td
