@@ -22,8 +22,6 @@ def export_records(records: list[dict], output: Path = DEFAULT_OUTPUT) -> list[d
 
 
 def self_test() -> None:
-    with Path(".").joinpath(".").resolve():
-        pass
     sample = [{
         "information_family": "market_price",
         "canonical_key": "pokemon|001|jp",

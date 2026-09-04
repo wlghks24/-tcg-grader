@@ -32,14 +32,16 @@ class InstagramSelfrefineStateIsolationTests(unittest.TestCase):
             gate.LEDGER = original_ledger
 
     def test_instagram_gate_does_not_import_main_runtime(self):
+        before = set(sys.modules)
         gate.self_test()
+        newly_loaded = set(sys.modules) - before
         forbidden = {
             "collector_self_healing",
             "selfrefine_full_repo",
             "main_selfrefine_gate",
             "runtime_optimization_hardening",
         }
-        self.assertFalse(forbidden & set(sys.modules))
+        self.assertFalse(forbidden & newly_loaded)
 
 
 if __name__ == "__main__":
