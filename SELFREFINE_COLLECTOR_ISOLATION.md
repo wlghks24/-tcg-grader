@@ -21,3 +21,10 @@
 - 여러 독립 수집기가 동일 identity의 같은 정보에 도달하면 결과 계층에서 교차검증 근거로 사용할 수 있다.
 - 동일 information_family 내 결과는 canonical_result_key가 일치할 때만 비교한다.
 - 최종 값이 같더라도 lineage_key는 각 collector/provider별로 별도 보존한다.
+
+SELFREFINE 적용 방식:
+
+- error_signature에 collector_id와 provider_id를 포함한다.
+- 같은 information_family의 수집 코드라도 오류 signature, retry_count, regression_result는 분리한다.
+- 결과 통합은 canonical_result_key가 일치할 때만 수행하고 lineage_key는 삭제하지 않는다.
+- 검증 충돌은 conflict로 남기고 임의 평균/자동 승격을 금지한다.
