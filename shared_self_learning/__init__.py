@@ -5,4 +5,4 @@ no domain collectors, renderers, runtime services, credentials, provider/retry
 state, ledgers, or persisted learning data.
 """
 
-SHARED_SELF_LEARNING_CONTRACT_VERSION = 2
+SHARED_SELF_LEARNING_CONTRACT_VERSION = 3

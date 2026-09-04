@@ -97,3 +97,10 @@ crosscheck_exchange/runtime-main*.json
 crosscheck_exchange/runtime-main*.jsonl
 crosscheck_exchange/runtime-instagram*.json
 crosscheck_exchange/runtime-instagram*.jsonl
+
+MAIN_SELFREFINE_LEARNING_STATE.json
+MAIN_SELFREFINE_RETRY_STATE.json
+MAIN_SELFREFINE_PROVIDER_STATE.json
+INSTAGRAM_TCG_SELFREFINE_LEARNING_STATE.json
+INSTAGRAM_TCG_SELFREFINE_RETRY_STATE.json
+INSTAGRAM_TCG_SELFREFINE_PROVIDER_STATE.json

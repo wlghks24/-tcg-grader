@@ -55,6 +55,6 @@ jobs:
           python -m instagram_tcg_content.crosscheck_export --self-test
           python selfrefine_crosscheck_gate.py --self-test
           python -m instagram_tcg_content.selfrefine_gate
-          python -m unittest -v test_selfrefine_domain_isolation_v18.py
+          python -m unittest -v test_selfrefine_domain_isolation_v18.py test_main_selfrefine_state_isolation_v18.py instagram_tcg_content.test_state_isolation_v18
       - name: Run runtime delivery contracts
         run: python test_runtime_delivery_guards.py

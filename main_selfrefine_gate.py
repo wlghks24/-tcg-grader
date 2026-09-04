@@ -82,7 +82,7 @@ def self_test():
     assert POLICY["rules"]["shared_self_learning_code"] is True
     assert POLICY["rules"]["shared_self_learning_state"] is False
     assert POLICY["rules"]["cross_domain_learning_state_merge"] is False
-    assert SHARED_SELF_LEARNING_CONTRACT_VERSION >= 2
+    assert SHARED_SELF_LEARNING_CONTRACT_VERSION >= 3
     left = enrich_error("main", {"stage": "HTTP_429", "path": "a.py", "evidence": "rate limited"})
     right = enrich_error("instagram_content", {"stage": "HTTP_429", "path": "a.py", "evidence": "rate limited"})
     assert left["shared_learning_key"] != right["shared_learning_key"]

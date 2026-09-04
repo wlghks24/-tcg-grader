@@ -73,6 +73,8 @@ on:
       - 'test_runtime_resilience_v182.py'
       - '.github/workflows/runtime-delivery-guard.yml'
 
+  workflow_dispatch:
+
 permissions:
   contents: read
 

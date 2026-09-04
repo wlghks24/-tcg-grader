@@ -119,7 +119,7 @@ def scan():
 
 
 def self_test():
-    assert SHARED_SELF_LEARNING_CONTRACT_VERSION >= 2
+    assert SHARED_SELF_LEARNING_CONTRACT_VERSION >= 3
     row = enrich_error(
         "instagram_content",
         {"stage": "HTTP_429", "path": "instagram_tcg_content/source.py", "evidence": "rate limited"},

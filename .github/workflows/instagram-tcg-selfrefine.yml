@@ -31,6 +31,8 @@ jobs:
   content-selfrefine:
     runs-on: ubuntu-latest
     timeout-minutes: 15
+    env:
+      PYTHONPATH: ${{ github.workspace }}
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
       - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
@@ -43,6 +45,7 @@ jobs:
           python -m instagram_tcg_content.crosscheck_export --self-test
           python selfrefine_crosscheck_gate.py --self-test
           python -m unittest -v test_selfrefine_domain_isolation_v18.py
+          python -m unittest -v instagram_tcg_content.test_state_isolation_v18
       - name: Run Instagram TCG Content SELFREFINE only
         run: python -m instagram_tcg_content.selfrefine_gate
       - name: Upload Instagram TCG SELFREFINE ledger
