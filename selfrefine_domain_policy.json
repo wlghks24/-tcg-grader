@@ -1,5 +1,5 @@
 {
-  "version": 1,
+  "version": 2,
   "domains": {
     "main": {
       "root": ".",
@@ -11,6 +11,10 @@
     "instagram_content": {
       "root": "instagram_tcg_content/",
       "ledger": "INSTAGRAM_TCG_SELFREFINE_ERROR_LEDGER.json"
+    },
+    "shared_self_learning": {
+      "root": "shared_self_learning/",
+      "purpose": "shared algorithms and contracts only; no domain runtime or persisted state"
     }
   },
   "rules": {
@@ -19,8 +23,14 @@
     "shared_learning_state": false,
     "shared_collector_registry": false,
     "shared_render_state": false,
+    "shared_self_learning_code": true,
+    "shared_self_learning_state": false,
     "main_may_import_instagram_content": false,
     "instagram_content_may_import_main_runtime": false,
+    "main_may_import_shared_self_learning": true,
+    "instagram_content_may_import_shared_self_learning": true,
+    "shared_self_learning_may_import_main_runtime": false,
+    "shared_self_learning_may_import_instagram_content": false,
     "cross_domain_result_exchange": "explicit_json_contract_only"
   }
 }
