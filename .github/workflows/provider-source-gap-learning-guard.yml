@@ -23,6 +23,7 @@ on:
       - 'test_source_gap_taxonomy_v10.py'
       - 'test_verified_gap_priority_v11.py'
       - 'test_gap_result_event_supersession_v12.py'
+      - 'test_verified_multilabel_coverage_v14.py'
       - '.github/workflows/provider-source-gap-learning-guard.yml'
   push:
     branches: [main]
@@ -47,6 +48,7 @@ on:
       - 'test_source_gap_taxonomy_v10.py'
       - 'test_verified_gap_priority_v11.py'
       - 'test_gap_result_event_supersession_v12.py'
+      - 'test_verified_multilabel_coverage_v14.py'
       - '.github/workflows/provider-source-gap-learning-guard.yml'
   workflow_dispatch:
 
@@ -83,7 +85,8 @@ jobs:
             test_source_gap_taxonomy_v9.py \
             test_source_gap_taxonomy_v10.py \
             test_verified_gap_priority_v11.py \
-            test_gap_result_event_supersession_v12.py
+            test_gap_result_event_supersession_v12.py \
+            test_verified_multilabel_coverage_v14.py
       - name: Verify candidate and official coverage stay separated
         run: python -m unittest -v test_provider_source_gap_learning_v5.py
       - name: Verify challenge-style official event headlines remain discoverable
@@ -104,3 +107,5 @@ jobs:
         run: python -m unittest -v test_verified_gap_priority_v11.py
       - name: Verify gap-result reservation and official event supersession
         run: python -m unittest -v test_gap_result_event_supersession_v12.py
+      - name: Verify bounded multi-label official coverage
+        run: python -m unittest -v test_verified_multilabel_coverage_v14.py
