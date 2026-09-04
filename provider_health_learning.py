@@ -34,9 +34,12 @@ MAX_SOURCE_KINDS = 80
 MAX_SOURCE_KINDS_PER_CELL = 12
 GAMES = ("포켓몬 카드", "원피스 카드", "나루토 카드")
 REGIONS = ("KR", "JP", "US")
-TOPICS = ("event", "tournament", "popup", "promo", "collab", "movie", "release", "reprint", "merch", "anniversary", "stock", "entry", "broadcast", "deadline", "status_update", "rules", "access", "results", "purchase_policy", "service_status")
+TOPICS = ("event", "tournament", "popup", "promo", "collab", "movie", "release", "reprint", "merch", "anniversary", "stock", "entry", "broadcast", "deadline", "status_update", "rules", "access", "results", "purchase_policy", "service_status", "official_price", "product_issue", "authenticity_notice")
 
 _TOPIC_RULES = (
+    ("authenticity_notice", re.compile(r"위조\s*품|위조품|가품|모조품|복제품|레플리카|비정규\s*카드|짝퉁|오리파|서치\s*(?:팩|박스)|사기\s*주의|counterfeit|fake\s+(?:card|cards|booster|pack|packs|product|products)|replica|knockoff|unauthorized\s+(?:copy|reproduction)|searched?\s+(?:pack|packs|box|boxes)|repacked|scam\s+warning|偽造品|模倣品|偽物|レプリカ|非正規カード|オリパ|サーチ済み", re.I)),
+    ("product_issue", re.compile(r"봉입\s*(?:내용\s*)?오류|내용물\s*(?:누락|오류)|카드\s*(?:인쇄|가공|재단|일러스트)\s*(?:불량|오류)|제품\s*(?:불량|오류)|제조\s*불량|교환\s*대응|교환\s*안내|리콜|상품\s*회수|manufacturing\s+(?:error|defect)|printing\s+(?:error|defect)|packaging\s+(?:error|defect)|incorrect\s+contents?|missing\s+contents?|defective\s+product|damaged\s+(?:card|cards|part|parts).{0,30}replacement|product\s+replacement|exchange\s+program|product\s+recall|封入内容.{0,12}誤り|表面加工.{0,12}誤り|イラスト.{0,12}誤り|製造.{0,12}不良|商品.{0,12}(?:不良|不具合)|交換対応|交換案内|回収|リコール", re.I)),
+    ("official_price", re.compile(r"가격\s*(?:인상|인하|개정|변경|조정)|희망\s*소비자\s*가격.{0,12}(?:인상|인하|개정|변경|조정)|권장\s*소비자\s*가격.{0,12}(?:인상|인하|개정|변경|조정)|price\s+(?:revision|change|increase|decrease|adjustment|update)|MSRP.{0,12}(?:revision|change|increase|decrease|update)|RRP.{0,12}(?:revision|change|increase|decrease|update)|価格改定|価格変更|値上げ|値下げ|希望小売価格.{0,12}(?:改定|変更)", re.I)),
     ("service_status", re.compile(r"점검|서비스\s*장애|접속\s*(?:장애|오류)|로그인\s*(?:불가|장애)|복구\s*완료|maintenance|service\s+(?:outage|unavailable|disruption)|login\s+(?:issue|failure|unavailable)|incident|resolved|メンテナンス|障害|不具合|ログインできない|利用できません|復旧", re.I)),
     ("results", re.compile(r"대회\s*결과|경기\s*결과|결과\s*발표|우승자\s*발표|입상자|최종\s*순위|우승\s*덱|상위\s*덱|tournament\s+results?|event\s+results?|match\s+results?|final\s+standings?|top\s+finishers?|winning\s+deck|champion\s+deck|大会結果|試合結果|結果発表|優勝者発表|入賞者|最終順位|優勝デッキ|上位デッキ", re.I)),
     ("purchase_policy", re.compile(r"추첨\s*판매|구매\s*제한|판매\s*제한|1인\s*\d+개|본인\s*인증.{0,20}(?:판매|구매)|구매권|구매\s*티켓|가상\s*대기열|lottery\s+sale|purchase\s+limit|sales?\s+limit|limited\s+to\s+(?:one|\d+)\s+items?\s+per\s+person|identity\s+verification.{0,30}(?:sale|purchase)|virtual\s+queue|purchase\s+(?:ticket|voucher)|抽選販売|購入制限|販売制限|お一人様\s*\d+点|本人認証.{0,20}(?:販売|購入)|購入券|購入チケット|仮想待機列", re.I)),
@@ -65,7 +68,7 @@ def _now() -> str:
 
 def _fresh() -> dict:
     return {
-        "version": 4,
+        "version": 5,
         "providers": {},
         "coverage_cells": {},
         "source_kinds": {},
@@ -426,7 +429,7 @@ def _coverage_report(data: dict) -> dict:
         verification_gap_streak = _num(stat.get("verification_gap_streak"))
         discovery_gap_streak = _num(stat.get("discovery_gap_streak"))
         topic = key.rsplit("/", 1)[-1]
-        urgency = {"service_status": 5.5, "status_update": 5.0, "rules": 4.5, "purchase_policy": 4.5, "deadline": 4.0, "access": 4.0, "entry": 3.0, "broadcast": 3.0, "results": 2.5, "stock": 2.0}.get(topic, 0.0)
+        urgency = {"service_status": 5.5, "authenticity_notice": 5.0, "status_update": 5.0, "product_issue": 4.75, "rules": 4.5, "purchase_policy": 4.5, "deadline": 4.0, "access": 4.0, "official_price": 3.5, "entry": 3.0, "broadcast": 3.0, "results": 2.5, "stock": 2.0}.get(topic, 0.0)
         priority = round(
             miss_streak * 4.0
             + verification_gap_streak * 2.0
