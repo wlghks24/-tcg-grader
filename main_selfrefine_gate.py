@@ -8,16 +8,16 @@ from pathlib import Path
 import security_self_audit
 import selfrefine_full_repo as core
 from shared_self_learning import SHARED_SELF_LEARNING_CONTRACT_VERSION
-from shared_self_learning.contracts import namespaced_signature
+from shared_self_learning.engine import enrich_error
 
 ROOT = Path(__file__).resolve().parent
-POLICY = json.loads((ROOT / 'selfrefine_domain_policy.json').read_text(encoding='utf-8'))
-EXCLUDES = tuple(POLICY['domains']['main']['exclude_prefixes'])
-LEDGER = ROOT / POLICY['domains']['main']['ledger']
+POLICY = json.loads((ROOT / "selfrefine_domain_policy.json").read_text(encoding="utf-8"))
+EXCLUDES = tuple(POLICY["domains"]["main"]["exclude_prefixes"])
+LEDGER = ROOT / POLICY["domains"]["main"]["ledger"]
 
 
 def _is_main_path(relative: str) -> bool:
-    normalized = str(relative).replace('\\', '/')
+    normalized = str(relative).replace("\\", "/")
     return not any(normalized.startswith(prefix) for prefix in EXCLUDES)
 
 
@@ -33,17 +33,21 @@ def tracked_main_files():
 def scan_main_security():
     errors = []
     for finding in security_self_audit.scan_repository(ROOT):
-        relative = str(finding.get('path') or 'repository')
+        relative = str(finding.get("path") or "repository")
         if not _is_main_path(relative):
             continue
-        if security_self_audit.SEVERITY_ORDER.get(str(finding.get('severity')), 0) < security_self_audit.SEVERITY_ORDER['high']:
+        if security_self_audit.SEVERITY_ORDER.get(str(finding.get("severity")), 0) < security_self_audit.SEVERITY_ORDER["high"]:
             continue
         errors.append(core.make_issue(
-            'SECURITY_HIGH', relative, str(finding.get('rule') or 'security finding'),
-            str(finding.get('evidence') or finding.get('message') or ''),
-            'high/critical 보안 finding을 해결하고 Main SELFREFINE 회귀검사를 재실행',
+            "SECURITY_HIGH", relative, str(finding.get("rule") or "security finding"),
+            str(finding.get("evidence") or finding.get("message") or ""),
+            "high/critical 보안 finding을 해결하고 Main SELFREFINE 회귀검사를 재실행",
         ))
     return errors
+
+
+def _enrich(rows):
+    return [enrich_error("main", row) for row in rows]
 
 
 def scan_once():
@@ -55,7 +59,7 @@ def scan_once():
             break
     if len(errors) < core.MAX_ERRORS:
         errors.extend(scan_main_security())
-    return errors[:core.MAX_ERRORS], len(files)
+    return _enrich(errors[:core.MAX_ERRORS]), len(files)
 
 
 def run(cycles: int):
@@ -71,30 +75,33 @@ def run(cycles: int):
 
 
 def self_test():
-    assert _is_main_path('collector_self_healing.py')
-    assert _is_main_path('shared_self_learning/contracts.py')
-    assert not _is_main_path('instagram_tcg_content/render/slide.py')
-    assert LEDGER.name == 'MAIN_SELFREFINE_ERROR_LEDGER.json'
-    assert POLICY['rules']['shared_self_learning_code'] is True
-    assert POLICY['rules']['shared_self_learning_state'] is False
-    assert SHARED_SELF_LEARNING_CONTRACT_VERSION >= 1
-    assert namespaced_signature('main', 'abc') == 'main:abc'
-    assert namespaced_signature('instagram_content', 'abc') == 'instagram_content:abc'
-    print('Main SELFREFINE domain isolation + shared learning code: PASS')
+    assert _is_main_path("collector_self_healing.py")
+    assert _is_main_path("shared_self_learning/engine.py")
+    assert not _is_main_path("instagram_tcg_content/selfrefine_gate.py")
+    assert LEDGER.name == "MAIN_SELFREFINE_ERROR_LEDGER.json"
+    assert POLICY["rules"]["shared_self_learning_code"] is True
+    assert POLICY["rules"]["shared_self_learning_state"] is False
+    assert POLICY["rules"]["cross_domain_learning_state_merge"] is False
+    assert SHARED_SELF_LEARNING_CONTRACT_VERSION >= 2
+    left = enrich_error("main", {"stage": "HTTP_429", "path": "a.py", "evidence": "rate limited"})
+    right = enrich_error("instagram_content", {"stage": "HTTP_429", "path": "a.py", "evidence": "rate limited"})
+    assert left["shared_learning_key"] != right["shared_learning_key"]
+    assert left["shared_retry_bucket"] == right["shared_retry_bucket"]
+    print("Main SELFREFINE domain isolation + shared stateless learning algorithms: PASS")
 
 
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument('--cycles', type=int, default=1)
-    parser.add_argument('--self-test', action='store_true')
+    parser.add_argument("--cycles", type=int, default=1)
+    parser.add_argument("--self-test", action="store_true")
     args = parser.parse_args()
     if args.self_test:
         self_test()
         return 0
     result = run(max(1, min(5, args.cycles)))
-    print(json.dumps(result['summary'], ensure_ascii=False))
-    return 0 if result['summary']['status'] == 'pass' else 1
+    print(json.dumps(result["summary"], ensure_ascii=False))
+    return 0 if result["summary"]["status"] == "pass" else 1
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     raise SystemExit(main())
