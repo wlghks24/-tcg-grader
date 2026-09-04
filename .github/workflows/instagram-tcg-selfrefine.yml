@@ -28,8 +28,13 @@ jobs:
       - name: Run diversified source verification regression
         working-directory: instagram_tcg_content
         run: python test_source_verification_engine.py
+      - name: Run live packet semantic guards
+        working-directory: instagram_tcg_content
+        run: python test_live_packet_guards.py
       - name: Validate source route policy JSON
         run: python -m json.tool instagram_tcg_content/source_routes.json >/dev/null
+      - name: Validate recorded live sample JSON
+        run: python -m json.tool instagram_tcg_content/live_sample_validation_20260904.json >/dev/null
       - name: Run Instagram TCG Content SELFREFINE only
         run: python instagram_tcg_content/selfrefine_gate.py
       - name: Upload Instagram TCG SELFREFINE ledger
