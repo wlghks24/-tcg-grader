@@ -17,6 +17,10 @@ FORBIDDEN_CONTENT_IMPORTS = {
 }
 FORBIDDEN_SHARED_IMPORTS = FORBIDDEN_CONTENT_IMPORTS | {'instagram_tcg_content'}
 SKIP = {'.git', '.venv', 'venv', '__pycache__', 'node_modules', 'dist', 'build'}
+CONTROL_PLANE_FILES = {
+    'selfrefine_domain_boundary_guard.py',
+    'main_selfrefine_gate.py',
+}
 
 # Only passive, non-executable factual data may cross Main <-> Instagram directly.
 # Shared learning *algorithms/contracts* live only in shared_self_learning/.
@@ -92,8 +96,10 @@ def main() -> int:
         else:
             if FORBIDDEN_MAIN_IMPORT in imports:
                 errors.append(f'{rel}: Main imports Instagram content domain')
-            if 'instagram_tcg_content/' in text and not rel.startswith(EXCHANGE_PREFIX):
-                if '.py' in text or 'import' in text:
+            # Boundary/control-plane files are allowed to name domain paths so they can
+            # enforce the boundary. Runtime code is not.
+            if rel not in CONTROL_PLANE_FILES and 'instagram_tcg_content/' in text:
+                if '.py' in text or re.search(r'\bimport\b', text):
                     errors.append(f'{rel}: Main references Instagram source code path')
 
         if EXCHANGE_PREFIX in text:
