@@ -6,8 +6,21 @@ on:
       - 'instagram_tcg_content/**'
       - 'shared_self_learning/**'
       - 'crosscheck_exchange/**'
+      - 'selfrefine_crosscheck_gate.py'
       - 'selfrefine_domain_policy.json'
       - 'selfrefine_domain_boundary_guard.py'
+      - 'test_selfrefine_domain_isolation_v18.py'
+      - '.github/workflows/instagram-tcg-selfrefine.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'instagram_tcg_content/**'
+      - 'shared_self_learning/**'
+      - 'crosscheck_exchange/**'
+      - 'selfrefine_crosscheck_gate.py'
+      - 'selfrefine_domain_policy.json'
+      - 'selfrefine_domain_boundary_guard.py'
+      - 'test_selfrefine_domain_isolation_v18.py'
       - '.github/workflows/instagram-tcg-selfrefine.yml'
   workflow_dispatch:
 
@@ -25,8 +38,12 @@ jobs:
           python-version: '3.11'
       - name: Enforce Main vs Instagram domain boundary
         run: python selfrefine_domain_boundary_guard.py
+      - name: Verify shared algorithm and passive crosscheck contracts
+        run: |
+          python selfrefine_crosscheck_gate.py --self-test
+          python -m unittest -v test_selfrefine_domain_isolation_v18.py
       - name: Run Instagram TCG Content SELFREFINE only
-        run: python instagram_tcg_content/selfrefine_gate.py
+        run: python -m instagram_tcg_content.selfrefine_gate
       - name: Upload Instagram TCG SELFREFINE ledger
         if: always()
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
