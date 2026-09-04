@@ -53,6 +53,20 @@ def _probe_with(get_code: int | None):
 
 
 def main():
+    # Korean/Japanese browser search templates must be converted to an
+    # ASCII request target without double-encoding existing %20 escapes.
+    korean = links._render_template_probe(
+        "https://map.naver.com/p/search/롯데마트%20토이저러스%20{query}"
+    )
+    japanese = links._render_template_probe(
+        "https://www.google.com/maps/search/トレカショップ+{query}"
+    )
+    assert "롯데마트" not in korean and "%EB%A1%AF%EB%8D%B0%EB%A7%88%ED%8A%B8" in korean, korean
+    assert "トレカショップ" not in japanese and "%E3%83%88" in japanese, japanese
+    assert "%2520" not in korean, korean
+    urllib.request.Request(korean, method="HEAD")
+    urllib.request.Request(japanese, method="HEAD")
+
     # HEAD-only 404 must never condemn a URL that works with GET.
     recovered = _probe_with(None)
     assert recovered["state"] == "ok", recovered
