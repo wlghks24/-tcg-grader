@@ -549,7 +549,8 @@ def _coverage_report(data: dict) -> dict:
         "no_candidate_cells": [row["cell"] for row in missing if row["candidate_count"] == 0],
         "next_priority_cells": priority_rows[:24],
         "next_priority_by_game": by_game,
-        "coverage_basis": "verified-source-only + unchanged-evidence recheck age",
+        "coverage_basis": "verified-source-only",
+        "freshness_basis": "unchanged verified evidence ages into bounded recheck-due priority without losing verified status",
     }
 
 
