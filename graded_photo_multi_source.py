@@ -24,7 +24,7 @@ from safe_runtime import atomic_write_json, diagnostic_exception, exclusive_file
 from detailed_collection_intelligence import (
  build_queries, canonical_key, evidence_confidence, learning_snapshot,
  grader_collection_targets, record_collection_cycle, record_official_feedback,
- route_run_count, source_priorities, source_priority,
+ route_plan, route_run_count, source_priorities, source_priority,
 )
 from graded_photo_evidence import enrich_rows, normalize_cert
 from grading_cert_verifier import lookup_url
@@ -650,7 +650,7 @@ def _discover_source_game(src:dict,game:str)->tuple[list[dict],list[str],int,dic
  raw=[];errors=[];queries=0;observations=[]
  detailed_started=time.monotonic()
  query_sid=SOURCE_ID_ALIASES.get(str(src.get('id') or ''),str(src.get('id') or 'unknown'))
- diag={'raw_results':0,'domain_matches':0,'company_matches':0,'resolved_redirects':0,'image_results':0,'google_image_results':0,'recovery_queries':0,'recovery_company_matches':0}
+ diag={'raw_results':0,'domain_matches':0,'company_matches':0,'resolved_redirects':0,'image_results':0,'google_image_results':0,'recovery_queries':0,'recovery_company_matches':0,'circuit_deferred_games':0,'circuit_recovery_probes':0}
  query_plan=_queries(src,game)
  for expected_company,q in query_plan:
   queries+=1;query_started=time.monotonic()
@@ -752,8 +752,13 @@ def _discover_source_game(src:dict,game:str)->tuple[list[dict],list[str],int,dic
  return out,errors,queries,diag
 
 def _collect_public_source(src:dict):
- found_by_game={};errors=[];queries=0;diag={'raw_results':0,'domain_matches':0,'company_matches':0,'resolved_redirects':0,'image_results':0,'google_image_results':0,'recovery_queries':0,'recovery_company_matches':0}
+ found_by_game={};errors=[];queries=0;diag={'raw_results':0,'domain_matches':0,'company_matches':0,'resolved_redirects':0,'image_results':0,'google_image_results':0,'recovery_queries':0,'recovery_company_matches':0,'circuit_deferred_games':0,'circuit_recovery_probes':0}
+ query_sid=SOURCE_ID_ALIASES.get(str(src.get('id') or ''),str(src.get('id') or 'unknown'))
  for game in GAMES:
+  plan=route_plan(query_sid,game)
+  if plan.get('circuit_open') is True:
+   found_by_game[game]=[];diag['circuit_deferred_games']+=1;continue
+  if plan.get('recovery_probe') is True:diag['circuit_recovery_probes']+=1
   rows,err,q,d=_discover_source_game(src,game);found_by_game[game]=rows;errors.extend(err);queries+=q
   for k in diag: diag[k]+=int(d.get(k,0))
  # A busy Pokemon/PSA query must not consume the cap before another game or

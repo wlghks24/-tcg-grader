@@ -3,6 +3,9 @@ name: Provider Source Gap Learning Guard
 on:
   pull_request:
     paths:
+      - 'test_collection_resilience_v22.py'
+      - 'detailed_collection_intelligence.py'
+      - 'graded_photo_multi_source.py'
       - 'provider_health_learning.py'
       - 'event_gap_learning.py'
       - 'collection_meta_learning.py'
@@ -28,6 +31,9 @@ on:
   push:
     branches: [main]
     paths:
+      - 'test_collection_resilience_v22.py'
+      - 'detailed_collection_intelligence.py'
+      - 'graded_photo_multi_source.py'
       - 'provider_health_learning.py'
       - 'event_gap_learning.py'
       - 'collection_meta_learning.py'
@@ -60,8 +66,8 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 6
     steps:
-      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
-      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97
         with:
           python-version: '3.11'
       - name: Compile source-gap and discovery guards
@@ -86,7 +92,10 @@ jobs:
             test_source_gap_taxonomy_v10.py \
             test_verified_gap_priority_v11.py \
             test_gap_result_event_supersession_v12.py \
-            test_verified_multilabel_coverage_v14.py
+            test_verified_multilabel_coverage_v14.py \
+            test_collection_resilience_v22.py
+      - name: Verify route resilience and process-safe provider learning
+        run: python -m unittest -v test_collection_resilience_v22.py
       - name: Verify candidate and official coverage stay separated
         run: python -m unittest -v test_provider_source_gap_learning_v5.py
       - name: Verify challenge-style official event headlines remain discoverable

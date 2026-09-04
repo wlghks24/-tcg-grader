@@ -19,6 +19,7 @@ INTELLIGENCE=ROOT/'detailed_collection_intelligence.py'
 COLLECTOR_MARKERS=(
     'record_collection_cycle',
     'record_official_feedback',
+    'route_plan',
     'route_run_count',
     'grader_collection_targets',
     '_balanced_candidate_selection',
@@ -35,11 +36,13 @@ INTELLIGENCE_MARKERS=(
     'def record_official_feedback(',
     'def learning_snapshot(',
     'def grader_collection_targets(',
+    'def route_plan(',
     "'query_learning_cannot_change_trust':True",
     "'idempotent_feedback':True",
     "'measurement_quality_feedback':True",
     "'undercovered_grader_recovery':True",
     "'cross_process_lock':True",
+    "'route_circuit_breaker':True",
     "SOURCE_ALIASES={'ebay_public':'ebay','ebay_api':'ebay'}",
 )
 

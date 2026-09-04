@@ -1,0 +1,158 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/wlghks24/-tcg-grader/crosscheck_exchange/schema.json",
+  "title": "SELFREFINE passive cross-domain exchange",
+  "description": "Only passive factual JSON/JSONL records. No executable payload or persisted runtime/provider/retry/learning state.",
+  "oneOf": [
+    {
+      "$ref": "#/$defs/envelope"
+    },
+    {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/record"
+      }
+    }
+  ],
+  "$defs": {
+    "envelope": {
+      "type": "object",
+      "required": [
+        "domain",
+        "records"
+      ],
+      "properties": {
+        "domain": {
+          "enum": [
+            "main",
+            "instagram_content"
+          ]
+        },
+        "records": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/record"
+          }
+        }
+      },
+      "additionalProperties": false
+    },
+    "record": {
+      "type": "object",
+      "required": [
+        "domain",
+        "information_family",
+        "canonical_key",
+        "value",
+        "source_code",
+        "source_locator",
+        "checked_at_kst",
+        "verification",
+        "confidence",
+        "lineage_key",
+        "evidence_fingerprint"
+      ],
+      "properties": {
+        "domain": {
+          "enum": [
+            "main",
+            "instagram_content"
+          ]
+        },
+        "information_family": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 80
+        },
+        "canonical_key": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 300
+        },
+        "value": {
+          "type": "string",
+          "maxLength": 600
+        },
+        "currency": {
+          "type": "string",
+          "maxLength": 12
+        },
+        "language": {
+          "type": "string",
+          "maxLength": 20
+        },
+        "variant": {
+          "type": "string",
+          "maxLength": 120
+        },
+        "source_code": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 80
+        },
+        "source_locator": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 500
+        },
+        "checked_at_kst": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 40
+        },
+        "verification": {
+          "enum": [
+            "candidate",
+            "corroborated",
+            "verified"
+          ]
+        },
+        "confidence": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1
+        },
+        "lineage_key": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 160
+        },
+        "evidence_fingerprint": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{24}$"
+        }
+      },
+      "additionalProperties": false
+    }
+  },
+  "x-crosscheck-policy": {
+    "canonical_key_match_required": true,
+    "lineage_must_be_preserved_per_domain": true,
+    "conflicts_are_not_averaged": true,
+    "conflicts_require_reverification": true,
+    "verification_is_not_promoted_cross_domain": true,
+    "provider_retry_learning_state_is_not_merged": true,
+    "forbidden_fields": [
+      "retry_count",
+      "cooldown",
+      "provider_score",
+      "provider_health",
+      "learning_state",
+      "error_ledger",
+      "render_state",
+      "collector_state"
+    ],
+    "fail_closed_execution_markers": [
+      "exec",
+      "eval",
+      "importlib",
+      "runpy",
+      "pickle",
+      "__import__",
+      "compile",
+      "marshal",
+      "subprocess",
+      "os.system"
+    ]
+  }
+}

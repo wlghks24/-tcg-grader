@@ -73,6 +73,45 @@ class VerifiedGradeLearningV135Tests(unittest.TestCase):
         self.assertTrue(rows[0]['server_verified'])
         self.assertEqual(audit['eligible'], 1)
 
+    def test_hierarchical_vision_features_survive_verified_gate(self):
+        self._registry([self._verified()])
+        vision = {
+            'analysisConfidence': 88,
+            'frontCenter': 47,
+            'backCenter': 46,
+            'surfaceRisk': 18,
+            'edgeRisk': 21,
+            'cornerRisk': 25,
+            'surfaceConfidence': 84,
+            'quadrantWorstRisk': 28,
+            'quadrantSurfaceWorstRisk': 24,
+            'quadrantEdgeWorstRisk': 20,
+            'quadrantCornerWorstRisk': 25,
+            'quadrantMeanRisk': 14,
+            'quadrantImbalance': 18,
+            'quadrantConfidence': 80,
+            'eightZoneWorstRisk': 47,
+            'eightZoneSurfaceWorstRisk': 39,
+            'eightZoneEdgeWorstRisk': 33,
+            'eightZoneCornerWorstRisk': 47,
+            'eightZoneMeanRisk': 17,
+            'eightZoneImbalance': 41,
+            'eightZoneConfidence': 76,
+            'hierarchyDefectRisk': 45,
+            'hierarchyConfidence': 76,
+            'multiAngle': True,
+            'engine': 'v160-grading-hierarchy-1-4-8',
+        }
+        self._store([self._row(vision=vision)])
+        rows, audit = learning.eligible_training_rows()
+        self.assertEqual(audit['eligible'], 1)
+        self.assertEqual(len(rows), 1)
+        stored = rows[0]['vision']
+        self.assertEqual(stored['eightZoneWorstRisk'], 47)
+        self.assertEqual(stored['quadrantCornerWorstRisk'], 25)
+        self.assertEqual(stored['hierarchyDefectRisk'], 45)
+        self.assertEqual(stored['engine'], 'v160-grading-hierarchy-1-4-8')
+
     def test_registry_grade_conflict_is_excluded(self):
         self._registry([self._verified(grade=8)])
         self._store([self._row(actual=9)])

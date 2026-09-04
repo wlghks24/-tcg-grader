@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 import inspect
 import unittest
+from pathlib import Path
 from unittest import mock
 
 import grading_cert_verifier as verifier
@@ -50,13 +51,13 @@ class ManualOnlyOfficialVerificationV192Tests(unittest.TestCase):
         self.assertNotIn('def _slab_identity_exact(',source)
 
     def test_ui_requires_explicit_third_step(self):
-        bridge=open('manual_official_verify_bridge.js',encoding='utf-8').read()
-        pending=open('pending_official_candidate_bridge_v161.js',encoding='utf-8').read()
+        bridge=Path('manual_official_verify_bridge.js').read_text(encoding='utf-8')
+        pending=Path('pending_official_candidate_bridge_v161.js').read_text(encoding='utf-8')
         self.assertIn('③ 검증완료 등록',bridge)
         self.assertIn('proofDrafts',bridge)
         self.assertIn('③ 검증완료 등록',pending)
         self.assertNotIn('brgcard.com/certification',pending)
-        self.assertIn('break.co.kr/certification/{cert}',open('grading_cert_verifier.py',encoding='utf-8').read())
+        self.assertIn('break.co.kr/certification/{cert}',Path('grading_cert_verifier.py').read_text(encoding='utf-8'))
 
 
 if __name__=='__main__':

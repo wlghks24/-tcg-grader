@@ -44,7 +44,7 @@ function trapezoid(){
   return im;
 }
 
-assert.strictEqual(vision.ENGINE_VERSION,'v159-eight-zone-oblique-crosscheck');
+assert.strictEqual(vision.ENGINE_VERSION,'v160-grading-hierarchy-1-4-8');
 assert.deepStrictEqual({low:vision.DEFAULT_CONFIG.cannyLow,high:vision.DEFAULT_CONFIG.cannyHigh},{low:35,high:105});
 
 const clean=card({artwork:true}),quality=vision.analyzeQuality(clean),outer=vision.detectOuterBounds(clean),center=vision.measureCentering(clean,outer,quality);
@@ -56,12 +56,33 @@ for(const game of ['pokemon','onepiece','naruto']){
   const quadrants=vision.analyzeFourQuadrants(clean,clean,outer,{game});
   assert.deepStrictEqual(Object.keys(quadrants.quadrants),['tl','tr','bl','br']);
   assert(quadrants.allQuadrantsMeasured&&quadrants.confidence>=55,JSON.stringify(quadrants));
+  assert(Number.isFinite(quadrants.cornerWorstRisk),JSON.stringify(quadrants));
   assert.strictEqual(quadrants.gameProfile,game);
+
+  const zones=vision.analyzeEightZones(clean,clean,outer,{game});
+  assert.deepStrictEqual(Object.keys(zones.zones),['r1l','r1r','r2l','r2r','r3l','r3r','r4l','r4r']);
+  assert.strictEqual(zones.zoneLayout,'4x2');
+  assert(Number.isFinite(zones.surfaceWorstRisk)&&Number.isFinite(zones.edgeWorstRisk)&&Number.isFinite(zones.cornerWorstRisk),JSON.stringify(zones));
+
+  const hierarchy=vision.analyzeGradingHierarchy(clean,clean,outer,{game});
+  assert.deepStrictEqual(hierarchy.stageOrder,[1,2,3]);
+  assert.strictEqual(hierarchy.mode,'grading-hierarchy-1-4-8');
+  assert.strictEqual(Object.keys(hierarchy.stage2.quadrants).length,4);
+  assert.strictEqual(Object.keys(hierarchy.stage3.zones).length,8);
+  assert(hierarchy.surfaceRisk>=hierarchy.stage3.surfaceWorstRisk,JSON.stringify(hierarchy));
+  assert(hierarchy.edgeRisk>=hierarchy.stage3.edgeWorstRisk,JSON.stringify(hierarchy));
+  assert(hierarchy.cornerRisk>=hierarchy.stage3.cornerWorstRisk,JSON.stringify(hierarchy));
+  assert(hierarchy.defectRisk>=0&&hierarchy.defectRisk<=100,JSON.stringify(hierarchy));
 }
 const localScratch=card();line(localScratch,245,145,305,205,[246,246,244],2);
 const localQuadrants=vision.analyzeFourQuadrants(localScratch,localScratch,null,{game:'pokemon'});
 assert.strictEqual(localQuadrants.worstQuadrant,'tl',JSON.stringify(localQuadrants));
 assert(localQuadrants.quadrants.tl.surfaceRisk>localQuadrants.quadrants.br.surfaceRisk,JSON.stringify(localQuadrants));
+const localZones=vision.analyzeEightZones(localScratch,localScratch,null,{game:'pokemon'});
+assert(localZones.zones.r2l.surfaceRisk>localZones.zones.r4r.surfaceRisk,JSON.stringify(localZones));
+const localHierarchy=vision.analyzeGradingHierarchy(localScratch,localScratch,null,{game:'pokemon'});
+assert(localHierarchy.surfaceRisk>=localZones.surfaceWorstRisk,JSON.stringify(localHierarchy));
+assert(localHierarchy.learningFeatures.eightZoneWorstRisk===localHierarchy.stage3.worstRisk,JSON.stringify(localHierarchy.learningFeatures));
 
 const off=card({leftBorder:14,rightBorder:34,topBorder:16,bottomBorder:36}),offCenter=vision.measureCentering(off);
 assert(offCenter.valid,JSON.stringify(offCenter));
@@ -108,4 +129,4 @@ const skewed=vision.detectOuterBounds(trapezoid());assert(skewed.perspectiveSkew
 assert.throws(()=>vision.analyzeQuality({width:9,height:9,data:new Uint8Array(3)}),/VisionImageDataError/);
 assert.throws(()=>vision.analyzeQuality({width:5000,height:5000,data:{length:100000000}}),/VisionImageSizeError/);
 
-console.log('PASS: card mask + CLAHE + Canny hysteresis + Hough line evidence separated artwork/dust/glare from confirmed micro scratches; whitening and centering cross-tests passed; threshold tuning selected 35/105');
+console.log('PASS: grading hierarchy 1→4→8, separate edge/corner risk, mask + CLAHE + Canny/Hough defect evidence, whitening, centering and oblique cross-tests passed');
