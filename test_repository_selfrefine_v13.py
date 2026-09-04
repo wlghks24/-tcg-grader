@@ -102,6 +102,13 @@ jobs:
             )
         )
 
+    def test_runtime_delivery_guard_does_not_pin_stale_asset_revision(self):
+        source = (ROOT / "test_runtime_delivery_guards.py").read_text(encoding="utf-8")
+        self.assertNotIn("auto_validation_flow.js?v=181", source)
+        self.assertNotIn("graded_photo_dashboard.js?v=181", source)
+        self.assertIn("cache-buster regressed", source)
+        self.assertIn("network-first-runtime", source)
+
     def test_runtime_bundle_coverage_contract_tracks_shared_taxonomy(self):
         import runtime_bundle_guard_v143 as runtime_guard
         import update_promo_events as promo
