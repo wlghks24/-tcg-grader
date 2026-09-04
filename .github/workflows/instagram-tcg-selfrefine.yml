@@ -28,6 +28,9 @@ jobs:
       - name: Run diversified source verification regression
         working-directory: instagram_tcg_content
         run: python test_source_verification_engine.py
+      - name: Run resilient source substitution regression
+        working-directory: instagram_tcg_content
+        run: python test_source_route_resilience.py
       - name: Run live packet semantic guards
         working-directory: instagram_tcg_content
         run: python test_live_packet_guards.py
