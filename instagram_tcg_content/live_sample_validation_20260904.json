@@ -1,0 +1,84 @@
+{
+  "schema_version": 1,
+  "run_date_kst": "2026-09-04",
+  "purpose": "live sample validation for Instagram TCG X10 hardening",
+  "disclaimer": "This file records only facts directly verified during the sample run. It is not a 10:00 baseline and does not assert a complete Top10.",
+  "games": {
+    "pokemon": {
+      "verified_official_facts": [
+        {
+          "fact_type": "official_release",
+          "canonical_key": "pokemon:30th-celebration:release-date",
+          "value": "2026-09-16",
+          "source_code": "P-S01",
+          "source_locator": "https://asia.pokemon-card.com/id/archives/9162/",
+          "verification_status": "verified",
+          "official_primary_present": true
+        },
+        {
+          "fact_type": "official_event",
+          "canonical_key": "pokemon:30th-celebration-event:tokyo",
+          "value": "2026-10-25|Makuhari Messe",
+          "source_code": "P-S02",
+          "source_locator": "https://www.30th.pokemon-card.com/event",
+          "verification_status": "verified",
+          "official_primary_present": true
+        },
+        {
+          "fact_type": "official_event",
+          "canonical_key": "pokemon:30th-celebration-event:osaka",
+          "value": "2026-10-31,2026-11-01|INTEX Osaka",
+          "source_code": "P-S02",
+          "source_locator": "https://www.30th.pokemon-card.com/event",
+          "verification_status": "verified",
+          "official_primary_present": true
+        }
+      ],
+      "market_topn_status": "not_verified_in_this_sample"
+    },
+    "one_piece": {
+      "verified_official_facts": [
+        {
+          "fact_type": "official_event",
+          "canonical_key": "onepiece:op17:4th-anniversary-event:period",
+          "value": "2026-08-21..2026-09-13",
+          "source_code": "O-S01",
+          "source_locator": "https://en.onepiece-cardgame.com/events/store-tournament-op17.html",
+          "verification_status": "verified",
+          "official_primary_present": true
+        }
+      ],
+      "market_topn_status": "not_verified_in_this_sample"
+    },
+    "naruto": {
+      "verified_official_facts": [],
+      "market_topn_status": "prelaunch_or_not_verified_in_this_sample",
+      "fail_closed": true
+    }
+  },
+  "fx": {
+    "usd_krw": {
+      "value": 1350.40,
+      "unit": "KRW per USD",
+      "as_of_kst": "2026-09-04T15:30:00+09:00",
+      "source_code": "C-S01",
+      "source_locator": "Yonhap report citing Seoul Money Brokerage / Yonhap Infomax",
+      "verification_status": "verified_for_15_30_reference_only"
+    },
+    "jpy_krw": {
+      "value": 8.6462,
+      "unit": "KRW per JPY",
+      "as_of_kst": "2026-09-04T15:30:00+09:00",
+      "source_code": "C-S01",
+      "source_locator": "Yonhap report citing Seoul Money Brokerage / Yonhap Infomax; published as 864.62 KRW per 100 JPY",
+      "verification_status": "verified_for_15_30_reference_only"
+    }
+  },
+  "x10_findings": [
+    "Do not manufacture a Top10 when completed-sale verification is incomplete.",
+    "Official event/release facts can pass independently of market TopN.",
+    "FX must retain its actual as-of timestamp and must not be relabeled as 10:00 or 22:00.",
+    "A live sample run must never be persisted or reused as the 10:00 baseline.",
+    "NARUTO market ranking remains fail-closed until launch/identity/trade evidence satisfies verification rules."
+  ]
+}
