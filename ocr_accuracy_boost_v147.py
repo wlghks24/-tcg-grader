@@ -16,12 +16,14 @@ It upgrades both manual-upload OCR and the shared slab-corpus OCR helper.
 from __future__ import annotations
 
 from collections import Counter
+from functools import lru_cache
 import math
 from pathlib import Path
 import re
 import shutil
 import subprocess
 import tempfile
+import time
 from typing import Any
 
 from PIL import Image, ImageEnhance, ImageFilter, ImageOps
@@ -225,19 +227,32 @@ def _prepare(source: Image.Image, top_fraction: float, target_width: int, mode: 
     return resized
 
 
-def _run_tesseract(image: Image.Image, psm: int, *, digits_only: bool = False) -> tuple[str, str | None]:
-    binary = shutil.which("tesseract")
+@lru_cache(maxsize=1)
+def _tesseract_binary() -> str:
+    return shutil.which("tesseract") or ""
+
+
+def _run_tesseract(
+    image: Image.Image,
+    psm: int,
+    *,
+    digits_only: bool = False,
+    timeout: float = 20.0,
+) -> tuple[str, str | None]:
+    binary = _tesseract_binary()
     if not binary:
         return "", "tesseract_not_installed"
     command_extra: list[str] = ["-c", "preserve_interword_spaces=1"]
     if digits_only:
         command_extra += ["-c", "tessedit_char_whitelist=0123456789OQDILZSBG|.-/# "]
+    bounded_timeout = max(3.0, min(20.0, float(timeout)))
     try:
         with tempfile.NamedTemporaryFile(suffix=".png") as tmp:
             image.save(tmp.name, format="PNG")
             run = subprocess.run(
                 [binary, tmp.name, "stdout", "--psm", str(psm), "-l", "eng", *command_extra],
-                capture_output=True, text=True, encoding="utf-8", errors="replace", timeout=20, check=False,
+                capture_output=True, text=True, encoding="utf-8", errors="replace",
+                timeout=bounded_timeout, check=False,
             )
         if run.returncode != 0:
             return "", f"tesseract_exit_{run.returncode}"
@@ -272,9 +287,19 @@ def ocr_label(path: Path, profile: str = "accuracy", *, fallback_company: str = 
             errors: list[str] = []
             used: list[str] = []
             fields = (None, None, None)
+            started = time.monotonic()
+            budget_seconds = 14.0 if profile == "fast" else 48.0
+            budget_exhausted = False
             for name, fraction, target_width, mode, psm, digits_only in passes:
+                remaining = budget_seconds - (time.monotonic() - started)
+                if remaining < 3.0:
+                    budget_exhausted = True
+                    errors.append("ocr_budget_exhausted")
+                    break
                 prepared = _prepare(source, fraction, target_width, mode)
-                text, error = _run_tesseract(prepared, psm, digits_only=digits_only)
+                text, error = _run_tesseract(
+                    prepared, psm, digits_only=digits_only, timeout=min(20.0, remaining)
+                )
                 used.append(name)
                 if text and text not in texts:
                     texts.append(text)
@@ -300,6 +325,9 @@ def ocr_label(path: Path, profile: str = "accuracy", *, fallback_company: str = 
             "grade_resolved": grade is not None,
             "identity_score": score,
             "fallback_company_used_for_parsing": bool(not visual_company and fallback_company),
+            "budget_seconds": budget_seconds,
+            "budget_exhausted": budget_exhausted,
+            "elapsed_seconds": round(time.monotonic() - started, 3),
         }
     except (OSError, ValueError) as exc:
         return "", type(exc).__name__, {

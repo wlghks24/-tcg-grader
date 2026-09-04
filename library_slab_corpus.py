@@ -24,7 +24,9 @@ import random
 import re
 import subprocess
 import tempfile
+import time
 from collections import Counter, defaultdict
+from functools import lru_cache
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
@@ -221,13 +223,22 @@ def _prepare_region_crop(
     return crop.resize((target_w, max(240, int(crop.height * ratio))))
 
 
+@lru_cache(maxsize=1)
+def _tesseract_binary() -> str:
+    import shutil
+    return shutil.which("tesseract") or ""
+
+
 def _run_tesseract(
     image: Image.Image, psm: int, whitelist: str | None = None,
 ) -> tuple[str, str | None]:
+    binary = _tesseract_binary()
+    if not binary:
+        return "", "tesseract_not_installed"
     try:
         with tempfile.NamedTemporaryFile(suffix=".png") as tmp:
             image.save(tmp.name)
-            command = ["tesseract", tmp.name, "stdout", "--psm", str(psm), "-l", "eng"]
+            command = [binary, tmp.name, "stdout", "--psm", str(psm), "-l", "eng"]
             if whitelist:
                 command += ["-c", f"tessedit_char_whitelist={whitelist}"]
             run = subprocess.run(
@@ -236,7 +247,8 @@ def _run_tesseract(
                 text=True,
                 encoding="utf-8",
                 errors="replace",
-                timeout=30,
+                timeout=18,
+                check=False,
             )
         if run.returncode != 0:
             return "", f"tesseract_exit_{run.returncode}"
@@ -245,6 +257,8 @@ def _run_tesseract(
         return "", "tesseract_not_installed"
     except subprocess.TimeoutExpired:
         return "", "TimeoutExpired"
+    except OSError:
+        return "", "tesseract_failed"
 
 
 def _looks_like_bgs_label(text: str) -> bool:
@@ -282,7 +296,14 @@ def ocr_label(path: Path, profile: str = "adaptive") -> tuple[str, str | None, d
             used: list[str] = []
             bgs_cert_targeted = False
             cgc_cert_targeted = False
+            started = time.monotonic()
+            budget_seconds = 16.0 if profile == "fast" else 54.0
+            budget_exhausted = False
             for name, fraction, scale, threshold, psm in passes:
+                if time.monotonic() - started >= budget_seconds - 2.0:
+                    budget_exhausted = True
+                    errors.append("ocr_budget_exhausted")
+                    break
                 crop = _prepare_crop(source, fraction, scale, threshold)
                 text, error = _run_tesseract(crop, psm)
                 used.append(name)
@@ -367,6 +388,9 @@ def ocr_label(path: Path, profile: str = "adaptive") -> tuple[str, str | None, d
             "company_resolved": company is not None,
             "cert_resolved": cert is not None,
             "grade_resolved": grade is not None,
+            "budget_seconds": budget_seconds,
+            "budget_exhausted": budget_exhausted,
+            "elapsed_seconds": round(time.monotonic() - started, 3),
         }
     except (OSError, ValueError) as exc:
         return "", type(exc).__name__, {

@@ -22,11 +22,13 @@ from __future__ import annotations
 
 from collections import deque
 from datetime import datetime, timezone
+from functools import lru_cache
 import hashlib
 import json
 import math
 from pathlib import Path
 import re
+import shutil
 import subprocess
 import tempfile
 import threading
@@ -335,12 +337,20 @@ def _contextual_grade_candidates(
     return set()
 
 
+@lru_cache(maxsize=1)
+def _tesseract_page_binary() -> str:
+    return shutil.which("tesseract") or ""
+
+
 def _tesseract_page_pass(image: Image.Image, *, psm: int = 11, digits_only: bool = False) -> tuple[str, str | None]:
     """OCR one official-page viewport pass; optimized for Latin grader tokens and cert digits."""
+    binary = _tesseract_page_binary()
+    if not binary:
+        return "", "tesseract_not_installed"
     try:
         with tempfile.NamedTemporaryFile(suffix=".png") as tmp:
             image.save(tmp.name)
-            command = ["tesseract", tmp.name, "stdout", "--psm", str(psm), "-l", "eng"]
+            command = [binary, tmp.name, "stdout", "--psm", str(psm), "-l", "eng"]
             if digits_only:
                 command += ["-c", "tessedit_char_whitelist=0123456789"]
             run = subprocess.run(
@@ -349,7 +359,8 @@ def _tesseract_page_pass(image: Image.Image, *, psm: int = 11, digits_only: bool
                 text=True,
                 encoding="utf-8",
                 errors="replace",
-                timeout=20,
+                timeout=18,
+                check=False,
             )
         if run.returncode != 0:
             return "", f"tesseract_page_exit_{run.returncode}"
@@ -374,60 +385,135 @@ def _prepare_page_crop(source: Image.Image, top: float, bottom: float, target_wi
 
 
 def _ocr_official_page(
-    image_path: Path, *, expected_company: str = "", expected_cert: str = ""
+    image_path: Path,
+    *,
+    expected_company: str = "",
+    expected_cert: str = "",
+    expected_grade: float | None = None,
 ) -> tuple[str, str | None, dict[str, Any], dict[str, Any]]:
-    """OCR a full browser screenshot instead of only the slab-label top crop."""
+    """Adaptive OCR for a full official-page screenshot.
+
+    The base screenshot OCR is reused first. Extra crops are generated lazily and
+    only for fields still missing from the exact company + certificate + grade
+    match, avoiding five unconditional Tesseract passes on clear screenshots.
+    """
     base_text, base_error, base_diag, base_evidence = manual_photo._ocr_image(image_path)
     texts = [str(base_text or "")]
     errors = [str(base_error)] if base_error else []
     passes: list[str] = []
+    skipped: list[str] = []
     digit_text = ""
-    try:
-        with Image.open(image_path) as raw:
-            source = ImageOps.exif_transpose(raw).convert("RGB")
-            variants = (
-                ("full_psm11", _prepare_page_crop(source, 0.0, 1.0, 1800), 11, False),
-                ("identity_band_psm11", _prepare_page_crop(source, 0.06, 0.72, 2200), 11, False),
-                ("slab_descriptor_band_psm6", _prepare_page_crop(source, 0.34, 0.84, 2400), 6, False),
-                ("lower_grade_psm11", _prepare_page_crop(source, 0.48, 1.0, 2000), 11, False),
-                ("identity_digits_psm11", _prepare_page_crop(source, 0.08, 0.74, 2400), 11, True),
-            )
-            for name, image, psm, digits_only in variants:
-                out, err = _tesseract_page_pass(image, psm=psm, digits_only=digits_only)
-                passes.append(name)
-                if out:
-                    texts.append(out)
-                    if digits_only:
-                        digit_text += " " + out
-                if err:
-                    errors.append(err)
-    except (OSError, ValueError):
-        errors.append("official_page_image_open_error")
-
-    combined = " | ".join(dict.fromkeys(part for part in texts if part))[:12000]
-    normalized_digits = re.sub(r"\D", "", digit_text)
+    expected_company = str(expected_company or "").upper()
     expected_cert_clean = _clean_cert(expected_cert)
-    cert_seen = bool(
-        expected_cert_clean.isdigit()
-        and expected_cert_clean
-        and expected_cert_clean in normalized_digits
-    )
-    if cert_seen:
-        combined += f" | CERTIFICATION {expected_cert_clean}"
+    expected_grade_value = _grade(expected_grade)
 
-    try:
-        from graded_photo_evidence import extract_label_evidence
-        evidence = extract_label_evidence(combined)
-    except (ImportError, OSError, ValueError, TypeError):
-        evidence = dict(base_evidence) if isinstance(base_evidence, dict) else {}
+    def combined_text() -> str:
+        return " | ".join(dict.fromkeys(part for part in texts if part))[:12000]
 
+    def evidence_from(text: str) -> dict[str, Any]:
+        try:
+            from graded_photo_evidence import extract_label_evidence
+            value = extract_label_evidence(text)
+            return value if isinstance(value, dict) else {}
+        except (ImportError, OSError, ValueError, TypeError):
+            return dict(base_evidence) if isinstance(base_evidence, dict) else {}
+
+    def state_for(text: str, evidence: dict[str, Any]) -> dict[str, Any]:
+        if expected_company in manual_photo.COMPANIES and expected_cert_clean and expected_grade_value is not None:
+            return _match_proof(
+                row={},
+                text=text,
+                evidence=evidence,
+                company=expected_company,
+                cert=expected_cert_clean,
+                expected_grade=expected_grade_value,
+            )
+        return {
+            "matched": False,
+            "company_match": bool(expected_company and _company_in_text(text, expected_company)),
+            "cert_match": bool(expected_cert_clean and _cert_in_text(text, expected_cert_clean)),
+            "grade_match": bool(
+                expected_grade_value is not None
+                and any(abs(value - expected_grade_value) < 1e-9 for value in _explicit_grade_candidates(text, expected_company))
+            ),
+            "missing": [],
+        }
+
+    combined = combined_text()
+    evidence = evidence_from(combined)
+    state = state_for(combined, evidence)
+    base_sufficient = bool(state.get("matched"))
+    cert_seen = False
+    if not base_sufficient:
+        try:
+            with Image.open(image_path) as raw:
+                source = ImageOps.exif_transpose(raw).convert("RGB")
+                # Purpose controls whether a pass is skipped once that field is
+                # already resolved. Crops are built lazily to reduce memory too.
+                specs = (
+                    ("full_psm11", 0.00, 1.00, 1800, 11, False, "general"),
+                    ("identity_band_psm11", 0.06, 0.72, 2200, 11, False, "identity"),
+                    ("identity_digits_psm11", 0.08, 0.74, 2400, 11, True, "cert"),
+                    ("slab_descriptor_band_psm6", 0.34, 0.84, 2400, 6, False, "grade"),
+                    ("lower_grade_psm11", 0.48, 1.00, 2000, 11, False, "grade"),
+                )
+                for name, top, bottom, width, psm, digits_only, purpose in specs:
+                    company_ok = bool(state.get("company_match"))
+                    cert_ok = bool(state.get("cert_match"))
+                    grade_ok = bool(state.get("grade_match"))
+                    if purpose == "identity" and company_ok and cert_ok:
+                        skipped.append(name)
+                        continue
+                    if purpose == "cert" and cert_ok:
+                        skipped.append(name)
+                        continue
+                    if purpose == "grade" and grade_ok:
+                        skipped.append(name)
+                        continue
+
+                    image = _prepare_page_crop(source, top, bottom, width)
+                    out, err = _tesseract_page_pass(image, psm=psm, digits_only=digits_only)
+                    passes.append(name)
+                    if out:
+                        texts.append(out)
+                        if digits_only:
+                            digit_text += " " + out
+                    if err:
+                        errors.append(err)
+
+                    normalized_digits = re.sub(r"\D", "", digit_text)
+                    if (
+                        digits_only
+                        and expected_cert_clean.isdigit()
+                        and expected_cert_clean
+                        and expected_cert_clean in normalized_digits
+                    ):
+                        cert_seen = True
+                        texts.append(f"CERTIFICATION {expected_cert_clean}")
+
+                    combined = combined_text()
+                    evidence = evidence_from(combined)
+                    state = state_for(combined, evidence)
+                    if state.get("matched"):
+                        break
+        except (OSError, ValueError):
+            errors.append("official_page_image_open_error")
+
+    combined = combined_text()
+    evidence = evidence_from(combined)
+    state = state_for(combined, evidence)
     diagnostics = dict(base_diag) if isinstance(base_diag, dict) else {}
     diagnostics.update({
         "official_page_fullscreen_ocr": True,
         "official_page_passes": passes,
-        "expected_company": str(expected_company or "").upper()[:8] or None,
+        "official_page_skipped_passes": skipped,
+        "official_page_pass_count": len(passes),
+        "official_page_early_stop": bool(state.get("matched")),
+        "base_ocr_sufficient": base_sufficient,
+        "expected_company": expected_company[:8] or None,
         "expected_cert_seen_in_digit_pass": cert_seen,
         "combined_text_chars": len(combined),
+        "remaining_fields": list(state.get("missing") or []),
     })
     return (
         combined,
@@ -549,7 +635,10 @@ def submit(payload: dict[str, Any]) -> dict[str, Any]:
     atomic_write_bytes(target, image, suffix=".official-proof.tmp")
 
     text, ocr_error, diagnostics, evidence = _ocr_official_page(
-        target, expected_company=company, expected_cert=cert,
+        target,
+        expected_company=company,
+        expected_cert=cert,
+        expected_grade=expected_grade,
     )
     match = _match_proof(
         row=row, text=text, evidence=evidence if isinstance(evidence, dict) else {},

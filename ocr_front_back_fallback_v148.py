@@ -47,9 +47,13 @@ def _ocr_for_row_front_back(row: dict[str, Any]):
     fallback_company = str(row.get("company") or evidence.get("company") or "").upper()
     try:
         import library_slab_corpus as slab
+        # The back side is only a company/certificate fallback; do not pay the
+        # full accuracy profile cost unless the fast pass still misses a field
+        # that the front side needs.
+        back_profiles = ["fast"]
         back_text, back_error, back_diag = boost.ocr_label(
             back_path,
-            profile="accuracy",
+            profile="fast",
             fallback_company=fallback_company,
             slab_module=slab,
         )
@@ -58,6 +62,33 @@ def _ocr_for_row_front_back(row: dict[str, Any]):
             fallback_company=fallback_company,
             slab_module=slab,
         )
+        back_pass_count = int(back_diag.get("pass_count", 0) or 0)
+        need_company = not evidence.get("company") and not back_company
+        need_cert = not evidence.get("certification_id") and not back_cert
+        if need_company or need_cert:
+            precise_text, precise_error, precise_diag = boost.ocr_label(
+                back_path,
+                profile="accuracy",
+                fallback_company=fallback_company,
+                slab_module=slab,
+            )
+            back_profiles.append("accuracy")
+            back_pass_count += int(precise_diag.get("pass_count", 0) or 0)
+            precise_company, precise_cert, precise_grade = boost.fields_from_text(
+                precise_text,
+                fallback_company=fallback_company,
+                slab_module=slab,
+            )
+            if precise_text and precise_text not in back_text:
+                back_text = " | ".join(part for part in (back_text, precise_text) if part)
+            back_company = back_company or precise_company
+            back_cert = back_cert or precise_cert
+            back_grade = back_grade if back_grade is not None else precise_grade
+            back_error = back_error or precise_error
+            if precise_diag.get("engine"):
+                back_diag = {**back_diag, "precision_engine": precise_diag.get("engine")}
+        else:
+            back_pass_count = int(back_diag.get("pass_count", 0) or 0)
     except (ImportError, OSError, ValueError, TypeError):
         diagnostics["back_ocr_used"] = True
         diagnostics["back_ocr_error"] = "back_ocr_unavailable"
@@ -72,7 +103,8 @@ def _ocr_for_row_front_back(row: dict[str, Any]):
     diagnostics.update({
         "back_ocr_used": True,
         "back_ocr_engine": back_diag.get("engine"),
-        "back_ocr_pass_count": back_diag.get("pass_count", 0),
+        "back_ocr_pass_count": back_pass_count,
+        "back_ocr_profiles": back_profiles,
         "back_company_resolved": bool(back_company),
         "back_cert_resolved": bool(back_cert),
         "back_grade_hint": back_grade,

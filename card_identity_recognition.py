@@ -14,10 +14,11 @@ import tempfile
 import unicodedata
 from collections import Counter
 from difflib import SequenceMatcher
+from functools import lru_cache
 from pathlib import Path
 from typing import Any
 
-from PIL import Image, ImageOps
+from PIL import Image, ImageFilter, ImageOps
 
 from safe_runtime import atomic_write_json, safe_read_text
 
@@ -28,13 +29,21 @@ REFERENCE = ROOT / "card_identity_reference_catalog.json"
 GAMES = {"pokemon", "onepiece", "naruto"}
 REGIONS = {"KR", "JP", "US", "UNKNOWN"}
 MAX_IMAGE_BYTES = 6_000_000
+MAX_IMAGE_PIXELS = 24_000_000
 MAX_OCR_TEXT = 5000
 MAX_ROWS = 2000
+Image.MAX_IMAGE_PIXELS = MAX_IMAGE_PIXELS
 HASH_RE = re.compile(r"^[0-9a-f]{16}$")
 NUMBER_RE = re.compile(
     r"(?<![A-Z0-9])(?:[A-Z]{1,6}\s*)?(?:\d{1,3}/\d{2,3}|(?:OP|ST|EB|PRB|P|CP|FB|SV|SM|S)\s*-?\s*\d{1,3}(?:-\d{2,3})?)(?![A-Z0-9])",
     re.I,
 )
+_DIGITISH_MAP = str.maketrans({
+    "O": "0", "Q": "0", "D": "0", "I": "1", "L": "1", "|": "1",
+    "Z": "2", "S": "5", "G": "6", "B": "8",
+})
+_CATALOG_CACHE_SIGNATURE: tuple | None = None
+_CATALOG_CACHE_ROWS: list[dict[str, Any]] = []
 
 
 def normalize(value: Any) -> str:
@@ -62,6 +71,11 @@ def normalize_game(value: Any) -> str:
     return str(value or "").lower() if str(value or "").lower() in GAMES else "unknown"
 
 
+def normalize_region(value: Any) -> str:
+    region = str(value or "").strip().upper()
+    return region if region in REGIONS else "UNKNOWN"
+
+
 def _json(path: Path, fallback: dict) -> dict:
     try:
         value = json.loads(safe_read_text(path))
@@ -70,9 +84,23 @@ def _json(path: Path, fallback: dict) -> dict:
         return fallback
 
 
+def _path_signature(path: Path) -> tuple[str, int, int]:
+    try:
+        stat = path.stat()
+        return str(path), int(stat.st_mtime_ns), int(stat.st_size)
+    except OSError:
+        return str(path), -1, -1
+
+
 def catalog() -> list[dict[str, Any]]:
+    """Load the identity catalog once per file revision, not once per OCR pass."""
+    global _CATALOG_CACHE_SIGNATURE, _CATALOG_CACHE_ROWS
+    signature = (_path_signature(MARKET), _path_signature(REFERENCE))
+    if signature == _CATALOG_CACHE_SIGNATURE:
+        return _CATALOG_CACHE_ROWS
+
     payload = _json(MARKET, {"entries": {}})
-    rows = []
+    rows: list[dict[str, Any]] = []
     for key, value in payload.get("entries", {}).items():
         if not isinstance(key, str) or not key.endswith("|HIT") or not isinstance(value, dict):
             continue
@@ -82,42 +110,104 @@ def catalog() -> list[dict[str, Any]]:
         game = normalize_game(value.get("game"))
         if not name:
             continue
-        aliases = {name, parts[1] if len(parts) > 1 else "", str(value.get("product_name") or "")}
+        aliases = sorted({
+            name,
+            parts[1] if len(parts) > 1 else "",
+            str(value.get("product_name") or ""),
+        } - {""})
         rows.append({
-            "market_key": key[:180], "region": parts[0] if parts and parts[0] in REGIONS else "UNKNOWN",
-            "game": game, "card_name": name, "card_number": number,
-            "aliases": sorted(x[:140] for x in aliases if x),
+            "market_key": key[:180],
+            "region": parts[0] if parts and parts[0] in REGIONS else "UNKNOWN",
+            "game": game,
+            "card_name": name,
+            "card_number": number,
+            "aliases": [x[:140] for x in aliases],
+            "_normalized_aliases": [normalize(x) for x in aliases if len(normalize(x)) >= 2],
         })
     reference = _json(REFERENCE, {"cards": []})
     known = {(row["game"], normalize(row["card_name"]), row["card_number"]) for row in rows}
     for value in reference.get("cards", []):
         if not isinstance(value, dict):
             continue
-        game = normalize_game(value.get("game")); name = str(value.get("card_name") or "").strip()[:120]
-        number = normalize_number(value.get("card_number")); region = str(value.get("region") or "UNKNOWN").upper()
-        if game not in GAMES or not name or region not in REGIONS:
+        game = normalize_game(value.get("game"))
+        name = str(value.get("card_name") or "").strip()[:120]
+        number = normalize_number(value.get("card_number"))
+        region = normalize_region(value.get("region"))
+        if game not in GAMES or not name:
             continue
         key = (game, normalize(name), number)
         if key in known:
             continue
-        aliases = {name, *(str(alias)[:140] for alias in value.get("aliases", []) if isinstance(alias, str))}
-        rows.append({"market_key": "", "region": region, "game": game, "card_name": name,
-                     "card_number": number, "aliases": sorted(alias for alias in aliases if alias)})
+        aliases = sorted({
+            name,
+            *(str(alias)[:140] for alias in value.get("aliases", []) if isinstance(alias, str)),
+        })
+        rows.append({
+            "market_key": "",
+            "region": region,
+            "game": game,
+            "card_name": name,
+            "card_number": number,
+            "aliases": [alias for alias in aliases if alias],
+            "_normalized_aliases": [normalize(alias) for alias in aliases if len(normalize(alias)) >= 2],
+        })
         known.add(key)
+
+    _CATALOG_CACHE_SIGNATURE = signature
+    _CATALOG_CACHE_ROWS = rows
     return rows
 
 
+def _digitish(value: str) -> str:
+    return re.sub(r"\D", "", str(value or "").upper().translate(_DIGITISH_MAP))
+
+
+def _repair_set_code(value: str) -> str:
+    raw = unicodedata.normalize("NFKC", str(value or "")).upper().strip()
+    match = re.fullmatch(
+        r"(OP|ST|EB|PRB|P|CP|FB|SV|SM|S)\s*(-?)\s*([0-9OQDIL|ZSBG]{1,3})"
+        r"(?:\s*-\s*([0-9OQDIL|ZSBG]{2,3}))?",
+        raw,
+    )
+    if not match:
+        return ""
+    prefix, separator, first, second = match.groups()
+    first_digits = _digitish(first)
+    second_digits = _digitish(second or "")
+    if not first_digits:
+        return ""
+    if second is not None:
+        return normalize_number(f"{prefix}{first_digits}-{second_digits}")
+    return normalize_number(f"{prefix}{'-' if separator else ''}{first_digits}")
+
+
 def extract_numbers(text: str) -> list[str]:
-    values = []
+    """Extract card numbers while repairing OCR glyph confusion only in numeric segments."""
+    values: list[str] = []
     normalized = unicodedata.normalize("NFKC", text or "").upper()
-    candidates = NUMBER_RE.findall(normalized)
+    candidates = list(NUMBER_RE.findall(normalized))
     candidates += re.findall(r"(?<!\d)\d{1,3}/\d{2,3}(?!\d)", normalized)
-    candidates += re.findall(r"(?<![A-Z0-9])(?:OP|ST|EB|PRB|P|CP|FB)\s*-?\s*\d{1,3}(?:-\d{2,3})?(?![A-Z0-9])", normalized)
+    candidates += re.findall(
+        r"(?<![A-Z0-9])(?:OP|ST|EB|PRB|P|CP|FB|SV|SM|S)\s*-?\s*\d{1,3}(?:-\d{2,3})?(?![A-Z0-9])",
+        normalized,
+    )
+    for left, right in re.findall(
+        r"(?<![A-Z0-9])([0-9OQDIL|ZSBG]{1,3})\s*/\s*([0-9OQDIL|ZSBG]{2,3})(?![A-Z0-9])",
+        normalized,
+    ):
+        repaired = f"{_digitish(left)}/{_digitish(right)}"
+        if repaired and repaired not in candidates:
+            candidates.append(repaired)
+    candidates += re.findall(
+        r"(?<![A-Z0-9])(?:OP|ST|EB|PRB|P|CP|FB|SV|SM|S)\s*-?\s*[0-9OQDIL|ZSBG]{1,3}"
+        r"(?:\s*-\s*[0-9OQDIL|ZSBG]{2,3})?(?![A-Z0-9])",
+        normalized,
+    )
     for match in candidates:
-        number = normalize_number(match)
+        number = _repair_set_code(match) or normalize_number(match)
         if number and number not in values:
             values.append(number)
-    return values[:12]
+    return values[:16]
 
 
 def _name_score(text: str, row: dict[str, Any]) -> float:
@@ -125,8 +215,9 @@ def _name_score(text: str, row: dict[str, Any]) -> float:
     if not source:
         return 0.0
     best = 0.0
-    for alias in row.get("aliases", []):
-        target = normalize(alias)
+    normalized_aliases = row.get("_normalized_aliases")
+    aliases = normalized_aliases if isinstance(normalized_aliases, list) else [normalize(alias) for alias in row.get("aliases", [])]
+    for target in aliases:
         if len(target) < 2:
             continue
         if target in source:
@@ -141,26 +232,74 @@ def _name_score(text: str, row: dict[str, Any]) -> float:
     return best
 
 
-def match_catalog(text: str, game: str = "unknown", limit: int = 5) -> list[dict[str, Any]]:
+def _number_relation(stored: str, candidate: str) -> str:
+    if not stored or not candidate:
+        return "none"
+    if stored == candidate:
+        return "exact"
+    if stored.endswith(candidate) or candidate.endswith(stored):
+        return "partial"
+    return "none"
+
+
+def match_catalog(
+    text: str,
+    game: str = "unknown",
+    limit: int = 5,
+    *,
+    region: str = "UNKNOWN",
+) -> list[dict[str, Any]]:
     game = normalize_game(game)
-    numbers = set(extract_numbers(text))
-    results = []
-    for row in catalog():
-        number = row["card_number"]
-        exact_number = bool(number and any(number == candidate or number.endswith(candidate) or candidate.endswith(number)
-                                           for candidate in numbers))
-        number_score = 0.98 if exact_number else 0.0
+    region = normalize_region(region)
+    numbers = tuple(extract_numbers(text))
+    rows = catalog()
+
+    # Fraction-only card numbers can recur in many sets. Measure ambiguity before
+    # assigning confidence so a generic 001/100 never looks like a 98% exact ID.
+    partial_counts: Counter[str] = Counter()
+    for candidate in numbers:
+        for row in rows:
+            if game in GAMES and row.get("game") in GAMES and row.get("game") != game:
+                continue
+            if _number_relation(str(row.get("card_number") or ""), candidate) == "partial":
+                partial_counts[candidate] += 1
+
+    results: list[dict[str, Any]] = []
+    for row in rows:
+        stored = str(row.get("card_number") or "")
+        relations = [(candidate, _number_relation(stored, candidate)) for candidate in numbers]
+        exact_candidate = next((candidate for candidate, relation in relations if relation == "exact"), "")
+        partial_candidate = next((candidate for candidate, relation in relations if relation == "partial"), "")
         name_score = _name_score(text, row)
+
+        if exact_candidate:
+            number_score = 0.985
+            matched_by = "card_number_exact"
+        elif partial_candidate:
+            number_score = 0.97 if partial_counts.get(partial_candidate, 0) <= 1 else 0.82
+            matched_by = "card_number_partial_unique" if number_score >= 0.9 else "card_number_partial_ambiguous"
+        else:
+            number_score = 0.0
+            matched_by = "card_name" if name_score >= 0.62 else "none"
+
         score = max(number_score, name_score)
-        matched_by = "card_number" if exact_number else "card_name" if name_score >= 0.62 else "none"
-        if exact_number and name_score >= 0.62:
-            score, matched_by = 0.995, "card_number+card_name"
+        if exact_candidate and name_score >= 0.62:
+            score, matched_by = 0.997, "card_number_exact+card_name"
+        elif partial_candidate and name_score >= 0.62:
+            score, matched_by = max(score, 0.965), "card_number_partial+card_name"
+
         if game in GAMES and row["game"] in GAMES:
-            score += 0.015 if row["game"] == game else -0.12
+            score += 0.015 if row["game"] == game else -0.15
+        if region in {"KR", "JP", "US"} and row.get("region") in {"KR", "JP", "US"}:
+            score += 0.012 if row["region"] == region else -0.035
+
         score = max(0.0, min(0.999, score))
         if score >= 0.58:
-            results.append({**{key: row[key] for key in ("market_key", "region", "game", "card_name", "card_number")},
-                            "confidence": round(score, 4), "matched_by": matched_by})
+            results.append({
+                **{key: row[key] for key in ("market_key", "region", "game", "card_name", "card_number")},
+                "confidence": round(score, 4),
+                "matched_by": matched_by,
+            })
     results.sort(key=lambda row: (-row["confidence"], 0 if row["card_number"] else 1, row["card_name"]))
     return results[:max(1, min(10, int(limit)))]
 
@@ -182,15 +321,23 @@ def _decode_image(data_url: str) -> bytes:
     return data
 
 
+def _validate_image_dimensions(image: Image.Image) -> None:
+    width, height = image.size
+    if width < 40 or height < 40 or width * height > MAX_IMAGE_PIXELS:
+        raise ValueError("이미지 해상도 오류")
+
+
 def image_dhash(data: bytes) -> str:
     try:
         with Image.open(io.BytesIO(data)) as image:
+            _validate_image_dimensions(image)
             image.verify()
         with Image.open(io.BytesIO(data)) as image:
+            _validate_image_dimensions(image)
             gray = ImageOps.exif_transpose(image).convert("L").resize((9, 8))
             pixels = list(gray.get_flattened_data())
-    except (OSError, ValueError) as exc:
-        raise ValueError("손상된 이미지") from exc
+    except (OSError, ValueError, Image.DecompressionBombError) as exc:
+        raise ValueError("손상되거나 과도한 이미지") from exc
     bits = 0
     for row in range(8):
         for col in range(8):
@@ -198,27 +345,232 @@ def image_dhash(data: bytes) -> str:
     return f"{bits:016x}"
 
 
-def ocr_image(data: bytes) -> tuple[str, str | None]:
-    if shutil.which("tesseract") is None:
-        return "", "tesseract_not_installed"
+@lru_cache(maxsize=1)
+def _tesseract_binary() -> str:
+    return shutil.which("tesseract") or ""
+
+
+@lru_cache(maxsize=1)
+def _tesseract_languages() -> frozenset[str]:
+    binary = _tesseract_binary()
+    if not binary:
+        return frozenset()
     try:
-        with Image.open(io.BytesIO(data)) as source:
-            source = ImageOps.exif_transpose(source).convert("RGB")
-            source.thumbnail((1800, 2500))
-            with tempfile.NamedTemporaryFile(suffix=".png") as tmp:
-                source.save(tmp.name)
-                outputs = []
-                for psm in (11, 6):
-                    run = subprocess.run(
-                        ["tesseract", tmp.name, "stdout", "--psm", str(psm), "-l", "eng"],
-                        capture_output=True, text=True, encoding="utf-8", errors="replace", timeout=25,
-                    )
-                    if run.returncode == 0:
-                        outputs.append(run.stdout)
-        text = " ".join(" ".join(part.split()) for part in outputs)
-        return text[:MAX_OCR_TEXT], None if text else "no_text_detected"
-    except (OSError, ValueError, subprocess.TimeoutExpired) as exc:
-        return "", type(exc).__name__
+        run = subprocess.run(
+            [binary, "--list-langs"],
+            capture_output=True,
+            text=True,
+            encoding="utf-8",
+            errors="replace",
+            timeout=6,
+            check=False,
+        )
+        if run.returncode != 0:
+            return frozenset({"eng"})
+        return frozenset(
+            line.strip()
+            for line in run.stdout.splitlines()
+            if re.fullmatch(r"[a-zA-Z0-9_]+", line.strip())
+        )
+    except (OSError, subprocess.TimeoutExpired):
+        return frozenset({"eng"})
+
+
+def _ocr_language(region: str, *, multilingual_fallback: bool = False) -> str:
+    available = _tesseract_languages()
+    if not available:
+        return ""
+    preferred = ["eng"]
+    region = normalize_region(region)
+    if region == "KR":
+        preferred.append("kor")
+    elif region == "JP":
+        preferred.append("jpn")
+    elif multilingual_fallback:
+        preferred.extend(("kor", "jpn"))
+    selected = [lang for lang in preferred if lang in available]
+    if not selected and "eng" in available:
+        selected = ["eng"]
+    return "+".join(dict.fromkeys(selected))
+
+
+def _prepare_card_ocr(
+    source: Image.Image,
+    top: float,
+    bottom: float,
+    target_width: int,
+    *,
+    sharpen: bool = True,
+) -> Image.Image:
+    width, height = source.size
+    y0 = max(0, min(height - 1, int(height * top)))
+    y1 = max(y0 + 1, min(height, int(height * bottom)))
+    crop = source.crop((0, y0, width, y1))
+    gray = ImageOps.autocontrast(ImageOps.grayscale(crop), cutoff=1)
+    scale = max(1.0, target_width / max(1, gray.width))
+    if scale > 1.0:
+        gray = gray.resize(
+            (max(1, int(gray.width * scale)), max(1, int(gray.height * scale))),
+            Image.Resampling.LANCZOS,
+        )
+    if sharpen:
+        gray = gray.filter(ImageFilter.UnsharpMask(radius=1.1, percent=150, threshold=3))
+    return gray
+
+
+def _run_card_tesseract(
+    image: Image.Image,
+    *,
+    psm: int,
+    language: str,
+    whitelist: str = "",
+) -> tuple[str, str | None]:
+    binary = _tesseract_binary()
+    if not binary:
+        return "", "tesseract_not_installed"
+    command_extra = ["-c", "preserve_interword_spaces=1"]
+    if whitelist:
+        command_extra += ["-c", f"tessedit_char_whitelist={whitelist}"]
+    try:
+        with tempfile.NamedTemporaryFile(suffix=".png") as tmp:
+            image.save(tmp.name, format="PNG")
+            run = subprocess.run(
+                [binary, tmp.name, "stdout", "--psm", str(psm), "-l", language or "eng", *command_extra],
+                capture_output=True,
+                text=True,
+                encoding="utf-8",
+                errors="replace",
+                timeout=18,
+                check=False,
+            )
+        if run.returncode != 0:
+            return "", f"tesseract_exit_{run.returncode}"
+        return " ".join(run.stdout.split())[:2200], None
+    except subprocess.TimeoutExpired:
+        return "", "tesseract_timeout"
+    except OSError:
+        return "", "tesseract_failed"
+
+
+def _high_confidence_identity(text: str, game: str, region: str) -> bool:
+    # Region is a ranking hint, not an OCR-text sufficiency requirement. An exact
+    # card number + name remains sufficient even when the caller's region hint is
+    # UNKNOWN or stale; final candidate ranking still applies the region signal.
+    hits = match_catalog(text, game, limit=1, region="UNKNOWN")
+    if not hits:
+        return False
+    best = hits[0]
+    matched_by = str(best.get("matched_by") or "")
+    # Stop early only when the card number is strong and independently specific:
+    # exact number, or partial number corroborated by the card name. A partial
+    # number alone can recur across sets and must not suppress later OCR passes.
+    return (
+        float(best.get("confidence") or 0) >= 0.98
+        and matched_by.startswith("card_number")
+        and "ambiguous" not in matched_by
+        and ("exact" in matched_by or "+card_name" in matched_by)
+    )
+
+
+def ocr_image_detailed(
+    data: bytes,
+    *,
+    game: str = "unknown",
+    region: str = "UNKNOWN",
+    seed_text: str = "",
+) -> tuple[str, str | None, dict[str, Any]]:
+    game = normalize_game(game)
+    region = normalize_region(region)
+    seed = str(seed_text or "")[:MAX_OCR_TEXT]
+    if seed and _high_confidence_identity(seed, game, region):
+        return "", None, {
+            "engine": "tesseract",
+            "passes_used": [],
+            "pass_count": 0,
+            "languages": [],
+            "early_stop": True,
+            "seed_text_sufficient": True,
+        }
+
+    binary = _tesseract_binary()
+    if not binary:
+        return "", "tesseract_not_installed", {
+            "engine": "tesseract",
+            "passes_used": [],
+            "pass_count": 0,
+            "languages": [],
+            "early_stop": False,
+            "seed_text_sufficient": False,
+        }
+
+    try:
+        with Image.open(io.BytesIO(data)) as opened:
+            _validate_image_dimensions(opened)
+            source = ImageOps.exif_transpose(opened).convert("RGB")
+        source.thumbnail((1800, 2500))
+    except (OSError, ValueError, Image.DecompressionBombError) as exc:
+        return "", type(exc).__name__, {
+            "engine": "tesseract",
+            "passes_used": [],
+            "pass_count": 0,
+            "languages": [],
+            "early_stop": False,
+            "seed_text_sufficient": False,
+        }
+
+    primary_lang = _ocr_language(region)
+    fallback_lang = _ocr_language(region, multilingual_fallback=True)
+    passes = [
+        ("full_psm11", 0.00, 1.00, 1600, 11, primary_lang, ""),
+        ("number_band_psm11", 0.58, 1.00, 2200, 11, "eng" if "eng" in _tesseract_languages() else primary_lang,
+         "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789OQDILZSBG-/#."),
+        ("name_band_psm6", 0.00, 0.42, 1900, 6, primary_lang, ""),
+    ]
+    if fallback_lang and fallback_lang != primary_lang:
+        passes.append(("multilang_full_psm11", 0.00, 1.00, 1700, 11, fallback_lang, ""))
+
+    outputs: list[str] = []
+    errors: list[str] = []
+    used: list[str] = []
+    languages: list[str] = []
+    early_stop = False
+    for name, top, bottom, width, psm, language, whitelist in passes:
+        if not language:
+            continue
+        prepared = _prepare_card_ocr(source, top, bottom, width)
+        out, error = _run_card_tesseract(prepared, psm=psm, language=language, whitelist=whitelist)
+        used.append(name)
+        languages.append(language)
+        if out and out not in outputs:
+            outputs.append(out)
+        if error:
+            errors.append(error)
+        combined = " ".join(part for part in (seed, *outputs) if part)
+        if _high_confidence_identity(combined, game, region):
+            early_stop = True
+            break
+
+    text = " ".join(outputs)[:MAX_OCR_TEXT]
+    error = ";".join(dict.fromkeys(errors)) if errors and not text else None
+    return text, error if error else (None if text or seed else "no_text_detected"), {
+        "engine": "tesseract-adaptive-card-v15",
+        "passes_used": used,
+        "pass_count": len(used),
+        "languages": list(dict.fromkeys(languages)),
+        "early_stop": early_stop,
+        "seed_text_sufficient": False,
+        "numbers_detected": extract_numbers(" ".join(part for part in (seed, text) if part)),
+    }
+
+
+def ocr_image(
+    data: bytes,
+    game: str = "unknown",
+    region: str = "UNKNOWN",
+    seed_text: str = "",
+) -> tuple[str, str | None]:
+    text, error, _ = ocr_image_detailed(data, game=game, region=region, seed_text=seed_text)
+    return text, error
 
 
 def _hamming(left: str, right: str) -> int:
@@ -264,19 +616,23 @@ def recognize(payload: dict[str, Any]) -> dict[str, Any]:
     game = normalize_game(payload.get("game"))
     if game not in GAMES:
         raise ValueError("게임 구분 오류")
+    region = normalize_region(payload.get("region"))
     supplied_text = str(payload.get("ocr_text") or "")[:MAX_OCR_TEXT]
     image_data = payload.get("image_data")
     image_hash = str(payload.get("image_hash") or "").lower()
     ocr_error = None
+    ocr_diagnostics: dict[str, Any] = {}
     if image_data:
         data = _decode_image(image_data)
         image_hash = image_dhash(data)
-        text, ocr_error = ocr_image(data)
+        text, ocr_error, ocr_diagnostics = ocr_image_detailed(
+            data, game=game, region=region, seed_text=supplied_text
+        )
         supplied_text = (supplied_text + " " + text).strip()[:MAX_OCR_TEXT]
     elif not HASH_RE.fullmatch(image_hash):
         raise ValueError("이미지 또는 특징값 필요")
     learned = match_learning(image_hash, game)
-    catalog_hits = match_catalog(supplied_text, game)
+    catalog_hits = match_catalog(supplied_text, game, region=region)
     merged = learned + catalog_hits
     unique = {}
     for row in merged:
@@ -285,8 +641,9 @@ def recognize(payload: dict[str, Any]) -> dict[str, Any]:
             unique[key] = row
     candidates = sorted(unique.values(), key=lambda row: -row["confidence"])[:5]
     return {
-        "ok": True, "game": game, "image_hash": image_hash, "ocr_text": supplied_text,
-        "ocr_error": ocr_error, "numbers_detected": extract_numbers(supplied_text),
+        "ok": True, "game": game, "region_hint": region, "image_hash": image_hash, "ocr_text": supplied_text,
+        "ocr_error": ocr_error, "ocr_diagnostics": ocr_diagnostics,
+        "numbers_detected": extract_numbers(supplied_text),
         "candidates": candidates, "best": candidates[0] if candidates else None,
         "requires_confirmation": True,
         "policy": {"prediction_auto_learned": False, "user_confirmation_required": True,
@@ -343,8 +700,11 @@ def self_test() -> dict[str, Any]:
     assert hits and hits[0]["card_number"].endswith("065/060")
     assert hits[0]["confidence"] >= 0.98
     assert normalize_number(" OP13 - 007 ") == "OP13-007"
+    assert "OP13-007" in extract_numbers("OP13-O07")
+    assert "065/060" in extract_numbers("O65/O6O")
     assert normalize_game("ONE PIECE") == "onepiece"
-    return {"ok": True, "tests": 5, "best": hits[0]}
+    assert normalize_region("jp") == "JP"
+    return {"ok": True, "tests": 8, "best": hits[0]}
 
 
 if __name__ == "__main__":

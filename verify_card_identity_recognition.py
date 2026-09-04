@@ -9,7 +9,10 @@ import card_identity_recognition as identity
 
 def main() -> None:
     result = identity.self_test()
-    assert result["ok"] and result["tests"] == 5
+    assert result["ok"] and int(result.get("tests") or 0) >= 8
+    best = result.get("best") or {}
+    assert float(best.get("confidence") or 0) >= 0.98
+    assert str(best.get("matched_by") or "").startswith("card_number")
     with tempfile.TemporaryDirectory(prefix="tcg-card-id-") as td:
         store = Path(td) / "learning.json"
         with patch.object(identity, "LEARNING", store):
@@ -24,7 +27,7 @@ def main() -> None:
             assert conflict["conflict"] is True
             data = json.loads(store.read_text(encoding="utf-8"))
             assert len(data["confirmed"]) == 1 and len(data["conflicts"]) == 1
-    print("card identity recognition: 11 checks passed")
+    print("card identity recognition: expanded OCR checks passed")
 
 
 if __name__ == "__main__":
