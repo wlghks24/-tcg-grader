@@ -25,6 +25,35 @@ class NegativeProofKoreanOcrV171Tests(unittest.TestCase):
         self.assertTrue(signal["site_error_detected"])
         self.assertFalse(signal["negative_text_detected"])
 
+    def test_known_company_stops_after_first_decisive_negative_ocr_pass(self):
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / "proof.png"
+            Image.new("RGB", (1080, 1920), "white").save(path)
+            calls = {'ocr': 0}
+
+            def fake_run(command, **kwargs):
+                class Result:
+                    returncode = 0
+                    stderr = ""
+                    stdout = ""
+                result = Result()
+                if "--list-langs" in command:
+                    result.stdout = "List of available languages in /tmp (2):\neng\nkor\n"
+                else:
+                    calls['ocr'] += 1
+                    result.stdout = "BECKETT 검색된 기록이 없습니다."
+                return result
+
+            with patch.object(pending.shutil, "which", return_value="/usr/bin/tesseract"), \
+                    patch.object(pending.subprocess, "run", side_effect=fake_run):
+                text, error = pending._multilang_negative_ocr(path, "BGS")
+
+        self.assertIsNone(error)
+        self.assertEqual(calls['ocr'], 1)
+        signal = pending._negative_ocr(text, {}, "BGS")
+        self.assertTrue(signal["negative_text_detected"])
+        self.assertTrue(signal["company_brand_detected"])
+
     def test_multilang_ocr_uses_korean_and_english(self):
         with tempfile.TemporaryDirectory() as directory:
             path = Path(directory) / "proof.png"
