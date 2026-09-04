@@ -457,10 +457,15 @@ def _high_confidence_identity(text: str, game: str, region: str) -> bool:
     if not hits:
         return False
     best = hits[0]
+    matched_by = str(best.get("matched_by") or "")
+    # Stop early only when the card number is strong and independently specific:
+    # exact number, or partial number corroborated by the card name. A partial
+    # number alone can recur across sets and must not suppress later OCR passes.
     return (
-        float(best.get("confidence") or 0) >= 0.985
-        and str(best.get("matched_by") or "").startswith("card_number")
-        and "ambiguous" not in str(best.get("matched_by") or "")
+        float(best.get("confidence") or 0) >= 0.98
+        and matched_by.startswith("card_number")
+        and "ambiguous" not in matched_by
+        and ("exact" in matched_by or "+card_name" in matched_by)
     )
 
 
