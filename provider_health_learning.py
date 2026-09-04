@@ -14,6 +14,7 @@ official-information gap.
 from __future__ import annotations
 
 import datetime as dt
+import hashlib
 import json
 import math
 import re
@@ -35,6 +36,18 @@ MAX_SOURCE_KINDS_PER_CELL = 12
 GAMES = ("포켓몬 카드", "원피스 카드", "나루토 카드")
 REGIONS = ("KR", "JP", "US")
 TOPICS = ("event", "tournament", "popup", "promo", "collab", "movie", "release", "reprint", "merch", "anniversary", "stock", "entry", "broadcast", "deadline", "status_update", "rules", "access", "results", "purchase_policy", "service_status", "official_price", "product_issue", "authenticity_notice")
+RECHECK_DAYS = {
+    "service_status": 7, "status_update": 14, "stock": 14,
+    "entry": 30, "deadline": 30, "access": 30, "purchase_policy": 30, "broadcast": 30,
+    "event": 60, "tournament": 60, "popup": 60, "promo": 60, "collab": 60,
+    "results": 90, "release": 120, "reprint": 120, "movie": 120, "merch": 120, "anniversary": 120,
+    "official_price": 180, "product_issue": 180, "authenticity_notice": 180, "rules": 180,
+}
+GAME_ALIASES = {
+    "포켓몬": "포켓몬 카드", "pokemon": "포켓몬 카드", "pokémon": "포켓몬 카드",
+    "원피스": "원피스 카드", "one piece": "원피스 카드",
+    "나루토": "나루토 카드", "naruto": "나루토 카드",
+}
 
 _TOPIC_RULES = (
     ("authenticity_notice", re.compile(r"위조\s*품|위조품|가품|모조품|복제품|레플리카|비정규\s*카드|짝퉁|오리파|서치\s*(?:팩|박스)|사기\s*주의|counterfeit|fake\s+(?:card|cards|booster|pack|packs|product|products)|replica|knockoff|unauthorized\s+(?:copy|reproduction)|searched?\s+(?:pack|packs|box|boxes)|repacked|scam\s+warning|偽造品|模倣品|偽物|レプリカ|非正規カード|オリパ|サーチ済み", re.I)),
@@ -179,6 +192,47 @@ def _expected_keys() -> list[str]:
     return [f"{game}/{region}/{topic}" for game in GAMES for region in REGIONS for topic in TOPICS]
 
 
+def _evidence_signature(row: dict) -> str:
+    stable = {
+        key: row.get(key)
+        for key in (
+            "source", "url", "title", "name_ko", "name_native", "status",
+            "start_date", "end_date", "claim_deadline", "date_precision",
+            "reward", "condition", "dates", "verification_source",
+        )
+        if row.get(key) not in (None, "", [], {})
+    }
+    raw = json.dumps(stable, ensure_ascii=False, sort_keys=True, default=str)
+    return hashlib.sha1(raw.encode("utf-8", "ignore")).hexdigest()[:20]
+
+
+def _fingerprint(signatures: object) -> str:
+    values = sorted({str(x)[:40] for x in (signatures or []) if str(x).strip()})
+    if not values:
+        return ""
+    return hashlib.sha1("|".join(values[:32]).encode("utf-8", "ignore")).hexdigest()[:20]
+
+
+def _parse_iso(value: object) -> dt.datetime | None:
+    text = str(value or "").strip()
+    if not text:
+        return None
+    try:
+        parsed = dt.datetime.fromisoformat(text.replace("Z", "+00:00"))
+        if parsed.tzinfo is None:
+            parsed = parsed.replace(tzinfo=dt.timezone.utc)
+        return parsed.astimezone(dt.timezone.utc)
+    except ValueError:
+        return None
+
+
+def _age_days(value: object) -> float | None:
+    parsed = _parse_iso(value)
+    if parsed is None:
+        return None
+    return max(0.0, (dt.datetime.now(dt.timezone.utc) - parsed).total_seconds() / 86400.0)
+
+
 def _coverage_snapshot(social: dict, supplementary: dict, promo: dict) -> dict[str, dict]:
     snapshot = {
         key: {
@@ -186,6 +240,7 @@ def _coverage_snapshot(social: dict, supplementary: dict, promo: dict) -> dict[s
             "verified_count": 0,
             "canonical_count": 0,
             "corroborated_count": 0,
+            "verified_signatures": [],
             "source_kinds": {},
         }
         for key in _expected_keys()
@@ -216,6 +271,9 @@ def _coverage_snapshot(social: dict, supplementary: dict, promo: dict) -> dict[s
             cell["candidate_count"] += 1
             if verified:
                 cell["verified_count"] += 1
+                signature = _evidence_signature(row)
+                if signature and signature not in cell["verified_signatures"] and len(cell["verified_signatures"]) < 32:
+                    cell["verified_signatures"].append(signature)
             if origin == "promo" and verified:
                 cell["canonical_count"] += 1
             if row.get("cross_checked") is True or _num(row.get("independent_source_count")) >= 2:
@@ -361,6 +419,7 @@ def _observe_coverage(data: dict, snapshot: dict[str, dict]) -> None:
         verified = _num(current.get("verified_count"))
         canonical = _num(current.get("canonical_count"))
         corroborated = _num(current.get("corroborated_count"))
+        verified_fingerprint = _fingerprint(current.get("verified_signatures"))
         stat = cells.setdefault(key, {})
         stat["attempts"] = _num(stat.get("attempts")) + 1
         stat["candidate_hits"] = _num(stat.get("candidate_hits")) + candidate
@@ -374,7 +433,13 @@ def _observe_coverage(data: dict, snapshot: dict[str, dict]) -> None:
             stat["miss_streak"] = 0
             stat["verification_gap_streak"] = 0
             stat["discovery_gap_streak"] = 0
-            stat["last_verified"] = now
+            old_fingerprint = str(stat.get("verified_fingerprint") or "")
+            if not stat.get("last_verified") or (verified_fingerprint and verified_fingerprint != old_fingerprint):
+                stat["last_verified"] = now
+                stat["last_verified_change"] = now
+            stat["last_verified_seen"] = now
+            if verified_fingerprint:
+                stat["verified_fingerprint"] = verified_fingerprint
             stat["last_state"] = "verified"
         else:
             stat["misses"] = _num(stat.get("misses")) + 1
@@ -430,12 +495,24 @@ def _coverage_report(data: dict) -> dict:
         discovery_gap_streak = _num(stat.get("discovery_gap_streak"))
         topic = key.rsplit("/", 1)[-1]
         urgency = {"service_status": 5.5, "authenticity_notice": 5.0, "status_update": 5.0, "product_issue": 4.75, "rules": 4.5, "purchase_policy": 4.5, "deadline": 4.0, "access": 4.0, "official_price": 3.5, "entry": 3.0, "broadcast": 3.0, "results": 2.5, "stock": 2.0}.get(topic, 0.0)
+        last_verified_age_days = _age_days(stat.get("last_verified"))
+        recheck_after_days = int(RECHECK_DAYS.get(topic, 120))
+        recheck_due = bool(
+            verified > 0
+            and last_verified_age_days is not None
+            and last_verified_age_days >= recheck_after_days
+        )
+        freshness_priority = (
+            2.0 + min(5.0, last_verified_age_days / max(1.0, float(recheck_after_days)))
+            if recheck_due and last_verified_age_days is not None else 0.0
+        )
         priority = round(
             miss_streak * 4.0
             + verification_gap_streak * 2.0
             + discovery_gap_streak
             + min(3.0, _num(stat.get("misses")) * 0.08)
-            + urgency,
+            + urgency
+            + freshness_priority,
             3,
         )
         rows.append({
@@ -446,20 +523,58 @@ def _coverage_report(data: dict) -> dict:
             "miss_streak": miss_streak,
             "verification_gap_streak": verification_gap_streak,
             "discovery_gap_streak": discovery_gap_streak,
+            "last_verified": stat.get("last_verified"),
+            "last_verified_seen": stat.get("last_verified_seen"),
+            "last_verified_age_days": round(last_verified_age_days, 2) if last_verified_age_days is not None else None,
+            "recheck_after_days": recheck_after_days,
+            "recheck_due": recheck_due,
             "priority": priority,
+            "priority_reason": "verified-recheck-due" if recheck_due else ("verified-missing" if verified == 0 else "current"),
         })
     missing = [row for row in rows if row["verified_count"] == 0]
-    missing.sort(key=lambda row: (row["priority"], row["candidate_count"]), reverse=True)
+    priority_rows = [row for row in rows if row["verified_count"] == 0 or row["recheck_due"]]
+    priority_rows.sort(key=lambda row: (row["priority"], row["candidate_count"]), reverse=True)
+    by_game = {
+        game: [row for row in priority_rows if row["cell"].startswith(game + "/")][:3]
+        for game in GAMES
+    }
     return {
         "expected_cells": len(rows),
         "verified_covered_cells": sum(1 for row in rows if row["verified_count"] > 0),
+        "fresh_verified_covered_cells": sum(1 for row in rows if row["verified_count"] > 0 and not row["recheck_due"]),
         "candidate_covered_cells": sum(1 for row in rows if row["candidate_count"] > 0),
         "verified_missing_cells": [row["cell"] for row in missing],
+        "recheck_due_cells": [row["cell"] for row in priority_rows if row["recheck_due"]],
         "candidate_only_cells": [row["cell"] for row in missing if row["candidate_count"] > 0],
         "no_candidate_cells": [row["cell"] for row in missing if row["candidate_count"] == 0],
-        "next_priority_cells": missing[:24],
-        "coverage_basis": "verified-source-only",
+        "next_priority_cells": priority_rows[:24],
+        "next_priority_by_game": by_game,
+        "coverage_basis": "verified-source-only + unchanged-evidence recheck age",
     }
+
+
+def recommended_verified_focus(game: str, data: dict | None = None) -> dict | None:
+    text = str(game or "").strip().lower()
+    canonical = next((full for full in GAMES if full.lower() in text), None)
+    if canonical is None:
+        for alias, full in GAME_ALIASES.items():
+            if alias in text:
+                canonical = full
+                break
+    if canonical is None:
+        return None
+    coverage = _coverage_report(data if isinstance(data, dict) else _load())
+    rows = (coverage.get("next_priority_by_game") or {}).get(canonical) or []
+    if not rows:
+        return None
+    row = dict(rows[0])
+    parts = str(row.get("cell") or "").rsplit("/", 2)
+    if len(parts) != 3:
+        return None
+    row["game"] = parts[0]
+    row["region"] = parts[1]
+    row["topic"] = parts[2]
+    return row
 
 
 def _source_kind_report(data: dict) -> list[dict]:
@@ -561,7 +676,7 @@ def report(data: dict | None = None) -> dict:
     rows.sort(key=lambda x: (x["score"], x["selected"], x["results"]), reverse=True)
     coverage = _coverage_report(data)
     return {
-        "version": 3,
+        "version": 4,
         "runs": _num(data.get("runs")),
         "updated_at": data.get("updated_at"),
         "providers": rows,
