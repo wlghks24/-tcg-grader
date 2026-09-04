@@ -1,0 +1,49 @@
+{
+  "version": 1,
+  "source_pool_size": 122,
+  "rules": {
+    "official_facts_require_official_primary": true,
+    "completed_sale_requires_independent_original_sources": 2,
+    "market_reference_requires_independent_sources_for_verified": 2,
+    "discovery_lead_can_confirm_fact_alone": false,
+    "same_error_signature_change_strategy_after": 2,
+    "same_error_signature_exclude_after": 3,
+    "respect_retry_after": true,
+    "bypass_403_429": false,
+    "preserve_provider_lineage": true,
+    "completed_sale_separate_from_market_reference": true
+  },
+  "routes": {
+    "official_release": ["official_primary", "official_secondary", "discovery_lead"],
+    "official_reprint": ["official_primary", "official_secondary", "discovery_lead"],
+    "official_promo": ["official_primary", "official_secondary", "discovery_lead"],
+    "official_event": ["official_primary", "official_secondary", "discovery_lead"],
+    "official_movie_bonus": ["official_primary", "official_secondary", "discovery_lead"],
+    "completed_sale": ["completed_sale_original", "grading_auction_original", "market_reference", "discovery_lead"],
+    "market_reference": ["market_reference", "completed_sale_original", "grading_auction_original"],
+    "fx": ["official_primary", "market_reference"]
+  },
+  "provider_groups": {
+    "pokemon": {
+      "official_primary": ["pokemon-official-jp", "pokemon-official-us", "pokemon-official-kr"],
+      "completed_sale_original": ["ebay", "heritage", "goldin"],
+      "grading_auction_original": ["psa-auction-prices", "pwcc"],
+      "market_reference": ["pricecharting", "tcgplayer", "cardmarket", "snkrdunk", "justtcg", "pavilion", "kream"],
+      "discovery_lead": ["google", "instagram", "x", "reddit"]
+    },
+    "one_piece": {
+      "official_primary": ["bandai-onepiece-global", "bandai-onepiece-jp", "bandai-onepiece-asia"],
+      "completed_sale_original": ["ebay", "heritage", "goldin"],
+      "grading_auction_original": ["psa-auction-prices", "pwcc"],
+      "market_reference": ["pricecharting", "tcgplayer", "cardmarket", "snkrdunk", "justtcg", "pavilion", "kream"],
+      "discovery_lead": ["google", "instagram", "x", "reddit"]
+    },
+    "naruto": {
+      "official_primary": ["bandai-namco-holdings", "bandai-card-games"],
+      "completed_sale_original": ["ebay", "heritage", "goldin"],
+      "grading_auction_original": ["psa-auction-prices", "pwcc"],
+      "market_reference": ["pricecharting", "tcgplayer", "cardmarket", "snkrdunk", "justtcg", "pavilion", "kream"],
+      "discovery_lead": ["google", "instagram", "x", "reddit"]
+    }
+  }
+}
