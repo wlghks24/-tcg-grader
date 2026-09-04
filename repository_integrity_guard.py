@@ -17,8 +17,12 @@ import sys
 from typing import Any
 
 ROOT = Path(__file__).resolve().parent
-EXECUTABLE_TEXT_SUFFIXES = {".py", ".js", ".html", ".yml", ".yaml", ".sh", ".bat", ".ps1"}
-TEXT_SUFFIXES = EXECUTABLE_TEXT_SUFFIXES | {".json", ".md", ".txt", ".css"}
+EXECUTABLE_TEXT_SUFFIXES = {
+    ".py", ".js", ".html", ".yml", ".yaml",
+    ".sh", ".command", ".bat", ".cmd", ".ps1",
+}
+JSON_TEXT_SUFFIXES = {".json", ".webmanifest"}
+TEXT_SUFFIXES = EXECUTABLE_TEXT_SUFFIXES | JSON_TEXT_SUFFIXES | {".md", ".txt", ".css", ".svg"}
 SECURITY_SCAN_LIMIT = 2_000_000
 MAX_JSON_BYTES = 20_000_000
 BIDI_CONTROLS = {chr(code) for code in (*range(0x202A, 0x202F), *range(0x2066, 0x206A))}
@@ -78,9 +82,43 @@ def reject_constant(value: str) -> None:
     raise ValueError(f"non-standard JSON constant: {value}")
 
 
+def legacy_runtime_reference(relative: str, text: str) -> str | None:
+    """Reject accidental execution/import of archived one-shot patch sources.
+
+    Historical apply_* and gemini-code-* files remain tracked for reproducibility,
+    but current runtime code must never depend on them. Tests and the archived
+    patch files themselves may mention those names while proving migration safety.
+    """
+    name = Path(relative).name
+    if (
+        name.startswith("apply_")
+        or name.startswith("gemini-code-")
+        or name.startswith(("test_", "verify_"))
+        or name == "repository_integrity_guard.py"
+        or relative.startswith(".github/workflows/apply-")
+    ):
+        return None
+    if "gemini-code-" in text:
+        return "current runtime references archived gemini-code source"
+    if re.search(r"(?m)^\s*(?:from|import)\s+apply_[A-Za-z0-9_]+", text):
+        return "current runtime imports one-shot apply_* patch module"
+    patch_exec = re.search(r"\bpython(?:3(?:\.\d+)?)?\s+apply_[A-Za-z0-9_]+\.py\b", text)
+    if patch_exec:
+        if relative.startswith(".github/workflows/"):
+            write_permission = bool(re.search(
+                r"(?m)^\s*['\"]?contents['\"]?\s*:\s*['\"]?write['\"]?\s*(?:#.*)?$", text
+            ))
+            pushes_code = bool(re.search(r"(?m)^\s*(?:run:\s*)?.*\bgit\s+push\b", text))
+            if not write_permission and not pushes_code:
+                return None
+        return "current runtime executes one-shot apply_* patch script"
+    return None
+
+
 def main() -> int:
     findings: list[str] = []
     checked = 0
+    suffix_counts: dict[str, int] = {}
     entries = tracked_entries()
 
     # A case-insensitive checkout (the user's Windows PC) cannot safely represent
@@ -106,6 +144,7 @@ def main() -> int:
         if suffix not in TEXT_SUFFIXES:
             continue
         checked += 1
+        suffix_counts[suffix] = suffix_counts.get(suffix, 0) + 1
         if is_symlink:
             findings.append(f"{relative}: tracked text/config symlink is not allowed")
             continue
@@ -124,8 +163,8 @@ def main() -> int:
                 f"{SECURITY_SCAN_LIMIT}-byte security-audit limit"
             )
             continue
-        if suffix == ".json" and size > MAX_JSON_BYTES:
-            findings.append(f"{relative}: JSON exceeds {MAX_JSON_BYTES} bytes")
+        if suffix in JSON_TEXT_SUFFIXES and size > MAX_JSON_BYTES:
+            findings.append(f"{relative}: JSON-like file exceeds {MAX_JSON_BYTES} bytes")
             continue
 
         try:
@@ -142,6 +181,9 @@ def main() -> int:
             for lineno, line in enumerate(text.splitlines(), 1):
                 if MERGE_MARKER_RE.fullmatch(line.lstrip()):
                     findings.append(f"{relative}:{lineno}: unresolved merge marker")
+            legacy_reason = legacy_runtime_reference(relative, text)
+            if legacy_reason:
+                findings.append(f"{relative}: {legacy_reason}")
 
         if suffix == ".py":
             try:
@@ -149,7 +191,7 @@ def main() -> int:
             except (SyntaxError, ValueError, OverflowError) as exc:
                 lineno = getattr(exc, "lineno", None) or 1
                 findings.append(f"{relative}:{lineno}: Python compile failed: {exc}")
-        elif suffix == ".json":
+        elif suffix in JSON_TEXT_SUFFIXES:
             try:
                 json.loads(text, object_pairs_hook=unique_object, parse_constant=reject_constant)
             except (ValueError, TypeError, RecursionError) as exc:
@@ -160,7 +202,11 @@ def main() -> int:
         for item in findings:
             print(f" - {item}", file=sys.stderr)
         return 1
-    print(f"Repository integrity guard: OK ({checked} tracked text files checked; {len(entries)} tracked paths checked)")
+    summary = ", ".join(f"{suffix or '(none)'}={count}" for suffix, count in sorted(suffix_counts.items()))
+    print(
+        f"Repository integrity guard: OK ({checked} tracked text files checked; "
+        f"{len(entries)} tracked paths checked; {summary})"
+    )
     return 0
 
 

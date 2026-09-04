@@ -100,6 +100,7 @@ def _load(name: str):
 
 def audit() -> dict:
     issues: list[str] = []
+    event_coverage_cells = 0
     missing = [name for name in REQUIRED_FILES if not _regular_file(name)]
     if missing:
         issues.append("필수 런타임 파일 누락: " + ", ".join(missing[:12]))
@@ -213,10 +214,20 @@ def audit() -> dict:
     if promo is not None:
         try:
             keys = promo.social_topic_expected_keys()
-            if len(keys) != 90:
-                issues.append(f"행사 SNS 커버리지 셀이 {len(keys)}개로, 기대값 90과 다릅니다")
+            topics = tuple(getattr(promo.multi_route_event_discovery, "COVERAGE_TOPICS", ()))
+            expected_cells = len(promo.GAMES) * len(promo.REGIONS) * len(topics)
+            event_coverage_cells = len(keys)
+            if expected_cells < 207:
+                issues.append(
+                    f"행사 SNS 공유 taxonomy가 {expected_cells}셀로 축소되어 현재 207셀 최소계약보다 작습니다"
+                )
+            if len(keys) != expected_cells or len(set(keys)) != expected_cells:
+                issues.append(
+                    f"행사 SNS 커버리지 셀이 {len(keys)}개(고유 {len(set(keys))}개)로, "
+                    f"공유 taxonomy 기대값 {expected_cells}과 다릅니다"
+                )
         except Exception:
-            issues.append("행사 3게임×3국가×10주제 커버리지 계약이 구버전입니다")
+            issues.append("행사 3게임×3국가×공유주제 커버리지 계약 검사 실패")
 
     search = modules.get("multi_channel_agent")
     if search is not None and not callable(getattr(search.MultiChannelCollector, "search_exact", None)):
@@ -364,7 +375,7 @@ def audit() -> dict:
             "manual_pair_grouped_by_game_and_grader": pair_queue_ok,
             "manual_proof_raw_calibration": False,
             "manual_proof_rejected_bytes_retained": False,
-            "event_coverage_cells": 90,
+            "event_coverage_cells": event_coverage_cells,
             "unverified_learning_weight": 0.0,
         },
     }

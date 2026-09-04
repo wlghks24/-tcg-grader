@@ -1,7 +1,13 @@
 name: Sync and Verify Catalog Images
 
 on:
-  workflow_dispatch:
+  pull_request:
+    paths:
+      - index.html
+      - catalog_image_manifest.json
+      - apply_catalog_image_patch.py
+      - test_catalog_images.py
+      - .github/workflows/catalog-image-sync.yml
   push:
     branches: [main]
     paths:
@@ -10,30 +16,29 @@ on:
       - apply_catalog_image_patch.py
       - test_catalog_images.py
       - .github/workflows/catalog-image-sync.yml
+  workflow_dispatch:
 
 permissions:
-  contents: write
+  contents: read
 
 concurrency:
-  group: catalog-image-sync-main
-  cancel-in-progress: false
+  group: catalog-image-sync-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
-  sync-and-verify:
+  validate-sync:
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
       - name: Checkout
         uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
-        with:
-          fetch-depth: 0
 
       - name: Set up Python
         uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
         with:
           python-version: '3.12'
 
-      - name: Synchronize reviewed BOX images
+      - name: Rebuild reviewed BOX image integration in workspace
         run: python apply_catalog_image_patch.py
 
       - name: Verify catalog image coverage
@@ -42,15 +47,13 @@ jobs:
       - name: Check generated diff
         run: git diff --check
 
-      - name: Commit synchronized catalog images
+      - name: Require generated integration to be committed in the reviewed change
         shell: bash
         run: |
           if git diff --quiet -- index.html; then
-            echo "Catalog images already synchronized."
+            echo "Catalog image integration is synchronized."
             exit 0
           fi
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add index.html
-          git commit -m "data: synchronize verified BOX catalog images"
-          git push origin HEAD:main
+          echo "::error::catalog_image_manifest.json and index.html are out of sync. Commit the generated index.html change in the PR instead of mutating main after merge."
+          git diff -- index.html
+          exit 1
