@@ -24,6 +24,7 @@ SOURCE_TIERS = {
     "market_reference": 5,
     "discovery_lead": 6,
 }
+INVALID_COMPLETED_STATUSES = {"cancelled", "refunded", "relisted", "asking", "listing", "best_offer_unknown", "unknown_condition"}
 
 @dataclass(frozen=True)
 class Observation:
@@ -105,18 +106,71 @@ def dedupe_lineage(rows: Iterable[Observation]) -> list[Observation]:
     return out
 
 
+def _parse_time(value: str | None) -> datetime | None:
+    if not value:
+        return None
+    try:
+        dt = datetime.fromisoformat(value.replace("Z", "+00:00"))
+    except (TypeError, ValueError):
+        return None
+    if dt.tzinfo is None:
+        return None
+    return dt
+
+
+def _invalid_observation_reason(row: Observation) -> str | None:
+    if row.source_tier not in SOURCE_TIERS:
+        return "unknown source tier"
+    if not row.source_code or not row.source_locator or not row.provider_id or not row.collector_id:
+        return "missing provenance field"
+    if not row.canonical_key or not row.fact_type or not row.game:
+        return "missing identity field"
+    if _parse_time(row.fetched_at_kst) is None:
+        return "invalid fetched_at_kst"
+    if row.event_or_trade_time and _parse_time(row.event_or_trade_time) is None:
+        return "invalid event_or_trade_time"
+    return None
+
+
+def _latest(rows: Sequence[Observation]) -> Observation:
+    def key(row: Observation):
+        return _parse_time(row.event_or_trade_time) or _parse_time(row.fetched_at_kst) or datetime.min.replace(tzinfo=timezone.utc)
+    return max(rows, key=key)
+
+
 def verify_fact(rows: Sequence[Observation]) -> VerificationResult:
     if not rows:
         return VerificationResult("", "", "inaccessible", None, (), 0, 0, False, 0.0, "no observations")
     rows = dedupe_lineage(rows)
-    key = rows[0].canonical_key
-    fact = rows[0].fact_type
-    rows = [r for r in rows if r.canonical_key == key and r.fact_type == fact]
-    values = sorted({r.value for r in rows})
+    first = rows[0]
+    key = first.canonical_key
+    fact = first.fact_type
+    game = first.game
+
+    invalid = [reason for r in rows if (reason := _invalid_observation_reason(r))]
+    if invalid:
+        return VerificationResult(key, fact, "unverified", None, tuple(sorted({r.source_code for r in rows if r.source_code})), len(rows), 0, False, 0.10, invalid[0])
+
+    # Never cross-verify different identities/games/fact families in one bucket.
+    if any(r.canonical_key != key or r.fact_type != fact or r.game != game for r in rows):
+        return VerificationResult(key, fact, "conflict", None, tuple(sorted({r.source_code for r in rows})), len(rows), 0, False, 0.10, "mixed canonical identity/game/fact")
+
     source_codes = tuple(sorted({r.source_code for r in rows}))
     independent = {independent_key(r) for r in rows}
     official_primary = any(r.source_tier == "official_primary" for r in rows)
 
+    # Each completed sale is a distinct event. Different legitimate sale prices are
+    # expected and must not be treated as a data conflict. We verify the evidence set
+    # with >=2 independent original-sale providers and display the most recent valid sale.
+    if fact == "completed_sale":
+        valid = [r for r in rows if r.source_tier == "completed_sale_original" and r.status.lower() not in INVALID_COMPLETED_STATUSES]
+        originals = {r.provider_id for r in valid}
+        if len(originals) >= 2:
+            latest = _latest(valid)
+            return VerificationResult(key, fact, "verified", latest.value, tuple(sorted({r.source_code for r in valid})), len(valid), len(originals), official_primary, 0.97, None)
+        return VerificationResult(key, fact, "partial", None if not valid else _latest(valid).value, tuple(sorted({r.source_code for r in valid})), len(valid), len(originals), official_primary, 0.58, "needs 2 independent original completed-sale sources")
+
+    values = sorted({r.value for r in rows})
     if len(values) > 1:
         return VerificationResult(key, fact, "conflict", None, source_codes, len(rows), len(independent), official_primary, 0.25, "independent sources disagree", tuple(values))
 
@@ -126,12 +180,6 @@ def verify_fact(rows: Sequence[Observation]) -> VerificationResult:
             return VerificationResult(key, fact, "verified", value, source_codes, len(rows), len(independent), True, 0.99, None)
         return VerificationResult(key, fact, "partial", value, source_codes, len(rows), len(independent), False, 0.60, "official primary source missing")
 
-    if fact == "completed_sale":
-        originals = {r.provider_id for r in rows if r.source_tier == "completed_sale_original"}
-        if len(originals) >= 2:
-            return VerificationResult(key, fact, "verified", value, source_codes, len(rows), len(originals), official_primary, 0.97, None)
-        return VerificationResult(key, fact, "partial", value, source_codes, len(rows), len(originals), official_primary, 0.58, "needs 2 independent original completed-sale sources")
-
     if fact == "market_reference":
         refs = {r.provider_id for r in rows if r.source_tier == "market_reference"}
         if len(refs) >= 2:
@@ -139,7 +187,8 @@ def verify_fact(rows: Sequence[Observation]) -> VerificationResult:
         return VerificationResult(key, fact, "probable", value, source_codes, len(rows), len(refs), official_primary, 0.65, "single market-reference provider")
 
     if fact == "fx":
-        # FX is postable when a current observation is present from an explicit FX provider.
+        # FX is postable only with an explicit FX provider. Freshness must be checked
+        # by the run packet immediately before final rendering; stale values are not reused.
         if any(r.provider_id.startswith("fx:") for r in rows):
             return VerificationResult(key, fact, "verified", value, source_codes, len(rows), len(independent), official_primary, 0.95, None)
         return VerificationResult(key, fact, "partial", value, source_codes, len(rows), len(independent), official_primary, 0.55, "explicit FX provider missing")
