@@ -1,6 +1,6 @@
 import unittest
 
-from solution import normalize_card_name
+from card_identity_recognition import normalize_card_name
 
 
 class TestCardNameRegression(unittest.TestCase):

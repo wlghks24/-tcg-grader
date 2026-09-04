@@ -53,6 +53,17 @@ def normalize(value: Any) -> str:
     return re.sub(r"[^0-9A-Z가-힣ぁ-んァ-ヶ一-龯]+", "", text)
 
 
+def normalize_card_name(value: Any) -> str:
+    """Normalize a user-confirmed card name without silently accepting non-text."""
+    if not isinstance(value, str):
+        raise TypeError("card name must be a string")
+    text = unicodedata.normalize("NFKC", value)
+    text = re.sub(r"\s+", " ", text).strip()
+    if any(ord(char) < 32 for char in text):
+        raise ValueError("card name contains control characters")
+    return text
+
+
 def normalize_number(value: Any) -> str:
     text = unicodedata.normalize("NFKC", str(value or "")).upper().strip()
     text = re.sub(r"\s+", "", text).replace("—", "-").replace("–", "-")
@@ -810,8 +821,11 @@ def save_confirmation(payload: dict[str, Any]) -> dict[str, Any]:
     game = normalize_game(payload.get("game"))
     if game not in GAMES:
         raise ValueError("게임 구분 오류")
-    card_name = unicodedata.normalize("NFKC", str(payload.get("card_name") or "")).strip()
-    if not card_name or len(card_name) > 120 or any(ord(char) < 32 for char in card_name):
+    try:
+        card_name = normalize_card_name(payload.get("card_name"))
+    except (TypeError, ValueError) as exc:
+        raise ValueError("카드명 오류") from exc
+    if not card_name or len(card_name) > 120:
         raise ValueError("카드명 오류")
     card_number = normalize_number(payload.get("card_number"))
     market_key = str(payload.get("market_key") or "")

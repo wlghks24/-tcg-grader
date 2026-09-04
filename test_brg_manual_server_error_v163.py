@@ -16,7 +16,8 @@ class Tests(unittest.TestCase):
         src=Path("pending_official_candidate_bridge_v161.js").read_text(encoding="utf-8")
         self.assertNotIn("brgcard.com/certification",src)
         self.assertIn("officialOpenUrl(String(row.official_reference_url||''),cert,row.company)",src)
-        self.assertIn("Application error / server-side exception / Digest",src)
+        self.assertIn("Application error",src)
+        self.assertIn("조회결과 없음이 아니므로",src)
         self.assertNotIn("const url=bgsDirect(",src)
 
 if __name__=='__main__': unittest.main()

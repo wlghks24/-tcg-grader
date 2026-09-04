@@ -229,6 +229,7 @@ def _public_row(row: dict[str, Any]) -> dict[str, Any]:
         "front_oblique_image_sha256", "back_oblique_image_sha256", "oblique_crosscheck_complete",
         "quadrant_zone_count", "quadrant_inspection_state", "measurement_learning_eligible",
         "client_preview_training_eligible", "photo_revalidation", "manual_official_proof_required",
+        "automatic_official_lookup_used",
     )
     public = {key: row.get(key) for key in keys if key in row}
     # v190: Older tablet-local BRG registrations may still contain the retired

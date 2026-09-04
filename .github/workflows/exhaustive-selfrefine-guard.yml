@@ -85,45 +85,17 @@ jobs:
           failed=0; total=0
           for file in test_*.py; do
             [ -f "$file" ] || continue
-            case "$file" in
-              test_brg_manual_server_error_v163.py|test_manual_graded_photo_registration.py) continue ;;
-            esac
             total=$((total+1)); echo "===== isolated root test: $file ====="
             python -m unittest discover -v -s . -p "$file"; rc=$?
             if [ "$rc" -ne 0 ]; then failed=$((failed+1)); fi
           done
           echo "isolated root test modules: $total; failed modules: $failed"
           exit "$failed"
-      - name: Run migrated manual-only contracts and legacy UI compatibility explicitly
-        env:
-          TCG_REQUIRE_NODE: '1'
-        run: |
-          python - <<'PY'
-          import importlib, unittest
-          obsolete={
-            'test_manual_only_flow_never_creates_provider_block_state',
-            'test_quick_registration_ocr_autofills_then_requires_manual_official_proof',
-          }
-          module=importlib.import_module('test_manual_graded_photo_registration')
-          def flatten(s):
-              for x in s:
-                  if isinstance(x,unittest.TestSuite): yield from flatten(x)
-                  else: yield x
-          suite=unittest.TestSuite(); isolated=[]
-          for case in flatten(unittest.defaultTestLoader.loadTestsFromModule(module)):
-              method=getattr(case,'_testMethodName','')
-              if method in obsolete: isolated.append(method); continue
-              suite.addTest(case)
-          if obsolete-set(isolated): raise SystemExit('manual-only stale assertion filter drift')
-          if not unittest.TextTestRunner(verbosity=2).run(suite).wasSuccessful(): raise SystemExit(1)
-          PY
-          python -m unittest -v test_manual_only_official_verification_v192.py test_manual_official_proof.py test_pending_official_candidate_v161.py
-          python -m unittest -v test_brg_break_lookup_v173.py test_brg_registered_link_normalization_v190.py
       - name: Run nested domain tests in their intended import contexts
         run: |
           python -m unittest discover -v -s instagram_tcg_content -p 'test_*.py'
           if [ -d trusted_ai_tests ]; then
-            (cd trusted_ai_tests && PYTHONPATH=. python -m unittest discover -v -s . -p 'test_*.py')
+            PYTHONPATH=. python -m unittest discover -v -s trusted_ai_tests -p 'test_*.py'
           fi
       - name: Re-run current release, runtime, tablet and security gates
         env:
