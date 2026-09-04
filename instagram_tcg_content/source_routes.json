@@ -1,5 +1,5 @@
 {
-  "version": 1,
+  "version": 2,
   "source_pool_size": 122,
   "rules": {
     "official_facts_require_official_primary": true,
@@ -11,7 +11,12 @@
     "respect_retry_after": true,
     "bypass_403_429": false,
     "preserve_provider_lineage": true,
-    "completed_sale_separate_from_market_reference": true
+    "completed_sale_separate_from_market_reference": true,
+    "official_primary_region_fallback_allowed": true,
+    "official_primary_cross_language_confirmation_allowed": true,
+    "official_event_detail_page_preferred_over_homepage": true,
+    "provider_homepage_staleness_does_not_override_fresh_detail_page": true,
+    "prelaunch_game_market_data_default_excluded": true
   },
   "routes": {
     "official_release": ["official_primary", "official_secondary", "discovery_lead"],
@@ -25,25 +30,52 @@
   },
   "provider_groups": {
     "pokemon": {
-      "official_primary": ["pokemon-official-jp", "pokemon-official-us", "pokemon-official-kr"],
+      "official_primary": [
+        "pokemon-official-jp-news",
+        "pokemon-30th-official-jp",
+        "pokemon-official-us-news",
+        "pokemon-official-us-product-gallery",
+        "pokemon-official-kr"
+      ],
       "completed_sale_original": ["ebay", "heritage", "goldin"],
       "grading_auction_original": ["psa-auction-prices", "pwcc"],
       "market_reference": ["pricecharting", "tcgplayer", "cardmarket", "snkrdunk", "justtcg", "pavilion", "kream"],
       "discovery_lead": ["google", "instagram", "x", "reddit"]
     },
     "one_piece": {
-      "official_primary": ["bandai-onepiece-global", "bandai-onepiece-jp", "bandai-onepiece-asia"],
+      "official_primary": [
+        "onepiece-cardgame-jp",
+        "onepiece-cardgame-global",
+        "onepiece-cardgame-asia-en",
+        "onepiece-campaign-detail"
+      ],
       "completed_sale_original": ["ebay", "heritage", "goldin"],
       "grading_auction_original": ["psa-auction-prices", "pwcc"],
       "market_reference": ["pricecharting", "tcgplayer", "cardmarket", "snkrdunk", "justtcg", "pavilion", "kream"],
       "discovery_lead": ["google", "instagram", "x", "reddit"]
     },
     "naruto": {
-      "official_primary": ["bandai-namco-holdings", "bandai-card-games"],
+      "official_primary": ["bandai-namco-holdings-ir", "bandai-card-games"],
       "completed_sale_original": ["ebay", "heritage", "goldin"],
       "grading_auction_original": ["psa-auction-prices", "pwcc"],
       "market_reference": ["pricecharting", "tcgplayer", "cardmarket", "snkrdunk", "justtcg", "pavilion", "kream"],
       "discovery_lead": ["google", "instagram", "x", "reddit"]
     }
+  },
+  "sample_findings_2026_09_04": {
+    "pokemon": [
+      "Official JP news had same-day 2026-09-04 event updates, so news index must be scanned before relying on older product pages.",
+      "US official product gallery can independently confirm launch date and promo contents for global products.",
+      "Cross-language official confirmation is valid corroboration but final Instagram output remains KR/EN only."
+    ],
+    "one_piece": [
+      "Official campaign/detail pages can be fresher and more specific than the global homepage.",
+      "Campaign subdomains must be treated as first-party official providers when provenance resolves to the official ONE PIECE CARD GAME property.",
+      "Event application/reward/goods pages should be crawled separately because key dates and promo rewards are split across pages."
+    ],
+    "naruto": [
+      "Bandai Namco Holdings IR is an official primary source for the planned Summer 2027 launch.",
+      "Because the product is prelaunch, normal market TopN/completed-sale collection is excluded unless an officially released product identity exists."
+    ]
   }
 }
