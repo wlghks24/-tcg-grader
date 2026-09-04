@@ -51,9 +51,9 @@ class MultiChannelCollector:
         "나루토": {"KR": "나루토 카드게임", "JP": "NARUTO カードゲーム", "US": "NARUTO CARD GAME"},
     }
     EVENT_OR = {
-        "KR": ("행사", "이벤트", "콜라보", "프로모", "프로모카드", "출시", "발매", "재발매", "한정", "증정", "대회", "영화"),
-        "JP": ("イベント", "コラボ", "プロモ", "プロモカード", "発売", "再販", "限定", "配布", "大会", "映画"),
-        "US": ("event", "collab", "collaboration", "promo", "promo card", "release", "restock", "exclusive", "giveaway", "tournament", "movie"),
+        "KR": ("행사", "이벤트", "챌린지", "도전", "개최", "콜라보", "프로모", "프로모카드", "출시", "발매", "재발매", "한정", "증정", "배포", "특전", "대회", "영화"),
+        "JP": ("イベント", "チャレンジ", "開催", "コラボ", "プロモ", "プロモカード", "発売", "再販", "限定", "配布", "特典", "大会", "映画"),
+        "US": ("event", "challenge", "special mission", "distribution", "collab", "collaboration", "promo", "promo card", "release", "restock", "exclusive", "giveaway", "tournament", "movie"),
     }
     GOOGLE_LOCALE = {
         "KR": {"hl": "ko", "gl": "KR", "ceid": "KR:ko"},
