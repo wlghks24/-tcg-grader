@@ -419,9 +419,21 @@ def main()->dict:
     same_host_fallback_stats=_attach_same_host_fallbacks(tasks,results,request_timeout)
     template_route_recovery_stats=_classify_template_route_failures(tasks,results,request_timeout)
     counts, unresolved_details=_apply_results(tasks,results,now)
+    repaired_details=[]
     blocked_details=[]
     transient_details=[]
     for url,refs in tasks.items():
+        result=results.get(url,{})
+        if result.get("state")=="broken":
+            host=urllib.parse.urlsplit(_render_template_probe(url)).hostname or ""
+            fallback=FALLBACKS.get(host.lower()) or result.get("fallback_url")
+            if fallback and fallback!=url:
+                repaired_details.append({
+                    "url":url,
+                    "fallback_url":fallback,
+                    "code":result.get("code"),
+                    "references":[{"file":fn,"field":key} for fn,_row,key in refs[:20]],
+                })
         result=results.get(url,{})
         state=result.get("state")
         if state=="blocked":
@@ -445,6 +457,7 @@ def main()->dict:
             "same_host_fallback_stats":same_host_fallback_stats,
             "template_route_recovery_stats":template_route_recovery_stats,
             "unresolved_details":unresolved_details,
+            "repaired_details":repaired_details[:50],
             "blocked_details":blocked_details[:50],
             "transient_details":transient_details[:50]}
     atomic_write_json(ROOT/"link_health_report.json",report,suffix='.report.tmp')
