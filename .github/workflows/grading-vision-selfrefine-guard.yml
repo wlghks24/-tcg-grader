@@ -1,0 +1,72 @@
+name: Grading Vision SELFREFINE Guard
+
+on:
+  pull_request:
+    paths:
+      - 'grading_vision_engine.js'
+      - 'index.html'
+      - 'grading_accuracy_v99.js'
+      - 'vision_calibration.py'
+      - 'verified_grade_learning_v135.py'
+      - 'verified_grade_learning_v135_safe.py'
+      - 'grade_learning_guard_v135.js'
+      - 'verify_vision_runtime.js'
+      - 'verify_vision_calibration.py'
+      - 'test_grading_hierarchy_v17.py'
+      - 'test_verified_grade_learning_v135.py'
+      - 'test_verified_grade_learning_v135_safe.py'
+      - '.github/workflows/grading-vision-selfrefine-guard.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'grading_vision_engine.js'
+      - 'index.html'
+      - 'grading_accuracy_v99.js'
+      - 'vision_calibration.py'
+      - 'verified_grade_learning_v135.py'
+      - 'verified_grade_learning_v135_safe.py'
+      - 'grade_learning_guard_v135.js'
+      - 'verify_vision_runtime.js'
+      - 'verify_vision_calibration.py'
+      - 'test_grading_hierarchy_v17.py'
+      - 'test_verified_grade_learning_v135.py'
+      - 'test_verified_grade_learning_v135_safe.py'
+      - '.github/workflows/grading-vision-selfrefine-guard.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  grading-vision:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
+        with:
+          python-version: '3.11'
+      - name: Compile grading learning paths
+        run: |
+          python -m py_compile \
+            vision_calibration.py \
+            verified_grade_learning_v135.py \
+            verified_grade_learning_v135_safe.py \
+            verify_vision_calibration.py \
+            test_grading_hierarchy_v17.py \
+            test_verified_grade_learning_v135.py \
+            test_verified_grade_learning_v135_safe.py
+      - name: Validate grading browser syntax
+        run: |
+          node --check grading_vision_engine.js
+          node --check grading_accuracy_v99.js
+          node --check grade_learning_guard_v135.js
+      - name: Verify pixel grading hierarchy
+        run: node verify_vision_runtime.js
+      - name: Verify verified-only vision calibration
+        run: |
+          python verify_vision_calibration.py
+          python -m unittest -v \
+            test_grading_hierarchy_v17.py \
+            test_verified_grade_learning_v135.py \
+            test_verified_grade_learning_v135_safe.py
