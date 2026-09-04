@@ -23,6 +23,17 @@ class GradingHierarchyV17Tests(unittest.TestCase):
         self.assertIn('cornerRisk=Math.min(100,Math.max(frontHierarchy.cornerRisk,backHierarchy.cornerRisk', source)
         self.assertIn('1차 전체 → 2차 4분할 → 3차 8분할 정밀검사', source)
 
+    def test_feature_contract_tracks_external_vision_engine(self):
+        contract_source = (ROOT / "feature_contract.py").read_text(encoding="utf-8")
+        self.assertIn('vision_engine = safe_read_text(base / "grading_vision_engine.js")', contract_source)
+        for token in (
+            '"analyzeWhitening"',
+            '"quadrantCornerWorstRisk"',
+            '"eightZoneWorst"',
+            '"hierarchyDefectRisk"',
+        ):
+            self.assertIn(token, contract_source)
+
     def test_eight_zone_features_are_saved_for_verified_learning(self):
         source = (ROOT / "index.html").read_text(encoding="utf-8")
         for token in (

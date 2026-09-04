@@ -21,7 +21,7 @@ import re
 import urllib.parse
 from pathlib import Path
 
-from safe_runtime import atomic_write_json, safe_read_text
+from safe_runtime import atomic_write_json, exclusive_file_lock, safe_read_text
 
 ROOT = Path(__file__).resolve().parent
 MEMORY = ROOT / "collection_provider_health.json"
@@ -406,6 +406,32 @@ def _social_provider_rows(payload: dict) -> list[dict]:
     return rows
 
 
+
+def _aggregate_provider_rows(provider_rows: list[dict]) -> tuple[list[dict], int]:
+    """Collapse repeated provider samples to one bounded health observation per run."""
+    grouped: dict[str, dict] = {}
+    total = 0
+    for row in provider_rows or []:
+        if not isinstance(row, dict):
+            continue
+        total += 1
+        name = str(row.get("provider") or "unknown")[:80]
+        current = grouped.setdefault(name, {
+            "provider": name,
+            "configured": False,
+            "responded": False,
+            "results": 0,
+            "selected": 0,
+            "errors": 0,
+        })
+        current["configured"] = bool(current["configured"] or row.get("configured") is not False)
+        current["responded"] = bool(current["responded"] or row.get("responded", True))
+        current["results"] = max(_num(current.get("results")), _num(row.get("results")))
+        current["selected"] = max(_num(current.get("selected")), _num(row.get("selected")))
+        current["errors"] = max(_num(current.get("errors")), _num(row.get("errors")))
+    return list(grouped.values()), max(0, total - len(grouped))
+
+
 def _observe_provider_rows(data: dict, provider_rows: list[dict]) -> None:
     providers = data.setdefault("providers", {})
     for row in provider_rows:
@@ -650,46 +676,54 @@ def observe(
     supplementary_path = Path(supplementary_path)
     promo_path = Path(promo_path)
 
-    data = _load(memory_path, backup)
-    data["runs"] = _num(data.get("runs")) + 1
-    data["updated_at"] = _now()
+    with exclusive_file_lock(memory_path):
+        data = _load(memory_path, backup)
+        data["runs"] = _num(data.get("runs")) + 1
+        data["updated_at"] = _now()
 
-    social = _read_payload(social_path)
-    supplementary = _read_payload(supplementary_path)
-    promo = _read_payload(promo_path)
-    hardening = _harden_social_coverage(
-        social, social_path, rewrite=rewrite_social_coverage
-    ) if social else {
-        "candidate_covered_cells": 0,
-        "verified_covered_cells": 0,
-        "candidate_only_cells": [],
-        "verified_missing_cells": _expected_keys(),
-        "basis": "verified-source-only",
-        "verified_fact_basis": "verified-concrete-facts-multi-label; unverified-primary-only",
-    }
+        social = _read_payload(social_path)
+        supplementary = _read_payload(supplementary_path)
+        promo = _read_payload(promo_path)
+        hardening = _harden_social_coverage(
+            social, social_path, rewrite=rewrite_social_coverage
+        ) if social else {
+            "candidate_covered_cells": 0,
+            "verified_covered_cells": 0,
+            "candidate_only_cells": [],
+            "verified_missing_cells": _expected_keys(),
+            "basis": "verified-source-only",
+            "verified_fact_basis": "verified-concrete-facts-multi-label; unverified-primary-only",
+        }
 
-    all_provider_rows = list(provider_rows or [])
-    all_provider_rows.extend(_social_provider_rows(social))
-    all_provider_rows.extend(_supplementary_provider_rows(supplementary))
-    _observe_provider_rows(data, all_provider_rows)
-    snapshot = _coverage_snapshot(social, supplementary, promo)
-    _observe_coverage(data, snapshot)
+        all_provider_rows = list(provider_rows or [])
+        all_provider_rows.extend(_social_provider_rows(social))
+        all_provider_rows.extend(_supplementary_provider_rows(supplementary))
+        aggregated_rows, duplicate_rows = _aggregate_provider_rows(all_provider_rows)
+        _observe_provider_rows(data, aggregated_rows)
+        snapshot = _coverage_snapshot(social, supplementary, promo)
+        _observe_coverage(data, snapshot)
 
-    if memory_path.exists():
-        try:
-            atomic_write_json(backup, _load(memory_path, backup), suffix=".provider-health.bak.tmp")
-        except Exception:
-            pass
-    atomic_write_json(memory_path, data, suffix=".provider-health.tmp")
-    result = report(data)
+        if memory_path.exists():
+            try:
+                atomic_write_json(backup, _load(memory_path, backup), suffix=".provider-health.bak.tmp")
+            except Exception:
+                pass
+        atomic_write_json(memory_path, data, suffix=".provider-health.tmp")
+        result = report(data)
+
     result["social_coverage_hardening"] = hardening
+    result["provider_observation_aggregation"] = {
+        "input_rows": len(all_provider_rows),
+        "provider_samples": len(aggregated_rows),
+        "duplicate_or_overlapping_rows_suppressed": duplicate_rows,
+        "one_health_sample_per_provider_per_run": True,
+    }
     result["current_sources"] = {
         "social_items": len(social.get("items") or []),
         "supplementary_items": len(supplementary.get("items") or []),
         "canonical_promo_items": len(promo.get("items") or []),
     }
     return result
-
 
 def report(data: dict | None = None) -> dict:
     data = data if isinstance(data, dict) else _load()
@@ -726,6 +760,8 @@ def report(data: dict | None = None) -> dict:
             "auto_verify": False,
             "learned_text_execution": False,
             "access_control_bypass": False,
+            "process_safe_transaction": True,
+            "one_health_sample_per_provider_per_run": True,
             "policy": "수집 성공률·누락 우선순위만 학습하며 X/Instagram/Google/나무위키/커뮤니티 반복발견으로 공식성·사실성을 자동승격하지 않음",
         },
     }

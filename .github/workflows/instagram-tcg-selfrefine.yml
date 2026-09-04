@@ -1,0 +1,57 @@
+name: Instagram TCG Content SELFREFINE
+
+on:
+  pull_request:
+    paths:
+      - 'instagram_tcg_content/**'
+      - 'shared_self_learning/**'
+      - 'crosscheck_exchange/**'
+      - 'selfrefine_crosscheck_gate.py'
+      - 'selfrefine_domain_policy.json'
+      - 'selfrefine_domain_boundary_guard.py'
+      - 'test_selfrefine_domain_isolation_v18.py'
+      - '.github/workflows/instagram-tcg-selfrefine.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'instagram_tcg_content/**'
+      - 'shared_self_learning/**'
+      - 'crosscheck_exchange/**'
+      - 'selfrefine_crosscheck_gate.py'
+      - 'selfrefine_domain_policy.json'
+      - 'selfrefine_domain_boundary_guard.py'
+      - 'test_selfrefine_domain_isolation_v18.py'
+      - '.github/workflows/instagram-tcg-selfrefine.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  content-selfrefine:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      PYTHONPATH: ${{ github.workspace }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97
+        with:
+          python-version: '3.11'
+      - name: Enforce Main vs Instagram domain boundary
+        run: python selfrefine_domain_boundary_guard.py
+      - name: Verify shared algorithm and passive crosscheck contracts
+        run: |
+          python -m instagram_tcg_content.crosscheck_export --self-test
+          python selfrefine_crosscheck_gate.py --self-test
+          python -m unittest -v test_selfrefine_domain_isolation_v18.py
+          python -m unittest -v instagram_tcg_content.test_state_isolation_v18
+      - name: Run Instagram TCG Content SELFREFINE only
+        run: python -m instagram_tcg_content.selfrefine_gate
+      - name: Upload Instagram TCG SELFREFINE ledger
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        with:
+          name: instagram-tcg-selfrefine-error-ledger
+          path: INSTAGRAM_TCG_SELFREFINE_ERROR_LEDGER.json
+          if-no-files-found: ignore

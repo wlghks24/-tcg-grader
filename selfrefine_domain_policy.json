@@ -1,0 +1,96 @@
+{
+  "version": 7,
+  "domains": {
+    "main": {
+      "root": ".",
+      "exclude_prefixes": [
+        "instagram_tcg_content/"
+      ],
+      "ledger": "MAIN_SELFREFINE_ERROR_LEDGER.json",
+      "learning_namespace": "main",
+      "state_files": {
+        "ledger": "MAIN_SELFREFINE_ERROR_LEDGER.json",
+        "learning": "MAIN_SELFREFINE_LEARNING_STATE.json",
+        "retry": "MAIN_SELFREFINE_RETRY_STATE.json",
+        "provider": "MAIN_SELFREFINE_PROVIDER_STATE.json",
+        "verified_repair": "MAIN_SELFREFINE_VERIFIED_REPAIR_STATE.json",
+        "error_quarantine": "MAIN_SELFREFINE_ERROR_QUARANTINE_STATE.json"
+      }
+    },
+    "instagram_content": {
+      "root": "instagram_tcg_content/",
+      "ledger": "INSTAGRAM_TCG_SELFREFINE_ERROR_LEDGER.json",
+      "learning_namespace": "instagram_content",
+      "state_files": {
+        "ledger": "INSTAGRAM_TCG_SELFREFINE_ERROR_LEDGER.json",
+        "learning": "INSTAGRAM_TCG_SELFREFINE_LEARNING_STATE.json",
+        "retry": "INSTAGRAM_TCG_SELFREFINE_RETRY_STATE.json",
+        "provider": "INSTAGRAM_TCG_SELFREFINE_PROVIDER_STATE.json",
+        "verified_repair": "INSTAGRAM_TCG_SELFREFINE_VERIFIED_REPAIR_STATE.json",
+        "error_quarantine": "INSTAGRAM_TCG_SELFREFINE_ERROR_QUARANTINE_STATE.json"
+      }
+    },
+    "shared_self_learning": {
+      "root": "shared_self_learning/",
+      "purpose": "pure shared algorithms/contracts only; no file IO, network, domain runtime, provider state, retry state, or persisted learning state"
+    },
+    "crosscheck_exchange": {
+      "root": "crosscheck_exchange/",
+      "purpose": "passive JSON/JSONL factual exchange only; never executable"
+    }
+  },
+  "shared_algorithms": [
+    "evidence_fingerprint",
+    "normalize_error_signature",
+    "confidence_score",
+    "rank_candidates",
+    "classify_regression_result",
+    "bounded_retry_decision",
+    "classify_conflict"
+  ],
+  "legacy_compatibility_wrappers": [
+    "observation_fingerprint",
+    "priority_score",
+    "retry_bucket",
+    "enrich_error",
+    "compare_record_sets"
+  ],
+  "rules": {
+    "shared_error_ledger": false,
+    "shared_retry_history": false,
+    "shared_learning_state": false,
+    "shared_collector_registry": false,
+    "shared_provider_health": false,
+    "shared_render_state": false,
+    "shared_self_learning_code": true,
+    "shared_self_learning_state": false,
+    "main_may_import_instagram_content": false,
+    "instagram_content_may_import_main_runtime": false,
+    "main_may_import_shared_self_learning": true,
+    "instagram_content_may_import_shared_self_learning": true,
+    "shared_self_learning_may_import_main_runtime": false,
+    "shared_self_learning_may_import_instagram_content": false,
+    "cross_domain_result_exchange": "explicit_json_jsonl_contract_only",
+    "cross_domain_verification_promotion": false,
+    "cross_domain_provider_state_merge": false,
+    "cross_domain_retry_state_merge": false,
+    "cross_domain_learning_state_merge": false,
+    "cross_domain_lineage_preserved": true,
+    "cross_domain_value_averaging": false,
+    "cross_domain_conflicts_require_reverification": true,
+    "crosscheck_fail_closed_on_execution_markers": true,
+    "main_verified_code_defined_auto_repair": true,
+    "instagram_verified_code_defined_auto_repair": false,
+    "learned_patch_text_executable": false,
+    "error_code_isolation": true,
+    "verified_resolution_learning": true,
+    "unknown_error_auto_repair": false,
+    "repair_rule_quarantine_after_failures": 2,
+    "failed_self_modify_auto_rollback": true,
+    "new_regression_auto_rollback": true,
+    "repair_rule_fingerprint_required": true,
+    "process_safe_selfrefine_state": true,
+    "self_modify_max_files_per_run": 3,
+    "self_modify_git_write": false
+  }
+}
