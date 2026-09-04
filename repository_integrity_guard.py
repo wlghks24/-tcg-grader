@@ -94,6 +94,7 @@ def legacy_runtime_reference(relative: str, text: str) -> str | None:
         name.startswith("apply_")
         or name.startswith("gemini-code-")
         or name.startswith(("test_", "verify_"))
+        or name == "repository_integrity_guard.py"
         or relative.startswith(".github/workflows/apply-")
     ):
         return None
