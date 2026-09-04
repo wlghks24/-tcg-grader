@@ -20,9 +20,10 @@ on:
       - 'test_cgc_cert_ocr_v170.py'
       - 'test_negative_proof_korean_ocr_v171.py'
       - 'test_manual_official_proof.py'
-      - 'test_manual_graded_photo_registration.py'
+      - 'test_psa_official_proof_grade_v187.py'
+      - 'test_manual_only_official_verification_v192.py'
+      - 'verify_card_identity_recognition.py'
       - 'test_grading_cert_verifier.py'
-      - 'test_psa_manual_proof_match_v166.py'
       - 'test_legacy_ocr_registry_cleanup_v149.py'
       - '.github/workflows/ocr-selfrefine-guard.yml'
   push:
