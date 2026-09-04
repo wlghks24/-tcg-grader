@@ -28,6 +28,25 @@ jobs:
         run: python security_self_audit.py --no-memory --fail-on high
       - name: Confirm security hardening is idempotent
         run: python security_hardening_apply.py --check
+      - name: Confirm collector self-healing safety contracts
+        run: |
+          python - <<'PY'
+          import collector_self_healing as c
+          status = c.safety_contract_status()
+          assert status.get('process_safe_transactions') is True, status
+          assert status.get('unique_policy_observation_per_run') is True, status
+          assert c.QUARANTINE_CODES
+          print('collector self-healing safety contracts: PASS')
+          PY
+      - name: Confirm runtime hardening patch is already idempotent
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          import runtime_optimization_hardening as r
+          source = Path('collector_self_healing.py').read_text(encoding='utf-8')
+          assert r.patch_collector_self_healing(source) == source
+          print('runtime hardening idempotence: PASS')
+          PY
       - name: Upload non-executable SELFREFINE ledger
         if: always()
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
