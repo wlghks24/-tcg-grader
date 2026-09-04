@@ -31,6 +31,7 @@ from typing import Iterable
 
 from safe_runtime import atomic_write_json, safe_read_text
 import collection_meta_learning
+import provider_health_learning
 
 ROOT = Path(__file__).resolve().parent
 MEMORY = ROOT / "collection_learning_memory.json"
@@ -345,6 +346,32 @@ class AdaptiveCollectionLearner:
                 "topic": topic,
             })
 
+        # Verified-only provider gap learning is the safety-critical closed loop.
+        # Candidate/community volume cannot suppress this query because the source
+        # gap learner tracks verified coverage separately and also ages unchanged
+        # verified evidence until it becomes due for recheck.
+        try:
+            verified_focus = provider_health_learning.recommended_verified_focus(game)
+        except Exception:
+            verified_focus = None
+        if isinstance(verified_focus, dict):
+            focus_region = str(verified_focus.get("region") or "KR")
+            if focus_region not in regional_names:
+                focus_region = "KR"
+            focus_topic = str(verified_focus.get("topic") or "event")[:30]
+            focus_terms = str(
+                collection_meta_learning.FOCUS_TERMS.get(
+                    focus_region, collection_meta_learning.FOCUS_TERMS["KR"]
+                ).get(focus_topic, REGION_SEEDS[focus_region]["phrase"])
+            )[:180]
+            candidates.append({
+                "query": f"{regional_names[focus_region]} {focus_terms}",
+                "family": f"verified-gap:{focus_topic}",
+                "region": focus_region,
+                "verified_gap_priority": float(verified_focus.get("priority") or 0.0),
+                "verified_gap_reason": str(verified_focus.get("priority_reason") or "verified-missing")[:40],
+            })
+
         # Cross-collector meta learning identifies the most under-covered
         # game/region/topic from event, stock, market and graded-photo outputs.
         # Only search-relevant topics are injected here; trust/verification remains separate.
@@ -429,10 +456,14 @@ class AdaptiveCollectionLearner:
             if row not in chosen:
                 chosen.append(row)
 
-        # Explicit reservations prevent historical yield from starving a whole
-        # subject, social channel, or controlled exploration path.
-        reserve([row for row in dedup if str(row.get("family") or "").startswith("topic:")])
+        # Explicit reservations prevent historical yield from starving verified
+        # gaps. Even the Android 5-query budget consumes one verified-only gap
+        # before generic topic/social exploration.
+        if budget >= 4:
+            reserve([row for row in dedup if str(row.get("family") or "").startswith("verified-gap:")])
         if budget >= 5:
+            reserve([row for row in dedup if str(row.get("family") or "").startswith("topic:")])
+        if budget >= 6:
             reserve([row for row in dedup if str(row.get("family") or "").startswith("social:")])
         if budget >= 7:
             reserve([row for row in dedup if row.get("family") in {"exploration", "official-site"}])
@@ -706,7 +737,7 @@ class AdaptiveCollectionLearner:
             "version": SCHEMA_VERSION,
             "updated_at": _now(),
             "policy": "수집전략만 자가학습. 반복 발견만으로 출처를 공식승격하지 않으며 공식도메인/SNS 검증정책은 별도 유지.",
-            "anti_blindspot": "KR/JP/US 기본 검색 + 영화/콜라보/팝업/대회/프로모/출시/재발매 독립 회전검색 + 공식도메인 + X/Instagram/YouTube 탐색으로 성공기록 과적합 방지.",
+            "anti_blindspot": "KR/JP/US 기본 검색 + verified-gap 우선 재검색 + 주제별 회전검색 + 공식도메인 + X/Instagram/YouTube 탐색. candidate/community 양으로 verified 누락을 숨기지 않음.",
             "memory_file": self.memory_path.name,
             "totals": dict(self.memory.get("totals", {})),
             "learned_queries": len(self.memory.get("query_stats", {})),
