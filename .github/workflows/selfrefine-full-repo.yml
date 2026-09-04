@@ -24,13 +24,16 @@ jobs:
         with:
           python-version: '3.12'
 
+      - name: Collector isolation contract
+        run: python selfrefine_full_repo.py --self-test
+
       - name: Repository-wide SELFREFINE audit
         run: python selfrefine_full_repo.py --cycles 5
 
       - name: Python compile regression
         run: |
           python - <<'PY'
-          import compileall, pathlib, sys
+          import compileall, pathlib
           root = pathlib.Path('.')
           ok = compileall.compile_dir(root, quiet=1, maxlevels=20)
           raise SystemExit(0 if ok else 1)
