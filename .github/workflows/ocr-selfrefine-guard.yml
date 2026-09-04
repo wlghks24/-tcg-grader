@@ -13,6 +13,8 @@ on:
       - 'manual_graded_photo_registration.py'
       - 'pending_official_candidate_v161.py'
       - 'grading_cert_verifier.py'
+      - 'verify_card_identity_recognition.py'
+      - 'verify_v109_card_identity.py'
       - 'test_ocr_selfrefine_v15.py'
       - 'test_ocr_accuracy_boost_v147.py'
       - 'test_ocr_front_back_fallback_v148.py'
@@ -22,7 +24,6 @@ on:
       - 'test_manual_official_proof.py'
       - 'test_psa_official_proof_grade_v187.py'
       - 'test_manual_only_official_verification_v192.py'
-      - 'verify_card_identity_recognition.py'
       - 'test_grading_cert_verifier.py'
       - 'test_legacy_ocr_registry_cleanup_v149.py'
       - '.github/workflows/ocr-selfrefine-guard.yml'
@@ -39,7 +40,19 @@ on:
       - 'manual_graded_photo_registration.py'
       - 'pending_official_candidate_v161.py'
       - 'grading_cert_verifier.py'
+      - 'verify_card_identity_recognition.py'
+      - 'verify_v109_card_identity.py'
       - 'test_ocr_selfrefine_v15.py'
+      - 'test_ocr_accuracy_boost_v147.py'
+      - 'test_ocr_front_back_fallback_v148.py'
+      - 'test_bgs_cert_ocr_v169.py'
+      - 'test_cgc_cert_ocr_v170.py'
+      - 'test_negative_proof_korean_ocr_v171.py'
+      - 'test_manual_official_proof.py'
+      - 'test_psa_official_proof_grade_v187.py'
+      - 'test_manual_only_official_verification_v192.py'
+      - 'test_grading_cert_verifier.py'
+      - 'test_legacy_ocr_registry_cleanup_v149.py'
       - '.github/workflows/ocr-selfrefine-guard.yml'
   workflow_dispatch:
 
@@ -55,18 +68,46 @@ jobs:
       - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
         with:
           python-version: '3.11'
+
       - name: Install OCR test dependencies
         run: python -m pip install --disable-pip-version-check -r requirements.txt
+
       - name: Compile active OCR paths
         run: |
-          python -m py_compile             card_identity_recognition.py             ocr_accuracy_boost_v147.py             ocr_front_back_fallback_v148.py             library_slab_corpus.py             graded_photo_evidence.py             manual_official_proof.py             manual_graded_photo_registration.py             pending_official_candidate_v161.py             grading_cert_verifier.py             test_ocr_selfrefine_v15.py
+          python -m py_compile \
+            card_identity_recognition.py \
+            ocr_accuracy_boost_v147.py \
+            ocr_front_back_fallback_v148.py \
+            library_slab_corpus.py \
+            graded_photo_evidence.py \
+            manual_official_proof.py \
+            manual_graded_photo_registration.py \
+            pending_official_candidate_v161.py \
+            grading_cert_verifier.py \
+            verify_card_identity_recognition.py \
+            verify_v109_card_identity.py \
+            test_ocr_selfrefine_v15.py
+
       - name: Validate browser OCR integration syntax
         run: node --check card_identity_recognition.js
+
       - name: Verify card identity OCR core
         run: |
           python card_identity_recognition.py
           python verify_card_identity_recognition.py
           python verify_v109_card_identity.py
-      - name: Run OCR accuracy and certification regressions
+
+      - name: Run OCR accuracy and current verification regressions
         run: |
-          python -m unittest -v             test_ocr_selfrefine_v15.py             test_ocr_accuracy_boost_v147.py             test_ocr_front_back_fallback_v148.py             test_bgs_cert_ocr_v169.py             test_cgc_cert_ocr_v170.py             test_negative_proof_korean_ocr_v171.py             test_manual_official_proof.py             test_manual_graded_photo_registration.py             test_grading_cert_verifier.py             test_psa_manual_proof_match_v166.py             test_legacy_ocr_registry_cleanup_v149.py
+          python -m unittest -v \
+            test_ocr_selfrefine_v15.py \
+            test_ocr_accuracy_boost_v147.py \
+            test_ocr_front_back_fallback_v148.py \
+            test_bgs_cert_ocr_v169.py \
+            test_cgc_cert_ocr_v170.py \
+            test_negative_proof_korean_ocr_v171.py \
+            test_manual_official_proof.py \
+            test_psa_official_proof_grade_v187.py \
+            test_manual_only_official_verification_v192.py \
+            test_grading_cert_verifier.py \
+            test_legacy_ocr_registry_cleanup_v149.py
