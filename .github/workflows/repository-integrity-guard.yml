@@ -47,5 +47,12 @@ jobs:
           node verify_vision_runtime.js
           python verify_vision_calibration.py
           python -m unittest -v test_grading_hierarchy_v17.py test_verified_grade_learning_v135.py test_verified_grade_learning_v135_safe.py
+      - name: Run Main vs Instagram SELFREFINE isolation contracts
+        run: |
+          python selfrefine_domain_boundary_guard.py
+          python main_selfrefine_gate.py --self-test
+          python selfrefine_crosscheck_gate.py --self-test
+          python -m instagram_tcg_content.selfrefine_gate
+          python -m unittest -v test_selfrefine_domain_isolation_v18.py
       - name: Run runtime delivery contracts
         run: python test_runtime_delivery_guards.py
