@@ -27,7 +27,7 @@ class OcrAccuracyBoostV147Tests(unittest.TestCase):
     def test_arbitrary_word_is_not_rewritten_into_cert(self):
         self.assertIsNone(boost.normalize_cert('PSA', 'CERTIFICATION SAMPLE LABEL'))
 
-    def test_accuracy_ocr_stops_after_complete_first_pass(self):
+    def test_accuracy_ocr_keeps_full_four_eight_stages_after_complete_stage1(self):
         with tempfile.TemporaryDirectory() as directory:
             path = Path(directory) / 'slab.jpg'
             Image.new('RGB', (800, 1200), 'white').save(path)
@@ -39,24 +39,26 @@ class OcrAccuracyBoostV147Tests(unittest.TestCase):
                 text, error, diagnostics = boost.ocr_label(path, profile='accuracy')
         self.assertIsNone(error)
         self.assertIn('12345678', text)
-        self.assertEqual(run.call_count, 1)
-        self.assertEqual(diagnostics['pass_count'], 1)
+        self.assertEqual(run.call_count, 13)
+        self.assertEqual(diagnostics['pass_count'], 13)
+        self.assertEqual(diagnostics['stage_region_counts'], {'1': 1, '2': 4, '3': 8})
         self.assertEqual(diagnostics['identity_score'], 100)
 
-    def test_accuracy_ocr_uses_fallback_pass_when_cert_missing(self):
+    def test_accuracy_ocr_combines_certificate_recovered_in_later_regions(self):
         with tempfile.TemporaryDirectory() as directory:
             path = Path(directory) / 'slab.jpg'
             Image.new('RGB', (800, 1200), 'white').save(path)
-            outputs = [
-                ('PSA GEM MT 10', None),
-                ('PSA GEM MT 10 CERT 12345678', None),
+            outputs = [('PSA GEM MT 10', None)] + [
+                ('PSA GEM MT 10 CERT 12345678', None)
+                for _ in range(12)
             ]
             with mock.patch.object(boost, '_run_tesseract', side_effect=outputs) as run:
                 text, error, diagnostics = boost.ocr_label(path, profile='accuracy')
         self.assertIsNone(error)
         self.assertIn('12345678', text)
-        self.assertEqual(run.call_count, 2)
+        self.assertEqual(run.call_count, 13)
         self.assertTrue(diagnostics['cert_resolved'])
+        self.assertEqual(diagnostics['stages_completed'], [1, 2, 3])
 
 
 if __name__ == '__main__':

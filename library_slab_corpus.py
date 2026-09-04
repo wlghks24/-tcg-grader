@@ -9,9 +9,9 @@ Safety rules:
 - Exact duplicate images inherit OCR/classification from the first identical
   image, avoiding both wasted OCR and false "unresolved" counts.
 
-The OCR pipeline is adaptive. It starts with one fast label pass and only runs
-additional crops / page-segmentation modes when company, certification number,
-or grade are still unresolved. Use --sample-size for a quick tablet benchmark
+The OCR pipeline uses mandatory full-image, 4-way, and 8-way hierarchical analysis.
+Grader-specific narrow certificate recovery runs only after the 13 shared regions
+when the certificate is still unresolved. Use --sample-size for a quick tablet benchmark
 before scanning the full archive.
 """
 from __future__ import annotations
@@ -32,6 +32,7 @@ from pathlib import Path
 from typing import Any
 
 from PIL import Image, ImageOps
+from ocr_multistage_regions_v16 import STAGE_REGION_COUNTS, crop_region, region_specs
 from safe_runtime import atomic_write_json, safe_read_text
 
 COMPANIES = ("PSA", "BGS", "CGC", "TAG", "BRG")
@@ -277,131 +278,170 @@ def _fields_from_text(text: str) -> tuple[str | None, str | None, float | None]:
 
 
 def ocr_label(path: Path, profile: str = "adaptive") -> tuple[str, str | None, dict[str, Any]]:
-    """OCR slab label using a fast first pass and adaptive fallbacks."""
+    """OCR slab image as full -> four quadrants -> eight precision regions."""
     try:
         with Image.open(path) as raw:
             source = ImageOps.exif_transpose(raw).convert("RGB")
-            passes = [
-                ("top42_psm6", 0.42, 2.0, False, 6),
-            ]
-            if profile == "adaptive":
-                passes += [
-                    ("top30_psm6", 0.30, 2.8, False, 6),
-                    ("top50_psm11", 0.50, 2.4, False, 11),
-                    ("top38_bin_psm11", 0.38, 3.0, True, 11),
-                ]
 
-            texts: list[str] = []
-            errors: list[str] = []
-            used: list[str] = []
-            bgs_cert_targeted = False
-            cgc_cert_targeted = False
-            started = time.monotonic()
-            budget_seconds = 16.0 if profile == "fast" else 54.0
-            budget_exhausted = False
-            for name, fraction, scale, threshold, psm in passes:
-                if time.monotonic() - started >= budget_seconds - 2.0:
-                    budget_exhausted = True
-                    errors.append("ocr_budget_exhausted")
-                    break
-                crop = _prepare_crop(source, fraction, scale, threshold)
-                text, error = _run_tesseract(crop, psm)
-                used.append(name)
+        if profile == "fast":
+            stage_settings = {
+                1: (1100, 11),
+                2: (850, 11),
+                3: (700, 11),
+            }
+        else:
+            stage_settings = {
+                1: (1600, 11),
+                2: (1200, 11),
+                3: (1000, 11),
+            }
+
+        texts: list[str] = []
+        errors: list[str] = []
+        used: list[str] = []
+        stage_summaries: list[dict[str, Any]] = []
+        region_diagnostics: list[dict[str, Any]] = []
+        stages_completed: list[int] = []
+        stage_region_counts: dict[str, int] = {}
+        started = time.monotonic()
+
+        for stage in (1, 2, 3):
+            target_width, psm = stage_settings[stage]
+            stage_texts: list[str] = []
+            specs = region_specs(stage)
+            attempted = 0
+            for spec in specs:
+                prepared = crop_region(
+                    source,
+                    spec,
+                    target_width=target_width,
+                    autocontrast_cutoff=1,
+                    sharpen=True,
+                )
+                text, error = _run_tesseract(prepared, psm)
+                attempted += 1
+                used.append(spec.name)
                 if text:
-                    texts.append(text)
+                    stage_texts.append(text)
+                    if text not in texts:
+                        texts.append(text)
                 if error:
-                    errors.append(error)
+                    errors.append(f"{spec.name}:{error}")
+                company, cert, grade = _fields_from_text(text or "")
+                region_diagnostics.append({
+                    **spec.public(),
+                    "ocr_text_chars": len(text or ""),
+                    "company": company,
+                    "certification_id": cert,
+                    "grade": grade,
+                    "error": error,
+                })
 
-                combined = " | ".join(texts)
-                company, cert, grade = _fields_from_text(combined)
+            stage_text = " | ".join(dict.fromkeys(stage_texts))
+            company, cert, grade = _fields_from_text(stage_text)
+            stage_summaries.append({
+                "stage": stage,
+                "region_count_expected": STAGE_REGION_COUNTS[stage],
+                "region_count_attempted": attempted,
+                "region_count_with_text": sum(
+                    1 for item in region_diagnostics
+                    if item.get("stage") == stage and int(item.get("ocr_text_chars") or 0) > 0
+                ),
+                "company": company,
+                "certification_id": cert,
+                "grade": grade,
+                "text_chars": len(stage_text),
+            })
+            stage_region_counts[str(stage)] = attempted
+            if attempted == STAGE_REGION_COUNTS[stage]:
+                stages_completed.append(stage)
 
-                # Beckett/BGS labels place a small serial at the far-right of the
-                # top label. On Android/Termux the normal PSM-6 pass can read the
-                # large grade/subgrades yet skip this small leading-zero number.
-                # Run a narrow digits-only recovery pass only when BGS identity is
-                # already visually supported and the certificate is unresolved.
-                if not bgs_cert_targeted and cert is None and (company == "BGS" or _looks_like_bgs_label(combined)):
-                    bgs_cert_targeted = True
-                    cert_crop = _prepare_region_crop(source, 0.48, 0.00, 1.00, 0.20, 1700, False)
-                    cert_text, cert_error = _run_tesseract(
-                        cert_crop, 6, whitelist="0123456789"
-                    )
-                    used.append("bgs_top_right_digits_psm6")
-                    if cert_error:
-                        errors.append(cert_error)
-                    recovered = normalize_cert("BGS", cert_text or "")
-                    if recovered is None:
-                        cert_text2, cert_error2 = _run_tesseract(
-                            cert_crop, 11, whitelist="0123456789"
-                        )
-                        used.append("bgs_top_right_digits_psm11")
-                        if cert_error2:
-                            errors.append(cert_error2)
-                        recovered = normalize_cert("BGS", cert_text2 or "")
-                    if recovered:
-                        # Synthetic CERT context is created only from a valid BGS
-                        # length candidate, preserving leading zeroes and making
-                        # downstream evidence extraction deterministic.
-                        texts.append(f"BECKETT CERT {recovered}")
-                    combined = " | ".join(texts)
-                    company, cert, grade = _fields_from_text(combined)
+        combined = " | ".join(dict.fromkeys(texts))
+        company, cert, grade = _fields_from_text(combined)
+        targeted_passes: list[str] = []
 
-                # CGC labels commonly print the certification number as a small
-                # 10+ digit line near the center/bottom of the white top label.
-                # Android/Termux fast OCR can read CGC + GEM MINT 10 while skipping
-                # that serial. Run a digits-only label-band recovery pass only
-                # after CGC identity is already supported and the cert is missing.
-                if not cgc_cert_targeted and cert is None and company == "CGC":
-                    cgc_cert_targeted = True
-                    recovered = None
-                    cgc_regions = (
-                        ("cgc_center_label_digits_psm6", 0.25, 0.05, 0.78, 0.23, 2200, 6, False),
-                        ("cgc_center_label_digits_psm11", 0.34, 0.08, 0.74, 0.22, 2400, 11, True),
-                    )
-                    for pass_name, left, top, right, bottom, target_width, cert_psm, threshold2 in cgc_regions:
-                        cert_crop = _prepare_region_crop(
-                            source, left, top, right, bottom, target_width, threshold2
-                        )
-                        cert_text, cert_error = _run_tesseract(
-                            cert_crop, cert_psm, whitelist="0123456789"
-                        )
-                        used.append(pass_name)
-                        if cert_error:
-                            errors.append(cert_error)
-                        recovered = normalize_cert("CGC", cert_text or "")
-                        if recovered:
-                            texts.append(f"CGC CERT {recovered}")
-                            break
-                    combined = " | ".join(texts)
-                    company, cert, grade = _fields_from_text(combined)
+        # Preserve grader-specific certificate recovery as a post-hierarchy
+        # fallback. The shared 13-region analysis always runs first.
+        if cert is None and (company == "BGS" or _looks_like_bgs_label(combined)):
+            cert_crop = _prepare_region_crop(source, 0.48, 0.00, 1.00, 0.20, 1700, False)
+            for pass_name, cert_psm in (
+                ("bgs_top_right_digits_psm6", 6),
+                ("bgs_top_right_digits_psm11", 11),
+            ):
+                cert_text, cert_error = _run_tesseract(
+                    cert_crop, cert_psm, whitelist="0123456789"
+                )
+                used.append(pass_name)
+                targeted_passes.append(pass_name)
+                if cert_error:
+                    errors.append(cert_error)
+                recovered = normalize_cert("BGS", cert_text or "")
+                if recovered:
+                    texts.append(f"BECKETT CERT {recovered}")
+                    break
 
-                if profile == "adaptive" and company and cert and grade is not None:
+        combined = " | ".join(dict.fromkeys(texts))
+        company, cert, grade = _fields_from_text(combined)
+        if cert is None and company == "CGC":
+            for pass_name, left, top, right, bottom, target_width, cert_psm, threshold2 in (
+                ("cgc_center_label_digits_psm6", 0.25, 0.05, 0.78, 0.23, 2200, 6, False),
+                ("cgc_center_label_digits_psm11", 0.34, 0.08, 0.74, 0.22, 2400, 11, True),
+            ):
+                cert_crop = _prepare_region_crop(
+                    source, left, top, right, bottom, target_width, threshold2
+                )
+                cert_text, cert_error = _run_tesseract(
+                    cert_crop, cert_psm, whitelist="0123456789"
+                )
+                used.append(pass_name)
+                targeted_passes.append(pass_name)
+                if cert_error:
+                    errors.append(cert_error)
+                recovered = normalize_cert("CGC", cert_text or "")
+                if recovered:
+                    texts.append(f"CGC CERT {recovered}")
                     break
 
         combined = " | ".join(dict.fromkeys(texts))[:5000]
-        error = ";".join(dict.fromkeys(errors)) if errors and not combined else None
         company, cert, grade = _fields_from_text(combined)
-        return combined, error, {
+        error = ";".join(dict.fromkeys(errors)) if errors and not combined else None
+        return combined, error if error else (None if combined else "ocr_empty"), {
             "profile": profile,
+            "engine": "library-slab-hierarchical-1-4-8-v16",
+            "analysis_mode": "hierarchical_1_4_8",
+            "stage_order": [1, 2, 3],
+            "stage_region_expected": {"1": 1, "2": 4, "3": 8},
+            "stage_region_counts": stage_region_counts,
+            "stages_completed": stages_completed,
+            "all_stages_completed": stages_completed == [1, 2, 3],
+            "stage_summaries": stage_summaries,
+            "regions": region_diagnostics,
+            "targeted_passes": targeted_passes,
             "passes_used": used,
             "pass_count": len(used),
             "company_resolved": company is not None,
             "cert_resolved": cert is not None,
             "grade_resolved": grade is not None,
-            "budget_seconds": budget_seconds,
-            "budget_exhausted": budget_exhausted,
+            "budget_seconds": None,
+            "budget_exhausted": False,
             "elapsed_seconds": round(time.monotonic() - started, 3),
         }
     except (OSError, ValueError) as exc:
         return "", type(exc).__name__, {
             "profile": profile,
+            "engine": "library-slab-hierarchical-1-4-8-v16",
+            "analysis_mode": "hierarchical_1_4_8",
+            "stage_order": [1, 2, 3],
+            "stage_region_expected": {"1": 1, "2": 4, "3": 8},
+            "stage_region_counts": {},
+            "stages_completed": [],
+            "all_stages_completed": False,
             "passes_used": [],
             "pass_count": 0,
             "company_resolved": False,
             "cert_resolved": False,
             "grade_resolved": False,
         }
-
 
 def load_registry(path: Path | None) -> dict[tuple[str, str], dict[str, Any]]:
     if path is None or not path.exists():

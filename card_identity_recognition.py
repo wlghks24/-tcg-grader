@@ -20,6 +20,7 @@ from typing import Any
 
 from PIL import Image, ImageFilter, ImageOps
 
+from ocr_multistage_regions_v16 import STAGE_REGION_COUNTS, crop_region, region_specs
 from safe_runtime import atomic_write_json, safe_read_text
 
 ROOT = Path(__file__).resolve().parent
@@ -424,6 +425,7 @@ def _run_card_tesseract(
     psm: int,
     language: str,
     whitelist: str = "",
+    timeout: float = 12.0,
 ) -> tuple[str, str | None]:
     binary = _tesseract_binary()
     if not binary:
@@ -440,7 +442,7 @@ def _run_card_tesseract(
                 text=True,
                 encoding="utf-8",
                 errors="replace",
-                timeout=18,
+                timeout=max(3.0, min(18.0, float(timeout))),
                 check=False,
             )
         if run.returncode != 0:
@@ -472,6 +474,99 @@ def _high_confidence_identity(text: str, game: str, region: str) -> bool:
     )
 
 
+def _compact_ocr_parts(parts: list[str], max_chars: int) -> str:
+    """Keep number-bearing OCR regions first, then preserve remaining text."""
+    unique = list(dict.fromkeys(part.strip() for part in parts if str(part or "").strip()))
+    ordered = sorted(
+        enumerate(unique),
+        key=lambda item: (0 if extract_numbers(item[1]) else 1, item[0]),
+    )
+    chunks: list[str] = []
+    used = 0
+    for _, part in ordered:
+        remaining = max_chars - used
+        if remaining <= 0:
+            break
+        chunk = part[:remaining]
+        if chunk:
+            chunks.append(chunk)
+            used += len(chunk) + 1
+    return " ".join(chunks)[:max_chars]
+
+
+def _stage_identity_summary(stage: int, text: str, game: str, region: str) -> dict[str, Any]:
+    hits = match_catalog(text, game, limit=1, region=region) if text else []
+    best = hits[0] if hits else None
+    return {
+        "stage": stage,
+        "region_count_expected": STAGE_REGION_COUNTS[stage],
+        "numbers_detected": extract_numbers(text),
+        "best_candidate": best,
+        "text_chars": len(text),
+    }
+
+
+def _identity_stage_consensus(stage_summaries: list[dict[str, Any]]) -> dict[str, Any]:
+    number_votes: Counter[str] = Counter()
+    candidate_votes: Counter[tuple[str, str, str]] = Counter()
+    candidate_confidence: dict[tuple[str, str, str], float] = {}
+
+    for summary in stage_summaries:
+        for number in set(summary.get("numbers_detected") or []):
+            number_votes[str(number)] += 1
+        best = summary.get("best_candidate")
+        if isinstance(best, dict):
+            key = (
+                str(best.get("card_name") or ""),
+                str(best.get("card_number") or ""),
+                str(best.get("market_key") or ""),
+            )
+            if any(key):
+                candidate_votes[key] += 1
+                candidate_confidence[key] = max(
+                    candidate_confidence.get(key, 0.0),
+                    float(best.get("confidence") or 0.0),
+                )
+
+    best_number, best_number_votes = ("", 0)
+    if number_votes:
+        best_number, best_number_votes = max(
+            number_votes.items(), key=lambda item: (item[1], len(item[0]), item[0])
+        )
+
+    best_identity: tuple[str, str, str] | None = None
+    best_identity_votes = 0
+    if candidate_votes:
+        best_identity = max(
+            candidate_votes,
+            key=lambda key: (
+                candidate_votes[key],
+                candidate_confidence.get(key, 0.0),
+                len(key[1]),
+                key,
+            ),
+        )
+        best_identity_votes = candidate_votes[best_identity]
+
+    return {
+        "number_consensus": best_number or None,
+        "number_stage_votes": best_number_votes,
+        "identity_consensus": (
+            {
+                "card_name": best_identity[0],
+                "card_number": best_identity[1],
+                "market_key": best_identity[2],
+                "stage_votes": best_identity_votes,
+                "max_confidence": round(candidate_confidence.get(best_identity, 0.0), 4),
+            }
+            if best_identity
+            else None
+        ),
+        "cross_validated": bool(best_number_votes >= 2 or best_identity_votes >= 2),
+        "three_stage_agreement": bool(best_number_votes == 3 or best_identity_votes == 3),
+    }
+
+
 def ocr_image_detailed(
     data: bytes,
     *,
@@ -479,28 +574,28 @@ def ocr_image_detailed(
     region: str = "UNKNOWN",
     seed_text: str = "",
 ) -> tuple[str, str | None, dict[str, Any]]:
+    """Run mandatory 1 -> 4 -> 8 hierarchical OCR over the full card image.
+
+    Stage 1 reads the complete image, stage 2 reads four overlapping quadrants,
+    and stage 3 reads eight overlapping precision tiles. Results remain OCR
+    evidence only; the existing confirmation-only learning policy is unchanged.
+    """
     game = normalize_game(game)
     region = normalize_region(region)
     seed = str(seed_text or "")[:MAX_OCR_TEXT]
-    if seed and _high_confidence_identity(seed, game, region):
-        return "", None, {
-            "engine": "tesseract",
-            "passes_used": [],
-            "pass_count": 0,
-            "languages": [],
-            "early_stop": True,
-            "seed_text_sufficient": True,
-        }
 
     binary = _tesseract_binary()
     if not binary:
         return "", "tesseract_not_installed", {
-            "engine": "tesseract",
+            "engine": "tesseract-hierarchical-1-4-8-v16",
+            "analysis_mode": "hierarchical_1_4_8",
+            "stages_completed": [],
+            "stage_region_counts": {},
             "passes_used": [],
             "pass_count": 0,
             "languages": [],
-            "early_stop": False,
-            "seed_text_sufficient": False,
+            "seed_text_sufficient": bool(seed and _high_confidence_identity(seed, game, region)),
+            "cross_validation": _identity_stage_consensus([]),
         }
 
     try:
@@ -510,58 +605,113 @@ def ocr_image_detailed(
         source.thumbnail((1800, 2500))
     except (OSError, ValueError, Image.DecompressionBombError) as exc:
         return "", type(exc).__name__, {
-            "engine": "tesseract",
+            "engine": "tesseract-hierarchical-1-4-8-v16",
+            "analysis_mode": "hierarchical_1_4_8",
+            "stages_completed": [],
+            "stage_region_counts": {},
             "passes_used": [],
             "pass_count": 0,
             "languages": [],
-            "early_stop": False,
             "seed_text_sufficient": False,
+            "cross_validation": _identity_stage_consensus([]),
         }
 
     primary_lang = _ocr_language(region)
-    fallback_lang = _ocr_language(region, multilingual_fallback=True)
-    passes = [
-        ("full_psm11", 0.00, 1.00, 1600, 11, primary_lang, ""),
-        ("number_band_psm11", 0.58, 1.00, 2200, 11, "eng" if "eng" in _tesseract_languages() else primary_lang,
-         "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789OQDILZSBG-/#."),
-        ("name_band_psm6", 0.00, 0.42, 1900, 6, primary_lang, ""),
-    ]
-    if fallback_lang and fallback_lang != primary_lang:
-        passes.append(("multilang_full_psm11", 0.00, 1.00, 1700, 11, fallback_lang, ""))
+    if not primary_lang:
+        primary_lang = "eng"
+    stage_settings = {
+        1: {"target_width": 1600, "psm": 11, "timeout": 12.0},
+        2: {"target_width": 1250, "psm": 11, "timeout": 9.0},
+        3: {"target_width": 1050, "psm": 11, "timeout": 7.0},
+    }
 
     outputs: list[str] = []
     errors: list[str] = []
     used: list[str] = []
-    languages: list[str] = []
-    early_stop = False
-    for name, top, bottom, width, psm, language, whitelist in passes:
-        if not language:
-            continue
-        prepared = _prepare_card_ocr(source, top, bottom, width)
-        out, error = _run_card_tesseract(prepared, psm=psm, language=language, whitelist=whitelist)
-        used.append(name)
-        languages.append(language)
-        if out and out not in outputs:
-            outputs.append(out)
-        if error:
-            errors.append(error)
-        combined = " ".join(part for part in (seed, *outputs) if part)
-        if _high_confidence_identity(combined, game, region):
-            early_stop = True
-            break
+    stage_summaries: list[dict[str, Any]] = []
+    stage_texts_compact: dict[int, str] = {}
+    region_diagnostics: list[dict[str, Any]] = []
+    stages_completed: list[int] = []
+    stage_region_counts: dict[str, int] = {}
 
-    text = " ".join(outputs)[:MAX_OCR_TEXT]
+    for stage in (1, 2, 3):
+        settings = stage_settings[stage]
+        stage_outputs: list[str] = []
+        specs = region_specs(stage)
+        attempted = 0
+        for spec in specs:
+            prepared = crop_region(
+                source,
+                spec,
+                target_width=int(settings["target_width"]),
+                autocontrast_cutoff=1,
+                sharpen=True,
+            )
+            out, error = _run_card_tesseract(
+                prepared,
+                psm=int(settings["psm"]),
+                language=primary_lang,
+                timeout=float(settings["timeout"]),
+            )
+            attempted += 1
+            used.append(spec.name)
+            if out:
+                stage_outputs.append(out)
+                if out not in outputs:
+                    outputs.append(out)
+            if error:
+                errors.append(f"{spec.name}:{error}")
+            region_diagnostics.append({
+                **spec.public(),
+                "ocr_text_chars": len(out or ""),
+                "numbers_detected": extract_numbers(out or ""),
+                "error": error,
+            })
+
+        stage_text = _compact_ocr_parts(stage_outputs, 3600)
+        stage_texts_compact[stage] = stage_text
+        stage_summary = _stage_identity_summary(stage, stage_text, game, region)
+        stage_summary["region_count_attempted"] = attempted
+        stage_summary["region_count_with_text"] = sum(
+            1 for item in region_diagnostics
+            if item.get("stage") == stage and int(item.get("ocr_text_chars") or 0) > 0
+        )
+        stage_summaries.append(stage_summary)
+        stage_region_counts[str(stage)] = attempted
+        if attempted == STAGE_REGION_COUNTS[stage]:
+            stages_completed.append(stage)
+
+    # Preserve evidence from every stage in the bounded public OCR text. Each
+    # stage gets a fixed share, with number-bearing regions prioritized inside
+    # that share so stage-3 discoveries are not truncated away.
+    text = " ".join([
+        stage_texts_compact.get(1, "")[:1600],
+        stage_texts_compact.get(2, "")[:1700],
+        stage_texts_compact.get(3, "")[:1700],
+    ]).strip()[:MAX_OCR_TEXT]
+    combined_for_match = " ".join(
+        part for part in (seed, *stage_texts_compact.values()) if part
+    )[:16000]
+    cross_validation = _identity_stage_consensus(stage_summaries)
     error = ";".join(dict.fromkeys(errors)) if errors and not text else None
+
     return text, error if error else (None if text or seed else "no_text_detected"), {
-        "engine": "tesseract-adaptive-card-v15",
+        "engine": "tesseract-hierarchical-1-4-8-v16",
+        "analysis_mode": "hierarchical_1_4_8",
+        "stage_order": [1, 2, 3],
+        "stage_region_expected": {"1": 1, "2": 4, "3": 8},
+        "stage_region_counts": stage_region_counts,
+        "stages_completed": stages_completed,
+        "all_stages_completed": stages_completed == [1, 2, 3],
         "passes_used": used,
         "pass_count": len(used),
-        "languages": list(dict.fromkeys(languages)),
-        "early_stop": early_stop,
-        "seed_text_sufficient": False,
-        "numbers_detected": extract_numbers(" ".join(part for part in (seed, text) if part)),
+        "languages": [primary_lang],
+        "seed_text_sufficient": bool(seed and _high_confidence_identity(seed, game, region)),
+        "stage_summaries": stage_summaries,
+        "regions": region_diagnostics,
+        "cross_validation": cross_validation,
+        "numbers_detected": extract_numbers(combined_for_match),
     }
-
 
 def ocr_image(
     data: bytes,

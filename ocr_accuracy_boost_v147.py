@@ -28,8 +28,10 @@ from typing import Any
 
 from PIL import Image, ImageEnhance, ImageFilter, ImageOps
 
+from ocr_multistage_regions_v16 import STAGE_REGION_COUNTS, crop_region, region_specs
+
 PATCH_ID = 147
-ENGINE = "slab-ocr-accuracy-v147"
+ENGINE = "slab-ocr-hierarchical-1-4-8-v16"
 _APPLIED = False
 
 CERT_LENGTHS = {
@@ -265,59 +267,179 @@ def _run_tesseract(
         return "", "tesseract_failed"
 
 
+def _slab_stage_consensus(stage_summaries: list[dict[str, Any]]) -> dict[str, Any]:
+    company_votes: Counter[str] = Counter()
+    cert_votes: Counter[str] = Counter()
+    grade_votes: Counter[float] = Counter()
+    identity_votes: Counter[tuple[str, str, float]] = Counter()
+
+    for summary in stage_summaries:
+        company = str(summary.get("company") or "")
+        cert = str(summary.get("certification_id") or "")
+        grade = summary.get("grade")
+        if company:
+            company_votes[company] += 1
+        if cert:
+            cert_votes[cert] += 1
+        if grade is not None:
+            try:
+                grade_votes[float(grade)] += 1
+            except (TypeError, ValueError, OverflowError):
+                pass
+        if company and cert and grade is not None:
+            try:
+                identity_votes[(company, cert, float(grade))] += 1
+            except (TypeError, ValueError, OverflowError):
+                pass
+
+    def winner(counter):
+        return max(counter.items(), key=lambda item: (item[1], str(item[0]))) if counter else (None, 0)
+
+    company, company_count = winner(company_votes)
+    cert, cert_count = winner(cert_votes)
+    grade, grade_count = winner(grade_votes)
+    identity, identity_count = winner(identity_votes)
+    return {
+        "company_consensus": company,
+        "company_stage_votes": company_count,
+        "certification_consensus": cert,
+        "certification_stage_votes": cert_count,
+        "grade_consensus": grade,
+        "grade_stage_votes": grade_count,
+        "identity_consensus": (
+            {
+                "company": identity[0],
+                "certification_id": identity[1],
+                "grade": identity[2],
+                "stage_votes": identity_count,
+            }
+            if identity
+            else None
+        ),
+        "cross_validated": bool(
+            identity_count >= 2
+            or (company_count >= 2 and cert_count >= 2 and grade_count >= 2)
+        ),
+        "three_stage_agreement": bool(
+            identity_count == 3
+            or (company_count == 3 and cert_count == 3 and grade_count == 3)
+        ),
+    }
+
+
 def ocr_label(path: Path, profile: str = "accuracy", *, fallback_company: str = "", slab_module=None) -> tuple[str, str | None, dict[str, Any]]:
-    """Adaptive multi-crop OCR, stopping as soon as all identity fields resolve."""
+    """Analyze slab OCR as full image -> 4-way -> 8-way precision hierarchy."""
     try:
         with Image.open(path) as raw:
             source = ImageOps.exif_transpose(raw).convert("RGB")
-            # Ordered by cost/expected yield. Most normal slab photos stop after
-            # pass 1 or 2. Difficult glare/crop cases can use all fallbacks.
-            if profile == "fast":
-                passes = [("top30_gray_psm6", .30, 1500, "gray", 6, False)]
-            else:
-                passes = [
-                    ("top30_gray_psm6", .30, 1700, "gray", 6, False),
-                    ("top22_contrast_psm6", .22, 1900, "contrast", 6, False),
-                    ("top38_gray_psm11", .38, 1800, "gray", 11, False),
-                    ("top30_binary_psm6", .30, 2000, "binary", 6, False),
-                    ("top45_binary_psm11", .45, 1900, "binary", 11, False),
-                    ("top35_cert_psm11", .35, 2100, "contrast", 11, True),
-                ]
-            texts: list[str] = []
-            errors: list[str] = []
-            used: list[str] = []
-            fields = (None, None, None)
-            started = time.monotonic()
-            budget_seconds = 14.0 if profile == "fast" else 48.0
-            budget_exhausted = False
-            for name, fraction, target_width, mode, psm, digits_only in passes:
-                remaining = budget_seconds - (time.monotonic() - started)
-                if remaining < 3.0:
-                    budget_exhausted = True
-                    errors.append("ocr_budget_exhausted")
-                    break
-                prepared = _prepare(source, fraction, target_width, mode)
-                text, error = _run_tesseract(
-                    prepared, psm, digits_only=digits_only, timeout=min(20.0, remaining)
+
+        # All profiles complete the same 1/4/8 geometry. "fast" reduces image
+        # scale and per-pass timeout, but it does not skip a requested stage.
+        if profile == "fast":
+            stage_settings = {
+                1: {"target_width": 1200, "psm": 11, "timeout": 7.0},
+                2: {"target_width": 900, "psm": 11, "timeout": 5.0},
+                3: {"target_width": 760, "psm": 11, "timeout": 4.0},
+            }
+        else:
+            stage_settings = {
+                1: {"target_width": 1700, "psm": 11, "timeout": 12.0},
+                2: {"target_width": 1250, "psm": 11, "timeout": 8.0},
+                3: {"target_width": 1050, "psm": 11, "timeout": 6.0},
+            }
+
+        texts: list[str] = []
+        errors: list[str] = []
+        used: list[str] = []
+        stage_summaries: list[dict[str, Any]] = []
+        region_diagnostics: list[dict[str, Any]] = []
+        stages_completed: list[int] = []
+        stage_region_counts: dict[str, int] = {}
+        started = time.monotonic()
+
+        for stage in (1, 2, 3):
+            settings = stage_settings[stage]
+            stage_texts: list[str] = []
+            specs = region_specs(stage)
+            attempted = 0
+            for spec in specs:
+                prepared = crop_region(
+                    source,
+                    spec,
+                    target_width=int(settings["target_width"]),
+                    autocontrast_cutoff=1,
+                    sharpen=True,
                 )
-                used.append(name)
-                if text and text not in texts:
-                    texts.append(text)
+                text, error = _run_tesseract(
+                    prepared,
+                    int(settings["psm"]),
+                    timeout=float(settings["timeout"]),
+                )
+                attempted += 1
+                used.append(spec.name)
+                if text:
+                    stage_texts.append(text)
+                    if text not in texts:
+                        texts.append(text)
                 if error:
-                    errors.append(error)
-                combined = " | ".join(texts)
-                fields = fields_from_text(combined, fallback_company=fallback_company, slab_module=slab_module)
-                visual_company, cert, grade = fields
-                company_for_completion = visual_company or (fallback_company if str(fallback_company).upper() in COMPANIES else None)
-                if company_for_completion and cert and grade is not None:
-                    break
-        combined = " | ".join(texts)[:5000]
-        visual_company, cert, grade = fields_from_text(combined, fallback_company=fallback_company, slab_module=slab_module)
+                    errors.append(f"{spec.name}:{error}")
+
+                visual_company, cert, grade = fields_from_text(
+                    text or "",
+                    fallback_company=fallback_company,
+                    slab_module=slab_module,
+                )
+                region_diagnostics.append({
+                    **spec.public(),
+                    "ocr_text_chars": len(text or ""),
+                    "company": visual_company,
+                    "certification_id": cert,
+                    "grade": grade,
+                    "error": error,
+                })
+
+            stage_text = " | ".join(dict.fromkeys(stage_texts))
+            visual_company, cert, grade = fields_from_text(
+                stage_text,
+                fallback_company=fallback_company,
+                slab_module=slab_module,
+            )
+            stage_summaries.append({
+                "stage": stage,
+                "region_count_expected": STAGE_REGION_COUNTS[stage],
+                "region_count_attempted": attempted,
+                "region_count_with_text": sum(
+                    1 for item in region_diagnostics
+                    if item.get("stage") == stage and int(item.get("ocr_text_chars") or 0) > 0
+                ),
+                "company": visual_company,
+                "certification_id": cert,
+                "grade": grade,
+                "text_chars": len(stage_text),
+            })
+            stage_region_counts[str(stage)] = attempted
+            if attempted == STAGE_REGION_COUNTS[stage]:
+                stages_completed.append(stage)
+
+        combined = " | ".join(dict.fromkeys(texts))[:5000]
+        visual_company, cert, grade = fields_from_text(
+            combined,
+            fallback_company=fallback_company,
+            slab_module=slab_module,
+        )
         score = int(bool(visual_company)) * 34 + int(bool(cert)) * 38 + int(grade is not None) * 28
         error = ";".join(dict.fromkeys(errors)) if errors and not combined else None
-        return combined, error, {
+        consensus = _slab_stage_consensus(stage_summaries)
+
+        return combined, error if error else (None if combined else "ocr_empty"), {
             "engine": ENGINE,
             "profile": profile,
+            "analysis_mode": "hierarchical_1_4_8",
+            "stage_order": [1, 2, 3],
+            "stage_region_expected": {"1": 1, "2": 4, "3": 8},
+            "stage_region_counts": stage_region_counts,
+            "stages_completed": stages_completed,
+            "all_stages_completed": stages_completed == [1, 2, 3],
             "passes_used": used,
             "pass_count": len(used),
             "company_resolved": visual_company is not None,
@@ -325,17 +447,31 @@ def ocr_label(path: Path, profile: str = "accuracy", *, fallback_company: str = 
             "grade_resolved": grade is not None,
             "identity_score": score,
             "fallback_company_used_for_parsing": bool(not visual_company and fallback_company),
-            "budget_seconds": budget_seconds,
-            "budget_exhausted": budget_exhausted,
+            "stage_summaries": stage_summaries,
+            "regions": region_diagnostics,
+            "cross_validation": consensus,
+            "budget_seconds": None,
+            "budget_exhausted": False,
             "elapsed_seconds": round(time.monotonic() - started, 3),
         }
     except (OSError, ValueError) as exc:
         return "", type(exc).__name__, {
-            "engine": ENGINE, "profile": profile, "passes_used": [], "pass_count": 0,
-            "company_resolved": False, "cert_resolved": False, "grade_resolved": False,
+            "engine": ENGINE,
+            "profile": profile,
+            "analysis_mode": "hierarchical_1_4_8",
+            "stage_order": [1, 2, 3],
+            "stage_region_expected": {"1": 1, "2": 4, "3": 8},
+            "stage_region_counts": {},
+            "stages_completed": [],
+            "all_stages_completed": False,
+            "passes_used": [],
+            "pass_count": 0,
+            "company_resolved": False,
+            "cert_resolved": False,
+            "grade_resolved": False,
             "identity_score": 0,
+            "cross_validation": _slab_stage_consensus([]),
         }
-
 
 def _manual_ocr_for_row(row: dict[str, Any]):
     """Manual registration OCR with safe complete-result caching."""
