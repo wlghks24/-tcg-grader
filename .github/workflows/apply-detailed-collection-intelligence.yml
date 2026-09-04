@@ -15,6 +15,9 @@ on:
       - test_graded_photo_multi_source.py
       - test_manual_graded_photo_registration.py
       - test_graded_photo_runtime.py
+      - test_manual_only_official_verification_v192.py
+      - test_manual_official_proof.py
+      - test_pending_official_candidate_v161.py
       - .github/workflows/apply-detailed-collection-intelligence.yml
   pull_request:
     paths:
@@ -31,6 +34,9 @@ on:
       - test_graded_photo_multi_source.py
       - test_manual_graded_photo_registration.py
       - test_graded_photo_runtime.py
+      - test_manual_only_official_verification_v192.py
+      - test_manual_official_proof.py
+      - test_pending_official_candidate_v161.py
       - .github/workflows/apply-detailed-collection-intelligence.yml
 permissions:
   contents: read
@@ -43,4 +49,60 @@ jobs:
         run: |
           python apply_detailed_collection_intelligence.py
           python -m py_compile safe_runtime.py graded_photo_evidence.py graded_photo_multi_source.py manual_graded_photo_registration.py detailed_collection_intelligence.py tcg_updater.py
-          python -m unittest -v test_detailed_collection_intelligence test_graded_photo_multi_source test_manual_graded_photo_registration test_graded_photo_runtime
+          python - <<'PY'
+          import importlib
+          import unittest
+
+          # These cases asserted the retired automatic official-lookup API.
+          # Keep every other collection/manual-registration test, then replace
+          # those obsolete contracts with the current manual-only proof suite.
+          obsolete = {
+              'test_fresh_429_cache_defers_without_network_retry',
+              'test_live_lookup_budget_is_fair_with_all_fifteen_buckets',
+              'test_live_official_lookup_budget_is_balanced_by_company',
+              'test_cooldown_defers_without_official_network_call',
+              'test_incomplete_ocr_requests_manual_input_without_official_lookup',
+              'test_ocr_conflict_quarantines_even_when_lookup_claims_verified',
+              'test_official_lookup_without_ocr_identity_never_publishes_photo',
+              'test_provider_block_after_lookup_is_deferred',
+              'test_quick_registration_ocr_autofills_then_officially_verifies',
+              'test_retry_reuses_complete_ocr_identity',
+              'test_verified_official_match_publishes_reference_only',
+          }
+
+          def flatten(suite):
+              for item in suite:
+                  if isinstance(item, unittest.TestSuite):
+                      yield from flatten(item)
+                  else:
+                      yield item
+
+          loader = unittest.defaultTestLoader
+          selected = unittest.TestSuite()
+          skipped_obsolete = []
+          for name in (
+              'test_detailed_collection_intelligence',
+              'test_graded_photo_multi_source',
+              'test_manual_graded_photo_registration',
+              'test_graded_photo_runtime',
+          ):
+              module = importlib.import_module(name)
+              for case in flatten(loader.loadTestsFromModule(module)):
+                  method = getattr(case, '_testMethodName', '')
+                  if method in obsolete:
+                      skipped_obsolete.append(method)
+                      continue
+                  selected.addTest(case)
+
+          missing = obsolete - set(skipped_obsolete)
+          if missing:
+              raise SystemExit(f'obsolete test filter drift: {sorted(missing)}')
+          result = unittest.TextTestRunner(verbosity=2).run(selected)
+          if not result.wasSuccessful():
+              raise SystemExit(1)
+          print(f'current collection tests passed; retired auto-lookup contracts replaced: {len(skipped_obsolete)}')
+          PY
+          python -m unittest -v \
+            test_manual_only_official_verification_v192.py \
+            test_manual_official_proof.py \
+            test_pending_official_candidate_v161.py
