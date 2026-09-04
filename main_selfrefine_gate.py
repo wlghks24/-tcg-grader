@@ -7,6 +7,8 @@ from pathlib import Path
 
 import security_self_audit
 import selfrefine_full_repo as core
+from shared_self_learning import SHARED_SELF_LEARNING_CONTRACT_VERSION
+from shared_self_learning.contracts import namespaced_signature
 
 ROOT = Path(__file__).resolve().parent
 POLICY = json.loads((ROOT / 'selfrefine_domain_policy.json').read_text(encoding='utf-8'))
@@ -70,9 +72,15 @@ def run(cycles: int):
 
 def self_test():
     assert _is_main_path('collector_self_healing.py')
+    assert _is_main_path('shared_self_learning/contracts.py')
     assert not _is_main_path('instagram_tcg_content/render/slide.py')
     assert LEDGER.name == 'MAIN_SELFREFINE_ERROR_LEDGER.json'
-    print('Main SELFREFINE domain isolation: PASS')
+    assert POLICY['rules']['shared_self_learning_code'] is True
+    assert POLICY['rules']['shared_self_learning_state'] is False
+    assert SHARED_SELF_LEARNING_CONTRACT_VERSION >= 1
+    assert namespaced_signature('main', 'abc') == 'main:abc'
+    assert namespaced_signature('instagram_content', 'abc') == 'instagram_content:abc'
+    print('Main SELFREFINE domain isolation + shared learning code: PASS')
 
 
 def main():
