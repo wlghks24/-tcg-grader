@@ -1,4 +1,4 @@
-name: SELFREFINE Full Repository
+name: Main SELFREFINE
 
 on:
   pull_request:
@@ -18,10 +18,15 @@ jobs:
       - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
         with:
           python-version: '3.11'
-      - name: Verify SELFREFINE audit contracts
-        run: python selfrefine_full_repo.py --self-test
-      - name: Run bounded tracked-repository SELFREFINE
-        run: python selfrefine_full_repo.py --cycles 5
+      - name: Enforce Main vs Instagram domain boundary
+        run: python selfrefine_domain_boundary_guard.py
+      - name: Verify shared stateless learning and crosscheck contracts
+        run: |
+          python main_selfrefine_gate.py --self-test
+          python selfrefine_crosscheck_gate.py --self-test
+          python -m unittest -v test_selfrefine_domain_isolation_v18.py
+      - name: Run bounded Main SELFREFINE only
+        run: python main_selfrefine_gate.py --cycles 5
       - name: Confirm fail-closed repository integrity
         run: python repository_integrity_guard.py
       - name: Confirm no high or critical security finding
@@ -47,10 +52,10 @@ jobs:
           assert r.patch_collector_self_healing(source) == source
           print('runtime hardening idempotence: PASS')
           PY
-      - name: Upload non-executable SELFREFINE ledger
+      - name: Upload Main SELFREFINE ledger
         if: always()
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         with:
-          name: selfrefine-error-ledger
-          path: SELFREFINE_ERROR_LEDGER.json
+          name: main-selfrefine-error-ledger
+          path: MAIN_SELFREFINE_ERROR_LEDGER.json
           if-no-files-found: ignore
