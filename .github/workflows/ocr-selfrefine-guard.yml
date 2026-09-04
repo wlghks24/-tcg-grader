@@ -4,6 +4,7 @@ on:
   pull_request:
     paths:
       - 'card_identity_recognition.py'
+      - 'ocr_multistage_regions_v16.py'
       - 'card_identity_recognition.js'
       - 'ocr_accuracy_boost_v147.py'
       - 'ocr_front_back_fallback_v148.py'
@@ -16,6 +17,7 @@ on:
       - 'verify_card_identity_recognition.py'
       - 'verify_v109_card_identity.py'
       - 'test_ocr_selfrefine_v15.py'
+      - 'test_ocr_multistage_v16.py'
       - 'test_ocr_accuracy_boost_v147.py'
       - 'test_ocr_front_back_fallback_v148.py'
       - 'test_bgs_cert_ocr_v169.py'
@@ -31,6 +33,7 @@ on:
     branches: [main]
     paths:
       - 'card_identity_recognition.py'
+      - 'ocr_multistage_regions_v16.py'
       - 'card_identity_recognition.js'
       - 'ocr_accuracy_boost_v147.py'
       - 'ocr_front_back_fallback_v148.py'
@@ -43,6 +46,7 @@ on:
       - 'verify_card_identity_recognition.py'
       - 'verify_v109_card_identity.py'
       - 'test_ocr_selfrefine_v15.py'
+      - 'test_ocr_multistage_v16.py'
       - 'test_ocr_accuracy_boost_v147.py'
       - 'test_ocr_front_back_fallback_v148.py'
       - 'test_bgs_cert_ocr_v169.py'
@@ -76,6 +80,7 @@ jobs:
         run: |
           python -m py_compile \
             card_identity_recognition.py \
+            ocr_multistage_regions_v16.py \
             ocr_accuracy_boost_v147.py \
             ocr_front_back_fallback_v148.py \
             library_slab_corpus.py \
@@ -86,7 +91,8 @@ jobs:
             grading_cert_verifier.py \
             verify_card_identity_recognition.py \
             verify_v109_card_identity.py \
-            test_ocr_selfrefine_v15.py
+            test_ocr_selfrefine_v15.py \
+            test_ocr_multistage_v16.py
 
       - name: Validate browser OCR integration syntax
         run: node --check card_identity_recognition.js
