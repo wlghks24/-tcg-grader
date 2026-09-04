@@ -129,36 +129,38 @@ class ManualGradedPhotoRegistrationTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "다른 각도"):
             manual.register(payload)
 
-    def test_quick_registration_ocr_autofills_then_officially_verifies(self):
+
+    def test_quick_registration_ocr_autofills_then_requires_manual_official_proof(self):
         row = manual.register({
             "game": "naruto", "image_data_url": png_data_url(marker=b"n")
         })["registration"]
         evidence = {"company": "CGC", "grade": 9.5, "certification_id": "CGC123456"}
-        with mock.patch.object(manual, "_ocr_image", return_value=("CGC 9.5 CGC123456", None, {}, evidence)), \
-             mock.patch.object(manual.OFFICIAL_LOOKUP_GUARD, "claim", return_value=(True, {})), \
-             mock.patch.object(manual.OFFICIAL_LOOKUP_GUARD, "record_result", return_value={"blocked": False}), \
-             mock.patch.object(manual, "verify_cert", return_value={"verified": True, "grade": 9.5, "official_url": "https://www.cgccards.com/certlookup/CGC123456"}) as verifier:
+        with mock.patch.object(manual, "_ocr_image", return_value=("CGC 9.5 CGC123456", None, {}, evidence)) as ocr:
             result = manual.process_registration(row["registration_id"])
-        verified = result["registration"]
-        self.assertTrue(verified["official_result"])
-        self.assertEqual((verified["company"], verified["claimed_grade"], verified["certification_id"]),
+        queued = result["registration"]
+        self.assertTrue(result["deferred"])
+        self.assertTrue(result["manual_official_proof_required"])
+        self.assertFalse(queued["official_result"])
+        self.assertEqual((queued["company"], queued["claimed_grade"], queued["certification_id"]),
                          ("CGC", 9.5, "CGC123456"))
-        verifier.assert_called_once_with("CGC", "CGC123456", expected_grade=9.5, timeout=10)
+        self.assertEqual(queued["verification_state"], "manual_official_verification_required")
+        self.assertFalse(queued["automatic_official_lookup_used"])
+        self.assertFalse(hasattr(manual, "verify_cert"))
+        self.assertFalse(hasattr(manual, "OFFICIAL_LOOKUP_GUARD"))
+        ocr.assert_called_once()
 
     def test_incomplete_ocr_requests_manual_input_without_official_lookup(self):
         row = manual.register({
             "game": "pokemon", "image_data_url": png_data_url(marker=b"m")
         })["registration"]
-        with mock.patch.object(manual, "_ocr_image", return_value=("PSA label", None, {}, {"company": "PSA"})), \
-             mock.patch.object(manual.OFFICIAL_LOOKUP_GUARD, "claim") as claim, \
-             mock.patch.object(manual, "verify_cert") as verifier:
+        with mock.patch.object(manual, "_ocr_image", return_value=("PSA label", None, {}, {"company": "PSA"})) as ocr:
             result = manual.process_registration(row["registration_id"])
         self.assertTrue(result["manual_input_required"])
         self.assertEqual(result["registration"]["verification_state"], "manual_input_required")
         self.assertEqual(set(result["registration"]["missing_identity_fields"]), {"grade", "certification_id"})
-        claim.assert_not_called()
-        verifier.assert_not_called()
-
+        self.assertFalse(result["registration"]["official_result"])
+        self.assertFalse(hasattr(manual, "verify_cert"))
+        ocr.assert_called_once()
     def test_same_quick_photo_can_be_completed_with_manual_identity(self):
         quick = {"game": "pokemon", "image_data_url": png_data_url(marker=b"r")}
         first = manual.register(quick)
@@ -210,63 +212,57 @@ class ManualGradedPhotoRegistrationTests(unittest.TestCase):
         with self.assertRaises(ValueError):
             manual.register(bad)
 
-    def test_verified_official_match_publishes_reference_only(self):
+
+    def test_complete_identity_stays_pending_until_manual_official_proof(self):
         payload = self.payload()
         payload["back_image_data_url"] = png_data_url(marker=b"z")
         row = manual.register(payload)["registration"]
-        with mock.patch.object(manual, "_ocr_image", return_value=("PSA 10 CERT 12345678", None, {"pass_count": 1}, {"company": "PSA", "grade": 10.0, "certification_id": "12345678"})), \
-             mock.patch.object(manual.OFFICIAL_LOOKUP_GUARD, "claim", return_value=(True, {"guard_reason": "allowed"})), \
-             mock.patch.object(manual.OFFICIAL_LOOKUP_GUARD, "record_result", return_value={"blocked": False}), \
-             mock.patch.object(manual, "verify_cert", return_value={"verified": True, "grade": 10.0, "official_url": "https://www.psacard.com/cert/12345678/psa", "http_status": 200}):
+        evidence = {"company": "PSA", "grade": 10.0, "certification_id": "12345678"}
+        with mock.patch.object(manual, "_ocr_image", return_value=("PSA 10 CERT 12345678", None, {"pass_count": 1}, evidence)):
             result = manual.process_registration(row["registration_id"])
-        verified = result["registration"]
-        self.assertTrue(verified["official_result"])
-        self.assertEqual(verified["learning_eligibility"], "reference_learning_only")
-        self.assertFalse(verified["training_eligible"])
-        self.assertTrue(verified["measurement_learning_eligible"])
-        references = json.loads(manual.VERIFIED_SLAB_REFERENCES.read_text(encoding="utf-8"))
-        self.assertEqual(references["training_rows_written"], 0)
-        self.assertEqual(references["certifications"][0]["source_sha256"], verified["image_sha256"])
-        self.assertEqual(references["certifications"][0]["back_source_sha256"], verified["back_image_sha256"])
-        self.assertTrue(references["certifications"][0]["front_back_pair_complete"])
-
-    def test_cooldown_defers_without_official_network_call(self):
-        row = manual.register(self.payload())["registration"]
-        with mock.patch.object(manual, "_ocr_image", return_value=("", "tesseract_not_installed", {}, {})), \
-             mock.patch.object(manual.OFFICIAL_LOOKUP_GUARD, "claim", return_value=(False, {"retry_after_seconds": 300})), \
-             mock.patch.object(manual, "verify_cert") as verifier:
-            result = manual.process_registration(row["registration_id"])
-        verifier.assert_not_called()
+        queued = result["registration"]
         self.assertTrue(result["deferred"])
-        self.assertEqual(result["registration"]["verification_state"], "deferred_by_cooldown")
-        self.assertFalse(result["registration"]["training_eligible"])
+        self.assertTrue(result["manual_official_proof_required"])
+        self.assertFalse(queued["official_result"])
+        self.assertEqual(queued["learning_eligibility"], "manual_official_proof_required")
+        self.assertFalse(queued["training_eligible"])
+        self.assertEqual(queued["verification_state"], "manual_official_verification_required")
+        self.assertFalse(manual.VERIFIED_SLAB_REFERENCES.exists())
 
-    def test_retry_reuses_complete_ocr_identity(self):
+    def test_manual_only_flow_has_no_network_cooldown_dependency(self):
         row = manual.register(self.payload())["registration"]
         evidence = {"company": "PSA", "grade": 10.0, "certification_id": "12345678"}
-        with mock.patch.object(manual, "_ocr_image", return_value=("PSA 10 CERT 12345678", None, {"pass_count": 1}, evidence)) as ocr, \
-             mock.patch.object(manual.OFFICIAL_LOOKUP_GUARD, "claim", side_effect=[(False, {"retry_after_seconds": 60}), (True, {})]), \
-             mock.patch.object(manual.OFFICIAL_LOOKUP_GUARD, "record_result", return_value={"blocked": False}), \
-             mock.patch.object(manual, "verify_cert", return_value={"verified": True, "grade": 10.0, "official_url": "https://www.psacard.com/cert/12345678/psa"}):
+        with mock.patch.object(manual, "_ocr_image", return_value=("PSA 10 CERT 12345678", None, {}, evidence)):
+            result = manual.process_registration(row["registration_id"])
+        self.assertTrue(result["deferred"])
+        self.assertTrue(result["manual_official_proof_required"])
+        self.assertIsNone(result["registration"].get("retry_after_seconds"))
+        self.assertFalse(result["registration"]["official_result"])
+        self.assertNotIn("official_provider_blocked", result["registration"].get("quarantine_reasons", []))
+
+    def test_retry_reuses_complete_ocr_identity_without_network_lookup(self):
+        row = manual.register(self.payload())["registration"]
+        evidence = {"company": "PSA", "grade": 10.0, "certification_id": "12345678"}
+        with mock.patch.object(manual, "_ocr_image", return_value=("PSA 10 CERT 12345678", None, {"pass_count": 1}, evidence)) as ocr:
             first = manual.process_registration(row["registration_id"])
             second = manual.process_registration(row["registration_id"])
-        self.assertTrue(first["deferred"])
-        self.assertTrue(second["registration"]["official_result"])
+        self.assertTrue(first["manual_official_proof_required"])
+        self.assertTrue(second["manual_official_proof_required"])
+        self.assertFalse(second["registration"]["official_result"])
         self.assertTrue(second["registration"]["ocr_cache_hit"])
         ocr.assert_called_once()
 
-    def test_provider_block_after_lookup_is_deferred(self):
+    def test_manual_only_flow_never_creates_provider_block_state(self):
         row = manual.register(self.payload())["registration"]
         evidence = {"company": "PSA", "grade": 10.0, "certification_id": "12345678"}
-        with mock.patch.object(manual, "_ocr_image", return_value=("PSA 10 CERT 12345678", None, {}, evidence)), \
-             mock.patch.object(manual.OFFICIAL_LOOKUP_GUARD, "claim", return_value=(True, {})), \
-             mock.patch.object(manual.OFFICIAL_LOOKUP_GUARD, "record_result", return_value={"blocked": True, "cooldown_seconds": 120}), \
-             mock.patch.object(manual, "verify_cert", return_value={"verified": False, "blocked_or_challenged": True, "http_status": 429}):
+        with mock.patch.object(manual, "_ocr_image", return_value=("PSA 10 CERT 12345678", None, {}, evidence)):
             result = manual.process_registration(row["registration_id"])
-        self.assertTrue(result["deferred"])
-        self.assertEqual(result["registration"]["verification_state"], "deferred_by_cooldown")
-        self.assertEqual(result["registration"]["retry_after_seconds"], 120)
-
+        queued = result["registration"]
+        self.assertTrue(result["manual_official_proof_required"])
+        self.assertFalse(queued["official_result"])
+        self.assertIsNone(queued.get("retry_after_seconds"))
+        self.assertNotIn("official_provider_blocked", queued.get("quarantine_reasons", []))
+        self.assertFalse(queued["automatic_official_lookup_used"])
     def test_duplicate_processing_request_is_coalesced(self):
         row = manual.register(self.payload())["registration"]
         manual.PROCESSING_IDS.add(row["registration_id"])
@@ -275,26 +271,30 @@ class ManualGradedPhotoRegistrationTests(unittest.TestCase):
         self.assertTrue(result["already_processing"])
         ocr.assert_not_called()
 
-    def test_ocr_conflict_quarantines_even_when_lookup_claims_verified(self):
-        row = manual.register(self.payload())["registration"]
-        with mock.patch.object(manual, "_ocr_image", return_value=("BGS 9 CERT 87654321", None, {}, {"company": "BGS", "grade": 9.0, "certification_id": "87654321"})), \
-             mock.patch.object(manual.OFFICIAL_LOOKUP_GUARD, "claim", return_value=(True, {})), \
-             mock.patch.object(manual.OFFICIAL_LOOKUP_GUARD, "record_result", return_value={"blocked": False}), \
-             mock.patch.object(manual, "verify_cert", return_value={"verified": True, "grade": 10.0, "official_url": "https://www.psacard.com/cert/12345678/psa"}):
-            result = manual.process_registration(row["registration_id"])
-        self.assertFalse(result["registration"]["official_result"])
-        self.assertEqual(result["registration"]["status"], "quarantine")
 
-    def test_official_lookup_without_ocr_identity_never_publishes_photo(self):
+    def test_ocr_conflict_is_preserved_for_manual_review(self):
         row = manual.register(self.payload())["registration"]
-        with mock.patch.object(manual, "_ocr_image", return_value=("", "tesseract_not_installed", {}, {})), \
-             mock.patch.object(manual.OFFICIAL_LOOKUP_GUARD, "claim", return_value=(True, {})), \
-             mock.patch.object(manual.OFFICIAL_LOOKUP_GUARD, "record_result", return_value={"blocked": False}), \
-             mock.patch.object(manual, "verify_cert", return_value={"verified": True, "grade": 10.0, "official_url": "https://www.psacard.com/cert/12345678/psa"}):
+        evidence = {"company": "BGS", "grade": 9.0, "certification_id": "87654321"}
+        with mock.patch.object(manual, "_ocr_image", return_value=("BGS 9 CERT 87654321", None, {}, evidence)):
             result = manual.process_registration(row["registration_id"])
-        self.assertFalse(result["registration"]["official_result"])
+        queued = result["registration"]
+        self.assertFalse(queued["official_result"])
+        self.assertTrue(result["manual_official_proof_required"])
+        reasons=set(queued.get("quarantine_reasons", []))
+        self.assertIn("ocr_company_conflict", reasons)
+        self.assertIn("ocr_certification_conflict", reasons)
+        self.assertIn("ocr_grade_conflict", reasons)
+        self.assertIn("manual_official_proof_required", reasons)
+
+    def test_manual_identity_without_ocr_identity_never_publishes_photo(self):
+        row = manual.register(self.payload())["registration"]
+        with mock.patch.object(manual, "_ocr_image", return_value=("", "tesseract_not_installed", {}, {})):
+            result = manual.process_registration(row["registration_id"])
+        queued = result["registration"]
+        self.assertTrue(result["manual_official_proof_required"])
+        self.assertFalse(queued["official_result"])
+        self.assertEqual(queued["verification_state"], "manual_official_verification_required")
         self.assertFalse(manual.VERIFIED_SLAB_REFERENCES.exists())
-
 
 if __name__ == "__main__":
     unittest.main()
