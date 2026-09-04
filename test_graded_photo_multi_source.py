@@ -349,7 +349,8 @@ class GradedPhotoMultiSourceTests(unittest.TestCase):
         self.assertIn('near_duplicate_image_label_conflict',resolved[1]['evidence_conflicts'])
         self.assertEqual(stats['near_duplicate_label_conflicts'],1)
 
-    def test_live_official_lookup_budget_is_balanced_by_company(self):
+
+    def test_manual_only_collector_ignores_live_lookup_budget(self):
         rows=[]
         for company in g.COMPANIES:
             count=8 if company=='PSA' else 1
@@ -357,51 +358,50 @@ class GradedPhotoMultiSourceTests(unittest.TestCase):
                 rows.append({'company':company,'game':'pokemon','grade':10,
                              'certification_id':f'{g.COMPANIES.index(company)+1}{index:07d}'})
         with tempfile.TemporaryDirectory() as directory, \
-             mock.patch.object(g,'OFFICIAL_CACHE',Path(directory)/'cache.json'), \
-             mock.patch.object(g,'verify_cert',return_value={'verified':False,'notice':'not found'}):
-            _,stats=g._official_verify_rows(rows,{},max_live=5)
-        self.assertEqual(stats['live_attempts'],5)
-        self.assertEqual(stats['company_live_attempts'],{company:1 for company in g.COMPANIES})
-
+             mock.patch.object(g,'OFFICIAL_CACHE',Path(directory)/'cache.json'):
+            out,stats=g._official_verify_rows(rows,{},max_live=5)
+        self.assertEqual(stats['live_attempts'],0)
+        self.assertEqual(sum(stats['company_live_attempts'].values()),0)
+        self.assertTrue(all(row.get('automatic_official_lookup_used') is False for row in out))
+        self.assertTrue(all(row.get('manual_official_verification_required') is True for row in out))
     def test_official_cache_429_uses_provider_retry_after(self):
         self.assertEqual(g._official_cache_ttl_seconds({
             'http_status':429,'blocked_or_challenged':True,'retry_after_seconds':420,
         }),420)
         self.assertEqual(g._official_cache_ttl_seconds({'verified':True}),30*86400)
 
-    def test_fresh_429_cache_defers_without_network_retry(self):
+
+    def test_retired_official_cache_is_cleared_and_never_reused(self):
         row={'company':'PSA','game':'pokemon','grade':10,'certification_id':'12345678'}
-        now=1_000_000.0
-        cached={'schema_version':2,'entries':{'PSA:12345678':{
-            'checked_epoch':now-10,'expires_epoch':now+290,'cache_ttl_seconds':300,
+        stale={'schema_version':2,'entries':{'PSA:12345678':{
+            'checked_epoch':1,'expires_epoch':9999999999,
             'result':{'http_status':429,'blocked_or_challenged':True,
                       'recommended_cooldown_seconds':300},
         }}}
         with tempfile.TemporaryDirectory() as directory, \
              mock.patch.object(g,'OFFICIAL_CACHE',Path(directory)/'cache.json'), \
-             mock.patch.object(g.time,'time',return_value=now), \
-             mock.patch.object(g,'_load',return_value=cached), \
-             mock.patch.object(g,'verify_cert') as verifier:
-            _,stats=g._official_verify_rows([row],{},max_live=5)
-        verifier.assert_not_called()
-        self.assertEqual(stats['deferred_by_cooldown'],1)
-        self.assertEqual(stats['company_deferred']['PSA'],1)
-        self.assertEqual(stats['next_retry_seconds'],290)
+             mock.patch.object(g,'_load',return_value=stale):
+            out,stats=g._official_verify_rows([row],{},max_live=5)
+            cache=json.loads(g.OFFICIAL_CACHE.read_text(encoding='utf-8'))
+        self.assertEqual(stats['live_attempts'],0)
+        self.assertEqual(stats['deferred_by_cooldown'],0)
+        self.assertEqual(cache['entries'],{})
+        self.assertTrue(out[0]['manual_official_verification_required'])
+        self.assertFalse(out[0]['official_result'])
 
-    def test_live_lookup_budget_is_fair_with_all_fifteen_buckets(self):
+    def test_manual_only_policy_applies_to_all_fifteen_company_game_buckets(self):
         rows=[]
         for company_index,company in enumerate(g.COMPANIES):
             for game_index,game in enumerate(g.GAMES):
                 rows.append({'company':company,'game':game,'grade':10,
                              'certification_id':f'{company_index+1}{game_index+1}000000'})
         with tempfile.TemporaryDirectory() as directory, \
-             mock.patch.object(g,'OFFICIAL_CACHE',Path(directory)/'cache.json'), \
-             mock.patch.object(g,'verify_cert',return_value={'verified':False,'notice':'not found'}):
-            _,stats=g._official_verify_rows(rows,{},max_live=5)
-        self.assertEqual(stats['company_live_attempts'],{company:1 for company in g.COMPANIES})
-        game_attempts=list(stats['game_live_attempts'].values())
-        self.assertLessEqual(max(game_attempts)-min(game_attempts),1)
-
+             mock.patch.object(g,'OFFICIAL_CACHE',Path(directory)/'cache.json'):
+            out,stats=g._official_verify_rows(rows,{},max_live=5)
+        self.assertEqual(len(out),15)
+        self.assertEqual(stats['live_attempts'],0)
+        self.assertTrue(all(row.get('manual_official_verification_required') is True for row in out))
+        self.assertTrue(all(row.get('verification_method') is None for row in out))
     def test_registry_seed_is_visible_without_marketplace_hit(self):
         seeds=g._registry_seed_rows()
         psa=[x for x in seeds if x.get('company')=='PSA' and x.get('certification_id')=='88411675']
