@@ -3,12 +3,16 @@ from __future__ import annotations
 
 import ast
 import json
+import sys
 from pathlib import Path
+
+ROOT = Path(__file__).resolve().parents[1]
+if str(ROOT) not in sys.path:
+    sys.path.insert(0, str(ROOT))
 
 from shared_self_learning import SHARED_SELF_LEARNING_CONTRACT_VERSION
 from shared_self_learning.contracts import namespaced_signature
 
-ROOT = Path(__file__).resolve().parents[1]
 DOMAIN = ROOT / 'instagram_tcg_content'
 SHARED = ROOT / 'shared_self_learning'
 LEDGER = ROOT / 'INSTAGRAM_TCG_SELFREFINE_ERROR_LEDGER.json'
