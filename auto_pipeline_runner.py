@@ -94,13 +94,37 @@ def _diverse_ranked(rows: list[dict], limit: int = 8) -> list[dict]:
             buckets[provider], len(buckets[provider]) or 1
         )
     result: list[dict] = []
+    selected_urls: set[str] = set()
+
+    # search_web() already reserves one verified-gap result. Direct official
+    # source merging ranks the pool again, so reserve that repair candidate a
+    # second time or the closed loop can be lost at this later compression.
+    gap_row = next((
+        row for row in rows
+        if str(row.get("query_family") or "").startswith("verified-gap:")
+        and (float(row.get("relevance_score") or 0.0) >= 2.0 or row.get("official_hint"))
+    ), None)
+    if gap_row is not None:
+        gap_url = str(gap_row.get("url") or "")
+        if gap_url:
+            selected_urls.add(gap_url)
+            result.append(gap_row)
+            if len(result) >= max(1, limit):
+                return result[: max(1, limit)]
+
     index = 0
     while len(result) < max(1, limit) and order:
         progressed = False
         for provider in order:
             rows_for_provider = buckets.get(provider, [])
             if index < len(rows_for_provider):
-                result.append(rows_for_provider[index])
+                row = rows_for_provider[index]
+                row_url = str(row.get("url") or "")
+                if row_url and row_url in selected_urls:
+                    continue
+                if row_url:
+                    selected_urls.add(row_url)
+                result.append(row)
                 progressed = True
                 if len(result) >= max(1, limit):
                     break

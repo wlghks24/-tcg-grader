@@ -147,6 +147,23 @@ class MultiChannelCollector:
         max_len = max((len(provider_rows.get(name, [])) for name in preferred_order), default=0)
         mixed: list[dict] = []
         seen: set[str] = set()
+
+        # A verified-gap query is deliberately scheduled to repair a known
+        # verified-only coverage hole. Do not execute it and then throw every
+        # relevant result away during the global shortlist compression.
+        gap_row = next((
+            row for row in ranked
+            if str(row.get("query_family") or "").startswith("verified-gap:")
+            and (float(row.get("relevance_score") or 0.0) >= 2.0 or row.get("official_hint"))
+        ), None)
+        if gap_row is not None:
+            gap_url = str(gap_row.get("url") or "")
+            if gap_url:
+                seen.add(gap_url)
+                mixed.append(gap_row)
+                if len(mixed) >= limit:
+                    return mixed[:limit]
+
         for index in range(max_len):
             for provider in preferred_order:
                 rows = provider_rows.get(provider, [])
