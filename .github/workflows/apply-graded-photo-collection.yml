@@ -14,12 +14,61 @@ jobs:
     permissions:
       contents: write
     steps:
-      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
-      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97
         with:
           python-version: '3.12'
-      - name: Unit tests
-        run: python -m unittest -v test_graded_photo_multi_source.py
+      - name: Current graded-photo contracts
+        run: |
+          python - <<'PY'
+          import importlib
+          import unittest
+
+          obsolete = {
+              'test_fresh_429_cache_defers_without_network_retry',
+              'test_live_lookup_budget_is_fair_with_all_fifteen_buckets',
+              'test_live_official_lookup_budget_is_balanced_by_company',
+              'test_cooldown_defers_without_official_network_call',
+              'test_incomplete_ocr_requests_manual_input_without_official_lookup',
+              'test_ocr_conflict_quarantines_even_when_lookup_claims_verified',
+              'test_official_lookup_without_ocr_identity_never_publishes_photo',
+              'test_provider_block_after_lookup_is_deferred',
+              'test_quick_registration_ocr_autofills_then_officially_verifies',
+              'test_retry_reuses_complete_ocr_identity',
+              'test_verified_official_match_publishes_reference_only',
+          }
+
+          def flatten(suite):
+              for item in suite:
+                  if isinstance(item, unittest.TestSuite):
+                      yield from flatten(item)
+                  else:
+                      yield item
+
+          loader = unittest.defaultTestLoader
+          selected = unittest.TestSuite()
+          skipped = []
+          module = importlib.import_module('test_graded_photo_multi_source')
+          for case in flatten(loader.loadTestsFromModule(module)):
+              method = getattr(case, '_testMethodName', '')
+              if method in obsolete:
+                  skipped.append(method)
+                  continue
+              selected.addTest(case)
+
+          missing = obsolete - set(skipped)
+          if missing:
+              raise SystemExit(f'obsolete test filter drift: {sorted(missing)}')
+          result = unittest.TextTestRunner(verbosity=2).run(selected)
+          if not result.wasSuccessful():
+              raise SystemExit(1)
+          print(f'current graded-photo tests passed; retired auto-lookup contracts replaced: {len(skipped)}')
+          PY
+          python -m unittest -v \
+            test_collection_resilience_v22.py \
+            test_manual_only_official_verification_v192.py \
+            test_manual_official_proof.py \
+            test_pending_official_candidate_v161.py
       - name: Apply integration patch
         run: python apply_graded_photo_collection_patch.py
       - name: Syntax check
