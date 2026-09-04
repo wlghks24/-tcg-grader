@@ -1,0 +1,101 @@
+name: Deep SELFREFINE Guard
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/deep-selfrefine-guard.yml'
+      - 'index.html'
+      - 'sw.js'
+      - '*.py'
+      - '*.js'
+      - '*.sh'
+      - '*.json'
+      - '*.webmanifest'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: deep-selfrefine-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  deep-audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 18
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          fetch-depth: 1
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97
+        with:
+          python-version: '3.12'
+      - name: Install deep-audit dependencies
+        run: |
+          python -m pip install --disable-pip-version-check -r requirements.txt
+          python -m pip install --disable-pip-version-check pyyaml
+      - name: Compile every tracked Python file
+        run: python repository_integrity_guard.py
+      - name: Parse every tracked JSON and workflow YAML
+        run: |
+          python - <<'PY'
+          import json, subprocess
+          from pathlib import Path
+          import yaml
+          files=subprocess.check_output(['git','ls-files'],text=True).splitlines()
+          json_count=yaml_count=0
+          for name in files:
+              path=Path(name)
+              if name.endswith(('.json','.webmanifest')):
+                  json.loads(path.read_text(encoding='utf-8-sig'))
+                  json_count += 1
+              elif name.endswith(('.yml','.yaml')):
+                  yaml.safe_load(path.read_text(encoding='utf-8-sig'))
+                  yaml_count += 1
+          print(f'JSON/webmanifest parsed: {json_count}; YAML parsed: {yaml_count}')
+          PY
+      - name: Syntax-check every tracked JavaScript
+        run: |
+          set -eu
+          count=0
+          while IFS= read -r file; do
+            node --check "$file"
+            count=$((count+1))
+          done < <(git ls-files '*.js')
+          echo "JavaScript syntax checked: $count"
+      - name: Syntax-check every tracked shell script
+        run: |
+          set -eu
+          count=0
+          while IFS= read -r file; do
+            bash -n "$file"
+            count=$((count+1))
+          done < <(git ls-files '*.sh')
+          echo "Shell syntax checked: $count"
+      - name: Exercise browser UI camera service worker and links
+        run: |
+          node verify_browser_runtime.js
+          node verify_camera_runtime.js
+          node verify_service_worker_runtime.js
+          node verify_vision_runtime.js
+          python verify_link_runtime.py
+          python verify_card_identity_recognition.py
+      - name: Exercise current release and real local HTTP server
+        env:
+          TCG_REQUIRE_NODE: '1'
+        run: |
+          python verify_all.py
+          python verify_v107_runtime_integration.py
+      - name: Exercise UI and tablet contracts
+        run: |
+          python test_ui_polish_v121.py
+          python test_ui_tablet_refine_v122.py
+          TCG_FINAL_SKIP_HEAD_MATCH=1 bash VERIFY_TABLET_FINAL.sh
+      - name: Security and SELFREFINE fail-closed checks
+        run: |
+          python security_self_audit.py --fail-on medium
+          python test_security_hardening.py
+          python test_link_audit_hardening_v184.py
+          python main_selfrefine_gate.py
