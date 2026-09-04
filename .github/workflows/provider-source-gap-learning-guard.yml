@@ -8,11 +8,12 @@ on:
       - 'social_event_discovery.py'
       - 'supplementary_discovery.py'
       - 'multi_route_event_discovery.py'
-      - 'multi_channel_agent.py'
-      - 'auto_pipeline_runner.py'
       - 'update_promo_events.py'
       - 'test_promo_event_keyword_coverage_v5.py'
+      - 'multi_channel_agent.py'
+      - 'auto_pipeline_runner.py'
       - 'test_extended_discovery_channels_v5.py'
+      - 'test_source_gap_taxonomy_v6.py'
       - '.github/workflows/provider-source-gap-learning-guard.yml'
   push:
     branches: [main]
@@ -22,11 +23,12 @@ on:
       - 'social_event_discovery.py'
       - 'supplementary_discovery.py'
       - 'multi_route_event_discovery.py'
-      - 'multi_channel_agent.py'
-      - 'auto_pipeline_runner.py'
       - 'update_promo_events.py'
       - 'test_promo_event_keyword_coverage_v5.py'
+      - 'multi_channel_agent.py'
+      - 'auto_pipeline_runner.py'
       - 'test_extended_discovery_channels_v5.py'
+      - 'test_source_gap_taxonomy_v6.py'
       - '.github/workflows/provider-source-gap-learning-guard.yml'
   workflow_dispatch:
 
@@ -46,17 +48,20 @@ jobs:
         run: |
           python -m py_compile \
             provider_health_learning.py \
+            update_promo_events.py \
             multi_channel_agent.py \
             multi_route_event_discovery.py \
             social_event_discovery.py \
             auto_pipeline_runner.py \
-            update_promo_events.py \
             test_provider_source_gap_learning_v5.py \
             test_promo_event_keyword_coverage_v5.py \
-            test_extended_discovery_channels_v5.py
+            test_extended_discovery_channels_v5.py \
+            test_source_gap_taxonomy_v6.py
       - name: Verify candidate and official coverage stay separated
         run: python -m unittest -v test_provider_source_gap_learning_v5.py
       - name: Verify challenge-style official event headlines remain discoverable
         run: python -m unittest -v test_promo_event_keyword_coverage_v5.py
       - name: Verify extended public discovery remains discovery-only
         run: python -m unittest -v test_extended_discovery_channels_v5.py
+      - name: Verify stock entry broadcast and Facebook gap taxonomy
+        run: python -m unittest -v test_source_gap_taxonomy_v6.py

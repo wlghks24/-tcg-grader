@@ -68,6 +68,8 @@ QUERY_FAMILIES = {
         "merch": "굿즈 공식숍 공식샵 점프샵 \"JUMP SHOP\" 한정판매 예약판매 특설매장 백화점",
         "anniversary": "기념 주년 기념전 전시 페어 축제 생일 anniversary",
         "stock": "재입고 입고 판매 자판기 재고 품절 구매처",
+        "entry": "응모 신청 접수 등록 추첨 당첨 참가신청 사전신청 엔트리",
+        "broadcast": "라이브 생방송 방송 스트리밍 시청 트위치 Twitch 드롭 드롭스 코드 교환 리딤",
     },
     "ja": {
         "release": "発売 新商品 新弾 ブースター スターター 予約 再販",
@@ -81,6 +83,8 @@ QUERY_FAMILIES = {
         "merch": "グッズ 公式ショップ ジャンプショップ 限定販売 予約販売 百貨店",
         "anniversary": "記念 周年 記念展 フェア 祭典 anniversary",
         "stock": "再入荷 入荷 在庫 売り切れ 販売 店舗",
+        "entry": "応募 申込 申し込み 受付 登録 抽選 当選 エントリー 事前応募",
+        "broadcast": "ライブ ライブ配信 生配信 配信 視聴 Twitch ドロップ コード シリアルコード",
     },
     "en": {
         "release": "release new set booster starter preorder reprint",
@@ -94,10 +98,12 @@ QUERY_FAMILIES = {
         "merch": "merch merchandise official shop limited store department store",
         "anniversary": "anniversary celebration commemorative exhibition fair festival",
         "stock": "restock in stock sold out retailer store vending",
+        "entry": "entry application apply registration register lottery drawing winner signup sign-up",
+        "broadcast": "livestream live stream broadcast streaming watch twitch drops reward code redeem redemption",
     },
 }
 
-COVERAGE_TOPICS = ("event", "tournament", "popup", "promo", "collab", "movie", "release", "reprint", "merch", "anniversary")
+COVERAGE_TOPICS = ("event", "tournament", "popup", "promo", "collab", "movie", "release", "reprint", "merch", "anniversary", "stock", "entry", "broadcast")
 
 OFFICIAL_ROUTES = {
     ("포켓몬 카드", "KR"): (
@@ -173,12 +179,12 @@ PRESS_DOMAINS = {
     "US": ("prnewswire.com", "businesswire.com", "globenewswire.com", "comicbook.com"),
 }
 PRESS_HOSTS = {host for hosts in PRESS_DOMAINS.values() for host in hosts}
-SOCIAL_DISCOVERY_HOSTS = ("x.com", "instagram.com", "youtube.com")
+SOCIAL_DISCOVERY_HOSTS = ("x.com", "instagram.com", "youtube.com", "tiktok.com", "twitch.tv", "facebook.com")
 
 KEYWORD_RE = re.compile(
-    r"행사|이벤트|대회|팝업|페스타|프로모|증정|배포|출시|발매|신탄|부스터|스타터|예약|재발매|재입고|입고|재고|콜라보|협업|영화|극장판|굿즈|공식숍|점프샵|기념|주년|"
-    r"イベント|大会|ポップアップ|プロモ|配布|発売|新弾|ブースター|スターター|予約|再販|再入荷|在庫|コラボ|映画|劇場版|グッズ|公式ショップ|記念|周年|"
-    r"event|tournament|pop[- ]?up|promo|giveaway|release|booster|starter|preorder|reprint|restock|in stock|collab|movie|film|merch|official shop|anniversary|commemorative|collector|collection|unboxing|deck|decklist|review|price|"
+    r"행사|이벤트|대회|팝업|페스타|프로모|증정|배포|출시|발매|신탄|부스터|스타터|예약|재발매|재입고|입고|재고|품절|구매처|콜라보|협업|영화|극장판|굿즈|공식숍|점프샵|기념|주년|응모|신청|접수|등록|추첨|당첨|엔트리|라이브|생방송|방송|스트리밍|시청|코드|리딤|"
+    r"イベント|大会|ポップアップ|プロモ|配布|発売|新弾|ブースター|スターター|予約|再販|再入荷|入荷|在庫|売り切れ|コラボ|映画|劇場版|グッズ|公式ショップ|記念|周年|応募|申込|受付|登録|抽選|当選|エントリー|ライブ配信|生配信|配信|視聴|ドロップ|コード|プレゼント|"
+    r"event|tournament|pop[- ]?up|promo|giveaway|release|booster|starter|preorder|reprint|restock|in stock|sold out|availability|retailer|entry|application|apply|registration|register|lottery|drawing|signup|livestream|live stream|broadcast|streaming|watch|twitch drops|reward code|redeem|redemption|collab|movie|film|merch|official shop|anniversary|commemorative|collector|collection|unboxing|deck|decklist|review|price|"
     r"개봉|언박싱|덱|덱리스트|수집|컬렉터|카드샵|후기|시세|開封|デッキ|コレクター|コレクション|レビュー|相場",
     re.I,
 )
@@ -210,14 +216,17 @@ def _topic(text: str) -> str:
     value = text or ""
     patterns = (
         ("movie", r"영화|극장판|개봉|관람특전|movie|film|cinema|screening|映画|劇場版|上映|入場者特典"),
+        ("broadcast", r"라이브|생방송|방송|스트리밍|시청|twitch\s*drops?|live[ -]?stream|broadcast|streaming|watch\s+live|redeem|redemption|ライブ配信|生配信|配信|視聴|Twitch|ドロップ|コード|シリアルコード"),
         ("anniversary", r"기념|주년|기념전|anniversary|commemorative|周年|記念"),
         ("merch", r"굿즈|공식숍|공식샵|점프샵|JUMP SHOP|merch|merchandise|official shop|グッズ|公式ショップ"),
         ("collab", r"콜라보|협업|제휴|브랜드데이|collab|collaboration|partnership|コラボ|タイアップ"),
-        ("reprint", r"재발매|재판|복각|reprint|re-release|rerun|再販|再版|復刻"),
+        ("entry", r"응모|신청|접수|등록|추첨|당첨|엔트리|사전신청|entry|application|apply|registration|register|lottery|drawing|sign[- ]?up|応募|申込|申し込み|受付|登録|抽選|当選|エントリー|事前応募"),
+        ("stock", r"재입고|입고|재고|품절|구매처|restock|in stock|sold out|availability|retailer|再入荷|入荷|在庫|売り切れ|販売店舗"),
+        ("reprint", r"재발매|재판|복각|추가생산|reprint|re-release|additional print|rerun|再販|再版|復刻|追加生産"),
         ("release", r"출시|발매|신탄|부스터|스타터|release|launch|new set|booster|starter|発売|新弾"),
         ("popup", r"팝업|팝업스토어|박람회|전시회|pop[- ]?up|expo|convention|exhibition|ポップアップ|展示会"),
         ("tournament", r"대회|리그|챔피언십|월드챔피언십|tournament|league|championship|regional|worlds|大会|リーグ|チャンピオンシップ"),
-        ("promo", r"프로모|증정|배포|특전|한정|promo|giveaway|distribution|exclusive|プロモ|配布|特典|限定"),
+        ("promo", r"프로모|증정|배포|특전|한정|캠페인|promo|giveaway|distribution|exclusive|campaign|プロモ|配布|特典|限定|キャンペーン|プレゼント"),
     )
     for topic, pattern in patterns:
         if re.search(pattern, value, re.I):

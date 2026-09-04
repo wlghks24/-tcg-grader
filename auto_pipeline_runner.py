@@ -45,6 +45,7 @@ SOCIAL_HOST_KIND = {
     "youtube.com": "youtube_public_search", "www.youtube.com": "youtube_public_search", "youtu.be": "youtube_public_search",
     "tiktok.com": "tiktok_public_search", "www.tiktok.com": "tiktok_public_search",
     "twitch.tv": "twitch_public_search", "www.twitch.tv": "twitch_public_search",
+    "facebook.com": "facebook_public_search", "www.facebook.com": "facebook_public_search", "m.facebook.com": "facebook_public_search",
 }
 DIRECT_PROVIDER_ORDER = ("official_youtube_feed", "official_sitemap", "official_direct")
 PROVIDER_ORDER = DIRECT_PROVIDER_ORDER + ("google_news", "bing_rss", "duckduckgo")
