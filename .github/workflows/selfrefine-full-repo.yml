@@ -25,7 +25,7 @@ jobs:
           python main_selfrefine_gate.py --self-test
           python main_crosscheck_export.py --self-test
           python selfrefine_crosscheck_gate.py --self-test
-          python -m unittest -v test_selfrefine_domain_isolation_v18.py test_main_selfrefine_state_isolation_v18.py test_verified_code_repair_rules_v19.py
+          python -m unittest -v test_selfrefine_domain_isolation_v18.py test_main_selfrefine_state_isolation_v18.py test_verified_code_repair_rules_v19.py test_selfrefine_error_quarantine_v20.py
           python verified_code_repair_rules.py --self-test
       - name: Run bounded Main SELFREFINE only
         run: python main_selfrefine_gate.py --cycles 5
@@ -60,4 +60,12 @@ jobs:
         with:
           name: main-selfrefine-error-ledger
           path: MAIN_SELFREFINE_ERROR_LEDGER.json
+          if-no-files-found: ignore
+
+      - name: Upload Main SELFREFINE error quarantine state
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        with:
+          name: main-selfrefine-error-quarantine
+          path: MAIN_SELFREFINE_ERROR_QUARANTINE_STATE.json
           if-no-files-found: ignore

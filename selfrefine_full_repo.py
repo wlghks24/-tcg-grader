@@ -123,6 +123,7 @@ def make_issue(stage: str, relative: str, root_cause: str, evidence: str, fix_ru
             provider_id=ident["provider_id"],
         ),
         "stage": stage,
+        "error_code": "SELFREFINE." + re.sub(r"[^A-Z0-9_]+", "_", str(stage).upper()).strip("_"),
         "path": relative,
         "collector_id": ident["collector_id"],
         "provider_id": ident["provider_id"],

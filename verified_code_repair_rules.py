@@ -41,11 +41,50 @@ CORE_WORKFLOWS = {
     ".github/workflows/instagram-tcg-selfrefine.yml",
     ".github/workflows/code-repair-learning-guard.yml",
     ".github/workflows/tcg-code-repair-learning-guard.yml",
+    ".github/workflows/grading-vision-selfrefine-guard.yml",
+    ".github/workflows/apply-detailed-collection-intelligence.yml",
+    ".github/workflows/ocr-selfrefine-guard.yml",
 }
 RESOURCE_GUARD_PATH = "test_manual_only_official_verification_v192.py"
+FEATURE_CONTRACT_PATH = "feature_contract.py"
+OCR_CONTRACT_PATH = "verify_v109_card_identity.py"
 
 ACTION_RULE_ID = "upgrade-core-actions-node24-v1"
 RESOURCE_RULE_ID = "close-literal-read-handles-v1"
+FEATURE_VISION_RULE_ID = "align-photo-feature-contract-1-4-8-v1"
+OCR_COUNT_RULE_ID = "dynamic-feature-contract-count-v1"
+ALL_RULE_IDS = (
+    ACTION_RULE_ID,
+    RESOURCE_RULE_ID,
+    FEATURE_VISION_RULE_ID,
+    OCR_COUNT_RULE_ID,
+)
+RULE_PATHS = {
+    ACTION_RULE_ID: frozenset(CORE_WORKFLOWS),
+    RESOURCE_RULE_ID: frozenset({RESOURCE_GUARD_PATH}),
+    FEATURE_VISION_RULE_ID: frozenset({FEATURE_CONTRACT_PATH}),
+    OCR_COUNT_RULE_ID: frozenset({OCR_CONTRACT_PATH}),
+}
+
+STALE_FEATURE_BLOCK = """        and all(token in page for token in ("sceneDistance", "Camera", "_tcgCapturedFile", "visibilitychange",
+                                             "analyzeWhitening", "confirmedSegments")),
+        "앞·뒤 파일입력·자동촬영·내부 보더·Hough 선형 결함·백화·카메라 수명주기")
+"""
+CURRENT_FEATURE_BLOCK = """        and all(token in page for token in ("sceneDistance", "Camera", "_tcgCapturedFile", "visibilitychange",
+                                             "confirmedSegments", "hierarchyDefectRisk", "eightZoneWorstRisk"))
+        and all(token in vision_engine for token in (
+            "analyzeWhitening",
+            "quadrantCornerWorstRisk",
+            "eightZoneWorst",
+            "hierarchyDefectRisk",
+        )),
+        "앞·뒤 파일입력·자동촬영·1→4→8 비전·독립 코너/엣지·백화·사선광·카메라 수명주기")
+"""
+STALE_OCR_COUNT = '    assert contract["ok"] and contract["implemented"] == contract["total"] == 25'
+CURRENT_OCR_COUNT = """    assert (
+        contract["ok"]
+        and contract["implemented"] == contract["total"] == len(contract["features"])
+    ), json.dumps(contract, ensure_ascii=False, sort_keys=True)"""
 
 _ACTION_RE = re.compile(
     r"(?P<action>actions/(?:checkout|setup-python|upload-artifact))@(?P<sha>[0-9a-f]{40})"
@@ -72,6 +111,22 @@ def detect_text_issues(relative: str, text: str) -> list[dict[str, str]]:
             "fix_rule": RESOURCE_RULE_ID,
         })
 
+    if relative == FEATURE_CONTRACT_PATH and STALE_FEATURE_BLOCK in text:
+        issues.append({
+            "stage": "FEATURE_CONTRACT_VISION_STALE",
+            "root_cause": "front/back feature contract still expects whitening implementation inside index.html",
+            "evidence": "1→4→8 vision implementation moved to grading_vision_engine.js",
+            "fix_rule": FEATURE_VISION_RULE_ID,
+        })
+
+    if relative == OCR_CONTRACT_PATH and STALE_OCR_COUNT in text:
+        issues.append({
+            "stage": "OCR_FEATURE_COUNT_STALE",
+            "root_cause": "OCR contract hard-codes historical feature count",
+            "evidence": "feature contract count must follow the declared features list",
+            "fix_rule": OCR_COUNT_RULE_ID,
+        })
+
     if relative in CORE_WORKFLOWS:
         stale = []
         for match in _ACTION_RE.finditer(text):
@@ -96,6 +151,10 @@ def rule_for_issue(issue: dict[str, Any]) -> str | None:
         return RESOURCE_RULE_ID
     if stage == "CI_ACTION_RUNTIME_DEPRECATED" and path in CORE_WORKFLOWS:
         return ACTION_RULE_ID
+    if stage == "FEATURE_CONTRACT_VISION_STALE" and path == FEATURE_CONTRACT_PATH:
+        return FEATURE_VISION_RULE_ID
+    if stage == "OCR_FEATURE_COUNT_STALE" and path == OCR_CONTRACT_PATH:
+        return OCR_COUNT_RULE_ID
     return None
 
 
@@ -124,7 +183,7 @@ def _load_state(path: Path) -> dict[str, Any]:
         return _default_state()
     state = _default_state()
     raw_rules = value.get("rules") if isinstance(value.get("rules"), dict) else {}
-    for rule_id in (ACTION_RULE_ID, RESOURCE_RULE_ID):
+    for rule_id in ALL_RULE_IDS:
         raw = raw_rules.get(rule_id) if isinstance(raw_rules.get(rule_id), dict) else {}
         state["rules"][rule_id] = {
             "attempts": max(0, min(1000, int(raw.get("attempts") or 0))),
@@ -174,11 +233,34 @@ def _transform_actions(relative: str, text: str) -> str:
     return _ACTION_RE.sub(repl, text)
 
 
+def _transform_feature_contract(relative: str, text: str) -> str:
+    if _normalized(relative) != FEATURE_CONTRACT_PATH or STALE_FEATURE_BLOCK not in text:
+        return text
+    updated = text
+    page_line = '    page = safe_read_text(base / "index.html")\n'
+    vision_line = '    vision_engine = safe_read_text(base / "grading_vision_engine.js")\n'
+    if vision_line not in updated:
+        if page_line not in updated:
+            return text
+        updated = updated.replace(page_line, page_line + vision_line, 1)
+    return updated.replace(STALE_FEATURE_BLOCK, CURRENT_FEATURE_BLOCK, 1)
+
+
+def _transform_ocr_count(relative: str, text: str) -> str:
+    if _normalized(relative) != OCR_CONTRACT_PATH:
+        return text
+    return text.replace(STALE_OCR_COUNT, CURRENT_OCR_COUNT, 1)
+
+
 def transform_for_rule(rule_id: str, relative: str, text: str) -> str:
     if rule_id == RESOURCE_RULE_ID:
         return _transform_resource(relative, text)
     if rule_id == ACTION_RULE_ID:
         return _transform_actions(relative, text)
+    if rule_id == FEATURE_VISION_RULE_ID:
+        return _transform_feature_contract(relative, text)
+    if rule_id == OCR_COUNT_RULE_ID:
+        return _transform_ocr_count(relative, text)
     return text
 
 
@@ -195,10 +277,27 @@ def apply_issues(
     seen: set[tuple[str, str]] = set()
     limit = max(0, min(MAX_REPAIRS_PER_RUN, int(max_repairs)))
 
-    for issue in issues:
+    ordered_issues = sorted(
+        (row for row in issues if isinstance(row, dict)),
+        key=lambda row: (
+            row.get("learned_solution_reuse") is not True,
+            -float(row.get("learned_solution_confidence") or 0.0),
+            str(row.get("path") or ""),
+            str(row.get("stage") or ""),
+        ),
+    )
+
+    for issue in ordered_issues:
         if len(applied) >= limit:
             break
         if issue.get("state") not in {None, "open"}:
+            continue
+        if issue.get("auto_repair_allowed") is False:
+            skipped.append({
+                "rule_id": str(issue.get("auto_repair_rule") or ""),
+                "path": _normalized(str(issue.get("path") or "")),
+                "reason": "error_signature_quarantined_or_unverified",
+            })
             continue
         rule_id = rule_for_issue(issue)
         relative = _normalized(str(issue.get("path") or ""))
@@ -217,10 +316,7 @@ def apply_issues(
             skipped.append({"rule_id": rule_id, "path": relative, "reason": "quarantined"})
             continue
 
-        if rule_id == ACTION_RULE_ID and relative not in CORE_WORKFLOWS:
-            skipped.append({"rule_id": rule_id, "path": relative, "reason": "path_not_allowlisted"})
-            continue
-        if rule_id == RESOURCE_RULE_ID and relative != RESOURCE_GUARD_PATH:
+        if relative not in RULE_PATHS.get(rule_id, frozenset()):
             skipped.append({"rule_id": rule_id, "path": relative, "reason": "path_not_allowlisted"})
             continue
 
@@ -243,6 +339,10 @@ def apply_issues(
             "rule_id": rule_id,
             "path": relative,
             "stage": str(issue.get("stage") or ""),
+            "error_signature": str(issue.get("error_signature") or "")[:80],
+            "error_code": str(issue.get("error_code") or "")[:160],
+            "error_family": str(issue.get("error_family") or "")[:80],
+            "learned_solution_reuse": issue.get("learned_solution_reuse") is True,
             "before_hash": _hash(before),
             "after_hash": _hash(after),
         })
@@ -276,7 +376,7 @@ def record_verification(
         rule_id = str(item.get("rule_id") or "")
         path = _normalized(str(item.get("path") or ""))
         stage = str(item.get("stage") or "")
-        if rule_id not in {ACTION_RULE_ID, RESOURCE_RULE_ID}:
+        if rule_id not in ALL_RULE_IDS:
             continue
         stats = state.setdefault("rules", {}).setdefault(rule_id, {
             "attempts": 0, "successes": 0, "failures": 0,

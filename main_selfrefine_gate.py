@@ -7,6 +7,7 @@ from pathlib import Path
 
 import security_self_audit
 import selfrefine_full_repo as core
+import selfrefine_error_quarantine as error_quarantine
 import verified_code_repair_rules as verified_repairs
 from shared_self_learning import SHARED_SELF_LEARNING_CONTRACT_VERSION
 from shared_self_learning.engine import enrich_error
@@ -16,6 +17,7 @@ POLICY = json.loads((ROOT / "selfrefine_domain_policy.json").read_text(encoding=
 EXCLUDES = tuple(POLICY["domains"]["main"]["exclude_prefixes"])
 LEDGER = ROOT / POLICY["domains"]["main"]["ledger"]
 REPAIR_STATE = ROOT / POLICY["domains"]["main"]["state_files"]["verified_repair"]
+ERROR_QUARANTINE_STATE = ROOT / POLICY["domains"]["main"]["state_files"]["error_quarantine"]
 
 
 def _is_main_path(relative: str) -> bool:
@@ -75,8 +77,12 @@ def run(cycles: int):
             row for row in result.get("errors", [])
             if isinstance(row, dict) and row.get("state") == "open"
         ]
-        repair = verified_repairs.apply_issues(
+        isolation = error_quarantine.observe_open_errors(
             open_errors,
+            state_path=ERROR_QUARANTINE_STATE,
+        )
+        repair = verified_repairs.apply_issues(
+            isolation.get("errors", []),
             root=ROOT,
             state_path=REPAIR_STATE,
         )
@@ -87,6 +93,11 @@ def run(cycles: int):
                 result.get("errors", []),
                 state_path=REPAIR_STATE,
             )
+            resolution_learning = error_quarantine.record_repair_outcomes(
+                repair.get("applied", []),
+                result.get("errors", []),
+                state_path=ERROR_QUARANTINE_STATE,
+            )
         else:
             verification = {
                 "verified_pass": 0,
@@ -94,16 +105,33 @@ def run(cycles: int):
                 "quarantined": 0,
                 "state_path": REPAIR_STATE.name,
             }
+            resolution_learning = {
+                "verified_resolution_learned": 0,
+                "verification_failed": 0,
+                "newly_quarantined": 0,
+                "state_path": ERROR_QUARANTINE_STATE.name,
+            }
         result["verified_self_heal"] = {
+            "isolation": isolation,
             "repair": repair,
             "verification": verification,
+            "resolution_learning": resolution_learning,
         }
+        result.setdefault("summary", {}).update({
+            "isolated_error_codes": isolation.get("summary", {}).get("isolated_count", 0),
+            "learned_solution_reuse": isolation.get("summary", {}).get("learned_solution_reuse", 0),
+            "quarantined_error_codes": isolation.get("summary", {}).get("quarantined_count", 0),
+            "verified_resolutions_learned": resolution_learning.get("verified_resolution_learned", 0),
+        })
         result.setdefault("safety", {}).update({
             "verified_code_defined_auto_repair": True,
             "learned_patch_text_used": False,
             "learned_text_executable": False,
             "git_write": False,
             "repair_quarantine_after_consecutive_failures": 2,
+            "error_code_isolation": True,
+            "verified_resolution_learning": True,
+            "unknown_error_auto_repair": False,
         })
         return result
     finally:
@@ -117,6 +145,7 @@ def self_test():
     assert not _is_main_path("instagram_tcg_content/selfrefine_gate.py")
     assert LEDGER.name == "MAIN_SELFREFINE_ERROR_LEDGER.json"
     assert REPAIR_STATE.name == "MAIN_SELFREFINE_VERIFIED_REPAIR_STATE.json"
+    assert ERROR_QUARANTINE_STATE.name == "MAIN_SELFREFINE_ERROR_QUARANTINE_STATE.json"
     assert POLICY["rules"]["shared_self_learning_code"] is True
     assert POLICY["rules"]["shared_self_learning_state"] is False
     assert POLICY["rules"]["cross_domain_learning_state_merge"] is False

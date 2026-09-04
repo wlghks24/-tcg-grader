@@ -1,5 +1,5 @@
 {
-  "version": 5,
+  "version": 6,
   "domains": {
     "main": {
       "root": ".",
@@ -13,7 +13,8 @@
         "learning": "MAIN_SELFREFINE_LEARNING_STATE.json",
         "retry": "MAIN_SELFREFINE_RETRY_STATE.json",
         "provider": "MAIN_SELFREFINE_PROVIDER_STATE.json",
-        "verified_repair": "MAIN_SELFREFINE_VERIFIED_REPAIR_STATE.json"
+        "verified_repair": "MAIN_SELFREFINE_VERIFIED_REPAIR_STATE.json",
+        "error_quarantine": "MAIN_SELFREFINE_ERROR_QUARANTINE_STATE.json"
       }
     },
     "instagram_content": {
@@ -25,7 +26,8 @@
         "learning": "INSTAGRAM_TCG_SELFREFINE_LEARNING_STATE.json",
         "retry": "INSTAGRAM_TCG_SELFREFINE_RETRY_STATE.json",
         "provider": "INSTAGRAM_TCG_SELFREFINE_PROVIDER_STATE.json",
-        "verified_repair": "INSTAGRAM_TCG_SELFREFINE_VERIFIED_REPAIR_STATE.json"
+        "verified_repair": "INSTAGRAM_TCG_SELFREFINE_VERIFIED_REPAIR_STATE.json",
+        "error_quarantine": "INSTAGRAM_TCG_SELFREFINE_ERROR_QUARANTINE_STATE.json"
       }
     },
     "shared_self_learning": {
@@ -79,6 +81,10 @@
     "crosscheck_fail_closed_on_execution_markers": true,
     "main_verified_code_defined_auto_repair": true,
     "instagram_verified_code_defined_auto_repair": false,
-    "learned_patch_text_executable": false
+    "learned_patch_text_executable": false,
+    "error_code_isolation": true,
+    "verified_resolution_learning": true,
+    "unknown_error_auto_repair": false,
+    "repair_rule_quarantine_after_failures": 2
   }
-}
+}\n

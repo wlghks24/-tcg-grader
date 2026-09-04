@@ -49,13 +49,15 @@ jobs:
             collector_self_healing.py \
             tcg_code_repair_learning.py \
             verified_code_repair_rules.py \
-            test_verified_code_repair_rules_v19.py
+            selfrefine_error_quarantine.py \
+            test_verified_code_repair_rules_v19.py \
+            test_selfrefine_error_quarantine_v20.py
 
       - name: Exercise TCG-wide repair learning self-test
         run: |
           python tcg_code_repair_learning.py --self-test
           python verified_code_repair_rules.py --self-test
-          python -m unittest -v test_verified_code_repair_rules_v19.py
+          python -m unittest -v test_verified_code_repair_rules_v19.py test_selfrefine_error_quarantine_v20.py
 
       - name: Prove collector structural failures feed code-repair learning
         run: |
