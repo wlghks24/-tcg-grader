@@ -1,0 +1,49 @@
+name: V108 Regression Diagnostic
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/v108-regression-diagnostic.yml'
+      - 'verify_v108_final.py'
+      - 'verify_v107_final.py'
+      - 'verify_library_slab_corpus.py'
+      - 'library_slab_candidates.json'
+      - 'library_verified_slab_references.json'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  diagnose:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97
+        with:
+          python-version: '3.12'
+      - name: Install current dependencies
+        run: python -m pip install --disable-pip-version-check -r requirements.txt
+      - name: Verify Library slab parser
+        run: python verify_library_slab_corpus.py
+      - name: Verify v108 policy data
+        run: |
+          python - <<'PY'
+          import verify_v108_final as v
+          row=v.policy_check()
+          print(row)
+          assert row['ok'], row
+          PY
+      - name: Verify v107 full regression with diagnostics
+        env:
+          TCG_REQUIRE_NODE: '1'
+        run: |
+          set +e
+          python verify_v107_final.py
+          rc=$?
+          if [ -f V107_CURRENT_VERIFICATION.json ]; then
+            cat V107_CURRENT_VERIFICATION.json
+          fi
+          exit "$rc"
