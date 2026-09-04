@@ -27,7 +27,7 @@ class CollectorRecoveryV161Tests(unittest.TestCase):
             return sample
 
         with mock.patch.object(releases, 'fetch', side_effect=fake_fetch):
-            rows = releases.collect_pokemon_jp()
+            rows, _fingerprint = releases._collect_pokemon_jp_html()
         self.assertEqual(calls, ['https://www.pokemon-card.com/products/'])
         self.assertEqual(rows[0]['release_date'], '2026-07-31')
         self.assertEqual(rows[0]['price'], '¥200/팩')

@@ -167,7 +167,7 @@ class ErrorRecoveryLearningV134Tests(unittest.TestCase):
         page=("拡張パック 『 테스트 팩 』  拡張パック  販売日 2026 年 9 月 18 日 "
               "商品情報 希望小売価格 180 円")
         with mock.patch.object(releases,"fetch",return_value=page):
-            rows=releases.collect_pokemon_jp()
+            rows,_fingerprint=releases._collect_pokemon_jp_html()
         self.assertEqual(len(rows),1)
         self.assertEqual(rows[0]["release_date"],"2026-09-18")
         self.assertTrue(releases.valid(rows[0]))

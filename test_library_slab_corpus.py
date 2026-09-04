@@ -24,20 +24,21 @@ class LibrarySlabCorpusTests(unittest.TestCase):
         self.assertEqual(slab.choose_paths(paths,5,42),slab.choose_paths(paths,5,42))
         self.assertEqual(len(slab.choose_paths(paths,5,42)),5)
 
-    def test_adaptive_ocr_stops_after_fields_are_resolved(self):
+    def test_hierarchical_ocr_completes_all_1_4_8_regions(self):
         with tempfile.TemporaryDirectory() as directory:
             image_path=Path(directory)/'slab.png'
             Image.new('RGB',(120,200),'white').save(image_path)
-            outputs=[
-                ('TAG Technical Authentication',''),
-                ('TAG Technical Authentication and Grading CERT 123456 GRADE 10',None),
-            ]
+            full='TAG Technical Authentication and Grading CERT 123456 GRADE 10'
+            outputs=[(full,None)]*13
             with mock.patch.object(slab,'_run_tesseract',side_effect=outputs) as run:
                 text,error,diagnostics=slab.ocr_label(image_path,'adaptive')
         self.assertIsNone(error)
         self.assertIn('123456',text)
-        self.assertEqual(run.call_count,2)
-        self.assertEqual(diagnostics['pass_count'],2)
+        self.assertEqual(run.call_count,13)
+        self.assertEqual(diagnostics['pass_count'],13)
+        self.assertEqual(diagnostics['stage_region_counts'],{'1':1,'2':4,'3':8})
+        self.assertEqual(diagnostics['stages_completed'],[1,2,3])
+        self.assertTrue(diagnostics['all_stages_completed'])
         self.assertTrue(diagnostics['company_resolved'])
         self.assertTrue(diagnostics['cert_resolved'])
         self.assertTrue(diagnostics['grade_resolved'])

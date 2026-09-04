@@ -14,7 +14,8 @@ class Tests(unittest.TestCase):
         self.assertTrue(s["company_brand_detected"])
     def test_brg_form_url(self):
         src=Path("pending_official_candidate_bridge_v161.js").read_text(encoding="utf-8")
-        self.assertIn("if(c==='BRG')return 'https://www.brgcard.com/certification'",src)
+        self.assertNotIn("brgcard.com/certification",src)
+        self.assertIn("officialOpenUrl(String(row.official_reference_url||''),cert,row.company)",src)
         self.assertIn("Application error / server-side exception / Digest",src)
         self.assertNotIn("const url=bgsDirect(",src)
 

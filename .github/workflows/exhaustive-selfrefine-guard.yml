@@ -99,11 +99,24 @@ jobs:
           if failures:
               raise SystemExit(f'duplicate active definitions: {failures}')
           PY
-      - name: Run all Python unit tests discovered from repository root
+      - name: Run every Python test module in an isolated interpreter
         env:
           TCG_REQUIRE_NODE: '1'
         run: |
-          python -m unittest discover -v -p 'test_*.py'
+          set +e
+          failed=0
+          total=0
+          while IFS= read -r file; do
+            total=$((total+1))
+            directory="$(dirname "$file")"
+            pattern="$(basename "$file")"
+            echo "===== isolated test module: $file ====="
+            python -m unittest discover -v -s "$directory" -p "$pattern"
+            rc=$?
+            if [ "$rc" -ne 0 ]; then failed=$((failed+1)); fi
+          done < <(find . -type f -name 'test_*.py' -not -path './.git/*' | sort)
+          echo "isolated test modules: $total; failed modules: $failed"
+          exit "$failed"
       - name: Re-run current release, runtime, tablet and security gates
         env:
           TCG_REQUIRE_NODE: '1'
