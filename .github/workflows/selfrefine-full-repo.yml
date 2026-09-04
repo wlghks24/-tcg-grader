@@ -1,0 +1,37 @@
+name: SELFREFINE Full Repository
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  selfrefine:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
+        with:
+          python-version: '3.11'
+      - name: Verify SELFREFINE audit contracts
+        run: python selfrefine_full_repo.py --self-test
+      - name: Run bounded tracked-repository SELFREFINE
+        run: python selfrefine_full_repo.py --cycles 5
+      - name: Confirm fail-closed repository integrity
+        run: python repository_integrity_guard.py
+      - name: Confirm no high or critical security finding
+        run: python security_self_audit.py --no-memory --fail-on high
+      - name: Confirm security hardening is idempotent
+        run: python security_hardening_apply.py --check
+      - name: Upload non-executable SELFREFINE ledger
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: selfrefine-error-ledger
+          path: SELFREFINE_ERROR_LEDGER.json
+          if-no-files-found: ignore
