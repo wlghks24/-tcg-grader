@@ -1,0 +1,26 @@
+{
+  "version": 1,
+  "domains": {
+    "main": {
+      "root": ".",
+      "exclude_prefixes": [
+        "instagram_tcg_content/"
+      ],
+      "ledger": "MAIN_SELFREFINE_ERROR_LEDGER.json"
+    },
+    "instagram_content": {
+      "root": "instagram_tcg_content/",
+      "ledger": "INSTAGRAM_TCG_SELFREFINE_ERROR_LEDGER.json"
+    }
+  },
+  "rules": {
+    "shared_error_ledger": false,
+    "shared_retry_history": false,
+    "shared_learning_state": false,
+    "shared_collector_registry": false,
+    "shared_render_state": false,
+    "main_may_import_instagram_content": false,
+    "instagram_content_may_import_main_runtime": false,
+    "cross_domain_result_exchange": "explicit_json_contract_only"
+  }
+}
