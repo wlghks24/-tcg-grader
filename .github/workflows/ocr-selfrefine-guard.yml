@@ -106,6 +106,7 @@ jobs:
       - name: Run OCR accuracy and current verification regressions
         run: |
           python -m unittest -v \
+            test_ocr_multistage_v16.py \
             test_ocr_selfrefine_v15.py \
             test_ocr_accuracy_boost_v147.py \
             test_ocr_front_back_fallback_v148.py \
