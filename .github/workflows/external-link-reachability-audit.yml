@@ -1,0 +1,61 @@
+name: External Link Reachability Audit
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'validate_external_links.py'
+      - 'releases.json'
+      - 'market_prices.json'
+      - 'market_watch.json'
+      - 'promo_events.json'
+      - 'supplementary_candidates.json'
+      - 'purchase_sources.json'
+      - 'purchase_signals.json'
+      - '.github/workflows/external-link-reachability-audit.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: external-link-reachability-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97
+        with:
+          python-version: '3.12'
+      - name: Run bounded live HTTPS link audit
+        env:
+          TCG_HTTP_TIMEOUT: '8'
+          TCG_LINK_AUDIT_TIMEOUT: '360'
+          TCG_LINK_WORKERS: '12'
+        run: python validate_external_links.py
+      - name: Enforce confirmed-link safety only
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          report=json.loads(Path('link_health_report.json').read_text(encoding='utf-8'))
+          summary={key:report.get(key) for key in (
+              'updated_at','checked','ok','restricted','broken','repaired',
+              'unresolved_broken','transient','blocked'
+          )}
+          print(json.dumps(summary,ensure_ascii=False))
+          if int(report.get('unresolved_broken') or 0) > 0:
+              raise SystemExit('confirmed unresolved 404/410 links remain')
+          if int(report.get('blocked') or 0) > 0:
+              raise SystemExit('DNS/security-blocked external links remain')
+          PY
+      - name: Upload live link report
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        with:
+          name: external-link-reachability-report
+          path: link_health_report.json
+          if-no-files-found: error
