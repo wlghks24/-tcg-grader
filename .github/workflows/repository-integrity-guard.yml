@@ -41,6 +41,6 @@ jobs:
       - name: Verify security hardening is already applied
         run: python security_hardening_apply.py --check
       - name: Run cross-cutting SELFREFINE contracts
-        run: python -m unittest -v test_security_self_audit.py test_security_hardening.py test_runtime_bundle_guard_v143.py test_verified_gap_priority_v11.py test_gap_result_event_supersession_v12.py test_repository_selfrefine_v13.py
+        run: python -m unittest -v test_security_self_audit.py test_security_hardening.py test_runtime_bundle_guard_v143.py test_verified_gap_priority_v11.py test_gap_result_event_supersession_v12.py test_repository_selfrefine_v13.py test_verified_multilabel_coverage_v14.py
       - name: Run runtime delivery contracts
         run: python test_runtime_delivery_guards.py
