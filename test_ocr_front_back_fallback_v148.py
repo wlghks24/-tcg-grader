@@ -33,7 +33,42 @@ class OcrFrontBackFallbackV148Tests(unittest.TestCase):
         self.assertEqual(evidence['grade'], 10.0)
         self.assertTrue(diagnostics['back_ocr_used'])
         self.assertEqual(diagnostics['back_grade_hint'], 7.0)
+        self.assertEqual(diagnostics['back_ocr_profiles'], ['fast'])
         self.assertIn('BACK:', text)
+
+    def test_back_escalates_to_accuracy_only_when_fast_still_misses_needed_cert(self):
+        row = {
+            'image_path': 'front.jpg',
+            'back_image_path': 'back.jpg',
+            'company': 'PSA',
+        }
+        front_result = (
+            'PSA GEM MT 10', None, {},
+            {'company': 'PSA', 'grade': 10.0, 'certification_id': ''},
+            False,
+        )
+        with mock.patch.object(fallback, '_ORIGINAL_OCR_FOR_ROW', return_value=front_result), \
+             mock.patch.object(
+                 fallback.boost, 'ocr_label',
+                 side_effect=[
+                     ('BACK PSA', None, {'engine': 'fast', 'pass_count': 1}),
+                     ('BACK PSA CERT 12345678', None, {'engine': 'accuracy', 'pass_count': 2}),
+                 ],
+             ) as back_ocr, \
+             mock.patch.object(
+                 fallback.boost, 'fields_from_text',
+                 side_effect=[
+                     ('PSA', None, None),
+                     ('PSA', '12345678', None),
+                 ],
+             ):
+            _, _, diagnostics, evidence, _ = fallback._ocr_for_row_front_back(row)
+        self.assertEqual(back_ocr.call_count, 2)
+        self.assertEqual(back_ocr.call_args_list[0].kwargs['profile'], 'fast')
+        self.assertEqual(back_ocr.call_args_list[1].kwargs['profile'], 'accuracy')
+        self.assertEqual(evidence['certification_id'], '12345678')
+        self.assertEqual(diagnostics['back_ocr_profiles'], ['fast', 'accuracy'])
+        self.assertEqual(diagnostics['back_ocr_pass_count'], 3)
 
     def test_complete_front_does_not_spend_back_ocr(self):
         row = {'back_image_path': 'back.jpg'}
