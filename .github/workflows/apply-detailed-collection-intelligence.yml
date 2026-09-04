@@ -2,6 +2,8 @@ name: Verify detailed collection intelligence
 on:
   push:
     paths:
+      - provider_health_learning.py
+      - test_collection_resilience_v22.py
       - detailed_collection_intelligence.py
       - graded_photo_multi_source.py
       - graded_photo_evidence.py
@@ -21,6 +23,8 @@ on:
       - .github/workflows/apply-detailed-collection-intelligence.yml
   pull_request:
     paths:
+      - provider_health_learning.py
+      - test_collection_resilience_v22.py
       - detailed_collection_intelligence.py
       - graded_photo_multi_source.py
       - graded_photo_evidence.py
@@ -53,7 +57,7 @@ jobs:
       - name: Validate integrated collector
         run: |
           python apply_detailed_collection_intelligence.py
-          python -m py_compile safe_runtime.py graded_photo_evidence.py graded_photo_multi_source.py manual_graded_photo_registration.py detailed_collection_intelligence.py tcg_updater.py
+          python -m py_compile safe_runtime.py provider_health_learning.py graded_photo_evidence.py graded_photo_multi_source.py manual_graded_photo_registration.py detailed_collection_intelligence.py test_collection_resilience_v22.py tcg_updater.py
           python - <<'PY'
           import importlib
           import unittest
@@ -107,6 +111,7 @@ jobs:
               raise SystemExit(1)
           print(f'current collection tests passed; retired auto-lookup contracts replaced: {len(skipped_obsolete)}')
           PY
+          python -m unittest -v test_collection_resilience_v22.py
           python -m unittest -v \
             test_manual_only_official_verification_v192.py \
             test_manual_official_proof.py \

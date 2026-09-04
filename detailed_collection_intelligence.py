@@ -23,6 +23,8 @@ MAX_QUERY_HISTORY=240
 MAX_VERIFIED_TERMS=60
 MAX_FEEDBACK_EVENTS=2000
 RECENT_HALF_LIFE_SECONDS=14*86400
+ROUTE_CIRCUIT_FAILURE_THRESHOLD=3
+ROUTE_CIRCUIT_MAX_SECONDS=6*3600
 SOURCE_ALIASES={'ebay_public':'ebay','ebay_api':'ebay'}
 GRADERS=('PSA','BGS','CGC','TAG','BRG')
 
@@ -230,6 +232,60 @@ def _apply_query_observation(source:dict,observation:dict,now:int):
  success=(accepted+0.35*images)/max(1,raw);error_penalty=min(0.5,errors*0.08)
  old=_number(source.get('score'),0.5);source['score']=round(max(0.05,min(0.99,old*0.82+(success-error_penalty)*0.18)),4)
 
+
+def _route_cooldown_seconds(consecutive_failures:int)->int:
+ failures=_bounded_count(consecutive_failures,1000)
+ if failures<ROUTE_CIRCUIT_FAILURE_THRESHOLD:return 0
+ exponent=min(6,failures-ROUTE_CIRCUIT_FAILURE_THRESHOLD)
+ return min(ROUTE_CIRCUIT_MAX_SECONDS,300*(2**exponent))
+
+def _route_health_score(route:dict,now:int)->float:
+ route=_dict(route)
+ runs=_bounded_count(route.get('runs'))
+ if runs<=0:return 0.5
+ recent=dict(_dict(route.get('recent')))
+ last=max(0,int(_number(recent.get('updated_at') or route.get('last_at'))))
+ factor=0.5**(max(0,now-last)/RECENT_HALF_LIFE_SECONDS) if last else 1.0
+ def metric(name:str)->float:
+  recent_value=max(0.0,_number(recent.get(name)))*factor
+  return recent_value if recent_value>0 else max(0.0,_number(route.get(name)))
+ raw=metric('raw');accepted=metric('accepted');errors=metric('errors')
+ verified=metric('verified');ready=metric('measurement_ready')
+ acceptance=min(1.0,accepted/max(1.0,raw))
+ error_rate=min(1.0,errors/max(1.0,runs))
+ verified_rate=min(1.0,verified/max(1.0,accepted))
+ ready_rate=min(1.0,ready/max(1.0,accepted))
+ failure_penalty=min(0.55,_bounded_count(route.get('consecutive_failures'),1000)*0.09)
+ return round(max(0.05,min(0.99,0.42+0.30*acceptance+0.15*verified_rate+0.08*ready_rate-0.22*error_rate-failure_penalty)),4)
+
+def route_plan(source_id:str,game:str,*,now:int|None=None,learning_state:dict|None=None)->dict:
+ """Return one source×game collection route decision.
+
+ Repeated failures open only this route, not the whole collector. After the
+ bounded cooldown expires one recovery probe is allowed. Verified evidence and
+ source trust are never changed by this operational circuit breaker.
+ """
+ source_id=_source_id(source_id);game=game if game in GAMES else 'unknown'
+ current=max(0,int(time.time() if now is None else now))
+ d=learning_state if isinstance(learning_state,dict) else _load()
+ routes=_dict(d.get('graded_photo_routes')) if isinstance(d,dict) else {}
+ route=_dict(routes.get(f'{source_id}|{game}'))
+ consecutive=_bounded_count(route.get('consecutive_failures'),1000)
+ open_until=max(0,int(_number(route.get('circuit_open_until'))))
+ remaining=max(0,open_until-current)
+ return {
+  'source_id':source_id,'game':game,
+  'allowed':remaining==0,
+  'circuit_open':remaining>0,
+  'cooldown_remaining_seconds':remaining,
+  'consecutive_failures':consecutive,
+  'recovery_probe':bool(remaining==0 and consecutive>=ROUTE_CIRCUIT_FAILURE_THRESHOLD and _bounded_count(route.get('runs'))>0),
+  'health_score':_route_health_score(route,current),
+  'reason':'route_circuit_open' if remaining>0 else ('recovery_probe' if consecutive>=ROUTE_CIRCUIT_FAILURE_THRESHOLD else 'normal'),
+  'access_control_bypass':False,
+  'trust_promotion':False,
+ }
+
 def record_collection_cycle(source_id:str,game:str,observations:list[dict],*,raw:int=0,accepted:int=0,images:int=0,errors:int=0,elapsed:float=0.0):
  source_id=_source_id(source_id);game=game if game in GAMES else 'unknown';now=int(time.time())
  with LEARNING_LOCK,exclusive_file_lock(LEARNING):
@@ -265,6 +321,14 @@ def record_collection_cycle(source_id:str,game:str,observations:list[dict],*,raw
   route['errors']=_add_count(route.get('errors'),errors);route['elapsed_total']=round(min(86_400_000.0,max(0.0,_number(route.get('elapsed_total')))+max(0.0,min(3600.0,_number(elapsed)))),3)
   failed=_bounded_count(accepted)==0 and (_bounded_count(errors)>0 or _bounded_count(raw)==0)
   route['consecutive_failures']=_add_count(route.get('consecutive_failures'),1,1000) if failed else 0
+  if failed:
+   cooldown=_route_cooldown_seconds(route['consecutive_failures'])
+   if cooldown:
+    route['circuit_open_until']=max(int(_number(route.get('circuit_open_until'))),now+cooldown)
+    route['circuit_reason']='consecutive_route_failures'
+    route['circuit_open_count']=_add_count(route.get('circuit_open_count'),1,100000)
+  else:
+   route['circuit_open_until']=0;route['circuit_reason']=None;route['last_recovered_at']=now
   route['last_at']=now;route['last_status']='recovery_needed' if failed else 'productive'
   _recent_add(route,now,runs=1,raw=raw,accepted=accepted,images=images,errors=errors,elapsed_total=elapsed)
   _save_unlocked(d)
@@ -418,6 +482,7 @@ def learning_snapshot()->dict:
          'grader_coverage':{company:{'runs':sum(_bounded_count(row.get('runs')) for row in grader_routes.values() if isinstance(row,dict) and row.get('company')==company),'images':sum(_bounded_count(row.get('images')) for row in grader_routes.values() if isinstance(row,dict) and row.get('company')==company),'verified':sum(_bounded_count(row.get('verified')) for row in grader_routes.values() if isinstance(row,dict) and row.get('company')==company),'measurement_ready':sum(_bounded_count(row.get('measurement_ready')) for row in grader_routes.values() if isinstance(row,dict) and row.get('company')==company)} for company in GRADERS},
          'productive_routes':sum(_bounded_count(r.get('accepted'))>0 for r in routes.values() if isinstance(r,dict)),
          'recovery_routes':sum(_bounded_count(r.get('consecutive_failures'))>0 for r in routes.values() if isinstance(r,dict)),
+         'open_route_circuits':sum(route_plan(str(r.get('source_id') or ''),str(r.get('game') or ''),learning_state=d).get('circuit_open') is True for r in routes.values() if isinstance(r,dict)),
          'official_feedback':_bounded_count(totals.get('official_verified')),
          'measurement_ready_feedback':_bounded_count(totals.get('measurement_ready')),
          'duplicate_feedback_ignored':_bounded_count(totals.get('duplicates_ignored')),
@@ -427,15 +492,20 @@ def learning_snapshot()->dict:
                             'buckets':len(manual_gaps)},
          'undercovered_recovery_targets':{game:grader_collection_targets('ebay',game,count=1,cycle=route_run_count('ebay',game)) for game in GAMES},
          'verified_identifiers':{game:[term for term,_ in sorted(_dict(terms.get(game)).items(),key=lambda pair:(-_number(pair[1]),pair[0]))[:5]] for game in GAMES},
-         'policy':{'verified_feedback_only':True,'measurement_quality_feedback':True,'undercovered_grader_recovery':True,'manual_fallback_guides_coverage_only':True,'query_learning_cannot_change_trust':True,'exploration_retained':True,'recency_decay_enabled':True,'idempotent_feedback':True,'cross_process_lock':True,'state_backup_enabled':True}}
+         'policy':{'verified_feedback_only':True,'measurement_quality_feedback':True,'undercovered_grader_recovery':True,'manual_fallback_guides_coverage_only':True,'query_learning_cannot_change_trust':True,'exploration_retained':True,'recency_decay_enabled':True,'idempotent_feedback':True,'cross_process_lock':True,'state_backup_enabled':True,'route_circuit_breaker':True,'route_health_source_priority':True,'route_circuit_access_bypass':False}}
 
 def source_priority(source_id:str,learning_state:dict|None=None)->float:
  source_id=_source_id(source_id)
  s=source_by_id(source_id);base=float(s['weight']) if s else 0.4
  d=learning_state if isinstance(learning_state,dict) else _load();learned=_dict(_dict(d.get('source_query_stats')).get(source_id)) if isinstance(d,dict) else {}
- last=max(0,int(_number(learned.get('last_at'))));freshness=1.0 if not last else 0.5**(max(0,int(time.time())-last)/(30*86400))
+ current=max(0,int(time.time()))
+ last=max(0,int(_number(learned.get('last_at'))));freshness=1.0 if not last else 0.5**(max(0,current-last)/(30*86400))
  learned_score=0.5+(_number(learned.get('score'),0.5)-0.5)*freshness
- return round(base*0.65+max(0.05,min(0.99,learned_score))*0.35,4)
+ plans=[route_plan(source_id,game,now=current,learning_state=d) for game in GAMES]
+ route_health=sum(_number(plan.get('health_score'),0.5) for plan in plans)/max(1,len(plans))
+ open_circuits=sum(plan.get('circuit_open') is True for plan in plans)
+ score=base*0.50+max(0.05,min(0.99,learned_score))*0.30+route_health*0.20-open_circuits*0.06
+ return round(max(0.05,min(0.99,score)),4)
 
 def source_priorities(source_ids:Iterable[str])->dict[str,float]:
  """Score many sources from one immutable learning snapshot."""
