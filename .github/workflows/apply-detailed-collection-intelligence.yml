@@ -62,13 +62,9 @@ jobs:
           import importlib
           import unittest
 
-          # These cases asserted the retired automatic official-lookup API.
-          # Keep every other collection/manual-registration test, then replace
-          # those obsolete contracts with the current manual-only proof suite.
+          # These manual-registration cases asserted the retired automatic
+          # certification-site lookup path. Current policy is manual proof only.
           obsolete = {
-              'test_fresh_429_cache_defers_without_network_retry',
-              'test_live_lookup_budget_is_fair_with_all_fifteen_buckets',
-              'test_live_official_lookup_budget_is_balanced_by_company',
               'test_cooldown_defers_without_official_network_call',
               'test_incomplete_ocr_requests_manual_input_without_official_lookup',
               'test_ocr_conflict_quarantines_even_when_lookup_claims_verified',
