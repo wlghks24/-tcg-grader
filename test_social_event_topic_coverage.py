@@ -23,10 +23,17 @@ class SocialEventTopicCoverageTests(unittest.TestCase):
                 "source": f"https://example.com/common/{index}",
                 "source_kind": "test", "confidence": 0.99,
             })
-        with patch.object(social, "MAX_ITEMS", 10):
+        with patch.object(social, "MAX_ITEMS", len(routes.COVERAGE_TOPICS)):
             merged = social.merge_candidates(rows)
         topics = {social._coverage_topic(row) for row in merged}
         self.assertTrue(set(routes.COVERAGE_TOPICS).issubset(topics))
+
+        with patch.object(social, "MAX_ITEMS", 10):
+            capped = social.merge_candidates(rows)
+        capped_topics = {social._coverage_topic(row) for row in capped}
+        self.assertEqual(len(capped), 10)
+        self.assertEqual(len(capped_topics), 10)
+        self.assertTrue(capped_topics.issubset(set(routes.COVERAGE_TOPICS)))
 
     def test_brand_authority_is_not_shared_across_games(self):
         url = "https://www.naruto-cardgame.com/en/news/example.php"

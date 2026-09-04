@@ -347,23 +347,21 @@ def _game_query_terms(game: str, region: str) -> str:
     name_expr = " OR ".join(f'"{name}"' if " " in name else name for name in names[:3])
     priority_terms = {
         "ko": [
-            "행사", "이벤트", "콜라보", "프로모", "영화", "극장판", "발매", "출시",
-            "재발매", "재입고", "품절", "응모", "추첨", "대회", "마감", "기한",
-            "룰", "금지", "제한", "에라타", "대회결과", "우승덱", "서비스장애",
-            "복구완료", "가격변경", "제품불량", "리콜", "위조품",
+            "행사", "이벤트", "챌린지", "콜라보", "프로모", "영화", "극장판", "발매",
+            "출시", "재발매", "재입고", "품절", "응모", "추첨", "마감", "취소",
+            "규칙", "체크인", "대회결과", "가격개정", "서비스장애", "제품불량",
+            "리콜", "위조품",
         ],
         "ja": [
-            "イベント", "コラボ", "キャンペーン", "プロモ", "映画", "劇場版", "発売",
-            "再販", "再入荷", "売り切れ", "応募", "抽選", "配信", "大会", "締切", "期限",
-            "ルール", "禁止", "制限", "エラッタ", "大会結果", "優勝デッキ",
-            "障害", "復旧", "価格変更", "製造不良", "リコール", "偽造品",
+            "イベント", "チャレンジ", "コラボ", "キャンペーン", "プロモ", "映画",
+            "劇場版", "発売", "再販", "再入荷", "売り切れ", "応募", "配信", "締切",
+            "変更", "メンテナンス", "大会結果", "偽造品", "製造不良", "リコール",
         ],
         "en": [
-            "event", "collab", "collaboration", "promo", "movie", "film", "release",
-            "reprint", "restock", "sold-out", "entry", "registration", "lottery", "twitch", "tournament",
-            "deadline", "rules", "banned", "restricted", "errata", "tournament results",
-            "winning deck", "service outage", "resolved", "price change",
-            "manufacturing error", "product recall", "counterfeit",
+            "event", "challenge", "collab", "promo", "movie", "release", "reprint",
+            "restock", "sold-out", "registration", "twitch", "deadline", "cancel",
+            "TCG+", "legality", "RK9", "purchase limit", "manufacturing error",
+            "counterfeit", "service outage", "product recall",
         ],
     }[lang]
     suffix = f" lang:{lang} -is:retweet"
