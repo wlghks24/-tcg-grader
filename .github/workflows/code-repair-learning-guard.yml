@@ -3,6 +3,9 @@ name: Code Repair Learning Guard
 on:
   pull_request:
     paths:
+      - 'selfrefine_domain_policy.json'
+      - 'test_selfrefine_error_quarantine_v20.py'
+      - 'selfrefine_error_quarantine.py'
       - 'tcg_code_repair_learning.py'
       - 'collector_self_healing.py'
       - 'auto_repair_engine.py'
@@ -16,6 +19,9 @@ on:
   push:
     branches: [main]
     paths:
+      - 'selfrefine_domain_policy.json'
+      - 'test_selfrefine_error_quarantine_v20.py'
+      - 'selfrefine_error_quarantine.py'
       - 'tcg_code_repair_learning.py'
       - 'collector_self_healing.py'
       - 'auto_repair_engine.py'
