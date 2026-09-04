@@ -82,15 +82,24 @@ jobs:
           TCG_REQUIRE_NODE: '1'
         run: |
           set +e
-          failed=0; total=0
+          failed_count=0
+          total=0
+          failed_files=""
           for file in test_*.py; do
             [ -f "$file" ] || continue
-            total=$((total+1)); echo "===== isolated root test: $file ====="
-            python -m unittest discover -v -s . -p "$file"; rc=$?
-            if [ "$rc" -ne 0 ]; then failed=$((failed+1)); fi
+            total=$((total+1))
+            echo "===== isolated root test: $file ====="
+            python -m unittest discover -v -s . -p "$file"
+            rc=$?
+            echo "SELFREFINE_MODULE_RC file=$file rc=$rc"
+            if [ "$rc" -ne 0 ]; then
+              failed_count=$((failed_count+1))
+              failed_files="$failed_files $file"
+            fi
           done
-          echo "isolated root test modules: $total; failed modules: $failed"
-          exit "$failed"
+          echo "isolated root test modules: $total; failed modules: $failed_count"
+          echo "failed root test files:$failed_files"
+          if [ "$failed_count" -ne 0 ]; then exit 1; fi
       - name: Run nested domain tests in their intended import contexts
         run: |
           python -m unittest discover -v -s instagram_tcg_content -p 'test_*.py'
