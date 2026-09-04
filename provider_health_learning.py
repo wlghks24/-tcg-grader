@@ -49,6 +49,15 @@ GAME_ALIASES = {
     "나루토": "나루토 카드", "naruto": "나루토 카드",
 }
 
+# Verified evidence may close multiple independently matched factual gaps.
+# Broad umbrella categories remain primary-only to prevent one generic event page
+# from falsely resolving unrelated coverage cells.
+VERIFIED_MULTI_LABEL_TOPICS = frozenset({
+    "authenticity_notice", "product_issue", "official_price", "service_status",
+    "results", "purchase_policy", "status_update", "deadline", "access", "rules",
+    "broadcast",
+})
+
 _TOPIC_RULES = (
     ("authenticity_notice", re.compile(r"위조\s*품|위조품|가품|모조품|복제품|레플리카|비정규\s*카드|짝퉁|오리파|서치\s*(?:팩|박스)|사기\s*주의|counterfeit|fake\s+(?:card|cards|booster|pack|packs|product|products)|replica|knockoff|unauthorized\s+(?:copy|reproduction)|searched?\s+(?:pack|packs|box|boxes)|repacked|scam\s+warning|偽造品|模倣品|偽物|レプリカ|非正規カード|オリパ|サーチ済み", re.I)),
     ("product_issue", re.compile(r"봉입\s*(?:내용\s*)?오류|내용물\s*(?:누락|오류)|카드\s*(?:인쇄|가공|재단|일러스트)\s*(?:불량|오류)|제품\s*(?:불량|오류)|제조\s*불량|교환\s*대응|교환\s*안내|리콜|상품\s*회수|manufacturing\s+(?:error|defect)|printing\s+(?:error|defect)|packaging\s+(?:error|defect)|incorrect\s+contents?|missing\s+contents?|defective\s+product|damaged\s+(?:card|cards|part|parts).{0,30}replacement|product\s+replacement|exchange\s+program|product\s+recall|封入内容.{0,12}誤り|表面加工.{0,12}誤り|イラスト.{0,12}誤り|製造.{0,12}不良|商品.{0,12}(?:不良|不具合)|交換対応|交換案内|回収|リコール", re.I)),
@@ -81,7 +90,7 @@ def _now() -> str:
 
 def _fresh() -> dict:
     return {
-        "version": 5,
+        "version": 6,
         "providers": {},
         "coverage_cells": {},
         "source_kinds": {},
@@ -150,19 +159,24 @@ def _read_payload(path: Path) -> dict:
         return {}
 
 
-def _topic(row: dict) -> str:
-    explicit = str(row.get("search_topic") or row.get("topic") or "").strip().lower()
-    if explicit in TOPICS:
-        return explicit
-    if row.get("event_scope") == "licensed_ip_popup_not_tcg_tournament":
-        return "popup"
-    text = " ".join(
+def _topic_text(row: dict) -> str:
+    return " ".join(
         str(row.get(key) or "")
         for key in (
             "category", "title", "excerpt", "name_ko", "name_native", "reward",
             "condition", "status", "source_label", "event_scope",
         )
     )
+
+
+def _topic(row: dict) -> str:
+    """Return the backward-compatible single primary topic."""
+    explicit = str(row.get("search_topic") or row.get("topic") or "").strip().lower()
+    if explicit in TOPICS:
+        return explicit
+    if row.get("event_scope") == "licensed_ip_popup_not_tcg_tournament":
+        return "popup"
+    text = _topic_text(row)
     for topic, pattern in _TOPIC_RULES:
         if pattern.search(text):
             return topic
@@ -174,6 +188,21 @@ def _topic(row: dict) -> str:
     if category == "promo":
         return "promo"
     return "event"
+
+
+def _topics(row: dict, *, verified: bool = False) -> tuple[str, ...]:
+    """Return primary topic plus bounded concrete secondary facts for verified rows."""
+    primary = _topic(row)
+    if not verified:
+        return (primary,)
+    text = _topic_text(row)
+    topics = [primary]
+    for topic, pattern in _TOPIC_RULES:
+        if topic == primary or topic not in VERIFIED_MULTI_LABEL_TOPICS:
+            continue
+        if pattern.search(text):
+            topics.append(topic)
+    return tuple(dict.fromkeys(topic for topic in topics if topic in TOPICS))
 
 
 def _source_kind(row: dict, origin: str) -> str:
@@ -258,30 +287,32 @@ def _coverage_snapshot(social: dict, supplementary: dict, promo: dict) -> dict[s
             region = str(row.get("region") or "")
             if game not in GAMES or region not in REGIONS:
                 continue
-            topic = _topic(row)
-            if topic not in TOPICS:
-                continue
-            key = f"{game}/{region}/{topic}"
-            cell = snapshot[key]
             verified = (
                 str(row.get("source_grade") or "").lower() == "official"
                 if origin == "promo"
                 else row.get("verified") is True
             )
-            cell["candidate_count"] += 1
-            if verified:
-                cell["verified_count"] += 1
-                signature = _evidence_signature(row)
-                if signature and signature not in cell["verified_signatures"] and len(cell["verified_signatures"]) < 32:
-                    cell["verified_signatures"].append(signature)
-            if origin == "promo" and verified:
-                cell["canonical_count"] += 1
-            if row.get("cross_checked") is True or _num(row.get("independent_source_count")) >= 2:
-                cell["corroborated_count"] += 1
+            topics = _topics(row, verified=verified)
+            signature = _evidence_signature(row) if verified else ""
             kind = _source_kind(row, origin)
-            kind_row = cell["source_kinds"].setdefault(kind, {"candidate": 0, "verified": 0})
-            kind_row["candidate"] += 1
-            kind_row["verified"] += 1 if verified else 0
+            corroborated = row.get("cross_checked") is True or _num(row.get("independent_source_count")) >= 2
+            for topic in topics:
+                if topic not in TOPICS:
+                    continue
+                key = f"{game}/{region}/{topic}"
+                cell = snapshot[key]
+                cell["candidate_count"] += 1
+                if verified:
+                    cell["verified_count"] += 1
+                    if signature and signature not in cell["verified_signatures"] and len(cell["verified_signatures"]) < 32:
+                        cell["verified_signatures"].append(signature)
+                if origin == "promo" and verified:
+                    cell["canonical_count"] += 1
+                if corroborated:
+                    cell["corroborated_count"] += 1
+                kind_row = cell["source_kinds"].setdefault(kind, {"candidate": 0, "verified": 0})
+                kind_row["candidate"] += 1
+                kind_row["verified"] += 1 if verified else 0
     return snapshot
 
 
@@ -296,9 +327,11 @@ def _social_topic_coverage(items: list[dict], *, verified_only: bool) -> dict[st
             continue
         if verified_only and row.get("verified") is not True:
             continue
-        key = f"{game}/{region}/{_topic(row)}"
-        if key in coverage:
-            coverage[key] += 1
+        topics = _topics(row, verified=verified_only)
+        for topic in topics:
+            key = f"{game}/{region}/{topic}"
+            if key in coverage:
+                coverage[key] += 1
     return coverage
 
 
@@ -330,6 +363,7 @@ def _harden_social_coverage(payload: dict, social_path: Path, *, rewrite: bool) 
         "candidate_only_cells": hardened["candidate_only_topic_cells"],
         "verified_missing_cells": hardened["verified_topic_missing_cells"],
         "basis": "verified-source-only",
+        "verified_fact_basis": "verified-concrete-facts-multi-label; unverified-primary-only",
     }
 
 
@@ -550,6 +584,8 @@ def _coverage_report(data: dict) -> dict:
         "next_priority_cells": priority_rows[:24],
         "next_priority_by_game": by_game,
         "coverage_basis": "verified-source-only",
+        "verified_fact_basis": "verified rows may resolve multiple independently matched concrete factual topics; unverified rows remain primary-topic-only",
+        "verified_multi_label_topics": sorted(VERIFIED_MULTI_LABEL_TOPICS),
         "freshness_basis": "unchanged verified evidence ages into bounded recheck-due priority without losing verified status",
     }
 
@@ -628,6 +664,7 @@ def observe(
         "candidate_only_cells": [],
         "verified_missing_cells": _expected_keys(),
         "basis": "verified-source-only",
+        "verified_fact_basis": "verified-concrete-facts-multi-label; unverified-primary-only",
     }
 
     all_provider_rows = list(provider_rows or [])
@@ -677,7 +714,7 @@ def report(data: dict | None = None) -> dict:
     rows.sort(key=lambda x: (x["score"], x["selected"], x["results"]), reverse=True)
     coverage = _coverage_report(data)
     return {
-        "version": 4,
+        "version": 5,
         "runs": _num(data.get("runs")),
         "updated_at": data.get("updated_at"),
         "providers": rows,
