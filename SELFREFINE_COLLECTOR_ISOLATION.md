@@ -26,6 +26,7 @@ SELFREFINE 적용 방식:
 
 - error_signature에 collector_id와 provider_id를 포함한다.
 - 같은 information_family의 수집 코드라도 오류 signature, retry_count, regression_result는 분리한다.
+- normalize_acquired_result가 canonical_key와 lineage_key를 동시에 붙여 같은 정보 비교와 출처 추적을 분리한다.
 - 결과 통합은 canonical_result_key가 일치할 때만 수행하고 lineage_key는 삭제하지 않는다.
 - 검증 충돌은 conflict로 남기고 임의 평균/자동 승격을 금지한다.
 - completed_sale과 market_price는 서로 다른 information_family로 유지해 실제 완료거래와 시장참고값이 섞이지 않게 한다.
