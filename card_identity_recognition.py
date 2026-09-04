@@ -474,6 +474,26 @@ def _high_confidence_identity(text: str, game: str, region: str) -> bool:
     )
 
 
+def _compact_ocr_parts(parts: list[str], max_chars: int) -> str:
+    """Keep number-bearing OCR regions first, then preserve remaining text."""
+    unique = list(dict.fromkeys(part.strip() for part in parts if str(part or "").strip()))
+    ordered = sorted(
+        enumerate(unique),
+        key=lambda item: (0 if extract_numbers(item[1]) else 1, item[0]),
+    )
+    chunks: list[str] = []
+    used = 0
+    for _, part in ordered:
+        remaining = max_chars - used
+        if remaining <= 0:
+            break
+        chunk = part[:remaining]
+        if chunk:
+            chunks.append(chunk)
+            used += len(chunk) + 1
+    return " ".join(chunks)[:max_chars]
+
+
 def _stage_identity_summary(stage: int, text: str, game: str, region: str) -> dict[str, Any]:
     hits = match_catalog(text, game, limit=1, region=region) if text else []
     best = hits[0] if hits else None
@@ -609,6 +629,7 @@ def ocr_image_detailed(
     errors: list[str] = []
     used: list[str] = []
     stage_summaries: list[dict[str, Any]] = []
+    stage_texts_compact: dict[int, str] = {}
     region_diagnostics: list[dict[str, Any]] = []
     stages_completed: list[int] = []
     stage_region_counts: dict[str, int] = {}
@@ -647,7 +668,8 @@ def ocr_image_detailed(
                 "error": error,
             })
 
-        stage_text = " ".join(dict.fromkeys(stage_outputs))
+        stage_text = _compact_ocr_parts(stage_outputs, 3600)
+        stage_texts_compact[stage] = stage_text
         stage_summary = _stage_identity_summary(stage, stage_text, game, region)
         stage_summary["region_count_attempted"] = attempted
         stage_summary["region_count_with_text"] = sum(
@@ -659,8 +681,17 @@ def ocr_image_detailed(
         if attempted == STAGE_REGION_COUNTS[stage]:
             stages_completed.append(stage)
 
-    text = " ".join(outputs)[:MAX_OCR_TEXT]
-    combined_for_match = " ".join(part for part in (seed, text) if part)
+    # Preserve evidence from every stage in the bounded public OCR text. Each
+    # stage gets a fixed share, with number-bearing regions prioritized inside
+    # that share so stage-3 discoveries are not truncated away.
+    text = " ".join([
+        stage_texts_compact.get(1, "")[:1600],
+        stage_texts_compact.get(2, "")[:1700],
+        stage_texts_compact.get(3, "")[:1700],
+    ]).strip()[:MAX_OCR_TEXT]
+    combined_for_match = " ".join(
+        part for part in (seed, *stage_texts_compact.values()) if part
+    )[:16000]
     cross_validation = _identity_stage_consensus(stage_summaries)
     error = ";".join(dict.fromkeys(errors)) if errors and not text else None
 
