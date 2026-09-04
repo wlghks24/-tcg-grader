@@ -1,5 +1,5 @@
 name: Deep SELFREFINE Guard
-# SELFREFINE final same-SHA cross-check trigger v2
+# SELFREFINE final same-SHA cross-check trigger v3
 
 on:
   push:
