@@ -31,6 +31,10 @@ jobs:
       - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97
         with:
           python-version: '3.12'
+      - name: Validate link-audit code before network execution
+        run: |
+          python -m py_compile validate_external_links.py test_link_audit_hardening_v184.py
+          python test_link_audit_hardening_v184.py
       - name: Run bounded live HTTPS link audit
         env:
           TCG_HTTP_TIMEOUT: '8'

@@ -88,47 +88,48 @@ TEMPLATE_PLACEHOLDER_PROBES = {
 
 
 def _render_template_probe(url: str) -> str:
-    """Render known placeholders and safely encode Unicode URL components.
-
-    Browsers percent-encode Korean/Japanese search paths automatically, while
-    urllib Request requires an ASCII request target. Preserve existing percent
-    escapes so already encoded templates are never double-encoded.
-    """
+    """Render known placeholders and encode Unicode request components safely."""
     concrete = url
     for token, sample in TEMPLATE_PLACEHOLDER_PROBES.items():
-        concrete = concrete.replace(token, urllib.parse.quote(sample, safe=''))
-    if '{' in concrete or '}' in concrete:
+        concrete = concrete.replace(token, urllib.parse.quote(sample, safe=""))
+    if "{" in concrete or "}" in concrete:
         raise ValueError("unknown url template placeholder")
     parsed = urllib.parse.urlsplit(concrete)
     path = urllib.parse.quote(
         parsed.path,
-        safe="/%:@-._~!def _render_template_probe(url: str) -> str:
-    """Render known URL-template placeholders to safe probe values."""
-    concrete = url
-    for token, sample in TEMPLATE_PLACEHOLDER_PROBES.items():
-        concrete = concrete.replace(token, urllib.parse.quote(sample, safe=''))
-    if '{' in concrete or '}' in concrete:
-        raise ValueError("unknown url template placeholder")
-    return concrete
-'()*+,;=",
+        safe="/%:@-._~!$&()*+,;=",
     )
     query = urllib.parse.quote(
         parsed.query,
-        safe="%=&+,:;@/?-._~!
+        safe="%=&+,:;@/?-._~!$()*",
+    )
+    fragment = urllib.parse.quote(
+        parsed.fragment,
+        safe="%=&+,:;@/?-._~!$()*",
+    )
+    return urllib.parse.urlunsplit((parsed.scheme, parsed.netloc, path, query, fragment))
+
+
 def _safe(url:str)->str:
-    if not isinstance(url,str) or not url or len(url)>2048: raise ValueError("invalid url")
+    if not isinstance(url,str) or not url or len(url)>2048:
+        raise ValueError("invalid url")
     probe=_render_template_probe(url)
     validate_public_https_url(probe)
     p=urllib.parse.urlsplit(probe)
-    if p.scheme!="https" or not p.hostname or p.username or p.password or p.port not in (None,443): raise ValueError("https only")
-    host=p.hostname.rstrip('.').lower()
-    if host in {"localhost","localhost.localdomain"} or host.endswith('.local'): raise ValueError("local blocked")
+    if p.scheme!="https" or not p.hostname or p.username or p.password or p.port not in (None,443):
+        raise ValueError("https only")
+    host=p.hostname.rstrip(".").lower()
+    if host in {"localhost","localhost.localdomain"} or host.endswith(".local"):
+        raise ValueError("local blocked")
     try:
         ip=ipaddress.ip_address(host)
-        if not ip.is_global: raise ValueError("private ip blocked")
+        if not ip.is_global:
+            raise ValueError("private ip blocked")
     except ValueError as exc:
-        if "blocked" in str(exc): raise
+        if "blocked" in str(exc):
+            raise
     return url
+
 
 def _resolve_public(host:str):
     rows=socket.getaddrinfo(host,443,type=socket.SOCK_STREAM)
