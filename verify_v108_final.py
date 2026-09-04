@@ -47,6 +47,9 @@ def main() -> int:
         run("v107 전체 기능 회귀", [sys.executable, "verify_v107_final.py"]),
     ]
     print(f"[{'PASS' if rows[1]['ok'] else 'FAIL'}] {rows[1]['name']}", flush=True)
+    for row in rows:
+        if not row["ok"]:
+            print(f"[DETAIL] {row['name']}: {row.get('detail','')}", flush=True)
     payload = {
         "version": "v108-library-slab-corpus",
         "checked_at": datetime.now(timezone.utc).replace(microsecond=0).isoformat().replace("+00:00", "Z"),
