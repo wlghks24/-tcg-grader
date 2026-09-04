@@ -52,16 +52,19 @@ GAMES = {
     "나루토": ("나루토", "naruto", "ナルト"),
 }
 REGIONS = ("KR", "JP", "US")
-TOPICS = ("release", "reprint", "event", "tournament", "popup", "promo", "collab", "movie", "merch", "anniversary", "stock", "entry", "broadcast", "deadline", "status_update", "rules", "access", "results", "purchase_policy", "service_status", "market", "graded_photo")
-SEARCH_TOPICS = ("release", "reprint", "event", "tournament", "popup", "promo", "collab", "movie", "merch", "anniversary", "stock", "entry", "broadcast", "deadline", "status_update", "rules", "access", "results", "purchase_policy", "service_status")
+TOPICS = ("release", "reprint", "event", "tournament", "popup", "promo", "collab", "movie", "merch", "anniversary", "stock", "entry", "broadcast", "deadline", "status_update", "rules", "access", "results", "purchase_policy", "service_status", "official_price", "product_issue", "authenticity_notice", "market", "graded_photo")
+SEARCH_TOPICS = ("release", "reprint", "event", "tournament", "popup", "promo", "collab", "movie", "merch", "anniversary", "stock", "entry", "broadcast", "deadline", "status_update", "rules", "access", "results", "purchase_policy", "service_status", "official_price", "product_issue", "authenticity_notice")
 TOPIC_PRECEDENCE = (
-    "graded_photo", "market", "service_status", "results", "purchase_policy", "status_update", "rules", "deadline", "access", "stock", "broadcast", "entry",
+    "graded_photo", "authenticity_notice", "product_issue", "official_price", "market", "service_status", "results", "purchase_policy", "status_update", "rules", "deadline", "access", "stock", "broadcast", "entry",
     "movie", "anniversary", "merch", "collab", "reprint", "release", "popup",
     "tournament", "promo", "event",
 )
 
 TOPIC_PATTERNS = {
     "graded_photo": re.compile(r"\bpsa(?:\s?\d{1,2})?\b|\bbgs(?:\s?\d{1,2}(?:\.\d)?)?\b|\bcgc(?:\s?\d{1,2}(?:\.\d)?)?\b|\btag(?:\s?\d{1,2})?\b|\bbrg(?:\s?\d{1,2})?\b|\bgraded\b|\bslab\b|등급\s*카드|감정\s*카드|鑑定", re.I),
+    "authenticity_notice": re.compile(r"위조\s*품|위조품|가품|모조품|복제품|레플리카|비정규\s*카드|짝퉁|오리파|서치\s*(?:팩|박스)|사기\s*주의|counterfeit|fake\s+(?:card|cards|booster|pack|packs|product|products)|replica|knockoff|unauthorized\s+(?:copy|reproduction)|searched?\s+(?:pack|packs|box|boxes)|repacked|scam\s+warning|偽造品|模倣品|偽物|レプリカ|非正規カード|オリパ|サーチ済み", re.I),
+    "product_issue": re.compile(r"봉입\s*(?:내용\s*)?오류|내용물\s*(?:누락|오류)|카드\s*(?:인쇄|가공|재단|일러스트)\s*(?:불량|오류)|제품\s*(?:불량|오류)|제조\s*불량|교환\s*대응|교환\s*안내|리콜|상품\s*회수|manufacturing\s+(?:error|defect)|printing\s+(?:error|defect)|packaging\s+(?:error|defect)|incorrect\s+contents?|missing\s+contents?|defective\s+product|damaged\s+(?:card|cards|part|parts).{0,30}replacement|product\s+replacement|exchange\s+program|product\s+recall|封入内容.{0,12}誤り|表面加工.{0,12}誤り|イラスト.{0,12}誤り|製造.{0,12}不良|商品.{0,12}(?:不良|不具合)|交換対応|交換案内|回収|リコール", re.I),
+    "official_price": re.compile(r"가격\s*(?:인상|인하|개정|변경|조정)|희망\s*소비자\s*가격.{0,12}(?:인상|인하|개정|변경|조정)|권장\s*소비자\s*가격.{0,12}(?:인상|인하|개정|변경|조정)|price\s+(?:revision|change|increase|decrease|adjustment|update)|MSRP.{0,12}(?:revision|change|increase|decrease|update)|RRP.{0,12}(?:revision|change|increase|decrease|update)|価格改定|価格変更|値上げ|値下げ|希望小売価格.{0,12}(?:改定|変更)", re.I),
     "market": re.compile(r"시세|가격|실거래|거래|판매가|price|sold|market|相場|落札|価格", re.I),
     "service_status": re.compile(r"점검|서비스\s*장애|접속\s*(?:장애|오류)|로그인\s*(?:불가|장애)|복구\s*완료|maintenance|service\s+(?:outage|unavailable|disruption)|login\s+(?:issue|failure|unavailable)|incident|resolved|メンテナンス|障害|不具合|ログインできない|利用できません|復旧", re.I),
     "results": re.compile(r"대회\s*결과|경기\s*결과|결과\s*발표|우승자\s*발표|입상자|최종\s*순위|우승\s*덱|상위\s*덱|tournament\s+results?|event\s+results?|match\s+results?|final\s+standings?|top\s+finishers?|winning\s+deck|champion\s+deck|大会結果|試合結果|結果発表|優勝者発表|入賞者|最終順位|優勝デッキ|上位デッキ", re.I),
@@ -107,6 +110,9 @@ FOCUS_TERMS = {
         "results": "대회결과 경기결과 결과발표 우승자발표 입상자 최종순위 우승덱 상위덱",
         "purchase_policy": "추첨판매 구매제한 판매제한 1인1개 본인인증 구매권 구매티켓 가상대기열",
         "service_status": "점검 서비스장애 접속장애 접속오류 로그인불가 복구완료",
+        "official_price": "가격개정 가격변경 가격인상 가격인하 희망소비자가격 변경",
+        "product_issue": "봉입오류 내용물누락 제품불량 제조불량 인쇄오류 가공오류 교환대응 회수 리콜",
+        "authenticity_notice": "위조품 가품 모조품 복제품 레플리카 비정규카드 오리파 서치팩 서치박스 사기주의",
     },
     "JP": {
         "release": "発売 新弾 新商品 ブースター スターター 予約 再販",
@@ -129,6 +135,9 @@ FOCUS_TERMS = {
         "results": "大会結果 試合結果 結果発表 優勝者発表 入賞者 最終順位 優勝デッキ 上位デッキ",
         "purchase_policy": "抽選販売 購入制限 販売制限 お一人様1点 本人認証 購入券 購入チケット 仮想待機列",
         "service_status": "メンテナンス 障害 不具合 ログインできない 利用できません 復旧",
+        "official_price": "価格改定 価格変更 値上げ 値下げ 希望小売価格改定",
+        "product_issue": "封入内容の誤り 表面加工の誤り イラストの誤り 製造不良 交換対応 回収 リコール",
+        "authenticity_notice": "偽造品 模倣品 偽物 レプリカ 非正規カード オリパ サーチ済み",
     },
     "US": {
         "release": "release new set booster starter preorder reprint",
@@ -151,6 +160,9 @@ FOCUS_TERMS = {
         "results": "tournament results event results match results final standings top finishers winning deck champion deck",
         "purchase_policy": "lottery sale purchase limit sales limit one item per person identity verification virtual queue purchase ticket voucher",
         "service_status": "maintenance service outage unavailable disruption login issue incident resolved",
+        "official_price": "price revision price change price increase price decrease MSRP update RRP update",
+        "product_issue": "manufacturing error printing error packaging error incorrect contents missing contents defective product product replacement exchange program product recall",
+        "authenticity_notice": "counterfeit fake cards replica knockoff unauthorized reproduction searched packs repacked scam warning",
     },
 }
 

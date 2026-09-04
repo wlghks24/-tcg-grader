@@ -77,6 +77,9 @@ QUERY_FAMILIES = {
         "results": "대회결과 경기결과 결과발표 우승자발표 입상자 최종순위 우승덱 상위덱",
         "purchase_policy": "추첨판매 구매제한 판매제한 1인1개 본인인증 구매권 구매티켓 가상대기열",
         "service_status": "점검 서비스장애 접속장애 접속오류 로그인불가 복구완료",
+        "official_price": "가격개정 가격변경 가격인상 가격인하 희망소비자가격 변경",
+        "product_issue": "봉입오류 내용물누락 제품불량 제조불량 인쇄오류 가공오류 교환대응 회수 리콜",
+        "authenticity_notice": "위조품 가품 모조품 복제품 레플리카 비정규카드 오리파 서치팩 서치박스 사기주의",
     },
     "ja": {
         "release": "発売 新商品 新弾 ブースター スターター 予約 再販",
@@ -99,6 +102,9 @@ QUERY_FAMILIES = {
         "results": "大会結果 試合結果 結果発表 優勝者発表 入賞者 最終順位 優勝デッキ 上位デッキ",
         "purchase_policy": "抽選販売 購入制限 販売制限 お一人様1点 本人認証 購入券 購入チケット 仮想待機列",
         "service_status": "メンテナンス 障害 不具合 ログインできない 利用できません 復旧",
+        "official_price": "価格改定 価格変更 値上げ 値下げ 希望小売価格改定",
+        "product_issue": "封入内容の誤り 表面加工の誤り イラストの誤り 製造不良 交換対応 回収 リコール",
+        "authenticity_notice": "偽造品 模倣品 偽物 レプリカ 非正規カード オリパ サーチ済み",
     },
     "en": {
         "release": "release new set booster starter preorder reprint",
@@ -121,10 +127,13 @@ QUERY_FAMILIES = {
         "results": "tournament-results event-results match-results final-standings top-finishers winning-deck champion-deck",
         "purchase_policy": "lottery-sale purchase-limit sales-limit one-item-per-person identity-verification virtual-queue purchase-ticket purchase-voucher",
         "service_status": "maintenance service-outage service-unavailable disruption login-issue incident resolved",
+        "official_price": "price-revision price-change price-increase price-decrease MSRP-update RRP-update",
+        "product_issue": "manufacturing-error printing-error packaging-error incorrect-contents missing-contents defective-product product-replacement exchange-program product-recall",
+        "authenticity_notice": "counterfeit fake-cards replica knockoff unauthorized-reproduction searched-packs repacked scam-warning",
     },
 }
 
-COVERAGE_TOPICS = ("event", "tournament", "popup", "promo", "collab", "movie", "release", "reprint", "merch", "anniversary", "stock", "entry", "broadcast", "deadline", "status_update", "rules", "access", "results", "purchase_policy", "service_status")
+COVERAGE_TOPICS = ("event", "tournament", "popup", "promo", "collab", "movie", "release", "reprint", "merch", "anniversary", "stock", "entry", "broadcast", "deadline", "status_update", "rules", "access", "results", "purchase_policy", "service_status", "official_price", "product_issue", "authenticity_notice")
 
 OFFICIAL_ROUTES = {
     ("포켓몬 카드", "KR"): (
@@ -146,6 +155,7 @@ OFFICIAL_ROUTES = {
         "https://community.pokemon.com/en-us/categories/news-announcements?sort=new",
         "https://www.pokemon.com/us/play-pokemon/pokemon-events/championship-series-event-results",
         "https://support.pokemon.com/hc/en-us",
+        "https://support.pokemon.com/hc/en-us/categories/115000426053-Pok%C3%A9mon-Trading-Card-Game",
     ),
     ("원피스 카드", "KR"): (
         "https://onepiece-cardgame.kr/events.do",
@@ -213,9 +223,9 @@ SERVICE_DISCOVERY_HOSTS = ("lin.ee", "line.me", "www.line.me", "bandai-tcg-plus.
 COMMUNITY_DISCOVERY_HOSTS = ("namu.wiki", "www.namu.wiki", "namu.moe", "www.namu.moe", "reddit.com", "www.reddit.com")
 
 KEYWORD_RE = re.compile(
-    r"대회결과|경기결과|결과발표|우승자발표|입상자|최종순위|우승덱|상위덱|추첨판매|구매제한|판매제한|본인인증|구매권|구매티켓|가상대기열|점검|서비스장애|접속장애|접속오류|로그인불가|복구완료|행사|이벤트|대회|팝업|페스타|프로모|증정|배포|출시|발매|신탄|부스터|스타터|예약|재발매|재입고|입고|재고|품절|구매처|콜라보|협업|영화|극장판|굿즈|공식숍|점프샵|기념|주년|응모|신청|접수|등록|추첨|당첨|엔트리|라이브|생방송|방송|스트리밍|시청|코드|리딤|마감|기한|취소|연기|일정변경|시간변경|장소변경|갱신내용|룰|규칙|금지|제한|금지카드|제한카드|금지페어|에라타|체크인|참가자격|입장권|패스|대기명단|플레이어ID|덱리스트|RK9|PLAYGO|\bLINE\b|BANDAI\s*TCG\+|TCG\+|"
-    r"大会結果|試合結果|結果発表|優勝者発表|入賞者|最終順位|優勝デッキ|上位デッキ|抽選販売|購入制限|販売制限|本人認証|購入券|購入チケット|仮想待機列|メンテナンス|障害|不具合|ログインできない|利用できません|復旧|イベント|大会|ポップアップ|プロモ|配布|発売|新弾|ブースター|スターター|予約|再販|再入荷|入荷|在庫|売り切れ|コラボ|映画|劇場版|グッズ|公式ショップ|記念|周年|応募|申込|受付|登録|抽選|当選|エントリー|ライブ配信|生配信|配信|視聴|ドロップ|コード|プレゼント|締切|期限|変更|中止|延期|日程変更|時間変更|会場変更|内容変更|ルール|禁止|制限|禁止カード|制限カード|エラッタ|チェックイン|参加資格|入場券|パス|キャンセル待ち|プレイヤーID|デッキリスト|RK9|\bLINE\b|BANDAI\s*TCG\+|TCG\+|"
-    r"tournament results?|event results?|match results?|final standings?|top finishers?|winning deck|champion deck|lottery sale|purchase limit|sales? limit|one item per person|identity verification|virtual queue|purchase ticket|purchase voucher|maintenance|service outage|service unavailable|login issue|incident|resolved|event|tournament|pop[- ]?up|promo|giveaway|release|booster|starter|preorder|reprint|restock|in stock|sold out|availability|retailer|entry|application|apply|registration|register|lottery|drawing|signup|livestream|live stream|broadcast|streaming|watch|twitch drops|reward code|redeem|redemption|deadline|apply by|registration closes?|application period|cancelled|canceled|postponed|rescheduled|schedule change|venue change|rules?|banned|restricted|restriction|errata|legality|check[- ]?in|eligibility|spectator|waitlist|interest list|player id|deck list|entry fee|\bbadge\b|\bpass\b|RK9|PLAYGO|\bLINE\b|BANDAI\s*TCG\+|TCG\+|collab|movie|film|merch|official shop|anniversary|commemorative|collector|collection|unboxing|deck|decklist|review|price|"
+    r"가격개정|가격변경|가격인상|가격인하|희망소비자가격|봉입오류|내용물누락|제품불량|제조불량|인쇄오류|가공오류|교환대응|상품회수|리콜|위조품|가품|모조품|복제품|레플리카|비정규카드|오리파|서치팩|서치박스|사기주의|대회결과|경기결과|결과발표|우승자발표|입상자|최종순위|우승덱|상위덱|추첨판매|구매제한|판매제한|본인인증|구매권|구매티켓|가상대기열|점검|서비스장애|접속장애|접속오류|로그인불가|복구완료|행사|이벤트|대회|팝업|페스타|프로모|증정|배포|출시|발매|신탄|부스터|스타터|예약|재발매|재입고|입고|재고|품절|구매처|콜라보|협업|영화|극장판|굿즈|공식숍|점프샵|기념|주년|응모|신청|접수|등록|추첨|당첨|엔트리|라이브|생방송|방송|스트리밍|시청|코드|리딤|마감|기한|취소|연기|일정변경|시간변경|장소변경|갱신내용|룰|규칙|금지|제한|금지카드|제한카드|금지페어|에라타|체크인|참가자격|입장권|패스|대기명단|플레이어ID|덱리스트|RK9|PLAYGO|\bLINE\b|BANDAI\s*TCG\+|TCG\+|"
+    r"価格改定|価格変更|値上げ|値下げ|希望小売価格|封入内容の誤り|表面加工の誤り|イラストの誤り|製造不良|交換対応|回収|リコール|偽造品|模倣品|偽物|レプリカ|非正規カード|オリパ|サーチ済み|大会結果|試合結果|結果発表|優勝者発表|入賞者|最終順位|優勝デッキ|上位デッキ|抽選販売|購入制限|販売制限|本人認証|購入券|購入チケット|仮想待機列|メンテナンス|障害|不具合|ログインできない|利用できません|復旧|イベント|大会|ポップアップ|プロモ|配布|発売|新弾|ブースター|スターター|予約|再販|再入荷|入荷|在庫|売り切れ|コラボ|映画|劇場版|グッズ|公式ショップ|記念|周年|応募|申込|受付|登録|抽選|当選|エントリー|ライブ配信|生配信|配信|視聴|ドロップ|コード|プレゼント|締切|期限|変更|中止|延期|日程変更|時間変更|会場変更|内容変更|ルール|禁止|制限|禁止カード|制限カード|エラッタ|チェックイン|参加資格|入場券|パス|キャンセル待ち|プレイヤーID|デッキリスト|RK9|\bLINE\b|BANDAI\s*TCG\+|TCG\+|"
+    r"price revision|price change|price increase|price decrease|MSRP update|RRP update|manufacturing error|printing error|packaging error|incorrect contents?|missing contents?|defective product|product replacement|exchange program|product recall|counterfeit|fake cards?|replica|knockoff|unauthorized reproduction|searched? packs?|repacked|scam warning|tournament results?|event results?|match results?|final standings?|top finishers?|winning deck|champion deck|lottery sale|purchase limit|sales? limit|one item per person|identity verification|virtual queue|purchase ticket|purchase voucher|maintenance|service outage|service unavailable|login issue|incident|resolved|event|tournament|pop[- ]?up|promo|giveaway|release|booster|starter|preorder|reprint|restock|in stock|sold out|availability|retailer|entry|application|apply|registration|register|lottery|drawing|signup|livestream|live stream|broadcast|streaming|watch|twitch drops|reward code|redeem|redemption|deadline|apply by|registration closes?|application period|cancelled|canceled|postponed|rescheduled|schedule change|venue change|rules?|banned|restricted|restriction|errata|legality|check[- ]?in|eligibility|spectator|waitlist|interest list|player id|deck list|entry fee|\bbadge\b|\bpass\b|RK9|PLAYGO|\bLINE\b|BANDAI\s*TCG\+|TCG\+|collab|movie|film|merch|official shop|anniversary|commemorative|collector|collection|unboxing|deck|decklist|review|price|"
     r"개봉|언박싱|덱|덱리스트|수집|컬렉터|카드샵|후기|시세|開封|デッキ|コレクター|コレクション|レビュー|相場",
     re.I,
 )
@@ -246,6 +256,9 @@ def _category(text: str) -> str:
 def _topic(text: str) -> str:
     value = text or ""
     patterns = (
+        ("authenticity_notice", r"위조\s*품|위조품|가품|모조품|복제품|레플리카|비정규\s*카드|짝퉁|오리파|서치\s*(?:팩|박스)|사기\s*주의|counterfeit|fake\s+(?:card|cards|booster|pack|packs|product|products)|replica|knockoff|unauthorized\s+(?:copy|reproduction)|searched?\s+(?:pack|packs|box|boxes)|repacked|scam\s+warning|偽造品|模倣品|偽物|レプリカ|非正規カード|オリパ|サーチ済み"),
+        ("product_issue", r"봉입\s*(?:내용\s*)?오류|내용물\s*(?:누락|오류)|카드\s*(?:인쇄|가공|재단|일러스트)\s*(?:불량|오류)|제품\s*(?:불량|오류)|제조\s*불량|교환\s*대응|교환\s*안내|리콜|상품\s*회수|manufacturing\s+(?:error|defect)|printing\s+(?:error|defect)|packaging\s+(?:error|defect)|incorrect\s+contents?|missing\s+contents?|defective\s+product|damaged\s+(?:card|cards|part|parts).{0,30}replacement|product\s+replacement|exchange\s+program|product\s+recall|封入内容.{0,12}誤り|表面加工.{0,12}誤り|イラスト.{0,12}誤り|製造.{0,12}不良|商品.{0,12}(?:不良|不具合)|交換対応|交換案内|回収|リコール"),
+        ("official_price", r"가격\s*(?:인상|인하|개정|변경|조정)|희망\s*소비자\s*가격.{0,12}(?:인상|인하|개정|변경|조정)|권장\s*소비자\s*가격.{0,12}(?:인상|인하|개정|변경|조정)|price\s+(?:revision|change|increase|decrease|adjustment|update)|MSRP.{0,12}(?:revision|change|increase|decrease|update)|RRP.{0,12}(?:revision|change|increase|decrease|update)|価格改定|価格変更|値上げ|値下げ|希望小売価格.{0,12}(?:改定|変更)"),
         ("service_status", r"점검|서비스\s*장애|접속\s*(?:장애|오류)|로그인\s*(?:불가|장애)|복구\s*완료|maintenance|service\s+(?:outage|unavailable|disruption)|login\s+(?:issue|failure|unavailable)|incident|resolved|メンテナンス|障害|不具合|ログインできない|利用できません|復旧"),
         ("results", r"대회\s*결과|경기\s*결과|결과\s*발표|우승자\s*발표|입상자|최종\s*순위|우승\s*덱|상위\s*덱|tournament\s+results?|event\s+results?|match\s+results?|final\s+standings?|top\s+finishers?|winning\s+deck|champion\s+deck|大会結果|試合結果|結果発表|優勝者発表|入賞者|最終順位|優勝デッキ|上位デッキ"),
         ("purchase_policy", r"추첨\s*판매|구매\s*제한|판매\s*제한|1인\s*\d+개|본인\s*인증.{0,20}(?:판매|구매)|구매권|구매\s*티켓|가상\s*대기열|lottery\s+sale|purchase\s+limit|sales?\s+limit|limited\s+to\s+(?:one|\d+)\s+items?\s+per\s+person|identity\s+verification.{0,30}(?:sale|purchase)|virtual\s+queue|purchase\s+(?:ticket|voucher)|抽選販売|購入制限|販売制限|お一人様\s*\d+点|本人認証.{0,20}(?:販売|購入)|購入券|購入チケット|仮想待機列"),
