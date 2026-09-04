@@ -5,7 +5,7 @@
 })(typeof globalThis!=='undefined'?globalThis:this,function(){
   'use strict';
 
-  const ENGINE_VERSION='v159-eight-zone-oblique-crosscheck';
+  const ENGINE_VERSION='v160-grading-hierarchy-1-4-8';
   const MAX_PIXELS=16000000;
   const DEFAULT_CONFIG=Object.freeze({
     maskInset:.025,cornerRadius:.045,claheClipLimit:2,claheTiles:8,
@@ -348,8 +348,56 @@
       const candidateSegments=baseSegments.length+obliqueSegments.length,obliqueStatus=!obliqueInput?'not_captured':confirmed?'confirmed':candidateSegments===0?'clear_both_angles':'angle_mismatch',risk=Math.round(clamp(Math.max(surfaceRisk,whitening.edgeRisk,whitening.cornerRisk),0,100)),confidence=Math.round(clamp((obliqueInput?58:40)+quality.score*.32+bounds.confidence*.18+Math.min(12,confirmed*4)-(profile.id==='naruto'?8:0),8,profile.confidenceCap));
       rows[id]={id,scratchRisk,surfaceRisk,edgeRisk:whitening.edgeRisk,cornerRisk:whitening.cornerRisk,whiteningRisk:whitening.risk,combinedRisk:risk,confidence,confirmedSegments:confirmed,candidateSegments,baseCandidateSegments:baseSegments.length,obliqueCandidateSegments:obliqueSegments.length,obliqueStatus,obliqueCrossChecked:Boolean(obliqueInput),texture,whitening};
     }
-    const risks=ids.map(id=>rows[id].combinedRisk),surfaceRisks=ids.map(id=>rows[id].surfaceRisk),edgeRisks=ids.map(id=>rows[id].edgeRisk),confidences=ids.map(id=>rows[id].confidence),worstRisk=Math.max(...risks),surfaceWorstRisk=Math.max(...surfaceRisks),edgeWorstRisk=Math.max(...edgeRisks),meanRisk=risks.reduce((a,b)=>a+b,0)/4,imbalance=Math.max(...risks)-Math.min(...risks),confidence=Math.round(Math.min(...confidences));
-    return {version:2,mode:'four-quadrant-oblique-crosscheck',gameProfile:profile.id,precisionConfig:{minLineRatio:precisionConfig.minLineRatio,houghVoteThreshold:precisionConfig.houghVoteThreshold,scratchContrastMin:precisionConfig.scratchContrastMin},quadrants:rows,worstQuadrant:ids.find(id=>rows[id].combinedRisk===worstRisk),worstRisk,surfaceWorstRisk,edgeWorstRisk,meanRisk:Math.round(meanRisk*10)/10,imbalance,confidence,obliqueCrossChecked:Boolean(obliqueInput),allQuadrantsMeasured:ids.every(id=>rows[id].confidence>=55),learningFeatures:{quadrantWorstRisk:worstRisk,quadrantSurfaceWorstRisk:surfaceWorstRisk,quadrantEdgeWorstRisk:edgeWorstRisk,quadrantMeanRisk:Math.round(meanRisk*10)/10,quadrantImbalance:imbalance,quadrantConfidence:confidence}};
+    const risks=ids.map(id=>rows[id].combinedRisk),surfaceRisks=ids.map(id=>rows[id].surfaceRisk),edgeRisks=ids.map(id=>rows[id].edgeRisk),cornerRisks=ids.map(id=>rows[id].cornerRisk),confidences=ids.map(id=>rows[id].confidence),worstRisk=Math.max(...risks),surfaceWorstRisk=Math.max(...surfaceRisks),edgeWorstRisk=Math.max(...edgeRisks),cornerWorstRisk=Math.max(...cornerRisks),meanRisk=risks.reduce((a,b)=>a+b,0)/4,imbalance=Math.max(...risks)-Math.min(...risks),confidence=Math.round(Math.min(...confidences));
+    return {version:3,mode:'four-quadrant-oblique-crosscheck',gameProfile:profile.id,precisionConfig:{minLineRatio:precisionConfig.minLineRatio,houghVoteThreshold:precisionConfig.houghVoteThreshold,scratchContrastMin:precisionConfig.scratchContrastMin},quadrants:rows,worstQuadrant:ids.find(id=>rows[id].combinedRisk===worstRisk),worstRisk,surfaceWorstRisk,edgeWorstRisk,cornerWorstRisk,meanRisk:Math.round(meanRisk*10)/10,imbalance,confidence,obliqueCrossChecked:Boolean(obliqueInput),allQuadrantsMeasured:ids.every(id=>rows[id].confidence>=55),learningFeatures:{quadrantWorstRisk:worstRisk,quadrantSurfaceWorstRisk:surfaceWorstRisk,quadrantEdgeWorstRisk:edgeWorstRisk,quadrantCornerWorstRisk:cornerWorstRisk,quadrantMeanRisk:Math.round(meanRisk*10)/10,quadrantImbalance:imbalance,quadrantConfidence:confidence}};
+  }
+
+  function eightZoneId(x,y){
+    const col=x<.5?0:1,row=clamp(Math.floor(y*4),0,3);
+    return `r${row+1}${col===0?'l':'r'}`;
+  }
+  function eightZoneMeta(id){
+    const match=/^r([1-4])([lr])$/.exec(String(id||''));
+    if(!match)throw new Error('VisionZoneIdError');
+    return {row:Number(match[1])-1,col:match[2]==='l'?0:1,rows:4,cols:2};
+  }
+  function regionTextureRisk(input,bounds,id){
+    const {width,height,data}=validateImage(input),meta=eightZoneMeta(id),cellW=bounds.width/meta.cols,cellH=bounds.height/meta.rows,pad=Math.max(2,Math.round(Math.min(bounds.width,bounds.height)*.018));
+    const x0=Math.round(bounds.left+meta.col*cellW)+pad,x1=Math.round(bounds.left+(meta.col+1)*cellW)-pad,y0=Math.round(bounds.top+meta.row*cellH)+pad,y1=Math.round(bounds.top+(meta.row+1)*cellH)-pad;
+    const step=Math.max(1,Math.round(Math.min(bounds.width,bounds.height)/430));let total=0,samples=0,strong=0;
+    for(let y=y0;y<y1-step;y+=step)for(let x=x0;x<x1-step;x+=step){const p=pixelIndex(width,x,y),px=pixelIndex(width,x+step,y),py=pixelIndex(width,x,y+step),delta=(Math.abs(luminance(data,p)-luminance(data,px))+Math.abs(luminance(data,p)-luminance(data,py)))/2;total+=delta;samples++;if(delta>=32)strong++}
+    const mean=total/Math.max(1,samples),ratio=strong/Math.max(1,samples),raw=Math.max(0,mean-10)*1.8+Math.max(0,ratio-.03)*150,risk=Math.round(clamp(raw*.58,0,60));
+    return {risk,meanGradient:Math.round(mean*100)/100,strongDetailRatio:Math.round(ratio*10000)/10000,samples};
+  }
+  function regionWhiteningRisk(input,bounds,id){
+    const {width,height,data}=validateImage(input),meta=eightZoneMeta(id),cellW=bounds.width/meta.cols,cellH=bounds.height/meta.rows,x0=Math.round(bounds.left+meta.col*cellW),x1=Math.round(bounds.left+(meta.col+1)*cellW),y0=Math.round(bounds.top+meta.row*cellH),y1=Math.round(bounds.top+(meta.row+1)*cellH),band=Math.max(2,Math.round(Math.min(bounds.width,bounds.height)*.030)),step=Math.max(1,Math.round(Math.min(bounds.width,bounds.height)/440)),reference=[];
+    const sample=(x,y)=>{const p=pixelIndex(width,clamp(Math.round(x),0,width-1),clamp(Math.round(y),0,height-1)),lum=luminance(data,p),chr=Math.max(data[p],data[p+1],data[p+2])-Math.min(data[p],data[p+1],data[p+2]);return {lum,chr}};
+    const sideX=meta.col===0?bounds.left+band:bounds.right-band;
+    for(let y=y0;y<=y1;y+=step)reference.push(sample(sideX,y));
+    if(meta.row===0||meta.row===3){const sideY=meta.row===0?bounds.top+band:bounds.bottom-band;for(let x=x0;x<=x1;x+=step)reference.push(sample(x,sideY))}
+    const refLum=median(reference.map(row=>row.lum)),refChroma=median(reference.map(row=>row.chr)),natural=refLum>=215&&refChroma<=25;let n=0,white=0,cornerN=0,cornerWhite=0;
+    const cornerSpan=Math.max(band*2,Math.round(Math.min(bounds.width,bounds.height)*.105));
+    const inspect=(x,y,isCorner)=>{const row=sample(x,y),flag=!natural&&refLum<225&&row.lum>=Math.max(175,refLum+28)&&row.chr<=Math.max(10,Math.min(36,refChroma*.72+10));n++;if(isCorner)cornerN++;if(flag){white++;if(isCorner)cornerWhite++}};
+    for(let y=y0;y<=y1;y+=step)for(let d=0;d<band;d+=step){const atTopCorner=meta.row===0&&y-y0<cornerSpan,atBottomCorner=meta.row===3&&y1-y<cornerSpan;inspect(meta.col===0?bounds.left+d:bounds.right-d,y,atTopCorner||atBottomCorner)}
+    if(meta.row===0||meta.row===3){for(let x=x0;x<=x1;x+=step)for(let d=0;d<band;d+=step){const atSideCorner=meta.col===0?x-x0<cornerSpan:x1-x<cornerSpan;inspect(x,meta.row===0?bounds.top+d:bounds.bottom-d,atSideCorner)}}
+    const ratio=white/Math.max(1,n),cornerRatio=cornerWhite/Math.max(1,cornerN),edgeRisk=Math.round(clamp(ratio*1800,0,100)),cornerRisk=Math.round(clamp(cornerRatio*1600,0,100));
+    return {risk:Math.max(edgeRisk,cornerRisk),edgeRisk,cornerRisk,ratio,cornerRatio,whitePixels:white,cornerWhitePixels:cornerWhite,samplePixels:n,naturallyWhite:natural};
+  }
+  function zoneMatches(baseSegments,obliqueSegments,id){
+    let matches=0;for(const left of baseSegments||[]){if(eightZoneId(left.midX,left.midY)!==id)continue;if((obliqueSegments||[]).some(right=>eightZoneId(right.midX,right.midY)===id&&left.angleIndex===right.angleIndex&&Math.hypot(left.midX-right.midX,left.midY-right.midY)<=.10&&Math.abs(left.lengthRatio-right.lengthRatio)<=.18))matches++}return matches;
+  }
+  function analyzeEightZones(baseInput,obliqueInput=null,providedBounds=null,providedConfig={}){
+    const profile=gameProfile(providedConfig.game),config={...DEFAULT_CONFIG,...providedConfig},bounds=providedBounds||detectOuterBounds(baseInput),quality=analyzeQuality(baseInput),precisionConfig={...config,minLineRatio:Math.max(.065,config.minLineRatio*.34),houghVoteThreshold:Math.max(16,config.houghVoteThreshold-1),scratchContrastMin:Math.max(30,config.scratchContrastMin)},base=detectScratchCandidates(baseInput,bounds,precisionConfig),oblique=obliqueInput?detectScratchCandidates(obliqueInput,detectOuterBounds(obliqueInput),precisionConfig):null,ids=['r1l','r1r','r2l','r2r','r3l','r3r','r4l','r4r'],zones={};
+    for(const id of ids){
+      const baseSegments=(base.segments||[]).filter(row=>eightZoneId(row.midX,row.midY)===id),obliqueSegments=(oblique?.segments||[]).filter(row=>eightZoneId(row.midX,row.midY)===id),confirmed=obliqueInput?zoneMatches(baseSegments,obliqueSegments,id):0,baseRisk=quadrantSegmentRisk(baseSegments),obliqueRisk=quadrantSegmentRisk(obliqueSegments),candidateRisk=obliqueInput?Math.max(baseRisk,obliqueRisk):baseRisk,scratchRisk=Math.round(clamp(obliqueInput?(confirmed?candidateRisk*.84+confirmed*5:candidateRisk*.14):candidateRisk*.56,0,100)),texture=regionTextureRisk(baseInput,bounds,id),whitening=regionWhiteningRisk(baseInput,bounds,id),surfaceRisk=Math.max(scratchRisk,texture.risk),combinedRisk=Math.round(clamp(Math.max(surfaceRisk,whitening.edgeRisk,whitening.cornerRisk),0,100)),candidateSegments=baseSegments.length+obliqueSegments.length,confidence=Math.round(clamp((obliqueInput?56:38)+quality.score*.30+bounds.confidence*.16+Math.min(14,confirmed*4)-(profile.id==='naruto'?8:0),8,profile.confidenceCap));
+      zones[id]={id,...eightZoneMeta(id),scratchRisk,surfaceRisk,edgeRisk:whitening.edgeRisk,cornerRisk:whitening.cornerRisk,combinedRisk,confidence,confirmedSegments:confirmed,candidateSegments,baseCandidateSegments:baseSegments.length,obliqueCandidateSegments:obliqueSegments.length,obliqueCrossChecked:Boolean(obliqueInput),texture,whitening};
+    }
+    const risks=ids.map(id=>zones[id].combinedRisk),surfaceRisks=ids.map(id=>zones[id].surfaceRisk),edgeRisks=ids.map(id=>zones[id].edgeRisk),cornerRisks=ids.map(id=>zones[id].cornerRisk),confidences=ids.map(id=>zones[id].confidence),worstRisk=Math.max(...risks),surfaceWorstRisk=Math.max(...surfaceRisks),edgeWorstRisk=Math.max(...edgeRisks),cornerWorstRisk=Math.max(...cornerRisks),meanRisk=risks.reduce((a,b)=>a+b,0)/8,imbalance=Math.max(...risks)-Math.min(...risks),confidence=Math.round(Math.min(...confidences)),worstZone=ids.find(id=>zones[id].combinedRisk===worstRisk);
+    return {version:1,mode:'eight-zone-precision-oblique-crosscheck',gameProfile:profile.id,zoneLayout:'4x2',zones,worstZone,worstRisk,surfaceWorstRisk,edgeWorstRisk,cornerWorstRisk,meanRisk:Math.round(meanRisk*10)/10,imbalance,confidence,obliqueCrossChecked:Boolean(obliqueInput),allZonesMeasured:ids.every(id=>zones[id].confidence>=50),learningFeatures:{eightZoneWorstRisk:worstRisk,eightZoneSurfaceWorstRisk:surfaceWorstRisk,eightZoneEdgeWorstRisk:edgeWorstRisk,eightZoneCornerWorstRisk:cornerWorstRisk,eightZoneMeanRisk:Math.round(meanRisk*10)/10,eightZoneImbalance:imbalance,eightZoneConfidence:confidence}};
+  }
+  function analyzeGradingHierarchy(baseInput,obliqueInput=null,providedBounds=null,providedConfig={}){
+    const bounds=providedBounds||detectOuterBounds(baseInput),quality=analyzeQuality(baseInput),centering=measureCentering(baseInput,bounds,quality),surface=analyzeSurface(baseInput,obliqueInput,bounds,providedConfig),whitening=analyzeWhitening(baseInput,bounds),quadrants=analyzeFourQuadrants(baseInput,obliqueInput,bounds,providedConfig,surface),zones=analyzeEightZones(baseInput,obliqueInput,bounds,providedConfig),surfaceRisk=Math.max(surface.risk,quadrants.surfaceWorstRisk,zones.surfaceWorstRisk),edgeRisk=Math.max(whitening.edgeRisk,quadrants.edgeWorstRisk,zones.edgeWorstRisk),cornerRisk=Math.max(whitening.cornerRisk,quadrants.cornerWorstRisk,zones.cornerWorstRisk),defectRisk=Math.round(clamp(Math.max(surfaceRisk,edgeRisk*.90,cornerRisk*.95),0,100)),confidence=Math.round(clamp(Math.min(quality.score,centering.confidence||0,surface.confidence,quadrants.confidence,zones.confidence),0,99));
+    return {version:1,mode:'grading-hierarchy-1-4-8',stageOrder:[1,2,3],stage1:{name:'full-card',quality,centering,surface,whitening},stage2:{name:'four-quadrant',...quadrants},stage3:{name:'eight-zone',...zones},surfaceRisk,edgeRisk,cornerRisk,defectRisk,confidence,allStagesMeasured:Boolean(quality.measurable&&centering.valid&&quadrants.allQuadrantsMeasured&&zones.allZonesMeasured),learningFeatures:{...quadrants.learningFeatures,...zones.learningFeatures,hierarchySurfaceRisk:surfaceRisk,hierarchyEdgeRisk:edgeRisk,hierarchyCornerRisk:cornerRisk,hierarchyDefectRisk:defectRisk,hierarchyConfidence:confidence}};
   }
 
   function imageElementData(image,maxDimension=1400){
@@ -363,5 +411,5 @@
     return {width:imageData.width,height:imageData.height,data:imageData.data,canvas};
   }
 
-  return Object.freeze({ENGINE_VERSION,DEFAULT_CONFIG,GAME_PROFILES,gameProfile,analyzeQuality,detectOuterBounds,measureCentering,detectScratchCandidates,analyzeSurface,analyzeWhitening,analyzeFourQuadrants,imageElementData});
+  return Object.freeze({ENGINE_VERSION,DEFAULT_CONFIG,GAME_PROFILES,gameProfile,analyzeQuality,detectOuterBounds,measureCentering,detectScratchCandidates,analyzeSurface,analyzeWhitening,analyzeFourQuadrants,analyzeEightZones,analyzeGradingHierarchy,imageElementData});
 });
