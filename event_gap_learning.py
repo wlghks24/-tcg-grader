@@ -25,7 +25,7 @@ ROOT = Path(__file__).resolve().parent
 MEMORY = ROOT / "event_gap_learning.json"
 PROMO = ROOT / "promo_events.json"
 MANUAL_EVIDENCE = ROOT / "manual_event_evidence.json"
-MAX_CELLS, MAX_TERMS, MAX_SEEN = 180, 600, 500
+MAX_CELLS, MAX_TERMS, MAX_SEEN = 220, 650, 550
 MAX_REGION_HINTS, MAX_RECOVERIES = 360, 240
 TOKEN_RE = re.compile(r"[A-Za-z][A-Za-z0-9_.&'/-]{2,32}|[가-힣]{2,18}|[ァ-ヶ一-龠]{2,18}")
 PHRASE_RE = re.compile(r"\b[A-Z][A-Z0-9&'./-]{2,}(?:\s+[A-Z][A-Z0-9&'./-]{2,}){1,4}\b")
@@ -142,6 +142,9 @@ def _topic(row):
         )
     )
     checks = (
+        ("service_status", r"점검|서비스\s*장애|접속\s*(?:장애|오류)|로그인\s*(?:불가|장애)|복구\s*완료|maintenance|service\s+(?:outage|unavailable|disruption)|login\s+(?:issue|failure|unavailable)|incident|resolved|メンテナンス|障害|不具合|ログインできない|利用できません|復旧"),
+        ("results", r"대회\s*결과|경기\s*결과|결과\s*발표|우승자\s*발표|입상자|최종\s*순위|우승\s*덱|상위\s*덱|tournament\s+results?|event\s+results?|match\s+results?|final\s+standings?|top\s+finishers?|winning\s+deck|champion\s+deck|大会結果|試合結果|結果発表|優勝者発表|入賞者|最終順位|優勝デッキ|上位デッキ"),
+        ("purchase_policy", r"추첨\s*판매|구매\s*제한|판매\s*제한|1인\s*\d+개|본인\s*인증.{0,20}(?:판매|구매)|구매권|구매\s*티켓|가상\s*대기열|lottery\s+sale|purchase\s+limit|sales?\s+limit|limited\s+to\s+(?:one|\d+)\s+items?\s+per\s+person|identity\s+verification.{0,30}(?:sale|purchase)|virtual\s+queue|purchase\s+(?:ticket|voucher)|抽選販売|購入制限|販売制限|お一人様\s*\d+点|本人認証.{0,20}(?:販売|購入)|購入券|購入チケット|仮想待機列"),
         ("status_update", r"취소|연기|일정\s*변경|시간\s*변경|장소\s*변경|갱신내용|cancel(?:led|ed|ation)?|postpon(?:e|ed|ement)|reschedul(?:e|ed|ing)|schedule\s+change|venue\s+change|中止|延期|日程変更|時間変更|会場変更|内容変更"),
         ("deadline", r"마감|신청\s*기한|응모\s*기한|접수\s*기한|신청기간|응모기간|접수기간|deadline|apply\s+by|registration\s+closes?|application\s+period|締切|期限|応募期間|申込期間|受付期間"),
         ("access", r"참가\s*자격|참가조건|체크인|입장권|관람객|패스|정원|대기\s*명단|플레이어\s*ID|덱\s*리스트|참가비|eligib(?:le|ility)|check[- ]?in|waitlist|interest\s+list|spectator|admission|entry\s+fee|player\s+id|deck\s+list|seating|capacity|\bbadge\b|\bpass\b|参加資格|参加条件|チェックイン|入場券|観戦|パス|定員|キャンセル待ち|プレイヤーID|デッキリスト|参加費"),
