@@ -23,6 +23,7 @@ jobs:
       - name: Verify shared stateless learning and crosscheck contracts
         run: |
           python main_selfrefine_gate.py --self-test
+          python main_crosscheck_export.py --self-test
           python selfrefine_crosscheck_gate.py --self-test
           python -m unittest -v test_selfrefine_domain_isolation_v18.py
       - name: Run bounded Main SELFREFINE only
