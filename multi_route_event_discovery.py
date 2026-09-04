@@ -168,7 +168,7 @@ OFFICIAL_ROUTES = {
         "https://www.onepiece-cardgame.com/events/",
         "https://www.onepiece-cardgame.com/products/",
         "https://www.onepiece-cardgame.com/rules/",
-        "https://one-piece.com/news/",
+        "https://one-piece.com/news/index.html",
     ),
     ("원피스 카드", "US"): (
         "https://en.onepiece-cardgame.com/",

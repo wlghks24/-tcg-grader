@@ -354,13 +354,13 @@ def _game_query_terms(game: str, region: str) -> str:
         ],
         "ja": [
             "イベント", "コラボ", "キャンペーン", "プロモ", "映画", "劇場版", "発売",
-            "再販", "再入荷", "売り切れ", "応募", "抽選", "大会", "締切", "期限",
+            "再販", "再入荷", "売り切れ", "応募", "抽選", "配信", "大会", "締切", "期限",
             "ルール", "禁止", "制限", "エラッタ", "大会結果", "優勝デッキ",
             "障害", "復旧", "価格変更", "製造不良", "リコール", "偽造品",
         ],
         "en": [
             "event", "collab", "collaboration", "promo", "movie", "film", "release",
-            "reprint", "restock", "sold-out", "entry", "lottery", "tournament",
+            "reprint", "restock", "sold-out", "entry", "registration", "lottery", "twitch", "tournament",
             "deadline", "rules", "banned", "restricted", "errata", "tournament results",
             "winning deck", "service outage", "resolved", "price change",
             "manufacturing error", "product recall", "counterfeit",
