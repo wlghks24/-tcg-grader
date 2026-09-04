@@ -68,27 +68,33 @@ class OcrSelfrefineV15Tests(unittest.TestCase):
             fallback = identity._ocr_language("UNKNOWN", multilingual_fallback=True)
         self.assertEqual(fallback, "eng+kor+jpn")
 
-    def test_sufficient_browser_ocr_skips_tesseract_and_even_image_decode(self):
+    def test_browser_seed_is_preserved_but_does_not_skip_requested_hierarchy(self):
         temp, patcher = self._catalog_context([
             {"game": "onepiece", "card_name": "Monkey D. Luffy", "card_number": "OP13-007"},
         ])
+        buffer = io.BytesIO()
+        Image.new("RGB", (900, 1300), "white").save(buffer, format="PNG")
         try:
-            with patcher, mock.patch.object(identity, "_tesseract_binary") as binary:
+            with patcher, \
+                 mock.patch.object(identity, "_tesseract_binary", return_value="/usr/bin/tesseract"), \
+                 mock.patch.object(identity, "_tesseract_languages", return_value=frozenset({"eng", "jpn"})), \
+                 mock.patch.object(identity, "_run_card_tesseract", return_value=("MONKEY D LUFFY OP13-007", None)) as run:
                 text, error, diag = identity.ocr_image_detailed(
-                    b"not-an-image",
+                    buffer.getvalue(),
                     game="onepiece",
                     region="JP",
                     seed_text="MONKEY D LUFFY OP13-007",
                 )
-            binary.assert_not_called()
-            self.assertEqual(text, "")
             self.assertIsNone(error)
+            self.assertIn("OP13-007", text)
             self.assertTrue(diag["seed_text_sufficient"])
-            self.assertEqual(diag["pass_count"], 0)
+            self.assertEqual(run.call_count, 13)
+            self.assertEqual(diag["stage_region_counts"], {"1": 1, "2": 4, "3": 8})
+            self.assertTrue(diag["all_stages_completed"])
         finally:
             temp.cleanup()
 
-    def test_server_ocr_stops_after_first_high_confidence_pass(self):
+    def test_server_ocr_completes_all_three_stages_even_after_high_confidence_stage1(self):
         temp, patcher = self._catalog_context([
             {"game": "onepiece", "card_name": "Monkey D. Luffy", "card_number": "OP13-007"},
         ])
@@ -104,9 +110,9 @@ class OcrSelfrefineV15Tests(unittest.TestCase):
                 )
             self.assertIsNone(error)
             self.assertIn("OP13-007", text)
-            self.assertEqual(run.call_count, 1)
-            self.assertEqual(diag["pass_count"], 1)
-            self.assertTrue(diag["early_stop"])
+            self.assertEqual(run.call_count, 13)
+            self.assertEqual(diag["pass_count"], 13)
+            self.assertEqual(diag["stages_completed"], [1, 2, 3])
         finally:
             temp.cleanup()
 
@@ -159,7 +165,7 @@ class OcrSelfrefineV15Tests(unittest.TestCase):
         self.assertEqual(source.count("window.loadCardImage(file)"), 1)
         self.assertNotIn("async function imageHash(file)", source)
         self.assertNotIn("async function imageData(file)", source)
-        self.assertIn("v15-ocr-selfrefine", source)
+        self.assertIn("v16-ocr-hierarchical-1-4-8", source)
 
 
 if __name__ == "__main__":
