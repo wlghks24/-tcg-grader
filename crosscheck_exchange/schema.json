@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://github.com/wlghks24/-tcg-grader/crosscheck_exchange/schema.json",
   "title": "SELFREFINE passive cross-domain exchange",
-  "description": "Only passive factual JSON/JSONL records. No executable payload or persisted runtime/provider/retry/learning state.",
+  "description": "Passive cross-domain exchange for factual records and exact-allowlist peer learning summaries. No executable payload or persisted runtime/provider/retry/raw learning state.",
   "oneOf": [
     {
       "$ref": "#/$defs/envelope"
@@ -12,6 +12,9 @@
       "items": {
         "$ref": "#/$defs/record"
       }
+    },
+    {
+      "$ref": "#/$defs/learning_envelope"
     }
   ],
   "$defs": {
@@ -123,6 +126,115 @@
         }
       },
       "additionalProperties": false
+    },
+    "learning_envelope": {
+      "type": "object",
+      "required": [
+        "domain",
+        "kind",
+        "lessons"
+      ],
+      "properties": {
+        "domain": {
+          "enum": [
+            "main",
+            "instagram_content"
+          ]
+        },
+        "kind": {
+          "const": "learning_summary"
+        },
+        "lessons": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/learning_record"
+          }
+        }
+      },
+      "additionalProperties": false
+    },
+    "learning_record": {
+      "type": "object",
+      "required": [
+        "lesson_id",
+        "subsystem",
+        "issue_class",
+        "trigger_condition",
+        "symptom_summary",
+        "root_cause_class",
+        "fix_pattern",
+        "prevention_rule_id",
+        "verification_result",
+        "regression_pass",
+        "recurrence_count",
+        "applicable_scope",
+        "confidence_level"
+      ],
+      "properties": {
+        "lesson_id": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 160
+        },
+        "subsystem": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 120
+        },
+        "issue_class": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 120
+        },
+        "trigger_condition": {
+          "type": "string",
+          "maxLength": 300
+        },
+        "symptom_summary": {
+          "type": "string",
+          "maxLength": 500
+        },
+        "root_cause_class": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 160
+        },
+        "fix_pattern": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 500
+        },
+        "prevention_rule_id": {
+          "type": "string",
+          "maxLength": 160
+        },
+        "verification_result": {
+          "type": "string",
+          "maxLength": 120
+        },
+        "regression_pass": {
+          "type": "boolean"
+        },
+        "recurrence_count": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 1000000
+        },
+        "applicable_scope": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 200
+        },
+        "confidence_level": {
+          "enum": [
+            "low",
+            "medium",
+            "high",
+            "unknown"
+          ]
+        }
+      },
+      "additionalProperties": false
     }
   },
   "x-crosscheck-policy": {
@@ -140,7 +252,23 @@
       "learning_state",
       "error_ledger",
       "render_state",
-      "collector_state"
+      "collector_state",
+      "raw_log",
+      "parser_config",
+      "parser_state",
+      "retry_queue",
+      "source_health",
+      "baseline",
+      "ranking_weights",
+      "confidence_tuning",
+      "raw_measurements",
+      "grading_raw",
+      "grading_calibration",
+      "pixel_features",
+      "image_features",
+      "upload_state",
+      "delivery_state",
+      "quarantine"
     ],
     "fail_closed_execution_markers": [
       "exec",
@@ -153,6 +281,31 @@
       "marshal",
       "subprocess",
       "os.system"
+    ],
+    "peer_learning_summary_only": true,
+    "peer_fix_auto_apply": false,
+    "peer_prevention_rule_copy": false,
+    "peer_adoption_gate": [
+      "reproduction_test",
+      "root_cause_reconfirmation",
+      "minimal_scope_fix",
+      "local_regression_test",
+      "full_regression_test"
+    ],
+    "peer_learning_allowed_fields": [
+      "lesson_id",
+      "subsystem",
+      "issue_class",
+      "trigger_condition",
+      "symptom_summary",
+      "root_cause_class",
+      "fix_pattern",
+      "prevention_rule_id",
+      "verification_result",
+      "regression_pass",
+      "recurrence_count",
+      "applicable_scope",
+      "confidence_level"
     ]
   }
 }
