@@ -10,6 +10,7 @@ from pathlib import Path
 from unittest import mock
 
 import auto_update_all
+import collection_source_coverage_v28
 import main_crosscheck_export
 import selfrefine_crosscheck_gate
 import tcg_updater
@@ -188,6 +189,15 @@ class Operational0600RefreshV25Tests(unittest.TestCase):
         self.assertIn("atomic_write_json(REPORT, result", source)
         self.assertNotIn("REPORT.write_text(", source)
 
+    def test_official_source_coverage_contract_is_nine_by_nine(self):
+        configured = collection_source_coverage_v28.configured_matrix()
+        direct = collection_source_coverage_v28.direct_entry_matrix()
+        self.assertTrue(configured["ok"], configured)
+        self.assertEqual(configured["configured_cells"], 9)
+        self.assertTrue(direct["ok"], direct)
+        self.assertEqual(direct["configured_cells"], 9)
+        self.assertGreaterEqual(len(tcg_updater.SOURCES), 30)
+
     def test_daily_0600_workflow_refreshes_live_health_with_ci_only_cap(self):
         text = Path(".github/workflows/daily-0600-collection-instagram-accuracy.yml").read_text(
             encoding="utf-8"
@@ -205,6 +215,9 @@ class Operational0600RefreshV25Tests(unittest.TestCase):
         self.assertIn("source_health_age_seconds", text)
         self.assertIn("adaptive_health_age_seconds", text)
         self.assertIn("critical_collection_results", text)
+        self.assertIn("collection_source_coverage_v28.audit_source_stats", text)
+        self.assertIn("official_source_coverage", text)
+        self.assertIn("healthy_cells", text)
         self.assertIn("stale {label} health", text)
         self.assertIn("future-dated {label} health", text)
         self.assertIn("timeout-minutes: 30", text)
