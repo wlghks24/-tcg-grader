@@ -36,7 +36,8 @@ class SelfrefineResolutionResearchV24Tests(unittest.TestCase):
             state = root / "state.json"
             report = root / "report.json"
             result = research.observe_errors(
-                [self._issue()], root=root, state_path=state, report_path=report
+                [self._issue()], root=root, state_path=state, report_path=report,
+                network_research=False,
             )
             self.assertEqual(result["new_error_count"], 1)
             self.assertTrue(result["full_repository_scan"])
@@ -64,7 +65,8 @@ class SelfrefineResolutionResearchV24Tests(unittest.TestCase):
             state = root / "state.json"
             report = root / "report.json"
             research.observe_errors(
-                [self._issue()], root=root, state_path=state, report_path=report
+                [self._issue()], root=root, state_path=state, report_path=report,
+                network_research=False,
             )
             staged = research.stage_repairs([{
                 "error_signature": "a" * 20,
@@ -89,7 +91,8 @@ class SelfrefineResolutionResearchV24Tests(unittest.TestCase):
             report = root / "report.json"
             issue = self._issue()
             research.observe_errors(
-                [issue], root=root, state_path=state, report_path=report
+                [issue], root=root, state_path=state, report_path=report,
+                network_research=False,
             )
             research.stage_repairs([{
                 "error_signature": "a" * 20,
@@ -112,7 +115,8 @@ class SelfrefineResolutionResearchV24Tests(unittest.TestCase):
             )
 
             observed = research.observe_errors(
-                [issue], root=root, state_path=state, report_path=report
+                [issue], root=root, state_path=state, report_path=report,
+                network_research=False,
             )
             self.assertTrue(
                 observed["errors"][0]["known_verified_resolution"]
@@ -129,7 +133,8 @@ class SelfrefineResolutionResearchV24Tests(unittest.TestCase):
             state = root / "state.json"
             report = root / "report.json"
             research.observe_errors(
-                [self._issue()], root=root, state_path=state, report_path=report
+                [self._issue()], root=root, state_path=state, report_path=report,
+                network_research=False,
             )
             research.stage_repairs([{
                 "error_signature": "a" * 20,
