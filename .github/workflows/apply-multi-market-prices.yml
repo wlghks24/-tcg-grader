@@ -27,8 +27,14 @@ jobs:
           grep -q 'multi_market_prices.js' index.html
           grep -q '/api/multi-market-prices' tcg_updater.py
           grep -q "multi_market_prices.js','multi_market_prices.css" tcg_updater.py
-          python -m py_compile tcg_updater.py multi_market_price_collector.py
-          python -m unittest -v test_multi_market_price_collector.py
+          python - <<'PY'
+          from pathlib import Path
+          html=Path('index.html').read_text(encoding='utf-8')
+          assert html.count('multi_market_prices.css') == 1, 'duplicate multi-market CSS tag'
+          assert html.count('multi_market_prices.js') == 1, 'duplicate multi-market JS tag'
+          PY
+          python -m py_compile tcg_updater.py multi_market_price_collector.py apply_multi_market_prices_patch.py
+          python -m unittest -v test_multi_market_price_collector.py test_market_reference_sources_v130.py test_apply_patch_idempotency.py
       - name: Commit generated integration
         run: |
           if git diff --quiet -- index.html tcg_updater.py .gitignore; then exit 0; fi
