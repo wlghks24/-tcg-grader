@@ -192,7 +192,7 @@ def _source_health_signals(now: dt.datetime, *, runtime_live: bool) -> list[dict
                 auto_action="bounded_collection_refresh",
             ))
 
-    fresh_enough = age is not None and age <= 24
+    fresh_enough = runtime_live and age is not None and age <= 24
     if fresh_enough:
         for name, row in rows.items():
             if not isinstance(row, dict):
@@ -398,6 +398,9 @@ def _github_signals(repo: str, token: str | None, current_run_id: str | None) ->
     failed_critical = []
     for name, row in latest.items():
         if row.get("status") != "completed":
+            continue
+        created = _parse_time(row.get("created_at"))
+        if created is not None and (_now() - created).total_seconds() > 7 * 24 * 3600:
             continue
         conclusion = row.get("conclusion")
         if conclusion not in {"failure", "timed_out", "startup_failure", "action_required"}:
