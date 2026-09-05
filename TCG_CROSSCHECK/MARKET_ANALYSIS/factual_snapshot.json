@@ -11,7 +11,7 @@
     "manifest_validated": true,
     "allowed_fields_only": true,
     "exact_factual_types_enforced": true,
-    "write_readback_verified": false,
+    "write_readback_verified": true,
     "isolation_breach": false
   },
   "error_code": null
