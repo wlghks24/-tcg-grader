@@ -92,6 +92,13 @@ class CollectionVerificationGateTests(unittest.TestCase):
         self.assertEqual("degraded", report["status"])
         self.assertTrue(any(x["code"] == "INVALID_RELEASE_ROW" for x in report["findings"]))
 
+    def test_global_release_scope_is_valid(self):
+        self.valid_fixture()
+        self.write("releases.json", {"items": [{"game": "NARUTO", "region": "GLOBAL", "name": "NARUTO CARD GAME", "release_window": "2027 summer", "source": "https://example.com/naruto"}]})
+        report = gate.verify(self.root, now=self.now)
+        self.assertEqual("pass", report["status"])
+        self.assertEqual(0, report["metrics"]["invalid_release_items"])
+
 
 if __name__ == "__main__":
     unittest.main()
