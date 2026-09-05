@@ -12,6 +12,8 @@ from __future__ import annotations
 import argparse
 import datetime as dt
 import json
+import os
+import tempfile
 from pathlib import Path
 from typing import Any
 
@@ -56,6 +58,37 @@ def _read_json(path: Path) -> dict[str, Any]:
         return value if isinstance(value, dict) else {}
     except (OSError, ValueError, TypeError, UnicodeError):
         return {}
+
+
+def _safe_int(value: object, default: int = 0) -> int:
+    try:
+        return int(value)
+    except (TypeError, ValueError, OverflowError):
+        return default
+
+
+def _write_json_atomic(path: Path, payload: dict[str, Any]) -> None:
+    path = path.resolve()
+    path.parent.mkdir(parents=True, exist_ok=True)
+    temp_path: Path | None = None
+    try:
+        with tempfile.NamedTemporaryFile(
+            mode="w",
+            encoding="utf-8",
+            dir=path.parent,
+            prefix=f".{path.name}.",
+            suffix=".tmp",
+            delete=False,
+        ) as handle:
+            json.dump(payload, handle, ensure_ascii=False, indent=2)
+            handle.write("\n")
+            handle.flush()
+            os.fsync(handle.fileno())
+            temp_path = Path(handle.name)
+        temp_path.replace(path)
+    finally:
+        if temp_path is not None and temp_path.exists():
+            temp_path.unlink()
 
 
 def _parse_time(value: object) -> dt.datetime | None:
@@ -114,7 +147,7 @@ def audit_main_collection(
             continue
 
         age = _age_hours(row.get("last_run"), now)
-        consecutive_failures = int(row.get("consecutive_failures") or 0)
+        consecutive_failures = _safe_int(row.get("consecutive_failures"), 0)
         last_ok = bool(row.get("last_ok"))
         recovered = bool(row.get("last_recovered"))
 
@@ -180,8 +213,8 @@ def audit_main_collection(
         )
 
     coverage = promo.get("coverage") if isinstance(promo.get("coverage"), dict) else {}
-    expected = int(coverage.get("expected_game_region_pairs") or 0)
-    covered = int(coverage.get("covered_game_region_pairs") or 0)
+    expected = _safe_int(coverage.get("expected_game_region_pairs"), 0)
+    covered = _safe_int(coverage.get("covered_game_region_pairs"), 0)
     missing_pairs = coverage.get("missing_source_pairs") or []
     if expected != EXPECTED_GAME_REGION_PAIRS or covered < EXPECTED_GAME_REGION_PAIRS or missing_pairs:
         findings.append(
@@ -335,7 +368,30 @@ def audit_cross_domain(main_exchange: Path, instagram_exchange: Path) -> dict[st
             ],
         }
 
-    result = run_crosscheck(main_exchange, instagram_exchange)
+    try:
+        result = run_crosscheck(main_exchange, instagram_exchange)
+    except Exception as exc:
+        error_text = str(exc).replace("\n", " ")[:400]
+        return {
+            "status": "validation_error",
+            "main_records": 0,
+            "instagram_records": 0,
+            "agree": 0,
+            "conflict": 0,
+            "reverification_required": 0,
+            "error_type": type(exc).__name__,
+            "error": error_text,
+            "repair_actions": [
+                _action(
+                    "critical",
+                    "crosscheck",
+                    "repair_invalid_snapshot",
+                    f"Cross-domain snapshot validation failed: {type(exc).__name__}: {error_text}",
+                    "Keep the exchange fail-closed. Re-export both passive snapshots, validate JSON/JSONL schema and forbidden-state fields, then rerun the crosscheck before using the affected facts.",
+                )
+            ],
+        }
+
     actions: list[dict[str, str]] = []
     if int(result.get("conflict") or 0) > 0:
         actions.append(
@@ -395,11 +451,20 @@ def build_report(
     critical = sum(1 for row in findings if row.get("severity") == "critical")
     high = sum(1 for row in findings if row.get("severity") == "high")
     medium = sum(1 for row in findings if row.get("severity") == "medium")
-    conflicts = int(cross.get("conflict") or 0)
+    conflicts = _safe_int(cross.get("conflict"), 0)
+    cross_validation_error = cross.get("status") == "validation_error"
 
-    health_score = max(0, 100 - critical * 25 - high * 10 - medium * 3 - conflicts * 15)
+    health_score = max(
+        0,
+        100
+        - critical * 25
+        - high * 10
+        - medium * 3
+        - conflicts * 15
+        - (25 if cross_validation_error else 0),
+    )
     status = "pass"
-    if critical or conflicts:
+    if critical or conflicts or cross_validation_error:
         status = "fail_closed"
     elif high:
         status = "degraded"
@@ -418,6 +483,7 @@ def build_report(
             "medium_findings": medium,
             "high_or_critical_findings": high + critical,
             "repair_action_count": len(actions),
+            "crosscheck_validation_error": cross_validation_error,
         },
         "main_collection": main,
         "instagram_policy": instagram,
@@ -438,6 +504,20 @@ def build_report(
     return report
 
 
+def _exit_code(
+    report: dict[str, Any],
+    *,
+    strict_policy: bool = False,
+    fail_on_degraded: bool = False,
+) -> int:
+    status = str((report.get("summary") or {}).get("status") or "")
+    if strict_policy and status == "fail_closed":
+        return 1
+    if fail_on_degraded and status in {"degraded", "fail_closed"}:
+        return 1
+    return 0
+
+
 def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--adaptive", default=str(DEFAULT_MAIN_STATS))
@@ -450,6 +530,7 @@ def main() -> int:
     parser.add_argument("--report", default=str(DEFAULT_REPORT))
     parser.add_argument("--now")
     parser.add_argument("--strict-policy", action="store_true")
+    parser.add_argument("--fail-on-degraded", action="store_true")
     args = parser.parse_args()
 
     now = _parse_time(args.now) if args.now else dt.datetime.now(dt.timezone.utc)
@@ -469,12 +550,14 @@ def main() -> int:
     )
 
     output = Path(args.report)
-    output.write_text(json.dumps(report, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+    _write_json_atomic(output, report)
     print(json.dumps(report["summary"], ensure_ascii=False))
 
-    if args.strict_policy and report["summary"]["critical_findings"]:
-        return 1
-    return 0
+    return _exit_code(
+        report,
+        strict_policy=args.strict_policy,
+        fail_on_degraded=args.fail_on_degraded,
+    )
 
 
 if __name__ == "__main__":

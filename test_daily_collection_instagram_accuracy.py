@@ -7,7 +7,7 @@ import tempfile
 import unittest
 from pathlib import Path
 
-from daily_collection_instagram_accuracy import build_report
+from daily_collection_instagram_accuracy import _exit_code, build_report
 from shared_self_learning.engine import normalize_crosscheck_record
 
 NOW = dt.datetime(2026, 9, 5, 21, 0, tzinfo=dt.timezone.utc)
@@ -111,6 +111,8 @@ class DailyAuditTest(unittest.TestCase):
         self.assertIn("stale_job", kinds)
         self.assertIn("repeated_failure", kinds)
         self.assertEqual(report["summary"]["status"], "degraded")
+        self.assertEqual(_exit_code(report, strict_policy=True), 0)
+        self.assertEqual(_exit_code(report, fail_on_degraded=True), 1)
 
     def test_policy_regression_fails_closed(self):
         routes = good_routes()
@@ -181,6 +183,49 @@ class DailyAuditTest(unittest.TestCase):
             self.assertTrue(
                 any(x["rule"] == "reverify_conflict" for x in report["repair_actions"])
             )
+            self.assertEqual(_exit_code(report, strict_policy=True), 1)
+
+    def test_malformed_numeric_health_fields_do_not_crash_audit(self):
+        adaptive = healthy_adaptive()
+        adaptive["jobs"]["releases.json"]["consecutive_failures"] = "not-an-int"
+        promo = healthy_promo()
+        promo["coverage"]["covered_game_region_pairs"] = {"bad": "shape"}
+        report = self._report(adaptive=adaptive, promo=promo)
+        kinds = {x["kind"] for x in report["main_collection"]["findings"]}
+        self.assertIn("coverage_gap", kinds)
+        self.assertEqual(report["summary"]["status"], "degraded")
+
+    def test_malformed_crosscheck_snapshot_fails_closed_with_repair_action(self):
+        exchange_root = Path("crosscheck_exchange")
+        exchange_root.mkdir(exist_ok=True)
+        with tempfile.TemporaryDirectory(dir=exchange_root) as td:
+            root = Path(td)
+            main_path = root / "main.json"
+            instagram_path = root / "instagram.json"
+            main_path.write_text("{not-json", encoding="utf-8")
+            instagram_path.write_text(
+                json.dumps({"domain": "instagram_content", "records": []}),
+                encoding="utf-8",
+            )
+            report = build_report(
+                now=NOW,
+                adaptive=healthy_adaptive(),
+                source_stats={
+                    "updated_at": "2026-09-05T20:00:00+00:00",
+                    "sources": {"x": {}},
+                },
+                promo=healthy_promo(),
+                routes=good_routes(),
+                main_exchange=main_path,
+                instagram_exchange=instagram_path,
+            )
+            self.assertEqual(report["summary"]["status"], "fail_closed")
+            self.assertTrue(report["summary"]["crosscheck_validation_error"])
+            self.assertEqual(report["cross_domain"]["status"], "validation_error")
+            self.assertTrue(
+                any(x["rule"] == "repair_invalid_snapshot" for x in report["repair_actions"])
+            )
+            self.assertEqual(_exit_code(report, strict_policy=True), 1)
 
 
 if __name__ == "__main__":

@@ -34,14 +34,23 @@ on:
 permissions:
   contents: read
 
+concurrency:
+  group: daily-0600-collection-instagram-accuracy-${{ github.ref }}
+  cancel-in-progress: false
+
 jobs:
   audit:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 12
     env:
-      PYTHONPATH: .
+      PYTHONPATH: ${{ github.workspace }}
+      PYTHONDONTWRITEBYTECODE: '1'
+      PYTHONUNBUFFERED: '1'
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          persist-credentials: false
+          fetch-depth: 1
       - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97
         with:
           python-version: '3.11'
@@ -55,14 +64,85 @@ jobs:
 
       - name: Verify 06:00 audit regression
         run: |
-          python -m py_compile daily_collection_instagram_accuracy.py
+          python -m py_compile daily_collection_instagram_accuracy.py selfrefine_crosscheck_gate.py selfrefine_domain_boundary_guard.py
+          python -c "import daily_collection_instagram_accuracy, selfrefine_crosscheck_gate"
           python -m unittest -v test_daily_collection_instagram_accuracy.py
 
       - name: Run daily collection vs Instagram audit
         run: |
+          flags=(--strict-policy)
+          if [[ "${{ github.event_name }}" == "schedule" ]]; then
+            flags+=(--fail-on-degraded)
+          fi
           python daily_collection_instagram_accuracy.py \
             --report COLLECTION_INSTAGRAM_ACCURACY_REPORT.json \
-            --strict-policy
+            "${flags[@]}"
+
+      - name: Validate audit report artifact
+        if: always()
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+
+          path = Path("COLLECTION_INSTAGRAM_ACCURACY_REPORT.json")
+          if not path.is_file():
+              raise SystemExit("06:00 audit report is missing")
+
+          payload = json.loads(path.read_text(encoding="utf-8"))
+          if payload.get("schema_version") != 1:
+              raise SystemExit("unexpected 06:00 audit report schema_version")
+
+          summary = payload.get("summary")
+          if not isinstance(summary, dict):
+              raise SystemExit("06:00 audit report summary is missing")
+          required_summary = {
+              "status",
+              "health_score",
+              "critical_findings",
+              "high_findings",
+              "medium_findings",
+              "repair_action_count",
+              "crosscheck_validation_error",
+          }
+          missing = sorted(required_summary - set(summary))
+          if missing:
+              raise SystemExit(f"06:00 audit report summary missing keys: {missing}")
+          if summary["status"] not in {"pass", "warning", "degraded", "fail_closed"}:
+              raise SystemExit(f"invalid 06:00 audit status: {summary['status']!r}")
+
+          safety = payload.get("safety")
+          if not isinstance(safety, dict):
+              raise SystemExit("06:00 audit safety contract is missing")
+          expected_safety = {
+              "main_instagram_runtime_state_merged": False,
+              "provider_health_shared": False,
+              "retry_history_shared": False,
+              "learning_state_shared": False,
+              "verification_auto_promoted": False,
+              "conflicting_values_averaged": False,
+              "403_429_bypass_allowed": False,
+              "passive_factual_exchange_only": True,
+          }
+          mismatches = {
+              key: {"expected": expected, "actual": safety.get(key)}
+              for key, expected in expected_safety.items()
+              if safety.get(key) is not expected
+          }
+          if mismatches:
+              raise SystemExit(f"06:00 audit safety contract mismatch: {mismatches}")
+
+          print(
+              json.dumps(
+                  {
+                      "status": summary["status"],
+                      "health_score": summary["health_score"],
+                      "crosscheck_validation_error": summary["crosscheck_validation_error"],
+                  },
+                  ensure_ascii=False,
+              )
+          )
+          PY
 
       - name: Show audit summary
         if: always()
@@ -77,5 +157,5 @@ jobs:
         with:
           name: collection-instagram-accuracy-report
           path: COLLECTION_INSTAGRAM_ACCURACY_REPORT.json
-          if-no-files-found: warn
+          if-no-files-found: error
           retention-days: 30
