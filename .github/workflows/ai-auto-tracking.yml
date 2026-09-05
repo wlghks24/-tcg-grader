@@ -1,0 +1,79 @@
+name: AI Auto Tracking
+
+on:
+  push:
+    branches: [main]
+  schedule:
+    - cron: '17 * * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  actions: read
+
+concurrency:
+  group: ai-auto-tracking-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  track:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    env:
+      GITHUB_TOKEN: ${{ github.token }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97
+        with:
+          python-version: '3.12'
+
+      - name: Compile AI tracker
+        run: python -m py_compile ai_auto_tracker.py test_ai_auto_tracker_v27.py
+
+      - name: Verify AI tracking safety and behavior
+        run: |
+          python ai_auto_tracker.py --self-test
+          python -m unittest -v test_ai_auto_tracker_v27.py
+          python main_selfrefine_gate.py --self-test
+          python verify_critical_feature_matrix_v25.py
+
+      - name: Track current repository and workflow health
+        run: >-
+          python ai_auto_tracker.py
+          --github
+          --trigger github-actions
+          --output AI_AUTO_TRACKING_REPORT.json
+          --fail-on high
+
+      - name: Publish concise tracking summary
+        if: always()
+        shell: bash
+        run: |
+          python - <<'PY'
+          import json, os
+          from pathlib import Path
+          path=Path('AI_AUTO_TRACKING_REPORT.json')
+          if not path.is_file():
+              print('AI tracking report was not produced')
+              raise SystemExit(0)
+          data=json.loads(path.read_text(encoding='utf-8'))
+          summary=data.get('summary') or {}
+          issues=data.get('issues') or []
+          lines=[
+              '## AI Auto Tracking',
+              '',
+              f"- status: **{data.get('status')}**",
+              f"- critical/high/medium: **{summary.get('critical',0)}/{summary.get('high',0)}/{summary.get('medium',0)}**",
+              f"- new/repeat/resolved: **{summary.get('new_issue_count',0)}/{summary.get('repeat_issue_count',0)}/{summary.get('resolved_since_last',0)}**",
+              f"- GitHub read-only: **{(data.get('safety') or {}).get('github_read_only')}**",
+              f"- 403/429 bypass: **{(data.get('safety') or {}).get('http_403_429_bypass')}**",
+              '',
+          ]
+          for row in issues[:8]:
+              lines.append(f"- [{row.get('severity')}] {row.get('component')}: {row.get('code')} — {row.get('next_action')}")
+          target=os.environ.get('GITHUB_STEP_SUMMARY')
+          if target:
+              with open(target,'a',encoding='utf-8') as handle:
+                  handle.write('\n'.join(lines)+'\n')
+          print('\n'.join(lines))
+          PY
