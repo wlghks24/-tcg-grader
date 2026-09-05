@@ -1,5 +1,5 @@
 {
-  "version": 9,
+  "version": 10,
   "domains": {
     "main": {
       "root": ".",
@@ -119,6 +119,11 @@
     "new_error_bounded_official_network_research": true,
     "research_network_allowlist_only": true,
     "research_raw_body_persisted": false,
-    "research_network_failure_blocks_selfrefine": false
+    "research_network_failure_blocks_selfrefine": false,
+    "pending_resolution_rule_binding_required": true,
+    "pending_resolution_after_hash_required": true,
+    "stale_pending_resolution_not_promoted": true,
+    "clean_run_skips_redundant_impact_scan": true,
+    "rolled_back_repair_not_staged_for_learning": true
   }
 }
