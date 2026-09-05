@@ -71,6 +71,8 @@ jobs:
           for row in bad: print('UNPINNED',*row)
           if bad: raise SystemExit(f'unpinned external actions: {len(bad)}')
           PY
+      - name: Verify critical feature coverage matrix
+        run: python verify_critical_feature_matrix_v25.py
       - name: Detect duplicate top-level definitions in active runtime modules
         run: |
           python - <<'PY'
