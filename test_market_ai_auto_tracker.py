@@ -44,7 +44,7 @@ class MarketAIAutoTrackerTests(unittest.TestCase):
             "name: Market AI Auto Tracker\n"
             "on: workflow_dispatch\n"
             "permissions:\n  contents: write\n"
-            "concurrency:\n  group: market-ai-\${{ github.ref }}\n  cancel-in-progress: true\n"
+            "concurrency:\n  group: market-ai-${{ github.ref }}\n  cancel-in-progress: true\n"
             "jobs:\n  test:\n    steps:\n"
             "      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1\n",
             encoding="utf-8",
