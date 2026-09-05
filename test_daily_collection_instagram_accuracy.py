@@ -103,13 +103,20 @@ class DailyAuditTest(unittest.TestCase):
                 "last_ok": False,
                 "last_recovered": True,
                 "consecutive_failures": 13,
-                "dominant_error_signature": "abc",
+                "dominant_error_signature": "historical-dominant",
+                "last_error_signature": "current-timeout",
             }
         )
         report = self._report(adaptive=adaptive)
         kinds = {x["kind"] for x in report["main_collection"]["findings"]}
         self.assertIn("stale_job", kinds)
         self.assertIn("repeated_failure", kinds)
+        repeated = next(
+            x for x in report["main_collection"]["findings"]
+            if x["kind"] == "repeated_failure"
+        )
+        self.assertEqual(repeated["current_error_signature"], "current-timeout")
+        self.assertEqual(repeated["dominant_error_signature"], "historical-dominant")
         self.assertEqual(report["summary"]["status"], "degraded")
         self.assertEqual(_exit_code(report, strict_policy=True), 0)
         self.assertEqual(_exit_code(report, fail_on_degraded=True), 1)
