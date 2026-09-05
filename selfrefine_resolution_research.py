@@ -1084,6 +1084,7 @@ def public_summary(*, state_path: Path = STATE) -> dict[str, Any]:
 
 def self_test() -> int:
     import tempfile
+    import verified_code_repair_rules as verified_repairs
 
     with tempfile.TemporaryDirectory() as tmp:
         root = Path(tmp)
@@ -1104,35 +1105,78 @@ def self_test() -> int:
             "state": "open",
         }
         observed = observe_errors(
-            [issue], root=root, state_path=state, report_path=report, network_research=False
+            [issue],
+            root=root,
+            state_path=state,
+            report_path=report,
+            network_research=False,
         )
         assert observed["new_error_count"] == 1, observed
-        impacted = {row["path"] for row in observed["errors"][0]["impact_analysis"]["impacted_files"]}
+        impacted = {
+            row["path"]
+            for row in observed["errors"][0]["impact_analysis"]["impacted_files"]
+        }
         assert {"broken.py", "consumer.py", "test_broken.py"}.issubset(impacted), impacted
         assert observed["errors"][0]["research"]["preferred_sources"]
         assert observed["errors"][0]["research"]["patch_from_search_text_allowed"] is False
 
-        staged = stage_repairs([{
-            "error_signature": "a" * 20,
-            "rule_id": "example-code-defined-rule",
-            "rule_fingerprint": "f" * 24,
-            "path": "broken.py",
-            "stage": "PYTHON_SYNTAX",
-        }], state_path=state)
+        repair_target = root / verified_repairs.RESOURCE_GUARD_PATH
+        repair_target.write_text(
+            "from pathlib import Path\n"
+            "x = Path('a.js').read_text(encoding='utf-8')\n",
+            encoding="utf-8",
+        )
+        repair_signature = "b" * 20
+        repair_issue = {
+            "error_signature": repair_signature,
+            "error_code": "SELFREFINE.RESOURCE_HANDLE_LEAK_RISK",
+            "stage": "RESOURCE_HANDLE_LEAK_RISK",
+            "path": verified_repairs.RESOURCE_GUARD_PATH,
+            "root_cause": "unclosed literal text read",
+            "evidence": "open(...).read() can leave a file handle",
+            "state": "open",
+        }
+        observe_errors(
+            [repair_issue],
+            root=root,
+            state_path=state,
+            report_path=report,
+            network_research=False,
+        )
+        applied = {
+            "error_signature": repair_signature,
+            "rule_id": verified_repairs.RESOURCE_RULE_ID,
+            "rule_fingerprint": verified_repairs.rule_fingerprint(
+                verified_repairs.RESOURCE_RULE_ID
+            ),
+            "path": verified_repairs.RESOURCE_GUARD_PATH,
+            "stage": "RESOURCE_HANDLE_LEAK_RISK",
+            "before_hash": _text_hash("old content"),
+            "after_hash": _text_hash(repair_target.read_text(encoding="utf-8")),
+            "rollback_outcome": "verified_kept",
+        }
+        staged = stage_repairs([applied], state_path=state)
         assert staged["pending_full_regression"] == 1, staged
         assert not _load_state(state)["lessons"], "must not learn before full regression"
 
-        finalized = finalize_pending(True, state_path=state)
+        finalized = finalize_pending(True, state_path=state, root=root)
         assert finalized["verified_resolution_lessons"] == 1, finalized
-        lesson = _load_state(state)["lessons"]["a" * 20]
+        lesson = _load_state(state)["lessons"][repair_signature]
         assert lesson["regression_pass"] is True
         assert lesson["verification_result"] == "full_regression_passed"
-        assert lesson["fix_pattern"].startswith("verified_code_rule:")
-
-        observed_again = observe_errors(
-            [issue], root=root, state_path=state, report_path=report, network_research=False
+        assert lesson["fix_pattern"] == (
+            f"verified_code_rule:{verified_repairs.RESOURCE_RULE_ID}"
         )
-        assert observed_again["errors"][0]["known_verified_resolution"] is True
+
+        clean = observe_errors(
+            [],
+            root=root,
+            state_path=state,
+            report_path=report,
+            network_research=False,
+        )
+        assert clean["impact_scan_skipped_no_open_errors"] is True
+        assert clean["repository_files_scanned"] == 0
 
     print("Main SELFREFINE new-error research + verified resolution learning: PASS")
     return 0
