@@ -389,7 +389,7 @@ def _github_signals(repo: str, token: str | None, current_run_id: str | None) ->
     latest: dict[str, dict[str, Any]] = {}
     for row in runs:
         name = row.get("name") or ""
-        if not name or name == "AI Auto Tracking":
+        if not name or name in {"AI Auto Tracking", "Integrated AI Auto Tracking"}:
             continue
         if name not in latest:
             latest[name] = row
