@@ -148,7 +148,7 @@ class Operational0600RefreshV25Tests(unittest.TestCase):
     def test_retired_pokemon_routes_are_replaced(self):
         self.assertEqual(
             update_promo_events.INDEXES[2][2],
-            "https://pokemoncard.co.kr/card/category/event",
+            "https://new.pokemonkorea.co.kr/card",
         )
         self.assertEqual(
             update_promo_events.OFFICIAL_SOURCE_REPLACEMENTS[
@@ -156,6 +156,20 @@ class Operational0600RefreshV25Tests(unittest.TestCase):
             ],
             "https://pokemonkorea.co.kr/2026_battle_tournament3/menu800",
         )
+
+    def test_pokemon_kr_event_uses_same_company_collection_fallback(self):
+        tracker = dict(update_promo_events.KR_MOVIE_TRACKERS[0])
+        self.assertEqual(tracker["source"], "https://www.pokemonkorea.co.kr/")
+        self.assertEqual(tracker["collection_source"], "https://new.pokemonkorea.co.kr/card")
+        with mock.patch.object(
+            update_promo_events,
+            "fetch",
+            side_effect=["official collection page ok", "secondary ok"],
+        ) as mocked:
+            checked, error = update_promo_events.check_existing(tracker)
+        self.assertIsNone(error)
+        self.assertEqual(mocked.call_args_list[0].args[0], "https://new.pokemonkorea.co.kr/card")
+        self.assertEqual(checked["verification_status"], "secondary_reachable")
 
     def test_factual_exchange_writers_use_atomic_runtime_helper(self):
         with tempfile.TemporaryDirectory() as tmp:
