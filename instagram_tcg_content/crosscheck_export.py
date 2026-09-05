@@ -6,6 +6,7 @@ import json
 from pathlib import Path
 
 from shared_self_learning.engine import normalize_crosscheck_record
+from safe_runtime import atomic_write_json
 
 ROOT = Path(__file__).resolve().parents[1]
 DEFAULT_OUTPUT = ROOT / "crosscheck_exchange" / "runtime-instagram.json"
@@ -13,10 +14,10 @@ DEFAULT_OUTPUT = ROOT / "crosscheck_exchange" / "runtime-instagram.json"
 
 def export_records(records: list[dict], output: Path = DEFAULT_OUTPUT) -> list[dict]:
     normalized = [normalize_crosscheck_record("instagram_content", row) for row in records]
-    output.parent.mkdir(parents=True, exist_ok=True)
-    output.write_text(
-        json.dumps({"domain": "instagram_content", "records": normalized}, ensure_ascii=False, indent=2) + "\n",
-        encoding="utf-8",
+    atomic_write_json(
+        output,
+        {"domain": "instagram_content", "records": normalized},
+        suffix=".instagram-crosscheck.tmp",
     )
     return normalized
 
