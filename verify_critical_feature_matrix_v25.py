@@ -70,6 +70,7 @@ FEATURE_FILES = {
 }
 
 EXHAUSTIVE_COMMANDS = {
+    "feature_matrix_guard": "python verify_critical_feature_matrix_v25.py",
     "root_test_sweep": "for file in test_*.py; do",
     "instagram_nested_tests": "python -m unittest discover -v -s instagram_tcg_content -p 'test_*.py'",
     "release_gate": "python verify_all.py",
