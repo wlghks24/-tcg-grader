@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 from __future__ import annotations
 
+import datetime as dt
 import json
 import os
 import tempfile
@@ -8,6 +9,7 @@ import unittest
 from pathlib import Path
 from unittest import mock
 
+import auto_update_all
 import main_crosscheck_export
 import selfrefine_crosscheck_gate
 import tcg_updater
@@ -48,6 +50,76 @@ class Operational0600RefreshV25Tests(unittest.TestCase):
         with mock.patch.dict(os.environ, {"TCG_SOURCE_TIMEOUT_CAP": "300"}, clear=False):
             self.assertEqual(tcg_updater._source_timeout({}), 300)
 
+    def test_stale_failure_streak_resets_without_erasing_lifetime_learning(self):
+        old_signature = "old-dominant"
+        stats = {
+            "jobs": {
+                "promo_events.json": {
+                    "runs": 13,
+                    "successes": 0,
+                    "failures": 0,
+                    "timeouts": 0,
+                    "partial_successes": 13,
+                    "recovered_successes": 13,
+                    "success_streak": 0,
+                    "consecutive_failures": 13,
+                    "last_run": "2026-08-26T10:47:08+00:00",
+                    "dominant_error_signature": old_signature,
+                    "error_patterns": {
+                        old_signature: {
+                            "count": 13,
+                            "sample": "historical network error",
+                            "last_seen": "2026-08-26T10:47:08+00:00",
+                        }
+                    },
+                }
+            }
+        }
+        auto_update_all._record_job_stat(
+            stats,
+            "promo_events.json",
+            2.5,
+            True,
+            error="한국 나루토 영화 개봉 확인: URLError: timed out",
+            partial=True,
+        )
+        row = stats["jobs"]["promo_events.json"]
+        self.assertEqual(row["consecutive_failures"], 1)
+        self.assertEqual(row["streak_reset_reason"], "observation_gap_over_72h")
+        self.assertEqual(row["runs"], 14)
+        self.assertIn(old_signature, row["error_patterns"])
+        self.assertNotEqual(row["last_error_signature"], old_signature)
+
+    def test_recent_failure_streak_remains_consecutive(self):
+        recent = dt.datetime.now(dt.timezone.utc).isoformat(timespec="seconds")
+        stats = {
+            "jobs": {
+                "promo_events.json": {
+                    "runs": 2,
+                    "successes": 0,
+                    "failures": 0,
+                    "timeouts": 0,
+                    "partial_successes": 2,
+                    "recovered_successes": 0,
+                    "success_streak": 0,
+                    "consecutive_failures": 2,
+                    "last_run": recent,
+                    "error_patterns": {},
+                }
+            }
+        }
+        auto_update_all._record_job_stat(
+            stats,
+            "promo_events.json",
+            1.0,
+            True,
+            error="URLError: timed out",
+            partial=True,
+        )
+        row = stats["jobs"]["promo_events.json"]
+        self.assertEqual(row["consecutive_failures"], 3)
+        self.assertNotIn("streak_reset_reason", row)
+
     def test_factual_exchange_writers_use_atomic_runtime_helper(self):
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
@@ -74,6 +146,15 @@ class Operational0600RefreshV25Tests(unittest.TestCase):
         self.assertIn("TCG_SOURCE_TIMEOUT_CAP: '30'", text)
         self.assertIn("source_collection_stats.json", text)
         self.assertIn("adaptive_collection_stats.json", text)
+        self.assertIn("github.event_name == 'push'", text)
+        self.assertIn("github.event_name == 'pull_request'", text)
+        self.assertIn("cancel-in-progress: ${{ github.event_name == 'pull_request' }}", text)
+        self.assertIn("MAX_HEALTH_AGE_SECONDS = 600", text)
+        self.assertIn("MAX_FUTURE_SKEW_SECONDS = 300", text)
+        self.assertIn("source_health_age_seconds", text)
+        self.assertIn("adaptive_health_age_seconds", text)
+        self.assertIn("stale {label} health", text)
+        self.assertIn("future-dated {label} health", text)
         self.assertIn("timeout-minutes: 30", text)
 
 

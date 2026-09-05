@@ -180,6 +180,10 @@ def audit_main_collection(
                     "job": name,
                     "severity": "high",
                     "consecutive_failures": consecutive_failures,
+                    "current_error_signature": (
+                        row.get("last_error_signature")
+                        or row.get("dominant_error_signature")
+                    ),
                     "dominant_error_signature": row.get("dominant_error_signature"),
                 }
             )
