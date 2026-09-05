@@ -136,7 +136,14 @@ class PeerLearningCrosscheckV23Tests(unittest.TestCase):
             "crosscheck_status": "conflicting-fix",
         }
         self.assertFalse(evaluate_main_peer_adoption(peer, safer_fix_selected=False, **flags)["adoption_allowed"])
-        self.assertTrue(evaluate_main_peer_adoption(peer, safer_fix_selected=True, **flags)["adoption_allowed"])
+        self.assertTrue(
+            evaluate_main_peer_adoption(
+                peer,
+                safer_fix_selected=True,
+                selected_fix_pattern="locally reproduced safer alternate-source fix",
+                **flags,
+            )["adoption_allowed"]
+        )
 
     def test_main_persistence_is_local_and_never_copies_peer_rule(self):
         peer = lesson("IG-PERSIST")
