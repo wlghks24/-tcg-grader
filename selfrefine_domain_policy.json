@@ -118,6 +118,7 @@
     "verified_resolution_reuse": true,
     "new_error_bounded_official_network_research": true,
     "research_network_allowlist_only": true,
-    "research_raw_body_persisted": false
+    "research_raw_body_persisted": false,
+    "research_network_failure_blocks_selfrefine": false
   }
 }
