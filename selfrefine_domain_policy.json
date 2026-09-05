@@ -1,5 +1,5 @@
 {
-  "version": 7,
+  "version": 8,
   "domains": {
     "main": {
       "root": ".",
@@ -14,7 +14,8 @@
         "retry": "MAIN_SELFREFINE_RETRY_STATE.json",
         "provider": "MAIN_SELFREFINE_PROVIDER_STATE.json",
         "verified_repair": "MAIN_SELFREFINE_VERIFIED_REPAIR_STATE.json",
-        "error_quarantine": "MAIN_SELFREFINE_ERROR_QUARANTINE_STATE.json"
+        "error_quarantine": "MAIN_SELFREFINE_ERROR_QUARANTINE_STATE.json",
+        "peer_prevention": "MARKET_ANALYSIS_PEER_PREVENTION_RULES.json"
       }
     },
     "instagram_content": {
@@ -36,7 +37,7 @@
     },
     "crosscheck_exchange": {
       "root": "crosscheck_exchange/",
-      "purpose": "passive JSON/JSONL factual exchange only; never executable"
+      "purpose": "passive JSON/JSONL factual exchange plus exact-allowlist peer learning summaries; never executable and never raw runtime state"
     }
   },
   "shared_algorithms": [
@@ -46,7 +47,11 @@
     "rank_candidates",
     "classify_regression_result",
     "bounded_retry_decision",
-    "classify_conflict"
+    "classify_conflict",
+    "normalize_peer_lesson",
+    "compare_learning_sets",
+    "classify_learning_pair",
+    "evaluate_main_peer_adoption"
   ],
   "legacy_compatibility_wrappers": [
     "observation_fingerprint",
@@ -91,6 +96,18 @@
     "repair_rule_fingerprint_required": true,
     "process_safe_selfrefine_state": true,
     "self_modify_max_files_per_run": 3,
-    "self_modify_git_write": false
+    "self_modify_git_write": false,
+    "cross_domain_learning_summary_exchange": true,
+    "cross_domain_peer_fix_auto_apply": false,
+    "cross_domain_peer_prevention_rule_copy": false,
+    "peer_learning_requires_reproduction": true,
+    "peer_learning_requires_root_cause_reconfirmation": true,
+    "peer_learning_requires_minimal_scope_fix": true,
+    "peer_learning_requires_local_regression": true,
+    "peer_learning_requires_full_regression": true,
+    "conflicting_fix_requires_safer_local_selection": true,
+    "grading_raw_cross_domain_share": false,
+    "grading_calibration_cross_domain_share": false,
+    "pixel_features_cross_domain_share": false
   }
 }
