@@ -210,6 +210,8 @@ def _default_state() -> dict[str, Any]:
             "unknown_error_direct_auto_patch": False,
             "code_defined_repairs_only": True,
             "full_regression_required_before_learning": True,
+            "research_plan_required_before_learning": True,
+            "local_error_disappearance_required_before_learning": True,
             "failed_verification_not_learned": True,
             "pending_resolution_rule_binding_required": True,
             "pending_resolution_after_hash_required": True,
@@ -968,6 +970,12 @@ def stage_repairs(
             ):
                 skip("impact_analysis_incomplete")
                 continue
+            research_fingerprint = _clean(
+                (issue.get("research") or {}).get("research_fingerprint"), 80
+            ).lower()
+            if not re.fullmatch(r"[0-9a-f]{24}", research_fingerprint or ""):
+                skip("research_plan_missing")
+                continue
             if not re.fullmatch(r"[0-9a-f]{20}", before_hash or ""):
                 skip("before_hash_missing")
                 continue
@@ -988,9 +996,8 @@ def stage_repairs(
                 "verification_status": "pending_full_regression",
                 "before_hash": before_hash,
                 "after_hash": after_hash,
-                "research_fingerprint": _clean(
-                    (issue.get("research") or {}).get("research_fingerprint"), 80
-                ),
+                "research_fingerprint": research_fingerprint,
+                "local_error_disappearance_verified": True,
                 "impact_files": [
                     row.get("path")
                     for row in (issue.get("impact_analysis") or {}).get("impacted_files", [])[:20]
@@ -1070,6 +1077,8 @@ def finalize_pending(
                     issue.get("stage"), 100
                 ):
                     binding_reason = "issue_stage_binding_changed"
+                elif pending_row.get("local_error_disappearance_verified") is not True:
+                    binding_reason = "local_error_disappearance_not_verified"
                 elif not re.fullmatch(r"[0-9a-f]{20}", after_hash or ""):
                     binding_reason = "after_hash_missing"
                 elif staged_at is None:
@@ -1139,7 +1148,8 @@ def finalize_pending(
                     ),
                     "resolution_method": (
                         "full_repository_impact_analysis -> official_source_research -> "
-                        "code_defined_minimal_fix -> local_scan -> full_regression"
+                        "code_defined_minimal_fix -> local_error_disappearance_check -> "
+                        "full_regression"
                     ),
                     "impacted_files": list(pending_row.get("impact_files") or [])[:20],
                     "verified_at": now,
