@@ -121,7 +121,9 @@ class DailyAuditTest(unittest.TestCase):
         self.assertFalse(report["safety"]["403_429_bypass_allowed"])
 
     def test_cross_domain_conflict_requires_reverification(self):
-        with tempfile.TemporaryDirectory() as td:
+        exchange_root = Path("crosscheck_exchange")
+        exchange_root.mkdir(exist_ok=True)
+        with tempfile.TemporaryDirectory(dir=exchange_root) as td:
             root = Path(td)
             main_path = root / "main.json"
             instagram_path = root / "instagram.json"
