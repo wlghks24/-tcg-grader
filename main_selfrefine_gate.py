@@ -238,6 +238,7 @@ def self_test():
     assert POLICY["rules"]["full_regression_failure_does_not_poison_verified_lesson"] is True
     assert POLICY["rules"]["local_resolution_is_provisional"] is True
     assert POLICY["rules"]["full_regression_promotes_quarantine_learning"] is True
+    assert POLICY["rules"]["legacy_local_success_not_promoted"] is True
     assert SHARED_SELF_LEARNING_CONTRACT_VERSION >= 3
     left = enrich_error("main", {"stage": "HTTP_429", "path": "a.py", "evidence": "rate limited"})
     right = enrich_error("instagram_content", {"stage": "HTTP_429", "path": "a.py", "evidence": "rate limited"})
