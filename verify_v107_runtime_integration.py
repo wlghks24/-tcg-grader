@@ -25,6 +25,15 @@ def fetch_json(url: str) -> tuple[int, dict]:
         return exc.code, json.loads(exc.read().decode("utf-8"))
 
 
+def fetch_text(url: str) -> tuple[int, str, str]:
+    with urllib.request.urlopen(url, timeout=5) as response:
+        return (
+            response.status,
+            str(response.headers.get("Content-Type") or ""),
+            response.read(200_000).decode("utf-8", "replace"),
+        )
+
+
 def main() -> dict:
     checks: list[dict] = []
 
@@ -35,8 +44,10 @@ def main() -> dict:
 
     check(
         "public_allowlist",
-        "social_event_candidates.json" in tcg_updater.PUBLIC_STATIC_FILES,
-        "SNS/Google 후보 JSON이 로컬 서버 공개 목록에 포함됨",
+        "social_event_candidates.json" in tcg_updater.PUBLIC_STATIC_FILES
+        and "feature_category_nav.css" in tcg_updater.PUBLIC_STATIC_FILES
+        and "feature_category_nav.js" in tcg_updater.PUBLIC_STATIC_FILES,
+        "SNS/Google 후보 JSON과 기능 카테고리 UI 자산이 로컬 서버 공개 목록에 포함됨",
     )
 
     handler = partial(tcg_updater.Handler, directory=str(ROOT))
@@ -56,6 +67,18 @@ def main() -> dict:
             "social_feed_http",
             status == 200 and isinstance(candidates.get("items"), list),
             "화면이 사용하는 SNS/Google 후보 JSON을 실제 HTTP로 제공함",
+        )
+        css_status, css_type, css_body = fetch_text(f"{base}/feature_category_nav.css")
+        js_status, js_type, js_body = fetch_text(f"{base}/feature_category_nav.js")
+        check(
+            "feature_category_assets_http",
+            css_status == 200
+            and "text/css" in css_type.lower()
+            and ".feature-category-nav" in css_body
+            and js_status == 200
+            and ("javascript" in js_type.lower() or "text/plain" in js_type.lower())
+            and "TCGFeatureCategoryNav" in js_body,
+            "기능 카테고리 CSS/JS를 로컬 PC·태블릿 서버가 실제 HTTP로 제공함",
         )
         status, _ = fetch_json(f"{base}/social_source_registry.json")
         check(
