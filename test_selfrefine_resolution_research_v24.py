@@ -583,6 +583,7 @@ class SelfrefineResolutionResearchV24Tests(unittest.TestCase):
         self.assertTrue(rules["rolled_back_repair_not_staged_for_learning"])
         self.assertTrue(rules["clean_run_skips_redundant_impact_scan"])
         self.assertTrue(rules["transitive_dependency_impact_analysis"])
+        self.assertTrue(rules["relative_import_impact_analysis"])
         self.assertTrue(rules["complete_impact_analysis_required_for_learning"])
         self.assertTrue(rules["full_regression_failure_does_not_poison_verified_lesson"])
         self.assertTrue(rules["local_resolution_is_provisional"])
