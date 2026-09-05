@@ -47,7 +47,7 @@ class OcrSelfrefineV15Tests(unittest.TestCase):
         with self.assertRaises(TypeError):
             identity.normalize_card_name(12345)
         with self.assertRaises(ValueError):
-            identity.normalize_card_name("Pikachu\\x00Injected")
+            identity.normalize_card_name("Pikachu" + chr(0) + "Injected")
 
     def test_card_number_ocr_confusions_are_repaired_only_in_numeric_segments(self):
         self.assertIn("OP13-007", identity.extract_numbers("OP13-O07"))
