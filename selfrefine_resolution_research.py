@@ -323,6 +323,9 @@ def _python_imports(text: str) -> set[str]:
             imports.update(alias.name for alias in node.names if alias.name)
         elif isinstance(node, ast.ImportFrom) and node.module:
             imports.add(node.module)
+            for alias in node.names:
+                if alias.name and alias.name != "*":
+                    imports.add(f"{node.module}.{alias.name}")
     return imports
 
 
@@ -371,20 +374,66 @@ def analyze_repository_impact(
     target_stem = Path(target).stem.lower() if target else ""
     target_module = _module_name(target) if target.endswith(".py") else ""
 
+    # Build a reverse Python dependency graph once from the already-scanned
+    # repository. This exposes second/third-order blast radius without importing
+    # or executing project modules.
+    module_to_path = {
+        _module_name(row["path"]): row["path"]
+        for row in index["records"]
+        if row["suffix"] == ".py"
+    }
+    reverse_dependencies: dict[str, set[str]] = {}
+    for row in index["records"]:
+        if row["suffix"] != ".py":
+            continue
+        importer_path = row["path"]
+        for imported in row["imports"]:
+            dependency_path = module_to_path.get(imported)
+            if dependency_path and dependency_path != importer_path:
+                reverse_dependencies.setdefault(dependency_path, set()).add(
+                    importer_path
+                )
+
+    dependency_depth: dict[str, int] = {}
+    if target in module_to_path.values():
+        frontier = [target]
+        depth = 0
+        visited = {target}
+        while frontier and depth < 8:
+            depth += 1
+            next_frontier: list[str] = []
+            for dependency in frontier:
+                for importer in sorted(reverse_dependencies.get(dependency, set())):
+                    if importer in visited:
+                        continue
+                    visited.add(importer)
+                    dependency_depth[importer] = depth
+                    next_frontier.append(importer)
+            frontier = next_frontier
+
     impacted: list[dict[str, Any]] = []
     for row in index["records"]:
         relative = row["path"]
         lower = row["text_lower"]
         score = 0
         reasons: list[str] = []
+        depth = dependency_depth.get(relative)
         if relative == target:
             score = 100
             reasons.append("direct_error_path")
-        if target_module and row["suffix"] == ".py":
+        if depth == 1:
+            score = max(score, 90)
+            reasons.append("python_import_dependency")
+        elif depth and depth > 1:
+            score = max(score, max(60, 86 - depth * 6))
+            reasons.append("transitive_python_dependency")
+        elif target_module and row["suffix"] == ".py":
+            # Keep conservative textual/import matching for unusual import
+            # layouts that cannot be resolved to a tracked module exactly.
             for imported in row["imports"]:
                 if imported == target_module or imported.startswith(target_module + "."):
-                    score = max(score, 90)
-                    reasons.append("python_import_dependency")
+                    score = max(score, 88)
+                    reasons.append("python_import_dependency_unresolved_graph")
                     break
         if target_stem and Path(relative).name.lower().startswith("test_") and target_stem in lower:
             score = max(score, 82)
@@ -399,11 +448,14 @@ def analyze_repository_impact(
             score = max(score, 75)
             reasons.append("workflow_reference")
         if score:
-            impacted.append({
+            item = {
                 "path": relative,
                 "score": score,
                 "reasons": sorted(set(reasons)),
-            })
+            }
+            if depth:
+                item["dependency_depth"] = depth
+            impacted.append(item)
 
     impacted.sort(key=lambda row: (-int(row["score"]), str(row["path"])))
     return {
@@ -412,6 +464,7 @@ def analyze_repository_impact(
         "scan_truncated": bool(index["scan_truncated"]),
         "full_repository_scan": bool(index["full_repository_scan"]),
         "read_errors": int(index["read_errors"]),
+        "python_transitive_dependency_analysis": True,
         "impacted_files": impacted[:MAX_IMPACT_FILES],
         "impacted_file_count": len(impacted),
     }
