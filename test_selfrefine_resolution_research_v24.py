@@ -161,6 +161,9 @@ class SelfrefineResolutionResearchV24Tests(unittest.TestCase):
         rules = policy["rules"]
         self.assertTrue(rules["new_error_full_repository_analysis"])
         self.assertTrue(rules["new_error_official_source_research"])
+        self.assertTrue(rules["new_error_bounded_official_network_research"])
+        self.assertTrue(rules["research_network_allowlist_only"])
+        self.assertFalse(rules["research_raw_body_persisted"])
         self.assertFalse(rules["research_text_executable"])
         self.assertFalse(rules["search_result_patch_generation"])
         self.assertTrue(rules["full_regression_before_resolution_learning"])
