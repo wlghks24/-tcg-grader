@@ -1,0 +1,19 @@
+{
+  "schema_version": "1.0",
+  "namespace": "MARKET_ANALYSIS",
+  "snapshot_kind": "learning",
+  "run_date_kst": "2026-09-06",
+  "status": "building",
+  "built_at": "2026-09-06T07:30:00+09:00",
+  "finalized_at": null,
+  "lessons": [],
+  "validation": {
+    "manifest_validated": true,
+    "learning_fields_only": true,
+    "peer_prevention_rule_copy_count": 0,
+    "raw_grading_share_count": 0,
+    "write_readback_verified": false,
+    "learning_isolation_breach": false
+  },
+  "error_code": null
+}
