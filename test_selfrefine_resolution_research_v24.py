@@ -205,7 +205,7 @@ class SelfrefineResolutionResearchV24Tests(unittest.TestCase):
             self.assertNotIn(issue["error_signature"], payload["lessons"])
             self.assertEqual(
                 payload["issues"][issue["error_signature"]]["status"],
-                "verification_failed",
+                "full_regression_not_passed",
             )
 
     def test_official_lookup_dns_failure_is_deferred_not_fatal(self):
@@ -371,6 +371,90 @@ class SelfrefineResolutionResearchV24Tests(unittest.TestCase):
             self.assertFalse(result["impact_scan_required"])
             self.assertTrue(result["impact_scan_skipped_no_open_errors"])
 
+    def test_incomplete_impact_analysis_cannot_enter_learning_queue(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            self._repo(root)
+            state = root / "state.json"
+            report = root / "report.json"
+            issue, applied, _target = self._prepare_verified_repair(
+                root, state, report
+            )
+            payload = json.loads(state.read_text(encoding="utf-8"))
+            payload["issues"][issue["error_signature"]]["impact_analysis"][
+                "full_repository_scan"
+            ] = False
+            state.write_text(json.dumps(payload), encoding="utf-8")
+            staged = research.stage_repairs([applied], state_path=state)
+            self.assertEqual(staged["pending_full_regression"], 0)
+            self.assertEqual(
+                staged["skip_reasons"]["impact_analysis_incomplete"], 1
+            )
+
+    def test_noop_hash_cannot_enter_learning_queue(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            self._repo(root)
+            state = root / "state.json"
+            report = root / "report.json"
+            _issue, applied, _target = self._prepare_verified_repair(
+                root, state, report
+            )
+            applied["before_hash"] = applied["after_hash"]
+            staged = research.stage_repairs([applied], state_path=state)
+            self.assertEqual(staged["pending_full_regression"], 0)
+            self.assertEqual(
+                staged["skip_reasons"]["repair_did_not_change_target"], 1
+            )
+
+    def test_unrelated_full_regression_failure_does_not_poison_verified_lesson(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            self._repo(root)
+            state = root / "state.json"
+            report = root / "report.json"
+            issue, applied, _target = self._prepare_verified_repair(
+                root, state, report
+            )
+            research.stage_repairs([applied], state_path=state)
+            first = research.finalize_pending(
+                True, state_path=state, root=root
+            )
+            self.assertEqual(first["verified_resolution_lessons"], 1)
+            payload = json.loads(state.read_text(encoding="utf-8"))
+            original_lesson = dict(payload["lessons"][issue["error_signature"]])
+
+            research.observe_errors(
+                [issue], root=root, state_path=state, report_path=report,
+                network_research=False,
+            )
+            _issue2, applied2, _target2 = self._prepare_verified_repair(
+                root, state, report
+            )
+            research.stage_repairs([applied2], state_path=state)
+            second = research.finalize_pending(
+                False, state_path=state, root=root
+            )
+            self.assertEqual(second["rejected_unverified_resolutions"], 1)
+            payload = json.loads(state.read_text(encoding="utf-8"))
+            current_lesson = payload["lessons"][issue["error_signature"]]
+            self.assertEqual(
+                current_lesson["verified_successes"],
+                original_lesson["verified_successes"],
+            )
+            self.assertEqual(
+                current_lesson["verified_failures"],
+                original_lesson["verified_failures"],
+            )
+            self.assertEqual(
+                current_lesson["confidence_level"],
+                original_lesson["confidence_level"],
+            )
+            self.assertEqual(
+                payload["issues"][issue["error_signature"]]["status"],
+                "full_regression_not_passed",
+            )
+
     def test_policy_keeps_search_text_non_executable(self):
         policy = json.loads(
             (Path(__file__).resolve().parent / "selfrefine_domain_policy.json")
@@ -386,6 +470,14 @@ class SelfrefineResolutionResearchV24Tests(unittest.TestCase):
         self.assertFalse(rules["research_text_executable"])
         self.assertFalse(rules["search_result_patch_generation"])
         self.assertTrue(rules["full_regression_before_resolution_learning"])
+        self.assertTrue(rules["pending_resolution_rule_binding_required"])
+        self.assertTrue(rules["pending_resolution_after_hash_required"])
+        self.assertTrue(rules["stale_pending_resolution_not_promoted"])
+        self.assertTrue(rules["rolled_back_repair_not_staged_for_learning"])
+        self.assertTrue(rules["clean_run_skips_redundant_impact_scan"])
+        self.assertTrue(rules["transitive_dependency_impact_analysis"])
+        self.assertTrue(rules["complete_impact_analysis_required_for_learning"])
+        self.assertTrue(rules["full_regression_failure_does_not_poison_verified_lesson"])
         self.assertFalse(rules["unknown_error_auto_repair"])
 
 
