@@ -49,8 +49,11 @@ permissions:
   contents: read
 
 concurrency:
-  group: daily-0600-collection-instagram-accuracy-${{ github.ref }}
-  cancel-in-progress: false
+  group: daily-0600-collection-instagram-accuracy-${{ github.event_name }}-${{ github.ref }}
+  # Superseded PR commits should not consume the full live-collection budget.
+  # Scheduled/main runs remain non-cancellable so an operational audit is never
+  # interrupted merely because another event arrives on the same ref.
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 jobs:
   audit:
