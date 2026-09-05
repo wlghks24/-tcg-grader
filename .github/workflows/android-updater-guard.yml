@@ -1,5 +1,16 @@
 name: Android Updater Guard
 on:
+  pull_request:
+    paths:
+      - 'ANDROID_UPDATE_AND_START.sh'
+      - 'ANDROID_RECOVER_UPDATE.sh'
+      - 'ANDROID_AUTO_START_INSTALL.sh'
+      - 'VERIFY_TABLET_FINAL.sh'
+      - 'VERIFY_TABLET_RUNTIME.sh'
+      - 'tablet_runtime_probe.py'
+      - 'test_runtime_delivery_guards.py'
+      - 'START_TCG_UPDATER_ANDROID.sh'
+      - '.github/workflows/android-updater-guard.yml'
   push:
     branches: [main]
     paths:
@@ -7,22 +18,45 @@ on:
       - 'ANDROID_RECOVER_UPDATE.sh'
       - 'ANDROID_AUTO_START_INSTALL.sh'
       - 'VERIFY_TABLET_FINAL.sh'
+      - 'VERIFY_TABLET_RUNTIME.sh'
+      - 'tablet_runtime_probe.py'
+      - 'test_runtime_delivery_guards.py'
+      - 'START_TCG_UPDATER_ANDROID.sh'
       - '.github/workflows/android-updater-guard.yml'
   workflow_dispatch:
 permissions:
   contents: read
 jobs:
   verify:
-    runs-on: ubuntu-latest
-    timeout-minutes: 5
+    runs-on: ubuntu-24.04
+    timeout-minutes: 8
     steps:
       - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
+        with:
+          persist-credentials: false
       - name: Validate Android updater shell syntax
         run: |
           bash -n ANDROID_UPDATE_AND_START.sh
           bash -n ANDROID_RECOVER_UPDATE.sh
           bash -n ANDROID_AUTO_START_INSTALL.sh
           bash -n VERIFY_TABLET_FINAL.sh
+          bash -n VERIFY_TABLET_RUNTIME.sh
+          bash -n START_TCG_UPDATER_ANDROID.sh
+      - name: Validate tablet runtime probe and delivery guards
+        run: |
+          python -m py_compile tablet_runtime_probe.py test_runtime_delivery_guards.py
+          python tablet_runtime_probe.py --self-test
+          python test_runtime_delivery_guards.py
+      - name: Verify boot supervisor diagnostics and health route
+        run: |
+          grep -Fq 'api/v135-health' ANDROID_AUTO_START_INSTALL.sh
+          grep -Fq 'tablet_runtime_probe.py' ANDROID_AUTO_START_INSTALL.sh
+          grep -Fq 'retrying in ${delay}s' ANDROID_AUTO_START_INSTALL.sh
+          grep -Fq 'delay=30' ANDROID_AUTO_START_INSTALL.sh
+          grep -Fq 'delay=300' ANDROID_AUTO_START_INSTALL.sh
+          grep -Fq 'TCG_ANDROID_STARTUP.log' ANDROID_AUTO_START_INSTALL.sh
+          grep -Fq -- '--require-health' VERIFY_TABLET_RUNTIME.sh
+          grep -Fq 'origin/main' VERIFY_TABLET_RUNTIME.sh
       - name: Verify runtime-conflict recovery guards are present
         run: |
           grep -Fq '.tcg_runtime_preserved' ANDROID_UPDATE_AND_START.sh
