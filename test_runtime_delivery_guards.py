@@ -58,7 +58,10 @@ def main():
     assert 'sleep 60; continue' in boot
     assert 'retrying in ${delay}s' in boot
     assert 'git config --local core.fileMode false' in boot
-    assert 'v183 health-supervised safe updater' in boot
+    assert 'health-supervised safe updater' in boot
+    assert 'v183 health-supervised safe updater' not in boot
+    assert 'tcg_updater_v135.py' in boot
+    assert 'VERIFY_TABLET_FINAL.sh' in boot
     assert 'sleep 10; done' not in boot
     assert "pgrep -f '[p]ython.*tcg_updater_v135.py'" not in boot
 
