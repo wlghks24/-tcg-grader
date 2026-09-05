@@ -1,6 +1,16 @@
 name: Exhaustive SELFREFINE Guard
 
 on:
+  pull_request:
+    paths:
+      - '.github/workflows/**'
+      - '*.py'
+      - '*.js'
+      - '*.sh'
+      - '*.json'
+      - '*.webmanifest'
+      - 'index.html'
+      - 'sw.js'
   push:
     branches: [main]
     paths:
