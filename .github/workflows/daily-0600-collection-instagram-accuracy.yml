@@ -138,6 +138,23 @@ jobs:
           source_age = fresh_age_seconds('source', source.get('updated_at'), now)
           adaptive_age = fresh_age_seconds('adaptive', adaptive.get('updated_at'), now)
 
+          critical_results = {}
+          report_path = Path('auto_update_report.json')
+          if report_path.is_file():
+              report = json.loads(report_path.read_text(encoding='utf-8'))
+              for row in report.get('results', []):
+                  filename = row.get('file')
+                  if filename not in {'releases.json', 'market_prices.json', 'promo_events.json', 'exchange_rates.json'}:
+                      continue
+                  critical_results[filename] = {
+                      'ok': bool(row.get('ok')),
+                      'status': str(row.get('status') or '')[:240],
+                      'remaining_collection_errors': [
+                          str(x)[:300] for x in (row.get('remaining_collection_errors') or [])[:5]
+                      ],
+                      'retry_count': int(row.get('retry_count') or 0),
+                  }
+
           print(json.dumps({
               'source_health_rows': len(source['sources']),
               'source_health_updated_at': source['updated_at'],
@@ -145,6 +162,7 @@ jobs:
               'adaptive_updated_at': adaptive['updated_at'],
               'adaptive_health_age_seconds': adaptive_age,
               'auto_update_status': (result.get('auto_update') or {}).get('status'),
+              'critical_collection_results': critical_results,
           }, ensure_ascii=False))
           PY
 

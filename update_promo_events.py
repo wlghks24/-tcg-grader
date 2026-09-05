@@ -26,7 +26,7 @@ ALLOWED = {
     "www.pokemon-card.com", "www.30th.pokemon-card.com",
     "pokemon.co.jp", "www.pokemon.co.jp",
     "pokemoncard.co.kr", "www.pokemoncard.co.kr",
-    "pokemonkorea.co.kr", "www.pokemonkorea.co.kr",
+    "pokemonkorea.co.kr", "www.pokemonkorea.co.kr", "new.pokemonkorea.co.kr",
     "onepiece-cardgame.kr", "www.onepiece-cardgame.kr",
     "www.onepiece-cardgame.com", "en.onepiece-cardgame.com",
     "cp.onepiece-cardgame.com", "one-piece.com", "www.one-piece.com",
@@ -43,7 +43,7 @@ FETCH_ALLOWED = ALLOWED | OFFICIAL_SOCIAL_HOSTS
 INDEXES = (
     ("KR", "원피스 카드", "https://onepiece-cardgame.kr/events.do"),
     ("KR", "원피스 카드", "https://onepiece-cardgame.kr/topics.do"),
-    ("KR", "포켓몬 카드", "https://pokemonkorea.co.kr/"),
+    ("KR", "포켓몬 카드", "https://new.pokemonkorea.co.kr/card"),
     ("KR", "나루토 카드", "https://www.naruto-cardgame.com/asia-en/"),
     ("JP", "포켓몬 카드", "https://www.pokemon-card.com/info/"),
     ("JP", "포켓몬 카드", "https://www.pokemon.co.jp/info/"),
@@ -58,6 +58,10 @@ INDEXES = (
 GAMES = ("포켓몬 카드", "원피스 카드", "나루토 카드")
 REGIONS = ("KR", "JP", "US")
 DATE_PRECISIONS = {"day", "month", "season", "start-only", "unannounced"}
+OFFICIAL_SOURCE_REPLACEMENTS = {
+    "https://pokemonkorea.co.kr/2026_battle_tournament3":
+        "https://pokemonkorea.co.kr/2026_battle_tournament3/menu800",
+}
 
 
 # 한국 영화 정보는 "없음"으로 숨기지 않고, 한국 공식/공공 출처에서
@@ -73,6 +77,7 @@ KR_MOVIE_TRACKERS = (
         "condition": "포켓몬코리아 및 KOBIS 기준. 현재 확인 가능한 2026년 한국 신작 극장 개봉일은 공식 발표되지 않아 임의 날짜를 만들지 않음.",
         "location": "대한민국", "status": "한국 개봉일 미발표",
         "source": "https://www.pokemonkorea.co.kr/",
+        "collection_source": "https://new.pokemonkorea.co.kr/card",
         "verification_source": "https://www.kobis.or.kr/kobis/business/mast/mvie/searchMovieList.do",
         "tracking_only": True,
     },
@@ -96,8 +101,8 @@ KR_MOVIE_TRACKERS = (
         "reward": "실사 영화 또는 애니 극장판의 한국 개봉·배급 일정이 확정되면 한국 일정 표시",
         "condition": "NARUTO 공식 제작 발표와 KOBIS 한국 개봉 등록을 교차 확인. 실사 영화는 제작 진행 중이지만 한국 개봉일은 아직 공식 발표되지 않음.",
         "location": "대한민국", "status": "한국 개봉일 미발표",
-        "source": "https://www.kobis.or.kr/kobis/business/mast/mvie/searchMovieList.do",
-        "verification_source": "https://naruto-official.com/en/news/01_2649",
+        "source": "https://naruto-official.com/en/news/01_2649",
+        "verification_source": "https://www.kobis.or.kr/kobis/business/mast/mvie/searchMovieList.do",
         "tracking_only": True,
     },
 )
@@ -811,19 +816,46 @@ def discover(index: tuple[str, str, str]) -> tuple[list[dict], list[str]]:
     return rows, errors
 
 
+def _secondary_verification_transient(exc: BaseException) -> bool:
+    if isinstance(exc, urllib.error.HTTPError):
+        return int(exc.code) in {401, 403, 405, 406, 409, 429, 500, 502, 503, 504}
+    text = f"{type(exc).__name__}: {exc}".lower()
+    return any(token in text for token in (
+        "timeout", "timed out", "urlerror", "temporary", "connection",
+        "name resolution", "remote end closed", "reset by peer",
+    ))
+
+
 def check_existing(item: dict) -> tuple[dict, str | None]:
+    checked = dict(item)
     try:
-        page = fetch(item["source"])
-        if not item.get("tracking_only"):
-            native_tokens = re.findall(r"[가-힣ァ-ヶ一-龠]{4,}|[A-Za-z]{5,}", item.get("name_native", ""))[:4]
-            korean_tokens = re.findall(r"[가-힣]{4,}", item.get("name_ko", ""))[:3]
-            if native_tokens or korean_tokens:
-                lowered = page.lower()
-                if not any(token.lower() in lowered for token in native_tokens + korean_tokens):
-                    raise ValueError("행사명 확인 실패")
-        return item, None
+        collection_url = str(checked.get("collection_source") or checked["source"])
+        page = fetch(collection_url)
+        if checked.get("tracking_only"):
+            secondary = str(checked.get("verification_source") or "").strip()
+            if secondary and secondary != checked.get("source"):
+                checked["verification_checked_at"] = dt.datetime.now(dt.timezone.utc).isoformat(timespec="seconds")
+                try:
+                    fetch(secondary)
+                except (urllib.error.URLError, TimeoutError, OSError, ValueError, UnicodeDecodeError) as exc:
+                    if not _secondary_verification_transient(exc):
+                        return checked, f"{checked['name_ko']} 보조검증: {diagnostic_exception(exc)}"
+                    checked["verification_status"] = "secondary_temporarily_unavailable"
+                    checked["verification_error"] = diagnostic_exception(exc)
+                else:
+                    checked["verification_status"] = "secondary_reachable"
+                    checked.pop("verification_error", None)
+            return checked, None
+
+        native_tokens = re.findall(r"[가-힣ァ-ヶ一-龠]{4,}|[A-Za-z]{5,}", checked.get("name_native", ""))[:4]
+        korean_tokens = re.findall(r"[가-힣]{4,}", checked.get("name_ko", ""))[:3]
+        if native_tokens or korean_tokens:
+            lowered = page.lower()
+            if not any(token.lower() in lowered for token in native_tokens + korean_tokens):
+                raise ValueError("행사명 확인 실패")
+        return checked, None
     except (urllib.error.URLError, TimeoutError, OSError, ValueError, UnicodeDecodeError) as exc:
-        return item, f"{item['name_ko']}: {diagnostic_exception(exc)}"
+        return checked, f"{checked['name_ko']}: {diagnostic_exception(exc)}"
 
 
 def main() -> dict:
@@ -840,6 +872,17 @@ def main() -> dict:
             errors.append("구조 오류: 잘못된 행사 항목")
             continue
         repaired = normalize_event_dates(item)
+        old_source = str(repaired.get("source") or "")
+        replacement_source = OFFICIAL_SOURCE_REPLACEMENTS.get(old_source)
+        if replacement_source:
+            repaired["source"] = replacement_source
+            repaired_count += 1
+        if (
+            repaired.get("game") == "포켓몬 카드"
+            and repaired.get("region") == "KR"
+            and str(repaired.get("source") or "").startswith("https://pokemonkorea.co.kr/")
+        ):
+            repaired.setdefault("collection_source", "https://new.pokemonkorea.co.kr/card")
         actual_region = event_region(str(repaired.get("region", "")), repaired.get("name_native"),
                                      repaired.get("name_ko"), repaired.get("source"), repaired.get("location"))
         if actual_region is None:
@@ -904,10 +947,15 @@ def main() -> dict:
     checked = []
     known_keys = set()
     known_identities = set()
+    secondary_verification_warnings = []
     for item, error in checked_results:
         checked.append(item)
         known_keys.add(event_key(item))
         known_identities.add(event_identity_key(item))
+        if item.get("verification_status") == "secondary_temporarily_unavailable":
+            secondary_verification_warnings.append(
+                f"{item.get('name_ko', '이름 없음')}: {item.get('verification_error', '보조검증 일시 확인불가')}"
+            )
         if error:
             errors.append(error)
 
@@ -958,9 +1006,14 @@ def main() -> dict:
     kr_movie_count = sum(1 for x in checked if x.get("region") == "KR" and x.get("category") == "movie")
     data["kr_movie_tracking_count"] = kr_movie_count
     movie_pairs = data["coverage"]["movie_game_region_pairs"]
+    data["secondary_verification_warnings"] = secondary_verification_warnings[:50]
     data["collection_status"] = (
-        f"정상 · 한·일·미 영화정보 {movie_pairs}/9 조합 추적" if not errors
-        else f"기존 확인자료 유지 · 일부 출처 재확인 필요 · 한·일·미 영화정보 {movie_pairs}/9 조합 추적"
+        f"정상 · 보조검증 {len(secondary_verification_warnings)}건 재확인 대기 · 한·일·미 영화정보 {movie_pairs}/9 조합 추적"
+        if not errors and secondary_verification_warnings
+        else (
+            f"정상 · 한·일·미 영화정보 {movie_pairs}/9 조합 추적" if not errors
+            else f"기존 확인자료 유지 · 일부 출처 재확인 필요 · 한·일·미 영화정보 {movie_pairs}/9 조합 추적"
+        )
     )
     data["collection_errors"] = errors
     try:

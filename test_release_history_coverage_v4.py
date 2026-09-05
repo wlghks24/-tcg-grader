@@ -1,4 +1,5 @@
 import unittest
+from unittest import mock
 
 import release_history_backfill as backfill
 
@@ -51,6 +52,31 @@ class ReleaseHistoryCoverageV4Tests(unittest.TestCase):
             raw, 'https://pokemoncard.co.kr/card/category/info1', r'^/card/\d{1,8}/?$'
         )
         self.assertEqual(links, ['https://pokemoncard.co.kr/card/907'])
+
+    def test_korean_release_indexes_prefer_current_official_host(self):
+        self.assertEqual(
+            backfill.POKEMON_KR_INDEXES[0],
+            "https://new.pokemonkorea.co.kr/card/category/3",
+        )
+        self.assertIn("https://new.pokemonkorea.co.kr/card", backfill.POKEMON_KR_INDEXES)
+
+    def test_one_failed_fallback_index_does_not_poison_successful_korean_collection(self):
+        detail_html = (
+            '<a href="/card/907">MEGA 확장팩 「어비스아이」</a>'
+        )
+        calls = []
+        def fake_fetch(url):
+            calls.append(url)
+            if url == "https://new.pokemonkorea.co.kr/card/category/3":
+                return detail_html
+            if url == "https://new.pokemonkorea.co.kr/card/907":
+                return 'MEGA 확장팩 「어비스아이」 발매일 2026-06-26 가격 1,500원'
+            raise OSError("retired fallback unavailable")
+
+        rows, errors = backfill._collect_pokemon_region_details(fake_fetch, lambda x: x, "KR")
+        self.assertEqual(errors, [])
+        self.assertTrue(any(row.get("release_date") == "2026-06-26" for row in rows))
+        self.assertIn("https://new.pokemonkorea.co.kr/card/category/3", calls)
 
     def test_us_pokemon_launch_date_is_parsed(self):
         rows = backfill.parse_pokemon_us(

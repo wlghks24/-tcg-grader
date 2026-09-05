@@ -33,8 +33,9 @@ EXPECTED_CELLS = tuple(
     for region in ("KR", "JP", "US")
 )
 POKEMON_KR_INDEXES = (
+    "https://new.pokemonkorea.co.kr/card/category/3",
+    "https://new.pokemonkorea.co.kr/card",
     "https://pokemoncard.co.kr/card/category/info1",
-    "https://pokemoncard.co.kr/card",
 )
 POKEMON_US_INDEXES = (
     "https://www.pokemon.com/us/pokemon-tcg/product-gallery/",
@@ -359,12 +360,15 @@ def _collect_pokemon_region_details(fetch, html_to_text, region):
         return [], [f"Pokémon {region}: unsupported region"]
 
     rows, errors, links, seen = [], [], [], set()
+    index_failures = []
+    successful_indexes = 0
     for index_url in indexes:
         try:
             raw = fetch(index_url)
+            successful_indexes += 1
             rows.extend(parser(html_to_text(raw), index_url))
         except (OSError, ValueError, TypeError, UnicodeError) as exc:
-            errors.append(f"Pokémon {region} index: {type(exc).__name__}")
+            index_failures.append(f"Pokémon {region} index: {type(exc).__name__}")
             continue
         for link in _official_detail_links(raw, index_url, path_pattern):
             if link not in seen:
@@ -374,6 +378,9 @@ def _collect_pokemon_region_details(fetch, html_to_text, region):
                 break
         if len(links) >= MAX_DETAIL_PAGES_PER_REGION:
             break
+
+    if successful_indexes == 0:
+        errors.extend(index_failures)
 
     for url in links[:MAX_DETAIL_PAGES_PER_REGION]:
         try:
