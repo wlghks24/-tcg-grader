@@ -50,6 +50,10 @@ FEATURE_FILES = {
         "auto_update_all.py",
         "update_market_prices.py",
         "daily_collection_instagram_accuracy.py",
+        "collection_source_coverage_v28.py",
+        "test_collection_source_coverage_v28.py",
+        "official_direct_discovery.py",
+        "adaptive_collection_learner.py",
     ],
     "runtime_delivery": [
         "test_runtime_delivery_guards.py",
@@ -99,6 +103,7 @@ DAILY_COMMANDS = {
     "daily_audit": "python daily_collection_instagram_accuracy.py",
     "health_freshness": "MAX_HEALTH_AGE_SECONDS = 600",
     "critical_collector_diagnostics": "critical_collection_results",
+    "official_source_coverage": "collection_source_coverage_v28.audit_source_stats",
 }
 
 def _read(path: Path) -> str:

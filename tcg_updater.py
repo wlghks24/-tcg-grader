@@ -103,12 +103,25 @@ PUBLIC_STATIC_FILES={
 }
 SOURCES=[
  ('포켓몬 한국 공식','https://pokemoncard.co.kr/card/category/info1','공식'),
+ ('포켓몬 한국 카드 홈 공식','https://new.pokemonkorea.co.kr/card','공식'),
+ ('포켓몬 한국 이벤트 공식','https://pokemoncard.co.kr/card/category/event','행사'),
  ('포켓몬 일본 공식','https://www.pokemon-card.com/products/index.html','공식'),
+ ('포켓몬 일본 새소식 공식','https://www.pokemon-card.com/info/','공식'),
  ('포켓몬 30주년 공식','https://www.30th.pokemon-card.com/','공식'),
+ ('포켓몬 미국 뉴스 공식','https://www.pokemon.com/us/pokemon-news','공식'),
+ ('포켓몬 미국 Play 이벤트 공식','https://www.pokemon.com/us/play-pokemon/','행사'),
  ('원피스 한국 공식','https://onepiece-cardgame.kr/products.do','공식'),
+ ('원피스 한국 공지 공식','https://onepiece-cardgame.kr/topics.do','공식'),
+ ('원피스 한국 이벤트 공식','https://onepiece-cardgame.kr/events.do','행사'),
  ('원피스 일본 공식','https://www.onepiece-cardgame.com/','공식'),
+ ('원피스 일본 뉴스 공식','https://www.onepiece-cardgame.com/news/','공식'),
+ ('원피스 일본 이벤트 공식','https://www.onepiece-cardgame.com/events/','행사'),
  ('원피스 미국 공식','https://en.onepiece-cardgame.com/products/','공식'),
+ ('원피스 미국 토픽 공식','https://en.onepiece-cardgame.com/topics/','공식'),
+ ('원피스 미국 이벤트 공식','https://en.onepiece-cardgame.com/events/','행사'),
  ('나루토 카드게임 글로벌 공식','https://www.naruto-cardgame.com/asia-en/','공식'),
+ ('나루토 일본 공식','https://www.naruto-cardgame.com/jp/','공식'),
+ ('나루토 미국 공식','https://www.naruto-cardgame.com/en/','공식'),
  ('포켓몬 일본 프로모 행사 공식','https://www.pokemon-card.com/info/005397.html','행사'),
  ('PSA 공식 등급기준','https://www.psacard.com/gradingstandards','등급'),
  ('BGS 공식 등급','https://www.beckett.com/grading/scale','등급'),
@@ -123,6 +136,40 @@ SOURCES=[
  ('TCGdex 포켓몬 가격 API','https://tcgdex.dev/markets-prices','참고시세'),
  ('Pavilion TCG 통합 참고시세','https://pavilion-tcg.com/search?language=ko','참고시세'),
 ]
+
+OFFICIAL_SOURCE_SCOPE={
+ '포켓몬 한국 공식':('pokemon','KR','product'),
+ '포켓몬 한국 카드 홈 공식':('pokemon','KR','mixed'),
+ '포켓몬 한국 이벤트 공식':('pokemon','KR','event'),
+ '포켓몬 일본 공식':('pokemon','JP','product'),
+ '포켓몬 일본 새소식 공식':('pokemon','JP','news'),
+ '포켓몬 일본 프로모 행사 공식':('pokemon','JP','event'),
+ '포켓몬 미국 뉴스 공식':('pokemon','US','news'),
+ '포켓몬 미국 Play 이벤트 공식':('pokemon','US','event'),
+ '원피스 한국 공식':('one_piece','KR','product'),
+ '원피스 한국 공지 공식':('one_piece','KR','news'),
+ '원피스 한국 이벤트 공식':('one_piece','KR','event'),
+ '원피스 일본 공식':('one_piece','JP','mixed'),
+ '원피스 일본 뉴스 공식':('one_piece','JP','news'),
+ '원피스 일본 이벤트 공식':('one_piece','JP','event'),
+ '원피스 미국 공식':('one_piece','US','product'),
+ '원피스 미국 토픽 공식':('one_piece','US','news'),
+ '원피스 미국 이벤트 공식':('one_piece','US','event'),
+ '나루토 카드게임 글로벌 공식':('naruto','KR','news_event'),
+ '나루토 일본 공식':('naruto','JP','news_event'),
+ '나루토 미국 공식':('naruto','US','news_event'),
+}
+
+def _annotate_source_health(stats,name,url,kind):
+    scope=OFFICIAL_SOURCE_SCOPE.get(name)
+    with SOURCE_STATS_LOCK:
+        row=stats.setdefault('sources',{}).setdefault(name,{'runs':0,'successes':0,'failures':0})
+        row['url']=str(url)[:900]
+        row['kind']=str(kind)[:40]
+        row['official_scope']=bool(scope)
+        if scope:
+            row['game'],row['region'],row['channel']=scope
+
 
 def free_port(start=8765, limit=30):
     for port in range(start,start+limit):
@@ -363,7 +410,7 @@ def _sanitize_source_stats(data):
     for name,row in rows.items():
         if not isinstance(name,str) or not isinstance(row,dict): continue
         clean=dict(row)
-        for k in ('runs','successes','failures','recovered_successes','clean_success_streak','consecutive_failures'):
+        for k in ('runs','successes','failures','recovered_successes','clean_success_streak','consecutive_failures','access_restrictions'):
             clean[k]=_safe_stat_int(row.get(k),0)
         for k in ('success_ewma_seconds','last_seconds','next_timeout_seconds'):
             if k in row: clean[k]=_safe_stat_float(row.get(k),0.0)
@@ -447,6 +494,7 @@ def _record_source_restriction(stats,name,seconds,http_status):
         row['last_seconds']=round(seconds,3)
         row['last_run']=time.strftime('%Y-%m-%dT%H:%M:%S%z')
         row['last_http_status']=int(http_status)
+        row['last_result']='restricted'
         row['clean_success_streak']=0
         row['consecutive_failures']=0
         row['next_timeout_seconds']=_source_timeout(row)
@@ -461,13 +509,20 @@ def _record_source_stat(stats,name,seconds,clean_success,error='',recovered=Fals
             row['successes']=int(row.get('successes',0))+1
             row['clean_success_streak']=int(row.get('clean_success_streak',0))+1
             row['consecutive_failures']=0
+            row['last_result']='success'
+            row.pop('last_http_status',None)
             old=float(row.get('success_ewma_seconds') or seconds)
             row['success_ewma_seconds']=round(old*.7+seconds*.3,3)
         else:
             row['clean_success_streak']=0
             row['consecutive_failures']=int(row.get('consecutive_failures',0))+1
-            if recovered:row['recovered_successes']=int(row.get('recovered_successes',0))+1
-            else:row['failures']=int(row.get('failures',0))+1
+            if recovered:
+                row['recovered_successes']=int(row.get('recovered_successes',0))+1
+                row['last_result']='recovered'
+                row.pop('last_http_status',None)
+            else:
+                row['failures']=int(row.get('failures',0))+1
+                row['last_result']='failure'
             if error:
                 key=hashlib.sha1(re.sub(r'\d+','<n>',error.lower()).encode('utf-8','ignore')).hexdigest()[:12]
                 pats=row.setdefault('error_patterns',{})
@@ -505,14 +560,15 @@ def _collect_one_source(source,stats):
     name,url,kind=source
     row=stats.get('sources',{}).get(name,{})
     learned_timeout=_source_timeout(row)
+    runtime_cap=env_int('TCG_SOURCE_TIMEOUT_CAP',300,5,300)
     total_budget=300
     started=time.monotonic();last_exc=None;attempt_timeouts=[]
     for attempt in (1,2):
         elapsed=time.monotonic()-started
         remain=max(0,total_budget-elapsed)
         if remain < 5:break
-        requested = learned_timeout if attempt == 1 else min(300, max(90, learned_timeout * 2))
-        attempt_timeout=max(5,min(int(requested),int(remain)))
+        requested = learned_timeout if attempt == 1 else min(runtime_cap, max(90, learned_timeout * 2))
+        attempt_timeout=max(5,min(int(requested),int(remain),runtime_cap))
         attempt_timeouts.append(attempt_timeout)
         try:
             html=fetch(url,attempt_timeout)
@@ -553,6 +609,7 @@ def collect():
             except Exception as exc:results.append({'ok':False,'name':'unknown','url':'','kind':'','error':f'{type(exc).__name__}: {exc}'})
     for result in results:
         name=result['name'];url=result['url'];kind=result['kind']
+        _annotate_source_health(stats,name,url,kind)
         if result.get('restricted'):
             old=data['sources'].get(name,{})
             preserved=dict(old) if isinstance(old,dict) else {}
@@ -575,6 +632,20 @@ def collect():
             pending.append({'source':name,'url':url,'kind':kind,'status':'수집 오류','error':result.get('error','unknown'),'checked_at':now})
     _save_source_stats(stats)
     data['updated_at']=now;data['pending']=pending;save_db(data);return data
+
+def _partition_source_pending(pending):
+    normal=[]; errors=[]; restricted=[]
+    for row in pending or []:
+        if not isinstance(row,dict):
+            continue
+        status=str(row.get('status') or '')
+        if status in {'최초 확인','변경 확인 필요'}:
+            normal.append(row)
+        elif status=='수집 오류':
+            errors.append(row)
+        else:
+            restricted.append(row)
+    return normal,errors,restricted
 
 def update_cycle(trigger='manual', progress_callback=None):
     """Collect official source changes and refresh the verified release board safely."""
@@ -599,15 +670,14 @@ def update_cycle(trigger='manual', progress_callback=None):
         # 수집 오류 항목만 대기목록에 남기고, 정상 변경감지는 자동 검증 반영 기록으로 이동한다.
         now_text=time.strftime('%Y-%m-%dT%H:%M:%S%z')
         pending=list(data.get('pending',[]))
-        normal=[x for x in pending if x.get('status')!='수집 오류']
-        errors=[x for x in pending if x.get('status')=='수집 오류']
+        normal,errors,restricted=_partition_source_pending(pending)
         applied=list(data.get('applied',[]))
         if normal:
             applied.extend({**x,'approved':True,'apply_mode':'통합 자동검증','applied_at':now_text} for x in normal)
             # 기록 파일이 끝없이 커지지 않도록 최근 300건만 보관한다.
             applied=applied[-300:]
         data['applied']=applied
-        data['pending']=errors
+        data['pending']=(errors+restricted)[-300:]
         data['auto_update']={
             'enabled':True,'interval_hours':6,'trigger':trigger,
             'last_run':time.strftime('%Y-%m-%dT%H:%M:%S%z',time.localtime(started)),
@@ -617,6 +687,7 @@ def update_cycle(trigger='manual', progress_callback=None):
             'source_checked_count':len(SOURCES),
             'source_auto_applied_count':len(normal),
             'source_error_count':len(errors),
+            'source_restricted_count':len(restricted),
             'full_update':True,
         }
         save_db(data)
@@ -966,7 +1037,7 @@ def _atomic_copy_json(src,dst):
 def _changed_source_files(pending):
     files=set()
     for row in pending or []:
-        if row.get('status')=='수집 오류':
+        if row.get('status') not in {'최초 확인','변경 확인 필요'}:
             continue
         name=(row.get('source') or '')
         kind=(row.get('kind') or '')
@@ -1055,13 +1126,13 @@ def finalize_precollected_cycle(due_at):
         result_map={x.get('file'):x for x in final_report.get('results',[])}
         def st(fn): return result_map.get(fn,{}).get('status','사전수집 검증 반영')
         data=load_db(); now_text=time.strftime('%Y-%m-%dT%H:%M:%S%z')
-        pending=list(data.get('pending',[])); normal=[x for x in pending if x.get('status')!='수집 오류']; errors=[x for x in pending if x.get('status')=='수집 오류']
+        pending=list(data.get('pending',[])); normal,errors,restricted=_partition_source_pending(pending)
         applied=list(data.get('applied',[]))
         if normal:
             applied.extend({**x,'approved':True,'apply_mode':'30분 사전수집 + 6시간 최종검증','applied_at':now_text} for x in normal)
             applied=applied[-300:]
         next_due=next_update_due(due_at,time.time())
-        data['applied']=applied; data['pending']=errors
+        data['applied']=applied; data['pending']=(errors+restricted)[-300:]
         data['auto_update']={'enabled':True,'interval_hours':6,'precollect_lead_minutes':30,'trigger':trigger,
             'last_run':time.strftime('%Y-%m-%dT%H:%M:%S%z',time.localtime(started)),
             'next_run':time.strftime('%Y-%m-%dT%H:%M:%S%z',time.localtime(next_due)),
@@ -1069,6 +1140,7 @@ def finalize_precollected_cycle(due_at):
             'status':st('releases.json'),'market_status':st('market_prices.json'),'watch_status':st('market_watch.json'),
             'promo_status':st('promo_events.json'),'purchase_status':st('purchase_sources.json'),'fx_status':st('exchange_rates.json'),
             'source_checked_count':len(SOURCES),'source_auto_applied_count':len(normal),'source_error_count':len(errors),
+            'source_restricted_count':len(restricted),
             'precollect_state':status.get('state'),'precollect_applied_count':len(applied_files),
             'supplement_file_count':len(failed_files),'full_update':True}
         save_db(data)

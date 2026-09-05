@@ -49,7 +49,7 @@ GAME_CONFIG = {
         "canonical": "포켓몬 카드",
         "aliases": ("포켓몬", "포켓몬카드", "포켓몬 카드", "pokemon", "pokémon", "pokemon tcg", "ポケモン", "ポケカ"),
         "official_hosts": (
-            "pokemonkorea.co.kr", "www.pokemonkorea.co.kr", "pokemoncard.co.kr", "www.pokemoncard.co.kr",
+            "pokemonkorea.co.kr", "www.pokemonkorea.co.kr", "new.pokemonkorea.co.kr", "pokemoncard.co.kr", "www.pokemoncard.co.kr",
             "pokemon.co.jp", "www.pokemon.co.jp", "pokemon-card.com", "www.pokemon-card.com",
             "30th.pokemon-card.com", "www.30th.pokemon-card.com",
             "pokemon.com", "www.pokemon.com", "pokemongo.com", "www.pokemongo.com",
