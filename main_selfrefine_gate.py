@@ -187,6 +187,11 @@ def run(cycles: int):
             "research_text_executable": False,
             "search_result_patch_generation": False,
             "full_regression_before_resolution_learning": True,
+            "pending_resolution_rule_binding_required": True,
+            "pending_resolution_after_hash_required": True,
+            "stale_pending_resolution_not_promoted": True,
+            "rolled_back_repair_not_staged_for_learning": True,
+            "clean_run_skips_redundant_impact_scan": True,
         })
         return result
     finally:
@@ -216,6 +221,11 @@ def self_test():
     assert POLICY["rules"]["research_text_executable"] is False
     assert POLICY["rules"]["search_result_patch_generation"] is False
     assert POLICY["rules"]["full_regression_before_resolution_learning"] is True
+    assert POLICY["rules"]["pending_resolution_rule_binding_required"] is True
+    assert POLICY["rules"]["pending_resolution_after_hash_required"] is True
+    assert POLICY["rules"]["stale_pending_resolution_not_promoted"] is True
+    assert POLICY["rules"]["rolled_back_repair_not_staged_for_learning"] is True
+    assert POLICY["rules"]["clean_run_skips_redundant_impact_scan"] is True
     assert SHARED_SELF_LEARNING_CONTRACT_VERSION >= 3
     left = enrich_error("main", {"stage": "HTTP_429", "path": "a.py", "evidence": "rate limited"})
     right = enrich_error("instagram_content", {"stage": "HTTP_429", "path": "a.py", "evidence": "rate limited"})
