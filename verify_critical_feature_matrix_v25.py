@@ -97,7 +97,7 @@ DAILY_COMMANDS = {
     "instagram_peer_export": "python -m instagram_tcg_content.peer_learning_export --self-test",
     "live_collection_refresh": "tcg_updater.update_cycle('scheduled-0600-audit')",
     "daily_audit": "python daily_collection_instagram_accuracy.py",
-    "health_freshness": "MAX_HEALTH_AGE_SECONDS = 600",
+    "health_freshness": "current_run_age_seconds",
     "critical_collector_diagnostics": "critical_collection_results",
 }
 
