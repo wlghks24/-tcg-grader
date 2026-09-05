@@ -292,6 +292,16 @@ def main() -> int:
         print('[안내] v142 자료수집 학습 강화 모듈을 찾지 못해 기본 수집정책으로 실행합니다.', flush=True)
 
     threading.Thread(target=core.auto_update_loop, daemon=True).start()
+    try:
+        import ai_auto_tracker
+        threading.Thread(
+            target=ai_auto_tracker.loop,
+            daemon=True,
+            name='tcg-ai-auto-tracker',
+        ).start()
+        print('AI 통합 자동추적: 1시간 간격 · 시세전용 추적기 결과 + 전체 기능/수집/SELF-REFINE 종합', flush=True)
+    except ImportError:
+        print('[안내] AI 통합 자동추적 모듈을 찾지 못해 6시간 업데이트 직후 점검만 사용합니다.', flush=True)
 
     try:
         import event_priority_watch
