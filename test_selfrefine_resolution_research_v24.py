@@ -4,7 +4,9 @@ from __future__ import annotations
 import json
 import tempfile
 import unittest
+import urllib.error
 from pathlib import Path
+from unittest import mock
 
 import selfrefine_resolution_research as research
 
@@ -153,6 +155,70 @@ class SelfrefineResolutionResearchV24Tests(unittest.TestCase):
                 "verification_failed",
             )
 
+    def test_official_lookup_dns_failure_is_deferred_not_fatal(self):
+        plan = research.research_plan(self._issue())
+        with mock.patch.object(
+            research,
+            "require_public_https",
+            side_effect=urllib.error.URLError("offline"),
+        ):
+            result = research.search_official_sources(plan, request_limit=1)
+        self.assertEqual(result["attempted"], 1)
+        self.assertEqual(result["successful"], 0)
+        self.assertEqual(result["status"], "deferred")
+        self.assertEqual(result["results"][0]["error_type"], "URLError")
+        self.assertFalse(result["content_used_for_patch"])
+        self.assertFalse(result["search_result_patch_generation"])
+        self.assertFalse(result["raw_body_persisted"])
+
+    def test_network_research_runs_only_for_first_observation(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            self._repo(root)
+            state = root / "state.json"
+            report = root / "report.json"
+            fake = {
+                "attempted": 1,
+                "successful": 1,
+                "status": "researched",
+                "results": [{
+                    "host": "docs.python.org",
+                    "http_status": 200,
+                    "title": "Python Documentation",
+                    "content_type": "text/html",
+                    "bytes_sampled": 128,
+                    "status": "reachable",
+                }],
+                "content_used_for_patch": False,
+                "search_result_patch_generation": False,
+                "raw_body_persisted": False,
+            }
+            with mock.patch.object(
+                research, "search_official_sources", return_value=fake
+            ) as lookup:
+                first = research.observe_errors(
+                    [self._issue()],
+                    root=root,
+                    state_path=state,
+                    report_path=report,
+                    network_research=True,
+                )
+                second = research.observe_errors(
+                    [self._issue()],
+                    root=root,
+                    state_path=state,
+                    report_path=report,
+                    network_research=True,
+                )
+            self.assertEqual(lookup.call_count, 1)
+            self.assertEqual(first["network_research_attempted"], 1)
+            self.assertEqual(second["network_research_attempted"], 0)
+            self.assertEqual(
+                second["errors"][0]["network_research"]["status"],
+                "not_required",
+            )
+            self.assertEqual(second["errors"][0]["recurrence_count"], 2)
+
     def test_policy_keeps_search_text_non_executable(self):
         policy = json.loads(
             (Path(__file__).resolve().parent / "selfrefine_domain_policy.json")
@@ -164,6 +230,7 @@ class SelfrefineResolutionResearchV24Tests(unittest.TestCase):
         self.assertTrue(rules["new_error_bounded_official_network_research"])
         self.assertTrue(rules["research_network_allowlist_only"])
         self.assertFalse(rules["research_raw_body_persisted"])
+        self.assertFalse(rules["research_network_failure_blocks_selfrefine"])
         self.assertFalse(rules["research_text_executable"])
         self.assertFalse(rules["search_result_patch_generation"])
         self.assertTrue(rules["full_regression_before_resolution_learning"])
