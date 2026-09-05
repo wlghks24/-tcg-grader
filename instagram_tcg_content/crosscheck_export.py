@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import tempfile
 from pathlib import Path
 
 from shared_self_learning.engine import normalize_crosscheck_record
@@ -11,13 +12,26 @@ ROOT = Path(__file__).resolve().parents[1]
 DEFAULT_OUTPUT = ROOT / "crosscheck_exchange" / "runtime-instagram.json"
 
 
+def _write_json_atomic(path: Path, payload: dict) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    temp: Path | None = None
+    try:
+        with tempfile.NamedTemporaryFile(
+            mode="w", encoding="utf-8", dir=path.parent,
+            prefix=f".{path.name}.", suffix=".tmp", delete=False,
+        ) as handle:
+            json.dump(payload, handle, ensure_ascii=False, indent=2)
+            handle.write("\n")
+            temp = Path(handle.name)
+        temp.replace(path)
+    finally:
+        if temp is not None and temp.exists():
+            temp.unlink(missing_ok=True)
+
+
 def export_records(records: list[dict], output: Path = DEFAULT_OUTPUT) -> list[dict]:
     normalized = [normalize_crosscheck_record("instagram_content", row) for row in records]
-    output.parent.mkdir(parents=True, exist_ok=True)
-    output.write_text(
-        json.dumps({"domain": "instagram_content", "records": normalized}, ensure_ascii=False, indent=2) + "\n",
-        encoding="utf-8",
-    )
+    _write_json_atomic(output, {"domain": "instagram_content", "records": normalized})
     return normalized
 
 

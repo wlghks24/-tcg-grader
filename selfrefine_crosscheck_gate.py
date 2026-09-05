@@ -8,6 +8,7 @@ from typing import Any
 
 from shared_self_learning.contracts import assert_passive_exchange_payload
 from shared_self_learning.engine import compare_record_sets
+from safe_runtime import atomic_write_json
 
 ROOT = Path(__file__).resolve().parent
 EXCHANGE = ROOT / "crosscheck_exchange"
@@ -140,7 +141,7 @@ def main() -> int:
         Path(args.instagram_path) if args.instagram_path else None,
     )
     if args.write_report:
-        REPORT.write_text(json.dumps(result, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+        atomic_write_json(REPORT, result, suffix=".factual-crosscheck.tmp")
     print(json.dumps({
         "status": result["status"],
         "main_records": result["main_records"],

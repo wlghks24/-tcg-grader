@@ -410,19 +410,26 @@ def _source_timeout(row):
     streak=_safe_stat_int(row.get('clean_success_streak'),0)
     ewma=_safe_stat_float(row.get('success_ewma_seconds'),0.0)
     failures=_safe_stat_int(row.get('consecutive_failures'),0)
-    if successes < 2 or ewma <= 0:return 300
-    if failures:return min(300,max(90,int(ewma*(4+failures)+30)))
-    # v65: 공식출처도 clean-success 단계가 충분히 쌓이기 전에는
-    # 다음 timeout 단계 아래로 내려가지 않는다. 기존 min(cap, learned)는
-    # 빠른 EWMA 하나만으로 곧바로 30초가 될 수 있었다.
-    if streak>=12:stage_floor=30
-    elif streak>=9:stage_floor=45
-    elif streak>=7:stage_floor=60
-    elif streak>=5:stage_floor=90
-    elif streak>=4:stage_floor=120
-    elif streak>=3:stage_floor=180
-    else:stage_floor=300
-    return min(300,max(stage_floor,max(30,int(ewma*3+15))))
+    # Default remains 300s for PC/Termux. CI/audit jobs may explicitly lower
+    # only the per-source wait ceiling without changing retry/access policy.
+    runtime_cap=env_int('TCG_SOURCE_TIMEOUT_CAP',300,5,300)
+    if successes < 2 or ewma <= 0:
+        learned=300
+    elif failures:
+        learned=min(300,max(90,int(ewma*(4+failures)+30)))
+    else:
+        # v65: 공식출처도 clean-success 단계가 충분히 쌓이기 전에는
+        # 다음 timeout 단계 아래로 내려가지 않는다. 기존 min(cap, learned)는
+        # 빠른 EWMA 하나만으로 곧바로 30초가 될 수 있었다.
+        if streak>=12:stage_floor=30
+        elif streak>=9:stage_floor=45
+        elif streak>=7:stage_floor=60
+        elif streak>=5:stage_floor=90
+        elif streak>=4:stage_floor=120
+        elif streak>=3:stage_floor=180
+        else:stage_floor=300
+        learned=min(300,max(stage_floor,max(30,int(ewma*3+15))))
+    return min(runtime_cap,learned)
 
 def _source_transient_error(exc):
     text=(type(exc).__name__+' '+str(exc)).lower()
