@@ -26,7 +26,7 @@ ALLOWED = {
     "www.pokemon-card.com", "www.30th.pokemon-card.com",
     "pokemon.co.jp", "www.pokemon.co.jp",
     "pokemoncard.co.kr", "www.pokemoncard.co.kr",
-    "pokemonkorea.co.kr", "www.pokemonkorea.co.kr",
+    "pokemonkorea.co.kr", "www.pokemonkorea.co.kr", "new.pokemonkorea.co.kr",
     "onepiece-cardgame.kr", "www.onepiece-cardgame.kr",
     "www.onepiece-cardgame.com", "en.onepiece-cardgame.com",
     "cp.onepiece-cardgame.com", "one-piece.com", "www.one-piece.com",
@@ -43,7 +43,7 @@ FETCH_ALLOWED = ALLOWED | OFFICIAL_SOCIAL_HOSTS
 INDEXES = (
     ("KR", "원피스 카드", "https://onepiece-cardgame.kr/events.do"),
     ("KR", "원피스 카드", "https://onepiece-cardgame.kr/topics.do"),
-    ("KR", "포켓몬 카드", "https://pokemoncard.co.kr/card/category/event"),
+    ("KR", "포켓몬 카드", "https://new.pokemonkorea.co.kr/card"),
     ("KR", "나루토 카드", "https://www.naruto-cardgame.com/asia-en/"),
     ("JP", "포켓몬 카드", "https://www.pokemon-card.com/info/"),
     ("JP", "포켓몬 카드", "https://www.pokemon.co.jp/info/"),
@@ -76,7 +76,8 @@ KR_MOVIE_TRACKERS = (
         "reward": "한국 극장 개봉·재개봉·특별상영 일정이 공식 발표되면 날짜와 극장 정보를 표시",
         "condition": "포켓몬코리아 및 KOBIS 기준. 현재 확인 가능한 2026년 한국 신작 극장 개봉일은 공식 발표되지 않아 임의 날짜를 만들지 않음.",
         "location": "대한민국", "status": "한국 개봉일 미발표",
-        "source": "https://pokemonkorea.co.kr/news",
+        "source": "https://www.pokemonkorea.co.kr/",
+        "collection_source": "https://new.pokemonkorea.co.kr/card",
         "verification_source": "https://www.kobis.or.kr/kobis/business/mast/mvie/searchMovieList.do",
         "tracking_only": True,
     },
@@ -828,7 +829,8 @@ def _secondary_verification_transient(exc: BaseException) -> bool:
 def check_existing(item: dict) -> tuple[dict, str | None]:
     checked = dict(item)
     try:
-        page = fetch(checked["source"])
+        collection_url = str(checked.get("collection_source") or checked["source"])
+        page = fetch(collection_url)
         if checked.get("tracking_only"):
             secondary = str(checked.get("verification_source") or "").strip()
             if secondary and secondary != checked.get("source"):
@@ -875,6 +877,12 @@ def main() -> dict:
         if replacement_source:
             repaired["source"] = replacement_source
             repaired_count += 1
+        if (
+            repaired.get("game") == "포켓몬 카드"
+            and repaired.get("region") == "KR"
+            and str(repaired.get("source") or "").startswith("https://pokemonkorea.co.kr/")
+        ):
+            repaired.setdefault("collection_source", "https://new.pokemonkorea.co.kr/card")
         actual_region = event_region(str(repaired.get("region", "")), repaired.get("name_native"),
                                      repaired.get("name_ko"), repaired.get("source"), repaired.get("location"))
         if actual_region is None:
