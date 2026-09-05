@@ -1,0 +1,113 @@
+name: Collection Verification Guard
+
+on:
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - 'collection_verification_gate.py'
+      - 'test_collection_verification_gate.py'
+      - 'tcg_updater.py'
+      - 'auto_update_all.py'
+      - 'update_market_prices.py'
+      - 'multi_market_price_collector.py'
+      - 'update_releases.py'
+      - 'update_promo_events.py'
+      - 'source_collection_stats.json'
+      - 'adaptive_collection_stats.json'
+      - '.github/workflows/collection-verification-guard.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'collection_verification_gate.py'
+      - 'test_collection_verification_gate.py'
+      - 'tcg_updater.py'
+      - 'auto_update_all.py'
+      - 'update_market_prices.py'
+      - 'multi_market_price_collector.py'
+      - 'update_releases.py'
+      - 'update_promo_events.py'
+      - '.github/workflows/collection-verification-guard.yml'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: collection-verification-${{ github.event_name }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+jobs:
+  verify:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    env:
+      PYTHONPATH: ${{ github.workspace }}
+      PYTHONDONTWRITEBYTECODE: '1'
+      PYTHONUNBUFFERED: '1'
+      TCG_SOURCE_TIMEOUT_CAP: '30'
+      TCG_HTTP_TIMEOUT: '30'
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          persist-credentials: false
+          fetch-depth: 1
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97
+        with:
+          python-version: '3.11'
+
+      - name: Static and regression verification
+        run: |
+          python -m py_compile collection_verification_gate.py test_collection_verification_gate.py
+          python -m unittest -v test_collection_verification_gate.py
+          python selfrefine_domain_boundary_guard.py
+
+      - name: Run bounded live collection cycle
+        timeout-minutes: 22
+        run: |
+          python - <<'PY'
+          import json
+          import tcg_updater
+          result = tcg_updater.update_cycle('collection-verification-guard')
+          print(json.dumps({
+              'auto_update_status': (result.get('auto_update') or {}).get('status'),
+              'trigger': result.get('trigger'),
+          }, ensure_ascii=False))
+          PY
+
+      - name: Verify collected evidence fail-closed
+        run: |
+          python collection_verification_gate.py \
+            --max-health-age-seconds 900 \
+            --report COLLECTION_VERIFICATION_REPORT.json
+
+      - name: Validate verification safety contract
+        if: always()
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          path = Path('COLLECTION_VERIFICATION_REPORT.json')
+          if not path.is_file():
+              raise SystemExit('collection verification report missing')
+          report = json.loads(path.read_text(encoding='utf-8'))
+          if report.get('schema_version') != 1:
+              raise SystemExit('unexpected collection verification schema')
+          safety = report.get('safety') or {}
+          expected = {
+              'bypass_403_429': False,
+              'learned_text_executable': False,
+              'source_code_auto_rewritten': False,
+          }
+          bad = {k: {'expected': v, 'actual': safety.get(k)} for k, v in expected.items() if safety.get(k) is not v}
+          if bad:
+              raise SystemExit(f'collection verification safety mismatch: {bad}')
+          print(json.dumps({'status': report.get('status'), 'counts': report.get('counts'), 'metrics': report.get('metrics')}, ensure_ascii=False))
+          PY
+
+      - name: Upload collection verification report
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        with:
+          name: collection-verification-report
+          path: COLLECTION_VERIFICATION_REPORT.json
+          if-no-files-found: error
+          retention-days: 30
