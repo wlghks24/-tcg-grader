@@ -120,10 +120,10 @@ jobs:
           from pathlib import Path
           import tcg_updater
 
-          MAX_HEALTH_AGE_SECONDS = 600
+          MAX_PRESTART_SKEW_SECONDS = 300
           MAX_FUTURE_SKEW_SECONDS = 300
 
-          def fresh_age_seconds(label, value, now):
+          def current_run_age_seconds(label, value, started_at, now):
               if not value:
                   raise SystemExit(f'06:00 live refresh missing {label} updated_at')
               try:
@@ -132,12 +132,14 @@ jobs:
                   raise SystemExit(f'06:00 live refresh invalid {label} updated_at: {value!r}') from exc
               if parsed.tzinfo is None:
                   parsed = parsed.replace(tzinfo=dt.timezone.utc)
-              age = (now - parsed.astimezone(dt.timezone.utc)).total_seconds()
-              if age > MAX_HEALTH_AGE_SECONDS:
+              parsed = parsed.astimezone(dt.timezone.utc)
+              earliest = started_at - dt.timedelta(seconds=MAX_PRESTART_SKEW_SECONDS)
+              if parsed < earliest:
                   raise SystemExit(
-                      f'06:00 live refresh stale {label} health: age={age:.1f}s '
-                      f'(max={MAX_HEALTH_AGE_SECONDS}s)'
+                      f'06:00 live refresh {label} health predates current refresh: '
+                      f'updated_at={parsed.isoformat()} started_at={started_at.isoformat()}'
                   )
+              age = (now - parsed).total_seconds()
               if age < -MAX_FUTURE_SKEW_SECONDS:
                   raise SystemExit(
                       f'06:00 live refresh future-dated {label} health: age={age:.1f}s '
@@ -145,6 +147,7 @@ jobs:
                   )
               return round(age, 1)
 
+          refresh_started_at = dt.datetime.now(dt.timezone.utc)
           result = tcg_updater.update_cycle('scheduled-0600-audit')
           source = json.loads(Path('source_collection_stats.json').read_text(encoding='utf-8'))
           adaptive = json.loads(Path('adaptive_collection_stats.json').read_text(encoding='utf-8'))
@@ -154,8 +157,8 @@ jobs:
               raise SystemExit('06:00 live refresh did not persist adaptive collector health')
 
           now = dt.datetime.now(dt.timezone.utc)
-          source_age = fresh_age_seconds('source', source.get('updated_at'), now)
-          adaptive_age = fresh_age_seconds('adaptive', adaptive.get('updated_at'), now)
+          source_age = current_run_age_seconds('source', source.get('updated_at'), refresh_started_at, now)
+          adaptive_age = current_run_age_seconds('adaptive', adaptive.get('updated_at'), refresh_started_at, now)
 
           critical_results = {}
           report_path = Path('auto_update_report.json')
@@ -175,6 +178,8 @@ jobs:
                   }
 
           print(json.dumps({
+              'refresh_started_at': refresh_started_at.isoformat(),
+              'refresh_duration_seconds': round((now - refresh_started_at).total_seconds(), 1),
               'source_health_rows': len(source['sources']),
               'source_health_updated_at': source['updated_at'],
               'source_health_age_seconds': source_age,
@@ -186,6 +191,7 @@ jobs:
           PY
 
       - name: Run daily collection vs Instagram audit
+        if: ${{ !cancelled() }}
         run: |
           flags=(--strict-policy)
           if [[ "${{ github.event_name }}" == "schedule" ]]; then
