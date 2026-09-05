@@ -74,6 +74,13 @@ class Operational0600RefreshV25Tests(unittest.TestCase):
         self.assertIn("TCG_SOURCE_TIMEOUT_CAP: '30'", text)
         self.assertIn("source_collection_stats.json", text)
         self.assertIn("adaptive_collection_stats.json", text)
+        self.assertIn("github.event_name == 'push'", text)
+        self.assertIn("MAX_HEALTH_AGE_SECONDS = 600", text)
+        self.assertIn("MAX_FUTURE_SKEW_SECONDS = 300", text)
+        self.assertIn("source_health_age_seconds", text)
+        self.assertIn("adaptive_health_age_seconds", text)
+        self.assertIn("stale {label} health", text)
+        self.assertIn("future-dated {label} health", text)
         self.assertIn("timeout-minutes: 30", text)
 
 
