@@ -21,10 +21,20 @@ import json
 import os
 import re
 import subprocess
+import urllib.error
+import urllib.parse
+import urllib.request
 from pathlib import Path
 from typing import Any
 
-from safe_runtime import atomic_write_json, exclusive_file_lock, safe_read_text
+from safe_runtime import (
+    atomic_write_json,
+    exclusive_file_lock,
+    normalize_public_https_redirect,
+    require_public_https,
+    safe_read_text,
+    validate_public_https_url,
+)
 
 ROOT = Path(__file__).resolve().parent
 STATE = ROOT / "MAIN_SELFREFINE_RESOLUTION_LEARNING_STATE.json"
@@ -37,6 +47,9 @@ MAX_IMPACT_FILES = 64
 MAX_ISSUES = 500
 MAX_LESSONS = 500
 MAX_HISTORY = 300
+MAX_NETWORK_RESEARCH_REQUESTS = 4
+NETWORK_RESEARCH_TIMEOUT_SECONDS = 6
+NETWORK_RESEARCH_MAX_BYTES = 250_000
 
 AUDIT_SUFFIXES = {
     ".py", ".js", ".mjs", ".cjs", ".html", ".css",
@@ -50,6 +63,15 @@ EXCLUDED_PREFIXES = (
     "__pycache__/",
     ".pytest_cache/",
 )
+
+RESEARCH_ALLOWED_HOSTS = {
+    "docs.python.org",
+    "docs.github.com",
+    "nodejs.org",
+    "developer.mozilla.org",
+    "www.gnu.org",
+    "datatracker.ietf.org",
+}
 
 OFFICIAL_RESEARCH = {
     "python": {
@@ -102,6 +124,26 @@ OFFICIAL_RESEARCH = {
     },
 }
 
+OFFICIAL_SEARCH_TEMPLATES = {
+    "python": "https://docs.python.org/3/search.html?q={query}",
+    "javascript": "https://developer.mozilla.org/en-US/search?q={query}",
+    "shell": "https://www.gnu.org/software/bash/manual/bash.html",
+    "json": "https://docs.python.org/3/search.html?q={query}",
+    "github_actions": "https://docs.github.com/en/search?query={query}",
+    "http": "https://docs.python.org/3/search.html?q={query}",
+    "generic": "https://docs.github.com/en/search?query={query}",
+}
+
+
+class OfficialResearchRedirect(urllib.request.HTTPRedirectHandler):
+    def redirect_request(self, req, fp, code, msg, headers, newurl):
+        absolute = normalize_public_https_redirect(
+            req.full_url, newurl, RESEARCH_ALLOWED_HOSTS
+        )
+        validate_public_https_url(absolute, RESEARCH_ALLOWED_HOSTS)
+        require_public_https(absolute, RESEARCH_ALLOWED_HOSTS)
+        return super().redirect_request(req, fp, code, msg, headers, absolute)
+
 
 def _now() -> str:
     return dt.datetime.now(dt.timezone.utc).isoformat(timespec="seconds")
@@ -140,6 +182,8 @@ def _default_state() -> dict[str, Any]:
         "safety": {
             "full_repository_impact_analysis": True,
             "official_source_first_research": True,
+            "bounded_official_network_research": True,
+            "research_network_allowlist_only": True,
             "research_text_executable": False,
             "search_result_patch_generation": False,
             "learned_text_executable": False,
@@ -408,12 +452,127 @@ def research_plan(issue: dict[str, Any]) -> dict[str, Any]:
     }
 
 
+def _search_url(plan: dict[str, Any]) -> str:
+    family = str(plan.get("research_family") or "generic")
+    template = OFFICIAL_SEARCH_TEMPLATES.get(
+        family, OFFICIAL_SEARCH_TEMPLATES["generic"]
+    )
+    query = str((plan.get("search_queries") or [""])[0])[:300]
+    encoded = urllib.parse.quote_plus(query)
+    url = template.format(query=encoded)
+    validate_public_https_url(url, RESEARCH_ALLOWED_HOSTS)
+    require_public_https(url, RESEARCH_ALLOWED_HOSTS)
+    return url
+
+
+def _html_title(raw: str) -> str:
+    match = re.search(r"(?is)<title[^>]*>(.*?)</title>", raw)
+    if not match:
+        return ""
+    title = re.sub(r"(?s)<[^>]+>", " ", match.group(1))
+    title = re.sub(r"\s+", " ", title).strip()
+    return _clean(title, 240)
+
+
+def search_official_sources(
+    plan: dict[str, Any],
+    *,
+    request_limit: int = 1,
+) -> dict[str, Any]:
+    """Perform a bounded lookup against a fixed official-document allowlist.
+
+    The fetched page is reduced to non-executable metadata only. Body text,
+    snippets, scripts and examples are never persisted or fed into patch logic.
+    """
+    limit = max(0, min(2, int(request_limit)))
+    if limit <= 0:
+        return {
+            "attempted": 0,
+            "successful": 0,
+            "status": "budget_exhausted",
+            "results": [],
+            "content_used_for_patch": False,
+        }
+    urls = [_search_url(plan)]
+    preferred = [
+        value for value in plan.get("preferred_sources", [])
+        if isinstance(value, str) and value.startswith("https://")
+    ]
+    for value in preferred:
+        if len(urls) >= limit:
+            break
+        try:
+            validate_public_https_url(value, RESEARCH_ALLOWED_HOSTS)
+            require_public_https(value, RESEARCH_ALLOWED_HOSTS)
+        except ValueError:
+            continue
+        if value not in urls:
+            urls.append(value)
+
+    opener = urllib.request.build_opener(OfficialResearchRedirect)
+    results: list[dict[str, Any]] = []
+    for url in urls[:limit]:
+        parsed = urllib.parse.urlsplit(url)
+        host = (parsed.hostname or "").lower()
+        try:
+            request = urllib.request.Request(
+                url,
+                headers={"User-Agent": "TCG-Grader-SELFREFINE-Research/1.0"},
+            )
+            with opener.open(
+                request, timeout=NETWORK_RESEARCH_TIMEOUT_SECONDS
+            ) as response:
+                final_url = response.geturl()
+                validate_public_https_url(final_url, RESEARCH_ALLOWED_HOSTS)
+                require_public_https(final_url, RESEARCH_ALLOWED_HOSTS)
+                raw = response.read(NETWORK_RESEARCH_MAX_BYTES)
+                content_type = str(response.headers.get("Content-Type") or "")[:120]
+                decoded = raw.decode("utf-8", "replace")
+                results.append({
+                    "host": host,
+                    "http_status": int(getattr(response, "status", 200) or 200),
+                    "title": _html_title(decoded),
+                    "content_type": _clean(content_type, 120),
+                    "bytes_sampled": len(raw),
+                    "status": "reachable",
+                })
+        except (
+            urllib.error.URLError,
+            urllib.error.HTTPError,
+            TimeoutError,
+            OSError,
+            ValueError,
+        ) as exc:
+            results.append({
+                "host": host,
+                "http_status": int(exc.code)
+                if isinstance(exc, urllib.error.HTTPError) else None,
+                "title": "",
+                "content_type": "",
+                "bytes_sampled": 0,
+                "status": "unavailable",
+                "error_type": type(exc).__name__,
+            })
+
+    successful = sum(row.get("status") == "reachable" for row in results)
+    return {
+        "attempted": len(results),
+        "successful": successful,
+        "status": "researched" if successful else "deferred",
+        "results": results,
+        "content_used_for_patch": False,
+        "search_result_patch_generation": False,
+        "raw_body_persisted": False,
+    }
+
+
 def observe_errors(
     errors: list[dict[str, Any]],
     *,
     root: Path = ROOT,
     state_path: Path = STATE,
     report_path: Path = REPORT,
+    network_research: bool = True,
 ) -> dict[str, Any]:
     open_errors = [
         row for row in errors[:MAX_ISSUES]
@@ -422,6 +581,7 @@ def observe_errors(
     index = build_repository_index(root)
     now = _now()
     observations: list[dict[str, Any]] = []
+    network_budget = MAX_NETWORK_RESEARCH_REQUESTS
 
     with exclusive_file_lock(state_path):
         state = _load_state(state_path)
@@ -434,6 +594,22 @@ def observe_errors(
             impact = analyze_repository_impact(issue, index=index, root=root)
             research = research_plan(issue)
             lesson = lessons.get(signature) if isinstance(lessons.get(signature), dict) else None
+            is_new = not bool(previous)
+            if network_research and is_new and network_budget > 0:
+                network_result = search_official_sources(
+                    research, request_limit=min(2, network_budget)
+                )
+                network_budget -= int(network_result.get("attempted") or 0)
+            else:
+                network_result = {
+                    "attempted": 0,
+                    "successful": 0,
+                    "status": "not_required" if not is_new else "disabled",
+                    "results": [],
+                    "content_used_for_patch": False,
+                    "search_result_patch_generation": False,
+                    "raw_body_persisted": False,
+                }
             row = {
                 "error_signature": signature,
                 "error_code": _clean(issue.get("error_code"), 160),
@@ -445,9 +621,10 @@ def observe_errors(
                 "last_seen": now,
                 "recurrence_count": min(1_000_000, recurrence),
                 "status": "open",
-                "new_error": not bool(previous),
+                "new_error": is_new,
                 "impact_analysis": impact,
                 "research": research,
+                "network_research": network_result,
                 "known_verified_resolution": bool(lesson and lesson.get("regression_pass") is True),
                 "preferred_verified_fix_pattern": (
                     _clean(lesson.get("fix_pattern"), 300)
@@ -478,6 +655,14 @@ def observe_errors(
         "full_repository_scan": bool(index["full_repository_scan"]),
         "scan_truncated": bool(index["scan_truncated"]),
         "read_errors": int(index["read_errors"]),
+        "network_research_attempted": sum(
+            int((row.get("network_research") or {}).get("attempted") or 0)
+            for row in observations
+        ),
+        "network_research_successful": sum(
+            int((row.get("network_research") or {}).get("successful") or 0)
+            for row in observations
+        ),
         "errors": observations,
         "safety": _default_state()["safety"],
     }
@@ -673,7 +858,7 @@ def self_test() -> int:
             "state": "open",
         }
         observed = observe_errors(
-            [issue], root=root, state_path=state, report_path=report
+            [issue], root=root, state_path=state, report_path=report, network_research=False
         )
         assert observed["new_error_count"] == 1, observed
         impacted = {row["path"] for row in observed["errors"][0]["impact_analysis"]["impacted_files"]}
@@ -699,7 +884,7 @@ def self_test() -> int:
         assert lesson["fix_pattern"].startswith("verified_code_rule:")
 
         observed_again = observe_errors(
-            [issue], root=root, state_path=state, report_path=report
+            [issue], root=root, state_path=state, report_path=report, network_research=False
         )
         assert observed_again["errors"][0]["known_verified_resolution"] is True
 
