@@ -39,6 +39,7 @@ from safe_runtime import (
 ROOT = Path(__file__).resolve().parent
 STATE = ROOT / "MAIN_SELFREFINE_RESOLUTION_LEARNING_STATE.json"
 REPORT = ROOT / "MAIN_SELFREFINE_RESEARCH_REPORT.json"
+ERROR_QUARANTINE_STATE = ROOT / "MAIN_SELFREFINE_ERROR_QUARANTINE_STATE.json"
 SCHEMA = 1
 
 MAX_SCAN_FILES = 4000
@@ -981,10 +982,12 @@ def finalize_pending(
     *,
     state_path: Path = STATE,
     root: Path = ROOT,
+    quarantine_state_path: Path | None = None,
 ) -> dict[str, Any]:
     import verified_code_repair_rules as verified_repairs
 
     verified = rejected = binding_rejected = 0
+    promotions: list[tuple[str, str]] = []
     now = _now()
     now_dt = _parse_timestamp(now) or dt.datetime.now(dt.timezone.utc)
     with exclusive_file_lock(state_path):
@@ -1101,6 +1104,7 @@ def finalize_pending(
                 issue["status"] = "resolved_verified"
                 issue["last_verified_resolution"] = lesson["fix_pattern"]
                 verified += 1
+                promotions.append((signature, rule_id))
                 event = "verified_resolution_learned"
             else:
                 # A full workflow can fail for reasons unrelated to this repair
@@ -1118,10 +1122,28 @@ def finalize_pending(
             })
             state.setdefault("pending_verifications", {}).pop(signature, None)
         _save_state(state_path, state)
+
+    quarantine_promoted = quarantine_promotion_failed = 0
+    if success and quarantine_state_path is not None and promotions:
+        import selfrefine_error_quarantine as error_quarantine
+
+        for signature, rule_id in promotions:
+            outcome = error_quarantine.promote_full_regression_resolution(
+                signature,
+                rule_id,
+                state_path=quarantine_state_path,
+            )
+            if outcome.get("promoted") == 1:
+                quarantine_promoted += 1
+            else:
+                quarantine_promotion_failed += 1
+
     return {
         "verified_resolution_lessons": verified,
         "rejected_unverified_resolutions": rejected,
         "binding_rejected_resolutions": binding_rejected,
+        "quarantine_verified_promotions": quarantine_promoted,
+        "quarantine_promotion_failed": quarantine_promotion_failed,
         "regression_pass": bool(success),
         "research_text_executable": False,
         "unknown_error_direct_auto_patch": False,
@@ -1260,7 +1282,10 @@ def main() -> int:
         return self_test()
     if args.finalize:
         print(json.dumps(
-            finalize_pending(args.finalize == "success"),
+            finalize_pending(
+                args.finalize == "success",
+                quarantine_state_path=ERROR_QUARANTINE_STATE,
+            ),
             ensure_ascii=False,
             sort_keys=True,
         ))
