@@ -13,6 +13,7 @@ import auto_update_all
 import main_crosscheck_export
 import selfrefine_crosscheck_gate
 import tcg_updater
+import update_promo_events
 
 
 def _sample(source: str) -> dict:
@@ -120,6 +121,42 @@ class Operational0600RefreshV25Tests(unittest.TestCase):
         self.assertEqual(row["consecutive_failures"], 3)
         self.assertNotIn("streak_reset_reason", row)
 
+    def test_tracking_secondary_timeout_is_warning_not_hard_collection_error(self):
+        tracker = dict(update_promo_events.KR_MOVIE_TRACKERS[2])
+        with mock.patch.object(
+            update_promo_events,
+            "fetch",
+            side_effect=["official primary ok", OSError("timed out")],
+        ):
+            checked, error = update_promo_events.check_existing(tracker)
+        self.assertIsNone(error)
+        self.assertEqual(checked["source"], "https://naruto-official.com/en/news/01_2649")
+        self.assertEqual(checked["verification_status"], "secondary_temporarily_unavailable")
+        self.assertIn("timed out", checked["verification_error"].lower())
+
+    def test_tracking_secondary_configuration_error_remains_fail_closed(self):
+        tracker = dict(update_promo_events.KR_MOVIE_TRACKERS[2])
+        with mock.patch.object(
+            update_promo_events,
+            "fetch",
+            side_effect=["official primary ok", ValueError("unapproved verification url")],
+        ):
+            _, error = update_promo_events.check_existing(tracker)
+        self.assertIsNotNone(error)
+        self.assertIn("보조검증", error)
+
+    def test_retired_pokemon_routes_are_replaced(self):
+        self.assertEqual(
+            update_promo_events.INDEXES[2][2],
+            "https://pokemoncard.co.kr/card/category/event",
+        )
+        self.assertEqual(
+            update_promo_events.OFFICIAL_SOURCE_REPLACEMENTS[
+                "https://pokemonkorea.co.kr/2026_battle_tournament3"
+            ],
+            "https://pokemonkorea.co.kr/2026_battle_tournament3/menu800",
+        )
+
     def test_factual_exchange_writers_use_atomic_runtime_helper(self):
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
@@ -153,6 +190,7 @@ class Operational0600RefreshV25Tests(unittest.TestCase):
         self.assertIn("MAX_FUTURE_SKEW_SECONDS = 300", text)
         self.assertIn("source_health_age_seconds", text)
         self.assertIn("adaptive_health_age_seconds", text)
+        self.assertIn("critical_collection_results", text)
         self.assertIn("stale {label} health", text)
         self.assertIn("future-dated {label} health", text)
         self.assertIn("timeout-minutes: 30", text)
