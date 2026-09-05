@@ -184,6 +184,7 @@ def _default_state() -> dict[str, Any]:
             "official_source_first_research": True,
             "bounded_official_network_research": True,
             "research_network_allowlist_only": True,
+            "research_network_failure_blocks_selfrefine": False,
             "research_text_executable": False,
             "search_result_patch_generation": False,
             "learned_text_executable": False,
