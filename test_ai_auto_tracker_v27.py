@@ -90,6 +90,26 @@ class AIAutoTrackerV27Tests(unittest.TestCase):
         self.assertIn("Retry-After=60", detail)
         self.assertEqual(opened.call_count, 1)
 
+    def test_market_tracker_findings_are_supervised_not_repaired_here(self):
+        with mock.patch("market_ai_auto_tracker.scan_static", return_value=[{
+            "code": "MARKET_API_ROUTE_DUPLICATE",
+            "path": "tcg_updater.py",
+            "severity": "critical",
+        }]):
+            issues = tracker._market_ai_signals()
+        self.assertEqual(len(issues), 1)
+        self.assertEqual(issues[0]["severity"], "high")
+        self.assertEqual(issues[0]["safe_auto_action"], "market_ai_tracker")
+
+    def test_integrated_tracker_ignores_its_own_latest_run(self):
+        runs = [
+            {"id": "7", "name": "Integrated AI Auto Tracking", "status": "completed", "conclusion": "failure", "head_sha": "self"},
+            {"id": "8", "name": "Main SELFREFINE", "status": "completed", "conclusion": "success", "head_sha": "ok"},
+        ]
+        with mock.patch.object(tracker, "_github_runs", return_value=(runs, None)):
+            issues = tracker._github_signals("wlghks24/-tcg-grader", None, None)
+        self.assertEqual(issues, [])
+
     def test_runtime_state_counts_repeat_and_resolution(self):
         now = dt.datetime(2026, 9, 5, 15, 0, tzinfo=dt.timezone.utc)
         issue = tracker._issue("high", "X", "component", "same evidence", "fix", "verify")
@@ -144,6 +164,7 @@ class AIAutoTrackerV27Tests(unittest.TestCase):
                 mock.patch.object(tracker, "_auto_update_signals", return_value=[]),
                 mock.patch.object(tracker, "_link_signals", return_value=[]),
                 mock.patch.object(tracker, "_event_signals", return_value=[]),
+                mock.patch.object(tracker, "_market_ai_signals", return_value=[]),
                 mock.patch.object(tracker, "_selfrefine_signals", return_value=[]),
             ):
                 result = tracker.run_once(trigger="test", runtime_live=False)
