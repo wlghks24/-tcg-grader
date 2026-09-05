@@ -80,6 +80,16 @@ def main() -> dict:
             and "TCGFeatureCategoryNav" in js_body,
             "기능 카테고리 CSS/JS를 로컬 PC·태블릿 서버가 실제 HTTP로 제공함",
         )
+        status, ai_tracking = fetch_json(f"{base}/api/ai-auto-tracking")
+        ai_safety = ai_tracking.get("safety") if isinstance(ai_tracking, dict) else {}
+        check(
+            "ai_auto_tracking_http",
+            status == 200
+            and ai_tracking.get("status") in {"not-run", "pass", "warning", "high", "critical"}
+            and ai_safety.get("github_write") is False
+            and ai_safety.get("http_403_429_bypass") is False,
+            "AI 자동추적 API가 읽기전용·403/429 비우회 안전상태를 제공함",
+        )
         status, _ = fetch_json(f"{base}/social_source_registry.json")
         check(
             "private_registry_blocked",
