@@ -633,6 +633,20 @@ def collect():
     _save_source_stats(stats)
     data['updated_at']=now;data['pending']=pending;save_db(data);return data
 
+def _partition_source_pending(pending):
+    normal=[]; errors=[]; restricted=[]
+    for row in pending or []:
+        if not isinstance(row,dict):
+            continue
+        status=str(row.get('status') or '')
+        if status in {'최초 확인','변경 확인 필요'}:
+            normal.append(row)
+        elif status=='수집 오류':
+            errors.append(row)
+        else:
+            restricted.append(row)
+    return normal,errors,restricted
+
 def update_cycle(trigger='manual', progress_callback=None):
     """Collect official source changes and refresh the verified release board safely."""
     with UPDATE_LOCK:
@@ -656,15 +670,14 @@ def update_cycle(trigger='manual', progress_callback=None):
         # 수집 오류 항목만 대기목록에 남기고, 정상 변경감지는 자동 검증 반영 기록으로 이동한다.
         now_text=time.strftime('%Y-%m-%dT%H:%M:%S%z')
         pending=list(data.get('pending',[]))
-        normal=[x for x in pending if x.get('status')!='수집 오류']
-        errors=[x for x in pending if x.get('status')=='수집 오류']
+        normal,errors,restricted=_partition_source_pending(pending)
         applied=list(data.get('applied',[]))
         if normal:
             applied.extend({**x,'approved':True,'apply_mode':'통합 자동검증','applied_at':now_text} for x in normal)
             # 기록 파일이 끝없이 커지지 않도록 최근 300건만 보관한다.
             applied=applied[-300:]
         data['applied']=applied
-        data['pending']=errors
+        data['pending']=(errors+restricted)[-300:]
         data['auto_update']={
             'enabled':True,'interval_hours':6,'trigger':trigger,
             'last_run':time.strftime('%Y-%m-%dT%H:%M:%S%z',time.localtime(started)),
@@ -674,6 +687,7 @@ def update_cycle(trigger='manual', progress_callback=None):
             'source_checked_count':len(SOURCES),
             'source_auto_applied_count':len(normal),
             'source_error_count':len(errors),
+            'source_restricted_count':len(restricted),
             'full_update':True,
         }
         save_db(data)
@@ -1023,7 +1037,7 @@ def _atomic_copy_json(src,dst):
 def _changed_source_files(pending):
     files=set()
     for row in pending or []:
-        if row.get('status')=='수집 오류':
+        if row.get('status') not in {'최초 확인','변경 확인 필요'}:
             continue
         name=(row.get('source') or '')
         kind=(row.get('kind') or '')
@@ -1112,13 +1126,13 @@ def finalize_precollected_cycle(due_at):
         result_map={x.get('file'):x for x in final_report.get('results',[])}
         def st(fn): return result_map.get(fn,{}).get('status','사전수집 검증 반영')
         data=load_db(); now_text=time.strftime('%Y-%m-%dT%H:%M:%S%z')
-        pending=list(data.get('pending',[])); normal=[x for x in pending if x.get('status')!='수집 오류']; errors=[x for x in pending if x.get('status')=='수집 오류']
+        pending=list(data.get('pending',[])); normal,errors,restricted=_partition_source_pending(pending)
         applied=list(data.get('applied',[]))
         if normal:
             applied.extend({**x,'approved':True,'apply_mode':'30분 사전수집 + 6시간 최종검증','applied_at':now_text} for x in normal)
             applied=applied[-300:]
         next_due=next_update_due(due_at,time.time())
-        data['applied']=applied; data['pending']=errors
+        data['applied']=applied; data['pending']=(errors+restricted)[-300:]
         data['auto_update']={'enabled':True,'interval_hours':6,'precollect_lead_minutes':30,'trigger':trigger,
             'last_run':time.strftime('%Y-%m-%dT%H:%M:%S%z',time.localtime(started)),
             'next_run':time.strftime('%Y-%m-%dT%H:%M:%S%z',time.localtime(next_due)),
@@ -1126,6 +1140,7 @@ def finalize_precollected_cycle(due_at):
             'status':st('releases.json'),'market_status':st('market_prices.json'),'watch_status':st('market_watch.json'),
             'promo_status':st('promo_events.json'),'purchase_status':st('purchase_sources.json'),'fx_status':st('exchange_rates.json'),
             'source_checked_count':len(SOURCES),'source_auto_applied_count':len(normal),'source_error_count':len(errors),
+            'source_restricted_count':len(restricted),
             'precollect_state':status.get('state'),'precollect_applied_count':len(applied_files),
             'supplement_file_count':len(failed_files),'full_update':True}
         save_db(data)
