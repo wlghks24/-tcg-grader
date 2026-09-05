@@ -27,6 +27,7 @@ on:
       - 'test_verified_gap_priority_v11.py'
       - 'test_gap_result_event_supersession_v12.py'
       - 'test_verified_multilabel_coverage_v14.py'
+      - 'test_verified_evidence_freshness_v15.py'
       - '.github/workflows/provider-source-gap-learning-guard.yml'
   push:
     branches: [main]
@@ -93,6 +94,7 @@ jobs:
             test_verified_gap_priority_v11.py \
             test_gap_result_event_supersession_v12.py \
             test_verified_multilabel_coverage_v14.py \
+            test_verified_evidence_freshness_v15.py \
             test_collection_resilience_v22.py
       - name: Verify route resilience and process-safe provider learning
         run: python -m unittest -v test_collection_resilience_v22.py
@@ -118,3 +120,5 @@ jobs:
         run: python -m unittest -v test_gap_result_event_supersession_v12.py
       - name: Verify bounded multi-label official coverage
         run: python -m unittest -v test_verified_multilabel_coverage_v14.py
+      - name: Verify evidence timestamps control freshness and stale replay
+        run: python -m unittest -v test_verified_evidence_freshness_v15.py
