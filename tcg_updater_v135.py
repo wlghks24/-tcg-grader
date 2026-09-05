@@ -125,6 +125,10 @@ class Handler(core.Handler):
                 'retry_reason_explainer_version': 160,
                 'pending_official_candidate_manual_verify': True,
                 'pending_official_candidate_manual_verify_version': 161,
+                'integrated_ai_auto_tracking': True,
+                'ai_tracking_interval_minutes': 60,
+                'market_ai_supervision': True,
+                'ai_tracking_arbitrary_code_write': False,
                 'base_service': getattr(core, 'SERVICE_NAME', 'TCG updater'),
             })
         if path == '/api/learning-model-status':
