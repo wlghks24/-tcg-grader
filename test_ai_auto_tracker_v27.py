@@ -74,6 +74,37 @@ class AIAutoTrackerV27Tests(unittest.TestCase):
                 issues = tracker._source_health_signals(now, runtime_live=False)
         self.assertEqual(issues, [])
 
+    def test_fresh_committed_source_failure_is_ignored_when_not_runtime_live(self):
+        now = dt.datetime(2026, 9, 5, 15, 0, tzinfo=dt.timezone.utc)
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            (root / "source_collection_stats.json").write_text(json.dumps({
+                "updated_at": "2026-09-05T14:30:00+00:00",
+                "sources": {"committed": {"consecutive_failures": 9, "last_http_status": 503}},
+            }), encoding="utf-8")
+            with mock.patch.object(tracker, "ROOT", root):
+                issues = tracker._source_health_signals(now, runtime_live=False)
+        self.assertEqual(issues, [])
+
+    def test_obsolete_workflow_failure_is_not_actionable(self):
+        old = (dt.datetime.now(dt.timezone.utc) - dt.timedelta(days=8)).isoformat()
+        runs = [{
+            "id": "11",
+            "name": "Repository Integrity Guard",
+            "status": "completed",
+            "conclusion": "failure",
+            "head_sha": "old",
+            "created_at": old,
+        }]
+        with mock.patch.object(tracker, "_github_runs", return_value=(runs, None)):
+            issues = tracker._github_signals("wlghks24/-tcg-grader", None, None)
+        self.assertEqual(issues, [])
+
+    def test_android_v135_runtime_starts_hourly_tracker(self):
+        source = (Path(__file__).resolve().parent / "tcg_updater_v135.py").read_text(encoding="utf-8")
+        self.assertIn("target=ai_auto_tracker.loop", source)
+        self.assertIn("name='tcg-ai-auto-tracker'", source)
+
     def test_429_github_api_is_not_retried_or_bypassed(self):
         headers = {"Retry-After": "60"}
         error = urllib.error.HTTPError(
