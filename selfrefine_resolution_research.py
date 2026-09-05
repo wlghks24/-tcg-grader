@@ -352,7 +352,7 @@ def build_repository_index(root: Path = ROOT) -> dict[str, Any]:
         "files_scanned": len(records),
         "scan_truncated": truncated,
         "read_errors": read_errors,
-        "full_repository_scan": not truncated,
+        "full_repository_scan": not truncated and read_errors == 0,
     }
 
 
@@ -913,11 +913,24 @@ def stage_repairs(
             if relative != _normalized(issue.get("path")):
                 skip("issue_path_binding_mismatch")
                 continue
+            if _clean(item.get("stage"), 100) != _clean(issue.get("stage"), 100):
+                skip("issue_stage_binding_mismatch")
+                continue
+            impact = issue.get("impact_analysis")
+            if (
+                not isinstance(impact, dict)
+                or impact.get("full_repository_scan") is not True
+            ):
+                skip("impact_analysis_incomplete")
+                continue
             if not re.fullmatch(r"[0-9a-f]{20}", before_hash or ""):
                 skip("before_hash_missing")
                 continue
             if not re.fullmatch(r"[0-9a-f]{20}", after_hash or ""):
                 skip("after_hash_missing")
+                continue
+            if before_hash == after_hash:
+                skip("repair_did_not_change_target")
                 continue
 
             state.setdefault("pending_verifications", {})[signature] = {
@@ -1006,6 +1019,10 @@ def finalize_pending(
                     binding_reason = "repair_rule_fingerprint_changed"
                 elif relative != _normalized(issue.get("path")):
                     binding_reason = "issue_path_binding_changed"
+                elif _clean(pending_row.get("stage"), 100) != _clean(
+                    issue.get("stage"), 100
+                ):
+                    binding_reason = "issue_stage_binding_changed"
                 elif not re.fullmatch(r"[0-9a-f]{20}", after_hash or ""):
                     binding_reason = "after_hash_missing"
                 elif staged_at is None:
@@ -1086,15 +1103,13 @@ def finalize_pending(
                 verified += 1
                 event = "verified_resolution_learned"
             else:
-                old = state.get("lessons", {}).get(signature)
-                if isinstance(old, dict):
-                    old["verified_failures"] = min(
-                        10_000, int(old.get("verified_failures") or 0) + 1
-                    )
-                    old["confidence_level"] = "low"
-                issue["status"] = "verification_failed"
+                # A full workflow can fail for reasons unrelated to this repair
+                # (runner/network/flaky integration). Never poison a previously
+                # verified lesson without repair-specific regression evidence.
+                issue["status"] = "full_regression_not_passed"
+                issue["last_verification_rejection"] = "full_regression_not_passed"
                 rejected += 1
-                event = "resolution_rejected_by_full_regression"
+                event = "resolution_not_promoted_full_regression_failed"
             state.setdefault("history", []).append({
                 "at": now,
                 "error_signature": signature,
