@@ -30,6 +30,7 @@ class SelfrefineResolutionResearchV24Tests(unittest.TestCase):
         (root / "test_broken.py").write_text(
             "import broken\n# broken.py regression\n", encoding="utf-8"
         )
+        (root / "top.py").write_text("import consumer\n", encoding="utf-8")
         (root / "unrelated.py").write_text("value = 1\n", encoding="utf-8")
 
     def _repair_issue(self) -> dict:
@@ -96,8 +97,20 @@ class SelfrefineResolutionResearchV24Tests(unittest.TestCase):
                 item["path"] for item in row["impact_analysis"]["impacted_files"]
             }
             self.assertTrue(
-                {"broken.py", "consumer.py", "test_broken.py"}.issubset(impacted),
+                {"broken.py", "consumer.py", "test_broken.py", "top.py"}.issubset(
+                    impacted
+                ),
                 impacted,
+            )
+            top = next(
+                item
+                for item in row["impact_analysis"]["impacted_files"]
+                if item["path"] == "top.py"
+            )
+            self.assertIn("transitive_python_dependency", top["reasons"])
+            self.assertEqual(top["dependency_depth"], 2)
+            self.assertTrue(
+                row["impact_analysis"]["python_transitive_dependency_analysis"]
             )
             self.assertEqual(row["research"]["research_family"], "python")
             self.assertTrue(all(
