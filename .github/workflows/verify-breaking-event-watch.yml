@@ -147,8 +147,14 @@ jobs:
           assert status['strict_official_social_url_match'] is True, status
           assert status['unverified_payload_learning_weight'] == 0.0, status
           assert status['unverified_search_host_term_learning_weight'] == 0.0, status
-          assert len(promo.social_topic_expected_keys()) == 90, len(promo.social_topic_expected_keys())
-          print('[OK] v145 source expansion + v144 miss recovery + v143 runtime bundle + v142 learning guard + 90-cell coverage')
+          topic_keys = promo.social_topic_expected_keys()
+          expected_topic_cells = len(promo.GAMES) * len(promo.REGIONS) * len(routes.COVERAGE_TOPICS)
+          assert len(topic_keys) == expected_topic_cells, (len(topic_keys), expected_topic_cells)
+          assert len(set(topic_keys)) == expected_topic_cells, 'duplicate social topic coverage keys'
+          print(
+              '[OK] v145 source expansion + v144 miss recovery + v143 runtime bundle '
+              f'+ v142 learning guard + {expected_topic_cells}-cell dynamic coverage'
+          )
           PY
           grep -q 'event_source_expansion_v145.apply()' auto_pipeline_runner.py
           grep -q 'v142-verified-collection-learning' auto_pipeline_runner.py
