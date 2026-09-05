@@ -252,6 +252,7 @@ checks=(
  ('http://127.0.0.1:8765/api/learning-model-status',None),
  ('http://127.0.0.1:8765/api/grade-learning-audit',None),
  ('http://127.0.0.1:8765/api/manual-official-proof-status','manual'),
+ ('http://127.0.0.1:8765/api/ai-auto-tracking','ai'),
 )
 for url, marker in checks:
     with urllib.request.urlopen(url,timeout=5) as r:
@@ -279,6 +280,11 @@ for url, marker in checks:
         assert policy.get('manual_screenshot_trains_raw_grade_calibration') is False, data
         assert policy.get('rejected_screenshot_bytes_retained') is False, data
         assert policy.get('proof_upload_rate_limited') is True, data
+    if marker == 'ai':
+        assert data.get('status') in {'not-run','pass','warning','high','critical'}, data
+        safety=data.get('safety',{})
+        assert safety.get('github_write') is False, data
+        assert safety.get('http_403_429_bypass') is False, data
 print('[OK] v143 서버 API + 전체 런타임 + 자료수집/등급사진 수동검증 보안 정상')
 PY
 
