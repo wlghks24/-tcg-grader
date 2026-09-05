@@ -24,6 +24,11 @@ on:
       - 'auto_update_all.py'
       - 'collector_self_healing.py'
       - 'tcg_code_repair_learning.py'
+      - 'ai_auto_tracker.py'
+      - 'test_ai_auto_tracker_v27.py'
+      - 'tcg_updater.py'
+      - 'verify_v107_runtime_integration.py'
+      - '.github/workflows/ai-auto-tracking.yml'
       - 'GRAPHIFY_UPDATE.sh'
       - 'GRAPHIFY_SELF_HEAL.py'
       - 'GRAPHIFY_AUDIT.py'
@@ -58,6 +63,8 @@ jobs:
           grep -Fq 'tcg_code_repair_learning.json' .gitignore
           grep -Fq 'tcg_code_repair_candidates.json' .gitignore
           grep -Fq 'tcg_code_repair_report.json' .gitignore
+          grep -Fq 'AI_AUTO_TRACKING_STATE.json' .gitignore
+          grep -Fq 'AI_AUTO_TRACKING_REPORT.json' .gitignore
           grep -Fq 'graphify_self_heal_memory.json' .gitignore
           grep -Fq 'graphify-out/graph_audit.json' .gitignore
       - name: Verify Graphify control-plane files stay out of map
