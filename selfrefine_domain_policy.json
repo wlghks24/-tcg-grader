@@ -115,6 +115,9 @@
     "research_text_executable": false,
     "search_result_patch_generation": false,
     "full_regression_before_resolution_learning": true,
-    "verified_resolution_reuse": true
+    "verified_resolution_reuse": true,
+    "new_error_bounded_official_network_research": true,
+    "research_network_allowlist_only": true,
+    "research_raw_body_persisted": false
   }
 }
