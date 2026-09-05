@@ -126,3 +126,7 @@ MARKET_ANALYSIS_PEER_PREVENTION_RULES.json
 # Market AI auto tracker runtime evidence is device/runner-local.
 MARKET_AI_TRACKER_REPORT.json
 MARKET_AI_TRACKER_STATE.json
+
+# Integrated AI automatic tracking state/report are device/runner-local.
+AI_AUTO_TRACKING_STATE.json
+AI_AUTO_TRACKING_REPORT.json
