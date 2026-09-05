@@ -18,6 +18,15 @@ class PatchIdempotencyTests(unittest.TestCase):
         after = {name: (ROOT / name).read_bytes() for name in targets}
         self.assertEqual(before, after, result.stdout)
 
+    def test_multi_market_patch_is_noop_with_versioned_assets(self):
+        self._assert_noop(
+            "apply_multi_market_prices_patch.py",
+            ("index.html", "tcg_updater.py", ".gitignore"),
+        )
+        html = (ROOT / "index.html").read_text(encoding="utf-8")
+        self.assertEqual(html.count("multi_market_prices.css"), 1)
+        self.assertEqual(html.count("multi_market_prices.js"), 1)
+
     def test_multi_route_patch_is_noop_on_newer_runtime(self):
         self._assert_noop(
             "apply_multi_route_event_patch.py",
