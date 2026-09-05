@@ -130,6 +130,7 @@
     "full_regression_failure_does_not_poison_verified_lesson": true,
     "local_resolution_is_provisional": true,
     "full_regression_promotes_quarantine_learning": true,
-    "legacy_local_success_not_promoted": true
+    "legacy_local_success_not_promoted": true,
+    "relative_import_impact_analysis": true
   }
 }
