@@ -285,10 +285,18 @@ def _region(row: dict) -> str:
         return "US"
 
     # A generic .com TLD is not a US signal. Several Japanese/global TCG
-    # official sites use .com, so use bounded known-host hints instead.
+    # official sites use .com, so use bounded known-host hints instead. When a
+    # localized subdomain also matches a parent domain (for example
+    # en.onepiece-cardgame.com vs onepiece-cardgame.com), the longest/specific
+    # domain wins so regional provenance cannot be swallowed by the parent.
+    matches = []
     for region, domains in REGION_HOST_HINTS.items():
-        if any(host == domain or host.endswith("." + domain) for domain in domains):
-            return region
+        for domain in domains:
+            if host == domain or host.endswith("." + domain):
+                matches.append((len(domain), region, domain))
+    if matches:
+        matches.sort(reverse=True)
+        return matches[0][1]
     return "KR"
 
 
