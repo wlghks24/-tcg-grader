@@ -715,6 +715,9 @@ def _coverage_report(data: dict) -> dict:
         "candidate_covered_cells": sum(1 for row in rows if row["candidate_count"] > 0),
         "verified_missing_cells": [row["cell"] for row in missing],
         "recheck_due_cells": [row["cell"] for row in priority_rows if row["recheck_due"]],
+        "verification_freshness_unknown_cells": [
+            row["cell"] for row in rows if row["verification_freshness_unknown"]
+        ],
         "candidate_only_cells": [row["cell"] for row in missing if row["candidate_count"] > 0],
         "no_candidate_cells": [row["cell"] for row in missing if row["candidate_count"] == 0],
         "next_priority_cells": priority_rows[:24],
