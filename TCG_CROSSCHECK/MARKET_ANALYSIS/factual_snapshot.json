@@ -1,0 +1,18 @@
+{
+  "schema_version": "1.0",
+  "namespace": "MARKET_ANALYSIS",
+  "snapshot_kind": "factual",
+  "run_date_kst": "2026-09-06",
+  "status": "building",
+  "built_at": "2026-09-06T07:30:00+09:00",
+  "finalized_at": null,
+  "facts": [],
+  "validation": {
+    "manifest_validated": true,
+    "allowed_fields_only": true,
+    "exact_factual_types_enforced": true,
+    "write_readback_verified": false,
+    "isolation_breach": false
+  },
+  "error_code": null
+}
