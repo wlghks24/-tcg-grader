@@ -1,10 +1,10 @@
-name: AI Auto Tracking
+name: Integrated AI Auto Tracking
 
 on:
   push:
     branches: [main]
   schedule:
-    - cron: '17 * * * *'
+    - cron: '37 * * * *'
   workflow_dispatch:
 
 permissions:
@@ -12,7 +12,7 @@ permissions:
   actions: read
 
 concurrency:
-  group: ai-auto-tracking-${{ github.ref }}
+  group: integrated-ai-auto-tracking-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
