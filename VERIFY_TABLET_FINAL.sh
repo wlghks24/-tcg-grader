@@ -32,6 +32,7 @@ auto_repair_engine.py
 auto_update_all.py
 collector_self_healing.py
 tcg_code_repair_learning.py
+ai_auto_tracker.py
 csp_hash_hardening.py
 index.html
 feature_category_nav.css
@@ -69,6 +70,7 @@ python -m py_compile \
   auto_update_all.py \
   collector_self_healing.py \
   tcg_code_repair_learning.py \
+  ai_auto_tracker.py \
   runtime_optimization_hardening.py \
   csp_hash_hardening.py \
   GRAPHIFY_SELF_HEAL.py \
@@ -81,6 +83,7 @@ echo "[3/9] 핵심 Python 문법/컴파일: OK"
 
 python runtime_optimization_hardening.py --check >/dev/null
 python tcg_code_repair_learning.py --self-test >/dev/null
+python ai_auto_tracker.py --self-test >/dev/null
 python GRAPHIFY_SELF_HEAL.py --self-test >/dev/null
 echo "[4/9] 최적화 하드닝/오류학습/자가복구 자체시험: OK"
 
@@ -203,6 +206,10 @@ grep -Fq 'import tcg_code_repair_learning' collector_self_healing.py
 grep -Fq 'tcg_code_repair_learning.json' .gitignore
 grep -Fq 'tcg_code_repair_candidates.json' .gitignore
 grep -Fq 'tcg_code_repair_report.json' .gitignore
+grep -Fq 'AI_AUTO_TRACKING_STATE.json' .gitignore
+grep -Fq 'AI_AUTO_TRACKING_REPORT.json' .gitignore
+grep -Fq "/api/ai-auto-tracking" tcg_updater.py
+grep -Fq "target=ai_auto_tracker.loop" tcg_updater.py
 grep -Fq 'GRAPHIFY_VERSION="${GRAPHIFY_VERSION:-0.9.53}"' SETUP_GRAPHIFY_TERMUX.sh
 grep -Fxq '.codex/' .graphifyignore
 grep -Fxq '.agents/' .graphifyignore
