@@ -313,20 +313,54 @@ def _tracked_files(root: Path) -> tuple[list[str], bool]:
     return filtered[:MAX_SCAN_FILES], truncated
 
 
-def _python_imports(text: str) -> set[str]:
+def _package_name(relative: str) -> str:
+    module = _module_name(relative)
+    if relative.replace("\\", "/").endswith("/__init__.py"):
+        return module
+    return module.rsplit(".", 1)[0] if "." in module else ""
+
+
+def _python_imports(text: str, relative: str = "") -> set[str]:
     try:
         tree = ast.parse(text)
     except (SyntaxError, ValueError, MemoryError, RecursionError):
         return set()
     imports: set[str] = set()
+    package_parts = [
+        part for part in _package_name(relative).split(".") if part
+    ]
     for node in ast.walk(tree):
         if isinstance(node, ast.Import):
             imports.update(alias.name for alias in node.names if alias.name)
-        elif isinstance(node, ast.ImportFrom) and node.module:
-            imports.add(node.module)
-            for alias in node.names:
-                if alias.name and alias.name != "*":
-                    imports.add(f"{node.module}.{alias.name}")
+            continue
+        if not isinstance(node, ast.ImportFrom):
+            continue
+
+        if node.level:
+            # Python's level=1 means current package; each additional dot climbs
+            # one package. Resolve this statically without importing code.
+            climb = max(0, int(node.level) - 1)
+            base_parts = (
+                package_parts[: len(package_parts) - climb]
+                if climb <= len(package_parts)
+                else []
+            )
+            if node.module:
+                base_parts = base_parts + [
+                    part for part in node.module.split(".") if part
+                ]
+            base = ".".join(base_parts)
+        else:
+            base = node.module or ""
+
+        if base:
+            imports.add(base)
+        for alias in node.names:
+            if not alias.name or alias.name == "*":
+                continue
+            candidate = ".".join(part for part in (base, alias.name) if part)
+            if candidate:
+                imports.add(candidate)
     return imports
 
 
@@ -346,7 +380,11 @@ def build_repository_index(root: Path = ROOT) -> dict[str, Any]:
             "suffix": path.suffix.lower(),
             "text": text,
             "text_lower": text.lower(),
-            "imports": _python_imports(text) if path.suffix.lower() == ".py" else set(),
+            "imports": (
+                _python_imports(text, relative)
+                if path.suffix.lower() == ".py"
+                else set()
+            ),
         })
     return {
         "records": records,
