@@ -1,14 +1,17 @@
 from pathlib import Path
+import re
 
 # Link browser assets.
 p=Path('index.html')
 s=p.read_text(encoding='utf-8')
 css='<link rel="stylesheet" href="multi_market_prices.css">'
 js='<script src="multi_market_prices.js"></script>'
-if css not in s:
+css_pattern=re.compile(r'<link\\s+rel=["\\\']stylesheet["\\\']\\s+href=["\\\']multi_market_prices\\.css(?:\\?[^"\\\']*)?["\\\']\\s*/?>',re.I)
+js_pattern=re.compile(r'<script\\s+src=["\\\']multi_market_prices\\.js(?:\\?[^"\\\']*)?["\\\']\\s*></script>',re.I)
+if not css_pattern.search(s):
     if '</head>' not in s: raise SystemExit('missing </head>')
     s=s.replace('</head>',css+'\n</head>',1)
-if js not in s:
+if not js_pattern.search(s):
     marker='<script src="auto_market_center.js"></script>'
     if marker in s:s=s.replace(marker,marker+'\n'+js,1)
     elif '</body>' in s:s=s.replace('</body>',js+'\n</body>',1)
