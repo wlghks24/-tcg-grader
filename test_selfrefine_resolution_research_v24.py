@@ -121,6 +121,33 @@ class SelfrefineResolutionResearchV24Tests(unittest.TestCase):
             self.assertFalse(row["research"]["research_text_executable"])
             self.assertFalse(row["research"]["patch_from_search_text_allowed"])
 
+    def test_network_error_semantics_override_python_collector_suffix(self):
+        http_timeout = {
+            "stage": "HTTP_TIMEOUT",
+            "path": "multi_market_price_collector.py",
+            "root_cause": "remote request timed out",
+            "evidence": "timed out while collecting market prices",
+        }
+        source_block = {
+            "stage": "SOURCE_429",
+            "path": "market_public_crosscheck.py",
+            "root_cause": "rate limited",
+            "evidence": "HTTP 429 Retry-After",
+        }
+        syntax_error = {
+            "stage": "PYTHON_SYNTAX",
+            "path": "multi_market_price_collector.py",
+            "root_cause": "SyntaxError",
+            "evidence": "invalid syntax",
+        }
+
+        self.assertEqual(research._research_family(http_timeout), "http")
+        self.assertEqual(research._research_family(source_block), "http")
+        self.assertEqual(research._research_family(syntax_error), "python")
+        self.assertEqual(
+            research.research_plan(http_timeout)["research_family"], "http"
+        )
+
     def test_relative_imports_are_included_in_transitive_impact_graph(self):
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
