@@ -222,11 +222,11 @@ def compare_learning_sets(
     matched_instagram_ids: set[str] = set()
 
     for left in main_rows:
-        candidates = by_key.get(lesson_match_key(left), [])
+        candidates = sorted(by_key.get(lesson_match_key(left), []), key=lambda row: row["lesson_id"])
         if candidates:
-            right = sorted(candidates, key=lambda row: row["lesson_id"])[0]
-            matched_instagram_ids.add(right["lesson_id"])
-            comparisons.append(classify_learning_pair(left, right))
+            for right in candidates:
+                matched_instagram_ids.add(right["lesson_id"])
+                comparisons.append(classify_learning_pair(left, right))
             continue
         status = (
             "not-applicable"
