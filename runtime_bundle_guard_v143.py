@@ -30,6 +30,7 @@ REQUIRED_FILES = (
     "auto_update_all.py",
     "collector_self_healing.py",
     "tcg_code_repair_learning.py",
+    "ai_auto_tracker.py",
     "tcg_updater.py",
     "tcg_updater_v135.py",
     "update_releases.py",
