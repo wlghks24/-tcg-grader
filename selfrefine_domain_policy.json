@@ -1,5 +1,5 @@
 {
-  "version": 8,
+  "version": 9,
   "domains": {
     "main": {
       "root": ".",
@@ -15,7 +15,8 @@
         "provider": "MAIN_SELFREFINE_PROVIDER_STATE.json",
         "verified_repair": "MAIN_SELFREFINE_VERIFIED_REPAIR_STATE.json",
         "error_quarantine": "MAIN_SELFREFINE_ERROR_QUARANTINE_STATE.json",
-        "peer_prevention": "MARKET_ANALYSIS_PEER_PREVENTION_RULES.json"
+        "peer_prevention": "MARKET_ANALYSIS_PEER_PREVENTION_RULES.json",
+        "resolution_learning": "MAIN_SELFREFINE_RESOLUTION_LEARNING_STATE.json"
       }
     },
     "instagram_content": {
@@ -108,6 +109,12 @@
     "conflicting_fix_requires_safer_local_selection": true,
     "grading_raw_cross_domain_share": false,
     "grading_calibration_cross_domain_share": false,
-    "pixel_features_cross_domain_share": false
+    "pixel_features_cross_domain_share": false,
+    "new_error_full_repository_analysis": true,
+    "new_error_official_source_research": true,
+    "research_text_executable": false,
+    "search_result_patch_generation": false,
+    "full_regression_before_resolution_learning": true,
+    "verified_resolution_reuse": true
   }
 }
