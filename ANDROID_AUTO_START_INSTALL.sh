@@ -2,7 +2,7 @@
 set -eu
 cd "$(dirname "$0")"
 
-if [ ! -f "tcg_updater.py" ] || [ ! -f "index.html" ] || [ ! -f "START_TCG_UPDATER_ANDROID.sh" ] || [ ! -f "ANDROID_UPDATE_AND_START.sh" ]; then
+if [ ! -f "tcg_updater.py" ] || [ ! -f "tcg_updater_v135.py" ] || [ ! -f "index.html" ] || [ ! -f "START_TCG_UPDATER_ANDROID.sh" ] || [ ! -f "ANDROID_UPDATE_AND_START.sh" ] || [ ! -f "VERIFY_TABLET_FINAL.sh" ]; then
   echo "[ERROR] Extract/pull the complete program before installing auto-start."
   exit 1
 fi
