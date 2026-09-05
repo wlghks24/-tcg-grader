@@ -3,11 +3,16 @@ from __future__ import annotations
 
 import argparse
 import json
+import tempfile
 from pathlib import Path
 from typing import Any
 
 from shared_self_learning.contracts import assert_passive_exchange_payload
-from shared_self_learning.peer_learning import compare_learning_sets, normalize_peer_lesson
+from shared_self_learning.peer_learning import (
+    PEER_LEARNING_FIELDS,
+    compare_learning_sets,
+    validate_peer_snapshot_lesson,
+)
 
 ROOT = Path(__file__).resolve().parent
 EXCHANGE = ROOT / "crosscheck_exchange"
@@ -42,13 +47,21 @@ def _load_lessons(path: Path, expected_domain: str) -> list[dict[str, Any]]:
             if not isinstance(value, dict):
                 raise ValueError(f"{path}:{line_no}: JSONL row must be an object")
             assert_passive_exchange_payload(value)
-            lessons.append(normalize_peer_lesson(expected_domain, value))
+            lessons.append(validate_peer_snapshot_lesson(expected_domain, value))
         return lessons
 
     value = json.loads(path.read_text(encoding="utf-8"))
     assert_passive_exchange_payload(value)
     if not isinstance(value, dict):
         raise ValueError(f"{path}: expected learning-summary envelope")
+    envelope_fields = {"domain", "kind", "lessons"}
+    extra_envelope = sorted(set(value) - envelope_fields)
+    missing_envelope = sorted(envelope_fields - set(value))
+    if extra_envelope or missing_envelope:
+        raise ValueError(
+            f"{path}: learning-summary envelope fields mismatch: "
+            f"missing={missing_envelope} extra={extra_envelope}"
+        )
     if value.get("domain") != expected_domain:
         raise ValueError(f"{path}: expected domain {expected_domain!r}")
     if value.get("kind") != "learning_summary":
@@ -56,7 +69,28 @@ def _load_lessons(path: Path, expected_domain: str) -> list[dict[str, Any]]:
     lessons = value.get("lessons")
     if not isinstance(lessons, list) or not all(isinstance(row, dict) for row in lessons):
         raise ValueError(f"{path}: lessons must be a list of objects")
-    return [normalize_peer_lesson(expected_domain, row) for row in lessons]
+    return [validate_peer_snapshot_lesson(expected_domain, row) for row in lessons]
+
+
+def _write_json_atomic(path: Path, payload: dict[str, Any]) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    temp: Path | None = None
+    try:
+        with tempfile.NamedTemporaryFile(
+            mode="w",
+            encoding="utf-8",
+            dir=path.parent,
+            prefix=f".{path.name}.",
+            suffix=".tmp",
+            delete=False,
+        ) as handle:
+            json.dump(payload, handle, ensure_ascii=False, indent=2, sort_keys=True)
+            handle.write("\n")
+            temp = Path(handle.name)
+        temp.replace(path)
+    finally:
+        if temp is not None and temp.exists():
+            temp.unlink(missing_ok=True)
 
 
 def run(main_path: Path | None = None, instagram_path: Path | None = None) -> dict[str, Any]:
@@ -142,7 +176,7 @@ def main() -> int:
 
     result = run(Path(args.main_learning), Path(args.instagram_learning))
     if args.write_report:
-        REPORT.write_text(json.dumps(result, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+        _write_json_atomic(REPORT, result)
     print(json.dumps({
         "status": result["status"],
         "main_lessons": result["main_lessons"],
