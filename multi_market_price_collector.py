@@ -68,16 +68,51 @@ def _to_krw(amount,currency,fx):
     return int(round(float(amount)*rate)) if rate and amount else 0
 
 def _extract_price(text,fx):
+    """Choose the most price-like amount instead of blindly taking the maximum.
+
+    Search snippets frequently contain MSRP, shipping, discount, coupon or bundle
+    amounts next to the actual market/transaction price.  Ranking by amount alone
+    biases the result upward and can turn unrelated values into "current price".
+    """
+    raw=str(text or '')
     values=[]
+    positive=('sold','completed','market price','current price','price','거래가','체결가','현재가','시세','판매가','낙찰가')
+    negative=('shipping','ship ','delivery','tax','coupon','discount','save ','msrp','list price','retail price','배송','택배','쿠폰','할인','정가','출시가')
     for currency,pat in PRICE_PATTERNS:
-        for m in pat.finditer(text or ''):
+        for m in pat.finditer(raw):
             try:a=float(m.group(1).replace(',',''))
             except Exception:continue
             krw=_to_krw(a,currency,fx)
-            if 100<=krw<=100_000_000:values.append((krw,a,currency))
+            if not (100<=krw<=100_000_000):continue
+            low=raw.lower()
+            center=(m.start()+m.end())//2
+            left=max(0,m.start()-64);right=min(len(raw),m.end()+64)
+            nearby=low[left:right]
+            score=0
+            # Attribute labels to the nearest amount. A flat "keyword exists in
+            # 48 chars" score lets an adjacent MSRP label contaminate the real
+            # current price (and vice versa).
+            for word in positive:
+                start=0
+                while True:
+                    pos=nearby.find(word,start)
+                    if pos<0:break
+                    absolute=left+pos+len(word)//2
+                    score+=max(1,80-min(79,abs(center-absolute)))
+                    start=pos+len(word)
+            for word in negative:
+                start=0
+                while True:
+                    pos=nearby.find(word,start)
+                    if pos<0:break
+                    absolute=left+pos+len(word)//2
+                    score-=max(1,100-min(99,abs(center-absolute)))
+                    start=pos+len(word)
+            values.append((score,m.start(),krw,a,currency))
     if not values:return None
-    # Search snippets sometimes include unrelated shipping/discount values. Prefer the largest plausible card price.
-    krw,a,c=max(values,key=lambda x:x[0])
+    # Highest semantic score wins; on a tie prefer the first explicit amount,
+    # which avoids the previous "largest number always wins" inflation bias.
+    _,_,krw,a,c=max(values,key=lambda x:(x[0],-x[1]))
     return {'price_krw':krw,'price_native':a,'currency':c}
 
 def _rss(query,limit=8):
@@ -95,11 +130,20 @@ def _rss(query,limit=8):
         out.append({'title':title[:240],'url':link[:800],'snippet':desc[:600],'date':date[:80]})
     return out
 
+def _region_query_term(region):
+    region=str(region or 'ALL').upper()
+    return {'KR':'Korean 한국판','JP':'Japanese 일본판','US':'English'}.get(region,'')
+
 def _ebay_api(query,region,fx):
     token=os.environ.get('EBAY_OAUTH_TOKEN','').strip()
     if not token:return []
-    marketplace='EBAY_US' if region!='JP' else 'EBAY_US'
-    url='https://api.ebay.com/buy/browse/v1/item_summary/search?q='+quote_plus(query)+'&limit=20'
+    # Region means card edition/language in this UI, not seller geography.
+    # eBay Browse is queried through EBAY_US, so scope the text query instead
+    # of pretending that an EBAY_JP marketplace exists.
+    region_term=_region_query_term(region)
+    scoped_query=(str(query).strip()+' '+region_term).strip()
+    marketplace='EBAY_US'
+    url='https://api.ebay.com/buy/browse/v1/item_summary/search?q='+quote_plus(scoped_query)+'&limit=20'
     req=Request(url,headers={'Authorization':'Bearer '+token,'X-EBAY-C-MARKETPLACE-ID':marketplace,'User-Agent':UA})
     with safe_urlopen(req,timeout=15,allowed_hosts={'api.ebay.com'}) as r:d=json.loads(r.read(2_000_000).decode('utf-8','ignore'))
     rows=[]
@@ -148,9 +192,13 @@ def _json_request(url,headers,allowed_hosts,max_bytes=2_000_000,timeout=15):
     if len(raw)>max_bytes:raise ValueError('response exceeds safe size limit')
     return json.loads(raw.decode('utf-8','strict'))
 
-def _justtcg_api(query,game,fx):
+def _justtcg_api(query,game,fx,region='ALL'):
     token=os.environ.get('JUSTTCG_API_KEY','').strip()
     if not token:return [],'not_configured'
+    if str(region or 'ALL').upper() not in ('ALL','US'):
+        # JustTCG's USD reference feed must not be presented as KR/JP-edition
+        # evidence merely because the card identity happens to match.
+        return [],'region_unsupported'
     game_name={'pokemon':'Pokemon','onepiece':'One Piece'}.get(_game_key(game))
     if not game_name:return [],'unsupported'
     params={'query':query,'game':game_name,'limit':'12','include_statistics':'30d','include_null_prices':'false'}
@@ -165,18 +213,22 @@ def _justtcg_api(query,game,fx):
             if wanted and wanted not in actual:continue
         variants=card.get('variants') or []
         priced=[v for v in variants if isinstance(v,dict) and isinstance(v.get('price'),(int,float)) and v.get('price',0)>0]
-        if not priced:continue
-        variant=max(priced,key=lambda v:float(v.get('price') or 0))
-        amount=float(variant['price']);krw=_to_krw(amount,'USD',fx)
-        if not krw:continue
-        title=' · '.join(x for x in [str(card.get('name') or ''),str(card.get('number') or ''),str(variant.get('condition') or ''),str(variant.get('printing') or '')] if x)
-        updated=variant.get('lastUpdated');date=''
-        try:date=datetime.fromtimestamp(int(updated),timezone.utc).isoformat(timespec='seconds') if updated else ''
-        except (TypeError,ValueError,OverflowError,OSError):pass
-        rows.append({'source':'JustTCG','source_id':'justtcg','title':title[:240],'url':'https://justtcg.com/',
-                     'price_krw':krw,'price_native':amount,'currency':'USD','price_kind':'API 현재가',
-                     'verified_api':True,'date':date,'score':0.98,'card_number':str(card.get('number') or '')[:60]})
-    return rows,'ok'
+        # Never select the most expensive variant as the card's representative
+        # price. Preserve each condition/printing as a separate comparable row.
+        for variant in priced[:8]:
+            amount=float(variant['price']);krw=_to_krw(amount,'USD',fx)
+            if not krw:continue
+            title=' · '.join(x for x in [str(card.get('name') or ''),str(card.get('number') or ''),str(variant.get('condition') or ''),str(variant.get('printing') or '')] if x)
+            updated=variant.get('lastUpdated');date=''
+            try:date=datetime.fromtimestamp(int(updated),timezone.utc).isoformat(timespec='seconds') if updated else ''
+            except (TypeError,ValueError,OverflowError,OSError):pass
+            rows.append({'source':'JustTCG','source_id':'justtcg','title':title[:240],'url':'https://justtcg.com/',
+                         'price_krw':krw,'price_native':amount,'currency':'USD','price_kind':'API 현재가',
+                         'verified_api':True,'date':date,'score':0.98,'card_number':str(card.get('number') or '')[:60],
+                         'condition':str(variant.get('condition') or '')[:80],
+                         'printing':str(variant.get('printing') or '')[:80],
+                         'region_scope':'US'})
+    return rows[:24],'ok'
 
 def _tcgdex_query_parts(query):
     card_number=''
@@ -186,12 +238,15 @@ def _tcgdex_query_parts(query):
     name=re.sub(r'\b(?:pokemon|pok[eé]mon|card|tcg)\b',' ',name,flags=re.I)
     return re.sub(r'\s+',' ',name).strip(),card_number
 
-def _tcgdex_api(query,game,fx):
+def _tcgdex_api(query,game,fx,region='ALL'):
     if _game_key(game) not in ('pokemon','all'):return [],'unsupported'
+    region=str(region or 'ALL').upper()
+    if region=='KR':return [],'region_unsupported'
     name,card_number=_tcgdex_query_parts(query)
     if not name or not re.search(r'[A-Za-z\u3040-\u30ff\u3400-\u9fff]',name):return [],'query_language_unsupported'
     rows=[];seen=set()
-    for language in ('en','ja'):
+    languages=('ja',) if region=='JP' else (('en',) if region=='US' else ('en','ja'))
+    for language in languages:
         params={'name':name,'pagination:page':'1','pagination:itemsPerPage':'6'}
         if card_number and re.fullmatch(r'[A-Za-z]?\d{1,4}',card_number):params['localId']=card_number
         briefs=_json_request(f'https://api.tcgdex.net/v2/{language}/cards?'+urlencode(params),{}, {'api.tcgdex.net'})
@@ -217,7 +272,8 @@ def _tcgdex_api(query,game,fx):
                              'url':f'https://api.tcgdex.net/v2/{language}/cards/{card_id}','price_krw':krw,
                              'price_native':float(amount),'currency':'USD','price_kind':'TCGplayer API 통합시세',
                              'verified_api':True,'date':str(tcgp.get('updated') or ''),'score':0.96,
-                             'card_number':str(card.get('localId') or '')[:60]})
+                             'card_number':str(card.get('localId') or '')[:60],
+                             'region_scope':'JP' if language=='ja' else 'US'})
     return rows[:18],'ok'
 
 GRADE_ORDER=('미감정','A','B','C','D','PSA 10','PSA 9','PSA 8 이하','BGS 10 블랙라벨')
@@ -239,6 +295,27 @@ def _grade_reference(items):
     return [{'grade':label,'count':len(values),'price_krw':int(statistics.median(values)) if values else 0,
              'min_krw':min(values) if values else 0,'max_krw':max(values) if values else 0}
             for label,values in grouped.items()]
+
+def _query_grade_label(query):
+    text=str(query or '')
+    if re.search(r'BGS\s*10.*(?:black|블랙)',text,re.I):return 'BGS 10 블랙라벨'
+    m=re.search(r'PSA\s*(10|9|8|7|6|5|4|3|2|1)',text,re.I)
+    if m:return 'PSA 10' if m.group(1)=='10' else ('PSA 9' if m.group(1)=='9' else 'PSA 8 이하')
+    return ''
+
+def _comparable_summary_items(query,items):
+    """Keep the headline median on one grading basis.
+
+    The detailed rows can still show all evidence, but a raw-card query must not
+    average PSA/BGS prices into the number labelled as the central reference.
+    """
+    wanted=_query_grade_label(query)
+    valid=[x for x in items if int(x.get('price_krw') or 0)>0]
+    if wanted:
+        chosen=[x for x in valid if _grade_label(x)==wanted]
+        return chosen, wanted
+    raw=[x for x in valid if _grade_label(x)=='미감정']
+    return raw, '미감정'
 
 def _learning():
     d=_safe_json(LEARNING,{})
@@ -270,7 +347,7 @@ def _save_learning(stats):
     old=_learning();src=old.setdefault('sources',{})
     for sid,x in stats.items():
         row=src.setdefault(sid,{'runs':0,'hits':0,'errors':0})
-        if x.get('status') in ('not_configured','unsupported','query_language_unsupported','cooldown_skip'):continue
+        if x.get('status') in ('not_configured','unsupported','region_unsupported','query_language_unsupported','cooldown_skip'):continue
         row['runs']=int(row.get('runs',0))+1;row['hits']=int(row.get('hits',0))+int(x.get('hits',0));row['errors']=int(row.get('errors',0))+int(x.get('error',0));row['last_at']=datetime.now(timezone.utc).isoformat(timespec='seconds')
         if int(x.get('error',0)):
             row['consecutive_errors']=int(row.get('consecutive_errors',0))+1
@@ -324,7 +401,7 @@ def search_multi_market(query,region='ALL',game='ALL',force=False):
         if _cooling(sid,learn):
             stats[sid]={'hits':0,'error':0,'status':'cooldown_skip'};continue
         try:
-            direct,status=loader(query,game,fx);items.extend(direct)
+            direct,status=loader(query,game,fx,region);items.extend(direct)
             stats[sid]={'hits':len(direct),'error':0,'status':status}
         except Exception as exc:
             failure=_failure_stats(exc);stats[sid]={'hits':0,**failure};errors.append(name+':'+failure['detail'])
@@ -337,6 +414,8 @@ def search_multi_market(query,region='ALL',game='ALL',force=False):
             stats[sid]['status']='unsupported';continue
         q=f'site:{src["domain"]} {query}'
         if game not in ('ALL',''):q+=' '+game
+        region_term=_region_query_term(region)
+        if region_term:q+=' '+region_term
         try:rows=_rss(q,6)
         except Exception as e:
             failure=_failure_stats(e);stats[sid].update(failure);errors.append(src['name']+':'+failure['detail']);continue
@@ -349,11 +428,12 @@ def search_multi_market(query,region='ALL',game='ALL',force=False):
             blob=(r['title']+' '+r['snippet']).lower();kind='실거래/완료 신호' if any(w in blob for w in SOLD_WORDS) else src['kind']
             weight=float(src['weight'])*_health(sid,learn)*(1.08 if kind=='실거래/완료 신호' else 1.0)
             items.append({'source':src['name'],'source_id':sid,'title':r['title'],'url':r['url'],'snippet':r['snippet'],'date':r['date'],
-                          **p,'price_kind':kind,'verified_api':False,'score':round(weight,3)})
+                          **p,'price_kind':kind,'verified_api':False,'score':round(weight,3),
+                          'region_scope':region if region in ('KR','JP','US') else 'ALL'})
             seen+=1
         stats[sid]['hits']+=seen
         if seen:stats[sid]['status']='ok'
-        elif stats[sid].get('status') not in ('not_configured','unsupported','query_language_unsupported'):stats[sid]['status']='no_result'
+        elif stats[sid].get('status') not in ('not_configured','unsupported','region_unsupported','query_language_unsupported'):stats[sid]['status']='no_result'
     # Dedupe URL + near-identical title/price.
     dedup={}
     for x in items:
@@ -362,9 +442,12 @@ def search_multi_market(query,region='ALL',game='ALL',force=False):
         old=dedup.get(k)
         if not old or float(x.get('score',1))>float(old.get('score',1)):dedup[k]=x
     items=list(dedup.values());items.sort(key=lambda x:(-float(x.get('score',1)),-int(x.get('price_krw',0))))
-    prices=[int(x['price_krw']) for x in items if int(x.get('price_krw',0))>0]
-    summary={'count':len(prices),'median_krw':int(statistics.median(prices)) if prices else 0,'min_krw':min(prices) if prices else 0,'max_krw':max(prices) if prices else 0,
-             'source_count':len({x.get('source_id') for x in items})}
+    comparable,basis=_comparable_summary_items(query,items)
+    prices=[int(x['price_krw']) for x in comparable if int(x.get('price_krw',0))>0]
+    summary={'count':len(prices),'total_count':len([x for x in items if int(x.get('price_krw',0))>0]),
+             'median_krw':int(statistics.median(prices)) if prices else 0,'min_krw':min(prices) if prices else 0,'max_krw':max(prices) if prices else 0,
+             'source_count':len({x.get('source_id') for x in comparable}),'basis':basis,
+             'region_scope':region if region in ('KR','JP','US') else 'ALL'}
     source_status=[{'source_id':src['id'],'source':src['name'],'hits':int((stats.get(src['id']) or {}).get('hits') or 0),
                     'status':str((stats.get(src['id']) or {}).get('status') or 'ready')}
                    for src in SOURCES if src['id'] in ('snkrdunk','justtcg','tcgdex','pavilion')]

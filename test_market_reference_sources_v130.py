@@ -55,6 +55,56 @@ class MarketReferenceSourcesV130Tests(unittest.TestCase):
         self.assertEqual(rows[0]['price_krw'],7000)
         self.assertEqual(market._tcgdex_api('Boa Hancock','ONE PIECE',{'USD':1400})[1],'unsupported')
 
+    def test_justtcg_keeps_variants_separate_instead_of_picking_highest(self):
+        payload={'data':[{'name':'Pikachu','number':'025','variants':[
+            {'condition':'Near Mint','printing':'Normal','price':5.0,'lastUpdated':0},
+            {'condition':'Near Mint','printing':'Holo','price':50.0,'lastUpdated':0},
+        ]}]}
+        with mock.patch.dict(os.environ,{'JUSTTCG_API_KEY':'secret-test-key'},clear=False), \
+             mock.patch.object(market,'_json_request',return_value=payload):
+            rows,status=market._justtcg_api('Pikachu','Pokémon',{'USD':1400,'KRW':1})
+        self.assertEqual(status,'ok')
+        self.assertEqual(sorted(row['price_krw'] for row in rows),[7000,70000])
+        self.assertEqual({row['printing'] for row in rows},{'Normal','Holo'})
+
+    def test_region_scope_blocks_us_reference_api_for_kr_and_selects_tcgdex_language(self):
+        with mock.patch.dict(os.environ,{'JUSTTCG_API_KEY':'secret-test-key'},clear=False):
+            rows,status=market._justtcg_api('Pikachu','Pokémon',{'USD':1400,'KRW':1},'KR')
+        self.assertEqual(rows,[])
+        self.assertEqual(status,'region_unsupported')
+        self.assertEqual(market._tcgdex_api('Pikachu','Pokémon',{'USD':1400},'KR')[1],'region_unsupported')
+
+        seen=[]
+        def fake_request(url,*_args,**_kwargs):
+            seen.append(url)
+            if '?' in url:return [{'id':'base-25','localId':'25','name':'Pikachu'}]
+            return {'id':'base-25','localId':'25','name':'Pikachu','pricing':{'tcgplayer':{'updated':'2026-01-01','unit':'USD','normal':{'marketPrice':5.0}}}}
+        with mock.patch.object(market,'_json_request',side_effect=fake_request):
+            rows,status=market._tcgdex_api('Pikachu 25','Pokémon',{'USD':1400,'KRW':1},'JP')
+        self.assertEqual(status,'ok')
+        self.assertTrue(rows)
+        self.assertTrue(all('/v2/ja/' in url for url in seen),seen)
+        self.assertTrue(all(row['region_scope']=='JP' for row in rows))
+
+    def test_headline_summary_does_not_mix_raw_and_graded_prices(self):
+        items=[
+            {'title':'Pikachu raw','price_krw':10000,'source_id':'a'},
+            {'title':'Pikachu PSA 10','price_krw':100000,'source_id':'b'},
+        ]
+        comparable,basis=market._comparable_summary_items('Pikachu',items)
+        self.assertEqual(basis,'미감정')
+        self.assertEqual([row['price_krw'] for row in comparable],[10000])
+        comparable,basis=market._comparable_summary_items('Pikachu PSA 10',items)
+        self.assertEqual(basis,'PSA 10')
+        self.assertEqual([row['price_krw'] for row in comparable],[100000])
+
+    def test_price_parser_prefers_market_price_over_shipping_or_msrp(self):
+        fx={'KRW':1.0,'USD':1400.0,'JPY':9.0}
+        row=market._extract_price('정가 ₩120,000 · 현재가 ₩89,000 · 배송 ₩3,000',fx)
+        self.assertEqual(row['price_krw'],89000)
+        row=market._extract_price('price $80.00 shipping $5.00',fx)
+        self.assertEqual(row['price_krw'],112000)
+
     def test_rate_limit_creates_cooldown_without_retry_bypass(self):
         with tempfile.TemporaryDirectory() as directory:
             learning=Path(directory)/'learning.json'
