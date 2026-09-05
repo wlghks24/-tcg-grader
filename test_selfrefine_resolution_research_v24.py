@@ -9,6 +9,7 @@ from pathlib import Path
 from unittest import mock
 
 import selfrefine_resolution_research as research
+import selfrefine_error_quarantine as quarantine
 import verified_code_repair_rules as repairs
 
 
@@ -455,6 +456,60 @@ class SelfrefineResolutionResearchV24Tests(unittest.TestCase):
                 "full_regression_not_passed",
             )
 
+    def test_full_regression_promotes_provisional_quarantine_learning(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            self._repo(root)
+            state = root / "state.json"
+            qstate = root / "quarantine.json"
+            report = root / "report.json"
+            issue, applied, _target = self._prepare_verified_repair(
+                root, state, report
+            )
+
+            qrow = quarantine.observe_open_errors(
+                [issue], state_path=qstate
+            )["errors"][0]
+            local = quarantine.record_repair_outcomes(
+                [{
+                    "error_signature": qrow["error_signature"],
+                    "rule_id": applied["rule_id"],
+                    "path": applied["path"],
+                    "stage": applied["stage"],
+                }],
+                [],
+                state_path=qstate,
+            )
+            self.assertEqual(local["local_resolution_passed"], 1)
+            self.assertEqual(local["verified_resolution_learned"], 0)
+
+            before = quarantine.observe_open_errors(
+                [issue], state_path=qstate
+            )["errors"][0]
+            self.assertFalse(before["learned_solution_reuse"])
+
+            staged = research.stage_repairs([applied], state_path=state)
+            self.assertEqual(staged["pending_full_regression"], 1)
+            finalized = research.finalize_pending(
+                True,
+                state_path=state,
+                root=root,
+                quarantine_state_path=qstate,
+            )
+            self.assertEqual(finalized["verified_resolution_lessons"], 1)
+            self.assertEqual(finalized["quarantine_verified_promotions"], 1)
+            self.assertEqual(finalized["quarantine_promotion_failed"], 0)
+
+            after = quarantine.observe_open_errors(
+                [issue], state_path=qstate
+            )["errors"][0]
+            self.assertTrue(after["learned_solution_reuse"])
+            qpayload = json.loads(qstate.read_text(encoding="utf-8"))
+            qentry = qpayload["entries"][issue["error_signature"]]
+            self.assertEqual(qentry["status"], "resolved_verified")
+            self.assertEqual(qentry["verified_successes"], 1)
+            self.assertEqual(qentry["last_verified_rule"], applied["rule_id"])
+
     def test_policy_keeps_search_text_non_executable(self):
         policy = json.loads(
             (Path(__file__).resolve().parent / "selfrefine_domain_policy.json")
@@ -478,6 +533,9 @@ class SelfrefineResolutionResearchV24Tests(unittest.TestCase):
         self.assertTrue(rules["transitive_dependency_impact_analysis"])
         self.assertTrue(rules["complete_impact_analysis_required_for_learning"])
         self.assertTrue(rules["full_regression_failure_does_not_poison_verified_lesson"])
+        self.assertTrue(rules["local_resolution_is_provisional"])
+        self.assertTrue(rules["full_regression_promotes_quarantine_learning"])
+        self.assertTrue(rules["legacy_local_success_not_promoted"])
         self.assertFalse(rules["unknown_error_auto_repair"])
 
 
