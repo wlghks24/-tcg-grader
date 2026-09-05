@@ -1,0 +1,88 @@
+{
+  "schema_version": "1.0",
+  "exchange_name": "TCG_CROSSCHECK",
+  "purpose": "neutral_peer_exchange_only",
+  "namespaces": ["MARKET_ANALYSIS", "IG_CARDINFO"],
+  "factual_types": [
+    "card_price",
+    "release",
+    "rerelease",
+    "promo",
+    "event",
+    "movie_bonus",
+    "completed_sale",
+    "market_reference"
+  ],
+  "factual_fields": [
+    "canonical_key",
+    "fact_type",
+    "lineage_key",
+    "identity",
+    "value",
+    "value_type",
+    "currency",
+    "region",
+    "language",
+    "condition",
+    "grade_company",
+    "grade",
+    "effective_date",
+    "observed_at",
+    "source_role",
+    "source_locator",
+    "verification_status"
+  ],
+  "required_factual_keys": ["canonical_key", "fact_type", "lineage_key"],
+  "verification_status_values": ["verified", "conflict", "missing", "unverified", "quarantine"],
+  "learning_fields": [
+    "lesson_id",
+    "error_type",
+    "abstract_cause",
+    "abstract_fix_pattern",
+    "evidence_class",
+    "verification_status"
+  ],
+  "learning_result_values": [
+    "corroborated",
+    "single-system-only",
+    "conflicting-fix",
+    "not-applicable"
+  ],
+  "forbidden_shared_fields": [
+    "raw_log",
+    "parser_config_full",
+    "retry_queue",
+    "source_health_full",
+    "baseline_raw",
+    "ranking_weights",
+    "confidence_tuning",
+    "grading_raw",
+    "grading_calibration",
+    "pixel_feature",
+    "rendering",
+    "delivery",
+    "peer_error_ledger",
+    "quarantine_state",
+    "prevention_rule"
+  ],
+  "comparison_key": ["canonical_key", "fact_type", "lineage_key"],
+  "snapshot_status_values": ["building", "finalized"],
+  "write_ownership": {
+    "MARKET_ANALYSIS": [
+      "TCG_CROSSCHECK/MARKET_ANALYSIS/factual_snapshot.json",
+      "TCG_CROSSCHECK/MARKET_ANALYSIS/learning_snapshot.json"
+    ],
+    "IG_CARDINFO": [
+      "TCG_CROSSCHECK/IG_CARDINFO/factual_snapshot.json",
+      "TCG_CROSSCHECK/IG_CARDINFO/learning_snapshot.json"
+    ]
+  },
+  "rules": {
+    "peer_files_read_only": true,
+    "peer_verified_never_auto_promotes_local": true,
+    "missing_never_equals_agree": true,
+    "same_underlying_transaction_one_lineage": true,
+    "peer_prevention_rule_copy_forbidden": true,
+    "grading_raw_share_forbidden": true
+  }
+}
