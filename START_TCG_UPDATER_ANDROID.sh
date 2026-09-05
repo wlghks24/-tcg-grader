@@ -162,6 +162,7 @@ for required in \
   auto_update_all.py \
   collector_self_healing.py \
   tcg_code_repair_learning.py \
+  ai_auto_tracker.py \
   tcg_updater.py \
   tcg_updater_v135.py \
   runtime_bundle_guard_v143.py \
@@ -221,6 +222,7 @@ if ! python - <<'PY' >/dev/null 2>&1
 import collection_learning_hardening_v142 as learning_guard
 import event_source_expansion_v145 as source_expansion
 import runtime_bundle_guard_v143 as bundle_guard
+import ai_auto_tracker
 import manual_collection_mode as manual_mode
 import graded_photo_manual_pair_queue as pair_queue
 import legacy_ocr_registry_cleanup_v149 as legacy_cleanup
@@ -234,6 +236,7 @@ assert int(expansion.get('patch') or 0) == 145
 assert expansion.get('scoped_learned_host_queries') is True
 assert expansion.get('trust_auto_promotion') is False
 assert float(expansion.get('unverified_source_learning_weight',-1)) == 0.0
+ai_auto_tracker.self_test()
 assert int(bundle.get('patch') or 0) == 143
 assert bundle.get('missing_file_count') == 0
 assert bundle.get('issue_count') == 0
