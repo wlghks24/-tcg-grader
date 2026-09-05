@@ -1,0 +1,81 @@
+name: Daily 06:00 Collection ↔ Instagram Accuracy Audit
+
+on:
+  schedule:
+    # GitHub cron is UTC. 21:00 UTC = 06:00 KST next day.
+    - cron: '0 21 * * *'
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - 'daily_collection_instagram_accuracy.py'
+      - 'test_daily_collection_instagram_accuracy.py'
+      - 'adaptive_collection_stats.json'
+      - 'source_collection_stats.json'
+      - 'promo_events.json'
+      - 'instagram_tcg_content/**'
+      - 'main_crosscheck_export.py'
+      - 'selfrefine_crosscheck_gate.py'
+      - 'crosscheck_exchange/**'
+      - '.github/workflows/daily-0600-collection-instagram-accuracy.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'daily_collection_instagram_accuracy.py'
+      - 'test_daily_collection_instagram_accuracy.py'
+      - 'adaptive_collection_stats.json'
+      - 'source_collection_stats.json'
+      - 'promo_events.json'
+      - 'instagram_tcg_content/**'
+      - 'main_crosscheck_export.py'
+      - 'selfrefine_crosscheck_gate.py'
+      - 'crosscheck_exchange/**'
+      - '.github/workflows/daily-0600-collection-instagram-accuracy.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    env:
+      PYTHONPATH: \${{ github.workspace }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97
+        with:
+          python-version: '3.11'
+
+      - name: Preserve Main vs Instagram isolation
+        run: |
+          python selfrefine_domain_boundary_guard.py
+          python selfrefine_crosscheck_gate.py --self-test
+          python -m unittest -v test_selfrefine_domain_isolation_v18.py
+          python -m unittest -v instagram_tcg_content.test_state_isolation_v18
+
+      - name: Verify 06:00 audit regression
+        run: |
+          python -m py_compile daily_collection_instagram_accuracy.py
+          python -m unittest -v test_daily_collection_instagram_accuracy.py
+
+      - name: Run daily collection vs Instagram audit
+        run: |
+          python daily_collection_instagram_accuracy.py \
+            --report COLLECTION_INSTAGRAM_ACCURACY_REPORT.json \
+            --strict-policy
+
+      - name: Show audit summary
+        if: always()
+        run: |
+          if [ -f COLLECTION_INSTAGRAM_ACCURACY_REPORT.json ]; then
+            python -c "import json; p=json.load(open('COLLECTION_INSTAGRAM_ACCURACY_REPORT.json')); print(json.dumps({'summary':p['summary'],'cross_domain':p['cross_domain']}, ensure_ascii=False, indent=2))"
+          fi
+
+      - name: Upload 06:00 accuracy report
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        with:
+          name: collection-instagram-accuracy-report
+          path: COLLECTION_INSTAGRAM_ACCURACY_REPORT.json
+          if-no-files-found: warn
+          retention-days: 30
