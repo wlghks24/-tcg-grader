@@ -136,7 +136,14 @@ class PeerLearningCrosscheckV23Tests(unittest.TestCase):
             "crosscheck_status": "conflicting-fix",
         }
         self.assertFalse(evaluate_main_peer_adoption(peer, safer_fix_selected=False, **flags)["adoption_allowed"])
-        self.assertTrue(evaluate_main_peer_adoption(peer, safer_fix_selected=True, **flags)["adoption_allowed"])
+        self.assertTrue(
+            evaluate_main_peer_adoption(
+                peer,
+                safer_fix_selected=True,
+                selected_fix_pattern="locally reproduced safer alternate-source fix",
+                **flags,
+            )["adoption_allowed"]
+        )
 
     def test_main_persistence_is_local_and_never_copies_peer_rule(self):
         peer = lesson("IG-PERSIST")
@@ -158,6 +165,104 @@ class PeerLearningCrosscheckV23Tests(unittest.TestCase):
             self.assertNotEqual(rule["prevention_rule_id"], peer["prevention_rule_id"])
             self.assertNotIn("prevention_rule", rule)
             self.assertNotIn("raw_log", rule)
+
+    def test_not_applicable_peer_can_never_be_adopted(self):
+        peer = lesson("IG-NA", scope="both")
+        result = evaluate_main_peer_adoption(
+            peer,
+            reproduction_pass=True,
+            root_cause_reconfirmed=True,
+            minimal_scope_fix=True,
+            local_regression_pass=True,
+            full_regression_pass=True,
+            crosscheck_status="not-applicable",
+        )
+        self.assertFalse(result["adoption_allowed"])
+        self.assertFalse(result["status_eligible"])
+        self.assertIsNone(result["local_prevention_rule"])
+
+    def test_conflicting_fix_requires_explicit_selected_fix_pattern(self):
+        peer = lesson("IG-CONFLICT-EXPLICIT")
+        flags = {
+            "reproduction_pass": True,
+            "root_cause_reconfirmed": True,
+            "minimal_scope_fix": True,
+            "local_regression_pass": True,
+            "full_regression_pass": True,
+            "crosscheck_status": "conflicting-fix",
+            "safer_fix_selected": True,
+        }
+        blocked = evaluate_main_peer_adoption(peer, **flags)
+        self.assertFalse(blocked["adoption_allowed"])
+        self.assertFalse(blocked["selected_fix_explicit"])
+        allowed = evaluate_main_peer_adoption(
+            peer,
+            selected_fix_pattern="locally validated alternate parser with fail-closed empty-row detection",
+            **flags,
+        )
+        self.assertTrue(allowed["adoption_allowed"])
+        self.assertTrue(allowed["selected_fix_explicit"])
+        self.assertEqual(
+            allowed["local_prevention_rule"]["fix_pattern"],
+            "locally validated alternate parser with fail-closed empty-row detection",
+        )
+
+    def test_renderer_peer_lesson_is_not_applicable_to_main_even_when_scope_claims_both(self):
+        peer = lesson("IG-RENDER", scope="both")
+        peer.update({
+            "subsystem": "renderer",
+            "issue_class": "text_clip",
+            "trigger_condition": "mobile export",
+            "root_cause_class": "layout_overflow",
+            "fix_pattern": "reduce font size",
+        })
+        result = evaluate_main_peer_adoption(
+            peer,
+            reproduction_pass=True,
+            root_cause_reconfirmed=True,
+            minimal_scope_fix=True,
+            local_regression_pass=True,
+            full_regression_pass=True,
+        )
+        self.assertFalse(result["applicable_to_main"])
+        self.assertFalse(result["adoption_allowed"])
+
+    def test_nested_container_cannot_leak_raw_state_through_summary_field(self):
+        row = lesson("MAIN-NESTED")
+        row["symptom_summary"] = {"raw_log": "secret full log"}
+        with self.assertRaises(TypeError):
+            normalize_peer_lesson("main", row)
+
+    def test_snapshot_rejects_extra_learning_fields_fail_closed(self):
+        exchange = Path("crosscheck_exchange")
+        exchange.mkdir(exist_ok=True)
+        with tempfile.TemporaryDirectory(dir=exchange) as tmp:
+            path = Path(tmp) / "runtime-main-learning.json"
+            row = lesson("MAIN-EXTRA")
+            row["created_at"] = "2026-09-05T00:00:00Z"
+            path.write_text(
+                json.dumps({"domain": "main", "kind": "learning_summary", "lessons": [row]}),
+                encoding="utf-8",
+            )
+            with self.assertRaises(ValueError):
+                gate._load_lessons(path, "main")
+
+    def test_snapshot_rejects_extra_envelope_fields_fail_closed(self):
+        exchange = Path("crosscheck_exchange")
+        exchange.mkdir(exist_ok=True)
+        with tempfile.TemporaryDirectory(dir=exchange) as tmp:
+            path = Path(tmp) / "runtime-main-learning.json"
+            path.write_text(
+                json.dumps({
+                    "domain": "main",
+                    "kind": "learning_summary",
+                    "lessons": [lesson("MAIN-ENV")],
+                    "source_health": {"hidden": True},
+                }),
+                encoding="utf-8",
+            )
+            with self.assertRaises(ValueError):
+                gate._load_lessons(path, "main")
 
     def test_crosscheck_gate_rejects_wrong_location(self):
         with tempfile.TemporaryDirectory() as tmp:
