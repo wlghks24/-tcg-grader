@@ -8,6 +8,9 @@ on:
   pull_request:
     paths:
       - 'daily_collection_instagram_accuracy.py'
+      - 'tcg_updater.py'
+      - 'auto_update_all.py'
+      - 'test_0600_operational_refresh_v25.py'
       - 'test_daily_collection_instagram_accuracy.py'
       - 'adaptive_collection_stats.json'
       - 'source_collection_stats.json'
@@ -25,6 +28,9 @@ on:
     branches: [main]
     paths:
       - 'daily_collection_instagram_accuracy.py'
+      - 'tcg_updater.py'
+      - 'auto_update_all.py'
+      - 'test_0600_operational_refresh_v25.py'
       - 'test_daily_collection_instagram_accuracy.py'
       - 'adaptive_collection_stats.json'
       - 'source_collection_stats.json'
@@ -49,7 +55,7 @@ concurrency:
 jobs:
   audit:
     runs-on: ubuntu-24.04
-    timeout-minutes: 12
+    timeout-minutes: 30
     env:
       PYTHONPATH: ${{ github.workspace }}
       PYTHONDONTWRITEBYTECODE: '1'
@@ -78,6 +84,33 @@ jobs:
           python -m py_compile daily_collection_instagram_accuracy.py selfrefine_crosscheck_gate.py peer_learning_crosscheck_gate.py main_peer_learning_export.py main_peer_learning_adoption.py selfrefine_domain_boundary_guard.py shared_self_learning/peer_learning.py instagram_tcg_content/peer_learning_export.py
           python -c "import daily_collection_instagram_accuracy, selfrefine_crosscheck_gate, peer_learning_crosscheck_gate"
           python -m unittest -v test_daily_collection_instagram_accuracy.py
+
+      - name: Refresh bounded live collection state before 06:00 audit
+        if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch' || github.event_name == 'pull_request'
+        timeout-minutes: 22
+        env:
+          TCG_SOURCE_TIMEOUT_CAP: '30'
+          TCG_HTTP_TIMEOUT: '30'
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          import tcg_updater
+
+          result = tcg_updater.update_cycle('scheduled-0600-audit')
+          source = json.loads(Path('source_collection_stats.json').read_text(encoding='utf-8'))
+          adaptive = json.loads(Path('adaptive_collection_stats.json').read_text(encoding='utf-8'))
+          if not source.get('updated_at') or not isinstance(source.get('sources'), dict) or not source['sources']:
+              raise SystemExit('06:00 live refresh did not persist source-level health')
+          if not adaptive.get('updated_at') or not isinstance(adaptive.get('jobs'), dict):
+              raise SystemExit('06:00 live refresh did not persist adaptive collector health')
+          print(json.dumps({
+              'source_health_rows': len(source['sources']),
+              'source_health_updated_at': source['updated_at'],
+              'adaptive_updated_at': adaptive['updated_at'],
+              'auto_update_status': (result.get('auto_update') or {}).get('status'),
+          }, ensure_ascii=False))
+          PY
 
       - name: Run daily collection vs Instagram audit
         run: |
