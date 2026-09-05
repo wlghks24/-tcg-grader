@@ -18,7 +18,10 @@ from urllib.parse import urlparse
 
 ROOT = Path(__file__).resolve().parent
 CRITICAL_FILES = ("releases.json", "market_prices.json", "promo_events.json", "exchange_rates.json")
-ALLOWED_REGIONS = {"KR", "JP", "US", "ALL"}
+# GLOBAL is valid only for genuinely worldwide release/event rows. Market keys remain
+# region-specific and are validated separately, so allowing GLOBAL here cannot turn a
+# worldwide announcement into KR/JP/US price evidence.
+ALLOWED_REGIONS = {"KR", "JP", "US", "ALL", "GLOBAL"}
 HTTP_BLOCK_RE = re.compile(r"HTTPError: status (403|429)\b", re.I)
 TRANSIENT_RE = re.compile(r"HTTPError: status (?:408|425|429|5(?:00|02|03|04))\b|URLError|TimeoutError|timed out|connection reset|name resolution|DNS", re.I)
 
