@@ -848,10 +848,12 @@ def stage_repairs(
             ):
                 skip("repair_not_locally_verified")
                 continue
+            rule_probe = {"stage": _clean(item.get("stage"), 100), "path": relative}
             if (
                 rule_id not in verified_repairs.ALL_RULE_IDS
                 or relative not in verified_repairs.RULE_PATHS.get(rule_id, frozenset())
                 or fingerprint != verified_repairs.rule_fingerprint(rule_id)
+                or verified_repairs.rule_for_issue(rule_probe) != rule_id
             ):
                 skip("repair_rule_binding_mismatch")
                 continue
@@ -937,9 +939,14 @@ def finalize_pending(
 
             binding_reason = ""
             if success:
+                rule_probe = {
+                    "stage": _clean(pending_row.get("stage"), 100),
+                    "path": relative,
+                }
                 if (
                     rule_id not in verified_repairs.ALL_RULE_IDS
                     or relative not in verified_repairs.RULE_PATHS.get(rule_id, frozenset())
+                    or verified_repairs.rule_for_issue(rule_probe) != rule_id
                 ):
                     binding_reason = "repair_rule_not_allowlisted"
                 elif fingerprint != verified_repairs.rule_fingerprint(rule_id):
