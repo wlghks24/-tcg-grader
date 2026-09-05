@@ -47,6 +47,7 @@ MAX_IMPACT_FILES = 64
 MAX_ISSUES = 500
 MAX_LESSONS = 500
 MAX_HISTORY = 300
+MAX_PENDING_AGE_SECONDS = 6 * 60 * 60
 MAX_NETWORK_RESEARCH_REQUESTS = 4
 NETWORK_RESEARCH_TIMEOUT_SECONDS = 6
 NETWORK_RESEARCH_MAX_BYTES = 250_000
@@ -160,6 +161,23 @@ def _normalized(value: Any) -> str:
     return _clean(value, 400).replace("\\", "/").lstrip("./")
 
 
+def _text_hash(text: str) -> str:
+    return hashlib.sha256(text.encode("utf-8", "replace")).hexdigest()[:20]
+
+
+def _parse_timestamp(value: Any) -> dt.datetime | None:
+    text = _clean(value, 80)
+    if not text:
+        return None
+    try:
+        parsed = dt.datetime.fromisoformat(text.replace("Z", "+00:00"))
+    except ValueError:
+        return None
+    if parsed.tzinfo is None:
+        parsed = parsed.replace(tzinfo=dt.timezone.utc)
+    return parsed.astimezone(dt.timezone.utc)
+
+
 def _safe_signature(issue: dict[str, Any]) -> str:
     existing = _clean(issue.get("error_signature"), 80).lower()
     if re.fullmatch(r"[0-9a-f]{16,80}", existing):
@@ -192,6 +210,10 @@ def _default_state() -> dict[str, Any]:
             "code_defined_repairs_only": True,
             "full_regression_required_before_learning": True,
             "failed_verification_not_learned": True,
+            "pending_resolution_rule_binding_required": True,
+            "pending_resolution_after_hash_required": True,
+            "stale_pending_resolution_not_promoted": True,
+            "clean_run_skips_redundant_impact_scan": True,
         },
     }
 
@@ -581,8 +603,50 @@ def observe_errors(
         row for row in errors[:MAX_ISSUES]
         if isinstance(row, dict) and row.get("state") == "open"
     ]
-    index = build_repository_index(root)
     now = _now()
+
+    # Main SELFREFINE already scanned the repository to determine that there are
+    # no open errors. A second full impact index on a clean run adds I/O and
+    # battery/CI cost without producing any diagnosis.
+    if not open_errors:
+        with exclusive_file_lock(state_path):
+            state = _load_state(state_path)
+            pending = set(state.get("pending_verifications", {}))
+            for signature, issue in state.get("issues", {}).items():
+                if (
+                    isinstance(issue, dict)
+                    and issue.get("status") == "open"
+                    and signature not in pending
+                ):
+                    issue["status"] = "not_observed_unverified"
+                    issue["last_clean_seen"] = now
+                    state.setdefault("history", []).append({
+                        "at": now,
+                        "error_signature": signature,
+                        "event": "error_not_observed_without_verified_repair",
+                    })
+            _save_state(state_path, state)
+        report = {
+            "schema": SCHEMA,
+            "generated_at": now,
+            "error_count": 0,
+            "new_error_count": 0,
+            "known_verified_resolution_count": 0,
+            "repository_files_scanned": 0,
+            "full_repository_scan": True,
+            "impact_scan_required": False,
+            "impact_scan_skipped_no_open_errors": True,
+            "scan_truncated": False,
+            "read_errors": 0,
+            "network_research_attempted": 0,
+            "network_research_successful": 0,
+            "errors": [],
+            "safety": _default_state()["safety"],
+        }
+        atomic_write_json(report_path, report, suffix=".resolution-research.tmp")
+        return report
+
+    index = build_repository_index(root)
 
     # Read only the small identity/lesson snapshot while holding the process-safe
     # state lock. Network research can take several seconds and must never block
@@ -634,6 +698,22 @@ def observe_errors(
         state = _load_state(state_path)
         issues = state.setdefault("issues", {})
         lessons = state.setdefault("lessons", {})
+        observed_signatures = {row["signature"] for row in prepared}
+        pending_signatures = set(state.get("pending_verifications", {}))
+        for signature, previous_issue in issues.items():
+            if (
+                isinstance(previous_issue, dict)
+                and previous_issue.get("status") == "open"
+                and signature not in observed_signatures
+                and signature not in pending_signatures
+            ):
+                previous_issue["status"] = "not_observed_unverified"
+                previous_issue["last_clean_seen"] = now
+                state.setdefault("history", []).append({
+                    "at": now,
+                    "error_signature": signature,
+                    "event": "error_not_observed_without_verified_repair",
+                })
         for prepared_row in prepared:
             issue = prepared_row["issue"]
             signature = prepared_row["signature"]
@@ -733,30 +813,68 @@ def stage_repairs(
     *,
     state_path: Path = STATE,
 ) -> dict[str, Any]:
+    import verified_code_repair_rules as verified_repairs
+
     staged = 0
+    skipped = 0
+    skip_reasons: dict[str, int] = {}
     now = _now()
+
+    def skip(reason: str) -> None:
+        nonlocal skipped
+        skipped += 1
+        skip_reasons[reason] = skip_reasons.get(reason, 0) + 1
+
     with exclusive_file_lock(state_path):
         state = _load_state(state_path)
         for item in applied:
             if not isinstance(item, dict):
+                skip("invalid_item")
                 continue
             signature = _clean(item.get("error_signature"), 80).lower()
-            if not signature:
-                continue
             issue = state.get("issues", {}).get(signature)
-            if not isinstance(issue, dict):
+            if not signature or not isinstance(issue, dict):
+                skip("missing_observed_issue")
                 continue
+
             rule_id = _clean(item.get("rule_id"), 160)
-            if not rule_id:
+            relative = _normalized(item.get("path"))
+            fingerprint = _clean(item.get("rule_fingerprint"), 80)
+            before_hash = _clean(item.get("before_hash"), 40).lower()
+            after_hash = _clean(item.get("after_hash"), 40).lower()
+            if (
+                item.get("verification_forced_failed") is True
+                or item.get("rollback_outcome") != "verified_kept"
+            ):
+                skip("repair_not_locally_verified")
                 continue
+            if (
+                rule_id not in verified_repairs.ALL_RULE_IDS
+                or relative not in verified_repairs.RULE_PATHS.get(rule_id, frozenset())
+                or fingerprint != verified_repairs.rule_fingerprint(rule_id)
+            ):
+                skip("repair_rule_binding_mismatch")
+                continue
+            if relative != _normalized(issue.get("path")):
+                skip("issue_path_binding_mismatch")
+                continue
+            if not re.fullmatch(r"[0-9a-f]{20}", before_hash or ""):
+                skip("before_hash_missing")
+                continue
+            if not re.fullmatch(r"[0-9a-f]{20}", after_hash or ""):
+                skip("after_hash_missing")
+                continue
+
             state.setdefault("pending_verifications", {})[signature] = {
                 "error_signature": signature,
                 "rule_id": rule_id,
-                "rule_fingerprint": _clean(item.get("rule_fingerprint"), 80),
-                "path": _normalized(item.get("path")),
+                "rule_fingerprint": fingerprint,
+                "path": relative,
                 "stage": _clean(item.get("stage"), 100),
                 "staged_at": now,
                 "verification_status": "pending_full_regression",
+                "before_hash": before_hash,
+                "after_hash": after_hash,
                 "research_fingerprint": _clean(
                     (issue.get("research") or {}).get("research_fingerprint"), 80
                 ),
@@ -766,16 +884,20 @@ def stage_repairs(
                     if isinstance(row, dict)
                 ],
             }
+            issue["status"] = "pending_full_regression"
             staged += 1
             state.setdefault("history", []).append({
                 "at": now,
                 "error_signature": signature,
                 "event": "repair_pending_full_regression",
                 "rule_id": rule_id,
+                "after_hash": after_hash,
             })
         _save_state(state_path, state)
     return {
         "pending_full_regression": staged,
+        "skipped_unverified_repairs": skipped,
+        "skip_reasons": skip_reasons,
         "full_regression_required_before_learning": True,
         "learned_now": 0,
     }
@@ -790,9 +912,13 @@ def finalize_pending(
     success: bool,
     *,
     state_path: Path = STATE,
+    root: Path = ROOT,
 ) -> dict[str, Any]:
-    verified = rejected = 0
+    import verified_code_repair_rules as verified_repairs
+
+    verified = rejected = binding_rejected = 0
     now = _now()
+    now_dt = _parse_timestamp(now) or dt.datetime.now(dt.timezone.utc)
     with exclusive_file_lock(state_path):
         state = _load_state(state_path)
         pending = dict(state.get("pending_verifications", {}))
@@ -804,6 +930,60 @@ def finalize_pending(
                 state.get("pending_verifications", {}).pop(signature, None)
                 continue
             rule_id = _clean(pending_row.get("rule_id"), 160)
+            relative = _normalized(pending_row.get("path"))
+            fingerprint = _clean(pending_row.get("rule_fingerprint"), 80)
+            after_hash = _clean(pending_row.get("after_hash"), 40).lower()
+            staged_at = _parse_timestamp(pending_row.get("staged_at"))
+
+            binding_reason = ""
+            if success:
+                if (
+                    rule_id not in verified_repairs.ALL_RULE_IDS
+                    or relative not in verified_repairs.RULE_PATHS.get(rule_id, frozenset())
+                ):
+                    binding_reason = "repair_rule_not_allowlisted"
+                elif fingerprint != verified_repairs.rule_fingerprint(rule_id):
+                    binding_reason = "repair_rule_fingerprint_changed"
+                elif relative != _normalized(issue.get("path")):
+                    binding_reason = "issue_path_binding_changed"
+                elif not re.fullmatch(r"[0-9a-f]{20}", after_hash or ""):
+                    binding_reason = "after_hash_missing"
+                elif staged_at is None:
+                    binding_reason = "invalid_staged_at"
+                elif (
+                    (now_dt - staged_at).total_seconds() < 0
+                    or (now_dt - staged_at).total_seconds() > MAX_PENDING_AGE_SECONDS
+                ):
+                    binding_reason = "pending_verification_expired"
+                else:
+                    target = root / relative
+                    try:
+                        if target.is_symlink() or not target.is_file():
+                            raise OSError("repair target is not a regular file")
+                        current_hash = _text_hash(
+                            safe_read_text(target, max_bytes=MAX_FILE_BYTES)
+                        )
+                    except (OSError, ValueError, TypeError, UnicodeError):
+                        binding_reason = "repair_target_unreadable"
+                    else:
+                        if current_hash != after_hash:
+                            binding_reason = "repair_target_hash_changed"
+
+                if binding_reason:
+                    issue["status"] = "verification_binding_rejected"
+                    issue["last_verification_rejection"] = binding_reason
+                    binding_rejected += 1
+                    rejected += 1
+                    state.setdefault("history", []).append({
+                        "at": now,
+                        "error_signature": signature,
+                        "event": "resolution_binding_rejected",
+                        "rule_id": rule_id,
+                        "reason": binding_reason,
+                    })
+                    state.setdefault("pending_verifications", {}).pop(signature, None)
+                    continue
+
             if success:
                 old = state.get("lessons", {}).get(signature)
                 old_successes = int(old.get("verified_successes") or 0) if isinstance(old, dict) else 0
@@ -866,6 +1046,7 @@ def finalize_pending(
     return {
         "verified_resolution_lessons": verified,
         "rejected_unverified_resolutions": rejected,
+        "binding_rejected_resolutions": binding_rejected,
         "regression_pass": bool(success),
         "research_text_executable": False,
         "unknown_error_direct_auto_patch": False,
