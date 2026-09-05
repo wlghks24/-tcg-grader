@@ -86,28 +86,61 @@ jobs:
           python -m unittest -v test_daily_collection_instagram_accuracy.py
 
       - name: Refresh bounded live collection state before 06:00 audit
-        if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch' || github.event_name == 'pull_request'
+        if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch' || github.event_name == 'pull_request' || github.event_name == 'push'
         timeout-minutes: 22
         env:
           TCG_SOURCE_TIMEOUT_CAP: '30'
           TCG_HTTP_TIMEOUT: '30'
         run: |
           python - <<'PY'
+          import datetime as dt
           import json
           from pathlib import Path
           import tcg_updater
 
+          MAX_HEALTH_AGE_SECONDS = 600
+          MAX_FUTURE_SKEW_SECONDS = 300
+
+          def fresh_age_seconds(label, value, now):
+              if not value:
+                  raise SystemExit(f'06:00 live refresh missing {label} updated_at')
+              try:
+                  parsed = dt.datetime.fromisoformat(str(value).replace('Z', '+00:00'))
+              except ValueError as exc:
+                  raise SystemExit(f'06:00 live refresh invalid {label} updated_at: {value!r}') from exc
+              if parsed.tzinfo is None:
+                  parsed = parsed.replace(tzinfo=dt.timezone.utc)
+              age = (now - parsed.astimezone(dt.timezone.utc)).total_seconds()
+              if age > MAX_HEALTH_AGE_SECONDS:
+                  raise SystemExit(
+                      f'06:00 live refresh stale {label} health: age={age:.1f}s '
+                      f'(max={MAX_HEALTH_AGE_SECONDS}s)'
+                  )
+              if age < -MAX_FUTURE_SKEW_SECONDS:
+                  raise SystemExit(
+                      f'06:00 live refresh future-dated {label} health: age={age:.1f}s '
+                      f'(max future skew={MAX_FUTURE_SKEW_SECONDS}s)'
+                  )
+              return round(age, 1)
+
           result = tcg_updater.update_cycle('scheduled-0600-audit')
           source = json.loads(Path('source_collection_stats.json').read_text(encoding='utf-8'))
           adaptive = json.loads(Path('adaptive_collection_stats.json').read_text(encoding='utf-8'))
-          if not source.get('updated_at') or not isinstance(source.get('sources'), dict) or not source['sources']:
+          if not isinstance(source.get('sources'), dict) or not source['sources']:
               raise SystemExit('06:00 live refresh did not persist source-level health')
-          if not adaptive.get('updated_at') or not isinstance(adaptive.get('jobs'), dict):
+          if not isinstance(adaptive.get('jobs'), dict) or not adaptive['jobs']:
               raise SystemExit('06:00 live refresh did not persist adaptive collector health')
+
+          now = dt.datetime.now(dt.timezone.utc)
+          source_age = fresh_age_seconds('source', source.get('updated_at'), now)
+          adaptive_age = fresh_age_seconds('adaptive', adaptive.get('updated_at'), now)
+
           print(json.dumps({
               'source_health_rows': len(source['sources']),
               'source_health_updated_at': source['updated_at'],
+              'source_health_age_seconds': source_age,
               'adaptive_updated_at': adaptive['updated_at'],
+              'adaptive_health_age_seconds': adaptive_age,
               'auto_update_status': (result.get('auto_update') or {}).get('status'),
           }, ensure_ascii=False))
           PY
