@@ -262,6 +262,62 @@ def _age_days(value: object) -> float | None:
     return max(0.0, (dt.datetime.now(dt.timezone.utc) - parsed).total_seconds() / 86400.0)
 
 
+VERIFIED_EVIDENCE_TIME_FIELDS = (
+    "official_verified_at",
+    "collected_at",
+    "observed_at",
+    "updated_at",
+    "published_at",
+    "discovered_at",
+    "source_date",
+)
+
+
+def _verified_evidence_at(row: dict) -> str | None:
+    """Return the newest timestamp carried by the evidence itself.
+
+    Replaying an old tracked JSON file must never make its official rows look
+    newly verified merely because the learner happened to run today.  Prefer
+    explicit verification/collection timestamps and fall back to publication
+    or discovery dates.  link_checked_at is intentionally excluded because a
+    failed reachability probe can update that field without re-verifying facts.
+    """
+    stamps = []
+    for key in VERIFIED_EVIDENCE_TIME_FIELDS:
+        parsed = _parse_iso(row.get(key))
+        if parsed is not None:
+            stamps.append(parsed)
+    if not stamps:
+        return None
+    return max(stamps).isoformat(timespec="seconds")
+
+
+def _newest_iso(left: object, right: object) -> str | None:
+    first = _parse_iso(left)
+    second = _parse_iso(right)
+    if first is None:
+        return second.isoformat(timespec="seconds") if second is not None else None
+    if second is None:
+        return first.isoformat(timespec="seconds")
+    return max(first, second).isoformat(timespec="seconds")
+
+
+def _payload_recency(payload: dict) -> dict:
+    values = []
+    for key in ("updated_at", "checked_at", "generated_at", "collected_at"):
+        parsed = _parse_iso(payload.get(key))
+        if parsed is not None:
+            values.append(parsed)
+    newest = max(values) if values else None
+    return {
+        "updated_at": newest.isoformat(timespec="seconds") if newest is not None else None,
+        "age_days": round(
+            max(0.0, (dt.datetime.now(dt.timezone.utc) - newest).total_seconds() / 86400.0),
+            3,
+        ) if newest is not None else None,
+    }
+
+
 def _coverage_snapshot(social: dict, supplementary: dict, promo: dict) -> dict[str, dict]:
     snapshot = {
         key: {
@@ -270,6 +326,9 @@ def _coverage_snapshot(social: dict, supplementary: dict, promo: dict) -> dict[s
             "canonical_count": 0,
             "corroborated_count": 0,
             "verified_signatures": [],
+            "verified_latest_evidence_at": None,
+            "verified_timestamp_known_count": 0,
+            "verified_timestamp_unknown_count": 0,
             "source_kinds": {},
         }
         for key in _expected_keys()
@@ -294,6 +353,7 @@ def _coverage_snapshot(social: dict, supplementary: dict, promo: dict) -> dict[s
             )
             topics = _topics(row, verified=verified)
             signature = _evidence_signature(row) if verified else ""
+            evidence_at = _verified_evidence_at(row) if verified else None
             kind = _source_kind(row, origin)
             corroborated = row.get("cross_checked") is True or _num(row.get("independent_source_count")) >= 2
             for topic in topics:
@@ -306,6 +366,13 @@ def _coverage_snapshot(social: dict, supplementary: dict, promo: dict) -> dict[s
                     cell["verified_count"] += 1
                     if signature and signature not in cell["verified_signatures"] and len(cell["verified_signatures"]) < 32:
                         cell["verified_signatures"].append(signature)
+                    if evidence_at:
+                        cell["verified_timestamp_known_count"] += 1
+                        cell["verified_latest_evidence_at"] = _newest_iso(
+                            cell.get("verified_latest_evidence_at"), evidence_at
+                        )
+                    else:
+                        cell["verified_timestamp_unknown_count"] += 1
                 if origin == "promo" and verified:
                     cell["canonical_count"] += 1
                 if corroborated:
@@ -481,6 +548,9 @@ def _observe_coverage(data: dict, snapshot: dict[str, dict]) -> None:
         canonical = _num(current.get("canonical_count"))
         corroborated = _num(current.get("corroborated_count"))
         verified_fingerprint = _fingerprint(current.get("verified_signatures"))
+        verified_evidence_at = str(current.get("verified_latest_evidence_at") or "")
+        verified_timestamp_known = _num(current.get("verified_timestamp_known_count"))
+        verified_timestamp_unknown = _num(current.get("verified_timestamp_unknown_count"))
         stat = cells.setdefault(key, {})
         stat["attempts"] = _num(stat.get("attempts")) + 1
         stat["candidate_hits"] = _num(stat.get("candidate_hits")) + candidate
@@ -495,10 +565,25 @@ def _observe_coverage(data: dict, snapshot: dict[str, dict]) -> None:
             stat["verification_gap_streak"] = 0
             stat["discovery_gap_streak"] = 0
             old_fingerprint = str(stat.get("verified_fingerprint") or "")
-            if not stat.get("last_verified") or (verified_fingerprint and verified_fingerprint != old_fingerprint):
-                stat["last_verified"] = now
-                stat["last_verified_change"] = now
+            evidence_changed = bool(
+                not old_fingerprint
+                or (verified_fingerprint and verified_fingerprint != old_fingerprint)
+            )
+            if not stat.get("last_verified") or evidence_changed:
+                if verified_evidence_at:
+                    # Never manufacture verification freshness from the learner run time.
+                    # Also never move an already known verification time backwards.
+                    stat["last_verified"] = _newest_iso(
+                        stat.get("last_verified"), verified_evidence_at
+                    )
+                stat["last_verified_change_observed"] = now
             stat["last_verified_seen"] = now
+            stat["last_verified_evidence_at"] = verified_evidence_at or None
+            stat["verification_timestamp_known_count"] = verified_timestamp_known
+            stat["verification_timestamp_unknown_count"] = verified_timestamp_unknown
+            stat["verification_timestamp_unknown"] = bool(
+                verified > 0 and verified_timestamp_known == 0
+            )
             if verified_fingerprint:
                 stat["verified_fingerprint"] = verified_fingerprint
             stat["last_state"] = "verified"
@@ -558,14 +643,30 @@ def _coverage_report(data: dict) -> dict:
         urgency = {"service_status": 5.5, "authenticity_notice": 5.0, "status_update": 5.0, "product_issue": 4.75, "rules": 4.5, "purchase_policy": 4.5, "deadline": 4.0, "access": 4.0, "official_price": 3.5, "entry": 3.0, "broadcast": 3.0, "results": 2.5, "stock": 2.0}.get(topic, 0.0)
         last_verified_age_days = _age_days(stat.get("last_verified"))
         recheck_after_days = int(RECHECK_DAYS.get(topic, 120))
+        freshness_unknown = bool(
+            verified > 0
+            and (
+                stat.get("verification_timestamp_unknown") is True
+                or last_verified_age_days is None
+            )
+        )
         recheck_due = bool(
             verified > 0
-            and last_verified_age_days is not None
-            and last_verified_age_days >= recheck_after_days
+            and (
+                freshness_unknown
+                or (
+                    last_verified_age_days is not None
+                    and last_verified_age_days >= recheck_after_days
+                )
+            )
         )
         freshness_priority = (
-            2.0 + min(5.0, last_verified_age_days / max(1.0, float(recheck_after_days)))
-            if recheck_due and last_verified_age_days is not None else 0.0
+            4.0
+            if freshness_unknown
+            else (
+                2.0 + min(5.0, last_verified_age_days / max(1.0, float(recheck_after_days)))
+                if recheck_due and last_verified_age_days is not None else 0.0
+            )
         )
         priority = round(
             miss_streak * 4.0
@@ -586,11 +687,19 @@ def _coverage_report(data: dict) -> dict:
             "discovery_gap_streak": discovery_gap_streak,
             "last_verified": stat.get("last_verified"),
             "last_verified_seen": stat.get("last_verified_seen"),
+            "last_verified_evidence_at": stat.get("last_verified_evidence_at"),
             "last_verified_age_days": round(last_verified_age_days, 2) if last_verified_age_days is not None else None,
+            "verification_timestamp_known_count": _num(stat.get("verification_timestamp_known_count")),
+            "verification_timestamp_unknown_count": _num(stat.get("verification_timestamp_unknown_count")),
+            "verification_freshness_unknown": freshness_unknown,
             "recheck_after_days": recheck_after_days,
             "recheck_due": recheck_due,
             "priority": priority,
-            "priority_reason": "verified-recheck-due" if recheck_due else ("verified-missing" if verified == 0 else "current"),
+            "priority_reason": (
+                "verified-freshness-unknown"
+                if freshness_unknown
+                else ("verified-recheck-due" if recheck_due else ("verified-missing" if verified == 0 else "current"))
+            ),
         })
     missing = [row for row in rows if row["verified_count"] == 0]
     priority_rows = [row for row in rows if row["verified_count"] == 0 or row["recheck_due"]]
@@ -606,6 +715,9 @@ def _coverage_report(data: dict) -> dict:
         "candidate_covered_cells": sum(1 for row in rows if row["candidate_count"] > 0),
         "verified_missing_cells": [row["cell"] for row in missing],
         "recheck_due_cells": [row["cell"] for row in priority_rows if row["recheck_due"]],
+        "verification_freshness_unknown_cells": [
+            row["cell"] for row in rows if row["verification_freshness_unknown"]
+        ],
         "candidate_only_cells": [row["cell"] for row in missing if row["candidate_count"] > 0],
         "no_candidate_cells": [row["cell"] for row in missing if row["candidate_count"] == 0],
         "next_priority_cells": priority_rows[:24],
@@ -613,7 +725,11 @@ def _coverage_report(data: dict) -> dict:
         "coverage_basis": "verified-source-only",
         "verified_fact_basis": "verified rows may resolve multiple independently matched concrete factual topics; unverified rows remain primary-topic-only",
         "verified_multi_label_topics": sorted(VERIFIED_MULTI_LABEL_TOPICS),
-        "freshness_basis": "unchanged verified evidence ages into bounded recheck-due priority without losing verified status",
+        "freshness_basis": (
+            "verification freshness comes from timestamps carried by the evidence itself; "
+            "replaying stale tracked JSON never refreshes last_verified, and timestamp-unknown "
+            "verified cells are immediately prioritized for recheck"
+        ),
     }
 
 
@@ -720,8 +836,11 @@ def observe(
     }
     result["current_sources"] = {
         "social_items": len(social.get("items") or []),
+        "social_recency": _payload_recency(social),
         "supplementary_items": len(supplementary.get("items") or []),
+        "supplementary_recency": _payload_recency(supplementary),
         "canonical_promo_items": len(promo.get("items") or []),
+        "canonical_promo_recency": _payload_recency(promo),
     }
     return result
 
@@ -762,7 +881,10 @@ def report(data: dict | None = None) -> dict:
             "access_control_bypass": False,
             "process_safe_transaction": True,
             "one_health_sample_per_provider_per_run": True,
-            "policy": "수집 성공률·누락 우선순위만 학습하며 X/Instagram/Google/나무위키/커뮤니티 반복발견으로 공식성·사실성을 자동승격하지 않음",
+            "evidence_timestamp_controls_verification_freshness": True,
+            "stale_snapshot_replay_refreshes_verification_time": False,
+            "unknown_verification_timestamp_forces_recheck_priority": True,
+            "policy": "수집 성공률·누락 우선순위만 학습하며 X/Instagram/Google/나무위키/커뮤니티 반복발견으로 공식성·사실성·검증시점을 자동승격하지 않음",
         },
     }
 

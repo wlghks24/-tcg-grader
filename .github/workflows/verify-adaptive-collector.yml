@@ -24,6 +24,8 @@ on:
       - 'test_official_channel_health.py'
       - 'test_jump_shop_event_watch.py'
       - 'test_event_gap_learning.py'
+      - 'test_verified_evidence_freshness_v15.py'
+      - 'test_collection_region_provenance_v16.py'
       - '.github/workflows/verify-adaptive-collector.yml'
   workflow_dispatch:
 
@@ -64,4 +66,6 @@ jobs:
             test_official_direct_discovery.py \
             test_official_channel_health.py \
             test_jump_shop_event_watch.py \
-            test_event_gap_learning.py
+            test_event_gap_learning.py \
+            test_verified_evidence_freshness_v15.py \
+            test_collection_region_provenance_v16.py

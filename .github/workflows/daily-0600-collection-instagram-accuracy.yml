@@ -13,6 +13,10 @@ on:
       - 'test_0600_operational_refresh_v25.py'
       - 'test_daily_collection_instagram_accuracy.py'
       - 'adaptive_collection_stats.json'
+      - 'provider_health_learning.py'
+      - 'collection_meta_learning.py'
+      - 'test_verified_evidence_freshness_v15.py'
+      - 'test_collection_region_provenance_v16.py'
       - 'source_collection_stats.json'
       - 'promo_events.json'
       - 'instagram_tcg_content/**'
@@ -33,6 +37,10 @@ on:
       - 'test_0600_operational_refresh_v25.py'
       - 'test_daily_collection_instagram_accuracy.py'
       - 'adaptive_collection_stats.json'
+      - 'provider_health_learning.py'
+      - 'collection_meta_learning.py'
+      - 'test_verified_evidence_freshness_v15.py'
+      - 'test_collection_region_provenance_v16.py'
       - 'source_collection_stats.json'
       - 'promo_events.json'
       - 'instagram_tcg_content/**'
@@ -84,9 +92,20 @@ jobs:
 
       - name: Verify 06:00 audit regression
         run: |
-          python -m py_compile daily_collection_instagram_accuracy.py auto_update_all.py selfrefine_crosscheck_gate.py peer_learning_crosscheck_gate.py main_peer_learning_export.py main_peer_learning_adoption.py selfrefine_domain_boundary_guard.py shared_self_learning/peer_learning.py instagram_tcg_content/peer_learning_export.py
+          python -m py_compile \
+            daily_collection_instagram_accuracy.py auto_update_all.py \
+            provider_health_learning.py collection_meta_learning.py \
+            test_verified_evidence_freshness_v15.py test_collection_region_provenance_v16.py \
+            selfrefine_crosscheck_gate.py peer_learning_crosscheck_gate.py \
+            main_peer_learning_export.py main_peer_learning_adoption.py \
+            selfrefine_domain_boundary_guard.py shared_self_learning/peer_learning.py \
+            instagram_tcg_content/peer_learning_export.py
           python -c "import daily_collection_instagram_accuracy, auto_update_all, selfrefine_crosscheck_gate, peer_learning_crosscheck_gate"
-          python -m unittest -v test_daily_collection_instagram_accuracy.py test_0600_operational_refresh_v25.py
+          python -m unittest -v \
+            test_daily_collection_instagram_accuracy.py \
+            test_0600_operational_refresh_v25.py \
+            test_verified_evidence_freshness_v15.py \
+            test_collection_region_provenance_v16.py
 
       - name: Refresh bounded live collection state before 06:00 audit
         if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch' || github.event_name == 'pull_request' || github.event_name == 'push'

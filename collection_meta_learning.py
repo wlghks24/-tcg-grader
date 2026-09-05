@@ -233,14 +233,70 @@ def _game(row: dict) -> str | None:
     return None
 
 
+REGION_HOST_HINTS = {
+    "KR": (
+        "pokemonkorea.co.kr",
+        "pokemoncard.co.kr",
+        "onepiece-cardgame.kr",
+        "bandainamcokorea.co.kr",
+    ),
+    "JP": (
+        "pokemon-card.com",
+        "pokemon.co.jp",
+        "www.onepiece-cardgame.com",
+        "onepiece-cardgame.com",
+    ),
+    "US": (
+        "pokemon.com",
+        "pokemoncenter.com",
+        "en.onepiece-cardgame.com",
+    ),
+}
+
+
 def _region(row: dict) -> str:
-    raw = str(row.get("region") or row.get("country") or "").upper()
-    if raw in REGIONS:
-        return raw
-    hay = _norm(f"{row.get('location','')} {row.get('source','')} {row.get('url','')}")
-    if re.search(r"한국|korea|\.kr\b", hay, re.I): return "KR"
-    if re.search(r"일본|japan|\.jp\b", hay, re.I): return "JP"
-    if re.search(r"미국|usa|united states|\.com\b", hay, re.I): return "US"
+    # Preserve the region chosen by the collector/query planner before attempting
+    # any URL inference.  query_region is widely used by official-direct and
+    # multi-route discovery; ignoring it can move JP evidence into US coverage.
+    for key in ("region", "query_region", "target_region", "market_region", "country"):
+        raw = str(row.get(key) or "").strip().upper()
+        if raw in REGIONS:
+            return raw
+
+    hay = _norm(
+        f"{row.get('location','')} {row.get('source','')} "
+        f"{row.get('url','')} {row.get('source_url','')}"
+    )
+    try:
+        host = (
+            urllib.parse.urlsplit(
+                str(row.get("source") or row.get("url") or row.get("source_url") or "")
+            ).hostname
+            or ""
+        ).lower().rstrip(".")
+    except ValueError:
+        host = ""
+
+    if re.search(r"한국|korea|\.kr\b", hay, re.I):
+        return "KR"
+    if re.search(r"일본|japan|\.jp\b", hay, re.I):
+        return "JP"
+    if re.search(r"미국|usa|united states|north america", hay, re.I):
+        return "US"
+
+    # A generic .com TLD is not a US signal. Several Japanese/global TCG
+    # official sites use .com, so use bounded known-host hints instead. When a
+    # localized subdomain also matches a parent domain (for example
+    # en.onepiece-cardgame.com vs onepiece-cardgame.com), the longest/specific
+    # domain wins so regional provenance cannot be swallowed by the parent.
+    matches = []
+    for region, domains in REGION_HOST_HINTS.items():
+        for domain in domains:
+            if host == domain or host.endswith("." + domain):
+                matches.append((len(domain), region, domain))
+    if matches:
+        matches.sort(reverse=True)
+        return matches[0][1]
     return "KR"
 
 
