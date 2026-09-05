@@ -52,6 +52,21 @@ class Operational0600RefreshV25Tests(unittest.TestCase):
         with mock.patch.dict(os.environ, {"TCG_SOURCE_TIMEOUT_CAP": "300"}, clear=False):
             self.assertEqual(tcg_updater._source_timeout({}), 300)
 
+    def test_ci_source_timeout_cap_applies_to_recovery_attempt_too(self):
+        source=("테스트 공식","https://example.com/official","공식")
+        stats={"sources":{}}
+        with (
+            mock.patch.dict(os.environ, {"TCG_SOURCE_TIMEOUT_CAP": "30"}, clear=False),
+            mock.patch.object(tcg_updater, "fetch", side_effect=[TimeoutError("timed out"), "<html>ok</html>"]) as fetched,
+            mock.patch.object(tcg_updater.time, "sleep", return_value=None),
+        ):
+            result=tcg_updater._collect_one_source(source,stats)
+        self.assertTrue(result["ok"],result)
+        self.assertTrue(result["recovered"])
+        self.assertEqual(result["attempt_timeouts"],[30,30])
+        self.assertEqual(fetched.call_args_list[0].args[1],30)
+        self.assertEqual(fetched.call_args_list[1].args[1],30)
+
     def test_stale_failure_streak_resets_without_erasing_lifetime_learning(self):
         old_signature = "old-dominant"
         stats = {
