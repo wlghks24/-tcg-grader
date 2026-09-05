@@ -24,6 +24,8 @@ TIMEOUT = env_int("TCG_HTTP_TIMEOUT", 20, 5, 60)
 OFFICIAL_ENTRY_PAGES = {
     "포켓몬": {
         "KR": (
+            "https://new.pokemonkorea.co.kr/card",
+            "https://pokemoncard.co.kr/card/category/info1",
             "https://www.pokemonkorea.co.kr/",
         ),
         "JP": (
@@ -33,6 +35,7 @@ OFFICIAL_ENTRY_PAGES = {
         ),
         "US": (
             "https://www.pokemon.com/us/pokemon-news",
+            "https://www.pokemon.com/us/play-pokemon/",
         ),
     },
     "원피스": {
@@ -57,6 +60,7 @@ OFFICIAL_ENTRY_PAGES = {
             "https://www.naruto-cardgame.com/asia-en/",
         ),
         "JP": (
+            "https://www.naruto-cardgame.com/jp/",
             "https://www.naruto-cardgame.com/",
             "https://naruto-official.com/",
         ),
