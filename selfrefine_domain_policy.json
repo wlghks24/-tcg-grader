@@ -124,6 +124,7 @@
     "pending_resolution_after_hash_required": true,
     "stale_pending_resolution_not_promoted": true,
     "clean_run_skips_redundant_impact_scan": true,
-    "rolled_back_repair_not_staged_for_learning": true
+    "rolled_back_repair_not_staged_for_learning": true,
+    "transitive_dependency_impact_analysis": true
   }
 }
