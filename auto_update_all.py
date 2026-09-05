@@ -35,6 +35,7 @@ _STATS_LOCK = threading.Lock()
 DEFERRED_TIMEOUT_MIN_SECONDS = 180
 DEFERRED_TIMEOUT_MAX_SECONDS = 600
 DEFERRED_TIMEOUT_MAX_ITEMS = 6
+FAILURE_STREAK_RESET_GAP_SECONDS = 72 * 60 * 60
 JOBS = (
     ("출시일", "update_releases", "releases.json"),
     ("판매·재발매 추적", "update_market_watch", "market_watch.json"),
@@ -204,10 +205,35 @@ def _error_signature(message: str) -> str:
     text=re.sub(r'\s+',' ',text)[:600]
     return hashlib.sha1(text.encode('utf-8','ignore')).hexdigest()[:12]
 
+def _failure_streak_gap_expired(last_run: object, now: dt.datetime) -> bool:
+    """A long observation gap breaks a *consecutive* failure streak.
+
+    Lifetime counters/error fingerprints are retained. Only volatile streak state
+    is reset so stale repository/CI telemetry cannot masquerade as repeated
+    failures in a new operating period.
+    """
+    text=str(last_run or '').strip()
+    if not text:
+        return False
+    try:
+        parsed=dt.datetime.fromisoformat(text.replace('Z','+00:00'))
+    except ValueError:
+        return False
+    if parsed.tzinfo is None:
+        parsed=parsed.replace(tzinfo=dt.timezone.utc)
+    gap=(now.astimezone(dt.timezone.utc)-parsed.astimezone(dt.timezone.utc)).total_seconds()
+    return gap > FAILURE_STREAK_RESET_GAP_SECONDS
+
 def _record_job_stat(stats: dict, filename: str, seconds: float, ok: bool, timed_out: bool=False, error: str='', partial: bool=False, recovered: bool=False) -> None:
     with _STATS_LOCK:
         jobs=stats.setdefault('jobs',{})
         row=jobs.setdefault(filename,{"runs":0,"successes":0,"failures":0,"timeouts":0})
+        now=dt.datetime.now(dt.timezone.utc)
+        if _failure_streak_gap_expired(row.get('last_run'),now):
+            row['consecutive_failures']=0
+            row['success_streak']=0
+            row['streak_reset_at']=now.isoformat(timespec='seconds')
+            row['streak_reset_reason']='observation_gap_over_72h'
         row['runs']=int(row.get('runs',0))+1
         row['successes']=int(row.get('successes',0))+(1 if ok and not partial and not recovered else 0)
         row['partial_successes']=int(row.get('partial_successes',0))+(1 if partial else 0)
@@ -220,6 +246,7 @@ def _record_job_stat(stats: dict, filename: str, seconds: float, ok: bool, timed
         row['success_streak']=(int(row.get('success_streak') or 0)+1) if ok and not partial and not recovered else 0
         row['consecutive_failures']=0 if ok and not partial and not recovered else int(row.get('consecutive_failures') or 0)+1
         if ok and not partial and not recovered:
+            row.pop('last_error_signature',None)
             old=float(row.get('success_ewma_seconds') or seconds)
             row['success_ewma_seconds']=round(old*0.7+seconds*0.3,3)
             # 구버전 호환 표시값
@@ -230,10 +257,11 @@ def _record_job_stat(stats: dict, filename: str, seconds: float, ok: bool, timed
             e=errs.setdefault(sig,{'count':0,'sample':'','last_seen':None})
             e['count']=int(e.get('count',0))+1
             e['sample']=(error or ('recovered after retry' if recovered else ('timeout' if timed_out else 'failure')))[-500:]
-            e['last_seen']=dt.datetime.now(dt.timezone.utc).isoformat(timespec='seconds')
-            # 많이 반복되는 오류는 자동 재시도 대상으로 표시한다.
+            e['last_seen']=now.isoformat(timespec='seconds')
+            row['last_error_signature']=sig
+            # 많이 반복되는 오류는 장기 학습 참고용으로 유지한다.
             row['dominant_error_signature']=max(errs, key=lambda k:_safe_int(errs[k].get('count',0),0,0,1_000_000))
-        row['last_run']=dt.datetime.now(dt.timezone.utc).isoformat(timespec='seconds')
+        row['last_run']=now.isoformat(timespec='seconds')
 
 def _should_retry(row: dict, timed_out: bool, message: str) -> bool:
     """일시적 네트워크/런타임 오류만 한 번 재시도한다. 데이터 검증 오류는 즉시 격리한다."""
