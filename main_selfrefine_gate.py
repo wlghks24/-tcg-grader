@@ -135,6 +135,7 @@ def run(cycles: int):
                 "state_path": REPAIR_STATE.name,
             }
             resolution_learning = {
+                "local_resolution_passed": 0,
                 "verified_resolution_learned": 0,
                 "verification_failed": 0,
                 "newly_quarantined": 0,
@@ -158,6 +159,7 @@ def run(cycles: int):
             "isolated_error_codes": isolation.get("summary", {}).get("isolated_count", 0),
             "learned_solution_reuse": isolation.get("summary", {}).get("learned_solution_reuse", 0),
             "quarantined_error_codes": isolation.get("summary", {}).get("quarantined_count", 0),
+            "locally_resolved_repairs": resolution_learning.get("local_resolution_passed", 0),
             "verified_resolutions_learned": resolution_learning.get("verified_resolution_learned", 0),
             "self_modify_rollbacks": rollback.get("restored", 0),
             "self_modify_rollback_conflicts": rollback.get("rollback_conflicts", 0),
@@ -195,6 +197,8 @@ def run(cycles: int):
             "transitive_dependency_impact_analysis": True,
             "complete_impact_analysis_required_for_learning": True,
             "full_regression_failure_does_not_poison_verified_lesson": True,
+            "local_resolution_is_provisional": True,
+            "full_regression_promotes_quarantine_learning": True,
         })
         return result
     finally:
@@ -232,6 +236,8 @@ def self_test():
     assert POLICY["rules"]["transitive_dependency_impact_analysis"] is True
     assert POLICY["rules"]["complete_impact_analysis_required_for_learning"] is True
     assert POLICY["rules"]["full_regression_failure_does_not_poison_verified_lesson"] is True
+    assert POLICY["rules"]["local_resolution_is_provisional"] is True
+    assert POLICY["rules"]["full_regression_promotes_quarantine_learning"] is True
     assert SHARED_SELF_LEARNING_CONTRACT_VERSION >= 3
     left = enrich_error("main", {"stage": "HTTP_429", "path": "a.py", "evidence": "rate limited"})
     right = enrich_error("instagram_content", {"stage": "HTTP_429", "path": "a.py", "evidence": "rate limited"})
