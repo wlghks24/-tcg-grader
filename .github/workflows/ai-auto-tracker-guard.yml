@@ -1,0 +1,43 @@
+name: AI Auto Tracker Guard
+
+on:
+  push:
+    paths:
+      - 'ai_auto_tracker.py'
+      - 'test_ai_auto_tracker.py'
+      - 'selfrefine_error_quarantine.py'
+      - 'safe_runtime.py'
+      - '.github/workflows/ai-auto-tracker-guard.yml'
+  pull_request:
+    paths:
+      - 'ai_auto_tracker.py'
+      - 'test_ai_auto_tracker.py'
+      - 'selfrefine_error_quarantine.py'
+      - 'safe_runtime.py'
+      - '.github/workflows/ai-auto-tracker-guard.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ai-auto-tracker-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Syntax check
+        run: python -m py_compile ai_auto_tracker.py test_ai_auto_tracker.py
+      - name: Tracker regression tests
+        run: python -m unittest -v test_ai_auto_tracker.py
+      - name: Domain boundary regression
+        run: python selfrefine_domain_boundary_guard.py
+      - name: Dry-run health check
+        run: python ai_auto_tracker.py --dry-run
