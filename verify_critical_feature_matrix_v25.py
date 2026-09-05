@@ -36,6 +36,10 @@ FEATURE_FILES = {
     "browser_camera_pwa": [
         "index.html",
         "sw.js",
+        "feature_category_nav.css",
+        "feature_category_nav.js",
+        "verify_feature_category_navigation.js",
+        "test_feature_category_navigation_v26.py",
         "verify_browser_runtime.js",
         "verify_camera_runtime.js",
         "verify_service_worker_runtime.js",
@@ -76,6 +80,7 @@ EXHAUSTIVE_COMMANDS = {
     "release_gate": "python verify_all.py",
     "local_server_pwa": "python verify_v107_runtime_integration.py",
     "browser_runtime": "node verify_browser_runtime.js",
+    "feature_category_navigation": "node verify_feature_category_navigation.js",
     "camera_runtime": "node verify_camera_runtime.js",
     "service_worker": "node verify_service_worker_runtime.js",
     "vision_runtime": "node verify_vision_runtime.js",
