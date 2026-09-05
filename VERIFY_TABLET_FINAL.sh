@@ -210,6 +210,7 @@ grep -Fq 'AI_AUTO_TRACKING_STATE.json' .gitignore
 grep -Fq 'AI_AUTO_TRACKING_REPORT.json' .gitignore
 grep -Fq "/api/ai-auto-tracking" tcg_updater.py
 grep -Fq "target=ai_auto_tracker.loop" tcg_updater.py
+grep -Fq "target=ai_auto_tracker.loop" tcg_updater_v135.py
 grep -Fq 'GRAPHIFY_VERSION="${GRAPHIFY_VERSION:-0.9.53}"' SETUP_GRAPHIFY_TERMUX.sh
 grep -Fxq '.codex/' .graphifyignore
 grep -Fxq '.agents/' .graphifyignore
