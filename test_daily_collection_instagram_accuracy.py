@@ -70,6 +70,26 @@ def healthy_promo():
     }
 
 
+def healthy_source_stats():
+    stamp = "2026-09-05T20:00:00+00:00"
+    sources = {}
+    index = 0
+    for game in ("pokemon", "one_piece", "naruto"):
+        for region in ("KR", "JP", "US"):
+            index += 1
+            sources[f"official-{index}"] = {
+                "official_scope": True,
+                "game": game,
+                "region": region,
+                "channel": "news_event",
+                "url": f"https://example.invalid/{game}/{region}",
+                "last_run": stamp,
+                "last_result": "success",
+                "consecutive_failures": 0,
+            }
+    return {"updated_at": stamp, "sources": sources}
+
+
 class DailyAuditTest(unittest.TestCase):
     def _report(self, adaptive=None, source_stats=None, promo=None, routes=None):
         with tempfile.TemporaryDirectory() as td:
@@ -77,11 +97,7 @@ class DailyAuditTest(unittest.TestCase):
             return build_report(
                 now=NOW,
                 adaptive=adaptive or healthy_adaptive(),
-                source_stats=source_stats
-                or {
-                    "updated_at": "2026-09-05T20:00:00+00:00",
-                    "sources": {"official": {"ok": 1}},
-                },
+                source_stats=source_stats or healthy_source_stats(),
                 promo=promo or healthy_promo(),
                 routes=routes or good_routes(),
                 main_exchange=root / "main.json",
@@ -120,6 +136,24 @@ class DailyAuditTest(unittest.TestCase):
         self.assertEqual(report["summary"]["status"], "degraded")
         self.assertEqual(_exit_code(report, strict_policy=True), 0)
         self.assertEqual(_exit_code(report, fail_on_degraded=True), 1)
+
+    def test_official_source_coverage_gap_is_degraded_and_repairable(self):
+        stats = healthy_source_stats()
+        for row in stats["sources"].values():
+            if row.get("game") == "naruto" and row.get("region") == "US":
+                row["last_result"] = "restricted"
+                row["last_http_status"] = 403
+        report = self._report(source_stats=stats)
+        coverage = report["main_collection"]["official_source_coverage"]
+        self.assertFalse(coverage["ok"])
+        self.assertIn("naruto/US", coverage["degraded_cells"])
+        self.assertTrue(
+            any(x["kind"] == "official_source_coverage_gap" for x in report["main_collection"]["findings"])
+        )
+        self.assertTrue(
+            any(x["rule"] == "restore_official_source_coverage" for x in report["repair_actions"])
+        )
+        self.assertEqual(report["summary"]["status"], "degraded")
 
     def test_policy_regression_fails_closed(self):
         routes = good_routes()
@@ -176,10 +210,7 @@ class DailyAuditTest(unittest.TestCase):
             report = build_report(
                 now=NOW,
                 adaptive=healthy_adaptive(),
-                source_stats={
-                    "updated_at": "2026-09-05T20:00:00+00:00",
-                    "sources": {"x": {}},
-                },
+                source_stats=healthy_source_stats(),
                 promo=healthy_promo(),
                 routes=good_routes(),
                 main_exchange=main_path,
@@ -217,10 +248,7 @@ class DailyAuditTest(unittest.TestCase):
             report = build_report(
                 now=NOW,
                 adaptive=healthy_adaptive(),
-                source_stats={
-                    "updated_at": "2026-09-05T20:00:00+00:00",
-                    "sources": {"x": {}},
-                },
+                source_stats=healthy_source_stats(),
                 promo=healthy_promo(),
                 routes=good_routes(),
                 main_exchange=main_path,
