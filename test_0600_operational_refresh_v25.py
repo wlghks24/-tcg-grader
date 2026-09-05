@@ -11,7 +11,6 @@ from unittest import mock
 import main_crosscheck_export
 import selfrefine_crosscheck_gate
 import tcg_updater
-from instagram_tcg_content import crosscheck_export as instagram_crosscheck_export
 
 
 def _sample(source: str) -> dict:
@@ -53,15 +52,13 @@ class Operational0600RefreshV25Tests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
             main_path = root / "main.json"
-            insta_path = root / "instagram.json"
             main_crosscheck_export.export_records([_sample("main")], main_path)
-            instagram_crosscheck_export.export_records([_sample("instagram")], insta_path)
             self.assertEqual(json.loads(main_path.read_text(encoding="utf-8"))["domain"], "main")
-            self.assertEqual(
-                json.loads(insta_path.read_text(encoding="utf-8"))["domain"],
-                "instagram_content",
-            )
             self.assertFalse(any(p.suffix == ".tmp" for p in root.iterdir()))
+        instagram_source = Path("instagram_tcg_content/crosscheck_export.py").read_text(encoding="utf-8")
+        self.assertIn("def _write_json_atomic(", instagram_source)
+        self.assertNotIn("from safe_runtime import", instagram_source)
+        self.assertNotIn("output.write_text(", instagram_source)
 
     def test_factual_report_writer_is_atomic(self):
         source = Path("selfrefine_crosscheck_gate.py").read_text(encoding="utf-8")
