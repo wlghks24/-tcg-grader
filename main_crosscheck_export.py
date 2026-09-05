@@ -6,6 +6,7 @@ import json
 from pathlib import Path
 
 from shared_self_learning.engine import normalize_crosscheck_record
+from safe_runtime import atomic_write_json
 
 ROOT = Path(__file__).resolve().parent
 DEFAULT_OUTPUT = ROOT / "crosscheck_exchange" / "runtime-main.json"
@@ -13,10 +14,10 @@ DEFAULT_OUTPUT = ROOT / "crosscheck_exchange" / "runtime-main.json"
 
 def export_records(records: list[dict], output: Path = DEFAULT_OUTPUT) -> list[dict]:
     normalized = [normalize_crosscheck_record("main", row) for row in records]
-    output.parent.mkdir(parents=True, exist_ok=True)
-    output.write_text(
-        json.dumps({"domain": "main", "records": normalized}, ensure_ascii=False, indent=2) + "\n",
-        encoding="utf-8",
+    atomic_write_json(
+        output,
+        {"domain": "main", "records": normalized},
+        suffix=".main-crosscheck.tmp",
     )
     return normalized
 
