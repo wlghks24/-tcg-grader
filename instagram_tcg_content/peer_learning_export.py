@@ -41,10 +41,11 @@ def self_test() -> None:
         "applicable_scope": "both",
         "confidence_level": "high",
     }
-    row = export_lessons([sample], Path("/tmp/instagram-peer-learning-selftest.json"))[0]
-    assert tuple(row) == PEER_LEARNING_FIELDS
-    assert "render_state" not in row and "upload_state" not in row
-    Path("/tmp/instagram-peer-learning-selftest.json").unlink(missing_ok=True)
+    with tempfile.TemporaryDirectory() as tmp:
+        output = Path(tmp) / "instagram-peer-learning-selftest.json"
+        row = export_lessons([sample], output)[0]
+        assert tuple(row) == PEER_LEARNING_FIELDS
+        assert "render_state" not in row and "upload_state" not in row
     print("Instagram peer learning export contract: PASS")
 
 
