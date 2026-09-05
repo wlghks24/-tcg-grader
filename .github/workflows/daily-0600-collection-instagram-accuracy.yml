@@ -9,6 +9,10 @@ on:
     paths:
       - 'daily_collection_instagram_accuracy.py'
       - 'tcg_updater.py'
+      - 'collection_source_coverage_v28.py'
+      - 'test_collection_source_coverage_v28.py'
+      - 'official_direct_discovery.py'
+      - 'adaptive_collection_learner.py'
       - 'auto_update_all.py'
       - 'test_0600_operational_refresh_v25.py'
       - 'test_daily_collection_instagram_accuracy.py'
@@ -29,6 +33,10 @@ on:
     paths:
       - 'daily_collection_instagram_accuracy.py'
       - 'tcg_updater.py'
+      - 'collection_source_coverage_v28.py'
+      - 'test_collection_source_coverage_v28.py'
+      - 'official_direct_discovery.py'
+      - 'adaptive_collection_learner.py'
       - 'auto_update_all.py'
       - 'test_0600_operational_refresh_v25.py'
       - 'test_daily_collection_instagram_accuracy.py'
@@ -84,9 +92,10 @@ jobs:
 
       - name: Verify 06:00 audit regression
         run: |
-          python -m py_compile daily_collection_instagram_accuracy.py auto_update_all.py selfrefine_crosscheck_gate.py peer_learning_crosscheck_gate.py main_peer_learning_export.py main_peer_learning_adoption.py selfrefine_domain_boundary_guard.py shared_self_learning/peer_learning.py instagram_tcg_content/peer_learning_export.py
+          python -m py_compile daily_collection_instagram_accuracy.py auto_update_all.py collection_source_coverage_v28.py selfrefine_crosscheck_gate.py peer_learning_crosscheck_gate.py main_peer_learning_export.py main_peer_learning_adoption.py selfrefine_domain_boundary_guard.py shared_self_learning/peer_learning.py instagram_tcg_content/peer_learning_export.py
+          python collection_source_coverage_v28.py
           python -c "import daily_collection_instagram_accuracy, auto_update_all, selfrefine_crosscheck_gate, peer_learning_crosscheck_gate"
-          python -m unittest -v test_daily_collection_instagram_accuracy.py test_0600_operational_refresh_v25.py
+          python -m unittest -v test_daily_collection_instagram_accuracy.py test_0600_operational_refresh_v25.py test_collection_source_coverage_v28.py
 
       - name: Refresh bounded live collection state before 06:00 audit
         if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch' || github.event_name == 'pull_request' || github.event_name == 'push'
@@ -100,6 +109,7 @@ jobs:
           import json
           from pathlib import Path
           import tcg_updater
+          import collection_source_coverage_v28
 
           MAX_HEALTH_AGE_SECONDS = 600
           MAX_FUTURE_SKEW_SECONDS = 300
@@ -137,6 +147,18 @@ jobs:
           now = dt.datetime.now(dt.timezone.utc)
           source_age = fresh_age_seconds('source', source.get('updated_at'), now)
           adaptive_age = fresh_age_seconds('adaptive', adaptive.get('updated_at'), now)
+          official_source_coverage = collection_source_coverage_v28.audit_source_stats(
+              source, now, max_age_hours=36.0
+          )
+          if not official_source_coverage.get('ok'):
+              raise SystemExit(
+                  '06:00 live refresh official-source coverage incomplete: '
+                  + json.dumps({
+                      'healthy_cells': official_source_coverage.get('healthy_cells'),
+                      'missing_cells': official_source_coverage.get('missing_cells'),
+                      'degraded_cells': official_source_coverage.get('degraded_cells'),
+                  }, ensure_ascii=False)
+              )
 
           critical_results = {}
           report_path = Path('auto_update_report.json')
@@ -162,6 +184,12 @@ jobs:
               'adaptive_updated_at': adaptive['updated_at'],
               'adaptive_health_age_seconds': adaptive_age,
               'auto_update_status': (result.get('auto_update') or {}).get('status'),
+              'official_source_coverage': {
+                  'expected_cells': official_source_coverage['expected_cells'],
+                  'healthy_cells': official_source_coverage['healthy_cells'],
+                  'missing_cells': official_source_coverage['missing_cells'],
+                  'degraded_cells': official_source_coverage['degraded_cells'],
+              },
               'critical_collection_results': critical_results,
           }, ensure_ascii=False))
           PY
@@ -210,6 +238,15 @@ jobs:
               raise SystemExit(f"06:00 audit report summary missing keys: {missing}")
           if summary["status"] not in {"pass", "warning", "degraded", "fail_closed"}:
               raise SystemExit(f"invalid 06:00 audit status: {summary['status']!r}")
+
+          main_collection = payload.get("main_collection")
+          if not isinstance(main_collection, dict):
+              raise SystemExit("06:00 audit main_collection is missing")
+          official_coverage = main_collection.get("official_source_coverage")
+          if not isinstance(official_coverage, dict) or official_coverage.get("expected_cells") != 9:
+              raise SystemExit("06:00 audit official source coverage contract is missing")
+          if official_coverage.get("healthy_cells") != 9 or official_coverage.get("missing_cells") or official_coverage.get("degraded_cells"):
+              raise SystemExit(f"06:00 audit official source coverage incomplete: {official_coverage}")
 
           safety = payload.get("safety")
           if not isinstance(safety, dict):
