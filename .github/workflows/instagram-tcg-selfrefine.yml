@@ -46,6 +46,14 @@ jobs:
           python selfrefine_crosscheck_gate.py --self-test
           python -m unittest -v test_selfrefine_domain_isolation_v18.py
           python -m unittest -v instagram_tcg_content.test_state_isolation_v18
+      - name: Verify diversified source evidence rules
+        run: python -m instagram_tcg_content.test_source_verification_engine
+      - name: Verify resilient source substitution
+        run: python -m instagram_tcg_content.test_source_route_resilience
+      - name: Verify run-packet semantic guards
+        run: python -m instagram_tcg_content.test_live_packet_guards
+      - name: Validate Instagram source route policy
+        run: python -m json.tool instagram_tcg_content/source_routes.json >/dev/null
       - name: Run Instagram TCG Content SELFREFINE only
         run: python -m instagram_tcg_content.selfrefine_gate
       - name: Upload Instagram TCG SELFREFINE ledger

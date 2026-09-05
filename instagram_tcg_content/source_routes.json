@@ -1,0 +1,71 @@
+{
+  "version": 3,
+  "rules": {
+    "official_facts_require_official_primary": true,
+    "completed_sale_requires_independent_realized_sale_sources": 2,
+    "market_reference_requires_independent_sources_for_verified": 2,
+    "discovery_lead_can_confirm_fact_alone": false,
+    "same_error_signature_change_strategy_after": 2,
+    "same_error_signature_exclude_after": 3,
+    "respect_retry_after": true,
+    "bypass_403_429": false,
+    "preserve_provider_lineage": true,
+    "dedupe_same_underlying_sale_lineage": true,
+    "completed_sale_separate_from_market_reference": true,
+    "official_primary_region_fallback_allowed": true,
+    "official_primary_cross_language_confirmation_allowed": true,
+    "official_event_detail_page_preferred_over_homepage": true,
+    "provider_homepage_staleness_does_not_override_fresh_detail_page": true,
+    "prelaunch_game_market_data_default_excluded": true
+  },
+  "routes": {
+    "official_release": ["official_primary", "official_secondary", "discovery_lead"],
+    "official_reprint": ["official_primary", "official_secondary", "discovery_lead"],
+    "official_promo": ["official_primary", "official_secondary", "discovery_lead"],
+    "official_event": ["official_primary", "official_secondary", "discovery_lead"],
+    "official_movie_bonus": ["official_primary", "official_secondary", "discovery_lead"],
+    "completed_sale": ["completed_sale_original", "grading_auction_original", "market_reference", "discovery_lead"],
+    "market_reference": ["market_reference", "completed_sale_original", "grading_auction_original"],
+    "fx": ["official_primary", "market_reference"]
+  },
+  "provider_groups": {
+    "pokemon": {
+      "official_primary": [
+        "pokemon-official-jp-news",
+        "pokemon-official-us-news",
+        "pokemon-official-us-product-gallery",
+        "pokemon-official-kr",
+        "pokemon-center"
+      ],
+      "completed_sale_original": ["ebay", "heritage", "goldin"],
+      "grading_auction_original": ["psa-auction-prices", "card-ladder", "pwcc"],
+      "market_reference": ["pricecharting", "tcgplayer", "cardmarket", "snkrdunk", "justtcg", "pavilion", "kream"],
+      "discovery_lead": ["google", "instagram", "x", "reddit"]
+    },
+    "one_piece": {
+      "official_primary": [
+        "onepiece-cardgame-jp",
+        "onepiece-cardgame-global",
+        "onepiece-cardgame-regional",
+        "bandai-tcg-plus",
+        "onepiece-campaign-detail"
+      ],
+      "completed_sale_original": ["ebay", "heritage", "goldin"],
+      "grading_auction_original": ["psa-auction-prices", "card-ladder", "pwcc"],
+      "market_reference": ["pricecharting", "tcgplayer", "cardmarket", "snkrdunk", "justtcg", "pavilion", "kream"],
+      "discovery_lead": ["google", "instagram", "x", "reddit"]
+    },
+    "naruto": {
+      "official_primary": [
+        "naruto-cardgame-official",
+        "naruto-official-news",
+        "bandai-card-games",
+        "bandai-tcg-plus"
+      ],
+      "completed_sale_original": ["ebay", "heritage", "goldin"],
+      "grading_auction_original": ["psa-auction-prices", "card-ladder", "pwcc"],
+      "market_reference": ["pricecharting", "tcgplayer", "cardmarket", "snkrdunk", "justtcg", "pavilion", "kream"],
+      "discovery_lead": ["google", "instagram", "x", "reddit"]
+    }
+  }
+}
