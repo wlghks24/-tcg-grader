@@ -181,6 +181,9 @@ def run(cycles: int):
             "process_safe_learning_state": True,
             "full_repository_error_impact_analysis": True,
             "official_source_first_error_research": True,
+            "bounded_official_network_error_research": True,
+            "research_network_allowlist_only": True,
+            "research_raw_body_persisted": False,
             "research_text_executable": False,
             "search_result_patch_generation": False,
             "full_regression_before_resolution_learning": True,
@@ -207,6 +210,9 @@ def self_test():
     assert POLICY["rules"]["process_safe_selfrefine_state"] is True
     assert POLICY["rules"]["new_error_full_repository_analysis"] is True
     assert POLICY["rules"]["new_error_official_source_research"] is True
+    assert POLICY["rules"]["new_error_bounded_official_network_research"] is True
+    assert POLICY["rules"]["research_network_allowlist_only"] is True
+    assert POLICY["rules"]["research_raw_body_persisted"] is False
     assert POLICY["rules"]["research_text_executable"] is False
     assert POLICY["rules"]["search_result_patch_generation"] is False
     assert POLICY["rules"]["full_regression_before_resolution_learning"] is True
