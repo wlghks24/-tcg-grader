@@ -24,6 +24,24 @@ jobs:
         run: |
           python main_selfrefine_gate.py --self-test
           python selfrefine_resolution_research.py --self-test
+          python - <<'PY'
+          import selfrefine_resolution_research as research
+          plan = research.research_plan({
+              'stage': 'PYTHON_SYNTAX',
+              'path': 'sample.py',
+              'root_cause': 'SyntaxError',
+          })
+          result = research.search_official_sources(plan, request_limit=1)
+          assert result['attempted'] == 1, result
+          assert result['content_used_for_patch'] is False, result
+          assert result['search_result_patch_generation'] is False, result
+          assert result['raw_body_persisted'] is False, result
+          assert all(
+              row.get('host') in research.RESEARCH_ALLOWED_HOSTS
+              for row in result.get('results', [])
+          ), result
+          print('bounded official SELFREFINE research probe: PASS', result['status'])
+          PY
           python main_crosscheck_export.py --self-test
           python selfrefine_crosscheck_gate.py --self-test
           python main_peer_learning_export.py --self-test
