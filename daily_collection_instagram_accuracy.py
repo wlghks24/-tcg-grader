@@ -19,6 +19,7 @@ from typing import Any
 
 from selfrefine_crosscheck_gate import run as run_crosscheck
 from peer_learning_crosscheck_gate import run as run_peer_learning_crosscheck
+import collection_source_coverage_v28
 
 ROOT = Path(__file__).resolve().parent
 KST = dt.timezone(dt.timedelta(hours=9))
@@ -219,6 +220,30 @@ def audit_main_collection(
             )
         )
 
+    official_source_coverage = collection_source_coverage_v28.audit_source_stats(
+        source_stats, now, max_age_hours=36.0
+    )
+    if not official_source_coverage.get("ok"):
+        findings.append(
+            {
+                "kind": "official_source_coverage_gap",
+                "severity": "high",
+                "expected_cells": official_source_coverage.get("expected_cells", 9),
+                "healthy_cells": official_source_coverage.get("healthy_cells", 0),
+                "missing_cells": official_source_coverage.get("missing_cells", []),
+                "degraded_cells": official_source_coverage.get("degraded_cells", []),
+            }
+        )
+        actions.append(
+            _action(
+                "high",
+                "main",
+                "restore_official_source_coverage",
+                "At least one Pokémon / ONE PIECE / NARUTO × KR/JP/US official-source cell has no fresh usable route",
+                "Refresh the affected official primary route or its approved same-domain alternate. A 401/403/405/406/409 restricted response is diagnostic-only and must not count as a successful collection. Never bypass 403/429.",
+            )
+        )
+
     coverage = promo.get("coverage") if isinstance(promo.get("coverage"), dict) else {}
     expected = _safe_int(coverage.get("expected_game_region_pairs"), 0)
     covered = _safe_int(coverage.get("covered_game_region_pairs"), 0)
@@ -282,7 +307,11 @@ def audit_main_collection(
             )
         )
 
-    return {"findings": findings, "repair_actions": actions}
+    return {
+        "findings": findings,
+        "repair_actions": actions,
+        "official_source_coverage": official_source_coverage,
+    }
 
 
 def audit_instagram_policy(routes: dict[str, Any]) -> dict[str, Any]:
