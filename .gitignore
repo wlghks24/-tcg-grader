@@ -122,3 +122,7 @@ crosscheck_exchange/runtime-main-learning*.jsonl
 crosscheck_exchange/runtime-instagram-learning*.json
 crosscheck_exchange/runtime-instagram-learning*.jsonl
 MARKET_ANALYSIS_PEER_PREVENTION_RULES.json
+
+# Device-local AI automatic tracking state/report.
+AI_AUTO_TRACKING_STATE.json
+AI_AUTO_TRACKING_REPORT.json
