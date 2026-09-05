@@ -560,14 +560,15 @@ def _collect_one_source(source,stats):
     name,url,kind=source
     row=stats.get('sources',{}).get(name,{})
     learned_timeout=_source_timeout(row)
+    runtime_cap=env_int('TCG_SOURCE_TIMEOUT_CAP',300,5,300)
     total_budget=300
     started=time.monotonic();last_exc=None;attempt_timeouts=[]
     for attempt in (1,2):
         elapsed=time.monotonic()-started
         remain=max(0,total_budget-elapsed)
         if remain < 5:break
-        requested = learned_timeout if attempt == 1 else min(300, max(90, learned_timeout * 2))
-        attempt_timeout=max(5,min(int(requested),int(remain)))
+        requested = learned_timeout if attempt == 1 else min(runtime_cap, max(90, learned_timeout * 2))
+        attempt_timeout=max(5,min(int(requested),int(remain),runtime_cap))
         attempt_timeouts.append(attempt_timeout)
         try:
             html=fetch(url,attempt_timeout)
