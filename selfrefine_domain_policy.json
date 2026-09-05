@@ -1,5 +1,5 @@
 {
-  "version": 10,
+  "version": 11,
   "domains": {
     "main": {
       "root": ".",
@@ -127,6 +127,9 @@
     "rolled_back_repair_not_staged_for_learning": true,
     "transitive_dependency_impact_analysis": true,
     "complete_impact_analysis_required_for_learning": true,
-    "full_regression_failure_does_not_poison_verified_lesson": true
+    "full_regression_failure_does_not_poison_verified_lesson": true,
+    "local_resolution_is_provisional": true,
+    "full_regression_promotes_quarantine_learning": true,
+    "legacy_local_success_not_promoted": true
   }
 }
