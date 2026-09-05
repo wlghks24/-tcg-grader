@@ -1,21 +1,6 @@
 name: Market AI Auto Tracker
 
 on:
-  pull_request:
-    paths:
-      - 'market_ai_auto_tracker.py'
-      - 'test_market_ai_auto_tracker.py'
-      - 'multi_market_price_collector.py'
-      - 'multi_market_prices.js'
-      - 'multi_market_prices.css'
-      - 'market_prices.json'
-      - 'market_watch.json'
-      - 'tcg_updater.py'
-      - 'index.html'
-      - 'main_selfrefine_gate.py'
-      - 'selfrefine_*.py'
-      - 'verified_code_repair_rules.py'
-      - '.github/workflows/market-ai-auto-tracker.yml'
   push:
     branches: [main]
     paths:
