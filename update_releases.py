@@ -27,7 +27,7 @@ HEADERS = {
     "Accept-Language": "ko-KR,ko;q=0.9,ja-JP;q=0.8,en;q=0.6",
 }
 ALLOWED = {
-    "pokemoncard.co.kr", "www.pokemoncard.co.kr",
+    "pokemoncard.co.kr", "www.pokemoncard.co.kr", "new.pokemonkorea.co.kr",
     "www.pokemon-card.com", "www.30th.pokemon-card.com", "www.pokemon.com",
     "onepiece-cardgame.kr", "www.onepiece-cardgame.kr",
     "www.onepiece-cardgame.com", "en.onepiece-cardgame.com",
