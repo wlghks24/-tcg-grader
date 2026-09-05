@@ -103,12 +103,25 @@ PUBLIC_STATIC_FILES={
 }
 SOURCES=[
  ('포켓몬 한국 공식','https://pokemoncard.co.kr/card/category/info1','공식'),
+ ('포켓몬 한국 카드 홈 공식','https://new.pokemonkorea.co.kr/card','공식'),
+ ('포켓몬 한국 이벤트 공식','https://pokemoncard.co.kr/card/category/event','행사'),
  ('포켓몬 일본 공식','https://www.pokemon-card.com/products/index.html','공식'),
+ ('포켓몬 일본 새소식 공식','https://www.pokemon-card.com/info/','공식'),
  ('포켓몬 30주년 공식','https://www.30th.pokemon-card.com/','공식'),
+ ('포켓몬 미국 뉴스 공식','https://www.pokemon.com/us/pokemon-news','공식'),
+ ('포켓몬 미국 Play 이벤트 공식','https://www.pokemon.com/us/play-pokemon/','행사'),
  ('원피스 한국 공식','https://onepiece-cardgame.kr/products.do','공식'),
+ ('원피스 한국 공지 공식','https://onepiece-cardgame.kr/topics.do','공식'),
+ ('원피스 한국 이벤트 공식','https://onepiece-cardgame.kr/events.do','행사'),
  ('원피스 일본 공식','https://www.onepiece-cardgame.com/','공식'),
+ ('원피스 일본 뉴스 공식','https://www.onepiece-cardgame.com/news/','공식'),
+ ('원피스 일본 이벤트 공식','https://www.onepiece-cardgame.com/events/','행사'),
  ('원피스 미국 공식','https://en.onepiece-cardgame.com/products/','공식'),
+ ('원피스 미국 토픽 공식','https://en.onepiece-cardgame.com/topics/','공식'),
+ ('원피스 미국 이벤트 공식','https://en.onepiece-cardgame.com/events/','행사'),
  ('나루토 카드게임 글로벌 공식','https://www.naruto-cardgame.com/asia-en/','공식'),
+ ('나루토 일본 공식','https://www.naruto-cardgame.com/jp/','공식'),
+ ('나루토 미국 공식','https://www.naruto-cardgame.com/en/','공식'),
  ('포켓몬 일본 프로모 행사 공식','https://www.pokemon-card.com/info/005397.html','행사'),
  ('PSA 공식 등급기준','https://www.psacard.com/gradingstandards','등급'),
  ('BGS 공식 등급','https://www.beckett.com/grading/scale','등급'),
@@ -123,6 +136,40 @@ SOURCES=[
  ('TCGdex 포켓몬 가격 API','https://tcgdex.dev/markets-prices','참고시세'),
  ('Pavilion TCG 통합 참고시세','https://pavilion-tcg.com/search?language=ko','참고시세'),
 ]
+
+OFFICIAL_SOURCE_SCOPE={
+ '포켓몬 한국 공식':('pokemon','KR','product'),
+ '포켓몬 한국 카드 홈 공식':('pokemon','KR','mixed'),
+ '포켓몬 한국 이벤트 공식':('pokemon','KR','event'),
+ '포켓몬 일본 공식':('pokemon','JP','product'),
+ '포켓몬 일본 새소식 공식':('pokemon','JP','news'),
+ '포켓몬 일본 프로모 행사 공식':('pokemon','JP','event'),
+ '포켓몬 미국 뉴스 공식':('pokemon','US','news'),
+ '포켓몬 미국 Play 이벤트 공식':('pokemon','US','event'),
+ '원피스 한국 공식':('one_piece','KR','product'),
+ '원피스 한국 공지 공식':('one_piece','KR','news'),
+ '원피스 한국 이벤트 공식':('one_piece','KR','event'),
+ '원피스 일본 공식':('one_piece','JP','mixed'),
+ '원피스 일본 뉴스 공식':('one_piece','JP','news'),
+ '원피스 일본 이벤트 공식':('one_piece','JP','event'),
+ '원피스 미국 공식':('one_piece','US','product'),
+ '원피스 미국 토픽 공식':('one_piece','US','news'),
+ '원피스 미국 이벤트 공식':('one_piece','US','event'),
+ '나루토 카드게임 글로벌 공식':('naruto','KR','news_event'),
+ '나루토 일본 공식':('naruto','JP','news_event'),
+ '나루토 미국 공식':('naruto','US','news_event'),
+}
+
+def _annotate_source_health(stats,name,url,kind):
+    scope=OFFICIAL_SOURCE_SCOPE.get(name)
+    with SOURCE_STATS_LOCK:
+        row=stats.setdefault('sources',{}).setdefault(name,{'runs':0,'successes':0,'failures':0})
+        row['url']=str(url)[:900]
+        row['kind']=str(kind)[:40]
+        row['official_scope']=bool(scope)
+        if scope:
+            row['game'],row['region'],row['channel']=scope
+
 
 def free_port(start=8765, limit=30):
     for port in range(start,start+limit):
@@ -363,7 +410,7 @@ def _sanitize_source_stats(data):
     for name,row in rows.items():
         if not isinstance(name,str) or not isinstance(row,dict): continue
         clean=dict(row)
-        for k in ('runs','successes','failures','recovered_successes','clean_success_streak','consecutive_failures'):
+        for k in ('runs','successes','failures','recovered_successes','clean_success_streak','consecutive_failures','access_restrictions'):
             clean[k]=_safe_stat_int(row.get(k),0)
         for k in ('success_ewma_seconds','last_seconds','next_timeout_seconds'):
             if k in row: clean[k]=_safe_stat_float(row.get(k),0.0)
@@ -553,6 +600,7 @@ def collect():
             except Exception as exc:results.append({'ok':False,'name':'unknown','url':'','kind':'','error':f'{type(exc).__name__}: {exc}'})
     for result in results:
         name=result['name'];url=result['url'];kind=result['kind']
+        _annotate_source_health(stats,name,url,kind)
         if result.get('restricted'):
             old=data['sources'].get(name,{})
             preserved=dict(old) if isinstance(old,dict) else {}
