@@ -58,14 +58,25 @@ FORBIDDEN_PEER_INPUT_FIELDS = {
 }
 
 _PASS_RESULTS = {"pass", "passed", "verified", "success", "ok", "true"}
+_CONTAINER_TYPES = (dict, list, tuple, set, frozenset, bytes, bytearray)
+_MAIN_INAPPLICABLE_SUBSYSTEM_TOKENS = {
+    "renderer", "rendering", "upload", "delivery", "design", "image_template",
+    "caption", "hashtag", "instagram_renderer", "instagram_upload", "instagram_delivery",
+}
 
 
 def _clean(value: Any, limit: int = 400) -> str:
     return " ".join(str(value or "").replace("\x00", " ").split())[:limit]
 
 
+def _clean_scalar(value: Any, field: str, limit: int = 400) -> str:
+    if isinstance(value, _CONTAINER_TYPES):
+        raise TypeError(f"{field} must be a scalar value")
+    return _clean(value, limit)
+
+
 def _normalize_confidence(value: Any) -> str:
-    text = _clean(value, 40).lower()
+    text = _clean_scalar(value, "confidence_level", 40).lower()
     if text in {"low", "medium", "high", "unknown"}:
         return text
     try:
@@ -82,10 +93,12 @@ def _normalize_confidence(value: Any) -> str:
 def _normalize_bool(value: Any) -> bool:
     if isinstance(value, bool):
         return value
-    return _clean(value, 20).lower() in {"1", "true", "yes", "pass", "passed", "ok", "success"}
+    return _clean_scalar(value, "regression_pass", 20).lower() in {"1", "true", "yes", "pass", "passed", "ok", "success"}
 
 
 def _normalize_recurrence(value: Any) -> int:
+    if isinstance(value, _CONTAINER_TYPES):
+        raise TypeError("recurrence_count must be a scalar value")
     try:
         number = int(value)
     except (TypeError, ValueError, OverflowError):
@@ -108,18 +121,18 @@ def normalize_peer_lesson(domain: str, row: dict[str, Any]) -> dict[str, Any]:
     _validate_peer_input(row)
 
     normalized = {
-        "lesson_id": _clean(row.get("lesson_id"), 160),
-        "subsystem": _clean(row.get("subsystem"), 120),
-        "issue_class": _clean(row.get("issue_class"), 120),
-        "trigger_condition": _clean(row.get("trigger_condition"), 300),
-        "symptom_summary": _clean(row.get("symptom_summary"), 500),
-        "root_cause_class": _clean(row.get("root_cause_class"), 160),
-        "fix_pattern": _clean(row.get("fix_pattern"), 500),
-        "prevention_rule_id": _clean(row.get("prevention_rule_id"), 160),
-        "verification_result": _clean(row.get("verification_result"), 120),
+        "lesson_id": _clean_scalar(row.get("lesson_id"), "lesson_id", 160),
+        "subsystem": _clean_scalar(row.get("subsystem"), "subsystem", 120),
+        "issue_class": _clean_scalar(row.get("issue_class"), "issue_class", 120),
+        "trigger_condition": _clean_scalar(row.get("trigger_condition"), "trigger_condition", 300),
+        "symptom_summary": _clean_scalar(row.get("symptom_summary"), "symptom_summary", 500),
+        "root_cause_class": _clean_scalar(row.get("root_cause_class"), "root_cause_class", 160),
+        "fix_pattern": _clean_scalar(row.get("fix_pattern"), "fix_pattern", 500),
+        "prevention_rule_id": _clean_scalar(row.get("prevention_rule_id"), "prevention_rule_id", 160),
+        "verification_result": _clean_scalar(row.get("verification_result"), "verification_result", 120),
         "regression_pass": _normalize_bool(row.get("regression_pass")),
         "recurrence_count": _normalize_recurrence(row.get("recurrence_count")),
-        "applicable_scope": _clean(row.get("applicable_scope"), 200),
+        "applicable_scope": _clean_scalar(row.get("applicable_scope"), "applicable_scope", 200),
         "confidence_level": _normalize_confidence(row.get("confidence_level")),
     }
     required = ("lesson_id", "subsystem", "issue_class", "root_cause_class", "fix_pattern", "applicable_scope")
@@ -129,6 +142,18 @@ def normalize_peer_lesson(domain: str, row: dict[str, Any]) -> dict[str, Any]:
     if tuple(normalized) != PEER_LEARNING_FIELDS:
         raise AssertionError("peer learning projection drifted from exact allowlist")
     return normalized
+
+
+def validate_peer_snapshot_lesson(domain: str, row: dict[str, Any]) -> dict[str, Any]:
+    if not isinstance(row, dict):
+        raise TypeError("peer learning snapshot lesson must be an object")
+    expected = set(PEER_LEARNING_FIELDS)
+    actual = set(row)
+    missing = sorted(expected - actual)
+    extra = sorted(actual - expected)
+    if missing or extra:
+        raise ValueError(f"peer learning snapshot fields mismatch: missing={missing} extra={extra}")
+    return normalize_peer_lesson(domain, row)
 
 
 def _token(value: Any) -> str:
@@ -173,6 +198,14 @@ def scope_applies(value: Any, target_domain: str) -> bool:
     return False
 
 
+def lesson_applies_to_domain(row: dict[str, Any], target_domain: str) -> bool:
+    if target_domain == "main":
+        subsystem_tokens = _scope_tokens(row.get("subsystem"))
+        if subsystem_tokens & _MAIN_INAPPLICABLE_SUBSYSTEM_TOKENS:
+            return False
+    return scope_applies(row.get("applicable_scope"), target_domain)
+
+
 def _verified_pass(row: dict[str, Any]) -> bool:
     return bool(row.get("regression_pass")) and _token(row.get("verification_result")) in _PASS_RESULTS
 
@@ -184,9 +217,7 @@ def classify_learning_pair(main_lesson: dict[str, Any], instagram_lesson: dict[s
     if lesson_match_key(left) != lesson_match_key(right):
         raise ValueError("peer lessons are not comparable")
 
-    if not scope_applies(left["applicable_scope"], "instagram_content") or not scope_applies(
-        right["applicable_scope"], "main"
-    ):
+    if not lesson_applies_to_domain(left, "instagram_content") or not lesson_applies_to_domain(right, "main"):
         status = "not-applicable"
     elif _token(left["fix_pattern"]) != _token(right["fix_pattern"]):
         status = "conflicting-fix"
@@ -230,7 +261,7 @@ def compare_learning_sets(
             continue
         status = (
             "not-applicable"
-            if not scope_applies(left["applicable_scope"], "instagram_content")
+            if not lesson_applies_to_domain(left, "instagram_content")
             else "single-system-only"
         )
         comparisons.append({
@@ -247,7 +278,7 @@ def compare_learning_sets(
     for right in insta_rows:
         if right["lesson_id"] in matched_instagram_ids:
             continue
-        status = "not-applicable" if not scope_applies(right["applicable_scope"], "main") else "single-system-only"
+        status = "not-applicable" if not lesson_applies_to_domain(right, "main") else "single-system-only"
         comparisons.append({
             "status": status,
             "main": None,
@@ -295,11 +326,14 @@ def evaluate_main_peer_adoption(
         "local_regression_pass": bool(local_regression_pass),
         "full_regression_pass": bool(full_regression_pass),
     }
-    applicable = scope_applies(peer["applicable_scope"], "main")
-    conflict_safe = crosscheck_status != "conflicting-fix" or bool(safer_fix_selected)
-    allowed = applicable and all(checks.values()) and conflict_safe
+    applicable = lesson_applies_to_domain(peer, "main")
+    status_eligible = crosscheck_status != "not-applicable"
+    selected_fix = _clean_scalar(selected_fix_pattern, "selected_fix_pattern", 500) if selected_fix_pattern is not None else ""
+    selected_fix_explicit = bool(selected_fix)
+    conflict_safe = crosscheck_status != "conflicting-fix" or (bool(safer_fix_selected) and selected_fix_explicit)
+    allowed = applicable and status_eligible and all(checks.values()) and conflict_safe
 
-    chosen_fix = _clean(selected_fix_pattern if selected_fix_pattern is not None else peer["fix_pattern"], 500)
+    chosen_fix = selected_fix if selected_fix_explicit else peer["fix_pattern"]
     digest = hashlib.sha256(
         f'{peer["lesson_id"]}|{peer["issue_class"]}|{peer["root_cause_class"]}|{chosen_fix}'.encode("utf-8", "replace")
     ).hexdigest()[:16]
@@ -321,7 +355,9 @@ def evaluate_main_peer_adoption(
         "adoption_allowed": allowed,
         "applicable_to_main": applicable,
         "crosscheck_status": crosscheck_status,
+        "status_eligible": status_eligible,
         "safer_fix_selected": bool(safer_fix_selected),
+        "selected_fix_explicit": selected_fix_explicit,
         "required_sequence": [
             "reproduction_test",
             "root_cause_reconfirmation",
