@@ -130,6 +130,7 @@ jobs:
           python verify_all.py
           python verify_v107_runtime_integration.py
           node verify_browser_runtime.js
+          node verify_feature_category_navigation.js
           node verify_camera_runtime.js
           node verify_service_worker_runtime.js
           node verify_vision_runtime.js

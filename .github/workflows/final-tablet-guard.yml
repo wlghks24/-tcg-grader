@@ -4,6 +4,12 @@ on:
     branches: [main]
     paths:
       - 'VERIFY_TABLET_FINAL.sh'
+      - 'index.html'
+      - 'sw.js'
+      - 'feature_category_nav.css'
+      - 'feature_category_nav.js'
+      - 'verify_feature_category_navigation.js'
+      - 'test_feature_category_navigation_v26.py'
       - 'ANDROID_RECOVER_UPDATE.sh'
       - 'ANDROID_UPDATE_AND_START.sh'
       - 'ANDROID_AUTO_START_INSTALL.sh'
