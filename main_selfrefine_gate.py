@@ -8,6 +8,7 @@ from pathlib import Path
 import security_self_audit
 import selfrefine_full_repo as core
 import selfrefine_error_quarantine as error_quarantine
+import selfrefine_resolution_research as resolution_research
 import verified_code_repair_rules as verified_repairs
 from shared_self_learning import SHARED_SELF_LEARNING_CONTRACT_VERSION
 from shared_self_learning.engine import enrich_error
@@ -18,6 +19,7 @@ EXCLUDES = tuple(POLICY["domains"]["main"]["exclude_prefixes"])
 LEDGER = ROOT / POLICY["domains"]["main"]["ledger"]
 REPAIR_STATE = ROOT / POLICY["domains"]["main"]["state_files"]["verified_repair"]
 ERROR_QUARANTINE_STATE = ROOT / POLICY["domains"]["main"]["state_files"]["error_quarantine"]
+RESOLUTION_LEARNING_STATE = ROOT / POLICY["domains"]["main"]["state_files"]["resolution_learning"]
 
 
 def _is_main_path(relative: str) -> bool:
@@ -81,6 +83,11 @@ def run(cycles: int):
             open_errors,
             state_path=ERROR_QUARANTINE_STATE,
         )
+        resolution_research_result = resolution_research.observe_errors(
+            isolation.get("errors", []),
+            root=ROOT,
+            state_path=RESOLUTION_LEARNING_STATE,
+        )
         repair = verified_repairs.apply_issues(
             isolation.get("errors", []),
             root=ROOT,
@@ -103,6 +110,10 @@ def run(cycles: int):
                 repair.get("applied", []),
                 post_repair_result.get("errors", []),
                 state_path=ERROR_QUARANTINE_STATE,
+            )
+            resolution_learning_stage = resolution_research.stage_repairs(
+                repair.get("applied", []),
+                state_path=RESOLUTION_LEARNING_STATE,
             )
             result = (
                 core.run(1, path=LEDGER)
@@ -129,12 +140,19 @@ def run(cycles: int):
                 "newly_quarantined": 0,
                 "state_path": ERROR_QUARANTINE_STATE.name,
             }
+            resolution_learning_stage = {
+                "pending_full_regression": 0,
+                "full_regression_required_before_learning": True,
+                "learned_now": 0,
+            }
         result["verified_self_heal"] = {
             "isolation": isolation,
             "repair": repair,
             "rollback": rollback,
             "verification": verification,
             "resolution_learning": resolution_learning,
+            "resolution_research": resolution_research_result,
+            "resolution_learning_stage": resolution_learning_stage,
         }
         result.setdefault("summary", {}).update({
             "isolated_error_codes": isolation.get("summary", {}).get("isolated_count", 0),
@@ -143,6 +161,10 @@ def run(cycles: int):
             "verified_resolutions_learned": resolution_learning.get("verified_resolution_learned", 0),
             "self_modify_rollbacks": rollback.get("restored", 0),
             "self_modify_rollback_conflicts": rollback.get("rollback_conflicts", 0),
+            "new_errors_researched": resolution_research_result.get("new_error_count", 0),
+            "repository_files_analyzed_for_errors": resolution_research_result.get("repository_files_scanned", 0),
+            "verified_resolution_reuse_candidates": resolution_research_result.get("known_verified_resolution_count", 0),
+            "resolution_lessons_pending_full_regression": resolution_learning_stage.get("pending_full_regression", 0),
         })
         result.setdefault("safety", {}).update({
             "verified_code_defined_auto_repair": True,
@@ -157,6 +179,14 @@ def run(cycles: int):
             "new_regression_auto_rollback": True,
             "repair_rule_fingerprint_required": True,
             "process_safe_learning_state": True,
+            "full_repository_error_impact_analysis": True,
+            "official_source_first_error_research": True,
+            "bounded_official_network_error_research": True,
+            "research_network_allowlist_only": True,
+            "research_raw_body_persisted": False,
+            "research_text_executable": False,
+            "search_result_patch_generation": False,
+            "full_regression_before_resolution_learning": True,
         })
         return result
     finally:
@@ -171,12 +201,21 @@ def self_test():
     assert LEDGER.name == "MAIN_SELFREFINE_ERROR_LEDGER.json"
     assert REPAIR_STATE.name == "MAIN_SELFREFINE_VERIFIED_REPAIR_STATE.json"
     assert ERROR_QUARANTINE_STATE.name == "MAIN_SELFREFINE_ERROR_QUARANTINE_STATE.json"
+    assert RESOLUTION_LEARNING_STATE.name == "MAIN_SELFREFINE_RESOLUTION_LEARNING_STATE.json"
     assert POLICY["rules"]["shared_self_learning_code"] is True
     assert POLICY["rules"]["shared_self_learning_state"] is False
     assert POLICY["rules"]["cross_domain_learning_state_merge"] is False
     assert POLICY["rules"]["failed_self_modify_auto_rollback"] is True
     assert POLICY["rules"]["repair_rule_fingerprint_required"] is True
     assert POLICY["rules"]["process_safe_selfrefine_state"] is True
+    assert POLICY["rules"]["new_error_full_repository_analysis"] is True
+    assert POLICY["rules"]["new_error_official_source_research"] is True
+    assert POLICY["rules"]["new_error_bounded_official_network_research"] is True
+    assert POLICY["rules"]["research_network_allowlist_only"] is True
+    assert POLICY["rules"]["research_raw_body_persisted"] is False
+    assert POLICY["rules"]["research_text_executable"] is False
+    assert POLICY["rules"]["search_result_patch_generation"] is False
+    assert POLICY["rules"]["full_regression_before_resolution_learning"] is True
     assert SHARED_SELF_LEARNING_CONTRACT_VERSION >= 3
     left = enrich_error("main", {"stage": "HTTP_429", "path": "a.py", "evidence": "rate limited"})
     right = enrich_error("instagram_content", {"stage": "HTTP_429", "path": "a.py", "evidence": "rate limited"})

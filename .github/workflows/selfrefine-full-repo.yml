@@ -23,12 +23,31 @@ jobs:
       - name: Verify shared stateless learning and crosscheck contracts
         run: |
           python main_selfrefine_gate.py --self-test
+          python selfrefine_resolution_research.py --self-test
+          python - <<'PY'
+          import selfrefine_resolution_research as research
+          plan = research.research_plan({
+              'stage': 'PYTHON_SYNTAX',
+              'path': 'sample.py',
+              'root_cause': 'SyntaxError',
+          })
+          result = research.search_official_sources(plan, request_limit=1)
+          assert result['attempted'] == 1, result
+          assert result['content_used_for_patch'] is False, result
+          assert result['search_result_patch_generation'] is False, result
+          assert result['raw_body_persisted'] is False, result
+          assert all(
+              row.get('host') in research.RESEARCH_ALLOWED_HOSTS
+              for row in result.get('results', [])
+          ), result
+          print('bounded official SELFREFINE research probe: PASS', result['status'])
+          PY
           python main_crosscheck_export.py --self-test
           python selfrefine_crosscheck_gate.py --self-test
           python main_peer_learning_export.py --self-test
           python peer_learning_crosscheck_gate.py --self-test
           python main_peer_learning_adoption.py --self-test
-          python -m unittest -v test_selfrefine_domain_isolation_v18.py test_main_selfrefine_state_isolation_v18.py test_peer_learning_crosscheck_v23.py test_verified_code_repair_rules_v19.py test_selfrefine_error_quarantine_v20.py test_secure_self_modify_v21.py
+          python -m unittest -v test_selfrefine_domain_isolation_v18.py test_main_selfrefine_state_isolation_v18.py test_peer_learning_crosscheck_v23.py test_verified_code_repair_rules_v19.py test_selfrefine_error_quarantine_v20.py test_secure_self_modify_v21.py test_selfrefine_resolution_research_v24.py
           python verified_code_repair_rules.py --self-test
       - name: Run bounded Main SELFREFINE only
         run: python main_selfrefine_gate.py --cycles 5
@@ -57,6 +76,12 @@ jobs:
           assert r.patch_collector_self_healing(source) == source
           print('runtime hardening idempotence: PASS')
           PY
+      - name: Learn only fully regression-verified resolution methods
+        if: success()
+        run: python selfrefine_resolution_research.py --finalize success
+      - name: Reject pending resolution learning after any regression failure
+        if: failure()
+        run: python selfrefine_resolution_research.py --finalize failure
       - name: Upload Main SELFREFINE ledger
         if: always()
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
@@ -71,4 +96,14 @@ jobs:
         with:
           name: main-selfrefine-error-quarantine
           path: MAIN_SELFREFINE_ERROR_QUARANTINE_STATE.json
+          if-no-files-found: ignore
+
+      - name: Upload Main SELFREFINE resolution research
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        with:
+          name: main-selfrefine-resolution-research
+          path: |
+            MAIN_SELFREFINE_RESEARCH_REPORT.json
+            MAIN_SELFREFINE_RESOLUTION_LEARNING_STATE.json
           if-no-files-found: ignore
