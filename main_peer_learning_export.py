@@ -41,10 +41,11 @@ def self_test() -> None:
         "applicable_scope": "both",
         "confidence_level": "high",
     }
-    row = export_lessons([sample], Path("/tmp/main-peer-learning-selftest.json"))[0]
-    assert tuple(row) == PEER_LEARNING_FIELDS
-    assert "retry_queue" not in row and "source_health" not in row
-    Path("/tmp/main-peer-learning-selftest.json").unlink(missing_ok=True)
+    with tempfile.TemporaryDirectory() as tmp:
+        output = Path(tmp) / "main-peer-learning-selftest.json"
+        row = export_lessons([sample], output)[0]
+        assert tuple(row) == PEER_LEARNING_FIELDS
+        assert "retry_queue" not in row and "source_health" not in row
     print("Main peer learning export contract: PASS")
 
 
