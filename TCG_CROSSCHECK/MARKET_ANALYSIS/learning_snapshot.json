@@ -12,7 +12,7 @@
     "learning_fields_only": true,
     "peer_prevention_rule_copy_count": 0,
     "raw_grading_share_count": 0,
-    "write_readback_verified": false,
+    "write_readback_verified": true,
     "learning_isolation_breach": false
   },
   "error_code": null
