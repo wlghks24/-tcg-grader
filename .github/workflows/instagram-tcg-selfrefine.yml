@@ -7,6 +7,9 @@ on:
       - 'shared_self_learning/**'
       - 'crosscheck_exchange/**'
       - 'selfrefine_crosscheck_gate.py'
+      - 'peer_learning_crosscheck_gate.py'
+      - 'main_peer_learning_export.py'
+      - 'test_peer_learning_crosscheck_v23.py'
       - 'selfrefine_domain_policy.json'
       - 'selfrefine_domain_boundary_guard.py'
       - 'test_selfrefine_domain_isolation_v18.py'
@@ -18,6 +21,9 @@ on:
       - 'shared_self_learning/**'
       - 'crosscheck_exchange/**'
       - 'selfrefine_crosscheck_gate.py'
+      - 'peer_learning_crosscheck_gate.py'
+      - 'main_peer_learning_export.py'
+      - 'test_peer_learning_crosscheck_v23.py'
       - 'selfrefine_domain_policy.json'
       - 'selfrefine_domain_boundary_guard.py'
       - 'test_selfrefine_domain_isolation_v18.py'
@@ -44,7 +50,9 @@ jobs:
         run: |
           python -m instagram_tcg_content.crosscheck_export --self-test
           python selfrefine_crosscheck_gate.py --self-test
-          python -m unittest -v test_selfrefine_domain_isolation_v18.py
+          python -m instagram_tcg_content.peer_learning_export --self-test
+          python peer_learning_crosscheck_gate.py --self-test
+          python -m unittest -v test_selfrefine_domain_isolation_v18.py test_peer_learning_crosscheck_v23.py
           python -m unittest -v instagram_tcg_content.test_state_isolation_v18
       - name: Verify diversified source evidence rules
         run: python -m instagram_tcg_content.test_source_verification_engine

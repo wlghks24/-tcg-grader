@@ -15,6 +15,10 @@ on:
       - 'instagram_tcg_content/**'
       - 'main_crosscheck_export.py'
       - 'selfrefine_crosscheck_gate.py'
+      - 'peer_learning_crosscheck_gate.py'
+      - 'main_peer_learning_export.py'
+      - 'shared_self_learning/peer_learning.py'
+      - 'test_peer_learning_crosscheck_v23.py'
       - 'crosscheck_exchange/**'
       - '.github/workflows/daily-0600-collection-instagram-accuracy.yml'
   push:
@@ -28,6 +32,10 @@ on:
       - 'instagram_tcg_content/**'
       - 'main_crosscheck_export.py'
       - 'selfrefine_crosscheck_gate.py'
+      - 'peer_learning_crosscheck_gate.py'
+      - 'main_peer_learning_export.py'
+      - 'shared_self_learning/peer_learning.py'
+      - 'test_peer_learning_crosscheck_v23.py'
       - 'crosscheck_exchange/**'
       - '.github/workflows/daily-0600-collection-instagram-accuracy.yml'
 
@@ -59,13 +67,16 @@ jobs:
         run: |
           python selfrefine_domain_boundary_guard.py
           python selfrefine_crosscheck_gate.py --self-test
-          python -m unittest -v test_selfrefine_domain_isolation_v18.py
+          python peer_learning_crosscheck_gate.py --self-test
+          python main_peer_learning_export.py --self-test
+          python -m instagram_tcg_content.peer_learning_export --self-test
+          python -m unittest -v test_selfrefine_domain_isolation_v18.py test_peer_learning_crosscheck_v23.py
           python -m unittest -v instagram_tcg_content.test_state_isolation_v18
 
       - name: Verify 06:00 audit regression
         run: |
-          python -m py_compile daily_collection_instagram_accuracy.py selfrefine_crosscheck_gate.py selfrefine_domain_boundary_guard.py
-          python -c "import daily_collection_instagram_accuracy, selfrefine_crosscheck_gate"
+          python -m py_compile daily_collection_instagram_accuracy.py selfrefine_crosscheck_gate.py peer_learning_crosscheck_gate.py main_peer_learning_export.py main_peer_learning_adoption.py selfrefine_domain_boundary_guard.py shared_self_learning/peer_learning.py instagram_tcg_content/peer_learning_export.py
+          python -c "import daily_collection_instagram_accuracy, selfrefine_crosscheck_gate, peer_learning_crosscheck_gate"
           python -m unittest -v test_daily_collection_instagram_accuracy.py
 
       - name: Run daily collection vs Instagram audit
@@ -104,6 +115,8 @@ jobs:
               "medium_findings",
               "repair_action_count",
               "crosscheck_validation_error",
+              "learning_crosscheck_validation_error",
+              "learning_conflicting_fix",
           }
           missing = sorted(required_summary - set(summary))
           if missing:
@@ -119,10 +132,17 @@ jobs:
               "provider_health_shared": False,
               "retry_history_shared": False,
               "learning_state_shared": False,
+              "learning_summary_shared_only": True,
+              "peer_fix_auto_applied": False,
+              "peer_prevention_rule_shared": False,
               "verification_auto_promoted": False,
               "conflicting_values_averaged": False,
               "403_429_bypass_allowed": False,
-              "passive_factual_exchange_only": True,
+              "passive_factual_and_learning_summary_exchange_only": True,
+              "grading_raw_shared": False,
+              "grading_calibration_shared": False,
+              "pixel_features_shared": False,
+              "render_upload_delivery_state_shared": False,
           }
           mismatches = {
               key: {"expected": expected, "actual": safety.get(key)}
@@ -148,7 +168,7 @@ jobs:
         if: always()
         run: |
           if [ -f COLLECTION_INSTAGRAM_ACCURACY_REPORT.json ]; then
-            python -c "import json; p=json.load(open('COLLECTION_INSTAGRAM_ACCURACY_REPORT.json')); print(json.dumps({'summary':p['summary'],'cross_domain':p['cross_domain']}, ensure_ascii=False, indent=2))"
+            python -c "import json; p=json.load(open('COLLECTION_INSTAGRAM_ACCURACY_REPORT.json')); print(json.dumps({'summary':p['summary'],'cross_domain':p['cross_domain'],'internal_learning_crosscheck':p.get('internal_learning_crosscheck',{})}, ensure_ascii=False, indent=2))"
           fi
 
       - name: Upload 06:00 accuracy report

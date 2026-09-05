@@ -18,6 +18,7 @@ from pathlib import Path
 from typing import Any
 
 from selfrefine_crosscheck_gate import run as run_crosscheck
+from peer_learning_crosscheck_gate import run as run_peer_learning_crosscheck
 
 ROOT = Path(__file__).resolve().parent
 KST = dt.timezone(dt.timedelta(hours=9))
@@ -28,6 +29,8 @@ DEFAULT_PROMO = ROOT / "promo_events.json"
 DEFAULT_ROUTES = ROOT / "instagram_tcg_content" / "source_routes.json"
 DEFAULT_MAIN_EXCHANGE = ROOT / "crosscheck_exchange" / "runtime-main.json"
 DEFAULT_INSTAGRAM_EXCHANGE = ROOT / "crosscheck_exchange" / "runtime-instagram.json"
+DEFAULT_MAIN_LEARNING_EXCHANGE = ROOT / "crosscheck_exchange" / "runtime-main-learning.json"
+DEFAULT_INSTAGRAM_LEARNING_EXCHANGE = ROOT / "crosscheck_exchange" / "runtime-instagram-learning.json"
 DEFAULT_REPORT = ROOT / "COLLECTION_INSTAGRAM_ACCURACY_REPORT.json"
 
 CRITICAL_MAIN_JOBS = (
@@ -414,6 +417,99 @@ def audit_cross_domain(main_exchange: Path, instagram_exchange: Path) -> dict[st
     }
 
 
+
+def audit_peer_learning(
+    main_learning_exchange: Path | None,
+    instagram_learning_exchange: Path | None,
+) -> dict[str, Any]:
+    if main_learning_exchange is None or instagram_learning_exchange is None:
+        return {
+            "status": "snapshot_missing",
+            "missing_domains": ["main", "instagram_content"],
+            "counts": {
+                "corroborated": 0,
+                "single-system-only": 0,
+                "conflicting-fix": 0,
+                "not-applicable": 0,
+            },
+            "repair_actions": [],
+        }
+
+    if not main_learning_exchange.exists() or not instagram_learning_exchange.exists():
+        missing = []
+        if not main_learning_exchange.exists():
+            missing.append("main")
+        if not instagram_learning_exchange.exists():
+            missing.append("instagram_content")
+        return {
+            "status": "snapshot_missing",
+            "missing_domains": missing,
+            "counts": {
+                "corroborated": 0,
+                "single-system-only": 0,
+                "conflicting-fix": 0,
+                "not-applicable": 0,
+            },
+            "repair_actions": [
+                _action(
+                    "medium",
+                    "peer_learning_crosscheck",
+                    "export_learning_summary_snapshot",
+                    "A passive peer-learning summary snapshot is missing for the 06:00 comparison",
+                    "Export only the exact learning-summary allowlist from each isolated domain. Do not export raw logs, parser state, retry queues, source health, grading raw/calibration, pixel features, or render/upload/delivery state.",
+                )
+            ],
+        }
+
+    try:
+        result = run_peer_learning_crosscheck(main_learning_exchange, instagram_learning_exchange)
+    except Exception as exc:
+        error_text = str(exc).replace("\n", " ")[:400]
+        return {
+            "status": "validation_error",
+            "counts": {
+                "corroborated": 0,
+                "single-system-only": 0,
+                "conflicting-fix": 0,
+                "not-applicable": 0,
+            },
+            "error_type": type(exc).__name__,
+            "error": error_text,
+            "repair_actions": [
+                _action(
+                    "critical",
+                    "peer_learning_crosscheck",
+                    "repair_learning_snapshot_isolation",
+                    f"Peer-learning snapshot validation failed: {type(exc).__name__}: {error_text}",
+                    "Fail closed. Re-export only the exact 13 allowed summary fields from each domain and rerun the crosscheck. Never merge or copy peer prevention rules or raw internal state.",
+                )
+            ],
+        }
+
+    actions: list[dict[str, str]] = []
+    conflicting = int((result.get("counts") or {}).get("conflicting-fix") or 0)
+    if conflicting:
+        actions.append(
+            _action(
+                "medium",
+                "peer_learning_crosscheck",
+                "independent_conflicting_fix_reproduction",
+                f"{conflicting} peer-learning fixes disagree across Main and Instagram",
+                "Do not copy or average fixes. Reproduce locally, reconfirm the root cause, apply only a minimal-scope candidate fix, run local regression, then full regression. Adopt the safer Main-local rule only after all gates pass.",
+            )
+        )
+    return {
+        "status": result.get("status"),
+        "main_lessons": result.get("main_lessons", 0),
+        "instagram_lessons": result.get("instagram_lessons", 0),
+        "counts": result.get("counts", {}),
+        "repair_actions": actions,
+        "peer_fix_auto_apply": False,
+        "prevention_rule_shared": False,
+        "raw_state_shared": False,
+    }
+
+
 def _previous_delta(previous: dict[str, Any], current: dict[str, Any]) -> dict[str, Any]:
     if not previous:
         return {"available": False}
@@ -427,6 +523,11 @@ def _previous_delta(previous: dict[str, Any], current: dict[str, Any]) -> dict[s
         - int(old_summary.get("high_or_critical_findings") or 0),
         "cross_domain_conflict_change": int(current.get("cross_domain", {}).get("conflict") or 0)
         - int(previous.get("cross_domain", {}).get("conflict") or 0),
+        "peer_learning_conflicting_fix_change": int(
+            current.get("internal_learning_crosscheck", {}).get("counts", {}).get("conflicting-fix") or 0
+        ) - int(
+            previous.get("internal_learning_crosscheck", {}).get("counts", {}).get("conflicting-fix") or 0
+        ),
     }
 
 
@@ -439,20 +540,33 @@ def build_report(
     routes: dict[str, Any],
     main_exchange: Path,
     instagram_exchange: Path,
+    main_learning_exchange: Path | None = None,
+    instagram_learning_exchange: Path | None = None,
     previous: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
     main = audit_main_collection(adaptive, source_stats, promo, now)
     instagram = audit_instagram_policy(routes)
     cross = audit_cross_domain(main_exchange, instagram_exchange)
+    learning_cross = audit_peer_learning(main_learning_exchange, instagram_learning_exchange)
 
     findings = main["findings"] + instagram["findings"]
-    actions = main["repair_actions"] + instagram["repair_actions"] + cross["repair_actions"]
+    actions = (
+        main["repair_actions"]
+        + instagram["repair_actions"]
+        + cross["repair_actions"]
+        + learning_cross["repair_actions"]
+    )
 
     critical = sum(1 for row in findings if row.get("severity") == "critical")
     high = sum(1 for row in findings if row.get("severity") == "high")
     medium = sum(1 for row in findings if row.get("severity") == "medium")
     conflicts = _safe_int(cross.get("conflict"), 0)
     cross_validation_error = cross.get("status") == "validation_error"
+    learning_validation_error = learning_cross.get("status") == "validation_error"
+    conflicting_fixes = _safe_int(
+        (learning_cross.get("counts") or {}).get("conflicting-fix"),
+        0,
+    )
 
     health_score = max(
         0,
@@ -461,20 +575,27 @@ def build_report(
         - high * 10
         - medium * 3
         - conflicts * 15
-        - (25 if cross_validation_error else 0),
+        - conflicting_fixes * 3
+        - (25 if cross_validation_error else 0)
+        - (25 if learning_validation_error else 0),
     )
     status = "pass"
-    if critical or conflicts or cross_validation_error:
+    if critical or conflicts or cross_validation_error or learning_validation_error:
         status = "fail_closed"
     elif high:
         status = "degraded"
-    elif cross.get("status") == "snapshot_missing" or medium:
+    elif (
+        cross.get("status") == "snapshot_missing"
+        or learning_cross.get("status") == "snapshot_missing"
+        or conflicting_fixes
+        or medium
+    ):
         status = "warning"
 
     report: dict[str, Any] = {
         "schema_version": 1,
         "run_at_kst": now.astimezone(KST).isoformat(timespec="seconds"),
-        "purpose": "daily 06:00 Main collection vs Instagram TCG accuracy and health comparison",
+        "purpose": "daily 06:00 Main vs Instagram factual + peer-learning summary crosscheck and health comparison",
         "summary": {
             "status": status,
             "health_score": health_score,
@@ -484,20 +605,30 @@ def build_report(
             "high_or_critical_findings": high + critical,
             "repair_action_count": len(actions),
             "crosscheck_validation_error": cross_validation_error,
+            "learning_crosscheck_validation_error": learning_validation_error,
+            "learning_conflicting_fix": conflicting_fixes,
         },
         "main_collection": main,
         "instagram_policy": instagram,
         "cross_domain": cross,
+        "internal_learning_crosscheck": learning_cross,
         "repair_actions": actions,
         "safety": {
             "main_instagram_runtime_state_merged": False,
             "provider_health_shared": False,
             "retry_history_shared": False,
             "learning_state_shared": False,
+            "learning_summary_shared_only": True,
+            "peer_fix_auto_applied": False,
+            "peer_prevention_rule_shared": False,
             "verification_auto_promoted": False,
             "conflicting_values_averaged": False,
             "403_429_bypass_allowed": False,
-            "passive_factual_exchange_only": True,
+            "passive_factual_and_learning_summary_exchange_only": True,
+            "grading_raw_shared": False,
+            "grading_calibration_shared": False,
+            "pixel_features_shared": False,
+            "render_upload_delivery_state_shared": False,
         },
     }
     report["previous_day_delta"] = _previous_delta(previous or {}, report)
@@ -526,6 +657,11 @@ def main() -> int:
     parser.add_argument("--routes", default=str(DEFAULT_ROUTES))
     parser.add_argument("--main-exchange", default=str(DEFAULT_MAIN_EXCHANGE))
     parser.add_argument("--instagram-exchange", default=str(DEFAULT_INSTAGRAM_EXCHANGE))
+    parser.add_argument("--main-learning-exchange", default=str(DEFAULT_MAIN_LEARNING_EXCHANGE))
+    parser.add_argument(
+        "--instagram-learning-exchange",
+        default=str(DEFAULT_INSTAGRAM_LEARNING_EXCHANGE),
+    )
     parser.add_argument("--previous-report")
     parser.add_argument("--report", default=str(DEFAULT_REPORT))
     parser.add_argument("--now")
@@ -546,6 +682,8 @@ def main() -> int:
         routes=_read_json(Path(args.routes)),
         main_exchange=Path(args.main_exchange),
         instagram_exchange=Path(args.instagram_exchange),
+        main_learning_exchange=Path(args.main_learning_exchange),
+        instagram_learning_exchange=Path(args.instagram_learning_exchange),
         previous=previous,
     )
 

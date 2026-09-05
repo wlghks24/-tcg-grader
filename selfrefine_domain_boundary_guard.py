@@ -19,6 +19,8 @@ CONTROL_PLANE_FILES = {
     "main_selfrefine_gate.py",
     "selfrefine_crosscheck_gate.py",
     "main_crosscheck_export.py",
+    "main_peer_learning_export.py",
+    "peer_learning_crosscheck_gate.py",
     "test_selfrefine_domain_isolation_v18.py",
     "test_main_selfrefine_state_isolation_v18.py",
 }
@@ -36,7 +38,11 @@ FORBIDDEN_EXCHANGE_SUFFIXES = {
 }
 FORBIDDEN_EXCHANGE_STATE_FIELDS = {
     "retry_count", "cool", "cooldown", "provider_score", "provider_health",
-    "learning_state", "error_ledger", "render_state", "collector_state",
+    "learning_state", "error_ledger", "render_state", "rendering_state", "collector_state",
+    "raw_log", "raw_logs", "logs", "parser_config", "parser_state", "retry_queue",
+    "retry_history", "source_health", "baseline", "ranking_weights", "confidence_tuning",
+    "raw_measurements", "grading_raw", "grading_calibration", "pixel_features",
+    "image_features", "upload_state", "delivery_state", "quarantine", "prevention_rule",
 }
 DANGEROUS_EXCHANGE_IMPORTS = {"importlib", "runpy", "pickle", "cloudpickle", "joblib", "marshal", "subprocess"}
 

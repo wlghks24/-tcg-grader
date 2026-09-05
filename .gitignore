@@ -112,3 +112,11 @@ INSTAGRAM_TCG_SELFREFINE_ERROR_QUARANTINE_STATE.json
 # Daily 06:00 Main ↔ Instagram audit runtime reports.
 COLLECTION_INSTAGRAM_ACCURACY_REPORT.json
 COLLECTION_INSTAGRAM_ACCURACY_PREVIOUS.json
+
+# Passive peer-learning crosscheck runtime outputs and Main-only adopted prevention rules.
+PEER_LEARNING_CROSSCHECK_REPORT.json
+crosscheck_exchange/runtime-main-learning*.json
+crosscheck_exchange/runtime-main-learning*.jsonl
+crosscheck_exchange/runtime-instagram-learning*.json
+crosscheck_exchange/runtime-instagram-learning*.jsonl
+MARKET_ANALYSIS_PEER_PREVENTION_RULES.json
