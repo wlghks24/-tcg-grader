@@ -30,3 +30,6 @@
 ## GitHub Actions 시각
 GitHub Actions cron은 UTC 기준이므로 workflow는 0 21 * * * 를 사용합니다.
 대한민국은 DST가 없으므로 이는 매일 다음 날 **06:00 KST**입니다.
+
+## 통합관리 계약
+이 06:00 감사는 별도 시스템이 아니라 기존 `인스타 카드정보` 통합 TCG 관리체계의 하위 단계입니다. 새 채팅에서도 별도 TCG 자동화나 별도 감사 시스템을 만들지 않고 `TCG_INTEGRATED_MANAGEMENT.md` 계약을 기준으로 기존 시스템을 계속 업데이트합니다.
