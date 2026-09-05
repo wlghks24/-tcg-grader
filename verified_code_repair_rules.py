@@ -46,6 +46,7 @@ CORE_WORKFLOWS = {
     ".github/workflows/grading-vision-selfrefine-guard.yml",
     ".github/workflows/apply-detailed-collection-intelligence.yml",
     ".github/workflows/ocr-selfrefine-guard.yml",
+    ".github/workflows/market-ai-auto-tracker.yml",
 }
 RESOURCE_GUARD_PATH = "test_manual_only_official_verification_v192.py"
 FEATURE_CONTRACT_PATH = "feature_contract.py"
