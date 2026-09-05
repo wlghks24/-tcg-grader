@@ -86,10 +86,82 @@ input[type=range]{width:100%}
 <link rel="stylesheet" href="box_knowledge_stats.css">
 <link rel="stylesheet" href="ui_polish_v121.css?v=121">
 <link rel="stylesheet" href="ui_tablet_refine_v122.css?v=122">
+<link rel="stylesheet" href="feature_category_nav.css?v=202">
 <link rel="stylesheet" href="multi_market_prices.css">
 </head>
 <body>
 <main class="app">
+<section class="feature-category-nav" id="featureCategories" aria-labelledby="featureCategoriesTitle">
+  <div class="feature-category-head">
+    <div>
+      <h2 id="featureCategoriesTitle">🧭 기능 카테고리</h2>
+      <p>찾고 싶은 카테고리를 누른 뒤 세부 기능을 선택하세요. 기존 기능은 그대로 유지되고 해당 위치로 바로 이동합니다.</p>
+    </div>
+    <span class="feature-category-count">7개 카테고리</span>
+  </div>
+  <div class="feature-category-grid">
+    <details class="feature-category" open>
+      <summary><span class="feature-category-icon">🎴</span><span><span class="feature-category-title">카드 등급 측정</span><span class="feature-category-sub">자동촬영 · 센터링 · 결함 · 8구역</span></span></summary>
+      <div class="feature-shortcut-grid">
+        <a class="feature-shortcut" href="#simpleGradeV32">📷 자동촬영 등급측정<small>앞·뒷면 자동촬영 후 1~10 사전등급</small></a>
+        <a class="feature-shortcut" href="#gradeStart">🖼️ 사진 직접 등록<small>RAW·슬랩 앞면/뒷면과 사선광 입력</small></a>
+        <a class="feature-shortcut" href="#precisionHub">🔬 1→4→8 정밀측정<small>센터링·표면·스크래치·엣지·코너·백화</small></a>
+      </div>
+    </details>
+
+    <details class="feature-category">
+      <summary><span class="feature-category-icon">🔤</span><span><span class="feature-category-title">OCR · 학습 · 보정</span><span class="feature-category-sub">카드명/번호 · 실등급 · 오차보정</span></span></summary>
+      <div class="feature-shortcut-grid">
+        <a class="feature-shortcut" href="#simpleGradeV32">🔎 카드명·번호 OCR<small>촬영 분석 후 카드명·번호 확인형 OCR 사용</small></a>
+        <a class="feature-shortcut" href="#v30validation">✅ 실제 등급 검증<small>PSA·BGS·CGC·TAG·BRG 실제 결과 등록</small></a>
+        <a class="feature-shortcut" href="#v31testdashboard">🧠 검증·학습 상태<small>자동검사와 학습 안전상태 확인</small></a>
+      </div>
+    </details>
+
+    <details class="feature-category">
+      <summary><span class="feature-category-icon">💰</span><span><span class="feature-category-title">시세 · 완료거래</span><span class="feature-category-sub">한국·일본·미국 · 등급별 판매가</span></span></summary>
+      <div class="feature-shortcut-grid">
+        <a class="feature-shortcut" href="#market12section">🔎 카드·BOX 시세 검색<small>국가·게임·카드번호·세트명으로 조회</small></a>
+        <a class="feature-shortcut" href="#gradingEconomics">🧮 5개 등급사 예상 판매가<small>등급별 판매가·비용·손익 계산</small></a>
+        <a class="feature-shortcut" href="#tradingCatalogSection">💹 현재 거래중 카드·BOX<small>거래자료·시장참고가 검색과 정렬</small></a>
+      </div>
+    </details>
+
+    <details class="feature-category">
+      <summary><span class="feature-category-icon">📦</span><span><span class="feature-category-title">BOX · HIT 분석</span><span class="feature-category-sub">출시가 · 선호도 · 대표 HIT</span></span></summary>
+      <div class="feature-shortcut-grid">
+        <a class="feature-shortcut" href="#box12section">📚 BOX 지식베이스<small>국가별 BOX 사진·출시가·발매정보</small></a>
+        <a class="feature-shortcut" href="#v14section">⭐ BOX 선호도·HIT 분석<small>나라별 인기·대표 HIT·가격 비교</small></a>
+      </div>
+    </details>
+
+    <details class="feature-category">
+      <summary><span class="feature-category-icon">📅</span><span><span class="feature-category-title">출시 · 프로모 · 행사</span><span class="feature-category-sub">재발매 · 콜라보 · 영화특전</span></span></summary>
+      <div class="feature-shortcut-grid">
+        <a class="feature-shortcut" href="#releaseBoard" data-feature-open-panel="releasePanel">📅 출시·재발매<small>한국·일본·미국 공식 출시 일정</small></a>
+        <a class="feature-shortcut" href="#releaseBoard" data-feature-open-panel="promoPanel">🎁 프로모·콜라보·영화<small>행사·증정·영화/영상 특전과 출처 상태</small></a>
+      </div>
+    </details>
+
+    <details class="feature-category">
+      <summary><span class="feature-category-icon">🛒</span><span><span class="feature-category-title">구매처 · 가까운 매장</span><span class="feature-category-sub">온라인 · 오프라인 · 현재위치</span></span></summary>
+      <div class="feature-shortcut-grid">
+        <a class="feature-shortcut" href="#releaseBoard" data-feature-open-panel="purchasePanel">🏪 구매처 찾기<small>편의점·마트·문구점·카드샵 등</small></a>
+        <a class="feature-shortcut" href="#releaseBoard" data-feature-open-panel="purchasePanel">📍 위치·거리 검색<small>현재위치 또는 안산 기준 가까운 매장</small></a>
+      </div>
+    </details>
+
+    <details class="feature-category">
+      <summary><span class="feature-category-icon">🛠️</span><span><span class="feature-category-title">검증 · 업데이트</span><span class="feature-category-sub">전체 검사 · 수집 · 오류보정</span></span></summary>
+      <div class="feature-shortcut-grid">
+        <a class="feature-shortcut" href="#audit15">🧪 전체 기능 오류 검사<small>현재 앱 구조·시세·등급 기능 점검</small></a>
+        <a class="feature-shortcut" href="#updateHub">🔄 업데이트 관리<small>전체 업데이트·재수집·직접입력·서버</small></a>
+        <a class="feature-shortcut" href="#v31testdashboard">✅ 자동검증 결과<small>배포 전 검사와 서버 상태 확인</small></a>
+      </div>
+    </details>
+  </div>
+</section>
+<a class="feature-category-fab" id="featureCategoryFab" href="#featureCategories" aria-label="기능 카테고리로 이동">☰ 기능</a>
 <section class="release-board" id="releaseBoard">
 <h2>🆕 신상품 · 사전예약 · 출시일</h2>
 <div class="muted">공식 출시정보와 프로모·콜라보·영화 정보를 국가별로 확인합니다. Instagram·X·Google News·웹검색·나무위키 등 보조출처는 공식자료와 분리해 교차검증 상태를 표시합니다.</div>
@@ -120,14 +192,6 @@ input[type=range]{width:100%}
 <div id="purchaseRegionGrid" class="purchase-region-grid"><div class="release-empty">구매처 목록을 불러오는 중입니다.</div></div>
 <div id="purchaseUpdated" class="muted" style="margin-top:9px">목록 확인: 불러오는 중</div>
 <div class="purchase-privacy">위치정보는 브라우저 안에서 거리 계산과 지도 검색에만 사용하며 파일에 저장하지 않습니다. 같은 Wi‑Fi의 HTTP 주소에서는 브라우저 보안정책으로 정밀 위치가 차단될 수 있어 지역 직접 입력을 함께 제공합니다.</div>
-</div>
-</section>
-<section class="home-launcher" aria-label="주요 기능 선택">
-<h2>원하는 기능을 선택하세요</h2>
-<div class="muted">아래 버튼을 누르면 해당 기능으로 바로 이동합니다.</div>
-<div class="home-launcher-grid">
-<button type="button" class="home-launch-btn" data-home-target="gradeStart"><span class="home-launch-icon">🎴</span><b>카드 등급 측정</b><small>사진으로 센터링·결함 검사</small></button>
-<button type="button" class="home-launch-btn" data-home-target="v14section"><span class="home-launch-icon">📦</span><b>박스 정보·시세</b><small>원가·인기·히트카드·가격</small></button>
 </div>
 </section>
 <script src="./grading_vision_engine.js?v=160"></script>
@@ -2502,7 +2566,8 @@ document.querySelectorAll(".update-panel-close").forEach(btn=>btn.addEventListen
  async function quickPrice(){const q=S('quickCardQuery').value.trim().toLowerCase();if(!q){S('quickPriceResults').textContent='카드명 또는 카드번호를 입력하세요.';return}S('quickPriceResults').textContent='시세자료 검색 중…';try{const r=await fetch(`market_prices.json?t=${Date.now()}`,{cache:'no-store'}),d=await r.json(),entries=d.entries&&typeof d.entries==='object'?d.entries:{};const gameNeed=simpleGame==='pokemon'?'pok':simpleGame==='onepiece'?'one':'nar';let hits=[];for(const [k,v] of Object.entries(entries)){const blob=(k+' '+JSON.stringify(v)).toLowerCase();if(blob.includes(q)&&(!gameNeed||blob.includes(gameNeed)||blob.includes(profiles[simpleGame].name.toLowerCase())))hits.push([k,v]);}if(!hits.length){for(const [k,v] of Object.entries(entries)){const blob=(k+' '+JSON.stringify(v)).toLowerCase();if(blob.includes(q))hits.push([k,v]);}}hits=hits.slice(0,12);if(!hits.length){S('quickPriceResults').innerHTML='저장된 시세자료에서 일치 항목을 찾지 못했습니다. <b>카드번호까지 같이 입력</b>하면 정확도가 올라갑니다.';return}S('quickPriceResults').innerHTML=hits.map(([k,v])=>`<div class="price-item"><b>${escapeDisplayText(k)}</b><br><span class="muted">${Object.entries(v&&typeof v==='object'?v:{}).filter(([a,b])=>['string','number'].includes(typeof b)).slice(0,8).map(([a,b])=>`${escapeDisplayText(a)}: ${escapeDisplayText(b)}`).join(' · ')}</span></div>`).join('');}catch(e){S('quickPriceResults').textContent='시세자료를 불러오지 못했습니다. 업데이트 후 다시 시도하세요.'}}
  S('startAutoCamera').onclick=start;S('stopAutoCamera').onclick=()=>stopCamera('카메라를 중지했습니다. 촬영을 다시 시작하거나 사진 파일을 선택할 수 있습니다.');S('manualCapture').onclick=()=>capture(frameMetric(),true);S('quickPriceSearch').onclick=quickPrice;S('quickCardQuery').addEventListener('keydown',e=>{if(e.key==='Enter')quickPrice()});window.addEventListener('pagehide',()=>stopCamera('',true));document.addEventListener('visibilitychange',()=>{if(document.hidden&&stream)stopCamera('앱이 백그라운드로 이동해 카메라를 안전하게 중지했습니다.')});window.tcgCameraRuntime=Object.freeze({version:'v104-camera-shake-stability',stop:()=>stopCamera('카메라를 중지했습니다.'),state:()=>({active:!!stream,stage,capturing,stableFrames:stable,frontReady:!!S('front')._tcgCapturedFile,backReady:!!S('back')._tcgCapturedFile})});
 })();
-</script><script src="card_identity_recognition.js?v=181"></script>
+</script><script src="feature_category_nav.js?v=202"></script>
+<script src="card_identity_recognition.js?v=181"></script>
 <script src="inventory_lookup.js"></script>
 <script src="grade_market_flow.js"></script>
 <script src="auto_market_center.js"></script>
