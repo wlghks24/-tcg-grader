@@ -38,10 +38,6 @@ concurrency:
   group: daily-0600-collection-instagram-accuracy-${{ github.ref }}
   cancel-in-progress: false
 
-defaults:
-  run:
-    working-directory: ${{ github.workspace }}
-
 jobs:
   audit:
     runs-on: ubuntu-24.04
@@ -68,7 +64,7 @@ jobs:
 
       - name: Verify 06:00 audit regression
         run: |
-          python -m py_compile             daily_collection_instagram_accuracy.py             selfrefine_crosscheck_gate.py             selfrefine_domain_boundary_guard.py
+          python -m py_compile daily_collection_instagram_accuracy.py selfrefine_crosscheck_gate.py selfrefine_domain_boundary_guard.py
           python -c "import daily_collection_instagram_accuracy, selfrefine_crosscheck_gate"
           python -m unittest -v test_daily_collection_instagram_accuracy.py
 
