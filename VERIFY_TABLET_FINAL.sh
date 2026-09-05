@@ -34,6 +34,8 @@ collector_self_healing.py
 tcg_code_repair_learning.py
 csp_hash_hardening.py
 index.html
+feature_category_nav.css
+feature_category_nav.js
 GRAPHIFY_UPDATE.sh
 GRAPHIFY_SELF_HEAL.py
 GRAPHIFY_AUDIT.py
@@ -218,6 +220,10 @@ if grep -F 'find "$RUNTIME_BACKUP_DIR"' ANDROID_UPDATE_AND_START.sh >/dev/null; 
   exit 17
 fi
 grep -Fq "OFFICIAL_HTTPS='https://github.com/wlghks24/-tcg-grader.git'" ANDROID_RECOVER_UPDATE.sh
+grep -Fq 'feature_category_nav.css' index.html
+grep -Fq 'feature_category_nav.js' index.html
+grep -Fq "'feature_category_nav.css'" tcg_updater.py
+grep -Fq "'feature_category_nav.js'" tcg_updater.py
 grep -Fq "script-src 'self' 'sha256-" index.html
 if grep -F "script-src 'self' 'unsafe-inline'" index.html >/dev/null; then
   echo "[오류] script-src에 unsafe-inline이 다시 활성화되었습니다."
