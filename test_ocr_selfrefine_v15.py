@@ -41,6 +41,14 @@ class OcrSelfrefineV15Tests(unittest.TestCase):
         )
         return temp, stack
 
+    def test_confirmed_card_name_normalization_is_safe_and_stable(self):
+        self.assertEqual(identity.normalize_card_name("  Monkey   D.   Luffy  "), "Monkey D. Luffy")
+        self.assertEqual(identity.normalize_card_name("Ｐｉｋａｃｈｕ"), "Pikachu")
+        with self.assertRaises(TypeError):
+            identity.normalize_card_name(12345)
+        with self.assertRaises(ValueError):
+            identity.normalize_card_name("Pikachu\\x00Injected")
+
     def test_card_number_ocr_confusions_are_repaired_only_in_numeric_segments(self):
         self.assertIn("OP13-007", identity.extract_numbers("OP13-O07"))
         self.assertIn("065/060", identity.extract_numbers("O65/O6O"))
