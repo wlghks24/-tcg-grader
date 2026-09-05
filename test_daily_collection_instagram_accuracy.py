@@ -2,11 +2,13 @@
 from __future__ import annotations
 
 import datetime as dt
+import json
 import tempfile
 import unittest
 from pathlib import Path
 
 from daily_collection_instagram_accuracy import build_report
+from shared_self_learning.engine import normalize_crosscheck_record
 
 NOW = dt.datetime(2026, 9, 5, 21, 0, tzinfo=dt.timezone.utc)
 
@@ -137,10 +139,11 @@ class DailyAuditTest(unittest.TestCase):
                 "confidence": 0.9,
                 "lineage_key": "main-lineage",
             }
-            from main_crosscheck_export import export_records as export_main
-            from instagram_tcg_content.crosscheck_export import export_records as export_instagram
-
-            export_main([base], main_path)
+            main_row = normalize_crosscheck_record("main", base)
+            main_path.write_text(
+                json.dumps({"domain": "main", "records": [main_row]}, ensure_ascii=False),
+                encoding="utf-8",
+            )
             other = dict(base)
             other.update(
                 {
@@ -151,7 +154,14 @@ class DailyAuditTest(unittest.TestCase):
                     "lineage_key": "ig-lineage",
                 }
             )
-            export_instagram([other], instagram_path)
+            instagram_row = normalize_crosscheck_record("instagram_content", other)
+            instagram_path.write_text(
+                json.dumps(
+                    {"domain": "instagram_content", "records": [instagram_row]},
+                    ensure_ascii=False,
+                ),
+                encoding="utf-8",
+            )
             report = build_report(
                 now=NOW,
                 adaptive=healthy_adaptive(),
