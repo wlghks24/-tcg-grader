@@ -81,9 +81,9 @@ jobs:
 
       - name: Verify 06:00 audit regression
         run: |
-          python -m py_compile daily_collection_instagram_accuracy.py selfrefine_crosscheck_gate.py peer_learning_crosscheck_gate.py main_peer_learning_export.py main_peer_learning_adoption.py selfrefine_domain_boundary_guard.py shared_self_learning/peer_learning.py instagram_tcg_content/peer_learning_export.py
-          python -c "import daily_collection_instagram_accuracy, selfrefine_crosscheck_gate, peer_learning_crosscheck_gate"
-          python -m unittest -v test_daily_collection_instagram_accuracy.py
+          python -m py_compile daily_collection_instagram_accuracy.py auto_update_all.py selfrefine_crosscheck_gate.py peer_learning_crosscheck_gate.py main_peer_learning_export.py main_peer_learning_adoption.py selfrefine_domain_boundary_guard.py shared_self_learning/peer_learning.py instagram_tcg_content/peer_learning_export.py
+          python -c "import daily_collection_instagram_accuracy, auto_update_all, selfrefine_crosscheck_gate, peer_learning_crosscheck_gate"
+          python -m unittest -v test_daily_collection_instagram_accuracy.py test_0600_operational_refresh_v25.py
 
       - name: Refresh bounded live collection state before 06:00 audit
         if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch' || github.event_name == 'pull_request' || github.event_name == 'push'
