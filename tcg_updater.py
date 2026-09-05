@@ -620,7 +620,31 @@ def update_cycle(trigger='manual', progress_callback=None):
             'full_update':True,
         }
         save_db(data)
-        return data
+        return _refresh_ai_auto_tracking(data, trigger)
+
+def _refresh_ai_auto_tracking(data, trigger):
+    """Attach a small public summary while keeping detailed learning state device-local."""
+    try:
+        import ai_auto_tracker
+        report=ai_auto_tracker.run_once(trigger=f"tcg-updater:{trigger}",runtime_live=True)
+        summary={
+            'status':report.get('status'),
+            'generated_at':report.get('generated_at'),
+            'actionable':bool(report.get('actionable')),
+            'critical':int((report.get('summary') or {}).get('critical',0) or 0),
+            'high':int((report.get('summary') or {}).get('high',0) or 0),
+            'medium':int((report.get('summary') or {}).get('medium',0) or 0),
+            'new_issue_count':int((report.get('summary') or {}).get('new_issue_count',0) or 0),
+            'repeat_issue_count':int((report.get('summary') or {}).get('repeat_issue_count',0) or 0),
+            'resolved_since_last':int((report.get('summary') or {}).get('resolved_since_last',0) or 0),
+        }
+    except Exception as exc:
+        summary={'status':'tracker-error','generated_at':time.strftime('%Y-%m-%dT%H:%M:%S%z'),
+                 'actionable':False,'error':f'{type(exc).__name__}: AI auto tracking isolated'}
+    data=dict(data) if isinstance(data,dict) else load_db()
+    data['ai_auto_tracking']=summary
+    save_db(data)
+    return data
 
 def _job_snapshot():
     with UPDATE_JOB_LOCK:
@@ -1072,7 +1096,7 @@ def finalize_precollected_cycle(due_at):
             'precollect_state':status.get('state'),'precollect_applied_count':len(applied_files),
             'supplement_file_count':len(failed_files),'full_update':True}
         save_db(data)
-        return data
+        return _refresh_ai_auto_tracking(data, trigger)
 
 
 def auto_update_loop():
@@ -1347,6 +1371,12 @@ class Handler(SimpleHTTPRequestHandler):
                 return self.json(collector_self_healing.public_status())
             except (OSError,ValueError,TypeError,json.JSONDecodeError):
                 return self.json({'ok':False,'error':'수집기 자가복구 상태를 읽지 못했습니다.'},500)
+        if path=='/api/ai-auto-tracking':
+            try:
+                import ai_auto_tracker
+                return self.json(ai_auto_tracker.public_report())
+            except (OSError,ValueError,TypeError,json.JSONDecodeError):
+                return self.json({'ok':False,'status':'error','error':'AI 자동추적 상태를 읽지 못했습니다.'},500)
         if path=='/api/verification-cycles': return self.json(load_json_file(os.path.join(BASE,'verification_cycles.json'),{'completed_passes':0,'successful_passes':0,'results':[]}))
         if path=='/api/learning-store': return self.json(learning_store())
         if path=='/api/vision-self-learning': return self.json(load_json_file(VISION_SELF_LEARNING_REPORT,{'version':1,'engine':'v101-isolated-self-learning-calibration','status':'not-run'}))
@@ -1737,7 +1767,13 @@ if __name__=='__main__':
     try: threading.Thread(target=lambda:webbrowser.open(url),daemon=True).start()
     except Exception: pass
     threading.Thread(target=auto_update_loop,daemon=True).start()
+    try:
+        import ai_auto_tracker
+        threading.Thread(target=ai_auto_tracker.loop,daemon=True,name='tcg-ai-auto-tracker').start()
+    except Exception:
+        pass
     print('공식자료 자동 확인: 시작 직후 전체검증 + 매 6시간 반영 · 30분 전 사전수집',flush=True)
+    print('AI 자동추적: 전체 업데이트 직후 + 매 1시간 기능·수집·SELF-REFINE 상태 점검',flush=True)
     print('1 출시일 · 2 판매/재발매 · 3 거래시세 · 4 프로모/콜라보 · 5 구매처/링크 · 6 환율 · 7 업체별 등급카드 사진',flush=True)
     try: server.serve_forever()
     except KeyboardInterrupt: pass
