@@ -127,6 +127,8 @@
     "rolled_back_repair_not_staged_for_learning": true,
     "transitive_dependency_impact_analysis": true,
     "complete_impact_analysis_required_for_learning": true,
+    "research_plan_required_before_learning": true,
+    "local_error_disappearance_required_before_learning": true,
     "full_regression_failure_does_not_poison_verified_lesson": true,
     "local_resolution_is_provisional": true,
     "full_regression_promotes_quarantine_learning": true,
