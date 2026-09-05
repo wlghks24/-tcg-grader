@@ -121,6 +121,48 @@ class SelfrefineResolutionResearchV24Tests(unittest.TestCase):
             self.assertFalse(row["research"]["research_text_executable"])
             self.assertFalse(row["research"]["patch_from_search_text_allowed"])
 
+    def test_relative_imports_are_included_in_transitive_impact_graph(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            pkg = root / "pkg"
+            pkg.mkdir()
+            (pkg / "__init__.py").write_text("", encoding="utf-8")
+            (pkg / "base.py").write_text("VALUE = 1\n", encoding="utf-8")
+            (pkg / "mid.py").write_text(
+                "from . import base\nVALUE = base.VALUE\n",
+                encoding="utf-8",
+            )
+            (pkg / "top.py").write_text(
+                "from .mid import VALUE\n",
+                encoding="utf-8",
+            )
+            issue = {
+                "error_signature": "c" * 20,
+                "error_code": "SELFREFINE.PYTHON_SYNTAX",
+                "stage": "PYTHON_SYNTAX",
+                "path": "pkg/base.py",
+                "root_cause": "SyntaxError",
+                "evidence": "package impact test",
+                "state": "open",
+            }
+            index = research.build_repository_index(root)
+            result = research.analyze_repository_impact(
+                issue, index=index, root=root
+            )
+            by_path = {
+                row["path"]: row for row in result["impacted_files"]
+            }
+            self.assertEqual(
+                by_path["pkg/mid.py"]["dependency_depth"], 1
+            )
+            self.assertEqual(
+                by_path["pkg/top.py"]["dependency_depth"], 2
+            )
+            self.assertIn(
+                "transitive_python_dependency",
+                by_path["pkg/top.py"]["reasons"],
+            )
+
     def test_research_does_not_learn_before_full_regression(self):
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
