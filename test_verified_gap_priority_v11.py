@@ -10,20 +10,20 @@ import provider_health_learning as health
 
 
 class VerifiedGapPriorityV11Tests(unittest.TestCase):
-    def _official_snapshot(self, title="일정 변경 공지", status="변경"):
-        promo = {
-            "items": [{
-                "game": "포켓몬 카드",
-                "region": "KR",
-                "category": "event",
-                "title": title,
-                "status": status,
-                "source": "https://pokemoncard.co.kr/example",
-                "source_grade": "official",
-                "start_date": "2026-09-10",
-            }]
+    def _official_snapshot(self, title="일정 변경 공지", status="변경", official_verified_at=None):
+        row = {
+            "game": "포켓몬 카드",
+            "region": "KR",
+            "category": "event",
+            "title": title,
+            "status": status,
+            "source": "https://pokemoncard.co.kr/example",
+            "source_grade": "official",
+            "start_date": "2026-09-10",
         }
-        return health._coverage_snapshot({}, {}, promo)
+        if official_verified_at:
+            row["official_verified_at"] = official_verified_at
+        return health._coverage_snapshot({}, {}, {"items": [row]})
 
     def test_same_verified_evidence_does_not_refresh_timestamp_forever(self):
         data = health._fresh()
@@ -51,7 +51,11 @@ class VerifiedGapPriorityV11Tests(unittest.TestCase):
         data["coverage_cells"][cell]["last_verified"] = old
         old_fingerprint = data["coverage_cells"][cell]["verified_fingerprint"]
 
-        changed = self._official_snapshot(title="일정 변경 공지 - 장소 변경", status="장소 변경")
+        changed = self._official_snapshot(
+            title="일정 변경 공지 - 장소 변경",
+            status="장소 변경",
+            official_verified_at="2026-09-05T00:00:00+00:00",
+        )
         health._observe_coverage(data, changed)
         stat = data["coverage_cells"][cell]
         self.assertNotEqual(stat["verified_fingerprint"], old_fingerprint)
