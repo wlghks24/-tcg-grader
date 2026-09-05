@@ -84,10 +84,30 @@ def _extract_price(text,fx):
             except Exception:continue
             krw=_to_krw(a,currency,fx)
             if not (100<=krw<=100_000_000):continue
-            nearby=raw[max(0,m.start()-48):min(len(raw),m.end()+48)].lower()
+            low=raw.lower()
+            center=(m.start()+m.end())//2
+            left=max(0,m.start()-64);right=min(len(raw),m.end()+64)
+            nearby=low[left:right]
             score=0
-            score+=sum(3 for word in positive if word in nearby)
-            score-=sum(5 for word in negative if word in nearby)
+            # Attribute labels to the nearest amount. A flat "keyword exists in
+            # 48 chars" score lets an adjacent MSRP label contaminate the real
+            # current price (and vice versa).
+            for word in positive:
+                start=0
+                while True:
+                    pos=nearby.find(word,start)
+                    if pos<0:break
+                    absolute=left+pos+len(word)//2
+                    score+=max(1,80-min(79,abs(center-absolute)))
+                    start=pos+len(word)
+            for word in negative:
+                start=0
+                while True:
+                    pos=nearby.find(word,start)
+                    if pos<0:break
+                    absolute=left+pos+len(word)//2
+                    score-=max(1,100-min(99,abs(center-absolute)))
+                    start=pos+len(word)
             values.append((score,m.start(),krw,a,currency))
     if not values:return None
     # Highest semantic score wins; on a tie prefer the first explicit amount,
