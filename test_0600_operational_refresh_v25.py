@@ -10,6 +10,7 @@ from pathlib import Path
 from unittest import mock
 
 import auto_update_all
+import collection_source_coverage_v28
 import main_crosscheck_export
 import selfrefine_crosscheck_gate
 import tcg_updater
@@ -50,6 +51,21 @@ class Operational0600RefreshV25Tests(unittest.TestCase):
             )
         with mock.patch.dict(os.environ, {"TCG_SOURCE_TIMEOUT_CAP": "300"}, clear=False):
             self.assertEqual(tcg_updater._source_timeout({}), 300)
+
+    def test_ci_source_timeout_cap_applies_to_recovery_attempt_too(self):
+        source=("테스트 공식","https://example.com/official","공식")
+        stats={"sources":{}}
+        with (
+            mock.patch.dict(os.environ, {"TCG_SOURCE_TIMEOUT_CAP": "30"}, clear=False),
+            mock.patch.object(tcg_updater, "fetch", side_effect=[TimeoutError("timed out"), "<html>ok</html>"]) as fetched,
+            mock.patch.object(tcg_updater.time, "sleep", return_value=None),
+        ):
+            result=tcg_updater._collect_one_source(source,stats)
+        self.assertTrue(result["ok"],result)
+        self.assertTrue(result["recovered"])
+        self.assertEqual(result["attempt_timeouts"],[30,30])
+        self.assertEqual(fetched.call_args_list[0].args[1],30)
+        self.assertEqual(fetched.call_args_list[1].args[1],30)
 
     def test_stale_failure_streak_resets_without_erasing_lifetime_learning(self):
         old_signature = "old-dominant"
@@ -188,6 +204,15 @@ class Operational0600RefreshV25Tests(unittest.TestCase):
         self.assertIn("atomic_write_json(REPORT, result", source)
         self.assertNotIn("REPORT.write_text(", source)
 
+    def test_official_source_coverage_contract_is_nine_by_nine(self):
+        configured = collection_source_coverage_v28.configured_matrix()
+        direct = collection_source_coverage_v28.direct_entry_matrix()
+        self.assertTrue(configured["ok"], configured)
+        self.assertEqual(configured["configured_cells"], 9)
+        self.assertTrue(direct["ok"], direct)
+        self.assertEqual(direct["configured_cells"], 9)
+        self.assertGreaterEqual(len(tcg_updater.SOURCES), 30)
+
     def test_daily_0600_workflow_refreshes_live_health_with_ci_only_cap(self):
         text = Path(".github/workflows/daily-0600-collection-instagram-accuracy.yml").read_text(
             encoding="utf-8"
@@ -205,6 +230,9 @@ class Operational0600RefreshV25Tests(unittest.TestCase):
         self.assertIn("source_health_age_seconds", text)
         self.assertIn("adaptive_health_age_seconds", text)
         self.assertIn("critical_collection_results", text)
+        self.assertIn("collection_source_coverage_v28.audit_source_stats", text)
+        self.assertIn("official_source_coverage", text)
+        self.assertIn("healthy_cells", text)
         self.assertIn("stale {label} health", text)
         self.assertIn("future-dated {label} health", text)
         self.assertIn("timeout-minutes: 30", text)
