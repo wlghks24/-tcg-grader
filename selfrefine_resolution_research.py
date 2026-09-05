@@ -460,8 +460,10 @@ def _search_url(plan: dict[str, Any]) -> str:
     query = str((plan.get("search_queries") or [""])[0])[:300]
     encoded = urllib.parse.quote_plus(query)
     url = template.format(query=encoded)
+    # URL construction is syntax/allowlist-only. DNS reachability is checked
+    # inside the bounded request loop so an offline device cannot crash error
+    # analysis before a deferred research result can be recorded.
     validate_public_https_url(url, RESEARCH_ALLOWED_HOSTS)
-    require_public_https(url, RESEARCH_ALLOWED_HOSTS)
     return url
 
 
@@ -503,7 +505,6 @@ def search_official_sources(
             break
         try:
             validate_public_https_url(value, RESEARCH_ALLOWED_HOSTS)
-            require_public_https(value, RESEARCH_ALLOWED_HOSTS)
         except ValueError:
             continue
         if value not in urls:
@@ -515,6 +516,7 @@ def search_official_sources(
         parsed = urllib.parse.urlsplit(url)
         host = (parsed.hostname or "").lower()
         try:
+            require_public_https(url, RESEARCH_ALLOWED_HOSTS)
             request = urllib.request.Request(
                 url,
                 headers={"User-Agent": "TCG-Grader-SELFREFINE-Research/1.0"},
@@ -580,36 +582,83 @@ def observe_errors(
     ]
     index = build_repository_index(root)
     now = _now()
-    observations: list[dict[str, Any]] = []
-    network_budget = MAX_NETWORK_RESEARCH_REQUESTS
 
+    # Read only the small identity/lesson snapshot while holding the process-safe
+    # state lock. Network research can take several seconds and must never block
+    # another SELFREFINE process from reading/writing its local learning state.
     with exclusive_file_lock(state_path):
+        snapshot = _load_state(state_path)
+        previously_seen = set(snapshot.get("issues", {}))
+        known_lessons = {
+            key: dict(value)
+            for key, value in snapshot.get("lessons", {}).items()
+            if isinstance(value, dict)
+        }
+
+    prepared: list[dict[str, Any]] = []
+    network_budget = MAX_NETWORK_RESEARCH_REQUESTS
+    for issue in open_errors:
+        signature = _safe_signature(issue)
+        impact = analyze_repository_impact(issue, index=index, root=root)
+        research = research_plan(issue)
+        was_seen = signature in previously_seen
+        if network_research and not was_seen and network_budget > 0:
+            network_result = search_official_sources(
+                research, request_limit=min(2, network_budget)
+            )
+            network_budget -= int(network_result.get("attempted") or 0)
+        else:
+            network_result = {
+                "attempted": 0,
+                "successful": 0,
+                "status": "not_required" if was_seen else "disabled",
+                "results": [],
+                "content_used_for_patch": False,
+                "search_result_patch_generation": False,
+                "raw_body_persisted": False,
+            }
+        prepared.append({
+            "issue": dict(issue),
+            "signature": signature,
+            "impact": impact,
+            "research": research,
+            "network_research": network_result,
+            "snapshot_lesson": known_lessons.get(signature),
+        })
+
+    observations: list[dict[str, Any]] = []
+    with exclusive_file_lock(state_path):
+        # Reload before merge. Another process may have observed the same error
+        # while this process performed bounded network research.
         state = _load_state(state_path)
         issues = state.setdefault("issues", {})
         lessons = state.setdefault("lessons", {})
-        for issue in open_errors:
-            signature = _safe_signature(issue)
-            previous = issues.get(signature) if isinstance(issues.get(signature), dict) else {}
+        for prepared_row in prepared:
+            issue = prepared_row["issue"]
+            signature = prepared_row["signature"]
+            previous = (
+                issues.get(signature)
+                if isinstance(issues.get(signature), dict)
+                else {}
+            )
             recurrence = max(0, int(previous.get("recurrence_count") or 0)) + 1
-            impact = analyze_repository_impact(issue, index=index, root=root)
-            research = research_plan(issue)
-            lesson = lessons.get(signature) if isinstance(lessons.get(signature), dict) else None
+            lesson = (
+                lessons.get(signature)
+                if isinstance(lessons.get(signature), dict)
+                else prepared_row.get("snapshot_lesson")
+            )
             is_new = not bool(previous)
-            if network_research and is_new and network_budget > 0:
-                network_result = search_official_sources(
-                    research, request_limit=min(2, network_budget)
+            network_result = dict(prepared_row["network_research"])
+            # If a concurrent process recorded the same signature first, retain
+            # the bounded evidence we already collected but classify this merge
+            # as a recurrence rather than a second new error.
+            if not is_new and network_result.get("attempted"):
+                network_result["status"] = (
+                    "researched_concurrently"
+                    if network_result.get("successful")
+                    else "deferred_concurrently"
                 )
-                network_budget -= int(network_result.get("attempted") or 0)
-            else:
-                network_result = {
-                    "attempted": 0,
-                    "successful": 0,
-                    "status": "not_required" if not is_new else "disabled",
-                    "results": [],
-                    "content_used_for_patch": False,
-                    "search_result_patch_generation": False,
-                    "raw_body_persisted": False,
-                }
+
             row = {
                 "error_signature": signature,
                 "error_code": _clean(issue.get("error_code"), 160),
@@ -622,13 +671,16 @@ def observe_errors(
                 "recurrence_count": min(1_000_000, recurrence),
                 "status": "open",
                 "new_error": is_new,
-                "impact_analysis": impact,
-                "research": research,
+                "impact_analysis": prepared_row["impact"],
+                "research": prepared_row["research"],
                 "network_research": network_result,
-                "known_verified_resolution": bool(lesson and lesson.get("regression_pass") is True),
+                "known_verified_resolution": bool(
+                    lesson and lesson.get("regression_pass") is True
+                ),
                 "preferred_verified_fix_pattern": (
                     _clean(lesson.get("fix_pattern"), 300)
-                    if lesson and lesson.get("regression_pass") is True else ""
+                    if lesson and lesson.get("regression_pass") is True
+                    else ""
                 ),
             }
             issues[signature] = row
@@ -636,9 +688,14 @@ def observe_errors(
             state.setdefault("history", []).append({
                 "at": now,
                 "error_signature": signature,
-                "event": "new_error_researched" if row["new_error"] else "recurring_error_researched",
-                "research_fingerprint": research["research_fingerprint"],
-                "files_scanned": impact["files_scanned"],
+                "event": (
+                    "new_error_researched"
+                    if row["new_error"]
+                    else "recurring_error_researched"
+                ),
+                "research_fingerprint": prepared_row["research"]["research_fingerprint"],
+                "files_scanned": prepared_row["impact"]["files_scanned"],
+                "network_research_status": network_result.get("status"),
             })
 
         _save_state(state_path, state)
