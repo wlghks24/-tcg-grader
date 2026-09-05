@@ -71,6 +71,13 @@ FEATURE_FILES = {
         "repository_integrity_guard.py",
         "security_self_audit.py",
     ],
+    "ai_auto_tracking": [
+        "ai_auto_tracker.py",
+        "test_ai_auto_tracker_v27.py",
+        ".github/workflows/ai-auto-tracking.yml",
+        "market_ai_auto_tracker.py",
+        ".github/workflows/market-ai-auto-tracker.yml",
+    ],
 }
 
 EXHAUSTIVE_COMMANDS = {
@@ -89,6 +96,7 @@ EXHAUSTIVE_COMMANDS = {
     "tablet": "TCG_FINAL_SKIP_HEAD_MATCH=1 bash VERIFY_TABLET_FINAL.sh",
     "security": "python security_self_audit.py --fail-on medium",
     "main_selfrefine": "python main_selfrefine_gate.py",
+    "ai_auto_tracking": "python ai_auto_tracker.py --self-test",
 }
 
 DAILY_COMMANDS = {
