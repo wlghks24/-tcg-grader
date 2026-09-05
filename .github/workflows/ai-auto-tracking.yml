@@ -1,6 +1,15 @@
 name: Integrated AI Auto Tracking
 
 on:
+  pull_request:
+    paths:
+      - 'ai_auto_tracker.py'
+      - 'test_ai_auto_tracker_v27.py'
+      - 'market_ai_auto_tracker.py'
+      - 'tcg_updater.py'
+      - 'tcg_updater_v135.py'
+      - 'verify_critical_feature_matrix_v25.py'
+      - '.github/workflows/ai-auto-tracking.yml'
   push:
     branches: [main]
   schedule:
@@ -37,7 +46,16 @@ jobs:
           python main_selfrefine_gate.py --self-test
           python verify_critical_feature_matrix_v25.py
 
+      - name: Track PR integration without external state mutation
+        if: github.event_name == 'pull_request'
+        run: >-
+          python ai_auto_tracker.py
+          --trigger pull-request
+          --output AI_AUTO_TRACKING_REPORT.json
+          --fail-on high
+
       - name: Track current repository and workflow health
+        if: github.event_name != 'pull_request'
         run: >-
           python ai_auto_tracker.py
           --github
