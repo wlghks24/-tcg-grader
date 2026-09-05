@@ -49,7 +49,7 @@ mv -f "$BOOT_TEMP" "$BOOT_FILE"
 chmod +x "$BOOT_FILE"
 chmod +x "$PROJECT_DIR/ANDROID_UPDATE_AND_START.sh" "$PROJECT_DIR/START_TCG_UPDATER_ANDROID.sh" 2>/dev/null || true
 
-echo "[OK] Android boot auto-start installed (v183 health-supervised safe updater)."
+echo "[OK] Android boot auto-start installed (health-supervised safe updater)."
 echo "Boot file: $BOOT_FILE"
 echo "Log file: $PROJECT_DIR/TCG_ANDROID_STARTUP.log"
 echo "At reboot it checks origin/main before startup; while healthy it only checks local /api/v135-health every 60 seconds."
