@@ -15,6 +15,8 @@ def main():
         'auto_validation_flow.js',
         'graded_photo_dashboard.js',
         'manual_dual_photo_bridge.js',
+        'feature_category_nav.css',
+        'feature_category_nav.js',
     )
     for asset in runtime_assets:
         matches=re.findall(re.escape(asset)+r'\?v=(\d+)',index)
@@ -28,9 +30,12 @@ def main():
     assert "cache:'no-store'" in sw
     assert 'Promise.allSettled(CORE.map' in sw
     assert '(?:html|js|css|json|webmanifest)' in sw
+    assert './feature_category_nav.css' in sw
+    assert './feature_category_nav.js' in sw
 
     server=text('tcg_updater.py')
     assert "target.suffix.lower() in {'.html','.js','.css','.json','.webmanifest'}" in server
+    assert "'feature_category_nav.css'" in server and "'feature_category_nav.js'" in server
     assert 'no-store, no-cache, must-revalidate, max-age=0' in server
 
     updater=text('ANDROID_UPDATE_AND_START.sh')
