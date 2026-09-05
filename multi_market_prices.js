@@ -49,7 +49,8 @@ function renderReferences(list){
 function render(data){
  const summary=$('multiMarketSummary'),rows=$('multiMarketRows');if(!summary||!rows)return;
  const info=data.summary||{};summary.className='mmp-summary';
- summary.innerHTML=`<div><span>수집가격</span><b>${info.count||0}건</b></div><div><span>출처</span><b>${info.source_count||0}곳</b></div><div><span>중앙값</span><b>${krw(info.median_krw)}</b></div><div><span>가격범위</span><b>${krw(info.min_krw)} ~ ${krw(info.max_krw)}</b></div>`;
+ const basis=esc(info.basis||'동일 기준'),region=esc(info.region_scope||'ALL');
+ summary.innerHTML=`<div><span>비교가능가격</span><b>${info.count||0}건</b><small>전체 ${info.total_count??info.count??0}건</small></div><div><span>출처</span><b>${info.source_count||0}곳</b><small>지역 ${region}</small></div><div><span>${basis} 중앙값</span><b>${krw(info.median_krw)}</b></div><div><span>동일기준 범위</span><b>${krw(info.min_krw)} ~ ${krw(info.max_krw)}</b></div>`;
  renderSources(data.source_status);renderGrades(data.grade_reference);renderReferences(data.reference_links);
  rows.innerHTML=(data.items||[]).slice(0,24).map(item=>`<article class="mmp-row"><div class="mmp-top"><div class="mmp-badges">${sourceBadge(item)}</div><strong>${krw(item.price_krw)}</strong></div><div class="mmp-title">${esc(item.title)}</div><div class="mmp-meta"><span>${item.currency&&item.price_native?`${esc(item.currency)} ${Number(item.price_native).toLocaleString()}`:'원화 환산'}</span><span>${esc(item.date||'최근 검색 확인')}</span></div><a href="${esc(item.url)}" target="_blank" rel="noopener noreferrer">원문 확인 →</a></article>`).join('')||'<div class="mmp-empty"><b>가격 결과 없음</b><span>현재 공개 검색결과에서 확인 가능한 가격을 찾지 못했습니다. 위 참고사이트 원문도 함께 확인해 주세요.</span></div>';
  $('multiMarketNote').textContent=(data.notice||'')+(data.errors?.length?` · 일부 출처 실패 ${data.errors.length}곳`:``);
