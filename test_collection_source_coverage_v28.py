@@ -92,6 +92,20 @@ class CollectionSourceCoverageV28Tests(unittest.TestCase):
         self.assertFalse(result["ok"])
         self.assertIn("naruto/US",result["degraded_cells"])
 
+    def test_restricted_pending_is_never_auto_approved_or_change_triggered(self):
+        rows=[
+            {"source":"A","status":"변경 확인 필요","kind":"행사"},
+            {"source":"포켓몬 제한","status":"자동접근 제한 · 브라우저 링크 사용 가능 (HTTP 403)","kind":"행사"},
+            {"source":"B","status":"수집 오류","kind":"공식"},
+        ]
+        normal,errors,restricted=tcg_updater._partition_source_pending(rows)
+        self.assertEqual([x["source"] for x in normal],["A"])
+        self.assertEqual([x["source"] for x in errors],["B"])
+        self.assertEqual([x["source"] for x in restricted],["포켓몬 제한"])
+        changed=tcg_updater._changed_source_files(rows)
+        self.assertIn("promo_events.json",changed)
+        self.assertNotIn("releases.json",changed)
+
     def test_source_result_state_distinguishes_restriction_and_success(self):
         restricted={}
         tcg_updater._annotate_source_health(
