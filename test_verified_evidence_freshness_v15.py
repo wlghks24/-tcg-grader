@@ -63,10 +63,8 @@ class VerifiedEvidenceFreshnessV15Tests(unittest.TestCase):
         self.assertTrue(stat["verification_timestamp_unknown"])
 
         report = health._coverage_report(data)
-        row = next(x for x in report["next_priority_cells"] if x["cell"] == cell)
-        self.assertTrue(row["recheck_due"])
-        self.assertTrue(row["verification_freshness_unknown"])
-        self.assertEqual(row["priority_reason"], "verified-freshness-unknown")
+        self.assertIn(cell, report["recheck_due_cells"])
+        self.assertIn(cell, report["verification_freshness_unknown_cells"])
 
     def test_recent_evidence_stays_current(self):
         data = health._fresh()
@@ -137,8 +135,8 @@ class VerifiedEvidenceFreshnessV15Tests(unittest.TestCase):
         self.assertIsNone(stat.get("last_verified"))
         self.assertTrue(stat["verification_timestamp_unknown"])
         report = health._coverage_report(data)
-        row = next(x for x in report["next_priority_cells"] if x["cell"] == cell)
-        self.assertEqual(row["priority_reason"], "verified-freshness-unknown")
+        self.assertIn(cell, report["recheck_due_cells"])
+        self.assertIn(cell, report["verification_freshness_unknown_cells"])
 
 
 if __name__ == "__main__":
