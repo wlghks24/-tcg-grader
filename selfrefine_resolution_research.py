@@ -39,6 +39,7 @@ from safe_runtime import (
 ROOT = Path(__file__).resolve().parent
 STATE = ROOT / "MAIN_SELFREFINE_RESOLUTION_LEARNING_STATE.json"
 REPORT = ROOT / "MAIN_SELFREFINE_RESEARCH_REPORT.json"
+ERROR_QUARANTINE_STATE = ROOT / "MAIN_SELFREFINE_ERROR_QUARANTINE_STATE.json"
 SCHEMA = 1
 
 MAX_SCAN_FILES = 4000
@@ -47,6 +48,7 @@ MAX_IMPACT_FILES = 64
 MAX_ISSUES = 500
 MAX_LESSONS = 500
 MAX_HISTORY = 300
+MAX_PENDING_AGE_SECONDS = 6 * 60 * 60
 MAX_NETWORK_RESEARCH_REQUESTS = 4
 NETWORK_RESEARCH_TIMEOUT_SECONDS = 6
 NETWORK_RESEARCH_MAX_BYTES = 250_000
@@ -160,6 +162,23 @@ def _normalized(value: Any) -> str:
     return _clean(value, 400).replace("\\", "/").lstrip("./")
 
 
+def _text_hash(text: str) -> str:
+    return hashlib.sha256(text.encode("utf-8", "replace")).hexdigest()[:20]
+
+
+def _parse_timestamp(value: Any) -> dt.datetime | None:
+    text = _clean(value, 80)
+    if not text:
+        return None
+    try:
+        parsed = dt.datetime.fromisoformat(text.replace("Z", "+00:00"))
+    except ValueError:
+        return None
+    if parsed.tzinfo is None:
+        parsed = parsed.replace(tzinfo=dt.timezone.utc)
+    return parsed.astimezone(dt.timezone.utc)
+
+
 def _safe_signature(issue: dict[str, Any]) -> str:
     existing = _clean(issue.get("error_signature"), 80).lower()
     if re.fullmatch(r"[0-9a-f]{16,80}", existing):
@@ -192,6 +211,10 @@ def _default_state() -> dict[str, Any]:
             "code_defined_repairs_only": True,
             "full_regression_required_before_learning": True,
             "failed_verification_not_learned": True,
+            "pending_resolution_rule_binding_required": True,
+            "pending_resolution_after_hash_required": True,
+            "stale_pending_resolution_not_promoted": True,
+            "clean_run_skips_redundant_impact_scan": True,
         },
     }
 
@@ -290,17 +313,54 @@ def _tracked_files(root: Path) -> tuple[list[str], bool]:
     return filtered[:MAX_SCAN_FILES], truncated
 
 
-def _python_imports(text: str) -> set[str]:
+def _package_name(relative: str) -> str:
+    module = _module_name(relative)
+    if relative.replace("\\", "/").endswith("/__init__.py"):
+        return module
+    return module.rsplit(".", 1)[0] if "." in module else ""
+
+
+def _python_imports(text: str, relative: str = "") -> set[str]:
     try:
         tree = ast.parse(text)
     except (SyntaxError, ValueError, MemoryError, RecursionError):
         return set()
     imports: set[str] = set()
+    package_parts = [
+        part for part in _package_name(relative).split(".") if part
+    ]
     for node in ast.walk(tree):
         if isinstance(node, ast.Import):
             imports.update(alias.name for alias in node.names if alias.name)
-        elif isinstance(node, ast.ImportFrom) and node.module:
-            imports.add(node.module)
+            continue
+        if not isinstance(node, ast.ImportFrom):
+            continue
+
+        if node.level:
+            # Python's level=1 means current package; each additional dot climbs
+            # one package. Resolve this statically without importing code.
+            climb = max(0, int(node.level) - 1)
+            base_parts = (
+                package_parts[: len(package_parts) - climb]
+                if climb <= len(package_parts)
+                else []
+            )
+            if node.module:
+                base_parts = base_parts + [
+                    part for part in node.module.split(".") if part
+                ]
+            base = ".".join(base_parts)
+        else:
+            base = node.module or ""
+
+        if base:
+            imports.add(base)
+        for alias in node.names:
+            if not alias.name or alias.name == "*":
+                continue
+            candidate = ".".join(part for part in (base, alias.name) if part)
+            if candidate:
+                imports.add(candidate)
     return imports
 
 
@@ -320,14 +380,18 @@ def build_repository_index(root: Path = ROOT) -> dict[str, Any]:
             "suffix": path.suffix.lower(),
             "text": text,
             "text_lower": text.lower(),
-            "imports": _python_imports(text) if path.suffix.lower() == ".py" else set(),
+            "imports": (
+                _python_imports(text, relative)
+                if path.suffix.lower() == ".py"
+                else set()
+            ),
         })
     return {
         "records": records,
         "files_scanned": len(records),
         "scan_truncated": truncated,
         "read_errors": read_errors,
-        "full_repository_scan": not truncated,
+        "full_repository_scan": not truncated and read_errors == 0,
     }
 
 
@@ -349,20 +413,66 @@ def analyze_repository_impact(
     target_stem = Path(target).stem.lower() if target else ""
     target_module = _module_name(target) if target.endswith(".py") else ""
 
+    # Build a reverse Python dependency graph once from the already-scanned
+    # repository. This exposes second/third-order blast radius without importing
+    # or executing project modules.
+    module_to_path = {
+        _module_name(row["path"]): row["path"]
+        for row in index["records"]
+        if row["suffix"] == ".py"
+    }
+    reverse_dependencies: dict[str, set[str]] = {}
+    for row in index["records"]:
+        if row["suffix"] != ".py":
+            continue
+        importer_path = row["path"]
+        for imported in row["imports"]:
+            dependency_path = module_to_path.get(imported)
+            if dependency_path and dependency_path != importer_path:
+                reverse_dependencies.setdefault(dependency_path, set()).add(
+                    importer_path
+                )
+
+    dependency_depth: dict[str, int] = {}
+    if target in module_to_path.values():
+        frontier = [target]
+        depth = 0
+        visited = {target}
+        while frontier and depth < 8:
+            depth += 1
+            next_frontier: list[str] = []
+            for dependency in frontier:
+                for importer in sorted(reverse_dependencies.get(dependency, set())):
+                    if importer in visited:
+                        continue
+                    visited.add(importer)
+                    dependency_depth[importer] = depth
+                    next_frontier.append(importer)
+            frontier = next_frontier
+
     impacted: list[dict[str, Any]] = []
     for row in index["records"]:
         relative = row["path"]
         lower = row["text_lower"]
         score = 0
         reasons: list[str] = []
+        depth = dependency_depth.get(relative)
         if relative == target:
             score = 100
             reasons.append("direct_error_path")
-        if target_module and row["suffix"] == ".py":
+        if depth == 1:
+            score = max(score, 90)
+            reasons.append("python_import_dependency")
+        elif depth and depth > 1:
+            score = max(score, max(60, 86 - depth * 6))
+            reasons.append("transitive_python_dependency")
+        elif target_module and row["suffix"] == ".py":
+            # Keep conservative textual/import matching for unusual import
+            # layouts that cannot be resolved to a tracked module exactly.
             for imported in row["imports"]:
                 if imported == target_module or imported.startswith(target_module + "."):
-                    score = max(score, 90)
-                    reasons.append("python_import_dependency")
+                    score = max(score, 88)
+                    reasons.append("python_import_dependency_unresolved_graph")
                     break
         if target_stem and Path(relative).name.lower().startswith("test_") and target_stem in lower:
             score = max(score, 82)
@@ -377,11 +487,14 @@ def analyze_repository_impact(
             score = max(score, 75)
             reasons.append("workflow_reference")
         if score:
-            impacted.append({
+            item = {
                 "path": relative,
                 "score": score,
                 "reasons": sorted(set(reasons)),
-            })
+            }
+            if depth:
+                item["dependency_depth"] = depth
+            impacted.append(item)
 
     impacted.sort(key=lambda row: (-int(row["score"]), str(row["path"])))
     return {
@@ -390,6 +503,7 @@ def analyze_repository_impact(
         "scan_truncated": bool(index["scan_truncated"]),
         "full_repository_scan": bool(index["full_repository_scan"]),
         "read_errors": int(index["read_errors"]),
+        "python_transitive_dependency_analysis": True,
         "impacted_files": impacted[:MAX_IMPACT_FILES],
         "impacted_file_count": len(impacted),
     }
@@ -581,8 +695,50 @@ def observe_errors(
         row for row in errors[:MAX_ISSUES]
         if isinstance(row, dict) and row.get("state") == "open"
     ]
-    index = build_repository_index(root)
     now = _now()
+
+    # Main SELFREFINE already scanned the repository to determine that there are
+    # no open errors. A second full impact index on a clean run adds I/O and
+    # battery/CI cost without producing any diagnosis.
+    if not open_errors:
+        with exclusive_file_lock(state_path):
+            state = _load_state(state_path)
+            pending = set(state.get("pending_verifications", {}))
+            for signature, issue in state.get("issues", {}).items():
+                if (
+                    isinstance(issue, dict)
+                    and issue.get("status") == "open"
+                    and signature not in pending
+                ):
+                    issue["status"] = "not_observed_unverified"
+                    issue["last_clean_seen"] = now
+                    state.setdefault("history", []).append({
+                        "at": now,
+                        "error_signature": signature,
+                        "event": "error_not_observed_without_verified_repair",
+                    })
+            _save_state(state_path, state)
+        report = {
+            "schema": SCHEMA,
+            "generated_at": now,
+            "error_count": 0,
+            "new_error_count": 0,
+            "known_verified_resolution_count": 0,
+            "repository_files_scanned": 0,
+            "full_repository_scan": True,
+            "impact_scan_required": False,
+            "impact_scan_skipped_no_open_errors": True,
+            "scan_truncated": False,
+            "read_errors": 0,
+            "network_research_attempted": 0,
+            "network_research_successful": 0,
+            "errors": [],
+            "safety": _default_state()["safety"],
+        }
+        atomic_write_json(report_path, report, suffix=".resolution-research.tmp")
+        return report
+
+    index = build_repository_index(root)
 
     # Read only the small identity/lesson snapshot while holding the process-safe
     # state lock. Network research can take several seconds and must never block
@@ -634,6 +790,22 @@ def observe_errors(
         state = _load_state(state_path)
         issues = state.setdefault("issues", {})
         lessons = state.setdefault("lessons", {})
+        observed_signatures = {row["signature"] for row in prepared}
+        pending_signatures = set(state.get("pending_verifications", {}))
+        for signature, previous_issue in issues.items():
+            if (
+                isinstance(previous_issue, dict)
+                and previous_issue.get("status") == "open"
+                and signature not in observed_signatures
+                and signature not in pending_signatures
+            ):
+                previous_issue["status"] = "not_observed_unverified"
+                previous_issue["last_clean_seen"] = now
+                state.setdefault("history", []).append({
+                    "at": now,
+                    "error_signature": signature,
+                    "event": "error_not_observed_without_verified_repair",
+                })
         for prepared_row in prepared:
             issue = prepared_row["issue"]
             signature = prepared_row["signature"]
@@ -733,30 +905,83 @@ def stage_repairs(
     *,
     state_path: Path = STATE,
 ) -> dict[str, Any]:
+    import verified_code_repair_rules as verified_repairs
+
     staged = 0
+    skipped = 0
+    skip_reasons: dict[str, int] = {}
     now = _now()
+
+    def skip(reason: str) -> None:
+        nonlocal skipped
+        skipped += 1
+        skip_reasons[reason] = skip_reasons.get(reason, 0) + 1
+
     with exclusive_file_lock(state_path):
         state = _load_state(state_path)
         for item in applied:
             if not isinstance(item, dict):
+                skip("invalid_item")
                 continue
             signature = _clean(item.get("error_signature"), 80).lower()
-            if not signature:
-                continue
             issue = state.get("issues", {}).get(signature)
-            if not isinstance(issue, dict):
+            if not signature or not isinstance(issue, dict):
+                skip("missing_observed_issue")
                 continue
+
             rule_id = _clean(item.get("rule_id"), 160)
-            if not rule_id:
+            relative = _normalized(item.get("path"))
+            fingerprint = _clean(item.get("rule_fingerprint"), 80)
+            before_hash = _clean(item.get("before_hash"), 40).lower()
+            after_hash = _clean(item.get("after_hash"), 40).lower()
+            if (
+                item.get("verification_forced_failed") is True
+                or item.get("rollback_outcome") != "verified_kept"
+            ):
+                skip("repair_not_locally_verified")
                 continue
+            rule_probe = {"stage": _clean(item.get("stage"), 100), "path": relative}
+            if (
+                rule_id not in verified_repairs.ALL_RULE_IDS
+                or relative not in verified_repairs.RULE_PATHS.get(rule_id, frozenset())
+                or fingerprint != verified_repairs.rule_fingerprint(rule_id)
+                or verified_repairs.rule_for_issue(rule_probe) != rule_id
+            ):
+                skip("repair_rule_binding_mismatch")
+                continue
+            if relative != _normalized(issue.get("path")):
+                skip("issue_path_binding_mismatch")
+                continue
+            if _clean(item.get("stage"), 100) != _clean(issue.get("stage"), 100):
+                skip("issue_stage_binding_mismatch")
+                continue
+            impact = issue.get("impact_analysis")
+            if (
+                not isinstance(impact, dict)
+                or impact.get("full_repository_scan") is not True
+            ):
+                skip("impact_analysis_incomplete")
+                continue
+            if not re.fullmatch(r"[0-9a-f]{20}", before_hash or ""):
+                skip("before_hash_missing")
+                continue
+            if not re.fullmatch(r"[0-9a-f]{20}", after_hash or ""):
+                skip("after_hash_missing")
+                continue
+            if before_hash == after_hash:
+                skip("repair_did_not_change_target")
+                continue
+
             state.setdefault("pending_verifications", {})[signature] = {
                 "error_signature": signature,
                 "rule_id": rule_id,
-                "rule_fingerprint": _clean(item.get("rule_fingerprint"), 80),
-                "path": _normalized(item.get("path")),
+                "rule_fingerprint": fingerprint,
+                "path": relative,
                 "stage": _clean(item.get("stage"), 100),
                 "staged_at": now,
                 "verification_status": "pending_full_regression",
+                "before_hash": before_hash,
+                "after_hash": after_hash,
                 "research_fingerprint": _clean(
                     (issue.get("research") or {}).get("research_fingerprint"), 80
                 ),
@@ -766,16 +991,20 @@ def stage_repairs(
                     if isinstance(row, dict)
                 ],
             }
+            issue["status"] = "pending_full_regression"
             staged += 1
             state.setdefault("history", []).append({
                 "at": now,
                 "error_signature": signature,
                 "event": "repair_pending_full_regression",
                 "rule_id": rule_id,
+                "after_hash": after_hash,
             })
         _save_state(state_path, state)
     return {
         "pending_full_regression": staged,
+        "skipped_unverified_repairs": skipped,
+        "skip_reasons": skip_reasons,
         "full_regression_required_before_learning": True,
         "learned_now": 0,
     }
@@ -790,9 +1019,15 @@ def finalize_pending(
     success: bool,
     *,
     state_path: Path = STATE,
+    root: Path = ROOT,
+    quarantine_state_path: Path | None = None,
 ) -> dict[str, Any]:
-    verified = rejected = 0
+    import verified_code_repair_rules as verified_repairs
+
+    verified = rejected = binding_rejected = 0
+    promotions: list[tuple[str, str]] = []
     now = _now()
+    now_dt = _parse_timestamp(now) or dt.datetime.now(dt.timezone.utc)
     with exclusive_file_lock(state_path):
         state = _load_state(state_path)
         pending = dict(state.get("pending_verifications", {}))
@@ -804,6 +1039,69 @@ def finalize_pending(
                 state.get("pending_verifications", {}).pop(signature, None)
                 continue
             rule_id = _clean(pending_row.get("rule_id"), 160)
+            relative = _normalized(pending_row.get("path"))
+            fingerprint = _clean(pending_row.get("rule_fingerprint"), 80)
+            after_hash = _clean(pending_row.get("after_hash"), 40).lower()
+            staged_at = _parse_timestamp(pending_row.get("staged_at"))
+
+            binding_reason = ""
+            if success:
+                rule_probe = {
+                    "stage": _clean(pending_row.get("stage"), 100),
+                    "path": relative,
+                }
+                if (
+                    rule_id not in verified_repairs.ALL_RULE_IDS
+                    or relative not in verified_repairs.RULE_PATHS.get(rule_id, frozenset())
+                    or verified_repairs.rule_for_issue(rule_probe) != rule_id
+                ):
+                    binding_reason = "repair_rule_not_allowlisted"
+                elif fingerprint != verified_repairs.rule_fingerprint(rule_id):
+                    binding_reason = "repair_rule_fingerprint_changed"
+                elif relative != _normalized(issue.get("path")):
+                    binding_reason = "issue_path_binding_changed"
+                elif _clean(pending_row.get("stage"), 100) != _clean(
+                    issue.get("stage"), 100
+                ):
+                    binding_reason = "issue_stage_binding_changed"
+                elif not re.fullmatch(r"[0-9a-f]{20}", after_hash or ""):
+                    binding_reason = "after_hash_missing"
+                elif staged_at is None:
+                    binding_reason = "invalid_staged_at"
+                elif (
+                    (now_dt - staged_at).total_seconds() < 0
+                    or (now_dt - staged_at).total_seconds() > MAX_PENDING_AGE_SECONDS
+                ):
+                    binding_reason = "pending_verification_expired"
+                else:
+                    target = root / relative
+                    try:
+                        if target.is_symlink() or not target.is_file():
+                            raise OSError("repair target is not a regular file")
+                        current_hash = _text_hash(
+                            safe_read_text(target, max_bytes=MAX_FILE_BYTES)
+                        )
+                    except (OSError, ValueError, TypeError, UnicodeError):
+                        binding_reason = "repair_target_unreadable"
+                    else:
+                        if current_hash != after_hash:
+                            binding_reason = "repair_target_hash_changed"
+
+                if binding_reason:
+                    issue["status"] = "verification_binding_rejected"
+                    issue["last_verification_rejection"] = binding_reason
+                    binding_rejected += 1
+                    rejected += 1
+                    state.setdefault("history", []).append({
+                        "at": now,
+                        "error_signature": signature,
+                        "event": "resolution_binding_rejected",
+                        "rule_id": rule_id,
+                        "reason": binding_reason,
+                    })
+                    state.setdefault("pending_verifications", {}).pop(signature, None)
+                    continue
+
             if success:
                 old = state.get("lessons", {}).get(signature)
                 old_successes = int(old.get("verified_successes") or 0) if isinstance(old, dict) else 0
@@ -844,17 +1142,16 @@ def finalize_pending(
                 issue["status"] = "resolved_verified"
                 issue["last_verified_resolution"] = lesson["fix_pattern"]
                 verified += 1
+                promotions.append((signature, rule_id))
                 event = "verified_resolution_learned"
             else:
-                old = state.get("lessons", {}).get(signature)
-                if isinstance(old, dict):
-                    old["verified_failures"] = min(
-                        10_000, int(old.get("verified_failures") or 0) + 1
-                    )
-                    old["confidence_level"] = "low"
-                issue["status"] = "verification_failed"
+                # A full workflow can fail for reasons unrelated to this repair
+                # (runner/network/flaky integration). Never poison a previously
+                # verified lesson without repair-specific regression evidence.
+                issue["status"] = "full_regression_not_passed"
+                issue["last_verification_rejection"] = "full_regression_not_passed"
                 rejected += 1
-                event = "resolution_rejected_by_full_regression"
+                event = "resolution_not_promoted_full_regression_failed"
             state.setdefault("history", []).append({
                 "at": now,
                 "error_signature": signature,
@@ -863,9 +1160,28 @@ def finalize_pending(
             })
             state.setdefault("pending_verifications", {}).pop(signature, None)
         _save_state(state_path, state)
+
+    quarantine_promoted = quarantine_promotion_failed = 0
+    if success and quarantine_state_path is not None and promotions:
+        import selfrefine_error_quarantine as error_quarantine
+
+        for signature, rule_id in promotions:
+            outcome = error_quarantine.promote_full_regression_resolution(
+                signature,
+                rule_id,
+                state_path=quarantine_state_path,
+            )
+            if outcome.get("promoted") == 1:
+                quarantine_promoted += 1
+            else:
+                quarantine_promotion_failed += 1
+
     return {
         "verified_resolution_lessons": verified,
         "rejected_unverified_resolutions": rejected,
+        "binding_rejected_resolutions": binding_rejected,
+        "quarantine_verified_promotions": quarantine_promoted,
+        "quarantine_promotion_failed": quarantine_promotion_failed,
         "regression_pass": bool(success),
         "research_text_executable": False,
         "unknown_error_direct_auto_patch": False,
@@ -896,6 +1212,7 @@ def public_summary(*, state_path: Path = STATE) -> dict[str, Any]:
 
 def self_test() -> int:
     import tempfile
+    import verified_code_repair_rules as verified_repairs
 
     with tempfile.TemporaryDirectory() as tmp:
         root = Path(tmp)
@@ -916,35 +1233,78 @@ def self_test() -> int:
             "state": "open",
         }
         observed = observe_errors(
-            [issue], root=root, state_path=state, report_path=report, network_research=False
+            [issue],
+            root=root,
+            state_path=state,
+            report_path=report,
+            network_research=False,
         )
         assert observed["new_error_count"] == 1, observed
-        impacted = {row["path"] for row in observed["errors"][0]["impact_analysis"]["impacted_files"]}
+        impacted = {
+            row["path"]
+            for row in observed["errors"][0]["impact_analysis"]["impacted_files"]
+        }
         assert {"broken.py", "consumer.py", "test_broken.py"}.issubset(impacted), impacted
         assert observed["errors"][0]["research"]["preferred_sources"]
         assert observed["errors"][0]["research"]["patch_from_search_text_allowed"] is False
 
-        staged = stage_repairs([{
-            "error_signature": "a" * 20,
-            "rule_id": "example-code-defined-rule",
-            "rule_fingerprint": "f" * 24,
-            "path": "broken.py",
-            "stage": "PYTHON_SYNTAX",
-        }], state_path=state)
+        repair_target = root / verified_repairs.RESOURCE_GUARD_PATH
+        repair_target.write_text(
+            "from pathlib import Path\n"
+            "x = Path('a.js').read_text(encoding='utf-8')\n",
+            encoding="utf-8",
+        )
+        repair_signature = "b" * 20
+        repair_issue = {
+            "error_signature": repair_signature,
+            "error_code": "SELFREFINE.RESOURCE_HANDLE_LEAK_RISK",
+            "stage": "RESOURCE_HANDLE_LEAK_RISK",
+            "path": verified_repairs.RESOURCE_GUARD_PATH,
+            "root_cause": "unclosed literal text read",
+            "evidence": "open(...).read() can leave a file handle",
+            "state": "open",
+        }
+        observe_errors(
+            [repair_issue],
+            root=root,
+            state_path=state,
+            report_path=report,
+            network_research=False,
+        )
+        applied = {
+            "error_signature": repair_signature,
+            "rule_id": verified_repairs.RESOURCE_RULE_ID,
+            "rule_fingerprint": verified_repairs.rule_fingerprint(
+                verified_repairs.RESOURCE_RULE_ID
+            ),
+            "path": verified_repairs.RESOURCE_GUARD_PATH,
+            "stage": "RESOURCE_HANDLE_LEAK_RISK",
+            "before_hash": _text_hash("old content"),
+            "after_hash": _text_hash(repair_target.read_text(encoding="utf-8")),
+            "rollback_outcome": "verified_kept",
+        }
+        staged = stage_repairs([applied], state_path=state)
         assert staged["pending_full_regression"] == 1, staged
         assert not _load_state(state)["lessons"], "must not learn before full regression"
 
-        finalized = finalize_pending(True, state_path=state)
+        finalized = finalize_pending(True, state_path=state, root=root)
         assert finalized["verified_resolution_lessons"] == 1, finalized
-        lesson = _load_state(state)["lessons"]["a" * 20]
+        lesson = _load_state(state)["lessons"][repair_signature]
         assert lesson["regression_pass"] is True
         assert lesson["verification_result"] == "full_regression_passed"
-        assert lesson["fix_pattern"].startswith("verified_code_rule:")
-
-        observed_again = observe_errors(
-            [issue], root=root, state_path=state, report_path=report, network_research=False
+        assert lesson["fix_pattern"] == (
+            f"verified_code_rule:{verified_repairs.RESOURCE_RULE_ID}"
         )
-        assert observed_again["errors"][0]["known_verified_resolution"] is True
+
+        clean = observe_errors(
+            [],
+            root=root,
+            state_path=state,
+            report_path=report,
+            network_research=False,
+        )
+        assert clean["impact_scan_skipped_no_open_errors"] is True
+        assert clean["repository_files_scanned"] == 0
 
     print("Main SELFREFINE new-error research + verified resolution learning: PASS")
     return 0
@@ -960,7 +1320,10 @@ def main() -> int:
         return self_test()
     if args.finalize:
         print(json.dumps(
-            finalize_pending(args.finalize == "success"),
+            finalize_pending(
+                args.finalize == "success",
+                quarantine_state_path=ERROR_QUARANTINE_STATE,
+            ),
             ensure_ascii=False,
             sort_keys=True,
         ))

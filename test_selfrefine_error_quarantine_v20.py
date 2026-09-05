@@ -22,12 +22,15 @@ class SelfrefineErrorQuarantineV20Tests(unittest.TestCase):
             "state": "open",
         }
 
-    def test_error_code_is_isolated_then_verified_result_is_learned(self):
+    def test_error_code_is_isolated_then_full_regression_promotes_learning(self):
         with tempfile.TemporaryDirectory() as tmp:
             state = Path(tmp) / "q.json"
             first = quarantine.observe_open_errors([self._issue()], state_path=state)
             row = first["errors"][0]
-            self.assertEqual(row["error_code"], "SELFREFINE.CI_RUNTIME.CI_ACTION_RUNTIME_DEPRECATED")
+            self.assertEqual(
+                row["error_code"],
+                "SELFREFINE.CI_RUNTIME.CI_ACTION_RUNTIME_DEPRECATED",
+            )
             self.assertEqual(row["isolation_state"], "isolated")
             self.assertTrue(row["auto_repair_allowed"])
             self.assertFalse(row["learned_solution_reuse"])
@@ -38,10 +41,27 @@ class SelfrefineErrorQuarantineV20Tests(unittest.TestCase):
                 "path": row["path"],
                 "stage": row["stage"],
             }]
-            learned = quarantine.record_repair_outcomes(applied, [], state_path=state)
-            self.assertEqual(learned["verified_resolution_learned"], 1)
+            local = quarantine.record_repair_outcomes(
+                applied, [], state_path=state
+            )
+            self.assertEqual(local["local_resolution_passed"], 1)
+            self.assertEqual(local["verified_resolution_learned"], 0)
 
-            recurrent = quarantine.observe_open_errors([self._issue()], state_path=state)
+            recurrent_before_full = quarantine.observe_open_errors(
+                [self._issue()], state_path=state
+            )["errors"][0]
+            self.assertFalse(recurrent_before_full["learned_solution_reuse"])
+
+            promoted = quarantine.promote_full_regression_resolution(
+                row["error_signature"],
+                repairs.ACTION_RULE_ID,
+                state_path=state,
+            )
+            self.assertEqual(promoted["promoted"], 1)
+
+            recurrent = quarantine.observe_open_errors(
+                [self._issue()], state_path=state
+            )
             rerow = recurrent["errors"][0]
             self.assertTrue(rerow["learned_solution_reuse"])
             self.assertGreater(rerow["learned_solution_confidence"], 0.5)
@@ -114,6 +134,37 @@ class SelfrefineErrorQuarantineV20Tests(unittest.TestCase):
             if issues:
                 failures[relative] = issues
         self.assertFalse(failures, failures)
+
+    def test_schema_v2_local_success_is_not_inherited_as_full_verified_learning(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            state = Path(tmp) / "q.json"
+            state.write_text(json.dumps({
+                "schema": 2,
+                "entries": {
+                    "a" * 20: {
+                        "error_code": "SELFREFINE.CI_RUNTIME.CI_ACTION_RUNTIME_DEPRECATED",
+                        "family": "ci_runtime",
+                        "stage": "CI_ACTION_RUNTIME_DEPRECATED",
+                        "path": ".github/workflows/selfrefine-full-repo.yml",
+                        "occurrences": 1,
+                        "resolved_count": 1,
+                        "verified_successes": 3,
+                        "verified_failures": 0,
+                        "consecutive_verification_failures": 0,
+                        "last_verified_rule": repairs.ACTION_RULE_ID,
+                        "status": "resolved",
+                        "quarantined": False,
+                    }
+                },
+                "history": [],
+            }), encoding="utf-8")
+            loaded = quarantine._load(state)
+            row = loaded["entries"]["a" * 20]
+            self.assertEqual(row["local_successes"], 3)
+            self.assertEqual(row["verified_successes"], 0)
+            self.assertIsNone(row["last_verified_rule"])
+            self.assertEqual(row["last_local_rule"], repairs.ACTION_RULE_ID)
+            self.assertEqual(row["status"], "resolved_local")
 
     def test_domain_state_files_are_separate_and_ignored(self):
         policy = json.loads((ROOT / "selfrefine_domain_policy.json").read_text(encoding="utf-8"))

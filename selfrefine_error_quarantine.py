@@ -18,7 +18,7 @@ from safe_runtime import atomic_write_json, exclusive_file_lock, safe_read_text
 
 ROOT = Path(__file__).resolve().parent
 STATE = ROOT / "MAIN_SELFREFINE_ERROR_QUARANTINE_STATE.json"
-SCHEMA = 2
+SCHEMA = 3
 MAX_ENTRIES = 500
 MAX_HISTORY = 200
 MAX_TEXT = 240
@@ -89,6 +89,9 @@ def _default() -> dict[str, Any]:
             "verification_failure_quarantine_threshold": 2,
             "process_safe_state_transaction": True,
             "failed_repair_auto_rollback": True,
+            "local_resolution_is_provisional": True,
+            "full_regression_required_for_verified_reuse": True,
+            "legacy_local_success_not_promoted": True,
         },
     }
 
@@ -108,13 +111,45 @@ def _load(path: Path = STATE) -> dict[str, Any]:
     if not isinstance(raw, dict):
         return _default()
     state = _default()
+    raw_schema = _safe_int(raw.get("schema"), 100)
     rows = raw.get("entries") if isinstance(raw.get("entries"), dict) else {}
     for signature, item in list(rows.items())[-MAX_ENTRIES:]:
         if not isinstance(signature, str) or not signature or not isinstance(item, dict):
             continue
-        rule = item.get("last_verified_rule")
-        if rule not in verified_repairs.ALL_RULE_IDS:
-            rule = None
+        verified_rule = item.get("last_verified_rule")
+        local_rule = item.get("last_local_rule")
+        if verified_rule not in verified_repairs.ALL_RULE_IDS:
+            verified_rule = None
+        if local_rule not in verified_repairs.ALL_RULE_IDS:
+            local_rule = None
+
+        legacy_local_successes = 0
+        if raw_schema < 3:
+            # Schema v2 called the immediate post-repair rescan "verified".
+            # Preserve it only as local/provisional history; never inherit it as
+            # full-regression verified learning.
+            legacy_local_successes = _safe_int(
+                item.get("verified_successes"), 10000
+            )
+            if local_rule is None:
+                local_rule = verified_rule
+            verified_rule = None
+
+        local_successes = _safe_int(item.get("local_successes"), 10000)
+        local_failures = _safe_int(item.get("local_failures"), 10000)
+        if raw_schema < 3:
+            local_successes = min(
+                10000, local_successes + legacy_local_successes
+            )
+
+        status = item.get("status")
+        if raw_schema < 3 and status == "resolved":
+            status = "resolved_local"
+        if status not in {
+            "isolated", "resolved_local", "resolved_verified", "quarantined"
+        }:
+            status = "isolated"
+
         state["entries"][signature[:80]] = {
             "error_code": _clean(item.get("error_code"), 160),
             "family": _clean(item.get("family"), 80),
@@ -122,17 +157,36 @@ def _load(path: Path = STATE) -> dict[str, Any]:
             "path": _clean(item.get("path"), 240).replace("\\", "/"),
             "occurrences": _safe_int(item.get("occurrences")),
             "resolved_count": _safe_int(item.get("resolved_count"), 10000),
-            "recurrence_after_verified_resolution": _safe_int(item.get("recurrence_after_verified_resolution"), 10000),
-            "verified_successes": _safe_int(item.get("verified_successes"), 10000),
-            "verified_failures": _safe_int(item.get("verified_failures"), 10000),
-            "consecutive_verification_failures": _safe_int(item.get("consecutive_verification_failures"), 100),
-            "last_verified_rule": rule,
+            "recurrence_after_verified_resolution": _safe_int(
+                item.get("recurrence_after_verified_resolution"), 10000
+            ),
+            "local_successes": local_successes,
+            "local_failures": local_failures,
+            "verified_successes": (
+                0 if raw_schema < 3
+                else _safe_int(item.get("verified_successes"), 10000)
+            ),
+            "verified_failures": (
+                0 if raw_schema < 3
+                else _safe_int(item.get("verified_failures"), 10000)
+            ),
+            "consecutive_verification_failures": _safe_int(
+                item.get("consecutive_verification_failures"), 100
+            ),
+            "last_local_rule": local_rule,
+            "last_verified_rule": verified_rule,
             "last_seen": _clean(item.get("last_seen"), 80),
             "last_resolved": _clean(item.get("last_resolved"), 80),
-            "status": item.get("status") if item.get("status") in {"isolated", "resolved", "quarantined"} else "isolated",
+            "last_full_regression_verified": _clean(
+                item.get("last_full_regression_verified"), 80
+            ),
+            "status": status,
             "quarantined": item.get("quarantined") is True,
         }
-    state["history"] = [x for x in (raw.get("history") or [])[-MAX_HISTORY:] if isinstance(x, dict)]
+    state["history"] = [
+        x for x in (raw.get("history") or [])[-MAX_HISTORY:]
+        if isinstance(x, dict)
+    ]
     return state
 
 
@@ -187,16 +241,20 @@ def _observe_open_errors_unlocked(
             "occurrences": 0,
             "resolved_count": 0,
             "recurrence_after_verified_resolution": 0,
+            "local_successes": 0,
+            "local_failures": 0,
             "verified_successes": 0,
             "verified_failures": 0,
             "consecutive_verification_failures": 0,
+            "last_local_rule": None,
             "last_verified_rule": None,
+            "last_full_regression_verified": None,
             "last_seen": None,
             "last_resolved": None,
             "status": "isolated",
             "quarantined": False,
         })
-        if entry.get("status") == "resolved":
+        if entry.get("status") == "resolved_verified":
             entry["recurrence_after_verified_resolution"] = min(
                 10000, _safe_int(entry.get("recurrence_after_verified_resolution"), 10000) + 1
             )
@@ -304,20 +362,25 @@ def _record_repair_outcomes_unlocked(
             and item.get("verification_forced_failed") is not True
         )
         if resolved:
-            entry["verified_successes"] = min(
-                10000, _safe_int(entry.get("verified_successes"), 10000) + 1
+            entry["local_successes"] = min(
+                10000, _safe_int(entry.get("local_successes"), 10000) + 1
             )
-            entry["resolved_count"] = min(10000, _safe_int(entry.get("resolved_count"), 10000) + 1)
+            entry["resolved_count"] = min(
+                10000, _safe_int(entry.get("resolved_count"), 10000) + 1
+            )
             entry["consecutive_verification_failures"] = 0
-            entry["last_verified_rule"] = rule_id
+            entry["last_local_rule"] = rule_id
             entry["last_resolved"] = now
-            entry["status"] = "resolved"
-            entry["quarantined"] = False
+            entry["status"] = (
+                "quarantined"
+                if entry.get("quarantined") is True
+                else "resolved_local"
+            )
             passed += 1
-            event = "verified_resolution_learned"
+            event = "local_resolution_observed"
         else:
-            entry["verified_failures"] = min(
-                10000, _safe_int(entry.get("verified_failures"), 10000) + 1
+            entry["local_failures"] = min(
+                10000, _safe_int(entry.get("local_failures"), 10000) + 1
             )
             entry["consecutive_verification_failures"] = min(
                 100, _safe_int(entry.get("consecutive_verification_failures"), 100) + 1
@@ -343,7 +406,8 @@ def _record_repair_outcomes_unlocked(
 
     _save(state, state_path)
     return {
-        "verified_resolution_learned": passed,
+        "local_resolution_passed": passed,
+        "verified_resolution_learned": 0,
         "verification_failed": failed,
         "newly_quarantined": newly_quarantined,
         "state_path": state_path.name,
@@ -351,6 +415,57 @@ def _record_repair_outcomes_unlocked(
         "source_patch_generated_from_state": False,
     }
 
+
+
+def promote_full_regression_resolution(
+    error_signature: str,
+    rule_id: str,
+    *,
+    state_path: Path = STATE,
+) -> dict[str, Any]:
+    """Promote one provisional local success after the complete regression gate."""
+
+    signature = _clean(error_signature, 80)
+    if rule_id not in verified_repairs.ALL_RULE_IDS or not signature:
+        return {"promoted": 0, "reason": "invalid_binding"}
+
+    with exclusive_file_lock(state_path):
+        state = _load(state_path)
+        entry = state.setdefault("entries", {}).get(signature)
+        if not isinstance(entry, dict):
+            return {"promoted": 0, "reason": "missing_error_entry"}
+        if (
+            entry.get("last_local_rule") != rule_id
+            or _safe_int(entry.get("local_successes"), 10000) <= 0
+        ):
+            return {"promoted": 0, "reason": "local_success_not_observed"}
+
+        now = _now()
+        entry["verified_successes"] = min(
+            10000, _safe_int(entry.get("verified_successes"), 10000) + 1
+        )
+        entry["last_verified_rule"] = rule_id
+        entry["last_full_regression_verified"] = now
+        entry["status"] = "resolved_verified"
+        entry["quarantined"] = False
+        entry["consecutive_verification_failures"] = 0
+        state.setdefault("history", []).append({
+            "at": now,
+            "signature": signature,
+            "error_code": entry.get("error_code"),
+            "stage": entry.get("stage"),
+            "path": entry.get("path"),
+            "event": "full_regression_resolution_promoted",
+            "rule_id": rule_id,
+            "solution_confidence": _confidence(entry),
+        })
+        _save(state, state_path)
+    return {
+        "promoted": 1,
+        "error_signature": signature,
+        "rule_id": rule_id,
+        "verified_solution_confidence": _confidence(entry),
+    }
 
 
 def record_repair_outcomes(
@@ -371,7 +486,16 @@ def public_status(*, state_path: Path = STATE) -> dict[str, Any]:
     return {
         "ok": True,
         "isolated": sum(x.get("status") == "isolated" for x in entries),
-        "resolved": sum(x.get("status") == "resolved" for x in entries),
+        "locally_resolved": sum(
+            x.get("status") == "resolved_local" for x in entries
+        ),
+        "verified_resolved": sum(
+            x.get("status") == "resolved_verified" for x in entries
+        ),
+        "resolved": sum(
+            x.get("status") in {"resolved_local", "resolved_verified"}
+            for x in entries
+        ),
         "quarantined": sum(x.get("status") == "quarantined" for x in entries),
         "verified_solution_codes": sum(_safe_int(x.get("verified_successes"), 10000) > 0 for x in entries),
         "safety": state["safety"],
