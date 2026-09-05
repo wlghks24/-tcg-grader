@@ -139,3 +139,4 @@ jobs:
           TCG_FINAL_SKIP_HEAD_MATCH=1 bash VERIFY_TABLET_FINAL.sh
           python security_self_audit.py --fail-on medium
           python main_selfrefine_gate.py
+          python ai_auto_tracker.py --self-test
