@@ -6,8 +6,8 @@ p=Path('index.html')
 s=p.read_text(encoding='utf-8')
 css='<link rel="stylesheet" href="multi_market_prices.css">'
 js='<script src="multi_market_prices.js"></script>'
-css_pattern=re.compile(r'<link\\s+rel=["\\\']stylesheet["\\\']\\s+href=["\\\']multi_market_prices\\.css(?:\\?[^"\\\']*)?["\\\']\\s*/?>',re.I)
-js_pattern=re.compile(r'<script\\s+src=["\\\']multi_market_prices\\.js(?:\\?[^"\\\']*)?["\\\']\\s*></script>',re.I)
+css_pattern=re.compile(r'''<link\s+rel=["']stylesheet["']\s+href=["']multi_market_prices\.css(?:\?[^"']*)?["']\s*/?>''',re.I)
+js_pattern=re.compile(r'''<script\s+src=["']multi_market_prices\.js(?:\?[^"']*)?["']\s*></script>''',re.I)
 if not css_pattern.search(s):
     if '</head>' not in s: raise SystemExit('missing </head>')
     s=s.replace('</head>',css+'\n</head>',1)
