@@ -195,6 +195,7 @@ def run(cycles: int):
             "rolled_back_repair_not_staged_for_learning": True,
             "clean_run_skips_redundant_impact_scan": True,
             "transitive_dependency_impact_analysis": True,
+            "relative_import_impact_analysis": True,
             "complete_impact_analysis_required_for_learning": True,
             "full_regression_failure_does_not_poison_verified_lesson": True,
             "local_resolution_is_provisional": True,
@@ -234,6 +235,7 @@ def self_test():
     assert POLICY["rules"]["rolled_back_repair_not_staged_for_learning"] is True
     assert POLICY["rules"]["clean_run_skips_redundant_impact_scan"] is True
     assert POLICY["rules"]["transitive_dependency_impact_analysis"] is True
+    assert POLICY["rules"]["relative_import_impact_analysis"] is True
     assert POLICY["rules"]["complete_impact_analysis_required_for_learning"] is True
     assert POLICY["rules"]["full_regression_failure_does_not_poison_verified_lesson"] is True
     assert POLICY["rules"]["local_resolution_is_provisional"] is True
