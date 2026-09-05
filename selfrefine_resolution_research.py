@@ -519,6 +519,16 @@ def _research_family(issue: dict[str, Any]) -> str:
     ).lower()
     if path.startswith(".github/workflows/") or "GITHUB" in stage or "ACTION" in stage:
         return "github_actions"
+
+    # Error semantics must win over implementation language. Most acquisition
+    # collectors are Python files, so classifying by ".py" first would route
+    # HTTP 403/429, timeout and connection failures to generic Python docs
+    # instead of the HTTP/network research path.
+    if any(token in stage for token in ("HTTP", "NETWORK", "TIMEOUT", "SOURCE_")):
+        return "http"
+    if any(token in evidence for token in ("http ", "urlerror", "timed out", "connection")):
+        return "http"
+
     if "PYTHON" in stage or path.endswith(".py") or "syntaxerror" in evidence:
         return "python"
     if "JS_" in stage or "JAVASCRIPT" in stage or path.endswith((".js", ".mjs", ".cjs")):
@@ -527,10 +537,6 @@ def _research_family(issue: dict[str, Any]) -> str:
         return "shell"
     if "JSON" in stage or path.endswith((".json", ".jsonl")):
         return "json"
-    if any(token in stage for token in ("HTTP", "NETWORK", "TIMEOUT", "SOURCE_")):
-        return "http"
-    if any(token in evidence for token in ("http ", "urlerror", "timed out", "connection")):
-        return "http"
     return "generic"
 
 
