@@ -333,7 +333,12 @@ def _selfrefine_signals() -> list[dict[str, Any]]:
 
 def _validate_repo(value: str) -> str | None:
     text = str(value or "").strip()
-    return text if re.fullmatch(r"[A-Za-z0-9_.-]{1,100}/[A-Za-z0-9_.-]{1,100}", text) else None
+    if not re.fullmatch(r"[A-Za-z0-9_.-]{1,100}/[A-Za-z0-9_.-]{1,100}", text):
+        return None
+    owner, name = text.split("/", 1)
+    if owner in {".", ".."} or name in {".", ".."}:
+        return None
+    return text
 
 
 def _github_runs(repo: str, token: str | None, current_run_id: str | None) -> tuple[list[dict[str, Any]], str | None]:
