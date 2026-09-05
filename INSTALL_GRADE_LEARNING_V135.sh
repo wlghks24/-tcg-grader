@@ -24,6 +24,7 @@ PY_RUNTIME_FILES=(
   auto_repair_engine.py
   auto_update_all.py
   tcg_updater.py
+  ai_auto_tracker.py
   tcg_updater_v135.py
   runtime_bundle_guard_v143.py
   update_releases.py
@@ -75,6 +76,7 @@ PY_RUNTIME_FILES=(
   test_event_source_expansion_v145.py
   test_collection_learning_hardening_v142.py
   test_runtime_bundle_guard_v143.py
+  test_ai_auto_tracker_v27.py
   test_verified_grade_learning_v135.py
   test_verified_grade_learning_v135_safe.py
   test_grading_cert_verifier.py
@@ -124,6 +126,7 @@ python -m unittest -v \
   test_manual_pair_queue.py \
   test_manual_official_proof.py \
   test_runtime_bundle_guard_v143.py \
+  test_ai_auto_tracker_v27.py \
   test_verified_grade_learning_v135.py \
   test_verified_grade_learning_v135_safe.py
 
