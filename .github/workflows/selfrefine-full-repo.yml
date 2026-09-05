@@ -47,7 +47,7 @@ jobs:
           python main_peer_learning_export.py --self-test
           python peer_learning_crosscheck_gate.py --self-test
           python main_peer_learning_adoption.py --self-test
-          python -m unittest -v test_selfrefine_domain_isolation_v18.py test_main_selfrefine_state_isolation_v18.py test_peer_learning_crosscheck_v23.py test_verified_code_repair_rules_v19.py test_selfrefine_error_quarantine_v20.py test_secure_self_modify_v21.py test_selfrefine_resolution_research_v24.py
+          python -m unittest -v test_selfrefine_domain_isolation_v18.py test_main_selfrefine_state_isolation_v18.py test_peer_learning_crosscheck_v23.py test_verified_code_repair_rules_v19.py test_selfrefine_error_quarantine_v20.py test_secure_self_modify_v21.py test_market_ai_auto_tracker.py test_selfrefine_resolution_research_v24.py
           python verified_code_repair_rules.py --self-test
       - name: Run bounded Main SELFREFINE only
         run: python main_selfrefine_gate.py --cycles 5
