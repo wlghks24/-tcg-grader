@@ -461,6 +461,53 @@ class SelfrefineResolutionResearchV24Tests(unittest.TestCase):
                 staged["skip_reasons"]["impact_analysis_incomplete"], 1
             )
 
+    def test_research_plan_is_required_before_learning_queue(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            self._repo(root)
+            state = root / "state.json"
+            report = root / "report.json"
+            issue, applied, _target = self._prepare_verified_repair(
+                root, state, report
+            )
+            payload = json.loads(state.read_text(encoding="utf-8"))
+            payload["issues"][issue["error_signature"]]["research"] = {}
+            state.write_text(json.dumps(payload), encoding="utf-8")
+            staged = research.stage_repairs([applied], state_path=state)
+            self.assertEqual(staged["pending_full_regression"], 0)
+            self.assertEqual(staged["skip_reasons"]["research_plan_missing"], 1)
+
+    def test_local_error_disappearance_evidence_is_required_for_learning(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            self._repo(root)
+            state = root / "state.json"
+            report = root / "report.json"
+            issue, applied, _target = self._prepare_verified_repair(
+                root, state, report
+            )
+            staged = research.stage_repairs([applied], state_path=state)
+            self.assertEqual(staged["pending_full_regression"], 1)
+            payload = json.loads(state.read_text(encoding="utf-8"))
+            pending = payload["pending_verifications"][issue["error_signature"]]
+            self.assertTrue(pending["local_error_disappearance_verified"])
+            pending["local_error_disappearance_verified"] = False
+            state.write_text(json.dumps(payload), encoding="utf-8")
+
+            result = research.finalize_pending(
+                True, state_path=state, root=root
+            )
+            self.assertEqual(result["verified_resolution_lessons"], 0)
+            self.assertEqual(result["binding_rejected_resolutions"], 1)
+            payload = json.loads(state.read_text(encoding="utf-8"))
+            self.assertNotIn(issue["error_signature"], payload["lessons"])
+            self.assertEqual(
+                payload["issues"][issue["error_signature"]][
+                    "last_verification_rejection"
+                ],
+                "local_error_disappearance_not_verified",
+            )
+
     def test_noop_hash_cannot_enter_learning_queue(self):
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
@@ -612,6 +659,8 @@ class SelfrefineResolutionResearchV24Tests(unittest.TestCase):
         self.assertTrue(rules["transitive_dependency_impact_analysis"])
         self.assertTrue(rules["relative_import_impact_analysis"])
         self.assertTrue(rules["complete_impact_analysis_required_for_learning"])
+        self.assertTrue(rules["research_plan_required_before_learning"])
+        self.assertTrue(rules["local_error_disappearance_required_before_learning"])
         self.assertTrue(rules["full_regression_failure_does_not_poison_verified_lesson"])
         self.assertTrue(rules["local_resolution_is_provisional"])
         self.assertTrue(rules["full_regression_promotes_quarantine_learning"])
