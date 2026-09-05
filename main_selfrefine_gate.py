@@ -197,6 +197,8 @@ def run(cycles: int):
             "transitive_dependency_impact_analysis": True,
             "relative_import_impact_analysis": True,
             "complete_impact_analysis_required_for_learning": True,
+            "research_plan_required_before_learning": True,
+            "local_error_disappearance_required_before_learning": True,
             "full_regression_failure_does_not_poison_verified_lesson": True,
             "local_resolution_is_provisional": True,
             "full_regression_promotes_quarantine_learning": True,
@@ -237,6 +239,8 @@ def self_test():
     assert POLICY["rules"]["transitive_dependency_impact_analysis"] is True
     assert POLICY["rules"]["relative_import_impact_analysis"] is True
     assert POLICY["rules"]["complete_impact_analysis_required_for_learning"] is True
+    assert POLICY["rules"]["research_plan_required_before_learning"] is True
+    assert POLICY["rules"]["local_error_disappearance_required_before_learning"] is True
     assert POLICY["rules"]["full_regression_failure_does_not_poison_verified_lesson"] is True
     assert POLICY["rules"]["local_resolution_is_provisional"] is True
     assert POLICY["rules"]["full_regression_promotes_quarantine_learning"] is True
