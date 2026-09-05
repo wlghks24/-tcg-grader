@@ -48,6 +48,7 @@ CRITICAL_WORKFLOWS = {
     "Grading Vision SELFREFINE Guard",
     "Daily 06:00 Collection ↔ Instagram Accuracy Audit",
     "Final Tablet Guard",
+    "Market AI Auto Tracker",
 }
 IMPORTANT_FILES = (
     "releases.json",
@@ -277,6 +278,40 @@ def _event_signals(now: dt.datetime) -> list[dict[str, Any]]:
     return result
 
 
+def _market_ai_signals() -> list[dict[str, Any]]:
+    """Summarize the existing market-only tracker without duplicating its repair logic."""
+    try:
+        import market_ai_auto_tracker
+        findings = market_ai_auto_tracker.scan_static(ROOT)
+    except Exception as exc:
+        return [_issue(
+            "medium", "MARKET_AI_TRACKER_READ_FAILED", "market_ai_tracker",
+            f"{type(exc).__name__}: market tracker static scan failed",
+            "시세 전용 추적기 자체검사와 테스트를 실행",
+            "Market AI Auto Tracker와 시세 회귀검사가 정상인지 확인",
+            auto_action="market_ai_tracker",
+        )]
+    if not findings:
+        return []
+    severe = [
+        row for row in findings
+        if isinstance(row, dict) and str(row.get("severity") or "").lower() in {"error", "critical", "high"}
+    ]
+    sample = [
+        f"{row.get('code')}:{row.get('path')}"
+        for row in findings[:8] if isinstance(row, dict)
+    ]
+    return [_issue(
+        "high" if severe else "medium",
+        "MARKET_AI_TRACKER_FINDINGS",
+        "market_ai_tracker",
+        f"findings={len(findings)}; sample={sample}",
+        "시세 전용 Market AI Auto Tracker의 bounded deterministic repair 또는 수동 검토 경로를 사용",
+        "Market AI Auto Tracker + market regression + Main SELFREFINE가 모두 통과하는지 확인",
+        auto_action="market_ai_tracker",
+    )]
+
+
 def _selfrefine_signals() -> list[dict[str, Any]]:
     ledger = _read_json(ROOT / "MAIN_SELFREFINE_ERROR_LEDGER.json", {})
     rows = ledger.get("errors") if isinstance(ledger.get("errors"), list) else []
@@ -479,6 +514,7 @@ def run_once(
         issues.extend(_auto_update_signals(now))
         issues.extend(_link_signals(now))
         issues.extend(_event_signals(now))
+        issues.extend(_market_ai_signals())
         issues.extend(_selfrefine_signals())
 
         github_repo = _validate_repo(repo or os.environ.get("GITHUB_REPOSITORY", ""))
