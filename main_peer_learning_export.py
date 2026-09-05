@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import tempfile
 from pathlib import Path
 
 from shared_self_learning.peer_learning import PEER_LEARNING_FIELDS, normalize_peer_lesson
