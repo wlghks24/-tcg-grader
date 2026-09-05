@@ -500,15 +500,25 @@ class SelfrefineResolutionResearchV24Tests(unittest.TestCase):
             self.assertEqual(finalized["quarantine_verified_promotions"], 1)
             self.assertEqual(finalized["quarantine_promotion_failed"], 0)
 
+            qpayload = json.loads(qstate.read_text(encoding="utf-8"))
+            verified_entry = qpayload["entries"][issue["error_signature"]]
+            self.assertEqual(verified_entry["status"], "resolved_verified")
+            self.assertEqual(verified_entry["verified_successes"], 1)
+            self.assertEqual(
+                verified_entry["last_verified_rule"], applied["rule_id"]
+            )
+
             after = quarantine.observe_open_errors(
                 [issue], state_path=qstate
             )["errors"][0]
             self.assertTrue(after["learned_solution_reuse"])
             qpayload = json.loads(qstate.read_text(encoding="utf-8"))
-            qentry = qpayload["entries"][issue["error_signature"]]
-            self.assertEqual(qentry["status"], "resolved_verified")
-            self.assertEqual(qentry["verified_successes"], 1)
-            self.assertEqual(qentry["last_verified_rule"], applied["rule_id"])
+            recurrent_entry = qpayload["entries"][issue["error_signature"]]
+            self.assertEqual(recurrent_entry["status"], "isolated")
+            self.assertEqual(
+                recurrent_entry["recurrence_after_verified_resolution"], 1
+            )
+            self.assertEqual(recurrent_entry["verified_successes"], 1)
 
     def test_policy_keeps_search_text_non_executable(self):
         policy = json.loads(
