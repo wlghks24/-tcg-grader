@@ -494,6 +494,7 @@ def _record_source_restriction(stats,name,seconds,http_status):
         row['last_seconds']=round(seconds,3)
         row['last_run']=time.strftime('%Y-%m-%dT%H:%M:%S%z')
         row['last_http_status']=int(http_status)
+        row['last_result']='restricted'
         row['clean_success_streak']=0
         row['consecutive_failures']=0
         row['next_timeout_seconds']=_source_timeout(row)
@@ -508,13 +509,20 @@ def _record_source_stat(stats,name,seconds,clean_success,error='',recovered=Fals
             row['successes']=int(row.get('successes',0))+1
             row['clean_success_streak']=int(row.get('clean_success_streak',0))+1
             row['consecutive_failures']=0
+            row['last_result']='success'
+            row.pop('last_http_status',None)
             old=float(row.get('success_ewma_seconds') or seconds)
             row['success_ewma_seconds']=round(old*.7+seconds*.3,3)
         else:
             row['clean_success_streak']=0
             row['consecutive_failures']=int(row.get('consecutive_failures',0))+1
-            if recovered:row['recovered_successes']=int(row.get('recovered_successes',0))+1
-            else:row['failures']=int(row.get('failures',0))+1
+            if recovered:
+                row['recovered_successes']=int(row.get('recovered_successes',0))+1
+                row['last_result']='recovered'
+                row.pop('last_http_status',None)
+            else:
+                row['failures']=int(row.get('failures',0))+1
+                row['last_result']='failure'
             if error:
                 key=hashlib.sha1(re.sub(r'\d+','<n>',error.lower()).encode('utf-8','ignore')).hexdigest()[:12]
                 pats=row.setdefault('error_patterns',{})
