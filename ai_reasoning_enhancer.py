@@ -11,6 +11,7 @@ from __future__ import annotations
 import json
 import math
 import re
+from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
@@ -126,16 +127,52 @@ def _clean(value: Any, limit: int = MAX_TEXT) -> str:
     return text[: max(1, min(2000, int(limit)))]
 
 
-def _haystack(event: dict[str, Any]) -> str:
-    return " ".join(
-        _clean(event.get(key), 500).lower()
-        for key in ("stage", "path", "error_type", "message", "evidence", "source")
+@dataclass(frozen=True)
+class ReasoningFeatures:
+    stage: str
+    path: str
+    error_type: str
+    message: str
+    evidence: str
+    source: str
+    explicit_domain: str
+    severity: str
+    verification: str
+    haystack: str
+
+
+def _prepare(event: dict[str, Any]) -> ReasoningFeatures:
+    row = event if isinstance(event, dict) else {}
+    stage = _clean(row.get("stage"), 500)
+    path = _clean(row.get("path"), 500)
+    error_type = _clean(row.get("error_type"), 500)
+    message = _clean(row.get("message"), 500)
+    evidence = _clean(row.get("evidence"), 500)
+    source = _clean(row.get("source"), 500)
+    return ReasoningFeatures(
+        stage=stage,
+        path=path,
+        error_type=error_type,
+        message=message,
+        evidence=evidence,
+        source=source,
+        explicit_domain=_clean(row.get("domain"), 20).lower(),
+        severity=_clean(row.get("severity"), 20).lower(),
+        verification=_clean(row.get("verification"), 40).lower(),
+        haystack=" ".join(
+            value.lower()
+            for value in (stage, path, error_type, message, evidence, source)
+        ),
     )
 
 
-def domain_assessment(event: dict[str, Any]) -> dict[str, Any]:
-    explicit = _clean(event.get("domain"), 20).lower()
-    text = _haystack(event)
+def _haystack(event: dict[str, Any]) -> str:
+    return _prepare(event).haystack
+
+
+def _domain_from_features(features: ReasoningFeatures) -> dict[str, Any]:
+    explicit = features.explicit_domain
+    text = features.haystack
     raw_scores = {domain: sum(token in text for token in hints) for domain, hints in DOMAIN_HINTS.items()}
     if explicit in DOMAINS:
         raw_scores[explicit] += 5
@@ -161,8 +198,12 @@ def domain_assessment(event: dict[str, Any]) -> dict[str, Any]:
     }
 
 
-def root_cause_assessment(event: dict[str, Any]) -> dict[str, Any]:
-    text = _haystack(event)
+def domain_assessment(event: dict[str, Any]) -> dict[str, Any]:
+    return _domain_from_features(_prepare(event))
+
+
+def _root_cause_from_features(features: ReasoningFeatures) -> dict[str, Any]:
+    text = features.haystack
     matches: list[tuple[int, str, list[str]]] = []
     for family, hints in CAUSE_RULES:
         hit = sorted({hint for hint in hints if hint in text})
@@ -177,18 +218,26 @@ def root_cause_assessment(event: dict[str, Any]) -> dict[str, Any]:
     return {"family": family, "confidence": round(confidence, 3), "signals": signals[:5]}
 
 
-def evidence_quality(event: dict[str, Any], code_map: dict[str, Any] | None = None) -> dict[str, Any]:
+def root_cause_assessment(event: dict[str, Any]) -> dict[str, Any]:
+    return _root_cause_from_features(_prepare(event))
+
+
+def _evidence_from_features(
+    event: dict[str, Any],
+    features: ReasoningFeatures,
+    code_map: dict[str, Any] | None = None,
+) -> dict[str, Any]:
     score = 0.0
     reasons: list[str] = []
     checks = (
-        ("stage", 0.12),
-        ("path", 0.16),
-        ("error_type", 0.14),
-        ("evidence", 0.18),
-        ("message", 0.08),
+        ("stage", features.stage, 0.12),
+        ("path", features.path, 0.16),
+        ("error_type", features.error_type, 0.14),
+        ("evidence", features.evidence, 0.18),
+        ("message", features.message, 0.08),
     )
-    for key, weight in checks:
-        if _clean(event.get(key), 500):
+    for key, value, weight in checks:
+        if value:
             score += weight
             reasons.append(key)
     if isinstance(event.get("changed_files"), list) and event.get("changed_files"):
@@ -197,20 +246,28 @@ def evidence_quality(event: dict[str, Any], code_map: dict[str, Any] | None = No
     if event.get("regression_pass") is not None:
         score += 0.06
         reasons.append("regression_result")
-    verification = _clean(event.get("verification"), 40).lower()
-    if event.get("verified") is True or verification in {"verified", "full_verified", "full_regression_verified"}:
+    if event.get("verified") is True or features.verification in {"verified", "full_verified", "full_regression_verified"}:
         score += 0.08
         reasons.append("verification")
-    text = _haystack(event)
-    if re.search(r"\b(?:403|408|425|429|500|502|503|504)\b", text):
+    if re.search(r"\b(?:403|408|425|429|500|502|503|504)\b", features.haystack):
         score += 0.05
         reasons.append("status_code")
     if isinstance(code_map, dict) and code_map.get("available"):
-        score += 0.05
-        reasons.append("code_map")
+        map_confidence = _bounded_float(code_map.get("confidence"), 0.5)
+        if code_map.get("status") == "stale_for_origin":
+            map_confidence = min(map_confidence, 0.35)
+            reasons.append("code_map_stale")
+        else:
+            reasons.append("code_map")
+        score += 0.02 + 0.03 * map_confidence
     score = max(0.0, min(1.0, score))
     level = "high" if score >= 0.72 else ("medium" if score >= 0.45 else "low")
     return {"score": round(score, 3), "level": level, "signals": reasons[:10]}
+
+
+def evidence_quality(event: dict[str, Any], code_map: dict[str, Any] | None = None) -> dict[str, Any]:
+    features = _prepare(event)
+    return _evidence_from_features(event, features, code_map)
 
 
 def recurrence_assessment(occurrences: Any) -> dict[str, Any]:
@@ -245,11 +302,12 @@ def actionability_assessment(
     occurrences: Any = 1,
     code_map: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
-    domain = domain_assessment(event)
-    cause = root_cause_assessment(event)
-    evidence = evidence_quality(event, code_map)
+    features = _prepare(event)
+    domain = _domain_from_features(features)
+    cause = _root_cause_from_features(features)
+    evidence = _evidence_from_features(event, features, code_map)
     recurrence = recurrence_assessment(occurrences)
-    severity = _clean(event.get("severity"), 20).lower()
+    severity = features.severity
     severity_weight = SEVERITY_WEIGHT.get(severity, 0.35)
     structural_risk = str(code_map.get("structural_risk") or "") if isinstance(code_map, dict) else ""
     structural = 0.15 if structural_risk == "high" else (0.07 if structural_risk == "medium" else 0.0)
@@ -281,6 +339,10 @@ def actionability_assessment(
         "root_cause": cause,
         "evidence": evidence,
         "recurrence": recurrence,
+        "reasoning_features": {
+            "single_pass": True,
+            "haystack_reused": True,
+        },
     }
 
 
@@ -325,6 +387,10 @@ def enrich_incident(
         "schema": 1,
         "assessment": assessment,
         "recommended_checks": recommended_checks(safe_event, assessment, code_map),
+        "performance": {
+            "reasoning_feature_extraction": "single_pass",
+            "haystack_reused": True,
+        },
         "safety": {
             "learned_text_executable": False,
             "auto_patch_from_reasoning": False,

@@ -238,6 +238,26 @@ class PerformanceRuntimeTests(unittest.TestCase):
             self.assertTrue(context["matched_nodes"])
             self.assertIn("collector.py", context["impacted_files"])
 
+    def test_code_map_index_caches_identical_impact_query(self):
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            _write_graph(root)
+            index = fast.CodeMapIndex(root)
+            first = index.impact("collector.py", depth=2)
+            second = index.impact("collector.py", depth=2)
+            self.assertFalse(first["index_cache_hit"])
+            self.assertTrue(second["index_cache_hit"])
+            self.assertEqual(index.impact_cache_hits, 1)
+            self.assertEqual(first["impacted_files"], second["impacted_files"])
+
+    def test_code_map_neighbors_are_pre_sorted_once(self):
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            _write_graph(root)
+            index = fast.CodeMapIndex(root)
+            self.assertTrue(index.sorted_adjacency)
+            self.assertTrue(all(isinstance(value, tuple) for value in index.sorted_adjacency.values()))
+
     def test_batch_is_bounded(self):
         events = [{"message": "x"} for _ in range(fast.MAX_BATCH_EVENTS + 20)]
         with tempfile.TemporaryDirectory() as td:

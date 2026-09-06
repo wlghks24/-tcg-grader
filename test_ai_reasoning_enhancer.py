@@ -104,6 +104,47 @@ class AIReasoningEnhancerTests(unittest.TestCase):
         )
         self.assertTrue(out["assessment"]["human_review_required"])
 
+    def test_enrich_incident_prepares_reasoning_features_once(self):
+        event = {
+            "domain": "market",
+            "severity": "high",
+            "stage": "COLLECT",
+            "path": "collector.py",
+            "error_type": "HTTPError",
+            "message": "price source 429",
+            "evidence": "Retry-After 60",
+        }
+        calls = {"n": 0}
+        original = enhancer._prepare
+
+        def counted(row):
+            calls["n"] += 1
+            return original(row)
+
+        from unittest import mock
+        with mock.patch.object(enhancer, "_prepare", side_effect=counted):
+            out = enhancer.enrich_incident(event)
+        self.assertEqual(calls["n"], 1)
+        self.assertEqual(out["performance"]["reasoning_feature_extraction"], "single_pass")
+        self.assertTrue(out["performance"]["haystack_reused"])
+
+    def test_code_map_confidence_weights_evidence_conservatively(self):
+        event = {
+            "stage": "CI",
+            "path": "x.py",
+            "error_type": "AssertionError",
+            "message": "test failed",
+            "evidence": "assertion mismatch",
+        }
+        fresh = enhancer.evidence_quality(event, {
+            "available": True, "confidence": 0.98, "status": "ok",
+        })
+        stale = enhancer.evidence_quality(event, {
+            "available": True, "confidence": 0.98, "status": "stale_for_origin",
+        })
+        self.assertGreater(fresh["score"], stale["score"])
+        self.assertIn("code_map_stale", stale["signals"])
+
     def test_secret_redaction(self):
         text = enhancer._clean("Bearer abc.def api_key=xyz token=123 https://example.com/a")
         self.assertNotIn("abc.def", text)

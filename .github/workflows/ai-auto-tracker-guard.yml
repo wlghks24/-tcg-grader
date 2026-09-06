@@ -103,7 +103,7 @@ jobs:
           assert perf['fingerprint_reclean'] is False
           assert perf['compact_code_map_rebuild_on_hit'] is False
           assert out['safety']['performance_cache_run_scoped_only'] is True
-          print('AI performance v3 contract: OK')
+          print('AI performance v4 tracker contract: OK')
           PY
       - name: Safety contract audit
         run: |
@@ -119,6 +119,8 @@ jobs:
               'message': 'regression test failed',
               'evidence': 'bounded fixture',
           }, occurrences=3, code_map={'available': True})
+          assert sample['performance']['reasoning_feature_extraction'] == 'single_pass'
+          assert sample['performance']['haystack_reused'] is True
           safety = sample['safety']
           assert safety['learned_text_executable'] is False
           assert safety['auto_patch_from_reasoning'] is False

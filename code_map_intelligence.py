@@ -159,8 +159,11 @@ class CodeMapIndex:
         self.ids_by_basename: dict[str, list[str]] = {}
         self.test_paths: list[str] = []
         self.adjacency: dict[str, set[str]] = {}
+        self.sorted_adjacency: dict[str, tuple[str, ...]] = {}
         self.degree: Counter[str] = Counter()
         self.audit: dict[str, Any] = {}
+        self.impact_cache: dict[tuple[Any, ...], dict[str, Any]] = {}
+        self.impact_cache_hits = 0
         self._load()
 
     def _load(self) -> None:
@@ -203,6 +206,11 @@ class CodeMapIndex:
             self.adjacency.setdefault(target, set()).add(source)
             self.degree[source] += 1
             self.degree[target] += 1
+
+        self.sorted_adjacency = {
+            node: tuple(sorted(neighbors))
+            for node, neighbors in self.adjacency.items()
+        }
 
         try:
             if self.audit_path.is_file() and self.audit_path.stat().st_size <= 4_000_000:
@@ -251,6 +259,32 @@ class CodeMapIndex:
     ) -> dict[str, Any]:
         origin = _norm(origin_path)
         max_depth = max(0, min(4, int(depth)))
+        safe_limit = max(1, min(MAX_IMPACT_FILES, int(limit)))
+        pattern_stamp: tuple[Any, ...] = ()
+        if isinstance(learning, dict):
+            patterns = learning.get("verified_patterns")
+            if isinstance(patterns, dict):
+                candidate = patterns.get(_learning_key(origin))
+                if isinstance(candidate, dict):
+                    raw_counts = candidate.get("changed_file_counts")
+                    count_stamp = tuple(sorted(
+                        (_norm(path), int(count or 0))
+                        for path, count in (raw_counts.items() if isinstance(raw_counts, dict) else ())
+                        if _norm(path)
+                    )[:32])
+                    pattern_stamp = (
+                        int(candidate.get("verified_count") or 0),
+                        str(candidate.get("last_map_signature") or "")[:40],
+                        count_stamp,
+                    )
+        cache_key = (origin.lower(), max_depth, safe_limit, pattern_stamp)
+        cached = self.impact_cache.get(cache_key)
+        if cached is not None:
+            self.impact_cache_hits += 1
+            result = dict(cached)
+            result["index_cache_hit"] = True
+            return result
+
         if not self.available:
             return {
                 "available": False,
@@ -276,7 +310,7 @@ class CodeMapIndex:
             current, level = queue.popleft()
             if level >= max_depth:
                 continue
-            for neighbor in sorted(self.adjacency.get(current, ())):
+            for neighbor in self.sorted_adjacency.get(current, ()):
                 next_level = level + 1
                 prior = distance.get(neighbor)
                 if prior is not None and prior <= next_level:
@@ -351,7 +385,7 @@ class CodeMapIndex:
                 if path not in tests:
                     tests.append(path)
 
-        impacted_files = production[: max(1, min(MAX_IMPACT_FILES, int(limit)))]
+        impacted_files = production[:safe_limit]
         suggested_tests = tests[:MAX_SUGGESTED_TESTS]
         historical_review = [
             path for path, _ in sorted(
@@ -388,7 +422,7 @@ class CodeMapIndex:
             for _, path, meta in ranked[:16]
         ]
 
-        return {
+        result = {
             "available": True,
             "status": status,
             "origin_path": origin,
@@ -411,8 +445,11 @@ class CodeMapIndex:
             "confidence": confidence,
             "structural_risk": risk,
             "learning_applied": bool(pattern),
+            "index_cache_hit": False,
             "read_only": True,
         }
+        self.impact_cache[cache_key] = result
+        return result
 
 
 def impact_context(
