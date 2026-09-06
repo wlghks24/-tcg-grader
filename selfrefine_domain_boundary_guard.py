@@ -21,6 +21,8 @@ CONTROL_PLANE_FILES = {
     "main_crosscheck_export.py",
     "main_peer_learning_export.py",
     "peer_learning_crosscheck_gate.py",
+    "crosscheck_runtime_bridge.py",
+    "test_crosscheck_runtime_bridge_v26.py",
     "test_selfrefine_domain_isolation_v18.py",
     "test_main_selfrefine_state_isolation_v18.py",
 }
