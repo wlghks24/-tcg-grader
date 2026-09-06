@@ -6,7 +6,10 @@ import json
 from pathlib import Path
 from typing import Any
 
-from shared_self_learning.contracts import assert_passive_exchange_payload
+from shared_self_learning.contracts import (
+    assert_canonical_factual_type,
+    assert_passive_exchange_payload,
+)
 from shared_self_learning.engine import compare_record_sets
 from safe_runtime import atomic_write_json
 
@@ -41,6 +44,10 @@ def _load_records(path: Path) -> list[dict[str, Any]]:
             if not isinstance(value, dict):
                 raise ValueError(f"{path}:{line_no}: JSONL row must be an object")
             assert_passive_exchange_payload(value)
+            assert_canonical_factual_type(
+                value.get("information_family"),
+                label=f"{path}:{line_no}.information_family",
+            )
             rows.append(value)
         return rows
 
@@ -50,6 +57,11 @@ def _load_records(path: Path) -> list[dict[str, Any]]:
         value = value.get("records", [])
     if not isinstance(value, list) or not all(isinstance(row, dict) for row in value):
         raise ValueError(f"{path}: expected JSON list or records list")
+    for index, row in enumerate(value):
+        assert_canonical_factual_type(
+            row.get("information_family"),
+            label=f"{path}:records[{index}].information_family",
+        )
     return value
 
 
