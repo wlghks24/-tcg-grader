@@ -4,6 +4,7 @@ from __future__ import annotations
 import tempfile
 import unittest
 from pathlib import Path
+import json
 
 import market_ai_auto_tracker as tracker
 
@@ -40,6 +41,19 @@ class MarketAIAutoTrackerTests(unittest.TestCase):
             "MARKET_AI_TRACKER_REPORT.json\nMARKET_AI_TRACKER_STATE.json\n",
             encoding="utf-8",
         )
+        graph = root / "graphify-out"
+        graph.mkdir(parents=True, exist_ok=True)
+        (graph / "graph.json").write_text(json.dumps({
+            "nodes": [
+                {"id": "html", "source_file": "index.html"},
+                {"id": "updater", "source_file": "tcg_updater.py"},
+                {"id": "collector", "source_file": "multi_market_price_collector.py"},
+            ],
+            "links": [
+                {"source": "html", "target": "updater"},
+                {"source": "updater", "target": "collector"},
+            ],
+        }), encoding="utf-8")
         (root / tracker.TRACKER_WORKFLOW).write_text(
             "name: Market AI Auto Tracker\n"
             "on: workflow_dispatch\n"
@@ -133,6 +147,23 @@ class MarketAIAutoTrackerTests(unittest.TestCase):
             workflow.write_text(text, encoding="utf-8")
             codes = {row["code"] for row in tracker.scan_static(root)}
             self.assertIn("MARKET_TRACKER_ACTION_NOT_SHA_PINNED", codes)
+
+    def test_verified_repair_uses_code_map_and_learns_only_after_pass(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            self._repo(root)
+            html = (root / "index.html").read_text(encoding="utf-8")
+            html = html.replace(
+                "</body>",
+                '<script src="multi_market_prices.js?duplicate=1"></script></body>',
+            )
+            (root / "index.html").write_text(html, encoding="utf-8")
+            result = tracker.run_tracker(root=root, repair=True, run_tests=False, report_path=root / "report.json")
+            self.assertEqual(result["summary"]["status"], "pass")
+            self.assertTrue(result["code_map"]["available"])
+            self.assertTrue(result["code_map"]["verified_learning"])
+            state = json.loads((root / tracker.STATE.name).read_text(encoding="utf-8"))
+            self.assertTrue(state["code_map_learning"]["verified_patterns"])
 
     def test_design_references_are_official_github_docs(self):
         self.assertTrue(tracker.DESIGN_REFERENCES)

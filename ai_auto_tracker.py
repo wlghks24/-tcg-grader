@@ -21,6 +21,14 @@ from email.utils import parsedate_to_datetime
 from pathlib import Path
 from typing import Any, Callable, Iterable
 
+from code_map_intelligence import (
+    compact_context,
+    default_learning_state,
+    impact_context,
+    merge_verified_learning,
+    verified_learning_candidate,
+)
+
 try:
     from safe_runtime import atomic_write_json, exclusive_file_lock, diagnostic_exception
 except ImportError:  # isolated test fallback; repository runtime provides safe_runtime
@@ -131,6 +139,7 @@ def _default_state() -> dict[str, Any]:
         "domain_state_isolation": True,
         "auto_source_patch_from_learned_text": False,
         "full_regression_required_for_verified_repair": True,
+        "code_map_learning": default_learning_state(),
     }
 
 
@@ -148,6 +157,9 @@ def _load_state(path: Path) -> dict[str, Any]:
         if isinstance(k, str) and isinstance(v, dict)
     }
     state["history"] = [x for x in (raw.get("history") or [])[-MAX_HISTORY:] if isinstance(x, dict)]
+    raw_learning = raw.get("code_map_learning")
+    if isinstance(raw_learning, dict):
+        state["code_map_learning"] = raw_learning
     return state
 
 
@@ -233,7 +245,12 @@ def call_with_retry(operation: Callable[[], Any], *, attempts: int = 4,
     raise RuntimeError("unreachable retry state")
 
 
-def _handoff_payload(event: dict[str, Any], incident_id: str, domain: str) -> dict[str, Any]:
+def _handoff_payload(
+    event: dict[str, Any],
+    incident_id: str,
+    domain: str,
+    code_map: dict[str, Any],
+) -> dict[str, Any]:
     return {
         "incident_id": incident_id,
         "domain": domain,
@@ -243,6 +260,7 @@ def _handoff_payload(event: dict[str, Any], incident_id: str, domain: str) -> di
         "error_type": _clean(event.get("error_type") or "unknown", 100),
         "evidence": _clean(event.get("evidence") or event.get("message"), 240),
         "observed_at": _now(),
+        "code_map": compact_context(code_map),
     }
 
 
@@ -266,13 +284,15 @@ def _main_selfrefine_observe(event: dict[str, Any]) -> dict[str, Any] | None:
 
 
 def observe(events: Iterable[dict[str, Any]], *, state_path: Path = STATE,
-            dry_run: bool = False) -> dict[str, Any]:
+            dry_run: bool = False, code_map_root: Path | None = None) -> dict[str, Any]:
     normalized = [dict(x) for x in events if isinstance(x, dict)]
     with exclusive_file_lock(state_path):
         state = _load_state(state_path)
         observed: list[dict[str, Any]] = []
         handoffs: list[dict[str, Any]] = []
         selfrefine: list[dict[str, Any]] = []
+        verified_learning: list[dict[str, Any]] = []
+        map_root = Path(code_map_root) if code_map_root is not None else ROOT
         now = _now()
         for event in normalized:
             domain = classify_domain(event)
@@ -280,6 +300,11 @@ def observe(events: Iterable[dict[str, Any]], *, state_path: Path = STATE,
             incident = state["incidents"].get(iid, {})
             count = min(1_000_000, int(incident.get("occurrences", 0) or 0) + 1)
             status = "new" if count == 1 else "recurring"
+            map_context = impact_context(
+                map_root,
+                _clean(event.get("path"), 240).replace("\\", "/"),
+                depth=2,
+            )
             row = {
                 "incident_id": iid,
                 "domain": domain,
@@ -292,9 +317,23 @@ def observe(events: Iterable[dict[str, Any]], *, state_path: Path = STATE,
                 "message": _clean(event.get("message") or event.get("evidence"), 240),
                 "first_seen": incident.get("first_seen") or now,
                 "last_seen": now,
+                "code_map": compact_context(map_context),
             }
             observed.append(row)
-            handoffs.append(_handoff_payload(event, iid, domain))
+            handoffs.append(_handoff_payload(event, iid, domain, map_context))
+            changed_files = event.get("changed_files") if isinstance(event.get("changed_files"), list) else []
+            verified = bool(event.get("verified")) or str(event.get("verification") or "").lower() in {
+                "verified", "full_verified", "full_regression_verified",
+            }
+            candidate = verified_learning_candidate(
+                origin_path=row["path"],
+                changed_files=changed_files,
+                impact=map_context,
+                verified=verified,
+                regression_pass=event.get("regression_pass") is True,
+            )
+            if candidate is not None:
+                verified_learning.append(candidate)
             if not dry_run:
                 state["incidents"][iid] = row
                 state["history"].append({
@@ -306,6 +345,8 @@ def observe(events: Iterable[dict[str, Any]], *, state_path: Path = STATE,
                 if result is not None:
                     selfrefine.append({"incident_id": iid, **result})
         if not dry_run:
+            if verified_learning:
+                merge_verified_learning(state, verified_learning)
             _save_state(state, state_path)
 
     summary = {
@@ -315,6 +356,8 @@ def observe(events: Iterable[dict[str, Any]], *, state_path: Path = STATE,
         "by_domain": {d: sum(x["domain"] == d for x in observed) for d in sorted(DOMAINS)},
         "critical_high": sum(x["severity"] in {"critical", "high"} for x in observed),
         "dry_run": dry_run,
+        "code_map_available": sum(bool(x.get("code_map", {}).get("available")) for x in observed),
+        "verified_code_map_learning": len(verified_learning),
     }
     return {
         "schema": SCHEMA,
@@ -323,12 +366,18 @@ def observe(events: Iterable[dict[str, Any]], *, state_path: Path = STATE,
         "incidents": observed,
         "handoffs": handoffs,
         "main_selfrefine": selfrefine,
+        "code_map": {
+            "mode": "graphify_read_only_impact_analysis",
+            "verified_learning": verified_learning,
+        },
         "safety": {
             "domain_state_isolation": True,
             "passive_cross_domain_handoff_only": True,
             "learned_text_executable": False,
             "unverified_patch_generation": False,
             "full_regression_required_for_verified_repair": True,
+            "code_map_patch_generation": False,
+            "code_map_learning_requires_full_regression": True,
         },
     }
 

@@ -14,6 +14,22 @@ class FakeHTTPError(Exception):
         self.headers = {"Retry-After": retry_after} if retry_after is not None else {}
 
 
+def _write_graph(root: Path) -> None:
+    target = root / "graphify-out"
+    target.mkdir(parents=True, exist_ok=True)
+    (target / "graph.json").write_text(json.dumps({
+        "nodes": [
+            {"id": "collector", "source_file": "collector.py"},
+            {"id": "updater", "source_file": "tcg_updater.py"},
+            {"id": "index", "source_file": "index.html"},
+        ],
+        "links": [
+            {"source": "collector", "target": "updater"},
+            {"source": "updater", "target": "index"},
+        ],
+    }), encoding="utf-8")
+
+
 class AutoTrackerTests(unittest.TestCase):
     def test_domain_routing_isolated(self):
         self.assertEqual(tracker.classify_domain({"message":"Termux tablet reboot autostart failed"}), "tablet")
@@ -77,6 +93,56 @@ class AutoTrackerTests(unittest.TestCase):
             out = tracker.observe([{"message":"tablet Termux failed"}], state_path=state, dry_run=True)
             self.assertTrue(out["summary"]["dry_run"])
             self.assertFalse(state.exists())
+
+    def test_code_map_impact_is_attached_to_handoff(self):
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            _write_graph(root)
+            state = root / "state.json"
+            out = tracker.observe(
+                [{"path": "collector.py", "message": "collector failed"}],
+                state_path=state,
+                code_map_root=root,
+            )
+            context = out["handoffs"][0]["code_map"]
+            self.assertTrue(context["available"])
+            self.assertIn("tcg_updater.py", context["impacted_files"])
+
+    def test_code_map_learning_requires_verified_full_regression(self):
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            _write_graph(root)
+            state = root / "state.json"
+            tracker.observe(
+                [{
+                    "path": "collector.py",
+                    "message": "collector failed",
+                    "changed_files": ["tcg_updater.py"],
+                    "verification": "verified",
+                    "regression_pass": False,
+                }],
+                state_path=state,
+                code_map_root=root,
+            )
+            first = json.loads(state.read_text(encoding="utf-8"))
+            self.assertEqual(first["code_map_learning"]["verified_patterns"], {})
+            out = tracker.observe(
+                [{
+                    "path": "collector.py",
+                    "message": "collector failed",
+                    "changed_files": ["tcg_updater.py"],
+                    "verification": "verified",
+                    "regression_pass": True,
+                }],
+                state_path=state,
+                code_map_root=root,
+            )
+            self.assertEqual(out["summary"]["verified_code_map_learning"], 1)
+            second = json.loads(state.read_text(encoding="utf-8"))
+            patterns = second["code_map_learning"]["verified_patterns"]
+            self.assertEqual(len(patterns), 1)
+            learned = next(iter(patterns.values()))
+            self.assertEqual(learned["changed_file_counts"]["tcg_updater.py"], 1)
 
     def test_secret_redaction(self):
         value = tracker._clean("Bearer abc.def token=123 password=xyz https://example.com/a")

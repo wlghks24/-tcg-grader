@@ -25,6 +25,12 @@ from pathlib import Path
 from typing import Any
 
 from safe_runtime import atomic_write_json, atomic_write_text, safe_read_text
+from code_map_intelligence import (
+    compact_context,
+    impact_context,
+    merge_verified_learning,
+    verified_learning_candidate,
+)
 
 ROOT = Path(__file__).resolve().parent
 REPORT = ROOT / "MARKET_AI_TRACKER_REPORT.json"
@@ -570,6 +576,10 @@ def _save_state(result: dict[str, Any], path: Path = STATE) -> None:
         "regression_pass": result.get("summary", {}).get("regression_pass"),
     })
     state["history"] = history
+    code_map = result.get("code_map") if isinstance(result.get("code_map"), dict) else {}
+    learning_rows = code_map.get("verified_learning") if isinstance(code_map.get("verified_learning"), list) else []
+    if learning_rows:
+        merge_verified_learning(state, learning_rows)
     atomic_write_json(path, state, suffix=".market-ai-state.tmp")
 
 
@@ -615,6 +625,50 @@ def run_tracker(
     if blocking or not regression_pass or not diff_safety["allowed"]:
         status = "fail"
 
+    map_contexts: list[dict[str, Any]] = []
+    seen_paths: set[str] = set()
+    for row in initial[:40]:
+        path = str(row.get("path") or "").replace("\\", "/")
+        if not path or path in seen_paths:
+            continue
+        seen_paths.add(path)
+        map_contexts.append(impact_context(root, path, depth=2))
+    impacted_files = sorted({
+        path
+        for context in map_contexts
+        for path in (context.get("impacted_files") or [])
+        if isinstance(path, str) and path
+    })[:40]
+    verified_learning: list[dict[str, Any]] = []
+    verified_repair = (
+        status == "pass"
+        and regression_pass
+        and bool(diff_safety.get("allowed"))
+        and bool(repair_result.get("attempted"))
+        and not bool(repair_result.get("rolled_back"))
+        and bool(repair_result.get("changed_files"))
+    )
+    if verified_repair:
+        by_origin = {
+            str(context.get("origin_path") or ""): context
+            for context in map_contexts
+            if str(context.get("origin_path") or "")
+        }
+        for row in initial[:40]:
+            origin = str(row.get("path") or "").replace("\\", "/")
+            context = by_origin.get(origin)
+            if context is None:
+                continue
+            candidate = verified_learning_candidate(
+                origin_path=origin,
+                changed_files=repair_result.get("changed_files") or [],
+                impact=context,
+                verified=True,
+                regression_pass=True,
+            )
+            if candidate is not None:
+                verified_learning.append(candidate)
+
     result = {
         "schema": SCHEMA,
         "generated_at": _now(),
@@ -636,6 +690,14 @@ def run_tracker(
         "repair": repair_result,
         "regressions": regressions,
         "diff_safety": diff_safety,
+        "code_map": {
+            "mode": "graphify_read_only_impact_analysis",
+            "available": any(bool(context.get("available")) for context in map_contexts),
+            "contexts": [compact_context(context) for context in map_contexts[:16]],
+            "impacted_files": impacted_files,
+            "verified_learning": verified_learning,
+            "learning_applied": bool(verified_learning),
+        },
         "design_references": DESIGN_REFERENCES,
         "safety": {
             "runtime_web_text_executable": False,
@@ -648,6 +710,8 @@ def run_tracker(
             "github_rate_limit_retry_storm": False,
             "selfrefine_error_state_isolated": True,
             "unknown_error_auto_patch": False,
+            "code_map_patch_generation": False,
+            "code_map_learning_requires_full_regression": True,
         },
     }
     target = report_path or REPORT

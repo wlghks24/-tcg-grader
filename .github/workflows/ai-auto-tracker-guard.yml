@@ -4,6 +4,7 @@ on:
   push:
     paths:
       - 'ai_auto_tracker.py'
+      - 'code_map_intelligence.py'
       - 'test_ai_auto_tracker.py'
       - 'selfrefine_error_quarantine.py'
       - 'safe_runtime.py'
@@ -34,7 +35,7 @@ jobs:
         with:
           python-version: '3.11'
       - name: Syntax check
-        run: python -m py_compile ai_auto_tracker.py test_ai_auto_tracker.py
+        run: python -m py_compile code_map_intelligence.py ai_auto_tracker.py test_ai_auto_tracker.py
       - name: Tracker regression tests
         run: python -m unittest -v test_ai_auto_tracker.py
       - name: Domain boundary regression

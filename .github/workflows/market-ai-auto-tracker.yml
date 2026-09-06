@@ -5,7 +5,12 @@ on:
     branches: [main]
     paths:
       - 'market_ai_auto_tracker.py'
+      - 'ai_auto_tracker.py'
+      - 'code_map_intelligence.py'
       - 'test_market_ai_auto_tracker.py'
+      - 'GRAPHIFY_UPDATE.sh'
+      - 'GRAPHIFY_AUDIT.py'
+      - '.graphifyignore'
       - 'multi_market_price_collector.py'
       - 'multi_market_prices.js'
       - 'multi_market_prices.css'
@@ -44,6 +49,19 @@ jobs:
         uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97
         with:
           python-version: '3.11'
+
+      - name: Build audited Graphify code map for impact analysis
+        env:
+          GRAPHIFY_VERSION: '0.9.53'
+          GRAPHIFY_DISABLE_SELF_HEAL: '1'
+        shell: bash
+        run: |
+          set -euo pipefail
+          python -m pip install --disable-pip-version-check "graphifyy==$GRAPHIFY_VERSION"
+          bash GRAPHIFY_UPDATE.sh --quiet
+          python GRAPHIFY_AUDIT.py --strict
+          test -s graphify-out/graph.json
+          test -s graphify-out/graph_audit.json
 
       - name: Run market AI tracker and bounded deterministic repair
         run: python market_ai_auto_tracker.py --repair --no-tests
@@ -116,6 +134,7 @@ jobs:
           path: |
             MARKET_AI_TRACKER_REPORT.json
             MARKET_AI_TRACKER_STATE.json
+            graphify-out/graph_audit.json
             MAIN_SELFREFINE_ERROR_LEDGER.json
             MAIN_SELFREFINE_RESEARCH_REPORT.json
           if-no-files-found: ignore
@@ -131,6 +150,8 @@ jobs:
             echo "- commit: ${GITHUB_SHA}"
             echo "- event: ${{ github.event_name }}"
             echo "- bounded repair changed files: ${{ steps.changes.outputs.changed || 'unknown' }}"
+            echo "- Graphify code map: built + audited before tracking"
+            echo "- code-map learning: full-regression-verified outcomes only"
             echo "- 403/429 bypass: disabled"
             echo "- search/error text -> source patch: disabled"
             echo "- publish gate: targeted regression + repository integrity + security audit + safe-diff allowlist"
