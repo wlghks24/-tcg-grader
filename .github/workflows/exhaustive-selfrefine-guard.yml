@@ -75,6 +75,11 @@ jobs:
           PY
       - name: Verify critical feature coverage matrix
         run: python verify_critical_feature_matrix_v25.py
+      - name: Verify internal code-map contracts
+        run: |
+          python verify_code_map_internal.py
+          python -m unittest -v test_ai_auto_tracker.py test_market_ai_auto_tracker.py
+
       - name: Detect duplicate top-level definitions in active runtime modules
         run: |
           python - <<'PY'
