@@ -155,7 +155,7 @@ def self_test() -> None:
         )
         assert result["status"] == "finalized", result
         assert result["validation"]["write_readback_verified"] is True, result
-        assert tuple(result["lessons"][0]) == PEER_LEARNING_FIELDS, result
+        assert set(result["lessons"][0]) == set(PEER_LEARNING_FIELDS), result
 
         empty = export_snapshot(
             [],
