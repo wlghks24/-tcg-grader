@@ -71,6 +71,17 @@ FEATURE_FILES = {
         "repository_integrity_guard.py",
         "security_self_audit.py",
     ],
+    "code_map_internal": [
+        "verify_code_map_internal.py",
+        "code_map_intelligence.py",
+        "GRAPHIFY_UPDATE.sh",
+        "GRAPHIFY_SELF_HEAL.py",
+        "GRAPHIFY_AUDIT.py",
+        "SETUP_GRAPHIFY_TERMUX.sh",
+        "test_ai_auto_tracker.py",
+        "test_market_ai_auto_tracker.py",
+        ".github/workflows/graphify-integration-guard.yml",
+    ],
 }
 
 EXHAUSTIVE_COMMANDS = {
@@ -89,6 +100,7 @@ EXHAUSTIVE_COMMANDS = {
     "tablet": "TCG_FINAL_SKIP_HEAD_MATCH=1 bash VERIFY_TABLET_FINAL.sh",
     "security": "python security_self_audit.py --fail-on medium",
     "main_selfrefine": "python main_selfrefine_gate.py",
+    "code_map_internal": "python verify_code_map_internal.py",
 }
 
 DAILY_COMMANDS = {
@@ -99,6 +111,7 @@ DAILY_COMMANDS = {
     "daily_audit": "python daily_collection_instagram_accuracy.py",
     "health_freshness": "current_run_age_seconds",
     "critical_collector_diagnostics": "critical_collection_results",
+    "code_map_internal": "python verify_code_map_internal.py",
 }
 
 def _read(path: Path) -> str:

@@ -24,6 +24,11 @@ jobs:
         run: python -m pip install --disable-pip-version-check -r requirements.txt
       - name: Run tracked repository integrity checks
         run: python repository_integrity_guard.py
+      - name: Verify internal code-map contracts
+        run: |
+          python verify_code_map_internal.py
+          python -m unittest -v test_ai_auto_tracker.py test_market_ai_auto_tracker.py
+
       - name: Validate all tracked shell entrypoints
         shell: bash
         run: |
