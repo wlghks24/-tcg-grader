@@ -101,6 +101,8 @@ class DailyAuditTest(unittest.TestCase):
         self.assertEqual(report["summary"]["status"], "warning")
         self.assertFalse(report["summary"]["crosscheck_operational_ready"])
         self.assertEqual(_exit_code(report, require_crosscheck_ready=True), 1)
+        self.assertFalse(report["summary"]["crosscheck_operational_ready"])
+        self.assertEqual(_exit_code(report, require_crosscheck_ready=True), 1)
 
     def test_stale_repeated_main_failures_are_high_and_repairable(self):
         adaptive = healthy_adaptive()
