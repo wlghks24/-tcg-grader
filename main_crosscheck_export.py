@@ -5,25 +5,19 @@ import argparse
 import json
 from pathlib import Path
 
+from shared_self_learning.contracts import CANONICAL_FACTUAL_TYPES, assert_canonical_factual_type
 from shared_self_learning.engine import normalize_crosscheck_record
 from safe_runtime import atomic_write_json
 
 ROOT = Path(__file__).resolve().parent
 DEFAULT_OUTPUT = ROOT / "crosscheck_exchange" / "runtime-main.json"
-CANONICAL_FACTUAL_TYPES = {
-    "card_price", "release", "rerelease", "promo",
-    "event", "movie_bonus", "completed_sale", "market_reference",
-}
-
 
 def export_records(records: list[dict], output: Path = DEFAULT_OUTPUT) -> list[dict]:
-    invalid = sorted({
-        str(row.get("information_family") or "").strip()
-        for row in records
-        if str(row.get("information_family") or "").strip() not in CANONICAL_FACTUAL_TYPES
-    })
-    if invalid:
-        raise ValueError(f"unsupported factual types: {invalid}")
+    for index, row in enumerate(records):
+        assert_canonical_factual_type(
+            row.get("information_family"),
+            label=f"records[{index}].information_family",
+        )
     normalized = [normalize_crosscheck_record("main", row) for row in records]
     atomic_write_json(
         output,
