@@ -63,9 +63,16 @@
           ]
         },
         "information_family": {
-          "type": "string",
-          "minLength": 1,
-          "maxLength": 80
+          "enum": [
+            "card_price",
+            "release",
+            "rerelease",
+            "promo",
+            "event",
+            "movie_bonus",
+            "completed_sale",
+            "market_reference"
+          ]
         },
         "canonical_key": {
           "type": "string",
