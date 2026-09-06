@@ -30,7 +30,7 @@ REQUIRED_TEXT = {
     "ai_auto_tracker.py": (
         "CodeMapIndex",
         "code_map_root",
-        "verified_code_map_learning",
+        "code_map_learning",
     ),
     "market_ai_auto_tracker.py": (
         "CodeMapIndex",
