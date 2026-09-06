@@ -593,6 +593,43 @@ def _proof_reason_cleanup(reasons: set[str]) -> set[str]:
     }
 
 
+def _inside_allowed_file(relative_path: Any, allowed_root: Path) -> bool:
+    text = str(relative_path or "").strip()
+    if not text:
+        return False
+    try:
+        root = allowed_root.resolve()
+        candidate = (ROOT / text).resolve()
+        return (
+            candidate != root
+            and root in candidate.parents
+            and candidate.is_file()
+            and not candidate.is_symlink()
+        )
+    except (OSError, ValueError, RuntimeError):
+        return False
+
+
+def _manual_verification_ready(row: dict[str, Any]) -> tuple[bool, str]:
+    """Require the complete stored evidence set before marking manual verification complete."""
+    if row.get("front_back_pair_complete") is not True:
+        return False, "front_back_pair_incomplete"
+    front_sha = str(row.get("image_sha256") or "").lower()
+    back_sha = str(row.get("back_image_sha256") or "").lower()
+    proof_sha = str(row.get("manual_official_proof_sha256") or "").lower()
+    if not all(re.fullmatch(r"[0-9a-f]{64}", value) for value in (front_sha, back_sha, proof_sha)):
+        return False, "evidence_hash_missing"
+    if front_sha == back_sha:
+        return False, "front_back_same_image"
+    if not _inside_allowed_file(row.get("image_path"), manual_photo.INBOX_ROOT):
+        return False, "front_evidence_missing"
+    if not _inside_allowed_file(row.get("back_image_path"), manual_photo.INBOX_ROOT):
+        return False, "back_evidence_missing"
+    if not _inside_allowed_file(row.get("manual_official_proof_path"), PROOF_ROOT):
+        return False, "proof_evidence_missing"
+    return True, "ready"
+
+
 def submit(payload: dict[str, Any]) -> dict[str, Any]:
     if not isinstance(payload, dict):
         raise ValueError("수동 공식확인 자료 형식 오류")
@@ -707,11 +744,15 @@ def submit(payload: dict[str, Any]) -> dict[str, Any]:
             "manual_official_proof_missing_fields": match["missing"],
             "manual_official_proof_conflicts": match["conflicts"],
             "official_reference_url": current.get("official_reference_url") or lookup_url(company, cert),
-            "official_result": bool(matched),
-            "official_grade": expected_grade if matched else None,
-            "official_verification_method": "user_browser_official_page_exact_screenshot" if matched else None,
-            "official_verified_at": now if matched else None,
-            "training_eligible": bool(matched),
+            # A matched screenshot is necessary but not sufficient. Verification
+            # completes only after stored front/back/proof evidence and the
+            # persisted verified registry all agree.
+            "official_result": False,
+            "official_grade": None,
+            "official_verification_method": None,
+            "official_verification_source": None,
+            "official_verified_at": None,
+            "training_eligible": False,
             "raw_grade_calibration_eligible": False,
             "automatic_official_lookup_used": False,
         })
@@ -720,17 +761,49 @@ def submit(payload: dict[str, Any]) -> dict[str, Any]:
             current["manual_official_proof_game_inferred"] = True
             current["manual_official_proof_game_evidence"] = "official_page_text"
         reasons = _proof_reason_cleanup(set(current.get("quarantine_reasons") or []))
+        verified = False
+        verification_reason = None
         if matched:
-            reasons.discard("official_lookup_not_confirmed")
-            reasons.discard("manual_official_proof_required")
-            reasons.discard("manual_official_page_proof_only")
-            reasons.discard("live_official_lookup_pending")
-            current.update({
-                "status": "verified_reference",
-                "verification_state": "manual_official_verified",
-                "learning_eligibility": "official_reference_manual_screenshot",
-                "manual_official_proof_required": False,
-            })
+            ready, verification_reason = _manual_verification_ready(current)
+            if ready:
+                # Publish the exact company+cert+grade anchor first. Only a
+                # successful persisted-registry write may flip official_result.
+                published, publish_error = manual_photo._publish_verified(current)
+                if published:
+                    verified = True
+                    verification_reason = "verified"
+                else:
+                    verification_reason = str(publish_error or "verified_registry_publish_failed")
+                    reasons.add(verification_reason)
+            if verified:
+                reasons.discard("official_lookup_not_confirmed")
+                reasons.discard("manual_official_proof_required")
+                reasons.discard("manual_official_page_proof_only")
+                reasons.discard("live_official_lookup_pending")
+                current.update({
+                    "official_result": True,
+                    "official_grade": expected_grade,
+                    "official_verification_method": "manual_user_browser_official_page_exact_match",
+                    "official_verification_source": "user_browser_official_page",
+                    "official_verified_at": now,
+                    "status": "verified_reference",
+                    "verification_state": "manual_official_verified",
+                    "learning_eligibility": "official_verified_slab",
+                    "manual_official_proof_required": False,
+                })
+            else:
+                reasons.add("manual_official_verification_not_complete")
+                current.update({
+                    "status": "quarantine" if str(verification_reason or "").startswith("persisted_official_") else "pending_official_verification",
+                    "verification_state": (
+                        "manual_official_verified_registry_conflict"
+                        if str(verification_reason or "").startswith("persisted_official_")
+                        else "manual_official_proof_matched_pending_verification"
+                    ),
+                    "learning_eligibility": "manual_verification_required_before_learning",
+                    "manual_official_proof_required": False,
+                    "manual_official_verification_block_reason": verification_reason,
+                })
         else:
             reasons.add("official_lookup_not_confirmed")
             reasons.add("manual_official_proof_needs_review")
@@ -758,14 +831,18 @@ def submit(payload: dict[str, Any]) -> dict[str, Any]:
 
     new_path = target.relative_to(ROOT).as_posix()
     if matched:
-        _append_reference(current)
+        if current.get("official_result") is True:
+            _append_reference(current)
         if old_path and old_path != new_path:
             _remove_proof_file(old_path)
     else:
         _remove_proof_file(new_path)
 
-    reason = None if matched else (
-        "official_page_screenshot_identity_conflict_needs_review"
+    reason = (
+        None if current.get("official_result") is True
+        else "manual_verification_not_complete"
+        if matched
+        else "official_page_screenshot_identity_conflict_needs_review"
         if match["conflicts"] else "official_page_screenshot_ocr_incomplete"
     )
     return {
@@ -776,8 +853,11 @@ def submit(payload: dict[str, Any]) -> dict[str, Any]:
         "proof": proof_payload,
         "policy": {
             "manual_only": True,
-            "official_result": bool(matched),
-            "official_reference": bool(matched),
+            "proof_matched": bool(matched),
+            "official_result": current.get("official_result") is True,
+            "official_reference": current.get("official_result") is True,
+            "verified_registry_required": True,
+            "complete_stored_evidence_required": True,
             "raw_grade_calibration": False,
             "rejected_screenshot_bytes_retained": False,
             "ocr_miss_does_not_quarantine_card": True,
