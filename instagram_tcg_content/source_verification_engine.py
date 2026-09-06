@@ -60,6 +60,12 @@ class Observation:
     event_or_trade_time: str | None = None
     status: str = "observed"
     original_currency: str | None = None
+    condition: str | None = None
+    grade: str | None = None
+    finality: str | None = None
+    price_basis: str | None = None
+    quantity: int | None = None
+    unit: str | None = None
     lineage_key: str | None = None
 
     def with_lineage(self) -> "Observation":
@@ -157,6 +163,36 @@ def _parse_time(value: str | None) -> datetime | None:
     return dt
 
 
+def _completed_sale_evidence_reason(row: Observation) -> str | None:
+    if row.fact_type != "completed_sale":
+        return None
+    if row.source_tier not in TRANSACTION_EVIDENCE_TIERS:
+        return None
+    if row.status.lower() in INVALID_COMPLETED_STATUSES:
+        return "invalid completed-sale status"
+    if row.status.lower() not in {"sold", "completed", "closed", "settled", "realized"}:
+        return "completed-sale final state missing"
+    if _parse_time(row.event_or_trade_time) is None:
+        return "completed-sale transaction time missing"
+    if not row.original_currency:
+        return "completed-sale currency missing"
+    if not str(row.value).strip():
+        return "completed-sale realized amount missing"
+    if not row.condition:
+        return "completed-sale condition missing"
+    if not row.finality:
+        return "completed-sale finality missing"
+    if not row.price_basis:
+        return "completed-sale price basis missing"
+    if row.quantity is None or row.quantity <= 0:
+        return "completed-sale quantity missing"
+    if not row.unit:
+        return "completed-sale unit missing"
+    if not row.source_locator:
+        return "completed-sale item/lot locator missing"
+    return None
+
+
 def _invalid_observation_reason(row: Observation) -> str | None:
     if row.source_tier not in SOURCE_TIERS:
         return "unknown source tier"
@@ -243,7 +279,7 @@ def verify_fact(rows: Sequence[Observation]) -> VerificationResult:
             r
             for r in rows
             if r.source_tier in TRANSACTION_EVIDENCE_TIERS
-            and r.status.lower() not in INVALID_COMPLETED_STATUSES
+            and _completed_sale_evidence_reason(r) is None
         ]
         original_providers = {r.provider_id for r in valid}
         if len(original_providers) >= 2:
@@ -260,6 +296,17 @@ def verify_fact(rows: Sequence[Observation]) -> VerificationResult:
                 0.97,
                 None,
             )
+        evidence_errors = [
+            reason
+            for r in rows
+            if r.source_tier in TRANSACTION_EVIDENCE_TIERS
+            if (reason := _completed_sale_evidence_reason(r))
+        ]
+        reason = (
+            evidence_errors[0]
+            if evidence_errors
+            else "needs 2 independent realized-sale evidence providers"
+        )
         return VerificationResult(
             key,
             fact,
@@ -270,7 +317,7 @@ def verify_fact(rows: Sequence[Observation]) -> VerificationResult:
             len(original_providers),
             official_primary,
             0.58,
-            "needs 2 independent realized-sale evidence providers",
+            reason,
         )
 
     values = sorted({r.value for r in rows})
