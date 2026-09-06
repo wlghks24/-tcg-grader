@@ -30,6 +30,8 @@ on:
       - 'shared_self_learning/peer_learning.py'
       - 'test_peer_learning_crosscheck_v23.py'
       - 'crosscheck_exchange/**'
+      - 'TCG_CROSSCHECK/**'
+      - 'TCG_CROSSCHECK/**'
       - '.github/workflows/daily-0600-collection-instagram-accuracy.yml'
   push:
     branches: [main]
