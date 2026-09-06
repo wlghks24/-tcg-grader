@@ -54,6 +54,27 @@ jobs:
           node verify_vision_runtime.js
           python verify_vision_calibration.py
           python -m unittest -v test_grading_hierarchy_v17.py test_verified_grade_learning_v135.py test_verified_grade_learning_v135_safe.py
+      - name: Run extended OCR and card verification contracts
+        run: |
+          python -m unittest -v \
+            test_ocr_accuracy_boost_v147.py \
+            test_ocr_front_back_fallback_v148.py \
+            test_bgs_cert_ocr_v169.py \
+            test_cgc_cert_ocr_v170.py \
+            test_negative_proof_korean_ocr_v171.py \
+            test_psa_official_proof_grade_v187.py \
+            test_grading_cert_verifier.py
+      - name: Run release event promo collection contracts
+        run: |
+          python -m unittest -v \
+            test_release_history_coverage_v4.py \
+            test_release_parser_learning.py \
+            test_update_releases_parser_recovery.py \
+            test_promo_event_keyword_coverage_v5.py \
+            test_multi_route_event_discovery.py \
+            test_event_quick_watch.py \
+            test_event_source_expansion_v145.py \
+            test_collection_verification_gate.py
       - name: Run Main vs Instagram SELFREFINE isolation contracts
         run: |
           python selfrefine_domain_boundary_guard.py
