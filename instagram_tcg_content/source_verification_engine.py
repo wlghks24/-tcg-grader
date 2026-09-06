@@ -10,7 +10,9 @@ from __future__ import annotations
 
 from dataclasses import dataclass, replace
 from datetime import datetime, timedelta, timezone
+from decimal import Decimal, InvalidOperation
 from hashlib import sha256
+import re
 from typing import Iterable, Sequence
 
 KST = timezone(timedelta(hours=9))
@@ -133,20 +135,37 @@ def independent_key(obs: Observation) -> tuple[str, str]:
 
 
 def dedupe_lineage(rows: Iterable[Observation]) -> list[Observation]:
-    """Deduplicate the same underlying sale/event when lineage is shared.
+    """Deduplicate shared lineage without fabricating sale lineage.
 
-    Aggregators such as auction-price registries must reuse the underlying sale's
-    lineage_key when that lineage is known; this prevents double-counting the
-    registry row and the original marketplace/auction row as independent sales.
+    Completed-sale transaction evidence must carry an explicit lineage key.
+    Other fact types may still derive a deterministic lineage fingerprint.
     """
     seen: set[str] = set()
     out: list[Observation] = []
     for raw in rows:
-        row = raw.with_lineage()
-        assert row.lineage_key
-        if row.lineage_key in seen:
+        is_transaction = (
+            raw.fact_type == "completed_sale"
+            and raw.source_tier in TRANSACTION_EVIDENCE_TIERS
+        )
+        row = raw if is_transaction else raw.with_lineage()
+        if row.lineage_key:
+            dedupe_key = row.lineage_key
+        else:
+            fallback = "|".join(
+                (
+                    row.collector_id,
+                    row.provider_id,
+                    row.canonical_key,
+                    row.source_locator,
+                    row.value,
+                )
+            )
+            dedupe_key = "__missing_lineage__:" + sha256(
+                fallback.encode("utf-8", "replace")
+            ).hexdigest()[:24]
+        if dedupe_key in seen:
             continue
-        seen.add(row.lineage_key)
+        seen.add(dedupe_key)
         out.append(row)
     return out
 
@@ -163,6 +182,14 @@ def _parse_time(value: str | None) -> datetime | None:
     return dt
 
 
+def _positive_finite_decimal(value: str) -> bool:
+    try:
+        parsed = Decimal(str(value).replace(",", "").strip())
+    except (InvalidOperation, ValueError):
+        return False
+    return parsed.is_finite() and parsed > 0
+
+
 def _completed_sale_evidence_reason(row: Observation) -> str | None:
     if row.fact_type != "completed_sale":
         return None
@@ -174,12 +201,17 @@ def _completed_sale_evidence_reason(row: Observation) -> str | None:
         return "completed-sale final state missing"
     if _parse_time(row.event_or_trade_time) is None:
         return "completed-sale transaction time missing"
-    if not row.original_currency:
-        return "completed-sale currency missing"
-    if not str(row.value).strip():
-        return "completed-sale realized amount missing"
+    if not row.lineage_key:
+        return "completed-sale explicit lineage missing"
+    currency = (row.original_currency or "").strip()
+    if not re.fullmatch(r"[A-Z]{3}", currency):
+        return "completed-sale currency invalid"
+    if not _positive_finite_decimal(row.value):
+        return "completed-sale realized amount invalid"
     if not row.condition:
         return "completed-sale condition missing"
+    if "graded" in row.condition.lower() and not row.grade:
+        return "completed-sale grade missing"
     if not row.finality:
         return "completed-sale finality missing"
     if not row.price_basis:
