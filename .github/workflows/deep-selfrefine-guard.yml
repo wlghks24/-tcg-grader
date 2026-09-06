@@ -8,22 +8,22 @@ on:
       - '.github/workflows/deep-selfrefine-guard.yml'
       - 'index.html'
       - 'sw.js'
-      - '*.py'
-      - '*.js'
-      - '*.sh'
-      - '*.json'
-      - '*.webmanifest'
+      - '**/*.py'
+      - '**/*.js'
+      - '**/*.sh'
+      - '**/*.json'
+      - '**/*.webmanifest'
   push:
     branches: [main]
     paths:
       - '.github/workflows/deep-selfrefine-guard.yml'
       - 'index.html'
       - 'sw.js'
-      - '*.py'
-      - '*.js'
-      - '*.sh'
-      - '*.json'
-      - '*.webmanifest'
+      - '**/*.py'
+      - '**/*.js'
+      - '**/*.sh'
+      - '**/*.json'
+      - '**/*.webmanifest'
   workflow_dispatch:
 
 permissions:
