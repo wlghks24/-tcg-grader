@@ -562,6 +562,79 @@ def _load_state(path: Path = STATE) -> dict[str, Any]:
     return {"schema": SCHEMA, "runs": 0, "history": []}
 
 
+def restore_verified_code_map_learning(
+    source_path: Path,
+    *,
+    target_path: Path = STATE,
+) -> dict[str, Any]:
+    """Restore only previously full-regression-verified map learning.
+
+    GitHub Actions runners are ephemeral, so verified learning is restored from
+    the prior successful run artifact. Pending candidates, repair diffs and any
+    executable text are never carried across runs.
+    """
+    try:
+        source = _load_state(source_path)
+    except Exception as exc:
+        return {"restored": False, "reason": "source_read_failed", "error": type(exc).__name__}
+
+    learning = source.get("code_map_learning")
+    if not isinstance(learning, dict):
+        return {"restored": False, "reason": "no_verified_learning"}
+
+    if (
+        learning.get("verified_learning_only") is not True
+        or learning.get("learned_text_executable") is not False
+        or learning.get("source_patch_from_learning") is not False
+    ):
+        return {"restored": False, "reason": "unsafe_learning_contract"}
+
+    patterns = learning.get("verified_patterns")
+    if not isinstance(patterns, dict) or len(patterns) > 200:
+        return {"restored": False, "reason": "invalid_verified_patterns"}
+
+    for key, row in patterns.items():
+        if not isinstance(key, str) or len(key) > 80 or not isinstance(row, dict):
+            return {"restored": False, "reason": "invalid_verified_pattern_row"}
+        if not str(row.get("origin_path") or "").strip():
+            return {"restored": False, "reason": "invalid_verified_pattern_origin"}
+        if int(row.get("verified_count") or 0) < 1:
+            return {"restored": False, "reason": "unverified_pattern_present"}
+
+    # JSON round-trip strips non-JSON runtime objects and gives us a detached
+    # data-only copy before writing it into the new runner state.
+    clean_learning = json.loads(json.dumps(
+        learning,
+        ensure_ascii=False,
+        sort_keys=True,
+        separators=(",", ":"),
+    ))
+
+    target = _load_state(target_path)
+    target["schema"] = SCHEMA
+    target["code_map_learning"] = clean_learning
+    target.pop("pending_code_map_learning", None)
+    aggregate = clean_learning.get("aggregate")
+    verified_outcomes = (
+        int(aggregate.get("verified_outcomes") or 0)
+        if isinstance(aggregate, dict) else 0
+    )
+    target["restored_code_map_learning"] = {
+        "at": _now(),
+        "source_updated_at": str(source.get("updated_at") or "")[:64],
+        "verified_outcomes": verified_outcomes,
+        "pattern_count": len(patterns),
+        "pending_restored": False,
+    }
+    atomic_write_json(target_path, target, suffix=".market-ai-state.tmp")
+    return {
+        "restored": True,
+        "reason": "verified_learning_restored",
+        "verified_outcomes": verified_outcomes,
+        "pattern_count": len(patterns),
+    }
+
+
 def _save_state(result: dict[str, Any], path: Path = STATE) -> None:
     state = _load_state(path)
     state["schema"] = SCHEMA
@@ -849,6 +922,7 @@ def main() -> int:
     parser.add_argument("--assert-safe-diff", action="store_true")
     parser.add_argument("--promote-code-map-learning", action="store_true")
     parser.add_argument("--verified-regression", action="store_true")
+    parser.add_argument("--restore-code-map-learning-from")
     parser.add_argument("--self-test", action="store_true")
     args = parser.parse_args()
 
@@ -858,6 +932,15 @@ def main() -> int:
         return 0 if result["allowed"] else 3
     if args.self_test:
         return self_test(ROOT)
+    if args.restore_code_map_learning_from:
+        result = restore_verified_code_map_learning(
+            Path(args.restore_code_map_learning_from),
+            target_path=ROOT / STATE.name,
+        )
+        print(json.dumps(result, ensure_ascii=False, sort_keys=True))
+        # Learning restore is optional. Unsafe/corrupt prior state is ignored,
+        # never promoted into executable behavior, and does not block tracking.
+        return 0
     if args.promote_code_map_learning:
         result = promote_pending_code_map_learning(
             root=ROOT,
