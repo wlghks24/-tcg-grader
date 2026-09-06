@@ -215,6 +215,66 @@ class DailyAuditTest(unittest.TestCase):
             )
             self.assertEqual(_exit_code(report, strict_policy=True), 1)
 
+    def test_persisted_snapshot_state_overrides_stale_runtime_exchange(self):
+        exchange_root = Path("crosscheck_exchange")
+        exchange_root.mkdir(exist_ok=True)
+        with tempfile.TemporaryDirectory(dir=exchange_root) as td:
+            root = Path(td)
+            runtime_main = root / "runtime-main.json"
+            runtime_instagram = root / "runtime-instagram.json"
+            runtime_main.write_text(
+                json.dumps({"domain": "main", "records": []}),
+                encoding="utf-8",
+            )
+            runtime_instagram.write_text(
+                json.dumps({"domain": "instagram_content", "records": []}),
+                encoding="utf-8",
+            )
+            persisted_main = root / "persisted-main.json"
+            persisted_instagram = root / "persisted-instagram.json"
+            persisted_main.write_text(
+                json.dumps({
+                    "schema_version": "1.0",
+                    "namespace": "MARKET_ANALYSIS",
+                    "snapshot_kind": "factual",
+                    "run_date_kst": "2026-09-06",
+                    "status": "building",
+                    "built_at": "2026-09-06T06:00:00+09:00",
+                    "finalized_at": None,
+                    "facts": [],
+                    "validation": {
+                        "manifest_validated": True,
+                        "allowed_fields_only": True,
+                        "exact_factual_types_enforced": True,
+                        "write_readback_verified": True,
+                        "isolation_breach": False,
+                    },
+                    "error_code": None,
+                }),
+                encoding="utf-8",
+            )
+            report = build_report(
+                now=NOW,
+                adaptive=healthy_adaptive(),
+                source_stats={
+                    "updated_at": "2026-09-05T20:00:00+00:00",
+                    "sources": {"x": {}},
+                },
+                promo=healthy_promo(),
+                routes=good_routes(),
+                main_exchange=runtime_main,
+                instagram_exchange=runtime_instagram,
+                main_persisted=persisted_main,
+                instagram_persisted=persisted_instagram,
+            )
+            self.assertFalse(report["cross_domain"]["operational_ready"])
+            self.assertEqual(report["cross_domain"]["source_mode"], "persisted_tcg_crosscheck")
+            self.assertEqual(report["cross_domain"]["status"], "snapshot_unavailable")
+            self.assertEqual(
+                report["cross_domain"]["unavailable_reasons"]["main"],
+                "not_finalized",
+            )
+
     def test_malformed_numeric_health_fields_do_not_crash_audit(self):
         adaptive = healthy_adaptive()
         adaptive["jobs"]["releases.json"]["consecutive_failures"] = "not-an-int"
