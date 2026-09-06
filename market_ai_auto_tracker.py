@@ -636,7 +636,15 @@ def run_tracker(
         status = "fail"
 
     state_before = _load_state(root / STATE.name)
-    map_index = CodeMapIndex(root) if initial else None
+    learning_state = state_before.get("code_map_learning")
+    learning_patterns = (
+        learning_state.get("verified_patterns")
+        if isinstance(learning_state, dict) else {}
+    )
+    needs_map_revalidation = bool(initial) or bool(
+        isinstance(learning_patterns, dict) and learning_patterns
+    )
+    map_index = CodeMapIndex(root) if needs_map_revalidation else None
     map_contexts: list[dict[str, Any]] = []
     seen_paths: set[str] = set()
     for row in initial[:40]:
@@ -739,8 +747,13 @@ def run_tracker(
             "map_signature": map_index.signature if map_index is not None else "",
             "single_parse_per_run": True,
             "empty_findings_graphify_short_circuit": map_index is None,
+            "learning_revalidation_forces_map": bool(
+                not initial
+                and isinstance(learning_patterns, dict)
+                and learning_patterns
+            ),
             "self_refine": learning_health(
-                state_before.get("code_map_learning"),
+                learning_state,
                 map_signature=map_index.signature if map_index is not None else None,
             ),
         },
