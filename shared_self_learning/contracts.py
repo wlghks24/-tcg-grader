@@ -11,6 +11,22 @@ CANONICAL_FACTUAL_TYPES = frozenset({
     "event", "movie_bonus", "completed_sale", "market_reference",
 })
 
+PEER_LEARNING_FIELDS = (
+    "lesson_id",
+    "subsystem",
+    "issue_class",
+    "trigger_condition",
+    "symptom_summary",
+    "root_cause_class",
+    "fix_pattern",
+    "prevention_rule_id",
+    "verification_result",
+    "regression_pass",
+    "recurrence_count",
+    "applicable_scope",
+    "confidence_level",
+)
+
 
 def assert_canonical_factual_type(value: object, *, label: str = "information_family") -> str:
     factual_type = str(value or "").strip()

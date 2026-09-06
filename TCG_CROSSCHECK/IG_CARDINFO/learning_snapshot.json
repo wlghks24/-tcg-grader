@@ -1,0 +1,80 @@
+{
+  "schema_version": "1.0",
+  "namespace": "IG_CARDINFO",
+  "snapshot_kind": "learning",
+  "run_date_kst": "2026-09-06",
+  "status": "finalized",
+  "built_at": "2026-09-06T21:23:38+09:00",
+  "finalized_at": "2026-09-06T21:23:38+09:00",
+  "lessons": [
+    {
+      "lesson_id": "IG-CROSSCHECK-FRESHNESS-20260906-01",
+      "subsystem": "factual_crosscheck_runtime",
+      "issue_class": "nondeterministic_freshness_regression",
+      "trigger_condition": "persisted snapshot freshness regression compares historical fixture timestamps against wall-clock now",
+      "symptom_summary": "a previously valid freshness fixture can become stale as real time advances even though production crosscheck logic is unchanged",
+      "root_cause_class": "wall_clock_coupled_test_fixture",
+      "fix_pattern": "inject a fixed timezone-aware now into freshness regression tests while keeping the production 36-hour stale-evidence gate unchanged",
+      "prevention_rule_id": "IG-PREV-CROSSCHECK-FIXED-NOW-V1",
+      "verification_result": "passed",
+      "regression_pass": true,
+      "recurrence_count": 1,
+      "applicable_scope": "both",
+      "confidence_level": "high"
+    },
+    {
+      "lesson_id": "IG-PEER-LEARNING-CONTRACT-20260906-02",
+      "subsystem": "peer_learning_exchange",
+      "issue_class": "learning_schema_drift",
+      "trigger_condition": "exchange_manifest learning_fields differs from the runtime PEER_LEARNING_FIELDS allowlist",
+      "symptom_summary": "persisted and runtime peer-learning snapshots can disagree about allowed fields despite each component passing isolated tests",
+      "root_cause_class": "duplicated_schema_source_of_truth",
+      "fix_pattern": "centralize the 13 learning fields in shared contracts, make runtime normalization consume that contract, and regression-lock the manifest to it",
+      "prevention_rule_id": "IG-PREV-LEARNING-CONTRACT-SSOT-V1",
+      "verification_result": "passed",
+      "regression_pass": true,
+      "recurrence_count": 1,
+      "applicable_scope": "both",
+      "confidence_level": "high"
+    },
+    {
+      "lesson_id": "IG-DOMAIN-TEST-PLACEMENT-20260906-03",
+      "subsystem": "domain_isolation",
+      "issue_class": "instagram_test_misclassified_as_main",
+      "trigger_condition": "a root-level regression test imports instagram_tcg_content directly",
+      "symptom_summary": "domain boundary guard blocks Main and 06:00 workflows before functional tests run",
+      "root_cause_class": "domain_specific_test_wrong_location",
+      "fix_pattern": "place Instagram-specific regression tests inside instagram_tcg_content and avoid adding broad control-plane exceptions",
+      "prevention_rule_id": "IG-PREV-DOMAIN-TEST-LOCATION-V1",
+      "verification_result": "passed",
+      "regression_pass": true,
+      "recurrence_count": 1,
+      "applicable_scope": "instagram_content",
+      "confidence_level": "high"
+    },
+    {
+      "lesson_id": "IG-JSON-FIELD-ORDER-20260906-04",
+      "subsystem": "peer_learning_persistence",
+      "issue_class": "json_object_order_false_negative",
+      "trigger_condition": "persisted JSON is written with sorted keys and readback validation compares dict iteration order to canonical field order",
+      "symptom_summary": "all required learning fields are present but self-test fails because serialization reordered JSON object keys",
+      "root_cause_class": "serialization_order_treated_as_schema_semantics",
+      "fix_pattern": "validate canonical projection order before serialization and validate the exact field set after JSON readback",
+      "prevention_rule_id": "IG-PREV-JSON-FIELD-SET-V1",
+      "verification_result": "passed",
+      "regression_pass": true,
+      "recurrence_count": 1,
+      "applicable_scope": "both",
+      "confidence_level": "high"
+    }
+  ],
+  "validation": {
+    "manifest_validated": true,
+    "learning_fields_only": true,
+    "peer_prevention_rule_copy_count": 0,
+    "raw_grading_share_count": 0,
+    "write_readback_verified": true,
+    "learning_isolation_breach": false
+  },
+  "error_code": null
+}

@@ -2,7 +2,10 @@
   "schema_version": "1.0",
   "exchange_name": "TCG_CROSSCHECK",
   "purpose": "neutral_peer_exchange_only",
-  "namespaces": ["MARKET_ANALYSIS", "IG_CARDINFO"],
+  "namespaces": [
+    "MARKET_ANALYSIS",
+    "IG_CARDINFO"
+  ],
   "factual_types": [
     "card_price",
     "release",
@@ -32,15 +35,32 @@
     "source_locator",
     "verification_status"
   ],
-  "required_factual_keys": ["canonical_key", "fact_type", "lineage_key"],
-  "verification_status_values": ["verified", "conflict", "missing", "unverified", "quarantine"],
+  "required_factual_keys": [
+    "canonical_key",
+    "fact_type",
+    "lineage_key"
+  ],
+  "verification_status_values": [
+    "verified",
+    "conflict",
+    "missing",
+    "unverified",
+    "quarantine"
+  ],
   "learning_fields": [
     "lesson_id",
-    "error_type",
-    "abstract_cause",
-    "abstract_fix_pattern",
-    "evidence_class",
-    "verification_status"
+    "subsystem",
+    "issue_class",
+    "trigger_condition",
+    "symptom_summary",
+    "root_cause_class",
+    "fix_pattern",
+    "prevention_rule_id",
+    "verification_result",
+    "regression_pass",
+    "recurrence_count",
+    "applicable_scope",
+    "confidence_level"
   ],
   "learning_result_values": [
     "corroborated",
@@ -65,8 +85,15 @@
     "quarantine_state",
     "prevention_rule"
   ],
-  "comparison_key": ["canonical_key", "fact_type", "lineage_key"],
-  "snapshot_status_values": ["building", "finalized"],
+  "comparison_key": [
+    "canonical_key",
+    "fact_type",
+    "lineage_key"
+  ],
+  "snapshot_status_values": [
+    "building",
+    "finalized"
+  ],
   "write_ownership": {
     "MARKET_ANALYSIS": [
       "TCG_CROSSCHECK/MARKET_ANALYSIS/factual_snapshot.json",
