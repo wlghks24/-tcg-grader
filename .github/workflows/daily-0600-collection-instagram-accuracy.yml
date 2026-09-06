@@ -21,7 +21,9 @@ on:
       - 'promo_events.json'
       - 'instagram_tcg_content/**'
       - 'main_crosscheck_export.py'
+      - 'shared_self_learning/contracts.py'
       - 'main_persisted_crosscheck_export.py'
+      - 'crosscheck_runtime_bridge.py'
       - 'selfrefine_crosscheck_gate.py'
       - 'peer_learning_crosscheck_gate.py'
       - 'main_peer_learning_export.py'
@@ -204,14 +206,19 @@ jobs:
         run: python main_persisted_crosscheck_export.py --releases releases.json
 
       - name: Refresh passive factual runtime crosscheck from persisted snapshots
-        run: python crosscheck_runtime_bridge.py --from-persisted
+        run: |
+          if [[ "${{ github.event_name }}" == "schedule" ]]; then
+            python crosscheck_runtime_bridge.py --from-persisted
+          else
+            python crosscheck_runtime_bridge.py --from-persisted --allow-unready
+          fi
 
       - name: Run daily collection vs Instagram audit
         if: ${{ !cancelled() }}
         run: |
           flags=(--strict-policy)
           if [[ "${{ github.event_name }}" == "schedule" ]]; then
-            flags+=(--fail-on-degraded)
+            flags+=(--fail-on-degraded --require-crosscheck-ready)
           fi
           python daily_collection_instagram_accuracy.py \
             --report COLLECTION_INSTAGRAM_ACCURACY_REPORT.json \
