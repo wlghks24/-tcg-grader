@@ -46,23 +46,49 @@ class ManualOfficialProofTests(unittest.TestCase):
         evidence = {"company": "PSA", "grade": 10.0, "certification_id": "160600294"}
         with self._patch_common(registry, evidence, "PSA #160600294 GEM MT 10"), \
              mock.patch.object(proof.manual_photo, "_save_registry") as save_registry, \
+             mock.patch.object(proof.manual_photo, "_publish_verified", return_value=(True, None)) as publish_verified, \
+             mock.patch.object(proof, "_manual_verification_ready", return_value=(True, "ready")), \
              mock.patch.object(proof, "_claim_proof_upload"), \
              mock.patch.object(proof, "atomic_write_bytes"), \
              mock.patch.object(proof, "_append_reference") as append_reference, \
              mock.patch.object(proof, "_remove_proof_file"):
             result = proof.submit({"registration_id": REGISTRATION_ID, "proof_image_data_url": "ignored"})
             save_registry.assert_called_once()
+            publish_verified.assert_called_once()
         self.assertTrue(result["accepted"], result)
         self.assertTrue(result["policy"]["official_result"])
         self.assertFalse(result["policy"]["raw_grade_calibration"])
         self.assertFalse(result["policy"]["later_live_lookup_required"])
         saved = registry["registrations"][0]
         self.assertTrue(saved["official_result"])
-        self.assertTrue(saved["training_eligible"])
+        self.assertFalse(saved["training_eligible"])
         self.assertFalse(saved["raw_grade_calibration_eligible"])
         self.assertEqual(saved["verification_state"], "manual_official_verified")
+        self.assertEqual(saved["official_verification_source"], "user_browser_official_page")
+        self.assertEqual(saved["learning_eligibility"], "official_verified_slab")
         self.assertEqual(saved["manual_official_proof_match_mode"], "official_page_company_cert_grade_ocr")
         append_reference.assert_called_once()
+
+    def test_matched_manual_proof_cannot_finish_when_verified_registry_publish_fails(self):
+        registry = {"registrations": [row_template()]}
+        evidence = {"company": "PSA", "grade": 10.0, "certification_id": "160600294"}
+        with self._patch_common(registry, evidence, "PSA #160600294 GEM MT 10"), \
+             mock.patch.object(proof.manual_photo, "_save_registry"), \
+             mock.patch.object(proof.manual_photo, "_publish_verified", return_value=(False, "persisted_official_grade_conflict")), \
+             mock.patch.object(proof, "_manual_verification_ready", return_value=(True, "ready")), \
+             mock.patch.object(proof, "_claim_proof_upload"), \
+             mock.patch.object(proof, "atomic_write_bytes"), \
+             mock.patch.object(proof, "_append_reference") as append_reference, \
+             mock.patch.object(proof, "_remove_proof_file"):
+            result = proof.submit({"registration_id": REGISTRATION_ID, "proof_image_data_url": "ignored"})
+        self.assertTrue(result["accepted"], result)
+        self.assertFalse(result["policy"]["official_result"])
+        saved = registry["registrations"][0]
+        self.assertFalse(saved["official_result"])
+        self.assertEqual(saved["verification_state"], "manual_official_verified_registry_conflict")
+        self.assertEqual(saved["learning_eligibility"], "manual_verification_required_before_learning")
+        self.assertFalse(saved["training_eligible"])
+        append_reference.assert_not_called()
 
     def test_psa_page_cert_match_without_official_grade_stays_pending(self):
         registry = {"registrations": [row_template()]}
@@ -165,6 +191,9 @@ class ManualOfficialProofTests(unittest.TestCase):
             status = proof.public_status()
         policy = status["policy"]
         self.assertTrue(policy["manual_screenshot_sets_official_result"])
+        self.assertTrue(policy["manual_screenshot_requires_complete_stored_evidence"])
+        self.assertTrue(policy["verified_registry_publish_required"])
+        self.assertTrue(policy["proof_match_alone_is_not_verification_complete"])
         self.assertTrue(policy["manual_screenshot_requires_company_certificate_and_grade_match"])
         self.assertFalse(policy["manual_screenshot_alone_without_identity_match_sets_official_result"])
         self.assertFalse(policy["later_live_official_lookup_can_promote"])
