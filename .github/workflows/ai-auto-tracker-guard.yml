@@ -4,11 +4,13 @@ on:
   push:
     paths:
       - 'ai_auto_tracker.py'
+      - 'ai_performance_runtime.py'
       - 'ai_reasoning_enhancer.py'
       - 'ai_correlation_engine.py'
       - 'ai_intelligence_pipeline.py'
       - 'code_map_intelligence.py'
       - 'test_ai_auto_tracker.py'
+      - 'test_ai_performance_runtime.py'
       - 'test_ai_reasoning_enhancer.py'
       - 'test_ai_correlation_engine.py'
       - 'selfrefine_error_quarantine.py'
@@ -17,11 +19,13 @@ on:
   pull_request:
     paths:
       - 'ai_auto_tracker.py'
+      - 'ai_performance_runtime.py'
       - 'ai_reasoning_enhancer.py'
       - 'ai_correlation_engine.py'
       - 'ai_intelligence_pipeline.py'
       - 'code_map_intelligence.py'
       - 'test_ai_auto_tracker.py'
+      - 'test_ai_performance_runtime.py'
       - 'test_ai_reasoning_enhancer.py'
       - 'test_ai_correlation_engine.py'
       - 'selfrefine_error_quarantine.py'
@@ -53,20 +57,47 @@ jobs:
           python -m py_compile \
             code_map_intelligence.py \
             ai_auto_tracker.py \
+            ai_performance_runtime.py \
             ai_reasoning_enhancer.py \
             ai_correlation_engine.py \
             ai_intelligence_pipeline.py \
             test_ai_auto_tracker.py \
+            test_ai_performance_runtime.py \
             test_ai_reasoning_enhancer.py \
             test_ai_correlation_engine.py
-      - name: Tracker and intelligence regression tests
-        run: python -m unittest -v test_ai_auto_tracker.py test_ai_reasoning_enhancer.py test_ai_correlation_engine.py
+      - name: Tracker intelligence and performance regression tests
+        run: >-
+          python -m unittest -v
+          test_ai_auto_tracker.py
+          test_ai_performance_runtime.py
+          test_ai_reasoning_enhancer.py
+          test_ai_correlation_engine.py
       - name: Reasoning self-test
         run: python ai_reasoning_enhancer.py
       - name: Domain boundary regression
         run: python selfrefine_domain_boundary_guard.py
       - name: Integrated dry-run health check
         run: python ai_intelligence_pipeline.py --dry-run
+      - name: Performance cache contract
+        run: |
+          python - <<'PY'
+          import tempfile
+          from pathlib import Path
+          import ai_performance_runtime as p
+          events = [
+              {'domain':'market', 'path':'same.py', 'message':f'429 event {i}'}
+              for i in range(50)
+          ]
+          with tempfile.TemporaryDirectory() as td:
+              out = p.observe(events, state_path=Path(td)/'state.json', dry_run=True)
+          perf = out['summary']['performance']
+          assert perf['unique_code_map_paths'] == 1
+          assert perf['code_map_cache_hits'] == 49
+          assert perf['event_field_normalization'] == 'single_pass'
+          assert perf['duplicate_severity_handoff_scan'] is False
+          assert out['safety']['performance_cache_run_scoped_only'] is True
+          print('AI performance cache contract: OK')
+          PY
       - name: Safety contract audit
         run: |
           python - <<'PY'
