@@ -44,6 +44,9 @@ INVALID_COMPLETED_STATUSES = {
     "best_offer_unknown",
     "unknown_condition",
 }
+FINAL_COMPLETED_STATES = {"sold", "completed", "closed", "settled", "realized"}
+FINALITY_VALUES = {"final", "settled", "closed", "completed", "complete", "realized"}
+GRADED_CONDITIONS = {"graded", "slabbed", "encapsulated"}
 
 
 @dataclass(frozen=True)
@@ -135,12 +138,13 @@ def independent_key(obs: Observation) -> tuple[str, str]:
 
 
 def dedupe_lineage(rows: Iterable[Observation]) -> list[Observation]:
-    """Deduplicate shared lineage without fabricating sale lineage.
+    """Deduplicate shared lineage without hiding identity conflicts.
 
-    Completed-sale transaction evidence must carry an explicit lineage key.
-    Other fact types may still derive a deterministic lineage fingerprint.
+    Completed-sale transaction evidence must carry explicit lineage. Missing
+    lineage remains visible for the hard gate; non-sale facts may derive a
+    deterministic lineage fingerprint.
     """
-    seen: set[str] = set()
+    seen: set[tuple[str, str, str, str]] = set()
     out: list[Observation] = []
     for raw in rows:
         is_transaction = (
@@ -149,7 +153,7 @@ def dedupe_lineage(rows: Iterable[Observation]) -> list[Observation]:
         )
         row = raw if is_transaction else raw.with_lineage()
         if row.lineage_key:
-            dedupe_key = row.lineage_key
+            lineage = row.lineage_key
         else:
             fallback = "|".join(
                 (
@@ -160,15 +164,15 @@ def dedupe_lineage(rows: Iterable[Observation]) -> list[Observation]:
                     row.value,
                 )
             )
-            dedupe_key = "__missing_lineage__:" + sha256(
+            lineage = "__missing_lineage__:" + sha256(
                 fallback.encode("utf-8", "replace")
             ).hexdigest()[:24]
+        dedupe_key = (lineage, row.game, row.fact_type, row.canonical_key)
         if dedupe_key in seen:
             continue
         seen.add(dedupe_key)
         out.append(row)
     return out
-
 
 def _parse_time(value: str | None) -> datetime | None:
     if not value:
@@ -189,6 +193,81 @@ def _positive_finite_decimal(value: str) -> bool:
         return False
     return parsed.is_finite() and parsed > 0
 
+def _normalized_sale_amount(value: str) -> str | None:
+    try:
+        parsed = Decimal(str(value).replace(",", "").strip())
+    except (InvalidOperation, ValueError):
+        return None
+    if not parsed.is_finite():
+        return None
+    return format(parsed.normalize(), "f")
+
+
+def _normalize_condition(value: str | None) -> str:
+    condition = (value or "").strip().lower()
+    if condition in GRADED_CONDITIONS:
+        return "graded"
+    if condition in {"raw", "ungraded"}:
+        return "raw"
+    return condition
+
+
+def _normalize_finality(value: str | None) -> str:
+    finality = (value or "").strip().lower()
+    return "final" if finality in FINALITY_VALUES else finality
+
+
+def _sale_comparability_key(row: Observation) -> tuple[object, ...]:
+    condition = _normalize_condition(row.condition)
+    grade = " ".join((row.grade or "").strip().upper().split()) if condition == "graded" else ""
+    return (
+        (row.original_currency or "").strip().upper(),
+        condition,
+        grade,
+        (row.price_basis or "").strip().lower(),
+        row.quantity,
+        (row.unit or "").strip().lower(),
+    )
+
+
+def _transaction_lineage_conflict(
+    rows: Sequence[Observation],
+) -> tuple[bool, tuple[str, ...]]:
+    """Return conflict when one explicit sale lineage disagrees on core facts."""
+    grouped: dict[str, set[tuple[object, ...]]] = {}
+    values: dict[str, set[str]] = {}
+    for row in rows:
+        if (
+            row.fact_type != "completed_sale"
+            or row.source_tier not in TRANSACTION_EVIDENCE_TIERS
+            or not row.lineage_key
+        ):
+            continue
+        trade_time = _parse_time(row.event_or_trade_time)
+        normalized_time = trade_time.astimezone(timezone.utc).isoformat() if trade_time else None
+        status = row.status.strip().lower()
+        final_state = "final" if status in FINAL_COMPLETED_STATES else status
+        signature = (
+            row.game,
+            row.fact_type,
+            row.canonical_key,
+            _normalized_sale_amount(row.value),
+            normalized_time,
+            final_state,
+            _normalize_finality(row.finality),
+            _sale_comparability_key(row),
+        )
+        grouped.setdefault(row.lineage_key, set()).add(signature)
+        values.setdefault(row.lineage_key, set()).add(str(row.value))
+
+    conflicting_values: set[str] = set()
+    found = False
+    for lineage, signatures in grouped.items():
+        if len(signatures) > 1:
+            found = True
+            conflicting_values.update(values.get(lineage, set()))
+    return (found, tuple(sorted(conflicting_values)))
+
 
 def _completed_sale_evidence_reason(row: Observation) -> str | None:
     if row.fact_type != "completed_sale":
@@ -197,7 +276,7 @@ def _completed_sale_evidence_reason(row: Observation) -> str | None:
         return None
     if row.status.lower() in INVALID_COMPLETED_STATUSES:
         return "invalid completed-sale status"
-    if row.status.lower() not in {"sold", "completed", "closed", "settled", "realized"}:
+    if row.status.lower() not in FINAL_COMPLETED_STATES:
         return "completed-sale final state missing"
     if _parse_time(row.event_or_trade_time) is None:
         return "completed-sale transaction time missing"
@@ -210,14 +289,22 @@ def _completed_sale_evidence_reason(row: Observation) -> str | None:
         return "completed-sale realized amount invalid"
     if not row.condition:
         return "completed-sale condition missing"
-    if "graded" in row.condition.lower() and not row.grade:
+    condition = _normalize_condition(row.condition)
+    if condition == "graded" and not row.grade:
         return "completed-sale grade missing"
     if not row.finality:
         return "completed-sale finality missing"
+    if row.finality.strip().lower() not in FINALITY_VALUES:
+        return "completed-sale finality invalid"
     if not row.price_basis:
         return "completed-sale price basis missing"
-    if row.quantity is None or row.quantity <= 0:
-        return "completed-sale quantity missing"
+    if (
+        row.quantity is None
+        or isinstance(row.quantity, bool)
+        or not isinstance(row.quantity, int)
+        or row.quantity <= 0
+    ):
+        return "completed-sale quantity missing or invalid"
     if not row.unit:
         return "completed-sale unit missing"
     if not row.source_locator:
@@ -259,6 +346,23 @@ def verify_fact(rows: Sequence[Observation]) -> VerificationResult:
     if not rows:
         return VerificationResult(
             "", "", "inaccessible", None, (), 0, 0, False, 0.0, "no observations"
+        )
+
+    lineage_conflict, lineage_conflict_values = _transaction_lineage_conflict(rows)
+    if lineage_conflict:
+        first_raw = rows[0]
+        return VerificationResult(
+            first_raw.canonical_key,
+            first_raw.fact_type,
+            "conflict",
+            None,
+            tuple(sorted({r.source_code for r in rows if r.source_code})),
+            len(rows),
+            0,
+            any(r.source_tier == "official_primary" for r in rows),
+            0.10,
+            "same completed-sale lineage disagrees on transaction facts",
+            lineage_conflict_values,
         )
 
     rows = dedupe_lineage(rows)
@@ -313,32 +417,56 @@ def verify_fact(rows: Sequence[Observation]) -> VerificationResult:
             if r.source_tier in TRANSACTION_EVIDENCE_TIERS
             and _completed_sale_evidence_reason(r) is None
         ]
-        original_providers = {r.provider_id for r in valid}
-        if len(original_providers) >= 2:
-            latest = _latest(valid)
+        comparable_groups: dict[tuple[object, ...], list[Observation]] = {}
+        for row in valid:
+            comparable_groups.setdefault(_sale_comparability_key(row), []).append(row)
+        eligible_groups = [
+            group
+            for group in comparable_groups.values()
+            if len({r.provider_id for r in group}) >= 2
+        ]
+        if len(eligible_groups) > 1:
+            return VerificationResult(
+                key,
+                fact,
+                "conflict",
+                None,
+                tuple(sorted({r.source_code for r in valid})),
+                len(valid),
+                0,
+                official_primary,
+                0.20,
+                "multiple completed-sale evidence bases for one canonical key",
+            )
+        if len(eligible_groups) == 1:
+            selected = eligible_groups[0]
+            original_providers = {r.provider_id for r in selected}
+            latest = _latest(selected)
             return VerificationResult(
                 key,
                 fact,
                 "verified",
                 latest.value,
-                tuple(sorted({r.source_code for r in valid})),
-                len(valid),
+                tuple(sorted({r.source_code for r in selected})),
+                len(selected),
                 len(original_providers),
                 official_primary,
                 0.97,
                 None,
             )
+        original_providers = {r.provider_id for r in valid}
         evidence_errors = [
             reason
             for r in rows
             if r.source_tier in TRANSACTION_EVIDENCE_TIERS
             if (reason := _completed_sale_evidence_reason(r))
         ]
-        reason = (
-            evidence_errors[0]
-            if evidence_errors
-            else "needs 2 independent realized-sale evidence providers"
-        )
+        if evidence_errors:
+            reason = evidence_errors[0]
+        elif len(comparable_groups) > 1:
+            reason = "completed-sale evidence basis mismatch"
+        else:
+            reason = "needs 2 independent realized-sale evidence providers"
         return VerificationResult(
             key,
             fact,
