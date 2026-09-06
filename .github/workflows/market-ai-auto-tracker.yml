@@ -6,10 +6,12 @@ on:
     paths:
       - 'market_ai_auto_tracker.py'
       - 'market_ai_decision_engine.py'
+      - 'market_ai_learning_memory.py'
       - 'ai_auto_tracker.py'
       - 'code_map_intelligence.py'
       - 'test_market_ai_auto_tracker.py'
       - 'test_market_ai_decision_engine.py'
+      - 'test_market_ai_learning_memory.py'
       - 'GRAPHIFY_UPDATE.sh'
       - 'GRAPHIFY_AUDIT.py'
       - '.graphifyignore'
@@ -76,6 +78,7 @@ jobs:
           python -m unittest -v \
             test_market_ai_auto_tracker.py \
             test_market_ai_decision_engine.py \
+            test_market_ai_learning_memory.py \
             test_multi_market_price_collector.py \
             test_market_reference_sources_v130.py \
             test_apply_patch_idempotency.py \
@@ -167,6 +170,9 @@ jobs:
             echo "- bounded repair changed files: ${{ steps.changes.outputs.changed || 'unknown' }}"
             echo "- Graphify code map: built + audited before tracking"
             echo "- evidence decision engine: two-pass fail-closed verification enabled"
+            echo "- verified-outcome learning memory: calibration + drift + recurrence guards enabled"
+            echo "- learned confidence may only decrease/cap raw confidence, never inflate it"
+            echo "- unverified history excluded from calibration memory"
             echo "- peer verified auto-promotion: disabled"
             echo "- completed-sale/market-reference promotion: blocked"
             echo "- code-map learning: pending first, promoted only after full regression + safe diff"
