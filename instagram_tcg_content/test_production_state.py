@@ -64,6 +64,15 @@ def main():
 
     release_run_lock(state, lock_key, status="completed")
 
+    ok, reason = acquire_run_lock(
+        state,
+        production_date_kst="2026-09-06",
+        scheduled_slot_kst="2026-09-06T10:30:00+09:00",
+        router_branch="DAILY_PRODUCTION",
+        run_id="run-3",
+    )
+    assert not ok and reason == "DUPLICATE_RUN_SUPPRESSED"
+
     good = record()
     assert validate_production_record(good) == []
     finalize_production(state, good)
@@ -114,6 +123,14 @@ def main():
     bad_delivery["delivery_reference_status"] = "pending"
     assert "delivery_reference_status must be verified" in validate_production_record(bad_delivery)
 
+    bad_caption = record()
+    bad_caption["caption_hash"] = ""
+    assert "caption_hash missing" in validate_production_record(bad_caption)
+
+    bad_hashtag = record()
+    bad_hashtag["hashtag_hash"] = None
+    assert "hashtag_hash missing" in validate_production_record(bad_hashtag)
+
     naive_time = record()
     naive_time["actual_started_at_kst"] = "2026-09-06T10:30:03"
     assert (
@@ -146,6 +163,24 @@ def main():
             raise AssertionError("schema mismatch was silently reset")
         except StateIntegrityError as exc:
             assert str(exc) == "STATE_SCHEMA_MISMATCH"
+
+        malformed_lock = empty_state()
+        malformed_lock["run_locks"]["slot"] = "broken"
+        write_state_atomic(path, malformed_lock)
+        try:
+            load_state(path)
+            raise AssertionError("malformed nested lock failed open")
+        except StateIntegrityError as exc:
+            assert str(exc) == "STATE_RUN_LOCK_INVALID"
+
+        malformed_budget = empty_state()
+        malformed_budget["catchup_attempts"]["2026-09-07"] = -1
+        write_state_atomic(path, malformed_budget)
+        try:
+            load_state(path)
+            raise AssertionError("malformed catchup budget failed open")
+        except StateIntegrityError as exc:
+            assert str(exc) == "STATE_CATCHUP_BUDGET_INVALID"
 
     print("Instagram TCG production state regression: PASS")
 

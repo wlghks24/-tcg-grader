@@ -107,8 +107,11 @@ jobs:
             test_verified_evidence_freshness_v15.py \
             test_collection_region_provenance_v16.py
 
+      # Pull requests validate tracked policy/state deterministically. External live
+      # refresh remains on main push, schedule, and manual dispatch to avoid
+      # repeated source-budget use across superseded PR commits.
       - name: Refresh bounded live collection state before 06:00 audit
-        if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch' || github.event_name == 'pull_request' || github.event_name == 'push'
+        if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch' || github.event_name == 'push'
         timeout-minutes: 22
         env:
           TCG_SOURCE_TIMEOUT_CAP: '30'

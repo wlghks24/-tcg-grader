@@ -16,7 +16,10 @@
     "official_primary_cross_language_confirmation_allowed": true,
     "official_event_detail_page_preferred_over_homepage": true,
     "provider_homepage_staleness_does_not_override_fresh_detail_page": true,
-    "prelaunch_game_market_data_default_excluded": true
+    "prelaunch_game_market_data_default_excluded": true,
+    "completed_sale_requires_explicit_lineage": true,
+    "completed_sale_requires_comparable_basis": true,
+    "production_state_corruption_fail_closed": true
   },
   "routes": {
     "official_release": ["official_primary", "official_secondary", "discovery_lead"],
