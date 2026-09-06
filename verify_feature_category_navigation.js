@@ -77,7 +77,7 @@ const context = vm.createContext({
 vm.runInContext(source, context, { filename: "feature_category_nav.js" });
 
 assert.ok(context.window.TCGFeatureCategoryNav, "navigation API was not exposed");
-assert.equal(context.window.TCGFeatureCategoryNav.version, "v26-category-nav");
+assert.equal(context.window.TCGFeatureCategoryNav.version, "v27-category-picker");
 assert.equal(context.window.TCGFeatureCategoryNav.targetExists("simpleGradeV32"), true);
 assert.equal(context.window.TCGFeatureCategoryNav.targetExists("missingTarget"), false);
 assert.equal(context.window.TCGFeatureCategoryNav.targetExists("../unsafe"), false);

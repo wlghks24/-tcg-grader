@@ -50,6 +50,19 @@ class FeatureCategoryNavigationV26Tests(unittest.TestCase):
         self.assertNotIn('data-home-target="gradeStart"', self.html)
         self.assertNotIn('data-home-target="v14section"', self.html)
 
+    def test_category_picker_starts_compact_and_exposes_two_step_guide(self):
+        self.assertNotIn('class="feature-category" open', self.html)
+        self.assertIn('id="featureCategorySelected"', self.html)
+        self.assertIn('class="feature-category-steps"', self.html)
+        self.assertIn("1</b> 카테고리 선택", self.html)
+        self.assertIn("2</b> 기능 선택", self.html)
+        self.assertIn('data-category-key="grading"', self.html)
+        self.assertIn('data-category-key="market"', self.html)
+        self.assertIn('data-category-key="system"', self.html)
+        self.assertIn('category.addEventListener("toggle"', self.js)
+        self.assertIn("categories.forEach((item)", self.js)
+        self.assertIn('version: "v27-category-picker"', self.js)
+
     def test_navigation_is_first_class_and_mobile_safe(self):
         nav = self.html.index('id="featureCategories"')
         release = self.html.index('id="releaseBoard"')
@@ -58,6 +71,9 @@ class FeatureCategoryNavigationV26Tests(unittest.TestCase):
         self.assertIn('href="#featureCategories"', self.html)
         self.assertIn("@media(max-width:430px)", self.css)
         self.assertIn(".feature-category[open]", self.css)
+        self.assertIn("grid-template-columns:repeat(4,minmax(0,1fr))", self.css)
+        self.assertIn(".feature-category-steps", self.css)
+        self.assertIn(".feature-category-selected", self.css)
         self.assertIn("env(safe-area-inset-bottom", self.css)
         self.assertIn("prefers-reduced-motion", self.css)
 
@@ -71,8 +87,8 @@ class FeatureCategoryNavigationV26Tests(unittest.TestCase):
         self.assertNotIn("innerHTML", self.js)
 
     def test_pwa_assets_are_versioned_once(self):
-        self.assertEqual(self.html.count('feature_category_nav.css?v=202'), 1)
-        self.assertEqual(self.html.count('feature_category_nav.js?v=202'), 1)
+        self.assertEqual(self.html.count('feature_category_nav.css?v=203'), 1)
+        self.assertEqual(self.html.count('feature_category_nav.js?v=203'), 1)
 
 
 if __name__ == "__main__":
