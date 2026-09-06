@@ -97,11 +97,12 @@ def main() -> dict:
     cache_match = re.search(r"const CACHE='tcg-v(\d+)(?:-[a-z0-9-]+)?'", service_worker, re.I)
     check(
         "ui_pwa_version",
-        "사전검사기 v109" in index
-        and manifest.get("name") == "TCG 등급 사전검사기 v109"
+        "<h1>카드시세분석</h1>" in index
+        and manifest.get("name") == "카드시세분석"
+        and str(manifest.get("version")) == "109"
         and cache_match is not None and int(cache_match.group(1)) >= 109
         and "./index.html" in service_worker and "./manifest.webmanifest" in service_worker,
-        "화면·manifest 앱버전 일치 + 서비스워커 캐시 revision 정상",
+        "표시 이름과 manifest 내부버전 분리 + 서비스워커 캐시 revision 정상",
     )
 
     # Historical guides are optional archive material. The executable package

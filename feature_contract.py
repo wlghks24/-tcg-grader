@@ -243,17 +243,18 @@ def audit_feature_contract(root: str | Path | None = None) -> dict[str, Any]:
                                                   "START_TCG_UPDATER_ANDROID.sh", "ANDROID_AUTO_START_INSTALL.sh")),
         "Windows·Termux 실행기 4종")
     app_name = str(manifest.get("name", ""))
+    app_version = str(manifest.get("version", ""))
     cache_match = re.search(r"const CACHE='([^']+)'", worker)
     version_match = re.search(r"INTEGRATED_VERSION\s*=\s*['\"]([^'\"]+)['\"]", server)
-    app_version_match = re.search(r"\bv(\d+)\b", app_name, re.I)
+    app_version_match = re.fullmatch(r"(\d+)", app_version)
     cache_version_match = (re.fullmatch(r"tcg-v(\d+)(?:-[a-z0-9-]+)?", cache_match.group(1), re.I)
                            if cache_match else None)
     health_uses_version = "'integrated_version':INTEGRATED_VERSION" in server
-    # 앱 기능 버전과 서비스워커 캐시 개정번호는 수명주기가 다르다. 캐시
-    # 개정번호를 서버의 긴 통합 버전 문자열과 동일하다고 강제하면 정상 배포도
-    # 실패한다. 대신 앱 버전이 서버·자동수집·화면에 일치하고, 캐시는 그보다
-    # 오래되지 않은 정규화된 revision인지 각각 검증한다.
-    coherent = bool(app_name and app_name in page and app_version_match
+    # 사용자에게 보이는 앱 이름과 내부 기능 버전은 분리한다. 표시 이름을 바꿔도
+    # 런타임 버전 검증이 깨지지 않도록 manifest.version을 버전 SSOT로 사용한다.
+    coherent = bool(app_name == "카드시세분석"
+                    and "<h1>카드시세분석</h1>" in page
+                    and app_version_match
                     and cache_match and cache_version_match and version_match and health_uses_version
                     and f"v{app_version_match.group(1)}" in version_match.group(1)
                     and version_match.group(1) in automatic
