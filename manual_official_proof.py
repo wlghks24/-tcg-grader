@@ -3,9 +3,11 @@
 """Manual official-page proof fallback for graded-photo registration.
 
 A user may open the official PSA/BGS/CGC/TAG/BRG lookup page and upload a
-screenshot. The screenshot is the authoritative official-reference evidence after exact
-company + certificate + grade matching. It sets official_result=True but never
-enters RAW grade calibration.
+screenshot. Exact company + certificate + grade matching is required, but the
+screenshot alone does not complete verification. official_result=True is set only
+after the stored front/back/proof evidence passes and the exact identity is
+successfully published into the persisted verified registry. RAW grade calibration
+remains isolated from slab-label reference learning.
 
 v151 hardening:
 - certificate number is the primary page-identity key;
