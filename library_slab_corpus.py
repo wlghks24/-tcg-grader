@@ -31,7 +31,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
-from PIL import Image, ImageOps
+from PIL import Image, ImageEnhance, ImageFilter, ImageOps, ImageStat
 from ocr_multistage_regions_v16 import STAGE_REGION_COUNTS, crop_region, region_specs
 from safe_runtime import atomic_write_json, safe_read_text
 
@@ -44,8 +44,45 @@ CERT_LENGTHS = {
     "PSA": (8, 9),
     "CGC": (10, 11, 12, 13),
     "BGS": (9, 10, 11, 12),
+    # TAG's current public format is typically one letter + seven digits.
+    # Keep legacy numeric lengths accepted so older persisted rows stay readable.
     "TAG": (6, 7, 8, 9, 10, 11, 12),
     "BRG": (7,),
+}
+
+_CERT_OCR_CONFUSION_MAP = str.maketrans({
+    "O": "0", "Q": "0", "D": "0",
+    "I": "1", "L": "1", "|": "1",
+    "Z": "2", "S": "5", "G": "6", "B": "8",
+})
+_CERT_NUMERICISH = "0123456789OQDILZSBG|"
+_CERT_NUMERICISH_WHITELIST = _CERT_NUMERICISH + " "
+CERT_TARGET_PROFILES = {
+    "PSA": (
+        ("psa_top_right_numericish_psm7", 0.46, 0.00, 1.00, 0.24, 2200, 7, "contrast", _CERT_NUMERICISH_WHITELIST),
+        ("psa_top_right_digits_psm6", 0.50, 0.00, 1.00, 0.25, 2400, 6, "binary", "0123456789"),
+        ("psa_full_label_numericish_psm11", 0.04, 0.00, 0.98, 0.29, 2400, 11, "binary", _CERT_NUMERICISH_WHITELIST),
+    ),
+    "BGS": (
+        ("bgs_top_right_digits_psm6", 0.48, 0.00, 1.00, 0.20, 1700, 6, "contrast", "0123456789"),
+        ("bgs_top_right_numericish_psm7", 0.46, 0.00, 1.00, 0.22, 2100, 7, "contrast", _CERT_NUMERICISH_WHITELIST),
+        ("bgs_top_right_digits_psm11", 0.48, 0.00, 1.00, 0.22, 2100, 11, "binary", "0123456789"),
+    ),
+    "CGC": (
+        ("cgc_center_label_digits_psm6", 0.25, 0.05, 0.78, 0.23, 2200, 6, "contrast", "0123456789"),
+        ("cgc_center_label_numericish_psm7", 0.22, 0.04, 0.82, 0.25, 2400, 7, "contrast", _CERT_NUMERICISH_WHITELIST),
+        ("cgc_center_label_digits_psm11", 0.34, 0.08, 0.74, 0.22, 2400, 11, "binary", "0123456789"),
+    ),
+    "TAG": (
+        ("tag_cert_left_of_qr_psm7", 0.08, 0.00, 0.72, 0.25, 2400, 7, "contrast", "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"),
+        ("tag_full_label_psm11", 0.03, 0.00, 0.98, 0.28, 2500, 11, "binary", "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"),
+        ("tag_cert_band_psm6", 0.20, 0.02, 0.90, 0.27, 2500, 6, "contrast", "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"),
+    ),
+    "BRG": (
+        ("brg_top_right_numericish_psm7", 0.44, 0.00, 1.00, 0.25, 2200, 7, "contrast", _CERT_NUMERICISH_WHITELIST),
+        ("brg_full_label_digits_psm6", 0.05, 0.00, 0.98, 0.28, 2400, 6, "binary", "0123456789"),
+        ("brg_center_label_numericish_psm11", 0.20, 0.02, 0.86, 0.30, 2400, 11, "contrast", _CERT_NUMERICISH_WHITELIST),
+    ),
 }
 
 
@@ -119,38 +156,97 @@ def detect_company(text: str) -> str | None:
     return None
 
 
-def _numeric_candidates(text: str) -> list[str]:
+def _numericish_to_digits(value: str) -> str:
+    raw = re.sub(r"[\s._/#:-]+", "", str(value or "").upper())
+    if not raw:
+        return ""
+    meaningful = [char for char in raw if char.isalnum() or char == "|"]
+    if not meaningful:
+        return ""
+    allowed = set(_CERT_NUMERICISH)
+    if sum(char in allowed for char in meaningful) / len(meaningful) < 0.78:
+        return ""
+    mapped = raw.translate(_CERT_OCR_CONFUSION_MAP)
+    return re.sub(r"\D", "", mapped)
+
+
+def _tag_candidate(value: str) -> str:
+    raw = re.sub(r"[\s._/#:-]+", "", str(value or "").upper())
+    if len(raw) != 8:
+        return ""
+    # Current TAG certs are typically one letter followed by seven digits.
+    # Preserve that leading letter instead of applying numeric OCR substitutions.
+    if raw[0].isalpha():
+        tail = _numericish_to_digits(raw[1:])
+        if len(tail) == 7:
+            return raw[0] + tail
+        return ""
+    return raw if raw.isdigit() else ""
+
+
+def _numeric_candidates(text: str, company: str | None = None) -> list[str]:
     compact = _normalized_ocr(text)
-    patterns = (
-        r"(?<![A-Z0-9])[0-9OQDIL]{6,13}(?![A-Z0-9])",
-        r"(?<![A-Z0-9])(?:[0-9OQDIL]{2,4}[ -]){1,4}[0-9OQDIL]{2,4}(?![A-Z0-9])",
-        r"(?:CERT(?:IFICATION)?(?:\s*(?:NO|NUMBER))?\s*[:#-]?\s*)([0-9OQDIL .-]{6,20})",
-    )
     values: list[str] = []
-    for pattern in patterns:
-        for match in re.finditer(pattern, compact):
-            value = match.group(1) if match.lastindex else match.group(0)
-            mapped = value.translate(
-                str.maketrans({"O": "0", "Q": "0", "D": "0", "I": "1", "L": "1"})
-            )
-            digits = re.sub(r"\D", "", mapped)
-            if 6 <= len(digits) <= 13:
-                values.append(digits)
-    return list(dict.fromkeys(values))
+
+    if company == "TAG":
+        tag_patterns = (
+            r"(?:CERT(?:IFICATION)?(?:\s*(?:NO|NUMBER|ID))?|CERT#|SERIAL)\s*[:#.-]?\s*([A-Z0-9][A-Z0-9 ._/#:-]{7,16})",
+            r"(?<![A-Z0-9])([A-Z][0-9OQDILZSBG|]{7})(?![A-Z0-9])",
+            r"(?<![A-Z0-9])([0-9]{8})(?![A-Z0-9])",
+        )
+        for pattern in tag_patterns:
+            for match in re.finditer(pattern, compact, re.I):
+                raw = match.group(1) if match.lastindex else match.group(0)
+                candidate = _tag_candidate(raw)
+                if candidate:
+                    values.append(candidate)
+
+    patterns = (
+        r"(?:CERT(?:IFICATION)?(?:\s*(?:NO|NUMBER|ID))?|CERT#|SERIAL|鑑定番号|인증(?:번호)?)\s*[:#.-]?\s*([0-9OQDILZSBG| ._/#:-]{6,24})",
+        r"(?<![A-Z0-9])([0-9OQDILZSBG|]{6,13})(?![A-Z0-9])",
+        r"(?<![A-Z0-9])((?:[0-9OQDILZSBG|]{2,5}[ ._-]){1,4}[0-9OQDILZSBG|]{2,5})(?![A-Z0-9])",
+    )
+    for pattern_index, pattern in enumerate(patterns):
+        for match in re.finditer(pattern, compact, re.I):
+            raw = match.group(1) if match.lastindex else match.group(0)
+            digits = _numericish_to_digits(raw)
+            if not 6 <= len(digits) <= 13:
+                continue
+            # Avoid joining a visible year and a nearby card number into a fake
+            # serial unless the OCR also captured explicit certification context.
+            if pattern_index == 2:
+                groups = re.findall(r"[0-9]{2,5}", raw)
+                if len(groups) >= 2 and re.fullmatch(r"(?:19|20)\d{2}", groups[0]):
+                    continue
+            values.append(digits)
+    return values
 
 
 def normalize_cert(company: str | None, text: str) -> str | None:
+    company = str(company or "").upper()
     if company not in CERT_LENGTHS:
         return None
     allowed = CERT_LENGTHS[company]
-    candidates = [value for value in _numeric_candidates(text) if len(value) in allowed]
+    raw_candidates = _numeric_candidates(text, company)
+    candidates = [
+        value for value in raw_candidates
+        if (company == "TAG" and re.fullmatch(r"[A-Z][0-9]{7}", value))
+        or (value.isdigit() and len(value) in allowed)
+    ]
     if not candidates:
         return None
 
     counts = Counter(candidates)
+    # Repetition wins first. For TAG, prefer the documented letter+7 form over
+    # an equally frequent numeric token. Otherwise preserve first-seen context.
     return max(
         candidates,
-        key=lambda value: (counts[value], len(value), candidates.index(value)),
+        key=lambda value: (
+            counts[value],
+            int(company == "TAG" and bool(re.fullmatch(r"[A-Z][0-9]{7}", value))),
+            -candidates.index(value),
+            len(value),
+        ),
     )
 
 
@@ -205,9 +301,34 @@ def _prepare_crop(source: Image.Image, top_fraction: float, scale: float, thresh
     return crop.resize((target_w, target_h))
 
 
+def _otsu_threshold(gray: Image.Image) -> int:
+    histogram = gray.histogram()[:256]
+    total = sum(histogram) or 1
+    weighted = sum(index * count for index, count in enumerate(histogram))
+    background_weight = 0
+    background_sum = 0
+    best = -1.0
+    threshold = 172
+    for index, count in enumerate(histogram):
+        background_weight += count
+        if background_weight <= 0:
+            continue
+        foreground_weight = total - background_weight
+        if foreground_weight <= 0:
+            break
+        background_sum += index * count
+        background_mean = background_sum / background_weight
+        foreground_mean = (weighted - background_sum) / foreground_weight
+        between = background_weight * foreground_weight * (background_mean - foreground_mean) ** 2
+        if between > best:
+            best = between
+            threshold = index
+    return max(80, min(220, threshold))
+
+
 def _prepare_region_crop(
     source: Image.Image, left: float, top: float, right: float, bottom: float,
-    target_width: int, threshold: bool = False,
+    target_width: int, threshold: bool = False, mode: str = "gray",
 ) -> Image.Image:
     """Prepare a bounded label sub-region for grader-specific OCR recovery."""
     width, height = source.size
@@ -215,13 +336,54 @@ def _prepare_region_crop(
     y0 = max(0, min(height - 1, int(height * top)))
     x1 = max(x0 + 1, min(width, int(width * right)))
     y1 = max(y0 + 1, min(height, int(height * bottom)))
-    crop = source.crop((x0, y0, x1, y1))
-    crop = ImageOps.autocontrast(ImageOps.grayscale(crop))
-    if threshold:
-        crop = crop.point(lambda p: 255 if p > 172 else 0)
+    crop = ImageOps.grayscale(source.crop((x0, y0, x1, y1)))
+    # Dark label variants (for example some TAG/BGS presentations) are easier
+    # for Tesseract after polarity normalization.
+    if float(ImageStat.Stat(crop).mean[0]) < 105.0:
+        crop = ImageOps.invert(crop)
+    crop = ImageOps.autocontrast(crop, cutoff=1)
+    crop = crop.filter(ImageFilter.UnsharpMask(radius=1.1, percent=175, threshold=2))
+    if mode == "contrast":
+        crop = ImageEnhance.Contrast(crop).enhance(1.55)
+    if threshold or mode == "binary":
+        cutoff = _otsu_threshold(crop)
+        crop = crop.point(lambda pixel: 255 if pixel > cutoff else 0)
     target_w = max(900, int(target_width))
     ratio = target_w / max(1, crop.width)
-    return crop.resize((target_w, max(240, int(crop.height * ratio))))
+    return crop.resize((target_w, max(240, int(crop.height * ratio))), Image.Resampling.LANCZOS)
+
+
+def _targeted_cert_recovery(
+    source: Image.Image, company: str,
+) -> tuple[str | None, list[str], list[str], list[dict[str, Any]]]:
+    """Run bounded grader-specific certificate passes after the shared 1/4/8 OCR."""
+    recovered = None
+    passes: list[str] = []
+    errors: list[str] = []
+    diagnostics: list[dict[str, Any]] = []
+    for pass_name, left, top, right, bottom, target_width, psm, mode, whitelist in CERT_TARGET_PROFILES.get(company, ()):
+        crop = _prepare_region_crop(
+            source, left, top, right, bottom, target_width,
+            threshold=(mode == "binary"), mode=mode,
+        )
+        text, error = _run_tesseract(crop, psm, whitelist=whitelist)
+        passes.append(pass_name)
+        if error:
+            errors.append(f"{pass_name}:{error}")
+        candidate = normalize_cert(company, text or "")
+        diagnostics.append({
+            "pass": pass_name,
+            "company": company,
+            "psm": psm,
+            "mode": mode,
+            "text_chars": len(text or ""),
+            "certification_id": candidate,
+            "error": error,
+        })
+        if candidate:
+            recovered = candidate
+            break
+    return recovered, passes, errors, diagnostics
 
 
 @lru_cache(maxsize=1)
@@ -268,16 +430,22 @@ def _looks_like_bgs_label(text: str) -> bool:
     return ("BECKETT" in upper or " BGS " in f" {upper} " or "PRISTINE" in upper) and markers >= 2
 
 
-def _fields_from_text(text: str) -> tuple[str | None, str | None, float | None]:
+def _fields_from_text(
+    text: str, fallback_company: str = "",
+) -> tuple[str | None, str | None, float | None]:
     company = detect_company(text)
     if company is None and _looks_like_bgs_label(text):
         company = "BGS"
-    cert = normalize_cert(company, text)
-    grade = normalize_grade(text, company)
+    hint = str(fallback_company or "").upper()
+    parse_company = company or (hint if hint in COMPANIES else None)
+    cert = normalize_cert(parse_company, text)
+    grade = normalize_grade(text, parse_company)
     return company, cert, grade
 
 
-def ocr_label(path: Path, profile: str = "adaptive") -> tuple[str, str | None, dict[str, Any]]:
+def ocr_label(
+    path: Path, profile: str = "adaptive", *, fallback_company: str = "",
+) -> tuple[str, str | None, dict[str, Any]]:
     """OCR slab image as full -> four quadrants -> eight precision regions."""
     try:
         with Image.open(path) as raw:
@@ -327,7 +495,7 @@ def ocr_label(path: Path, profile: str = "adaptive") -> tuple[str, str | None, d
                         texts.append(text)
                 if error:
                     errors.append(f"{spec.name}:{error}")
-                company, cert, grade = _fields_from_text(text or "")
+                company, cert, grade = _fields_from_text(text or "", fallback_company)
                 region_diagnostics.append({
                     **spec.public(),
                     "ocr_text_chars": len(text or ""),
@@ -338,7 +506,7 @@ def ocr_label(path: Path, profile: str = "adaptive") -> tuple[str, str | None, d
                 })
 
             stage_text = " | ".join(dict.fromkeys(stage_texts))
-            company, cert, grade = _fields_from_text(stage_text)
+            company, cert, grade = _fields_from_text(stage_text, fallback_company)
             stage_summaries.append({
                 "stage": stage,
                 "region_count_expected": STAGE_REGION_COUNTS[stage],
@@ -357,53 +525,30 @@ def ocr_label(path: Path, profile: str = "adaptive") -> tuple[str, str | None, d
                 stages_completed.append(stage)
 
         combined = " | ".join(dict.fromkeys(texts))
-        company, cert, grade = _fields_from_text(combined)
+        company, cert, grade = _fields_from_text(combined, fallback_company)
         targeted_passes: list[str] = []
+        targeted_cert_diagnostics: list[dict[str, Any]] = []
 
-        # Preserve grader-specific certificate recovery as a post-hierarchy
-        # fallback. The shared 13-region analysis always runs first.
-        if cert is None and (company == "BGS" or _looks_like_bgs_label(combined)):
-            cert_crop = _prepare_region_crop(source, 0.48, 0.00, 1.00, 0.20, 1700, False)
-            for pass_name, cert_psm in (
-                ("bgs_top_right_digits_psm6", 6),
-                ("bgs_top_right_digits_psm11", 11),
-            ):
-                cert_text, cert_error = _run_tesseract(
-                    cert_crop, cert_psm, whitelist="0123456789"
-                )
-                used.append(pass_name)
-                targeted_passes.append(pass_name)
-                if cert_error:
-                    errors.append(cert_error)
-                recovered = normalize_cert("BGS", cert_text or "")
-                if recovered:
-                    texts.append(f"BECKETT CERT {recovered}")
-                    break
-
-        combined = " | ".join(dict.fromkeys(texts))
-        company, cert, grade = _fields_from_text(combined)
-        if cert is None and company == "CGC":
-            for pass_name, left, top, right, bottom, target_width, cert_psm, threshold2 in (
-                ("cgc_center_label_digits_psm6", 0.25, 0.05, 0.78, 0.23, 2200, 6, False),
-                ("cgc_center_label_digits_psm11", 0.34, 0.08, 0.74, 0.22, 2400, 11, True),
-            ):
-                cert_crop = _prepare_region_crop(
-                    source, left, top, right, bottom, target_width, threshold2
-                )
-                cert_text, cert_error = _run_tesseract(
-                    cert_crop, cert_psm, whitelist="0123456789"
-                )
-                used.append(pass_name)
-                targeted_passes.append(pass_name)
-                if cert_error:
-                    errors.append(cert_error)
-                recovered = normalize_cert("CGC", cert_text or "")
-                if recovered:
-                    texts.append(f"CGC CERT {recovered}")
-                    break
+        # The shared 13-region analysis always runs first. If the serial is still
+        # missing, use a bounded grader-specific label profile. A manually selected
+        # grader may choose the profile, but it is not promoted to visual OCR proof.
+        hint = str(fallback_company or "").upper()
+        target_company = company or (hint if hint in COMPANIES else "")
+        if cert is None and target_company:
+            recovered, profile_passes, profile_errors, targeted_cert_diagnostics = (
+                _targeted_cert_recovery(source, target_company)
+            )
+            used.extend(profile_passes)
+            targeted_passes.extend(profile_passes)
+            errors.extend(profile_errors)
+            if recovered:
+                # Add explicit CERT context so downstream evidence can preserve the
+                # serial. Add the company token only if OCR actually saw the grader.
+                prefix = f"{company} " if company else ""
+                texts.append(f"{prefix}CERT {recovered}")
 
         combined = " | ".join(dict.fromkeys(texts))[:5000]
-        company, cert, grade = _fields_from_text(combined)
+        company, cert, grade = _fields_from_text(combined, fallback_company)
         error = ";".join(dict.fromkeys(errors)) if errors and not combined else None
         return combined, error if error else (None if combined else "ocr_empty"), {
             "profile": profile,
@@ -417,6 +562,8 @@ def ocr_label(path: Path, profile: str = "adaptive") -> tuple[str, str | None, d
             "stage_summaries": stage_summaries,
             "regions": region_diagnostics,
             "targeted_passes": targeted_passes,
+            "targeted_cert_diagnostics": targeted_cert_diagnostics,
+            "fallback_company_used_for_parsing": bool(not company and str(fallback_company or "").upper() in COMPANIES),
             "passes_used": used,
             "pass_count": len(used),
             "company_resolved": company is not None,
@@ -453,7 +600,7 @@ def load_registry(path: Path | None) -> dict[tuple[str, str], dict[str, Any]]:
         if not isinstance(row, dict):
             continue
         company = str(row.get("company", "")).upper()
-        cert = re.sub(r"\D", "", str(row.get("certification_id", "")))
+        cert = normalize_cert(company, str(row.get("certification_id", ""))) or ""
         url = str(row.get("official_reference_url") or "")
         try:
             grade = float(row.get("grade"))
