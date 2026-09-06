@@ -7,6 +7,8 @@ from pathlib import Path
 
 from crosscheck_runtime_bridge import run_bridge, run_from_persisted
 
+FIXED_NOW = dt.datetime(2026, 9, 6, 0, 0, tzinfo=dt.timezone.utc)
+
 BASE = {
     "information_family": "release",
     "canonical_key": "pokemon|30th-celebration|jp",
@@ -141,6 +143,7 @@ class CrosscheckRuntimeBridgeTests(unittest.TestCase):
             result = run_from_persisted(
                 main_snapshot=main_snapshot,
                 instagram_snapshot=instagram_snapshot,
+                now=FIXED_NOW,
                 **paths,
             )
             self.assertTrue(result["operational_ready"])
@@ -192,7 +195,7 @@ class CrosscheckRuntimeBridgeTests(unittest.TestCase):
             result = run_from_persisted(
                 main_snapshot=main_snapshot,
                 instagram_snapshot=instagram_snapshot,
-                now=dt.datetime(2026, 9, 6, 0, 0, tzinfo=dt.timezone.utc),
+                now=FIXED_NOW,
                 **self._paths(root),
             )
             self.assertFalse(result["operational_ready"])
@@ -226,6 +229,7 @@ class CrosscheckRuntimeBridgeTests(unittest.TestCase):
                 run_from_persisted(
                     main_snapshot=main_snapshot,
                     instagram_snapshot=instagram_snapshot,
+                    now=FIXED_NOW,
                     **self._paths(root),
                 )
 
