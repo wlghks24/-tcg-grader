@@ -8,12 +8,19 @@ baselines, and false finalized records fail closed.
 from __future__ import annotations
 
 import json
+import os
 import tempfile
+from datetime import datetime
 from pathlib import Path
 from typing import Any
 
 SCHEMA_VERSION = 1
 SCHEDULED_BASELINE_RUN_KIND = "scheduled_10_30"
+
+
+class StateIntegrityError(RuntimeError):
+    """Raised when an existing production-state file cannot be trusted."""
+
 EXPECTED_ARTIFACT_COUNT = 6
 EXPECTED_DIMENSIONS = [1080, 1350]
 
@@ -46,15 +53,25 @@ def empty_state() -> dict[str, Any]:
 
 
 def load_state(path: Path) -> dict[str, Any]:
+    if not path.exists():
+        return empty_state()
     try:
-        value = json.loads(path.read_text(encoding="utf-8"))
-    except (OSError, ValueError, TypeError, UnicodeError):
-        return empty_state()
-    if not isinstance(value, dict) or value.get("schema_version") != SCHEMA_VERSION:
-        return empty_state()
-    value.setdefault("run_locks", {})
-    value.setdefault("production_records", {})
-    value.setdefault("catchup_attempts", {})
+        raw = path.read_text(encoding="utf-8")
+    except OSError as exc:
+        raise StateIntegrityError("STATE_READ_FAILED") from exc
+    try:
+        value = json.loads(raw)
+    except (ValueError, TypeError, UnicodeError) as exc:
+        raise StateIntegrityError("STATE_CORRUPT_JSON") from exc
+    if not isinstance(value, dict):
+        raise StateIntegrityError("STATE_ROOT_NOT_OBJECT")
+    if value.get("schema_version") != SCHEMA_VERSION:
+        raise StateIntegrityError("STATE_SCHEMA_MISMATCH")
+    for key in ("run_locks", "production_records", "catchup_attempts"):
+        if key not in value:
+            value[key] = {}
+        elif not isinstance(value[key], dict):
+            raise StateIntegrityError(f"STATE_FIELD_INVALID:{key}")
     return value
 
 
@@ -72,8 +89,19 @@ def write_state_atomic(path: Path, state: dict[str, Any]) -> None:
         ) as handle:
             json.dump(state, handle, ensure_ascii=False, indent=2, sort_keys=True)
             handle.write("\n")
+            handle.flush()
+            os.fsync(handle.fileno())
             tmp = Path(handle.name)
         tmp.replace(path)
+        try:
+            dir_fd = os.open(path.parent, os.O_RDONLY)
+        except OSError:
+            dir_fd = None
+        if dir_fd is not None:
+            try:
+                os.fsync(dir_fd)
+            finally:
+                os.close(dir_fd)
     finally:
         if tmp is not None and tmp.exists():
             tmp.unlink(missing_ok=True)
@@ -118,12 +146,29 @@ def release_run_lock(
     row["status"] = status
 
 
+def _parse_aware_iso(value: Any) -> datetime | None:
+    if not isinstance(value, str) or not value:
+        return None
+    try:
+        dt = datetime.fromisoformat(value.replace("Z", "+00:00"))
+    except ValueError:
+        return None
+    return dt if dt.tzinfo is not None else None
+
+
 def validate_production_record(record: dict[str, Any]) -> list[str]:
     errors: list[str] = []
     missing = sorted(REQUIRED_PRODUCTION_FIELDS - set(record))
     if missing:
         errors.append("missing production fields: " + ",".join(missing))
         return errors
+
+    if record.get("schema_version") != SCHEMA_VERSION:
+        errors.append("schema_version mismatch")
+
+    for field in ("scheduled_slot_kst", "actual_started_at_kst", "finalized_at"):
+        if _parse_aware_iso(record.get(field)) is None:
+            errors.append(f"{field} must be timezone-aware ISO-8601")
 
     run_kind = record.get("run_kind")
     baseline_id = record.get("baseline_id")
@@ -158,10 +203,10 @@ def validate_production_record(record: dict[str, Any]) -> list[str]:
     ):
         errors.append("all artifacts must be 1080x1350")
 
-    if not record.get("delivery_reference_status"):
-        errors.append("delivery_reference_status missing")
-    if not record.get("finalized_at"):
-        errors.append("finalized_at missing")
+    if record.get("x10_status") != "pass":
+        errors.append("x10_status must be pass")
+    if record.get("delivery_reference_status") != "verified":
+        errors.append("delivery_reference_status must be verified")
     return errors
 
 
@@ -202,7 +247,11 @@ def finalize_production(
     if errors:
         raise ValueError("; ".join(errors))
     production_date = str(record["production_date_kst"])
-    state.setdefault("production_records", {})[production_date] = {
+    records = state.setdefault("production_records", {})
+    prior = records.get(production_date)
+    if isinstance(prior, dict) and prior.get("finalized") is True:
+        raise RuntimeError("FINALIZED_PRODUCTION_ALREADY_EXISTS")
+    records[production_date] = {
         "finalized": True,
         **record,
     }
