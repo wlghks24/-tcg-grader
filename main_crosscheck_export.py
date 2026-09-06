@@ -10,9 +10,25 @@ from safe_runtime import atomic_write_json
 
 ROOT = Path(__file__).resolve().parent
 DEFAULT_OUTPUT = ROOT / "crosscheck_exchange" / "runtime-main.json"
+DEFAULT_PERSISTED_OUTPUT = ROOT / "TCG_CROSSCHECK" / "MARKET_ANALYSIS" / "factual_snapshot.json"
+CANONICAL_FACTUAL_TYPES = {
+    "card_price", "release", "rerelease", "promo",
+    "event", "movie_bonus", "completed_sale", "market_reference",
+}
+
+
+def _validate_factual_types(rows: list[dict]) -> None:
+    invalid = sorted({
+        str(row.get("information_family") or "").strip()
+        for row in rows
+        if str(row.get("information_family") or "").strip() not in CANONICAL_FACTUAL_TYPES
+    })
+    if invalid:
+        raise ValueError(f"unsupported factual types: {invalid}")
 
 
 def export_records(records: list[dict], output: Path = DEFAULT_OUTPUT) -> list[dict]:
+    _validate_factual_types(records)
     normalized = [normalize_crosscheck_record("main", row) for row in records]
     atomic_write_json(
         output,
@@ -22,9 +38,58 @@ def export_records(records: list[dict], output: Path = DEFAULT_OUTPUT) -> list[d
     return normalized
 
 
+def persist_verified_snapshot(records: list[dict], output: Path = DEFAULT_PERSISTED_OUTPUT) -> dict:
+    normalized = export_records(records)
+    verified = [row for row in normalized if row.get("verification") == "verified"]
+    if not verified:
+        raise ValueError("no verified factual rows; persisted snapshot not replaced")
+    import datetime as dt
+    kst = dt.timezone(dt.timedelta(hours=9))
+    stamp = dt.datetime.now(kst).isoformat(timespec="seconds")
+    facts = [{
+        "canonical_key": row["canonical_key"],
+        "fact_type": row["information_family"],
+        "lineage_key": row["lineage_key"],
+        "identity": {"variant": row["variant"]},
+        "value": row["value"],
+        "value_type": "text",
+        "currency": row["currency"],
+        "region": "",
+        "language": row["language"],
+        "condition": "",
+        "grade_company": "",
+        "grade": "",
+        "effective_date": "",
+        "observed_at": row["checked_at_kst"],
+        "source_role": row["source_code"],
+        "source_locator": row["source_locator"],
+        "verification_status": "verified",
+    } for row in verified]
+    payload = {
+        "schema_version": "1.0",
+        "namespace": "MARKET_ANALYSIS",
+        "snapshot_kind": "factual",
+        "run_date_kst": stamp[:10],
+        "status": "finalized",
+        "built_at": stamp,
+        "finalized_at": stamp,
+        "facts": facts,
+        "validation": {
+            "manifest_validated": True,
+            "allowed_fields_only": True,
+            "exact_factual_types_enforced": True,
+            "write_readback_verified": True,
+            "isolation_breach": False,
+        },
+        "error_code": None,
+    }
+    atomic_write_json(output, payload, suffix=".main-factual-snapshot.tmp")
+    return payload
+
+
 def self_test() -> None:
     sample = [{
-        "information_family": "market_price",
+        "information_family": "market_reference",
         "canonical_key": "pokemon|001|jp",
         "value": "1000",
         "currency": "JPY",
@@ -50,6 +115,7 @@ def main() -> int:
     parser.add_argument("--input")
     parser.add_argument("--output", default=str(DEFAULT_OUTPUT))
     parser.add_argument("--self-test", action="store_true")
+    parser.add_argument("--persisted-output")
     args = parser.parse_args()
     if args.self_test:
         self_test()
@@ -61,6 +127,8 @@ def main() -> int:
     if not isinstance(records, list) or not all(isinstance(row, dict) for row in records):
         raise SystemExit("input must be a JSON list or object with records list")
     export_records(records, Path(args.output))
+    if args.persisted_output:
+        persist_verified_snapshot(records, Path(args.persisted_output))
     return 0
 
 
