@@ -51,6 +51,26 @@ class MarketAILearningMemoryTests(unittest.TestCase):
         self.assertLessEqual(apply_confidence_cap(0.80, report), 0.80)
         self.assertLessEqual(apply_confidence_cap(0.99, report), 0.99)
 
+    def test_calibration_consumes_single_pass_iterable_once(self):
+        owner = self
+
+        class SinglePass:
+            def __init__(self):
+                self.used = False
+
+            def __iter__(self):
+                if self.used:
+                    raise AssertionError("calibration attempted a second pass")
+                self.used = True
+                for i in range(10):
+                    yield owner.outcome(key=str(i), predicted_value=100.0, observed_value=101.0)
+
+        rows = SinglePass()
+        report = calibration_report(rows, min_samples=5)
+        self.assertTrue(rows.used)
+        self.assertEqual(report.sample_count, 10)
+        self.assertIsNotNone(report.mae)
+
     def test_stable_distribution_is_not_drift(self):
         result = detect_distribution_drift(
             [100, 101, 99, 100, 102],
