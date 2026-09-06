@@ -36,6 +36,7 @@ on:
       - 'VERIFY_TABLET_FINAL.sh'
       - 'VERIFY_TABLET_RUNTIME.sh'
       - 'tablet_runtime_probe.py'
+      - 'tablet_runtime_qa.py'
       - 'test_tablet_runtime_qa_integration.py'
       - 'ANDROID_AUTO_START_INSTALL.sh'
       - 'START_TCG_UPDATER_ANDROID.sh'
@@ -83,6 +84,7 @@ on:
       - 'VERIFY_TABLET_FINAL.sh'
       - 'VERIFY_TABLET_RUNTIME.sh'
       - 'tablet_runtime_probe.py'
+      - 'tablet_runtime_qa.py'
       - 'test_tablet_runtime_qa_integration.py'
       - 'ANDROID_AUTO_START_INSTALL.sh'
       - 'START_TCG_UPDATER_ANDROID.sh'
@@ -119,7 +121,7 @@ jobs:
         run: python -m pip install pillow
       - name: Verify runtime delivery invariants
         run: |
-          python test_runtime_delivery_guards.py
+          python tablet_runtime_qa.py --profile runtime
           python test_runtime_resilience_v182.py
           python test_link_audit_hardening_v184.py
           python test_link_same_host_fallback_v189.py
@@ -128,13 +130,8 @@ jobs:
           python test_manual_only_official_verification_v192.py
           python test_manual_official_proof.py
           python test_pending_official_candidate_v161.py
-          python -m py_compile safe_runtime.py tcg_updater.py tcg_updater_v135.py update_market_prices.py validate_external_links.py grading_cert_verifier.py manual_graded_photo_registration.py manual_official_proof.py pending_official_candidate_v161.py graded_photo_multi_source.py auto_update_all.py auto_repair_engine.py error_scenario_lab.py tablet_runtime_probe.py test_tablet_runtime_qa_integration.py
-          python tablet_runtime_probe.py --self-test
+          python -m py_compile safe_runtime.py tcg_updater.py tcg_updater_v135.py update_market_prices.py validate_external_links.py grading_cert_verifier.py manual_graded_photo_registration.py manual_official_proof.py pending_official_candidate_v161.py graded_photo_multi_source.py auto_update_all.py auto_repair_engine.py error_scenario_lab.py tablet_runtime_qa.py test_tablet_runtime_qa_integration.py
           python test_tablet_runtime_qa_integration.py
-          bash -n VERIFY_TABLET_RUNTIME.sh
-          bash -n ANDROID_UPDATE_AND_START.sh
-          bash -n ANDROID_AUTO_START_INSTALL.sh
-          bash -n START_TCG_UPDATER_ANDROID.sh
           node --check multi_market_prices.js
           node --check manual_official_verify_bridge.js
           node --check pending_official_candidate_bridge_v161.js

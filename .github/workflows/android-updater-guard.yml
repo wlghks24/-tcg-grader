@@ -9,6 +9,7 @@ on:
       - 'VERIFY_TABLET_RUNTIME.sh'
       - 'tablet_runtime_probe.py'
       - 'test_runtime_delivery_guards.py'
+      - 'tablet_runtime_qa.py'
       - 'test_tablet_runtime_qa_integration.py'
       - 'START_TCG_UPDATER_ANDROID.sh'
       - '.github/workflows/android-updater-guard.yml'
@@ -22,6 +23,7 @@ on:
       - 'VERIFY_TABLET_RUNTIME.sh'
       - 'tablet_runtime_probe.py'
       - 'test_runtime_delivery_guards.py'
+      - 'tablet_runtime_qa.py'
       - 'test_tablet_runtime_qa_integration.py'
       - 'START_TCG_UPDATER_ANDROID.sh'
       - '.github/workflows/android-updater-guard.yml'
@@ -41,19 +43,9 @@ jobs:
       - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
         with:
           persist-credentials: false
-      - name: Validate Android updater shell syntax
+      - name: Run shared tablet runtime QA
         run: |
-          bash -n ANDROID_UPDATE_AND_START.sh
-          bash -n ANDROID_RECOVER_UPDATE.sh
-          bash -n ANDROID_AUTO_START_INSTALL.sh
-          bash -n VERIFY_TABLET_FINAL.sh
-          bash -n VERIFY_TABLET_RUNTIME.sh
-          bash -n START_TCG_UPDATER_ANDROID.sh
-      - name: Validate tablet runtime probe and delivery guards
-        run: |
-          python -m py_compile tablet_runtime_probe.py test_runtime_delivery_guards.py test_tablet_runtime_qa_integration.py
-          python tablet_runtime_probe.py --self-test
-          python test_runtime_delivery_guards.py
+          python tablet_runtime_qa.py --profile updater
           python test_tablet_runtime_qa_integration.py
       - name: Verify boot supervisor diagnostics and health route
         run: |

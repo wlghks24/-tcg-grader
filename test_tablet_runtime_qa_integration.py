@@ -26,6 +26,7 @@ def main() -> None:
     runtime_guard = read(".github/workflows/runtime-delivery-guard.yml")
     android_guard = read(".github/workflows/android-updater-guard.yml")
     runtime_script = read("VERIFY_TABLET_RUNTIME.sh")
+    shared_qa = read("tablet_runtime_qa.py")
 
     # Canonical TABLET_RUNTIME_QA layers:
     # 1) final release preflight, 2) live runtime probe, 3) CI delivery/updater guards.
@@ -33,10 +34,9 @@ def main() -> None:
         "VERIFY_TABLET_RUNTIME.sh",
         "tablet_runtime_probe.py",
         "test_runtime_delivery_guards.py",
+        "tablet_runtime_qa.py",
         "test_tablet_runtime_qa_integration.py",
-        "bash -n VERIFY_TABLET_RUNTIME.sh",
-        "python tablet_runtime_probe.py --self-test",
-        "python test_runtime_delivery_guards.py",
+        "python tablet_runtime_qa.py --profile final",
         "python test_tablet_runtime_qa_integration.py",
     ):
         require(final_script, marker, "VERIFY_TABLET_FINAL.sh")
@@ -49,16 +49,23 @@ def main() -> None:
         for path in (
             "VERIFY_TABLET_RUNTIME.sh",
             "tablet_runtime_probe.py",
+            "tablet_runtime_qa.py",
             "test_tablet_runtime_qa_integration.py",
         ):
             require_path_in_push_and_pr(workflow, path, label)
         require(workflow, "python test_tablet_runtime_qa_integration.py", label)
 
     require(final_guard, "bash VERIFY_TABLET_FINAL.sh", "Final Tablet Guard")
-    require(runtime_guard, "python tablet_runtime_probe.py --self-test", "Runtime delivery guard")
-    require(runtime_guard, "bash -n VERIFY_TABLET_RUNTIME.sh", "Runtime delivery guard")
-    require(android_guard, "python tablet_runtime_probe.py --self-test", "Android Updater Guard")
-    require(android_guard, "bash -n VERIFY_TABLET_RUNTIME.sh", "Android Updater Guard")
+    require(runtime_guard, "python tablet_runtime_qa.py --profile runtime", "Runtime delivery guard")
+    require(android_guard, "python tablet_runtime_qa.py --profile updater", "Android Updater Guard")
+
+    require(shared_qa, "COMMON_REQUIRED", "tablet_runtime_qa.py")
+    require(shared_qa, "COMMON_SHELL", "tablet_runtime_qa.py")
+    require(shared_qa, "BOOT_MARKERS", "tablet_runtime_qa.py")
+    require(shared_qa, "RUNTIME_MARKERS", "tablet_runtime_qa.py")
+    require(shared_qa, "UPDATER_MARKERS", "tablet_runtime_qa.py")
+    require(shared_qa, "tablet_runtime_probe.self_test()", "tablet_runtime_qa.py")
+    require(shared_qa, "test_runtime_delivery_guards.main()", "tablet_runtime_qa.py")
 
     # The live device-only check remains distinct and must fail closed on health/head drift.
     require(runtime_script, "--require-health", "VERIFY_TABLET_RUNTIME.sh")
