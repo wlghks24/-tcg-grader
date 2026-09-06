@@ -8,7 +8,7 @@ after repeated failures.
 """
 from __future__ import annotations
 
-from dataclasses import asdict, dataclass
+from dataclasses import dataclass, replace
 from datetime import datetime, timedelta, timezone
 from hashlib import sha256
 from typing import Iterable, Sequence
@@ -74,8 +74,9 @@ class Observation:
                 self.value,
             )
         )
-        return Observation(
-            **{**asdict(self), "lineage_key": sha256(raw.encode()).hexdigest()[:24]}
+        return replace(
+            self,
+            lineage_key=sha256(raw.encode("utf-8", "replace")).hexdigest()[:24],
         )
 
 
