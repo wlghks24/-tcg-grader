@@ -1,18 +1,21 @@
 #!/usr/bin/env python3
 """Performance-optimized execution path for the canonical AI tracker.
 
-This module deliberately reuses ai_auto_tracker's state schema, safety contracts,
-retry policy, quarantine handoff, and verified-learning logic. It does not create
-a second tracker or learning store. The optimization is limited to eliminating
-repeated pure work inside one observe() call:
+This module reuses ai_auto_tracker's state schema, safety contracts, retry policy,
+quarantine handoff, and verified-learning logic. It does not create a second
+tracker or learning store.
 
-- normalize hot event fields once;
-- cache Graphify impact analysis by normalized origin path for the run;
-- reuse the already-computed severity in handoffs;
+V2 optimizations are run-scoped and deterministic:
+- normalize every hot event field once;
+- derive domain, severity, and fingerprint from the same prepared feature set;
+- cache Graphify impact analysis by normalized origin path;
+- reuse compact Code Map output and computed severity in handoffs;
 - keep occurrence/state semantics identical to the canonical tracker.
 """
 from __future__ import annotations
 
+import hashlib
+from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Iterable
 
@@ -29,20 +32,86 @@ from code_map_intelligence import (
 MAX_BATCH_EVENTS = 5000
 
 
-def _prepared(event: dict[str, Any]) -> dict[str, Any]:
-    """Normalize repeatedly-used fields once without mutating the input event."""
+@dataclass(frozen=True)
+class EventFeatures:
+    path: str
+    stage: str
+    stage_lower: str
+    error_type: str
+    fingerprint_error: str
+    message: str
+    evidence: str
+    source: str
+    explicit_domain: str
+    explicit_severity: str
+    domain_haystack: str
+    severity_haystack: str
+
+
+def _features(event: dict[str, Any]) -> EventFeatures:
+    """Normalize all strings needed by routing, severity, fingerprint and handoff once."""
     path = tracker._clean(event.get("path"), 240).replace("\\", "/")
-    stage = tracker._clean(event.get("stage"), 80) or "UNKNOWN"
-    error_type = tracker._clean(event.get("error_type") or "unknown", 100)
-    message = tracker._clean(event.get("message") or event.get("evidence"), 240)
-    evidence = tracker._clean(event.get("evidence") or event.get("message"), 240)
-    return {
-        "path": path,
-        "stage": stage,
-        "error_type": error_type,
-        "message": message,
-        "evidence": evidence,
+    stage_raw = tracker._clean(event.get("stage"), 500)
+    stage = stage_raw[:80] or "UNKNOWN"
+    message_raw = tracker._clean(event.get("message"), 500)
+    evidence_raw = tracker._clean(event.get("evidence"), 500)
+    source = tracker._clean(event.get("source"), 500)
+    error_value = event.get("error_type") or "unknown"
+    error_type = tracker._clean(error_value, 100)
+    fingerprint_error = tracker._clean(event.get("error_type") or event.get("message"), 220).lower()
+    explicit_domain = tracker._clean(event.get("domain"), 20).lower()
+    explicit_severity = tracker._clean(event.get("severity"), 20).lower()
+    domain_haystack = " ".join((stage_raw.lower(), path.lower(), message_raw.lower(), evidence_raw.lower(), source.lower()))
+    severity_haystack = " ".join((stage_raw[:300].lower(), message_raw[:300].lower(), evidence_raw[:300].lower()))
+    return EventFeatures(
+        path=path,
+        stage=stage,
+        stage_lower=stage[:80].lower(),
+        error_type=error_type,
+        fingerprint_error=fingerprint_error,
+        message=(message_raw or evidence_raw)[:240],
+        evidence=(evidence_raw or message_raw)[:240],
+        source=source,
+        explicit_domain=explicit_domain,
+        explicit_severity=explicit_severity,
+        domain_haystack=domain_haystack,
+        severity_haystack=severity_haystack,
+    )
+
+
+def _domain_from_features(features: EventFeatures) -> str:
+    if features.explicit_domain in tracker.DOMAINS:
+        return features.explicit_domain
+    scores = {
+        tracker.DOMAIN_MARKET: sum(token in features.domain_haystack for token in tracker.MARKET_HINTS),
+        tracker.DOMAIN_TABLET: sum(token in features.domain_haystack for token in tracker.TABLET_HINTS),
+        tracker.DOMAIN_GITHUB: sum(token in features.domain_haystack for token in tracker.GITHUB_HINTS),
     }
+    best = max(scores, key=scores.get)
+    return best if scores[best] > 0 else tracker.DOMAIN_GITHUB
+
+
+def _severity_from_features(features: EventFeatures) -> str:
+    if features.explicit_severity in {"critical", "high", "medium", "low"}:
+        return features.explicit_severity
+    text = features.severity_haystack
+    if any(x in text for x in ("security_high", "data loss", "corrupt", "credential", "secret leak")):
+        return "critical"
+    if any(x in text for x in ("syntax", "startup", "deploy", "unavailable", "crash", "403", "429")):
+        return "high"
+    if any(x in text for x in ("timeout", "stale", "mismatch", "failed", "error")):
+        return "medium"
+    return "low"
+
+
+def _fingerprint_from_features(features: EventFeatures, domain: str) -> str:
+    parts = (
+        domain,
+        features.stage_lower,
+        features.path.lower(),
+        features.fingerprint_error,
+    )
+    return hashlib.sha256("|".join(parts).encode("utf-8", "replace")).hexdigest()[:24]
 
 
 def _handoff_payload_fast(
@@ -50,20 +119,20 @@ def _handoff_payload_fast(
     incident_id: str,
     domain: str,
     severity: str,
-    prepared: dict[str, Any],
-    map_context: dict[str, Any],
+    features: EventFeatures,
+    compact_map: dict[str, Any],
     observed_at: str,
 ) -> dict[str, Any]:
     return {
         "incident_id": incident_id,
         "domain": domain,
-        "stage": prepared["stage"],
-        "path": prepared["path"],
+        "stage": features.stage,
+        "path": features.path,
         "severity": severity,
-        "error_type": prepared["error_type"],
-        "evidence": prepared["evidence"],
+        "error_type": features.error_type,
+        "evidence": features.evidence,
         "observed_at": observed_at,
-        "code_map": compact_context(map_context),
+        "code_map": compact_map,
     }
 
 
@@ -83,23 +152,27 @@ def observe(
         verified_learning: list[dict[str, Any]] = []
         map_root = Path(code_map_root) if code_map_root is not None else tracker.ROOT
         map_index = CodeMapIndex(map_root)
-        map_cache: dict[str, dict[str, Any]] = {}
+        map_cache: dict[str, tuple[dict[str, Any], dict[str, Any]]] = {}
         cache_hits = 0
         now = tracker._now()
         learning_state = state.get("code_map_learning")
 
+        by_domain = {d: 0 for d in sorted(tracker.DOMAINS)}
+        new_count = recurring_count = critical_high = map_available = high_risk = stale = 0
+
         for event in normalized:
-            prepared = _prepared(event)
-            domain = tracker.classify_domain(event)
-            iid = tracker.fingerprint(event, domain)
+            features = _features(event)
+            domain = _domain_from_features(features)
+            severity = _severity_from_features(features)
+            iid = _fingerprint_from_features(features, domain)
             incident = state["incidents"].get(iid, {})
             count = min(1_000_000, int(incident.get("occurrences", 0) or 0) + 1)
             status = "new" if count == 1 else "recurring"
-            severity = tracker.severity_for(event)
 
-            cache_key = prepared["path"]
-            if cache_key in map_cache:
-                map_context = map_cache[cache_key]
+            cache_key = features.path
+            cached = map_cache.get(cache_key)
+            if cached is not None:
+                map_context, compact_map = cached
                 cache_hits += 1
             else:
                 map_context = impact_context(
@@ -109,9 +182,9 @@ def observe(
                     index=map_index,
                     learning=learning_state,
                 )
-                map_cache[cache_key] = map_context
+                compact_map = compact_context(map_context)
+                map_cache[cache_key] = (map_context, compact_map)
 
-            compact_map = compact_context(map_context)
             row = {
                 "incident_id": iid,
                 "domain": domain,
@@ -119,10 +192,10 @@ def observe(
                 "impact_priority": event_priority(severity, map_context),
                 "status": status,
                 "occurrences": count,
-                "stage": prepared["stage"],
-                "path": prepared["path"],
-                "error_type": prepared["error_type"],
-                "message": prepared["message"],
+                "stage": features.stage,
+                "path": features.path,
+                "error_type": features.error_type,
+                "message": features.message,
                 "first_seen": incident.get("first_seen") or now,
                 "last_seen": now,
                 "code_map": compact_map,
@@ -132,17 +205,28 @@ def observe(
                 incident_id=iid,
                 domain=domain,
                 severity=severity,
-                prepared=prepared,
-                map_context=map_context,
+                features=features,
+                compact_map=compact_map,
                 observed_at=now,
             ))
+
+            by_domain[domain] += 1
+            if status == "new":
+                new_count += 1
+            else:
+                recurring_count += 1
+            if severity in {"critical", "high"}:
+                critical_high += 1
+            map_available += bool(compact_map.get("available"))
+            high_risk += compact_map.get("structural_risk") == "high"
+            stale += compact_map.get("status") == "stale_for_origin"
 
             changed_files = event.get("changed_files") if isinstance(event.get("changed_files"), list) else []
             verified = bool(event.get("verified")) or str(event.get("verification") or "").lower() in {
                 "verified", "full_verified", "full_regression_verified",
             }
             candidate = verified_learning_candidate(
-                origin_path=prepared["path"],
+                origin_path=features.path,
                 changed_files=changed_files,
                 impact=map_context,
                 verified=verified,
@@ -170,21 +254,6 @@ def observe(
                 merge_verified_learning(state, verified_learning)
             tracker._save_state(state, state_path)
 
-    by_domain = {d: 0 for d in sorted(tracker.DOMAINS)}
-    new_count = recurring_count = critical_high = map_available = high_risk = stale = 0
-    for row in observed:
-        by_domain[row["domain"]] += 1
-        if row["status"] == "new":
-            new_count += 1
-        else:
-            recurring_count += 1
-        if row["severity"] in {"critical", "high"}:
-            critical_high += 1
-        map_info = row.get("code_map") or {}
-        map_available += bool(map_info.get("available"))
-        high_risk += map_info.get("structural_risk") == "high"
-        stale += map_info.get("status") == "stale_for_origin"
-
     total_map_requests = len(observed)
     summary = {
         "observed": len(observed),
@@ -198,13 +267,16 @@ def observe(
         "code_map_high_risk": high_risk,
         "code_map_stale": stale,
         "performance": {
-            "mode": "cached_hot_path_v1",
+            "mode": "cached_hot_path_v2",
             "batch_events": len(normalized),
             "unique_code_map_paths": len(map_cache),
             "code_map_cache_hits": cache_hits,
             "code_map_cache_hit_ratio": round(cache_hits / total_map_requests, 4) if total_map_requests else 0.0,
-            "event_field_normalization": "single_pass",
-            "duplicate_severity_handoff_scan": False,
+            "event_feature_extraction": "single_pass",
+            "domain_rescan": False,
+            "severity_rescan": False,
+            "fingerprint_reclean": False,
+            "compact_code_map_rebuild_on_hit": False,
         },
     }
     return {
