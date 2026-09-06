@@ -43,7 +43,10 @@ class ManualOnlyOfficialVerificationV192Tests(unittest.TestCase):
     def test_manual_proof_is_final_official_reference_but_not_raw(self):
         source=inspect.getsource(proof)
         self.assertIn('"manual_screenshot_sets_official_result": True',source)
-        self.assertIn('"official_result": bool(matched)',source)
+        self.assertIn('"proof_match_alone_is_not_verification_complete": True',source)
+        self.assertIn('published, publish_error = manual_photo._publish_verified(current)',source)
+        self.assertIn('"official_result": True',source)
+        self.assertIn('"manual_official_verification_not_complete"',source)
         self.assertIn('"verification_state": "manual_official_verified"',source)
         self.assertIn('"raw_grade_calibration_eligible": False',source)
         self.assertIn('"automatic_live_lookup_used": False',source)
