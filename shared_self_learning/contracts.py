@@ -6,6 +6,21 @@ from typing import Any
 
 ALLOWED_DOMAINS = {"main", "instagram_content"}
 
+CANONICAL_FACTUAL_TYPES = frozenset({
+    "card_price", "release", "rerelease", "promo",
+    "event", "movie_bonus", "completed_sale", "market_reference",
+})
+
+
+def assert_canonical_factual_type(value: object, *, label: str = "information_family") -> str:
+    factual_type = str(value or "").strip()
+    if factual_type not in CANONICAL_FACTUAL_TYPES:
+        raise ValueError(
+            f"{label}: unsupported factual type {factual_type!r}; "
+            f"allowed={sorted(CANONICAL_FACTUAL_TYPES)}"
+        )
+    return factual_type
+
 _FORBIDDEN_EXECUTION_RE = re.compile(
     r"(?i)(?<![A-Za-z0-9_])"
     r"(?:exec|eval|__import__|importlib(?:\.[A-Za-z_][A-Za-z0-9_]*)?|"
