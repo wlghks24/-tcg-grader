@@ -19,6 +19,7 @@ from typing import Any
 
 from selfrefine_crosscheck_gate import run as run_crosscheck
 from peer_learning_crosscheck_gate import run as run_peer_learning_crosscheck
+from crosscheck_runtime_bridge import run_persisted_bridge
 
 ROOT = Path(__file__).resolve().parent
 KST = dt.timezone(dt.timedelta(hours=9))
@@ -29,6 +30,8 @@ DEFAULT_PROMO = ROOT / "promo_events.json"
 DEFAULT_ROUTES = ROOT / "instagram_tcg_content" / "source_routes.json"
 DEFAULT_MAIN_EXCHANGE = ROOT / "crosscheck_exchange" / "runtime-main.json"
 DEFAULT_INSTAGRAM_EXCHANGE = ROOT / "crosscheck_exchange" / "runtime-instagram.json"
+DEFAULT_MAIN_PERSISTED = ROOT / "TCG_CROSSCHECK" / "MARKET_ANALYSIS" / "factual_snapshot.json"
+DEFAULT_INSTAGRAM_PERSISTED = ROOT / "TCG_CROSSCHECK" / "IG_CARDINFO" / "factual_snapshot.json"
 DEFAULT_MAIN_LEARNING_EXCHANGE = ROOT / "crosscheck_exchange" / "runtime-main-learning.json"
 DEFAULT_INSTAGRAM_LEARNING_EXCHANGE = ROOT / "crosscheck_exchange" / "runtime-instagram-learning.json"
 DEFAULT_REPORT = ROOT / "COLLECTION_INSTAGRAM_ACCURACY_REPORT.json"
@@ -354,81 +357,145 @@ def audit_instagram_policy(routes: dict[str, Any]) -> dict[str, Any]:
     return {"findings": findings, "repair_actions": actions}
 
 
-def audit_cross_domain(main_exchange: Path, instagram_exchange: Path) -> dict[str, Any]:
-    if not main_exchange.exists() or not instagram_exchange.exists():
-        missing = []
-        if not main_exchange.exists():
-            missing.append("main")
-        if not instagram_exchange.exists():
-            missing.append("instagram_content")
-        return {
-            "status": "snapshot_missing",
-            "engine_available": True,
-            "operational_ready": False,
-            "missing_domains": missing,
-            "agree": 0,
-            "conflict": 0,
-            "reverification_required": 0,
-            "repair_actions": [
-                _action(
-                    "medium",
-                    "crosscheck",
-                    "export_daily_snapshot",
-                    "A passive factual snapshot is missing for the 06:00 comparison",
-                    "Export each domain's latest factual rows through its own crosscheck exporter. Keep runtime/provider/retry/learning state out of the exchange file.",
-                )
-            ],
-        }
-
-    try:
-        result = run_crosscheck(main_exchange, instagram_exchange)
-    except Exception as exc:
-        error_text = str(exc).replace("\n", " ")[:400]
-        return {
-            "status": "validation_error",
-            "engine_available": True,
-            "operational_ready": False,
-            "main_records": 0,
-            "instagram_records": 0,
-            "agree": 0,
-            "conflict": 0,
-            "reverification_required": 0,
-            "error_type": type(exc).__name__,
-            "error": error_text,
-            "repair_actions": [
-                _action(
-                    "critical",
-                    "crosscheck",
-                    "repair_invalid_snapshot",
-                    f"Cross-domain snapshot validation failed: {type(exc).__name__}: {error_text}",
-                    "Keep the exchange fail-closed. Re-export both passive snapshots, validate JSON/JSONL schema and forbidden-state fields, then rerun the crosscheck before using the affected facts.",
-                )
-            ],
-        }
-
+def _crosscheck_view(result: dict[str, Any], *, source_mode: str) -> dict[str, Any]:
     actions: list[dict[str, str]] = []
-    if int(result.get("conflict") or 0) > 0:
+    conflict = int(result.get("conflict") or 0)
+    if conflict > 0:
         actions.append(
             _action(
                 "high",
                 "crosscheck",
                 "reverify_conflict",
-                f"{result.get('conflict')} canonical facts disagree across Main and Instagram",
-                "Do not average the values and do not auto-promote either side. Reverify the conflicting canonical_key with fresh independent evidence, preferring official primary for official facts and direct realized-sale evidence for sales.",
+                f"{conflict} canonical facts disagree across Main and Instagram",
+                "Do not average values or auto-promote either side. Reverify with fresh independent evidence; prefer official primary for official facts and direct realized-sale evidence for completed sales.",
+            )
+        )
+    if result.get("operational_ready") is not True:
+        reasons = result.get("unavailable_reasons") or {
+            domain: "missing" for domain in (result.get("missing_domains") or [])
+        }
+        actions.append(
+            _action(
+                "medium",
+                "crosscheck",
+                "export_daily_snapshot",
+                f"Cross-domain factual comparison is not operational: {reasons}",
+                "Export each domain's own finalized, non-empty, fresh factual snapshot. Never reconstruct the peer snapshot from the local domain. Re-run only after both independent snapshots are available.",
             )
         )
     return {
         "status": result.get("status"),
-        "engine_available": True,
-        "operational_ready": result.get("status") == "crosschecked",
+        "engine_available": bool(result.get("engine_available", True)),
+        "operational_ready": bool(result.get("operational_ready")),
+        "source_mode": source_mode,
         "main_records": result.get("main_records", 0),
         "instagram_records": result.get("instagram_records", 0),
         "agree": result.get("agree", 0),
-        "conflict": result.get("conflict", 0),
+        "conflict": conflict,
         "reverification_required": result.get("reverification_required", 0),
+        "unavailable_reasons": result.get("unavailable_reasons", {}),
+        "persisted_snapshots": result.get("persisted_snapshots", {}),
         "repair_actions": actions,
     }
 
+
+def audit_cross_domain(
+    main_exchange: Path,
+    instagram_exchange: Path,
+    *,
+    main_persisted: Path | None = None,
+    instagram_persisted: Path | None = None,
+    now: dt.datetime | None = None,
+) -> dict[str, Any]:
+    if main_exchange.exists() and instagram_exchange.exists():
+        try:
+            result = run_crosscheck(main_exchange, instagram_exchange)
+        except Exception as exc:
+            error_text = str(exc).replace("\n", " ")[:400]
+            return {
+                "status": "validation_error",
+                "engine_available": True,
+                "operational_ready": False,
+                "source_mode": "runtime_exchange",
+                "main_records": 0,
+                "instagram_records": 0,
+                "agree": 0,
+                "conflict": 0,
+                "reverification_required": 0,
+                "error_type": type(exc).__name__,
+                "error": error_text,
+                "repair_actions": [
+                    _action(
+                        "critical",
+                        "crosscheck",
+                        "repair_invalid_snapshot",
+                        f"Cross-domain runtime snapshot validation failed: {type(exc).__name__}: {error_text}",
+                        "Keep the exchange fail-closed. Re-export both passive snapshots, validate schema/forbidden-state fields, then rerun before using affected facts.",
+                    )
+                ],
+            }
+        return _crosscheck_view(result, source_mode="runtime_exchange")
+
+    if main_persisted is not None and instagram_persisted is not None:
+        try:
+            result = run_persisted_bridge(
+                main_persisted,
+                instagram_persisted,
+                main_output=main_exchange,
+                instagram_output=instagram_exchange,
+                report_output=None,
+                now=now,
+            )
+        except Exception as exc:
+            error_text = str(exc).replace("\n", " ")[:400]
+            return {
+                "status": "validation_error",
+                "engine_available": True,
+                "operational_ready": False,
+                "source_mode": "persisted_tcg_crosscheck",
+                "main_records": 0,
+                "instagram_records": 0,
+                "agree": 0,
+                "conflict": 0,
+                "reverification_required": 0,
+                "error_type": type(exc).__name__,
+                "error": error_text,
+                "repair_actions": [
+                    _action(
+                        "critical",
+                        "crosscheck",
+                        "repair_invalid_persisted_snapshot",
+                        f"Persisted cross-domain snapshot validation failed: {type(exc).__name__}: {error_text}",
+                        "Fail closed. Repair only the owning domain snapshot; require finalized/non-empty/fresh verified facts, preserve lineage, then rerun.",
+                    )
+                ],
+            }
+        return _crosscheck_view(result, source_mode="persisted_tcg_crosscheck")
+
+    missing = []
+    if not main_exchange.exists():
+        missing.append("main")
+    if not instagram_exchange.exists():
+        missing.append("instagram_content")
+    return {
+        "status": "snapshot_missing",
+        "engine_available": True,
+        "operational_ready": False,
+        "source_mode": "runtime_exchange",
+        "missing_domains": missing,
+        "agree": 0,
+        "conflict": 0,
+        "reverification_required": 0,
+        "repair_actions": [
+            _action(
+                "medium",
+                "crosscheck",
+                "export_daily_snapshot",
+                "A passive factual snapshot is missing for the 06:00 comparison",
+                "Export each domain's latest factual rows through its own crosscheck exporter. Keep runtime/provider/retry/learning state out of the exchange file.",
+            )
+        ],
+    }
 
 
 def audit_peer_learning(
@@ -553,13 +620,21 @@ def build_report(
     routes: dict[str, Any],
     main_exchange: Path,
     instagram_exchange: Path,
+    main_persisted: Path | None = None,
+    instagram_persisted: Path | None = None,
     main_learning_exchange: Path | None = None,
     instagram_learning_exchange: Path | None = None,
     previous: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
     main = audit_main_collection(adaptive, source_stats, promo, now)
     instagram = audit_instagram_policy(routes)
-    cross = audit_cross_domain(main_exchange, instagram_exchange)
+    cross = audit_cross_domain(
+        main_exchange,
+        instagram_exchange,
+        main_persisted=main_persisted,
+        instagram_persisted=instagram_persisted,
+        now=now,
+    )
     learning_cross = audit_peer_learning(main_learning_exchange, instagram_learning_exchange)
 
     findings = main["findings"] + instagram["findings"]
@@ -598,7 +673,7 @@ def build_report(
     elif high:
         status = "degraded"
     elif (
-        cross.get("status") == "snapshot_missing"
+        cross.get("status") in {"snapshot_missing", "snapshot_unavailable", "no_exchange_data"}
         or learning_cross.get("status") == "snapshot_missing"
         or conflicting_fixes
         or medium
@@ -620,6 +695,7 @@ def build_report(
             "crosscheck_validation_error": cross_validation_error,
             "learning_crosscheck_validation_error": learning_validation_error,
             "learning_conflicting_fix": conflicting_fixes,
+            "crosscheck_operational_ready": bool(cross.get("operational_ready")),
         },
         "main_collection": main,
         "instagram_policy": instagram,
@@ -653,8 +729,11 @@ def _exit_code(
     *,
     strict_policy: bool = False,
     fail_on_degraded: bool = False,
+    require_crosscheck_ready: bool = False,
 ) -> int:
     status = str((report.get("summary") or {}).get("status") or "")
+    if require_crosscheck_ready and not bool((report.get("cross_domain") or {}).get("operational_ready")):
+        return 1
     if strict_policy and status == "fail_closed":
         return 1
     if fail_on_degraded and status in {"degraded", "fail_closed"}:
@@ -670,6 +749,8 @@ def main() -> int:
     parser.add_argument("--routes", default=str(DEFAULT_ROUTES))
     parser.add_argument("--main-exchange", default=str(DEFAULT_MAIN_EXCHANGE))
     parser.add_argument("--instagram-exchange", default=str(DEFAULT_INSTAGRAM_EXCHANGE))
+    parser.add_argument("--main-persisted", default=str(DEFAULT_MAIN_PERSISTED))
+    parser.add_argument("--instagram-persisted", default=str(DEFAULT_INSTAGRAM_PERSISTED))
     parser.add_argument("--main-learning-exchange", default=str(DEFAULT_MAIN_LEARNING_EXCHANGE))
     parser.add_argument(
         "--instagram-learning-exchange",
@@ -680,6 +761,7 @@ def main() -> int:
     parser.add_argument("--now")
     parser.add_argument("--strict-policy", action="store_true")
     parser.add_argument("--fail-on-degraded", action="store_true")
+    parser.add_argument("--require-crosscheck-ready", action="store_true")
     args = parser.parse_args()
 
     now = _parse_time(args.now) if args.now else dt.datetime.now(dt.timezone.utc)
@@ -695,6 +777,8 @@ def main() -> int:
         routes=_read_json(Path(args.routes)),
         main_exchange=Path(args.main_exchange),
         instagram_exchange=Path(args.instagram_exchange),
+        main_persisted=Path(args.main_persisted),
+        instagram_persisted=Path(args.instagram_persisted),
         main_learning_exchange=Path(args.main_learning_exchange),
         instagram_learning_exchange=Path(args.instagram_learning_exchange),
         previous=previous,
@@ -708,6 +792,7 @@ def main() -> int:
         report,
         strict_policy=args.strict_policy,
         fail_on_degraded=args.fail_on_degraded,
+        require_crosscheck_ready=args.require_crosscheck_ready,
     )
 
 
