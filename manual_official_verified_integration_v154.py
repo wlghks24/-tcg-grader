@@ -157,10 +157,30 @@ def promote_registration(registration_id: str) -> dict[str, Any]:
         except ValueError:
             return {"ok": False, "promoted": False, "reason": "registration_not_found"}
         row = dict(source)
-        if row.get("official_result") is True:
+        manual_candidate = bool(
+            row.get("manual_official_proof_registered") is True
+            or str(row.get("official_verification_source") or "") == _MANUAL_OFFICIAL_SOURCE
+            or str(row.get("verification_state") or "").startswith("manual_official")
+            or str(row.get("verification_state") or "") == "verified_manual_official_page"
+        )
+        if row.get("official_result") is True and not manual_candidate:
             return {"ok": True, "promoted": False, "already_official": True, "registration": manual_photo._public_row(row)}
         ready, reason = _identity_gate(row)
         if not ready:
+            if row.get("official_result") is True and manual_candidate:
+                row.update({
+                    "official_result": False,
+                    "official_grade": None,
+                    "status": "pending_official_verification",
+                    "verification_state": "manual_official_verification_gate_failed",
+                    "learning_eligibility": "manual_verification_required_before_learning",
+                    "training_eligible": False,
+                    "raw_grade_calibration_eligible": False,
+                    "manual_official_verification_block_reason": reason,
+                    "quarantine_reasons": sorted(set((row.get("quarantine_reasons") or []) + ["manual_official_verification_not_complete", reason])),
+                })
+                registry["registrations"][index] = row
+                manual_photo._save_registry(registry)
             return {"ok": True, "promoted": False, "reason": reason, "registration": manual_photo._public_row(row)}
         if not _stored_evidence_present(row):
             return {"ok": True, "promoted": False, "reason": "stored_evidence_missing", "registration": manual_photo._public_row(row)}
@@ -212,7 +232,6 @@ def migrate_existing() -> dict[str, Any]:
             str(row.get("registration_id") or "")
             for row in registry.get("registrations", [])
             if isinstance(row, dict)
-            and row.get("official_result") is not True
             and row.get("manual_official_proof_registered") is True
             and str(row.get("manual_official_proof_state") or "") == "matched"
         ]
