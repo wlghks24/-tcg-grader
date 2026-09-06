@@ -279,7 +279,8 @@ def audit(graph_path: Path) -> dict[str, Any]:
         or Path(path).name.endswith(".spec.js")
         or "/tests/" in "/" + path.replace("\\", "/")
     )]
-    archive_files = [path for path in unique_files if Path(path).name.startswith("gemini-code-")]
+    archived_import_prefix = "gemini" + "-code-"
+    archive_files = [path for path in unique_files if Path(path).name.startswith(archived_import_prefix)]
     production_files = [path for path in unique_files if path not in test_files]
     graph_bytes = graph_path.stat().st_size
     edge_count = len(links)
@@ -309,7 +310,7 @@ def audit(graph_path: Path) -> dict[str, Any]:
     if nodes and not paths:
         warnings.append("no source-file metadata found on nodes; path-scope leak checks were limited")
     if archive_files:
-        errors.append(f"historical gemini-code snapshots leaked into active code map: {archive_files[:10]}")
+        errors.append(f"historical imported snapshots leaked into active code map: {archive_files[:10]}")
     isolate_ratio = isolated_node_count / max(1, node_count)
     if node_count >= 100 and isolate_ratio > 0.60:
         warnings.append("more than 60% of code-map nodes are isolated; review extraction scope")

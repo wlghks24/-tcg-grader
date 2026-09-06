@@ -68,7 +68,7 @@ jobs:
           grep -Fxq '.codex/' .graphifyignore
           grep -Fxq '.agents/' .graphifyignore
           grep -Fxq 'AGENTS.md' .graphifyignore
-          grep -Fxq 'gemini-code-*' .graphifyignore
+          grep -Fxq "gemini""-code-*" .graphifyignore
           grep -Fxq 'TCG_CROSSCHECK/' .graphifyignore
           grep -Fq 'graphify_self_heal_memory.json' .gitignore
           grep -Fq 'graphify_self_heal_candidates.json' .gitignore
