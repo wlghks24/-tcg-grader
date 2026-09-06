@@ -27,6 +27,7 @@ on:
       - 'test_psa_official_proof_grade_v187.py'
       - 'test_manual_only_official_verification_v192.py'
       - 'test_grading_cert_verifier.py'
+      - 'test_grader_cert_ocr_profiles_v193.py'
       - 'test_legacy_ocr_registry_cleanup_v149.py'
       - '.github/workflows/ocr-selfrefine-guard.yml'
   push:
@@ -56,6 +57,7 @@ on:
       - 'test_psa_official_proof_grade_v187.py'
       - 'test_manual_only_official_verification_v192.py'
       - 'test_grading_cert_verifier.py'
+      - 'test_grader_cert_ocr_profiles_v193.py'
       - 'test_legacy_ocr_registry_cleanup_v149.py'
       - '.github/workflows/ocr-selfrefine-guard.yml'
   workflow_dispatch:
@@ -117,4 +119,5 @@ jobs:
             test_psa_official_proof_grade_v187.py \
             test_manual_only_official_verification_v192.py \
             test_grading_cert_verifier.py \
+            test_grader_cert_ocr_profiles_v193.py \
             test_legacy_ocr_registry_cleanup_v149.py
