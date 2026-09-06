@@ -55,7 +55,7 @@ class GraderCertOcrV193Tests(unittest.TestCase):
             "0017492225",
             "bgs_top_right_digits_psm6",
         )
-        self.assertIn("BGS CERT 0017492225", text)
+        self.assertIn("BECKETT CERT 0017492225", text)
 
     def test_cgc_targeted_profile_is_preserved(self):
         text, _ = self._ocr_case(
