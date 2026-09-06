@@ -213,6 +213,17 @@ class Operational0600RefreshV25Tests(unittest.TestCase):
         self.assertIn("future-dated {label} health", text)
         self.assertIn("if: ${{ !cancelled() }}", text)
         self.assertIn("timeout-minutes: 30", text)
+        self.assertIn("main_snapshot_ready: ${{ steps.main_snapshot_payload.outputs.ready }}", text)
+        self.assertIn("Capture verified Main snapshot for persistence", text)
+        self.assertIn("persist-main-snapshot:", text)
+        self.assertIn("needs.audit.outputs.main_snapshot_ready == 'true'", text)
+        self.assertIn("github.event_name != 'pull_request'", text)
+        self.assertIn("github.ref == 'refs/heads/main'", text)
+        self.assertIn("permissions:\\n      contents: write", text)
+        self.assertIn("TCG_CROSSCHECK/MARKET_ANALYSIS/factual_snapshot.json", text)
+        self.assertIn("refusing to persist non-finalized MARKET_ANALYSIS snapshot", text)
+        self.assertIn("[skip ci]", text)
+        self.assertNotIn("git push origin HEAD:main", text)
 
 
 if __name__ == "__main__":
