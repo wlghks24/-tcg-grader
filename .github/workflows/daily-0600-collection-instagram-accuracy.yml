@@ -67,6 +67,9 @@ concurrency:
 
 jobs:
   audit:
+    outputs:
+      main_snapshot_ready: ${{ steps.main_snapshot_payload.outputs.ready }}
+      main_snapshot_b64: ${{ steps.main_snapshot_payload.outputs.payload }}
     runs-on: ubuntu-24.04
     timeout-minutes: 30
     env:
@@ -203,6 +206,39 @@ jobs:
         if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch' || github.event_name == 'push'
         run: python main_persisted_crosscheck_export.py --releases releases.json
 
+      - name: Capture verified Main snapshot for persistence
+        id: main_snapshot_payload
+        if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch' || github.event_name == 'push'
+        run: |
+          python - <<'PY'
+          import base64
+          import json
+          import os
+          from pathlib import Path
+
+          path = Path('TCG_CROSSCHECK/MARKET_ANALYSIS/factual_snapshot.json')
+          payload = json.loads(path.read_text(encoding='utf-8'))
+          validation = payload.get('validation') or {}
+          ready = (
+              payload.get('namespace') == 'MARKET_ANALYSIS'
+              and payload.get('snapshot_kind') == 'factual'
+              and payload.get('status') == 'finalized'
+              and bool(payload.get('facts'))
+              and bool(payload.get('finalized_at'))
+              and validation.get('manifest_validated') is True
+              and validation.get('allowed_fields_only') is True
+              and validation.get('exact_factual_types_enforced') is True
+              and validation.get('write_readback_verified') is True
+              and validation.get('isolation_breach') is False
+          )
+          compact = json.dumps(payload, ensure_ascii=False, sort_keys=True, separators=(',', ':')).encode('utf-8')
+          encoded = base64.b64encode(compact).decode('ascii') if ready else ''
+          with open(os.environ['GITHUB_OUTPUT'], 'a', encoding='utf-8') as handle:
+              handle.write(f"ready={'true' if ready else 'false'}\n")
+              handle.write(f"payload={encoded}\n")
+          print(json.dumps({'ready': ready, 'fact_count': len(payload.get('facts') or [])}, ensure_ascii=False))
+          PY
+
       - name: Refresh passive factual runtime crosscheck from persisted snapshots
         run: python crosscheck_runtime_bridge.py --from-persisted
 
@@ -309,3 +345,72 @@ jobs:
           path: COLLECTION_INSTAGRAM_ACCURACY_REPORT.json
           if-no-files-found: error
           retention-days: 30
+
+  persist-main-snapshot:
+    needs: audit
+    if: needs.audit.result == 'success' && needs.audit.outputs.main_snapshot_ready == 'true' && github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    permissions:
+      contents: write
+    steps:
+      - name: Persist verified Main factual snapshot only
+        env:
+          GH_TOKEN: ${{ github.token }}
+          SNAPSHOT_B64: ${{ needs.audit.outputs.main_snapshot_b64 }}
+          REPOSITORY: ${{ github.repository }}
+        run: |
+          python - <<'PY'
+          import base64
+          import json
+          import os
+          import urllib.error
+          import urllib.parse
+          import urllib.request
+
+          target = 'TCG_CROSSCHECK/MARKET_ANALYSIS/factual_snapshot.json'
+          raw = base64.b64decode(os.environ['SNAPSHOT_B64'], validate=True)
+          payload = json.loads(raw.decode('utf-8'))
+          validation = payload.get('validation') or {}
+          expected = {
+              'manifest_validated': True,
+              'allowed_fields_only': True,
+              'exact_factual_types_enforced': True,
+              'write_readback_verified': True,
+              'isolation_breach': False,
+          }
+          if payload.get('namespace') != 'MARKET_ANALYSIS' or payload.get('status') != 'finalized':
+              raise SystemExit('refusing to persist non-finalized MARKET_ANALYSIS snapshot')
+          if not payload.get('facts') or not payload.get('finalized_at'):
+              raise SystemExit('refusing to persist empty/unfinalized factual snapshot')
+          if any(validation.get(k) is not v for k, v in expected.items()):
+              raise SystemExit('refusing to persist snapshot with invalid validation contract')
+
+          repo = os.environ['REPOSITORY']
+          token = os.environ['GH_TOKEN']
+          url = f"https://api.github.com/repos/{repo}/contents/{urllib.parse.quote(target, safe='/')}?ref=main"
+          headers = {
+              'Authorization': f'Bearer {token}',
+              'Accept': 'application/vnd.github+json',
+              'X-GitHub-Api-Version': '2022-11-28',
+              'User-Agent': 'tcg-crosscheck-snapshot-writer',
+          }
+          req = urllib.request.Request(url, headers=headers)
+          with urllib.request.urlopen(req, timeout=20) as response:
+              current = json.load(response)
+          current_raw = base64.b64decode(current.get('content') or '')
+          if current_raw.rstrip() == raw.rstrip():
+              print(json.dumps({'status': 'unchanged', 'path': target}, ensure_ascii=False))
+              raise SystemExit(0)
+
+          body = json.dumps({
+              'message': 'CROSSCHECK: persist verified Main factual snapshot [skip ci]',
+              'content': base64.b64encode(raw + b'\n').decode('ascii'),
+              'sha': current['sha'],
+              'branch': 'main',
+          }).encode('utf-8')
+          put = urllib.request.Request(url.split('?ref=main')[0], data=body, headers={**headers, 'Content-Type': 'application/json'}, method='PUT')
+          with urllib.request.urlopen(put, timeout=20) as response:
+              result = json.load(response)
+          print(json.dumps({'status': 'persisted', 'path': target, 'commit': (result.get('commit') or {}).get('sha')}, ensure_ascii=False))
+          PY
