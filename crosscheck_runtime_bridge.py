@@ -74,6 +74,29 @@ def _load_records(path: Path) -> list[dict[str, Any]]:
     return records
 
 
+def _load_persisted_records(path: Path, expected_namespace: str) -> tuple[list[dict[str, Any]], str]:
+    if not path.exists():
+        return ([], "missing")
+    value = json.loads(path.read_text(encoding="utf-8"))
+    if not isinstance(value, dict):
+        raise ValueError(f"{path}: persisted snapshot root must be an object")
+    if value.get("namespace") != expected_namespace:
+        raise ValueError(
+            f"{path}: namespace mismatch: expected {expected_namespace!r}, got {value.get('namespace')!r}"
+        )
+    if value.get("snapshot_kind") not in {None, "factual"}:
+        raise ValueError(f"{path}: snapshot_kind must be factual")
+    status = str(value.get("status") or "").strip()
+    if status != "finalized":
+        return ([], status or "unknown")
+    facts = value.get("facts")
+    if not isinstance(facts, list) or not all(isinstance(row, dict) for row in facts):
+        raise ValueError(f"{path}: finalized persisted snapshot facts must be a list")
+    if not facts:
+        return ([], "finalized_empty")
+    return ([_manifest_fact_to_record(row) for row in facts], status)
+
+
 def _remove_stale_runtime_outputs(
     main_output: Path,
     instagram_output: Path,
@@ -161,8 +184,10 @@ def run_from_persisted(
     instagram_output: Path = DEFAULT_INSTAGRAM_OUTPUT,
     report_output: Path | None = DEFAULT_REPORT,
 ) -> dict[str, Any]:
-    main_records = _load_records(main_snapshot) if main_snapshot.exists() else []
-    instagram_records = _load_records(instagram_snapshot) if instagram_snapshot.exists() else []
+    main_records, main_status = _load_persisted_records(main_snapshot, "MARKET_ANALYSIS")
+    instagram_records, instagram_status = _load_persisted_records(
+        instagram_snapshot, "IG_CARDINFO"
+    )
     result = run_bridge(
         main_records,
         instagram_records,
@@ -170,14 +195,8 @@ def run_from_persisted(
         instagram_output=instagram_output,
         report_output=report_output,
     )
-    result["persisted_main_status"] = (
-        json.loads(main_snapshot.read_text(encoding="utf-8")).get("status")
-        if main_snapshot.exists() else "missing"
-    )
-    result["persisted_instagram_status"] = (
-        json.loads(instagram_snapshot.read_text(encoding="utf-8")).get("status")
-        if instagram_snapshot.exists() else "missing"
-    )
+    result["persisted_main_status"] = main_status
+    result["persisted_instagram_status"] = instagram_status
     return result
 
 
