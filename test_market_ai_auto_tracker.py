@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import tempfile
 import unittest
+from unittest import mock
 from pathlib import Path
 import json
 
@@ -215,6 +216,24 @@ class MarketAIAutoTrackerTests(unittest.TestCase):
             health = result["code_map"]["self_refine"]
             self.assertEqual(health["stale_generation_patterns"], 1)
             self.assertEqual(health["self_corrected_patterns"], [])
+
+    def test_empty_findings_skip_graphify_index(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            self._repo(root)
+            with mock.patch.object(
+                tracker,
+                "CodeMapIndex",
+                side_effect=AssertionError("no findings must not parse Graphify"),
+            ):
+                result = tracker.run_tracker(
+                    root=root,
+                    repair=False,
+                    run_tests=False,
+                    report_path=root / "report.json",
+                )
+            self.assertTrue(result["code_map"]["empty_findings_graphify_short_circuit"])
+            self.assertEqual(result["code_map"]["map_signature"], "")
 
     def test_design_references_are_official_github_docs(self):
         self.assertTrue(tracker.DESIGN_REFERENCES)

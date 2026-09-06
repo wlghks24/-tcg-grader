@@ -78,6 +78,30 @@ jobs:
         run: python selfrefine_domain_boundary_guard.py
       - name: Integrated dry-run health check
         run: python ai_intelligence_pipeline.py --dry-run
+      - name: Canonical tracker uses optimized engine
+        run: |
+          python - <<'PY'
+          import tempfile
+          from pathlib import Path
+          import ai_auto_tracker as t
+          with tempfile.TemporaryDirectory() as td:
+              out = t.observe(
+                  [
+                      {'path':'same.py','message':'first'},
+                      {'path':'./same.py','message':'second'},
+                  ],
+                  state_path=Path(td)/'state.json',
+                  dry_run=True,
+              )
+          perf = out['summary']['performance']
+          assert perf['mode'] == 'cached_hot_path_v8'
+          assert perf['canonical_entrypoint'] is True
+          assert perf['single_tracker_engine'] is True
+          assert perf['unique_code_map_paths'] == 1
+          assert perf['code_map_cache_hits'] == 1
+          assert out['safety']['canonical_uses_optimized_engine'] is True
+          print('Canonical AI tracker optimized-engine contract: OK')
+          PY
       - name: Performance cache and feature contract
         run: |
           python - <<'PY'
@@ -91,7 +115,7 @@ jobs:
           with tempfile.TemporaryDirectory() as td:
               out = p.observe(events, state_path=Path(td)/'state.json', dry_run=True)
           perf = out['summary']['performance']
-          assert perf['mode'] == 'cached_hot_path_v7'
+          assert perf['mode'] == 'cached_hot_path_v8'
           assert perf['unique_code_map_paths'] == 1
           assert perf['code_map_cache_hits'] == 49
           assert perf['event_feature_extraction'] == 'single_pass'
@@ -101,6 +125,7 @@ jobs:
           assert perf['map_index_loaded'] is True
           assert perf['empty_batch_graphify_short_circuit'] is False
           assert perf['canonical_map_path_cache'] is True
+          assert perf['single_tracker_engine'] is True
           assert perf['selfrefine_outside_state_lock'] is True
           assert perf['state_lock_scope'] == 'snapshot_and_commit_only'
           assert perf['adaptive_code_map_depth'] is True
@@ -111,7 +136,7 @@ jobs:
           assert perf['compact_code_map_rebuild_on_hit'] is False
           assert perf['verified_learning_deduped_per_run'] is True
           assert out['safety']['performance_cache_run_scoped_only'] is True
-          print('AI performance v7 tracker contract: OK')
+          print('AI performance v8 tracker contract: OK')
           PY
       - name: Safety contract audit
         run: |

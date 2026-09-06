@@ -188,7 +188,7 @@ class PerformanceRuntimeTests(unittest.TestCase):
             )
             perf = out["summary"]["performance"]
             self.assertEqual(perf["code_map_cache_hits"], 1)
-            self.assertEqual(perf["mode"], "cached_hot_path_v7")
+            self.assertEqual(perf["mode"], "cached_hot_path_v8")
             self.assertTrue(perf["map_index_build_outside_state_lock"])
             self.assertTrue(perf["map_analysis_outside_state_lock"])
             self.assertTrue(perf["selfrefine_outside_state_lock"])

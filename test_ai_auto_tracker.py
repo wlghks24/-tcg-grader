@@ -181,6 +181,39 @@ class AutoTrackerTests(unittest.TestCase):
             self.assertEqual(len(signatures), 1)
             self.assertNotEqual(next(iter(signatures)), "")
 
+    def test_canonical_entrypoint_uses_optimized_single_engine(self):
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            _write_graph(root)
+            out = tracker.observe(
+                [
+                    {"path": "collector.py", "message": "one"},
+                    {"path": "./collector.py", "message": "two"},
+                ],
+                state_path=root / "state.json",
+                dry_run=True,
+                code_map_root=root,
+            )
+            perf = out["summary"]["performance"]
+            self.assertEqual(perf["mode"], "cached_hot_path_v8")
+            self.assertTrue(perf["canonical_entrypoint"])
+            self.assertTrue(perf["single_tracker_engine"])
+            self.assertEqual(perf["unique_code_map_paths"], 1)
+            self.assertEqual(perf["code_map_cache_hits"], 1)
+            self.assertTrue(out["safety"]["canonical_uses_optimized_engine"])
+
+    def test_canonical_empty_batch_skips_graphify(self):
+        with tempfile.TemporaryDirectory() as td:
+            out = tracker.observe(
+                [],
+                state_path=Path(td) / "state.json",
+                dry_run=True,
+            )
+            perf = out["summary"]["performance"]
+            self.assertFalse(perf["map_index_loaded"])
+            self.assertTrue(perf["empty_batch_graphify_short_circuit"])
+            self.assertTrue(perf["canonical_entrypoint"])
+
     def test_secret_redaction(self):
         value = tracker._clean("Bearer abc.def token=123 password=xyz https://example.com/a")
         self.assertNotIn("abc.def", value)

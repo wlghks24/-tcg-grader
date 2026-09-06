@@ -5,7 +5,7 @@ This module reuses ai_auto_tracker's state schema, safety contracts, retry polic
 quarantine handoff, and verified-learning logic. It does not create a second
 tracker or learning store.
 
-V7 optimizations are run-scoped and deterministic:
+V8 optimizations are run-scoped and deterministic:
 - normalize every hot event field once;
 - derive domain, severity, and fingerprint from the same prepared feature set;
 - prepare event features/domain/severity/fingerprint before the state lock;
@@ -17,7 +17,8 @@ V7 optimizations are run-scoped and deterministic:
 - choose one bounded map depth per path from the highest severity in the batch;
 - execute SELF-REFINE quarantine handoff outside the state lock;
 - reuse compact Code Map output and computed severity in handoffs;
-- keep occurrence/state semantics identical to the canonical tracker.
+- serve both the canonical tracker and performance entrypoint from this single engine;
+- keep occurrence/state semantics identical across both entrypoints.
 """
 from __future__ import annotations
 
@@ -311,7 +312,7 @@ def observe(
             row.get("code_map", {}).get("status") == "stale_for_origin" for row in observed
         ),
         "performance": {
-            "mode": "cached_hot_path_v7",
+            "mode": "cached_hot_path_v8",
             "batch_events": len(normalized),
             "prepared_events": len(prepared),
             "unique_code_map_paths": len(map_cache),
@@ -324,6 +325,7 @@ def observe(
             "map_index_loaded": map_index is not None,
             "empty_batch_graphify_short_circuit": not prepared,
             "canonical_map_path_cache": True,
+            "single_tracker_engine": True,
             "selfrefine_outside_state_lock": True,
             "state_lock_scope": "snapshot_and_commit_only",
             "state_lock_phases": 1 if dry_run else 2,

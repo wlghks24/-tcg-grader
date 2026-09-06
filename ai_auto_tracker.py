@@ -289,114 +289,28 @@ def _main_selfrefine_observe(event: dict[str, Any]) -> dict[str, Any] | None:
 
 def observe(events: Iterable[dict[str, Any]], *, state_path: Path = STATE,
             dry_run: bool = False, code_map_root: Path | None = None) -> dict[str, Any]:
-    normalized = [dict(x) for x in events if isinstance(x, dict)]
-    with exclusive_file_lock(state_path):
-        state = _load_state(state_path)
-        observed: list[dict[str, Any]] = []
-        handoffs: list[dict[str, Any]] = []
-        selfrefine: list[dict[str, Any]] = []
-        verified_learning: list[dict[str, Any]] = []
-        map_root = Path(code_map_root) if code_map_root is not None else ROOT
-        map_index = CodeMapIndex(map_root)
-        now = _now()
-        for event in normalized:
-            domain = classify_domain(event)
-            iid = fingerprint(event, domain)
-            incident = state["incidents"].get(iid, {})
-            count = min(1_000_000, int(incident.get("occurrences", 0) or 0) + 1)
-            status = "new" if count == 1 else "recurring"
-            severity = severity_for(event)
-            map_context = impact_context(
-                map_root,
-                _clean(event.get("path"), 240).replace("\\", "/"),
-                depth=impact_depth_for_severity(severity),
-                index=map_index,
-                learning=state.get("code_map_learning"),
-            )
-            row = {
-                "incident_id": iid,
-                "domain": domain,
-                "severity": severity,
-                "impact_priority": event_priority(severity, map_context),
-                "status": status,
-                "occurrences": count,
-                "stage": _clean(event.get("stage"), 80) or "UNKNOWN",
-                "path": _clean(event.get("path"), 240).replace("\\", "/"),
-                "error_type": _clean(event.get("error_type") or "unknown", 100),
-                "message": _clean(event.get("message") or event.get("evidence"), 240),
-                "first_seen": incident.get("first_seen") or now,
-                "last_seen": now,
-                "code_map": compact_context(map_context),
-            }
-            observed.append(row)
-            handoffs.append(_handoff_payload(event, iid, domain, map_context))
-            changed_files = event.get("changed_files") if isinstance(event.get("changed_files"), list) else []
-            verified = bool(event.get("verified")) or str(event.get("verification") or "").lower() in {
-                "verified", "full_verified", "full_regression_verified",
-            }
-            candidate = verified_learning_candidate(
-                origin_path=row["path"],
-                changed_files=changed_files,
-                impact=map_context,
-                verified=verified,
-                regression_pass=event.get("regression_pass") is True,
-            )
-            if candidate is not None:
-                verified_learning.append(candidate)
-            if not dry_run:
-                state["incidents"][iid] = row
-                state["history"].append({
-                    "at": now, "incident_id": iid, "domain": domain,
-                    "event": "incident_observed", "status": status,
-                })
-            if domain == DOMAIN_GITHUB and not dry_run:
-                result = _main_selfrefine_observe(event)
-                if result is not None:
-                    selfrefine.append({"incident_id": iid, **result})
-        verified_learning = dedupe_learning_rows(verified_learning)
-        if not dry_run:
-            if verified_learning:
-                merge_verified_learning(state, verified_learning)
-            _save_state(state, state_path)
+    """Canonical tracker entrypoint backed by the single optimized runtime engine.
 
-    summary = {
-        "observed": len(observed),
-        "new": sum(x["status"] == "new" for x in observed),
-        "recurring": sum(x["status"] == "recurring" for x in observed),
-        "by_domain": {d: sum(x["domain"] == d for x in observed) for d in sorted(DOMAINS)},
-        "critical_high": sum(x["severity"] in {"critical", "high"} for x in observed),
-        "dry_run": dry_run,
-        "code_map_available": sum(bool(x.get("code_map", {}).get("available")) for x in observed),
-        "verified_code_map_learning": len(verified_learning),
-        "code_map_high_risk": sum(
-            x.get("code_map", {}).get("structural_risk") == "high" for x in observed
-        ),
-        "code_map_stale": sum(
-            x.get("code_map", {}).get("status") == "stale_for_origin" for x in observed
-        ),
-    }
-    return {
-        "schema": SCHEMA,
-        "generated_at": _now(),
-        "summary": summary,
-        "incidents": observed,
-        "handoffs": handoffs,
-        "main_selfrefine": selfrefine,
-        "code_map": {
-            "mode": "graphify_read_only_impact_analysis",
-            "verified_learning": verified_learning,
-        },
-        "safety": {
-            "domain_state_isolation": True,
-            "passive_cross_domain_handoff_only": True,
-            "learned_text_executable": False,
-            "unverified_patch_generation": False,
-            "full_regression_required_for_verified_repair": True,
-            "code_map_patch_generation": False,
-            "code_map_learning_requires_full_regression": True,
-        },
-    }
+    Import lazily to avoid module-initialization cycles: ai_performance_runtime imports
+    this module for shared state/safety helpers, while this function is called only
+    after module initialization is complete.
+    """
+    from ai_performance_runtime import observe as optimized_observe
 
+    result = optimized_observe(
+        events,
+        state_path=state_path,
+        dry_run=dry_run,
+        code_map_root=code_map_root,
+    )
+    performance = result.get("summary", {}).get("performance")
+    if isinstance(performance, dict):
+        performance["canonical_entrypoint"] = True
+        performance["single_tracker_engine"] = True
+    safety = result.get("safety")
+    if isinstance(safety, dict):
+        safety["canonical_uses_optimized_engine"] = True
+    return result
 
 def events_from_json(path: Path) -> list[dict[str, Any]]:
     raw = json.loads(path.read_text(encoding="utf-8"))
