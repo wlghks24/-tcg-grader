@@ -52,6 +52,9 @@ POLICY_REQUIREMENTS = {
     "preserve_provider_lineage": True,
     "dedupe_same_underlying_sale_lineage": True,
     "completed_sale_separate_from_market_reference": True,
+    "completed_sale_requires_explicit_lineage": True,
+    "completed_sale_requires_comparable_basis": True,
+    "production_state_corruption_fail_closed": True,
 }
 
 
