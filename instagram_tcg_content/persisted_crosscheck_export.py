@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
 import tempfile
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
@@ -64,8 +65,10 @@ def _write_json_atomic(path: Path, payload: dict[str, Any]) -> None:
         ) as handle:
             json.dump(payload, handle, ensure_ascii=False, indent=2)
             handle.write("\n")
+            handle.flush()
+            os.fsync(handle.fileno())
             temp = Path(handle.name)
-        temp.replace(path)
+        os.replace(temp, path)
     finally:
         if temp is not None and temp.exists():
             temp.unlink(missing_ok=True)
@@ -96,8 +99,15 @@ def _normalize_fact(row: dict[str, Any]) -> dict[str, Any] | None:
     canonical_key = _clean(row.get("canonical_key"))
     lineage_key = _clean(row.get("lineage_key"))
     source_locator = _clean(row.get("source_locator"))
+    source_role = _clean(row.get("source_role") or row.get("source_code"))
     observed_at = _clean(row.get("checked_at_kst") or row.get("observed_at"))
-    if not all((canonical_key, lineage_key, source_locator, observed_at)):
+    try:
+        parsed_observed_at = datetime.fromisoformat(observed_at.replace("Z", "+00:00"))
+    except ValueError as exc:
+        raise ValueError("verified factual row has invalid observed_at") from exc
+    if parsed_observed_at.tzinfo is None:
+        raise ValueError("verified factual row observed_at must include timezone")
+    if not all((canonical_key, lineage_key, source_locator, source_role, observed_at)):
         raise ValueError("verified factual row is missing canonical/provenance fields")
 
     fact = {
@@ -115,7 +125,7 @@ def _normalize_fact(row: dict[str, Any]) -> dict[str, Any] | None:
         "grade": _clean(row.get("grade")),
         "effective_date": _clean(row.get("effective_date")),
         "observed_at": observed_at,
-        "source_role": _clean(row.get("source_role") or row.get("source_code") or "instagram_verified"),
+        "source_role": source_role,
         "source_locator": source_locator,
         "verification_status": "verified",
     }
@@ -157,8 +167,36 @@ def build_snapshot(records: list[dict[str, Any]], *, now: datetime | None = None
     }
 
 
+def _existing_last_good(path: Path) -> dict[str, Any] | None:
+    if not path.is_file():
+        return None
+    try:
+        value = json.loads(path.read_text(encoding="utf-8"))
+    except (OSError, ValueError, TypeError, UnicodeError):
+        return None
+    if (
+        isinstance(value, dict)
+        and value.get("namespace") == "IG_CARDINFO"
+        and value.get("status") == "finalized"
+        and isinstance(value.get("facts"), list)
+        and bool(value.get("facts"))
+        and isinstance(value.get("validation"), dict)
+        and value["validation"].get("write_readback_verified") is True
+    ):
+        return value
+    return None
+
+
 def export_snapshot(records: list[dict[str, Any]], output: Path = DEFAULT_OUTPUT) -> dict[str, Any]:
     payload = build_snapshot(records)
+    if payload.get("status") != "finalized":
+        previous = _existing_last_good(output)
+        if previous is not None:
+            return {
+                **previous,
+                "preserved_last_good": True,
+                "latest_attempt_status": payload.get("error_code") or "NO_VERIFIED_FACTS",
+            }
     _write_json_atomic(output, payload)
     reread = json.loads(output.read_text(encoding="utf-8"))
     if reread.get("namespace") != "IG_CARDINFO" or reread.get("facts") != payload.get("facts"):
@@ -190,9 +228,10 @@ def self_test() -> None:
         assert payload["validation"]["write_readback_verified"] is True, payload
 
         empty = export_snapshot([candidate], path)
-        assert empty["status"] == "building", empty
-        assert empty["facts"] == [], empty
-        assert empty["error_code"] == "NO_VERIFIED_FACTS", empty
+        assert empty["status"] == "finalized", empty
+        assert empty.get("preserved_last_good") is True, empty
+        reread = json.loads(path.read_text(encoding="utf-8"))
+        assert reread["status"] == "finalized" and len(reread["facts"]) == 1, reread
 
         try:
             export_snapshot([{**verified, "information_family": "market_price"}], path)
