@@ -4,15 +4,20 @@ on:
   push:
     paths:
       - 'ai_auto_tracker.py'
+      - 'ai_reasoning_enhancer.py'
       - 'code_map_intelligence.py'
       - 'test_ai_auto_tracker.py'
+      - 'test_ai_reasoning_enhancer.py'
       - 'selfrefine_error_quarantine.py'
       - 'safe_runtime.py'
       - '.github/workflows/ai-auto-tracker-guard.yml'
   pull_request:
     paths:
       - 'ai_auto_tracker.py'
+      - 'ai_reasoning_enhancer.py'
+      - 'code_map_intelligence.py'
       - 'test_ai_auto_tracker.py'
+      - 'test_ai_reasoning_enhancer.py'
       - 'selfrefine_error_quarantine.py'
       - 'safe_runtime.py'
       - '.github/workflows/ai-auto-tracker-guard.yml'
@@ -31,14 +36,45 @@ jobs:
     timeout-minutes: 10
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          persist-credentials: false
+          fetch-depth: 1
       - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97
         with:
           python-version: '3.11'
       - name: Syntax check
-        run: python -m py_compile code_map_intelligence.py ai_auto_tracker.py test_ai_auto_tracker.py
+        run: |
+          python -m py_compile \
+            code_map_intelligence.py \
+            ai_auto_tracker.py \
+            ai_reasoning_enhancer.py \
+            test_ai_auto_tracker.py \
+            test_ai_reasoning_enhancer.py
       - name: Tracker regression tests
-        run: python -m unittest -v test_ai_auto_tracker.py
+        run: python -m unittest -v test_ai_auto_tracker.py test_ai_reasoning_enhancer.py
+      - name: Reasoning self-test
+        run: python ai_reasoning_enhancer.py
       - name: Domain boundary regression
         run: python selfrefine_domain_boundary_guard.py
       - name: Dry-run health check
         run: python ai_auto_tracker.py --dry-run
+      - name: Safety contract audit
+        run: |
+          python - <<'PY'
+          import ai_reasoning_enhancer as r
+          sample = r.enrich_incident({
+              'domain': 'github',
+              'severity': 'high',
+              'stage': 'CI',
+              'path': 'x.py',
+              'error_type': 'AssertionError',
+              'message': 'regression test failed',
+              'evidence': 'bounded fixture',
+          }, occurrences=3, code_map={'available': True})
+          safety = sample['safety']
+          assert safety['learned_text_executable'] is False
+          assert safety['auto_patch_from_reasoning'] is False
+          assert safety['domain_state_merged'] is False
+          assert safety['full_regression_required'] is True
+          print('AI reasoning safety contract: OK')
+          PY
