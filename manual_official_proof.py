@@ -178,6 +178,9 @@ def public_status() -> dict[str, Any]:
             "manual_screenshot_grade_may_use_exact_slab_ocr_fallback": False,
             "manual_screenshot_missing_ocr_does_not_quarantine_card": True,
             "manual_screenshot_sets_official_result": True,
+            "manual_screenshot_requires_complete_stored_evidence": True,
+            "verified_registry_publish_required": True,
+            "proof_match_alone_is_not_verification_complete": True,
             "manual_screenshot_trains_raw_grade_calibration": False,
             "rejected_screenshot_bytes_retained": False,
             "valid_proof_cannot_be_downgraded_by_later_bad_upload": True,
@@ -221,7 +224,9 @@ def _append_reference(row: dict[str, Any]) -> None:
         "verification_method": row.get("manual_official_proof_match_mode") or "user_browser_official_page_reference",
         "official_result": True,
         "manual_official_proof_matched": True,
-        "learning_eligibility": "official_reference_manual_screenshot",
+        "official_verification_source": row.get("official_verification_source") or "user_browser_official_page",
+        "official_verification_method": row.get("official_verification_method") or "manual_user_browser_official_page_exact_match",
+        "learning_eligibility": "official_verified_slab",
         "raw_grade_calibration_eligible": False,
     })
     payload.update({
