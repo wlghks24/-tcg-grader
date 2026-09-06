@@ -78,10 +78,15 @@ def tailscale_ipv4() -> str | None:
     return value if _valid_ipv4(value) else None
 
 
-def build_report(root: Path, *, probe_health: bool = True) -> dict[str, Any]:
+def build_report(
+    root: Path,
+    *,
+    probe_health: bool = True,
+    probe_network: bool = True,
+) -> dict[str, Any]:
     git = git_state(root)
-    lan = lan_ipv4_candidates()
-    tailscale = tailscale_ipv4()
+    lan = lan_ipv4_candidates() if probe_network else []
+    tailscale = tailscale_ipv4() if probe_network else None
     report: dict[str, Any] = {
         "schema_version": 1,
         "git": git,
@@ -102,10 +107,12 @@ def self_test() -> None:
     assert _valid_ipv4("100.64.0.1")
     assert not _valid_ipv4("127.0.0.1")
     assert not _valid_ipv4("999.1.1.1")
-    report = build_report(Path.cwd(), probe_health=False)
+    report = build_report(Path.cwd(), probe_health=False, probe_network=False)
     assert report["schema_version"] == 1
     assert report["health"]["skipped"] is True
-    assert isinstance(report["access_candidates"], list)
+    assert report["lan_ipv4"] == []
+    assert report["tailscale_ipv4"] is None
+    assert report["access_candidates"] == []
     print("tablet runtime probe: OK")
 
 
