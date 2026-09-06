@@ -8,7 +8,6 @@ from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from typing import Any
 
-from safe_runtime import atomic_write_json
 
 ROOT = Path(__file__).resolve().parents[1]
 DEFAULT_OUTPUT = ROOT / "TCG_CROSSCHECK" / "IG_CARDINFO" / "factual_snapshot.json"
@@ -49,6 +48,27 @@ ALLOWED_OUTPUT_FIELDS = {
     "source_locator",
     "verification_status",
 }
+
+
+def _write_json_atomic(path: Path, payload: dict[str, Any]) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    temp: Path | None = None
+    try:
+        with tempfile.NamedTemporaryFile(
+            mode="w",
+            encoding="utf-8",
+            dir=path.parent,
+            prefix=f".{path.name}.",
+            suffix=".tmp",
+            delete=False,
+        ) as handle:
+            json.dump(payload, handle, ensure_ascii=False, indent=2)
+            handle.write("\n")
+            temp = Path(handle.name)
+        temp.replace(path)
+    finally:
+        if temp is not None and temp.exists():
+            temp.unlink(missing_ok=True)
 
 
 def _clean(value: Any) -> str:
@@ -139,12 +159,12 @@ def build_snapshot(records: list[dict[str, Any]], *, now: datetime | None = None
 
 def export_snapshot(records: list[dict[str, Any]], output: Path = DEFAULT_OUTPUT) -> dict[str, Any]:
     payload = build_snapshot(records)
-    atomic_write_json(output, payload, suffix=".ig-cardinfo-snapshot.tmp")
+    _write_json_atomic(output, payload)
     reread = json.loads(output.read_text(encoding="utf-8"))
     if reread.get("namespace") != "IG_CARDINFO" or reread.get("facts") != payload.get("facts"):
         raise RuntimeError("IG_CARDINFO snapshot write/readback mismatch")
     reread["validation"]["write_readback_verified"] = True
-    atomic_write_json(output, reread, suffix=".ig-cardinfo-snapshot-verify.tmp")
+    _write_json_atomic(output, reread)
     return reread
 
 
