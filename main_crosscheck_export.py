@@ -39,7 +39,8 @@ def export_records(records: list[dict], output: Path = DEFAULT_OUTPUT) -> list[d
 
 
 def persist_verified_snapshot(records: list[dict], output: Path = DEFAULT_PERSISTED_OUTPUT) -> dict:
-    normalized = export_records(records)
+    _validate_factual_types(records)
+    normalized = [normalize_crosscheck_record("main", row) for row in records]
     verified = [row for row in normalized if row.get("verification") == "verified"]
     if not verified:
         raise ValueError("no verified factual rows; persisted snapshot not replaced")
