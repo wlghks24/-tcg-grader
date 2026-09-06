@@ -5,8 +5,9 @@
 The archive is intentionally reference-learning only. Slab labels must never be
 used to train RAW-card grade calibration because the slab itself contains the
 answer. Only rows with a complete company/certificate/grade identity, both
-front and back photos, and either live official verification or a matched manual
-official-page reference are copied.
+front and back photos, and completed official verification are copied.
+A matched manual official-page screenshot is not enough by itself: the row must
+also have official_result=True after persisted registry publication succeeds.
 
 On Android/Termux the preferred archive is:
   /storage/emulated/0/Download/TCG등급학습/검증완료/<COMPANY>/<GAME>/...
@@ -73,19 +74,26 @@ def archive_root() -> Path:
     return FALLBACK_ARCHIVE
 
 
+STRICT_MANUAL_MATCH_MODES = {
+    "official_page_company_cert_grade_ocr",
+    "official_page_company_cert_plus_exact_slab_ocr_grade",
+}
+
+
 def _verification_kind(row: dict[str, Any]) -> str | None:
-    if row.get("official_result") is True:
-        return "live_official_verified"
-    proof_matched = (
-        row.get("manual_official_proof_registered") is True
-        and (
-            str(row.get("manual_official_proof_state") or "") == "matched"
-            or str(row.get("verification_state") or "") == "manual_official_proof_matched"
-        )
-    )
-    if proof_matched:
-        return "manual_official_reference"
-    return None
+    if row.get("official_result") is not True:
+        return None
+    manual_source = str(row.get("official_verification_source") or "") == "user_browser_official_page"
+    manual_state = str(row.get("verification_state") or "")
+    if manual_source or manual_state in {"manual_official_verified", "verified_manual_official_page"}:
+        if row.get("manual_official_proof_registered") is not True:
+            return None
+        if str(row.get("manual_official_proof_state") or "") != "matched":
+            return None
+        if str(row.get("manual_official_proof_match_mode") or "") not in STRICT_MANUAL_MATCH_MODES:
+            return None
+        return "manual_official_verified"
+    return "persisted_official_verified"
 
 
 def _identity(row: dict[str, Any]) -> tuple[str, str, float, str] | None:
@@ -184,17 +192,15 @@ def _entry_from_row(row: dict[str, Any], target_root: Path, source_root: Path) -
         "card_number": row.get("card_number"),
         "verification_kind": kind,
         "official_result": row.get("official_result") is True,
-        "manual_official_reference": kind == "manual_official_reference",
+        "manual_official_reference": False,
+        "manual_official_verified": kind == "manual_official_verified",
         "front_back_pair_complete": True,
         "front_sha256": row.get("image_sha256"),
         "back_sha256": row.get("back_image_sha256"),
         "front_path": rel(front_target),
         "back_path": rel(back_target),
         "proof_path": rel(proof_target) if proof_target else None,
-        "learning_eligibility": (
-            "reference_learning_only" if kind == "live_official_verified"
-            else "reference_only_pending_live_official_verification"
-        ),
+        "learning_eligibility": "reference_learning_only",
         "training_role": "slab_reference_only",
         "raw_grade_calibration_eligible": False,
         "source_registration_updated_at": row.get("updated_at"),
@@ -236,7 +242,8 @@ def _write_readme(target_root: Path) -> None:
         "- 인증번호 + 등급 + 앞면 + 뒷면이 모두 있는 검증완료 자료만 들어옵니다.\n"
         "- .nomedia 파일 때문에 이 보관함의 관리용 복사본은 Photos/Gallery에 표시하지 않습니다.\n"
         "- 슬랩 사진은 참고학습 전용입니다. RAW 카드 등급 보정학습에는 사용하지 않습니다.\n"
-        "- live_official_verified와 manual_official_reference는 학습목록에서 구분됩니다.\n"
+        "- 수동검증 자료는 공식페이지 증빙 + 앞/뒤 사진 + 레지스트리 게시가 모두 성공해야 검증완료로 들어옵니다.\n"
+        "- manual_official_verified와 persisted_official_verified는 학습목록에서 구분됩니다.\n"
     )
     atomic_write_text(target_root / "README_검증완료.txt", text, suffix=".archive-readme.tmp")
 
@@ -309,8 +316,9 @@ def sync_rows(rows: Iterable[dict[str, Any]], *, target_root: Path, source_root:
             "skipped_missing_files": skipped_missing_files,
             "by_company": counts,
             "by_game": games,
-            "live_official_verified": sum(item.get("verification_kind") == "live_official_verified" for item in entries),
-            "manual_official_reference": sum(item.get("verification_kind") == "manual_official_reference" for item in entries),
+            "persisted_official_verified": sum(item.get("verification_kind") == "persisted_official_verified" for item in entries),
+            "manual_official_verified": sum(item.get("verification_kind") == "manual_official_verified" for item in entries),
+            "manual_official_reference": 0,
         },
         "policy": {
             "front_back_required": True,
@@ -319,7 +327,9 @@ def sync_rows(rows: Iterable[dict[str, Any]], *, target_root: Path, source_root:
             "photos_gallery_hidden_with_nomedia": True,
             "slab_reference_learning_only": True,
             "raw_grade_calibration_modified": False,
-            "manual_official_reference_is_not_live_official_truth": True,
+            "manual_proof_match_alone_is_not_verified": True,
+            "manual_verified_requires_official_result": True,
+            "manual_verified_requires_strict_match_mode": True,
         },
     }
     atomic_write_json(external_manifest_path, payload, suffix=".verified-archive-manifest.tmp")
