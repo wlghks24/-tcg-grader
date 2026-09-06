@@ -8,7 +8,7 @@ import tempfile
 from pathlib import Path
 from typing import Any
 
-from shared_self_learning.persisted_learning_snapshot import (
+from persisted_learning_snapshot import (
     build_snapshot as build_shared_snapshot,
     export_snapshot as export_shared_snapshot,
 )
