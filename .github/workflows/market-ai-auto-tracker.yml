@@ -81,6 +81,9 @@ jobs:
       - name: Enforce repair changed-file allowlist
         run: python market_ai_auto_tracker.py --assert-safe-diff
 
+      - name: Promote code-map learning only after full regression
+        run: python market_ai_auto_tracker.py --promote-code-map-learning --verified-regression
+
       - name: Record repair candidate paths
         id: changes
         shell: bash
@@ -151,7 +154,8 @@ jobs:
             echo "- event: ${{ github.event_name }}"
             echo "- bounded repair changed files: ${{ steps.changes.outputs.changed || 'unknown' }}"
             echo "- Graphify code map: built + audited before tracking"
-            echo "- code-map learning: full-regression-verified outcomes only"
+            echo "- code-map learning: pending first, promoted only after full regression + safe diff"
+            echo "- impact ranking: distance + hub penalty + critical-runtime + verified history"
             echo "- 403/429 bypass: disabled"
             echo "- search/error text -> source patch: disabled"
             echo "- publish gate: targeted regression + repository integrity + security audit + safe-diff allowlist"

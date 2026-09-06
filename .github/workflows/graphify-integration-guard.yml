@@ -47,8 +47,8 @@ jobs:
           grep -Fq 'graphify hook install' SETUP_GRAPHIFY_TERMUX.sh
           grep -Fq 'TCG_GRAPHIFY_POST_MERGE' SETUP_GRAPHIFY_TERMUX.sh
           grep -Fq 'GRAPHIFY_UPDATE.sh --quiet' SETUP_GRAPHIFY_TERMUX.sh
-          grep -Fq 'run_graphify update .' GRAPHIFY_UPDATE.sh
-          grep -Fq 'run_graphify update . --force || return 21' GRAPHIFY_UPDATE.sh
+          grep -Fq 'run_graphify update . --no-cluster' GRAPHIFY_UPDATE.sh
+          grep -Fq 'run_graphify update . --force --no-cluster || return 21' GRAPHIFY_UPDATE.sh
           grep -Fq 'run_graphify extract . --code-only || return 22' GRAPHIFY_UPDATE.sh
           grep -Fq 'run_graphify cluster-only . --no-label --exclude-hubs 99 || return 23' GRAPHIFY_UPDATE.sh
           grep -Fq 'python "$AUDIT_SCRIPT" --strict' GRAPHIFY_UPDATE.sh
@@ -68,6 +68,8 @@ jobs:
           grep -Fxq '.codex/' .graphifyignore
           grep -Fxq '.agents/' .graphifyignore
           grep -Fxq 'AGENTS.md' .graphifyignore
+          grep -Fxq 'gemini-code-*' .graphifyignore
+          grep -Fxq 'TCG_CROSSCHECK/' .graphifyignore
           grep -Fq 'graphify_self_heal_memory.json' .gitignore
           grep -Fq 'graphify_self_heal_candidates.json' .gitignore
           grep -Fq 'graphify-out/graph_audit.json' .gitignore
@@ -121,6 +123,8 @@ jobs:
           audit = json.loads(Path('graphify-out/graph_audit.json').read_text())
           assert audit['ok'] is True, audit
           assert audit['path_leak_count'] == 0, audit
+          assert audit['archive_source_file_count'] == 0, audit
+          assert audit['policy']['historical_snapshots_excluded'] is True, audit
           assert audit['policy']['ignore_policy_synced'] is True, audit
           PY
 
@@ -220,8 +224,9 @@ jobs:
           chmod +x /tmp/fake-graphify-incremental-ok
           : > /tmp/fake-graphify-calls.txt
           GRAPHIFY_BIN=/tmp/fake-graphify-incremental-ok GRAPHIFY_DISABLE_SELF_HEAL=1 bash ./GRAPHIFY_UPDATE.sh
-          grep -Fxq 'update .' /tmp/fake-graphify-calls.txt
-          ! grep -Fxq 'update . --force' /tmp/fake-graphify-calls.txt
+          grep -Fxq 'update . --no-cluster' /tmp/fake-graphify-calls.txt
+          grep -Fxq 'cluster-only . --no-label --exclude-hubs 99' /tmp/fake-graphify-calls.txt
+          ! grep -Fxq 'update . --force --no-cluster' /tmp/fake-graphify-calls.txt
 
       - name: Prove structural validation detects corrupt outputs
         shell: bash

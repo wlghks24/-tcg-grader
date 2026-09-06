@@ -1,16 +1,19 @@
 #!/usr/bin/env python3
-"""Read-only Graphify code-map intelligence for AI automatic tracking.
+"""Optimized read-only Graphify intelligence for AI automatic tracking.
 
-The code map is advisory:
-- reads graphify-out/graph.json when available;
-- never turns learned text into commands or patches;
-- reports bounded dependency/impact neighborhoods;
-- learns only from repairs that are explicitly verified and full-regression-passed.
+Design:
+- parse graphify-out/graph.json once per tracker run;
+- rank impact by graph distance, hub penalty, critical-runtime weight and verified history;
+- surface related regression tests separately from production impact files;
+- detect stale maps before trusting impact results;
+- never turn map/learning text into commands or source patches;
+- learn only from full-regression-verified repairs.
 """
 from __future__ import annotations
 
 import hashlib
 import json
+import math
 from collections import Counter, deque
 from pathlib import Path
 from typing import Any, Iterable
@@ -21,8 +24,25 @@ MAX_GRAPH_BYTES = 40 * 1024 * 1024
 MAX_IMPACT_FILES = 24
 MAX_MATCHED_NODES = 12
 MAX_LEARNING_PATTERNS = 200
+MAX_SUGGESTED_TESTS = 12
 PATH_KEYS = (
     "source_file", "file_path", "filepath", "filename", "path", "file", "module_path",
+)
+CRITICAL_RUNTIME_EXACT = {
+    "tcg_updater.py",
+    "tcg_updater_v135.py",
+    "index.html",
+    "service-worker.js",
+    "START_TCG_UPDATER_ANDROID.sh",
+    "ANDROID_UPDATE_AND_START.sh",
+    "ANDROID_AUTO_START_INSTALL.sh",
+    "main_selfrefine_gate.py",
+    "market_ai_auto_tracker.py",
+    "ai_auto_tracker.py",
+}
+CRITICAL_RUNTIME_HINTS = (
+    "grader", "grading", "collector", "security", "selfrefine", "auto_repair",
+    "service-worker", "runtime", "updater", ".github/workflows/",
 )
 
 
@@ -67,16 +87,6 @@ def _node_path(row: dict[str, Any]) -> str:
     return ""
 
 
-def _safe_json(path: Path) -> dict[str, Any] | None:
-    try:
-        if not path.is_file() or path.stat().st_size <= 0 or path.stat().st_size > MAX_GRAPH_BYTES:
-            return None
-        value = json.loads(path.read_text(encoding="utf-8"))
-        return value if isinstance(value, dict) else None
-    except (OSError, UnicodeError, ValueError, TypeError, RecursionError):
-        return None
-
-
 def _matches(origin: str, candidate: str) -> bool:
     a = _norm(origin).lower()
     b = _norm(candidate).lower()
@@ -87,92 +97,329 @@ def _matches(origin: str, candidate: str) -> bool:
     return Path(a).name == Path(b).name
 
 
+def _is_test_path(path: str) -> bool:
+    value = _norm(path).lower()
+    name = Path(value).name
+    return (
+        name.startswith("test_")
+        or name.endswith("_test.py")
+        or name.endswith(".test.js")
+        or name.endswith(".spec.js")
+        or "/tests/" in "/" + value
+    )
+
+
+def _is_critical_runtime(path: str) -> bool:
+    value = _norm(path)
+    lower = value.lower()
+    if Path(value).name in CRITICAL_RUNTIME_EXACT:
+        return True
+    return any(hint in lower for hint in CRITICAL_RUNTIME_HINTS)
+
+
+def _learning_key(origin: str) -> str:
+    return hashlib.sha256(_norm(origin).lower().encode("utf-8", "replace")).hexdigest()[:20]
+
+
+def default_learning_state() -> dict[str, Any]:
+    return {
+        "schema": 2,
+        "verified_patterns": {},
+        "verified_learning_only": True,
+        "learned_text_executable": False,
+    }
+
+
+class CodeMapIndex:
+    """In-memory Graphify index. One instance is reused for all incidents in a run."""
+
+    def __init__(self, root: Path):
+        self.root = Path(root)
+        self.graph_path = self.root / GRAPH_RELATIVE
+        self.audit_path = self.root / AUDIT_RELATIVE
+        self.available = False
+        self.error = ""
+        self.signature = ""
+        self.graph_mtime_ns = 0
+        self.graph_size = 0
+        self.nodes: list[dict[str, Any]] = []
+        self.links: list[dict[str, Any]] = []
+        self.path_by_id: dict[str, str] = {}
+        self.ids_by_path: dict[str, list[str]] = {}
+        self.adjacency: dict[str, set[str]] = {}
+        self.degree: Counter[str] = Counter()
+        self.audit: dict[str, Any] = {}
+        self._load()
+
+    def _load(self) -> None:
+        try:
+            stat = self.graph_path.stat()
+            if stat.st_size <= 0 or stat.st_size > MAX_GRAPH_BYTES:
+                raise ValueError(f"graph size outside safe bound: {stat.st_size}")
+            raw = self.graph_path.read_bytes()
+            payload = json.loads(raw.decode("utf-8"))
+            if not isinstance(payload, dict):
+                raise ValueError("graph root must be object")
+            self.graph_size = stat.st_size
+            self.graph_mtime_ns = stat.st_mtime_ns
+            self.signature = hashlib.sha256(raw).hexdigest()[:20]
+        except (OSError, UnicodeError, ValueError, TypeError, RecursionError) as exc:
+            self.error = f"{type(exc).__name__}: {str(exc)[:240]}"
+            return
+
+        self.nodes = _rows(payload, "nodes")
+        self.links = _rows(payload, "links", "edges")
+        for index, row in enumerate(self.nodes):
+            nid = _node_id(row, index)
+            path = _node_path(row)
+            self.adjacency.setdefault(nid, set())
+            if path:
+                self.path_by_id[nid] = path
+                self.ids_by_path.setdefault(path.lower(), []).append(nid)
+
+        for link in self.links:
+            source = _endpoint(link.get("source"))
+            target = _endpoint(link.get("target"))
+            if not source or not target:
+                continue
+            self.adjacency.setdefault(source, set()).add(target)
+            self.adjacency.setdefault(target, set()).add(source)
+            self.degree[source] += 1
+            self.degree[target] += 1
+
+        try:
+            if self.audit_path.is_file() and self.audit_path.stat().st_size <= 4_000_000:
+                audit = json.loads(self.audit_path.read_text(encoding="utf-8"))
+                if isinstance(audit, dict):
+                    self.audit = audit
+        except (OSError, UnicodeError, ValueError, TypeError, RecursionError):
+            self.audit = {}
+
+        self.available = bool(self.nodes)
+
+    def _match_nodes(self, origin: str) -> list[str]:
+        origin_norm = _norm(origin)
+        if not origin_norm:
+            return []
+        exact = self.ids_by_path.get(origin_norm.lower())
+        if exact:
+            return exact[:MAX_MATCHED_NODES]
+        matched = [
+            nid for nid, path in self.path_by_id.items()
+            if _matches(origin_norm, path)
+        ]
+        return matched[:MAX_MATCHED_NODES]
+
+    def _freshness(self, origin: str) -> tuple[str, float]:
+        if not self.available:
+            return "unavailable", 0.0
+        source = self.root / _norm(origin)
+        try:
+            source_mtime = source.stat().st_mtime_ns
+        except OSError:
+            return "source_mtime_unknown", 0.8
+        if self.graph_mtime_ns + 2_000_000_000 < source_mtime:
+            return "stale_for_origin", 0.55
+        return "fresh", 1.0
+
+    def impact(
+        self,
+        origin_path: str,
+        *,
+        depth: int = 2,
+        limit: int = MAX_IMPACT_FILES,
+        learning: dict[str, Any] | None = None,
+    ) -> dict[str, Any]:
+        origin = _norm(origin_path)
+        max_depth = max(0, min(4, int(depth)))
+        if not self.available:
+            return {
+                "available": False,
+                "status": "missing_or_invalid",
+                "origin_path": origin,
+                "graph_path": str(GRAPH_RELATIVE),
+                "matched_nodes": [],
+                "impacted_files": [],
+                "suggested_tests": [],
+                "historical_review_files": [],
+                "depth": max_depth,
+                "confidence": 0.0,
+                "structural_risk": "unknown",
+                "map_signature": self.signature,
+                "error": self.error,
+            }
+
+        matched = self._match_nodes(origin)
+        freshness, freshness_factor = self._freshness(origin)
+        distance: dict[str, int] = {nid: 0 for nid in matched}
+        queue = deque((nid, 0) for nid in matched)
+        while queue:
+            current, level = queue.popleft()
+            if level >= max_depth:
+                continue
+            for neighbor in sorted(self.adjacency.get(current, ())):
+                next_level = level + 1
+                prior = distance.get(neighbor)
+                if prior is not None and prior <= next_level:
+                    continue
+                distance[neighbor] = next_level
+                queue.append((neighbor, next_level))
+
+        learned_counts: dict[str, int] = {}
+        pattern = None
+        if isinstance(learning, dict):
+            patterns = learning.get("verified_patterns")
+            if isinstance(patterns, dict):
+                candidate = patterns.get(_learning_key(origin))
+                if isinstance(candidate, dict):
+                    pattern = candidate
+                    raw_counts = candidate.get("changed_file_counts")
+                    if isinstance(raw_counts, dict):
+                        learned_counts = {
+                            _norm(path): max(0, int(count or 0))
+                            for path, count in raw_counts.items()
+                            if _norm(path)
+                        }
+        max_learned = max(learned_counts.values(), default=0)
+
+        file_meta: dict[str, dict[str, Any]] = {}
+        for nid, dist in distance.items():
+            path = self.path_by_id.get(nid)
+            if not path:
+                continue
+            row = file_meta.setdefault(path, {
+                "distance": dist,
+                "max_degree": 0,
+                "node_count": 0,
+            })
+            row["distance"] = min(int(row["distance"]), dist)
+            row["max_degree"] = max(int(row["max_degree"]), int(self.degree.get(nid, 0)))
+            row["node_count"] = int(row["node_count"]) + 1
+
+        ranked: list[tuple[float, str, dict[str, Any]]] = []
+        for path, meta in file_meta.items():
+            dist = int(meta["distance"])
+            degree = int(meta["max_degree"])
+            base = 1.0 if dist == 0 else 1.0 / (1.0 + dist)
+            hub_penalty = 1.0 / (1.0 + math.log2(degree + 1) / 8.0)
+            critical_bonus = 0.22 if _is_critical_runtime(path) else 0.0
+            learned_bonus = 0.0
+            if max_learned and path in learned_counts:
+                learned_bonus = 0.35 * (learned_counts[path] / max_learned)
+            origin_bonus = 1.0 if _matches(origin, path) else 0.0
+            score = origin_bonus + base * hub_penalty + critical_bonus + learned_bonus
+            meta["score"] = round(score, 4)
+            meta["critical_runtime"] = _is_critical_runtime(path)
+            meta["test_file"] = _is_test_path(path)
+            meta["verified_history_count"] = learned_counts.get(path, 0)
+            ranked.append((score, path, meta))
+
+        ranked.sort(key=lambda item: (
+            -item[0],
+            int(item[2]["distance"]),
+            item[1],
+        ))
+        production = [path for _, path, meta in ranked if not meta["test_file"]]
+        tests = [path for _, path, meta in ranked if meta["test_file"]]
+
+        if len(tests) < MAX_SUGGESTED_TESTS and origin:
+            stem = Path(origin).stem.lower()
+            heuristic = sorted({
+                path for path in self.path_by_id.values()
+                if _is_test_path(path) and stem and stem in Path(path).name.lower()
+            })
+            for path in heuristic:
+                if path not in tests:
+                    tests.append(path)
+
+        impacted_files = production[: max(1, min(MAX_IMPACT_FILES, int(limit)))]
+        suggested_tests = tests[:MAX_SUGGESTED_TESTS]
+        historical_review = [
+            path for path, _ in sorted(
+                learned_counts.items(), key=lambda item: (-item[1], item[0])
+            )
+            if path not in impacted_files
+        ][:8]
+
+        critical_touches = [path for path in impacted_files if _is_critical_runtime(path)]
+        fanout = len(file_meta)
+        origin_degrees = [self.degree.get(nid, 0) for nid in matched]
+        origin_hub_degree = max(origin_degrees, default=0)
+        risk = "low"
+        if critical_touches or fanout >= 16:
+            risk = "high"
+        elif fanout >= 7 or origin_hub_degree >= 20:
+            risk = "medium"
+
+        match_factor = 1.0 if matched else 0.45
+        confidence = round(min(0.98, match_factor * freshness_factor), 3)
+        status = "ok" if matched else "origin_not_mapped"
+        if matched and freshness == "stale_for_origin":
+            status = "stale_for_origin"
+
+        top_ranked = [
+            {
+                "path": path,
+                "score": meta["score"],
+                "distance": meta["distance"],
+                "max_degree": meta["max_degree"],
+                "critical_runtime": meta["critical_runtime"],
+                "verified_history_count": meta["verified_history_count"],
+            }
+            for _, path, meta in ranked[:16]
+        ]
+
+        return {
+            "available": True,
+            "status": status,
+            "origin_path": origin,
+            "graph_path": str(GRAPH_RELATIVE),
+            "map_signature": self.signature,
+            "map_bytes": self.graph_size,
+            "node_count": len(self.nodes),
+            "edge_count": len(self.links),
+            "matched_nodes": matched,
+            "impacted_files": impacted_files,
+            "suggested_tests": suggested_tests,
+            "historical_review_files": historical_review,
+            "ranked_files": top_ranked,
+            "depth": max_depth,
+            "fanout_nodes": len(distance),
+            "fanout_files": fanout,
+            "origin_hub_degree": int(origin_hub_degree),
+            "critical_runtime_files": critical_touches[:12],
+            "freshness": freshness,
+            "confidence": confidence,
+            "structural_risk": risk,
+            "learning_applied": bool(pattern),
+            "read_only": True,
+        }
+
+
 def impact_context(
     root: Path,
     origin_path: str,
     *,
     depth: int = 2,
     limit: int = MAX_IMPACT_FILES,
+    index: CodeMapIndex | None = None,
+    learning: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
-    root = Path(root)
-    graph_path = root / GRAPH_RELATIVE
-    graph = _safe_json(graph_path)
-    origin = _norm(origin_path)
-    if graph is None:
-        return {
-            "available": False,
-            "status": "missing_or_invalid",
-            "origin_path": origin,
-            "graph_path": str(GRAPH_RELATIVE),
-            "matched_nodes": [],
-            "impacted_files": [],
-            "depth": max(0, min(4, int(depth))),
-        }
+    active = index if index is not None else CodeMapIndex(Path(root))
+    return active.impact(origin_path, depth=depth, limit=limit, learning=learning)
 
-    nodes = _rows(graph, "nodes")
-    links = _rows(graph, "links", "edges")
-    ids: list[str] = []
-    path_by_id: dict[str, str] = {}
-    for index, row in enumerate(nodes):
-        nid = _node_id(row, index)
-        ids.append(nid)
-        path = _node_path(row)
-        if path:
-            path_by_id[nid] = path
 
-    adjacency: dict[str, set[str]] = {nid: set() for nid in ids}
-    degree: Counter[str] = Counter()
-    for link in links:
-        source = _endpoint(link.get("source"))
-        target = _endpoint(link.get("target"))
-        if not source or not target:
-            continue
-        adjacency.setdefault(source, set()).add(target)
-        adjacency.setdefault(target, set()).add(source)
-        degree[source] += 1
-        degree[target] += 1
-
-    matched = [nid for nid, path in path_by_id.items() if _matches(origin, path)]
-    matched = matched[:MAX_MATCHED_NODES]
-    max_depth = max(0, min(4, int(depth)))
-    visited = set(matched)
-    queue = deque((nid, 0) for nid in matched)
-    while queue:
-        current, level = queue.popleft()
-        if level >= max_depth:
-            continue
-        for neighbor in sorted(adjacency.get(current, ())):
-            if neighbor in visited:
-                continue
-            visited.add(neighbor)
-            queue.append((neighbor, level + 1))
-
-    impacted_files: list[str] = []
-    for nid in visited:
-        path = path_by_id.get(nid)
-        if path and path not in impacted_files:
-            impacted_files.append(path)
-    impacted_files.sort(key=lambda value: (0 if _matches(origin, value) else 1, value))
-    impacted_files = impacted_files[: max(1, min(MAX_IMPACT_FILES, int(limit)))]
-
-    audit = _safe_json(root / AUDIT_RELATIVE) or {}
-    top_hubs = audit.get("top_hubs") if isinstance(audit.get("top_hubs"), list) else [
-        {"node": node, "degree": count} for node, count in degree.most_common(8)
-    ]
-
-    return {
-        "available": True,
-        "status": "ok" if matched else "origin_not_mapped",
-        "origin_path": origin,
-        "graph_path": str(GRAPH_RELATIVE),
-        "node_count": len(nodes),
-        "edge_count": len(links),
-        "matched_nodes": matched,
-        "impacted_files": impacted_files,
-        "depth": max_depth,
-        "top_hubs": [row for row in top_hubs[:8] if isinstance(row, dict)],
-        "read_only": True,
-    }
+def event_priority(severity: str, impact: dict[str, Any]) -> str:
+    sev = str(severity or "").lower()
+    risk = str(impact.get("structural_risk") or "unknown")
+    stale = impact.get("status") == "stale_for_origin"
+    if sev == "critical" or (sev == "high" and risk in {"high", "medium"}):
+        return "P0"
+    if sev == "high" or risk == "high" or stale:
+        return "P1"
+    if sev == "medium" or risk == "medium":
+        return "P2"
+    return "P3"
 
 
 def verified_learning_candidate(
@@ -191,24 +438,15 @@ def verified_learning_candidate(
     predicted_set = set(predicted)
     hits = [path for path in changed if path in predicted_set]
     misses = [path for path in changed if path not in predicted_set]
-    key = hashlib.sha256(origin.lower().encode("utf-8", "replace")).hexdigest()[:20]
     return {
-        "pattern_key": key,
+        "pattern_key": _learning_key(origin),
         "origin_path": origin,
         "changed_files": changed,
         "predicted_hits": hits,
         "predicted_misses": misses,
         "map_available": bool(impact.get("available")),
+        "map_signature": str(impact.get("map_signature") or "")[:40],
         "verification": "full_regression_verified",
-    }
-
-
-def default_learning_state() -> dict[str, Any]:
-    return {
-        "schema": 1,
-        "verified_patterns": {},
-        "verified_learning_only": True,
-        "learned_text_executable": False,
     }
 
 
@@ -230,6 +468,7 @@ def merge_verified_learning(state: dict[str, Any], rows: Iterable[dict[str, Any]
         current["origin_path"] = origin
         current["verified_count"] = min(1_000_000, int(current.get("verified_count") or 0) + 1)
         current["map_available"] = bool(row.get("map_available"))
+        current["last_map_signature"] = str(row.get("map_signature") or "")[:40]
         counts = current.get("changed_file_counts")
         if not isinstance(counts, dict):
             counts = {}
@@ -242,6 +481,8 @@ def merge_verified_learning(state: dict[str, Any], rows: Iterable[dict[str, Any]
         )[:32])
         current["last_predicted_hits"] = list(row.get("predicted_hits") or [])[:32]
         current["last_predicted_misses"] = list(row.get("predicted_misses") or [])[:32]
+        total = max(1, len(row.get("changed_files") or []))
+        current["last_prediction_hit_rate"] = round(len(row.get("predicted_hits") or []) / total, 4)
         patterns[key] = current
 
     if len(patterns) > MAX_LEARNING_PATTERNS:
@@ -252,7 +493,7 @@ def merge_verified_learning(state: dict[str, Any], rows: Iterable[dict[str, Any]
         )[:MAX_LEARNING_PATTERNS]
         patterns = dict(ranked)
 
-    learning["schema"] = 1
+    learning["schema"] = 2
     learning["verified_patterns"] = patterns
     learning["verified_learning_only"] = True
     learning["learned_text_executable"] = False
@@ -265,8 +506,17 @@ def compact_context(value: dict[str, Any]) -> dict[str, Any]:
         "available": bool(value.get("available")),
         "status": str(value.get("status") or "")[:40],
         "origin_path": _norm(value.get("origin_path")),
+        "map_signature": str(value.get("map_signature") or "")[:40],
         "matched_nodes": list(value.get("matched_nodes") or [])[:8],
         "impacted_files": [_norm(x) for x in (value.get("impacted_files") or []) if _norm(x)][:16],
+        "suggested_tests": [_norm(x) for x in (value.get("suggested_tests") or []) if _norm(x)][:10],
+        "historical_review_files": [_norm(x) for x in (value.get("historical_review_files") or []) if _norm(x)][:8],
+        "critical_runtime_files": [_norm(x) for x in (value.get("critical_runtime_files") or []) if _norm(x)][:8],
+        "fanout_files": int(value.get("fanout_files") or 0),
+        "confidence": float(value.get("confidence") or 0.0),
+        "structural_risk": str(value.get("structural_risk") or "unknown")[:16],
+        "freshness": str(value.get("freshness") or "")[:32],
+        "learning_applied": bool(value.get("learning_applied")),
         "depth": int(value.get("depth") or 0),
         "read_only": True,
     }

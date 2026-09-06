@@ -71,20 +71,21 @@ perform_update() {
     # shrink-safety guard pre-emptively on every tablet refresh.  --force is a
     # bounded fallback for legitimate refactors/deletions that make the graph
     # smaller.
-    echo "[Graphify] 변경분 지도 갱신: incremental update"
-    if ! run_graphify update .; then
+    echo "[Graphify] 변경분 지도 갱신: incremental update --no-cluster"
+    if ! run_graphify update . --no-cluster; then
       echo "[Graphify] 일반 증분갱신 실패 → 삭제/축소 리팩터링용 --force 1회 재시도"
-      run_graphify update . --force || return 21
+      run_graphify update . --force --no-cluster || return 21
     fi
   else
     echo "[Graphify] 최초 코드 지도 생성: extract --code-only"
     run_graphify extract . --code-only || return 22
   fi
 
-  if [ -s "graphify-out/graph.json" ] && { [ ! -s "graphify-out/GRAPH_REPORT.md" ] || [ ! -s "graphify-out/graph.html" ]; }; then
-    echo "[Graphify] 보고서/HTML 보완 생성: cluster-only --no-label --exclude-hubs 99"
-    run_graphify cluster-only . --no-label --exclude-hubs 99 || return 23
-  fi
+  # Every successful extraction/update is reclustered with the same hub policy.
+  # This keeps tablet, CI and post-merge maps deterministic instead of letting
+  # incremental updates silently fall back to Graphify's default clustering.
+  echo "[Graphify] 지도 최적화 재클러스터링: --exclude-hubs 99"
+  run_graphify cluster-only . --no-label --exclude-hubs 99 || return 23
 
   validate_outputs || return $?
   run_map_audit || return $?

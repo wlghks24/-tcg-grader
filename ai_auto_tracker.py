@@ -22,8 +22,10 @@ from pathlib import Path
 from typing import Any, Callable, Iterable
 
 from code_map_intelligence import (
+    CodeMapIndex,
     compact_context,
     default_learning_state,
+    event_priority,
     impact_context,
     merge_verified_learning,
     verified_learning_candidate,
@@ -293,6 +295,7 @@ def observe(events: Iterable[dict[str, Any]], *, state_path: Path = STATE,
         selfrefine: list[dict[str, Any]] = []
         verified_learning: list[dict[str, Any]] = []
         map_root = Path(code_map_root) if code_map_root is not None else ROOT
+        map_index = CodeMapIndex(map_root)
         now = _now()
         for event in normalized:
             domain = classify_domain(event)
@@ -300,15 +303,19 @@ def observe(events: Iterable[dict[str, Any]], *, state_path: Path = STATE,
             incident = state["incidents"].get(iid, {})
             count = min(1_000_000, int(incident.get("occurrences", 0) or 0) + 1)
             status = "new" if count == 1 else "recurring"
+            severity = severity_for(event)
             map_context = impact_context(
                 map_root,
                 _clean(event.get("path"), 240).replace("\\", "/"),
                 depth=2,
+                index=map_index,
+                learning=state.get("code_map_learning"),
             )
             row = {
                 "incident_id": iid,
                 "domain": domain,
-                "severity": severity_for(event),
+                "severity": severity,
+                "impact_priority": event_priority(severity, map_context),
                 "status": status,
                 "occurrences": count,
                 "stage": _clean(event.get("stage"), 80) or "UNKNOWN",
@@ -358,6 +365,12 @@ def observe(events: Iterable[dict[str, Any]], *, state_path: Path = STATE,
         "dry_run": dry_run,
         "code_map_available": sum(bool(x.get("code_map", {}).get("available")) for x in observed),
         "verified_code_map_learning": len(verified_learning),
+        "code_map_high_risk": sum(
+            x.get("code_map", {}).get("structural_risk") == "high" for x in observed
+        ),
+        "code_map_stale": sum(
+            x.get("code_map", {}).get("status") == "stale_for_origin" for x in observed
+        ),
     }
     return {
         "schema": SCHEMA,

@@ -107,6 +107,8 @@ class AutoTrackerTests(unittest.TestCase):
             context = out["handoffs"][0]["code_map"]
             self.assertTrue(context["available"])
             self.assertIn("tcg_updater.py", context["impacted_files"])
+            self.assertTrue(context["suggested_tests"] == [] or isinstance(context["suggested_tests"], list))
+            self.assertIn(out["incidents"][0]["impact_priority"], {"P0", "P1", "P2", "P3"})
 
     def test_code_map_learning_requires_verified_full_regression(self):
         with tempfile.TemporaryDirectory() as td:
@@ -143,6 +145,23 @@ class AutoTrackerTests(unittest.TestCase):
             self.assertEqual(len(patterns), 1)
             learned = next(iter(patterns.values()))
             self.assertEqual(learned["changed_file_counts"]["tcg_updater.py"], 1)
+
+    def test_code_map_is_loaded_once_per_observe_run(self):
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            _write_graph(root)
+            state = root / "state.json"
+            out = tracker.observe(
+                [
+                    {"path": "collector.py", "message": "one"},
+                    {"path": "tcg_updater.py", "message": "two"},
+                ],
+                state_path=state,
+                code_map_root=root,
+            )
+            signatures = {row["code_map"]["map_signature"] for row in out["incidents"]}
+            self.assertEqual(len(signatures), 1)
+            self.assertNotEqual(next(iter(signatures)), "")
 
     def test_secret_redaction(self):
         value = tracker._clean("Bearer abc.def token=123 password=xyz https://example.com/a")

@@ -108,8 +108,9 @@ bash GRAPHIFY_UPDATE.sh
 동작:
 
 - 첫 실행: `graphify extract . --code-only`
-- 기존 지도 존재: `graphify update . --force`
-- `GRAPH_REPORT.md` 또는 `graph.html` 누락: `graphify cluster-only . --no-label`
+- 기존 지도 존재: `graphify update . --no-cluster` (실패 시에만 `--force --no-cluster` 1회)
+- 추출/증분갱신 후 항상: `graphify cluster-only . --no-label --exclude-hubs 99`
+- 과도한 공용 유틸리티 허브를 클러스터링에서 억제해 실제 기능 묶음 중심으로 지도화
 - 모든 단계의 반환코드를 개별 검사
 - `graph.json`, `GRAPH_REPORT.md`, `graph.html` 세 파일이 모두 0바이트보다 커야 성공
 
@@ -183,6 +184,8 @@ grep -n TCG_GRAPHIFY_POST_MERGE .git/hooks/post-merge
 ## 코드 지도 범위
 
 `.graphifyignore`에서 가격/행사/자가학습 결과/등급사진 등 고변동 런타임 자료를 제외하여 코드 구조 지도가 불필요하게 흔들리지 않도록 했습니다.
+
+또한 Git에 보존된 과거 작업 스냅샷 `gemini-code-*`와 `TCG_CROSSCHECK/` 결과 스냅샷은 실제 실행 코드가 아니므로 지도에서만 제외합니다. 파일 자체는 삭제하지 않습니다.
 
 Graphify 지도는 탐색 보조 자료입니다. 코드를 수정할 때는 지도에서 관련 모듈을 좁힌 뒤 원본 소스를 다시 확인하고 TCG의 학습자료/수동등록사진/검증자료 보존 규칙을 유지해야 합니다.
 

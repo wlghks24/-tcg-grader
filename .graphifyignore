@@ -64,3 +64,10 @@ graded_photo_official_cache.json
 release_history_progress.json
 manual_event_evidence.json
 release_parser_learning.json
+
+
+# Imported historical coding snapshots are retained in git for provenance but are not active architecture.
+gemini-code-*
+
+# Cross-check JSON snapshots are runtime/evidence exchange, not executable architecture.
+TCG_CROSSCHECK/

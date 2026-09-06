@@ -272,9 +272,22 @@ def audit(graph_path: Path) -> dict[str, Any]:
         errors.append(f"ignored/runtime/control-plane paths leaked into code map: {leaks[:20]}")
 
     unique_files = sorted(set(paths))
+    test_files = [path for path in unique_files if (
+        Path(path).name.startswith("test_")
+        or Path(path).name.endswith("_test.py")
+        or Path(path).name.endswith(".test.js")
+        or Path(path).name.endswith(".spec.js")
+        or "/tests/" in "/" + path.replace("\\", "/")
+    )]
+    archive_files = [path for path in unique_files if Path(path).name.startswith("gemini-code-")]
+    production_files = [path for path in unique_files if path not in test_files]
     graph_bytes = graph_path.stat().st_size
     edge_count = len(links)
     node_count = len(nodes)
+    isolated_node_count = sum(1 for node in ids if degree.get(node, 0) == 0)
+    edge_density = 0.0
+    if node_count > 1:
+        edge_density = (2.0 * edge_count) / (node_count * (node_count - 1))
 
     top_hubs = [
         {"node": node, "degree": count}
@@ -295,6 +308,11 @@ def audit(graph_path: Path) -> dict[str, Any]:
         warnings.append("large graph has no links; call/dependency extraction may be incomplete")
     if nodes and not paths:
         warnings.append("no source-file metadata found on nodes; path-scope leak checks were limited")
+    if archive_files:
+        errors.append(f"historical gemini-code snapshots leaked into active code map: {archive_files[:10]}")
+    isolate_ratio = isolated_node_count / max(1, node_count)
+    if node_count >= 100 and isolate_ratio > 0.60:
+        warnings.append("more than 60% of code-map nodes are isolated; review extraction scope")
 
     return {
         "ok": not errors,
@@ -302,7 +320,14 @@ def audit(graph_path: Path) -> dict[str, Any]:
         "node_count": node_count,
         "edge_count": edge_count,
         "source_file_count": len(unique_files),
+        "production_source_file_count": len(production_files),
+        "test_source_file_count": len(test_files),
+        "archive_source_file_count": len(archive_files),
         "graph_bytes": graph_bytes,
+        "isolated_node_count": isolated_node_count,
+        "isolated_node_ratio": round(isolate_ratio, 4),
+        "edge_density": round(edge_density, 8),
+        "nodes_per_source_file": round(node_count / max(1, len(unique_files)), 3),
         "top_hub_edge_ratio": round(hub_ratio, 4),
         "top_hubs": top_hubs,
         "ignore_rule_count": len(rules),
@@ -319,6 +344,8 @@ def audit(graph_path: Path) -> dict[str, Any]:
             "git_written": False,
             "runtime_state_excluded": True,
             "ignore_policy_synced": not ignore_errors,
+            "historical_snapshots_excluded": not archive_files,
+            "active_code_focus": not archive_files and len(unique_files) > 0,
         },
     }
 

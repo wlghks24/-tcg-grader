@@ -26,6 +26,7 @@ from typing import Any
 
 from safe_runtime import atomic_write_json, atomic_write_text, safe_read_text
 from code_map_intelligence import (
+    CodeMapIndex,
     compact_context,
     impact_context,
     merge_verified_learning,
@@ -580,6 +581,13 @@ def _save_state(result: dict[str, Any], path: Path = STATE) -> None:
     learning_rows = code_map.get("verified_learning") if isinstance(code_map.get("verified_learning"), list) else []
     if learning_rows:
         merge_verified_learning(state, learning_rows)
+    pending_rows = code_map.get("pending_learning") if isinstance(code_map.get("pending_learning"), list) else []
+    if pending_rows:
+        state["pending_code_map_learning"] = {
+            "head": result.get("git", {}).get("head"),
+            "changed_files": list(result.get("repair", {}).get("changed_files") or [])[:32],
+            "candidates": pending_rows[:40],
+        }
     atomic_write_json(path, state, suffix=".market-ai-state.tmp")
 
 
@@ -615,7 +623,7 @@ def run_tracker(
     selfrefine_rows = load_selfrefine_market_findings(root)
     findings = (static_after + selfrefine_rows)[:MAX_FINDINGS]
     regressions = run_regression(root) if run_tests else []
-    regression_pass = all(row.get("returncode") == 0 for row in regressions)
+    regression_pass = bool(run_tests) and all(row.get("returncode") == 0 for row in regressions)
     diff_safety = assert_safe_diff(root)
     blocking = [
         row for row in findings
@@ -625,6 +633,8 @@ def run_tracker(
     if blocking or not regression_pass or not diff_safety["allowed"]:
         status = "fail"
 
+    state_before = _load_state(root / STATE.name)
+    map_index = CodeMapIndex(root)
     map_contexts: list[dict[str, Any]] = []
     seen_paths: set[str] = set()
     for row in initial[:40]:
@@ -632,23 +642,35 @@ def run_tracker(
         if not path or path in seen_paths:
             continue
         seen_paths.add(path)
-        map_contexts.append(impact_context(root, path, depth=2))
-    impacted_files = sorted({
-        path
-        for context in map_contexts
-        for path in (context.get("impacted_files") or [])
-        if isinstance(path, str) and path
-    })[:40]
+        map_contexts.append(impact_context(
+            root,
+            path,
+            depth=2,
+            index=map_index,
+            learning=state_before.get("code_map_learning"),
+        ))
+    impacted_files = []
+    suggested_tests = []
+    for context in map_contexts:
+        for path in context.get("impacted_files") or []:
+            if isinstance(path, str) and path and path not in impacted_files:
+                impacted_files.append(path)
+        for path in context.get("suggested_tests") or []:
+            if isinstance(path, str) and path and path not in suggested_tests:
+                suggested_tests.append(path)
+    impacted_files = impacted_files[:40]
+    suggested_tests = suggested_tests[:20]
+
     verified_learning: list[dict[str, Any]] = []
-    verified_repair = (
+    pending_learning: list[dict[str, Any]] = []
+    candidate_repair = (
         status == "pass"
-        and regression_pass
         and bool(diff_safety.get("allowed"))
         and bool(repair_result.get("attempted"))
         and not bool(repair_result.get("rolled_back"))
         and bool(repair_result.get("changed_files"))
     )
-    if verified_repair:
+    if candidate_repair:
         by_origin = {
             str(context.get("origin_path") or ""): context
             for context in map_contexts
@@ -666,8 +688,14 @@ def run_tracker(
                 verified=True,
                 regression_pass=True,
             )
-            if candidate is not None:
+            if candidate is None:
+                continue
+            if regression_pass:
                 verified_learning.append(candidate)
+            else:
+                pending = dict(candidate)
+                pending["verification"] = "pending_full_regression"
+                pending_learning.append(pending)
 
     result = {
         "schema": SCHEMA,
@@ -684,7 +712,11 @@ def run_tracker(
             "repair_rolled_back": bool(repair_result.get("rolled_back")),
             "repair_changed_files": len(repair_result.get("changed_files") or []),
             "regression_pass": regression_pass,
+            "regression_executed": bool(run_tests),
             "safe_diff": bool(diff_safety.get("allowed")),
+            "code_map_high_risk_contexts": sum(
+                context.get("structural_risk") == "high" for context in map_contexts
+            ),
         },
         "findings": findings,
         "repair": repair_result,
@@ -695,8 +727,12 @@ def run_tracker(
             "available": any(bool(context.get("available")) for context in map_contexts),
             "contexts": [compact_context(context) for context in map_contexts[:16]],
             "impacted_files": impacted_files,
+            "suggested_tests": suggested_tests,
             "verified_learning": verified_learning,
+            "pending_learning": pending_learning,
             "learning_applied": bool(verified_learning),
+            "map_signature": map_index.signature,
+            "single_parse_per_run": True,
         },
         "design_references": DESIGN_REFERENCES,
         "safety": {
@@ -712,12 +748,56 @@ def run_tracker(
             "unknown_error_auto_patch": False,
             "code_map_patch_generation": False,
             "code_map_learning_requires_full_regression": True,
+            "code_map_pending_learning_not_executable": True,
+            "code_map_single_parse_per_run": True,
         },
     }
     target = report_path or REPORT
     atomic_write_json(target, result, suffix=".market-ai-report.tmp")
     _save_state(result, root / STATE.name)
     return result
+
+
+def promote_pending_code_map_learning(
+    *,
+    root: Path = ROOT,
+    state_path: Path | None = None,
+    regression_verified: bool = False,
+) -> dict[str, Any]:
+    """Promote pending map learning only after the workflow's full regression gate passed."""
+    target = state_path or (root / STATE.name)
+    state = _load_state(target)
+    pending = state.get("pending_code_map_learning")
+    if not regression_verified or not isinstance(pending, dict):
+        return {"promoted": 0, "reason": "missing_verified_regression_or_pending"}
+
+    current_head = _git_head(root)
+    if str(pending.get("head") or "") != current_head:
+        return {"promoted": 0, "reason": "head_changed"}
+
+    safety = assert_safe_diff(root)
+    if not safety.get("allowed"):
+        return {"promoted": 0, "reason": "unsafe_diff"}
+
+    changed = set(safety.get("changed_paths") or [])
+    expected = {str(path) for path in (pending.get("changed_files") or []) if str(path)}
+    if not expected or not expected.issubset(changed):
+        return {"promoted": 0, "reason": "repair_diff_mismatch"}
+
+    promoted = []
+    for row in pending.get("candidates") or []:
+        if not isinstance(row, dict):
+            continue
+        item = dict(row)
+        item["verification"] = "full_regression_verified"
+        promoted.append(item)
+    if not promoted:
+        return {"promoted": 0, "reason": "no_candidates"}
+
+    merge_verified_learning(state, promoted)
+    state.pop("pending_code_map_learning", None)
+    atomic_write_json(target, state, suffix=".market-ai-state.tmp")
+    return {"promoted": len(promoted), "reason": "full_regression_verified"}
 
 
 def self_test(root: Path = ROOT) -> int:
@@ -739,6 +819,8 @@ def main() -> int:
     parser.add_argument("--no-tests", action="store_true")
     parser.add_argument("--report", default=str(REPORT))
     parser.add_argument("--assert-safe-diff", action="store_true")
+    parser.add_argument("--promote-code-map-learning", action="store_true")
+    parser.add_argument("--verified-regression", action="store_true")
     parser.add_argument("--self-test", action="store_true")
     args = parser.parse_args()
 
@@ -748,6 +830,15 @@ def main() -> int:
         return 0 if result["allowed"] else 3
     if args.self_test:
         return self_test(ROOT)
+    if args.promote_code_map_learning:
+        result = promote_pending_code_map_learning(
+            root=ROOT,
+            regression_verified=args.verified_regression,
+        )
+        print(json.dumps(result, ensure_ascii=False, sort_keys=True))
+        return 0 if result.get("reason") in {
+            "full_regression_verified", "missing_verified_regression_or_pending"
+        } else 4
 
     result = run_tracker(
         root=ROOT,

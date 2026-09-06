@@ -148,7 +148,7 @@ class MarketAIAutoTrackerTests(unittest.TestCase):
             codes = {row["code"] for row in tracker.scan_static(root)}
             self.assertIn("MARKET_TRACKER_ACTION_NOT_SHA_PINNED", codes)
 
-    def test_verified_repair_uses_code_map_and_learns_only_after_pass(self):
+    def test_repair_without_regression_is_pending_not_learned(self):
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
             self._repo(root)
@@ -159,11 +159,12 @@ class MarketAIAutoTrackerTests(unittest.TestCase):
             )
             (root / "index.html").write_text(html, encoding="utf-8")
             result = tracker.run_tracker(root=root, repair=True, run_tests=False, report_path=root / "report.json")
-            self.assertEqual(result["summary"]["status"], "pass")
+            self.assertEqual(result["summary"]["status"], "fail")
+            self.assertFalse(result["summary"]["regression_pass"])
             self.assertTrue(result["code_map"]["available"])
-            self.assertTrue(result["code_map"]["verified_learning"])
+            self.assertFalse(result["code_map"]["verified_learning"])
             state = json.loads((root / tracker.STATE.name).read_text(encoding="utf-8"))
-            self.assertTrue(state["code_map_learning"]["verified_patterns"])
+            self.assertEqual(state.get("code_map_learning", {}).get("verified_patterns", {}), {})
 
     def test_design_references_are_official_github_docs(self):
         self.assertTrue(tracker.DESIGN_REFERENCES)
