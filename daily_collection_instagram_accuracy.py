@@ -407,6 +407,16 @@ def audit_cross_domain(main_exchange: Path, instagram_exchange: Path) -> dict[st
         }
 
     actions: list[dict[str, str]] = []
+    if result.get("status") == "no_comparable_data":
+        actions.append(
+            _action(
+                "medium",
+                "crosscheck",
+                "collect_comparable_facts",
+                "Both domains have factual rows but no comparable canonical fact keys",
+                "Do not mark the crosscheck complete. Collect fresh independently verified facts that overlap on factual type, canonical_key, currency, language, and variant, then rerun the passive comparison.",
+            )
+        )
     if int(result.get("conflict") or 0) > 0:
         actions.append(
             _action(
@@ -426,6 +436,7 @@ def audit_cross_domain(main_exchange: Path, instagram_exchange: Path) -> dict[st
         "agree": result.get("agree", 0),
         "conflict": result.get("conflict", 0),
         "reverification_required": result.get("reverification_required", 0),
+        "comparison_count": result.get("comparison_count", len(result.get("comparisons") or [])),
         "repair_actions": actions,
     }
 
@@ -598,7 +609,7 @@ def build_report(
     elif high:
         status = "degraded"
     elif (
-        cross.get("status") == "snapshot_missing"
+        cross.get("status") in {"snapshot_missing", "no_comparable_data"}
         or learning_cross.get("status") == "snapshot_missing"
         or conflicting_fixes
         or medium
