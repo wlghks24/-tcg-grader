@@ -96,7 +96,7 @@ jobs:
           python main_persisted_crosscheck_export.py --self-test
           python -m instagram_tcg_content.peer_learning_export --self-test
           python -m instagram_tcg_content.persisted_learning_export --self-test
-          python -m unittest -v test_peer_learning_manifest_contract_v28.py
+          python -m unittest -v instagram_tcg_content.test_peer_learning_manifest_contract_v28
           python -m instagram_tcg_content.persisted_crosscheck_export --self-test
           python crosscheck_runtime_bridge.py --self-test
           python -m unittest -v test_crosscheck_runtime_bridge_v26.py
@@ -112,7 +112,7 @@ jobs:
             selfrefine_crosscheck_gate.py peer_learning_crosscheck_gate.py \
             main_peer_learning_export.py main_peer_learning_adoption.py main_persisted_crosscheck_export.py \
             selfrefine_domain_boundary_guard.py shared_self_learning/peer_learning.py \
-            instagram_tcg_content/peer_learning_export.py instagram_tcg_content/persisted_learning_export.py instagram_tcg_content/persisted_crosscheck_export.py crosscheck_runtime_bridge.py test_crosscheck_runtime_bridge_v26.py test_peer_learning_manifest_contract_v28.py
+            instagram_tcg_content/peer_learning_export.py instagram_tcg_content/persisted_learning_export.py instagram_tcg_content/persisted_crosscheck_export.py crosscheck_runtime_bridge.py test_crosscheck_runtime_bridge_v26.py instagram_tcg_content/test_peer_learning_manifest_contract_v28.py
           python -c "import daily_collection_instagram_accuracy, auto_update_all, selfrefine_crosscheck_gate, peer_learning_crosscheck_gate"
           python -m unittest -v \
             test_daily_collection_instagram_accuracy.py \
