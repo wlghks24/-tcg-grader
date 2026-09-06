@@ -18,7 +18,7 @@ import update_promo_events
 
 def _sample(source: str) -> dict:
     return {
-        "information_family": "market_price",
+        "information_family": "card_price",
         "canonical_key": "pokemon|pikachu|001|jp",
         "value": "1000",
         "currency": "JPY",
