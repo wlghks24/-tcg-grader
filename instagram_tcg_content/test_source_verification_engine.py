@@ -19,7 +19,7 @@ def obs(
     status="observed",
     event_time=None,
     locator=None,
-    lineage_key=None,
+    lineage_key="auto",
     currency="USD",
     condition="graded",
     grade="PSA 10",
@@ -33,6 +33,9 @@ def obs(
             status = "completed"
         if event_time is None:
             event_time = "2026-09-04T21:30:00+09:00"
+    resolved_lineage = lineage_key
+    if lineage_key == "auto":
+        resolved_lineage = f"sale:{provider}" if fact == "completed_sale" else None
     return Observation(
         game=game,
         fact_type=fact,
@@ -54,7 +57,7 @@ def obs(
         price_basis=price_basis if fact == "completed_sale" else None,
         quantity=quantity if fact == "completed_sale" else None,
         unit=unit if fact == "completed_sale" else None,
-        lineage_key=lineage_key,
+        lineage_key=resolved_lineage,
     )
 
 
@@ -137,7 +140,66 @@ def main():
     )
     assert r.status == "partial", r
     assert r.independent_source_count == 1, r
-    assert "currency missing" in (r.uncertainty_reason or ""), r
+    assert "currency invalid" in (r.uncertainty_reason or ""), r
+
+    # Transaction evidence must carry explicit lineage; synthetic lineage is not accepted.
+    r = verify_fact(
+        [
+            obs(
+                "ebay",
+                "completed_sale_original",
+                "100",
+                code="P-S01",
+                lineage_key=None,
+            ),
+            obs(
+                "goldin",
+                "completed_sale_original",
+                "110",
+                code="P-S02",
+            ),
+        ]
+    )
+    assert r.status == "partial", r
+    assert r.independent_source_count == 1, r
+    assert "explicit lineage missing" in (r.uncertainty_reason or ""), r
+
+    # Currency, realized amount, and grade must be semantically valid.
+    r = verify_fact(
+        [
+            obs("ebay", "completed_sale_original", "100", currency="usd"),
+            obs("goldin", "completed_sale_original", "110", code="P-S02"),
+        ]
+    )
+    assert r.status == "partial", r
+    assert "currency invalid" in (r.uncertainty_reason or ""), r
+
+    r = verify_fact(
+        [
+            obs("ebay", "completed_sale_original", "0"),
+            obs("goldin", "completed_sale_original", "110", code="P-S02"),
+        ]
+    )
+    assert r.status == "partial", r
+    assert "realized amount invalid" in (r.uncertainty_reason or ""), r
+
+    r = verify_fact(
+        [
+            obs("ebay", "completed_sale_original", "NaN"),
+            obs("goldin", "completed_sale_original", "110", code="P-S02"),
+        ]
+    )
+    assert r.status == "partial", r
+    assert "realized amount invalid" in (r.uncertainty_reason or ""), r
+
+    r = verify_fact(
+        [
+            obs("ebay", "completed_sale_original", "100", grade=None),
+            obs("goldin", "completed_sale_original", "110", code="P-S02"),
+        ]
+    )
+    assert r.status == "partial", r
+    assert "grade missing" in (r.uncertainty_reason or ""), r
 
     # Market-reference data cannot independently promote a completed sale.
     r = verify_fact(

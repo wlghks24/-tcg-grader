@@ -1,14 +1,20 @@
 #!/usr/bin/env python3
+from pathlib import Path
+from tempfile import TemporaryDirectory
+
 from instagram_tcg_content.production_state import (
     SCHEDULED_BASELINE_RUN_KIND,
+    StateIntegrityError,
     acquire_run_lock,
     baseline_id_for_date,
     can_start_catchup,
     empty_state,
     finalize_production,
+    load_state,
     record_catchup_attempt,
     release_run_lock,
     validate_production_record,
+    write_state_atomic,
 )
 
 
@@ -92,6 +98,54 @@ def main():
     malformed_size = record()
     malformed_size["dimensions"][1] = "1080x1350"
     assert "all artifacts must be 1080x1350" in validate_production_record(malformed_size)
+
+    # Finalized records are immutable.
+    try:
+        finalize_production(state, record())
+        raise AssertionError("finalized production overwrite was not blocked")
+    except RuntimeError as exc:
+        assert str(exc) == "FINALIZED_PRODUCTION_ALREADY_EXISTS"
+
+    bad_x10 = record()
+    bad_x10["x10_status"] = "failed"
+    assert "x10_status must be pass" in validate_production_record(bad_x10)
+
+    bad_delivery = record()
+    bad_delivery["delivery_reference_status"] = "pending"
+    assert "delivery_reference_status must be verified" in validate_production_record(bad_delivery)
+
+    naive_time = record()
+    naive_time["actual_started_at_kst"] = "2026-09-06T10:30:03"
+    assert (
+        "actual_started_at_kst must be timezone-aware ISO-8601"
+        in validate_production_record(naive_time)
+    )
+
+    wrong_schema = record()
+    wrong_schema["schema_version"] = 999
+    assert "schema_version mismatch" in validate_production_record(wrong_schema)
+
+    # Missing state is a valid first-run case, but existing corrupt state fails closed.
+    with TemporaryDirectory() as tmp:
+        path = Path(tmp) / "production-state.json"
+        assert load_state(path) == empty_state()
+
+        write_state_atomic(path, empty_state())
+        assert load_state(path) == empty_state()
+
+        path.write_text("{broken-json", encoding="utf-8")
+        try:
+            load_state(path)
+            raise AssertionError("corrupt JSON was silently reset")
+        except StateIntegrityError as exc:
+            assert str(exc) == "STATE_CORRUPT_JSON"
+
+        path.write_text('{"schema_version":999}', encoding="utf-8")
+        try:
+            load_state(path)
+            raise AssertionError("schema mismatch was silently reset")
+        except StateIntegrityError as exc:
+            assert str(exc) == "STATE_SCHEMA_MISMATCH"
 
     print("Instagram TCG production state regression: PASS")
 
