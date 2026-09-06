@@ -5,9 +5,11 @@ on:
     branches: [main]
     paths:
       - 'market_ai_auto_tracker.py'
+      - 'market_ai_decision_engine.py'
       - 'ai_auto_tracker.py'
       - 'code_map_intelligence.py'
       - 'test_market_ai_auto_tracker.py'
+      - 'test_market_ai_decision_engine.py'
       - 'GRAPHIFY_UPDATE.sh'
       - 'GRAPHIFY_AUDIT.py'
       - '.graphifyignore'
@@ -71,7 +73,14 @@ jobs:
 
       - name: Run market and tracker regression suite
         run: |
-          python -m unittest -v             test_market_ai_auto_tracker.py             test_multi_market_price_collector.py             test_market_reference_sources_v130.py             test_apply_patch_idempotency.py             test_selfrefine_resolution_research_v24.py             test_selfrefine_error_quarantine_v20.py
+          python -m unittest -v \
+            test_market_ai_auto_tracker.py \
+            test_market_ai_decision_engine.py \
+            test_multi_market_price_collector.py \
+            test_market_reference_sources_v130.py \
+            test_apply_patch_idempotency.py \
+            test_selfrefine_resolution_research_v24.py \
+            test_selfrefine_error_quarantine_v20.py
           python repository_integrity_guard.py
           python security_self_audit.py --no-memory --fail-on high
 
@@ -118,7 +127,10 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          gh api --method POST             -H 'Accept: application/vnd.github+json'             -H 'X-GitHub-Api-Version: 2026-03-10'             "repos/${GITHUB_REPOSITORY}/pages/builds"
+          gh api --method POST \
+            -H 'Accept: application/vnd.github+json' \
+            -H 'X-GitHub-Api-Version: 2026-03-10' \
+            "repos/${GITHUB_REPOSITORY}/pages/builds"
 
       - name: Re-dispatch Main SELFREFINE against persisted repair
         if: steps.changes.outputs.changed == 'true' && github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
@@ -154,6 +166,9 @@ jobs:
             echo "- event: ${{ github.event_name }}"
             echo "- bounded repair changed files: ${{ steps.changes.outputs.changed || 'unknown' }}"
             echo "- Graphify code map: built + audited before tracking"
+            echo "- evidence decision engine: two-pass fail-closed verification enabled"
+            echo "- peer verified auto-promotion: disabled"
+            echo "- completed-sale/market-reference promotion: blocked"
             echo "- code-map learning: pending first, promoted only after full regression + safe diff"
             echo "- impact ranking: distance + hub penalty + critical-runtime + verified history"
             echo "- 403/429 bypass: disabled"
