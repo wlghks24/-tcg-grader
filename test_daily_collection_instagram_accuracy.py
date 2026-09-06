@@ -96,6 +96,8 @@ class DailyAuditTest(unittest.TestCase):
         self.assertEqual(report["summary"]["critical_findings"], 0)
         self.assertEqual(report["summary"]["high_findings"], 0)
         self.assertEqual(report["cross_domain"]["status"], "snapshot_missing")
+        self.assertTrue(report["cross_domain"]["engine_available"])
+        self.assertFalse(report["cross_domain"]["operational_ready"])
         self.assertEqual(report["summary"]["status"], "warning")
 
     def test_stale_repeated_main_failures_are_high_and_repairable(self):
@@ -201,6 +203,8 @@ class DailyAuditTest(unittest.TestCase):
                 instagram_exchange=instagram_path,
             )
             self.assertEqual(report["cross_domain"]["conflict"], 1)
+            self.assertTrue(report["cross_domain"]["engine_available"])
+            self.assertTrue(report["cross_domain"]["operational_ready"])
             self.assertEqual(report["summary"]["status"], "fail_closed")
             self.assertTrue(
                 any(x["rule"] == "reverify_conflict" for x in report["repair_actions"])
