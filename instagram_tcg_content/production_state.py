@@ -72,6 +72,40 @@ def load_state(path: Path) -> dict[str, Any]:
             value[key] = {}
         elif not isinstance(value[key], dict):
             raise StateIntegrityError(f"STATE_FIELD_INVALID:{key}")
+
+    for lock_key, row in value["run_locks"].items():
+        if (
+            not isinstance(lock_key, str)
+            or not isinstance(row, dict)
+            or not isinstance(row.get("run_id"), str)
+            or not row.get("run_id")
+            or row.get("status") not in {"running", "completed", "failed"}
+        ):
+            raise StateIntegrityError("STATE_RUN_LOCK_INVALID")
+
+    for production_date, row in value["production_records"].items():
+        if (
+            not isinstance(production_date, str)
+            or not isinstance(row, dict)
+            or row.get("finalized") is not True
+        ):
+            raise StateIntegrityError("STATE_PRODUCTION_RECORD_INVALID")
+        record_errors = validate_production_record(row)
+        if record_errors:
+            raise StateIntegrityError(
+                "STATE_PRODUCTION_RECORD_INVALID:" + "; ".join(record_errors)
+            )
+        if str(row.get("production_date_kst")) != production_date:
+            raise StateIntegrityError("STATE_PRODUCTION_DATE_KEY_MISMATCH")
+
+    for production_date, count in value["catchup_attempts"].items():
+        if (
+            not isinstance(production_date, str)
+            or isinstance(count, bool)
+            or not isinstance(count, int)
+            or count < 0
+        ):
+            raise StateIntegrityError("STATE_CATCHUP_BUDGET_INVALID")
     return value
 
 
@@ -126,7 +160,7 @@ def acquire_run_lock(
     key = make_lock_key(production_date_kst, scheduled_slot_kst, router_branch)
     locks = state.setdefault("run_locks", {})
     prior = locks.get(key)
-    if isinstance(prior, dict) and prior.get("status") == "running":
+    if prior is not None:
         return False, "DUPLICATE_RUN_SUPPRESSED"
     locks[key] = {"run_id": run_id, "status": "running"}
     return True, key
@@ -207,6 +241,10 @@ def validate_production_record(record: dict[str, Any]) -> list[str]:
         errors.append("x10_status must be pass")
     if record.get("delivery_reference_status") != "verified":
         errors.append("delivery_reference_status must be verified")
+    if not isinstance(record.get("caption_hash"), str) or not record.get("caption_hash"):
+        errors.append("caption_hash missing")
+    if not isinstance(record.get("hashtag_hash"), str) or not record.get("hashtag_hash"):
+        errors.append("hashtag_hash missing")
     return errors
 
 
