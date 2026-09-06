@@ -6,6 +6,7 @@ import json
 import tempfile
 from pathlib import Path
 
+from shared_self_learning.contracts import canonicalize_factual_type
 from shared_self_learning.engine import normalize_crosscheck_record
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -30,6 +31,8 @@ def _write_json_atomic(path: Path, payload: dict) -> None:
 
 
 def export_records(records: list[dict], output: Path = DEFAULT_OUTPUT) -> list[dict]:
+    for index, row in enumerate(records):
+        canonicalize_factual_type(row.get("information_family"), label=f"records[{index}].information_family")
     normalized = [normalize_crosscheck_record("instagram_content", row) for row in records]
     _write_json_atomic(output, {"domain": "instagram_content", "records": normalized})
     return normalized
