@@ -111,7 +111,7 @@
   }
 
   window.TCGFeatureCategoryNav = Object.freeze({
-    version: "v28-clear-home",
+    version: "v29-tablet-code-titles",
     activateTopPanel,
     navigateShortcut,
     selectCategory,

@@ -86,14 +86,14 @@ input[type=range]{width:100%}
 <link rel="stylesheet" href="box_knowledge_stats.css">
 <link rel="stylesheet" href="ui_polish_v121.css?v=121">
 <link rel="stylesheet" href="ui_tablet_refine_v122.css?v=122">
-<link rel="stylesheet" href="feature_category_nav.css?v=204">
+<link rel="stylesheet" href="feature_category_nav.css?v=205">
 </head>
 <body>
 <main class="app">
 <header class="app-title app-title-primary">
   <div class="app-title-kicker">TCG 통합 관리</div>
   <h1>카드시세분석</h1>
-  <div class="app-title-summary">포켓몬 · 원피스 · 나루토 카드의 <b>등급 측정, 시세, BOX, 출시·프로모, 구매처, OCR·학습, 검증</b> 기능을 한곳에서 사용합니다.</div>
+  <div class="app-title-summary">포켓몬 · 원피스 · 나루토 카드의 <b>등급 측정, 시세, BOX, 출시·프로모, 구매처, OCR·학습, 태블릿 관리, 코드 검사</b> 기능을 한곳에서 사용합니다.</div>
   <div class="app-title-help">아래에서 원하는 카테고리를 먼저 선택하세요.</div>
 </header>
 <section class="feature-category-nav" id="featureCategories" aria-labelledby="featureCategoriesTitle">
@@ -102,7 +102,7 @@ input[type=range]{width:100%}
       <h2 id="featureCategoriesTitle">🧭 원하는 기능을 선택하세요</h2>
       <p>큰 카테고리를 누르면 필요한 기능 목록만 펼쳐집니다.</p>
     </div>
-    <span class="feature-category-count">7개 카테고리</span>
+    <span class="feature-category-count">8개 카테고리</span>
   </div>
 
   <div class="feature-category-steps" aria-label="사용 순서">
@@ -166,12 +166,18 @@ input[type=range]{width:100%}
       </div>
     </details>
 
-    <details class="feature-category" data-category-key="system" data-category-label="검증 · 업데이트">
-      <summary><span class="feature-category-icon">🛠️</span><span><span class="feature-category-title">검증 · 업데이트</span><span class="feature-category-sub">오류검사 · 재수집 · 서버상태</span></span></summary>
+    <details class="feature-category" data-category-key="tablet" data-category-label="태블릿 관리기">
+      <summary><span class="feature-category-icon">📱</span><span><span class="feature-category-title">태블릿 관리기</span><span class="feature-category-sub">업데이트 · 서버 · 실행관리</span></span></summary>
       <div class="feature-shortcut-grid">
-        <a class="feature-shortcut" href="#audit15">🧪 전체 기능 오류 검사<small>현재 앱 구조·시세·등급 기능 점검</small></a>
-        <a class="feature-shortcut" href="#updateHub">🔄 업데이트 관리<small>전체 업데이트·재수집·직접입력·서버</small></a>
-        <a class="feature-shortcut" href="#v31testdashboard">✅ 자동검증 결과<small>배포 전 검사와 서버 상태 확인</small></a>
+        <a class="feature-shortcut" href="#updateHub">📱 태블릿 관리기 열기<small>전체 업데이트 · 재수집 · 직접입력 · PC/태블릿 서버 관리</small></a>
+      </div>
+    </details>
+
+    <details class="feature-category" data-category-key="code" data-category-label="코드 검사기">
+      <summary><span class="feature-category-icon">🧪</span><span><span class="feature-category-title">코드 검사기</span><span class="feature-category-sub">오류검사 · 자동검증 · 안전확인</span></span></summary>
+      <div class="feature-shortcut-grid">
+        <a class="feature-shortcut" href="#audit15">🧪 코드·기능 오류 검사<small>앱 구조 · 시세 · 등급 · 코드 실행 오류를 점검</small></a>
+        <a class="feature-shortcut" href="#v31testdashboard">✅ 코드 자동검증 결과<small>배포 전 검사 · 서버 API · 오류 차단 결과 확인</small></a>
       </div>
     </details>
   </div>
@@ -757,9 +763,9 @@ loadReleases();loadPromos();loadPurchaseSources();
 </section>
 
 <section class="card">
-<h3 style="margin:0 0 8px">🛠️ v15 전체 프로그램 검증센터</h3>
+<h3 style="margin:0 0 8px">🧪 코드 검사기</h3>
 <p class="muted">현재 앱의 공식 기준, BOX 데이터, 가격 데이터 구조, 등급 예측, 실등급 검증 기능을 점검합니다. 오류가 발견되면 위험도를 표시하고 수정 대상을 기록합니다.</p>
-<button id="audit15">전체 기능 오류 검사</button>
+<button id="audit15">코드·기능 오류 검사</button>
 <button id="sync15" style="margin-left:6px">🌐 최신자료 다시 확인</button>
 <button id="reset15" style="margin-left:6px">검증기록 초기화</button>
 <div id="audit15out" class="status" style="margin-top:10px">검사 전</div>
@@ -772,8 +778,8 @@ loadReleases();loadPromos();loadPurchaseSources();
 </section>
 
 <section class="card update-hub" id="updateHub">
-<h3>🧰 업데이트 관리</h3>
-<div class="muted">필요한 기능만 선택해서 열 수 있습니다.</div>
+<h3>📱 태블릿 관리기</h3>
+<div class="muted">태블릿 업데이트, 직접입력, PC·태블릿 서버 기능을 선택해서 관리합니다.</div>
 <div class="update-menu">
 <button type="button" class="update-menu-btn" data-update-target="v16update"><span class="update-icon">🔄</span><b>전체 안전 업데이트</b><small>한 번에 확인 · 검증 · 전체반영</small></button>
 <button type="button" class="update-menu-btn" data-update-target="v17semi"><span class="update-icon">✍️</span><b>직접 정보 입력</b><small>가격 · HIT · 출처</small></button>
@@ -2518,7 +2524,7 @@ document.querySelectorAll(".update-panel-close").forEach(btn=>btn.addEventListen
 })();
 </script>
 <section class="card" id="v31testdashboard">
-<details class="compact-details system-check"><summary>✅ 프로그램 실행·오류 검증 결과 보기</summary>
+<details class="compact-details system-check"><summary>✅ 코드 검사기 자동검증 결과 보기</summary>
 <p class="muted">배포 전 자동 검사를 실행해 화면 요소, 계산 코드, 서버 API와 오류 차단을 확인했습니다.</p>
 <div class="grid2"><div class="metric">전체 자동검사<b>검증 스크립트 기준 PASS</b></div><div class="metric">구매처 3개 국가<b>69개 이상 · 링크 자동점검</b></div><div class="metric">공식 프로모·특별행사<b>13개 이상 · 신규행사 자동탐색</b></div><div class="metric">PC·태블릿 API<b>HTTP 200 · 30분 전 사전수집 + 6시간 검증반영</b></div><div class="metric">화면 자동반영<b>1분마다 안전 동기화</b></div><div class="metric">자동실행·보안<b>HTTPS·출처 검증 PASS</b></div></div>
 <p class="muted">실제 외부자료 수집은 PC·태블릿 서버가 인터넷에 연결된 상태에서 수행하며, 실패한 자료는 마지막 정상본을 유지합니다.</p>
@@ -2579,7 +2585,7 @@ document.querySelectorAll(".update-panel-close").forEach(btn=>btn.addEventListen
  async function quickPrice(){const q=S('quickCardQuery').value.trim().toLowerCase();if(!q){S('quickPriceResults').textContent='카드명 또는 카드번호를 입력하세요.';return}S('quickPriceResults').textContent='시세자료 검색 중…';try{const r=await fetch(`market_prices.json?t=${Date.now()}`,{cache:'no-store'}),d=await r.json(),entries=d.entries&&typeof d.entries==='object'?d.entries:{};const gameNeed=simpleGame==='pokemon'?'pok':simpleGame==='onepiece'?'one':'nar';let hits=[];for(const [k,v] of Object.entries(entries)){const blob=(k+' '+JSON.stringify(v)).toLowerCase();if(blob.includes(q)&&(!gameNeed||blob.includes(gameNeed)||blob.includes(profiles[simpleGame].name.toLowerCase())))hits.push([k,v]);}if(!hits.length){for(const [k,v] of Object.entries(entries)){const blob=(k+' '+JSON.stringify(v)).toLowerCase();if(blob.includes(q))hits.push([k,v]);}}hits=hits.slice(0,12);if(!hits.length){S('quickPriceResults').innerHTML='저장된 시세자료에서 일치 항목을 찾지 못했습니다. <b>카드번호까지 같이 입력</b>하면 정확도가 올라갑니다.';return}S('quickPriceResults').innerHTML=hits.map(([k,v])=>`<div class="price-item"><b>${escapeDisplayText(k)}</b><br><span class="muted">${Object.entries(v&&typeof v==='object'?v:{}).filter(([a,b])=>['string','number'].includes(typeof b)).slice(0,8).map(([a,b])=>`${escapeDisplayText(a)}: ${escapeDisplayText(b)}`).join(' · ')}</span></div>`).join('');}catch(e){S('quickPriceResults').textContent='시세자료를 불러오지 못했습니다. 업데이트 후 다시 시도하세요.'}}
  S('startAutoCamera').onclick=start;S('stopAutoCamera').onclick=()=>stopCamera('카메라를 중지했습니다. 촬영을 다시 시작하거나 사진 파일을 선택할 수 있습니다.');S('manualCapture').onclick=()=>capture(frameMetric(),true);S('quickPriceSearch').onclick=quickPrice;S('quickCardQuery').addEventListener('keydown',e=>{if(e.key==='Enter')quickPrice()});window.addEventListener('pagehide',()=>stopCamera('',true));document.addEventListener('visibilitychange',()=>{if(document.hidden&&stream)stopCamera('앱이 백그라운드로 이동해 카메라를 안전하게 중지했습니다.')});window.tcgCameraRuntime=Object.freeze({version:'v104-camera-shake-stability',stop:()=>stopCamera('카메라를 중지했습니다.'),state:()=>({active:!!stream,stage,capturing,stableFrames:stable,frontReady:!!S('front')._tcgCapturedFile,backReady:!!S('back')._tcgCapturedFile})});
 })();
-</script><script src="feature_category_nav.js?v=204"></script>
+</script><script src="feature_category_nav.js?v=205"></script>
 <script src="card_identity_recognition.js?v=181"></script>
 <script src="inventory_lookup.js"></script>
 <script src="grade_market_flow.js"></script>

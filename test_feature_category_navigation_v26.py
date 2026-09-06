@@ -17,8 +17,8 @@ class FeatureCategoryNavigationV26Tests(unittest.TestCase):
         self.css = CSS.read_text(encoding="utf-8")
         self.js = JS.read_text(encoding="utf-8")
 
-    def test_navigation_has_seven_categories_and_eighteen_shortcuts(self):
-        self.assertEqual(self.html.count('class="feature-category"'), 7)
+    def test_navigation_has_eight_categories_and_eighteen_shortcuts(self):
+        self.assertEqual(self.html.count('class="feature-category"'), 8)
         self.assertEqual(self.html.count('class="feature-shortcut"'), 18)
         for label in (
             "카드 등급 측정",
@@ -27,7 +27,8 @@ class FeatureCategoryNavigationV26Tests(unittest.TestCase):
             "BOX · HIT 분석",
             "출시 · 프로모 · 행사",
             "구매처 · 가까운 매장",
-            "검증 · 업데이트",
+            "태블릿 관리기",
+            "코드 검사기",
         ):
             self.assertIn(label, self.html)
 
@@ -58,10 +59,11 @@ class FeatureCategoryNavigationV26Tests(unittest.TestCase):
         self.assertIn("2</b> 기능 선택", self.html)
         self.assertIn('data-category-key="grading"', self.html)
         self.assertIn('data-category-key="market"', self.html)
-        self.assertIn('data-category-key="system"', self.html)
+        self.assertIn('data-category-key="tablet"', self.html)
+        self.assertIn('data-category-key="code"', self.html)
         self.assertIn('category.addEventListener("toggle"', self.js)
         self.assertIn("categories.forEach((item)", self.js)
-        self.assertIn('version: "v28-clear-home"', self.js)
+        self.assertIn('version: "v29-tablet-code-titles"', self.js)
 
     def test_clear_home_identity_precedes_category_picker(self):
         title = self.html.index("<h1>카드시세분석</h1>")
@@ -72,9 +74,12 @@ class FeatureCategoryNavigationV26Tests(unittest.TestCase):
         manifest = __import__("json").loads((ROOT / "manifest.webmanifest").read_text(encoding="utf-8"))
         self.assertEqual(manifest["name"], "카드시세분석")
         self.assertEqual(str(manifest["version"]), "109")
-        self.assertIn("7개 카테고리", self.html)
+        self.assertIn("8개 카테고리", self.html)
         self.assertIn("큰 카테고리를 누르면 필요한 기능 목록만 펼쳐집니다.", self.html)
         self.assertIn("☰ 메뉴", self.html)
+        self.assertIn("<h3>📱 태블릿 관리기</h3>", self.html)
+        self.assertIn("🧪 코드 검사기", self.html)
+        self.assertIn("코드 검사기 자동검증 결과 보기", self.html)
         self.assertNotIn("<h1>TCG 등급 사전검사기 v109</h1>", self.html)
         self.assertIn(".app-title-primary", self.css)
         self.assertIn("기능 화면으로 이동했습니다", self.js)
@@ -103,8 +108,8 @@ class FeatureCategoryNavigationV26Tests(unittest.TestCase):
         self.assertNotIn("innerHTML", self.js)
 
     def test_pwa_assets_are_versioned_once(self):
-        self.assertEqual(self.html.count('feature_category_nav.css?v=204'), 1)
-        self.assertEqual(self.html.count('feature_category_nav.js?v=204'), 1)
+        self.assertEqual(self.html.count('feature_category_nav.css?v=205'), 1)
+        self.assertEqual(self.html.count('feature_category_nav.js?v=205'), 1)
 
 
 if __name__ == "__main__":
