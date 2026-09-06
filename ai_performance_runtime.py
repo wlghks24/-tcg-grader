@@ -5,13 +5,15 @@ This module reuses ai_auto_tracker's state schema, safety contracts, retry polic
 quarantine handoff, and verified-learning logic. It does not create a second
 tracker or learning store.
 
-V6 optimizations are run-scoped and deterministic:
+V7 optimizations are run-scoped and deterministic:
 - normalize every hot event field once;
 - derive domain, severity, and fingerprint from the same prepared feature set;
 - prepare event features/domain/severity/fingerprint before the state lock;
 - hold the persistent-state lock only for a short snapshot and final atomic commit;
 - build/search the Graphify map outside the state lock;
-- cache Graphify impact analysis by normalized origin path;
+- skip Graphify parsing entirely for empty event batches;
+- canonicalize equivalent map-path spellings before cache lookup;
+- cache Graphify impact analysis by canonical normalized origin path;
 - choose one bounded map depth per path from the highest severity in the batch;
 - execute SELF-REFINE quarantine handoff outside the state lock;
 - reuse compact Code Map output and computed severity in handoffs;
@@ -40,9 +42,20 @@ from code_map_intelligence import (
 MAX_BATCH_EVENTS = 5000
 
 
+def _map_path_key(path: str) -> str:
+    """Canonical cache key only; incident fingerprint/path semantics stay unchanged."""
+    text = str(path or "").replace("\\", "/")
+    while text.startswith("./"):
+        text = text[2:]
+    while "//" in text:
+        text = text.replace("//", "/")
+    return text
+
+
 @dataclass(frozen=True)
 class EventFeatures:
     path: str
+    map_path_key: str
     stage: str
     fingerprint_stage_lower: str
     error_type: str
@@ -73,6 +86,7 @@ def _features(event: dict[str, Any]) -> EventFeatures:
     severity_haystack = " ".join((stage_raw[:300].lower(), message_raw[:300].lower(), evidence_raw[:300].lower()))
     return EventFeatures(
         path=path,
+        map_path_key=_map_path_key(path),
         stage=stage,
         fingerprint_stage_lower=stage_raw[:80].lower(),
         error_type=error_type,
@@ -162,14 +176,14 @@ def observe(
         iid = _fingerprint_from_features(features, domain)
         prepared.append((event, features, domain, severity, iid))
         depth = impact_depth_for_severity(severity)
-        path_depth[features.path] = max(depth, path_depth.get(features.path, 0))
+        path_depth[features.map_path_key] = max(depth, path_depth.get(features.map_path_key, 0))
 
     with tracker.exclusive_file_lock(state_path):
         state_snapshot = tracker._load_state(state_path)
         learning_state = state_snapshot.get("code_map_learning")
 
     map_root = Path(code_map_root) if code_map_root is not None else tracker.ROOT
-    map_index = CodeMapIndex(map_root)
+    map_index = CodeMapIndex(map_root) if prepared else None
     map_cache: dict[str, tuple[dict[str, Any], dict[str, Any]]] = {}
     cache_hits = 0
     verified_learning: list[dict[str, Any]] = []
@@ -181,7 +195,7 @@ def observe(
     ] = []
 
     for event, features, domain, severity, iid in prepared:
-        cache_key = features.path
+        cache_key = features.map_path_key
         cached = map_cache.get(cache_key)
         if cached is not None:
             map_context, compact_map = cached
@@ -297,7 +311,7 @@ def observe(
             row.get("code_map", {}).get("status") == "stale_for_origin" for row in observed
         ),
         "performance": {
-            "mode": "cached_hot_path_v6",
+            "mode": "cached_hot_path_v7",
             "batch_events": len(normalized),
             "prepared_events": len(prepared),
             "unique_code_map_paths": len(map_cache),
@@ -307,6 +321,9 @@ def observe(
             "feature_extraction_outside_state_lock": True,
             "map_index_build_outside_state_lock": True,
             "map_analysis_outside_state_lock": True,
+            "map_index_loaded": map_index is not None,
+            "empty_batch_graphify_short_circuit": not prepared,
+            "canonical_map_path_cache": True,
             "selfrefine_outside_state_lock": True,
             "state_lock_scope": "snapshot_and_commit_only",
             "state_lock_phases": 1 if dry_run else 2,
@@ -333,7 +350,7 @@ def observe(
             "verified_learning": verified_learning,
             "self_refine": learning_health(
                 state.get("code_map_learning") if isinstance(state, dict) else None,
-                map_signature=map_index.signature,
+                map_signature=map_index.signature if map_index is not None else None,
             ),
         },
         "safety": {

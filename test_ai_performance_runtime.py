@@ -188,7 +188,7 @@ class PerformanceRuntimeTests(unittest.TestCase):
             )
             perf = out["summary"]["performance"]
             self.assertEqual(perf["code_map_cache_hits"], 1)
-            self.assertEqual(perf["mode"], "cached_hot_path_v6")
+            self.assertEqual(perf["mode"], "cached_hot_path_v7")
             self.assertTrue(perf["map_index_build_outside_state_lock"])
             self.assertTrue(perf["map_analysis_outside_state_lock"])
             self.assertTrue(perf["selfrefine_outside_state_lock"])
@@ -403,6 +403,53 @@ class PerformanceRuntimeTests(unittest.TestCase):
             self.assertEqual(len(learned["impacted_files"]), 4)
             self.assertIn("learned_fix.py", learned["impacted_files"])
             self.assertIn("origin.py", learned["impacted_files"])
+
+    def test_equivalent_map_path_spellings_share_cache(self):
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            _write_graph(root)
+            original = fast.impact_context
+            calls = {"n": 0}
+
+            def counted(*args, **kwargs):
+                calls["n"] += 1
+                return original(*args, **kwargs)
+
+            events = [
+                {"path": "collector.py", "message": "a"},
+                {"path": "./collector.py", "message": "b"},
+                {"path": ".\\collector.py", "message": "c"},
+            ]
+            with mock.patch.object(fast, "impact_context", side_effect=counted):
+                out = fast.observe(
+                    events,
+                    state_path=root / "state.json",
+                    dry_run=True,
+                    code_map_root=root,
+                )
+
+            self.assertEqual(calls["n"], 1)
+            perf = out["summary"]["performance"]
+            self.assertEqual(perf["unique_code_map_paths"], 1)
+            self.assertEqual(perf["code_map_cache_hits"], 2)
+            self.assertTrue(perf["canonical_map_path_cache"])
+
+    def test_empty_batch_skips_graphify_index_build(self):
+        with tempfile.TemporaryDirectory() as td:
+            with mock.patch.object(
+                fast,
+                "CodeMapIndex",
+                side_effect=AssertionError("empty batch must not load graph"),
+            ):
+                out = fast.observe(
+                    [],
+                    state_path=Path(td) / "state.json",
+                    dry_run=True,
+                )
+            perf = out["summary"]["performance"]
+            self.assertEqual(out["summary"]["observed"], 0)
+            self.assertFalse(perf["map_index_loaded"])
+            self.assertTrue(perf["empty_batch_graphify_short_circuit"])
 
     def test_expensive_map_work_runs_outside_state_lock(self):
         from contextlib import contextmanager
