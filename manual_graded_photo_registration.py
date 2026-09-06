@@ -530,13 +530,25 @@ def _publish_verified(row: dict[str, Any]) -> tuple[bool, str | None]:
     return True, None
 
 
-def _ocr_image(image_path: Path) -> tuple[str, str | None, dict[str, Any], dict[str, Any]]:
-    """Keep Pillow/Tesseract optional so registration still queues safely."""
+def _ocr_image(
+    image_path: Path, *, fallback_company: str = "",
+) -> tuple[str, str | None, dict[str, Any], dict[str, Any]]:
+    """Keep Pillow/Tesseract optional so registration still queues safely.
+
+    A manually selected grader is only an OCR search-profile hint. It never
+    becomes image company evidence unless the label text itself identifies it.
+    """
     try:
         from library_slab_corpus import ocr_label
         from graded_photo_evidence import extract_label_evidence
-        text, error, diagnostics = ocr_label(image_path, profile="fast")
-        return text, error, diagnostics, extract_label_evidence(text)
+        hint = str(fallback_company or "").upper()
+        if hint not in COMPANIES:
+            hint = ""
+        text, error, diagnostics = ocr_label(
+            image_path, profile="fast", fallback_company=hint,
+        )
+        evidence = extract_label_evidence(text)
+        return text, error, diagnostics, evidence
     except (ImportError, OSError, ValueError, TypeError):
         return "", "ocr_unavailable", {}, {}
 
@@ -563,7 +575,11 @@ def _ocr_for_row(row: dict[str, Any]) -> tuple[str, str | None, dict[str, Any], 
             cached_identity,
             True,
         )
-    text, error, diagnostics, evidence = _ocr_image(ROOT / str(row["image_path"]))
+    hint = str(row.get("company") or "").upper()
+    text, error, diagnostics, evidence = _ocr_image(
+        ROOT / str(row["image_path"]),
+        fallback_company=hint if hint in COMPANIES else "",
+    )
     return text, error, diagnostics, evidence, False
 
 

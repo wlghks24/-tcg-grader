@@ -40,6 +40,7 @@ FEATURE_FILES = {
         "test_negative_proof_korean_ocr_v171.py",
         "test_psa_official_proof_grade_v187.py",
         "test_grading_cert_verifier.py",
+        "test_grader_cert_ocr_profiles_v193.py",
     ],
     "five_company_grading": [
         "test_five_company_verification_policy.py",
