@@ -154,7 +154,7 @@ class DailyAuditTest(unittest.TestCase):
             main_path = root / "main.json"
             instagram_path = root / "instagram.json"
             base = {
-                "information_family": "market_price",
+                "information_family": "card_price",
                 "canonical_key": "pokemon|001|jp",
                 "value": "1000",
                 "currency": "JPY",
