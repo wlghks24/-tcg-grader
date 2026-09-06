@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import argparse
+import datetime as dt
 import json
 import tempfile
 from pathlib import Path
@@ -50,7 +51,7 @@ def _manifest_fact_to_record(row: dict[str, Any]) -> dict[str, Any]:
         "currency": str(row.get("currency") or "").strip(),
         "language": str(row.get("language") or row.get("region") or "").strip(),
         "variant": variant,
-        "source_code": str(row.get("source_role") or "persisted-snapshot").strip(),
+        "source_code": str(row.get("source_role") or "").strip(),
         "source_locator": str(row.get("source_locator") or "").strip(),
         "checked_at_kst": str(row.get("observed_at") or "").strip(),
         "verification": verification,
@@ -74,12 +75,24 @@ def _load_records(path: Path) -> list[dict[str, Any]]:
     return records
 
 
+def _parse_timezone_aware(value: Any) -> dt.datetime | None:
+    if not value:
+        return None
+    try:
+        parsed = dt.datetime.fromisoformat(str(value).replace("Z", "+00:00"))
+    except ValueError:
+        return None
+    return parsed if parsed.tzinfo is not None else None
+
+
 def _load_persisted_records(path: Path, expected_namespace: str) -> tuple[list[dict[str, Any]], str]:
     if not path.exists():
         return ([], "missing")
     value = json.loads(path.read_text(encoding="utf-8"))
     if not isinstance(value, dict):
         raise ValueError(f"{path}: persisted snapshot root must be an object")
+    if value.get("schema_version") not in {None, "1.0"}:
+        raise ValueError(f"{path}: unsupported schema_version")
     if value.get("namespace") != expected_namespace:
         raise ValueError(
             f"{path}: namespace mismatch: expected {expected_namespace!r}, got {value.get('namespace')!r}"
@@ -89,13 +102,59 @@ def _load_persisted_records(path: Path, expected_namespace: str) -> tuple[list[d
     status = str(value.get("status") or "").strip()
     if status != "finalized":
         return ([], status or "unknown")
+    if _parse_timezone_aware(value.get("finalized_at")) is None:
+        raise ValueError(f"{path}: finalized snapshot requires timezone-aware finalized_at")
+
+    validation = value.get("validation")
+    if not isinstance(validation, dict):
+        raise ValueError(f"{path}: finalized snapshot validation block missing")
+    expected_validation = {
+        "manifest_validated": True,
+        "allowed_fields_only": True,
+        "exact_factual_types_enforced": True,
+        "write_readback_verified": True,
+        "isolation_breach": False,
+    }
+    mismatches = {
+        key: {"expected": expected, "actual": validation.get(key)}
+        for key, expected in expected_validation.items()
+        if validation.get(key) is not expected
+    }
+    if mismatches:
+        raise ValueError(f"{path}: persisted validation mismatch: {mismatches}")
+
     facts = value.get("facts")
     if not isinstance(facts, list) or not all(isinstance(row, dict) for row in facts):
         raise ValueError(f"{path}: finalized persisted snapshot facts must be a list")
     if not facts:
         return ([], "finalized_empty")
-    return ([_manifest_fact_to_record(row) for row in facts], status)
 
+    verified: list[dict[str, Any]] = []
+    for idx, row in enumerate(facts):
+        fact_type = str(row.get("fact_type") or "").strip()
+        if fact_type not in CANONICAL_FACTUAL_TYPES:
+            raise ValueError(f"{path}: fact #{idx} has unsupported fact_type {fact_type!r}")
+        verification_status = str(row.get("verification_status") or "").strip().lower()
+        if verification_status not in {"verified", "conflict", "missing", "unverified", "quarantine"}:
+            raise ValueError(f"{path}: fact #{idx} has invalid verification_status")
+        if verification_status != "verified":
+            continue
+        required = {
+            "canonical_key": str(row.get("canonical_key") or "").strip(),
+            "lineage_key": str(row.get("lineage_key") or "").strip(),
+            "source_role": str(row.get("source_role") or "").strip(),
+            "source_locator": str(row.get("source_locator") or "").strip(),
+            "observed_at": str(row.get("observed_at") or "").strip(),
+        }
+        missing = sorted(key for key, item in required.items() if not item)
+        if missing:
+            raise ValueError(f"{path}: verified fact #{idx} missing provenance fields {missing}")
+        if _parse_timezone_aware(required["observed_at"]) is None:
+            raise ValueError(f"{path}: verified fact #{idx} observed_at must be timezone-aware")
+        verified.append(_manifest_fact_to_record(row))
+    if not verified:
+        return ([], "finalized_no_verified")
+    return (verified, status)
 
 def _remove_stale_runtime_outputs(
     main_output: Path,
@@ -197,6 +256,8 @@ def run_from_persisted(
     )
     result["persisted_main_status"] = main_status
     result["persisted_instagram_status"] = instagram_status
+    if report_output is not None:
+        atomic_write_json(report_output, result, suffix=".persisted-crosscheck-report.tmp")
     return result
 
 
@@ -272,8 +333,18 @@ def self_test() -> None:
         persisted_main = root / "persisted-main.json"
         persisted_instagram = root / "persisted-instagram.json"
         persisted_main.write_text(json.dumps({
+            "schema_version": "1.0",
             "namespace": "MARKET_ANALYSIS",
+            "snapshot_kind": "factual",
             "status": "finalized",
+            "finalized_at": "2026-09-06T06:01:00+09:00",
+            "validation": {
+                "manifest_validated": True,
+                "allowed_fields_only": True,
+                "exact_factual_types_enforced": True,
+                "write_readback_verified": True,
+                "isolation_breach": False,
+            },
             "facts": [{
                 "fact_type": "release",
                 "canonical_key": "pokemon|30th-celebration|jp",
@@ -287,8 +358,18 @@ def self_test() -> None:
             }],
         }), encoding="utf-8")
         persisted_instagram.write_text(json.dumps({
+            "schema_version": "1.0",
             "namespace": "IG_CARDINFO",
+            "snapshot_kind": "factual",
             "status": "finalized",
+            "finalized_at": "2026-09-06T06:31:00+09:00",
+            "validation": {
+                "manifest_validated": True,
+                "allowed_fields_only": True,
+                "exact_factual_types_enforced": True,
+                "write_readback_verified": True,
+                "isolation_breach": False,
+            },
             "facts": [{
                 "fact_type": "release",
                 "canonical_key": "pokemon|30th-celebration|jp",
