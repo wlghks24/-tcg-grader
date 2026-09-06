@@ -618,6 +618,8 @@ def build_report(
             "high_or_critical_findings": high + critical,
             "repair_action_count": len(actions),
             "crosscheck_validation_error": cross_validation_error,
+            "crosscheck_engine_available": bool(cross.get("engine_available")),
+            "crosscheck_operational_ready": bool(cross.get("operational_ready")),
             "learning_crosscheck_validation_error": learning_validation_error,
             "learning_conflicting_fix": conflicting_fixes,
         },
