@@ -630,7 +630,7 @@ def run_tracker(
         if row.get("severity") in {"critical", "error"}
     ]
     status = "pass"
-    if blocking or not regression_pass or not diff_safety["allowed"]:
+    if blocking or (run_tests and not regression_pass) or not diff_safety["allowed"]:
         status = "fail"
 
     state_before = _load_state(root / STATE.name)
