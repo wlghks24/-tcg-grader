@@ -8,6 +8,7 @@ from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from typing import Any
 
+from shared_self_learning.contracts import assert_canonical_factual_type
 
 ROOT = Path(__file__).resolve().parents[1]
 DEFAULT_OUTPUT = ROOT / "TCG_CROSSCHECK" / "IG_CARDINFO" / "factual_snapshot.json"
@@ -28,7 +29,6 @@ FACT_TYPE_MAP = {
     "completed_sale": "completed_sale",
     "market_reference": "market_reference",
 }
-ALLOWED_FACTUAL_TYPES = set(FACT_TYPE_MAP.values())
 ALLOWED_OUTPUT_FIELDS = {
     "canonical_key",
     "fact_type",
@@ -89,9 +89,8 @@ def _normalize_fact(row: dict[str, Any]) -> dict[str, Any] | None:
         return None
 
     raw_type = _clean(row.get("information_family") or row.get("fact_type"))
-    fact_type = FACT_TYPE_MAP.get(raw_type)
-    if fact_type not in ALLOWED_FACTUAL_TYPES:
-        raise ValueError(f"unsupported factual type: {raw_type!r}")
+    fact_type = FACT_TYPE_MAP.get(raw_type, raw_type)
+    assert_canonical_factual_type(fact_type, label="fact_type")
 
     canonical_key = _clean(row.get("canonical_key"))
     lineage_key = _clean(row.get("lineage_key"))
