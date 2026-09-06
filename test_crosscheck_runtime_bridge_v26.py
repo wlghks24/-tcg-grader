@@ -91,6 +91,23 @@ class CrosscheckRuntimeBridgeTests(unittest.TestCase):
             self.assertEqual(result["conflict"], 1)
             self.assertEqual(result["reverification_required"], 1)
 
+    def test_nonoverlapping_nonempty_records_are_not_operational(self):
+        exchange = Path("crosscheck_exchange")
+        exchange.mkdir(exist_ok=True)
+        with tempfile.TemporaryDirectory(dir=exchange) as td:
+            root = Path(td)
+            instagram = {
+                **BASE,
+                "canonical_key": "pokemon|different-product|jp",
+                "source_code": "instagram-official",
+                "source_locator": "https://example.invalid/instagram-different",
+                "lineage_key": "instagram-different-lineage",
+            }
+            result = run_bridge([BASE], [instagram], **self._paths(root))
+            self.assertEqual(result["status"], "no_comparable_data")
+            self.assertEqual(result["comparison_count"], 0)
+            self.assertFalse(result["operational_ready"])
+
     def test_missing_side_does_not_create_fake_snapshot(self):
         exchange = Path("crosscheck_exchange")
         exchange.mkdir(exist_ok=True)
