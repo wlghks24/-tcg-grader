@@ -20,7 +20,19 @@ def obs(
     event_time=None,
     locator=None,
     lineage_key=None,
+    currency="USD",
+    condition="graded",
+    grade="PSA 10",
+    finality="final",
+    price_basis="realized",
+    quantity=1,
+    unit="card",
 ):
+    if fact == "completed_sale":
+        if status == "observed":
+            status = "completed"
+        if event_time is None:
+            event_time = "2026-09-04T21:30:00+09:00"
     return Observation(
         game=game,
         fact_type=fact,
@@ -35,6 +47,13 @@ def obs(
         fetched_at_kst="2026-09-04T22:00:00+09:00",
         event_or_trade_time=event_time,
         status=status,
+        original_currency=currency if fact == "completed_sale" else None,
+        condition=condition if fact == "completed_sale" else None,
+        grade=grade if fact == "completed_sale" else None,
+        finality=finality if fact == "completed_sale" else None,
+        price_basis=price_basis if fact == "completed_sale" else None,
+        quantity=quantity if fact == "completed_sale" else None,
+        unit=unit if fact == "completed_sale" else None,
         lineage_key=lineage_key,
     )
 
@@ -97,6 +116,28 @@ def main():
     )
     assert r.status == "partial", r
     assert r.independent_source_count == 1, r
+
+    # Completed-sale evidence with missing hard-gate fields must fail closed.
+    r = verify_fact(
+        [
+            obs(
+                "ebay",
+                "completed_sale_original",
+                "100",
+                code="P-S01",
+                currency=None,
+            ),
+            obs(
+                "goldin",
+                "completed_sale_original",
+                "110",
+                code="P-S02",
+            ),
+        ]
+    )
+    assert r.status == "partial", r
+    assert r.independent_source_count == 1, r
+    assert "currency missing" in (r.uncertainty_reason or ""), r
 
     # Market-reference data cannot independently promote a completed sale.
     r = verify_fact(

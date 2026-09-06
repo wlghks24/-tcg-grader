@@ -58,8 +58,10 @@ jobs:
         run: python -m instagram_tcg_content.test_source_verification_engine
       - name: Verify resilient source substitution
         run: python -m instagram_tcg_content.test_source_route_resilience
-      - name: Verify run-packet semantic guards
-        run: python -m instagram_tcg_content.test_live_packet_guards
+      - name: Verify run-packet and production-state guards
+        run: |
+          python -m instagram_tcg_content.test_live_packet_guards
+          python -m instagram_tcg_content.test_production_state
       - name: Validate Instagram source route policy
         run: python -m json.tool instagram_tcg_content/source_routes.json >/dev/null
       - name: Run Instagram TCG Content SELFREFINE only
