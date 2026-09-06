@@ -47,6 +47,12 @@ GRAPHIFY_UPDATE.sh
 GRAPHIFY_SELF_HEAL.py
 GRAPHIFY_AUDIT.py
 SETUP_GRAPHIFY_TERMUX.sh
+code_map_intelligence.py
+verify_code_map_internal.py
+ai_auto_tracker.py
+market_ai_auto_tracker.py
+test_ai_auto_tracker.py
+test_market_ai_auto_tracker.py
 .graphifyignore
 .gitignore
 "
@@ -77,6 +83,10 @@ python -m py_compile \
   csp_hash_hardening.py \
   GRAPHIFY_SELF_HEAL.py \
   GRAPHIFY_AUDIT.py \
+  code_map_intelligence.py \
+  verify_code_map_internal.py \
+  ai_auto_tracker.py \
+  market_ai_auto_tracker.py \
   runtime_bundle_guard_v143.py \
   collection_learning_hardening_v144.py \
   event_source_overlay_v144.py \
@@ -89,6 +99,7 @@ echo "[3/9] 핵심 Python 문법/컴파일: OK"
 python runtime_optimization_hardening.py --check >/dev/null
 python tcg_code_repair_learning.py --self-test >/dev/null
 python GRAPHIFY_SELF_HEAL.py --self-test >/dev/null
+python verify_code_map_internal.py >/dev/null
 python test_tablet_runtime_qa_integration.py >/dev/null
 echo "[4/9] 최적화 하드닝/오류학습/자가복구/태블릿 공용 QA 자체시험: OK"
 
