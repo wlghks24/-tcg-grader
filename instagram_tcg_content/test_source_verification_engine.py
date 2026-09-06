@@ -34,8 +34,8 @@ def obs(
         if event_time is None:
             event_time = "2026-09-04T21:30:00+09:00"
     resolved_lineage = lineage_key
-    if fact == "completed_sale" and lineage_key == "auto":
-        resolved_lineage = f"sale:{provider}"
+    if lineage_key == "auto":
+        resolved_lineage = f"sale:{provider}" if fact == "completed_sale" else None
     return Observation(
         game=game,
         fact_type=fact,
