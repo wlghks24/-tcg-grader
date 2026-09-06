@@ -27,6 +27,12 @@ REQUIRED_FILES = (
 )
 
 REQUIRED_TEXT = {
+    "code_map_intelligence.py": (
+        "test_paths_by_trigram",
+        "_heuristic_test_matches",
+        "heuristic_test_candidates",
+        "heuristic_test_indexed",
+    ),
     "ai_auto_tracker.py": (
         "CodeMapIndex",
         "code_map_root",
@@ -151,6 +157,43 @@ def verify() -> dict:
                 failures.append("code-map fixture did not surface regression test")
             if result.get("map_signature") in {None, ""}:
                 failures.append("code-map fixture did not produce map signature")
+
+    with tempfile.TemporaryDirectory() as td:
+        root = Path(td)
+        graph_dir = root / "graphify-out"
+        graph_dir.mkdir(parents=True, exist_ok=True)
+        (root / "collector.py").write_text("def collect():\n    return 1\n", encoding="utf-8")
+        nodes = [{"id": "collector", "source_file": "collector.py"}]
+        nodes.append({"id": "target", "source_file": "test_collector_contract.py"})
+        nodes.extend(
+            {
+                "id": f"noise-{index}",
+                "source_file": f"tests/test_feature_{index:04d}.py",
+            }
+            for index in range(2500)
+        )
+        (graph_dir / "graph.json").write_text(
+            json.dumps({"nodes": nodes, "links": []}, ensure_ascii=False),
+            encoding="utf-8",
+        )
+        index = CodeMapIndex(root)
+        if not index.available:
+            failures.append(f"code-map performance fixture failed to load: {index.error}")
+        else:
+            result = index.impact("collector.py", depth=0, limit=12, learning=learning)
+            candidates = int(result.get("heuristic_test_candidates") or 0)
+            total = int(result.get("heuristic_test_total") or 0)
+            if "test_collector_contract.py" not in set(result.get("suggested_tests") or []):
+                failures.append("indexed heuristic changed substring test-match semantics")
+            if result.get("heuristic_test_indexed") is not True:
+                failures.append("long origin stem did not use trigram test index")
+            if total < 2501:
+                failures.append(f"performance fixture incomplete: total_tests={total}")
+            if candidates >= max(50, total // 10):
+                failures.append(
+                    f"trigram index did not bound candidate scan: candidates={candidates} total={total}"
+                )
+            checked_contracts += 4
 
     return {
         "ok": not failures,
