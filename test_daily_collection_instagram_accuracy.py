@@ -74,9 +74,12 @@ def healthy_promo():
 
 
 class DailyAuditTest(unittest.TestCase):
-    def _report(self, adaptive=None, source_stats=None, promo=None, routes=None):
+    def _report(self, adaptive=None, source_stats=None, promo=None, routes=None, bridge_state=None):
         with tempfile.TemporaryDirectory() as td:
             root = Path(td)
+            bridge_report = root / "bridge-report.json"
+            if bridge_state is not None:
+                bridge_report.write_text(json.dumps(bridge_state), encoding="utf-8")
             return build_report(
                 now=NOW,
                 adaptive=adaptive or healthy_adaptive(),
@@ -89,6 +92,7 @@ class DailyAuditTest(unittest.TestCase):
                 routes=routes or good_routes(),
                 main_exchange=root / "main.json",
                 instagram_exchange=root / "instagram.json",
+                crosscheck_report=bridge_report,
             )
 
     def test_healthy_policy_with_missing_runtime_snapshots_is_warning_only(self):
@@ -98,6 +102,34 @@ class DailyAuditTest(unittest.TestCase):
         self.assertEqual(report["cross_domain"]["status"], "snapshot_missing")
         self.assertTrue(report["cross_domain"]["engine_available"])
         self.assertFalse(report["cross_domain"]["operational_ready"])
+        self.assertEqual(report["summary"]["status"], "warning")
+        self.assertFalse(report["summary"]["crosscheck_operational_ready"])
+        self.assertEqual(_exit_code(report, require_crosscheck_ready=True), 1)
+
+    def test_bridge_unavailable_reason_is_preserved_in_daily_report(self):
+        report = self._report(bridge_state={
+            "status": "snapshot_unavailable",
+            "engine_available": True,
+            "operational_ready": False,
+            "source_mode": "persisted_tcg_crosscheck",
+            "missing_domains": ["main", "instagram_content"],
+            "unavailable_reasons": {
+                "main": "not_finalized",
+                "instagram_content": "not_finalized",
+            },
+            "main_records": 0,
+            "instagram_records": 0,
+            "persisted_snapshots": {
+                "main": {"status": "building"},
+                "instagram_content": {"status": "building"},
+            },
+        })
+        self.assertEqual(report["cross_domain"]["status"], "snapshot_unavailable")
+        self.assertEqual(
+            report["cross_domain"]["unavailable_reasons"]["main"],
+            "not_finalized",
+        )
+        self.assertFalse(report["summary"]["crosscheck_operational_ready"])
         self.assertEqual(report["summary"]["status"], "warning")
 
     def test_stale_repeated_main_failures_are_high_and_repairable(self):
