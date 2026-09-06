@@ -854,7 +854,9 @@ def submit(payload: dict[str, Any]) -> dict[str, Any]:
     )
     return {
         "ok": True,
-        "accepted": matched,
+        "accepted": current.get("official_result") is True,
+        "proof_matched": bool(matched),
+        "verification_complete": current.get("official_result") is True,
         "reason": reason,
         "registration": _proof_public(current),
         "proof": proof_payload,

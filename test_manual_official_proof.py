@@ -81,7 +81,9 @@ class ManualOfficialProofTests(unittest.TestCase):
              mock.patch.object(proof, "_append_reference") as append_reference, \
              mock.patch.object(proof, "_remove_proof_file"):
             result = proof.submit({"registration_id": REGISTRATION_ID, "proof_image_data_url": "ignored"})
-        self.assertTrue(result["accepted"], result)
+        self.assertFalse(result["accepted"], result)
+        self.assertTrue(result["proof_matched"], result)
+        self.assertFalse(result["verification_complete"], result)
         self.assertFalse(result["policy"]["official_result"])
         saved = registry["registrations"][0]
         self.assertFalse(saved["official_result"])
