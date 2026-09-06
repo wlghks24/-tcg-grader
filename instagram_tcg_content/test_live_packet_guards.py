@@ -3,12 +3,15 @@
 from datetime import datetime
 
 
+SCHEDULED_BASELINE_RUN_KIND = "scheduled_10_30"
+
+
 def validate_run_packet(packet: dict) -> list[str]:
     errors: list[str] = []
     run_kind = packet.get("run_kind")
     baseline_id = packet.get("baseline_id")
-    if run_kind != "scheduled_10_00" and baseline_id:
-        errors.append("non-10:00 run cannot create baseline_id")
+    if run_kind != SCHEDULED_BASELINE_RUN_KIND and baseline_id:
+        errors.append("non-10:30 run cannot create baseline_id")
 
     fx = packet.get("fx") or {}
     for pair, row in fx.items():
@@ -36,11 +39,11 @@ def validate_run_packet(packet: dict) -> list[str]:
 def main() -> None:
     bad = {
         "run_kind": "live_sample",
-        "baseline_id": "TCG-20260904-1000-KST",
+        "baseline_id": "TCG-20260904-1030-KST",
         "fx": {
             "USD/KRW": {
                 "as_of_kst": "2026-09-04T15:30:00+09:00",
-                "display_label_time_kst": "2026-09-04T10:00:00+09:00",
+                "display_label_time_kst": "2026-09-04T10:30:00+09:00",
             }
         },
         "games": {
