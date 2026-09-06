@@ -10,6 +10,8 @@ on:
       - 'selfrefine_crosscheck_gate.py'
       - 'peer_learning_crosscheck_gate.py'
       - 'main_peer_learning_export.py'
+      - 'main_persisted_learning_export.py'
+      - 'peer_learning_runtime_bridge.py'
       - 'test_peer_learning_crosscheck_v23.py'
       - 'selfrefine_domain_policy.json'
       - 'selfrefine_domain_boundary_guard.py'
@@ -25,6 +27,8 @@ on:
       - 'selfrefine_crosscheck_gate.py'
       - 'peer_learning_crosscheck_gate.py'
       - 'main_peer_learning_export.py'
+      - 'main_persisted_learning_export.py'
+      - 'peer_learning_runtime_bridge.py'
       - 'test_peer_learning_crosscheck_v23.py'
       - 'selfrefine_domain_policy.json'
       - 'selfrefine_domain_boundary_guard.py'
@@ -57,6 +61,8 @@ jobs:
           python selfrefine_crosscheck_gate.py --self-test
           python -m instagram_tcg_content.peer_learning_export --self-test
           python -m instagram_tcg_content.persisted_learning_export --self-test
+          python main_persisted_learning_export.py --self-test
+          python peer_learning_runtime_bridge.py --self-test
           python -m unittest -v instagram_tcg_content.test_peer_learning_manifest_contract_v28
           python peer_learning_crosscheck_gate.py --self-test
           python -m unittest -v test_selfrefine_domain_isolation_v18.py test_peer_learning_crosscheck_v23.py
