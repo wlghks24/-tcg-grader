@@ -9,7 +9,7 @@ from typing import Any
 
 from peer_learning_crosscheck_gate import run as run_peer_crosscheck
 from safe_runtime import atomic_write_json
-from persisted_learning_snapshot import load_finalized_snapshot
+from crosscheck_control_plane.persisted_learning_snapshot import load_finalized_snapshot
 
 ROOT = Path(__file__).resolve().parent
 EXCHANGE = ROOT / "crosscheck_exchange"
