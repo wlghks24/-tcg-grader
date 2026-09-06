@@ -120,6 +120,26 @@ def main():
     assert r.status == "partial", r
     assert r.independent_source_count == 1, r
 
+    # Same lineage with contradictory sale facts must be a conflict, not a silent dedupe.
+    r = verify_fact(
+        [
+            obs("ebay", "completed_sale_original", "100", code="P-S01", lineage_key=same_lineage),
+            obs("psa-apr", "grading_auction_original", "110", code="P-S02", lineage_key=same_lineage),
+        ]
+    )
+    assert r.status == "conflict", r
+    assert "lineage disagrees" in (r.uncertainty_reason or ""), r
+
+    # Numeric formatting differences for the same sale are equivalent and dedupe once.
+    r = verify_fact(
+        [
+            obs("ebay", "completed_sale_original", "100", code="P-S01", lineage_key="sale:format:1"),
+            obs("psa-apr", "grading_auction_original", "100.00", code="P-S02", lineage_key="sale:format:1"),
+        ]
+    )
+    assert r.status == "partial", r
+    assert r.independent_source_count == 1, r
+
     # Completed-sale evidence with missing hard-gate fields must fail closed.
     r = verify_fact(
         [
@@ -201,6 +221,44 @@ def main():
     assert r.status == "partial", r
     assert "grade missing" in (r.uncertainty_reason or ""), r
 
+    # Different transaction bases must not cross-verify merely because two providers exist.
+    r = verify_fact(
+        [
+            obs("ebay", "completed_sale_original", "100", code="P-S01", price_basis="realized"),
+            obs("goldin", "completed_sale_original", "110", code="P-S02", price_basis="hammer"),
+        ]
+    )
+    assert r.status == "partial", r
+    assert "basis mismatch" in (r.uncertainty_reason or ""), r
+
+    r = verify_fact(
+        [
+            obs("ebay", "completed_sale_original", "100", code="P-S01", currency="USD"),
+            obs("goldin", "completed_sale_original", "110", code="P-S02", currency="JPY"),
+        ]
+    )
+    assert r.status == "partial", r
+    assert "basis mismatch" in (r.uncertainty_reason or ""), r
+
+    r = verify_fact(
+        [
+            obs("ebay", "completed_sale_original", "100", code="P-S01", finality="pending"),
+            obs("goldin", "completed_sale_original", "110", code="P-S02"),
+        ]
+    )
+    assert r.status == "partial", r
+    assert "finality invalid" in (r.uncertainty_reason or ""), r
+
+    # Equivalent condition/finality synonyms for one lineage must still dedupe once.
+    r = verify_fact(
+        [
+            obs("ebay", "completed_sale_original", "100", code="P-S01", lineage_key="sale:synonym:1", condition="graded", finality="final"),
+            obs("psa-apr", "grading_auction_original", "100.00", code="P-S02", lineage_key="sale:synonym:1", condition="slabbed", finality="settled"),
+        ]
+    )
+    assert r.status == "partial", r
+    assert r.independent_source_count == 1, r
+
     # Market-reference data cannot independently promote a completed sale.
     r = verify_fact(
         [
@@ -242,6 +300,15 @@ def main():
                 key="pokemon:b",
                 code="P-S02",
             ),
+        ]
+    )
+    assert r.status == "conflict", r
+
+    # Reused lineage must not hide a canonical-identity conflict.
+    r = verify_fact(
+        [
+            obs("ebay", "completed_sale_original", key="pokemon:a", lineage_key="sale:shared:1"),
+            obs("goldin", "completed_sale_original", key="pokemon:b", code="P-S02", lineage_key="sale:shared:1"),
         ]
     )
     assert r.status == "conflict", r
