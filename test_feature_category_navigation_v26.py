@@ -42,7 +42,7 @@ class FeatureCategoryNavigationV26Tests(unittest.TestCase):
             "simpleGradeV32", "gradeStart", "precisionHub", "v30validation",
             "market12section", "gradingEconomics", "tradingCatalogSection",
             "box12section", "v14section", "releaseBoard", "audit15",
-            "updateHub", "v31testdashboard",
+            "tabletManagerHub", "v31testdashboard",
         }
         self.assertTrue(required.issubset(set(targets)), required - set(targets))
 
@@ -63,7 +63,7 @@ class FeatureCategoryNavigationV26Tests(unittest.TestCase):
         self.assertIn('data-category-key="code"', self.html)
         self.assertIn('category.addEventListener("toggle"', self.js)
         self.assertIn("categories.forEach((item)", self.js)
-        self.assertIn('version: "v29-tablet-code-titles"', self.js)
+        self.assertIn('version: "v30-tablet-manager-hub"', self.js)
 
     def test_clear_home_identity_precedes_category_picker(self):
         title = self.html.index("<h1>카드시세분석</h1>")
@@ -80,6 +80,13 @@ class FeatureCategoryNavigationV26Tests(unittest.TestCase):
         self.assertIn("<h3>📱 태블릿 관리기</h3>", self.html)
         self.assertIn("🧪 코드 검사기", self.html)
         self.assertIn("코드 검사기 자동검증 결과 보기", self.html)
+        self.assertIn('id="tabletManagerHub"', self.html)
+        self.assertEqual(self.html.count('class="tablet-manager-action"'), 6)
+        for label in ("태블릿 상태", "서버 상태", "업데이트", "자동시작", "네트워크", "오류검사"):
+            self.assertIn(label, self.html)
+        self.assertIn("openTabletAction", self.js)
+        self.assertIn("VALID_TABLET_TARGETS", self.js)
+        self.assertIn(".tablet-manager-grid", self.css)
         self.assertNotIn("<h1>TCG 등급 사전검사기 v109</h1>", self.html)
         self.assertIn(".app-title-primary", self.css)
         self.assertIn("기능 화면으로 이동했습니다", self.js)
@@ -108,8 +115,8 @@ class FeatureCategoryNavigationV26Tests(unittest.TestCase):
         self.assertNotIn("innerHTML", self.js)
 
     def test_pwa_assets_are_versioned_once(self):
-        self.assertEqual(self.html.count('feature_category_nav.css?v=205'), 1)
-        self.assertEqual(self.html.count('feature_category_nav.js?v=205'), 1)
+        self.assertEqual(self.html.count('feature_category_nav.css?v=206'), 1)
+        self.assertEqual(self.html.count('feature_category_nav.js?v=206'), 1)
 
 
 if __name__ == "__main__":

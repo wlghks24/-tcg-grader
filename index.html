@@ -86,7 +86,7 @@ input[type=range]{width:100%}
 <link rel="stylesheet" href="box_knowledge_stats.css">
 <link rel="stylesheet" href="ui_polish_v121.css?v=121">
 <link rel="stylesheet" href="ui_tablet_refine_v122.css?v=122">
-<link rel="stylesheet" href="feature_category_nav.css?v=205">
+<link rel="stylesheet" href="feature_category_nav.css?v=206">
 </head>
 <body>
 <main class="app">
@@ -169,7 +169,7 @@ input[type=range]{width:100%}
     <details class="feature-category" data-category-key="tablet" data-category-label="태블릿 관리기">
       <summary><span class="feature-category-icon">📱</span><span><span class="feature-category-title">태블릿 관리기</span><span class="feature-category-sub">업데이트 · 서버 · 실행관리</span></span></summary>
       <div class="feature-shortcut-grid">
-        <a class="feature-shortcut" href="#updateHub">📱 태블릿 관리기 열기<small>전체 업데이트 · 재수집 · 직접입력 · PC/태블릿 서버 관리</small></a>
+        <a class="feature-shortcut" href="#tabletManagerHub">📱 태블릿 관리기 열기<small>상태 · 서버 · 업데이트 · 자동시작 · 네트워크 · 오류검사</small></a>
       </div>
     </details>
 
@@ -778,8 +778,41 @@ loadReleases();loadPromos();loadPurchaseSources();
 </section>
 
 <section class="card update-hub" id="updateHub">
-<h3>📱 태블릿 관리기</h3>
-<div class="muted">태블릿 업데이트, 직접입력, PC·태블릿 서버 기능을 선택해서 관리합니다.</div>
+<div class="tablet-manager-hub" id="tabletManagerHub" aria-labelledby="tabletManagerTitle">
+  <div class="tablet-manager-head">
+    <div>
+      <h3 id="tabletManagerTitle">📱 태블릿 관리기</h3>
+      <div class="muted">태블릿에서 자주 쓰는 관리 기능을 한 화면에서 선택하세요.</div>
+    </div>
+    <span class="tablet-manager-badge">6개 관리 메뉴</span>
+  </div>
+  <div class="tablet-manager-grid" role="group" aria-label="태블릿 관리 기능">
+    <button type="button" class="tablet-manager-action" data-tablet-target="v23dual">
+      <span class="tablet-manager-icon">📟</span><b>태블릿 상태</b><small>현재 연결 모드와 실행 상태 보기</small>
+    </button>
+    <button type="button" class="tablet-manager-action" data-tablet-target="v23dual" data-tablet-click="v23check">
+      <span class="tablet-manager-icon">🖥️</span><b>서버 상태</b><small>PC·태블릿 서버 연결상태 검사</small>
+    </button>
+    <button type="button" class="tablet-manager-action" data-tablet-target="v16update">
+      <span class="tablet-manager-icon">🔄</span><b>업데이트</b><small>최신자료 확인·검증·안전 반영</small>
+    </button>
+    <button type="button" class="tablet-manager-action" data-tablet-target="tabletServerGuide">
+      <span class="tablet-manager-icon">⚡</span><b>자동시작</b><small>Termux:Boot 설치·설정 방법</small>
+    </button>
+    <button type="button" class="tablet-manager-action" data-tablet-target="v23dual" data-tablet-click="v23check">
+      <span class="tablet-manager-icon">🌐</span><b>네트워크</b><small>같은 Wi‑Fi·접속 가능 상태 확인</small>
+    </button>
+    <button type="button" class="tablet-manager-action" data-tablet-target="v20live" data-tablet-click="v20issues">
+      <span class="tablet-manager-icon">🩺</span><b>오류검사</b><small>태블릿 오류·자동보정 결과 확인</small>
+    </button>
+  </div>
+  <div class="tablet-manager-status" id="tabletManagerStatus" role="status" aria-live="polite">원하는 관리 항목을 선택하세요.</div>
+</div>
+
+<div class="tablet-manager-advanced">
+  <h4>상세 관리</h4>
+  <div class="muted">필요할 때 전체 업데이트·직접입력·모바일·서버 기능을 직접 열 수 있습니다.</div>
+</div>
 <div class="update-menu">
 <button type="button" class="update-menu-btn" data-update-target="v16update"><span class="update-icon">🔄</span><b>전체 안전 업데이트</b><small>한 번에 확인 · 검증 · 전체반영</small></button>
 <button type="button" class="update-menu-btn" data-update-target="v17semi"><span class="update-icon">✍️</span><b>직접 정보 입력</b><small>가격 · HIT · 출처</small></button>
@@ -2585,7 +2618,7 @@ document.querySelectorAll(".update-panel-close").forEach(btn=>btn.addEventListen
  async function quickPrice(){const q=S('quickCardQuery').value.trim().toLowerCase();if(!q){S('quickPriceResults').textContent='카드명 또는 카드번호를 입력하세요.';return}S('quickPriceResults').textContent='시세자료 검색 중…';try{const r=await fetch(`market_prices.json?t=${Date.now()}`,{cache:'no-store'}),d=await r.json(),entries=d.entries&&typeof d.entries==='object'?d.entries:{};const gameNeed=simpleGame==='pokemon'?'pok':simpleGame==='onepiece'?'one':'nar';let hits=[];for(const [k,v] of Object.entries(entries)){const blob=(k+' '+JSON.stringify(v)).toLowerCase();if(blob.includes(q)&&(!gameNeed||blob.includes(gameNeed)||blob.includes(profiles[simpleGame].name.toLowerCase())))hits.push([k,v]);}if(!hits.length){for(const [k,v] of Object.entries(entries)){const blob=(k+' '+JSON.stringify(v)).toLowerCase();if(blob.includes(q))hits.push([k,v]);}}hits=hits.slice(0,12);if(!hits.length){S('quickPriceResults').innerHTML='저장된 시세자료에서 일치 항목을 찾지 못했습니다. <b>카드번호까지 같이 입력</b>하면 정확도가 올라갑니다.';return}S('quickPriceResults').innerHTML=hits.map(([k,v])=>`<div class="price-item"><b>${escapeDisplayText(k)}</b><br><span class="muted">${Object.entries(v&&typeof v==='object'?v:{}).filter(([a,b])=>['string','number'].includes(typeof b)).slice(0,8).map(([a,b])=>`${escapeDisplayText(a)}: ${escapeDisplayText(b)}`).join(' · ')}</span></div>`).join('');}catch(e){S('quickPriceResults').textContent='시세자료를 불러오지 못했습니다. 업데이트 후 다시 시도하세요.'}}
  S('startAutoCamera').onclick=start;S('stopAutoCamera').onclick=()=>stopCamera('카메라를 중지했습니다. 촬영을 다시 시작하거나 사진 파일을 선택할 수 있습니다.');S('manualCapture').onclick=()=>capture(frameMetric(),true);S('quickPriceSearch').onclick=quickPrice;S('quickCardQuery').addEventListener('keydown',e=>{if(e.key==='Enter')quickPrice()});window.addEventListener('pagehide',()=>stopCamera('',true));document.addEventListener('visibilitychange',()=>{if(document.hidden&&stream)stopCamera('앱이 백그라운드로 이동해 카메라를 안전하게 중지했습니다.')});window.tcgCameraRuntime=Object.freeze({version:'v104-camera-shake-stability',stop:()=>stopCamera('카메라를 중지했습니다.'),state:()=>({active:!!stream,stage,capturing,stableFrames:stable,frontReady:!!S('front')._tcgCapturedFile,backReady:!!S('back')._tcgCapturedFile})});
 })();
-</script><script src="feature_category_nav.js?v=205"></script>
+</script><script src="feature_category_nav.js?v=206"></script>
 <script src="card_identity_recognition.js?v=181"></script>
 <script src="inventory_lookup.js"></script>
 <script src="grade_market_flow.js"></script>

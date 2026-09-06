@@ -83,3 +83,22 @@ html{scroll-behavior:smooth;scroll-padding-top:14px}
 }
 @media(max-width:350px){.feature-category-grid{grid-template-columns:1fr}.feature-category summary{min-height:88px}}
 @media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}.feature-category,.feature-shortcut,.feature-category-fab{transition:none}}
+
+.tablet-manager-hub{margin-bottom:14px;padding:15px;border:2px solid #bfdbfe;border-radius:18px;background:linear-gradient(180deg,#eff6ff,#fff)}
+.tablet-manager-head{display:flex;align-items:flex-start;justify-content:space-between;gap:10px;margin-bottom:12px}
+.tablet-manager-head h3{margin:0 0 4px!important;font-size:21px;color:#0f172a}
+.tablet-manager-badge{flex:0 0 auto;border-radius:999px;background:#1d4ed8;color:#fff;padding:6px 9px;font-size:10px;font-weight:900}
+.tablet-manager-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+.tablet-manager-action{margin:0!important;min-height:112px;padding:11px 8px!important;border:2px solid #dbeafe!important;border-radius:14px!important;background:#fff!important;color:#0f172a!important;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px;text-align:center}
+.tablet-manager-action:hover{border-color:#60a5fa!important;background:#f8fbff!important}
+.tablet-manager-action:active{transform:scale(.99)}
+.tablet-manager-action:focus-visible{outline:3px solid #2563eb;outline-offset:2px}
+.tablet-manager-icon{font-size:30px;line-height:1}
+.tablet-manager-action b{font-size:13px}
+.tablet-manager-action small{font-size:10px;line-height:1.4;color:#64748b}
+.tablet-manager-status{margin-top:10px;padding:10px 11px;border-radius:11px;background:#fff;color:#475569;font-size:11px;font-weight:750;border:1px solid #dbeafe}
+.tablet-manager-status.active{background:#ecfdf5;border-color:#bbf7d0;color:#166534}
+.tablet-manager-advanced{margin-top:4px}
+.tablet-manager-advanced h4{margin:0 0 3px;font-size:15px;color:#334155}
+@media(max-width:620px){.tablet-manager-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:350px){.tablet-manager-grid{grid-template-columns:1fr}.tablet-manager-action{min-height:86px}}

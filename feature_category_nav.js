@@ -1,6 +1,8 @@
 "use strict";
 (() => {
   const VALID_TOP_PANELS = new Set(["releasePanel", "promoPanel", "purchasePanel"]);
+  const VALID_TABLET_TARGETS = new Set(["v23dual", "v16update", "v20live", "tabletServerGuide"]);
+  const VALID_TABLET_CLICKS = new Set(["v23check", "v20issues"]);
   const categories = [...document.querySelectorAll(".feature-category")];
   const selectedStatus = document.getElementById("featureCategorySelected");
   const nav = document.getElementById("featureCategories");
@@ -96,6 +98,49 @@
     });
   });
 
+  function openTabletAction(button) {
+    const targetId = String(button?.dataset?.tabletTarget || "");
+    if (!VALID_TABLET_TARGETS.has(targetId)) return false;
+    const target = safeTarget(targetId);
+    if (!target) return false;
+
+    if (targetId === "tabletServerGuide") {
+      target.open = true;
+    } else {
+      const updateButton = [...document.querySelectorAll(".update-menu-btn")]
+        .find((item) => String(item?.dataset?.updateTarget || "") === targetId);
+      if (!updateButton || typeof updateButton.click !== "function") return false;
+      updateButton.click();
+    }
+
+    const clickId = String(button?.dataset?.tabletClick || "");
+    if (clickId) {
+      if (!VALID_TABLET_CLICKS.has(clickId)) return false;
+      const action = safeTarget(clickId);
+      if (!action || typeof action.click !== "function") return false;
+      setTimeout(() => action.click(), 80);
+    }
+
+    const status = document.getElementById("tabletManagerStatus");
+    if (status) {
+      const label = String(button?.querySelector?.("b")?.textContent || "관리 기능").trim();
+      status.classList?.add?.("active");
+      status.textContent = `✅ ${label} 화면을 열었습니다.`;
+    }
+    setTimeout(() => {
+      try {
+        target.scrollIntoView({ behavior: "smooth", block: "start" });
+      } catch (_) {
+        target.scrollIntoView?.();
+      }
+    }, 60);
+    return true;
+  }
+
+  document.querySelectorAll(".tablet-manager-action").forEach((button) => {
+    button.addEventListener("click", () => openTabletAction(button));
+  });
+
   if (fab) {
     fab.addEventListener("click", (event) => {
       event.preventDefault();
@@ -111,9 +156,10 @@
   }
 
   window.TCGFeatureCategoryNav = Object.freeze({
-    version: "v29-tablet-code-titles",
+    version: "v30-tablet-manager-hub",
     activateTopPanel,
     navigateShortcut,
+    openTabletAction,
     selectCategory,
     targetExists: (id) => Boolean(safeTarget(id)),
   });
