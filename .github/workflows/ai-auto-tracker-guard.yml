@@ -129,7 +129,9 @@ jobs:
               origin_path='a.py', changed_files=['b.py'], impact=base,
               verified=True, regression_pass=True,
           )
-          cm.merge_verified_learning(state, [row, row, row])
+          cm.merge_verified_learning(state, [row])
+          cm.merge_verified_learning(state, [row])
+          cm.merge_verified_learning(state, [row])
           health = cm.learning_health(state['code_map_learning'])
           assert health['status'] == 'needs_refinement'
           assert health['self_corrected_patterns']
