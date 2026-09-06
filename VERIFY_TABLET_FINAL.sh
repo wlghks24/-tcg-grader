@@ -25,6 +25,7 @@ START_TCG_UPDATER_ANDROID.sh
 VERIFY_TABLET_RUNTIME.sh
 tablet_runtime_probe.py
 test_runtime_delivery_guards.py
+test_tablet_runtime_qa_integration.py
 tcg_updater.py
 tcg_updater_v135.py
 runtime_bundle_guard_v143.py
@@ -85,6 +86,7 @@ python -m py_compile \
   event_source_expansion_v145.py \
   tablet_runtime_probe.py \
   test_runtime_delivery_guards.py \
+  test_tablet_runtime_qa_integration.py \
   tcg_updater_v135.py
 echo "[3/9] 핵심 Python 문법/컴파일: OK"
 
@@ -93,7 +95,8 @@ python tcg_code_repair_learning.py --self-test >/dev/null
 python GRAPHIFY_SELF_HEAL.py --self-test >/dev/null
 python tablet_runtime_probe.py --self-test >/dev/null
 python test_runtime_delivery_guards.py >/dev/null
-echo "[4/9] 최적화 하드닝/오류학습/자가복구/태블릿 런타임 자체시험: OK"
+python test_tablet_runtime_qa_integration.py >/dev/null
+echo "[4/9] 최적화 하드닝/오류학습/자가복구/태블릿 통합 QA 자체시험: OK"
 
 python csp_hash_hardening.py --check >/dev/null
 echo "[5/9] 브라우저 인라인 스크립트 CSP 해시: OK"

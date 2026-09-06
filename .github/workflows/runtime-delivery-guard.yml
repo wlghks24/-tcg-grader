@@ -33,6 +33,10 @@ on:
       - 'verify_service_worker_runtime.js'
       - 'verify_link_runtime.py'
       - 'ANDROID_UPDATE_AND_START.sh'
+      - 'VERIFY_TABLET_FINAL.sh'
+      - 'VERIFY_TABLET_RUNTIME.sh'
+      - 'tablet_runtime_probe.py'
+      - 'test_tablet_runtime_qa_integration.py'
       - 'ANDROID_AUTO_START_INSTALL.sh'
       - 'START_TCG_UPDATER_ANDROID.sh'
       - 'update_market_prices.py'
@@ -76,6 +80,10 @@ on:
       - 'verify_service_worker_runtime.js'
       - 'verify_link_runtime.py'
       - 'ANDROID_UPDATE_AND_START.sh'
+      - 'VERIFY_TABLET_FINAL.sh'
+      - 'VERIFY_TABLET_RUNTIME.sh'
+      - 'tablet_runtime_probe.py'
+      - 'test_tablet_runtime_qa_integration.py'
       - 'ANDROID_AUTO_START_INSTALL.sh'
       - 'START_TCG_UPDATER_ANDROID.sh'
       - 'update_market_prices.py'
@@ -120,7 +128,10 @@ jobs:
           python test_manual_only_official_verification_v192.py
           python test_manual_official_proof.py
           python test_pending_official_candidate_v161.py
-          python -m py_compile safe_runtime.py tcg_updater.py tcg_updater_v135.py update_market_prices.py validate_external_links.py grading_cert_verifier.py manual_graded_photo_registration.py manual_official_proof.py pending_official_candidate_v161.py graded_photo_multi_source.py auto_update_all.py auto_repair_engine.py error_scenario_lab.py
+          python -m py_compile safe_runtime.py tcg_updater.py tcg_updater_v135.py update_market_prices.py validate_external_links.py grading_cert_verifier.py manual_graded_photo_registration.py manual_official_proof.py pending_official_candidate_v161.py graded_photo_multi_source.py auto_update_all.py auto_repair_engine.py error_scenario_lab.py tablet_runtime_probe.py test_tablet_runtime_qa_integration.py
+          python tablet_runtime_probe.py --self-test
+          python test_tablet_runtime_qa_integration.py
+          bash -n VERIFY_TABLET_RUNTIME.sh
           bash -n ANDROID_UPDATE_AND_START.sh
           bash -n ANDROID_AUTO_START_INSTALL.sh
           bash -n START_TCG_UPDATER_ANDROID.sh

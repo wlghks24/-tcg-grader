@@ -17,6 +17,7 @@ on:
       - 'VERIFY_TABLET_RUNTIME.sh'
       - 'tablet_runtime_probe.py'
       - 'test_runtime_delivery_guards.py'
+      - 'test_tablet_runtime_qa_integration.py'
       - 'tcg_updater.py'
       - 'tcg_updater_v135.py'
       - 'multi_market_prices.js'
@@ -58,6 +59,7 @@ on:
       - 'VERIFY_TABLET_RUNTIME.sh'
       - 'tablet_runtime_probe.py'
       - 'test_runtime_delivery_guards.py'
+      - 'test_tablet_runtime_qa_integration.py'
       - 'tcg_updater.py'
       - 'tcg_updater_v135.py'
       - 'multi_market_prices.js'
@@ -103,6 +105,8 @@ jobs:
         env:
           TCG_FINAL_SKIP_HEAD_MATCH: '1'
         run: bash VERIFY_TABLET_FINAL.sh
+      - name: Verify unified tablet runtime QA contract
+        run: python test_tablet_runtime_qa_integration.py
       - name: Verify tablet recovery entrypoint exists
         run: |
           test -s ANDROID_RECOVER_UPDATE.sh

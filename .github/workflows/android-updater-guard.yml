@@ -9,6 +9,7 @@ on:
       - 'VERIFY_TABLET_RUNTIME.sh'
       - 'tablet_runtime_probe.py'
       - 'test_runtime_delivery_guards.py'
+      - 'test_tablet_runtime_qa_integration.py'
       - 'START_TCG_UPDATER_ANDROID.sh'
       - '.github/workflows/android-updater-guard.yml'
   push:
@@ -21,6 +22,7 @@ on:
       - 'VERIFY_TABLET_RUNTIME.sh'
       - 'tablet_runtime_probe.py'
       - 'test_runtime_delivery_guards.py'
+      - 'test_tablet_runtime_qa_integration.py'
       - 'START_TCG_UPDATER_ANDROID.sh'
       - '.github/workflows/android-updater-guard.yml'
   workflow_dispatch:
@@ -49,9 +51,10 @@ jobs:
           bash -n START_TCG_UPDATER_ANDROID.sh
       - name: Validate tablet runtime probe and delivery guards
         run: |
-          python -m py_compile tablet_runtime_probe.py test_runtime_delivery_guards.py
+          python -m py_compile tablet_runtime_probe.py test_runtime_delivery_guards.py test_tablet_runtime_qa_integration.py
           python tablet_runtime_probe.py --self-test
           python test_runtime_delivery_guards.py
+          python test_tablet_runtime_qa_integration.py
       - name: Verify boot supervisor diagnostics and health route
         run: |
           grep -Fq 'api/v135-health' ANDROID_AUTO_START_INSTALL.sh
