@@ -32,17 +32,27 @@ class ManualProofArchiveStatusV153Tests(unittest.TestCase):
             "manual_official_proof_match_mode": "official_page_company_cert_plus_exact_slab_ocr_grade",
         }
 
-    def test_recent_public_row_exposes_manual_proof_completion(self):
+    def test_recent_public_row_exposes_proof_match_without_claiming_verification_complete(self):
         public = manual_photo._public_row(self._row())
         self.assertTrue(public["manual_official_proof_registered"], public)
         self.assertEqual(public["manual_official_proof_state"], "matched")
-        self.assertEqual(public["verification_state"], "manual_official_proof_matched")
+        self.assertFalse(public["official_result"], public)
         self.assertTrue(public["front_back_pair_complete"])
 
-    def test_matched_manual_proof_is_archive_eligible(self):
+    def test_matched_manual_proof_alone_is_not_archive_eligible(self):
         row = self._row()
-        self.assertEqual(archive._verification_kind(row), "manual_official_reference")
+        self.assertIsNone(archive._verification_kind(row))
         self.assertEqual(archive._identity(row), ("PSA", "160600294", 10.0, "onepiece"))
+        self.assertFalse(archive._eligible(row))
+
+    def test_completed_manual_verification_is_archive_eligible(self):
+        row = self._row()
+        row.update({
+            "official_result": True,
+            "official_verification_source": "user_browser_official_page",
+            "verification_state": "manual_official_verified",
+        })
+        self.assertEqual(archive._verification_kind(row), "manual_official_verified")
         self.assertTrue(archive._eligible(row))
 
 
