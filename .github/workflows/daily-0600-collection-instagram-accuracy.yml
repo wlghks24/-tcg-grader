@@ -20,6 +20,9 @@ on:
       - 'source_collection_stats.json'
       - 'promo_events.json'
       - 'instagram_tcg_content/**'
+      - 'shared_self_learning/contracts.py'
+      - 'crosscheck_runtime_bridge.py'
+      - 'test_crosscheck_runtime_bridge_v26.py'
       - 'main_crosscheck_export.py'
       - 'selfrefine_crosscheck_gate.py'
       - 'peer_learning_crosscheck_gate.py'
@@ -44,6 +47,9 @@ on:
       - 'source_collection_stats.json'
       - 'promo_events.json'
       - 'instagram_tcg_content/**'
+      - 'shared_self_learning/contracts.py'
+      - 'crosscheck_runtime_bridge.py'
+      - 'test_crosscheck_runtime_bridge_v26.py'
       - 'main_crosscheck_export.py'
       - 'selfrefine_crosscheck_gate.py'
       - 'peer_learning_crosscheck_gate.py'
@@ -197,6 +203,7 @@ jobs:
           PY
 
       - name: Refresh passive factual runtime crosscheck from persisted snapshots
+        if: github.event_name != 'pull_request'
         run: python crosscheck_runtime_bridge.py --from-persisted
 
       - name: Run daily collection vs Instagram audit
@@ -204,7 +211,7 @@ jobs:
         run: |
           flags=(--strict-policy)
           if [[ "${{ github.event_name }}" == "schedule" ]]; then
-            flags+=(--fail-on-degraded)
+            flags+=(--fail-on-degraded --require-crosscheck-ready)
           fi
           python daily_collection_instagram_accuracy.py \
             --report COLLECTION_INSTAGRAM_ACCURACY_REPORT.json \
@@ -238,6 +245,7 @@ jobs:
               "crosscheck_validation_error",
               "learning_crosscheck_validation_error",
               "learning_conflicting_fix",
+              "crosscheck_operational_ready",
           }
           missing = sorted(required_summary - set(summary))
           if missing:
