@@ -21,6 +21,7 @@ on:
       - 'promo_events.json'
       - 'instagram_tcg_content/**'
       - 'main_crosscheck_export.py'
+      - 'main_persisted_crosscheck_export.py'
       - 'selfrefine_crosscheck_gate.py'
       - 'peer_learning_crosscheck_gate.py'
       - 'main_peer_learning_export.py'
@@ -45,6 +46,7 @@ on:
       - 'promo_events.json'
       - 'instagram_tcg_content/**'
       - 'main_crosscheck_export.py'
+      - 'main_persisted_crosscheck_export.py'
       - 'selfrefine_crosscheck_gate.py'
       - 'peer_learning_crosscheck_gate.py'
       - 'main_peer_learning_export.py'
@@ -86,6 +88,7 @@ jobs:
           python selfrefine_crosscheck_gate.py --self-test
           python peer_learning_crosscheck_gate.py --self-test
           python main_peer_learning_export.py --self-test
+          python main_persisted_crosscheck_export.py --self-test
           python -m instagram_tcg_content.peer_learning_export --self-test
           python -m instagram_tcg_content.persisted_crosscheck_export --self-test
           python crosscheck_runtime_bridge.py --self-test
@@ -100,9 +103,9 @@ jobs:
             provider_health_learning.py collection_meta_learning.py \
             test_verified_evidence_freshness_v15.py test_collection_region_provenance_v16.py \
             selfrefine_crosscheck_gate.py peer_learning_crosscheck_gate.py \
-            main_peer_learning_export.py main_peer_learning_adoption.py \
+            main_peer_learning_export.py main_peer_learning_adoption.py main_persisted_crosscheck_export.py \
             selfrefine_domain_boundary_guard.py shared_self_learning/peer_learning.py \
-            instagram_tcg_content/peer_learning_export.py crosscheck_runtime_bridge.py test_crosscheck_runtime_bridge_v26.py
+            instagram_tcg_content/peer_learning_export.py instagram_tcg_content/persisted_crosscheck_export.py crosscheck_runtime_bridge.py test_crosscheck_runtime_bridge_v26.py
           python -c "import daily_collection_instagram_accuracy, auto_update_all, selfrefine_crosscheck_gate, peer_learning_crosscheck_gate"
           python -m unittest -v \
             test_daily_collection_instagram_accuracy.py \
@@ -196,6 +199,10 @@ jobs:
           }, ensure_ascii=False))
           PY
 
+      - name: Materialize Main persisted factual snapshot from refreshed releases
+        if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch' || github.event_name == 'push'
+        run: python main_persisted_crosscheck_export.py --releases releases.json
+
       - name: Refresh passive factual runtime crosscheck from persisted snapshots
         run: python crosscheck_runtime_bridge.py --from-persisted
 
@@ -236,6 +243,8 @@ jobs:
               "medium_findings",
               "repair_action_count",
               "crosscheck_validation_error",
+              "crosscheck_engine_available",
+              "crosscheck_operational_ready",
               "learning_crosscheck_validation_error",
               "learning_conflicting_fix",
           }

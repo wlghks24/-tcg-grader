@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+import json
 import tempfile
 import unittest
 from pathlib import Path
@@ -19,6 +20,24 @@ BASE = {
     "confidence": 0.99,
     "lineage_key": "main-release-lineage",
 }
+
+
+def persisted_snapshot(namespace, facts, status="finalized"):
+    return {
+        "schema_version": "1.0",
+        "namespace": namespace,
+        "snapshot_kind": "factual",
+        "status": status,
+        "finalized_at": "2026-09-06T06:31:00+09:00" if status == "finalized" else None,
+        "facts": facts,
+        "validation": {
+            "manifest_validated": True,
+            "allowed_fields_only": True,
+            "exact_factual_types_enforced": True,
+            "write_readback_verified": True,
+            "isolation_breach": False,
+        },
+    }
 
 
 class CrosscheckRuntimeBridgeTests(unittest.TestCase):
@@ -90,11 +109,31 @@ class CrosscheckRuntimeBridgeTests(unittest.TestCase):
             main_snapshot = root / "persisted-main.json"
             instagram_snapshot = root / "persisted-instagram.json"
             main_snapshot.write_text(
-                '{"namespace":"MARKET_ANALYSIS","snapshot_kind":"factual","status":"finalized","facts":[{"fact_type":"release","canonical_key":"pokemon|30th-celebration|jp","lineage_key":"pmain","value":"2026-09-16","language":"JP","source_role":"official_primary","source_locator":"https://example.invalid/main-persisted","observed_at":"2026-09-06T06:00:00+09:00","verification_status":"verified"}]}',
+                json.dumps(persisted_snapshot("MARKET_ANALYSIS", [{
+                    "fact_type": "release",
+                    "canonical_key": "pokemon|30th-celebration|jp",
+                    "lineage_key": "pmain",
+                    "value": "2026-09-16",
+                    "language": "JP",
+                    "source_role": "official_primary",
+                    "source_locator": "https://example.invalid/main-persisted",
+                    "observed_at": "2026-09-06T06:00:00+09:00",
+                    "verification_status": "verified",
+                }])),
                 encoding="utf-8",
             )
             instagram_snapshot.write_text(
-                '{"namespace":"IG_CARDINFO","snapshot_kind":"factual","status":"finalized","facts":[{"fact_type":"release","canonical_key":"pokemon|30th-celebration|jp","lineage_key":"pinstagram","value":"2026-09-16","language":"JP","source_role":"official_primary","source_locator":"https://example.invalid/instagram-persisted","observed_at":"2026-09-06T06:30:00+09:00","verification_status":"verified"}]}',
+                json.dumps(persisted_snapshot("IG_CARDINFO", [{
+                    "fact_type": "release",
+                    "canonical_key": "pokemon|30th-celebration|jp",
+                    "lineage_key": "pinstagram",
+                    "value": "2026-09-16",
+                    "language": "JP",
+                    "source_role": "official_primary",
+                    "source_locator": "https://example.invalid/instagram-persisted",
+                    "observed_at": "2026-09-06T06:30:00+09:00",
+                    "verification_status": "verified",
+                }])),
                 encoding="utf-8",
             )
             paths = self._paths(root)
@@ -109,7 +148,7 @@ class CrosscheckRuntimeBridgeTests(unittest.TestCase):
             self.assertEqual(result["persisted_instagram_status"], "finalized")
 
             instagram_snapshot.write_text(
-                '{"namespace":"IG_CARDINFO","snapshot_kind":"factual","status":"building","facts":[]}',
+                json.dumps(persisted_snapshot("IG_CARDINFO", [], status="building")),
                 encoding="utf-8",
             )
             paths["main_output"].write_text("{}", encoding="utf-8")
@@ -132,11 +171,20 @@ class CrosscheckRuntimeBridgeTests(unittest.TestCase):
             main_snapshot = root / "persisted-main.json"
             instagram_snapshot = root / "persisted-instagram.json"
             main_snapshot.write_text(
-                '{"namespace":"IG_CARDINFO","snapshot_kind":"factual","status":"finalized","facts":[{"fact_type":"release","canonical_key":"x","lineage_key":"x","value":"x","source_role":"official","source_locator":"https://example.invalid/x","observed_at":"2026-09-06T06:00:00+09:00","verification_status":"verified"}]}',
+                json.dumps(persisted_snapshot("IG_CARDINFO", [{
+                    "fact_type": "release",
+                    "canonical_key": "x",
+                    "lineage_key": "x",
+                    "value": "x",
+                    "source_role": "official",
+                    "source_locator": "https://example.invalid/x",
+                    "observed_at": "2026-09-06T06:00:00+09:00",
+                    "verification_status": "verified",
+                }])),
                 encoding="utf-8",
             )
             instagram_snapshot.write_text(
-                '{"namespace":"IG_CARDINFO","snapshot_kind":"factual","status":"building","facts":[]}',
+                json.dumps(persisted_snapshot("IG_CARDINFO", [], status="building")),
                 encoding="utf-8",
             )
             with self.assertRaises(ValueError):
