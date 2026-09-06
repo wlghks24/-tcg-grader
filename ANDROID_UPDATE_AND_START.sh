@@ -172,8 +172,10 @@ EOF
 }
 
 LOCKED=0
+UPDATE_LOCK_AVAILABLE=0
 if acquire_update_lock; then
   LOCKED=1
+  UPDATE_LOCK_AVAILABLE=1
 fi
 trap '[ "${LOCKED:-0}" = "1" ] && cleanup_update_lock || true' EXIT INT TERM
 
@@ -193,7 +195,10 @@ if command -v git >/dev/null 2>&1 && git rev-parse --is-inside-work-tree >/dev/n
   runtime_dirty_paths=""
   bootstrap_dirty_paths=""
 
-  if [ "$branch" != "main" ]; then
+  if [ "${UPDATE_LOCK_AVAILABLE:-0}" != "1" ]; then
+    echo "[안내] 업데이트 잠금이 없어 원격 업데이트를 건너뜁니다. 현재 검증된 로컬 버전으로 시작합니다."
+    can_update=0
+  elif [ "$branch" != "main" ]; then
     echo "[안내] 현재 브랜치가 main이 아닙니다(${branch:-detached}). 자동 업데이트는 건너뜁니다."
     can_update=0
   elif ! git diff --cached --quiet --ignore-submodules --; then

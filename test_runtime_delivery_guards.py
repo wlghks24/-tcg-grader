@@ -46,6 +46,12 @@ def main():
     assert 'vision_calibration.json' in updater
     assert 'git config --local core.fileMode false' in updater
     assert 'reset --hard' not in updater
+    assert 'UPDATE_LOCK_AVAILABLE=0' in updater
+    assert 'UPDATE_LOCK_AVAILABLE=1' in updater
+    lock_gate='if [ "${UPDATE_LOCK_AVAILABLE:-0}" != "1" ]; then'
+    assert lock_gate in updater
+    assert '업데이트 잠금이 없어 원격 업데이트를 건너뜁니다.' in updater
+    assert updater.index(lock_gate) < updater.index('git fetch --prune "$OFFICIAL_HTTPS"')
     # The update lock must never survive the final exec handoff. exec preserves
     # the PID, so a stale lock would make the server look like an active updater.
     handoff=updater.rfind('exec bash START_TCG_UPDATER_ANDROID.sh')
