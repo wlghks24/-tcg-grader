@@ -28,6 +28,7 @@ from code_map_intelligence import (
     event_priority,
     impact_context,
     impact_depth_for_severity,
+    learning_health,
     merge_verified_learning,
     verified_learning_candidate,
 )
@@ -306,6 +307,9 @@ def observe(
         "code_map": {
             "mode": "graphify_read_only_impact_analysis_cached_per_origin_adaptive_depth",
             "verified_learning": verified_learning,
+            "self_refine": learning_health(
+                state.get("code_map_learning") if isinstance(state, dict) else None
+            ),
         },
         "safety": {
             "domain_state_isolation": True,

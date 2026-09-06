@@ -167,6 +167,22 @@ class MarketAIAutoTrackerTests(unittest.TestCase):
             state = json.loads((root / tracker.STATE.name).read_text(encoding="utf-8"))
             self.assertEqual(state.get("code_map_learning", {}).get("verified_patterns", {}), {})
 
+    def test_code_map_learning_health_is_reported_without_source_patch_permission(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            self._repo(root)
+            result = tracker.run_tracker(
+                root=root,
+                repair=False,
+                run_tests=False,
+                report_path=root / "report.json",
+            )
+            self.assertIn("self_refine", result["code_map"])
+            safety = result["code_map"]["self_refine"]["safety"]
+            self.assertTrue(safety["verified_learning_only"])
+            self.assertFalse(safety["source_patch_from_learning"])
+            self.assertFalse(safety["learned_text_executable"])
+
     def test_design_references_are_official_github_docs(self):
         self.assertTrue(tracker.DESIGN_REFERENCES)
         self.assertTrue(all(

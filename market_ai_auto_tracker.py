@@ -29,6 +29,7 @@ from code_map_intelligence import (
     CodeMapIndex,
     compact_context,
     impact_context,
+    learning_health,
     merge_verified_learning,
     verified_learning_candidate,
 )
@@ -733,6 +734,7 @@ def run_tracker(
             "learning_applied": bool(verified_learning),
             "map_signature": map_index.signature,
             "single_parse_per_run": True,
+            "self_refine": learning_health(state_before.get("code_map_learning")),
         },
         "design_references": DESIGN_REFERENCES,
         "safety": {
@@ -750,6 +752,8 @@ def run_tracker(
             "code_map_learning_requires_full_regression": True,
             "code_map_pending_learning_not_executable": True,
             "code_map_single_parse_per_run": True,
+            "code_map_self_correction_verified_overlay_only": True,
+            "code_map_confidence_calibrated_from_verified_history": True,
         },
     }
     target = report_path or REPORT

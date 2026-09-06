@@ -176,6 +176,8 @@ jobs:
             echo "- peer verified auto-promotion: disabled"
             echo "- completed-sale/market-reference promotion: blocked"
             echo "- code-map learning: pending first, promoted only after full regression + safe diff"
+            echo "- code-map self-correction: repeated verified misses become bounded impact overlays"
+            echo "- code-map confidence: calibrated downward when verified prediction hit-rate is weak"
             echo "- impact ranking: distance + hub penalty + critical-runtime + verified history"
             echo "- 403/429 bypass: disabled"
             echo "- search/error text -> source patch: disabled"

@@ -121,6 +121,18 @@ jobs:
           }, occurrences=3, code_map={'available': True})
           assert sample['performance']['reasoning_feature_extraction'] == 'single_pass'
           assert sample['performance']['haystack_reused'] is True
+          import code_map_intelligence as cm
+          state = {}
+          base = {'available': True, 'impacted_files': ['a.py'], 'map_signature': 'x'}
+          row = cm.verified_learning_candidate(
+              origin_path='a.py', changed_files=['b.py'], impact=base,
+              verified=True, regression_pass=True,
+          )
+          cm.merge_verified_learning(state, [row, row, row])
+          health = cm.learning_health(state['code_map_learning'])
+          assert health['status'] == 'needs_refinement'
+          assert health['self_corrected_patterns']
+          assert health['safety']['source_patch_from_learning'] is False
           safety = sample['safety']
           assert safety['learned_text_executable'] is False
           assert safety['auto_patch_from_reasoning'] is False

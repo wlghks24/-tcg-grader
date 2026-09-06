@@ -258,6 +258,60 @@ class PerformanceRuntimeTests(unittest.TestCase):
             self.assertTrue(index.sorted_adjacency)
             self.assertTrue(all(isinstance(value, tuple) for value in index.sorted_adjacency.values()))
 
+    def test_verified_misses_become_self_correction_overlay_only_after_two_passes(self):
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            _write_graph(root)
+            state = {}
+            base_index = fast.CodeMapIndex(root)
+            base = base_index.impact("collector.py", depth=1)
+            candidate = fast.verified_learning_candidate(
+                origin_path="collector.py",
+                changed_files=["repair_helper.py"],
+                impact=base,
+                verified=True,
+                regression_pass=True,
+            )
+            self.assertIsNotNone(candidate)
+            fast.merge_verified_learning(state, [candidate])
+            once = fast.CodeMapIndex(root).impact(
+                "collector.py", depth=1, learning=state["code_map_learning"]
+            )
+            self.assertNotIn("repair_helper.py", once["impacted_files"])
+            fast.merge_verified_learning(state, [candidate])
+            twice = fast.CodeMapIndex(root).impact(
+                "collector.py", depth=1, learning=state["code_map_learning"]
+            )
+            self.assertIn("repair_helper.py", twice["impacted_files"])
+            self.assertIn("repair_helper.py", twice["learned_overlay_files"])
+            self.assertTrue(twice["self_correction_applied"])
+
+    def test_repeated_low_hit_rate_reduces_map_confidence(self):
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            _write_graph(root)
+            state = {}
+            base = fast.CodeMapIndex(root).impact("collector.py", depth=1)
+            original_confidence = base["confidence"]
+            candidate = fast.verified_learning_candidate(
+                origin_path="collector.py",
+                changed_files=["outside_graph.py"],
+                impact=base,
+                verified=True,
+                regression_pass=True,
+            )
+            for _ in range(3):
+                fast.merge_verified_learning(state, [candidate])
+            learned = fast.CodeMapIndex(root).impact(
+                "collector.py", depth=1, learning=state["code_map_learning"]
+            )
+            self.assertLess(learned["confidence"], original_confidence)
+            self.assertEqual(learned["learning_prediction_hit_rate"], 0.0)
+            self.assertEqual(learned["structural_risk"], "high")
+            health = fast.learning_health(state["code_map_learning"])
+            self.assertEqual(health["status"], "needs_refinement")
+            self.assertTrue(health["low_quality_patterns"])
+
     def test_batch_is_bounded(self):
         events = [{"message": "x"} for _ in range(fast.MAX_BATCH_EVENTS + 20)]
         with tempfile.TemporaryDirectory() as td:
