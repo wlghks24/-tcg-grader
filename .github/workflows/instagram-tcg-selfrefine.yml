@@ -49,8 +49,8 @@ jobs:
       - name: Verify shared algorithm and passive crosscheck contracts
         run: |
           python -m instagram_tcg_content.crosscheck_export --self-test
-          python -m instagram_tcg_content.crosscheck_runtime_bridge --self-test
-          python -m unittest -v instagram_tcg_content.test_crosscheck_runtime_bridge
+          python crosscheck_runtime_bridge.py --self-test
+          python -m unittest -v test_crosscheck_runtime_bridge_v26.py
           python selfrefine_crosscheck_gate.py --self-test
           python -m instagram_tcg_content.peer_learning_export --self-test
           python peer_learning_crosscheck_gate.py --self-test
