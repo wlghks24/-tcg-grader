@@ -55,6 +55,8 @@ def tier_satisfies_fact(fact_type: str, tier: str) -> bool:
 def _eligible(state: ProviderState) -> bool:
     if state.status in HARD_FAIL:
         return False
+    if state.status in {"rate_limited", "forbidden"}:
+        return False
     if state.failure_count >= 3:
         return False
     return True
@@ -87,26 +89,43 @@ def choose_routes(
 
     selected: list[str] = []
     skipped: list[str] = []
-    seen: set[str] = set()
+    selected_set: set[str] = set()
+    skipped_set: set[str] = set()
+    route_budget = min(max_routes, target)
 
-    for state in proving + supporting:
-        if state.provider_id in seen:
-            skipped.append(state.provider_id)
+    # Healthy/eligible proving routes are sufficient once the independent target
+    # is met. Do not contact extra providers just because max_routes is larger.
+    for state in proving:
+        if state.provider_id in selected_set:
+            if state.provider_id not in skipped_set:
+                skipped.append(state.provider_id)
+                skipped_set.add(state.provider_id)
             continue
-        seen.add(state.provider_id)
         selected.append(state.provider_id)
-        if len(selected) >= min(max_routes, max(target, target + 2)):
+        selected_set.add(state.provider_id)
+        if len(selected) >= route_budget:
             break
 
+    # Supporting routes are diagnostic fallbacks only when qualifying evidence is
+    # insufficient; they never inflate the independent-evidence count.
+    if len(selected) < route_budget:
+        for state in supporting:
+            if state.provider_id in selected_set:
+                continue
+            selected.append(state.provider_id)
+            selected_set.add(state.provider_id)
+            if len(selected) >= route_budget:
+                break
+
     for state in states:
-        if state.provider_id not in selected and state.provider_id not in skipped:
+        if state.provider_id not in selected_set and state.provider_id not in skipped_set:
             skipped.append(state.provider_id)
+            skipped_set.add(state.provider_id)
 
     proving_selected = {
         s.provider_id
-        for s in states
-        if s.provider_id in selected
-        and _eligible(s)
+        for s in eligible
+        if s.provider_id in selected_set
         and tier_satisfies_fact(fact_type, s.tier)
     }
     if len(proving_selected) < target:
