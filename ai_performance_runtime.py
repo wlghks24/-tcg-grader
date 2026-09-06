@@ -36,7 +36,7 @@ MAX_BATCH_EVENTS = 5000
 class EventFeatures:
     path: str
     stage: str
-    stage_lower: str
+    fingerprint_stage_lower: str
     error_type: str
     fingerprint_error: str
     message: str
@@ -66,7 +66,7 @@ def _features(event: dict[str, Any]) -> EventFeatures:
     return EventFeatures(
         path=path,
         stage=stage,
-        stage_lower=stage[:80].lower(),
+        fingerprint_stage_lower=stage_raw[:80].lower(),
         error_type=error_type,
         fingerprint_error=fingerprint_error,
         message=(message_raw or evidence_raw)[:240],
@@ -107,7 +107,7 @@ def _severity_from_features(features: EventFeatures) -> str:
 def _fingerprint_from_features(features: EventFeatures, domain: str) -> str:
     parts = (
         domain,
-        features.stage_lower,
+        features.fingerprint_stage_lower,
         features.path.lower(),
         features.fingerprint_error,
     )
