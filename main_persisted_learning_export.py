@@ -8,7 +8,7 @@ import tempfile
 from pathlib import Path
 from typing import Any
 
-from persisted_learning_snapshot import export_snapshot as export_shared_snapshot
+from crosscheck_control_plane.persisted_learning_snapshot import export_snapshot as export_shared_snapshot
 
 ROOT = Path(__file__).resolve().parent
 DEFAULT_OUTPUT = ROOT / "TCG_CROSSCHECK" / "MARKET_ANALYSIS" / "learning_snapshot.json"
