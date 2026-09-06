@@ -76,6 +76,26 @@ class ManualOfficialVerifiedIntegrationV154Tests(unittest.TestCase):
         self.assertFalse(promoted["raw_grade_calibration_eligible"])
         publish.assert_called_once()
 
+    def test_legacy_manual_official_true_is_reconciled_through_publish_gate(self):
+        row = self._row()
+        row["official_result"] = True
+        row["official_verification_source"] = "user_browser_official_page"
+        registry = {"schema_version": 1, "registrations": [row]}
+        saved = []
+        with (
+            patch.object(manual_photo, "_registry", return_value=registry),
+            patch.object(manual_photo, "_save_registry", side_effect=lambda payload: saved.append(payload)),
+            patch.object(manual_photo, "_publish_verified", return_value=(True, None)) as publish,
+            patch.object(integration, "_stored_evidence_present", return_value=True),
+            patch.object(integration, "_promote_reference_file"),
+            patch.object(manual_photo, "_record_collection_gap"),
+        ):
+            result = integration.promote_registration(row["registration_id"])
+        self.assertTrue(result["ok"], result)
+        self.assertTrue(result["promoted"], result)
+        publish.assert_called_once()
+        self.assertTrue(saved[-1]["registrations"][0]["official_result"])
+
     def test_registry_conflict_blocks_official_promotion(self):
         row = self._row()
         registry = {"schema_version": 1, "registrations": [row]}
