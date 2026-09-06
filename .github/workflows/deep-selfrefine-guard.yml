@@ -88,6 +88,11 @@ jobs:
             count=$((count+1))
           done < <(git ls-files '*.sh')
           echo "Shell syntax checked: $count"
+      - name: Verify internal code-map contracts
+        run: |
+          python verify_code_map_internal.py
+          python -m unittest -v test_ai_auto_tracker.py test_market_ai_auto_tracker.py
+
       - name: Exercise browser UI camera service worker and links
         run: |
           node verify_browser_runtime.js
