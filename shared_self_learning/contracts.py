@@ -6,6 +6,30 @@ from typing import Any
 
 ALLOWED_DOMAINS = {"main", "instagram_content"}
 
+CANONICAL_FACTUAL_TYPES = frozenset({
+    "card_price", "release", "rerelease", "promo", "event",
+    "movie_bonus", "completed_sale", "market_reference",
+})
+FACTUAL_TYPE_ALIASES = {
+    **{name: name for name in CANONICAL_FACTUAL_TYPES},
+    "official_release": "release",
+    "official_reprint": "rerelease",
+    "official_promo": "promo",
+    "official_event": "event",
+    "official_movie_bonus": "movie_bonus",
+}
+
+
+def canonicalize_factual_type(value: object, *, label: str = "information_family") -> str:
+    raw = str(value or "").strip()
+    factual_type = FACTUAL_TYPE_ALIASES.get(raw)
+    if factual_type not in CANONICAL_FACTUAL_TYPES:
+        raise ValueError(
+            f"{label}: unsupported factual type {raw!r}; "
+            f"allowed={sorted(CANONICAL_FACTUAL_TYPES)}"
+        )
+    return factual_type
+
 _FORBIDDEN_EXECUTION_RE = re.compile(
     r"(?i)(?<![A-Za-z0-9_])"
     r"(?:exec|eval|__import__|importlib(?:\.[A-Za-z_][A-Za-z0-9_]*)?|"
