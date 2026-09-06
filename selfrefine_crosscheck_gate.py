@@ -60,7 +60,14 @@ def run(main_path: Path | None, instagram_path: Path | None) -> dict[str, Any]:
     main_rows = _load_records(main_path) if main_path else []
     instagram_rows = _load_records(instagram_path) if instagram_path else []
     result = compare_record_sets(main_rows, instagram_rows)
-    result["status"] = "crosschecked" if main_rows and instagram_rows else "no_exchange_data"
+    comparison_count = len(result.get("comparisons") or [])
+    if not main_rows or not instagram_rows:
+        result["status"] = "no_exchange_data"
+    elif comparison_count == 0:
+        result["status"] = "no_comparable_data"
+    else:
+        result["status"] = "crosschecked"
+    result["comparison_count"] = comparison_count
     result["safety"] = {
         "passive_json_jsonl_only": True,
         "verification_promotion": False,
@@ -71,6 +78,7 @@ def run(main_path: Path | None, instagram_path: Path | None) -> dict[str, Any]:
         "values_averaged": False,
         "conflicts_require_reverification": True,
         "execution_markers_fail_closed": True,
+        "comparable_fact_required": True,
     }
     return result
 
@@ -152,6 +160,7 @@ def main() -> int:
         "agree": result["agree"],
         "conflict": result["conflict"],
         "reverification_required": result["reverification_required"],
+        "comparison_count": result.get("comparison_count", len(result.get("comparisons") or [])),
     }, ensure_ascii=False))
     return 0
 
