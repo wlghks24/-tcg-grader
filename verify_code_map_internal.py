@@ -41,7 +41,7 @@ REQUIRED_TEXT = {
         "run_graphify update . --no-cluster",
         "run_graphify update . --force --no-cluster",
         "run_graphify cluster-only . --no-label --exclude-hubs 99",
-        "python "$AUDIT_SCRIPT" --strict",
+        'python "$AUDIT_SCRIPT" --strict',
         "GRAPHIFY_DISABLE_SELF_HEAL",
     ),
     "SETUP_GRAPHIFY_TERMUX.sh": (
