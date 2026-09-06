@@ -102,9 +102,64 @@ class PerformanceRuntimeTests(unittest.TestCase):
             self.assertEqual(canonical["summary"]["by_domain"], optimized["summary"]["by_domain"])
             self.assertEqual(canonical["summary"]["critical_high"], optimized["summary"]["critical_high"])
             for left, right in zip(canonical["incidents"], optimized["incidents"]):
-                for key in ("incident_id", "domain", "severity", "impact_priority", "status", "path", "error_type"):
+                for key in ("incident_id", "domain", "severity", "impact_priority", "status", "path", "error_type", "message"):
                     self.assertEqual(left[key], right[key])
                 self.assertEqual(left["code_map"]["map_signature"], right["code_map"]["map_signature"])
+
+    def test_feature_extraction_matches_canonical_helpers_on_mixed_inputs(self):
+        events = [
+            {"message": "Termux tablet reboot autostart failed", "path": "START_TCG_UPDATER_ANDROID.sh"},
+            {"message": "KRW price collector 429 source failed", "path": "collector.py"},
+            {"message": "GitHub Actions CI syntax test failed", "stage": "CI", "path": "x.py"},
+            {"domain": "market", "severity": "critical", "message": "tablet wording must not override explicit domain"},
+            {"stage": "X", "path": "a.py", "message": "token=abc https://example.com/x"},
+            {"evidence": "timeout error", "source": "network"},
+        ]
+        for event in events:
+            features = fast._features(event)
+            domain = fast._domain_from_features(features)
+            severity = fast._severity_from_features(features)
+            iid = fast._fingerprint_from_features(features, domain)
+            self.assertEqual(domain, tracker.classify_domain(event))
+            self.assertEqual(severity, tracker.severity_for(event))
+            self.assertEqual(iid, tracker.fingerprint(event, domain))
+
+    def test_hot_path_does_not_reinvoke_canonical_domain_severity_or_fingerprint_helpers(self):
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            _write_graph(root)
+            events = [
+                {"path": "collector.py", "message": f"429 rate limit {i}"}
+                for i in range(40)
+            ]
+            with mock.patch.object(tracker, "classify_domain", side_effect=AssertionError("domain rescan")), \
+                 mock.patch.object(tracker, "severity_for", side_effect=AssertionError("severity rescan")), \
+                 mock.patch.object(tracker, "fingerprint", side_effect=AssertionError("fingerprint reclean")):
+                out = fast.observe(events, state_path=root / "state.json", dry_run=True, code_map_root=root)
+            self.assertEqual(out["summary"]["observed"], 40)
+            perf = out["summary"]["performance"]
+            self.assertEqual(perf["event_feature_extraction"], "single_pass")
+            self.assertFalse(perf["domain_rescan"])
+            self.assertFalse(perf["severity_rescan"])
+            self.assertFalse(perf["fingerprint_reclean"])
+
+    def test_compact_code_map_is_reused_on_cache_hit(self):
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            _write_graph(root)
+            real_compact = fast.compact_context
+            calls = {"n": 0}
+
+            def counted(value):
+                calls["n"] += 1
+                return real_compact(value)
+
+            events = [{"path": "collector.py", "message": f"error {i}"} for i in range(25)]
+            with mock.patch.object(fast, "compact_context", side_effect=counted):
+                out = fast.observe(events, state_path=root / "state.json", dry_run=True, code_map_root=root)
+            self.assertEqual(calls["n"], 1)
+            self.assertEqual(out["summary"]["performance"]["code_map_cache_hits"], 24)
+            self.assertFalse(out["summary"]["performance"]["compact_code_map_rebuild_on_hit"])
 
     def test_state_occurrence_semantics_are_preserved(self):
         with tempfile.TemporaryDirectory() as td:
@@ -133,6 +188,7 @@ class PerformanceRuntimeTests(unittest.TestCase):
             )
             perf = out["summary"]["performance"]
             self.assertEqual(perf["code_map_cache_hits"], 1)
+            self.assertEqual(perf["mode"], "cached_hot_path_v2")
             self.assertTrue(out["safety"]["performance_cache_run_scoped_only"])
             self.assertTrue(out["intelligence"]["safety"]["run_scoped_performance_cache"])
             self.assertFalse(out["intelligence"]["safety"]["cross_domain_state_merge"])

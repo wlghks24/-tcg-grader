@@ -78,7 +78,7 @@ jobs:
         run: python selfrefine_domain_boundary_guard.py
       - name: Integrated dry-run health check
         run: python ai_intelligence_pipeline.py --dry-run
-      - name: Performance cache contract
+      - name: Performance cache and feature contract
         run: |
           python - <<'PY'
           import tempfile
@@ -91,12 +91,16 @@ jobs:
           with tempfile.TemporaryDirectory() as td:
               out = p.observe(events, state_path=Path(td)/'state.json', dry_run=True)
           perf = out['summary']['performance']
+          assert perf['mode'] == 'cached_hot_path_v2'
           assert perf['unique_code_map_paths'] == 1
           assert perf['code_map_cache_hits'] == 49
-          assert perf['event_field_normalization'] == 'single_pass'
-          assert perf['duplicate_severity_handoff_scan'] is False
+          assert perf['event_feature_extraction'] == 'single_pass'
+          assert perf['domain_rescan'] is False
+          assert perf['severity_rescan'] is False
+          assert perf['fingerprint_reclean'] is False
+          assert perf['compact_code_map_rebuild_on_hit'] is False
           assert out['safety']['performance_cache_run_scoped_only'] is True
-          print('AI performance cache contract: OK')
+          print('AI performance v2 contract: OK')
           PY
       - name: Safety contract audit
         run: |
