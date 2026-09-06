@@ -74,7 +74,7 @@ def run(main_path: Path | None, instagram_path: Path | None) -> dict[str, Any]:
 
 def self_test() -> None:
     base = {
-        "information_family": "market_price",
+        "information_family": "card_price",
         "canonical_key": "pokemon|pikachu|001|jp",
         "value": "10000",
         "currency": "JPY",
