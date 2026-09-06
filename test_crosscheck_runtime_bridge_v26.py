@@ -1,4 +1,6 @@
 #!/usr/bin/env python3
+import datetime as dt
+import json
 import tempfile
 import unittest
 from pathlib import Path
@@ -19,6 +21,56 @@ BASE = {
     "confidence": 0.99,
     "lineage_key": "main-release-lineage",
 }
+NOW = dt.datetime(2026, 9, 6, 0, 0, tzinfo=dt.timezone.utc)
+
+
+def persisted_snapshot(
+    namespace: str,
+    *,
+    status: str = "finalized",
+    finalized_at: str = "2026-09-06T06:10:00+09:00",
+    observed_at: str = "2026-09-06T06:00:00+09:00",
+    factual_type: str = "release",
+    value: str = "2026-09-16",
+    verification_status: str = "verified",
+    lineage: str = "release-lineage",
+):
+    return {
+        "schema_version": "1.0",
+        "namespace": namespace,
+        "snapshot_kind": "factual",
+        "run_date_kst": "2026-09-06",
+        "status": status,
+        "built_at": "2026-09-06T06:00:00+09:00",
+        "finalized_at": finalized_at if status == "finalized" else None,
+        "facts": [{
+            "canonical_key": "pokemon|30th-celebration|jp",
+            "fact_type": factual_type,
+            "lineage_key": lineage,
+            "identity": {"game": "pokemon", "product": "30th-celebration"},
+            "value": value,
+            "value_type": "date",
+            "currency": "",
+            "region": "JP",
+            "language": "JP",
+            "condition": "",
+            "grade_company": "",
+            "grade": "",
+            "effective_date": value,
+            "observed_at": observed_at,
+            "source_role": "official_primary",
+            "source_locator": "https://example.invalid/fact",
+            "verification_status": verification_status,
+        }],
+        "validation": {
+            "manifest_validated": True,
+            "allowed_fields_only": True,
+            "exact_factual_types_enforced": True,
+            "write_readback_verified": True,
+            "isolation_breach": False,
+        },
+        "error_code": None,
+    }
 
 
 class CrosscheckRuntimeBridgeTests(unittest.TestCase):
@@ -77,74 +129,9 @@ class CrosscheckRuntimeBridgeTests(unittest.TestCase):
             paths = self._paths(root)
             result = run_bridge([BASE], [], **paths)
             self.assertEqual(result["status"], "snapshot_missing")
-            self.assertTrue(result["engine_available"])
             self.assertFalse(result["operational_ready"])
             self.assertFalse(paths["main_output"].exists())
             self.assertFalse(paths["instagram_output"].exists())
-
-    def test_persisted_snapshots_feed_runtime_and_purge_stale_outputs(self):
-        exchange = Path("crosscheck_exchange")
-        exchange.mkdir(exist_ok=True)
-        with tempfile.TemporaryDirectory(dir=exchange) as td:
-            root = Path(td)
-            main_snapshot = root / "persisted-main.json"
-            instagram_snapshot = root / "persisted-instagram.json"
-            main_snapshot.write_text(
-                '{"namespace":"MARKET_ANALYSIS","snapshot_kind":"factual","status":"finalized","facts":[{"fact_type":"release","canonical_key":"pokemon|30th-celebration|jp","lineage_key":"pmain","value":"2026-09-16","language":"JP","source_role":"official_primary","source_locator":"https://example.invalid/main-persisted","observed_at":"2026-09-06T06:00:00+09:00","verification_status":"verified"}]}',
-                encoding="utf-8",
-            )
-            instagram_snapshot.write_text(
-                '{"namespace":"IG_CARDINFO","snapshot_kind":"factual","status":"finalized","facts":[{"fact_type":"release","canonical_key":"pokemon|30th-celebration|jp","lineage_key":"pinstagram","value":"2026-09-16","language":"JP","source_role":"official_primary","source_locator":"https://example.invalid/instagram-persisted","observed_at":"2026-09-06T06:30:00+09:00","verification_status":"verified"}]}',
-                encoding="utf-8",
-            )
-            paths = self._paths(root)
-            result = run_from_persisted(
-                main_snapshot=main_snapshot,
-                instagram_snapshot=instagram_snapshot,
-                **paths,
-            )
-            self.assertTrue(result["operational_ready"])
-            self.assertEqual(result["agree"], 1)
-            self.assertEqual(result["persisted_main_status"], "finalized")
-            self.assertEqual(result["persisted_instagram_status"], "finalized")
-
-            instagram_snapshot.write_text(
-                '{"namespace":"IG_CARDINFO","snapshot_kind":"factual","status":"building","facts":[]}',
-                encoding="utf-8",
-            )
-            paths["main_output"].write_text("{}", encoding="utf-8")
-            paths["instagram_output"].write_text("{}", encoding="utf-8")
-            result = run_from_persisted(
-                main_snapshot=main_snapshot,
-                instagram_snapshot=instagram_snapshot,
-                **paths,
-            )
-            self.assertFalse(result["operational_ready"])
-            self.assertEqual(result["status"], "snapshot_missing")
-            self.assertFalse(paths["main_output"].exists())
-            self.assertFalse(paths["instagram_output"].exists())
-
-    def test_persisted_namespace_mismatch_fails_closed(self):
-        exchange = Path("crosscheck_exchange")
-        exchange.mkdir(exist_ok=True)
-        with tempfile.TemporaryDirectory(dir=exchange) as td:
-            root = Path(td)
-            main_snapshot = root / "persisted-main.json"
-            instagram_snapshot = root / "persisted-instagram.json"
-            main_snapshot.write_text(
-                '{"namespace":"IG_CARDINFO","snapshot_kind":"factual","status":"finalized","facts":[{"fact_type":"release","canonical_key":"x","lineage_key":"x","value":"x","source_role":"official","source_locator":"https://example.invalid/x","observed_at":"2026-09-06T06:00:00+09:00","verification_status":"verified"}]}',
-                encoding="utf-8",
-            )
-            instagram_snapshot.write_text(
-                '{"namespace":"IG_CARDINFO","snapshot_kind":"factual","status":"building","facts":[]}',
-                encoding="utf-8",
-            )
-            with self.assertRaises(ValueError):
-                run_from_persisted(
-                    main_snapshot=main_snapshot,
-                    instagram_snapshot=instagram_snapshot,
-                    **self._paths(root),
-                )
 
     def test_noncanonical_factual_type_fails_closed(self):
         exchange = Path("crosscheck_exchange")
@@ -156,6 +143,181 @@ class CrosscheckRuntimeBridgeTests(unittest.TestCase):
                     [{**BASE, "information_family": "market_price"}],
                     [{**BASE, "source_code": "instagram-source", "lineage_key": "ig"}],
                     **self._paths(root),
+                )
+
+    def test_finalized_fresh_persisted_snapshots_are_crosschecked(self):
+        exchange = Path("crosscheck_exchange")
+        exchange.mkdir(exist_ok=True)
+        with tempfile.TemporaryDirectory(dir=exchange) as td:
+            root = Path(td)
+            main = root / "main-persisted.json"
+            instagram = root / "instagram-persisted.json"
+            main.write_text(
+                json.dumps(persisted_snapshot("MARKET_ANALYSIS", lineage="main-release")),
+                encoding="utf-8",
+            )
+            instagram.write_text(
+                json.dumps(persisted_snapshot("IG_CARDINFO", lineage="ig-release")),
+                encoding="utf-8",
+            )
+            result = run_from_persisted(
+                main_snapshot=main,
+                instagram_snapshot=instagram,
+                **self._paths(root),
+                now=NOW,
+            )
+            self.assertTrue(result["operational_ready"])
+            self.assertEqual(result["status"], "crosschecked")
+            self.assertEqual(result["agree"], 1)
+            self.assertEqual(result["source_mode"], "persisted_tcg_crosscheck")
+
+    def test_building_or_missing_persisted_snapshot_is_unavailable(self):
+        exchange = Path("crosscheck_exchange")
+        exchange.mkdir(exist_ok=True)
+        with tempfile.TemporaryDirectory(dir=exchange) as td:
+            root = Path(td)
+            main = root / "main-persisted.json"
+            instagram = root / "instagram-persisted.json"
+            main.write_text(
+                json.dumps(persisted_snapshot("MARKET_ANALYSIS", status="building")),
+                encoding="utf-8",
+            )
+            paths = self._paths(root)
+            paths["main_output"].write_text("stale", encoding="utf-8")
+            paths["instagram_output"].write_text("stale", encoding="utf-8")
+            result = run_from_persisted(
+                main_snapshot=main,
+                instagram_snapshot=instagram,
+                **paths,
+                now=NOW,
+            )
+            self.assertEqual(result["status"], "snapshot_unavailable")
+            self.assertFalse(result["operational_ready"])
+            self.assertEqual(result["unavailable_reasons"]["main"], "not_finalized")
+            self.assertEqual(result["unavailable_reasons"]["instagram_content"], "missing")
+            self.assertFalse(paths["main_output"].exists())
+            self.assertFalse(paths["instagram_output"].exists())
+
+    def test_stale_snapshot_and_stale_verified_fact_are_not_current(self):
+        exchange = Path("crosscheck_exchange")
+        exchange.mkdir(exist_ok=True)
+        with tempfile.TemporaryDirectory(dir=exchange) as td:
+            root = Path(td)
+            main = root / "main-persisted.json"
+            instagram = root / "instagram-persisted.json"
+            main.write_text(
+                json.dumps(
+                    persisted_snapshot(
+                        "MARKET_ANALYSIS",
+                        finalized_at="2026-09-01T06:10:00+09:00",
+                    )
+                ),
+                encoding="utf-8",
+            )
+            instagram.write_text(
+                json.dumps(persisted_snapshot("IG_CARDINFO")),
+                encoding="utf-8",
+            )
+            result = run_from_persisted(
+                main_snapshot=main,
+                instagram_snapshot=instagram,
+                **self._paths(root),
+                now=NOW,
+            )
+            self.assertFalse(result["operational_ready"])
+            self.assertEqual(result["unavailable_reasons"]["main"], "stale_snapshot")
+
+            main.write_text(
+                json.dumps(
+                    persisted_snapshot(
+                        "MARKET_ANALYSIS",
+                        observed_at="2026-09-01T06:00:00+09:00",
+                    )
+                ),
+                encoding="utf-8",
+            )
+            result = run_from_persisted(
+                main_snapshot=main,
+                instagram_snapshot=instagram,
+                **self._paths(root),
+                now=NOW,
+            )
+            self.assertFalse(result["operational_ready"])
+            self.assertEqual(
+                result["unavailable_reasons"]["main"],
+                "no_fresh_verified_facts",
+            )
+
+    def test_unverified_persisted_fact_is_not_promoted(self):
+        exchange = Path("crosscheck_exchange")
+        exchange.mkdir(exist_ok=True)
+        with tempfile.TemporaryDirectory(dir=exchange) as td:
+            root = Path(td)
+            main = root / "main-persisted.json"
+            instagram = root / "instagram-persisted.json"
+            main.write_text(
+                json.dumps(
+                    persisted_snapshot(
+                        "MARKET_ANALYSIS",
+                        verification_status="unverified",
+                    )
+                ),
+                encoding="utf-8",
+            )
+            instagram.write_text(
+                json.dumps(persisted_snapshot("IG_CARDINFO")),
+                encoding="utf-8",
+            )
+            result = run_from_persisted(
+                main_snapshot=main,
+                instagram_snapshot=instagram,
+                **self._paths(root),
+                now=NOW,
+            )
+            self.assertFalse(result["operational_ready"])
+            self.assertEqual(
+                result["unavailable_reasons"]["main"],
+                "no_fresh_verified_facts",
+            )
+
+    def test_persisted_namespace_or_type_mismatch_fails_closed(self):
+        exchange = Path("crosscheck_exchange")
+        exchange.mkdir(exist_ok=True)
+        with tempfile.TemporaryDirectory(dir=exchange) as td:
+            root = Path(td)
+            main = root / "main-persisted.json"
+            instagram = root / "instagram-persisted.json"
+            main.write_text(
+                json.dumps(persisted_snapshot("IG_CARDINFO")),
+                encoding="utf-8",
+            )
+            instagram.write_text(
+                json.dumps(persisted_snapshot("IG_CARDINFO")),
+                encoding="utf-8",
+            )
+            with self.assertRaises(ValueError):
+                run_from_persisted(
+                    main_snapshot=main,
+                    instagram_snapshot=instagram,
+                    **self._paths(root),
+                    now=NOW,
+                )
+
+            main.write_text(
+                json.dumps(
+                    persisted_snapshot(
+                        "MARKET_ANALYSIS",
+                        factual_type="market_price",
+                    )
+                ),
+                encoding="utf-8",
+            )
+            with self.assertRaises(ValueError):
+                run_from_persisted(
+                    main_snapshot=main,
+                    instagram_snapshot=instagram,
+                    **self._paths(root),
+                    now=NOW,
                 )
 
 
