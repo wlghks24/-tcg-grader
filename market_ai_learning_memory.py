@@ -55,11 +55,17 @@ class CalibrationReport:
         }
 
 
-def _finite(value: Any) -> bool:
+def _finite_float(value: Any) -> float | None:
+    """Return one validated float conversion so callers do not convert twice."""
     try:
-        return math.isfinite(float(value))
+        converted = float(value)
     except (TypeError, ValueError):
-        return False
+        return None
+    return converted if math.isfinite(converted) else None
+
+
+def _finite(value: Any) -> bool:
+    return _finite_float(value) is not None
 
 
 def _clamp01(value: float) -> float:
@@ -74,9 +80,9 @@ def verified_only(outcomes: Iterable[VerifiedOutcome]) -> list[VerifiedOutcome]:
             continue
         if not row.key.strip():
             continue
-        if not (_finite(row.predicted_value) and _finite(row.observed_value)):
+        if _finite_float(row.predicted_value) is None or _finite_float(row.observed_value) is None:
             continue
-        if not _finite(row.predicted_confidence):
+        if _finite_float(row.predicted_confidence) is None:
             continue
         clean.append(row)
     return clean
@@ -88,10 +94,39 @@ def calibration_report(
     relative_tolerance: float = 0.10,
     min_samples: int = 5,
 ) -> CalibrationReport:
-    rows = verified_only(outcomes)
-    if len(rows) < max(1, int(min_samples)):
+    """Compute verified calibration metrics in one pass with bounded memory.
+
+    Older code materialized the verified rows and four additional metric lists.
+    This streaming form preserves the same fail-closed semantics while keeping
+    additional memory constant as verified history grows.
+    """
+    tolerance = max(0.0, float(relative_tolerance))
+    sample_count = 0
+    sum_abs_error = 0.0
+    sum_ape = 0.0
+    sum_correct = 0.0
+    sum_confidence = 0.0
+
+    for row in outcomes:
+        if not row.verified or not row.key.strip():
+            continue
+        pred = _finite_float(row.predicted_value)
+        obs = _finite_float(row.observed_value)
+        confidence = _finite_float(row.predicted_confidence)
+        if pred is None or obs is None or confidence is None:
+            continue
+
+        err = abs(pred - obs)
+        rel = err / max(abs(obs), 1e-12)
+        sample_count += 1
+        sum_abs_error += err
+        sum_ape += rel
+        sum_correct += 1.0 if rel <= tolerance else 0.0
+        sum_confidence += _clamp01(confidence)
+
+    if sample_count < max(1, int(min_samples)):
         return CalibrationReport(
-            sample_count=len(rows),
+            sample_count=sample_count,
             mae=None,
             mape=None,
             mean_confidence=None,
@@ -102,27 +137,11 @@ def calibration_report(
             reason_codes=("VERIFIED_SAMPLE_FLOOR_NOT_MET",),
         )
 
-    abs_errors: list[float] = []
-    ape: list[float] = []
-    correct: list[float] = []
-    confidences: list[float] = []
-    tolerance = max(0.0, float(relative_tolerance))
-
-    for row in rows:
-        pred = float(row.predicted_value)
-        obs = float(row.observed_value)
-        err = abs(pred - obs)
-        abs_errors.append(err)
-        denom = max(abs(obs), 1e-12)
-        rel = err / denom
-        ape.append(rel)
-        correct.append(1.0 if rel <= tolerance else 0.0)
-        confidences.append(_clamp01(float(row.predicted_confidence)))
-
-    mae = statistics.fmean(abs_errors)
-    mape = statistics.fmean(ape)
-    empirical = statistics.fmean(correct)
-    mean_conf = statistics.fmean(confidences)
+    inverse_count = 1.0 / sample_count
+    mae = sum_abs_error * inverse_count
+    mape = sum_ape * inverse_count
+    empirical = sum_correct * inverse_count
+    mean_conf = sum_confidence * inverse_count
     gap = mean_conf - empirical
 
     reasons: list[str] = []
@@ -143,7 +162,7 @@ def calibration_report(
         reasons.append("VERIFIED_HISTORY_WITHIN_BOUNDS")
 
     return CalibrationReport(
-        sample_count=len(rows),
+        sample_count=sample_count,
         mae=round(mae, 6),
         mape=round(mape, 6),
         mean_confidence=round(mean_conf, 6),
