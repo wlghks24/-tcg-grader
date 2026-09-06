@@ -127,6 +127,8 @@ def validate_production_record(record: dict[str, Any]) -> list[str]:
 
     run_kind = record.get("run_kind")
     baseline_id = record.get("baseline_id")
+    if run_kind == SCHEDULED_BASELINE_RUN_KIND and not baseline_id:
+        errors.append("10:30 scheduled run requires baseline_id")
     if run_kind != SCHEDULED_BASELINE_RUN_KIND and baseline_id:
         errors.append("non-10:30 run cannot create baseline_id")
 
@@ -134,15 +136,26 @@ def validate_production_record(record: dict[str, Any]) -> list[str]:
     artifact_hashes = record.get("artifact_hashes")
     dimensions = record.get("dimensions")
 
-    if not isinstance(payload_hashes, list) or len(payload_hashes) != EXPECTED_ARTIFACT_COUNT:
-        errors.append("payload_hashes must contain exactly 6 values")
-    if not isinstance(artifact_hashes, list) or len(artifact_hashes) != EXPECTED_ARTIFACT_COUNT:
-        errors.append("artifact_hashes must contain exactly 6 values")
+    if (
+        not isinstance(payload_hashes, list)
+        or len(payload_hashes) != EXPECTED_ARTIFACT_COUNT
+        or not all(isinstance(item, str) and item for item in payload_hashes)
+    ):
+        errors.append("payload_hashes must contain exactly 6 non-empty string values")
+    if (
+        not isinstance(artifact_hashes, list)
+        or len(artifact_hashes) != EXPECTED_ARTIFACT_COUNT
+        or not all(isinstance(item, str) and item for item in artifact_hashes)
+    ):
+        errors.append("artifact_hashes must contain exactly 6 non-empty string values")
     elif len(set(artifact_hashes)) != EXPECTED_ARTIFACT_COUNT:
         errors.append("artifact_hashes must be unique")
     if not isinstance(dimensions, list) or len(dimensions) != EXPECTED_ARTIFACT_COUNT:
         errors.append("dimensions must contain exactly 6 values")
-    elif any(list(item) != EXPECTED_DIMENSIONS for item in dimensions):
+    elif any(
+        not isinstance(item, (list, tuple)) or list(item) != EXPECTED_DIMENSIONS
+        for item in dimensions
+    ):
         errors.append("all artifacts must be 1080x1350")
 
     if not record.get("delivery_reference_status"):
