@@ -25,6 +25,9 @@ def good_routes():
             "preserve_provider_lineage": True,
             "dedupe_same_underlying_sale_lineage": True,
             "completed_sale_separate_from_market_reference": True,
+            "completed_sale_requires_explicit_lineage": True,
+            "completed_sale_requires_comparable_basis": True,
+            "production_state_corruption_fail_closed": True,
         },
         "provider_groups": {
             game: {
@@ -128,6 +131,18 @@ class DailyAuditTest(unittest.TestCase):
         self.assertGreater(report["summary"]["critical_findings"], 0)
         self.assertEqual(report["summary"]["status"], "fail_closed")
         self.assertFalse(report["safety"]["403_429_bypass_allowed"])
+
+    def test_new_fail_closed_policy_regressions_are_critical(self):
+        for key in (
+            "completed_sale_requires_explicit_lineage",
+            "completed_sale_requires_comparable_basis",
+            "production_state_corruption_fail_closed",
+        ):
+            routes = good_routes()
+            routes["rules"][key] = False
+            report = self._report(routes=routes)
+            self.assertGreater(report["summary"]["critical_findings"], 0, key)
+            self.assertEqual(report["summary"]["status"], "fail_closed", key)
 
     def test_cross_domain_conflict_requires_reverification(self):
         exchange_root = Path("crosscheck_exchange")
