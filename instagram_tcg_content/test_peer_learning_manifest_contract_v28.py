@@ -44,6 +44,30 @@ class PeerLearningManifestContractV28Tests(unittest.TestCase):
             self.assertTrue(result["validation"]["write_readback_verified"])
             self.assertFalse(result["validation"]["learning_isolation_breach"])
 
+    def test_committed_instagram_learning_snapshot_uses_exact_contract(self):
+        path = Path("TCG_CROSSCHECK/IG_CARDINFO/learning_snapshot.json")
+        self.assertTrue(path.is_file(), "committed IG learning snapshot missing")
+        snapshot = json.loads(path.read_text(encoding="utf-8"))
+        self.assertEqual(snapshot["namespace"], "IG_CARDINFO")
+        self.assertEqual(snapshot["snapshot_kind"], "learning")
+        self.assertEqual(snapshot["status"], "finalized")
+        self.assertTrue(snapshot["lessons"])
+        for row in snapshot["lessons"]:
+            self.assertEqual(set(row), set(PEER_LEARNING_FIELDS))
+            self.assertNotIn("raw_log", row)
+            self.assertNotIn("parser_state", row)
+            self.assertNotIn("retry_queue", row)
+            self.assertNotIn("source_health", row)
+            self.assertNotIn("grading_raw", row)
+            self.assertNotIn("render_state", row)
+        validation = snapshot["validation"]
+        self.assertTrue(validation["manifest_validated"])
+        self.assertTrue(validation["learning_fields_only"])
+        self.assertEqual(validation["peer_prevention_rule_copy_count"], 0)
+        self.assertEqual(validation["raw_grading_share_count"], 0)
+        self.assertTrue(validation["write_readback_verified"])
+        self.assertFalse(validation["learning_isolation_breach"])
+
     def test_empty_learning_run_preserves_last_good(self):
         with tempfile.TemporaryDirectory() as td:
             output = Path(td) / "learning_snapshot.json"
