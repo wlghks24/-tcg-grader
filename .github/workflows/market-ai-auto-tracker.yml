@@ -1,6 +1,30 @@
 name: Market AI Auto Tracker
 
 on:
+  pull_request:
+    paths:
+      - 'market_ai_auto_tracker.py'
+      - 'market_ai_decision_engine.py'
+      - 'market_ai_learning_memory.py'
+      - 'ai_auto_tracker.py'
+      - 'code_map_intelligence.py'
+      - 'test_market_ai_auto_tracker.py'
+      - 'test_market_ai_decision_engine.py'
+      - 'test_market_ai_learning_memory.py'
+      - 'GRAPHIFY_UPDATE.sh'
+      - 'GRAPHIFY_AUDIT.py'
+      - '.graphifyignore'
+      - 'multi_market_price_collector.py'
+      - 'multi_market_prices.js'
+      - 'multi_market_prices.css'
+      - 'market_prices.json'
+      - 'market_watch.json'
+      - 'tcg_updater.py'
+      - 'index.html'
+      - 'main_selfrefine_gate.py'
+      - 'selfrefine_*.py'
+      - 'verified_code_repair_rules.py'
+      - '.github/workflows/market-ai-auto-tracker.yml'
   push:
     branches: [main]
     paths:
@@ -53,6 +77,40 @@ jobs:
         uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97
         with:
           python-version: '3.11'
+
+      - name: Restore verified code-map learning from previous successful run
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          rm -rf /tmp/market-ai-previous /tmp/market-ai-previous.zip
+          mkdir -p /tmp/market-ai-previous
+
+          prior_run_id="$(gh api             "repos/${GITHUB_REPOSITORY}/actions/workflows/market-ai-auto-tracker.yml/runs?branch=main&status=success&per_page=20"             --jq '.workflow_runs[0].id // empty' 2>/dev/null || true)"
+
+          if [ -z "$prior_run_id" ]; then
+            echo "[CodeMap] previous successful workflow run not found; starting with empty verified learning"
+            exit 0
+          fi
+
+          artifact_id="$(gh api             "repos/${GITHUB_REPOSITORY}/actions/runs/${prior_run_id}/artifacts?per_page=100"             --jq '.artifacts[] | select(.name == "market-ai-auto-tracker" and .expired == false) | .id'             2>/dev/null | head -n 1 || true)"
+
+          if [ -z "$artifact_id" ]; then
+            echo "[CodeMap] previous tracker artifact not found; starting with empty verified learning"
+            exit 0
+          fi
+
+          curl -fsSL             -H "Authorization: Bearer ${GH_TOKEN}"             -H 'Accept: application/vnd.github+json'             -H 'X-GitHub-Api-Version: 2026-03-10'             "https://api.github.com/repos/${GITHUB_REPOSITORY}/actions/artifacts/${artifact_id}/zip"             -o /tmp/market-ai-previous.zip
+          unzip -q /tmp/market-ai-previous.zip -d /tmp/market-ai-previous
+
+          previous_state="$(find /tmp/market-ai-previous -type f -name MARKET_AI_TRACKER_STATE.json -print -quit)"
+          if [ -z "$previous_state" ]; then
+            echo "[CodeMap] artifact has no state file; starting with empty verified learning"
+            exit 0
+          fi
+
+          python market_ai_auto_tracker.py             --restore-code-map-learning-from "$previous_state"
 
       - name: Build audited Graphify code map for impact analysis
         env:
@@ -176,6 +234,7 @@ jobs:
             echo "- peer verified auto-promotion: disabled"
             echo "- completed-sale/market-reference promotion: blocked"
             echo "- code-map learning: pending first, promoted only after full regression + safe diff"
+            echo "- code-map learning persistence: previous verified state restored when available; pending state never restored"
             echo "- code-map self-correction: repeated verified misses become bounded impact overlays"
             echo "- code-map confidence: calibrated downward when verified prediction hit-rate is weak"
             echo "- code-map generations: old overlays are disabled until re-verified on the new map"
