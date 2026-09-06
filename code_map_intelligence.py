@@ -113,6 +113,13 @@ def _is_test_path(path: str) -> bool:
     )
 
 
+def _trigrams(value: str) -> tuple[str, ...]:
+    text = str(value or "").strip().lower()
+    if len(text) < 3:
+        return ()
+    return tuple(sorted({text[index:index + 3] for index in range(len(text) - 2)}))
+
+
 def _is_critical_runtime(path: str) -> bool:
     value = _norm(path)
     lower = value.lower()
@@ -201,6 +208,10 @@ class CodeMapIndex:
         self.ids_by_path: dict[str, list[str]] = {}
         self.ids_by_basename: dict[str, list[str]] = {}
         self.test_paths: list[str] = []
+        self.test_name_lower: dict[str, str] = {}
+        self.test_paths_by_trigram: dict[str, tuple[str, ...]] = {}
+        self.test_path_set: set[str] = set()
+        self.critical_path_set: set[str] = set()
         self.adjacency: dict[str, set[str]] = {}
         self.sorted_adjacency: dict[str, tuple[str, ...]] = {}
         self.degree: Counter[str] = Counter()
@@ -239,6 +250,21 @@ class CodeMapIndex:
                     self.test_paths.append(path)
 
         self.test_paths = sorted(set(self.test_paths))
+        self.test_path_set = set(self.test_paths)
+        trigram_rows: dict[str, list[str]] = {}
+        for path in self.test_paths:
+            name = Path(path).name.lower()
+            self.test_name_lower[path] = name
+            for trigram in _trigrams(name):
+                trigram_rows.setdefault(trigram, []).append(path)
+        self.test_paths_by_trigram = {
+            trigram: tuple(paths)
+            for trigram, paths in trigram_rows.items()
+        }
+        self.critical_path_set = {
+            path for path in set(self.path_by_id.values())
+            if _is_critical_runtime(path)
+        }
 
         for link in self.links:
             source = _endpoint(link.get("source"))
@@ -279,6 +305,26 @@ class CodeMapIndex:
             if _matches(origin_norm, self.path_by_id.get(nid, ""))
         ]
         return matched[:MAX_MATCHED_NODES]
+
+    def _heuristic_test_matches(self, stem: str) -> tuple[list[str], int, bool]:
+        clean = str(stem or "").strip().lower()
+        if not clean:
+            return [], 0, False
+        indexed = len(clean) >= 3
+        if indexed:
+            grams = _trigrams(clean)
+            candidate_groups = [
+                self.test_paths_by_trigram.get(trigram, ())
+                for trigram in grams
+            ]
+            candidates = min(candidate_groups, key=len, default=())
+        else:
+            candidates = self.test_paths
+        matched = [
+            path for path in candidates
+            if clean in self.test_name_lower.get(path, "")
+        ]
+        return matched, len(candidates), indexed
 
     def _freshness(self, origin: str) -> tuple[str, float]:
         if not self.available:
@@ -452,15 +498,17 @@ class CodeMapIndex:
             degree = int(meta["max_degree"])
             base = 1.0 if dist == 0 else 1.0 / (1.0 + dist)
             hub_penalty = 1.0 / (1.0 + math.log2(degree + 1) / 8.0)
-            critical_bonus = 0.22 if _is_critical_runtime(path) else 0.0
+            critical_runtime = path in self.critical_path_set
+            test_file = path in self.test_path_set
+            critical_bonus = 0.22 if critical_runtime else 0.0
             learned_bonus = 0.0
             if max_learned and path in learned_counts:
                 learned_bonus = 0.35 * (learned_counts[path] / max_learned)
             origin_bonus = 1.0 if _matches(origin, path) else 0.0
             score = origin_bonus + base * hub_penalty + critical_bonus + learned_bonus
             meta["score"] = round(score, 4)
-            meta["critical_runtime"] = _is_critical_runtime(path)
-            meta["test_file"] = _is_test_path(path)
+            meta["critical_runtime"] = critical_runtime
+            meta["test_file"] = test_file
             meta["verified_history_count"] = learned_counts.get(path, 0)
             ranked.append((score, path, meta))
 
@@ -472,12 +520,13 @@ class CodeMapIndex:
         production = [path for _, path, meta in ranked if not meta["test_file"]]
         tests = [path for _, path, meta in ranked if meta["test_file"]]
 
+        heuristic_test_candidates = 0
+        heuristic_test_indexed = False
         if len(tests) < MAX_SUGGESTED_TESTS and origin:
             stem = Path(origin).stem.lower()
-            heuristic = [
-                path for path in self.test_paths
-                if stem and stem in Path(path).name.lower()
-            ]
+            heuristic, heuristic_test_candidates, heuristic_test_indexed = (
+                self._heuristic_test_matches(stem)
+            )
             for path in heuristic:
                 if path not in tests:
                     tests.append(path)
@@ -527,7 +576,10 @@ class CodeMapIndex:
             if path not in impacted_files
         ][:8]
 
-        critical_touches = [path for path in impacted_files if _is_critical_runtime(path)]
+        critical_touches = [
+            path for path in impacted_files
+            if path in self.critical_path_set or _is_critical_runtime(path)
+        ]
         fanout = len(file_meta)
         origin_degrees = [self.degree.get(nid, 0) for nid in matched]
         origin_hub_degree = max(origin_degrees, default=0)
@@ -608,6 +660,9 @@ class CodeMapIndex:
             ),
             "learning_confidence_factor": calibration_factor,
             "self_correction_applied": bool(learned_overlay),
+            "heuristic_test_candidates": heuristic_test_candidates,
+            "heuristic_test_total": len(self.test_paths),
+            "heuristic_test_indexed": heuristic_test_indexed,
             "index_cache_hit": False,
             "read_only": True,
         }
