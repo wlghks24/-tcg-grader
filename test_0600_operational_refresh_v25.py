@@ -213,6 +213,33 @@ class Operational0600RefreshV25Tests(unittest.TestCase):
         self.assertIn("future-dated {label} health", text)
         self.assertIn("if: ${{ !cancelled() }}", text)
         self.assertIn("timeout-minutes: 30", text)
+        self.assertIn("Validate Main snapshot handoff", text)
+        self.assertIn("Upload verified Main snapshot handoff", text)
+        self.assertIn("name: main-crosscheck-snapshot", text)
+        self.assertIn("TCG_CROSSCHECK/MARKET_ANALYSIS/factual_snapshot.json", text)
+        self.assertEqual(text.count("contents: write"), 0)
+        self.assertNotIn("git push origin HEAD:main", text)
+
+    def test_main_snapshot_writer_is_trusted_workflow_run_only(self):
+        text = Path(".github/workflows/persist-main-crosscheck-snapshot.yml").read_text(
+            encoding="utf-8"
+        )
+        self.assertIn("workflow_run:", text)
+        self.assertIn("Daily 06:00 Collection ↔ Instagram Accuracy Audit", text)
+        self.assertNotIn("pull_request:", text)
+        self.assertIn("head_branch == 'main'", text)
+        self.assertIn("head_repository.full_name == github.repository", text)
+        self.assertIn("workflow_run.event == 'schedule'", text)
+        self.assertIn("workflow_run.event == 'workflow_dispatch'", text)
+        self.assertIn("workflow_run.event == 'push'", text)
+        self.assertIn("actions: read", text)
+        self.assertIn("contents: write", text)
+        self.assertIn("main-crosscheck-snapshot", text)
+        self.assertIn("MAX_ZIP_BYTES = 2_000_000", text)
+        self.assertIn("stale_snapshot_suppressed", text)
+        self.assertIn("TCG_CROSSCHECK/MARKET_ANALYSIS/factual_snapshot.json", text)
+        self.assertIn("[skip ci]", text)
+        self.assertNotIn("git push origin HEAD:main", text)
 
 
 if __name__ == "__main__":

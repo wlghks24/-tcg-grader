@@ -1,0 +1,215 @@
+name: Persist Main Crosscheck Snapshot
+
+on:
+  workflow_run:
+    workflows:
+      - 'Daily 06:00 Collection ↔ Instagram Accuracy Audit'
+    types: [completed]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: persist-main-crosscheck-snapshot
+  cancel-in-progress: false
+
+jobs:
+  persist:
+    if: >-
+      github.event.workflow_run.conclusion == 'success' &&
+      github.event.workflow_run.head_branch == 'main' &&
+      github.event.workflow_run.head_repository.full_name == github.repository &&
+      (
+        github.event.workflow_run.event == 'schedule' ||
+        github.event.workflow_run.event == 'workflow_dispatch' ||
+        github.event.workflow_run.event == 'push'
+      )
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    permissions:
+      actions: read
+      contents: write
+    env:
+      PYTHONDONTWRITEBYTECODE: '1'
+      PYTHONUNBUFFERED: '1'
+    steps:
+      - name: Persist trusted verified Main snapshot artifact
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPOSITORY: ${{ github.repository }}
+          SOURCE_RUN_ID: ${{ github.event.workflow_run.id }}
+        run: |
+          python - <<'PY'
+          import base64
+          import datetime as dt
+          import io
+          import json
+          import os
+          import pathlib
+          import urllib.error
+          import urllib.parse
+          import urllib.request
+          import zipfile
+
+          TARGET = 'TCG_CROSSCHECK/MARKET_ANALYSIS/factual_snapshot.json'
+          ARTIFACT_NAME = 'main-crosscheck-snapshot'
+          MAX_ZIP_BYTES = 2_000_000
+          MAX_JSON_BYTES = 1_000_000
+          MAX_FACTS = 250
+          ALLOWED_TYPES = {
+              'card_price', 'release', 'rerelease', 'promo',
+              'event', 'movie_bonus', 'completed_sale', 'market_reference',
+          }
+          EXPECTED_VALIDATION = {
+              'manifest_validated': True,
+              'allowed_fields_only': True,
+              'exact_factual_types_enforced': True,
+              'write_readback_verified': True,
+              'isolation_breach': False,
+          }
+
+          def parse_time(value):
+              if not value:
+                  return None
+              try:
+                  parsed = dt.datetime.fromisoformat(str(value).replace('Z', '+00:00'))
+              except ValueError:
+                  return None
+              return parsed if parsed.tzinfo is not None else None
+
+          repo = os.environ['REPOSITORY']
+          token = os.environ['GH_TOKEN']
+          run_id = os.environ['SOURCE_RUN_ID']
+          api = f'https://api.github.com/repos/{repo}'
+          headers = {
+              'Authorization': f'Bearer {token}',
+              'Accept': 'application/vnd.github+json',
+              'X-GitHub-Api-Version': '2022-11-28',
+              'User-Agent': 'tcg-crosscheck-snapshot-writer',
+          }
+
+          artifacts_url = f'{api}/actions/runs/{run_id}/artifacts?per_page=100'
+          with urllib.request.urlopen(urllib.request.Request(artifacts_url, headers=headers), timeout=20) as response:
+              artifact_page = json.load(response)
+          matches = [
+              row for row in (artifact_page.get('artifacts') or [])
+              if row.get('name') == ARTIFACT_NAME and not row.get('expired')
+          ]
+          if len(matches) != 1:
+              raise SystemExit(f'expected exactly one trusted snapshot artifact, found {len(matches)}')
+          artifact_id = matches[0].get('id')
+          if not isinstance(artifact_id, int):
+              raise SystemExit('snapshot artifact id missing')
+
+          class NoRedirect(urllib.request.HTTPRedirectHandler):
+              def redirect_request(self, req, fp, code, msg, headers_, newurl):
+                  return None
+
+          zip_endpoint = f'{api}/actions/artifacts/{artifact_id}/zip'
+          opener = urllib.request.build_opener(NoRedirect)
+          try:
+              opener.open(urllib.request.Request(zip_endpoint, headers=headers), timeout=20)
+              raise SystemExit('artifact download endpoint did not redirect')
+          except urllib.error.HTTPError as exc:
+              if exc.code not in {301, 302, 303, 307, 308}:
+                  raise
+              signed_url = exc.headers.get('Location')
+          if not signed_url or not signed_url.startswith('https://'):
+              raise SystemExit('artifact signed download URL missing or invalid')
+
+          with urllib.request.urlopen(signed_url, timeout=20) as response:
+              archive = response.read(MAX_ZIP_BYTES + 1)
+          if len(archive) > MAX_ZIP_BYTES:
+              raise SystemExit('snapshot artifact zip exceeds size limit')
+
+          with zipfile.ZipFile(io.BytesIO(archive)) as zf:
+              files = [info for info in zf.infolist() if not info.is_dir()]
+              if len(files) != 1:
+                  raise SystemExit(f'snapshot artifact must contain exactly one file, found {len(files)}')
+              info = files[0]
+              posix = pathlib.PurePosixPath(info.filename)
+              if posix.is_absolute() or '..' in posix.parts or posix.name != 'factual_snapshot.json':
+                  raise SystemExit('snapshot artifact contains unexpected path')
+              if info.file_size <= 0 or info.file_size > MAX_JSON_BYTES:
+                  raise SystemExit('snapshot JSON size is invalid')
+              raw = zf.read(info)
+
+          payload = json.loads(raw.decode('utf-8'))
+          validation = payload.get('validation')
+          facts = payload.get('facts')
+          finalized_at = parse_time(payload.get('finalized_at'))
+          if payload.get('schema_version') != '1.0':
+              raise SystemExit('unsupported snapshot schema_version')
+          if payload.get('namespace') != 'MARKET_ANALYSIS':
+              raise SystemExit('snapshot namespace mismatch')
+          if payload.get('snapshot_kind') != 'factual' or payload.get('status') != 'finalized':
+              raise SystemExit('snapshot is not finalized factual data')
+          if finalized_at is None:
+              raise SystemExit('snapshot finalized_at must be timezone-aware')
+          if not isinstance(validation, dict) or any(validation.get(k) is not v for k, v in EXPECTED_VALIDATION.items()):
+              raise SystemExit('snapshot validation contract mismatch')
+          if not isinstance(facts, list) or not facts or len(facts) > MAX_FACTS:
+              raise SystemExit('snapshot fact count is invalid')
+
+          for index, fact in enumerate(facts):
+              if not isinstance(fact, dict):
+                  raise SystemExit(f'fact #{index} is not an object')
+              if fact.get('fact_type') not in ALLOWED_TYPES:
+                  raise SystemExit(f'fact #{index} has unsupported factual type')
+              if str(fact.get('verification_status') or '').strip().lower() != 'verified':
+                  raise SystemExit(f'fact #{index} is not verified')
+              required = ('canonical_key', 'lineage_key', 'source_role', 'source_locator', 'observed_at')
+              if any(not str(fact.get(key) or '').strip() for key in required):
+                  raise SystemExit(f'fact #{index} is missing provenance')
+              if parse_time(fact.get('observed_at')) is None:
+                  raise SystemExit(f'fact #{index} observed_at must be timezone-aware')
+
+          encoded_target = urllib.parse.quote(TARGET, safe='/')
+          contents_url = f'{api}/contents/{encoded_target}?ref=main'
+          current_req = urllib.request.Request(contents_url, headers=headers)
+          with urllib.request.urlopen(current_req, timeout=20) as response:
+              current = json.load(response)
+          current_raw = base64.b64decode(current.get('content') or '')
+          if current_raw.rstrip() == raw.rstrip():
+              print(json.dumps({'status': 'unchanged', 'path': TARGET}, ensure_ascii=False))
+              raise SystemExit(0)
+
+          try:
+              current_payload = json.loads(current_raw.decode('utf-8'))
+          except (UnicodeDecodeError, json.JSONDecodeError):
+              current_payload = {}
+          current_finalized = parse_time(current_payload.get('finalized_at'))
+          if (
+              current_payload.get('namespace') == 'MARKET_ANALYSIS'
+              and current_payload.get('status') == 'finalized'
+              and current_finalized is not None
+              and current_finalized >= finalized_at
+          ):
+              print(json.dumps({
+                  'status': 'stale_snapshot_suppressed',
+                  'incoming_finalized_at': finalized_at.isoformat(),
+                  'current_finalized_at': current_finalized.isoformat(),
+              }, ensure_ascii=False))
+              raise SystemExit(0)
+
+          body = json.dumps({
+              'message': 'CROSSCHECK: persist verified Main factual snapshot [skip ci]',
+              'content': base64.b64encode(raw.rstrip() + b'\n').decode('ascii'),
+              'sha': current['sha'],
+              'branch': 'main',
+          }).encode('utf-8')
+          put_url = contents_url.split('?ref=main')[0]
+          put_headers = {**headers, 'Content-Type': 'application/json'}
+          with urllib.request.urlopen(
+              urllib.request.Request(put_url, data=body, headers=put_headers, method='PUT'),
+              timeout=20,
+          ) as response:
+              result = json.load(response)
+          print(json.dumps({
+              'status': 'persisted',
+              'path': TARGET,
+              'fact_count': len(facts),
+              'finalized_at': finalized_at.isoformat(),
+              'commit': (result.get('commit') or {}).get('sha'),
+          }, ensure_ascii=False))
+          PY

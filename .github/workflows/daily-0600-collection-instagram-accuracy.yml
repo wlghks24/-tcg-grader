@@ -208,6 +208,46 @@ jobs:
         if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch' || github.event_name == 'push'
         run: python main_persisted_crosscheck_export.py --releases releases.json
 
+      - name: Validate Main snapshot handoff
+        id: main_snapshot_payload
+        if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch' || github.event_name == 'push'
+        run: |
+          python - <<'PY'
+          import json
+          import os
+          from pathlib import Path
+
+          path = Path('TCG_CROSSCHECK/MARKET_ANALYSIS/factual_snapshot.json')
+          payload = json.loads(path.read_text(encoding='utf-8'))
+          validation = payload.get('validation') or {}
+          ready = (
+              payload.get('namespace') == 'MARKET_ANALYSIS'
+              and payload.get('snapshot_kind') == 'factual'
+              and payload.get('status') == 'finalized'
+              and bool(payload.get('facts'))
+              and bool(payload.get('finalized_at'))
+              and validation.get('manifest_validated') is True
+              and validation.get('allowed_fields_only') is True
+              and validation.get('exact_factual_types_enforced') is True
+              and validation.get('write_readback_verified') is True
+              and validation.get('isolation_breach') is False
+          )
+          with open(os.environ['GITHUB_OUTPUT'], 'a', encoding='utf-8') as handle:
+              handle.write(f"ready={'true' if ready else 'false'}\n")
+          print(json.dumps({'ready': ready, 'fact_count': len(payload.get('facts') or [])}, ensure_ascii=False))
+          if not ready:
+              raise SystemExit('Main snapshot handoff is not finalized/validated')
+          PY
+
+      - name: Upload verified Main snapshot handoff
+        if: steps.main_snapshot_payload.outputs.ready == 'true'
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        with:
+          name: main-crosscheck-snapshot
+          path: TCG_CROSSCHECK/MARKET_ANALYSIS/factual_snapshot.json
+          if-no-files-found: error
+          retention-days: 2
+
       - name: Refresh passive factual runtime crosscheck from persisted snapshots
         run: |
           if [[ "${{ github.event_name }}" == "schedule" ]]; then
@@ -319,3 +359,4 @@ jobs:
           path: COLLECTION_INSTAGRAM_ACCURACY_REPORT.json
           if-no-files-found: error
           retention-days: 30
+
