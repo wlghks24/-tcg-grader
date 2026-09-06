@@ -9,6 +9,7 @@ from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from typing import Any
 
+from shared_self_learning.contracts import CANONICAL_FACTUAL_TYPES
 
 ROOT = Path(__file__).resolve().parents[1]
 DEFAULT_OUTPUT = ROOT / "TCG_CROSSCHECK" / "IG_CARDINFO" / "factual_snapshot.json"
@@ -29,7 +30,7 @@ FACT_TYPE_MAP = {
     "completed_sale": "completed_sale",
     "market_reference": "market_reference",
 }
-ALLOWED_FACTUAL_TYPES = set(FACT_TYPE_MAP.values())
+ALLOWED_FACTUAL_TYPES = set(CANONICAL_FACTUAL_TYPES)
 ALLOWED_OUTPUT_FIELDS = {
     "canonical_key",
     "fact_type",

@@ -655,8 +655,11 @@ def _exit_code(
     *,
     strict_policy: bool = False,
     fail_on_degraded: bool = False,
+    require_crosscheck_ready: bool = False,
 ) -> int:
     status = str((report.get("summary") or {}).get("status") or "")
+    if require_crosscheck_ready and not bool((report.get("cross_domain") or {}).get("operational_ready")):
+        return 1
     if strict_policy and status == "fail_closed":
         return 1
     if fail_on_degraded and status in {"degraded", "fail_closed"}:
@@ -682,6 +685,7 @@ def main() -> int:
     parser.add_argument("--now")
     parser.add_argument("--strict-policy", action="store_true")
     parser.add_argument("--fail-on-degraded", action="store_true")
+    parser.add_argument("--require-crosscheck-ready", action="store_true")
     args = parser.parse_args()
 
     now = _parse_time(args.now) if args.now else dt.datetime.now(dt.timezone.utc)
@@ -710,6 +714,7 @@ def main() -> int:
         report,
         strict_policy=args.strict_policy,
         fail_on_degraded=args.fail_on_degraded,
+        require_crosscheck_ready=args.require_crosscheck_ready,
     )
 
 

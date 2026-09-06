@@ -6,15 +6,11 @@ import json
 import tempfile
 from pathlib import Path
 
+from shared_self_learning.contracts import CANONICAL_FACTUAL_TYPES, assert_canonical_factual_type
 from shared_self_learning.engine import normalize_crosscheck_record
 
 ROOT = Path(__file__).resolve().parents[1]
 DEFAULT_OUTPUT = ROOT / "crosscheck_exchange" / "runtime-instagram.json"
-CANONICAL_FACTUAL_TYPES = {
-    "card_price", "release", "rerelease", "promo",
-    "event", "movie_bonus", "completed_sale", "market_reference",
-}
-
 
 def _write_json_atomic(path: Path, payload: dict) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
@@ -34,13 +30,11 @@ def _write_json_atomic(path: Path, payload: dict) -> None:
 
 
 def export_records(records: list[dict], output: Path = DEFAULT_OUTPUT) -> list[dict]:
-    invalid = sorted({
-        str(row.get("information_family") or "").strip()
-        for row in records
-        if str(row.get("information_family") or "").strip() not in CANONICAL_FACTUAL_TYPES
-    })
-    if invalid:
-        raise ValueError(f"unsupported factual types: {invalid}")
+    for index, row in enumerate(records):
+        assert_canonical_factual_type(
+            row.get("information_family"),
+            label=f"records[{index}].information_family",
+        )
     normalized = [normalize_crosscheck_record("instagram_content", row) for row in records]
     _write_json_atomic(output, {"domain": "instagram_content", "records": normalized})
     return normalized

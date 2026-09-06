@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 import json
+import datetime as dt
 import tempfile
 import unittest
 from pathlib import Path
@@ -162,6 +163,40 @@ class CrosscheckRuntimeBridgeTests(unittest.TestCase):
             self.assertEqual(result["status"], "snapshot_missing")
             self.assertFalse(paths["main_output"].exists())
             self.assertFalse(paths["instagram_output"].exists())
+
+    def test_stale_persisted_snapshot_is_not_current(self):
+        exchange = Path("crosscheck_exchange")
+        exchange.mkdir(exist_ok=True)
+        with tempfile.TemporaryDirectory(dir=exchange) as td:
+            root = Path(td)
+            facts = [{
+                "fact_type": "release",
+                "canonical_key": "pokemon|stale|jp",
+                "lineage_key": "stale",
+                "value": "2026-09-16",
+                "language": "JP",
+                "source_role": "official_primary",
+                "source_locator": "https://example.invalid/stale",
+                "observed_at": "2026-09-01T06:00:00+09:00",
+                "verification_status": "verified",
+            }]
+            main_snapshot = root / "main-persisted.json"
+            instagram_snapshot = root / "instagram-persisted.json"
+            stale = persisted_snapshot("MARKET_ANALYSIS", facts)
+            stale["finalized_at"] = "2026-09-01T06:01:00+09:00"
+            main_snapshot.write_text(json.dumps(stale), encoding="utf-8")
+            instagram_snapshot.write_text(
+                json.dumps(persisted_snapshot("IG_CARDINFO", facts)),
+                encoding="utf-8",
+            )
+            result = run_from_persisted(
+                main_snapshot=main_snapshot,
+                instagram_snapshot=instagram_snapshot,
+                now=dt.datetime(2026, 9, 6, 0, 0, tzinfo=dt.timezone.utc),
+                **self._paths(root),
+            )
+            self.assertFalse(result["operational_ready"])
+            self.assertEqual(result["persisted_main_status"], "stale")
 
     def test_persisted_namespace_mismatch_fails_closed(self):
         exchange = Path("crosscheck_exchange")

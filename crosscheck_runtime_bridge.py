@@ -10,6 +10,7 @@ from typing import Any
 
 from safe_runtime import atomic_write_json
 from selfrefine_crosscheck_gate import run as run_crosscheck
+from shared_self_learning.contracts import CANONICAL_FACTUAL_TYPES
 from shared_self_learning.engine import normalize_crosscheck_record
 
 ROOT = Path(__file__).resolve().parent
@@ -19,17 +20,7 @@ DEFAULT_INSTAGRAM_OUTPUT = EXCHANGE / "runtime-instagram.json"
 DEFAULT_REPORT = EXCHANGE / "runtime-crosscheck-report.json"
 PERSISTED_MAIN = ROOT / "TCG_CROSSCHECK" / "MARKET_ANALYSIS" / "factual_snapshot.json"
 PERSISTED_INSTAGRAM = ROOT / "TCG_CROSSCHECK" / "IG_CARDINFO" / "factual_snapshot.json"
-
-CANONICAL_FACTUAL_TYPES = {
-    "card_price",
-    "release",
-    "rerelease",
-    "promo",
-    "event",
-    "movie_bonus",
-    "completed_sale",
-    "market_reference",
-}
+MAX_PERSISTED_AGE_HOURS = 36.0
 
 
 def _manifest_fact_to_record(row: dict[str, Any]) -> dict[str, Any]:
@@ -85,7 +76,13 @@ def _parse_timezone_aware(value: Any) -> dt.datetime | None:
     return parsed if parsed.tzinfo is not None else None
 
 
-def _load_persisted_records(path: Path, expected_namespace: str) -> tuple[list[dict[str, Any]], str]:
+def _load_persisted_records(
+    path: Path,
+    expected_namespace: str,
+    *,
+    now: dt.datetime | None = None,
+    max_age_hours: float = MAX_PERSISTED_AGE_HOURS,
+) -> tuple[list[dict[str, Any]], str]:
     if not path.exists():
         return ([], "missing")
     value = json.loads(path.read_text(encoding="utf-8"))
@@ -102,8 +99,19 @@ def _load_persisted_records(path: Path, expected_namespace: str) -> tuple[list[d
     status = str(value.get("status") or "").strip()
     if status != "finalized":
         return ([], status or "unknown")
-    if _parse_timezone_aware(value.get("finalized_at")) is None:
+    finalized_at = _parse_timezone_aware(value.get("finalized_at"))
+    if finalized_at is None:
         raise ValueError(f"{path}: finalized snapshot requires timezone-aware finalized_at")
+    current = now or dt.datetime.now(dt.timezone.utc)
+    if current.tzinfo is None:
+        raise ValueError("now must be timezone-aware")
+    current = current.astimezone(dt.timezone.utc)
+    finalized_utc = finalized_at.astimezone(dt.timezone.utc)
+    finalized_age = (current - finalized_utc).total_seconds() / 3600.0
+    if finalized_age < -(5.0 / 60.0):
+        raise ValueError(f"{path}: finalized_at is more than 5 minutes in the future")
+    if finalized_age > max_age_hours:
+        return ([], "stale")
 
     validation = value.get("validation")
     if not isinstance(validation, dict):
@@ -149,11 +157,17 @@ def _load_persisted_records(path: Path, expected_namespace: str) -> tuple[list[d
         missing = sorted(key for key, item in required.items() if not item)
         if missing:
             raise ValueError(f"{path}: verified fact #{idx} missing provenance fields {missing}")
-        if _parse_timezone_aware(required["observed_at"]) is None:
+        observed_at = _parse_timezone_aware(required["observed_at"])
+        if observed_at is None:
             raise ValueError(f"{path}: verified fact #{idx} observed_at must be timezone-aware")
+        observed_age = (current - observed_at.astimezone(dt.timezone.utc)).total_seconds() / 3600.0
+        if observed_age < -(5.0 / 60.0):
+            raise ValueError(f"{path}: verified fact #{idx} observed_at is in the future")
+        if observed_age > max_age_hours:
+            continue
         verified.append(_manifest_fact_to_record(row))
     if not verified:
-        return ([], "finalized_no_verified")
+        return ([], "finalized_no_fresh_verified")
     return (verified, status)
 
 def _remove_stale_runtime_outputs(
@@ -242,10 +256,14 @@ def run_from_persisted(
     main_output: Path = DEFAULT_MAIN_OUTPUT,
     instagram_output: Path = DEFAULT_INSTAGRAM_OUTPUT,
     report_output: Path | None = DEFAULT_REPORT,
+    now: dt.datetime | None = None,
+    max_age_hours: float = MAX_PERSISTED_AGE_HOURS,
 ) -> dict[str, Any]:
-    main_records, main_status = _load_persisted_records(main_snapshot, "MARKET_ANALYSIS")
+    main_records, main_status = _load_persisted_records(
+        main_snapshot, "MARKET_ANALYSIS", now=now, max_age_hours=max_age_hours
+    )
     instagram_records, instagram_status = _load_persisted_records(
-        instagram_snapshot, "IG_CARDINFO"
+        instagram_snapshot, "IG_CARDINFO", now=now, max_age_hours=max_age_hours
     )
     result = run_bridge(
         main_records,
@@ -436,6 +454,8 @@ def main() -> int:
     parser.add_argument("--report", default=str(DEFAULT_REPORT))
     parser.add_argument("--self-test", action="store_true")
     parser.add_argument("--from-persisted", action="store_true")
+    parser.add_argument("--max-persisted-age-hours", type=float, default=MAX_PERSISTED_AGE_HOURS)
+    parser.add_argument("--allow-unready", action="store_true")
     args = parser.parse_args()
 
     if args.self_test:
@@ -446,6 +466,7 @@ def main() -> int:
             main_output=Path(args.main_output),
             instagram_output=Path(args.instagram_output),
             report_output=Path(args.report),
+            max_age_hours=args.max_persisted_age_hours,
         )
         print(json.dumps({
             "status": result["status"],
@@ -459,7 +480,7 @@ def main() -> int:
             "conflict": result["conflict"],
             "reverification_required": result["reverification_required"],
         }, ensure_ascii=False))
-        return 0
+        return 0 if result["operational_ready"] or args.allow_unready else 2
     if not args.main_input or not args.instagram_input:
         raise SystemExit("--main-input and --instagram-input are required")
 
