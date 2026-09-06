@@ -363,6 +363,8 @@ def audit_cross_domain(main_exchange: Path, instagram_exchange: Path) -> dict[st
             missing.append("instagram_content")
         return {
             "status": "snapshot_missing",
+            "engine_available": True,
+            "operational_ready": False,
             "missing_domains": missing,
             "agree": 0,
             "conflict": 0,
@@ -384,6 +386,8 @@ def audit_cross_domain(main_exchange: Path, instagram_exchange: Path) -> dict[st
         error_text = str(exc).replace("\n", " ")[:400]
         return {
             "status": "validation_error",
+            "engine_available": True,
+            "operational_ready": False,
             "main_records": 0,
             "instagram_records": 0,
             "agree": 0,
@@ -415,6 +419,8 @@ def audit_cross_domain(main_exchange: Path, instagram_exchange: Path) -> dict[st
         )
     return {
         "status": result.get("status"),
+        "engine_available": True,
+        "operational_ready": result.get("status") == "crosschecked",
         "main_records": result.get("main_records", 0),
         "instagram_records": result.get("instagram_records", 0),
         "agree": result.get("agree", 0),
