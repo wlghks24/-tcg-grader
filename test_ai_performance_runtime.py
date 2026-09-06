@@ -188,7 +188,11 @@ class PerformanceRuntimeTests(unittest.TestCase):
             )
             perf = out["summary"]["performance"]
             self.assertEqual(perf["code_map_cache_hits"], 1)
-            self.assertEqual(perf["mode"], "cached_hot_path_v5")
+            self.assertEqual(perf["mode"], "cached_hot_path_v6")
+            self.assertTrue(perf["map_index_build_outside_state_lock"])
+            self.assertTrue(perf["map_analysis_outside_state_lock"])
+            self.assertTrue(perf["selfrefine_outside_state_lock"])
+            self.assertEqual(perf["state_lock_scope"], "snapshot_and_commit_only")
             self.assertTrue(perf["feature_extraction_outside_state_lock"])
             self.assertTrue(perf["adaptive_code_map_depth"])
             self.assertTrue(perf["basename_indexed_code_map"])
@@ -399,6 +403,88 @@ class PerformanceRuntimeTests(unittest.TestCase):
             self.assertEqual(len(learned["impacted_files"]), 4)
             self.assertIn("learned_fix.py", learned["impacted_files"])
             self.assertIn("origin.py", learned["impacted_files"])
+
+    def test_expensive_map_work_runs_outside_state_lock(self):
+        from contextlib import contextmanager
+
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            _write_graph(root)
+            state = root / "state.json"
+            lock = {"held": False, "entries": 0}
+            original_lock = tracker.exclusive_file_lock
+            original_index = fast.CodeMapIndex
+            original_impact = fast.impact_context
+
+            @contextmanager
+            def tracked_lock(path, *args, **kwargs):
+                with original_lock(path, *args, **kwargs):
+                    lock["held"] = True
+                    lock["entries"] += 1
+                    try:
+                        yield
+                    finally:
+                        lock["held"] = False
+
+            def checked_index(*args, **kwargs):
+                self.assertFalse(lock["held"])
+                return original_index(*args, **kwargs)
+
+            def checked_impact(*args, **kwargs):
+                self.assertFalse(lock["held"])
+                return original_impact(*args, **kwargs)
+
+            with mock.patch.object(tracker, "exclusive_file_lock", new=tracked_lock), \
+                 mock.patch.object(fast, "CodeMapIndex", side_effect=checked_index), \
+                 mock.patch.object(fast, "impact_context", side_effect=checked_impact):
+                out = fast.observe(
+                    [{"domain": "market", "path": "collector.py", "message": "429 rate limit"}],
+                    state_path=state,
+                    code_map_root=root,
+                )
+
+            self.assertEqual(lock["entries"], 2)
+            perf = out["summary"]["performance"]
+            self.assertEqual(perf["state_lock_phases"], 2)
+            self.assertTrue(perf["map_index_build_outside_state_lock"])
+            self.assertTrue(perf["map_analysis_outside_state_lock"])
+
+    def test_selfrefine_handoff_runs_after_state_lock_release(self):
+        from contextlib import contextmanager
+
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            _write_graph(root)
+            state = root / "state.json"
+            lock = {"held": False}
+            original_lock = tracker.exclusive_file_lock
+            calls = {"n": 0}
+
+            @contextmanager
+            def tracked_lock(path, *args, **kwargs):
+                with original_lock(path, *args, **kwargs):
+                    lock["held"] = True
+                    try:
+                        yield
+                    finally:
+                        lock["held"] = False
+
+            def checked_selfrefine(event):
+                self.assertFalse(lock["held"])
+                calls["n"] += 1
+                return {"ok": True}
+
+            with mock.patch.object(tracker, "exclusive_file_lock", new=tracked_lock), \
+                 mock.patch.object(tracker, "_main_selfrefine_observe", side_effect=checked_selfrefine):
+                out = fast.observe(
+                    [{"domain": "github", "path": "collector.py", "message": "CI failed"}],
+                    state_path=state,
+                    code_map_root=root,
+                )
+
+            self.assertEqual(calls["n"], 1)
+            self.assertEqual(len(out["main_selfrefine"]), 1)
+            self.assertTrue(out["summary"]["performance"]["selfrefine_outside_state_lock"])
 
     def test_batch_is_bounded(self):
         events = [{"message": "x"} for _ in range(fast.MAX_BATCH_EVENTS + 20)]

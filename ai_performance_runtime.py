@@ -5,12 +5,15 @@ This module reuses ai_auto_tracker's state schema, safety contracts, retry polic
 quarantine handoff, and verified-learning logic. It does not create a second
 tracker or learning store.
 
-V3 optimizations are run-scoped and deterministic:
+V6 optimizations are run-scoped and deterministic:
 - normalize every hot event field once;
 - derive domain, severity, and fingerprint from the same prepared feature set;
 - prepare event features/domain/severity/fingerprint before the state lock;
+- hold the persistent-state lock only for a short snapshot and final atomic commit;
+- build/search the Graphify map outside the state lock;
 - cache Graphify impact analysis by normalized origin path;
 - choose one bounded map depth per path from the highest severity in the batch;
+- execute SELF-REFINE quarantine handoff outside the state lock;
 - reuse compact Code Map output and computed severity in handoffs;
 - keep occurrence/state semantics identical to the canonical tracker.
 """
@@ -150,7 +153,6 @@ def observe(
 ) -> dict[str, Any]:
     normalized = [dict(x) for x in events if isinstance(x, dict)][:MAX_BATCH_EVENTS]
 
-    # Stateless preparation is intentionally outside the persistent-state lock.
     prepared: list[tuple[dict[str, Any], EventFeatures, str, str, str]] = []
     path_depth: dict[str, int] = {}
     for event in normalized:
@@ -163,42 +165,67 @@ def observe(
         path_depth[features.path] = max(depth, path_depth.get(features.path, 0))
 
     with tracker.exclusive_file_lock(state_path):
-        state = tracker._load_state(state_path)
-        observed: list[dict[str, Any]] = []
-        handoffs: list[dict[str, Any]] = []
-        selfrefine: list[dict[str, Any]] = []
-        verified_learning: list[dict[str, Any]] = []
-        map_root = Path(code_map_root) if code_map_root is not None else tracker.ROOT
-        map_index = CodeMapIndex(map_root)
-        map_cache: dict[str, tuple[dict[str, Any], dict[str, Any]]] = {}
-        cache_hits = 0
-        now = tracker._now()
-        learning_state = state.get("code_map_learning")
+        state_snapshot = tracker._load_state(state_path)
+        learning_state = state_snapshot.get("code_map_learning")
 
-        by_domain = {d: 0 for d in sorted(tracker.DOMAINS)}
-        new_count = recurring_count = critical_high = map_available = high_risk = stale = 0
+    map_root = Path(code_map_root) if code_map_root is not None else tracker.ROOT
+    map_index = CodeMapIndex(map_root)
+    map_cache: dict[str, tuple[dict[str, Any], dict[str, Any]]] = {}
+    cache_hits = 0
+    verified_learning: list[dict[str, Any]] = []
+    analyzed: list[
+        tuple[
+            dict[str, Any], EventFeatures, str, str, str,
+            dict[str, Any], dict[str, Any],
+        ]
+    ] = []
 
-        for event, features, domain, severity, iid in prepared:
-            incident = state["incidents"].get(iid, {})
+    for event, features, domain, severity, iid in prepared:
+        cache_key = features.path
+        cached = map_cache.get(cache_key)
+        if cached is not None:
+            map_context, compact_map = cached
+            cache_hits += 1
+        else:
+            map_context = impact_context(
+                map_root,
+                cache_key,
+                depth=path_depth.get(cache_key, 2),
+                index=map_index,
+                learning=learning_state,
+            )
+            compact_map = compact_context(map_context)
+            map_cache[cache_key] = (map_context, compact_map)
+
+        analyzed.append((
+            event, features, domain, severity, iid, map_context, compact_map,
+        ))
+
+        changed_files = event.get("changed_files") if isinstance(event.get("changed_files"), list) else []
+        verified = bool(event.get("verified")) or str(event.get("verification") or "").lower() in {
+            "verified", "full_verified", "full_regression_verified",
+        }
+        candidate = verified_learning_candidate(
+            origin_path=features.path,
+            changed_files=changed_files,
+            impact=map_context,
+            verified=verified,
+            regression_pass=event.get("regression_pass") is True,
+        )
+        if candidate is not None:
+            verified_learning.append(candidate)
+
+    verified_learning = dedupe_learning_rows(verified_learning)
+    now = tracker._now()
+    observed: list[dict[str, Any]] = []
+    handoffs: list[dict[str, Any]] = []
+    selfrefine: list[dict[str, Any]] = []
+
+    def append_rows(active_state: dict[str, Any], *, persist: bool) -> None:
+        for event, features, domain, severity, iid, map_context, compact_map in analyzed:
+            incident = active_state["incidents"].get(iid, {})
             count = min(1_000_000, int(incident.get("occurrences", 0) or 0) + 1)
             status = "new" if count == 1 else "recurring"
-
-            cache_key = features.path
-            cached = map_cache.get(cache_key)
-            if cached is not None:
-                map_context, compact_map = cached
-                cache_hits += 1
-            else:
-                map_context = impact_context(
-                    map_root,
-                    cache_key,
-                    depth=path_depth.get(cache_key, 2),
-                    index=map_index,
-                    learning=learning_state,
-                )
-                compact_map = compact_context(map_context)
-                map_cache[cache_key] = (map_context, compact_map)
-
             row = {
                 "incident_id": iid,
                 "domain": domain,
@@ -223,66 +250,54 @@ def observe(
                 compact_map=compact_map,
                 observed_at=now,
             ))
-
-            by_domain[domain] += 1
-            if status == "new":
-                new_count += 1
-            else:
-                recurring_count += 1
-            if severity in {"critical", "high"}:
-                critical_high += 1
-            map_available += bool(compact_map.get("available"))
-            high_risk += compact_map.get("structural_risk") == "high"
-            stale += compact_map.get("status") == "stale_for_origin"
-
-            changed_files = event.get("changed_files") if isinstance(event.get("changed_files"), list) else []
-            verified = bool(event.get("verified")) or str(event.get("verification") or "").lower() in {
-                "verified", "full_verified", "full_regression_verified",
-            }
-            candidate = verified_learning_candidate(
-                origin_path=features.path,
-                changed_files=changed_files,
-                impact=map_context,
-                verified=verified,
-                regression_pass=event.get("regression_pass") is True,
-            )
-            if candidate is not None:
-                verified_learning.append(candidate)
-
-            if not dry_run:
-                state["incidents"][iid] = row
-                state["history"].append({
+            active_state["incidents"][iid] = row
+            if persist:
+                active_state["history"].append({
                     "at": now,
                     "incident_id": iid,
                     "domain": domain,
                     "event": "incident_observed",
                     "status": status,
                 })
-            if domain == tracker.DOMAIN_GITHUB and not dry_run:
-                result = tracker._main_selfrefine_observe(event)
-                if result is not None:
-                    selfrefine.append({"incident_id": iid, **result})
 
-        verified_learning = dedupe_learning_rows(verified_learning)
-        if not dry_run:
+    if dry_run:
+        state = state_snapshot
+        append_rows(state, persist=False)
+    else:
+        with tracker.exclusive_file_lock(state_path):
+            state = tracker._load_state(state_path)
+            append_rows(state, persist=True)
             if verified_learning:
                 merge_verified_learning(state, verified_learning)
             tracker._save_state(state, state_path)
 
+        for event, _features_row, domain, _severity, iid, _map_context, _compact_map in analyzed:
+            if domain == tracker.DOMAIN_GITHUB:
+                result = tracker._main_selfrefine_observe(event)
+                if result is not None:
+                    selfrefine.append({"incident_id": iid, **result})
+
     total_map_requests = len(observed)
     summary = {
         "observed": len(observed),
-        "new": new_count,
-        "recurring": recurring_count,
-        "by_domain": by_domain,
-        "critical_high": critical_high,
+        "new": sum(row["status"] == "new" for row in observed),
+        "recurring": sum(row["status"] == "recurring" for row in observed),
+        "by_domain": {
+            domain: sum(row["domain"] == domain for row in observed)
+            for domain in sorted(tracker.DOMAINS)
+        },
+        "critical_high": sum(row["severity"] in {"critical", "high"} for row in observed),
         "dry_run": dry_run,
-        "code_map_available": map_available,
+        "code_map_available": sum(bool(row.get("code_map", {}).get("available")) for row in observed),
         "verified_code_map_learning": len(verified_learning),
-        "code_map_high_risk": high_risk,
-        "code_map_stale": stale,
+        "code_map_high_risk": sum(
+            row.get("code_map", {}).get("structural_risk") == "high" for row in observed
+        ),
+        "code_map_stale": sum(
+            row.get("code_map", {}).get("status") == "stale_for_origin" for row in observed
+        ),
         "performance": {
-            "mode": "cached_hot_path_v5",
+            "mode": "cached_hot_path_v6",
             "batch_events": len(normalized),
             "prepared_events": len(prepared),
             "unique_code_map_paths": len(map_cache),
@@ -290,6 +305,11 @@ def observe(
             "code_map_cache_hit_ratio": round(cache_hits / total_map_requests, 4) if total_map_requests else 0.0,
             "event_feature_extraction": "single_pass",
             "feature_extraction_outside_state_lock": True,
+            "map_index_build_outside_state_lock": True,
+            "map_analysis_outside_state_lock": True,
+            "selfrefine_outside_state_lock": True,
+            "state_lock_scope": "snapshot_and_commit_only",
+            "state_lock_phases": 1 if dry_run else 2,
             "adaptive_code_map_depth": True,
             "max_code_map_depth": max(path_depth.values(), default=0),
             "basename_indexed_code_map": True,
@@ -326,5 +346,6 @@ def observe(
             "code_map_learning_requires_full_regression": True,
             "same_tracker_state_schema": True,
             "performance_cache_run_scoped_only": True,
+            "state_commit_reloads_fresh_state": True,
         },
     }

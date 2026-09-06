@@ -91,11 +91,15 @@ jobs:
           with tempfile.TemporaryDirectory() as td:
               out = p.observe(events, state_path=Path(td)/'state.json', dry_run=True)
           perf = out['summary']['performance']
-          assert perf['mode'] == 'cached_hot_path_v5'
+          assert perf['mode'] == 'cached_hot_path_v6'
           assert perf['unique_code_map_paths'] == 1
           assert perf['code_map_cache_hits'] == 49
           assert perf['event_feature_extraction'] == 'single_pass'
           assert perf['feature_extraction_outside_state_lock'] is True
+          assert perf['map_index_build_outside_state_lock'] is True
+          assert perf['map_analysis_outside_state_lock'] is True
+          assert perf['selfrefine_outside_state_lock'] is True
+          assert perf['state_lock_scope'] == 'snapshot_and_commit_only'
           assert perf['adaptive_code_map_depth'] is True
           assert perf['basename_indexed_code_map'] is True
           assert perf['domain_rescan'] is False
@@ -104,7 +108,7 @@ jobs:
           assert perf['compact_code_map_rebuild_on_hit'] is False
           assert perf['verified_learning_deduped_per_run'] is True
           assert out['safety']['performance_cache_run_scoped_only'] is True
-          print('AI performance v5 tracker contract: OK')
+          print('AI performance v6 tracker contract: OK')
           PY
       - name: Safety contract audit
         run: |
