@@ -271,6 +271,90 @@ class MarketAIAutoTrackerTests(unittest.TestCase):
             self.assertTrue(result["code_map"]["learning_revalidation_forces_map"])
             self.assertEqual(result["code_map"]["self_refine"]["stale_generation_patterns"], 1)
 
+    def test_restore_verified_code_map_learning_carries_only_verified_memory(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            source = root / "prior.json"
+            target = root / tracker.STATE.name
+            source.write_text(json.dumps({
+                "schema": tracker.SCHEMA,
+                "updated_at": "2026-09-06T14:28:00+00:00",
+                "pending_code_map_learning": {
+                    "head": "old",
+                    "changed_files": ["index.html"],
+                    "candidates": [{"verification": "pending"}],
+                },
+                "code_map_learning": {
+                    "schema": 4,
+                    "verified_patterns": {
+                        "pattern": {
+                            "origin_path": "index.html",
+                            "verified_count": 3,
+                            "generation_verified_count": 3,
+                            "generation_map_signature": "old-map",
+                            "generation_prediction_hits": 2,
+                            "generation_prediction_misses": 1,
+                        }
+                    },
+                    "aggregate": {
+                        "verified_outcomes": 3,
+                        "prediction_hits": 2,
+                        "prediction_misses": 1,
+                        "changed_files": 3,
+                        "prediction_hit_rate": 0.6667,
+                        "overlay_file_count": 0,
+                    },
+                    "verified_learning_only": True,
+                    "learned_text_executable": False,
+                    "source_patch_from_learning": False,
+                },
+            }), encoding="utf-8")
+
+            result = tracker.restore_verified_code_map_learning(
+                source,
+                target_path=target,
+            )
+            self.assertTrue(result["restored"])
+            restored = json.loads(target.read_text(encoding="utf-8"))
+            self.assertIn("code_map_learning", restored)
+            self.assertNotIn("pending_code_map_learning", restored)
+            self.assertFalse(
+                restored["restored_code_map_learning"]["pending_restored"]
+            )
+            self.assertEqual(
+                restored["code_map_learning"]["verified_patterns"]["pattern"]["verified_count"],
+                3,
+            )
+
+    def test_restore_rejects_learning_that_can_generate_source_patches(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            source = root / "unsafe.json"
+            target = root / tracker.STATE.name
+            source.write_text(json.dumps({
+                "code_map_learning": {
+                    "schema": 4,
+                    "verified_patterns": {
+                        "pattern": {
+                            "origin_path": "index.html",
+                            "verified_count": 1,
+                        }
+                    },
+                    "aggregate": {"verified_outcomes": 1},
+                    "verified_learning_only": True,
+                    "learned_text_executable": False,
+                    "source_patch_from_learning": True,
+                },
+            }), encoding="utf-8")
+
+            result = tracker.restore_verified_code_map_learning(
+                source,
+                target_path=target,
+            )
+            self.assertFalse(result["restored"])
+            self.assertEqual(result["reason"], "unsafe_learning_contract")
+            self.assertFalse(target.exists())
+
     def test_design_references_are_official_github_docs(self):
         self.assertTrue(tracker.DESIGN_REFERENCES)
         self.assertTrue(all(
