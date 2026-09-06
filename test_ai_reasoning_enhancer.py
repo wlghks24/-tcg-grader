@@ -66,6 +66,44 @@ class AIReasoningEnhancerTests(unittest.TestCase):
         self.assertEqual(out["level"], "high")
         self.assertGreaterEqual(out["score"], 0.72)
 
+    def test_code_map_targeted_tests_are_recommended_first(self):
+        out = enhancer.enrich_incident(
+            {
+                "domain": "github",
+                "severity": "high",
+                "stage": "CI",
+                "path": "collector.py",
+                "message": "regression test failed",
+            },
+            code_map={
+                "available": True,
+                "structural_risk": "medium",
+                "suggested_tests": ["test_collector.py", "test_runtime_delivery_guards.py"],
+            },
+        )
+        self.assertIn("test_collector.py", out["recommended_checks"][0])
+        self.assertTrue(any("test_runtime_delivery_guards.py" in row for row in out["recommended_checks"]))
+
+    def test_stale_code_map_requires_review_for_high_severity(self):
+        out = enhancer.enrich_incident(
+            {
+                "domain": "github",
+                "severity": "high",
+                "stage": "CI",
+                "path": "collector.py",
+                "error_type": "AssertionError",
+                "message": "test failed",
+                "evidence": "assertion mismatch",
+            },
+            code_map={
+                "available": True,
+                "status": "stale_for_origin",
+                "structural_risk": "medium",
+                "confidence": 0.55,
+            },
+        )
+        self.assertTrue(out["assessment"]["human_review_required"])
+
     def test_secret_redaction(self):
         text = enhancer._clean("Bearer abc.def api_key=xyz token=123 https://example.com/a")
         self.assertNotIn("abc.def", text)

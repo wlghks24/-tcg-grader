@@ -49,6 +49,22 @@ class CorrelationTests(unittest.TestCase):
             self.assertTrue(out["intelligence"]["safety"]["same_tracker_state"])
             self.assertFalse(out["intelligence"]["safety"]["separate_learning_store"])
 
+    def test_code_map_targeted_test_files_lead_plan(self):
+        out = corr.correlate([
+            {
+                "incident_id": "mapped",
+                "domain": "github",
+                "severity": "high",
+                "message": "CI regression failed",
+                "code_map": {
+                    "available": True,
+                    "suggested_tests": ["test_runtime_delivery_guards.py", "test_ai_auto_tracker.py"],
+                },
+            }
+        ])
+        self.assertEqual(out["recommended_test_files"][0], "test_runtime_delivery_guards.py")
+        self.assertTrue(out["recommended_test_plan"][0].startswith("run code-map targeted regression:"))
+
     def test_no_auto_patch_or_cross_domain_merge(self):
         out = corr.correlate([{"domain":"github","message":"syntax test failed"}])
         self.assertFalse(out["safety"]["auto_patch"])

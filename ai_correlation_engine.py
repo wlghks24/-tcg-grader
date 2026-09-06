@@ -131,18 +131,44 @@ def correlate(incidents: list[dict[str, Any]]) -> dict[str, Any]:
                 if len(chains) >= MAX_CHAINS:
                     break
 
-    tests: list[str] = []
-    for cluster in sorted(cluster_rows, key=lambda c: ({"P0": 0, "P1": 1, "P2": 2, "P3": 3}.get(c["highest_priority"], 9), -c["count"])):
-        for test in CAUSE_TESTS.get(cluster["root_cause"], CAUSE_TESTS["unknown"]):
-            if test not in tests:
-                tests.append(test)
-            if len(tests) >= MAX_TESTS:
+    targeted_test_files: list[str] = []
+    priority_rank = {"P0": 0, "P1": 1, "P2": 2, "P3": 3}
+    for row in sorted(
+        enriched_rows,
+        key=lambda item: (
+            priority_rank.get(str(((item.get("intelligence") or {}).get("assessment") or {}).get("priority") or "P3"), 9),
+            -int(item.get("occurrences") or 1),
+            _text(item.get("incident_id"), 80),
+        ),
+    ):
+        code_map = row.get("code_map") if isinstance(row.get("code_map"), dict) else {}
+        for path in code_map.get("suggested_tests") or []:
+            clean = _text(path, 180)
+            if clean and clean not in targeted_test_files:
+                targeted_test_files.append(clean)
+            if len(targeted_test_files) >= MAX_TESTS:
                 break
+        if len(targeted_test_files) >= MAX_TESTS:
+            break
+
+    tests: list[str] = []
+    if contradictions:
+        tests.append("resolve contradictory evidence before auto-repair")
+    for path in targeted_test_files:
+        step = f"run code-map targeted regression: {path}"
+        if step not in tests:
+            tests.append(step)
         if len(tests) >= MAX_TESTS:
             break
-    if contradictions and "resolve contradictory evidence before auto-repair" not in tests:
-        tests.insert(0, "resolve contradictory evidence before auto-repair")
-        tests = tests[:MAX_TESTS]
+    if len(tests) < MAX_TESTS:
+        for cluster in sorted(cluster_rows, key=lambda c: (priority_rank.get(c["highest_priority"], 9), -c["count"])):
+            for test in CAUSE_TESTS.get(cluster["root_cause"], CAUSE_TESTS["unknown"]):
+                if test not in tests:
+                    tests.append(test)
+                if len(tests) >= MAX_TESTS:
+                    break
+            if len(tests) >= MAX_TESTS:
+                break
 
     return {
         "schema": 1,
@@ -151,6 +177,7 @@ def correlate(incidents: list[dict[str, Any]]) -> dict[str, Any]:
         "clusters": cluster_rows,
         "possible_causal_chains": chains,
         "contradictions": contradictions[:50],
+        "recommended_test_files": targeted_test_files,
         "recommended_test_plan": tests,
         "human_review_required": bool(contradictions) or any(
             bool(((row.get("intelligence") or {}).get("assessment") or {}).get("human_review_required"))

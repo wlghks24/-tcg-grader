@@ -5,10 +5,12 @@ This module reuses ai_auto_tracker's state schema, safety contracts, retry polic
 quarantine handoff, and verified-learning logic. It does not create a second
 tracker or learning store.
 
-V2 optimizations are run-scoped and deterministic:
+V3 optimizations are run-scoped and deterministic:
 - normalize every hot event field once;
 - derive domain, severity, and fingerprint from the same prepared feature set;
+- prepare event features/domain/severity/fingerprint before the state lock;
 - cache Graphify impact analysis by normalized origin path;
+- choose one bounded map depth per path from the highest severity in the batch;
 - reuse compact Code Map output and computed severity in handoffs;
 - keep occurrence/state semantics identical to the canonical tracker.
 """
@@ -25,6 +27,7 @@ from code_map_intelligence import (
     compact_context,
     event_priority,
     impact_context,
+    impact_depth_for_severity,
     merge_verified_learning,
     verified_learning_candidate,
 )
@@ -144,6 +147,19 @@ def observe(
     code_map_root: Path | None = None,
 ) -> dict[str, Any]:
     normalized = [dict(x) for x in events if isinstance(x, dict)][:MAX_BATCH_EVENTS]
+
+    # Stateless preparation is intentionally outside the persistent-state lock.
+    prepared: list[tuple[dict[str, Any], EventFeatures, str, str, str]] = []
+    path_depth: dict[str, int] = {}
+    for event in normalized:
+        features = _features(event)
+        domain = _domain_from_features(features)
+        severity = _severity_from_features(features)
+        iid = _fingerprint_from_features(features, domain)
+        prepared.append((event, features, domain, severity, iid))
+        depth = impact_depth_for_severity(severity)
+        path_depth[features.path] = max(depth, path_depth.get(features.path, 0))
+
     with tracker.exclusive_file_lock(state_path):
         state = tracker._load_state(state_path)
         observed: list[dict[str, Any]] = []
@@ -160,11 +176,7 @@ def observe(
         by_domain = {d: 0 for d in sorted(tracker.DOMAINS)}
         new_count = recurring_count = critical_high = map_available = high_risk = stale = 0
 
-        for event in normalized:
-            features = _features(event)
-            domain = _domain_from_features(features)
-            severity = _severity_from_features(features)
-            iid = _fingerprint_from_features(features, domain)
+        for event, features, domain, severity, iid in prepared:
             incident = state["incidents"].get(iid, {})
             count = min(1_000_000, int(incident.get("occurrences", 0) or 0) + 1)
             status = "new" if count == 1 else "recurring"
@@ -178,7 +190,7 @@ def observe(
                 map_context = impact_context(
                     map_root,
                     cache_key,
-                    depth=2,
+                    depth=path_depth.get(cache_key, 2),
                     index=map_index,
                     learning=learning_state,
                 )
@@ -267,12 +279,17 @@ def observe(
         "code_map_high_risk": high_risk,
         "code_map_stale": stale,
         "performance": {
-            "mode": "cached_hot_path_v2",
+            "mode": "cached_hot_path_v3",
             "batch_events": len(normalized),
+            "prepared_events": len(prepared),
             "unique_code_map_paths": len(map_cache),
             "code_map_cache_hits": cache_hits,
             "code_map_cache_hit_ratio": round(cache_hits / total_map_requests, 4) if total_map_requests else 0.0,
             "event_feature_extraction": "single_pass",
+            "feature_extraction_outside_state_lock": True,
+            "adaptive_code_map_depth": True,
+            "max_code_map_depth": max(path_depth.values(), default=0),
+            "basename_indexed_code_map": True,
             "domain_rescan": False,
             "severity_rescan": False,
             "fingerprint_reclean": False,
@@ -287,7 +304,7 @@ def observe(
         "handoffs": handoffs,
         "main_selfrefine": selfrefine,
         "code_map": {
-            "mode": "graphify_read_only_impact_analysis_cached_per_origin",
+            "mode": "graphify_read_only_impact_analysis_cached_per_origin_adaptive_depth",
             "verified_learning": verified_learning,
         },
         "safety": {

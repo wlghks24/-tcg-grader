@@ -130,6 +130,16 @@ def default_learning_state() -> dict[str, Any]:
     }
 
 
+def impact_depth_for_severity(severity: str) -> int:
+    """Bound impact traversal by incident severity: low=1, medium=2, high/critical=3."""
+    value = str(severity or "").strip().lower()
+    if value in {"critical", "high"}:
+        return 3
+    if value == "medium":
+        return 2
+    return 1
+
+
 class CodeMapIndex:
     """In-memory Graphify index. One instance is reused for all incidents in a run."""
 
@@ -146,6 +156,8 @@ class CodeMapIndex:
         self.links: list[dict[str, Any]] = []
         self.path_by_id: dict[str, str] = {}
         self.ids_by_path: dict[str, list[str]] = {}
+        self.ids_by_basename: dict[str, list[str]] = {}
+        self.test_paths: list[str] = []
         self.adjacency: dict[str, set[str]] = {}
         self.degree: Counter[str] = Counter()
         self.audit: dict[str, Any] = {}
@@ -176,6 +188,11 @@ class CodeMapIndex:
             if path:
                 self.path_by_id[nid] = path
                 self.ids_by_path.setdefault(path.lower(), []).append(nid)
+                self.ids_by_basename.setdefault(Path(path).name.lower(), []).append(nid)
+                if _is_test_path(path):
+                    self.test_paths.append(path)
+
+        self.test_paths = sorted(set(self.test_paths))
 
         for link in self.links:
             source = _endpoint(link.get("source"))
@@ -204,9 +221,11 @@ class CodeMapIndex:
         exact = self.ids_by_path.get(origin_norm.lower())
         if exact:
             return exact[:MAX_MATCHED_NODES]
+        basename = Path(origin_norm).name.lower()
+        candidates = self.ids_by_basename.get(basename, [])
         matched = [
-            nid for nid, path in self.path_by_id.items()
-            if _matches(origin_norm, path)
+            nid for nid in candidates
+            if _matches(origin_norm, self.path_by_id.get(nid, ""))
         ]
         return matched[:MAX_MATCHED_NODES]
 
@@ -324,10 +343,10 @@ class CodeMapIndex:
 
         if len(tests) < MAX_SUGGESTED_TESTS and origin:
             stem = Path(origin).stem.lower()
-            heuristic = sorted({
-                path for path in self.path_by_id.values()
-                if _is_test_path(path) and stem and stem in Path(path).name.lower()
-            })
+            heuristic = [
+                path for path in self.test_paths
+                if stem and stem in Path(path).name.lower()
+            ]
             for path in heuristic:
                 if path not in tests:
                     tests.append(path)

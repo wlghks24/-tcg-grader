@@ -188,11 +188,55 @@ class PerformanceRuntimeTests(unittest.TestCase):
             )
             perf = out["summary"]["performance"]
             self.assertEqual(perf["code_map_cache_hits"], 1)
-            self.assertEqual(perf["mode"], "cached_hot_path_v2")
+            self.assertEqual(perf["mode"], "cached_hot_path_v3")
+            self.assertTrue(perf["feature_extraction_outside_state_lock"])
+            self.assertTrue(perf["adaptive_code_map_depth"])
+            self.assertTrue(perf["basename_indexed_code_map"])
             self.assertTrue(out["safety"]["performance_cache_run_scoped_only"])
             self.assertTrue(out["intelligence"]["safety"]["run_scoped_performance_cache"])
             self.assertFalse(out["intelligence"]["safety"]["cross_domain_state_merge"])
             self.assertFalse(out["intelligence"]["safety"]["auto_patch_from_reasoning"])
+
+    def test_adaptive_depth_uses_highest_severity_for_shared_path(self):
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            _write_graph(root)
+            depths = []
+            original = fast.impact_context
+
+            def counted(*args, **kwargs):
+                depths.append(kwargs.get("depth"))
+                return original(*args, **kwargs)
+
+            events = [
+                {"path": "collector.py", "severity": "low", "message": "minor"},
+                {"path": "collector.py", "severity": "critical", "message": "data loss"},
+            ]
+            with mock.patch.object(fast, "impact_context", side_effect=counted):
+                out = fast.observe(events, state_path=root / "state.json", dry_run=True, code_map_root=root)
+            self.assertEqual(depths, [3])
+            self.assertEqual(out["summary"]["performance"]["max_code_map_depth"], 3)
+
+    def test_low_severity_uses_shallow_code_map(self):
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            _write_graph(root)
+            out = fast.observe(
+                [{"path": "collector.py", "severity": "low", "message": "minor"}],
+                state_path=root / "state.json",
+                dry_run=True,
+                code_map_root=root,
+            )
+            self.assertEqual(out["incidents"][0]["code_map"]["depth"], 1)
+
+    def test_basename_index_matches_absolute_origin_without_full_path(self):
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            _write_graph(root)
+            index = fast.CodeMapIndex(root)
+            context = index.impact("/tmp/runtime/collector.py", depth=1)
+            self.assertTrue(context["matched_nodes"])
+            self.assertIn("collector.py", context["impacted_files"])
 
     def test_batch_is_bounded(self):
         events = [{"message": "x"} for _ in range(fast.MAX_BATCH_EVENTS + 20)]

@@ -251,7 +251,8 @@ def actionability_assessment(
     recurrence = recurrence_assessment(occurrences)
     severity = _clean(event.get("severity"), 20).lower()
     severity_weight = SEVERITY_WEIGHT.get(severity, 0.35)
-    structural = 0.15 if isinstance(code_map, dict) and code_map.get("structural_risk") == "high" else 0.0
+    structural_risk = str(code_map.get("structural_risk") or "") if isinstance(code_map, dict) else ""
+    structural = 0.15 if structural_risk == "high" else (0.07 if structural_risk == "medium" else 0.0)
     score = (
         0.34 * severity_weight
         + 0.22 * _bounded_float(domain["confidence"])
@@ -266,6 +267,11 @@ def actionability_assessment(
         or cause["confidence"] < 0.55
         or evidence["score"] < 0.35
         or (severity in {"high", "critical"} and evidence["score"] < 0.5)
+        or (
+            severity in {"high", "critical"}
+            and isinstance(code_map, dict)
+            and code_map.get("status") == "stale_for_origin"
+        )
     )
     return {
         "score": round(score, 3),
@@ -278,10 +284,22 @@ def actionability_assessment(
     }
 
 
-def recommended_checks(event: dict[str, Any], assessment: dict[str, Any]) -> list[str]:
+def recommended_checks(
+    event: dict[str, Any],
+    assessment: dict[str, Any],
+    code_map: dict[str, Any] | None = None,
+) -> list[str]:
     domain = str((assessment.get("domain") or {}).get("domain") or "github")
     family = str((assessment.get("root_cause") or {}).get("family") or "unknown")
-    rows = list(RECOMMENDATIONS.get(family, RECOMMENDATIONS["unknown"]))
+    rows: list[str] = []
+
+    if isinstance(code_map, dict):
+        for path in (code_map.get("suggested_tests") or [])[:2]:
+            cleaned_path = _clean(path, 180)
+            if cleaned_path:
+                rows.append(f"Run code-map targeted regression for {cleaned_path}.")
+
+    rows.extend(RECOMMENDATIONS.get(family, RECOMMENDATIONS["unknown"]))
     domain_check = DOMAIN_CHECKS.get(domain)
     if domain_check:
         rows.append(domain_check)
@@ -306,7 +324,7 @@ def enrich_incident(
     return {
         "schema": 1,
         "assessment": assessment,
-        "recommended_checks": recommended_checks(safe_event, assessment),
+        "recommended_checks": recommended_checks(safe_event, assessment, code_map),
         "safety": {
             "learned_text_executable": False,
             "auto_patch_from_reasoning": False,

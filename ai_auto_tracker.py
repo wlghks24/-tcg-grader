@@ -27,6 +27,7 @@ from code_map_intelligence import (
     default_learning_state,
     event_priority,
     impact_context,
+    impact_depth_for_severity,
     merge_verified_learning,
     verified_learning_candidate,
 )
@@ -307,7 +308,7 @@ def observe(events: Iterable[dict[str, Any]], *, state_path: Path = STATE,
             map_context = impact_context(
                 map_root,
                 _clean(event.get("path"), 240).replace("\\", "/"),
-                depth=2,
+                depth=impact_depth_for_severity(severity),
                 index=map_index,
                 learning=state.get("code_map_learning"),
             )
