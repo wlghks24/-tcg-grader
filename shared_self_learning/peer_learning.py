@@ -4,23 +4,7 @@ import hashlib
 import re
 from typing import Any, Iterable
 
-from .contracts import ALLOWED_DOMAINS, assert_passive_exchange_payload
-
-PEER_LEARNING_FIELDS = (
-    "lesson_id",
-    "subsystem",
-    "issue_class",
-    "trigger_condition",
-    "symptom_summary",
-    "root_cause_class",
-    "fix_pattern",
-    "prevention_rule_id",
-    "verification_result",
-    "regression_pass",
-    "recurrence_count",
-    "applicable_scope",
-    "confidence_level",
-)
+from .contracts import ALLOWED_DOMAINS, PEER_LEARNING_FIELDS, assert_passive_exchange_payload
 
 PEER_LEARNING_STATUSES = (
     "corroborated",
