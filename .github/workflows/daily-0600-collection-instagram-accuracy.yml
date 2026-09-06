@@ -107,8 +107,11 @@ jobs:
             test_verified_evidence_freshness_v15.py \
             test_collection_region_provenance_v16.py
 
+      # PRs validate the audit contract against tracked state and regression
+      # fixtures. Live refresh is reserved for main/scheduled/manual runs so
+      # superseded PR commits do not repeatedly spend the external-source budget.
       - name: Refresh bounded live collection state before 06:00 audit
-        if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch' || github.event_name == 'pull_request' || github.event_name == 'push'
+        if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch' || github.event_name == 'push'
         timeout-minutes: 22
         env:
           TCG_SOURCE_TIMEOUT_CAP: '30'
