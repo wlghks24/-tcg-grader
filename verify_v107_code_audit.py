@@ -121,15 +121,18 @@ def main() -> dict:
     worker_source = (ROOT / "sw.js").read_text(encoding="utf-8")
     fault_source = (ROOT / "fault_injection_healing.py").read_text(encoding="utf-8")
     page_source = (ROOT / "index.html").read_text(encoding="utf-8")
+    manifest = json.loads((ROOT / "manifest.webmanifest").read_text(encoding="utf-8"))
     cache_match = re.search(r"const CACHE='tcg-v(\d+)(?:-[a-z0-9-]+)?'", worker_source, re.I)
     version_ok = bool(
         VERSION in server_source and VERSION in automatic_source
-        and "사전검사기 v109" in page_source
+        and "<h1>카드시세분석</h1>" in page_source
+        and manifest.get("name") == "카드시세분석"
+        and str(manifest.get("version")) == "109"
         and cache_match and int(cache_match.group(1)) >= 109
         and "pwa-cache-version-skew" in fault_source and "required-current-cache" in fault_source
     )
     add("release_version_coherence", version_ok,
-        "서버·자동수집·화면 v109 일치 + PWA 캐시 revision·고장주입 계약 정상")
+        "표시 이름 카드시세분석 + 내부 v109 + PWA 캐시 revision·고장주입 계약 정상")
 
     public_files = __import__("tcg_updater").PUBLIC_STATIC_FILES
     missing_public = sorted(name for name in public_files if not (ROOT / name).is_file())
