@@ -33,3 +33,14 @@
 한쪽 입력이 비어 있으면 빈 snapshot을 만들어 PASS 처리하지 않고 `snapshot_missing` / `operational_ready=false`로 종료합니다. conflict는 평균내거나 자동 승격하지 않고 `reverification_required`로 남깁니다.
 
 런타임 교환 파일은 Git에 커밋하지 않으며 .gitignore로 제외합니다. 교환 데이터가 없어도 두 도메인은 독립 실행됩니다.
+
+
+## Persisted snapshot hydration
+
+The durable handoff files are owned separately:
+- Main: `TCG_CROSSCHECK/MARKET_ANALYSIS/factual_snapshot.json`
+- Instagram card-info: `TCG_CROSSCHECK/IG_CARDINFO/factual_snapshot.json`
+
+Only a `status=finalized` snapshot with at least one real factual row is eligible for runtime hydration. `crosscheck_runtime_bridge.py --from-persisted` converts both finalized snapshots into the passive `crosscheck_exchange/runtime-*.json` contract and then runs the existing fail-closed comparison gate.
+
+If either persisted snapshot is missing, still building, empty, malformed, or has the wrong namespace, the bridge must not reuse prior runtime files. Stale runtime snapshots are removed and the result remains `snapshot_missing` / `operational_ready=false` until both sides provide real finalized data.

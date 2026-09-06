@@ -87,6 +87,7 @@ jobs:
           python peer_learning_crosscheck_gate.py --self-test
           python main_peer_learning_export.py --self-test
           python -m instagram_tcg_content.peer_learning_export --self-test
+          python -m instagram_tcg_content.persisted_crosscheck_export --self-test
           python crosscheck_runtime_bridge.py --self-test
           python -m unittest -v test_crosscheck_runtime_bridge_v26.py
           python -m unittest -v test_selfrefine_domain_isolation_v18.py test_peer_learning_crosscheck_v23.py
@@ -194,6 +195,9 @@ jobs:
               'critical_collection_results': critical_results,
           }, ensure_ascii=False))
           PY
+
+      - name: Refresh passive factual runtime crosscheck from persisted snapshots
+        run: python crosscheck_runtime_bridge.py --from-persisted
 
       - name: Run daily collection vs Instagram audit
         if: ${{ !cancelled() }}

@@ -1,0 +1,18 @@
+{
+  "schema_version": "1.0",
+  "namespace": "IG_CARDINFO",
+  "snapshot_kind": "factual",
+  "run_date_kst": "2026-09-06",
+  "status": "building",
+  "built_at": "2026-09-06T20:35:00+09:00",
+  "finalized_at": null,
+  "facts": [],
+  "validation": {
+    "manifest_validated": true,
+    "allowed_fields_only": true,
+    "exact_factual_types_enforced": true,
+    "write_readback_verified": true,
+    "isolation_breach": false
+  },
+  "error_code": "NO_VERIFIED_FACTS"
+}
