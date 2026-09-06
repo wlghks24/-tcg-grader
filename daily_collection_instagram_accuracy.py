@@ -407,35 +407,8 @@ def audit_cross_domain(
     instagram_persisted: Path | None = None,
     now: dt.datetime | None = None,
 ) -> dict[str, Any]:
-    if main_exchange.exists() and instagram_exchange.exists():
-        try:
-            result = run_crosscheck(main_exchange, instagram_exchange)
-        except Exception as exc:
-            error_text = str(exc).replace("\n", " ")[:400]
-            return {
-                "status": "validation_error",
-                "engine_available": True,
-                "operational_ready": False,
-                "source_mode": "runtime_exchange",
-                "main_records": 0,
-                "instagram_records": 0,
-                "agree": 0,
-                "conflict": 0,
-                "reverification_required": 0,
-                "error_type": type(exc).__name__,
-                "error": error_text,
-                "repair_actions": [
-                    _action(
-                        "critical",
-                        "crosscheck",
-                        "repair_invalid_snapshot",
-                        f"Cross-domain runtime snapshot validation failed: {type(exc).__name__}: {error_text}",
-                        "Keep the exchange fail-closed. Re-export both passive snapshots, validate schema/forbidden-state fields, then rerun before using affected facts.",
-                    )
-                ],
-            }
-        return _crosscheck_view(result, source_mode="runtime_exchange")
-
+    # Persisted owner snapshots are authoritative when configured. This prevents
+    # stale runtime exchange files from masking a missing/stale current snapshot.
     if main_persisted is not None and instagram_persisted is not None:
         try:
             result = run_persisted_bridge(
@@ -471,6 +444,35 @@ def audit_cross_domain(
                 ],
             }
         return _crosscheck_view(result, source_mode="persisted_tcg_crosscheck")
+
+    if main_exchange.exists() and instagram_exchange.exists():
+        try:
+            result = run_crosscheck(main_exchange, instagram_exchange)
+        except Exception as exc:
+            error_text = str(exc).replace("\n", " ")[:400]
+            return {
+                "status": "validation_error",
+                "engine_available": True,
+                "operational_ready": False,
+                "source_mode": "runtime_exchange",
+                "main_records": 0,
+                "instagram_records": 0,
+                "agree": 0,
+                "conflict": 0,
+                "reverification_required": 0,
+                "error_type": type(exc).__name__,
+                "error": error_text,
+                "repair_actions": [
+                    _action(
+                        "critical",
+                        "crosscheck",
+                        "repair_invalid_snapshot",
+                        f"Cross-domain runtime snapshot validation failed: {type(exc).__name__}: {error_text}",
+                        "Keep the exchange fail-closed. Re-export both passive snapshots, validate schema/forbidden-state fields, then rerun before using affected facts.",
+                    )
+                ],
+            }
+        return _crosscheck_view(result, source_mode="runtime_exchange")
 
     missing = []
     if not main_exchange.exists():
