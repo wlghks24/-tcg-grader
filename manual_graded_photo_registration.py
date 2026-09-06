@@ -492,8 +492,13 @@ def _publish_verified(row: dict[str, Any]) -> tuple[bool, str | None]:
     else:
         values.append({
             "company": company, "certification_id": cert, "grade": grade, "verified": True,
+            "official_result": True,
             "official_reference_url": row["official_reference_url"], "card_name": row.get("card_name"),
             "game": row.get("game"), "mode": "slab", "source": "manual-photo-official-cert-match",
+            "official_verification_source": row.get("official_verification_source") or "user_browser_official_page",
+            "official_verification_method": row.get("official_verification_method") or "manual_user_browser_official_page_exact_match",
+            "manual_official_proof_verified": row.get("manual_official_proof_registered") is True
+                and str(row.get("manual_official_proof_state") or "") == "matched",
         })
         certifications = {"version": 1, "certifications": values,
                           "instructions": "Manual labels require official company+cert+grade verification before reference learning."}
@@ -520,6 +525,10 @@ def _publish_verified(row: dict[str, Any]) -> tuple[bool, str | None]:
             "oblique_crosscheck_complete": row.get("oblique_crosscheck_complete") is True,
             "quadrant_zone_count": row.get("quadrant_zone_count"),
             "learning_eligibility": "reference_only_missing_raw_prediction",
+            "official_verification_source": row.get("official_verification_source"),
+            "official_verification_method": row.get("official_verification_method"),
+            "manual_official_proof_verified": row.get("manual_official_proof_registered") is True
+                and str(row.get("manual_official_proof_state") or "") == "matched",
         })
         references = {
             "schema_version": 1, "updated_at": _now(), "certifications": ref_values[-2000:],

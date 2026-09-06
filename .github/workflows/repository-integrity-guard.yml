@@ -65,6 +65,15 @@ jobs:
             test_psa_official_proof_grade_v187.py \
             test_grading_cert_verifier.py \
             test_grader_cert_ocr_profiles_v193.py
+      - name: Run manual verified learning gate contracts
+        run: |
+          python -m unittest -v \
+            test_manual_graded_photo_registration.py \
+            test_manual_official_proof.py \
+            test_manual_official_verified_integration_v154.py \
+            test_verified_slab_training_archive_v152.py \
+            test_verified_slab_raw_learning_v155.py \
+            test_verified_grade_learning_v135.py
       - name: Run release event promo collection contracts
         run: |
           python -m unittest -v \

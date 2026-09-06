@@ -47,10 +47,10 @@ class VerifiedSlabTrainingArchiveV152Tests(unittest.TestCase):
             self.assertTrue((pair_dirs[0] / 'front.jpg').is_file())
             self.assertTrue((pair_dirs[0] / 'back.jpg').is_file())
             meta = json.loads((pair_dirs[0] / '학습정보.json').read_text(encoding='utf-8'))
-            self.assertEqual(meta['verification_kind'], 'live_official_verified')
+            self.assertEqual(meta['verification_kind'], 'persisted_official_verified')
             self.assertFalse(meta['raw_grade_calibration_eligible'])
 
-    def test_manual_official_reference_is_reference_only(self):
+    def test_manual_proof_match_without_official_result_is_not_archived_as_verified(self):
         with tempfile.TemporaryDirectory() as tmp:
             source = Path(tmp) / 'source'
             archive_root = Path(tmp) / 'archive'
@@ -60,10 +60,36 @@ class VerifiedSlabTrainingArchiveV152Tests(unittest.TestCase):
             (folder / 'back.jpg').write_bytes(b'back-image')
             row = self._row(company='BGS', game='pokemon', cert='0016988990', official=False, manual_reference=True)
             payload = archive.sync_rows([row], target_root=archive_root, source_root=source)
+            self.assertEqual(payload['summary']['verified_pairs'], 0)
+            self.assertEqual(payload['entries'], [])
+
+    def test_strict_manual_verified_row_is_archived_only_after_official_result(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            source = Path(tmp) / 'source'
+            archive_root = Path(tmp) / 'archive'
+            folder = source / 'GRADE_TRAINING_INBOX' / 'manual' / '202609'
+            proof_folder = source / 'GRADE_TRAINING_INBOX' / 'manual_official_proof' / '202609'
+            folder.mkdir(parents=True)
+            proof_folder.mkdir(parents=True)
+            (folder / 'front.jpg').write_bytes(b'front-image')
+            (folder / 'back.jpg').write_bytes(b'back-image')
+            (proof_folder / 'proof.jpg').write_bytes(b'proof-image')
+            row = self._row(company='BGS', game='pokemon', cert='0016988990', official=True)
+            row.update({
+                'official_verification_source': 'user_browser_official_page',
+                'verification_state': 'manual_official_verified',
+                'manual_official_proof_registered': True,
+                'manual_official_proof_state': 'matched',
+                'manual_official_proof_match_mode': 'official_page_company_cert_grade_ocr',
+                'manual_official_proof_path': 'GRADE_TRAINING_INBOX/manual_official_proof/202609/proof.jpg',
+            })
+            payload = archive.sync_rows([row], target_root=archive_root, source_root=source)
+            self.assertEqual(payload['summary']['verified_pairs'], 1)
             entry = payload['entries'][0]
-            self.assertEqual(entry['verification_kind'], 'manual_official_reference')
-            self.assertEqual(entry['learning_eligibility'], 'reference_only_pending_live_official_verification')
-            self.assertFalse(entry['official_result'])
+            self.assertEqual(entry['verification_kind'], 'manual_official_verified')
+            self.assertTrue(entry['official_result'])
+            self.assertTrue(entry['manual_official_verified'])
+            self.assertEqual(entry['learning_eligibility'], 'reference_learning_only')
 
     def test_unverified_registration_is_pruned_from_archive(self):
         with tempfile.TemporaryDirectory() as tmp:
