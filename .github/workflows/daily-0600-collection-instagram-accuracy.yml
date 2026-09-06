@@ -27,7 +27,10 @@ on:
       - 'selfrefine_crosscheck_gate.py'
       - 'peer_learning_crosscheck_gate.py'
       - 'main_peer_learning_export.py'
+      - 'main_persisted_learning_export.py'
+      - 'peer_learning_runtime_bridge.py'
       - 'shared_self_learning/peer_learning.py'
+      - 'crosscheck_control_plane/persisted_learning_snapshot.py'
       - 'test_peer_learning_crosscheck_v23.py'
       - 'crosscheck_exchange/**'
       - 'TCG_CROSSCHECK/**'
@@ -56,7 +59,10 @@ on:
       - 'selfrefine_crosscheck_gate.py'
       - 'peer_learning_crosscheck_gate.py'
       - 'main_peer_learning_export.py'
+      - 'main_persisted_learning_export.py'
+      - 'peer_learning_runtime_bridge.py'
       - 'shared_self_learning/peer_learning.py'
+      - 'crosscheck_control_plane/persisted_learning_snapshot.py'
       - 'test_peer_learning_crosscheck_v23.py'
       - 'crosscheck_exchange/**'
       - 'TCG_CROSSCHECK/**'
@@ -66,11 +72,11 @@ permissions:
   contents: read
 
 concurrency:
-  group: daily-0600-collection-instagram-accuracy-${{ github.event_name }}-${{ github.ref }}
-  # Superseded PR commits should not consume the full live-collection budget.
-  # Scheduled/main runs remain non-cancellable so an operational audit is never
-  # interrupted merely because another event arrives on the same ref.
-  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+  # PR runs skip the live collector, so isolate them by commit SHA. This prevents
+  # a stale cancellation state from blocking validation of the newest PR commit.
+  # Main/scheduled runs keep a stable ref-based group and remain non-cancellable.
+  group: daily-0600-collection-instagram-accuracy-${{ github.event_name }}-${{ github.event_name == 'pull_request' && github.sha || github.ref }}
+  cancel-in-progress: false
 
 jobs:
   audit:
@@ -95,6 +101,8 @@ jobs:
           python selfrefine_crosscheck_gate.py --self-test
           python peer_learning_crosscheck_gate.py --self-test
           python main_peer_learning_export.py --self-test
+          python main_persisted_learning_export.py --self-test
+          python peer_learning_runtime_bridge.py --self-test
           python main_persisted_crosscheck_export.py --self-test
           python -m instagram_tcg_content.peer_learning_export --self-test
           python -m instagram_tcg_content.persisted_learning_export --self-test
@@ -113,6 +121,7 @@ jobs:
             test_verified_evidence_freshness_v15.py test_collection_region_provenance_v16.py \
             selfrefine_crosscheck_gate.py peer_learning_crosscheck_gate.py \
             main_peer_learning_export.py main_peer_learning_adoption.py main_persisted_crosscheck_export.py \
+            main_persisted_learning_export.py peer_learning_runtime_bridge.py crosscheck_control_plane/persisted_learning_snapshot.py \
             selfrefine_domain_boundary_guard.py shared_self_learning/peer_learning.py \
             instagram_tcg_content/peer_learning_export.py instagram_tcg_content/persisted_learning_export.py instagram_tcg_content/persisted_crosscheck_export.py crosscheck_runtime_bridge.py test_crosscheck_runtime_bridge_v26.py instagram_tcg_content/test_peer_learning_manifest_contract_v28.py
           python -c "import daily_collection_instagram_accuracy, auto_update_all, selfrefine_crosscheck_gate, peer_learning_crosscheck_gate"
@@ -260,12 +269,20 @@ jobs:
             python crosscheck_runtime_bridge.py --from-persisted --allow-unready
           fi
 
+      - name: Refresh passive peer-learning runtime crosscheck from persisted snapshots
+        run: |
+          if [[ "${{ github.event_name }}" == "schedule" ]]; then
+            python peer_learning_runtime_bridge.py --from-persisted
+          else
+            python peer_learning_runtime_bridge.py --from-persisted --allow-unready
+          fi
+
       - name: Run daily collection vs Instagram audit
         if: ${{ !cancelled() }}
         run: |
           flags=(--strict-policy)
           if [[ "${{ github.event_name }}" == "schedule" ]]; then
-            flags+=(--fail-on-degraded --require-crosscheck-ready)
+            flags+=(--fail-on-degraded --require-crosscheck-ready --require-learning-crosscheck-ready)
           fi
           python daily_collection_instagram_accuracy.py \
             --report COLLECTION_INSTAGRAM_ACCURACY_REPORT.json \
@@ -300,6 +317,7 @@ jobs:
               "crosscheck_engine_available",
               "crosscheck_operational_ready",
               "learning_crosscheck_validation_error",
+              "learning_crosscheck_operational_ready",
               "learning_conflicting_fix",
           }
           missing = sorted(required_summary - set(summary))

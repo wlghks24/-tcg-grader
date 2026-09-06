@@ -449,6 +449,7 @@ def audit_peer_learning(
     if main_learning_exchange is None or instagram_learning_exchange is None:
         return {
             "status": "snapshot_missing",
+            "operational_ready": False,
             "missing_domains": ["main", "instagram_content"],
             "counts": {
                 "corroborated": 0,
@@ -467,6 +468,7 @@ def audit_peer_learning(
             missing.append("instagram_content")
         return {
             "status": "snapshot_missing",
+            "operational_ready": False,
             "missing_domains": missing,
             "counts": {
                 "corroborated": 0,
@@ -491,6 +493,7 @@ def audit_peer_learning(
         error_text = str(exc).replace("\n", " ")[:400]
         return {
             "status": "validation_error",
+            "operational_ready": False,
             "counts": {
                 "corroborated": 0,
                 "single-system-only": 0,
@@ -524,6 +527,7 @@ def audit_peer_learning(
         )
     return {
         "status": result.get("status"),
+        "operational_ready": result.get("status") == "crosschecked",
         "main_lessons": result.get("main_lessons", 0),
         "instagram_lessons": result.get("instagram_lessons", 0),
         "counts": result.get("counts", {}),
@@ -632,6 +636,7 @@ def build_report(
             "crosscheck_engine_available": bool(cross.get("engine_available")),
             "crosscheck_operational_ready": bool(cross.get("operational_ready")),
             "learning_crosscheck_validation_error": learning_validation_error,
+            "learning_crosscheck_operational_ready": bool(learning_cross.get("operational_ready")),
             "learning_conflicting_fix": conflicting_fixes,
         },
         "main_collection": main,
@@ -667,9 +672,14 @@ def _exit_code(
     strict_policy: bool = False,
     fail_on_degraded: bool = False,
     require_crosscheck_ready: bool = False,
+    require_learning_crosscheck_ready: bool = False,
 ) -> int:
     status = str((report.get("summary") or {}).get("status") or "")
     if require_crosscheck_ready and not bool((report.get("cross_domain") or {}).get("operational_ready")):
+        return 1
+    if require_learning_crosscheck_ready and not bool(
+        (report.get("internal_learning_crosscheck") or {}).get("operational_ready")
+    ):
         return 1
     if strict_policy and status == "fail_closed":
         return 1
@@ -697,6 +707,7 @@ def main() -> int:
     parser.add_argument("--strict-policy", action="store_true")
     parser.add_argument("--fail-on-degraded", action="store_true")
     parser.add_argument("--require-crosscheck-ready", action="store_true")
+    parser.add_argument("--require-learning-crosscheck-ready", action="store_true")
     args = parser.parse_args()
 
     now = _parse_time(args.now) if args.now else dt.datetime.now(dt.timezone.utc)
@@ -726,6 +737,7 @@ def main() -> int:
         strict_policy=args.strict_policy,
         fail_on_degraded=args.fail_on_degraded,
         require_crosscheck_ready=args.require_crosscheck_ready,
+        require_learning_crosscheck_ready=args.require_learning_crosscheck_ready,
     )
 
 

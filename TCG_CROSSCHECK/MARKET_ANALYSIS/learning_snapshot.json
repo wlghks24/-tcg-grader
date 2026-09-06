@@ -3,10 +3,26 @@
   "namespace": "MARKET_ANALYSIS",
   "snapshot_kind": "learning",
   "run_date_kst": "2026-09-06",
-  "status": "building",
-  "built_at": "2026-09-06T07:30:00+09:00",
-  "finalized_at": null,
-  "lessons": [],
+  "status": "finalized",
+  "built_at": "2026-09-06T21:30:00+09:00",
+  "finalized_at": "2026-09-06T21:30:00+09:00",
+  "lessons": [
+    {
+      "lesson_id": "MAIN-CROSSCHECK-FRESHNESS-20260906-01",
+      "subsystem": "factual_crosscheck_runtime",
+      "issue_class": "nondeterministic_freshness_regression",
+      "trigger_condition": "persisted snapshot freshness regression compares historical fixture timestamps against wall-clock now",
+      "symptom_summary": "a previously valid freshness fixture can become stale as real time advances even though production crosscheck logic is unchanged",
+      "root_cause_class": "wall_clock_coupled_test_fixture",
+      "fix_pattern": "inject a fixed timezone-aware now into freshness regression tests while keeping the production 36-hour stale-evidence gate unchanged",
+      "prevention_rule_id": "MAIN-PREV-CROSSCHECK-FIXED-NOW-V1",
+      "verification_result": "passed",
+      "regression_pass": true,
+      "recurrence_count": 1,
+      "applicable_scope": "both",
+      "confidence_level": "high"
+    }
+  ],
   "validation": {
     "manifest_validated": true,
     "learning_fields_only": true,
