@@ -24,6 +24,7 @@ on:
       - 'crosscheck_runtime_bridge.py'
       - 'test_crosscheck_runtime_bridge_v26.py'
       - 'main_crosscheck_export.py'
+      - 'main_persisted_crosscheck_export.py'
       - 'selfrefine_crosscheck_gate.py'
       - 'peer_learning_crosscheck_gate.py'
       - 'main_peer_learning_export.py'
@@ -51,6 +52,7 @@ on:
       - 'crosscheck_runtime_bridge.py'
       - 'test_crosscheck_runtime_bridge_v26.py'
       - 'main_crosscheck_export.py'
+      - 'main_persisted_crosscheck_export.py'
       - 'selfrefine_crosscheck_gate.py'
       - 'peer_learning_crosscheck_gate.py'
       - 'main_peer_learning_export.py'
@@ -92,6 +94,7 @@ jobs:
           python selfrefine_crosscheck_gate.py --self-test
           python peer_learning_crosscheck_gate.py --self-test
           python main_peer_learning_export.py --self-test
+          python main_persisted_crosscheck_export.py --self-test
           python -m instagram_tcg_content.peer_learning_export --self-test
           python -m instagram_tcg_content.persisted_crosscheck_export --self-test
           python crosscheck_runtime_bridge.py --self-test
@@ -106,9 +109,10 @@ jobs:
             provider_health_learning.py collection_meta_learning.py \
             test_verified_evidence_freshness_v15.py test_collection_region_provenance_v16.py \
             selfrefine_crosscheck_gate.py peer_learning_crosscheck_gate.py \
-            main_peer_learning_export.py main_peer_learning_adoption.py \
+            main_peer_learning_export.py main_peer_learning_adoption.py main_persisted_crosscheck_export.py \
             selfrefine_domain_boundary_guard.py shared_self_learning/peer_learning.py \
-            instagram_tcg_content/peer_learning_export.py crosscheck_runtime_bridge.py test_crosscheck_runtime_bridge_v26.py
+            instagram_tcg_content/peer_learning_export.py instagram_tcg_content/persisted_crosscheck_export.py \
+            crosscheck_runtime_bridge.py test_crosscheck_runtime_bridge_v26.py
           python -c "import daily_collection_instagram_accuracy, auto_update_all, selfrefine_crosscheck_gate, peer_learning_crosscheck_gate"
           python -m unittest -v \
             test_daily_collection_instagram_accuracy.py \
