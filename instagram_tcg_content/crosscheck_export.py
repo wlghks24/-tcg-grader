@@ -37,7 +37,7 @@ def export_records(records: list[dict], output: Path = DEFAULT_OUTPUT) -> list[d
 
 def self_test() -> None:
     sample = {
-        "information_family": "promo_event",
+        "information_family": "promo",
         "canonical_key": "onepiece|event|jp",
         "value": "2026-09-10",
         "currency": "",
