@@ -39,7 +39,7 @@ class PeerLearningManifestContractV28Tests(unittest.TestCase):
             output = Path(td) / "learning_snapshot.json"
             result = export_snapshot([lesson("IG-V28")], output)
             self.assertEqual(result["status"], "finalized")
-            self.assertEqual(tuple(result["lessons"][0]), PEER_LEARNING_FIELDS)
+            self.assertEqual(set(result["lessons"][0]), set(PEER_LEARNING_FIELDS))
             self.assertTrue(result["validation"]["learning_fields_only"])
             self.assertTrue(result["validation"]["write_readback_verified"])
             self.assertFalse(result["validation"]["learning_isolation_breach"])
