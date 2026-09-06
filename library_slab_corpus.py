@@ -544,7 +544,8 @@ def ocr_label(
             if recovered:
                 # Add explicit CERT context so downstream evidence can preserve the
                 # serial. Add the company token only if OCR actually saw the grader.
-                prefix = f"{company} " if company else ""
+                marker = "BECKETT" if company == "BGS" else company
+                prefix = f"{marker} " if marker else ""
                 texts.append(f"{prefix}CERT {recovered}")
 
         combined = " | ".join(dict.fromkeys(texts))[:5000]
