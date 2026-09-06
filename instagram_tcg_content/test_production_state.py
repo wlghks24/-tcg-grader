@@ -70,6 +70,10 @@ def main():
     errors = validate_production_record(catchup)
     assert "non-10:30 run cannot create baseline_id" in errors
 
+    missing_baseline = record(baseline_id=None)
+    errors = validate_production_record(missing_baseline)
+    assert "10:30 scheduled run requires baseline_id" in errors
+
     fresh = empty_state()
     allowed, reason = can_start_catchup(fresh, "2026-09-07")
     assert allowed and reason == "CATCHUP_ALLOWED"
@@ -84,6 +88,10 @@ def main():
     wrong_size = record()
     wrong_size["dimensions"][2] = [1080, 1080]
     assert "all artifacts must be 1080x1350" in validate_production_record(wrong_size)
+
+    malformed_size = record()
+    malformed_size["dimensions"][1] = "1080x1350"
+    assert "all artifacts must be 1080x1350" in validate_production_record(malformed_size)
 
     print("Instagram TCG production state regression: PASS")
 
