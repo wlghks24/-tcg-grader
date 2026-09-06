@@ -2,6 +2,17 @@ name: Deep SELFREFINE Guard
 # SELFREFINE final same-SHA cross-check trigger v3
 
 on:
+  pull_request:
+    branches: [main]
+    paths:
+      - '.github/workflows/deep-selfrefine-guard.yml'
+      - 'index.html'
+      - 'sw.js'
+      - '*.py'
+      - '*.js'
+      - '*.sh'
+      - '*.json'
+      - '*.webmanifest'
   push:
     branches: [main]
     paths:
