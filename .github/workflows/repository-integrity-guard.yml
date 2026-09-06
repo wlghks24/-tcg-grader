@@ -54,6 +54,8 @@ jobs:
           python selfrefine_domain_boundary_guard.py
           python main_selfrefine_gate.py --self-test
           python main_crosscheck_export.py --self-test
+          python main_persisted_learning_export.py --self-test
+          python peer_learning_runtime_bridge.py --self-test
           python -m instagram_tcg_content.crosscheck_export --self-test
           python selfrefine_crosscheck_gate.py --self-test
           python -m instagram_tcg_content.selfrefine_gate
