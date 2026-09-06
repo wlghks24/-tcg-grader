@@ -406,6 +406,7 @@ def self_test() -> None:
             main_output=root / "persisted-runtime-main.json",
             instagram_output=root / "persisted-runtime-instagram.json",
             report_output=root / "persisted-report.json",
+            now=dt.datetime(2026, 9, 6, 0, 0, tzinfo=dt.timezone.utc),
         )
         assert persisted["operational_ready"] is True, persisted
         assert persisted["agree"] == 1, persisted
@@ -425,6 +426,7 @@ def self_test() -> None:
             main_output=stale_main,
             instagram_output=stale_instagram,
             report_output=root / "unavailable-report.json",
+            now=dt.datetime(2026, 9, 6, 0, 0, tzinfo=dt.timezone.utc),
         )
         assert unavailable["operational_ready"] is False, unavailable
         assert not stale_main.exists() and not stale_instagram.exists(), unavailable
