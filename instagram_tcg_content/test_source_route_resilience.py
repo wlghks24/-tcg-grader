@@ -17,6 +17,8 @@ def main():
     decision = choose_routes("completed_sale", states)
     assert decision.independent_target == 2
     assert "goldin" in decision.selected and "heritage" in decision.selected, decision
+    assert "ebay" not in decision.selected, decision
+    assert len(decision.selected) == 2, decision
     assert coverage_ok(
         "completed_sale",
         [
@@ -63,6 +65,7 @@ def main():
         ],
     )
     assert official.selected[0] in {"campaign-detail", "news-index"}, official
+    assert len(official.selected) == 1, official
 
     blocked = choose_routes(
         "completed_sale",
