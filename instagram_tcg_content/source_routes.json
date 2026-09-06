@@ -16,17 +16,52 @@
     "official_primary_cross_language_confirmation_allowed": true,
     "official_event_detail_page_preferred_over_homepage": true,
     "provider_homepage_staleness_does_not_override_fresh_detail_page": true,
-    "prelaunch_game_market_data_default_excluded": true
+    "prelaunch_game_market_data_default_excluded": true,
+    "completed_sale_requires_explicit_lineage": true,
+    "completed_sale_requires_comparable_basis": true,
+    "production_state_corruption_fail_closed": true
   },
   "routes": {
-    "official_release": ["official_primary", "official_secondary", "discovery_lead"],
-    "official_reprint": ["official_primary", "official_secondary", "discovery_lead"],
-    "official_promo": ["official_primary", "official_secondary", "discovery_lead"],
-    "official_event": ["official_primary", "official_secondary", "discovery_lead"],
-    "official_movie_bonus": ["official_primary", "official_secondary", "discovery_lead"],
-    "completed_sale": ["completed_sale_original", "grading_auction_original", "market_reference", "discovery_lead"],
-    "market_reference": ["market_reference", "completed_sale_original", "grading_auction_original"],
-    "fx": ["official_primary", "market_reference"]
+    "official_release": [
+      "official_primary",
+      "official_secondary",
+      "discovery_lead"
+    ],
+    "official_reprint": [
+      "official_primary",
+      "official_secondary",
+      "discovery_lead"
+    ],
+    "official_promo": [
+      "official_primary",
+      "official_secondary",
+      "discovery_lead"
+    ],
+    "official_event": [
+      "official_primary",
+      "official_secondary",
+      "discovery_lead"
+    ],
+    "official_movie_bonus": [
+      "official_primary",
+      "official_secondary",
+      "discovery_lead"
+    ],
+    "completed_sale": [
+      "completed_sale_original",
+      "grading_auction_original",
+      "market_reference",
+      "discovery_lead"
+    ],
+    "market_reference": [
+      "market_reference",
+      "completed_sale_original",
+      "grading_auction_original"
+    ],
+    "fx": [
+      "official_primary",
+      "market_reference"
+    ]
   },
   "provider_groups": {
     "pokemon": {
@@ -37,10 +72,31 @@
         "pokemon-official-kr",
         "pokemon-center"
       ],
-      "completed_sale_original": ["ebay", "heritage", "goldin"],
-      "grading_auction_original": ["psa-auction-prices", "card-ladder", "pwcc"],
-      "market_reference": ["pricecharting", "tcgplayer", "cardmarket", "snkrdunk", "justtcg", "pavilion", "kream"],
-      "discovery_lead": ["google", "instagram", "x", "reddit"]
+      "completed_sale_original": [
+        "ebay",
+        "heritage",
+        "goldin"
+      ],
+      "grading_auction_original": [
+        "psa-auction-prices",
+        "card-ladder",
+        "pwcc"
+      ],
+      "market_reference": [
+        "pricecharting",
+        "tcgplayer",
+        "cardmarket",
+        "snkrdunk",
+        "justtcg",
+        "pavilion",
+        "kream"
+      ],
+      "discovery_lead": [
+        "google",
+        "instagram",
+        "x",
+        "reddit"
+      ]
     },
     "one_piece": {
       "official_primary": [
@@ -50,10 +106,31 @@
         "bandai-tcg-plus",
         "onepiece-campaign-detail"
       ],
-      "completed_sale_original": ["ebay", "heritage", "goldin"],
-      "grading_auction_original": ["psa-auction-prices", "card-ladder", "pwcc"],
-      "market_reference": ["pricecharting", "tcgplayer", "cardmarket", "snkrdunk", "justtcg", "pavilion", "kream"],
-      "discovery_lead": ["google", "instagram", "x", "reddit"]
+      "completed_sale_original": [
+        "ebay",
+        "heritage",
+        "goldin"
+      ],
+      "grading_auction_original": [
+        "psa-auction-prices",
+        "card-ladder",
+        "pwcc"
+      ],
+      "market_reference": [
+        "pricecharting",
+        "tcgplayer",
+        "cardmarket",
+        "snkrdunk",
+        "justtcg",
+        "pavilion",
+        "kream"
+      ],
+      "discovery_lead": [
+        "google",
+        "instagram",
+        "x",
+        "reddit"
+      ]
     },
     "naruto": {
       "official_primary": [
@@ -62,10 +139,31 @@
         "bandai-card-games",
         "bandai-tcg-plus"
       ],
-      "completed_sale_original": ["ebay", "heritage", "goldin"],
-      "grading_auction_original": ["psa-auction-prices", "card-ladder", "pwcc"],
-      "market_reference": ["pricecharting", "tcgplayer", "cardmarket", "snkrdunk", "justtcg", "pavilion", "kream"],
-      "discovery_lead": ["google", "instagram", "x", "reddit"]
+      "completed_sale_original": [
+        "ebay",
+        "heritage",
+        "goldin"
+      ],
+      "grading_auction_original": [
+        "psa-auction-prices",
+        "card-ladder",
+        "pwcc"
+      ],
+      "market_reference": [
+        "pricecharting",
+        "tcgplayer",
+        "cardmarket",
+        "snkrdunk",
+        "justtcg",
+        "pavilion",
+        "kream"
+      ],
+      "discovery_lead": [
+        "google",
+        "instagram",
+        "x",
+        "reddit"
+      ]
     }
   }
 }
