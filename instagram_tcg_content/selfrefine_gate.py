@@ -20,15 +20,16 @@ def _scan_root(root: Path):
     errors = []
     files = []
     for path in root.rglob("*"):
-        if not path.is_file() or path.suffix.lower() not in TEXT_SUFFIXES:
+        suffix = path.suffix.lower()
+        if suffix not in TEXT_SUFFIXES or not path.is_file():
             continue
         files.append(path)
         rel = str(path.relative_to(ROOT)).replace("\\", "/")
         try:
             text = path.read_text(encoding="utf-8", errors="strict")
-            if path.suffix.lower() == ".py":
+            if suffix == ".py":
                 ast.parse(text, filename=rel)
-            elif path.suffix.lower() == ".json":
+            elif suffix == ".json":
                 json.loads(text)
         except Exception as exc:
             errors.append({
