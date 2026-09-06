@@ -5,6 +5,7 @@ import argparse
 import json
 from pathlib import Path
 
+from shared_self_learning.contracts import assert_canonical_factual_type
 from shared_self_learning.engine import normalize_crosscheck_record
 from safe_runtime import atomic_write_json
 
@@ -13,6 +14,11 @@ DEFAULT_OUTPUT = ROOT / "crosscheck_exchange" / "runtime-main.json"
 
 
 def export_records(records: list[dict], output: Path = DEFAULT_OUTPUT) -> list[dict]:
+    for index, row in enumerate(records):
+        assert_canonical_factual_type(
+            row.get("information_family"),
+            label=f"records[{index}].information_family",
+        )
     normalized = [normalize_crosscheck_record("main", row) for row in records]
     atomic_write_json(
         output,
@@ -24,7 +30,7 @@ def export_records(records: list[dict], output: Path = DEFAULT_OUTPUT) -> list[d
 
 def self_test() -> None:
     sample = [{
-        "information_family": "market_price",
+        "information_family": "card_price",
         "canonical_key": "pokemon|001|jp",
         "value": "1000",
         "currency": "JPY",
