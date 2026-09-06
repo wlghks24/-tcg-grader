@@ -3,10 +3,34 @@
   "namespace": "IG_CARDINFO",
   "snapshot_kind": "factual",
   "run_date_kst": "2026-09-06",
-  "status": "building",
-  "built_at": "2026-09-06T20:35:00+09:00",
-  "finalized_at": null,
-  "facts": [],
+  "status": "finalized",
+  "built_at": "2026-09-06T21:25:43+09:00",
+  "finalized_at": "2026-09-06T21:25:43+09:00",
+  "facts": [
+    {
+      "canonical_key": "pokemon|メガシンフォニア|jp",
+      "fact_type": "release",
+      "lineage_key": "ig-release:2e440180e1001bec36152ccd",
+      "identity": {
+        "game": "pokemon",
+        "name": "メガシンフォニア",
+        "region": "JP"
+      },
+      "value": "2025-08-01",
+      "value_type": "date",
+      "currency": "",
+      "region": "JP",
+      "language": "JP",
+      "condition": "",
+      "grade_company": "",
+      "grade": "",
+      "effective_date": "2025-08-01",
+      "observed_at": "2026-09-06T21:25:43+09:00",
+      "source_role": "official_primary",
+      "source_locator": "https://www.pokemon-card.com/ex/m1/",
+      "verification_status": "verified"
+    }
+  ],
   "validation": {
     "manifest_validated": true,
     "allowed_fields_only": true,
@@ -14,5 +38,5 @@
     "write_readback_verified": true,
     "isolation_breach": false
   },
-  "error_code": "NO_VERIFIED_FACTS"
+  "error_code": null
 }
