@@ -22,6 +22,11 @@ ANDROID_RECOVER_UPDATE.sh
 ANDROID_UPDATE_AND_START.sh
 ANDROID_AUTO_START_INSTALL.sh
 START_TCG_UPDATER_ANDROID.sh
+VERIFY_TABLET_RUNTIME.sh
+tablet_runtime_probe.py
+test_runtime_delivery_guards.py
+tcg_updater.py
+tcg_updater_v135.py
 runtime_bundle_guard_v143.py
 collection_learning_hardening_v144.py
 event_source_overlay_v144.py
@@ -59,6 +64,7 @@ bash -n ANDROID_RECOVER_UPDATE.sh
 bash -n ANDROID_UPDATE_AND_START.sh
 bash -n ANDROID_AUTO_START_INSTALL.sh
 bash -n START_TCG_UPDATER_ANDROID.sh
+bash -n VERIFY_TABLET_RUNTIME.sh
 bash -n GRAPHIFY_UPDATE.sh
 bash -n SETUP_GRAPHIFY_TERMUX.sh
 echo "[2/9] Android/Graphify 셸 문법: OK"
@@ -76,13 +82,18 @@ python -m py_compile \
   runtime_bundle_guard_v143.py \
   collection_learning_hardening_v144.py \
   event_source_overlay_v144.py \
-  event_source_expansion_v145.py
+  event_source_expansion_v145.py \
+  tablet_runtime_probe.py \
+  test_runtime_delivery_guards.py \
+  tcg_updater_v135.py
 echo "[3/9] 핵심 Python 문법/컴파일: OK"
 
 python runtime_optimization_hardening.py --check >/dev/null
 python tcg_code_repair_learning.py --self-test >/dev/null
 python GRAPHIFY_SELF_HEAL.py --self-test >/dev/null
-echo "[4/9] 최적화 하드닝/오류학습/자가복구 자체시험: OK"
+python tablet_runtime_probe.py --self-test >/dev/null
+python test_runtime_delivery_guards.py >/dev/null
+echo "[4/9] 최적화 하드닝/오류학습/자가복구/태블릿 런타임 자체시험: OK"
 
 python csp_hash_hardening.py --check >/dev/null
 echo "[5/9] 브라우저 인라인 스크립트 CSP 해시: OK"
