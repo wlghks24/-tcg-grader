@@ -16,6 +16,13 @@ class FakeElement {
     this.listeners = new Map();
     this.clickCount = 0;
     this.scrollCount = 0;
+    this.textContent = "";
+    this.classSet = new Set();
+    this.classList = {
+      add: (...names) => names.forEach((name) => this.classSet.add(name)),
+      remove: (...names) => names.forEach((name) => this.classSet.delete(name)),
+      contains: (name) => this.classSet.has(name),
+    };
   }
   addEventListener(type, callback) {
     if (!this.listeners.has(type)) this.listeners.set(type, []);
@@ -34,6 +41,7 @@ class FakeElement {
   scrollIntoView() { this.scrollCount += 1; }
 }
 
+const selectedStatus = new FakeElement("featureCategorySelected");
 const releaseBoard = new FakeElement("releaseBoard");
 const grade = new FakeElement("simpleGradeV32");
 const promoTab = new FakeElement("promoTab");
@@ -48,6 +56,7 @@ const gradeShortcut = new FakeElement("gradeShortcut", { href: "#simpleGradeV32"
 const badShortcut = new FakeElement("badShortcut", { href: "#missingTarget" });
 
 const byId = new Map([
+  ["featureCategorySelected", selectedStatus],
   ["releaseBoard", releaseBoard],
   ["simpleGradeV32", grade],
 ]);
@@ -77,7 +86,7 @@ const context = vm.createContext({
 vm.runInContext(source, context, { filename: "feature_category_nav.js" });
 
 assert.ok(context.window.TCGFeatureCategoryNav, "navigation API was not exposed");
-assert.equal(context.window.TCGFeatureCategoryNav.version, "v27-category-picker");
+assert.equal(context.window.TCGFeatureCategoryNav.version, "v28-clear-home");
 assert.equal(context.window.TCGFeatureCategoryNav.targetExists("simpleGradeV32"), true);
 assert.equal(context.window.TCGFeatureCategoryNav.targetExists("missingTarget"), false);
 assert.equal(context.window.TCGFeatureCategoryNav.targetExists("../unsafe"), false);
@@ -90,6 +99,8 @@ assert.equal(releaseBoard.scrollCount, 1, "promo category did not scroll to the 
 const gradeEvent = gradeShortcut.emit("click");
 assert.equal(gradeEvent.prevented, true);
 assert.equal(grade.scrollCount, 1, "grade shortcut did not scroll to grading");
+assert.match(selectedStatus.textContent, /기능 화면으로 이동했습니다/);
+assert.equal(selectedStatus.classList.contains("active"), true);
 
 const badEvent = badShortcut.emit("click");
 assert.equal(badEvent.prevented, true);

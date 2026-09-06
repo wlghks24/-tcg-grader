@@ -61,7 +61,20 @@ class FeatureCategoryNavigationV26Tests(unittest.TestCase):
         self.assertIn('data-category-key="system"', self.html)
         self.assertIn('category.addEventListener("toggle"', self.js)
         self.assertIn("categories.forEach((item)", self.js)
-        self.assertIn('version: "v27-category-picker"', self.js)
+        self.assertIn('version: "v28-clear-home"', self.js)
+
+    def test_clear_home_identity_precedes_category_picker(self):
+        title = self.html.index("<h1>카드시세분석</h1>")
+        nav = self.html.index('id="featureCategories"')
+        self.assertLess(title, nav)
+        self.assertIn("<title>카드시세분석 · TCG 통합 도구</title>", self.html)
+        self.assertIn('content="카드시세분석"', self.html)
+        self.assertIn("7개 카테고리", self.html)
+        self.assertIn("큰 카테고리를 누르면 필요한 기능 목록만 펼쳐집니다.", self.html)
+        self.assertIn("☰ 메뉴", self.html)
+        self.assertNotIn("<h1>TCG 등급 사전검사기 v109</h1>", self.html)
+        self.assertIn(".app-title-primary", self.css)
+        self.assertIn("기능 화면으로 이동했습니다", self.js)
 
     def test_navigation_is_first_class_and_mobile_safe(self):
         nav = self.html.index('id="featureCategories"')
@@ -87,8 +100,8 @@ class FeatureCategoryNavigationV26Tests(unittest.TestCase):
         self.assertNotIn("innerHTML", self.js)
 
     def test_pwa_assets_are_versioned_once(self):
-        self.assertEqual(self.html.count('feature_category_nav.css?v=203'), 1)
-        self.assertEqual(self.html.count('feature_category_nav.js?v=203'), 1)
+        self.assertEqual(self.html.count('feature_category_nav.css?v=204'), 1)
+        self.assertEqual(self.html.count('feature_category_nav.js?v=204'), 1)
 
 
 if __name__ == "__main__":

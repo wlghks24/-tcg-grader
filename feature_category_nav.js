@@ -72,6 +72,11 @@
     const panelId = String(link?.dataset?.featureOpenPanel || "");
     if (panelId) activateTopPanel(panelId);
 
+    if (selectedStatus) {
+      selectedStatus.classList?.add?.("active");
+      selectedStatus.textContent = "✅ 기능 화면으로 이동했습니다. 오른쪽 아래 ‘☰ 메뉴’를 누르면 기능 메뉴로 돌아올 수 있습니다.";
+    }
+
     setTimeout(() => {
       try {
         target.scrollIntoView({ behavior: "smooth", block: "start" });
@@ -106,7 +111,7 @@
   }
 
   window.TCGFeatureCategoryNav = Object.freeze({
-    version: "v27-category-picker",
+    version: "v28-clear-home",
     activateTopPanel,
     navigateShortcut,
     selectCategory,

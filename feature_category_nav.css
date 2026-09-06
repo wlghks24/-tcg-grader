@@ -1,3 +1,13 @@
+.app-title-primary{
+  background:linear-gradient(135deg,#0f172a,#1e3a8a);color:#fff;border-radius:22px;
+  padding:18px 16px;margin:0 0 14px;box-shadow:0 8px 26px #0f172a26
+}
+.app-title-primary h1{margin:2px 0 7px;font-size:28px;letter-spacing:-.03em}
+.app-title-kicker{font-size:11px;font-weight:900;letter-spacing:.08em;color:#bfdbfe}
+.app-title-summary{font-size:13px;line-height:1.6;color:#e2e8f0}
+.app-title-summary b{color:#fff}
+.app-title-help{display:inline-block;margin-top:10px;padding:7px 10px;border-radius:10px;background:#ffffff18;color:#fff;font-size:12px;font-weight:850}
+@media(max-width:430px){.app-title-primary{padding:15px 14px}.app-title-primary h1{font-size:25px}.app-title-summary{font-size:12px}}
 html{scroll-behavior:smooth;scroll-padding-top:14px}
 .feature-category-nav{
   background:linear-gradient(180deg,#ffffff,#f8fafc);
