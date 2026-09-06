@@ -27,6 +27,8 @@ MAX_LEARNING_PATTERNS = 200
 MAX_SUGGESTED_TESTS = 12
 MIN_OVERLAY_MISS_COUNT = 2
 MIN_CONFIDENCE_CALIBRATION_SAMPLES = 3
+MAX_OVERLAY_IMPACT_FILES = 6
+MAX_OVERLAY_TEST_FILES = 4
 PATH_KEYS = (
     "source_file", "file_path", "filepath", "filename", "path", "file", "module_path",
 )
@@ -125,7 +127,7 @@ def _learning_key(origin: str) -> str:
 
 def default_learning_state() -> dict[str, Any]:
     return {
-        "schema": 3,
+        "schema": 4,
         "verified_patterns": {},
         "aggregate": {
             "verified_outcomes": 0,
@@ -149,6 +151,36 @@ def impact_depth_for_severity(severity: str) -> int:
     if value == "medium":
         return 2
     return 1
+
+
+def learning_outcome_key(row: dict[str, Any]) -> str:
+    payload = {
+        "pattern_key": str(row.get("pattern_key") or "")[:40],
+        "origin_path": _norm(row.get("origin_path")),
+        "map_signature": str(row.get("map_signature") or "")[:40],
+        "changed_files": sorted({_norm(x) for x in (row.get("changed_files") or []) if _norm(x)}),
+        "predicted_hits": sorted({_norm(x) for x in (row.get("predicted_hits") or []) if _norm(x)}),
+        "predicted_misses": sorted({_norm(x) for x in (row.get("predicted_misses") or []) if _norm(x)}),
+    }
+    raw = json.dumps(payload, ensure_ascii=False, sort_keys=True, separators=(",", ":"))
+    return hashlib.sha256(raw.encode("utf-8", "replace")).hexdigest()[:24]
+
+
+def dedupe_learning_rows(rows: Iterable[dict[str, Any]]) -> list[dict[str, Any]]:
+    """Collapse identical outcomes inside one run so one verified repair counts once."""
+    seen: set[str] = set()
+    result: list[dict[str, Any]] = []
+    for row in rows:
+        if not isinstance(row, dict):
+            continue
+        key = learning_outcome_key(row)
+        if key in seen:
+            continue
+        seen.add(key)
+        item = dict(row)
+        item["outcome_key"] = key
+        result.append(item)
+    return result
 
 
 class CodeMapIndex:
@@ -283,7 +315,9 @@ class CodeMapIndex:
                         for path, count in (raw_counts.items() if isinstance(raw_counts, dict) else ())
                         if _norm(path)
                     )[:32])
-                    raw_misses = candidate.get("miss_file_counts")
+                    raw_misses = candidate.get("generation_miss_file_counts")
+                    if not isinstance(raw_misses, dict):
+                        raw_misses = candidate.get("miss_file_counts")
                     miss_stamp = tuple(sorted(
                         (_norm(path), int(count or 0))
                         for path, count in (raw_misses.items() if isinstance(raw_misses, dict) else ())
@@ -291,9 +325,10 @@ class CodeMapIndex:
                     )[:32])
                     pattern_stamp = (
                         int(candidate.get("verified_count") or 0),
-                        int(candidate.get("cumulative_prediction_hits") or 0),
-                        int(candidate.get("cumulative_prediction_misses") or 0),
-                        str(candidate.get("last_map_signature") or "")[:40],
+                        int(candidate.get("generation_verified_count") or 0),
+                        int(candidate.get("generation_prediction_hits") or 0),
+                        int(candidate.get("generation_prediction_misses") or 0),
+                        str(candidate.get("generation_map_signature") or candidate.get("last_map_signature") or "")[:40],
                         count_stamp,
                         miss_stamp,
                     )
@@ -343,7 +378,9 @@ class CodeMapIndex:
         learned_overlay: list[str] = []
         pattern = None
         verified_count = 0
-        cumulative_hits = cumulative_misses = 0
+        generation_verified_count = 0
+        generation_hits = generation_misses = 0
+        generation_match = False
         if isinstance(learning, dict):
             patterns = learning.get("verified_patterns")
             if isinstance(patterns, dict):
@@ -351,8 +388,25 @@ class CodeMapIndex:
                 if isinstance(candidate, dict):
                     pattern = candidate
                     verified_count = max(0, int(candidate.get("verified_count") or 0))
-                    cumulative_hits = max(0, int(candidate.get("cumulative_prediction_hits") or 0))
-                    cumulative_misses = max(0, int(candidate.get("cumulative_prediction_misses") or 0))
+                    generation_signature = str(
+                        candidate.get("generation_map_signature")
+                        or candidate.get("last_map_signature")
+                        or ""
+                    )[:40]
+                    generation_match = bool(generation_signature and generation_signature == self.signature)
+                    if generation_match:
+                        generation_verified_count = max(
+                            0,
+                            int(candidate.get("generation_verified_count") or candidate.get("verified_count") or 0),
+                        )
+                        generation_hits = max(
+                            0,
+                            int(candidate.get("generation_prediction_hits") or candidate.get("cumulative_prediction_hits") or 0),
+                        )
+                        generation_misses = max(
+                            0,
+                            int(candidate.get("generation_prediction_misses") or candidate.get("cumulative_prediction_misses") or 0),
+                        )
                     raw_counts = candidate.get("changed_file_counts")
                     if isinstance(raw_counts, dict):
                         learned_counts = {
@@ -360,19 +414,22 @@ class CodeMapIndex:
                             for path, count in raw_counts.items()
                             if _norm(path)
                         }
-                    raw_misses = candidate.get("miss_file_counts")
-                    if isinstance(raw_misses, dict):
-                        miss_counts = {
-                            _norm(path): max(0, int(count or 0))
-                            for path, count in raw_misses.items()
-                            if _norm(path)
-                        }
-                    learned_overlay = [
-                        path for path, count in sorted(
-                            miss_counts.items(), key=lambda item: (-item[1], item[0])
-                        )
-                        if count >= MIN_OVERLAY_MISS_COUNT
-                    ][:16]
+                    if generation_match:
+                        raw_misses = candidate.get("generation_miss_file_counts")
+                        if not isinstance(raw_misses, dict):
+                            raw_misses = candidate.get("miss_file_counts")
+                        if isinstance(raw_misses, dict):
+                            miss_counts = {
+                                _norm(path): max(0, int(count or 0))
+                                for path, count in raw_misses.items()
+                                if _norm(path)
+                            }
+                        learned_overlay = [
+                            path for path, count in sorted(
+                                miss_counts.items(), key=lambda item: (-item[1], item[0])
+                            )
+                            if count >= MIN_OVERLAY_MISS_COUNT
+                        ][:16]
         max_learned = max(learned_counts.values(), default=0)
 
         file_meta: dict[str, dict[str, Any]] = {}
@@ -433,8 +490,36 @@ class CodeMapIndex:
             path for path in learned_overlay
             if _is_test_path(path) and path not in tests
         ]
-        impacted_files = (production + overlay_production)[:safe_limit]
-        suggested_tests = (tests + overlay_tests)[:MAX_SUGGESTED_TESTS]
+        overlay_impact_take = min(
+            len(overlay_production),
+            MAX_OVERLAY_IMPACT_FILES,
+            max(0, safe_limit // 4),
+        )
+        base_impact_take = max(0, safe_limit - overlay_impact_take)
+        impacted_files = (
+            production[:base_impact_take]
+            + overlay_production[:overlay_impact_take]
+        )
+        if len(impacted_files) < safe_limit:
+            for path in production[base_impact_take:]:
+                if path not in impacted_files:
+                    impacted_files.append(path)
+                if len(impacted_files) >= safe_limit:
+                    break
+
+        overlay_test_take = min(
+            len(overlay_tests),
+            MAX_OVERLAY_TEST_FILES,
+            max(0, MAX_SUGGESTED_TESTS // 3),
+        )
+        base_test_take = max(0, MAX_SUGGESTED_TESTS - overlay_test_take)
+        suggested_tests = tests[:base_test_take] + overlay_tests[:overlay_test_take]
+        if len(suggested_tests) < MAX_SUGGESTED_TESTS:
+            for path in tests[base_test_take:]:
+                if path not in suggested_tests:
+                    suggested_tests.append(path)
+                if len(suggested_tests) >= MAX_SUGGESTED_TESTS:
+                    break
         historical_review = [
             path for path, _ in sorted(
                 learned_counts.items(), key=lambda item: (-item[1], item[0])
@@ -453,12 +538,12 @@ class CodeMapIndex:
             risk = "medium"
 
         match_factor = 1.0 if matched else 0.45
-        history_total = cumulative_hits + cumulative_misses
+        history_total = generation_hits + generation_misses
         learned_hit_rate = (
-            cumulative_hits / history_total if history_total > 0 else None
+            generation_hits / history_total if history_total > 0 else None
         )
         calibration_factor = 1.0
-        if verified_count >= MIN_CONFIDENCE_CALIBRATION_SAMPLES and learned_hit_rate is not None:
+        if generation_verified_count >= MIN_CONFIDENCE_CALIBRATION_SAMPLES and learned_hit_rate is not None:
             if learned_hit_rate < 0.50:
                 calibration_factor = 0.65
             elif learned_hit_rate < 0.75:
@@ -469,7 +554,7 @@ class CodeMapIndex:
         if learned_overlay and risk == "low":
             risk = "medium"
         if (
-            verified_count >= MIN_CONFIDENCE_CALIBRATION_SAMPLES
+            generation_verified_count >= MIN_CONFIDENCE_CALIBRATION_SAMPLES
             and learned_hit_rate is not None
             and learned_hit_rate < 0.50
         ):
@@ -515,6 +600,9 @@ class CodeMapIndex:
             "structural_risk": risk,
             "learning_applied": bool(pattern),
             "learning_verified_count": verified_count,
+            "learning_generation_verified_count": generation_verified_count,
+            "learning_generation_match": generation_match,
+            "learning_history_revalidation_required": bool(pattern) and not generation_match,
             "learning_prediction_hit_rate": (
                 round(learned_hit_rate, 4) if learned_hit_rate is not None else None
             ),
@@ -588,8 +676,8 @@ def merge_verified_learning(state: dict[str, Any], rows: Iterable[dict[str, Any]
     if not isinstance(patterns, dict):
         patterns = {}
 
-    for row in rows:
-        if not isinstance(row, dict) or row.get("verification") != "full_regression_verified":
+    for row in dedupe_learning_rows(rows):
+        if row.get("verification") != "full_regression_verified":
             continue
         key = str(row.get("pattern_key") or "")[:40]
         origin = _norm(row.get("origin_path"))
@@ -599,7 +687,19 @@ def merge_verified_learning(state: dict[str, Any], rows: Iterable[dict[str, Any]
         current["origin_path"] = origin
         current["verified_count"] = min(1_000_000, int(current.get("verified_count") or 0) + 1)
         current["map_available"] = bool(row.get("map_available"))
-        current["last_map_signature"] = str(row.get("map_signature") or "")[:40]
+        map_signature = str(row.get("map_signature") or "")[:40]
+        current["last_map_signature"] = map_signature
+        if str(current.get("generation_map_signature") or "") != map_signature:
+            current["generation_map_signature"] = map_signature
+            current["generation_verified_count"] = 0
+            current["generation_prediction_hits"] = 0
+            current["generation_prediction_misses"] = 0
+            current["generation_hit_file_counts"] = {}
+            current["generation_miss_file_counts"] = {}
+            current["verified_overlay_files"] = []
+        current["generation_verified_count"] = min(
+            1_000_000, int(current.get("generation_verified_count") or 0) + 1
+        )
         counts = current.get("changed_file_counts")
         if not isinstance(counts, dict):
             counts = {}
@@ -628,18 +728,44 @@ def merge_verified_learning(state: dict[str, Any], rows: Iterable[dict[str, Any]
         miss_counts = current.get("miss_file_counts")
         if not isinstance(miss_counts, dict):
             miss_counts = {}
+        generation_hit_counts = current.get("generation_hit_file_counts")
+        if not isinstance(generation_hit_counts, dict):
+            generation_hit_counts = {}
+        generation_miss_counts = current.get("generation_miss_file_counts")
+        if not isinstance(generation_miss_counts, dict):
+            generation_miss_counts = {}
         for path in hits:
             hit_counts[path] = min(1_000_000, int(hit_counts.get(path) or 0) + 1)
+            generation_hit_counts[path] = min(
+                1_000_000, int(generation_hit_counts.get(path) or 0) + 1
+            )
         for path in misses:
             miss_counts[path] = min(1_000_000, int(miss_counts.get(path) or 0) + 1)
+            generation_miss_counts[path] = min(
+                1_000_000, int(generation_miss_counts.get(path) or 0) + 1
+            )
         current["hit_file_counts"] = dict(sorted(
             hit_counts.items(), key=lambda item: (-int(item[1]), item[0])
         )[:32])
         current["miss_file_counts"] = dict(sorted(
             miss_counts.items(), key=lambda item: (-int(item[1]), item[0])
         )[:32])
+        current["generation_hit_file_counts"] = dict(sorted(
+            generation_hit_counts.items(), key=lambda item: (-int(item[1]), item[0])
+        )[:32])
+        current["generation_miss_file_counts"] = dict(sorted(
+            generation_miss_counts.items(), key=lambda item: (-int(item[1]), item[0])
+        )[:32])
+        current["generation_prediction_hits"] = min(
+            1_000_000,
+            int(current.get("generation_prediction_hits") or 0) + len(hits),
+        )
+        current["generation_prediction_misses"] = min(
+            1_000_000,
+            int(current.get("generation_prediction_misses") or 0) + len(misses),
+        )
         current["verified_overlay_files"] = [
-            path for path, count in current["miss_file_counts"].items()
+            path for path, count in current["generation_miss_file_counts"].items()
             if int(count) >= MIN_OVERLAY_MISS_COUNT
         ][:16]
         total = max(1, len(row.get("changed_files") or []))
@@ -652,6 +778,15 @@ def merge_verified_learning(state: dict[str, Any], rows: Iterable[dict[str, Any]
             int(current.get("cumulative_prediction_hits") or 0) / max(1, cumulative_total),
             4,
         )
+        generation_total = (
+            int(current.get("generation_prediction_hits") or 0)
+            + int(current.get("generation_prediction_misses") or 0)
+        )
+        current["generation_prediction_hit_rate"] = round(
+            int(current.get("generation_prediction_hits") or 0) / max(1, generation_total),
+            4,
+        )
+        current["last_outcome_key"] = str(row.get("outcome_key") or learning_outcome_key(row))[:24]
         patterns[key] = current
 
     if len(patterns) > MAX_LEARNING_PATTERNS:
@@ -681,7 +816,7 @@ def merge_verified_learning(state: dict[str, Any], rows: Iterable[dict[str, Any]
         for path in (row.get("verified_overlay_files") or [])
         if _norm(path)
     }
-    learning["schema"] = 3
+    learning["schema"] = 4
     learning["verified_patterns"] = patterns
     learning["aggregate"] = {
         "verified_outcomes": min(1_000_000, aggregate_outcomes),
@@ -719,6 +854,9 @@ def compact_context(value: dict[str, Any]) -> dict[str, Any]:
         "freshness": str(value.get("freshness") or "")[:32],
         "learning_applied": bool(value.get("learning_applied")),
         "learning_verified_count": int(value.get("learning_verified_count") or 0),
+        "learning_generation_verified_count": int(value.get("learning_generation_verified_count") or 0),
+        "learning_generation_match": bool(value.get("learning_generation_match")),
+        "learning_history_revalidation_required": bool(value.get("learning_history_revalidation_required")),
         "learning_prediction_hit_rate": value.get("learning_prediction_hit_rate"),
         "learning_confidence_factor": float(value.get("learning_confidence_factor") or 1.0),
         "self_correction_applied": bool(value.get("self_correction_applied")),
@@ -727,7 +865,11 @@ def compact_context(value: dict[str, Any]) -> dict[str, Any]:
     }
 
 
-def learning_health(learning: dict[str, Any] | None) -> dict[str, Any]:
+def learning_health(
+    learning: dict[str, Any] | None,
+    *,
+    map_signature: str | None = None,
+) -> dict[str, Any]:
     """Summarize verified code-map learning without executing or patching source code."""
     source = learning if isinstance(learning, dict) else {}
     patterns = source.get("verified_patterns")
@@ -739,17 +881,35 @@ def learning_health(learning: dict[str, Any] | None) -> dict[str, Any]:
 
     low_quality: list[dict[str, Any]] = []
     overlay_patterns: list[dict[str, Any]] = []
+    stale_generation_patterns = 0
     for key, row in patterns.items():
         if not isinstance(row, dict):
             continue
         verified = int(row.get("verified_count") or 0)
-        rate = row.get("cumulative_prediction_hit_rate")
-        overlays = [_norm(path) for path in (row.get("verified_overlay_files") or []) if _norm(path)]
-        if verified >= MIN_CONFIDENCE_CALIBRATION_SAMPLES and isinstance(rate, (int, float)) and rate < 0.75:
+        generation_signature = str(
+            row.get("generation_map_signature") or row.get("last_map_signature") or ""
+        )[:40]
+        generation_matches = not map_signature or generation_signature == str(map_signature)[:40]
+        if map_signature and generation_signature and not generation_matches:
+            stale_generation_patterns += 1
+        rate = (
+            row.get("generation_prediction_hit_rate")
+            if generation_matches else None
+        )
+        generation_verified = (
+            int(row.get("generation_verified_count") or verified)
+            if generation_matches else 0
+        )
+        overlays = (
+            [_norm(path) for path in (row.get("verified_overlay_files") or []) if _norm(path)]
+            if generation_matches else []
+        )
+        if generation_verified >= MIN_CONFIDENCE_CALIBRATION_SAMPLES and isinstance(rate, (int, float)) and rate < 0.75:
             low_quality.append({
                 "pattern_key": str(key)[:40],
                 "origin_path": _norm(row.get("origin_path")),
                 "verified_count": verified,
+                "generation_verified_count": generation_verified,
                 "prediction_hit_rate": round(float(rate), 4),
             })
         if overlays:
@@ -773,6 +933,8 @@ def learning_health(learning: dict[str, Any] | None) -> dict[str, Any]:
         "prediction_hits": int(aggregate.get("prediction_hits") or 0),
         "prediction_misses": int(aggregate.get("prediction_misses") or 0),
         "overlay_file_count": int(aggregate.get("overlay_file_count") or 0),
+        "stale_generation_patterns": stale_generation_patterns,
+        "map_signature": str(map_signature or "")[:40],
         "low_quality_patterns": low_quality[:20],
         "self_corrected_patterns": overlay_patterns[:20],
         "safety": {

@@ -188,7 +188,7 @@ class PerformanceRuntimeTests(unittest.TestCase):
             )
             perf = out["summary"]["performance"]
             self.assertEqual(perf["code_map_cache_hits"], 1)
-            self.assertEqual(perf["mode"], "cached_hot_path_v3")
+            self.assertEqual(perf["mode"], "cached_hot_path_v5")
             self.assertTrue(perf["feature_extraction_outside_state_lock"])
             self.assertTrue(perf["adaptive_code_map_depth"])
             self.assertTrue(perf["basename_indexed_code_map"])
@@ -311,6 +311,94 @@ class PerformanceRuntimeTests(unittest.TestCase):
             health = fast.learning_health(state["code_map_learning"])
             self.assertEqual(health["status"], "needs_refinement")
             self.assertTrue(health["low_quality_patterns"])
+
+    def test_identical_verified_outcomes_in_one_batch_count_once(self):
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            _write_graph(root)
+            state = root / "state.json"
+            event = {
+                "path": "collector.py",
+                "message": "verified repair",
+                "changed_files": ["outside_graph.py"],
+                "verification": "verified",
+                "regression_pass": True,
+            }
+            out = fast.observe([event, event], state_path=state, code_map_root=root)
+            self.assertEqual(out["summary"]["verified_code_map_learning"], 1)
+            saved = json.loads(state.read_text(encoding="utf-8"))
+            learned = next(iter(saved["code_map_learning"]["verified_patterns"].values()))
+            self.assertEqual(learned["verified_count"], 1)
+            self.assertEqual(learned["generation_verified_count"], 1)
+            self.assertEqual(learned["generation_miss_file_counts"]["outside_graph.py"], 1)
+
+    def test_graph_generation_change_requires_overlay_reverification(self):
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            _write_graph(root)
+            state = {}
+            first_index = fast.CodeMapIndex(root)
+            base = first_index.impact("collector.py", depth=1)
+            candidate = fast.verified_learning_candidate(
+                origin_path="collector.py",
+                changed_files=["repair_helper.py"],
+                impact=base,
+                verified=True,
+                regression_pass=True,
+            )
+            fast.merge_verified_learning(state, [candidate])
+            fast.merge_verified_learning(state, [candidate])
+            before = fast.CodeMapIndex(root).impact(
+                "collector.py", depth=1, learning=state["code_map_learning"]
+            )
+            self.assertTrue(before["self_correction_applied"])
+            self.assertIn("repair_helper.py", before["impacted_files"])
+
+            graph_path = root / "graphify-out" / "graph.json"
+            payload = json.loads(graph_path.read_text(encoding="utf-8"))
+            payload["nodes"].append({"id": "new-node", "source_file": "new_runtime.py"})
+            graph_path.write_text(json.dumps(payload), encoding="utf-8")
+            after = fast.CodeMapIndex(root).impact(
+                "collector.py", depth=1, learning=state["code_map_learning"]
+            )
+            self.assertFalse(after["learning_generation_match"])
+            self.assertTrue(after["learning_history_revalidation_required"])
+            self.assertFalse(after["self_correction_applied"])
+            self.assertNotIn("repair_helper.py", after["impacted_files"])
+            self.assertEqual(after["learning_confidence_factor"], 1.0)
+
+    def test_overlay_keeps_reserved_slot_when_base_impact_is_full(self):
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            target = root / "graphify-out"
+            target.mkdir(parents=True, exist_ok=True)
+            nodes = [{"id": "origin", "source_file": "origin.py"}]
+            links = []
+            for i in range(8):
+                nodes.append({"id": f"n{i}", "source_file": f"base_{i}.py"})
+                links.append({"source": "origin", "target": f"n{i}"})
+            (target / "graph.json").write_text(
+                json.dumps({"nodes": nodes, "links": links}),
+                encoding="utf-8",
+            )
+            state = {}
+            index = fast.CodeMapIndex(root)
+            base = index.impact("origin.py", depth=1, limit=4)
+            candidate = fast.verified_learning_candidate(
+                origin_path="origin.py",
+                changed_files=["learned_fix.py"],
+                impact=base,
+                verified=True,
+                regression_pass=True,
+            )
+            fast.merge_verified_learning(state, [candidate])
+            fast.merge_verified_learning(state, [candidate])
+            learned = fast.CodeMapIndex(root).impact(
+                "origin.py", depth=1, limit=4, learning=state["code_map_learning"]
+            )
+            self.assertEqual(len(learned["impacted_files"]), 4)
+            self.assertIn("learned_fix.py", learned["impacted_files"])
+            self.assertIn("origin.py", learned["impacted_files"])
 
     def test_batch_is_bounded(self):
         events = [{"message": "x"} for _ in range(fast.MAX_BATCH_EVENTS + 20)]

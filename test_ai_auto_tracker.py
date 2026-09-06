@@ -146,6 +146,24 @@ class AutoTrackerTests(unittest.TestCase):
             learned = next(iter(patterns.values()))
             self.assertEqual(learned["changed_file_counts"]["tcg_updater.py"], 1)
 
+    def test_duplicate_verified_events_do_not_double_learn(self):
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            _write_graph(root)
+            state = root / "state.json"
+            event = {
+                "path": "collector.py",
+                "message": "verified miss",
+                "changed_files": ["outside_graph.py"],
+                "verification": "verified",
+                "regression_pass": True,
+            }
+            out = tracker.observe([event, event], state_path=state, code_map_root=root)
+            self.assertEqual(out["summary"]["verified_code_map_learning"], 1)
+            raw = json.loads(state.read_text(encoding="utf-8"))
+            learned = next(iter(raw["code_map_learning"]["verified_patterns"].values()))
+            self.assertEqual(learned["verified_count"], 1)
+
     def test_code_map_is_loaded_once_per_observe_run(self):
         with tempfile.TemporaryDirectory() as td:
             root = Path(td)

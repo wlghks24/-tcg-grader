@@ -183,6 +183,39 @@ class MarketAIAutoTrackerTests(unittest.TestCase):
             self.assertFalse(safety["source_patch_from_learning"])
             self.assertFalse(safety["learned_text_executable"])
 
+    def test_learning_health_marks_old_graph_generation_for_revalidation(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            self._repo(root)
+            state_path = root / tracker.STATE.name
+            state_path.write_text(json.dumps({
+                "schema": tracker.SCHEMA,
+                "runs": 0,
+                "history": [],
+                "code_map_learning": {
+                    "schema": 4,
+                    "verified_patterns": {
+                        "x": {
+                            "origin_path": "index.html",
+                            "verified_count": 3,
+                            "generation_verified_count": 3,
+                            "generation_map_signature": "old-map",
+                            "generation_prediction_hits": 0,
+                            "generation_prediction_misses": 3,
+                            "generation_prediction_hit_rate": 0.0,
+                            "verified_overlay_files": ["old_fix.py"],
+                        }
+                    },
+                    "aggregate": {"verified_outcomes": 3, "prediction_hit_rate": 0.0},
+                },
+            }), encoding="utf-8")
+            result = tracker.run_tracker(
+                root=root, repair=False, run_tests=False, report_path=root / "report.json"
+            )
+            health = result["code_map"]["self_refine"]
+            self.assertEqual(health["stale_generation_patterns"], 1)
+            self.assertEqual(health["self_corrected_patterns"], [])
+
     def test_design_references_are_official_github_docs(self):
         self.assertTrue(tracker.DESIGN_REFERENCES)
         self.assertTrue(all(

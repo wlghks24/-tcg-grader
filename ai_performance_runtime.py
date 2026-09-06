@@ -25,6 +25,7 @@ import ai_auto_tracker as tracker
 from code_map_intelligence import (
     CodeMapIndex,
     compact_context,
+    dedupe_learning_rows,
     event_priority,
     impact_context,
     impact_depth_for_severity,
@@ -262,6 +263,7 @@ def observe(
                 if result is not None:
                     selfrefine.append({"incident_id": iid, **result})
 
+        verified_learning = dedupe_learning_rows(verified_learning)
         if not dry_run:
             if verified_learning:
                 merge_verified_learning(state, verified_learning)
@@ -280,7 +282,7 @@ def observe(
         "code_map_high_risk": high_risk,
         "code_map_stale": stale,
         "performance": {
-            "mode": "cached_hot_path_v3",
+            "mode": "cached_hot_path_v5",
             "batch_events": len(normalized),
             "prepared_events": len(prepared),
             "unique_code_map_paths": len(map_cache),
@@ -295,6 +297,8 @@ def observe(
             "severity_rescan": False,
             "fingerprint_reclean": False,
             "compact_code_map_rebuild_on_hit": False,
+            "verified_learning_deduped_per_run": True,
+            "verified_learning_unique_outcomes": len(verified_learning),
         },
     }
     return {
@@ -308,7 +312,8 @@ def observe(
             "mode": "graphify_read_only_impact_analysis_cached_per_origin_adaptive_depth",
             "verified_learning": verified_learning,
             "self_refine": learning_health(
-                state.get("code_map_learning") if isinstance(state, dict) else None
+                state.get("code_map_learning") if isinstance(state, dict) else None,
+                map_signature=map_index.signature,
             ),
         },
         "safety": {

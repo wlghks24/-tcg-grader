@@ -24,6 +24,7 @@ from typing import Any, Callable, Iterable
 from code_map_intelligence import (
     CodeMapIndex,
     compact_context,
+    dedupe_learning_rows,
     default_learning_state,
     event_priority,
     impact_context,
@@ -352,6 +353,7 @@ def observe(events: Iterable[dict[str, Any]], *, state_path: Path = STATE,
                 result = _main_selfrefine_observe(event)
                 if result is not None:
                     selfrefine.append({"incident_id": iid, **result})
+        verified_learning = dedupe_learning_rows(verified_learning)
         if not dry_run:
             if verified_learning:
                 merge_verified_learning(state, verified_learning)

@@ -28,6 +28,7 @@ from safe_runtime import atomic_write_json, atomic_write_text, safe_read_text
 from code_map_intelligence import (
     CodeMapIndex,
     compact_context,
+    dedupe_learning_rows,
     impact_context,
     learning_health,
     merge_verified_learning,
@@ -698,6 +699,9 @@ def run_tracker(
                 pending["verification"] = "pending_full_regression"
                 pending_learning.append(pending)
 
+    verified_learning = dedupe_learning_rows(verified_learning)
+    pending_learning = dedupe_learning_rows(pending_learning)
+
     result = {
         "schema": SCHEMA,
         "generated_at": _now(),
@@ -734,7 +738,10 @@ def run_tracker(
             "learning_applied": bool(verified_learning),
             "map_signature": map_index.signature,
             "single_parse_per_run": True,
-            "self_refine": learning_health(state_before.get("code_map_learning")),
+            "self_refine": learning_health(
+                state_before.get("code_map_learning"),
+                map_signature=map_index.signature,
+            ),
         },
         "design_references": DESIGN_REFERENCES,
         "safety": {
@@ -754,6 +761,9 @@ def run_tracker(
             "code_map_single_parse_per_run": True,
             "code_map_self_correction_verified_overlay_only": True,
             "code_map_confidence_calibrated_from_verified_history": True,
+            "code_map_learning_deduped_per_run": True,
+            "code_map_generation_revalidation_required": True,
+            "code_map_overlay_quota_reserved": True,
         },
     }
     target = report_path or REPORT
