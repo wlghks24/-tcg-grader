@@ -7,7 +7,7 @@
       "system": "IG_CARDINFO",
       "automation_id": "6a9b8a22e72c8191849c273e1240378e",
       "incident_id": "IG-AUTOMATION-PAUSE-20260907-0534-KST",
-      "status": "cause_unresolved_reactivated",
+      "status": "cause_unresolved_guard_verified_reactivated",
       "disabled_state_observed_at_utc": "2026-09-06T20:34:07.836996Z",
       "last_run_before_pause_utc": "2026-09-06T19:30:22.873339Z",
       "reactivated_at_utc": "2026-09-07T01:01:48.674172Z",
@@ -26,7 +26,16 @@
         "detect pause gap and missed 06:30 full slot on next observed state",
         "record evidence-backed cause only when actor and reason are available",
         "never self-disable for collector, crosscheck, render, or validation failure"
-      ]
+      ],
+      "guard_verification": {
+        "instagram_selfrefine": "pass",
+        "daily_0600_audit": "pass",
+        "main_selfrefine": "pass",
+        "repository_integrity": "pass",
+        "deep_selfrefine": "pass",
+        "exhaustive_selfrefine": "pass"
+      },
+      "verified_prevention_rule_id": "IG-PREV-AUTOMATION-PAUSE-ATTRIBUTION-V1"
     }
   ]
 }
