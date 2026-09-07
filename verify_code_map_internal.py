@@ -77,7 +77,7 @@ REQUIRED_TEXT = {
         "Build and audit the real repository code map",
         "GRAPHIFY_DISABLE_SELF_HEAL=1 bash ./GRAPHIFY_UPDATE.sh",
         "python ./GRAPHIFY_AUDIT.py --strict",
-        "python -m unittest -v test_market_ai_auto_tracker.py",
+        "python -m unittest -v test_code_map_fast_route_v195.py test_market_ai_auto_tracker.py",
     ),
     "test_ai_auto_tracker.py": (
         "test_code_map_impact_is_attached_to_handoff",
