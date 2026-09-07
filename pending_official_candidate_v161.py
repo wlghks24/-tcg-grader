@@ -441,8 +441,11 @@ def _submit_not_found(incoming: dict[str, Any]) -> dict[str, Any]:
 def submit(incoming: dict[str, Any]) -> dict[str, Any]:
     if not isinstance(incoming, dict):
         raise ValueError("등록자료 형식 오류")
-    if str(incoming.get("action") or "").strip().lower() == "official_not_found":
+    action = str(incoming.get("action") or "").strip().lower()
+    if action == "official_not_found":
         return _submit_not_found(incoming)
+    if action != "complete_manual_verification" or incoming.get("manual_verification_confirmed") is not True:
+        raise ValueError("③ 검증완료 등록을 직접 눌러 수동검증을 확인해야 학습자료로 승격할 수 있습니다.")
 
     candidate_id = str(incoming.get("candidate_id") or "").strip()[:64]
     if not candidate_id:
@@ -490,8 +493,68 @@ def submit(incoming: dict[str, Any]) -> dict[str, Any]:
         raise
 
     rel_path = str(proof_path.relative_to(ROOT))
-    promoted = 0
     verified_at = _now()
+
+    # Persist the exact manual company+cert+grade anchor first. Candidate
+    # reference-learning must never outrun the verified registry trust boundary.
+    published, registry_error = manual_photo._publish_verified_cert_anchor(
+        company=company,
+        cert=cert,
+        grade=float(grade),
+        official_reference_url=lookup_url(company, cert),
+        card_name=target.get("card_name") or target.get("title"),
+        game=target.get("game"),
+        source="pending-official-candidate-manual-verified",
+        official_verification_source="manual_official_candidate_v161",
+        official_verification_method="user_browser_official_page_exact_screenshot",
+        manual_official_proof_verified=False,
+    )
+    if not published:
+        for row in rows:
+            if row.get("official_result") is True or _candidate_id(row) != candidate_id:
+                continue
+            row.update({
+                "official_result": False,
+                "verification_state": "manual_official_verified_registry_conflict",
+                "official_verification_method": None,
+                "official_verification_source": None,
+                "manual_official_candidate_verified": False,
+                "manual_verification_confirmed": True,
+                "manual_verification_confirmed_at": verified_at,
+                "manual_verification_action": action,
+                "manual_official_candidate_proof_path": rel_path,
+                "manual_official_candidate_proof_sha256": digest,
+                "manual_official_candidate_proof_match_mode": match.get("match_mode"),
+                "manual_official_verification_block_reason": str(registry_error or "verified_registry_publish_failed"),
+                "learning_eligibility": "not_eligible_registry_conflict",
+                "raw_grade_calibration_eligible": False,
+            })
+        summary = _save_candidate_payload(
+            payload, rows, promoted_delta=0,
+            timestamp_key="manual_official_candidate_last_verification_failed_at",
+        )
+        return {
+            "ok": True,
+            "accepted": False,
+            "proof_matched": True,
+            "verification_complete": False,
+            "candidate_id": candidate_id,
+            "company": company,
+            "certification_id": cert,
+            "grade": grade,
+            "error": str(registry_error or "verified_registry_publish_failed"),
+            "reference_learning_count": summary.get("reference_learning_count", 0),
+            "raw_grade_calibration_eligible": False,
+            "policy": {
+                "manual_only": True,
+                "explicit_manual_verification_confirmation_required": True,
+                "manual_verification_confirmed": True,
+                "verified_registry_required": True,
+                "official_result": False,
+            },
+        }
+
+    promoted = 0
     for row in rows:
         if row.get("official_result") is True or _candidate_id(row) != candidate_id:
             continue
@@ -509,6 +572,10 @@ def submit(incoming: dict[str, Any]) -> dict[str, Any]:
             "manual_official_candidate_proof_ocr_certification_id": (evidence or {}).get("certification_id") if isinstance(evidence, dict) else None,
             "manual_official_candidate_proof_ocr_grade": (evidence or {}).get("grade") if isinstance(evidence, dict) else None,
             "manual_official_candidate_verified": True,
+            "manual_verification_confirmed": True,
+            "manual_verification_confirmed_at": verified_at,
+            "manual_verification_action": action,
+            "learning_eligibility": "reference_learning_only",
             "raw_grade_calibration_eligible": False,
         })
         promoted += 1
@@ -522,6 +589,7 @@ def submit(incoming: dict[str, Any]) -> dict[str, Any]:
     return {
         "ok": True,
         "accepted": True,
+        "verification_complete": True,
         "candidate_id": candidate_id,
         "company": company,
         "certification_id": cert,
@@ -530,6 +598,13 @@ def submit(incoming: dict[str, Any]) -> dict[str, Any]:
         "reference_learning_count": summary["reference_learning_count"],
         "raw_grade_calibration_eligible": False,
         "verification_method": "user_browser_official_page_exact_screenshot",
+        "policy": {
+            "manual_only": True,
+            "explicit_manual_verification_confirmation_required": True,
+            "manual_verification_confirmed": True,
+            "verified_registry_required": True,
+            "official_result": True,
+        },
     }
 
 
