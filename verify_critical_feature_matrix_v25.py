@@ -28,6 +28,9 @@ FEATURE_FILES = {
         "verify_card_identity_recognition.py",
         "test_ocr_selfrefine_v15.py",
         "test_ocr_multistage_v16.py",
+        "card_identity_recognition.js",
+        "verify_pokemon_generation_runtime.js",
+        "test_pokemon_generation_display_v207.py",
     ],
     "ocr_extended_verification": [
         "library_slab_corpus.py",
