@@ -9,6 +9,10 @@ on:
 permissions:
   contents: read
 
+concurrency:
+  group: main-selfrefine-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   selfrefine:
     runs-on: ubuntu-latest
