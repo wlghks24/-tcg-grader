@@ -168,7 +168,7 @@ FEATURE_ENTRYPOINTS = {
     "tablet_termux": ("ANDROID_UPDATE_AND_START.sh",),
     "selfrefine_isolation": ("main_selfrefine_gate.py", "selfrefine_domain_boundary_guard.py"),
     "security_integrity": ("repository_integrity_guard.py",),
-    "code_map_internal": ("code_map_fast_route.py", "code_map_intelligence.py"),
+    "code_map_internal": ("code_map_fast_route.py",),
     "instagram_cardinfo_pause_recovery": ("instagram_tcg_content/automation_state_guard.py",),
     "instagram_cardinfo_crosscheck": ("crosscheck_runtime_bridge.py",),
     "instagram_cardinfo_source_verification": ("instagram_tcg_content/source_verification_engine.py",),
@@ -395,6 +395,11 @@ def resolve_feature_query(
             if path not in entry_files:
                 entry_files.append(path)
 
+    entry_files = entry_files[:8]
+    support_files = [
+        path for path in primary
+        if path not in set(entry_files)
+    ]
     repo_wide = not selected or top_score < 4
     result = {
         "query": str(query or "")[:240],
@@ -402,7 +407,9 @@ def resolve_feature_query(
             {"group": group, "score": round(score, 2)}
             for score, group in selected
         ],
-        "entry_files": entry_files[:8],
+        "entry_file": entry_files[0] if entry_files else None,
+        "entry_files": entry_files,
+        "support_files": support_files,
         "primary_files": primary,
         "suggested_tests": tests,
         "workflow_files": workflows,
