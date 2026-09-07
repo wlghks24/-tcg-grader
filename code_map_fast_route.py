@@ -6,7 +6,7 @@ import json
 import time
 from pathlib import Path
 
-from code_map_intelligence import CodeMapIndex, impact_depth_for_severity, resolve_feature_query
+from code_map_intelligence import CodeMapIndex, impact_depth_for_severity, resolve_feature_query, validation_plan_for_route
 
 ROOT = Path(__file__).resolve().parent
 
@@ -20,12 +20,12 @@ def route(
         index = CodeMapIndex(ROOT)
         result = index.feature_impact(query, depth=depth, max_seed_files=max_seeds)
         result["graph_loaded"] = True
+        result["diagnostic_strategy"] = "entrypoint_then_bounded_impact"
     else:
         result = resolve_feature_query(query)
-        result["diagnostic_strategy"] = "targeted_first"
-        result["full_chain_after_fix"] = [
-            "Repository Verify", "Deep Audit", "Exhaustive", "Build/Deploy",
-        ]
+        result["diagnostic_strategy"] = "entrypoint_first"
+    result["validation_plan"] = validation_plan_for_route(result, severity)
+    result["full_chain_after_fix"] = result["validation_plan"]["full_chain"]
     result["route_ms"] = round((time.perf_counter() - started) * 1000.0, 3)
     result["severity"] = severity
     result["depth"] = depth
