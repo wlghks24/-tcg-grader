@@ -211,9 +211,9 @@ class CodeMapEntrypointRouteV196Tests(unittest.TestCase):
 
     def test_changed_file_outside_feature_route_adds_repository_verify(self):
         result = route(
-            "업체별 인증번호 OCR 인식률 개선",
+            "인스타 카드정보 일시정지 재활성화",
             severity="low",
-            changed_files=["grading_cert_verifier.py", "unrelated_helper.py"],
+            changed_files=["instagram_tcg_content/automation_state_guard.py", "unrelated_helper.py"],
         )
         plan = result["validation_plan"]
         self.assertEqual("targeted_plus_repository_verify", plan["initial_scope"])
