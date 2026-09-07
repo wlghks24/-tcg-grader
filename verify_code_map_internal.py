@@ -67,6 +67,8 @@ REQUIRED_TEXT = {
         "FEATURE_TEST_NODE_CONTRACTS",
         "test_scope_policy",
         "validation_plan_for_route",
+        "validation_plan_for_changes",
+        "change_boundary",
         "diagnostic_strategy",
     ),
     "code_map_fast_route.py": (
@@ -78,6 +80,10 @@ REQUIRED_TEXT = {
         "3a_recommended_test_nodes",
         "3c_deferred_related_test_nodes",
         "repository_search_policy",
+        "ci_execution_plan",
+        "bottleneck_analysis",
+        "graph_load_attempted",
+        "changed_files",
     ),
     "test_code_map_fast_route_v195.py": (
         "test_cert_ocr_query_routes_without_repo_wide_search",
@@ -97,6 +103,10 @@ REQUIRED_TEXT = {
         "test_crosscheck_primary_tests_do_not_pull_secondary_feature_tests",
         "test_fast_route_defers_related_tests_from_active_validation",
         "test_low_severity_avoids_unconditional_full_ci",
+        "test_route_local_changed_file_stays_targeted",
+        "test_changed_file_outside_feature_route_adds_repository_verify",
+        "test_workflow_change_escalates_immediately_to_full_chain",
+        "test_unknown_impact_skips_pointless_graph_load",
         "test_high_severity_escalates_immediately_to_full_chain",
         "test_feature_impact_uses_entrypoint_as_seed",
     ),
@@ -383,7 +393,44 @@ def verify() -> dict:
             )
         if "code_map_intelligence.py" not in set(internal_route.get("support_files") or []):
             failures.append("code-map intelligence engine is not classified as support")
-        checked_contracts += 13
+
+        from code_map_fast_route import route as fast_route
+
+        local_change = fast_route(
+            "인스타 카드정보 일시정지 재활성화",
+            changed_files=["instagram_tcg_content/automation_state_guard.py"],
+        )
+        local_plan = local_change.get("validation_plan") or {}
+        if local_plan.get("initial_scope") != "targeted":
+            failures.append("route-local change unnecessarily escalated beyond targeted tests")
+        if local_plan.get("full_chain_required_now") is not False:
+            failures.append("route-local low-risk change incorrectly required full CI")
+
+        outside_change = fast_route(
+            "업체별 인증번호 OCR 인식률 개선",
+            changed_files=["grading_cert_verifier.py", "unrelated_helper.py"],
+        )
+        outside_plan = outside_change.get("validation_plan") or {}
+        if outside_plan.get("initial_scope") != "targeted_plus_repository_verify":
+            failures.append("changed file outside feature route did not add Repository Verify")
+
+        workflow_change = fast_route(
+            "업체별 인증번호 OCR 인식률 개선",
+            changed_files=[".github/workflows/repository-integrity-guard.yml"],
+        )
+        workflow_plan = workflow_change.get("validation_plan") or {}
+        if workflow_plan.get("initial_scope") != "full_chain":
+            failures.append("workflow change did not force full validation chain")
+        if workflow_plan.get("full_chain_required_now") is not True:
+            failures.append("workflow change did not mark full chain required now")
+
+        unknown_impact = fast_route("unknown_xyz_code_map_208", include_impact=True)
+        if unknown_impact.get("graph_load_attempted") is not False:
+            failures.append("unknown feature impact loaded Graphify before fallback search")
+        if unknown_impact.get("impact_skipped_reason") != "feature_route_unknown_no_bounded_seed":
+            failures.append("unknown feature impact did not record bounded-seed skip reason")
+
+        checked_contracts += 21
 
     with tempfile.TemporaryDirectory() as td:
         root = Path(td)
