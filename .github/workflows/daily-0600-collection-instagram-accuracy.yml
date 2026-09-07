@@ -129,6 +129,8 @@ jobs:
           python -m unittest -v test_crosscheck_runtime_bridge_v26.py
           python -m unittest -v test_selfrefine_domain_isolation_v18.py test_peer_learning_crosscheck_v23.py
           python -m unittest -v instagram_tcg_content.test_state_isolation_v18
+          python -m instagram_tcg_content.automation_state_guard --self-test
+          python -m unittest -v instagram_tcg_content.test_automation_pause_recovery_v30
 
       - name: Verify 06:00 audit regression
         run: |
@@ -140,7 +142,7 @@ jobs:
             main_peer_learning_export.py main_peer_learning_adoption.py main_persisted_crosscheck_export.py \
             main_persisted_learning_export.py peer_learning_runtime_bridge.py crosscheck_control_plane/persisted_learning_snapshot.py \
             selfrefine_domain_boundary_guard.py shared_self_learning/peer_learning.py \
-            instagram_tcg_content/peer_learning_export.py instagram_tcg_content/persisted_learning_export.py instagram_tcg_content/persisted_crosscheck_export.py crosscheck_runtime_bridge.py test_crosscheck_runtime_bridge_v26.py instagram_tcg_content/test_peer_learning_manifest_contract_v28.py
+            instagram_tcg_content/peer_learning_export.py instagram_tcg_content/persisted_learning_export.py instagram_tcg_content/persisted_crosscheck_export.py instagram_tcg_content/automation_state_guard.py instagram_tcg_content/test_automation_pause_recovery_v30.py crosscheck_runtime_bridge.py test_crosscheck_runtime_bridge_v26.py instagram_tcg_content/test_peer_learning_manifest_contract_v28.py
           python -c "import daily_collection_instagram_accuracy, auto_update_all, selfrefine_crosscheck_gate, peer_learning_crosscheck_gate"
           python -m unittest -v \
             test_daily_collection_instagram_accuracy.py \
