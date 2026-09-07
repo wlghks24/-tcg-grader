@@ -626,7 +626,7 @@ class CodeMapIndex:
     ) -> dict[str, Any]:
         """Route feature text to seeds, then merge bounded graph impact results."""
         route = self.resolve_feature(query)
-        seed_files = list(route.get("primary_files") or [])[:max(1, min(8, int(max_seed_files)))]
+        seed_files = list(route.get("entry_files") or route.get("primary_files") or [])[:max(1, min(8, int(max_seed_files)))]
         impacted: list[str] = []
         tests: list[str] = list(route.get("suggested_tests") or [])
         critical: list[str] = []
@@ -661,10 +661,12 @@ class CodeMapIndex:
             "suggested_tests": tests[:MAX_SUGGESTED_TESTS],
             "critical_runtime_files": critical[:12],
             "seed_results": seed_results,
-            "diagnostic_strategy": "targeted_first",
-            "full_chain_after_fix": [
-                "Repository Verify", "Deep Audit", "Exhaustive", "Build/Deploy",
-            ],
+            "diagnostic_strategy": "entrypoint_then_bounded_impact",
+            "validation_plan": validation_plan_for_route(
+                {**route, "suggested_tests": tests[:MAX_SUGGESTED_TESTS]},
+                "low",
+            ),
+            "full_chain_after_fix": list(FULL_CHAIN_AFTER_FIX),
             "graph_available": self.available,
             "map_signature": self.signature,
         }
