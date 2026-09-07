@@ -476,33 +476,118 @@ def _find_row(registry: dict[str, Any], registration_id: str) -> tuple[int, dict
     raise ValueError("수동등록 번호를 찾을 수 없습니다.")
 
 
-def _publish_verified(row: dict[str, Any]) -> tuple[bool, str | None]:
-    company, cert, grade = row["company"], row["certification_id"], float(row["claimed_grade"])
+def _publish_verified_cert_anchor(
+    *,
+    company: str,
+    cert: str,
+    grade: float,
+    official_reference_url: str,
+    card_name: Any = None,
+    game: Any = None,
+    source: str = "manual-photo-official-cert-match",
+    official_verification_source: str = "user_browser_official_page",
+    official_verification_method: str = "manual_user_browser_official_page_exact_match",
+    manual_official_proof_verified: bool = False,
+) -> tuple[bool, str | None]:
+    """Publish the exact company+cert+grade anchor before any learning promotion."""
+    company = str(company or "").upper()
+    cert = _normalized_cert(cert)
+    try:
+        grade = float(grade)
+    except (TypeError, ValueError, OverflowError):
+        return False, "persisted_official_grade_invalid"
+    if company not in COMPANIES or not cert or not math.isfinite(grade) or not 1 <= grade <= 10:
+        return False, "persisted_official_identity_invalid"
+
     certifications = _load(VERIFIED_CERTIFICATIONS, {"version": 1, "certifications": []})
     values = certifications.get("certifications", []) if isinstance(certifications, dict) else []
     values = [dict(item) for item in values if isinstance(item, dict)]
+    changed = False
     for item in values:
-        if str(item.get("company") or "").upper() == company and _normalized_cert(item.get("certification_id")) == cert:
-            try:
-                if abs(float(item.get("grade")) - grade) > 1e-9:
-                    return False, "persisted_official_grade_conflict"
-            except (TypeError, ValueError, OverflowError):
-                return False, "persisted_official_grade_invalid"
-            break
+        if str(item.get("company") or "").upper() != company or _normalized_cert(item.get("certification_id")) != cert:
+            continue
+        try:
+            if abs(float(item.get("grade")) - grade) > 1e-9:
+                return False, "persisted_official_grade_conflict"
+        except (TypeError, ValueError, OverflowError):
+            return False, "persisted_official_grade_invalid"
+        item.update({
+            "verified": True,
+            "official_result": True,
+            "official_reference_url": official_reference_url,
+            "official_verification_source": official_verification_source,
+            "official_verification_method": official_verification_method,
+            "manual_official_proof_verified": bool(manual_official_proof_verified),
+        })
+        changed = True
+        break
     else:
         values.append({
-            "company": company, "certification_id": cert, "grade": grade, "verified": True,
+            "company": company,
+            "certification_id": cert,
+            "grade": grade,
+            "verified": True,
             "official_result": True,
-            "official_reference_url": row["official_reference_url"], "card_name": row.get("card_name"),
-            "game": row.get("game"), "mode": "slab", "source": "manual-photo-official-cert-match",
-            "official_verification_source": row.get("official_verification_source") or "user_browser_official_page",
-            "official_verification_method": row.get("official_verification_method") or "manual_user_browser_official_page_exact_match",
-            "manual_official_proof_verified": row.get("manual_official_proof_registered") is True
-                and str(row.get("manual_official_proof_state") or "") == "matched",
+            "official_reference_url": official_reference_url,
+            "card_name": card_name,
+            "game": game,
+            "mode": "slab",
+            "source": source,
+            "official_verification_source": official_verification_source,
+            "official_verification_method": official_verification_method,
+            "manual_official_proof_verified": bool(manual_official_proof_verified),
         })
-        certifications = {"version": 1, "certifications": values,
-                          "instructions": "Manual labels require official company+cert+grade verification before reference learning."}
+        changed = True
+
+    if changed:
+        certifications = {
+            "version": 1,
+            "certifications": values,
+            "instructions": "Manual labels require explicit user verification plus official company+cert+grade registry publication before reference learning.",
+        }
         atomic_write_json(VERIFIED_CERTIFICATIONS, certifications, suffix=".manual-cert.tmp")
+
+    # Treat the persisted registry as the trust boundary: a successful in-memory
+    # mutation is not enough. The exact company+cert+grade anchor must be readable
+    # back from disk before any caller can mark learning as verified.
+    readback = _load(VERIFIED_CERTIFICATIONS, {"certifications": []})
+    readback_values = readback.get("certifications", []) if isinstance(readback, dict) else []
+    for item in readback_values if isinstance(readback_values, list) else []:
+        if not isinstance(item, dict):
+            continue
+        if str(item.get("company") or "").upper() != company:
+            continue
+        if _normalized_cert(item.get("certification_id")) != cert:
+            continue
+        try:
+            stored_grade = float(item.get("grade"))
+        except (TypeError, ValueError, OverflowError):
+            return False, "persisted_official_grade_invalid"
+        if abs(stored_grade - grade) > 1e-9:
+            return False, "persisted_official_grade_conflict"
+        if item.get("verified") is not True and item.get("official_result") is not True:
+            return False, "persisted_official_registry_not_verified"
+        return True, None
+    return False, "persisted_official_registry_readback_failed"
+
+
+def _publish_verified(row: dict[str, Any]) -> tuple[bool, str | None]:
+    company, cert, grade = row["company"], row["certification_id"], float(row["claimed_grade"])
+    published, error = _publish_verified_cert_anchor(
+        company=company,
+        cert=cert,
+        grade=grade,
+        official_reference_url=row["official_reference_url"],
+        card_name=row.get("card_name"),
+        game=row.get("game"),
+        source="manual-photo-official-cert-match",
+        official_verification_source=row.get("official_verification_source") or "user_browser_official_page",
+        official_verification_method=row.get("official_verification_method") or "manual_user_browser_official_page_exact_match",
+        manual_official_proof_verified=row.get("manual_official_proof_registered") is True
+            and str(row.get("manual_official_proof_state") or "") == "matched",
+    )
+    if not published:
+        return False, error
 
     references = _load(VERIFIED_SLAB_REFERENCES, {"schema_version": 1, "certifications": []})
     ref_values = references.get("certifications", []) if isinstance(references, dict) else []

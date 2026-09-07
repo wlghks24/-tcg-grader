@@ -182,7 +182,7 @@ async function submitProof(event){
  try{
   if(label)label.textContent='공식 조회 화면 OCR 일치검사 중…';
   const image=await normalize(file);
-  const response=await fetch('/api/manual-official-proof',{method:'POST',headers:{'Content-Type':'application/json'},cache:'no-store',body:JSON.stringify({registration_id:registrationId,proof_image_data_url:image,filename:file.name||''})});
+  const response=await fetch('/api/manual-official-proof',{method:'POST',headers:{'Content-Type':'application/json'},cache:'no-store',body:JSON.stringify({action:'complete_manual_verification',manual_verification_confirmed:true,registration_id:registrationId,proof_image_data_url:image,filename:file.name||''})});
   const data=await response.json().catch(()=>({}));
   if(!response.ok)throw new Error(data.error||`등록 실패(${response.status})`);
   if(!data.accepted){

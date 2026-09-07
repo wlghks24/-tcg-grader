@@ -191,6 +191,7 @@ def public_status() -> dict[str, Any]:
             "later_live_official_lookup_can_promote": False,
             "automatic_live_lookup_used": False,
             "verification_is_manual_only": True,
+            "explicit_manual_verification_confirmation_required": True,
             "user_can_cancel_unverified_registration": True,
             "user_cannot_delete_live_official_verified_registration": True,
             "access_control_bypass_used": False,
@@ -618,7 +619,11 @@ def _inside_allowed_file(relative_path: Any, allowed_root: Path) -> bool:
 
 
 def _manual_verification_ready(row: dict[str, Any]) -> tuple[bool, str]:
-    """Require the complete stored evidence set before marking manual verification complete."""
+    """Require explicit user approval plus complete stored evidence before completion."""
+    if row.get("manual_verification_confirmed") is not True:
+        return False, "manual_verification_confirmation_missing"
+    if str(row.get("manual_verification_action") or "") != "complete_manual_verification":
+        return False, "manual_verification_action_missing"
     if row.get("front_back_pair_complete") is not True:
         return False, "front_back_pair_incomplete"
     front_sha = str(row.get("image_sha256") or "").lower()
@@ -643,8 +648,11 @@ def submit(payload: dict[str, Any]) -> dict[str, Any]:
     registration_id = str(payload.get("registration_id") or "").strip()[:80]
     if not _REGISTRATION_RE.fullmatch(registration_id):
         raise ValueError("수동등록 번호 형식 오류")
-    if str(payload.get("action") or "").strip().lower() == "delete_registration":
+    action = str(payload.get("action") or "").strip().lower()
+    if action == "delete_registration":
         return manual_delete.delete_registration(registration_id)
+    if action != "complete_manual_verification" or payload.get("manual_verification_confirmed") is not True:
+        raise ValueError("③ 검증완료 등록을 직접 눌러 수동검증을 확인해야 학습정보에 반영할 수 있습니다.")
     _claim_proof_upload()
 
     with manual_photo.LOCK:
@@ -750,6 +758,9 @@ def submit(payload: dict[str, Any]) -> dict[str, Any]:
             "manual_official_proof_match_mode": match["match_mode"],
             "manual_official_proof_missing_fields": match["missing"],
             "manual_official_proof_conflicts": match["conflicts"],
+            "manual_verification_confirmed": bool(matched and payload.get("manual_verification_confirmed") is True),
+            "manual_verification_confirmed_at": now if matched else None,
+            "manual_verification_action": action if matched else None,
             "official_reference_url": current.get("official_reference_url") or lookup_url(company, cert),
             # A matched screenshot is necessary but not sufficient. Verification
             # completes only after stored front/back/proof evidence and the
@@ -867,6 +878,8 @@ def submit(payload: dict[str, Any]) -> dict[str, Any]:
             "official_reference": current.get("official_result") is True,
             "verified_registry_required": True,
             "complete_stored_evidence_required": True,
+            "explicit_manual_verification_confirmation_required": True,
+            "manual_verification_confirmed": current.get("manual_verification_confirmed") is True,
             "raw_grade_calibration": False,
             "rejected_screenshot_bytes_retained": False,
             "ocr_miss_does_not_quarantine_card": True,

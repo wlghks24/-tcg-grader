@@ -66,6 +66,17 @@ def _identity_gate(row: dict[str, Any]) -> tuple[bool, str]:
         return False, "manual_proof_not_matched"
     if str(row.get("manual_official_proof_match_mode") or "") not in _ALLOWED_MATCH_MODES:
         return False, "manual_proof_match_mode_not_strict"
+    legacy_verified_manual = bool(
+        row.get("official_result") is True
+        and str(row.get("official_verification_source") or "") == _MANUAL_OFFICIAL_SOURCE
+    )
+    if row.get("manual_verification_confirmed") is not True and not legacy_verified_manual:
+        return False, "manual_verification_confirmation_missing"
+    if (
+        row.get("manual_verification_confirmed") is True
+        and str(row.get("manual_verification_action") or "") != "complete_manual_verification"
+    ):
+        return False, "manual_verification_action_missing"
     if row.get("front_back_pair_complete") is not True:
         return False, "front_back_pair_incomplete"
     front_sha = str(row.get("image_sha256") or "")
@@ -287,6 +298,7 @@ def _integrated_public_status() -> dict[str, Any]:
         "matched_user_browser_official_page_is_official_verification": True,
         "strict_identity_front_back_and_stored_proof_required": True,
         "registry_conflict_blocks_promotion": True,
+        "explicit_manual_verification_confirmation_required": True,
         "automatic_official_lookup_required_for_manual_match": False,
         "manual_screenshot_trains_raw_grade_calibration": False,
         "later_live_official_lookup_can_promote": False,

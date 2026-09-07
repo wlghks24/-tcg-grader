@@ -32,6 +32,17 @@ def row_template(**updates):
     return row
 
 
+def approval_payload(**updates):
+    payload = {
+        "action": "complete_manual_verification",
+        "manual_verification_confirmed": True,
+        "registration_id": REGISTRATION_ID,
+        "proof_image_data_url": "ignored",
+    }
+    payload.update(updates)
+    return payload
+
+
 class ManualOfficialProofTests(unittest.TestCase):
     def _patch_common(self, registry, evidence, text="OCR"):
         return mock.patch.multiple(
@@ -40,6 +51,15 @@ class ManualOfficialProofTests(unittest.TestCase):
             _decode_image=mock.Mock(return_value=(b"x" * 2048, ".jpg", 900, 1400)),
             _ocr_image=mock.Mock(return_value=(text, None, {}, evidence)),
         )
+
+    def test_explicit_manual_confirmation_is_required_before_any_verification(self):
+        with mock.patch.object(proof.manual_photo, "_publish_verified") as publish:
+            with self.assertRaises(ValueError):
+                proof.submit({
+                    "registration_id": REGISTRATION_ID,
+                    "proof_image_data_url": "ignored",
+                })
+        publish.assert_not_called()
 
     def test_exact_match_is_manual_official_reference_never_raw(self):
         registry = {"registrations": [row_template()]}
@@ -52,7 +72,7 @@ class ManualOfficialProofTests(unittest.TestCase):
              mock.patch.object(proof, "atomic_write_bytes"), \
              mock.patch.object(proof, "_append_reference") as append_reference, \
              mock.patch.object(proof, "_remove_proof_file"):
-            result = proof.submit({"registration_id": REGISTRATION_ID, "proof_image_data_url": "ignored"})
+            result = proof.submit(approval_payload())
             save_registry.assert_called_once()
             publish_verified.assert_called_once()
         self.assertTrue(result["accepted"], result)
@@ -80,7 +100,7 @@ class ManualOfficialProofTests(unittest.TestCase):
              mock.patch.object(proof, "atomic_write_bytes"), \
              mock.patch.object(proof, "_append_reference") as append_reference, \
              mock.patch.object(proof, "_remove_proof_file"):
-            result = proof.submit({"registration_id": REGISTRATION_ID, "proof_image_data_url": "ignored"})
+            result = proof.submit(approval_payload())
         self.assertFalse(result["accepted"], result)
         self.assertTrue(result["proof_matched"], result)
         self.assertFalse(result["verification_complete"], result)
@@ -102,7 +122,7 @@ class ManualOfficialProofTests(unittest.TestCase):
              mock.patch.object(proof, "atomic_write_bytes"), \
              mock.patch.object(proof, "_append_reference") as append_reference, \
              mock.patch.object(proof, "_remove_proof_file"):
-            result = proof.submit({"registration_id": REGISTRATION_ID, "proof_image_data_url": "ignored"})
+            result = proof.submit(approval_payload())
         self.assertFalse(result["accepted"], result)
         self.assertFalse(result["proof"]["slab_grade_fallback"], result)
         self.assertIn("grade", result["proof"]["missing"], result)
@@ -119,7 +139,7 @@ class ManualOfficialProofTests(unittest.TestCase):
              mock.patch.object(proof, "atomic_write_bytes"), \
              mock.patch.object(proof, "_append_reference") as append_reference, \
              mock.patch.object(proof, "_remove_proof_file"):
-            result = proof.submit({"registration_id": REGISTRATION_ID, "proof_image_data_url": "ignored"})
+            result = proof.submit(approval_payload())
         self.assertFalse(result["accepted"], result)
         saved = registry["registrations"][0]
         self.assertEqual(saved["status"], "pending_official_verification")
@@ -137,7 +157,7 @@ class ManualOfficialProofTests(unittest.TestCase):
              mock.patch.object(proof, "atomic_write_bytes"), \
              mock.patch.object(proof, "_append_reference") as append_reference, \
              mock.patch.object(proof, "_remove_proof_file"):
-            result = proof.submit({"registration_id": REGISTRATION_ID, "proof_image_data_url": "ignored"})
+            result = proof.submit(approval_payload())
         self.assertFalse(result["accepted"], result)
         self.assertFalse(result["proof"]["slab_grade_fallback"], result)
         self.assertIn("grade", result["proof"]["missing"], result)
@@ -159,7 +179,7 @@ class ManualOfficialProofTests(unittest.TestCase):
              mock.patch.object(proof, "atomic_write_bytes"), \
              mock.patch.object(proof, "_append_reference") as append_reference, \
              mock.patch.object(proof, "_remove_proof_file") as remove_proof:
-            result = proof.submit({"registration_id": REGISTRATION_ID, "proof_image_data_url": "ignored"})
+            result = proof.submit(approval_payload())
             save_registry.assert_not_called()
         self.assertFalse(result["accepted"], result)
         self.assertTrue(result["registration"]["manual_official_proof_registered"])
@@ -176,7 +196,7 @@ class ManualOfficialProofTests(unittest.TestCase):
              mock.patch.object(proof, "atomic_write_bytes"), \
              mock.patch.object(proof, "_append_reference") as append_reference, \
              mock.patch.object(proof, "_remove_proof_file") as remove_proof:
-            result = proof.submit({"registration_id": REGISTRATION_ID, "proof_image_data_url": "ignored"})
+            result = proof.submit(approval_payload())
             save_registry.assert_called_once()
         self.assertFalse(result["accepted"], result)
         saved = registry["registrations"][0]
@@ -201,6 +221,7 @@ class ManualOfficialProofTests(unittest.TestCase):
         self.assertFalse(policy["later_live_official_lookup_can_promote"])
         self.assertFalse(policy["automatic_live_lookup_used"])
         self.assertTrue(policy["verification_is_manual_only"])
+        self.assertTrue(policy["explicit_manual_verification_confirmation_required"])
         self.assertFalse(policy["manual_screenshot_trains_raw_grade_calibration"])
         self.assertFalse(policy["rejected_screenshot_bytes_retained"])
         self.assertTrue(policy["valid_proof_cannot_be_downgraded_by_later_bad_upload"])
