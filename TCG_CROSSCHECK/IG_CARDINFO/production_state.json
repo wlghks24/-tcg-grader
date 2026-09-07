@@ -1,6 +1,11 @@
 {
   "schema_version": 1,
-  "run_locks": {},
+  "run_locks": {
+    "2026-09-07|2026-09-07T15:30:00+09:00|USER_REQUESTED_RECOVERY": {
+      "run_id": "ig-cardinfo-recovery-2026-09-07T15:30+09:00",
+      "status": "running"
+    }
+  },
   "production_records": {},
   "blocked_attempts": {
     "2026-09-07": {
@@ -12,5 +17,7 @@
       "detail": "Post-slot evidence: finalized IG factual snapshot exposed one verified fact and no finalized production state/artifact record was present."
     }
   },
-  "catchup_attempts": {}
+  "catchup_attempts": {
+    "2026-09-07": 1
+  }
 }
