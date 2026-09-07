@@ -94,6 +94,31 @@ class AutomationPauseRecoveryV30Tests(unittest.TestCase):
         self.assertTrue(policy["preserve_enabled_state"])
         self.assertTrue(policy["preserve_schedule"])
 
+    def test_revision_preflight_data_shortage_is_not_scheduler_block(self):
+        policy = runtime_failure_policy(
+            stage="revision_preflight",
+            error_code="REVISION_BASELINE_MISSING",
+            retryable=False,
+        )
+        self.assertEqual(policy["run_status"], "PRECHECK_NOT_READY")
+        self.assertEqual(policy["next_action"], "COMPLETE_RUN_AND_KEEP_NEXT_SLOT")
+        self.assertFalse(policy["automation_state_mutation_allowed"])
+        self.assertFalse(policy["self_disable_allowed"])
+        self.assertFalse(policy["self_pause_allowed"])
+        self.assertFalse(policy["scheduler_terminal"])
+        self.assertTrue(policy["automation_continues"])
+        self.assertTrue(policy["preserve_enabled_state"])
+
+    def test_snapshot_building_is_not_scheduler_block(self):
+        policy = runtime_failure_policy(
+            stage="production_preflight",
+            error_code="SNAPSHOT_BUILDING",
+            retryable=False,
+        )
+        self.assertEqual(policy["run_status"], "PRECHECK_NOT_READY")
+        self.assertTrue(policy["automation_continues"])
+        self.assertFalse(policy["automation_state_mutation_allowed"])
+
     def test_wrong_id_fails_closed(self):
         state = self.state(False)
         state["id"] = "wrong"
