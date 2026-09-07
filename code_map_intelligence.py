@@ -396,26 +396,43 @@ def resolve_feature_query(
     selected = ranked_groups[:max(1, min(8, int(max_groups)))]
     top_score = selected[0][0] if selected else 0.0
 
+    selected_groups = [group for _score, group in selected]
+    primary_group = selected_groups[0] if selected_groups else None
+
     primary: list[str] = []
     tests: list[str] = []
     workflows: list[str] = []
+    related_primary: list[str] = []
+    related_tests: list[str] = []
+    related_workflows: list[str] = []
     scanned = 0
-    for _score, group in selected:
+    related_scanned = 0
+
+    for index, (_score, group) in enumerate(selected):
+        target_primary = primary if index == 0 else related_primary
+        target_tests = tests if index == 0 else related_tests
+        target_workflows = workflows if index == 0 else related_workflows
         for path in feature_routes.get(group, ()):
-            scanned += 1
+            if index == 0:
+                scanned += 1
+            else:
+                related_scanned += 1
             if path.startswith(".github/workflows/"):
-                if path not in workflows:
-                    workflows.append(path)
+                if path not in target_workflows:
+                    target_workflows.append(path)
             elif _is_test_path(path):
-                if path not in tests:
-                    tests.append(path)
-            elif path not in primary:
-                primary.append(path)
+                if path not in target_tests:
+                    target_tests.append(path)
+            elif path not in target_primary:
+                target_primary.append(path)
 
     safe_limit = max(1, min(64, int(max_files)))
     primary = primary[:safe_limit]
     tests = tests[:MAX_SUGGESTED_TESTS]
     workflows = workflows[:8]
+    related_primary = [path for path in related_primary if path not in set(primary)][:safe_limit]
+    related_tests = [path for path in related_tests if path not in set(tests)][:MAX_SUGGESTED_TESTS]
+    related_workflows = [path for path in related_workflows if path not in set(workflows)][:8]
     confidence = 0.0
     if top_score >= 12:
         confidence = 0.99
@@ -426,8 +443,6 @@ def resolve_feature_query(
     elif top_score > 0:
         confidence = 0.62
 
-    selected_groups = [group for _score, group in selected]
-    primary_group = selected_groups[0] if selected_groups else None
     entry_file: str | None = None
     alternate_entry_files: list[str] = []
     entrypoint_reason = "no_feature_match"
@@ -467,8 +482,17 @@ def resolve_feature_query(
         "primary_files": primary,
         "suggested_tests": tests,
         "workflow_files": workflows,
+        "related_feature_groups": [
+            {"group": group, "score": round(score, 2)}
+            for score, group in selected[1:]
+        ],
+        "related_primary_files": related_primary,
+        "related_tests": related_tests,
+        "related_workflow_files": related_workflows,
         "confidence": confidence,
         "candidate_files_scanned": scanned,
+        "related_candidate_files_scanned": related_scanned,
+        "test_scope_policy": "primary_feature_group_only",
         "repository_wide_search_required": repo_wide,
         "repository_wide_search_avoided": not repo_wide,
         "route_decision": "direct_entrypoint" if not repo_wide else "fallback_search_required",
