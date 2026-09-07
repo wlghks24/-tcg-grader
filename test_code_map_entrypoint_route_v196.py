@@ -53,6 +53,62 @@ class CodeMapEntrypointRouteV196Tests(unittest.TestCase):
         self.assertNotIn("code_map_intelligence.py", result["entry_files"])
         self.assertFalse(result["repository_wide_search_required"])
 
+    def test_cert_ocr_has_one_entry_and_slab_as_alternate(self):
+        result = resolve_feature_query("업체별 인증번호 OCR 인식률 개선")
+        self.assertEqual("grading_cert_verifier.py", result["entry_file"])
+        self.assertEqual(["grading_cert_verifier.py"], result["entry_files"])
+        self.assertIn("library_slab_corpus.py", result["alternate_entry_files"])
+        self.assertEqual("group_default", result["entrypoint_reason"])
+
+    def test_slab_corpus_query_promotes_slab_entrypoint(self):
+        result = resolve_feature_query("슬랩 코퍼스 OCR 학습자료 확인")
+        self.assertEqual("library_slab_corpus.py", result["entry_file"])
+        self.assertEqual(["library_slab_corpus.py"], result["entry_files"])
+        self.assertIn("grading_cert_verifier.py", result["alternate_entry_files"])
+        self.assertEqual("query_specific_rule", result["entrypoint_reason"])
+
+    def test_release_and_promo_queries_choose_different_single_entries(self):
+        release = resolve_feature_query("재발매 출시 정보 수집 오류")
+        promo = resolve_feature_query("프로모 행사 영화특전 수집 오류")
+        self.assertEqual("update_releases.py", release["entry_file"])
+        self.assertEqual(["update_releases.py"], release["entry_files"])
+        self.assertEqual("update_promo_events.py", promo["entry_file"])
+        self.assertEqual(["update_promo_events.py"], promo["entry_files"])
+        self.assertIn("update_releases.py", promo["alternate_entry_files"])
+
+    def test_selfrefine_isolation_query_promotes_boundary_guard(self):
+        result = resolve_feature_query("SELFREFINE 도메인 격리 오류")
+        self.assertEqual("selfrefine_domain_boundary_guard.py", result["entry_file"])
+        self.assertEqual(["selfrefine_domain_boundary_guard.py"], result["entry_files"])
+        self.assertIn("main_selfrefine_gate.py", result["alternate_entry_files"])
+
+    def test_known_feature_routes_never_return_multiple_entry_files(self):
+        samples = (
+            "등급측정 센터링",
+            "카드명 카드번호 OCR",
+            "업체별 인증번호 OCR",
+            "PSA BGS CGC TAG BRG 등급사",
+            "수동 검증 등급사진",
+            "브라우저 카메라 업로드",
+            "시세 가격 수집",
+            "출시 재발매",
+            "프로모 행사",
+            "서버 runtime delivery",
+            "태블릿 Termux",
+            "SELFREFINE 격리",
+            "보안 무결성",
+            "코드지도 영향분석",
+            "인스타 카드정보 일시정지",
+            "인스타 카드정보 자료비교",
+            "인스타 카드정보 출처 검증",
+            "인스타 카드정보 작업물",
+        )
+        for query in samples:
+            result = resolve_feature_query(query)
+            self.assertLessEqual(len(result["entry_files"]), 1, (query, result["entry_files"]))
+            if result["repository_wide_search_required"] is False:
+                self.assertIsNotNone(result["entry_file"], query)
+
     def test_low_severity_avoids_unconditional_full_ci(self):
         result = route("업체별 인증번호 OCR 인식률 개선", severity="low")
         plan = result["validation_plan"]
@@ -65,7 +121,7 @@ class CodeMapEntrypointRouteV196Tests(unittest.TestCase):
         result = route("인스타 카드정보 일시정지 재활성화", severity="low")
         plan = result["exploration_plan"]
         self.assertEqual(
-            ["instagram_tcg_content/automation_state_guard.py"],
+            "instagram_tcg_content/automation_state_guard.py",
             plan["1_entrypoint"],
         )
         self.assertFalse(plan["2_bounded_impact"]["requested"])
