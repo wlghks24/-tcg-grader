@@ -546,7 +546,29 @@ def _publish_verified_cert_anchor(
             "instructions": "Manual labels require explicit user verification plus official company+cert+grade registry publication before reference learning.",
         }
         atomic_write_json(VERIFIED_CERTIFICATIONS, certifications, suffix=".manual-cert.tmp")
-    return True, None
+
+    # Treat the persisted registry as the trust boundary: a successful in-memory
+    # mutation is not enough. The exact company+cert+grade anchor must be readable
+    # back from disk before any caller can mark learning as verified.
+    readback = _load(VERIFIED_CERTIFICATIONS, {"certifications": []})
+    readback_values = readback.get("certifications", []) if isinstance(readback, dict) else []
+    for item in readback_values if isinstance(readback_values, list) else []:
+        if not isinstance(item, dict):
+            continue
+        if str(item.get("company") or "").upper() != company:
+            continue
+        if _normalized_cert(item.get("certification_id")) != cert:
+            continue
+        try:
+            stored_grade = float(item.get("grade"))
+        except (TypeError, ValueError, OverflowError):
+            return False, "persisted_official_grade_invalid"
+        if abs(stored_grade - grade) > 1e-9:
+            return False, "persisted_official_grade_conflict"
+        if item.get("verified") is not True and item.get("official_result") is not True:
+            return False, "persisted_official_registry_not_verified"
+        return True, None
+    return False, "persisted_official_registry_readback_failed"
 
 
 def _publish_verified(row: dict[str, Any]) -> tuple[bool, str | None]:
