@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 from __future__ import annotations
 
+import ast
 import json
 import tempfile
 from pathlib import Path
@@ -9,6 +10,8 @@ from code_map_intelligence import (
     CodeMapIndex,
     FEATURE_ALTERNATE_ENTRYPOINTS,
     FEATURE_ENTRYPOINTS,
+    FEATURE_QUERY_ALIASES,
+    FEATURE_TEST_NODE_CONTRACTS,
     default_learning_state,
     impact_depth_for_severity,
     resolve_feature_query,
@@ -58,6 +61,10 @@ REQUIRED_TEXT = {
         "support_files",
         "related_feature_groups",
         "related_tests",
+        "suggested_test_nodes",
+        "related_test_nodes",
+        "test_node_scope_policy",
+        "FEATURE_TEST_NODE_CONTRACTS",
         "test_scope_policy",
         "validation_plan_for_route",
         "diagnostic_strategy",
@@ -68,6 +75,8 @@ REQUIRED_TEXT = {
         "include_impact",
         "route_ms",
         "exploration_plan",
+        "3a_recommended_test_nodes",
+        "3c_deferred_related_test_nodes",
         "repository_search_policy",
     ),
     "test_code_map_fast_route_v195.py": (
@@ -153,6 +162,46 @@ def _workflow_trigger_text(relative: str) -> str:
     return text.split("\npermissions:", 1)[0]
 
 
+def _python_executable_nodes(relative: str) -> set[str]:
+    """Parse test nodes without importing test modules or optional dependencies."""
+    path = ROOT / relative
+    try:
+        tree = ast.parse(path.read_text(encoding="utf-8"))
+    except (OSError, UnicodeError, SyntaxError):
+        return set()
+    nodes: set[str] = set()
+    for item in tree.body:
+        if isinstance(item, (ast.FunctionDef, ast.AsyncFunctionDef)):
+            nodes.add(item.name)
+        elif isinstance(item, ast.ClassDef):
+            nodes.add(item.name)
+            for sub in item.body:
+                if isinstance(sub, (ast.FunctionDef, ast.AsyncFunctionDef)):
+                    nodes.add(f"{item.name}::{sub.name}")
+    return nodes
+
+
+def missing_test_node_contracts() -> list[str]:
+    """Fail closed when a Code Map-recommended executable node was renamed/removed."""
+    missing: list[str] = []
+    cache: dict[str, set[str]] = {}
+    for group, node_ids in FEATURE_TEST_NODE_CONTRACTS.items():
+        if not node_ids:
+            missing.append(f"{group}:<no-test-node-contract>")
+            continue
+        for node_id in node_ids:
+            file, *selectors = str(node_id).split("::")
+            if not selectors or not (ROOT / file).is_file():
+                missing.append(str(node_id))
+                continue
+            if file not in cache:
+                cache[file] = _python_executable_nodes(file)
+            selector = "::".join(selectors).split("[", 1)[0]
+            if selector not in cache[file]:
+                missing.append(str(node_id))
+    return missing
+
+
 def verify() -> dict:
     failures: list[str] = []
     checked_files = 0
@@ -212,6 +261,20 @@ def verify() -> dict:
             if f"- '{path}'" in trigger:
                 failures.append(f"unrelated heavy CI still triggered by code-map maintenance: {relative}: {path}")
     checked_contracts += 6 + (2 * len(targeted_only)) + (2 * 5) + 4
+
+    # Every known Code Map feature must keep at least one executable test node.
+    missing_nodes = missing_test_node_contracts()
+    for node_id in missing_nodes:
+        failures.append(f"code-map executable test node missing: {node_id}")
+    checked_contracts += sum(len(nodes) for nodes in FEATURE_TEST_NODE_CONTRACTS.values())
+
+    alias_groups = set(FEATURE_QUERY_ALIASES)
+    contract_groups = set(FEATURE_TEST_NODE_CONTRACTS)
+    for group in sorted(alias_groups - contract_groups):
+        failures.append(f"code-map feature lacks executable test-node contract: {group}")
+    for group in sorted(contract_groups - alias_groups):
+        failures.append(f"orphan executable test-node contract: {group}")
+    checked_contracts += len(alias_groups) + len(contract_groups)
 
     # Every curated feature group must have one canonical default entrypoint.
     for group, paths in FEATURE_ENTRYPOINTS.items():
@@ -291,6 +354,14 @@ def verify() -> dict:
         if plan.get("diagnostic_strategy") != "entrypoint_then_bounded_impact":
             failures.append("feature impact did not enforce entrypoint-first diagnostics")
         crosscheck_route = route_index.resolve_feature("인스타 카드정보 자료 비교 교차확인 오류")
+        if not crosscheck_route.get("suggested_test_nodes"):
+            failures.append("primary feature route did not expose executable test-node contracts")
+        if crosscheck_route.get("test_node_scope_policy") != "primary_feature_group_only+ast_fail_closed":
+            failures.append("feature router did not keep executable test nodes fail-closed")
+        for node_id in crosscheck_route.get("suggested_test_nodes") or []:
+            node_file = str(node_id).split("::", 1)[0]
+            if node_file not in set(crosscheck_route.get("suggested_tests") or []):
+                failures.append(f"executable node file is not an active suggested test: {node_id}")
         if crosscheck_route.get("test_scope_policy") != "primary_feature_group_only":
             failures.append("feature router did not keep tests inside the primary feature group")
         if set(crosscheck_route.get("suggested_tests") or []) & set(crosscheck_route.get("related_tests") or []):
@@ -396,6 +467,8 @@ def verify() -> dict:
         "graph_engine": "Graphify",
         "checked_files": checked_files,
         "checked_contracts": checked_contracts,
+        "executable_test_node_contracts": sum(len(nodes) for nodes in FEATURE_TEST_NODE_CONTRACTS.values()),
+        "missing_test_nodes": missing_nodes,
         "failures": failures,
         "physical_lenovo_verified": False,
     }

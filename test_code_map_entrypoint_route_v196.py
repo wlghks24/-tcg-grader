@@ -127,10 +127,52 @@ class CodeMapEntrypointRouteV196Tests(unittest.TestCase):
     def test_fast_route_defers_related_tests_from_active_validation(self):
         result = route("인스타 카드정보 자료 비교 교차확인 오류", severity="low")
         active = result["validation_plan"]["initial_checks"]
-        deferred = result["exploration_plan"]["3a_deferred_related_tests"]
+        deferred = result["exploration_plan"]["3b_deferred_related_tests"]
         self.assertEqual(result["suggested_tests"], result["exploration_plan"]["3_recommended_tests"])
         self.assertTrue(set(active).isdisjoint(set(deferred)), result)
         self.assertEqual("targeted", result["validation_plan"]["initial_scope"])
+
+    def test_every_known_feature_exposes_one_executable_test_node_contract(self):
+        samples = (
+            "등급측정 센터링",
+            "카드명 카드번호 OCR",
+            "업체별 인증번호 OCR",
+            "PSA BGS CGC TAG BRG 등급사",
+            "수동 검증 등급사진",
+            "브라우저 카메라 업로드",
+            "시세 가격 수집",
+            "출시 재발매",
+            "서버 runtime delivery",
+            "태블릿 Termux",
+            "SELFREFINE 격리",
+            "보안 무결성",
+            "코드지도 영향분석",
+            "인스타 카드정보 일시정지",
+            "인스타 카드정보 자료비교",
+            "인스타 카드정보 출처 검증",
+            "인스타 카드정보 작업물",
+        )
+        for query in samples:
+            result = resolve_feature_query(query)
+            self.assertTrue(result["suggested_test_nodes"], query)
+            self.assertEqual(
+                "primary_feature_group_only+ast_fail_closed",
+                result["test_node_scope_policy"],
+            )
+            active_files = set(result["suggested_tests"])
+            for node_id in result["suggested_test_nodes"]:
+                self.assertIn(node_id.split("::", 1)[0], active_files, (query, node_id))
+
+    def test_fast_route_surfaces_node_contracts_without_activating_related_nodes(self):
+        result = route("인스타 카드정보 자료 비교 교차확인 오류", severity="low")
+        plan = result["exploration_plan"]
+        self.assertEqual(result["suggested_test_nodes"], plan["3a_recommended_test_nodes"])
+        self.assertEqual(result["related_test_nodes"], plan["3c_deferred_related_test_nodes"])
+        self.assertTrue(
+            set(plan["3a_recommended_test_nodes"]).isdisjoint(
+                set(plan["3c_deferred_related_test_nodes"])
+            )
+        )
 
     def test_low_severity_avoids_unconditional_full_ci(self):
         result = route("업체별 인증번호 OCR 인식률 개선", severity="low")

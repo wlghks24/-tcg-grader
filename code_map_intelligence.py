@@ -122,6 +122,18 @@ FEATURE_QUERY_ALIASES = {
 # kept out of the global critical-feature matrix.  These let a known feature name
 # jump straight to its maintenance entrypoint without a repository-wide search.
 FEATURE_ROUTE_OVERRIDES = {
+    "market_collection": (
+        "test_multi_market_price_collector.py",
+    ),
+    "tablet_termux": (
+        "test_tablet_runtime_qa_integration.py",
+    ),
+    "selfrefine_isolation": (
+        "test_selfrefine_domain_isolation_v18.py",
+    ),
+    "security_integrity": (
+        "test_security_self_audit.py",
+    ),
     "instagram_cardinfo_pause_recovery": (
         "instagram_tcg_content/automation_state_guard.py",
         "instagram_tcg_content/test_automation_pause_recovery_v30.py",
@@ -152,6 +164,74 @@ FEATURE_ROUTE_OVERRIDES = {
         "instagram_tcg_content/test_live_packet_guards.py",
     ),
 }
+
+# Representative executable test nodes. These are diagnostic contracts, not
+# arbitrary code execution. The fast route still recommends test files; the
+# internal Code Map guard parses these files with AST and fails closed if a
+# declared node/function was renamed or removed.
+FEATURE_TEST_NODE_CONTRACTS = {
+    "grading_vision_1_4_8": (
+        "test_grading_hierarchy_v17.py::GradingHierarchyV17Tests::test_index_uses_hierarchy_for_grade_estimation",
+    ),
+    "ocr_card_identity": (
+        "test_ocr_selfrefine_v15.py::OcrSelfrefineV15Tests::test_server_ocr_completes_all_three_stages_even_after_high_confidence_stage1",
+    ),
+    "ocr_extended_verification": (
+        "test_grader_cert_ocr_profiles_v193.py::GraderCertOcrV193Tests::test_psa_targeted_profile_repairs_numericish_confusions",
+    ),
+    "five_company_grading": (
+        "test_five_company_verification_policy.py::FiveCompanyVerificationPolicyTests::test_all_five_graders_have_official_lookup_configuration",
+    ),
+    "manual_verified_learning_gate": (
+        "test_manual_graded_photo_registration.py::ManualGradedPhotoRegistrationTests::test_verified_cert_anchor_supports_all_graders_and_requires_persisted_readback",
+    ),
+    "browser_camera_pwa": (
+        "test_feature_category_navigation_v26.py::FeatureCategoryNavigationV26Tests::test_every_shortcut_points_to_an_existing_runtime_target",
+    ),
+    "market_collection": (
+        "test_multi_market_price_collector.py::MultiMarketPriceCollectorTests::test_required_sources_present",
+    ),
+    "release_event_promo_collection": (
+        "test_release_history_coverage_v4.py::ReleaseHistoryCoverageV4Tests::test_expected_matrix_is_three_games_by_three_regions",
+    ),
+    "runtime_delivery": (
+        "test_runtime_delivery_guards.py::main",
+    ),
+    "tablet_termux": (
+        "test_tablet_runtime_qa_integration.py::main",
+    ),
+    "selfrefine_isolation": (
+        "test_selfrefine_domain_isolation_v18.py::SelfrefineDomainIsolationV18Tests::test_shared_learning_key_is_namespaced_and_state_is_not_shared",
+    ),
+    "security_integrity": (
+        "test_security_self_audit.py::SecuritySelfAuditTests::test_scan_keeps_syntax_and_dangerous_call_detection",
+    ),
+    "code_map_internal": (
+        "test_code_map_entrypoint_route_v196.py::CodeMapEntrypointRouteV196Tests::test_code_map_internal_has_single_public_entrypoint",
+    ),
+    "instagram_cardinfo_pause_recovery": (
+        "instagram_tcg_content/test_automation_pause_recovery_v30.py::AutomationPauseRecoveryV30Tests::test_unknown_pause_never_fabricates_root_cause",
+    ),
+    "instagram_cardinfo_crosscheck": (
+        "test_crosscheck_runtime_bridge_v26.py::CrosscheckRuntimeBridgeTests::test_end_to_end_agree_and_conflict",
+    ),
+    "instagram_cardinfo_source_verification": (
+        "instagram_tcg_content/test_source_verification_engine.py::main",
+    ),
+    "instagram_cardinfo_production_state": (
+        "instagram_tcg_content/test_production_state.py::main",
+    ),
+}
+
+
+def test_nodes_for_groups(groups: Iterable[str]) -> list[str]:
+    nodes: list[str] = []
+    for group in groups:
+        for node_id in FEATURE_TEST_NODE_CONTRACTS.get(str(group), ()):
+            if node_id not in nodes:
+                nodes.append(node_id)
+    return nodes
+
 
 # Curated first-touch files.  A route can still return more candidate files, but
 # maintenance should inspect these files first.
@@ -481,6 +561,7 @@ def resolve_feature_query(
         "support_files": support_files,
         "primary_files": primary,
         "suggested_tests": tests,
+        "suggested_test_nodes": test_nodes_for_groups([primary_group] if primary_group else []),
         "workflow_files": workflows,
         "related_feature_groups": [
             {"group": group, "score": round(score, 2)}
@@ -488,11 +569,13 @@ def resolve_feature_query(
         ],
         "related_primary_files": related_primary,
         "related_tests": related_tests,
+        "related_test_nodes": test_nodes_for_groups(selected_groups[1:]),
         "related_workflow_files": related_workflows,
         "confidence": confidence,
         "candidate_files_scanned": scanned,
         "related_candidate_files_scanned": related_scanned,
         "test_scope_policy": "primary_feature_group_only",
+        "test_node_scope_policy": "primary_feature_group_only+ast_fail_closed",
         "repository_wide_search_required": repo_wide,
         "repository_wide_search_avoided": not repo_wide,
         "route_decision": "direct_entrypoint" if not repo_wide else "fallback_search_required",
