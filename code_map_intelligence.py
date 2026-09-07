@@ -158,15 +158,15 @@ FEATURE_ROUTE_OVERRIDES = {
 FEATURE_ENTRYPOINTS = {
     "grading_vision_1_4_8": ("grading_vision_engine.js",),
     "ocr_card_identity": ("card_identity_recognition.py",),
-    "ocr_extended_verification": ("grading_cert_verifier.py", "library_slab_corpus.py"),
+    "ocr_extended_verification": ("grading_cert_verifier.py",),
     "five_company_grading": ("verify_v109_final.py",),
     "manual_verified_learning_gate": ("manual_graded_photo_registration.py",),
     "browser_camera_pwa": ("index.html",),
     "market_collection": ("tcg_updater.py",),
-    "release_event_promo_collection": ("update_releases.py", "update_promo_events.py"),
+    "release_event_promo_collection": ("update_releases.py",),
     "runtime_delivery": ("verify_link_runtime.py",),
     "tablet_termux": ("ANDROID_UPDATE_AND_START.sh",),
-    "selfrefine_isolation": ("main_selfrefine_gate.py", "selfrefine_domain_boundary_guard.py"),
+    "selfrefine_isolation": ("main_selfrefine_gate.py",),
     "security_integrity": ("repository_integrity_guard.py",),
     "code_map_internal": ("code_map_fast_route.py",),
     "instagram_cardinfo_pause_recovery": ("instagram_tcg_content/automation_state_guard.py",),
@@ -174,6 +174,49 @@ FEATURE_ENTRYPOINTS = {
     "instagram_cardinfo_source_verification": ("instagram_tcg_content/source_verification_engine.py",),
     "instagram_cardinfo_production_state": ("instagram_tcg_content/production_state.py",),
 }
+
+# Secondary first-touch files stay visible without competing with the one
+# canonical start file. Query-specific rules may promote one alternate to the
+# canonical entry_file for that request.
+FEATURE_ALTERNATE_ENTRYPOINTS = {
+    "ocr_extended_verification": ("library_slab_corpus.py",),
+    "release_event_promo_collection": ("update_promo_events.py",),
+    "selfrefine_isolation": ("selfrefine_domain_boundary_guard.py",),
+}
+
+# Ordered, deterministic query-specific promotions. More specific rules come
+# first. They only select a file already declared for the same feature group.
+FEATURE_ENTRYPOINT_RULES = {
+    "ocr_extended_verification": (
+        (("slab corpus", "슬랩 코퍼스", "library slab", "등급사진 코퍼스"), "library_slab_corpus.py"),
+    ),
+    "release_event_promo_collection": (
+        (("movie bonus", "영화특전", "promo", "프로모", "event", "행사"), "update_promo_events.py"),
+        (("rerelease", "재발매", "release", "출시"), "update_releases.py"),
+    ),
+    "selfrefine_isolation": (
+        (("domain boundary", "isolation", "격리", "분리", "경계"), "selfrefine_domain_boundary_guard.py"),
+        (("selfrefine", "self-refine", "자가학습", "자가복구", "self heal", "self-heal"), "main_selfrefine_gate.py"),
+    ),
+}
+
+
+def _entrypoint_for_group(group: str, query_text: str) -> tuple[str | None, list[str], str]:
+    defaults = tuple(FEATURE_ENTRYPOINTS.get(group, ()))
+    alternates = tuple(FEATURE_ALTERNATE_ENTRYPOINTS.get(group, ()))
+    allowed = tuple(dict.fromkeys(defaults + alternates))
+    if not allowed:
+        return None, [], "route_fallback"
+
+    lowered = " ".join(str(query_text or "").strip().lower().split())
+    for keywords, path in FEATURE_ENTRYPOINT_RULES.get(group, ()):
+        if path not in allowed:
+            continue
+        if any(" ".join(keyword.lower().split()) in lowered for keyword in keywords):
+            return path, [candidate for candidate in allowed if candidate != path], "query_specific_rule"
+
+    primary = defaults[0] if defaults else allowed[0]
+    return primary, [candidate for candidate in allowed if candidate != primary], "group_default"
 
 FULL_CHAIN_AFTER_FIX = ("Repository Verify", "Deep Audit", "Exhaustive", "Build/Deploy")
 
@@ -384,21 +427,29 @@ def resolve_feature_query(
         confidence = 0.62
 
     selected_groups = [group for _score, group in selected]
-    entry_files: list[str] = []
-    for group in selected_groups:
-        configured = FEATURE_ENTRYPOINTS.get(group, ())
-        candidates = configured or tuple(
-            path for path in feature_routes.get(group, ())
-            if not _is_test_path(path) and not path.startswith(".github/workflows/")
+    primary_group = selected_groups[0] if selected_groups else None
+    entry_file: str | None = None
+    alternate_entry_files: list[str] = []
+    entrypoint_reason = "no_feature_match"
+    if primary_group:
+        entry_file, alternate_entry_files, entrypoint_reason = _entrypoint_for_group(
+            primary_group,
+            query_text,
         )
-        for path in candidates:
-            if path not in entry_files:
-                entry_files.append(path)
+        if entry_file is None:
+            fallback_candidates = tuple(
+                path for path in feature_routes.get(primary_group, ())
+                if not _is_test_path(path) and not path.startswith(".github/workflows/")
+            )
+            if fallback_candidates:
+                entry_file = fallback_candidates[0]
+                alternate_entry_files = list(fallback_candidates[1:8])
+                entrypoint_reason = "route_fallback"
 
-    entry_files = entry_files[:8]
+    entry_files = [entry_file] if entry_file else []
     support_files = [
         path for path in primary
-        if path not in set(entry_files)
+        if path != entry_file and path not in set(alternate_entry_files)
     ]
     repo_wide = not selected or top_score < 4
     result = {
@@ -407,8 +458,11 @@ def resolve_feature_query(
             {"group": group, "score": round(score, 2)}
             for score, group in selected
         ],
-        "entry_file": entry_files[0] if entry_files else None,
+        "entry_group": primary_group,
+        "entry_file": entry_file,
         "entry_files": entry_files,
+        "alternate_entry_files": alternate_entry_files[:8],
+        "entrypoint_reason": entrypoint_reason,
         "support_files": support_files,
         "primary_files": primary,
         "suggested_tests": tests,
