@@ -53,6 +53,12 @@ ai_auto_tracker.py
 market_ai_auto_tracker.py
 test_ai_auto_tracker.py
 test_market_ai_auto_tracker.py
+verified_grade_learning_v135.py
+verified_slab_raw_learning_v155.py
+verified_slab_training_archive_v152.py
+manual_official_verified_integration_v154.py
+manual_official_proof.py
+manual_graded_photo_registration.py
 .graphifyignore
 .gitignore
 "
@@ -87,6 +93,12 @@ python -m py_compile \
   verify_code_map_internal.py \
   ai_auto_tracker.py \
   market_ai_auto_tracker.py \
+  manual_graded_photo_registration.py \
+  manual_official_proof.py \
+  manual_official_verified_integration_v154.py \
+  verified_slab_training_archive_v152.py \
+  verified_slab_raw_learning_v155.py \
+  verified_grade_learning_v135.py \
   runtime_bundle_guard_v143.py \
   collection_learning_hardening_v144.py \
   event_source_overlay_v144.py \
@@ -215,6 +227,17 @@ assert GRAPHIFY_AUDIT._ignored_reason('tcg_live_data.json', rules)
 assert GRAPHIFY_AUDIT._ignored_reason('.env.example', rules) is None
 assert GRAPHIFY_SELF_HEAL.FAILURE_CODE_CATEGORY[25] == 'map_audit_failed'
 assert GRAPHIFY_SELF_HEAL.CLUSTER_ARGS[-2:] == ('--exclude-hubs', '99')
+
+manual_proof_source = Path("manual_official_proof.py").read_text(encoding="utf-8")
+archive_source = Path("verified_slab_training_archive_v152.py").read_text(encoding="utf-8")
+raw_learning_source = Path("verified_slab_raw_learning_v155.py").read_text(encoding="utf-8")
+grade_learning_source = Path("verified_grade_learning_v135.py").read_text(encoding="utf-8")
+assert '"proof_match_alone_is_not_verification_complete": True' in manual_proof_source
+assert '"verified_registry_publish_required": True' in manual_proof_source
+assert 'if row.get("official_result") is not True:' in archive_source
+assert '"manual_proof_match_alone_is_not_verified": True' in archive_source
+assert 'if row.get("official_result") is not True:' in raw_learning_source
+assert '"not_in_verified_registry"' in grade_learning_source
 print("TCG + Graphify bounded safety contracts: OK")
 PY
 
