@@ -63,9 +63,10 @@ class CodeMapFastRouteTests(unittest.TestCase):
         self.assertTrue(second["route_cache_hit"])
         self.assertEqual(1, index.feature_route_cache_hits)
 
-    def test_feature_impact_keeps_targeted_first_validation_policy(self):
+    def test_feature_impact_keeps_entrypoint_first_validation_policy(self):
         result = self._index().feature_impact("업체별 인증번호 OCR", depth=1)
-        self.assertEqual("targeted_first", result["diagnostic_strategy"])
+        self.assertEqual("entrypoint_then_bounded_impact", result["diagnostic_strategy"])
+        self.assertEqual("grading_cert_verifier.py", result["entry_files"][0])
         self.assertIn("Repository Verify", result["full_chain_after_fix"])
         self.assertIn("test_grader_cert_ocr_profiles_v193.py", result["suggested_tests"])
         self.assertFalse(result["repository_wide_search_required"])
