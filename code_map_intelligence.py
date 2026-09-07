@@ -14,6 +14,7 @@ from __future__ import annotations
 import hashlib
 import json
 import math
+import re
 from collections import Counter, deque
 from pathlib import Path
 from typing import Any, Iterable
@@ -48,6 +49,58 @@ CRITICAL_RUNTIME_HINTS = (
     "grader", "grading", "collector", "security", "selfrefine", "auto_repair",
     "service-worker", "runtime", "updater", ".github/workflows/",
 )
+
+# Feature-query aliases are deliberately small and stable. They only select
+# candidate feature groups; they never execute code or decide a repair.
+FEATURE_QUERY_ALIASES = {
+    "grading_vision_1_4_8": (
+        "grading", "grade", "등급", "등급측정", "1 4 8", "1→4→8", "centering",
+        "scratch", "print line", "surface", "edge", "corner", "whitening",
+    ),
+    "ocr_card_identity": (
+        "card identity", "card name", "card number", "카드명", "카드 번호", "카드번호",
+        "ocr 카드", "identity ocr",
+    ),
+    "ocr_extended_verification": (
+        "ocr", "인증번호", "인증 번호", "업체별 인증번호", "슬랩", "cert", "certificate",
+        "certification", "psa", "bgs", "beckett", "cgc", "tag", "brg", "break grading",
+    ),
+    "five_company_grading": (
+        "psa", "bgs", "cgc", "tag", "brg", "5개 업체", "five company", "등급사",
+    ),
+    "manual_verified_learning_gate": (
+        "수동검증", "수동 검증", "manual verification", "verified learning", "학습정보",
+        "등급사진", "grading photo",
+    ),
+    "browser_camera_pwa": (
+        "browser", "브라우저", "camera", "카메라", "upload", "업로드", "service worker",
+        "pwa", "button", "버튼", "link", "링크", "ui",
+    ),
+    "market_collection": (
+        "시세", "가격", "price", "market", "market collection", "수집", "collector",
+    ),
+    "release_event_promo_collection": (
+        "release", "출시", "재발매", "rerelease", "promo", "프로모", "event", "행사",
+        "movie bonus", "영화특전",
+    ),
+    "runtime_delivery": (
+        "runtime", "배포", "delivery", "server", "서버", "api", "port",
+    ),
+    "tablet_termux": (
+        "tablet", "태블릿", "termux", "lenovo", "android", "안드로이드", "tailscale",
+    ),
+    "selfrefine_isolation": (
+        "selfrefine", "self-refine", "self heal", "self-heal", "자가학습", "자가복구",
+        "crosscheck", "교차확인",
+    ),
+    "security_integrity": (
+        "security", "보안", "integrity", "무결성", "secret", "권한",
+    ),
+    "code_map_internal": (
+        "code map", "codemap", "code-map", "코드지도", "코드 지도", "graphify",
+        "impact", "영향분석", "코드 검사기",
+    ),
+}
 
 
 def _norm(value: Any) -> str:
@@ -118,6 +171,25 @@ def _trigrams(value: str) -> tuple[str, ...]:
     if len(text) < 3:
         return ()
     return tuple(sorted({text[index:index + 3] for index in range(len(text) - 2)}))
+
+
+def _query_tokens(value: str) -> set[str]:
+    text = str(value or "").strip().lower()
+    tokens = set(re.findall(r"[a-z0-9_]{2,}|[가-힣]{2,}", text))
+    return {token for token in tokens if token}
+
+
+def _load_feature_routes() -> dict[str, tuple[str, ...]]:
+    try:
+        from verify_critical_feature_matrix_v25 import FEATURE_FILES
+    except (ImportError, AttributeError):
+        return {}
+    routes: dict[str, tuple[str, ...]] = {}
+    for group, paths in FEATURE_FILES.items():
+        clean = tuple(dict.fromkeys(_norm(path) for path in paths if _norm(path)))
+        if clean:
+            routes[str(group)] = clean
+    return routes
 
 
 def _is_critical_runtime(path: str) -> bool:
@@ -218,6 +290,9 @@ class CodeMapIndex:
         self.audit: dict[str, Any] = {}
         self.impact_cache: dict[tuple[Any, ...], dict[str, Any]] = {}
         self.impact_cache_hits = 0
+        self.feature_routes = _load_feature_routes()
+        self.feature_route_cache: dict[str, dict[str, Any]] = {}
+        self.feature_route_cache_hits = 0
         self._load()
 
     def _load(self) -> None:
@@ -290,6 +365,143 @@ class CodeMapIndex:
             self.audit = {}
 
         self.available = bool(self.nodes)
+
+    def resolve_feature(
+        self, query: str, *, max_groups: int = 4, max_files: int = 24,
+    ) -> dict[str, Any]:
+        """Resolve a feature-language request without a repository-wide search."""
+        query_text = " ".join(str(query or "").strip().lower().split())
+        cache_key = query_text
+        cached = self.feature_route_cache.get(cache_key)
+        if cached is not None:
+            self.feature_route_cache_hits += 1
+            result = dict(cached)
+            result["route_cache_hit"] = True
+            return result
+
+        query_tokens = _query_tokens(query_text)
+        ranked_groups: list[tuple[float, str]] = []
+        for group, paths in self.feature_routes.items():
+            aliases = FEATURE_QUERY_ALIASES.get(group, ())
+            score = 0.0
+            for alias in aliases:
+                normalized_alias = " ".join(str(alias).lower().split())
+                if normalized_alias and normalized_alias in query_text:
+                    score += 8.0 if " " in normalized_alias or len(normalized_alias) >= 4 else 5.0
+            group_tokens = _query_tokens(group.replace("_", " "))
+            score += 3.0 * len(query_tokens & group_tokens)
+            path_tokens: set[str] = set()
+            for path in paths:
+                path_tokens.update(_query_tokens(Path(path).stem.replace("_", " ")))
+            score += 1.25 * len(query_tokens & path_tokens)
+            if score > 0:
+                ranked_groups.append((score, group))
+
+        ranked_groups.sort(key=lambda item: (-item[0], item[1]))
+        selected = ranked_groups[:max(1, min(8, int(max_groups)))]
+        top_score = selected[0][0] if selected else 0.0
+
+        primary: list[str] = []
+        tests: list[str] = []
+        workflows: list[str] = []
+        scanned = 0
+        for _score, group in selected:
+            for path in self.feature_routes.get(group, ()):
+                scanned += 1
+                if path.startswith(".github/workflows/"):
+                    if path not in workflows:
+                        workflows.append(path)
+                elif _is_test_path(path):
+                    if path not in tests:
+                        tests.append(path)
+                elif path not in primary:
+                    primary.append(path)
+
+        safe_limit = max(1, min(64, int(max_files)))
+        primary = primary[:safe_limit]
+        tests = tests[:MAX_SUGGESTED_TESTS]
+        workflows = workflows[:8]
+        confidence = 0.0
+        if top_score >= 12:
+            confidence = 0.99
+        elif top_score >= 8:
+            confidence = 0.95
+        elif top_score >= 4:
+            confidence = 0.82
+        elif top_score > 0:
+            confidence = 0.62
+
+        result = {
+            "query": str(query or "")[:240],
+            "matched_feature_groups": [
+                {"group": group, "score": round(score, 2)}
+                for score, group in selected
+            ],
+            "primary_files": primary,
+            "suggested_tests": tests,
+            "workflow_files": workflows,
+            "confidence": confidence,
+            "candidate_files_scanned": scanned,
+            "repository_wide_search_required": not selected or top_score < 4,
+            "route_source": "critical_feature_matrix+feature_aliases",
+            "route_cache_hit": False,
+            "read_only": True,
+        }
+        self.feature_route_cache[cache_key] = result
+        return result
+
+    def feature_impact(
+        self,
+        query: str,
+        *,
+        depth: int = 1,
+        max_seed_files: int = 4,
+        learning: dict[str, Any] | None = None,
+    ) -> dict[str, Any]:
+        """Route feature text to seeds, then merge bounded graph impact results."""
+        route = self.resolve_feature(query)
+        seed_files = list(route.get("primary_files") or [])[:max(1, min(8, int(max_seed_files)))]
+        impacted: list[str] = []
+        tests: list[str] = list(route.get("suggested_tests") or [])
+        critical: list[str] = []
+        seed_results: list[dict[str, Any]] = []
+
+        for seed in seed_files:
+            impact = self.impact(seed, depth=depth, learning=learning)
+            seed_results.append({
+                "seed": seed,
+                "available": bool(impact.get("available")),
+                "status": str(impact.get("status") or ""),
+                "confidence": float(impact.get("confidence") or 0.0),
+                "fanout_files": int(impact.get("fanout_files") or 0),
+            })
+            for path in impact.get("impacted_files") or []:
+                clean = _norm(path)
+                if clean and clean not in impacted:
+                    impacted.append(clean)
+            for path in impact.get("suggested_tests") or []:
+                clean = _norm(path)
+                if clean and clean not in tests:
+                    tests.append(clean)
+            for path in impact.get("critical_runtime_files") or []:
+                clean = _norm(path)
+                if clean and clean not in critical:
+                    critical.append(clean)
+
+        return {
+            **route,
+            "seed_files": seed_files,
+            "impacted_files": impacted[:MAX_IMPACT_FILES],
+            "suggested_tests": tests[:MAX_SUGGESTED_TESTS],
+            "critical_runtime_files": critical[:12],
+            "seed_results": seed_results,
+            "diagnostic_strategy": "targeted_first",
+            "full_chain_after_fix": [
+                "Repository Verify", "Deep Audit", "Exhaustive", "Build/Deploy",
+            ],
+            "graph_available": self.available,
+            "map_signature": self.signature,
+        }
 
     def _match_nodes(self, origin: str) -> list[str]:
         origin_norm = _norm(origin)
