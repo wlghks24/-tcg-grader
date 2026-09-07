@@ -226,6 +226,122 @@ def validation_plan_for_route(route: dict[str, Any], severity: str = "low") -> d
     }
 
 
+def validation_plan_for_changes(
+    route: dict[str, Any],
+    changed_files: Iterable[str],
+    severity: str = "low",
+) -> dict[str, Any]:
+    """Select validation from the actual edit boundary, not severity alone.
+
+    The feature route narrows what should be inspected.  Actual changed files then
+    decide whether targeted tests are enough, Repository Verify is needed, or the
+    full chain is mandatory.  This keeps low-risk local edits from paying for an
+    unconditional full-CI run while still escalating cross-cutting changes.
+    """
+    base = validation_plan_for_route(route, severity)
+    changed = list(dict.fromkeys(
+        _norm(path) for path in changed_files if _norm(path)
+    ))
+    tests = list(route.get("suggested_tests") or [])[:MAX_SUGGESTED_TESTS]
+    if not tests:
+        tests = ["feature-local smoke/self-test"]
+
+    route_known = set()
+    for key in ("entry_files", "primary_files", "suggested_tests", "workflow_files", "impacted_files"):
+        route_known.update(
+            _norm(path) for path in (route.get(key) or []) if _norm(path)
+        )
+
+    workflow_files = [path for path in changed if path.startswith(".github/workflows/")]
+    critical_runtime_files = [path for path in changed if _is_critical_runtime(path)]
+    domain_boundary_files = [
+        path for path in changed
+        if path in {
+            "selfrefine_domain_boundary_guard.py",
+            "selfrefine_crosscheck_gate.py",
+            "peer_learning_crosscheck_gate.py",
+            "crosscheck_runtime_bridge.py",
+            "peer_learning_runtime_bridge.py",
+            "shared_self_learning/contracts.py",
+            "TCG_CROSSCHECK/exchange_manifest.json",
+        }
+        or path.startswith("crosscheck_control_plane/")
+        or path.startswith("crosscheck_exchange/")
+    ]
+    security_files = [
+        path for path in changed
+        if "security" in path.lower()
+        or "integrity" in path.lower()
+        or Path(path).name in {"repository_integrity_guard.py", "security_hardening.py"}
+    ]
+    outside_route_files = [path for path in changed if path not in route_known]
+    route_local_files = [path for path in changed if path in route_known]
+    groups = [
+        str(row.get("group") or "")
+        for row in (route.get("matched_feature_groups") or [])
+        if isinstance(row, dict) and row.get("group")
+    ]
+
+    full_reasons: list[str] = []
+    if base["severity"] in {"high", "critical"}:
+        full_reasons.append("severity_high_or_critical")
+    if workflow_files:
+        full_reasons.append("workflow_changed")
+    if critical_runtime_files:
+        full_reasons.append("critical_runtime_changed")
+    if domain_boundary_files:
+        full_reasons.append("domain_or_crosscheck_boundary_changed")
+    if security_files:
+        full_reasons.append("security_or_integrity_changed")
+
+    repository_verify_reasons: list[str] = []
+    if base["severity"] == "medium":
+        repository_verify_reasons.append("severity_medium")
+    if len(set(groups)) > 1:
+        repository_verify_reasons.append("multiple_feature_groups")
+    if outside_route_files:
+        repository_verify_reasons.append("changed_file_outside_feature_route")
+    if len(changed) > 6:
+        repository_verify_reasons.append("changed_file_count_over_6")
+
+    if full_reasons:
+        scope = "full_chain"
+        run_now = list(dict.fromkeys(tests + list(FULL_CHAIN_AFTER_FIX)))
+        full_now = True
+    elif repository_verify_reasons:
+        scope = "targeted_plus_repository_verify"
+        run_now = list(dict.fromkeys(tests + ["Repository Verify"]))
+        full_now = False
+    else:
+        scope = "targeted"
+        run_now = list(dict.fromkeys(tests))
+        full_now = False
+
+    result = dict(base)
+    result.update({
+        "initial_scope": scope,
+        "initial_checks": run_now,
+        "run_now": run_now,
+        "full_chain_immediate": full_now,
+        "full_chain_required_now": full_now,
+        "deferred_full_chain": [] if full_now else list(FULL_CHAIN_AFTER_FIX),
+        "avoids_unconditional_full_ci": not full_now,
+        "decision_source": "feature-route+severity+actual-changed-files",
+        "escalation_reasons": full_reasons + repository_verify_reasons,
+        "change_boundary": {
+            "changed_files": changed,
+            "changed_file_count": len(changed),
+            "route_local_files": route_local_files,
+            "outside_route_files": outside_route_files,
+            "workflow_files": workflow_files,
+            "critical_runtime_files": critical_runtime_files,
+            "domain_boundary_files": domain_boundary_files,
+            "security_files": security_files,
+        },
+    })
+    return result
+
+
 def _norm(value: Any) -> str:
     if not isinstance(value, str):
         return ""
