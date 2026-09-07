@@ -30,6 +30,9 @@ FEATURE_FILES = {
         "test_ocr_multistage_v16.py",
     ],
     "ocr_extended_verification": [
+        "library_slab_corpus.py",
+        "manual_graded_photo_registration.py",
+        "graded_photo_evidence.py",
         "ocr_accuracy_boost_v147.py",
         "ocr_front_back_fallback_v148.py",
         "grading_cert_verifier.py",
@@ -123,6 +126,8 @@ FEATURE_FILES = {
     "code_map_internal": [
         "verify_code_map_internal.py",
         "code_map_intelligence.py",
+        "code_map_fast_route.py",
+        "test_code_map_fast_route_v195.py",
         "GRAPHIFY_UPDATE.sh",
         "GRAPHIFY_SELF_HEAL.py",
         "GRAPHIFY_AUDIT.py",
