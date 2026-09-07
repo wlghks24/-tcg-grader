@@ -5,10 +5,16 @@ import tempfile
 import unittest
 from pathlib import Path
 
-from code_map_intelligence import CodeMapIndex
+from code_map_intelligence import CodeMapIndex, resolve_feature_query
 
 
 class CodeMapFastRouteTests(unittest.TestCase):
+    def test_pure_feature_route_does_not_load_graph(self):
+        result = resolve_feature_query("업체별 인증번호 OCR 인식률 개선")
+        self.assertFalse(result["graph_loaded"])
+        self.assertFalse(result["repository_wide_search_required"])
+        self.assertIn("library_slab_corpus.py", result["primary_files"])
+
     def _index(self) -> CodeMapIndex:
         temp = tempfile.TemporaryDirectory()
         self.addCleanup(temp.cleanup)
