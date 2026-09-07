@@ -7,8 +7,11 @@ from pathlib import Path
 
 from code_map_intelligence import (
     CodeMapIndex,
+    FEATURE_ALTERNATE_ENTRYPOINTS,
+    FEATURE_ENTRYPOINTS,
     default_learning_state,
     impact_depth_for_severity,
+    resolve_feature_query,
 )
 
 ROOT = Path(__file__).resolve().parent
@@ -47,8 +50,11 @@ REQUIRED_TEXT = {
         "feature_route_cache",
         "repository_wide_search_required",
         "repository_wide_search_avoided",
+        "entry_group",
         "entry_file",
         "entry_files",
+        "alternate_entry_files",
+        "entrypoint_reason",
         "support_files",
         "validation_plan_for_route",
         "diagnostic_strategy",
@@ -70,6 +76,10 @@ REQUIRED_TEXT = {
     "test_code_map_entrypoint_route_v196.py": (
         "test_pause_recovery_routes_directly_to_guard",
         "test_code_map_internal_has_single_public_entrypoint",
+        "test_cert_ocr_has_one_entry_and_slab_as_alternate",
+        "test_release_and_promo_queries_choose_different_single_entries",
+        "test_selfrefine_isolation_query_promotes_boundary_guard",
+        "test_known_feature_routes_never_return_multiple_entry_files",
         "test_crosscheck_routes_to_runtime_bridge_first",
         "test_fast_route_emits_complete_exploration_plan",
         "test_low_severity_avoids_unconditional_full_ci",
@@ -198,6 +208,38 @@ def verify() -> dict:
                 failures.append(f"unrelated heavy CI still triggered by code-map maintenance: {relative}: {path}")
     checked_contracts += 6 + (2 * len(targeted_only)) + (2 * 5) + 4
 
+    # Every curated feature group must have one canonical default entrypoint.
+    for group, paths in FEATURE_ENTRYPOINTS.items():
+        checked_contracts += 1
+        if len(paths) != 1:
+            failures.append(f"feature entrypoint must be singular: {group}: {paths}")
+    for group, paths in FEATURE_ALTERNATE_ENTRYPOINTS.items():
+        checked_contracts += 1
+        primary = FEATURE_ENTRYPOINTS.get(group, ())
+        overlap = set(primary) & set(paths)
+        if overlap:
+            failures.append(f"alternate entrypoint duplicates canonical entrypoint: {group}: {sorted(overlap)}")
+
+    route_samples = {
+        "업체별 인증번호 OCR 인식률 개선": "grading_cert_verifier.py",
+        "슬랩 코퍼스 OCR 학습자료 확인": "library_slab_corpus.py",
+        "재발매 출시 정보 수집 오류": "update_releases.py",
+        "프로모 행사 영화특전 수집 오류": "update_promo_events.py",
+        "SELFREFINE 도메인 격리 오류": "selfrefine_domain_boundary_guard.py",
+        "코드지도 영향분석 최적화": "code_map_fast_route.py",
+    }
+    for query, expected in route_samples.items():
+        checked_contracts += 1
+        routed = resolve_feature_query(query)
+        if routed.get("entry_file") != expected:
+            failures.append(
+                f"singular route mismatch: query={query!r} expected={expected} actual={routed.get('entry_file')}"
+            )
+        if routed.get("entry_files") != [expected]:
+            failures.append(
+                f"route returned ambiguous entry_files: query={query!r} entry_files={routed.get('entry_files')}"
+            )
+
     learning = default_learning_state()
     if learning.get("verified_learning_only") is not True:
         failures.append("code-map learning must be verified-only")
@@ -221,7 +263,6 @@ def verify() -> dict:
             )
 
     with tempfile.TemporaryDirectory() as td:
-        from code_map_intelligence import resolve_feature_query
         pure_route = resolve_feature_query("업체별 인증번호 OCR 인식률 개선")
         if pure_route.get("graph_loaded") is not False:
             failures.append("feature-only route unexpectedly loaded Graphify")

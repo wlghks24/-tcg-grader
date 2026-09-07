@@ -32,7 +32,8 @@ def route(
         else "fallback_required"
     )
     result["exploration_plan"] = {
-        "1_entrypoint": list(result.get("entry_files") or []),
+        "1_entrypoint": result.get("entry_file"),
+        "1a_alternate_entrypoints": list(result.get("alternate_entry_files") or []),
         "2_bounded_impact": {
             "requested": bool(include_impact),
             "depth": depth,
