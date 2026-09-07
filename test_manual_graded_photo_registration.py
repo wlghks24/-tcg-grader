@@ -79,6 +79,50 @@ class ManualGradedPhotoRegistrationTests(unittest.TestCase):
         ):
             self.assertIn(token, source)
 
+    def test_verified_cert_anchor_supports_all_graders_and_requires_persisted_readback(self):
+        certs = {
+            "PSA": "12345678",
+            "BGS": "100017423404",
+            "CGC": "6195763028",
+            "TAG": "X9491558",
+            "BRG": "0346643",
+        }
+        self.assertEqual(set(certs), manual.COMPANIES)
+        for company, cert in certs.items():
+            ok, reason = manual._publish_verified_cert_anchor(
+                company=company,
+                cert=cert,
+                grade=10.0,
+                official_reference_url=f"https://example.invalid/{company}/{cert}",
+                card_name="Verified test card",
+                game="pokemon",
+                source="unit-test-manual-verification",
+                official_verification_source="user_browser_official_page",
+                official_verification_method="manual_user_browser_official_page_exact_match",
+            )
+            self.assertTrue(ok, (company, reason))
+        payload = json.loads(manual.VERIFIED_CERTIFICATIONS.read_text(encoding="utf-8"))
+        rows = payload["certifications"]
+        self.assertEqual(len(rows), 5)
+        by_company = {row["company"]: row for row in rows}
+        for company, cert in certs.items():
+            self.assertEqual(by_company[company]["certification_id"], cert)
+            self.assertTrue(by_company[company]["verified"])
+            self.assertTrue(by_company[company]["official_result"])
+            self.assertEqual(float(by_company[company]["grade"]), 10.0)
+
+    def test_verified_cert_anchor_detects_readback_failure(self):
+        with mock.patch.object(manual, "_load", return_value={"certifications": []}), \
+             mock.patch.object(manual, "atomic_write_json"):
+            ok, reason = manual._publish_verified_cert_anchor(
+                company="PSA",
+                cert="12345678",
+                grade=10.0,
+                official_reference_url="https://example.invalid/PSA/12345678",
+            )
+        self.assertFalse(ok)
+        self.assertEqual(reason, "persisted_official_registry_readback_failed")
+
     def test_registration_is_quarantined_and_server_generates_path(self):
         result = manual.register(self.payload())
         row = result["registration"]
