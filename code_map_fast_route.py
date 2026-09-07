@@ -41,6 +41,7 @@ def route(
             "impacted_files": list(result.get("impacted_files") or []),
         },
         "3_recommended_tests": list(result.get("suggested_tests") or []),
+        "3a_deferred_related_tests": list(result.get("related_tests") or []),
         "4_validation_scope": result["validation_plan"]["initial_scope"],
         "fallback_repo_search": bool(result.get("repository_wide_search_required")),
     }
