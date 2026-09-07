@@ -273,7 +273,8 @@ FEATURE_ALTERNATE_ENTRYPOINTS = {
 # first. They only select a file already declared for the same feature group.
 FEATURE_ENTRYPOINT_RULES = {
     "ocr_card_identity": (
-        (("포켓몬 세대", "세대 표시", "세대 판별", "generation", "레귤레이션", "확장팩 코드"), "card_identity_recognition.js"),
+        (("포켓몬 몇세대", "포켓몬 몇 세대", "몇세대인지", "몇 세대인지",
+          "포켓몬 세대", "세대 표시", "세대 판별", "generation", "레귤레이션", "확장팩 코드"), "card_identity_recognition.js"),
     ),
     "ocr_extended_verification": (
         (("slab corpus", "슬랩 코퍼스", "library slab", "등급사진 코퍼스"), "library_slab_corpus.py"),
