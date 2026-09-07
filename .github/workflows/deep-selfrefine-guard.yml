@@ -13,6 +13,11 @@ on:
       - '**/*.sh'
       - '**/*.json'
       - '**/*.webmanifest'
+      - '!code_map_fast_route.py'
+      - '!code_map_intelligence.py'
+      - '!test_code_map_fast_route_v195.py'
+      - '!test_code_map_entrypoint_route_v196.py'
+      - '!verify_code_map_internal.py'
   push:
     branches: [main]
     paths:
@@ -24,6 +29,11 @@ on:
       - '**/*.sh'
       - '**/*.json'
       - '**/*.webmanifest'
+      - '!code_map_fast_route.py'
+      - '!code_map_intelligence.py'
+      - '!test_code_map_fast_route_v195.py'
+      - '!test_code_map_entrypoint_route_v196.py'
+      - '!verify_code_map_internal.py'
   workflow_dispatch:
 
 permissions:

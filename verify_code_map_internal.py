@@ -27,6 +27,10 @@ REQUIRED_FILES = (
     ".github/workflows/graphify-integration-guard.yml",
     ".github/workflows/repository-integrity-guard.yml",
     ".github/workflows/selfrefine-full-repo.yml",
+    ".github/workflows/deep-selfrefine-guard.yml",
+    ".github/workflows/exhaustive-selfrefine-guard.yml",
+    ".github/workflows/daily-0600-collection-instagram-accuracy.yml",
+    ".github/workflows/final-tablet-guard.yml",
     "test_ai_auto_tracker.py",
     "test_market_ai_auto_tracker.py",
 )
@@ -129,6 +133,11 @@ def _read(relative: str) -> str:
     return (ROOT / relative).read_text(encoding="utf-8")
 
 
+def _workflow_trigger_text(relative: str) -> str:
+    text = _read(relative)
+    return text.split("\npermissions:", 1)[0]
+
+
 def verify() -> dict:
     failures: list[str] = []
     checked_files = 0
@@ -149,6 +158,45 @@ def verify() -> dict:
             checked_contracts += 1
             if fragment not in text:
                 failures.append(f"code-map contract missing: {relative}: {fragment}")
+
+    # Code-map-only maintenance must stay on targeted validation paths.
+    targeted_only = (
+        "code_map_fast_route.py",
+        "code_map_intelligence.py",
+        "test_code_map_fast_route_v195.py",
+        "test_code_map_entrypoint_route_v196.py",
+        "verify_code_map_internal.py",
+        "GRAPHIFY_CHATGPT_GUIDE.md",
+    )
+    for relative in (
+        ".github/workflows/repository-integrity-guard.yml",
+        ".github/workflows/selfrefine-full-repo.yml",
+    ):
+        trigger = _workflow_trigger_text(relative)
+        if "paths-ignore:" not in trigger:
+            failures.append(f"code-map CI scope missing paths-ignore: {relative}")
+        for path in targeted_only:
+            if f"- '{path}'" not in trigger:
+                failures.append(f"code-map CI scope ignore missing: {relative}: {path}")
+
+    for relative in (
+        ".github/workflows/deep-selfrefine-guard.yml",
+        ".github/workflows/exhaustive-selfrefine-guard.yml",
+    ):
+        trigger = _workflow_trigger_text(relative)
+        for path in targeted_only[:5]:
+            if f"- '!{path}'" not in trigger:
+                failures.append(f"code-map CI negative path missing: {relative}: {path}")
+
+    for relative in (
+        ".github/workflows/daily-0600-collection-instagram-accuracy.yml",
+        ".github/workflows/final-tablet-guard.yml",
+    ):
+        trigger = _workflow_trigger_text(relative)
+        for path in ("code_map_intelligence.py", "verify_code_map_internal.py"):
+            if f"- '{path}'" in trigger:
+                failures.append(f"unrelated heavy CI still triggered by code-map maintenance: {relative}: {path}")
+    checked_contracts += 6 + (2 * len(targeted_only)) + (2 * 5) + 4
 
     learning = default_learning_state()
     if learning.get("verified_learning_only") is not True:

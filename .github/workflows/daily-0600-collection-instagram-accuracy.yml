@@ -8,8 +8,6 @@ on:
   pull_request:
     paths:
       - 'daily_collection_instagram_accuracy.py'
-      - 'verify_code_map_internal.py'
-      - 'code_map_intelligence.py'
       - 'GRAPHIFY_UPDATE.sh'
       - 'GRAPHIFY_SELF_HEAL.py'
       - 'GRAPHIFY_AUDIT.py'
@@ -45,8 +43,6 @@ on:
     branches: [main]
     paths:
       - 'daily_collection_instagram_accuracy.py'
-      - 'verify_code_map_internal.py'
-      - 'code_map_intelligence.py'
       - 'GRAPHIFY_UPDATE.sh'
       - 'GRAPHIFY_SELF_HEAL.py'
       - 'GRAPHIFY_AUDIT.py'

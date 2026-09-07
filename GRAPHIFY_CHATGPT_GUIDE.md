@@ -205,6 +205,8 @@ python code_map_fast_route.py 인스타 카드정보 자료 비교 교차확인 
 
 기본 심각도 `low`에서는 기능 단위 테스트부터 시작하고 전체 CI를 무조건 다시 돌리지 않습니다. `medium`은 targeted test + Repository Verify, `high/critical`은 전체 검증 체인을 즉시 권장합니다. 실제 수정 파일이 workflow, critical runtime, domain boundary, security/integrity에 걸리면 낮은 심각도라도 전체 검증 체인으로 승격합니다.
 
+코드지도 전용 파일만 바뀐 PR은 `Graphify Integration Guard`를 기본 검증으로 사용하고, `code_map_intelligence.py`가 바뀌면 `AI Auto Tracker Guard`도 함께 실행합니다. 코드지도 전용 변경만으로 Repository Integrity / Main SELFREFINE / Deep / Exhaustive / Daily 06:00 factual audit / Final Tablet Guard를 다시 실행하지 않습니다. 코드지도 변경과 실제 runtime/workflow/security 파일이 함께 바뀌면 해당 전체 검증이 다시 활성화됩니다.
+
 즉 탐색 순서는 **기능명 → entrypoint → bounded impact → 추천 테스트 → 검증 범위**입니다. 알려지지 않은 기능일 때만 `repository_wide_search_required=true`로 전체 검색 fallback을 사용합니다.
 
 ## 코드 지도 범위
