@@ -11,6 +11,23 @@ KST = dt.timezone(dt.timedelta(hours=9))
 CANONICAL_ID = "6a9b8a22e72c8191849c273e1240378e"
 CANONICAL_TITLE = "인스타 카드정보"
 
+NON_FATAL_PRECHECK_CODES = {
+    "BASELINE_MISSING",
+    "REVISION_BASELINE_MISSING",
+    "SNAPSHOT_BUILDING",
+    "NO_VERIFIED_FACTS",
+    "INSUFFICIENT_VERIFIED_FACTS",
+    "INSUFFICIENT_COMPLETED_SALES",
+    "NO_COMPARABLE_DATA",
+    "PRECHECK_DATA_NOT_READY",
+}
+
+PRECHECK_STAGES = {
+    "preflight",
+    "production_preflight",
+    "revision_preflight",
+}
+
 
 class AutomationStateGuardError(ValueError):
     pass
@@ -55,10 +72,21 @@ def runtime_failure_policy(
     """
     stage = str(stage or "UNKNOWN").strip() or "UNKNOWN"
     error_code = str(error_code or "UNKNOWN_ERROR").strip() or "UNKNOWN_ERROR"
+    is_precheck_not_ready = (
+        stage.lower() in PRECHECK_STAGES
+        or error_code.upper() in NON_FATAL_PRECHECK_CODES
+    )
+    if is_precheck_not_ready:
+        run_status = "PRECHECK_NOT_READY"
+        next_action = "COMPLETE_RUN_AND_KEEP_NEXT_SLOT"
+    else:
+        run_status = "DEGRADED" if retryable else "BLOCKED"
+        next_action = "BOUNDED_RETRY" if retryable else "RECORD_AND_CONTINUE_NEXT_SLOT"
+
     return {
         "stage": stage,
         "error_code": error_code,
-        "run_status": "DEGRADED" if retryable else "BLOCKED",
+        "run_status": run_status,
         "automation_state_mutation_allowed": False,
         "self_disable_allowed": False,
         "self_pause_allowed": False,
@@ -66,7 +94,9 @@ def runtime_failure_policy(
         "preserve_enabled_state": True,
         "preserve_title": True,
         "preserve_schedule": True,
-        "next_action": "BOUNDED_RETRY" if retryable else "RECORD_AND_CONTINUE_NEXT_SLOT",
+        "scheduler_terminal": False,
+        "automation_continues": True,
+        "next_action": next_action,
     }
 
 
@@ -201,6 +231,18 @@ def self_test() -> None:
     assert policy["run_status"] == "BLOCKED", policy
     assert policy["self_disable_allowed"] is False, policy
     assert policy["preserve_enabled_state"] is True, policy
+    assert policy["automation_continues"] is True, policy
+
+    precheck = runtime_failure_policy(
+        stage="revision_preflight",
+        error_code="REVISION_BASELINE_MISSING",
+        retryable=False,
+    )
+    assert precheck["run_status"] == "PRECHECK_NOT_READY", precheck
+    assert precheck["next_action"] == "COMPLETE_RUN_AND_KEEP_NEXT_SLOT", precheck
+    assert precheck["automation_state_mutation_allowed"] is False, precheck
+    assert precheck["scheduler_terminal"] is False, precheck
+    assert precheck["automation_continues"] is True, precheck
 
     bad = dict(disabled, updated_at="2026-09-06T20:34:07")
     try:
