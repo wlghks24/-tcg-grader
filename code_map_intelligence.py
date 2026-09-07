@@ -60,6 +60,7 @@ FEATURE_QUERY_ALIASES = {
     "ocr_card_identity": (
         "card identity", "card name", "card number", "카드명", "카드 번호", "카드번호",
         "ocr 카드", "identity ocr", "포켓몬 세대", "세대 표시", "세대 판별", "generation",
+        "포켓몬 몇세대", "포켓몬 몇 세대", "몇세대인지", "몇 세대인지",
         "몇세대", "몇 세대", "예상등급 세대", "예상 등급 세대",
         "regulation mark", "레귤레이션", "확장팩 코드",
     ),
