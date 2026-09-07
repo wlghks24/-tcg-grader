@@ -97,7 +97,7 @@ REQUIRED_TEXT = {
         "python ./GRAPHIFY_AUDIT.py --strict",
         "python -m unittest -v test_code_map_fast_route_v195.py test_code_map_entrypoint_route_v196.py test_market_ai_auto_tracker.py",
         "concurrency:",
-        "group: graphify-integration-\${{ github.ref }}",
+        "group: graphify-integration-${{ github.ref }}",
         "cancel-in-progress: true",
     ),
     ".github/workflows/repository-integrity-guard.yml": (
