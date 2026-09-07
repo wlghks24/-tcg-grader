@@ -193,12 +193,15 @@ python code_map_fast_route.py 인스타 카드정보 자료 비교 교차확인 
 
 출력에서 다음 순서로 확인합니다.
 
-1. `entry_files`: 가장 먼저 열 파일. 수정 지점 탐색의 시작점입니다.
-2. `primary_files`: 같은 기능 묶음의 후보 파일입니다.
-3. `impacted_files`: `--impact` 사용 시 Graphify에서 제한된 깊이로 계산한 영향 파일입니다.
-4. `suggested_tests`: 우선 실행할 기능 단위 회귀검사입니다.
-5. `validation_plan`: low/medium/high/critical 심각도에 따라 최소 안전 검증 범위를 결정합니다.
-6. `repository_wide_search_required=false`: 알려진 기능은 전체 저장소 검색 없이 바로 진입합니다.
+- 코드지도 자체의 **유일한 사용자/에이전트 진입점은 `code_map_fast_route.py`**입니다. `code_map_intelligence.py`는 내부 계산 엔진이며 직접 시작점으로 사용하지 않습니다.
+1. `entry_file`: 대표 시작 파일 1개입니다.
+2. `entry_files`: 기능에 복수의 합법적 시작점이 있을 때의 목록입니다. 코드지도 자체는 항상 `["code_map_fast_route.py"]` 하나만 반환합니다.
+3. `support_files`: 대표 시작점 뒤에서 사용하는 내부 엔진/보조 파일입니다.
+4. `primary_files`: 같은 기능 묶음의 후보 파일입니다.
+5. `impacted_files`: `--impact` 사용 시 Graphify에서 제한된 깊이로 계산한 영향 파일입니다.
+6. `suggested_tests`: 우선 실행할 기능 단위 회귀검사입니다.
+7. `validation_plan`: low/medium/high/critical 심각도에 따라 최소 안전 검증 범위를 결정합니다.
+8. `repository_wide_search_required=false`: 알려진 기능은 전체 저장소 검색 없이 바로 진입합니다.
 
 기본 심각도 `low`에서는 기능 단위 테스트부터 시작하고 전체 CI를 무조건 다시 돌리지 않습니다. `medium`은 targeted test + Repository Verify, `high/critical`은 전체 검증 체인을 즉시 권장합니다. 실제 수정 파일이 workflow, critical runtime, domain boundary, security/integrity에 걸리면 낮은 심각도라도 전체 검증 체인으로 승격합니다.
 

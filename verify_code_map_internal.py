@@ -41,7 +41,9 @@ REQUIRED_TEXT = {
         "feature_route_cache",
         "repository_wide_search_required",
         "repository_wide_search_avoided",
+        "entry_file",
         "entry_files",
+        "support_files",
         "validation_plan_for_route",
         "diagnostic_strategy",
     ),
@@ -61,6 +63,7 @@ REQUIRED_TEXT = {
     ),
     "test_code_map_entrypoint_route_v196.py": (
         "test_pause_recovery_routes_directly_to_guard",
+        "test_code_map_internal_has_single_public_entrypoint",
         "test_crosscheck_routes_to_runtime_bridge_first",
         "test_fast_route_emits_complete_exploration_plan",
         "test_low_severity_avoids_unconditional_full_ci",
@@ -184,7 +187,16 @@ def verify() -> dict:
         pause_plan = pause_route.get("validation_plan") or {}
         if pause_plan.get("initial_scope") != "targeted":
             failures.append("low-severity feature route did not stay targeted")
-        checked_contracts += 10
+        internal_route = route_index.resolve_feature("코드지도 영향분석 최적화")
+        if internal_route.get("entry_file") != "code_map_fast_route.py":
+            failures.append("code-map public entrypoint is not code_map_fast_route.py")
+        if internal_route.get("entry_files") != ["code_map_fast_route.py"]:
+            failures.append(
+                f"code-map public entrypoint is ambiguous: {internal_route.get('entry_files')}"
+            )
+        if "code_map_intelligence.py" not in set(internal_route.get("support_files") or []):
+            failures.append("code-map intelligence engine is not classified as support")
+        checked_contracts += 13
 
     with tempfile.TemporaryDirectory() as td:
         root = Path(td)
