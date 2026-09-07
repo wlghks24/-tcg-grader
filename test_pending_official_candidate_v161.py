@@ -119,7 +119,8 @@ class PendingOfficialCandidateV161Tests(unittest.TestCase):
         self.assertFalse(row['official_result'])
         self.assertFalse(row['manual_official_candidate_verified'])
         self.assertEqual(row['verification_state'], 'manual_official_verified_registry_conflict')
-        self.assertEqual(row['learning_eligibility'], 'not_eligible_registry_conflict')
+        self.assertEqual(row['learning_eligibility'], 'not_eligible_unverified')
+        self.assertEqual(row['manual_official_verification_block_reason'], 'persisted_official_grade_conflict')
 
     def test_mismatch_does_not_promote(self):
         candidate_id = mod.public_status()['candidates'][0]['candidate_id']
