@@ -25,6 +25,12 @@ REQUIRED_FILES = (
     "GRAPHIFY_AUDIT.py",
     "SETUP_GRAPHIFY_TERMUX.sh",
     ".github/workflows/graphify-integration-guard.yml",
+    ".github/workflows/deep-selfrefine-guard.yml",
+    ".github/workflows/exhaustive-selfrefine-guard.yml",
+    ".github/workflows/selfrefine-full-repo.yml",
+    ".github/workflows/repository-integrity-guard.yml",
+    ".github/workflows/final-tablet-guard.yml",
+    ".github/workflows/daily-0600-collection-instagram-accuracy.yml",
     "test_ai_auto_tracker.py",
     "test_market_ai_auto_tracker.py",
 )
@@ -139,6 +145,46 @@ def verify() -> dict:
             checked_contracts += 1
             if fragment not in text:
                 failures.append(f"code-map contract missing: {relative}: {fragment}")
+
+    code_map_local = (
+        "code_map_fast_route.py",
+        "code_map_intelligence.py",
+        "verify_code_map_internal.py",
+        "test_code_map_fast_route_v195.py",
+        "test_code_map_entrypoint_route_v196.py",
+    )
+    for workflow in (
+        ".github/workflows/deep-selfrefine-guard.yml",
+        ".github/workflows/exhaustive-selfrefine-guard.yml",
+    ):
+        text = _read(workflow)
+        for local in code_map_local:
+            checked_contracts += 1
+            if f"'!{local}'" not in text:
+                failures.append(f"code-map-only exclusion missing: {workflow}: {local}")
+
+    for workflow in (
+        ".github/workflows/selfrefine-full-repo.yml",
+        ".github/workflows/repository-integrity-guard.yml",
+    ):
+        text = _read(workflow)
+        checked_contracts += 1
+        if "paths-ignore:" not in text:
+            failures.append(f"code-map-only paths-ignore missing: {workflow}")
+        for local in code_map_local:
+            checked_contracts += 1
+            if f"'{local}'" not in text:
+                failures.append(f"code-map-only ignore missing: {workflow}: {local}")
+
+    for workflow in (
+        ".github/workflows/final-tablet-guard.yml",
+        ".github/workflows/daily-0600-collection-instagram-accuracy.yml",
+    ):
+        text = _read(workflow)
+        for local in ("code_map_intelligence.py", "verify_code_map_internal.py"):
+            checked_contracts += 1
+            if f"- '{local}'" in text:
+                failures.append(f"code-map-only path still triggers unrelated workflow: {workflow}: {local}")
 
     learning = default_learning_state()
     if learning.get("verified_learning_only") is not True:
