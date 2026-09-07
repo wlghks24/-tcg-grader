@@ -100,7 +100,130 @@ FEATURE_QUERY_ALIASES = {
         "code map", "codemap", "code-map", "코드지도", "코드 지도", "graphify",
         "impact", "영향분석", "코드 검사기",
     ),
+    "instagram_cardinfo_pause_recovery": (
+        "인스타 카드정보 일시정지", "인스타 카드정보 자동화", "pause recovery",
+        "automation pause", "일시정지", "비활성화", "재활성화", "pause guard",
+    ),
+    "instagram_cardinfo_crosscheck": (
+        "인스타 카드정보 교차확인", "자료비교", "자료 비교", "crosscheck",
+        "factual snapshot", "교차검증", "비교 작업",
+    ),
+    "instagram_cardinfo_source_verification": (
+        "인스타 카드정보 출처", "출처 검증", "source verification", "source route",
+        "공식 출처", "실거래", "시세참고",
+    ),
+    "instagram_cardinfo_production_state": (
+        "인스타 카드정보 작업물", "작업물", "production state", "baseline",
+        "10:30 제작", "22:30 수정판", "artifact",
+    ),
 }
+
+# Feature-only routes that are important for fast maintenance but are intentionally
+# kept out of the global critical-feature matrix.  These let a known feature name
+# jump straight to its maintenance entrypoint without a repository-wide search.
+FEATURE_ROUTE_OVERRIDES = {
+    "instagram_cardinfo_pause_recovery": (
+        "instagram_tcg_content/automation_state_guard.py",
+        "instagram_tcg_content/test_automation_pause_recovery_v30.py",
+        ".github/workflows/instagram-tcg-selfrefine.yml",
+        ".github/workflows/daily-0600-collection-instagram-accuracy.yml",
+    ),
+    "instagram_cardinfo_crosscheck": (
+        "crosscheck_runtime_bridge.py",
+        "instagram_tcg_content/crosscheck_export.py",
+        "instagram_tcg_content/persisted_crosscheck_export.py",
+        "selfrefine_crosscheck_gate.py",
+        "peer_learning_crosscheck_gate.py",
+        "test_crosscheck_runtime_bridge_v26.py",
+        "instagram_tcg_content/test_peer_learning_manifest_contract_v28.py",
+        ".github/workflows/daily-0600-collection-instagram-accuracy.yml",
+    ),
+    "instagram_cardinfo_source_verification": (
+        "instagram_tcg_content/source_verification_engine.py",
+        "instagram_tcg_content/source_route_resilience.py",
+        "instagram_tcg_content/source_routes.json",
+        "instagram_tcg_content/test_source_verification_engine.py",
+        "instagram_tcg_content/test_source_route_resilience.py",
+    ),
+    "instagram_cardinfo_production_state": (
+        "instagram_tcg_content/production_state.py",
+        "instagram_tcg_content/selfrefine_gate.py",
+        "instagram_tcg_content/test_production_state.py",
+        "instagram_tcg_content/test_live_packet_guards.py",
+    ),
+}
+
+# Curated first-touch files.  A route can still return more candidate files, but
+# maintenance should inspect these files first.
+FEATURE_ENTRYPOINTS = {
+    "grading_vision_1_4_8": ("grading_vision_engine.js",),
+    "ocr_card_identity": ("card_identity_recognition.py",),
+    "ocr_extended_verification": ("grading_cert_verifier.py", "library_slab_corpus.py"),
+    "five_company_grading": ("verify_v109_final.py",),
+    "manual_verified_learning_gate": ("manual_graded_photo_registration.py",),
+    "browser_camera_pwa": ("index.html",),
+    "market_collection": ("tcg_updater.py",),
+    "release_event_promo_collection": ("update_releases.py", "update_promo_events.py"),
+    "runtime_delivery": ("verify_link_runtime.py",),
+    "tablet_termux": ("ANDROID_UPDATE_AND_START.sh",),
+    "selfrefine_isolation": ("main_selfrefine_gate.py", "selfrefine_domain_boundary_guard.py"),
+    "security_integrity": ("repository_integrity_guard.py",),
+    "code_map_internal": ("code_map_fast_route.py", "code_map_intelligence.py"),
+    "instagram_cardinfo_pause_recovery": ("instagram_tcg_content/automation_state_guard.py",),
+    "instagram_cardinfo_crosscheck": ("crosscheck_runtime_bridge.py",),
+    "instagram_cardinfo_source_verification": ("instagram_tcg_content/source_verification_engine.py",),
+    "instagram_cardinfo_production_state": ("instagram_tcg_content/production_state.py",),
+}
+
+FULL_CHAIN_AFTER_FIX = ("Repository Verify", "Deep Audit", "Exhaustive", "Build/Deploy")
+
+
+def validation_plan_for_route(route: dict[str, Any], severity: str = "low") -> dict[str, Any]:
+    """Choose the smallest safe validation scope; escalation stays explicit."""
+    level = str(severity or "low").strip().lower()
+    groups = [
+        str(row.get("group") or "")
+        for row in (route.get("matched_feature_groups") or [])
+        if isinstance(row, dict) and row.get("group")
+    ]
+    tests = list(route.get("suggested_tests") or [])[:MAX_SUGGESTED_TESTS]
+    workflows = list(route.get("workflow_files") or [])
+
+    if level in {"high", "critical"}:
+        initial_scope = "full_chain"
+        initial_checks = list(FULL_CHAIN_AFTER_FIX)
+    elif level == "medium":
+        initial_scope = "targeted_plus_repository_verify"
+        initial_checks = tests + ["Repository Verify"]
+    else:
+        initial_scope = "targeted"
+        initial_checks = tests
+
+    if not initial_checks:
+        initial_checks = ["feature-local smoke/self-test"]
+
+    return {
+        "severity": level,
+        "initial_scope": initial_scope,
+        "initial_checks": list(dict.fromkeys(initial_checks)),
+        "full_chain": list(FULL_CHAIN_AFTER_FIX),
+        "full_chain_immediate": level in {"high", "critical"},
+        "escalate_to_repository_verify_if": [
+            "targeted check fails",
+            "impact fanout is larger than the bounded feature route",
+            "more than one feature group must be edited",
+        ],
+        "escalate_to_full_chain_if": [
+            "workflow file is actually changed",
+            "critical runtime or domain-boundary file is actually changed",
+            "cross-domain contract changes",
+            "security/integrity behavior changes",
+            "severity becomes high or critical",
+        ],
+        "workflow_candidates": workflows,
+        "decision_source": "feature-route+severity+change-boundary",
+        "avoids_unconditional_full_ci": level in {"low", "medium"},
+    }
 
 
 def _norm(value: Any) -> str:
@@ -180,13 +303,19 @@ def _query_tokens(value: str) -> set[str]:
 
 
 def _load_feature_routes() -> dict[str, tuple[str, ...]]:
+    routes: dict[str, tuple[str, ...]] = {}
     try:
         from verify_critical_feature_matrix_v25 import FEATURE_FILES
     except (ImportError, AttributeError):
-        return {}
-    routes: dict[str, tuple[str, ...]] = {}
+        FEATURE_FILES = {}
     for group, paths in FEATURE_FILES.items():
         clean = tuple(dict.fromkeys(_norm(path) for path in paths if _norm(path)))
+        if clean:
+            routes[str(group)] = clean
+    for group, paths in FEATURE_ROUTE_OVERRIDES.items():
+        existing = list(routes.get(group, ()))
+        existing.extend(_norm(path) for path in paths if _norm(path))
+        clean = tuple(dict.fromkeys(existing))
         if clean:
             routes[str(group)] = clean
     return routes
@@ -254,22 +383,40 @@ def resolve_feature_query(
     elif top_score > 0:
         confidence = 0.62
 
-    return {
+    selected_groups = [group for _score, group in selected]
+    entry_files: list[str] = []
+    for group in selected_groups:
+        configured = FEATURE_ENTRYPOINTS.get(group, ())
+        candidates = configured or tuple(
+            path for path in feature_routes.get(group, ())
+            if not _is_test_path(path) and not path.startswith(".github/workflows/")
+        )
+        for path in candidates:
+            if path not in entry_files:
+                entry_files.append(path)
+
+    repo_wide = not selected or top_score < 4
+    result = {
         "query": str(query or "")[:240],
         "matched_feature_groups": [
             {"group": group, "score": round(score, 2)}
             for score, group in selected
         ],
+        "entry_files": entry_files[:8],
         "primary_files": primary,
         "suggested_tests": tests,
         "workflow_files": workflows,
         "confidence": confidence,
         "candidate_files_scanned": scanned,
-        "repository_wide_search_required": not selected or top_score < 4,
-        "route_source": "critical_feature_matrix+feature_aliases",
+        "repository_wide_search_required": repo_wide,
+        "repository_wide_search_avoided": not repo_wide,
+        "route_decision": "direct_entrypoint" if not repo_wide else "fallback_search_required",
+        "route_source": "critical_feature_matrix+feature_overrides+feature_aliases",
         "graph_loaded": False,
         "read_only": True,
     }
+    result["validation_plan"] = validation_plan_for_route(result, "low")
+    return result
 
 
 def _is_critical_runtime(path: str) -> bool:
@@ -479,7 +626,7 @@ class CodeMapIndex:
     ) -> dict[str, Any]:
         """Route feature text to seeds, then merge bounded graph impact results."""
         route = self.resolve_feature(query)
-        seed_files = list(route.get("primary_files") or [])[:max(1, min(8, int(max_seed_files)))]
+        seed_files = list(route.get("entry_files") or route.get("primary_files") or [])[:max(1, min(8, int(max_seed_files)))]
         impacted: list[str] = []
         tests: list[str] = list(route.get("suggested_tests") or [])
         critical: list[str] = []
@@ -514,10 +661,12 @@ class CodeMapIndex:
             "suggested_tests": tests[:MAX_SUGGESTED_TESTS],
             "critical_runtime_files": critical[:12],
             "seed_results": seed_results,
-            "diagnostic_strategy": "targeted_first",
-            "full_chain_after_fix": [
-                "Repository Verify", "Deep Audit", "Exhaustive", "Build/Deploy",
-            ],
+            "diagnostic_strategy": "entrypoint_then_bounded_impact",
+            "validation_plan": validation_plan_for_route(
+                {**route, "suggested_tests": tests[:MAX_SUGGESTED_TESTS]},
+                "low",
+            ),
+            "full_chain_after_fix": list(FULL_CHAIN_AFTER_FIX),
             "graph_available": self.available,
             "map_signature": self.signature,
         }

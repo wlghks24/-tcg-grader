@@ -17,6 +17,7 @@ REQUIRED_FILES = (
     "code_map_intelligence.py",
     "code_map_fast_route.py",
     "test_code_map_fast_route_v195.py",
+    "test_code_map_entrypoint_route_v196.py",
     "ai_auto_tracker.py",
     "market_ai_auto_tracker.py",
     "GRAPHIFY_UPDATE.sh",
@@ -39,6 +40,9 @@ REQUIRED_TEXT = {
         "feature_impact",
         "feature_route_cache",
         "repository_wide_search_required",
+        "repository_wide_search_avoided",
+        "entry_files",
+        "validation_plan_for_route",
         "diagnostic_strategy",
     ),
     "code_map_fast_route.py": (
@@ -46,12 +50,22 @@ REQUIRED_TEXT = {
         "resolve_feature_query",
         "include_impact",
         "route_ms",
+        "exploration_plan",
+        "repository_search_policy",
     ),
     "test_code_map_fast_route_v195.py": (
         "test_cert_ocr_query_routes_without_repo_wide_search",
         "test_event_promo_release_query_routes_directly",
         "test_route_cache_is_reused",
-        "test_feature_impact_keeps_targeted_first_validation_policy",
+        "test_feature_impact_keeps_entrypoint_first_validation_policy",
+    ),
+    "test_code_map_entrypoint_route_v196.py": (
+        "test_pause_recovery_routes_directly_to_guard",
+        "test_crosscheck_routes_to_runtime_bridge_first",
+        "test_fast_route_emits_complete_exploration_plan",
+        "test_low_severity_avoids_unconditional_full_ci",
+        "test_high_severity_escalates_immediately_to_full_chain",
+        "test_feature_impact_uses_entrypoint_as_seed",
     ),
     "ai_auto_tracker.py": (
         "CodeMapIndex",
@@ -79,7 +93,7 @@ REQUIRED_TEXT = {
         "Build and audit the real repository code map",
         "GRAPHIFY_DISABLE_SELF_HEAL=1 bash ./GRAPHIFY_UPDATE.sh",
         "python ./GRAPHIFY_AUDIT.py --strict",
-        "python -m unittest -v test_code_map_fast_route_v195.py test_market_ai_auto_tracker.py",
+        "python -m unittest -v test_code_map_fast_route_v195.py test_code_map_entrypoint_route_v196.py test_market_ai_auto_tracker.py",
     ),
     "test_ai_auto_tracker.py": (
         "test_code_map_impact_is_attached_to_handoff",
@@ -154,13 +168,23 @@ def verify() -> dict:
             failures.append("feature router missed cert OCR runtime seed")
         if route.get("repository_wide_search_required") is not False:
             failures.append("known cert OCR feature incorrectly requested repo-wide search")
+        if route.get("repository_wide_search_avoided") is not True:
+            failures.append("known cert OCR feature did not record repo-wide search avoidance")
+        if not route.get("entry_files"):
+            failures.append("known cert OCR feature did not resolve an entrypoint")
         second = route_index.resolve_feature("업체별 인증번호 OCR 인식률 개선")
         if second.get("route_cache_hit") is not True:
             failures.append("feature route cache was not reused")
         plan = route_index.feature_impact("행사 프로모 재발매", depth=1)
-        if plan.get("diagnostic_strategy") != "targeted_first":
-            failures.append("feature impact did not enforce targeted-first diagnostics")
-        checked_contracts += 6
+        if plan.get("diagnostic_strategy") != "entrypoint_then_bounded_impact":
+            failures.append("feature impact did not enforce entrypoint-first diagnostics")
+        pause_route = route_index.resolve_feature("인스타 카드정보 일시정지 재활성화")
+        if pause_route.get("entry_files", [None])[0] != "instagram_tcg_content/automation_state_guard.py":
+            failures.append("pause recovery route missed automation state guard entrypoint")
+        pause_plan = pause_route.get("validation_plan") or {}
+        if pause_plan.get("initial_scope") != "targeted":
+            failures.append("low-severity feature route did not stay targeted")
+        checked_contracts += 10
 
     with tempfile.TemporaryDirectory() as td:
         root = Path(td)

@@ -181,6 +181,29 @@ grep -n TCG_GRAPHIFY_POST_MERGE .git/hooks/post-merge
 
 원격 `main` fast-forward 후 `GRAPHIFY_UPDATE.sh --quiet`가 백그라운드로 실행되고, 실패하면 동일한 자가복구/학습 절차가 작동합니다.
 
+## 기능명으로 바로 찾기
+
+수정 위치를 찾을 때 저장소 전체 검색부터 시작하지 않습니다. 먼저 기능명을 빠른 라우터에 넣습니다.
+
+```bash
+python code_map_fast_route.py 업체별 인증번호 OCR 인식률 개선
+python code_map_fast_route.py 인스타 카드정보 일시정지 재활성화
+python code_map_fast_route.py 인스타 카드정보 자료 비교 교차확인 --impact
+```
+
+출력에서 다음 순서로 확인합니다.
+
+1. `entry_files`: 가장 먼저 열 파일. 수정 지점 탐색의 시작점입니다.
+2. `primary_files`: 같은 기능 묶음의 후보 파일입니다.
+3. `impacted_files`: `--impact` 사용 시 Graphify에서 제한된 깊이로 계산한 영향 파일입니다.
+4. `suggested_tests`: 우선 실행할 기능 단위 회귀검사입니다.
+5. `validation_plan`: low/medium/high/critical 심각도에 따라 최소 안전 검증 범위를 결정합니다.
+6. `repository_wide_search_required=false`: 알려진 기능은 전체 저장소 검색 없이 바로 진입합니다.
+
+기본 심각도 `low`에서는 기능 단위 테스트부터 시작하고 전체 CI를 무조건 다시 돌리지 않습니다. `medium`은 targeted test + Repository Verify, `high/critical`은 전체 검증 체인을 즉시 권장합니다. 실제 수정 파일이 workflow, critical runtime, domain boundary, security/integrity에 걸리면 낮은 심각도라도 전체 검증 체인으로 승격합니다.
+
+즉 탐색 순서는 **기능명 → entrypoint → bounded impact → 추천 테스트 → 검증 범위**입니다. 알려지지 않은 기능일 때만 `repository_wide_search_required=true`로 전체 검색 fallback을 사용합니다.
+
 ## 코드 지도 범위
 
 `.graphifyignore`에서 가격/행사/자가학습 결과/등급사진 등 고변동 런타임 자료를 제외하여 코드 구조 지도가 불필요하게 흔들리지 않도록 했습니다.
