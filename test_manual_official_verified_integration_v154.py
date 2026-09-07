@@ -27,6 +27,9 @@ class ManualOfficialVerifiedIntegrationV154Tests(unittest.TestCase):
             "manual_official_proof_state": "matched",
             "manual_official_proof_at": "2026-08-31T17:36:00Z",
             "manual_official_proof_match_mode": "official_page_company_cert_plus_exact_slab_ocr_grade",
+            "manual_verification_confirmed": True,
+            "manual_verification_action": "complete_manual_verification",
+            "manual_verification_confirmed_at": "2026-08-31T17:36:00Z",
             "official_reference_url": "https://www.psacard.com/cert/160600294",
             "official_result": False,
             "status": "manual_official_reference",
@@ -40,6 +43,14 @@ class ManualOfficialVerifiedIntegrationV154Tests(unittest.TestCase):
     def test_strict_matched_front_back_proof_is_promotable(self):
         ready, reason = integration._identity_gate(self._row())
         self.assertTrue(ready, reason)
+
+    def test_pending_row_without_explicit_manual_confirmation_is_not_promotable(self):
+        row = self._row()
+        row.pop("manual_verification_confirmed")
+        row.pop("manual_verification_action")
+        ready, reason = integration._identity_gate(row)
+        self.assertFalse(ready)
+        self.assertEqual(reason, "manual_verification_confirmation_missing")
 
     def test_missing_back_pair_is_not_promotable(self):
         row = self._row()
@@ -80,6 +91,9 @@ class ManualOfficialVerifiedIntegrationV154Tests(unittest.TestCase):
         row = self._row()
         row["official_result"] = True
         row["official_verification_source"] = "user_browser_official_page"
+        row.pop("manual_verification_confirmed")
+        row.pop("manual_verification_action")
+        row.pop("manual_verification_confirmed_at")
         registry = {"schema_version": 1, "registrations": [row]}
         saved = []
         with (
@@ -119,6 +133,7 @@ class ManualOfficialVerifiedIntegrationV154Tests(unittest.TestCase):
         self.assertFalse(policy["manual_screenshot_alone_sets_official_result"])
         self.assertTrue(policy["strict_identity_front_back_and_stored_proof_required"])
         self.assertTrue(policy["registry_conflict_blocks_promotion"])
+        self.assertTrue(policy["explicit_manual_verification_confirmation_required"])
         self.assertFalse(policy["manual_screenshot_trains_raw_grade_calibration"])
 
 
