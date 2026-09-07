@@ -128,6 +128,7 @@ FEATURE_FILES = {
         "code_map_intelligence.py",
         "code_map_fast_route.py",
         "test_code_map_fast_route_v195.py",
+        "test_code_map_entrypoint_route_v196.py",
         "GRAPHIFY_UPDATE.sh",
         "GRAPHIFY_SELF_HEAL.py",
         "GRAPHIFY_AUDIT.py",
