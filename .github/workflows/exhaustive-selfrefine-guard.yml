@@ -11,6 +11,16 @@ on:
       - '**/*.webmanifest'
       - 'index.html'
       - 'sw.js'
+      - '!code_map_fast_route.py'
+      - '!code_map_intelligence.py'
+      - '!verify_code_map_internal.py'
+      - '!test_code_map_fast_route_v195.py'
+      - '!test_code_map_entrypoint_route_v196.py'
+      - '!code_map_fast_route.py'
+      - '!code_map_intelligence.py'
+      - '!verify_code_map_internal.py'
+      - '!test_code_map_fast_route_v195.py'
+      - '!test_code_map_entrypoint_route_v196.py'
   push:
     branches: [main]
     paths:
