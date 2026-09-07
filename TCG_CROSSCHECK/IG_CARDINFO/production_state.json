@@ -3,7 +3,7 @@
   "run_locks": {
     "2026-09-07|2026-09-07T15:30:00+09:00|USER_REQUESTED_RECOVERY": {
       "run_id": "ig-cardinfo-recovery-2026-09-07T15:30+09:00",
-      "status": "running"
+      "status": "failed"
     }
   },
   "production_records": {},
@@ -13,8 +13,8 @@
       "scheduled_slot_kst": "2026-09-07T10:30:00+09:00",
       "reason_code": "INSUFFICIENT_VERIFIED_FACTS_OBSERVED_POST_SLOT",
       "verified_fact_count": 1,
-      "recorded_at_kst": "2026-09-07T15:09:00+09:00",
-      "detail": "Post-slot evidence: finalized IG factual snapshot exposed one verified fact and no finalized production state/artifact record was present."
+      "recorded_at_kst": "2026-09-07T15:35:00+09:00",
+      "detail": "PRODUCTION_HARD_GATE_BLOCKED after the single user-requested recovery. Canonical master lock/spec passed. Bounded targeted collection found verified official release/event facts for Pokemon, ONE PIECE, and NARUTO, but the production template requires enough verified runtime data to replace every DYNAMIC field, including recent-30-day completed-sale Top 10 rows. Required completed-sale lineage/finality/realized-price records were not available in sufficient quantity for all Pokemon/ONE PIECE/NARUTO KR/EN outputs. No PNGs were rendered, no baseline_id was created, and no finalized production was recorded. Second same-day recovery is forbidden because catchup_attempts=1."
     }
   },
   "catchup_attempts": {
