@@ -109,6 +109,29 @@ class CodeMapEntrypointRouteV196Tests(unittest.TestCase):
             if result["repository_wide_search_required"] is False:
                 self.assertIsNotNone(result["entry_file"], query)
 
+    def test_crosscheck_primary_tests_do_not_pull_secondary_feature_tests(self):
+        result = resolve_feature_query("인스타 카드정보 자료 비교 교차확인 오류")
+        self.assertEqual("instagram_cardinfo_crosscheck", result["entry_group"])
+        self.assertIn("test_crosscheck_runtime_bridge_v26.py", result["suggested_tests"])
+        self.assertEqual("primary_feature_group_only", result["test_scope_policy"])
+        self.assertNotEqual([], result["related_feature_groups"])
+        self.assertTrue(
+            set(result["suggested_tests"]).isdisjoint(set(result["related_tests"])),
+            result,
+        )
+        self.assertLessEqual(
+            result["candidate_files_scanned"],
+            result["candidate_files_scanned"] + result["related_candidate_files_scanned"],
+        )
+
+    def test_fast_route_defers_related_tests_from_active_validation(self):
+        result = route("인스타 카드정보 자료 비교 교차확인 오류", severity="low")
+        active = result["validation_plan"]["initial_checks"]
+        deferred = result["exploration_plan"]["3a_deferred_related_tests"]
+        self.assertEqual(result["suggested_tests"], result["exploration_plan"]["3_recommended_tests"])
+        self.assertTrue(set(active).isdisjoint(set(deferred)), result)
+        self.assertEqual("targeted", result["validation_plan"]["initial_scope"])
+
     def test_low_severity_avoids_unconditional_full_ci(self):
         result = route("업체별 인증번호 OCR 인식률 개선", severity="low")
         plan = result["validation_plan"]

@@ -56,6 +56,9 @@ REQUIRED_TEXT = {
         "alternate_entry_files",
         "entrypoint_reason",
         "support_files",
+        "related_feature_groups",
+        "related_tests",
+        "test_scope_policy",
         "validation_plan_for_route",
         "diagnostic_strategy",
     ),
@@ -82,6 +85,8 @@ REQUIRED_TEXT = {
         "test_known_feature_routes_never_return_multiple_entry_files",
         "test_crosscheck_routes_to_runtime_bridge_first",
         "test_fast_route_emits_complete_exploration_plan",
+        "test_crosscheck_primary_tests_do_not_pull_secondary_feature_tests",
+        "test_fast_route_defers_related_tests_from_active_validation",
         "test_low_severity_avoids_unconditional_full_ci",
         "test_high_severity_escalates_immediately_to_full_chain",
         "test_feature_impact_uses_entrypoint_as_seed",
@@ -285,6 +290,12 @@ def verify() -> dict:
         plan = route_index.feature_impact("행사 프로모 재발매", depth=1)
         if plan.get("diagnostic_strategy") != "entrypoint_then_bounded_impact":
             failures.append("feature impact did not enforce entrypoint-first diagnostics")
+        crosscheck_route = route_index.resolve_feature("인스타 카드정보 자료 비교 교차확인 오류")
+        if crosscheck_route.get("test_scope_policy") != "primary_feature_group_only":
+            failures.append("feature router did not keep tests inside the primary feature group")
+        if set(crosscheck_route.get("suggested_tests") or []) & set(crosscheck_route.get("related_tests") or []):
+            failures.append("primary and related feature tests overlap")
+        checked_contracts += 2
         pause_route = route_index.resolve_feature("인스타 카드정보 일시정지 재활성화")
         if pause_route.get("entry_files", [None])[0] != "instagram_tcg_content/automation_state_guard.py":
             failures.append("pause recovery route missed automation state guard entrypoint")
