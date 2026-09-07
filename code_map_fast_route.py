@@ -6,20 +6,26 @@ import json
 import time
 from pathlib import Path
 
-from code_map_intelligence import CodeMapIndex, impact_depth_for_severity
+from code_map_intelligence import CodeMapIndex, impact_depth_for_severity, resolve_feature_query
 
 ROOT = Path(__file__).resolve().parent
 
 
-def route(query: str, *, severity: str = "low", max_seeds: int = 4) -> dict:
+def route(
+    query: str, *, severity: str = "low", max_seeds: int = 4, include_impact: bool = False,
+) -> dict:
     started = time.perf_counter()
-    index = CodeMapIndex(ROOT)
     depth = impact_depth_for_severity(severity)
-    result = index.feature_impact(
-        query,
-        depth=depth,
-        max_seed_files=max_seeds,
-    )
+    if include_impact:
+        index = CodeMapIndex(ROOT)
+        result = index.feature_impact(query, depth=depth, max_seed_files=max_seeds)
+        result["graph_loaded"] = True
+    else:
+        result = resolve_feature_query(query)
+        result["diagnostic_strategy"] = "targeted_first"
+        result["full_chain_after_fix"] = [
+            "Repository Verify", "Deep Audit", "Exhaustive", "Build/Deploy",
+        ]
     result["route_ms"] = round((time.perf_counter() - started) * 1000.0, 3)
     result["severity"] = severity
     result["depth"] = depth
@@ -32,8 +38,14 @@ def main() -> int:
     parser.add_argument("query", nargs="+", help="feature/request text")
     parser.add_argument("--severity", default="low", choices=("low", "medium", "high", "critical"))
     parser.add_argument("--max-seeds", type=int, default=4)
+    parser.add_argument("--impact", action="store_true", help="load Graphify and merge bounded impact")
     args = parser.parse_args()
-    result = route(" ".join(args.query), severity=args.severity, max_seeds=args.max_seeds)
+    result = route(
+        " ".join(args.query),
+        severity=args.severity,
+        max_seeds=args.max_seeds,
+        include_impact=args.impact,
+    )
     print(json.dumps(result, ensure_ascii=False, indent=2))
     return 0
 
