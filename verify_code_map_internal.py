@@ -43,6 +43,8 @@ REQUIRED_TEXT = {
         "repository_wide_search_avoided",
         "entry_files",
         "validation_plan_for_route",
+        "validation_plan_for_changes",
+        "change_boundary",
         "diagnostic_strategy",
     ),
     "code_map_fast_route.py": (
@@ -52,6 +54,9 @@ REQUIRED_TEXT = {
         "route_ms",
         "exploration_plan",
         "repository_search_policy",
+        "graph_load_attempted",
+        "ci_execution_plan",
+        "bottleneck_analysis",
     ),
     "test_code_map_fast_route_v195.py": (
         "test_cert_ocr_query_routes_without_repo_wide_search",
@@ -66,6 +71,9 @@ REQUIRED_TEXT = {
         "test_low_severity_avoids_unconditional_full_ci",
         "test_high_severity_escalates_immediately_to_full_chain",
         "test_feature_impact_uses_entrypoint_as_seed",
+        "test_unknown_impact_skips_pointless_graph_load",
+        "test_local_pause_guard_change_stays_targeted",
+        "test_workflow_change_escalates_to_full_chain",
     ),
     "ai_auto_tracker.py": (
         "CodeMapIndex",
@@ -185,6 +193,20 @@ def verify() -> dict:
         if pause_plan.get("initial_scope") != "targeted":
             failures.append("low-severity feature route did not stay targeted")
         checked_contracts += 10
+        from code_map_fast_route import route as fast_route
+        local_change = fast_route(
+            "인스타 카드정보 일시정지 재활성화",
+            changed_files=["instagram_tcg_content/automation_state_guard.py"],
+        )
+        local_plan = local_change.get("validation_plan") or {}
+        if local_plan.get("initial_scope") != "targeted":
+            failures.append("route-local change unnecessarily escalated beyond targeted tests")
+        if local_plan.get("full_chain_required_now") is not False:
+            failures.append("route-local low-risk change incorrectly required full CI")
+        unknown_impact = fast_route("unknown_xyz_code_map_197", include_impact=True)
+        if unknown_impact.get("graph_load_attempted") is not False:
+            failures.append("unknown feature impact loaded Graphify before fallback search")
+        checked_contracts += 3
 
     with tempfile.TemporaryDirectory() as td:
         root = Path(td)
