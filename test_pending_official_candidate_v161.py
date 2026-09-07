@@ -45,6 +45,14 @@ class PendingOfficialCandidateV161Tests(unittest.TestCase):
         jpeg = b'\xff\xd8\xff' + b'x' * 100
         return 'data:image/jpeg;base64,' + base64.b64encode(jpeg).decode('ascii')
 
+    def _approval(self, candidate_id):
+        return {
+            'action': 'complete_manual_verification',
+            'manual_verification_confirmed': True,
+            'candidate_id': candidate_id,
+            'proof_image': self._jpeg_url(),
+        }
+
     def test_public_status_lists_only_pending_resolved_candidate(self):
         status = mod.public_status()
         self.assertTrue(status['ok'])
@@ -53,6 +61,15 @@ class PendingOfficialCandidateV161Tests(unittest.TestCase):
         self.assertEqual(row['company'], 'BGS')
         self.assertEqual(row['certification_id'], '100017423404')
         self.assertEqual(row['grade'], 10.0)
+
+    def test_missing_explicit_manual_confirmation_cannot_promote(self):
+        candidate_id = mod.public_status()['candidates'][0]['candidate_id']
+        with mock.patch.object(mod.manual_photo, '_publish_verified_cert_anchor') as publish:
+            with self.assertRaises(ValueError):
+                mod.submit({'candidate_id': candidate_id, 'proof_image': self._jpeg_url()})
+        publish.assert_not_called()
+        payload = mod.gp._load(self.out, {})
+        self.assertFalse(payload['records'][0]['official_result'])
 
     def test_exact_manual_proof_promotes_reference(self):
         candidate_id = mod.public_status()['candidates'][0]['candidate_id']
@@ -64,16 +81,45 @@ class PendingOfficialCandidateV161Tests(unittest.TestCase):
         }
         with mock.patch.object(mod.manual_photo, '_ocr_image', return_value=('BGS 100017423404 GRADE 10', None, {}, evidence)), \
              mock.patch.object(mod.manual_proof, '_match_proof', return_value=exact), \
+             mock.patch.object(mod.manual_photo, '_publish_verified_cert_anchor', return_value=(True, None)) as publish, \
              mock.patch.object(mod.gp, '_save_reference_learning', return_value={'summary': {'reference_learning_count': 1}}), \
              mock.patch.object(mod.gp, 'record_official_feedback', return_value=None):
-            result = mod.submit({'candidate_id': candidate_id, 'proof_image': self._jpeg_url()})
+            result = mod.submit(self._approval(candidate_id))
         self.assertTrue(result['accepted'])
+        self.assertTrue(result['verification_complete'])
+        self.assertTrue(result['policy']['official_result'])
+        publish.assert_called_once()
         payload = mod.gp._load(self.out, {})
         row = payload['records'][0]
         self.assertTrue(row['official_result'])
         self.assertTrue(row['manual_official_candidate_verified'])
         self.assertEqual(row['verification_state'], 'manual_official_verified')
         self.assertFalse(row['raw_grade_calibration_eligible'])
+
+    def test_registry_publish_failure_keeps_candidate_unverified_and_out_of_learning(self):
+        candidate_id = mod.public_status()['candidates'][0]['candidate_id']
+        evidence = {'company': 'BGS', 'certification_id': '100017423404', 'grade': 10.0}
+        exact = {
+            'matched': True, 'company_match': True, 'cert_match': True,
+            'grade_match': True, 'explicit_conflicts': [],
+            'match_mode': 'official_page_company_cert_grade_ocr',
+        }
+        with mock.patch.object(mod.manual_photo, '_ocr_image', return_value=('BGS 100017423404 GRADE 10', None, {}, evidence)), \
+             mock.patch.object(mod.manual_proof, '_match_proof', return_value=exact), \
+             mock.patch.object(mod.manual_photo, '_publish_verified_cert_anchor', return_value=(False, 'persisted_official_grade_conflict')), \
+             mock.patch.object(mod.gp, '_save_reference_learning', return_value={'summary': {'reference_learning_count': 0}}), \
+             mock.patch.object(mod.gp, 'record_official_feedback', return_value=None):
+            result = mod.submit(self._approval(candidate_id))
+        self.assertFalse(result['accepted'])
+        self.assertFalse(result['verification_complete'])
+        self.assertTrue(result['proof_matched'])
+        self.assertFalse(result['policy']['official_result'])
+        payload = mod.gp._load(self.out, {})
+        row = payload['records'][0]
+        self.assertFalse(row['official_result'])
+        self.assertFalse(row['manual_official_candidate_verified'])
+        self.assertEqual(row['verification_state'], 'manual_official_verified_registry_conflict')
+        self.assertEqual(row['learning_eligibility'], 'not_eligible_registry_conflict')
 
     def test_mismatch_does_not_promote(self):
         candidate_id = mod.public_status()['candidates'][0]['candidate_id']
@@ -84,7 +130,7 @@ class PendingOfficialCandidateV161Tests(unittest.TestCase):
         }
         with mock.patch.object(mod.manual_photo, '_ocr_image', return_value=('BGS 100017423404 GRADE 9', None, {}, {'company': 'BGS', 'certification_id': '100017423404', 'grade': 9.0})), \
              mock.patch.object(mod.manual_proof, '_match_proof', return_value=mismatch):
-            result = mod.submit({'candidate_id': candidate_id, 'proof_image': self._jpeg_url()})
+            result = mod.submit(self._approval(candidate_id))
         self.assertFalse(result['accepted'])
         payload = mod.gp._load(self.out, {})
         self.assertFalse(payload['records'][0]['official_result'])
