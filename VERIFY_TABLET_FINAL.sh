@@ -58,6 +58,10 @@ verified_slab_raw_learning_v155.py
 verified_slab_training_archive_v152.py
 manual_official_verified_integration_v154.py
 manual_official_proof.py
+manual_official_verify_bridge.js
+pending_official_candidate_v161.py
+pending_official_candidate_bridge_v161.js
+test_pending_official_candidate_v161.py
 manual_graded_photo_registration.py
 .graphifyignore
 .gitignore
@@ -96,6 +100,8 @@ python -m py_compile \
   manual_graded_photo_registration.py \
   manual_official_proof.py \
   manual_official_verified_integration_v154.py \
+  pending_official_candidate_v161.py \
+  test_pending_official_candidate_v161.py \
   verified_slab_training_archive_v152.py \
   verified_slab_raw_learning_v155.py \
   verified_grade_learning_v135.py \
@@ -229,11 +235,22 @@ assert GRAPHIFY_SELF_HEAL.FAILURE_CODE_CATEGORY[25] == 'map_audit_failed'
 assert GRAPHIFY_SELF_HEAL.CLUSTER_ARGS[-2:] == ('--exclude-hubs', '99')
 
 manual_proof_source = Path("manual_official_proof.py").read_text(encoding="utf-8")
+manual_bridge_source = Path("manual_official_verify_bridge.js").read_text(encoding="utf-8")
+pending_source = Path("pending_official_candidate_v161.py").read_text(encoding="utf-8")
+pending_bridge_source = Path("pending_official_candidate_bridge_v161.js").read_text(encoding="utf-8")
 archive_source = Path("verified_slab_training_archive_v152.py").read_text(encoding="utf-8")
 raw_learning_source = Path("verified_slab_raw_learning_v155.py").read_text(encoding="utf-8")
 grade_learning_source = Path("verified_grade_learning_v135.py").read_text(encoding="utf-8")
 assert '"proof_match_alone_is_not_verification_complete": True' in manual_proof_source
 assert '"verified_registry_publish_required": True' in manual_proof_source
+assert '"explicit_manual_verification_confirmation_required": True' in manual_proof_source
+assert 'payload.get("manual_verification_confirmed") is not True' in manual_proof_source
+assert "action:'complete_manual_verification'" in manual_bridge_source
+assert "manual_verification_confirmed:true" in manual_bridge_source
+assert 'incoming.get("manual_verification_confirmed") is not True' in pending_source
+assert 'manual_photo._publish_verified_cert_anchor(' in pending_source
+assert "action:'complete_manual_verification'" in pending_bridge_source
+assert "manual_verification_confirmed:true" in pending_bridge_source
 assert 'if row.get("official_result") is not True:' in archive_source
 assert '"manual_proof_match_alone_is_not_verified": True' in archive_source
 assert 'if row.get("official_result") is not True:' in raw_learning_source
