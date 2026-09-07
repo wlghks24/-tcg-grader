@@ -289,6 +289,7 @@ def verify() -> dict:
             failures.append(f"alternate entrypoint duplicates canonical entrypoint: {group}: {sorted(overlap)}")
 
     route_samples = {
+        "포켓몬 예상등급 세대 표시": "card_identity_recognition.js",
         "업체별 인증번호 OCR 인식률 개선": "grading_cert_verifier.py",
         "슬랩 코퍼스 OCR 학습자료 확인": "library_slab_corpus.py",
         "재발매 출시 정보 수집 오류": "update_releases.py",

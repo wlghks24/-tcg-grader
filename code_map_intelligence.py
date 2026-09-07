@@ -59,7 +59,10 @@ FEATURE_QUERY_ALIASES = {
     ),
     "ocr_card_identity": (
         "card identity", "card name", "card number", "카드명", "카드 번호", "카드번호",
-        "ocr 카드", "identity ocr",
+        "ocr 카드", "identity ocr", "포켓몬 세대", "세대 표시", "세대 판별", "generation",
+        "포켓몬 몇세대", "포켓몬 몇 세대", "몇세대인지", "몇 세대인지",
+        "몇세대", "몇 세대", "예상등급 세대", "예상 등급 세대",
+        "regulation mark", "레귤레이션", "확장팩 코드",
     ),
     "ocr_extended_verification": (
         "ocr", "인증번호", "인증 번호", "업체별 인증번호", "슬랩", "cert", "certificate",
@@ -175,6 +178,7 @@ FEATURE_TEST_NODE_CONTRACTS = {
     ),
     "ocr_card_identity": (
         "test_ocr_selfrefine_v15.py::OcrSelfrefineV15Tests::test_server_ocr_completes_all_three_stages_even_after_high_confidence_stage1",
+        "test_pokemon_generation_display_v207.py::PokemonGenerationDisplayV207Tests::test_generation_runtime_executes",
     ),
     "ocr_extended_verification": (
         "test_grader_cert_ocr_profiles_v193.py::GraderCertOcrV193Tests::test_psa_targeted_profile_repairs_numericish_confusions",
@@ -259,6 +263,7 @@ FEATURE_ENTRYPOINTS = {
 # canonical start file. Query-specific rules may promote one alternate to the
 # canonical entry_file for that request.
 FEATURE_ALTERNATE_ENTRYPOINTS = {
+    "ocr_card_identity": ("card_identity_recognition.js",),
     "ocr_extended_verification": ("library_slab_corpus.py",),
     "release_event_promo_collection": ("update_promo_events.py",),
     "selfrefine_isolation": ("selfrefine_domain_boundary_guard.py",),
@@ -267,6 +272,10 @@ FEATURE_ALTERNATE_ENTRYPOINTS = {
 # Ordered, deterministic query-specific promotions. More specific rules come
 # first. They only select a file already declared for the same feature group.
 FEATURE_ENTRYPOINT_RULES = {
+    "ocr_card_identity": (
+        (("포켓몬 몇세대", "포켓몬 몇 세대", "몇세대인지", "몇 세대인지",
+          "포켓몬 세대", "세대 표시", "세대 판별", "generation", "레귤레이션", "확장팩 코드"), "card_identity_recognition.js"),
+    ),
     "ocr_extended_verification": (
         (("slab corpus", "슬랩 코퍼스", "library slab", "등급사진 코퍼스"), "library_slab_corpus.py"),
     ),
