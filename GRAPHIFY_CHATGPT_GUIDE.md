@@ -189,6 +189,7 @@ grep -n TCG_GRAPHIFY_POST_MERGE .git/hooks/post-merge
 python code_map_fast_route.py 업체별 인증번호 OCR 인식률 개선
 python code_map_fast_route.py 인스타 카드정보 일시정지 재활성화
 python code_map_fast_route.py 인스타 카드정보 자료 비교 교차확인 --impact
+python code_map_fast_route.py 인스타 카드정보 일시정지 재활성화 --changed instagram_tcg_content/automation_state_guard.py
 ```
 
 출력에서 다음 순서로 확인합니다.
@@ -200,7 +201,9 @@ python code_map_fast_route.py 인스타 카드정보 자료 비교 교차확인 
 5. `validation_plan`: low/medium/high/critical 심각도에 따라 최소 안전 검증 범위를 결정합니다.
 6. `repository_wide_search_required=false`: 알려진 기능은 전체 저장소 검색 없이 바로 진입합니다.
 
-기본 심각도 `low`에서는 기능 단위 테스트부터 시작하고 전체 CI를 무조건 다시 돌리지 않습니다. `medium`은 targeted test + Repository Verify, `high/critical`은 전체 검증 체인을 즉시 권장합니다. 실제 수정 파일이 workflow, critical runtime, domain boundary, security/integrity에 걸리면 낮은 심각도라도 전체 검증 체인으로 승격합니다.
+기본 심각도 `low`에서는 기능 단위 테스트부터 시작하고 전체 CI를 무조건 다시 돌리지 않습니다. `medium`은 targeted test + Repository Verify, `high/critical`은 전체 검증 체인을 즉시 권장합니다. `--changed PATH`를 실제 수정 파일마다 반복하면 코드지도가 실제 변경 경계를 계산해, 기능 내부의 로컬 수정이면 targeted test만 실행하고 기능 밖 파일이면 Repository Verify로 올리며 workflow/critical runtime/domain boundary/security 변경일 때만 전체 체인을 즉시 요구합니다.
+
+또한 `--impact`는 먼저 기능명 라우팅에 성공한 경우에만 Graphify 지도를 로드합니다. 알려지지 않은 기능은 bounded seed가 없으므로 지도를 먼저 읽지 않고 곧바로 `repository_wide_search_required=true` fallback으로 넘깁니다. 이 경로는 `graph_load_attempted=false`와 `impact_skipped_reason=feature_route_unknown_no_bounded_seed`로 확인할 수 있습니다.
 
 즉 탐색 순서는 **기능명 → entrypoint → bounded impact → 추천 테스트 → 검증 범위**입니다. 알려지지 않은 기능일 때만 `repository_wide_search_required=true`로 전체 검색 fallback을 사용합니다.
 
