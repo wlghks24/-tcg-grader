@@ -43,6 +43,16 @@ class CodeMapEntrypointRouteV196Tests(unittest.TestCase):
             result["suggested_tests"],
         )
 
+    def test_code_map_internal_has_single_public_entrypoint(self):
+        result = resolve_feature_query("코드지도 느림 영향분석 최적화")
+        groups = [row["group"] for row in result["matched_feature_groups"]]
+        self.assertEqual("code_map_internal", groups[0])
+        self.assertEqual("code_map_fast_route.py", result["entry_file"])
+        self.assertEqual(["code_map_fast_route.py"], result["entry_files"])
+        self.assertIn("code_map_intelligence.py", result["support_files"])
+        self.assertNotIn("code_map_intelligence.py", result["entry_files"])
+        self.assertFalse(result["repository_wide_search_required"])
+
     def test_low_severity_avoids_unconditional_full_ci(self):
         result = route("업체별 인증번호 OCR 인식률 개선", severity="low")
         plan = result["validation_plan"]
