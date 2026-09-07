@@ -3,8 +3,7 @@ name: Deep SELFREFINE Guard
 
 on:
   pull_request:
-    branches: [main]
-    paths:
+    branches: [main]\n    paths:
       - '.github/workflows/deep-selfrefine-guard.yml'
       - 'index.html'
       - 'sw.js'
@@ -13,11 +12,6 @@ on:
       - '**/*.sh'
       - '**/*.json'
       - '**/*.webmanifest'
-      - '!code_map_fast_route.py'
-      - '!code_map_intelligence.py'
-      - '!verify_code_map_internal.py'
-      - '!test_code_map_fast_route_v195.py'
-      - '!test_code_map_entrypoint_route_v196.py'
       - '!code_map_fast_route.py'
       - '!code_map_intelligence.py'
       - '!verify_code_map_internal.py'
@@ -34,6 +28,11 @@ on:
       - '**/*.sh'
       - '**/*.json'
       - '**/*.webmanifest'
+      - '!code_map_fast_route.py'
+      - '!code_map_intelligence.py'
+      - '!verify_code_map_internal.py'
+      - '!test_code_map_fast_route_v195.py'
+      - '!test_code_map_entrypoint_route_v196.py'
   workflow_dispatch:
 
 permissions:
