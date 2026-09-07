@@ -25,6 +25,8 @@ REQUIRED_FILES = (
     "GRAPHIFY_AUDIT.py",
     "SETUP_GRAPHIFY_TERMUX.sh",
     ".github/workflows/graphify-integration-guard.yml",
+    ".github/workflows/repository-integrity-guard.yml",
+    ".github/workflows/selfrefine-full-repo.yml",
     "test_ai_auto_tracker.py",
     "test_market_ai_auto_tracker.py",
 )
@@ -97,6 +99,19 @@ REQUIRED_TEXT = {
         "GRAPHIFY_DISABLE_SELF_HEAL=1 bash ./GRAPHIFY_UPDATE.sh",
         "python ./GRAPHIFY_AUDIT.py --strict",
         "python -m unittest -v test_code_map_fast_route_v195.py test_code_map_entrypoint_route_v196.py test_market_ai_auto_tracker.py",
+        "concurrency:",
+        "group: graphify-integration-${{ github.ref }}",
+        "cancel-in-progress: true",
+    ),
+    ".github/workflows/repository-integrity-guard.yml": (
+        "concurrency:",
+        "group: repository-integrity-${{ github.ref }}",
+        "cancel-in-progress: true",
+    ),
+    ".github/workflows/selfrefine-full-repo.yml": (
+        "concurrency:",
+        "group: main-selfrefine-${{ github.ref }}",
+        "cancel-in-progress: true",
     ),
     "test_ai_auto_tracker.py": (
         "test_code_map_impact_is_attached_to_handoff",
