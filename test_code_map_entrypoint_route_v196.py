@@ -6,7 +6,12 @@ import unittest
 from pathlib import Path
 
 from code_map_fast_route import route
-from code_map_intelligence import CodeMapIndex, resolve_feature_query, validation_plan_for_route
+from code_map_intelligence import (
+    CodeMapIndex,
+    resolve_feature_query,
+    validation_plan_for_changes,
+    validation_plan_for_route,
+)
 
 
 class CodeMapEntrypointRouteV196Tests(unittest.TestCase):
@@ -99,6 +104,82 @@ class CodeMapEntrypointRouteV196Tests(unittest.TestCase):
             result["seed_files"],
         )
         self.assertEqual("entrypoint_then_bounded_impact", result["diagnostic_strategy"])
+
+    def test_unknown_impact_skips_pointless_graph_load(self):
+        result = route(
+            "totally_unknown_feature_xyz_197",
+            severity="low",
+            include_impact=True,
+        )
+        self.assertTrue(result["repository_wide_search_required"])
+        self.assertFalse(result["graph_load_attempted"])
+        self.assertFalse(result["graph_loaded"])
+        self.assertEqual(
+            "feature_route_unknown_no_bounded_seed",
+            result["impact_skipped_reason"],
+        )
+        self.assertTrue(result["bottleneck_analysis"]["unknown_feature_graph_load_avoided"])
+
+    def test_local_pause_guard_change_stays_targeted(self):
+        result = route(
+            "인스타 카드정보 일시정지 재활성화",
+            severity="low",
+            changed_files=["instagram_tcg_content/automation_state_guard.py"],
+        )
+        plan = result["validation_plan"]
+        self.assertEqual("targeted", plan["initial_scope"])
+        self.assertFalse(plan["full_chain_required_now"])
+        self.assertTrue(plan["avoids_unconditional_full_ci"])
+        self.assertEqual(
+            ["instagram_tcg_content/automation_state_guard.py"],
+            plan["change_boundary"]["route_local_files"],
+        )
+        self.assertIn(
+            "instagram_tcg_content/test_automation_pause_recovery_v30.py",
+            result["ci_execution_plan"]["run_now"],
+        )
+        self.assertNotIn("Exhaustive", result["ci_execution_plan"]["run_now"])
+
+    def test_unrelated_changed_file_adds_repository_verify_not_full_chain(self):
+        raw = resolve_feature_query("인스타 카드정보 일시정지 재활성화")
+        plan = validation_plan_for_changes(
+            raw,
+            ["docs/maintenance_note.md"],
+            "low",
+        )
+        self.assertEqual("targeted_plus_repository_verify", plan["initial_scope"])
+        self.assertIn("Repository Verify", plan["run_now"])
+        self.assertNotIn("Exhaustive", plan["run_now"])
+        self.assertIn(
+            "changed_file_outside_feature_route",
+            plan["escalation_reasons"],
+        )
+
+    def test_workflow_change_escalates_to_full_chain(self):
+        result = route(
+            "인스타 카드정보 일시정지 재활성화",
+            severity="low",
+            changed_files=[".github/workflows/instagram-tcg-selfrefine.yml"],
+        )
+        plan = result["validation_plan"]
+        self.assertEqual("full_chain", plan["initial_scope"])
+        self.assertTrue(plan["full_chain_required_now"])
+        self.assertIn("workflow_changed", plan["escalation_reasons"])
+        self.assertIn("Exhaustive", result["ci_execution_plan"]["run_now"])
+
+    def test_cross_domain_bridge_change_escalates_to_full_chain(self):
+        result = route(
+            "인스타 카드정보 자료 비교 교차확인",
+            severity="low",
+            changed_files=["crosscheck_runtime_bridge.py"],
+        )
+        plan = result["validation_plan"]
+        self.assertEqual("full_chain", plan["initial_scope"])
+        self.assertTrue(plan["full_chain_required_now"])
+        self.assertIn(
+            "domain_or_crosscheck_boundary_changed",
+            plan["escalation_reasons"],
+        )
 
     def test_unknown_feature_still_requests_fallback_search(self):
         result = resolve_feature_query("totally_unknown_feature_xyz_196")
