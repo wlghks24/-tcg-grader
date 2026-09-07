@@ -4,13 +4,16 @@ from tempfile import TemporaryDirectory
 
 from instagram_tcg_content.production_state import (
     SCHEDULED_BASELINE_RUN_KIND,
+    USER_REQUESTED_RECOVERY_RUN_KIND,
     StateIntegrityError,
     acquire_run_lock,
     baseline_id_for_date,
     can_start_catchup,
+    can_start_user_requested_recovery,
     empty_state,
     finalize_production,
     load_state,
+    record_blocked_production_attempt,
     record_catchup_attempt,
     release_run_lock,
     validate_production_record,
@@ -96,6 +99,59 @@ def main():
     allowed, reason = can_start_catchup(fresh, "2026-09-07")
     assert not allowed and reason == "CATCHUP_BUDGET_EXHAUSTED"
 
+    blocked = empty_state()
+    row = record_blocked_production_attempt(
+        blocked,
+        production_date_kst="2026-09-07",
+        scheduled_slot_kst="2026-09-07T10:30:00+09:00",
+        reason_code="INSUFFICIENT_VERIFIED_FACTS",
+        verified_fact_count=1,
+        recorded_at_kst="2026-09-07T15:15:00+09:00",
+        detail="6 required artifacts could not be supported by one verified fact",
+    )
+    assert row["verified_fact_count"] == 1
+
+    allowed, reason = can_start_user_requested_recovery(
+        blocked,
+        "2026-09-07",
+        user_requested=False,
+    )
+    assert not allowed and reason == "USER_REQUEST_REQUIRED"
+
+    allowed, reason = can_start_user_requested_recovery(
+        blocked,
+        "2026-09-07",
+        user_requested=True,
+    )
+    assert allowed and reason == "USER_REQUESTED_RECOVERY_ALLOWED"
+
+    recovery = record(
+        run_kind=USER_REQUESTED_RECOVERY_RUN_KIND,
+        baseline_id=None,
+    )
+    recovery["scheduled_slot_kst"] = "2026-09-07T15:30:00+09:00"
+    recovery["actual_started_at_kst"] = "2026-09-07T15:30:03+09:00"
+    recovery["finalized_at"] = "2026-09-07T15:31:00+09:00"
+    recovery["production_date_kst"] = "2026-09-07"
+    recovery["recovery_of_slot_kst"] = "2026-09-07T10:30:00+09:00"
+    recovery["recovery_request_evidence"] = "user requested missing artifact recovery in canonical chat"
+    assert validate_production_record(recovery) == []
+
+    missing_recovery_evidence = dict(recovery)
+    missing_recovery_evidence["recovery_request_evidence"] = ""
+    assert (
+        "user-requested recovery requires recovery_request_evidence"
+        in validate_production_record(missing_recovery_evidence)
+    )
+
+    record_catchup_attempt(blocked, "2026-09-07")
+    allowed, reason = can_start_user_requested_recovery(
+        blocked,
+        "2026-09-07",
+        user_requested=True,
+    )
+    assert not allowed and reason == "CATCHUP_BUDGET_EXHAUSTED"
+
     duplicate_artifact = record()
     duplicate_artifact["artifact_hashes"][5] = duplicate_artifact["artifact_hashes"][4]
     assert "artifact_hashes must be unique" in validate_production_record(duplicate_artifact)
@@ -172,6 +228,21 @@ def main():
             raise AssertionError("malformed nested lock failed open")
         except StateIntegrityError as exc:
             assert str(exc) == "STATE_RUN_LOCK_INVALID"
+
+        malformed_block = empty_state()
+        malformed_block["blocked_attempts"]["2026-09-07"] = {
+            "production_date_kst": "2026-09-07",
+            "scheduled_slot_kst": "2026-09-07T10:30:00+09:00",
+            "reason_code": "INVENTED_REASON",
+            "verified_fact_count": 1,
+            "recorded_at_kst": "2026-09-07T15:15:00+09:00",
+        }
+        write_state_atomic(path, malformed_block)
+        try:
+            load_state(path)
+            raise AssertionError("malformed blocked attempt failed open")
+        except StateIntegrityError as exc:
+            assert str(exc) == "STATE_BLOCKED_ATTEMPT_INVALID"
 
         malformed_budget = empty_state()
         malformed_budget["catchup_attempts"]["2026-09-07"] = -1
