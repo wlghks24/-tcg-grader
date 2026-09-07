@@ -194,6 +194,56 @@ class CodeMapEntrypointRouteV196Tests(unittest.TestCase):
         self.assertFalse(plan["full_chain_immediate"])
         self.assertNotIn("Exhaustive", plan["initial_checks"])
 
+    def test_route_local_changed_file_stays_targeted(self):
+        result = route(
+            "인스타 카드정보 일시정지 재활성화",
+            severity="low",
+            changed_files=["instagram_tcg_content/automation_state_guard.py"],
+        )
+        plan = result["validation_plan"]
+        self.assertEqual("targeted", plan["initial_scope"])
+        self.assertFalse(plan["full_chain_required_now"])
+        self.assertEqual(
+            ["instagram_tcg_content/automation_state_guard.py"],
+            plan["change_boundary"]["route_local_files"],
+        )
+        self.assertEqual([], plan["change_boundary"]["outside_route_files"])
+
+    def test_changed_file_outside_feature_route_adds_repository_verify(self):
+        result = route(
+            "인스타 카드정보 일시정지 재활성화",
+            severity="low",
+            changed_files=["instagram_tcg_content/automation_state_guard.py", "unrelated_helper.py"],
+        )
+        plan = result["validation_plan"]
+        self.assertEqual("targeted_plus_repository_verify", plan["initial_scope"])
+        self.assertFalse(plan["full_chain_required_now"])
+        self.assertIn("Repository Verify", plan["run_now"])
+        self.assertIn("changed_file_outside_feature_route", plan["escalation_reasons"])
+
+    def test_workflow_change_escalates_immediately_to_full_chain(self):
+        result = route(
+            "업체별 인증번호 OCR 인식률 개선",
+            severity="low",
+            changed_files=[".github/workflows/repository-integrity-guard.yml"],
+        )
+        plan = result["validation_plan"]
+        self.assertEqual("full_chain", plan["initial_scope"])
+        self.assertTrue(plan["full_chain_required_now"])
+        self.assertIn("workflow_changed", plan["escalation_reasons"])
+        self.assertIn("Exhaustive", plan["run_now"])
+
+    def test_unknown_impact_skips_pointless_graph_load(self):
+        result = route("totally_unknown_feature_xyz_208", include_impact=True)
+        self.assertTrue(result["repository_wide_search_required"])
+        self.assertFalse(result["graph_load_attempted"])
+        self.assertFalse(result["graph_loaded"])
+        self.assertEqual(
+            "feature_route_unknown_no_bounded_seed",
+            result["impact_skipped_reason"],
+        )
+        self.assertTrue(result["bottleneck_analysis"]["unknown_feature_graph_load_avoided"])
+
     def test_fast_route_emits_complete_exploration_plan(self):
         result = route("인스타 카드정보 일시정지 재활성화", severity="low")
         plan = result["exploration_plan"]
@@ -207,6 +257,8 @@ class CodeMapEntrypointRouteV196Tests(unittest.TestCase):
             plan["3_recommended_tests"],
         )
         self.assertEqual("targeted", plan["4_validation_scope"])
+        self.assertIn("5_ci_execution", plan)
+        self.assertFalse(plan["5_ci_execution"]["full_chain_required_now"])
         self.assertFalse(plan["fallback_repo_search"])
         self.assertEqual("fallback_only", result["repository_search_policy"])
         self.assertLess(result["route_ms"], 100.0)
