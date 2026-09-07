@@ -1,0 +1,16 @@
+{
+  "schema_version": 1,
+  "run_locks": {},
+  "production_records": {},
+  "blocked_attempts": {
+    "2026-09-07": {
+      "production_date_kst": "2026-09-07",
+      "scheduled_slot_kst": "2026-09-07T10:30:00+09:00",
+      "reason_code": "INSUFFICIENT_VERIFIED_FACTS_OBSERVED_POST_SLOT",
+      "verified_fact_count": 1,
+      "recorded_at_kst": "2026-09-07T15:09:00+09:00",
+      "detail": "Post-slot evidence: finalized IG factual snapshot exposed one verified fact and no finalized production state/artifact record was present."
+    }
+  },
+  "catchup_attempts": {}
+}
