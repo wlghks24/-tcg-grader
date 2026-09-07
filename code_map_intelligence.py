@@ -192,6 +192,86 @@ def _load_feature_routes() -> dict[str, tuple[str, ...]]:
     return routes
 
 
+def resolve_feature_query(
+    query: str,
+    *,
+    max_groups: int = 4,
+    max_files: int = 24,
+    routes: dict[str, tuple[str, ...]] | None = None,
+) -> dict[str, Any]:
+    """Resolve feature text without loading Graphify or scanning the repository."""
+    query_text = " ".join(str(query or "").strip().lower().split())
+    feature_routes = routes if isinstance(routes, dict) else _load_feature_routes()
+    query_tokens = _query_tokens(query_text)
+    ranked_groups: list[tuple[float, str]] = []
+    for group, paths in feature_routes.items():
+        aliases = FEATURE_QUERY_ALIASES.get(group, ())
+        score = 0.0
+        for alias in aliases:
+            normalized_alias = " ".join(str(alias).lower().split())
+            if normalized_alias and normalized_alias in query_text:
+                score += 8.0 if " " in normalized_alias or len(normalized_alias) >= 4 else 5.0
+        group_tokens = _query_tokens(group.replace("_", " "))
+        score += 3.0 * len(query_tokens & group_tokens)
+        path_tokens: set[str] = set()
+        for path in paths:
+            path_tokens.update(_query_tokens(Path(path).stem.replace("_", " ")))
+        score += 1.25 * len(query_tokens & path_tokens)
+        if score > 0:
+            ranked_groups.append((score, group))
+
+    ranked_groups.sort(key=lambda item: (-item[0], item[1]))
+    selected = ranked_groups[:max(1, min(8, int(max_groups)))]
+    top_score = selected[0][0] if selected else 0.0
+
+    primary: list[str] = []
+    tests: list[str] = []
+    workflows: list[str] = []
+    scanned = 0
+    for _score, group in selected:
+        for path in feature_routes.get(group, ()):
+            scanned += 1
+            if path.startswith(".github/workflows/"):
+                if path not in workflows:
+                    workflows.append(path)
+            elif _is_test_path(path):
+                if path not in tests:
+                    tests.append(path)
+            elif path not in primary:
+                primary.append(path)
+
+    safe_limit = max(1, min(64, int(max_files)))
+    primary = primary[:safe_limit]
+    tests = tests[:MAX_SUGGESTED_TESTS]
+    workflows = workflows[:8]
+    confidence = 0.0
+    if top_score >= 12:
+        confidence = 0.99
+    elif top_score >= 8:
+        confidence = 0.95
+    elif top_score >= 4:
+        confidence = 0.82
+    elif top_score > 0:
+        confidence = 0.62
+
+    return {
+        "query": str(query or "")[:240],
+        "matched_feature_groups": [
+            {"group": group, "score": round(score, 2)}
+            for score, group in selected
+        ],
+        "primary_files": primary,
+        "suggested_tests": tests,
+        "workflow_files": workflows,
+        "confidence": confidence,
+        "candidate_files_scanned": scanned,
+        "repository_wide_search_required": not selected or top_score < 4,
+        "route_source": "critical_feature_matrix+feature_aliases",
+        "graph_loaded": False,
+        "read_only": True,
+    }
+
+
 def _is_critical_runtime(path: str) -> bool:
     value = _norm(path)
     lower = value.lower()
@@ -369,7 +449,7 @@ class CodeMapIndex:
     def resolve_feature(
         self, query: str, *, max_groups: int = 4, max_files: int = 24,
     ) -> dict[str, Any]:
-        """Resolve a feature-language request without a repository-wide search."""
+        """Cached feature-language routing; graph state is not required."""
         query_text = " ".join(str(query or "").strip().lower().split())
         cache_key = query_text
         cached = self.feature_route_cache.get(cache_key)
@@ -379,74 +459,13 @@ class CodeMapIndex:
             result["route_cache_hit"] = True
             return result
 
-        query_tokens = _query_tokens(query_text)
-        ranked_groups: list[tuple[float, str]] = []
-        for group, paths in self.feature_routes.items():
-            aliases = FEATURE_QUERY_ALIASES.get(group, ())
-            score = 0.0
-            for alias in aliases:
-                normalized_alias = " ".join(str(alias).lower().split())
-                if normalized_alias and normalized_alias in query_text:
-                    score += 8.0 if " " in normalized_alias or len(normalized_alias) >= 4 else 5.0
-            group_tokens = _query_tokens(group.replace("_", " "))
-            score += 3.0 * len(query_tokens & group_tokens)
-            path_tokens: set[str] = set()
-            for path in paths:
-                path_tokens.update(_query_tokens(Path(path).stem.replace("_", " ")))
-            score += 1.25 * len(query_tokens & path_tokens)
-            if score > 0:
-                ranked_groups.append((score, group))
-
-        ranked_groups.sort(key=lambda item: (-item[0], item[1]))
-        selected = ranked_groups[:max(1, min(8, int(max_groups)))]
-        top_score = selected[0][0] if selected else 0.0
-
-        primary: list[str] = []
-        tests: list[str] = []
-        workflows: list[str] = []
-        scanned = 0
-        for _score, group in selected:
-            for path in self.feature_routes.get(group, ()):
-                scanned += 1
-                if path.startswith(".github/workflows/"):
-                    if path not in workflows:
-                        workflows.append(path)
-                elif _is_test_path(path):
-                    if path not in tests:
-                        tests.append(path)
-                elif path not in primary:
-                    primary.append(path)
-
-        safe_limit = max(1, min(64, int(max_files)))
-        primary = primary[:safe_limit]
-        tests = tests[:MAX_SUGGESTED_TESTS]
-        workflows = workflows[:8]
-        confidence = 0.0
-        if top_score >= 12:
-            confidence = 0.99
-        elif top_score >= 8:
-            confidence = 0.95
-        elif top_score >= 4:
-            confidence = 0.82
-        elif top_score > 0:
-            confidence = 0.62
-
-        result = {
-            "query": str(query or "")[:240],
-            "matched_feature_groups": [
-                {"group": group, "score": round(score, 2)}
-                for score, group in selected
-            ],
-            "primary_files": primary,
-            "suggested_tests": tests,
-            "workflow_files": workflows,
-            "confidence": confidence,
-            "candidate_files_scanned": scanned,
-            "repository_wide_search_required": not selected or top_score < 4,
-            "route_source": "critical_feature_matrix+feature_aliases",
-            "route_cache_hit": False,
-            "read_only": True,
-        }
+        result = resolve_feature_query(
+            query,
+            max_groups=max_groups,
+            max_files=max_files,
+            routes=self.feature_routes,
+        )
+        result["route_cache_hit"] = False
         self.feature_route_cache[cache_key] = result
         return result
 
