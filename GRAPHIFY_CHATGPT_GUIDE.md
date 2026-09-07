@@ -201,15 +201,16 @@ python code_map_fast_route.py 인스타 카드정보 자료 비교 교차확인 
 5. `support_files`: 대표 시작점 뒤에서 사용하는 내부 엔진/보조 파일입니다.
 6. `primary_files`: 같은 기능 묶음의 후보 파일입니다.
 7. `impacted_files`: `--impact` 사용 시 Graphify에서 제한된 깊이로 계산한 영향 파일입니다.
-8. `suggested_tests`: 우선 실행할 기능 단위 회귀검사입니다.
-9. `validation_plan`: low/medium/high/critical 심각도에 따라 최소 안전 검증 범위를 결정합니다.
-10. `repository_wide_search_required=false`: 알려진 기능은 전체 저장소 검색 없이 바로 진입합니다.
+8. `suggested_tests`: **대표 기능군에 속한 테스트만** 우선 실행합니다.
+9. `related_tests`: 2순위 이하 매칭 기능군의 테스트이며 기본 검증에서는 실행하지 않고 보류합니다.
+10. `validation_plan`: low/medium/high/critical 심각도에 따라 최소 안전 검증 범위를 결정합니다.
+11. `repository_wide_search_required=false`: 알려진 기능은 전체 저장소 검색 없이 바로 진입합니다.
 
 기본 심각도 `low`에서는 기능 단위 테스트부터 시작하고 전체 CI를 무조건 다시 돌리지 않습니다. `medium`은 targeted test + Repository Verify, `high/critical`은 전체 검증 체인을 즉시 권장합니다. 실제 수정 파일이 workflow, critical runtime, domain boundary, security/integrity에 걸리면 낮은 심각도라도 전체 검증 체인으로 승격합니다.
 
 코드지도 전용 파일만 바뀐 PR은 `Graphify Integration Guard`를 기본 검증으로 사용하고, `code_map_intelligence.py`가 바뀌면 `AI Auto Tracker Guard`도 함께 실행합니다. 코드지도 전용 변경만으로 Repository Integrity / Main SELFREFINE / Deep / Exhaustive / Daily 06:00 factual audit / Final Tablet Guard를 다시 실행하지 않습니다. 코드지도 변경과 실제 runtime/workflow/security 파일이 함께 바뀌면 해당 전체 검증이 다시 활성화됩니다.
 
-즉 탐색 순서는 **기능명 → 대표 entrypoint 1개 → 필요 시 alternate/support → bounded impact → 추천 테스트 → 검증 범위**입니다. 알려지지 않은 기능일 때만 `repository_wide_search_required=true`로 전체 검색 fallback을 사용합니다.
+즉 탐색 순서는 **기능명 → 대표 entrypoint 1개 → 필요 시 alternate/support → bounded impact → 대표 기능군 추천 테스트 → 검증 범위**입니다. 2순위 이하 기능군의 테스트는 `related_tests`로 분리해 기본 실행에서 제외하고, 실제 영향분석이나 수정 파일이 그 기능군까지 번질 때만 승격합니다. 알려지지 않은 기능일 때만 `repository_wide_search_required=true`로 전체 검색 fallback을 사용합니다.
 
 ## 코드 지도 범위
 
