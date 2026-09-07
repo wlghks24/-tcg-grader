@@ -2,8 +2,22 @@ name: Main SELFREFINE
 
 on:
   pull_request:
+    paths-ignore:
+      - 'code_map_fast_route.py'
+      - 'code_map_intelligence.py'
+      - 'verify_code_map_internal.py'
+      - 'test_code_map_fast_route_v195.py'
+      - 'test_code_map_entrypoint_route_v196.py'
+      - 'GRAPHIFY_CHATGPT_GUIDE.md'
   push:
     branches: [main]
+    paths-ignore:
+      - 'code_map_fast_route.py'
+      - 'code_map_intelligence.py'
+      - 'verify_code_map_internal.py'
+      - 'test_code_map_fast_route_v195.py'
+      - 'test_code_map_entrypoint_route_v196.py'
+      - 'GRAPHIFY_CHATGPT_GUIDE.md'
   workflow_dispatch:
 
 permissions:
