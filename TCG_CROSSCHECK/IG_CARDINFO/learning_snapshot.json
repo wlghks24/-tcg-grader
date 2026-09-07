@@ -2,10 +2,10 @@
   "schema_version": "1.0",
   "namespace": "IG_CARDINFO",
   "snapshot_kind": "learning",
-  "run_date_kst": "2026-09-06",
+  "run_date_kst": "2026-09-07",
   "status": "finalized",
-  "built_at": "2026-09-06T21:23:38+09:00",
-  "finalized_at": "2026-09-06T21:23:38+09:00",
+  "built_at": "2026-09-07T10:15:00+09:00",
+  "finalized_at": "2026-09-07T10:15:00+09:00",
   "lessons": [
     {
       "lesson_id": "IG-CROSSCHECK-FRESHNESS-20260906-01",
@@ -65,6 +65,21 @@
       "regression_pass": true,
       "recurrence_count": 1,
       "applicable_scope": "both",
+      "confidence_level": "high"
+    },
+    {
+      "lesson_id": "IG-AUTOMATION-PAUSE-GUARD-20260907-05",
+      "subsystem": "automation_state_guard",
+      "issue_class": "automation_pause_attribution_gap",
+      "trigger_condition": "canonical Instagram automation is observed disabled but automation metadata exposes no actor/reason/change-source evidence",
+      "symptom_summary": "scheduled :30 runs can stop while the available control-plane record only shows enabled state, updated_at, and last_run_time",
+      "root_cause_class": "control_plane_attribution_unavailable",
+      "fix_pattern": "detect and persist the pause incident, never fabricate the disable cause, identify definitely missed slots, preserve the canonical automation id and schedule, re-enable only the existing automation, and allow at most one bounded same-day catch-up when the 06:30 full slot was missed",
+      "prevention_rule_id": "IG-PREV-AUTOMATION-PAUSE-ATTRIBUTION-V1",
+      "verification_result": "passed",
+      "regression_pass": true,
+      "recurrence_count": 2,
+      "applicable_scope": "instagram_content",
       "confidence_level": "high"
     }
   ],
