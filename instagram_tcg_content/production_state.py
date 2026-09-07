@@ -16,6 +16,14 @@ from typing import Any
 
 SCHEMA_VERSION = 1
 SCHEDULED_BASELINE_RUN_KIND = "scheduled_10_30"
+USER_REQUESTED_RECOVERY_RUN_KIND = "user_requested_recovery"
+RECOVERABLE_BLOCK_REASONS = {
+    "INSUFFICIENT_VERIFIED_FACTS",
+    "INSUFFICIENT_VERIFIED_FACTS_OBSERVED_POST_SLOT",
+    "ARTIFACT_GENERATION_FAILED",
+    "ARTIFACT_VALIDATION_FAILED",
+    "DELIVERY_REFERENCE_MISSING",
+}
 
 
 class StateIntegrityError(RuntimeError):
@@ -48,6 +56,7 @@ def empty_state() -> dict[str, Any]:
         "schema_version": SCHEMA_VERSION,
         "run_locks": {},
         "production_records": {},
+        "blocked_attempts": {},
         "catchup_attempts": {},
     }
 
@@ -67,7 +76,7 @@ def load_state(path: Path) -> dict[str, Any]:
         raise StateIntegrityError("STATE_ROOT_NOT_OBJECT")
     if value.get("schema_version") != SCHEMA_VERSION:
         raise StateIntegrityError("STATE_SCHEMA_MISMATCH")
-    for key in ("run_locks", "production_records", "catchup_attempts"):
+    for key in ("run_locks", "production_records", "blocked_attempts", "catchup_attempts"):
         if key not in value:
             value[key] = {}
         elif not isinstance(value[key], dict):
@@ -97,6 +106,20 @@ def load_state(path: Path) -> dict[str, Any]:
             )
         if str(row.get("production_date_kst")) != production_date:
             raise StateIntegrityError("STATE_PRODUCTION_DATE_KEY_MISMATCH")
+
+    for production_date, row in value["blocked_attempts"].items():
+        if (
+            not isinstance(production_date, str)
+            or not isinstance(row, dict)
+            or str(row.get("production_date_kst") or "") != production_date
+            or str(row.get("reason_code") or "") not in RECOVERABLE_BLOCK_REASONS
+            or _parse_aware_iso(row.get("scheduled_slot_kst")) is None
+            or _parse_aware_iso(row.get("recorded_at_kst")) is None
+            or isinstance(row.get("verified_fact_count"), bool)
+            or not isinstance(row.get("verified_fact_count"), int)
+            or row.get("verified_fact_count") < 0
+        ):
+            raise StateIntegrityError("STATE_BLOCKED_ATTEMPT_INVALID")
 
     for production_date, count in value["catchup_attempts"].items():
         if (
@@ -210,6 +233,12 @@ def validate_production_record(record: dict[str, Any]) -> list[str]:
         errors.append("10:30 scheduled run requires baseline_id")
     if run_kind != SCHEDULED_BASELINE_RUN_KIND and baseline_id:
         errors.append("non-10:30 run cannot create baseline_id")
+    if run_kind == USER_REQUESTED_RECOVERY_RUN_KIND:
+        if _parse_aware_iso(record.get("recovery_of_slot_kst")) is None:
+            errors.append("user-requested recovery requires recovery_of_slot_kst")
+        evidence = record.get("recovery_request_evidence")
+        if not isinstance(evidence, str) or not evidence.strip():
+            errors.append("user-requested recovery requires recovery_request_evidence")
 
     payload_hashes = record.get("payload_hashes")
     artifact_hashes = record.get("artifact_hashes")
@@ -256,6 +285,60 @@ def finalized_record_for_date(
     if isinstance(row, dict) and row.get("finalized") is True:
         return row
     return None
+
+
+def record_blocked_production_attempt(
+    state: dict[str, Any],
+    *,
+    production_date_kst: str,
+    scheduled_slot_kst: str,
+    reason_code: str,
+    verified_fact_count: int,
+    recorded_at_kst: str,
+    detail: str = "",
+) -> dict[str, Any]:
+    if reason_code not in RECOVERABLE_BLOCK_REASONS:
+        raise ValueError("UNSUPPORTED_BLOCK_REASON")
+    if _parse_aware_iso(scheduled_slot_kst) is None:
+        raise ValueError("scheduled_slot_kst must be timezone-aware ISO-8601")
+    if _parse_aware_iso(recorded_at_kst) is None:
+        raise ValueError("recorded_at_kst must be timezone-aware ISO-8601")
+    if isinstance(verified_fact_count, bool) or not isinstance(verified_fact_count, int) or verified_fact_count < 0:
+        raise ValueError("verified_fact_count must be a non-negative integer")
+    if finalized_record_for_date(state, production_date_kst):
+        raise RuntimeError("FINALIZED_PRODUCTION_ALREADY_EXISTS")
+
+    row = {
+        "production_date_kst": production_date_kst,
+        "scheduled_slot_kst": scheduled_slot_kst,
+        "reason_code": reason_code,
+        "verified_fact_count": verified_fact_count,
+        "recorded_at_kst": recorded_at_kst,
+        "detail": str(detail or ""),
+    }
+    state.setdefault("blocked_attempts", {})[production_date_kst] = row
+    return row
+
+
+def can_start_user_requested_recovery(
+    state: dict[str, Any],
+    production_date_kst: str,
+    *,
+    user_requested: bool,
+) -> tuple[bool, str]:
+    if finalized_record_for_date(state, production_date_kst):
+        return False, "FINALIZED_PRODUCTION_ALREADY_EXISTS"
+    blocked = state.setdefault("blocked_attempts", {}).get(production_date_kst)
+    if not isinstance(blocked, dict):
+        return False, "NO_BLOCKED_BASELINE_EVIDENCE"
+    if blocked.get("reason_code") not in RECOVERABLE_BLOCK_REASONS:
+        return False, "BLOCK_REASON_NOT_RECOVERABLE"
+    if user_requested is not True:
+        return False, "USER_REQUEST_REQUIRED"
+    count = int(state.setdefault("catchup_attempts", {}).get(production_date_kst, 0) or 0)
+    if count >= 1:
+        return False, "CATCHUP_BUDGET_EXHAUSTED"
+    return True, "USER_REQUESTED_RECOVERY_ALLOWED"
 
 
 def can_start_catchup(
