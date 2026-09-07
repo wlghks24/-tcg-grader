@@ -15,6 +15,8 @@ ROOT = Path(__file__).resolve().parent
 
 REQUIRED_FILES = (
     "code_map_intelligence.py",
+    "code_map_fast_route.py",
+    "test_code_map_fast_route_v195.py",
     "ai_auto_tracker.py",
     "market_ai_auto_tracker.py",
     "GRAPHIFY_UPDATE.sh",
@@ -32,6 +34,24 @@ REQUIRED_TEXT = {
         "_heuristic_test_matches",
         "heuristic_test_candidates",
         "heuristic_test_indexed",
+        "resolve_feature_query",
+        "resolve_feature",
+        "feature_impact",
+        "feature_route_cache",
+        "repository_wide_search_required",
+        "diagnostic_strategy",
+    ),
+    "code_map_fast_route.py": (
+        "find-first-fix-fast",
+        "resolve_feature_query",
+        "include_impact",
+        "route_ms",
+    ),
+    "test_code_map_fast_route_v195.py": (
+        "test_cert_ocr_query_routes_without_repo_wide_search",
+        "test_event_promo_release_query_routes_directly",
+        "test_route_cache_is_reused",
+        "test_feature_impact_keeps_targeted_first_validation_policy",
     ),
     "ai_auto_tracker.py": (
         "CodeMapIndex",
@@ -59,7 +79,7 @@ REQUIRED_TEXT = {
         "Build and audit the real repository code map",
         "GRAPHIFY_DISABLE_SELF_HEAL=1 bash ./GRAPHIFY_UPDATE.sh",
         "python ./GRAPHIFY_AUDIT.py --strict",
-        "python -m unittest -v test_market_ai_auto_tracker.py",
+        "python -m unittest -v test_code_map_fast_route_v195.py test_market_ai_auto_tracker.py",
     ),
     "test_ai_auto_tracker.py": (
         "test_code_map_impact_is_attached_to_handoff",
@@ -119,6 +139,28 @@ def verify() -> dict:
             failures.append(
                 f"severity impact depth drift: {severity}: expected={expected} actual={actual}"
             )
+
+    with tempfile.TemporaryDirectory() as td:
+        from code_map_intelligence import resolve_feature_query
+        pure_route = resolve_feature_query("업체별 인증번호 OCR 인식률 개선")
+        if pure_route.get("graph_loaded") is not False:
+            failures.append("feature-only route unexpectedly loaded Graphify")
+        route_index = CodeMapIndex(Path(td))
+        route = route_index.resolve_feature("업체별 인증번호 OCR 인식률 개선")
+        groups = [row.get("group") for row in route.get("matched_feature_groups") or []]
+        if not groups or groups[0] != "ocr_extended_verification":
+            failures.append(f"feature router did not prioritize cert OCR: {groups}")
+        if "library_slab_corpus.py" not in set(route.get("primary_files") or []):
+            failures.append("feature router missed cert OCR runtime seed")
+        if route.get("repository_wide_search_required") is not False:
+            failures.append("known cert OCR feature incorrectly requested repo-wide search")
+        second = route_index.resolve_feature("업체별 인증번호 OCR 인식률 개선")
+        if second.get("route_cache_hit") is not True:
+            failures.append("feature route cache was not reused")
+        plan = route_index.feature_impact("행사 프로모 재발매", depth=1)
+        if plan.get("diagnostic_strategy") != "targeted_first":
+            failures.append("feature impact did not enforce targeted-first diagnostics")
+        checked_contracts += 6
 
     with tempfile.TemporaryDirectory() as td:
         root = Path(td)
