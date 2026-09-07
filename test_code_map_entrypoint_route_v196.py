@@ -53,6 +53,18 @@ class CodeMapEntrypointRouteV196Tests(unittest.TestCase):
         self.assertNotIn("code_map_intelligence.py", result["entry_files"])
         self.assertFalse(result["repository_wide_search_required"])
 
+    def test_pokemon_generation_display_routes_to_browser_identity_runtime(self):
+        result = resolve_feature_query("예상 등급에 포켓몬 몇세대인지 표시")
+        self.assertEqual("ocr_card_identity", result["entry_group"])
+        self.assertEqual("card_identity_recognition.js", result["entry_file"])
+        self.assertEqual(["card_identity_recognition.js"], result["entry_files"])
+        self.assertIn("test_pokemon_generation_display_v207.py", result["suggested_tests"])
+        self.assertIn(
+            "test_pokemon_generation_display_v207.py::PokemonGenerationDisplayV207Tests::test_generation_runtime_executes",
+            result["suggested_test_nodes"],
+        )
+        self.assertFalse(result["repository_wide_search_required"])
+
     def test_cert_ocr_has_one_entry_and_slab_as_alternate(self):
         result = resolve_feature_query("업체별 인증번호 OCR 인식률 개선")
         self.assertEqual("grading_cert_verifier.py", result["entry_file"])
