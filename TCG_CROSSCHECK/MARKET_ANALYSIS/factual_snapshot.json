@@ -4,8 +4,8 @@
   "snapshot_kind": "factual",
   "run_date_kst": "2026-09-07",
   "status": "finalized",
-  "built_at": "2026-09-07T16:51:37+09:00",
-  "finalized_at": "2026-09-07T16:51:37+09:00",
+  "built_at": "2026-09-07T16:56:32+09:00",
+  "finalized_at": "2026-09-07T16:56:32+09:00",
   "facts": [
     {
       "canonical_key": "pokemon|ステラミラクル|jp",
@@ -25,7 +25,7 @@
       "grade_company": "",
       "grade": "",
       "effective_date": "2024-07-19",
-      "observed_at": "2026-09-07T16:46:06+09:00",
+      "observed_at": "2026-09-07T16:52:37+09:00",
       "source_role": "official_primary",
       "source_locator": "https://www.pokemon-card.com/products/index.html?productType=expansion",
       "verification_status": "verified"
@@ -48,7 +48,7 @@
       "grade_company": "",
       "grade": "",
       "effective_date": "2024-09-13",
-      "observed_at": "2026-09-07T16:46:06+09:00",
+      "observed_at": "2026-09-07T16:52:37+09:00",
       "source_role": "official_primary",
       "source_locator": "https://www.pokemon-card.com/products/index.html?productType=expansion",
       "verification_status": "verified"
@@ -71,7 +71,7 @@
       "grade_company": "",
       "grade": "",
       "effective_date": "2024-10-18",
-      "observed_at": "2026-09-07T16:46:06+09:00",
+      "observed_at": "2026-09-07T16:52:37+09:00",
       "source_role": "official_primary",
       "source_locator": "https://www.pokemon-card.com/products/index.html?productType=expansion",
       "verification_status": "verified"
@@ -94,7 +94,7 @@
       "grade_company": "",
       "grade": "",
       "effective_date": "2024-12-06",
-      "observed_at": "2026-09-07T16:46:06+09:00",
+      "observed_at": "2026-09-07T16:52:37+09:00",
       "source_role": "official_primary",
       "source_locator": "https://www.pokemon-card.com/products/index.html?productType=expansion",
       "verification_status": "verified"
@@ -117,7 +117,7 @@
       "grade_company": "",
       "grade": "",
       "effective_date": "2025-01-24",
-      "observed_at": "2026-09-07T16:46:06+09:00",
+      "observed_at": "2026-09-07T16:52:37+09:00",
       "source_role": "official_primary",
       "source_locator": "https://www.pokemon-card.com/products/index.html?productType=expansion",
       "verification_status": "verified"
@@ -140,7 +140,7 @@
       "grade_company": "",
       "grade": "",
       "effective_date": "2025-01-25",
-      "observed_at": "2026-09-07T16:46:06+09:00",
+      "observed_at": "2026-09-07T16:52:37+09:00",
       "source_role": "official_primary",
       "source_locator": "https://www.onepiece-cardgame.com/products/?subcategory=boosters",
       "verification_status": "verified"
@@ -163,7 +163,7 @@
       "grade_company": "",
       "grade": "",
       "effective_date": "2025-03-01",
-      "observed_at": "2026-09-07T16:46:06+09:00",
+      "observed_at": "2026-09-07T16:52:37+09:00",
       "source_role": "official_primary",
       "source_locator": "https://www.onepiece-cardgame.com/products/?subcategory=boosters",
       "verification_status": "verified"
@@ -186,7 +186,7 @@
       "grade_company": "",
       "grade": "",
       "effective_date": "2025-03-14",
-      "observed_at": "2026-09-07T16:46:06+09:00",
+      "observed_at": "2026-09-07T16:52:37+09:00",
       "source_role": "official_primary",
       "source_locator": "https://www.pokemon-card.com/products/index.html?productType=expansion",
       "verification_status": "verified"
@@ -209,7 +209,7 @@
       "grade_company": "",
       "grade": "",
       "effective_date": "2025-04-18",
-      "observed_at": "2026-09-07T16:46:06+09:00",
+      "observed_at": "2026-09-07T16:52:37+09:00",
       "source_role": "official_primary",
       "source_locator": "https://www.pokemon-card.com/products/index.html?productType=expansion",
       "verification_status": "verified"
@@ -232,7 +232,7 @@
       "grade_company": "",
       "grade": "",
       "effective_date": "2025-05-31",
-      "observed_at": "2026-09-07T16:46:06+09:00",
+      "observed_at": "2026-09-07T16:52:37+09:00",
       "source_role": "official_primary",
       "source_locator": "https://www.onepiece-cardgame.com/products/?subcategory=boosters",
       "verification_status": "verified"
@@ -255,7 +255,7 @@
       "grade_company": "",
       "grade": "",
       "effective_date": "2025-06-06",
-      "observed_at": "2026-09-07T16:46:06+09:00",
+      "observed_at": "2026-09-07T16:52:37+09:00",
       "source_role": "official_primary",
       "source_locator": "https://www.pokemon-card.com/products/index.html?productType=expansion",
       "verification_status": "verified"
@@ -278,7 +278,7 @@
       "grade_company": "",
       "grade": "",
       "effective_date": "2025-06-06",
-      "observed_at": "2026-09-07T16:46:06+09:00",
+      "observed_at": "2026-09-07T16:52:37+09:00",
       "source_role": "official_primary",
       "source_locator": "https://www.pokemon-card.com/products/index.html?productType=expansion",
       "verification_status": "verified"
@@ -301,7 +301,7 @@
       "grade_company": "",
       "grade": "",
       "effective_date": "2025-07-26",
-      "observed_at": "2026-09-07T16:46:06+09:00",
+      "observed_at": "2026-09-07T16:52:37+09:00",
       "source_role": "official_primary",
       "source_locator": "https://www.onepiece-cardgame.com/products/?subcategory=boosters",
       "verification_status": "verified"
@@ -324,7 +324,7 @@
       "grade_company": "",
       "grade": "",
       "effective_date": "2025-08-01",
-      "observed_at": "2026-09-07T16:46:06+09:00",
+      "observed_at": "2026-09-07T16:52:37+09:00",
       "source_role": "official_primary",
       "source_locator": "https://www.pokemon-card.com/products/index.html?productType=expansion",
       "verification_status": "verified"
@@ -347,7 +347,7 @@
       "grade_company": "",
       "grade": "",
       "effective_date": "2025-08-01",
-      "observed_at": "2026-09-07T16:46:06+09:00",
+      "observed_at": "2026-09-07T16:52:37+09:00",
       "source_role": "official_primary",
       "source_locator": "https://www.pokemon-card.com/products/index.html?productType=expansion",
       "verification_status": "verified"
@@ -370,7 +370,7 @@
       "grade_company": "",
       "grade": "",
       "effective_date": "2025-08-23",
-      "observed_at": "2026-09-07T16:46:06+09:00",
+      "observed_at": "2026-09-07T16:52:37+09:00",
       "source_role": "official_primary",
       "source_locator": "https://www.onepiece-cardgame.com/products/?subcategory=boosters",
       "verification_status": "verified"
@@ -393,7 +393,7 @@
       "grade_company": "",
       "grade": "",
       "effective_date": "2025-09-26",
-      "observed_at": "2026-09-07T16:46:06+09:00",
+      "observed_at": "2026-09-07T16:52:37+09:00",
       "source_role": "official_primary",
       "source_locator": "https://www.pokemon-card.com/products/index.html?productType=expansion",
       "verification_status": "verified"
@@ -416,7 +416,7 @@
       "grade_company": "",
       "grade": "",
       "effective_date": "2025-10-25",
-      "observed_at": "2026-09-07T16:46:06+09:00",
+      "observed_at": "2026-09-07T16:52:37+09:00",
       "source_role": "official_primary",
       "source_locator": "https://www.onepiece-cardgame.com/products/?subcategory=boosters",
       "verification_status": "verified"
@@ -439,7 +439,7 @@
       "grade_company": "",
       "grade": "",
       "effective_date": "2025-11-22",
-      "observed_at": "2026-09-07T16:46:06+09:00",
+      "observed_at": "2026-09-07T16:52:37+09:00",
       "source_role": "official_primary",
       "source_locator": "https://www.onepiece-cardgame.com/products/?subcategory=boosters",
       "verification_status": "verified"
@@ -462,7 +462,7 @@
       "grade_company": "",
       "grade": "",
       "effective_date": "2025-11-28",
-      "observed_at": "2026-09-07T16:46:06+09:00",
+      "observed_at": "2026-09-07T16:52:37+09:00",
       "source_role": "official_primary",
       "source_locator": "https://www.pokemon-card.com/products/index.html?productType=expansion",
       "verification_status": "verified"
@@ -485,7 +485,7 @@
       "grade_company": "",
       "grade": "",
       "effective_date": "2026-01-23",
-      "observed_at": "2026-09-07T16:46:06+09:00",
+      "observed_at": "2026-09-07T16:52:37+09:00",
       "source_role": "official_primary",
       "source_locator": "https://www.pokemon-card.com/products/index.html?productType=expansion",
       "verification_status": "verified"
@@ -508,7 +508,7 @@
       "grade_company": "",
       "grade": "",
       "effective_date": "2026-01-31",
-      "observed_at": "2026-09-07T16:46:06+09:00",
+      "observed_at": "2026-09-07T16:52:37+09:00",
       "source_role": "official_primary",
       "source_locator": "https://www.onepiece-cardgame.com/products/?subcategory=boosters",
       "verification_status": "verified"
@@ -531,7 +531,7 @@
       "grade_company": "",
       "grade": "",
       "effective_date": "2026-02-28",
-      "observed_at": "2026-09-07T16:46:06+09:00",
+      "observed_at": "2026-09-07T16:52:37+09:00",
       "source_role": "official_primary",
       "source_locator": "https://www.onepiece-cardgame.com/products/?subcategory=boosters",
       "verification_status": "verified"
@@ -554,7 +554,7 @@
       "grade_company": "",
       "grade": "",
       "effective_date": "2026-03-13",
-      "observed_at": "2026-09-07T16:46:06+09:00",
+      "observed_at": "2026-09-07T16:52:37+09:00",
       "source_role": "official_primary",
       "source_locator": "https://www.pokemon-card.com/products/index.html?productType=expansion",
       "verification_status": "verified"
@@ -577,7 +577,7 @@
       "grade_company": "",
       "grade": "",
       "effective_date": "2026-05-22",
-      "observed_at": "2026-09-07T16:46:06+09:00",
+      "observed_at": "2026-09-07T16:52:37+09:00",
       "source_role": "official_primary",
       "source_locator": "https://www.pokemon-card.com/products/index.html?productType=expansion",
       "verification_status": "verified"
@@ -600,7 +600,7 @@
       "grade_company": "",
       "grade": "",
       "effective_date": "2026-05-30",
-      "observed_at": "2026-09-07T16:46:06+09:00",
+      "observed_at": "2026-09-07T16:52:37+09:00",
       "source_role": "official_primary",
       "source_locator": "https://www.onepiece-cardgame.com/products/?subcategory=boosters",
       "verification_status": "verified"
@@ -623,7 +623,7 @@
       "grade_company": "",
       "grade": "",
       "effective_date": "2026-06-26",
-      "observed_at": "2026-09-07T16:46:06+09:00",
+      "observed_at": "2026-09-07T16:52:37+09:00",
       "source_role": "official_primary",
       "source_locator": "https://onepiece-cardgame.kr/products.do",
       "verification_status": "verified"
@@ -646,7 +646,7 @@
       "grade_company": "",
       "grade": "",
       "effective_date": "2026-07-24",
-      "observed_at": "2026-09-07T16:46:06+09:00",
+      "observed_at": "2026-09-07T16:52:37+09:00",
       "source_role": "official_primary",
       "source_locator": "https://onepiece-cardgame.kr/products.do",
       "verification_status": "verified"
@@ -669,7 +669,7 @@
       "grade_company": "",
       "grade": "",
       "effective_date": "2026-07-31",
-      "observed_at": "2026-09-07T16:46:06+09:00",
+      "observed_at": "2026-09-07T16:52:37+09:00",
       "source_role": "official_primary",
       "source_locator": "https://www.pokemon-card.com/products/index.html?productType=expansion",
       "verification_status": "verified"
@@ -692,7 +692,7 @@
       "grade_company": "",
       "grade": "",
       "effective_date": "2026-08-21",
-      "observed_at": "2026-09-07T16:46:06+09:00",
+      "observed_at": "2026-09-07T16:52:37+09:00",
       "source_role": "official_primary",
       "source_locator": "https://onepiece-cardgame.kr/products.do",
       "verification_status": "verified"
@@ -715,7 +715,7 @@
       "grade_company": "",
       "grade": "",
       "effective_date": "2026-08-22",
-      "observed_at": "2026-09-07T16:46:06+09:00",
+      "observed_at": "2026-09-07T16:52:37+09:00",
       "source_role": "official_primary",
       "source_locator": "https://www.onepiece-cardgame.com/products/?subcategory=boosters",
       "verification_status": "verified"
@@ -738,7 +738,7 @@
       "grade_company": "",
       "grade": "",
       "effective_date": "2026-09-16",
-      "observed_at": "2026-09-07T16:46:06+09:00",
+      "observed_at": "2026-09-07T16:52:37+09:00",
       "source_role": "official_primary",
       "source_locator": "https://www.pokemon-card.com/products/index.html?productType=expansion",
       "verification_status": "verified"
