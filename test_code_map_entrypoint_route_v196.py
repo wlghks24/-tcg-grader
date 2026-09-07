@@ -51,6 +51,24 @@ class CodeMapEntrypointRouteV196Tests(unittest.TestCase):
         self.assertFalse(plan["full_chain_immediate"])
         self.assertNotIn("Exhaustive", plan["initial_checks"])
 
+    def test_fast_route_emits_complete_exploration_plan(self):
+        result = route("인스타 카드정보 일시정지 재활성화", severity="low")
+        plan = result["exploration_plan"]
+        self.assertEqual(
+            ["instagram_tcg_content/automation_state_guard.py"],
+            plan["1_entrypoint"],
+        )
+        self.assertFalse(plan["2_bounded_impact"]["requested"])
+        self.assertIn(
+            "instagram_tcg_content/test_automation_pause_recovery_v30.py",
+            plan["3_recommended_tests"],
+        )
+        self.assertEqual("targeted", plan["4_validation_scope"])
+        self.assertFalse(plan["fallback_repo_search"])
+        self.assertEqual("fallback_only", result["repository_search_policy"])
+        self.assertLess(result["route_ms"], 100.0)
+        self.assertLess(result["candidate_files_scanned"], 20)
+
     def test_medium_severity_adds_repository_verify_only(self):
         raw = resolve_feature_query("행사 프로모 재발매 정보 수집")
         plan = validation_plan_for_route(raw, "medium")
