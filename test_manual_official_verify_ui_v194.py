@@ -3,6 +3,7 @@ import unittest
 
 ROOT = Path(__file__).resolve().parent
 BRIDGE = ROOT / "manual_official_verify_bridge.js"
+PENDING_BRIDGE = ROOT / "pending_official_candidate_bridge_v161.js"
 
 
 class ManualOfficialVerifyUiV194Tests(unittest.TestCase):
@@ -21,6 +22,17 @@ class ManualOfficialVerifyUiV194Tests(unittest.TestCase):
         source = BRIDGE.read_text(encoding="utf-8")
         self.assertIn("data.verification_complete!==true||data.policy?.official_result!==true", source)
         self.assertIn("data.reason==='manual_verification_not_complete'&&data.proof_matched===true", source)
+
+    def test_manual_submit_sends_explicit_user_approval(self):
+        source = BRIDGE.read_text(encoding="utf-8")
+        self.assertIn("action:'complete_manual_verification'", source)
+        self.assertIn("manual_verification_confirmed:true", source)
+
+    def test_pending_candidate_submit_requires_explicit_approval_and_server_complete(self):
+        source = PENDING_BRIDGE.read_text(encoding="utf-8")
+        self.assertIn("action:'complete_manual_verification'", source)
+        self.assertIn("manual_verification_confirmed:true", source)
+        self.assertIn("data.verification_complete!==true||data.policy?.official_result!==true", source)
 
 
 if __name__ == "__main__":
