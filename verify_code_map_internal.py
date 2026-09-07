@@ -50,6 +50,8 @@ REQUIRED_TEXT = {
         "resolve_feature_query",
         "include_impact",
         "route_ms",
+        "exploration_plan",
+        "repository_search_policy",
     ),
     "test_code_map_fast_route_v195.py": (
         "test_cert_ocr_query_routes_without_repo_wide_search",
@@ -60,6 +62,7 @@ REQUIRED_TEXT = {
     "test_code_map_entrypoint_route_v196.py": (
         "test_pause_recovery_routes_directly_to_guard",
         "test_crosscheck_routes_to_runtime_bridge_first",
+        "test_fast_route_emits_complete_exploration_plan",
         "test_low_severity_avoids_unconditional_full_ci",
         "test_high_severity_escalates_immediately_to_full_chain",
         "test_feature_impact_uses_entrypoint_as_seed",
