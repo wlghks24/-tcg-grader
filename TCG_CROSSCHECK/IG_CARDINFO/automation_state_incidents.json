@@ -36,6 +36,37 @@
         "exhaustive_selfrefine": "pass"
       },
       "verified_prevention_rule_id": "IG-PREV-AUTOMATION-PAUSE-ATTRIBUTION-V1"
+    },
+    {
+      "schema_version": "1.1",
+      "system": "IG_CARDINFO",
+      "automation_id": "6a9b8a22e72c8191849c273e1240378e",
+      "incident_id": "IG-AUTOMATION-PAUSE-20260907-2137-KST",
+      "status": "cause_unresolved_recurrence_critical_reactivated",
+      "disabled_state_observed_at_utc": "2026-09-07T12:37:51.391235Z",
+      "last_run_before_pause_utc": "2026-09-07T11:30:08.040725Z",
+      "foreground_observed_at_utc": "2026-09-07T14:05:00Z",
+      "reactivated_at_utc": "2026-09-07T14:06:53.310574Z",
+      "cause_status": "unresolved",
+      "cause_class": "CONTROL_PLANE_ATTRIBUTION_UNAVAILABLE",
+      "severity": "PAUSE_RECURRENCE_CRITICAL",
+      "recurrence_count": 2,
+      "evidence_summary": [
+        "automation metadata exposed is_enabled=false",
+        "state updated_at was 2026-09-07T12:37:51.391235Z",
+        "last_run_time was 2026-09-07T11:30:08.040725Z",
+        "no actor/reason/change-source field was exposed",
+        "canonical prompt already forbids scheduled-run control-plane mutation"
+      ],
+      "fabricated_root_cause": false,
+      "remediation": [
+        "reactivate existing canonical automation only",
+        "preserve exact hourly :30 schedule and title",
+        "do not create duplicate watchdog automation",
+        "keep runtime/content failures isolated from automation enabled state",
+        "retain CONTROL_PLANE_ATTRIBUTION_UNAVAILABLE until actor and reason evidence exists"
+      ],
+      "verified_prevention_rule_id": "IG-PREV-AUTOMATION-PAUSE-ATTRIBUTION-V1"
     }
   ]
 }
