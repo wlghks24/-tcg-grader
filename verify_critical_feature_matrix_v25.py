@@ -105,6 +105,9 @@ FEATURE_FILES = {
         "test_event_quick_watch.py",
         "test_event_source_expansion_v145.py",
         "test_collection_verification_gate.py",
+        "test_pokemon_run30_asia_recovery_v208.py",
+        "manual_event_evidence.json",
+        "promo_events.json",
     ],
     "runtime_delivery": [
         "test_runtime_delivery_guards.py",

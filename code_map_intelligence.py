@@ -84,7 +84,8 @@ FEATURE_QUERY_ALIASES = {
     ),
     "release_event_promo_collection": (
         "release", "출시", "재발매", "rerelease", "promo", "프로모", "event", "행사",
-        "movie bonus", "영화특전",
+        "movie bonus", "영화특전", "pokemon run", "pokémon run", "run 30", "완주자",
+        "참가보상", "참가 보상", "아시아 이벤트", "asia event",
     ),
     "runtime_delivery": (
         "runtime", "배포", "delivery", "server", "서버", "api", "port",
@@ -197,6 +198,7 @@ FEATURE_TEST_NODE_CONTRACTS = {
     ),
     "release_event_promo_collection": (
         "test_release_history_coverage_v4.py::ReleaseHistoryCoverageV4Tests::test_expected_matrix_is_three_games_by_three_regions",
+        "test_pokemon_run30_asia_recovery_v208.py::PokemonRun30AsiaRecoveryV208Tests::test_verified_seed_preserves_reward_and_korea_exclusion",
     ),
     "runtime_delivery": (
         "test_runtime_delivery_guards.py::main",
@@ -280,7 +282,8 @@ FEATURE_ENTRYPOINT_RULES = {
         (("slab corpus", "슬랩 코퍼스", "library slab", "등급사진 코퍼스"), "library_slab_corpus.py"),
     ),
     "release_event_promo_collection": (
-        (("movie bonus", "영화특전", "promo", "프로모", "event", "행사"), "update_promo_events.py"),
+        (("pokemon run", "pokémon run", "run 30", "완주자", "참가보상", "참가 보상",
+          "아시아 이벤트", "asia event", "movie bonus", "영화특전", "promo", "프로모", "event", "행사"), "update_promo_events.py"),
         (("rerelease", "재발매", "release", "출시"), "update_releases.py"),
     ),
     "selfrefine_isolation": (

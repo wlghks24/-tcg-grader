@@ -1,6 +1,6 @@
 {
   "version": 2,
-  "updated_at": "2026-09-03T19:21:00+09:00",
+  "updated_at": "2026-09-08T15:35:00+09:00",
   "policy": "자동수집이 놓친 공식 발표를 사용자가 공식 화면으로 제보한 경우 임시 보존하고 공식 계정/공식 웹으로 교차검증합니다. verified=true 이면서 공식 계정/공식 도메인 근거가 있는 누락사례만 검색어·지역힌트 자가학습에 사용합니다. 일반 커뮤니티 제보는 공식 사실 또는 학습 근거로 자동승격하지 않습니다.",
   "items": [
     {
@@ -112,6 +112,96 @@
       "event_scope": "official_tcg_promo_collaboration",
       "recovery_case_id": "onepiece-jp-nike-promo-2026-09-03",
       "collected_at": "2026-09-03T19:21:00+09:00"
+    },
+    {
+      "game": "포켓몬 카드",
+      "region": "ASIA",
+      "category": "promo",
+      "topic": "promo",
+      "title": "Pokémon RUN 30 · 완주자 Pokémon RUN Pikachu 프로모 카드",
+      "dedupe_terms": [
+        "Pokémon RUN 30",
+        "Pokemon RUN 30",
+        "Pokémon RUN Pikachu",
+        "RUN Pikachu",
+        "완주자 피카츄"
+      ],
+      "learning_terms": [
+        "Pokémon RUN",
+        "Pokemon RUN",
+        "fun run",
+        "runner",
+        "participant",
+        "completion",
+        "finisher",
+        "participation reward",
+        "promo card",
+        "완주",
+        "완주자",
+        "참가자",
+        "참가 보상",
+        "프로모 카드"
+      ],
+      "region_anchors": [
+        "Asia",
+        "아시아",
+        "Taiwan",
+        "대만",
+        "Hong Kong",
+        "홍콩",
+        "Singapore",
+        "싱가포르",
+        "Malaysia",
+        "말레이시아",
+        "Philippines",
+        "필리핀",
+        "Thailand",
+        "태국",
+        "Indonesia",
+        "인도네시아"
+      ],
+      "location": "필리핀·대만·싱가포르·말레이시아·인도네시아·태국·홍콩",
+      "source": "https://tw.portal-pokemon.com/30th/topics/20260902_02/?lang=en",
+      "source_kind": "official_web",
+      "source_tier": "A-official-primary",
+      "source_label": "Pokémon Asia 30th Anniversary 공식 사이트",
+      "official_domain_match": true,
+      "official_account_verified": false,
+      "published_at": "2026-09-02T00:00:00+08:00",
+      "dates": [
+        "2026-10-03",
+        "2027-01-24"
+      ],
+      "excerpt": "Pokémon RUN 30 참가자가 코스를 완주하면 Pokémon RUN Pikachu 프로모 카드 1장을 받을 수 있으며, 공식 개최 지역은 필리핀·대만·싱가포르·말레이시아·인도네시아·태국·홍콩으로 안내됨.",
+      "status": "공식 웹 교차확인 · 자동수집 누락 보정",
+      "verified": true,
+      "confidence": 0.99,
+      "manual_evidence": true,
+      "evidence_kind": "user_reported_miss_plus_official_web_crosscheck",
+      "evidence_sources": [
+        "https://tw.portal-pokemon.com/30th/topics/20260902_02/?lang=en",
+        "https://pokemongo.com/news/pokemon-run-30-2026",
+        "https://hk.portal-pokemon.com/30th/?lang=en"
+      ],
+      "reward_watch": true,
+      "must_show_candidate": true,
+      "collection_scope_override": "tcg_reward_or_giveaway",
+      "event_scope": "official_asia_participation_promo",
+      "region_members": [
+        "PH",
+        "TW",
+        "SG",
+        "MY",
+        "ID",
+        "TH",
+        "HK"
+      ],
+      "excluded_regions": [
+        "KR"
+      ],
+      "korea_included": false,
+      "recovery_case_id": "pokemon-asia-run30-pikachu-promo-2026-09-02",
+      "collected_at": "2026-09-08T15:35:00+09:00"
     }
   ]
 }
