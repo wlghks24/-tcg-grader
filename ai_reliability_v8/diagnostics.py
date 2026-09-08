@@ -48,6 +48,8 @@ class EvidenceLog:
             db.execute('CREATE TABLE IF NOT EXISTS snapshots (seq INTEGER PRIMARY KEY, observed REAL, enabled INTEGER, version TEXT, actor TEXT, reason TEXT, audit_ref TEXT)')
 
     def emit(self, run, kind, stage='', code='OK', **details):
+        # Only approved scalar diagnostic fields; never store prompts, outputs,
+        # exception messages, URLs, credentials or local variable contents.
         allowed={'slot','revision','duration_ms','exception_type','location','signature','status'}
         if set(details)-allowed:
             raise ValueError('UNKNOWN_DIAGNOSTIC_FIELD')
@@ -57,6 +59,7 @@ class EvidenceLog:
                 (time.time(),run,kind,stage,code,json.dumps(details,ensure_ascii=False)))
 
     def snapshot(self, metadata, *, foreground):
+        # Explicit host/foreground lookup only; no scheduler API is called here.
         if not foreground:
             raise ValueError('FOREGROUND_REQUIRED')
         if metadata.get('id')!=self.task_id:
@@ -64,6 +67,7 @@ class EvidenceLog:
         enabled=metadata.get('is_enabled')
         if type(enabled) is not bool:
             raise ValueError('INVALID_ENABLED_STATE')
+        # Standardized actor/reason must come from actual audit evidence.
         actor=metadata.get('pause_actor')
         reason=metadata.get('pause_reason')
         ref=metadata.get('audit_reference')
@@ -131,6 +135,7 @@ class EvidenceLog:
             events=list(reversed(db.execute('SELECT seq,at,kind,stage,code,details FROM events WHERE run=? ORDER BY seq DESC LIMIT 2000',(run,)).fetchall()))
             snapshots=list(reversed(db.execute('SELECT seq,observed,enabled,version,actor,reason,audit_ref FROM snapshots ORDER BY seq DESC LIMIT 1000').fetchall()))
         failures=[r for r in events if r[4]!='OK' and r[2]!='HEARTBEAT']
+        # Terminal failure supersedes transient errors that subsequently recovered.
         terminal=next((r for r in reversed(events) if r[2] in ('RUN_ENDED','RUN_INTERRUPTED')),None)
         failure=failures[-1] if failures else None
         runtime={'status':'NO_RUNTIME_EVIDENCE','cause':'UNRESOLVED'}
