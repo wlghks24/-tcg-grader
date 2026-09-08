@@ -67,6 +67,49 @@
         "retain CONTROL_PLANE_ATTRIBUTION_UNAVAILABLE until actor and reason evidence exists"
       ],
       "verified_prevention_rule_id": "IG-PREV-AUTOMATION-PAUSE-ATTRIBUTION-V1"
+    },
+    {
+      "schema_version": "1.2",
+      "system": "IG_CARDINFO",
+      "automation_id": "6a9b8a22e72c8191849c273e1240378e",
+      "incident_id": "IG-AUTOMATION-PAUSE-20260908-1037-KST",
+      "status": "cause_unresolved_recurrence_critical_reactivated_fingerprinted",
+      "disabled_state_observed_at_utc": "2026-09-08T01:37:01.377102Z",
+      "last_run_before_pause_utc": "2026-09-07T20:27:56.644698Z",
+      "scheduled_slot_kst": "2026-09-08T10:30+09:00",
+      "foreground_observed_at_utc": "2026-09-08T05:44:00Z",
+      "reactivated_at_utc": "2026-09-08T05:46:12.840010Z",
+      "cause_status": "unresolved",
+      "cause_class": "CONTROL_PLANE_ATTRIBUTION_UNAVAILABLE",
+      "state_transition_fingerprint": "SCHEDULE_START_DISABLE_WITHOUT_RUN",
+      "state_transition_is_root_cause": false,
+      "severity": "PAUSE_RECURRENCE_CRITICAL",
+      "recurrence_count": 3,
+      "evidence_summary": [
+        "automation metadata exposed is_enabled=false",
+        "state updated_at was 2026-09-08T01:37:01.377102Z",
+        "last_run_time remained 2026-09-07T20:27:56.644698Z",
+        "10:30 KST scheduled slot therefore had no observed run record",
+        "disable transition occurred within 15 minutes after the :30 schedule boundary",
+        "no actor/reason/change-source field was exposed"
+      ],
+      "fabricated_root_cause": false,
+      "remediation": [
+        "fingerprint the observed state transition without attributing root cause",
+        "reactivate existing canonical automation only",
+        "preserve exact hourly :30 schedule, title, task id and prompt",
+        "do not create duplicate watchdog or replacement automation",
+        "keep runtime/content failures isolated from scheduler enabled state",
+        "retain CONTROL_PLANE_ATTRIBUTION_UNAVAILABLE until actor and reason evidence exists"
+      ],
+      "verification": {
+        "guard_main_contains_fingerprint": true,
+        "regression_test_main_contains_observed_case": true,
+        "existing_automation_reactivated": true,
+        "scheduler_title_or_schedule_mutated": false,
+        "scheduled_run_after_reactivation": "SCHEDULED_RUN_UNVERIFIED"
+      },
+      "verified_prevention_rule_id": "IG-PREV-AUTOMATION-PAUSE-ATTRIBUTION-V1"
     }
   ]
 }
