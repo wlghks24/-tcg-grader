@@ -413,13 +413,17 @@ def _train(rows: list[dict[str, Any]], hidden: int, seed: int) -> dict[str, Any]
 
 
 def _split(rows: list[dict[str, Any]]) -> tuple[list[dict[str, Any]], list[dict[str, Any]]]:
-    train: list[dict[str, Any]] = []
-    holdout: list[dict[str, Any]] = []
-    for row in rows:
-        bucket = int(row["sample_id"][:8], 16) % 5
-        (holdout if bucket == 0 else train).append(row)
-    if not holdout and train:
-        holdout.append(train.pop())
+    """Deterministic exact 80/20 split once the 1,000-label gate is met.
+
+    Hash-bucket modulo splitting is deterministic but only approximate. At the
+    exact activation threshold it can randomly leave fewer than 800 training
+    rows, contradicting the documented 1,000-label activation contract.
+    Sorting by independent sample_id and taking every fifth item gives exactly
+    20% holdout (for 1,000 rows: 800 train / 200 holdout).
+    """
+    ordered = sorted(rows, key=lambda row: str(row.get("sample_id") or ""))
+    holdout = [row for index, row in enumerate(ordered) if index % 5 == 0]
+    train = [row for index, row in enumerate(ordered) if index % 5 != 0]
     return train, holdout
 
 
