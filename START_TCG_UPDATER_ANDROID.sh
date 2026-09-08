@@ -213,7 +213,7 @@ assert collection_neural.SAFETY.get('official_trust_auto_promotion') is False
 assert collection_neural.SAFETY.get('candidate_database_auto_promotion') is False
 assert collection_neural.SAFETY.get('verification_bypass') is False
 assert collection_neural.SAFETY.get('neural_output_is_priority_only') is True
-assert collection_job_neural.RUNTIME_PATCH == 212
+assert collection_job_neural.RUNTIME_PATCH == 214
 assert collection_job_neural.MIN_INDEPENDENT_LABELS == 1000
 assert collection_job_neural.HIDDEN_SIZES == (4, 8, 12)
 assert collection_job_neural.SAFETY.get('learns_operational_strategy_not_facts') is True
@@ -272,7 +272,7 @@ echo "수동등록 정책: 앞면+뒷면 2장 필수 · 앞면 OCR · 뒷면 별
 echo "등급사진 정책: 자동 등급사 조회 OFF · 공식사이트 직접확인/수동등록 · 인증번호+앞뒤사진만 게임폴더에 보관"
 echo "자료수집 자가학습 v142 + 런타임 번들 v143 + OCR v149: 고유출처 검증 + timeout circuit-breaker + 혼합버전 차단"
 echo "자료수집 신경망 v211: 실제 공식결과/정상 빈검색만 학습 · 1,000개 독립라벨 전 비활성 · 4/8/12 비교 · 검증우회/사실승격 금지"
-echo "전체수집 작업 신경망 v212: postflight 검증결과만 학습 · 모든 7개 핵심수집+통합+링크감사 유지 · 순서만 최적화"
+echo "전체수집 작업 신경망 v214: postflight 검증결과만 학습 · 모든 7개 핵심수집+통합+링크감사 유지 · 순서만 최적화"
 python tcg_updater_v135.py &
 SERVER_PID=$!
 wait "$SERVER_PID"

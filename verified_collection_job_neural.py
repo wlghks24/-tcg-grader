@@ -44,7 +44,7 @@ MODEL_BACKUP_PATH = ROOT / "VERIFIED_COLLECTION_JOB_NEURAL_MODEL.json.bak"
 REPORT_PATH = ROOT / "VERIFIED_COLLECTION_JOB_NEURAL_REPORT.json"
 
 SCHEMA = 1
-RUNTIME_PATCH = 212
+RUNTIME_PATCH = 214
 MIN_INDEPENDENT_LABELS = 1000
 MIN_CLASS_LABELS = 100
 MAX_LABELS = 8000
@@ -99,6 +99,8 @@ SAFETY = {
     "git_write": False,
     "neural_output_is_priority_only": True,
     "all_mandatory_collectors_preserved": True,
+    "training_features_pre_outcome": True,
+    "per_file_postflight_gate": True,
 }
 
 
@@ -283,15 +285,26 @@ def ingest_verified_report(
     report: dict[str, Any],
     stats: dict[str, Any],
     *,
+    stats_before: dict[str, Any] | None = None,
     labels_path: Path = LABELS_PATH,
     now: datetime | None = None,
 ) -> dict[str, Any]:
-    """Learn only after postflight validation is known to be good."""
+    """Learn from pre-outcome stats after the relevant output passed postflight.
+
+    A failure in an unrelated project file must not erase valid learning from a
+    collector whose own output passed postflight. Auxiliary jobs do not own one
+    of the core JSON files, so their bounded structured runner result is used.
+    """
     if not isinstance(report, dict):
         return {"ok": True, "added": 0, "reason": "invalid_report"}
     postflight = report.get("postflight_monitor")
-    if not isinstance(postflight, dict) or postflight.get("ok") is not True:
+    if not isinstance(postflight, dict) or not isinstance(postflight.get("results"), list):
         return {"ok": True, "added": 0, "reason": "postflight_not_verified"}
+    postflight_by_file = {
+        str(row.get("file") or ""): row
+        for row in postflight.get("results", [])
+        if isinstance(row, dict)
+    }
     rows: list[tuple[str, dict[str, Any]]] = []
     for result in report.get("results") if isinstance(report.get("results"), list) else []:
         if isinstance(result, dict):
@@ -313,10 +326,15 @@ def ingest_verified_report(
             added = 0
             updated = 0
             eligible = 0
-            stats_jobs = stats.get("jobs") if isinstance(stats.get("jobs"), dict) else {}
+            feature_stats = stats_before if isinstance(stats_before, dict) else stats
+            stats_jobs = feature_stats.get("jobs") if isinstance(feature_stats.get("jobs"), dict) else {}
+            postflight_skipped = 0
             observed_at = (now or datetime.now(timezone.utc)).astimezone(timezone.utc).isoformat(timespec="seconds")
             for job_key, result in rows:
                 if not _eligible_result(job_key, result):
+                    continue
+                if job_key.endswith(".json") and postflight_by_file.get(job_key, {}).get("ok") is not True:
+                    postflight_skipped += 1
                     continue
                 eligible += 1
                 stats_row = stats_jobs.get(job_key) if isinstance(stats_jobs.get(job_key), dict) else {}
@@ -346,6 +364,7 @@ def ingest_verified_report(
                 "added": added,
                 "updated": updated,
                 "eligible": eligible,
+                "postflight_skipped": postflight_skipped,
                 "label_count": len(labels["labels"]),
                 "reason": "postflight_verified_outcomes_ingested",
             }

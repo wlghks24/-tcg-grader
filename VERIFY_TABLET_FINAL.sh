@@ -139,7 +139,7 @@ python - <<'PY' >/dev/null
 import verified_collection_neural as neural
 import verified_collection_job_neural as job_neural
 assert neural.RUNTIME_PATCH == 213
-assert job_neural.RUNTIME_PATCH == 212
+assert job_neural.RUNTIME_PATCH == 214
 assert job_neural.MIN_INDEPENDENT_LABELS == 1000
 assert job_neural.HIDDEN_SIZES == (4, 8, 12)
 assert job_neural.SAFETY.get("collector_skip_allowed") is False

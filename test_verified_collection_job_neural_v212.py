@@ -14,7 +14,7 @@ import auto_update_all
 
 class VerifiedCollectionJobNeuralV212Tests(unittest.TestCase):
     def test_safety_contract(self):
-        self.assertEqual(212, neural.RUNTIME_PATCH)
+        self.assertEqual(214, neural.RUNTIME_PATCH)
         self.assertEqual((4, 8, 12), neural.HIDDEN_SIZES)
         self.assertEqual(1000, neural.MIN_INDEPENDENT_LABELS)
         self.assertFalse(neural.SAFETY["collector_skip_allowed"])
@@ -23,12 +23,21 @@ class VerifiedCollectionJobNeuralV212Tests(unittest.TestCase):
         self.assertFalse(neural.SAFETY["official_trust_auto_promotion"])
         self.assertTrue(neural.SAFETY["neural_output_is_priority_only"])
         self.assertTrue(neural.SAFETY["all_mandatory_collectors_preserved"])
+        self.assertTrue(neural.SAFETY["training_features_pre_outcome"])
+        self.assertTrue(neural.SAFETY["per_file_postflight_gate"])
 
     def test_postflight_verified_report_ingest_and_dedupe(self):
         with tempfile.TemporaryDirectory() as tmp:
             labels = Path(tmp) / "labels.json"
             report = {
-                "postflight_monitor": {"ok": True},
+                "postflight_monitor": {
+                    "ok": True,
+                    "results": [
+                        {"file": "releases.json", "ok": True},
+                        {"file": "market_prices.json", "ok": True},
+                        {"file": "promo_events.json", "ok": True},
+                    ],
+                },
                 "results": [
                     {
                         "file": "releases.json",
@@ -54,7 +63,15 @@ class VerifiedCollectionJobNeuralV212Tests(unittest.TestCase):
                 "integration": {"ok": True, "max_attempts": 2, "degraded": False},
                 "link_audit": {"ok": True, "max_attempts": 2, "degraded": False},
             }
-            stats = {
+            stats_before = {
+                "jobs": {
+                    "releases.json": {"runs": 3, "successes": 3, "success_ewma_seconds": 35},
+                    "market_prices.json": {"runs": 3, "successes": 2, "timeouts": 1, "consecutive_failures": 0},
+                    "__integration__": {"runs": 1, "successes": 1},
+                    "__link_audit__": {"runs": 1, "successes": 1},
+                }
+            }
+            stats_after = {
                 "jobs": {
                     "releases.json": {"runs": 4, "successes": 4, "success_ewma_seconds": 40},
                     "market_prices.json": {"runs": 4, "successes": 2, "timeouts": 2, "consecutive_failures": 1},
@@ -63,8 +80,8 @@ class VerifiedCollectionJobNeuralV212Tests(unittest.TestCase):
                 }
             }
             now = datetime(2026, 9, 8, 12, 30, tzinfo=timezone.utc)
-            first = neural.ingest_verified_report(report, stats, labels_path=labels, now=now)
-            second = neural.ingest_verified_report(report, stats, labels_path=labels, now=now)
+            first = neural.ingest_verified_report(report, stats_after, stats_before=stats_before, labels_path=labels, now=now)
+            second = neural.ingest_verified_report(report, stats_after, stats_before=stats_before, labels_path=labels, now=now)
             self.assertEqual(4, first["eligible"])
             self.assertEqual(4, first["added"])
             self.assertEqual(0, second["added"])
@@ -72,6 +89,9 @@ class VerifiedCollectionJobNeuralV212Tests(unittest.TestCase):
             self.assertEqual(4, len(payload["labels"]))
             self.assertEqual({True, False}, {row["outcome"] for row in payload["labels"]})
             self.assertNotIn("promo_events.json", {row["job_key"] for row in payload["labels"]})
+            release = next(row for row in payload["labels"] if row["job_key"] == "releases.json")
+            self.assertEqual(3, release["runs"])
+            self.assertEqual(3, release["successes"])
 
     def test_no_postflight_no_learning(self):
         with tempfile.TemporaryDirectory() as tmp:
@@ -82,6 +102,32 @@ class VerifiedCollectionJobNeuralV212Tests(unittest.TestCase):
             )
             self.assertEqual(0, result["added"])
             self.assertEqual("postflight_not_verified", result["reason"])
+
+    def test_unrelated_postflight_failure_does_not_drop_verified_job_learning(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            labels = Path(tmp) / "labels.json"
+            report = {
+                "postflight_monitor": {
+                    "ok": False,
+                    "results": [
+                        {"file": "releases.json", "ok": True},
+                        {"file": "market_prices.json", "ok": False},
+                        {"file": "tcg_live_data.json", "ok": False},
+                    ],
+                },
+                "results": [
+                    {"file": "releases.json", "ok": True, "max_attempts": 2, "collection_errors": []},
+                    {"file": "market_prices.json", "ok": True, "max_attempts": 2, "collection_errors": []},
+                ],
+                "integration": {"ok": True, "max_attempts": 2, "degraded": False},
+                "link_audit": {"ok": True, "max_attempts": 2, "degraded": False},
+            }
+            before = {"jobs": {"releases.json": {"runs": 7, "successes": 6}}}
+            result = neural.ingest_verified_report(report, {"jobs": {}}, stats_before=before, labels_path=labels)
+            self.assertEqual(3, result["eligible"])
+            self.assertEqual(1, result["postflight_skipped"])
+            payload = json.loads(labels.read_text(encoding="utf-8"))
+            self.assertEqual({"releases.json", "__integration__", "__link_audit__"}, {row["job_key"] for row in payload["labels"]})
 
     def test_training_compares_all_hidden_sizes(self):
         with tempfile.TemporaryDirectory() as tmp:
@@ -182,7 +228,9 @@ class VerifiedCollectionJobNeuralV212Tests(unittest.TestCase):
 
         with patch.object(auto_update_all.verified_collection_job_neural, "score_job", side_effect=score):
             active = auto_update_all._ordered_jobs(auto_update_all.JOBS, stats)
-        self.assertEqual("releases.json", active[0][2])
+        self.assertEqual("graded_photo_candidates.json", active[0][2])
+        self.assertGreater(active.index(next(job for job in active if job[2] == "market_watch.json")),
+                           active.index(next(job for job in active if job[2] == "releases.json")))
         self.assertEqual(
             {job[2] for job in auto_update_all.JOBS},
             {job[2] for job in active},

@@ -268,8 +268,8 @@ def audit() -> dict:
     collection_job_neural = modules.get("verified_collection_job_neural")
     if collection_job_neural is not None:
         safety = getattr(collection_job_neural, "SAFETY", {})
-        if int(getattr(collection_job_neural, "RUNTIME_PATCH", 0) or 0) != 212:
-            issues.append("전체수집 작업 신경망 런타임 패치가 v212가 아닙니다")
+        if int(getattr(collection_job_neural, "RUNTIME_PATCH", 0) or 0) != 214:
+            issues.append("전체수집 작업 신경망 런타임 패치가 v214가 아닙니다")
         if int(getattr(collection_job_neural, "MIN_INDEPENDENT_LABELS", 0) or 0) != 1000:
             issues.append("전체수집 작업 신경망 최소 독립라벨 계약이 1,000개가 아닙니다")
         if tuple(getattr(collection_job_neural, "HIDDEN_SIZES", ())) != (4, 8, 12):

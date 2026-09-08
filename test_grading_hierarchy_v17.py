@@ -23,6 +23,16 @@ class GradingHierarchyV17Tests(unittest.TestCase):
         self.assertIn('cornerRisk=Math.min(100,Math.max(frontHierarchy.cornerRisk,backHierarchy.cornerRisk', source)
         self.assertIn('1차 전체 → 2차 4분할 → 3차 8분할 정밀검사', source)
 
+    def test_hierarchy_reuses_quality_and_oblique_bounds(self):
+        source = (ROOT / "grading_vision_engine.js").read_text(encoding="utf-8")
+        self.assertIn("providedQuality=null,providedObliqueQuality=null,providedObliqueBounds=null", source)
+        self.assertIn("providedSurface=null,providedQuality=null,providedObliqueBounds=null", source)
+        self.assertIn("providedConfig={},providedQuality=null,providedObliqueBounds=null", source)
+        self.assertIn("obliqueQuality=obliqueInput?analyzeQuality(obliqueInput):null", source)
+        self.assertIn("surface=analyzeSurface(baseInput,obliqueInput,bounds,providedConfig,quality,obliqueQuality,obliqueBounds)", source)
+        self.assertIn("quadrants=analyzeFourQuadrants(baseInput,obliqueInput,bounds,providedConfig,surface,quality,obliqueBounds)", source)
+        self.assertIn("zones=analyzeEightZones(baseInput,obliqueInput,bounds,providedConfig,quality,obliqueBounds)", source)
+
     def test_feature_contract_tracks_external_vision_engine(self):
         contract_source = (ROOT / "feature_contract.py").read_text(encoding="utf-8")
         self.assertIn('vision_engine = safe_read_text(base / "grading_vision_engine.js")', contract_source)

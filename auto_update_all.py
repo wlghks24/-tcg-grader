@@ -200,11 +200,11 @@ def _job_timeout(filename: str, stats: dict) -> int:
 
 
 def _ordered_jobs(jobs, stats: dict):
-    """Order mandatory collectors without ever filtering or skipping them."""
+    """Preserve LPT makespan efficiency and let neural risk adjust close calls."""
     def order_key(job):
         filename=job[2]
         stat_row=stats.get('jobs',{}).get(filename,{})
-        ewma=float(stat_row.get('ewma_seconds') or stat_row.get('success_ewma_seconds') or 30)
+        ewma=max(1.0,_safe_float(stat_row.get('ewma_seconds') or stat_row.get('success_ewma_seconds'),30.0,0.0,3600.0))
         try:
             neural=verified_collection_job_neural.score_job(
                 filename,
@@ -214,9 +214,26 @@ def _ordered_jobs(jobs, stats: dict):
         except (OSError,ValueError,TypeError,OverflowError,json.JSONDecodeError):
             neural={'active':False,'risk_priority':0.5}
         if neural.get('active') is True:
-            return (1,float(neural.get('risk_priority') or 0.0),ewma)
-        return (0,0.0,ewma)
+            risk=_safe_float(neural.get('risk_priority'),0.5,0.0,1.0)
+            # Keep long-running work at the front of the bounded worker queue.
+            # Neural risk can raise priority by at most 25%, so a tiny risky job
+            # cannot push a much longer job to the tail and increase makespan.
+            effective_load=ewma*(1.0+0.25*risk)
+            return (1,effective_load,risk,ewma)
+        return (0,ewma,0.0,ewma)
     return sorted(list(jobs),key=order_key,reverse=True)
+
+
+def _snapshot_job_learning_stats(stats: dict) -> dict:
+    """Capture features before this run mutates success/failure counters."""
+    with _STATS_LOCK:
+        jobs=stats.get('jobs',{}) if isinstance(stats.get('jobs'),dict) else {}
+        return {
+            'jobs':{
+                key:dict(jobs.get(key,{})) if isinstance(jobs.get(key),dict) else {}
+                for key in verified_collection_job_neural.JOB_KEYS
+            }
+        }
 
 
 def _error_signature(message: str) -> str:
@@ -758,6 +775,7 @@ def run_all(trigger: str = "manual", selected_files=None, progress_callback=None
     total_jobs = len(jobs)
     memory = auto_repair_engine.load_memory(MEMORY)
     stats = _load_adaptive_stats()
+    learning_stats_before = _snapshot_job_learning_stats(stats)
     self_heal_plans = {job[2]: collector_self_healing.plan_for(job[2]) for job in jobs}
     LAST_GOOD.mkdir(exist_ok=True)
     # v58: 전체 수집 전에 핵심 JSON을 감시 점검한다. 손상/누락 파일은
@@ -1166,12 +1184,12 @@ def run_all(trigger: str = "manual", selected_files=None, progress_callback=None
     report['optimization']['monitoring']='safe whitelist + last-good restore + bounded single retry + traceback fingerprint learning'
     _save_adaptive_stats(stats)
     try:
-        neural_ingest=verified_collection_job_neural.ingest_verified_report(report,stats)
+        neural_ingest=verified_collection_job_neural.ingest_verified_report(report,stats,stats_before=learning_stats_before)
         neural_status=verified_collection_job_neural.train_if_ready()
         report['collection_job_neural']={
             'ingest':neural_ingest,
             'status':neural_status,
-            'policy':'postflight 검증 결과만 학습 · 1,000개 독립라벨 전 기존 EWMA 유지 · 활성 후에도 모든 수집기 실행',
+            'policy':'postflight 검증 결과만 학습 · 1,000개 독립라벨 전 기존 EWMA 유지 · 활성 후 LPT+위험도 보조정렬 · 모든 수집기 실행',
         }
     except (OSError,ValueError,TypeError,OverflowError,json.JSONDecodeError) as exc:
         report['collection_job_neural']={

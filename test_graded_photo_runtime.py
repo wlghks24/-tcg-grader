@@ -84,6 +84,10 @@ class GradedPhotoRuntimeTests(unittest.TestCase):
         self.assertIn("grade:gradeText===''?null:Number(gradeText)",source)
         self.assertNotIn('id="gpdManualCompany" required',source)
         self.assertNotIn('rows.filter(r=>companyOf(r)===c)',source)
+        self.assertIn("typeof canvas.toBlob==='function'",source)
+        self.assertIn('blob.size>6_000_000',source)
+        self.assertIn('async function decodedPhoto(file)',source)
+        self.assertIn('await jpegDataUrl(canvas,quality)',source)
 
     def test_updater_source_is_valid_utf8(self):
         source=(ROOT/'tcg_updater.py').read_text(encoding='utf-8')
