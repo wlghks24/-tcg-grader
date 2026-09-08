@@ -66,6 +66,26 @@ class AutomationPauseRecoveryV30Tests(unittest.TestCase):
         self.assertEqual(result["recurrence_count"], 3)
         self.assertEqual(result["severity"], "PAUSE_RECURRENCE_CRITICAL")
 
+    def test_missed_slots_anchor_to_last_run_not_disable_time(self):
+        state = self.state(False)
+        state["updated_at"] = "2026-09-08T01:37:01.377102Z"
+        state["last_run_time"] = "2026-09-07T20:27:56.644698Z"
+        result = classify_pause(
+            state,
+            observed_at="2026-09-08T05:44:00Z",
+            prior_pause_count=2,
+        )
+        self.assertEqual(result["missed_slot_anchor"], "last_run_plus_early_grace")
+        self.assertEqual(result["schedule_run_early_grace_minutes"], 5)
+        self.assertIn("2026-09-08T06:30+09:00", result["missed_slots_kst"])
+        self.assertIn("2026-09-08T10:30+09:00", result["missed_slots_kst"])
+        self.assertNotIn("2026-09-08T05:30+09:00", result["missed_slots_kst"])
+        self.assertTrue(result["missed_full_0630"])
+        self.assertEqual(
+            result["catchup_policy"],
+            "AT_MOST_ONCE_SAME_DAY_WITHOUT_BASELINE_CREATION",
+        )
+
     def test_evidence_backed_reason_is_preserved(self):
         result = classify_pause(
             self.state(False),
