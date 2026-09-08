@@ -346,7 +346,13 @@ def apply() -> dict[str, Any]:
     global _APPLIED, _ORIGINAL_SUBMIT, _ORIGINAL_PROOF_PUBLIC, _ORIGINAL_PUBLIC_STATUS, _LAST_MIGRATION
     if getattr(proof.submit, "_manual_official_verified_integration_v154", False):
         _APPLIED = True
-        _LAST_MIGRATION = migrate_existing()
+        # The wrapper promotes every newly accepted manual proof immediately.
+        # Re-running the full legacy migration on every apply() call only
+        # rescans the complete registration registry and rewrites nothing.
+        # Preserve one migration for module-reload/startup recovery, then make
+        # repeated apply() calls truly idempotent.
+        if not _LAST_MIGRATION:
+            _LAST_MIGRATION = migrate_existing()
         return status()
     if _ORIGINAL_SUBMIT is None:
         _ORIGINAL_SUBMIT = proof.submit

@@ -126,6 +126,23 @@ class ManualOfficialVerifiedIntegrationV154Tests(unittest.TestCase):
         self.assertFalse(saved[-1]["registrations"][0]["official_result"])
         self.assertEqual(saved[-1]["registrations"][0]["status"], "quarantine")
 
+    def test_repeated_apply_does_not_repeat_full_legacy_migration(self):
+        original_last = integration._LAST_MIGRATION
+        original_applied = integration._APPLIED
+        def already_integrated(payload):
+            return {"accepted": False}
+        already_integrated._manual_official_verified_integration_v154 = True
+        try:
+            integration._LAST_MIGRATION = {"candidates": 3, "promoted": 1, "skipped": 2, "failures": []}
+            integration._APPLIED = True
+            with patch.object(integration.proof, "submit", already_integrated), \
+                 patch.object(integration, "migrate_existing") as migrate:
+                integration.apply()
+            migrate.assert_not_called()
+        finally:
+            integration._LAST_MIGRATION = original_last
+            integration._APPLIED = original_applied
+
     def test_public_policy_exposes_strict_promotion_gates(self):
         integration.apply()
         policy = integration.proof.public_status()["policy"]
