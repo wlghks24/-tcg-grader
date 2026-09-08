@@ -19,7 +19,7 @@ class TabletStandaloneHardeningV209(unittest.TestCase):
    self.assertEqual("stale",health.public_status(p,now=future)["status"])
  def test_manifest(self):
   req={"tcg_updater.py","collection_runtime_health.py","update_releases.py","update_market_prices.py","update_promo_events.py",
-       "graded_photo_multi_source.py","event_priority_watch.py","event_quick_watch.py","multi_route_event_discovery.py","verified_collection_neural.py"}
+       "graded_photo_multi_source.py","event_priority_watch.py","event_quick_watch.py","multi_route_event_discovery.py","verified_collection_neural.py","verified_collection_job_neural.py"}
   self.assertTrue(req.issubset(set(manifest.ACTIVE_RUNTIME_FILES)))
   r=manifest.audit(ROOT,compile_python=True); self.assertTrue(r["ok"],r); self.assertGreaterEqual(r["python_checked"],40)
  def test_auto_loop(self):
@@ -38,8 +38,9 @@ class TabletStandaloneHardeningV209(unittest.TestCase):
   self.assertIn("def collection_neural_status():",src)
   self.assertIn("'/api/collection-neural-status'",src)
   self.assertIn("auto_status['collection_neural']=collection_neural_status()",src)
+  self.assertIn("'query_strategy':query_status",src); self.assertIn("'job_strategy':job_status",src)
   ui=(ROOT/"index.html").read_text(encoding="utf-8")
-  self.assertIn("🧠 수집AI",ui); self.assertIn("status.collection_neural",ui)
+  self.assertIn("🧠 수집AI",ui); self.assertIn("status.collection_neural",ui); self.assertIn("전체작업",ui)
  def test_candidate_before_merge(self):
   src=(ROOT/"ANDROID_UPDATE_AND_START.sh").read_text(encoding="utf-8")
   self.assertIn("verify_remote_candidate()",src); self.assertLess(src.index('verify_remote_candidate "$remote_head"'),src.index("git merge --ff-only origin/main"))

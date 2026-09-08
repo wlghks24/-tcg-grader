@@ -103,6 +103,29 @@ class VerifiedCollectionNeuralV211Tests(unittest.TestCase):
             self.assertEqual(2, len(payload["labels"]))
             self.assertEqual({True, False}, {row["outcome"] for row in payload["labels"]})
 
+    def test_same_query_same_six_hour_window_updates_instead_of_inflating_labels(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            labels = Path(tmp) / "labels.json"
+            now = datetime(2026, 9, 8, 12, 30, tzinfo=timezone.utc)
+            first = neural.observe_search_outcome(
+                game="포켓몬", region="US", family="official-site",
+                query="Pokemon TCG promo event", rows=[],
+                relevant_count=0, official_count=0, labels_path=labels, now=now,
+            )
+            changed = neural.observe_search_outcome(
+                game="포켓몬", region="US", family="official-site",
+                query="Pokemon TCG promo event",
+                rows=[{"title":"Pokemon official promo event","url":"https://www.pokemon.com/us/pokemon-news/test"}],
+                relevant_count=1, official_count=1, labels_path=labels, now=now,
+            )
+            self.assertEqual(1, first["added"])
+            self.assertEqual(0, changed["added"])
+            self.assertEqual(1, changed["updated"])
+            self.assertEqual("updated_same_collection_window", changed["reason"])
+            payload = json.loads(labels.read_text(encoding="utf-8"))
+            self.assertEqual(1, len(payload["labels"]))
+            self.assertTrue(payload["labels"][0]["outcome"])
+
     def test_adaptive_plan_uses_neural_only_for_priority_and_keeps_reserved_slots(self):
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)

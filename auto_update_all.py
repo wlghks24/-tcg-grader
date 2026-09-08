@@ -17,6 +17,7 @@ import signal
 from pathlib import Path
 import auto_repair_engine
 import collector_self_healing
+import verified_collection_job_neural
 from safe_runtime import (
     atomic_write_bytes, atomic_write_json, atomic_write_text,
     bounded_float as _safe_float, bounded_int as _safe_int,
@@ -196,6 +197,27 @@ def _job_timeout(filename: str, stats: dict) -> int:
 
     learned=max(30, int(success_ewma*3.0 + 15))
     return min(300, max(stage_floor, learned))
+
+
+def _ordered_jobs(jobs, stats: dict):
+    """Order mandatory collectors without ever filtering or skipping them."""
+    def order_key(job):
+        filename=job[2]
+        stat_row=stats.get('jobs',{}).get(filename,{})
+        ewma=float(stat_row.get('ewma_seconds') or stat_row.get('success_ewma_seconds') or 30)
+        try:
+            neural=verified_collection_job_neural.score_job(
+                filename,
+                stat_row,
+                planned_timeout_seconds=_job_timeout(filename,stats),
+            )
+        except (OSError,ValueError,TypeError,OverflowError,json.JSONDecodeError):
+            neural={'active':False,'risk_priority':0.5}
+        if neural.get('active') is True:
+            return (1,float(neural.get('risk_priority') or 0.0),ewma)
+        return (0,0.0,ewma)
+    return sorted(list(jobs),key=order_key,reverse=True)
+
 
 def _error_signature(message: str) -> str:
     """동일 오류를 학습할 수 있도록 변동 숫자/주소를 정규화한 짧은 키를 만든다."""
@@ -748,8 +770,8 @@ def run_all(trigger: str = "manual", selected_files=None, progress_callback=None
     preflight_by_file = {r.get('file'): r for r in preflight.get('results', [])}
     worker_count = _worker_count(total_jobs)
 
-    # 오래 걸릴 것으로 학습된 작업을 먼저 배치(LPT)하면 병렬 처리의 꼬리시간이 줄어든다.
-    jobs = sorted(jobs, key=lambda j: float(stats.get('jobs',{}).get(j[2],{}).get('ewma_seconds') or 30), reverse=True)
+    # 신경망 비활성 시 기존 LPT(EWMA) 정렬을 그대로 유지한다. 활성 후에도 모든 작업은 필수 실행된다.
+    jobs = _ordered_jobs(jobs,stats)
     progress_counter = {'done':0}
     progress_lock = threading.Lock()
 
@@ -1143,6 +1165,20 @@ def run_all(trigger: str = "manual", selected_files=None, progress_callback=None
     report['ok_with_monitor']=bool(report.get('ok_with_aux') and report['postflight_monitor'].get('ok'))
     report['optimization']['monitoring']='safe whitelist + last-good restore + bounded single retry + traceback fingerprint learning'
     _save_adaptive_stats(stats)
+    try:
+        neural_ingest=verified_collection_job_neural.ingest_verified_report(report,stats)
+        neural_status=verified_collection_job_neural.train_if_ready()
+        report['collection_job_neural']={
+            'ingest':neural_ingest,
+            'status':neural_status,
+            'policy':'postflight 검증 결과만 학습 · 1,000개 독립라벨 전 기존 EWMA 유지 · 활성 후에도 모든 수집기 실행',
+        }
+    except (OSError,ValueError,TypeError,OverflowError,json.JSONDecodeError) as exc:
+        report['collection_job_neural']={
+            'ingest':{'added':0,'reason':'collection_job_neural_unavailable'},
+            'status':{'ok':False,'active':False,'reason':type(exc).__name__,'label_count':0,'minimum_labels':1000},
+            'policy':'신경망 오류 시 기존 EWMA 정렬로 자동 폴백',
+        }
     atomic_report(report)
     atomic_issues(report)
     learned_memory=auto_repair_engine.learn(report,MEMORY)

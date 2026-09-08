@@ -48,6 +48,7 @@ REQUIRED_FILES = (
     "search_method_learning.py",
     "adaptive_collection_learner.py",
     "verified_collection_neural.py",
+    "verified_collection_job_neural.py",
     "collection_learning_hardening_v142.py",
     "collection_learning_hardening_v144.py",
     "event_source_overlay_v144.py",
@@ -118,6 +119,7 @@ def audit() -> dict:
         "multi_channel_agent",
         "search_method_learning",
         "verified_collection_neural",
+        "verified_collection_job_neural",
         "collection_learning_hardening_v142",
         "event_source_expansion_v145",
         "manual_official_proof",
@@ -159,6 +161,8 @@ def audit() -> dict:
         if files != EXPECTED_JOB_FILES:
             issues.append("7개 정규 수집 작업 구성이 현재 번들과 맞지 않습니다")
         try:
+            if not callable(getattr(update_all, "_ordered_jobs", None)):
+                issues.append("전체수집 작업 신경망 우선순위 결합 함수가 없습니다")
             if update_all._should_retry({}, False, "ValueError: malformed data"):
                 issues.append("결정적 ValueError가 네트워크 재시도로 잘못 처리됩니다")
             recovered_probe = {
@@ -260,6 +264,29 @@ def audit() -> dict:
             issues.append("자료수집 신경망 모델 가중치 구조/유한값 검증기가 없습니다")
         if not hasattr(collection_neural, "LABELS_BACKUP_PATH") or not hasattr(collection_neural, "MODEL_BACKUP_PATH"):
             issues.append("자료수집 신경망 라벨/모델 마지막 정상 백업 경로가 없습니다")
+
+    collection_job_neural = modules.get("verified_collection_job_neural")
+    if collection_job_neural is not None:
+        safety = getattr(collection_job_neural, "SAFETY", {})
+        if int(getattr(collection_job_neural, "RUNTIME_PATCH", 0) or 0) != 212:
+            issues.append("전체수집 작업 신경망 런타임 패치가 v212가 아닙니다")
+        if int(getattr(collection_job_neural, "MIN_INDEPENDENT_LABELS", 0) or 0) != 1000:
+            issues.append("전체수집 작업 신경망 최소 독립라벨 계약이 1,000개가 아닙니다")
+        if tuple(getattr(collection_job_neural, "HIDDEN_SIZES", ())) != (4, 8, 12):
+            issues.append("전체수집 작업 신경망 은닉크기 4/8/12 비교 계약이 없습니다")
+        if safety.get("learns_operational_strategy_not_facts") is not True:
+            issues.append("전체수집 작업 신경망이 운영전략 이외의 사실값을 학습할 수 있습니다")
+        if safety.get("collector_skip_allowed") is not False or safety.get("collector_disable_allowed") is not False:
+            issues.append("전체수집 작업 신경망이 필수 수집기를 생략/비활성화할 수 있습니다")
+        if safety.get("verification_bypass") is not False:
+            issues.append("전체수집 작업 신경망이 검증 게이트를 우회할 수 있습니다")
+        if safety.get("neural_output_is_priority_only") is not True:
+            issues.append("전체수집 작업 신경망 출력이 작업 우선순위 이외 용도로 사용될 수 있습니다")
+        if not callable(getattr(collection_job_neural, "_validate_model_payload", None)):
+            issues.append("전체수집 작업 신경망 모델 가중치 구조/유한값 검증기가 없습니다")
+        if not hasattr(collection_job_neural, "LABELS_BACKUP_PATH") or not hasattr(collection_job_neural, "MODEL_BACKUP_PATH"):
+            issues.append("전체수집 작업 신경망 라벨/모델 마지막 정상 백업 경로가 없습니다")
+
 
     photo = modules.get("graded_photo_multi_source")
     if photo is not None:

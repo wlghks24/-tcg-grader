@@ -9,6 +9,10 @@ on:
       - 'VERIFY_TABLET_RUNTIME.sh'
       - 'tablet_runtime_manifest.py'
       - 'collection_runtime_health.py'
+      - 'verified_collection_neural.py'
+      - 'verified_collection_job_neural.py'
+      - 'test_verified_collection_neural_v211.py'
+      - 'test_verified_collection_job_neural_v212.py'
       - 'verify_current_runtime.py'
       - 'test_tablet_standalone_hardening_v209.py'
       - 'tablet_runtime_probe.py'
@@ -27,6 +31,10 @@ on:
       - 'VERIFY_TABLET_RUNTIME.sh'
       - 'tablet_runtime_manifest.py'
       - 'collection_runtime_health.py'
+      - 'verified_collection_neural.py'
+      - 'verified_collection_job_neural.py'
+      - 'test_verified_collection_neural_v211.py'
+      - 'test_verified_collection_job_neural_v212.py'
       - 'verify_current_runtime.py'
       - 'test_tablet_standalone_hardening_v209.py'
       - 'tablet_runtime_probe.py'
@@ -58,6 +66,8 @@ jobs:
           python tablet_runtime_manifest.py --check --compile
           python collection_runtime_health.py
           python -m unittest -v test_tablet_standalone_hardening_v209.py
+          python -m unittest -v test_verified_collection_neural_v211.py
+          python -m unittest -v test_verified_collection_job_neural_v212.py
       - name: Verify boot supervisor diagnostics and health route
         run: |
           grep -Fq 'api/v135-health' ANDROID_AUTO_START_INSTALL.sh

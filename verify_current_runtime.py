@@ -29,6 +29,7 @@ def _commands():
       ("standalone_v209",[py,"-m","unittest","-v","test_tablet_standalone_hardening_v209.py"],180,False),
       ("verified_neural_selfrefine",[py,"-m","unittest","-v","test_verified_neural_self_refine_v210.py"],180,False),
       ("verified_collection_neural",[py,"-m","unittest","-v","test_verified_collection_neural_v211.py"],180,False),
+      ("verified_collection_job_neural",[py,"-m","unittest","-v","test_verified_collection_job_neural_v212.py"],180,False),
       ("current_runtime_regressions",[py,"-m","unittest","-v","test_runtime_resilience_v182.py","test_grading_hierarchy_v17.py",
        "test_ocr_multistage_v16.py","test_verified_grade_learning_v135_safe.py","test_collection_verification_gate.py",
        "test_multi_route_event_discovery.py","test_pokemon_run30_asia_recovery_v208.py"],600,False)]

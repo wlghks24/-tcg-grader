@@ -62,13 +62,36 @@ def collection_health_status():
 def collection_neural_status():
     try:
         import verified_collection_neural
-        return verified_collection_neural.status()
+        query_status=verified_collection_neural.status()
     except (ImportError,OSError,ValueError,TypeError,OverflowError,json.JSONDecodeError):
-        return {
-            'ok':False,'active':False,'reason':'collection-neural-state-error',
-            'label_count':0,'minimum_labels':1000,'labels_remaining':1000,
-            'progress_percent':0.0,'scope':'adaptive_public_search_priority_only'
+        query_status={
+            'ok':False,'active':False,'reason':'query-neural-state-error',
+            'label_count':0,'minimum_labels':1000,'labels_remaining':1000,'progress_percent':0.0
         }
+    try:
+        import verified_collection_job_neural
+        job_status=verified_collection_job_neural.status()
+    except (ImportError,OSError,ValueError,TypeError,OverflowError,json.JSONDecodeError):
+        job_status={
+            'ok':False,'active':False,'reason':'job-neural-state-error',
+            'label_count':0,'minimum_labels':1000,'labels_remaining':1000,'progress_percent':0.0
+        }
+    total_labels=int(query_status.get('label_count') or 0)+int(job_status.get('label_count') or 0)
+    total_minimum=int(query_status.get('minimum_labels') or 1000)+int(job_status.get('minimum_labels') or 1000)
+    return {
+        'ok':query_status.get('ok') is True and job_status.get('ok') is True,
+        'active':query_status.get('active') is True or job_status.get('active') is True,
+        'all_active':query_status.get('active') is True and job_status.get('active') is True,
+        'label_count':total_labels,
+        'minimum_labels':total_minimum,
+        'labels_remaining':max(0,total_minimum-total_labels),
+        'progress_percent':round(min(100.0,total_labels*100.0/max(1,total_minimum)),2),
+        'query_strategy':query_status,
+        'job_strategy':job_status,
+        'scope':'adaptive_public_search_priority + mandatory_collection_job_priority',
+        'verification_bypass':False,
+        'collector_skip_allowed':False,
+    }
 
 def _collection_mark_attempt(trigger,next_due_at=None):
     try:

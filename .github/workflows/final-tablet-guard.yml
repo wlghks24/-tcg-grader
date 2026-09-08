@@ -18,7 +18,9 @@ on:
       - 'tablet_runtime_manifest.py'
       - 'collection_runtime_health.py'
       - 'verified_collection_neural.py'
+      - 'verified_collection_job_neural.py'
       - 'test_verified_collection_neural_v211.py'
+      - 'test_verified_collection_job_neural_v212.py'
       - 'verify_current_runtime.py'
       - 'test_tablet_standalone_hardening_v209.py'
       - 'tablet_runtime_probe.py'
@@ -84,7 +86,9 @@ on:
       - 'tablet_runtime_manifest.py'
       - 'collection_runtime_health.py'
       - 'verified_collection_neural.py'
+      - 'verified_collection_job_neural.py'
       - 'test_verified_collection_neural_v211.py'
+      - 'test_verified_collection_job_neural_v212.py'
       - 'verify_current_runtime.py'
       - 'test_tablet_standalone_hardening_v209.py'
       - 'tablet_runtime_probe.py'
@@ -176,6 +180,10 @@ jobs:
           grep -Fq 'VERIFIED_COLLECTION_NEURAL_LABELS.json.bak' .gitignore
           grep -Fq 'VERIFIED_COLLECTION_NEURAL_MODEL.json' .gitignore
           grep -Fq 'VERIFIED_COLLECTION_NEURAL_MODEL.json.bak' .gitignore
+          grep -Fq 'VERIFIED_COLLECTION_JOB_NEURAL_LABELS.json' .gitignore
+          grep -Fq 'VERIFIED_COLLECTION_JOB_NEURAL_LABELS.json.bak' .gitignore
+          grep -Fq 'VERIFIED_COLLECTION_JOB_NEURAL_MODEL.json' .gitignore
+          grep -Fq 'VERIFIED_COLLECTION_JOB_NEURAL_MODEL.json.bak' .gitignore
       - name: Verify Graphify control-plane files stay out of map
         run: |
           grep -Fxq '.codex/' .graphifyignore

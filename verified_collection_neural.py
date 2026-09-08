@@ -247,6 +247,7 @@ def _sanitize_labels_payload(raw: object) -> dict[str, Any] | None:
             "coverage_gap_score": max(0.0, min(10.0, _safe_float(item.get("coverage_gap_score"), 0.0))),
             "outcome": item["outcome"],
             "evidence": str(item.get("evidence") or "")[:40],
+            "result_fingerprint": str(item.get("result_fingerprint") or "")[:16],
             "observed_at": str(item.get("observed_at") or "")[:64],
         }
     ordered = sorted(clean.values(), key=lambda x: (x["observed_at"], x["sample_id"]))[-MAX_LABELS:]
@@ -328,6 +329,7 @@ def observe_search_outcome(
     stats = query_stats if isinstance(query_stats, dict) else {}
     slot = _six_hour_slot(now)
     result_fp = _result_fingerprint(material)
+    # Exactly one independent label per query per six-hour window.
     sample_raw = "|".join(
         (
             slot,
@@ -335,22 +337,16 @@ def observe_search_outcome(
             normalized_region,
             _family(family),
             str(query or "")[:320],
-            result_fp,
-            "1" if outcome else "0",
         )
     )
     sample_id = hashlib.sha256(sample_raw.encode("utf-8", "replace")).hexdigest()[:24]
     try:
         with exclusive_file_lock(labels_path, timeout_seconds=3.0, stale_seconds=300):
             labels = _load_labels(labels_path)
-            if any(row.get("sample_id") == sample_id for row in labels["labels"]):
-                return {
-                    "eligible": True,
-                    "added": 0,
-                    "reason": "duplicate_same_collection_window",
-                    "sample_id": sample_id,
-                    "label_count": len(labels["labels"]),
-                }
+            existing_index = next(
+                (index for index, item in enumerate(labels["labels"]) if item.get("sample_id") == sample_id),
+                None,
+            )
 
             previous = {
                 **labels,
@@ -372,9 +368,28 @@ def observe_search_outcome(
                 "coverage_gap_score": max(0.0, min(10.0, _safe_float(coverage_gap_score, 0.0))),
                 "outcome": outcome,
                 "evidence": evidence,
+                "result_fingerprint": result_fp,
                 "observed_at": (now or datetime.now(timezone.utc)).astimezone(timezone.utc).isoformat(timespec="seconds"),
             }
-            labels["labels"].append(row)
+            if existing_index is None:
+                labels["labels"].append(row)
+                added, updated, reason = 1, 0, evidence
+            else:
+                prior = labels["labels"][existing_index]
+                if (
+                    prior.get("outcome") == row["outcome"]
+                    and prior.get("result_fingerprint") == row["result_fingerprint"]
+                ):
+                    return {
+                        "eligible": True,
+                        "added": 0,
+                        "updated": 0,
+                        "reason": "duplicate_same_collection_window",
+                        "sample_id": sample_id,
+                        "label_count": len(labels["labels"]),
+                    }
+                labels["labels"][existing_index] = row
+                added, updated, reason = 0, 1, "updated_same_collection_window"
             labels["labels"] = labels["labels"][-MAX_LABELS:]
             labels["updated_at"] = _now()
             backup_path = _backup_path(labels_path, LABELS_PATH, LABELS_BACKUP_PATH)
@@ -383,8 +398,9 @@ def observe_search_outcome(
             atomic_write_json(labels_path, labels, suffix=".collection-neural-labels.tmp")
             return {
                 "eligible": True,
-                "added": 1,
-                "reason": evidence,
+                "added": added,
+                "updated": updated,
+                "reason": reason,
                 "sample_id": sample_id,
                 "label_count": len(labels["labels"]),
             }

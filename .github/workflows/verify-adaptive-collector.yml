@@ -6,6 +6,7 @@ on:
     paths:
       - 'adaptive_collection_learner.py'
       - 'verified_collection_neural.py'
+      - 'verified_collection_job_neural.py'
       - 'multi_channel_agent.py'
       - 'official_direct_discovery.py'
       - 'official_channel_feed_discovery.py'
@@ -22,6 +23,7 @@ on:
       - 'supplementary_discovery.py'
       - 'test_adaptive_collection_learner.py'
       - 'test_verified_collection_neural_v211.py'
+      - 'test_verified_collection_job_neural_v212.py'
       - 'test_official_direct_discovery.py'
       - 'test_official_channel_health.py'
       - 'test_jump_shop_event_watch.py'
@@ -50,6 +52,7 @@ jobs:
           python -m py_compile \
             adaptive_collection_learner.py \
             verified_collection_neural.py \
+            verified_collection_job_neural.py \
             multi_channel_agent.py \
             official_direct_discovery.py \
             official_channel_feed_discovery.py \
@@ -67,6 +70,7 @@ jobs:
           python -m unittest -v \
             test_adaptive_collection_learner.py \
             test_verified_collection_neural_v211.py \
+            test_verified_collection_job_neural_v212.py \
             test_official_direct_discovery.py \
             test_official_channel_health.py \
             test_jump_shop_event_watch.py \

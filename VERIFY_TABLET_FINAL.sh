@@ -27,7 +27,9 @@ tablet_runtime_probe.py
 tablet_runtime_manifest.py
 collection_runtime_health.py
 verified_collection_neural.py
+verified_collection_job_neural.py
 test_verified_collection_neural_v211.py
+test_verified_collection_job_neural_v212.py
 test_runtime_delivery_guards.py
 tablet_runtime_qa.py
 test_tablet_runtime_qa_integration.py
@@ -118,7 +120,9 @@ python -m py_compile \
   tcg_updater_v135.py \
   collection_runtime_health.py \
   verified_collection_neural.py \
+  verified_collection_job_neural.py \
   test_verified_collection_neural_v211.py \
+  test_verified_collection_job_neural_v212.py \
   tablet_runtime_manifest.py
 python tablet_runtime_manifest.py --check --compile >/dev/null
 python collection_runtime_health.py >/dev/null
@@ -130,9 +134,18 @@ python GRAPHIFY_SELF_HEAL.py --self-test >/dev/null
 python verify_code_map_internal.py >/dev/null
 python test_tablet_runtime_qa_integration.py >/dev/null
 python -m unittest -v test_verified_collection_neural_v211.py >/dev/null
+python -m unittest -v test_verified_collection_job_neural_v212.py >/dev/null
 python - <<'PY' >/dev/null
 import verified_collection_neural as neural
+import verified_collection_job_neural as job_neural
 assert neural.RUNTIME_PATCH == 213
+assert job_neural.RUNTIME_PATCH == 212
+assert job_neural.MIN_INDEPENDENT_LABELS == 1000
+assert job_neural.HIDDEN_SIZES == (4, 8, 12)
+assert job_neural.SAFETY.get("collector_skip_allowed") is False
+assert job_neural.SAFETY.get("collector_disable_allowed") is False
+assert job_neural.SAFETY.get("verification_bypass") is False
+assert job_neural.SAFETY.get("neural_output_is_priority_only") is True
 assert neural.MIN_INDEPENDENT_LABELS == 1000
 assert neural.HIDDEN_SIZES == (4, 8, 12)
 assert callable(getattr(neural, "_validate_model_payload", None))
