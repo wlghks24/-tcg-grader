@@ -53,6 +53,15 @@ class PendingOfficialCandidateV161Tests(unittest.TestCase):
             'proof_image': self._jpeg_url(),
         }
 
+    def test_browser_proof_compression_contract_is_async_and_6mb_bounded(self):
+        source=(Path(__file__).resolve().parent/'pending_official_candidate_bridge_v161.js').read_text(encoding='utf-8')
+        self.assertIn("async function decodedPhoto(file)",source)
+        self.assertIn("typeof canvas.toBlob==='function'",source)
+        self.assertIn("blob.size>6_000_000",source)
+        self.assertIn("await jpegDataUrl(canvas,quality)",source)
+        self.assertIn("공식 조회 화면을 6MB 이하로 줄이지 못했습니다.",source)
+        self.assertNotIn("공식 조회 화면을 8MB 이하로 줄이지 못했습니다.",source)
+
     def test_public_status_lists_only_pending_resolved_candidate(self):
         status = mod.public_status()
         self.assertTrue(status['ok'])
