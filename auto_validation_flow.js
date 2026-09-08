@@ -59,7 +59,8 @@ function boot(){
  ensureVerifiedLearningGuard();
  let n=0;const t=setInterval(()=>{n++;ensureVerifiedLearningGuard();if(mount()||n>20)clearInterval(t)},250);
  mount();
- setInterval(syncManualPanel,1200);
+ setInterval(()=>{if(!document.hidden)syncManualPanel()},1200);
+ document.addEventListener('visibilitychange',()=>{if(!document.hidden)syncManualPanel()});
 }
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',boot,{once:true});else boot();
 })();

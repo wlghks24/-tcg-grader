@@ -28,6 +28,18 @@ class ManualOfficialVerifyUiV194Tests(unittest.TestCase):
         self.assertIn("action:'complete_manual_verification'", source)
         self.assertIn("manual_verification_confirmed:true", source)
 
+    def test_proof_draft_is_not_overwritten_by_background_refresh(self):
+        source = BRIDGE.read_text(encoding="utf-8")
+        self.assertIn("!document.hidden&&proofDrafts.size===0", source)
+        self.assertIn("document.addEventListener('visibilitychange'", source)
+
+    def test_proof_image_uses_async_blob_compression_with_decode_fallback(self):
+        source = BRIDGE.read_text(encoding="utf-8")
+        self.assertIn("async function decodedPhoto(file)", source)
+        self.assertIn("typeof canvas.toBlob==='function'", source)
+        self.assertIn("blob.size>6_000_000", source)
+        self.assertIn("await jpegDataUrl(canvas,quality)", source)
+
     def test_pending_candidate_submit_requires_explicit_approval_and_server_complete(self):
         source = PENDING_BRIDGE.read_text(encoding="utf-8")
         self.assertIn("action:'complete_manual_verification'", source)

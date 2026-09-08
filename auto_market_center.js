@@ -37,6 +37,6 @@ function run(force=false){
  // v12 is the primary pre-grade market lookup; execute it automatically.
  requestAnimationFrame(()=>$('search12')?.click());
 }
-function boot(){ensureStatus();setInterval(()=>run(false),500);['identityCardName','identityCardNumber','identityRegion'].forEach(id=>$(id)?.addEventListener('input',()=>run(true)));window.tcgAutoMarketCenter=Object.freeze({refresh:()=>run(true)})}
+function boot(){ensureStatus();const pulse=()=>{if(!document.hidden)run(false)};setInterval(pulse,500);document.addEventListener('visibilitychange',()=>{if(!document.hidden)run(false)});['identityCardName','identityCardNumber','identityRegion'].forEach(id=>$(id)?.addEventListener('input',()=>run(true)));window.tcgAutoMarketCenter=Object.freeze({refresh:()=>run(true)})}
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',boot,{once:true});else boot();
 })();

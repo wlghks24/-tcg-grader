@@ -20,18 +20,33 @@ function ensureDualPhotoBridge(){
 }
 
 function fileDataUrl(file){return new Promise((resolve,reject)=>{const reader=new FileReader();reader.onload=()=>resolve(String(reader.result||''));reader.onerror=()=>reject(new Error('파일을 읽지 못했습니다.'));reader.readAsDataURL(file)})}
+function imageFromDataUrl(url){return new Promise((resolve,reject)=>{const image=new Image();image.onload=()=>resolve(image);image.onerror=()=>reject(new Error('공식 조회 화면을 디코딩하지 못했습니다.'));image.src=url})}
+async function decodedPhoto(file){
+ if(globalThis.createImageBitmap){try{const bitmap=await createImageBitmap(file,{imageOrientation:'from-image'});return {image:bitmap,close:()=>bitmap.close?.()}}catch(_){}}
+ const dataUrl=await fileDataUrl(file),image=await imageFromDataUrl(dataUrl);return {image,close:()=>{}}
+}
+async function jpegDataUrl(canvas,quality){
+ if(typeof canvas.toBlob==='function'){
+  const blob=await new Promise((resolve,reject)=>canvas.toBlob(value=>value?resolve(value):reject(new Error('공식 조회 화면 JPEG 변환에 실패했습니다.')),'image/jpeg',quality));
+  if(blob.size>6_000_000)return null;
+  return fileDataUrl(blob);
+ }
+ const value=canvas.toDataURL('image/jpeg',quality);
+ return value.length<8_000_000?value:null;
+}
 async function normalize(file){
  if(!file||!['image/jpeg','image/png'].includes(file.type))throw new Error('공식 조회 결과 화면을 JPG 또는 PNG로 선택하세요.');
  if(file.size>12_000_000)throw new Error('공식 조회 화면이 12MB를 초과합니다.');
- if(!globalThis.createImageBitmap)return fileDataUrl(file);
- const bitmap=await createImageBitmap(file,{imageOrientation:'from-image'});try{
-  const scale=Math.min(1,2200/Math.max(bitmap.width,bitmap.height));
-  const canvas=document.createElement('canvas');canvas.width=Math.max(320,Math.round(bitmap.width*scale));canvas.height=Math.max(320,Math.round(bitmap.height*scale));
+ const decoded=await decodedPhoto(file);try{
+  const image=decoded.image,width=Number(image.naturalWidth||image.width),height=Number(image.naturalHeight||image.height);
+  if(width<320||height<320)throw new Error('공식 조회 화면 해상도가 너무 작습니다.');
+  const scale=Math.min(1,2200/Math.max(width,height));
+  const canvas=document.createElement('canvas');canvas.width=Math.max(320,Math.round(width*scale));canvas.height=Math.max(320,Math.round(height*scale));
   const ctx=canvas.getContext('2d');if(!ctx)throw new Error('사진 변환을 시작하지 못했습니다.');
-  ctx.fillStyle='#fff';ctx.fillRect(0,0,canvas.width,canvas.height);ctx.drawImage(bitmap,0,0,canvas.width,canvas.height);
-  for(const quality of [.9,.82,.74]){const value=canvas.toDataURL('image/jpeg',quality);if(value.length<8_000_000)return value}
+  ctx.fillStyle='#fff';ctx.fillRect(0,0,canvas.width,canvas.height);ctx.drawImage(image,0,0,canvas.width,canvas.height);
+  for(const quality of [.9,.82,.74]){const value=await jpegDataUrl(canvas,quality);if(value)return value}
   throw new Error('공식 조회 화면을 6MB 이하로 줄이지 못했습니다.');
- }finally{bitmap.close?.()}
+ }finally{decoded.close()}
 }
 
 function style(){
@@ -208,7 +223,8 @@ async function install(){
  if(installed)return;const host=document.getElementById('gpdManualRows');if(!host)return;
  installed=true;ensureDualPhotoBridge();style();installSummaryObserver();mergeVerifiedLearningSummary();suppressAutoRetry();injectRecentDeleteButtons();await render();
  const observer=new MutationObserver(()=>{ensureDualPhotoBridge();suppressAutoRetry();injectRecentDeleteButtons()});observer.observe(host,{childList:true,subtree:true});
- setInterval(()=>{mergeVerifiedLearningSummary();render()},30000);
+ setInterval(()=>{if(!document.hidden&&proofDrafts.size===0){mergeVerifiedLearningSummary();render()}},30000);
+ document.addEventListener('visibilitychange',()=>{if(!document.hidden&&proofDrafts.size===0){mergeVerifiedLearningSummary();render()}});
 }
 function boot(){let tries=0;const timer=setInterval(()=>{tries++;if(document.getElementById('gpdManualRows')){clearInterval(timer);ensureDualPhotoBridge();install()}else if(tries>80)clearInterval(timer)},250)}
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',boot,{once:true});else boot();

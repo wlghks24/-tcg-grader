@@ -21,3 +21,11 @@ def test_screenshot_fixes_present():
     assert ':has(.analysis-image-wait)' in text
     assert '#siteUpdateAll' in text
     assert '@media (min-width:651px)' in text
+
+def test_background_pollers_pause_when_tablet_page_is_hidden():
+    market=(ROOT/'auto_market_center.js').read_text(encoding='utf-8')
+    validation=(ROOT/'auto_validation_flow.js').read_text(encoding='utf-8')
+    manual=(ROOT/'manual_official_verify_bridge.js').read_text(encoding='utf-8')
+    assert "if(!document.hidden)run(false)" in market
+    assert "if(!document.hidden)syncManualPanel()" in validation
+    assert "!document.hidden&&proofDrafts.size===0" in manual
