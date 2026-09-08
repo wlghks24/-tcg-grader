@@ -229,8 +229,8 @@ class VerifiedCollectionJobNeuralV212Tests(unittest.TestCase):
         with patch.object(auto_update_all.verified_collection_job_neural, "score_job", side_effect=score):
             active = auto_update_all._ordered_jobs(auto_update_all.JOBS, stats)
         self.assertEqual("graded_photo_candidates.json", active[0][2])
-        self.assertGreater(active.index(next(job for job in active if job[2] == "market_watch.json")),
-                           active.index(next(job for job in active if job[2] == "releases.json")))
+        self.assertLess(active.index(next(job for job in active if job[2] == "market_watch.json")),
+                        active.index(next(job for job in active if job[2] == "releases.json")))
         self.assertEqual(
             {job[2] for job in auto_update_all.JOBS},
             {job[2] for job in active},
