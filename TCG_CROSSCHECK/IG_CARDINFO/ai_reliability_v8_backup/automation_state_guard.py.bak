@@ -10,24 +10,6 @@ from typing import Any
 KST = dt.timezone(dt.timedelta(hours=9))
 CANONICAL_ID = "6a9b8a22e72c8191849c273e1240378e"
 CANONICAL_TITLE = "인스타 카드정보"
-AI_RELIABILITY_PROJECT = "instagram_card"
-AI_RELIABILITY_TASK_ID = CANONICAL_ID
-
-
-def build_ai_reliability_bridge(state_root: str | Path):
-    """Build the additive v8 bridge for this canonical task only.
-
-    Import is deliberately deferred so existing pause classification remains
-    import-safe and the reliability package performs no scheduler mutation.
-    """
-    from ai_reliability_v8 import ReliabilityBridge
-
-    return ReliabilityBridge(
-        Path(state_root),
-        project=AI_RELIABILITY_PROJECT,
-        task_id=AI_RELIABILITY_TASK_ID,
-    )
-
 
 NON_FATAL_PRECHECK_CODES = {
     "BASELINE_MISSING",

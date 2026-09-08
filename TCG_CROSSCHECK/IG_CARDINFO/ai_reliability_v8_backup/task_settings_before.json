@@ -1,0 +1,22 @@
+{
+  "schema_version": 8,
+  "project": "instagram_card",
+  "task_id": "6a9b8a22e72c8191849c273e1240378e",
+  "repository": "wlghks24/-tcg-grader",
+  "base_main_sha": "9707a5ef819b674157e4dcf89b1a1a1b6261dc72",
+  "selected_entrypoint": "instagram_tcg_content/automation_state_guard.py",
+  "selected_entrypoint_blob_sha": "2fd231b1725e90021255b0ec38bd0c03f2e54715",
+  "targeted_test": "instagram_tcg_content/test_automation_pause_recovery_v30.py",
+  "targeted_test_blob_sha": "0917244c9432305297fb006fdb148acffb06c300",
+  "task_settings_snapshot": {
+    "title": "인스타 카드정보",
+    "schedule": "BEGIN:VEVENT\\nDTSTART;TZID=Asia/Seoul:20260907T173000\\nRRULE:FREQ=HOURLY;BYMINUTE=30;BYSECOND=0\\nEND:VEVENT",
+    "timing_mode": "exact_schedule",
+    "is_enabled": false,
+    "updated_at": "2026-09-07T21:38:15.761356Z",
+    "last_run_time": "2026-09-07T20:27:56.644698Z",
+    "prompt_prefix": "[인스타 카드정보 · CANONICAL v5.9 · PRECHECK-NOT-READY · PAUSE-SAFE]",
+    "prompt_mutated_before_activation": false
+  },
+  "restore_policy": "restore entrypoint bytes from backup path; leave other project state untouched; restore task enabled state only after WorkflowGate authorization"
+}
