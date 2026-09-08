@@ -29,7 +29,8 @@ class PokemonRun30AsiaRecoveryV208Tests(unittest.TestCase):
 
     def test_asia_scope_is_allowed_without_expanding_core_market_regions(self):
         self.assertEqual(("KR", "JP", "US"), promo.CORE_REGIONS)
-        self.assertIn("ASIA", promo.REGIONS)
+        self.assertEqual(("KR", "JP", "US"), promo.REGIONS)
+        self.assertIn("ASIA", promo.EVENT_REGIONS)
         self.assertIn(("포켓몬 카드", "ASIA"), promo.EVENT_SCOPE_PAIRS)
         self.assertNotIn(("원피스 카드", "ASIA"), promo.EVENT_SCOPE_PAIRS)
         self.assertEqual(
