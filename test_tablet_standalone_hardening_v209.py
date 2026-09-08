@@ -25,7 +25,9 @@ class TabletStandaloneHardeningV209(unittest.TestCase):
  def test_auto_loop(self):
   src=(ROOT/"tcg_updater.py").read_text(encoding="utf-8"); loop=src[src.index("def auto_update_loop():"):src.index("\nclass Handler",src.index("def auto_update_loop():"))]
   self.assertNotIn("except Exception: pass",loop); self.assertIn("_retry_failed_automatic",loop); self.assertIn("AUTO_FAILURE_RETRY_SECONDS",src)
-  self.assertIn("'report_ok':bool(report.get('ok'))",src); self.assertIn("'collection_health':collection_health_status()",src)
+  self.assertIn("'report_ok':bool(report.get('ok_with_monitor', report.get('ok_with_aux', report.get('ok'))))",src)
+  self.assertIn("'report_ok':bool(final_report.get('ok_with_monitor', final_report.get('ok_with_aux', final_report.get('ok'))))",src)
+  self.assertIn("'collection_health':collection_health_status()",src)
  def test_v135_health(self):
   src=(ROOT/"tcg_updater_v135.py").read_text(encoding="utf-8"); self.assertIn("collection_health = core.collection_health_status()",src)
   self.assertIn("'collection_health': collection_health",src); self.assertIn("'ok': True",src)

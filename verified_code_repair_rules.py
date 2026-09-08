@@ -101,8 +101,8 @@ STALE_COLLECTION_REPORT_OK = "\'report_ok\':bool(report.get(\'ok\'))"
 CURRENT_COLLECTION_REPORT_OK = "\'report_ok\':bool(report.get(\'ok_with_monitor\', report.get(\'ok_with_aux\', report.get(\'ok\'))))"
 STALE_FINAL_REPORT_OK = "\'report_ok\':bool(final_report.get(\'ok\'))"
 CURRENT_FINAL_REPORT_OK = "\'report_ok\':bool(final_report.get(\'ok_with_monitor\', final_report.get(\'ok_with_aux\', final_report.get(\'ok\'))))"
-STALE_TABLET_HEALTH = \'python tablet_runtime_probe.py --require-health > "$TMP"\'
-CURRENT_TABLET_HEALTH = \'python tablet_runtime_probe.py --require-health --require-collection-health > "$TMP"\'
+STALE_TABLET_HEALTH = 'python tablet_runtime_probe.py --require-health > "$TMP"'
+CURRENT_TABLET_HEALTH = 'python tablet_runtime_probe.py --require-health --require-collection-health > "$TMP"'
 
 _ACTION_RE = re.compile(
     r"(?P<action>actions/(?:checkout|setup-python|upload-artifact))@(?P<sha>[0-9a-f]{40})"
