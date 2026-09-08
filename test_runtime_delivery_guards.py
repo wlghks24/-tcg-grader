@@ -82,6 +82,18 @@ def main():
     assert 'trap cleanup_android_start EXIT INT TERM' not in launcher
     assert '혼합 업데이트 상태로 서버를 시작하지 않습니다. INSTALL_MANUAL_OFFICIAL_FALLBACK.sh' not in launcher
 
+    v161_workflow=text('.github/workflows/apply-pending-official-candidate-v161.yml')
+    assert 'contents: read' in v161_workflow
+    assert 'contents: write' not in v161_workflow
+    assert 'git push' not in v161_workflow
+    assert 'Patch v135 server and repair contract' not in v161_workflow
+    assert 'Verify v161 runtime wiring without mutating source' in v161_workflow
+
+    repair=text('REPAIR_V135_SERVER.sh')
+    assert '"pending_official_candidate_manual_verify": true' in repair
+    assert 'gpdPendingOfficialV161' in repair
+    assert '/api/pending-official-candidate-proof' in repair
+
     market=text('update_market_prices.py')
     assert 'catalog_marker_missing' in market
     assert 'kream_transient=(' in market

@@ -26,7 +26,8 @@ health_is_current(){
   printf '%s' "$payload" | grep -q '"runtime": "tcg-updater-v135-verified-learning"' \
     && printf '%s' "$payload" | grep -q '"ok": true' \
     && printf '%s' "$payload" | grep -q '"manual_dual_photo_ui": true' \
-    && printf '%s' "$payload" | grep -q '"manual_dual_photo_bridge_inline": true'
+    && printf '%s' "$payload" | grep -q '"manual_dual_photo_bridge_inline": true' \
+    && printf '%s' "$payload" | grep -q '"pending_official_candidate_manual_verify": true'
 }
 port_is_open(){
   python - "$PORT" <<'PY' >/dev/null 2>&1
@@ -203,6 +204,14 @@ if ! printf '%s' "$DASHBOARD" | grep -q '기존 등록사진·후보 전체 재�
 fi
 if ! printf '%s' "$DASHBOARD" | grep -q '/api/run-existing-photo-revalidation'; then
   echo "[오류] 기존 등록사진 재검증 API 호출 코드가 실제 대시보드 응답에 포함되지 않았습니다."
+  exit 1
+fi
+if ! printf '%s' "$DASHBOARD" | grep -q 'gpdPendingOfficialV161'; then
+  echo "[오류] 공식검증 미완료 후보 v161 UI가 실제 대시보드 응답에 포함되지 않았습니다."
+  exit 1
+fi
+if ! printf '%s' "$DASHBOARD" | grep -q '/api/pending-official-candidate-proof'; then
+  echo "[오류] 공식검증 미완료 후보 v161 등록 API 코드가 실제 대시보드 응답에 포함되지 않았습니다."
   exit 1
 fi
 if ! printf '%s' "$DASHBOARD" | grep -q 'verifiedSlabRawLearning:true'; then

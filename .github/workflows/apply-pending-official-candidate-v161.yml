@@ -7,19 +7,21 @@ on:
       - '.github/workflows/apply-pending-official-candidate-v161.yml'
       - 'pending_official_candidate_v161.py'
       - 'pending_official_candidate_bridge_v161.js'
+      - 'tcg_updater_v135.py'
+      - 'REPAIR_V135_SERVER.sh'
       - 'test_pending_official_candidate_v161.py'
+      - 'test_manual_official_verify_ui_v194.py'
+      - 'test_runtime_delivery_guards.py'
   workflow_dispatch:
 
 permissions:
-  contents: write
+  contents: read
 
 jobs:
-  patch:
+  verify:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
-        with:
-          fetch-depth: 0
       - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
         with:
           python-version: '3.12'
@@ -27,82 +29,55 @@ jobs:
           cache-dependency-path: requirements.txt
       - name: Install runtime test dependencies
         run: python -m pip install --disable-pip-version-check -r requirements.txt
-      - name: Patch v135 server and repair contract
+      - name: Verify v161 runtime wiring without mutating source
         run: |
           python - <<'PY'
           from pathlib import Path
 
-          p=Path('tcg_updater_v135.py')
-          text=p.read_text(encoding='utf-8')
+          server=Path('tcg_updater_v135.py').read_text(encoding='utf-8')
+          bridge=Path('pending_official_candidate_bridge_v161.js').read_text(encoding='utf-8')
+          repair=Path('REPAIR_V135_SERVER.sh').read_text(encoding='utf-8')
 
-          old="""            official_bridge = core.Path(self.directory) / 'manual_official_verify_bridge.js'\n            files = (base, dual_bridge, official_bridge)\n"""
-          new="""            official_bridge = core.Path(self.directory) / 'manual_official_verify_bridge.js'\n            pending_bridge = core.Path(self.directory) / 'pending_official_candidate_bridge_v161.js'\n            files = (base, dual_bridge, official_bridge, pending_bridge)\n"""
-          if old in text:
-              text=text.replace(old,new)
-          elif new not in text:
-              raise SystemExit('dashboard bridge files hook not found')
+          required_server=(
+              "pending_official_candidate_bridge_v161.js",
+              "'pending_official_candidate_manual_verify': True",
+              "'pending_official_candidate_manual_verify_version': 161",
+              "if path == '/api/pending-official-candidates':",
+              "if path == '/api/pending-official-candidate-proof':",
+              "self._read_json_body(9000000)",
+          )
+          missing=[token for token in required_server if token not in server]
+          if missing:
+              raise SystemExit(f'v161 server wiring missing: {missing}')
 
-          old="""                + '\\n\\n/* manual official verification bridge */\\n'\n                + official_bridge.read_text(encoding='utf-8')\n                + '\\n'\n"""
-          new="""                + '\\n\\n/* manual official verification bridge */\\n'\n                + official_bridge.read_text(encoding='utf-8')\n                + '\\n\\n/* pending official candidate verification v161 */\\n'\n                + pending_bridge.read_text(encoding='utf-8')\n                + '\\n'\n"""
-          if old in text:
-              text=text.replace(old,new)
-          elif new not in text:
-              raise SystemExit('dashboard bridge content hook not found')
+          required_bridge=(
+              "gpdPendingOfficialV161",
+              "/api/pending-official-candidate-proof",
+              "async function decodedPhoto(file)",
+              "typeof canvas.toBlob==='function'",
+              "blob.size>6_000_000",
+              "await jpegDataUrl(canvas,quality)",
+              "공식 조회 화면을 6MB 이하로 줄이지 못했습니다.",
+          )
+          missing=[token for token in required_bridge if token not in bridge]
+          if missing:
+              raise SystemExit(f'v161 bridge contract missing: {missing}')
+          if "공식 조회 화면을 8MB 이하로 줄이지 못했습니다." in bridge:
+              raise SystemExit('stale v161 8MB compression contract remains')
 
-          old="""                'retry_reason_explainer': True,\n                'retry_reason_explainer_version': 160,\n                'base_service': getattr(core, 'SERVICE_NAME', 'TCG updater'),\n"""
-          new="""                'retry_reason_explainer': True,\n                'retry_reason_explainer_version': 160,\n                'pending_official_candidate_manual_verify': True,\n                'pending_official_candidate_manual_verify_version': 161,\n                'base_service': getattr(core, 'SERVICE_NAME', 'TCG updater'),\n"""
-          if old in text:
-              text=text.replace(old,new)
-          elif new not in text:
-              raise SystemExit('health hook not found')
-
-          marker="""        if path == '/api/manual-official-proof-status':\n"""
-          addition="""        if path == '/api/pending-official-candidates':\n            if not self._search_origin_allowed():\n                return self.json({'ok': False, 'error': '허용되지 않은 요청 출처'}, 403)\n            try:\n                import pending_official_candidate_v161 as pending_official\n                return self.json(pending_official.public_status())\n            except (ImportError, OSError, ValueError, TypeError):\n                return self.json({'ok': False, 'error': '공식검증 미완료 후보 상태 오류'}, 500)\n"""
-          if addition not in text:
-              if marker not in text:
-                  raise SystemExit('GET endpoint hook not found')
-              text=text.replace(marker,addition+marker)
-
-          marker="""        if path == '/api/manual-official-proof':\n"""
-          addition="""        if path == '/api/pending-official-candidate-proof':\n            if not self._require_mutation_origin():\n                return\n            try:\n                incoming = self._read_json_body(9000000)\n                import pending_official_candidate_v161 as pending_official\n                with core.DATA_WRITE_LOCK:\n                    result = pending_official.submit(incoming)\n                    core.clear_json_file_cache()\n                return self.json(result, 200 if result.get('accepted') else 409)\n            except ValueError as exc:\n                return self.json({'ok': False, 'accepted': False, 'error': str(exc)[:220]}, 400)\n            except (ImportError, OSError, TypeError, OverflowError, UnicodeError, RecursionError):\n                return self.json({'ok': False, 'accepted': False, 'error': '공식검증 미완료 수동등록 처리 오류'}, 500)\n"""
-          if addition not in text:
-              if marker not in text:
-                  raise SystemExit('POST endpoint hook not found')
-              text=text.replace(marker,addition+marker)
-
-          old="수동등록 UI: 앞면+뒷면 8구역 정밀검사 + 기존 등록사진·후보 전체 재검증 · 캐시 우회 v159"
-          new="수동등록 UI: 앞면+뒷면 8구역 + 후보 전체 재검증 + 공식검증 미완료 직접확인/등록 v161"
-          if old in text:
-              text=text.replace(old,new)
-
-          p.write_text(text,encoding='utf-8')
-
-          p=Path('REPAIR_V135_SERVER.sh')
-          text=p.read_text(encoding='utf-8')
-          marker="if [ ! -f graded_photo_retry_reason_v160.py ]; then\n"
-          addition="""if [ ! -f pending_official_candidate_v161.py ] || [ ! -f pending_official_candidate_bridge_v161.js ]; then\n  echo \"[오류] 공식검증 미완료 직접확인/등록 v161 파일이 없습니다.\"\n  exit 1\nfi\n"""
-          if addition not in text:
-              if marker not in text:
-                  raise SystemExit('repair module hook not found')
-              text=text.replace(marker,addition+marker)
-          old='echo "[OK] 8구역 + 후보 전체 재검증 + 재시도원인 v160 + 공식검증 RAW학습 실전달 확인"'
-          new='echo "[OK] 8구역 + 후보 재검증 + 재시도원인 + 공식검증 미완료 직접확인/등록 v161 실전달 확인"'
-          if old in text:
-              text=text.replace(old,new)
-          p.write_text(text,encoding='utf-8')
+          required_repair=(
+              "pending_official_candidate_v161.py",
+              "pending_official_candidate_bridge_v161.js",
+              '"pending_official_candidate_manual_verify": true',
+              "gpdPendingOfficialV161",
+              "/api/pending-official-candidate-proof",
+          )
+          missing=[token for token in required_repair if token not in repair]
+          if missing:
+              raise SystemExit(f'v161 tablet repair delivery check missing: {missing}')
           PY
       - name: Tests
         run: |
           python -m py_compile pending_official_candidate_v161.py tcg_updater_v135.py
-          python -m unittest -v test_pending_official_candidate_v161.py test_graded_photo_retry_reason_v160.py test_graded_photo_existing_revalidation_v159.py
-      - name: Commit generated patch
-        run: |
-          if git diff --quiet; then
-            echo 'No generated changes.'
-            exit 0
-          fi
-          git config user.name github-actions[bot]
-          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
-          git add tcg_updater_v135.py REPAIR_V135_SERVER.sh
-          git commit -m 'feat: wire pending official candidate manual verification v161'
-          git push
+          python -m unittest -v test_pending_official_candidate_v161.py test_manual_official_verify_ui_v194.py test_graded_photo_retry_reason_v160.py test_graded_photo_existing_revalidation_v159.py
+          python test_runtime_delivery_guards.py
