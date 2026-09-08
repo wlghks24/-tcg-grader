@@ -49,6 +49,24 @@ JSON_FILE_CACHE_LIMIT=48
 AUTO_INTERVAL_SECONDS=6*60*60
 PRECOLLECT_LEAD_SECONDS=30*60
 
+AI_RELIABILITY_PROJECT='tcg_grader'
+AI_RELIABILITY_TASK_ID='6a9b878f35bc8191963b8685566709c4'
+
+
+def build_ai_reliability_bridge(state_root):
+    """Build the isolated v8 reliability bridge for this TCG task only.
+
+    The import is deliberately deferred. Constructing the bridge cannot mutate
+    scheduler state, existing learning files, or the other project's root
+    ai_reliability_v8 package.
+    """
+    from tcg_grader_reliability.ai_reliability_v8 import ReliabilityBridge
+    return ReliabilityBridge(
+        Path(state_root),
+        project=AI_RELIABILITY_PROJECT,
+        task_id=AI_RELIABILITY_TASK_ID,
+    )
+
 
 def next_update_due(previous_due, now=None):
     """Return the next future cadence slot without replaying missed cycles."""
