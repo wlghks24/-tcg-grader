@@ -37,6 +37,7 @@ on:
       - 'test_collection_learning_hardening_v142.py'
       - 'test_runtime_bundle_guard_v143.py'
       - 'START_TCG_UPDATER_ANDROID.sh'
+      - 'tablet_runtime_manifest.py'
       - 'INSTALL_GRADE_LEARNING_V135.sh'
       - '.github/workflows/verify-breaking-event-watch.yml'
   workflow_dispatch:
@@ -169,6 +170,20 @@ jobs:
         run: |
           bash -n START_TCG_UPDATER_ANDROID.sh
           bash -n INSTALL_GRADE_LEARNING_V135.sh
+          python tablet_runtime_manifest.py --check --compile
+          python - <<'PY'
+          import tablet_runtime_manifest as manifest
+          required = {
+              'runtime_bundle_guard_v143.py','auto_repair_engine.py','auto_update_all.py',
+              'update_releases.py','update_market_prices.py','update_promo_events.py',
+              'update_exchange_rates.py','graded_photo_multi_source.py','multi_channel_agent.py',
+              'search_method_learning.py','collection_learning_hardening_v142.py',
+              'collection_learning_hardening_v144.py','event_source_overlay_v144.py',
+              'event_source_expansion_v145.py',
+          }
+          assert required.issubset(set(manifest.ACTIVE_RUNTIME_FILES)), sorted(required-set(manifest.ACTIVE_RUNTIME_FILES))
+          print('[OK] v145 runtime dependencies present in tablet SSOT manifest')
+          PY
           for required in \
             runtime_bundle_guard_v143.py \
             auto_repair_engine.py \
@@ -184,7 +199,6 @@ jobs:
             collection_learning_hardening_v144.py \
             event_source_overlay_v144.py \
             event_source_expansion_v145.py; do
-            grep -q "$required" START_TCG_UPDATER_ANDROID.sh
             grep -q "$required" INSTALL_GRADE_LEARNING_V135.sh
           done
           grep -q 'test_event_source_expansion_v145.py' INSTALL_GRADE_LEARNING_V135.sh

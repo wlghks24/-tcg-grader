@@ -356,6 +356,11 @@ def patch_runtime_bundle_guard(text: str) -> str:
 
 
 def patch_android_start(text: str) -> str:
+    # v209: Android runtime dependencies are now centralized in
+    # tablet_runtime_manifest.py. The launcher validates that manifest before
+    # starting, so the old duplicated shell dependency list is intentionally gone.
+    if "tablet_runtime_manifest.py --check --compile" in text:
+        return text
     if "  collector_self_healing.py \\\n" not in text:
         text = _replace_once(
             text,

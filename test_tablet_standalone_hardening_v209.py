@@ -4,6 +4,7 @@ from pathlib import Path
 import tempfile,unittest
 import collection_runtime_health as health
 import tablet_runtime_manifest as manifest
+import runtime_optimization_hardening as optimizer
 ROOT=Path(__file__).resolve().parent
 class TabletStandaloneHardeningV209(unittest.TestCase):
  def test_collection_health_recovery(self):
@@ -33,8 +34,10 @@ class TabletStandaloneHardeningV209(unittest.TestCase):
   self.assertIn("verify_remote_candidate()",src); self.assertLess(src.index('verify_remote_candidate "$remote_head"'),src.index("git merge --ff-only origin/main"))
   self.assertIn("git worktree add --detach",src); self.assertIn("TCG_FINAL_SKIP_HEAD_MATCH=1",src)
  def test_manifest_wiring(self):
-  self.assertIn("tablet_runtime_manifest.py --check --compile",(ROOT/"START_TCG_UPDATER_ANDROID.sh").read_text(encoding="utf-8"))
+  launcher=(ROOT/"START_TCG_UPDATER_ANDROID.sh").read_text(encoding="utf-8")
+  self.assertIn("tablet_runtime_manifest.py --check --compile",launcher)
   self.assertIn("tablet_runtime_manifest.py --check --compile",(ROOT/"VERIFY_TABLET_FINAL.sh").read_text(encoding="utf-8"))
+  self.assertEqual(launcher,optimizer.patch_android_start(launcher))
  def test_current_user_verifier(self):
   for n in ("RUN_FULL_VERIFICATION.bat","전체프로그램검사.bat"):
    src=(ROOT/n).read_text(encoding="utf-8"); self.assertIn("verify_current_runtime.py",src); self.assertNotIn("run_repeated_verification.py",src)
