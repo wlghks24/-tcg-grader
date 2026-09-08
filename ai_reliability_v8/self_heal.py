@@ -99,6 +99,7 @@ class SelfHealer:
 
     def _record(self, scope, incident, candidate, passed, evidence):
         with sqlite3.connect(self.db_path) as db:
+            # An incident's failed trial cannot later be rewritten as success.
             db.execute('INSERT OR IGNORE INTO trials VALUES (?,?,?,?,?,?)',
                        (scope,incident,digest(candidate),int(passed),evidence,time.time()))
 
@@ -136,6 +137,7 @@ class SelfHealer:
             if not journal.exists():
                 return True
             pending=json.loads(journal.read_text())
+            # Journal identity and bounds are checked before restoring.
             if pending.get('path') != str(path) or not valid_config(pending.get('before')):
                 return False
             before_bytes=bytes.fromhex(pending['before_hex'])
@@ -143,7 +145,7 @@ class SelfHealer:
                 return False
             current=path.read_bytes()
             if hashlib.sha256(current).hexdigest() not in (pending['before_hash'],pending['after_hash']):
-                return False
+                return False  # concurrent external edit: preserve it
             atomic_write(path,before_bytes)
             journal.unlink()
             return True
@@ -165,6 +167,8 @@ class SelfHealer:
             if baseline.passed is not False or baseline.code != signature or not baseline.evidence:
                 return {'status':'FAILURE_NOT_REPRODUCED'}
             candidates=proposer(dict(config),signature)
+            # Synchronous proposer must be bounded and trusted. Do not accept an
+            # unbounded iterator, executable output or additional config keys.
             if not isinstance(candidates,list) or len(candidates)>32:
                 return {'status':'INVALID_PROPOSAL'}
             history=self.history(project,signature,revision)
