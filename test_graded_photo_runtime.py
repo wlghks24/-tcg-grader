@@ -9,6 +9,7 @@ from pathlib import Path
 from unittest import mock
 
 import tcg_updater
+import tcg_updater_v135
 
 
 ROOT=Path(__file__).resolve().parent
@@ -58,6 +59,47 @@ class GradedPhotoRuntimeTests(unittest.TestCase):
             self.assertEqual(reader.call_count,1)
             self.assertEqual(second['items'][0]['value'],1)
             self.assertEqual(third['items'][0]['value'],1)
+
+    def test_json_cache_hit_is_promoted_to_mru(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root=Path(directory)
+            paths=[root/f'{name}.json' for name in ('a','b','c')]
+            for index,path in enumerate(paths,1):
+                path.write_text(json.dumps({'value':index}),encoding='utf-8')
+            original_limit=tcg_updater.JSON_FILE_CACHE_LIMIT
+            tcg_updater.JSON_FILE_CACHE_LIMIT=2
+            tcg_updater.clear_json_file_cache()
+            original=tcg_updater.safe_read_text
+            try:
+                with mock.patch.object(tcg_updater,'safe_read_text',wraps=original) as reader:
+                    tcg_updater.load_json_file(paths[0],{})
+                    tcg_updater.load_json_file(paths[1],{})
+                    tcg_updater.load_json_file(paths[0],{})  # promote a to MRU
+                    tcg_updater.load_json_file(paths[2],{})  # evicts b, not a
+                    tcg_updater.load_json_file(paths[0],{})
+                    tcg_updater.load_json_file(paths[1],{})  # b must be parsed again
+                self.assertEqual(reader.call_count,4)
+                self.assertIn(str(paths[0].resolve()),tcg_updater.JSON_FILE_CACHE)
+            finally:
+                tcg_updater.JSON_FILE_CACHE_LIMIT=original_limit
+                tcg_updater.clear_json_file_cache()
+
+    def test_v135_dashboard_bundle_cache_reuses_bytes_and_invalidates_on_change(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root=Path(directory)
+            names=('graded_photo_dashboard.js','manual_dual_photo_bridge.js','manual_official_verify_bridge.js','pending_official_candidate_bridge_v161.js')
+            for index,name in enumerate(names):
+                (root/name).write_text(f'// {index}\n',encoding='utf-8')
+            with tcg_updater_v135.DASHBOARD_BUNDLE_LOCK:
+                tcg_updater_v135.DASHBOARD_BUNDLE_CACHE['signature']=None
+                tcg_updater_v135.DASHBOARD_BUNDLE_CACHE['body']=None
+            first=tcg_updater_v135._dashboard_bundle_body(root)
+            second=tcg_updater_v135._dashboard_bundle_body(root)
+            self.assertIs(first,second)
+            (root/names[0]).write_text('// changed\n',encoding='utf-8')
+            third=tcg_updater_v135._dashboard_bundle_body(root)
+            self.assertNotEqual(first,third)
+            self.assertIn(b'changed',third)
 
     def test_json_read_cache_invalidates_after_file_change(self):
         with tempfile.TemporaryDirectory() as directory:

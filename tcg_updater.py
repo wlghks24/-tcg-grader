@@ -46,6 +46,7 @@ SOURCE_STATS_LOCK=threading.Lock()
 JSON_FILE_CACHE_LOCK=threading.RLock()
 JSON_FILE_CACHE={}
 JSON_FILE_CACHE_LIMIT=48
+JSON_FILE_CACHE_MISS=object()
 AUTO_INTERVAL_SECONDS=6*60*60
 PRECOLLECT_LEAD_SECONDS=30*60
 AUTO_FAILURE_RETRY_SECONDS=env_int('TCG_AUTO_FAILURE_RETRY_SECONDS',30*60,5*60,2*60*60)
@@ -304,14 +305,23 @@ def load_json_file(path, fallback):
     try:
         metadata=os.stat(cache_path)
         signature=(metadata.st_dev,metadata.st_ino,metadata.st_mtime_ns,metadata.st_size)
+        cached_value=JSON_FILE_CACHE_MISS
         with JSON_FILE_CACHE_LOCK:
             cached=JSON_FILE_CACHE.get(cache_path)
             if cached and cached[0]==signature:
-                return copy.deepcopy(cached[1])
+                # Keep cache-lock scope constant-time: promote the hit to MRU,
+                # then copy the potentially large JSON snapshot after releasing
+                # the shared lock so concurrent API readers do not queue behind it.
+                JSON_FILE_CACHE.pop(cache_path,None)
+                JSON_FILE_CACHE[cache_path]=cached
+                cached_value=cached[1]
+        if cached_value is not JSON_FILE_CACHE_MISS:
+            return copy.deepcopy(cached_value)
         data=strict_json_loads(safe_read_text(cache_path,max_bytes=MAX_SAFE_FILE_BYTES),max_depth=32,max_nodes=200000)
         if isinstance(fallback,dict) and not isinstance(data,dict):return copy.deepcopy(fallback)
         if isinstance(fallback,list) and not isinstance(data,list):return copy.deepcopy(fallback)
         with JSON_FILE_CACHE_LOCK:
+            JSON_FILE_CACHE.pop(cache_path,None)
             JSON_FILE_CACHE[cache_path]=(signature,data)
             while len(JSON_FILE_CACHE)>JSON_FILE_CACHE_LIMIT:
                 JSON_FILE_CACHE.pop(next(iter(JSON_FILE_CACHE)))

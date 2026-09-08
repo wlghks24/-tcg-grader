@@ -44,3 +44,18 @@ def test_manual_dual_photo_compression_is_async_and_byte_bounded():
     assert "typeof canvas.toBlob==='function'" in source
     assert "blob.size>6_000_000" in source
     assert "await jpegDataUrl(canvas,q)" in source
+
+def test_grade_market_flow_stops_polling_when_hidden():
+    source=(ROOT/'grade_market_flow.js').read_text(encoding='utf-8')
+    assert "function stopTicking()" in source
+    assert "if(document.hidden)stopTicking()" in source
+    assert "tickTimer=setInterval(tick,600)" in source
+
+def test_card_identity_jpeg_encoding_is_async_and_single_pass_on_save():
+    source=(ROOT/'card_identity_recognition.js').read_text(encoding='utf-8')
+    assert "typeof canvas.toBlob==='function'" in source
+    assert "blob.size<=6_000_000" in source
+    assert "data:await canvasJpegDataUrl(dataCanvas)" in source
+    assert "function identityKey(item)" in source
+    assert "for(const item of rows)" in source
+    assert "const rows=localRows(),same=rows.filter" not in source

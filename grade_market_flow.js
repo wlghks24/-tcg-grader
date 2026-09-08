@@ -76,6 +76,10 @@ function updateGrades(force=false){
  }).join('');
 }
 function tick(){mount(); if(el('autoGradeMarketFlow')){applyIdentity();updateGrades(false)}}
-if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',()=>{mount();setInterval(tick,600)});else{mount();setInterval(tick,600)}
+let tickTimer=0;
+function startTicking(){if(tickTimer||document.hidden)return;tickTimer=setInterval(tick,600)}
+function stopTicking(){if(tickTimer){clearInterval(tickTimer);tickTimer=0}}
+function boot(){mount();tick();startTicking();document.addEventListener('visibilitychange',()=>{if(document.hidden)stopTicking();else{tick();startTicking()}})}
+if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',boot,{once:true});else boot()
 window.refreshAutoGradeMarketFlow=()=>{lastIdentity='';lastGrades='';tick()};
 })();

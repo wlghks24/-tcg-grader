@@ -15,6 +15,57 @@ RUNTIME_PATCH = 143
 RUNTIME_DELIVERY_PATCH = 182
 RUNTIME_BUNDLE_STATUS = {"ok": False, "patch": 143, "issues": ["startup audit not completed"]}
 AI_RELIABILITY_BRIDGE = None
+DASHBOARD_BUNDLE_LOCK = threading.Lock()
+DASHBOARD_BUNDLE_CACHE = {"signature": None, "body": None}
+
+
+def _dashboard_bundle_paths(directory):
+    root = core.Path(directory)
+    return (
+        root / 'graded_photo_dashboard.js',
+        root / 'manual_dual_photo_bridge.js',
+        root / 'manual_official_verify_bridge.js',
+        root / 'pending_official_candidate_bridge_v161.js',
+    )
+
+
+def _dashboard_bundle_signature(files):
+    signature = []
+    for path in files:
+        if path.is_symlink() or path.parent.is_symlink() or not path.is_file():
+            raise FileNotFoundError(str(path))
+        stat = path.stat()
+        signature.append((stat.st_dev, stat.st_ino, stat.st_mtime_ns, stat.st_size))
+    return tuple(signature)
+
+
+def _dashboard_bundle_body(directory):
+    files = _dashboard_bundle_paths(directory)
+    for _attempt in range(2):
+        signature = _dashboard_bundle_signature(files)
+        with DASHBOARD_BUNDLE_LOCK:
+            if DASHBOARD_BUNDLE_CACHE.get("signature") == signature:
+                cached = DASHBOARD_BUNDLE_CACHE.get("body")
+                if isinstance(cached, bytes):
+                    return cached
+        text = (
+            files[0].read_text(encoding='utf-8')
+            + '\n\n/* v158 dual-photo/eight-zone bridge: served inline by v135 */\n'
+            + files[1].read_text(encoding='utf-8')
+            + '\n\n/* manual official verification bridge */\n'
+            + files[2].read_text(encoding='utf-8')
+            + '\n\n/* pending official candidate verification v161 */\n'
+            + files[3].read_text(encoding='utf-8')
+            + '\n'
+        )
+        if _dashboard_bundle_signature(files) != signature:
+            continue
+        body = text.encode('utf-8')
+        with DASHBOARD_BUNDLE_LOCK:
+            DASHBOARD_BUNDLE_CACHE["signature"] = signature
+            DASHBOARD_BUNDLE_CACHE["body"] = body
+        return body
+    raise OSError("dashboard bundle changed during read")
 
 
 class Handler(core.Handler):
@@ -41,24 +92,9 @@ class Handler(core.Handler):
         blocked or served from a stale cache.
         """
         try:
-            base = core.Path(self.directory) / 'graded_photo_dashboard.js'
-            dual_bridge = core.Path(self.directory) / 'manual_dual_photo_bridge.js'
-            official_bridge = core.Path(self.directory) / 'manual_official_verify_bridge.js'
-            pending_bridge = core.Path(self.directory) / 'pending_official_candidate_bridge_v161.js'
-            files = (base, dual_bridge, official_bridge, pending_bridge)
-            if any(path.is_symlink() or path.parent.is_symlink() or not path.is_file() for path in files):
-                return self.json({'ok': False, 'error': '등급사진 대시보드/앞뒤사진 브리지 파일 오류'}, 404)
-            text = (
-                base.read_text(encoding='utf-8')
-                + '\n\n/* v158 dual-photo/eight-zone bridge: served inline by v135 */\n'
-                + dual_bridge.read_text(encoding='utf-8')
-                + '\n\n/* manual official verification bridge */\n'
-                + official_bridge.read_text(encoding='utf-8')
-                + '\n\n/* pending official candidate verification v161 */\n'
-                + pending_bridge.read_text(encoding='utf-8')
-                + '\n'
-            )
-            body = text.encode('utf-8')
+            body = _dashboard_bundle_body(self.directory)
+        except FileNotFoundError:
+            return self.json({'ok': False, 'error': '등급사진 대시보드/앞뒤사진 브리지 파일 오류'}, 404)
         except (OSError, UnicodeError, ValueError):
             return self.json({'ok': False, 'error': '등급사진 대시보드 로드 오류'}, 500)
         self.send_response(200)
@@ -124,6 +160,7 @@ class Handler(core.Handler):
                 'manual_official_proof_raw_calibration': False,
                 'manual_dual_photo_ui': True,
                 'manual_dual_photo_bridge_inline': True,
+                'dashboard_bundle_stat_cache': True,
                 'manual_dual_photo_bridge_version': 158,
                 'graded_photo_eight_zone_ui': True,
                 'existing_photo_revalidation': True,
