@@ -36,6 +36,9 @@ ALLOWED = {
     "kobis.or.kr", "www.kobis.or.kr",
     "daewonmedia.com", "www.daewonmedia.com",
     "seoulmediacomics.com", "www.seoulmediacomics.com",
+    "tw.portal-pokemon.com", "hk.portal-pokemon.com", "sg.portal-pokemon.com",
+    "my.portal-pokemon.com", "ph.portal-pokemon.com", "th.portal-pokemon.com",
+    "id.portal-pokemon.com", "pokemongo.com", "www.pokemongo.com",
 }
 OFFICIAL_SOCIAL_HOSTS = {"x.com", "www.x.com"}
 OFFICIAL_SOCIAL_POSTS = {("smg_comic", "2081560207646441942")}
@@ -51,12 +54,18 @@ INDEXES = (
     ("JP", "원피스 카드", "https://one-piece.com/news/index.html"),
     ("US", "원피스 카드", "https://en.onepiece-cardgame.com/events/"),
     ("US", "포켓몬 카드", "https://www.pokemon.com/us/play-pokemon"),
+    ("ASIA", "포켓몬 카드", "https://hk.portal-pokemon.com/30th/?lang=en"),
+    ("ASIA", "포켓몬 카드", "https://sg.portal-pokemon.com/30th/"),
+    ("ASIA", "포켓몬 카드", "https://th.portal-pokemon.com/30th/?lang=en"),
+    ("ASIA", "포켓몬 카드", "https://id.portal-pokemon.com/30th/?lang=en"),
     ("JP", "나루토 카드", "https://www.naruto-cardgame.com/jp/"),
     ("JP", "나루토 카드", "https://naruto-official.com/news/"),
     ("US", "나루토 카드", "https://www.naruto-cardgame.com/en/"),
 )
 GAMES = ("포켓몬 카드", "원피스 카드", "나루토 카드")
-REGIONS = ("KR", "JP", "US")
+CORE_REGIONS = ("KR", "JP", "US")
+REGIONS = CORE_REGIONS + ("ASIA",)
+EVENT_SCOPE_PAIRS = tuple((game, region) for game in GAMES for region in CORE_REGIONS) + (("포켓몬 카드", "ASIA"),)
 DATE_PRECISIONS = {"day", "month", "season", "start-only", "unannounced"}
 OFFICIAL_SOURCE_REPLACEMENTS = {
     "https://pokemonkorea.co.kr/2026_battle_tournament3":
@@ -142,6 +151,26 @@ REGIONAL_MOVIE_TRACKERS = KR_MOVIE_TRACKERS + (
 # 2026-08-25에 실제 공식 페이지에서 대조한 최소 사실만 유지한다.
 # 월/계절/시작일만 발표된 정보에서 내부 검토 범위를 실제 확정일처럼 표시하지 않는다.
 OFFICIAL_VERIFIED_SEEDS = (
+    {
+        "game": "포켓몬 카드", "region": "ASIA", "category": "promo",
+        "name_ko": "Pokémon RUN 30 완주자 피카츄 프로모 카드",
+        "name_native": "Pokémon RUN Pikachu at Pokémon RUN 30!",
+        "start_date": "2026-10-03", "end_date": "2027-01-24", "claim_deadline": "2027-01-24",
+        "date_precision": "day",
+        "reward": "Pokémon RUN 30 코스를 완주한 검증 참가자에게 Pokémon RUN Pikachu 프로모 카드 1장 지급",
+        "condition": "Pokémon RUN 30 등록 참가자가 각 개최지 코스를 완주해야 합니다. 프로모 카드는 양도·현금교환 불가이며 향후 다른 행사에서 배포될 수 있습니다.",
+        "location": "필리핀·대만·싱가포르·말레이시아·인도네시아·태국·홍콩",
+        "status": "예정",
+        "source": "https://tw.portal-pokemon.com/30th/topics/20260902_02/?lang=en",
+        "verification_source": "https://pokemongo.com/news/pokemon-run-30-2026",
+        "source_grade": "official",
+        "event_scope": "official_asia_participation_promo",
+        "reward_watch": True,
+        "must_show_candidate": True,
+        "region_members": ["PH", "TW", "SG", "MY", "ID", "TH", "HK"],
+        "excluded_regions": ["KR"],
+        "korea_included": False,
+    },
     {
         "game": "원피스 카드", "region": "KR", "category": "collaboration",
         "name_ko": "JUMP SHOP in SEOUL 제3탄 · 원피스 포함 공식 팝업",
@@ -269,17 +298,19 @@ OUTSIDE_TARGET_REGION = re.compile(
     re.I,
 )
 TARGET_REGION_HINTS = {
-    "KR": re.compile(r"\b(?:south\s*korea|republic\s+of\s+korea|seoul|busan|seongnam)\b|대한민국|한국|서울|부산|성남", re.I),
+    "KR": re.compile(r"\b(?:south\s+korea|republic\s+of\s+korea|seoul|busan|seongnam)\b|대한민국|한국|서울|부산|성남", re.I),
     "JP": re.compile(r"\b(?:japan|tokyo|osaka|kyoto|nagoya|yokohama|awaji|shinobi-zato)\b|일본|東京|大阪|名古屋|横浜|淡路", re.I),
     "US": re.compile(r"\b(?:u\.?s\.?a\.?|united\s+states|new\s+york|san\s+francisco|dallas|orlando|anaheim|los\s+angeles)\b|미국|뉴욕|샌프란시스코|댈러스|올랜도", re.I),
+    "ASIA": re.compile(r"\b(?:asia|taiwan|taichung|kaohsiung|new\s+taipei|hong\s+kong|singapore|malaysia|kuala\s+lumpur|philippines|manila|thailand|bangkok|indonesia|jakarta)\b|아시아|대만|타이중|가오슝|신베이|홍콩|싱가포르|말레이시아|쿠알라룸푸르|필리핀|마닐라|태국|방콕|인도네시아|자카르타", re.I),
 }
 
 TIMEOUT_SECONDS = env_int('TCG_HTTP_TIMEOUT',20,5,60)
 MAX_DISCOVERED_PER_INDEX = 2
 EVENT_WORDS = re.compile(
     r"이벤트|행사|배틀|교류회|챔피언|토너먼트|프로모|팝업|팝업스토어|점프샵|JUMP SHOP|챌린지|도전|개최|특전|배포|"
-    r"イベント|バトル|キャンペーン|チャンピオン|チャレンジ|開催|特典|配布|"
-    r"event|battle|championship|tournament|promo|league|cup|tutorial|fest|comic con|game night|night|giveaway|teaching session|collab|collaboration|convention|expo|challenge|special mission|distribution",
+    r"러닝|달리기|완주|완주자|참가자|참가보상|참가특전|프로모카드|"
+    r"イベント|バトル|キャンペーン|チャンピオン|チャレンジ|開催|特典|配布|参加|完走|"
+    r"event|battle|championship|tournament|promo|league|cup|tutorial|fest|comic con|game night|night|giveaway|teaching session|collab|collaboration|convention|expo|challenge|special mission|distribution|fun run|pokemon run|pokémon run|runner|participant|completion|finisher|participation reward|promo card",
     re.I,
 )
 
@@ -498,7 +529,7 @@ def normalize_event_dates(item: dict) -> dict:
 
 def event_region(default: str, *values: object) -> str | None:
     evidence = " ".join(str(value or "") for value in values)
-    if OUTSIDE_TARGET_REGION.search(evidence):
+    if default != "ASIA" and OUTSIDE_TARGET_REGION.search(evidence):
         return None
     found = {region for region, pattern in TARGET_REGION_HINTS.items() if pattern.search(evidence)}
     if len(found) == 1:
@@ -672,22 +703,21 @@ def coverage_summary(items: list[dict]) -> dict:
     movies = {(str(item.get("game")), str(item.get("region")))
               for item in items if item.get("category") == "movie"}
     matrix = []
-    for game in GAMES:
-        for region in REGIONS:
-            count = sum(item.get("game") == game and item.get("region") == region for item in items)
-            movie_count = sum(item.get("game") == game and item.get("region") == region
-                              and item.get("category") == "movie" for item in items)
-            matrix.append({"game": game, "region": region, "official_source_count": sum(
-                source_game == game and source_region == region
-                for source_region, source_game, _ in INDEXES),
-                "official_item_count": count, "movie_item_count": movie_count,
-                "status": "공식 정보 확인" if count else "공식 발표 확인 중"})
-    return {"expected_game_region_pairs": len(GAMES) * len(REGIONS),
+    for game, region in EVENT_SCOPE_PAIRS:
+        count = sum(item.get("game") == game and item.get("region") == region for item in items)
+        movie_count = sum(item.get("game") == game and item.get("region") == region
+                          and item.get("category") == "movie" for item in items)
+        matrix.append({"game": game, "region": region, "official_source_count": sum(
+            source_game == game and source_region == region
+            for source_region, source_game, _ in INDEXES),
+            "official_item_count": count, "movie_item_count": movie_count,
+            "status": "공식 정보 확인" if count else "공식 발표 확인 중"})
+    return {"expected_game_region_pairs": len(EVENT_SCOPE_PAIRS),
             "watched_game_region_pairs": len(watched), "covered_game_region_pairs": len(actual),
             "movie_game_region_pairs": len(movies),
-            "missing_source_pairs": [f"{game}:{region}" for game in GAMES for region in REGIONS
+            "missing_source_pairs": [f"{game}:{region}" for game, region in EVENT_SCOPE_PAIRS
                                      if (game, region) not in watched],
-            "missing_movie_pairs": [f"{game}:{region}" for game in GAMES for region in REGIONS
+            "missing_movie_pairs": [f"{game}:{region}" for game, region in EVENT_SCOPE_PAIRS
                                     if (game, region) not in movies],
             "matrix": matrix}
 
@@ -697,7 +727,7 @@ def social_topic_expected_keys() -> list[str]:
     return [
         f"{game}/{region}/{topic}"
         for game in GAMES
-        for region in REGIONS
+        for region in CORE_REGIONS
         for topic in multi_route_event_discovery.COVERAGE_TOPICS
     ]
 
@@ -798,14 +828,14 @@ def discover(index: tuple[str, str, str]) -> tuple[list[dict], list[str]]:
                 "game": game,
                 "region": actual_region,
                 "category": "collaboration" if EVENT_WORDS.search(native) and re.search(r"교류|collab|champion|チャンピオン|fest|comic con|night|convention|expo", native, re.I) else "promo",
-                "name_ko": native if actual_region == "KR" else f"{'일본' if actual_region == 'JP' else '미국'} 공식 행사 · {native}",
+                "name_ko": native if actual_region == "KR" else f"{ {'JP':'일본','US':'미국','ASIA':'아시아'}[actual_region] } 공식 행사 · {native}",
                 "name_native": native,
                 "start_date": start,
                 "end_date": end,
                 "claim_deadline": end,
                 "reward": "공식 행사 안내에서 참가·입상 보상 확인",
                 "condition": "공식 안내의 참가 자격·접수 일정·현장 조건을 확인하세요.",
-                "location": {"KR": "한국 공식 개최점", "JP": "일본 공식 개최점", "US": "미국 공식 개최점"}[actual_region],
+                "location": {"KR": "한국 공식 개최점", "JP": "일본 공식 개최점", "US": "미국 공식 개최점", "ASIA": "아시아 공식 개최지"}[actual_region],
                 "status": "진행 중" if dt.date.fromisoformat(start) <= dt.date.today() else "예정",
                 "source": target,
                 "source_grade": "official",
