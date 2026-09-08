@@ -338,7 +338,7 @@ def observe_search_outcome(
         "official": int(max(0, _safe_float(stats.get("official"), official_count))),
         "errors": int(max(0, _safe_float(stats.get("errors"), 0))),
         "empty": int(max(0, _safe_float(stats.get("empty"), 0))),
-        "learned_score": max(-5.0, min(10.0, _safe_float(stats.get("learned_score"), stats.get("score")))),
+        "learned_score": max(-5.0, min(10.0, _safe_float(stats.get("learned_score"), _safe_float(stats.get("score"), 0.0)))),
         "verified_gap_priority": max(0.0, min(10.0, _safe_float(verified_gap_priority, 0.0))),
         "coverage_gap_score": max(0.0, min(10.0, _safe_float(coverage_gap_score, 0.0))),
         "outcome": outcome,
