@@ -78,6 +78,7 @@ class ProfileLearner:
             for case in cases:
                 metrics=[]
                 for profile in (champion,candidate):
+                    # Fresh copies prevent evaluator/proposer mutation of registry/cases.
                     value=await evaluate(profile,json.loads(json.dumps(self.profiles[profile])),json.loads(json.dumps(case)))
                     if not metric_valid(value):
                         raise ValueError('INVALID_EVALUATION_EVIDENCE')
@@ -89,6 +90,8 @@ class ProfileLearner:
             rows=await asyncio.wait_for(compare(),budget)
         except asyncio.TimeoutError:
             return {'status':'EVALUATION_TIMEOUT','selected':champion}
+        # Every case must retain quality, pass a hard gate, and stay within
+        # 10% latency overhead. Improvement must hold separately in each split.
         no_regression=all(r['candidate']['hard_gate'] is True and r['candidate']['score']>=r['baseline']['score'] and r['candidate']['latency_ms']<=r['baseline']['latency_ms']*1.1 for r in rows)
         gains={split:sum(r['candidate']['score']-r['baseline']['score'] for r in rows if r['split']==split)/counts[split] for split in counts}
         eligible=no_regression and all(g>=min_gain for g in gains.values())
