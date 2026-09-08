@@ -54,6 +54,15 @@ GAMES = {
     },
 }
 REGIONS = {"KR": "ko", "JP": "ja", "US": "en"}
+REGION_LANG = {**REGIONS, "ASIA": "en"}
+SUPPLEMENTARY_DISCOVERY_CELLS = (("포켓몬 카드", "ASIA"),)
+SUPPLEMENTARY_COVERAGE_TOPICS = ("event", "promo", "anniversary", "entry", "access")
+REGION_QUERY_TERMS = {
+    "ASIA": (
+        "Asia", "Taiwan", "Hong Kong", "Singapore", "Malaysia",
+        "Philippines", "Thailand", "Indonesia",
+    ),
+}
 
 QUERY_FAMILIES = {
     "ko": {
@@ -108,10 +117,10 @@ QUERY_FAMILIES = {
     },
     "en": {
         "release": "release new set booster starter preorder reprint",
-        "event": "event challenge special mission tournament pop-up festival demo store championship",
+        "event": "event challenge special mission tournament pop-up festival demo store championship fun run pokemon run pokémon run finisher participant",
         "tournament": "tournament league cup championship regional worlds store battle",
         "popup": "pop-up popup store festival expo convention exhibition demo card shop",
-        "promo": "promo promotional card giveaway distribution exclusive campaign",
+        "promo": "promo promotional card giveaway distribution exclusive campaign finisher reward participation reward promo card",
         "collab": "collaboration collab cafe retailer partnership brand baseball",
         "movie": "movie film cinema screening premiere theatrical bonus admission promo",
         "reprint": "reprint re-release restock additional print rerun",
@@ -123,7 +132,7 @@ QUERY_FAMILIES = {
         "deadline": "deadline apply-by registration-closes application-period entry-period closing-date",
         "status_update": "change cancelled canceled postponed rescheduled schedule-change time-change venue-change location-change",
         "rules": "rules banned restricted restriction errata legality legal-date regulation rulebook floor-rules",
-        "access": "eligibility check-in spectator pass badge waitlist interest-list player-ID deck-list entry-fee capacity RK9 PLAYGO",
+        "access": "eligibility check-in spectator pass badge waitlist interest-list player-ID deck-list entry-fee capacity RK9 PLAYGO participant runner finisher completion",
         "results": "tournament-results event-results match-results final-standings top-finishers winning-deck champion-deck",
         "purchase_policy": "lottery-sale purchase-limit sales-limit one-item-per-person identity-verification virtual-queue purchase-ticket purchase-voucher",
         "service_status": "maintenance service-outage service-unavailable disruption login-issue incident resolved",
@@ -156,6 +165,16 @@ OFFICIAL_ROUTES = {
         "https://www.pokemon.com/us/play-pokemon/pokemon-events/championship-series-event-results",
         "https://support.pokemon.com/hc/en-us",
         "https://support.pokemon.com/hc/en-us/categories/115000426053-Pok%C3%A9mon-Trading-Card-Game",
+    ),
+    ("포켓몬 카드", "ASIA"): (
+        "https://tw.portal-pokemon.com/30th/?lang=en",
+        "https://hk.portal-pokemon.com/30th/?lang=en",
+        "https://sg.portal-pokemon.com/30th/",
+        "https://my.portal-pokemon.com/30th/",
+        "https://ph.portal-pokemon.com/30th/",
+        "https://th.portal-pokemon.com/30th/?lang=en",
+        "https://id.portal-pokemon.com/30th/?lang=en",
+        "https://pokemongo.com/news/",
     ),
     ("원피스 카드", "KR"): (
         "https://onepiece-cardgame.kr/events.do",
@@ -315,7 +334,7 @@ def _parse_pubdate(value: str | None) -> str | None:
 
 def _query(game: str, region: str, *, scoped_hosts: tuple[str, ...] = (), topic: str | None = None,
            extra_terms: tuple[str, ...] = ()) -> str:
-    lang = REGIONS[region]
+    lang = REGION_LANG[region]
     names = GAMES[game][lang][:2]
     name_expr = " OR ".join(f'"{x}"' for x in names)
     families = QUERY_FAMILIES[lang]
@@ -327,10 +346,14 @@ def _query(game: str, region: str, *, scoped_hosts: tuple[str, ...] = (), topic:
     learned = ""
     if extra_terms:
         learned = " OR (" + " OR ".join(f'\"{term}\"' if " " in term else term for term in extra_terms[:6]) + ")"
+    region_expr = ""
+    region_terms = REGION_QUERY_TERMS.get(region, ())
+    if region_terms:
+        region_expr = " (" + " OR ".join(f'"{term}"' if " " in term else term for term in region_terms) + ")"
     site_expr = ""
     if scoped_hosts:
         site_expr = " (" + " OR ".join(f"site:{host}" for host in scoped_hosts[:8]) + ")"
-    return f"({name_expr}) ({terms}{learned}){site_expr}"
+    return f"({name_expr}) ({terms}{learned}){region_expr}{site_expr}"
 
 
 def _bing_one(game: str, region: str, route: str, hosts: tuple[str, ...] = (), topic: str | None = None,
@@ -471,6 +494,21 @@ def _ddg_one(game: str, region: str, topic: str | None = None,
         return [], _error_summary(f"DDG fallback {game}/{region}", exc)
 
 
+def _supplementary_topic_coverage(rows: list[dict], *, verified_only: bool = False) -> dict[str, int]:
+    return {
+        f"{game}/{region}/{topic}": sum(
+            1 for row in rows
+            if isinstance(row, dict)
+            and row.get("game") == game
+            and row.get("region") == region
+            and row.get("search_topic") == topic
+            and (not verified_only or row.get("verified") is True)
+        )
+        for game, region in SUPPLEMENTARY_DISCOVERY_CELLS
+        for topic in SUPPLEMENTARY_COVERAGE_TOPICS
+    }
+
+
 def _topic_coverage(rows: list[dict], *, verified_only: bool = False) -> dict[str, int]:
     """Return game/region/topic coverage without letting discovery-only hits hide gaps.
 
@@ -512,6 +550,20 @@ def collect_all() -> tuple[list[dict], list[str], dict]:
             if press_hosts: jobs.append(("bing_press", _bing_one, (game, region, "press", press_hosts)))
             for url in OFFICIAL_ROUTES.get((game, region), ()):
                 jobs.append(("official_anchor", _official_scan_one, (game, region, url)))
+
+    # Keep the core 3x3 learner matrix stable while adding a bounded Pokémon Asia
+    # discovery lane for participation/finisher promos such as Pokémon RUN 30.
+    for game, region in SUPPLEMENTARY_DISCOVERY_CELLS:
+        official_hosts = tuple(dict.fromkeys(
+            _host(url) for url in OFFICIAL_ROUTES.get((game, region), ()) if _host(url)
+        ))
+        for topic in SUPPLEMENTARY_COVERAGE_TOPICS:
+            jobs.append(("bing_asia_topic", _bing_one, (game, region, "topic", (), topic, ())))
+        jobs.append(("bing_asia_social", _bing_one, (game, region, "social", SOCIAL_DISCOVERY_HOSTS)))
+        if official_hosts:
+            jobs.append(("bing_asia_official", _bing_one, (game, region, "official", official_hosts)))
+        for url in OFFICIAL_ROUTES.get((game, region), ()):
+            jobs.append(("official_asia_anchor", _official_scan_one, (game, region, url)))
 
     rows = []; errors = []; by_route = {}; successes = 0
     is_android = 'com.termux' in os.environ.get('PREFIX', '') or 'ANDROID_ROOT' in os.environ
@@ -561,6 +613,42 @@ def collect_all() -> tuple[list[dict], list[str], dict]:
             coverage[key] = sum(1 for row in rows if row.get("game") == game and row.get("region") == region)
     topic_coverage = _topic_coverage(rows)
     verified_topic_coverage = _topic_coverage(rows, verified_only=True)
+    supplementary_topic_coverage = _supplementary_topic_coverage(rows)
+    supplementary_verified_topic_coverage = _supplementary_topic_coverage(rows, verified_only=True)
+
+    # The supplementary Asia lane does not train the core gap learner. It still
+    # gets an independent DDG retry when Bing/direct official scans have not
+    # produced verified coverage for a watched participation-promo topic.
+    supplementary_missing = [
+        key for key, count in supplementary_verified_topic_coverage.items() if count == 0
+    ]
+    if supplementary_missing:
+        supplementary_fallback_jobs = [tuple(key.split("/", 2)) for key in supplementary_missing]
+        with concurrent.futures.ThreadPoolExecutor(max_workers=workers) as pool:
+            future_map = {
+                pool.submit(_ddg_one, game, region, topic, ()): (game, region, topic)
+                for game, region, topic in supplementary_fallback_jobs
+            }
+            for future in concurrent.futures.as_completed(future_map):
+                stat = by_route.setdefault(
+                    "ddg_asia_fallback",
+                    {"queries": 0, "successes": 0, "results": 0, "errors": 0},
+                )
+                stat["queries"] += 1
+                try:
+                    part, error = future.result()
+                except Exception as exc:
+                    part, error = [], f"DDG ASIA fallback: {type(exc).__name__}"
+                if error:
+                    stat["errors"] += 1
+                    errors.append(error)
+                else:
+                    stat["successes"] += 1
+                    successes += 1
+                stat["results"] += len(part)
+                rows.extend(part)
+        supplementary_topic_coverage = _supplementary_topic_coverage(rows)
+        supplementary_verified_topic_coverage = _supplementary_topic_coverage(rows, verified_only=True)
     # Only verified-source coverage changes the learner's hit/miss streak. Discovery
     # candidates can guide human/independent verification but cannot teach a gap as solved.
     learner.observe(verified_topic_coverage)
@@ -583,6 +671,15 @@ def collect_all() -> tuple[list[dict], list[str], dict]:
         "missing_topic_cells": [key for key, value in topic_coverage.items() if value == 0],
         "verified_covered_topic_cells": sum(1 for value in verified_topic_coverage.values() if value > 0),
         "verified_missing_topic_cells": [key for key, value in verified_topic_coverage.items() if value == 0],
+        "supplementary_discovery_cells": [f"{game}/{region}" for game, region in SUPPLEMENTARY_DISCOVERY_CELLS],
+        "supplementary_topic_coverage": supplementary_topic_coverage,
+        "supplementary_verified_topic_coverage": supplementary_verified_topic_coverage,
+        "supplementary_missing_topic_cells": [
+            key for key, value in supplementary_topic_coverage.items() if value == 0
+        ],
+        "supplementary_verified_missing_topic_cells": [
+            key for key, value in supplementary_verified_topic_coverage.items() if value == 0
+        ],
         "gap_learning_coverage_basis": "verified-source-only",
         "gap_learning": learner.report(),
         "verified_events_learned_this_run": learned_verified,
