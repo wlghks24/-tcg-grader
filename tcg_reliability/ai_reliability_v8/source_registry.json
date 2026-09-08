@@ -1,0 +1,927 @@
+{
+  "schema_version": 6,
+  "sources": [
+    {
+      "id": "pokemon_kr",
+      "title": "포켓몬 카드 한국 공식",
+      "url": "https://pokemoncard.co.kr/main",
+      "owner_group": "pokemon",
+      "projects": [
+        "instagram_card",
+        "tcg_grader"
+      ],
+      "kinds": [
+        "identity",
+        "release",
+        "event"
+      ],
+      "regions": [
+        "KR"
+      ],
+      "subjects": [
+        "pokemon"
+      ],
+      "discovery_status": "PAGE_READ",
+      "checked_date": "2026-09-07",
+      "note": "원문 세부 항목과 날짜를 다시 검증해야 함"
+    },
+    {
+      "id": "pokemon_jp",
+      "title": "포켓몬 카드 일본 공식",
+      "url": "https://www.pokemon-card.com/card-search/",
+      "owner_group": "pokemon",
+      "projects": [
+        "instagram_card",
+        "tcg_grader"
+      ],
+      "kinds": [
+        "identity"
+      ],
+      "regions": [
+        "JP"
+      ],
+      "subjects": [
+        "pokemon"
+      ],
+      "discovery_status": "PAGE_READ",
+      "checked_date": "2026-09-07",
+      "note": "원문 세부 항목과 날짜를 다시 검증해야 함"
+    },
+    {
+      "id": "onepiece_kr",
+      "title": "원피스 카드 한국 공식",
+      "url": "https://onepiece-cardgame.kr/cardlist.do",
+      "owner_group": "bandai",
+      "projects": [
+        "instagram_card",
+        "tcg_grader"
+      ],
+      "kinds": [
+        "identity",
+        "release"
+      ],
+      "regions": [
+        "KR"
+      ],
+      "subjects": [
+        "onepiece"
+      ],
+      "discovery_status": "PAGE_READ",
+      "checked_date": "2026-09-07",
+      "note": "원문 세부 항목과 날짜를 다시 검증해야 함"
+    },
+    {
+      "id": "onepiece_en",
+      "title": "원피스 카드 영문 공식",
+      "url": "https://en.onepiece-cardgame.com/cardlist/",
+      "owner_group": "bandai",
+      "projects": [
+        "instagram_card",
+        "tcg_grader"
+      ],
+      "kinds": [
+        "identity"
+      ],
+      "regions": [
+        "US",
+        "EU",
+        "OC"
+      ],
+      "subjects": [
+        "onepiece"
+      ],
+      "discovery_status": "PAGE_READ",
+      "checked_date": "2026-09-07",
+      "note": "원문 세부 항목과 날짜를 다시 검증해야 함"
+    },
+    {
+      "id": "onepiece_products",
+      "title": "원피스 카드 공식 상품",
+      "url": "https://en.onepiece-cardgame.com/products/",
+      "owner_group": "bandai",
+      "projects": [
+        "instagram_card",
+        "tcg_grader"
+      ],
+      "kinds": [
+        "release"
+      ],
+      "regions": [
+        "US",
+        "EU",
+        "OC"
+      ],
+      "subjects": [
+        "onepiece"
+      ],
+      "discovery_status": "SEARCH_ONLY",
+      "checked_date": "2026-09-07",
+      "note": "원문 세부 항목과 날짜를 다시 검증해야 함"
+    },
+    {
+      "id": "naruto_official",
+      "title": "나루토 공식 뉴스",
+      "url": "https://naruto-official.com/en/news",
+      "owner_group": "naruto_official",
+      "projects": [
+        "anime",
+        "instagram_card"
+      ],
+      "kinds": [
+        "release",
+        "event",
+        "schedule"
+      ],
+      "regions": [
+        "JP",
+        "GLOBAL"
+      ],
+      "subjects": [
+        "naruto"
+      ],
+      "discovery_status": "PAGE_READ",
+      "checked_date": "2026-09-07",
+      "note": "목록에 개별 기사가 없을 수 있음. 제조사 불명의 나루토 카드를 이 사이트만으로 인증하지 않음"
+    },
+    {
+      "id": "psa_cert",
+      "title": "PSA 인증번호 확인",
+      "url": "https://www.psacard.com/cert",
+      "owner_group": "psa",
+      "projects": [
+        "tcg_grader",
+        "instagram_card"
+      ],
+      "kinds": [
+        "certificate"
+      ],
+      "regions": [
+        "GLOBAL"
+      ],
+      "subjects": [
+        "cards"
+      ],
+      "discovery_status": "PAGE_READ",
+      "checked_date": "2026-09-07",
+      "note": "등록 정보 확인이며 사진 속 실물의 진품 보장이나 예상 등급 인증이 아님"
+    },
+    {
+      "id": "psa_auction",
+      "title": "PSA 경매 결과",
+      "url": "https://www.psacard.com/auctionprices",
+      "owner_group": "psa",
+      "projects": [
+        "tcg_grader",
+        "instagram_card"
+      ],
+      "kinds": [
+        "completed_sale"
+      ],
+      "regions": [
+        "GLOBAL"
+      ],
+      "subjects": [
+        "cards"
+      ],
+      "discovery_status": "PAGE_READ",
+      "checked_date": "2026-09-07",
+      "note": "원 경매/판매처 transaction ID로 중복 제거. 비용·낙찰/실수령 기준 구분"
+    },
+    {
+      "id": "beckett_cert",
+      "title": "Beckett 인증 조회",
+      "url": "https://www.beckett.com/grading/card-lookup",
+      "owner_group": "beckett",
+      "projects": [
+        "tcg_grader",
+        "instagram_card"
+      ],
+      "kinds": [
+        "certificate"
+      ],
+      "regions": [
+        "GLOBAL"
+      ],
+      "subjects": [
+        "cards"
+      ],
+      "discovery_status": "OPEN_FAILED",
+      "checked_date": "2026-09-07",
+      "note": "원문 세부 항목과 날짜를 다시 검증해야 함"
+    },
+    {
+      "id": "cgc_home",
+      "title": "CGC Cards 공식 인증 안내",
+      "url": "https://www.cgccards.com/",
+      "owner_group": "cgc",
+      "projects": [
+        "tcg_grader",
+        "instagram_card"
+      ],
+      "kinds": [
+        "certificate"
+      ],
+      "regions": [
+        "GLOBAL"
+      ],
+      "subjects": [
+        "cards"
+      ],
+      "discovery_status": "PAGE_READ",
+      "checked_date": "2026-09-07",
+      "note": "안내 페이지 확인. 실제 인증번호 조회는 별도로 필요"
+    },
+    {
+      "id": "cgc_cert",
+      "title": "CGC 인증 조회 후보",
+      "url": "https://www.cgccards.com/certlookup/",
+      "owner_group": "cgc",
+      "projects": [
+        "tcg_grader",
+        "instagram_card"
+      ],
+      "kinds": [
+        "certificate"
+      ],
+      "regions": [
+        "GLOBAL"
+      ],
+      "subjects": [
+        "cards"
+      ],
+      "discovery_status": "OPEN_FAILED",
+      "checked_date": "2026-09-07",
+      "note": "원문 세부 항목과 날짜를 다시 검증해야 함"
+    },
+    {
+      "id": "tag_cert",
+      "title": "TAG 인증 조회 후보",
+      "url": "https://taggrading.com/pages/verify",
+      "owner_group": "tag",
+      "projects": [
+        "tcg_grader",
+        "instagram_card"
+      ],
+      "kinds": [
+        "certificate"
+      ],
+      "regions": [
+        "GLOBAL"
+      ],
+      "subjects": [
+        "cards"
+      ],
+      "discovery_status": "OPEN_FAILED",
+      "checked_date": "2026-09-07",
+      "note": "원문 세부 항목과 날짜를 다시 검증해야 함"
+    },
+    {
+      "id": "ebay_research",
+      "title": "eBay Product Research",
+      "url": "https://www.ebay.com/sellercenter/growth/ebay-research-tools",
+      "owner_group": "ebay",
+      "projects": [
+        "tcg_grader",
+        "instagram_card"
+      ],
+      "kinds": [
+        "completed_sale",
+        "market_reference"
+      ],
+      "regions": [
+        "GLOBAL"
+      ],
+      "subjects": [
+        "cards"
+      ],
+      "discovery_status": "PAGE_READ",
+      "checked_date": "2026-09-07",
+      "note": "안내 페이지 확인. 실제 개별 거래 접근/로그인 별도. 공개 호가를 거래 완료가로 바꾸지 않음"
+    },
+    {
+      "id": "tcgplayer",
+      "title": "TCGplayer Market Price API 안내",
+      "url": "https://docs.tcgplayer.com/reference/pricing_getmarketpricebyproductconditionid-1",
+      "owner_group": "tcgplayer",
+      "projects": [
+        "tcg_grader",
+        "instagram_card"
+      ],
+      "kinds": [
+        "market_reference"
+      ],
+      "regions": [
+        "US"
+      ],
+      "subjects": [
+        "cards"
+      ],
+      "discovery_status": "PAGE_READ",
+      "checked_date": "2026-09-07",
+      "note": "API 권한 별도. Market Price 집계는 개별 완료 거래가 아님. eBay 관련 재인용은 동일 lineage 처리"
+    },
+    {
+      "id": "dart",
+      "title": "금융감독원 OpenDART",
+      "url": "https://opendart.fss.or.kr/guide/main.do?apiGrpCd=DS001",
+      "owner_group": "fss",
+      "projects": [
+        "stock"
+      ],
+      "kinds": [
+        "disclosure",
+        "financial_statement"
+      ],
+      "regions": [
+        "KR"
+      ],
+      "subjects": [
+        "stocks"
+      ],
+      "discovery_status": "PAGE_READ",
+      "checked_date": "2026-09-07",
+      "note": "API 인증키 필요. 공시 접수번호·기간·연결/별도·정정 여부 확인"
+    },
+    {
+      "id": "sec",
+      "title": "SEC EDGAR API",
+      "url": "https://www.sec.gov/search-filings/edgar-application-programming-interfaces",
+      "owner_group": "sec",
+      "projects": [
+        "stock"
+      ],
+      "kinds": [
+        "disclosure",
+        "financial_statement"
+      ],
+      "regions": [
+        "US"
+      ],
+      "subjects": [
+        "stocks"
+      ],
+      "discovery_status": "PAGE_READ",
+      "checked_date": "2026-09-07",
+      "note": "제출 이력/XBRL 조회. issuer·기간·단위·정정 공시 확인. 시세 API가 아님"
+    },
+    {
+      "id": "kind",
+      "title": "KRX KIND",
+      "url": "https://kind.krx.co.kr/",
+      "owner_group": "krx",
+      "projects": [
+        "stock"
+      ],
+      "kinds": [
+        "disclosure"
+      ],
+      "regions": [
+        "KR"
+      ],
+      "subjects": [
+        "stocks"
+      ],
+      "discovery_status": "NO_BODY",
+      "checked_date": "2026-09-07",
+      "note": "원문 세부 항목과 날짜를 다시 검증해야 함"
+    },
+    {
+      "id": "krx_data",
+      "title": "KRX 정보데이터",
+      "url": "https://data.krx.co.kr/",
+      "owner_group": "krx",
+      "projects": [
+        "stock"
+      ],
+      "kinds": [
+        "market_reference"
+      ],
+      "regions": [
+        "KR"
+      ],
+      "subjects": [
+        "stocks"
+      ],
+      "discovery_status": "NO_BODY",
+      "checked_date": "2026-09-07",
+      "note": "원문 세부 항목과 날짜를 다시 검증해야 함"
+    },
+    {
+      "id": "bok",
+      "title": "한국은행",
+      "url": "https://www.bok.or.kr/portal/main/main.do",
+      "owner_group": "bok",
+      "projects": [
+        "stock"
+      ],
+      "kinds": [
+        "macro"
+      ],
+      "regions": [
+        "KR"
+      ],
+      "subjects": [
+        "economy"
+      ],
+      "discovery_status": "PAGE_READ",
+      "checked_date": "2026-09-07",
+      "note": "경제통계·통화정책의 해당 공표일/단위/개정치 확인"
+    },
+    {
+      "id": "fed",
+      "title": "Federal Reserve 뉴스",
+      "url": "https://www.federalreserve.gov/newsevents.htm",
+      "owner_group": "fed",
+      "projects": [
+        "stock"
+      ],
+      "kinds": [
+        "macro"
+      ],
+      "regions": [
+        "US"
+      ],
+      "subjects": [
+        "economy"
+      ],
+      "discovery_status": "PAGE_READ",
+      "checked_date": "2026-09-07",
+      "note": "원문 세부 항목과 날짜를 다시 검증해야 함"
+    },
+    {
+      "id": "bls",
+      "title": "BLS 통계 발표",
+      "url": "https://www.bls.gov/bls/news-release/",
+      "owner_group": "bls",
+      "projects": [
+        "stock"
+      ],
+      "kinds": [
+        "macro"
+      ],
+      "regions": [
+        "US"
+      ],
+      "subjects": [
+        "economy"
+      ],
+      "discovery_status": "PAGE_READ",
+      "checked_date": "2026-09-07",
+      "note": "원문 세부 항목과 날짜를 다시 검증해야 함"
+    },
+    {
+      "id": "bea",
+      "title": "BEA 뉴스",
+      "url": "https://www.bea.gov/news",
+      "owner_group": "bea",
+      "projects": [
+        "stock"
+      ],
+      "kinds": [
+        "macro"
+      ],
+      "regions": [
+        "US"
+      ],
+      "subjects": [
+        "economy"
+      ],
+      "discovery_status": "LIMITED_BODY",
+      "checked_date": "2026-09-07",
+      "note": "원문 세부 항목과 날짜를 다시 검증해야 함"
+    },
+    {
+      "id": "onepiece_news",
+      "title": "원피스 공식 뉴스 후보",
+      "url": "https://one-piece.com/news/",
+      "owner_group": "onepiece_official",
+      "projects": [
+        "anime"
+      ],
+      "kinds": [
+        "release",
+        "event",
+        "schedule"
+      ],
+      "regions": [
+        "JP",
+        "GLOBAL"
+      ],
+      "subjects": [
+        "onepiece"
+      ],
+      "discovery_status": "OPEN_FAILED",
+      "checked_date": "2026-09-07",
+      "note": "원문 세부 항목과 날짜를 다시 검증해야 함"
+    },
+    {
+      "id": "tvtokyo",
+      "title": "TV Tokyo 애니 공식",
+      "url": "https://www.tv-tokyo.co.jp/anime/",
+      "owner_group": "tvtokyo",
+      "projects": [
+        "anime"
+      ],
+      "kinds": [
+        "schedule",
+        "release"
+      ],
+      "regions": [
+        "JP"
+      ],
+      "subjects": [
+        "anime"
+      ],
+      "discovery_status": "PAGE_READ",
+      "checked_date": "2026-09-07",
+      "note": "일본 방송 일정과 한국 공개 일정을 혼합하지 않음"
+    },
+    {
+      "id": "toei",
+      "title": "Toei Animation 후보",
+      "url": "https://www.toei-anim.co.jp/",
+      "owner_group": "toei",
+      "projects": [
+        "anime"
+      ],
+      "kinds": [
+        "release",
+        "schedule"
+      ],
+      "regions": [
+        "JP",
+        "GLOBAL"
+      ],
+      "subjects": [
+        "anime"
+      ],
+      "discovery_status": "OPEN_FAILED",
+      "checked_date": "2026-09-07",
+      "note": "원문 세부 항목과 날짜를 다시 검증해야 함"
+    },
+    {
+      "id": "kobis",
+      "title": "영화진흥위원회 KOBIS OpenAPI",
+      "url": "https://www.kobis.or.kr/kobisopenapi/homepg/main/main.do",
+      "owner_group": "kofic",
+      "projects": [
+        "anime"
+      ],
+      "kinds": [
+        "box_office",
+        "release"
+      ],
+      "regions": [
+        "KR"
+      ],
+      "subjects": [
+        "film"
+      ],
+      "discovery_status": "PAGE_READ",
+      "checked_date": "2026-09-07",
+      "note": "영화코드·집계일·관객/매출·누적/당일 구분. 애니 전체 인기순위가 아님"
+    },
+    {
+      "id": "anilist",
+      "title": "AniList API 문서 후보",
+      "url": "https://anilist.gitbook.io/anilist-apiv2-docs/docs/reference/index",
+      "owner_group": "anilist",
+      "projects": [
+        "anime"
+      ],
+      "kinds": [
+        "market_reference"
+      ],
+      "regions": [
+        "GLOBAL"
+      ],
+      "subjects": [
+        "anime"
+      ],
+      "discovery_status": "OPEN_FAILED",
+      "checked_date": "2026-09-07",
+      "note": "사이트 내부 메타데이터/인기 참고. 공식 방송 확정이나 전세계 순위로 간주하지 않음"
+    },
+    {
+      "id": "pexels",
+      "title": "Pexels License",
+      "url": "https://www.pexels.com/license/",
+      "owner_group": "pexels",
+      "projects": [
+        "reels"
+      ],
+      "kinds": [
+        "license_policy"
+      ],
+      "regions": [
+        "GLOBAL"
+      ],
+      "subjects": [
+        "media"
+      ],
+      "discovery_status": "PAGE_READ",
+      "checked_date": "2026-09-07",
+      "note": "개별 파일 저작자·원본·용도·초상/상표 권리 별도 확인. 정책 페이지는 파일 사용허가 자체가 아님"
+    },
+    {
+      "id": "pixabay",
+      "title": "Pixabay License Summary",
+      "url": "https://pixabay.com/service/license-summary/",
+      "owner_group": "pixabay",
+      "projects": [
+        "reels"
+      ],
+      "kinds": [
+        "license_policy"
+      ],
+      "regions": [
+        "GLOBAL"
+      ],
+      "subjects": [
+        "media"
+      ],
+      "discovery_status": "PAGE_READ",
+      "checked_date": "2026-09-07",
+      "note": "파일별 라이선스와 금지 용도 확인. 정책만으로 개별 사용 승인 금지"
+    },
+    {
+      "id": "cc_by",
+      "title": "Creative Commons BY 4.0",
+      "url": "https://creativecommons.org/licenses/by/4.0/",
+      "owner_group": "creative_commons",
+      "projects": [
+        "reels"
+      ],
+      "kinds": [
+        "license_policy"
+      ],
+      "regions": [
+        "GLOBAL"
+      ],
+      "subjects": [
+        "media"
+      ],
+      "discovery_status": "PAGE_READ",
+      "checked_date": "2026-09-07",
+      "note": "조건 정의 확인. 특정 영상에 이 라이선스가 적용되는지는 별도 확인"
+    },
+    {
+      "id": "wikimedia",
+      "title": "Wikimedia 외부 재사용 안내",
+      "url": "https://commons.wikimedia.org/wiki/Commons:Reusing_content_outside_Wikimedia",
+      "owner_group": "wikimedia",
+      "projects": [
+        "reels"
+      ],
+      "kinds": [
+        "license_policy"
+      ],
+      "regions": [
+        "GLOBAL"
+      ],
+      "subjects": [
+        "media"
+      ],
+      "discovery_status": "PAGE_READ",
+      "checked_date": "2026-09-07",
+      "note": "파일 설명 페이지의 개별 라이선스·저작자·표기조건 확인"
+    },
+    {
+      "id": "youtube_license",
+      "title": "YouTube 라이선스 안내",
+      "url": "https://support.google.com/youtube/answer/2797468?hl=en",
+      "owner_group": "google",
+      "projects": [
+        "reels"
+      ],
+      "kinds": [
+        "license_policy"
+      ],
+      "regions": [
+        "GLOBAL"
+      ],
+      "subjects": [
+        "media"
+      ],
+      "discovery_status": "PAGE_READ",
+      "checked_date": "2026-09-07",
+      "note": "일반 YouTube 게시물은 재사용 허가로 간주하지 않음"
+    },
+    {
+      "id": "pokemon_us_cards",
+      "title": "Pokémon TCG US Card Database",
+      "url": "https://www.pokemon.com/us/pokemon-tcg/pokemon-cards",
+      "owner_group": "pokemon",
+      "projects": ["instagram_card", "tcg_grader"],
+      "kinds": ["identity", "release"],
+      "regions": ["US"],
+      "subjects": ["pokemon"],
+      "discovery_status": "READ_LIMITED",
+      "checked_date": "2026-09-07",
+      "note": "공식 카드 검색이나 본문이 iframe이라 수집기 캡처를 별도 검증"
+    },
+    {
+      "id": "onepiece_news_en",
+      "title": "ONE PIECE CARD GAME English Official News",
+      "url": "https://en.onepiece-cardgame.com/news/",
+      "owner_group": "bandai",
+      "projects": ["instagram_card", "tcg_grader"],
+      "kinds": ["identity", "release", "event"],
+      "regions": ["US", "EU", "OC", "LATAM", "ME"],
+      "subjects": ["onepiece"],
+      "discovery_status": "PAGE_READ",
+      "checked_date": "2026-09-07",
+      "note": "사이트가 명시한 영문 서비스 지역에만 적용; 개발 중 이미지는 실물과 다를 수 있음"
+    },
+    {
+      "id": "onepiece_asia_en",
+      "title": "ONE PIECE CARD GAME Asia English Official",
+      "url": "https://asia-en.onepiece-cardgame.com/",
+      "owner_group": "bandai",
+      "projects": ["instagram_card", "tcg_grader"],
+      "kinds": ["identity", "release", "event", "schedule"],
+      "regions": ["ASIA"],
+      "subjects": ["onepiece"],
+      "discovery_status": "PAGE_READ",
+      "checked_date": "2026-09-07",
+      "note": "아시아 영문판 공식 일정·제품용; 국가별 적용 여부를 claim scope에 명시"
+    },
+    {
+      "id": "naruto_tcg_launch",
+      "title": "NARUTO Official TCG Launch Announcement",
+      "url": "https://naruto-official.com/en/news/01_2637",
+      "owner_group": "shueisha_bandai",
+      "projects": ["instagram_card", "tcg_grader", "anime"],
+      "kinds": ["release"],
+      "regions": ["GLOBAL", "JP"],
+      "subjects": ["naruto"],
+      "discovery_status": "PAGE_READ",
+      "checked_date": "2026-09-07",
+      "note": "2027 동시 글로벌 출시 발표만 입증; 개별 카드·가격·상세 출시일은 입증하지 않음"
+    },
+    {
+      "id": "cgc_verify",
+      "title": "CGC Certification Verification",
+      "url": "https://www.cgcgrading.com/en-US/verify",
+      "owner_group": "cgc",
+      "projects": ["instagram_card", "tcg_grader"],
+      "kinds": ["certificate"],
+      "regions": ["GLOBAL"],
+      "subjects": ["pokemon", "onepiece", "naruto", "tcg"],
+      "discovery_status": "PAGE_READ",
+      "checked_date": "2026-09-07",
+      "note": "인증번호의 설명·등급 확인용; 사진만으로 인증 성공 처리 금지"
+    },
+    {
+      "id": "jpx_tdnet",
+      "title": "Japan Exchange Group TDnet",
+      "url": "https://www.jpx.co.jp/english/equities/listing/disclosure/tdnet/",
+      "owner_group": "jpx",
+      "projects": ["stock"],
+      "kinds": ["disclosure", "financial_statement"],
+      "regions": ["JP"],
+      "subjects": ["stocks"],
+      "discovery_status": "PAGE_READ",
+      "checked_date": "2026-09-07",
+      "note": "일본 상장사 적시공시용; 문서의 회사·기간·공시 ID 확인"
+    },
+    {
+      "id": "boj_timeseries",
+      "title": "Bank of Japan Time-Series Data Search",
+      "url": "https://www.stat-search.boj.or.jp/index_en.html",
+      "owner_group": "boj",
+      "projects": ["stock"],
+      "kinds": ["macro"],
+      "regions": ["JP"],
+      "subjects": ["stocks"],
+      "discovery_status": "PAGE_READ",
+      "checked_date": "2026-09-07",
+      "note": "일본 거시 시계열용; 계열 코드·단위·빈도·개정 시점을 보관"
+    },
+    {
+      "id": "ecb_data_api",
+      "title": "ECB Data Portal API",
+      "url": "https://data.ecb.europa.eu/help/api/data",
+      "owner_group": "ecb",
+      "projects": ["stock"],
+      "kinds": ["macro"],
+      "regions": ["EU"],
+      "subjects": ["stocks"],
+      "discovery_status": "OPEN_FAILED",
+      "checked_date": "2026-09-07",
+      "note": "공식 API 후보이나 이번 직접 열기 실패; 성공 원문 캡처 전 검증 출처로 사용 금지"
+    },
+    {
+      "id": "imf_api",
+      "title": "IMF Data API",
+      "url": "https://data.imf.org/en/Resource-Pages/IMF-API",
+      "owner_group": "imf",
+      "projects": ["stock"],
+      "kinds": ["macro"],
+      "regions": ["GLOBAL"],
+      "subjects": ["stocks"],
+      "discovery_status": "PAGE_READ",
+      "checked_date": "2026-09-07",
+      "note": "국제 거시자료용; 데이터셋·지표·국가·단위·빈도·개정 시점을 scope에 보관"
+    },
+    {
+      "id": "crunchyroll_calendar",
+      "title": "Crunchyroll Simulcast Calendar",
+      "url": "https://www.crunchyroll.com/simulcastcalendar",
+      "owner_group": "crunchyroll",
+      "projects": ["anime"],
+      "kinds": ["schedule", "release"],
+      "regions": ["US", "EU"],
+      "subjects": ["anime", "naruto", "onepiece"],
+      "discovery_status": "PAGE_READ",
+      "checked_date": "2026-09-07",
+      "note": "배급 지역별 차이가 있으므로 국가·시간대·에피소드 범위를 일치시켜야 함"
+    },
+    {
+      "id": "netflix_media_center",
+      "title": "Netflix Media Center",
+      "url": "https://media.netflix.com/en/",
+      "owner_group": "netflix",
+      "projects": ["anime"],
+      "kinds": ["schedule", "release"],
+      "regions": ["GLOBAL"],
+      "subjects": ["anime"],
+      "discovery_status": "PAGE_READ",
+      "checked_date": "2026-09-07",
+      "note": "Netflix 공개작 공식 발표용; 실제 제공 지역은 작품별 페이지와 재확인"
+    },
+    {
+      "id": "youtube_audio_library",
+      "title": "YouTube Audio Library Help",
+      "url": "https://support.google.com/youtube/answer/3376882?hl=en",
+      "owner_group": "google",
+      "projects": ["reels"],
+      "kinds": ["license_policy"],
+      "regions": ["GLOBAL"],
+      "subjects": ["media"],
+      "discovery_status": "PAGE_READ",
+      "checked_date": "2026-09-07",
+      "note": "YouTube 내 저작권 안전성 안내이며 법률 조언·타 플랫폼 사용 허가로 확대 해석 금지; 트랙별 표시 조건 확인"
+    },
+    {
+      "id": "x_api_posts",
+      "title": "X API Posts",
+      "url": "https://docs.x.com/x-api/posts/search/introduction",
+      "allowed_hosts": ["x.com"],
+      "owner_group": "x_platform",
+      "projects": ["stock", "instagram_card", "anime", "tcg_grader"],
+      "kinds": ["identity", "release", "event", "schedule", "disclosure"],
+      "regions": ["GLOBAL"],
+      "subjects": ["stocks", "pokemon", "onepiece", "naruto", "anime", "tcg"],
+      "evidence_role": "supporting_only",
+      "discovery_status": "PAGE_READ",
+      "checked_date": "2026-09-07",
+      "note": "공식 계정·post ID·author ID·API 원문 캡처 확인 시에만 교차검증 보조. 단독 사실 검증·가격 검증 금지"
+    },
+    {
+      "id": "instagram_graph_media",
+      "title": "Instagram Platform Media API",
+      "url": "https://developers.facebook.com/docs/instagram-platform/reference/instagram-media/v21.0/",
+      "allowed_hosts": ["www.instagram.com", "instagram.com"],
+      "owner_group": "meta_platform",
+      "projects": ["instagram_card", "anime", "reels", "tcg_grader"],
+      "kinds": ["identity", "release", "event", "schedule", "license_policy"],
+      "regions": ["GLOBAL"],
+      "subjects": ["pokemon", "onepiece", "naruto", "anime", "tcg", "media"],
+      "evidence_role": "supporting_only",
+      "discovery_status": "PAGE_READ",
+      "checked_date": "2026-09-07",
+      "note": "공식 계정 media ID와 API 캡처 확인 시 교차검증 보조. 재게시·해시태그·좋아요 수는 사실 근거가 아님"
+    },
+    {
+      "id": "youtube_data_v3",
+      "title": "YouTube Data API v3",
+      "url": "https://developers.google.com/youtube/v3/docs",
+      "allowed_hosts": ["www.youtube.com", "youtube.com", "youtu.be"],
+      "owner_group": "google_platform",
+      "projects": ["instagram_card", "anime", "reels", "tcg_grader"],
+      "kinds": ["identity", "release", "event", "schedule", "license_policy"],
+      "regions": ["GLOBAL"],
+      "subjects": ["pokemon", "onepiece", "naruto", "anime", "tcg", "media"],
+      "evidence_role": "supporting_only",
+      "discovery_status": "PAGE_READ",
+      "checked_date": "2026-09-07",
+      "note": "공식 채널·video ID·API 응답 확인 시 교차검증 보조. 인기 영상과 일반 업로드는 권리 허가가 아님"
+    },
+    {
+      "id": "reddit_api",
+      "title": "Reddit API",
+      "url": "https://developers.reddit.com/docs/capabilities/server/reddit-api",
+      "allowed_hosts": ["www.reddit.com", "reddit.com"],
+      "owner_group": "reddit_platform",
+      "projects": ["stock", "instagram_card", "anime", "tcg_grader"],
+      "kinds": ["identity", "release", "event", "schedule"],
+      "regions": ["GLOBAL"],
+      "subjects": ["stocks", "pokemon", "onepiece", "naruto", "anime", "tcg"],
+      "evidence_role": "supporting_only",
+      "discovery_status": "PAGE_READ",
+      "checked_date": "2026-09-07",
+      "note": "발견·반응 관찰 중심. 공식 계정 입증과 독립 1차 출처가 없으면 검증 완료에 사용 금지"
+    }
+  ]
+}

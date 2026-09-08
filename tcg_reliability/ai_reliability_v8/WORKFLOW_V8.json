@@ -1,0 +1,14 @@
+{
+  "schema_version": 8,
+  "stages": ["inventory", "binding", "backup", "read_only_plan", "additive_install", "wire_one_entrypoint", "targeted_tests", "full_regression", "actual_output_validation", "activate"],
+  "rollback_stage": "restore_entrypoint",
+  "rules": {
+    "single_project": true,
+    "single_entrypoint": true,
+    "ordered_success_receipts_required": true,
+    "artifact_hash_required_for_mutation_and_test_stages": true,
+    "activation_requires_actual_output_validation": true,
+    "model_structure_validated_before_inference": true,
+    "model_can_verify": false
+  }
+}

@@ -1,0 +1,15 @@
+{
+  "schema_version": 1,
+  "stage": "backup",
+  "created_at": "2026-09-08T02:39:45.859581Z",
+  "baseline_commit": "b5d9c753961bad8ff850a1948d4616a875a7a262",
+  "files": {
+    "tcg_updater_v135.py.bak": "2cfa7a27458b44b83855197b089c8f08b35d47c2af6df4cf75cc74c7356d5036",
+    "gitignore.bak": "416a7ffc64dfb92b40b5abb9a0dd8df85d728974d1c1e20f74a16f73e6db168b"
+  },
+  "restore": {
+    "entrypoint": "copy tcg_updater_v135.py.bak over tcg_updater_v135.py and verify SHA-256",
+    "gitignore": "copy gitignore.bak over .gitignore and verify SHA-256",
+    "scheduler": "restore is_enabled=false only if activation changed it; preserve the same task ID"
+  }
+}

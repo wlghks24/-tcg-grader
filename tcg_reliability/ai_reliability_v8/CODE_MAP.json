@@ -1,0 +1,19 @@
+{
+  "schema_version": 8,
+  "aliases": {"출처": "sources", "수집": "social_evidence", "검증": "verification", "학습": "adaptive_learning", "신경망": "adaptive_learning", "AI": "ai_profiles", "분석": "code_optimizer", "최적화": "code_optimizer", "순서": "workflow", "오류": "diagnostics", "중지": "diagnostics", "복구": "repair", "통합": "integration"},
+  "features": {
+    "sources": {"entry_file": "source_registry.json", "impact": ["verification.py"], "tests": ["test_v4.SourceTests"], "validation": "출처 역할/지역/본문 확인 상태와 도메인 일치"},
+    "verification": {"entry_file": "verification.py", "impact": ["bridge.py", "source_registry.json"], "tests": ["test_v4.VerificationTests"], "validation": "원문 해시/기간/값/독립성/충돌/실거래 gate"},
+    "evidence_learning": {"entry_file": "evidence_learning.py", "impact": ["bridge.py"], "tests": ["test_v4.EvidenceLearningTests"], "validation": "그룹/시간/레이블 누수 차단, 보정과 holdout, 학습점수로 검증 승격 금지"},
+    "adaptive_learning": {"entry_file": "adaptive_learning.py", "impact": ["bridge.py", "evidence_learning.py"], "tests": ["test_v5.AdaptiveLearningTests", "test_v7.RobustNeuralTests", "test_v8.ModelIntegrityTests"], "validation": "다중 시드 안정성·calibration/test 격리·출처 편중 차단, 추론 전 모델 차원/개수/유한값/권한 검증"},
+    "diverse_collection": {"entry_file": "diverse_collection.py", "impact": ["source_registry.json", "bridge.py"], "tests": ["test_v5.CoverageTests"], "validation": "프로젝트/목적/지역/주제 범위와 소유자 다양성, 미충족 범위 보고"},
+    "social_evidence": {"entry_file": "social_evidence.py", "impact": ["verification.py", "source_registry.json", "bridge.py"], "tests": ["test_v6.SocialEvidenceTests"], "validation": "플랫폼 원문·게시물/작성자 ID·공식계정 증명·시각·호스트 검사, 단독 검증 금지"},
+    "code_optimizer": {"entry_file": "code_optimizer.py", "impact": ["bridge.py", "CODE_MAP.json"], "tests": ["test_v6.CodeOptimizerTests"], "validation": "허용 파일/변경량/AST 위험 검사, targeted·holdout·post-apply 후 원자 교체, 실패 시 정확 복원"},
+    "workflow": {"entry_file": "WORKFLOW_V8.json", "impact": ["workflow.py", "integrate.py", "bridge.py"], "tests": ["test_v7.WorkflowTests", "test_v8.ReceiptWorkflowTests"], "validation": "순서·프로젝트 바인딩·성공 증거·시각·산출물 해시 영수증을 확인한 뒤 활성화 허가"},
+    "ai_profiles": {"entry_file": "ai_learning.py", "impact": ["bridge.py"], "tests": ["test_v3.LearnerTests"], "validation": "기존 AI 후보 비교/별도 검증/복귀"},
+    "diagnostics": {"entry_file": "diagnostics.py", "impact": ["bridge.py"], "tests": ["test_v3.DiagnosticsTests"], "validation": "실행 오류와 플랫폼 중지 원인 분리"},
+    "repair": {"entry_file": "self_heal.py", "impact": ["bridge.py", "recovery.py"], "tests": ["test_extended.SelfHealTests", "test_guard.GuardTests"], "validation": "수정 검증/복원/승인 상태 보존"},
+    "runtime": {"entry_file": "guard.py", "impact": ["bridge.py", "diagnostics.py"], "tests": ["test_guard.GuardTests", "test_extended.ExtendedGuardTests"], "validation": "멱등성/취소/체크포인트/예산"},
+    "integration": {"entry_file": "integrate.py", "impact": ["__init__.py", "bridge.py", "CODE_MAP.json"], "tests": ["test_v3.IntegrationTests", "test_v4.SourceTests", "test_v6.CodeOptimizerTests", "test_v8.ReceiptWorkflowTests"], "validation": "원본 보존/별도 v8 폴더/설치 후 import/기존 API 보존"}
+  }
+}

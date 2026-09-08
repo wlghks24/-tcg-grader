@@ -1,0 +1,76 @@
+{
+  "schema_version": 1,
+  "reported_at": "2026-09-08T03:00:00Z",
+  "project": "tcg_grader",
+  "task_id": "6a9b878f35bc8191963b8685566709c4",
+  "implementation_commit": "62c5ef9bc05e2f261db6d635ae5b6cadcaddb66f",
+  "repository_main_before": "b5d9c753961bad8ff850a1948d4616a875a7a262",
+  "repository_main_changed": false,
+  "external_upload_status": "APPROVED_FOR_FEATURE_BRANCH_UPLOAD",
+  "uploaded_branch": "integrate/tcg-grader-ai-reliability-v8",
+  "existing_function_preservation": {
+    "result": "PASS",
+    "entrypoint_change": "12 added lines and 1 replaced global declaration line",
+    "existing_instagram_card_package_unchanged": true,
+    "existing_learning_records_overwritten": false,
+    "scheduler_settings_changed": false
+  },
+  "changed_file_count": 36,
+  "core_changed_files": [
+    "tcg_updater_v135.py",
+    ".gitignore"
+  ],
+  "new_runtime_files": [
+    "tcg_reliability_runtime.py",
+    "tcg_reliability/ai_reliability_v8/",
+    "test_tcg_reliability_v8_integration.py"
+  ],
+  "test_results": {
+    "attachment": "119/119 PASS",
+    "targeted": "47/47 PASS",
+    "project_isolated": "928 unittest + 14 script checks PASS",
+    "new_regressions": 0,
+    "combined_discover_note": "original main and integration branch both show the same six order-dependent failures; each passes alone"
+  },
+  "actual_output_validation": {
+    "result": "PASS",
+    "card_identity": "22 checks PASS",
+    "grading_vision_runtime": "PASS",
+    "vision_calibration": "11/11 PASS",
+    "http_index": 200,
+    "http_platform_diagnostics": 200
+  },
+  "neural_training": {
+    "started": false,
+    "reason": "no supplied set of at least 1000 independent real labels",
+    "existing_model_preserved": true,
+    "synthetic_or_ai_self_labels_used": false
+  },
+  "workflow_gate": {
+    "activation_authorized": true,
+    "receipt_fingerprint": "f5feb387b46bcf72584318fc4c539ee5c0ac01d66c848f904d213b14b723d5ba",
+    "receipts_sha256": "3009c2cbdafcf15ad4f7d83d33d0412157ec4b078bc20bebe072cd5039be56eb"
+  },
+  "scheduler": {
+    "title": "카드시세분석",
+    "id": "6a9b878f35bc8191963b8685566709c4",
+    "connected": false,
+    "is_enabled": false,
+    "reason": "repository changes are not on main; activation intentionally withheld",
+    "first_run_validation": "SCHEDULED_RUN_UNVERIFIED"
+  },
+  "remaining_unverified": [
+    "GitHub main merge",
+    "first scheduled run after activation",
+    "real card-photo accuracy without independent labels",
+    "external API credentials and live collection paths",
+    "pre-existing monolithic unittest global-state contamination"
+  ],
+  "restore": {
+    "entrypoint_backup": "TCG_CROSSCHECK/TCG_GRADER/ai_reliability_v8_backup/tcg_updater_v135.py.bak",
+    "gitignore_backup": "TCG_CROSSCHECK/TCG_GRADER/ai_reliability_v8_backup/gitignore.bak",
+    "expected_entrypoint_sha256": "2cfa7a27458b44b83855197b089c8f08b35d47c2af6df4cf75cc74c7356d5036",
+    "expected_gitignore_sha256": "416a7ffc64dfb92b40b5abb9a0dd8df85d728974d1c1e20f74a16f73e6db168b",
+    "scheduler_restore": "keep the same task ID and restore is_enabled=false only if activation later changes it"
+  }
+}

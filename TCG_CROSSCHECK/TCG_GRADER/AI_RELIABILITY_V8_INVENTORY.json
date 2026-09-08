@@ -1,0 +1,34 @@
+{
+  "schema_version": 1,
+  "stage": "inventory",
+  "recorded_at": "2026-09-08T02:38:48.044545Z",
+  "repository": "wlghks24/-tcg-grader",
+  "branch_baseline": "main",
+  "baseline_commit": "b5d9c753961bad8ff850a1948d4616a875a7a262",
+  "project": "tcg_grader",
+  "task_id": "6a9b878f35bc8191963b8685566709c4",
+  "automation": {
+    "title": "카드시세분석",
+    "is_enabled_before": false,
+    "schedule": "HOURLY_BYMINUTE_0_ASIA_SEOUL",
+    "last_run_time": "2026-09-07T20:00:43.681255+00:00",
+    "updated_at": "2026-09-07T21:06:55.178276+00:00"
+  },
+  "existing_entrypoint": "tcg_updater_v135.py:main",
+  "existing_launchers": [
+    "START_TCG_UPDATER.bat",
+    "START_TCG_UPDATER_ANDROID.sh"
+  ],
+  "code_map": {
+    "grading_entry": "grading_vision_engine.js",
+    "runtime_entry": "verify_link_runtime.py",
+    "required_scope": "full_chain",
+    "reason": "high-risk runtime integration and cross-domain isolation"
+  },
+  "collision": {
+    "path": "ai_reliability_v8",
+    "bound_project": "instagram_card",
+    "decision": "preserve unchanged; install tcg_grader package under tcg_reliability/ai_reliability_v8"
+  },
+  "existing_files_modified": false
+}

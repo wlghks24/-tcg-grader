@@ -1,0 +1,19 @@
+{
+  "stage": "targeted_tests",
+  "project": "tcg_grader",
+  "task_id": "6a9b878f35bc8191963b8685566709c4",
+  "completed_at": "2026-09-08T02:44:05Z",
+  "result": "PASS",
+  "tests_run": 47,
+  "failures": 0,
+  "suites": [
+    "test_tcg_reliability_v8_integration.py",
+    "test_runtime_bundle_guard_v143.py",
+    "test_multi_market_price_collector.py",
+    "test_code_map_fast_route_v195.py",
+    "test_code_map_entrypoint_route_v196.py"
+  ],
+  "entrypoint_added_lines": 12,
+  "entrypoint_removed_lines": 1,
+  "forbidden_ast_calls": []
+}

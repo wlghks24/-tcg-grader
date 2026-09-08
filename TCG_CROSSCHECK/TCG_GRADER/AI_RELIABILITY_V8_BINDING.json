@@ -1,0 +1,19 @@
+{
+  "schema_version": 8,
+  "stage": "binding",
+  "recorded_at": "2026-09-08T02:38:49.044545Z",
+  "project": "tcg_grader",
+  "task_id": "6a9b878f35bc8191963b8685566709c4",
+  "repository": "wlghks24/-tcg-grader",
+  "entrypoint": "tcg_updater_v135.py:main",
+  "state_root_default": ".tcg_reliability_state",
+  "package_import": "tcg_reliability.ai_reliability_v8",
+  "blocked_projects": [
+    "instagram_card",
+    "anime",
+    "reels",
+    "stock"
+  ],
+  "activation_authorized": false,
+  "scheduler_mutation_allowed": false
+}

@@ -1,0 +1,91 @@
+{
+  "schema_version": 8,
+  "project": "tcg_grader",
+  "task_id": "6a9b878f35bc8191963b8685566709c4",
+  "receipts": [
+    {
+      "stage": "inventory",
+      "project": "tcg_grader",
+      "task_id": "6a9b878f35bc8191963b8685566709c4",
+      "passed": true,
+      "evidence": "baseline main b5d9c753, canonical automation metadata, entrypoint and existing instagram_card collision recorded",
+      "at": "2026-09-08T02:38:48.044545Z",
+      "artifact_hash": "1f39edbe25a92d867300db2286d14f3d10b0984aa7aa63b50ccd7b0c16ce2fb3"
+    },
+    {
+      "stage": "binding",
+      "project": "tcg_grader",
+      "task_id": "6a9b878f35bc8191963b8685566709c4",
+      "passed": true,
+      "evidence": "START_HERE mapping and foreground automation metadata agree on the single TCG grader task",
+      "at": "2026-09-08T02:38:49.044545Z",
+      "artifact_hash": "d696ad299c8a5b68db81d6a22c1ce7016119b4c3cd9e5e6de6a5558be0cd6b38"
+    },
+    {
+      "stage": "backup",
+      "project": "tcg_grader",
+      "task_id": "6a9b878f35bc8191963b8685566709c4",
+      "passed": true,
+      "evidence": "entrypoint, gitignore and scheduler metadata saved with byte hashes before edits",
+      "at": "2026-09-08T02:39:45.859581Z",
+      "artifact_hash": "55da27592fd04b10063f82021413c8f6661cf9622623382ec1a4975f20001f88"
+    },
+    {
+      "stage": "read_only_plan",
+      "project": "tcg_grader",
+      "task_id": "6a9b878f35bc8191963b8685566709c4",
+      "passed": true,
+      "evidence": "installer collision detected without writes; code map selected runtime/full-chain validation and isolated target",
+      "at": "2026-09-08T02:40:35.356221Z",
+      "artifact_hash": "9c9b152cfb4e6f4bc35443d0d3ef27a7e89e383954dc0648a643a14ffe69dd5f"
+    },
+    {
+      "stage": "additive_install",
+      "project": "tcg_grader",
+      "task_id": "6a9b878f35bc8191963b8685566709c4",
+      "passed": true,
+      "evidence": "installer returned READY_ADDITIVE then INSTALLED_ADDITIVE then ALREADY_INSTALLED in TCG-only namespace",
+      "at": "2026-09-08T02:41:20.666589Z",
+      "artifact_hash": "e0e73595944bb7d806c72bc107f7e3c7109c14773e1bbcab4eba2504de7e9f12"
+    },
+    {
+      "stage": "wire_one_entrypoint",
+      "project": "tcg_grader",
+      "task_id": "6a9b878f35bc8191963b8685566709c4",
+      "passed": true,
+      "evidence": "tcg_updater_v135.py:main initializes only the TCG bridge; 12 added/1 removed lines; AST dangerous-call set empty",
+      "at": "2026-09-08T02:44:04.190819Z",
+      "artifact_hash": "a5c247ed429c3511edd35ab9914532fedf791bd143910b325a0df17f73dcd0b5"
+    },
+    {
+      "stage": "targeted_tests",
+      "project": "tcg_grader",
+      "task_id": "6a9b878f35bc8191963b8685566709c4",
+      "passed": true,
+      "evidence": "47 code-map and integration tests passed; zero failures",
+      "at": "2026-09-08T02:44:05Z",
+      "artifact_hash": "cd249c7bf6783eef56aef67ae747137d1f6be3372adf7abbdc7aebfe905b9f1a"
+    },
+    {
+      "stage": "full_regression",
+      "project": "tcg_grader",
+      "task_id": "6a9b878f35bc8191963b8685566709c4",
+      "passed": true,
+      "evidence": "119/119 attachment tests and isolated project suite 928 unittest plus 14 script checks passed; zero new failures versus baseline",
+      "at": "2026-09-08T02:48:27.489117Z",
+      "artifact_hash": "045dfde6783f726fc9c8baa8bc8b5de11075f93384c8445f401829c5967d9cc3"
+    },
+    {
+      "stage": "actual_output_validation",
+      "project": "tcg_grader",
+      "task_id": "6a9b878f35bc8191963b8685566709c4",
+      "passed": true,
+      "evidence": "real localhost HTTP index and diagnostics returned 200; card identity 22 checks, grading runtime and calibration 11 tests passed",
+      "at": "2026-09-08T02:49:31.989949Z",
+      "artifact_hash": "f56c12964705bf9e62bd655af80f1a292017b097e800d7f74521ad8b22f0b233"
+    }
+  ],
+  "activation_authorized": true,
+  "activate_stage_completed": false,
+  "scheduled_run_validation": "SCHEDULED_RUN_UNVERIFIED"
+}

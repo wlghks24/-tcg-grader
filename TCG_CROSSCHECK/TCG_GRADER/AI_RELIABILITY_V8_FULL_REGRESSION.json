@@ -1,0 +1,26 @@
+{
+  "stage": "full_regression",
+  "project": "tcg_grader",
+  "task_id": "6a9b878f35bc8191963b8685566709c4",
+  "completed_at": "2026-09-08T02:48:27.489117Z",
+  "result": "PASS_WITH_BASELINE_RUNNER_NOTE",
+  "attachment_suite": {
+    "tests": 119,
+    "failures": 0,
+    "seconds": 38.537
+  },
+  "project_isolated_process_suite": {
+    "unittest_tests": 928,
+    "script_checks": 14,
+    "failed_modules": 0
+  },
+  "combined_discover_diagnostic": {
+    "branch_tests": 925,
+    "branch_failures": 6,
+    "baseline_tests": 920,
+    "baseline_failures": 6,
+    "new_failures": 0,
+    "classification": "PRE_EXISTING_TEST_PROCESS_GLOBAL_STATE_CONTAMINATION",
+    "all_six_pass_individually": true
+  }
+}
