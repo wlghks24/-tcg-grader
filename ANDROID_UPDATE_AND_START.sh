@@ -29,6 +29,29 @@ is_official_origin() {
   esac
 }
 
+verify_remote_candidate() {
+  candidate_sha="${1:-}"
+  [ -n "$candidate_sha" ] || return 1
+  verify_base="${TMPDIR:-${PREFIX:-/tmp}/tmp}"
+  mkdir -p "$verify_base" 2>/dev/null || return 1
+  verify_dir="$(mktemp -d "$verify_base/tcg-main-verify.XXXXXX")" || return 1
+  if ! git worktree add --detach --quiet "$verify_dir" "$candidate_sha"; then
+    rm -rf "$verify_dir" 2>/dev/null || true
+    return 1
+  fi
+  (
+    cd "$verify_dir" || exit 1
+    TCG_FINAL_SKIP_HEAD_MATCH=1 TCG_CANDIDATE_PREFLIGHT=1 bash VERIFY_TABLET_FINAL.sh
+  )
+  verify_rc=$?
+  cleanup_rc=0
+  git worktree remove --force "$verify_dir" >/dev/null 2>&1 || cleanup_rc=1
+  git worktree prune >/dev/null 2>&1 || true
+  rm -rf "$verify_dir" 2>/dev/null || true
+  [ "$cleanup_rc" = "0" ] || return 1
+  return "$verify_rc"
+}
+
 cleanup_update_lock() {
   rm -rf "$UPDATE_LOCK_DIR" 2>/dev/null || true
 }
@@ -224,6 +247,20 @@ if command -v git >/dev/null 2>&1 && git rev-parse --is-inside-work-tree >/dev/n
     else
       echo "[안내] 네트워크/GitHub 연결 문제로 업데이트 확인을 건너뜁니다. 현재 버전으로 시작합니다."
       can_update=0
+    fi
+  fi
+
+  if [ "$can_update" = "1" ] && [ "$remote_ready" = "1" ]; then
+    local_head_candidate="$(git rev-parse HEAD 2>/dev/null || true)"
+    remote_head="$(git rev-parse origin/main 2>/dev/null || true)"
+    if [ -n "$remote_head" ] && [ "$local_head_candidate" != "$remote_head" ]; then
+      echo "[검증] 새 GitHub main을 임시 worktree에서 먼저 검사합니다..."
+      if verify_remote_candidate "$remote_head"; then
+        echo "[OK] 새 GitHub main 사전검사 통과. 실제 태블릿 코드에 반영합니다."
+      else
+        echo "[안전] 새 GitHub main 사전검사 실패. 현재 정상 로컬 버전을 유지하고 서버를 시작합니다."
+        can_update=0
+      fi
     fi
   fi
 

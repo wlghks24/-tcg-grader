@@ -155,59 +155,15 @@ if command -v tesseract >/dev/null 2>&1; then
 fi
 
 echo "서버를 종료하려면 Ctrl+C를 누르세요."
-for required in \
-  index.html \
-  safe_runtime.py \
-  auto_repair_engine.py \
-  auto_update_all.py \
-  collector_self_healing.py \
-  tcg_code_repair_learning.py \
-  tcg_updater.py \
-  tcg_updater_v135.py \
-  runtime_bundle_guard_v143.py \
-  update_releases.py \
-  update_market_watch.py \
-  update_market_prices.py \
-  update_promo_events.py \
-  update_purchase_sources.py \
-  update_exchange_rates.py \
-  graded_photo_multi_source.py \
-  graded_photo_manual_pair_queue.py \
-  grading_cert_verifier.py \
-  manual_collection_mode.py \
-  manual_graded_photo_registration.py \
-  manual_dual_photo_registration.py \
-  manual_dual_photo_bridge.js \
-  manual_official_proof.py \
-  ocr_accuracy_boost_v147.py \
-  public_ocr_accuracy_boost_v147.py \
-  ocr_front_back_fallback_v148.py \
-  legacy_ocr_registry_cleanup_v149.py \
-  release_tcg_port.py \
-  multi_channel_agent.py \
-  search_method_learning.py \
-  verified_grade_learning_v135.py \
-  verified_grade_learning_v135_safe.py \
-  event_collection_hardening_v139.py \
-  event_collection_hardening_v140.py \
-  event_collection_hardening_v141.py \
-  collection_learning_hardening_v142.py \
-  collection_learning_hardening_v144.py \
-  event_source_overlay_v144.py \
-  event_source_expansion_v145.py \
-  event_gap_learning.py \
-  event_priority_watch.py \
-  event_quick_watch.py \
-  social_event_discovery.py \
-  multi_route_event_discovery.py \
-  adaptive_collection_learner.py \
-  fan_social_learning.py; do
-  if [ ! -s "$required" ]; then
-    echo "[오류] v149 안전서버 필수파일 누락: $required"
-    echo "[안전] 구버전/혼합 버전 서버로 폴백하지 않습니다. 최신 설치/갱신 스크립트를 다시 실행하세요."
-    exit 1
-  fi
-done
+if [ ! -s "tablet_runtime_manifest.py" ]; then
+  echo "[오류] tablet_runtime_manifest.py 파일이 없습니다. 최신 GitHub main으로 갱신하세요."
+  exit 1
+fi
+if ! python tablet_runtime_manifest.py --check --compile; then
+  echo "[오류] 활성 태블릿 런타임 전체 파일/문법 검사 실패"
+  echo "[안전] 일부 파일만 최신인 혼합 버전으로 서버를 시작하지 않습니다."
+  exit 1
+fi
 
 if ! grep -q 'manual_dual_photo_bridge.js' index.html; then
   echo "[오류] index.html에 앞면+뒷면 수동등록 UI가 설치되지 않았습니다."

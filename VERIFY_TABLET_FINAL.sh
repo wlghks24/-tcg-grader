@@ -24,6 +24,8 @@ ANDROID_AUTO_START_INSTALL.sh
 START_TCG_UPDATER_ANDROID.sh
 VERIFY_TABLET_RUNTIME.sh
 tablet_runtime_probe.py
+tablet_runtime_manifest.py
+collection_runtime_health.py
 test_runtime_delivery_guards.py
 tablet_runtime_qa.py
 test_tablet_runtime_qa_integration.py
@@ -111,8 +113,12 @@ python -m py_compile \
   event_source_expansion_v145.py \
   tablet_runtime_qa.py \
   test_tablet_runtime_qa_integration.py \
-  tcg_updater_v135.py
-echo "[3/9] 핵심 Python 문법/컴파일: OK"
+  tcg_updater_v135.py \
+  collection_runtime_health.py \
+  tablet_runtime_manifest.py
+python tablet_runtime_manifest.py --check --compile >/dev/null
+python collection_runtime_health.py >/dev/null
+echo "[3/9] 핵심 + 활성 태블릿 전체 Python 문법/컴파일: OK"
 
 python runtime_optimization_hardening.py --check >/dev/null
 python tcg_code_repair_learning.py --self-test >/dev/null

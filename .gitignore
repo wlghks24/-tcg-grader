@@ -127,3 +127,8 @@ MARKET_ANALYSIS_PEER_PREVENTION_RULES.json
 # Market AI auto tracker runtime evidence is device/runner-local.
 MARKET_AI_TRACKER_REPORT.json
 MARKET_AI_TRACKER_STATE.json
+
+# Tablet-only collection health and current verification reports are device-local.
+collection_runtime_health.json
+collection_runtime_health.json.bak
+CURRENT_RUNTIME_VERIFICATION_REPORT.json

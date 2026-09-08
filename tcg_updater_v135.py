@@ -82,8 +82,11 @@ class Handler(core.Handler):
         if path == '/api/v135-health':
             bundle = RUNTIME_BUNDLE_STATUS if isinstance(RUNTIME_BUNDLE_STATUS, dict) else {}
             contracts = bundle.get('contracts') if isinstance(bundle.get('contracts'), dict) else {}
+            collection_health = core.collection_health_status()
             return self.json({
                 'ok': True,
+                'collection_health': collection_health,
+                'collection_requires_attention': collection_health.get('requires_attention') is True,
                 'runtime': RUNTIME_ID,
                 'patch': RUNTIME_PATCH,
                 'runtime_delivery_patch': RUNTIME_DELIVERY_PATCH,

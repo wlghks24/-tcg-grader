@@ -7,6 +7,10 @@ on:
       - 'ANDROID_AUTO_START_INSTALL.sh'
       - 'VERIFY_TABLET_FINAL.sh'
       - 'VERIFY_TABLET_RUNTIME.sh'
+      - 'tablet_runtime_manifest.py'
+      - 'collection_runtime_health.py'
+      - 'verify_current_runtime.py'
+      - 'test_tablet_standalone_hardening_v209.py'
       - 'tablet_runtime_probe.py'
       - 'test_runtime_delivery_guards.py'
       - 'tablet_runtime_qa.py'
@@ -21,6 +25,10 @@ on:
       - 'ANDROID_AUTO_START_INSTALL.sh'
       - 'VERIFY_TABLET_FINAL.sh'
       - 'VERIFY_TABLET_RUNTIME.sh'
+      - 'tablet_runtime_manifest.py'
+      - 'collection_runtime_health.py'
+      - 'verify_current_runtime.py'
+      - 'test_tablet_standalone_hardening_v209.py'
       - 'tablet_runtime_probe.py'
       - 'test_runtime_delivery_guards.py'
       - 'tablet_runtime_qa.py'
@@ -47,6 +55,9 @@ jobs:
         run: |
           python tablet_runtime_qa.py --profile updater
           python test_tablet_runtime_qa_integration.py
+          python tablet_runtime_manifest.py --check --compile
+          python collection_runtime_health.py
+          python -m unittest -v test_tablet_standalone_hardening_v209.py
       - name: Verify boot supervisor diagnostics and health route
         run: |
           grep -Fq 'api/v135-health' ANDROID_AUTO_START_INSTALL.sh
@@ -62,6 +73,9 @@ jobs:
           grep -Fq '.tcg_runtime_preserved' ANDROID_UPDATE_AND_START.sh
           grep -Fq 'git restore --worktree --source=HEAD' ANDROID_UPDATE_AND_START.sh
           grep -Fq 'git merge --ff-only origin/main' ANDROID_UPDATE_AND_START.sh
+          grep -Fq 'verify_remote_candidate "$remote_head"' ANDROID_UPDATE_AND_START.sh
+          grep -Fq 'git worktree add --detach' ANDROID_UPDATE_AND_START.sh
+          grep -Fq 'TCG_FINAL_SKIP_HEAD_MATCH=1' ANDROID_UPDATE_AND_START.sh
           grep -Fq 'restore_runtime_snapshot' ANDROID_UPDATE_AND_START.sh
           grep -Fq 'mktemp -d "$RUNTIME_BACKUP_DIR/' ANDROID_UPDATE_AND_START.sh
           grep -Fq 'if [ -L "$RUNTIME_BACKUP_DIR" ]; then' ANDROID_UPDATE_AND_START.sh

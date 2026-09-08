@@ -87,11 +87,16 @@ def build_report(
     git = git_state(root)
     lan = lan_ipv4_candidates() if probe_network else []
     tailscale = tailscale_ipv4() if probe_network else None
+    health = health_probe() if probe_health else {"ok": None, "skipped": True}
+    health_payload = health.get("payload") if isinstance(health, dict) and isinstance(health.get("payload"), dict) else {}
+    collection_health = health_payload.get("collection_health") if isinstance(health_payload.get("collection_health"), dict) else None
     report: dict[str, Any] = {
-        "schema_version": 1,
+        "schema_version": 2,
         "git": git,
         "health_url": HEALTH_URL,
-        "health": health_probe() if probe_health else {"ok": None, "skipped": True},
+        "health": health,
+        "collection_health": collection_health,
+        "collection_requires_attention": bool(collection_health and collection_health.get("requires_attention") is True),
         "lan_ipv4": lan,
         "tailscale_ipv4": tailscale,
         "access_candidates": [f"http://{ip}:8765/" for ip in lan] + ([f"http://{tailscale}:8765/"] if tailscale else []),
@@ -108,11 +113,12 @@ def self_test() -> None:
     assert not _valid_ipv4("127.0.0.1")
     assert not _valid_ipv4("999.1.1.1")
     report = build_report(Path.cwd(), probe_health=False, probe_network=False)
-    assert report["schema_version"] == 1
+    assert report["schema_version"] == 2
     assert report["health"]["skipped"] is True
     assert report["lan_ipv4"] == []
     assert report["tailscale_ipv4"] is None
     assert report["access_candidates"] == []
+    assert report["collection_health"] is None
     print("tablet runtime probe: OK")
 
 
@@ -121,6 +127,7 @@ def main() -> int:
     parser.add_argument("--root", default=str(Path(__file__).resolve().parent))
     parser.add_argument("--no-health", action="store_true")
     parser.add_argument("--require-health", action="store_true")
+    parser.add_argument("--require-collection-health", action="store_true")
     parser.add_argument("--self-test", action="store_true")
     args = parser.parse_args()
     if args.self_test:
@@ -130,6 +137,8 @@ def main() -> int:
     print(json.dumps(report, ensure_ascii=False, separators=(",", ":")))
     if args.require_health and report.get("health", {}).get("ok") is not True:
         return 2
+    if args.require_collection_health and report.get("collection_health") is not None and report.get("collection_health", {}).get("healthy") is False:
+        return 3
     return 0
 
 

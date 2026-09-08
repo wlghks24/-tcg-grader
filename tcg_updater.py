@@ -48,7 +48,47 @@ JSON_FILE_CACHE={}
 JSON_FILE_CACHE_LIMIT=48
 AUTO_INTERVAL_SECONDS=6*60*60
 PRECOLLECT_LEAD_SECONDS=30*60
+AUTO_FAILURE_RETRY_SECONDS=env_int('TCG_AUTO_FAILURE_RETRY_SECONDS',30*60,5*60,2*60*60)
+AUTO_FAILURE_RETRY_LIMIT=env_int('TCG_AUTO_FAILURE_RETRY_LIMIT',2,1,3)
 
+
+def collection_health_status():
+    try:
+        import collection_runtime_health
+        return collection_runtime_health.public_status()
+    except (ImportError,OSError,ValueError,TypeError,json.JSONDecodeError):
+        return {'healthy':False,'status':'health-state-error','requires_attention':True,'process_restart_required':False}
+
+def _collection_mark_attempt(trigger,next_due_at=None):
+    try:
+        import collection_runtime_health
+        collection_runtime_health.mark_attempt(trigger,next_due_at=next_due_at)
+    except (ImportError,OSError,ValueError,TypeError):
+        return None
+
+def _collection_mark_success(trigger,next_due_at=None):
+    try:
+        import collection_runtime_health
+        collection_runtime_health.mark_success(trigger,next_due_at=next_due_at)
+    except (ImportError,OSError,ValueError,TypeError):
+        return None
+
+def _collection_mark_failure(trigger,error,next_due_at=None):
+    try:
+        import collection_runtime_health
+        collection_runtime_health.mark_failure(trigger,error,next_due_at=next_due_at)
+    except (ImportError,OSError,ValueError,TypeError):
+        return None
+
+def _collection_mark_precollect(status):
+    try:
+        import collection_runtime_health
+        collection_runtime_health.mark_precollect(status)
+    except (ImportError,OSError,ValueError,TypeError):
+        return None
+
+def _auto_result_ok(data):
+    return isinstance(data,dict) and data.get('auto_update',{}).get('report_ok') is True
 
 def next_update_due(previous_due, now=None):
     """Return the next future cadence slot without replaying missed cycles."""
@@ -578,9 +618,11 @@ def collect():
 
 def update_cycle(trigger='manual', progress_callback=None):
     """Collect official source changes and refresh the verified release board safely."""
+    _collection_mark_attempt(trigger)
     with UPDATE_LOCK:
         started=time.time()
         data=collect()
+        report={'ok':False,'results':[]}
         try:
             import auto_update_all
             report=auto_update_all.run_all(trigger, progress_callback=progress_callback)
@@ -617,9 +659,14 @@ def update_cycle(trigger='manual', progress_callback=None):
             'source_checked_count':len(SOURCES),
             'source_auto_applied_count':len(normal),
             'source_error_count':len(errors),
+            'report_ok':bool(report.get('ok')),
             'full_update':True,
         }
         save_db(data)
+        if data['auto_update']['report_ok']:
+            _collection_mark_success(trigger,data['auto_update'].get('next_run'))
+        else:
+            _collection_mark_failure(trigger,'verified automatic-update report failed',data['auto_update'].get('next_run'))
         return data
 
 def _job_snapshot():
@@ -934,6 +981,7 @@ def precollect_cycle(due_at):
                        'error':f'{type(exc).__name__}: {exc}','message':'사전수집 실패 · 정규 6시간 업데이트에서 보완'})
         shutil.rmtree(tmp_stage,ignore_errors=True)
     _write_precollect_status(status)
+    _collection_mark_precollect(status)
     return status
 
 
@@ -979,8 +1027,10 @@ def _changed_source_files(pending):
 
 def finalize_precollected_cycle(due_at):
     """정확한 6시간 시점에 사전수집 자료를 검증 반영하고 부족한 항목만 보완 수집한다."""
+    trigger='automatic-final'
+    _collection_mark_attempt(trigger,time.strftime('%Y-%m-%dT%H:%M:%S%z',time.localtime(due_at)))
     with UPDATE_LOCK:
-        started=time.time(); trigger='automatic-final'
+        started=time.time()
         import auto_update_all
         staged_report={}; failed_files=set(); applied_files=[]
         stage_ready=False
@@ -1070,34 +1120,68 @@ def finalize_precollected_cycle(due_at):
             'promo_status':st('promo_events.json'),'purchase_status':st('purchase_sources.json'),'fx_status':st('exchange_rates.json'),
             'source_checked_count':len(SOURCES),'source_auto_applied_count':len(normal),'source_error_count':len(errors),
             'precollect_state':status.get('state'),'precollect_applied_count':len(applied_files),
-            'supplement_file_count':len(failed_files),'full_update':True}
+            'supplement_file_count':len(failed_files),'report_ok':bool(final_report.get('ok')),'full_update':True}
         save_db(data)
+        if data['auto_update']['report_ok']:
+            _collection_mark_success(trigger,data['auto_update'].get('next_run'))
+        else:
+            _collection_mark_failure(trigger,'verified final collection report failed',data['auto_update'].get('next_run'))
         return data
 
 
+def _retry_failed_automatic(base_trigger):
+    for attempt in range(1,AUTO_FAILURE_RETRY_LIMIT+1):
+        time.sleep(AUTO_FAILURE_RETRY_SECONDS)
+        trigger=f'{base_trigger}-retry-{attempt}'
+        try:
+            data=update_cycle(trigger)
+        except Exception as exc:
+            _collection_mark_failure(trigger,exc)
+            continue
+        if _auto_result_ok(data):
+            return True
+    return False
+
+
 def auto_update_loop():
-    # 시작 직후 한 번은 전체 검증을 수행해 기준시각을 만든다.
+    # 시작 직후 전체 검증. 실패하면 상태를 영구 기록하고 30분 간격으로 제한 재시도한다.
+    startup_ok=False
     try:
         first=update_cycle('automatic-startup')
-        last_text=first.get('auto_update',{}).get('last_run')
-    except Exception:
-        last_text=None
-    now=time.time()
-    due=now+AUTO_INTERVAL_SECONDS
+        startup_ok=_auto_result_ok(first)
+    except Exception as exc:
+        _collection_mark_failure('automatic-startup',exc)
+    if not startup_ok:
+        _retry_failed_automatic('automatic-startup')
+
+    due=time.time()+AUTO_INTERVAL_SECONDS
     while True:
         pre_at=due-PRECOLLECT_LEAD_SECONDS
         delay=max(0,pre_at-time.time())
-        if delay: time.sleep(delay)
-        try: precollect_cycle(due)
-        except Exception: pass
+        if delay:
+            time.sleep(delay)
+        try:
+            precollect_cycle(due)
+        except Exception as exc:
+            _collection_mark_precollect({'state':'failed','error':f'{type(exc).__name__}: {exc}'})
         delay=max(0,due-time.time())
-        if delay: time.sleep(delay)
-        try: finalize_precollected_cycle(due)
-        except Exception:
-            # stage 반영에 실패하면 기존 정규 전체업데이트로 안전하게 폴백한다.
-            try: update_cycle('automatic-fallback')
-            except Exception: pass
-        due = next_update_due(due,time.time())
+        if delay:
+            time.sleep(delay)
+        final_ok=False
+        try:
+            final=finalize_precollected_cycle(due)
+            final_ok=_auto_result_ok(final)
+        except Exception as exc:
+            _collection_mark_failure('automatic-final',exc)
+        if not final_ok:
+            try:
+                fallback=update_cycle('automatic-fallback')
+                final_ok=_auto_result_ok(fallback)
+            except Exception as exc:
+                _collection_mark_failure('automatic-fallback',exc)
+        if not final_ok:
+            _retry_failed_automatic('automatic-cycle')
+        due=next_update_due(due,time.time())
 
 class Handler(SimpleHTTPRequestHandler):
     def __init__(self, *args, directory=None, **kwargs):
@@ -1271,7 +1355,8 @@ class Handler(SimpleHTTPRequestHandler):
                 'issues':issues,
                 'message':'최신자료 확인 → 변경 비교 → 검증 → 정상자료 전체 반영을 한 번에 완료했습니다.'
             })
-        except Exception:
+        except Exception as exc:
+            _collection_mark_failure('manual',exc)
             return self.json({'ok':False,'error':'통합 업데이트 실행 오류'},500)
     def _safe_static(self,path):
         name=path.lstrip('/') or 'index.html'
@@ -1327,7 +1412,8 @@ class Handler(SimpleHTTPRequestHandler):
             return
         parsed=urlparse(self.path);path=parsed.path
         if path=='/api/health':
-            return self.json({'ok':True,'service':SERVICE_NAME,'platform':PLATFORM,'port':PORT,'api_version':3,'integrated_version':INTEGRATED_VERSION,'learning_version':'v123-verified-multisource-photo-collection'})
+            return self.json({'ok':True,'service':SERVICE_NAME,'platform':PLATFORM,'port':PORT,'api_version':3,'integrated_version':INTEGRATED_VERSION,'learning_version':'v123-verified-multisource-photo-collection','collection_health':collection_health_status()})
+        if path=='/api/collection-health': return self.json(collection_health_status())
         if path=='/api/status': return self.json(load_db())
         if path=='/api/auto-status': return self.json(load_db().get('auto_update',{}))
         if path=='/api/update-job': return self.json({'ok':True,'job':_job_snapshot()})

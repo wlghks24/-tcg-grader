@@ -15,6 +15,10 @@ on:
       - 'ANDROID_AUTO_START_INSTALL.sh'
       - 'START_TCG_UPDATER_ANDROID.sh'
       - 'VERIFY_TABLET_RUNTIME.sh'
+      - 'tablet_runtime_manifest.py'
+      - 'collection_runtime_health.py'
+      - 'verify_current_runtime.py'
+      - 'test_tablet_standalone_hardening_v209.py'
       - 'tablet_runtime_probe.py'
       - 'test_runtime_delivery_guards.py'
       - 'tablet_runtime_qa.py'
@@ -75,6 +79,10 @@ on:
       - 'ANDROID_AUTO_START_INSTALL.sh'
       - 'START_TCG_UPDATER_ANDROID.sh'
       - 'VERIFY_TABLET_RUNTIME.sh'
+      - 'tablet_runtime_manifest.py'
+      - 'collection_runtime_health.py'
+      - 'verify_current_runtime.py'
+      - 'test_tablet_standalone_hardening_v209.py'
       - 'tablet_runtime_probe.py'
       - 'test_runtime_delivery_guards.py'
       - 'tablet_runtime_qa.py'
@@ -142,7 +150,11 @@ jobs:
           TCG_FINAL_SKIP_HEAD_MATCH: '1'
         run: bash VERIFY_TABLET_FINAL.sh
       - name: Verify unified tablet runtime QA wiring
-        run: python test_tablet_runtime_qa_integration.py
+        run: |
+          python test_tablet_runtime_qa_integration.py
+          python tablet_runtime_manifest.py --check --compile
+          python collection_runtime_health.py
+          python -m unittest -v test_tablet_standalone_hardening_v209.py
       - name: Verify tablet recovery entrypoint exists
         run: |
           test -s ANDROID_RECOVER_UPDATE.sh
