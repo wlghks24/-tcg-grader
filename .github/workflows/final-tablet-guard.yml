@@ -17,6 +17,8 @@ on:
       - 'VERIFY_TABLET_RUNTIME.sh'
       - 'tablet_runtime_manifest.py'
       - 'collection_runtime_health.py'
+      - 'verified_collection_neural.py'
+      - 'test_verified_collection_neural_v211.py'
       - 'verify_current_runtime.py'
       - 'test_tablet_standalone_hardening_v209.py'
       - 'tablet_runtime_probe.py'
@@ -81,6 +83,8 @@ on:
       - 'VERIFY_TABLET_RUNTIME.sh'
       - 'tablet_runtime_manifest.py'
       - 'collection_runtime_health.py'
+      - 'verified_collection_neural.py'
+      - 'test_verified_collection_neural_v211.py'
       - 'verify_current_runtime.py'
       - 'test_tablet_standalone_hardening_v209.py'
       - 'tablet_runtime_probe.py'
@@ -168,6 +172,8 @@ jobs:
           grep -Fq 'tcg_code_repair_report.json' .gitignore
           grep -Fq 'graphify_self_heal_memory.json' .gitignore
           grep -Fq 'graphify-out/graph_audit.json' .gitignore
+          grep -Fq 'VERIFIED_COLLECTION_NEURAL_LABELS.json' .gitignore
+          grep -Fq 'VERIFIED_COLLECTION_NEURAL_MODEL.json' .gitignore
       - name: Verify Graphify control-plane files stay out of map
         run: |
           grep -Fxq '.codex/' .graphifyignore

@@ -180,6 +180,7 @@ import runtime_bundle_guard_v143 as bundle_guard
 import manual_collection_mode as manual_mode
 import graded_photo_manual_pair_queue as pair_queue
 import legacy_ocr_registry_cleanup_v149 as legacy_cleanup
+import verified_collection_neural as collection_neural
 learning=learning_guard.apply()
 expansion=source_expansion.apply()
 bundle=bundle_guard.require_compatible()
@@ -204,6 +205,13 @@ assert mode.get('back_stored_separately') is True
 assert mode.get('grouped_by_game_only') is True
 assert mode.get('grader_subfolders_created') is False
 assert legacy_cleanup.PATCH_ID == 149
+assert collection_neural.MIN_INDEPENDENT_LABELS == 1000
+assert collection_neural.HIDDEN_SIZES == (4, 8, 12)
+assert collection_neural.SAFETY.get('learns_strategy_not_facts') is True
+assert collection_neural.SAFETY.get('official_trust_auto_promotion') is False
+assert collection_neural.SAFETY.get('candidate_database_auto_promotion') is False
+assert collection_neural.SAFETY.get('verification_bypass') is False
+assert collection_neural.SAFETY.get('neural_output_is_priority_only') is True
 probe=pair_queue._pair_folder(pair_queue.ANDROID_ROOT,'pokemon','0123456789abcdefabcd')
 assert str(probe).endswith('/pokemon/수동등록대기/0123456789abcdefabcd')
 assert '/pokemon/PSA/' not in str(probe)
@@ -254,6 +262,7 @@ echo "등급학습 안전게이트 사용: 공식인증 + RAW 원시예측 + 교
 echo "수동등록 정책: 앞면+뒷면 2장 필수 · 앞면 OCR · 뒷면 별도 증빙 저장"
 echo "등급사진 정책: 자동 등급사 조회 OFF · 공식사이트 직접확인/수동등록 · 인증번호+앞뒤사진만 게임폴더에 보관"
 echo "자료수집 자가학습 v142 + 런타임 번들 v143 + OCR v149: 고유출처 검증 + timeout circuit-breaker + 혼합버전 차단"
+echo "자료수집 신경망 v211: 실제 공식결과/정상 빈검색만 학습 · 1,000개 독립라벨 전 비활성 · 4/8/12 비교 · 검증우회/사실승격 금지"
 python tcg_updater_v135.py &
 SERVER_PID=$!
 wait "$SERVER_PID"

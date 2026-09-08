@@ -37,6 +37,8 @@ on:
       - 'VERIFY_TABLET_RUNTIME.sh'
       - 'tablet_runtime_manifest.py'
       - 'collection_runtime_health.py'
+      - 'verified_collection_neural.py'
+      - 'test_verified_collection_neural_v211.py'
       - 'verify_current_runtime.py'
       - 'test_tablet_standalone_hardening_v209.py'
       - 'tablet_runtime_probe.py'
@@ -89,6 +91,8 @@ on:
       - 'VERIFY_TABLET_RUNTIME.sh'
       - 'tablet_runtime_manifest.py'
       - 'collection_runtime_health.py'
+      - 'verified_collection_neural.py'
+      - 'test_verified_collection_neural_v211.py'
       - 'verify_current_runtime.py'
       - 'test_tablet_standalone_hardening_v209.py'
       - 'tablet_runtime_probe.py'
@@ -134,6 +138,7 @@ jobs:
           python tablet_runtime_manifest.py --check --compile
           python collection_runtime_health.py
           python -m unittest -v test_tablet_standalone_hardening_v209.py
+          python -m unittest -v test_verified_collection_neural_v211.py
           python test_link_audit_hardening_v184.py
           python test_link_same_host_fallback_v189.py
           python test_psa_official_proof_grade_v187.py
@@ -141,7 +146,7 @@ jobs:
           python test_manual_only_official_verification_v192.py
           python test_manual_official_proof.py
           python test_pending_official_candidate_v161.py
-          python -m py_compile safe_runtime.py collection_runtime_health.py tablet_runtime_manifest.py verify_current_runtime.py tcg_updater.py tcg_updater_v135.py update_market_prices.py validate_external_links.py grading_cert_verifier.py manual_graded_photo_registration.py manual_official_proof.py pending_official_candidate_v161.py graded_photo_multi_source.py auto_update_all.py auto_repair_engine.py error_scenario_lab.py tablet_runtime_qa.py test_tablet_runtime_qa_integration.py
+          python -m py_compile safe_runtime.py collection_runtime_health.py tablet_runtime_manifest.py verified_collection_neural.py verify_current_runtime.py tcg_updater.py tcg_updater_v135.py update_market_prices.py validate_external_links.py grading_cert_verifier.py manual_graded_photo_registration.py manual_official_proof.py pending_official_candidate_v161.py graded_photo_multi_source.py auto_update_all.py auto_repair_engine.py error_scenario_lab.py tablet_runtime_qa.py test_tablet_runtime_qa_integration.py
           python test_tablet_runtime_qa_integration.py
           node --check multi_market_prices.js
           node --check manual_official_verify_bridge.js

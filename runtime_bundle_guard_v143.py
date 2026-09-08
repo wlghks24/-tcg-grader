@@ -47,6 +47,7 @@ REQUIRED_FILES = (
     "multi_channel_agent.py",
     "search_method_learning.py",
     "adaptive_collection_learner.py",
+    "verified_collection_neural.py",
     "collection_learning_hardening_v142.py",
     "collection_learning_hardening_v144.py",
     "event_source_overlay_v144.py",
@@ -116,6 +117,7 @@ def audit() -> dict:
         "graded_photo_multi_source",
         "multi_channel_agent",
         "search_method_learning",
+        "verified_collection_neural",
         "collection_learning_hardening_v142",
         "event_source_expansion_v145",
         "manual_official_proof",
@@ -236,6 +238,24 @@ def audit() -> dict:
     method = modules.get("search_method_learning")
     if method is not None and int(getattr(method, "SCHEMA_VERSION", 0) or 0) < 2:
         issues.append("검색경로 timeout/403/429 cooldown 학습기가 구버전입니다")
+
+    collection_neural = modules.get("verified_collection_neural")
+    if collection_neural is not None:
+        safety = getattr(collection_neural, "SAFETY", {})
+        if int(getattr(collection_neural, "MIN_INDEPENDENT_LABELS", 0) or 0) != 1000:
+            issues.append("자료수집 신경망 최소 독립라벨 계약이 1,000개가 아닙니다")
+        if tuple(getattr(collection_neural, "HIDDEN_SIZES", ())) != (4, 8, 12):
+            issues.append("자료수집 신경망 은닉크기 4/8/12 비교 계약이 없습니다")
+        if safety.get("learns_strategy_not_facts") is not True:
+            issues.append("자료수집 신경망이 전략이 아닌 사실값을 학습할 수 있습니다")
+        if safety.get("official_trust_auto_promotion") is not False:
+            issues.append("자료수집 신경망이 출처를 공식으로 자동승격할 수 있습니다")
+        if safety.get("candidate_database_auto_promotion") is not False:
+            issues.append("자료수집 신경망이 후보자료를 검증 없이 DB로 승격할 수 있습니다")
+        if safety.get("verification_bypass") is not False:
+            issues.append("자료수집 신경망이 검증 게이트를 우회할 수 있습니다")
+        if safety.get("neural_output_is_priority_only") is not True:
+            issues.append("자료수집 신경망 출력이 검색 우선순위 이외 용도로 사용될 수 있습니다")
 
     photo = modules.get("graded_photo_multi_source")
     if photo is not None:

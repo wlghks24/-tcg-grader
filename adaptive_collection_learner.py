@@ -32,6 +32,7 @@ from typing import Iterable
 from safe_runtime import atomic_write_json, safe_read_text
 import collection_meta_learning
 import provider_health_learning
+import verified_collection_neural
 
 ROOT = Path(__file__).resolve().parent
 MEMORY = ROOT / "collection_learning_memory.json"
@@ -245,6 +246,14 @@ class AdaptiveCollectionLearner:
         self.memory_path = Path(memory_path)
         self.backup_path = Path(backup_path) if backup_path else self.memory_path.with_suffix(self.memory_path.suffix + ".bak")
         self.report_path = Path(report_path)
+        if self.memory_path.resolve() == MEMORY.resolve():
+            self.neural_labels_path = verified_collection_neural.LABELS_PATH
+            self.neural_model_path = verified_collection_neural.MODEL_PATH
+            self.neural_report_path = verified_collection_neural.REPORT_PATH
+        else:
+            self.neural_labels_path = self.memory_path.parent / "VERIFIED_COLLECTION_NEURAL_LABELS.json"
+            self.neural_model_path = self.memory_path.parent / "VERIFIED_COLLECTION_NEURAL_MODEL.json"
+            self.neural_report_path = self.memory_path.parent / "VERIFIED_COLLECTION_NEURAL_REPORT.json"
         self.memory = self._load()
 
     def _load(self) -> dict:
@@ -269,6 +278,14 @@ class AdaptiveCollectionLearner:
             except (OSError, ValueError, TypeError, json.JSONDecodeError):
                 pass
         atomic_write_json(self.memory_path, self.memory, suffix=".learn.tmp")
+        try:
+            verified_collection_neural.train_if_ready(
+                labels_path=self.neural_labels_path,
+                model_path=self.neural_model_path,
+                report_path=self.neural_report_path,
+            )
+        except (OSError, ValueError, TypeError, OverflowError, json.JSONDecodeError):
+            pass
         atomic_write_json(self.report_path, self.report(), suffix=".learn.report.tmp")
 
     def _query_score(self, query: str) -> float:
@@ -443,10 +460,40 @@ class AdaptiveCollectionLearner:
             if not q or key in seen:
                 continue
             seen.add(key)
-            row = dict(row); row["query"] = q; row["learned_score"] = round(self._query_score(q), 4)
+            row = dict(row)
+            row["query"] = q
+            row["learned_score"] = round(self._query_score(q), 4)
+            qstat = self.memory["query_stats"].get(_signature(q), {})
+            neural_input = {
+                **qstat,
+                **row,
+                "game": game,
+                "learned_score": row["learned_score"],
+            }
+            try:
+                neural = verified_collection_neural.score_query(
+                    neural_input,
+                    model_path=self.neural_model_path,
+                )
+            except (OSError, ValueError, TypeError, OverflowError, json.JSONDecodeError):
+                neural = {"active": False, "score": 0.5, "reason": "collection_neural_unavailable"}
+            row["neural_priority_active"] = neural.get("active") is True
+            row["neural_priority_score"] = round(
+                max(0.0, min(1.0, _bounded_float(neural.get("score"), 0.5, 0.0, 1.0))),
+                4,
+            )
+            row["neural_priority_reason"] = str(neural.get("reason") or "")[:60]
             dedup.append(row)
         baseline = dedup[:3]
-        remainder = sorted(dedup[3:], key=lambda row: row["learned_score"], reverse=True)
+        remainder = sorted(
+            dedup[3:],
+            key=lambda row: (
+                row.get("neural_priority_active") is True,
+                _bounded_float(row.get("neural_priority_score"), 0.5, 0.0, 1.0),
+                _bounded_float(row.get("learned_score"), 0.0, -50.0, 50.0),
+            ),
+            reverse=True,
+        )
         chosen = list(baseline)
 
         def reserve(pool: list[dict], offset: int = 0) -> None:
@@ -578,7 +625,34 @@ class AdaptiveCollectionLearner:
         for term in REGION_SEEDS.get(region, REGION_SEEDS["KR"])["event"]:
             if term.lower() in query.lower():
                 self._bump_term(game, region, term, relevant=len(relevant_rows), official=len(official_rows), weight=0.08, run=True)
-        return {"results": len(rows), "relevant": len(relevant_rows), "official": len(official_rows), "error": bool(error)}
+
+        try:
+            neural_observation = verified_collection_neural.observe_search_outcome(
+                game=game,
+                region=region,
+                family=family,
+                query=query,
+                rows=rows,
+                relevant_count=len(relevant_rows),
+                official_count=len(official_rows),
+                error=error,
+                query_stats=qrow,
+                labels_path=self.neural_labels_path,
+            )
+        except (OSError, ValueError, TypeError, OverflowError, json.JSONDecodeError):
+            neural_observation = {
+                "eligible": False,
+                "added": 0,
+                "reason": "collection_neural_observation_failed",
+            }
+        return {
+            "results": len(rows),
+            "relevant": len(relevant_rows),
+            "official": len(official_rows),
+            "error": bool(error),
+            "neural_label_added": int(neural_observation.get("added") or 0),
+            "neural_label_reason": str(neural_observation.get("reason") or "")[:80],
+        }
 
     def _extract_terms(self, game: str, text: str) -> list[str]:
         cfg = GAME_CONFIG.get(game, {})
@@ -733,11 +807,25 @@ class AdaptiveCollectionLearner:
             terms.append({"game": parts[0], "region": parts[1], "term": parts[2], "score": round(self._term_score(row), 3),
                           "official_hits": _bounded_int(row.get("official")), "cross_checked": _bounded_int(row.get("cross_checked"))})
         terms.sort(key=lambda x: (x["score"], x["official_hits"], x["cross_checked"]), reverse=True)
+        try:
+            neural_status = verified_collection_neural.status(
+                labels_path=self.neural_labels_path,
+                model_path=self.neural_model_path,
+            )
+        except (OSError, ValueError, TypeError, OverflowError, json.JSONDecodeError):
+            neural_status = {
+                "ok": False,
+                "active": False,
+                "reason": "collection_neural_status_failed",
+                "label_count": 0,
+            }
         return {
             "version": SCHEMA_VERSION,
             "updated_at": _now(),
             "policy": "수집전략만 자가학습. 반복 발견만으로 출처를 공식승격하지 않으며 공식도메인/SNS 검증정책은 별도 유지.",
             "anti_blindspot": "KR/JP/US 기본 검색 + verified-gap 우선 재검색 + 주제별 회전검색 + 공식도메인 + X/Instagram/YouTube 탐색. candidate/community 양으로 verified 누락을 숨기지 않음.",
+            "neural_policy": "실제 공식결과/정상 빈검색만 학습하며 신경망은 예약된 기본·verified-gap·탐색 슬롯을 건드리지 않고 남는 검색후보 순서만 조정.",
+            "collection_neural": neural_status,
             "memory_file": self.memory_path.name,
             "totals": dict(self.memory.get("totals", {})),
             "learned_queries": len(self.memory.get("query_stats", {})),

@@ -19,7 +19,7 @@ class TabletStandaloneHardeningV209(unittest.TestCase):
    self.assertEqual("stale",health.public_status(p,now=future)["status"])
  def test_manifest(self):
   req={"tcg_updater.py","collection_runtime_health.py","update_releases.py","update_market_prices.py","update_promo_events.py",
-       "graded_photo_multi_source.py","event_priority_watch.py","event_quick_watch.py","multi_route_event_discovery.py"}
+       "graded_photo_multi_source.py","event_priority_watch.py","event_quick_watch.py","multi_route_event_discovery.py","verified_collection_neural.py"}
   self.assertTrue(req.issubset(set(manifest.ACTIVE_RUNTIME_FILES)))
   r=manifest.audit(ROOT,compile_python=True); self.assertTrue(r["ok"],r); self.assertGreaterEqual(r["python_checked"],40)
  def test_auto_loop(self):
