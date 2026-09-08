@@ -132,7 +132,7 @@ class EvidenceLearner:
     def save_model(self,report,path):
         model=report.get('model')
         if report.get('status')!='READY_FOR_REVIEW_RANKING' or not isinstance(model,dict) or model.get('operational') is not True or model.get('scope')!=self.scope or report.get('metrics',{}).get('statistical_gates_passed') is not True:
-            return {'status':'MODEL_NOT_PROMODED'}
+            return {'status':'MODEL_NOT_PROMOTED'}
         path=Path(path);path.parent.mkdir(parents=True,exist_ok=True)
         fd,tmp=tempfile.mkstemp(dir=path.parent,suffix='.tmp')
         try:
