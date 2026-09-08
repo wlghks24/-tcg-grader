@@ -6,8 +6,10 @@
   "implementation_commit": "62c5ef9bc05e2f261db6d635ae5b6cadcaddb66f",
   "repository_main_before": "b5d9c753961bad8ff850a1948d4616a875a7a262",
   "repository_main_changed": false,
-  "external_upload_status": "APPROVED_FOR_FEATURE_BRANCH_UPLOAD",
+  "external_upload_status": "UPLOADED_TO_FEATURE_BRANCH",
   "uploaded_branch": "integrate/tcg-grader-ai-reliability-v8",
+  "uploaded_at": "2026-09-08T03:56:47Z",
+  "remote_branch_url": "https://github.com/wlghks24/-tcg-grader/tree/integrate/tcg-grader-ai-reliability-v8",
   "existing_function_preservation": {
     "result": "PASS",
     "entrypoint_change": "12 added lines and 1 replaced global declaration line",
@@ -15,7 +17,7 @@
     "existing_learning_records_overwritten": false,
     "scheduler_settings_changed": false
   },
-  "changed_file_count": 36,
+  "changed_file_count": 37,
   "core_changed_files": [
     "tcg_updater_v135.py",
     ".gitignore"
