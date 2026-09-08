@@ -10,6 +10,7 @@ from __future__ import annotations
 
 import base64
 import binascii
+from collections import deque
 from datetime import datetime, timezone
 from functools import lru_cache
 import hashlib
@@ -265,17 +266,32 @@ def public_registry() -> dict[str, Any]:
             signature = None
         payload = _cached_registry_payload(str(REGISTRY_PATH.absolute()), signature)
         source_rows = payload.get("registrations", []) if isinstance(payload, dict) else []
-        rows = [_public_row(row) for row in reversed(source_rows[-MAX_REGISTRATIONS:]) if isinstance(row, dict)]
+        total = verified_reference = pending = quarantined = 0
+        recent: deque[dict[str, Any]] = deque(maxlen=200)
+        # Summary needs all retained registrations, but the browser only receives
+        # the newest 200. Avoid projecting/normalizing up to 5,000 full public
+        # rows on every status poll; count raw status fields once and copy only
+        # the bounded rows that will actually leave the server.
+        for row in source_rows[-MAX_REGISTRATIONS:]:
+            if not isinstance(row, dict):
+                continue
+            total += 1
+            verified_reference += row.get("official_result") is True
+            pending += row.get("status") == "pending_official_verification"
+            quarantined += row.get("status") == "quarantine"
+            recent.append(dict(row))
+        updated_at = payload.get("updated_at") if isinstance(payload, dict) else None
+    rows = [_public_row(row) for row in reversed(recent)]
     return {
         "ok": True,
         "schema_version": 2,
-        "updated_at": payload.get("updated_at"),
-        "registrations": rows[:200],
+        "updated_at": updated_at,
+        "registrations": rows,
         "summary": {
-            "total": len(rows),
-            "verified_reference": sum(row.get("official_result") is True for row in rows),
-            "pending": sum(row.get("status") == "pending_official_verification" for row in rows),
-            "quarantined": sum(row.get("status") == "quarantine" for row in rows),
+            "total": total,
+            "verified_reference": verified_reference,
+            "pending": pending,
+            "quarantined": quarantined,
             "raw_calibration_rows_written": 0,
         },
         "policy": {

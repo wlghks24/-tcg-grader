@@ -223,6 +223,30 @@ class ManualGradedPhotoRegistrationTests(unittest.TestCase):
         self.assertEqual(first["registration"]["registration_id"], second["registration"]["registration_id"])
         self.assertEqual(manual.public_registry()["summary"]["total"], 1)
 
+    def test_public_registry_projects_only_newest_200_but_counts_all_rows(self):
+        rows=[]
+        for index in range(500):
+            rows.append({
+                "registration_id": f"manual-{index:014d}-abcdef123456",
+                "official_result": index % 5 == 0,
+                "status": "pending_official_verification" if index % 3 == 0 else ("quarantine" if index % 7 == 0 else "other"),
+            })
+        payload={"updated_at":"2026-09-09T00:00:00Z","registrations":rows}
+        original=manual._public_row
+        with tempfile.TemporaryDirectory() as directory:
+            missing=Path(directory)/"missing-registry.json"
+            with mock.patch.object(manual,"REGISTRY_PATH",missing), \
+                 mock.patch.object(manual,"_cached_registry_payload",return_value=payload), \
+                 mock.patch.object(manual,"_public_row",wraps=original) as projector:
+                result=manual.public_registry()
+        self.assertEqual(result["summary"]["total"],500)
+        self.assertEqual(result["summary"]["verified_reference"],100)
+        self.assertEqual(result["summary"]["pending"],167)
+        self.assertEqual(result["summary"]["quarantined"],48)
+        self.assertEqual(len(result["registrations"]),200)
+        self.assertEqual(projector.call_count,200)
+        self.assertEqual(result["registrations"][0]["registration_id"],"manual-00000000000499-abcdef123456")
+
     def test_registry_cache_reuses_parse_but_returns_isolated_rows(self):
         manual.register(self.payload())
         manual._cached_registry_payload.cache_clear()
