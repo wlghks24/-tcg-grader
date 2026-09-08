@@ -1,0 +1,45 @@
+{
+  "schema_version": 1,
+  "project": "tcg_grader",
+  "task_id": "6a9b878f35bc8191963b8685566709c4",
+  "base_commit": "b5d9c753961bad8ff850a1948d4616a875a7a262",
+  "entrypoint": {
+    "path": "tcg_updater.py",
+    "sha256": "96e3af9584f2c78e119b6b9e65e161f7254767a049eb3dab448451cb3a93f452",
+    "blob_sha": "8c8648ecb7f64ba9d390a0e6e71f1157f1eb858f",
+    "bytes": 102039
+  },
+  "learning_files": {
+    "vision_calibration.json": {
+      "sha256": "5d27a7d977b1c98ce748786b1883b521a0cb792fb1493c664294b58f9399b561",
+      "blob_sha": "46ac70e26502f39be10bee2fe40421465c589eb9",
+      "bytes": 493
+    },
+    "vision_self_learning_report.json": {
+      "sha256": "35544939bffadbfc4ea1542a39f6100fbaf8b0160115d8d8ff919183f2231181",
+      "blob_sha": "906fb46575f93a7618664cdd4ef8b288e29bae0f",
+      "bytes": 2436
+    },
+    "graded_photo_reference_learning.json": {
+      "sha256": "9ff8a3d77f140e33bd68c8ca80486cea78ddb54da337a325125484a344b7fac0",
+      "blob_sha": "c0214e2ae3cf5d61cdb3c59f79ec0a53648724e1",
+      "bytes": 775
+    },
+    "card_identity_learning.json": {
+      "sha256": "f74df5e30fb02f4922e76be720581456765d5cdabdaeedd6cb27cfb3b2174408",
+      "blob_sha": "66749dfb05a0279f6a4edd2fd2d5b2f21740a0ce",
+      "bytes": 120
+    },
+    "learning_store.json": {
+      "sha256": "314836156b1cade09071a21538fb00cbe230a1121e94c122ad0da9c4c35c349a",
+      "blob_sha": "b15f2ac262a8bec2b038517c9e9e9191ab2246cd",
+      "bytes": 112
+    },
+    "graded_photo_candidates.json": {
+      "sha256": "d8ffeb046bfc241086dff799060d0dea855291ef48aee86274a3d7f4a27dc14c",
+      "blob_sha": "04aa0fab9354de9b6469c9017e0f56634a6a43ab",
+      "bytes": 3284
+    }
+  },
+  "guarantee": "tracked originals remain recoverable from base_commit; learning files will not be edited by this integration"
+}
