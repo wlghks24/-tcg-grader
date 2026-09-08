@@ -54,6 +54,15 @@ GAMES = {
     },
 }
 REGIONS = {"KR": "ko", "JP": "ja", "US": "en"}
+REGION_LANG = {**REGIONS, "ASIA": "en"}
+SUPPLEMENTARY_DISCOVERY_CELLS = (("포켓몬 카드", "ASIA"),)
+SUPPLEMENTARY_COVERAGE_TOPICS = ("event", "promo", "anniversary", "entry", "access")
+REGION_QUERY_TERMS = {
+    "ASIA": (
+        "Asia", "Taiwan", "Hong Kong", "Singapore", "Malaysia",
+        "Philippines", "Thailand", "Indonesia",
+    ),
+}
 
 QUERY_FAMILIES = {
     "ko": {
@@ -108,10 +117,10 @@ QUERY_FAMILIES = {
     },
     "en": {
         "release": "release new set booster starter preorder reprint",
-        "event": "event challenge special mission tournament pop-up festival demo store championship",
+        "event": "event challenge \"special mission\" tournament pop-up festival demo store championship \"fun run\" \"pokemon run\" \"pokémon run\" finisher participant",
         "tournament": "tournament league cup championship regional worlds store battle",
         "popup": "pop-up popup store festival expo convention exhibition demo card shop",
-        "promo": "promo promotional card giveaway distribution exclusive campaign",
+        "promo": "promo \"promotional card\" giveaway distribution exclusive campaign finisher reward \"participation reward\" \"promo card\"",
         "collab": "collaboration collab cafe retailer partnership brand baseball",
         "movie": "movie film cinema screening premiere theatrical bonus admission promo",
         "reprint": "reprint re-release restock additional print rerun",
@@ -123,7 +132,7 @@ QUERY_FAMILIES = {
         "deadline": "deadline apply-by registration-closes application-period entry-period closing-date",
         "status_update": "change cancelled canceled postponed rescheduled schedule-change time-change venue-change location-change",
         "rules": "rules banned restricted restriction errata legality legal-date regulation rulebook floor-rules",
-        "access": "eligibility check-in spectator pass badge waitlist interest-list player-ID deck-list entry-fee capacity RK9 PLAYGO",
+        "access": "eligibility check-in spectator pass badge waitlist interest-list player-ID deck-list entry-fee capacity RK9 PLAYGO participant runner finisher completion \"completion reward\"",
         "results": "tournament-results event-results match-results final-standings top-finishers winning-deck champion-deck",
         "purchase_policy": "lottery-sale purchase-limit sales-limit one-item-per-person identity-verification virtual-queue purchase-ticket purchase-voucher",
         "service_status": "maintenance service-outage service-unavailable disruption login-issue incident resolved",
@@ -156,6 +165,16 @@ OFFICIAL_ROUTES = {
         "https://www.pokemon.com/us/play-pokemon/pokemon-events/championship-series-event-results",
         "https://support.pokemon.com/hc/en-us",
         "https://support.pokemon.com/hc/en-us/categories/115000426053-Pok%C3%A9mon-Trading-Card-Game",
+    ),
+    ("포켓몬 카드", "ASIA"): (
+        "https://tw.portal-pokemon.com/30th/?lang=en",
+        "https://hk.portal-pokemon.com/30th/?lang=en",
+        "https://sg.portal-pokemon.com/30th/",
+        "https://my.portal-pokemon.com/30th/",
+        "https://ph.portal-pokemon.com/30th/",
+        "https://th.portal-pokemon.com/30th/?lang=en",
+        "https://id.portal-pokemon.com/30th/?lang=en",
+        "https://pokemongo.com/news/",
     ),
     ("원피스 카드", "KR"): (
         "https://onepiece-cardgame.kr/events.do",
@@ -223,9 +242,9 @@ SERVICE_DISCOVERY_HOSTS = ("lin.ee", "line.me", "www.line.me", "bandai-tcg-plus.
 COMMUNITY_DISCOVERY_HOSTS = ("namu.wiki", "www.namu.wiki", "namu.moe", "www.namu.moe", "reddit.com", "www.reddit.com")
 
 KEYWORD_RE = re.compile(
-    r"가격개정|가격변경|가격인상|가격인하|희망소비자가격|봉입오류|내용물누락|제품불량|제조불량|인쇄오류|가공오류|교환대응|상품회수|리콜|위조품|가품|모조품|복제품|레플리카|비정규카드|오리파|서치팩|서치박스|사기주의|대회결과|경기결과|결과발표|우승자발표|입상자|최종순위|우승덱|상위덱|추첨판매|구매제한|판매제한|본인인증|구매권|구매티켓|가상대기열|점검|서비스장애|접속장애|접속오류|로그인불가|복구완료|행사|이벤트|대회|팝업|페스타|프로모|증정|배포|출시|발매|신탄|부스터|스타터|예약|재발매|재입고|입고|재고|품절|구매처|콜라보|협업|영화|극장판|굿즈|공식숍|점프샵|기념|주년|응모|신청|접수|등록|추첨|당첨|엔트리|라이브|생방송|방송|스트리밍|시청|코드|리딤|마감|기한|취소|연기|일정변경|시간변경|장소변경|갱신내용|룰|규칙|금지|제한|금지카드|제한카드|금지페어|에라타|체크인|참가자격|입장권|패스|대기명단|플레이어ID|덱리스트|RK9|PLAYGO|\bLINE\b|BANDAI\s*TCG\+|TCG\+|"
-    r"価格改定|価格変更|値上げ|値下げ|希望小売価格|封入内容の誤り|表面加工の誤り|イラストの誤り|製造不良|交換対応|回収|リコール|偽造品|模倣品|偽物|レプリカ|非正規カード|オリパ|サーチ済み|大会結果|試合結果|結果発表|優勝者発表|入賞者|最終順位|優勝デッキ|上位デッキ|抽選販売|購入制限|販売制限|本人認証|購入券|購入チケット|仮想待機列|メンテナンス|障害|不具合|ログインできない|利用できません|復旧|イベント|大会|ポップアップ|プロモ|配布|発売|新弾|ブースター|スターター|予約|再販|再入荷|入荷|在庫|売り切れ|コラボ|映画|劇場版|グッズ|公式ショップ|記念|周年|応募|申込|受付|登録|抽選|当選|エントリー|ライブ配信|生配信|配信|視聴|ドロップ|コード|プレゼント|締切|期限|変更|中止|延期|日程変更|時間変更|会場変更|内容変更|ルール|禁止|制限|禁止カード|制限カード|エラッタ|チェックイン|参加資格|入場券|パス|キャンセル待ち|プレイヤーID|デッキリスト|RK9|\bLINE\b|BANDAI\s*TCG\+|TCG\+|"
-    r"price revision|price change|price increase|price decrease|MSRP update|RRP update|manufacturing error|printing error|packaging error|incorrect contents?|missing contents?|defective product|product replacement|exchange program|product recall|counterfeit|fake cards?|replica|knockoff|unauthorized reproduction|searched? packs?|repacked|scam warning|tournament results?|event results?|match results?|final standings?|top finishers?|winning deck|champion deck|lottery sale|purchase limit|sales? limit|one item per person|identity verification|virtual queue|purchase ticket|purchase voucher|maintenance|service outage|service unavailable|login issue|incident|resolved|event|tournament|pop[- ]?up|promo|giveaway|release|booster|starter|preorder|reprint|restock|in stock|sold out|availability|retailer|entry|application|apply|registration|register|lottery|drawing|signup|livestream|live stream|broadcast|streaming|watch|twitch drops|reward code|redeem|redemption|deadline|apply by|registration closes?|application period|cancelled|canceled|postponed|rescheduled|schedule change|venue change|rules?|banned|restricted|restriction|errata|legality|check[- ]?in|eligibility|spectator|waitlist|interest list|player id|deck list|entry fee|\bbadge\b|\bpass\b|RK9|PLAYGO|\bLINE\b|BANDAI\s*TCG\+|TCG\+|collab|movie|film|merch|official shop|anniversary|commemorative|collector|collection|unboxing|deck|decklist|review|price|"
+    r"가격개정|가격변경|가격인상|가격인하|희망소비자가격|봉입오류|내용물누락|제품불량|제조불량|인쇄오류|가공오류|교환대응|상품회수|리콜|위조품|가품|모조품|복제품|레플리카|비정규카드|오리파|서치팩|서치박스|사기주의|대회결과|경기결과|결과발표|우승자발표|입상자|최종순위|우승덱|상위덱|추첨판매|구매제한|판매제한|본인인증|구매권|구매티켓|가상대기열|점검|서비스장애|접속장애|접속오류|로그인불가|복구완료|행사|이벤트|대회|팝업|페스타|프로모|증정|배포|출시|발매|신탄|부스터|스타터|예약|재발매|재입고|입고|재고|품절|구매처|콜라보|협업|영화|극장판|굿즈|공식숍|점프샵|기념|주년|응모|신청|접수|등록|추첨|당첨|엔트리|라이브|생방송|방송|스트리밍|시청|코드|리딤|마감|기한|취소|연기|일정변경|시간변경|장소변경|갱신내용|룰|규칙|금지|제한|금지카드|제한카드|금지페어|에라타|체크인|참가자격|입장권|패스|대기명단|플레이어ID|덱리스트|러닝|달리기|완주|완주자|참가자|참가보상|참가특전|프로모카드|RK9|PLAYGO|\bLINE\b|BANDAI\s*TCG\+|TCG\+|"
+    r"価格改定|価格変更|値上げ|値下げ|希望小売価格|封入内容の誤り|表面加工の誤り|イラストの誤り|製造不良|交換対応|回収|リコール|偽造品|模倣品|偽物|レプリカ|非正規カード|オリパ|サーチ済み|大会結果|試合結果|結果発表|優勝者発表|入賞者|最終順位|優勝デッキ|上位デッキ|抽選販売|購入制限|販売制限|本人認証|購入券|購入チケット|仮想待機列|メンテナンス|障害|不具合|ログインできない|利用できません|復旧|イベント|大会|ポップアップ|プロモ|配布|発売|新弾|ブースター|スターター|予約|再販|再入荷|入荷|在庫|売り切れ|コラボ|映画|劇場版|グッズ|公式ショップ|記念|周年|応募|申込|受付|登録|抽選|当選|エントリー|ライブ配信|生配信|配信|視聴|ドロップ|コード|プレゼント|締切|期限|変更|中止|延期|日程変更|時間変更|会場変更|内容変更|ルール|禁止|制限|禁止カード|制限カード|エラッタ|チェックイン|参加資格|入場券|パス|キャンセル待ち|プレイヤーID|デッキリスト|参加|完走|参加特典|参加賞|プロモカード|RK9|\bLINE\b|BANDAI\s*TCG\+|TCG\+|"
+    r"price revision|price change|price increase|price decrease|MSRP update|RRP update|manufacturing error|printing error|packaging error|incorrect contents?|missing contents?|defective product|product replacement|exchange program|product recall|counterfeit|fake cards?|replica|knockoff|unauthorized reproduction|searched? packs?|repacked|scam warning|tournament results?|event results?|match results?|final standings?|top finishers?|winning deck|champion deck|lottery sale|purchase limit|sales? limit|one item per person|identity verification|virtual queue|purchase ticket|purchase voucher|maintenance|service outage|service unavailable|login issue|incident|resolved|event|tournament|pop[- ]?up|promo|giveaway|release|booster|starter|preorder|reprint|restock|in stock|sold out|availability|retailer|entry|application|apply|registration|register|lottery|drawing|signup|livestream|live stream|broadcast|streaming|watch|twitch drops|reward code|redeem|redemption|deadline|apply by|registration closes?|application period|cancelled|canceled|postponed|rescheduled|schedule change|venue change|rules?|banned|restricted|restriction|errata|legality|check[- ]?in|eligibility|spectator|waitlist|interest list|player id|deck list|entry fee|\bbadge\b|\bpass\b|fun run|pokemon run|pokémon run|runner|participant|completion|finisher|participation reward|promo card|RK9|PLAYGO|\bLINE\b|BANDAI\s*TCG\+|TCG\+|collab|movie|film|merch|official shop|anniversary|commemorative|collector|collection|unboxing|deck|decklist|review|price|"
     r"개봉|언박싱|덱|덱리스트|수집|컬렉터|카드샵|후기|시세|開封|デッキ|コレクター|コレクション|レビュー|相場",
     re.I,
 )
@@ -315,7 +334,7 @@ def _parse_pubdate(value: str | None) -> str | None:
 
 def _query(game: str, region: str, *, scoped_hosts: tuple[str, ...] = (), topic: str | None = None,
            extra_terms: tuple[str, ...] = ()) -> str:
-    lang = REGIONS[region]
+    lang = REGION_LANG[region]
     names = GAMES[game][lang][:2]
     name_expr = " OR ".join(f'"{x}"' for x in names)
     families = QUERY_FAMILIES[lang]
@@ -327,10 +346,14 @@ def _query(game: str, region: str, *, scoped_hosts: tuple[str, ...] = (), topic:
     learned = ""
     if extra_terms:
         learned = " OR (" + " OR ".join(f'\"{term}\"' if " " in term else term for term in extra_terms[:6]) + ")"
+    region_expr = ""
+    region_terms = REGION_QUERY_TERMS.get(region, ())
+    if region_terms:
+        region_expr = " (" + " OR ".join(f'"{term}"' if " " in term else term for term in region_terms) + ")"
     site_expr = ""
     if scoped_hosts:
         site_expr = " (" + " OR ".join(f"site:{host}" for host in scoped_hosts[:8]) + ")"
-    return f"({name_expr}) ({terms}{learned}){site_expr}"
+    return f"({name_expr}) ({terms}{learned}){region_expr}{site_expr}"
 
 
 def _bing_one(game: str, region: str, route: str, hosts: tuple[str, ...] = (), topic: str | None = None,
@@ -471,6 +494,21 @@ def _ddg_one(game: str, region: str, topic: str | None = None,
         return [], _error_summary(f"DDG fallback {game}/{region}", exc)
 
 
+def _supplementary_topic_coverage(rows: list[dict], *, verified_only: bool = False) -> dict[str, int]:
+    return {
+        f"{game}/{region}/{topic}": sum(
+            1 for row in rows
+            if isinstance(row, dict)
+            and row.get("game") == game
+            and row.get("region") == region
+            and row.get("search_topic") == topic
+            and (not verified_only or row.get("verified") is True)
+        )
+        for game, region in SUPPLEMENTARY_DISCOVERY_CELLS
+        for topic in SUPPLEMENTARY_COVERAGE_TOPICS
+    }
+
+
 def _topic_coverage(rows: list[dict], *, verified_only: bool = False) -> dict[str, int]:
     """Return game/region/topic coverage without letting discovery-only hits hide gaps.
 
@@ -512,6 +550,20 @@ def collect_all() -> tuple[list[dict], list[str], dict]:
             if press_hosts: jobs.append(("bing_press", _bing_one, (game, region, "press", press_hosts)))
             for url in OFFICIAL_ROUTES.get((game, region), ()):
                 jobs.append(("official_anchor", _official_scan_one, (game, region, url)))
+
+    # Keep the core 3x3 learner matrix stable while adding a bounded Pokémon Asia
+    # discovery lane for participation/finisher promos such as Pokémon RUN 30.
+    for game, region in SUPPLEMENTARY_DISCOVERY_CELLS:
+        official_hosts = tuple(dict.fromkeys(
+            _host(url) for url in OFFICIAL_ROUTES.get((game, region), ()) if _host(url)
+        ))
+        for topic in SUPPLEMENTARY_COVERAGE_TOPICS:
+            jobs.append(("bing_asia_topic", _bing_one, (game, region, "topic", (), topic, ())))
+        jobs.append(("bing_asia_social", _bing_one, (game, region, "social", SOCIAL_DISCOVERY_HOSTS)))
+        if official_hosts:
+            jobs.append(("bing_asia_official", _bing_one, (game, region, "official", official_hosts)))
+        for url in OFFICIAL_ROUTES.get((game, region), ()):
+            jobs.append(("official_asia_anchor", _official_scan_one, (game, region, url)))
 
     rows = []; errors = []; by_route = {}; successes = 0
     is_android = 'com.termux' in os.environ.get('PREFIX', '') or 'ANDROID_ROOT' in os.environ
@@ -561,6 +613,42 @@ def collect_all() -> tuple[list[dict], list[str], dict]:
             coverage[key] = sum(1 for row in rows if row.get("game") == game and row.get("region") == region)
     topic_coverage = _topic_coverage(rows)
     verified_topic_coverage = _topic_coverage(rows, verified_only=True)
+    supplementary_topic_coverage = _supplementary_topic_coverage(rows)
+    supplementary_verified_topic_coverage = _supplementary_topic_coverage(rows, verified_only=True)
+
+    # The supplementary Asia lane does not train the core gap learner. It still
+    # gets an independent DDG retry when Bing/direct official scans have not
+    # produced verified coverage for a watched participation-promo topic.
+    supplementary_missing = [
+        key for key, count in supplementary_verified_topic_coverage.items() if count == 0
+    ]
+    if supplementary_missing:
+        supplementary_fallback_jobs = [tuple(key.split("/", 2)) for key in supplementary_missing]
+        with concurrent.futures.ThreadPoolExecutor(max_workers=workers) as pool:
+            future_map = {
+                pool.submit(_ddg_one, game, region, topic, ()): (game, region, topic)
+                for game, region, topic in supplementary_fallback_jobs
+            }
+            for future in concurrent.futures.as_completed(future_map):
+                stat = by_route.setdefault(
+                    "ddg_asia_fallback",
+                    {"queries": 0, "successes": 0, "results": 0, "errors": 0},
+                )
+                stat["queries"] += 1
+                try:
+                    part, error = future.result()
+                except Exception as exc:
+                    part, error = [], f"DDG ASIA fallback: {type(exc).__name__}"
+                if error:
+                    stat["errors"] += 1
+                    errors.append(error)
+                else:
+                    stat["successes"] += 1
+                    successes += 1
+                stat["results"] += len(part)
+                rows.extend(part)
+        supplementary_topic_coverage = _supplementary_topic_coverage(rows)
+        supplementary_verified_topic_coverage = _supplementary_topic_coverage(rows, verified_only=True)
     # Only verified-source coverage changes the learner's hit/miss streak. Discovery
     # candidates can guide human/independent verification but cannot teach a gap as solved.
     learner.observe(verified_topic_coverage)
@@ -583,6 +671,15 @@ def collect_all() -> tuple[list[dict], list[str], dict]:
         "missing_topic_cells": [key for key, value in topic_coverage.items() if value == 0],
         "verified_covered_topic_cells": sum(1 for value in verified_topic_coverage.values() if value > 0),
         "verified_missing_topic_cells": [key for key, value in verified_topic_coverage.items() if value == 0],
+        "supplementary_discovery_cells": [f"{game}/{region}" for game, region in SUPPLEMENTARY_DISCOVERY_CELLS],
+        "supplementary_topic_coverage": supplementary_topic_coverage,
+        "supplementary_verified_topic_coverage": supplementary_verified_topic_coverage,
+        "supplementary_missing_topic_cells": [
+            key for key, value in supplementary_topic_coverage.items() if value == 0
+        ],
+        "supplementary_verified_missing_topic_cells": [
+            key for key, value in supplementary_verified_topic_coverage.items() if value == 0
+        ],
         "gap_learning_coverage_basis": "verified-source-only",
         "gap_learning": learner.report(),
         "verified_events_learned_this_run": learned_verified,

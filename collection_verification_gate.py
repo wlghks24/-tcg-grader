@@ -22,6 +22,9 @@ CRITICAL_FILES = ("releases.json", "market_prices.json", "promo_events.json", "e
 # region-specific and are validated separately, so allowing GLOBAL here cannot turn a
 # worldwide announcement into KR/JP/US price evidence.
 ALLOWED_REGIONS = {"KR", "JP", "US", "ALL", "GLOBAL"}
+# ASIA is intentionally event-only. Releases and market provenance keep the
+# stricter shared region set above.
+ALLOWED_EVENT_REGIONS = ALLOWED_REGIONS | {"ASIA"}
 HTTP_BLOCK_RE = re.compile(r"HTTPError: status (403|429)\b", re.I)
 TRANSIENT_RE = re.compile(r"HTTPError: status (?:408|425|429|5(?:00|02|03|04))\b|URLError|TimeoutError|timed out|connection reset|name resolution|DNS", re.I)
 
@@ -155,7 +158,7 @@ def _audit_events(root: Path, findings: list[dict[str, Any]]) -> dict[str, int]:
         reasons = []
         if not isinstance(row, dict): reasons.append("not_object")
         else:
-            if str(row.get("region") or "").upper() not in ALLOWED_REGIONS: reasons.append("bad_region")
+            if str(row.get("region") or "").upper() not in ALLOWED_EVENT_REGIONS: reasons.append("bad_region")
             if not str(row.get("category") or "").strip(): reasons.append("missing_category")
             if not str(row.get("name_ko") or row.get("name_native") or "").strip(): reasons.append("missing_name")
             if not _valid_public_https(row.get("source")): reasons.append("invalid_source")

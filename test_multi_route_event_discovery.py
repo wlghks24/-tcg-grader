@@ -13,6 +13,55 @@ class MultiRouteEventDiscoveryTests(unittest.TestCase):
             self.assertGreaterEqual(len(routes.OFFICIAL_ROUTES[key]),1)
             self.assertTrue(all(url.startswith('https://') for url in routes.OFFICIAL_ROUTES[key]))
 
+    def test_pokemon_asia_supplementary_lane_is_bounded_and_official(self):
+        self.assertEqual((("포켓몬 카드", "ASIA"),), routes.SUPPLEMENTARY_DISCOVERY_CELLS)
+        self.assertEqual(
+            ("event", "promo", "anniversary", "entry", "access"),
+            routes.SUPPLEMENTARY_COVERAGE_TOPICS,
+        )
+        asia_urls = routes.OFFICIAL_ROUTES[("포켓몬 카드", "ASIA")]
+        hosts = {routes._host(url).removeprefix("www.") for url in asia_urls}
+        for host in (
+            "tw.portal-pokemon.com", "hk.portal-pokemon.com",
+            "sg.portal-pokemon.com", "my.portal-pokemon.com",
+            "ph.portal-pokemon.com", "th.portal-pokemon.com",
+            "id.portal-pokemon.com", "pokemongo.com",
+        ):
+            self.assertIn(host, hosts)
+            self.assertTrue(routes._official_for("포켓몬 카드", "ASIA", host))
+
+    def test_pokemon_asia_promo_query_contains_region_and_finisher_terms(self):
+        q = routes._query("포켓몬 카드", "ASIA", topic="promo")
+        self.assertIn("Taiwan", q)
+        self.assertIn('"Hong Kong"', q)
+        self.assertIn("Malaysia", q)
+        self.assertIn("finisher", q)
+        self.assertIn('"participation reward"', q)
+
+    def test_pokemon_run_finisher_title_passes_discovery_keyword_gate(self):
+        for value in (
+            "Pokémon RUN 30 finisher promo card",
+            "Pokemon RUN 30 participation reward for participants",
+            "포켓몬 런 완주자 프로모카드",
+            "Pokémon RUN 完走 参加特典",
+        ):
+            with self.subTest(value=value):
+                self.assertIsNotNone(routes.KEYWORD_RE.search(value))
+
+    def test_supplementary_coverage_does_not_expand_core_3x3_matrix(self):
+        core = routes._topic_coverage([], verified_only=True)
+        supplementary = routes._supplementary_topic_coverage([], verified_only=True)
+        self.assertEqual(
+            len(core),
+            len(routes.GAMES) * len(routes.REGIONS) * len(routes.COVERAGE_TOPICS),
+        )
+        self.assertEqual(
+            len(supplementary),
+            len(routes.SUPPLEMENTARY_DISCOVERY_CELLS) * len(routes.SUPPLEMENTARY_COVERAGE_TOPICS),
+        )
+        self.assertNotIn("ASIA", routes.REGIONS)
+        self.assertTrue(all("/ASIA/" in key for key in supplementary))
+
     def test_query_families_cover_major_information_types(self):
         for lang in ('ko','ja','en'):
             self.assertTrue({'release','reprint','event','tournament','popup','promo','collab','movie','stock'}.issubset(routes.QUERY_FAMILIES[lang]))
