@@ -74,6 +74,9 @@ def main():
     launcher=text('START_TCG_UPDATER_ANDROID.sh')
     assert 'PAIR_QUEUE_PID=$!' in launcher
     assert 'kill -TERM "$PAIR_QUEUE_PID"' in launcher
+    assert 'RAW_LEARNING_PID=$!' in launcher
+    assert 'kill -TERM "$RAW_LEARNING_PID"' in launcher
+    assert 'verified_slab_raw_learning_v155.py --watch --interval 30' in launcher
     assert 'SERVER_PID=$!' in launcher
     assert 'kill -TERM "$SERVER_PID"' in launcher
     assert "trap 'handle_android_signal 130' INT" in launcher
@@ -93,6 +96,15 @@ def main():
     assert '"pending_official_candidate_manual_verify": true' in repair
     assert 'gpdPendingOfficialV161' in repair
     assert '/api/pending-official-candidate-proof' in repair
+
+    raw_learning=text('verified_slab_raw_learning_v155.py')
+    assert 'def _watch_signature()' in raw_learning
+    assert 'def _watch_cycle(last_signature)' in raw_learning
+    assert 'current == last_signature' in raw_learning
+    assert 'exclusive_file_lock(WATCH_LOCK_PATH' in raw_learning
+
+    safe=text('safe_runtime.py')
+    assert 'owner_alive is False or (age >= stale_after and owner_alive is not True)' in safe
 
     market=text('update_market_prices.py')
     assert 'catalog_marker_missing' in market

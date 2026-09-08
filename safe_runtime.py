@@ -148,7 +148,9 @@ def exclusive_file_lock(
 
     The lock is an adjacent private file created with ``O_EXCL``.  This works on
     Windows/Termux/Linux without optional packages and refuses symbolic-link lock
-    paths.  A stale lock is recovered only after its bounded age has elapsed.
+    paths. A lock whose recorded owner PID is confirmed dead is recovered
+    immediately; locks with missing/unknown owner metadata require the bounded
+    stale age before recovery.
     """
     path = Path(target)
     assert_no_symlink_components(path.parent, allow_missing=True)
@@ -192,22 +194,24 @@ def exclusive_file_lock(
             if stat.S_ISLNK(current.st_mode) or not stat.S_ISREG(current.st_mode):
                 raise ValueError("unsafe lock target")
             age = max(0.0, time.time() - current.st_mtime)
-            if age >= stale_after:
-                owner_pid = _read_lock_pid(lock_path)
-                owner_alive = _process_is_alive(owner_pid) if owner_pid is not None else None
-                # A lock can be old while its owner is still legitimately working.
-                # Never steal it merely because wall-clock age crossed the stale threshold.
-                if owner_alive is not True:
-                    recovered = False
-                    try:
-                        latest = os.lstat(lock_path)
-                        if (latest.st_dev, latest.st_ino) == (current.st_dev, current.st_ino):
-                            os.unlink(lock_path)
-                            recovered = True
-                    except FileNotFoundError:
+            owner_pid = _read_lock_pid(lock_path)
+            owner_alive = _process_is_alive(owner_pid) if owner_pid is not None else None
+            # A freshly-created lock from a process that has already died must
+            # not block Termux restart/recovery for stale_seconds (some long-lived
+            # watchers use two hours). Unknown/malformed owners still require the
+            # age gate, and a confirmed live owner is never stolen.
+            recoverable = owner_alive is False or (age >= stale_after and owner_alive is not True)
+            if recoverable:
+                recovered = False
+                try:
+                    latest = os.lstat(lock_path)
+                    if (latest.st_dev, latest.st_ino) == (current.st_dev, current.st_ino):
+                        os.unlink(lock_path)
                         recovered = True
-                    if recovered:
-                        continue
+                except FileNotFoundError:
+                    recovered = True
+                if recovered:
+                    continue
             if time.monotonic() >= deadline:
                 raise TimeoutError("another process is updating the same state")
             time.sleep(0.025)

@@ -13,6 +13,40 @@ import verified_slab_raw_learning_v155 as raw
 
 
 class VerifiedSlabRawLearningV155Tests(unittest.TestCase):
+    def test_watch_cycle_skips_unchanged_inputs_and_updates_post_sync_signature(self):
+        with patch.object(raw, "_watch_signature", return_value=(("same", None),)), \
+             patch.object(raw, "sync_all") as sync:
+            signature, result = raw._watch_cycle((("same", None),))
+        self.assertEqual(signature, (("same", None),))
+        self.assertIsNone(result)
+        sync.assert_not_called()
+
+        with patch.object(raw, "_watch_signature", side_effect=[(("before", None),), (("after", None),)]), \
+             patch.object(raw, "sync_all", return_value={"summary": {"proxy_candidates": 1}}) as sync:
+            signature, result = raw._watch_cycle((("old", None),))
+        self.assertEqual(signature, (("after", None),))
+        self.assertEqual(result["summary"]["proxy_candidates"], 1)
+        sync.assert_called_once()
+
+    def test_watch_signature_changes_with_registry_file(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            registry = root / "manual.json"
+            verified = root / "verified.json"
+            learning = root / "learning.json"
+            state = root / "state.json"
+            for path in (registry, verified, learning, state):
+                path.write_text("{}", encoding="utf-8")
+            with patch.object(raw.manual_photo, "REGISTRY_PATH", registry), \
+                 patch.object(raw.manual_photo, "VERIFIED_CERTIFICATIONS", verified), \
+                 patch.object(raw.grade_learning, "VERIFIED_CERTS", verified), \
+                 patch.object(raw.grade_learning, "LEARNING_STORE", learning), \
+                 patch.object(raw, "STATE_PATH", state):
+                first = raw._watch_signature()
+                registry.write_text('{"changed":true}', encoding="utf-8")
+                second = raw._watch_signature()
+        self.assertNotEqual(first, second)
+
     def test_card_roi_excludes_top_slab_label(self):
         image = Image.new("RGB", (800, 1400), (110, 110, 110))
         # Simulated red grader label/header, entirely above the card ROI.

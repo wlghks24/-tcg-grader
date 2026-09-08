@@ -37,13 +37,17 @@ import manual_graded_photo_registration as manual_photo
 import verified_grade_learning_v135 as grade_learning
 import verified_grade_learning_v135_safe as grade_learning_safe
 from grading_accuracy_v99 import estimate_raw_grade, valid_actual_grade
-from safe_runtime import atomic_write_bytes, atomic_write_json, atomic_write_text, safe_read_bytes, safe_read_text
+from safe_runtime import (
+    atomic_write_bytes, atomic_write_json, atomic_write_text,
+    exclusive_file_lock, safe_read_bytes, safe_read_text,
+)
 
 PATCH_ID = 159
 ENGINE = "v159-slab-card-roi-eight-zone-oblique-crosscheck"
 ROOT = Path(__file__).resolve().parent
 STATE_PATH = ROOT / "verified_slab_raw_learning_v155.json"
 REVALIDATION_PATH = ROOT / "existing_photo_revalidation_v160.json"
+WATCH_LOCK_PATH = ROOT / ".verified_slab_raw_learning_watch"
 PROXY_ROOT = ROOT / "GRADE_TRAINING_INBOX" / "verified_raw_proxy"
 ANDROID_ARCHIVE = Path("/storage/emulated/0/Download/TCG등급학습/검증완료")
 COMPANIES = ("PSA", "BGS", "CGC", "TAG", "BRG")
@@ -863,14 +867,62 @@ def sync_all() -> dict[str, Any]:
     return sync_rows(rows)
 
 
+def _watch_path_signature(path: Path) -> tuple[int, int, int, int] | None:
+    try:
+        stat = path.stat()
+        return (stat.st_dev, stat.st_ino, stat.st_mtime_ns, stat.st_size)
+    except (OSError, TypeError, ValueError):
+        return None
+
+
+def _watch_signature() -> tuple[tuple[str, tuple[int, int, int, int] | None], ...]:
+    # Only inputs/state that can change the RAW proxy result are watched.
+    # Deduplicate aliases such as manual_photo.VERIFIED_CERTIFICATIONS and
+    # grade_learning.VERIFIED_CERTS when they point to the same file.
+    paths = (
+        manual_photo.REGISTRY_PATH,
+        manual_photo.VERIFIED_CERTIFICATIONS,
+        grade_learning.VERIFIED_CERTS,
+        grade_learning.LEARNING_STORE,
+        STATE_PATH,
+    )
+    seen: set[str] = set()
+    signature: list[tuple[str, tuple[int, int, int, int] | None]] = []
+    for raw_path in paths:
+        path = Path(raw_path).absolute()
+        key = str(path)
+        if key in seen:
+            continue
+        seen.add(key)
+        signature.append((key, _watch_path_signature(path)))
+    return tuple(signature)
+
+
+def _watch_cycle(last_signature):
+    current = _watch_signature()
+    if current == last_signature:
+        return current, None
+    result = sync_all()
+    # sync_all() can itself update registry/learning/state files. Capture the
+    # post-sync signature so our own atomic writes do not trigger another cycle.
+    return _watch_signature(), result
+
+
 def watch(interval: int = 30) -> int:
     delay = max(15, min(3600, int(interval)))
-    while True:
-        try:
-            sync_all()
-        except Exception as exc:
-            print(json.dumps({"ok": False, "error": str(exc)[:300]}, ensure_ascii=False), flush=True)
-        time.sleep(delay)
+    last_signature = None
+    with exclusive_file_lock(WATCH_LOCK_PATH, timeout_seconds=0.05, stale_seconds=7200):
+        while True:
+            try:
+                last_signature, result = _watch_cycle(last_signature)
+                if isinstance(result, dict):
+                    summary = result.get("summary", result)
+                    print(json.dumps({"ok": True, "watch_sync": True, **summary}, ensure_ascii=False), flush=True)
+            except Exception as exc:
+                # Keep the previous successful signature so transient failures are
+                # retried on the next bounded interval instead of being forgotten.
+                print(json.dumps({"ok": False, "error": str(exc)[:300]}, ensure_ascii=False), flush=True)
+            time.sleep(delay)
 
 
 def main(argv: list[str] | None = None) -> int:

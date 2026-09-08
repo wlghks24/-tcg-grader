@@ -10,6 +10,7 @@ START_LOCK_DIR=".tcg_android_start.lock"
 START_LOCK_PID="$START_LOCK_DIR/pid"
 WAKE_LOCKED=0
 PAIR_QUEUE_PID=""
+RAW_LEARNING_PID=""
 SERVER_PID=""
 CLEANUP_RUNNING=0
 
@@ -41,6 +42,12 @@ cleanup_android_start() {
     wait "$PAIR_QUEUE_PID" 2>/dev/null || true
   fi
   PAIR_QUEUE_PID=""
+
+  if [ -n "${RAW_LEARNING_PID:-}" ] && kill -0 "$RAW_LEARNING_PID" 2>/dev/null; then
+    kill -TERM "$RAW_LEARNING_PID" 2>/dev/null || true
+    wait "$RAW_LEARNING_PID" 2>/dev/null || true
+  fi
+  RAW_LEARNING_PID=""
 
   if [ "${WAKE_LOCKED:-0}" = "1" ] && command -v termux-wake-unlock >/dev/null 2>&1; then
     termux-wake-unlock >/dev/null 2>&1 || true
@@ -182,6 +189,7 @@ import graded_photo_manual_pair_queue as pair_queue
 import legacy_ocr_registry_cleanup_v149 as legacy_cleanup
 import verified_collection_neural as collection_neural
 import verified_collection_job_neural as collection_job_neural
+import verified_slab_raw_learning_v155 as raw_learning
 learning=learning_guard.apply()
 expansion=source_expansion.apply()
 bundle=bundle_guard.require_compatible()
@@ -223,6 +231,8 @@ assert collection_job_neural.SAFETY.get('verification_bypass') is False
 assert collection_job_neural.SAFETY.get('neural_output_is_priority_only') is True
 assert collection_job_neural.SAFETY.get('training_features_pre_outcome') is True
 assert collection_job_neural.SAFETY.get('per_file_postflight_gate') is True
+assert callable(raw_learning._watch_signature)
+assert callable(raw_learning._watch_cycle)
 probe=pair_queue._pair_folder(pair_queue.ANDROID_ROOT,'pokemon','0123456789abcdefabcd')
 assert str(probe).endswith('/pokemon/수동등록대기/0123456789abcdefabcd')
 assert '/pokemon/PSA/' not in str(probe)
@@ -267,6 +277,14 @@ nohup python graded_photo_manual_pair_queue.py --watch --interval 60 \
   > TCG_MANUAL_PAIR_QUEUE.log 2>&1 &
 PAIR_QUEUE_PID=$!
 echo "등급사진 수동대기 자동분류 시작: 인증번호+앞뒤사진만 pokemon/onepiece/naruto 게임별 저장"
+
+pkill -f 'verified_slab_raw_learning_v155.py --watch' 2>/dev/null || true
+if [ -f "verified_slab_raw_learning_v155.py" ]; then
+  nohup python verified_slab_raw_learning_v155.py --watch --interval 30 \
+    > TCG_VERIFIED_SLAB_RAW_LEARNING.log 2>&1 &
+  RAW_LEARNING_PID=$!
+  echo "검증완료 슬랩 RAW 보정학습 watcher 시작: 입력 변경 시에만 재동기화"
+fi
 
 echo "로컬 서버를 먼저 시작합니다. 자료 수집은 서버 안에서 안전하게 순차 실행됩니다."
 echo "등급학습 안전게이트 사용: 공식인증 + RAW 원시예측 + 교차검증 + 하향보정만"

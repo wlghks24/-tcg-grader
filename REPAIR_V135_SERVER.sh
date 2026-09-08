@@ -125,10 +125,9 @@ nohup python graded_photo_manual_pair_queue.py --watch --interval 60 \
 
 # 검증완료 슬랩은 공식검증 이후 card-only ROI로만 RAW 학습에 전달한다.
 if [ -f verified_slab_raw_learning_v155.py ]; then
-  python verified_slab_raw_learning_v155.py --sync > TCG_VERIFIED_SLAB_RAW_LEARNING.log 2>&1 || true
   pkill -f '[v]erified_slab_raw_learning_v155\.py --watch' 2>/dev/null || true
   nohup python verified_slab_raw_learning_v155.py --watch --interval 30 \
-    >> TCG_VERIFIED_SLAB_RAW_LEARNING.log 2>&1 &
+    > TCG_VERIFIED_SLAB_RAW_LEARNING.log 2>&1 &
   printf '%s\n' "$!" > .verified_slab_raw_learning.pid
 fi
 
