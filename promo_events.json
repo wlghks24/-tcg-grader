@@ -1,7 +1,44 @@
 {
-  "updated_at": "2026-08-31T09:17:42+00:00",
+  "updated_at": "2026-09-08T15:35:00+09:00",
   "collection_status": "기존 확인자료 유지 · JUMP SHOP 서울 제3탄 공식 팝업 반영 · 한·일·미 영화정보 9/9 조합 추적",
   "items": [
+    {
+      "game": "포켓몬 카드",
+      "region": "ASIA",
+      "category": "promo",
+      "name_ko": "Pokémon RUN 30 완주자 피카츄 프로모 카드",
+      "name_native": "Pokémon RUN Pikachu at Pokémon RUN 30!",
+      "start_date": "2026-10-03",
+      "end_date": "2027-01-24",
+      "claim_deadline": "2027-01-24",
+      "date_precision": "day",
+      "reward": "Pokémon RUN 30 코스를 완주한 검증 참가자에게 Pokémon RUN Pikachu 프로모 카드 1장 지급",
+      "condition": "Pokémon RUN 30 등록 참가자가 각 개최지 코스를 완주해야 합니다. 프로모 카드는 양도·현금교환 불가이며 향후 다른 행사에서 배포될 수 있습니다.",
+      "location": "필리핀·대만·싱가포르·말레이시아·인도네시아·태국·홍콩",
+      "status": "예정",
+      "source": "https://tw.portal-pokemon.com/30th/topics/20260902_02/?lang=en",
+      "verification_source": "https://pokemongo.com/news/pokemon-run-30-2026",
+      "source_grade": "official",
+      "event_scope": "official_asia_participation_promo",
+      "reward_watch": true,
+      "must_show_candidate": true,
+      "region_members": [
+        "PH",
+        "TW",
+        "SG",
+        "MY",
+        "ID",
+        "TH",
+        "HK"
+      ],
+      "excluded_regions": [
+        "KR"
+      ],
+      "korea_included": false,
+      "verified": true,
+      "confidence": 0.99,
+      "collected_at": "2026-09-08T15:35:00+09:00"
+    },
     {
       "game": "포켓몬 카드",
       "region": "JP",
