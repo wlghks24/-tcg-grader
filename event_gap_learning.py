@@ -56,6 +56,12 @@ REGION_HINT_SEEDS = {
         "미국", "usa", "u.s.", "united states", "north america", "뉴욕", "new york",
         "로스앤젤레스", "los angeles", "california", "chicago", "las vegas",
     ),
+    "ASIA": (
+        "아시아", "asia", "대만", "taiwan", "타이중", "taichung", "가오슝", "kaohsiung",
+        "홍콩", "hong kong", "싱가포르", "singapore", "말레이시아", "malaysia",
+        "쿠알라룸푸르", "kuala lumpur", "필리핀", "philippines", "마닐라", "manila",
+        "태국", "thailand", "방콕", "bangkok", "인도네시아", "indonesia", "자카르타", "jakarta",
+    ),
 }
 
 
@@ -257,7 +263,7 @@ class EventGapLearner:
             game = str(row.get("game") or "")
             region = str(row.get("region") or "")
             source = str(row.get("source") or "")
-            if not game or region not in {"KR", "JP", "US"} or not source.startswith("https://"):
+            if not game or region not in {"KR", "JP", "US", "ASIA"} or not source.startswith("https://"):
                 continue
             marker = hashlib.sha256(f"promo|{game}|{region}|{source}|{row.get('name_ko')}".encode()).hexdigest()[:24]
             if marker in seen:
@@ -290,7 +296,7 @@ class EventGapLearner:
             game = str(row.get("game") or "")
             region = str(row.get("region") or "")
             source = str(row.get("source") or "")
-            if not game or region not in {"KR", "JP", "US"} or not source.startswith("https://"):
+            if not game or region not in {"KR", "JP", "US", "ASIA"} or not source.startswith("https://"):
                 continue
             case_id = str(row.get("recovery_case_id") or "").strip()[:80]
             marker_raw = f"manual-miss|{game}|{region}|{source}|{row.get('title')}|{case_id}"
