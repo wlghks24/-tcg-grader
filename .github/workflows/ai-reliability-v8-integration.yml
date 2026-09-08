@@ -1,0 +1,45 @@
+name: AI Reliability V8 Integration
+
+on:
+  pull_request:
+    paths:
+      - 'ai_reliability_v8/**'
+      - 'instagram_tcg_content/automation_state_guard.py'
+      - 'instagram_tcg_content/test_ai_reliability_v8_integration.py'
+      - '.github/workflows/ai-reliability-v8-integration.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  targeted-v8:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97
+        with:
+          python-version: '3.11'
+      - name: Compile additive reliability package
+        run: python -m compileall -q ai_reliability_v8 instagram_tcg_content/automation_state_guard.py
+      - name: Validate canonical binding and installed hashes
+        run: |
+          python - <<'PY'
+          import hashlib, json
+          from pathlib import Path
+          root=Path('ai_reliability_v8')
+          binding=json.loads((root/'binding.json').read_text())
+          assert binding['project']=='instagram_card'
+          assert binding['task_id']=='6a9b8a22e72c8191849c273e1240378e'
+          assert set(binding['files']) == {
+            '__init__.py','guard.py','recovery.py','self_heal.py','diagnostics.py','ai_learning.py','bridge.py',
+            'verification.py','evidence_learning.py','adaptive_learning.py','diverse_collection.py','social_evidence.py','code_optimizer.py',
+            'source_registry.json','code_map_fast_route.py','CODE_MAP.json','workflow.py','WORKFLOW_V8.json'
+          }
+          for name, expected in binding['files'].items():
+              actual=hashlib.sha256((root/name).read_bytes()).hexdigest()
+              assert actual==expected,(name,actual,expected)
+          print('V8 binding/hash validation: PASS')
+          PY
+      - name: Run targeted Instagram-card integration tests
+        run: python -m unittest -v instagram_tcg_content.test_ai_reliability_v8_integration instagram_tcg_content.test_automation_pause_recovery_v30
