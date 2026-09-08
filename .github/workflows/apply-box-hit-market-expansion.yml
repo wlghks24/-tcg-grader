@@ -1,14 +1,7 @@
 name: Apply BOX HIT market expansion
 
+# Legacy integrated feature: automatic source mutation is disabled; run manually only.
 on:
-  push:
-    branches: [main]
-    paths:
-      - 'box_hit_market_discovery.py'
-      - 'market_catalog_expander.js'
-      - 'test_box_hit_market_discovery.py'
-      - 'apply_box_hit_market_expansion_patch.py'
-      - '.github/workflows/apply-box-hit-market-expansion.yml'
   workflow_dispatch:
 
 permissions:

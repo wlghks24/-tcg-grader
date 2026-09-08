@@ -1,11 +1,7 @@
 name: Apply collection runtime resilience v177
 
+# Legacy integrated feature: automatic source mutation is disabled; run manually only.
 on:
-  push:
-    branches: [main]
-    paths:
-      - 'apply_collection_runtime_resilience_v177.py'
-      - '.github/workflows/apply-collection-runtime-resilience-v177.yml'
   workflow_dispatch:
 
 permissions:

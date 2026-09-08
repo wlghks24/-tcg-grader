@@ -1,11 +1,7 @@
 name: Apply integration timeout cache fallback v178
 
+# Legacy integrated feature: automatic source mutation is disabled; run manually only.
 on:
-  push:
-    branches: [main]
-    paths:
-      - 'apply_integration_timeout_cache_v178.py'
-      - '.github/workflows/apply-integration-timeout-cache-v178.yml'
   workflow_dispatch:
 
 permissions:

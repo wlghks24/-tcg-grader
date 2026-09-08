@@ -1,11 +1,7 @@
 name: Apply search 403 cooldown guard v175
 
+# Legacy integrated feature: automatic source mutation is disabled; run manually only.
 on:
-  push:
-    branches: [main]
-    paths:
-      - 'apply_search_403_cooldown_guard_v175.py'
-      - '.github/workflows/apply-search-403-cooldown-guard-v175.yml'
   workflow_dispatch:
 
 permissions:

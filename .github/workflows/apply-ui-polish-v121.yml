@@ -1,13 +1,8 @@
 name: Apply UI polish v121
+# Legacy integrated feature: automatic source mutation is disabled; run manually only.
 on:
-  push:
-    branches: [main]
-    paths:
-      - 'ui_polish_v121.css'
-      - 'apply_ui_polish_v121.py'
-      - 'test_ui_polish_v121.py'
-      - '.github/workflows/apply-ui-polish-v121.yml'
   workflow_dispatch:
+
 permissions:
   contents: write
 jobs:

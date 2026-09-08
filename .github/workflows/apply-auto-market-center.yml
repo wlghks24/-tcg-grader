@@ -1,12 +1,8 @@
 name: Apply Auto Market Center
+# Legacy integrated feature: automatic source mutation is disabled; run manually only.
 on:
-  push:
-    branches: [main]
-    paths:
-      - auto_market_center.js
-      - auto_market_center.css
-      - apply_auto_market_center_patch.py
-      - .github/workflows/apply-auto-market-center.yml
+  workflow_dispatch:
+
 permissions:
   contents: write
 jobs:

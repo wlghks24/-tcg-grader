@@ -1,12 +1,7 @@
 name: Apply CGC certificate OCR v170
 
+# Legacy integrated feature: automatic source mutation is disabled; run manually only.
 on:
-  push:
-    branches: [main]
-    paths:
-      - 'apply_cgc_cert_ocr_v170.py'
-      - 'test_cgc_cert_ocr_v170.py'
-      - '.github/workflows/apply-cgc-cert-ocr-v170.yml'
   workflow_dispatch:
 
 permissions:

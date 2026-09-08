@@ -1,23 +1,7 @@
 name: Apply multi-route TCG discovery
 
+# Legacy integrated feature: automatic source mutation is disabled; run manually only.
 on:
-  push:
-    branches: [main]
-    paths:
-      - 'multi_route_event_discovery.py'
-      - 'event_gap_learning.py'
-      - 'social_event_discovery.py'
-      - 'update_promo_events.py'
-      - 'promo_events.json'
-      - 'social_source_registry.json'
-      - 'adaptive_collection_learner.py'
-      - 'collection_meta_learning.py'
-      - 'test_multi_route_event_discovery.py'
-      - 'test_event_gap_learning.py'
-      - 'test_social_event_topic_coverage.py'
-      - 'test_jump_shop_event_watch.py'
-      - 'apply_multi_route_event_patch.py'
-      - '.github/workflows/apply-multi-route-event-discovery.yml'
   workflow_dispatch:
 
 permissions:

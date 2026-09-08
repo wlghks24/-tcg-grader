@@ -1,12 +1,8 @@
 name: Apply graded photo collection
+# Legacy integrated feature: automatic source mutation is disabled; run manually only.
 on:
-  push:
-    branches: [main]
-    paths:
-      - graded_photo_multi_source.py
-      - test_graded_photo_multi_source.py
-      - apply_graded_photo_collection_patch.py
-      - .github/workflows/apply-graded-photo-collection.yml
+  workflow_dispatch:
+
 jobs:
   patch:
     if: github.actor != 'github-actions[bot]'

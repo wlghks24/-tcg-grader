@@ -1,12 +1,7 @@
 name: Apply Purchase UI Polish
 
+# Legacy integrated feature: automatic source mutation is disabled; run manually only.
 on:
-  push:
-    branches: [main]
-    paths:
-      - 'purchase_ui_polish.css'
-      - 'apply_purchase_ui_polish.py'
-      - '.github/workflows/apply-purchase-ui-polish.yml'
   workflow_dispatch:
 
 permissions:

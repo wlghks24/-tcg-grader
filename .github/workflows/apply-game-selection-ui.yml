@@ -1,11 +1,7 @@
 name: Apply Game Selection UI Patch
 
+# Legacy integrated feature: automatic source mutation is disabled; run manually only.
 on:
-  push:
-    branches: [main]
-    paths:
-      - 'apply_game_selection_visual_patch.py'
-      - '.github/workflows/apply-game-selection-ui.yml'
   workflow_dispatch:
 
 permissions:

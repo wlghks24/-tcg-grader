@@ -1,14 +1,8 @@
 name: Apply Grading Proxy Costs
+# Legacy integrated feature: automatic source mutation is disabled; run manually only.
 on:
-  push:
-    branches: [main]
-    paths:
-      - grading_proxy_costs.py
-      - grading_proxy_costs.js
-      - grading_proxy_costs.css
-      - apply_grading_proxy_costs_patch.py
-      - test_grading_proxy_costs.py
-      - .github/workflows/apply-grading-proxy-costs.yml
+  workflow_dispatch:
+
 permissions:
   contents: write
 jobs:

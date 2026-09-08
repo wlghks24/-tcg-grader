@@ -1,12 +1,8 @@
 name: Apply Grade Market Flow
+# Legacy integrated feature: automatic source mutation is disabled; run manually only.
 on:
-  push:
-    branches: [main]
-    paths:
-      - grade_market_flow.js
-      - grade_market_flow.css
-      - apply_grade_market_flow_patch.py
-      - .github/workflows/apply-grade-market-flow.yml
+  workflow_dispatch:
+
 permissions:
   contents: write
 jobs:

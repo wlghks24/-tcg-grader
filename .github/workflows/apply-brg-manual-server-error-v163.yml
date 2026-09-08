@@ -1,10 +1,8 @@
 name: Apply BRG manual verification fix v163
 
+# Legacy integrated feature: automatic source mutation is disabled; run manually only.
 on:
-  push:
-    branches: [main]
-    paths:
-      - '.github/workflows/apply-brg-manual-server-error-v163.yml'
+  workflow_dispatch:
 
 permissions:
   contents: write

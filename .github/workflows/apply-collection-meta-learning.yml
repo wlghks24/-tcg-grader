@@ -1,13 +1,7 @@
 name: Apply collection meta learning
 
+# Legacy integrated feature: automatic source mutation is disabled; run manually only.
 on:
-  push:
-    branches: [main]
-    paths:
-      - 'apply_collection_meta_learning.py'
-      - 'collection_meta_learning.py'
-      - 'test_collection_meta_learning.py'
-      - '.github/workflows/apply-collection-meta-learning.yml'
   workflow_dispatch:
 
 permissions:

@@ -1,10 +1,8 @@
 name: Stabilize Android manual proof registration v164
 
+# Legacy integrated feature: automatic source mutation is disabled; run manually only.
 on:
-  push:
-    branches: [main]
-    paths:
-      - '.github/workflows/apply-android-manual-proof-input-v164.yml'
+  workflow_dispatch:
 
 permissions:
   contents: write

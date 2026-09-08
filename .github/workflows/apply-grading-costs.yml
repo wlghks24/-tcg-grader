@@ -1,14 +1,8 @@
 name: Apply Grading Costs
+# Legacy integrated feature: automatic source mutation is disabled; run manually only.
 on:
-  push:
-    branches: [main]
-    paths:
-      - grading_costs_live.py
-      - grading_costs_live.js
-      - grading_costs_live.css
-      - apply_grading_costs_patch.py
-      - test_grading_costs_live.py
-      - .github/workflows/apply-grading-costs.yml
+  workflow_dispatch:
+
 permissions:
   contents: write
 jobs:

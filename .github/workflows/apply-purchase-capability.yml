@@ -1,10 +1,8 @@
 name: Apply Purchase Capability Labels
+# Legacy integrated feature: automatic source mutation is disabled; run manually only.
 on:
-  push:
-    branches: [main]
-    paths:
-      - 'apply_purchase_capability_patch.py'
-      - '.github/workflows/apply-purchase-capability.yml'
+  workflow_dispatch:
+
 permissions:
   contents: write
 jobs:

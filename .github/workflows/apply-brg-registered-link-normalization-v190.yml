@@ -1,11 +1,7 @@
 name: Apply BRG registered link normalization v190
 
+# Legacy integrated feature: automatic source mutation is disabled; run manually only.
 on:
-  push:
-    branches: [main]
-    paths:
-      - 'apply_brg_registered_link_normalization_v190.py'
-      - '.github/workflows/apply-brg-registered-link-normalization-v190.yml'
   workflow_dispatch:
 
 permissions:

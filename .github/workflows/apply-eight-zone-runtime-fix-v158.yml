@@ -1,10 +1,7 @@
 name: Apply eight-zone runtime fix v158
 
+# Legacy integrated feature: automatic source mutation is disabled; run manually only.
 on:
-  push:
-    branches: [main]
-    paths:
-      - 'apply_eight_zone_runtime_fix_v158.py'
   workflow_dispatch:
 
 permissions:

@@ -1,10 +1,7 @@
 name: Apply social stock and Pokemon event upgrade
 
+# Legacy integrated feature: automatic source mutation is disabled; run manually only.
 on:
-  push:
-    branches: [main]
-    paths:
-      - '.github/workflows/apply-social-stock-event-upgrade.yml'
   workflow_dispatch:
 
 permissions:

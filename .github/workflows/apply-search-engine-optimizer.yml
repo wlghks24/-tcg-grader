@@ -1,12 +1,7 @@
 name: Apply learned search engine optimizer
 
+# Legacy integrated feature: automatic source mutation is disabled; run manually only.
 on:
-  push:
-    branches: [main]
-    paths:
-      - 'apply_search_engine_optimizer_patch.py'
-      - 'test_search_engine_optimizer.py'
-      - '.github/workflows/apply-search-engine-optimizer.yml'
   workflow_dispatch:
 
 permissions:

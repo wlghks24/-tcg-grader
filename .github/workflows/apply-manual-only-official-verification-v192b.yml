@@ -1,11 +1,8 @@
 name: Apply manual-only official verification v192b
 
+# Legacy integrated feature: automatic source mutation is disabled; run manually only.
 on:
-  push:
-    branches: [main]
-    paths:
-      - 'apply_manual_only_official_verification_v192b.py'
-      - '.github/workflows/apply-manual-only-official-verification-v192b.yml'
+  workflow_dispatch:
 
 permissions:
   contents: write

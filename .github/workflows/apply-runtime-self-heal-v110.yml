@@ -1,10 +1,8 @@
 name: Apply runtime self-heal v110
+# Legacy integrated feature: automatic source mutation is disabled; run manually only.
 on:
-  push:
-    branches: [main]
-    paths:
-      - apply_runtime_self_heal_v110.py
-      - .github/workflows/apply-runtime-self-heal-v110.yml
+  workflow_dispatch:
+
 jobs:
   patch:
     runs-on: ubuntu-latest

@@ -1,10 +1,8 @@
 name: Restore manual official verification UI v162
 
+# Legacy integrated feature: automatic source mutation is disabled; run manually only.
 on:
-  push:
-    branches: [main]
-    paths:
-      - '.github/workflows/apply-manual-official-ui-visibility-v162.yml'
+  workflow_dispatch:
 
 permissions:
   contents: write

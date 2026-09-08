@@ -1,14 +1,8 @@
 name: Apply Official Inventory Lookup
+# Legacy integrated feature: automatic source mutation is disabled; run manually only.
 on:
-  push:
-    branches: [main]
-    paths:
-      - inventory_lookup.py
-      - inventory_lookup.js
-      - inventory_lookup.css
-      - apply_inventory_lookup_patch.py
-      - test_inventory_lookup.py
-      - .github/workflows/apply-inventory-lookup.yml
+  workflow_dispatch:
+
 permissions:
   contents: write
 jobs:

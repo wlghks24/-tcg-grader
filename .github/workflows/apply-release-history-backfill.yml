@@ -1,11 +1,8 @@
 name: Apply unified release history backfill
+# Legacy integrated feature: automatic source mutation is disabled; run manually only.
 on:
-  push:
-    branches: [main]
-    paths:
-      - 'apply_release_history_backfill_patch.py'
-      - 'release_history_backfill.py'
-      - '.github/workflows/apply-release-history-backfill.yml'
+  workflow_dispatch:
+
 permissions:
   contents: write
 jobs:

@@ -1,12 +1,7 @@
 name: Apply Korean official no-record OCR v171
 
+# Legacy integrated feature: automatic source mutation is disabled; run manually only.
 on:
-  push:
-    branches: [main]
-    paths:
-      - 'apply_negative_proof_korean_ocr_v171.py'
-      - 'test_negative_proof_korean_ocr_v171.py'
-      - '.github/workflows/apply-negative-proof-korean-ocr-v171.yml'
   workflow_dispatch:
 
 permissions:

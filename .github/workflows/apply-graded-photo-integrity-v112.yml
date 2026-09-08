@@ -1,11 +1,7 @@
 name: Apply graded photo integrity v112
 
+# Legacy integrated feature: automatic source mutation is disabled; run manually only.
 on:
-  push:
-    branches: [main]
-    paths:
-      - apply_graded_photo_integrity_v112.py
-      - .github/workflows/apply-graded-photo-integrity-v112.yml
   workflow_dispatch:
 
 permissions:

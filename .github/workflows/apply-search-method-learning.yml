@@ -1,13 +1,7 @@
 name: Apply adaptive search method routing
 
+# Legacy integrated feature: automatic source mutation is disabled; run manually only.
 on:
-  push:
-    branches: [main]
-    paths:
-      - 'search_method_learning.py'
-      - 'apply_search_method_learning_patch.py'
-      - 'apply_search_method_compat_patch.py'
-      - '.github/workflows/apply-search-method-learning.yml'
   workflow_dispatch:
 
 permissions:

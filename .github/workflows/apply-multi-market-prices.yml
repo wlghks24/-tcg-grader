@@ -1,14 +1,8 @@
 name: Apply Multi Market Prices
+# Legacy integrated feature: automatic source mutation is disabled; run manually only.
 on:
-  push:
-    branches: [main]
-    paths:
-      - multi_market_price_collector.py
-      - multi_market_prices.js
-      - multi_market_prices.css
-      - test_multi_market_price_collector.py
-      - apply_multi_market_prices_patch.py
-      - .github/workflows/apply-multi-market-prices.yml
+  workflow_dispatch:
+
 permissions:
   contents: write
 jobs:

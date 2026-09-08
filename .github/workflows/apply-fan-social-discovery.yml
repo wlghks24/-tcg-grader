@@ -1,13 +1,7 @@
 name: Apply fan social discovery
 
+# Legacy integrated feature: automatic source mutation is disabled; run manually only.
 on:
-  push:
-    branches: [main]
-    paths:
-      - 'fan_social_learning.py'
-      - 'apply_fan_social_discovery_patch.py'
-      - 'test_fan_social_learning.py'
-      - '.github/workflows/apply-fan-social-discovery.yml'
   workflow_dispatch:
 
 permissions:

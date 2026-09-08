@@ -1,35 +1,7 @@
 name: Apply Security Hardening
 
+# Legacy integrated feature: automatic source mutation is disabled; run manually only.
 on:
-  push:
-    branches: [main]
-    paths:
-      - 'server_security_guard.py'
-      - 'grading_cert_verifier.py'
-      - 'security_hardening_apply.py'
-      - 'security_self_audit.py'
-      - 'csp_hash_hardening.py'
-      - 'runtime_optimization_hardening.py'
-      - 'validate_external_links.py'
-      - 'test_link_audit_hardening_v184.py'
-      - 'repository_integrity_guard.py'
-      - 'test_csp_hash_hardening.py'
-      - 'test_security_hardening.py'
-      - 'test_five_company_verification_policy.py'
-      - 'index.html'
-      - 'ai_code_improver.py'
-      - 'auto_repair_engine.py'
-      - 'collector_self_healing.py'
-      - 'tcg_code_repair_learning.py'
-      - 'GRAPHIFY_SELF_HEAL.py'
-      - 'GRAPHIFY_AUDIT.py'
-      - 'ANDROID_RECOVER_UPDATE.sh'
-      - 'ANDROID_UPDATE_AND_START.sh'
-      - 'VERIFY_TABLET_FINAL.sh'
-      - '.gitignore'
-      - '.github/workflows/**'
-      - 'gemini-code-1787475308276.py'
-      - 'gemini-code-1787475504812.py'
   workflow_dispatch:
 
 permissions:

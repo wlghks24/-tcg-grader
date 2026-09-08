@@ -1,11 +1,7 @@
 name: Apply PLAYGO event watch patch
 
+# Legacy integrated feature: automatic source mutation is disabled; run manually only.
 on:
-  push:
-    branches: [main]
-    paths:
-      - '.github/workflows/apply-playgo-event-watch.yml'
-      - 'apply_playgo_event_data_sync.py'
   workflow_dispatch:
 
 permissions:

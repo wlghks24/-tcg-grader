@@ -106,6 +106,41 @@ def main():
     safe=text('safe_runtime.py')
     assert 'owner_alive is False or (age >= stale_after and owner_alive is not True)' in safe
 
+    # Legacy apply workflows may still exist as explicit recovery tools, but
+    # any workflow that can commit/push source must be manual-only. Allowing a
+    # main-push trigger here can re-apply stale string patches to an already
+    # integrated runtime and create CI/commit cascades.
+    workflow_root=ROOT/'.github'/'workflows'
+    for workflow_path in sorted(workflow_root.glob('apply-*.yml')):
+        workflow=workflow_path.read_text(encoding='utf-8')
+        if 'contents: write' not in workflow or 'git push' not in workflow:
+            continue
+        lines=workflow.splitlines()
+        try:
+            on_index=lines.index('on:')
+        except ValueError as exc:
+            raise AssertionError(f'{workflow_path.name}: missing top-level on block') from exc
+        end=on_index+1
+        while end < len(lines) and (not lines[end].strip() or lines[end][:1].isspace()):
+            end += 1
+        trigger='\n'.join(lines[on_index+1:end])
+        assert re.search(r'^  workflow_dispatch:\s*    assert 'catalog_marker_missing' in market
+    assert 'kream_transient=(' in market
+    print('[OK] runtime delivery guards v185')
+
+
+if __name__=='__main__':
+    main()
+,trigger,re.M), f'{workflow_path.name}: self-mutating workflow must retain manual dispatch'
+        assert not re.search(r'^  push:\s*    assert 'catalog_marker_missing' in market
+    assert 'kream_transient=(' in market
+    print('[OK] runtime delivery guards v185')
+
+
+if __name__=='__main__':
+    main()
+,trigger,re.M), f'{workflow_path.name}: self-mutating workflow must not run on push'
+
     market=text('update_market_prices.py')
     assert 'catalog_marker_missing' in market
     assert 'kream_transient=(' in market

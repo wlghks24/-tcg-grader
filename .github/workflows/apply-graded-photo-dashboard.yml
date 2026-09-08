@@ -1,10 +1,7 @@
 name: Apply graded photo dashboard
 
+# Legacy integrated feature: automatic source mutation is disabled; run manually only.
 on:
-  push:
-    branches: [main]
-    paths:
-      - 'apply_graded_photo_dashboard_patch.py'
   workflow_dispatch:
 
 permissions:

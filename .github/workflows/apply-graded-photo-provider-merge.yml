@@ -1,9 +1,8 @@
 name: Apply graded photo provider merge
+# Legacy integrated feature: automatic source mutation is disabled; run manually only.
 on:
-  push:
-    branches: [main]
-    paths:
-      - apply_graded_photo_provider_merge.py
+  workflow_dispatch:
+
 jobs:
   apply:
     runs-on: ubuntu-latest

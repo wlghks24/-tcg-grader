@@ -1,11 +1,7 @@
 name: Apply top 7-step UI wording
 
+# Legacy integrated feature: automatic source mutation is disabled; run manually only.
 on:
-  push:
-    branches: [main]
-    paths:
-      - 'apply_top_7step_ui_patch.py'
-      - '.github/workflows/apply-top-7step-ui.yml'
   workflow_dispatch:
 
 permissions:

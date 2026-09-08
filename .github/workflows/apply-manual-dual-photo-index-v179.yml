@@ -1,10 +1,8 @@
 name: Apply manual dual-photo index v179
 
+# Legacy integrated feature: automatic source mutation is disabled; run manually only.
 on:
-  push:
-    branches: [main]
-    paths:
-      - '.github/workflows/apply-manual-dual-photo-index-v179.yml'
+  workflow_dispatch:
 
 permissions:
   contents: write

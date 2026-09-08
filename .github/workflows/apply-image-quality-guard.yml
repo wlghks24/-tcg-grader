@@ -1,13 +1,8 @@
 name: Apply image quality guard
 
+# Legacy integrated feature: automatic source mutation is disabled; run manually only.
 on:
-  push:
-    branches: [main]
-    paths:
-      - 'image_quality_guard.js'
-      - 'apply_image_quality_guard_patch.py'
-      - 'box_hit_market_discovery.py'
-      - '.github/workflows/apply-image-quality-guard.yml'
+  workflow_dispatch:
 
 permissions:
   contents: write

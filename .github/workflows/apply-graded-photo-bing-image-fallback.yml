@@ -1,10 +1,8 @@
 name: Apply graded photo Bing image fallback
+# Legacy integrated feature: automatic source mutation is disabled; run manually only.
 on:
-  push:
-    branches: [main]
-    paths:
-      - 'apply_graded_photo_bing_image_fallback.py'
-      - '.github/workflows/apply-graded-photo-bing-image-fallback.yml'
+  workflow_dispatch:
+
 permissions:
   contents: write
 jobs:

@@ -1,12 +1,7 @@
 name: Apply Termux Korean tessdata bootstrap v172
 
+# Legacy integrated feature: automatic source mutation is disabled; run manually only.
 on:
-  push:
-    branches: [main]
-    paths:
-      - 'ensure_tesseract_kor.sh'
-      - 'apply_termux_korean_tessdata_v172.py'
-      - '.github/workflows/apply-termux-korean-tessdata-v172.yml'
   workflow_dispatch:
 
 permissions:

@@ -1,11 +1,7 @@
 name: Apply search recovery diversity
 
+# Legacy integrated feature: automatic source mutation is disabled; run manually only.
 on:
-  push:
-    branches: [main]
-    paths:
-      - 'apply_search_recovery_diversity_patch.py'
-      - '.github/workflows/apply-search-recovery-diversity.yml'
   workflow_dispatch:
 
 permissions:

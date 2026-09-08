@@ -1,12 +1,7 @@
 name: Apply BGS certificate OCR v169
 
+# Legacy integrated feature: automatic source mutation is disabled; run manually only.
 on:
-  push:
-    branches: [main]
-    paths:
-      - 'apply_bgs_cert_ocr_v169.py'
-      - 'test_bgs_cert_ocr_v169.py'
-      - '.github/workflows/apply-bgs-cert-ocr-v169.yml'
   workflow_dispatch:
 
 permissions:

@@ -1,12 +1,8 @@
 name: Apply BOX knowledge statistics
+# Legacy integrated feature: automatic source mutation is disabled; run manually only.
 on:
-  push:
-    branches: [main]
-    paths:
-      - 'apply_box_knowledge_stats_patch.py'
-      - 'box_knowledge_stats.js'
-      - 'box_knowledge_stats.css'
-      - '.github/workflows/apply-box-knowledge-stats.yml'
+  workflow_dispatch:
+
 permissions:
   contents: write
 jobs:

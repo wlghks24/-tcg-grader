@@ -1,11 +1,8 @@
 name: Apply official proof fullscreen OCR v168b
 
+# Legacy integrated feature: automatic source mutation is disabled; run manually only.
 on:
-  push:
-    branches:
-      - main
-    paths:
-      - '.github/workflows/apply-official-proof-fullscreen-ocr-v168b.yml'
+  workflow_dispatch:
 
 permissions:
   contents: write

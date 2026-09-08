@@ -1,9 +1,8 @@
 name: Apply initial graded-photo no-timeout mode
+# Legacy integrated feature: automatic source mutation is disabled; run manually only.
 on:
-  push:
-    branches: [main]
-    paths:
-      - apply_first_full_collection_no_timeout.py
+  workflow_dispatch:
+
 jobs:
   patch:
     runs-on: ubuntu-latest

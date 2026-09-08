@@ -1,9 +1,8 @@
 name: Apply graded photo hard timeout
+# Legacy integrated feature: automatic source mutation is disabled; run manually only.
 on:
-  push:
-    branches: [main]
-    paths:
-      - apply_graded_photo_hard_timeout_patch.py
+  workflow_dispatch:
+
 jobs:
   patch:
     runs-on: ubuntu-latest

@@ -1,12 +1,8 @@
 name: Apply Grading Total Cost
+# Legacy integrated feature: automatic source mutation is disabled; run manually only.
 on:
-  push:
-    branches: [main]
-    paths:
-      - grading_total_cost.js
-      - grading_total_cost.css
-      - apply_grading_total_cost_patch.py
-      - .github/workflows/apply-grading-total-cost.yml
+  workflow_dispatch:
+
 permissions:
   contents: write
 jobs:

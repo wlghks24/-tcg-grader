@@ -1,10 +1,8 @@
 name: Apply collection resilience v111b
+# Legacy integrated feature: automatic source mutation is disabled; run manually only.
 on:
-  push:
-    branches: [main]
-    paths:
-      - apply_collection_resilience_v111b.py
-      - .github/workflows/apply-collection-resilience-v111b.yml
+  workflow_dispatch:
+
 jobs:
   patch:
     runs-on: ubuntu-latest

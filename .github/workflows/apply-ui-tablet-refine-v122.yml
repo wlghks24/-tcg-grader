@@ -1,13 +1,8 @@
 name: Apply UI tablet refine v122
+# Legacy integrated feature: automatic source mutation is disabled; run manually only.
 on:
-  push:
-    branches: [main]
-    paths:
-      - 'ui_tablet_refine_v122.css'
-      - 'apply_ui_tablet_refine_v122.py'
-      - 'test_ui_tablet_refine_v122.py'
-      - '.github/workflows/apply-ui-tablet-refine-v122.yml'
   workflow_dispatch:
+
 permissions:
   contents: write
 jobs:

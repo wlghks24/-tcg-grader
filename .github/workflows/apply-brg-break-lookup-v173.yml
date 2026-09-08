@@ -1,12 +1,7 @@
 name: Apply BRG Break Korea lookup v173
 
+# Legacy integrated feature: automatic source mutation is disabled; run manually only.
 on:
-  push:
-    branches: [main]
-    paths:
-      - 'apply_brg_break_lookup_v173.py'
-      - 'test_brg_break_lookup_v173.py'
-      - '.github/workflows/apply-brg-break-lookup-v173.yml'
   workflow_dispatch:
 
 permissions:

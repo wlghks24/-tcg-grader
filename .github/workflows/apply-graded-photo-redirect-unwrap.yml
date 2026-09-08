@@ -1,10 +1,8 @@
 name: Apply graded photo redirect unwrap
+# Legacy integrated feature: automatic source mutation is disabled; run manually only.
 on:
-  push:
-    branches: [main]
-    paths:
-      - 'apply_graded_photo_redirect_unwrap.py'
-      - '.github/workflows/apply-graded-photo-redirect-unwrap.yml'
+  workflow_dispatch:
+
 permissions:
   contents: write
 jobs:
