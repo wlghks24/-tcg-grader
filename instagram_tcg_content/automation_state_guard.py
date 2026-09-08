@@ -8,6 +8,7 @@ from pathlib import Path
 from typing import Any
 
 KST = dt.timezone(dt.timedelta(hours=9))
+SCHEDULE_RUN_EARLY_GRACE = dt.timedelta(minutes=5)
 CANONICAL_ID = "6a9b8a22e72c8191849c273e1240378e"
 CANONICAL_TITLE = "인스타 카드정보"
 AI_RELIABILITY_PROJECT = "instagram_card"
@@ -61,6 +62,24 @@ def _aware(value: str | None, field: str) -> dt.datetime | None:
     if parsed.tzinfo is None:
         raise AutomationStateGuardError(f"{field} must be timezone-aware")
     return parsed.astimezone(dt.timezone.utc)
+
+
+def _missed_slot_gap_start(
+    *,
+    last_run: dt.datetime | None,
+    updated: dt.datetime | None,
+    observed: dt.datetime,
+) -> tuple[dt.datetime, str]:
+    """Anchor missed-slot detection to the last observed run when available.
+
+    A small early-run grace prevents a run recorded a few minutes before :30
+    from being misclassified as a missed :30 slot.
+    """
+    if last_run is not None:
+        return last_run + SCHEDULE_RUN_EARLY_GRACE, "last_run_plus_early_grace"
+    if updated is not None:
+        return updated, "state_updated_at"
+    return observed, "observed_at"
 
 
 def _schedule_start_disable_without_run(
@@ -178,7 +197,11 @@ def classify_pause(
             cause_status = "unresolved"
             cause_class = "CONTROL_PLANE_ATTRIBUTION_UNAVAILABLE"
 
-    gap_start = updated or last_run or observed
+    gap_start, gap_anchor = _missed_slot_gap_start(
+        last_run=last_run,
+        updated=updated,
+        observed=observed,
+    )
     missed_slots = _hourly_half_past_slots(gap_start, observed) if incident else []
     missed_0630 = any(x[11:16] == "06:30" for x in missed_slots)
     recurrence_count = prior_pause_count + (1 if incident else 0)
@@ -220,6 +243,9 @@ def classify_pause(
         "schedule_start_slot_kst": schedule_disable_slot_kst,
         "state_transition_is_root_cause": False,
         "missed_slots_kst": missed_slots,
+        "missed_slot_anchor": gap_anchor,
+        "missed_slot_anchor_utc": gap_start.isoformat(),
+        "schedule_run_early_grace_minutes": int(SCHEDULE_RUN_EARLY_GRACE.total_seconds() // 60),
         "missed_full_0630": missed_0630,
         "required_action": (
             "REACTIVATE_EXISTING_CANONICAL_AUTOMATION"
@@ -277,6 +303,11 @@ def self_test() -> None:
     assert boundary["state_transition_is_root_cause"] is False, boundary
     assert boundary["cause_class"] == "CONTROL_PLANE_ATTRIBUTION_UNAVAILABLE", boundary
     assert boundary["recurrence_count"] == 3, boundary
+    assert boundary["missed_slot_anchor"] == "last_run_plus_early_grace", boundary
+    assert "2026-09-08T06:30+09:00" in boundary["missed_slots_kst"], boundary
+    assert "2026-09-08T10:30+09:00" in boundary["missed_slots_kst"], boundary
+    assert "2026-09-08T05:30+09:00" not in boundary["missed_slots_kst"], boundary
+    assert boundary["missed_full_0630"] is True, boundary
 
     backed = classify_pause(
         disabled,
