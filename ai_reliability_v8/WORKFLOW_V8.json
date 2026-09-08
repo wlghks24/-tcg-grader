@@ -1,6 +1,6 @@
 {
   "schema_version": 8,
-  "stages": ["inventory", "binding", "backup", "read_only_plan", "additive_install", "wire_one_entrypoint","targeted_tests","full_regression","actual_output_validation", "activate"],
+  "stages": ["inventory", "binding", "backup", "read_only_plan", "additive_install", "wire_one_entrypoint", "targeted_tests", "full_regression", "actual_output_validation", "activate"],
   "rollback_stage": "restore_entrypoint",
   "rules": {
     "single_project": true,
