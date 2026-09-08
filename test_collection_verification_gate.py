@@ -92,6 +92,38 @@ class CollectionVerificationGateTests(unittest.TestCase):
         self.assertEqual("degraded", report["status"])
         self.assertTrue(any(x["code"] == "INVALID_RELEASE_ROW" for x in report["findings"]))
 
+    def test_asia_promo_event_is_valid_without_widening_release_regions(self):
+        self.valid_fixture()
+        self.write("promo_events.json", {"items": [{
+            "game": "포켓몬 카드",
+            "region": "ASIA",
+            "category": "promo",
+            "name_ko": "Pokémon RUN 30 완주자 피카츄 프로모 카드",
+            "source": "https://tw.portal-pokemon.com/30th/topics/20260902_02/?lang=en",
+            "source_grade": "official",
+        }]})
+        report = gate.verify(self.root, now=self.now)
+        self.assertEqual("pass", report["status"])
+        self.assertEqual(0, report["metrics"]["invalid_promo_event_items"])
+        self.assertNotIn("ASIA", gate.ALLOWED_REGIONS)
+        self.assertIn("ASIA", gate.ALLOWED_EVENT_REGIONS)
+
+    def test_asia_release_remains_invalid(self):
+        self.valid_fixture()
+        self.write("releases.json", {"items": [{
+            "game": "Pokémon",
+            "region": "ASIA",
+            "name": "Must remain event-only",
+            "source": "https://example.com/release",
+        }]})
+        report = gate.verify(self.root, now=self.now)
+        self.assertEqual("degraded", report["status"])
+        self.assertEqual(1, report["metrics"]["invalid_release_items"])
+        self.assertTrue(any(
+            x["code"] == "INVALID_RELEASE_ROW" and "bad_region" in x.get("reasons", [])
+            for x in report["findings"]
+        ))
+
     def test_global_release_scope_is_valid(self):
         self.valid_fixture()
         self.write("releases.json", {"items": [{"game": "NARUTO", "region": "GLOBAL", "name": "NARUTO CARD GAME", "release_window": "2027 summer", "source": "https://example.com/naruto"}]})
