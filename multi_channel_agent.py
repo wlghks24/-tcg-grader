@@ -601,8 +601,13 @@ class MultiChannelCollector:
                 transport_successes += 1
             error_text = " / ".join(attempt_errors)
             with self._learning_lock:
+                # A fully empty result is a trustworthy negative neural label only
+                # when every attempted provider completed without warnings/errors.
+                # Positive official hits may still teach even if another provider
+                # had a transient warning because the positive evidence is explicit.
+                learning_error = error_text if (hard_failure or (not rows and bool(attempt_errors))) else ""
                 learned = self.learner.observe_search(
-                    keyword, used_query, rows, error=error_text if hard_failure else "", family=family, region=region
+                    keyword, used_query, rows, error=learning_error, family=family, region=region
                 )
             for row in rows:
                 enriched = dict(row)

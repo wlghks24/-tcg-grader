@@ -14,7 +14,7 @@ from adaptive_collection_learner import AdaptiveCollectionLearner
 
 class VerifiedCollectionNeuralV211Tests(unittest.TestCase):
     def test_safety_contract_and_activation_threshold(self):
-        self.assertEqual(212, neural.RUNTIME_PATCH)
+        self.assertEqual(213, neural.RUNTIME_PATCH)
         self.assertEqual((4, 8, 12), neural.HIDDEN_SIZES)
         self.assertEqual(1000, neural.MIN_INDEPENDENT_LABELS)
         self.assertTrue(neural.SAFETY["learns_strategy_not_facts"])
@@ -300,6 +300,75 @@ class VerifiedCollectionNeuralV211Tests(unittest.TestCase):
             self.assertEqual("adaptive_public_search_priority_only", state["scope"])
             self.assertIn("official_release_fetch", state["deterministic_collectors"])
             self.assertIn("graded_photo_final_verification", state["deterministic_collectors"])
+
+    def test_failed_retrain_deactivates_primary_but_preserves_last_known_good(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            labels_path = root / "labels.json"
+            model_path = root / "model.json"
+            backup_path = root / "model.json.bak"
+            report_path = root / "report.json"
+            rows = []
+            for index in range(1100):
+                rows.append({
+                    "sample_id": hashlib.sha256(f"drift-{index}".encode()).hexdigest()[:24],
+                    "game": neural.GAMES[index % len(neural.GAMES)],
+                    "region": neural.REGIONS[index % 3],
+                    "family": "regional",
+                    "runs": 2,
+                    "hits": 1,
+                    "relevant": 1 if index % 2 == 0 else 0,
+                    "official": 1 if index % 2 == 0 else 0,
+                    "errors": 0,
+                    "empty": 0 if index % 2 == 0 else 1,
+                    "learned_score": 0.0,
+                    "verified_gap_priority": 0.0,
+                    "coverage_gap_score": 0.0,
+                    "outcome": bool(index % 2 == 0),
+                    "evidence": "official_result_observed" if index % 2 == 0 else "successful_empty_search",
+                    "observed_at": "2026-09-08T00:00:00+00:00",
+                })
+            labels_path.write_text(json.dumps({
+                "schema": neural.SCHEMA,
+                "feature_fingerprint": neural.FEATURE_FINGERPRINT,
+                "labels": rows,
+            }, ensure_ascii=False), encoding="utf-8")
+            base = neural._init_model(4, 23)
+            existing = {
+                "schema": neural.SCHEMA,
+                "active": True,
+                "feature_fingerprint": neural.FEATURE_FINGERPRINT,
+                "feature_count": neural.FEATURE_COUNT,
+                "trained_at": "2026-09-08T00:00:00+00:00",
+                "label_count": 1000,
+                "hidden": 4,
+                "w1": base["w1"],
+                "b1": base["b1"],
+                "w2": base["w2"],
+                "b2": base["b2"],
+                "metrics": {"accuracy": 0.7, "logloss": 0.5},
+                "safety": neural.SAFETY,
+            }
+            model_path.write_text(json.dumps(existing), encoding="utf-8")
+            weak = {"accuracy": 0.4, "logloss": 1.2}
+            with patch("verified_collection_neural._train", return_value=base), \
+                 patch("verified_collection_neural._metrics", return_value=weak):
+                result = neural.train_if_ready(
+                    labels_path=labels_path,
+                    model_path=model_path,
+                    report_path=report_path,
+                    force=True,
+                )
+            primary = json.loads(model_path.read_text(encoding="utf-8"))
+            backup = json.loads(backup_path.read_text(encoding="utf-8"))
+            self.assertFalse(result["active"])
+            self.assertEqual("model_deactivated_after_current_holdout_failure", result["reason"])
+            self.assertTrue(result["last_known_good_preserved"])
+            self.assertFalse(primary["active"])
+            self.assertTrue(backup["active"])
+            state = neural.status(labels_path=labels_path, model_path=model_path)
+            self.assertFalse(state["active"])
+            self.assertEqual("disabled", state["model_source"])
 
 
 if __name__ == "__main__":

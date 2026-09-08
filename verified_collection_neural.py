@@ -28,7 +28,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Iterable
 
-from safe_runtime import atomic_write_json, safe_read_text
+from safe_runtime import atomic_write_json, exclusive_file_lock, safe_read_text
 
 ROOT = Path(__file__).resolve().parent
 LABELS_PATH = ROOT / "VERIFIED_COLLECTION_NEURAL_LABELS.json"
@@ -38,7 +38,7 @@ MODEL_BACKUP_PATH = ROOT / "VERIFIED_COLLECTION_NEURAL_MODEL.json.bak"
 REPORT_PATH = ROOT / "VERIFIED_COLLECTION_NEURAL_REPORT.json"
 
 SCHEMA = 1
-RUNTIME_PATCH = 212
+RUNTIME_PATCH = 213
 MIN_INDEPENDENT_LABELS = 1000
 MIN_CLASS_LABELS = 100
 MAX_LABELS = 6000
@@ -340,49 +340,61 @@ def observe_search_outcome(
         )
     )
     sample_id = hashlib.sha256(sample_raw.encode("utf-8", "replace")).hexdigest()[:24]
-    labels = _load_labels(labels_path)
-    if any(row.get("sample_id") == sample_id for row in labels["labels"]):
-        return {
-            "eligible": True,
-            "added": 0,
-            "reason": "duplicate_same_collection_window",
-            "sample_id": sample_id,
-            "label_count": len(labels["labels"]),
-        }
+    try:
+        with exclusive_file_lock(labels_path, timeout_seconds=3.0, stale_seconds=300):
+            labels = _load_labels(labels_path)
+            if any(row.get("sample_id") == sample_id for row in labels["labels"]):
+                return {
+                    "eligible": True,
+                    "added": 0,
+                    "reason": "duplicate_same_collection_window",
+                    "sample_id": sample_id,
+                    "label_count": len(labels["labels"]),
+                }
 
-    row = {
-        "sample_id": sample_id,
-        "game": canonical_game,
-        "region": normalized_region,
-        "family": _family(family),
-        "runs": int(max(0, _safe_float(stats.get("runs"), 0))),
-        "hits": int(max(0, _safe_float(stats.get("hits"), 0))),
-        "relevant": int(max(0, _safe_float(stats.get("relevant"), relevant_count))),
-        "official": int(max(0, _safe_float(stats.get("official"), official_count))),
-        "errors": int(max(0, _safe_float(stats.get("errors"), 0))),
-        "empty": int(max(0, _safe_float(stats.get("empty"), 0))),
-        "learned_score": max(-5.0, min(10.0, _safe_float(stats.get("learned_score"), _safe_float(stats.get("score"), 0.0)))),
-        "verified_gap_priority": max(0.0, min(10.0, _safe_float(verified_gap_priority, 0.0))),
-        "coverage_gap_score": max(0.0, min(10.0, _safe_float(coverage_gap_score, 0.0))),
-        "outcome": outcome,
-        "evidence": evidence,
-        "observed_at": (now or datetime.now(timezone.utc)).astimezone(timezone.utc).isoformat(timespec="seconds"),
-    }
-    labels["labels"].append(row)
-    labels["labels"] = labels["labels"][-MAX_LABELS:]
-    labels["updated_at"] = _now()
-    backup_path = _backup_path(labels_path, LABELS_PATH, LABELS_BACKUP_PATH)
-    previous = _load_labels(labels_path)
-    if previous.get("labels"):
-        atomic_write_json(backup_path, previous, suffix=".collection-neural-labels-bak.tmp")
-    atomic_write_json(labels_path, labels, suffix=".collection-neural-labels.tmp")
-    return {
-        "eligible": True,
-        "added": 1,
-        "reason": evidence,
-        "sample_id": sample_id,
-        "label_count": len(labels["labels"]),
-    }
+            previous = {
+                **labels,
+                "labels": [dict(item) for item in labels.get("labels", []) if isinstance(item, dict)],
+            }
+            row = {
+                "sample_id": sample_id,
+                "game": canonical_game,
+                "region": normalized_region,
+                "family": _family(family),
+                "runs": int(max(0, _safe_float(stats.get("runs"), 0))),
+                "hits": int(max(0, _safe_float(stats.get("hits"), 0))),
+                "relevant": int(max(0, _safe_float(stats.get("relevant"), relevant_count))),
+                "official": int(max(0, _safe_float(stats.get("official"), official_count))),
+                "errors": int(max(0, _safe_float(stats.get("errors"), 0))),
+                "empty": int(max(0, _safe_float(stats.get("empty"), 0))),
+                "learned_score": max(-5.0, min(10.0, _safe_float(stats.get("learned_score"), _safe_float(stats.get("score"), 0.0)))),
+                "verified_gap_priority": max(0.0, min(10.0, _safe_float(verified_gap_priority, 0.0))),
+                "coverage_gap_score": max(0.0, min(10.0, _safe_float(coverage_gap_score, 0.0))),
+                "outcome": outcome,
+                "evidence": evidence,
+                "observed_at": (now or datetime.now(timezone.utc)).astimezone(timezone.utc).isoformat(timespec="seconds"),
+            }
+            labels["labels"].append(row)
+            labels["labels"] = labels["labels"][-MAX_LABELS:]
+            labels["updated_at"] = _now()
+            backup_path = _backup_path(labels_path, LABELS_PATH, LABELS_BACKUP_PATH)
+            if previous.get("labels"):
+                atomic_write_json(backup_path, previous, suffix=".collection-neural-labels-bak.tmp")
+            atomic_write_json(labels_path, labels, suffix=".collection-neural-labels.tmp")
+            return {
+                "eligible": True,
+                "added": 1,
+                "reason": evidence,
+                "sample_id": sample_id,
+                "label_count": len(labels["labels"]),
+            }
+    except TimeoutError:
+        return {
+            "eligible": False,
+            "added": 0,
+            "reason": "learning_lock_busy",
+            "sample_id": sample_id,
+        }
 
 
 def _sigmoid(value: float) -> float:
@@ -711,7 +723,10 @@ def train_if_ready(
                 "safety": SAFETY,
             }
             model_backup = _backup_path(model_path, MODEL_PATH, MODEL_BACKUP_PATH)
-            atomic_write_json(model_backup, disabled, suffix=".collection-neural-model-disable-bak.tmp")
+            # Preserve the last known-good model for forensic/manual rollback, but
+            # keep the inactive primary marker authoritative so backup recovery
+            # cannot silently reactivate a model that failed the current holdout.
+            atomic_write_json(model_backup, existing, suffix=".collection-neural-model-lkg.tmp")
             atomic_write_json(model_path, disabled, suffix=".collection-neural-model-disable.tmp")
             status.update(
                 {
@@ -719,6 +734,7 @@ def train_if_ready(
                     "reason": "model_deactivated_after_current_holdout_failure",
                     "model_source": "disabled",
                     "model_recovered_from_backup": False,
+                    "last_known_good_preserved": True,
                 }
             )
     else:

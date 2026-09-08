@@ -132,7 +132,7 @@ python test_tablet_runtime_qa_integration.py >/dev/null
 python -m unittest -v test_verified_collection_neural_v211.py >/dev/null
 python - <<'PY' >/dev/null
 import verified_collection_neural as neural
-assert neural.RUNTIME_PATCH == 212
+assert neural.RUNTIME_PATCH == 213
 assert neural.MIN_INDEPENDENT_LABELS == 1000
 assert neural.HIDDEN_SIZES == (4, 8, 12)
 assert callable(getattr(neural, "_validate_model_payload", None))

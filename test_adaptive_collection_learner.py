@@ -219,6 +219,23 @@ class AdaptiveCollectionLearnerTests(unittest.TestCase):
         encoded = "https://html.duckduckgo.com/l/?uddg=" + __import__("urllib.parse", fromlist=["quote"]).quote(target, safe="")
         self.assertEqual(MultiChannelCollector._decode_result_url(encoded), target)
 
+    def test_partial_provider_failure_empty_search_is_not_neural_negative(self):
+        with tempfile.TemporaryDirectory() as td:
+            learner = self.make_learner(Path(td))
+            collector = MultiChannelCollector(learner=learner)
+            with patch.object(
+                collector,
+                "_search_once",
+                return_value=([], ["bing_web_rss: TimeoutError"], 3, False, 3),
+            ):
+                result = collector.search_web("포켓몬", limit=5)
+            self.assertTrue(result["ok"])
+            learned = [row.get("learned", {}) for row in result.get("query_results", [])]
+            self.assertTrue(learned)
+            self.assertTrue(all(row.get("neural_label_added") == 0 for row in learned))
+            self.assertTrue(all(row.get("neural_label_reason") == "error_observation_excluded" for row in learned))
+            self.assertFalse(learner.neural_labels_path.exists())
+
     def test_empty_successful_search_is_not_counted_as_hard_failure(self):
         with tempfile.TemporaryDirectory() as td:
             learner = self.make_learner(Path(td))
