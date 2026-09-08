@@ -57,26 +57,56 @@ class BreakingEventWatchTests(unittest.TestCase):
             "miss_learning":{"learned_this_run":0,"learned_terms":0,"learned_region_hints":0,"verified_miss_recoveries":0},
             "network_seconds":0.1,
         }
-        def prepare(started):
+        miss_learning=prepared["miss_learning"]
+        def prelearn():
+            self.assertTrue(state["held"])
+            return miss_learning
+        def prepare(started,miss_learning=None):
             self.assertFalse(state["held"])
+            self.assertIs(miss_learning,prepared["miss_learning"])
             return prepared
         def commit(started,value,lock_wait_seconds=0.0):
             self.assertTrue(state["held"])
             self.assertIs(value,prepared)
             return {"ok":True,"network_outside_shared_lock":True}
-        with mock.patch.object(event_priority_watch,"_prepare_scan",side_effect=prepare) as prepare_mock, \
+        with mock.patch.object(event_priority_watch,"_prelearn_verified_misses",side_effect=prelearn) as prelearn_mock, \
+             mock.patch.object(event_priority_watch,"_prepare_scan",side_effect=prepare) as prepare_mock, \
              mock.patch.object(event_priority_watch,"_commit_scan",side_effect=commit) as commit_mock:
             result=event_priority_watch.run_once(TrackingLock())
         self.assertTrue(result["ok"])
         self.assertTrue(result["network_outside_shared_lock"])
+        prelearn_mock.assert_called_once()
         prepare_mock.assert_called_once()
         commit_mock.assert_called_once()
+        self.assertTrue(result["learning_write_serialized"])
 
     def test_priority_watch_source_limits_shared_lock_to_merge_and_persist(self):
         source=Path("event_priority_watch.py").read_text(encoding="utf-8")
         self.assertIn('"network_outside_shared_lock": True',source)
         self.assertIn('"shared_lock_scope": "latest_snapshot_merge_and_atomic_persist_only"',source)
         self.assertNotIn("with shared_lock:\n            return _run_locked(started)",source)
+
+    def test_quick_watch_serializes_prelearn_with_full_gap_learning_save(self):
+        state={"held":False}
+        class TrackingLock:
+            def __enter__(self):
+                state["held"]=True
+                return self
+            def __exit__(self, exc_type, exc, tb):
+                state["held"]=False
+                return False
+        def prelearn():
+            self.assertTrue(state["held"])
+            return {"learned_this_run":0,"learned_terms":0,"learned_region_hints":0,"verified_miss_recoveries":0}
+        result_payload={"fresh_collection_ok":True,"degraded":False,"items":[],"collection_errors":[]}
+        def discover():
+            self.assertTrue(state["held"])
+            return result_payload
+        with mock.patch.object(event_quick_watch,"_prelearn_verified_misses",side_effect=prelearn), \
+             mock.patch.object(event_quick_watch.social_event_discovery,"main",side_effect=discover), \
+             mock.patch.object(event_quick_watch,"_merge_manual_evidence",return_value=(result_payload,0)):
+            result=event_quick_watch.run_once(TrackingLock())
+        self.assertTrue(result["ok"])
 
     def test_watchers_use_v142_collection_learning_guard(self):
         self.assertEqual(142, event_priority_watch.hardening.PATCH_ID)

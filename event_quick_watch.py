@@ -174,12 +174,16 @@ def run_once(shared_lock=None) -> dict:
         source_overlay.apply()
         source_expansion.apply()
         miss_hardening.apply()
-        miss_learning = _prelearn_verified_misses()
         if shared_lock is None:
+            miss_learning = _prelearn_verified_misses()
             result = social_event_discovery.main()
             result, manual_added = _merge_manual_evidence(result)
         else:
+            # The full discovery pass also persists EventGapLearner state.
+            # Keep prelearn + discovery save in the same shared transaction so
+            # the 30-minute priority watcher cannot overwrite verified learning.
             with shared_lock:
+                miss_learning = _prelearn_verified_misses()
                 result = social_event_discovery.main()
                 result, manual_added = _merge_manual_evidence(result)
         items = result.get("items", []) if isinstance(result, dict) else []

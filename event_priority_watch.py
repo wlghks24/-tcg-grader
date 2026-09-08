@@ -130,13 +130,14 @@ def _learn_priority_rewards() -> int:
         return 0
 
 
-def _prepare_scan(started: float) -> dict:
+def _prepare_scan(started: float, miss_learning: dict | None = None) -> dict:
     """Perform patch setup and external network work without holding UPDATE_LOCK."""
     hardening.apply()
     source_overlay.apply()
     source_expansion.apply()
     miss_hardening.apply()
-    miss_learning = _prelearn_verified_misses()
+    if miss_learning is None:
+        miss_learning = _prelearn_verified_misses()
 
     registry = social_event_discovery.load_registry()
     jobs = [
@@ -240,13 +241,23 @@ def run_once(shared_lock=None) -> dict:
         return {"ok": True, "skipped": True, "reason": "priority watch already running"}
     started = time.monotonic()
     try:
-        prepared = _prepare_scan(started)
         if shared_lock is None:
+            prepared = _prepare_scan(started)
             return _commit_scan(started, prepared)
+        # Serialize only the live event-gap read/learn/save transaction. The
+        # external official-SNS network scan remains outside UPDATE_LOCK.
+        learn_wait_started = time.monotonic()
+        with shared_lock:
+            miss_learning = _prelearn_verified_misses()
+            learning_lock_wait_seconds = time.monotonic() - learn_wait_started
+        prepared = _prepare_scan(started, miss_learning=miss_learning)
         wait_started = time.monotonic()
         with shared_lock:
             lock_wait_seconds = time.monotonic() - wait_started
-            return _commit_scan(started, prepared, lock_wait_seconds=lock_wait_seconds)
+            result = _commit_scan(started, prepared, lock_wait_seconds=lock_wait_seconds)
+        result["learning_write_serialized"] = True
+        result["learning_lock_wait_seconds"] = round(max(0.0, learning_lock_wait_seconds), 3)
+        return result
     except Exception as exc:
         return {
             "ok": False,
