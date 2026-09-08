@@ -36,6 +36,7 @@ def canonical_url(value):
 
 
 def independent_count(items):
+    # Connected components: A shares owner with B; B shares origin with C => one.
     parent=list(range(len(items)))
     def find(i):
         while parent[i]!=i:
@@ -63,6 +64,7 @@ class Verifier:
                   and (subject in r['subjects'] or (subject in ('pokemon','onepiece','naruto') and 'cards' in r['subjects']) or (subject in ('pokemon','onepiece','naruto','anime') and 'anime' in r['subjects']))]
         if not include_supporting:
             matching=[r for r in matching if r.get('evidence_role','primary')=='primary']
+        # Region match is GLOBAL only when the source declares it.
         matching=[r for r in matching if region in r['regions'] or 'GLOBAL' in r['regions']]
         matching.sort(key=lambda r:(r.get('evidence_role','primary')!='primary',r['discovery_status']!='PAGE_READ',r['id']))
         ordered=[];owners=set()
@@ -139,6 +141,7 @@ class Verifier:
                 accepted.append({'id':eid,'owner':source['owner_group'],'origin':e['origin_key'],'sha256':sha,'url':url,
                                  'review_reference':reviewed['reference'],'role':role})
             except (ValueError,KeyError,TypeError,OSError) as exc:
+                # Exception text may contain secrets: use only our known uppercase codes.
                 code=str(exc)
                 if not code.replace('_','').isalpha() or code.upper()!=code: code='INVALID_EVIDENCE'
                 rejected.append({'id':eid,'code':code})
@@ -158,6 +161,7 @@ class Verifier:
         path=Path(ledger_path);path.parent.mkdir(parents=True,exist_ok=True)
         claim_hash=hashlib.sha256(json.dumps(claim,sort_keys=True,ensure_ascii=False).encode()).hexdigest()
         result_hash=hashlib.sha256(json.dumps(result,sort_keys=True,ensure_ascii=False).encode()).hexdigest()
+        # History is append-only by content hash; rechecking never erases a conflict.
         with sqlite3.connect(path) as db:
             db.execute('CREATE TABLE IF NOT EXISTS binding (singleton INTEGER PRIMARY KEY, project TEXT)')
             db.execute('INSERT OR IGNORE INTO binding VALUES (1,?)',(self.project,))
