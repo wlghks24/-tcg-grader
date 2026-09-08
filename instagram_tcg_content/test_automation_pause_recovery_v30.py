@@ -45,6 +45,27 @@ class AutomationPauseRecoveryV30Tests(unittest.TestCase):
         self.assertEqual(result["severity"], "PAUSE_RECURRENCE_CRITICAL")
         self.assertEqual(result["cause_class"], "CONTROL_PLANE_ATTRIBUTION_UNAVAILABLE")
 
+    def test_schedule_start_disable_without_run_is_fingerprinted_not_attributed(self):
+        state = self.state(False)
+        state["updated_at"] = "2026-09-08T01:37:01.377102Z"
+        state["last_run_time"] = "2026-09-07T20:27:56.644698Z"
+        result = classify_pause(
+            state,
+            observed_at="2026-09-08T05:44:00Z",
+            prior_pause_count=2,
+        )
+        self.assertEqual(
+            result["state_transition_fingerprint"],
+            "SCHEDULE_START_DISABLE_WITHOUT_RUN",
+        )
+        self.assertTrue(result["schedule_start_disable_without_run"])
+        self.assertEqual(result["schedule_start_slot_kst"], "2026-09-08T10:30+09:00")
+        self.assertFalse(result["state_transition_is_root_cause"])
+        self.assertEqual(result["cause_status"], "unresolved")
+        self.assertEqual(result["cause_class"], "CONTROL_PLANE_ATTRIBUTION_UNAVAILABLE")
+        self.assertEqual(result["recurrence_count"], 3)
+        self.assertEqual(result["severity"], "PAUSE_RECURRENCE_CRITICAL")
+
     def test_evidence_backed_reason_is_preserved(self):
         result = classify_pause(
             self.state(False),
