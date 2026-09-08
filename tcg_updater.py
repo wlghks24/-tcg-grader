@@ -705,21 +705,21 @@ def update_cycle(trigger='manual', progress_callback=None):
 
 def _job_snapshot():
     with UPDATE_JOB_LOCK:
-        return json.loads(json.dumps(UPDATE_JOB, ensure_ascii=False))
+        return copy.deepcopy(UPDATE_JOB)
 
 def _job_set(**changes):
     with UPDATE_JOB_LOCK:
         UPDATE_JOB.update(changes)
-        return json.loads(json.dumps(UPDATE_JOB, ensure_ascii=False))
+        return copy.deepcopy(UPDATE_JOB)
 
 def _graded_photo_job_snapshot():
     with GRADED_PHOTO_JOB_LOCK:
-        return json.loads(json.dumps(GRADED_PHOTO_JOB, ensure_ascii=False))
+        return copy.deepcopy(GRADED_PHOTO_JOB)
 
 def _graded_photo_job_set(**changes):
     with GRADED_PHOTO_JOB_LOCK:
         GRADED_PHOTO_JOB.update(changes)
-        return json.loads(json.dumps(GRADED_PHOTO_JOB, ensure_ascii=False))
+        return copy.deepcopy(GRADED_PHOTO_JOB)
 
 def _background_graded_photo_collection(job_id):
     try:
@@ -762,12 +762,12 @@ def _start_graded_photo_collection():
 
 def _photo_revalidation_job_snapshot():
     with PHOTO_REVALIDATION_JOB_LOCK:
-        return json.loads(json.dumps(PHOTO_REVALIDATION_JOB,ensure_ascii=False))
+        return copy.deepcopy(PHOTO_REVALIDATION_JOB)
 
 def _photo_revalidation_job_set(**changes):
     with PHOTO_REVALIDATION_JOB_LOCK:
         PHOTO_REVALIDATION_JOB.update(changes)
-        return json.loads(json.dumps(PHOTO_REVALIDATION_JOB,ensure_ascii=False))
+        return copy.deepcopy(PHOTO_REVALIDATION_JOB)
 
 def _background_existing_photo_revalidation(job_id):
     try:

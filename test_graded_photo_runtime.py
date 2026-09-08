@@ -68,6 +68,23 @@ class GradedPhotoRuntimeTests(unittest.TestCase):
             path.write_text('{"value":200}',encoding='utf-8')
             self.assertEqual(tcg_updater.load_json_file(path,{})['value'],200)
 
+    def test_job_snapshots_are_isolated_without_json_roundtrip(self):
+        source=(ROOT/'tcg_updater.py').read_text(encoding='utf-8')
+        self.assertNotIn('json.loads(json.dumps(UPDATE_JOB',source)
+        self.assertNotIn('json.loads(json.dumps(GRADED_PHOTO_JOB',source)
+        self.assertNotIn('json.loads(json.dumps(PHOTO_REVALIDATION_JOB',source)
+        with tcg_updater.UPDATE_JOB_LOCK:
+            original=tcg_updater.UPDATE_JOB.get('report')
+            tcg_updater.UPDATE_JOB['report']={'nested':[1]}
+        try:
+            snapshot=tcg_updater._job_snapshot()
+            snapshot['report']['nested'][0]=99
+            self.assertEqual(tcg_updater._job_snapshot()['report']['nested'][0],1)
+            json.dumps(snapshot,ensure_ascii=False,allow_nan=False)
+        finally:
+            with tcg_updater.UPDATE_JOB_LOCK:
+                tcg_updater.UPDATE_JOB['report']=original
+
     def test_dashboard_avoids_background_refresh_and_stops_finished_polling(self):
         source=(ROOT/'graded_photo_dashboard.js').read_text(encoding='utf-8')
         self.assertIn("document.visibilityState==='visible'",source)
@@ -88,6 +105,13 @@ class GradedPhotoRuntimeTests(unittest.TestCase):
         self.assertIn('blob.size>6_000_000',source)
         self.assertIn('async function decodedPhoto(file)',source)
         self.assertIn('await jpegDataUrl(canvas,quality)',source)
+        self.assertNotIn('termCount=Object.values',source)
+        self.assertNotIn('rows.filter(isVerified)',source)
+        self.assertNotIn('rows.filter(isReferenceLearning)',source)
+        self.assertNotIn('rows.filter(isRawEligible)',source)
+        self.assertIn('for(const r of sourceRows)',source)
+        self.assertIn('강화 수집 상태 응답 형식 오류',source)
+        self.assertIn('강화 수집 제한시간 초과 · 서버 작업은 계속되므로 상태를 다시 확인하세요.',source)
 
     def test_updater_source_is_valid_utf8(self):
         source=(ROOT/'tcg_updater.py').read_text(encoding='utf-8')

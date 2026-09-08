@@ -102,28 +102,35 @@ function diagnosticHtml(payload){
  const rawErrors=Array.isArray(payload.errors)?payload.errors.filter(Boolean):[];
  const compactError=value=>{const text=String(value||'');if(/adaptive_search:naver_news_html:.*(?:403|forbidden)/i.test(text))return 'Naver 뉴스 공개검색: HTTP 403 차단 감지 · 자동 쿨다운 후 DDG/Bing/Google 경로 사용';return text};
  const errors=[...new Set(rawErrors.map(compactError))].slice(0,8);
- const config=payload.configuration||{};const probe=payload.image_probe_stats||{};const official=payload.official_verification_stats||{};const learning=payload.collection_learning_stats||{};const termCount=Object.values(learning.verified_identifiers||{}).reduce((sum,rows)=>sum+(Array.isArray(rows)?rows.length:0),0);
+ const config=payload.configuration||{};const probe=payload.image_probe_stats||{};const official=payload.official_verification_stats||{};const learning=payload.collection_learning_stats||{};
  return `<div class="gpd-diagnostics"><div><b>사진 OCR·최적선택</b><span>사진시도 ${n(probe.attempted)} · 후보행 ${n(probe.rows_attempted)} · 대체사진 ${n(probe.gallery_alternate_attempts)} · 정상 ${n(probe.validated)} · 문자판독 ${n(probe.ocr_readable)} · 인증번호 ${n(probe.certs_extracted)}</span></div><div><b>업체·게임 공정배분</b><span>15개 조합 중 ${n(payload.summary?.game_grader_buckets_covered)}개 확보 · 저장한도 제외 ${n(payload.summary?.candidate_cap_dropped)}건 · 공식조회 ${n(official.live_verified)}/${n(official.live_attempts)}</span></div><div><b>수집 자가학습 v${n(learning.version)}</b><span>검색학습 ${n(learning.query_runs)}회 · 업체경로 ${n(learning.grader_routes_tracked)}개 · 저조업체 재탐색 ${n(payload.summary?.undercovered_recovery_queries)}회 · 수동복구 ${n(learning.manual_recovery?.verified)}/${n(learning.manual_recovery?.registrations)}건 · 미해결 ${n(learning.manual_recovery?.unresolved)}건 · 측정사진학습 ${n(learning.measurement_ready_feedback)}건 · 중복학습 차단 ${n(learning.duplicate_feedback_ignored)+n(payload.summary?.near_duplicate_references_suppressed)}건</span></div><div><b>연결 상태</b><span>Google CSE ${config.google_cse_configured?'연결':'미설정·공개검색 폴백'} · eBay API ${config.ebay_oauth_configured?'연결':'미설정·공개검색 폴백'}</span></div>${errors.length?`<div class="gpd-errors"><b>최근 폴백 원인</b><span>${errors.map(esc).join(' · ')}</span></div>`:''}</div>`;
 }
 function render(payload){
  const body=document.getElementById('gpdBody');if(!body)return;
  const rowsProvided=Array.isArray(payload.records)||Array.isArray(payload.items);
  const sourceRows=Array.isArray(payload.records)?payload.records:Array.isArray(payload.items)?payload.items:[];
- const rows=sourceRows.filter(r=>r&&typeof r==='object'&&!isInactiveCandidate(r));
  const summary=payload.summary||{};
- const verified=rowsProvided?rows.filter(isVerified).length:n(summary.verified_references);
- const references=rowsProvided?rows.filter(isReferenceLearning).length:n(summary.reference_learning_count);
- const rawEligible=rowsProvided?rows.filter(isRawEligible).length:n(summary.raw_grade_calibration_eligible);
- const quarantine=rowsProvided?rows.filter(isQuarantine).length:n(summary.quarantined);
- const total=rowsProvided?rows.length:n(summary.total_candidates);
- const measurementReady=rowsProvided?rows.filter(r=>r.measurement_photo_ready===true).length:n(summary.measurement_photo_ready);
- const validatedImages=rowsProvided?rows.filter(r=>r.image_validated===true).length:n(summary.validated_images);
- const ocrReadable=rowsProvided?rows.filter(r=>String(r.ocr_label_text||'').trim()).length:n(summary.ocr_readable);
- const certificationsResolved=rowsProvided?new Set(rows.map(r=>String(r.certification_id||r.cert_no||'').replace(/[^A-Za-z0-9]/g,'').toUpperCase()).filter(Boolean)).size:n(summary.certifications_resolved);
  const companyStats=payload.company_stats&&typeof payload.company_stats==='object'?payload.company_stats:{};const byCompany=Object.fromEntries(COMPANIES.map(c=>[c,0]));
  const gameStats=payload.game_stats&&typeof payload.game_stats==='object'?payload.game_stats:{};const byGame=Object.fromEntries(Object.keys(GAMES).map(g=>[g,0]));
  const liveCompanyStats=Object.fromEntries(COMPANIES.map(c=>[c,{games:new Set(),games_covered:0,validated_images:0,measurement_ready:0,verified_references:0}]));
- const sourceMap={};rows.forEach(r=>{const company=companyOf(r),game=gameOf(r),source=sourceOf(r);if(company in byCompany){byCompany[company]++;const stat=liveCompanyStats[company];if(game in GAMES)stat.games.add(game);if(r.image_validated===true)stat.validated_images++;if(r.measurement_photo_ready===true)stat.measurement_ready++;if(isVerified(r))stat.verified_references++}if(game in byGame)byGame[game]++;sourceMap[source]=(sourceMap[source]||0)+1});
+ const rows=[],sourceMap={},certifications=new Set();let verifiedCount=0,referenceCount=0,rawEligibleCount=0,quarantineCount=0,measurementReadyCount=0,validatedImagesCount=0,ocrReadableCount=0;
+ for(const r of sourceRows){
+  if(!r||typeof r!=='object'||isInactiveCandidate(r))continue;
+  rows.push(r);
+  const verifiedRow=isVerified(r),company=companyOf(r),game=gameOf(r),source=sourceOf(r);
+  if(verifiedRow)verifiedCount++;
+  if(isReferenceLearning(r))referenceCount++;
+  if(isRawEligible(r))rawEligibleCount++;
+  if(isQuarantine(r))quarantineCount++;
+  if(r.measurement_photo_ready===true)measurementReadyCount++;
+  if(r.image_validated===true)validatedImagesCount++;
+  if(String(r.ocr_label_text||'').trim())ocrReadableCount++;
+  const certification=String(r.certification_id||r.cert_no||'').replace(/[^A-Za-z0-9]/g,'').toUpperCase();if(certification)certifications.add(certification);
+  if(company in byCompany){byCompany[company]++;const stat=liveCompanyStats[company];if(game in GAMES)stat.games.add(game);if(r.image_validated===true)stat.validated_images++;if(r.measurement_photo_ready===true)stat.measurement_ready++;if(verifiedRow)stat.verified_references++}
+  if(game in byGame)byGame[game]++;
+  sourceMap[source]=(sourceMap[source]||0)+1;
+ }
+ const verified=rowsProvided?verifiedCount:n(summary.verified_references),references=rowsProvided?referenceCount:n(summary.reference_learning_count),rawEligible=rowsProvided?rawEligibleCount:n(summary.raw_grade_calibration_eligible),quarantine=rowsProvided?quarantineCount:n(summary.quarantined),total=rowsProvided?rows.length:n(summary.total_candidates),measurementReady=rowsProvided?measurementReadyCount:n(summary.measurement_photo_ready),validatedImages=rowsProvided?validatedImagesCount:n(summary.validated_images),ocrReadable=rowsProvided?ocrReadableCount:n(summary.ocr_readable),certificationsResolved=rowsProvided?certifications.size:n(summary.certifications_resolved);
  if(!rowsProvided){COMPANIES.forEach(c=>{byCompany[c]=n(companyStats[c]?.candidates)});Object.keys(GAMES).forEach(g=>{byGame[g]=n(gameStats[g]?.candidates)})}
  COMPANIES.forEach(c=>{liveCompanyStats[c].games_covered=liveCompanyStats[c].games.size;delete liveCompanyStats[c].games});
  const sources=Object.entries(sourceMap).sort((a,b)=>b[1]-a[1]).slice(0,15);const providers=Object.entries(payload.provider_stats||{}).sort((a,b)=>n(b[1])-n(a[1])).slice(0,10);
@@ -142,19 +149,21 @@ async function load(){
  for(const url of urls){try{const join=url.includes('?')?'&':'?';const response=await fetch(url+join+'_='+Date.now(),{cache:'no-store'});if(!response.ok)continue;render(await response.json());loadManualRegistrations();return}catch(_){}}
  if(body)body.innerHTML='<div class="gpd-error">현황을 불러오지 못했습니다. PC 또는 태블릿 로컬 서버 접속인지 확인하세요.</div>';
 }
-async function jobStatus(){const response=await fetch('/api/graded-photo-collection-status?_='+Date.now(),{cache:'no-store'});if(!response.ok)throw new Error('status');return response.json()}
+async function jobStatus(){const response=await fetch('/api/graded-photo-collection-status?_='+Date.now(),{cache:'no-store'});if(!response.ok)throw new Error('강화 수집 상태를 확인하지 못했습니다.');const job=await response.json().catch(()=>null);if(!job||typeof job!=='object'||!REVALIDATION_STATES.has(String(job.state||'')))throw new Error('강화 수집 상태 응답 형식 오류');return job}
 async function runCollection(){
  if(running)return;running=true;const button=document.getElementById('gpdRefresh'),status=document.getElementById('gpdRunStatus');button.disabled=true;button.textContent='수집 시작 중…';status.textContent='공개 출처를 확인하고 사진 OCR·공식 인증조회까지 진행합니다.';
  try{
   const response=await fetch('/api/run-graded-photo-collection',{method:'POST',headers:{'Content-Type':'application/json'},body:'{}',cache:'no-store'});
   const data=await response.json().catch(()=>({}));
   if(!response.ok&&(response.status!==409||!['queued','running'].includes(String(data.job?.state||''))))throw new Error(data.error||'start');
+  let finished=false;
   for(let i=0;i<120;i++){
    const job=await jobStatus();const state=job.state||'running';status.textContent=job.message||`강화 수집 ${state}`;
-   if(state==='completed'||state==='failed'){await load();if(state==='failed')throw new Error(job.error||'collection failed');break}
+   if(state==='completed'||state==='failed'){finished=true;await load();if(state==='failed')throw new Error(job.error||'강화 수집 실패');break}
    await sleep(3000);
   }
- }catch(_){status.textContent=location.hostname.endsWith('github.io')?'GitHub Pages에서는 저장된 현황만 표시됩니다. 실제 수집은 PC·태블릿 로컬 서버에서 실행하세요.':'강화 수집을 시작하지 못했습니다. 서버 상태와 최근 오류를 확인하세요.';await load()}
+  if(!finished)throw new Error('강화 수집 제한시간 초과 · 서버 작업은 계속되므로 상태를 다시 확인하세요.');
+ }catch(error){status.textContent=location.hostname.endsWith('github.io')?'GitHub Pages에서는 저장된 현황만 표시됩니다. 실제 수집은 PC·태블릿 로컬 서버에서 실행하세요.':String(error?.message||'강화 수집을 시작하지 못했습니다. 서버 상태와 최근 오류를 확인하세요.');await load()}
  finally{running=false;button.disabled=false;button.textContent='강화 수집 실행'}
 }
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',()=>load(),{once:true});else load();document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible'&&!running&&!manualSubmitting)load()});setInterval(()=>{if(document.visibilityState==='visible'&&!running&&!manualSubmitting)load()},60000);
