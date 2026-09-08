@@ -25,6 +25,8 @@ on:
       - 'main_selfrefine_gate.py'
       - 'selfrefine_*.py'
       - 'verified_code_repair_rules.py'
+      - 'verified_neural_self_refine.py'
+      - 'test_verified_neural_self_refine_v210.py'
       - '.github/workflows/market-ai-auto-tracker.yml'
   schedule:
     - cron: '17 * * * *'
@@ -88,6 +90,9 @@ jobs:
 
           python market_ai_auto_tracker.py             --restore-code-map-learning-from "$previous_state"
 
+      - name: Restore verified neural repair learning from previous successful run
+        run: python verified_neural_self_refine.py --restore-from /tmp/market-ai-previous
+
       - name: Build audited Graphify code map for impact analysis
         env:
           GRAPHIFY_VERSION: '0.9.53'
@@ -117,9 +122,15 @@ jobs:
             test_market_reference_sources_v130.py \
             test_apply_patch_idempotency.py \
             test_selfrefine_resolution_research_v24.py \
-            test_selfrefine_error_quarantine_v20.py
+            test_selfrefine_error_quarantine_v20.py \
+            test_verified_neural_self_refine_v210.py
           python repository_integrity_guard.py
           python security_self_audit.py --no-memory --fail-on high
+
+      - name: Learn neural repair priority only from full-regression outcomes
+        run: |
+          python verified_neural_self_refine.py --ingest-full-regression MAIN_SELFREFINE_VERIFIED_REPAIR_STATE.json
+          python verified_neural_self_refine.py --status
 
       - name: Re-scan after SELFREFINE and regression
         run: python market_ai_auto_tracker.py --no-tests
@@ -189,6 +200,9 @@ jobs:
             graphify-out/graph_audit.json
             MAIN_SELFREFINE_ERROR_LEDGER.json
             MAIN_SELFREFINE_RESEARCH_REPORT.json
+            VERIFIED_NEURAL_REPAIR_LABELS.json
+            VERIFIED_NEURAL_REPAIR_MODEL.json
+            VERIFIED_NEURAL_REPAIR_REPORT.json
           if-no-files-found: ignore
           retention-days: 14
 
@@ -219,5 +233,8 @@ jobs:
             echo "- impact ranking: distance + hub penalty + critical-runtime + verified history"
             echo "- 403/429 bypass: disabled"
             echo "- search/error text -> source patch: disabled"
+            echo "- verified neural repair ranking: full-regression labels only; minimum 1,000 independent labels"
+            echo "- neural hidden sizes: 4/8/12 compared; holdout gate required before activation"
+            echo "- neural output: allowlisted repair priority only; patch generation and git writes disabled"
             echo "- publish gate: targeted regression + repository integrity + security audit + safe-diff allowlist"
           } >> "$GITHUB_STEP_SUMMARY"

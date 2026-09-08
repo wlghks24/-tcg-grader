@@ -10,6 +10,7 @@ import selfrefine_full_repo as core
 import selfrefine_error_quarantine as error_quarantine
 import selfrefine_resolution_research as resolution_research
 import verified_code_repair_rules as verified_repairs
+import verified_neural_self_refine as neural_refine
 from shared_self_learning import SHARED_SELF_LEARNING_CONTRACT_VERSION
 from shared_self_learning.engine import enrich_error
 
@@ -146,6 +147,12 @@ def run(cycles: int):
                 "full_regression_required_before_learning": True,
                 "learned_now": 0,
             }
+        neural_status = neural_refine.status(
+            current_rule_fingerprints={
+                rule_id: verified_repairs.rule_fingerprint(rule_id)
+                for rule_id in verified_repairs.ALL_RULE_IDS
+            }
+        )
         result["verified_self_heal"] = {
             "isolation": isolation,
             "repair": repair,
@@ -154,6 +161,7 @@ def run(cycles: int):
             "resolution_learning": resolution_learning,
             "resolution_research": resolution_research_result,
             "resolution_learning_stage": resolution_learning_stage,
+            "verified_neural": neural_status,
         }
         result.setdefault("summary", {}).update({
             "isolated_error_codes": isolation.get("summary", {}).get("isolated_count", 0),
@@ -167,9 +175,15 @@ def run(cycles: int):
             "repository_files_analyzed_for_errors": resolution_research_result.get("repository_files_scanned", 0),
             "verified_resolution_reuse_candidates": resolution_research_result.get("known_verified_resolution_count", 0),
             "resolution_lessons_pending_full_regression": resolution_learning_stage.get("pending_full_regression", 0),
+            "verified_neural_labels": neural_status.get("label_count", 0),
+            "verified_neural_active": neural_status.get("active") is True,
         })
         result.setdefault("safety", {}).update({
             "verified_code_defined_auto_repair": True,
+            "verified_neural_priority_only": True,
+            "neural_patch_generation": False,
+            "neural_minimum_independent_labels": 1000,
+            "neural_hidden_sizes": [4, 8, 12],
             "learned_patch_text_used": False,
             "learned_text_executable": False,
             "git_write": False,

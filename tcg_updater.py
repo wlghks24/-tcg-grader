@@ -659,7 +659,7 @@ def update_cycle(trigger='manual', progress_callback=None):
             'source_checked_count':len(SOURCES),
             'source_auto_applied_count':len(normal),
             'source_error_count':len(errors),
-            'report_ok':bool(report.get('ok')),
+            'report_ok':bool(report.get('ok_with_monitor', report.get('ok_with_aux', report.get('ok')))),
             'full_update':True,
         }
         save_db(data)
@@ -1120,7 +1120,7 @@ def finalize_precollected_cycle(due_at):
             'promo_status':st('promo_events.json'),'purchase_status':st('purchase_sources.json'),'fx_status':st('exchange_rates.json'),
             'source_checked_count':len(SOURCES),'source_auto_applied_count':len(normal),'source_error_count':len(errors),
             'precollect_state':status.get('state'),'precollect_applied_count':len(applied_files),
-            'supplement_file_count':len(failed_files),'report_ok':bool(final_report.get('ok')),'full_update':True}
+            'supplement_file_count':len(failed_files),'report_ok':bool(final_report.get('ok_with_monitor', final_report.get('ok_with_aux', final_report.get('ok')))),'full_update':True}
         save_db(data)
         if data['auto_update']['report_ok']:
             _collection_mark_success(trigger,data['auto_update'].get('next_run'))

@@ -51,14 +51,16 @@ def load(path: Path = STATE) -> dict[str, Any]:
     return base
 
 def _safe_error(value: Any) -> str:
-    if isinstance(value, BaseException):
-        return diagnostic_exception(value, 600)
-    text = str(value or "collection_failed")
-    text = re.sub(r"https?://[^\s\"'<>]+", "<url>", text, flags=re.I)
-    text = re.sub(r"[\x00-\x1f\x7f]+", " ", text)
-    text = re.sub(r"\s+", " ", text).strip()
-    return text[:600] or "collection_failed"
-
+    text = diagnostic_exception(value, 600) if isinstance(value, BaseException) else str(value or "collection_failed")
+    try:
+        import auto_repair_engine
+        return auto_repair_engine.redact_sensitive(text, 600) or "collection_failed"
+    except (ImportError, AttributeError, TypeError, ValueError):
+        text = re.sub(r"https?://[^\\s\\\"'<>]+", "<url>", text, flags=re.I)
+        text = re.sub(r"(?i)\\b(?:token|api[_-]?key|authorization|password|secret)\\s*[=:]\\s*[^\\s,;]+", "<secret>", text)
+        text = re.sub(r"[\\x00-\\x1f\\x7f]+", " ", text)
+        text = re.sub(r"\\s+", " ", text).strip()
+        return text[:600] or "collection_failed"
 def mark_attempt(trigger: str, *, next_due_at: str | None=None, path: Path=STATE) -> dict[str,Any]:
     data=load(path); data["last_attempt_at"]=_now(); data["last_trigger"]=str(trigger or "unknown")[:120]
     if next_due_at: data["next_due_at"]=str(next_due_at)[:80]

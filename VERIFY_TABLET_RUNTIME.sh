@@ -11,7 +11,7 @@ python tablet_runtime_probe.py --self-test >/dev/null
 
 REPORT="TCG_TABLET_RUNTIME_REPORT.json"
 TMP="${REPORT}.tmp.$$"
-python tablet_runtime_probe.py --require-health > "$TMP" || {
+python tablet_runtime_probe.py --require-health --require-collection-health > "$TMP" || {
   rc=$?
   cat "$TMP" 2>/dev/null || true
   rm -f "$TMP" 2>/dev/null || true

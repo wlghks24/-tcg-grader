@@ -21,6 +21,7 @@ from pathlib import Path
 from typing import Any
 
 from safe_runtime import atomic_write_json, atomic_write_text, exclusive_file_lock, safe_read_text
+import verified_neural_self_refine as neural_refine
 
 ROOT = Path(__file__).resolve().parent
 STATE = ROOT / "MAIN_SELFREFINE_VERIFIED_REPAIR_STATE.json"
@@ -51,22 +52,30 @@ CORE_WORKFLOWS = {
 RESOURCE_GUARD_PATH = "test_manual_only_official_verification_v192.py"
 FEATURE_CONTRACT_PATH = "feature_contract.py"
 OCR_CONTRACT_PATH = "verify_v109_card_identity.py"
+COLLECTION_HEALTH_PATH = "tcg_updater.py"
+TABLET_RUNTIME_VERIFY_PATH = "VERIFY_TABLET_RUNTIME.sh"
 
 ACTION_RULE_ID = "upgrade-core-actions-node24-v1"
 RESOURCE_RULE_ID = "close-literal-read-handles-v1"
 FEATURE_VISION_RULE_ID = "align-photo-feature-contract-1-4-8-v1"
 OCR_COUNT_RULE_ID = "dynamic-feature-contract-count-v1"
+COLLECTION_HEALTH_RULE_ID = "collection-health-final-monitor-v1"
+TABLET_COLLECTION_HEALTH_RULE_ID = "tablet-runtime-require-collection-health-v1"
 ALL_RULE_IDS = (
     ACTION_RULE_ID,
     RESOURCE_RULE_ID,
     FEATURE_VISION_RULE_ID,
     OCR_COUNT_RULE_ID,
+    COLLECTION_HEALTH_RULE_ID,
+    TABLET_COLLECTION_HEALTH_RULE_ID,
 )
 RULE_PATHS = {
     ACTION_RULE_ID: frozenset(CORE_WORKFLOWS),
     RESOURCE_RULE_ID: frozenset({RESOURCE_GUARD_PATH}),
     FEATURE_VISION_RULE_ID: frozenset({FEATURE_CONTRACT_PATH}),
     OCR_COUNT_RULE_ID: frozenset({OCR_CONTRACT_PATH}),
+    COLLECTION_HEALTH_RULE_ID: frozenset({COLLECTION_HEALTH_PATH}),
+    TABLET_COLLECTION_HEALTH_RULE_ID: frozenset({TABLET_RUNTIME_VERIFY_PATH}),
 }
 
 STALE_FEATURE_BLOCK = """        and all(token in page for token in ("sceneDistance", "Camera", "_tcgCapturedFile", "visibilitychange",
@@ -88,6 +97,12 @@ CURRENT_OCR_COUNT = """    assert (
         contract["ok"]
         and contract["implemented"] == contract["total"] == len(contract["features"])
     ), json.dumps(contract, ensure_ascii=False, sort_keys=True)"""
+STALE_COLLECTION_REPORT_OK = "\'report_ok\':bool(report.get(\'ok\'))"
+CURRENT_COLLECTION_REPORT_OK = "\'report_ok\':bool(report.get(\'ok_with_monitor\', report.get(\'ok_with_aux\', report.get(\'ok\'))))"
+STALE_FINAL_REPORT_OK = "\'report_ok\':bool(final_report.get(\'ok\'))"
+CURRENT_FINAL_REPORT_OK = "\'report_ok\':bool(final_report.get(\'ok_with_monitor\', final_report.get(\'ok_with_aux\', final_report.get(\'ok\'))))"
+STALE_TABLET_HEALTH = \'python tablet_runtime_probe.py --require-health > "$TMP"\'
+CURRENT_TABLET_HEALTH = \'python tablet_runtime_probe.py --require-health --require-collection-health > "$TMP"\'
 
 _ACTION_RE = re.compile(
     r"(?P<action>actions/(?:checkout|setup-python|upload-artifact))@(?P<sha>[0-9a-f]{40})"
@@ -130,6 +145,24 @@ def detect_text_issues(relative: str, text: str) -> list[dict[str, str]]:
             "fix_rule": OCR_COUNT_RULE_ID,
         })
 
+    if relative == COLLECTION_HEALTH_PATH and (
+        STALE_COLLECTION_REPORT_OK in text or STALE_FINAL_REPORT_OK in text
+    ):
+        issues.append({
+            "stage": "COLLECTION_HEALTH_GATE_STALE",
+            "root_cause": "collection health trusts primary jobs before auxiliary/postflight verification",
+            "evidence": "report_ok must follow ok_with_monitor/ok_with_aux before primary ok",
+            "fix_rule": COLLECTION_HEALTH_RULE_ID,
+        })
+
+    if relative == TABLET_RUNTIME_VERIFY_PATH and STALE_TABLET_HEALTH in text:
+        issues.append({
+            "stage": "TABLET_COLLECTION_HEALTH_NOT_ENFORCED",
+            "root_cause": "tablet verification checks server liveness but not stale collection data",
+            "evidence": "tablet_runtime_probe must require both process health and collection health",
+            "fix_rule": TABLET_COLLECTION_HEALTH_RULE_ID,
+        })
+
     if relative in CORE_WORKFLOWS:
         stale = []
         for match in _ACTION_RE.finditer(text):
@@ -158,6 +191,10 @@ def rule_for_issue(issue: dict[str, Any]) -> str | None:
         return FEATURE_VISION_RULE_ID
     if stage == "OCR_FEATURE_COUNT_STALE" and path == OCR_CONTRACT_PATH:
         return OCR_COUNT_RULE_ID
+    if stage == "COLLECTION_HEALTH_GATE_STALE" and path == COLLECTION_HEALTH_PATH:
+        return COLLECTION_HEALTH_RULE_ID
+    if stage == "TABLET_COLLECTION_HEALTH_NOT_ENFORCED" and path == TABLET_RUNTIME_VERIFY_PATH:
+        return TABLET_COLLECTION_HEALTH_RULE_ID
     return None
 
 
@@ -193,6 +230,20 @@ def rule_fingerprint(rule_id: str) -> str:
             "paths": sorted(RULE_PATHS[rule_id]),
             "before": STALE_OCR_COUNT,
             "after": CURRENT_OCR_COUNT,
+        }
+    elif rule_id == COLLECTION_HEALTH_RULE_ID:
+        payload = {
+            "rule_id": rule_id,
+            "paths": sorted(RULE_PATHS[rule_id]),
+            "before": [STALE_COLLECTION_REPORT_OK, STALE_FINAL_REPORT_OK],
+            "after": [CURRENT_COLLECTION_REPORT_OK, CURRENT_FINAL_REPORT_OK],
+        }
+    elif rule_id == TABLET_COLLECTION_HEALTH_RULE_ID:
+        payload = {
+            "rule_id": rule_id,
+            "paths": sorted(RULE_PATHS[rule_id]),
+            "before": STALE_TABLET_HEALTH,
+            "after": CURRENT_TABLET_HEALTH,
         }
     else:
         raise ValueError("unknown repair rule")
@@ -323,6 +374,20 @@ def _transform_ocr_count(relative: str, text: str) -> str:
     return text.replace(STALE_OCR_COUNT, CURRENT_OCR_COUNT, 1)
 
 
+def _transform_collection_health(relative: str, text: str) -> str:
+    if _normalized(relative) != COLLECTION_HEALTH_PATH:
+        return text
+    return text.replace(STALE_COLLECTION_REPORT_OK, CURRENT_COLLECTION_REPORT_OK).replace(
+        STALE_FINAL_REPORT_OK, CURRENT_FINAL_REPORT_OK
+    )
+
+
+def _transform_tablet_collection_health(relative: str, text: str) -> str:
+    if _normalized(relative) != TABLET_RUNTIME_VERIFY_PATH:
+        return text
+    return text.replace(STALE_TABLET_HEALTH, CURRENT_TABLET_HEALTH, 1)
+
+
 def transform_for_rule(rule_id: str, relative: str, text: str) -> str:
     if rule_id == RESOURCE_RULE_ID:
         return _transform_resource(relative, text)
@@ -332,6 +397,10 @@ def transform_for_rule(rule_id: str, relative: str, text: str) -> str:
         return _transform_feature_contract(relative, text)
     if rule_id == OCR_COUNT_RULE_ID:
         return _transform_ocr_count(relative, text)
+    if rule_id == COLLECTION_HEALTH_RULE_ID:
+        return _transform_collection_health(relative, text)
+    if rule_id == TABLET_COLLECTION_HEALTH_RULE_ID:
+        return _transform_tablet_collection_health(relative, text)
     return text
 
 
@@ -348,11 +417,25 @@ def apply_issues(
     skipped: list[dict[str, str]] = []
     seen: set[tuple[str, str]] = set()
     limit = max(0, min(MAX_REPAIRS_PER_RUN, int(max_repairs)))
+    fingerprints = {rule_id: rule_fingerprint(rule_id) for rule_id in ALL_RULE_IDS}
+    prepared: list[dict[str, Any]] = []
+    for raw in issues:
+        if not isinstance(raw, dict):
+            continue
+        row = dict(raw)
+        try:
+            neural = neural_refine.score_issue(row, current_rule_fingerprints=fingerprints)
+        except (OSError, ValueError, TypeError, OverflowError, json.JSONDecodeError):
+            neural = {"active": False, "score": 0.5, "reason": "neural_rank_unavailable"}
+        row["_neural_priority_active"] = neural.get("active") is True
+        row["_neural_priority_score"] = max(0.0, min(1.0, float(neural.get("score") or 0.5)))
+        prepared.append(row)
 
     ordered_issues = sorted(
-        (row for row in issues if isinstance(row, dict)),
+        prepared,
         key=lambda row: (
             row.get("learned_solution_reuse") is not True,
+            -float(row.get("_neural_priority_score") or 0.5),
             -float(row.get("learned_solution_confidence") or 0.0),
             str(row.get("path") or ""),
             str(row.get("stage") or ""),
@@ -418,6 +501,13 @@ def apply_issues(
             "error_code": str(issue.get("error_code") or "")[:160],
             "error_family": str(issue.get("error_family") or "")[:80],
             "learned_solution_reuse": issue.get("learned_solution_reuse") is True,
+            "learned_solution_confidence": (
+                max(0.0, min(1.0, float(issue.get("learned_solution_confidence") or 0.0)))
+                if isinstance(issue.get("learned_solution_confidence"), (int, float)) else 0.0
+            ),
+            "auto_repair_allowed": issue.get("auto_repair_allowed") is not False,
+            "neural_priority_active": issue.get("_neural_priority_active") is True,
+            "neural_priority_score": max(0.0, min(1.0, float(issue.get("_neural_priority_score") or 0.5))),
             "rule_fingerprint": rule_fingerprint(rule_id),
             "rollback_token": rollback_token,
             "before_hash": _hash(before),
@@ -432,6 +522,8 @@ def apply_issues(
         "learned_patch_text_used": False,
         "git_write": False,
         "code_defined_rules_only": True,
+        "verified_neural_priority_only": True,
+        "neural_patch_generation": False,
         "failed_repair_auto_rollback": True,
         "new_regression_auto_rollback": True,
     }
@@ -567,6 +659,18 @@ def record_verification(
                 "path": path,
                 "stage": stage,
                 "outcome": outcome,
+                "error_family": str(item.get("error_family") or "")[:80],
+                "learned_solution_reuse": item.get("learned_solution_reuse") is True,
+                "learned_solution_confidence": (
+                    max(0.0, min(1.0, float(item.get("learned_solution_confidence") or 0.0)))
+                    if isinstance(item.get("learned_solution_confidence"), (int, float)) else 0.0
+                ),
+                "auto_repair_allowed": item.get("auto_repair_allowed") is not False,
+                "neural_priority_active": item.get("neural_priority_active") is True,
+                "neural_priority_score": (
+                    max(0.0, min(1.0, float(item.get("neural_priority_score") or 0.5)))
+                    if isinstance(item.get("neural_priority_score"), (int, float)) else 0.5
+                ),
                 "rollback_outcome": str(item.get("rollback_outcome") or "")[:80],
                 "before_hash": str(item.get("before_hash") or "")[:20],
                 "after_hash": str(item.get("after_hash") or "")[:20],

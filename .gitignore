@@ -132,3 +132,8 @@ MARKET_AI_TRACKER_STATE.json
 collection_runtime_health.json
 collection_runtime_health.json.bak
 CURRENT_RUNTIME_VERIFICATION_REPORT.json
+
+# Verified-only neural SELFREFINE state is runtime/CI learning data, never source truth.
+VERIFIED_NEURAL_REPAIR_LABELS.json
+VERIFIED_NEURAL_REPAIR_MODEL.json
+VERIFIED_NEURAL_REPAIR_REPORT.json
