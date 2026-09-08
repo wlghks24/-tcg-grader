@@ -59,6 +59,17 @@ def collection_health_status():
     except (ImportError,OSError,ValueError,TypeError,json.JSONDecodeError):
         return {'healthy':False,'status':'health-state-error','requires_attention':True,'process_restart_required':False}
 
+def collection_neural_status():
+    try:
+        import verified_collection_neural
+        return verified_collection_neural.status()
+    except (ImportError,OSError,ValueError,TypeError,OverflowError,json.JSONDecodeError):
+        return {
+            'ok':False,'active':False,'reason':'collection-neural-state-error',
+            'label_count':0,'minimum_labels':1000,'labels_remaining':1000,
+            'progress_percent':0.0,'scope':'adaptive_public_search_priority_only'
+        }
+
 def _collection_mark_attempt(trigger,next_due_at=None):
     try:
         import collection_runtime_health
@@ -1412,10 +1423,14 @@ class Handler(SimpleHTTPRequestHandler):
             return
         parsed=urlparse(self.path);path=parsed.path
         if path=='/api/health':
-            return self.json({'ok':True,'service':SERVICE_NAME,'platform':PLATFORM,'port':PORT,'api_version':3,'integrated_version':INTEGRATED_VERSION,'learning_version':'v123-verified-multisource-photo-collection','collection_health':collection_health_status()})
+            return self.json({'ok':True,'service':SERVICE_NAME,'platform':PLATFORM,'port':PORT,'api_version':3,'integrated_version':INTEGRATED_VERSION,'learning_version':'v123-verified-multisource-photo-collection','collection_health':collection_health_status(),'collection_neural':collection_neural_status()})
         if path=='/api/collection-health': return self.json(collection_health_status())
+        if path=='/api/collection-neural-status': return self.json(collection_neural_status())
         if path=='/api/status': return self.json(load_db())
-        if path=='/api/auto-status': return self.json(load_db().get('auto_update',{}))
+        if path=='/api/auto-status':
+            auto_status=dict(load_db().get('auto_update',{}))
+            auto_status['collection_neural']=collection_neural_status()
+            return self.json(auto_status)
         if path=='/api/update-job': return self.json({'ok':True,'job':_job_snapshot()})
         if path=='/api/graded-photo-collection-status': return self.json(_graded_photo_job_snapshot())
         if path=='/api/graded-photo-revalidation-status': return self.json(_photo_revalidation_job_snapshot())

@@ -221,6 +221,85 @@ class VerifiedCollectionNeuralV211Tests(unittest.TestCase):
             self.assertFalse(result["active"])
             self.assertEqual("waiting_for_independent_labels", result["reason"])
 
+    def test_corrupt_label_primary_recovers_last_known_good_backup(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            labels_path = root / "labels.json"
+            backup_path = root / "labels.json.bak"
+            sample = {
+                "sample_id": hashlib.sha256(b"backup-label").hexdigest()[:24],
+                "game": "포켓몬",
+                "region": "KR",
+                "family": "regional",
+                "runs": 1,
+                "hits": 1,
+                "relevant": 1,
+                "official": 1,
+                "errors": 0,
+                "empty": 0,
+                "learned_score": 1.0,
+                "verified_gap_priority": 0.0,
+                "coverage_gap_score": 0.0,
+                "outcome": True,
+                "evidence": "official_result_observed",
+                "observed_at": "2026-09-08T00:00:00+00:00",
+            }
+            backup_path.write_text(json.dumps({
+                "schema": neural.SCHEMA,
+                "feature_fingerprint": neural.FEATURE_FINGERPRINT,
+                "labels": [sample],
+            }, ensure_ascii=False), encoding="utf-8")
+            labels_path.write_text("{broken", encoding="utf-8")
+            state = neural.status(labels_path=labels_path, model_path=root / "model.json")
+            self.assertEqual(1, state["label_count"])
+            self.assertEqual("backup", state["label_source"])
+            self.assertTrue(state["label_recovered_from_backup"])
+
+    def test_corrupt_or_nonfinite_model_is_rejected_and_valid_backup_recovers(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            model_path = root / "model.json"
+            backup_path = root / "model.json.bak"
+            base = neural._init_model(4, 19)
+            payload = {
+                "schema": neural.SCHEMA,
+                "active": True,
+                "feature_fingerprint": neural.FEATURE_FINGERPRINT,
+                "feature_count": neural.FEATURE_COUNT,
+                "trained_at": "2026-09-08T00:00:00+00:00",
+                "label_count": 1000,
+                "hidden": 4,
+                "w1": base["w1"],
+                "b1": base["b1"],
+                "w2": base["w2"],
+                "b2": base["b2"],
+                "metrics": {"accuracy": 0.7, "logloss": 0.5},
+                "safety": neural.SAFETY,
+            }
+            backup_path.write_text(json.dumps(payload), encoding="utf-8")
+            broken = dict(payload)
+            broken["w1"] = [[float("nan")] * neural.FEATURE_COUNT for _ in range(4)]
+            model_path.write_text(json.dumps(broken), encoding="utf-8")
+            state = neural.status(labels_path=root / "labels.json", model_path=model_path)
+            self.assertTrue(state["active"])
+            self.assertEqual("backup", state["model_source"])
+            self.assertTrue(state["model_recovered_from_backup"])
+
+            backup_path.unlink()
+            state = neural.status(labels_path=root / "labels.json", model_path=model_path)
+            self.assertFalse(state["active"])
+            self.assertEqual("none", state["model_source"])
+
+    def test_status_exposes_training_progress_and_safe_scope(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            state = neural.status(labels_path=root / "labels.json", model_path=root / "model.json")
+            self.assertEqual(1000, state["labels_remaining"])
+            self.assertEqual(0.0, state["progress_percent"])
+            self.assertEqual("adaptive_public_search_priority_only", state["scope"])
+            self.assertIn("official_release_fetch", state["deterministic_collectors"])
+            self.assertIn("graded_photo_final_verification", state["deterministic_collectors"])
+
 
 if __name__ == "__main__":
     unittest.main()

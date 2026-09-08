@@ -30,7 +30,16 @@ class TabletStandaloneHardeningV209(unittest.TestCase):
   self.assertIn("'collection_health':collection_health_status()",src)
  def test_v135_health(self):
   src=(ROOT/"tcg_updater_v135.py").read_text(encoding="utf-8"); self.assertIn("collection_health = core.collection_health_status()",src)
-  self.assertIn("'collection_health': collection_health",src); self.assertIn("'ok': True",src)
+  self.assertIn("collection_neural = core.collection_neural_status()",src)
+  self.assertIn("'collection_health': collection_health",src); self.assertIn("'collection_neural': collection_neural",src)
+  self.assertIn("'collection_neural_active': collection_neural.get('active') is True",src); self.assertIn("'ok': True",src)
+ def test_collection_neural_runtime_api(self):
+  src=(ROOT/"tcg_updater.py").read_text(encoding="utf-8")
+  self.assertIn("def collection_neural_status():",src)
+  self.assertIn("'/api/collection-neural-status'",src)
+  self.assertIn("auto_status['collection_neural']=collection_neural_status()",src)
+  ui=(ROOT/"index.html").read_text(encoding="utf-8")
+  self.assertIn("🧠 수집AI",ui); self.assertIn("status.collection_neural",ui)
  def test_candidate_before_merge(self):
   src=(ROOT/"ANDROID_UPDATE_AND_START.sh").read_text(encoding="utf-8")
   self.assertIn("verify_remote_candidate()",src); self.assertLess(src.index('verify_remote_candidate "$remote_head"'),src.index("git merge --ff-only origin/main"))

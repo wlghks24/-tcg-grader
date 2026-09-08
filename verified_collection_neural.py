@@ -32,7 +32,9 @@ from safe_runtime import atomic_write_json, safe_read_text
 
 ROOT = Path(__file__).resolve().parent
 LABELS_PATH = ROOT / "VERIFIED_COLLECTION_NEURAL_LABELS.json"
+LABELS_BACKUP_PATH = ROOT / "VERIFIED_COLLECTION_NEURAL_LABELS.json.bak"
 MODEL_PATH = ROOT / "VERIFIED_COLLECTION_NEURAL_MODEL.json"
+MODEL_BACKUP_PATH = ROOT / "VERIFIED_COLLECTION_NEURAL_MODEL.json.bak"
 REPORT_PATH = ROOT / "VERIFIED_COLLECTION_NEURAL_REPORT.json"
 
 SCHEMA = 1
@@ -204,10 +206,18 @@ def _load_json(path: Path, fallback: dict[str, Any], *, max_bytes: int = 5_000_0
     return value if isinstance(value, dict) else fallback
 
 
-def _load_labels(path: Path = LABELS_PATH) -> dict[str, Any]:
-    raw = _load_json(path, _default_labels())
-    if raw.get("feature_fingerprint") != FEATURE_FINGERPRINT:
-        return _default_labels()
+def _backup_path(path: Path, primary: Path, backup: Path) -> Path:
+    try:
+        if path.resolve() == primary.resolve():
+            return backup
+    except OSError:
+        pass
+    return path.with_name(path.name + ".bak")
+
+
+def _sanitize_labels_payload(raw: object) -> dict[str, Any] | None:
+    if not isinstance(raw, dict) or raw.get("feature_fingerprint") != FEATURE_FINGERPRINT:
+        return None
     clean: dict[str, dict[str, Any]] = {}
     rows = raw.get("labels") if isinstance(raw.get("labels"), list) else []
     for item in rows[-MAX_LABELS * 2 :]:
@@ -248,6 +258,18 @@ def _load_labels(path: Path = LABELS_PATH) -> dict[str, Any]:
     }
 
 
+def _load_labels_with_source(path: Path = LABELS_PATH) -> tuple[dict[str, Any], str, bool]:
+    backup = _backup_path(path, LABELS_PATH, LABELS_BACKUP_PATH)
+    for candidate, source in ((path, "primary"), (backup, "backup")):
+        raw = _load_json(candidate, {})
+        clean = _sanitize_labels_payload(raw)
+        if clean is not None:
+            return clean, source, source == "backup"
+    return _default_labels(), "empty", False
+
+
+def _load_labels(path: Path = LABELS_PATH) -> dict[str, Any]:
+    return _load_labels_with_source(path)[0]
 def _six_hour_slot(now: datetime | None = None) -> str:
     stamp = (now or datetime.now(timezone.utc)).astimezone(timezone.utc)
     hour = (stamp.hour // 6) * 6
@@ -348,6 +370,10 @@ def observe_search_outcome(
     labels["labels"].append(row)
     labels["labels"] = labels["labels"][-MAX_LABELS:]
     labels["updated_at"] = _now()
+    backup_path = _backup_path(labels_path, LABELS_PATH, LABELS_BACKUP_PATH)
+    previous = _load_labels(labels_path)
+    if previous.get("labels"):
+        atomic_write_json(backup_path, previous, suffix=".collection-neural-labels-bak.tmp")
     atomic_write_json(labels_path, labels, suffix=".collection-neural-labels.tmp")
     return {
         "eligible": True,
@@ -458,19 +484,81 @@ def _baseline(train: list[dict[str, Any]], holdout: list[dict[str, Any]]) -> dic
     }
 
 
-def _load_model(path: Path = MODEL_PATH) -> dict[str, Any] | None:
-    raw = _load_json(path, {})
+def _finite_vector(value: object, expected: int) -> bool:
+    if not isinstance(value, list) or len(value) != expected:
+        return False
+    for item in value:
+        if not isinstance(item, (int, float)) or isinstance(item, bool):
+            return False
+        number = float(item)
+        if not math.isfinite(number) or abs(number) > 1000.0:
+            return False
+    return True
+
+
+def _validate_model_payload(raw: object, *, require_active: bool = True) -> bool:
+    if not isinstance(raw, dict):
+        return False
+    if raw.get("schema") != SCHEMA or raw.get("feature_fingerprint") != FEATURE_FINGERPRINT:
+        return False
+    if require_active and raw.get("active") is not True:
+        return False
+    hidden = int(raw.get("hidden") or 0)
+    if hidden not in HIDDEN_SIZES or int(raw.get("feature_count") or 0) != FEATURE_COUNT:
+        return False
+    if int(raw.get("label_count") or 0) < MIN_INDEPENDENT_LABELS:
+        return False
+    w1 = raw.get("w1")
+    if not isinstance(w1, list) or len(w1) != hidden:
+        return False
+    if any(not _finite_vector(row, FEATURE_COUNT) for row in w1):
+        return False
+    if not _finite_vector(raw.get("b1"), hidden) or not _finite_vector(raw.get("w2"), hidden):
+        return False
+    b2 = raw.get("b2")
+    if not isinstance(b2, (int, float)) or isinstance(b2, bool):
+        return False
+    if not math.isfinite(float(b2)) or abs(float(b2)) > 1000.0:
+        return False
+    metrics = raw.get("metrics")
+    if not isinstance(metrics, dict):
+        return False
+    for key in ("accuracy", "logloss"):
+        value = metrics.get(key)
+        if not isinstance(value, (int, float)) or isinstance(value, bool) or not math.isfinite(float(value)):
+            return False
+    return True
+
+
+def _load_model_with_source(path: Path = MODEL_PATH) -> tuple[dict[str, Any] | None, str, bool]:
+    backup = _backup_path(path, MODEL_PATH, MODEL_BACKUP_PATH)
+    primary_raw = _load_json(path, {})
     if (
-        raw.get("schema") != SCHEMA
-        or raw.get("active") is not True
-        or raw.get("feature_fingerprint") != FEATURE_FINGERPRINT
-        or int(raw.get("feature_count") or 0) != FEATURE_COUNT
-        or int(raw.get("hidden") or 0) not in HIDDEN_SIZES
-        or not isinstance(raw.get("w1"), list)
-        or not isinstance(raw.get("w2"), list)
+        isinstance(primary_raw, dict)
+        and primary_raw.get("schema") == SCHEMA
+        and primary_raw.get("feature_fingerprint") == FEATURE_FINGERPRINT
+        and primary_raw.get("active") is False
     ):
-        return None
-    return raw
+        return None, "disabled", False
+    if _validate_model_payload(primary_raw):
+        return primary_raw, "primary", False
+    backup_raw = _load_json(backup, {})
+    if _validate_model_payload(backup_raw):
+        return backup_raw, "backup", True
+    return None, "none", False
+
+
+def _load_model(path: Path = MODEL_PATH) -> dict[str, Any] | None:
+    return _load_model_with_source(path)[0]
+
+
+def _model_gate(metrics: dict[str, Any], baseline: dict[str, Any]) -> tuple[bool, float]:
+    gain = float(baseline["logloss"]) - float(metrics["logloss"])
+    return (
+        float(metrics["accuracy"]) >= ACTIVATION_MIN_ACCURACY
+        and gain >= ACTIVATION_MIN_LOGLOSS_GAIN,
+        gain,
+    )
 
 
 def train_if_ready(
@@ -480,10 +568,11 @@ def train_if_ready(
     report_path: Path = REPORT_PATH,
     force: bool = False,
 ) -> dict[str, Any]:
-    labels = _load_labels(labels_path)["labels"]
+    label_payload, label_source, label_recovered = _load_labels_with_source(labels_path)
+    labels = label_payload["labels"]
     positives = sum(bool(row["outcome"]) for row in labels)
     negatives = len(labels) - positives
-    existing = _load_model(model_path)
+    existing, model_source, model_recovered = _load_model_with_source(model_path)
     existing_count = int(existing.get("label_count") or 0) if existing else 0
     status: dict[str, Any] = {
         "schema": SCHEMA,
@@ -494,8 +583,25 @@ def train_if_ready(
         "positive_labels": positives,
         "negative_labels": negatives,
         "minimum_labels": MIN_INDEPENDENT_LABELS,
+        "labels_remaining": max(0, MIN_INDEPENDENT_LABELS - len(labels)),
+        "positive_labels_remaining": max(0, MIN_CLASS_LABELS - positives),
+        "negative_labels_remaining": max(0, MIN_CLASS_LABELS - negatives),
+        "progress_percent": round(min(100.0, len(labels) * 100.0 / MIN_INDEPENDENT_LABELS), 2),
         "hidden_sizes": list(HIDDEN_SIZES),
+        "label_source": label_source,
+        "label_recovered_from_backup": label_recovered,
+        "model_source": model_source,
+        "model_recovered_from_backup": model_recovered,
         "reason": "waiting_for_independent_labels",
+        "scope": "adaptive_public_search_priority_only",
+        "deterministic_collectors": [
+            "official_release_fetch",
+            "market_price_direct_sources",
+            "purchase_source_validation",
+            "exchange_rate_official_api",
+            "official_event_verification",
+            "graded_photo_final_verification",
+        ],
         "safety": SAFETY,
     }
     if len(labels) < MIN_INDEPENDENT_LABELS:
@@ -536,46 +642,89 @@ def train_if_ready(
             best = (meta, model)
     assert best is not None
     selected, model = best
-    gain = baseline["logloss"] - selected["metrics"]["logloss"]
-    active = (
-        selected["metrics"]["accuracy"] >= ACTIVATION_MIN_ACCURACY
-        and gain >= ACTIVATION_MIN_LOGLOSS_GAIN
-    )
+    active, gain = _model_gate(selected["metrics"], baseline)
     status.update(
         {
             "baseline": baseline,
             "candidates": candidates,
-            "selected_hidden": selected["hidden"],
-            "selected_metrics": selected["metrics"],
-            "logloss_gain": round(gain, 6),
-            "active": active,
-            "reason": "activated" if active else "holdout_gate_not_met",
+            "candidate_selected_hidden": selected["hidden"],
+            "candidate_selected_metrics": selected["metrics"],
+            "candidate_logloss_gain": round(gain, 6),
         }
     )
+
     if active:
-        atomic_write_json(
-            model_path,
+        payload = {
+            "schema": SCHEMA,
+            "active": True,
+            "feature_fingerprint": FEATURE_FINGERPRINT,
+            "feature_count": FEATURE_COUNT,
+            "trained_at": status["updated_at"],
+            "label_count": len(labels),
+            "hidden": model["hidden"],
+            "w1": model["w1"],
+            "b1": model["b1"],
+            "w2": model["w2"],
+            "b2": model["b2"],
+            "metrics": selected["metrics"],
+            "safety": SAFETY,
+        }
+        model_backup = _backup_path(model_path, MODEL_PATH, MODEL_BACKUP_PATH)
+        if existing is not None:
+            atomic_write_json(model_backup, existing, suffix=".collection-neural-model-bak.tmp")
+        atomic_write_json(model_path, payload, suffix=".collection-neural-model.tmp")
+        status.update(
             {
-                "schema": SCHEMA,
                 "active": True,
-                "feature_fingerprint": FEATURE_FINGERPRINT,
-                "feature_count": FEATURE_COUNT,
-                "trained_at": status["updated_at"],
-                "label_count": len(labels),
-                "hidden": model["hidden"],
-                "w1": model["w1"],
-                "b1": model["b1"],
-                "w2": model["w2"],
-                "b2": model["b2"],
-                "metrics": selected["metrics"],
-                "safety": SAFETY,
-            },
-            suffix=".collection-neural-model.tmp",
+                "reason": "activated",
+                "selected_hidden": selected["hidden"],
+                "selected_metrics": selected["metrics"],
+                "logloss_gain": round(gain, 6),
+                "model_source": "primary",
+                "model_recovered_from_backup": False,
+            }
         )
+    elif existing is not None:
+        existing_metrics = _metrics(existing, holdout)
+        existing_ok, existing_gain = _model_gate(existing_metrics, baseline)
+        status["existing_model_current_metrics"] = existing_metrics
+        status["existing_model_current_logloss_gain"] = round(existing_gain, 6)
+        if existing_ok:
+            status.update(
+                {
+                    "active": True,
+                    "reason": "last_known_good_retained_after_retrain_reject",
+                    "selected_hidden": existing.get("hidden"),
+                    "selected_metrics": existing_metrics,
+                    "logloss_gain": round(existing_gain, 6),
+                }
+            )
+        else:
+            disabled = {
+                "schema": SCHEMA,
+                "active": False,
+                "feature_fingerprint": FEATURE_FINGERPRINT,
+                "disabled_at": status["updated_at"],
+                "reason": "current_holdout_gate_failed",
+                "label_count": len(labels),
+                "safety": SAFETY,
+            }
+            model_backup = _backup_path(model_path, MODEL_PATH, MODEL_BACKUP_PATH)
+            atomic_write_json(model_backup, disabled, suffix=".collection-neural-model-disable-bak.tmp")
+            atomic_write_json(model_path, disabled, suffix=".collection-neural-model-disable.tmp")
+            status.update(
+                {
+                    "active": False,
+                    "reason": "model_deactivated_after_current_holdout_failure",
+                    "model_source": "disabled",
+                    "model_recovered_from_backup": False,
+                }
+            )
+    else:
+        status.update({"active": False, "reason": "holdout_gate_not_met"})
+
     atomic_write_json(report_path, status, suffix=".collection-neural-report.tmp")
     return status
-
-
 def score_query(
     row: dict[str, Any],
     *,
@@ -603,22 +752,42 @@ def status(
     labels_path: Path = LABELS_PATH,
     model_path: Path = MODEL_PATH,
 ) -> dict[str, Any]:
-    labels = _load_labels(labels_path)["labels"]
-    model = _load_model(model_path)
+    label_payload, label_source, label_recovered = _load_labels_with_source(labels_path)
+    labels = label_payload["labels"]
+    model, model_source, model_recovered = _load_model_with_source(model_path)
+    positives = sum(bool(row["outcome"]) for row in labels)
+    negatives = len(labels) - positives
     return {
         "ok": True,
         "active": model is not None,
-        "reason": "active" if model is not None else "model_inactive",
+        "reason": "active" if model is not None else ("model_disabled" if model_source == "disabled" else "model_inactive"),
         "label_count": len(labels),
-        "positive_labels": sum(bool(row["outcome"]) for row in labels),
-        "negative_labels": sum(not bool(row["outcome"]) for row in labels),
+        "positive_labels": positives,
+        "negative_labels": negatives,
         "minimum_labels": MIN_INDEPENDENT_LABELS,
+        "labels_remaining": max(0, MIN_INDEPENDENT_LABELS - len(labels)),
+        "positive_labels_remaining": max(0, MIN_CLASS_LABELS - positives),
+        "negative_labels_remaining": max(0, MIN_CLASS_LABELS - negatives),
+        "progress_percent": round(min(100.0, len(labels) * 100.0 / MIN_INDEPENDENT_LABELS), 2),
         "hidden_sizes": list(HIDDEN_SIZES),
         "feature_fingerprint": FEATURE_FINGERPRINT,
+        "label_source": label_source,
+        "label_recovered_from_backup": label_recovered,
+        "model_source": model_source,
+        "model_recovered_from_backup": model_recovered,
+        "selected_hidden": model.get("hidden") if model else None,
+        "selected_metrics": model.get("metrics") if model else None,
+        "scope": "adaptive_public_search_priority_only",
+        "deterministic_collectors": [
+            "official_release_fetch",
+            "market_price_direct_sources",
+            "purchase_source_validation",
+            "exchange_rate_official_api",
+            "official_event_verification",
+            "graded_photo_final_verification",
+        ],
         "safety": SAFETY,
     }
-
-
 def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--status", action="store_true")

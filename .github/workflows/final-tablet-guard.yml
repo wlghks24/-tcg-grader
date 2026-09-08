@@ -173,7 +173,9 @@ jobs:
           grep -Fq 'graphify_self_heal_memory.json' .gitignore
           grep -Fq 'graphify-out/graph_audit.json' .gitignore
           grep -Fq 'VERIFIED_COLLECTION_NEURAL_LABELS.json' .gitignore
+          grep -Fq 'VERIFIED_COLLECTION_NEURAL_LABELS.json.bak' .gitignore
           grep -Fq 'VERIFIED_COLLECTION_NEURAL_MODEL.json' .gitignore
+          grep -Fq 'VERIFIED_COLLECTION_NEURAL_MODEL.json.bak' .gitignore
       - name: Verify Graphify control-plane files stay out of map
         run: |
           grep -Fxq '.codex/' .graphifyignore

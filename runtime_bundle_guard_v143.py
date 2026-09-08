@@ -256,6 +256,10 @@ def audit() -> dict:
             issues.append("자료수집 신경망이 검증 게이트를 우회할 수 있습니다")
         if safety.get("neural_output_is_priority_only") is not True:
             issues.append("자료수집 신경망 출력이 검색 우선순위 이외 용도로 사용될 수 있습니다")
+        if not callable(getattr(collection_neural, "_validate_model_payload", None)):
+            issues.append("자료수집 신경망 모델 가중치 구조/유한값 검증기가 없습니다")
+        if not hasattr(collection_neural, "LABELS_BACKUP_PATH") or not hasattr(collection_neural, "MODEL_BACKUP_PATH"):
+            issues.append("자료수집 신경망 라벨/모델 마지막 정상 백업 경로가 없습니다")
 
     photo = modules.get("graded_photo_multi_source")
     if photo is not None:
