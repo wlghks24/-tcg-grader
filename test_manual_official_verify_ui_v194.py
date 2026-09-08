@@ -40,6 +40,15 @@ class ManualOfficialVerifyUiV194Tests(unittest.TestCase):
         self.assertIn("blob.size>6_000_000", source)
         self.assertIn("await jpegDataUrl(canvas,quality)", source)
 
+    def test_pending_candidate_proof_uses_async_blob_compression(self):
+        source = PENDING_BRIDGE.read_text(encoding="utf-8")
+        self.assertIn("async function decodedPhoto(file)", source)
+        self.assertIn("typeof canvas.toBlob==='function'", source)
+        self.assertIn("blob.size>6_000_000", source)
+        self.assertIn("await jpegDataUrl(canvas,quality)", source)
+        self.assertIn("공식 조회 화면을 6MB 이하로 줄이지 못했습니다.", source)
+        self.assertNotIn("공식 조회 화면을 8MB 이하로 줄이지 못했습니다.", source)
+
     def test_pending_candidate_submit_requires_explicit_approval_and_server_complete(self):
         source = PENDING_BRIDGE.read_text(encoding="utf-8")
         self.assertIn("action:'complete_manual_verification'", source)
