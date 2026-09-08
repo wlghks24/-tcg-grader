@@ -1,0 +1,208 @@
+{
+  "schema_version": 6,
+  "sources": [
+    {
+      "id": "pokemon_kr",
+      "title": "포켓몬 카드 한국 공식",
+      "url": "https://pokemoncard.co.kr/main",
+      "owner_group": "pokemon",
+      "projects": [
+        "instagram_card",
+        "tcg_grader"
+      ],
+      "kinds": [
+        "identity",
+        "release",
+        "event"
+      ],
+      "regions": [
+        "KR"
+      ],
+      "subjects": [
+        "pokemon"
+      ],
+      "discovery_status": "PAGE_READ",
+      "checked_date": "2026-09-07",
+      "note": "원문 세부 항목과 날짜를 다시 검증해야 함"
+    },
+    {
+      "id": "pokemon_jp",
+      "title": "포켓몬 카드 일본 공식",
+      "url": "https://www.pokemon-card.com/card-search/",
+      "owner_group": "pokemon",
+      "projects": [
+        "instagram_card",
+        "tcg_grader"
+      ],
+      "kinds": [
+        "identity"
+      ],
+      "regions": [
+        "JP"
+      ],
+      "subjects": [
+        "pokemon"
+      ],
+      "discovery_status": "PAGE_READ",
+      "checked_date": "2026-09-07",
+      "note": "원문 세부 항목과 날짜를 다시 검증해야 함"
+    },
+    {
+      "id": "onepiece_kr",
+      "title": "원피스 카드 한국 공식",
+      "url": "https://onepiece-cardgame.kr/cardlist.do",
+      "owner_group": "bandai",
+      "projects": [
+        "instagram_card",
+        "tcg_grader"
+      ],
+      "kinds": [
+        "identity",
+        "release"
+      ],
+      "regions": [
+        "KR"
+      ],
+      "subjects": [
+        "onepiece"
+      ],
+      "discovery_status": "PAGE_READ",
+      "checked_date": "2026-09-07",
+      "note": "원문 세부 항목과 날짜를 다시 검증해야 함"
+    },
+    {
+      "id": "onepiece_en",
+      "title": "원피스 카드 영문 공식",
+      "url": "https://en.onepiece-cardgame.com/cardlist/",
+      "owner_group": "bandai",
+      "projects": [
+        "instagram_card",
+        "tcg_grader"
+      ],
+      "kinds": [
+        "identity"
+      ],
+      "regions": [
+        "US",
+        "EU",
+        "OC"
+      ],
+      "subjects": [
+        "onepiece"
+      ],
+      "discovery_status": "PAGE_READ",
+      "checked_date": "2026-09-07",
+      "note": "원문 세부 항목과 날짜를 다시 검증해야 함"
+    },
+    {
+      "id": "onepiece_products",
+      "title": "원피스 카드 공식 상품",
+      "url": "https://en.onepiece-cardgame.com/products/",
+      "owner_group": "bandai",
+      "projects": [
+        "instagram_card",
+        "tcg_grader"
+      ],
+      "kinds": [
+        "release"
+      ],
+      "regions": [
+        "US",
+        "EU",
+        "OC"
+      ],
+      "subjects": [
+        "onepiece"
+      ],
+      "discovery_status": "SEARCH_ONLY",
+      "checked_date": "2026-09-07",
+      "note": "원문 세부 항목과 날짜를 다시 검증해야 함"
+    },
+    {
+      "id": "naruto_official",
+      "title": "나루토 공식 뉴스",
+      "url": "https://naruto-official.com/en/news",
+      "owner_group": "naruto_official",
+      "projects": [
+        "anime",
+        "instagram_card"
+      ],
+      "kinds": [
+        "release",
+        "event",
+        "schedule"
+      ],
+      "regions": [
+        "JP",
+        "GLOBAL"
+      ],
+      "subjects": [
+        "naruto"
+      ],
+      "discovery_status": "PAGE_READ",
+      "checked_date": "2026-09-07",
+      "note": "목록에 개별 기사가 없을 수 있음. 제조사 불명의 나루토 카드를 이 사이트만으로 인증하지 않음"
+    },
+    {
+      "id": "psa_cert",
+      "title": "PSA 인증번호 확인",
+      "url": "https://www.psacard.com/cert",
+      "owner_group": "psa",
+      "projects": [
+        "tcg_grader",
+        "instagram_card"
+      ],
+      "kinds": [
+        "certificate"
+      ],
+      "regions": [
+        "GLOBAL"
+      ],
+      "subjects": [
+        "cards"
+      ],
+      "discovery_status": "PAGE_READ",
+      "checked_date": "2026-09-07",
+      "note": "등록 정보 확인이며 사진 속 실물의 진품 보장이나 예상 등급 인증이 아님"
+    },
+    {
+      "id": "psa_auction",
+      "title": "PSA 경매 결과",
+      "url": "https://www.psacard.com/auctionprices",
+      "owner_group": "psa",
+      "projects": [
+        "tcg_grader",
+        "instagram_card"
+      ],
+      "kinds": [
+        "completed_sale"
+      ],
+      "regions": [
+        "GLOBAL"
+      ],
+      "subjects": [
+        "cards"
+      ],
+      "discovery_status": "PAGE_READ",
+      "checked_date": "2026-09-07",
+      "note": "원 경매/판매처 transaction ID로 중복 제거. 비용·낙찰/실수령 기준 구분"
+    },
+    {
+      "id": "beckett_cert",
+      "title": "Beckett 인증 조회",
+      "url": "https://www.beckett.com/grading/card-lookup",
+      "owner_group": "beckett",
+      "projects": [
+        "tcg_grader",
+        "instagram_card"
+      ],
+      "kinds": [
+        "certificate"
+      ],
+      "regions": [
+        "GLOBAL"
+      ],
+      "subjects": [
+        "cards"
+      ],
+      "discovery_st
