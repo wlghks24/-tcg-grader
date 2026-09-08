@@ -480,23 +480,41 @@ def sync_once() -> dict[str, Any]:
     return result
 
 
+def _source_signature() -> tuple[int, int] | None:
+    try:
+        stat = SOURCE.stat()
+        return (stat.st_mtime_ns, stat.st_size)
+    except OSError:
+        return None
+
+
+def _watch_cycle(last_signature):
+    signature = _source_signature()
+    if signature == last_signature:
+        return last_signature, None
+    result = sync_once()
+    # Only a successful sync acknowledges the new source signature. If sync_once
+    # raises, the caller keeps the previous successful signature and retries the
+    # same source contents on the next interval instead of silently losing work.
+    return signature, result
+
+
 def watch(interval: int) -> int:
     interval = max(30, min(900, int(interval)))
     last_signature: tuple[int, int] | None = None
     with exclusive_file_lock(LOCK_PATH, timeout_seconds=0.05, stale_seconds=7200):
         while True:
             try:
-                stat = SOURCE.stat()
-                signature = (stat.st_mtime_ns, stat.st_size)
-            except OSError:
-                signature = None
-            if signature != last_signature:
-                try:
-                    result = sync_once()
+                last_signature, result = _watch_cycle(last_signature)
+                if isinstance(result, dict):
                     print(json.dumps(result["summary"], ensure_ascii=False), flush=True)
-                except Exception as exc:
-                    print(json.dumps({"ok": False, "error": type(exc).__name__}, ensure_ascii=False), flush=True)
-                last_signature = signature
+            except Exception as exc:
+                print(json.dumps({
+                    "ok": False,
+                    "error": type(exc).__name__,
+                    "message": str(exc)[:240],
+                    "retry_next_interval": True,
+                }, ensure_ascii=False), flush=True)
             time.sleep(interval)
 
 

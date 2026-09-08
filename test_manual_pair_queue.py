@@ -96,6 +96,35 @@ class ManualPairQueueTests(unittest.TestCase):
             self.assertTrue((moved / "pair.json").is_file())
             self.assertFalse((root / "pokemon" / "PSA").exists())
 
+    def test_watch_cycle_retries_same_signature_after_sync_failure(self):
+        previous = (100, 10)
+        changed = (200, 20)
+        with mock.patch.object(queue, "_source_signature", return_value=changed), \
+             mock.patch.object(queue, "sync_once", side_effect=RuntimeError("temporary write failure")) as sync:
+            with self.assertRaises(RuntimeError):
+                queue._watch_cycle(previous)
+        sync.assert_called_once()
+        # The caller never receives a new acknowledged signature on failure,
+        # so the same changed source remains retryable on the next interval.
+        self.assertEqual(previous, (100, 10))
+
+    def test_watch_cycle_skips_unchanged_source_and_acks_success_only(self):
+        signature = (300, 30)
+        with mock.patch.object(queue, "_source_signature", return_value=signature), \
+             mock.patch.object(queue, "sync_once") as sync:
+            acknowledged, result = queue._watch_cycle(signature)
+        self.assertEqual(acknowledged, signature)
+        self.assertIsNone(result)
+        sync.assert_not_called()
+
+        payload = {"summary": {"saved": 1}}
+        with mock.patch.object(queue, "_source_signature", return_value=signature), \
+             mock.patch.object(queue, "sync_once", return_value=payload) as sync:
+            acknowledged, result = queue._watch_cycle((200, 20))
+        self.assertEqual(acknowledged, signature)
+        self.assertEqual(result, payload)
+        sync.assert_called_once()
+
     def test_android_root_uses_canonical_storage_not_sdcard_symlink(self):
         self.assertEqual(str(queue.ANDROID_ROOT), "/storage/emulated/0/Download/TCG등급학습")
         self.assertNotIn("/sdcard", str(queue.ANDROID_ROOT))
