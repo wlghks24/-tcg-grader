@@ -282,6 +282,10 @@ def audit() -> dict:
             issues.append("전체수집 작업 신경망이 검증 게이트를 우회할 수 있습니다")
         if safety.get("neural_output_is_priority_only") is not True:
             issues.append("전체수집 작업 신경망 출력이 작업 우선순위 이외 용도로 사용될 수 있습니다")
+        if safety.get("training_features_pre_outcome") is not True:
+            issues.append("전체수집 작업 신경망이 현재 실행 결과가 반영된 통계로 학습할 수 있습니다")
+        if safety.get("per_file_postflight_gate") is not True:
+            issues.append("전체수집 작업 신경망의 파일별 postflight 학습 게이트가 없습니다")
         if not callable(getattr(collection_job_neural, "_validate_model_payload", None)):
             issues.append("전체수집 작업 신경망 모델 가중치 구조/유한값 검증기가 없습니다")
         if not hasattr(collection_job_neural, "LABELS_BACKUP_PATH") or not hasattr(collection_job_neural, "MODEL_BACKUP_PATH"):

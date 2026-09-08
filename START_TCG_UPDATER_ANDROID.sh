@@ -221,6 +221,8 @@ assert collection_job_neural.SAFETY.get('collector_skip_allowed') is False
 assert collection_job_neural.SAFETY.get('collector_disable_allowed') is False
 assert collection_job_neural.SAFETY.get('verification_bypass') is False
 assert collection_job_neural.SAFETY.get('neural_output_is_priority_only') is True
+assert collection_job_neural.SAFETY.get('training_features_pre_outcome') is True
+assert collection_job_neural.SAFETY.get('per_file_postflight_gate') is True
 probe=pair_queue._pair_folder(pair_queue.ANDROID_ROOT,'pokemon','0123456789abcdefabcd')
 assert str(probe).endswith('/pokemon/수동등록대기/0123456789abcdefabcd')
 assert '/pokemon/PSA/' not in str(probe)

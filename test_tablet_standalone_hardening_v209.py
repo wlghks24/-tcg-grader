@@ -45,6 +45,13 @@ class TabletStandaloneHardeningV209(unittest.TestCase):
   src=(ROOT/"ANDROID_UPDATE_AND_START.sh").read_text(encoding="utf-8")
   self.assertIn("verify_remote_candidate()",src); self.assertLess(src.index('verify_remote_candidate "$remote_head"'),src.index("git merge --ff-only origin/main"))
   self.assertIn("git worktree add --detach",src); self.assertIn("TCG_FINAL_SKIP_HEAD_MATCH=1",src)
+ def test_collection_job_neural_safety_contract_is_startup_enforced(self):
+  start=(ROOT/"START_TCG_UPDATER_ANDROID.sh").read_text(encoding="utf-8")
+  final=(ROOT/"VERIFY_TABLET_FINAL.sh").read_text(encoding="utf-8")
+  bundle=(ROOT/"runtime_bundle_guard_v143.py").read_text(encoding="utf-8")
+  for token in ("training_features_pre_outcome","per_file_postflight_gate"):
+   self.assertIn(token,start); self.assertIn(token,final); self.assertIn(token,bundle)
+
  def test_manifest_wiring(self):
   launcher=(ROOT/"START_TCG_UPDATER_ANDROID.sh").read_text(encoding="utf-8")
   self.assertIn("tablet_runtime_manifest.py --check --compile",launcher)

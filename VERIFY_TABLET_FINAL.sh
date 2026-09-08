@@ -146,6 +146,8 @@ assert job_neural.SAFETY.get("collector_skip_allowed") is False
 assert job_neural.SAFETY.get("collector_disable_allowed") is False
 assert job_neural.SAFETY.get("verification_bypass") is False
 assert job_neural.SAFETY.get("neural_output_is_priority_only") is True
+assert job_neural.SAFETY.get("training_features_pre_outcome") is True
+assert job_neural.SAFETY.get("per_file_postflight_gate") is True
 assert neural.MIN_INDEPENDENT_LABELS == 1000
 assert neural.HIDDEN_SIZES == (4, 8, 12)
 assert callable(getattr(neural, "_validate_model_payload", None))
