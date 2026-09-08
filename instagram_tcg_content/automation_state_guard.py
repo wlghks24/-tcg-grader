@@ -63,6 +63,29 @@ def _aware(value: str | None, field: str) -> dt.datetime | None:
     return parsed.astimezone(dt.timezone.utc)
 
 
+def _schedule_start_disable_without_run(
+    updated: dt.datetime | None,
+    last_run: dt.datetime | None,
+) -> tuple[bool, str | None]:
+    """Detect an observable disable transition near a :30 slot without a run.
+
+    This is a state-transition fingerprint, not a root-cause attribution.
+    """
+    if updated is None:
+        return False, None
+    updated_kst = updated.astimezone(KST)
+    slot_kst = updated_kst.replace(minute=30, second=0, microsecond=0)
+    if updated_kst.minute < 30:
+        slot_kst -= dt.timedelta(hours=1)
+    delta = updated_kst - slot_kst
+    if delta < dt.timedelta(0) or delta > dt.timedelta(minutes=15):
+        return False, None
+    slot_utc = slot_kst.astimezone(dt.timezone.utc)
+    if last_run is not None and last_run >= slot_utc:
+        return False, None
+    return True, slot_kst.isoformat(timespec="minutes")
+
+
 def _hourly_half_past_slots(start: dt.datetime, end: dt.datetime) -> list[str]:
     if end <= start:
         return []
@@ -160,6 +183,17 @@ def classify_pause(
     missed_0630 = any(x[11:16] == "06:30" for x in missed_slots)
     recurrence_count = prior_pause_count + (1 if incident else 0)
 
+    schedule_disable_without_run = False
+    schedule_disable_slot_kst = None
+    state_transition_fingerprint = None
+    if incident:
+        schedule_disable_without_run, schedule_disable_slot_kst = _schedule_start_disable_without_run(
+            updated,
+            last_run,
+        )
+        if schedule_disable_without_run:
+            state_transition_fingerprint = "SCHEDULE_START_DISABLE_WITHOUT_RUN"
+
     severity = "NONE"
     if incident:
         severity = "PAUSE_RECURRENCE_CRITICAL" if recurrence_count >= 2 else "PAUSE_INCIDENT"
@@ -181,6 +215,10 @@ def classify_pause(
         "root_cause_fabricated": False,
         "recurrence_count": recurrence_count,
         "severity": severity,
+        "state_transition_fingerprint": state_transition_fingerprint,
+        "schedule_start_disable_without_run": schedule_disable_without_run,
+        "schedule_start_slot_kst": schedule_disable_slot_kst,
+        "state_transition_is_root_cause": False,
         "missed_slots_kst": missed_slots,
         "missed_full_0630": missed_0630,
         "required_action": (
@@ -223,6 +261,22 @@ def self_test() -> None:
     )
     assert repeated["recurrence_count"] == 2, repeated
     assert repeated["severity"] == "PAUSE_RECURRENCE_CRITICAL", repeated
+
+    boundary_disabled = dict(
+        disabled,
+        updated_at="2026-09-08T01:37:01.377102Z",
+        last_run_time="2026-09-07T20:27:56.644698Z",
+    )
+    boundary = classify_pause(
+        boundary_disabled,
+        observed_at="2026-09-08T05:44:00Z",
+        prior_pause_count=2,
+    )
+    assert boundary["state_transition_fingerprint"] == "SCHEDULE_START_DISABLE_WITHOUT_RUN", boundary
+    assert boundary["schedule_start_slot_kst"] == "2026-09-08T10:30+09:00", boundary
+    assert boundary["state_transition_is_root_cause"] is False, boundary
+    assert boundary["cause_class"] == "CONTROL_PLANE_ATTRIBUTION_UNAVAILABLE", boundary
+    assert boundary["recurrence_count"] == 3, boundary
 
     backed = classify_pause(
         disabled,
