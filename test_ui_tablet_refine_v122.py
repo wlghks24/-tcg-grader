@@ -26,6 +26,21 @@ def test_background_pollers_pause_when_tablet_page_is_hidden():
     market=(ROOT/'auto_market_center.js').read_text(encoding='utf-8')
     validation=(ROOT/'auto_validation_flow.js').read_text(encoding='utf-8')
     manual=(ROOT/'manual_official_verify_bridge.js').read_text(encoding='utf-8')
+    dual=(ROOT/'manual_dual_photo_bridge.js').read_text(encoding='utf-8')
+    learning=(ROOT/'grade_learning_guard_v135.js').read_text(encoding='utf-8')
+    box=(ROOT/'box_knowledge_stats.js').read_text(encoding='utf-8')
+    costs=(ROOT/'grading_total_cost.js').read_text(encoding='utf-8')
     assert "if(!document.hidden)run(false)" in market
     assert "if(!document.hidden)syncManualPanel()" in validation
     assert "!document.hidden&&proofDrafts.size===0" in manual
+    assert "if(!document.hidden){ensureRecentManualToggle();syncRecentManualProofState()}" in dual
+    assert "if(!document.hidden)refreshModel(false)" in learning
+    assert "if(!document.hidden)refresh()" in box
+    assert "if(!document.hidden)calc()" in costs
+
+def test_manual_dual_photo_compression_is_async_and_byte_bounded():
+    source=(ROOT/'manual_dual_photo_bridge.js').read_text(encoding='utf-8')
+    assert "async function decodedPhoto(file)" in source
+    assert "typeof canvas.toBlob==='function'" in source
+    assert "blob.size>6_000_000" in source
+    assert "await jpegDataUrl(canvas,q)" in source

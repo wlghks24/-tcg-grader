@@ -252,7 +252,8 @@ function hook(){
  save?.addEventListener('click',()=>setTimeout(submitLatest,220));
  document.getElementById('recalcCalibration')?.addEventListener('click',()=>setTimeout(()=>refreshModel(true),250));
  let checks=0;const timer=setInterval(()=>{checks++;if(window.v30ApplyCalibration!==applyVerifiedCalibration)window.v30ApplyCalibration=applyVerifiedCalibration;patchLegacyUi();if(checks>30)clearInterval(timer)},300);
- setInterval(()=>refreshModel(false),30000);
+ setInterval(()=>{if(!document.hidden)refreshModel(false)},30000);
+ document.addEventListener('visibilitychange',()=>{if(!document.hidden)refreshModel(false)});
 }
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',hook,{once:true});else hook();
 })();

@@ -79,5 +79,5 @@ const hookRender=()=>{try{if(typeof window.renderBoxKnowledge==='function'&&!win
 window.addEventListener('tcg-market-catalog-expanded',()=>setTimeout(refresh,80));
 document.addEventListener('click',e=>{const t=e.target.closest?.('button');if(!t||t.dataset.boxTab)return;if(/한국|일본|미국|전체/.test(t.textContent||''))setTimeout(()=>{refreshStatsOnly();applyTabFilter()},150)});
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',()=>setTimeout(()=>{hookRender();refresh()},550));else setTimeout(()=>{hookRender();refresh()},550);
-setInterval(refresh,60000);window.refreshBoxKnowledgeStats=refresh;
+setInterval(()=>{if(!document.hidden)refresh()},60000);document.addEventListener('visibilitychange',()=>{if(!document.hidden)refresh()});window.refreshBoxKnowledgeStats=refresh;
 })();

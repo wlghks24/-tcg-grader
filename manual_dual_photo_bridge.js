@@ -17,19 +17,33 @@ let installed=false,submitting=false,proofSyncing=false,proofObserverInstalled=f
 const previewUrls={front:null,back:null};
 const sleep=ms=>new Promise(r=>setTimeout(r,ms));
 function fileDataUrl(file){return new Promise((resolve,reject)=>{const reader=new FileReader();reader.onload=()=>resolve(String(reader.result||''));reader.onerror=()=>reject(new Error('파일을 읽지 못했습니다.'));reader.readAsDataURL(file)})}
+function imageFromDataUrl(url){return new Promise((resolve,reject)=>{const image=new Image();image.onload=()=>resolve(image);image.onerror=()=>reject(new Error('사진을 디코딩하지 못했습니다.'));image.src=url})}
+async function decodedPhoto(file){
+ if(globalThis.createImageBitmap){try{const bitmap=await createImageBitmap(file,{imageOrientation:'from-image'});return {image:bitmap,close:()=>bitmap.close?.()}}catch(_){}}
+ const dataUrl=await fileDataUrl(file),image=await imageFromDataUrl(dataUrl);return {image,close:()=>{}}
+}
+async function jpegDataUrl(canvas,quality){
+ if(typeof canvas.toBlob==='function'){
+  const blob=await new Promise((resolve,reject)=>canvas.toBlob(value=>value?resolve(value):reject(new Error('사진 JPEG 변환에 실패했습니다.')),'image/jpeg',quality));
+  if(blob.size>6_000_000)return null;
+  return fileDataUrl(blob);
+ }
+ const value=canvas.toDataURL('image/jpeg',quality);
+ return value.length<8_000_000?value:null;
+}
 async function normalize(file){
  if(!file||!['image/jpeg','image/png'].includes(file.type))throw new Error('앞면·뒷면 모두 JPG 또는 PNG로 선택하세요.');
  if(file.size>12_000_000)throw new Error('원본 사진 1장이 12MB를 초과합니다.');
- if(!globalThis.createImageBitmap)return fileDataUrl(file);
- const bitmap=await createImageBitmap(file,{imageOrientation:'from-image'});try{
-  if(bitmap.width<320||bitmap.height<320)throw new Error('사진 해상도가 너무 작습니다.');
-  const scale=Math.min(1,2200/Math.max(bitmap.width,bitmap.height));
-  const canvas=document.createElement('canvas');canvas.width=Math.max(320,Math.round(bitmap.width*scale));canvas.height=Math.max(320,Math.round(bitmap.height*scale));
+ const decoded=await decodedPhoto(file);try{
+  const image=decoded.image,width=Number(image.naturalWidth||image.width),height=Number(image.naturalHeight||image.height);
+  if(width<320||height<320)throw new Error('사진 해상도가 너무 작습니다.');
+  const scale=Math.min(1,2200/Math.max(width,height));
+  const canvas=document.createElement('canvas');canvas.width=Math.max(320,Math.round(width*scale));canvas.height=Math.max(320,Math.round(height*scale));
   const ctx=canvas.getContext('2d');if(!ctx)throw new Error('사진 변환을 시작하지 못했습니다.');
-  ctx.fillStyle='#fff';ctx.fillRect(0,0,canvas.width,canvas.height);ctx.drawImage(bitmap,0,0,canvas.width,canvas.height);
-  for(const q of [.9,.82,.74]){const value=canvas.toDataURL('image/jpeg',q);if(value.length<8_000_000)return value}
+  ctx.fillStyle='#fff';ctx.fillRect(0,0,canvas.width,canvas.height);ctx.drawImage(image,0,0,canvas.width,canvas.height);
+  for(const q of [.9,.82,.74]){const value=await jpegDataUrl(canvas,q);if(value)return value}
   throw new Error('사진을 6MB 이하로 줄이지 못했습니다.');
- }finally{bitmap.close?.()}
+ }finally{decoded.close()}
 }
 function formatBytes(bytes){const n=Number(bytes)||0;if(n>=1048576)return (n/1048576).toFixed(1)+'MB';if(n>=1024)return Math.round(n/1024)+'KB';return n+'B'}
 function ensurePreviewStyle(){
@@ -120,7 +134,8 @@ function installProofStateSync(){
  proofObserverInstalled=true;
  let timer=0;const schedule=()=>{clearTimeout(timer);timer=setTimeout(()=>{ensureRecentManualToggle();syncRecentManualProofState()},120)};
  const observer=new MutationObserver(schedule);observer.observe(host,{childList:true,subtree:true});
- ensureRecentManualToggle();schedule();setInterval(()=>{ensureRecentManualToggle();syncRecentManualProofState()},4000);
+ ensureRecentManualToggle();schedule();setInterval(()=>{if(!document.hidden){ensureRecentManualToggle();syncRecentManualProofState()}},4000);
+ document.addEventListener('visibilitychange',()=>{if(!document.hidden){ensureRecentManualToggle();syncRecentManualProofState()}});
 }
 function enhance(){
  const form=document.getElementById('gpdManualForm');if(!form)return false;
