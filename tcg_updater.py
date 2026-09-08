@@ -47,6 +47,8 @@ JSON_FILE_CACHE_LOCK=threading.RLock()
 JSON_FILE_CACHE={}
 JSON_FILE_CACHE_LIMIT=48
 JSON_FILE_CACHE_MISS=object()
+COLLECTION_NEURAL_STATUS_LOCK=threading.Lock()
+COLLECTION_NEURAL_STATUS_CACHE={'signature':None,'value':None}
 AUTO_INTERVAL_SECONDS=6*60*60
 PRECOLLECT_LEAD_SECONDS=30*60
 AUTO_FAILURE_RETRY_SECONDS=env_int('TCG_AUTO_FAILURE_RETRY_SECONDS',30*60,5*60,2*60*60)
@@ -60,26 +62,46 @@ def collection_health_status():
     except (ImportError,OSError,ValueError,TypeError,json.JSONDecodeError):
         return {'healthy':False,'status':'health-state-error','requires_attention':True,'process_restart_required':False}
 
+def _file_signature(path):
+    try:
+        metadata=os.stat(os.fspath(path))
+        return (metadata.st_dev,metadata.st_ino,metadata.st_mtime_ns,metadata.st_size)
+    except (OSError,TypeError,ValueError):
+        return None
+
+def _collection_neural_signature(query_module,job_module):
+    paths=(
+        getattr(query_module,'LABELS_PATH',None),getattr(query_module,'LABELS_BACKUP_PATH',None),
+        getattr(query_module,'MODEL_PATH',None),getattr(query_module,'MODEL_BACKUP_PATH',None),
+        getattr(job_module,'LABELS_PATH',None),getattr(job_module,'LABELS_BACKUP_PATH',None),
+        getattr(job_module,'MODEL_PATH',None),getattr(job_module,'MODEL_BACKUP_PATH',None),
+    )
+    return tuple(_file_signature(path) for path in paths)
+
 def collection_neural_status():
     try:
         import verified_collection_neural
+        import verified_collection_job_neural
+        signature=_collection_neural_signature(verified_collection_neural,verified_collection_job_neural)
+        with COLLECTION_NEURAL_STATUS_LOCK:
+            cached=COLLECTION_NEURAL_STATUS_CACHE.get('value')
+            if COLLECTION_NEURAL_STATUS_CACHE.get('signature')==signature and isinstance(cached,dict):
+                return copy.deepcopy(cached)
         query_status=verified_collection_neural.status()
+        job_status=verified_collection_job_neural.status()
     except (ImportError,OSError,ValueError,TypeError,OverflowError,json.JSONDecodeError):
         query_status={
             'ok':False,'active':False,'reason':'query-neural-state-error',
             'label_count':0,'minimum_labels':1000,'labels_remaining':1000,'progress_percent':0.0
         }
-    try:
-        import verified_collection_job_neural
-        job_status=verified_collection_job_neural.status()
-    except (ImportError,OSError,ValueError,TypeError,OverflowError,json.JSONDecodeError):
         job_status={
             'ok':False,'active':False,'reason':'job-neural-state-error',
             'label_count':0,'minimum_labels':1000,'labels_remaining':1000,'progress_percent':0.0
         }
+        signature=None
     total_labels=int(query_status.get('label_count') or 0)+int(job_status.get('label_count') or 0)
     total_minimum=int(query_status.get('minimum_labels') or 1000)+int(job_status.get('minimum_labels') or 1000)
-    return {
+    result={
         'ok':query_status.get('ok') is True and job_status.get('ok') is True,
         'active':query_status.get('active') is True or job_status.get('active') is True,
         'all_active':query_status.get('active') is True and job_status.get('active') is True,
@@ -92,7 +114,13 @@ def collection_neural_status():
         'scope':'adaptive_public_search_priority + mandatory_collection_job_priority',
         'verification_bypass':False,
         'collector_skip_allowed':False,
+        'status_cache_by_file_signature':True,
     }
+    if signature is not None:
+        with COLLECTION_NEURAL_STATUS_LOCK:
+            COLLECTION_NEURAL_STATUS_CACHE['signature']=signature
+            COLLECTION_NEURAL_STATUS_CACHE['value']=copy.deepcopy(result)
+    return result
 
 def _collection_mark_attempt(trigger,next_due_at=None):
     try:

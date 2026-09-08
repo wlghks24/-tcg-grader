@@ -716,6 +716,8 @@ def status(
     model_path: Path = MODEL_PATH,
 ) -> dict[str, Any]:
     labels = _load_labels(labels_path)["labels"]
+    positives = sum(bool(row["outcome"]) for row in labels)
+    negatives = len(labels) - positives
     model, model_source, model_recovered = _load_model_with_source(model_path)
     return {
         "ok": True,
@@ -724,8 +726,8 @@ def status(
         "model_source": model_source,
         "model_recovered_from_backup": model_recovered,
         "label_count": len(labels),
-        "positive_labels": sum(bool(row["outcome"]) for row in labels),
-        "negative_labels": sum(not bool(row["outcome"]) for row in labels),
+        "positive_labels": positives,
+        "negative_labels": negatives,
         "minimum_labels": MIN_INDEPENDENT_LABELS,
         "labels_remaining": max(0, MIN_INDEPENDENT_LABELS - len(labels)),
         "progress_percent": round(min(100.0, len(labels) * 100.0 / MIN_INDEPENDENT_LABELS), 2),

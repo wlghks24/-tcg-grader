@@ -110,6 +110,28 @@ class GradedPhotoRuntimeTests(unittest.TestCase):
             path.write_text('{"value":200}',encoding='utf-8')
             self.assertEqual(tcg_updater.load_json_file(path,{})['value'],200)
 
+    def test_collection_neural_health_status_reuses_unchanged_file_signature(self):
+        import verified_collection_neural
+        import verified_collection_job_neural
+        with tcg_updater.COLLECTION_NEURAL_STATUS_LOCK:
+            tcg_updater.COLLECTION_NEURAL_STATUS_CACHE['signature']=None
+            tcg_updater.COLLECTION_NEURAL_STATUS_CACHE['value']=None
+        query={'ok':True,'active':False,'label_count':7,'minimum_labels':1000}
+        job={'ok':True,'active':False,'label_count':9,'minimum_labels':1000}
+        signatures=[('same',),('same',),('changed',)]
+        with mock.patch.object(tcg_updater,'_collection_neural_signature',side_effect=signatures), \
+             mock.patch.object(verified_collection_neural,'status',return_value=query) as query_status, \
+             mock.patch.object(verified_collection_job_neural,'status',return_value=job) as job_status:
+            first=tcg_updater.collection_neural_status()
+            second=tcg_updater.collection_neural_status()
+            third=tcg_updater.collection_neural_status()
+        self.assertEqual(first['label_count'],16)
+        self.assertEqual(second['label_count'],16)
+        self.assertEqual(third['label_count'],16)
+        self.assertEqual(query_status.call_count,2)
+        self.assertEqual(job_status.call_count,2)
+        self.assertTrue(first['status_cache_by_file_signature'])
+
     def test_job_snapshots_are_isolated_without_json_roundtrip(self):
         source=(ROOT/'tcg_updater.py').read_text(encoding='utf-8')
         self.assertNotIn('json.loads(json.dumps(UPDATE_JOB',source)
