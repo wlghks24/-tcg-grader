@@ -64,7 +64,8 @@ INDEXES = (
 )
 GAMES = ("포켓몬 카드", "원피스 카드", "나루토 카드")
 CORE_REGIONS = ("KR", "JP", "US")
-REGIONS = CORE_REGIONS + ("ASIA",)
+REGIONS = CORE_REGIONS
+EVENT_REGIONS = CORE_REGIONS + ("ASIA",)
 EVENT_SCOPE_PAIRS = tuple((game, region) for game in GAMES for region in CORE_REGIONS) + (("포켓몬 카드", "ASIA"),)
 DATE_PRECISIONS = {"day", "month", "season", "start-only", "unannounced"}
 OFFICIAL_SOURCE_REPLACEMENTS = {
@@ -727,7 +728,7 @@ def social_topic_expected_keys() -> list[str]:
     return [
         f"{game}/{region}/{topic}"
         for game in GAMES
-        for region in CORE_REGIONS
+        for region in REGIONS
         for topic in multi_route_event_discovery.COVERAGE_TOPICS
     ]
 
@@ -758,7 +759,7 @@ def valid(item: dict) -> bool:
     required = ("game", "region", "name_ko", "start_date", "end_date", "reward", "condition", "source")
     if not isinstance(item, dict) or not all(item.get(key) for key in required):
         return False
-    if item.get("region") not in REGIONS or item.get("game") not in GAMES:
+    if item.get("region") not in EVENT_REGIONS or item.get("game") not in GAMES:
         return False
     if item.get("category", "promo") not in {"promo", "collaboration", "movie"}:
         return False
