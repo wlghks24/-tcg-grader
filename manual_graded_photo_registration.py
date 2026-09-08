@@ -53,7 +53,7 @@ def _load(path: Path, default: Any) -> Any:
         return default
 
 
-@lru_cache(maxsize=8)
+@lru_cache(maxsize=1)
 def _cached_registry_payload(path_text: str, signature: tuple[int, int, int, int] | None) -> Any:
     """Cache a parsed registry until its inode, timestamp, or size changes."""
     return _load(Path(path_text), {})

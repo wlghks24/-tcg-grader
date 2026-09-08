@@ -247,6 +247,10 @@ class ManualGradedPhotoRegistrationTests(unittest.TestCase):
         self.assertEqual(projector.call_count,200)
         self.assertEqual(result["registrations"][0]["registration_id"],"manual-00000000000499-abcdef123456")
 
+    def test_registry_cache_keeps_only_current_signature_generation(self):
+        manual._cached_registry_payload.cache_clear()
+        self.assertEqual(manual._cached_registry_payload.cache_info().maxsize, 1)
+
     def test_registry_cache_reuses_parse_but_returns_isolated_rows(self):
         manual.register(self.payload())
         manual._cached_registry_payload.cache_clear()
