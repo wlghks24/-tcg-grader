@@ -130,7 +130,8 @@ def _learn_priority_rewards() -> int:
         return 0
 
 
-def _run_locked(started: float) -> dict:
+def _prepare_scan(started: float) -> dict:
+    """Perform patch setup and external network work without holding UPDATE_LOCK."""
     hardening.apply()
     source_overlay.apply()
     source_expansion.apply()
@@ -144,10 +145,30 @@ def _run_locked(started: float) -> dict:
         for region in social_event_discovery.REGION_LANG
         if hardening._trusted_accounts(registry, game, region)
     ]
+    network_started = time.monotonic()
     new_rows, errors = _collect(registry, jobs)
+    annotated = social_event_discovery._annotate_social_rows(new_rows, registry)
+    return {
+        "registry": registry,
+        "jobs": jobs,
+        "annotated": annotated,
+        "errors": errors,
+        "miss_learning": miss_learning,
+        "network_seconds": round(time.monotonic() - network_started, 2),
+        "prepared_seconds": round(time.monotonic() - started, 2),
+    }
+
+
+def _commit_scan(started: float, prepared: dict, *, lock_wait_seconds: float = 0.0) -> dict:
+    """Merge against the newest persisted snapshot and atomically publish it."""
+    registry = prepared["registry"]
+    jobs = prepared["jobs"]
+    annotated = prepared["annotated"]
+    errors = prepared["errors"]
+    miss_learning = prepared["miss_learning"]
+
     previous = _load_previous()
     existing = [dict(x) for x in previous.get("items", []) if isinstance(x, dict)]
-    annotated = social_event_discovery._annotate_social_rows(new_rows, registry)
     merged = social_event_discovery.merge_candidates(existing + annotated)
     payload = dict(previous)
     payload.update({
@@ -165,6 +186,10 @@ def _run_locked(started: float) -> dict:
             "verified_miss_learning": miss_learning,
             "error_count": len(errors),
             "errors": errors[:20],
+            "network_outside_shared_lock": True,
+            "shared_lock_scope": "latest_snapshot_merge_and_atomic_persist_only",
+            "network_seconds": float(prepared.get("network_seconds") or 0.0),
+            "shared_lock_wait_seconds": round(max(0.0, float(lock_wait_seconds)), 3),
             "elapsed_seconds": round(time.monotonic() - started, 2),
         },
         "priority_gap_cells": _priority_gaps(merged, registry),
@@ -202,6 +227,10 @@ def _run_locked(started: float) -> dict:
         "manual_evidence_added": manual_added,
         "priority_gap_count": len(payload.get("priority_gap_cells", []) or []),
         "error_count": len(errors),
+        "network_outside_shared_lock": True,
+        "shared_lock_scope": "latest_snapshot_merge_and_atomic_persist_only",
+        "network_seconds": float(prepared.get("network_seconds") or 0.0),
+        "shared_lock_wait_seconds": round(max(0.0, float(lock_wait_seconds)), 3),
         "elapsed_seconds": round(time.monotonic() - started, 2),
     }
 
@@ -211,10 +240,13 @@ def run_once(shared_lock=None) -> dict:
         return {"ok": True, "skipped": True, "reason": "priority watch already running"}
     started = time.monotonic()
     try:
+        prepared = _prepare_scan(started)
         if shared_lock is None:
-            return _run_locked(started)
+            return _commit_scan(started, prepared)
+        wait_started = time.monotonic()
         with shared_lock:
-            return _run_locked(started)
+            lock_wait_seconds = time.monotonic() - wait_started
+            return _commit_scan(started, prepared, lock_wait_seconds=lock_wait_seconds)
     except Exception as exc:
         return {
             "ok": False,
