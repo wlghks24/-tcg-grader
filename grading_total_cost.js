@@ -20,6 +20,9 @@ function routeBase(){const direct=serviceFee(),v=$('gtcRoute')?.value||'direct';
 if(p.pricing_type==='proxy_fee_plus_actual')return {amount:direct.krw+Number(p.proxy_fee_from_krw||0),label:`공식 감정비 + ${p.provider} 대행수수료`,complete:!!direct.krw&&!!p.proxy_fee_from_krw};
 const q=Number($('gtcQuote')?.value||0);return {amount:q,label:`${p.provider} 실제 견적 총액`,complete:q>0}}
 function calc(){if(!$('gradingTotalCostPanel'))return;const c=$('gtcCompany')?.value||'PSA',g=predictedGrade(c),base=routeBase(),extra=Number($('gtcExtra')?.value||0),total=base.amount+extra,sale=expectedSale(c,g),buy=Number($('econBuy')?.value||0),feePct=Number($('econFee')?.value||0),netSale=sale*(1-feePct/100),profit=sale>0?netSale-buy-total:NaN;$('gtcGrade').textContent=`${c} ${g}`;$('gtcBase').textContent=base.complete?krw(base.amount):'견적/요금 확인 필요';$('gtcTotal').textContent=base.complete?krw(total):'계산 대기';$('gtcSale').textContent=sale>0?krw(sale):'거래자료 없음';$('gtcProfit').textContent=Number.isFinite(profit)?krw(profit):'계산 대기';$('gtcProfit').className=Number.isFinite(profit)?(profit>=0?'plus':'minus'):'';const rate=usdKrw?`USD/KRW ${usdKrw.toLocaleString('ko-KR')}`:'환율 미확인';$('gtcNote').textContent=`${base.label} · ${rate} · 배송/보험처럼 실제 결제 시 달라지는 비용은 위 추가비용 칸의 실제 금액을 사용합니다. 총 대행가격은 공식 감정비와 중복 합산하지 않습니다.`}
-function boot(){let tries=0;const t=setInterval(()=>{tries++;if(mount()||tries>20)clearInterval(t)},250);mount();load();setInterval(()=>{if(!document.hidden)calc()},1000);document.addEventListener('visibilitychange',()=>{if(!document.hidden)calc()})}
+let calcTimer=0;
+function startCalcTimer(){if(calcTimer||document.hidden)return;calcTimer=setInterval(calc,1000)}
+function stopCalcTimer(){if(calcTimer){clearInterval(calcTimer);calcTimer=0}}
+function boot(){let tries=0;const t=setInterval(()=>{tries++;if(mount()||tries>20)clearInterval(t)},250);mount();load();startCalcTimer();document.addEventListener('visibilitychange',()=>{if(document.hidden)stopCalcTimer();else{calc();startCalcTimer()}})}
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',boot);else boot();
 })();

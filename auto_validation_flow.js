@@ -55,12 +55,14 @@ function mount(){
  $('certificationId')?.addEventListener('change',syncManualPanel);
  syncManualPanel();return true;
 }
+let syncTimer=0;
+function startSyncTimer(){if(syncTimer||document.hidden)return;syncTimer=setInterval(syncManualPanel,1200)}
+function stopSyncTimer(){if(syncTimer){clearInterval(syncTimer);syncTimer=0}}
 function boot(){
  ensureVerifiedLearningGuard();
  let n=0;const t=setInterval(()=>{n++;ensureVerifiedLearningGuard();if(mount()||n>20)clearInterval(t)},250);
- mount();
- setInterval(()=>{if(!document.hidden)syncManualPanel()},1200);
- document.addEventListener('visibilitychange',()=>{if(!document.hidden)syncManualPanel()});
+ mount();startSyncTimer();
+ document.addEventListener('visibilitychange',()=>{if(document.hidden)stopSyncTimer();else{syncManualPanel();startSyncTimer()}});
 }
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',boot,{once:true});else boot();
 })();

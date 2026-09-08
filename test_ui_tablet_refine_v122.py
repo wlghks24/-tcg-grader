@@ -30,13 +30,27 @@ def test_background_pollers_pause_when_tablet_page_is_hidden():
     learning=(ROOT/'grade_learning_guard_v135.js').read_text(encoding='utf-8')
     box=(ROOT/'box_knowledge_stats.js').read_text(encoding='utf-8')
     costs=(ROOT/'grading_total_cost.js').read_text(encoding='utf-8')
-    assert "if(!document.hidden)run(false)" in market
-    assert "if(!document.hidden)syncManualPanel()" in validation
+    assert "function stopPulse()" in market
+    assert "if(document.hidden)stopPulse()" in market
+    assert "function stopSyncTimer()" in validation
+    assert "if(document.hidden)stopSyncTimer()" in validation
     assert "!document.hidden&&proofDrafts.size===0" in manual
     assert "if(!document.hidden){ensureRecentManualToggle();syncRecentManualProofState()}" in dual
     assert "if(!document.hidden)refreshModel(false)" in learning
     assert "if(!document.hidden)refresh()" in box
-    assert "if(!document.hidden)calc()" in costs
+    assert "function stopCalcTimer()" in costs
+    assert "if(document.hidden)stopCalcTimer()" in costs
+
+def test_high_frequency_tablet_timers_are_cleared_while_hidden():
+    market=(ROOT/'auto_market_center.js').read_text(encoding='utf-8')
+    validation=(ROOT/'auto_validation_flow.js').read_text(encoding='utf-8')
+    costs=(ROOT/'grading_total_cost.js').read_text(encoding='utf-8')
+    assert "pulseTimer=setInterval(()=>run(false),500)" in market
+    assert "clearInterval(pulseTimer)" in market
+    assert "syncTimer=setInterval(syncManualPanel,1200)" in validation
+    assert "clearInterval(syncTimer)" in validation
+    assert "calcTimer=setInterval(calc,1000)" in costs
+    assert "clearInterval(calcTimer)" in costs
 
 def test_manual_dual_photo_compression_is_async_and_byte_bounded():
     source=(ROOT/'manual_dual_photo_bridge.js').read_text(encoding='utf-8')
