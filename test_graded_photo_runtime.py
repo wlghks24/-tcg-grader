@@ -45,6 +45,22 @@ class GradedPhotoRuntimeTests(unittest.TestCase):
         self.assertEqual(payload['engine'],'v123-verified-multisource-photo-collection')
         self.assertEqual(payload['summary']['raw_grade_calibration_eligible'],0)
 
+    def test_precollect_stage_skips_manual_raw_photos_and_logs_but_keeps_learning_state(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root=Path(directory)
+            source=root/'source'; target=root/'stage'
+            source.mkdir()
+            (source/'collector.py').write_text('print("ok")\n',encoding='utf-8')
+            (source/'collection_learning_memory.json').write_text('{"ok":true}',encoding='utf-8')
+            (source/'TCG_RUNTIME.log').write_text('x'*100,encoding='utf-8')
+            inbox=source/'GRADE_TRAINING_INBOX'; inbox.mkdir()
+            (inbox/'large-photo.jpg').write_bytes(b'x'*4096)
+            tcg_updater._safe_stage_copy(source,target)
+            self.assertTrue((target/'collector.py').is_file())
+            self.assertTrue((target/'collection_learning_memory.json').is_file())
+            self.assertFalse((target/'TCG_RUNTIME.log').exists())
+            self.assertFalse((target/'GRADE_TRAINING_INBOX').exists())
+
     def test_json_read_cache_reuses_parse_and_returns_isolated_values(self):
         with tempfile.TemporaryDirectory() as directory:
             path=Path(directory)/'cached.json'

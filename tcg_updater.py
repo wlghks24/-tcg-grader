@@ -979,11 +979,21 @@ def _safe_stage_copy(src, dst):
     if source.is_symlink() or destination.is_symlink():
         raise ValueError('심볼릭 링크 사전수집 작업폴더는 허용되지 않습니다.')
     def ignore(path,names):
-        skip={'__pycache__','.precollect_stage','.precollect_stage.tmp','.git'}
+        # Precollection needs source code, factual JSON and device-local strategy
+        # state. It never consumes the manually uploaded raw photo inbox or log
+        # files, which can grow much larger than the collector runtime itself.
+        # Excluding only these proven non-inputs keeps the 30-minute staging
+        # snapshot fast without dropping neural/adaptive learning state.
+        skip={'__pycache__','.precollect_stage','.precollect_stage.tmp','.git','GRADE_TRAINING_INBOX'}
+        ignored=[]
         for name in names:
-            if name not in skip and not name.endswith('.pyc') and (Path(path)/name).is_symlink():
+            candidate=Path(path)/name
+            if name in skip or name.endswith('.pyc') or name.endswith('.log'):
+                ignored.append(name)
+                continue
+            if candidate.is_symlink():
                 raise ValueError('심볼릭 링크 사전수집 자료는 허용되지 않습니다.')
-        return [n for n in names if n in skip or n.endswith('.pyc')]
+        return ignored
     if os.path.exists(dst): shutil.rmtree(dst,ignore_errors=True)
     shutil.copytree(src,dst,ignore=ignore,symlinks=True)
 
