@@ -26,6 +26,8 @@ VERIFY_TABLET_RUNTIME.sh
 tablet_runtime_probe.py
 tablet_runtime_manifest.py
 collection_runtime_health.py
+verified_collection_neural.py
+test_verified_collection_neural_v211.py
 test_runtime_delivery_guards.py
 tablet_runtime_qa.py
 test_tablet_runtime_qa_integration.py
@@ -115,6 +117,8 @@ python -m py_compile \
   test_tablet_runtime_qa_integration.py \
   tcg_updater_v135.py \
   collection_runtime_health.py \
+  verified_collection_neural.py \
+  test_verified_collection_neural_v211.py \
   tablet_runtime_manifest.py
 python tablet_runtime_manifest.py --check --compile >/dev/null
 python collection_runtime_health.py >/dev/null
@@ -125,7 +129,21 @@ python tcg_code_repair_learning.py --self-test >/dev/null
 python GRAPHIFY_SELF_HEAL.py --self-test >/dev/null
 python verify_code_map_internal.py >/dev/null
 python test_tablet_runtime_qa_integration.py >/dev/null
-echo "[4/9] 최적화 하드닝/오류학습/자가복구/태블릿 공용 QA 자체시험: OK"
+python -m unittest -v test_verified_collection_neural_v211.py >/dev/null
+python - <<'PY' >/dev/null
+import verified_collection_neural as neural
+assert neural.RUNTIME_PATCH == 212
+assert neural.MIN_INDEPENDENT_LABELS == 1000
+assert neural.HIDDEN_SIZES == (4, 8, 12)
+assert callable(getattr(neural, "_validate_model_payload", None))
+assert hasattr(neural, "LABELS_BACKUP_PATH")
+assert hasattr(neural, "MODEL_BACKUP_PATH")
+status=neural.status()
+assert status.get("scope") == "adaptive_public_search_priority_only"
+assert status.get("safety",{}).get("verification_bypass") is False
+assert status.get("safety",{}).get("official_trust_auto_promotion") is False
+PY
+echo "[4/9] 최적화 하드닝/오류학습/자가복구/자료수집 신경망/태블릿 공용 QA 자체시험: OK"
 
 python csp_hash_hardening.py --check >/dev/null
 echo "[5/9] 브라우저 인라인 스크립트 CSP 해시: OK"

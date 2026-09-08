@@ -14,6 +14,7 @@ from adaptive_collection_learner import AdaptiveCollectionLearner
 
 class VerifiedCollectionNeuralV211Tests(unittest.TestCase):
     def test_safety_contract_and_activation_threshold(self):
+        self.assertEqual(212, neural.RUNTIME_PATCH)
         self.assertEqual((4, 8, 12), neural.HIDDEN_SIZES)
         self.assertEqual(1000, neural.MIN_INDEPENDENT_LABELS)
         self.assertTrue(neural.SAFETY["learns_strategy_not_facts"])
