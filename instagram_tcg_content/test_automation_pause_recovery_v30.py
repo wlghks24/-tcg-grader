@@ -9,6 +9,7 @@ from instagram_tcg_content.automation_state_guard import (
     CANONICAL_TITLE,
     classify_pause,
     runtime_failure_policy,
+    snapshot_state,
 )
 
 
@@ -18,6 +19,9 @@ class AutomationPauseRecoveryV30Tests(unittest.TestCase):
             "id": CANONICAL_ID,
             "title": CANONICAL_TITLE,
             "is_enabled": enabled,
+            "schedule": "RRULE:FREQ=HOURLY;BYMINUTE=30;BYSECOND=0",
+            "timing_mode": "exact_schedule",
+            "prompt": "stable",
             "updated_at": "2026-09-06T20:34:07.836996Z",
             "last_run_time": "2026-09-06T19:30:22.873339Z",
         }
@@ -44,6 +48,17 @@ class AutomationPauseRecoveryV30Tests(unittest.TestCase):
         self.assertEqual(result["recurrence_count"], 2)
         self.assertEqual(result["severity"], "PAUSE_RECURRENCE_CRITICAL")
         self.assertEqual(result["cause_class"], "CONTROL_PLANE_ATTRIBUTION_UNAVAILABLE")
+        self.assertEqual(result["priority"], "HIGH")
+
+    def test_third_pause_escalates_critical_priority(self):
+        result = classify_pause(
+            self.state(False),
+            observed_at="2026-09-07T01:01:48.674172Z",
+            prior_pause_count=2,
+        )
+        self.assertEqual(result["recurrence_count"], 3)
+        self.assertEqual(result["event_class"], "PAUSE_RECURRENCE_CRITICAL")
+        self.assertEqual(result["priority"], "CRITICAL")
 
     def test_schedule_start_disable_without_run_is_fingerprinted_not_attributed(self):
         state = self.state(False)
@@ -64,7 +79,7 @@ class AutomationPauseRecoveryV30Tests(unittest.TestCase):
         self.assertEqual(result["cause_status"], "unresolved")
         self.assertEqual(result["cause_class"], "CONTROL_PLANE_ATTRIBUTION_UNAVAILABLE")
         self.assertEqual(result["recurrence_count"], 3)
-        self.assertEqual(result["severity"], "PAUSE_RECURRENCE_CRITICAL")
+        self.assertEqual(result["priority"], "CRITICAL")
 
     def test_missed_slots_anchor_to_last_run_not_disable_time(self):
         state = self.state(False)
@@ -85,6 +100,57 @@ class AutomationPauseRecoveryV30Tests(unittest.TestCase):
             result["catchup_policy"],
             "AT_MOST_ONCE_SAME_DAY_WITHOUT_BASELINE_CREATION",
         )
+
+    def test_enabled_task_can_still_have_schedule_gap_active(self):
+        state = self.state(True)
+        state["updated_at"] = "2026-09-09T01:41:51.738851Z"
+        state["last_run_time"] = "2026-09-08T23:31:43.768364Z"
+        result = classify_pause(
+            state,
+            observed_at="2026-09-09T02:45:00Z",
+        )
+        self.assertFalse(result["pause_detected"])
+        self.assertTrue(result["schedule_gap_detected"])
+        self.assertTrue(result["schedule_gap_active"])
+        self.assertEqual(result["event_class"], "SCHEDULE_GAP_ACTIVE")
+        self.assertGreaterEqual(result["missed_slot_count"], 1)
+        self.assertEqual(result["required_action"], "MONITOR_NEXT_SLOT_NO_DUPLICATE_CATCHUP")
+        self.assertFalse(result["duplicate_catchup_allowed"])
+
+    def test_snapshot_fingerprints_and_changed_fields_preserve_incident_before_state(self):
+        before = self.state(False)
+        previous = snapshot_state(
+            before,
+            observed_at="2026-09-09T01:35:52.289137Z",
+        )
+        after = self.state(True)
+        after["updated_at"] = "2026-09-09T01:41:51.738851Z"
+        result = classify_pause(
+            after,
+            observed_at="2026-09-09T01:42:00Z",
+            previous_snapshot=previous,
+        )
+        self.assertEqual(result["changed_fields"], ["is_enabled"])
+        self.assertFalse(result["baseline_match"])
+        self.assertEqual(result["change_window_start"], previous["snapshot_observed_at"])
+        self.assertIsNotNone(result["snapshot"]["fingerprints"]["schedule"])
+        self.assertIsNotNone(result["snapshot"]["fingerprints"]["prompt"])
+
+    def test_post_recovery_disable_is_recovery_regression(self):
+        post_recovery = snapshot_state(
+            self.state(True),
+            observed_at="2026-09-09T01:42:00Z",
+        )
+        recurrent = self.state(False)
+        recurrent["updated_at"] = "2026-09-09T01:50:00Z"
+        result = classify_pause(
+            recurrent,
+            observed_at="2026-09-09T01:51:00Z",
+            prior_pause_count=1,
+            post_recovery_snapshot=post_recovery,
+        )
+        self.assertEqual(result["event_class"], "RECOVERY_REGRESSION")
+        self.assertFalse(result["post_recovery_match"])
 
     def test_evidence_backed_reason_is_preserved(self):
         result = classify_pause(
@@ -113,13 +179,16 @@ class AutomationPauseRecoveryV30Tests(unittest.TestCase):
         )
 
     def test_enabled_state_is_not_pause_incident(self):
+        state = self.state(True)
+        state["last_run_time"] = "2026-09-07T00:30:10Z"
         result = classify_pause(
-            self.state(True),
-            observed_at="2026-09-07T01:01:48.674172Z",
+            state,
+            observed_at="2026-09-07T00:31:00Z",
         )
         self.assertFalse(result["pause_detected"])
         self.assertEqual(result["required_action"], "NONE")
         self.assertTrue(result["desired_enabled_state"])
+        self.assertEqual(result["event_class"], "NONE")
 
     def test_runtime_failure_policy_never_disables_scheduler(self):
         policy = runtime_failure_policy(
