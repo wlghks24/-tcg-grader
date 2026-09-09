@@ -9,8 +9,9 @@ accepted only from full-regression-verified repair-state history.
 Activation requirements:
 - at least 1,000 independent repair labels
 - both success and failure classes represented by at least 100 labels
-- one-hidden-layer candidates with hidden sizes 4, 8, and 12 are compared
-- holdout performance must beat a constant-rate baseline before activation
+- hidden sizes 4, 8 and 12 are compared across three deterministic seeds
+- chronological train/tune/calibration/final-test partitions are isolated
+- final-test performance must beat a constant-rate baseline before activation
 """
 from __future__ import annotations
 
@@ -23,7 +24,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
-from safe_runtime import atomic_write_json, safe_read_text
+from safe_runtime import atomic_write_json, exclusive_file_lock, safe_read_text
 
 ROOT = Path(__file__).resolve().parent
 LABELS_PATH = ROOT / "VERIFIED_NEURAL_REPAIR_LABELS.json"
@@ -182,7 +183,7 @@ def _sample_id(row: dict[str, Any]) -> str:
     return hashlib.sha256("|".join(parts).encode("utf-8", "replace")).hexdigest()[:24]
 
 
-def ingest_full_regression_state(
+def _ingest_full_regression_state_unlocked(
     state_path: Path,
     *,
     labels_path: Path = LABELS_PATH,
@@ -246,6 +247,24 @@ def ingest_full_regression_state(
         "label_count": len(labels["labels"]),
         "reason": "full_regression_ingested",
     }
+
+
+def ingest_full_regression_state(
+    state_path: Path,
+    *,
+    labels_path: Path = LABELS_PATH,
+) -> dict[str, Any]:
+    """Serialize the verified load/merge/save transaction so labels cannot be lost."""
+    try:
+        with exclusive_file_lock(labels_path, timeout_seconds=3.0, stale_seconds=300):
+            return _ingest_full_regression_state_unlocked(state_path, labels_path=labels_path)
+    except TimeoutError:
+        return {
+            "ok": True,
+            "added": 0,
+            "reason": "learning_lock_busy",
+            "label_count": len(_load_labels(labels_path)["labels"]),
+        }
 
 
 def _sigmoid(x: float) -> float:
