@@ -45,7 +45,7 @@
       "tests": [
         "test_v4.EvidenceLearningTests"
       ],
-      "validation": "1,000개 미만 모델 업데이트 금지/기존 모델 유지, 독립 실제 라벨·owner 다양성·시간순 train/tune/calibration/final-test·누수/NaN/확률/드리프트 검사, 학습점수로 검증 승격 금지"
+      "validation": "1,000개 미만 모델 업데이트 금지/기존 모델 유지, 독립 실제 라벨·문자열 ID/origin/reference·timezone 시각·owner 3개 이상·전체 및 train/tune/calibration/final-test 각 split 편중 70% 이하·누수/NaN/확률/드리프트 검사, 학습점수로 검증 승격 금지"
     },
     "adaptive_learning": {
       "entry_file": "adaptive_learning.py",
@@ -58,7 +58,7 @@
         "test_v7.RobustNeuralTests",
         "test_v8.ModelIntegrityTests"
       ],
-      "validation": "실제 독립 라벨 1,000개 이상에서만 hidden 4/8/12 × seeds 20260907/20260917/20260927 비교, tune-only 선택·calibration/test 격리·출처 편중/합성라벨 차단·모델 차원/유한값/구조 검증"
+      "validation": "실제 독립 라벨 1,000개 이상에서만 hidden 4/8/12 × seeds 20260907/20260917/20260927 비교, tune-only 선택·calibration/test 격리·전체 및 각 split 출처 편중/합성라벨/입력타입 차단·모델 차원/유한값/구조 검증"
     },
     "diverse_collection": {
       "entry_file": "diverse_collection.py",
