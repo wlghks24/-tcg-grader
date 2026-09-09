@@ -12,6 +12,7 @@ from dataclasses import dataclass, replace
 from datetime import datetime, timedelta, timezone
 from decimal import Decimal, InvalidOperation
 from hashlib import sha256
+import json
 import re
 from typing import Iterable, Sequence
 
@@ -706,3 +707,194 @@ def x10_fact_gate(
                 f"{result.uncertainty_reason or 'unverified'}"
             )
     return (not reasons, reasons)
+
+
+VERIFICATION_RECEIPT_SCHEMA = 1
+VERIFICATION_MODE = "INSTAGRAM_LOCAL_EVIDENCE_ONLY"
+
+
+def _verification_result_payload(result: VerificationResult) -> dict[str, object]:
+    return {
+        "canonical_key": result.canonical_key,
+        "fact_type": result.fact_type,
+        "status": result.status,
+        "canonical_value": result.canonical_value,
+        "source_count": result.source_count,
+        "independent_source_count": result.independent_source_count,
+        "official_primary_present": result.official_primary_present,
+        "confidence_score": result.confidence_score,
+        "uncertainty_reason": result.uncertainty_reason,
+        "conflict_values": list(result.conflict_values),
+    }
+
+
+def _receipt_hash(payload: dict[str, object]) -> str:
+    encoded = json.dumps(
+        payload,
+        ensure_ascii=False,
+        sort_keys=True,
+        separators=(",", ":"),
+        allow_nan=False,
+    ).encode("utf-8")
+    return sha256(encoded).hexdigest()
+
+
+def build_production_verification_receipt(
+    results: Sequence[VerificationResult],
+    *,
+    snapshot_id: str,
+    required_core_keys: Sequence[tuple[str, str]],
+) -> dict[str, object]:
+    """Bind a production PASS to the exact locally verified result set."""
+    snapshot = str(snapshot_id or "").strip()
+    required = sorted(
+        {
+            (str(key).strip(), str(fact).strip())
+            for key, fact in required_core_keys
+            if str(key).strip() and str(fact).strip()
+        }
+    )
+    if not snapshot:
+        raise ValueError("SNAPSHOT_ID_REQUIRED")
+    if not required:
+        raise ValueError("REQUIRED_CORE_KEYS_REQUIRED")
+
+    passed, reasons = x10_fact_gate(results, required_core_keys=required)
+    if not passed:
+        raise ValueError("VERIFICATION_GATE_FAILED:" + "|".join(reasons))
+
+    core_results = [
+        result for result in results
+        if result.fact_type in CORE_FACTS
+    ]
+    verified_keys = sorted(
+        {
+            (result.canonical_key, result.fact_type)
+            for result in core_results
+            if result.status == "verified"
+        }
+    )
+    evidence_payload = sorted(
+        (_verification_result_payload(result) for result in results),
+        key=lambda row: (
+            str(row["canonical_key"]),
+            str(row["fact_type"]),
+            str(row["status"]),
+            str(row["canonical_value"]),
+        ),
+    )
+    evidence_fingerprint = _receipt_hash({"results": evidence_payload})
+    payload: dict[str, object] = {
+        "schema_version": VERIFICATION_RECEIPT_SCHEMA,
+        "verification_mode": VERIFICATION_MODE,
+        "snapshot_id": snapshot,
+        "status": "pass",
+        "required_core_keys": [list(item) for item in required],
+        "verified_core_keys": [list(item) for item in verified_keys],
+        "core_fact_count": len(core_results),
+        "verified_core_fact_count": len(verified_keys),
+        "evidence_fingerprint": evidence_fingerprint,
+    }
+    payload["receipt_hash"] = _receipt_hash(payload)
+    return payload
+
+
+def validate_production_verification_receipt(
+    receipt: object,
+    *,
+    expected_snapshot_id: str,
+) -> list[str]:
+    errors: list[str] = []
+    if not isinstance(receipt, dict):
+        return ["verification_receipt must be an object"]
+
+    expected_fields = {
+        "schema_version",
+        "verification_mode",
+        "snapshot_id",
+        "status",
+        "required_core_keys",
+        "verified_core_keys",
+        "core_fact_count",
+        "verified_core_fact_count",
+        "evidence_fingerprint",
+        "receipt_hash",
+    }
+    if set(receipt) != expected_fields:
+        errors.append("verification_receipt field set mismatch")
+        return errors
+    if receipt.get("schema_version") != VERIFICATION_RECEIPT_SCHEMA:
+        errors.append("verification_receipt schema mismatch")
+    if receipt.get("verification_mode") != VERIFICATION_MODE:
+        errors.append("verification_receipt mode mismatch")
+    if receipt.get("snapshot_id") != expected_snapshot_id:
+        errors.append("verification_receipt snapshot mismatch")
+    if receipt.get("status") != "pass":
+        errors.append("verification_receipt status must be pass")
+
+    required_raw = receipt.get("required_core_keys")
+    verified_raw = receipt.get("verified_core_keys")
+    def normalize_pairs(value: object) -> set[tuple[str, str]] | None:
+        if not isinstance(value, list):
+            return None
+        out: set[tuple[str, str]] = set()
+        for row in value:
+            if (
+                not isinstance(row, list)
+                or len(row) != 2
+                or not all(isinstance(item, str) and item.strip() for item in row)
+            ):
+                return None
+            out.add((row[0].strip(), row[1].strip()))
+        return out
+
+    required = normalize_pairs(required_raw)
+    verified = normalize_pairs(verified_raw)
+    if not required:
+        errors.append("verification_receipt required_core_keys invalid")
+    if verified is None:
+        errors.append("verification_receipt verified_core_keys invalid")
+    elif required is not None and not required.issubset(verified):
+        errors.append("verification_receipt missing required verified core facts")
+
+    core_count = receipt.get("core_fact_count")
+    verified_count = receipt.get("verified_core_fact_count")
+    if isinstance(core_count, bool) or not isinstance(core_count, int) or core_count <= 0:
+        errors.append("verification_receipt core_fact_count invalid")
+    if (
+        isinstance(verified_count, bool)
+        or not isinstance(verified_count, int)
+        or verified_count <= 0
+    ):
+        errors.append("verification_receipt verified_core_fact_count invalid")
+    elif verified is not None and verified_count != len(verified):
+        errors.append("verification_receipt verified_core_fact_count mismatch")
+    if isinstance(core_count, int) and isinstance(verified_count, int) and verified_count > core_count:
+        errors.append("verification_receipt verified count exceeds core count")
+
+    fingerprint = receipt.get("evidence_fingerprint")
+    if (
+        not isinstance(fingerprint, str)
+        or len(fingerprint) != 64
+        or any(ch not in "0123456789abcdef" for ch in fingerprint)
+    ):
+        errors.append("verification_receipt evidence_fingerprint invalid")
+
+    receipt_hash = receipt.get("receipt_hash")
+    if (
+        not isinstance(receipt_hash, str)
+        or len(receipt_hash) != 64
+        or any(ch not in "0123456789abcdef" for ch in receipt_hash)
+    ):
+        errors.append("verification_receipt receipt_hash invalid")
+    else:
+        base = dict(receipt)
+        base.pop("receipt_hash", None)
+        try:
+            expected_hash = _receipt_hash(base)
+        except (TypeError, ValueError):
+            errors.append("verification_receipt canonical encoding failed")
+        else:
+            if receipt_hash != expected_hash:
+                errors.append("verification_receipt hash mismatch")
+    return errors
