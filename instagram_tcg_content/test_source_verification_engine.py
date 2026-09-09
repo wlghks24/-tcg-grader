@@ -11,6 +11,7 @@ from instagram_tcg_content.source_verification_engine import (
 )
 
 FIXED_NOW = datetime(2026, 9, 4, 14, 0, tzinfo=timezone.utc)
+SNAPSHOT_FINGERPRINT = "c" * 64
 
 
 def verify_fact(rows):
@@ -444,6 +445,7 @@ def main():
     receipt = build_production_verification_receipt(
         [good_observations],
         snapshot_id="snapshot-verified-1",
+        snapshot_fingerprint=SNAPSHOT_FINGERPRINT,
         required_core_keys=[(good.canonical_key, good.fact_type)],
         now=FIXED_NOW,
     )
@@ -453,12 +455,14 @@ def main():
         validate_production_verification_receipt(
             receipt,
             expected_snapshot_id="snapshot-verified-1",
+            expected_snapshot_fingerprint=SNAPSHOT_FINGERPRINT,
         )
         == []
     )
 
     assert receipt["schema_version"] == 2, receipt
     assert receipt["verification_contract"] == "OBSERVATION_GROUPS_V1", receipt
+    assert receipt["snapshot_fingerprint"] == SNAPSHOT_FINGERPRINT, receipt
     assert receipt["observation_count"] == 2, receipt
     assert len(receipt["observation_fingerprint"]) == 64, receipt
 
@@ -467,6 +471,7 @@ def main():
         build_production_verification_receipt(
             [good],
             snapshot_id="snapshot-bypass",
+            snapshot_fingerprint=SNAPSHOT_FINGERPRINT,
             required_core_keys=[(good.canonical_key, good.fact_type)],
             now=FIXED_NOW,
         )
@@ -479,12 +484,20 @@ def main():
         build_production_verification_receipt(
             [good_observations, good_observations],
             snapshot_id="snapshot-duplicate",
+            snapshot_fingerprint=SNAPSHOT_FINGERPRINT,
             required_core_keys=[(good.canonical_key, good.fact_type)],
             now=FIXED_NOW,
         )
         raise AssertionError("duplicate verification group was accepted")
     except ValueError as exc:
         assert str(exc).startswith("DUPLICATE_VERIFICATION_GROUP:"), exc
+
+    snapshot_mismatch = validate_production_verification_receipt(
+        receipt,
+        expected_snapshot_id="snapshot-verified-1",
+        expected_snapshot_fingerprint="d" * 64,
+    )
+    assert "verification_receipt snapshot fingerprint mismatch" in snapshot_mismatch
 
     tampered = dict(receipt)
     tampered["verified_core_fact_count"] = 999
@@ -499,6 +512,7 @@ def main():
         build_production_verification_receipt(
             [bad_observations],
             snapshot_id="snapshot-blocked",
+            snapshot_fingerprint=SNAPSHOT_FINGERPRINT,
             required_core_keys=[(bad.canonical_key, bad.fact_type)],
             now=FIXED_NOW,
         )
