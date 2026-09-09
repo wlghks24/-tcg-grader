@@ -1,6 +1,17 @@
 {
   "schema_version": 8,
-  "stages": ["inventory", "binding", "backup", "read_only_plan", "additive_install", "wire_one_entrypoint", "targeted_tests", "full_regression", "actual_output_validation", "activate"],
+  "stages": [
+    "inventory",
+    "binding",
+    "backup",
+    "read_only_plan",
+    "additive_install",
+    "wire_one_entrypoint",
+    "targeted_tests",
+    "full_regression",
+    "actual_output_validation",
+    "activate"
+  ],
   "rollback_stage": "restore_entrypoint",
   "rules": {
     "single_project": true,
@@ -9,6 +20,20 @@
     "artifact_hash_required_for_mutation_and_test_stages": true,
     "activation_requires_actual_output_validation": true,
     "model_structure_validated_before_inference": true,
-    "model_can_verify": false
+    "model_can_verify": false,
+    "model_update_requires_real_labels": 1000,
+    "model_update_below_threshold": "KEEP_EXISTING_MODEL",
+    "synthetic_or_ai_self_labels_forbidden": true,
+    "temporal_model_split": "train_50_tune_15_calibration_15_final_test_20",
+    "neural_hidden_sizes": [
+      4,
+      8,
+      12
+    ],
+    "neural_seeds": [
+      20260907,
+      20260917,
+      20260927
+    ]
   }
 }
