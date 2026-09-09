@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+from datetime import datetime, timedelta, timezone
 import random
 import tempfile
 import unittest
@@ -109,6 +110,59 @@ class InstagramCardReliabilityV8IntegrationTests(unittest.TestCase):
         self.assertFalse(concentrated["ready_for_training"])
         self.assertIn("INSUFFICIENT_OWNER_DIVERSITY", concentrated["readiness_reasons"])
         self.assertIn("OWNER_CONCENTRATION_TOO_HIGH", concentrated["readiness_reasons"])
+
+    def test_label_schema_and_split_source_concentration_fail_closed(self):
+        base_time = datetime(2025, 1, 1, tzinfo=timezone.utc)
+
+        def make_rows():
+            rows = []
+            for i in range(1000):
+                observed = base_time + timedelta(minutes=i)
+                labeled = observed + timedelta(seconds=1)
+                owner = f"owner-{i % 4}" if i < 800 else "owner-0"
+                rows.append({
+                    "project": "instagram_card",
+                    "purpose": "verification_review",
+                    "revision": "v8-integration",
+                    "label_source": "human_audit",
+                    "label_reference": f"ref-{i}",
+                    "label": i % 2,
+                    "id": f"id-{i}",
+                    "origin_group": f"origin-{i}",
+                    "owner_group": owner,
+                    "synthetic": False,
+                    "observed_at": observed.isoformat(),
+                    "labeled_at": labeled.isoformat(),
+                    "features": {name: 0.5 for name in FEATURES},
+                })
+            return rows
+
+        for learner_cls in (EvidenceLearner, AdaptiveEvidenceLearner):
+            learner = learner_cls(
+                project="instagram_card",
+                purpose="verification_review",
+                revision="v8-integration",
+            )
+
+            malformed = make_rows()
+            malformed[0]["label_reference"] = 123
+            with self.assertRaisesRegex(ValueError, "INDEPENDENT_LABEL_REQUIRED"):
+                learner.fit(malformed)
+
+            malformed_time = make_rows()
+            malformed_time[0]["observed_at"] = 123
+            with self.assertRaisesRegex(ValueError, "TIMESTAMP_REQUIRED"):
+                learner.fit(malformed_time)
+
+            split_biased = make_rows()
+            report = learner.fit(split_biased)
+            self.assertEqual(report["status"], "INSUFFICIENT_SOURCE_DIVERSITY")
+            self.assertIsNone(report["model"])
+            self.assertTrue(report.get("existing_model_preserved"))
+            split_quality = report["data_quality"]["split_source_quality"]
+            final_test = next(row for row in split_quality if row["split"] == "test")
+            self.assertEqual(final_test["owner_groups"], 1)
+            self.assertEqual(final_test["owner_dominance"], 1.0)
 
     def test_model_integrity_rejects_nan_and_dimension_mismatch(self):
         base = {
