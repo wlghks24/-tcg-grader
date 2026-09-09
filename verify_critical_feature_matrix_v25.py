@@ -13,6 +13,8 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parent
 EXHAUSTIVE = ROOT / ".github/workflows/exhaustive-selfrefine-guard.yml"
 DAILY = ROOT / ".github/workflows/daily-0600-collection-instagram-accuracy.yml"
+PERSIST_MAIN_CROSSCHECK = ROOT / ".github/workflows/persist-main-crosscheck-snapshot.yml"
+INSTAGRAM_SELFREFINE = ROOT / ".github/workflows/instagram-tcg-selfrefine.yml"
 
 FEATURE_FILES = {
     "grading_vision_1_4_8": [
@@ -129,6 +131,18 @@ FEATURE_FILES = {
         "repository_integrity_guard.py",
         "security_self_audit.py",
     ],
+    "instagram_cardinfo_local_verification": [
+        "instagram_tcg_content/source_verification_engine.py",
+        "instagram_tcg_content/source_route_resilience.py",
+        "instagram_tcg_content/source_routes.json",
+        "instagram_tcg_content/verification_scope_policy.json",
+        "instagram_tcg_content/test_source_verification_engine.py",
+        "instagram_tcg_content/test_source_route_resilience.py",
+        "test_instagram_verification_scope_policy_v210.py",
+        "instagram_tcg_content/production_state.py",
+        "instagram_tcg_content/automation_state_guard.py",
+        ".github/workflows/instagram-tcg-selfrefine.yml",
+    ],
     "code_map_internal": [
         "verify_code_map_internal.py",
         "code_map_intelligence.py",
@@ -164,15 +178,15 @@ EXHAUSTIVE_COMMANDS = {
     "code_map_internal": "python verify_code_map_internal.py",
 }
 
-DAILY_COMMANDS = {
+INSTAGRAM_LOCAL_COMMANDS = {
     "domain_isolation": "python selfrefine_domain_boundary_guard.py",
-    "peer_learning_gate": "python peer_learning_crosscheck_gate.py --self-test",
-    "instagram_peer_export": "python -m instagram_tcg_content.peer_learning_export --self-test",
-    "live_collection_refresh": "tcg_updater.update_cycle('scheduled-0600-audit')",
-    "daily_audit": "python daily_collection_instagram_accuracy.py",
-    "health_freshness": "current_run_age_seconds",
-    "critical_collector_diagnostics": "critical_collection_results",
-    "code_map_internal": "python verify_code_map_internal.py",
+    "state_isolation": "python -m unittest -v instagram_tcg_content.test_state_isolation_v18",
+    "source_verification": "python -m instagram_tcg_content.test_source_verification_engine",
+    "source_resilience": "python -m instagram_tcg_content.test_source_route_resilience",
+    "verification_scope": "python -m unittest -v test_instagram_verification_scope_policy_v210",
+    "production_state": "python -m instagram_tcg_content.test_production_state",
+    "pause_guard": "python -m instagram_tcg_content.automation_state_guard --self-test",
+    "instagram_selfrefine": "python -m instagram_tcg_content.selfrefine_gate",
 }
 
 def _read(path: Path) -> str:
@@ -194,24 +208,53 @@ def verify() -> dict:
         if fragment not in exhaustive:
             failures.append(f"exhaustive coverage missing: {feature}: {fragment}")
 
-    daily = _read(DAILY)
-    for feature, fragment in DAILY_COMMANDS.items():
-        if fragment not in daily:
-            failures.append(f"06:00 coverage missing: {feature}: {fragment}")
+    legacy_daily = _read(DAILY)
+    legacy_persist = _read(PERSIST_MAIN_CROSSCHECK)
+    instagram = _read(INSTAGRAM_SELFREFINE)
+    for feature, fragment in INSTAGRAM_LOCAL_COMMANDS.items():
+        if fragment not in instagram:
+            failures.append(f"Instagram-local coverage missing: {feature}: {fragment}")
 
-    if "branches: [main]" not in daily:
-        failures.append("06:00 workflow no longer covers main pushes")
-    if "cron: '0 21 * * *'" not in daily:
-        failures.append("06:00 KST schedule contract missing")
-    if "403_429_bypass_allowed" not in daily:
-        failures.append("06:00 safety contract no longer checks 403/429 bypass prohibition")
+    legacy_trigger = legacy_daily.split("\npermissions:", 1)[0]
+    if "schedule:" in legacy_trigger:
+        failures.append("retired Main↔Instagram crosscheck is still scheduled")
+    if "pull_request:" in legacy_trigger or "push:" in legacy_trigger:
+        failures.append("retired Main↔Instagram crosscheck is still automatic")
+    if "workflow_dispatch:" not in legacy_trigger:
+        failures.append("retired Main↔Instagram workflow lacks manual no-op marker")
+    if "Cross-domain audit retired" not in legacy_daily:
+        failures.append("retired Main↔Instagram workflow lacks retirement marker")
+    if "python crosscheck_runtime_bridge.py" in legacy_daily:
+        failures.append("retired Main↔Instagram workflow still executes runtime crosscheck")
+    for marker in (
+        "crosscheck_runtime_bridge.py",
+        "peer_learning_runtime_bridge.py",
+        "TCG_CROSSCHECK/MARKET_ANALYSIS",
+        "daily_collection_instagram_accuracy.py",
+    ):
+        if marker in instagram:
+            failures.append(f"Instagram SELFREFINE still references retired cross-domain path: {marker}")
+
+    persist_trigger = legacy_persist.split("\npermissions:", 1)[0]
+    if "workflow_run:" in persist_trigger:
+        failures.append("retired Main snapshot persistence still has workflow_run trigger")
+    if "schedule:" in persist_trigger or "push:" in persist_trigger or "pull_request:" in persist_trigger:
+        failures.append("retired Main snapshot persistence is still automatic")
+    if "workflow_dispatch:" not in persist_trigger:
+        failures.append("retired Main snapshot persistence lacks manual no-op marker")
+    if "contents: write" in legacy_persist:
+        failures.append("retired Main snapshot persistence still has contents write permission")
+    if "Main snapshot persistence retired" not in legacy_persist:
+        failures.append("retired Main snapshot persistence lacks retirement marker")
 
     return {
         "ok": not failures,
         "critical_feature_groups": len(FEATURE_FILES),
         "critical_files_checked": checked_files,
         "exhaustive_commands_checked": len(EXHAUSTIVE_COMMANDS),
-        "daily_commands_checked": len(DAILY_COMMANDS),
+        "daily_commands_checked": 0,
+        "instagram_local_commands_checked": len(INSTAGRAM_LOCAL_COMMANDS),
+        "legacy_cross_domain_workflow_mode": "disabled_noop_manual_only",
         "failures": failures,
     }
 

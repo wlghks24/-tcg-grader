@@ -4,35 +4,21 @@ on:
   pull_request:
     paths:
       - 'instagram_tcg_content/**'
+      - 'ai_reliability_v8/**'
       - 'shared_self_learning/**'
-      - 'crosscheck_exchange/**'
-      - 'TCG_CROSSCHECK/**'
-      - 'selfrefine_crosscheck_gate.py'
-      - 'peer_learning_crosscheck_gate.py'
-      - 'main_peer_learning_export.py'
-      - 'main_persisted_learning_export.py'
-      - 'peer_learning_runtime_bridge.py'
-      - 'test_peer_learning_crosscheck_v23.py'
-      - 'selfrefine_domain_policy.json'
+      - 'TCG_CROSSCHECK/IG_CARDINFO/**'
       - 'selfrefine_domain_boundary_guard.py'
-      - 'test_selfrefine_domain_isolation_v18.py'
+      - 'test_instagram_verification_scope_policy_v210.py'
       - '.github/workflows/instagram-tcg-selfrefine.yml'
   push:
     branches: [main]
     paths:
       - 'instagram_tcg_content/**'
+      - 'ai_reliability_v8/**'
       - 'shared_self_learning/**'
-      - 'crosscheck_exchange/**'
-      - 'TCG_CROSSCHECK/**'
-      - 'selfrefine_crosscheck_gate.py'
-      - 'peer_learning_crosscheck_gate.py'
-      - 'main_peer_learning_export.py'
-      - 'main_persisted_learning_export.py'
-      - 'peer_learning_runtime_bridge.py'
-      - 'test_peer_learning_crosscheck_v23.py'
-      - 'selfrefine_domain_policy.json'
+      - 'TCG_CROSSCHECK/IG_CARDINFO/**'
       - 'selfrefine_domain_boundary_guard.py'
-      - 'test_selfrefine_domain_isolation_v18.py'
+      - 'test_instagram_verification_scope_policy_v210.py'
       - '.github/workflows/instagram-tcg-selfrefine.yml'
   workflow_dispatch:
 
@@ -50,37 +36,30 @@ jobs:
       - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97
         with:
           python-version: '3.11'
-      - name: Enforce Main vs Instagram domain boundary
-        run: python selfrefine_domain_boundary_guard.py
-      - name: Verify shared algorithm and passive crosscheck contracts
+
+      - name: Enforce Instagram isolation from retired card-price analysis
         run: |
-          python -m instagram_tcg_content.crosscheck_export --self-test
-          python -m instagram_tcg_content.persisted_crosscheck_export --self-test
-          python crosscheck_runtime_bridge.py --self-test
-          python -m unittest -v test_crosscheck_runtime_bridge_v26.py
-          python selfrefine_crosscheck_gate.py --self-test
-          python -m instagram_tcg_content.peer_learning_export --self-test
-          python -m instagram_tcg_content.persisted_learning_export --self-test
-          python main_persisted_learning_export.py --self-test
-          python peer_learning_runtime_bridge.py --self-test
-          python -m unittest -v instagram_tcg_content.test_peer_learning_manifest_contract_v28
-          python peer_learning_crosscheck_gate.py --self-test
-          python -m unittest -v test_selfrefine_domain_isolation_v18.py test_peer_learning_crosscheck_v23.py
+          python selfrefine_domain_boundary_guard.py
           python -m unittest -v instagram_tcg_content.test_state_isolation_v18
-          python -m instagram_tcg_content.automation_state_guard --self-test
-          python -m unittest -v instagram_tcg_content.test_automation_pause_recovery_v30
-      - name: Verify diversified source evidence rules
-        run: python -m instagram_tcg_content.test_source_verification_engine
-      - name: Verify resilient source substitution
-        run: python -m instagram_tcg_content.test_source_route_resilience
-      - name: Verify run-packet and production-state guards
+
+      - name: Verify Instagram-local source evidence before production
+        run: |
+          python -m instagram_tcg_content.test_source_verification_engine
+          python -m instagram_tcg_content.test_source_route_resilience
+          python -m unittest -v test_instagram_verification_scope_policy_v210
+          python -m json.tool instagram_tcg_content/source_routes.json >/dev/null
+          python -m json.tool instagram_tcg_content/verification_scope_policy.json >/dev/null
+
+      - name: Verify run packet, production state, and pause safety
         run: |
           python -m instagram_tcg_content.test_live_packet_guards
           python -m instagram_tcg_content.test_production_state
-      - name: Validate Instagram source route policy
-        run: python -m json.tool instagram_tcg_content/source_routes.json >/dev/null
-      - name: Run Instagram TCG Content SELFREFINE only
+          python -m instagram_tcg_content.automation_state_guard --self-test
+          python -m unittest -v instagram_tcg_content.test_automation_pause_recovery_v30
+
+      - name: Run Instagram-only SELFREFINE
         run: python -m instagram_tcg_content.selfrefine_gate
+
       - name: Upload Instagram TCG SELFREFINE ledger
         if: always()
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a

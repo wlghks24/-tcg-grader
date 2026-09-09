@@ -22,15 +22,19 @@ class CodeMapEntrypointRouteV196Tests(unittest.TestCase):
         self.assertFalse(result["repository_wide_search_required"])
         self.assertEqual("direct_entrypoint", result["route_decision"])
 
-    def test_crosscheck_routes_to_runtime_bridge_first(self):
+    def test_crosscheck_routes_to_instagram_local_source_verification(self):
         result = resolve_feature_query("인스타 카드정보 자료 비교 교차확인 오류")
         groups = [row["group"] for row in result["matched_feature_groups"]]
         self.assertEqual("instagram_cardinfo_crosscheck", groups[0])
-        self.assertEqual("crosscheck_runtime_bridge.py", result["entry_files"][0])
+        self.assertEqual(
+            "instagram_tcg_content/source_verification_engine.py",
+            result["entry_files"][0],
+        )
         self.assertIn(
-            "test_crosscheck_runtime_bridge_v26.py",
+            "instagram_tcg_content/test_source_verification_engine.py",
             result["suggested_tests"],
         )
+        self.assertNotIn("crosscheck_runtime_bridge.py", result["primary_files"])
 
     def test_source_verification_routes_to_verification_engine(self):
         result = resolve_feature_query("인스타 카드정보 공식 출처 검증")
@@ -124,7 +128,11 @@ class CodeMapEntrypointRouteV196Tests(unittest.TestCase):
     def test_crosscheck_primary_tests_do_not_pull_secondary_feature_tests(self):
         result = resolve_feature_query("인스타 카드정보 자료 비교 교차확인 오류")
         self.assertEqual("instagram_cardinfo_crosscheck", result["entry_group"])
-        self.assertIn("test_crosscheck_runtime_bridge_v26.py", result["suggested_tests"])
+        self.assertIn(
+            "instagram_tcg_content/test_source_verification_engine.py",
+            result["suggested_tests"],
+        )
+        self.assertNotIn("test_crosscheck_runtime_bridge_v26.py", result["suggested_tests"])
         self.assertEqual("primary_feature_group_only", result["test_scope_policy"])
         self.assertNotEqual([], result["related_feature_groups"])
         self.assertTrue(
