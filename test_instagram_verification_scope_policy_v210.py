@@ -9,6 +9,7 @@ from code_map_intelligence import resolve_feature_query
 
 ROOT = Path(__file__).resolve().parent
 POLICY = ROOT / "instagram_tcg_content" / "verification_scope_policy.json"
+README = ROOT / "instagram_tcg_content" / "README.md"
 IG_WORKFLOW = ROOT / ".github" / "workflows" / "instagram-tcg-selfrefine.yml"
 LEGACY_WORKFLOW = ROOT / ".github" / "workflows" / "daily-0600-collection-instagram-accuracy.yml"
 LEGACY_PERSIST = ROOT / ".github" / "workflows" / "persist-main-crosscheck-snapshot.yml"
@@ -35,6 +36,24 @@ class InstagramVerificationScopePolicyV210Tests(unittest.TestCase):
             payload["source_verification_entrypoint"],
             "instagram_tcg_content/source_verification_engine.py",
         )
+        self.assertTrue(payload["production_verification_receipt_required"])
+        self.assertEqual(
+            payload["production_verification_receipt_mode"],
+            "INSTAGRAM_LOCAL_EVIDENCE_ONLY",
+        )
+        self.assertEqual(
+            payload["production_finalization_entrypoint"],
+            "instagram_tcg_content/production_state.py::finalize_production",
+        )
+        self.assertIn("build_verification_receipt", payload["preproduction_order"])
+        self.assertIn("validate_verification_receipt", payload["preproduction_order"])
+
+    def test_readme_does_not_reintroduce_main_crosscheck(self):
+        text = README.read_text(encoding="utf-8")
+        self.assertNotIn("crosscheck_exchange/를 통한 passive factual JSON 교차검증만 허용", text)
+        self.assertNotIn("TCG_CROSSCHECK/exchange_manifest.json", text)
+        self.assertIn("Main/카드시세분석 factual snapshot", text)
+        self.assertIn("verification receipt", text)
 
     def test_instagram_ci_does_not_execute_market_analysis_crosscheck(self):
         text = IG_WORKFLOW.read_text(encoding="utf-8")
