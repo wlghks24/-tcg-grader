@@ -34,6 +34,21 @@ class TabletStandaloneHardeningV209(unittest.TestCase):
    self.assertTrue((dst/"active.py").is_file())
    for name in excluded:
     self.assertFalse((dst/name).exists(),name)
+ def test_precollect_stage_copy_excludes_secret_files_but_keeps_collector_inputs(self):
+  with tempfile.TemporaryDirectory() as tmp:
+   root=Path(tmp); src=root/"src"; dst=root/"stage"; src.mkdir()
+   keep=("adaptive_collection_stats.json","VERIFIED_COLLECTION_NEURAL_MODEL.json","source_collection_stats.json")
+   secret=(".env",".env.local","credentials-prod.json","secrets.json","oauth_token_main.json","client.pem","private.key","client.p12","client.pfx")
+   for name in keep:
+    (src/name).write_text("{}\n",encoding="utf-8")
+   for name in secret:
+    (src/name).write_text("sensitive\n",encoding="utf-8")
+   core._safe_stage_copy(src,dst)
+   for name in keep:
+    self.assertTrue((dst/name).is_file(),name)
+   for name in secret:
+    self.assertFalse((dst/name).exists(),name)
+
  def test_auto_loop(self):
   src=(ROOT/"tcg_updater.py").read_text(encoding="utf-8"); loop=src[src.index("def auto_update_loop():"):src.index("\nclass Handler",src.index("def auto_update_loop():"))]
   self.assertNotIn("except Exception: pass",loop); self.assertIn("_retry_failed_automatic",loop); self.assertIn("AUTO_FAILURE_RETRY_SECONDS",src)

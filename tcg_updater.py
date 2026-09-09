@@ -993,7 +993,14 @@ def _safe_stage_copy(src, dst):
         ignored=[]
         for name in names:
             candidate=Path(path)/name
-            if name in skip or name.endswith('.pyc') or name.endswith('.log'):
+            lower=name.lower()
+            secret_file=(
+                lower == '.env'
+                or lower.startswith('.env.')
+                or (lower.endswith('.json') and lower.startswith(('credentials','secrets','oauth_token')))
+                or lower.endswith(('.pem','.key','.p12','.pfx'))
+            )
+            if name in skip or name.endswith('.pyc') or name.endswith('.log') or secret_file:
                 ignored.append(name)
                 continue
             if candidate.is_symlink():
