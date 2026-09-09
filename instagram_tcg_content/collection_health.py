@@ -58,7 +58,14 @@ def _game_of(row: dict[str, Any]) -> str:
 
 def _language_of(row: dict[str, Any]) -> str:
     value = row.get("language")
-    return value.strip().upper() if isinstance(value, str) else ""
+    if isinstance(value, str) and value.strip():
+        return value.strip().upper()
+    identity = row.get("identity")
+    if isinstance(identity, dict):
+        value = identity.get("language")
+        if isinstance(value, str) and value.strip():
+            return value.strip().upper()
+    return ""
 
 
 def _validate_routes(routes: dict[str, Any]) -> list[str]:
@@ -232,8 +239,7 @@ def self_test() -> None:
             "canonical_key": f"{game}|release|{language.lower()}",
             "fact_type": "release",
             "lineage_key": f"{game}:{language}:release",
-            "identity": {"game": game},
-            "language": language,
+            "identity": {"game": game, "language": language},
             "source_locator": "https://example.invalid/official",
             "verification_status": "verified",
             "verification_mode": VERIFICATION_MODE,
