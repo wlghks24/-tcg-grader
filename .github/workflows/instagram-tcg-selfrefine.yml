@@ -7,6 +7,7 @@ on:
       - 'ai_reliability_v8/**'
       - 'TCG_CROSSCHECK/IG_CARDINFO/**'
       - 'selfrefine_domain_boundary_guard.py'
+      - 'test_instagram_verification_scope_policy_v210.py'
       - '.github/workflows/instagram-tcg-selfrefine.yml'
   push:
     branches: [main]
@@ -15,6 +16,7 @@ on:
       - 'ai_reliability_v8/**'
       - 'TCG_CROSSCHECK/IG_CARDINFO/**'
       - 'selfrefine_domain_boundary_guard.py'
+      - 'test_instagram_verification_scope_policy_v210.py'
       - '.github/workflows/instagram-tcg-selfrefine.yml'
   workflow_dispatch:
 
