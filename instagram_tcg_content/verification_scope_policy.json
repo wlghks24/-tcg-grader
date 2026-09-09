@@ -25,6 +25,7 @@
     "fact_type_hard_gate",
     "persist_verified_snapshot",
     "collection_health_gate",
+    "ai_reliability_advisory",
     "build_verification_receipt",
     "validate_verification_receipt",
     "production_preflight"
@@ -60,5 +61,20 @@
   ],
   "production_min_verified_completed_sales_per_output": 10,
   "persisted_verified_fact_requires_verification_mode": "INSTAGRAM_LOCAL_EVIDENCE_ONLY",
-  "persisted_verified_fact_requires_verification_engine": "instagram_tcg_content.source_verification_engine.py::verify_fact"
+  "persisted_verified_fact_requires_verification_engine": "instagram_tcg_content.source_verification_engine.py::verify_fact",
+  "ai_reliability_runtime_entrypoint": "instagram_tcg_content/ai_reliability_runtime.py",
+  "ai_reliability_binding": "ai_reliability_v8/binding.json",
+  "ai_reliability_project": "instagram_card",
+  "ai_reliability_task_id": "6a9b8a22e72c8191849c273e1240378e",
+  "ai_reliability_purpose": "verification_review",
+  "ai_reliability_revision": "v8-integration",
+  "ai_reliability_default_model": "TCG_CROSSCHECK/IG_CARDINFO/ai_reliability/model.json",
+  "ai_reliability_independent_labels": "TCG_CROSSCHECK/IG_CARDINFO/ai_reliability/independent_labels.json",
+  "ai_reliability_min_real_labels": 1000,
+  "ai_reliability_advisory_only": true,
+  "ai_reliability_can_verify": false,
+  "ai_reliability_can_override_collection_health": false,
+  "ai_reliability_can_authorize_production": false,
+  "ai_reliability_missing_model_behavior": "RULES_ONLY",
+  "ai_reliability_below_label_threshold_behavior": "KEEP_EXISTING_MODEL_NO_TRAINING"
 }
