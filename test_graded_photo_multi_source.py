@@ -88,6 +88,56 @@ class GradedPhotoMultiSourceTests(unittest.TestCase):
             self.assertTrue(all('site:ebay.com' in query for _,query in queries))
             self.assertTrue(any(name in text for name in names))
 
+    def test_expired_source_deadline_stops_new_network_queries(self):
+        source=next(x for x in g.SOURCES if x['id']=='ebay_public')
+        g._DEADLINE_LOCAL.deadline=g.time.monotonic()-1
+        try:
+            with mock.patch.object(g,'_query_rows') as query_rows, \
+                 mock.patch.object(g,'_bing_image_rows') as bing_images, \
+                 mock.patch.object(g,'_google_cse_images') as google_images, \
+                 mock.patch.object(g,'_ebay_public_rows') as ebay_rows, \
+                 mock.patch.object(g,'_og_image') as og_image, \
+                 mock.patch.object(g,'record_collection_cycle'):
+                rows,errors,queries,diag=g._discover_source_game(source,'pokemon')
+        finally:
+            try: delattr(g._DEADLINE_LOCAL,'deadline')
+            except AttributeError: pass
+        self.assertEqual(rows,[])
+        self.assertEqual(queries,0)
+        self.assertGreaterEqual(diag['deadline_stops'],1)
+        self.assertTrue(any('source_deadline' in error for error in errors))
+        query_rows.assert_not_called()
+        bing_images.assert_not_called()
+        google_images.assert_not_called()
+        ebay_rows.assert_not_called()
+        og_image.assert_not_called()
+
+    def test_expired_source_deadline_stops_before_next_game(self):
+        source=next(x for x in g.SOURCES if x['id']=='ebay_public')
+        g._DEADLINE_LOCAL.deadline=g.time.monotonic()-1
+        try:
+            with mock.patch.object(g,'_discover_source_game') as discover:
+                _,rows,errors,queries,diag=g._collect_public_source(source)
+        finally:
+            try: delattr(g._DEADLINE_LOCAL,'deadline')
+            except AttributeError: pass
+        self.assertEqual(rows,[])
+        self.assertEqual(queries,0)
+        self.assertGreaterEqual(diag['deadline_stops'],1)
+        self.assertTrue(any('source_deadline' in error for error in errors))
+        discover.assert_not_called()
+
+    def test_deadline_wrapper_preserves_existing_source_signature_and_cleans_thread_state(self):
+        source=next(x for x in g.SOURCES if x['id']=='ebay_public')
+        deadline=g.time.monotonic()+30
+        def fake_collect(_source):
+            return getattr(g._DEADLINE_LOCAL,'deadline',None)
+        with mock.patch.object(g,'_collect_public_source',side_effect=fake_collect) as collect:
+            observed=g._collect_public_source_with_deadline(source,deadline)
+        self.assertEqual(observed,deadline)
+        self.assertFalse(hasattr(g._DEADLINE_LOCAL,'deadline'))
+        collect.assert_called_once_with(source)
+
     def test_source_cap_is_balanced_across_three_games(self):
         source=next(x for x in g.SOURCES if x['id']=='ebay_public')
         def fake_discover(_source,game):

@@ -15,7 +15,7 @@ import concurrent.futures
 import base64
 import collections
 import html
-import json, math, os, re, urllib.parse, urllib.request, time
+import json, math, os, re, urllib.parse, urllib.request, time, threading
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
@@ -52,6 +52,16 @@ MAX_PAGE_BYTES=1_000_000
 RUN_SOURCE_LIMIT=6
 RUN_WAIT_SECONDS=300
 os.environ.setdefault('TCG_HTTP_TIMEOUT','5')
+
+_DEADLINE_LOCAL=threading.local()
+
+
+def _collection_deadline_reached()->bool:
+ deadline=getattr(_DEADLINE_LOCAL,'deadline',None)
+ if deadline is None:return False
+ try:return time.monotonic()>=float(deadline)
+ except (TypeError,ValueError,OverflowError):return False
+
 
 SOURCE_ID_ALIASES={'ebay_public':'ebay'}
 BOOTSTRAP_SOURCE_IDS=('ebay_public','amazon_us','amazon_jp','kream','daangn','collectory')
@@ -650,9 +660,11 @@ def _discover_source_game(src:dict,game:str)->tuple[list[dict],list[str],int,dic
  raw=[];errors=[];queries=0;observations=[]
  detailed_started=time.monotonic()
  query_sid=SOURCE_ID_ALIASES.get(str(src.get('id') or ''),str(src.get('id') or 'unknown'))
- diag={'raw_results':0,'domain_matches':0,'company_matches':0,'resolved_redirects':0,'image_results':0,'google_image_results':0,'recovery_queries':0,'recovery_company_matches':0,'circuit_deferred_games':0,'circuit_recovery_probes':0}
+ diag={'raw_results':0,'domain_matches':0,'company_matches':0,'resolved_redirects':0,'image_results':0,'google_image_results':0,'recovery_queries':0,'recovery_company_matches':0,'circuit_deferred_games':0,'circuit_recovery_probes':0,'deadline_stops':0}
  query_plan=_queries(src,game)
  for expected_company,q in query_plan:
+  if _collection_deadline_reached():
+   errors.append('source_deadline:query_plan');diag['deadline_stops']+=1;break
   queries+=1;query_started=time.monotonic()
   try:
    qrows,err=_query_rows(q,10)
@@ -669,35 +681,38 @@ def _discover_source_game(src:dict,game:str)->tuple[list[dict],list[str],int,dic
  # One compact image-search per game/source. Bing image rows expose the actual
  # marketplace page (purl) and source image (murl), which avoids search redirect loss.
  image_started=time.monotonic();iq=''
- try:
-  gname={'pokemon':'Pokemon','onepiece':'One Piece','naruto':'Naruto'}[game]
-  image_company=next((company for company,_ in query_plan if company in COMPANIES),'')
-  iq=f'site:{src["domain"]} {gname} {image_company} graded card slab label cert'
-  irows=_bing_image_rows(iq,src,12)
-  grows=_google_cse_images(iq,10)
-  for item in grows:
-   page=str(item.get('url') or '')
-   try:host=(urllib.parse.urlsplit(page).hostname or '').lower()
-   except ValueError:continue
-   if _allowed_host(host,src['domain']):irows.append(item)
-  diag['google_image_results']+=len(grows)
-  if src.get('id')=='ebay_public':
-   direct=_ebay_public_rows(game,12)
-   existing={str(x.get('url') or '') for x in irows}
-   irows.extend(x for x in direct if str(x.get('url') or '') not in existing)
-  for rr in irows:
-   if isinstance(rr,dict):
-    item=dict(rr)
-    # A targeted query may supply its intended grader, but a broad/unknown image
-    # must never be silently relabelled as PSA.
-    item['_expected_company']=_company(str(item.get('title') or '')) or image_company
-    item['_learning_query']=iq[:300]
-    raw.append(item)
-  diag['image_results']+=len(irows);diag['raw_results']+=len(irows)
-  observations.append({'query':iq,'company':image_company,'raw':len(irows),'accepted':sum(bool(_company(str(item.get('title') or ''))) for item in irows if isinstance(item,dict)),'images':sum(bool(item.get('image_url')) for item in irows if isinstance(item,dict)),'errors':0,'elapsed':time.monotonic()-image_started})
- except Exception as exc:
-  errors.append('bing_images:'+diagnostic_exception(exc))
-  observations.append({'query':iq or f'{game}:image_search','company':locals().get('image_company',''),'raw':0,'accepted':0,'images':0,'errors':1,'elapsed':time.monotonic()-image_started})
+ if _collection_deadline_reached():
+  errors.append('source_deadline:image_search');diag['deadline_stops']+=1
+ else:
+  try:
+   gname={'pokemon':'Pokemon','onepiece':'One Piece','naruto':'Naruto'}[game]
+   image_company=next((company for company,_ in query_plan if company in COMPANIES),'')
+   iq=f'site:{src["domain"]} {gname} {image_company} graded card slab label cert'
+   irows=_bing_image_rows(iq,src,12)
+   grows=[] if _collection_deadline_reached() else _google_cse_images(iq,10)
+   for item in grows:
+    page=str(item.get('url') or '')
+    try:host=(urllib.parse.urlsplit(page).hostname or '').lower()
+    except ValueError:continue
+    if _allowed_host(host,src['domain']):irows.append(item)
+   diag['google_image_results']+=len(grows)
+   if src.get('id')=='ebay_public' and not _collection_deadline_reached():
+    direct=_ebay_public_rows(game,12)
+    existing={str(x.get('url') or '') for x in irows}
+    irows.extend(x for x in direct if str(x.get('url') or '') not in existing)
+   for rr in irows:
+    if isinstance(rr,dict):
+     item=dict(rr)
+     # A targeted query may supply its intended grader, but a broad/unknown image
+     # must never be silently relabelled as PSA.
+     item['_expected_company']=_company(str(item.get('title') or '')) or image_company
+     item['_learning_query']=iq[:300]
+     raw.append(item)
+   diag['image_results']+=len(irows);diag['raw_results']+=len(irows)
+   observations.append({'query':iq,'company':image_company,'raw':len(irows),'accepted':sum(bool(_company(str(item.get('title') or ''))) for item in irows if isinstance(item,dict)),'images':sum(bool(item.get('image_url')) for item in irows if isinstance(item,dict)),'errors':0,'elapsed':time.monotonic()-image_started})
+  except Exception as exc:
+   errors.append('bing_images:'+diagnostic_exception(exc))
+   observations.append({'query':iq or f'{game}:image_search','company':locals().get('image_company',''),'raw':0,'accepted':0,'images':0,'errors':1,'elapsed':time.monotonic()-image_started})
  # A source returning only PSA/BGS candidates receives a small bounded recovery
  # pass for the weakest company routes. Search failure remains diagnostic and no
  # recovered listing is trusted until image OCR + official certification match.
@@ -706,6 +721,8 @@ def _discover_source_game(src:dict,game:str)->tuple[list[dict],list[str],int,dic
  recovery_order=grader_collection_targets(query_sid,game,count=len(COMPANIES),cycle=route_run_count(query_sid,game))
  recovery_budget=1 if 'com.termux' in os.environ.get('PREFIX','') else MAX_RECOVERY_QUERIES_PER_GAME
  for recovery_company in [company for company in recovery_order if company not in seen_companies][:recovery_budget]:
+  if _collection_deadline_reached():
+   errors.append('source_deadline:recovery');diag['deadline_stops']+=1;break
   recovery_game_name={'pokemon':'Pokemon','onepiece':'One Piece','naruto':'Naruto'}[game]
   recovery_query=f'site:{src["domain"]} {recovery_game_name} {recovery_company} graded card slab label cert'
   recovery_started=time.monotonic();queries+=1;diag['recovery_queries']+=1
@@ -740,7 +757,7 @@ def _discover_source_game(src:dict,game:str)->tuple[list[dict],list[str],int,dic
   if c not in COMPANIES:continue
   diag['company_matches']+=1
   g=_grade(blob,c);cert=_cert(blob);image=str(r.get('image_url') or '')
-  if not image and idx<MAX_IMAGE_PROBES_PER_SOURCE:image=_og_image(url,src['domain'])
+  if not image and idx<MAX_IMAGE_PROBES_PER_SOURCE and not _collection_deadline_reached():image=_og_image(url,src['domain'])
   out.append({'source_id':src['id'],'source':src['name'],'search_provider':r.get('search_provider'),'url':url[:1200],
               'title':str(r.get('title') or '')[:260],'snippet':str(r.get('snippet') or '')[:700],'image_url':image[:1200],
               'company':c,'grade':g,'certification_id':cert,'game':_game(blob,game),'mode':'slab','source_weight':src['weight'],
@@ -752,9 +769,11 @@ def _discover_source_game(src:dict,game:str)->tuple[list[dict],list[str],int,dic
  return out,errors,queries,diag
 
 def _collect_public_source(src:dict):
- found_by_game={};errors=[];queries=0;diag={'raw_results':0,'domain_matches':0,'company_matches':0,'resolved_redirects':0,'image_results':0,'google_image_results':0,'recovery_queries':0,'recovery_company_matches':0,'circuit_deferred_games':0,'circuit_recovery_probes':0}
+ found_by_game={};errors=[];queries=0;diag={'raw_results':0,'domain_matches':0,'company_matches':0,'resolved_redirects':0,'image_results':0,'google_image_results':0,'recovery_queries':0,'recovery_company_matches':0,'circuit_deferred_games':0,'circuit_recovery_probes':0,'deadline_stops':0}
  query_sid=SOURCE_ID_ALIASES.get(str(src.get('id') or ''),str(src.get('id') or 'unknown'))
  for game in GAMES:
+  if _collection_deadline_reached():
+   errors.append('source_deadline:next_game');diag['deadline_stops']+=1;break
   plan=route_plan(query_sid,game)
   if plan.get('circuit_open') is True:
    found_by_game[game]=[];diag['circuit_deferred_games']+=1;continue
@@ -787,6 +806,17 @@ def _collect_public_source(src:dict):
  diag['company_candidates']={company:sum(str(x.get('company') or '').upper()==company for x in selected) for company in COMPANIES}
  diag['company_shortfalls']={company:max(0,1-count) for company,count in diag['company_candidates'].items()}
  return src['id'],selected,errors,queries,diag
+
+
+def _collect_public_source_with_deadline(src:dict,deadline:float):
+ marker=object();previous=getattr(_DEADLINE_LOCAL,'deadline',marker)
+ _DEADLINE_LOCAL.deadline=deadline
+ try:return _collect_public_source(src)
+ finally:
+  if previous is marker:
+   try:delattr(_DEADLINE_LOCAL,'deadline')
+   except AttributeError:pass
+  else:_DEADLINE_LOCAL.deadline=previous
 
 def _apply_measurement_photo_quality(rows:list[dict])->list[dict]:
  """Label image usefulness conservatively; this never creates grade truth."""
@@ -1269,10 +1299,12 @@ def _collect_once()->dict:
  state['last_active_sources']=[x['id'] for x in active]
  atomic_write_json(LEARNING,state,suffix='.graded-photo-cursor.tmp')
 
- pool=concurrent.futures.ThreadPoolExecutor(max_workers=min(len(active),3 if is_android else 6),thread_name_prefix='graded-photo')
- futures={pool.submit(_collect_public_source,src):src for src in active}
  run_timeout=max(120,min(RUN_WAIT_SECONDS,adaptive_timeout_seconds))
- done,pending=concurrent.futures.wait(futures,timeout=run_timeout)
+ deadline=time.monotonic()+run_timeout
+ pool=concurrent.futures.ThreadPoolExecutor(max_workers=min(len(active),3 if is_android else 6),thread_name_prefix='graded-photo')
+ futures={pool.submit(_collect_public_source_with_deadline,src,deadline):src for src in active}
+ wait_timeout=max(0.0,deadline-time.monotonic())
+ done,pending=concurrent.futures.wait(futures,timeout=wait_timeout)
  for future in done:
   src=futures[future]
   try:
