@@ -112,5 +112,16 @@
     "quality_rule_profile_refresh",
     "quality_neural_train_if_ready",
     "quality_post_make_review"
-  ]
+  ],
+  "pause_monitor_exchange_entrypoint": "instagram_tcg_content/pause_monitor_exchange.py",
+  "pause_monitor_task_id": "6aa02cd749c0819196a6b17db6378958",
+  "pause_monitor_exchange_schema": "1.0-card-pause-exchange",
+  "pause_monitor_exchange_root": "TCG_CROSSCHECK/IG_CARDINFO/pause_monitor_exchange",
+  "pause_monitor_producer_status": "TCG_CROSSCHECK/IG_CARDINFO/pause_monitor_exchange/PRODUCER_STATUS.json",
+  "pause_monitor_producer_ack": "TCG_CROSSCHECK/IG_CARDINFO/pause_monitor_exchange/PRODUCER_ACK.json",
+  "pause_monitor_status": "TCG_CROSSCHECK/IG_CARDINFO/pause_monitor_exchange/MONITOR_STATUS.json",
+  "pause_monitor_root_cause_policy": "NO_GUESS",
+  "pause_monitor_control_plane_unknown_label": "UNRESOLVED_CONTROL_PLANE",
+  "pause_monitor_missing_attribution_label": "CONTROL_PLANE_ATTRIBUTION_UNAVAILABLE",
+  "pause_monitor_source_code_auto_patch_allowed": false
 }
