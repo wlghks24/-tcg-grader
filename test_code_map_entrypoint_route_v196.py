@@ -60,6 +60,17 @@ class CodeMapEntrypointRouteV196Tests(unittest.TestCase):
         self.assertNotIn("crosscheck_runtime_bridge.py", result["primary_files"])
         self.assertFalse(result["repository_wide_search_required"])
 
+    def test_instagram_cardinfo_quality_learning_routes_to_quality_runtime(self):
+        result = resolve_feature_query("만든걸 분석 학습해서 자연스러운 카드정보 품질 개선")
+        self.assertEqual("instagram_cardinfo_quality_learning", result["entry_group"])
+        self.assertEqual("instagram_tcg_content/cardinfo_quality_learning.py", result["entry_file"])
+        self.assertEqual(["instagram_tcg_content/cardinfo_quality_learning.py"], result["entry_files"])
+        self.assertIn(
+            "instagram_tcg_content/test_cardinfo_quality_learning.py",
+            result["suggested_tests"],
+        )
+        self.assertFalse(result["repository_wide_search_required"])
+
     def test_main_verified_neural_query_never_routes_to_instagram(self):
         result = resolve_feature_query("태블릿 단독운영 인공지능 신경망 독립 라벨 모델 학습")
         self.assertEqual("verified_neural_learning", result["entry_group"])
@@ -190,6 +201,7 @@ class CodeMapEntrypointRouteV196Tests(unittest.TestCase):
             "인스타 카드정보 출처 검증",
             "인스타 카드정보 작업물",
             "인스타 카드정보 신경망 1000 라벨",
+            "만든걸 분석 학습해서 자연스러운 카드정보 품질 개선",
         )
         for query in samples:
             result = resolve_feature_query(query)
@@ -244,6 +256,7 @@ class CodeMapEntrypointRouteV196Tests(unittest.TestCase):
             "인스타 카드정보 자료비교",
             "인스타 카드정보 출처 검증",
             "인스타 카드정보 작업물",
+            "만든걸 분석 학습해서 자연스러운 카드정보 품질 개선",
         )
         for query in samples:
             result = resolve_feature_query(query)
