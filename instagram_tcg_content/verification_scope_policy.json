@@ -40,5 +40,7 @@
   "production_verification_receipt_schema": 2,
   "production_verification_receipt_contract": "OBSERVATION_GROUPS_V1",
   "production_verification_receipt_input": "RAW_OBSERVATION_GROUPS_ONLY",
-  "production_verification_receipt_observation_fingerprint_required": true
+  "production_verification_receipt_observation_fingerprint_required": true,
+  "production_snapshot_sha256_required": true,
+  "production_receipt_snapshot_hash_match_required": true
 }
