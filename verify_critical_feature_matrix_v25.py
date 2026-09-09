@@ -130,6 +130,18 @@ FEATURE_FILES = {
         "repository_integrity_guard.py",
         "security_self_audit.py",
     ],
+    "instagram_cardinfo_local_verification": [
+        "instagram_tcg_content/source_verification_engine.py",
+        "instagram_tcg_content/source_route_resilience.py",
+        "instagram_tcg_content/source_routes.json",
+        "instagram_tcg_content/verification_scope_policy.json",
+        "instagram_tcg_content/test_source_verification_engine.py",
+        "instagram_tcg_content/test_source_route_resilience.py",
+        "test_instagram_verification_scope_policy_v210.py",
+        "instagram_tcg_content/production_state.py",
+        "instagram_tcg_content/automation_state_guard.py",
+        ".github/workflows/instagram-tcg-selfrefine.yml",
+    ],
     "code_map_internal": [
         "verify_code_map_internal.py",
         "code_map_intelligence.py",
