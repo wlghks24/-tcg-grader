@@ -28,7 +28,9 @@ from safe_runtime import atomic_write_json, exclusive_file_lock, safe_read_text
 
 ROOT = Path(__file__).resolve().parent
 LABELS_PATH = ROOT / "VERIFIED_NEURAL_REPAIR_LABELS.json"
+LABELS_BACKUP_PATH = ROOT / "VERIFIED_NEURAL_REPAIR_LABELS.json.bak"
 MODEL_PATH = ROOT / "VERIFIED_NEURAL_REPAIR_MODEL.json"
+MODEL_BACKUP_PATH = ROOT / "VERIFIED_NEURAL_REPAIR_MODEL.json.bak"
 REPORT_PATH = ROOT / "VERIFIED_NEURAL_REPAIR_REPORT.json"
 
 SCHEMA = 1
@@ -129,8 +131,9 @@ def _load_json(path: Path, fallback: dict[str, Any], max_bytes: int = 4_000_000)
     return value if isinstance(value, dict) else fallback
 
 
-def _load_labels(path: Path = LABELS_PATH) -> dict[str, Any]:
-    raw = _load_json(path, _default_labels())
+def _sanitize_labels_payload(raw: object) -> dict[str, Any] | None:
+    if not isinstance(raw, dict) or raw.get("schema") != SCHEMA or not isinstance(raw.get("labels"), list):
+        return None
     rows = raw.get("labels") if isinstance(raw.get("labels"), list) else []
     clean: dict[str, dict[str, Any]] = {}
     for item in rows[-MAX_LABELS * 2:]:
@@ -170,6 +173,27 @@ def _load_labels(path: Path = LABELS_PATH) -> dict[str, Any]:
         "safety": SAFETY,
     }
 
+
+def _backup_path(path: Path, primary: Path, backup: Path) -> Path:
+    try:
+        if path.resolve() == primary.resolve():
+            return backup
+    except OSError:
+        pass
+    return path.with_name(path.name + ".bak")
+
+
+def _load_labels_with_source(path: Path = LABELS_PATH) -> tuple[dict[str, Any], str, bool]:
+    backup = _backup_path(path, LABELS_PATH, LABELS_BACKUP_PATH)
+    for candidate, source in ((path, "primary"), (backup, "backup")):
+        clean = _sanitize_labels_payload(_load_json(candidate, {}))
+        if clean is not None:
+            return clean, source, source == "backup"
+    return _default_labels(), "empty", False
+
+
+def _load_labels(path: Path = LABELS_PATH) -> dict[str, Any]:
+    return _load_labels_with_source(path)[0]
 
 def _sample_id(row: dict[str, Any]) -> str:
     parts = (
@@ -240,6 +264,10 @@ def _ingest_full_regression_state_unlocked(
         by_id.values(), key=lambda x: (x.get("recorded_at") or "", x["sample_id"])
     )[-MAX_LABELS:]
     labels["updated_at"] = now
+    backup_path = _backup_path(labels_path, LABELS_PATH, LABELS_BACKUP_PATH)
+    previous = _load_labels(labels_path)
+    if previous.get("labels"):
+        atomic_write_json(backup_path, previous, suffix=".verified-neural-labels-bak.tmp")
     atomic_write_json(labels_path, labels, suffix=".verified-neural-labels.tmp")
     return {
         "ok": True,
@@ -525,6 +553,13 @@ def train_if_ready(
             "rule_fingerprints": fingerprints,
             "safety": SAFETY,
         }
+        existing_model = _load_model(model_path)
+        if existing_model is not None:
+            atomic_write_json(
+                _backup_path(model_path, MODEL_PATH, MODEL_BACKUP_PATH),
+                existing_model,
+                suffix=".verified-neural-model-bak.tmp",
+            )
         atomic_write_json(model_path, model_payload, suffix=".verified-neural-model.tmp")
     atomic_write_json(report_path, status, suffix=".verified-neural-report.tmp")
     return status
@@ -534,33 +569,46 @@ def _finite_number(value: Any) -> bool:
     return isinstance(value, (int, float)) and not isinstance(value, bool) and math.isfinite(float(value))
 
 
-def _load_model(path: Path = MODEL_PATH) -> dict[str, Any] | None:
-    raw = _load_json(path, {})
-    hidden = int(raw.get("hidden") or 0) if isinstance(raw, dict) else 0
+def _validate_model_payload(raw: object) -> bool:
+    if not isinstance(raw, dict):
+        return False
+    hidden = int(raw.get("hidden") or 0)
     if (
-        not isinstance(raw, dict)
-        or raw.get("schema") != SCHEMA
+        raw.get("schema") != SCHEMA
         or raw.get("active") is not True
         or int(raw.get("feature_count") or 0) != FEATURE_COUNT
         or hidden not in HIDDEN_SIZES
     ):
-        return None
+        return False
     w1, b1, w2 = raw.get("w1"), raw.get("b1"), raw.get("w2")
     if not isinstance(w1, list) or len(w1) != hidden or not isinstance(b1, list) or len(b1) != hidden or not isinstance(w2, list) or len(w2) != hidden:
-        return None
+        return False
     if any(not isinstance(row, list) or len(row) != FEATURE_COUNT or not all(_finite_number(v) for v in row) for row in w1):
-        return None
+        return False
     if not all(_finite_number(v) for v in b1) or not all(_finite_number(v) for v in w2) or not _finite_number(raw.get("b2")):
-        return None
+        return False
     slope = raw.get("calibration_slope", 1.0)
     offset = raw.get("calibration_offset", 0.0)
     if not _finite_number(slope) or not 0.05 <= float(slope) <= 8.0 or not _finite_number(offset) or abs(float(offset)) > 8.0:
-        return None
+        return False
     metrics = raw.get("metrics")
     if not isinstance(metrics, dict) or not _finite_number(metrics.get("accuracy")) or not _finite_number(metrics.get("logloss")):
-        return None
-    return raw
+        return False
+    expected = raw.get("rule_fingerprints")
+    return isinstance(expected, dict)
 
+
+def _load_model_with_source(path: Path = MODEL_PATH) -> tuple[dict[str, Any] | None, str, bool]:
+    backup = _backup_path(path, MODEL_PATH, MODEL_BACKUP_PATH)
+    for candidate, source in ((path, "primary"), (backup, "backup")):
+        raw = _load_json(candidate, {})
+        if _validate_model_payload(raw):
+            return raw, source, source == "backup"
+    return None, "none", False
+
+
+def _load_model(path: Path = MODEL_PATH) -> dict[str, Any] | None:
+    return _load_model_with_source(path)[0]
 
 def score_issue(
     issue: dict[str, Any],
@@ -601,7 +649,7 @@ def status(
         row for row in all_labels
         if current.get(str(row.get("rule_id") or "")) == str(row.get("rule_fingerprint") or "")
     ] if current else []
-    model = _load_model(model_path)
+    model, model_source, model_recovered = _load_model_with_source(model_path)
     active = False
     reason = "model_inactive"
     if model is not None:
@@ -615,6 +663,8 @@ def status(
         "ok": True,
         "active": active,
         "reason": reason,
+        "model_source": model_source,
+        "model_recovered_from_backup": model_recovered,
         "label_count": len(labels),
         "stored_label_count": len(all_labels),
         "stale_rule_fingerprint_labels": max(0, len(all_labels) - len(labels)),
