@@ -681,23 +681,40 @@ def restore_from_directory(source: Path) -> dict[str, Any]:
     if not source.is_dir():
         return {"ok": True, "restored": [], "reason": "source_missing"}
     restored = []
-    for name, target in ((LABELS_PATH.name, LABELS_PATH), (MODEL_PATH.name, MODEL_PATH)):
-        candidate = source / name
-        if candidate.is_file() and not candidate.is_symlink():
+    recovered_from_backup = []
+    specs = (
+        (LABELS_PATH.name, LABELS_BACKUP_PATH.name, LABELS_PATH, "labels"),
+        (MODEL_PATH.name, MODEL_BACKUP_PATH.name, MODEL_PATH, "model"),
+    )
+    for primary_name, backup_name, target, kind in specs:
+        chosen = None
+        chosen_source = None
+        for name, source_kind in ((primary_name, "primary"), (backup_name, "backup")):
+            candidate = source / name
+            if not candidate.is_file() or candidate.is_symlink():
+                continue
             raw = _load_json(candidate, {})
-            if name == LABELS_PATH.name:
-                temp = ROOT / (name + ".restore-source")
-                atomic_write_json(temp, raw, suffix=".restore-source.tmp")
-                clean = _load_labels(temp)
-                temp.unlink(missing_ok=True)
-                atomic_write_json(target, clean, suffix=".restore-labels.tmp")
-                restored.append(name)
-            elif _load_model(candidate) is not None:
-                atomic_write_json(target, raw, suffix=".restore-model.tmp")
-                restored.append(name)
+            valid = _sanitize_labels_payload(raw) is not None if kind == "labels" else _validate_model_payload(raw)
+            if valid:
+                chosen = raw
+                chosen_source = source_kind
+                break
+        if chosen is None:
+            continue
+        if kind == "labels":
+            clean = _sanitize_labels_payload(chosen)
+            if clean is None:
+                continue
+            atomic_write_json(target, clean, suffix=".restore-labels.tmp")
+        else:
+            atomic_write_json(target, chosen, suffix=".restore-model.tmp")
+        restored.append(primary_name)
+        if chosen_source == "backup":
+            recovered_from_backup.append(primary_name)
     return {
         "ok": True,
         "restored": restored,
+        "recovered_from_backup": recovered_from_backup,
         "reason": "verified_state_restored" if restored else "no_verified_state",
     }
 
