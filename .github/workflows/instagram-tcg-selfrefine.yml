@@ -5,6 +5,8 @@ on:
     paths:
       - 'instagram_tcg_content/**'
       - 'ai_reliability_v8/**'
+      - 'shared_self_learning/**'
+      - 'shared_self_learning/**'
       - 'TCG_CROSSCHECK/IG_CARDINFO/**'
       - 'selfrefine_domain_boundary_guard.py'
       - 'test_instagram_verification_scope_policy_v210.py'
