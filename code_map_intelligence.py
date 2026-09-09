@@ -150,7 +150,7 @@ FEATURE_ROUTE_OVERRIDES = {
         "instagram_tcg_content/verification_scope_policy.json",
         "instagram_tcg_content/test_source_verification_engine.py",
         "instagram_tcg_content/test_source_route_resilience.py",
-        "instagram_tcg_content/test_verification_scope_policy.py",
+        "test_instagram_verification_scope_policy_v210.py",
         "instagram_tcg_content/selfrefine_gate.py",
     ),
     "instagram_cardinfo_source_verification": (
@@ -160,7 +160,7 @@ FEATURE_ROUTE_OVERRIDES = {
         "instagram_tcg_content/verification_scope_policy.json",
         "instagram_tcg_content/test_source_verification_engine.py",
         "instagram_tcg_content/test_source_route_resilience.py",
-        "instagram_tcg_content/test_verification_scope_policy.py",
+        "test_instagram_verification_scope_policy_v210.py",
     ),
     "instagram_cardinfo_production_state": (
         "instagram_tcg_content/production_state.py",
