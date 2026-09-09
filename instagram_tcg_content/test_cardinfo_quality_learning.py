@@ -15,6 +15,7 @@ from instagram_tcg_content.cardinfo_quality_learning import (
     load_model,
     rank_variant,
     train_quality_model,
+    issue_tags_from_features,
 )
 
 
@@ -49,6 +50,17 @@ class CardInfoQualityLearningTests(unittest.TestCase):
         self.assertGreater(profile["min_whitespace_ratio"], BASE_PROFILE["min_whitespace_ratio"])
         self.assertIn("crowded_text", profile["recurring_issue_counts"])
         self.assertTrue(any("자연스러운" in line for line in profile["guidance"]))
+
+    def test_low_quality_metrics_generate_deterministic_issue_tags(self):
+        features = {name: 0.9 for name in FEATURES}
+        features["text_density_fit"] = 0.4
+        features["whitespace_balance"] = 0.5
+        features["hierarchy_clarity"] = 0.6
+        tags = issue_tags_from_features(features)
+        self.assertIn("crowded_text", tags)
+        self.assertIn("low_whitespace", tags)
+        self.assertIn("weak_hierarchy", tags)
+        self.assertNotIn("poor_number_readability", tags)
 
     def test_single_unverified_pattern_does_not_mutate_profile(self):
         rows = [self._row(0, issues=["crowded_text"])]
