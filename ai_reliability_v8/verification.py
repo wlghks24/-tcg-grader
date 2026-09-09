@@ -8,7 +8,7 @@ from pathlib import Path
 from urllib.parse import urlsplit, parse_qsl, urlencode, urlunsplit
 
 TTL={'identity':86400*30,'certificate':86400,'release':86400,'event':86400,
-     'schedule':21600,'completed_sale':86400*30,'market_reference':3600,
+     'schedule':21600,'completed_sale':36*3600,'market_reference':3600,
      'disclosure':86400,'financial_statement':86400,'macro':86400,
      'box_office':86400,'license_policy':86400}
 SCOPE={'identity':('set','number'),'certificate':('grader','cert_number'),
@@ -127,7 +127,10 @@ class Verifier:
                         raise ValueError('FINAL_SALE_REQUIRED')
                     if sale.get('transaction_id')!=claim['scope']['transaction_id'] or sale.get('currency')!=claim['scope']['currency']:
                         raise ValueError('TRANSACTION_MISMATCH')
-                    if stamp(sale['sold_at'])>current: raise ValueError('FUTURE_SALE')
+                    sold_at=stamp(sale['sold_at'])
+                    sale_age=current-sold_at
+                    if sale_age<0: raise ValueError('FUTURE_SALE')
+                    if sale_age>86400*30: raise ValueError('SALE_OUTSIDE_30_DAY_WINDOW')
                     if type(sale.get('amount')) not in (int,float) or not math.isfinite(sale['amount']) or sale['amount']<=0 or sale['amount']!=claim['value']:
                         raise ValueError('REALIZED_AMOUNT_REQUIRED')
                 if kind=='certificate' and reviewed.get('cert_record_match') is not True:
