@@ -13,6 +13,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parent
 EXHAUSTIVE = ROOT / ".github/workflows/exhaustive-selfrefine-guard.yml"
 DAILY = ROOT / ".github/workflows/daily-0600-collection-instagram-accuracy.yml"
+PERSIST_MAIN_CROSSCHECK = ROOT / ".github/workflows/persist-main-crosscheck-snapshot.yml"
 INSTAGRAM_SELFREFINE = ROOT / ".github/workflows/instagram-tcg-selfrefine.yml"
 
 FEATURE_FILES = {
@@ -208,6 +209,7 @@ def verify() -> dict:
             failures.append(f"exhaustive coverage missing: {feature}: {fragment}")
 
     legacy_daily = _read(DAILY)
+    legacy_persist = _read(PERSIST_MAIN_CROSSCHECK)
     instagram = _read(INSTAGRAM_SELFREFINE)
     for feature, fragment in INSTAGRAM_LOCAL_COMMANDS.items():
         if fragment not in instagram:
@@ -232,6 +234,18 @@ def verify() -> dict:
     ):
         if marker in instagram:
             failures.append(f"Instagram SELFREFINE still references retired cross-domain path: {marker}")
+
+    persist_trigger = legacy_persist.split("\npermissions:", 1)[0]
+    if "workflow_run:" in persist_trigger:
+        failures.append("retired Main snapshot persistence still has workflow_run trigger")
+    if "schedule:" in persist_trigger or "push:" in persist_trigger or "pull_request:" in persist_trigger:
+        failures.append("retired Main snapshot persistence is still automatic")
+    if "workflow_dispatch:" not in persist_trigger:
+        failures.append("retired Main snapshot persistence lacks manual no-op marker")
+    if "contents: write" in legacy_persist:
+        failures.append("retired Main snapshot persistence still has contents write permission")
+    if "Main snapshot persistence retired" not in legacy_persist:
+        failures.append("retired Main snapshot persistence lacks retirement marker")
 
     return {
         "ok": not failures,
