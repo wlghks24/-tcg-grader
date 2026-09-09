@@ -42,7 +42,9 @@ jobs:
         run: |
           python -m instagram_tcg_content.test_source_verification_engine
           python -m instagram_tcg_content.test_source_route_resilience
+          python -m unittest -v instagram_tcg_content.test_verification_scope_policy
           python -m json.tool instagram_tcg_content/source_routes.json >/dev/null
+          python -m json.tool instagram_tcg_content/verification_scope_policy.json >/dev/null
 
       - name: Verify run packet, production state, and pause safety
         run: |
