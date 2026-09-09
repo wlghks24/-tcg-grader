@@ -45,6 +45,18 @@ class CodeMapEntrypointRouteV196Tests(unittest.TestCase):
             "instagram_tcg_content/test_ai_reliability_v8_integration.py",
             result["suggested_tests"],
         )
+
+    def test_instagram_ai_runtime_link_query_promotes_runtime_adapter(self):
+        result = resolve_feature_query("인스타 카드정보 자료수집 신경망 연결 상태 확인")
+        self.assertEqual("instagram_cardinfo_ai_reliability", result["entry_group"])
+        self.assertEqual("instagram_tcg_content/ai_reliability_runtime.py", result["entry_file"])
+        self.assertEqual(["instagram_tcg_content/ai_reliability_runtime.py"], result["entry_files"])
+        self.assertIn("ai_reliability_v8/adaptive_learning.py", result["alternate_entry_files"])
+        self.assertIn(
+            "instagram_tcg_content/test_ai_reliability_runtime.py",
+            result["suggested_tests"],
+        )
+        self.assertEqual("query_specific_rule", result["entrypoint_reason"])
         self.assertNotIn("crosscheck_runtime_bridge.py", result["primary_files"])
         self.assertFalse(result["repository_wide_search_required"])
 
