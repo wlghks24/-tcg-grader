@@ -57,6 +57,8 @@ class InstagramVerificationScopePolicyV210Tests(unittest.TestCase):
         self.assertTrue(
             payload["production_verification_receipt_observation_fingerprint_required"]
         )
+        self.assertTrue(payload["production_snapshot_sha256_required"])
+        self.assertTrue(payload["production_receipt_snapshot_hash_match_required"])
         self.assertIn("build_verification_receipt", payload["preproduction_order"])
         self.assertIn("validate_verification_receipt", payload["preproduction_order"])
 
