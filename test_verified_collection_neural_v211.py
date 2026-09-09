@@ -182,7 +182,7 @@ class VerifiedCollectionNeuralV211Tests(unittest.TestCase):
                     "coverage_gap_score": 0.0,
                     "outcome": positive,
                     "evidence": "official_result_observed" if positive else "successful_empty_search",
-                    "observed_at": "2026-09-08T00:00:00+00:00",
+                    "observed_at": f"2026-09-08T00:{index // 60:02d}:{index % 60:02d}+00:00",
                 })
             labels_path.write_text(json.dumps({
                 "schema": neural.SCHEMA,
@@ -349,7 +349,7 @@ class VerifiedCollectionNeuralV211Tests(unittest.TestCase):
                     "coverage_gap_score": 0.0,
                     "outcome": bool(index % 2 == 0),
                     "evidence": "official_result_observed" if index % 2 == 0 else "successful_empty_search",
-                    "observed_at": "2026-09-08T00:00:00+00:00",
+                    "observed_at": f"2026-09-08T00:{index // 60:02d}:{index % 60:02d}+00:00",
                 })
             labels_path.write_text(json.dumps({
                 "schema": neural.SCHEMA,
