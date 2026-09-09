@@ -19,7 +19,9 @@
 - shared_self_learning/의 순수 알고리즘과 계약만 사용
 - 사실 검증은 IG_CARDINFO 자체 source route와 factual snapshot만 사용
 - Main/카드시세분석 factual snapshot, crosscheck_exchange, peer-learning 결과는 검증 근거로 사용하지 않음
-- production finalization 전 source_verification_engine의 tamper-evident verification receipt를 production_state가 검증해야 함
+- production finalization 전 source_verification_engine이 raw Observation 그룹을 직접 verify_fact()한 receipt만 허용
+- receipt의 observation_fingerprint와 persisted factual snapshot SHA-256을 production_state가 검증하고, snapshot_id/hash가 일치해야 함
+- AI/신경망 점수나 외부에서 직접 만든 VerificationResult는 production 검증 권한이 없음
 
 분리:
 - Main 코드 import 금지
