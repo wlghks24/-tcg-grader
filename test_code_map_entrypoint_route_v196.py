@@ -340,6 +340,18 @@ class CodeMapEntrypointRouteV196Tests(unittest.TestCase):
         )
         self.assertEqual("entrypoint_then_bounded_impact", result["diagnostic_strategy"])
 
+    def test_graphify_guard_refreshes_map_for_general_source_changes_with_pip_cache(self):
+        workflow = Path(".github/workflows/graphify-integration-guard.yml").read_text(encoding="utf-8")
+        trigger = workflow.split("\npermissions:", 1)[0]
+        for pattern in ("'**/*.py'", "'**/*.js'", "'**/*.sh'", "'**/*.html'"):
+            self.assertEqual(trigger.count(pattern), 2, pattern)
+        for excluded in ("'!gemini-code-*/**'", "'!.codex/**'", "'!.agents/**'"):
+            self.assertEqual(trigger.count(excluded), 2, excluded)
+        self.assertIn("cache: 'pip'", workflow)
+        self.assertIn("cache-dependency-path: '.github/workflows/graphify-integration-guard.yml'", workflow)
+        self.assertIn("GRAPHIFY_UPDATE.sh --quiet", workflow)
+        self.assertIn("GRAPHIFY_AUDIT.py --strict", workflow)
+
     def test_unknown_feature_still_requests_fallback_search(self):
         result = resolve_feature_query("totally_unknown_feature_xyz_196")
         self.assertTrue(result["repository_wide_search_required"])
