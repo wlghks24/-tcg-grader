@@ -369,7 +369,7 @@ def run(cycles: int, *, path: Path = LEDGER_PATH) -> dict:
 
 
 def self_test() -> None:
-    assert integrity.is_archived_source("gemini-code-123.py") is True
+    assert integrity.is_archived_source("gemini" + "-code-123.py") is True
     assert integrity.is_archived_source("tcg_updater.py") is False
     with tempfile.TemporaryDirectory() as directory:
         root = Path(directory)
