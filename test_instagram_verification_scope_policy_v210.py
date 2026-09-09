@@ -11,6 +11,7 @@ ROOT = Path(__file__).resolve().parent
 POLICY = ROOT / "instagram_tcg_content" / "verification_scope_policy.json"
 IG_WORKFLOW = ROOT / ".github" / "workflows" / "instagram-tcg-selfrefine.yml"
 LEGACY_WORKFLOW = ROOT / ".github" / "workflows" / "daily-0600-collection-instagram-accuracy.yml"
+LEGACY_PERSIST = ROOT / ".github" / "workflows" / "persist-main-crosscheck-snapshot.yml"
 
 
 class InstagramVerificationScopePolicyV210Tests(unittest.TestCase):
@@ -27,6 +28,8 @@ class InstagramVerificationScopePolicyV210Tests(unittest.TestCase):
         self.assertFalse(payload["market_analysis_snapshot_crosscheck_enabled"])
         self.assertFalse(payload["market_analysis_peer_learning_enabled"])
         self.assertFalse(payload["cross_domain_runtime_bridge_enabled"])
+        self.assertFalse(payload["market_analysis_snapshot_write_enabled"])
+        self.assertEqual(payload["legacy_main_snapshot_persistence_mode"], "DISABLED_NOOP_MANUAL_ONLY")
         self.assertTrue(payload["fail_closed"])
         self.assertEqual(
             payload["source_verification_entrypoint"],
@@ -58,6 +61,18 @@ class InstagramVerificationScopePolicyV210Tests(unittest.TestCase):
         self.assertIn("workflow_dispatch:", trigger_text)
         self.assertNotIn("python crosscheck_runtime_bridge.py", text)
         self.assertIn("Cross-domain audit retired", text)
+
+    def test_legacy_main_snapshot_persistence_is_noop_and_read_only(self):
+        text = LEGACY_PERSIST.read_text(encoding="utf-8")
+        trigger_text = text.split("\npermissions:", 1)[0]
+        self.assertNotIn("workflow_run:", trigger_text)
+        self.assertNotIn("schedule:", trigger_text)
+        self.assertNotIn("push:", trigger_text)
+        self.assertIn("workflow_dispatch:", trigger_text)
+        self.assertNotIn("contents: write", text)
+        self.assertNotIn("MARKET_ANALYSIS/factual_snapshot.json", text)
+        self.assertNotIn("main-crosscheck-snapshot", text)
+        self.assertIn("Main snapshot persistence retired", text)
 
     def test_code_map_routes_crosscheck_wording_to_local_verifier(self):
         result = resolve_feature_query("인스타 카드정보 자료 비교 교차확인 오류")
