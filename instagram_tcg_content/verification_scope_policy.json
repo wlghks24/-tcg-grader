@@ -26,5 +26,8 @@
     "persist_verified_snapshot",
     "production_preflight"
   ],
-  "fail_closed": true
+  "fail_closed": true,
+  "legacy_main_snapshot_persistence_workflow": ".github/workflows/persist-main-crosscheck-snapshot.yml",
+  "legacy_main_snapshot_persistence_mode": "DISABLED_NOOP_MANUAL_ONLY",
+  "market_analysis_snapshot_write_enabled": false
 }
