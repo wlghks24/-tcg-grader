@@ -98,7 +98,7 @@ REQUIRED_TEXT = {
         "test_release_and_promo_queries_choose_different_single_entries",
         "test_selfrefine_isolation_query_promotes_boundary_guard",
         "test_known_feature_routes_never_return_multiple_entry_files",
-        "test_crosscheck_routes_to_runtime_bridge_first",
+        "test_crosscheck_routes_to_instagram_local_source_verification",
         "test_fast_route_emits_complete_exploration_plan",
         "test_crosscheck_primary_tests_do_not_pull_secondary_feature_tests",
         "test_fast_route_defers_related_tests_from_active_validation",
