@@ -93,6 +93,11 @@ FEATURE_QUERY_ALIASES = {
     "tablet_termux": (
         "tablet", "태블릿", "termux", "lenovo", "android", "안드로이드", "tailscale",
     ),
+    "verified_neural_learning": (
+        "인공지능 신경망", "신경망", "neural", "독립 라벨", "검증 라벨",
+        "모델 학습", "모델 승격", "verified collection neural", "collection neural",
+        "1000 라벨", "1000개 라벨", "hidden size", "hidden 4 8 12",
+    ),
     "selfrefine_isolation": (
         "selfrefine", "self-refine", "self heal", "self-heal", "자가학습", "자가복구",
         "crosscheck", "교차확인",
@@ -122,7 +127,6 @@ FEATURE_QUERY_ALIASES = {
     ),
     "instagram_cardinfo_ai_reliability": (
         "인스타 카드정보 신경망", "인스타 카드정보 ai", "ai reliability",
-        "신경망", "1000 라벨", "1000개 라벨", "hidden size", "hidden 4 8 12",
         "calibration", "drift", "모델 손상", "차원 불일치", "확률 오차",
         "adaptive learning", "evidence learner",
     ),
@@ -137,6 +141,18 @@ FEATURE_ROUTE_OVERRIDES = {
     ),
     "tablet_termux": (
         "test_tablet_runtime_qa_integration.py",
+    ),
+    "verified_neural_learning": (
+        "verified_collection_neural.py",
+        "verified_collection_job_neural.py",
+        "verified_neural_self_refine.py",
+        "tcg_updater.py",
+        "collection_runtime_health.py",
+        "test_verified_collection_neural_v211.py",
+        "test_verified_collection_job_neural_v212.py",
+        "test_verified_neural_self_refine_v210.py",
+        "test_graded_photo_runtime.py",
+        ".github/workflows/final-tablet-guard.yml",
     ),
     "selfrefine_isolation": (
         "test_selfrefine_domain_isolation_v18.py",
@@ -229,6 +245,11 @@ FEATURE_TEST_NODE_CONTRACTS = {
     "tablet_termux": (
         "test_tablet_runtime_qa_integration.py::main",
     ),
+    "verified_neural_learning": (
+        "test_verified_collection_neural_v211.py::VerifiedCollectionNeuralV211Tests::test_less_than_1000_labels_never_activates",
+        "test_verified_collection_job_neural_v212.py::VerifiedCollectionJobNeuralV212Tests::test_below_threshold_is_inactive",
+        "test_verified_neural_self_refine_v210.py::VerifiedNeuralSelfRefineV210Tests::test_safety_contract_and_activation_threshold",
+    ),
     "selfrefine_isolation": (
         "test_selfrefine_domain_isolation_v18.py::SelfrefineDomainIsolationV18Tests::test_shared_learning_key_is_namespaced_and_state_is_not_shared",
     ),
@@ -283,6 +304,7 @@ FEATURE_ENTRYPOINTS = {
     "release_event_promo_collection": ("update_releases.py",),
     "runtime_delivery": ("verify_link_runtime.py",),
     "tablet_termux": ("ANDROID_UPDATE_AND_START.sh",),
+    "verified_neural_learning": ("verified_collection_neural.py",),
     "selfrefine_isolation": ("main_selfrefine_gate.py",),
     "security_integrity": ("repository_integrity_guard.py",),
     "code_map_internal": ("code_map_fast_route.py",),
@@ -301,6 +323,10 @@ FEATURE_ALTERNATE_ENTRYPOINTS = {
     "ocr_extended_verification": ("library_slab_corpus.py",),
     "release_event_promo_collection": ("update_promo_events.py",),
     "selfrefine_isolation": ("selfrefine_domain_boundary_guard.py",),
+    "verified_neural_learning": (
+        "verified_collection_job_neural.py",
+        "verified_neural_self_refine.py",
+    ),
 }
 
 # Ordered, deterministic query-specific promotions. More specific rules come
@@ -321,6 +347,10 @@ FEATURE_ENTRYPOINT_RULES = {
     "selfrefine_isolation": (
         (("domain boundary", "isolation", "격리", "분리", "경계"), "selfrefine_domain_boundary_guard.py"),
         (("selfrefine", "self-refine", "자가학습", "자가복구", "self heal", "self-heal"), "main_selfrefine_gate.py"),
+    ),
+    "verified_neural_learning": (
+        (("job neural", "작업 신경망", "수집 작업 신경망"), "verified_collection_job_neural.py"),
+        (("selfrefine", "self-refine", "자가개선", "자가학습"), "verified_neural_self_refine.py"),
     ),
 }
 

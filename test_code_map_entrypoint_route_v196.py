@@ -48,6 +48,20 @@ class CodeMapEntrypointRouteV196Tests(unittest.TestCase):
         self.assertNotIn("crosscheck_runtime_bridge.py", result["primary_files"])
         self.assertFalse(result["repository_wide_search_required"])
 
+    def test_main_verified_neural_query_never_routes_to_instagram(self):
+        result = resolve_feature_query("태블릿 단독운영 인공지능 신경망 독립 라벨 모델 학습")
+        self.assertEqual("verified_neural_learning", result["entry_group"])
+        self.assertEqual("verified_collection_neural.py", result["entry_file"])
+        self.assertIn("verified_collection_job_neural.py", result["alternate_entry_files"])
+        self.assertIn("test_verified_collection_neural_v211.py", result["suggested_tests"])
+        self.assertNotIn("ai_reliability_v8/adaptive_learning.py", result["primary_files"])
+        self.assertFalse(result["repository_wide_search_required"])
+
+    def test_explicit_instagram_neural_query_stays_in_instagram_domain(self):
+        result = resolve_feature_query("인스타 카드정보 신경망 모델 손상 calibration")
+        self.assertEqual("instagram_cardinfo_ai_reliability", result["entry_group"])
+        self.assertEqual("ai_reliability_v8/adaptive_learning.py", result["entry_file"])
+
     def test_source_verification_routes_to_verification_engine(self):
         result = resolve_feature_query("인스타 카드정보 공식 출처 검증")
         self.assertEqual(
@@ -147,6 +161,7 @@ class CodeMapEntrypointRouteV196Tests(unittest.TestCase):
             "프로모 행사",
             "서버 runtime delivery",
             "태블릿 Termux",
+            "태블릿 인공지능 신경망 독립 라벨",
             "SELFREFINE 격리",
             "보안 무결성",
             "코드지도 영향분석",
@@ -201,6 +216,7 @@ class CodeMapEntrypointRouteV196Tests(unittest.TestCase):
             "출시 재발매",
             "서버 runtime delivery",
             "태블릿 Termux",
+            "태블릿 인공지능 신경망 독립 라벨",
             "SELFREFINE 격리",
             "보안 무결성",
             "코드지도 영향분석",

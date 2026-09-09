@@ -121,6 +121,18 @@ FEATURE_FILES = {
         "ANDROID_AUTO_START_INSTALL.sh",
         "START_TCG_UPDATER_ANDROID.sh",
     ],
+    "verified_neural_learning": [
+        "verified_collection_neural.py",
+        "verified_collection_job_neural.py",
+        "verified_neural_self_refine.py",
+        "tcg_updater.py",
+        "collection_runtime_health.py",
+        "test_verified_collection_neural_v211.py",
+        "test_verified_collection_job_neural_v212.py",
+        "test_verified_neural_self_refine_v210.py",
+        "test_graded_photo_runtime.py",
+        ".github/workflows/final-tablet-guard.yml",
+    ],
     "selfrefine_isolation": [
         "main_selfrefine_gate.py",
         "selfrefine_domain_boundary_guard.py",

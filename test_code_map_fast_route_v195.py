@@ -44,6 +44,13 @@ class CodeMapFastRouteTests(unittest.TestCase):
         self.assertEqual("tablet_termux", groups[0])
         self.assertIn("ANDROID_UPDATE_AND_START.sh", result["primary_files"])
 
+    def test_main_neural_query_routes_to_verified_collection_neural(self):
+        result = self._index().resolve_feature("태블릿 단독운영 신경망 독립 라벨 학습")
+        groups = [row["group"] for row in result["matched_feature_groups"]]
+        self.assertEqual("verified_neural_learning", groups[0])
+        self.assertEqual("verified_collection_neural.py", result["entry_file"])
+        self.assertNotIn("ai_reliability_v8/adaptive_learning.py", result["primary_files"])
+
     def test_code_map_query_routes_to_internal_engine(self):
         result = self._index().resolve_feature("코드지도 느림 영향분석 최적화")
         groups = [row["group"] for row in result["matched_feature_groups"]]
