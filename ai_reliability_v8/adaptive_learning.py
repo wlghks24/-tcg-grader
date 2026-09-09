@@ -169,20 +169,38 @@ class AdaptiveEvidenceLearner(EvidenceLearner):
             }
         data, ids, groups, label_times = [], set(), set(), {}
         synthetic = False
+        owner_counts = {}
+        owner_by_id = {}
         for row in rows:
+            if not isinstance(row, dict):
+                raise ValueError("TRAINING_ROW_REQUIRED")
             if any(row.get(k) != v for k, v in self.scope.items()):
                 raise ValueError("TRAINING_SCOPE_MISMATCH")
-            if row.get("label_source") not in ("human_audit", "external_outcome") or not row.get("label_reference"):
+            if (
+                row.get("label_source") not in ("human_audit", "external_outcome")
+                or not isinstance(row.get("label_reference"), str)
+                or not row["label_reference"]
+            ):
                 raise ValueError("INDEPENDENT_LABEL_REQUIRED")
             if type(row.get("label")) is not int or row["label"] not in (0, 1):
                 raise ValueError("BINARY_LABEL_REQUIRED")
-            if not row.get("id") or not row.get("origin_group"):
+            if (
+                not isinstance(row.get("id"), str)
+                or not row["id"]
+                or not isinstance(row.get("origin_group"), str)
+                or not row["origin_group"]
+            ):
                 raise ValueError("IDENTITY_REQUIRED")
             if row["id"] in ids or row["origin_group"] in groups:
                 raise ValueError("DUPLICATE_ORIGIN_GROUP")
             if type(row.get("synthetic")) is not bool:
                 raise ValueError("DATA_PROVENANCE_REQUIRED")
+            owner = row.get("owner_group")
+            if not isinstance(owner, str) or not owner:
+                raise ValueError("OWNER_GROUP_REQUIRED")
             ids.add(row["id"]); groups.add(row["origin_group"]); synthetic |= row["synthetic"]
+            owner_counts[owner] = owner_counts.get(owner, 0) + 1
+            owner_by_id[row["id"]] = owner
             observed, labeled = timestamp(row["observed_at"]), timestamp(row["labeled_at"])
             if labeled < observed:
                 raise ValueError("LABEL_PRECEDES_OBSERVATION")
@@ -207,15 +225,27 @@ class AdaptiveEvidenceLearner(EvidenceLearner):
             raise ValueError("FUTURE_LABEL_LEAKAGE")
         if any(min(sum(r[2] == 0 for r in part), sum(r[2] == 1 for r in part)) < 20 for part in parts):
             return {"status": "INSUFFICIENT_CLASS_COVERAGE", "model": None}
-        owner_counts={}
-        for row in rows:
-            owner=row.get('owner_group')
-            if not isinstance(owner,str) or not owner: raise ValueError('OWNER_GROUP_REQUIRED')
-            owner_counts[owner]=owner_counts.get(owner,0)+1
         dominance=max(owner_counts.values())/len(rows)
-        if len(owner_counts)<3 or dominance>.7:
+        split_quality=[]
+        split_source_failure=False
+        for name, part in zip(("train","tune","calibration","test"), parts):
+            counts={}
+            for _, _, _, row_id in part:
+                owner=owner_by_id[row_id]
+                counts[owner]=counts.get(owner,0)+1
+            part_dominance=max(counts.values())/len(part)
+            split_quality.append({
+                'split':name,
+                'owner_groups':len(counts),
+                'owner_dominance':part_dominance,
+            })
+            if len(counts)<2 or part_dominance>.7:
+                split_source_failure=True
+        if len(owner_counts)<3 or dominance>.7 or split_source_failure:
             return {'status':'INSUFFICIENT_SOURCE_DIVERSITY','model':None,
-                    'data_quality':{'owner_groups':len(owner_counts),'owner_dominance':dominance}}
+                    'existing_model_preserved':True,
+                    'data_quality':{'owner_groups':len(owner_counts),'owner_dominance':dominance,
+                                    'split_source_quality':split_quality}}
         logistic = _train_logistic(train)
         logistic_score = _brier(logistic,tune)
         seeds=ALLOWED_MLP_SEEDS
@@ -271,7 +301,8 @@ class AdaptiveEvidenceLearner(EvidenceLearner):
                 "model": model, "selection": {"policy": "MULTI_SEED_TUNE_ONLY_MIN_IMPROVEMENT_0.005", "tune_brier": tune_scores,
                 "mlp_families": [{"hidden_size":f['hidden_size'],"seed_brier":f['scores'],"mean_brier":f['mean'],"range":f['range']} for f in families],
                 "mlp_stable":stable,"mlp_improved":improved,"selected": selected["kind"], "test_was_used_for_selection": False},
-                "data_quality":{"owner_groups":len(owner_counts),"owner_dominance":dominance},
+                "data_quality":{"owner_groups":len(owner_counts),"owner_dominance":dominance,
+                                "split_source_quality":split_quality},
                 "metrics": {"brier": brier, "constant_brier": baseline, "ece_5_bins": ece,
                 "false_high": false_high, "test_negatives": negatives, "false_high_wilson95_upper": upper,
                 "feature_mean_drift": drift, "train": len(train), "tune": len(tune),

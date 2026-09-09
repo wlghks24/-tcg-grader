@@ -35,7 +35,7 @@
       "tests": [
         "test_v4.VerificationTests"
       ],
-      "validation": "원문 해시/기간/값/독립성/충돌/실거래 gate"
+      "validation": "원문 해시/캡처 freshness/값/독립성/충돌 gate. completed_sale은 source capture 36시간 이내, 거래시각 최근 30일 이내, 독립 primary evidence 2개 이상 필요"
     },
     "evidence_learning": {
       "entry_file": "evidence_learning.py",
@@ -45,7 +45,7 @@
       "tests": [
         "test_v4.EvidenceLearningTests"
       ],
-      "validation": "1,000개 미만 모델 업데이트 금지/기존 모델 유지, 독립 실제 라벨·owner 다양성·시간순 train/tune/calibration/final-test·누수/NaN/확률/드리프트 검사, 학습점수로 검증 승격 금지"
+      "validation": "1,000개 미만 모델 업데이트 금지/기존 모델 유지, 독립 실제 라벨·문자열 ID/origin/reference·timezone 시각·owner 3개 이상·전체 및 train/tune/calibration/final-test 각 split 편중 70% 이하·누수/NaN/확률/드리프트 검사, 학습점수로 검증 승격 금지"
     },
     "adaptive_learning": {
       "entry_file": "adaptive_learning.py",
@@ -58,18 +58,21 @@
         "test_v7.RobustNeuralTests",
         "test_v8.ModelIntegrityTests"
       ],
-      "validation": "실제 독립 라벨 1,000개 이상에서만 hidden 4/8/12 × seeds 20260907/20260917/20260927 비교, tune-only 선택·calibration/test 격리·출처 편중/합성라벨 차단·모델 차원/유한값/구조 검증"
+      "validation": "실제 독립 라벨 1,000개 이상에서만 hidden 4/8/12 × seeds 20260907/20260917/20260927 비교, tune-only 선택·calibration/test 격리·전체 및 각 split 출처 편중/합성라벨/입력타입 차단·모델 차원/유한값/구조 검증"
     },
     "diverse_collection": {
       "entry_file": "diverse_collection.py",
       "impact": [
         "source_registry.json",
-        "bridge.py"
+        "bridge.py",
+        "adaptive_learning.py",
+        "evidence_learning.py"
       ],
       "tests": [
-        "test_v5.CoverageTests"
+        "test_v5.CoverageTests",
+        "instagram_tcg_content/test_ai_reliability_v8_integration.py"
       ],
-      "validation": "프로젝트/목적/지역/주제 범위와 소유자 다양성, 미충족 범위 보고"
+      "validation": "학습 준비 신호도 실제 독립 human_audit/external_outcome 라벨 1,000개 이상, owner 3개 이상, owner 편중 70% 이하, 단일 project, binary class coverage, ID/origin 중복 없음, synthetic=false일 때만 true"
     },
     "social_evidence": {
       "entry_file": "social_evidence.py",

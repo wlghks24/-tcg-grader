@@ -1,9 +1,10 @@
 #!/usr/bin/env python3
+from datetime import datetime, timezone
 from pathlib import Path
 from tempfile import TemporaryDirectory
 
 from instagram_tcg_content.source_verification_engine import (
-    VerificationResult,
+    Observation,
     build_production_verification_receipt,
 )
 from instagram_tcg_content.production_state import (
@@ -25,23 +26,30 @@ from instagram_tcg_content.production_state import (
 )
 
 
-def verification_receipt(snapshot_id="snapshot-1"):
-    result = VerificationResult(
-        canonical_key="pokemon|release|kr",
+SNAPSHOT_HASH = "a" * 64
+
+
+def verification_receipt(snapshot_id="snapshot-1", snapshot_hash=SNAPSHOT_HASH):
+    observation = Observation(
+        game="pokemon",
         fact_type="official_release",
-        status="verified",
-        canonical_value="2026-09-16",
-        source_codes=("P-S01",),
-        source_count=1,
-        independent_source_count=1,
-        official_primary_present=True,
-        confidence_score=0.99,
-        uncertainty_reason=None,
+        canonical_key="pokemon|release|kr",
+        value="2026-09-16",
+        source_code="P-S01",
+        source_name="pokemon-official",
+        source_locator="https://www.pokemon-card.com/",
+        source_tier="official_primary",
+        collector_id="collector:pokemon-official",
+        provider_id="pokemon-official",
+        fetched_at_kst="2026-09-06T10:00:00+09:00",
+        status="observed",
     )
     return build_production_verification_receipt(
-        [result],
+        [[observation]],
         snapshot_id=snapshot_id,
+        snapshot_fingerprint=snapshot_hash,
         required_core_keys=[("pokemon|release|kr", "official_release")],
+        now=datetime(2026, 9, 6, 1, 5, tzinfo=timezone.utc),
     )
 
 
@@ -53,6 +61,7 @@ def record(run_kind=SCHEDULED_BASELINE_RUN_KIND, baseline_id="IG-20260906-1030")
         "router_branch": "DAILY_PRODUCTION",
         "run_kind": run_kind,
         "snapshot_id": "snapshot-1",
+        "snapshot_hash": SNAPSHOT_HASH,
         "schema_version": 1,
         "payload_hashes": [f"payload-{i}" for i in range(6)],
         "artifact_hashes": [f"artifact-{i}" for i in range(6)],
@@ -212,6 +221,20 @@ def main():
     assert (
         "verification_receipt snapshot mismatch"
         in validate_production_record(mismatched_receipt)
+    )
+
+    mismatched_snapshot_hash = record()
+    mismatched_snapshot_hash["snapshot_hash"] = "b" * 64
+    assert (
+        "verification_receipt snapshot fingerprint mismatch"
+        in validate_production_record(mismatched_snapshot_hash)
+    )
+
+    malformed_snapshot_hash = record()
+    malformed_snapshot_hash["snapshot_hash"] = "not-a-sha"
+    assert (
+        "snapshot_hash must be lowercase SHA-256"
+        in validate_production_record(malformed_snapshot_hash)
     )
 
     tampered_receipt = record()

@@ -44,6 +44,7 @@ REQUIRED_PRODUCTION_FIELDS = {
     "router_branch",
     "run_kind",
     "snapshot_id",
+    "snapshot_hash",
     "schema_version",
     "payload_hashes",
     "artifact_hashes",
@@ -276,12 +277,20 @@ def validate_production_record(record: dict[str, Any]) -> list[str]:
         errors.append("x10_status must be pass")
 
     snapshot_id = record.get("snapshot_id")
+    snapshot_hash = record.get("snapshot_hash")
     if not isinstance(snapshot_id, str) or not snapshot_id.strip():
         errors.append("snapshot_id missing")
-    else:
+    if (
+        not isinstance(snapshot_hash, str)
+        or len(snapshot_hash) != 64
+        or any(ch not in "0123456789abcdef" for ch in snapshot_hash)
+    ):
+        errors.append("snapshot_hash must be lowercase SHA-256")
+    if isinstance(snapshot_id, str) and snapshot_id.strip() and isinstance(snapshot_hash, str):
         receipt_errors = validate_production_verification_receipt(
             record.get("verification_receipt"),
             expected_snapshot_id=snapshot_id,
+            expected_snapshot_fingerprint=snapshot_hash,
         )
         errors.extend(receipt_errors)
         receipt = record.get("verification_receipt")

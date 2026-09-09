@@ -709,8 +709,9 @@ def x10_fact_gate(
     return (not reasons, reasons)
 
 
-VERIFICATION_RECEIPT_SCHEMA = 1
+VERIFICATION_RECEIPT_SCHEMA = 2
 VERIFICATION_MODE = "INSTAGRAM_LOCAL_EVIDENCE_ONLY"
+VERIFICATION_RECEIPT_CONTRACT = "OBSERVATION_GROUPS_V1"
 
 
 def _verification_result_payload(result: VerificationResult) -> dict[str, object]:
@@ -719,12 +720,39 @@ def _verification_result_payload(result: VerificationResult) -> dict[str, object
         "fact_type": result.fact_type,
         "status": result.status,
         "canonical_value": result.canonical_value,
+        "source_codes": list(result.source_codes),
         "source_count": result.source_count,
         "independent_source_count": result.independent_source_count,
         "official_primary_present": result.official_primary_present,
         "confidence_score": result.confidence_score,
         "uncertainty_reason": result.uncertainty_reason,
         "conflict_values": list(result.conflict_values),
+    }
+
+
+def _observation_payload(row: Observation) -> dict[str, object]:
+    return {
+        "game": row.game,
+        "fact_type": row.fact_type,
+        "canonical_key": row.canonical_key,
+        "value": row.value,
+        "source_code": row.source_code,
+        "source_name": row.source_name,
+        "source_locator": row.source_locator,
+        "source_tier": row.source_tier,
+        "collector_id": row.collector_id,
+        "provider_id": row.provider_id,
+        "fetched_at_kst": row.fetched_at_kst,
+        "event_or_trade_time": row.event_or_trade_time,
+        "status": row.status,
+        "original_currency": row.original_currency,
+        "condition": row.condition,
+        "grade": row.grade,
+        "finality": row.finality,
+        "price_basis": row.price_basis,
+        "quantity": row.quantity,
+        "unit": row.unit,
+        "lineage_key": row.lineage_key,
     }
 
 
@@ -740,12 +768,19 @@ def _receipt_hash(payload: dict[str, object]) -> str:
 
 
 def build_production_verification_receipt(
-    results: Sequence[VerificationResult],
+    observation_groups: Sequence[Sequence[Observation]],
     *,
     snapshot_id: str,
+    snapshot_fingerprint: str,
     required_core_keys: Sequence[tuple[str, str]],
+    now: datetime | None = None,
 ) -> dict[str, object]:
-    """Bind a production PASS to the exact locally verified result set."""
+    """Run local verification and bind PASS to the exact observation set.
+
+    Callers provide raw Observation groups, not pre-computed VerificationResult
+    objects.  This prevents production code from bypassing verify_fact() by
+    constructing a synthetic "verified" result directly.
+    """
     snapshot = str(snapshot_id or "").strip()
     required = sorted(
         {
@@ -756,8 +791,42 @@ def build_production_verification_receipt(
     )
     if not snapshot:
         raise ValueError("SNAPSHOT_ID_REQUIRED")
+    if (
+        not isinstance(snapshot_fingerprint, str)
+        or len(snapshot_fingerprint) != 64
+        or any(ch not in "0123456789abcdef" for ch in snapshot_fingerprint)
+    ):
+        raise ValueError("SNAPSHOT_FINGERPRINT_REQUIRED")
     if not required:
         raise ValueError("REQUIRED_CORE_KEYS_REQUIRED")
+    if not isinstance(observation_groups, (list, tuple)) or not observation_groups:
+        raise ValueError("OBSERVATION_GROUPS_REQUIRED")
+
+    current = now or datetime.now(timezone.utc)
+    if current.tzinfo is None:
+        raise ValueError("now must be timezone-aware")
+
+    results: list[VerificationResult] = []
+    observations: list[Observation] = []
+    seen_group_keys: set[tuple[str, str]] = set()
+    for index, group in enumerate(observation_groups):
+        if not isinstance(group, (list, tuple)) or not group:
+            raise ValueError(f"OBSERVATION_GROUP_REQUIRED:{index}")
+        if any(not isinstance(row, Observation) for row in group):
+            raise ValueError(f"OBSERVATION_TYPE_REQUIRED:{index}")
+
+        result = verify_fact(group, now=current)
+        key = (result.canonical_key, result.fact_type)
+        if key in seen_group_keys:
+            raise ValueError(
+                "DUPLICATE_VERIFICATION_GROUP:"
+                + result.canonical_key
+                + ":"
+                + result.fact_type
+            )
+        seen_group_keys.add(key)
+        results.append(result)
+        observations.extend(group)
 
     passed, reasons = x10_fact_gate(results, required_core_keys=required)
     if not passed:
@@ -783,16 +852,33 @@ def build_production_verification_receipt(
             str(row["canonical_value"]),
         ),
     )
+    observation_payload = sorted(
+        (_observation_payload(row) for row in observations),
+        key=lambda row: (
+            str(row["canonical_key"]),
+            str(row["fact_type"]),
+            str(row["provider_id"]),
+            str(row["source_locator"]),
+            str(row["lineage_key"]),
+            str(row["value"]),
+        ),
+    )
     evidence_fingerprint = _receipt_hash({"results": evidence_payload})
+    observation_fingerprint = _receipt_hash({"observations": observation_payload})
+
     payload: dict[str, object] = {
         "schema_version": VERIFICATION_RECEIPT_SCHEMA,
         "verification_mode": VERIFICATION_MODE,
+        "verification_contract": VERIFICATION_RECEIPT_CONTRACT,
         "snapshot_id": snapshot,
+        "snapshot_fingerprint": snapshot_fingerprint,
         "status": "pass",
         "required_core_keys": [list(item) for item in required],
         "verified_core_keys": [list(item) for item in verified_keys],
         "core_fact_count": len(core_results),
         "verified_core_fact_count": len(verified_keys),
+        "observation_count": len(observations),
+        "observation_fingerprint": observation_fingerprint,
         "evidence_fingerprint": evidence_fingerprint,
     }
     payload["receipt_hash"] = _receipt_hash(payload)
@@ -803,6 +889,7 @@ def validate_production_verification_receipt(
     receipt: object,
     *,
     expected_snapshot_id: str,
+    expected_snapshot_fingerprint: str | None = None,
 ) -> list[str]:
     errors: list[str] = []
     if not isinstance(receipt, dict):
@@ -811,12 +898,16 @@ def validate_production_verification_receipt(
     expected_fields = {
         "schema_version",
         "verification_mode",
+        "verification_contract",
         "snapshot_id",
+        "snapshot_fingerprint",
         "status",
         "required_core_keys",
         "verified_core_keys",
         "core_fact_count",
         "verified_core_fact_count",
+        "observation_count",
+        "observation_fingerprint",
         "evidence_fingerprint",
         "receipt_hash",
     }
@@ -827,13 +918,28 @@ def validate_production_verification_receipt(
         errors.append("verification_receipt schema mismatch")
     if receipt.get("verification_mode") != VERIFICATION_MODE:
         errors.append("verification_receipt mode mismatch")
+    if receipt.get("verification_contract") != VERIFICATION_RECEIPT_CONTRACT:
+        errors.append("verification_receipt contract mismatch")
     if receipt.get("snapshot_id") != expected_snapshot_id:
         errors.append("verification_receipt snapshot mismatch")
+    snapshot_fingerprint = receipt.get("snapshot_fingerprint")
+    if (
+        not isinstance(snapshot_fingerprint, str)
+        or len(snapshot_fingerprint) != 64
+        or any(ch not in "0123456789abcdef" for ch in snapshot_fingerprint)
+    ):
+        errors.append("verification_receipt snapshot_fingerprint invalid")
+    elif (
+        expected_snapshot_fingerprint is not None
+        and snapshot_fingerprint != expected_snapshot_fingerprint
+    ):
+        errors.append("verification_receipt snapshot fingerprint mismatch")
     if receipt.get("status") != "pass":
         errors.append("verification_receipt status must be pass")
 
     required_raw = receipt.get("required_core_keys")
     verified_raw = receipt.get("verified_core_keys")
+
     def normalize_pairs(value: object) -> set[tuple[str, str]] | None:
         if not isinstance(value, list):
             return None
@@ -859,6 +965,7 @@ def validate_production_verification_receipt(
 
     core_count = receipt.get("core_fact_count")
     verified_count = receipt.get("verified_core_fact_count")
+    observation_count = receipt.get("observation_count")
     if isinstance(core_count, bool) or not isinstance(core_count, int) or core_count <= 0:
         errors.append("verification_receipt core_fact_count invalid")
     if (
@@ -869,16 +976,29 @@ def validate_production_verification_receipt(
         errors.append("verification_receipt verified_core_fact_count invalid")
     elif verified is not None and verified_count != len(verified):
         errors.append("verification_receipt verified_core_fact_count mismatch")
-    if isinstance(core_count, int) and isinstance(verified_count, int) and verified_count > core_count:
-        errors.append("verification_receipt verified count exceeds core count")
-
-    fingerprint = receipt.get("evidence_fingerprint")
     if (
-        not isinstance(fingerprint, str)
-        or len(fingerprint) != 64
-        or any(ch not in "0123456789abcdef" for ch in fingerprint)
+        isinstance(core_count, int)
+        and not isinstance(core_count, bool)
+        and isinstance(verified_count, int)
+        and not isinstance(verified_count, bool)
+        and verified_count > core_count
     ):
-        errors.append("verification_receipt evidence_fingerprint invalid")
+        errors.append("verification_receipt verified count exceeds core count")
+    if (
+        isinstance(observation_count, bool)
+        or not isinstance(observation_count, int)
+        or observation_count <= 0
+    ):
+        errors.append("verification_receipt observation_count invalid")
+
+    for field in ("observation_fingerprint", "evidence_fingerprint"):
+        fingerprint = receipt.get(field)
+        if (
+            not isinstance(fingerprint, str)
+            or len(fingerprint) != 64
+            or any(ch not in "0123456789abcdef" for ch in fingerprint)
+        ):
+            errors.append(f"verification_receipt {field} invalid")
 
     receipt_hash = receipt.get("receipt_hash")
     if (

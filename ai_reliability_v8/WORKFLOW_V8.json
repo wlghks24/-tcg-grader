@@ -34,6 +34,15 @@
       20260907,
       20260917,
       20260927
-    ]
+    ],
+    "label_identity_fields_must_be_strings": true,
+    "timezone_aware_label_times_required": true,
+    "owner_groups_minimum": 3,
+    "owner_dominance_maximum": 0.7,
+    "temporal_split_owner_minimum_groups": 2,
+    "temporal_split_owner_dominance_maximum": 0.7,
+    "completed_sale_capture_max_hours": 36,
+    "completed_sale_event_max_days": 30,
+    "completed_sale_min_independent_sources": 2
   }
 }

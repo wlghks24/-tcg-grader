@@ -11,6 +11,7 @@ from instagram_tcg_content.source_verification_engine import (
 )
 
 FIXED_NOW = datetime(2026, 9, 4, 14, 0, tzinfo=timezone.utc)
+SNAPSHOT_FINGERPRINT = "c" * 64
 
 
 def verify_fact(rows):
@@ -428,23 +429,25 @@ def main():
     assert strategy_for_retry(2) == "alternate_parser_and_source"
     assert strategy_for_retry(3) == "quarantine_and_exclude"
 
-    good = verify_fact(
-        [
-            obs("ebay", "completed_sale_original"),
-            obs("goldin", "completed_sale_original", code="P-S02"),
-        ]
-    )
+    good_observations = [
+        obs("ebay", "completed_sale_original"),
+        obs("goldin", "completed_sale_original", code="P-S02"),
+    ]
+    good = verify_fact(good_observations)
     ok, reasons = x10_fact_gate([good])
     assert ok and not reasons, reasons
 
-    bad = verify_fact([obs("ebay", "completed_sale_original")])
+    bad_observations = [obs("ebay", "completed_sale_original")]
+    bad = verify_fact(bad_observations)
     ok, reasons = x10_fact_gate([bad])
     assert not ok and reasons
 
     receipt = build_production_verification_receipt(
-        [good],
+        [good_observations],
         snapshot_id="snapshot-verified-1",
+        snapshot_fingerprint=SNAPSHOT_FINGERPRINT,
         required_core_keys=[(good.canonical_key, good.fact_type)],
+        now=FIXED_NOW,
     )
     assert receipt["status"] == "pass", receipt
     assert receipt["verification_mode"] == "INSTAGRAM_LOCAL_EVIDENCE_ONLY", receipt
@@ -452,9 +455,49 @@ def main():
         validate_production_verification_receipt(
             receipt,
             expected_snapshot_id="snapshot-verified-1",
+            expected_snapshot_fingerprint=SNAPSHOT_FINGERPRINT,
         )
         == []
     )
+
+    assert receipt["schema_version"] == 2, receipt
+    assert receipt["verification_contract"] == "OBSERVATION_GROUPS_V1", receipt
+    assert receipt["snapshot_fingerprint"] == SNAPSHOT_FINGERPRINT, receipt
+    assert receipt["observation_count"] == 2, receipt
+    assert len(receipt["observation_fingerprint"]) == 64, receipt
+
+    # Pre-computed VerificationResult objects are not accepted as receipt input.
+    try:
+        build_production_verification_receipt(
+            [good],
+            snapshot_id="snapshot-bypass",
+            snapshot_fingerprint=SNAPSHOT_FINGERPRINT,
+            required_core_keys=[(good.canonical_key, good.fact_type)],
+            now=FIXED_NOW,
+        )
+        raise AssertionError("pre-computed VerificationResult bypass was accepted")
+    except ValueError as exc:
+        assert str(exc).startswith("OBSERVATION_GROUP_REQUIRED:"), exc
+
+    # Duplicate canonical/fact groups cannot inflate verified counts.
+    try:
+        build_production_verification_receipt(
+            [good_observations, good_observations],
+            snapshot_id="snapshot-duplicate",
+            snapshot_fingerprint=SNAPSHOT_FINGERPRINT,
+            required_core_keys=[(good.canonical_key, good.fact_type)],
+            now=FIXED_NOW,
+        )
+        raise AssertionError("duplicate verification group was accepted")
+    except ValueError as exc:
+        assert str(exc).startswith("DUPLICATE_VERIFICATION_GROUP:"), exc
+
+    snapshot_mismatch = validate_production_verification_receipt(
+        receipt,
+        expected_snapshot_id="snapshot-verified-1",
+        expected_snapshot_fingerprint="d" * 64,
+    )
+    assert "verification_receipt snapshot fingerprint mismatch" in snapshot_mismatch
 
     tampered = dict(receipt)
     tampered["verified_core_fact_count"] = 999
@@ -467,9 +510,11 @@ def main():
 
     try:
         build_production_verification_receipt(
-            [bad],
+            [bad_observations],
             snapshot_id="snapshot-blocked",
+            snapshot_fingerprint=SNAPSHOT_FINGERPRINT,
             required_core_keys=[(bad.canonical_key, bad.fact_type)],
+            now=FIXED_NOW,
         )
         raise AssertionError("non-verified evidence created a production receipt")
     except ValueError as exc:

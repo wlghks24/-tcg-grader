@@ -1,22 +1,22 @@
 {
   "files": {
-    "CODE_MAP.json": "fcf1d11a3fc63021a4e9f9943a1959fd34e04a5de5be691973125d7ce98ab4d9",
-    "WORKFLOW_V8.json": "d5c7f62227ccc20b34962500f840458fccab6b76ac8d25612b683baac3a3def4",
+    "CODE_MAP.json": "055ae1a006a2cd919416684a92e8cc3d9433936908dd8c97aff0f7a2e9923e3b",
+    "WORKFLOW_V8.json": "f82c565d7ec386809cbe19acbf0a4bbc69667358c3c145c232b5514f83f60456",
     "__init__.py": "7ae3e028b8898e2db665c3c513f0b1ae614c11d85b7205834052e0b0dab49d27",
-    "adaptive_learning.py": "868b87055393b076de3c2dac7820294e7010a057f63a45cdacf5b84aa5bf304f",
+    "adaptive_learning.py": "4c3c33515ec0e529e7627ab5c9b88ccdb4858a9d52217527f88d83e5b9de4cc5",
     "ai_learning.py": "60e82fb89e267ad003606dcadf9ee4133c7512968fa18f7c0ffef6721a12123e",
     "bridge.py": "4d67106481b7180fd97617f02fff976b493fda294e0c0506ffe935a5cdd33f95",
     "code_map_fast_route.py": "48d142500ed286cf464b25c83362942e9dce13807828b46e4b6d7a0117f50c13",
     "code_optimizer.py": "26924cc564fd7863a8517ce1c7164ac4390d8a7d1dc3f5d2f853a5166b88a186",
     "diagnostics.py": "1a18e45db2248f0843bdee2db167c3f5b26a2bba9feabef884130762f9077e1d",
-    "diverse_collection.py": "07d414a2eab042ab17febcd2e60e98a0a6a7f037ef330cd9085b4f22f72c2ae0",
-    "evidence_learning.py": "8e602b5ab443d817bbfcc3a0f0715fba3949eec955e970cd09ffff4a07c95944",
+    "diverse_collection.py": "3a7a42dcd5b9727a68439468967df437d25160fa82b7d76f1bccd6771c50a649",
+    "evidence_learning.py": "26fc92a9dff331aa82d1aa39b541055b48d24c9eda34c62757508e1909c4b6b5",
     "guard.py": "d9cc01aff11e65a01267f2e8e08de1dcc8d200c21ffa21a1c089c8a19fca0514",
     "recovery.py": "b1c555f02e9aecf00e6b7cb5890359d297de6127151b28ffa41067e1ab0dcab0",
     "self_heal.py": "bb3c6bf75b23ba06ae95e2e5bffc33be5a034ba73665fcafed14a0ef258bea7f",
     "social_evidence.py": "f04aa3e641363c3abdb51d60f912e2f6b0216f2ab4746ae5fdd001421a61ebff",
     "source_registry.json": "a8a130d43e30664fef8466829cd0e9b4a12f7b37d19fcf4e19347fe1559b8e2b",
-    "verification.py": "e7409654c913322d2fc59c5c5d8c12770d8b7ff8ec077094b302ffd600355ded",
+    "verification.py": "c28738b6aea92bf6bf06d195e5d1ecffb87b7ab07d6c0e8493d8b90a9aded1e0",
     "workflow.py": "fd4d51e29c9548a5b620e8962da76a1e8072c5ced16a36167904ffdbeb9d2133"
   },
   "project": "instagram_card",
@@ -36,6 +36,17 @@
       20260917,
       20260927
     ],
-    "temporal_split": "50_15_15_20"
+    "temporal_split": "50_15_15_20",
+    "training_readiness_min_real_labels": 1000,
+    "training_readiness_min_owner_groups": 3,
+    "training_readiness_max_owner_dominance": 0.7,
+    "training_readiness_requires_unique_id_and_origin": true,
+    "temporal_split_owner_min_groups": 2,
+    "temporal_split_owner_max_dominance": 0.7,
+    "label_identity_fields_must_be_strings": true,
+    "timezone_aware_label_times_required": true,
+    "completed_sale_capture_max_hours": 36,
+    "completed_sale_event_max_days": 30,
+    "completed_sale_min_independent_sources": 2
   }
 }
