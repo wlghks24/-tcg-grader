@@ -120,6 +120,12 @@ FEATURE_QUERY_ALIASES = {
         "인스타 카드정보 작업물", "작업물", "production state", "baseline",
         "10:30 제작", "22:30 수정판", "artifact",
     ),
+    "instagram_cardinfo_ai_reliability": (
+        "인스타 카드정보 신경망", "인스타 카드정보 ai", "ai reliability",
+        "신경망", "1000 라벨", "1000개 라벨", "hidden size", "hidden 4 8 12",
+        "calibration", "drift", "모델 손상", "차원 불일치", "확률 오차",
+        "adaptive learning", "evidence learner",
+    ),
 }
 
 # Feature-only routes that are important for fast maintenance but are intentionally
@@ -167,6 +173,16 @@ FEATURE_ROUTE_OVERRIDES = {
         "instagram_tcg_content/selfrefine_gate.py",
         "instagram_tcg_content/test_production_state.py",
         "instagram_tcg_content/test_live_packet_guards.py",
+    ),
+    "instagram_cardinfo_ai_reliability": (
+        "ai_reliability_v8/adaptive_learning.py",
+        "ai_reliability_v8/evidence_learning.py",
+        "ai_reliability_v8/bridge.py",
+        "ai_reliability_v8/binding.json",
+        "ai_reliability_v8/CODE_MAP.json",
+        "ai_reliability_v8/WORKFLOW_V8.json",
+        "instagram_tcg_content/test_ai_reliability_v8_integration.py",
+        ".github/workflows/ai-reliability-v8-integration.yml",
     ),
 }
 
@@ -228,6 +244,9 @@ FEATURE_TEST_NODE_CONTRACTS = {
     "instagram_cardinfo_production_state": (
         "instagram_tcg_content/test_production_state.py::main",
     ),
+    "instagram_cardinfo_ai_reliability": (
+        "instagram_tcg_content/test_ai_reliability_v8_integration.py::InstagramCardReliabilityV8IntegrationTests::test_neural_gate_below_1000_preserves_existing_model_without_training",
+    ),
 }
 
 
@@ -260,6 +279,7 @@ FEATURE_ENTRYPOINTS = {
     "instagram_cardinfo_crosscheck": ("instagram_tcg_content/source_verification_engine.py",),
     "instagram_cardinfo_source_verification": ("instagram_tcg_content/source_verification_engine.py",),
     "instagram_cardinfo_production_state": ("instagram_tcg_content/production_state.py",),
+    "instagram_cardinfo_ai_reliability": ("ai_reliability_v8/adaptive_learning.py",),
 }
 
 # Secondary first-touch files stay visible without competing with the one
