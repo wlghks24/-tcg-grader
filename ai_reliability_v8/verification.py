@@ -2,6 +2,7 @@
 import hashlib
 import json
 import math
+import re
 import sqlite3
 from datetime import datetime, timezone
 from pathlib import Path
@@ -146,7 +147,8 @@ class Verifier:
             except (ValueError,KeyError,TypeError,OSError) as exc:
                 # Exception text may contain secrets: use only our known uppercase codes.
                 code=str(exc)
-                if not code.replace('_','').isalpha() or code.upper()!=code: code='INVALID_EVIDENCE'
+                if not re.fullmatch(r'[A-Z][A-Z0-9_]{0,63}',code):
+                    code='INVALID_EVIDENCE'
                 rejected.append({'id':eid,'code':code})
         groups=independent_count(accepted)
         primary_groups=independent_count([x for x in accepted if x['role']=='primary']) if any(x['role']=='primary' for x in accepted) else 0
