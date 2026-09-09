@@ -1,10 +1,18 @@
 #!/usr/bin/env python3
+from datetime import datetime, timezone
+
 from instagram_tcg_content.source_verification_engine import (
     Observation,
     strategy_for_retry,
-    verify_fact,
+    verify_fact as _verify_fact,
     x10_fact_gate,
 )
+
+FIXED_NOW = datetime(2026, 9, 4, 14, 0, tzinfo=timezone.utc)
+
+
+def verify_fact(rows):
+    return _verify_fact(rows, now=FIXED_NOW)
 
 
 def obs(
@@ -62,6 +70,45 @@ def obs(
 
 
 def main():
+    # Production fact gate must fail closed on no evidence or reference-only evidence.
+    ok, reasons = x10_fact_gate([])
+    assert not ok and reasons == ["NO_VERIFICATION_RESULTS"], reasons
+
+    reference_only = verify_fact(
+        [obs("pricecharting", "market_reference", "200", "market_reference")]
+    )
+    ok, reasons = x10_fact_gate([reference_only])
+    assert not ok and "NO_CORE_FACTS" in reasons, reasons
+
+    # Stale source capture and completed-sale evidence older than 30 days are rejected.
+    stale_capture = _verify_fact(
+        [obs("pokemon-official", "official_primary", "2026-09-16", "official_release")],
+        now=datetime(2026, 9, 7, 0, 0, tzinfo=timezone.utc),
+    )
+    assert stale_capture.status == "unverified", stale_capture
+    assert stale_capture.uncertainty_reason == "stale source capture", stale_capture
+
+    old_sale = _verify_fact(
+        [
+            obs(
+                "ebay",
+                "completed_sale_original",
+                "100",
+                event_time="2026-07-01T20:00:00+09:00",
+            ),
+            obs(
+                "goldin",
+                "completed_sale_original",
+                "110",
+                event_time="2026-07-02T20:00:00+09:00",
+                code="P-S02",
+            ),
+        ],
+        now=FIXED_NOW,
+    )
+    assert old_sale.status == "unverified", old_sale
+    assert "older than 30 days" in (old_sale.uncertainty_reason or ""), old_sale
+
     # One realized-sale source is insufficient.
     r = verify_fact([obs("ebay", "completed_sale_original")])
     assert r.status == "partial", r
