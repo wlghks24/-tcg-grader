@@ -64,12 +64,15 @@
       "entry_file": "diverse_collection.py",
       "impact": [
         "source_registry.json",
-        "bridge.py"
+        "bridge.py",
+        "adaptive_learning.py",
+        "evidence_learning.py"
       ],
       "tests": [
-        "test_v5.CoverageTests"
+        "test_v5.CoverageTests",
+        "instagram_tcg_content/test_ai_reliability_v8_integration.py"
       ],
-      "validation": "프로젝트/목적/지역/주제 범위와 소유자 다양성, 미충족 범위 보고"
+      "validation": "학습 준비 신호도 실제 독립 human_audit/external_outcome 라벨 1,000개 이상, owner 3개 이상, owner 편중 70% 이하, 단일 project, binary class coverage, ID/origin 중복 없음, synthetic=false일 때만 true"
     },
     "social_evidence": {
       "entry_file": "social_evidence.py",
