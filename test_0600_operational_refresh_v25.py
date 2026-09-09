@@ -188,59 +188,45 @@ class Operational0600RefreshV25Tests(unittest.TestCase):
         self.assertIn("atomic_write_json(REPORT, result", source)
         self.assertNotIn("REPORT.write_text(", source)
 
-    def test_daily_0600_workflow_refreshes_live_health_with_ci_only_cap(self):
-        text = Path(".github/workflows/daily-0600-collection-instagram-accuracy.yml").read_text(
+    def test_retired_cross_domain_workflows_are_inert(self):
+        legacy = Path(".github/workflows/daily-0600-collection-instagram-accuracy.yml").read_text(
             encoding="utf-8"
         )
-        self.assertIn("Refresh bounded live collection state before 06:00 audit", text)
-        self.assertIn("tcg_updater.update_cycle('scheduled-0600-audit')", text)
-        self.assertIn("TCG_SOURCE_TIMEOUT_CAP: '30'", text)
-        self.assertIn("source_collection_stats.json", text)
-        self.assertIn("adaptive_collection_stats.json", text)
-        self.assertIn("github.event_name == 'push'", text)
-        self.assertIn("github.event_name == 'pull_request'", text)
-        self.assertIn("github.event_name == 'pull_request' && github.sha || github.ref", text)
-        self.assertIn("cancel-in-progress: false", text)
-        self.assertIn("MAX_PRESTART_SKEW_SECONDS = 300", text)
-        self.assertIn("MAX_FUTURE_SKEW_SECONDS = 300", text)
-        self.assertIn("refresh_started_at = dt.datetime.now(dt.timezone.utc)", text)
-        self.assertIn("current_run_age_seconds", text)
-        self.assertIn("predates current refresh", text)
-        self.assertNotIn("MAX_HEALTH_AGE_SECONDS = 600", text)
-        self.assertIn("source_health_age_seconds", text)
-        self.assertIn("adaptive_health_age_seconds", text)
-        self.assertIn("refresh_duration_seconds", text)
-        self.assertIn("critical_collection_results", text)
-        self.assertIn("future-dated {label} health", text)
-        self.assertIn("if: ${{ !cancelled() }}", text)
-        self.assertIn("timeout-minutes: 30", text)
-        self.assertIn("Validate Main snapshot handoff", text)
-        self.assertIn("Upload verified Main snapshot handoff", text)
-        self.assertIn("name: main-crosscheck-snapshot", text)
-        self.assertIn("TCG_CROSSCHECK/MARKET_ANALYSIS/factual_snapshot.json", text)
-        self.assertEqual(text.count("contents: write"), 0)
-        self.assertNotIn("git push origin HEAD:main", text)
+        trigger = legacy.split("\npermissions:", 1)[0]
+        self.assertIn("workflow_dispatch:", trigger)
+        self.assertNotIn("schedule:", trigger)
+        self.assertNotIn("pull_request:", trigger)
+        self.assertNotIn("push:", trigger)
+        self.assertIn("Cross-domain audit retired", legacy)
+        self.assertNotIn("tcg_updater.update_cycle", legacy)
+        self.assertNotIn("python crosscheck_runtime_bridge.py", legacy)
+        self.assertNotIn("TCG_CROSSCHECK/MARKET_ANALYSIS", legacy)
 
-    def test_main_snapshot_writer_is_trusted_workflow_run_only(self):
-        text = Path(".github/workflows/persist-main-crosscheck-snapshot.yml").read_text(
+        persist = Path(".github/workflows/persist-main-crosscheck-snapshot.yml").read_text(
             encoding="utf-8"
         )
-        self.assertIn("workflow_run:", text)
-        self.assertIn("Daily 06:00 Collection ↔ Instagram Accuracy Audit", text)
-        self.assertNotIn("pull_request:", text)
-        self.assertIn("head_branch == 'main'", text)
-        self.assertIn("head_repository.full_name == github.repository", text)
-        self.assertIn("workflow_run.event == 'schedule'", text)
-        self.assertIn("workflow_run.event == 'workflow_dispatch'", text)
-        self.assertIn("workflow_run.event == 'push'", text)
-        self.assertIn("actions: read", text)
-        self.assertIn("contents: write", text)
-        self.assertIn("main-crosscheck-snapshot", text)
-        self.assertIn("MAX_ZIP_BYTES = 2_000_000", text)
-        self.assertIn("stale_snapshot_suppressed", text)
-        self.assertIn("TCG_CROSSCHECK/MARKET_ANALYSIS/factual_snapshot.json", text)
-        self.assertIn("[skip ci]", text)
-        self.assertNotIn("git push origin HEAD:main", text)
+        persist_trigger = persist.split("\npermissions:", 1)[0]
+        self.assertIn("workflow_dispatch:", persist_trigger)
+        self.assertNotIn("workflow_run:", persist_trigger)
+        self.assertNotIn("schedule:", persist_trigger)
+        self.assertNotIn("contents: write", persist)
+        self.assertNotIn("main-crosscheck-snapshot", persist)
+        self.assertNotIn("MARKET_ANALYSIS/factual_snapshot.json", persist)
+        self.assertIn("Main snapshot persistence retired", persist)
+
+    def test_instagram_workflow_self_verifies_without_market_analysis(self):
+        text = Path(".github/workflows/instagram-tcg-selfrefine.yml").read_text(
+            encoding="utf-8"
+        )
+        self.assertIn("python -m instagram_tcg_content.test_source_verification_engine", text)
+        self.assertIn("python -m instagram_tcg_content.test_source_route_resilience", text)
+        self.assertIn("python -m unittest -v test_instagram_verification_scope_policy_v210", text)
+        self.assertIn("python -m instagram_tcg_content.test_production_state", text)
+        self.assertIn("python -m instagram_tcg_content.automation_state_guard --self-test", text)
+        self.assertNotIn("crosscheck_runtime_bridge.py", text)
+        self.assertNotIn("peer_learning_runtime_bridge.py", text)
+        self.assertNotIn("TCG_CROSSCHECK/MARKET_ANALYSIS", text)
+        self.assertNotIn("daily_collection_instagram_accuracy.py", text)
 
 
 if __name__ == "__main__":
