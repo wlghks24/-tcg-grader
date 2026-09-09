@@ -48,6 +48,7 @@ jobs:
           python -m instagram_tcg_content.test_source_route_resilience
           python -m instagram_tcg_content.persisted_crosscheck_export --self-test
           python -m instagram_tcg_content.collection_health --self-test
+          python -m unittest -v instagram_tcg_content.test_collection_health
           python -m unittest -v test_instagram_verification_scope_policy_v210
           python -m json.tool instagram_tcg_content/source_routes.json >/dev/null
           python -m json.tool instagram_tcg_content/verification_scope_policy.json >/dev/null
