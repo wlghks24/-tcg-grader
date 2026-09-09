@@ -143,7 +143,7 @@ def choose_routes(
 
     seen_provider_ids: set[str] = set()
     normalized: list[ProviderState] = []
-    for state in normalized:
+    for state in states:
         _validate_state(state)
         provider_id = state.provider_id.strip()
         if provider_id in seen_provider_ids:
@@ -190,7 +190,7 @@ def choose_routes(
             if len(selected) >= route_budget:
                 break
 
-    for state in states:
+    for state in normalized:
         if state.provider_id not in selected_set and state.provider_id not in skipped_set:
             skipped.append(state.provider_id)
             skipped_set.add(state.provider_id)
