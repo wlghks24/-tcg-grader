@@ -65,7 +65,7 @@ class VerifiedNeuralSelfRefineV210Tests(unittest.TestCase):
                     "auto_repair_allowed": True,
                     "outcome": bool((i % 4) in (0, 1)),
                     "verification_level": "full_regression",
-                    "recorded_at": "2026-09-08T00:00:00+00:00",
+                    "recorded_at": f"2026-09-08T00:{i // 60:02d}:{i % 60:02d}+00:00",
                 })
             labels_path.write_text(json.dumps({
                 "schema": neural.SCHEMA,
