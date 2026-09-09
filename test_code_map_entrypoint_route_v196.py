@@ -345,8 +345,9 @@ class CodeMapEntrypointRouteV196Tests(unittest.TestCase):
         trigger = workflow.split("\npermissions:", 1)[0]
         for pattern in ("'**/*.py'", "'**/*.js'", "'**/*.sh'", "'**/*.html'"):
             self.assertEqual(trigger.count(pattern), 2, pattern)
-        for excluded in ("'!gemini-code-*/**'", "'!.codex/**'", "'!.agents/**'"):
+        for excluded in ("'!.codex/**'", "'!.agents/**'"):
             self.assertEqual(trigger.count(excluded), 2, excluded)
+        self.assertNotIn("gemini-code", workflow)
         self.assertIn("cache: 'pip'", workflow)
         self.assertIn("cache-dependency-path: '.github/workflows/graphify-integration-guard.yml'", workflow)
         self.assertIn("GRAPHIFY_UPDATE.sh --quiet", workflow)

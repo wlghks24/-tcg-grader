@@ -23,7 +23,6 @@ on:
       - '**/*.js'
       - '**/*.sh'
       - '**/*.html'
-      - '!gemini-code-*/**'
       - '!.codex/**'
       - '!.agents/**'
   push:
@@ -49,7 +48,6 @@ on:
       - '**/*.js'
       - '**/*.sh'
       - '**/*.html'
-      - '!gemini-code-*/**'
       - '!.codex/**'
       - '!.agents/**'
   workflow_dispatch:
