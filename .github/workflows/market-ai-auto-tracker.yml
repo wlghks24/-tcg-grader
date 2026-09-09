@@ -201,7 +201,9 @@ jobs:
             MAIN_SELFREFINE_ERROR_LEDGER.json
             MAIN_SELFREFINE_RESEARCH_REPORT.json
             VERIFIED_NEURAL_REPAIR_LABELS.json
+            VERIFIED_NEURAL_REPAIR_LABELS.json.bak
             VERIFIED_NEURAL_REPAIR_MODEL.json
+            VERIFIED_NEURAL_REPAIR_MODEL.json.bak
             VERIFIED_NEURAL_REPAIR_REPORT.json
           if-no-files-found: ignore
           retention-days: 14
