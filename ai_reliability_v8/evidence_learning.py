@@ -73,7 +73,7 @@ class EvidenceLearner:
         if len(rows)>MAX_REAL_LABELS:
             return _skip_status('INSUFFICIENT_OR_EXCESSIVE_LABELS',label_count=len(rows))
 
-        data=[];ids=set();groups=set();label_times={};owner_counts={}
+        data=[];ids=set();groups=set();label_times={};owner_counts={};owner_by_id={}
         synthetic_found=False
         for r in rows:
             if not isinstance(r,dict): raise ValueError('TRAINING_ROW_REQUIRED')
@@ -89,6 +89,7 @@ class EvidenceLearner:
             if not isinstance(owner,str) or not owner: raise ValueError('OWNER_GROUP_REQUIRED')
             ids.add(r['id']);groups.add(r['origin_group']);synthetic_found|=r['synthetic']
             owner_counts[owner]=owner_counts.get(owner,0)+1
+            owner_by_id[r['id']]=owner
             label_times[r['id']]=timestamp(r['labeled_at'])
             observed=timestamp(r['observed_at'])
             if label_times[r['id']]<observed: raise ValueError('LABEL_PRECEDES_OBSERVATION')
@@ -114,6 +115,32 @@ class EvidenceLearner:
             raise ValueError('FUTURE_LABEL_LEAKAGE')
         if any(min(sum(r[2]==0 for r in s),sum(r[2]==1 for r in s))<20 for s in parts):
             return _skip_status('INSUFFICIENT_CLASS_COVERAGE',label_count=len(rows))
+
+        split_quality=[]
+        split_source_failure=False
+        for name,part in zip(('train','tune','calibration','test'),parts):
+            counts={}
+            for _,_,_,row_id in part:
+                owner=owner_by_id[row_id]
+                counts[owner]=counts.get(owner,0)+1
+            part_dominance=max(counts.values())/len(part)
+            split_quality.append({
+                'split':name,
+                'owner_groups':len(counts),
+                'owner_dominance':part_dominance,
+            })
+            if len(counts)<2 or part_dominance>MAX_OWNER_DOMINANCE:
+                split_source_failure=True
+        if split_source_failure:
+            return _skip_status(
+                'INSUFFICIENT_SOURCE_DIVERSITY',
+                label_count=len(rows),
+                data_quality={
+                    'owner_groups':len(owner_counts),
+                    'owner_dominance':dominance,
+                    'split_source_quality':split_quality,
+                },
+            )
 
         weights=[0.0]*(len(FEATURES)+1)
         for _ in range(300):
@@ -164,7 +191,8 @@ class EvidenceLearner:
         return {
             'status':status,'model':model,'existing_model_preserved':not passed,
             'selection':{'policy':'LOGISTIC_BASELINE_ONLY','tune_used_for_model_selection':False,'test_used_for_model_selection':False},
-            'data_quality':{'owner_groups':len(owner_counts),'owner_dominance':dominance},
+            'data_quality':{'owner_groups':len(owner_counts),'owner_dominance':dominance,
+                            'split_source_quality':split_quality},
             'metrics':{
                 'tune_brier':tune_brier,'brier':brier,'constant_brier':constant_brier,'ece_5_bins':ece,
                 'false_high':false_high,'test_negatives':negatives,'false_high_wilson95_upper':upper,
