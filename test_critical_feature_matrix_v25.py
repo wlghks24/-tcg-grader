@@ -29,21 +29,53 @@ class CriticalFeatureMatrixV25Tests(unittest.TestCase):
         self.assertFalse(result["ok"])
         self.assertTrue(any("camera_runtime" in item for item in result["failures"]))
 
-    def test_missing_live_collection_refresh_fails_closed(self):
-        daily = matrix.DAILY.read_text(encoding="utf-8")
+    def test_missing_instagram_local_source_verification_fails_closed(self):
+        instagram = matrix.INSTAGRAM_SELFREFINE.read_text(encoding="utf-8")
         with tempfile.TemporaryDirectory() as tmp:
-            temp = Path(tmp) / "daily.yml"
+            temp = Path(tmp) / "instagram.yml"
             temp.write_text(
-                daily.replace(
-                    "tcg_updater.update_cycle('scheduled-0600-audit')",
-                    "# removed live collection refresh",
+                instagram.replace(
+                    "python -m instagram_tcg_content.test_source_verification_engine",
+                    "# removed Instagram-local source verification",
+                ),
+                encoding="utf-8",
+            )
+            with mock.patch.object(matrix, "INSTAGRAM_SELFREFINE", temp):
+                result = matrix.verify()
+        self.assertFalse(result["ok"])
+        self.assertTrue(any("source_verification" in item for item in result["failures"]))
+
+    def test_reactivating_legacy_cross_domain_schedule_fails_closed(self):
+        legacy = matrix.DAILY.read_text(encoding="utf-8")
+        with tempfile.TemporaryDirectory() as tmp:
+            temp = Path(tmp) / "legacy.yml"
+            temp.write_text(
+                legacy.replace(
+                    "  workflow_dispatch:",
+                    "  schedule:\n    - cron: '0 21 * * *'\n  workflow_dispatch:",
                 ),
                 encoding="utf-8",
             )
             with mock.patch.object(matrix, "DAILY", temp):
                 result = matrix.verify()
         self.assertFalse(result["ok"])
-        self.assertTrue(any("live_collection_refresh" in item for item in result["failures"]))
+        self.assertTrue(any("still scheduled" in item for item in result["failures"]))
+
+    def test_reactivating_legacy_snapshot_writer_fails_closed(self):
+        legacy = matrix.PERSIST_MAIN_CROSSCHECK.read_text(encoding="utf-8")
+        with tempfile.TemporaryDirectory() as tmp:
+            temp = Path(tmp) / "persist.yml"
+            temp.write_text(
+                legacy.replace(
+                    "permissions:\n  contents: read",
+                    "permissions:\n  contents: write",
+                ),
+                encoding="utf-8",
+            )
+            with mock.patch.object(matrix, "PERSIST_MAIN_CROSSCHECK", temp):
+                result = matrix.verify()
+        self.assertFalse(result["ok"])
+        self.assertTrue(any("contents write" in item for item in result["failures"]))
 
 
 if __name__ == "__main__":
