@@ -7,11 +7,22 @@ routes are substituted while the failed route remains auditable.
 from __future__ import annotations
 
 from dataclasses import dataclass
+from datetime import datetime, timedelta, timezone
 from typing import Iterable, Sequence
 
+KST = timezone(timedelta(hours=9))
 HEALTHY = {"ok", "fresh"}
 SOFT_FAIL = {"timeout", "parser_error", "stale", "empty", "rate_limited", "forbidden"}
 HARD_FAIL = {"invalid_provenance", "identity_mismatch", "security_block", "quarantined"}
+KNOWN_STATUSES = HEALTHY | SOFT_FAIL | HARD_FAIL
+KNOWN_TIERS = {
+    "official_primary",
+    "official_secondary",
+    "completed_sale_original",
+    "grading_auction_original",
+    "market_reference",
+    "discovery_lead",
+}
 
 
 @dataclass(frozen=True)
@@ -52,12 +63,46 @@ def tier_satisfies_fact(fact_type: str, tier: str) -> bool:
     return tier not in {"discovery_lead"}
 
 
-def _eligible(state: ProviderState) -> bool:
-    if state.status in HARD_FAIL:
+def _parse_aware(value: str | None, field: str) -> datetime | None:
+    if value in (None, ""):
+        return None
+    try:
+        parsed = datetime.fromisoformat(str(value).replace("Z", "+00:00"))
+    except ValueError as exc:
+        raise ValueError(f"{field} must be ISO-8601") from exc
+    if parsed.tzinfo is None:
+        raise ValueError(f"{field} must be timezone-aware")
+    return parsed.astimezone(timezone.utc)
+
+
+def _validate_state(state: ProviderState) -> None:
+    if not isinstance(state, ProviderState):
+        raise ValueError("PROVIDER_STATE_REQUIRED")
+    if not isinstance(state.provider_id, str) or not state.provider_id.strip():
+        raise ValueError("PROVIDER_ID_REQUIRED")
+    if state.tier not in KNOWN_TIERS:
+        raise ValueError("UNKNOWN_PROVIDER_TIER")
+    if state.status not in KNOWN_STATUSES:
+        raise ValueError("UNKNOWN_PROVIDER_STATUS")
+    if isinstance(state.failure_count, bool) or not isinstance(state.failure_count, int) or state.failure_count < 0:
+        raise ValueError("INVALID_FAILURE_COUNT")
+    if not isinstance(state.parser_id, str) or not state.parser_id.strip():
+        raise ValueError("PARSER_ID_REQUIRED")
+    _parse_aware(state.cooldown_until_kst, "cooldown_until_kst")
+
+
+def _route_eligible(state: ProviderState, *, now: datetime) -> bool:
+    if state.status in HARD_FAIL or state.failure_count >= 3:
         return False
-    if state.status in {"rate_limited", "forbidden"}:
+
+    cooldown = _parse_aware(state.cooldown_until_kst, "cooldown_until_kst")
+    current = now.astimezone(timezone.utc)
+    if cooldown is not None and current < cooldown:
         return False
-    if state.failure_count >= 3:
+
+    # 403/429 without a bounded cooldown must not be retried. After an explicit
+    # cooldown expires they may re-enter only as degraded fallbacks.
+    if state.status in {"rate_limited", "forbidden"} and cooldown is None:
         return False
     return True
 
@@ -80,9 +125,37 @@ def choose_routes(
     states: Sequence[ProviderState],
     *,
     max_routes: int = 4,
+    now_kst: str | None = None,
 ) -> RouteDecision:
+    if not isinstance(fact_type, str) or not fact_type.strip():
+        raise ValueError("FACT_TYPE_REQUIRED")
+    if isinstance(max_routes, bool) or not isinstance(max_routes, int) or not 1 <= max_routes <= 8:
+        raise ValueError("MAX_ROUTES_OUT_OF_RANGE")
+    if not isinstance(states, Sequence):
+        raise ValueError("PROVIDER_STATES_REQUIRED")
+
+    current = (
+        _parse_aware(now_kst, "now_kst")
+        if now_kst is not None
+        else datetime.now(timezone.utc)
+    )
+    assert current is not None
+
+    seen_provider_ids: set[str] = set()
+    normalized: list[ProviderState] = []
+    for state in states:
+        _validate_state(state)
+        provider_id = state.provider_id.strip()
+        if provider_id in seen_provider_ids:
+            raise ValueError("DUPLICATE_PROVIDER_STATE")
+        seen_provider_ids.add(provider_id)
+        normalized.append(state)
+
     target = required_independent_sources(fact_type)
-    eligible = sorted((s for s in states if _eligible(s)), key=_priority)
+    eligible = sorted(
+        (s for s in normalized if _route_eligible(s, now=current)),
+        key=_priority,
+    )
 
     proving = [s for s in eligible if tier_satisfies_fact(fact_type, s.tier)]
     supporting = [s for s in eligible if not tier_satisfies_fact(fact_type, s.tier)]
@@ -117,7 +190,7 @@ def choose_routes(
             if len(selected) >= route_budget:
                 break
 
-    for state in states:
+    for state in normalized:
         if state.provider_id not in selected_set and state.provider_id not in skipped_set:
             skipped.append(state.provider_id)
             skipped_set.add(state.provider_id)
@@ -130,7 +203,7 @@ def choose_routes(
     }
     if len(proving_selected) < target:
         reason = f"insufficient qualifying independent routes: {len(proving_selected)}/{target}"
-    elif any(s.status in SOFT_FAIL for s in states if s.provider_id in proving_selected):
+    elif any(s.status in SOFT_FAIL for s in normalized if s.provider_id in proving_selected):
         reason = "qualifying fallback route included after healthier alternatives were exhausted"
     else:
         reason = "qualifying independent route target satisfied"
@@ -139,6 +212,10 @@ def choose_routes(
 
 
 def next_strategy(status: str, failure_count: int) -> str:
+    if status not in KNOWN_STATUSES:
+        raise ValueError("UNKNOWN_PROVIDER_STATUS")
+    if isinstance(failure_count, bool) or not isinstance(failure_count, int) or failure_count < 0:
+        raise ValueError("INVALID_FAILURE_COUNT")
     if status in {"rate_limited", "forbidden"}:
         return "respect_retry_after_then_alternate_provider"
     if status == "parser_error":
@@ -154,11 +231,24 @@ def coverage_ok(
     fact_type: str,
     successful_states: Iterable[ProviderState],
 ) -> bool:
+    if not isinstance(fact_type, str) or not fact_type.strip():
+        raise ValueError("FACT_TYPE_REQUIRED")
+    rows = list(successful_states)
+    seen_provider_ids: set[str] = set()
+    for state in rows:
+        _validate_state(state)
+        provider_id = state.provider_id.strip()
+        if provider_id in seen_provider_ids:
+            raise ValueError("DUPLICATE_PROVIDER_STATE")
+        seen_provider_ids.add(provider_id)
+
+    # Cooldown affects whether a provider may be contacted again, not whether a
+    # previously captured healthy evidence item remains valid for coverage.
     qualifying = {
         state.provider_id
-        for state in successful_states
-        if _eligible(state)
-        and state.status in HEALTHY
+        for state in rows
+        if state.status in HEALTHY
+        and state.failure_count < 3
         and tier_satisfies_fact(fact_type, state.tier)
     }
     return len(qualifying) >= required_independent_sources(fact_type)
