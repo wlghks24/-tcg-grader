@@ -26,7 +26,10 @@ from instagram_tcg_content.production_state import (
 )
 
 
-def verification_receipt(snapshot_id="snapshot-1"):
+SNAPSHOT_HASH = "a" * 64
+
+
+def verification_receipt(snapshot_id="snapshot-1", snapshot_hash=SNAPSHOT_HASH):
     observation = Observation(
         game="pokemon",
         fact_type="official_release",
@@ -44,6 +47,7 @@ def verification_receipt(snapshot_id="snapshot-1"):
     return build_production_verification_receipt(
         [[observation]],
         snapshot_id=snapshot_id,
+        snapshot_fingerprint=snapshot_hash,
         required_core_keys=[("pokemon|release|kr", "official_release")],
         now=datetime(2026, 9, 6, 1, 5, tzinfo=timezone.utc),
     )
@@ -57,6 +61,7 @@ def record(run_kind=SCHEDULED_BASELINE_RUN_KIND, baseline_id="IG-20260906-1030")
         "router_branch": "DAILY_PRODUCTION",
         "run_kind": run_kind,
         "snapshot_id": "snapshot-1",
+        "snapshot_hash": SNAPSHOT_HASH,
         "schema_version": 1,
         "payload_hashes": [f"payload-{i}" for i in range(6)],
         "artifact_hashes": [f"artifact-{i}" for i in range(6)],
@@ -216,6 +221,20 @@ def main():
     assert (
         "verification_receipt snapshot mismatch"
         in validate_production_record(mismatched_receipt)
+    )
+
+    mismatched_snapshot_hash = record()
+    mismatched_snapshot_hash["snapshot_hash"] = "b" * 64
+    assert (
+        "verification_receipt snapshot fingerprint mismatch"
+        in validate_production_record(mismatched_snapshot_hash)
+    )
+
+    malformed_snapshot_hash = record()
+    malformed_snapshot_hash["snapshot_hash"] = "not-a-sha"
+    assert (
+        "snapshot_hash must be lowercase SHA-256"
+        in validate_production_record(malformed_snapshot_hash)
     )
 
     tampered_receipt = record()
