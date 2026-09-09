@@ -78,27 +78,53 @@ def _collection_neural_signature(query_module,job_module):
     )
     return tuple(_file_signature(path) for path in paths)
 
+def _collection_neural_error_status(reason):
+    return {
+        'ok':False,'active':False,'reason':reason,
+        'label_count':0,'minimum_labels':1000,'labels_remaining':1000,'progress_percent':0.0
+    }
+
 def collection_neural_status():
+    query_module=job_module=None
     try:
-        import verified_collection_neural
-        import verified_collection_job_neural
-        signature=_collection_neural_signature(verified_collection_neural,verified_collection_job_neural)
-        with COLLECTION_NEURAL_STATUS_LOCK:
-            cached=COLLECTION_NEURAL_STATUS_CACHE.get('value')
-            if COLLECTION_NEURAL_STATUS_CACHE.get('signature')==signature and isinstance(cached,dict):
-                return copy.deepcopy(cached)
-        query_status=verified_collection_neural.status()
-        job_status=verified_collection_job_neural.status()
+        import verified_collection_neural as query_module
     except (ImportError,OSError,ValueError,TypeError,OverflowError,json.JSONDecodeError):
-        query_status={
-            'ok':False,'active':False,'reason':'query-neural-state-error',
-            'label_count':0,'minimum_labels':1000,'labels_remaining':1000,'progress_percent':0.0
-        }
-        job_status={
-            'ok':False,'active':False,'reason':'job-neural-state-error',
-            'label_count':0,'minimum_labels':1000,'labels_remaining':1000,'progress_percent':0.0
-        }
-        signature=None
+        query_module=None
+    try:
+        import verified_collection_job_neural as job_module
+    except (ImportError,OSError,ValueError,TypeError,OverflowError,json.JSONDecodeError):
+        job_module=None
+
+    signature=None
+    if query_module is not None and job_module is not None:
+        try:
+            signature=_collection_neural_signature(query_module,job_module)
+        except (OSError,ValueError,TypeError,OverflowError):
+            signature=None
+        if signature is not None:
+            with COLLECTION_NEURAL_STATUS_LOCK:
+                cached=COLLECTION_NEURAL_STATUS_CACHE.get('value')
+                if COLLECTION_NEURAL_STATUS_CACHE.get('signature')==signature and isinstance(cached,dict):
+                    return copy.deepcopy(cached)
+
+    query_status=_collection_neural_error_status('query-neural-import-error')
+    query_ok=False
+    if query_module is not None:
+        try:
+            query_status=query_module.status()
+            query_ok=isinstance(query_status,dict)
+        except (OSError,ValueError,TypeError,OverflowError,json.JSONDecodeError):
+            query_status=_collection_neural_error_status('query-neural-state-error')
+
+    job_status=_collection_neural_error_status('job-neural-import-error')
+    job_ok=False
+    if job_module is not None:
+        try:
+            job_status=job_module.status()
+            job_ok=isinstance(job_status,dict)
+        except (OSError,ValueError,TypeError,OverflowError,json.JSONDecodeError):
+            job_status=_collection_neural_error_status('job-neural-state-error')
+
     total_labels=int(query_status.get('label_count') or 0)+int(job_status.get('label_count') or 0)
     total_minimum=int(query_status.get('minimum_labels') or 1000)+int(job_status.get('minimum_labels') or 1000)
     result={
@@ -115,8 +141,9 @@ def collection_neural_status():
         'verification_bypass':False,
         'collector_skip_allowed':False,
         'status_cache_by_file_signature':True,
+        'independent_strategy_fault_isolation':True,
     }
-    if signature is not None:
+    if signature is not None and query_ok and job_ok:
         with COLLECTION_NEURAL_STATUS_LOCK:
             COLLECTION_NEURAL_STATUS_CACHE['signature']=signature
             COLLECTION_NEURAL_STATUS_CACHE['value']=copy.deepcopy(result)

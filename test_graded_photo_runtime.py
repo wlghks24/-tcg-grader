@@ -148,6 +148,27 @@ class GradedPhotoRuntimeTests(unittest.TestCase):
         self.assertEqual(job_status.call_count,2)
         self.assertTrue(first['status_cache_by_file_signature'])
 
+    def test_collection_neural_status_isolates_strategy_failures(self):
+        import verified_collection_neural
+        import verified_collection_job_neural
+        with tcg_updater.COLLECTION_NEURAL_STATUS_LOCK:
+            tcg_updater.COLLECTION_NEURAL_STATUS_CACHE['signature']=None
+            tcg_updater.COLLECTION_NEURAL_STATUS_CACHE['value']=None
+        healthy_job={'ok':True,'active':True,'label_count':1200,'minimum_labels':1000,'reason':'active'}
+        with mock.patch.object(tcg_updater,'_collection_neural_signature',return_value=('isolated-fault',)), \
+             mock.patch.object(verified_collection_neural,'status',side_effect=ValueError('corrupt query model')), \
+             mock.patch.object(verified_collection_job_neural,'status',return_value=healthy_job):
+            result=tcg_updater.collection_neural_status()
+        self.assertFalse(result['ok'])
+        self.assertTrue(result['active'])
+        self.assertEqual(result['label_count'],1200)
+        self.assertEqual(result['query_strategy']['reason'],'query-neural-state-error')
+        self.assertTrue(result['job_strategy']['ok'])
+        self.assertTrue(result['job_strategy']['active'])
+        self.assertTrue(result['independent_strategy_fault_isolation'])
+        with tcg_updater.COLLECTION_NEURAL_STATUS_LOCK:
+            self.assertIsNone(tcg_updater.COLLECTION_NEURAL_STATUS_CACHE['value'])
+
     def test_job_snapshots_are_isolated_without_json_roundtrip(self):
         source=(ROOT/'tcg_updater.py').read_text(encoding='utf-8')
         self.assertNotIn('json.loads(json.dumps(UPDATE_JOB',source)
