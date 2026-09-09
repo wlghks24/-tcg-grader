@@ -26,6 +26,7 @@
     "persist_verified_snapshot",
     "collection_health_gate",
     "ai_reliability_advisory",
+    "quality_render_profile",
     "build_verification_receipt",
     "validate_verification_receipt",
     "production_preflight"
@@ -76,5 +77,40 @@
   "ai_reliability_can_override_collection_health": false,
   "ai_reliability_can_authorize_production": false,
   "ai_reliability_missing_model_behavior": "RULES_ONLY",
-  "ai_reliability_below_label_threshold_behavior": "KEEP_EXISTING_MODEL_NO_TRAINING"
+  "ai_reliability_below_label_threshold_behavior": "KEEP_EXISTING_MODEL_NO_TRAINING",
+  "cardinfo_quality_learning_entrypoint": "instagram_tcg_content/cardinfo_quality_learning.py",
+  "cardinfo_quality_learning_labels": "TCG_CROSSCHECK/IG_CARDINFO/quality_learning/quality_labels.json",
+  "cardinfo_quality_learning_model": "TCG_CROSSCHECK/IG_CARDINFO/quality_learning/quality_model.json",
+  "cardinfo_quality_render_profile": "TCG_CROSSCHECK/IG_CARDINFO/quality_learning/render_quality_profile.json",
+  "cardinfo_quality_min_real_labels": 1000,
+  "cardinfo_quality_allowed_label_sources": [
+    "user_feedback",
+    "human_audit",
+    "external_outcome"
+  ],
+  "cardinfo_quality_synthetic_labels_forbidden": true,
+  "cardinfo_quality_hidden_sizes": [
+    4,
+    8,
+    12
+  ],
+  "cardinfo_quality_fixed_seeds": [
+    20260909,
+    20260919,
+    20260929
+  ],
+  "cardinfo_quality_early_phase": "RULES_ONLY_REPEATED_VERIFIED_FEEDBACK",
+  "cardinfo_quality_repeated_issue_min_origins": 3,
+  "cardinfo_quality_locked_master_mutation_allowed": false,
+  "cardinfo_quality_can_verify_facts": false,
+  "cardinfo_quality_can_override_collection_health": false,
+  "cardinfo_quality_can_authorize_production": false,
+  "postproduction_order": [
+    "artifact_validation",
+    "quality_feature_inspection",
+    "real_feedback_append_if_available",
+    "quality_rule_profile_refresh",
+    "quality_neural_train_if_ready",
+    "quality_post_make_review"
+  ]
 }
