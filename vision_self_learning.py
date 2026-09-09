@@ -256,6 +256,7 @@ def detect_linear_surface_defects(img: np.ndarray, params: VisionParams) -> dict
 
 
 def detect_whitening(img: np.ndarray, params: VisionParams) -> dict:
+    params.validate()
     working = _resize(img, params.working_width)
     roi, _ = _card_roi(working)
     lab = cv2.cvtColor(roi, cv2.COLOR_BGR2LAB)
@@ -389,7 +390,7 @@ def candidate_params(base: VisionParams) -> list[VisionParams]:
 def calibrate(samples: Iterable[Sample] | None = None, base: VisionParams | None = None,
               params_path: Path = PARAMS_PATH, report_path: Path = REPORT_PATH) -> dict:
     base = (base or VisionParams()).validate()
-    split = split_by_card(samples or build_synthetic_dataset())
+    split = split_by_card(build_synthetic_dataset() if samples is None else samples)
     base_val = evaluate(base, split["validation"])
     base_hold = evaluate(base, split["holdout"])
     candidates=[]
@@ -437,11 +438,19 @@ def self_test() -> dict:
     except ValueError: conflict_blocked=True
     else: conflict_blocked=False
     assert conflict_blocked
+    try:
+        calibrate([], base)
+    except ValueError:
+        empty_dataset_blocked=True
+    else:
+        empty_dataset_blocked=False
+    assert empty_dataset_blocked
     report=calibrate(rows,base)
     selected_metrics=report["full_metrics"]
     assert min(selected_metrics["scratch_recall"],selected_metrics["scratch_specificity"],
                selected_metrics["whitening_recall"],selected_metrics["whitening_specificity"]) >= 0.90, selected_metrics
     return {"ok":True,"metrics":metrics,"leak_blocked":leak_blocked,"conflict_blocked":conflict_blocked,
+            "empty_dataset_blocked":empty_dataset_blocked,
             "calibration_adopted":report["adopted"],"selected":report["selected_params"],
             "selected_metrics":selected_metrics,"card_groups":60,"samples":len(rows)}
 
