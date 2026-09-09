@@ -1,0 +1,74 @@
+#!/usr/bin/env python3
+from __future__ import annotations
+
+import json
+import unittest
+from pathlib import Path
+
+from code_map_intelligence import resolve_feature_query
+
+ROOT = Path(__file__).resolve().parents[1]
+POLICY = ROOT / "instagram_tcg_content" / "verification_scope_policy.json"
+IG_WORKFLOW = ROOT / ".github" / "workflows" / "instagram-tcg-selfrefine.yml"
+LEGACY_WORKFLOW = ROOT / ".github" / "workflows" / "daily-0600-collection-instagram-accuracy.yml"
+
+
+class InstagramVerificationScopePolicyTests(unittest.TestCase):
+    def test_policy_is_instagram_local_only(self):
+        payload = json.loads(POLICY.read_text(encoding="utf-8"))
+        self.assertEqual(payload["project"], "instagram_card")
+        self.assertEqual(
+            payload["task_id"],
+            "6a9b8a22e72c8191849c273e1240378e",
+        )
+        self.assertEqual(payload["room_scope"], "instagram_cardinfo")
+        self.assertEqual(payload["verification_mode"], "INSTAGRAM_LOCAL_EVIDENCE_ONLY")
+        self.assertFalse(payload["card_price_analysis_used"])
+        self.assertFalse(payload["market_analysis_snapshot_crosscheck_enabled"])
+        self.assertFalse(payload["market_analysis_peer_learning_enabled"])
+        self.assertFalse(payload["cross_domain_runtime_bridge_enabled"])
+        self.assertTrue(payload["fail_closed"])
+        self.assertEqual(
+            payload["source_verification_entrypoint"],
+            "instagram_tcg_content/source_verification_engine.py",
+        )
+
+    def test_instagram_ci_does_not_execute_market_analysis_crosscheck(self):
+        text = IG_WORKFLOW.read_text(encoding="utf-8")
+        forbidden = (
+            "crosscheck_runtime_bridge.py",
+            "peer_learning_runtime_bridge.py",
+            "main_persisted_crosscheck_export.py",
+            "main_persisted_learning_export.py",
+            "TCG_CROSSCHECK/MARKET_ANALYSIS",
+            "daily_collection_instagram_accuracy.py",
+        )
+        for marker in forbidden:
+            with self.subTest(marker=marker):
+                self.assertNotIn(marker, text)
+        self.assertIn("test_source_verification_engine", text)
+        self.assertIn("test_source_route_resilience", text)
+
+    def test_legacy_cross_domain_workflow_is_noop_and_unscheduled(self):
+        text = LEGACY_WORKFLOW.read_text(encoding="utf-8")
+        trigger_text = text.split("\npermissions:", 1)[0]
+        self.assertNotIn("schedule:", trigger_text)
+        self.assertNotIn("pull_request:", trigger_text)
+        self.assertNotIn("push:", trigger_text)
+        self.assertIn("workflow_dispatch:", trigger_text)
+        self.assertNotIn("python crosscheck_runtime_bridge.py", text)
+        self.assertIn("Cross-domain audit retired", text)
+
+    def test_code_map_routes_crosscheck_wording_to_local_verifier(self):
+        result = resolve_feature_query("인스타 카드정보 자료 비교 교차확인 오류")
+        self.assertEqual(result["entry_group"], "instagram_cardinfo_crosscheck")
+        self.assertEqual(
+            result["entry_file"],
+            "instagram_tcg_content/source_verification_engine.py",
+        )
+        self.assertNotIn("crosscheck_runtime_bridge.py", result["primary_files"])
+        self.assertNotIn("test_crosscheck_runtime_bridge_v26.py", result["suggested_tests"])
+
+
+if __name__ == "__main__":
+    unittest.main()
