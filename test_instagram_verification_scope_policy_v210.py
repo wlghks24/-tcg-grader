@@ -70,7 +70,9 @@ class InstagramVerificationScopePolicyV210Tests(unittest.TestCase):
         self.assertNotIn("crosscheck_exchange/를 통한 passive factual JSON 교차검증만 허용", text)
         self.assertNotIn("TCG_CROSSCHECK/exchange_manifest.json", text)
         self.assertIn("Main/카드시세분석 factual snapshot", text)
-        self.assertIn("verification receipt", text)
+        self.assertIn("raw Observation", text)
+        self.assertIn("observation_fingerprint", text)
+        self.assertIn("snapshot_id/hash", text)
 
     def test_instagram_ci_does_not_execute_market_analysis_crosscheck(self):
         text = IG_WORKFLOW.read_text(encoding="utf-8")
