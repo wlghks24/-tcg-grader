@@ -154,8 +154,10 @@ FEATURE_ROUTE_OVERRIDES = {
         "instagram_tcg_content/source_route_resilience.py",
         "instagram_tcg_content/source_routes.json",
         "instagram_tcg_content/verification_scope_policy.json",
+        "instagram_tcg_content/production_state.py",
         "instagram_tcg_content/test_source_verification_engine.py",
         "instagram_tcg_content/test_source_route_resilience.py",
+        "instagram_tcg_content/test_production_state.py",
         "test_instagram_verification_scope_policy_v210.py",
         "instagram_tcg_content/selfrefine_gate.py",
     ),
@@ -164,14 +166,18 @@ FEATURE_ROUTE_OVERRIDES = {
         "instagram_tcg_content/source_route_resilience.py",
         "instagram_tcg_content/source_routes.json",
         "instagram_tcg_content/verification_scope_policy.json",
+        "instagram_tcg_content/production_state.py",
         "instagram_tcg_content/test_source_verification_engine.py",
         "instagram_tcg_content/test_source_route_resilience.py",
+        "instagram_tcg_content/test_production_state.py",
         "test_instagram_verification_scope_policy_v210.py",
     ),
     "instagram_cardinfo_production_state": (
         "instagram_tcg_content/production_state.py",
+        "instagram_tcg_content/source_verification_engine.py",
         "instagram_tcg_content/selfrefine_gate.py",
         "instagram_tcg_content/test_production_state.py",
+        "instagram_tcg_content/test_source_verification_engine.py",
         "instagram_tcg_content/test_live_packet_guards.py",
     ),
     "instagram_cardinfo_ai_reliability": (
@@ -237,12 +243,15 @@ FEATURE_TEST_NODE_CONTRACTS = {
     ),
     "instagram_cardinfo_crosscheck": (
         "instagram_tcg_content/test_source_verification_engine.py::main",
+        "instagram_tcg_content/test_production_state.py::main",
     ),
     "instagram_cardinfo_source_verification": (
         "instagram_tcg_content/test_source_verification_engine.py::main",
+        "instagram_tcg_content/test_production_state.py::main",
     ),
     "instagram_cardinfo_production_state": (
         "instagram_tcg_content/test_production_state.py::main",
+        "instagram_tcg_content/test_source_verification_engine.py::main",
     ),
     "instagram_cardinfo_ai_reliability": (
         "instagram_tcg_content/test_ai_reliability_v8_integration.py::InstagramCardReliabilityV8IntegrationTests::test_neural_gate_below_1000_preserves_existing_model_without_training",
