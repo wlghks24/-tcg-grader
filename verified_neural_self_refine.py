@@ -650,6 +650,11 @@ def self_test() -> None:
             "b1": fake_model["b1"],
             "w2": fake_model["w2"],
             "b2": fake_model["b2"],
+            "metrics": {"accuracy": 0.70, "logloss": 0.50},
+            "protocol_version": PROTOCOL_VERSION,
+            "selected_seed": SEEDS[0],
+            "calibration_slope": 1.0,
+            "calibration_offset": 0.0,
             "rule_fingerprints": {RULE_ORDER[0]: "a" * 24},
             "safety": SAFETY,
         }, suffix=".selftest-model.tmp")
