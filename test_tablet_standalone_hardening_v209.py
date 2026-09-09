@@ -5,6 +5,7 @@ import tempfile,unittest
 import collection_runtime_health as health
 import tablet_runtime_manifest as manifest
 import runtime_optimization_hardening as optimizer
+import tcg_updater as core
 ROOT=Path(__file__).resolve().parent
 class TabletStandaloneHardeningV209(unittest.TestCase):
  def test_collection_health_recovery(self):
@@ -22,6 +23,17 @@ class TabletStandaloneHardeningV209(unittest.TestCase):
        "graded_photo_multi_source.py","event_priority_watch.py","event_quick_watch.py","multi_route_event_discovery.py","verified_collection_neural.py","verified_collection_job_neural.py"}
   self.assertTrue(req.issubset(set(manifest.ACTIVE_RUNTIME_FILES)))
   r=manifest.audit(ROOT,compile_python=True); self.assertTrue(r["ok"],r); self.assertGreaterEqual(r["python_checked"],40)
+ def test_precollect_stage_copy_skips_runtime_copies_and_heavy_non_inputs(self):
+  with tempfile.TemporaryDirectory() as tmp:
+   root=Path(tmp); src=root/"src"; dst=root/"stage"; src.mkdir()
+   (src/"active.py").write_text("VALUE=1\n",encoding="utf-8")
+   excluded=("GRADE_TRAINING_INBOX","graphify-out",".tcg_runtime_preserved",".tcg_reliability_state",".venv","node_modules")
+   for name in excluded:
+    folder=src/name; folder.mkdir(); (folder/"ignored.py").write_text("VALUE=2\n",encoding="utf-8")
+   core._safe_stage_copy(src,dst)
+   self.assertTrue((dst/"active.py").is_file())
+   for name in excluded:
+    self.assertFalse((dst/name).exists(),name)
  def test_auto_loop(self):
   src=(ROOT/"tcg_updater.py").read_text(encoding="utf-8"); loop=src[src.index("def auto_update_loop():"):src.index("\nclass Handler",src.index("def auto_update_loop():"))]
   self.assertNotIn("except Exception: pass",loop); self.assertIn("_retry_failed_automatic",loop); self.assertIn("AUTO_FAILURE_RETRY_SECONDS",src)

@@ -984,7 +984,12 @@ def _safe_stage_copy(src, dst):
         # files, which can grow much larger than the collector runtime itself.
         # Excluding only these proven non-inputs keeps the 30-minute staging
         # snapshot fast without dropping neural/adaptive learning state.
-        skip={'__pycache__','.precollect_stage','.precollect_stage.tmp','.git','GRADE_TRAINING_INBOX'}
+        skip={
+            '__pycache__','.pytest_cache','.precollect_stage','.precollect_stage.tmp','.git',
+            'GRADE_TRAINING_INBOX','graphify-out','.graphify_recovery','.tcg_runtime_preserved',
+            '.tcg_reliability_state','.tcg_ai_proposals','.codex','.agents',
+            'node_modules','.venv','venv',
+        }
         ignored=[]
         for name in names:
             candidate=Path(path)/name
