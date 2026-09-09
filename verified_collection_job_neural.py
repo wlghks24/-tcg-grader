@@ -437,13 +437,24 @@ def _train(rows: list[dict[str, Any]], hidden: int, seed: int) -> dict[str, Any]
 
 def _split(rows: list[dict[str, Any]]) -> tuple[list[dict[str, Any]], list[dict[str, Any]],
                                                  list[dict[str, Any]], list[dict[str, Any]]]:
-    """Chronological 50/15/15/20 train/tune/calibration/final-test split."""
+    """Chronological 50/15/15/20 split without splitting one observed batch."""
     ordered = sorted(rows, key=lambda row: (str(row.get("observed_at") or ""), str(row.get("sample_id") or "")))
+    if not ordered or any(not str(row.get("observed_at") or "").strip() for row in ordered):
+        return [], [], [], []
     n = len(ordered)
-    a, b, d = int(n * 0.50), int(n * 0.65), int(n * 0.80)
+
+    def boundary(target: int, previous: int) -> int:
+        cut = max(previous + 1, min(n, target))
+        while cut < n and str(ordered[cut - 1].get("observed_at") or "") == str(ordered[cut].get("observed_at") or ""):
+            cut += 1
+        return cut
+
+    a = boundary(int(n * 0.50), 0)
+    b = boundary(int(n * 0.65), a)
+    d = boundary(int(n * 0.80), b)
+    if not (0 < a < b < d < n):
+        return ordered[:a], ordered[a:b], ordered[b:d], ordered[d:]
     return ordered[:a], ordered[a:b], ordered[b:d], ordered[d:]
-
-
 def _calibrated_probability(model: dict[str, Any], features: list[float], *, slope: float | None = None,
                             offset: float | None = None) -> float:
     _hidden, raw = _predict(model, features)
