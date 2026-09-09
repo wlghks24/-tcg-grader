@@ -37,6 +37,8 @@ MAX_LABELS = 5000
 HIDDEN_SIZES = (4, 8, 12)
 SEEDS = (20260907, 20260917, 20260927)
 PROTOCOL_VERSION = 2
+MIN_SPLIT_CLASS_LABELS = 10
+MAX_SEED_LOGLOSS_RANGE = 0.08
 PATH_BUCKETS = 6
 STAGE_BUCKETS = 6
 FAMILY_BUCKETS = 4
@@ -414,6 +416,11 @@ def train_if_ready(
         status["reason"] = "insufficient_temporal_protocol_split"
         atomic_write_json(report_path, status, suffix=".verified-neural-report.tmp")
         return status
+    if any(min(sum(bool(row["outcome"]) for row in part), sum(not bool(row["outcome"]) for row in part)) < MIN_SPLIT_CLASS_LABELS
+           for part in (train_rows, tune_rows, calibration_rows, final_test)):
+        status["reason"] = "insufficient_temporal_class_coverage"
+        atomic_write_json(report_path, status, suffix=".verified-neural-report.tmp")
+        return status
 
     baseline = _baseline_metrics(train_rows, final_test)
     candidates = []
@@ -445,9 +452,11 @@ def train_if_ready(
     final_metrics = _metrics(best_model, final_test, slope=slope, offset=offset)
     best_meta = {"hidden": selected_hidden, "seed": selected_seed, "tune_metrics": tune_metrics, "metrics": final_metrics}
     gain = baseline["logloss"] - final_metrics["logloss"]
+    selected_seed_spread = max(item[2]["logloss"] for item in members) - min(item[2]["logloss"] for item in members)
     activation_ok = (
         final_metrics["accuracy"] >= ACTIVATION_MIN_ACCURACY
         and gain >= ACTIVATION_MIN_LOGLOSS_GAIN
+        and selected_seed_spread <= MAX_SEED_LOGLOSS_RANGE
     )
     status.update({
         "protocol_version": PROTOCOL_VERSION,
@@ -461,6 +470,8 @@ def train_if_ready(
         "selected_metrics": best_meta["metrics"],
         "logloss_gain": round(gain, 6),
         "final_test_used_for_selection": False,
+        "selected_seed_logloss_range": round(selected_seed_spread, 6),
+        "seed_stability_gate_passed": selected_seed_spread <= MAX_SEED_LOGLOSS_RANGE,
         "active": activation_ok,
         "reason": "activated" if activation_ok else "holdout_gate_not_met",
     })
