@@ -43,6 +43,8 @@ MIN_INDEPENDENT_LABELS = 1000
 MIN_CLASS_LABELS = 100
 MAX_LABELS = 6000
 HIDDEN_SIZES = (4, 8, 12)
+SEEDS = (20260907, 20260917, 20260927)
+PROTOCOL_VERSION = 2
 EPOCHS = 56
 LEARNING_RATE = 0.032
 L2 = 0.0005
@@ -469,13 +471,23 @@ def _train(rows: list[dict[str, Any]], hidden: int, seed: int) -> dict[str, Any]
     return model
 
 
-def _metrics(model: dict[str, Any], rows: list[dict[str, Any]]) -> dict[str, float]:
+def _calibrated_probability(model: dict[str, Any], features: list[float], *, slope: float | None = None,
+                            offset: float | None = None) -> float:
+    _hidden, raw = _predict(model, features)
+    raw = max(1e-9, min(1.0 - 1e-9, raw))
+    a = float(model.get("calibration_slope", 1.0) if slope is None else slope)
+    b = float(model.get("calibration_offset", 0.0) if offset is None else offset)
+    return _sigmoid(a * math.log(raw / (1.0 - raw)) + b)
+
+
+def _metrics(model: dict[str, Any], rows: list[dict[str, Any]], *, slope: float | None = None,
+             offset: float | None = None) -> dict[str, float]:
     if not rows:
         return {"accuracy": 0.0, "logloss": 99.0}
     correct = 0
     loss = 0.0
     for row in rows:
-        _hidden, probability = _predict(model, feature_vector(row))
+        probability = _calibrated_probability(model, feature_vector(row), slope=slope, offset=offset)
         probability = max(1e-7, min(1.0 - 1e-7, probability))
         target = 1.0 if row["outcome"] else 0.0
         correct += int((probability >= 0.5) == bool(row["outcome"]))
@@ -486,15 +498,37 @@ def _metrics(model: dict[str, Any], rows: list[dict[str, Any]]) -> dict[str, flo
     }
 
 
-def _split(rows: list[dict[str, Any]]) -> tuple[list[dict[str, Any]], list[dict[str, Any]]]:
-    train: list[dict[str, Any]] = []
-    holdout: list[dict[str, Any]] = []
+def _fit_calibration(model: dict[str, Any], rows: list[dict[str, Any]]) -> tuple[float, float]:
+    if not rows:
+        return 1.0, 0.0
+    logits = []
     for row in rows:
-        bucket = int(str(row["sample_id"])[:8], 16) % 5
-        (holdout if bucket == 0 else train).append(row)
-    if not holdout and train:
-        holdout.append(train.pop())
-    return train, holdout
+        _hidden, raw = _predict(model, feature_vector(row))
+        raw = max(1e-9, min(1.0 - 1e-9, raw))
+        logits.append((math.log(raw / (1.0 - raw)), 1.0 if row["outcome"] else 0.0))
+    slope, offset = 1.0, 0.0
+    for _ in range(180):
+        ga = gb = 0.0
+        for z, target in logits:
+            error = _sigmoid(slope * z + offset) - target
+            ga += error * z
+            gb += error
+        slope = max(0.05, min(8.0, slope - 0.04 * ga / len(logits)))
+        offset = max(-8.0, min(8.0, offset - 0.04 * gb / len(logits)))
+    return slope, offset
+
+
+def _split(rows: list[dict[str, Any]]) -> tuple[list[dict[str, Any]], list[dict[str, Any]],
+                                                 list[dict[str, Any]], list[dict[str, Any]]]:
+    """Chronological train/tune/calibration/final-test split.
+
+    The final test is never used for architecture, seed, or calibration choices.
+    observed_at is emitted by the verified collector; sample_id only breaks ties.
+    """
+    ordered = sorted(rows, key=lambda row: (str(row.get("observed_at") or ""), str(row.get("sample_id") or "")))
+    n = len(ordered)
+    a, b, d = int(n * 0.50), int(n * 0.65), int(n * 0.80)
+    return ordered[:a], ordered[a:b], ordered[b:d], ordered[d:]
 
 
 def _baseline(train: list[dict[str, Any]], holdout: list[dict[str, Any]]) -> dict[str, float]:
@@ -556,6 +590,12 @@ def _validate_model_payload(raw: object, *, require_active: bool = True) -> bool
         value = metrics.get(key)
         if not isinstance(value, (int, float)) or isinstance(value, bool) or not math.isfinite(float(value)):
             return False
+    slope = raw.get("calibration_slope", 1.0)
+    offset = raw.get("calibration_offset", 0.0)
+    if not isinstance(slope, (int, float)) or isinstance(slope, bool) or not math.isfinite(float(slope)) or not 0.05 <= float(slope) <= 8.0:
+        return False
+    if not isinstance(offset, (int, float)) or isinstance(offset, bool) or not math.isfinite(float(offset)) or abs(float(offset)) > 8.0:
+        return False
     return True
 
 
@@ -617,6 +657,8 @@ def train_if_ready(
         "negative_labels_remaining": max(0, MIN_CLASS_LABELS - negatives),
         "progress_percent": round(min(100.0, len(labels) * 100.0 / MIN_INDEPENDENT_LABELS), 2),
         "hidden_sizes": list(HIDDEN_SIZES),
+        "seeds": list(SEEDS),
+        "protocol_version": PROTOCOL_VERSION,
         "label_source": label_source,
         "label_recovered_from_backup": label_recovered,
         "model_source": model_source,
@@ -652,33 +694,54 @@ def train_if_ready(
         atomic_write_json(report_path, status, suffix=".collection-neural-report.tmp")
         return status
 
-    train_rows, holdout = _split(labels)
-    if len(train_rows) < 800 or len(holdout) < 100:
-        status["reason"] = "insufficient_deterministic_holdout"
+    train_rows, tune_rows, calibration_rows, final_test = _split(labels)
+    if min(len(train_rows), len(tune_rows), len(calibration_rows), len(final_test)) < 100 or len(train_rows) < 400:
+        status["reason"] = "insufficient_temporal_protocol_split"
         atomic_write_json(report_path, status, suffix=".collection-neural-report.tmp")
         return status
 
-    baseline = _baseline(train_rows, holdout)
-    seed = int(hashlib.sha256("".join(sorted(row["sample_id"] for row in labels)).encode()).hexdigest()[:8], 16)
+    baseline = _baseline(train_rows, final_test)
+    dataset_seed = int(hashlib.sha256("".join(sorted(row["sample_id"] for row in labels)).encode()).hexdigest()[:8], 16)
     candidates = []
-    best: tuple[dict[str, Any], dict[str, Any]] | None = None
+    best_family = None
     for hidden in HIDDEN_SIZES:
-        model = _train(train_rows, hidden, seed ^ hidden)
-        metrics = _metrics(model, holdout)
-        meta = {"hidden": hidden, "metrics": metrics}
+        members = []
+        seed_metrics = []
+        for seed in SEEDS:
+            actual_seed = dataset_seed ^ hidden ^ seed
+            member = _train(train_rows, hidden, actual_seed)
+            metrics = _metrics(member, tune_rows)
+            members.append((seed, member, metrics))
+            seed_metrics.append({"seed": seed, "metrics": metrics})
+        mean_logloss = sum(item[2]["logloss"] for item in members) / len(members)
+        spread = max(item[2]["logloss"] for item in members) - min(item[2]["logloss"] for item in members)
+        meta = {"hidden": hidden, "seed_metrics": seed_metrics, "mean_tune_logloss": round(mean_logloss, 6),
+                "seed_logloss_range": round(spread, 6)}
         candidates.append(meta)
-        if best is None or metrics["logloss"] < best[0]["metrics"]["logloss"]:
-            best = (meta, model)
-    assert best is not None
-    selected, model = best
-    active, gain = _model_gate(selected["metrics"], baseline)
+        if best_family is None or (mean_logloss, hidden) < (best_family[0], best_family[1]):
+            best_family = (mean_logloss, hidden, members)
+    assert best_family is not None
+    _family_score, selected_hidden, members = best_family
+    selected_seed, model, tune_metrics = min(members, key=lambda item: (item[2]["logloss"], item[0]))
+    slope, offset = _fit_calibration(model, calibration_rows)
+    final_metrics = _metrics(model, final_test, slope=slope, offset=offset)
+    active, gain = _model_gate(final_metrics, baseline)
+    selected = {"hidden": selected_hidden, "seed": selected_seed, "tune_metrics": tune_metrics,
+                "metrics": final_metrics, "calibration_slope": round(slope, 8),
+                "calibration_offset": round(offset, 8)}
     status.update(
         {
+            "protocol_version": PROTOCOL_VERSION,
+            "seeds": list(SEEDS),
+            "split_counts": {"train": len(train_rows), "tune": len(tune_rows),
+                             "calibration": len(calibration_rows), "final_test": len(final_test)},
             "baseline": baseline,
             "candidates": candidates,
-            "candidate_selected_hidden": selected["hidden"],
-            "candidate_selected_metrics": selected["metrics"],
+            "candidate_selected_hidden": selected_hidden,
+            "candidate_selected_seed": selected_seed,
+            "candidate_selected_metrics": final_metrics,
             "candidate_logloss_gain": round(gain, 6),
+            "final_test_used_for_selection": False,
         }
     )
 
@@ -696,6 +759,10 @@ def train_if_ready(
             "w2": model["w2"],
             "b2": model["b2"],
             "metrics": selected["metrics"],
+            "protocol_version": PROTOCOL_VERSION,
+            "selected_seed": selected_seed,
+            "calibration_slope": slope,
+            "calibration_offset": offset,
             "safety": SAFETY,
         }
         model_backup = _backup_path(model_path, MODEL_PATH, MODEL_BACKUP_PATH)
@@ -714,7 +781,7 @@ def train_if_ready(
             }
         )
     elif existing is not None:
-        existing_metrics = _metrics(existing, holdout)
+        existing_metrics = _metrics(existing, final_test)
         existing_ok, existing_gain = _model_gate(existing_metrics, baseline)
         status["existing_model_current_metrics"] = existing_metrics
         status["existing_model_current_logloss_gain"] = round(existing_gain, 6)
@@ -771,7 +838,7 @@ def score_query(
             "reason": "model_inactive",
             "neural_output_is_priority_only": True,
         }
-    _hidden, probability = _predict(model, feature_vector(row))
+    probability = _calibrated_probability(model, feature_vector(row))
     return {
         "active": True,
         "score": round(probability, 6),
