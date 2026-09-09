@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+import hashlib
 import json
 import math
 import tempfile
@@ -26,6 +27,18 @@ class TcgReliabilityV8IntegrationTests(unittest.TestCase):
         self.assertEqual(binding["project"], PROJECT)
         self.assertEqual(binding["task_id"], TASK_ID)
         self.assertNotEqual(binding["project"], "instagram_card")
+
+    def test_binding_hashes_match_installed_tcg_package(self):
+        binding = json.loads(BINDING_PATH.read_text(encoding="utf-8"))
+        package_root = BINDING_PATH.parent
+        expected_files = binding.get("files")
+        self.assertIsInstance(expected_files, dict)
+        self.assertGreaterEqual(len(expected_files), 10)
+        for name, expected in expected_files.items():
+            path = package_root / name
+            self.assertTrue(path.is_file(), name)
+            actual = hashlib.sha256(path.read_bytes()).hexdigest()
+            self.assertEqual(actual, expected, name)
 
     def test_bridge_state_is_project_scoped(self):
         with tempfile.TemporaryDirectory() as td:

@@ -108,6 +108,8 @@ jobs:
             test_pokemon_run30_asia_recovery_v208.py \
             test_verified_collection_neural_v211.py \
             test_verified_collection_job_neural_v212.py
+      - name: Verify TCG reliability v8 binding and isolation
+        run: python -m unittest -v test_tcg_reliability_v8_integration.py
       - name: Run Main vs Instagram SELFREFINE isolation contracts
         run: |
           python selfrefine_domain_boundary_guard.py
