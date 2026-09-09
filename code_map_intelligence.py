@@ -145,14 +145,12 @@ FEATURE_ROUTE_OVERRIDES = {
         ".github/workflows/daily-0600-collection-instagram-accuracy.yml",
     ),
     "instagram_cardinfo_crosscheck": (
-        "crosscheck_runtime_bridge.py",
-        "instagram_tcg_content/crosscheck_export.py",
-        "instagram_tcg_content/persisted_crosscheck_export.py",
-        "selfrefine_crosscheck_gate.py",
-        "peer_learning_crosscheck_gate.py",
-        "test_crosscheck_runtime_bridge_v26.py",
-        "instagram_tcg_content/test_peer_learning_manifest_contract_v28.py",
-        ".github/workflows/daily-0600-collection-instagram-accuracy.yml",
+        "instagram_tcg_content/source_verification_engine.py",
+        "instagram_tcg_content/source_route_resilience.py",
+        "instagram_tcg_content/source_routes.json",
+        "instagram_tcg_content/test_source_verification_engine.py",
+        "instagram_tcg_content/test_source_route_resilience.py",
+        "instagram_tcg_content/selfrefine_gate.py",
     ),
     "instagram_cardinfo_source_verification": (
         "instagram_tcg_content/source_verification_engine.py",
@@ -219,7 +217,7 @@ FEATURE_TEST_NODE_CONTRACTS = {
         "instagram_tcg_content/test_automation_pause_recovery_v30.py::AutomationPauseRecoveryV30Tests::test_unknown_pause_never_fabricates_root_cause",
     ),
     "instagram_cardinfo_crosscheck": (
-        "test_crosscheck_runtime_bridge_v26.py::CrosscheckRuntimeBridgeTests::test_end_to_end_agree_and_conflict",
+        "instagram_tcg_content/test_source_verification_engine.py::main",
     ),
     "instagram_cardinfo_source_verification": (
         "instagram_tcg_content/test_source_verification_engine.py::main",
@@ -256,7 +254,7 @@ FEATURE_ENTRYPOINTS = {
     "security_integrity": ("repository_integrity_guard.py",),
     "code_map_internal": ("code_map_fast_route.py",),
     "instagram_cardinfo_pause_recovery": ("instagram_tcg_content/automation_state_guard.py",),
-    "instagram_cardinfo_crosscheck": ("crosscheck_runtime_bridge.py",),
+    "instagram_cardinfo_crosscheck": ("instagram_tcg_content/source_verification_engine.py",),
     "instagram_cardinfo_source_verification": ("instagram_tcg_content/source_verification_engine.py",),
     "instagram_cardinfo_production_state": ("instagram_tcg_content/production_state.py",),
 }
