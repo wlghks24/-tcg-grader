@@ -1,10 +1,11 @@
 #!/usr/bin/env python3
+import random
 import tempfile
 import unittest
 from pathlib import Path
 
 from ai_reliability_v8 import ReliabilityBridge
-from ai_reliability_v8.adaptive_learning import AdaptiveEvidenceLearner, validate_prediction_model
+from ai_reliability_v8.adaptive_learning import AdaptiveEvidenceLearner, FEATURES, _train_mlp, validate_prediction_model
 from ai_reliability_v8.workflow import WorkflowGate
 from instagram_tcg_content.automation_state_guard import (
     AI_RELIABILITY_PROJECT,
@@ -67,6 +68,43 @@ class InstagramCardReliabilityV8IntegrationTests(unittest.TestCase):
         bad["weights"][0] = float("nan")
         with self.assertRaises(ValueError):
             validate_prediction_model(bad)
+
+    def test_mlp_regularization_and_ensemble_integrity(self):
+        seed = 20260907
+        hidden = 4
+        rng = random.Random(seed)
+        _ = [[rng.uniform(-.18, .18) for _ in FEATURES] for _ in range(hidden)]
+        initial_output = [rng.uniform(-.18, .18) for _ in range(hidden)]
+        rows = [(float(i), [0.0] * len(FEATURES), i % 2, str(i)) for i in range(1000)]
+        model = _train_mlp(rows, hidden_size=hidden, seed=seed)
+        self.assertLess(
+            sum(abs(x) for x in model["output_weights"]),
+            sum(abs(x) for x in initial_output) * .70,
+        )
+
+        member = {
+            "kind": "shallow_mlp",
+            "hidden_size": 4,
+            "hidden_weights": [[0.0] * len(FEATURES) for _ in range(4)],
+            "hidden_bias": [0.0] * 4,
+            "output_weights": [0.0] * 4,
+            "output_bias": 0.0,
+        }
+        ensemble = {
+            "schema_version": 8,
+            "kind": "mlp_ensemble",
+            "hidden_size": 8,
+            "seeds": [1, 2, 3],
+            "members": [dict(member) for _ in range(3)],
+            "features": list(FEATURES),
+            "scope": {"project": "instagram_card", "purpose": "verification_review", "revision": "v8-integration"},
+            "calibration_slope": 1.0,
+            "calibration_offset": 0.0,
+            "operational": True,
+            "verification_authority": False,
+        }
+        with self.assertRaises(ValueError):
+            validate_prediction_model(ensemble)
 
     def test_activation_gate_requires_all_nine_pre_activation_receipts(self):
         gate = WorkflowGate()
