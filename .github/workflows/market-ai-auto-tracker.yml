@@ -55,6 +55,11 @@ jobs:
         uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97
         with:
           python-version: '3.11'
+          cache: 'pip'
+          # Graphify is pinned in this workflow rather than requirements.txt.
+          # Key the pip cache to this file so hourly runs can reuse downloaded
+          # wheels while still invalidating immediately when the pin changes.
+          cache-dependency-path: '.github/workflows/market-ai-auto-tracker.yml'
 
       - name: Restore verified code-map learning from previous successful run
         env:
