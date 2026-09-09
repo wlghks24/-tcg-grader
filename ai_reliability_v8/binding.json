@@ -1,6 +1,6 @@
 {
   "files": {
-    "CODE_MAP.json": "dc5dbe229eaddfc00ebd6216eb3a88125eaf12f73fa6414ea64bd719c7c44997",
+    "CODE_MAP.json": "055ae1a006a2cd919416684a92e8cc3d9433936908dd8c97aff0f7a2e9923e3b",
     "WORKFLOW_V8.json": "f1b91d98e7cb76db0b21e77b4a8cf8e60bb3b748ad06ab0d1a034facc13ea251",
     "__init__.py": "7ae3e028b8898e2db665c3c513f0b1ae614c11d85b7205834052e0b0dab49d27",
     "adaptive_learning.py": "4c3c33515ec0e529e7627ab5c9b88ccdb4858a9d52217527f88d83e5b9de4cc5",
@@ -16,7 +16,7 @@
     "self_heal.py": "bb3c6bf75b23ba06ae95e2e5bffc33be5a034ba73665fcafed14a0ef258bea7f",
     "social_evidence.py": "f04aa3e641363c3abdb51d60f912e2f6b0216f2ab4746ae5fdd001421a61ebff",
     "source_registry.json": "a8a130d43e30664fef8466829cd0e9b4a12f7b37d19fcf4e19347fe1559b8e2b",
-    "verification.py": "e7409654c913322d2fc59c5c5d8c12770d8b7ff8ec077094b302ffd600355ded",
+    "verification.py": "d4bf9555bc5e8616729d0004e2db452ad68aad4a1709aa3ffe7e85ef814f2b75",
     "workflow.py": "fd4d51e29c9548a5b620e8962da76a1e8072c5ced16a36167904ffdbeb9d2133"
   },
   "project": "instagram_card",
@@ -44,6 +44,9 @@
     "temporal_split_owner_min_groups": 2,
     "temporal_split_owner_max_dominance": 0.7,
     "label_identity_fields_must_be_strings": true,
-    "timezone_aware_label_times_required": true
+    "timezone_aware_label_times_required": true,
+    "completed_sale_capture_max_hours": 36,
+    "completed_sale_event_max_days": 30,
+    "completed_sale_min_independent_sources": 2
   }
 }
