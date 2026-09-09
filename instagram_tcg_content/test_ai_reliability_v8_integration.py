@@ -1,5 +1,7 @@
 #!/usr/bin/env python3
 from datetime import datetime, timedelta, timezone
+import hashlib
+import json
 import random
 import tempfile
 import unittest
@@ -15,6 +17,7 @@ from ai_reliability_v8.adaptive_learning import (
     validate_prediction_model,
 )
 from ai_reliability_v8.workflow import WorkflowGate
+from ai_reliability_v8.verification import TTL, Verifier
 from ai_reliability_v8.diverse_collection import SourceCoveragePlanner
 from instagram_tcg_content.source_verification_engine import (
     validate_production_verification_receipt,
@@ -336,6 +339,134 @@ class InstagramCardReliabilityV8IntegrationTests(unittest.TestCase):
             expected_snapshot_id="snapshot-1",
         )
         self.assertIn("verification_receipt field set mismatch", errors)
+
+    def test_completed_sale_verifier_requires_two_fresh_independent_sources(self):
+        self.assertEqual(TTL["completed_sale"], 36 * 3600)
+        now = datetime(2026, 9, 9, 3, 0, tzinfo=timezone.utc)
+
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            registry = {
+                "sources": [
+                    {
+                        "id": "sale-a",
+                        "url": "https://a.example/",
+                        "allowed_hosts": ["a.example"],
+                        "projects": ["instagram_card"],
+                        "kinds": ["completed_sale"],
+                        "regions": ["KR"],
+                        "subjects": ["cards"],
+                        "owner_group": "owner-a",
+                        "evidence_role": "primary",
+                        "discovery_status": "PAGE_READ",
+                    },
+                    {
+                        "id": "sale-b",
+                        "url": "https://b.example/",
+                        "allowed_hosts": ["b.example"],
+                        "projects": ["instagram_card"],
+                        "kinds": ["completed_sale"],
+                        "regions": ["KR"],
+                        "subjects": ["cards"],
+                        "owner_group": "owner-b",
+                        "evidence_role": "primary",
+                        "discovery_status": "PAGE_READ",
+                    },
+                ]
+            }
+            registry_path = root / "registry.json"
+            registry_path.write_text(json.dumps(registry), encoding="utf-8")
+            verifier = Verifier(root, project="instagram_card", registry_path=registry_path)
+
+            claim = {
+                "project": "instagram_card",
+                "id": "sale-claim",
+                "entity": "pokemon:test:psa10",
+                "region": "KR",
+                "language": "EN",
+                "subject": "pokemon",
+                "kind": "completed_sale",
+                "value": 100.0,
+                "scope": {
+                    "condition": "graded",
+                    "grade": "PSA 10",
+                    "currency": "USD",
+                    "unit": "card",
+                    "quantity": 1,
+                    "price_basis": "realized",
+                    "transaction_id": "tx-1",
+                },
+            }
+
+            def evidence(source_id, host, body_name, body_text, origin):
+                body_path = root / body_name
+                body_path.write_text(body_text, encoding="utf-8")
+                return {
+                    "id": source_id,
+                    "source_id": source_id,
+                    "project": claim["project"],
+                    "entity": claim["entity"],
+                    "region": claim["region"],
+                    "language": claim["language"],
+                    "kind": claim["kind"],
+                    "scope": claim["scope"],
+                    "url": f"https://{host}/lot/1",
+                    "fetched_at": (now - timedelta(hours=1)).isoformat(),
+                    "snippet_only": False,
+                    "origin_key": origin,
+                    "body_file": body_name,
+                    "sha256": hashlib.sha256(body_path.read_bytes()).hexdigest(),
+                }
+
+            def inspect(_source, _claim, item, _body):
+                return {
+                    "inspected": True,
+                    "reference": "manual-test-reference",
+                    "source_capture_verified": True,
+                    "source_capture_reference": "capture:" + item["id"],
+                    "contradicts": False,
+                    "matches": True,
+                    "value": claim["value"],
+                    "sale": {
+                        "final": True,
+                        "status": "SOLD",
+                        "hidden_price": False,
+                        "transaction_id": claim["scope"]["transaction_id"],
+                        "currency": claim["scope"]["currency"],
+                        "sold_at": (now - timedelta(days=20)).isoformat(),
+                        "amount": claim["value"],
+                    },
+                }
+
+            a = evidence("sale-a", "a.example", "a.txt", "sale-a-body", "origin-a")
+            b = evidence("sale-b", "b.example", "b.txt", "sale-b-body", "origin-b")
+
+            one = verifier.verify(claim, [a], inspect=inspect, now=now.isoformat())
+            self.assertEqual(one["status"], "NEEDS_EVIDENCE")
+            self.assertEqual(one["required_groups"], 2)
+
+            two = verifier.verify(claim, [a, b], inspect=inspect, now=now.isoformat())
+            self.assertEqual(two["status"], "VERIFIED_CROSSCHECK")
+            self.assertEqual(two["independent_groups"], 2)
+
+            def old_sale_inspect(source, local_claim, item, body):
+                result = inspect(source, local_claim, item, body)
+                result["sale"]["sold_at"] = (now - timedelta(days=31)).isoformat()
+                return result
+
+            old_sale = verifier.verify(claim, [a, b], inspect=old_sale_inspect, now=now.isoformat())
+            self.assertEqual(old_sale["status"], "NEEDS_EVIDENCE")
+            self.assertTrue(
+                all(row["code"] == "SALE_OUTSIDE_30_DAY_WINDOW" for row in old_sale["rejected"])
+            )
+
+            stale_a = dict(a)
+            stale_a["fetched_at"] = (now - timedelta(hours=37)).isoformat()
+            stale = verifier.verify(claim, [stale_a, b], inspect=inspect, now=now.isoformat())
+            self.assertEqual(stale["status"], "NEEDS_EVIDENCE")
+            self.assertTrue(
+                any(row["code"] == "STALE_OR_FUTURE_EVIDENCE" for row in stale["rejected"])
+            )
 
     def test_activation_gate_requires_all_nine_pre_activation_receipts(self):
         gate = WorkflowGate()
