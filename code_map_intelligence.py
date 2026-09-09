@@ -131,6 +131,8 @@ FEATURE_QUERY_ALIASES = {
     ),
     "instagram_cardinfo_ai_reliability": (
         "인스타 카드정보 신경망", "인스타 카드정보 ai", "ai reliability",
+        "인스타 카드정보 자료수집 신경망 연결", "자료수집 신경망 연결",
+        "신경망 연결", "ai 연결", "runtime link", "runtime 연결",
         "calibration", "drift", "모델 손상", "차원 불일치", "확률 오차",
         "adaptive learning", "evidence learner",
     ),
