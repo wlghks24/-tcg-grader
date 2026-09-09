@@ -22,6 +22,15 @@ class CodeMapEntrypointRouteV196Tests(unittest.TestCase):
         self.assertFalse(result["repository_wide_search_required"])
         self.assertEqual("direct_entrypoint", result["route_decision"])
 
+    def test_pause_monitor_exchange_routes_directly_to_exchange_adapter(self):
+        result = resolve_feature_query("인스타 카드정보 작업 중지 감시 자료교환 원인미상 일시중지")
+        self.assertEqual("instagram_cardinfo_pause_recovery", result["entry_group"])
+        self.assertEqual("instagram_tcg_content/pause_monitor_exchange.py", result["entry_file"])
+        self.assertIn("instagram_tcg_content/automation_state_guard.py", result["alternate_entry_files"])
+        self.assertIn("instagram_tcg_content/test_pause_monitor_exchange.py", result["suggested_tests"])
+        self.assertEqual("query_specific_rule", result["entrypoint_reason"])
+        self.assertFalse(result["repository_wide_search_required"])
+
     def test_crosscheck_routes_to_instagram_local_source_verification(self):
         result = resolve_feature_query("인스타 카드정보 자료 비교 교차확인 오류")
         groups = [row["group"] for row in result["matched_feature_groups"]]
