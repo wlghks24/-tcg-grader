@@ -109,6 +109,30 @@ def _feature_vector(features: object) -> list[float]:
     return [float(value) for value in values]
 
 
+def issue_tags_from_features(features: dict[str, float], *, threshold: float = 0.65) -> list[str]:
+    values = dict(zip(FEATURES, _feature_vector(features)))
+    tags = []
+    if values["text_density_fit"] < threshold:
+        tags.append("crowded_text")
+    if values["whitespace_balance"] < threshold:
+        tags.append("low_whitespace")
+    if values["hierarchy_clarity"] < threshold:
+        tags.append("weak_hierarchy")
+    if values["card_image_prominence"] < threshold:
+        tags.append("small_card_image")
+    if values["alignment_consistency"] < threshold:
+        tags.append("inconsistent_alignment")
+    if values["copy_brevity"] < threshold:
+        tags.append("repetitive_copy")
+    if values["numeric_readability"] < threshold:
+        tags.append("poor_number_readability")
+    if values["visual_consistency"] < threshold:
+        tags.append("color_noise")
+    if values["information_focus"] < threshold:
+        tags.append("weak_focus")
+    return tags
+
+
 def _normalize_row(row: object) -> dict[str, Any]:
     if not isinstance(row, dict):
         raise ValueError("QUALITY_LABEL_ROW_REQUIRED")
@@ -130,7 +154,9 @@ def _normalize_row(row: object) -> dict[str, Any]:
     if labeled < observed:
         raise ValueError("QUALITY_LABEL_PRECEDES_OBSERVATION")
     features = _feature_vector(row.get("features"))
-    raw_tags = row.get("issue_tags", [])
+    raw_tags = row.get("issue_tags")
+    if raw_tags is None:
+        raw_tags = issue_tags_from_features(row.get("features"))
     if not isinstance(raw_tags, list) or any(tag not in ISSUE_TAGS for tag in raw_tags):
         raise ValueError("QUALITY_ISSUE_TAG_INVALID")
     if label == 1 and raw_tags:
