@@ -151,7 +151,7 @@ class VerifiedCollectionJobNeuralV212Tests(unittest.TestCase):
                     "planned_timeout_seconds": 90 if good else 300,
                     "outcome": good,
                     "evidence": "clean_verified_collection" if good else "verified_operational_problem",
-                    "observed_at": "2026-09-08T00:00:00+00:00",
+                    "observed_at": f"2026-09-08T00:{index // 60:02d}:{index % 60:02d}+00:00",
                 })
             labels_path.write_text(json.dumps({
                 "schema": neural.SCHEMA,
