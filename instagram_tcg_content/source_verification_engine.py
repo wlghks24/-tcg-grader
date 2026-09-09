@@ -771,6 +771,7 @@ def build_production_verification_receipt(
     observation_groups: Sequence[Sequence[Observation]],
     *,
     snapshot_id: str,
+    snapshot_fingerprint: str,
     required_core_keys: Sequence[tuple[str, str]],
     now: datetime | None = None,
 ) -> dict[str, object]:
@@ -790,6 +791,12 @@ def build_production_verification_receipt(
     )
     if not snapshot:
         raise ValueError("SNAPSHOT_ID_REQUIRED")
+    if (
+        not isinstance(snapshot_fingerprint, str)
+        or len(snapshot_fingerprint) != 64
+        or any(ch not in "0123456789abcdef" for ch in snapshot_fingerprint)
+    ):
+        raise ValueError("SNAPSHOT_FINGERPRINT_REQUIRED")
     if not required:
         raise ValueError("REQUIRED_CORE_KEYS_REQUIRED")
     if not isinstance(observation_groups, (list, tuple)) or not observation_groups:
@@ -864,6 +871,7 @@ def build_production_verification_receipt(
         "verification_mode": VERIFICATION_MODE,
         "verification_contract": VERIFICATION_RECEIPT_CONTRACT,
         "snapshot_id": snapshot,
+        "snapshot_fingerprint": snapshot_fingerprint,
         "status": "pass",
         "required_core_keys": [list(item) for item in required],
         "verified_core_keys": [list(item) for item in verified_keys],
@@ -881,6 +889,7 @@ def validate_production_verification_receipt(
     receipt: object,
     *,
     expected_snapshot_id: str,
+    expected_snapshot_fingerprint: str | None = None,
 ) -> list[str]:
     errors: list[str] = []
     if not isinstance(receipt, dict):
@@ -891,6 +900,7 @@ def validate_production_verification_receipt(
         "verification_mode",
         "verification_contract",
         "snapshot_id",
+        "snapshot_fingerprint",
         "status",
         "required_core_keys",
         "verified_core_keys",
@@ -912,6 +922,18 @@ def validate_production_verification_receipt(
         errors.append("verification_receipt contract mismatch")
     if receipt.get("snapshot_id") != expected_snapshot_id:
         errors.append("verification_receipt snapshot mismatch")
+    snapshot_fingerprint = receipt.get("snapshot_fingerprint")
+    if (
+        not isinstance(snapshot_fingerprint, str)
+        or len(snapshot_fingerprint) != 64
+        or any(ch not in "0123456789abcdef" for ch in snapshot_fingerprint)
+    ):
+        errors.append("verification_receipt snapshot_fingerprint invalid")
+    elif (
+        expected_snapshot_fingerprint is not None
+        and snapshot_fingerprint != expected_snapshot_fingerprint
+    ):
+        errors.append("verification_receipt snapshot fingerprint mismatch")
     if receipt.get("status") != "pass":
         errors.append("verification_receipt status must be pass")
 
