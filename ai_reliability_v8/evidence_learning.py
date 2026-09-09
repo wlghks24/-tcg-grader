@@ -203,14 +203,15 @@ class EvidenceLearner:
 
     def rank(self,features,model=None):
         x=vector(features)
-        if model is None or model.get('operational') is not True:
+        if model is None or model.get('operational') is not True or model.get('schema_version') != 8:
             return {'status':'RULES_ONLY','review_priority':'HIGH' if features['conflict'] or features['field_completeness']<1 else 'NORMAL','can_verify':False}
         if model.get('scope')!=self.scope or model.get('features')!=list(FEATURES) or model.get('verification_authority') is not False:
             raise ValueError('MODEL_SCOPE_OR_SCHEMA_MISMATCH')
-        if model.get('kind') not in (None,'l2_logistic'):
+        if model.get('kind') != 'l2_logistic':
             raise ValueError('MODEL_SCOPE_OR_SCHEMA_MISMATCH')
-        if model.get('schema_version')==8 and (
-            model.get('training_label_count',0)<MIN_REAL_LABELS or model.get('temporal_split_policy')!='50_15_15_20'
+        if (
+            model.get('training_label_count',0)<MIN_REAL_LABELS
+            or model.get('temporal_split_policy')!='50_15_15_20'
         ):
             raise ValueError('MODEL_TRAINING_POLICY_MISMATCH')
         weights=model.get('weights')
@@ -228,6 +229,7 @@ class EvidenceLearner:
             report.get('status')!='READY_FOR_REVIEW_RANKING'
             or not isinstance(model,dict)
             or model.get('operational') is not True
+            or model.get('schema_version') != 8
             or model.get('scope')!=self.scope
             or report.get('metrics',{}).get('statistical_gates_passed') is not True
             or model.get('training_label_count',0)<MIN_REAL_LABELS

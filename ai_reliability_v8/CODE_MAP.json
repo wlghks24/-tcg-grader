@@ -22,7 +22,9 @@
         "verification.py"
       ],
       "tests": [
-        "test_v4.SourceTests"
+        "instagram_tcg_content/test_ai_reliability_v8_code_map_contract.py",
+        "instagram_tcg_content/test_source_verification_engine.py",
+        "instagram_tcg_content/test_source_route_resilience.py"
       ],
       "validation": "출처 역할/지역/본문 확인 상태와 도메인 일치"
     },
@@ -33,7 +35,9 @@
         "source_registry.json"
       ],
       "tests": [
-        "test_v4.VerificationTests"
+        "instagram_tcg_content/test_ai_reliability_v8_code_map_contract.py",
+        "instagram_tcg_content/test_source_verification_engine.py",
+        "instagram_tcg_content/test_ai_reliability_v8_integration.py"
       ],
       "validation": "원문 해시/캡처 freshness/값/독립성/충돌 gate. completed_sale은 source capture 36시간 이내, 거래시각 최근 30일 이내, 독립 primary evidence 2개 이상 필요"
     },
@@ -43,7 +47,8 @@
         "bridge.py"
       ],
       "tests": [
-        "test_v4.EvidenceLearningTests"
+        "instagram_tcg_content/test_ai_reliability_v8_code_map_contract.py",
+        "instagram_tcg_content/test_ai_reliability_v8_integration.py"
       ],
       "validation": "1,000개 미만 모델 업데이트 금지/기존 모델 유지, 독립 실제 라벨·문자열 ID/origin/reference·timezone 시각·owner 3개 이상·전체 및 train/tune/calibration/final-test 각 split 편중 70% 이하·누수/NaN/확률/드리프트 검사, 학습점수로 검증 승격 금지"
     },
@@ -54,9 +59,8 @@
         "evidence_learning.py"
       ],
       "tests": [
-        "test_v5.AdaptiveLearningTests",
-        "test_v7.RobustNeuralTests",
-        "test_v8.ModelIntegrityTests"
+        "instagram_tcg_content/test_ai_reliability_v8_code_map_contract.py",
+        "instagram_tcg_content/test_ai_reliability_v8_integration.py"
       ],
       "validation": "실제 독립 라벨 1,000개 이상에서만 hidden 4/8/12 × seeds 20260907/20260917/20260927 비교, tune-only 선택·calibration/test 격리·전체 및 각 split 출처 편중/합성라벨/입력타입 차단·모델 차원/유한값/구조 검증"
     },
@@ -69,8 +73,9 @@
         "evidence_learning.py"
       ],
       "tests": [
-        "test_v5.CoverageTests",
-        "instagram_tcg_content/test_ai_reliability_v8_integration.py"
+        "instagram_tcg_content/test_ai_reliability_v8_code_map_contract.py",
+        "instagram_tcg_content/test_source_verification_engine.py",
+        "instagram_tcg_content/test_source_route_resilience.py"
       ],
       "validation": "학습 준비 신호도 실제 독립 human_audit/external_outcome 라벨 1,000개 이상, owner 3개 이상, owner 편중 70% 이하, 단일 project, binary class coverage, ID/origin 중복 없음, synthetic=false일 때만 true"
     },
@@ -82,7 +87,9 @@
         "bridge.py"
       ],
       "tests": [
-        "test_v6.SocialEvidenceTests"
+        "instagram_tcg_content/test_ai_reliability_v8_code_map_contract.py",
+        "instagram_tcg_content/test_source_verification_engine.py",
+        "instagram_tcg_content/test_source_route_resilience.py"
       ],
       "validation": "플랫폼 원문·게시물/작성자 ID·공식계정 증명·시각·호스트 검사, 단독 검증 금지"
     },
@@ -93,7 +100,7 @@
         "CODE_MAP.json"
       ],
       "tests": [
-        "test_v6.CodeOptimizerTests"
+        "instagram_tcg_content/test_ai_reliability_v8_code_map_contract.py"
       ],
       "validation": "허용 파일/변경량/AST 위험 검사, targeted·holdout·post-apply 후 원자 교체, 실패 시 정확 복원"
     },
@@ -101,12 +108,11 @@
       "entry_file": "WORKFLOW_V8.json",
       "impact": [
         "workflow.py",
-        "integrate.py",
         "bridge.py"
       ],
       "tests": [
-        "test_v7.WorkflowTests",
-        "test_v8.ReceiptWorkflowTests"
+        "instagram_tcg_content/test_ai_reliability_v8_code_map_contract.py",
+        "instagram_tcg_content/test_ai_reliability_v8_integration.py"
       ],
       "validation": "순서·프로젝트 바인딩·성공 증거·시각·산출물 해시 영수증을 확인한 뒤 활성화 허가"
     },
@@ -116,7 +122,7 @@
         "bridge.py"
       ],
       "tests": [
-        "test_v3.LearnerTests"
+        "instagram_tcg_content/test_ai_reliability_v8_code_map_contract.py"
       ],
       "validation": "기존 AI 후보 비교/별도 검증/복귀"
     },
@@ -126,7 +132,7 @@
         "bridge.py"
       ],
       "tests": [
-        "test_v3.DiagnosticsTests"
+        "instagram_tcg_content/test_ai_reliability_v8_code_map_contract.py"
       ],
       "validation": "실행 오류와 플랫폼 중지 원인 분리"
     },
@@ -137,8 +143,7 @@
         "recovery.py"
       ],
       "tests": [
-        "test_extended.SelfHealTests",
-        "test_guard.GuardTests"
+        "instagram_tcg_content/test_ai_reliability_v8_code_map_contract.py"
       ],
       "validation": "수정 검증/복원/승인 상태 보존"
     },
@@ -149,25 +154,25 @@
         "diagnostics.py"
       ],
       "tests": [
-        "test_guard.GuardTests",
-        "test_extended.ExtendedGuardTests"
+        "instagram_tcg_content/test_ai_reliability_v8_code_map_contract.py"
       ],
       "validation": "멱등성/취소/체크포인트/예산"
     },
     "integration": {
-      "entry_file": "integrate.py",
+      "entry_file": "bridge.py",
       "impact": [
         "__init__.py",
-        "bridge.py",
-        "CODE_MAP.json"
+        "binding.json",
+        "CODE_MAP.json",
+        "WORKFLOW_V8.json"
       ],
       "tests": [
-        "test_v3.IntegrationTests",
-        "test_v4.SourceTests",
-        "test_v6.CodeOptimizerTests",
-        "test_v8.ReceiptWorkflowTests"
+        "instagram_tcg_content/test_ai_reliability_v8_code_map_contract.py",
+        "instagram_tcg_content/test_ai_reliability_v8_integration.py"
       ],
-      "validation": "원본 보존/별도 v8 폴더/설치 후 import/기존 API 보존"
+      "validation": "bridge factory와 package exports, binding, workflow 계약을 통한 additive 통합"
     }
-  }
+  },
+  "test_reference_policy": "repo_relative_existing_python_files",
+  "validation_contract": "instagram_tcg_content/test_ai_reliability_v8_code_map_contract.py"
 }

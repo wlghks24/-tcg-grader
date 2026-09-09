@@ -167,6 +167,53 @@ class InstagramCardReliabilityV8IntegrationTests(unittest.TestCase):
             self.assertEqual(final_test["owner_groups"], 1)
             self.assertEqual(final_test["owner_dominance"], 1.0)
 
+    def test_legacy_operational_models_fall_back_to_rules_only(self):
+        features = {
+            "source_match": 1.0,
+            "freshness": 1.0,
+            "independent_support": 1.0,
+            "field_completeness": 1.0,
+            "conflict": 0.0,
+            "parser_health": 1.0,
+        }
+        legacy = {
+            "schema_version": 7,
+            "kind": "l2_logistic",
+            "weights": [0.0] * 7,
+            "features": list(FEATURES),
+            "scope": {
+                "project": "instagram_card",
+                "purpose": "verification_review",
+                "revision": "v8-integration",
+            },
+            "calibration_slope": 1.0,
+            "calibration_offset": 0.0,
+            "operational": True,
+            "verification_authority": False,
+        }
+        for learner_cls in (EvidenceLearner, AdaptiveEvidenceLearner):
+            learner = learner_cls(
+                project="instagram_card",
+                purpose="verification_review",
+                revision="v8-integration",
+            )
+            ranked = learner.rank(features, legacy)
+            self.assertEqual(ranked["status"], "RULES_ONLY")
+            self.assertFalse(ranked["can_verify"])
+
+        with self.assertRaises(ValueError):
+            validate_prediction_model(legacy)
+        self.assertTrue(validate_prediction_model(legacy, require_operational=False))
+
+        no_schema = dict(legacy)
+        no_schema.pop("schema_version")
+        adaptive = AdaptiveEvidenceLearner(
+            project="instagram_card",
+            purpose="verification_review",
+            revision="v8-integration",
+        )
+        self.assertEqual(adaptive.rank(features, no_schema)["status"], "RULES_ONLY")
+
     def test_model_integrity_rejects_nan_and_dimension_mismatch(self):
         base = {
             "schema_version": 8,

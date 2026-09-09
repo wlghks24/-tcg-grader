@@ -255,6 +255,8 @@ FEATURE_TEST_NODE_CONTRACTS = {
     ),
     "instagram_cardinfo_ai_reliability": (
         "instagram_tcg_content/test_ai_reliability_v8_integration.py::InstagramCardReliabilityV8IntegrationTests::test_neural_gate_below_1000_preserves_existing_model_without_training",
+        "instagram_tcg_content/test_ai_reliability_v8_integration.py::InstagramCardReliabilityV8IntegrationTests::test_legacy_operational_models_fall_back_to_rules_only",
+        "instagram_tcg_content/test_ai_reliability_v8_code_map_contract.py::AiReliabilityV8CodeMapContractTests::test_binding_hashes_match_installed_files",
     ),
 }
 

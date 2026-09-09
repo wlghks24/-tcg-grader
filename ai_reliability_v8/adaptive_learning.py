@@ -53,6 +53,8 @@ def validate_prediction_model(model,*,require_operational=True):
     if not isinstance(model,dict) or model.get('schema_version') not in (5,7,8):
         raise ValueError('INVALID_MODEL')
     schema_version=model.get('schema_version')
+    if require_operational and schema_version != 8:
+        raise ValueError('LEGACY_MODEL_NOT_OPERATIONAL')
     if schema_version==8 and (
         type(model.get('training_label_count')) is not int
         or model.get('training_label_count') < MIN_REAL_LABELS
@@ -310,16 +312,17 @@ class AdaptiveEvidenceLearner(EvidenceLearner):
 
     def save_model(self, report, path):
         model = report.get("model") if isinstance(report, dict) else None
-        if isinstance(model, dict) and model.get("schema_version") in (5, 7, 8):
-            try:
-                validate_prediction_model(model)
-            except ValueError:
-                return {"status": "MODEL_NOT_PROMOTED"}
+        if not isinstance(model, dict) or model.get("schema_version") != 8:
+            return {"status": "MODEL_NOT_PROMOTED", "existing_model_preserved": True}
+        try:
+            validate_prediction_model(model)
+        except ValueError:
+            return {"status": "MODEL_NOT_PROMOTED", "existing_model_preserved": True}
         return super().save_model(report, path)
 
     def rank(self, features, model=None):
-        if not model or model.get("schema_version") not in (5,7,8):
-            return super().rank(features, model)
+        if not model or model.get("schema_version") != 8:
+            return super().rank(features, None)
         x = vector(features)
         if model.get("operational") is not True:
             return super().rank(features, None)
