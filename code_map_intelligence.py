@@ -264,10 +264,12 @@ FEATURE_TEST_NODE_CONTRACTS = {
     ),
     "instagram_cardinfo_crosscheck": (
         "instagram_tcg_content/test_source_verification_engine.py::main",
+        "instagram_tcg_content/test_source_route_resilience.py::main",
         "instagram_tcg_content/test_production_state.py::main",
     ),
     "instagram_cardinfo_source_verification": (
         "instagram_tcg_content/test_source_verification_engine.py::main",
+        "instagram_tcg_content/test_source_route_resilience.py::main",
         "instagram_tcg_content/test_production_state.py::main",
     ),
     "instagram_cardinfo_production_state": (
