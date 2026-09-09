@@ -35,7 +35,12 @@ def vector(values):
 
 
 def timestamp(value):
-    d=datetime.fromisoformat(value.replace('Z','+00:00'))
+    if not isinstance(value,str) or not value:
+        raise ValueError('TIMESTAMP_REQUIRED')
+    try:
+        d=datetime.fromisoformat(value.replace('Z','+00:00'))
+    except ValueError as exc:
+        raise ValueError('INVALID_TIMESTAMP') from exc
     if d.tzinfo is None: raise ValueError('TIMEZONE_REQUIRED')
     return d.timestamp()
 
@@ -71,6 +76,7 @@ class EvidenceLearner:
         data=[];ids=set();groups=set();label_times={};owner_counts={}
         synthetic_found=False
         for r in rows:
+            if not isinstance(r,dict): raise ValueError('TRAINING_ROW_REQUIRED')
             if any(r.get(k)!=v for k,v in self.scope.items()): raise ValueError('TRAINING_SCOPE_MISMATCH')
             if r.get('label_source') not in ('human_audit','external_outcome') or not isinstance(r.get('label_reference'),str) or not r['label_reference']:
                 raise ValueError('INDEPENDENT_LABEL_REQUIRED')
