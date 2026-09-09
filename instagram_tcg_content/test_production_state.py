@@ -2,6 +2,10 @@
 from pathlib import Path
 from tempfile import TemporaryDirectory
 
+from instagram_tcg_content.source_verification_engine import (
+    VerificationResult,
+    build_production_verification_receipt,
+)
 from instagram_tcg_content.production_state import (
     SCHEDULED_BASELINE_RUN_KIND,
     USER_REQUESTED_RECOVERY_RUN_KIND,
@@ -21,6 +25,26 @@ from instagram_tcg_content.production_state import (
 )
 
 
+def verification_receipt(snapshot_id="snapshot-1"):
+    result = VerificationResult(
+        canonical_key="pokemon|release|kr",
+        fact_type="official_release",
+        status="verified",
+        canonical_value="2026-09-16",
+        source_codes=("P-S01",),
+        source_count=1,
+        independent_source_count=1,
+        official_primary_present=True,
+        confidence_score=0.99,
+        uncertainty_reason=None,
+    )
+    return build_production_verification_receipt(
+        [result],
+        snapshot_id=snapshot_id,
+        required_core_keys=[("pokemon|release|kr", "official_release")],
+    )
+
+
 def record(run_kind=SCHEDULED_BASELINE_RUN_KIND, baseline_id="IG-20260906-1030"):
     value = {
         "production_date_kst": "2026-09-06",
@@ -36,6 +60,7 @@ def record(run_kind=SCHEDULED_BASELINE_RUN_KIND, baseline_id="IG-20260906-1030")
         "caption_hash": "caption",
         "hashtag_hash": "hashtags",
         "x10_status": "pass",
+        "verification_receipt": verification_receipt("snapshot-1"),
         "delivery_reference_status": "verified",
         "finalized_at": "2026-09-06T10:31:00+09:00",
     }
@@ -174,6 +199,27 @@ def main():
     bad_x10 = record()
     bad_x10["x10_status"] = "failed"
     assert "x10_status must be pass" in validate_production_record(bad_x10)
+
+    missing_receipt = record()
+    missing_receipt.pop("verification_receipt")
+    assert (
+        "missing production fields: verification_receipt"
+        in validate_production_record(missing_receipt)
+    )
+
+    mismatched_receipt = record()
+    mismatched_receipt["verification_receipt"] = verification_receipt("different-snapshot")
+    assert (
+        "verification_receipt snapshot mismatch"
+        in validate_production_record(mismatched_receipt)
+    )
+
+    tampered_receipt = record()
+    tampered_receipt["verification_receipt"] = dict(tampered_receipt["verification_receipt"])
+    tampered_receipt["verification_receipt"]["verified_core_fact_count"] = 999
+    receipt_errors = validate_production_record(tampered_receipt)
+    assert "verification_receipt verified_core_fact_count mismatch" in receipt_errors
+    assert "verification_receipt hash mismatch" in receipt_errors
 
     bad_delivery = record()
     bad_delivery["delivery_reference_status"] = "pending"

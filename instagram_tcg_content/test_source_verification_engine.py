@@ -3,7 +3,9 @@ from datetime import datetime, timezone
 
 from instagram_tcg_content.source_verification_engine import (
     Observation,
+    build_production_verification_receipt,
     strategy_for_retry,
+    validate_production_verification_receipt,
     verify_fact as _verify_fact,
     x10_fact_gate,
 )
@@ -438,6 +440,40 @@ def main():
     bad = verify_fact([obs("ebay", "completed_sale_original")])
     ok, reasons = x10_fact_gate([bad])
     assert not ok and reasons
+
+    receipt = build_production_verification_receipt(
+        [good],
+        snapshot_id="snapshot-verified-1",
+        required_core_keys=[(good.canonical_key, good.fact_type)],
+    )
+    assert receipt["status"] == "pass", receipt
+    assert receipt["verification_mode"] == "INSTAGRAM_LOCAL_EVIDENCE_ONLY", receipt
+    assert (
+        validate_production_verification_receipt(
+            receipt,
+            expected_snapshot_id="snapshot-verified-1",
+        )
+        == []
+    )
+
+    tampered = dict(receipt)
+    tampered["verified_core_fact_count"] = 999
+    receipt_errors = validate_production_verification_receipt(
+        tampered,
+        expected_snapshot_id="snapshot-verified-1",
+    )
+    assert "verification_receipt verified_core_fact_count mismatch" in receipt_errors
+    assert "verification_receipt hash mismatch" in receipt_errors
+
+    try:
+        build_production_verification_receipt(
+            [bad],
+            snapshot_id="snapshot-blocked",
+            required_core_keys=[(bad.canonical_key, bad.fact_type)],
+        )
+        raise AssertionError("non-verified evidence created a production receipt")
+    except ValueError as exc:
+        assert str(exc).startswith("VERIFICATION_GATE_FAILED:"), exc
 
     print("Instagram TCG source verification regression: PASS")
 

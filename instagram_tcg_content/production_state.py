@@ -14,6 +14,11 @@ from datetime import datetime
 from pathlib import Path
 from typing import Any
 
+from instagram_tcg_content.source_verification_engine import (
+    VERIFICATION_MODE,
+    validate_production_verification_receipt,
+)
+
 SCHEMA_VERSION = 1
 SCHEDULED_BASELINE_RUN_KIND = "scheduled_10_30"
 USER_REQUESTED_RECOVERY_RUN_KIND = "user_requested_recovery"
@@ -46,6 +51,7 @@ REQUIRED_PRODUCTION_FIELDS = {
     "caption_hash",
     "hashtag_hash",
     "x10_status",
+    "verification_receipt",
     "delivery_reference_status",
     "finalized_at",
 }
@@ -268,6 +274,20 @@ def validate_production_record(record: dict[str, Any]) -> list[str]:
 
     if record.get("x10_status") != "pass":
         errors.append("x10_status must be pass")
+
+    snapshot_id = record.get("snapshot_id")
+    if not isinstance(snapshot_id, str) or not snapshot_id.strip():
+        errors.append("snapshot_id missing")
+    else:
+        receipt_errors = validate_production_verification_receipt(
+            record.get("verification_receipt"),
+            expected_snapshot_id=snapshot_id,
+        )
+        errors.extend(receipt_errors)
+        receipt = record.get("verification_receipt")
+        if isinstance(receipt, dict) and receipt.get("verification_mode") != VERIFICATION_MODE:
+            errors.append("verification receipt must use Instagram-local evidence mode")
+
     if record.get("delivery_reference_status") != "verified":
         errors.append("delivery_reference_status must be verified")
     if not isinstance(record.get("caption_hash"), str) or not record.get("caption_hash"):

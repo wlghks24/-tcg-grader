@@ -24,10 +24,17 @@
     "freshness_check",
     "fact_type_hard_gate",
     "persist_verified_snapshot",
+    "build_verification_receipt",
+    "validate_verification_receipt",
     "production_preflight"
   ],
   "fail_closed": true,
   "legacy_main_snapshot_persistence_workflow": ".github/workflows/persist-main-crosscheck-snapshot.yml",
   "legacy_main_snapshot_persistence_mode": "DISABLED_NOOP_MANUAL_ONLY",
-  "market_analysis_snapshot_write_enabled": false
+  "market_analysis_snapshot_write_enabled": false,
+  "production_verification_receipt_required": true,
+  "production_verification_receipt_mode": "INSTAGRAM_LOCAL_EVIDENCE_ONLY",
+  "production_verification_receipt_builder": "instagram_tcg_content/source_verification_engine.py::build_production_verification_receipt",
+  "production_verification_receipt_validator": "instagram_tcg_content/source_verification_engine.py::validate_production_verification_receipt",
+  "production_finalization_entrypoint": "instagram_tcg_content/production_state.py::finalize_production"
 }
