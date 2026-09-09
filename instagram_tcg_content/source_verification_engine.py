@@ -16,6 +16,9 @@ import re
 from typing import Iterable, Sequence
 
 KST = timezone(timedelta(hours=9))
+MAX_FETCH_AGE_HOURS = 36.0
+MAX_COMPLETED_SALE_AGE_DAYS = 30
+MAX_FUTURE_SKEW = timedelta(minutes=5)
 POSTABLE = {"verified"}
 CORE_FACTS = {
     "completed_sale",
@@ -310,7 +313,11 @@ def _completed_sale_evidence_reason(row: Observation) -> str | None:
     return None
 
 
-def _invalid_observation_reason(row: Observation) -> str | None:
+def _invalid_observation_reason(
+    row: Observation,
+    *,
+    now: datetime,
+) -> str | None:
     if row.source_tier not in SOURCE_TIERS:
         return "unknown source tier"
     if (
@@ -322,10 +329,28 @@ def _invalid_observation_reason(row: Observation) -> str | None:
         return "missing provenance field"
     if not row.canonical_key or not row.fact_type or not row.game:
         return "missing identity field"
-    if _parse_time(row.fetched_at_kst) is None:
+
+    fetched = _parse_time(row.fetched_at_kst)
+    if fetched is None:
         return "invalid fetched_at_kst"
-    if row.event_or_trade_time and _parse_time(row.event_or_trade_time) is None:
+    fetched_utc = fetched.astimezone(timezone.utc)
+    current_utc = now.astimezone(timezone.utc)
+    if fetched_utc - current_utc > MAX_FUTURE_SKEW:
+        return "fetched_at_kst is in the future"
+    fetch_age_hours = (current_utc - fetched_utc).total_seconds() / 3600.0
+    if fetch_age_hours > MAX_FETCH_AGE_HOURS:
+        return "stale source capture"
+
+    event_time = _parse_time(row.event_or_trade_time) if row.event_or_trade_time else None
+    if row.event_or_trade_time and event_time is None:
         return "invalid event_or_trade_time"
+    if row.fact_type == "completed_sale" and event_time is not None:
+        event_utc = event_time.astimezone(timezone.utc)
+        if event_utc - current_utc > MAX_FUTURE_SKEW:
+            return "completed-sale time is in the future"
+        sale_age_days = (current_utc - event_utc).total_seconds() / 86400.0
+        if sale_age_days > MAX_COMPLETED_SALE_AGE_DAYS:
+            return "completed-sale evidence older than 30 days"
     return None
 
 
@@ -340,7 +365,14 @@ def _latest(rows: Sequence[Observation]) -> Observation:
     return max(rows, key=key)
 
 
-def verify_fact(rows: Sequence[Observation]) -> VerificationResult:
+def verify_fact(
+    rows: Sequence[Observation],
+    *,
+    now: datetime | None = None,
+) -> VerificationResult:
+    current = now or datetime.now(timezone.utc)
+    if current.tzinfo is None:
+        raise ValueError("now must be timezone-aware")
     if not rows:
         return VerificationResult(
             "", "", "inaccessible", None, (), 0, 0, False, 0.0, "no observations"
@@ -372,7 +404,7 @@ def verify_fact(rows: Sequence[Observation]) -> VerificationResult:
     invalid = [
         reason
         for r in rows
-        if (reason := _invalid_observation_reason(r))
+        if (reason := _invalid_observation_reason(r, now=current))
     ]
     if invalid:
         return VerificationResult(
@@ -645,10 +677,30 @@ def can_post(result: VerificationResult) -> bool:
 
 def x10_fact_gate(
     results: Sequence[VerificationResult],
+    *,
+    required_core_keys: Sequence[tuple[str, str]] | None = None,
 ) -> tuple[bool, list[str]]:
+    """Fail closed unless core production facts are present and verified."""
     reasons: list[str] = []
-    for result in results:
-        if result.fact_type in CORE_FACTS and result.status != "verified":
+    if not results:
+        return False, ["NO_VERIFICATION_RESULTS"]
+
+    core_results = [result for result in results if result.fact_type in CORE_FACTS]
+    if not core_results:
+        reasons.append("NO_CORE_FACTS")
+
+    seen = {(result.canonical_key, result.fact_type) for result in core_results}
+    if required_core_keys is not None:
+        required = {
+            (str(key).strip(), str(fact).strip())
+            for key, fact in required_core_keys
+            if str(key).strip() and str(fact).strip()
+        }
+        missing = sorted(required - seen)
+        reasons.extend(f"MISSING_REQUIRED_CORE_FACT:{key}:{fact}" for key, fact in missing)
+
+    for result in core_results:
+        if result.status != "verified":
             reasons.append(
                 f"{result.canonical_key}:{result.fact_type}:{result.status}:"
                 f"{result.uncertainty_reason or 'unverified'}"

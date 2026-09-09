@@ -4,8 +4,15 @@ import tempfile
 import unittest
 from pathlib import Path
 
-from ai_reliability_v8 import ReliabilityBridge
-from ai_reliability_v8.adaptive_learning import AdaptiveEvidenceLearner, FEATURES, _train_mlp, validate_prediction_model
+from ai_reliability_v8 import EvidenceLearner, ReliabilityBridge
+from ai_reliability_v8.adaptive_learning import (
+    ALLOWED_HIDDEN_SIZES,
+    ALLOWED_MLP_SEEDS,
+    AdaptiveEvidenceLearner,
+    FEATURES,
+    _train_mlp,
+    validate_prediction_model,
+)
 from ai_reliability_v8.workflow import WorkflowGate
 from instagram_tcg_content.automation_state_guard import (
     AI_RELIABILITY_PROJECT,
@@ -42,11 +49,25 @@ class InstagramCardReliabilityV8IntegrationTests(unittest.TestCase):
             self.assertFalse(policy["scheduler_terminal"])
             self.assertTrue(policy["automation_continues"])
 
-    def test_neural_gate_below_1000_keeps_non_neural_path(self):
-        learner = AdaptiveEvidenceLearner(project="instagram_card", purpose="verification_review", revision="v8-integration")
-        report = learner.fit([])
-        self.assertIsNone(report.get("model"))
-        self.assertNotEqual(report.get("status"), "READY_FOR_REVIEW_RANKING")
+    def test_neural_gate_below_1000_preserves_existing_model_without_training(self):
+        for learner_cls in (EvidenceLearner, AdaptiveEvidenceLearner):
+            learner = learner_cls(
+                project="instagram_card",
+                purpose="verification_review",
+                revision="v8-integration",
+            )
+            report = learner.fit([])
+            self.assertEqual(report.get("status"), "MODEL_UPDATE_SKIPPED_KEEP_EXISTING")
+            self.assertIsNone(report.get("model"))
+            self.assertTrue(report.get("existing_model_preserved"))
+
+        with tempfile.TemporaryDirectory() as td:
+            bridge = build_ai_reliability_bridge(td)
+            learner = bridge.evidence_learner(
+                purpose="verification_review",
+                revision="v8-integration",
+            )
+            self.assertIsInstance(learner, AdaptiveEvidenceLearner)
 
     def test_model_integrity_rejects_nan_and_dimension_mismatch(self):
         base = {
@@ -58,6 +79,8 @@ class InstagramCardReliabilityV8IntegrationTests(unittest.TestCase):
             "calibration_slope": 1.0,
             "calibration_offset": 0.0,
             "operational": True,
+            "training_label_count": 1000,
+            "temporal_split_policy": "50_15_15_20",
             "verification_authority": False,
         }
         self.assertTrue(validate_prediction_model(base))
@@ -66,6 +89,75 @@ class InstagramCardReliabilityV8IntegrationTests(unittest.TestCase):
             validate_prediction_model(bad)
         bad = dict(base, weights=list(base["weights"]))
         bad["weights"][0] = float("nan")
+        with self.assertRaises(ValueError):
+            validate_prediction_model(bad)
+
+    def test_synthetic_labels_never_train_even_above_threshold(self):
+        learner = AdaptiveEvidenceLearner(
+            project="instagram_card",
+            purpose="verification_review",
+            revision="v8-integration",
+        )
+        rows = []
+        for i in range(1000):
+            rows.append({
+                "project": "instagram_card",
+                "purpose": "verification_review",
+                "revision": "v8-integration",
+                "label_source": "human_audit",
+                "label_reference": f"ref-{i}",
+                "label": i % 2,
+                "id": f"id-{i}",
+                "origin_group": f"origin-{i}",
+                "owner_group": f"owner-{i % 4}",
+                "synthetic": i == 999,
+                "observed_at": f"2026-01-{1 + (i % 28):02d}T00:00:00+00:00",
+                "labeled_at": f"2026-06-{1 + (i % 28):02d}T00:00:00+00:00",
+                "features": {name: 0.5 for name in FEATURES},
+            })
+        report = learner.fit(rows)
+        self.assertEqual(report["status"], "SYNTHETIC_LABELS_FORBIDDEN")
+        self.assertIsNone(report["model"])
+        self.assertTrue(report["existing_model_preserved"])
+
+    def test_operational_neural_model_requires_exact_sizes_seeds_and_1000_labels(self):
+        member = {
+            "kind": "shallow_mlp",
+            "hidden_size": 4,
+            "hidden_weights": [[0.0] * len(FEATURES) for _ in range(4)],
+            "hidden_bias": [0.0] * 4,
+            "output_weights": [0.0] * 4,
+            "output_bias": 0.0,
+        }
+        base = {
+            "schema_version": 8,
+            "kind": "mlp_ensemble",
+            "hidden_size": 4,
+            "seeds": list(ALLOWED_MLP_SEEDS),
+            "members": [dict(member) for _ in range(3)],
+            "features": list(FEATURES),
+            "scope": {
+                "project": "instagram_card",
+                "purpose": "verification_review",
+                "revision": "v8-integration",
+            },
+            "calibration_slope": 1.0,
+            "calibration_offset": 0.0,
+            "operational": True,
+            "training_label_count": 1000,
+            "temporal_split_policy": "50_15_15_20",
+            "verification_authority": False,
+        }
+        self.assertTrue(validate_prediction_model(base))
+        self.assertEqual(ALLOWED_HIDDEN_SIZES, (4, 8, 12))
+
+        bad = dict(base, hidden_size=16)
+        with self.assertRaises(ValueError):
+            validate_prediction_model(bad)
+        bad = dict(base, seeds=[1, 2, 3])
+        with self.assertRaises(ValueError):
+            validate_prediction_model(bad)
+        bad = dict(base, training_label_count=999)
         with self.assertRaises(ValueError):
             validate_prediction_model(bad)
 

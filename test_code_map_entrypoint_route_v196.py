@@ -36,6 +36,18 @@ class CodeMapEntrypointRouteV196Tests(unittest.TestCase):
         )
         self.assertNotIn("crosscheck_runtime_bridge.py", result["primary_files"])
 
+    def test_instagram_ai_reliability_routes_directly_to_adaptive_learner(self):
+        result = resolve_feature_query("인스타 카드정보 신경망 1000 라벨 calibration drift")
+        self.assertEqual("instagram_cardinfo_ai_reliability", result["entry_group"])
+        self.assertEqual("ai_reliability_v8/adaptive_learning.py", result["entry_file"])
+        self.assertEqual(["ai_reliability_v8/adaptive_learning.py"], result["entry_files"])
+        self.assertIn(
+            "instagram_tcg_content/test_ai_reliability_v8_integration.py",
+            result["suggested_tests"],
+        )
+        self.assertNotIn("crosscheck_runtime_bridge.py", result["primary_files"])
+        self.assertFalse(result["repository_wide_search_required"])
+
     def test_source_verification_routes_to_verification_engine(self):
         result = resolve_feature_query("인스타 카드정보 공식 출처 검증")
         self.assertEqual(
@@ -118,6 +130,7 @@ class CodeMapEntrypointRouteV196Tests(unittest.TestCase):
             "인스타 카드정보 자료비교",
             "인스타 카드정보 출처 검증",
             "인스타 카드정보 작업물",
+            "인스타 카드정보 신경망 1000 라벨",
         )
         for query in samples:
             result = resolve_feature_query(query)

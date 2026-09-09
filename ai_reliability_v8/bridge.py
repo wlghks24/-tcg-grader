@@ -7,7 +7,6 @@ from .diagnostics import EvidenceLog
 from .self_heal import SelfHealer
 from .ai_learning import ProfileLearner
 from .verification import Verifier
-from .evidence_learning import EvidenceLearner
 from .adaptive_learning import AdaptiveEvidenceLearner
 from .diverse_collection import SourceCoveragePlanner
 from .social_evidence import SocialEvidenceGate
@@ -35,7 +34,8 @@ class ReliabilityBridge:
             ledger_path=self.root/'verification'/'receipts.sqlite',now=now)
 
     def evidence_learner(self, *, purpose, revision):
-        return EvidenceLearner(project=self.project,purpose=purpose,revision=revision)
+        """Canonical learner alias; all model updates use the v8 adaptive hard gate."""
+        return AdaptiveEvidenceLearner(project=self.project,purpose=purpose,revision=revision)
 
     def adaptive_evidence_learner(self, *, purpose, revision):
         return AdaptiveEvidenceLearner(project=self.project,purpose=purpose,revision=revision)

@@ -9,9 +9,19 @@ import math
 import random
 
 try:
-    from .evidence_learning import FEATURES, EvidenceLearner, logit, sigmoid, timestamp, vector, wilson_upper
+    from .evidence_learning import (
+        FEATURES, MAX_REAL_LABELS, MIN_REAL_LABELS, EvidenceLearner,
+        logit, sigmoid, timestamp, vector, wilson_upper,
+    )
 except ImportError:  # Support running the copied module's tests from its own folder.
-    from evidence_learning import FEATURES, EvidenceLearner, logit, sigmoid, timestamp, vector, wilson_upper
+    from evidence_learning import (
+        FEATURES, MAX_REAL_LABELS, MIN_REAL_LABELS, EvidenceLearner,
+        logit, sigmoid, timestamp, vector, wilson_upper,
+    )
+
+
+ALLOWED_HIDDEN_SIZES = (4, 8, 12)
+ALLOWED_MLP_SEEDS = (20260907, 20260917, 20260927)
 
 
 def _brier(model, rows):
@@ -42,6 +52,13 @@ def validate_prediction_model(model,*,require_operational=True):
     """Reject malformed, oversized or non-finite JSON models before inference."""
     if not isinstance(model,dict) or model.get('schema_version') not in (5,7,8):
         raise ValueError('INVALID_MODEL')
+    schema_version=model.get('schema_version')
+    if schema_version==8 and (
+        type(model.get('training_label_count')) is not int
+        or model.get('training_label_count') < MIN_REAL_LABELS
+        or model.get('temporal_split_policy') != '50_15_15_20'
+    ):
+        raise ValueError('MODEL_TRAINING_POLICY_MISMATCH')
     if require_operational and model.get('operational') is not True:
         raise ValueError('MODEL_NOT_OPERATIONAL')
     if model.get('verification_authority') is not False or model.get('features')!=list(FEATURES):
@@ -57,16 +74,17 @@ def validate_prediction_model(model,*,require_operational=True):
                 raise ValueError('INVALID_MODEL')
         elif kind=='shallow_mlp':
             size=core.get('hidden_size');hw=core.get('hidden_weights');hb=core.get('hidden_bias');ow=core.get('output_weights')
-            if type(size) is not int or not 1<=size<=32 or not isinstance(hw,list) or len(hw)!=size or not isinstance(hb,list) or len(hb)!=size or not isinstance(ow,list) or len(ow)!=size:
+            if type(size) is not int or size not in ALLOWED_HIDDEN_SIZES or not isinstance(hw,list) or len(hw)!=size or not isinstance(hb,list) or len(hb)!=size or not isinstance(ow,list) or len(ow)!=size:
                 raise ValueError('INVALID_MODEL')
+            if depth==0 and require_operational:
+                raise ValueError('UNENSEMBLED_NEURAL_MODEL_NOT_OPERATIONAL')
             values=[core.get('output_bias')]+hb+ow+[x for row in hw if isinstance(row,list) for x in row]
             if any(not isinstance(row,list) or len(row)!=len(FEATURES) for row in hw) or not all(_finite(x) for x in values):
                 raise ValueError('INVALID_MODEL')
         elif kind=='mlp_ensemble':
             members=core.get('members'); size=core.get('hidden_size'); seeds=core.get('seeds')
-            if (type(size) is not int or not 1<=size<=32 or not isinstance(members,list) or not 1<=len(members)<=3
-                    or not isinstance(seeds,list) or len(seeds)!=len(members) or len(set(seeds))!=len(seeds)
-                    or any(type(seed) is not int for seed in seeds)):
+            if (type(size) is not int or size not in ALLOWED_HIDDEN_SIZES or not isinstance(members,list) or len(members)!=3
+                    or not isinstance(seeds,list) or tuple(seeds)!=ALLOWED_MLP_SEEDS or len(set(seeds))!=3):
                 raise ValueError('INVALID_MODEL')
             for member in members:
                 if not isinstance(member,dict) or member.get('kind')!='shallow_mlp' or member.get('hidden_size')!=size:
@@ -130,13 +148,25 @@ class AdaptiveEvidenceLearner(EvidenceLearner):
     """Select logistic or shallow MLP without looking at calibration/test results."""
 
     def fit(self, rows):
-        if not isinstance(rows, list) or len(rows) < 1000:
-            report = super().fit(rows)
-            if report.get("model"):
-                report["selection"] = {"policy": "LOGISTIC_ONLY_BELOW_1000_REAL_LABELS", "candidates": ["l2_logistic"]}
-            return report
-        if len(rows) > 5000:
-            return {"status": "INSUFFICIENT_OR_EXCESSIVE_LABELS", "minimum": 200, "maximum": 5000, "model": None}
+        if not isinstance(rows, list) or len(rows) < MIN_REAL_LABELS:
+            return {
+                "status": "MODEL_UPDATE_SKIPPED_KEEP_EXISTING",
+                "minimum": MIN_REAL_LABELS,
+                "maximum": MAX_REAL_LABELS,
+                "label_count": len(rows) if isinstance(rows, list) else 0,
+                "model": None,
+                "existing_model_preserved": True,
+                "selection": {"policy": "NO_MODEL_UPDATE_BELOW_1000_REAL_LABELS", "candidates": []},
+            }
+        if len(rows) > MAX_REAL_LABELS:
+            return {
+                "status": "INSUFFICIENT_OR_EXCESSIVE_LABELS",
+                "minimum": MIN_REAL_LABELS,
+                "maximum": MAX_REAL_LABELS,
+                "label_count": len(rows),
+                "model": None,
+                "existing_model_preserved": True,
+            }
         data, ids, groups, label_times = [], set(), set(), {}
         synthetic = False
         for row in rows:
@@ -158,6 +188,15 @@ class AdaptiveEvidenceLearner(EvidenceLearner):
                 raise ValueError("LABEL_PRECEDES_OBSERVATION")
             label_times[row["id"]] = labeled
             data.append((observed, vector(row["features"]), row["label"], row["id"]))
+        if synthetic:
+            return {
+                "status": "SYNTHETIC_LABELS_FORBIDDEN",
+                "minimum": MIN_REAL_LABELS,
+                "maximum": MAX_REAL_LABELS,
+                "label_count": len(rows),
+                "model": None,
+                "existing_model_preserved": True,
+            }
         data.sort(key=lambda item: item[0])
         a, b, c = int(len(data) * .5), int(len(data) * .65), int(len(data) * .8)
         train, tune, calibration, test = data[:a], data[a:b], data[b:c], data[c:]
@@ -179,9 +218,9 @@ class AdaptiveEvidenceLearner(EvidenceLearner):
                     'data_quality':{'owner_groups':len(owner_counts),'owner_dominance':dominance}}
         logistic = _train_logistic(train)
         logistic_score = _brier(logistic,tune)
-        seeds=(20260907,20260917,20260927)
+        seeds=ALLOWED_MLP_SEEDS
         families=[]
-        for hidden_size in (4,8,12):
+        for hidden_size in ALLOWED_HIDDEN_SIZES:
             members=[_train_mlp(train,hidden_size,seed) for seed in seeds]
             scores=[_brier(member,tune) for member in members]
             families.append({'hidden_size':hidden_size,'members':members,'scores':scores,
@@ -224,9 +263,11 @@ class AdaptiveEvidenceLearner(EvidenceLearner):
         passed = brier < baseline and upper <= .2 and ece <= .15 and drift <= .25
         model = dict(selected, schema_version=8, scope=self.scope, features=list(FEATURES),
                      calibration_slope=slope, calibration_offset=offset, threshold=.9,
-                     operational=passed and not synthetic, verification_authority=False,
+                     operational=passed, verification_authority=False,
+                     training_label_count=len(rows), temporal_split_policy='50_15_15_20',
+                     candidate_hidden_sizes=list(ALLOWED_HIDDEN_SIZES), candidate_seeds=list(ALLOWED_MLP_SEEDS),
                      training_fingerprint=hashlib.sha256(json.dumps(rows, sort_keys=True, separators=(",", ":"), allow_nan=False).encode()).hexdigest())
-        return {"status": "TEST_ONLY" if synthetic else "READY_FOR_REVIEW_RANKING" if passed else "REJECTED",
+        return {"status": "READY_FOR_REVIEW_RANKING" if passed else "REJECTED",
                 "model": model, "selection": {"policy": "MULTI_SEED_TUNE_ONLY_MIN_IMPROVEMENT_0.005", "tune_brier": tune_scores,
                 "mlp_families": [{"hidden_size":f['hidden_size'],"seed_brier":f['scores'],"mean_brier":f['mean'],"range":f['range']} for f in families],
                 "mlp_stable":stable,"mlp_improved":improved,"selected": selected["kind"], "test_was_used_for_selection": False},
