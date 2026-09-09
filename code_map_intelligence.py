@@ -121,6 +121,10 @@ FEATURE_QUERY_ALIASES = {
         "인스타 카드정보 출처", "출처 검증", "source verification", "source route",
         "공식 출처", "실거래", "시세참고",
     ),
+    "instagram_cardinfo_collection_health": (
+        "인스타 카드정보 자료수집", "자료수집", "수집상태", "수집 상태",
+        "collection health", "coverage matrix", "수집 커버리지", "자료 비교분석",
+    ),
     "instagram_cardinfo_production_state": (
         "인스타 카드정보 작업물", "작업물", "production state", "baseline",
         "10:30 제작", "22:30 수정판", "artifact",
@@ -182,11 +186,22 @@ FEATURE_ROUTE_OVERRIDES = {
         "instagram_tcg_content/source_route_resilience.py",
         "instagram_tcg_content/source_routes.json",
         "instagram_tcg_content/verification_scope_policy.json",
+        "instagram_tcg_content/collection_health.py",
+        "instagram_tcg_content/persisted_crosscheck_export.py",
         "instagram_tcg_content/production_state.py",
         "instagram_tcg_content/test_source_verification_engine.py",
         "instagram_tcg_content/test_source_route_resilience.py",
         "instagram_tcg_content/test_production_state.py",
         "test_instagram_verification_scope_policy_v210.py",
+    ),
+    "instagram_cardinfo_collection_health": (
+        "instagram_tcg_content/collection_health.py",
+        "instagram_tcg_content/persisted_crosscheck_export.py",
+        "instagram_tcg_content/source_verification_engine.py",
+        "instagram_tcg_content/source_route_resilience.py",
+        "instagram_tcg_content/source_routes.json",
+        "instagram_tcg_content/verification_scope_policy.json",
+        ".github/workflows/instagram-tcg-selfrefine.yml",
     ),
     "instagram_cardinfo_production_state": (
         "instagram_tcg_content/production_state.py",
@@ -271,6 +286,14 @@ FEATURE_TEST_NODE_CONTRACTS = {
         "instagram_tcg_content/test_source_verification_engine.py::main",
         "instagram_tcg_content/test_source_route_resilience.py::main",
         "instagram_tcg_content/test_production_state.py::main",
+        "instagram_tcg_content/collection_health.py::self_test",
+        "instagram_tcg_content/persisted_crosscheck_export.py::self_test",
+    ),
+    "instagram_cardinfo_collection_health": (
+        "instagram_tcg_content/collection_health.py::self_test",
+        "instagram_tcg_content/persisted_crosscheck_export.py::self_test",
+        "instagram_tcg_content/test_source_verification_engine.py::main",
+        "instagram_tcg_content/test_source_route_resilience.py::main",
     ),
     "instagram_cardinfo_production_state": (
         "instagram_tcg_content/test_production_state.py::main",
@@ -313,6 +336,7 @@ FEATURE_ENTRYPOINTS = {
     "instagram_cardinfo_pause_recovery": ("instagram_tcg_content/automation_state_guard.py",),
     "instagram_cardinfo_crosscheck": ("instagram_tcg_content/source_verification_engine.py",),
     "instagram_cardinfo_source_verification": ("instagram_tcg_content/source_verification_engine.py",),
+    "instagram_cardinfo_collection_health": ("instagram_tcg_content/collection_health.py",),
     "instagram_cardinfo_production_state": ("instagram_tcg_content/production_state.py",),
     "instagram_cardinfo_ai_reliability": ("ai_reliability_v8/adaptive_learning.py",),
 }
