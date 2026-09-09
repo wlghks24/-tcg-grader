@@ -51,6 +51,8 @@ MAX_LABELS = 8000
 HIDDEN_SIZES = (4, 8, 12)
 SEEDS = (20260907, 20260917, 20260927)
 PROTOCOL_VERSION = 2
+MIN_SPLIT_CLASS_LABELS = 10
+MAX_SEED_LOGLOSS_RANGE = 0.08
 EPOCHS = 56
 LEARNING_RATE = 0.032
 L2 = 0.0005
@@ -592,8 +594,6 @@ def train_if_ready(
         "hidden_sizes": list(HIDDEN_SIZES),
         "seeds": list(SEEDS),
         "protocol_version": PROTOCOL_VERSION,
-        "labels_remaining": max(0, MIN_INDEPENDENT_LABELS - len(labels)),
-        "progress_percent": round(min(100.0, len(labels) * 100.0 / MIN_INDEPENDENT_LABELS), 2),
         "model_source": model_source,
         "model_recovered_from_backup": model_recovered,
         "reason": "waiting_for_independent_labels",
@@ -621,6 +621,11 @@ def train_if_ready(
     train_rows, tune_rows, calibration_rows, final_test = _split(labels)
     if min(len(train_rows), len(tune_rows), len(calibration_rows), len(final_test)) < 100 or len(train_rows) < 400:
         status["reason"] = "insufficient_temporal_protocol_split"
+        atomic_write_json(report_path, status, suffix=".collection-job-neural-report.tmp")
+        return status
+    if any(min(sum(bool(row["outcome"]) for row in part), sum(not bool(row["outcome"]) for row in part)) < MIN_SPLIT_CLASS_LABELS
+           for part in (train_rows, tune_rows, calibration_rows, final_test)):
+        status["reason"] = "insufficient_temporal_class_coverage"
         atomic_write_json(report_path, status, suffix=".collection-job-neural-report.tmp")
         return status
 
@@ -651,7 +656,12 @@ def train_if_ready(
     final_metrics = _metrics(model, final_test, slope=slope, offset=offset)
     selected = {"hidden": selected_hidden, "seed": selected_seed, "tune_metrics": tune_metrics, "metrics": final_metrics}
     gain = baseline["logloss"] - final_metrics["logloss"]
-    active = final_metrics["accuracy"] >= ACTIVATION_MIN_ACCURACY and gain >= ACTIVATION_MIN_LOGLOSS_GAIN
+    selected_seed_spread = max(item[2]["logloss"] for item in members) - min(item[2]["logloss"] for item in members)
+    active = (
+        final_metrics["accuracy"] >= ACTIVATION_MIN_ACCURACY
+        and gain >= ACTIVATION_MIN_LOGLOSS_GAIN
+        and selected_seed_spread <= MAX_SEED_LOGLOSS_RANGE
+    )
     status.update(
         {
             "protocol_version": PROTOCOL_VERSION,
@@ -665,6 +675,8 @@ def train_if_ready(
             "selected_metrics": selected["metrics"],
             "logloss_gain": round(gain, 6),
             "final_test_used_for_selection": False,
+            "selected_seed_logloss_range": round(selected_seed_spread, 6),
+            "seed_stability_gate_passed": selected_seed_spread <= MAX_SEED_LOGLOSS_RANGE,
             "active": active,
             "reason": "activated" if active else "holdout_gate_not_met",
         }
