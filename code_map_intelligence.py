@@ -142,7 +142,6 @@ FEATURE_ROUTE_OVERRIDES = {
         "instagram_tcg_content/automation_state_guard.py",
         "instagram_tcg_content/test_automation_pause_recovery_v30.py",
         ".github/workflows/instagram-tcg-selfrefine.yml",
-        ".github/workflows/daily-0600-collection-instagram-accuracy.yml",
     ),
     "instagram_cardinfo_crosscheck": (
         "instagram_tcg_content/source_verification_engine.py",
