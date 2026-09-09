@@ -14,6 +14,9 @@ from ai_reliability_v8.adaptive_learning import (
     validate_prediction_model,
 )
 from ai_reliability_v8.workflow import WorkflowGate
+from instagram_tcg_content.source_verification_engine import (
+    validate_production_verification_receipt,
+)
 from instagram_tcg_content.automation_state_guard import (
     AI_RELIABILITY_PROJECT,
     AI_RELIABILITY_TASK_ID,
@@ -197,6 +200,50 @@ class InstagramCardReliabilityV8IntegrationTests(unittest.TestCase):
         }
         with self.assertRaises(ValueError):
             validate_prediction_model(ensemble)
+
+    def test_ai_score_cannot_authorize_production_verification(self):
+        learner = AdaptiveEvidenceLearner(
+            project="instagram_card",
+            purpose="verification_review",
+            revision="v8-integration",
+        )
+        model = {
+            "schema_version": 8,
+            "kind": "l2_logistic",
+            "weights": [0.0] * 7,
+            "features": list(FEATURES),
+            "scope": {
+                "project": "instagram_card",
+                "purpose": "verification_review",
+                "revision": "v8-integration",
+            },
+            "calibration_slope": 1.0,
+            "calibration_offset": 0.0,
+            "operational": True,
+            "training_label_count": 1000,
+            "temporal_split_policy": "50_15_15_20",
+            "verification_authority": False,
+        }
+        ranked = learner.rank(
+            {
+                "source_match": 1.0,
+                "freshness": 1.0,
+                "independent_support": 1.0,
+                "field_completeness": 1.0,
+                "conflict": 0.0,
+                "parser_health": 1.0,
+            },
+            model,
+        )
+        self.assertFalse(ranked["can_verify"])
+        errors = validate_production_verification_receipt(
+            {
+                "status": "pass",
+                "model_probability": ranked["estimated_label_probability"],
+            },
+            expected_snapshot_id="snapshot-1",
+        )
+        self.assertIn("verification_receipt field set mismatch", errors)
 
     def test_activation_gate_requires_all_nine_pre_activation_receipts(self):
         gate = WorkflowGate()
