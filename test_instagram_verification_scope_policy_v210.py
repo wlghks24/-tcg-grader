@@ -59,6 +59,9 @@ class InstagramVerificationScopePolicyV210Tests(unittest.TestCase):
         )
         self.assertTrue(payload["production_snapshot_sha256_required"])
         self.assertTrue(payload["production_receipt_snapshot_hash_match_required"])
+        self.assertEqual(payload["completed_sale_capture_max_hours"], 36)
+        self.assertEqual(payload["completed_sale_event_max_days"], 30)
+        self.assertEqual(payload["completed_sale_min_independent_sources"], 2)
         self.assertIn("build_verification_receipt", payload["preproduction_order"])
         self.assertIn("validate_verification_receipt", payload["preproduction_order"])
 
