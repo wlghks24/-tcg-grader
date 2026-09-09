@@ -144,6 +144,77 @@ def _normalize_row(row: object) -> dict[str, Any]:
     }
 
 
+def _write_json_atomic(path: Path, payload: dict[str, Any]) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    temp: Path | None = None
+    try:
+        with tempfile.NamedTemporaryFile(
+            mode="w",
+            encoding="utf-8",
+            dir=path.parent,
+            prefix=f".{path.name}.",
+            suffix=".tmp",
+            delete=False,
+        ) as handle:
+            json.dump(payload, handle, ensure_ascii=False, indent=2, sort_keys=True, allow_nan=False)
+            handle.write("\n")
+            handle.flush()
+            os.fsync(handle.fileno())
+            temp = Path(handle.name)
+        temp.replace(path)
+    finally:
+        if temp is not None and temp.exists():
+            temp.unlink(missing_ok=True)
+
+
+def append_quality_label(row: dict[str, Any], path: Path = DEFAULT_LABELS) -> dict[str, Any]:
+    clean = _normalize_row(row)
+    existing: list[dict[str, Any]] = []
+    if path.is_file():
+        raw = json.loads(path.read_text(encoding="utf-8"))
+        existing = raw.get("rows", raw) if isinstance(raw, dict) else raw
+        if not isinstance(existing, list):
+            raise ValueError("QUALITY_LABEL_FILE_SCHEMA_INVALID")
+    artifact_ids = {
+        value.get("artifact_id")
+        for value in existing
+        if isinstance(value, dict)
+    }
+    origins = {
+        value.get("origin_group")
+        for value in existing
+        if isinstance(value, dict)
+    }
+    if clean["artifact_id"] in artifact_ids:
+        raise ValueError("DUPLICATE_ARTIFACT_ID")
+    if clean["origin_group"] in origins:
+        raise ValueError("DUPLICATE_ORIGIN_GROUP")
+
+    stored = {
+        key: value
+        for key, value in row.items()
+        if key not in {"observed_epoch", "labeled_epoch", "feature_vector"}
+    }
+    payload = {
+        "schema_version": SCHEMA_VERSION,
+        "project": PROJECT,
+        "task_id": TASK_ID,
+        "label_authority": sorted(ALLOWED_LABEL_SOURCES),
+        "synthetic_labels_forbidden": True,
+        "rows": existing + [stored],
+    }
+    _write_json_atomic(path, payload)
+    reread = json.loads(path.read_text(encoding="utf-8"))
+    if not isinstance(reread, dict) or len(reread.get("rows") or []) != len(existing) + 1:
+        raise RuntimeError("QUALITY_LABEL_WRITE_READBACK_FAILED")
+    return {
+        "status": "QUALITY_REAL_LABEL_APPENDED",
+        "label_count": len(reread["rows"]),
+        "artifact_id": clean["artifact_id"],
+        "neural_training_ready": audit_labels(reread["rows"])["ready_for_neural_training"],
+    }
+
+
 def audit_labels(rows: object) -> dict[str, Any]:
     if not isinstance(rows, list):
         raise ValueError("QUALITY_LABELS_LIST_REQUIRED")
@@ -527,12 +598,19 @@ def main() -> int:
     parser.add_argument("--profile", default=str(DEFAULT_PROFILE))
     parser.add_argument("--train-if-ready", action="store_true")
     parser.add_argument("--build-profile", action="store_true")
+    parser.add_argument("--append-label")
     parser.add_argument("--self-test", action="store_true")
     args = parser.parse_args()
     if args.self_test:
         self_test()
         return 0
     labels_path = Path(args.labels)
+    if args.append_label:
+        value = json.loads(Path(args.append_label).read_text(encoding="utf-8"))
+        if not isinstance(value, dict):
+            raise SystemExit("append-label input must be one JSON object")
+        print(json.dumps(append_quality_label(value, labels_path), ensure_ascii=False, indent=2))
+        return 0
     rows = []
     if labels_path.is_file():
         raw = json.loads(labels_path.read_text(encoding="utf-8"))
