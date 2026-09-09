@@ -156,7 +156,15 @@ def load_optional_model(path: Path = DEFAULT_MODEL) -> tuple[dict[str, Any] | No
     value = _read_json(path)
     if not isinstance(value, dict):
         return None, "MODEL_FILE_INVALID"
-    return value, "MODEL_FILE_PRESENT"
+    # EvidenceLearner.save_model() atomically persists the full training report,
+    # while hand-provided operational fixtures may contain the model directly.
+    # Accept both formats, but never unwrap a rejected/non-operational report.
+    wrapped = value.get("model")
+    if isinstance(wrapped, dict):
+        if value.get("status") != "READY_FOR_REVIEW_RANKING":
+            return None, "SAVED_REPORT_NOT_PROMOTED"
+        return wrapped, "PROMOTED_MODEL_REPORT_PRESENT"
+    return value, "DIRECT_MODEL_FILE_PRESENT"
 
 
 def load_optional_labels(path: Path = DEFAULT_LABELS) -> tuple[list[dict[str, Any]], str]:
