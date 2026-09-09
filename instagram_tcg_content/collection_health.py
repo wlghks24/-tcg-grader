@@ -28,6 +28,8 @@ EXPECTED_OUTPUTS = (
 )
 MAX_SNAPSHOT_AGE_HOURS = 36.0
 MIN_COMPLETED_SALES_PER_OUTPUT = 10
+VERIFICATION_MODE = "INSTAGRAM_LOCAL_EVIDENCE_ONLY"
+VERIFICATION_ENGINE = "instagram_tcg_content.source_verification_engine.py::verify_fact"
 
 
 def _parse_aware(value: object) -> datetime | None:
@@ -140,6 +142,9 @@ def audit_collection(
         if not key or not fact_type or not lineage or raw.get("verification_status") != "verified":
             malformed_count += 1
             continue
+        if raw.get("verification_mode") != VERIFICATION_MODE or raw.get("verification_engine") != VERIFICATION_ENGINE:
+            malformed_count += 1
+            continue
         dedupe_key = (key, fact_type, lineage)
         if dedupe_key in seen:
             duplicate_keys.append("|".join(dedupe_key))
@@ -231,6 +236,8 @@ def self_test() -> None:
             "language": language,
             "source_locator": "https://example.invalid/official",
             "verification_status": "verified",
+            "verification_mode": VERIFICATION_MODE,
+            "verification_engine": VERIFICATION_ENGINE,
         })
         for index in range(MIN_COMPLETED_SALES_PER_OUTPUT):
             facts.append({
@@ -241,6 +248,8 @@ def self_test() -> None:
                 "language": language,
                 "source_locator": "https://example.invalid/sale",
                 "verification_status": "verified",
+                "verification_mode": VERIFICATION_MODE,
+                "verification_engine": VERIFICATION_ENGINE,
             })
     snapshot = {
         "namespace": "IG_CARDINFO",
