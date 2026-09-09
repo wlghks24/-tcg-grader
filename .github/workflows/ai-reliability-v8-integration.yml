@@ -6,6 +6,8 @@ on:
       - 'ai_reliability_v8/**'
       - 'instagram_tcg_content/automation_state_guard.py'
       - 'instagram_tcg_content/test_ai_reliability_v8_integration.py'
+      - 'instagram_tcg_content/test_ai_reliability_v8_code_map_contract.py'
+      - 'code_map_intelligence.py'
       - '.github/workflows/ai-reliability-v8-integration.yml'
 
 permissions:
@@ -20,8 +22,10 @@ jobs:
       - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97
         with:
           python-version: '3.11'
-      - name: Compile additive reliability package
-        run: python -m compileall -q ai_reliability_v8 instagram_tcg_content/automation_state_guard.py
+      - name: Compile additive reliability package and code-map router
+        run: python -m compileall -q ai_reliability_v8 instagram_tcg_content/automation_state_guard.py code_map_intelligence.py
+      - name: Run automation state guard self-test
+        run: python instagram_tcg_content/automation_state_guard.py --self-test
       - name: Validate canonical binding and installed hashes
         run: |
           python - <<'PY'
@@ -42,4 +46,4 @@ jobs:
           print('V8 binding/hash validation: PASS')
           PY
       - name: Run targeted Instagram-card integration tests
-        run: python -m unittest -v instagram_tcg_content.test_ai_reliability_v8_integration instagram_tcg_content.test_automation_pause_recovery_v30
+        run: python -m unittest -v instagram_tcg_content.test_ai_reliability_v8_integration instagram_tcg_content.test_automation_pause_recovery_v30 instagram_tcg_content.test_ai_reliability_v8_code_map_contract

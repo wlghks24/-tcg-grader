@@ -75,8 +75,9 @@ def snapshot_state(state: dict[str, Any], *, observed_at: str) -> dict[str, Any]
     """Create an immutable diagnostic snapshot without mutating scheduler state."""
     if state.get("id") != CANONICAL_ID:
         raise AutomationStateGuardError("unexpected automation id")
-    if state.get("title") != CANONICAL_TITLE:
-        raise AutomationStateGuardError("unexpected automation title")
+    title = state.get("title")
+    if not isinstance(title, str) or not title.strip():
+        raise AutomationStateGuardError("title must be a non-empty string")
     observed = _aware(observed_at, "observed_at")
     updated = _aware(state.get("updated_at"), "updated_at")
     last_run = _aware(state.get("last_run_time"), "last_run_time")
@@ -86,7 +87,9 @@ def snapshot_state(state: dict[str, Any], *, observed_at: str) -> dict[str, Any]
 
     return {
         "task_id": CANONICAL_ID,
-        "title": CANONICAL_TITLE,
+        "title": title,
+        "expected_title": CANONICAL_TITLE,
+        "title_matches_canonical": title == CANONICAL_TITLE,
         "is_enabled": enabled,
         "schedule": state.get("schedule"),
         "timing_mode": state.get("timing_mode"),
@@ -265,13 +268,19 @@ def classify_pause(
         if schedule_disable_without_run:
             state_transition_fingerprint = "SCHEDULE_START_DISABLE_WITHOUT_RUN"
 
+    comparison = compare_snapshots(previous_snapshot, snapshot)
+    control_plane_drift_fields = [
+        field for field in comparison["changed_fields"]
+        if field in {"title", "schedule", "timing_mode", "prompt"}
+    ]
+
     actor = str((cause_evidence or {}).get("actor") or "").strip()
     reason = str((cause_evidence or {}).get("reason") or "").strip()
     error_trace = str((cause_evidence or {}).get("error_trace") or "").strip()
     has_attribution = bool(actor and reason)
     cause_status = "not_applicable"
     cause_class = "NONE"
-    if pause_incident or schedule_gap:
+    if pause_incident or schedule_gap or control_plane_drift_fields:
         if has_attribution:
             cause_status = "evidence_backed"
             cause_class = str((cause_evidence or {}).get("cause_class") or "EXPLICIT_STATE_CHANGE")
@@ -291,8 +300,9 @@ def classify_pause(
         event_class = "SCHEDULE_GAP"
     else:
         event_class = "NONE"
+    if event_class == "NONE" and control_plane_drift_fields:
+        event_class = "CONTROL_PLANE_DRIFT"
 
-    comparison = compare_snapshots(previous_snapshot, snapshot)
     post_recovery_match = None
     if post_recovery_snapshot:
         post_recovery_match = compare_snapshots(post_recovery_snapshot, snapshot)["baseline_match"]
@@ -319,11 +329,15 @@ def classify_pause(
         required_action = "REACTIVATE_EXISTING_CANONICAL_AUTOMATION"
     elif schedule_gap_active:
         required_action = "MONITOR_NEXT_SLOT_NO_DUPLICATE_CATCHUP"
+    elif control_plane_drift_fields:
+        required_action = "REVIEW_VERIFIED_CONTROL_PLANE_DRIFT"
 
     return {
         "schema_version": "1.2",
         "automation_id": CANONICAL_ID,
-        "title": CANONICAL_TITLE,
+        "title": snapshot["title"],
+        "expected_title": CANONICAL_TITLE,
+        "title_matches_canonical": snapshot["title_matches_canonical"],
         "pause_detected": pause_incident,
         "schedule_gap_detected": schedule_gap,
         "schedule_gap_active": schedule_gap_active,
@@ -335,6 +349,7 @@ def classify_pause(
         "last_run_time": snapshot["last_run_time"],
         "snapshot": snapshot,
         "changed_fields": comparison["changed_fields"],
+        "control_plane_drift_fields": control_plane_drift_fields,
         "change_window_start": comparison["change_window_start"],
         "change_window_end": comparison["change_window_end"],
         "baseline_match": comparison["baseline_match"],
@@ -444,6 +459,24 @@ def self_test() -> None:
     )
     assert changed["changed_fields"] == ["is_enabled"], changed
     assert changed["baseline_match"] is False, changed
+
+    title_baseline = dict(
+        disabled,
+        is_enabled=True,
+        updated_at="2026-09-09T01:35:00Z",
+        last_run_time="2026-09-09T01:30:10Z",
+    )
+    title_drift_state = dict(title_baseline, title="인스타 카드정보 변경됨", updated_at="2026-09-09T01:41:00Z")
+    title_drift = classify_pause(
+        title_drift_state,
+        observed_at="2026-09-09T01:42:00Z",
+        previous_snapshot=snapshot_state(title_baseline, observed_at="2026-09-09T01:40:00Z"),
+    )
+    assert title_drift["title_matches_canonical"] is False, title_drift
+    assert title_drift["control_plane_drift_fields"] == ["title"], title_drift
+    assert title_drift["event_class"] == "CONTROL_PLANE_DRIFT", title_drift
+    assert title_drift["required_action"] == "REVIEW_VERIFIED_CONTROL_PLANE_DRIFT", title_drift
+    assert title_drift["cause_class"] == "CONTROL_PLANE_ATTRIBUTION_UNAVAILABLE", title_drift
 
     policy = runtime_failure_policy(
         stage="revision_preflight",

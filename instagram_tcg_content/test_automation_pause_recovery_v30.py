@@ -190,6 +190,36 @@ class AutomationPauseRecoveryV30Tests(unittest.TestCase):
         self.assertTrue(result["desired_enabled_state"])
         self.assertEqual(result["event_class"], "NONE")
 
+    def test_title_drift_is_captured_instead_of_aborting_snapshot(self):
+        baseline = self.state(True)
+        baseline["updated_at"] = "2026-09-09T01:35:00Z"
+        baseline["last_run_time"] = "2026-09-09T01:30:10Z"
+        previous = snapshot_state(
+            baseline,
+            observed_at="2026-09-09T01:40:00Z",
+        )
+        drifted = dict(baseline)
+        drifted["title"] = "인스타 카드정보 변경됨"
+        drifted["updated_at"] = "2026-09-09T01:41:00Z"
+        result = classify_pause(
+            drifted,
+            observed_at="2026-09-09T01:42:00Z",
+            previous_snapshot=previous,
+        )
+        self.assertFalse(result["title_matches_canonical"])
+        self.assertEqual(result["changed_fields"], ["title"])
+        self.assertEqual(result["control_plane_drift_fields"], ["title"])
+        self.assertEqual(result["event_class"], "CONTROL_PLANE_DRIFT")
+        self.assertEqual(result["required_action"], "REVIEW_VERIFIED_CONTROL_PLANE_DRIFT")
+        self.assertEqual(result["cause_class"], "CONTROL_PLANE_ATTRIBUTION_UNAVAILABLE")
+        self.assertEqual(result["final_root_cause_class"], "UNRESOLVED_CONTROL_PLANE")
+
+    def test_empty_title_still_fails_closed(self):
+        state = self.state(True)
+        state["title"] = ""
+        with self.assertRaises(AutomationStateGuardError):
+            snapshot_state(state, observed_at="2026-09-09T01:42:00Z")
+
     def test_runtime_failure_policy_never_disables_scheduler(self):
         policy = runtime_failure_policy(
             stage="render",
