@@ -35,7 +35,7 @@
       "tests": [
         "test_v4.VerificationTests"
       ],
-      "validation": "원문 해시/기간/값/독립성/충돌/실거래 gate"
+      "validation": "원문 해시/캡처 freshness/값/독립성/충돌 gate. completed_sale은 source capture 36시간 이내, 거래시각 최근 30일 이내, 독립 primary evidence 2개 이상 필요"
     },
     "evidence_learning": {
       "entry_file": "evidence_learning.py",
