@@ -42,5 +42,8 @@
   "production_verification_receipt_input": "RAW_OBSERVATION_GROUPS_ONLY",
   "production_verification_receipt_observation_fingerprint_required": true,
   "production_snapshot_sha256_required": true,
-  "production_receipt_snapshot_hash_match_required": true
+  "production_receipt_snapshot_hash_match_required": true,
+  "completed_sale_capture_max_hours": 36,
+  "completed_sale_event_max_days": 30,
+  "completed_sale_min_independent_sources": 2
 }
