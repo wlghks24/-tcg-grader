@@ -35,6 +35,12 @@ class SecuritySelfAuditTests(unittest.TestCase):
             excluded = root / "node_modules"
             excluded.mkdir()
             (excluded / "ignored.py").write_text("eval('1')\n", encoding="utf-8")
+            precollect = root / ".precollect_stage"
+            precollect.mkdir()
+            (precollect / "duplicate.py").write_text("eval('1')\n", encoding="utf-8")
+            virtualenv = root / ".venv"
+            virtualenv.mkdir()
+            (virtualenv / "dependency.py").write_text("eval('1')\n", encoding="utf-8")
             real = root / "external"
             real.mkdir()
             (real / "visible.py").write_text("VALUE = 1\n", encoding="utf-8")
@@ -47,6 +53,8 @@ class SecuritySelfAuditTests(unittest.TestCase):
             scanned = {path.relative_to(root).as_posix() for path, _ in audit.iter_text_files(root)}
 
         self.assertNotIn("node_modules/ignored.py", scanned)
+        self.assertNotIn(".precollect_stage/duplicate.py", scanned)
+        self.assertNotIn(".venv/dependency.py", scanned)
         if link is not None:
             self.assertNotIn("linked/visible.py", scanned)
         self.assertIn("external/visible.py", scanned)

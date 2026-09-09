@@ -28,6 +28,16 @@ MEMORY = ROOT / "security_learning_memory.json"
 TEXT_EXTENSIONS = {".py", ".js", ".html", ".yml", ".yaml", ".sh", ".bat", ".ps1"}
 MAX_SCAN_BYTES = 2_000_000
 SEVERITY_ORDER = {"info": 0, "low": 1, "medium": 2, "high": 3, "critical": 4}
+EXCLUDED_SCAN_DIRS = {
+    ".git", ".codex", ".agents", ".tcg_ai_proposals", ".graphify_recovery",
+    "graphify-out", "__pycache__", ".pytest_cache", "node_modules", "GRADE_TRAINING_INBOX",
+    # Runtime/precollection copies are not independent source trees. Scanning
+    # them duplicates the active repository audit and can double tablet I/O.
+    ".precollect_stage", ".precollect_stage.tmp", ".tcg_runtime_preserved",
+    ".tcg_reliability_state", ".tcg_last_good",
+    # Local virtual environments can contain thousands of third-party .py files.
+    ".venv", "venv",
+}
 
 
 def utc_now() -> str:
@@ -63,15 +73,11 @@ def add(findings: list[dict[str, Any]], rule: str, severity: str, path: str, lin
 
 
 def iter_text_files(root: Path):
-    excluded_dirs = {
-        ".git", ".codex", ".agents", ".tcg_ai_proposals", ".graphify_recovery",
-        "graphify-out", "__pycache__", ".pytest_cache", "node_modules", "GRADE_TRAINING_INBOX",
-    }
     for current, directories, filenames in os.walk(root, topdown=True, followlinks=False):
         current_path = Path(current)
         directories[:] = [
             name for name in directories
-            if name not in excluded_dirs and not (current_path / name).is_symlink()
+            if name not in EXCLUDED_SCAN_DIRS and not (current_path / name).is_symlink()
         ]
         for filename in filenames:
             path = current_path / filename
