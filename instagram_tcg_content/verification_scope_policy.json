@@ -1,0 +1,30 @@
+{
+  "schema_version": 1,
+  "project": "instagram_card",
+  "task_id": "6a9b8a22e72c8191849c273e1240378e",
+  "room_scope": "instagram_cardinfo",
+  "verification_mode": "INSTAGRAM_LOCAL_EVIDENCE_ONLY",
+  "card_price_analysis_used": false,
+  "market_analysis_snapshot_crosscheck_enabled": false,
+  "market_analysis_peer_learning_enabled": false,
+  "cross_domain_runtime_bridge_enabled": false,
+  "source_verification_entrypoint": "instagram_tcg_content/source_verification_engine.py",
+  "source_resilience_entrypoint": "instagram_tcg_content/source_route_resilience.py",
+  "source_routes": "instagram_tcg_content/source_routes.json",
+  "factual_snapshot": "TCG_CROSSCHECK/IG_CARDINFO/factual_snapshot.json",
+  "legacy_cross_domain_workflow": ".github/workflows/daily-0600-collection-instagram-accuracy.yml",
+  "legacy_cross_domain_workflow_mode": "DISABLED_NOOP_MANUAL_ONLY",
+  "preproduction_order": [
+    "source_route_health",
+    "source_capture",
+    "identity_scope_validation",
+    "lineage_deduplication",
+    "independent_source_check",
+    "conflict_check",
+    "freshness_check",
+    "fact_type_hard_gate",
+    "persist_verified_snapshot",
+    "production_preflight"
+  ],
+  "fail_closed": true
+}
