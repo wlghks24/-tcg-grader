@@ -17,8 +17,9 @@
 
 공유:
 - shared_self_learning/의 순수 알고리즘과 계약만 사용
-- crosscheck_exchange/를 통한 passive factual JSON 교차검증만 허용
-- TCG_CROSSCHECK/exchange_manifest.json은 교환 계약 참고용이며, 실제 파일 존재를 확인하지 않고 IG_CARDINFO snapshot이 있다고 가정하지 않는다.
+- 사실 검증은 IG_CARDINFO 자체 source route와 factual snapshot만 사용
+- Main/카드시세분석 factual snapshot, crosscheck_exchange, peer-learning 결과는 검증 근거로 사용하지 않음
+- production finalization 전 source_verification_engine의 tamper-evident verification receipt를 production_state가 검증해야 함
 
 분리:
 - Main 코드 import 금지
