@@ -131,6 +131,8 @@ FEATURE_QUERY_ALIASES = {
     ),
     "instagram_cardinfo_ai_reliability": (
         "인스타 카드정보 신경망", "인스타 카드정보 ai", "ai reliability",
+        "인스타 카드정보 자료수집 신경망 연결", "자료수집 신경망 연결",
+        "신경망 연결", "ai 연결", "runtime link", "runtime 연결",
         "calibration", "drift", "모델 손상", "차원 불일치", "확률 오차",
         "adaptive learning", "evidence learner",
     ),
@@ -214,6 +216,7 @@ FEATURE_ROUTE_OVERRIDES = {
         "instagram_tcg_content/test_live_packet_guards.py",
     ),
     "instagram_cardinfo_ai_reliability": (
+        "instagram_tcg_content/ai_reliability_runtime.py",
         "ai_reliability_v8/adaptive_learning.py",
         "ai_reliability_v8/evidence_learning.py",
         "ai_reliability_v8/bridge.py",
@@ -221,6 +224,7 @@ FEATURE_ROUTE_OVERRIDES = {
         "ai_reliability_v8/CODE_MAP.json",
         "ai_reliability_v8/WORKFLOW_V8.json",
         "instagram_tcg_content/test_ai_reliability_v8_integration.py",
+        "instagram_tcg_content/test_ai_reliability_runtime.py",
         ".github/workflows/ai-reliability-v8-integration.yml",
     ),
 }
@@ -301,6 +305,7 @@ FEATURE_TEST_NODE_CONTRACTS = {
         "instagram_tcg_content/test_source_verification_engine.py::main",
     ),
     "instagram_cardinfo_ai_reliability": (
+        "instagram_tcg_content/test_ai_reliability_runtime.py::InstagramAiReliabilityRuntimeTests::test_missing_model_and_labels_is_explicit_rules_only_not_fake_neural",
         "instagram_tcg_content/test_ai_reliability_v8_integration.py::InstagramCardReliabilityV8IntegrationTests::test_neural_gate_below_1000_preserves_existing_model_without_training",
         "instagram_tcg_content/test_ai_reliability_v8_integration.py::InstagramCardReliabilityV8IntegrationTests::test_legacy_operational_models_fall_back_to_rules_only",
         "instagram_tcg_content/test_ai_reliability_v8_code_map_contract.py::AiReliabilityV8CodeMapContractTests::test_binding_hashes_match_installed_files",
@@ -354,6 +359,9 @@ FEATURE_ALTERNATE_ENTRYPOINTS = {
         "verified_collection_job_neural.py",
         "verified_neural_self_refine.py",
     ),
+    "instagram_cardinfo_ai_reliability": (
+        "instagram_tcg_content/ai_reliability_runtime.py",
+    ),
 }
 
 # Ordered, deterministic query-specific promotions. More specific rules come
@@ -378,6 +386,10 @@ FEATURE_ENTRYPOINT_RULES = {
     "verified_neural_learning": (
         (("job neural", "작업 신경망", "수집 작업 신경망"), "verified_collection_job_neural.py"),
         (("selfrefine", "self-refine", "자가개선", "자가학습"), "verified_neural_self_refine.py"),
+    ),
+    "instagram_cardinfo_ai_reliability": (
+        (("신경망 연결", "ai 연결", "runtime link", "runtime 연결", "collection health", "자료수집 연결"),
+         "instagram_tcg_content/ai_reliability_runtime.py"),
     ),
 }
 
