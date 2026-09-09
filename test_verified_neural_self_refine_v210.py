@@ -192,8 +192,8 @@ class VerifiedNeuralSelfRefineV210Tests(unittest.TestCase):
                     "verification_level": "full_regression",
                     "recorded_at": "2026-09-08T00:00:00+00:00",
                 }
-                (source / old_labels.name).write_text("{broken", encoding="utf-8")
-                (source / old_labels_backup.name).write_text(
+                (source / neural.LABELS_PATH.name).write_text("{broken", encoding="utf-8")
+                (source / neural.LABELS_BACKUP_PATH.name).write_text(
                     json.dumps({"schema": neural.SCHEMA, "labels": [sample]}), encoding="utf-8"
                 )
                 base = neural._init_model(4, 31)
@@ -207,10 +207,11 @@ class VerifiedNeuralSelfRefineV210Tests(unittest.TestCase):
                     "calibration_slope": 1.0, "calibration_offset": 0.0,
                     "rule_fingerprints": {neural.RULE_ORDER[0]: "a" * 24},
                 }
-                (source / old_model.name).write_text("{broken", encoding="utf-8")
-                (source / old_model_backup.name).write_text(json.dumps(payload), encoding="utf-8")
+                (source / neural.MODEL_PATH.name).write_text("{broken", encoding="utf-8")
+                (source / neural.MODEL_BACKUP_PATH.name).write_text(json.dumps(payload), encoding="utf-8")
+                expected = {neural.LABELS_PATH.name, neural.MODEL_PATH.name}
                 result = neural.restore_from_directory(source)
-                self.assertEqual({old_labels.name, old_model.name}, set(result["recovered_from_backup"]))
+                self.assertEqual(expected, set(result["recovered_from_backup"]))
                 self.assertTrue(neural.LABELS_PATH.is_file())
                 self.assertTrue(neural.MODEL_PATH.is_file())
             finally:
