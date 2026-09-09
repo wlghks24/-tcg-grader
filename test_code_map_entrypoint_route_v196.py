@@ -55,6 +55,30 @@ class CodeMapEntrypointRouteV196Tests(unittest.TestCase):
             result["entry_files"][0],
         )
         self.assertIn(
+            "instagram_tcg_content/production_state.py",
+            result["primary_files"],
+        )
+        self.assertIn(
+            "instagram_tcg_content/test_source_verification_engine.py",
+            result["suggested_tests"],
+        )
+        self.assertIn(
+            "instagram_tcg_content/test_production_state.py",
+            result["suggested_tests"],
+        )
+
+    def test_production_state_route_includes_source_receipt_validation(self):
+        result = resolve_feature_query("인스타 카드정보 작업물 production state baseline")
+        self.assertEqual("instagram_cardinfo_production_state", result["entry_group"])
+        self.assertEqual(
+            "instagram_tcg_content/production_state.py",
+            result["entry_file"],
+        )
+        self.assertIn(
+            "instagram_tcg_content/source_verification_engine.py",
+            result["primary_files"],
+        )
+        self.assertIn(
             "instagram_tcg_content/test_source_verification_engine.py",
             result["suggested_tests"],
         )
