@@ -19,10 +19,16 @@ def _brier(model, rows):
 
 
 def _raw_probability(model, x):
-    if model["kind"] == "l2_logistic":
+    kind = model.get("kind")
+    if kind == "l2_logistic":
         return sigmoid(logit(model["weights"], x))
-    if model["kind"] == "mlp_ensemble":
-        return sum(_raw_probability(member, x) for member in model["members"]) / len(model["members"])
+    if kind == "mlp_ensemble":
+        members = model.get("members")
+        if not isinstance(members, list) or not members:
+            raise ValueError("INVALID_MODEL")
+        return sum(_raw_probability(member, x) for member in members) / len(members)
+    if kind != "shallow_mlp":
+        raise ValueError("INVALID_MODEL")
     hidden = [math.tanh(b + sum(w * v for w, v in zip(ws, x)))
               for ws, b in zip(model["hidden_weights"], model["hidden_bias"])]
     return sigmoid(model["output_bias"] + sum(w * v for w, v in zip(model["output_weights"], hidden)))
@@ -57,10 +63,14 @@ def validate_prediction_model(model,*,require_operational=True):
             if any(not isinstance(row,list) or len(row)!=len(FEATURES) for row in hw) or not all(_finite(x) for x in values):
                 raise ValueError('INVALID_MODEL')
         elif kind=='mlp_ensemble':
-            members=core.get('members')
-            if not isinstance(members,list) or not 1<=len(members)<=3: raise ValueError('INVALID_MODEL')
+            members=core.get('members'); size=core.get('hidden_size'); seeds=core.get('seeds')
+            if (type(size) is not int or not 1<=size<=32 or not isinstance(members,list) or not 1<=len(members)<=3
+                    or not isinstance(seeds,list) or len(seeds)!=len(members) or len(set(seeds))!=len(seeds)
+                    or any(type(seed) is not int for seed in seeds)):
+                raise ValueError('INVALID_MODEL')
             for member in members:
-                if not isinstance(member,dict) or member.get('kind')!='shallow_mlp': raise ValueError('INVALID_MODEL')
+                if not isinstance(member,dict) or member.get('kind')!='shallow_mlp' or member.get('hidden_size')!=size:
+                    raise ValueError('INVALID_MODEL')
                 check_core(member,depth+1)
         else: raise ValueError('INVALID_MODEL')
     check_core(model)
@@ -102,13 +112,16 @@ def _train_mlp(rows, hidden_size=8, seed=20260907):
                 ghb[h] += delta
                 for j, value in enumerate(x):
                     ghw[h][j] += delta * value
-        rate = .18 / len(rows)
-        ob -= rate * gob
+        rate = .18
+        inv_n = 1.0 / len(rows)
+        ob -= rate * gob * inv_n
         for h in range(hidden_size):
-            ow[h] -= rate * (gow[h] + .01 * ow[h])
-            hb[h] -= rate * ghb[h]
+            # Keep L2 on the same scale as the logistic baseline. The previous
+            # implementation divided the regularizer by n a second time.
+            ow[h] -= rate * (gow[h] * inv_n + .01 * ow[h])
+            hb[h] -= rate * ghb[h] * inv_n
             for j in range(len(FEATURES)):
-                hw[h][j] -= rate * (ghw[h][j] + .01 * hw[h][j])
+                hw[h][j] -= rate * (ghw[h][j] * inv_n + .01 * hw[h][j])
     return {"kind": "shallow_mlp", "hidden_size": hidden_size,
             "hidden_weights": hw, "hidden_bias": hb, "output_weights": ow, "output_bias": ob}
 
@@ -178,8 +191,10 @@ class AdaptiveEvidenceLearner(EvidenceLearner):
         improved=best['mean']+.005<logistic_score
         selected={'kind':'mlp_ensemble','hidden_size':best['hidden_size'],'seeds':list(seeds),'members':best['members']} if stable and improved else logistic
         tune_scores={'l2_logistic':logistic_score,'shallow_mlp':best['mean']}
-        logits = [(math.log(max(1e-9, min(1-1e-9, _raw_probability(selected, x))) /
-                            max(1e-9, 1-_raw_probability(selected, x))), y) for _, x, y, _ in calibration]
+        logits = []
+        for _, x, y, _ in calibration:
+            p = max(1e-9, min(1-1e-9, _raw_probability(selected, x)))
+            logits.append((math.log(p / (1-p)), y))
         slope, offset = 1.0, 0.0
         for _ in range(220):
             ga = gb = 0.0
@@ -192,22 +207,25 @@ class AdaptiveEvidenceLearner(EvidenceLearner):
             p = max(1e-9, min(1-1e-9, _raw_probability(selected, x)))
             return sigmoid(slope * math.log(p / (1-p)) + offset)
         prevalence = sum(r[2] for r in train) / len(train)
-        brier = sum((predict(x)-y)**2 for _, x, y, _ in test) / len(test)
-        baseline = sum((prevalence-y)**2 for _, x, y, _ in test) / len(test)
-        negatives = sum(y == 0 for _, _, y, _ in test)
-        false_high = sum(y == 0 and predict(x) >= .9 for _, x, y, _ in test)
+        test_predictions = [(predict(x), y) for _, x, y, _ in test]
+        brier = sum((p-y)**2 for p, y in test_predictions) / len(test_predictions)
+        baseline = sum((prevalence-y)**2 for _, y in test_predictions) / len(test_predictions)
+        negatives = sum(y == 0 for _, y in test_predictions)
+        false_high = sum(y == 0 and p >= .9 for p, y in test_predictions)
         upper = wilson_upper(false_high, negatives)
         ece = 0.0
         for low in (0, .2, .4, .6, .8):
-            pairs = [(predict(x), y) for _, x, y, _ in test if low <= predict(x) <= low + .2]
+            high = low + .2
+            pairs = [(p, y) for p, y in test_predictions
+                     if low <= p < high or (low == .8 and p <= high and p >= low)]
             if pairs:
-                ece += len(pairs)/len(test) * abs(sum(p for p, _ in pairs)/len(pairs)-sum(y for _, y in pairs)/len(pairs))
+                ece += len(pairs)/len(test_predictions) * abs(sum(p for p, _ in pairs)/len(pairs)-sum(y for _, y in pairs)/len(pairs))
         drift = max(abs(sum(r[1][j] for r in train)/len(train)-sum(r[1][j] for r in test)/len(test)) for j in range(len(FEATURES)))
         passed = brier < baseline and upper <= .2 and ece <= .15 and drift <= .25
         model = dict(selected, schema_version=8, scope=self.scope, features=list(FEATURES),
                      calibration_slope=slope, calibration_offset=offset, threshold=.9,
                      operational=passed and not synthetic, verification_authority=False,
-                     training_fingerprint=hashlib.sha256(json.dumps(rows, sort_keys=True).encode()).hexdigest())
+                     training_fingerprint=hashlib.sha256(json.dumps(rows, sort_keys=True, separators=(",", ":"), allow_nan=False).encode()).hexdigest())
         return {"status": "TEST_ONLY" if synthetic else "READY_FOR_REVIEW_RANKING" if passed else "REJECTED",
                 "model": model, "selection": {"policy": "MULTI_SEED_TUNE_ONLY_MIN_IMPROVEMENT_0.005", "tune_brier": tune_scores,
                 "mlp_families": [{"hidden_size":f['hidden_size'],"seed_brier":f['scores'],"mean_brier":f['mean'],"range":f['range']} for f in families],
@@ -217,6 +235,15 @@ class AdaptiveEvidenceLearner(EvidenceLearner):
                 "false_high": false_high, "test_negatives": negatives, "false_high_wilson95_upper": upper,
                 "feature_mean_drift": drift, "train": len(train), "tune": len(tune),
                 "calibration": len(calibration), "test": len(test), "statistical_gates_passed": passed}}
+
+    def save_model(self, report, path):
+        model = report.get("model") if isinstance(report, dict) else None
+        if isinstance(model, dict) and model.get("schema_version") in (5, 7, 8):
+            try:
+                validate_prediction_model(model)
+            except ValueError:
+                return {"status": "MODEL_NOT_PROMOTED"}
+        return super().save_model(report, path)
 
     def rank(self, features, model=None):
         if not model or model.get("schema_version") not in (5,7,8):
