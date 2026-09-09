@@ -428,23 +428,24 @@ def main():
     assert strategy_for_retry(2) == "alternate_parser_and_source"
     assert strategy_for_retry(3) == "quarantine_and_exclude"
 
-    good = verify_fact(
-        [
-            obs("ebay", "completed_sale_original"),
-            obs("goldin", "completed_sale_original", code="P-S02"),
-        ]
-    )
+    good_observations = [
+        obs("ebay", "completed_sale_original"),
+        obs("goldin", "completed_sale_original", code="P-S02"),
+    ]
+    good = verify_fact(good_observations)
     ok, reasons = x10_fact_gate([good])
     assert ok and not reasons, reasons
 
-    bad = verify_fact([obs("ebay", "completed_sale_original")])
+    bad_observations = [obs("ebay", "completed_sale_original")]
+    bad = verify_fact(bad_observations)
     ok, reasons = x10_fact_gate([bad])
     assert not ok and reasons
 
     receipt = build_production_verification_receipt(
-        [good],
+        [good_observations],
         snapshot_id="snapshot-verified-1",
         required_core_keys=[(good.canonical_key, good.fact_type)],
+        now=FIXED_NOW,
     )
     assert receipt["status"] == "pass", receipt
     assert receipt["verification_mode"] == "INSTAGRAM_LOCAL_EVIDENCE_ONLY", receipt
@@ -455,6 +456,35 @@ def main():
         )
         == []
     )
+
+    assert receipt["schema_version"] == 2, receipt
+    assert receipt["verification_contract"] == "OBSERVATION_GROUPS_V1", receipt
+    assert receipt["observation_count"] == 2, receipt
+    assert len(receipt["observation_fingerprint"]) == 64, receipt
+
+    # Pre-computed VerificationResult objects are not accepted as receipt input.
+    try:
+        build_production_verification_receipt(
+            [good],
+            snapshot_id="snapshot-bypass",
+            required_core_keys=[(good.canonical_key, good.fact_type)],
+            now=FIXED_NOW,
+        )
+        raise AssertionError("pre-computed VerificationResult bypass was accepted")
+    except ValueError as exc:
+        assert str(exc).startswith("OBSERVATION_GROUP_REQUIRED:"), exc
+
+    # Duplicate canonical/fact groups cannot inflate verified counts.
+    try:
+        build_production_verification_receipt(
+            [good_observations, good_observations],
+            snapshot_id="snapshot-duplicate",
+            required_core_keys=[(good.canonical_key, good.fact_type)],
+            now=FIXED_NOW,
+        )
+        raise AssertionError("duplicate verification group was accepted")
+    except ValueError as exc:
+        assert str(exc).startswith("DUPLICATE_VERIFICATION_GROUP:"), exc
 
     tampered = dict(receipt)
     tampered["verified_core_fact_count"] = 999
@@ -467,9 +497,10 @@ def main():
 
     try:
         build_production_verification_receipt(
-            [bad],
+            [bad_observations],
             snapshot_id="snapshot-blocked",
             required_core_keys=[(bad.canonical_key, bad.fact_type)],
+            now=FIXED_NOW,
         )
         raise AssertionError("non-verified evidence created a production receipt")
     except ValueError as exc:
