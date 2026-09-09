@@ -45,6 +45,8 @@ MAX_LABELS = 6000
 HIDDEN_SIZES = (4, 8, 12)
 SEEDS = (20260907, 20260917, 20260927)
 PROTOCOL_VERSION = 2
+MIN_SPLIT_CLASS_LABELS = 10
+MAX_SEED_LOGLOSS_RANGE = 0.08
 EPOCHS = 56
 LEARNING_RATE = 0.032
 L2 = 0.0005
@@ -699,6 +701,11 @@ def train_if_ready(
         status["reason"] = "insufficient_temporal_protocol_split"
         atomic_write_json(report_path, status, suffix=".collection-neural-report.tmp")
         return status
+    if any(min(sum(bool(row["outcome"]) for row in part), sum(not bool(row["outcome"]) for row in part)) < MIN_SPLIT_CLASS_LABELS
+           for part in (train_rows, tune_rows, calibration_rows, final_test)):
+        status["reason"] = "insufficient_temporal_class_coverage"
+        atomic_write_json(report_path, status, suffix=".collection-neural-report.tmp")
+        return status
 
     baseline = _baseline(train_rows, final_test)
     dataset_seed = int(hashlib.sha256("".join(sorted(row["sample_id"] for row in labels)).encode()).hexdigest()[:8], 16)
@@ -725,7 +732,9 @@ def train_if_ready(
     selected_seed, model, tune_metrics = min(members, key=lambda item: (item[2]["logloss"], item[0]))
     slope, offset = _fit_calibration(model, calibration_rows)
     final_metrics = _metrics(model, final_test, slope=slope, offset=offset)
+    selected_seed_spread = max(item[2]["logloss"] for item in members) - min(item[2]["logloss"] for item in members)
     active, gain = _model_gate(final_metrics, baseline)
+    active = active and selected_seed_spread <= MAX_SEED_LOGLOSS_RANGE
     selected = {"hidden": selected_hidden, "seed": selected_seed, "tune_metrics": tune_metrics,
                 "metrics": final_metrics, "calibration_slope": round(slope, 8),
                 "calibration_offset": round(offset, 8)}
@@ -742,6 +751,8 @@ def train_if_ready(
             "candidate_selected_metrics": final_metrics,
             "candidate_logloss_gain": round(gain, 6),
             "final_test_used_for_selection": False,
+            "selected_seed_logloss_range": round(selected_seed_spread, 6),
+            "seed_stability_gate_passed": selected_seed_spread <= MAX_SEED_LOGLOSS_RANGE,
         }
     )
 
