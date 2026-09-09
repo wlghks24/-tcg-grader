@@ -1,9 +1,10 @@
 #!/usr/bin/env python3
+from datetime import datetime, timezone
 from pathlib import Path
 from tempfile import TemporaryDirectory
 
 from instagram_tcg_content.source_verification_engine import (
-    VerificationResult,
+    Observation,
     build_production_verification_receipt,
 )
 from instagram_tcg_content.production_state import (
@@ -26,22 +27,25 @@ from instagram_tcg_content.production_state import (
 
 
 def verification_receipt(snapshot_id="snapshot-1"):
-    result = VerificationResult(
-        canonical_key="pokemon|release|kr",
+    observation = Observation(
+        game="pokemon",
         fact_type="official_release",
-        status="verified",
-        canonical_value="2026-09-16",
-        source_codes=("P-S01",),
-        source_count=1,
-        independent_source_count=1,
-        official_primary_present=True,
-        confidence_score=0.99,
-        uncertainty_reason=None,
+        canonical_key="pokemon|release|kr",
+        value="2026-09-16",
+        source_code="P-S01",
+        source_name="pokemon-official",
+        source_locator="https://www.pokemon-card.com/",
+        source_tier="official_primary",
+        collector_id="collector:pokemon-official",
+        provider_id="pokemon-official",
+        fetched_at_kst="2026-09-06T10:00:00+09:00",
+        status="observed",
     )
     return build_production_verification_receipt(
-        [result],
+        [[observation]],
         snapshot_id=snapshot_id,
         required_core_keys=[("pokemon|release|kr", "official_release")],
+        now=datetime(2026, 9, 6, 1, 5, tzinfo=timezone.utc),
     )
 
 
