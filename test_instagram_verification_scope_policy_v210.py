@@ -45,6 +45,18 @@ class InstagramVerificationScopePolicyV210Tests(unittest.TestCase):
             payload["production_finalization_entrypoint"],
             "instagram_tcg_content/production_state.py::finalize_production",
         )
+        self.assertEqual(payload["production_verification_receipt_schema"], 2)
+        self.assertEqual(
+            payload["production_verification_receipt_contract"],
+            "OBSERVATION_GROUPS_V1",
+        )
+        self.assertEqual(
+            payload["production_verification_receipt_input"],
+            "RAW_OBSERVATION_GROUPS_ONLY",
+        )
+        self.assertTrue(
+            payload["production_verification_receipt_observation_fingerprint_required"]
+        )
         self.assertIn("build_verification_receipt", payload["preproduction_order"])
         self.assertIn("validate_verification_receipt", payload["preproduction_order"])
 
