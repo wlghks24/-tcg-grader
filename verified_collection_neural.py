@@ -522,17 +522,24 @@ def _fit_calibration(model: dict[str, Any], rows: list[dict[str, Any]]) -> tuple
 
 def _split(rows: list[dict[str, Any]]) -> tuple[list[dict[str, Any]], list[dict[str, Any]],
                                                  list[dict[str, Any]], list[dict[str, Any]]]:
-    """Chronological train/tune/calibration/final-test split.
-
-    The final test is never used for architecture, seed, or calibration choices.
-    observed_at is emitted by the verified collector; sample_id only breaks ties.
-    """
+    """Chronological 50/15/15/20 split without splitting one observed batch."""
     ordered = sorted(rows, key=lambda row: (str(row.get("observed_at") or ""), str(row.get("sample_id") or "")))
+    if not ordered or any(not str(row.get("observed_at") or "").strip() for row in ordered):
+        return [], [], [], []
     n = len(ordered)
-    a, b, d = int(n * 0.50), int(n * 0.65), int(n * 0.80)
+
+    def boundary(target: int, previous: int) -> int:
+        cut = max(previous + 1, min(n, target))
+        while cut < n and str(ordered[cut - 1].get("observed_at") or "") == str(ordered[cut].get("observed_at") or ""):
+            cut += 1
+        return cut
+
+    a = boundary(int(n * 0.50), 0)
+    b = boundary(int(n * 0.65), a)
+    d = boundary(int(n * 0.80), b)
+    if not (0 < a < b < d < n):
+        return ordered[:a], ordered[a:b], ordered[b:d], ordered[d:]
     return ordered[:a], ordered[a:b], ordered[b:d], ordered[d:]
-
-
 def _baseline(train: list[dict[str, Any]], holdout: list[dict[str, Any]]) -> dict[str, float]:
     rate = (sum(bool(row["outcome"]) for row in train) + 1) / (len(train) + 2)
     rate = max(1e-7, min(1.0 - 1e-7, rate))
