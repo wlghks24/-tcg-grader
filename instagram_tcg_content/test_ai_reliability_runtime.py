@@ -104,6 +104,26 @@ class InstagramAiReliabilityRuntimeTests(unittest.TestCase):
         self.assertFalse(result["ranking"]["can_verify"])
         self.assertFalse(result["can_authorize_production"])
 
+    def test_promoted_training_report_unwraps_operational_model(self):
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            model = root / "model.json"
+            model.write_text(json.dumps({
+                "status": "READY_FOR_REVIEW_RANKING",
+                "model": self._model(),
+                "metrics": {"statistical_gates_passed": True},
+            }), encoding="utf-8")
+            result = evaluate_ai_runtime(
+                self._report(ready=True),
+                state_root=root / "state",
+                model_path=model,
+                labels_path=root / "missing-labels.json",
+            )
+        self.assertTrue(result["neural_active"], result)
+        self.assertEqual(result["model_status"], "PROMOTED_MODEL_REPORT_PRESENT")
+        self.assertEqual(result["ranking"]["status"], "ADVISORY_ONLY")
+        self.assertFalse(result["can_verify"])
+
     def test_invalid_model_falls_back_to_rules_without_overriding_health(self):
         with tempfile.TemporaryDirectory() as td:
             root = Path(td)
