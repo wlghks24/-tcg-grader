@@ -111,6 +111,59 @@ class VerifiedNeuralSelfRefineV210Tests(unittest.TestCase):
             )
             self.assertFalse(stale["active"])
 
+    def test_corrupt_primary_labels_recover_verified_backup(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            labels_path = root / "labels.json"
+            backup_path = root / "labels.json.bak"
+            sample = {
+                "sample_id": hashlib.sha256(b"backup-neural-label").hexdigest()[:24],
+                "rule_id": neural.RULE_ORDER[0],
+                "rule_fingerprint": "a" * 24,
+                "path": "x.py",
+                "stage": "RESOURCE_HANDLE_LEAK_RISK",
+                "error_family": "runtime",
+                "learned_solution_reuse": False,
+                "learned_solution_confidence": 0.0,
+                "auto_repair_allowed": True,
+                "outcome": True,
+                "verification_level": "full_regression",
+                "recorded_at": "2026-09-08T00:00:00+00:00",
+            }
+            backup_path.write_text(json.dumps({"schema": neural.SCHEMA, "labels": [sample]}), encoding="utf-8")
+            labels_path.write_text("{broken", encoding="utf-8")
+            payload, source, recovered = neural._load_labels_with_source(labels_path)
+            self.assertEqual(1, len(payload["labels"]))
+            self.assertEqual("backup", source)
+            self.assertTrue(recovered)
+
+    def test_corrupt_primary_model_recovers_last_known_good_backup(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            model_path = root / "model.json"
+            backup_path = root / "model.json.bak"
+            base = neural._init_model(4, 17)
+            payload = {
+                "schema": neural.SCHEMA,
+                "active": True,
+                "feature_count": neural.FEATURE_COUNT,
+                "hidden": 4,
+                "w1": base["w1"],
+                "b1": base["b1"],
+                "w2": base["w2"],
+                "b2": base["b2"],
+                "metrics": {"accuracy": 0.7, "logloss": 0.5},
+                "calibration_slope": 1.0,
+                "calibration_offset": 0.0,
+                "rule_fingerprints": {neural.RULE_ORDER[0]: "a" * 24},
+            }
+            backup_path.write_text(json.dumps(payload), encoding="utf-8")
+            model_path.write_text("{broken", encoding="utf-8")
+            model, source, recovered = neural._load_model_with_source(model_path)
+            self.assertIsNotNone(model)
+            self.assertEqual("backup", source)
+            self.assertTrue(recovered)
+
     def test_stale_rule_labels_do_not_count_toward_activation(self):
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
