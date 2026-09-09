@@ -8,7 +8,7 @@ from pathlib import Path
 from urllib.parse import urlsplit, parse_qsl, urlencode, urlunsplit
 
 TTL={'identity':86400*30,'certificate':86400,'release':86400,'event':86400,
-     'schedule':21600,'completed_sale':86400,'market_reference':3600,
+     'schedule':21600,'completed_sale':86400*30,'market_reference':3600,
      'disclosure':86400,'financial_statement':86400,'macro':86400,
      'box_office':86400,'license_policy':86400}
 SCOPE={'identity':('set','number'),'certificate':('grader','cert_number'),
@@ -147,7 +147,7 @@ class Verifier:
                 rejected.append({'id':eid,'code':code})
         groups=independent_count(accepted)
         primary_groups=independent_count([x for x in accepted if x['role']=='primary']) if any(x['role']=='primary' for x in accepted) else 0
-        required=2 if kind in ('release','event','schedule') else 1
+        required=2 if kind in ('release','event','schedule','completed_sale') else 1
         status='CONFLICT' if contradictions else 'NEEDS_EVIDENCE' if groups<required or primary_groups<1 else 'VERIFIED_CROSSCHECK' if groups>=2 else 'VERIFIED_PRIMARY'
         return {'schema_version':6,'project':self.project,'claim_id':claim['id'],'kind':kind,'status':status,
                 'verification_complete':status.startswith('VERIFIED_'),'independent_groups':groups,'required_groups':required,
