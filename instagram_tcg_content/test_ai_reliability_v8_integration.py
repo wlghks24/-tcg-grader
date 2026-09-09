@@ -14,6 +14,7 @@ from ai_reliability_v8.adaptive_learning import (
     validate_prediction_model,
 )
 from ai_reliability_v8.workflow import WorkflowGate
+from ai_reliability_v8.diverse_collection import SourceCoveragePlanner
 from instagram_tcg_content.source_verification_engine import (
     validate_production_verification_receipt,
 )
@@ -71,6 +72,43 @@ class InstagramCardReliabilityV8IntegrationTests(unittest.TestCase):
                 revision="v8-integration",
             )
             self.assertIsInstance(learner, AdaptiveEvidenceLearner)
+
+    def test_training_readiness_matches_1000_real_label_gate(self):
+        planner = SourceCoveragePlanner()
+
+        def rows(count, *, synthetic_index=None, owner_mod=4):
+            result = []
+            for i in range(count):
+                result.append({
+                    "project": "instagram_card",
+                    "label": i % 2,
+                    "id": f"id-{i}",
+                    "origin_group": f"origin-{i}",
+                    "owner_group": f"owner-{i % owner_mod}",
+                    "label_source": "human_audit",
+                    "label_reference": f"ref-{i}",
+                    "synthetic": i == synthetic_index,
+                })
+            return result
+
+        under = planner.audit_labels(rows(200))
+        self.assertFalse(under["ready_for_training"])
+        self.assertEqual(under["minimum_real_labels"], 1000)
+        self.assertIn("INSUFFICIENT_REAL_LABEL_COUNT", under["readiness_reasons"])
+
+        eligible = planner.audit_labels(rows(1000))
+        self.assertTrue(eligible["ready_for_training"])
+        self.assertEqual(eligible["independent_real_label_rows"], 1000)
+        self.assertLessEqual(eligible["owner_dominance"], 0.70)
+
+        synthetic = planner.audit_labels(rows(1000, synthetic_index=999))
+        self.assertFalse(synthetic["ready_for_training"])
+        self.assertIn("NON_REAL_OR_SYNTHETIC_LABEL_PRESENT", synthetic["readiness_reasons"])
+
+        concentrated = planner.audit_labels(rows(1000, owner_mod=1))
+        self.assertFalse(concentrated["ready_for_training"])
+        self.assertIn("INSUFFICIENT_OWNER_DIVERSITY", concentrated["readiness_reasons"])
+        self.assertIn("OWNER_CONCENTRATION_TOO_HIGH", concentrated["readiness_reasons"])
 
     def test_model_integrity_rejects_nan_and_dimension_mismatch(self):
         base = {
