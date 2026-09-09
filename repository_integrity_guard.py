@@ -35,6 +35,7 @@ WINDOWS_RESERVED = {
     *(f"LPT{i}" for i in range(1, 10)),
 }
 WINDOWS_FORBIDDEN = set('<>:"\\|?*')
+ARCHIVED_SOURCE_NAME_PREFIXES = ("gemini-code-",)
 
 
 def tracked_entries() -> list[tuple[str, Path, bool]]:
@@ -82,6 +83,11 @@ def reject_constant(value: str) -> None:
     raise ValueError(f"non-standard JSON constant: {value}")
 
 
+def is_archived_source(relative: str) -> bool:
+    """Return True for tracked provenance snapshots that are not executable runtime."""
+    return Path(str(relative).replace("\\", "/")).name.startswith(ARCHIVED_SOURCE_NAME_PREFIXES)
+
+
 def legacy_runtime_reference(relative: str, text: str) -> str | None:
     """Reject accidental execution/import of archived one-shot patch sources.
 
@@ -92,7 +98,7 @@ def legacy_runtime_reference(relative: str, text: str) -> str | None:
     name = Path(relative).name
     if (
         name.startswith("apply_")
-        or name.startswith("gemini-code-")
+        or is_archived_source(relative)
         or name.startswith(("test_", "verify_"))
         or name == "repository_integrity_guard.py"
         or relative.startswith(".github/workflows/apply-")

@@ -20,6 +20,15 @@ class SecuritySelfAuditTests(unittest.TestCase):
         self.assertIn(("broken.py", "PY_SYNTAX"), rules_by_path)
         self.assertNotIn(("safe.py", "PY_SYNTAX"), rules_by_path)
 
+    def test_archived_gemini_snapshots_are_not_security_scanned(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            (root / "gemini-code-123.py").write_text("eval('1')\n", encoding="utf-8")
+            (root / "active.py").write_text("VALUE = 1\n", encoding="utf-8")
+            scanned = {path.relative_to(root).as_posix() for path, _ in audit.iter_text_files(root)}
+        self.assertNotIn("gemini-code-123.py", scanned)
+        self.assertIn("active.py", scanned)
+
     def test_excluded_and_symlinked_directories_are_not_descended(self):
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)

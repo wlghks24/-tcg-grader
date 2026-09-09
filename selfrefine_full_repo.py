@@ -105,6 +105,8 @@ def error_signature(stage: str, path: str, evidence: str, *, collector_id: str, 
 def tracked_code_files() -> Iterable[tuple[str, Path]]:
     """Use git's tracked set so local caches/generated files cannot affect the gate."""
     for relative, path, is_symlink in integrity.tracked_entries():
+        if integrity.is_archived_source(relative):
+            continue
         if is_symlink or path.suffix.lower() not in AUDIT_SUFFIXES:
             continue
         yield relative, path
@@ -367,6 +369,8 @@ def run(cycles: int, *, path: Path = LEDGER_PATH) -> dict:
 
 
 def self_test() -> None:
+    assert integrity.is_archived_source("gemini-code-123.py") is True
+    assert integrity.is_archived_source("tcg_updater.py") is False
     with tempfile.TemporaryDirectory() as directory:
         root = Path(directory)
         bad_json = root / "bad.json"

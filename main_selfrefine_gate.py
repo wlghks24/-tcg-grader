@@ -30,6 +30,8 @@ def _is_main_path(relative: str) -> bool:
 
 def tracked_main_files():
     for relative, path, is_symlink in core.integrity.tracked_entries():
+        if core.integrity.is_archived_source(relative):
+            continue
         if not _is_main_path(relative):
             continue
         if is_symlink or path.suffix.lower() not in core.AUDIT_SUFFIXES:

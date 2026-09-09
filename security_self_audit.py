@@ -18,6 +18,7 @@ from pathlib import Path
 import re
 from typing import Any
 
+import repository_integrity_guard as integrity
 import security_hardening_apply as workflow_hardening
 from safe_runtime import atomic_write_json, safe_read_text
 
@@ -74,6 +75,9 @@ def iter_text_files(root: Path):
         ]
         for filename in filenames:
             path = current_path / filename
+            relative = path.relative_to(root).as_posix()
+            if integrity.is_archived_source(relative):
+                continue
             if path.suffix.lower() not in TEXT_EXTENSIONS or path.is_symlink():
                 continue
             try:
