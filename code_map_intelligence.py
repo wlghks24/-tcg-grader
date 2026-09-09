@@ -136,6 +136,12 @@ FEATURE_QUERY_ALIASES = {
         "calibration", "drift", "모델 손상", "차원 불일치", "확률 오차",
         "adaptive learning", "evidence learner",
     ),
+    "instagram_cardinfo_quality_learning": (
+        "카드정보 자연스럽게", "카드정보 어색", "카드정보 품질", "품질 학습",
+        "만든걸 분석", "만든 것을 분석", "결과물 분석 학습", "디자인 학습",
+        "자연스러운 카드정보", "natural quality", "quality learning",
+        "post make review", "post-make review", "레이아웃 학습", "문구 자연스러움",
+    ),
 }
 
 # Feature-only routes that are important for fast maintenance but are intentionally
@@ -227,6 +233,13 @@ FEATURE_ROUTE_OVERRIDES = {
         "instagram_tcg_content/test_ai_reliability_runtime.py",
         ".github/workflows/ai-reliability-v8-integration.yml",
     ),
+    "instagram_cardinfo_quality_learning": (
+        "instagram_tcg_content/cardinfo_quality_learning.py",
+        "instagram_tcg_content/test_cardinfo_quality_learning.py",
+        "instagram_tcg_content/verification_scope_policy.json",
+        "instagram_tcg_content/production_state.py",
+        ".github/workflows/instagram-tcg-selfrefine.yml",
+    ),
 }
 
 # Representative executable test nodes. These are diagnostic contracts, not
@@ -310,6 +323,11 @@ FEATURE_TEST_NODE_CONTRACTS = {
         "instagram_tcg_content/test_ai_reliability_v8_integration.py::InstagramCardReliabilityV8IntegrationTests::test_legacy_operational_models_fall_back_to_rules_only",
         "instagram_tcg_content/test_ai_reliability_v8_code_map_contract.py::AiReliabilityV8CodeMapContractTests::test_binding_hashes_match_installed_files",
     ),
+    "instagram_cardinfo_quality_learning": (
+        "instagram_tcg_content/test_cardinfo_quality_learning.py::CardInfoQualityLearningTests::test_early_phase_repeated_feedback_builds_bounded_profile",
+        "instagram_tcg_content/test_cardinfo_quality_learning.py::CardInfoQualityLearningTests::test_below_1000_never_trains_and_never_authorizes_production",
+        "instagram_tcg_content/test_cardinfo_quality_learning.py::CardInfoQualityLearningTests::test_ai_self_or_synthetic_labels_fail_closed",
+    ),
 }
 
 
@@ -345,6 +363,7 @@ FEATURE_ENTRYPOINTS = {
     "instagram_cardinfo_collection_health": ("instagram_tcg_content/collection_health.py",),
     "instagram_cardinfo_production_state": ("instagram_tcg_content/production_state.py",),
     "instagram_cardinfo_ai_reliability": ("ai_reliability_v8/adaptive_learning.py",),
+    "instagram_cardinfo_quality_learning": ("instagram_tcg_content/cardinfo_quality_learning.py",),
 }
 
 # Secondary first-touch files stay visible without competing with the one
