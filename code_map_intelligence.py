@@ -112,6 +112,8 @@ FEATURE_QUERY_ALIASES = {
     "instagram_cardinfo_pause_recovery": (
         "인스타 카드정보 일시정지", "인스타 카드정보 자동화", "pause recovery",
         "automation pause", "일시정지", "비활성화", "재활성화", "pause guard",
+        "작업 중지 감시", "자료교환", "감시 소통", "원인미상 일시중지",
+        "producer monitor exchange", "pause monitor exchange",
     ),
     "instagram_cardinfo_crosscheck": (
         "인스타 카드정보 교차확인", "자료비교", "자료 비교", "crosscheck",
@@ -174,7 +176,10 @@ FEATURE_ROUTE_OVERRIDES = {
     ),
     "instagram_cardinfo_pause_recovery": (
         "instagram_tcg_content/automation_state_guard.py",
+        "instagram_tcg_content/pause_monitor_exchange.py",
         "instagram_tcg_content/test_automation_pause_recovery_v30.py",
+        "instagram_tcg_content/test_pause_monitor_exchange.py",
+        "instagram_tcg_content/verification_scope_policy.json",
         ".github/workflows/instagram-tcg-selfrefine.yml",
     ),
     "instagram_cardinfo_crosscheck": (
@@ -294,6 +299,8 @@ FEATURE_TEST_NODE_CONTRACTS = {
         "test_code_map_entrypoint_route_v196.py::CodeMapEntrypointRouteV196Tests::test_code_map_internal_has_single_public_entrypoint",
     ),
     "instagram_cardinfo_pause_recovery": (
+        "instagram_tcg_content/test_pause_monitor_exchange.py::PauseMonitorExchangeTests::test_schedule_gap_without_producer_start_is_control_plane_only",
+        "instagram_tcg_content/test_pause_monitor_exchange.py::PauseMonitorExchangeTests::test_reported_producer_failure_allows_only_run_level_handoff",
         "instagram_tcg_content/test_automation_pause_recovery_v30.py::AutomationPauseRecoveryV30Tests::test_unknown_pause_never_fabricates_root_cause",
     ),
     "instagram_cardinfo_crosscheck": (
@@ -378,6 +385,9 @@ FEATURE_ALTERNATE_ENTRYPOINTS = {
         "verified_collection_job_neural.py",
         "verified_neural_self_refine.py",
     ),
+    "instagram_cardinfo_pause_recovery": (
+        "instagram_tcg_content/pause_monitor_exchange.py",
+    ),
     "instagram_cardinfo_ai_reliability": (
         "instagram_tcg_content/ai_reliability_runtime.py",
     ),
@@ -405,6 +415,10 @@ FEATURE_ENTRYPOINT_RULES = {
     "verified_neural_learning": (
         (("job neural", "작업 신경망", "수집 작업 신경망"), "verified_collection_job_neural.py"),
         (("selfrefine", "self-refine", "자가개선", "자가학습"), "verified_neural_self_refine.py"),
+    ),
+    "instagram_cardinfo_pause_recovery": (
+        (("자료교환", "감시 소통", "작업 중지 감시", "producer monitor", "pause monitor exchange", "원인미상 일시중지"),
+         "instagram_tcg_content/pause_monitor_exchange.py"),
     ),
     "instagram_cardinfo_ai_reliability": (
         (("신경망 연결", "ai 연결", "runtime link", "runtime 연결", "collection health", "자료수집 연결"),
