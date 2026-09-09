@@ -77,6 +77,14 @@ class CodeMapEntrypointRouteV196Tests(unittest.TestCase):
             result["suggested_tests"],
         )
         self.assertIn(
+            "instagram_tcg_content/test_source_route_resilience.py",
+            result["suggested_tests"],
+        )
+        self.assertIn(
+            "instagram_tcg_content/test_source_route_resilience.py::main",
+            result["suggested_test_nodes"],
+        )
+        self.assertIn(
             "instagram_tcg_content/test_production_state.py",
             result["suggested_tests"],
         )
