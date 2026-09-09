@@ -31,6 +31,8 @@ FACT_TYPE_MAP = {
     "market_reference": "market_reference",
 }
 ALLOWED_FACTUAL_TYPES = set(CANONICAL_FACTUAL_TYPES)
+VERIFICATION_MODE = "INSTAGRAM_LOCAL_EVIDENCE_ONLY"
+VERIFICATION_ENGINE = "instagram_tcg_content.source_verification_engine.py::verify_fact"
 ALLOWED_OUTPUT_FIELDS = {
     "canonical_key",
     "fact_type",
@@ -49,6 +51,8 @@ ALLOWED_OUTPUT_FIELDS = {
     "source_role",
     "source_locator",
     "verification_status",
+    "verification_mode",
+    "verification_engine",
 }
 
 
@@ -91,6 +95,12 @@ def _normalize_fact(row: dict[str, Any]) -> dict[str, Any] | None:
     verification = _clean(row.get("verification") or row.get("verification_status")).lower()
     if verification != "verified":
         return None
+    verification_mode = _clean(row.get("verification_mode"))
+    verification_engine = _clean(row.get("verification_engine"))
+    if verification_mode != VERIFICATION_MODE:
+        raise ValueError("verified factual row did not use Instagram-local verification mode")
+    if verification_engine != VERIFICATION_ENGINE:
+        raise ValueError("verified factual row did not use source_verification_engine.verify_fact")
 
     raw_type = _clean(row.get("information_family") or row.get("fact_type"))
     fact_type = FACT_TYPE_MAP.get(raw_type)
@@ -129,6 +139,8 @@ def _normalize_fact(row: dict[str, Any]) -> dict[str, Any] | None:
         "source_role": source_role,
         "source_locator": source_locator,
         "verification_status": "verified",
+        "verification_mode": verification_mode,
+        "verification_engine": verification_engine,
     }
     return {key: value for key, value in fact.items() if key in ALLOWED_OUTPUT_FIELDS}
 
@@ -165,6 +177,11 @@ def build_snapshot(records: list[dict[str, Any]], *, now: datetime | None = None
             "isolation_breach": False,
         },
         "error_code": None if finalized else "NO_VERIFIED_FACTS",
+        "latest_attempt": {
+            "status": "verified_facts_written" if finalized else "NO_VERIFIED_FACTS",
+            "attempted_at": stamp.astimezone(KST).isoformat(timespec="seconds"),
+            "verified_fact_count": len(facts),
+        },
     }
 
 
@@ -193,11 +210,20 @@ def export_snapshot(records: list[dict[str, Any]], output: Path = DEFAULT_OUTPUT
     if payload.get("status") != "finalized":
         previous = _existing_last_good(output)
         if previous is not None:
-            return {
+            preserved = {
                 **previous,
                 "preserved_last_good": True,
-                "latest_attempt_status": payload.get("error_code") or "NO_VERIFIED_FACTS",
+                "latest_attempt": {
+                    "status": payload.get("error_code") or "NO_VERIFIED_FACTS",
+                    "attempted_at": payload.get("built_at"),
+                    "verified_fact_count": 0,
+                },
             }
+            _write_json_atomic(output, preserved)
+            reread = json.loads(output.read_text(encoding="utf-8"))
+            if reread.get("facts") != previous.get("facts") or reread.get("latest_attempt") != preserved.get("latest_attempt"):
+                raise RuntimeError("IG_CARDINFO preserved snapshot write/readback mismatch")
+            return reread
     _write_json_atomic(output, payload)
     reread = json.loads(output.read_text(encoding="utf-8"))
     if reread.get("namespace") != "IG_CARDINFO" or reread.get("facts") != payload.get("facts"):
@@ -217,6 +243,8 @@ def self_test() -> None:
         "source_locator": "https://example.invalid/pokemon",
         "checked_at_kst": "2026-09-06T06:30:00+09:00",
         "verification": "verified",
+        "verification_mode": VERIFICATION_MODE,
+        "verification_engine": VERIFICATION_ENGINE,
         "lineage_key": "ig-release-1",
     }
     candidate = {**verified, "verification": "candidate", "lineage_key": "candidate"}
@@ -233,6 +261,14 @@ def self_test() -> None:
         assert empty.get("preserved_last_good") is True, empty
         reread = json.loads(path.read_text(encoding="utf-8"))
         assert reread["status"] == "finalized" and len(reread["facts"]) == 1, reread
+        assert reread["latest_attempt"]["status"] == "NO_VERIFIED_FACTS", reread
+
+        try:
+            export_snapshot([{**verified, "verification_mode": "WRONG"}], path)
+        except ValueError as exc:
+            assert "Instagram-local verification mode" in str(exc), exc
+        else:
+            raise AssertionError("non-local verification mode must fail closed")
 
         try:
             export_snapshot([{**verified, "information_family": "market_price"}], path)

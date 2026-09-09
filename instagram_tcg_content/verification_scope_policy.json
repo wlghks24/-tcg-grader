@@ -24,6 +24,7 @@
     "freshness_check",
     "fact_type_hard_gate",
     "persist_verified_snapshot",
+    "collection_health_gate",
     "build_verification_receipt",
     "validate_verification_receipt",
     "production_preflight"
@@ -45,5 +46,19 @@
   "production_receipt_snapshot_hash_match_required": true,
   "completed_sale_capture_max_hours": 36,
   "completed_sale_event_max_days": 30,
-  "completed_sale_min_independent_sources": 2
+  "completed_sale_min_independent_sources": 2,
+  "factual_snapshot_persistence_entrypoint": "instagram_tcg_content/persisted_crosscheck_export.py",
+  "collection_health_entrypoint": "instagram_tcg_content/collection_health.py",
+  "collection_health_max_snapshot_age_hours": 36,
+  "production_output_matrix": [
+    "pokemon:KR",
+    "pokemon:EN",
+    "one_piece:KR",
+    "one_piece:EN",
+    "naruto:KR",
+    "naruto:EN"
+  ],
+  "production_min_verified_completed_sales_per_output": 10,
+  "persisted_verified_fact_requires_verification_mode": "INSTAGRAM_LOCAL_EVIDENCE_ONLY",
+  "persisted_verified_fact_requires_verification_engine": "instagram_tcg_content.source_verification_engine.py::verify_fact"
 }
