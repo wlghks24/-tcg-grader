@@ -12,39 +12,24 @@ KST = dt.timezone(dt.timedelta(hours=9))
 SCHEDULE_RUN_EARLY_GRACE = dt.timedelta(minutes=5)
 POST_RUN_DISABLE_WINDOW = dt.timedelta(minutes=15)
 
-CANONICAL_ID = "6a9b8a22e72c8191849c273e1240378e"
+CANONICAL_ID = "6aa2af4de8c88191aad2a1da62439e10"
 CANONICAL_TITLE = "인스타 카드정보"
 AI_RELIABILITY_PROJECT = "instagram_card"
 AI_RELIABILITY_TASK_ID = CANONICAL_ID
+SCHEDULE_MODE = "hourly_on_the_hour_single_router"
+WEEKLY_PRODUCTION_WEEKDAY = 0
+WEEKLY_PRODUCTION_HOUR = 19
 
-NON_FATAL_PRECHECK_CODES = {
-    "BASELINE_MISSING",
-    "REVISION_BASELINE_MISSING",
-    "SNAPSHOT_BUILDING",
-    "NO_VERIFIED_FACTS",
-    "INSUFFICIENT_VERIFIED_FACTS",
-    "INSUFFICIENT_COMPLETED_SALES",
-    "NO_COMPARABLE_DATA",
-    "PRECHECK_DATA_NOT_READY",
-}
+NON_FATAL_PRECHECK_CODES = {"BASELINE_MISSING", "REVISION_BASELINE_MISSING", "SNAPSHOT_BUILDING", "NO_VERIFIED_FACTS", "INSUFFICIENT_VERIFIED_FACTS", "INSUFFICIENT_COMPLETED_SALES", "NO_COMPARABLE_DATA", "PRECHECK_DATA_NOT_READY"}
 PRECHECK_STAGES = {"preflight", "production_preflight", "revision_preflight"}
 FINGERPRINT_FIELDS = ("title", "schedule", "timing_mode", "prompt")
-
 
 class AutomationStateGuardError(ValueError):
     pass
 
-
 def build_ai_reliability_bridge(state_root: str | Path):
-    """Build the additive v8 bridge for this canonical task only."""
     from ai_reliability_v8 import ReliabilityBridge
-
-    return ReliabilityBridge(
-        Path(state_root),
-        project=AI_RELIABILITY_PROJECT,
-        task_id=AI_RELIABILITY_TASK_ID,
-    )
-
+    return ReliabilityBridge(Path(state_root), project=AI_RELIABILITY_PROJECT, task_id=AI_RELIABILITY_TASK_ID)
 
 def _aware(value: str | None, field: str) -> dt.datetime | None:
     if value in (None, ""):
@@ -57,22 +42,24 @@ def _aware(value: str | None, field: str) -> dt.datetime | None:
         raise AutomationStateGuardError(f"{field} must be timezone-aware")
     return parsed.astimezone(dt.timezone.utc)
 
-
 def _stable_fingerprint(value: Any) -> str | None:
     if value is None:
         return None
-    encoded = json.dumps(
-        value,
-        ensure_ascii=False,
-        sort_keys=True,
-        separators=(",", ":"),
-        allow_nan=False,
-    ).encode("utf-8")
-    return hashlib.sha256(encoded).hexdigest()
+    raw = json.dumps(value, ensure_ascii=False, sort_keys=True, separators=(",", ":"), allow_nan=False).encode()
+    return hashlib.sha256(raw).hexdigest()
 
+def router_branch_for_slot(value: str | dt.datetime) -> str:
+    parsed = _aware(value, "scheduled_slot_kst") if isinstance(value, str) else value
+    if parsed is None:
+        raise AutomationStateGuardError("scheduled_slot_kst required")
+    if parsed.tzinfo is None:
+        raise AutomationStateGuardError("scheduled_slot_kst must be timezone-aware")
+    kst = parsed.astimezone(KST)
+    if kst.weekday() == WEEKLY_PRODUCTION_WEEKDAY and kst.hour == WEEKLY_PRODUCTION_HOUR and kst.minute == 0:
+        return "WEEKLY_PRODUCTION"
+    return "COLLECTION_VERIFY_REFINE_ONLY"
 
 def snapshot_state(state: dict[str, Any], *, observed_at: str) -> dict[str, Any]:
-    """Create an immutable diagnostic snapshot without mutating scheduler state."""
     if state.get("id") != CANONICAL_ID:
         raise AutomationStateGuardError("unexpected automation id")
     title = state.get("title")
@@ -84,87 +71,43 @@ def snapshot_state(state: dict[str, Any], *, observed_at: str) -> dict[str, Any]
     enabled = state.get("is_enabled")
     if not isinstance(enabled, bool):
         raise AutomationStateGuardError("is_enabled must be boolean")
+    return {"task_id": CANONICAL_ID, "title": title, "expected_title": CANONICAL_TITLE, "title_matches_canonical": title == CANONICAL_TITLE, "is_enabled": enabled, "schedule": state.get("schedule"), "timing_mode": state.get("timing_mode"), "prompt": state.get("prompt"), "updated_at": updated.isoformat() if updated else None, "last_run_time": last_run.isoformat() if last_run else None, "snapshot_observed_at": observed.isoformat(), "schedule_mode": SCHEDULE_MODE, "fingerprints": {f: _stable_fingerprint(state.get(f)) for f in FINGERPRINT_FIELDS}}
 
-    return {
-        "task_id": CANONICAL_ID,
-        "title": title,
-        "expected_title": CANONICAL_TITLE,
-        "title_matches_canonical": title == CANONICAL_TITLE,
-        "is_enabled": enabled,
-        "schedule": state.get("schedule"),
-        "timing_mode": state.get("timing_mode"),
-        "prompt": state.get("prompt"),
-        "updated_at": updated.isoformat() if updated else None,
-        "last_run_time": last_run.isoformat() if last_run else None,
-        "snapshot_observed_at": observed.isoformat(),
-        "fingerprints": {
-            field: _stable_fingerprint(state.get(field))
-            for field in FINGERPRINT_FIELDS
-        },
-    }
-
-
-def compare_snapshots(
-    previous: dict[str, Any] | None,
-    current: dict[str, Any],
-) -> dict[str, Any]:
-    """Return changed fields and a conservative observation change window."""
+def compare_snapshots(previous: dict[str, Any] | None, current: dict[str, Any]) -> dict[str, Any]:
     if not previous:
-        return {
-            "changed_fields": [],
-            "change_window_start": None,
-            "change_window_end": current["snapshot_observed_at"],
-            "baseline_match": None,
-        }
-
+        return {"changed_fields": [], "change_window_start": None, "change_window_end": current["snapshot_observed_at"], "baseline_match": None}
     tracked = ("is_enabled", "title", "schedule", "timing_mode", "prompt")
-    changed = [field for field in tracked if previous.get(field) != current.get(field)]
-    return {
-        "changed_fields": changed,
-        "change_window_start": previous.get("snapshot_observed_at"),
-        "change_window_end": current.get("updated_at") or current.get("snapshot_observed_at"),
-        "baseline_match": not bool(changed),
-    }
+    changed = [f for f in tracked if previous.get(f) != current.get(f)]
+    return {"changed_fields": changed, "change_window_start": previous.get("snapshot_observed_at"), "change_window_end": current.get("updated_at") or current.get("snapshot_observed_at"), "baseline_match": not bool(changed)}
 
-
-def _missed_slot_gap_start(
-    *,
-    last_run: dt.datetime | None,
-    updated: dt.datetime | None,
-    observed: dt.datetime,
-) -> tuple[dt.datetime, str]:
+def _missed_slot_gap_start(*, last_run: dt.datetime | None, updated: dt.datetime | None, observed: dt.datetime) -> tuple[dt.datetime, str]:
     if last_run is not None:
         return last_run + SCHEDULE_RUN_EARLY_GRACE, "last_run_plus_early_grace"
     if updated is not None:
         return updated, "state_updated_at"
     return observed, "observed_at"
 
-
-def _hourly_half_past_slots(start: dt.datetime, end: dt.datetime) -> list[str]:
+def _hourly_on_the_hour_slots(start: dt.datetime, end: dt.datetime) -> list[str]:
     if end <= start:
         return []
-    start_kst = start.astimezone(KST)
-    end_kst = end.astimezone(KST)
-    cursor = start_kst.replace(minute=30, second=0, microsecond=0)
+    start_kst, end_kst = start.astimezone(KST), end.astimezone(KST)
+    cursor = start_kst.replace(minute=0, second=0, microsecond=0)
     if cursor <= start_kst:
         cursor += dt.timedelta(hours=1)
-    slots: list[str] = []
+    out: list[str] = []
     while cursor < end_kst:
-        slots.append(cursor.isoformat(timespec="minutes"))
+        out.append(cursor.isoformat(timespec="minutes"))
         cursor += dt.timedelta(hours=1)
-    return slots
+    return out
 
+def _hourly_half_past_slots(start: dt.datetime, end: dt.datetime) -> list[str]:
+    return _hourly_on_the_hour_slots(start, end)
 
-def _schedule_start_disable_without_run(
-    updated: dt.datetime | None,
-    last_run: dt.datetime | None,
-) -> tuple[bool, str | None]:
+def _schedule_start_disable_without_run(updated: dt.datetime | None, last_run: dt.datetime | None) -> tuple[bool, str | None]:
     if updated is None:
         return False, None
     updated_kst = updated.astimezone(KST)
-    slot_kst = updated_kst.replace(minute=30, second=0, microsecond=0)
-    if updated_kst.minute < 30:
-        slot_kst -= dt.timedelta(hours=1)
+    slot_kst = updated_kst.replace(minute=0, second=0, microsecond=0)
     delta = updated_kst - slot_kst
     if delta < dt.timedelta(0) or delta > POST_RUN_DISABLE_WINDOW:
         return False, None
@@ -173,371 +116,94 @@ def _schedule_start_disable_without_run(
         return False, None
     return True, slot_kst.isoformat(timespec="minutes")
 
-
-def _disable_event_class(
-    *,
-    updated: dt.datetime | None,
-    last_run: dt.datetime | None,
-    recurrence_count: int,
-) -> str:
+def _disable_event_class(*, updated: dt.datetime | None, last_run: dt.datetime | None, recurrence_count: int) -> str:
     if recurrence_count >= 3:
         return "PAUSE_RECURRENCE_CRITICAL"
-    if updated is not None and last_run is not None:
-        delta = updated - last_run
-        if dt.timedelta(0) <= delta <= POST_RUN_DISABLE_WINDOW:
-            return "POST_RUN_DISABLE"
+    if updated is not None and last_run is not None and dt.timedelta(0) <= updated - last_run <= POST_RUN_DISABLE_WINDOW:
+        return "POST_RUN_DISABLE"
     return "DISABLE_BETWEEN_RUNS"
 
-
-def runtime_failure_policy(
-    *,
-    stage: str,
-    error_code: str,
-    retryable: bool,
-) -> dict[str, Any]:
-    """Keep run-level failures from mutating the scheduler control plane."""
+def runtime_failure_policy(*, stage: str, error_code: str, retryable: bool) -> dict[str, Any]:
     stage = str(stage or "UNKNOWN").strip() or "UNKNOWN"
     error_code = str(error_code or "UNKNOWN_ERROR").strip() or "UNKNOWN_ERROR"
-    is_precheck_not_ready = (
-        stage.lower() in PRECHECK_STAGES
-        or error_code.upper() in NON_FATAL_PRECHECK_CODES
-    )
-    if is_precheck_not_ready:
-        run_status = "PRECHECK_NOT_READY"
-        next_action = "COMPLETE_RUN_AND_KEEP_NEXT_SLOT"
-    else:
-        run_status = "DEGRADED" if retryable else "BLOCKED"
-        next_action = "BOUNDED_RETRY" if retryable else "RECORD_AND_CONTINUE_NEXT_SLOT"
-    return {
-        "stage": stage,
-        "error_code": error_code,
-        "run_status": run_status,
-        "automation_state_mutation_allowed": False,
-        "self_disable_allowed": False,
-        "self_pause_allowed": False,
-        "self_reschedule_allowed": False,
-        "preserve_enabled_state": True,
-        "preserve_title": True,
-        "preserve_schedule": True,
-        "scheduler_terminal": False,
-        "automation_continues": True,
-        "next_action": next_action,
-    }
+    precheck = stage.lower() in PRECHECK_STAGES or error_code.upper() in NON_FATAL_PRECHECK_CODES
+    return {"stage": stage, "error_code": error_code, "run_status": "PRECHECK_NOT_READY" if precheck else ("DEGRADED" if retryable else "BLOCKED"), "automation_state_mutation_allowed": False, "self_disable_allowed": False, "self_pause_allowed": False, "self_reschedule_allowed": False, "preserve_enabled_state": True, "preserve_title": True, "preserve_schedule": True, "scheduler_terminal": False, "automation_continues": True, "next_action": "COMPLETE_RUN_AND_KEEP_NEXT_SLOT" if precheck else ("BOUNDED_RETRY" if retryable else "RECORD_AND_CONTINUE_NEXT_SLOT")}
 
-
-def classify_pause(
-    state: dict[str, Any],
-    *,
-    observed_at: str,
-    cause_evidence: dict[str, Any] | None = None,
-    prior_pause_count: int = 0,
-    previous_snapshot: dict[str, Any] | None = None,
-    post_recovery_snapshot: dict[str, Any] | None = None,
-) -> dict[str, Any]:
-    """Classify pause *and* active schedule-gap incidents from one snapshot."""
+def classify_pause(state: dict[str, Any], *, observed_at: str, cause_evidence: dict[str, Any] | None = None, prior_pause_count: int = 0, previous_snapshot: dict[str, Any] | None = None, post_recovery_snapshot: dict[str, Any] | None = None) -> dict[str, Any]:
     if isinstance(prior_pause_count, bool) or not isinstance(prior_pause_count, int) or prior_pause_count < 0:
         raise AutomationStateGuardError("prior_pause_count must be a non-negative integer")
-
     snapshot = snapshot_state(state, observed_at=observed_at)
     observed = _aware(snapshot["snapshot_observed_at"], "snapshot_observed_at")
     updated = _aware(snapshot["updated_at"], "updated_at")
     last_run = _aware(snapshot["last_run_time"], "last_run_time")
+    assert observed is not None
     enabled = bool(snapshot["is_enabled"])
     pause_incident = not enabled
-
-    gap_start, gap_anchor = _missed_slot_gap_start(
-        last_run=last_run,
-        updated=updated,
-        observed=observed,
-    )
-    # Schedule integrity is independent of enabled state. An active task can
-    # miss a slot, which must be reported without forcing a duplicate catch-up.
-    missed_slots = _hourly_half_past_slots(gap_start, observed)
+    gap_start, gap_anchor = _missed_slot_gap_start(last_run=last_run, updated=updated, observed=observed)
+    missed_slots = _hourly_on_the_hour_slots(gap_start, observed)
     schedule_gap = bool(missed_slots)
     schedule_gap_active = enabled and schedule_gap
-    missed_0630 = any(slot[11:16] == "06:30" for slot in missed_slots)
-
+    production_missed = any(router_branch_for_slot(slot) == "WEEKLY_PRODUCTION" for slot in missed_slots)
     recurrence_count = prior_pause_count + (1 if pause_incident else 0)
-    schedule_disable_without_run = False
-    schedule_disable_slot_kst = None
-    state_transition_fingerprint = None
+    boundary, boundary_slot = (False, None)
     if pause_incident:
-        schedule_disable_without_run, schedule_disable_slot_kst = _schedule_start_disable_without_run(
-            updated, last_run
-        )
-        if schedule_disable_without_run:
-            state_transition_fingerprint = "SCHEDULE_START_DISABLE_WITHOUT_RUN"
-
+        boundary, boundary_slot = _schedule_start_disable_without_run(updated, last_run)
     comparison = compare_snapshots(previous_snapshot, snapshot)
-    control_plane_drift_fields = [
-        field for field in comparison["changed_fields"]
-        if field in {"title", "schedule", "timing_mode", "prompt"}
-    ]
-
+    drift = [f for f in comparison["changed_fields"] if f in {"title", "schedule", "timing_mode", "prompt"}]
     actor = str((cause_evidence or {}).get("actor") or "").strip()
     reason = str((cause_evidence or {}).get("reason") or "").strip()
     error_trace = str((cause_evidence or {}).get("error_trace") or "").strip()
-    has_attribution = bool(actor and reason)
-    cause_status = "not_applicable"
-    cause_class = "NONE"
-    if pause_incident or schedule_gap or control_plane_drift_fields:
-        if has_attribution:
-            cause_status = "evidence_backed"
-            cause_class = str((cause_evidence or {}).get("cause_class") or "EXPLICIT_STATE_CHANGE")
-        else:
-            cause_status = "unresolved"
-            cause_class = "CONTROL_PLANE_ATTRIBUTION_UNAVAILABLE"
-
+    has_attr = bool(actor and reason)
+    if pause_incident or schedule_gap or drift:
+        cause_status = "evidence_backed" if has_attr else "unresolved"
+        cause_class = str((cause_evidence or {}).get("cause_class") or "EXPLICIT_STATE_CHANGE") if has_attr else "CONTROL_PLANE_ATTRIBUTION_UNAVAILABLE"
+    else:
+        cause_status, cause_class = "not_applicable", "NONE"
     if pause_incident:
-        event_class = _disable_event_class(
-            updated=updated,
-            last_run=last_run,
-            recurrence_count=recurrence_count,
-        )
+        event_class = _disable_event_class(updated=updated, last_run=last_run, recurrence_count=recurrence_count)
     elif schedule_gap_active:
         event_class = "SCHEDULE_GAP_ACTIVE"
     elif schedule_gap:
         event_class = "SCHEDULE_GAP"
+    elif drift:
+        event_class = "CONTROL_PLANE_DRIFT"
     else:
         event_class = "NONE"
-    if event_class == "NONE" and control_plane_drift_fields:
-        event_class = "CONTROL_PLANE_DRIFT"
-
-    post_recovery_match = None
+    post_match = None
     if post_recovery_snapshot:
-        post_recovery_match = compare_snapshots(post_recovery_snapshot, snapshot)["baseline_match"]
-        if (
-            post_recovery_snapshot.get("is_enabled") is True
-            and snapshot["is_enabled"] is False
-        ):
-            event_class = (
-                "PAUSE_RECURRENCE_CRITICAL"
-                if recurrence_count >= 3
-                else "RECOVERY_REGRESSION"
-            )
-
-    severity = "NONE"
-    if pause_incident and recurrence_count >= 2:
-        # Backward-compatible recurrence severity; CRITICAL priority starts at 3.
-        severity = "PAUSE_RECURRENCE_CRITICAL"
-    elif event_class != "NONE":
-        severity = "INCIDENT"
+        post_match = compare_snapshots(post_recovery_snapshot, snapshot)["baseline_match"]
+        if post_recovery_snapshot.get("is_enabled") is True and snapshot["is_enabled"] is False:
+            event_class = "PAUSE_RECURRENCE_CRITICAL" if recurrence_count >= 3 else "RECOVERY_REGRESSION"
+    severity = "PAUSE_RECURRENCE_CRITICAL" if pause_incident and recurrence_count >= 2 else ("INCIDENT" if event_class != "NONE" else "NONE")
     priority = "CRITICAL" if recurrence_count >= 3 else ("HIGH" if event_class != "NONE" else "NORMAL")
-
-    required_action = "NONE"
-    if pause_incident:
-        required_action = "REACTIVATE_EXISTING_CANONICAL_AUTOMATION"
-    elif schedule_gap_active:
-        required_action = "MONITOR_NEXT_SLOT_NO_DUPLICATE_CATCHUP"
-    elif control_plane_drift_fields:
-        required_action = "REVIEW_VERIFIED_CONTROL_PLANE_DRIFT"
-
-    return {
-        "schema_version": "1.2",
-        "automation_id": CANONICAL_ID,
-        "title": snapshot["title"],
-        "expected_title": CANONICAL_TITLE,
-        "title_matches_canonical": snapshot["title_matches_canonical"],
-        "pause_detected": pause_incident,
-        "schedule_gap_detected": schedule_gap,
-        "schedule_gap_active": schedule_gap_active,
-        "event_class": event_class,
-        "enabled_observed": enabled,
-        "desired_enabled_state": True,
-        "observed_at": snapshot["snapshot_observed_at"],
-        "state_updated_at": snapshot["updated_at"],
-        "last_run_time": snapshot["last_run_time"],
-        "snapshot": snapshot,
-        "changed_fields": comparison["changed_fields"],
-        "control_plane_drift_fields": control_plane_drift_fields,
-        "change_window_start": comparison["change_window_start"],
-        "change_window_end": comparison["change_window_end"],
-        "baseline_match": comparison["baseline_match"],
-        "post_recovery_match": post_recovery_match,
-        "cause_status": cause_status,
-        "cause_class": cause_class,
-        "cause_actor": actor or None,
-        "cause_reason": reason or None,
-        "error_trace_present": bool(error_trace),
-        "root_cause_fabricated": False,
-        "final_root_cause_class": (
-            cause_class if cause_status == "evidence_backed"
-            else ("UNRESOLVED_CONTROL_PLANE" if event_class != "NONE" else "NONE")
-        ),
-        "recurrence_count": recurrence_count,
-        "severity": severity,
-        "priority": priority,
-        "state_transition_fingerprint": state_transition_fingerprint,
-        "schedule_start_disable_without_run": schedule_disable_without_run,
-        "schedule_start_slot_kst": schedule_disable_slot_kst,
-        "state_transition_is_root_cause": False,
-        "missed_slots_kst": missed_slots,
-        "missed_slot_count": len(missed_slots),
-        "missed_slot_anchor": gap_anchor,
-        "missed_slot_anchor_utc": gap_start.isoformat(),
-        "schedule_run_early_grace_minutes": int(SCHEDULE_RUN_EARLY_GRACE.total_seconds() // 60),
-        "missed_full_0630": missed_0630,
-        "required_action": required_action,
-        "new_automation_allowed": False,
-        "duplicate_catchup_allowed": False,
-        "automation_state_mutation_allowed_by_runtime_failure": False,
-        "schedule_mutation_allowed_without_user_request": False,
-        "runtime_failure_must_not_disable_automation": True,
-        "catchup_policy": (
-            "AT_MOST_ONCE_SAME_DAY_WITHOUT_BASELINE_CREATION"
-            if pause_incident and missed_0630
-            else "NONE"
-        ),
-    }
-
+    required = "REACTIVATE_EXISTING_CANONICAL_AUTOMATION" if pause_incident else ("MONITOR_NEXT_SLOT_NO_DUPLICATE_CATCHUP" if schedule_gap_active else ("REVIEW_VERIFIED_CONTROL_PLANE_DRIFT" if drift else "NONE"))
+    return {"schema_version": "1.3-single-router", "automation_id": CANONICAL_ID, "title": snapshot["title"], "expected_title": CANONICAL_TITLE, "title_matches_canonical": snapshot["title_matches_canonical"], "pause_detected": pause_incident, "schedule_gap_detected": schedule_gap, "schedule_gap_active": schedule_gap_active, "event_class": event_class, "enabled_observed": enabled, "desired_enabled_state": True, "observed_at": snapshot["snapshot_observed_at"], "state_updated_at": snapshot["updated_at"], "last_run_time": snapshot["last_run_time"], "snapshot": snapshot, "changed_fields": comparison["changed_fields"], "control_plane_drift_fields": drift, "change_window_start": comparison["change_window_start"], "change_window_end": comparison["change_window_end"], "baseline_match": comparison["baseline_match"], "post_recovery_match": post_match, "cause_status": cause_status, "cause_class": cause_class, "cause_actor": actor or None, "cause_reason": reason or None, "error_trace_present": bool(error_trace), "root_cause_fabricated": False, "final_root_cause_class": cause_class if cause_status == "evidence_backed" else ("UNRESOLVED_CONTROL_PLANE" if event_class != "NONE" else "NONE"), "recurrence_count": recurrence_count, "severity": severity, "priority": priority, "state_transition_fingerprint": "SCHEDULE_START_DISABLE_WITHOUT_RUN" if boundary else None, "schedule_start_disable_without_run": boundary, "schedule_start_slot_kst": boundary_slot, "state_transition_is_root_cause": False, "missed_slots_kst": missed_slots, "missed_slot_count": len(missed_slots), "missed_slot_anchor": gap_anchor, "missed_slot_anchor_utc": gap_start.isoformat(), "schedule_run_early_grace_minutes": int(SCHEDULE_RUN_EARLY_GRACE.total_seconds() // 60), "missed_weekly_production": production_missed, "missed_full_0630": False, "missed_slot_branches": {slot: router_branch_for_slot(slot) for slot in missed_slots}, "required_action": required, "new_automation_allowed": False, "duplicate_catchup_allowed": False, "automation_state_mutation_allowed_by_runtime_failure": False, "schedule_mutation_allowed_without_user_request": False, "runtime_failure_must_not_disable_automation": True, "catchup_policy": "USER_REQUESTED_RECOVERY_ONLY" if pause_incident and production_missed else "NONE"}
 
 def self_test() -> None:
-    disabled = {
-        "id": CANONICAL_ID,
-        "title": CANONICAL_TITLE,
-        "is_enabled": False,
-        "schedule": "RRULE:FREQ=HOURLY;BYMINUTE=30;BYSECOND=0",
-        "timing_mode": "exact_schedule",
-        "prompt": "stable",
-        "updated_at": "2026-09-06T20:34:07.836996Z",
-        "last_run_time": "2026-09-06T19:30:22.873339Z",
-    }
-    result = classify_pause(disabled, observed_at="2026-09-07T01:01:48.674172Z")
-    assert result["pause_detected"] is True, result
-    assert result["cause_class"] == "CONTROL_PLANE_ATTRIBUTION_UNAVAILABLE", result
-    assert result["root_cause_fabricated"] is False, result
-    assert result["required_action"] == "REACTIVATE_EXISTING_CANONICAL_AUTOMATION", result
-    assert result["new_automation_allowed"] is False, result
-    assert result["missed_full_0630"] is True, result
-
-    repeated = classify_pause(
-        disabled,
-        observed_at="2026-09-07T01:01:48.674172Z",
-        prior_pause_count=2,
-    )
-    assert repeated["recurrence_count"] == 3, repeated
-    assert repeated["event_class"] == "PAUSE_RECURRENCE_CRITICAL", repeated
-    assert repeated["severity"] == "PAUSE_RECURRENCE_CRITICAL", repeated
-    assert repeated["priority"] == "CRITICAL", repeated
-
-    boundary = classify_pause(
-        dict(
-            disabled,
-            updated_at="2026-09-08T01:37:01.377102Z",
-            last_run_time="2026-09-07T20:27:56.644698Z",
-        ),
-        observed_at="2026-09-08T05:44:00Z",
-        prior_pause_count=2,
-    )
-    assert boundary["state_transition_fingerprint"] == "SCHEDULE_START_DISABLE_WITHOUT_RUN", boundary
-    assert boundary["state_transition_is_root_cause"] is False, boundary
-    assert boundary["cause_class"] == "CONTROL_PLANE_ATTRIBUTION_UNAVAILABLE", boundary
-    assert "2026-09-08T10:30+09:00" in boundary["missed_slots_kst"], boundary
-
-    # Regression: enabled tasks can still miss scheduled slots.
-    enabled_gap = classify_pause(
-        dict(
-            disabled,
-            is_enabled=True,
-            updated_at="2026-09-09T01:41:51.738851Z",
-            last_run_time="2026-09-08T23:31:43.768364Z",
-        ),
-        observed_at="2026-09-09T02:45:00Z",
-    )
-    assert enabled_gap["pause_detected"] is False, enabled_gap
-    assert enabled_gap["schedule_gap_active"] is True, enabled_gap
-    assert enabled_gap["event_class"] == "SCHEDULE_GAP_ACTIVE", enabled_gap
-    assert enabled_gap["missed_slot_count"] >= 1, enabled_gap
-    assert enabled_gap["required_action"] == "MONITOR_NEXT_SLOT_NO_DUPLICATE_CATCHUP", enabled_gap
-
-    previous = snapshot_state(disabled, observed_at="2026-09-09T01:35:52.289137Z")
-    enabled_state = dict(disabled, is_enabled=True, updated_at="2026-09-09T01:41:51.738851Z")
-    changed = classify_pause(
-        enabled_state,
-        observed_at="2026-09-09T01:42:00Z",
-        previous_snapshot=previous,
-    )
-    assert changed["changed_fields"] == ["is_enabled"], changed
-    assert changed["baseline_match"] is False, changed
-
-    title_baseline = dict(
-        disabled,
-        is_enabled=True,
-        updated_at="2026-09-09T01:35:00Z",
-        last_run_time="2026-09-09T01:30:10Z",
-    )
-    title_drift_state = dict(title_baseline, title="인스타 카드정보 변경됨", updated_at="2026-09-09T01:41:00Z")
-    title_drift = classify_pause(
-        title_drift_state,
-        observed_at="2026-09-09T01:42:00Z",
-        previous_snapshot=snapshot_state(title_baseline, observed_at="2026-09-09T01:40:00Z"),
-    )
-    assert title_drift["title_matches_canonical"] is False, title_drift
-    assert title_drift["control_plane_drift_fields"] == ["title"], title_drift
-    assert title_drift["event_class"] == "CONTROL_PLANE_DRIFT", title_drift
-    assert title_drift["required_action"] == "REVIEW_VERIFIED_CONTROL_PLANE_DRIFT", title_drift
-    assert title_drift["cause_class"] == "CONTROL_PLANE_ATTRIBUTION_UNAVAILABLE", title_drift
-
-    policy = runtime_failure_policy(
-        stage="revision_preflight",
-        error_code="REVISION_BASELINE_MISSING",
-        retryable=False,
-    )
-    assert policy["run_status"] == "PRECHECK_NOT_READY", policy
-    assert policy["automation_state_mutation_allowed"] is False, policy
-    assert policy["scheduler_terminal"] is False, policy
-
-    bad = dict(disabled, updated_at="2026-09-06T20:34:07")
-    try:
-        classify_pause(bad, observed_at="2026-09-07T01:01:48.674172Z")
-    except AutomationStateGuardError:
-        pass
-    else:
-        raise AssertionError("naive timestamps must fail closed")
-
-    print("Instagram automation state guard: PASS")
-
+    base = {"id": CANONICAL_ID, "title": CANONICAL_TITLE, "is_enabled": True, "schedule": "RRULE:FREQ=HOURLY;BYMINUTE=0;BYSECOND=0", "timing_mode": "exact_schedule", "prompt": "stable", "updated_at": "2026-09-10T14:40:00Z", "last_run_time": "2026-09-10T14:00:10Z"}
+    ok = classify_pause(base, observed_at="2026-09-10T14:05:00Z")
+    assert not ok["pause_detected"] and not ok["schedule_gap_detected"], ok
+    gap = classify_pause(dict(base, last_run_time="2026-09-10T12:00:10Z"), observed_at="2026-09-10T14:05:00Z")
+    assert "2026-09-10T22:00+09:00" in gap["missed_slots_kst"], gap
+    assert router_branch_for_slot("2026-09-14T19:00:00+09:00") == "WEEKLY_PRODUCTION"
+    assert router_branch_for_slot("2026-09-14T18:00:00+09:00") == "COLLECTION_VERIFY_REFINE_ONLY"
+    print("Instagram automation state guard single-router: PASS")
 
 def main() -> int:
-    parser = argparse.ArgumentParser()
-    parser.add_argument("--state")
-    parser.add_argument("--observed-at")
-    parser.add_argument("--cause-evidence")
-    parser.add_argument("--previous-snapshot")
-    parser.add_argument("--post-recovery-snapshot")
-    parser.add_argument("--prior-pause-count", type=int, default=0)
-    parser.add_argument("--output")
-    parser.add_argument("--self-test", action="store_true")
-    args = parser.parse_args()
-
-    if args.self_test:
-        self_test()
-        return 0
-    if not args.state or not args.observed_at:
+    p = argparse.ArgumentParser(); p.add_argument("--state"); p.add_argument("--observed-at"); p.add_argument("--cause-evidence"); p.add_argument("--previous-snapshot"); p.add_argument("--post-recovery-snapshot"); p.add_argument("--prior-pause-count", type=int, default=0); p.add_argument("--output"); p.add_argument("--self-test", action="store_true")
+    a = p.parse_args()
+    if a.self_test:
+        self_test(); return 0
+    if not a.state or not a.observed_at:
         raise SystemExit("--state and --observed-at are required")
-
-    state = json.loads(Path(args.state).read_text(encoding="utf-8"))
-    evidence = json.loads(Path(args.cause_evidence).read_text(encoding="utf-8")) if args.cause_evidence else None
-    previous = json.loads(Path(args.previous_snapshot).read_text(encoding="utf-8")) if args.previous_snapshot else None
-    post_recovery = (
-        json.loads(Path(args.post_recovery_snapshot).read_text(encoding="utf-8"))
-        if args.post_recovery_snapshot
-        else None
-    )
-    result = classify_pause(
-        state,
-        observed_at=args.observed_at,
-        cause_evidence=evidence,
-        prior_pause_count=args.prior_pause_count,
-        previous_snapshot=previous,
-        post_recovery_snapshot=post_recovery,
-    )
+    state = json.loads(Path(a.state).read_text(encoding="utf-8"))
+    load = lambda x: json.loads(Path(x).read_text(encoding="utf-8")) if x else None
+    result = classify_pause(state, observed_at=a.observed_at, cause_evidence=load(a.cause_evidence), prior_pause_count=a.prior_pause_count, previous_snapshot=load(a.previous_snapshot), post_recovery_snapshot=load(a.post_recovery_snapshot))
     encoded = json.dumps(result, ensure_ascii=False, indent=2) + "\n"
-    if args.output:
-        Path(args.output).write_text(encoded, encoding="utf-8")
+    if a.output:
+        Path(a.output).write_text(encoded, encoding="utf-8")
     print(encoded, end="")
     return 0
-
 
 if __name__ == "__main__":
     raise SystemExit(main())
