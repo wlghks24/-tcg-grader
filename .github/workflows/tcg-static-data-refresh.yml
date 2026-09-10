@@ -29,6 +29,7 @@ on:
       - 'test_social_topic_capacity_v213.py'
       - '.github/workflows/tcg-static-data-refresh.yml'
       - '.github/workflows/collection-verification-guard.yml'
+      - '.github/workflows/deep-selfrefine-guard.yml'
 
 permissions:
   contents: write
