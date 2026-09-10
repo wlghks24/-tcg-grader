@@ -16,6 +16,8 @@ on:
       - 'update_purchase_sources.py'
       - 'validate_external_links.py'
       - 'feature_contract.py'
+      - 'grading_company_watch.py'
+      - 'grading_costs_live.py'
       - 'multi_route_event_discovery.py'
       - 'social_event_discovery.py'
       - 'auto_pipeline_runner.py'
@@ -27,7 +29,11 @@ on:
       - 'test_collector_recovery_v161.py'
       - 'test_social_event_topic_coverage.py'
       - 'test_social_topic_capacity_v213.py'
+      - 'test_grading_company_watch_v215.py'
+      - 'test_grading_costs_live.py'
+      - 'test_grading_watch_integration_v220.py'
       - '.github/workflows/tcg-static-data-refresh.yml'
+      - '.github/workflows/grading-company-watch.yml'
       - '.github/workflows/collection-verification-guard.yml'
       - '.github/workflows/deep-selfrefine-guard.yml'
 
@@ -66,7 +72,8 @@ jobs:
           python -m py_compile \
             static_data_publish_gate.py auto_update_all.py tcg_updater.py feature_contract.py \
             update_releases.py update_promo_events.py update_purchase_sources.py validate_external_links.py \
-            multi_route_event_discovery.py social_event_discovery.py auto_pipeline_runner.py
+            multi_route_event_discovery.py social_event_discovery.py auto_pipeline_runner.py \
+            grading_company_watch.py grading_costs_live.py
           python -m unittest -v \
             test_static_data_publish_gate.py \
             test_collection_verification_gate.py \
@@ -76,7 +83,10 @@ jobs:
             test_collector_recovery_v161.py \
             test_social_event_topic_coverage.py \
             test_social_topic_capacity_v213.py \
-            test_event_quick_watch.py
+            test_event_quick_watch.py \
+            test_grading_company_watch_v215.py \
+            test_grading_costs_live.py \
+            test_grading_watch_integration_v220.py
           python feature_contract.py
 
       - name: Run full verified collection cycle
@@ -114,7 +124,7 @@ jobs:
             releases.json promo_events.json supplementary_candidates.json social_event_candidates.json \
             purchase_signals.json social_stock_signals.json \
             market_prices.json market_watch.json purchase_sources.json exchange_rates.json \
-            graded_photo_candidates.json source_collection_stats.json adaptive_collection_stats.json \
+            grading_company_updates.json graded_photo_candidates.json source_collection_stats.json adaptive_collection_stats.json \
             auto_update_report.json auto_update_issues.json tcg_live_data.json
           if git diff --cached --quiet; then
             echo "changed=false" >> "$GITHUB_OUTPUT"
@@ -160,5 +170,6 @@ jobs:
             echo "- lifecycle policy: end/release + 5 days, archive on day 6"
             echo "- topic policy: collection attempts are distinct from zero discovered leads"
             echo "- core coverage policy: KR/JP/US 3x3 must remain complete even when ASIA lanes are added"
+            echo "- grading policy: PSA/BGS/CGC/TAG/BRG official watch is mandatory and last-good protected"
             echo "- public signal persistence: purchase_signals + social_stock_signals included"
           } >> "$GITHUB_STEP_SUMMARY"
