@@ -57,10 +57,12 @@ jobs:
           python -m json.tool instagram_tcg_content/source_routes.json >/dev/null
           python -m json.tool instagram_tcg_content/verification_scope_policy.json >/dev/null
 
-      - name: Verify run packet, production state, and pause safety
+      - name: Verify run packet, production state, pause safety, and root-cause diagnostics
         run: |
           python -m instagram_tcg_content.test_live_packet_guards
           python -m instagram_tcg_content.test_production_state
+          python -m unittest -v instagram_tcg_content.test_card_root_cause_diagnostics
+          python -m unittest -v instagram_tcg_content.test_instagram_tcg_root_cause_diagnostics
           python -m instagram_tcg_content.automation_state_guard --self-test
           python -m unittest -v instagram_tcg_content.test_automation_pause_recovery_v30
           python -m instagram_tcg_content.pause_monitor_exchange
