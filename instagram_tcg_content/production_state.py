@@ -354,12 +354,30 @@ def can_start_user_requested_recovery(
     production_date_kst: str,
     *,
     user_requested: bool,
+    missed_scheduled_slot_evidence: bool = False,
 ) -> tuple[bool, str]:
+    """Authorize one user-requested recovery without inventing a baseline receipt.
+
+    Normal recovery still requires a producer-side blocked baseline. A silent
+    scheduler/producer gap has no such receipt by definition, so an explicit,
+    independently observed missed-slot signal may substitute for the missing
+    blocked record. This does not create/backfill a blocked attempt and cannot
+    bypass the finalized-record or once-per-day catch-up budget.
+    """
     if finalized_record_for_date(state, production_date_kst):
         return False, "FINALIZED_PRODUCTION_ALREADY_EXISTS"
+
     blocked = state.setdefault("blocked_attempts", {}).get(production_date_kst)
     if not isinstance(blocked, dict):
-        return False, "NO_BLOCKED_BASELINE_EVIDENCE"
+        if missed_scheduled_slot_evidence is not True:
+            return False, "NO_BLOCKED_BASELINE_EVIDENCE"
+        if user_requested is not True:
+            return False, "USER_REQUEST_REQUIRED"
+        count = int(state.setdefault("catchup_attempts", {}).get(production_date_kst, 0) or 0)
+        if count >= 1:
+            return False, "CATCHUP_BUDGET_EXHAUSTED"
+        return True, "USER_REQUESTED_RECOVERY_ALLOWED_WITH_MISSED_SLOT_EVIDENCE"
+
     if blocked.get("reason_code") not in RECOVERABLE_BLOCK_REASONS:
         return False, "BLOCK_REASON_NOT_RECOVERABLE"
     if user_requested is not True:

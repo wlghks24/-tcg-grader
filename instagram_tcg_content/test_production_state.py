@@ -133,6 +133,40 @@ def main():
     allowed, reason = can_start_catchup(fresh, "2026-09-07")
     assert not allowed and reason == "CATCHUP_BUDGET_EXHAUSTED"
 
+    # Silent scheduled gaps do not have a producer-side blocked receipt. They
+    # remain fail-closed unless the foreground/user supplies explicit missed-slot
+    # evidence. This path must not backfill a fake blocked baseline.
+    silent_gap = empty_state()
+    allowed, reason = can_start_user_requested_recovery(
+        silent_gap,
+        "2026-09-10",
+        user_requested=True,
+    )
+    assert not allowed and reason == "NO_BLOCKED_BASELINE_EVIDENCE"
+    allowed, reason = can_start_user_requested_recovery(
+        silent_gap,
+        "2026-09-10",
+        user_requested=False,
+        missed_scheduled_slot_evidence=True,
+    )
+    assert not allowed and reason == "USER_REQUEST_REQUIRED"
+    allowed, reason = can_start_user_requested_recovery(
+        silent_gap,
+        "2026-09-10",
+        user_requested=True,
+        missed_scheduled_slot_evidence=True,
+    )
+    assert allowed and reason == "USER_REQUESTED_RECOVERY_ALLOWED_WITH_MISSED_SLOT_EVIDENCE"
+    assert "2026-09-10" not in silent_gap["blocked_attempts"]
+    record_catchup_attempt(silent_gap, "2026-09-10")
+    allowed, reason = can_start_user_requested_recovery(
+        silent_gap,
+        "2026-09-10",
+        user_requested=True,
+        missed_scheduled_slot_evidence=True,
+    )
+    assert not allowed and reason == "CATCHUP_BUDGET_EXHAUSTED"
+
     blocked = empty_state()
     row = record_blocked_production_attempt(
         blocked,
