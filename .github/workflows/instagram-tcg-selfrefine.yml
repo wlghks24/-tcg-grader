@@ -1,5 +1,5 @@
 name: Instagram TCG Content SELFREFINE
-# v32: keep relocated root-cause diagnostics and add IG-local collection freshness-gap diagnostics.
+# v33: verify root-cause diagnostics, freshness-gap detection, and bounded IG-local recovery execution.
 
 on:
   pull_request:
@@ -52,6 +52,8 @@ jobs:
           python -m unittest -v instagram_tcg_content.test_collection_health
           python -m instagram_tcg_content.collection_freshness_gap_guard --self-test
           python -m unittest -v instagram_tcg_content.test_collection_freshness_gap_guard
+          python -m instagram_tcg_content.collection_recovery_runner --self-test
+          python -m unittest -v instagram_tcg_content.test_collection_recovery_runner
           # Diagnostic only: shared discovery freshness never grants IG verification.
           # A stale live snapshot is reported but does not make code-regression CI flaky.
           python -m instagram_tcg_content.collection_freshness_gap_guard
