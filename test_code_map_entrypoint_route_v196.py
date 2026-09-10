@@ -137,6 +137,15 @@ class CodeMapEntrypointRouteV196Tests(unittest.TestCase):
             result["suggested_tests"],
         )
 
+    def test_missing_card_output_routes_to_recovery_policy(self):
+        result = resolve_feature_query("인스타 카드정보 작업물 안올라옴 silent output 복구수집")
+        self.assertEqual("instagram_cardinfo_production_state", result["entry_group"])
+        self.assertEqual("instagram_tcg_content/production_recovery_policy.py", result["entry_file"])
+        self.assertIn("instagram_tcg_content/production_state.py", result["alternate_entry_files"])
+        self.assertIn("instagram_tcg_content/test_production_recovery_policy.py", result["suggested_tests"])
+        self.assertEqual("query_specific_rule", result["entrypoint_reason"])
+        self.assertFalse(result["repository_wide_search_required"])
+
     def test_code_map_internal_has_single_public_entrypoint(self):
         result = resolve_feature_query("코드지도 느림 영향분석 최적화")
         groups = [row["group"] for row in result["matched_feature_groups"]]
