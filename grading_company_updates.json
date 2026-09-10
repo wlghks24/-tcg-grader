@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "checked_at": "2026-09-10T15:34:53+00:00",
+  "checked_at": "2026-09-10T18:35:55+00:00",
   "policy": {
     "official_sources_only": true,
     "community_posts_are_leads_only": true,
@@ -20,7 +20,7 @@
     "sources": 11,
     "healthy_sources": 5,
     "degraded_sources": 6,
-    "new_changes": 0
+    "new_changes": 1
   },
   "companies": {
     "PSA": {
@@ -146,8 +146,9 @@
         },
         {
           "source_id": "cgc-news",
-          "status": "ok",
-          "url": "https://www.cgccards.com/news/"
+          "status": "degraded",
+          "url": "https://www.cgccards.com/news/",
+          "error": "HTTPError: status 500"
         }
       ]
     },
@@ -161,9 +162,8 @@
         },
         {
           "source_id": "tag-home",
-          "status": "degraded",
-          "url": "https://taggrading.com/",
-          "error": "HTTPError: status 503; Retry-After 158s"
+          "status": "ok",
+          "url": "https://taggrading.com/"
         }
       ]
     },
@@ -249,7 +249,7 @@
       "services": [],
       "announcements": [],
       "status": "degraded",
-      "checked_at": "2026-09-10T15:34:53+00:00",
+      "checked_at": "2026-09-10T18:35:55+00:00",
       "last_error": "HTTPError: status 403",
       "verified_official_source": true
     },
@@ -263,7 +263,7 @@
       "services": [],
       "announcements": [],
       "status": "degraded",
-      "checked_at": "2026-09-10T15:34:53+00:00",
+      "checked_at": "2026-09-10T18:35:55+00:00",
       "last_error": "HTTPError: status 403",
       "verified_official_source": true
     },
@@ -277,7 +277,7 @@
       "services": [],
       "announcements": [],
       "status": "degraded",
-      "checked_at": "2026-09-10T15:34:53+00:00",
+      "checked_at": "2026-09-10T18:35:55+00:00",
       "last_error": "HTTPError: status 403",
       "verified_official_source": true
     },
@@ -291,7 +291,7 @@
       "services": [],
       "announcements": [],
       "status": "degraded",
-      "checked_at": "2026-09-10T15:34:53+00:00",
+      "checked_at": "2026-09-10T18:35:55+00:00",
       "last_error": "ValueError: unapproved host",
       "verified_official_source": true
     },
@@ -305,7 +305,7 @@
       "services": [],
       "announcements": [],
       "status": "degraded",
-      "checked_at": "2026-09-10T15:34:53+00:00",
+      "checked_at": "2026-09-10T18:35:55+00:00",
       "last_error": "ValueError: unapproved host",
       "verified_official_source": true
     },
@@ -317,7 +317,7 @@
       "currency": "USD",
       "url": "https://www.cgccards.com/submit/services-fees/cgc-grading/?view=cards",
       "status": "ok",
-      "checked_at": "2026-09-10T15:34:53+00:00",
+      "checked_at": "2026-09-10T18:35:55+00:00",
       "signal_fingerprint": "af82d832ddfe6e187951aa755446dee325211eb78f2dc630439cc458baf503d6",
       "services": [
         {
@@ -393,7 +393,7 @@
       "currency": "USD",
       "url": "https://www.cgccards.com/submit/events/",
       "status": "ok",
-      "checked_at": "2026-09-10T15:34:53+00:00",
+      "checked_at": "2026-09-10T18:35:55+00:00",
       "signal_fingerprint": "7769c565b846014d8aba26bd33584dafdb45022331dad2f4e075167344d979d0",
       "services": [],
       "announcements": [
@@ -464,8 +464,8 @@
       "market": "GLOBAL",
       "currency": "USD",
       "url": "https://www.cgccards.com/news/",
-      "status": "ok",
-      "checked_at": "2026-09-10T15:34:53+00:00",
+      "status": "degraded",
+      "checked_at": "2026-09-10T18:35:55+00:00",
       "signal_fingerprint": "c9a9ff709278a690617ad86220533f8a9ca5ebe6fd0a7090928e3418f23d79a2",
       "services": [],
       "announcements": [
@@ -527,7 +527,8 @@
         }
       ],
       "verified_official_source": true,
-      "parser_version": 2
+      "parser_version": 2,
+      "last_error": "HTTPError: status 500"
     },
     "tag-pricing": {
       "company": "TAG",
@@ -537,8 +538,8 @@
       "currency": "USD",
       "url": "https://taggrading.com/pages/pricing",
       "status": "ok",
-      "checked_at": "2026-09-10T15:34:53+00:00",
-      "signal_fingerprint": "0e9f55411a94d2016974a85632d9fa32e343c02e94c65a3a1f347a2615dc4c82",
+      "checked_at": "2026-09-10T18:35:55+00:00",
+      "signal_fingerprint": "0734a745acc3caa3605dbe79effbe61cd08228f6dea9f0fdc1ba2285b91b1d2a",
       "services": [],
       "announcements": [],
       "verified_official_source": true,
@@ -551,9 +552,9 @@
       "market": "GLOBAL",
       "currency": "USD",
       "url": "https://taggrading.com/",
-      "status": "degraded",
-      "checked_at": "2026-09-10T15:34:53+00:00",
-      "signal_fingerprint": "d24613f879d3faf33de85d19ab671c19dbf1be64033b5270313756c608b2a2ef",
+      "status": "ok",
+      "checked_at": "2026-09-10T18:35:55+00:00",
+      "signal_fingerprint": "e6a35d3e4bff481ae2ed048823fb01ea5d2e63a86efae36f9d85ff332b72d67b",
       "services": [],
       "announcements": [
         {
@@ -663,8 +664,7 @@
         }
       ],
       "verified_official_source": true,
-      "parser_version": 2,
-      "last_error": "HTTPError: status 503; Retry-After 158s"
+      "parser_version": 2
     },
     "brg-pricing-news": {
       "company": "BRG",
@@ -674,7 +674,7 @@
       "currency": "KRW",
       "url": "https://break.co.kr/",
       "status": "ok",
-      "checked_at": "2026-09-10T15:34:53+00:00",
+      "checked_at": "2026-09-10T18:35:55+00:00",
       "signal_fingerprint": "a4b3f397492317435fdf3b29d0a799fc47c5cc679cf36d24d983c7c80facb2e7",
       "services": [
         {
@@ -913,7 +913,17 @@
       "verified_official_source": true
     }
   ],
-  "recent_changes": [],
+  "recent_changes": [
+    {
+      "company": "TAG",
+      "source_id": "tag-pricing",
+      "type": "official_page_changed_unparsed",
+      "detected_at": "2026-09-10T18:35:55+00:00",
+      "source": "https://taggrading.com/pages/pricing",
+      "requires_review": true,
+      "verified_official_source": true
+    }
+  ],
   "history": [
     {
       "company": "CGC",
@@ -1373,6 +1383,15 @@
       "title": "공지사항 & 이벤트",
       "url": "https://break.co.kr/notice",
       "detected_at": "2026-09-10T09:35:33+00:00",
+      "verified_official_source": true
+    },
+    {
+      "company": "TAG",
+      "source_id": "tag-pricing",
+      "type": "official_page_changed_unparsed",
+      "detected_at": "2026-09-10T18:35:55+00:00",
+      "source": "https://taggrading.com/pages/pricing",
+      "requires_review": true,
       "verified_official_source": true
     }
   ]
