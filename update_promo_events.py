@@ -940,6 +940,71 @@ def check_existing(item: dict) -> tuple[dict, str | None]:
         return checked, f"{checked['name_ko']}: {diagnostic_exception(exc)}"
 
 
+def refresh_auxiliary_coverage_metadata(data: dict | None = None, *, write: bool = False) -> dict:
+    """Synchronize candidate metadata after the integrated pipeline, without network I/O."""
+    if data is None:
+        data = json.loads(safe_read_text(DATA))
+    if not isinstance(data, dict):
+        raise ValueError("행사 메타데이터 형식 오류")
+    errors: list[str] = []
+    try:
+        supplementary_path = ROOT / "supplementary_candidates.json"
+        supplementary = json.loads(safe_read_text(supplementary_path)) if supplementary_path.exists() else {}
+        data["supplementary_candidate_count"] = len(supplementary.get("items", [])) if isinstance(supplementary, dict) else 0
+        data["supplementary_collection_mode"] = "post-integration-synchronized"
+    except Exception as exc:
+        data["supplementary_candidate_count"] = 0
+        data["supplementary_collection_mode"] = "deferred-read-error"
+        errors.append(f"보조후보 DB 읽기: {diagnostic_exception(exc)}")
+
+    expected_keys = social_topic_expected_keys()
+    try:
+        social_path = ROOT / "social_event_candidates.json"
+        social = json.loads(safe_read_text(social_path)) if social_path.exists() else {}
+        if not isinstance(social, dict):
+            raise ValueError("SNS/Google 후보 최상위 형식 오류")
+        data["social_candidate_count"] = len(social.get("items", []))
+        data["official_social_candidate_count"] = int(social.get("official_social_candidate_count") or 0)
+        data["social_cross_checked_count"] = int(social.get("cross_checked_count") or 0)
+        coverage = social.get("topic_coverage") if isinstance(social.get("topic_coverage"), dict) else {}
+        data["social_topic_coverage"] = coverage
+        data["social_topic_expected_cells"] = len(expected_keys)
+        data["social_topic_covered_cells"] = sum(1 for key in expected_keys if int(coverage.get(key) or 0) > 0)
+        undiscovered = [key for key in expected_keys if int(coverage.get(key) or 0) == 0]
+        data["social_topic_missing_cells"] = undiscovered
+        data["social_topic_undiscovered_cells"] = undiscovered
+        data["social_topic_attempted_cells"] = int(social.get("topic_query_attempted_cells") or 0)
+        data["social_topic_successful_cells"] = int(social.get("topic_query_successful_cells") or 0)
+        failed_cells = social.get("topic_query_failed_cells")
+        data["social_topic_failed_cells"] = [str(x) for x in failed_cells if str(x).strip()] if isinstance(failed_cells, list) else []
+        data["social_topic_collection_complete"] = bool(len(expected_keys) and data["social_topic_attempted_cells"] >= len(expected_keys))
+        data["social_topic_source_updated_at"] = social.get("updated_at")
+        data["social_collection_mode"] = "post-integration-synchronized"
+    except Exception as exc:
+        data["social_candidate_count"] = 0
+        data["official_social_candidate_count"] = 0
+        data["social_cross_checked_count"] = 0
+        data["social_topic_coverage"] = {}
+        data["social_topic_expected_cells"] = len(expected_keys)
+        data["social_topic_covered_cells"] = 0
+        data["social_topic_missing_cells"] = expected_keys
+        data["social_topic_undiscovered_cells"] = expected_keys
+        data["social_topic_attempted_cells"] = 0
+        data["social_topic_successful_cells"] = 0
+        data["social_topic_failed_cells"] = []
+        data["social_topic_collection_complete"] = False
+        data["social_collection_mode"] = "deferred-read-error"
+        errors.append(f"SNS/Google 후보 DB 읽기: {diagnostic_exception(exc)}")
+    data["auxiliary_coverage_synced_at"] = dt.datetime.now(dt.timezone.utc).isoformat(timespec="seconds")
+    data["auxiliary_coverage_errors"] = errors[:20]
+    if errors:
+        current_errors = [str(x) for x in (data.get("collection_errors") or []) if str(x).strip()]
+        data["collection_errors"] = list(dict.fromkeys(current_errors + errors))[:80]
+    if write:
+        atomic_write_json(DATA, data, suffix=".aux-sync.tmp")
+    return data
+
+
 def main() -> dict:
     data = json.loads(safe_read_text(DATA))
     original = data.get("items", [])
@@ -1102,38 +1167,7 @@ def main() -> dict:
         )
     )
     data["collection_errors"] = errors
-    try:
-        supplementary_path = ROOT / "supplementary_candidates.json"
-        supplementary = json.loads(safe_read_text(supplementary_path)) if supplementary_path.exists() else {}
-        data["supplementary_candidate_count"] = len(supplementary.get("items", []))
-        data["supplementary_collection_mode"] = "deferred-to-integration-stage"
-    except Exception as exc:
-        data["supplementary_candidate_count"] = 0
-        data["supplementary_collection_mode"] = "deferred-read-error"
-        errors.append(f"보조후보 DB 읽기: {diagnostic_exception(exc)}")
-    try:
-        social_path = ROOT / "social_event_candidates.json"
-        social = json.loads(safe_read_text(social_path)) if social_path.exists() else {}
-        data["social_candidate_count"] = len(social.get("items", []))
-        data["official_social_candidate_count"] = int(social.get("official_social_candidate_count") or 0)
-        data["social_cross_checked_count"] = int(social.get("cross_checked_count") or 0)
-        topic_coverage = social.get("topic_coverage") if isinstance(social.get("topic_coverage"), dict) else {}
-        expected_keys = social_topic_expected_keys()
-        data["social_topic_coverage"] = topic_coverage
-        data["social_topic_expected_cells"] = len(expected_keys)
-        data["social_topic_covered_cells"] = sum(1 for key in expected_keys if int(topic_coverage.get(key) or 0) > 0)
-        data["social_topic_missing_cells"] = [key for key in expected_keys if int(topic_coverage.get(key) or 0) == 0]
-        data["social_collection_mode"] = "deferred-to-integration-stage"
-    except Exception as exc:
-        data["social_candidate_count"] = 0
-        data["official_social_candidate_count"] = 0
-        data["social_cross_checked_count"] = 0
-        data["social_topic_coverage"] = {}
-        data["social_topic_expected_cells"] = len(social_topic_expected_keys())
-        data["social_topic_covered_cells"] = 0
-        data["social_topic_missing_cells"] = social_topic_expected_keys()
-        data["social_collection_mode"] = "deferred-read-error"
-        errors.append(f"SNS/Google 후보 DB 읽기: {diagnostic_exception(exc)}")
+    data = refresh_auxiliary_coverage_metadata(data, write=False)
     atomic_write_json(DATA,data,suffix=".json.tmp")
     return data
 

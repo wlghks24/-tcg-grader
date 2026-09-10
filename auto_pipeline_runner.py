@@ -306,6 +306,7 @@ def _merge_adaptive_into_social(social: dict, candidates: list[dict]) -> tuple[d
     out = dict(social)
     out["items"] = merged
     out["item_count"] = len(merged)
+    out["topic_coverage"] = social_event_discovery.topic_coverage(merged)
     out["official_social_candidate_count"] = sum(1 for x in merged if x.get("official_account_verified") is True)
     out["official_domain_search_count"] = sum(1 for x in merged if x.get("official_domain_match") is True)
     out["cross_checked_count"] = sum(1 for x in merged if x.get("cross_checked") is True)

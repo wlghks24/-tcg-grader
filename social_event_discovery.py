@@ -829,6 +829,21 @@ def merge_candidates(rows: list[dict]) -> list[dict]:
     return selected[:MAX_ITEMS]
 
 
+def topic_coverage(rows: list[dict]) -> dict[str, int]:
+    """Count discovered leads separately from whether each collection cell was attempted."""
+    return {
+        f"{game}/{region}/{topic}": sum(
+            1 for row in (rows or [])
+            if isinstance(row, dict)
+            and row.get("game") == game
+            and row.get("region") == region
+            and _coverage_topic(row) == topic
+        )
+        for game in GAMES for region in REGION_LANG
+        for topic in multi_route_event_discovery.COVERAGE_TOPICS
+    }
+
+
 def main() -> dict:
     previous = None
     if OUT.exists():
@@ -869,6 +884,10 @@ def main() -> dict:
                    or int(route_status.get("success_query_count") or 0) > 0
                    or int(public_status.get("success_query_count") or 0) > 0)
     usable_channels = [k for k, v in channel_status.items() if isinstance(v, dict) and v.get("configured") is True and int(v.get("success_query_count") or 0) > 0]
+    expected_topic_cells = int(route_status.get("expected_topic_cells") or (len(GAMES) * len(REGION_LANG) * len(multi_route_event_discovery.COVERAGE_TOPICS)))
+    attempted_topic_cells = int(route_status.get("attempted_topic_cells") or 0)
+    successful_topic_cells = int(route_status.get("successful_topic_cells") or 0)
+    failed_topic_cells = [str(x) for x in (route_status.get("failed_topic_cells") or []) if str(x).strip()]
     if not merged and previous and isinstance(previous.get("items"), list):
         merged = previous.get("items", [])[:MAX_ITEMS]
     payload = {
@@ -887,13 +906,12 @@ def main() -> dict:
         "fan_social_learning": fan_report,
         "official_domain_search_count": sum(1 for x in merged if x.get("official_domain_match") is True),
         "cross_checked_count": sum(1 for x in merged if x.get("cross_checked") is True),
-        "topic_coverage": {
-            f"{game}/{region}/{topic}": sum(1 for row in merged if row.get("game") == game
-                                             and row.get("region") == region
-                                             and _coverage_topic(row) == topic)
-            for game in GAMES for region in REGION_LANG
-            for topic in multi_route_event_discovery.COVERAGE_TOPICS
-        },
+        "topic_coverage": topic_coverage(merged),
+        "topic_query_expected_cells": expected_topic_cells,
+        "topic_query_attempted_cells": attempted_topic_cells,
+        "topic_query_successful_cells": successful_topic_cells,
+        "topic_query_failed_cells": failed_topic_cells,
+        "topic_query_complete": bool(expected_topic_cells and attempted_topic_cells >= expected_topic_cells),
         "channel_status": channel_status, "registry_account_count": len(registry.get("accounts", [])),
         "collection_errors": errors[:50], "collection_warnings": warnings[:50],
         "preserved_previous_items": bool(_previous_rows(previous)),

@@ -573,12 +573,23 @@ def collect_all() -> tuple[list[dict], list[str], dict]:
             jobs.append(("official_asia_anchor", _official_scan_one, (game, region, url)))
 
     rows = []; errors = []; by_route = {}; successes = 0
+    topic_query_attempts = {
+        f"{game}/{region}/{topic}": 0
+        for game in GAMES for region in REGIONS for topic in COVERAGE_TOPICS
+    }
+    topic_query_successes = dict(topic_query_attempts)
     is_android = 'com.termux' in os.environ.get('PREFIX', '') or 'ANDROID_ROOT' in os.environ
     workers = 2 if is_android else 5
     with concurrent.futures.ThreadPoolExecutor(max_workers=workers) as pool:
-        future_map = {pool.submit(fn, *args): route for route, fn, args in jobs}
+        future_map = {pool.submit(fn, *args): (route, args) for route, fn, args in jobs}
         for future in concurrent.futures.as_completed(future_map):
-            route = future_map[future]
+            route, args = future_map[future]
+            topic_key = None
+            if len(args) >= 5 and args[2] == "topic" and args[0] in GAMES and args[1] in REGIONS:
+                candidate_key = f"{args[0]}/{args[1]}/{args[4]}"
+                if candidate_key in topic_query_attempts:
+                    topic_key = candidate_key
+                    topic_query_attempts[topic_key] += 1
             try:
                 part, error = future.result()
             except Exception as exc:
@@ -589,6 +600,8 @@ def collect_all() -> tuple[list[dict], list[str], dict]:
                 stat["errors"] += 1; errors.append(error)
             else:
                 stat["successes"] += 1; successes += 1
+                if topic_key is not None:
+                    topic_query_successes[topic_key] += 1
             stat["results"] += len(part); rows.extend(part)
 
     # A broad provider can look healthy while still missing a low-volume subject.
@@ -673,7 +686,16 @@ def collect_all() -> tuple[list[dict], list[str], dict]:
         "coverage": coverage,
         "topic_coverage": topic_coverage,
         "verified_topic_coverage": verified_topic_coverage,
-        "expected_topic_cells": len(GAMES) * len(REGIONS) * len(COVERAGE_TOPICS),
+        "expected_topic_cells": len(topic_query_attempts),
+        "configured_topic_cells": len(topic_query_attempts),
+        "attempted_topic_cells": sum(1 for value in topic_query_attempts.values() if value > 0),
+        "successful_topic_cells": sum(1 for value in topic_query_successes.values() if value > 0),
+        "failed_topic_cells": [
+            key for key, attempts in topic_query_attempts.items()
+            if attempts > 0 and topic_query_successes.get(key, 0) == 0
+        ],
+        "topic_query_attempts": topic_query_attempts,
+        "topic_query_successes": topic_query_successes,
         "covered_topic_cells": sum(1 for value in topic_coverage.values() if value > 0),
         "missing_topic_cells": [key for key, value in topic_coverage.items() if value == 0],
         "verified_covered_topic_cells": sum(1 for value in verified_topic_coverage.values() if value > 0),
