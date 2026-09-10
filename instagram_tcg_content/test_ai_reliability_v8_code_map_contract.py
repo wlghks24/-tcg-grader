@@ -6,6 +6,8 @@ import json
 import unittest
 from pathlib import Path
 
+from instagram_tcg_content.automation_state_guard import CANONICAL_ID
+
 ROOT = Path(__file__).resolve().parents[1]
 PACKAGE = ROOT / "ai_reliability_v8"
 CODE_MAP_PATH = PACKAGE / "CODE_MAP.json"
@@ -42,7 +44,7 @@ class AiReliabilityV8CodeMapContractTests(unittest.TestCase):
         binding = json.loads(BINDING_PATH.read_text(encoding="utf-8"))
         self.assertEqual(binding.get("schema_version"), 8)
         self.assertEqual(binding.get("project"), "instagram_card")
-        self.assertEqual(binding.get("task_id"), "6a9b8a22e72c8191849c273e1240378e")
+        self.assertEqual(binding.get("task_id"), CANONICAL_ID)
         files = binding.get("files")
         self.assertIsInstance(files, dict)
         for relative, expected in files.items():

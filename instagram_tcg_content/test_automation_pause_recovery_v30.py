@@ -19,7 +19,7 @@ class AutomationPauseRecoveryV30Tests(unittest.TestCase):
             "id": CANONICAL_ID,
             "title": CANONICAL_TITLE,
             "is_enabled": enabled,
-            "schedule": "RRULE:FREQ=HOURLY;BYMINUTE=30;BYSECOND=0",
+            "schedule": "RRULE:FREQ=HOURLY;BYMINUTE=0;BYSECOND=0",
             "timing_mode": "exact_schedule",
             "prompt": "stable",
             "updated_at": "2026-09-06T20:34:07.836996Z",
@@ -62,8 +62,8 @@ class AutomationPauseRecoveryV30Tests(unittest.TestCase):
 
     def test_schedule_start_disable_without_run_is_fingerprinted_not_attributed(self):
         state = self.state(False)
-        state["updated_at"] = "2026-09-08T01:37:01.377102Z"
-        state["last_run_time"] = "2026-09-07T20:27:56.644698Z"
+        state["updated_at"] = "2026-09-08T01:07:01.377102Z"
+        state["last_run_time"] = "2026-09-07T20:00:56.644698Z"
         result = classify_pause(
             state,
             observed_at="2026-09-08T05:44:00Z",
@@ -74,7 +74,7 @@ class AutomationPauseRecoveryV30Tests(unittest.TestCase):
             "SCHEDULE_START_DISABLE_WITHOUT_RUN",
         )
         self.assertTrue(result["schedule_start_disable_without_run"])
-        self.assertEqual(result["schedule_start_slot_kst"], "2026-09-08T10:30+09:00")
+        self.assertEqual(result["schedule_start_slot_kst"], "2026-09-08T10:00+09:00")
         self.assertFalse(result["state_transition_is_root_cause"])
         self.assertEqual(result["cause_status"], "unresolved")
         self.assertEqual(result["cause_class"], "CONTROL_PLANE_ATTRIBUTION_UNAVAILABLE")
@@ -83,8 +83,8 @@ class AutomationPauseRecoveryV30Tests(unittest.TestCase):
 
     def test_missed_slots_anchor_to_last_run_not_disable_time(self):
         state = self.state(False)
-        state["updated_at"] = "2026-09-08T01:37:01.377102Z"
-        state["last_run_time"] = "2026-09-07T20:27:56.644698Z"
+        state["updated_at"] = "2026-09-08T01:07:01.377102Z"
+        state["last_run_time"] = "2026-09-07T20:00:56.644698Z"
         result = classify_pause(
             state,
             observed_at="2026-09-08T05:44:00Z",
@@ -92,14 +92,12 @@ class AutomationPauseRecoveryV30Tests(unittest.TestCase):
         )
         self.assertEqual(result["missed_slot_anchor"], "last_run_plus_early_grace")
         self.assertEqual(result["schedule_run_early_grace_minutes"], 5)
-        self.assertIn("2026-09-08T06:30+09:00", result["missed_slots_kst"])
-        self.assertIn("2026-09-08T10:30+09:00", result["missed_slots_kst"])
-        self.assertNotIn("2026-09-08T05:30+09:00", result["missed_slots_kst"])
-        self.assertTrue(result["missed_full_0630"])
-        self.assertEqual(
-            result["catchup_policy"],
-            "AT_MOST_ONCE_SAME_DAY_WITHOUT_BASELINE_CREATION",
-        )
+        self.assertIn("2026-09-08T06:00+09:00", result["missed_slots_kst"])
+        self.assertIn("2026-09-08T10:00+09:00", result["missed_slots_kst"])
+        self.assertNotIn("2026-09-08T05:00+09:00", result["missed_slots_kst"])
+        self.assertFalse(result["missed_weekly_production"])
+        self.assertFalse(result["missed_full_0630"])
+        self.assertEqual(result["catchup_policy"], "NONE")
 
     def test_enabled_task_can_still_have_schedule_gap_active(self):
         state = self.state(True)
@@ -167,16 +165,18 @@ class AutomationPauseRecoveryV30Tests(unittest.TestCase):
         self.assertEqual(result["cause_actor"], "user")
         self.assertEqual(result["cause_reason"], "manual pause")
 
-    def test_0630_missed_slot_requests_bounded_catchup(self):
+    def test_missed_weekly_production_requests_user_recovery_only(self):
+        state = self.state(False)
+        state["last_run_time"] = "2026-09-14T08:00:10Z"
+        state["updated_at"] = "2026-09-14T10:07:01Z"
         result = classify_pause(
-            self.state(False),
-            observed_at="2026-09-07T01:01:48.674172Z",
+            state,
+            observed_at="2026-09-14T11:05:00Z",
         )
-        self.assertTrue(result["missed_full_0630"])
-        self.assertEqual(
-            result["catchup_policy"],
-            "AT_MOST_ONCE_SAME_DAY_WITHOUT_BASELINE_CREATION",
-        )
+        self.assertTrue(result["missed_weekly_production"])
+        self.assertIn("2026-09-14T19:00+09:00", result["missed_slots_kst"])
+        self.assertEqual(result["catchup_policy"], "USER_REQUESTED_RECOVERY_ONLY")
+        self.assertFalse(result["duplicate_catchup_allowed"])
 
     def test_enabled_state_is_not_pause_incident(self):
         state = self.state(True)
@@ -213,6 +213,16 @@ class AutomationPauseRecoveryV30Tests(unittest.TestCase):
         self.assertEqual(result["required_action"], "REVIEW_VERIFIED_CONTROL_PLANE_DRIFT")
         self.assertEqual(result["cause_class"], "CONTROL_PLANE_ATTRIBUTION_UNAVAILABLE")
         self.assertEqual(result["final_root_cause_class"], "UNRESOLVED_CONTROL_PLANE")
+
+
+    def test_first_snapshot_wrong_schedule_is_control_plane_drift(self):
+        state = self.state(True)
+        state["schedule"] = "RRULE:FREQ=HOURLY;BYMINUTE=30;BYSECOND=0"
+        state["last_run_time"] = "2026-09-09T01:00:10Z"
+        result = classify_pause(state, observed_at="2026-09-09T01:01:00Z")
+        self.assertIn("schedule", result["control_plane_drift_fields"])
+        self.assertEqual(result["event_class"], "CONTROL_PLANE_DRIFT")
+        self.assertEqual(result["required_action"], "REVIEW_VERIFIED_CONTROL_PLANE_DRIFT")
 
     def test_empty_title_still_fails_closed(self):
         state = self.state(True)

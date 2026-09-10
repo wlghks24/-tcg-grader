@@ -8,6 +8,7 @@ from instagram_tcg_content.source_verification_engine import (
     build_production_verification_receipt,
 )
 from instagram_tcg_content.production_state import (
+    LEGACY_SCHEDULED_BASELINE_RUN_KIND,
     SCHEDULED_BASELINE_RUN_KIND,
     USER_REQUESTED_RECOVERY_RUN_KIND,
     StateIntegrityError,
@@ -53,12 +54,12 @@ def verification_receipt(snapshot_id="snapshot-1", snapshot_hash=SNAPSHOT_HASH):
     )
 
 
-def record(run_kind=SCHEDULED_BASELINE_RUN_KIND, baseline_id="IG-20260906-1030"):
+def record(run_kind=SCHEDULED_BASELINE_RUN_KIND, baseline_id="IG-20260914-1900"):
     value = {
-        "production_date_kst": "2026-09-06",
-        "scheduled_slot_kst": "2026-09-06T10:30:00+09:00",
-        "actual_started_at_kst": "2026-09-06T10:30:03+09:00",
-        "router_branch": "DAILY_PRODUCTION",
+        "production_date_kst": "2026-09-14",
+        "scheduled_slot_kst": "2026-09-14T19:00:00+09:00",
+        "actual_started_at_kst": "2026-09-14T19:00:03+09:00",
+        "router_branch": "WEEKLY_PRODUCTION",
         "run_kind": run_kind,
         "snapshot_id": "snapshot-1",
         "snapshot_hash": SNAPSHOT_HASH,
@@ -71,7 +72,7 @@ def record(run_kind=SCHEDULED_BASELINE_RUN_KIND, baseline_id="IG-20260906-1030")
         "x10_status": "pass",
         "verification_receipt": verification_receipt("snapshot-1"),
         "delivery_reference_status": "verified",
-        "finalized_at": "2026-09-06T10:31:00+09:00",
+        "finalized_at": "2026-09-14T19:01:00+09:00",
     }
     if baseline_id is not None:
         value["baseline_id"] = baseline_id
@@ -83,18 +84,18 @@ def main():
 
     ok, lock_key = acquire_run_lock(
         state,
-        production_date_kst="2026-09-06",
-        scheduled_slot_kst="2026-09-06T10:30:00+09:00",
-        router_branch="DAILY_PRODUCTION",
+        production_date_kst="2026-09-14",
+        scheduled_slot_kst="2026-09-14T19:00:00+09:00",
+        router_branch="WEEKLY_PRODUCTION",
         run_id="run-1",
     )
     assert ok
 
     ok, reason = acquire_run_lock(
         state,
-        production_date_kst="2026-09-06",
-        scheduled_slot_kst="2026-09-06T10:30:00+09:00",
-        router_branch="DAILY_PRODUCTION",
+        production_date_kst="2026-09-14",
+        scheduled_slot_kst="2026-09-14T19:00:00+09:00",
+        router_branch="WEEKLY_PRODUCTION",
         run_id="run-2",
     )
     assert not ok and reason == "DUPLICATE_RUN_SUPPRESSED"
@@ -103,9 +104,9 @@ def main():
 
     ok, reason = acquire_run_lock(
         state,
-        production_date_kst="2026-09-06",
-        scheduled_slot_kst="2026-09-06T10:30:00+09:00",
-        router_branch="DAILY_PRODUCTION",
+        production_date_kst="2026-09-14",
+        scheduled_slot_kst="2026-09-14T19:00:00+09:00",
+        router_branch="WEEKLY_PRODUCTION",
         run_id="run-3",
     )
     assert not ok and reason == "DUPLICATE_RUN_SUPPRESSED"
@@ -113,48 +114,48 @@ def main():
     good = record()
     assert validate_production_record(good) == []
     finalize_production(state, good)
-    assert baseline_id_for_date(state, "2026-09-06") == "IG-20260906-1030"
+    assert baseline_id_for_date(state, "2026-09-14") == "IG-20260914-1900"
 
-    allowed, reason = can_start_catchup(state, "2026-09-06")
+    allowed, reason = can_start_catchup(state, "2026-09-14")
     assert not allowed and reason == "FINALIZED_PRODUCTION_ALREADY_EXISTS"
 
     catchup = record(run_kind="catchup", baseline_id="illegal")
     errors = validate_production_record(catchup)
-    assert "non-10:30 run cannot create baseline_id" in errors
+    assert "non-weekly production run cannot create baseline_id" in errors
 
     missing_baseline = record(baseline_id=None)
     errors = validate_production_record(missing_baseline)
-    assert "10:30 scheduled run requires baseline_id" in errors
+    assert "weekly Monday 19:00 scheduled run requires baseline_id" in errors
 
     fresh = empty_state()
-    allowed, reason = can_start_catchup(fresh, "2026-09-07")
+    allowed, reason = can_start_catchup(fresh, "2026-09-21")
     assert allowed and reason == "CATCHUP_ALLOWED"
-    assert record_catchup_attempt(fresh, "2026-09-07") == 1
-    allowed, reason = can_start_catchup(fresh, "2026-09-07")
+    assert record_catchup_attempt(fresh, "2026-09-21") == 1
+    allowed, reason = can_start_catchup(fresh, "2026-09-21")
     assert not allowed and reason == "CATCHUP_BUDGET_EXHAUSTED"
 
     blocked = empty_state()
     row = record_blocked_production_attempt(
         blocked,
-        production_date_kst="2026-09-07",
-        scheduled_slot_kst="2026-09-07T10:30:00+09:00",
+        production_date_kst="2026-09-21",
+        scheduled_slot_kst="2026-09-21T19:00:00+09:00",
         reason_code="INSUFFICIENT_VERIFIED_FACTS",
         verified_fact_count=1,
-        recorded_at_kst="2026-09-07T15:15:00+09:00",
+        recorded_at_kst="2026-09-21T19:15:00+09:00",
         detail="6 required artifacts could not be supported by one verified fact",
     )
     assert row["verified_fact_count"] == 1
 
     allowed, reason = can_start_user_requested_recovery(
         blocked,
-        "2026-09-07",
+        "2026-09-21",
         user_requested=False,
     )
     assert not allowed and reason == "USER_REQUEST_REQUIRED"
 
     allowed, reason = can_start_user_requested_recovery(
         blocked,
-        "2026-09-07",
+        "2026-09-21",
         user_requested=True,
     )
     assert allowed and reason == "USER_REQUESTED_RECOVERY_ALLOWED"
@@ -163,11 +164,11 @@ def main():
         run_kind=USER_REQUESTED_RECOVERY_RUN_KIND,
         baseline_id=None,
     )
-    recovery["scheduled_slot_kst"] = "2026-09-07T15:30:00+09:00"
-    recovery["actual_started_at_kst"] = "2026-09-07T15:30:03+09:00"
-    recovery["finalized_at"] = "2026-09-07T15:31:00+09:00"
-    recovery["production_date_kst"] = "2026-09-07"
-    recovery["recovery_of_slot_kst"] = "2026-09-07T10:30:00+09:00"
+    recovery["scheduled_slot_kst"] = "2026-09-21T20:30:00+09:00"
+    recovery["actual_started_at_kst"] = "2026-09-21T20:30:03+09:00"
+    recovery["finalized_at"] = "2026-09-21T20:31:00+09:00"
+    recovery["production_date_kst"] = "2026-09-21"
+    recovery["recovery_of_slot_kst"] = "2026-09-21T19:00:00+09:00"
     recovery["recovery_request_evidence"] = "user requested missing artifact recovery in canonical chat"
     assert validate_production_record(recovery) == []
 
@@ -178,10 +179,10 @@ def main():
         in validate_production_record(missing_recovery_evidence)
     )
 
-    record_catchup_attempt(blocked, "2026-09-07")
+    record_catchup_attempt(blocked, "2026-09-21")
     allowed, reason = can_start_user_requested_recovery(
         blocked,
-        "2026-09-07",
+        "2026-09-21",
         user_requested=True,
     )
     assert not allowed and reason == "CATCHUP_BUDGET_EXHAUSTED"
@@ -275,6 +276,22 @@ def main():
         write_state_atomic(path, empty_state())
         assert load_state(path) == empty_state()
 
+
+        # Historical 10:30 finalized records remain readable after the Monday-19 migration.
+        legacy = record(run_kind=LEGACY_SCHEDULED_BASELINE_RUN_KIND, baseline_id="IG-LEGACY-20260906-1030")
+        legacy["production_date_kst"] = "2026-09-06"
+        legacy["scheduled_slot_kst"] = "2026-09-06T10:30:00+09:00"
+        legacy["actual_started_at_kst"] = "2026-09-06T10:30:03+09:00"
+        legacy["router_branch"] = "DAILY_PRODUCTION"
+        legacy["finalized_at"] = "2026-09-06T10:31:00+09:00"
+        assert validate_production_record(legacy, allow_legacy=True) == []
+        legacy_state = empty_state()
+        legacy_state["production_records"]["2026-09-06"] = {"finalized": True, **legacy}
+        write_state_atomic(path, legacy_state)
+        loaded_legacy = load_state(path)
+        assert baseline_id_for_date(loaded_legacy, "2026-09-06") == "IG-LEGACY-20260906-1030"
+        assert "legacy 10:30 scheduled run is read-only and cannot finalize" in validate_production_record(legacy)
+
         path.write_text("{broken-json", encoding="utf-8")
         try:
             load_state(path)
@@ -299,12 +316,12 @@ def main():
             assert str(exc) == "STATE_RUN_LOCK_INVALID"
 
         malformed_block = empty_state()
-        malformed_block["blocked_attempts"]["2026-09-07"] = {
-            "production_date_kst": "2026-09-07",
-            "scheduled_slot_kst": "2026-09-07T10:30:00+09:00",
+        malformed_block["blocked_attempts"]["2026-09-21"] = {
+            "production_date_kst": "2026-09-21",
+            "scheduled_slot_kst": "2026-09-21T19:00:00+09:00",
             "reason_code": "INVENTED_REASON",
             "verified_fact_count": 1,
-            "recorded_at_kst": "2026-09-07T15:15:00+09:00",
+            "recorded_at_kst": "2026-09-21T19:15:00+09:00",
         }
         write_state_atomic(path, malformed_block)
         try:
@@ -314,7 +331,7 @@ def main():
             assert str(exc) == "STATE_BLOCKED_ATTEMPT_INVALID"
 
         malformed_budget = empty_state()
-        malformed_budget["catchup_attempts"]["2026-09-07"] = -1
+        malformed_budget["catchup_attempts"]["2026-09-21"] = -1
         write_state_atomic(path, malformed_budget)
         try:
             load_state(path)

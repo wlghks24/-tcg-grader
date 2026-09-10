@@ -61,12 +61,20 @@ def load_state(path:Path)->dict[str,Any]:
         if not isinstance(production_date,str) or isinstance(count,bool) or not isinstance(count,int) or count<0: raise StateIntegrityError("STATE_CATCHUP_BUDGET_INVALID")
     return value
 
+def _fsync_parent_directory(path:Path)->None:
+    """Best-effort directory sync after atomic replace for crash durability."""
+    flags=os.O_RDONLY | getattr(os,"O_DIRECTORY",0)
+    try: fd=os.open(str(path.parent),flags)
+    except OSError: return
+    try: os.fsync(fd)
+    finally: os.close(fd)
+
 def write_state_atomic(path:Path,state:dict[str,Any])->None:
     path.parent.mkdir(parents=True,exist_ok=True); tmp=None
     try:
         with tempfile.NamedTemporaryFile(mode="w",encoding="utf-8",dir=path.parent,prefix=f".{path.name}.",suffix=".tmp",delete=False) as h:
             json.dump(state,h,ensure_ascii=False,indent=2,sort_keys=True); h.write("\n"); h.flush(); os.fsync(h.fileno()); tmp=Path(h.name)
-        tmp.replace(path)
+        tmp.replace(path); _fsync_parent_directory(path)
     finally:
         if tmp is not None and tmp.exists(): tmp.unlink(missing_ok=True)
 
@@ -85,8 +93,13 @@ def validate_production_record(record:dict[str,Any], *, allow_legacy: bool = Fal
     errors=[]; missing=sorted(REQUIRED_PRODUCTION_FIELDS-set(record))
     if missing: return ["missing production fields: "+",".join(missing)]
     if record.get("schema_version")!=SCHEMA_VERSION: errors.append("schema_version mismatch")
+    parsed_times={}
     for field in ("scheduled_slot_kst","actual_started_at_kst","finalized_at"):
-        if _parse_aware_iso(record.get(field)) is None: errors.append(f"{field} must be timezone-aware ISO-8601")
+        parsed_times[field]=_parse_aware_iso(record.get(field))
+        if parsed_times[field] is None: errors.append(f"{field} must be timezone-aware ISO-8601")
+    scheduled=parsed_times.get("scheduled_slot_kst"); started=parsed_times.get("actual_started_at_kst"); finalized=parsed_times.get("finalized_at")
+    if scheduled is not None and str(record.get("production_date_kst") or "") != scheduled.astimezone(KST).date().isoformat(): errors.append("production_date_kst must match scheduled slot KST date")
+    if started is not None and finalized is not None and finalized < started: errors.append("finalized_at cannot precede actual_started_at_kst")
     run_kind=record.get("run_kind"); baseline_id=record.get("baseline_id")
     if run_kind==COLLECTION_ONLY_RUN_KIND: errors.append("collection-only run cannot be finalized as production")
     if run_kind==SCHEDULED_BASELINE_RUN_KIND:

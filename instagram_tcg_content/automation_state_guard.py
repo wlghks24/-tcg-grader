@@ -19,6 +19,7 @@ AI_RELIABILITY_TASK_ID = CANONICAL_ID
 SCHEDULE_MODE = "hourly_on_the_hour_single_router"
 WEEKLY_PRODUCTION_WEEKDAY = 0
 WEEKLY_PRODUCTION_HOUR = 19
+CANONICAL_TIMING_MODE = "exact_schedule"
 
 NON_FATAL_PRECHECK_CODES = {"BASELINE_MISSING", "REVISION_BASELINE_MISSING", "SNAPSHOT_BUILDING", "NO_VERIFIED_FACTS", "INSUFFICIENT_VERIFIED_FACTS", "INSUFFICIENT_COMPLETED_SALES", "NO_COMPARABLE_DATA", "PRECHECK_DATA_NOT_READY"}
 PRECHECK_STAGES = {"preflight", "production_preflight", "revision_preflight"}
@@ -47,6 +48,10 @@ def _stable_fingerprint(value: Any) -> str | None:
         return None
     raw = json.dumps(value, ensure_ascii=False, sort_keys=True, separators=(",", ":"), allow_nan=False).encode()
     return hashlib.sha256(raw).hexdigest()
+
+def _schedule_matches_canonical(value: Any) -> bool:
+    text = "".join(str(value or "").split()).upper()
+    return "FREQ=HOURLY" in text and "BYMINUTE=0" in text and "BYSECOND=0" in text
 
 def router_branch_for_slot(value: str | dt.datetime) -> str:
     parsed = _aware(value, "scheduled_slot_kst") if isinstance(value, str) else value
@@ -150,6 +155,12 @@ def classify_pause(state: dict[str, Any], *, observed_at: str, cause_evidence: d
         boundary, boundary_slot = _schedule_start_disable_without_run(updated, last_run)
     comparison = compare_snapshots(previous_snapshot, snapshot)
     drift = [f for f in comparison["changed_fields"] if f in {"title", "schedule", "timing_mode", "prompt"}]
+    canonical_mismatches=[]
+    if snapshot["title"] != CANONICAL_TITLE: canonical_mismatches.append("title")
+    if not _schedule_matches_canonical(snapshot.get("schedule")): canonical_mismatches.append("schedule")
+    if snapshot.get("timing_mode") != CANONICAL_TIMING_MODE: canonical_mismatches.append("timing_mode")
+    for field in canonical_mismatches:
+        if field not in drift: drift.append(field)
     actor = str((cause_evidence or {}).get("actor") or "").strip()
     reason = str((cause_evidence or {}).get("reason") or "").strip()
     error_trace = str((cause_evidence or {}).get("error_trace") or "").strip()

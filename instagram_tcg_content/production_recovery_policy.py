@@ -4,8 +4,10 @@ from dataclasses import dataclass
 from datetime import datetime, timedelta, timezone
 from typing import Any
 
+from instagram_tcg_content.automation_state_guard import CANONICAL_ID
+
 PROJECT = "instagram_card"
-TASK_ID = "6aa2af4de8c88191aad2a1da62439e10"
+TASK_ID = CANONICAL_ID
 KST = timezone(timedelta(hours=9))
 RECOVERABLE_COLLECTION_REASONS = {"COMPLETED_SALE_COVERAGE_INSUFFICIENT", "NO_VERIFIED_FACTS", "SNAPSHOT_NOT_FINALIZED", "SNAPSHOT_WRITE_READBACK_UNVERIFIED"}
 RECOVERY_MODE = "PREPRODUCTION_RECOVERY_COLLECTION"

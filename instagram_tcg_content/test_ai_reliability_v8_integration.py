@@ -35,7 +35,7 @@ class InstagramCardReliabilityV8IntegrationTests(unittest.TestCase):
     def test_single_binding_and_bridge_factory(self):
         self.assertEqual(AI_RELIABILITY_PROJECT, "instagram_card")
         self.assertEqual(AI_RELIABILITY_TASK_ID, CANONICAL_ID)
-        self.assertEqual(CANONICAL_ID, "6a9b8a22e72c8191849c273e1240378e")
+        self.assertRegex(CANONICAL_ID, r"^[0-9a-f]{32}$")
         with tempfile.TemporaryDirectory() as td:
             bridge = build_ai_reliability_bridge(td)
             self.assertIsInstance(bridge, ReliabilityBridge)

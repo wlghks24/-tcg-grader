@@ -3,6 +3,7 @@ import unittest
 
 from instagram_tcg_content.production_recovery_policy import (
     BLOCKED_MODE,
+    COLLECTION_ONLY_MODE,
     GENERAL_MODE,
     RECOVERY_MODE,
     build_visible_failure_report,
@@ -83,10 +84,10 @@ class ProductionRecoveryPolicyTests(unittest.TestCase):
             is_production_slot=False,
             recovery_collection_attempts=0,
         )
-        self.assertEqual(decision.action, BLOCKED_MODE)
-        self.assertFalse(decision.run_bounded_collection)
+        self.assertEqual(decision.action, COLLECTION_ONLY_MODE)
+        self.assertTrue(decision.run_bounded_collection)
         self.assertFalse(decision.render_allowed)
-        self.assertTrue(decision.must_emit_visible_report)
+        self.assertFalse(decision.must_emit_visible_report)
 
     def test_ready_collection_goes_to_full_preflight(self):
         decision = decide_preproduction_recovery(
@@ -107,7 +108,7 @@ class ProductionRecoveryPolicyTests(unittest.TestCase):
 
     def test_visible_failure_report_contains_split_readiness_fields(self):
         report = build_visible_failure_report(
-            scheduled_slot_kst="2026-09-10T10:30:00+09:00",
+            scheduled_slot_kst="2026-09-14T19:00:00+09:00",
             collection_report={
                 "status": "NOT_READY",
                 "general_cardinfo_ready": False,
