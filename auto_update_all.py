@@ -44,6 +44,7 @@ JOBS = (
     ("프로모·콜라보 행사", "update_promo_events", "promo_events.json"),
     ("구매처·링크 보안 확인", "update_purchase_sources", "purchase_sources.json"),
     ("원화 환산 환율", "update_exchange_rates", "exchange_rates.json"),
+    ("등급업체 요금·서비스·이벤트", "grading_company_watch", "grading_company_updates.json"),
     ("업체별 등급카드 사진 후보", "graded_photo_multi_source", "graded_photo_candidates.json"),
 )
 
@@ -590,6 +591,7 @@ def _contextualize_collection_warning(filename: str, value: object) -> str:
         "market_prices.json":"공개 가격 페이지의 상품명·가격 표시 구조를 읽지 못했습니다",
         "promo_events.json":"공식 행사 페이지에서 검증 가능한 행사정보를 읽지 못했습니다",
         "exchange_rates.json":"원화 환산 환율 응답의 통화값·단위를 검증하지 못했습니다",
+        "grading_company_updates.json":"감정업체 공식 요금·서비스·이벤트 스냅샷의 출처·정책 구조를 검증하지 못했습니다",
         "graded_photo_candidates.json":"등급카드 사진 후보의 인증·이미지 증거 구조를 검증하지 못했습니다",
     }.get(filename,"수집 결과의 필수 구조를 검증하지 못했습니다")
     return f"{text}: {context}"
@@ -662,6 +664,35 @@ def validate_json(name: str, data: dict) -> None:
             raise ValueError("환율 값은 유한한 숫자여야 합니다") from exc
         if not (0 < jpy_krw < 30 and 500 < usd_krw < 3000):
             raise ValueError("환율 범위 오류")
+    elif name == "grading_company_updates.json":
+        import grading_company_watch
+        from urllib.parse import urlsplit
+        if data.get("schema_version") != 1:
+            raise ValueError("등급업체 감시 schema_version 오류")
+        policy=data.get("policy")
+        if (not isinstance(policy,dict)
+                or policy.get("official_sources_only") is not True
+                or policy.get("community_posts_are_leads_only") is not True
+                or policy.get("automatic_source_code_mutation") is not False
+                or policy.get("last_good_retained_on_failure") is not True):
+            raise ValueError("등급업체 공식출처 전용 정책 오류")
+        companies=data.get("companies"); sources=data.get("sources"); summary=data.get("summary")
+        if not isinstance(companies,dict) or set(companies) != {"PSA","BGS","CGC","TAG","BRG"}:
+            raise ValueError("등급업체 5개사 감시 프로필 누락")
+        if not isinstance(sources,dict) or len(sources) < 10 or not isinstance(summary,dict):
+            raise ValueError("등급업체 공식 감시 출처 대량 누락")
+        healthy=int(summary.get("healthy_sources") or 0); degraded=int(summary.get("degraded_sources") or 0)
+        if int(summary.get("sources") or -1) != len(sources) or healthy + degraded != len(sources):
+            raise ValueError("등급업체 출처 상태 집계 오류")
+        for source_id,row in sources.items():
+            if not isinstance(row,dict):
+                raise ValueError(f"등급업체 출처 구조 오류: {source_id}")
+            parts=urlsplit(str(row.get("url") or ""))
+            if parts.scheme != "https" or (parts.hostname or "").lower() not in grading_company_watch.ALLOWED_HOSTS:
+                raise ValueError(f"등급업체 비공식 출처 차단: {source_id}")
+        for row in data.get("recent_changes",[]) or []:
+            if not isinstance(row,dict) or row.get("verified_official_source") is not True:
+                raise ValueError("검증되지 않은 감정업체 변경정보 자동반영 차단")
     elif name == "graded_photo_candidates.json":
         if not isinstance(data.get("records"),list) or not isinstance(data.get("summary"),dict):
             raise ValueError("등급카드 사진 후보 records·summary 구조 오류")
@@ -684,6 +715,7 @@ def issue_advice(filename: str) -> str:
         "promo_events.json": "공식 행사 페이지의 기간·수령조건을 확인하세요.",
         "purchase_sources.json": "공식 구매처 HTTPS 주소·접속 상태를 확인하세요.",
         "exchange_rates.json": "인터넷 연결 후 환율 출처를 다시 확인하세요.",
+        "grading_company_updates.json": "PSA/BGS/CGC/TAG/BRG 공식 요금·서비스·이벤트 페이지와 출처 상태를 확인하세요.",
         "__integration__": "보조 후보수집 출처의 응답과 네트워크 상태를 확인하세요.",
         "__link_audit__": "외부 링크 검사의 일시적 차단·응답지연 여부를 확인하세요.",
     }.get(filename, "원출처와 인터넷 연결을 확인하세요.")

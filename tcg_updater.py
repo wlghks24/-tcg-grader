@@ -732,9 +732,10 @@ def update_cycle(trigger='manual', progress_callback=None):
             promo_status=result_map['promo_events.json']['status']
             purchase_status=result_map['purchase_sources.json']['status']
             fx_status=result_map['exchange_rates.json']['status']
+            grading_status=result_map['grading_company_updates.json']['status']
         except Exception as exc:
             message=f'통합 자동업데이트 오류: {type(exc).__name__}'
-            release_status=market_status=watch_status=promo_status=purchase_status=fx_status=message
+            release_status=market_status=watch_status=promo_status=purchase_status=fx_status=grading_status=message
         data=load_db()
         # 통합 업데이트가 끝나면 사용자가 출처별로 다시 체크/승인하지 않아도 된다.
         # 수집 오류 항목만 대기목록에 남기고, 정상 변경감지는 자동 검증 반영 기록으로 이동한다.
@@ -754,7 +755,7 @@ def update_cycle(trigger='manual', progress_callback=None):
             'last_run':time.strftime('%Y-%m-%dT%H:%M:%S%z',time.localtime(started)),
             'next_run':time.strftime('%Y-%m-%dT%H:%M:%S%z',time.localtime(started+AUTO_INTERVAL_SECONDS)),
             'status':release_status,'market_status':market_status,'watch_status':watch_status,
-            'promo_status':promo_status,'purchase_status':purchase_status,'fx_status':fx_status,
+            'promo_status':promo_status,'purchase_status':purchase_status,'fx_status':fx_status,'grading_status':grading_status,
             'source_checked_count':len(SOURCES),
             'source_auto_applied_count':len(normal),
             'source_error_count':len(errors),
@@ -933,16 +934,24 @@ def _progress_update(current,total,label,filename,state,result=None):
         changes['last_result']={k:result.get(k) for k in ('name','file','ok','status','error','collection_errors') if k in result}
     _job_set(**changes)
 
+def _full_update_job_count():
+    try:
+        import auto_update_all
+        return max(1,len(auto_update_all.JOBS))
+    except (ImportError,AttributeError,TypeError):
+        return 8
+
 def _background_full_update(job_id):
     try:
-        _job_set(state='running',message='공식자료 7단계 업데이트 시작',current=0,total=7,error=None)
+        total_jobs=_full_update_job_count()
+        _job_set(state='running',message=f'공식자료 {total_jobs}단계 업데이트 시작',current=0,total=total_jobs,error=None)
         data=update_cycle('manual', progress_callback=_progress_update)
         report=load_json_file(AUTO_REPORT,{'ok':False,'results':[]})
         issues=load_json_file(AUTO_ISSUES,{'issue_count':0,'issues':[]})
         deferred=report.get('deferred_timeout_recovery',{}) if isinstance(report,dict) else {}
         deferred_message=(f" · 시간초과 별도수집 {deferred.get('recovered_count',0)}/{deferred.get('attempted_count',0)}건 복구"
                           if deferred.get('attempted_count') else "")
-        _job_set(state='completed',finished_at=time.strftime('%Y-%m-%dT%H:%M:%S%z'),current=7,total=7,
+        _job_set(state='completed',finished_at=time.strftime('%Y-%m-%dT%H:%M:%S%z'),current=total_jobs,total=total_jobs,
                  label='완료',message='전체 업데이트 완료'+deferred_message,report=report,issues=issues,auto_update=data.get('auto_update',{}))
     except Exception as exc:
         _job_set(state='failed',finished_at=time.strftime('%Y-%m-%dT%H:%M:%S%z'),
@@ -990,8 +999,9 @@ def _start_background_update(retry_only=False):
             return None, {'ok':False,'error':'업데이트 요청이 너무 빠릅니다','retry_after_seconds':round(wait,1)}, 429
         LAST_MANUAL_UPDATE=now
         job_id=f"{int(time.time())}-{os.getpid()}"
+        total_jobs=_full_update_job_count()
         _job_set(id=job_id,state='queued',trigger='retry-failed' if retry_only else 'manual',
-                 started_at=time.strftime('%Y-%m-%dT%H:%M:%S%z'),finished_at=None,current=0,total=0 if retry_only else 7,
+                 started_at=time.strftime('%Y-%m-%dT%H:%M:%S%z'),finished_at=None,current=0,total=0 if retry_only else total_jobs,
                  label='대기 중',file=None,message='업데이트 작업 준비 중',error=None,report=None,retry_only=retry_only)
     target=_background_retry_failed if retry_only else _background_full_update
     threading.Thread(target=target,args=(job_id,),daemon=True).start()

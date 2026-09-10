@@ -27,6 +27,7 @@ REQUIRED_FILES = (
     "vision_calibration.py", "verify_vision_calibration.py", "vision_calibration.json",
     "trusted_ai_tests/test_card_name.py",
     "market_prices.json", "market_watch.json", "promo_events.json",
+    "grading_company_watch.py", "grading_company_updates.json",
     "social_event_discovery.py", "social_event_candidates.json", "social_source_registry.json",
     "purchase_sources.json", "manifest.webmanifest", "sw.js",
 )
@@ -73,6 +74,8 @@ def audit_feature_contract(root: str | Path | None = None) -> dict[str, Any]:
     social_registry = _json(base / "social_source_registry.json")
     social_discovery = safe_read_text(base / "social_event_discovery.py")
     purchases = _json(base / "purchase_sources.json")
+    grading_updates = _json(base / "grading_company_updates.json")
+    grading_watch = safe_read_text(base / "grading_company_watch.py")
 
     features: list[dict[str, Any]] = []
 
@@ -165,13 +168,14 @@ def audit_feature_contract(root: str | Path | None = None) -> dict[str, Any]:
                                               "DEFERRED_TIMEOUT_MAX_SECONDS = 600",
                                               "_deferred_timeout_eligible")),
         "시간초과 전용 분리예산")
-    add("six_collection_jobs", "출시·재발매·시세·행사·구매처·환율·등급사진 7단계 자동수집",
-        "'total':7" in server and "graded_photo_multi_source" in automatic
-        and all(token in server for token in ("/api/run-graded-photo-collection", "/api/graded-photo-collection-status"))
-        and len(re.findall(
-            r'^\s*\("[^"]+",\s*"update_[^"]+",\s*"[^"]+\.json"\),?$', automatic, re.M
-        )) == 6,
-        "6개 기존 작업 + OCR·공식 인증검증 등급사진 작업")
+    add("six_collection_jobs", "출시·재발매·시세·행사·구매처·환율·감정업체·등급사진 8단계 자동수집",
+        "_full_update_job_count" in server
+        and all(token in automatic for token in ("grading_company_watch", "grading_company_updates.json", "graded_photo_multi_source"))
+        and all(token in server for token in ("grading_status", "/api/run-graded-photo-collection", "/api/graded-photo-collection-status"))
+        and grading_updates.get("policy",{}).get("official_sources_only") is True
+        and set(grading_updates.get("companies",{})) == {"PSA","BGS","CGC","TAG","BRG"}
+        and "WATCH_SOURCES" in grading_watch,
+        "6개 기존 자료 + 공식 감정업체 변경감시 + OCR·공식 인증검증 등급사진 작업")
     add("scheduled_precollection", "6시간 자동반영·30분 전 사전수집",
         "AUTO_INTERVAL_SECONDS=6*60*60" in server and "PRECOLLECT_LEAD_SECONDS=30*60" in server,
         "PC·안드로이드 공통 일정")

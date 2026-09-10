@@ -13,6 +13,7 @@ Eligible jobs:
 - promo/events
 - purchase sources
 - exchange rates
+- grading-company official changes
 - graded-photo candidates
 - integrated discovery
 - link audit
@@ -67,6 +68,7 @@ JOB_KEYS = (
     "promo_events.json",
     "purchase_sources.json",
     "exchange_rates.json",
+    "grading_company_updates.json",
     "graded_photo_candidates.json",
     "__integration__",
     "__link_audit__",

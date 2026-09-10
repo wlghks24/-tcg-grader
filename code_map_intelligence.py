@@ -135,7 +135,8 @@ FEATURE_QUERY_ALIASES = {
     ),
     "instagram_cardinfo_production_state": (
         "인스타 카드정보 작업물", "작업물", "production state", "baseline",
-        "10:30 제작", "22:30 수정판", "artifact",
+        "월요일 19:00 제작", "매시간 수집", "정각 수집", "19:00 제작", "weekly production",
+        "구형 10:30 제작", "구형 22:30 수정판", "artifact",
         "작업물 안올라옴", "작업물 누락", "silent output", "복구수집",
         "recovery collection", "production recovery",
     ),
@@ -160,11 +161,15 @@ FEATURE_QUERY_ALIASES = {
 FEATURE_ROUTE_OVERRIDES = {
     "five_company_grading": (
         "grading_company_watch.py",
+        "auto_update_all.py",
+        "tcg_updater.py",
+        "verified_collection_job_neural.py",
         "grading_costs_live.py",
         "grading_costs_live.js",
         "test_grading_company_watch_v215.py",
         "test_grading_costs_live.py",
         ".github/workflows/grading-company-watch.yml",
+        ".github/workflows/tcg-static-data-refresh.yml",
     ),
     "market_collection": (
         "test_multi_market_price_collector.py",

@@ -198,6 +198,7 @@ class VerifiedCollectionJobNeuralV212Tests(unittest.TestCase):
                 "promo_events.json": {"ewma_seconds": 40},
                 "purchase_sources.json": {"ewma_seconds": 50},
                 "exchange_rates.json": {"ewma_seconds": 60},
+                "grading_company_updates.json": {"ewma_seconds": 65},
                 "graded_photo_candidates.json": {"ewma_seconds": 70},
             }
         }
@@ -211,6 +212,7 @@ class VerifiedCollectionJobNeuralV212Tests(unittest.TestCase):
             [job[2] for job in inactive],
             [
                 "graded_photo_candidates.json",
+                "grading_company_updates.json",
                 "exchange_rates.json",
                 "purchase_sources.json",
                 "promo_events.json",

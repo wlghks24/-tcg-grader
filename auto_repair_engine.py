@@ -75,7 +75,7 @@ SAFE_JSON_FILES = {
     "learning_store.json", "verification_history.json", "auto_update_report.json",
     "auto_update_issues.json", "adaptive_collection_stats.json", "source_collection_stats.json",
     "link_health_report.json", "tcg_live_data.json", "auto_repair_memory.json",
-    "verification_cycles.json", "graded_photo_candidates.json",
+    "verification_cycles.json", "graded_photo_candidates.json", "grading_company_updates.json",
     "collector_self_heal_memory.json",
 }
 
@@ -99,6 +99,7 @@ REQUIRED_JSON_FIELDS = {
     "auto_repair_memory.json": {"patterns": dict, "files": dict},
     "verification_cycles.json": {"results": list},
     "graded_photo_candidates.json": {"records": list, "summary": dict},
+    "grading_company_updates.json": {"companies": dict, "sources": dict, "summary": dict, "policy": dict},
     "collector_self_heal_memory.json": {"files": dict, "events": list, "quarantine": list},
 }
 
@@ -202,6 +203,23 @@ def _valid_project_payload(filename: str, data: Any) -> bool:
             if any(isinstance(value, bool) or not isinstance(value, (int, float)) for value in values):
                 return False
             if not (0 < values[0] < 30 and 500 < values[1] < 3000):
+                return False
+        elif filename == "grading_company_updates.json":
+            if data.get("schema_version") != 1:
+                return False
+            if set(data["companies"]) != {"PSA","BGS","CGC","TAG","BRG"} or len(data["sources"]) < 10:
+                return False
+            policy=data["policy"]
+            if (policy.get("official_sources_only") is not True
+                    or policy.get("community_posts_are_leads_only") is not True
+                    or policy.get("automatic_source_code_mutation") is not False
+                    or policy.get("last_good_retained_on_failure") is not True):
+                return False
+            if any(not isinstance(row,dict) or not isinstance(row.get("url"),str) for row in data["sources"].values()):
+                return False
+            for row in data["sources"].values():
+                validate_public_https_url(row["url"])
+            if any(not isinstance(row,dict) or row.get("verified_official_source") is not True for row in (data.get("recent_changes") or [])):
                 return False
         elif filename == "graded_photo_candidates.json":
             records = data["records"]
