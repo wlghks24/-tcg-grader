@@ -88,6 +88,17 @@ class ReleaseHistoryCoverageV4Tests(unittest.TestCase):
         self.assertEqual(rows[0]['region'], 'US')
         self.assertEqual(rows[0]['release_date'], '2026-09-16')
 
+    def test_pokemon_japanese_constructed_decks_are_not_dropped(self):
+        rows = releases._parse_pokemon_jp_decks(
+            "スターターセットex イーブイex 構築デッキ "
+            "販売日 2026年 7月31日（金） 希望小売価格 1,800円（税込）",
+            "https://www.pokemon-card.com/products/",
+        )
+        self.assertEqual(len(rows), 1)
+        self.assertEqual(rows[0]["name"], "スターターセットex イーブイex")
+        self.assertEqual(rows[0]["release_date"], "2026-07-31")
+        self.assertEqual(rows[0]["price"], "¥1,800/덱")
+
     def test_onepiece_korean_starter_deck_is_not_dropped(self):
         rows = releases.parse_onepiece_kr(
             "[STK-29] 스타트 덱 EGGHEAD 2026-09-18 12,000원 "

@@ -480,6 +480,36 @@ def _parse_pokemon_jp_segmented(text: str, url: str) -> list[dict]:
                       "source": url, "parser": "segmented-label-date-price-v111"})
     return found
 
+def _parse_pokemon_jp_decks(text: str, url: str) -> list[dict]:
+    """Parse official Japanese constructed-deck products without treating accessories as decks."""
+    normalized = re.sub(r"\s+", " ", str(text or "")).strip()
+    pattern = re.compile(
+        r"((?:スターターセット(?:ex)?|スターターデッキ|スタートデッキ|構築済みデッキ|"
+        r"バトルアカデミー|デッキビルドBOX).{1,110}?)\s*構築デッキ\s*"
+        r"(?:販売日|発売日)\s*(20\d{2})\s*年\s*(\d{1,2})\s*月\s*(\d{1,2})\s*日"
+        r".{0,180}?(?:希望小売価格|メーカー希望小売価格|価格)\s*([0-9,]+)\s*円",
+        re.I,
+    )
+    found: list[dict] = []
+    for name, y, m, d, price in pattern.findall(normalized):
+        try:
+            release_date = dt.date(int(y), int(m), int(d)).isoformat()
+            amount = int(price.replace(",", ""))
+        except (TypeError, ValueError):
+            continue
+        if not (1 <= amount <= 1_000_000):
+            continue
+        clean = re.sub(r"\s+", " ", name).strip(" -|:：/・")
+        if len(clean) < 2:
+            continue
+        found.append({
+            "game": "Pokémon", "region": "JP", "name": clean,
+            "release_date": release_date, "price": f"¥{amount:,}/덱",
+            "status": "공식 확인", "source": url, "parser": "jp-constructed-deck-v1",
+        })
+    return _dedupe_release_rows(found)
+
+
 def _clean_pokemon_jp_api_title(value: str) -> str:
     title = re.sub(r"\s+", " ", str(value or "")).strip()
     title = re.sub(
@@ -550,22 +580,26 @@ def _collect_pokemon_jp_html() -> tuple[list[dict], str]:
     last_error: Exception | None = None
     fetched_official_page = False
     last_fingerprint = ""
+    all_rows: list[dict] = []
     for url in POKEMON_JP_PRODUCT_URLS:
         try:
             raw = fetch(url)
             last_fingerprint = fingerprint_text(raw)
             text = html_to_text(raw)
-            found = (
+            expansions = (
                 _parse_pokemon_jp(text, url)
                 or _parse_pokemon_jp_fallback(text, url)
                 or _parse_pokemon_jp_segmented(text, url)
             )
+            decks = _parse_pokemon_jp_decks(text, url)
         except (urllib.error.URLError, TimeoutError, OSError, ValueError, UnicodeError) as exc:
             last_error = exc
             continue
         fetched_official_page = True
-        if found:
-            return found, last_fingerprint
+        all_rows.extend(expansions)
+        all_rows.extend(decks)
+    if all_rows:
+        return _dedupe_release_rows(all_rows), last_fingerprint
     if fetched_official_page:
         return [], last_fingerprint
     if last_error is not None:
