@@ -128,6 +128,8 @@ class InformationLifecycleArchiveV209Tests(unittest.TestCase):
                 "archive_items": [], "archive_grace_days": 5,
                 "coverage": {"missing_source_pairs": ["나루토 카드:US"]},
                 "social_topic_expected_cells": 100,
+                "social_topic_attempted_cells": 99,
+                "social_topic_successful_cells": 98,
                 "social_topic_missing_cells": ["나루토 카드/US/release"],
             }, ensure_ascii=False), encoding="utf-8")
             findings = []
@@ -135,6 +137,7 @@ class InformationLifecycleArchiveV209Tests(unittest.TestCase):
             self.assertEqual(1, metrics["missing_event_topic_cells"])
             self.assertTrue(any(x["code"] == "MISSING_OFFICIAL_EVENT_SOURCE_CELLS" for x in findings))
             self.assertTrue(any(x["code"] == "INCOMPLETE_EVENT_TOPIC_MATRIX" for x in findings))
+            self.assertTrue(any(x["code"] == "INCOMPLETE_EVENT_TOPIC_COLLECTION_ATTEMPTS" for x in findings))
 
 
 if __name__ == "__main__":

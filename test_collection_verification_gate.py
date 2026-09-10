@@ -36,6 +36,35 @@ class CollectionVerificationGateTests(unittest.TestCase):
         self.assertEqual("pass", report["status"])
         self.assertEqual(0, report["counts"]["critical"])
 
+    def test_topic_collection_attempts_are_distinct_from_zero_results(self):
+        self.valid_fixture()
+        self.write("promo_events.json", {
+            "items": [{"region": "KR", "category": "promo", "name_ko": "Test",
+                       "source": "https://example.com/event", "source_grade": "official"}],
+            "social_topic_expected_cells": 216,
+            "social_topic_attempted_cells": 216,
+            "social_topic_successful_cells": 210,
+            "social_topic_failed_cells": ["나루토 카드/US/movie"],
+            "social_topic_undiscovered_cells": [f"cell-{i}" for i in range(216)],
+        })
+        report = gate.verify(self.root, now=self.now)
+        self.assertFalse(any(x["code"] == "INCOMPLETE_EVENT_TOPIC_COLLECTION_ATTEMPTS" for x in report["findings"]))
+        self.assertEqual(216, report["metrics"]["attempted_event_topic_cells"])
+        self.assertEqual(216, report["metrics"]["undiscovered_event_topic_cells"])
+
+    def test_missing_topic_collection_attempt_is_degraded(self):
+        self.valid_fixture()
+        self.write("promo_events.json", {
+            "items": [{"region": "KR", "category": "promo", "name_ko": "Test",
+                       "source": "https://example.com/event", "source_grade": "official"}],
+            "social_topic_expected_cells": 216,
+            "social_topic_attempted_cells": 215,
+            "social_topic_successful_cells": 215,
+        })
+        report = gate.verify(self.root, now=self.now)
+        self.assertEqual("degraded", report["status"])
+        self.assertTrue(any(x["code"] == "INCOMPLETE_EVENT_TOPIC_COLLECTION_ATTEMPTS" for x in report["findings"]))
+
     def test_empty_source_health_fails_closed(self):
         self.valid_fixture()
         self.write("source_collection_stats.json", {"updated_at": self.now.isoformat(), "sources": {}})

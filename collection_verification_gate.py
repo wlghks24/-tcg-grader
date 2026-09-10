@@ -201,18 +201,29 @@ def _audit_events(root: Path, findings: list[dict[str, Any]]) -> dict[str, int]:
         findings.append({"severity": "critical", "code": "INVALID_EVENT_ARCHIVE_POLICY", "target": "promo_events.json"})
     missing_sources = ((db.get("coverage") or {}).get("missing_source_pairs")
                        if isinstance(db.get("coverage"), dict) else [])
-    missing_topics = db.get("social_topic_missing_cells", [])
+    missing_topics = db.get("social_topic_undiscovered_cells", db.get("social_topic_missing_cells", []))
     if isinstance(missing_sources, list) and missing_sources:
         findings.append({"severity": "high", "code": "MISSING_OFFICIAL_EVENT_SOURCE_CELLS",
                          "target": "promo_events.json", "cells": missing_sources[:30]})
     expected_topics = int(db.get("social_topic_expected_cells") or 0)
+    attempted_topics = int(db.get("social_topic_attempted_cells") or 0)
+    successful_topics = int(db.get("social_topic_successful_cells") or 0)
+    failed_topics = db.get("social_topic_failed_cells", [])
     if expected_topics and expected_topics < 207:
         findings.append({"severity": "high", "code": "INCOMPLETE_EVENT_TOPIC_MATRIX",
                          "target": "promo_events.json", "expected_minimum": 207,
                          "configured_cells": expected_topics})
+    if expected_topics and attempted_topics < expected_topics:
+        findings.append({"severity": "high", "code": "INCOMPLETE_EVENT_TOPIC_COLLECTION_ATTEMPTS",
+                         "target": "promo_events.json", "expected_cells": expected_topics,
+                         "attempted_cells": attempted_topics})
     return {"promo_event_items": len(rows), "current_promo_event_items": len(current),
             "archive_promo_event_items": len(archive), "invalid_promo_event_items": invalid,
             "configured_event_topic_cells": expected_topics,
+            "attempted_event_topic_cells": attempted_topics,
+            "successful_event_topic_cells": successful_topics,
+            "failed_event_topic_cells": len(failed_topics) if isinstance(failed_topics, list) else 0,
+            "undiscovered_event_topic_cells": len(missing_topics) if isinstance(missing_topics, list) else 0,
             "missing_event_topic_cells": len(missing_topics) if isinstance(missing_topics, list) else 0}
 
 

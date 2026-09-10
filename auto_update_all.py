@@ -1174,8 +1174,28 @@ def run_all(trigger: str = "manual", selected_files=None, progress_callback=None
         fi=ex.submit(_run_aux_task,'__integration__',integration_runner)
         fl=ex.submit(_run_aux_task,'__link_audit__',link_runner)
         report['integration']=fi.result(); report['link_audit']=fl.result()
+    try:
+        import update_promo_events as _promo_sync
+        synced = _promo_sync.refresh_auxiliary_coverage_metadata(write=True)
+        validate_json("promo_events.json", synced)
+        _copy_snapshot(ROOT / "promo_events.json", LAST_GOOD / "promo_events.json")
+        report["auxiliary_coverage_sync"] = {
+            "ok": True,
+            "expected_topic_cells": int(synced.get("social_topic_expected_cells") or 0),
+            "attempted_topic_cells": int(synced.get("social_topic_attempted_cells") or 0),
+            "successful_topic_cells": int(synced.get("social_topic_successful_cells") or 0),
+            "failed_topic_cells": len(synced.get("social_topic_failed_cells") or []),
+            "undiscovered_topic_cells": len(synced.get("social_topic_undiscovered_cells") or []),
+            "source_updated_at": synced.get("social_topic_source_updated_at"),
+        }
+    except Exception as exc:
+        report["auxiliary_coverage_sync"] = {
+            "ok": False,
+            "error": diagnostic_exception(exc, 1200),
+        }
     report['ok_with_aux']=bool(report['ok'] and report['integration'].get('ok') and not report['integration'].get('degraded')
-                               and report['link_audit'].get('ok') and not report['link_audit'].get('degraded'))
+                               and report['link_audit'].get('ok') and not report['link_audit'].get('degraded')
+                               and report['auxiliary_coverage_sync'].get('ok'))
 
     # v58: 수집이 끝난 뒤에도 동일 파일을 재검증한다. 이 단계에서 복구가 있었다면
     # monitor_history에 traceback/오류 유형/안전한 조치가 남아 다음 실행의 진단 자료가 된다.
