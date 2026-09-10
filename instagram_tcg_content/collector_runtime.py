@@ -63,6 +63,11 @@ def canonicalize_url(url:str)->str:
     return urllib.parse.urlunsplit((p.scheme.lower(),p.netloc.lower(),p.path or "/",urllib.parse.urlencode(pairs),""))
 
 
+def _safe_locator_for_error(url:str)->str:
+    try: return canonicalize_url(url)
+    except ValidationError: return str(url or "")
+
+
 def parse_retry_after(value:str|None, now:datetime|None=None)->float|None:
     if not value: return None
     value=value.strip()
@@ -174,7 +179,11 @@ class AutoTracker:
             try:
                 result=self.http.fetch(url); payload=dict((spec.validator or (lambda r:self._default_validate(spec,r)))(result)); payload.setdefault("source_code",spec.source_code); payload.setdefault("canonical_locator",result.url); payload.setdefault("checked_at",utc_now()); payload.setdefault("provider_id",spec.provider_id or spec.source_code.lower()); payload.setdefault("source_tier",spec.source_tier); payload["fallback_used"]=index>=len(spec.urls); payload["is_new"]=self.state.save(spec.source_code,result.url,payload); return [payload]
             except Exception as exc:
-                last=exc; self.state.error(spec.source_code,canonicalize_url(url),classify_error(exc)); continue
+                last=exc; code=classify_error(exc); self.state.error(spec.source_code,_safe_locator_for_error(url),code)
+                if isinstance(exc,SourceDeferred): raise
+                if isinstance(exc,urllib.error.HTTPError) and (exc.code==429 or exc.code in BLOCKED_HTTP): raise
+                if isinstance(exc,ValidationError) and str(exc).startswith(("PRIVATE_SOURCE_URL_FORBIDDEN","INVALID_SOURCE_URL")): raise
+                continue
         if last: raise last
         return []
     def run(self,specs:Iterable[SourceSpec])->dict:
