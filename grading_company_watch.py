@@ -177,7 +177,9 @@ def _window(text: str, alias: str, radius: int = 420) -> str | None:
     match = re.search(re.escape(alias), text, re.I)
     if not match:
         return None
-    return text[max(0, match.start() - 80):min(len(text), match.end() + radius)]
+    # Never look behind the matched service label: a preceding tier's fee can
+    # otherwise be attached to the next tier after a service-table redesign.
+    return text[match.start():min(len(text), match.end() + radius)]
 
 
 def _price(window: str, currency: str) -> float | int | None:

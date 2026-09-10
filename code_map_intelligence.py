@@ -70,6 +70,10 @@ FEATURE_QUERY_ALIASES = {
     ),
     "five_company_grading": (
         "psa", "bgs", "cgc", "tag", "brg", "5개 업체", "five company", "등급사",
+        "감정비", "등급업체", "등급 업체", "등급업체 가격", "등급 업체 가격",
+        "grading fee", "grading price", "grading company", "서비스 레벨", "service level",
+        "납기", "turnaround", "영업일", "업체 이벤트", "등급업체 이벤트", "grading event",
+        "접수중지", "접수 중지", "접수재개", "접수 재개",
     ),
     "manual_verified_learning_gate": (
         "수동검증", "수동 검증", "manual verification", "verified learning", "학습정보",
@@ -154,6 +158,14 @@ FEATURE_QUERY_ALIASES = {
 # kept out of the global critical-feature matrix.  These let a known feature name
 # jump straight to its maintenance entrypoint without a repository-wide search.
 FEATURE_ROUTE_OVERRIDES = {
+    "five_company_grading": (
+        "grading_company_watch.py",
+        "grading_costs_live.py",
+        "grading_costs_live.js",
+        "test_grading_company_watch_v215.py",
+        "test_grading_costs_live.py",
+        ".github/workflows/grading-company-watch.yml",
+    ),
     "market_collection": (
         "test_multi_market_price_collector.py",
     ),
