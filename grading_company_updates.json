@@ -1,0 +1,1792 @@
+{
+  "schema_version": 1,
+  "checked_at": "2026-09-10T09:35:33+00:00",
+  "policy": {
+    "official_sources_only": true,
+    "community_posts_are_leads_only": true,
+    "last_good_retained_on_failure": true,
+    "automatic_source_code_mutation": false,
+    "tracks": [
+      "fee",
+      "service_level",
+      "turnaround",
+      "availability",
+      "official_events",
+      "official_announcements"
+    ]
+  },
+  "summary": {
+    "companies": 5,
+    "sources": 11,
+    "healthy_sources": 6,
+    "degraded_sources": 5,
+    "new_changes": 42
+  },
+  "companies": {
+    "PSA": {
+      "markets": {},
+      "source_health": [
+        {
+          "source_id": "psa-us-pricing",
+          "status": "degraded",
+          "url": "https://www.psacard.com/services/tradingcardgrading",
+          "error": "HTTPError: status 403"
+        },
+        {
+          "source_id": "psa-jp-pricing",
+          "status": "degraded",
+          "url": "https://www.psacard.com/ja-JP/services/tradingcardgrading/grading",
+          "error": "HTTPError: status 403"
+        },
+        {
+          "source_id": "psa-jp-news",
+          "status": "degraded",
+          "url": "https://www.psacard.com/ja-JP/articles",
+          "error": "HTTPError: status 403"
+        }
+      ]
+    },
+    "BGS": {
+      "markets": {},
+      "source_health": [
+        {
+          "source_id": "bgs-pricing",
+          "status": "degraded",
+          "url": "https://www.beckett.com/grading",
+          "error": "ValueError: unapproved host"
+        },
+        {
+          "source_id": "bgs-news",
+          "status": "degraded",
+          "url": "https://www.beckett.com/news/",
+          "error": "ValueError: unapproved host"
+        }
+      ]
+    },
+    "CGC": {
+      "markets": {
+        "US": {
+          "currency": "USD",
+          "source": "https://www.cgccards.com/submit/services-fees/cgc-grading/?view=cards",
+          "services": [
+            {
+              "name": "Bulk",
+              "observed_label": "Bulk",
+              "currency": "USD",
+              "availability": "unknown",
+              "source": "https://www.cgccards.com/submit/services-fees/cgc-grading/?view=cards",
+              "verified_official_source": true,
+              "fee": 500.0
+            },
+            {
+              "name": "Economy",
+              "observed_label": "Economy",
+              "currency": "USD",
+              "availability": "unknown",
+              "source": "https://www.cgccards.com/submit/services-fees/cgc-grading/?view=cards",
+              "verified_official_source": true,
+              "fee": 1000.0
+            },
+            {
+              "name": "Standard",
+              "observed_label": "Standard",
+              "currency": "USD",
+              "availability": "unknown",
+              "source": "https://www.cgccards.com/submit/services-fees/cgc-grading/?view=cards",
+              "verified_official_source": true,
+              "fee": 3000.0
+            },
+            {
+              "name": "Express",
+              "observed_label": "Express",
+              "currency": "USD",
+              "availability": "unknown",
+              "source": "https://www.cgccards.com/submit/services-fees/cgc-grading/?view=cards",
+              "verified_official_source": true,
+              "fee": 10000.0
+            },
+            {
+              "name": "WalkThrough",
+              "observed_label": "WalkThrough",
+              "currency": "USD",
+              "availability": "unknown",
+              "source": "https://www.cgccards.com/submit/services-fees/cgc-grading/?view=cards",
+              "verified_official_source": true,
+              "fee": 300.0
+            }
+          ],
+          "verified_official_source": true
+        }
+      },
+      "source_health": [
+        {
+          "source_id": "cgc-pricing",
+          "status": "ok",
+          "url": "https://www.cgccards.com/submit/services-fees/cgc-grading/?view=cards"
+        },
+        {
+          "source_id": "cgc-events",
+          "status": "ok",
+          "url": "https://www.cgccards.com/submit/events/"
+        },
+        {
+          "source_id": "cgc-news",
+          "status": "ok",
+          "url": "https://www.cgccards.com/news/"
+        }
+      ]
+    },
+    "TAG": {
+      "markets": {},
+      "source_health": [
+        {
+          "source_id": "tag-pricing",
+          "status": "ok",
+          "url": "https://taggrading.com/pages/pricing"
+        },
+        {
+          "source_id": "tag-home",
+          "status": "ok",
+          "url": "https://taggrading.com/"
+        }
+      ]
+    },
+    "BRG": {
+      "markets": {
+        "KR": {
+          "currency": "KRW",
+          "source": "https://break.co.kr/",
+          "services": [
+            {
+              "name": "Regular",
+              "observed_label": "Regular",
+              "currency": "KRW",
+              "availability": "unknown",
+              "source": "https://break.co.kr/",
+              "verified_official_source": true,
+              "fee": 19800
+            },
+            {
+              "name": "Express",
+              "observed_label": "Express",
+              "currency": "KRW",
+              "availability": "unknown",
+              "source": "https://break.co.kr/",
+              "verified_official_source": true,
+              "fee": 39800
+            },
+            {
+              "name": "Bulk",
+              "observed_label": "Bulk",
+              "currency": "KRW",
+              "availability": "unknown",
+              "source": "https://break.co.kr/",
+              "verified_official_source": true,
+              "fee": 13800
+            },
+            {
+              "name": "Reholder",
+              "observed_label": "Reholder",
+              "currency": "KRW",
+              "availability": "unknown",
+              "source": "https://break.co.kr/",
+              "verified_official_source": true,
+              "fee": 9800,
+              "turnaround_business_days": 5
+            },
+            {
+              "name": "BRG GEN",
+              "observed_label": "BRG GEN",
+              "currency": "KRW",
+              "availability": "open",
+              "source": "https://break.co.kr/",
+              "verified_official_source": true,
+              "fee": 9800,
+              "turnaround_business_days": 5
+            }
+          ],
+          "verified_official_source": true
+        }
+      },
+      "source_health": [
+        {
+          "source_id": "brg-pricing-news",
+          "status": "ok",
+          "url": "https://break.co.kr/"
+        }
+      ]
+    }
+  },
+  "sources": {
+    "psa-us-pricing": {
+      "company": "PSA",
+      "source_id": "psa-us-pricing",
+      "kind": "pricing",
+      "market": "US",
+      "currency": "USD",
+      "url": "https://www.psacard.com/services/tradingcardgrading",
+      "services": [],
+      "announcements": [],
+      "status": "degraded",
+      "checked_at": "2026-09-10T09:35:33+00:00",
+      "last_error": "HTTPError: status 403",
+      "verified_official_source": false
+    },
+    "psa-jp-pricing": {
+      "company": "PSA",
+      "source_id": "psa-jp-pricing",
+      "kind": "pricing",
+      "market": "JP",
+      "currency": "JPY",
+      "url": "https://www.psacard.com/ja-JP/services/tradingcardgrading/grading",
+      "services": [],
+      "announcements": [],
+      "status": "degraded",
+      "checked_at": "2026-09-10T09:35:33+00:00",
+      "last_error": "HTTPError: status 403",
+      "verified_official_source": false
+    },
+    "psa-jp-news": {
+      "company": "PSA",
+      "source_id": "psa-jp-news",
+      "kind": "news",
+      "market": "JP",
+      "currency": "JPY",
+      "url": "https://www.psacard.com/ja-JP/articles",
+      "services": [],
+      "announcements": [],
+      "status": "degraded",
+      "checked_at": "2026-09-10T09:35:33+00:00",
+      "last_error": "HTTPError: status 403",
+      "verified_official_source": false
+    },
+    "bgs-pricing": {
+      "company": "BGS",
+      "source_id": "bgs-pricing",
+      "kind": "pricing",
+      "market": "US",
+      "currency": "USD",
+      "url": "https://www.beckett.com/grading",
+      "services": [],
+      "announcements": [],
+      "status": "degraded",
+      "checked_at": "2026-09-10T09:35:33+00:00",
+      "last_error": "ValueError: unapproved host",
+      "verified_official_source": false
+    },
+    "bgs-news": {
+      "company": "BGS",
+      "source_id": "bgs-news",
+      "kind": "news",
+      "market": "GLOBAL",
+      "currency": "USD",
+      "url": "https://www.beckett.com/news/",
+      "services": [],
+      "announcements": [],
+      "status": "degraded",
+      "checked_at": "2026-09-10T09:35:33+00:00",
+      "last_error": "ValueError: unapproved host",
+      "verified_official_source": false
+    },
+    "cgc-pricing": {
+      "company": "CGC",
+      "source_id": "cgc-pricing",
+      "kind": "pricing",
+      "market": "US",
+      "currency": "USD",
+      "url": "https://www.cgccards.com/submit/services-fees/cgc-grading/?view=cards",
+      "status": "ok",
+      "checked_at": "2026-09-10T09:35:33+00:00",
+      "signal_fingerprint": "af82d832ddfe6e187951aa755446dee325211eb78f2dc630439cc458baf503d6",
+      "services": [
+        {
+          "name": "Bulk",
+          "observed_label": "Bulk",
+          "currency": "USD",
+          "availability": "unknown",
+          "source": "https://www.cgccards.com/submit/services-fees/cgc-grading/?view=cards",
+          "verified_official_source": true,
+          "fee": 500.0
+        },
+        {
+          "name": "Economy",
+          "observed_label": "Economy",
+          "currency": "USD",
+          "availability": "unknown",
+          "source": "https://www.cgccards.com/submit/services-fees/cgc-grading/?view=cards",
+          "verified_official_source": true,
+          "fee": 1000.0
+        },
+        {
+          "name": "Standard",
+          "observed_label": "Standard",
+          "currency": "USD",
+          "availability": "unknown",
+          "source": "https://www.cgccards.com/submit/services-fees/cgc-grading/?view=cards",
+          "verified_official_source": true,
+          "fee": 3000.0
+        },
+        {
+          "name": "Express",
+          "observed_label": "Express",
+          "currency": "USD",
+          "availability": "unknown",
+          "source": "https://www.cgccards.com/submit/services-fees/cgc-grading/?view=cards",
+          "verified_official_source": true,
+          "fee": 10000.0
+        },
+        {
+          "name": "WalkThrough",
+          "observed_label": "WalkThrough",
+          "currency": "USD",
+          "availability": "unknown",
+          "source": "https://www.cgccards.com/submit/services-fees/cgc-grading/?view=cards",
+          "verified_official_source": true,
+          "fee": 300.0
+        }
+      ],
+      "announcements": [],
+      "verified_official_source": true
+    },
+    "cgc-events": {
+      "company": "CGC",
+      "source_id": "cgc-events",
+      "kind": "events",
+      "market": "GLOBAL",
+      "currency": "USD",
+      "url": "https://www.cgccards.com/submit/events/",
+      "status": "ok",
+      "checked_at": "2026-09-10T09:35:33+00:00",
+      "signal_fingerprint": "7769c565b846014d8aba26bd33584dafdb45022331dad2f4e075167344d979d0",
+      "services": [],
+      "announcements": [
+        {
+          "company": "CGC",
+          "source_id": "cgc-events",
+          "title": "TCG and Non-sports Card Grading",
+          "url": "https://www.cgccards.com/card-grading/trading-card-grading/",
+          "verified_official_source": true
+        },
+        {
+          "company": "CGC",
+          "source_id": "cgc-events",
+          "title": "Sports Card Grading",
+          "url": "https://www.cgccards.com/card-grading/sports-card-grading/",
+          "verified_official_source": true
+        },
+        {
+          "company": "CGC",
+          "source_id": "cgc-events",
+          "title": "Grading Process",
+          "url": "https://www.cgccards.com/card-grading/grading-process/",
+          "verified_official_source": true
+        },
+        {
+          "company": "CGC",
+          "source_id": "cgc-events",
+          "title": "Grading Scale",
+          "url": "https://www.cgccards.com/card-grading/grading-scale/",
+          "verified_official_source": true
+        },
+        {
+          "company": "CGC",
+          "source_id": "cgc-events",
+          "title": "Services & Fees",
+          "url": "https://www.cgccards.com/submit/services-fees/",
+          "verified_official_source": true
+        },
+        {
+          "company": "CGC",
+          "source_id": "cgc-events",
+          "title": "Submission Form",
+          "url": "https://www.cgccards.com/account/my-submissions/",
+          "verified_official_source": true
+        },
+        {
+          "company": "CGC",
+          "source_id": "cgc-events",
+          "title": "Submission Tracking",
+          "url": "https://www.cgccards.com/account/my-submissions/tracking/",
+          "verified_official_source": true
+        },
+        {
+          "company": "CGC",
+          "source_id": "cgc-events",
+          "title": "Events",
+          "url": "https://www.cgccards.com/submit/events/",
+          "verified_official_source": true
+        }
+      ],
+      "verified_official_source": true
+    },
+    "cgc-news": {
+      "company": "CGC",
+      "source_id": "cgc-news",
+      "kind": "news",
+      "market": "GLOBAL",
+      "currency": "USD",
+      "url": "https://www.cgccards.com/news/",
+      "status": "ok",
+      "checked_at": "2026-09-10T09:35:33+00:00",
+      "signal_fingerprint": "c9a9ff709278a690617ad86220533f8a9ca5ebe6fd0a7090928e3418f23d79a2",
+      "services": [],
+      "announcements": [
+        {
+          "company": "CGC",
+          "source_id": "cgc-news",
+          "title": "TCG and Non-sports Card Grading",
+          "url": "https://www.cgccards.com/card-grading/trading-card-grading/",
+          "verified_official_source": true
+        },
+        {
+          "company": "CGC",
+          "source_id": "cgc-news",
+          "title": "Sports Card Grading",
+          "url": "https://www.cgccards.com/card-grading/sports-card-grading/",
+          "verified_official_source": true
+        },
+        {
+          "company": "CGC",
+          "source_id": "cgc-news",
+          "title": "Grading Process",
+          "url": "https://www.cgccards.com/card-grading/grading-process/",
+          "verified_official_source": true
+        },
+        {
+          "company": "CGC",
+          "source_id": "cgc-news",
+          "title": "Grading Scale",
+          "url": "https://www.cgccards.com/card-grading/grading-scale/",
+          "verified_official_source": true
+        },
+        {
+          "company": "CGC",
+          "source_id": "cgc-news",
+          "title": "Services & Fees",
+          "url": "https://www.cgccards.com/submit/services-fees/",
+          "verified_official_source": true
+        },
+        {
+          "company": "CGC",
+          "source_id": "cgc-news",
+          "title": "Submission Form",
+          "url": "https://www.cgccards.com/account/my-submissions/",
+          "verified_official_source": true
+        },
+        {
+          "company": "CGC",
+          "source_id": "cgc-news",
+          "title": "Submission Tracking",
+          "url": "https://www.cgccards.com/account/my-submissions/tracking/",
+          "verified_official_source": true
+        },
+        {
+          "company": "CGC",
+          "source_id": "cgc-news",
+          "title": "Events",
+          "url": "https://www.cgccards.com/submit/events/",
+          "verified_official_source": true
+        }
+      ],
+      "verified_official_source": true
+    },
+    "tag-pricing": {
+      "company": "TAG",
+      "source_id": "tag-pricing",
+      "kind": "pricing",
+      "market": "US",
+      "currency": "USD",
+      "url": "https://taggrading.com/pages/pricing",
+      "status": "ok",
+      "checked_at": "2026-09-10T09:35:33+00:00",
+      "signal_fingerprint": "0e9f55411a94d2016974a85632d9fa32e343c02e94c65a3a1f347a2615dc4c82",
+      "services": [],
+      "announcements": [],
+      "verified_official_source": true
+    },
+    "tag-home": {
+      "company": "TAG",
+      "source_id": "tag-home",
+      "kind": "news",
+      "market": "GLOBAL",
+      "currency": "USD",
+      "url": "https://taggrading.com/",
+      "status": "ok",
+      "checked_at": "2026-09-10T09:35:33+00:00",
+      "signal_fingerprint": "d24613f879d3faf33de85d19ab671c19dbf1be64033b5270313756c608b2a2ef",
+      "services": [],
+      "announcements": [
+        {
+          "company": "TAG",
+          "source_id": "tag-home",
+          "title": "PRIORITY GRADING",
+          "url": "https://taggrading.com/pages/pricing",
+          "verified_official_source": true
+        },
+        {
+          "company": "TAG",
+          "source_id": "tag-home",
+          "title": "GRADING",
+          "url": "https://taggrading.com/pages/grading",
+          "verified_official_source": true
+        },
+        {
+          "company": "TAG",
+          "source_id": "tag-home",
+          "title": "EVENTS",
+          "url": "https://taggrading.com/pages/events",
+          "verified_official_source": true
+        },
+        {
+          "company": "TAG",
+          "source_id": "tag-home",
+          "title": "EVENTS / APPEARANCES",
+          "url": "https://taggrading.com/pages/events",
+          "verified_official_source": true
+        },
+        {
+          "company": "TAG",
+          "source_id": "tag-home",
+          "title": "TERMS OF SERVICE",
+          "url": "https://taggrading.com/pages/terms",
+          "verified_official_source": true
+        },
+        {
+          "company": "TAG",
+          "source_id": "tag-home",
+          "title": "GRADING SCALE",
+          "url": "https://taggrading.com/pages/scale",
+          "verified_official_source": true
+        },
+        {
+          "company": "TAG",
+          "source_id": "tag-home",
+          "title": "GRADING RUBRIC",
+          "url": "https://taggrading.com/pages/rubric",
+          "verified_official_source": true
+        },
+        {
+          "company": "TAG",
+          "source_id": "tag-home",
+          "title": "GRADING GLOSSARY",
+          "url": "https://taggrading.com/pages/glossary",
+          "verified_official_source": true
+        },
+        {
+          "company": "TAG",
+          "source_id": "tag-home",
+          "title": "ELIGIBLE FOR GRADING",
+          "url": "https://taggrading.com/pages/currently-grading",
+          "verified_official_source": true
+        },
+        {
+          "company": "TAG",
+          "source_id": "tag-home",
+          "title": "PRICING & SERVICES",
+          "url": "https://taggrading.com/pages/pricing",
+          "verified_official_source": true
+        },
+        {
+          "company": "TAG",
+          "source_id": "tag-home",
+          "title": "SUBMISSION KITS",
+          "url": "https://taggrading.com/pages/subkit",
+          "verified_official_source": true
+        },
+        {
+          "company": "TAG",
+          "source_id": "tag-home",
+          "title": "TAG VS MANUAL GRADING",
+          "url": "https://taggrading.com/pages/tagvsother",
+          "verified_official_source": true
+        },
+        {
+          "company": "TAG",
+          "source_id": "tag-home",
+          "title": "PURCHASE GRADING",
+          "url": "https://taggrading.com/pages/pricing",
+          "verified_official_source": true
+        },
+        {
+          "company": "TAG",
+          "source_id": "tag-home",
+          "title": "GRADING DECKBOX",
+          "url": "https://taggrading.com/products/tag-deckbox-1",
+          "verified_official_source": true
+        },
+        {
+          "company": "TAG",
+          "source_id": "tag-home",
+          "title": "CURRENTLY GRADING",
+          "url": "https://taggrading.com/pages/currently-grading",
+          "verified_official_source": true
+        }
+      ],
+      "verified_official_source": true
+    },
+    "brg-pricing-news": {
+      "company": "BRG",
+      "source_id": "brg-pricing-news",
+      "kind": "pricing_news",
+      "market": "KR",
+      "currency": "KRW",
+      "url": "https://break.co.kr/",
+      "status": "ok",
+      "checked_at": "2026-09-10T09:35:33+00:00",
+      "signal_fingerprint": "a4b3f397492317435fdf3b29d0a799fc47c5cc679cf36d24d983c7c80facb2e7",
+      "services": [
+        {
+          "name": "Regular",
+          "observed_label": "Regular",
+          "currency": "KRW",
+          "availability": "unknown",
+          "source": "https://break.co.kr/",
+          "verified_official_source": true,
+          "fee": 19800
+        },
+        {
+          "name": "Express",
+          "observed_label": "Express",
+          "currency": "KRW",
+          "availability": "unknown",
+          "source": "https://break.co.kr/",
+          "verified_official_source": true,
+          "fee": 39800
+        },
+        {
+          "name": "Bulk",
+          "observed_label": "Bulk",
+          "currency": "KRW",
+          "availability": "unknown",
+          "source": "https://break.co.kr/",
+          "verified_official_source": true,
+          "fee": 13800
+        },
+        {
+          "name": "Reholder",
+          "observed_label": "Reholder",
+          "currency": "KRW",
+          "availability": "unknown",
+          "source": "https://break.co.kr/",
+          "verified_official_source": true,
+          "fee": 9800,
+          "turnaround_business_days": 5
+        },
+        {
+          "name": "BRG GEN",
+          "observed_label": "BRG GEN",
+          "currency": "KRW",
+          "availability": "open",
+          "source": "https://break.co.kr/",
+          "verified_official_source": true,
+          "fee": 9800,
+          "turnaround_business_days": 5
+        }
+      ],
+      "announcements": [
+        {
+          "company": "BRG",
+          "source_id": "brg-pricing-news",
+          "title": "공지사항 & 이벤트",
+          "url": "https://break.co.kr/notice",
+          "verified_official_source": true
+        }
+      ],
+      "verified_official_source": true
+    }
+  },
+  "announcements": [
+    {
+      "company": "CGC",
+      "source_id": "cgc-news",
+      "title": "TCG and Non-sports Card Grading",
+      "url": "https://www.cgccards.com/card-grading/trading-card-grading/",
+      "verified_official_source": true
+    },
+    {
+      "company": "CGC",
+      "source_id": "cgc-news",
+      "title": "Sports Card Grading",
+      "url": "https://www.cgccards.com/card-grading/sports-card-grading/",
+      "verified_official_source": true
+    },
+    {
+      "company": "CGC",
+      "source_id": "cgc-news",
+      "title": "Grading Process",
+      "url": "https://www.cgccards.com/card-grading/grading-process/",
+      "verified_official_source": true
+    },
+    {
+      "company": "CGC",
+      "source_id": "cgc-news",
+      "title": "Grading Scale",
+      "url": "https://www.cgccards.com/card-grading/grading-scale/",
+      "verified_official_source": true
+    },
+    {
+      "company": "CGC",
+      "source_id": "cgc-news",
+      "title": "Services & Fees",
+      "url": "https://www.cgccards.com/submit/services-fees/",
+      "verified_official_source": true
+    },
+    {
+      "company": "CGC",
+      "source_id": "cgc-news",
+      "title": "Submission Form",
+      "url": "https://www.cgccards.com/account/my-submissions/",
+      "verified_official_source": true
+    },
+    {
+      "company": "CGC",
+      "source_id": "cgc-news",
+      "title": "Submission Tracking",
+      "url": "https://www.cgccards.com/account/my-submissions/tracking/",
+      "verified_official_source": true
+    },
+    {
+      "company": "CGC",
+      "source_id": "cgc-news",
+      "title": "Events",
+      "url": "https://www.cgccards.com/submit/events/",
+      "verified_official_source": true
+    },
+    {
+      "company": "TAG",
+      "source_id": "tag-home",
+      "title": "PRIORITY GRADING",
+      "url": "https://taggrading.com/pages/pricing",
+      "verified_official_source": true
+    },
+    {
+      "company": "TAG",
+      "source_id": "tag-home",
+      "title": "GRADING",
+      "url": "https://taggrading.com/pages/grading",
+      "verified_official_source": true
+    },
+    {
+      "company": "TAG",
+      "source_id": "tag-home",
+      "title": "EVENTS",
+      "url": "https://taggrading.com/pages/events",
+      "verified_official_source": true
+    },
+    {
+      "company": "TAG",
+      "source_id": "tag-home",
+      "title": "EVENTS / APPEARANCES",
+      "url": "https://taggrading.com/pages/events",
+      "verified_official_source": true
+    },
+    {
+      "company": "TAG",
+      "source_id": "tag-home",
+      "title": "TERMS OF SERVICE",
+      "url": "https://taggrading.com/pages/terms",
+      "verified_official_source": true
+    },
+    {
+      "company": "TAG",
+      "source_id": "tag-home",
+      "title": "GRADING SCALE",
+      "url": "https://taggrading.com/pages/scale",
+      "verified_official_source": true
+    },
+    {
+      "company": "TAG",
+      "source_id": "tag-home",
+      "title": "GRADING RUBRIC",
+      "url": "https://taggrading.com/pages/rubric",
+      "verified_official_source": true
+    },
+    {
+      "company": "TAG",
+      "source_id": "tag-home",
+      "title": "GRADING GLOSSARY",
+      "url": "https://taggrading.com/pages/glossary",
+      "verified_official_source": true
+    },
+    {
+      "company": "TAG",
+      "source_id": "tag-home",
+      "title": "ELIGIBLE FOR GRADING",
+      "url": "https://taggrading.com/pages/currently-grading",
+      "verified_official_source": true
+    },
+    {
+      "company": "TAG",
+      "source_id": "tag-home",
+      "title": "PRICING & SERVICES",
+      "url": "https://taggrading.com/pages/pricing",
+      "verified_official_source": true
+    },
+    {
+      "company": "TAG",
+      "source_id": "tag-home",
+      "title": "SUBMISSION KITS",
+      "url": "https://taggrading.com/pages/subkit",
+      "verified_official_source": true
+    },
+    {
+      "company": "TAG",
+      "source_id": "tag-home",
+      "title": "TAG VS MANUAL GRADING",
+      "url": "https://taggrading.com/pages/tagvsother",
+      "verified_official_source": true
+    },
+    {
+      "company": "TAG",
+      "source_id": "tag-home",
+      "title": "PURCHASE GRADING",
+      "url": "https://taggrading.com/pages/pricing",
+      "verified_official_source": true
+    },
+    {
+      "company": "TAG",
+      "source_id": "tag-home",
+      "title": "GRADING DECKBOX",
+      "url": "https://taggrading.com/products/tag-deckbox-1",
+      "verified_official_source": true
+    },
+    {
+      "company": "TAG",
+      "source_id": "tag-home",
+      "title": "CURRENTLY GRADING",
+      "url": "https://taggrading.com/pages/currently-grading",
+      "verified_official_source": true
+    },
+    {
+      "company": "BRG",
+      "source_id": "brg-pricing-news",
+      "title": "공지사항 & 이벤트",
+      "url": "https://break.co.kr/notice",
+      "verified_official_source": true
+    }
+  ],
+  "recent_changes": [
+    {
+      "company": "CGC",
+      "source_id": "cgc-pricing",
+      "type": "service_added",
+      "service": "Bulk",
+      "after": {
+        "name": "Bulk",
+        "observed_label": "Bulk",
+        "currency": "USD",
+        "availability": "unknown",
+        "source": "https://www.cgccards.com/submit/services-fees/cgc-grading/?view=cards",
+        "verified_official_source": true,
+        "fee": 500.0
+      },
+      "detected_at": "2026-09-10T09:35:33+00:00",
+      "verified_official_source": true
+    },
+    {
+      "company": "CGC",
+      "source_id": "cgc-pricing",
+      "type": "service_added",
+      "service": "Economy",
+      "after": {
+        "name": "Economy",
+        "observed_label": "Economy",
+        "currency": "USD",
+        "availability": "unknown",
+        "source": "https://www.cgccards.com/submit/services-fees/cgc-grading/?view=cards",
+        "verified_official_source": true,
+        "fee": 1000.0
+      },
+      "detected_at": "2026-09-10T09:35:33+00:00",
+      "verified_official_source": true
+    },
+    {
+      "company": "CGC",
+      "source_id": "cgc-pricing",
+      "type": "service_added",
+      "service": "Standard",
+      "after": {
+        "name": "Standard",
+        "observed_label": "Standard",
+        "currency": "USD",
+        "availability": "unknown",
+        "source": "https://www.cgccards.com/submit/services-fees/cgc-grading/?view=cards",
+        "verified_official_source": true,
+        "fee": 3000.0
+      },
+      "detected_at": "2026-09-10T09:35:33+00:00",
+      "verified_official_source": true
+    },
+    {
+      "company": "CGC",
+      "source_id": "cgc-pricing",
+      "type": "service_added",
+      "service": "Express",
+      "after": {
+        "name": "Express",
+        "observed_label": "Express",
+        "currency": "USD",
+        "availability": "unknown",
+        "source": "https://www.cgccards.com/submit/services-fees/cgc-grading/?view=cards",
+        "verified_official_source": true,
+        "fee": 10000.0
+      },
+      "detected_at": "2026-09-10T09:35:33+00:00",
+      "verified_official_source": true
+    },
+    {
+      "company": "CGC",
+      "source_id": "cgc-pricing",
+      "type": "service_added",
+      "service": "WalkThrough",
+      "after": {
+        "name": "WalkThrough",
+        "observed_label": "WalkThrough",
+        "currency": "USD",
+        "availability": "unknown",
+        "source": "https://www.cgccards.com/submit/services-fees/cgc-grading/?view=cards",
+        "verified_official_source": true,
+        "fee": 300.0
+      },
+      "detected_at": "2026-09-10T09:35:33+00:00",
+      "verified_official_source": true
+    },
+    {
+      "company": "BRG",
+      "source_id": "brg-pricing-news",
+      "type": "service_added",
+      "service": "Regular",
+      "after": {
+        "name": "Regular",
+        "observed_label": "Regular",
+        "currency": "KRW",
+        "availability": "unknown",
+        "source": "https://break.co.kr/",
+        "verified_official_source": true,
+        "fee": 19800
+      },
+      "detected_at": "2026-09-10T09:35:33+00:00",
+      "verified_official_source": true
+    },
+    {
+      "company": "BRG",
+      "source_id": "brg-pricing-news",
+      "type": "service_added",
+      "service": "Express",
+      "after": {
+        "name": "Express",
+        "observed_label": "Express",
+        "currency": "KRW",
+        "availability": "unknown",
+        "source": "https://break.co.kr/",
+        "verified_official_source": true,
+        "fee": 39800
+      },
+      "detected_at": "2026-09-10T09:35:33+00:00",
+      "verified_official_source": true
+    },
+    {
+      "company": "BRG",
+      "source_id": "brg-pricing-news",
+      "type": "service_added",
+      "service": "Bulk",
+      "after": {
+        "name": "Bulk",
+        "observed_label": "Bulk",
+        "currency": "KRW",
+        "availability": "unknown",
+        "source": "https://break.co.kr/",
+        "verified_official_source": true,
+        "fee": 13800
+      },
+      "detected_at": "2026-09-10T09:35:33+00:00",
+      "verified_official_source": true
+    },
+    {
+      "company": "BRG",
+      "source_id": "brg-pricing-news",
+      "type": "service_added",
+      "service": "Reholder",
+      "after": {
+        "name": "Reholder",
+        "observed_label": "Reholder",
+        "currency": "KRW",
+        "availability": "unknown",
+        "source": "https://break.co.kr/",
+        "verified_official_source": true,
+        "fee": 9800,
+        "turnaround_business_days": 5
+      },
+      "detected_at": "2026-09-10T09:35:33+00:00",
+      "verified_official_source": true
+    },
+    {
+      "company": "BRG",
+      "source_id": "brg-pricing-news",
+      "type": "service_added",
+      "service": "BRG GEN",
+      "after": {
+        "name": "BRG GEN",
+        "observed_label": "BRG GEN",
+        "currency": "KRW",
+        "availability": "open",
+        "source": "https://break.co.kr/",
+        "verified_official_source": true,
+        "fee": 9800,
+        "turnaround_business_days": 5
+      },
+      "detected_at": "2026-09-10T09:35:33+00:00",
+      "verified_official_source": true
+    },
+    {
+      "company": "CGC",
+      "source_id": "cgc-events",
+      "type": "official_announcement",
+      "title": "TCG and Non-sports Card Grading",
+      "url": "https://www.cgccards.com/card-grading/trading-card-grading/",
+      "detected_at": "2026-09-10T09:35:33+00:00",
+      "verified_official_source": true
+    },
+    {
+      "company": "CGC",
+      "source_id": "cgc-events",
+      "type": "official_announcement",
+      "title": "Sports Card Grading",
+      "url": "https://www.cgccards.com/card-grading/sports-card-grading/",
+      "detected_at": "2026-09-10T09:35:33+00:00",
+      "verified_official_source": true
+    },
+    {
+      "company": "CGC",
+      "source_id": "cgc-events",
+      "type": "official_announcement",
+      "title": "Grading Process",
+      "url": "https://www.cgccards.com/card-grading/grading-process/",
+      "detected_at": "2026-09-10T09:35:33+00:00",
+      "verified_official_source": true
+    },
+    {
+      "company": "CGC",
+      "source_id": "cgc-events",
+      "type": "official_announcement",
+      "title": "Grading Scale",
+      "url": "https://www.cgccards.com/card-grading/grading-scale/",
+      "detected_at": "2026-09-10T09:35:33+00:00",
+      "verified_official_source": true
+    },
+    {
+      "company": "CGC",
+      "source_id": "cgc-events",
+      "type": "official_announcement",
+      "title": "Services & Fees",
+      "url": "https://www.cgccards.com/submit/services-fees/",
+      "detected_at": "2026-09-10T09:35:33+00:00",
+      "verified_official_source": true
+    },
+    {
+      "company": "CGC",
+      "source_id": "cgc-events",
+      "type": "official_announcement",
+      "title": "Submission Form",
+      "url": "https://www.cgccards.com/account/my-submissions/",
+      "detected_at": "2026-09-10T09:35:33+00:00",
+      "verified_official_source": true
+    },
+    {
+      "company": "CGC",
+      "source_id": "cgc-events",
+      "type": "official_announcement",
+      "title": "Submission Tracking",
+      "url": "https://www.cgccards.com/account/my-submissions/tracking/",
+      "detected_at": "2026-09-10T09:35:33+00:00",
+      "verified_official_source": true
+    },
+    {
+      "company": "CGC",
+      "source_id": "cgc-events",
+      "type": "official_announcement",
+      "title": "Events",
+      "url": "https://www.cgccards.com/submit/events/",
+      "detected_at": "2026-09-10T09:35:33+00:00",
+      "verified_official_source": true
+    },
+    {
+      "company": "CGC",
+      "source_id": "cgc-news",
+      "type": "official_announcement",
+      "title": "TCG and Non-sports Card Grading",
+      "url": "https://www.cgccards.com/card-grading/trading-card-grading/",
+      "detected_at": "2026-09-10T09:35:33+00:00",
+      "verified_official_source": true
+    },
+    {
+      "company": "CGC",
+      "source_id": "cgc-news",
+      "type": "official_announcement",
+      "title": "Sports Card Grading",
+      "url": "https://www.cgccards.com/card-grading/sports-card-grading/",
+      "detected_at": "2026-09-10T09:35:33+00:00",
+      "verified_official_source": true
+    },
+    {
+      "company": "CGC",
+      "source_id": "cgc-news",
+      "type": "official_announcement",
+      "title": "Grading Process",
+      "url": "https://www.cgccards.com/card-grading/grading-process/",
+      "detected_at": "2026-09-10T09:35:33+00:00",
+      "verified_official_source": true
+    },
+    {
+      "company": "CGC",
+      "source_id": "cgc-news",
+      "type": "official_announcement",
+      "title": "Grading Scale",
+      "url": "https://www.cgccards.com/card-grading/grading-scale/",
+      "detected_at": "2026-09-10T09:35:33+00:00",
+      "verified_official_source": true
+    },
+    {
+      "company": "CGC",
+      "source_id": "cgc-news",
+      "type": "official_announcement",
+      "title": "Services & Fees",
+      "url": "https://www.cgccards.com/submit/services-fees/",
+      "detected_at": "2026-09-10T09:35:33+00:00",
+      "verified_official_source": true
+    },
+    {
+      "company": "CGC",
+      "source_id": "cgc-news",
+      "type": "official_announcement",
+      "title": "Submission Form",
+      "url": "https://www.cgccards.com/account/my-submissions/",
+      "detected_at": "2026-09-10T09:35:33+00:00",
+      "verified_official_source": true
+    },
+    {
+      "company": "CGC",
+      "source_id": "cgc-news",
+      "type": "official_announcement",
+      "title": "Submission Tracking",
+      "url": "https://www.cgccards.com/account/my-submissions/tracking/",
+      "detected_at": "2026-09-10T09:35:33+00:00",
+      "verified_official_source": true
+    },
+    {
+      "company": "CGC",
+      "source_id": "cgc-news",
+      "type": "official_announcement",
+      "title": "Events",
+      "url": "https://www.cgccards.com/submit/events/",
+      "detected_at": "2026-09-10T09:35:33+00:00",
+      "verified_official_source": true
+    },
+    {
+      "company": "TAG",
+      "source_id": "tag-home",
+      "type": "official_announcement",
+      "title": "PRIORITY GRADING",
+      "url": "https://taggrading.com/pages/pricing",
+      "detected_at": "2026-09-10T09:35:33+00:00",
+      "verified_official_source": true
+    },
+    {
+      "company": "TAG",
+      "source_id": "tag-home",
+      "type": "official_announcement",
+      "title": "GRADING",
+      "url": "https://taggrading.com/pages/grading",
+      "detected_at": "2026-09-10T09:35:33+00:00",
+      "verified_official_source": true
+    },
+    {
+      "company": "TAG",
+      "source_id": "tag-home",
+      "type": "official_announcement",
+      "title": "EVENTS",
+      "url": "https://taggrading.com/pages/events",
+      "detected_at": "2026-09-10T09:35:33+00:00",
+      "verified_official_source": true
+    },
+    {
+      "company": "TAG",
+      "source_id": "tag-home",
+      "type": "official_announcement",
+      "title": "EVENTS / APPEARANCES",
+      "url": "https://taggrading.com/pages/events",
+      "detected_at": "2026-09-10T09:35:33+00:00",
+      "verified_official_source": true
+    },
+    {
+      "company": "TAG",
+      "source_id": "tag-home",
+      "type": "official_announcement",
+      "title": "TERMS OF SERVICE",
+      "url": "https://taggrading.com/pages/terms",
+      "detected_at": "2026-09-10T09:35:33+00:00",
+      "verified_official_source": true
+    },
+    {
+      "company": "TAG",
+      "source_id": "tag-home",
+      "type": "official_announcement",
+      "title": "GRADING SCALE",
+      "url": "https://taggrading.com/pages/scale",
+      "detected_at": "2026-09-10T09:35:33+00:00",
+      "verified_official_source": true
+    },
+    {
+      "company": "TAG",
+      "source_id": "tag-home",
+      "type": "official_announcement",
+      "title": "GRADING RUBRIC",
+      "url": "https://taggrading.com/pages/rubric",
+      "detected_at": "2026-09-10T09:35:33+00:00",
+      "verified_official_source": true
+    },
+    {
+      "company": "TAG",
+      "source_id": "tag-home",
+      "type": "official_announcement",
+      "title": "GRADING GLOSSARY",
+      "url": "https://taggrading.com/pages/glossary",
+      "detected_at": "2026-09-10T09:35:33+00:00",
+      "verified_official_source": true
+    },
+    {
+      "company": "TAG",
+      "source_id": "tag-home",
+      "type": "official_announcement",
+      "title": "ELIGIBLE FOR GRADING",
+      "url": "https://taggrading.com/pages/currently-grading",
+      "detected_at": "2026-09-10T09:35:33+00:00",
+      "verified_official_source": true
+    },
+    {
+      "company": "TAG",
+      "source_id": "tag-home",
+      "type": "official_announcement",
+      "title": "PRICING & SERVICES",
+      "url": "https://taggrading.com/pages/pricing",
+      "detected_at": "2026-09-10T09:35:33+00:00",
+      "verified_official_source": true
+    },
+    {
+      "company": "TAG",
+      "source_id": "tag-home",
+      "type": "official_announcement",
+      "title": "SUBMISSION KITS",
+      "url": "https://taggrading.com/pages/subkit",
+      "detected_at": "2026-09-10T09:35:33+00:00",
+      "verified_official_source": true
+    },
+    {
+      "company": "TAG",
+      "source_id": "tag-home",
+      "type": "official_announcement",
+      "title": "TAG VS MANUAL GRADING",
+      "url": "https://taggrading.com/pages/tagvsother",
+      "detected_at": "2026-09-10T09:35:33+00:00",
+      "verified_official_source": true
+    },
+    {
+      "company": "TAG",
+      "source_id": "tag-home",
+      "type": "official_announcement",
+      "title": "PURCHASE GRADING",
+      "url": "https://taggrading.com/pages/pricing",
+      "detected_at": "2026-09-10T09:35:33+00:00",
+      "verified_official_source": true
+    },
+    {
+      "company": "TAG",
+      "source_id": "tag-home",
+      "type": "official_announcement",
+      "title": "GRADING DECKBOX",
+      "url": "https://taggrading.com/products/tag-deckbox-1",
+      "detected_at": "2026-09-10T09:35:33+00:00",
+      "verified_official_source": true
+    },
+    {
+      "company": "TAG",
+      "source_id": "tag-home",
+      "type": "official_announcement",
+      "title": "CURRENTLY GRADING",
+      "url": "https://taggrading.com/pages/currently-grading",
+      "detected_at": "2026-09-10T09:35:33+00:00",
+      "verified_official_source": true
+    },
+    {
+      "company": "BRG",
+      "source_id": "brg-pricing-news",
+      "type": "official_announcement",
+      "title": "공지사항 & 이벤트",
+      "url": "https://break.co.kr/notice",
+      "detected_at": "2026-09-10T09:35:33+00:00",
+      "verified_official_source": true
+    }
+  ],
+  "history": [
+    {
+      "company": "CGC",
+      "source_id": "cgc-pricing",
+      "type": "service_added",
+      "service": "Bulk",
+      "after": {
+        "name": "Bulk",
+        "observed_label": "Bulk",
+        "currency": "USD",
+        "availability": "unknown",
+        "source": "https://www.cgccards.com/submit/services-fees/cgc-grading/?view=cards",
+        "verified_official_source": true,
+        "fee": 500.0
+      },
+      "detected_at": "2026-09-10T09:35:33+00:00",
+      "verified_official_source": true
+    },
+    {
+      "company": "CGC",
+      "source_id": "cgc-pricing",
+      "type": "service_added",
+      "service": "Economy",
+      "after": {
+        "name": "Economy",
+        "observed_label": "Economy",
+        "currency": "USD",
+        "availability": "unknown",
+        "source": "https://www.cgccards.com/submit/services-fees/cgc-grading/?view=cards",
+        "verified_official_source": true,
+        "fee": 1000.0
+      },
+      "detected_at": "2026-09-10T09:35:33+00:00",
+      "verified_official_source": true
+    },
+    {
+      "company": "CGC",
+      "source_id": "cgc-pricing",
+      "type": "service_added",
+      "service": "Standard",
+      "after": {
+        "name": "Standard",
+        "observed_label": "Standard",
+        "currency": "USD",
+        "availability": "unknown",
+        "source": "https://www.cgccards.com/submit/services-fees/cgc-grading/?view=cards",
+        "verified_official_source": true,
+        "fee": 3000.0
+      },
+      "detected_at": "2026-09-10T09:35:33+00:00",
+      "verified_official_source": true
+    },
+    {
+      "company": "CGC",
+      "source_id": "cgc-pricing",
+      "type": "service_added",
+      "service": "Express",
+      "after": {
+        "name": "Express",
+        "observed_label": "Express",
+        "currency": "USD",
+        "availability": "unknown",
+        "source": "https://www.cgccards.com/submit/services-fees/cgc-grading/?view=cards",
+        "verified_official_source": true,
+        "fee": 10000.0
+      },
+      "detected_at": "2026-09-10T09:35:33+00:00",
+      "verified_official_source": true
+    },
+    {
+      "company": "CGC",
+      "source_id": "cgc-pricing",
+      "type": "service_added",
+      "service": "WalkThrough",
+      "after": {
+        "name": "WalkThrough",
+        "observed_label": "WalkThrough",
+        "currency": "USD",
+        "availability": "unknown",
+        "source": "https://www.cgccards.com/submit/services-fees/cgc-grading/?view=cards",
+        "verified_official_source": true,
+        "fee": 300.0
+      },
+      "detected_at": "2026-09-10T09:35:33+00:00",
+      "verified_official_source": true
+    },
+    {
+      "company": "BRG",
+      "source_id": "brg-pricing-news",
+      "type": "service_added",
+      "service": "Regular",
+      "after": {
+        "name": "Regular",
+        "observed_label": "Regular",
+        "currency": "KRW",
+        "availability": "unknown",
+        "source": "https://break.co.kr/",
+        "verified_official_source": true,
+        "fee": 19800
+      },
+      "detected_at": "2026-09-10T09:35:33+00:00",
+      "verified_official_source": true
+    },
+    {
+      "company": "BRG",
+      "source_id": "brg-pricing-news",
+      "type": "service_added",
+      "service": "Express",
+      "after": {
+        "name": "Express",
+        "observed_label": "Express",
+        "currency": "KRW",
+        "availability": "unknown",
+        "source": "https://break.co.kr/",
+        "verified_official_source": true,
+        "fee": 39800
+      },
+      "detected_at": "2026-09-10T09:35:33+00:00",
+      "verified_official_source": true
+    },
+    {
+      "company": "BRG",
+      "source_id": "brg-pricing-news",
+      "type": "service_added",
+      "service": "Bulk",
+      "after": {
+        "name": "Bulk",
+        "observed_label": "Bulk",
+        "currency": "KRW",
+        "availability": "unknown",
+        "source": "https://break.co.kr/",
+        "verified_official_source": true,
+        "fee": 13800
+      },
+      "detected_at": "2026-09-10T09:35:33+00:00",
+      "verified_official_source": true
+    },
+    {
+      "company": "BRG",
+      "source_id": "brg-pricing-news",
+      "type": "service_added",
+      "service": "Reholder",
+      "after": {
+        "name": "Reholder",
+        "observed_label": "Reholder",
+        "currency": "KRW",
+        "availability": "unknown",
+        "source": "https://break.co.kr/",
+        "verified_official_source": true,
+        "fee": 9800,
+        "turnaround_business_days": 5
+      },
+      "detected_at": "2026-09-10T09:35:33+00:00",
+      "verified_official_source": true
+    },
+    {
+      "company": "BRG",
+      "source_id": "brg-pricing-news",
+      "type": "service_added",
+      "service": "BRG GEN",
+      "after": {
+        "name": "BRG GEN",
+        "observed_label": "BRG GEN",
+        "currency": "KRW",
+        "availability": "open",
+        "source": "https://break.co.kr/",
+        "verified_official_source": true,
+        "fee": 9800,
+        "turnaround_business_days": 5
+      },
+      "detected_at": "2026-09-10T09:35:33+00:00",
+      "verified_official_source": true
+    },
+    {
+      "company": "CGC",
+      "source_id": "cgc-events",
+      "type": "official_announcement",
+      "title": "TCG and Non-sports Card Grading",
+      "url": "https://www.cgccards.com/card-grading/trading-card-grading/",
+      "detected_at": "2026-09-10T09:35:33+00:00",
+      "verified_official_source": true
+    },
+    {
+      "company": "CGC",
+      "source_id": "cgc-events",
+      "type": "official_announcement",
+      "title": "Sports Card Grading",
+      "url": "https://www.cgccards.com/card-grading/sports-card-grading/",
+      "detected_at": "2026-09-10T09:35:33+00:00",
+      "verified_official_source": true
+    },
+    {
+      "company": "CGC",
+      "source_id": "cgc-events",
+      "type": "official_announcement",
+      "title": "Grading Process",
+      "url": "https://www.cgccards.com/card-grading/grading-process/",
+      "detected_at": "2026-09-10T09:35:33+00:00",
+      "verified_official_source": true
+    },
+    {
+      "company": "CGC",
+      "source_id": "cgc-events",
+      "type": "official_announcement",
+      "title": "Grading Scale",
+      "url": "https://www.cgccards.com/card-grading/grading-scale/",
+      "detected_at": "2026-09-10T09:35:33+00:00",
+      "verified_official_source": true
+    },
+    {
+      "company": "CGC",
+      "source_id": "cgc-events",
+      "type": "official_announcement",
+      "title": "Services & Fees",
+      "url": "https://www.cgccards.com/submit/services-fees/",
+      "detected_at": "2026-09-10T09:35:33+00:00",
+      "verified_official_source": true
+    },
+    {
+      "company": "CGC",
+      "source_id": "cgc-events",
+      "type": "official_announcement",
+      "title": "Submission Form",
+      "url": "https://www.cgccards.com/account/my-submissions/",
+      "detected_at": "2026-09-10T09:35:33+00:00",
+      "verified_official_source": true
+    },
+    {
+      "company": "CGC",
+      "source_id": "cgc-events",
+      "type": "official_announcement",
+      "title": "Submission Tracking",
+      "url": "https://www.cgccards.com/account/my-submissions/tracking/",
+      "detected_at": "2026-09-10T09:35:33+00:00",
+      "verified_official_source": true
+    },
+    {
+      "company": "CGC",
+      "source_id": "cgc-events",
+      "type": "official_announcement",
+      "title": "Events",
+      "url": "https://www.cgccards.com/submit/events/",
+      "detected_at": "2026-09-10T09:35:33+00:00",
+      "verified_official_source": true
+    },
+    {
+      "company": "CGC",
+      "source_id": "cgc-news",
+      "type": "official_announcement",
+      "title": "TCG and Non-sports Card Grading",
+      "url": "https://www.cgccards.com/card-grading/trading-card-grading/",
+      "detected_at": "2026-09-10T09:35:33+00:00",
+      "verified_official_source": true
+    },
+    {
+      "company": "CGC",
+      "source_id": "cgc-news",
+      "type": "official_announcement",
+      "title": "Sports Card Grading",
+      "url": "https://www.cgccards.com/card-grading/sports-card-grading/",
+      "detected_at": "2026-09-10T09:35:33+00:00",
+      "verified_official_source": true
+    },
+    {
+      "company": "CGC",
+      "source_id": "cgc-news",
+      "type": "official_announcement",
+      "title": "Grading Process",
+      "url": "https://www.cgccards.com/card-grading/grading-process/",
+      "detected_at": "2026-09-10T09:35:33+00:00",
+      "verified_official_source": true
+    },
+    {
+      "company": "CGC",
+      "source_id": "cgc-news",
+      "type": "official_announcement",
+      "title": "Grading Scale",
+      "url": "https://www.cgccards.com/card-grading/grading-scale/",
+      "detected_at": "2026-09-10T09:35:33+00:00",
+      "verified_official_source": true
+    },
+    {
+      "company": "CGC",
+      "source_id": "cgc-news",
+      "type": "official_announcement",
+      "title": "Services & Fees",
+      "url": "https://www.cgccards.com/submit/services-fees/",
+      "detected_at": "2026-09-10T09:35:33+00:00",
+      "verified_official_source": true
+    },
+    {
+      "company": "CGC",
+      "source_id": "cgc-news",
+      "type": "official_announcement",
+      "title": "Submission Form",
+      "url": "https://www.cgccards.com/account/my-submissions/",
+      "detected_at": "2026-09-10T09:35:33+00:00",
+      "verified_official_source": true
+    },
+    {
+      "company": "CGC",
+      "source_id": "cgc-news",
+      "type": "official_announcement",
+      "title": "Submission Tracking",
+      "url": "https://www.cgccards.com/account/my-submissions/tracking/",
+      "detected_at": "2026-09-10T09:35:33+00:00",
+      "verified_official_source": true
+    },
+    {
+      "company": "CGC",
+      "source_id": "cgc-news",
+      "type": "official_announcement",
+      "title": "Events",
+      "url": "https://www.cgccards.com/submit/events/",
+      "detected_at": "2026-09-10T09:35:33+00:00",
+      "verified_official_source": true
+    },
+    {
+      "company": "TAG",
+      "source_id": "tag-home",
+      "type": "official_announcement",
+      "title": "PRIORITY GRADING",
+      "url": "https://taggrading.com/pages/pricing",
+      "detected_at": "2026-09-10T09:35:33+00:00",
+      "verified_official_source": true
+    },
+    {
+      "company": "TAG",
+      "source_id": "tag-home",
+      "type": "official_announcement",
+      "title": "GRADING",
+      "url": "https://taggrading.com/pages/grading",
+      "detected_at": "2026-09-10T09:35:33+00:00",
+      "verified_official_source": true
+    },
+    {
+      "company": "TAG",
+      "source_id": "tag-home",
+      "type": "official_announcement",
+      "title": "EVENTS",
+      "url": "https://taggrading.com/pages/events",
+      "detected_at": "2026-09-10T09:35:33+00:00",
+      "verified_official_source": true
+    },
+    {
+      "company": "TAG",
+      "source_id": "tag-home",
+      "type": "official_announcement",
+      "title": "EVENTS / APPEARANCES",
+      "url": "https://taggrading.com/pages/events",
+      "detected_at": "2026-09-10T09:35:33+00:00",
+      "verified_official_source": true
+    },
+    {
+      "company": "TAG",
+      "source_id": "tag-home",
+      "type": "official_announcement",
+      "title": "TERMS OF SERVICE",
+      "url": "https://taggrading.com/pages/terms",
+      "detected_at": "2026-09-10T09:35:33+00:00",
+      "verified_official_source": true
+    },
+    {
+      "company": "TAG",
+      "source_id": "tag-home",
+      "type": "official_announcement",
+      "title": "GRADING SCALE",
+      "url": "https://taggrading.com/pages/scale",
+      "detected_at": "2026-09-10T09:35:33+00:00",
+      "verified_official_source": true
+    },
+    {
+      "company": "TAG",
+      "source_id": "tag-home",
+      "type": "official_announcement",
+      "title": "GRADING RUBRIC",
+      "url": "https://taggrading.com/pages/rubric",
+      "detected_at": "2026-09-10T09:35:33+00:00",
+      "verified_official_source": true
+    },
+    {
+      "company": "TAG",
+      "source_id": "tag-home",
+      "type": "official_announcement",
+      "title": "GRADING GLOSSARY",
+      "url": "https://taggrading.com/pages/glossary",
+      "detected_at": "2026-09-10T09:35:33+00:00",
+      "verified_official_source": true
+    },
+    {
+      "company": "TAG",
+      "source_id": "tag-home",
+      "type": "official_announcement",
+      "title": "ELIGIBLE FOR GRADING",
+      "url": "https://taggrading.com/pages/currently-grading",
+      "detected_at": "2026-09-10T09:35:33+00:00",
+      "verified_official_source": true
+    },
+    {
+      "company": "TAG",
+      "source_id": "tag-home",
+      "type": "official_announcement",
+      "title": "PRICING & SERVICES",
+      "url": "https://taggrading.com/pages/pricing",
+      "detected_at": "2026-09-10T09:35:33+00:00",
+      "verified_official_source": true
+    },
+    {
+      "company": "TAG",
+      "source_id": "tag-home",
+      "type": "official_announcement",
+      "title": "SUBMISSION KITS",
+      "url": "https://taggrading.com/pages/subkit",
+      "detected_at": "2026-09-10T09:35:33+00:00",
+      "verified_official_source": true
+    },
+    {
+      "company": "TAG",
+      "source_id": "tag-home",
+      "type": "official_announcement",
+      "title": "TAG VS MANUAL GRADING",
+      "url": "https://taggrading.com/pages/tagvsother",
+      "detected_at": "2026-09-10T09:35:33+00:00",
+      "verified_official_source": true
+    },
+    {
+      "company": "TAG",
+      "source_id": "tag-home",
+      "type": "official_announcement",
+      "title": "PURCHASE GRADING",
+      "url": "https://taggrading.com/pages/pricing",
+      "detected_at": "2026-09-10T09:35:33+00:00",
+      "verified_official_source": true
+    },
+    {
+      "company": "TAG",
+      "source_id": "tag-home",
+      "type": "official_announcement",
+      "title": "GRADING DECKBOX",
+      "url": "https://taggrading.com/products/tag-deckbox-1",
+      "detected_at": "2026-09-10T09:35:33+00:00",
+      "verified_official_source": true
+    },
+    {
+      "company": "TAG",
+      "source_id": "tag-home",
+      "type": "official_announcement",
+      "title": "CURRENTLY GRADING",
+      "url": "https://taggrading.com/pages/currently-grading",
+      "detected_at": "2026-09-10T09:35:33+00:00",
+      "verified_official_source": true
+    },
+    {
+      "company": "BRG",
+      "source_id": "brg-pricing-news",
+      "type": "official_announcement",
+      "title": "공지사항 & 이벤트",
+      "url": "https://break.co.kr/notice",
+      "detected_at": "2026-09-10T09:35:33+00:00",
+      "verified_official_source": true
+    }
+  ]
+}
