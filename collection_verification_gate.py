@@ -2,7 +2,7 @@
 """Fail-closed verification for freshly collected TCG data.
 
 This gate does not collect data and does not rewrite learned source code. It validates
-freshness, provenance, structural contracts, critical-output status, and source-health
+freshness, provenance, structural contracts, mandatory-output status, and source-health
 coverage after an existing collection cycle. 403/429 are treated as blocked/degraded
 source conditions, never as authorization to bypass a provider.
 """
@@ -17,7 +17,28 @@ from typing import Any
 from urllib.parse import urlparse
 
 ROOT = Path(__file__).resolve().parent
-CRITICAL_FILES = ("releases.json", "market_prices.json", "promo_events.json", "exchange_rates.json")
+MANDATORY_OUTPUT_FILES = (
+    "releases.json",
+    "market_watch.json",
+    "market_prices.json",
+    "promo_events.json",
+    "purchase_sources.json",
+    "exchange_rates.json",
+    "grading_company_updates.json",
+    "graded_photo_candidates.json",
+)
+# Backward-compatible public name used by existing tests/callers. It now means every
+# mandatory collector output, not the historical four-file subset.
+CRITICAL_FILES = MANDATORY_OUTPUT_FILES
+EXPECTED_GRADING_COMPANIES = {"PSA", "BGS", "CGC", "TAG", "BRG"}
+GRADING_ALLOWED_HOSTS = {
+    "psacard.com", "www.psacard.com",
+    "beckett.com", "www.beckett.com",
+    "cgccards.com", "www.cgccards.com",
+    "taggrading.com", "www.taggrading.com",
+    "break.co.kr", "www.break.co.kr",
+}
+GRADING_MIN_OFFICIAL_SOURCES = 10
 # GLOBAL is valid only for genuinely worldwide release/event rows. Market keys remain
 # region-specific and are validated separately, so allowing GLOBAL here cannot turn a
 # worldwide announcement into KR/JP/US price evidence.
@@ -227,19 +248,129 @@ def _audit_events(root: Path, findings: list[dict[str, Any]]) -> dict[str, int]:
             "missing_event_topic_cells": len(missing_topics) if isinstance(missing_topics, list) else 0}
 
 
+def _audit_grading_companies(root: Path, now: dt.datetime, findings: list[dict[str, Any]]) -> dict[str, int]:
+    """Verify that the eighth mandatory collector is official, current, and observable."""
+    path = root / "grading_company_updates.json"
+    if not path.is_file():
+        findings.append({"severity": "critical", "code": "MISSING_GRADING_COMPANY_SNAPSHOT", "target": path.name})
+        return {"grading_sources": 0, "healthy_grading_sources": 0, "degraded_grading_sources": 0}
+    db = _load(path)
+    if not isinstance(db, dict):
+        findings.append({"severity": "critical", "code": "INVALID_GRADING_COMPANY_SNAPSHOT", "target": path.name})
+        return {"grading_sources": 0, "healthy_grading_sources": 0, "degraded_grading_sources": 0}
+    if db.get("schema_version") != 1:
+        findings.append({"severity": "critical", "code": "INVALID_GRADING_COMPANY_SCHEMA", "target": path.name})
+
+    companies = db.get("companies")
+    company_keys = set(companies) if isinstance(companies, dict) else set()
+    if company_keys != EXPECTED_GRADING_COMPANIES:
+        findings.append({"severity": "critical", "code": "INCOMPLETE_GRADING_COMPANY_MATRIX", "target": path.name,
+                         "missing": sorted(EXPECTED_GRADING_COMPANIES - company_keys),
+                         "unexpected": sorted(company_keys - EXPECTED_GRADING_COMPANIES)})
+
+    policy = db.get("policy") if isinstance(db.get("policy"), dict) else {}
+    expected_policy = {
+        "official_sources_only": True,
+        "community_posts_are_leads_only": True,
+        "automatic_source_code_mutation": False,
+        "last_good_retained_on_failure": True,
+    }
+    bad_policy = {key: {"expected": value, "actual": policy.get(key)}
+                  for key, value in expected_policy.items() if policy.get(key) is not value}
+    if bad_policy:
+        findings.append({"severity": "critical", "code": "INVALID_GRADING_SOURCE_POLICY", "target": path.name,
+                         "mismatch": bad_policy})
+
+    _fresh(path.name, db.get("checked_at"), now, 12 * 3600, findings)
+    sources = db.get("sources")
+    if not isinstance(sources, dict) or len(sources) < GRADING_MIN_OFFICIAL_SOURCES:
+        findings.append({"severity": "critical", "code": "INSUFFICIENT_GRADING_OFFICIAL_SOURCES", "target": path.name,
+                         "minimum": GRADING_MIN_OFFICIAL_SOURCES,
+                         "actual": len(sources) if isinstance(sources, dict) else 0})
+        sources = sources if isinstance(sources, dict) else {}
+
+    invalid = 0
+    degraded = 0
+    healthy = 0
+    source_companies: set[str] = set()
+    healthy_companies: set[str] = set()
+    degraded_errors: list[dict[str, str]] = []
+    for source_id, row in sources.items():
+        reasons = []
+        if not isinstance(row, dict):
+            reasons.append("not_object")
+            company = ""
+            status = ""
+        else:
+            company = str(row.get("company") or "").upper()
+            status = str(row.get("status") or "").lower()
+            if company not in EXPECTED_GRADING_COMPANIES:
+                reasons.append("unknown_company")
+            else:
+                source_companies.add(company)
+            url = row.get("url")
+            if not _valid_public_https(url):
+                reasons.append("invalid_source_url")
+            else:
+                host = (urlparse(str(url)).hostname or "").lower().rstrip(".")
+                if host not in GRADING_ALLOWED_HOSTS:
+                    reasons.append("unapproved_source_host")
+            if status not in {"healthy", "degraded"}:
+                reasons.append("invalid_status")
+        if reasons:
+            invalid += 1
+            if invalid <= 20:
+                findings.append({"severity": "critical", "code": "INVALID_GRADING_SOURCE", "target": str(source_id)[:160],
+                                 "reasons": reasons})
+            continue
+        if status == "healthy":
+            healthy += 1
+            healthy_companies.add(company)
+        else:
+            degraded += 1
+            if len(degraded_errors) < 20:
+                degraded_errors.append({"source": str(source_id), "error": str(row.get("error") or "")[:300]})
+
+    missing_source_companies = EXPECTED_GRADING_COMPANIES - source_companies
+    if missing_source_companies:
+        findings.append({"severity": "critical", "code": "GRADING_COMPANY_WITHOUT_OFFICIAL_SOURCE", "target": path.name,
+                         "companies": sorted(missing_source_companies)})
+    no_healthy = EXPECTED_GRADING_COMPANIES - healthy_companies
+    if no_healthy:
+        findings.append({"severity": "high", "code": "GRADING_COMPANY_NO_HEALTHY_SOURCE", "target": path.name,
+                         "companies": sorted(no_healthy), "degraded_samples": degraded_errors})
+    elif degraded:
+        findings.append({"severity": "medium", "code": "DEGRADED_GRADING_SOURCE", "target": path.name,
+                         "count": degraded, "samples": degraded_errors})
+
+    changes = db.get("recent_changes") or []
+    if not isinstance(changes, list) or any(
+        not isinstance(row, dict) or row.get("verified_official_source") is not True for row in changes
+    ):
+        findings.append({"severity": "critical", "code": "UNVERIFIED_GRADING_RECENT_CHANGE", "target": path.name})
+
+    return {
+        "grading_sources": len(sources),
+        "healthy_grading_sources": healthy,
+        "degraded_grading_sources": degraded,
+        "invalid_grading_sources": invalid,
+        "grading_companies_with_healthy_source": len(healthy_companies),
+    }
+
+
 def _audit_auto_update(root: Path, findings: list[dict[str, Any]]) -> dict[str, Any]:
     path = root / "auto_update_report.json"
     if not path.is_file():
         findings.append({"severity": "critical", "code": "MISSING_AUTO_UPDATE_REPORT", "target": path.name})
-        return {"critical_outputs_seen": 0}
+        return {"critical_outputs_seen": 0, "mandatory_outputs_expected": len(MANDATORY_OUTPUT_FILES)}
     report = _load(path)
     rows = report.get("results") if isinstance(report, dict) else None
     if not isinstance(rows, list):
         findings.append({"severity": "critical", "code": "INVALID_AUTO_UPDATE_REPORT", "target": path.name})
-        return {"critical_outputs_seen": 0}
+        return {"critical_outputs_seen": 0, "mandatory_outputs_expected": len(MANDATORY_OUTPUT_FILES)}
     by_file = {str(x.get("file")): x for x in rows if isinstance(x, dict)}
     seen = 0
-    for filename in CRITICAL_FILES:
+    for filename in MANDATORY_OUTPUT_FILES:
         row = by_file.get(filename)
         if row is None:
             findings.append({"severity": "critical", "code": "CRITICAL_OUTPUT_NOT_REPORTED", "target": filename})
@@ -252,7 +383,7 @@ def _audit_auto_update(root: Path, findings: list[dict[str, Any]]) -> dict[str, 
             findings.append({"severity": "critical", "code": "HARD_COLLECTION_FAILURE", "target": filename, "errors": hard[:5]})
         elif row.get("ok") is not True or errors:
             findings.append({"severity": "high", "code": "DEGRADED_COLLECTION_OUTPUT", "target": filename, "blocked_403_429": len(blocked), "errors": errors[:5]})
-    return {"critical_outputs_seen": seen}
+    return {"critical_outputs_seen": seen, "mandatory_outputs_expected": len(MANDATORY_OUTPUT_FILES)}
 
 
 def verify(root: Path = ROOT, *, max_health_age_seconds: int = 900, now: dt.datetime | None = None) -> dict[str, Any]:
@@ -265,6 +396,7 @@ def verify(root: Path = ROOT, *, max_health_age_seconds: int = 900, now: dt.date
     metrics.update(_audit_releases(root, findings))
     metrics.update(_audit_events(root, findings))
     metrics.update(_audit_candidate_freshness(root, now, findings))
+    metrics.update(_audit_grading_companies(root, now, findings))
     metrics.update(_audit_auto_update(root, findings))
     counts = {level: sum(x.get("severity") == level for x in findings) for level in ("critical", "high", "medium")}
     status = "fail_closed" if counts["critical"] else ("degraded" if counts["high"] else "pass")
