@@ -14,7 +14,7 @@ from datetime import datetime, timezone
 from functools import lru_cache
 from typing import Any, Mapping, Sequence
 
-DIAGNOSTIC_VERSION = "1.3-tracechain-fastpath"
+DIAGNOSTIC_VERSION = "1.3.1-tracechain-fastpath"
 PROJECT = 'instagram_card'
 TASK_ID = '6a9b8a22e72c8191849c273e1240378e'
 MONITOR_TASK_ID = "6aa02cd749c0819196a6b17db6378958"
@@ -117,8 +117,14 @@ def inspect_trace_chain(history: Sequence[Mapping[str, Any]] | None, *, schedule
     """Validate only the bounded current-slot lifecycle; never scans global history."""
     if not history:
         return {"status": "UNAVAILABLE", "matched": 0, "anomalies": [], "last_phase": None, "last_seq": None, "trace_hash": None}
+    # Support chronological and reverse-chronological stores without a full scan.
+    # Current-slot data should live near one end of the lifecycle sequence.
+    if len(history) <= 32:
+        sample = list(history)
+    else:
+        sample = list(history[:16]) + list(history[-16:])
     rows = []
-    for item in history[-32:]:
+    for item in sample:
         if not isinstance(item, Mapping):
             continue
         if item.get("project") != PROJECT or item.get("task_id") != TASK_ID:
@@ -129,6 +135,9 @@ def inspect_trace_chain(history: Sequence[Mapping[str, Any]] | None, *, schedule
     if not rows:
         return {"status": "NO_MATCHING_SLOT", "matched": 0, "anomalies": [], "last_phase": None, "last_seq": None, "trace_hash": None}
     anomalies: list[str] = []
+    if any(_parse_iso(item.get("observed_at")) is None for item in rows):
+        anomalies.append("TRACE_TIME_INVALID")
+    rows.sort(key=lambda item: _parse_iso(item.get("observed_at")) or datetime.min.replace(tzinfo=timezone.utc))
     prior_seq = None; prior_order = None; prior_run = None
     compact = []
     for item in rows:
