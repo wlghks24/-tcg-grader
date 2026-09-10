@@ -1,0 +1,126 @@
+name: TCG Static Data Refresh
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '23 */6 * * *'
+  push:
+    branches: [main]
+    paths:
+      - 'static_data_publish_gate.py'
+      - 'auto_update_all.py'
+      - 'tcg_updater.py'
+      - 'update_releases.py'
+      - 'release_history_backfill.py'
+      - 'update_promo_events.py'
+      - 'multi_route_event_discovery.py'
+      - 'social_event_discovery.py'
+      - 'auto_pipeline_runner.py'
+      - '.github/workflows/tcg-static-data-refresh.yml'
+
+permissions:
+  contents: write
+
+concurrency:
+  group: tcg-static-data-refresh-main
+  cancel-in-progress: false
+
+jobs:
+  refresh-validate-publish:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 35
+    env:
+      PYTHONPATH: ${{ github.workspace }}
+      PYTHONDONTWRITEBYTECODE: '1'
+      PYTHONUNBUFFERED: '1'
+      TCG_HTTP_TIMEOUT: '30'
+      TCG_SOURCE_TIMEOUT_CAP: '30'
+    steps:
+      - name: Checkout exact main snapshot
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          fetch-depth: 2
+
+      - name: Set up Python
+        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97
+        with:
+          python-version: '3.11'
+
+      - name: Compile and run collection publish regressions
+        run: |
+          python -m py_compile             static_data_publish_gate.py auto_update_all.py tcg_updater.py             update_releases.py update_promo_events.py multi_route_event_discovery.py             social_event_discovery.py auto_pipeline_runner.py
+          python -m unittest -v             test_static_data_publish_gate.py             test_collection_verification_gate.py             test_information_lifecycle_archive_v209.py             test_release_history_coverage_v4.py             test_event_quick_watch.py
+
+      - name: Run full verified collection cycle
+        timeout-minutes: 25
+        run: |
+          python - <<'PY'
+          import json
+          import tcg_updater
+          data = tcg_updater.update_cycle('github-pages-static-refresh')
+          print(json.dumps({
+              'updated_at': data.get('updated_at'),
+              'auto_update': data.get('auto_update', {}),
+          }, ensure_ascii=False, indent=2))
+          PY
+
+      - name: Fail closed before publishing static data
+        run: |
+          python static_data_publish_gate.py             --max-social-age-hours 12             --max-report-age-hours 2             --report STATIC_DATA_PUBLISH_REPORT.json
+
+      - name: Stage only approved public collection outputs
+        id: stage
+        shell: bash
+        run: |
+          set -euo pipefail
+          git fetch origin main
+          if [ "$(git rev-parse HEAD)" != "$(git rev-parse origin/main)" ]; then
+            echo "changed=false" >> "$GITHUB_OUTPUT"
+            echo "reason=main advanced during collection; discard this snapshot" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          git add --             releases.json promo_events.json supplementary_candidates.json social_event_candidates.json             market_prices.json market_watch.json purchase_sources.json exchange_rates.json             graded_photo_candidates.json source_collection_stats.json adaptive_collection_stats.json             auto_update_report.json auto_update_issues.json tcg_live_data.json
+          if git diff --cached --quiet; then
+            echo "changed=false" >> "$GITHUB_OUTPUT"
+            echo "reason=no validated data changes" >> "$GITHUB_OUTPUT"
+          else
+            echo "changed=true" >> "$GITHUB_OUTPUT"
+            echo "reason=validated data changed" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Commit validated static data snapshot
+        if: steps.stage.outputs.changed == 'true'
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git commit -m 'data: refresh validated TCG static snapshot'
+          git push origin HEAD:main
+
+      - name: Upload publish evidence
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        with:
+          name: tcg-static-data-refresh-report
+          path: |
+            STATIC_DATA_PUBLISH_REPORT.json
+            auto_update_report.json
+            auto_update_issues.json
+          if-no-files-found: ignore
+          retention-days: 14
+
+      - name: Write refresh summary
+        if: always()
+        shell: bash
+        run: |
+          {
+            echo '## TCG Static Data Refresh'
+            echo
+            echo "- source commit: ${GITHUB_SHA}"
+            echo "- stage changed: ${{ steps.stage.outputs.changed || 'not-reached' }}"
+            echo "- stage reason: ${{ steps.stage.outputs.reason || 'not-reached' }}"
+            echo "- publish policy: validated public JSON only; no force push"
+            echo "- lifecycle policy: end/release + 5 days, archive on day 6"
+            echo "- topic policy: collection attempts are distinct from zero discovered leads"
+          } >> "$GITHUB_STEP_SUMMARY"

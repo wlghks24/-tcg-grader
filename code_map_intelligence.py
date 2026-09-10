@@ -157,6 +157,19 @@ FEATURE_ROUTE_OVERRIDES = {
     "market_collection": (
         "test_multi_market_price_collector.py",
     ),
+    "release_event_promo_collection": (
+        "update_releases.py",
+        "release_history_backfill.py",
+        "update_promo_events.py",
+        "multi_route_event_discovery.py",
+        "social_event_discovery.py",
+        "auto_pipeline_runner.py",
+        "static_data_publish_gate.py",
+        "test_static_data_publish_gate.py",
+        "test_information_lifecycle_archive_v209.py",
+        ".github/workflows/tcg-static-data-refresh.yml",
+        ".github/workflows/collection-verification-guard.yml",
+    ),
     "tablet_termux": (
         "test_tablet_runtime_qa_integration.py",
     ),
