@@ -1,0 +1,208 @@
+name: Audit completion repair v218
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/audit-completion-v218.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  repair:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          fetch-depth: 2
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97
+        with:
+          python-version: '3.12'
+      - name: Apply exact bounded fixes
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          from pathlib import Path
+
+          def replace(path, old, new, *, count=None):
+              p = Path(path)
+              text = p.read_text(encoding='utf-8')
+              found = text.count(old)
+              if found == 0:
+                  if new in text:
+                      return
+                  raise SystemExit(f'missing patch anchor: {path}: {old[:100]!r}')
+              if count is not None and found != count:
+                  raise SystemExit(f'unexpected anchor count {path}: expected={count} actual={found}: {old[:80]!r}')
+              p.write_text(text.replace(old, new), encoding='utf-8')
+
+          # 1) Production-state durability and current/legacy validation contracts.
+          replace(
+              'instagram_tcg_content/production_state.py',
+              'def write_state_atomic(path:Path,state:dict[str,Any])->None:\n',
+              '''def _fsync_parent_directory(path:Path)->None:\n    """Best-effort directory sync after atomic replace for crash durability."""\n    flags=os.O_RDONLY | getattr(os,"O_DIRECTORY",0)\n    try: fd=os.open(str(path.parent),flags)\n    except OSError: return\n    try: os.fsync(fd)\n    finally: os.close(fd)\n\ndef write_state_atomic(path:Path,state:dict[str,Any])->None:\n''',
+              count=1,
+          )
+          replace(
+              'instagram_tcg_content/production_state.py',
+              '        tmp.replace(path)\n',
+              '        tmp.replace(path); _fsync_parent_directory(path)\n',
+              count=1,
+          )
+          replace(
+              'instagram_tcg_content/production_state.py',
+              '''    for field in ("scheduled_slot_kst","actual_started_at_kst","finalized_at"):\n        if _parse_aware_iso(record.get(field)) is None: errors.append(f"{field} must be timezone-aware ISO-8601")\n    run_kind=record.get("run_kind"); baseline_id=record.get("baseline_id")\n''',
+              '''    parsed_times={}\n    for field in ("scheduled_slot_kst","actual_started_at_kst","finalized_at"):\n        parsed_times[field]=_parse_aware_iso(record.get(field))\n        if parsed_times[field] is None: errors.append(f"{field} must be timezone-aware ISO-8601")\n    scheduled=parsed_times.get("scheduled_slot_kst"); started=parsed_times.get("actual_started_at_kst"); finalized=parsed_times.get("finalized_at")\n    if scheduled is not None and str(record.get("production_date_kst") or "") != scheduled.astimezone(KST).date().isoformat(): errors.append("production_date_kst must match scheduled slot KST date")\n    if started is not None and finalized is not None and finalized < started: errors.append("finalized_at cannot precede actual_started_at_kst")\n    run_kind=record.get("run_kind"); baseline_id=record.get("baseline_id")\n''',
+              count=1,
+          )
+
+          # 2) Control-plane guard must detect a wrong canonical schedule even on the first snapshot.
+          replace(
+              'instagram_tcg_content/automation_state_guard.py',
+              'WEEKLY_PRODUCTION_HOUR = 19\n',
+              'WEEKLY_PRODUCTION_HOUR = 19\nCANONICAL_TIMING_MODE = "exact_schedule"\n',
+              count=1,
+          )
+          replace(
+              'instagram_tcg_content/automation_state_guard.py',
+              'def router_branch_for_slot(value: str | dt.datetime) -> str:\n',
+              '''def _schedule_matches_canonical(value: Any) -> bool:\n    text = "".join(str(value or "").split()).upper()\n    return "FREQ=HOURLY" in text and "BYMINUTE=0" in text and "BYSECOND=0" in text\n\ndef router_branch_for_slot(value: str | dt.datetime) -> str:\n''',
+              count=1,
+          )
+          replace(
+              'instagram_tcg_content/automation_state_guard.py',
+              '''    drift = [f for f in comparison["changed_fields"] if f in {"title", "schedule", "timing_mode", "prompt"}]\n''',
+              '''    drift = [f for f in comparison["changed_fields"] if f in {"title", "schedule", "timing_mode", "prompt"}]\n    canonical_mismatches=[]\n    if snapshot["title"] != CANONICAL_TITLE: canonical_mismatches.append("title")\n    if not _schedule_matches_canonical(snapshot.get("schedule")): canonical_mismatches.append("schedule")\n    if snapshot.get("timing_mode") != CANONICAL_TIMING_MODE: canonical_mismatches.append("timing_mode")\n    for field in canonical_mismatches:\n        if field not in drift: drift.append(field)\n''',
+              count=1,
+          )
+
+          # 3) Recovery policy task identity also comes from the single canonical SSOT.
+          replace(
+              'instagram_tcg_content/production_recovery_policy.py',
+              'from typing import Any\n\nPROJECT = "instagram_card"\nTASK_ID = "6aa2af4de8c88191aad2a1da62439e10"\n',
+              'from typing import Any\n\nfrom instagram_tcg_content.automation_state_guard import CANONICAL_ID\n\nPROJECT = "instagram_card"\nTASK_ID = CANONICAL_ID\n',
+              count=1,
+          )
+
+          # 4) Remove the two remaining stale task-id literals from nested tests.
+          replace(
+              'instagram_tcg_content/test_ai_reliability_v8_code_map_contract.py',
+              'from pathlib import Path\n\nROOT = Path(__file__).resolve().parents[1]\n',
+              'from pathlib import Path\n\nfrom instagram_tcg_content.automation_state_guard import CANONICAL_ID\n\nROOT = Path(__file__).resolve().parents[1]\n',
+              count=1,
+          )
+          replace(
+              'instagram_tcg_content/test_ai_reliability_v8_code_map_contract.py',
+              '        self.assertEqual(binding.get("task_id"), "6a9b8a22e72c8191849c273e1240378e")\n',
+              '        self.assertEqual(binding.get("task_id"), CANONICAL_ID)\n',
+              count=1,
+          )
+          replace(
+              'instagram_tcg_content/test_ai_reliability_v8_integration.py',
+              '        self.assertEqual(CANONICAL_ID, "6a9b8a22e72c8191849c273e1240378e")\n',
+              '        self.assertRegex(CANONICAL_ID, r"^[0-9a-f]{32}$")\n',
+              count=1,
+          )
+
+          # 5) Migrate production-state regression fixtures to Monday 19:00 while explicitly keeping legacy-read coverage.
+          p=Path('instagram_tcg_content/test_production_state.py')
+          text=p.read_text(encoding='utf-8')
+          text=text.replace('    SCHEDULED_BASELINE_RUN_KIND,\n', '    LEGACY_SCHEDULED_BASELINE_RUN_KIND,\n    SCHEDULED_BASELINE_RUN_KIND,\n', 1)
+          text=text.replace('def record(run_kind=SCHEDULED_BASELINE_RUN_KIND, baseline_id="IG-20260906-1030"):', 'def record(run_kind=SCHEDULED_BASELINE_RUN_KIND, baseline_id="IG-20260914-1900"):')
+          text=text.replace('"production_date_kst": "2026-09-06"', '"production_date_kst": "2026-09-14"')
+          text=text.replace('"scheduled_slot_kst": "2026-09-06T10:30:00+09:00"', '"scheduled_slot_kst": "2026-09-14T19:00:00+09:00"')
+          text=text.replace('"actual_started_at_kst": "2026-09-06T10:30:03+09:00"', '"actual_started_at_kst": "2026-09-14T19:00:03+09:00"')
+          text=text.replace('"router_branch": "DAILY_PRODUCTION"', '"router_branch": "WEEKLY_PRODUCTION"')
+          text=text.replace('"finalized_at": "2026-09-06T10:31:00+09:00"', '"finalized_at": "2026-09-14T19:01:00+09:00"')
+          text=text.replace('production_date_kst="2026-09-06"', 'production_date_kst="2026-09-14"')
+          text=text.replace('scheduled_slot_kst="2026-09-06T10:30:00+09:00"', 'scheduled_slot_kst="2026-09-14T19:00:00+09:00"')
+          text=text.replace('router_branch="DAILY_PRODUCTION"', 'router_branch="WEEKLY_PRODUCTION"')
+          text=text.replace('baseline_id_for_date(state, "2026-09-06") == "IG-20260906-1030"', 'baseline_id_for_date(state, "2026-09-14") == "IG-20260914-1900"')
+          text=text.replace('can_start_catchup(state, "2026-09-06")', 'can_start_catchup(state, "2026-09-14")')
+          text=text.replace('"non-10:30 run cannot create baseline_id"', '"non-weekly production run cannot create baseline_id"')
+          text=text.replace('"10:30 scheduled run requires baseline_id"', '"weekly Monday 19:00 scheduled run requires baseline_id"')
+          text=text.replace('2026-09-07', '2026-09-21')
+          text=text.replace('2026-09-21T10:30:00+09:00', '2026-09-21T19:00:00+09:00')
+          text=text.replace('2026-09-21T15:15:00+09:00', '2026-09-21T19:15:00+09:00')
+          text=text.replace('2026-09-21T15:30:00+09:00', '2026-09-21T20:30:00+09:00')
+          text=text.replace('2026-09-21T15:30:03+09:00', '2026-09-21T20:30:03+09:00')
+          text=text.replace('2026-09-21T15:31:00+09:00', '2026-09-21T20:31:00+09:00')
+          legacy_block='''\n        # Historical 10:30 finalized records remain readable after the Monday-19 migration.\n        legacy = record(run_kind=LEGACY_SCHEDULED_BASELINE_RUN_KIND, baseline_id="IG-LEGACY-20260906-1030")\n        legacy["production_date_kst"] = "2026-09-06"\n        legacy["scheduled_slot_kst"] = "2026-09-06T10:30:00+09:00"\n        legacy["actual_started_at_kst"] = "2026-09-06T10:30:03+09:00"\n        legacy["router_branch"] = "DAILY_PRODUCTION"\n        legacy["finalized_at"] = "2026-09-06T10:31:00+09:00"\n        assert validate_production_record(legacy, allow_legacy=True) == []\n        legacy_state = empty_state()\n        legacy_state["production_records"]["2026-09-06"] = {"finalized": True, **legacy}\n        write_state_atomic(path, legacy_state)\n        loaded_legacy = load_state(path)\n        assert baseline_id_for_date(loaded_legacy, "2026-09-06") == "IG-LEGACY-20260906-1030"\n        assert "legacy 10:30 scheduled run is read-only and cannot finalize" in validate_production_record(legacy)\n\n'''
+          anchor='''        path.write_text("{broken-json", encoding="utf-8")\n'''
+          if anchor not in text: raise SystemExit('test_production_state legacy insertion anchor missing')
+          text=text.replace(anchor, legacy_block+anchor, 1)
+          p.write_text(text,encoding='utf-8')
+
+          # 6) Update pause/recovery regressions to the hourly-on-the-hour + Monday-19 contract.
+          p=Path('instagram_tcg_content/test_automation_pause_recovery_v30.py')
+          text=p.read_text(encoding='utf-8')
+          text=text.replace('RRULE:FREQ=HOURLY;BYMINUTE=30;BYSECOND=0','RRULE:FREQ=HOURLY;BYMINUTE=0;BYSECOND=0')
+          text=text.replace('state["updated_at"] = "2026-09-08T01:37:01.377102Z"','state["updated_at"] = "2026-09-08T01:07:01.377102Z"')
+          text=text.replace('state["last_run_time"] = "2026-09-07T20:27:56.644698Z"','state["last_run_time"] = "2026-09-07T20:00:56.644698Z"')
+          text=text.replace('result["schedule_start_slot_kst"], "2026-09-08T10:30+09:00"','result["schedule_start_slot_kst"], "2026-09-08T10:00+09:00"')
+          text=text.replace('self.assertIn("2026-09-08T06:30+09:00", result["missed_slots_kst"])','self.assertIn("2026-09-08T06:00+09:00", result["missed_slots_kst"])')
+          text=text.replace('self.assertIn("2026-09-08T10:30+09:00", result["missed_slots_kst"])','self.assertIn("2026-09-08T10:00+09:00", result["missed_slots_kst"])')
+          text=text.replace('self.assertNotIn("2026-09-08T05:30+09:00", result["missed_slots_kst"])','self.assertNotIn("2026-09-08T05:00+09:00", result["missed_slots_kst"])')
+          text=text.replace('''        self.assertTrue(result["missed_full_0630"])\n        self.assertEqual(\n            result["catchup_policy"],\n            "AT_MOST_ONCE_SAME_DAY_WITHOUT_BASELINE_CREATION",\n        )\n''','''        self.assertFalse(result["missed_weekly_production"])\n        self.assertFalse(result["missed_full_0630"])\n        self.assertEqual(result["catchup_policy"], "NONE")\n''',1)
+          old='''    def test_0630_missed_slot_requests_bounded_catchup(self):\n        result = classify_pause(\n            self.state(False),\n            observed_at="2026-09-07T01:01:48.674172Z",\n        )\n        self.assertTrue(result["missed_full_0630"])\n        self.assertEqual(\n            result["catchup_policy"],\n            "AT_MOST_ONCE_SAME_DAY_WITHOUT_BASELINE_CREATION",\n        )\n'''
+          new='''    def test_missed_weekly_production_requests_user_recovery_only(self):\n        state = self.state(False)\n        state["last_run_time"] = "2026-09-14T08:00:10Z"\n        state["updated_at"] = "2026-09-14T10:07:01Z"\n        result = classify_pause(\n            state,\n            observed_at="2026-09-14T11:05:00Z",\n        )\n        self.assertTrue(result["missed_weekly_production"])\n        self.assertIn("2026-09-14T19:00+09:00", result["missed_slots_kst"])\n        self.assertEqual(result["catchup_policy"], "USER_REQUESTED_RECOVERY_ONLY")\n        self.assertFalse(result["duplicate_catchup_allowed"])\n'''
+          if old not in text: raise SystemExit('old 0630 test block missing')
+          text=text.replace(old,new,1)
+          insertion='''\n    def test_first_snapshot_wrong_schedule_is_control_plane_drift(self):\n        state = self.state(True)\n        state["schedule"] = "RRULE:FREQ=HOURLY;BYMINUTE=30;BYSECOND=0"\n        state["last_run_time"] = "2026-09-09T01:00:10Z"\n        result = classify_pause(state, observed_at="2026-09-09T01:01:00Z")\n        self.assertIn("schedule", result["control_plane_drift_fields"])\n        self.assertEqual(result["event_class"], "CONTROL_PLANE_DRIFT")\n        self.assertEqual(result["required_action"], "REVIEW_VERIFIED_CONTROL_PLANE_DRIFT")\n\n'''
+          anchor='''    def test_empty_title_still_fails_closed(self):\n'''
+          if anchor not in text: raise SystemExit('pause test insertion anchor missing')
+          text=text.replace(anchor,insertion+anchor,1)
+          p.write_text(text,encoding='utf-8')
+
+          # 7) Non-production slots collect/verify only; visible failure reports are Monday 19:00 only.
+          p=Path('instagram_tcg_content/test_production_recovery_policy.py')
+          text=p.read_text(encoding='utf-8')
+          text=text.replace('    BLOCKED_MODE,\n', '    BLOCKED_MODE,\n    COLLECTION_ONLY_MODE,\n',1)
+          old='''        self.assertEqual(decision.action, BLOCKED_MODE)\n        self.assertFalse(decision.run_bounded_collection)\n        self.assertFalse(decision.render_allowed)\n        self.assertTrue(decision.must_emit_visible_report)\n\n    def test_ready_collection_goes_to_full_preflight(self):\n'''
+          new='''        self.assertEqual(decision.action, COLLECTION_ONLY_MODE)\n        self.assertTrue(decision.run_bounded_collection)\n        self.assertFalse(decision.render_allowed)\n        self.assertFalse(decision.must_emit_visible_report)\n\n    def test_ready_collection_goes_to_full_preflight(self):\n'''
+          if old not in text: raise SystemExit('nonproduction recovery expectation anchor missing')
+          text=text.replace(old,new,1)
+          text=text.replace('scheduled_slot_kst="2026-09-10T10:30:00+09:00"','scheduled_slot_kst="2026-09-14T19:00:00+09:00"',1)
+          p.write_text(text,encoding='utf-8')
+          PY
+
+      - name: Targeted regression
+        shell: bash
+        run: |
+          set -euo pipefail
+          python -m py_compile \
+            instagram_tcg_content/production_state.py \
+            instagram_tcg_content/automation_state_guard.py \
+            instagram_tcg_content/production_recovery_policy.py
+          python instagram_tcg_content/test_production_state.py
+          python -m unittest -v \
+            instagram_tcg_content.test_ai_reliability_runtime \
+            instagram_tcg_content.test_ai_reliability_v8_code_map_contract \
+            instagram_tcg_content.test_ai_reliability_v8_integration \
+            instagram_tcg_content.test_automation_pause_recovery_v30 \
+            instagram_tcg_content.test_production_recovery_policy
+          python selfrefine_domain_boundary_guard.py
+          python verify_critical_feature_matrix_v25.py
+
+      - name: Commit verified repair and remove one-shot workflow
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git rm -- .github/workflows/audit-completion-v218.yml
+          git add -- \
+            instagram_tcg_content/production_state.py \
+            instagram_tcg_content/automation_state_guard.py \
+            instagram_tcg_content/production_recovery_policy.py \
+            instagram_tcg_content/test_production_state.py \
+            instagram_tcg_content/test_automation_pause_recovery_v30.py \
+            instagram_tcg_content/test_production_recovery_policy.py \
+            instagram_tcg_content/test_ai_reliability_v8_code_map_contract.py \
+            instagram_tcg_content/test_ai_reliability_v8_integration.py
+          git commit -m 'fix: complete hourly and Monday 19 production migration'
+          git push origin HEAD:main
