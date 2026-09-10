@@ -34,7 +34,7 @@ class ProductionRecoveryPolicyTests(unittest.TestCase):
         self.assertTrue(decision.must_emit_visible_report)
         self.assertEqual(decision.recovery_attempt_limit, 1)
 
-    def test_second_general_failure_blocks_render_but_never_silences_report(self):
+    def test_second_failure_blocks_render_but_never_silences_report(self):
         report = {
             "production_ready": False,
             "general_cardinfo_ready": False,
