@@ -123,5 +123,25 @@
   "pause_monitor_root_cause_policy": "NO_GUESS",
   "pause_monitor_control_plane_unknown_label": "UNRESOLVED_CONTROL_PLANE",
   "pause_monitor_missing_attribution_label": "CONTROL_PLANE_ATTRIBUTION_UNAVAILABLE",
-  "pause_monitor_source_code_auto_patch_allowed": false
+  "pause_monitor_source_code_auto_patch_allowed": false,
+  "silent_output_detection_event": "RUN_INVOKED_NO_PRODUCER_RECEIPT",
+  "silent_output_failed_stage": "EXCHANGE_PERSISTENCE",
+  "silent_output_reporting_slots_kst": [
+    "09:30",
+    "10:30",
+    "21:30",
+    "22:30"
+  ],
+  "silent_output_user_visible_report_required": true,
+  "silent_output_current_incident_baseline": {
+    "scheduled_slot_kst": "2026-09-10T10:30:00+09:00",
+    "last_run_time_kst": "2026-09-10T10:30:33.467693+09:00",
+    "monitor_last_run_time_kst": "2026-09-10T10:33:52.052182+09:00",
+    "production_record_present": false,
+    "producer_exchange_receipt_present": false,
+    "latest_factual_snapshot_built_at": "2026-09-06T21:25:43+09:00",
+    "latest_verified_fact_count": 1,
+    "classification": "SILENT_OUTPUT_FAILURE",
+    "root_cause": "ROOT_CAUSE_UNRESOLVED"
+  }
 }
