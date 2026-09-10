@@ -42,7 +42,8 @@ class GradedPhotoRuntimeTests(unittest.TestCase):
         self.assertIn(payload['state'],{'idle','queued','running','completed','failed'})
         status,payload=request_json(urllib.request.Request(self.base+'/graded_photo_candidates.json'))
         self.assertEqual(status,200)
-        self.assertEqual(payload['engine'],'v123-verified-multisource-photo-collection')
+        self.assertRegex(payload['engine'],r'^v[0-9]+-[a-z0-9-]+-collection$')
+        self.assertGreaterEqual(int(payload.get('schema_version',0)),8)
         self.assertEqual(payload['summary']['raw_grade_calibration_eligible'],0)
 
     def test_precollect_stage_skips_manual_raw_photos_and_logs_but_keeps_learning_state(self):

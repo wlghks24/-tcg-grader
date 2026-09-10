@@ -154,7 +154,7 @@ class Operational0600RefreshV25Tests(unittest.TestCase):
             update_promo_events.OFFICIAL_SOURCE_REPLACEMENTS[
                 "https://pokemonkorea.co.kr/2026_battle_tournament3"
             ],
-            "https://pokemonkorea.co.kr/2026_battle_tournament3/menu800",
+            "https://new.pokemonkorea.co.kr/card",
         )
 
     def test_pokemon_kr_event_uses_same_company_collection_fallback(self):
