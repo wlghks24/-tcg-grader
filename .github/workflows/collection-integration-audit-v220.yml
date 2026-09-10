@@ -284,28 +284,22 @@ jobs:
               '    grading_updates = _json(base / "grading_company_updates.json")\n'
               '    grading_watch = safe_read_text(base / "grading_company_watch.py")\n',
           )
-          replace_once(
-              'feature_contract.py',
-              textwrap.dedent('''\
-                  add("six_collection_jobs", "출시·재발매·시세·행사·구매처·환율·등급사진 7단계 자동수집",
-                      "'total':7" in server and "graded_photo_multi_source" in automatic
-                      and all(token in server for token in ("/api/run-graded-photo-collection", "/api/graded-photo-collection-status"))
-                      and len(re.findall(
-                          r'^\\s*\\("[^"]+",\\s*"update_[^"]+",\\s*"[^"]+\\.json"\\),?$', automatic, re.M
-                      )) == 6,
-                      "6개 기존 작업 + OCR·공식 인증검증 등급사진 작업")
-              '''),
-              textwrap.dedent('''\
-                  add("six_collection_jobs", "출시·재발매·시세·행사·구매처·환율·감정업체·등급사진 8단계 자동수집",
-                      "_full_update_job_count" in server
-                      and all(token in automatic for token in ("grading_company_watch", "grading_company_updates.json", "graded_photo_multi_source"))
-                      and all(token in server for token in ("grading_status", "/api/run-graded-photo-collection", "/api/graded-photo-collection-status"))
-                      and grading_updates.get("policy",{}).get("official_sources_only") is True
-                      and set(grading_updates.get("companies",{})) == {"PSA","BGS","CGC","TAG","BRG"}
-                      and "WATCH_SOURCES" in grading_watch,
-                      "6개 기존 자료 + 공식 감정업체 변경감시 + OCR·공식 인증검증 등급사진 작업")
-              '''),
-          )
+          feature_text=read('feature_contract.py')
+          feature_start=feature_text.find('    add("six_collection_jobs", ')
+          feature_end=feature_text.find('    add("scheduled_precollection"', feature_start)
+          if feature_start < 0 or feature_end < 0:
+              raise SystemExit('feature_contract.py: collection contract block not found')
+          feature_new=textwrap.dedent('''\
+              add("six_collection_jobs", "출시·재발매·시세·행사·구매처·환율·감정업체·등급사진 8단계 자동수집",
+                  "_full_update_job_count" in server
+                  and all(token in automatic for token in ("grading_company_watch", "grading_company_updates.json", "graded_photo_multi_source"))
+                  and all(token in server for token in ("grading_status", "/api/run-graded-photo-collection", "/api/graded-photo-collection-status"))
+                  and grading_updates.get("policy",{}).get("official_sources_only") is True
+                  and set(grading_updates.get("companies",{})) == {"PSA","BGS","CGC","TAG","BRG"}
+                  and "WATCH_SOURCES" in grading_watch,
+                  "6개 기존 자료 + 공식 감정업체 변경감시 + OCR·공식 인증검증 등급사진 작업")
+          ''')
+          write('feature_contract.py',feature_text[:feature_start]+feature_new+feature_text[feature_end:])
           replace_once(
               'code_map_intelligence.py',
               '        "grading_company_watch.py",\n'
