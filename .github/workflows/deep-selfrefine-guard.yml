@@ -1,5 +1,5 @@
 name: Deep SELFREFINE Guard
-# SELFREFINE final same-SHA cross-check trigger v3
+# SELFREFINE final same-SHA cross-check trigger v4
 
 on:
   pull_request:
@@ -102,7 +102,14 @@ jobs:
         run: |
           python verify_code_map_internal.py
           python -m unittest -v test_ai_auto_tracker.py test_market_ai_auto_tracker.py
-
+      - name: Verify collection scope and retired official URL recovery
+        run: |
+          python -m unittest -v \
+            test_collection_scope_compat_v214.py \
+            test_collector_recovery_v161.py \
+            test_social_event_topic_coverage.py \
+            test_social_topic_capacity_v213.py
+          python feature_contract.py
       - name: Exercise browser UI camera service worker and links
         run: |
           node verify_browser_runtime.js
