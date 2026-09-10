@@ -12,17 +12,23 @@ on:
       - 'multi_market_price_collector.py'
       - 'update_releases.py'
       - 'update_promo_events.py'
+      - 'update_purchase_sources.py'
+      - 'validate_external_links.py'
+      - 'feature_contract.py'
       - 'multi_route_event_discovery.py'
       - 'social_event_discovery.py'
       - 'auto_pipeline_runner.py'
       - 'supplementary_discovery.py'
       - 'static_data_publish_gate.py'
       - 'test_static_data_publish_gate.py'
+      - 'test_collection_scope_compat_v214.py'
+      - 'test_social_event_topic_coverage.py'
       - 'test_social_topic_capacity_v213.py'
       - 'test_information_lifecycle_archive_v209.py'
       - 'source_collection_stats.json'
       - 'adaptive_collection_stats.json'
       - '.github/workflows/collection-verification-guard.yml'
+      - '.github/workflows/tcg-static-data-refresh.yml'
   push:
     branches: [main]
     paths:
@@ -34,15 +40,21 @@ on:
       - 'multi_market_price_collector.py'
       - 'update_releases.py'
       - 'update_promo_events.py'
+      - 'update_purchase_sources.py'
+      - 'validate_external_links.py'
+      - 'feature_contract.py'
       - 'multi_route_event_discovery.py'
       - 'social_event_discovery.py'
       - 'auto_pipeline_runner.py'
       - 'supplementary_discovery.py'
       - 'static_data_publish_gate.py'
       - 'test_static_data_publish_gate.py'
+      - 'test_collection_scope_compat_v214.py'
+      - 'test_social_event_topic_coverage.py'
       - 'test_social_topic_capacity_v213.py'
       - 'test_information_lifecycle_archive_v209.py'
       - '.github/workflows/collection-verification-guard.yml'
+      - '.github/workflows/tcg-static-data-refresh.yml'
 
 permissions:
   contents: read
@@ -73,14 +85,19 @@ jobs:
       - name: Static and regression verification
         run: |
           python -m py_compile \
-            collection_verification_gate.py static_data_publish_gate.py \
+            collection_verification_gate.py static_data_publish_gate.py feature_contract.py \
+            update_purchase_sources.py validate_external_links.py \
             test_collection_verification_gate.py test_static_data_publish_gate.py \
+            test_collection_scope_compat_v214.py test_social_event_topic_coverage.py \
             test_social_topic_capacity_v213.py test_information_lifecycle_archive_v209.py
           python -m unittest -v \
             test_collection_verification_gate.py \
             test_static_data_publish_gate.py \
+            test_collection_scope_compat_v214.py \
+            test_social_event_topic_coverage.py \
             test_social_topic_capacity_v213.py \
             test_information_lifecycle_archive_v209.py
+          python feature_contract.py
           python selfrefine_domain_boundary_guard.py
 
       - name: Run bounded live collection cycle
