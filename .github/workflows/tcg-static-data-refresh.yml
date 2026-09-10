@@ -14,11 +14,14 @@ on:
       - 'release_history_backfill.py'
       - 'update_promo_events.py'
       - 'update_purchase_sources.py'
+      - 'validate_external_links.py'
+      - 'feature_contract.py'
       - 'multi_route_event_discovery.py'
       - 'social_event_discovery.py'
       - 'auto_pipeline_runner.py'
       - 'test_static_data_publish_gate.py'
       - 'test_collection_verification_gate.py'
+      - 'test_collection_scope_compat_v214.py'
       - 'test_information_lifecycle_archive_v209.py'
       - 'test_release_history_coverage_v4.py'
       - 'test_collector_recovery_v161.py'
@@ -60,18 +63,20 @@ jobs:
       - name: Compile and run collection publish regressions
         run: |
           python -m py_compile \
-            static_data_publish_gate.py auto_update_all.py tcg_updater.py \
-            update_releases.py update_promo_events.py update_purchase_sources.py \
+            static_data_publish_gate.py auto_update_all.py tcg_updater.py feature_contract.py \
+            update_releases.py update_promo_events.py update_purchase_sources.py validate_external_links.py \
             multi_route_event_discovery.py social_event_discovery.py auto_pipeline_runner.py
           python -m unittest -v \
             test_static_data_publish_gate.py \
             test_collection_verification_gate.py \
+            test_collection_scope_compat_v214.py \
             test_information_lifecycle_archive_v209.py \
             test_release_history_coverage_v4.py \
             test_collector_recovery_v161.py \
             test_social_event_topic_coverage.py \
             test_social_topic_capacity_v213.py \
             test_event_quick_watch.py
+          python feature_contract.py
 
       - name: Run full verified collection cycle
         timeout-minutes: 25
@@ -153,5 +158,6 @@ jobs:
             echo "- publish policy: validated public JSON only; no force push"
             echo "- lifecycle policy: end/release + 5 days, archive on day 6"
             echo "- topic policy: collection attempts are distinct from zero discovered leads"
+            echo "- core coverage policy: KR/JP/US 3x3 must remain complete even when ASIA lanes are added"
             echo "- public signal persistence: purchase_signals + social_stock_signals included"
           } >> "$GITHUB_STEP_SUMMARY"
