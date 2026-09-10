@@ -1,4 +1,5 @@
 name: Grading Company Watch
+# v216: source-scoped baseline semantics verified before live activation.
 
 on:
   workflow_dispatch:
