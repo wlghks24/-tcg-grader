@@ -8,8 +8,9 @@ never copies, promotes, or marks a shared fact as verified. It only distinguishe
 1. upstream collection itself is stale/unavailable; and
 2. upstream collection is fresh while the strict IG_CARDINFO factual snapshot is stale.
 
-Case (2) is an actionable Instagram-local capture/persistence gap and should trigger a
-bounded IG source recapture followed by ``source_verification_engine.verify_fact`` and
+Case (2) is an actionable Instagram-local capture/persistence gap and routes to the
+bounded ``collection_recovery_runner``. The runner accepts only an explicit IG-local
+raw-observation packet, calls ``source_verification_engine.verify_fact`` and then
 ``persisted_crosscheck_export``. Verification standards are never relaxed.
 """
 from __future__ import annotations
@@ -27,6 +28,7 @@ DEFAULT_IG_SNAPSHOT = ROOT / "TCG_CROSSCHECK" / "IG_CARDINFO" / "factual_snapsho
 
 MAX_SHARED_AGE_HOURS = 12.0
 MAX_IG_SNAPSHOT_AGE_HOURS = 36.0
+RECOVERY_ENTRYPOINT = "instagram_tcg_content.collection_recovery_runner"
 
 
 def _load(path: Path) -> dict[str, Any]:
@@ -96,7 +98,7 @@ def audit_freshness_gap(
         status = "IG_LOCAL_CAPTURE_PERSISTENCE_LAG"
         error_code = "IG_SNAPSHOT_STALE_WHILE_SHARED_COLLECTION_FRESH"
         next_action = (
-            "RUN_BOUNDED_IG_LOCAL_SOURCE_CAPTURE_VERIFY_AND_PERSIST; "
+            "CAPTURE_IG_LOCAL_OBSERVATIONS_THEN_RUN_COLLECTION_RECOVERY_RUNNER; "
             "DO_NOT_PROMOTE_SHARED_ROWS_DIRECTLY"
         )
         ig_local_refresh_required = True
@@ -104,13 +106,14 @@ def audit_freshness_gap(
         status = "UPSTREAM_AND_IG_FRESHNESS_UNRESOLVED"
         error_code = "IG_AND_SHARED_COLLECTION_NOT_FRESH"
         next_action = (
-            "REFRESH_SHARED_DISCOVERY_IF_NEEDED_THEN_RUN_BOUNDED_IG_LOCAL_CAPTURE; "
+            "REFRESH_SHARED_DISCOVERY_IF_NEEDED_FOR_LEADS_ONLY; "
+            "CAPTURE_IG_LOCAL_OBSERVATIONS_THEN_RUN_COLLECTION_RECOVERY_RUNNER; "
             "KEEP_VERIFICATION_FAIL_CLOSED"
         )
         ig_local_refresh_required = True
 
     return {
-        "schema_version": 1,
+        "schema_version": 2,
         "project": "instagram_card",
         "status": status,
         "error_code": error_code,
@@ -134,6 +137,11 @@ def audit_freshness_gap(
         },
         "ig_local_refresh_required": ig_local_refresh_required,
         "verification_mode_must_remain": "INSTAGRAM_LOCAL_EVIDENCE_ONLY",
+        "recovery_entrypoint": RECOVERY_ENTRYPOINT,
+        "recovery_plan_command": "python -m instagram_tcg_content.collection_recovery_runner --plan",
+        "recovery_packet_command": (
+            "python -m instagram_tcg_content.collection_recovery_runner --input <ig-local-capture.json>"
+        ),
         "required_verification_entrypoint": (
             "instagram_tcg_content.source_verification_engine.py::verify_fact"
         ),
@@ -173,6 +181,7 @@ def self_test() -> None:
     assert lag["status"] == "IG_LOCAL_CAPTURE_PERSISTENCE_LAG", lag
     assert lag["ig_local_refresh_required"] is True, lag
     assert lag["shared_collection"]["promotion_to_ig_verified_fact_allowed"] is False, lag
+    assert lag["recovery_entrypoint"] == RECOVERY_ENTRYPOINT, lag
 
     fresh_ig = dict(stale_ig)
     fresh_ig["built_at"] = "2026-09-10T19:00:00+09:00"
