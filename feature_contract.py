@@ -193,11 +193,23 @@ def audit_feature_contract(root: str | Path | None = None) -> dict[str, Any]:
         bool(watched) and any("재발매" in str(row.get("release_type", "")) for row in watched if isinstance(row, dict))
         and all(token in page for token in ("releaseBoard", "market_watch.json")),
         "출시·재발매 자료와 화면")
-    coverage = promos.get("coverage") if isinstance(promos.get("coverage"), dict) else {}
+    promo_rows = [row for row in promos.get("items", []) if isinstance(row, dict)]
+    core_games = {"포켓몬 카드", "원피스 카드", "나루토 카드"}
+    core_regions = {"KR", "JP", "US"}
+    expected_core_pairs = {(game, region) for game in core_games for region in core_regions}
+    covered_core_pairs = {
+        (row.get("game"), row.get("region")) for row in promo_rows
+        if row.get("game") in core_games and row.get("region") in core_regions
+    }
+    movie_core_pairs = {
+        (row.get("game"), row.get("region")) for row in promo_rows
+        if row.get("game") in core_games and row.get("region") in core_regions
+        and row.get("category") == "movie"
+    }
     add("promo_collab_movies", "한·일·미 포켓몬·원피스·나루토 행사·콜라보·영화",
-        coverage.get("covered_game_region_pairs") == 9 and coverage.get("movie_game_region_pairs") == 9
-        and {"promo", "collaboration", "movie"} <= {row.get("category") for row in promos.get("items", []) if isinstance(row, dict)},
-        "3작품×3국 공식출처 9조합")
+        expected_core_pairs <= covered_core_pairs and expected_core_pairs <= movie_core_pairs
+        and {"promo", "collaboration", "movie"} <= {row.get("category") for row in promo_rows},
+        "3작품×3국 핵심 9조합 + 확장 지역은 별도 허용")
     social_channels = social_candidates.get("channels") if isinstance(social_candidates.get("channels"), dict) else {}
     add("social_google_event_discovery", "Instagram·X·Google 기반 행사·콜라보·영화 보조수집",
         all(token in social_discovery for token in (

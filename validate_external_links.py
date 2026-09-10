@@ -54,10 +54,10 @@ def _probe_pair(task):
     url, request_timeout = task
     return url, probe(url, request_timeout=request_timeout)
 FALLBACKS={
- "pokemoncard.co.kr":"https://pokemoncard.co.kr/",
- "www.pokemoncard.co.kr":"https://pokemoncard.co.kr/",
- "pokemonkorea.co.kr":"https://pokemonkorea.co.kr/",
- "www.pokemonkorea.co.kr":"https://pokemonkorea.co.kr/",
+ "pokemoncard.co.kr":"https://new.pokemonkorea.co.kr/card",
+ "www.pokemoncard.co.kr":"https://new.pokemonkorea.co.kr/card",
+ "pokemonkorea.co.kr":"https://new.pokemonkorea.co.kr/card",
+ "www.pokemonkorea.co.kr":"https://new.pokemonkorea.co.kr/card",
  "onepiece-cardgame.kr":"https://onepiece-cardgame.kr/",
  "www.onepiece-cardgame.kr":"https://onepiece-cardgame.kr/",
  "www.onepiece-cardgame.com":"https://www.onepiece-cardgame.com/",

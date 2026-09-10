@@ -74,7 +74,11 @@ DATE_PRECISIONS = {"day", "month", "season", "start-only", "unannounced"}
 ARCHIVE_GRACE_DAYS = 5
 OFFICIAL_SOURCE_REPLACEMENTS = {
     "https://pokemonkorea.co.kr/2026_battle_tournament3":
-        "https://pokemonkorea.co.kr/2026_battle_tournament3/menu800",
+        "https://new.pokemonkorea.co.kr/card",
+    "https://pokemonkorea.co.kr/2026_battle_tournament3/menu800":
+        "https://new.pokemonkorea.co.kr/card",
+    "https://pokemonkorea.co.kr/": "https://new.pokemonkorea.co.kr/card",
+    "https://www.pokemonkorea.co.kr/": "https://new.pokemonkorea.co.kr/card",
 }
 
 

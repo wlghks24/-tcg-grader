@@ -30,6 +30,12 @@ MAX_ONLINE_CHECKS = 12
 CANONICAL_URLS = {
     "https://events.pokemon.com/en-us/locations": "https://events.pokemon.com/EventLocator",
     "https://www.gamestop.com/stores/": "https://www.gamestop.com/stores",
+    "https://pokemoncard.co.kr/": "https://new.pokemonkorea.co.kr/card",
+    "https://www.pokemoncard.co.kr/": "https://new.pokemonkorea.co.kr/card",
+    "https://pokemoncard.co.kr/card/225": "https://new.pokemonkorea.co.kr/card",
+    "https://pokemoncard.co.kr/card/category/product": "https://new.pokemonkorea.co.kr/card",
+    "https://pokemonkorea.co.kr/": "https://new.pokemonkorea.co.kr/card",
+    "https://www.pokemonkorea.co.kr/": "https://new.pokemonkorea.co.kr/card",
 }
 
 # 주소·좌표는 거리 정렬용이며, 카드 재고는 매장별 전화/지도 검색으로만 확정한다.
@@ -159,7 +165,7 @@ OFFICIAL_CHAIN_HOSTS = {
     "아트박스": {"company.artbox.kr"},
     "교보문고 핫트랙스": {"store.kyobobook.co.kr"},
     "토이킹덤": {"store.emart.com"},
-    "포켓몬 카드샵": {"pokemoncard.co.kr"},
+    "포켓몬 카드샵": {"pokemoncard.co.kr", "www.pokemoncard.co.kr", "new.pokemonkorea.co.kr"},
     "원피스 카드샵": {"www.onepiece-cardgame.kr"},
     "다이소": {"www.daisomall.co.kr"},
     "노브랜드": {"store.emart.com"},
