@@ -1,5 +1,5 @@
 {
-  "version": 4,
+  "version": 5,
   "rules": {
     "official_facts_require_official_primary": true,
     "completed_sale_requires_independent_realized_sale_sources": 2,
@@ -8,7 +8,9 @@
     "same_error_signature_change_strategy_after": 2,
     "same_error_signature_exclude_after": 3,
     "respect_retry_after": true,
+    "retry_after_must_not_be_shortened": true,
     "bypass_403_429": false,
+    "private_or_local_source_url_forbidden": true,
     "preserve_provider_lineage": true,
     "dedupe_same_underlying_sale_lineage": true,
     "completed_sale_separate_from_market_reference": true,
@@ -22,7 +24,11 @@
     "production_state_corruption_fail_closed": true,
     "festival_is_event_subtype": true,
     "card_and_product_news_require_official_primary": true,
-    "archive_after_end_plus_days": 5
+    "archive_after_end_plus_days": 5,
+    "source_registry_required": true,
+    "all_provider_codes_must_resolve": true,
+    "source_registry_file": "instagram_tcg_content/source_registry.json",
+    "source_registry_validator": "instagram_tcg_content/source_registry.py::validate_registry"
   },
   "routes": {
     "official_release": ["official_primary", "official_secondary", "discovery_lead"],
