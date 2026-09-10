@@ -385,7 +385,13 @@ def collect(previous: dict | None = None, fetcher=_fetch_raw) -> dict:
                     "status": "ok", "checked_at": checked_at, "signal_fingerprint": fingerprint,
                     "services": services, "announcements": found, "verified_official_source": True,
                 }
-                structured = _service_changes(company, source_id, old.get("services", []) or [], services, checked_at)
+                # First successful observation of a source establishes its baseline.
+                # A previously verified source may emit service changes, including
+                # recovery after a temporary degraded fetch that retained last-good data.
+                structured = (
+                    _service_changes(company, source_id, old.get("services", []) or [], services, checked_at)
+                    if old.get("verified_official_source") is True else []
+                )
                 changes.extend(structured)
                 old_fp = old.get("signal_fingerprint")
                 if old_fp and old_fp != fingerprint and not structured and not found:
@@ -429,6 +435,11 @@ def collect(previous: dict | None = None, fetcher=_fetch_raw) -> dict:
     previous_announcements = previous.get("announcements", []) if isinstance(previous.get("announcements"), list) else []
     old_keys = {_announcement_key(row) for row in previous_announcements if isinstance(row, dict)}
     for row in announcements:
+        prior_source = prev_sources.get(str(row.get("source_id", "")), {})
+        # A newly introduced official source is baseline inventory even when the
+        # repository already has snapshots for other companies/sources.
+        if not (isinstance(prior_source, dict) and prior_source.get("verified_official_source") is True):
+            continue
         if _announcement_key(row) not in old_keys:
             changes.append({
                 "company": row["company"], "source_id": row["source_id"], "type": "official_announcement",

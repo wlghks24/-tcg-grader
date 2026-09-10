@@ -89,6 +89,42 @@ class GradingCompanyWatchV215Tests(unittest.TestCase):
         self.assertEqual(source["services"][0]["fee"], 29980)
         self.assertTrue(data["companies"]["PSA"]["markets"]["JP"]["retained_last_good"])
 
+    def test_initial_baseline_does_not_claim_every_current_service_changed(self):
+        specs = ({"id": "psa-jp-pricing", "kind": "pricing", "market": "JP", "currency": "JPY",
+                  "url": "https://www.psacard.com/ja-JP/services/tradingcardgrading/grading"},)
+        html = (
+            "<html><body>PSA公式トレーディングカード鑑定サービス 料金と納期のご案内。"
+            "スタンダード ￥9,980 予定納期：100営業日 申告価格：￥150,000以下 申し込む。"
+            "サービス内容、申告価格、予定納期は公式ページの最新表示を確認してください。"
+            "料金、受付状況、サービスレベルの変更はこの公式案内に掲載されます。</body></html>"
+        )
+        with mock.patch.object(watch, "WATCH_SOURCES", {"PSA": specs}):
+            data = watch.collect({}, fetcher=lambda _url: html)
+        self.assertEqual(data["recent_changes"], [])
+        self.assertEqual(data["history"], [])
+        self.assertEqual(data["sources"]["psa-jp-pricing"]["services"][0]["name"], "Standard")
+
+    def test_new_source_is_baseline_even_when_other_sources_have_history(self):
+        specs = ({"id": "psa-jp-news", "kind": "news", "market": "JP", "currency": "JPY",
+                  "url": "https://www.psacard.com/ja-JP/articles"},)
+        previous = {
+            "sources": {
+                "bgs-pricing": {"verified_official_source": True, "announcements": [], "services": []}
+            },
+            "announcements": [{"company": "BGS", "source_id": "bgs-pricing", "title": "old",
+                               "url": "https://www.beckett.com/grading", "verified_official_source": True}],
+            "history": [],
+        }
+        raw = (
+            "<html><body>PSA公式ニュース、サービスレベル、料金、納期、受付状況に関する最新のお知らせ一覧です。"
+            "<a href='/ja-JP/articles/articleview/999/service-change'>サービスレベル変更のお知らせ 2026/09/10</a>"
+            "公式発表のみを掲載し、詳細は各記事本文で確認できます。</body></html>"
+        )
+        with mock.patch.object(watch, "WATCH_SOURCES", {"PSA": specs}):
+            data = watch.collect(previous, fetcher=lambda _url: raw)
+        self.assertEqual(data["recent_changes"], [])
+        self.assertEqual(len(data["announcements"]), 2)
+
     def test_policy_never_allows_community_posts_to_write_verified_facts(self):
         with mock.patch.object(watch, "WATCH_SOURCES", {}):
             data = watch.collect({})
