@@ -1,4 +1,5 @@
 name: Instagram TCG Content SELFREFINE
+# v31: relocated root-cause diagnostics are verified inside the Instagram domain.
 
 on:
   pull_request:
