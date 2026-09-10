@@ -109,22 +109,66 @@ def _english_release_fields(value: str) -> dict:
     raise ValueError(f"공식 출시일 형식을 읽지 못했습니다: {normalized[:40]}")
 
 
-def collect_onepiece(url: str, region: str) -> list[dict]:
-    text = html_to_text(fetch(url))
-    pattern = re.compile(
-        r"((?:(?:EXTRA|PREMIUM)\s+)?BOOSTER(?:\s+PACK)?\s+.{2,130}?"
-        r"\[(?:OP|EB|PRB)[A-Z0-9-]+\])\s*"
-        r"Release\s*Date\s*([A-Za-z]+\s+(?:\d{1,2},\s*)?20\d{2})\s*"
-        r"MSRP\s*USD\s*\$([0-9]+(?:\.[0-9]+)?)",
-        re.I,
+def _dedupe_release_rows(rows: list[dict]) -> list[dict]:
+    """Keep one official row per stable product code/name and release window."""
+    out: list[dict] = []
+    seen: set[tuple] = set()
+    for row in rows:
+        if not isinstance(row, dict):
+            continue
+        name = re.sub(r"\s+", " ", str(row.get("name") or "")).strip()
+        code = re.search(r"\b(?:OPK|EBK|STK|OP|EB|PRB|ST|SD)-?\d+[A-Z]?\b", name, re.I)
+        identity = code.group(0).upper().replace(" ", "") if code else name.casefold()
+        key = (row.get("game"), row.get("region"), identity,
+               row.get("release_date"), row.get("release_window"))
+        if key in seen:
+            continue
+        seen.add(key)
+        out.append(row)
+    return out
+
+
+def _parse_onepiece_en(text: str, url: str, region: str) -> list[dict]:
+    """Parse official English booster and deck releases without mixing merchandise."""
+    normalized = re.sub(r"\s+", " ", str(text or "")).strip()
+    patterns = (
+        (
+            "팩",
+            re.compile(
+                r"((?:(?:EXTRA|PREMIUM)\s+)?BOOSTER(?:\s+PACK)?\s+.{2,130}?"
+                r"\[(?:OP|EB|PRB)[A-Z0-9-]+\])\s*"
+                r"Release\s*Date\s*([A-Za-z]+\s+(?:\d{1,2},\s*)?20\d{2})\s*"
+                r"MSRP\s*USD\s*\$([0-9]+(?:\.[0-9]+)?)",
+                re.I,
+            ),
+        ),
+        (
+            "덱",
+            re.compile(
+                r"((?:(?:STARTER|START|SET\s+SAIL|ULTIMATE)\s+)?(?:DECK(?:\s+SET)?|STARTER\s+DECK)"
+                r"\s+.{0,140}?\[(?:ST|SD)-\d+[A-Z]?\])\s*"
+                r"Release\s*Date\s*([A-Za-z]+\s+(?:\d{1,2},\s*)?20\d{2})\s*"
+                r"MSRP\s*USD\s*\$([0-9]+(?:\.[0-9]+)?)",
+                re.I,
+            ),
+        ),
     )
-    found = []
-    for name, date, price in pattern.findall(text):
-        row={"game":"ONE PIECE","region":region,"name":re.sub(r"\s+"," ",name).strip(),
-             "price":f"${price}/팩","status":"공식 확인","source":url}
-        row.update(_english_release_fields(date))
-        found.append(row)
-    return found
+    found: list[dict] = []
+    for unit, pattern in patterns:
+        for name, date, price in pattern.findall(normalized):
+            row = {
+                "game": "ONE PIECE", "region": region,
+                "name": re.sub(r"\s+", " ", name).strip(),
+                "price": "$" + price + "/" + unit,
+                "status": "공식 확인", "source": url,
+            }
+            row.update(_english_release_fields(date))
+            found.append(row)
+    return _dedupe_release_rows(found)
+
+
+def collect_onepiece(url: str, region: str) -> list[dict]:
+    return _parse_onepiece_en(html_to_text(fetch(url)), url, region)
 
 
 def _parse_onepiece_jp(text: str, url: str) -> list[dict]:
@@ -236,18 +280,89 @@ def _parse_onepiece_jp_segmented(text: str, url: str) -> list[dict]:
         found.append(row)
     return found
 
+def _parse_onepiece_jp_decks(text: str, url: str) -> list[dict]:
+    """Parse Japanese official starter/ultimate deck products by stable ST/SD code."""
+    normalized = re.sub(r"\s+", " ", str(text or "")).strip()
+    code_re = re.compile(r"\b(ST-\d+[A-Z]?|SD-\d+[A-Z]?)\b", re.I)
+    date_re = re.compile(
+        r"発売日.{0,90}?(20\d{2})\s*(?:[./年-])\s*(\d{1,2})"
+        r"(?:\s*(?:[./月-])\s*(\d{1,2})\s*日?)?",
+        re.I,
+    )
+    price_re = re.compile(
+        r"(?:メーカー希望小売価格|希望小売価格|価格).{0,120}?([0-9][0-9,]{1,7})\s*円",
+        re.I,
+    )
+    deck_words = re.compile(
+        r"(?:スタートデッキ(?:EX)?|アルティメットデッキ|デッキセット|デッキ)",
+        re.I,
+    )
+    found: list[dict] = []
+    for match in code_re.finditer(normalized):
+        left = max(0, match.start() - 180)
+        right = min(len(normalized), match.end() + 520)
+        segment = normalized[left:right]
+        dm = date_re.search(segment)
+        pm = price_re.search(segment)
+        before = normalized[max(left, match.start() - 160):match.start()]
+        words = list(deck_words.finditer(before))
+        if not dm or not pm or not words:
+            continue
+        code = match.group(1).upper()
+        y, m, d = dm.groups()
+        try:
+            year, month = int(y), int(m)
+            day = int(d) if d else None
+            price = int(pm.group(1).replace(",", ""))
+            if not (1 <= month <= 12 and 1 <= price <= 1_000_000):
+                continue
+            if day is not None:
+                dt.date(year, month, day)
+        except (TypeError, ValueError):
+            continue
+        title_start = words[-1].start()
+        title = re.sub(r"\s+", " ", before[title_start:]).strip(" -|:：/・")
+        if len(title) < 2:
+            title = f"ONE PIECE {code}"
+        row = {
+            "game": "ONE PIECE", "region": "JP", "name": f"{title} [{code}]",
+            "price": f"¥{price:,}/덱", "status": "공식 확인", "source": url,
+            "parser": "jp-deck-code-date-price-v1",
+        }
+        if day is None:
+            row.update({
+                "release_date": None,
+                "release_window": f"{year:04d}-{month:02d}",
+                "release_precision": "month",
+                "release_label": f"{year:04d}년 {month}월",
+            })
+        else:
+            row["release_date"] = dt.date(year, month, day).isoformat()
+        found.append(row)
+    return _dedupe_release_rows(found)
+
+
 def collect_onepiece_jp() -> list[dict]:
     last_error: Exception | None = None
     fetched_official_page = False
+    all_rows: list[dict] = []
     for url in ONEPIECE_JP_PRODUCT_URLS:
         try:
-            text = html_to_text(fetch(url)); found = (_parse_onepiece_jp(text, url) or _parse_onepiece_jp_fallback(text, url) or _parse_onepiece_jp_segmented(text, url))
+            text = html_to_text(fetch(url))
+            boosters = (
+                _parse_onepiece_jp(text, url)
+                or _parse_onepiece_jp_fallback(text, url)
+                or _parse_onepiece_jp_segmented(text, url)
+            )
+            decks = _parse_onepiece_jp_decks(text, url)
         except (urllib.error.URLError, TimeoutError, OSError, ValueError, UnicodeError) as exc:
             last_error = exc
             continue
         fetched_official_page = True
-        if found:
-            return found
+        all_rows.extend(boosters)
+        all_rows.extend(decks)
+    if all_rows:
+        return _dedupe_release_rows(all_rows)
     if fetched_official_page:
         return []
     if last_error is not None:
@@ -255,17 +370,36 @@ def collect_onepiece_jp() -> list[dict]:
     return []
 
 
+def parse_onepiece_kr(text: str, url: str = "https://onepiece-cardgame.kr/products.do") -> list[dict]:
+    """Parse Korean booster and starter-deck products from the official product list."""
+    normalized = re.sub(r"\s+", " ", str(text or "")).strip()
+    found: list[dict] = []
+    booster = re.compile(
+        r"\[(OPK-\d+|EBK-\d+)\]\s*(.{2,95}?)\s*(20\d{2}-\d{2}-\d{2})"
+        r".{0,120}?\[1BOX\]\s*([0-9,]+)\s*원",
+        re.I,
+    )
+    for code, title, date, price in booster.findall(normalized):
+        found.append({
+            "game": "ONE PIECE", "region": "KR", "name": f"[{code.upper()}] {title.strip()}",
+            "release_date": date, "price": f"₩{price}/BOX", "status": "공식 확인", "source": url,
+        })
+    deck = re.compile(
+        r"\[(STK-\d+)\]\s*(.{2,110}?)\s*(20\d{2}-\d{2}-\d{2})"
+        r".{0,100}?([0-9][0-9,]{2,8})\s*원",
+        re.I,
+    )
+    for code, title, date, price in deck.findall(normalized):
+        found.append({
+            "game": "ONE PIECE", "region": "KR", "name": f"[{code.upper()}] {title.strip()}",
+            "release_date": date, "price": f"₩{price}/덱", "status": "공식 확인", "source": url,
+        })
+    return _dedupe_release_rows(found)
+
+
 def collect_onepiece_kr() -> list[dict]:
     url = "https://onepiece-cardgame.kr/products.do"
-    text = html_to_text(fetch(url))
-    pattern = re.compile(r"\[(OPK-\d+|EBK-\d+)\]\s*(.{2,75}?)\s*(20\d{2}-\d{2}-\d{2}).{0,100}?\[1BOX\]\s*([0-9,]+)\s*원", re.I)
-    found = []
-    for code, title, date, price in pattern.findall(text):
-        found.append({
-            "game":"ONE PIECE", "region":"KR", "name":f"[{code}] {title.strip()}",
-            "release_date":date, "price":f"₩{price}/BOX", "status":"공식 확인", "source":url,
-        })
-    return found
+    return parse_onepiece_kr(html_to_text(fetch(url)), url)
 
 
 def _parse_pokemon_jp(text: str, url: str) -> list[dict]:
@@ -518,7 +652,7 @@ def valid(item: dict) -> bool:
 
 def item_key(item: dict) -> tuple:
     name = str(item.get("name", ""))
-    m = re.search(r"\b(?:OPK|EBK|OP|EB|PRB|SV|MEGA)[- ]?\d+[A-Z]?\b", name, re.I)
+    m = re.search(r"\b(?:OPK|EBK|STK|OP|EB|PRB|ST|SD|SV|MEGA)[- ]?\d+[A-Z]?\b", name, re.I)
     identity = re.sub(r"[^A-Z0-9]", "", m.group(0).upper()) if m else re.sub(r"\s+", " ", name).strip().casefold()
     # Date is intentionally not part of identity.  Re-release/date corrections update
     # the same product rather than creating endless duplicates.

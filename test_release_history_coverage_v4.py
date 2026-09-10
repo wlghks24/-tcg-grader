@@ -2,6 +2,7 @@ import unittest
 from unittest import mock
 
 import release_history_backfill as backfill
+import update_releases as releases
 
 
 class ReleaseHistoryCoverageV4Tests(unittest.TestCase):
@@ -86,6 +87,42 @@ class ReleaseHistoryCoverageV4Tests(unittest.TestCase):
         self.assertEqual(len(rows), 1)
         self.assertEqual(rows[0]['region'], 'US')
         self.assertEqual(rows[0]['release_date'], '2026-09-16')
+
+    def test_onepiece_korean_starter_deck_is_not_dropped(self):
+        rows = releases.parse_onepiece_kr(
+            "[STK-29] 스타트 덱 EGGHEAD 2026-09-18 12,000원 "
+            "[OPK-14] 부스터 팩 2026-08-21 [1BOX] 50,000원"
+        )
+        by_code = {row["name"].split("]")[0].lstrip("["): row for row in rows}
+        self.assertIn("STK-29", by_code)
+        self.assertEqual(by_code["STK-29"]["release_date"], "2026-09-18")
+        self.assertEqual(by_code["STK-29"]["price"], "₩12,000/덱")
+        self.assertIn("OPK-14", by_code)
+
+    def test_onepiece_english_deck_and_booster_are_both_parsed(self):
+        rows = releases._parse_onepiece_en(
+            "Set Sail Deck Set [SD-01] Release Date September 18, 2026 MSRP USD $24.99 "
+            "EXTRA BOOSTER -ONE PIECE HEROINES EDITION vol.2- [EB-05] "
+            "Release Date October 2026 MSRP USD $4.99",
+            "https://en.onepiece-cardgame.com/products/",
+            "US",
+        )
+        codes = {releases.item_key(row)[2]: row for row in rows}
+        self.assertIn("SD01", codes)
+        self.assertEqual(codes["SD01"]["release_date"], "2026-09-18")
+        self.assertIn("EB05", codes)
+        self.assertEqual(codes["EB05"]["release_window"], "2026-10")
+
+    def test_onepiece_japanese_deck_parser_keeps_exact_day(self):
+        rows = releases._parse_onepiece_jp_decks(
+            "デッキ スタートデッキEX エッグヘッド 【ST-29】 "
+            "発売日 2026.09.18 メーカー希望小売価格 1,320円",
+            "https://www.onepiece-cardgame.com/products/",
+        )
+        self.assertEqual(len(rows), 1)
+        self.assertIn("[ST-29]", rows[0]["name"])
+        self.assertEqual(rows[0]["release_date"], "2026-09-18")
+        self.assertEqual(rows[0]["price"], "¥1,320/덱")
 
     def test_naruto_requires_release_confirmation(self):
         self.assertEqual(backfill.parse_naruto_region('NARUTO CARD GAME tutorial sessions 2026', 'US'), [])
