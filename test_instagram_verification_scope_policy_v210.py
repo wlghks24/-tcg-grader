@@ -36,6 +36,37 @@ class InstagramVerificationScopePolicyV210Tests(unittest.TestCase):
             payload["source_verification_entrypoint"],
             "instagram_tcg_content/source_verification_engine.py",
         )
+        self.assertEqual(
+            payload["collection_freshness_gap_entrypoint"],
+            "instagram_tcg_content/collection_freshness_gap_guard.py",
+        )
+        self.assertEqual(
+            payload["collection_recovery_entrypoint"],
+            "instagram_tcg_content/collection_recovery_runner.py",
+        )
+        self.assertEqual(
+            payload["collection_recovery_evidence_scope"],
+            "instagram_local_source_capture",
+        )
+        self.assertTrue(payload["collection_recovery_merges_only_fresh_verified_ig_facts"])
+        self.assertTrue(payload["collection_recovery_shared_or_main_rows_forbidden"])
+        self.assertIn(
+            "bounded_collection_recovery_runner_if_needed",
+            payload["preproduction_order"],
+        )
+        self.assertTrue(payload["shared_collection_freshness_diagnostic_only"])
+        self.assertFalse(payload["shared_collection_verification_authority"])
+        self.assertFalse(payload["shared_collection_direct_fact_promotion_allowed"])
+        self.assertIn(
+            "shared_collection_freshness_diagnostic_only",
+            payload["preproduction_order"],
+        )
+        self.assertTrue(payload["user_requested_recovery_can_use_verified_missed_slot_evidence"])
+        self.assertTrue(
+            payload["user_requested_recovery_missed_slot_evidence_does_not_backfill_blocked_attempt"]
+        )
+        self.assertTrue(payload["user_requested_recovery_still_requires_no_finalized_record"])
+        self.assertEqual(payload["user_requested_recovery_max_attempts_per_day"], 1)
         self.assertTrue(payload["production_verification_receipt_required"])
         self.assertEqual(
             payload["production_verification_receipt_mode"],
@@ -89,6 +120,10 @@ class InstagramVerificationScopePolicyV210Tests(unittest.TestCase):
                 self.assertNotIn(marker, text)
         self.assertIn("test_source_verification_engine", text)
         self.assertIn("test_source_route_resilience", text)
+        self.assertIn("collection_freshness_gap_guard --self-test", text)
+        self.assertIn("test_collection_freshness_gap_guard", text)
+        self.assertIn("collection_recovery_runner --self-test", text)
+        self.assertIn("test_collection_recovery_runner", text)
 
     def test_legacy_cross_domain_workflow_is_noop_and_unscheduled(self):
         text = LEGACY_WORKFLOW.read_text(encoding="utf-8")

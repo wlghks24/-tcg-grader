@@ -34,6 +34,85 @@ class ProductionRecoveryPolicyTests(unittest.TestCase):
         self.assertTrue(decision.must_emit_visible_report)
         self.assertEqual(decision.recovery_attempt_limit, 1)
 
+    def test_matrix_coverage_gap_gets_first_bounded_refresh(self):
+        decision = decide_preproduction_recovery(
+            {
+                "production_ready": False,
+                "general_cardinfo_ready": False,
+                "market_price_ready": False,
+                "status": "NOT_READY",
+                "reasons": ["OUTPUT_MATRIX_COVERAGE_MISSING:pokemon:KR,naruto:EN"],
+            },
+            is_production_slot=True,
+            recovery_collection_attempts=0,
+        )
+        self.assertEqual(decision.action, RECOVERY_MODE)
+        self.assertTrue(decision.run_bounded_collection)
+
+    def test_latest_failed_collection_attempt_gets_one_refresh(self):
+        decision = decide_preproduction_recovery(
+            {
+                "production_ready": False,
+                "general_cardinfo_ready": False,
+                "market_price_ready": False,
+                "status": "NOT_READY",
+                "reasons": ["LATEST_COLLECTION_ATTEMPT_NOT_READY:NO_VERIFIED_FACTS"],
+            },
+            is_production_slot=True,
+            recovery_collection_attempts=0,
+        )
+        self.assertEqual(decision.action, RECOVERY_MODE)
+        self.assertTrue(decision.run_bounded_collection)
+
+    def test_malformed_or_invalid_snapshot_gets_one_rebuild_attempt(self):
+        for reason in (
+            "SNAPSHOT_FACTS_INVALID",
+            "SNAPSHOT_BUILT_AT_INVALID",
+            "MALFORMED_VERIFIED_FACTS:2",
+            "DUPLICATE_FACT_LINEAGE:1",
+        ):
+            with self.subTest(reason=reason):
+                decision = decide_preproduction_recovery(
+                    {
+                        "production_ready": False,
+                        "general_cardinfo_ready": False,
+                        "market_price_ready": False,
+                        "status": "NOT_READY",
+                        "reasons": [reason],
+                    },
+                    is_production_slot=True,
+                    recovery_collection_attempts=0,
+                )
+                self.assertEqual(decision.action, RECOVERY_MODE)
+                self.assertTrue(decision.run_bounded_collection)
+
+    def test_route_configuration_gap_does_not_waste_collection_retry(self):
+        for reason in (
+            "PROVIDER_GROUP_MISSING:pokemon",
+            "OFFICIAL_ROUTE_SHORTAGE:pokemon:0/1",
+            "COMPLETED_SALE_ROUTE_SHORTAGE:one_piece:1/2",
+            "MARKET_ROUTE_SHORTAGE:naruto:1/2",
+            "PROVIDER_GROUPS_MISSING",
+        ):
+            with self.subTest(reason=reason):
+                decision = decide_preproduction_recovery(
+                    {
+                        "production_ready": False,
+                        "general_cardinfo_ready": False,
+                        "market_price_ready": False,
+                        "status": "NOT_READY",
+                        "reasons": [reason],
+                    },
+                    is_production_slot=True,
+                    recovery_collection_attempts=0,
+                )
+                self.assertEqual(decision.action, BLOCKED_MODE)
+                self.assertFalse(decision.run_bounded_collection)
+                self.assertEqual(
+                    decision.reason,
+                    "SOURCE_ROUTE_CONFIGURATION_NOT_RECOVERABLE_BY_COLLECTION",
+                )
+
     def test_second_failure_blocks_render_but_never_silences_report(self):
         report = {
             "production_ready": False,
