@@ -83,8 +83,10 @@ FEATURE_QUERY_ALIASES = {
         "시세", "가격", "price", "market", "market collection", "수집", "collector",
     ),
     "release_event_promo_collection": (
-        "release", "출시", "재발매", "rerelease", "promo", "프로모", "event", "행사",
-        "festival", "축제", "페스티벌", "movie bonus", "영화특전", "pokemon run", "pokémon run", "run 30", "완주자",
+        "release", "출시", "발매", "카드발매", "발매소식", "카드발매소식", "재발매", "재입고", "rerelease", "restock",
+        "promo", "프로모", "event", "행사", "festival", "축제", "페스티벌", "movie", "영화", "극장판", "movie bonus", "영화특전",
+        "collab", "콜라보", "popup", "팝업", "tournament", "대회", "merch", "굿즈", "anniversary", "기념행사",
+        "pokemon run", "pokémon run", "run 30", "완주자",
         "참가보상", "참가 보상", "아시아 이벤트", "asia event",
     ),
     "runtime_delivery": (
@@ -413,8 +415,10 @@ FEATURE_ENTRYPOINT_RULES = {
     ),
     "release_event_promo_collection": (
         (("pokemon run", "pokémon run", "run 30", "완주자", "참가보상", "참가 보상",
-          "아시아 이벤트", "asia event", "festival", "축제", "페스티벌", "movie bonus", "영화특전", "promo", "프로모", "event", "행사"), "update_promo_events.py"),
-        (("rerelease", "재발매", "release", "출시"), "update_releases.py"),
+          "아시아 이벤트", "asia event", "festival", "축제", "페스티벌", "movie", "영화", "극장판", "movie bonus", "영화특전",
+          "collab", "콜라보", "popup", "팝업", "tournament", "대회", "merch", "굿즈", "anniversary", "기념행사",
+          "promo", "프로모", "event", "행사"), "update_promo_events.py"),
+        (("rerelease", "재발매", "restock", "재입고", "release", "출시", "발매", "카드발매", "발매소식", "카드발매소식"), "update_releases.py"),
     ),
     "selfrefine_isolation": (
         (("domain boundary", "isolation", "격리", "분리", "경계"), "selfrefine_domain_boundary_guard.py"),

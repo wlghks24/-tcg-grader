@@ -83,6 +83,39 @@ class InformationLifecycleArchiveV209Tests(unittest.TestCase):
         self.assertIn('<option value="reprint">🔁 재발매·재입고</option>', html)
         self.assertNotIn('||"2027-12-31"', html)
 
+    def test_second_example_ending_september_20_archives_on_september_26(self):
+        item = self.event(end="2026-09-20")
+        self.assertEqual("recently_ended", events.lifecycle_state(item, dt.date(2026, 9, 25)))
+        self.assertEqual("archive", events.lifecycle_state(item, dt.date(2026, 9, 26)))
+
+    def test_collection_keywords_and_categories_cover_requested_information_types(self):
+        import multi_route_event_discovery as routes
+        import social_event_discovery as social
+
+        samples = {
+            "promo": "포켓몬 카드 프로모 증정 캠페인",
+            "collaboration": "원피스 카드 콜라보 협업 행사",
+            "movie": "나루토 극장판 영화 개봉",
+            "event": "포켓몬 카드 공식 행사 개최",
+            "festival": "포켓몬 카드 축제 페스티벌 개최",
+            "tournament": "원피스 카드 챔피언십 대회",
+            "popup": "나루토 카드 팝업스토어 개최",
+            "release": "포켓몬 카드 신탄 부스터 발매",
+            "reprint": "원피스 카드 재발매 재판",
+            "merch": "나루토 카드 공식샵 굿즈",
+            "anniversary": "포켓몬 카드 30주년 기념행사",
+        }
+        for expected, text in samples.items():
+            with self.subTest(expected=expected):
+                self.assertIsNotNone(events.EVENT_WORDS.search(text))
+                self.assertEqual(expected, events.classify_information_category(text))
+                self.assertEqual(expected, routes._category(text))
+                self.assertEqual(expected, social._category(text))
+
+        self.assertEqual("reprint", events.classify_information_category("원피스 카드 재입고 안내"))
+        self.assertEqual("reprint", routes._category("원피스 카드 재입고 안내"))
+        self.assertEqual("reprint", social._category("원피스 카드 재입고 안내"))
+
     def test_verification_gate_reports_missing_collection_cells(self):
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)

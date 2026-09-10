@@ -72,9 +72,9 @@ REGION_LANG = {
     "US": {"lang": "en", "hl": "en-US", "gl": "US", "ceid": "US:en"},
 }
 EVENT_TERMS = {
-    "ko": "행사 이벤트 챌린지 도전 개최 특전 배포 콜라보 프로모 팝업 팝업스토어 점프샵 JUMP SHOP 슈에이샤 신세계 영화 극장판 개봉 예약 발매 출시 재발매 재입고 재고 품절 대회 응모 신청 등록 추첨 당첨 라이브 생방송 스트리밍 시청 트위치 드롭 코드 리딤 야구 KBO 굿즈 포토카드 브랜드데이 PLAYGO 재배포 재지급 수령 프로모션팩 신사황 마감 기한 변경 취소 연기 일정변경 시간변경 장소변경 LINE BANDAI TCG+ TCG+ 룰 규칙 금지 제한 에라타 체크인 참가자격 입장권 패스 대기명단 플레이어ID 덱리스트 RK9 PLAYGO 대회결과 결과발표 우승자발표 최종순위 우승덱 추첨판매 구매제한 본인인증 가상대기열 점검 서비스장애 로그인불가 복구완료 가격개정 가격변경 가격인상 가격인하 봉입오류 내용물누락 제품불량 제조불량 인쇄오류 가공오류 교환대응 상품회수 리콜 위조품 가품 모조품 복제품 레플리카 비정규카드 오리파 서치팩 서치박스 사기주의",
-    "ja": "イベント チャレンジ 開催 特典 配布 コラボ キャンペーン プロモ ポップアップ 映画 劇場版 発売 再販 再入荷 在庫 売り切れ 大会 応募 申込 登録 抽選 当選 ライブ配信 生配信 視聴 Twitch ドロップ コード グッズ カード 締切 期限 変更 中止 延期 日程変更 時間変更 会場変更 LINE BANDAI TCG+ TCG+ ルール 禁止 制限 エラッタ チェックイン 参加資格 入場券 パス キャンセル待ち プレイヤーID デッキリスト RK9 大会結果 結果発表 優勝者発表 最終順位 優勝デッキ 抽選販売 購入制限 本人認証 メンテナンス 障害 不具合 復旧 価格改定 価格変更 値上げ 値下げ 封入内容の誤り 表面加工の誤り イラストの誤り 製造不良 交換対応 回収 リコール 偽造品 模倣品 偽物 レプリカ 非正規カード オリパ サーチ済み",
-    "en": "event challenge special mission collaboration collab promo distribution giveaway pop-up movie film release reprint restock in-stock sold-out tournament preorder entry application registration lottery livestream broadcast streaming twitch drops redeem code merchandise card tiktok facebook deadline apply-by change cancelled canceled postponed rescheduled LINE BANDAI TCG+ TCG+ rules banned restricted errata legality check-in eligibility spectator pass badge waitlist interest-list player-id deck-list RK9 PLAYGO tournament-results event-results top-finishers final-standings winning-deck lottery-sale purchase-limit identity-verification virtual-queue maintenance service-outage login-issue resolved price-revision price-change price-increase price-decrease manufacturing-error printing-error packaging-error incorrect-contents missing-contents defective-product product-replacement exchange-program product-recall counterfeit fake-cards replica knockoff unauthorized-reproduction searched-packs repacked scam-warning",
+    "ko": "행사 이벤트 축제 페스티벌 페스타 박람회 챌린지 도전 개최 특전 배포 콜라보 프로모 팝업 팝업스토어 점프샵 JUMP SHOP 슈에이샤 신세계 영화 극장판 개봉 예약 발매 출시 재발매 재입고 재고 품절 대회 응모 신청 등록 추첨 당첨 라이브 생방송 스트리밍 시청 트위치 드롭 코드 리딤 야구 KBO 굿즈 포토카드 브랜드데이 PLAYGO 재배포 재지급 수령 프로모션팩 신사황 마감 기한 변경 취소 연기 일정변경 시간변경 장소변경 LINE BANDAI TCG+ TCG+ 룰 규칙 금지 제한 에라타 체크인 참가자격 입장권 패스 대기명단 플레이어ID 덱리스트 RK9 PLAYGO 대회결과 결과발표 우승자발표 최종순위 우승덱 추첨판매 구매제한 본인인증 가상대기열 점검 서비스장애 로그인불가 복구완료 가격개정 가격변경 가격인상 가격인하 봉입오류 내용물누락 제품불량 제조불량 인쇄오류 가공오류 교환대응 상품회수 리콜 위조품 가품 모조품 복제품 레플리카 비정규카드 오리파 서치팩 서치박스 사기주의",
+    "ja": "イベント 祭り 祭典 フェス フェスティバル チャレンジ 開催 特典 配布 コラボ キャンペーン プロモ ポップアップ 映画 劇場版 発売 再販 再入荷 在庫 売り切れ 大会 応募 申込 登録 抽選 当選 ライブ配信 生配信 視聴 Twitch ドロップ コード グッズ カード 締切 期限 変更 中止 延期 日程変更 時間変更 会場変更 LINE BANDAI TCG+ TCG+ ルール 禁止 制限 エラッタ チェックイン 参加資格 入場券 パス キャンセル待ち プレイヤーID デッキリスト RK9 大会結果 結果発表 優勝者発表 最終順位 優勝デッキ 抽選販売 購入制限 本人認証 メンテナンス 障害 不具合 復旧 価格改定 価格変更 値上げ 値下げ 封入内容の誤り 表面加工の誤り イラストの誤り 製造不良 交換対応 回収 リコール 偽造品 模倣品 偽物 レプリカ 非正規カード オリパ サーチ済み",
+    "en": "event festival card-fest fan-fest challenge special mission collaboration collab promo distribution giveaway pop-up movie film release reprint restock in-stock sold-out tournament preorder entry application registration lottery livestream broadcast streaming twitch drops redeem code merchandise card tiktok facebook deadline apply-by change cancelled canceled postponed rescheduled LINE BANDAI TCG+ TCG+ rules banned restricted errata legality check-in eligibility spectator pass badge waitlist interest-list player-id deck-list RK9 PLAYGO tournament-results event-results top-finishers final-standings winning-deck lottery-sale purchase-limit identity-verification virtual-queue maintenance service-outage login-issue resolved price-revision price-change price-increase price-decrease manufacturing-error printing-error packaging-error incorrect-contents missing-contents defective-product product-replacement exchange-program product-recall counterfeit fake-cards replica knockoff unauthorized-reproduction searched-packs repacked scam-warning",
 }
 FAN_TERMS = {
     "ko": "팬 컬렉터 수집 개봉 언박싱 덱 덱리스트 카드샵 매장 재고 입고 품절 시세 후기 대회 프로모 행사 이벤트 신제품 신탄 박스",
@@ -154,7 +154,9 @@ def _category(text: str) -> str:
     topic = multi_route_event_discovery._topic(text or "")
     if topic == "collab":
         return "collaboration"
-    if topic in {"movie", "festival", "tournament", "popup", "release", "reprint", "merch", "anniversary"}:
+    if topic == "stock":
+        return "reprint"
+    if topic in {"movie", "event", "festival", "tournament", "popup", "release", "reprint", "merch", "anniversary"}:
         return topic
     for category, pattern in CATEGORY_PATTERNS:
         if pattern.search(text or ""):
