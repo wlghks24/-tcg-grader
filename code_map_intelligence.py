@@ -166,6 +166,7 @@ FEATURE_ROUTE_OVERRIDES = {
         "auto_pipeline_runner.py",
         "static_data_publish_gate.py",
         "test_static_data_publish_gate.py",
+        "test_social_topic_capacity_v213.py",
         "test_information_lifecycle_archive_v209.py",
         ".github/workflows/tcg-static-data-refresh.yml",
         ".github/workflows/collection-verification-guard.yml",
