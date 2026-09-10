@@ -12,6 +12,7 @@ from instagram_tcg_content.collection_health import (
 from instagram_tcg_content.collection_normalizer import normalize_collector_record
 from instagram_tcg_content.persisted_crosscheck_export import build_snapshot
 from instagram_tcg_content.cardinfo_quality_learning_current import binding_status
+from instagram_tcg_content.source_verification_engine import CORE_FACTS
 
 
 def routes():
@@ -50,9 +51,11 @@ def test_festival_and_news_are_normalized_before_verification():
     festival = normalize_collector_record({"information_family": "official_festival"})
     assert festival["content_type"] == "festival"
     assert festival["fact_type"] == "official_event"
+    assert festival["fact_type"] in CORE_FACTS
     news = normalize_collector_record({"fact_type": "official_product_news"})
     assert news["content_type"] == "product_news"
     assert news["fact_type"] == "official_release"
+    assert news["fact_type"] in CORE_FACTS
 
 
 def test_snapshot_persists_content_subtype_and_lifecycle():
@@ -62,6 +65,18 @@ def test_snapshot_persists_content_subtype_and_lifecycle():
     assert fact["fact_type"] == "event"
     assert fact["content_type"] == "festival"
     assert fact["lifecycle_bucket"] == "ARCHIVE"
+
+
+def test_open_ended_period_content_stays_current_until_end_is_verified():
+    row = verified_row(
+        "pokemon", "KR", "official_festival", "festival-open",
+        start_date="2026-09-01",
+    )
+    snapshot = build_snapshot([row], now=datetime(2026, 10, 1, 3, 0, tzinfo=timezone.utc))
+    fact = snapshot["facts"][0]
+    assert fact["content_type"] == "festival"
+    assert fact["lifecycle_bucket"] == "CURRENT"
+    assert "end_date" not in fact
 
 
 def test_sales_only_never_satisfies_general_cardinfo_matrix():
@@ -101,6 +116,7 @@ if __name__ == "__main__":
     test_end_plus_five_then_archive()
     test_festival_and_news_are_normalized_before_verification()
     test_snapshot_persists_content_subtype_and_lifecycle()
+    test_open_ended_period_content_stays_current_until_end_is_verified()
     test_sales_only_never_satisfies_general_cardinfo_matrix()
     test_archived_general_facts_do_not_satisfy_current_matrix()
     test_quality_adapter_uses_current_canonical_binding_without_fact_authority()
