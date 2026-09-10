@@ -32,6 +32,24 @@ class PauseMonitorExchangeTests(unittest.TestCase):
         self.assertTrue(result["repair_handoff"]["control_plane_event"])
         self.assertFalse(result["repair_handoff"]["auto_run_level_repair_allowed"])
 
+    def test_invoked_run_without_producer_receipt_is_not_healthy(self):
+        result = classify_monitor_observation(
+            scheduled_slot_kst="2026-09-10T10:30:00+09:00",
+            observed_at="2026-09-10T10:35:00+09:00",
+            is_enabled=True,
+            last_run_time="2026-09-10T10:30:33+09:00",
+            producer_status=None,
+        )
+        self.assertEqual(result["classification"], "RUN_INVOKED_NO_PRODUCER_RECEIPT")
+        self.assertEqual(result["failed_stage"], "EXCHANGE_PERSISTENCE")
+        self.assertEqual(result["root_cause"], "ROOT_CAUSE_UNRESOLVED")
+        self.assertTrue(result["mandatory_reporting_slot"])
+        self.assertFalse(result["repair_handoff"]["auto_run_level_repair_allowed"])
+        self.assertEqual(
+            result["repair_handoff"]["recommended_action"],
+            "VERIFY_EXCHANGE_PERSISTENCE_AND_FORCE_VISIBLE_STATUS_REPORT",
+        )
+
     def test_reported_producer_failure_allows_only_run_level_handoff(self):
         status = build_producer_status(
             run_id="r1",
