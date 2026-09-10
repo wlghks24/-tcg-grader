@@ -535,11 +535,23 @@ def release_effective_date(item: dict) -> dt.date | None:
             return None
     window = str(item.get("release_window") or "")
     match = re.fullmatch(r"(20\d{2})-(0[1-9]|1[0-2])", window)
-    if not match:
+    if match:
+        year, month = map(int, match.groups())
+        next_month = dt.date(year + (month == 12), 1 if month == 12 else month + 1, 1)
+        return next_month - dt.timedelta(days=1)
+    season = re.fullmatch(r"(20\d{2})년\s*(봄|여름|가을|겨울)", window)
+    if not season:
         return None
-    year, month = map(int, match.groups())
-    next_month = dt.date(year + (month == 12), 1 if month == 12 else month + 1, 1)
-    return next_month - dt.timedelta(days=1)
+    year = int(season.group(1))
+    label = season.group(2)
+    if label == "봄":
+        return dt.date(year, 5, 31)
+    if label == "여름":
+        return dt.date(year, 8, 31)
+    if label == "가을":
+        return dt.date(year, 11, 30)
+    # 표시용 출시일을 만들지 않고, 계절 범위 종료점만 보관 수명주기에 사용한다.
+    return dt.date(year + 1, 3, 1) - dt.timedelta(days=1)
 
 
 def release_lifecycle_state(item: dict, today: dt.date | None = None) -> str:

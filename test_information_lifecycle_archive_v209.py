@@ -48,6 +48,16 @@ class InformationLifecycleArchiveV209Tests(unittest.TestCase):
         self.assertEqual("recently_released", releases.release_lifecycle_state(item, dt.date(2026, 10, 5)))
         self.assertEqual("archive", releases.release_lifecycle_state(item, dt.date(2026, 10, 6)))
 
+    def test_season_only_release_archives_after_season_end_plus_five_days(self):
+        item = self.release(date=None)
+        item["release_window"] = "2027년 여름"
+        self.assertEqual("current", releases.release_lifecycle_state(item, dt.date(2027, 8, 31)))
+        self.assertEqual("recently_released", releases.release_lifecycle_state(item, dt.date(2027, 9, 5)))
+        self.assertEqual("archive", releases.release_lifecycle_state(item, dt.date(2027, 9, 6)))
+        current, archive = releases.partition_release_lifecycle([item], dt.date(2027, 9, 6))
+        self.assertEqual([], current)
+        self.assertEqual("2027-09-06", archive[0]["archive_on"])
+
     def test_frontend_has_separate_event_and_release_archive_categories(self):
         html = Path("index.html").read_text(encoding="utf-8")
         self.assertIn('id="promoLifecycle"', html)
@@ -57,6 +67,8 @@ class InformationLifecycleArchiveV209Tests(unittest.TestCase):
         self.assertIn("INFO_ARCHIVE_GRACE_DAYS=5", html)
         self.assertIn("...(promoData.archive_items||[])", html)
         self.assertIn("...(releaseData.archive_items||[])", html)
+        self.assertIn("가을", html)
+        self.assertIn("new Date(y+1,2,0)", html)
 
     def test_every_requested_information_category_uses_event_lifecycle(self):
         base = {
