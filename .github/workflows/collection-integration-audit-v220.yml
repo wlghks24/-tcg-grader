@@ -1,0 +1,282 @@
+name: Collection integration audit v220
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/collection-integration-audit-v220.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  repair:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    env:
+      PYTHONPATH: ${{ github.workspace }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          fetch-depth: 2
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97
+        with:
+          python-version: '3.12'
+
+      - name: Apply bounded collection-integration repairs
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          from pathlib import Path
+
+          def replace(path, old, new, *, count=1):
+              p=Path(path); text=p.read_text(encoding='utf-8')
+              found=text.count(old)
+              if found != count:
+                  if new in text and found == 0:
+                      return
+                  raise SystemExit(f'{path}: expected {count} anchors, got {found}: {old[:100]!r}')
+              p.write_text(text.replace(old,new,count),encoding='utf-8')
+
+          # auto_update_all: the grading-company watcher is a mandatory local/PC/tablet collector.
+          replace('auto_update_all.py',
+              '    ("원화 환산 환율", "update_exchange_rates", "exchange_rates.json"),\n    ("업체별 등급카드 사진 후보", "graded_photo_multi_source", "graded_photo_candidates.json"),\n',
+              '    ("원화 환산 환율", "update_exchange_rates", "exchange_rates.json"),\n    ("등급업체 요금·서비스·이벤트", "grading_company_watch", "grading_company_updates.json"),\n    ("업체별 등급카드 사진 후보", "graded_photo_multi_source", "graded_photo_candidates.json"),\n')
+          replace('auto_update_all.py',
+              '        "exchange_rates.json":"원화 환산 환율 응답의 통화값·단위를 검증하지 못했습니다",\n        "graded_photo_candidates.json":"등급카드 사진 후보의 인증·이미지 증거 구조를 검증하지 못했습니다",\n',
+              '        "exchange_rates.json":"원화 환산 환율 응답의 통화값·단위를 검증하지 못했습니다",\n        "grading_company_updates.json":"감정업체 공식 요금·서비스·이벤트 스냅샷의 출처·정책 구조를 검증하지 못했습니다",\n        "graded_photo_candidates.json":"등급카드 사진 후보의 인증·이미지 증거 구조를 검증하지 못했습니다",\n')
+          replace('auto_update_all.py',
+              '    elif name == "graded_photo_candidates.json":\n        if not isinstance(data.get("records"),list) or not isinstance(data.get("summary"),dict):\n            raise ValueError("등급카드 사진 후보 records·summary 구조 오류")\n',
+              '''    elif name == "grading_company_updates.json":\n        import grading_company_watch\n        from urllib.parse import urlsplit\n        if data.get("schema_version") != 1:\n            raise ValueError("등급업체 감시 schema_version 오류")\n        policy=data.get("policy")\n        if not isinstance(policy,dict) or policy.get("official_sources_only") is not True or policy.get("community_posts_are_leads_only") is not True or policy.get("automatic_source_code_mutation") is not False:\n            raise ValueError("등급업체 공식출처 전용 정책 오류")\n        companies=data.get("companies"); sources=data.get("sources"); summary=data.get("summary")\n        if not isinstance(companies,dict) or set(companies) != {"PSA","BGS","CGC","TAG","BRG"}:\n            raise ValueError("등급업체 5개사 감시 프로필 누락")\n        if not isinstance(sources,dict) or len(sources) < 10 or not isinstance(summary,dict):\n            raise ValueError("등급업체 공식 감시 출처 대량 누락")\n        healthy=int(summary.get("healthy_sources") or 0); degraded=int(summary.get("degraded_sources") or 0)\n        if int(summary.get("sources") or -1) != len(sources) or healthy + degraded != len(sources) or healthy < 1:\n            raise ValueError("등급업체 출처 상태 집계 오류 또는 검증 가능한 공식 출처 없음")\n        for source_id,row in sources.items():\n            if not isinstance(row,dict):\n                raise ValueError(f"등급업체 출처 구조 오류: {source_id}")\n            parts=urlsplit(str(row.get("url") or ""))\n            if parts.scheme != "https" or (parts.hostname or "").lower() not in grading_company_watch.ALLOWED_HOSTS:\n                raise ValueError(f"등급업체 비공식 출처 차단: {source_id}")\n        for row in data.get("recent_changes",[]) or []:\n            if not isinstance(row,dict) or row.get("verified_official_source") is not True:\n                raise ValueError("검증되지 않은 감정업체 변경정보 자동반영 차단")\n    elif name == "graded_photo_candidates.json":\n        if not isinstance(data.get("records"),list) or not isinstance(data.get("summary"),dict):\n            raise ValueError("등급카드 사진 후보 records·summary 구조 오류")\n''')
+          replace('auto_update_all.py',
+              '        "exchange_rates.json": "인터넷 연결 후 환율 출처를 다시 확인하세요.",\n        "__integration__": "보조 후보수집 출처의 응답과 네트워크 상태를 확인하세요.",\n',
+              '        "exchange_rates.json": "인터넷 연결 후 환율 출처를 다시 확인하세요.",\n        "grading_company_updates.json": "PSA/BGS/CGC/TAG/BRG 공식 요금·서비스·이벤트 페이지와 출처 상태를 확인하세요.",\n        "__integration__": "보조 후보수집 출처의 응답과 네트워크 상태를 확인하세요.",\n')
+
+          # Shared safety gate knows the new factual JSON instead of bypassing it.
+          replace('auto_repair_engine.py',
+              '    "verification_cycles.json", "graded_photo_candidates.json",\n    "collector_self_heal_memory.json",\n',
+              '    "verification_cycles.json", "graded_photo_candidates.json", "grading_company_updates.json",\n    "collector_self_heal_memory.json",\n')
+          replace('auto_repair_engine.py',
+              '    "graded_photo_candidates.json": {"records": list, "summary": dict},\n    "collector_self_heal_memory.json": {"files": dict, "events": list, "quarantine": list},\n',
+              '    "graded_photo_candidates.json": {"records": list, "summary": dict},\n    "grading_company_updates.json": {"companies": dict, "sources": dict, "summary": dict, "policy": dict},\n    "collector_self_heal_memory.json": {"files": dict, "events": list, "quarantine": list},\n')
+          replace('auto_repair_engine.py',
+              '        elif filename == "graded_photo_candidates.json":\n            records = data["records"]\n',
+              '''        elif filename == "grading_company_updates.json":\n            if data.get("schema_version") != 1:\n                return False\n            if set(data["companies"]) != {"PSA","BGS","CGC","TAG","BRG"} or len(data["sources"]) < 10:\n                return False\n            policy=data["policy"]\n            if policy.get("official_sources_only") is not True or policy.get("community_posts_are_leads_only") is not True or policy.get("automatic_source_code_mutation") is not False:\n                return False\n            if any(not isinstance(row,dict) or not isinstance(row.get("url"),str) for row in data["sources"].values()):\n                return False\n            for row in data["sources"].values():\n                validate_public_https_url(row["url"])\n            if any(not isinstance(row,dict) or row.get("verified_official_source") is not True for row in (data.get("recent_changes") or [])):\n                return False\n        elif filename == "graded_photo_candidates.json":\n            records = data["records"]\n''')
+
+          # Neural job scheduling includes every mandatory collector; no skipping by omission.
+          replace('verified_collection_job_neural.py',
+              '- exchange rates\n- graded-photo candidates\n',
+              '- exchange rates\n- grading-company official changes\n- graded-photo candidates\n')
+          replace('verified_collection_job_neural.py',
+              '    "exchange_rates.json",\n    "graded_photo_candidates.json",\n',
+              '    "exchange_rates.json",\n    "grading_company_updates.json",\n    "graded_photo_candidates.json",\n')
+
+          p=Path('test_verified_collection_job_neural_v212.py'); text=p.read_text(encoding='utf-8')
+          text=text.replace('"exchange_rates.json": {"ewma_seconds": 60},\n                "graded_photo_candidates.json": {"ewma_seconds": 70},',
+                            '"exchange_rates.json": {"ewma_seconds": 60},\n                "grading_company_updates.json": {"ewma_seconds": 65},\n                "graded_photo_candidates.json": {"ewma_seconds": 70},',1)
+          text=text.replace('"graded_photo_candidates.json",\n                "exchange_rates.json",',
+                            '"graded_photo_candidates.json",\n                "grading_company_updates.json",\n                "exchange_rates.json",',1)
+          p.write_text(text,encoding='utf-8')
+
+          # tcg_updater: dynamic progress count + expose grading status in the overall health result.
+          replace('tcg_updater.py',
+              "def _background_full_update(job_id):\n    try:\n        _job_set(state='running',message='공식자료 7단계 업데이트 시작',current=0,total=7,error=None)\n",
+              '''def _full_update_job_count():\n    try:\n        import auto_update_all\n        return max(1,len(auto_update_all.JOBS))\n    except (ImportError,AttributeError,TypeError):\n        return 8\n\ndef _background_full_update(job_id):\n    try:\n        total_jobs=_full_update_job_count()\n        _job_set(state='running',message=f'공식자료 {total_jobs}단계 업데이트 시작',current=0,total=total_jobs,error=None)\n''')
+          replace('tcg_updater.py',
+              "        _job_set(state='completed',finished_at=time.strftime('%Y-%m-%dT%H:%M:%S%z'),current=7,total=7,\n",
+              "        _job_set(state='completed',finished_at=time.strftime('%Y-%m-%dT%H:%M:%S%z'),current=total_jobs,total=total_jobs,\n")
+          replace('tcg_updater.py',
+              "        _job_set(id=job_id,state='queued',trigger='retry-failed' if retry_only else 'manual',\n                 started_at=time.strftime('%Y-%m-%dT%H:%M:%S%z'),finished_at=None,current=0,total=0 if retry_only else 7,\n",
+              "        total_jobs=_full_update_job_count()\n        _job_set(id=job_id,state='queued',trigger='retry-failed' if retry_only else 'manual',\n                 started_at=time.strftime('%Y-%m-%dT%H:%M:%S%z'),finished_at=None,current=0,total=0 if retry_only else total_jobs,\n")
+          replace('tcg_updater.py',
+              "            fx_status=result_map['exchange_rates.json']['status']\n",
+              "            fx_status=result_map['exchange_rates.json']['status']\n            grading_status=result_map['grading_company_updates.json']['status']\n")
+          replace('tcg_updater.py',
+              '            release_status=market_status=watch_status=promo_status=purchase_status=fx_status=message\n',
+              '            release_status=market_status=watch_status=promo_status=purchase_status=fx_status=grading_status=message\n')
+          replace('tcg_updater.py',
+              "            'promo_status':promo_status,'purchase_status':purchase_status,'fx_status':fx_status,\n",
+              "            'promo_status':promo_status,'purchase_status':purchase_status,'fx_status':fx_status,'grading_status':grading_status,\n")
+
+          # 6-hour Pages refresh becomes an independent recovery lane for grading-company data.
+          replace('.github/workflows/tcg-static-data-refresh.yml',
+              "      - 'feature_contract.py'\n",
+              "      - 'feature_contract.py'\n      - 'grading_company_watch.py'\n      - 'grading_costs_live.py'\n      - 'test_grading_company_watch_v215.py'\n      - 'test_grading_costs_live.py'\n")
+          replace('.github/workflows/tcg-static-data-refresh.yml',
+              '            multi_route_event_discovery.py social_event_discovery.py auto_pipeline_runner.py\n',
+              '            multi_route_event_discovery.py social_event_discovery.py auto_pipeline_runner.py \\\n            grading_company_watch.py grading_costs_live.py\n')
+          replace('.github/workflows/tcg-static-data-refresh.yml',
+              '            test_social_topic_capacity_v213.py \\\n            test_event_quick_watch.py\n',
+              '            test_social_topic_capacity_v213.py \\\n            test_event_quick_watch.py \\\n            test_grading_company_watch_v215.py \\\n            test_grading_costs_live.py \\\n            test_grading_watch_integration_v220.py\n')
+          replace('.github/workflows/tcg-static-data-refresh.yml',
+              '            market_prices.json market_watch.json purchase_sources.json exchange_rates.json \\\n            graded_photo_candidates.json',
+              '            market_prices.json market_watch.json purchase_sources.json exchange_rates.json \\\n            grading_company_updates.json graded_photo_candidates.json')
+          replace('.github/workflows/tcg-static-data-refresh.yml',
+              '            echo "- public signal persistence: purchase_signals + social_stock_signals included"\n',
+              '            echo "- public signal persistence: purchase_signals + social_stock_signals included"\n            echo "- grading-company redundancy: dedicated 3-hour watch + verified 6-hour full collection lane"\n')
+
+          # Feature contract requires the expanded mandatory collector set and its snapshot.
+          replace('feature_contract.py',
+              '    "market_prices.json", "market_watch.json", "promo_events.json",\n',
+              '    "market_prices.json", "market_watch.json", "promo_events.json",\n    "grading_company_watch.py", "grading_company_updates.json",\n')
+          replace('feature_contract.py',
+              '    purchases = _json(base / "purchase_sources.json")\n',
+              '    purchases = _json(base / "purchase_sources.json")\n    grading_updates = _json(base / "grading_company_updates.json")\n    grading_watch = safe_read_text(base / "grading_company_watch.py")\n')
+          old='''    add("six_collection_jobs", "출시·재발매·시세·행사·구매처·환율·등급사진 7단계 자동수집",\n        "'total':7" in server and "graded_photo_multi_source" in automatic\n        and all(token in server for token in ("/api/run-graded-photo-collection", "/api/graded-photo-collection-status"))\n        and len(re.findall(\n            r'^\\s*\\("[^\"]+",\\s*\"update_[^\"]+\",\\s*\"[^\"]+\\.json\"\\),?$', automatic, re.M\n        )) == 6,\n        "6개 기존 작업 + OCR·공식 인증검증 등급사진 작업")\n'''
+          new='''    add("six_collection_jobs", "출시·재발매·시세·행사·구매처·환율·감정업체·등급사진 8단계 자동수집",\n        "_full_update_job_count" in server\n        and all(token in automatic for token in ("grading_company_watch", "grading_company_updates.json", "graded_photo_multi_source"))\n        and all(token in server for token in ("grading_status", "/api/run-graded-photo-collection", "/api/graded-photo-collection-status"))\n        and grading_updates.get("policy",{}).get("official_sources_only") is True\n        and set(grading_updates.get("companies",{})) == {"PSA","BGS","CGC","TAG","BRG"}\n        and "WATCH_SOURCES" in grading_watch,\n        "6개 기존 자료 + 공식 감정업체 변경감시 + OCR·공식 인증검증 등급사진 작업")\n'''
+          replace('feature_contract.py',old,new)
+
+          # Code map: include integration path and current hourly/Monday-19 production vocabulary.
+          replace('code_map_intelligence.py',
+              '        "grading_company_watch.py",\n        "grading_costs_live.py",\n',
+              '        "grading_company_watch.py",\n        "auto_update_all.py",\n        "tcg_updater.py",\n        "verified_collection_job_neural.py",\n        "grading_costs_live.py",\n')
+          replace('code_map_intelligence.py',
+              '        ".github/workflows/grading-company-watch.yml",\n',
+              '        ".github/workflows/grading-company-watch.yml",\n        ".github/workflows/tcg-static-data-refresh.yml",\n        "test_grading_watch_integration_v220.py",\n')
+          replace('code_map_intelligence.py',
+              '        "10:30 제작", "22:30 수정판", "artifact",\n',
+              '        "월요일 19:00 제작", "매시간 수집", "정각 수집", "19:00 제작", "weekly production",\n        "구형 10:30 제작", "구형 22:30 수정판", "artifact",\n')
+
+          # Permanent integration regression.
+          Path('test_grading_watch_integration_v220.py').write_text(r'''from __future__ import annotations
+
+import copy
+from pathlib import Path
+import unittest
+
+import auto_repair_engine
+import auto_update_all
+import grading_company_watch
+import tcg_updater
+import verified_collection_job_neural
+
+
+class GradingWatchIntegrationV220Tests(unittest.TestCase):
+    def _snapshot(self):
+        sources={}
+        for company,specs in grading_company_watch.WATCH_SOURCES.items():
+            for spec in specs:
+                sources[spec["id"]]={
+                    "company":company,
+                    "source_id":spec["id"],
+                    "kind":spec["kind"],
+                    "market":spec["market"],
+                    "currency":spec["currency"],
+                    "url":spec["url"],
+                    "status":"ok",
+                    "verified_official_source":True,
+                    "services":[],
+                    "announcements":[],
+                }
+        return {
+            "schema_version":1,
+            "checked_at":"2026-09-11T00:00:00+00:00",
+            "policy":{
+                "official_sources_only":True,
+                "community_posts_are_leads_only":True,
+                "last_good_retained_on_failure":True,
+                "automatic_source_code_mutation":False,
+            },
+            "summary":{
+                "companies":5,"sources":len(sources),"healthy_sources":len(sources),
+                "degraded_sources":0,"new_changes":0,
+            },
+            "companies":{name:{"markets":{},"source_health":[]} for name in ("PSA","BGS","CGC","TAG","BRG")},
+            "sources":sources,
+            "announcements":[],"recent_changes":[],"history":[],
+        }
+
+    def test_mandatory_local_collection_contains_grading_watch_exactly_once(self):
+        rows=[row for row in auto_update_all.JOBS if row[2]=="grading_company_updates.json"]
+        self.assertEqual(1,len(rows))
+        self.assertEqual("grading_company_watch",rows[0][1])
+        self.assertEqual(8,len(auto_update_all.JOBS))
+        self.assertEqual(len(auto_update_all.JOBS),tcg_updater._full_update_job_count())
+
+    def test_job_neural_cannot_omit_mandatory_grading_collection(self):
+        self.assertIn("grading_company_updates.json",verified_collection_job_neural.JOB_KEYS)
+        self.assertTrue(verified_collection_job_neural.SAFETY["all_mandatory_collectors_preserved"])
+
+    def test_grading_snapshot_requires_official_policy_hosts_and_live_health(self):
+        good=self._snapshot()
+        auto_update_all.validate_json("grading_company_updates.json",good)
+        self.assertTrue(auto_repair_engine._valid_project_payload("grading_company_updates.json",good))
+
+        external=copy.deepcopy(good)
+        first=next(iter(external["sources"].values()))
+        first["url"]="https://example.invalid/fake-grading-price"
+        with self.assertRaises(ValueError):
+            auto_update_all.validate_json("grading_company_updates.json",external)
+
+        blind=copy.deepcopy(good)
+        blind["summary"]["healthy_sources"]=0
+        blind["summary"]["degraded_sources"]=blind["summary"]["sources"]
+        with self.assertRaises(ValueError):
+            auto_update_all.validate_json("grading_company_updates.json",blind)
+
+        unverified=copy.deepcopy(good)
+        unverified["recent_changes"]=[{"verified_official_source":False}]
+        with self.assertRaises(ValueError):
+            auto_update_all.validate_json("grading_company_updates.json",unverified)
+        self.assertFalse(auto_repair_engine._valid_project_payload("grading_company_updates.json",unverified))
+
+    def test_static_refresh_is_independent_recovery_lane(self):
+        text=Path('.github/workflows/tcg-static-data-refresh.yml').read_text(encoding='utf-8')
+        self.assertIn('grading_company_watch.py',text)
+        self.assertIn('test_grading_company_watch_v215.py',text)
+        self.assertIn('grading_company_updates.json graded_photo_candidates.json',text)
+        dedicated=Path('.github/workflows/grading-company-watch.yml').read_text(encoding='utf-8')
+        self.assertIn("cron: '23 */3 * * *'",dedicated)
+        self.assertIn('grading_company_watch.py',dedicated)
+
+    def test_feature_contract_and_code_map_use_expanded_collection_contract(self):
+        contract=Path('feature_contract.py').read_text(encoding='utf-8')
+        self.assertIn('8단계 자동수집',contract)
+        self.assertNotIn("\"'total':7\" in server",contract)
+        code_map=Path('code_map_intelligence.py').read_text(encoding='utf-8')
+        self.assertIn('test_grading_watch_integration_v220.py',code_map)
+        self.assertIn('월요일 19:00 제작',code_map)
+        self.assertIn('매시간 수집',code_map)
+
+
+if __name__ == '__main__':
+    unittest.main()
+''',encoding='utf-8')
+          PY
+
+      - name: Targeted regression and contract audit
+        shell: bash
+        run: |
+          set -euo pipefail
+          python -m py_compile \
+            auto_update_all.py auto_repair_engine.py verified_collection_job_neural.py \
+            tcg_updater.py grading_company_watch.py feature_contract.py code_map_intelligence.py \
+            test_grading_watch_integration_v220.py
+          python -m unittest -v \
+            test_grading_company_watch_v215.py \
+            test_grading_costs_live.py \
+            test_grading_watch_integration_v220.py \
+            test_verified_collection_job_neural_v212.py \
+            test_0600_operational_refresh_v25.py \
+            test_information_lifecycle_archive_v209.py
+          python feature_contract.py
+          python verify_code_map_internal.py
+          python verify_critical_feature_matrix_v25.py
+          python selfrefine_domain_boundary_guard.py
+
+      - name: Commit verified integration and remove one-shot workflow
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git rm -- .github/workflows/collection-integration-audit-v220.yml
+          git add -- \
+            auto_update_all.py auto_repair_engine.py verified_collection_job_neural.py \
+            test_verified_collection_job_neural_v212.py tcg_updater.py \
+            .github/workflows/tcg-static-data-refresh.yml feature_contract.py code_map_intelligence.py \
+            test_grading_watch_integration_v220.py
+          git commit -m 'fix: integrate grading watch into mandatory collection lanes'
+          git push origin HEAD:main
