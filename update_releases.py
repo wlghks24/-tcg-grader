@@ -38,6 +38,7 @@ ALLOWED = {
 # to delete old official products from the archive on every refresh.
 MIN_RELEASE_DATE = dt.date(1996, 1, 1)
 MAX_FUTURE_YEARS = 5
+RELEASE_ARCHIVE_GRACE_DAYS = 5
 POKEMON_JP_PRODUCT_URLS = (
     "https://www.pokemon-card.com/products/",
     "https://www.pokemon-card.com/products/index.html?productType=expansion",
@@ -524,6 +525,50 @@ def item_key(item: dict) -> tuple:
     return (item["game"], item["region"], identity)
 
 
+def release_effective_date(item: dict) -> dt.date | None:
+    """Return the last public display date anchor without inventing a day."""
+    value = item.get("release_date")
+    if value:
+        try:
+            return dt.date.fromisoformat(str(value))
+        except (TypeError, ValueError):
+            return None
+    window = str(item.get("release_window") or "")
+    match = re.fullmatch(r"(20\d{2})-(0[1-9]|1[0-2])", window)
+    if not match:
+        return None
+    year, month = map(int, match.groups())
+    next_month = dt.date(year + (month == 12), 1 if month == 12 else month + 1, 1)
+    return next_month - dt.timedelta(days=1)
+
+
+def release_lifecycle_state(item: dict, today: dt.date | None = None) -> str:
+    """Keep releases current through day five, then place them in history."""
+    today = today or dt.date.today()
+    released = release_effective_date(item)
+    if released is None:
+        return "current"
+    if today > released + dt.timedelta(days=RELEASE_ARCHIVE_GRACE_DAYS):
+        return "archive"
+    if today > released:
+        return "recently_released"
+    return "current"
+
+
+def partition_release_lifecycle(items: list[dict], today: dt.date | None = None) -> tuple[list[dict], list[dict]]:
+    today = today or dt.date.today()
+    current, archived = [], []
+    for source in items:
+        item = dict(source)
+        state = release_lifecycle_state(item, today)
+        item["lifecycle"] = state
+        released = release_effective_date(item)
+        if released is not None:
+            item["archive_on"] = (released + dt.timedelta(days=RELEASE_ARCHIVE_GRACE_DAYS + 1)).isoformat()
+        (archived if state == "archive" else current).append(item)
+    return current, archived
+
+
 def _prefer_new(old: dict, new: dict) -> dict:
     """Merge a freshly verified official row without discarding useful history fields."""
     merged = dict(old or {})
@@ -537,6 +582,11 @@ def _prefer_new(old: dict, new: dict) -> dict:
 
 def main() -> None:
     current = json.loads(safe_read_text(DATA))
+    stored_items = current.get("items", [])
+    stored_archive = current.get("archive_items", [])
+    if not isinstance(stored_items, list) or not isinstance(stored_archive, list):
+        raise ValueError("출시 목록 형식 오류")
+    stored_history = [*stored_items, *stored_archive]
     candidates: list[dict] = []
     errors: list[str] = []
     parser_drift_warnings: list[str] = []
@@ -562,7 +612,7 @@ def main() -> None:
                     expected=coverage_map.get(label)
                     has_history=bool(expected and any(
                         isinstance(x,dict) and x.get('game')==expected[0] and x.get('region')==expected[1] and valid(x)
-                        for x in current.get('items',[])
+                        for x in stored_history
                     ))
                     if has_history:
                         parser_drift_warnings.append(f"{label}: 모든 검증 파서·전송전략 0건 · 기존 검증 이력 유지 · 자동복구 미해결")
@@ -591,7 +641,7 @@ def main() -> None:
 
     # Preserve ALL previously valid official history, regardless of age.
     merged: dict[tuple, dict] = {}
-    for x in current.get("items", []):
+    for x in stored_history:
         if valid(x):
             merged[item_key(x)] = dict(x)
     for item in candidates:
@@ -599,7 +649,10 @@ def main() -> None:
             key = item_key(item)
             merged[key] = _prefer_new(merged.get(key, {}), item)
 
-    current["items"] = sorted(merged.values(), key=lambda x: (x.get("release_date") or "9999-12-31", x.get("region", ""), x.get("name", "")))
+    all_releases = sorted(merged.values(), key=lambda x: (x.get("release_date") or "9999-12-31", x.get("region", ""), x.get("name", "")))
+    current_items, archive_items = partition_release_lifecycle(all_releases)
+    current["items"] = current_items
+    current["archive_items"] = archive_items
     current["updated_at"] = dt.datetime.now(dt.timezone.utc).isoformat(timespec="seconds")
     if errors:
         current["collection_status"] = "일부 출처 확인 실패 · 기존 전체 출시이력 보존"
@@ -609,8 +662,19 @@ def main() -> None:
         current["collection_status"] = "정상"
     current["collection_errors"] = errors
     current["parser_drift_warnings"] = parser_drift_warnings
-    current["history_policy"] = "공식 확인된 과거 출시제품은 기간 제한 없이 누적 보존하며 네트워크 실패 시 삭제하지 않음"
-    current["history_count"] = len(current["items"])
+    current["history_policy"] = "발매일까지와 발매 후 5일차까지 최신 목록에 표시하고 6일째부터 지난 카드발매 보관함으로 이동; 공식 확인 이력은 삭제하지 않음"
+    current["archive_grace_days"] = RELEASE_ARCHIVE_GRACE_DAYS
+    current["current_release_count"] = len(current_items)
+    current["archive_release_count"] = len(archive_items)
+    current["history_count"] = len(all_releases)
+    try:
+        from release_history_backfill import coverage_progress
+        current["collection_coverage"] = coverage_progress(all_releases)
+    except (ImportError, TypeError, ValueError):
+        current["collection_coverage"] = {
+            "expected_cells": 9, "configured_cells": 0,
+            "verified_cells": 0, "missing_verified_cells": [],
+        }
     current["parser_recovery_events"] = PARSER_RUN_EVENTS[-20:]
     current["parser_learning"] = parser_public_summary(
         PARSER_MEMORY, {"Pokémon JP": POKEMON_JP_STRATEGIES}

@@ -125,10 +125,12 @@ def _audit_market(root: Path, now: dt.datetime, findings: list[dict[str, Any]]) 
 
 def _audit_releases(root: Path, findings: list[dict[str, Any]]) -> dict[str, int]:
     db = _load(root / "releases.json")
-    rows = db.get("items") if isinstance(db, dict) else None
-    if not isinstance(rows, list) or not rows:
+    current = db.get("items") if isinstance(db, dict) else None
+    archive = db.get("archive_items", []) if isinstance(db, dict) else None
+    if not isinstance(current, list) or not isinstance(archive, list) or not current and not archive:
         findings.append({"severity": "critical", "code": "EMPTY_RELEASES", "target": "releases.json"})
         return {"release_items": 0}
+    rows = [*current, *archive]
     invalid = 0
     for idx, row in enumerate(rows):
         reasons = []
@@ -144,15 +146,43 @@ def _audit_releases(root: Path, findings: list[dict[str, Any]]) -> dict[str, int
         if reasons:
             invalid += 1
             if invalid <= 20: findings.append({"severity": "high", "code": "INVALID_RELEASE_ROW", "target": idx, "reasons": reasons})
-    return {"release_items": len(rows), "invalid_release_items": invalid}
+    if "archive_grace_days" in db and db.get("archive_grace_days") != 5:
+        findings.append({"severity": "critical", "code": "INVALID_RELEASE_ARCHIVE_POLICY", "target": "releases.json"})
+    coverage = db.get("collection_coverage") if isinstance(db.get("collection_coverage"), dict) else {}
+    expected = int(coverage.get("expected_cells") or 0)
+    configured = int(coverage.get("configured_cells") or 0)
+    if expected and configured < expected:
+        findings.append({"severity": "high", "code": "INCOMPLETE_RELEASE_SOURCE_MATRIX",
+                         "target": "releases.json", "expected_cells": expected,
+                         "configured_cells": configured})
+    return {"release_items": len(rows), "current_release_items": len(current),
+            "archive_release_items": len(archive), "invalid_release_items": invalid}
+
+
+def _audit_candidate_freshness(root: Path, now: dt.datetime, findings: list[dict[str, Any]]) -> dict[str, int]:
+    """Detect a silent collector that leaves apparently complete but stale gap data."""
+    seen = 0
+    for filename in ("releases.json", "promo_events.json", "supplementary_candidates.json",
+                     "social_event_candidates.json"):
+        path = root / filename
+        if not path.is_file():
+            continue
+        payload = _load(path)
+        if not isinstance(payload, dict) or not payload.get("updated_at"):
+            continue
+        seen += 1
+        _fresh(filename, payload.get("updated_at"), now, 48 * 3600, findings)
+    return {"freshness_tracked_outputs": seen}
 
 
 def _audit_events(root: Path, findings: list[dict[str, Any]]) -> dict[str, int]:
     db = _load(root / "promo_events.json")
-    rows = db.get("items") if isinstance(db, dict) else None
-    if not isinstance(rows, list) or not rows:
+    current = db.get("items") if isinstance(db, dict) else None
+    archive = db.get("archive_items", []) if isinstance(db, dict) else None
+    if not isinstance(current, list) or not isinstance(archive, list) or not current and not archive:
         findings.append({"severity": "critical", "code": "EMPTY_PROMO_EVENTS", "target": "promo_events.json"})
         return {"promo_event_items": 0}
+    rows = [*current, *archive]
     invalid = 0
     for idx, row in enumerate(rows):
         reasons = []
@@ -167,7 +197,23 @@ def _audit_events(root: Path, findings: list[dict[str, Any]]) -> dict[str, int]:
         if reasons:
             invalid += 1
             if invalid <= 20: findings.append({"severity": "high", "code": "INVALID_EVENT_ROW", "target": idx, "reasons": reasons})
-    return {"promo_event_items": len(rows), "invalid_promo_event_items": invalid}
+    if "archive_grace_days" in db and db.get("archive_grace_days") != 5:
+        findings.append({"severity": "critical", "code": "INVALID_EVENT_ARCHIVE_POLICY", "target": "promo_events.json"})
+    missing_sources = ((db.get("coverage") or {}).get("missing_source_pairs")
+                       if isinstance(db.get("coverage"), dict) else [])
+    missing_topics = db.get("social_topic_missing_cells", [])
+    if isinstance(missing_sources, list) and missing_sources:
+        findings.append({"severity": "high", "code": "MISSING_OFFICIAL_EVENT_SOURCE_CELLS",
+                         "target": "promo_events.json", "cells": missing_sources[:30]})
+    expected_topics = int(db.get("social_topic_expected_cells") or 0)
+    if expected_topics and expected_topics < 207:
+        findings.append({"severity": "high", "code": "INCOMPLETE_EVENT_TOPIC_MATRIX",
+                         "target": "promo_events.json", "expected_minimum": 207,
+                         "configured_cells": expected_topics})
+    return {"promo_event_items": len(rows), "current_promo_event_items": len(current),
+            "archive_promo_event_items": len(archive), "invalid_promo_event_items": invalid,
+            "configured_event_topic_cells": expected_topics,
+            "missing_event_topic_cells": len(missing_topics) if isinstance(missing_topics, list) else 0}
 
 
 def _audit_auto_update(root: Path, findings: list[dict[str, Any]]) -> dict[str, Any]:
@@ -207,6 +253,7 @@ def verify(root: Path = ROOT, *, max_health_age_seconds: int = 900, now: dt.date
     metrics.update(_audit_market(root, now, findings))
     metrics.update(_audit_releases(root, findings))
     metrics.update(_audit_events(root, findings))
+    metrics.update(_audit_candidate_freshness(root, now, findings))
     metrics.update(_audit_auto_update(root, findings))
     counts = {level: sum(x.get("severity") == level for x in findings) for level in ("critical", "high", "medium")}
     status = "fail_closed" if counts["critical"] else ("degraded" if counts["high"] else "pass")

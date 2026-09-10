@@ -71,6 +71,7 @@ REGIONS = CORE_REGIONS
 EVENT_REGIONS = CORE_REGIONS + ("ASIA",)
 EVENT_SCOPE_PAIRS = tuple((game, region) for game in GAMES for region in CORE_REGIONS) + (("포켓몬 카드", "ASIA"),)
 DATE_PRECISIONS = {"day", "month", "season", "start-only", "unannounced"}
+ARCHIVE_GRACE_DAYS = 5
 OFFICIAL_SOURCE_REPLACEMENTS = {
     "https://pokemonkorea.co.kr/2026_battle_tournament3":
         "https://pokemonkorea.co.kr/2026_battle_tournament3/menu800",
@@ -745,17 +746,47 @@ def effective_expiry(item: dict) -> dt.date | None:
 
 
 def is_expired(item: dict, today: dt.date | None = None) -> bool:
+    """Return True only after the five full post-event display days.
+
+    Example: an event ending September 5 remains in the current category through
+    September 10 and moves to the archive on September 11.
+    """
     today = today or dt.date.today()
     expiry = effective_expiry(item)
-    return bool(expiry and expiry < today)
+    return bool(expiry and today > expiry + dt.timedelta(days=ARCHIVE_GRACE_DAYS))
+
+
+def lifecycle_state(item: dict, today: dt.date | None = None) -> str:
+    """Classify an item without dropping verified history."""
+    today = today or dt.date.today()
+    expiry = effective_expiry(item)
+    if expiry is None:
+        return "current"
+    if today > expiry + dt.timedelta(days=ARCHIVE_GRACE_DAYS):
+        return "archive"
+    if today > expiry:
+        return "recently_ended"
+    return "current"
+
+
+def partition_event_lifecycle(items: list[dict], today: dt.date | None = None) -> tuple[list[dict], list[dict]]:
+    """Keep current/recent rows visible and retain older rows in a separate archive."""
+    today = today or dt.date.today()
+    current, archived = [], []
+    for source in items:
+        item = dict(source)
+        state = lifecycle_state(item, today)
+        item["lifecycle"] = state
+        expiry = effective_expiry(item)
+        if expiry is not None:
+            item["archive_on"] = (expiry + dt.timedelta(days=ARCHIVE_GRACE_DAYS + 1)).isoformat()
+        (archived if state == "archive" else current).append(item)
+    return current, archived
 
 
 def purge_expired(items: list[dict], today: dt.date | None = None) -> tuple[list[dict], list[dict]]:
-    today = today or dt.date.today()
-    kept, removed = [], []
-    for item in items:
-        (removed if is_expired(item, today) else kept).append(item)
-    return kept, removed
+    """Backward-compatible name: the second list is archived, never deleted."""
+    return partition_event_lifecycle(items, today)
 
 
 def valid(item: dict) -> bool:
@@ -895,13 +926,14 @@ def check_existing(item: dict) -> tuple[dict, str | None]:
 def main() -> dict:
     data = json.loads(safe_read_text(DATA))
     original = data.get("items", [])
-    if not isinstance(original, list):
+    original_archive = data.get("archive_items", [])
+    if not isinstance(original, list) or not isinstance(original_archive, list):
         raise ValueError("행사 목록 형식 오류")
     errors = []
     valid_original = []
     repaired_count = 0
     outside_region_names = []
-    for item in original:
+    for item in [*original, *original_archive]:
         if not isinstance(item, dict):
             errors.append("구조 오류: 잘못된 행사 항목")
             continue
@@ -967,9 +999,9 @@ def main() -> dict:
             item["verification_source"] = "https://www.pokemon-card.com/info/005605.html"
 
     valid_original, merged_existing = merge_duplicate_events(valid_original)
-    existing, expired = purge_expired(valid_original)
-    expired_names = [item.get("name_ko", "이름 없음") for item in expired]
-    if original and not existing and not expired:
+    existing, archived = partition_event_lifecycle(valid_original)
+    archived_names = [item.get("name_ko", "이름 없음") for item in archived]
+    if (original or original_archive) and not existing and not archived:
         raise ValueError("기존 행사 대량 삭제 방지")
 
     with concurrent.futures.ThreadPoolExecutor(max_workers=16) as pool:
@@ -1011,25 +1043,28 @@ def main() -> dict:
 
     checked, merged_discovered = merge_duplicate_events(checked)
 
+    # Rejoin the untouched archive before the final partition so a newly found
+    # schedule for the same official event can supersede its archived version.
+    all_verified, merged_archive = merge_duplicate_events([*checked, *archived])
+    checked, archived = partition_event_lifecycle(all_verified)
+    archived_names = [item.get("name_ko", "이름 없음") for item in archived]
     data["items"] = checked
+    data["archive_items"] = archived
     data["updated_at"] = dt.datetime.now(dt.timezone.utc).isoformat(timespec="seconds")
-    checked, newly_expired = purge_expired(checked)
-    if newly_expired:
-        expired.extend(newly_expired)
-        expired_names.extend(item.get("name_ko", "이름 없음") for item in newly_expired)
-    data["items"] = checked
     data["new_event_count"] = added
     data["updated_event_count"] = updated
     data["event_supersession_policy"] = "same game/region/category + exact official source URL + stable event title: newest observed schedule/status replaces stale duplicate while change_history is retained"
     data["official_seed_refresh_count"] = seeded_count
-    data["merged_duplicate_event_count"] = merged_existing + merged_discovered
+    data["merged_duplicate_event_count"] = merged_existing + merged_discovered + merged_archive
     data["excluded_outside_region_count"] = len(outside_region_names)
     data["excluded_outside_region_names"] = outside_region_names[:30]
-    data["expired_event_count"] = len(expired)
+    data["expired_event_count"] = len(archived)
     data["repaired_date_count"] = repaired_count
-    data["expired_event_names"] = expired_names[:50]
+    data["expired_event_names"] = archived_names[:50]
+    data["archive_event_count"] = len(archived)
+    data["archive_grace_days"] = ARCHIVE_GRACE_DAYS
     data["last_expiry_cleanup_at"] = dt.datetime.now(dt.timezone.utc).isoformat(timespec="seconds")
-    data["expiry_policy"] = "end_date/claim_deadline 중 더 늦은 날짜가 오늘보다 이전이면 자동 삭제"
+    data["expiry_policy"] = "end_date/claim_deadline 중 더 늦은 종료일까지 표시하고 종료 후 5일차까지 현재 목록 유지, 6일째부터 지난 행사 보관함으로 이동하며 삭제하지 않음"
     data["discovery_sources"] = len(INDEXES)
     data["coverage"] = coverage_summary(checked)
     data["official_source_policy"] = "공식 HTTPS 허용목록 + 정확히 승인된 공식 SNS 게시물 + 실제 개최지 판별 + 월/계절/미발표 날짜 정확도 보존 + 일반 SNS/Google 후보는 공식 검증 전 자동승격 금지"

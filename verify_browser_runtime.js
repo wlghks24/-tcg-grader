@@ -89,6 +89,7 @@ const context = vm.createContext({
   fxRates: { JPY_KRW: 8.7, USD_KRW: 1380 },
   fxUpdated: "2026-08-25",
   simpleGame: "pokemon",
+  INFO_ARCHIVE_GRACE_DAYS: 5,
   profiles: { pokemon: { name: "Pokémon" } },
   S: element,
   $: element,
@@ -119,7 +120,7 @@ function loadAsyncBlock(name) {
 }
 
 async function main() {
-  for (const name of ["loadCardImage", "load", "v6Load", "v7Image", "v30Load", "cardInputFile", "escapeDisplayText", "safeStoredJson", "safeVisionFeatures", "validCompanyActual", "safeExternalUrl", "trustedPromoOfficialUrl", "renderHistory", "v11Get", "v11Correction", "v17get", "foreignKrw", "finiteMoney", "normalizeGradePrices"]) {
+  for (const name of ["loadCardImage", "load", "v6Load", "v7Image", "v30Load", "cardInputFile", "escapeDisplayText", "safeStoredJson", "safeVisionFeatures", "validCompanyActual", "safeExternalUrl", "trustedPromoOfficialUrl", "localDateOnly", "addLocalDays", "promoLifecycle", "renderHistory", "v11Get", "v11Correction", "v17get", "foreignKrw", "finiteMoney", "normalizeGradePrices"]) {
     loadOneLine(name);
   }
   loadBlock("safeGradeRows");
@@ -199,7 +200,7 @@ async function main() {
   assert.equal(candidates[0].start_date, "2027-02-01");
   assert.equal(candidates[0].end_date, "2027-02-28");
   assert.equal(candidates[1].source_grade, "supplementary", "Unconfirmed community claim was promoted");
-  for (const id of ["promoGame", "promoFilter", "promoType", "promoSourceGrade"]) element(id).value = "ALL";
+  for (const id of ["promoGame", "promoFilter", "promoType", "promoLifecycle", "promoSourceGrade"]) element(id).value = "ALL";
   context.renderPromos();
   const promoHtml = element("promoList").innerHTML;
   assert.match(promoHtml, /공식 SNS/);

@@ -599,10 +599,10 @@ def validate_json(name: str, data: dict) -> None:
     if not isinstance(data, dict):
         raise ValueError("최상위 JSON 형식 오류")
     if name == "releases.json":
-        if not isinstance(data.get("items"), list):
-            raise ValueError("출시목록 items 누락")
+        if not isinstance(data.get("items"), list) or not isinstance(data.get("archive_items", []), list):
+            raise ValueError("출시목록 items/archive_items 누락")
         import update_releases
-        for index,item in enumerate(data["items"]):
+        for index,item in enumerate([*data["items"], *data.get("archive_items", [])]):
             if not update_releases.valid(item):
                 label=item.get("name","이름 없음") if isinstance(item,dict) else "객체 아님"
                 raise ValueError(f"출시상품 #{index + 1}({label}) 공식 출처·날짜 형식 또는 필수값 오류")
@@ -620,10 +620,10 @@ def validate_json(name: str, data: dict) -> None:
             if item.get("region") not in ("KR", "JP", "US") or item.get("asset") not in ("BOX", "HIT") or not item.get("name"):
                 raise ValueError("판매·재발매 추적 필수값 누락")
     elif name == "promo_events.json":
-        if not isinstance(data.get("items"), list):
-            raise ValueError("행사목록 items 누락")
+        if not isinstance(data.get("items"), list) or not isinstance(data.get("archive_items", []), list):
+            raise ValueError("행사목록 items/archive_items 누락")
         import update_promo_events
-        for index,item in enumerate(data["items"]):
+        for index,item in enumerate([*data["items"], *data.get("archive_items", [])]):
             if not update_promo_events.valid(item):
                 label=(item.get("name_ko") or item.get("name_native") or "이름 없음") if isinstance(item,dict) else "객체 아님"
                 raise ValueError(f"행사 #{index + 1}({label}) 공식 출처·국가·날짜 정확도 또는 필수 자료가 잘못되었습니다")

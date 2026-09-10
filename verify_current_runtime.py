@@ -32,7 +32,8 @@ def _commands():
       ("verified_collection_job_neural",[py,"-m","unittest","-v","test_verified_collection_job_neural_v212.py"],180,False),
       ("current_runtime_regressions",[py,"-m","unittest","-v","test_runtime_resilience_v182.py","test_grading_hierarchy_v17.py",
        "test_ocr_multistage_v16.py","test_verified_grade_learning_v135_safe.py","test_collection_verification_gate.py",
-       "test_multi_route_event_discovery.py","test_pokemon_run30_asia_recovery_v208.py"],600,False)]
+       "test_multi_route_event_discovery.py","test_pokemon_run30_asia_recovery_v208.py",
+       "test_information_lifecycle_archive_v209.py"],600,False)]
     if shutil.which("node"):
         rows += [("browser_runtime",["node","verify_browser_runtime.js"],180,False),
                  ("camera_runtime",["node","verify_camera_runtime.js"],180,False),

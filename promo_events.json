@@ -37,7 +37,9 @@
       "korea_included": false,
       "verified": true,
       "confidence": 0.99,
-      "collected_at": "2026-09-08T15:35:00+09:00"
+      "collected_at": "2026-09-08T15:35:00+09:00",
+      "lifecycle": "current",
+      "archive_on": "2027-01-30"
     },
     {
       "game": "포켓몬 카드",
@@ -58,7 +60,9 @@
       "source_grade": "official",
       "link_statuses": {
         "source": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인"
-      }
+      },
+      "lifecycle": "current",
+      "archive_on": "2026-11-06"
     },
     {
       "game": "포켓몬 카드",
@@ -79,7 +83,9 @@
       "source_grade": "official",
       "link_statuses": {
         "source": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인"
-      }
+      },
+      "lifecycle": "current",
+      "archive_on": "2026-10-06"
     },
     {
       "game": "나루토 카드",
@@ -101,7 +107,9 @@
       "link_status": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인",
       "link_statuses": {
         "source": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인"
-      }
+      },
+      "lifecycle": "current",
+      "archive_on": "2026-10-06"
     },
     {
       "game": "포켓몬 카드",
@@ -122,28 +130,9 @@
       "source_grade": "official",
       "link_statuses": {
         "source": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인"
-      }
-    },
-    {
-      "game": "원피스 카드",
-      "region": "KR",
-      "category": "promo",
-      "name_ko": "발매기념대회 리미티드 배틀",
-      "name_native": "원피스 카드게임 발매기념대회 리미티드 배틀",
-      "start_date": "2026-08-22",
-      "end_date": "2026-09-04",
-      "claim_deadline": "2026-09-04",
-      "reward": "참가·상위 입상 기념품은 공식 행사 안내 및 개최 점포에서 확인",
-      "condition": "한글판 카드로 구성한 지정 리미티드 규정 덱 사용. 점포별 개최 여부와 접수 방식 사전 확인",
-      "location": "한국 전국 원피스 카드게임 공인·취급 점포",
-      "status": "진행 중",
-      "source": "https://onepiece-cardgame.kr/events/view.do?brdno=6442",
-      "link_checked_at": "2026-08-26T10:47:11+00:00",
-      "link_status": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인",
-      "source_grade": "official",
-      "link_statuses": {
-        "source": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인"
-      }
+      },
+      "lifecycle": "current",
+      "archive_on": "2026-10-06"
     },
     {
       "game": "나루토 카드",
@@ -169,7 +158,9 @@
       "link_statuses": {
         "source": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인",
         "verification_source": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인"
-      }
+      },
+      "lifecycle": "current",
+      "archive_on": "2028-01-06"
     },
     {
       "game": "원피스 카드",
@@ -195,7 +186,9 @@
       "link_statuses": {
         "verification_source": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인",
         "source": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인"
-      }
+      },
+      "lifecycle": "current",
+      "archive_on": "2028-01-06"
     },
     {
       "game": "포켓몬 카드",
@@ -221,7 +214,9 @@
       "link_statuses": {
         "source": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인",
         "verification_source": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인"
-      }
+      },
+      "lifecycle": "current",
+      "archive_on": "2028-01-06"
     },
     {
       "game": "포켓몬 카드",
@@ -245,7 +240,9 @@
       "source_grade": "official",
       "link_statuses": {
         "source": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인"
-      }
+      },
+      "lifecycle": "current",
+      "archive_on": "2028-01-06"
     },
     {
       "game": "나루토 카드",
@@ -269,7 +266,9 @@
       "link_status": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인",
       "link_statuses": {
         "source": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인"
-      }
+      },
+      "lifecycle": "current",
+      "archive_on": "2028-01-06"
     },
     {
       "game": "나루토 카드",
@@ -293,7 +292,9 @@
       "link_status": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인",
       "link_statuses": {
         "source": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인"
-      }
+      },
+      "lifecycle": "current",
+      "archive_on": "2028-01-06"
     },
     {
       "game": "원피스 카드",
@@ -317,7 +318,9 @@
       "link_status": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인",
       "link_statuses": {
         "source": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인"
-      }
+      },
+      "lifecycle": "current",
+      "archive_on": "2028-01-06"
     },
     {
       "game": "포켓몬 카드",
@@ -341,30 +344,9 @@
       "link_status": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인",
       "link_statuses": {
         "source": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인"
-      }
-    },
-    {
-      "game": "포켓몬 카드",
-      "region": "US",
-      "category": "collaboration",
-      "name_ko": "2026 포켓몬 월드 챔피언십·PokémonXP",
-      "name_native": "2026 Pokémon World Championships and PokémonXP",
-      "start_date": "2026-08-28",
-      "end_date": "2026-08-30",
-      "claim_deadline": "2026-08-30",
-      "reward": "참가 자격·패스 종류에 따라 공식 웰컴 키트, 기념 카드 및 현장 프로그램",
-      "condition": "경쟁 부문은 초청 자격, 일반 관람은 유효한 패스 필요. 현장별 입장 조건 확인",
-      "location": "Moscone Center·Chase Center, San Francisco",
-      "status": "예정",
-      "source": "https://www.pokemon.com/us/news/check-out-the-pokemonxp-and-worlds-daily-schedule",
-      "link_checked_at": "2026-08-26T10:47:11+00:00",
-      "link_status": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인",
-      "source_grade": "official",
-      "verification_source": "https://www.pokemon-card.com/info/005605.html",
-      "link_statuses": {
-        "source": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인",
-        "verification_source": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인"
-      }
+      },
+      "lifecycle": "current",
+      "archive_on": "2028-01-06"
     },
     {
       "game": "포켓몬 카드",
@@ -385,7 +367,9 @@
       "source_grade": "official",
       "link_statuses": {
         "source": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인"
-      }
+      },
+      "lifecycle": "current",
+      "archive_on": "2026-09-18"
     },
     {
       "game": "원피스 카드",
@@ -408,7 +392,9 @@
       "link_status": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인",
       "link_statuses": {
         "source": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인"
-      }
+      },
+      "lifecycle": "current",
+      "archive_on": "2026-10-06"
     },
     {
       "game": "원피스 카드",
@@ -429,7 +415,9 @@
       "source_grade": "official",
       "link_statuses": {
         "source": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인"
-      }
+      },
+      "lifecycle": "current",
+      "archive_on": "2026-10-06"
     },
     {
       "game": "원피스 카드",
@@ -450,7 +438,9 @@
       "source_grade": "official",
       "link_statuses": {
         "source": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인"
-      }
+      },
+      "lifecycle": "current",
+      "archive_on": "2026-10-06"
     },
     {
       "game": "원피스 카드",
@@ -472,7 +462,9 @@
       "verification_source": "https://playgo.bandainamcokorea.co.kr/",
       "source_grade": "official",
       "official_verified_at": "2026-08-29",
-      "internal_tracking_end": true
+      "internal_tracking_end": true,
+      "lifecycle": "current",
+      "archive_on": "2028-01-06"
     },
     {
       "game": "원피스 카드",
@@ -494,7 +486,9 @@
       "source_grade": "official",
       "link_statuses": {
         "source": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인"
-      }
+      },
+      "lifecycle": "current",
+      "archive_on": "2026-10-06"
     },
     {
       "game": "원피스 카드",
@@ -515,7 +509,9 @@
       "source_grade": "official",
       "link_statuses": {
         "source": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인"
-      }
+      },
+      "lifecycle": "current",
+      "archive_on": "2026-10-06"
     },
     {
       "game": "포켓몬 카드",
@@ -536,7 +532,9 @@
       "source_grade": "official",
       "link_statuses": {
         "source": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인"
-      }
+      },
+      "lifecycle": "current",
+      "archive_on": "2027-05-06"
     },
     {
       "game": "포켓몬 카드",
@@ -560,29 +558,9 @@
       "link_status": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인",
       "link_statuses": {
         "source": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인"
-      }
-    },
-    {
-      "game": "원피스 카드",
-      "region": "JP",
-      "category": "collaboration",
-      "name_ko": "원피스 밀짚모자 스토어 나고야 공식 개점 행사",
-      "name_native": "ONE PIECE 麦わらストア 名古屋店 オープン",
-      "start_date": "2026-09-04",
-      "end_date": "2026-09-04",
-      "claim_deadline": "2026-09-04",
-      "reward": "나고야점 한정 상품과 공식 오픈 기념 이벤트 정보 확인",
-      "condition": "공식 안내 기준 나고야 PARCO 서관 8층에서 2026년 9월 4일 개점합니다.",
-      "location": "일본 나고야 PARCO 서관 8층",
-      "status": "예정",
-      "source": "https://one-piece.com/news/80639/index.html",
-      "source_grade": "official",
-      "date_precision": "day",
-      "link_checked_at": "2026-08-26T10:47:11+00:00",
-      "link_status": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인",
-      "link_statuses": {
-        "source": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인"
-      }
+      },
+      "lifecycle": "current",
+      "archive_on": "2027-03-08"
     },
     {
       "game": "나루토 카드",
@@ -603,7 +581,9 @@
       "source_grade": "official",
       "link_statuses": {
         "source": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인"
-      }
+      },
+      "lifecycle": "recently_ended",
+      "archive_on": "2026-09-14"
     },
     {
       "game": "원피스 카드",
@@ -624,7 +604,9 @@
       "source_grade": "official",
       "link_statuses": {
         "source": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인"
-      }
+      },
+      "lifecycle": "current",
+      "archive_on": "2026-09-26"
     },
     {
       "game": "포켓몬 카드",
@@ -645,7 +627,9 @@
       "source_grade": "official",
       "link_statuses": {
         "source": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인"
-      }
+      },
+      "lifecycle": "current",
+      "archive_on": "2026-09-28"
     },
     {
       "game": "나루토 카드",
@@ -664,7 +648,9 @@
       "source": "https://x.com/smg_comic/status/2081560207646441942",
       "verification_source": "https://www.seoulmediacomics.com/",
       "source_grade": "official",
-      "event_scope": "licensed_ip_popup_not_tcg_tournament"
+      "event_scope": "licensed_ip_popup_not_tcg_tournament",
+      "lifecycle": "current",
+      "archive_on": "2026-10-12"
     },
     {
       "game": "원피스 카드",
@@ -683,7 +669,9 @@
       "source": "https://x.com/smg_comic/status/2081560207646441942",
       "verification_source": "https://www.seoulmediacomics.com/",
       "source_grade": "official",
-      "event_scope": "licensed_ip_popup_not_tcg_tournament"
+      "event_scope": "licensed_ip_popup_not_tcg_tournament",
+      "lifecycle": "current",
+      "archive_on": "2026-10-12"
     },
     {
       "game": "나루토 카드",
@@ -704,7 +692,9 @@
       "source_grade": "official",
       "link_statuses": {
         "source": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인"
-      }
+      },
+      "lifecycle": "current",
+      "archive_on": "2026-10-17"
     },
     {
       "game": "포켓몬 카드",
@@ -725,7 +715,9 @@
       "source_grade": "official",
       "link_statuses": {
         "source": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인"
-      }
+      },
+      "lifecycle": "current",
+      "archive_on": "2026-11-07"
     },
     {
       "game": "나루토 카드",
@@ -746,7 +738,9 @@
       "source_grade": "official",
       "link_statuses": {
         "source": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인"
-      }
+      },
+      "lifecycle": "current",
+      "archive_on": "2027-01-16"
     },
     {
       "game": "원피스 카드",
@@ -770,7 +764,9 @@
       "link_status": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인",
       "link_statuses": {
         "source": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인"
-      }
+      },
+      "lifecycle": "current",
+      "archive_on": "2027-03-06"
     },
     {
       "game": "나루토 카드",
@@ -794,7 +790,9 @@
       "link_status": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인",
       "link_statuses": {
         "source": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인"
-      }
+      },
+      "lifecycle": "current",
+      "archive_on": "2027-09-06"
     }
   ],
   "collection_errors": [
@@ -849,11 +847,15 @@
     "https://www.naruto-cardgame.com/jp/",
     "https://www.naruto-cardgame.com/en/"
   ],
-  "expired_event_count": 0,
+  "expired_event_count": 3,
   "repaired_date_count": 0,
-  "expired_event_names": [],
+  "expired_event_names": [
+    "발매기념대회 리미티드 배틀",
+    "2026 포켓몬 월드 챔피언십·PokémonXP",
+    "원피스 밀짚모자 스토어 나고야 공식 개점 행사"
+  ],
   "last_expiry_cleanup_at": "2026-08-26T10:47:08+00:00",
-  "expiry_policy": "end_date/claim_deadline 중 더 늦은 날짜가 오늘보다 이전이면 자동 삭제",
+  "expiry_policy": "end_date/claim_deadline 중 더 늦은 종료일까지 표시하고 종료 후 5일차까지 현재 목록 유지, 6일째부터 지난 행사 보관함으로 이동하며 삭제하지 않음",
   "link_audit_at": "2026-08-26T10:47:11+00:00",
   "kr_movie_tracking_count": 3,
   "supplementary_candidate_count": 8,
@@ -951,5 +953,82 @@
   "official_source_policy": "공식 HTTPS 허용목록 + 실제 개최지 판별 + 월/계절/미발표 날짜 정확도 보존",
   "official_reference_checked_on": "2026-08-25",
   "supplementary_collection_mode": "deferred-to-integration-stage",
-  "manual_official_sync": "PLAYGO 2026-08-28 공식 공지 반영"
+  "manual_official_sync": "PLAYGO 2026-08-28 공식 공지 반영",
+  "archive_items": [
+    {
+      "game": "원피스 카드",
+      "region": "KR",
+      "category": "promo",
+      "name_ko": "발매기념대회 리미티드 배틀",
+      "name_native": "원피스 카드게임 발매기념대회 리미티드 배틀",
+      "start_date": "2026-08-22",
+      "end_date": "2026-09-04",
+      "claim_deadline": "2026-09-04",
+      "reward": "참가·상위 입상 기념품은 공식 행사 안내 및 개최 점포에서 확인",
+      "condition": "한글판 카드로 구성한 지정 리미티드 규정 덱 사용. 점포별 개최 여부와 접수 방식 사전 확인",
+      "location": "한국 전국 원피스 카드게임 공인·취급 점포",
+      "status": "진행 중",
+      "source": "https://onepiece-cardgame.kr/events/view.do?brdno=6442",
+      "link_checked_at": "2026-08-26T10:47:11+00:00",
+      "link_status": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인",
+      "source_grade": "official",
+      "link_statuses": {
+        "source": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인"
+      },
+      "lifecycle": "archive",
+      "archive_on": "2026-09-10"
+    },
+    {
+      "game": "포켓몬 카드",
+      "region": "US",
+      "category": "collaboration",
+      "name_ko": "2026 포켓몬 월드 챔피언십·PokémonXP",
+      "name_native": "2026 Pokémon World Championships and PokémonXP",
+      "start_date": "2026-08-28",
+      "end_date": "2026-08-30",
+      "claim_deadline": "2026-08-30",
+      "reward": "참가 자격·패스 종류에 따라 공식 웰컴 키트, 기념 카드 및 현장 프로그램",
+      "condition": "경쟁 부문은 초청 자격, 일반 관람은 유효한 패스 필요. 현장별 입장 조건 확인",
+      "location": "Moscone Center·Chase Center, San Francisco",
+      "status": "예정",
+      "source": "https://www.pokemon.com/us/news/check-out-the-pokemonxp-and-worlds-daily-schedule",
+      "link_checked_at": "2026-08-26T10:47:11+00:00",
+      "link_status": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인",
+      "source_grade": "official",
+      "verification_source": "https://www.pokemon-card.com/info/005605.html",
+      "link_statuses": {
+        "source": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인",
+        "verification_source": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인"
+      },
+      "lifecycle": "archive",
+      "archive_on": "2026-09-05"
+    },
+    {
+      "game": "원피스 카드",
+      "region": "JP",
+      "category": "collaboration",
+      "name_ko": "원피스 밀짚모자 스토어 나고야 공식 개점 행사",
+      "name_native": "ONE PIECE 麦わらストア 名古屋店 オープン",
+      "start_date": "2026-09-04",
+      "end_date": "2026-09-04",
+      "claim_deadline": "2026-09-04",
+      "reward": "나고야점 한정 상품과 공식 오픈 기념 이벤트 정보 확인",
+      "condition": "공식 안내 기준 나고야 PARCO 서관 8층에서 2026년 9월 4일 개점합니다.",
+      "location": "일본 나고야 PARCO 서관 8층",
+      "status": "예정",
+      "source": "https://one-piece.com/news/80639/index.html",
+      "source_grade": "official",
+      "date_precision": "day",
+      "link_checked_at": "2026-08-26T10:47:11+00:00",
+      "link_status": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인",
+      "link_statuses": {
+        "source": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인"
+      },
+      "lifecycle": "archive",
+      "archive_on": "2026-09-10"
+    }
+  ],
+  "archive_grace_days": 5,
+  "archive_event_count": 3,
+  "lifecycle_updated_at": "2026-09-10T00:00:00+00:00"
 }
