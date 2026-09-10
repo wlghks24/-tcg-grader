@@ -31,7 +31,12 @@ PUBLIC_OUTPUTS = (
     "exchange_rates.json",
     "graded_photo_candidates.json",
 )
-AUX_OUTPUTS = ("supplementary_candidates.json", "social_event_candidates.json")
+AUX_OUTPUTS = (
+    "supplementary_candidates.json",
+    "social_event_candidates.json",
+    "purchase_signals.json",
+    "social_stock_signals.json",
+)
 EXPECTED_TOPIC_CELLS = len(update_promo_events.social_topic_expected_keys())
 
 
