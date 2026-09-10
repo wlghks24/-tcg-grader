@@ -1,0 +1,89 @@
+name: Audit completion repair v219
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/audit-completion-v219.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  repair:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    env:
+      PYTHONPATH: ${{ github.workspace }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          fetch-depth: 2
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97
+        with:
+          python-version: '3.12'
+
+      - name: Reuse exact reviewed v218 patch body
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'EXTRACT'
+          from pathlib import Path
+          source=Path('.github/workflows/audit-completion-v218.yml').read_text(encoding='utf-8').splitlines()
+          start=None; end=None
+          for i,line in enumerate(source):
+              if line == "          python - <<'PY'":
+                  start=i+1; break
+          if start is None:
+              raise SystemExit('v218 patch start marker missing')
+          for i in range(start,len(source)):
+              if source[i] == '          PY':
+                  end=i; break
+          if end is None:
+              raise SystemExit('v218 patch end marker missing')
+          body=[]
+          for line in source[start:end]:
+              if line.startswith('          '): line=line[10:]
+              body.append(line)
+          Path('.audit_patch_v218.py').write_text('\n'.join(body)+'\n',encoding='utf-8')
+          EXTRACT
+          python .audit_patch_v218.py
+
+      - name: Targeted regression with correct package root
+        shell: bash
+        run: |
+          set -euo pipefail
+          python -m py_compile \
+            instagram_tcg_content/production_state.py \
+            instagram_tcg_content/automation_state_guard.py \
+            instagram_tcg_content/production_recovery_policy.py
+          python -m instagram_tcg_content.test_production_state
+          python -m unittest -v \
+            instagram_tcg_content.test_ai_reliability_runtime \
+            instagram_tcg_content.test_ai_reliability_v8_code_map_contract \
+            instagram_tcg_content.test_ai_reliability_v8_integration \
+            instagram_tcg_content.test_automation_pause_recovery_v30 \
+            instagram_tcg_content.test_production_recovery_policy
+          python selfrefine_domain_boundary_guard.py
+          python verify_critical_feature_matrix_v25.py
+
+      - name: Commit verified repair and remove one-shot workflows
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          rm -f .audit_patch_v218.py
+          git rm -- .github/workflows/audit-completion-v218.yml .github/workflows/audit-completion-v219.yml
+          git add -- \
+            instagram_tcg_content/production_state.py \
+            instagram_tcg_content/automation_state_guard.py \
+            instagram_tcg_content/production_recovery_policy.py \
+            instagram_tcg_content/test_production_state.py \
+            instagram_tcg_content/test_automation_pause_recovery_v30.py \
+            instagram_tcg_content/test_production_recovery_policy.py \
+            instagram_tcg_content/test_ai_reliability_v8_code_map_contract.py \
+            instagram_tcg_content/test_ai_reliability_v8_integration.py
+          git commit -m 'fix: complete hourly and Monday 19 production migration'
+          git push origin HEAD:main
