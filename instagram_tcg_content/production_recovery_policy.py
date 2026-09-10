@@ -1,12 +1,9 @@
 #!/usr/bin/env python3
 """Recovery policy for missing Instagram card-info production output.
 
-The policy separates two problems:
-1) collection readiness recovery before render;
-2) visible status reporting when production cannot proceed.
-
-It never fabricates facts, never weakens collection gates, and never authorizes
-scheduler/control-plane mutations.
+The policy separates collection recovery from presentation output and supports
+verified general card information even when strict completed-sale coverage is
+not yet ready. Unverified facts never become production-ready.
 """
 from __future__ import annotations
 
@@ -24,6 +21,7 @@ RECOVERABLE_COLLECTION_REASONS = {
 }
 RECOVERY_MODE = "PREPRODUCTION_RECOVERY_COLLECTION"
 BLOCKED_MODE = "PRODUCTION_BLOCKED_COLLECTION_NOT_READY"
+GENERAL_MODE = "PROCEED_GENERAL_CARDINFO_WITHOUT_UNVERIFIED_MARKET_SECTIONS"
 
 
 @dataclass(frozen=True)
@@ -32,6 +30,7 @@ class RecoveryDecision:
     reason: str
     run_bounded_collection: bool
     render_allowed: bool
+    market_sections_allowed: bool
     must_emit_visible_report: bool
     recovery_attempt_limit: int
 
@@ -41,6 +40,7 @@ class RecoveryDecision:
             "reason": self.reason,
             "run_bounded_collection": self.run_bounded_collection,
             "render_allowed": self.render_allowed,
+            "market_sections_allowed": self.market_sections_allowed,
             "must_emit_visible_report": self.must_emit_visible_report,
             "recovery_attempt_limit": self.recovery_attempt_limit,
         }
@@ -56,16 +56,29 @@ def decide_preproduction_recovery(
     is_production_slot: bool,
     recovery_collection_attempts: int,
 ) -> RecoveryDecision:
-    """Decide whether to run one bounded recovery collection before production."""
-    production_ready = collection_report.get("production_ready") is True
+    """Decide recovery/render behavior from split general/market readiness."""
+    general_ready = collection_report.get("general_cardinfo_ready") is True
+    market_ready = collection_report.get("market_price_ready") is True
+    legacy_ready = collection_report.get("production_ready") is True
     reasons = [str(x) for x in (collection_report.get("reasons") or [])]
 
-    if production_ready:
+    if general_ready or legacy_ready:
+        if market_ready:
+            return RecoveryDecision(
+                action="PROCEED_TO_PRODUCTION_PREFLIGHT",
+                reason="GENERAL_AND_MARKET_READY",
+                run_bounded_collection=False,
+                render_allowed=True,
+                market_sections_allowed=True,
+                must_emit_visible_report=True,
+                recovery_attempt_limit=1,
+            )
         return RecoveryDecision(
-            action="PROCEED_TO_PRODUCTION_PREFLIGHT",
-            reason="COLLECTION_HEALTH_READY",
+            action=GENERAL_MODE,
+            reason="GENERAL_READY_MARKET_NOT_READY",
             run_bounded_collection=False,
             render_allowed=True,
+            market_sections_allowed=False,
             must_emit_visible_report=True,
             recovery_attempt_limit=1,
         )
@@ -76,18 +89,20 @@ def decide_preproduction_recovery(
     if is_production_slot and recoverable and recovery_collection_attempts < 1:
         return RecoveryDecision(
             action=RECOVERY_MODE,
-            reason="COLLECTION_NOT_READY_TRY_ONE_BOUNDED_REFRESH",
+            reason="GENERAL_CARDINFO_NOT_READY_TRY_ONE_BOUNDED_REFRESH",
             run_bounded_collection=True,
             render_allowed=False,
+            market_sections_allowed=False,
             must_emit_visible_report=True,
             recovery_attempt_limit=1,
         )
 
     return RecoveryDecision(
         action=BLOCKED_MODE,
-        reason="COLLECTION_NOT_READY_AFTER_RECOVERY_OR_NOT_RECOVERABLE",
+        reason="GENERAL_CARDINFO_NOT_READY_AFTER_RECOVERY_OR_NOT_RECOVERABLE",
         run_bounded_collection=False,
         render_allowed=False,
+        market_sections_allowed=False,
         must_emit_visible_report=True,
         recovery_attempt_limit=1,
     )
@@ -107,11 +122,13 @@ def build_visible_failure_report(
         "OUTPUT_STATUS": "MISSING",
         "SCHEDULED_SLOT_KST": scheduled_slot_kst,
         "FAILED_STAGE": "COLLECTION_HEALTH",
-        "ERROR_CODE": "COLLECTION_HEALTH_NOT_READY",
-        "ROOT_CAUSE": "VERIFIED_DATA_REQUIREMENTS_NOT_MET",
+        "ERROR_CODE": "GENERAL_CARDINFO_NOT_READY",
+        "ROOT_CAUSE": "VERIFIED_GENERAL_CARDINFO_REQUIREMENTS_NOT_MET",
         "PRODUCER_PHASE": producer_phase or "UNKNOWN",
         "EXCHANGE_STATUS": exchange_status,
         "COLLECTION_HEALTH": collection_report.get("status", "NOT_READY"),
+        "GENERAL_CARDINFO_READY": collection_report.get("general_cardinfo_ready") is True,
+        "MARKET_PRICE_READY": collection_report.get("market_price_ready") is True,
         "VERIFIED_FACT_COUNT": int(collection_report.get("unique_fact_count") or 0),
         "OUTPUT_MATRIX_COVERAGE": collection_report.get("matrix_counts") or {},
         "COMPLETED_SALE_COVERAGE": collection_report.get("completed_sale_counts") or {},
@@ -128,6 +145,8 @@ def build_visible_failure_report(
 def self_test() -> None:
     stale = {
         "production_ready": False,
+        "general_cardinfo_ready": False,
+        "market_price_ready": False,
         "status": "NOT_READY",
         "reasons": [
             "SNAPSHOT_STALE:90.0h>36h",
@@ -152,17 +171,39 @@ def self_test() -> None:
     assert second.render_allowed is False
     assert second.must_emit_visible_report is True
 
+    general_only = decide_preproduction_recovery(
+        {
+            "production_ready": True,
+            "general_cardinfo_ready": True,
+            "market_price_ready": False,
+            "reasons": ["COMPLETED_SALE_COVERAGE_INSUFFICIENT"],
+        },
+        is_production_slot=True,
+        recovery_collection_attempts=0,
+    )
+    assert general_only.action == GENERAL_MODE, general_only
+    assert general_only.render_allowed is True
+    assert general_only.market_sections_allowed is False
+
     ready = decide_preproduction_recovery(
-        {"production_ready": True, "reasons": []},
+        {
+            "production_ready": True,
+            "general_cardinfo_ready": True,
+            "market_price_ready": True,
+            "reasons": [],
+        },
         is_production_slot=True,
         recovery_collection_attempts=0,
     )
     assert ready.render_allowed is True
+    assert ready.market_sections_allowed is True
 
     report = build_visible_failure_report(
         scheduled_slot_kst="2026-09-10T10:30:00+09:00",
         collection_report={
             "status": "NOT_READY",
+            "general_cardinfo_ready": False,
+            "market_price_ready": False,
             "unique_fact_count": 1,
             "matrix_counts": {},
             "completed_sale_counts": {},
@@ -175,6 +216,8 @@ def self_test() -> None:
     )
     assert report["OUTPUT_STATUS"] == "MISSING"
     assert report["ARTIFACT_COUNT"] == 0
+    assert report["GENERAL_CARDINFO_READY"] is False
+    assert report["MARKET_PRICE_READY"] is False
     assert report["must_emit_visible_report"] is True
     print("Instagram card production recovery policy: PASS")
 
