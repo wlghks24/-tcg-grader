@@ -30,8 +30,10 @@ from datetime import datetime
 from pathlib import Path
 from typing import Any
 
+from instagram_tcg_content.automation_state_guard import CANONICAL_ID
+
 PROJECT = "instagram_card"
-TASK_ID = "6a9b8a22e72c8191849c273e1240378e"
+TASK_ID = CANONICAL_ID
 SCHEMA_VERSION = 1
 MIN_REAL_LABELS = 1000
 MIN_OWNER_GROUPS = 3
