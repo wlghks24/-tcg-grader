@@ -1,0 +1,150 @@
+name: Apply grading service monitor v216
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/apply-grading-service-monitor-v216.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  wire:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          fetch-depth: 2
+
+      - name: Wire monitor into local runtime, Pages and 6-hour refresh
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          from pathlib import Path
+
+          def replace_once(path, old, new):
+              p=Path(path); text=p.read_text(encoding='utf-8')
+              if new in text:
+                  return False
+              if old not in text:
+                  raise SystemExit(f'missing anchor {path}: {old[:100]!r}')
+              p.write_text(text.replace(old,new,1),encoding='utf-8')
+              return True
+
+          # Public Pages compatibility output expected by the already-shipped UI.
+          replace_once(
+              'grading_service_monitor.py',
+              'CHANGES = ROOT / "grading_service_changes.json"\n',
+              'CHANGES = ROOT / "grading_service_changes.json"\nPUBLIC_OUT = ROOT / "grading_company_updates.json"\n',
+          )
+          marker='''    atomic_write_json(OUT, result, suffix=".grading-services.tmp")\n    atomic_write_json(\n        CHANGES,'''
+          replacement='''    atomic_write_json(OUT, result, suffix=".grading-services.tmp")\n\n    # Compatibility projection used by the existing grading-cost UI on GitHub Pages.\n    companies = {}\n    for profile_key, profile in profiles.items():\n        company = companies.setdefault(profile["provider"], {"markets": {}})\n        company["markets"][profile["market"]] = {\n            "currency": profile["currency"],\n            "services": profile.get("services", []),\n            "source": profile.get("service_source"),\n            "verification_status": profile.get("verification_status"),\n        }\n    recent_changes = []\n    announcements = []\n    for change in combined[-50:]:\n        change_type = change.get("change_type")\n        if change_type == "official_notice_content_changed":\n            projected = {\n                "type": "official_page_changed_unparsed",\n                "company": str(change.get("profile", "")).split("_", 1)[0],\n                "title": "공식 업체 공지/이벤트 페이지 변경 감지",\n                "url": change.get("source"),\n                "detected_at": change.get("detected_at"),\n            }\n            recent_changes.append(projected)\n            announcements.append(projected)\n        elif change_type == "service_added":\n            recent_changes.append({\n                "type": "service_added", "company": str(change.get("profile", "")).split("_",1)[0],\n                "service": change.get("service_id"), "url": change.get("source"),\n                "detected_at": change.get("detected_at"),\n            })\n        else:\n            recent_changes.append({\n                "type": "service_changed", "company": str(change.get("profile", "")).split("_",1)[0],\n                "service": change.get("service_id"), "url": change.get("source"),\n                "detected_at": change.get("detected_at"),\n                "changes": {change.get("field") or change_type: {"before": change.get("before"), "after": change.get("after")}},\n            })\n    public_snapshot = {\n        "schema_version": 1, "engine": "grading-service-monitor-v215",\n        "checked_at": checked_at, "refresh_hours": 6,\n        "policy": {\n            "official_sources_only": True,\n            "social_is_recheck_only": True,\n            "last_known_good_on_failure": True,\n            "event_archive_grace_days": ARCHIVE_GRACE_DAYS,\n        },\n        "companies": companies,\n        "recent_changes": recent_changes[-50:],\n        "announcements": announcements[-30:],\n        "recheck_triggers": RECHECK_TRIGGERS,\n    }\n    atomic_write_json(PUBLIC_OUT, public_snapshot, suffix=".grading-company-updates.tmp")\n\n    atomic_write_json(\n        CHANGES,'''
+          replace_once('grading_service_monitor.py',marker,replacement)
+
+          # Local/Termux automatic collection: add an eighth required job.
+          replace_once(
+              'auto_update_all.py',
+              '    ("업체별 등급카드 사진 후보", "graded_photo_multi_source", "graded_photo_candidates.json"),\n',
+              '    ("등급업체 요금·서비스·이벤트", "grading_service_monitor", "grading_services.json"),\n    ("업체별 등급카드 사진 후보", "graded_photo_multi_source", "graded_photo_candidates.json"),\n',
+          )
+          replace_once(
+              'auto_update_all.py',
+              '    elif name == "graded_photo_candidates.json":\n',
+              '    elif name == "grading_services.json":\n        if data.get("engine") != "grading-service-monitor-v215" or data.get("official_only_numeric_updates") is not True:\n            raise ValueError("등급업체 공식 변경감시 정책 또는 엔진 오류")\n        profiles=data.get("profiles")\n        if not isinstance(profiles,dict) or not {"PSA","BGS","CGC","TAG","BRG"}.issubset({row.get("provider") for row in profiles.values() if isinstance(row,dict)}):\n            raise ValueError("등급업체 5개사 감시 프로필 누락")\n    elif name == "graded_photo_candidates.json":\n',
+          )
+          replace_once(
+              'auto_update_all.py',
+              '        "exchange_rates.json": "인터넷 연결 후 환율 출처를 다시 확인하세요.",\n',
+              '        "exchange_rates.json": "인터넷 연결 후 환율 출처를 다시 확인하세요.",\n        "grading_services.json": "PSA/BGS/CGC/TAG/BRG 공식 요금·공지 페이지와 파서 상태를 확인하세요.",\n',
+          )
+
+          # Server progress and public static allow-list.
+          replace_once('tcg_updater.py', "    'current':0,'total':7,'label':'대기 중'", "    'current':0,'total':8,'label':'대기 중'")
+          replace_once(
+              'tcg_updater.py',
+              "'grading_total_cost.js','grading_total_cost.css','grading_costs_live.js','grading_costs_live.css',",
+              "'grading_total_cost.js','grading_total_cost.css','grading_costs_live.js','grading_costs_live.css','grading_services.json','grading_service_changes.json','grading_company_updates.json',",
+          )
+
+          # GitHub project Pages must use a repo-relative fallback, not domain root.
+          replace_once(
+              'grading_costs_live.js',
+              "fetch('/grading_company_updates.json?t='+Date.now()",
+              "fetch('grading_company_updates.json?t='+Date.now()",
+          )
+
+          # Scheduled static refresh watches, verifies and publishes all grader snapshots.
+          replace_once(
+              '.github/workflows/tcg-static-data-refresh.yml',
+              "      - 'feature_contract.py'\n",
+              "      - 'feature_contract.py'\n      - 'grading_service_monitor.py'\n      - 'test_grading_service_monitor_v215.py'\n",
+          )
+          replace_once(
+              '.github/workflows/tcg-static-data-refresh.yml',
+              '            multi_route_event_discovery.py social_event_discovery.py auto_pipeline_runner.py\n',
+              '            multi_route_event_discovery.py social_event_discovery.py auto_pipeline_runner.py grading_service_monitor.py\n',
+          )
+          replace_once(
+              '.github/workflows/tcg-static-data-refresh.yml',
+              '            test_event_quick_watch.py\n',
+              '            test_event_quick_watch.py \\\n            test_grading_service_monitor_v215.py\n',
+          )
+          replace_once(
+              '.github/workflows/tcg-static-data-refresh.yml',
+              '            purchase_signals.json social_stock_signals.json \\\n',
+              '            purchase_signals.json social_stock_signals.json grading_services.json grading_service_changes.json grading_company_updates.json \\\n',
+          )
+          replace_once(
+              '.github/workflows/tcg-static-data-refresh.yml',
+              '            echo "- public signal persistence: purchase_signals + social_stock_signals included"\n',
+              '            echo "- public signal persistence: purchase_signals + social_stock_signals included"\n            echo "- grading companies: official-only fee/service/turnaround/notice monitoring every six hours"\n',
+          )
+
+          # Old failed one-shot is no longer part of active repository automation.
+          Path('.github/workflows/apply-grading-service-monitor-v215.yml').unlink(missing_ok=True)
+          PY
+
+      - name: Targeted regression and live official-source refresh
+        shell: bash
+        run: |
+          set -euo pipefail
+          python -m py_compile grading_service_monitor.py auto_update_all.py tcg_updater.py
+          python -m unittest -v \
+            test_grading_service_monitor_v215.py \
+            test_grading_costs_live.py \
+            test_0600_operational_refresh_v25.py \
+            test_graded_photo_runtime.py
+          python grading_service_monitor.py
+          python - <<'PY'
+          import json
+          services=json.load(open('grading_services.json',encoding='utf-8'))
+          public=json.load(open('grading_company_updates.json',encoding='utf-8'))
+          changes=json.load(open('grading_service_changes.json',encoding='utf-8'))
+          assert services['official_only_numeric_updates'] is True
+          assert set(public['companies']) == {'PSA','BGS','CGC','TAG','BRG'}
+          assert public['policy']['official_sources_only'] is True
+          assert public['policy']['social_is_recheck_only'] is True
+          assert changes['engine']=='grading-service-monitor-v215'
+          print(services['summary'])
+          PY
+
+      - name: Commit verified wiring
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add -A -- \
+            grading_service_monitor.py grading_services.json grading_service_changes.json grading_company_updates.json \
+            auto_update_all.py tcg_updater.py grading_costs_live.js \
+            .github/workflows/tcg-static-data-refresh.yml \
+            .github/workflows/apply-grading-service-monitor-v215.yml
+          if git diff --cached --quiet; then
+            echo 'No integration changes needed.'
+            exit 0
+          fi
+          git commit -m 'feat: wire official grading company change monitoring'
+          git push origin HEAD:main
