@@ -1,0 +1,231 @@
+{
+  "schema_version": 1,
+  "project": "instagram_card",
+  "updated_at_kst": "2026-09-11T07:50:00+09:00",
+  "rules": {
+    "all_route_provider_ids_must_resolve": true,
+    "dynamic_detail_requires_parent_provider": true,
+    "non_http_source_locator_forbidden": true,
+    "private_or_local_source_url_forbidden": true,
+    "access_control_bypass_forbidden": true,
+    "discovery_only_cannot_verify_alone": true
+  },
+  "providers": {
+    "pokemon-official-jp-news": {
+      "tier": "official_primary",
+      "mode": "python_parser",
+      "source_codes": ["POKEMON_JP_PRODUCTS", "POKEMON_JP_INFO"],
+      "urls": ["https://www.pokemon-card.com/products/index.html", "https://www.pokemon-card.com/info/index.html"],
+      "region": "JP",
+      "fact_scope": ["release", "rerelease", "promo", "event", "festival", "card_news", "product_news"]
+    },
+    "pokemon-official-us-news": {
+      "tier": "official_primary",
+      "mode": "python_parser",
+      "source_codes": ["POKEMON_EN_NEWS"],
+      "urls": ["https://www.pokemon.com/us/news/all", "https://www.pokemon.com/us/pokemon-news/"],
+      "region": "GLOBAL_EN",
+      "fact_scope": ["release", "promo", "event", "card_news", "product_news"]
+    },
+    "pokemon-official-us-product-gallery": {
+      "tier": "official_primary",
+      "mode": "web_extract",
+      "source_codes": ["POKEMON_US_PRODUCT_DETAIL"],
+      "urls": ["https://www.pokemon.com/us/news/all"],
+      "region": "GLOBAL_EN",
+      "note": "Follow official product/news detail links; listing publication date is not a release date."
+    },
+    "pokemon-official-kr": {
+      "tier": "official_primary",
+      "mode": "python_parser",
+      "source_codes": ["POKEMON_KR_NEWS"],
+      "urls": ["https://pokemoncard.co.kr/main", "https://www.pokemonkorea.co.kr/"],
+      "region": "KR",
+      "fact_scope": ["release", "rerelease", "promo", "event", "festival", "card_news", "product_news"]
+    },
+    "pokemon-center": {
+      "tier": "official_primary",
+      "mode": "web_extract",
+      "source_codes": ["POKEMON_CENTER_TCG"],
+      "urls": ["https://www.pokemoncenter.com/category/tcg-cards?page=1"],
+      "region": "US",
+      "note": "Official product availability/reference only; never completed-sale evidence."
+    },
+    "onepiece-cardgame-jp": {
+      "tier": "official_primary",
+      "mode": "web_extract",
+      "source_codes": ["ONEPIECE_JP_OFFICIAL"],
+      "urls": ["https://www.onepiece-cardgame.com/"],
+      "region": "JP"
+    },
+    "onepiece-cardgame-global": {
+      "tier": "official_primary",
+      "mode": "python_parser",
+      "source_codes": ["ONEPIECE_EN_PRODUCTS", "ONEPIECE_EN_TOPICS"],
+      "urls": ["https://en.onepiece-cardgame.com/products/", "https://en.onepiece-cardgame.com/topics/"],
+      "region": "GLOBAL_EN"
+    },
+    "onepiece-cardgame-regional": {
+      "tier": "official_primary",
+      "mode": "python_parser",
+      "source_codes": ["ONEPIECE_KR_TOPICS"],
+      "urls": ["https://onepiece-cardgame.kr/topics.do", "https://onepiece-cardgame.kr/"],
+      "region": "KR"
+    },
+    "bandai-tcg-plus": {
+      "tier": "official_primary",
+      "mode": "web_extract",
+      "source_codes": ["BANDAI_TCG_PLUS"],
+      "urls": ["https://lp.bandai-tcg-plus.com/"],
+      "fact_scope": ["event", "festival"],
+      "note": "Event support source; specific title/date still requires item-level evidence."
+    },
+    "onepiece-campaign-detail": {
+      "tier": "official_primary",
+      "mode": "dynamic_detail",
+      "source_codes": ["ONEPIECE_CAMPAIGN_DETAIL"],
+      "parent_provider": "onepiece-cardgame-global",
+      "fact_scope": ["promo", "event", "festival", "card_news"]
+    },
+    "naruto-cardgame-official": {
+      "tier": "official_primary",
+      "mode": "python_parser",
+      "source_codes": ["NARUTO_CARDGAME_OFFICIAL"],
+      "urls": ["https://www.naruto-cardgame.com/en/", "https://www.naruto-cardgame.com/jp/"],
+      "region": "GLOBAL"
+    },
+    "naruto-official-news": {
+      "tier": "official_primary",
+      "mode": "python_parser",
+      "source_codes": ["NARUTO_OFFICIAL_NEWS"],
+      "urls": ["https://naruto-official.com/en/news/", "https://naruto-official.com/news/"],
+      "region": "GLOBAL"
+    },
+    "bandai-card-games": {
+      "tier": "official_primary",
+      "mode": "web_extract",
+      "source_codes": ["BANDAI_CARD_GAMES"],
+      "urls": ["https://www.carddass.com/bcg/en/"],
+      "region": "GLOBAL"
+    },
+    "ebay": {
+      "tier": "completed_sale_original",
+      "mode": "external_evidence",
+      "source_codes": ["EBAY"],
+      "urls": ["https://www.ebay.com/"],
+      "note": "Use item-level sold/completed locator; homepage alone proves nothing."
+    },
+    "heritage": {
+      "tier": "completed_sale_original",
+      "mode": "external_evidence",
+      "source_codes": ["HERITAGE"],
+      "urls": ["https://www.ha.com/"],
+      "note": "Use item/lot realized result."
+    },
+    "goldin": {
+      "tier": "completed_sale_original",
+      "mode": "external_evidence",
+      "source_codes": ["GOLDIN"],
+      "urls": ["https://goldin.co/"],
+      "note": "Use item/lot realized result."
+    },
+    "psa-auction-prices": {
+      "tier": "grading_auction_original",
+      "mode": "external_evidence",
+      "source_codes": ["PSA_AUCTION_PRICES"],
+      "urls": ["https://www.psacard.com/auctionprices"],
+      "note": "Grade/identity must match; preserve underlying sale lineage."
+    },
+    "card-ladder": {
+      "tier": "grading_auction_original",
+      "mode": "external_evidence",
+      "source_codes": ["CARD_LADDER"],
+      "urls": ["https://www.cardladder.com/"],
+      "note": "Aggregator/reference lineage cannot create independence by itself."
+    },
+    "pwcc": {
+      "tier": "grading_auction_original",
+      "mode": "external_evidence",
+      "source_codes": ["PWCC"],
+      "urls": ["https://www.fanaticscollect.com/"],
+      "note": "Legacy PWCC provider resolves to current Fanatics Collect surface; item-level provenance required."
+    },
+    "pricecharting": {
+      "tier": "market_reference",
+      "mode": "external_evidence",
+      "source_codes": ["PRICECHARTING"],
+      "urls": ["https://www.pricecharting.com/"],
+      "note": "Market/index reference only."
+    },
+    "tcgplayer": {
+      "tier": "market_reference",
+      "mode": "external_evidence",
+      "source_codes": ["TCGPLAYER_MARKET"],
+      "urls": ["https://www.tcgplayer.com/"],
+      "note": "Market reference only; cannot be promoted to completed sale."
+    },
+    "cardmarket": {
+      "tier": "market_reference",
+      "mode": "external_evidence",
+      "source_codes": ["CARDMARKET"],
+      "urls": ["https://www.cardmarket.com/"],
+      "note": "Market reference only."
+    },
+    "snkrdunk": {
+      "tier": "market_reference",
+      "mode": "external_evidence",
+      "source_codes": ["SNKRDUNK"],
+      "urls": ["https://snkrdunk.com/"],
+      "note": "Market reference unless an item-level completed transaction is independently verifiable."
+    },
+    "justtcg": {
+      "tier": "market_reference",
+      "mode": "external_evidence",
+      "source_codes": ["JUSTTCG"],
+      "urls": ["https://justtcg.com/"],
+      "note": "Market reference only."
+    },
+    "pavilion": {
+      "tier": "market_reference",
+      "mode": "external_evidence",
+      "source_codes": ["PAVILION"],
+      "urls": ["https://pavilion.ai/"],
+      "note": "Market/reference source only."
+    },
+    "kream": {
+      "tier": "market_reference",
+      "mode": "external_evidence",
+      "source_codes": ["KREAM"],
+      "urls": ["https://kream.co.kr/"],
+      "note": "Market reference only."
+    },
+    "google": {
+      "tier": "discovery_lead",
+      "mode": "discovery_only",
+      "source_codes": ["GOOGLE_DISCOVERY"],
+      "urls": ["https://www.google.com/"],
+      "note": "Discovery only; never verifies alone."
+    },
+    "instagram": {
+      "tier": "discovery_lead",
+      "mode": "discovery_only",
+      "source_codes": ["INSTAGRAM_DISCOVERY"],
+      "urls": ["https://www.instagram.com/"],
+      "note": "Discovery/repost lead only unless original official account evidence is independently identified."
+    },
+    "x": {
+      "tier": "discovery_lead",
+      "mode": "discovery_only",
+      "source_codes": ["X_DISCOVERY"],
+      "urls": ["https://x.com/"],
+      "note": "Discovery only; never verifies alone."
+    },
+    "reddit": {
+      "tier": "discovery_lead",
+      "mode": "discovery_only",
+      "source_codes": ["REDDIT_DISCOVERY"],
+      "urls": ["https://www.reddit.com/"],
+      "note": "Discovery/community lead only; never verifies alone."
+    }
+  }
+}
