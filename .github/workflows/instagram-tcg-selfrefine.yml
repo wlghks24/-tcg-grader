@@ -64,6 +64,8 @@ jobs:
           python -m instagram_tcg_content.automation_state_guard --self-test
           python -m unittest -v instagram_tcg_content.test_automation_pause_recovery_v30
           python -m instagram_tcg_content.pause_monitor_exchange
+          python -m instagram_tcg_content.production_recovery_policy
+          python -m unittest -v instagram_tcg_content.test_production_recovery_policy
           python -m unittest -v instagram_tcg_content.test_pause_monitor_exchange
 
       - name: Run Instagram-only SELFREFINE
