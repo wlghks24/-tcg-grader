@@ -21,20 +21,24 @@ jobs:
       - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97
         with:
           python-version: '3.12'
-      - name: Observe Beckett redirect target without following
+      - name: Observe Beckett redirect targets without following
         run: |
           python - <<'PY'
           import json
           import urllib.error
           import urllib.parse
           import urllib.request
-          from grading_company_watch import ALLOWED_HOSTS, WATCH_SOURCES, UA
+          from grading_company_watch import ALLOWED_HOSTS, UA
           from safe_runtime import safe_urlopen_no_redirect
 
+          urls = {
+              'bgs-pricing-www': 'https://www.beckett.com/grading',
+              'bgs-pricing-canonical': 'https://beckett.com/grading',
+              'bgs-news-www': 'https://www.beckett.com/news/',
+              'bgs-news-canonical': 'https://beckett.com/news/',
+          }
           rows = []
-          for cfg in WATCH_SOURCES['BGS']:
-              source_id = cfg['id']
-              url = cfg['url']
+          for source_id, url in urls.items():
               req = urllib.request.Request(url, headers={'User-Agent': UA, 'Accept': 'text/html,application/xhtml+xml'})
               try:
                   with safe_urlopen_no_redirect(req, timeout=20, allowed_hosts=ALLOWED_HOSTS) as response:
