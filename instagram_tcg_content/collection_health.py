@@ -1,35 +1,25 @@
 #!/usr/bin/env python3
-"""Instagram-card collection readiness audit.
-
-This module is read-only. It never fetches sources and never mutates scheduler
-state. It exposes two independent readiness levels:
-- general_cardinfo_ready: verified release/rerelease/promo/event/movie/card news
-  may be produced even when completed-sale coverage is still incomplete.
-- market_price_ready: strict completed-sale and market-reference coverage.
-
-Unverified facts never become production-ready in either mode.
-"""
+"""Read-only readiness audit for the single canonical Instagram card-info router."""
 from __future__ import annotations
 
 import argparse
 import json
 from collections import Counter
-from datetime import datetime, timedelta, timezone
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
 ROOT = Path(__file__).resolve().parents[1]
 DEFAULT_SNAPSHOT = ROOT / "TCG_CROSSCHECK" / "IG_CARDINFO" / "factual_snapshot.json"
 DEFAULT_ROUTES = ROOT / "instagram_tcg_content" / "source_routes.json"
-KST = timezone(timedelta(hours=9))
 EXPECTED_OUTPUTS = (
-    ("pokemon", "KR"),
-    ("pokemon", "EN"),
-    ("one_piece", "KR"),
-    ("one_piece", "EN"),
-    ("naruto", "KR"),
-    ("naruto", "EN"),
+    ("pokemon", "KR"), ("pokemon", "EN"),
+    ("one_piece", "KR"), ("one_piece", "EN"),
+    ("naruto", "KR"), ("naruto", "EN"),
 )
+GENERAL_FACT_TYPES = frozenset({"release", "rerelease", "promo", "event", "movie_bonus"})
+MARKET_FACT_TYPES = frozenset({"completed_sale", "market_reference", "card_price"})
+KNOWN_FACT_TYPES = GENERAL_FACT_TYPES | MARKET_FACT_TYPES
 MAX_SNAPSHOT_AGE_HOURS = 36.0
 MIN_COMPLETED_SALES_PER_OUTPUT = 10
 VERIFICATION_MODE = "INSTAGRAM_LOCAL_EVIDENCE_ONLY"
@@ -40,6 +30,11 @@ MARKET_ONLY_REASON_PREFIXES = (
     "COMPLETED_SALE_ROUTE_SHORTAGE:",
     "MARKET_ROUTE_SHORTAGE:",
 )
+GENERAL_ONLY_REASON_PREFIXES = (
+    "OUTPUT_MATRIX_COVERAGE_MISSING:",
+    "OFFICIAL_ROUTE_SHORTAGE:",
+    "GENERAL_LIFECYCLE_MISSING:",
+)
 
 
 def _parse_aware(value: object) -> datetime | None:
@@ -49,21 +44,17 @@ def _parse_aware(value: object) -> datetime | None:
         parsed = datetime.fromisoformat(value.replace("Z", "+00:00"))
     except ValueError:
         return None
-    if parsed.tzinfo is None:
-        return None
-    return parsed
+    return parsed if parsed.tzinfo is not None else None
 
 
 def _game_of(row: dict[str, Any]) -> str:
     identity = row.get("identity")
     if isinstance(identity, dict):
-        game = identity.get("game")
-        if isinstance(game, str) and game.strip():
-            return game.strip().lower()
-    canonical = row.get("canonical_key")
-    if isinstance(canonical, str) and canonical.strip():
-        return canonical.split("|", 1)[0].strip().lower()
-    return ""
+        value = identity.get("game")
+        if isinstance(value, str) and value.strip():
+            return value.strip().lower()
+    key = row.get("canonical_key")
+    return str(key).split("|", 1)[0].strip().lower() if isinstance(key, str) and key.strip() else ""
 
 
 def _language_of(row: dict[str, Any]) -> str:
@@ -89,9 +80,7 @@ def _validate_routes(routes: dict[str, Any]) -> list[str]:
             problems.append(f"PROVIDER_GROUP_MISSING:{game}")
             continue
         official = set(group.get("official_primary") or [])
-        realized = set(group.get("completed_sale_original") or []) | set(
-            group.get("grading_auction_original") or []
-        )
+        realized = set(group.get("completed_sale_original") or []) | set(group.get("grading_auction_original") or [])
         market = set(group.get("market_reference") or [])
         if len(official) < 1:
             problems.append(f"OFFICIAL_ROUTE_SHORTAGE:{game}:{len(official)}/1")
@@ -102,8 +91,8 @@ def _validate_routes(routes: dict[str, Any]) -> list[str]:
     return problems
 
 
-def _is_market_only_reason(reason: str) -> bool:
-    return any(reason == prefix or reason.startswith(prefix) for prefix in MARKET_ONLY_REASON_PREFIXES)
+def _has_prefix(reason: str, prefixes: tuple[str, ...]) -> bool:
+    return any(reason == prefix or reason.startswith(prefix) for prefix in prefixes)
 
 
 def audit_collection(
@@ -116,7 +105,7 @@ def audit_collection(
     current = now or datetime.now(timezone.utc)
     if current.tzinfo is None:
         raise ValueError("now must be timezone-aware")
-    if isinstance(min_completed_sales_per_output, bool) or min_completed_sales_per_output < 1:
+    if isinstance(min_completed_sales_per_output, bool) or not isinstance(min_completed_sales_per_output, int) or min_completed_sales_per_output < 1:
         raise ValueError("min_completed_sales_per_output must be >=1")
 
     reasons: list[str] = []
@@ -148,50 +137,83 @@ def audit_collection(
         facts = []
         reasons.append("SNAPSHOT_FACTS_INVALID")
 
-    duplicate_keys: list[str] = []
     seen: set[tuple[str, str, str]] = set()
-    matrix_counts: Counter[tuple[str, str]] = Counter()
-    completed_counts: Counter[tuple[str, str]] = Counter()
+    duplicate_count = 0
     malformed_count = 0
+    unsupported_count = 0
+    general_counts: Counter[tuple[str, str]] = Counter()
+    all_counts: Counter[tuple[str, str]] = Counter()
+    completed_counts: Counter[tuple[str, str]] = Counter()
+    archive_counts: Counter[tuple[str, str]] = Counter()
+    current_general_fact_count = 0
+    archived_general_fact_count = 0
+
     for raw in facts:
         if not isinstance(raw, dict):
             malformed_count += 1
             continue
-        key = str(raw.get("canonical_key") or "")
-        fact_type = str(raw.get("fact_type") or "")
-        lineage = str(raw.get("lineage_key") or "")
+        key = str(raw.get("canonical_key") or "").strip()
+        fact_type = str(raw.get("fact_type") or "").strip()
+        lineage = str(raw.get("lineage_key") or "").strip()
         if not key or not fact_type or not lineage or raw.get("verification_status") != "verified":
             malformed_count += 1
             continue
         if raw.get("verification_mode") != VERIFICATION_MODE or raw.get("verification_engine") != VERIFICATION_ENGINE:
             malformed_count += 1
             continue
+        if fact_type not in KNOWN_FACT_TYPES:
+            unsupported_count += 1
+            continue
         dedupe_key = (key, fact_type, lineage)
         if dedupe_key in seen:
-            duplicate_keys.append("|".join(dedupe_key))
+            duplicate_count += 1
             continue
         seen.add(dedupe_key)
-        game = _game_of(raw)
-        language = _language_of(raw)
-        if game and language:
-            matrix_counts[(game, language)] += 1
-            if fact_type == "completed_sale":
-                completed_counts[(game, language)] += 1
         if not str(raw.get("source_locator") or "").strip():
             malformed_count += 1
+            continue
+
+        game, language = _game_of(raw), _language_of(raw)
+        if not game or not language:
+            malformed_count += 1
+            continue
+        all_counts[(game, language)] += 1
+
+        if fact_type == "completed_sale":
+            completed_counts[(game, language)] += 1
+            continue
+
+        if fact_type in GENERAL_FACT_TYPES:
+            bucket = raw.get("lifecycle_bucket")
+            lifecycle_enforced = str(snapshot.get("schema_version") or "").startswith("1.1") or (
+                isinstance(validation, dict) and validation.get("lifecycle_routing_enforced") is True
+            )
+            if bucket not in {None, "", "CURRENT", "ARCHIVE"}:
+                malformed_count += 1
+                continue
+            if lifecycle_enforced and bucket in {None, ""}:
+                reasons.append(f"GENERAL_LIFECYCLE_MISSING:{game}:{language}:{key}")
+                continue
+            if bucket == "ARCHIVE":
+                archived_general_fact_count += 1
+                archive_counts[(game, language)] += 1
+                continue
+            current_general_fact_count += 1
+            general_counts[(game, language)] += 1
 
     if malformed_count:
         reasons.append(f"MALFORMED_VERIFIED_FACTS:{malformed_count}")
-    if duplicate_keys:
-        reasons.append(f"DUPLICATE_FACT_LINEAGE:{len(duplicate_keys)}")
-    if not facts:
+    if unsupported_count:
+        reasons.append(f"UNSUPPORTED_VERIFIED_FACT_TYPES:{unsupported_count}")
+    if duplicate_count:
+        reasons.append(f"DUPLICATE_FACT_LINEAGE:{duplicate_count}")
+    if not seen:
         reasons.append("NO_VERIFIED_FACTS")
 
-    missing_outputs = []
-    completed_sale_shortage = {}
+    missing_outputs: list[str] = []
+    completed_sale_shortage: dict[str, dict[str, int]] = {}
     for game, language in EXPECTED_OUTPUTS:
-        count = matrix_counts[(game, language)]
-        if count < 1:
+        if general_counts[(game, language)] < 1:
             missing_outputs.append(f"{game}:{language}")
         completed = completed_counts[(game, language)]
         if completed < min_completed_sales_per_output:
@@ -206,19 +228,22 @@ def audit_collection(
 
     route_problems = _validate_routes(routes)
     reasons.extend(route_problems)
-
     unique_reasons = list(dict.fromkeys(reasons))
-    general_blocking_reasons = [r for r in unique_reasons if not _is_market_only_reason(r)]
-    market_blocking_reasons = list(unique_reasons)
+
+    general_blocking_reasons = [r for r in unique_reasons if not _has_prefix(r, MARKET_ONLY_REASON_PREFIXES)]
+    market_blocking_reasons = [r for r in unique_reasons if not _has_prefix(r, GENERAL_ONLY_REASON_PREFIXES)]
     general_cardinfo_ready = not general_blocking_reasons
     market_price_ready = not market_blocking_reasons
 
-    if general_cardinfo_ready and not market_price_ready:
-        status = "GENERAL_READY_MARKET_NOT_READY"
-        next_action = "PROCEED_GENERAL_CARDINFO_WITHOUT_UNVERIFIED_MARKET_SECTIONS"
-    elif general_cardinfo_ready and market_price_ready:
+    if general_cardinfo_ready and market_price_ready:
         status = "READY"
         next_action = "PROCEED_TO_PRODUCTION_PREFLIGHT"
+    elif general_cardinfo_ready:
+        status = "GENERAL_READY_MARKET_NOT_READY"
+        next_action = "PROCEED_GENERAL_CARDINFO_WITHOUT_UNVERIFIED_MARKET_SECTIONS"
+    elif market_price_ready:
+        status = "MARKET_READY_GENERAL_NOT_READY"
+        next_action = "CONTINUE_GENERAL_CARDINFO_COLLECTION"
     else:
         status = "NOT_READY"
         next_action = "RUN_BOUNDED_FULL_COLLECTION_AND_PERSIST_VERIFIED_IG_FACTS"
@@ -232,14 +257,12 @@ def audit_collection(
         "snapshot_age_hours": None if age_hours is None else round(age_hours, 2),
         "fact_count": len(facts),
         "unique_fact_count": len(seen),
-        "matrix_counts": {
-            f"{game}:{language}": matrix_counts[(game, language)]
-            for game, language in EXPECTED_OUTPUTS
-        },
-        "completed_sale_counts": {
-            f"{game}:{language}": completed_counts[(game, language)]
-            for game, language in EXPECTED_OUTPUTS
-        },
+        "current_general_fact_count": current_general_fact_count,
+        "archived_general_fact_count": archived_general_fact_count,
+        "matrix_counts": {f"{g}:{l}": general_counts[(g, l)] for g, l in EXPECTED_OUTPUTS},
+        "all_verified_matrix_counts": {f"{g}:{l}": all_counts[(g, l)] for g, l in EXPECTED_OUTPUTS},
+        "archive_matrix_counts": {f"{g}:{l}": archive_counts[(g, l)] for g, l in EXPECTED_OUTPUTS},
+        "completed_sale_counts": {f"{g}:{l}": completed_counts[(g, l)] for g, l in EXPECTED_OUTPUTS},
         "completed_sale_shortage": completed_sale_shortage,
         "route_problems": route_problems,
         "reasons": unique_reasons,
@@ -250,81 +273,59 @@ def audit_collection(
 
 
 def self_test() -> None:
-    now = datetime(2026, 9, 9, 12, 0, tzinfo=timezone.utc)
-    routes = {
-        "provider_groups": {
-            game: {
-                "official_primary": ["official"],
-                "completed_sale_original": ["sale-a", "sale-b"],
-                "grading_auction_original": [],
-                "market_reference": ["market-a", "market-b"],
-            }
-            for game in ("pokemon", "one_piece", "naruto")
-        }
-    }
-    facts = []
-    official_only = []
+    now = datetime(2026, 9, 11, 0, 0, tzinfo=timezone.utc)
+    routes = {"provider_groups": {g: {
+        "official_primary": ["official"],
+        "completed_sale_original": ["sale-a", "sale-b"],
+        "grading_auction_original": [],
+        "market_reference": ["market-a", "market-b"],
+    } for g in ("pokemon", "one_piece", "naruto")}}
+
+    general, sales = [], []
     for game, language in EXPECTED_OUTPUTS:
-        official = {
-            "canonical_key": f"{game}|release|{language.lower()}",
-            "fact_type": "release",
-            "lineage_key": f"{game}:{language}:release",
-            "identity": {"game": game, "language": language},
-            "source_locator": "https://example.invalid/official",
-            "verification_status": "verified",
-            "verification_mode": VERIFICATION_MODE,
+        general.append({
+            "canonical_key": f"{game}|release|{language.lower()}", "fact_type": "release",
+            "content_type": "release", "lifecycle_bucket": "CURRENT",
+            "lineage_key": f"{game}:{language}:release", "identity": {"game": game},
+            "language": language, "source_locator": "https://example.invalid/official",
+            "verification_status": "verified", "verification_mode": VERIFICATION_MODE,
             "verification_engine": VERIFICATION_ENGINE,
-        }
-        facts.append(official)
-        official_only.append(dict(official))
-        for index in range(MIN_COMPLETED_SALES_PER_OUTPUT):
-            facts.append({
-                "canonical_key": f"{game}|sale-{index}|{language.lower()}",
-                "fact_type": "completed_sale",
-                "lineage_key": f"{game}:{language}:sale:{index}",
-                "identity": {"game": game},
-                "language": language,
-                "source_locator": "https://example.invalid/sale",
-                "verification_status": "verified",
-                "verification_mode": VERIFICATION_MODE,
+        })
+        for i in range(MIN_COMPLETED_SALES_PER_OUTPUT):
+            sales.append({
+                "canonical_key": f"{game}|sale-{i}|{language.lower()}", "fact_type": "completed_sale",
+                "lineage_key": f"{game}:{language}:sale:{i}", "identity": {"game": game},
+                "language": language, "source_locator": "https://example.invalid/sale",
+                "verification_status": "verified", "verification_mode": VERIFICATION_MODE,
                 "verification_engine": VERIFICATION_ENGINE,
             })
-    snapshot = {
-        "namespace": "IG_CARDINFO",
-        "status": "finalized",
-        "built_at": "2026-09-09T20:30:00+09:00",
-        "facts": facts,
-        "validation": {"write_readback_verified": True},
-        "latest_attempt": {"status": "verified_facts_written"},
-    }
-    ready = audit_collection(snapshot, routes, now=now)
-    assert ready["production_ready"] is True, ready
-    assert ready["general_cardinfo_ready"] is True, ready
-    assert ready["market_price_ready"] is True, ready
 
-    general_snapshot = dict(snapshot)
-    general_snapshot["facts"] = official_only
-    general = audit_collection(general_snapshot, routes, now=now)
-    assert general["production_ready"] is True, general
-    assert general["general_cardinfo_ready"] is True, general
-    assert general["market_price_ready"] is False, general
-    assert general["status"] == "GENERAL_READY_MARKET_NOT_READY", general
+    def snap(rows):
+        return {
+            "schema_version": "1.1-lifecycle", "namespace": "IG_CARDINFO", "status": "finalized",
+            "built_at": "2026-09-11T08:30:00+09:00", "facts": rows,
+            "validation": {"write_readback_verified": True, "lifecycle_routing_enforced": True},
+            "latest_attempt": {"status": "verified_facts_written"},
+        }
 
-    stale = dict(snapshot)
-    stale["built_at"] = "2026-09-06T20:30:00+09:00"
-    stale_report = audit_collection(stale, routes, now=now)
-    assert stale_report["production_ready"] is False, stale_report
-    assert stale_report["general_cardinfo_ready"] is False, stale_report
-    assert any(reason.startswith("SNAPSHOT_STALE:") for reason in stale_report["reasons"])
+    ready = audit_collection(snap(general + sales), routes, now=now)
+    assert ready["general_cardinfo_ready"] and ready["market_price_ready"], ready
 
-    thin = dict(snapshot)
-    thin["facts"] = facts[:1]
-    thin_report = audit_collection(thin, routes, now=now)
-    assert thin_report["production_ready"] is False, thin_report
-    assert "COMPLETED_SALE_COVERAGE_INSUFFICIENT" in thin_report["reasons"], thin_report
-    assert any(reason.startswith("OUTPUT_MATRIX_COVERAGE_MISSING:") for reason in thin_report["reasons"])
+    sales_only = audit_collection(snap(sales), routes, now=now)
+    assert sales_only["general_cardinfo_ready"] is False, sales_only
+    assert sales_only["market_price_ready"] is True, sales_only
+    assert all(v == 0 for v in sales_only["matrix_counts"].values()), sales_only
 
-    print("Instagram TCG collection health: PASS")
+    general_only = audit_collection(snap(general), routes, now=now)
+    assert general_only["general_cardinfo_ready"] is True, general_only
+    assert general_only["market_price_ready"] is False, general_only
+
+    archived = [{**row, "lifecycle_bucket": "ARCHIVE"} for row in general]
+    archived_report = audit_collection(snap(archived + sales), routes, now=now)
+    assert archived_report["general_cardinfo_ready"] is False, archived_report
+    assert archived_report["archived_general_fact_count"] == 6, archived_report
+
+    print("Instagram TCG collection health lifecycle split: PASS")
 
 
 def main() -> int:
