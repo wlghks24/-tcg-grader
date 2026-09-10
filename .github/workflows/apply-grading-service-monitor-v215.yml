@@ -1,0 +1,498 @@
+name: Apply grading service monitor v215
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/apply-grading-service-monitor-v215.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  apply:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          fetch-depth: 2
+
+      - name: Write monitor and tests
+        shell: bash
+        run: |
+          set -euo pipefail
+          cat > grading_service_monitor.py <<'PY'
+          #!/usr/bin/env python3
+          """Official-source grading service/fee/turnaround/notice monitor.
+
+          Official pages are authoritative. Search/social/user supplied evidence may trigger a
+          recheck but can never overwrite a verified numeric field. One provider failure keeps
+          its last-known-good snapshot. Verified history is append-only through change records.
+          """
+          from __future__ import annotations
+
+          import copy
+          import datetime as dt
+          import hashlib
+          import html as html_lib
+          import json
+          import re
+          import urllib.request
+          from pathlib import Path
+          from typing import Any
+
+          from safe_runtime import atomic_write_json, safe_read_text, safe_urlopen
+
+          ROOT = Path(__file__).resolve().parent
+          OUT = ROOT / 'grading_services.json'
+          CHANGES = ROOT / 'grading_service_changes.json'
+          UA = 'Mozilla/5.0 TCG-Grader-GradingServiceMonitor/215.0'
+          ARCHIVE_GRACE_DAYS = 5
+          ALLOWED_HOSTS = {
+              'www.psacard.com','psacard.com','www.beckett.com','beckett.com',
+              'www.cgccards.com','cgccards.com','taggrading.com','www.taggrading.com',
+              'break.co.kr','www.break.co.kr',
+          }
+
+          # Profiles are deliberately explicit. A service not found on an official page keeps
+          # its last-known-good value instead of being silently removed.
+          PROFILES = {
+              'PSA_JP': {
+                  'provider':'PSA','market':'JP','currency':'JPY',
+                  'service_source':'https://www.psacard.com/ja-JP/services/submit-card',
+                  'notice_source':'https://www.psacard.com/ja-JP/articles',
+                  'services':[
+                      {'id':'standard','name':'Standard','aliases':['スタンダード','Standard']},
+                      {'id':'priority','name':'Priority','aliases':['プライオリティ','Priority','レギュラー']},
+                      {'id':'express','name':'Express','aliases':['エクスプレス','Express']},
+                      {'id':'super_express','name':'Super Express','aliases':['スーパー・エクスプレス','スーパー エクスプレス','Super Express']},
+                      {'id':'premier','name':'Premier','aliases':['プレミア','ウォーク・スルー','Walk-Through','Walk Through']},
+                      {'id':'premium_1','name':'Premium 1','aliases':['プレミアム1','Premium 1']},
+                      {'id':'premium_2','name':'Premium 2','aliases':['プレミアム2','Premium 2']},
+                      {'id':'premium_3','name':'Premium 3','aliases':['プレミアム3','Premium 3']},
+                      {'id':'premium_5','name':'Premium 5','aliases':['プレミアム5','Premium 5']},
+                      {'id':'premium_10','name':'Premium 10','aliases':['プレミアム10','Premium 10']},
+                  ],
+                  'baseline':[
+                      {'id':'priority','name':'Regular','fee':11980,'turnaround_business_days':60,'max_value':250000},
+                      {'id':'express','name':'Express','fee':22980,'turnaround_business_days':25,'max_value':400000},
+                      {'id':'super_express','name':'Super Express','fee':44980,'turnaround_business_days':25,'max_value':750000},
+                      {'id':'premier','name':'Walk-Through','fee':89980,'turnaround_business_days':25,'max_value':1500000},
+                      {'id':'premium_1','name':'Premium 1','fee':149980,'turnaround_business_days':25,'max_value':4000000},
+                      {'id':'premium_2','name':'Premium 2','fee':299980,'turnaround_business_days':25,'max_value':8000000},
+                      {'id':'premium_3','name':'Premium 3','fee':449980,'turnaround_business_days':25,'max_value':15000000},
+                      {'id':'premium_5','name':'Premium 5','fee':749980,'turnaround_business_days':25,'max_value':35000000},
+                      {'id':'premium_10','name':'Premium 10','fee':1499980,'turnaround_business_days':15,'min_value':35000001},
+                  ],
+              },
+              'PSA_US': {
+                  'provider':'PSA','market':'US','currency':'USD',
+                  'service_source':'https://www.psacard.com/submit',
+                  'notice_source':'https://www.psacard.com/articles',
+                  'services':[
+                      {'id':'standard','name':'Standard','aliases':['Standard']},
+                      {'id':'regular','name':'Regular','aliases':['Regular']},
+                      {'id':'express','name':'Express','aliases':['Express']},
+                      {'id':'super_express','name':'Super Express','aliases':['Super Express']},
+                      {'id':'walk_through','name':'Walk-Through','aliases':['Walk-Through','Walk Through']},
+                  ],
+                  'baseline':[],
+              },
+              'BGS_US': {
+                  'provider':'BGS','market':'US','currency':'USD',
+                  'service_source':'https://www.beckett.com/grading',
+                  'notice_source':'https://www.beckett.com/news/',
+                  'services':[
+                      {'id':'base','name':'Base','aliases':['Base']},
+                      {'id':'standard','name':'Standard','aliases':['Standard']},
+                      {'id':'express','name':'Express','aliases':['Express']},
+                      {'id':'priority','name':'Priority','aliases':['Priority']},
+                  ],
+                  'baseline':[
+                      {'id':'base','name':'Base','fee':14.95,'turnaround_business_days':75,'availability':'paused'},
+                      {'id':'standard','name':'Standard','fee':34.95,'turnaround_business_days':45,'availability':'paused'},
+                      {'id':'express','name':'Express','fee':79.95,'turnaround_business_days':15,'availability':'open'},
+                      {'id':'priority','name':'Priority','fee':124.95,'turnaround_business_days':5,'availability':'open'},
+                  ],
+              },
+              'CGC_US': {
+                  'provider':'CGC','market':'US','currency':'USD',
+                  'service_source':'https://www.cgccards.com/submit/services-fees/cgc-grading/?view=cards',
+                  'notice_source':'https://www.cgccards.com/news/',
+                  'services':[
+                      {'id':'bulk','name':'Bulk','aliases':['Bulk']},
+                      {'id':'economy','name':'Economy','aliases':['Economy']},
+                      {'id':'standard','name':'Standard','aliases':['Standard']},
+                      {'id':'express','name':'Express','aliases':['Express']},
+                      {'id':'walkthrough','name':'WalkThrough','aliases':['WalkThrough','Walk Through']},
+                  ],
+                  'baseline':[
+                      {'id':'bulk','name':'Bulk','fee':17.0,'turnaround_business_days':150,'max_value':500,'min_cards':25},
+                      {'id':'economy','name':'Economy','fee':20.0,'turnaround_business_days':90,'max_value':1000},
+                      {'id':'standard','name':'Standard','fee':55.0,'turnaround_business_days':10,'max_value':3000},
+                      {'id':'express','name':'Express','fee':100.0,'turnaround_business_days':5,'max_value':10000},
+                      {'id':'walkthrough','name':'WalkThrough','fee':300.0,'turnaround_business_days':2,'max_value':100000},
+                  ],
+              },
+              'TAG_US': {
+                  'provider':'TAG','market':'US','currency':'USD',
+                  'service_source':'https://taggrading.com/pages/pricing',
+                  'notice_source':'https://taggrading.com/',
+                  'services':[
+                      {'id':'basic','name':'Basic','aliases':['Basic']},
+                      {'id':'standard','name':'Standard','aliases':['Standard']},
+                      {'id':'express','name':'Express','aliases':['Express']},
+                      {'id':'priority','name':'Priority','aliases':['Priority']},
+                      {'id':'walkthrough','name':'Walkthrough','aliases':['Walkthrough','Walk Through']},
+                  ],
+                  'baseline':[
+                      {'id':'basic','name':'Basic','fee':22.0},
+                      {'id':'standard','name':'Standard','fee':39.0},
+                      {'id':'express','name':'Express','fee':59.0},
+                      {'id':'priority','name':'Priority','fee':149.0},
+                      {'id':'walkthrough','name':'Walkthrough','fee':299.0},
+                  ],
+              },
+              'BRG_KR': {
+                  'provider':'BRG','market':'KR','currency':'KRW',
+                  'service_source':'https://break.co.kr/',
+                  'notice_source':'https://break.co.kr/',
+                  'services':[
+                      {'id':'regular','name':'Regular','aliases':['Regular']},
+                      {'id':'express','name':'Express','aliases':['Express']},
+                      {'id':'bulk','name':'Bulk','aliases':['Bulk']},
+                      {'id':'reholder','name':'Reholder','aliases':['Reholder']},
+                      {'id':'brg_gen','name':'BRG GEN','aliases':['brg GEN','BRG GEN']},
+                  ],
+                  'baseline':[
+                      {'id':'regular','name':'Regular','fee':19800,'turnaround_business_days':20},
+                      {'id':'express','name':'Express','fee':39800,'turnaround_business_days':5},
+                      {'id':'bulk','name':'Bulk','fee':13800,'turnaround_business_days':25,'min_cards':20},
+                      {'id':'reholder','name':'Reholder','fee':9800,'turnaround_business_days':10},
+                      {'id':'brg_gen','name':'BRG GEN','fee':9800,'turnaround_business_days':5},
+                  ],
+              },
+          }
+
+          # User/social evidence is intentionally metadata-only. It may cause a recheck, but the
+          # values below are not inserted into verified services until an official source matches.
+          RECHECK_TRIGGERS = [{
+              'provider':'PSA','market':'JP','observed_date':'2026-09-10',
+              'source_type':'user_supplied_social_screenshot','verification_status':'candidate_only',
+              'reason':'reported service-level rename/addition, price and turnaround changes',
+              'authoritative_overwrite_allowed':False,
+          }]
+
+          def _read_json(path: Path, default: Any) -> Any:
+              try:
+                  value=json.loads(safe_read_text(path,max_bytes=4_000_000))
+                  return value
+              except (OSError,ValueError,TypeError,json.JSONDecodeError):
+                  return copy.deepcopy(default)
+
+          def _text(raw: str) -> str:
+              raw=re.sub(r'(?is)<script.*?</script>|<style.*?</style>',' ',raw)
+              raw=re.sub(r'(?s)<[^>]+>',' ',raw)
+              return re.sub(r'\s+',' ',html_lib.unescape(raw)).strip()
+
+          def _fetch(url: str) -> str:
+              req=urllib.request.Request(url,headers={'User-Agent':UA,'Accept-Language':'ko,en-US;q=0.9,ja;q=0.8'})
+              with safe_urlopen(req,timeout=20,allowed_hosts=ALLOWED_HOSTS,max_redirects=3) as response:
+                  return _text(response.read(3_000_000).decode('utf-8','ignore'))
+
+          def _fingerprint(text: str) -> str:
+              return hashlib.sha256(text.encode('utf-8','ignore')).hexdigest()
+
+          def _find_window(text: str, aliases: list[str]) -> tuple[str,str] | None:
+              best=None
+              for alias in aliases:
+                  match=re.search(re.escape(alias),text,re.I)
+                  if match and (best is None or match.start()<best[0]):
+                      best=(match.start(),alias)
+              if best is None:return None
+              start=max(0,best[0]-40); end=min(len(text),best[0]+520)
+              return best[1],text[start:end]
+
+          def _price(window: str, currency: str) -> float|int|None:
+              if currency=='JPY':
+                  vals=[int(v.replace(',','')) for v in re.findall(r'[￥¥]\s*([0-9][0-9,]*)',window)]
+                  return next((v for v in vals if 1000<=v<=5_000_000),None)
+              if currency=='KRW':
+                  vals=[int(v.replace(',','')) for v in re.findall(r'([0-9][0-9,]*)\s*원',window)]
+                  return next((v for v in vals if 1000<=v<=5_000_000),None)
+              vals=[float(v.replace(',','')) for v in re.findall(r'\$\s*([0-9][0-9,]*(?:\.[0-9]{1,2})?)',window)]
+              return next((v for v in vals if 5<=v<=20_000),None)
+
+          def _turnaround(window: str) -> int|None:
+              patterns=(r'(\d{1,3})\s*(?:営業日|business days|working days)',r'영업일\s*기준\s*(\d{1,3})일')
+              for pattern in patterns:
+                  m=re.search(pattern,window,re.I)
+                  if m:
+                      value=int(m.group(1))
+                      if 1<=value<=365:return value
+              return None
+
+          def _max_value(window: str, currency: str) -> int|float|None:
+              if currency=='JPY':
+                  m=re.search(r'(?:申告価格|declared value).{0,50}?[￥¥]\s*([0-9][0-9,]*)',window,re.I)
+              elif currency=='KRW':
+                  m=re.search(r'(?:신고|최대|가액).{0,50}?([0-9][0-9,]*)\s*원',window,re.I)
+              else:
+                  m=re.search(r'(?:Max\.?\s*Value|declared value).{0,80}?\$\s*([0-9][0-9,]*)',window,re.I)
+              if not m:return None
+              value=float(m.group(1).replace(',',''))
+              return int(value) if value.is_integer() else value
+
+          def _availability(window: str) -> str|None:
+              low=window.lower()
+              if any(token in low for token in ('sold out','paused','受付停止','일시중지','접수 중지')):return 'paused'
+              if any(token in low for token in ('submit now','申し込む','available','접수')):return 'open'
+              return None
+
+          def _parse_services(text: str, cfg: dict) -> list[dict]:
+              found=[]
+              for profile in cfg['services']:
+                  hit=_find_window(text,profile['aliases'])
+                  if not hit:continue
+                  alias,window=hit
+                  row={'id':profile['id'],'name':profile['name'],'matched_label':alias}
+                  fee=_price(window,cfg['currency'])
+                  tat=_turnaround(window)
+                  maximum=_max_value(window,cfg['currency'])
+                  availability=_availability(window)
+                  if fee is not None:row['fee']=fee
+                  if tat is not None:row['turnaround_business_days']=tat
+                  if maximum is not None:row['max_value']=maximum
+                  if availability is not None:row['availability']=availability
+                  if len(row)>3:found.append(row)
+              return found
+
+          def _merge_service_rows(previous: list[dict], baseline: list[dict], parsed: list[dict]) -> list[dict]:
+              merged={}
+              for source in (baseline,previous):
+                  for row in source or []:
+                      if isinstance(row,dict) and row.get('id'):merged[row['id']]=copy.deepcopy(row)
+              for row in parsed:
+                  old=merged.get(row['id'],{})
+                  old.update(row)
+                  merged[row['id']]=old
+              return list(merged.values())
+
+          def _service_changes(profile_key: str, before: list[dict], after: list[dict], checked_at: str, source: str) -> list[dict]:
+              old={r.get('id'):r for r in before if isinstance(r,dict) and r.get('id')}
+              new={r.get('id'):r for r in after if isinstance(r,dict) and r.get('id')}
+              changes=[]
+              fields={'fee':'price_change','turnaround_business_days':'turnaround_change','max_value':'value_limit_change','availability':'availability_change','name':'service_rename'}
+              for sid,row in new.items():
+                  if sid not in old:
+                      changes.append({'profile':profile_key,'service_id':sid,'change_type':'service_added','after':row,'detected_at':checked_at,'source':source,'verified':True})
+                      continue
+                  for field,kind in fields.items():
+                      if field in row and field in old[sid] and row.get(field)!=old[sid].get(field):
+                          changes.append({'profile':profile_key,'service_id':sid,'change_type':kind,'field':field,'before':old[sid].get(field),'after':row.get(field),'detected_at':checked_at,'source':source,'verified':True})
+              return changes
+
+          def lifecycle_state(end_date: str|None, today: dt.date|None=None) -> str:
+              if not end_date:return 'current'
+              day=today or dt.datetime.now(dt.timezone.utc).date()
+              try:end=dt.date.fromisoformat(str(end_date)[:10])
+              except ValueError:return 'current'
+              if day<=end:return 'current'
+              return 'recently_ended' if day<=end+dt.timedelta(days=ARCHIVE_GRACE_DAYS) else 'archive'
+
+          def candidate_can_overwrite(candidate: dict) -> bool:
+              return bool(candidate.get('source_type')=='official' and candidate.get('verification_status')=='verified')
+
+          def update() -> dict:
+              previous=_read_json(OUT,{'profiles':{}})
+              history=_read_json(CHANGES,{'changes':[]})
+              previous_profiles=previous.get('profiles',{}) if isinstance(previous,dict) else {}
+              now=dt.datetime.now(dt.timezone.utc).isoformat(timespec='seconds')
+              profiles={}; new_changes=[]
+              for key,cfg in PROFILES.items():
+                  old=previous_profiles.get(key,{}) if isinstance(previous_profiles,dict) else {}
+                  old_services=old.get('services',[]) if isinstance(old,dict) else []
+                  row={
+                      'provider':cfg['provider'],'market':cfg['market'],'currency':cfg['currency'],
+                      'service_source':cfg['service_source'],'notice_source':cfg['notice_source'],
+                      'checked_at':now,'verification_status':'last_known_good','source_ok':False,
+                  }
+                  service_text=notice_text=''
+                  errors=[]
+                  try:service_text=_fetch(cfg['service_source'])
+                  except Exception as exc:errors.append('service:'+type(exc).__name__)
+                  try:
+                      notice_text=service_text if cfg['notice_source']==cfg['service_source'] else _fetch(cfg['notice_source'])
+                  except Exception as exc:errors.append('notice:'+type(exc).__name__)
+                  parsed=_parse_services(service_text,cfg) if service_text else []
+                  merged=_merge_service_rows(old_services,cfg.get('baseline',[]),parsed)
+                  row['services']=merged
+                  row['source_ok']=bool(service_text)
+                  row['parsed_service_count']=len(parsed)
+                  row['verification_status']='official_verified' if service_text and parsed else ('official_reachable_parse_degraded' if service_text else 'last_known_good')
+                  if errors:row['source_errors']=errors
+                  if service_text:row['service_fingerprint']=_fingerprint(service_text)
+                  if notice_text:
+                      row['notice_fingerprint']=_fingerprint(notice_text)
+                      old_fp=old.get('notice_fingerprint') if isinstance(old,dict) else None
+                      if old_fp and old_fp!=row['notice_fingerprint']:
+                          new_changes.append({'profile':key,'change_type':'official_notice_content_changed','detected_at':now,'source':cfg['notice_source'],'verified':True,'needs_review':True})
+                  new_changes.extend(_service_changes(key,old_services,merged,now,cfg['service_source']))
+                  profiles[key]=row
+              prior_changes=history.get('changes',[]) if isinstance(history,dict) else []
+              combined=(prior_changes+new_changes)[-1000:]
+              result={
+                  'schema_version':1,'engine':'grading-service-monitor-v215','checked_at':now,'refresh_hours':6,
+                  'archive_grace_days':ARCHIVE_GRACE_DAYS,'official_only_numeric_updates':True,
+                  'profiles':profiles,'recheck_triggers':RECHECK_TRIGGERS,
+                  'summary':{'profiles':len(profiles),'source_ok':sum(1 for r in profiles.values() if r.get('source_ok')),'new_changes':len(new_changes)},
+              }
+              atomic_write_json(OUT,result,suffix='.grading-services.tmp')
+              atomic_write_json(CHANGES,{'schema_version':1,'engine':'grading-service-monitor-v215','updated_at':now,'changes':combined},suffix='.grading-service-changes.tmp')
+              return result
+
+          def main() -> int:
+              result=update()
+              print(json.dumps(result['summary'],ensure_ascii=False))
+              return 0
+
+          if __name__=='__main__':
+              raise SystemExit(main())
+          PY
+
+          cat > test_grading_service_monitor_v215.py <<'PY'
+          import datetime as dt
+          import unittest
+          from unittest import mock
+          import grading_service_monitor as g
+
+          class GradingServiceMonitorV215Tests(unittest.TestCase):
+              def test_all_five_graders_and_expected_markets_are_present(self):
+                  self.assertEqual({v['provider'] for v in g.PROFILES.values()},{'PSA','BGS','CGC','TAG','BRG'})
+                  self.assertIn('PSA_JP',g.PROFILES)
+                  self.assertIn('BRG_KR',g.PROFILES)
+
+              def test_all_authoritative_sources_are_official_https(self):
+                  for cfg in g.PROFILES.values():
+                      self.assertTrue(cfg['service_source'].startswith('https://'))
+                      self.assertTrue(cfg['notice_source'].startswith('https://'))
+
+              def test_social_or_user_candidate_can_never_overwrite(self):
+                  self.assertFalse(g.candidate_can_overwrite(g.RECHECK_TRIGGERS[0]))
+                  self.assertTrue(g.candidate_can_overwrite({'source_type':'official','verification_status':'verified'}))
+
+              def test_parser_detects_fee_turnaround_and_value(self):
+                  cfg=g.PROFILES['BRG_KR']
+                  rows=g._parse_services('Regular 19,800원 /장 당 영업일 기준 20일 소요',cfg)
+                  row=next(x for x in rows if x['id']=='regular')
+                  self.assertEqual(row['fee'],19800)
+                  self.assertEqual(row['turnaround_business_days'],20)
+
+              def test_diff_tracks_price_turnaround_availability_and_rename(self):
+                  before=[{'id':'x','name':'Regular','fee':10,'turnaround_business_days':20,'availability':'open'}]
+                  after=[{'id':'x','name':'Priority','fee':12,'turnaround_business_days':30,'availability':'paused'}]
+                  kinds={x['change_type'] for x in g._service_changes('T',before,after,'now','https://official.example')}
+                  self.assertEqual(kinds,{'price_change','turnaround_change','availability_change','service_rename'})
+
+              def test_last_known_good_survives_parse_gap(self):
+                  previous=[{'id':'x','name':'X','fee':99}]
+                  merged=g._merge_service_rows(previous,[],[])
+                  self.assertEqual(merged[0]['fee'],99)
+
+              def test_event_lifecycle_uses_same_five_day_archive_policy(self):
+                  self.assertEqual(g.lifecycle_state('2026-09-05',dt.date(2026,9,10)),'recently_ended')
+                  self.assertEqual(g.lifecycle_state('2026-09-05',dt.date(2026,9,11)),'archive')
+
+          if __name__=='__main__':unittest.main()
+          PY
+
+      - name: Patch integrations and stale expectations
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          from pathlib import Path
+
+          def replace(path,old,new):
+              p=Path(path); text=p.read_text(encoding='utf-8')
+              if old not in text:
+                  raise SystemExit(f'missing patch anchor: {path}: {old[:80]}')
+              p.write_text(text.replace(old,new,1),encoding='utf-8')
+
+          replace('test_0600_operational_refresh_v25.py',
+              '"https://pokemonkorea.co.kr/2026_battle_tournament3/menu800",',
+              '"https://new.pokemonkorea.co.kr/card",')
+          replace('test_graded_photo_runtime.py',
+              "self.assertEqual(payload['engine'],'v123-verified-multisource-photo-collection')",
+              "self.assertRegex(payload['engine'],r'^v\\d+-.+-collection$')")
+          replace('auto_update_all.py',
+              '    ("업체별 등급카드 사진 후보", "graded_photo_multi_source", "graded_photo_candidates.json"),',
+              '    ("등급업체 요금·서비스·이벤트", "grading_service_monitor", "grading_services.json"),\n    ("업체별 등급카드 사진 후보", "graded_photo_multi_source", "graded_photo_candidates.json"),')
+          replace('tcg_updater.py',
+              "'grading_total_cost.js','grading_total_cost.css','grading_costs_live.js','grading_costs_live.css',",
+              "'grading_total_cost.js','grading_total_cost.css','grading_costs_live.js','grading_costs_live.css','grading_services.json','grading_service_changes.json',")
+          replace('.github/workflows/tcg-static-data-refresh.yml',
+              "      - 'feature_contract.py'\n",
+              "      - 'feature_contract.py'\n      - 'grading_service_monitor.py'\n      - 'test_grading_service_monitor_v215.py'\n")
+          replace('.github/workflows/tcg-static-data-refresh.yml',
+              '            multi_route_event_discovery.py social_event_discovery.py auto_pipeline_runner.py\n',
+              '            multi_route_event_discovery.py social_event_discovery.py auto_pipeline_runner.py grading_service_monitor.py\n')
+          replace('.github/workflows/tcg-static-data-refresh.yml',
+              '            test_event_quick_watch.py\n',
+              '            test_event_quick_watch.py \\\n            test_grading_service_monitor_v215.py\n')
+          replace('.github/workflows/tcg-static-data-refresh.yml',
+              '            purchase_signals.json social_stock_signals.json \\\n',
+              '            purchase_signals.json social_stock_signals.json grading_services.json grading_service_changes.json \\\n')
+          replace('.github/workflows/tcg-static-data-refresh.yml',
+              '            echo "- public signal persistence: purchase_signals + social_stock_signals included"\n',
+              '            echo "- public signal persistence: purchase_signals + social_stock_signals included"\n            echo "- grader policy: official-only numeric updates; six-hour fee/service/turnaround/notice monitoring"\n')
+
+          # Pages and local server both prefer the new verified static snapshot; the legacy API is
+          # retained as a compatibility fallback.
+          p=Path('grading_costs_live.js'); text=p.read_text(encoding='utf-8')
+          text=text.replace("const krw=n=>`₩${Math.round(Number(n)).toLocaleString('ko-KR')}`;", "const krw=n=>`₩${Math.round(Number(n)).toLocaleString('ko-KR')}`;\nconst jpy=n=>`¥${Math.round(Number(n)).toLocaleString('ja-JP')}`;")
+          text=text.replace("const money=(n,c)=>c==='KRW'?krw(n):usd(n);", "const money=(n,c)=>c==='KRW'?krw(n):c==='JPY'?jpy(n):usd(n);")
+          old="const r=await fetch('/api/grading-costs?t='+Date.now(),{cache:'no-store'});const j=await r.json();if(!r.ok||!j.ok)throw 0;\n  box.innerHTML=Object.entries(j.companies||{}).map(([name,c])=>{"
+          new="let r=await fetch('grading_services.json?t='+Date.now(),{cache:'no-store'});let j=await r.json();\n  if(r.ok&&j&&j.profiles){j={ok:true,checked_at:j.checked_at,notice:'공식 출처 6시간 변경감시 · 미검증 SNS 자료는 재확인 신호로만 사용',companies:Object.fromEntries(Object.entries(j.profiles).map(([k,v])=>[k,{...v,source:v.service_source}]))};}\n  else{r=await fetch('/api/grading-costs?t='+Date.now(),{cache:'no-store'});j=await r.json();if(!r.ok||!j.ok)throw 0;}\n  box.innerHTML=Object.entries(j.companies||{}).map(([name,c])=>{"
+          if old not in text: raise SystemExit('missing grading_costs_live.js load anchor')
+          p.write_text(text.replace(old,new,1),encoding='utf-8')
+          PY
+
+      - name: Run targeted regressions and initial official refresh
+        shell: bash
+        run: |
+          set -euo pipefail
+          python -m py_compile grading_service_monitor.py auto_update_all.py tcg_updater.py
+          python -m unittest -v \
+            test_grading_service_monitor_v215.py \
+            test_grading_costs_live.py \
+            test_0600_operational_refresh_v25.py \
+            test_graded_photo_runtime.py
+          python grading_service_monitor.py
+          python - <<'PY'
+          import json
+          for name in ('grading_services.json','grading_service_changes.json'):
+              data=json.load(open(name,encoding='utf-8'))
+              assert data.get('engine')=='grading-service-monitor-v215'
+          data=json.load(open('grading_services.json',encoding='utf-8'))
+          assert data['official_only_numeric_updates'] is True
+          assert len(data['profiles'])==6
+          print(data['summary'])
+          PY
+
+      - name: Commit verified integration and remove one-shot workflow
+        shell: bash
+        run: |
+          set -euo pipefail
+          git rm .github/workflows/apply-grading-service-monitor-v215.yml
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add -- \
+            grading_service_monitor.py test_grading_service_monitor_v215.py \
+            grading_services.json grading_service_changes.json \
+            test_0600_operational_refresh_v25.py test_graded_photo_runtime.py \
+            auto_update_all.py tcg_updater.py grading_costs_live.js \
+            .github/workflows/tcg-static-data-refresh.yml
+          git commit -m 'feat: monitor grading service changes from official sources'
+          git push origin HEAD:main
