@@ -2,20 +2,20 @@
   "version": 1,
   "jobs": {
     "exchange_rates.json": {
-      "runs": 24,
-      "successes": 5,
+      "runs": 25,
+      "successes": 6,
       "failures": 0,
       "timeouts": 0,
       "partial_successes": 19,
       "recovered_successes": 17,
-      "last_seconds": 0.546,
+      "last_seconds": 0.519,
       "last_ok": true,
       "last_recovered": false,
-      "success_streak": 4,
+      "success_streak": 5,
       "consecutive_failures": 0,
-      "success_ewma_seconds": 0.603,
-      "ewma_seconds": 0.603,
-      "last_run": "2026-09-10T13:00:16+00:00",
+      "success_ewma_seconds": 0.578,
+      "ewma_seconds": 0.578,
+      "last_run": "2026-09-10T18:58:20+00:00",
       "error_patterns": {
         "93697047de8f": {
           "count": 1,
@@ -45,20 +45,20 @@
       "streak_reset_reason": "observation_gap_over_72h"
     },
     "__integration__": {
-      "runs": 21,
+      "runs": 22,
       "successes": 8,
       "failures": 13,
-      "timeouts": 0,
+      "timeouts": 1,
       "partial_successes": 0,
-      "recovered_successes": 0,
-      "last_seconds": 113.103,
-      "last_ok": true,
-      "last_recovered": false,
-      "success_streak": 4,
-      "consecutive_failures": 0,
+      "recovered_successes": 1,
+      "last_seconds": 479.132,
+      "last_ok": false,
+      "last_recovered": true,
+      "success_streak": 0,
+      "consecutive_failures": 1,
       "success_ewma_seconds": 83.267,
       "ewma_seconds": 83.267,
-      "last_run": "2026-09-10T13:04:00+00:00",
+      "last_run": "2026-09-10T19:08:32+00:00",
       "timeout_exhaustions": 0,
       "deferred_attempts": 0,
       "deferred_successes": 0,
@@ -71,23 +71,29 @@
           "count": 13,
           "sample": " lookup failed> / 원피스: URLError: <urlopen error dns lookup failed> / URLError: <urlopen error dns lookup failed> / 나루토: URLError: <urlopen error dns lookup failed> / URLError: <urlopen error dns lookup failed> / 포켓몬: URLError: <urlopen error dns lookup failed> / URLError: <urlopen error dns lookup failed> / 원피스: URLError: <urlopen error dns lookup failed> / URLError: <urlopen error dns lookup failed> / 나루토: URLError: <urlopen error dns lookup failed> / URLError: <urlopen error dns lookup failed>",
           "last_seen": "2026-08-26T10:47:15+00:00"
+        },
+        "688e726e4ed1": {
+          "count": 1,
+          "sample": "TIMEOUT: __integration__ 264초 초과 / TIMEOUT: __integration__ 213초 초과",
+          "last_seen": "2026-09-10T19:08:32+00:00"
         }
       },
       "dominant_error_signature": "5af71b60988f",
       "streak_reset_at": "2026-09-10T04:52:16+00:00",
-      "streak_reset_reason": "observation_gap_over_72h"
+      "streak_reset_reason": "observation_gap_over_72h",
+      "last_error_signature": "688e726e4ed1"
     },
     "__link_audit__": {
-      "runs": 21,
-      "successes": 3,
+      "runs": 22,
+      "successes": 4,
       "failures": 0,
       "timeouts": 0,
       "partial_successes": 18,
       "recovered_successes": 0,
-      "last_seconds": 84.851,
+      "last_seconds": 88.259,
       "last_ok": true,
       "last_recovered": false,
-      "success_streak": 2,
+      "success_streak": 3,
       "consecutive_failures": 0,
       "error_patterns": {
         "355705cf62a5": {
@@ -127,7 +133,7 @@
         }
       },
       "dominant_error_signature": "cf8b8ee20def",
-      "last_run": "2026-09-10T13:03:31+00:00",
+      "last_run": "2026-09-10T19:02:01+00:00",
       "timeout_exhaustions": 0,
       "deferred_attempts": 0,
       "deferred_successes": 0,
@@ -137,24 +143,24 @@
       "deferred_pending": false,
       "streak_reset_at": "2026-09-10T04:51:52+00:00",
       "streak_reset_reason": "observation_gap_over_72h",
-      "success_ewma_seconds": 93.829,
-      "ewma_seconds": 93.829
+      "success_ewma_seconds": 92.158,
+      "ewma_seconds": 92.158
     },
     "market_watch.json": {
-      "runs": 17,
-      "successes": 17,
+      "runs": 18,
+      "successes": 18,
       "failures": 0,
       "timeouts": 0,
       "partial_successes": 0,
       "recovered_successes": 0,
-      "last_seconds": 0.06,
+      "last_seconds": 0.067,
       "last_ok": true,
       "last_recovered": false,
-      "success_streak": 4,
+      "success_streak": 5,
       "consecutive_failures": 0,
-      "success_ewma_seconds": 0.152,
-      "ewma_seconds": 0.152,
-      "last_run": "2026-09-10T13:00:15+00:00",
+      "success_ewma_seconds": 0.126,
+      "ewma_seconds": 0.126,
+      "last_run": "2026-09-10T18:58:19+00:00",
       "timeout_exhaustions": 0,
       "deferred_attempts": 0,
       "deferred_successes": 0,
@@ -167,16 +173,16 @@
       "streak_reset_reason": "observation_gap_over_72h"
     },
     "releases.json": {
-      "runs": 17,
-      "successes": 2,
+      "runs": 18,
+      "successes": 3,
       "failures": 0,
       "timeouts": 0,
       "partial_successes": 15,
       "recovered_successes": 13,
-      "last_seconds": 28.099,
+      "last_seconds": 31.319,
       "last_ok": true,
       "last_recovered": false,
-      "success_streak": 2,
+      "success_streak": 3,
       "consecutive_failures": 0,
       "error_patterns": {
         "366db33edeb6": {
@@ -251,7 +257,7 @@
         }
       },
       "dominant_error_signature": "dc7a3dae4914",
-      "last_run": "2026-09-10T12:59:52+00:00",
+      "last_run": "2026-09-10T18:58:01+00:00",
       "timeout_exhaustions": 0,
       "deferred_attempts": 0,
       "deferred_successes": 0,
@@ -261,20 +267,20 @@
       "deferred_pending": false,
       "streak_reset_at": "2026-09-10T04:47:07+00:00",
       "streak_reset_reason": "observation_gap_over_72h",
-      "success_ewma_seconds": 29.243,
-      "ewma_seconds": 29.243
+      "success_ewma_seconds": 29.866,
+      "ewma_seconds": 29.866
     },
     "market_prices.json": {
-      "runs": 17,
-      "successes": 4,
+      "runs": 18,
+      "successes": 5,
       "failures": 0,
       "timeouts": 0,
       "partial_successes": 13,
       "recovered_successes": 13,
-      "last_seconds": 194.194,
+      "last_seconds": 222.981,
       "last_ok": true,
       "last_recovered": false,
-      "success_streak": 4,
+      "success_streak": 5,
       "consecutive_failures": 0,
       "error_patterns": {
         "0e8e4bf5d058": {
@@ -284,7 +290,7 @@
         }
       },
       "dominant_error_signature": "0e8e4bf5d058",
-      "last_run": "2026-09-10T13:02:06+00:00",
+      "last_run": "2026-09-10T19:00:33+00:00",
       "timeout_exhaustions": 0,
       "deferred_attempts": 0,
       "deferred_successes": 0,
@@ -294,20 +300,20 @@
       "deferred_pending": false,
       "streak_reset_at": "2026-09-10T04:50:08+00:00",
       "streak_reset_reason": "observation_gap_over_72h",
-      "success_ewma_seconds": 196.285,
-      "ewma_seconds": 196.285
+      "success_ewma_seconds": 204.294,
+      "ewma_seconds": 204.294
     },
     "promo_events.json": {
-      "runs": 17,
-      "successes": 2,
+      "runs": 18,
+      "successes": 3,
       "failures": 0,
       "timeouts": 0,
       "partial_successes": 15,
       "recovered_successes": 13,
-      "last_seconds": 32.014,
+      "last_seconds": 36.842,
       "last_ok": true,
       "last_recovered": false,
-      "success_streak": 2,
+      "success_streak": 3,
       "consecutive_failures": 0,
       "error_patterns": {
         "386416d74406": {
@@ -322,7 +328,7 @@
         }
       },
       "dominant_error_signature": "386416d74406",
-      "last_run": "2026-09-10T12:59:24+00:00",
+      "last_run": "2026-09-10T18:57:27+00:00",
       "timeout_exhaustions": 0,
       "deferred_attempts": 0,
       "deferred_successes": 0,
@@ -332,20 +338,20 @@
       "deferred_pending": false,
       "streak_reset_at": "2026-09-10T04:47:44+00:00",
       "streak_reset_reason": "observation_gap_over_72h",
-      "success_ewma_seconds": 33.121,
-      "ewma_seconds": 33.121
+      "success_ewma_seconds": 34.237,
+      "ewma_seconds": 34.237
     },
     "purchase_sources.json": {
-      "runs": 17,
-      "successes": 2,
+      "runs": 18,
+      "successes": 3,
       "failures": 0,
       "timeouts": 0,
       "partial_successes": 15,
       "recovered_successes": 13,
-      "last_seconds": 3.561,
+      "last_seconds": 3.195,
       "last_ok": true,
       "last_recovered": false,
-      "success_streak": 2,
+      "success_streak": 3,
       "consecutive_failures": 0,
       "error_patterns": {
         "763f8bb5b931": {
@@ -360,7 +366,7 @@
         }
       },
       "dominant_error_signature": "763f8bb5b931",
-      "last_run": "2026-09-10T13:00:15+00:00",
+      "last_run": "2026-09-10T18:58:19+00:00",
       "timeout_exhaustions": 0,
       "deferred_attempts": 0,
       "deferred_successes": 0,
@@ -370,24 +376,24 @@
       "deferred_pending": false,
       "streak_reset_at": "2026-09-10T04:48:07+00:00",
       "streak_reset_reason": "observation_gap_over_72h",
-      "success_ewma_seconds": 4.432,
-      "ewma_seconds": 4.432
+      "success_ewma_seconds": 4.061,
+      "ewma_seconds": 4.061
     },
     "graded_photo_candidates.json": {
-      "runs": 4,
-      "successes": 4,
+      "runs": 5,
+      "successes": 5,
       "failures": 0,
       "timeouts": 0,
       "partial_successes": 0,
       "recovered_successes": 0,
-      "last_seconds": 19.152,
+      "last_seconds": 14.757,
       "last_ok": true,
       "last_recovered": false,
-      "success_streak": 4,
+      "success_streak": 5,
       "consecutive_failures": 0,
-      "success_ewma_seconds": 18.575,
-      "ewma_seconds": 18.575,
-      "last_run": "2026-09-10T13:00:11+00:00",
+      "success_ewma_seconds": 17.43,
+      "ewma_seconds": 17.43,
+      "last_run": "2026-09-10T18:58:16+00:00",
       "timeout_exhaustions": 0,
       "deferred_attempts": 0,
       "deferred_successes": 0,
@@ -396,7 +402,23 @@
       "deferred_recommended_timeout_seconds": 0,
       "deferred_pending": false,
       "error_patterns": {}
+    },
+    "grading_company_updates.json": {
+      "runs": 1,
+      "successes": 1,
+      "failures": 0,
+      "timeouts": 0,
+      "partial_successes": 0,
+      "recovered_successes": 0,
+      "last_seconds": 3.083,
+      "last_ok": true,
+      "last_recovered": false,
+      "success_streak": 1,
+      "consecutive_failures": 0,
+      "success_ewma_seconds": 3.083,
+      "ewma_seconds": 3.083,
+      "last_run": "2026-09-10T18:57:30+00:00"
     }
   },
-  "updated_at": "2026-09-10T13:04:00+00:00"
+  "updated_at": "2026-09-10T19:08:32+00:00"
 }

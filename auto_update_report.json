@@ -3,7 +3,7 @@
   "engine": "v98-camera-resilience-full-runtime",
   "trigger": "github-pages-static-refresh",
   "selected_files": [],
-  "started_at": "2026-09-10T12:58:52+00:00",
+  "started_at": "2026-09-10T18:56:50+00:00",
   "preflight_monitor": {
     "ok": true,
     "results": [
@@ -38,6 +38,11 @@
         "action": "검증 통과"
       },
       {
+        "file": "grading_company_updates.json",
+        "ok": true,
+        "action": "검증 통과"
+      },
+      {
         "file": "graded_photo_candidates.json",
         "ok": true,
         "action": "검증 통과"
@@ -49,13 +54,13 @@
       }
     ]
   },
-  "finished_at": "2026-09-10T13:02:06+00:00",
-  "duration_seconds": 194.23,
+  "finished_at": "2026-09-10T19:00:33+00:00",
+  "duration_seconds": 223.03,
   "parallel_workers": 2,
   "ok": true,
-  "success_count": 7,
+  "success_count": 8,
   "failure_count": 0,
-  "fresh_success_count": 7,
+  "fresh_success_count": 8,
   "degraded_count": 0,
   "restored_count": 0,
   "fresh_failure_count": 0,
@@ -77,7 +82,7 @@
       "file": "releases.json",
       "ok": true,
       "status": "정상",
-      "updated_at": "2026-09-10T12:59:52+00:00",
+      "updated_at": "2026-09-10T18:58:01+00:00",
       "count": 10,
       "retry_count": 0,
       "max_attempts": 2,
@@ -85,7 +90,7 @@
       "auto_action": "학습형 수집 · 검증 후 정상 반영",
       "collection_errors": [],
       "remaining_collection_errors": [],
-      "duration_seconds": 28.1,
+      "duration_seconds": 31.32,
       "adaptive_timeout_seconds": 300,
       "last_attempt_timeout_seconds": 299,
       "collection_stage": "primary",
@@ -96,7 +101,7 @@
       "file": "market_watch.json",
       "ok": true,
       "status": "정상",
-      "updated_at": "2026-09-10T13:00:15+00:00",
+      "updated_at": "2026-09-10T18:58:19+00:00",
       "count": 19,
       "retry_count": 0,
       "max_attempts": 2,
@@ -104,9 +109,9 @@
       "auto_action": "학습형 수집 · 검증 후 정상 반영",
       "collection_errors": [],
       "remaining_collection_errors": [],
-      "duration_seconds": 0.06,
-      "adaptive_timeout_seconds": 180,
-      "last_attempt_timeout_seconds": 180,
+      "duration_seconds": 0.07,
+      "adaptive_timeout_seconds": 120,
+      "last_attempt_timeout_seconds": 120,
       "collection_stage": "primary",
       "timeout_exhausted": false
     },
@@ -115,7 +120,7 @@
       "file": "market_prices.json",
       "ok": true,
       "status": "정상",
-      "updated_at": "2026-09-10T13:02:06+00:00",
+      "updated_at": "2026-09-10T19:00:33+00:00",
       "count": 38,
       "retry_count": 0,
       "max_attempts": 2,
@@ -123,7 +128,7 @@
       "auto_action": "학습형 수집 · 검증 후 정상 반영",
       "collection_errors": [],
       "remaining_collection_errors": [],
-      "duration_seconds": 194.19,
+      "duration_seconds": 222.98,
       "adaptive_timeout_seconds": 300,
       "last_attempt_timeout_seconds": 299,
       "collection_stage": "primary",
@@ -134,7 +139,7 @@
       "file": "promo_events.json",
       "ok": true,
       "status": "정상 · 한·일·미 영화정보 9/9 조합 추적",
-      "updated_at": "2026-09-10T12:59:24+00:00",
+      "updated_at": "2026-09-10T18:57:27+00:00",
       "count": 37,
       "retry_count": 0,
       "max_attempts": 2,
@@ -142,7 +147,7 @@
       "auto_action": "학습형 수집 · 검증 후 정상 반영",
       "collection_errors": [],
       "remaining_collection_errors": [],
-      "duration_seconds": 32.01,
+      "duration_seconds": 36.84,
       "adaptive_timeout_seconds": 300,
       "last_attempt_timeout_seconds": 299,
       "collection_stage": "primary",
@@ -153,7 +158,7 @@
       "file": "purchase_sources.json",
       "ok": true,
       "status": "정상",
-      "updated_at": "2026-09-10T13:00:14+00:00",
+      "updated_at": "2026-09-10T18:58:18+00:00",
       "count": 205,
       "retry_count": 0,
       "max_attempts": 2,
@@ -161,7 +166,7 @@
       "auto_action": "학습형 수집 · 검증 후 정상 반영",
       "collection_errors": [],
       "remaining_collection_errors": [],
-      "duration_seconds": 3.56,
+      "duration_seconds": 3.2,
       "adaptive_timeout_seconds": 300,
       "last_attempt_timeout_seconds": 299,
       "collection_stage": "primary",
@@ -172,7 +177,7 @@
       "file": "exchange_rates.json",
       "ok": true,
       "status": "정상",
-      "updated_at": "2026-09-10T13:00:16+00:00",
+      "updated_at": "2026-09-10T18:58:20+00:00",
       "count": 2,
       "retry_count": 0,
       "max_attempts": 2,
@@ -180,9 +185,28 @@
       "auto_action": "학습형 수집 · 검증 후 정상 반영",
       "collection_errors": [],
       "remaining_collection_errors": [],
-      "duration_seconds": 0.55,
-      "adaptive_timeout_seconds": 180,
-      "last_attempt_timeout_seconds": 180,
+      "duration_seconds": 0.52,
+      "adaptive_timeout_seconds": 120,
+      "last_attempt_timeout_seconds": 120,
+      "collection_stage": "primary",
+      "timeout_exhausted": false
+    },
+    {
+      "name": "등급업체 요금·서비스·이벤트",
+      "file": "grading_company_updates.json",
+      "ok": true,
+      "status": "정상",
+      "updated_at": null,
+      "count": 11,
+      "retry_count": 0,
+      "max_attempts": 2,
+      "recovered_after_retry": false,
+      "auto_action": "학습형 수집 · 검증 후 정상 반영",
+      "collection_errors": [],
+      "remaining_collection_errors": [],
+      "duration_seconds": 3.08,
+      "adaptive_timeout_seconds": 300,
+      "last_attempt_timeout_seconds": 299,
       "collection_stage": "primary",
       "timeout_exhausted": false
     },
@@ -192,63 +216,53 @@
       "ok": true,
       "status": "정상",
       "updated_at": null,
-      "count": 34,
+      "count": 40,
       "retry_count": 0,
       "max_attempts": 2,
       "recovered_after_retry": false,
       "auto_action": "학습형 수집 · 검증 후 정상 반영",
       "collection_errors": [],
       "remaining_collection_errors": [],
-      "duration_seconds": 19.15,
-      "adaptive_timeout_seconds": 180,
-      "last_attempt_timeout_seconds": 180,
+      "duration_seconds": 14.76,
+      "adaptive_timeout_seconds": 120,
+      "last_attempt_timeout_seconds": 120,
       "collection_stage": "primary",
       "timeout_exhausted": false
     }
   ],
   "optimization": {
     "method": "primary 5min budget + timeout-only isolated 3–10min deferred recovery + per-file learned recovery budget + clean-success-only timeout learning + unified root-cause error learning + bounded parallel primary collection",
-    "learned_job_count": 9,
+    "learned_job_count": 10,
     "failure_accounting": "v73: full aux failure != degraded success; redirects/DNS SSRF blocks are security failures; malformed learning/env timeout values are clamped; timeout stages cannot be skipped",
     "monitoring": "safe whitelist + last-good restore + bounded single retry + traceback fingerprint learning"
   },
   "integration": {
     "ok": true,
-    "degraded": false,
-    "candidate_count": 282,
-    "social_candidate_count": 250,
-    "official_social_candidate_count": 5,
-    "failure_count": 0,
-    "error": "",
-    "platform": {
-      "platform": "Linux",
-      "python": "3.11.16",
-      "data_dir": "<app-data>",
-      "storage_scope": "user-app-data",
-      "writable": true,
-      "checked_at": "2026-09-10T13:03:59+00:00"
-    },
-    "note": "검색/SNS/뉴스/공식사이트/공식 YouTube/사이트맵 후보 자료입니다. 발견 경로가 공식이어도 내용 검증 전에는 자동 확정하지 않습니다.",
-    "duration_seconds": 113.1,
-    "adaptive_timeout_seconds": 226,
-    "last_attempt_timeout_seconds": 226,
-    "retry_count": 0,
-    "recovered_after_retry": false
+    "degraded": true,
+    "deferred_timeout_pending": true,
+    "stale_cache_preserved": true,
+    "timeout_only_cache_fallback": true,
+    "warning": "보조 후보수집 시간예산 초과 · 기존 검증 후보자료 유지 · 다음 업데이트에서 재수집",
+    "cache_updated_at": "2026-08-28T17:29:25+09:00",
+    "duration_seconds": 479.13,
+    "adaptive_timeout_seconds": 264,
+    "retry_count": 1,
+    "auto_action": "기존 검증 후보자료 유지 · 다음 업데이트에서 보조 후보만 재수집"
   },
   "link_audit": {
     "ok": true,
     "degraded": false,
     "warning": "",
-    "reachable_count": 233,
+    "reachable_count": 232,
     "transient_deferred": true,
     "transient_notice": "일시 확인불가 17개 · 기존 링크 유지 · 다음 업데이트 재확인",
     "unresolved_broken": 0,
     "unresolved_summary": [],
-    "updated_at": "2026-09-10T13:02:06+00:00",
+    "updated_at": "2026-09-10T19:00:33+00:00",
     "checked": 265,
     "audit_timeout_seconds": 289,
     "request_timeout_seconds": 5,
-    "restricted": 15,
+    "restricted": 16,
     "broken": 0,
     "transient": 17,
     "blocked": 0,
@@ -279,17 +293,6 @@
         ]
       },
       {
-        "url": "https://www.amazon.co.jp/s?k={query}",
-        "detail": null,
-        "code": 503,
-        "references": [
-          {
-            "file": "purchase_sources.json",
-            "field": "url_template"
-          }
-        ]
-      },
-      {
         "url": "https://www.amazon.com/s?k={query}",
         "detail": null,
         "code": 503,
@@ -304,6 +307,17 @@
         "url": "https://kream.co.kr/search?keyword={query}",
         "detail": "TimeoutError",
         "code": null,
+        "references": [
+          {
+            "file": "purchase_sources.json",
+            "field": "url_template"
+          }
+        ]
+      },
+      {
+        "url": "https://shopping.yahoo.co.jp/search?p={query}",
+        "detail": null,
+        "code": 500,
         "references": [
           {
             "file": "purchase_sources.json",
@@ -471,7 +485,7 @@
         ]
       }
     ],
-    "duration_seconds": 84.85,
+    "duration_seconds": 88.26,
     "adaptive_timeout_seconds": 300,
     "last_attempt_timeout_seconds": 299,
     "retry_count": 0,
@@ -486,7 +500,7 @@
     "undiscovered_topic_cells": 173,
     "source_updated_at": "2026-09-10T13:03:59+00:00"
   },
-  "ok_with_aux": true,
+  "ok_with_aux": false,
   "postflight_monitor": {
     "ok": true,
     "results": [
@@ -521,6 +535,11 @@
         "action": "검증 통과"
       },
       {
+        "file": "grading_company_updates.json",
+        "ok": true,
+        "action": "검증 통과"
+      },
+      {
         "file": "graded_photo_candidates.json",
         "ok": true,
         "action": "검증 통과"
@@ -532,28 +551,28 @@
       }
     ]
   },
-  "ok_with_monitor": true,
+  "ok_with_monitor": false,
   "collection_job_neural": {
     "ingest": {
       "ok": true,
-      "added": 9,
+      "added": 10,
       "updated": 0,
-      "eligible": 9,
+      "eligible": 10,
       "postflight_skipped": 0,
-      "label_count": 9,
+      "label_count": 10,
       "reason": "postflight_verified_outcomes_ingested"
     },
     "status": {
       "schema": 1,
-      "feature_fingerprint": "f4761f0ce2326fe7c29fc318",
-      "updated_at": "2026-09-10T13:04:00+00:00",
+      "feature_fingerprint": "0bac15bf0ad62e49a7c7d300",
+      "updated_at": "2026-09-10T19:08:32+00:00",
       "active": false,
-      "label_count": 9,
+      "label_count": 10,
       "positive_labels": 9,
-      "negative_labels": 0,
+      "negative_labels": 1,
       "minimum_labels": 1000,
-      "labels_remaining": 991,
-      "progress_percent": 0.9,
+      "labels_remaining": 990,
+      "progress_percent": 1.0,
       "hidden_sizes": [
         4,
         8,

@@ -1,5 +1,43 @@
 {
-  "updated_at": "2026-09-10T13:02:06+00:00",
-  "issue_count": 0,
-  "issues": []
+  "updated_at": "2026-09-10T19:00:33+00:00",
+  "issue_count": 1,
+  "issues": [
+    {
+      "name": "보조 후보수집",
+      "file": "__integration__",
+      "severity": "주의",
+      "auto_action": "기존 검증 후보자료 유지 · 다음 업데이트에서 보조 후보만 재수집",
+      "detail": "보조 후보수집 시간예산 초과 · 기존 검증 후보자료 유지 · 다음 업데이트에서 재수집",
+      "recommended_action": "보조 후보수집 출처의 응답과 네트워크 상태를 확인하세요.",
+      "error_group_id": "fcee8eeb33cff444",
+      "error_code": "UNCLASSIFIED_ERROR",
+      "error_subtype": "general",
+      "http_status": null,
+      "bounded_retry_allowed": false,
+      "probable_cause": "기존 규칙에 없는 오류입니다. 상세정보를 비식별화해 기록하고 재현 범위를 확인해야 합니다.",
+      "resolution_steps": [
+        "발생 함수·파일·입력 범위를 확인합니다.",
+        "동일 조건에서 안전하게 재현되는지 검사합니다.",
+        "원인을 확인한 뒤 전용 회귀검사를 추가합니다."
+      ],
+      "verification_steps": [
+        "원인을 확인한 뒤 전용 회귀검사를 추가합니다.",
+        "기존 정상자료가 손상되지 않았는지 확인합니다."
+      ],
+      "scenario_prepared": true,
+      "scenario_profile_id": "c1b51c7e7e7921f8",
+      "diagnostic_priority": 25,
+      "first_checks": [
+        "비식별화한 예외형·함수·입력 범위를 기록합니다."
+      ],
+      "fast_resolution_steps": [
+        "발생 함수·파일·입력 범위를 확인합니다.",
+        "동일 조건에서 안전하게 재현되는지 검사합니다.",
+        "원인을 확인한 뒤 전용 회귀검사를 추가합니다."
+      ],
+      "stop_conditions": [
+        "전용 회귀검사가 생기기 전 자동조치를 확대하지 않습니다."
+      ]
+    }
+  ]
 }
