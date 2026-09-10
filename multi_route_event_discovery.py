@@ -291,7 +291,7 @@ def _topic(text: str) -> str:
         ("deadline", r"마감|신청\s*기한|응모\s*기한|접수\s*기한|신청기간|응모기간|접수기간|deadline|apply\s+by|registration\s+closes?|application\s+period|entry\s+period|closing\s+date|締切|期限|応募期間|申込期間|受付期間"),
         ("access", r"참가\s*자격|참가조건|체크인|입장권|관람객|패스|정원|대기\s*명단|플레이어\s*ID|덱\s*리스트|참가비|eligib(?:le|ility)|check[- ]?in|waitlist|interest\s+list|spectator|admission|entry\s+fee|player\s+id|deck\s+list|seating|capacity|\bbadge\b|\bpass\b|参加資格|参加条件|チェックイン|入場券|観戦|パス|定員|キャンセル待ち|プレイヤーID|デッキリスト|参加費"),
         ("rules", r"금지\s*/?\s*제한|금지카드|제한카드|금지\s*페어|에라타|사용\s*규정|룰|규칙|banned|restricted|restriction|errata|legality|legal\s+date|regulation|rulebook|floor\s+rules?|\brules?\b|禁止|制限|禁止カード|制限カード|禁止ペア|エラッタ|ルール|レギュレーション|使用可能"),
-        ("movie", r"영화|극장판|개봉|관람특전|movie|film|cinema|screening|映画|劇場版|上映|入場者特典"),
+        ("movie", r"영화|극장판|개봉|관람특전|티저|예고편|movie|film|cinema|screening|teaser|trailer|映画|劇場版|上映|入場者特典|ティザー|予告編"),
         ("broadcast", r"라이브|생방송|방송|스트리밍|시청|twitch\s*drops?|live[ -]?stream|broadcast|streaming|watch\s+live|redeem|redemption|ライブ配信|生配信|配信|視聴|Twitch|ドロップ|コード|シリアルコード"),
         ("festival", r"축제|페스티벌|페스타|축전|festival|card\s*fest|fan\s*fest|祭り|祭典|フェス|フェスティバル"),
         ("anniversary", r"기념|주년|기념전|anniversary|commemorative|周年|記念"),

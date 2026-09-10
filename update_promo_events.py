@@ -312,10 +312,10 @@ TARGET_REGION_HINTS = {
 TIMEOUT_SECONDS = env_int('TCG_HTTP_TIMEOUT',20,5,60)
 MAX_DISCOVERED_PER_INDEX = 2
 EVENT_WORDS = re.compile(
-    r"이벤트|행사|축제|페스티벌|페스타|축전|박람회|배틀|교류회|챔피언|토너먼트|프로모|증정|캠페인|팝업|팝업스토어|점프샵|JUMP SHOP|챌린지|도전|개최|특전|배포|콜라보|협업|영화|극장판|개봉|출시|발매|신탄|부스터|스타터|예약|재발매|재판|재입고|굿즈|공식숍|공식샵|기념|주년|"
+    r"이벤트|행사|축제|페스티벌|페스타|축전|박람회|배틀|교류회|챔피언|토너먼트|프로모|증정|캠페인|팝업|팝업스토어|점프샵|JUMP SHOP|챌린지|도전|개최|특전|배포|콜라보|협업|영화|극장판|개봉|티저|예고편|출시|발매|신탄|부스터|스타터|예약|재발매|재판|재입고|굿즈|공식숍|공식샵|기념|주년|"
     r"러닝|달리기|완주|완주자|참가자|참가보상|참가특전|프로모카드|"
-    r"イベント|祭り|祭典|フェス|フェスティバル|バトル|キャンペーン|チャンピオン|チャレンジ|開催|特典|配布|参加|完走|コラボ|映画|劇場版|上映|発売|新弾|ブースター|スターター|予約|再販|再版|再入荷|グッズ|公式ショップ|記念|周年|"
-    r"event|festival|card fest|fan fest|battle|championship|tournament|promo|giveaway|league|cup|tutorial|comic con|game night|night|collab|collaboration|convention|expo|challenge|special mission|distribution|movie|film|cinema|screening|release|launch|new set|booster|starter|preorder|reprint|re-release|restock|merch|merchandise|official shop|anniversary|commemorative|fun run|pokemon run|pokémon run|runner|participant|completion|finisher|participation reward|promo card",
+    r"イベント|祭り|祭典|フェス|フェスティバル|バトル|キャンペーン|チャンピオン|チャレンジ|開催|特典|配布|参加|完走|コラボ|映画|劇場版|上映|ティザー|予告編|発売|新弾|ブースター|スターター|予約|再販|再版|再入荷|グッズ|公式ショップ|記念|周年|"
+    r"event|festival|card fest|fan fest|battle|championship|tournament|promo|giveaway|league|cup|tutorial|comic con|game night|night|collab|collaboration|convention|expo|challenge|special mission|distribution|movie|film|cinema|screening|teaser|trailer|release|launch|new set|booster|starter|preorder|reprint|re-release|restock|merch|merchandise|official shop|anniversary|commemorative|fun run|pokemon run|pokémon run|runner|participant|completion|finisher|participation reward|promo card",
     re.I,
 )
 

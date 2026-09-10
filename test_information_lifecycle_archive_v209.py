@@ -115,6 +115,9 @@ class InformationLifecycleArchiveV209Tests(unittest.TestCase):
         self.assertEqual("reprint", events.classify_information_category("원피스 카드 재입고 안내"))
         self.assertEqual("reprint", routes._category("원피스 카드 재입고 안내"))
         self.assertEqual("reprint", social._category("원피스 카드 재입고 안내"))
+        self.assertEqual("movie", events.classify_information_category("슈퍼 티저 비주얼과 예고편 공개"))
+        self.assertEqual("movie", routes._category("슈퍼 티저 비주얼과 예고편 공개"))
+        self.assertEqual("movie", social._category("슈퍼 티저 비주얼과 예고편 공개"))
 
     def test_verification_gate_reports_missing_collection_cells(self):
         with tempfile.TemporaryDirectory() as tmp:
