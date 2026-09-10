@@ -2,7 +2,10 @@
 import unittest
 from datetime import datetime, timezone
 
-from instagram_tcg_content.collection_freshness_gap_guard import audit_freshness_gap
+from instagram_tcg_content.collection_freshness_gap_guard import (
+    RECOVERY_ENTRYPOINT,
+    audit_freshness_gap,
+)
 
 
 class CollectionFreshnessGapGuardTests(unittest.TestCase):
@@ -38,6 +41,9 @@ class CollectionFreshnessGapGuardTests(unittest.TestCase):
             report["verification_mode_must_remain"],
             "INSTAGRAM_LOCAL_EVIDENCE_ONLY",
         )
+        self.assertEqual(report["recovery_entrypoint"], RECOVERY_ENTRYPOINT)
+        self.assertIn("collection_recovery_runner --plan", report["recovery_plan_command"])
+        self.assertIn("collection_recovery_runner --input", report["recovery_packet_command"])
 
     def test_fresh_ig_snapshot_clears_gap(self):
         fresh = dict(self.stale_ig)
