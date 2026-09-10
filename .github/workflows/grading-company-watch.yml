@@ -1,0 +1,121 @@
+name: Grading Company Watch
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '23 */3 * * *'
+  push:
+    branches: [main]
+    paths:
+      - 'grading_company_watch.py'
+      - 'grading_costs_live.py'
+      - 'grading_costs_live.js'
+      - 'test_grading_company_watch_v215.py'
+      - 'test_grading_costs_live.py'
+      - '.github/workflows/grading-company-watch.yml'
+
+permissions:
+  contents: write
+
+concurrency:
+  group: grading-company-watch-main
+  cancel-in-progress: true
+
+jobs:
+  verify-watch-publish:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    env:
+      PYTHONDONTWRITEBYTECODE: '1'
+      PYTHONUNBUFFERED: '1'
+    steps:
+      - name: Checkout exact main snapshot
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          fetch-depth: 2
+
+      - name: Set up Python
+        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97
+        with:
+          python-version: '3.12'
+
+      - name: Verify watcher and live-cost contracts
+        run: |
+          python -m py_compile grading_company_watch.py grading_costs_live.py
+          python -m unittest -v test_grading_company_watch_v215.py test_grading_costs_live.py
+          node --check grading_costs_live.js
+
+      - name: Collect official grading company changes
+        run: python grading_company_watch.py
+
+      - name: Validate official-only public snapshot
+        run: |
+          python - <<'PY'
+          import json
+          from urllib.parse import urlsplit
+          from pathlib import Path
+          import grading_company_watch as w
+          data=json.loads(Path('grading_company_updates.json').read_text(encoding='utf-8'))
+          assert data.get('schema_version')==1
+          policy=data.get('policy',{})
+          assert policy.get('official_sources_only') is True
+          assert policy.get('community_posts_are_leads_only') is True
+          assert policy.get('automatic_source_code_mutation') is False
+          assert set(data.get('companies',{}))=={'PSA','BGS','CGC','TAG','BRG'}
+          assert int(data.get('summary',{}).get('sources',0))>=10
+          assert int(data.get('summary',{}).get('healthy_sources',0))>=1
+          for source in data.get('sources',{}).values():
+              url=source.get('url','')
+              parts=urlsplit(url)
+              assert parts.scheme=='https'
+              assert (parts.hostname or '').lower() in w.ALLOWED_HOSTS
+          for row in data.get('recent_changes',[]):
+              assert row.get('verified_official_source') is True
+          print(json.dumps(data.get('summary',{}),ensure_ascii=False,indent=2))
+          PY
+
+      - name: Stage only validated watcher snapshot
+        id: stage
+        shell: bash
+        run: |
+          set -euo pipefail
+          git fetch origin main
+          if [ "$(git rev-parse HEAD)" != "$(git rev-parse origin/main)" ]; then
+            echo "changed=false" >> "$GITHUB_OUTPUT"
+            echo "reason=main advanced during grading-company collection; discard stale snapshot" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          git add -- grading_company_updates.json
+          if git diff --cached --quiet; then
+            echo "changed=false" >> "$GITHUB_OUTPUT"
+            echo "reason=no verified grading-company changes" >> "$GITHUB_OUTPUT"
+          else
+            echo "changed=true" >> "$GITHUB_OUTPUT"
+            echo "reason=official grading-company snapshot changed" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Commit validated watcher snapshot
+        if: steps.stage.outputs.changed == 'true'
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git commit -m 'data: refresh grading company official watch'
+          git push origin HEAD:main
+
+      - name: Write watcher summary
+        if: always()
+        shell: bash
+        run: |
+          {
+            echo '## Grading Company Watch'
+            echo
+            echo '- companies: PSA / BGS / CGC / TAG / BRG'
+            echo '- cadence: every 3 hours + manual + relevant source pushes'
+            echo '- tracked: fee, service level, turnaround, availability, official event/news'
+            echo '- trust: official HTTPS sources only; community/Instagram are leads only'
+            echo '- failure policy: preserve last-good structured facts; expose degraded source health'
+            echo "- snapshot changed: ${{ steps.stage.outputs.changed || 'not-reached' }}"
+            echo "- reason: ${{ steps.stage.outputs.reason || 'not-reached' }}"
+          } >> "$GITHUB_STEP_SUMMARY"
