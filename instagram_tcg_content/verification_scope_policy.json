@@ -25,6 +25,8 @@
     "fact_type_hard_gate",
     "persist_verified_snapshot",
     "collection_health_gate",
+    "bounded_recovery_collection_if_needed",
+    "collection_health_recheck",
     "ai_reliability_advisory",
     "quality_render_profile",
     "build_verification_receipt",
@@ -143,5 +145,12 @@
     "latest_verified_fact_count": 1,
     "classification": "SILENT_OUTPUT_FAILURE",
     "root_cause": "ROOT_CAUSE_UNRESOLVED"
-  }
+  },
+  "production_recovery_policy_entrypoint": "instagram_tcg_content/production_recovery_policy.py",
+  "production_recovery_collection_max_attempts_per_production_run": 1,
+  "production_recovery_trigger": "production_slot_and_collection_not_ready",
+  "production_recovery_render_before_recheck_forbidden": true,
+  "production_failure_visible_report_required": true,
+  "production_failure_visible_report_root_cause": "VERIFIED_DATA_REQUIREMENTS_NOT_MET",
+  "production_failure_silent_output_forbidden": true
 }

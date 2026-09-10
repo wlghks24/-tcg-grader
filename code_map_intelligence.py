@@ -130,6 +130,8 @@ FEATURE_QUERY_ALIASES = {
     "instagram_cardinfo_production_state": (
         "인스타 카드정보 작업물", "작업물", "production state", "baseline",
         "10:30 제작", "22:30 수정판", "artifact",
+        "작업물 안올라옴", "작업물 누락", "silent output", "복구수집",
+        "recovery collection", "production recovery",
     ),
     "instagram_cardinfo_ai_reliability": (
         "인스타 카드정보 신경망", "인스타 카드정보 ai", "ai reliability",
@@ -220,9 +222,11 @@ FEATURE_ROUTE_OVERRIDES = {
     ),
     "instagram_cardinfo_production_state": (
         "instagram_tcg_content/production_state.py",
+        "instagram_tcg_content/production_recovery_policy.py",
         "instagram_tcg_content/source_verification_engine.py",
         "instagram_tcg_content/selfrefine_gate.py",
         "instagram_tcg_content/test_production_state.py",
+        "instagram_tcg_content/test_production_recovery_policy.py",
         "instagram_tcg_content/test_source_verification_engine.py",
         "instagram_tcg_content/test_live_packet_guards.py",
     ),
@@ -322,6 +326,7 @@ FEATURE_TEST_NODE_CONTRACTS = {
     ),
     "instagram_cardinfo_production_state": (
         "instagram_tcg_content/test_production_state.py::main",
+        "instagram_tcg_content/test_production_recovery_policy.py::ProductionRecoveryPolicyTests::test_second_failure_blocks_render_but_never_silences_report",
         "instagram_tcg_content/test_source_verification_engine.py::main",
     ),
     "instagram_cardinfo_ai_reliability": (
@@ -388,6 +393,9 @@ FEATURE_ALTERNATE_ENTRYPOINTS = {
     "instagram_cardinfo_pause_recovery": (
         "instagram_tcg_content/pause_monitor_exchange.py",
     ),
+    "instagram_cardinfo_production_state": (
+        "instagram_tcg_content/production_recovery_policy.py",
+    ),
     "instagram_cardinfo_ai_reliability": (
         "instagram_tcg_content/ai_reliability_runtime.py",
     ),
@@ -419,6 +427,10 @@ FEATURE_ENTRYPOINT_RULES = {
     "instagram_cardinfo_pause_recovery": (
         (("자료교환", "감시 소통", "작업 중지 감시", "producer monitor", "pause monitor exchange", "원인미상 일시중지"),
          "instagram_tcg_content/pause_monitor_exchange.py"),
+    ),
+    "instagram_cardinfo_production_state": (
+        (("작업물 안올라옴", "작업물 누락", "silent output", "복구수집", "recovery collection", "production recovery"),
+         "instagram_tcg_content/production_recovery_policy.py"),
     ),
     "instagram_cardinfo_ai_reliability": (
         (("신경망 연결", "ai 연결", "runtime link", "runtime 연결", "collection health", "자료수집 연결"),
