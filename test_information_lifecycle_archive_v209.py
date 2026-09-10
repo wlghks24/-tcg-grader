@@ -58,6 +58,31 @@ class InformationLifecycleArchiveV209Tests(unittest.TestCase):
         self.assertIn("...(promoData.archive_items||[])", html)
         self.assertIn("...(releaseData.archive_items||[])", html)
 
+    def test_every_requested_information_category_uses_event_lifecycle(self):
+        base = {
+            **self.event(), "game": "포켓몬 카드", "region": "KR",
+            "start_date": "2026-09-01", "reward": "안내", "condition": "공식 확인",
+            "source": "https://www.pokemon.com/us/pokemon-tcg", "source_grade": "official",
+        }
+        for category in (
+            "promo", "collaboration", "movie", "event", "festival", "tournament",
+            "popup", "release", "reprint", "merch", "anniversary",
+        ):
+            with self.subTest(category=category):
+                item = {**base, "category": category}
+                self.assertTrue(events.valid(item))
+                self.assertEqual("recently_ended", events.lifecycle_state(item, dt.date(2026, 9, 10)))
+                self.assertEqual("archive", events.lifecycle_state(item, dt.date(2026, 9, 11)))
+
+    def test_festival_has_independent_collection_topic_and_ui_category(self):
+        import multi_route_event_discovery as routes
+        html = Path("index.html").read_text(encoding="utf-8")
+        self.assertIn("festival", routes.COVERAGE_TOPICS)
+        self.assertEqual("festival", routes._category("포켓몬 카드 축제 페스티벌 개최"))
+        self.assertIn('<option value="festival">🎉 축제·페스티벌</option>', html)
+        self.assertIn('<option value="reprint">🔁 재발매·재입고</option>', html)
+        self.assertNotIn('||"2027-12-31"', html)
+
     def test_verification_gate_reports_missing_collection_cells(self):
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)

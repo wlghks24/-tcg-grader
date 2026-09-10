@@ -312,12 +312,17 @@ TARGET_REGION_HINTS = {
 TIMEOUT_SECONDS = env_int('TCG_HTTP_TIMEOUT',20,5,60)
 MAX_DISCOVERED_PER_INDEX = 2
 EVENT_WORDS = re.compile(
-    r"이벤트|행사|배틀|교류회|챔피언|토너먼트|프로모|팝업|팝업스토어|점프샵|JUMP SHOP|챌린지|도전|개최|특전|배포|"
+    r"이벤트|행사|축제|페스티벌|페스타|박람회|배틀|교류회|챔피언|토너먼트|프로모|팝업|팝업스토어|점프샵|JUMP SHOP|챌린지|도전|개최|특전|배포|"
     r"러닝|달리기|완주|완주자|참가자|참가보상|참가특전|프로모카드|"
-    r"イベント|バトル|キャンペーン|チャンピオン|チャレンジ|開催|特典|配布|参加|完走|"
+    r"イベント|祭り|祭典|フェス|フェスティバル|バトル|キャンペーン|チャンピオン|チャレンジ|開催|特典|配布|参加|完走|"
     r"event|battle|championship|tournament|promo|league|cup|tutorial|fest|comic con|game night|night|giveaway|teaching session|collab|collaboration|convention|expo|challenge|special mission|distribution|fun run|pokemon run|pokémon run|runner|participant|completion|finisher|participation reward|promo card",
     re.I,
 )
+
+EVENT_CATEGORIES = {
+    "promo", "collaboration", "movie", "event", "festival", "tournament",
+    "popup", "release", "reprint", "merch", "anniversary",
+}
 
 
 def approved_url(url: str) -> str:
@@ -795,7 +800,7 @@ def valid(item: dict) -> bool:
         return False
     if item.get("region") not in EVENT_REGIONS or item.get("game") not in GAMES:
         return False
-    if item.get("category", "promo") not in {"promo", "collaboration", "movie"}:
+    if item.get("category", "promo") not in EVENT_CATEGORIES:
         return False
     if item.get("source_grade", "official") != "official":
         return False

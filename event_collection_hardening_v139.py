@@ -220,7 +220,7 @@ def _manual_topic(row: dict) -> str:
     category = str(row.get("category") or "").lower()
     if category == "collaboration":
         return "collab"
-    if category in {"movie", "promo", "event", "release", "reprint", "popup", "tournament", "anniversary", "merch"}:
+    if category in {"movie", "promo", "event", "festival", "release", "reprint", "popup", "tournament", "anniversary", "merch"}:
         return category
     text = " ".join(str(row.get(k) or "") for k in ("title", "excerpt", "category"))
     return multi_route_event_discovery._topic(text)

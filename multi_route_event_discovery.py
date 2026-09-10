@@ -68,6 +68,7 @@ QUERY_FAMILIES = {
     "ko": {
         "release": "출시 발매 신제품 신탄 부스터 스타터 예약 재발매 재판",
         "event": "행사 이벤트 챌린지 도전 개최 대회 팝업 페스타 체험회 매장대회 월드챔피언십",
+        "festival": "축제 페스티벌 페스타 박람회 카드 축전 기념축제",
         "tournament": "대회 리그 컵 챔피언십 월드챔피언십 매장대회 배틀",
         "popup": "팝업 팝업스토어 점프샵 \"JUMP SHOP\" 슈에이샤 신세계 페스타 박람회 전시회 체험회 카드샵",
         "promo": "프로모 증정 배포 한정 수령 특전 캠페인 프로모션팩",
@@ -93,6 +94,7 @@ QUERY_FAMILIES = {
     "ja": {
         "release": "発売 新商品 新弾 ブースター スターター 予約 再販",
         "event": "イベント チャレンジ 開催 大会 ポップアップ フェス 体験会 店舗大会",
+        "festival": "祭り 祭典 フェス フェスティバル カードフェスタ 記念祭",
         "tournament": "大会 リーグ カップ チャンピオンシップ 店舗大会 バトル",
         "popup": "ポップアップ ポップアップストア フェス 展示会 体験会 カードショップ",
         "promo": "プロモ 配布 特典 限定 キャンペーン プレゼント",
@@ -118,6 +120,7 @@ QUERY_FAMILIES = {
     "en": {
         "release": "release new set booster starter preorder reprint",
         "event": "event challenge \"special mission\" tournament pop-up festival demo store championship \"fun run\" \"pokemon run\" \"pokémon run\" finisher participant",
+        "festival": "festival fest card fest celebration expo fair fan festival",
         "tournament": "tournament league cup championship regional worlds store battle",
         "popup": "pop-up popup store festival expo convention exhibition demo card shop",
         "promo": "promo \"promotional card\" giveaway distribution exclusive campaign finisher reward \"participation reward\" \"promo card\"",
@@ -142,7 +145,7 @@ QUERY_FAMILIES = {
     },
 }
 
-COVERAGE_TOPICS = ("event", "tournament", "popup", "promo", "collab", "movie", "release", "reprint", "merch", "anniversary", "stock", "entry", "broadcast", "deadline", "status_update", "rules", "access", "results", "purchase_policy", "service_status", "official_price", "product_issue", "authenticity_notice")
+COVERAGE_TOPICS = ("event", "festival", "tournament", "popup", "promo", "collab", "movie", "release", "reprint", "merch", "anniversary", "stock", "entry", "broadcast", "deadline", "status_update", "rules", "access", "results", "purchase_policy", "service_status", "official_price", "product_issue", "authenticity_notice")
 
 OFFICIAL_ROUTES = {
     ("포켓몬 카드", "KR"): (
@@ -269,6 +272,8 @@ def _category(text: str) -> str:
     topic = _topic(text)
     if topic == "movie": return "movie"
     if topic == "collab": return "collaboration"
+    if topic in {"event", "festival", "tournament", "popup", "release", "reprint", "merch", "anniversary"}:
+        return topic
     return "promo"
 
 
@@ -287,6 +292,7 @@ def _topic(text: str) -> str:
         ("rules", r"금지\s*/?\s*제한|금지카드|제한카드|금지\s*페어|에라타|사용\s*규정|룰|규칙|banned|restricted|restriction|errata|legality|legal\s+date|regulation|rulebook|floor\s+rules?|\brules?\b|禁止|制限|禁止カード|制限カード|禁止ペア|エラッタ|ルール|レギュレーション|使用可能"),
         ("movie", r"영화|극장판|개봉|관람특전|movie|film|cinema|screening|映画|劇場版|上映|入場者特典"),
         ("broadcast", r"라이브|생방송|방송|스트리밍|시청|twitch\s*drops?|live[ -]?stream|broadcast|streaming|watch\s+live|redeem|redemption|ライブ配信|生配信|配信|視聴|Twitch|ドロップ|コード|シリアルコード"),
+        ("festival", r"축제|페스티벌|페스타|축전|festival|card\s*fest|fan\s*fest|祭り|祭典|フェス|フェスティバル"),
         ("anniversary", r"기념|주년|기념전|anniversary|commemorative|周年|記念"),
         ("merch", r"굿즈|공식숍|공식샵|점프샵|JUMP SHOP|merch|merchandise|official shop|グッズ|公式ショップ"),
         ("collab", r"콜라보|협업|제휴|브랜드데이|collab|collaboration|partnership|コラボ|タイアップ"),

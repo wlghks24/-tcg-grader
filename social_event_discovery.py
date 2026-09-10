@@ -151,6 +151,11 @@ def _secret_safe(text: object) -> str:
 
 
 def _category(text: str) -> str:
+    topic = multi_route_event_discovery._topic(text or "")
+    if topic == "collab":
+        return "collaboration"
+    if topic in {"movie", "festival", "tournament", "popup", "release", "reprint", "merch", "anniversary"}:
+        return topic
     for category, pattern in CATEGORY_PATTERNS:
         if pattern.search(text or ""):
             return category
