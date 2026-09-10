@@ -81,6 +81,24 @@ def decide_for_slot(
     )
 
 
+def _failure_root_cause(collection_report: dict[str, Any], direct_root_cause: str | None) -> str:
+    """Return the most specific root cause supported by verified readiness fields.
+
+    Do not label a known readiness failure as unresolved.  A caller-supplied direct
+    cause remains authoritative, but otherwise a false general-card-info readiness
+    flag is already sufficient evidence that verified general requirements were not
+    met.  This keeps the visible report useful without inventing a lower-level
+    network/source cause that the collection report did not prove.
+    """
+    if direct_root_cause is not None:
+        direct = str(direct_root_cause).strip()
+        if direct:
+            return direct
+    if collection_report.get("general_cardinfo_ready") is not True:
+        return "VERIFIED_GENERAL_CARDINFO_REQUIREMENTS_NOT_MET"
+    return "ROOT_CAUSE_UNRESOLVED"
+
+
 def build_visible_failure_report(
     *, scheduled_slot_kst: str, collection_report: dict[str, Any], producer_phase: str | None,
     exchange_status: str, recovery_collection_attempted: bool, artifact_count: int,
@@ -89,7 +107,7 @@ def build_visible_failure_report(
     if not is_weekly_production_slot(scheduled_slot_kst):
         raise ValueError("VISIBLE_PRODUCTION_FAILURE_REPORT_ONLY_ALLOWED_FOR_MONDAY_1900")
     reasons = [str(x) for x in (collection_report.get("reasons") or [])]
-    root = str(direct_root_cause).strip() if direct_root_cause else "ROOT_CAUSE_UNRESOLVED"
+    root = _failure_root_cause(collection_report, direct_root_cause)
     return {
         "OUTPUT_STATUS": "MISSING",
         "SCHEDULED_SLOT_KST": scheduled_slot_kst,
@@ -127,7 +145,7 @@ def self_test() -> None:
         recovery_collection_attempted=True,
         artifact_count=0,
     )
-    assert report["ROOT_CAUSE"] == "ROOT_CAUSE_UNRESOLVED"
+    assert report["ROOT_CAUSE"] == "VERIFIED_GENERAL_CARDINFO_REQUIREMENTS_NOT_MET"
     assert report["READINESS_REASONS"] == stale["reasons"]
     print("Instagram card production recovery single-router: PASS")
 
