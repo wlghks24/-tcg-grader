@@ -86,3 +86,89 @@ def test_recovery_requires_next_real_slot():
     assert pending["recovery_verified"] is False
     done = assess_recovery_verification(before=before, immediate=immediate, same_execution=same, next_slot=immediate, next_slot_executed=True)
     assert done["recovery_verified"] is True
+
+
+def test_invoked_without_matching_receipt_is_not_healthy():
+    snap = snapshot_target(state(CARD, "인스타 카드정보"), observed_at="2026-09-10T09:35:00Z")
+    result = classify_observation(
+        snap,
+        scheduled_slot="2026-09-10T18:30:00+09:00",
+        slot_due=True,
+        last_run_advanced=True,
+        producer_status=None,
+    )
+    assert result["event_class"] == "RUN_INVOKED_NO_PRODUCER_RECEIPT"
+    assert result["failed_stage"] == "EXCHANGE_PERSISTENCE"
+
+
+def test_terminal_phase_false_flag_is_mismatch():
+    snap = snapshot_target(state(CARD, "인스타 카드정보"), observed_at="2026-09-10T09:35:00Z")
+    producer = {
+        "scheduled_slot_kst": "2026-09-10T18:30:00+09:00",
+        "phase": "VERIFIED_NO_OUTPUT",
+        "terminal": False,
+        "observed_at": "2026-09-10T09:31:00Z",
+    }
+    result = classify_observation(
+        snap,
+        scheduled_slot="2026-09-10T18:30:00+09:00",
+        slot_due=True,
+        last_run_advanced=True,
+        producer_status=producer,
+    )
+    assert result["event_class"] == "EXCHANGE_RECEIPT_TERMINAL_MISMATCH"
+
+
+def test_age_is_computed_from_receipt_when_not_supplied():
+    snap = snapshot_target(state(CARD, "인스타 카드정보"), observed_at="2026-09-10T10:00:01Z")
+    producer = {
+        "scheduled_slot_kst": "2026-09-10T18:30:00+09:00",
+        "phase": "VERIFY",
+        "terminal": False,
+        "observed_at": "2026-09-10T09:30:00Z",
+    }
+    result = classify_observation(
+        snap,
+        scheduled_slot="2026-09-10T18:30:00+09:00",
+        slot_due=True,
+        last_run_advanced=True,
+        producer_status=producer,
+    )
+    assert result["event_class"] == "RUN_STARTED_NO_TERMINAL_RECEIPT"
+    assert result["producer_status_age_seconds"] == 1801.0
+
+
+def test_failure_without_direct_error_evidence_does_not_promote_root_cause():
+    snap = snapshot_target(state(CARD, "인스타 카드정보"), observed_at="2026-09-10T09:35:00Z")
+    producer = {
+        "scheduled_slot_kst": "2026-09-10T18:30:00+09:00",
+        "phase": "FAILED",
+        "terminal": True,
+        "observed_at": "2026-09-10T09:31:00Z",
+        "root_cause": "MADE_UP",
+    }
+    result = classify_observation(
+        snap,
+        scheduled_slot="2026-09-10T18:30:00+09:00",
+        slot_due=True,
+        last_run_advanced=True,
+        producer_status=producer,
+    )
+    assert result["event_class"] == "PRODUCER_REPORTED_FAILURE"
+    assert result["root_cause"] == "ROOT_CAUSE_UNRESOLVED"
+    assert "PRODUCER_FAILURE_EVIDENCE_INCOMPLETE" in result["auxiliary_events"]
+
+
+def test_recovery_can_require_exchange_verification():
+    before = snapshot_target(state(CARD, "인스타 카드정보", enabled=False), observed_at="2026-09-10T08:40:00Z")
+    immediate = snapshot_target(state(CARD, "인스타 카드정보", enabled=True, updated="2026-09-10T08:46:08Z"), observed_at="2026-09-10T08:46:09Z")
+    same = snapshot_target(state(CARD, "인스타 카드정보", enabled=True, updated="2026-09-10T08:46:08Z"), observed_at="2026-09-10T08:46:10Z")
+    result = assess_recovery_verification(
+        before=before,
+        immediate=immediate,
+        same_execution=same,
+        next_slot=immediate,
+        next_slot_executed=True,
+        next_slot_exchange_verified=False,
+    )
+    assert result["recovery_verified"] is False
