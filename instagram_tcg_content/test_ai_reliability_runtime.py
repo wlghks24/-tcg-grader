@@ -5,6 +5,7 @@ import unittest
 from pathlib import Path
 
 from ai_reliability_v8.evidence_learning import FEATURES
+from instagram_tcg_content.automation_state_guard import CANONICAL_ID
 from instagram_tcg_content.ai_reliability_runtime import (
     EXPECTED_OUTPUT_KEYS,
     PURPOSE,
@@ -53,7 +54,8 @@ class InstagramAiReliabilityRuntimeTests(unittest.TestCase):
         result = verify_binding_integrity()
         self.assertEqual(result["status"], "PASS", result)
         self.assertEqual(result["project"], "instagram_card")
-        self.assertEqual(result["task_id"], "6a9b8a22e72c8191849c273e1240378e")
+        self.assertEqual(result["task_id"], CANONICAL_ID)
+        self.assertRegex(result["task_id"], r"^[0-9a-f]{32}$")
         self.assertGreater(result["checked_file_count"], 10)
         self.assertEqual(result["minimum_real_labels"], 1000)
 
