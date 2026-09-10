@@ -28,12 +28,14 @@ class SocialEventTopicCoverageTests(unittest.TestCase):
         topics = {social._coverage_topic(row) for row in merged}
         self.assertTrue(set(routes.COVERAGE_TOPICS).issubset(topics))
 
+        # A configured cap smaller than the topic matrix is now only a soft cap.
+        # Completeness wins: one populated lead per topic cell must not be evicted.
         with patch.object(social, "MAX_ITEMS", 10):
             capped = social.merge_candidates(rows)
         capped_topics = {social._coverage_topic(row) for row in capped}
-        self.assertEqual(len(capped), 10)
-        self.assertEqual(len(capped_topics), 10)
-        self.assertTrue(capped_topics.issubset(set(routes.COVERAGE_TOPICS)))
+        self.assertGreaterEqual(len(capped), len(routes.COVERAGE_TOPICS))
+        self.assertTrue(set(routes.COVERAGE_TOPICS).issubset(capped_topics))
+        self.assertGreaterEqual(social.candidate_limit(), social.TOPIC_MATRIX_MIN_ITEMS)
 
     def test_brand_authority_is_not_shared_across_games(self):
         url = "https://www.naruto-cardgame.com/en/news/example.php"
