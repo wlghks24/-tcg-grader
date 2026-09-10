@@ -29,10 +29,9 @@ class CollectionHealthTests(unittest.TestCase):
             }
         }
 
-    def _facts(self):
-        facts = []
-        for game, language in EXPECTED_OUTPUTS:
-            facts.append({
+    def _official_facts(self):
+        return [
+            {
                 "canonical_key": f"{game}|release|{language.lower()}",
                 "fact_type": "release",
                 "lineage_key": f"{game}:{language}:release",
@@ -42,7 +41,13 @@ class CollectionHealthTests(unittest.TestCase):
                 "verification_status": "verified",
                 "verification_mode": VERIFICATION_MODE,
                 "verification_engine": VERIFICATION_ENGINE,
-            })
+            }
+            for game, language in EXPECTED_OUTPUTS
+        ]
+
+    def _facts(self):
+        facts = self._official_facts()
+        for game, language in EXPECTED_OUTPUTS:
             for index in range(MIN_COMPLETED_SALES_PER_OUTPUT):
                 facts.append({
                     "canonical_key": f"{game}|sale-{index}|{language.lower()}",
@@ -57,21 +62,41 @@ class CollectionHealthTests(unittest.TestCase):
                 })
         return facts
 
-    def test_ready_snapshot_requires_fresh_six_output_matrix(self):
-        snapshot = {
+    def _snapshot(self, facts):
+        return {
             "namespace": "IG_CARDINFO",
             "status": "finalized",
             "built_at": "2026-09-09T20:30:00+09:00",
-            "facts": self._facts(),
+            "facts": facts,
             "validation": {"write_readback_verified": True},
             "latest_attempt": {"status": "verified_facts_written"},
         }
+
+    def test_ready_snapshot_requires_fresh_six_output_matrix(self):
         report = audit_collection(
-            snapshot,
+            self._snapshot(self._facts()),
             self._routes(),
             now=datetime(2026, 9, 9, 12, 0, tzinfo=timezone.utc),
         )
         self.assertTrue(report["production_ready"], report)
+        self.assertTrue(report["general_cardinfo_ready"], report)
+        self.assertTrue(report["market_price_ready"], report)
+
+    def test_verified_general_cardinfo_is_not_blocked_by_missing_sales(self):
+        report = audit_collection(
+            self._snapshot(self._official_facts()),
+            self._routes(),
+            now=datetime(2026, 9, 9, 12, 0, tzinfo=timezone.utc),
+        )
+        self.assertTrue(report["production_ready"], report)
+        self.assertTrue(report["general_cardinfo_ready"], report)
+        self.assertFalse(report["market_price_ready"], report)
+        self.assertEqual(report["status"], "GENERAL_READY_MARKET_NOT_READY")
+        self.assertIn("COMPLETED_SALE_COVERAGE_INSUFFICIENT", report["reasons"])
+        self.assertEqual(
+            report["next_action"],
+            "PROCEED_GENERAL_CARDINFO_WITHOUT_UNVERIFIED_MARKET_SECTIONS",
+        )
 
     def test_stale_or_thin_snapshot_fails_closed(self):
         snapshot = {
@@ -88,6 +113,7 @@ class CollectionHealthTests(unittest.TestCase):
             now=datetime(2026, 9, 9, 12, 0, tzinfo=timezone.utc),
         )
         self.assertFalse(report["production_ready"], report)
+        self.assertFalse(report["general_cardinfo_ready"], report)
         self.assertIn("COMPLETED_SALE_COVERAGE_INSUFFICIENT", report["reasons"])
         self.assertTrue(any(x.startswith("SNAPSHOT_STALE:") for x in report["reasons"]))
 
