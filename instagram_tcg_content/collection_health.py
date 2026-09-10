@@ -2,8 +2,12 @@
 """Instagram-card collection readiness audit.
 
 This module is read-only. It never fetches sources and never mutates scheduler
-state. Its purpose is to prevent a stale/partial factual snapshot from looking
-production-ready merely because the last good file still exists.
+state. It exposes two independent readiness levels:
+- general_cardinfo_ready: verified release/rerelease/promo/event/movie/card news
+  may be produced even when completed-sale coverage is still incomplete.
+- market_price_ready: strict completed-sale and market-reference coverage.
+
+Unverified facts never become production-ready in either mode.
 """
 from __future__ import annotations
 
@@ -30,6 +34,12 @@ MAX_SNAPSHOT_AGE_HOURS = 36.0
 MIN_COMPLETED_SALES_PER_OUTPUT = 10
 VERIFICATION_MODE = "INSTAGRAM_LOCAL_EVIDENCE_ONLY"
 VERIFICATION_ENGINE = "instagram_tcg_content.source_verification_engine.py::verify_fact"
+
+MARKET_ONLY_REASON_PREFIXES = (
+    "COMPLETED_SALE_COVERAGE_INSUFFICIENT",
+    "COMPLETED_SALE_ROUTE_SHORTAGE:",
+    "MARKET_ROUTE_SHORTAGE:",
+)
 
 
 def _parse_aware(value: object) -> datetime | None:
@@ -90,6 +100,10 @@ def _validate_routes(routes: dict[str, Any]) -> list[str]:
         if len(market) < 2:
             problems.append(f"MARKET_ROUTE_SHORTAGE:{game}:{len(market)}/2")
     return problems
+
+
+def _is_market_only_reason(reason: str) -> bool:
+    return any(reason == prefix or reason.startswith(prefix) for prefix in MARKET_ONLY_REASON_PREFIXES)
 
 
 def audit_collection(
@@ -194,9 +208,26 @@ def audit_collection(
     reasons.extend(route_problems)
 
     unique_reasons = list(dict.fromkeys(reasons))
+    general_blocking_reasons = [r for r in unique_reasons if not _is_market_only_reason(r)]
+    market_blocking_reasons = list(unique_reasons)
+    general_cardinfo_ready = not general_blocking_reasons
+    market_price_ready = not market_blocking_reasons
+
+    if general_cardinfo_ready and not market_price_ready:
+        status = "GENERAL_READY_MARKET_NOT_READY"
+        next_action = "PROCEED_GENERAL_CARDINFO_WITHOUT_UNVERIFIED_MARKET_SECTIONS"
+    elif general_cardinfo_ready and market_price_ready:
+        status = "READY"
+        next_action = "PROCEED_TO_PRODUCTION_PREFLIGHT"
+    else:
+        status = "NOT_READY"
+        next_action = "RUN_BOUNDED_FULL_COLLECTION_AND_PERSIST_VERIFIED_IG_FACTS"
+
     return {
-        "status": "READY" if not unique_reasons else "NOT_READY",
-        "production_ready": not unique_reasons,
+        "status": status,
+        "production_ready": general_cardinfo_ready,
+        "general_cardinfo_ready": general_cardinfo_ready,
+        "market_price_ready": market_price_ready,
         "snapshot_built_at": snapshot.get("built_at"),
         "snapshot_age_hours": None if age_hours is None else round(age_hours, 2),
         "fact_count": len(facts),
@@ -212,11 +243,9 @@ def audit_collection(
         "completed_sale_shortage": completed_sale_shortage,
         "route_problems": route_problems,
         "reasons": unique_reasons,
-        "next_action": (
-            "RUN_BOUNDED_FULL_COLLECTION_AND_PERSIST_VERIFIED_IG_FACTS"
-            if unique_reasons
-            else "PROCEED_TO_PRODUCTION_PREFLIGHT"
-        ),
+        "general_blocking_reasons": general_blocking_reasons,
+        "market_blocking_reasons": market_blocking_reasons,
+        "next_action": next_action,
     }
 
 
@@ -234,8 +263,9 @@ def self_test() -> None:
         }
     }
     facts = []
+    official_only = []
     for game, language in EXPECTED_OUTPUTS:
-        facts.append({
+        official = {
             "canonical_key": f"{game}|release|{language.lower()}",
             "fact_type": "release",
             "lineage_key": f"{game}:{language}:release",
@@ -244,7 +274,9 @@ def self_test() -> None:
             "verification_status": "verified",
             "verification_mode": VERIFICATION_MODE,
             "verification_engine": VERIFICATION_ENGINE,
-        })
+        }
+        facts.append(official)
+        official_only.append(dict(official))
         for index in range(MIN_COMPLETED_SALES_PER_OUTPUT):
             facts.append({
                 "canonical_key": f"{game}|sale-{index}|{language.lower()}",
@@ -267,16 +299,28 @@ def self_test() -> None:
     }
     ready = audit_collection(snapshot, routes, now=now)
     assert ready["production_ready"] is True, ready
+    assert ready["general_cardinfo_ready"] is True, ready
+    assert ready["market_price_ready"] is True, ready
+
+    general_snapshot = dict(snapshot)
+    general_snapshot["facts"] = official_only
+    general = audit_collection(general_snapshot, routes, now=now)
+    assert general["production_ready"] is True, general
+    assert general["general_cardinfo_ready"] is True, general
+    assert general["market_price_ready"] is False, general
+    assert general["status"] == "GENERAL_READY_MARKET_NOT_READY", general
 
     stale = dict(snapshot)
     stale["built_at"] = "2026-09-06T20:30:00+09:00"
     stale_report = audit_collection(stale, routes, now=now)
     assert stale_report["production_ready"] is False, stale_report
+    assert stale_report["general_cardinfo_ready"] is False, stale_report
     assert any(reason.startswith("SNAPSHOT_STALE:") for reason in stale_report["reasons"])
 
     thin = dict(snapshot)
     thin["facts"] = facts[:1]
     thin_report = audit_collection(thin, routes, now=now)
+    assert thin_report["production_ready"] is False, thin_report
     assert "COMPLETED_SALE_COVERAGE_INSUFFICIENT" in thin_report["reasons"], thin_report
     assert any(reason.startswith("OUTPUT_MATRIX_COVERAGE_MISSING:") for reason in thin_report["reasons"])
 
