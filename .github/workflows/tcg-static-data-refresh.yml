@@ -24,7 +24,9 @@ permissions:
 
 concurrency:
   group: tcg-static-data-refresh-main
-  cancel-in-progress: false
+  # A result collected against an older main commit is intentionally discarded.
+  # Cancel it immediately when a newer collector/policy commit arrives.
+  cancel-in-progress: true
 
 jobs:
   refresh-validate-publish:
