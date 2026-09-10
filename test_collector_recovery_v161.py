@@ -15,7 +15,7 @@ import update_releases as releases
 
 
 class CollectorRecoveryV161Tests(unittest.TestCase):
-    def test_pokemon_current_official_route_is_used_before_legacy_route(self):
+    def test_pokemon_current_official_route_is_first_and_all_product_routes_are_scanned(self):
         sample = (
             '拡張パック「ストームエメラルダ」 拡張パック '
             '販売日 2026年 7月31日（金） 希望小売価格 200円（税込）'
@@ -28,7 +28,9 @@ class CollectorRecoveryV161Tests(unittest.TestCase):
 
         with mock.patch.object(releases, 'fetch', side_effect=fake_fetch):
             rows, _fingerprint = releases._collect_pokemon_jp_html()
-        self.assertEqual(calls, ['https://www.pokemon-card.com/products/'])
+        self.assertEqual(calls, list(releases.POKEMON_JP_PRODUCT_URLS))
+        self.assertEqual(calls[0], 'https://www.pokemon-card.com/products/')
+        self.assertEqual(len(rows), 1)
         self.assertEqual(rows[0]['release_date'], '2026-07-31')
         self.assertEqual(rows[0]['price'], '¥200/팩')
 
