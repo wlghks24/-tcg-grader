@@ -8,13 +8,20 @@ on:
       - 'test_collection_verification_gate.py'
       - 'tcg_updater.py'
       - 'auto_update_all.py'
+      - 'update_market_watch.py'
       - 'update_market_prices.py'
       - 'multi_market_price_collector.py'
       - 'update_releases.py'
       - 'update_promo_events.py'
       - 'update_purchase_sources.py'
+      - 'update_exchange_rates.py'
+      - 'grading_company_watch.py'
+      - 'grading_company_updates.json'
+      - 'graded_photo_multi_source.py'
+      - 'verified_collection_job_neural.py'
       - 'validate_external_links.py'
       - 'feature_contract.py'
+      - 'runtime_bundle_guard_v143.py'
       - 'multi_route_event_discovery.py'
       - 'social_event_discovery.py'
       - 'auto_pipeline_runner.py'
@@ -25,6 +32,9 @@ on:
       - 'test_social_event_topic_coverage.py'
       - 'test_social_topic_capacity_v213.py'
       - 'test_information_lifecycle_archive_v209.py'
+      - 'test_grading_company_watch_v215.py'
+      - 'test_grading_watch_integration_v220.py'
+      - 'test_verified_collection_job_neural_v212.py'
       - 'source_collection_stats.json'
       - 'adaptive_collection_stats.json'
       - '.github/workflows/collection-verification-guard.yml'
@@ -36,13 +46,20 @@ on:
       - 'test_collection_verification_gate.py'
       - 'tcg_updater.py'
       - 'auto_update_all.py'
+      - 'update_market_watch.py'
       - 'update_market_prices.py'
       - 'multi_market_price_collector.py'
       - 'update_releases.py'
       - 'update_promo_events.py'
       - 'update_purchase_sources.py'
+      - 'update_exchange_rates.py'
+      - 'grading_company_watch.py'
+      - 'grading_company_updates.json'
+      - 'graded_photo_multi_source.py'
+      - 'verified_collection_job_neural.py'
       - 'validate_external_links.py'
       - 'feature_contract.py'
+      - 'runtime_bundle_guard_v143.py'
       - 'multi_route_event_discovery.py'
       - 'social_event_discovery.py'
       - 'auto_pipeline_runner.py'
@@ -53,6 +70,9 @@ on:
       - 'test_social_event_topic_coverage.py'
       - 'test_social_topic_capacity_v213.py'
       - 'test_information_lifecycle_archive_v209.py'
+      - 'test_grading_company_watch_v215.py'
+      - 'test_grading_watch_integration_v220.py'
+      - 'test_verified_collection_job_neural_v212.py'
       - '.github/workflows/collection-verification-guard.yml'
       - '.github/workflows/tcg-static-data-refresh.yml'
 
@@ -86,17 +106,24 @@ jobs:
         run: |
           python -m py_compile \
             collection_verification_gate.py static_data_publish_gate.py feature_contract.py \
-            update_purchase_sources.py validate_external_links.py \
+            update_market_watch.py update_purchase_sources.py update_exchange_rates.py \
+            grading_company_watch.py graded_photo_multi_source.py verified_collection_job_neural.py \
+            validate_external_links.py \
             test_collection_verification_gate.py test_static_data_publish_gate.py \
             test_collection_scope_compat_v214.py test_social_event_topic_coverage.py \
-            test_social_topic_capacity_v213.py test_information_lifecycle_archive_v209.py
+            test_social_topic_capacity_v213.py test_information_lifecycle_archive_v209.py \
+            test_grading_company_watch_v215.py test_grading_watch_integration_v220.py \
+            test_verified_collection_job_neural_v212.py
           python -m unittest -v \
             test_collection_verification_gate.py \
             test_static_data_publish_gate.py \
             test_collection_scope_compat_v214.py \
             test_social_event_topic_coverage.py \
             test_social_topic_capacity_v213.py \
-            test_information_lifecycle_archive_v209.py
+            test_information_lifecycle_archive_v209.py \
+            test_grading_company_watch_v215.py \
+            test_grading_watch_integration_v220.py \
+            test_verified_collection_job_neural_v212.py
           python feature_contract.py
           python selfrefine_domain_boundary_guard.py
 
@@ -141,7 +168,10 @@ jobs:
           bad = {k: {'expected': v, 'actual': safety.get(k)} for k, v in expected.items() if safety.get(k) is not v}
           if bad:
               raise SystemExit(f'collection verification safety mismatch: {bad}')
-          print(json.dumps({'status': report.get('status'), 'counts': report.get('counts'), 'metrics': report.get('metrics')}, ensure_ascii=False))
+          metrics = report.get('metrics') or {}
+          if metrics.get('mandatory_outputs_expected') != 8:
+              raise SystemExit(f'unexpected mandatory collector count: {metrics.get("mandatory_outputs_expected")}')
+          print(json.dumps({'status': report.get('status'), 'counts': report.get('counts'), 'metrics': metrics}, ensure_ascii=False))
           PY
 
       - name: Upload collection verification report
