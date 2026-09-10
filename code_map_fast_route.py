@@ -16,6 +16,120 @@ from code_map_intelligence import (
 )
 
 ROOT = Path(__file__).resolve().parent
+IG_COLLECTION_GROUP = "instagram_cardinfo_collection_health"
+IG_COLLECTION_HEALTH = "instagram_tcg_content/collection_health.py"
+IG_COLLECTION_GAP = "instagram_tcg_content/collection_freshness_gap_guard.py"
+IG_COLLECTION_RECOVERY = "instagram_tcg_content/collection_recovery_runner.py"
+IG_COLLECTION_TESTS = (
+    "instagram_tcg_content/test_collection_freshness_gap_guard.py",
+    "instagram_tcg_content/test_collection_recovery_runner.py",
+    "instagram_tcg_content/test_collection_health.py",
+)
+IG_COLLECTION_TEST_NODES = (
+    "instagram_tcg_content/test_collection_freshness_gap_guard.py::CollectionFreshnessGapGuardTests::test_fresh_shared_collection_plus_stale_ig_is_persistence_lag",
+    "instagram_tcg_content/test_collection_recovery_runner.py::CollectionRecoveryRunnerTests::test_incremental_recovery_merges_only_fresh_verified_instagram_facts",
+)
+
+
+def _merge_unique(*values: Iterable[str]) -> list[str]:
+    result: list[str] = []
+    for rows in values:
+        for row in rows:
+            value = str(row or "").strip()
+            if value and value not in result:
+                result.append(value)
+    return result
+
+
+def _instagram_collection_route_override(query: str, base: dict) -> dict:
+    """Promote known IG collection gap/recovery requests without repo-wide search.
+
+    The large static code-map stays generic; this public maintenance entrypoint owns
+    the operational routing for the newly added freshness-gap and recovery runner.
+    This is intentionally routing only and never grants verification authority.
+    """
+    text = " ".join(str(query or "").lower().split())
+    scoped = any(marker in text for marker in (
+        "인스타 카드정보",
+        "instagram cardinfo",
+        "instagram card info",
+        "ig cardinfo",
+    ))
+    if not scoped:
+        return dict(base)
+
+    recovery_markers = (
+        "수집 복구 실행",
+        "복구수집 실행",
+        "복구 실행",
+        "capture packet",
+        "recovery runner",
+        "collection recovery runner",
+        "ig-local capture",
+        "ig local capture",
+    )
+    gap_markers = (
+        "수집 단절",
+        "스냅샷 stale",
+        "snapshot stale",
+        "스냅샷만 stale",
+        "snapshot만 stale",
+        "수집은 최신",
+        "공용 수집은 최신",
+        "freshness gap",
+        "persistence lag",
+        "ig snapshot stale",
+        "스냅샷 지연",
+        "snapshot 지연",
+    )
+    if any(marker in text for marker in recovery_markers):
+        entry = IG_COLLECTION_RECOVERY
+        alternates = [IG_COLLECTION_GAP, IG_COLLECTION_HEALTH]
+        reason = "fast_route_instagram_collection_recovery_rule"
+    elif any(marker in text for marker in gap_markers):
+        entry = IG_COLLECTION_GAP
+        alternates = [IG_COLLECTION_RECOVERY, IG_COLLECTION_HEALTH]
+        reason = "fast_route_instagram_collection_gap_rule"
+    else:
+        return dict(base)
+
+    result = dict(base)
+    prior_groups = [
+        row for row in (base.get("matched_feature_groups") or [])
+        if isinstance(row, dict) and row.get("group") != IG_COLLECTION_GROUP
+    ]
+    result["matched_feature_groups"] = [
+        {"group": IG_COLLECTION_GROUP, "score": 100.0},
+        *prior_groups,
+    ]
+    result["entry_group"] = IG_COLLECTION_GROUP
+    result["entry_file"] = entry
+    result["entry_files"] = [entry]
+    result["alternate_entry_files"] = alternates
+    result["entrypoint_reason"] = reason
+    result["primary_files"] = _merge_unique(
+        [entry, *alternates],
+        base.get("primary_files") or [],
+    )
+    result["support_files"] = [
+        path for path in result["primary_files"]
+        if path != entry and path not in alternates
+    ]
+    result["suggested_tests"] = _merge_unique(
+        IG_COLLECTION_TESTS,
+        base.get("suggested_tests") or [],
+    )
+    result["suggested_test_nodes"] = _merge_unique(
+        IG_COLLECTION_TEST_NODES,
+        base.get("suggested_test_nodes") or [],
+    )
+    result["repository_wide_search_required"] = False
+    result["repository_wide_search_avoided"] = True
+    result["route_decision"] = "direct_entrypoint"
+    result["route_source"] = str(base.get("route_source") or "") + "+fast_ig_collection_override"
+    result["code_map_override"] = True
+    result["verification_authority"] = False
+    return result
 
 
 def route(
@@ -31,7 +145,10 @@ def route(
 
     # Cheap feature-name routing always comes first. Unknown features have no
     # bounded seed, so loading Graphify before fallback search only adds latency.
-    fast_route = resolve_feature_query(query)
+    fast_route = _instagram_collection_route_override(
+        query,
+        resolve_feature_query(query),
+    )
     result = dict(fast_route)
     graph_load_attempted = False
     graph_load_ms = 0.0
@@ -41,7 +158,33 @@ def route(
         graph_started = time.perf_counter()
         index = CodeMapIndex(ROOT)
         graph_load_ms = round((time.perf_counter() - graph_started) * 1000.0, 3)
-        result = index.feature_impact(query, depth=depth, max_seed_files=max_seeds)
+        if fast_route.get("code_map_override"):
+            # Do not let the generic static resolver silently replace the explicit
+            # IG gap/recovery entrypoint. Traverse from the promoted file itself.
+            impact = index.impact(
+                str(fast_route["entry_file"]),
+                depth=depth,
+                limit=max(1, min(24, int(max_seeds) * 6)),
+            )
+            result = dict(fast_route)
+            result["seed_files"] = [str(fast_route["entry_file"])]
+            result["impacted_files"] = list(impact.get("impacted_files") or [])
+            result["suggested_tests"] = _merge_unique(
+                fast_route.get("suggested_tests") or [],
+                impact.get("suggested_tests") or [],
+            )
+            result["critical_runtime_files"] = list(impact.get("critical_runtime_files") or [])
+            result["seed_results"] = [{
+                "seed": str(fast_route["entry_file"]),
+                "available": bool(impact.get("available")),
+                "status": str(impact.get("status") or ""),
+                "confidence": float(impact.get("confidence") or 0.0),
+                "fanout_files": int(impact.get("fanout_files") or 0),
+            }]
+            result["graph_available"] = bool(index.available)
+            result["map_signature"] = str(index.signature or "")
+        else:
+            result = index.feature_impact(query, depth=depth, max_seed_files=max_seeds)
         result["graph_loaded"] = bool(index.available)
         result["graph_load_attempted"] = True
         result["graph_load_ms"] = graph_load_ms
