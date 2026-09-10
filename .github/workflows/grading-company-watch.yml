@@ -1,5 +1,5 @@
 name: Grading Company Watch
-# v216: source-scoped baseline semantics verified before live activation.
+# v217: fee/declared-value separation and parser-version gate verified before live activation.
 
 on:
   workflow_dispatch:
