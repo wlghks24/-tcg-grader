@@ -67,6 +67,22 @@ class GradingCompanyWatchV215Tests(unittest.TestCase):
         self.assertEqual(rows[0]["announced_date"], "2026-09-10")
         self.assertTrue(rows[0]["url"].startswith("https://www.psacard.com/"))
 
+    def test_cgc_fee_is_not_confused_with_max_declared_value(self):
+        sample = (
+            "Bulk Cards 25-card minimum Max. Value per Card (USD) $500 Fee Per Card (USD) $17 "
+            "Current Turnaround (working days) 150 days Economy Max. Value per Card (USD) $1,000 "
+            "Fee Per Card (USD) $20 Current Turnaround (working days) 90 days "
+            "Standard Max. Value per Card (USD) $3,000 Fee Per Card (USD) $55 Current Turnaround (working days) 10 days"
+        )
+        rows=watch.parse_services('CGC','US','USD',sample,'https://www.cgccards.com/submit/services-fees/cgc-grading/?view=cards')
+        by={row['name']:row for row in rows}
+        self.assertEqual(by['Bulk']['fee'],17.0)
+        self.assertEqual(by['Bulk']['max_declared_or_insured_value'],500.0)
+        self.assertEqual(by['Bulk']['turnaround_business_days'],150)
+        self.assertEqual(by['Economy']['fee'],20.0)
+        self.assertEqual(by['Standard']['fee'],55.0)
+        self.assertEqual(by['Bulk']['parser_version'],watch.PARSER_VERSION)
+
     def test_network_failure_retains_last_good_source(self):
         specs = ({"id": "psa-jp-pricing", "kind": "pricing", "market": "JP", "currency": "JPY",
                   "url": "https://www.psacard.com/ja-JP/services/tradingcardgrading/grading"},)

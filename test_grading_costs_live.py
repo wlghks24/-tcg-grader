@@ -35,11 +35,11 @@ class GradingCostTests(unittest.TestCase):
                 'PSA':{
                     'markets':{
                         'US':{'currency':'USD','source':'https://www.psacard.com/services/tradingcardgrading','services':[
-                            {'name':'Standard','fee':84.99,'currency':'USD','availability':'open','verified_official_source':True,
+                            {'name':'Standard','fee':84.99,'currency':'USD','availability':'open','verified_official_source':True,'parser_version':2,
                              'source':'https://www.psacard.com/services/tradingcardgrading'}]},
                         'JP':{'currency':'JPY','source':'https://www.psacard.com/ja-JP/services/tradingcardgrading/grading','services':[
                             {'name':'Standard','fee':9980,'currency':'JPY','turnaround_business_days':100,'availability':'open',
-                             'verified_official_source':True,'source':'https://www.psacard.com/ja-JP/services/tradingcardgrading/grading'}]},
+                             'verified_official_source':True,'parser_version':2,'source':'https://www.psacard.com/ja-JP/services/tradingcardgrading/grading'}]},
                     },
                     'source_health':[{'source_id':'psa-jp-pricing','status':'ok'}],
                 }
@@ -56,7 +56,7 @@ class GradingCostTests(unittest.TestCase):
     def test_only_explicit_verified_removal_retires_fallback_service(self):
         companies=deepcopy(g.COMPANIES)
         watch={'companies':{},'history':[
-            {'company':'PSA','type':'service_removed','service':'Regular','verified_official_source':True}
+            {'company':'PSA','type':'service_removed','service':'Regular','verified_official_source':True,'parser_version':2}
         ]}
         g._merge_watch(companies,watch)
         regular=next(x for x in companies['PSA']['services'] if x['name']=='Regular')
@@ -69,6 +69,16 @@ class GradingCostTests(unittest.TestCase):
         self.assertIn('최근 요금·서비스 변경',source)
         self.assertIn('업체 이벤트·공지',source)
         self.assertIn("document.visibilityState==='visible'",source)
+
+    def test_obsolete_parser_snapshot_cannot_override_fallback_fee(self):
+        companies=deepcopy(g.COMPANIES)
+        watch={'companies':{'CGC':{'markets':{'US':{'services':[
+            {'name':'Bulk','fee':500.0,'verified_official_source':True,'parser_version':1}
+        ]}}}},'history':[]}
+        g._merge_watch(companies,watch)
+        by={row['name']:row for row in companies['CGC']['services']}
+        self.assertEqual(by['Bulk']['fee'],17.0)
+        self.assertEqual(companies['CGC']['regional_markets'],{})
 
 
 if __name__=='__main__':

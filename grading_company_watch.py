@@ -27,6 +27,7 @@ UA = "Mozilla/5.0 TCG-Grader-GradingCompanyWatch/1.0"
 MAX_PAGE_BYTES = 2_000_000
 MAX_HISTORY = 240
 MAX_ANNOUNCEMENTS = 120
+PARSER_VERSION = 2
 
 ALLOWED_HOSTS = {
     "psacard.com", "www.psacard.com",
@@ -189,6 +190,19 @@ def _price(window: str, currency: str) -> float | int | None:
     if currency == "KRW":
         values = [int(v.replace(",", "")) for v in re.findall(r"(?:₩\s*)?([0-9][0-9,]*)\s*원", window)]
         return next((v for v in values if 1000 <= v <= 5_000_000), None)
+    # Prefer explicitly labelled per-card fee fields. Official tables such as
+    # CGC put the maximum declared value before the fee, so the first dollar
+    # amount is not necessarily the grading price.
+    for pattern in (
+        r"Fee\s+Per\s+Card\s*\(USD\)\s*\$\s*([0-9][0-9,]*(?:\.[0-9]{1,2})?)",
+        r"\$\s*([0-9][0-9,]*(?:\.[0-9]{1,2})?)\s*(?:per\s*card|/\s*card)\b",
+        r"(?:fee|price|pricing)\s*[:=-]?\s*\$\s*([0-9][0-9,]*(?:\.[0-9]{1,2})?)",
+    ):
+        match = re.search(pattern, window, re.I)
+        if match:
+            value = float(match.group(1).replace(",", ""))
+            if 5 <= value <= 50_000:
+                return value
     values = [float(v.replace(",", "")) for v in re.findall(r"\$\s*([0-9][0-9,]*(?:\.[0-9]{1,2})?)", window)]
     return next((v for v in values if 5 <= v <= 50_000), None)
 
@@ -197,6 +211,7 @@ def _turnaround(window: str) -> int | None:
     for pattern in (
         r"予定納期\s*[:：]?\s*(\d{1,4})\s*営業日",
         r"(\d{1,4})\+?\s*business\s*days?",
+        r"Current\s+Turnaround\s*\(working\s+days\)\s*(\d{1,4})\s*days?",
         r"(\d{1,4})\s*영업일",
     ):
         match = re.search(pattern, window, re.I)
@@ -215,7 +230,7 @@ def _max_value(window: str, currency: str) -> float | int | None:
         match = re.search(r"(?:신고가액|신고가격).{0,30}?([0-9][0-9,]*)\s*원", window, re.I)
         return int(match.group(1).replace(",", "")) if match else None
     match = re.search(
-        r"(?:Max(?:imum)?\s+(?:Insured|Declared)\s+Value|Declared\s+Value).{0,50}?\$\s*([0-9][0-9,]*(?:\.[0-9]{1,2})?)",
+        r"(?:Max\.?\s+Value\s+per\s+Card(?:\s*\(USD\))?|Max(?:imum)?\s+(?:Insured|Declared)\s+Value|Declared\s+Value).{0,50}?\$\s*([0-9][0-9,]*(?:\.[0-9]{1,2})?)",
         window, re.I,
     )
     return float(match.group(1).replace(",", "")) if match else None
@@ -252,6 +267,7 @@ def parse_services(company: str, market: str, currency: str, text: str, source: 
         row = {
             "name": canonical, "observed_label": alias, "currency": currency,
             "availability": availability, "source": source, "verified_official_source": True,
+            "parser_version": PARSER_VERSION,
         }
         if fee is not None:
             row["fee"] = fee
@@ -320,7 +336,7 @@ def _service_changes(company: str, source_id: str, before: list[dict], after: li
             changes.append({
                 "company": company, "source_id": source_id, "type": "service_added",
                 "service": name, "after": row, "detected_at": checked_at,
-                "verified_official_source": True,
+                "verified_official_source": True, "parser_version": PARSER_VERSION,
             })
             continue
         prior = old[name]
@@ -331,7 +347,7 @@ def _service_changes(company: str, source_id: str, before: list[dict], after: li
             changes.append({
                 "company": company, "source_id": source_id, "type": "service_changed",
                 "service": name, "changes": diffs, "after": row, "detected_at": checked_at,
-                "verified_official_source": True,
+                "verified_official_source": True, "parser_version": PARSER_VERSION,
             })
     if allow_removal:
         for name, row in old.items():
@@ -339,7 +355,7 @@ def _service_changes(company: str, source_id: str, before: list[dict], after: li
                 changes.append({
                     "company": company, "source_id": source_id, "type": "service_removed",
                     "service": name, "before": row, "detected_at": checked_at,
-                    "verified_official_source": True,
+                    "verified_official_source": True, "parser_version": PARSER_VERSION,
                 })
     return changes
 
@@ -384,17 +400,18 @@ def collect(previous: dict | None = None, fetcher=_fetch_raw) -> dict:
                     "market": spec["market"], "currency": spec["currency"], "url": spec["url"],
                     "status": "ok", "checked_at": checked_at, "signal_fingerprint": fingerprint,
                     "services": services, "announcements": found, "verified_official_source": True,
+                    "parser_version": PARSER_VERSION,
                 }
                 # First successful observation of a source establishes its baseline.
                 # A previously verified source may emit service changes, including
                 # recovery after a temporary degraded fetch that retained last-good data.
                 structured = (
                     _service_changes(company, source_id, old.get("services", []) or [], services, checked_at)
-                    if old.get("verified_official_source") is True else []
+                    if old.get("verified_official_source") is True and old.get("parser_version") == PARSER_VERSION else []
                 )
                 changes.extend(structured)
                 old_fp = old.get("signal_fingerprint")
-                if old_fp and old_fp != fingerprint and not structured and not found:
+                if old.get("parser_version") == PARSER_VERSION and old_fp and old_fp != fingerprint and not structured and not found:
                     changes.append({
                         "company": company, "source_id": source_id, "type": "official_page_changed_unparsed",
                         "detected_at": checked_at, "source": spec["url"], "requires_review": True,

@@ -20,6 +20,7 @@ ALLOWED_HOSTS={
  'break.co.kr','www.break.co.kr',
 }
 PREFERRED_MARKET={'PSA':'US','BGS':'US','CGC':'US','TAG':'US','BRG':'KR'}
+WATCH_PARSER_MIN_VERSION=2
 
 # Last-known official baselines are fail-safe fallbacks only. The scheduled official
 # watcher can overlay verified changes without mutating source code.
@@ -101,6 +102,15 @@ def _load_watch():
         return data
     except (OSError,ValueError,TypeError,UnicodeError,json.JSONDecodeError):return {}
 
+def _watch_parser_ok(row):
+    if not isinstance(row,dict) or not row.get('verified_official_source'):
+        return False
+    try:return int(row.get('parser_version',0))>=WATCH_PARSER_MIN_VERSION
+    except (TypeError,ValueError,OverflowError):return False
+
+def _current_watch_service(row):
+    return _watch_parser_ok(row) and bool(row.get('name'))
+
 def _merge_watch(companies,watch):
     if not watch:return
     watched=watch.get('companies',{}) if isinstance(watch.get('companies'),dict) else {}
@@ -108,13 +118,21 @@ def _merge_watch(companies,watch):
     for name,out in companies.items():
         company=watched.get(name,{}) if isinstance(watched.get(name),dict) else {}
         markets=company.get('markets',{}) if isinstance(company.get('markets'),dict) else {}
-        out['regional_markets']=deepcopy(markets)
+        clean_markets={}
+        for market_name,raw_market in markets.items():
+            if not isinstance(raw_market,dict):continue
+            clean=deepcopy(raw_market)
+            raw_rows=raw_market.get('services',[]) if isinstance(raw_market.get('services'),list) else []
+            clean['services']=[deepcopy(row) for row in raw_rows if _current_watch_service(row)]
+            if clean['services']:
+                clean_markets[market_name]=clean
+        out['regional_markets']=clean_markets
         preferred=PREFERRED_MARKET.get(name)
-        market=markets.get(preferred,{}) if isinstance(markets.get(preferred),dict) else {}
+        market=clean_markets.get(preferred,{}) if isinstance(clean_markets.get(preferred),dict) else {}
         rows=market.get('services',[]) if isinstance(market.get('services'),list) else []
         by_name={str(s.get('name')):s for s in out.get('services',[]) if isinstance(s,dict) and s.get('name')}
         for observed in rows:
-            if not isinstance(observed,dict) or not observed.get('verified_official_source') or not observed.get('name'):continue
+            if not _current_watch_service(observed):continue
             key=str(observed['name']);target=by_name.get(key)
             if target is None:
                 target={'name':key};out.setdefault('services',[]).append(target);by_name[key]=target
@@ -122,7 +140,7 @@ def _merge_watch(companies,watch):
                 if field in observed:target[field]=observed[field]
             target['live_verified']=True;target['watch_source']=observed.get('source')
         # Only an explicit verified removal record can retire a fallback service.
-        removed={str(c.get('service')) for c in changes if isinstance(c,dict) and c.get('company')==name and c.get('type')=='service_removed' and c.get('verified_official_source')}
+        removed={str(c.get('service')) for c in changes if _watch_parser_ok(c) and c.get('company')==name and c.get('type')=='service_removed'}
         for svc in out.get('services',[]):
             if str(svc.get('name')) in removed:svc['availability']='retired'
         out['watch_source_health']=deepcopy(company.get('source_health',[]))
