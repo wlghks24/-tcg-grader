@@ -112,6 +112,8 @@ FEATURE_QUERY_ALIASES = {
     "instagram_cardinfo_pause_recovery": (
         "인스타 카드정보 일시정지", "인스타 카드정보 자동화", "pause recovery",
         "automation pause", "일시정지", "비활성화", "재활성화", "pause guard",
+        "작업 중지 감시", "자료교환", "감시 소통", "원인미상 일시중지",
+        "producer monitor exchange", "pause monitor exchange",
     ),
     "instagram_cardinfo_crosscheck": (
         "인스타 카드정보 교차확인", "자료비교", "자료 비교", "crosscheck",
@@ -121,14 +123,28 @@ FEATURE_QUERY_ALIASES = {
         "인스타 카드정보 출처", "출처 검증", "source verification", "source route",
         "공식 출처", "실거래", "시세참고",
     ),
+    "instagram_cardinfo_collection_health": (
+        "인스타 카드정보 자료수집", "자료수집", "수집상태", "수집 상태",
+        "collection health", "coverage matrix", "수집 커버리지", "자료 비교분석",
+    ),
     "instagram_cardinfo_production_state": (
         "인스타 카드정보 작업물", "작업물", "production state", "baseline",
         "10:30 제작", "22:30 수정판", "artifact",
+        "작업물 안올라옴", "작업물 누락", "silent output", "복구수집",
+        "recovery collection", "production recovery",
     ),
     "instagram_cardinfo_ai_reliability": (
         "인스타 카드정보 신경망", "인스타 카드정보 ai", "ai reliability",
+        "인스타 카드정보 자료수집 신경망 연결", "자료수집 신경망 연결",
+        "신경망 연결", "ai 연결", "runtime link", "runtime 연결",
         "calibration", "drift", "모델 손상", "차원 불일치", "확률 오차",
         "adaptive learning", "evidence learner",
+    ),
+    "instagram_cardinfo_quality_learning": (
+        "카드정보 자연스럽게", "카드정보 어색", "카드정보 품질", "품질 학습",
+        "만든걸 분석", "만든 것을 분석", "결과물 분석 학습", "디자인 학습",
+        "자연스러운 카드정보", "natural quality", "quality learning",
+        "post make review", "post-make review", "레이아웃 학습", "문구 자연스러움",
     ),
 }
 
@@ -162,7 +178,10 @@ FEATURE_ROUTE_OVERRIDES = {
     ),
     "instagram_cardinfo_pause_recovery": (
         "instagram_tcg_content/automation_state_guard.py",
+        "instagram_tcg_content/pause_monitor_exchange.py",
         "instagram_tcg_content/test_automation_pause_recovery_v30.py",
+        "instagram_tcg_content/test_pause_monitor_exchange.py",
+        "instagram_tcg_content/verification_scope_policy.json",
         ".github/workflows/instagram-tcg-selfrefine.yml",
     ),
     "instagram_cardinfo_crosscheck": (
@@ -182,21 +201,37 @@ FEATURE_ROUTE_OVERRIDES = {
         "instagram_tcg_content/source_route_resilience.py",
         "instagram_tcg_content/source_routes.json",
         "instagram_tcg_content/verification_scope_policy.json",
+        "instagram_tcg_content/collection_health.py",
+        "instagram_tcg_content/persisted_crosscheck_export.py",
+        "instagram_tcg_content/test_collection_health.py",
         "instagram_tcg_content/production_state.py",
         "instagram_tcg_content/test_source_verification_engine.py",
         "instagram_tcg_content/test_source_route_resilience.py",
         "instagram_tcg_content/test_production_state.py",
         "test_instagram_verification_scope_policy_v210.py",
     ),
+    "instagram_cardinfo_collection_health": (
+        "instagram_tcg_content/collection_health.py",
+        "instagram_tcg_content/persisted_crosscheck_export.py",
+        "instagram_tcg_content/source_verification_engine.py",
+        "instagram_tcg_content/source_route_resilience.py",
+        "instagram_tcg_content/source_routes.json",
+        "instagram_tcg_content/verification_scope_policy.json",
+        "instagram_tcg_content/test_collection_health.py",
+        ".github/workflows/instagram-tcg-selfrefine.yml",
+    ),
     "instagram_cardinfo_production_state": (
         "instagram_tcg_content/production_state.py",
+        "instagram_tcg_content/production_recovery_policy.py",
         "instagram_tcg_content/source_verification_engine.py",
         "instagram_tcg_content/selfrefine_gate.py",
         "instagram_tcg_content/test_production_state.py",
+        "instagram_tcg_content/test_production_recovery_policy.py",
         "instagram_tcg_content/test_source_verification_engine.py",
         "instagram_tcg_content/test_live_packet_guards.py",
     ),
     "instagram_cardinfo_ai_reliability": (
+        "instagram_tcg_content/ai_reliability_runtime.py",
         "ai_reliability_v8/adaptive_learning.py",
         "ai_reliability_v8/evidence_learning.py",
         "ai_reliability_v8/bridge.py",
@@ -204,7 +239,15 @@ FEATURE_ROUTE_OVERRIDES = {
         "ai_reliability_v8/CODE_MAP.json",
         "ai_reliability_v8/WORKFLOW_V8.json",
         "instagram_tcg_content/test_ai_reliability_v8_integration.py",
+        "instagram_tcg_content/test_ai_reliability_runtime.py",
         ".github/workflows/ai-reliability-v8-integration.yml",
+    ),
+    "instagram_cardinfo_quality_learning": (
+        "instagram_tcg_content/cardinfo_quality_learning.py",
+        "instagram_tcg_content/test_cardinfo_quality_learning.py",
+        "instagram_tcg_content/verification_scope_policy.json",
+        "instagram_tcg_content/production_state.py",
+        ".github/workflows/instagram-tcg-selfrefine.yml",
     ),
 }
 
@@ -260,24 +303,42 @@ FEATURE_TEST_NODE_CONTRACTS = {
         "test_code_map_entrypoint_route_v196.py::CodeMapEntrypointRouteV196Tests::test_code_map_internal_has_single_public_entrypoint",
     ),
     "instagram_cardinfo_pause_recovery": (
+        "instagram_tcg_content/test_pause_monitor_exchange.py::PauseMonitorExchangeTests::test_schedule_gap_without_producer_start_is_control_plane_only",
+        "instagram_tcg_content/test_pause_monitor_exchange.py::PauseMonitorExchangeTests::test_reported_producer_failure_allows_only_run_level_handoff",
         "instagram_tcg_content/test_automation_pause_recovery_v30.py::AutomationPauseRecoveryV30Tests::test_unknown_pause_never_fabricates_root_cause",
     ),
     "instagram_cardinfo_crosscheck": (
         "instagram_tcg_content/test_source_verification_engine.py::main",
+        "instagram_tcg_content/test_source_route_resilience.py::main",
         "instagram_tcg_content/test_production_state.py::main",
     ),
     "instagram_cardinfo_source_verification": (
         "instagram_tcg_content/test_source_verification_engine.py::main",
+        "instagram_tcg_content/test_source_route_resilience.py::main",
         "instagram_tcg_content/test_production_state.py::main",
+        "instagram_tcg_content/test_collection_health.py::CollectionHealthTests::test_ready_snapshot_requires_fresh_six_output_matrix",
+    ),
+    "instagram_cardinfo_collection_health": (
+        "instagram_tcg_content/test_collection_health.py::CollectionHealthTests::test_ready_snapshot_requires_fresh_six_output_matrix",
+        "instagram_tcg_content/test_collection_health.py::CollectionHealthTests::test_persisted_snapshot_records_failed_latest_attempt_and_rejects_nonlocal_provenance",
+        "instagram_tcg_content/test_source_verification_engine.py::main",
+        "instagram_tcg_content/test_source_route_resilience.py::main",
     ),
     "instagram_cardinfo_production_state": (
         "instagram_tcg_content/test_production_state.py::main",
+        "instagram_tcg_content/test_production_recovery_policy.py::ProductionRecoveryPolicyTests::test_second_failure_blocks_render_but_never_silences_report",
         "instagram_tcg_content/test_source_verification_engine.py::main",
     ),
     "instagram_cardinfo_ai_reliability": (
+        "instagram_tcg_content/test_ai_reliability_runtime.py::InstagramAiReliabilityRuntimeTests::test_missing_model_and_labels_is_explicit_rules_only_not_fake_neural",
         "instagram_tcg_content/test_ai_reliability_v8_integration.py::InstagramCardReliabilityV8IntegrationTests::test_neural_gate_below_1000_preserves_existing_model_without_training",
         "instagram_tcg_content/test_ai_reliability_v8_integration.py::InstagramCardReliabilityV8IntegrationTests::test_legacy_operational_models_fall_back_to_rules_only",
         "instagram_tcg_content/test_ai_reliability_v8_code_map_contract.py::AiReliabilityV8CodeMapContractTests::test_binding_hashes_match_installed_files",
+    ),
+    "instagram_cardinfo_quality_learning": (
+        "instagram_tcg_content/test_cardinfo_quality_learning.py::CardInfoQualityLearningTests::test_early_phase_repeated_feedback_builds_bounded_profile",
+        "instagram_tcg_content/test_cardinfo_quality_learning.py::CardInfoQualityLearningTests::test_below_1000_never_trains_and_never_authorizes_production",
+        "instagram_tcg_content/test_cardinfo_quality_learning.py::CardInfoQualityLearningTests::test_ai_self_or_synthetic_labels_fail_closed",
     ),
 }
 
@@ -311,8 +372,10 @@ FEATURE_ENTRYPOINTS = {
     "instagram_cardinfo_pause_recovery": ("instagram_tcg_content/automation_state_guard.py",),
     "instagram_cardinfo_crosscheck": ("instagram_tcg_content/source_verification_engine.py",),
     "instagram_cardinfo_source_verification": ("instagram_tcg_content/source_verification_engine.py",),
+    "instagram_cardinfo_collection_health": ("instagram_tcg_content/collection_health.py",),
     "instagram_cardinfo_production_state": ("instagram_tcg_content/production_state.py",),
     "instagram_cardinfo_ai_reliability": ("ai_reliability_v8/adaptive_learning.py",),
+    "instagram_cardinfo_quality_learning": ("instagram_tcg_content/cardinfo_quality_learning.py",),
 }
 
 # Secondary first-touch files stay visible without competing with the one
@@ -326,6 +389,15 @@ FEATURE_ALTERNATE_ENTRYPOINTS = {
     "verified_neural_learning": (
         "verified_collection_job_neural.py",
         "verified_neural_self_refine.py",
+    ),
+    "instagram_cardinfo_pause_recovery": (
+        "instagram_tcg_content/pause_monitor_exchange.py",
+    ),
+    "instagram_cardinfo_production_state": (
+        "instagram_tcg_content/production_recovery_policy.py",
+    ),
+    "instagram_cardinfo_ai_reliability": (
+        "instagram_tcg_content/ai_reliability_runtime.py",
     ),
 }
 
@@ -351,6 +423,18 @@ FEATURE_ENTRYPOINT_RULES = {
     "verified_neural_learning": (
         (("job neural", "작업 신경망", "수집 작업 신경망"), "verified_collection_job_neural.py"),
         (("selfrefine", "self-refine", "자가개선", "자가학습"), "verified_neural_self_refine.py"),
+    ),
+    "instagram_cardinfo_pause_recovery": (
+        (("자료교환", "감시 소통", "작업 중지 감시", "producer monitor", "pause monitor exchange", "원인미상 일시중지"),
+         "instagram_tcg_content/pause_monitor_exchange.py"),
+    ),
+    "instagram_cardinfo_production_state": (
+        (("작업물 안올라옴", "작업물 누락", "silent output", "복구수집", "recovery collection", "production recovery"),
+         "instagram_tcg_content/production_recovery_policy.py"),
+    ),
+    "instagram_cardinfo_ai_reliability": (
+        (("신경망 연결", "ai 연결", "runtime link", "runtime 연결", "collection health", "자료수집 연결"),
+         "instagram_tcg_content/ai_reliability_runtime.py"),
     ),
 }
 
