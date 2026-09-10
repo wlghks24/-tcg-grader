@@ -1,5 +1,5 @@
 {
-  "updated_at": "2026-09-02T17:54:09+00:00",
+  "updated_at": "2026-09-10T04:47:07+00:00",
   "items": [
     {
       "game": "Pokémon",
@@ -9,15 +9,15 @@
       "price": "¥360/팩",
       "status": "공식 확인",
       "source": "https://www.pokemon-card.com/products/index.html?productType=expansion",
-      "link_checked_at": "2026-08-26T10:47:11+00:00",
-      "link_status": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인",
+      "link_checked_at": "2026-09-10T04:50:08+00:00",
+      "link_status": "정상",
       "link_statuses": {
-        "source": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인"
+        "source": "정상"
       },
       "parser": "official-result-api-v1",
       "transport_source": "https://www.pokemon-card.com/products/resultAPI.php?productType=expansion&page=1",
       "first_seen_at": "2026-09-02T17:54:09+00:00",
-      "last_verified_at": "2026-09-02T17:54:09+00:00",
+      "last_verified_at": "2026-09-10T04:47:07+00:00",
       "lifecycle": "current",
       "archive_on": "2026-09-22"
     },
@@ -29,13 +29,49 @@
       "price": "공식 상품페이지 확인",
       "status": "출시예정",
       "source": "https://www.pokemon.com/us/pokemon-tcg/product-gallery/30th-celebration-elite-trainer-box",
-      "link_checked_at": "2026-08-26T10:47:11+00:00",
-      "link_status": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인",
+      "link_checked_at": "2026-09-10T04:50:08+00:00",
+      "link_status": "정상",
       "link_statuses": {
-        "source": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인"
+        "source": "정상"
       },
       "lifecycle": "current",
       "archive_on": "2026-09-22"
+    },
+    {
+      "game": "ONE PIECE",
+      "region": "KR",
+      "name": "[STK-29] 스타트 덱 EGGHEAD",
+      "release_date": "2026-09-18",
+      "price": "₩12,000/덱",
+      "status": "공식 확인",
+      "source": "https://onepiece-cardgame.kr/products.do",
+      "first_seen_at": "2026-09-10T04:47:07+00:00",
+      "last_verified_at": "2026-09-10T04:47:07+00:00",
+      "lifecycle": "current",
+      "archive_on": "2026-09-24",
+      "link_checked_at": "2026-09-10T04:50:08+00:00",
+      "link_statuses": {
+        "source": "정상"
+      },
+      "link_status": "정상"
+    },
+    {
+      "game": "ONE PIECE",
+      "region": "US",
+      "name": "Set Sail Deck Set [SD-01]",
+      "price": "$24.99/덱",
+      "status": "공식 확인",
+      "source": "https://en.onepiece-cardgame.com/products/",
+      "release_date": "2026-09-18",
+      "first_seen_at": "2026-09-10T04:47:07+00:00",
+      "last_verified_at": "2026-09-10T04:47:07+00:00",
+      "lifecycle": "current",
+      "archive_on": "2026-09-24",
+      "link_checked_at": "2026-09-10T04:50:08+00:00",
+      "link_statuses": {
+        "source": "정상"
+      },
+      "link_status": "정상"
     },
     {
       "game": "Pokémon",
@@ -45,10 +81,10 @@
       "price": "공식 상품페이지 확인",
       "status": "출시예정",
       "source": "https://www.pokemon.com/us/pokemon-tcg/product-gallery/30th-celebration-ultra-premium-collections-day-night",
-      "link_checked_at": "2026-08-26T10:47:11+00:00",
-      "link_status": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인",
+      "link_checked_at": "2026-09-10T04:50:08+00:00",
+      "link_status": "정상",
       "link_statuses": {
-        "source": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인"
+        "source": "정상"
       },
       "lifecycle": "current",
       "archive_on": "2026-11-12"
@@ -62,14 +98,35 @@
       "price": "가격·제품 구성 미정",
       "status": "전 세계 동시 출시 예정",
       "source": "https://www.naruto-cardgame.com/asia-en/",
-      "link_checked_at": "2026-08-26T10:47:11+00:00",
-      "link_status": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인",
+      "link_checked_at": "2026-09-10T04:50:08+00:00",
+      "link_status": "정상",
       "link_statuses": {
-        "source": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인"
+        "source": "정상"
       },
       "first_seen_at": "2026-09-02T17:54:09+00:00",
-      "last_verified_at": "2026-09-02T17:54:09+00:00",
-      "lifecycle": "current"
+      "last_verified_at": "2026-09-10T04:47:07+00:00",
+      "lifecycle": "current",
+      "archive_on": "2027-09-06"
+    },
+    {
+      "game": "NARUTO",
+      "region": "JP",
+      "name": "NARUTO CARD GAME",
+      "release_window": "2027년 여름",
+      "release_precision": "season",
+      "release_label": "2027년 여름",
+      "price": "가격·제품 구성 미정",
+      "status": "지역 공식 페이지 출시 확인",
+      "source": "https://www.naruto-cardgame.com/jp/",
+      "first_seen_at": "2026-09-10T04:47:07+00:00",
+      "last_verified_at": "2026-09-10T04:47:07+00:00",
+      "lifecycle": "current",
+      "archive_on": "2027-09-06",
+      "link_checked_at": "2026-09-10T04:50:08+00:00",
+      "link_statuses": {
+        "source": "정상"
+      },
+      "link_status": "정상"
     },
     {
       "game": "ONE PIECE",
@@ -82,9 +139,14 @@
       "release_precision": "month",
       "release_label": "2026년 10월",
       "first_seen_at": "2026-09-02T17:54:09+00:00",
-      "last_verified_at": "2026-09-02T17:54:09+00:00",
+      "last_verified_at": "2026-09-10T04:47:07+00:00",
       "lifecycle": "current",
-      "archive_on": "2026-11-06"
+      "archive_on": "2026-11-06",
+      "link_checked_at": "2026-09-10T04:50:08+00:00",
+      "link_statuses": {
+        "source": "정상"
+      },
+      "link_status": "정상"
     },
     {
       "game": "ONE PIECE",
@@ -97,47 +159,120 @@
       "release_precision": "month",
       "release_label": "October 2026",
       "first_seen_at": "2026-09-02T17:54:09+00:00",
-      "last_verified_at": "2026-09-02T17:54:09+00:00",
+      "last_verified_at": "2026-09-10T04:47:07+00:00",
       "lifecycle": "current",
-      "archive_on": "2026-11-06"
+      "archive_on": "2026-11-06",
+      "link_checked_at": "2026-09-10T04:50:08+00:00",
+      "link_statuses": {
+        "source": "정상"
+      },
+      "link_status": "정상"
+    },
+    {
+      "game": "NARUTO",
+      "region": "US",
+      "name": "NARUTO CARD GAME",
+      "release_window": "2027년 여름",
+      "release_precision": "season",
+      "release_label": "2027년 여름",
+      "price": "가격·제품 구성 미정",
+      "status": "지역 공식 페이지 출시 확인",
+      "source": "https://www.naruto-cardgame.com/en/",
+      "first_seen_at": "2026-09-10T04:47:07+00:00",
+      "last_verified_at": "2026-09-10T04:47:07+00:00",
+      "lifecycle": "current",
+      "archive_on": "2027-09-06",
+      "link_checked_at": "2026-09-10T04:50:08+00:00",
+      "link_statuses": {
+        "source": "정상"
+      },
+      "link_status": "정상"
     }
   ],
   "collection_policy": "공식 출처에서 상품명과 출시일 또는 공식 출시시기가 함께 확인된 항목만 자동 반영",
-  "collection_status": "정상",
-  "collection_errors": [],
-  "link_audit_at": "2026-08-26T10:47:11+00:00",
+  "collection_status": "일부 출처 확인 실패 · 기존 전체 출시이력 보존",
+  "collection_errors": [
+    "Pokémon KR index: HTTPError",
+    "Pokémon KR index: HTTPError",
+    "Pokémon KR index: HTTPError"
+  ],
+  "link_audit_at": "2026-09-10T04:50:08+00:00",
   "history_backfill_progress": {
     "pokemon_jp_next_year": 2024,
-    "pokemon_jp_last_run": "2026-09-02T17:54:05+00:00"
+    "pokemon_jp_last_run": "2026-09-10T04:46:51+00:00",
+    "coverage_matrix": {
+      "expected_cells": 9,
+      "configured_cells": 9,
+      "verified_cells": 6,
+      "missing_verified_cells": [
+        "Pokémon/KR",
+        "Pokémon/JP",
+        "NARUTO/KR"
+      ],
+      "cells": {
+        "Pokémon/KR": {
+          "configured": true,
+          "verified_rows": 0
+        },
+        "Pokémon/JP": {
+          "configured": true,
+          "verified_rows": 0
+        },
+        "Pokémon/US": {
+          "configured": true,
+          "verified_rows": 3
+        },
+        "ONE PIECE/KR": {
+          "configured": true,
+          "verified_rows": 9
+        },
+        "ONE PIECE/JP": {
+          "configured": true,
+          "verified_rows": 12
+        },
+        "ONE PIECE/US": {
+          "configured": true,
+          "verified_rows": 2
+        },
+        "NARUTO/KR": {
+          "configured": true,
+          "verified_rows": 0
+        },
+        "NARUTO/JP": {
+          "configured": true,
+          "verified_rows": 1
+        },
+        "NARUTO/US": {
+          "configured": true,
+          "verified_rows": 1
+        }
+      },
+      "matrix_policy": "3게임×KR/JP/US 공식출처만 확인 · 미발표 날짜 임의 생성 금지"
+    },
+    "last_matrix_run": "2026-09-10T04:47:07+00:00"
   },
-  "unified_history_policy": "Pokémon/ONE PIECE/NARUTO 동일 append-only 누적정책 · 공식출처만 반영 · 실패 시 기존 이력 보존",
+  "unified_history_policy": "Pokémon/ONE PIECE/NARUTO 3게임×KR/JP/US 동일 append-only 누적정책 · 공식출처만 반영 · 일/월/계절 정확도 보존 · 실패 시 기존 이력 보존",
   "parser_drift_warnings": [],
   "history_policy": "발매일까지와 발매 후 5일차까지 최신 목록에 표시하고 6일째부터 지난 카드발매 보관함으로 이동; 공식 확인 이력은 삭제하지 않음",
-  "history_count": 38,
+  "history_count": 50,
   "parser_recovery_events": [
     {
       "source": "Pokémon JP",
-      "strategy": "html_chain_v1",
-      "outcome": "zero_verified_rows",
-      "rows": 0
-    },
-    {
-      "source": "Pokémon JP",
       "strategy": "official_result_api_v1",
-      "outcome": "recovered",
+      "outcome": "success",
       "rows": 20
     }
   ],
   "parser_learning": {
     "version": 1,
-    "updated_at": "2026-09-02T17:54:04+00:00",
+    "updated_at": "2026-09-10T04:46:47+00:00",
     "sources": {
       "Pokémon JP": {
         "preferred_strategy": "official_result_api_v1",
-        "last_outcome": "recovered",
+        "last_outcome": "success",
         "last_row_count": 20,
         "consecutive_failures": 0,
-        "last_success_at": "2026-09-02T17:54:04+00:00",
+        "last_success_at": "2026-09-10T04:46:47+00:00",
         "last_fingerprint": "b34565ee569b3a64",
         "strategies": {
           "html_chain_v1": {
@@ -148,11 +283,11 @@
             "last_outcome": "zero_verified_rows"
           },
           "official_result_api_v1": {
-            "successes": 1,
+            "successes": 2,
             "failures": 0,
             "last_row_count": 20,
-            "last_success_at": "2026-09-02T17:54:04+00:00",
-            "last_outcome": "recovered"
+            "last_success_at": "2026-09-10T04:46:47+00:00",
+            "last_outcome": "success"
           }
         }
       }
@@ -170,7 +305,7 @@
       "parser": "official-result-api-v1",
       "transport_source": "https://www.pokemon-card.com/products/resultAPI.php?productType=expansion&page=1",
       "first_seen_at": "2026-09-02T17:54:09+00:00",
-      "last_verified_at": "2026-09-02T17:54:09+00:00",
+      "last_verified_at": "2026-09-10T04:47:07+00:00",
       "lifecycle": "archive",
       "archive_on": "2024-07-25"
     },
@@ -185,7 +320,7 @@
       "parser": "official-result-api-v1",
       "transport_source": "https://www.pokemon-card.com/products/resultAPI.php?productType=expansion&page=1",
       "first_seen_at": "2026-09-02T17:54:09+00:00",
-      "last_verified_at": "2026-09-02T17:54:09+00:00",
+      "last_verified_at": "2026-09-10T04:47:07+00:00",
       "lifecycle": "archive",
       "archive_on": "2024-09-19"
     },
@@ -200,7 +335,7 @@
       "parser": "official-result-api-v1",
       "transport_source": "https://www.pokemon-card.com/products/resultAPI.php?productType=expansion&page=1",
       "first_seen_at": "2026-09-02T17:54:09+00:00",
-      "last_verified_at": "2026-09-02T17:54:09+00:00",
+      "last_verified_at": "2026-09-10T04:47:07+00:00",
       "lifecycle": "archive",
       "archive_on": "2024-10-24"
     },
@@ -215,7 +350,7 @@
       "parser": "official-result-api-v1",
       "transport_source": "https://www.pokemon-card.com/products/resultAPI.php?productType=expansion&page=1",
       "first_seen_at": "2026-09-02T17:54:09+00:00",
-      "last_verified_at": "2026-09-02T17:54:09+00:00",
+      "last_verified_at": "2026-09-10T04:47:07+00:00",
       "lifecycle": "archive",
       "archive_on": "2024-12-12"
     },
@@ -230,7 +365,7 @@
       "parser": "official-result-api-v1",
       "transport_source": "https://www.pokemon-card.com/products/resultAPI.php?productType=expansion&page=1",
       "first_seen_at": "2026-09-02T17:54:09+00:00",
-      "last_verified_at": "2026-09-02T17:54:09+00:00",
+      "last_verified_at": "2026-09-10T04:47:07+00:00",
       "lifecycle": "archive",
       "archive_on": "2025-01-30"
     },
@@ -243,7 +378,7 @@
       "source": "https://www.onepiece-cardgame.com/products/?subcategory=boosters",
       "release_date": "2025-01-25",
       "first_seen_at": "2026-09-02T17:54:09+00:00",
-      "last_verified_at": "2026-09-02T17:54:09+00:00",
+      "last_verified_at": "2026-09-10T04:47:07+00:00",
       "lifecycle": "archive",
       "archive_on": "2025-01-31"
     },
@@ -256,7 +391,7 @@
       "source": "https://www.onepiece-cardgame.com/products/?subcategory=boosters",
       "release_date": "2025-03-01",
       "first_seen_at": "2026-09-02T17:54:09+00:00",
-      "last_verified_at": "2026-09-02T17:54:09+00:00",
+      "last_verified_at": "2026-09-10T04:47:07+00:00",
       "lifecycle": "archive",
       "archive_on": "2025-03-07"
     },
@@ -271,7 +406,7 @@
       "parser": "official-result-api-v1",
       "transport_source": "https://www.pokemon-card.com/products/resultAPI.php?productType=expansion&page=1",
       "first_seen_at": "2026-09-02T17:54:09+00:00",
-      "last_verified_at": "2026-09-02T17:54:09+00:00",
+      "last_verified_at": "2026-09-10T04:47:07+00:00",
       "lifecycle": "archive",
       "archive_on": "2025-03-20"
     },
@@ -286,7 +421,7 @@
       "parser": "official-result-api-v1",
       "transport_source": "https://www.pokemon-card.com/products/resultAPI.php?productType=expansion&page=1",
       "first_seen_at": "2026-09-02T17:54:09+00:00",
-      "last_verified_at": "2026-09-02T17:54:09+00:00",
+      "last_verified_at": "2026-09-10T04:47:07+00:00",
       "lifecycle": "archive",
       "archive_on": "2025-04-24"
     },
@@ -299,7 +434,7 @@
       "source": "https://www.onepiece-cardgame.com/products/?subcategory=boosters",
       "release_date": "2025-05-31",
       "first_seen_at": "2026-09-02T17:54:09+00:00",
-      "last_verified_at": "2026-09-02T17:54:09+00:00",
+      "last_verified_at": "2026-09-10T04:47:07+00:00",
       "lifecycle": "archive",
       "archive_on": "2025-06-06"
     },
@@ -314,7 +449,7 @@
       "parser": "official-result-api-v1",
       "transport_source": "https://www.pokemon-card.com/products/resultAPI.php?productType=expansion&page=1",
       "first_seen_at": "2026-09-02T17:54:09+00:00",
-      "last_verified_at": "2026-09-02T17:54:09+00:00",
+      "last_verified_at": "2026-09-10T04:47:07+00:00",
       "lifecycle": "archive",
       "archive_on": "2025-06-12"
     },
@@ -329,7 +464,7 @@
       "parser": "official-result-api-v1",
       "transport_source": "https://www.pokemon-card.com/products/resultAPI.php?productType=expansion&page=1",
       "first_seen_at": "2026-09-02T17:54:09+00:00",
-      "last_verified_at": "2026-09-02T17:54:09+00:00",
+      "last_verified_at": "2026-09-10T04:47:07+00:00",
       "lifecycle": "archive",
       "archive_on": "2025-06-12"
     },
@@ -342,7 +477,7 @@
       "source": "https://www.onepiece-cardgame.com/products/?subcategory=boosters",
       "release_date": "2025-07-26",
       "first_seen_at": "2026-09-02T17:54:09+00:00",
-      "last_verified_at": "2026-09-02T17:54:09+00:00",
+      "last_verified_at": "2026-09-10T04:47:07+00:00",
       "lifecycle": "archive",
       "archive_on": "2025-08-01"
     },
@@ -357,7 +492,7 @@
       "parser": "official-result-api-v1",
       "transport_source": "https://www.pokemon-card.com/products/resultAPI.php?productType=expansion&page=1",
       "first_seen_at": "2026-09-02T17:54:09+00:00",
-      "last_verified_at": "2026-09-02T17:54:09+00:00",
+      "last_verified_at": "2026-09-10T04:47:07+00:00",
       "lifecycle": "archive",
       "archive_on": "2025-08-07"
     },
@@ -372,7 +507,7 @@
       "parser": "official-result-api-v1",
       "transport_source": "https://www.pokemon-card.com/products/resultAPI.php?productType=expansion&page=1",
       "first_seen_at": "2026-09-02T17:54:09+00:00",
-      "last_verified_at": "2026-09-02T17:54:09+00:00",
+      "last_verified_at": "2026-09-10T04:47:07+00:00",
       "lifecycle": "archive",
       "archive_on": "2025-08-07"
     },
@@ -385,7 +520,7 @@
       "source": "https://www.onepiece-cardgame.com/products/?subcategory=boosters",
       "release_date": "2025-08-23",
       "first_seen_at": "2026-09-02T17:54:09+00:00",
-      "last_verified_at": "2026-09-02T17:54:09+00:00",
+      "last_verified_at": "2026-09-10T04:47:07+00:00",
       "lifecycle": "archive",
       "archive_on": "2025-08-29"
     },
@@ -400,7 +535,7 @@
       "parser": "official-result-api-v1",
       "transport_source": "https://www.pokemon-card.com/products/resultAPI.php?productType=expansion&page=1",
       "first_seen_at": "2026-09-02T17:54:09+00:00",
-      "last_verified_at": "2026-09-02T17:54:09+00:00",
+      "last_verified_at": "2026-09-10T04:47:07+00:00",
       "lifecycle": "archive",
       "archive_on": "2025-10-02"
     },
@@ -413,7 +548,7 @@
       "source": "https://www.onepiece-cardgame.com/products/?subcategory=boosters",
       "release_date": "2025-10-25",
       "first_seen_at": "2026-09-02T17:54:09+00:00",
-      "last_verified_at": "2026-09-02T17:54:09+00:00",
+      "last_verified_at": "2026-09-10T04:47:07+00:00",
       "lifecycle": "archive",
       "archive_on": "2025-10-31"
     },
@@ -426,7 +561,7 @@
       "source": "https://www.onepiece-cardgame.com/products/?subcategory=boosters",
       "release_date": "2025-11-22",
       "first_seen_at": "2026-09-02T17:54:09+00:00",
-      "last_verified_at": "2026-09-02T17:54:09+00:00",
+      "last_verified_at": "2026-09-10T04:47:07+00:00",
       "lifecycle": "archive",
       "archive_on": "2025-11-28"
     },
@@ -441,7 +576,7 @@
       "parser": "official-result-api-v1",
       "transport_source": "https://www.pokemon-card.com/products/resultAPI.php?productType=expansion&page=1",
       "first_seen_at": "2026-09-02T17:54:09+00:00",
-      "last_verified_at": "2026-09-02T17:54:09+00:00",
+      "last_verified_at": "2026-09-10T04:47:07+00:00",
       "lifecycle": "archive",
       "archive_on": "2025-12-04"
     },
@@ -456,7 +591,7 @@
       "parser": "official-result-api-v1",
       "transport_source": "https://www.pokemon-card.com/products/resultAPI.php?productType=expansion&page=1",
       "first_seen_at": "2026-09-02T17:54:09+00:00",
-      "last_verified_at": "2026-09-02T17:54:09+00:00",
+      "last_verified_at": "2026-09-10T04:47:07+00:00",
       "lifecycle": "archive",
       "archive_on": "2026-01-29"
     },
@@ -469,7 +604,7 @@
       "source": "https://www.onepiece-cardgame.com/products/?subcategory=boosters",
       "release_date": "2026-01-31",
       "first_seen_at": "2026-09-02T17:54:09+00:00",
-      "last_verified_at": "2026-09-02T17:54:09+00:00",
+      "last_verified_at": "2026-09-10T04:47:07+00:00",
       "lifecycle": "archive",
       "archive_on": "2026-02-06"
     },
@@ -482,7 +617,7 @@
       "source": "https://www.onepiece-cardgame.com/products/?subcategory=boosters",
       "release_date": "2026-02-28",
       "first_seen_at": "2026-09-02T17:54:09+00:00",
-      "last_verified_at": "2026-09-02T17:54:09+00:00",
+      "last_verified_at": "2026-09-10T04:47:07+00:00",
       "lifecycle": "archive",
       "archive_on": "2026-03-06"
     },
@@ -497,7 +632,7 @@
       "parser": "official-result-api-v1",
       "transport_source": "https://www.pokemon-card.com/products/resultAPI.php?productType=expansion&page=1",
       "first_seen_at": "2026-09-02T17:54:09+00:00",
-      "last_verified_at": "2026-09-02T17:54:09+00:00",
+      "last_verified_at": "2026-09-10T04:47:07+00:00",
       "lifecycle": "archive",
       "archive_on": "2026-03-19"
     },
@@ -512,7 +647,72 @@
       "parser": "official-result-api-v1",
       "transport_source": "https://www.pokemon-card.com/products/resultAPI.php?productType=expansion&page=1",
       "first_seen_at": "2026-09-02T17:54:09+00:00",
-      "last_verified_at": "2026-09-02T17:54:09+00:00",
+      "last_verified_at": "2026-09-10T04:47:07+00:00",
+      "lifecycle": "archive",
+      "archive_on": "2026-05-28"
+    },
+    {
+      "game": "ONE PIECE",
+      "region": "KR",
+      "name": "[STK-24] 스타트 덱 녹 쥬얼리 보니",
+      "release_date": "2026-05-22",
+      "price": "₩12,000/덱",
+      "status": "공식 확인",
+      "source": "https://onepiece-cardgame.kr/products.do",
+      "first_seen_at": "2026-09-10T04:47:07+00:00",
+      "last_verified_at": "2026-09-10T04:47:07+00:00",
+      "lifecycle": "archive",
+      "archive_on": "2026-05-28"
+    },
+    {
+      "game": "ONE PIECE",
+      "region": "KR",
+      "name": "[STK-25] 스타트 덱 청 버기",
+      "release_date": "2026-05-22",
+      "price": "₩12,000/덱",
+      "status": "공식 확인",
+      "source": "https://onepiece-cardgame.kr/products.do",
+      "first_seen_at": "2026-09-10T04:47:07+00:00",
+      "last_verified_at": "2026-09-10T04:47:07+00:00",
+      "lifecycle": "archive",
+      "archive_on": "2026-05-28"
+    },
+    {
+      "game": "ONE PIECE",
+      "region": "KR",
+      "name": "[STK-26] 스타트 덱 자흑 몽키 D. 루피",
+      "release_date": "2026-05-22",
+      "price": "₩12,000/덱",
+      "status": "공식 확인",
+      "source": "https://onepiece-cardgame.kr/products.do",
+      "first_seen_at": "2026-09-10T04:47:07+00:00",
+      "last_verified_at": "2026-09-10T04:47:07+00:00",
+      "lifecycle": "archive",
+      "archive_on": "2026-05-28"
+    },
+    {
+      "game": "ONE PIECE",
+      "region": "KR",
+      "name": "[STK-27] 스타트 덱 흑 마샬 D. 티치",
+      "release_date": "2026-05-22",
+      "price": "₩12,000/덱",
+      "status": "공식 확인",
+      "source": "https://onepiece-cardgame.kr/products.do",
+      "first_seen_at": "2026-09-10T04:47:07+00:00",
+      "last_verified_at": "2026-09-10T04:47:07+00:00",
+      "lifecycle": "archive",
+      "archive_on": "2026-05-28"
+    },
+    {
+      "game": "ONE PIECE",
+      "region": "KR",
+      "name": "[STK-28] 스타트 덱 녹황 야마토",
+      "release_date": "2026-05-22",
+      "price": "₩12,000/덱",
+      "status": "공식 확인",
+      "source": "https://onepiece-cardgame.kr/products.do",
+      "first_seen_at": "2026-09-10T04:47:07+00:00",
+      "last_verified_at": "2026-09-10T04:47:07+00:00",
       "lifecycle": "archive",
       "archive_on": "2026-05-28"
     },
@@ -525,7 +725,7 @@
       "source": "https://www.onepiece-cardgame.com/products/?subcategory=boosters",
       "release_date": "2026-05-30",
       "first_seen_at": "2026-09-02T17:54:09+00:00",
-      "last_verified_at": "2026-09-02T17:54:09+00:00",
+      "last_verified_at": "2026-09-10T04:47:07+00:00",
       "lifecycle": "archive",
       "archive_on": "2026-06-05"
     },
@@ -538,9 +738,35 @@
       "status": "공식 확인",
       "source": "https://onepiece-cardgame.kr/products.do",
       "first_seen_at": "2026-09-02T17:54:09+00:00",
-      "last_verified_at": "2026-09-02T17:54:09+00:00",
+      "last_verified_at": "2026-09-10T04:47:07+00:00",
       "lifecycle": "archive",
       "archive_on": "2026-07-02"
+    },
+    {
+      "game": "Pokémon",
+      "region": "US",
+      "name": "Pokémon TCG: Mega Evolution—Pitch Black Elite Trainer Box | Pokemon.com Log In Pokémon TCG: Mega Evolution—Pitch Black Elite Trainer Box",
+      "release_date": "2026-07-17",
+      "price": "official price check",
+      "status": "official release verified",
+      "source": "https://www.pokemon.com/us/pokemon-tcg/product-gallery/mega-evolution-pitch-black-elite-trainer-box",
+      "first_seen_at": "2026-09-10T04:47:07+00:00",
+      "last_verified_at": "2026-09-10T04:47:07+00:00",
+      "lifecycle": "archive",
+      "archive_on": "2026-07-23"
+    },
+    {
+      "game": "Pokémon",
+      "region": "US",
+      "name": "Pokémon TCG: Mega Evolution—Pitch Black Pokémon Center Elite Trainer Box",
+      "release_date": "2026-07-17",
+      "price": "official price check",
+      "status": "official release verified",
+      "source": "https://www.pokemon.com/us/pokemon-tcg/product-gallery/mega-evolution-pitch-black-pokemon-center-elite-trainer-box",
+      "first_seen_at": "2026-09-10T04:47:07+00:00",
+      "last_verified_at": "2026-09-10T04:47:07+00:00",
+      "lifecycle": "archive",
+      "archive_on": "2026-07-23"
     },
     {
       "game": "ONE PIECE",
@@ -556,7 +782,7 @@
         "source": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인"
       },
       "first_seen_at": "2026-09-02T17:54:09+00:00",
-      "last_verified_at": "2026-09-02T17:54:09+00:00",
+      "last_verified_at": "2026-09-10T04:47:07+00:00",
       "lifecycle": "archive",
       "archive_on": "2026-07-30"
     },
@@ -571,7 +797,7 @@
       "parser": "official-result-api-v1",
       "transport_source": "https://www.pokemon-card.com/products/resultAPI.php?productType=expansion&page=1",
       "first_seen_at": "2026-09-02T17:54:09+00:00",
-      "last_verified_at": "2026-09-02T17:54:09+00:00",
+      "last_verified_at": "2026-09-10T04:47:07+00:00",
       "lifecycle": "archive",
       "archive_on": "2026-08-06"
     },
@@ -589,7 +815,7 @@
         "source": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인"
       },
       "first_seen_at": "2026-09-02T17:54:09+00:00",
-      "last_verified_at": "2026-09-02T17:54:09+00:00",
+      "last_verified_at": "2026-09-10T04:47:07+00:00",
       "lifecycle": "archive",
       "archive_on": "2026-08-27"
     },
@@ -607,7 +833,7 @@
         "source": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인"
       },
       "first_seen_at": "2026-09-02T17:54:09+00:00",
-      "last_verified_at": "2026-09-02T17:54:09+00:00",
+      "last_verified_at": "2026-09-10T04:47:07+00:00",
       "lifecycle": "archive",
       "archive_on": "2026-08-28"
     },
@@ -626,20 +852,31 @@
       },
       "lifecycle": "archive",
       "archive_on": "2026-09-03"
+    },
+    {
+      "game": "Pokémon",
+      "region": "US",
+      "name": "Pokémon TCG: Mega Evolution—Ascended Heroes Tin | Pokemon.com Log In Pokémon TCG: Mega Evolution—Ascended Heroes Tin",
+      "release_date": "2026-08-28",
+      "price": "official price check",
+      "status": "official release verified",
+      "source": "https://www.pokemon.com/us/pokemon-tcg/product-gallery/mega-evolution-ascended-heroes-tin",
+      "first_seen_at": "2026-09-10T04:47:07+00:00",
+      "last_verified_at": "2026-09-10T04:47:07+00:00",
+      "lifecycle": "archive",
+      "archive_on": "2026-09-03"
     }
   ],
   "archive_grace_days": 5,
-  "current_release_count": 6,
-  "archive_release_count": 32,
+  "current_release_count": 10,
+  "archive_release_count": 40,
   "collection_coverage": {
     "expected_cells": 9,
     "configured_cells": 9,
-    "verified_cells": 5,
+    "verified_cells": 7,
     "missing_verified_cells": [
       "Pokémon/KR",
-      "NARUTO/KR",
-      "NARUTO/JP",
-      "NARUTO/US"
+      "NARUTO/KR"
     ],
     "cells": {
       "Pokémon/KR": {
@@ -652,11 +889,11 @@
       },
       "Pokémon/US": {
         "configured": true,
-        "verified_rows": 2
+        "verified_rows": 5
       },
       "ONE PIECE/KR": {
         "configured": true,
-        "verified_rows": 3
+        "verified_rows": 9
       },
       "ONE PIECE/JP": {
         "configured": true,
@@ -664,7 +901,7 @@
       },
       "ONE PIECE/US": {
         "configured": true,
-        "verified_rows": 2
+        "verified_rows": 3
       },
       "NARUTO/KR": {
         "configured": true,
@@ -672,11 +909,11 @@
       },
       "NARUTO/JP": {
         "configured": true,
-        "verified_rows": 0
+        "verified_rows": 1
       },
       "NARUTO/US": {
         "configured": true,
-        "verified_rows": 0
+        "verified_rows": 1
       }
     },
     "matrix_policy": "3게임×KR/JP/US 공식출처만 확인 · 미발표 날짜 임의 생성 금지"

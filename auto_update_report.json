@@ -1,9 +1,9 @@
 {
-  "version": 27,
+  "version": 28,
   "engine": "v98-camera-resilience-full-runtime",
-  "trigger": "manual",
+  "trigger": "github-pages-static-refresh",
   "selected_files": [],
-  "started_at": "2026-08-26T10:47:06+00:00",
+  "started_at": "2026-09-10T04:46:46+00:00",
   "preflight_monitor": {
     "ok": true,
     "results": [
@@ -38,20 +38,25 @@
         "action": "검증 통과"
       },
       {
+        "file": "graded_photo_candidates.json",
+        "ok": true,
+        "action": "검증 통과"
+      },
+      {
         "file": "tcg_live_data.json",
         "ok": true,
         "action": "검증 통과"
       }
     ]
   },
-  "finished_at": "2026-08-26T10:47:11+00:00",
-  "duration_seconds": 4.91,
-  "parallel_workers": 3,
+  "finished_at": "2026-09-10T04:50:08+00:00",
+  "duration_seconds": 202.3,
+  "parallel_workers": 2,
   "ok": true,
-  "success_count": 6,
+  "success_count": 7,
   "failure_count": 0,
-  "fresh_success_count": 1,
-  "degraded_count": 5,
+  "fresh_success_count": 4,
+  "degraded_count": 3,
   "restored_count": 0,
   "fresh_failure_count": 0,
   "deferred_timeout_recovery": {
@@ -71,30 +76,22 @@
       "name": "출시일",
       "file": "releases.json",
       "ok": true,
-      "status": "일부 출처 확인 실패",
-      "updated_at": "2026-08-26T10:47:08+00:00",
-      "count": 8,
-      "retry_count": 1,
+      "status": "일부 출처 확인 실패 · 기존 전체 출시이력 보존",
+      "updated_at": "2026-09-10T04:47:07+00:00",
+      "count": 10,
+      "retry_count": 0,
       "max_attempts": 2,
-      "recovered_after_retry": true,
+      "recovered_after_retry": false,
       "auto_action": "일부 출처 오류 격리 · 정상자료 반영 · 다음 실행 제한시간 확대",
       "collection_errors": [
-        "ONE PIECE KR: URLError",
-        "Pokémon JP: URLError",
-        "ONE PIECE US: URLError",
-        "ONE PIECE JP: URLError",
-        "NARUTO Global: URLError"
+        "Pokémon KR index: HTTPError"
       ],
       "remaining_collection_errors": [
-        "ONE PIECE US: URLError",
-        "ONE PIECE JP: URLError",
-        "ONE PIECE KR: URLError",
-        "Pokémon JP: URLError",
-        "NARUTO Global: URLError"
+        "Pokémon KR index: HTTPError"
       ],
-      "duration_seconds": 2.39,
+      "duration_seconds": 20.62,
       "adaptive_timeout_seconds": 300,
-      "last_attempt_timeout_seconds": 297,
+      "last_attempt_timeout_seconds": 299,
       "collection_stage": "primary",
       "timeout_exhausted": false
     },
@@ -103,15 +100,15 @@
       "file": "market_watch.json",
       "ok": true,
       "status": "정상",
-      "updated_at": "2026-08-26T10:47:09+00:00",
-      "count": 14,
+      "updated_at": "2026-09-10T04:48:30+00:00",
+      "count": 19,
       "retry_count": 0,
       "max_attempts": 2,
       "recovered_after_retry": false,
       "auto_action": "학습형 수집 · 검증 후 정상 반영",
       "collection_errors": [],
       "remaining_collection_errors": [],
-      "duration_seconds": 0.16,
+      "duration_seconds": 0.06,
       "adaptive_timeout_seconds": 30,
       "last_attempt_timeout_seconds": 30,
       "collection_stage": "primary",
@@ -121,34 +118,18 @@
       "name": "현재 거래시세",
       "file": "market_prices.json",
       "ok": true,
-      "status": "일부 가격 출처 확인 실패",
-      "updated_at": "2026-08-26T10:47:08+00:00",
+      "status": "정상",
+      "updated_at": "2026-09-10T04:50:08+00:00",
       "count": 38,
-      "retry_count": 1,
+      "retry_count": 0,
       "max_attempts": 2,
-      "recovered_after_retry": true,
-      "auto_action": "일부 출처 오류 격리 · 정상자료 반영 · 다음 실행 제한시간 확대",
-      "collection_errors": [
-        "NARUTO CP-001: URLError",
-        "POKARD BOX: URLError",
-        "KREAM HIT: URLError",
-        "KREAM 로맨스 던 BOX: URLError",
-        "KREAM 블랙볼트 BOX: URLError",
-        "Pack Magik OP14-009: URLError",
-        "POKARD HIT: URLError"
-      ],
-      "remaining_collection_errors": [
-        "NARUTO CP-001: URLError",
-        "POKARD BOX: URLError",
-        "KREAM HIT: URLError",
-        "KREAM 로맨스 던 BOX: URLError",
-        "KREAM 블랙볼트 BOX: URLError",
-        "Pack Magik OP14-009: URLError",
-        "POKARD HIT: URLError"
-      ],
-      "duration_seconds": 2.4,
+      "recovered_after_retry": false,
+      "auto_action": "학습형 수집 · 검증 후 정상 반영",
+      "collection_errors": [],
+      "remaining_collection_errors": [],
+      "duration_seconds": 202.27,
       "adaptive_timeout_seconds": 300,
-      "last_attempt_timeout_seconds": 297,
+      "last_attempt_timeout_seconds": 299,
       "collection_stage": "primary",
       "timeout_exhausted": false
     },
@@ -157,102 +138,25 @@
       "file": "promo_events.json",
       "ok": true,
       "status": "기존 확인자료 유지 · 일부 출처 재확인 필요 · 한·일·미 영화정보 9/9 조합 추적",
-      "updated_at": "2026-08-26T10:47:08+00:00",
-      "count": 31,
-      "retry_count": 1,
+      "updated_at": "2026-09-10T04:47:44+00:00",
+      "count": 37,
+      "retry_count": 0,
       "max_attempts": 2,
-      "recovered_after_retry": true,
+      "recovered_after_retry": false,
       "auto_action": "일부 출처 오류 격리 · 정상자료 반영 · 다음 실행 제한시간 확대",
       "collection_errors": [
-        "포켓몬 카드짐 엔트리 캠페인 2026 상반기: URLError",
-        "WCS 2026 기념 피카츄 프로모: URLError",
-        "친구·가족과 프렌드 배틀: URLError",
-        "발매기념대회 리미티드 배틀: URLError",
-        "2026 포켓몬 월드 챔피언십·PokémonXP: URLError",
-        "2026 성남CITY 배틀 토너먼트 × GXG 2026: URLError",
-        "포켓몬 카드짐 엔트리 캠페인 2026 하반기: URLError",
-        "9월 플래그쉽 배틀: URLError",
-        "9월 교류회: URLError",
-        "초보자 [9월] 원피스 카드게임 스탠다드 배틀 9월 1일 ~ 9월 30일: URLError",
-        "챔피언십 26-27 북미 파이널 시즌 1: URLError",
-        "BANDAI CARD GAMES Fest 26-27 Dallas: URLError",
-        "챔피언스리그 2027 요코하마: URLError",
-        "포켓몬 카드게임 30주년 기념 행사: URLError",
-        "NARUTO × 뉴욕 양키스 게임 나이트: URLError",
-        "New York Comic Con 2026 나루토 카드게임 체험회: URLError",
-        "BANDAI CARD GAMES Fest 26-27 Orlando: URLError",
-        "포켓몬 영화·애니 공식 정보: URLError",
-        "한국 포켓몬 영화·극장판 개봉 확인: URLError",
-        "한국 원피스 극장판 개봉 확인: URLError",
-        "한국 나루토 영화 개봉 확인: URLError",
-        "일본 포켓몬 영화·영상 공개 정보: URLError",
-        "일본 나루토 영화·영상 공개 정보: URLError",
-        "미국 원피스 영화·영상 공개 정보: URLError",
-        "미국 나루토 영화·영상 공개 정보: URLError",
-        "NARUTO & BORUTO 닌자마을 한여름 수둔 축제: URLError",
-        "원피스 밀짚모자 스토어 나고야 공식 개점 행사: URLError",
-        "ONE PIECE × NBA HOUSE JAPAN 공식 콜라보 배송: URLError",
-        "THE ONE PIECE 공식 애니메이션 영상 공개: URLError",
-        "포켓몬 데크 그대로 배틀 공식 체험 행사: URLError",
-        "한국 나루토 카드게임 행사·정식 출시 공식 발표 추적: URLError",
-        "KR 원피스 카드 신규행사 탐색: URLError",
-        "KR 포켓몬 카드 신규행사 탐색: URLError",
-        "KR 나루토 카드 신규행사 탐색: URLError",
-        "JP 포켓몬 카드 신규행사 탐색: URLError",
-        "JP 원피스 카드 신규행사 탐색: URLError",
-        "US 원피스 카드 신규행사 탐색: URLError",
-        "US 포켓몬 카드 신규행사 탐색: URLError",
-        "JP 나루토 카드 신규행사 탐색: URLError",
-        "US 나루토 카드 신규행사 탐색: URLError"
+        "한국 포켓몬 영화·극장판 개봉 확인: HTTPError: status 410",
+        "2026 성남CITY 배틀 토너먼트 × GXG 2026: HTTPError: status 410",
+        "KR 포켓몬 카드 신규행사 탐색: HTTPError: status 410"
       ],
       "remaining_collection_errors": [
-        "포켓몬 카드짐 엔트리 캠페인 2026 상반기: URLError",
-        "WCS 2026 기념 피카츄 프로모: URLError",
-        "친구·가족과 프렌드 배틀: URLError",
-        "발매기념대회 리미티드 배틀: URLError",
-        "2026 포켓몬 월드 챔피언십·PokémonXP: URLError",
-        "2026 성남CITY 배틀 토너먼트 × GXG 2026: URLError",
-        "포켓몬 카드짐 엔트리 캠페인 2026 하반기: URLError",
-        "9월 플래그쉽 배틀: URLError",
-        "9월 교류회: URLError",
-        "초보자 [9월] 원피스 카드게임 스탠다드 배틀 9월 1일 ~ 9월 30일: URLError",
-        "챔피언십 26-27 북미 파이널 시즌 1: URLError",
-        "BANDAI CARD GAMES Fest 26-27 Dallas: URLError",
-        "챔피언스리그 2027 요코하마: URLError",
-        "포켓몬 카드게임 30주년 기념 행사: URLError",
-        "NARUTO × 뉴욕 양키스 게임 나이트: URLError",
-        "New York Comic Con 2026 나루토 카드게임 체험회: URLError",
-        "BANDAI CARD GAMES Fest 26-27 Orlando: URLError",
-        "포켓몬 영화·애니 공식 정보: URLError",
-        "한국 포켓몬 영화·극장판 개봉 확인: URLError",
-        "한국 원피스 극장판 개봉 확인: URLError",
-        "한국 나루토 영화 개봉 확인: URLError",
-        "일본 포켓몬 영화·영상 공개 정보: URLError",
-        "일본 나루토 영화·영상 공개 정보: URLError",
-        "미국 원피스 영화·영상 공개 정보: URLError",
-        "미국 나루토 영화·영상 공개 정보: URLError",
-        "NARUTO & BORUTO 닌자마을 한여름 수둔 축제: URLError",
-        "원피스 밀짚모자 스토어 나고야 공식 개점 행사: URLError",
-        "ONE PIECE × NBA HOUSE JAPAN 공식 콜라보 배송: URLError",
-        "THE ONE PIECE 공식 애니메이션 영상 공개: URLError",
-        "포켓몬 데크 그대로 배틀 공식 체험 행사: URLError",
-        "한국 나루토 카드게임 행사·정식 출시 공식 발표 추적: URLError",
-        "KR 원피스 카드 신규행사 탐색: URLError",
-        "KR 포켓몬 카드 신규행사 탐색: URLError",
-        "KR 나루토 카드 신규행사 탐색: URLError",
-        "JP 포켓몬 카드 신규행사 탐색: URLError",
-        "JP 포켓몬 카드 신규행사 탐색: URLError",
-        "JP 원피스 카드 신규행사 탐색: URLError",
-        "JP 원피스 카드 신규행사 탐색: URLError",
-        "US 원피스 카드 신규행사 탐색: URLError",
-        "US 포켓몬 카드 신규행사 탐색: URLError",
-        "JP 나루토 카드 신규행사 탐색: URLError",
-        "JP 나루토 카드 신규행사 탐색: URLError",
-        "US 나루토 카드 신규행사 탐색: URLError"
+        "한국 포켓몬 영화·극장판 개봉 확인: HTTPError: status 410",
+        "2026 성남CITY 배틀 토너먼트 × GXG 2026: HTTPError: status 410",
+        "KR 포켓몬 카드 신규행사 탐색: HTTPError: status 410"
       ],
-      "duration_seconds": 2.5,
+      "duration_seconds": 37.58,
       "adaptive_timeout_seconds": 300,
-      "last_attempt_timeout_seconds": 297,
+      "last_attempt_timeout_seconds": 299,
       "collection_stage": "primary",
       "timeout_exhausted": false
     },
@@ -261,42 +165,23 @@
       "file": "purchase_sources.json",
       "ok": true,
       "status": "일부 구매처 재확인 필요·기존 목록 유지",
-      "updated_at": "2026-08-26T10:47:11+00:00",
+      "updated_at": "2026-09-10T04:48:04+00:00",
       "count": 205,
-      "retry_count": 1,
+      "retry_count": 0,
       "max_attempts": 2,
-      "recovered_after_retry": true,
+      "recovered_after_retry": false,
       "auto_action": "일부 출처 오류 격리 · 정상자료 반영 · 다음 실행 제한시간 확대",
       "collection_errors": [
-        "포켓몬 카드 게임 코리아 제품: 재확인 필요·기존 주소 유지 (URLError)",
-        "원피스 카드게임 코리아: 재확인 필요·기존 주소 유지 (URLError)",
-        "나루토 카드게임 공식: 재확인 필요·기존 주소 유지 (URLError)",
-        "포켓몬 카드 공식 제품: 재확인 필요·기존 주소 유지 (URLError)",
-        "포켓몬센터 온라인: 재확인 필요·기존 주소 유지 (URLError)",
-        "원피스 카드게임 공식: 재확인 필요·기존 주소 유지 (URLError)",
-        "Pokémon Center US: 재확인 필요·기존 주소 유지 (URLError)",
-        "Pokémon 공식 판매점 찾기: 재확인 필요·기존 주소 유지 (URLError)",
-        "One Piece Card Game 공식: 재확인 필요·기존 주소 유지 (URLError)",
-        "Naruto Card Game 공식: 재확인 필요·기존 주소 유지 (URLError)",
-        "포켓몬 공인 카드샵 안내: 재확인 필요·기존 주소 유지 (URLError)"
+        "포켓몬 카드 게임 코리아 제품: 재확인 필요·기존 주소 유지 (HTTPError: status 410)",
+        "포켓몬 공인 카드샵 안내: 재확인 필요·기존 주소 유지 (HTTPError: status 410)"
       ],
       "remaining_collection_errors": [
-        "포켓몬 카드 게임 코리아 제품: 재확인 필요·기존 주소 유지 (URLError)",
-        "원피스 카드게임 코리아: 재확인 필요·기존 주소 유지 (URLError)",
-        "나루토 카드게임 공식: 재확인 필요·기존 주소 유지 (URLError)",
-        "포켓몬 카드 공식 제품: 재확인 필요·기존 주소 유지 (URLError)",
-        "포켓몬센터 온라인: 재확인 필요·기존 주소 유지 (URLError)",
-        "원피스 카드게임 공식: 재확인 필요·기존 주소 유지 (URLError)",
-        "나루토 카드게임 공식: 재확인 필요·기존 주소 유지 (URLError)",
-        "Pokémon Center US: 재확인 필요·기존 주소 유지 (URLError)",
-        "Pokémon 공식 판매점 찾기: 재확인 필요·기존 주소 유지 (URLError)",
-        "One Piece Card Game 공식: 재확인 필요·기존 주소 유지 (URLError)",
-        "Naruto Card Game 공식: 재확인 필요·기존 주소 유지 (URLError)",
-        "포켓몬 공인 카드샵 안내: 재확인 필요·기존 주소 유지 (URLError)"
+        "포켓몬 카드 게임 코리아 제품: 재확인 필요·기존 주소 유지 (HTTPError: status 410)",
+        "포켓몬 공인 카드샵 안내: 재확인 필요·기존 주소 유지 (HTTPError: status 410)"
       ],
-      "duration_seconds": 2.46,
+      "duration_seconds": 22.69,
       "adaptive_timeout_seconds": 300,
-      "last_attempt_timeout_seconds": 297,
+      "last_attempt_timeout_seconds": 299,
       "collection_stage": "primary",
       "timeout_exhausted": false
     },
@@ -304,75 +189,401 @@
       "name": "원화 환산 환율",
       "file": "exchange_rates.json",
       "ok": true,
-      "status": "기존 확인환율 유지",
-      "updated_at": "2026-08-23T15:57:24+00:00",
+      "status": "정상",
+      "updated_at": "2026-09-10T04:48:31+00:00",
       "count": 2,
-      "retry_count": 1,
+      "retry_count": 0,
       "max_attempts": 2,
-      "recovered_after_retry": true,
-      "auto_action": "일부 출처 오류 격리 · 정상자료 반영 · 다음 실행 제한시간 확대",
-      "collection_errors": [
-        "URLError"
-      ],
-      "remaining_collection_errors": [
-        "URLError"
-      ],
-      "duration_seconds": 2.3,
+      "recovered_after_retry": false,
+      "auto_action": "학습형 수집 · 검증 후 정상 반영",
+      "collection_errors": [],
+      "remaining_collection_errors": [],
+      "duration_seconds": 0.61,
       "adaptive_timeout_seconds": 300,
-      "last_attempt_timeout_seconds": 297,
+      "last_attempt_timeout_seconds": 299,
+      "collection_stage": "primary",
+      "timeout_exhausted": false
+    },
+    {
+      "name": "업체별 등급카드 사진 후보",
+      "file": "graded_photo_candidates.json",
+      "ok": true,
+      "status": "정상",
+      "updated_at": null,
+      "count": 37,
+      "retry_count": 0,
+      "max_attempts": 2,
+      "recovered_after_retry": false,
+      "auto_action": "학습형 수집 · 검증 후 정상 반영",
+      "collection_errors": [],
+      "remaining_collection_errors": [],
+      "duration_seconds": 23.21,
+      "adaptive_timeout_seconds": 300,
+      "last_attempt_timeout_seconds": 299,
       "collection_stage": "primary",
       "timeout_exhausted": false
     }
   ],
   "optimization": {
     "method": "primary 5min budget + timeout-only isolated 3–10min deferred recovery + per-file learned recovery budget + clean-success-only timeout learning + unified root-cause error learning + bounded parallel primary collection",
-    "learned_job_count": 8,
+    "learned_job_count": 9,
     "failure_accounting": "v73: full aux failure != degraded success; redirects/DNS SSRF blocks are security failures; malformed learning/env timeout values are clamped; timeout stages cannot be skipped",
     "monitoring": "safe whitelist + last-good restore + bounded single retry + traceback fingerprint learning"
   },
   "integration": {
-    "ok": false,
-    "degraded": true,
-    "candidate_count": 0,
-    "failure_count": 3,
-    "error": "포켓몬: URLError: <urlopen error dns lookup failed> / URLError: <urlopen error dns lookup failed> / 원피스: URLError: <urlopen error dns lookup failed> / URLError: <urlopen error dns lookup failed> / 나루토: URLError: <urlopen error dns lookup failed> / URLError: <urlopen error dns lookup failed>",
+    "ok": true,
+    "degraded": false,
+    "candidate_count": 282,
+    "social_candidate_count": 250,
+    "official_social_candidate_count": 3,
+    "failure_count": 0,
+    "error": "",
     "platform": {
       "platform": "Linux",
-      "python": "3.12.13",
+      "python": "3.11.16",
       "data_dir": "<app-data>",
-      "storage_scope": "project-fallback",
+      "storage_scope": "user-app-data",
       "writable": true,
-      "checked_at": "2026-08-26T19:47:15+09:00"
+      "checked_at": "2026-09-10T04:52:16+00:00"
     },
-    "note": "검색 후보 자료입니다. 공식 검증 전에는 앱의 확정 행사/가격 데이터로 사용하지 않습니다.",
-    "duration_seconds": 4.66,
-    "adaptive_timeout_seconds": 179,
-    "last_attempt_timeout_seconds": 296,
-    "retry_count": 1,
-    "recovered_after_retry": false,
-    "auto_action": "기존 정상자료 유지 · 다음 실행에서 제한시간 확대 후 재확인"
+    "note": "검색/SNS/뉴스/공식사이트/공식 YouTube/사이트맵 후보 자료입니다. 발견 경로가 공식이어도 내용 검증 전에는 자동 확정하지 않습니다.",
+    "duration_seconds": 127.47,
+    "adaptive_timeout_seconds": 189,
+    "last_attempt_timeout_seconds": 189,
+    "retry_count": 0,
+    "recovered_after_retry": false
   },
   "link_audit": {
     "ok": true,
-    "degraded": true,
-    "warning": "일시 확인불가 257개",
-    "reachable_count": 0,
-    "updated_at": "2026-08-26T10:47:11+00:00",
-    "checked": 257,
+    "degraded": false,
+    "warning": "",
+    "reachable_count": 227,
+    "transient_deferred": true,
+    "transient_notice": "일시 확인불가 19개 · 기존 링크 유지 · 다음 업데이트 재확인",
+    "unresolved_broken": 0,
+    "unresolved_summary": [],
+    "updated_at": "2026-09-10T04:50:08+00:00",
+    "checked": 267,
     "audit_timeout_seconds": 289,
     "request_timeout_seconds": 5,
-    "restricted": 0,
-    "broken": 0,
-    "transient": 257,
+    "restricted": 17,
+    "broken": 4,
+    "transient": 19,
     "blocked": 0,
-    "repaired": 0,
-    "duration_seconds": 0.46,
+    "repaired": 4,
+    "same_host_fallback_stats": {
+      "eligible": 0,
+      "probes": 0,
+      "verified": 0
+    },
+    "template_route_recovery_stats": {
+      "eligible": 0,
+      "probes": 0,
+      "recovered": 0
+    },
+    "unresolved_details": [],
+    "repaired_details": [
+      {
+        "url": "https://pokemoncard.co.kr/card/category/product",
+        "fallback_url": "https://pokemoncard.co.kr/",
+        "code": 410,
+        "references": [
+          {
+            "file": "purchase_sources.json",
+            "field": "url"
+          }
+        ]
+      },
+      {
+        "url": "https://pokemoncard.co.kr/card/225",
+        "fallback_url": "https://pokemoncard.co.kr/",
+        "code": 410,
+        "references": [
+          {
+            "file": "purchase_sources.json",
+            "field": "url"
+          },
+          {
+            "file": "purchase_sources.json",
+            "field": "official_reference_url"
+          },
+          {
+            "file": "purchase_sources.json",
+            "field": "url"
+          },
+          {
+            "file": "purchase_sources.json",
+            "field": "official_reference_url"
+          }
+        ]
+      },
+      {
+        "url": "https://www.pokemonkorea.co.kr/",
+        "fallback_url": "https://pokemonkorea.co.kr/",
+        "code": 410,
+        "references": [
+          {
+            "file": "promo_events.json",
+            "field": "source"
+          }
+        ]
+      },
+      {
+        "url": "https://pokemonkorea.co.kr/2026_battle_tournament3/menu800",
+        "fallback_url": "https://pokemonkorea.co.kr/",
+        "code": 410,
+        "references": [
+          {
+            "file": "promo_events.json",
+            "field": "source"
+          }
+        ]
+      }
+    ],
+    "blocked_details": [],
+    "transient_details": [
+      {
+        "url": "https://search.shopping.naver.com/search/all?query={query}",
+        "detail": null,
+        "code": 418,
+        "references": [
+          {
+            "file": "purchase_sources.json",
+            "field": "url_template"
+          }
+        ]
+      },
+      {
+        "url": "https://www.pokemoncenter-online.com/",
+        "detail": null,
+        "code": 302,
+        "references": [
+          {
+            "file": "purchase_sources.json",
+            "field": "url"
+          }
+        ]
+      },
+      {
+        "url": "https://www.amazon.co.jp/s?k={query}",
+        "detail": null,
+        "code": 503,
+        "references": [
+          {
+            "file": "purchase_sources.json",
+            "field": "url_template"
+          }
+        ]
+      },
+      {
+        "url": "https://search.rakuten.co.jp/search/mall/{query}/",
+        "detail": "TimeoutError",
+        "code": null,
+        "references": [
+          {
+            "file": "purchase_sources.json",
+            "field": "url_template"
+          }
+        ]
+      },
+      {
+        "url": "https://www.amazon.com/s?k={query}",
+        "detail": null,
+        "code": 503,
+        "references": [
+          {
+            "file": "purchase_sources.json",
+            "field": "url_template"
+          }
+        ]
+      },
+      {
+        "url": "https://kream.co.kr/search?keyword={query}",
+        "detail": "TimeoutError",
+        "code": null,
+        "references": [
+          {
+            "file": "purchase_sources.json",
+            "field": "url_template"
+          }
+        ]
+      },
+      {
+        "url": "https://www.samsclub.com/s/{query}",
+        "detail": null,
+        "code": 412,
+        "references": [
+          {
+            "file": "purchase_sources.json",
+            "field": "url_template"
+          }
+        ]
+      },
+      {
+        "url": "https://www.trollandtoad.com/category.php?selected-cat=0&search-words={query}",
+        "detail": null,
+        "code": 400,
+        "references": [
+          {
+            "file": "purchase_sources.json",
+            "field": "url_template"
+          }
+        ]
+      },
+      {
+        "url": "https://www.7-eleven.co.kr/",
+        "detail": "URLError",
+        "code": null,
+        "references": [
+          {
+            "file": "purchase_sources.json",
+            "field": "official_reference_url"
+          },
+          {
+            "file": "purchase_sources.json",
+            "field": "url"
+          },
+          {
+            "file": "purchase_sources.json",
+            "field": "official_reference_url"
+          }
+        ]
+      },
+      {
+        "url": "https://kream.co.kr/products/959332",
+        "detail": "TimeoutError",
+        "code": null,
+        "references": [
+          {
+            "file": "market_prices.json",
+            "field": "source"
+          }
+        ]
+      },
+      {
+        "url": "https://kream.co.kr/products/stock/16256508",
+        "detail": "TimeoutError",
+        "code": null,
+        "references": [
+          {
+            "file": "market_prices.json",
+            "field": "source"
+          }
+        ]
+      },
+      {
+        "url": "https://kream.co.kr/products/627575",
+        "detail": "TimeoutError",
+        "code": null,
+        "references": [
+          {
+            "file": "market_prices.json",
+            "field": "source"
+          }
+        ]
+      },
+      {
+        "url": "https://kream.co.kr/products/911161",
+        "detail": "TimeoutError",
+        "code": null,
+        "references": [
+          {
+            "file": "market_prices.json",
+            "field": "source"
+          }
+        ]
+      },
+      {
+        "url": "https://kream.co.kr/products/975577/",
+        "detail": "TimeoutError",
+        "code": null,
+        "references": [
+          {
+            "file": "market_prices.json",
+            "field": "source"
+          },
+          {
+            "file": "market_watch.json",
+            "field": "source"
+          }
+        ]
+      },
+      {
+        "url": "https://kream.co.kr/products/1015880",
+        "detail": "TimeoutError",
+        "code": null,
+        "references": [
+          {
+            "file": "market_prices.json",
+            "field": "source"
+          },
+          {
+            "file": "market_watch.json",
+            "field": "source"
+          }
+        ]
+      },
+      {
+        "url": "https://kream.co.kr/products/911415",
+        "detail": "TimeoutError",
+        "code": null,
+        "references": [
+          {
+            "file": "market_prices.json",
+            "field": "source"
+          }
+        ]
+      },
+      {
+        "url": "https://kream.co.kr/products/991036",
+        "detail": "TimeoutError",
+        "code": null,
+        "references": [
+          {
+            "file": "market_prices.json",
+            "field": "source"
+          }
+        ]
+      },
+      {
+        "url": "https://kream.co.kr/products/911481",
+        "detail": "TimeoutError",
+        "code": null,
+        "references": [
+          {
+            "file": "market_prices.json",
+            "field": "source"
+          }
+        ]
+      },
+      {
+        "url": "https://kream.co.kr/products/1044391/",
+        "detail": "TimeoutError",
+        "code": null,
+        "references": [
+          {
+            "file": "market_watch.json",
+            "field": "source"
+          }
+        ]
+      }
+    ],
+    "duration_seconds": 103.46,
     "adaptive_timeout_seconds": 300,
     "last_attempt_timeout_seconds": 299,
     "retry_count": 0,
     "recovered_after_retry": false
   },
-  "ok_with_aux": false,
+  "auxiliary_coverage_sync": {
+    "ok": true,
+    "expected_topic_cells": 216,
+    "attempted_topic_cells": 216,
+    "successful_topic_cells": 216,
+    "failed_topic_cells": 0,
+    "undiscovered_topic_cells": 179,
+    "source_updated_at": "2026-09-10T04:52:16+00:00"
+  },
+  "ok_with_aux": true,
   "postflight_monitor": {
     "ok": true,
     "results": [
@@ -407,23 +618,88 @@
         "action": "검증 통과"
       },
       {
+        "file": "graded_photo_candidates.json",
+        "ok": true,
+        "action": "검증 통과"
+      },
+      {
         "file": "tcg_live_data.json",
         "ok": true,
         "action": "검증 통과"
       }
     ]
   },
-  "ok_with_monitor": false,
+  "ok_with_monitor": true,
+  "collection_job_neural": {
+    "ingest": {
+      "ok": true,
+      "added": 9,
+      "updated": 0,
+      "eligible": 9,
+      "postflight_skipped": 0,
+      "label_count": 9,
+      "reason": "postflight_verified_outcomes_ingested"
+    },
+    "status": {
+      "schema": 1,
+      "feature_fingerprint": "f4761f0ce2326fe7c29fc318",
+      "updated_at": "2026-09-10T04:52:16+00:00",
+      "active": false,
+      "label_count": 9,
+      "positive_labels": 6,
+      "negative_labels": 3,
+      "minimum_labels": 1000,
+      "labels_remaining": 991,
+      "progress_percent": 0.9,
+      "hidden_sizes": [
+        4,
+        8,
+        12
+      ],
+      "seeds": [
+        20260907,
+        20260917,
+        20260927
+      ],
+      "protocol_version": 2,
+      "model_source": "none",
+      "model_recovered_from_backup": false,
+      "reason": "waiting_for_independent_labels",
+      "safety": {
+        "learns_operational_strategy_not_facts": true,
+        "completed_postflight_verified_outcomes_only": true,
+        "minimum_independent_labels": 1000,
+        "minimum_each_class": 100,
+        "hidden_sizes_compared": [
+          4,
+          8,
+          12
+        ],
+        "collector_skip_allowed": false,
+        "collector_disable_allowed": false,
+        "verification_bypass": false,
+        "official_trust_auto_promotion": false,
+        "candidate_database_auto_promotion": false,
+        "source_code_auto_rewrite": false,
+        "git_write": false,
+        "neural_output_is_priority_only": true,
+        "all_mandatory_collectors_preserved": true,
+        "training_features_pre_outcome": true,
+        "per_file_postflight_gate": true
+      }
+    },
+    "policy": "postflight 검증 결과만 학습 · 1,000개 독립라벨 전 기존 EWMA 유지 · 활성 후 LPT+위험도 보조정렬 · 모든 수집기 실행"
+  },
   "error_learning": {
     "summary": {
-      "error_group_count": 7,
-      "new_group_count": 0,
-      "recurring_group_count": 6,
-      "unresolved_group_count": 0,
+      "error_group_count": 9,
+      "new_group_count": 1,
+      "recurring_group_count": 7,
+      "unresolved_group_count": 2,
       "resolved_group_count": 7,
       "verified_solution_group_count": 7,
-      "scenario_prepared_group_count": 1,
-      "consolidated_event_total": 1010
+      "scenario_prepared_group_count": 2,
+      "consolidated_event_total": 1016
     },
     "new_errors": [
       {
@@ -455,6 +731,66 @@
           "기존 정상자료가 손상되지 않았는지 확인합니다."
         ],
         "group_id": "819660722644a1bb"
+      },
+      {
+        "code": "NETWORK_HTTP_ERROR",
+        "title": "HTTP 응답 오류",
+        "category": "통신 오류",
+        "error_subtype": "unknown-status",
+        "file": "releases.json",
+        "detail": "Pokémon KR index: HTTPError",
+        "probable_cause": "원출처가 오류·차단 응답을 반환했거나 접근 정책이 바뀌었을 가능성이 큽니다.",
+        "safe_action": "상태별 제한 재시도 · 영구 오류 중단",
+        "analysis_status": "신규 분석",
+        "last_outcome": "unresolved",
+        "first_seen": "2026-09-10T04:50:08+00:00",
+        "last_seen": "2026-09-10T04:50:08+00:00",
+        "occurrences": 1,
+        "unresolved_count": 1,
+        "http_status": null,
+        "bounded_retry_allowed": false,
+        "http_statuses": [],
+        "resolution_steps": [
+          "HTTP 상태와 공식 주소 변경 여부를 확인합니다.",
+          "인증정보 없이 제한된 재시도를 실행합니다.",
+          "기존 정상자료 보존과 다음 실행 결과를 비교합니다."
+        ],
+        "verification_steps": [
+          "기존 정상자료 보존과 다음 실행 결과를 비교합니다.",
+          "기존 정상자료가 손상되지 않았는지 확인합니다."
+        ],
+        "group_id": "5d1afca9a032a190"
+      },
+      {
+        "code": "NETWORK_HTTP_ERROR",
+        "title": "HTTP 주소 소멸·변경 오류",
+        "category": "통신 오류",
+        "error_subtype": "missing-410",
+        "file": "promo_events.json",
+        "detail": "한국 포켓몬 영화·극장판 개봉 확인: HTTPError: status 410",
+        "probable_cause": "원출처 주소가 이동·삭제되어 영구 실패 응답을 반환했을 가능성이 큽니다.",
+        "safe_action": "상태별 제한 재시도 · 영구 오류 중단",
+        "analysis_status": "반복 발생",
+        "last_outcome": "unresolved",
+        "first_seen": "2026-09-10T04:50:08+00:00",
+        "last_seen": "2026-09-10T04:50:08+00:00",
+        "occurrences": 5,
+        "unresolved_count": 5,
+        "http_status": 410,
+        "bounded_retry_allowed": false,
+        "http_statuses": [
+          410
+        ],
+        "resolution_steps": [
+          "공식 사이트에서 현재 주소를 확인합니다.",
+          "같은 주소의 자동 재시도를 중단합니다.",
+          "새 주소 검증 전까지 기존 정상자료를 유지합니다."
+        ],
+        "verification_steps": [
+          "새 주소 검증 전까지 기존 정상자료를 유지합니다.",
+          "기존 정상자료가 손상되지 않았는지 확인합니다."
+        ],
+        "group_id": "f18ad1690821c01e"
       }
     ],
     "top_groups": [
@@ -727,6 +1063,104 @@
         "stop_conditions": []
       },
       {
+        "group_id": "f18ad1690821c01e",
+        "code": "NETWORK_HTTP_ERROR",
+        "title": "HTTP 주소 소멸·변경 오류",
+        "category": "통신 오류",
+        "error_subtype": "missing-410",
+        "http_status": 410,
+        "http_statuses": [
+          410
+        ],
+        "bounded_retry_allowed": false,
+        "occurrences": 5,
+        "resolved_count": 0,
+        "unresolved_count": 5,
+        "first_seen": "2026-09-10T04:50:08+00:00",
+        "last_seen": "2026-09-10T04:50:08+00:00",
+        "last_outcome": "unresolved",
+        "analysis_status": "반복 발생",
+        "affected_files": [
+          "promo_events.json",
+          "purchase_sources.json"
+        ],
+        "unresolved_files": [
+          "promo_events.json",
+          "purchase_sources.json"
+        ],
+        "probable_cause": "원출처 주소가 이동·삭제되어 영구 실패 응답을 반환했을 가능성이 큽니다.",
+        "safe_action": "상태별 제한 재시도 · 영구 오류 중단",
+        "recommended_action": "HTTP 상태·Retry-After·공식 주소 변경 여부를 확인하세요.",
+        "resolution_steps": [
+          "공식 사이트에서 현재 주소를 확인합니다.",
+          "같은 주소의 자동 재시도를 중단합니다.",
+          "새 주소 검증 전까지 기존 정상자료를 유지합니다."
+        ],
+        "verification_steps": [
+          "새 주소 검증 전까지 기존 정상자료를 유지합니다.",
+          "기존 정상자료가 손상되지 않았는지 확인합니다."
+        ],
+        "last_detail": "포켓몬 공인 카드샵 안내: 재확인 필요·기존 주소 유지 (HTTPError: status 410)",
+        "scenario_prepared": true,
+        "scenario_profile_id": "ac99cbcda23c7920",
+        "prepared_scenario_count": 1,
+        "diagnostic_priority": 20,
+        "first_checks": [
+          "HTTP 상태와 Retry-After 존재 여부를 먼저 확인합니다."
+        ],
+        "fast_resolution_steps": [
+          "공식 사이트에서 현재 주소를 확인합니다.",
+          "같은 주소의 자동 재시도를 중단합니다.",
+          "새 주소 검증 전까지 기존 정상자료를 유지합니다."
+        ],
+        "stop_conditions": [
+          "401·403·404·410은 같은 주소를 자동 재시도하지 않습니다."
+        ]
+      },
+      {
+        "group_id": "5d1afca9a032a190",
+        "code": "NETWORK_HTTP_ERROR",
+        "title": "HTTP 응답 오류",
+        "category": "통신 오류",
+        "error_subtype": "unknown-status",
+        "http_status": null,
+        "http_statuses": [],
+        "bounded_retry_allowed": false,
+        "occurrences": 1,
+        "resolved_count": 0,
+        "unresolved_count": 1,
+        "first_seen": "2026-09-10T04:50:08+00:00",
+        "last_seen": "2026-09-10T04:50:08+00:00",
+        "last_outcome": "unresolved",
+        "analysis_status": "신규 분석",
+        "affected_files": [
+          "releases.json"
+        ],
+        "unresolved_files": [
+          "releases.json"
+        ],
+        "probable_cause": "원출처가 오류·차단 응답을 반환했거나 접근 정책이 바뀌었을 가능성이 큽니다.",
+        "safe_action": "상태별 제한 재시도 · 영구 오류 중단",
+        "recommended_action": "HTTP 상태·Retry-After·공식 주소 변경 여부를 확인하세요.",
+        "resolution_steps": [
+          "HTTP 상태와 공식 주소 변경 여부를 확인합니다.",
+          "인증정보 없이 제한된 재시도를 실행합니다.",
+          "기존 정상자료 보존과 다음 실행 결과를 비교합니다."
+        ],
+        "verification_steps": [
+          "기존 정상자료 보존과 다음 실행 결과를 비교합니다.",
+          "기존 정상자료가 손상되지 않았는지 확인합니다."
+        ],
+        "last_detail": "Pokémon KR index: HTTPError",
+        "scenario_prepared": false,
+        "scenario_profile_id": null,
+        "prepared_scenario_count": 0,
+        "diagnostic_priority": 50,
+        "first_checks": [],
+        "fast_resolution_steps": [],
+        "stop_conditions": []
+      },
+      {
         "group_id": "e717373c5d3b3852",
         "code": "INTERNAL_CODE_ERROR",
         "title": "내부 코드 이름·가져오기 오류",
@@ -769,5 +1203,46 @@
       }
     ],
     "safety": "해결방법은 분석·검증 계획으로만 저장되며 문자열이나 생성 코드를 자동 실행하지 않습니다."
+  },
+  "self_healing": {
+    "ok": true,
+    "runs": 1,
+    "policy_applied": 0,
+    "policy_recovered": 0,
+    "next_policy_prepared": 0,
+    "quarantined_for_code_repair": 0,
+    "duplicate_active_signatures_suppressed": 3,
+    "duplicate_policy_observations_suppressed": 0,
+    "active_files": 0,
+    "code_repair_learning": {
+      "ok": true,
+      "runs": 1,
+      "new_candidates": 0,
+      "repeated_candidates": 0,
+      "verified_fix_regressions": 0,
+      "duplicate_signatures_suppressed": 0,
+      "observed_resolved": 0,
+      "open_candidates": 0,
+      "verified_fixed": 0,
+      "safety": {
+        "learned_text_executable": false,
+        "source_rewrite": false,
+        "git_write": false,
+        "unverified_data_promotion": false,
+        "allowlisted_playbooks_only": true,
+        "process_safe_transactions": true,
+        "verified_fix_requires_full_playbook": true,
+        "whole_file_clean_resolution": true,
+        "one_signature_occurrence_per_run": true
+      }
+    },
+    "safety": {
+      "learned_text_executable": false,
+      "source_rewrite": false,
+      "unverified_data_promotion": false,
+      "allowlisted_policy_only": true,
+      "process_safe_transactions": true,
+      "one_policy_observation_per_signature_per_run": true
+    }
   }
 }

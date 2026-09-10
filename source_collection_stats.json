@@ -1,5 +1,239 @@
 {
   "version": 1,
-  "updated_at": null,
-  "sources": {}
+  "sources": {
+    "포켓몬 30주년 공식": {
+      "runs": 1,
+      "successes": 1,
+      "failures": 0,
+      "last_seconds": 0.787,
+      "last_run": "2026-09-10T04:46:33+0000",
+      "clean_success_streak": 1,
+      "consecutive_failures": 0,
+      "success_ewma_seconds": 0.787,
+      "next_timeout_seconds": 30
+    },
+    "포켓몬 일본 공식": {
+      "runs": 1,
+      "successes": 1,
+      "failures": 0,
+      "last_seconds": 0.897,
+      "last_run": "2026-09-10T04:46:33+0000",
+      "clean_success_streak": 1,
+      "consecutive_failures": 0,
+      "success_ewma_seconds": 0.897,
+      "next_timeout_seconds": 30
+    },
+    "원피스 한국 공식": {
+      "runs": 1,
+      "successes": 1,
+      "failures": 0,
+      "last_seconds": 1.629,
+      "last_run": "2026-09-10T04:46:33+0000",
+      "clean_success_streak": 1,
+      "consecutive_failures": 0,
+      "success_ewma_seconds": 1.629,
+      "next_timeout_seconds": 30
+    },
+    "포켓몬 한국 공식": {
+      "runs": 1,
+      "successes": 0,
+      "failures": 1,
+      "last_seconds": 1.667,
+      "last_run": "2026-09-10T04:46:34+0000",
+      "clean_success_streak": 0,
+      "consecutive_failures": 1,
+      "error_patterns": {
+        "167538918137": {
+          "count": 1,
+          "sample": "HTTPError: HTTP Error 410: Gone",
+          "last_seen": "2026-09-10T04:46:34+0000"
+        }
+      },
+      "next_timeout_seconds": 30
+    },
+    "포켓몬 일본 프로모 행사 공식": {
+      "runs": 1,
+      "successes": 1,
+      "failures": 0,
+      "last_seconds": 0.35,
+      "last_run": "2026-09-10T04:46:34+0000",
+      "clean_success_streak": 1,
+      "consecutive_failures": 0,
+      "success_ewma_seconds": 0.35,
+      "next_timeout_seconds": 30
+    },
+    "PSA 공식 등급기준": {
+      "runs": 1,
+      "successes": 0,
+      "failures": 0,
+      "access_restrictions": 1,
+      "last_seconds": 0.287,
+      "last_run": "2026-09-10T04:46:34+0000",
+      "last_http_status": 403,
+      "clean_success_streak": 0,
+      "consecutive_failures": 0,
+      "next_timeout_seconds": 30
+    },
+    "원피스 미국 공식": {
+      "runs": 1,
+      "successes": 1,
+      "failures": 0,
+      "last_seconds": 1.427,
+      "last_run": "2026-09-10T04:46:34+0000",
+      "clean_success_streak": 1,
+      "consecutive_failures": 0,
+      "success_ewma_seconds": 1.427,
+      "next_timeout_seconds": 30
+    },
+    "나루토 카드게임 글로벌 공식": {
+      "runs": 1,
+      "successes": 1,
+      "failures": 0,
+      "last_seconds": 0.875,
+      "last_run": "2026-09-10T04:46:34+0000",
+      "clean_success_streak": 1,
+      "consecutive_failures": 0,
+      "success_ewma_seconds": 0.875,
+      "next_timeout_seconds": 30
+    },
+    "CGC 공식 등급": {
+      "runs": 1,
+      "successes": 1,
+      "failures": 0,
+      "last_seconds": 0.435,
+      "last_run": "2026-09-10T04:46:35+0000",
+      "clean_success_streak": 1,
+      "consecutive_failures": 0,
+      "success_ewma_seconds": 0.435,
+      "next_timeout_seconds": 30
+    },
+    "원피스 일본 공식": {
+      "runs": 1,
+      "successes": 1,
+      "failures": 0,
+      "last_seconds": 1.999,
+      "last_run": "2026-09-10T04:46:35+0000",
+      "clean_success_streak": 1,
+      "consecutive_failures": 0,
+      "success_ewma_seconds": 1.999,
+      "next_timeout_seconds": 30
+    },
+    "BGS 공식 등급": {
+      "runs": 1,
+      "successes": 1,
+      "failures": 0,
+      "last_seconds": 0.593,
+      "last_run": "2026-09-10T04:46:35+0000",
+      "clean_success_streak": 1,
+      "consecutive_failures": 0,
+      "success_ewma_seconds": 0.593,
+      "next_timeout_seconds": 30
+    },
+    "TAG 공식 등급": {
+      "runs": 1,
+      "successes": 1,
+      "failures": 0,
+      "last_seconds": 0.803,
+      "last_run": "2026-09-10T04:46:35+0000",
+      "clean_success_streak": 1,
+      "consecutive_failures": 0,
+      "success_ewma_seconds": 0.803,
+      "next_timeout_seconds": 30
+    },
+    "SNKRDUNK 포켓몬 공개 TCG 시세": {
+      "runs": 1,
+      "successes": 1,
+      "failures": 0,
+      "last_seconds": 0.511,
+      "last_run": "2026-09-10T04:46:36+0000",
+      "clean_success_streak": 1,
+      "consecutive_failures": 0,
+      "success_ewma_seconds": 0.511,
+      "next_timeout_seconds": 30
+    },
+    "BRG 공식 등급": {
+      "runs": 1,
+      "successes": 1,
+      "failures": 0,
+      "last_seconds": 1.54,
+      "last_run": "2026-09-10T04:46:36+0000",
+      "clean_success_streak": 1,
+      "consecutive_failures": 0,
+      "success_ewma_seconds": 1.54,
+      "next_timeout_seconds": 30
+    },
+    "SNKRDUNK 원피스 공개 TCG 시세": {
+      "runs": 1,
+      "successes": 1,
+      "failures": 0,
+      "last_seconds": 0.585,
+      "last_run": "2026-09-10T04:46:36+0000",
+      "clean_success_streak": 1,
+      "consecutive_failures": 0,
+      "success_ewma_seconds": 0.585,
+      "next_timeout_seconds": 30
+    },
+    "JustTCG 가격 API 문서": {
+      "runs": 1,
+      "successes": 1,
+      "failures": 0,
+      "last_seconds": 0.29,
+      "last_run": "2026-09-10T04:46:36+0000",
+      "clean_success_streak": 1,
+      "consecutive_failures": 0,
+      "success_ewma_seconds": 0.29,
+      "next_timeout_seconds": 30
+    },
+    "Collectory 공개 카드시세": {
+      "runs": 1,
+      "successes": 1,
+      "failures": 0,
+      "last_seconds": 1.894,
+      "last_run": "2026-09-10T04:46:37+0000",
+      "clean_success_streak": 1,
+      "consecutive_failures": 0,
+      "success_ewma_seconds": 1.894,
+      "next_timeout_seconds": 30
+    },
+    "Pavilion TCG 통합 참고시세": {
+      "runs": 1,
+      "successes": 1,
+      "failures": 0,
+      "last_seconds": 0.912,
+      "last_run": "2026-09-10T04:46:37+0000",
+      "clean_success_streak": 1,
+      "consecutive_failures": 0,
+      "success_ewma_seconds": 0.912,
+      "next_timeout_seconds": 30
+    },
+    "TCGdex 포켓몬 가격 API": {
+      "runs": 1,
+      "successes": 1,
+      "failures": 0,
+      "last_seconds": 1.208,
+      "last_run": "2026-09-10T04:46:37+0000",
+      "clean_success_streak": 1,
+      "consecutive_failures": 0,
+      "success_ewma_seconds": 1.208,
+      "next_timeout_seconds": 30
+    },
+    "KREAM 공개 TCG 시세": {
+      "runs": 1,
+      "successes": 0,
+      "failures": 1,
+      "last_seconds": 11.235,
+      "last_run": "2026-09-10T04:46:46+0000",
+      "clean_success_streak": 0,
+      "consecutive_failures": 1,
+      "error_patterns": {
+        "ca3ffa2f7ab2": {
+          "count": 1,
+          "sample": "HTTPError: HTTP Error 500: Internal Server Error",
+          "last_seen": "2026-09-10T04:46:46+0000"
+        }
+      },
+      "next_timeout_seconds": 30
+    }
+  },
+  "updated_at": "2026-09-10T04:46:46+0000"
 }
