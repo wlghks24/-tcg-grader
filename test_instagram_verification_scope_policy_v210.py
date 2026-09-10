@@ -19,11 +19,23 @@ class InstagramVerificationScopePolicyV210Tests(unittest.TestCase):
     def test_policy_is_instagram_local_only(self):
         payload = json.loads(POLICY.read_text(encoding="utf-8"))
         self.assertEqual(payload["project"], "instagram_card")
-        self.assertEqual(
-            payload["task_id"],
-            "6a9b8a22e72c8191849c273e1240378e",
-        )
-        self.assertEqual(payload["room_scope"], "instagram_cardinfo")
+
+        # The canonical router may be intentionally rebound to a new task when the
+        # dedicated management chat moves.  Pin the isolation contract rather than
+        # a retired task id: current policy and AI reliability must use one task.
+        task_id = payload["task_id"]
+        self.assertRegex(task_id, r"^[0-9a-f]{32}$")
+        self.assertEqual(payload["ai_reliability_task_id"], task_id)
+        self.assertEqual(payload["room_scope"], "instagram_cardinfo_current_chat")
+
+        schedule = payload["schedule"]
+        self.assertEqual(schedule["router_cadence"], "HOURLY_ON_THE_HOUR_KST")
+        self.assertEqual(schedule["production_slot"], "MONDAY_19:00_KST")
+        self.assertEqual(schedule["non_production_branch"], "COLLECTION_VERIFY_REFINE_ONLY")
+        self.assertEqual(schedule["production_branch"], "WEEKLY_PRODUCTION")
+        self.assertFalse(schedule["duplicate_cardinfo_automations_allowed"])
+        self.assertFalse(schedule["legacy_task_ids_reactivation_allowed"])
+
         self.assertEqual(payload["verification_mode"], "INSTAGRAM_LOCAL_EVIDENCE_ONLY")
         self.assertFalse(payload["card_price_analysis_used"])
         self.assertFalse(payload["market_analysis_snapshot_crosscheck_enabled"])
@@ -35,6 +47,24 @@ class InstagramVerificationScopePolicyV210Tests(unittest.TestCase):
         self.assertEqual(
             payload["source_verification_entrypoint"],
             "instagram_tcg_content/source_verification_engine.py",
+        )
+        self.assertEqual(
+            payload["collection_normalizer_entrypoint"],
+            "instagram_tcg_content/collection_normalizer.py::normalize_collector_records",
+        )
+        self.assertEqual(payload["lifecycle_current_through_end_plus_days"], 5)
+        self.assertTrue(payload["lifecycle_archive_from_day_after_grace"])
+        self.assertTrue(
+            {
+                "release",
+                "rerelease",
+                "promo",
+                "event",
+                "movie_bonus",
+                "festival",
+                "card_news",
+                "product_news",
+            }.issubset(set(payload["content_types"]))
         )
         self.assertTrue(payload["production_verification_receipt_required"])
         self.assertEqual(
@@ -52,7 +82,7 @@ class InstagramVerificationScopePolicyV210Tests(unittest.TestCase):
         )
         self.assertEqual(
             payload["production_verification_receipt_input"],
-            "RAW_OBSERVATION_GROUPS_ONLY",
+            "RAW_OBSERVATION_GROUPS_ONLY_AFTER_TAXONOMY_NORMALIZATION",
         )
         self.assertTrue(
             payload["production_verification_receipt_observation_fingerprint_required"]
@@ -62,6 +92,8 @@ class InstagramVerificationScopePolicyV210Tests(unittest.TestCase):
         self.assertEqual(payload["completed_sale_capture_max_hours"], 36)
         self.assertEqual(payload["completed_sale_event_max_days"], 30)
         self.assertEqual(payload["completed_sale_min_independent_sources"], 2)
+        self.assertIn("normalize_content_taxonomy", payload["preproduction_order"])
+        self.assertIn("persist_verified_snapshot_with_lifecycle", payload["preproduction_order"])
         self.assertIn("build_verification_receipt", payload["preproduction_order"])
         self.assertIn("validate_verification_receipt", payload["preproduction_order"])
 
