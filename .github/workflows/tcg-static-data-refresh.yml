@@ -17,6 +17,7 @@ on:
       - 'social_event_discovery.py'
       - 'auto_pipeline_runner.py'
       - '.github/workflows/tcg-static-data-refresh.yml'
+      - '.github/workflows/collection-verification-guard.yml'
 
 permissions:
   contents: write

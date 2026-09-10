@@ -12,6 +12,14 @@ on:
       - 'multi_market_price_collector.py'
       - 'update_releases.py'
       - 'update_promo_events.py'
+      - 'multi_route_event_discovery.py'
+      - 'social_event_discovery.py'
+      - 'auto_pipeline_runner.py'
+      - 'supplementary_discovery.py'
+      - 'static_data_publish_gate.py'
+      - 'test_static_data_publish_gate.py'
+      - 'test_social_topic_capacity_v213.py'
+      - 'test_information_lifecycle_archive_v209.py'
       - 'source_collection_stats.json'
       - 'adaptive_collection_stats.json'
       - '.github/workflows/collection-verification-guard.yml'
@@ -26,6 +34,14 @@ on:
       - 'multi_market_price_collector.py'
       - 'update_releases.py'
       - 'update_promo_events.py'
+      - 'multi_route_event_discovery.py'
+      - 'social_event_discovery.py'
+      - 'auto_pipeline_runner.py'
+      - 'supplementary_discovery.py'
+      - 'static_data_publish_gate.py'
+      - 'test_static_data_publish_gate.py'
+      - 'test_social_topic_capacity_v213.py'
+      - 'test_information_lifecycle_archive_v209.py'
       - '.github/workflows/collection-verification-guard.yml'
 
 permissions:
@@ -56,8 +72,15 @@ jobs:
 
       - name: Static and regression verification
         run: |
-          python -m py_compile collection_verification_gate.py test_collection_verification_gate.py
-          python -m unittest -v test_collection_verification_gate.py
+          python -m py_compile \
+            collection_verification_gate.py static_data_publish_gate.py \
+            test_collection_verification_gate.py test_static_data_publish_gate.py \
+            test_social_topic_capacity_v213.py test_information_lifecycle_archive_v209.py
+          python -m unittest -v \
+            test_collection_verification_gate.py \
+            test_static_data_publish_gate.py \
+            test_social_topic_capacity_v213.py \
+            test_information_lifecycle_archive_v209.py
           python selfrefine_domain_boundary_guard.py
 
       - name: Run bounded live collection cycle
