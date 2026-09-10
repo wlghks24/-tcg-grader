@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 from __future__ import annotations
-import hashlib, json
+import hashlib, json, re
 from collections import defaultdict
 from pathlib import Path
 from typing import Any
@@ -20,6 +20,7 @@ LEGACY_SAFE_TYPES = {
     "release_or_product": "product_news",
     "reprint_or_restock": "product_news",
 }
+EXACT_DATE_RE = re.compile(r"^\d{4}-\d{2}-\d{2}$")
 
 
 def _registry_index(registry_path: Path = DEFAULT_REGISTRY) -> dict[str, str]:
@@ -44,7 +45,14 @@ def _canonicalize_row(row: dict[str, Any]) -> dict[str, Any]:
     if raw in LEGACY_SAFE_TYPES:
         out["fact_type"] = LEGACY_SAFE_TYPES[raw]
         out["information_family"] = LEGACY_SAFE_TYPES[raw]
-    return normalize_collector_record(out)
+    normalized = normalize_collector_record(out)
+    period = str(normalized.get("effective_date_or_period") or "").strip()
+    published = str(normalized.get("published_at_if_available") or "").strip()
+    if EXACT_DATE_RE.fullmatch(period):
+        normalized.setdefault("effective_date", period)
+    if EXACT_DATE_RE.fullmatch(published):
+        normalized.setdefault("published_at", published)
+    return normalized
 
 
 def _canon_key(row: dict[str, Any]) -> str:
