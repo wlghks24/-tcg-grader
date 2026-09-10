@@ -252,6 +252,10 @@ def classify_monitor_observation(
             classification = "RUN_STARTED_NO_TERMINAL_RECEIPT"
             failed_stage = str(producer_phase or "UNKNOWN")
             root = "ROOT_CAUSE_UNRESOLVED"
+    elif slot_due and last_run_advanced and not producer_present:
+        classification = "RUN_INVOKED_NO_PRODUCER_RECEIPT"
+        failed_stage = "EXCHANGE_PERSISTENCE"
+        root = "ROOT_CAUSE_UNRESOLVED"
     elif slot_due and not last_run_advanced and is_enabled:
         classification = "SCHEDULE_GAP_ACTIVE"
         failed_stage = "SCHEDULER_INVOCATION"
@@ -289,6 +293,10 @@ def classify_monitor_observation(
         "failed_stage": failed_stage,
         "root_cause": root,
         "attribution": attribution,
+        "mandatory_reporting_slot": (
+            slot.astimezone(KST).hour in {9, 10, 21, 22}
+            and slot.astimezone(KST).minute == 30
+        ),
         "repair_handoff": {
             "event_class": classification,
             "failed_stage": failed_stage,
@@ -296,7 +304,11 @@ def classify_monitor_observation(
             "recommended_action": (
                 "NEXT_PRODUCER_RUN_USE_BOUNDED_ALTERNATE_STRATEGY"
                 if auto_run_level_repair_allowed
-                else "PRESERVE_PRODUCER_CODE_AND_VERIFY_NEXT_SCHEDULED_INVOCATION"
+                else (
+                    "VERIFY_EXCHANGE_PERSISTENCE_AND_FORCE_VISIBLE_STATUS_REPORT"
+                    if classification == "RUN_INVOKED_NO_PRODUCER_RECEIPT"
+                    else "PRESERVE_PRODUCER_CODE_AND_VERIFY_NEXT_SCHEDULED_INVOCATION"
+                )
             ),
             "auto_run_level_repair_allowed": auto_run_level_repair_allowed,
             "source_code_auto_patch_allowed": False,
@@ -367,6 +379,18 @@ def self_test() -> None:
     assert reported["classification"] == "PRODUCER_REPORTED_FAILURE", reported
     assert reported["repair_handoff"]["auto_run_level_repair_allowed"] is True
     assert reported["root_cause"] == "ROOT_CAUSE_UNRESOLVED"
+
+    invoked_without_receipt = classify_monitor_observation(
+        scheduled_slot_kst="2026-09-10T10:30:00+09:00",
+        observed_at="2026-09-10T10:35:00+09:00",
+        is_enabled=True,
+        last_run_time="2026-09-10T10:30:33+09:00",
+        producer_status=None,
+    )
+    assert invoked_without_receipt["classification"] == "RUN_INVOKED_NO_PRODUCER_RECEIPT", invoked_without_receipt
+    assert invoked_without_receipt["failed_stage"] == "EXCHANGE_PERSISTENCE"
+    assert invoked_without_receipt["mandatory_reporting_slot"] is True
+    assert invoked_without_receipt["repair_handoff"]["auto_run_level_repair_allowed"] is False
 
     delivery = build_producer_status(
         run_id="r2",
