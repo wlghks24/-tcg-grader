@@ -40,6 +40,8 @@ REQUIRED_FILES = (
     "update_promo_events.py",
     "update_purchase_sources.py",
     "update_exchange_rates.py",
+    "grading_company_watch.py",
+    "grading_company_updates.json",
     "graded_photo_multi_source.py",
     "graded_photo_evidence.py",
     "detailed_collection_intelligence.py",
@@ -75,6 +77,7 @@ EXPECTED_JOB_FILES = {
     "promo_events.json",
     "purchase_sources.json",
     "exchange_rates.json",
+    "grading_company_updates.json",
     "graded_photo_candidates.json",
 }
 
@@ -120,6 +123,7 @@ def audit() -> dict:
         "search_method_learning",
         "verified_collection_neural",
         "verified_collection_job_neural",
+        "grading_company_watch",
         "collection_learning_hardening_v142",
         "event_source_expansion_v145",
         "manual_official_proof",
@@ -144,6 +148,11 @@ def audit() -> dict:
     if repair is not None:
         if "graded_photo_candidates.json" not in getattr(repair, "SAFE_JSON_FILES", set()):
             issues.append("등급사진 후보 JSON이 자동복구 안전목록에 없습니다")
+        if "grading_company_updates.json" not in getattr(repair, "SAFE_JSON_FILES", set()):
+            issues.append("감정업체 공식 스냅샷이 자동복구 안전목록에 없습니다")
+        grading_required = getattr(repair, "REQUIRED_JSON_FIELDS", {}).get("grading_company_updates.json", {})
+        if grading_required.get("companies") is not dict or grading_required.get("sources") is not dict:
+            issues.append("감정업체 공식 스냅샷 사전검증 계약이 구버전입니다")
         required = getattr(repair, "REQUIRED_JSON_FIELDS", {}).get("graded_photo_candidates.json", {})
         if required.get("records") is not list or required.get("summary") is not dict:
             issues.append("등급사진 후보 JSON 사전검증 계약이 구버전입니다")
@@ -159,7 +168,7 @@ def audit() -> dict:
         jobs = getattr(update_all, "JOBS", ())
         files = {row[2] for row in jobs if isinstance(row, tuple) and len(row) >= 3}
         if files != EXPECTED_JOB_FILES:
-            issues.append("7개 정규 수집 작업 구성이 현재 번들과 맞지 않습니다")
+            issues.append(f"{len(EXPECTED_JOB_FILES)}개 정규 수집 작업 구성이 현재 번들과 맞지 않습니다")
         try:
             if not callable(getattr(update_all, "_ordered_jobs", None)):
                 issues.append("전체수집 작업 신경망 우선순위 결합 함수가 없습니다")
@@ -286,6 +295,9 @@ def audit() -> dict:
             issues.append("전체수집 작업 신경망이 현재 실행 결과가 반영된 통계로 학습할 수 있습니다")
         if safety.get("per_file_postflight_gate") is not True:
             issues.append("전체수집 작업 신경망의 파일별 postflight 학습 게이트가 없습니다")
+        neural_jobs=set(getattr(collection_job_neural, "JOB_KEYS", ()))
+        if not EXPECTED_JOB_FILES.issubset(neural_jobs):
+            issues.append("전체수집 작업 신경망이 정규 필수 수집 작업을 모두 포함하지 않습니다")
         if not callable(getattr(collection_job_neural, "_validate_model_payload", None)):
             issues.append("전체수집 작업 신경망 모델 가중치 구조/유한값 검증기가 없습니다")
         if not hasattr(collection_job_neural, "LABELS_BACKUP_PATH") or not hasattr(collection_job_neural, "MODEL_BACKUP_PATH"):

@@ -205,6 +205,8 @@ def _valid_project_payload(filename: str, data: Any) -> bool:
             if not (0 < values[0] < 30 and 500 < values[1] < 3000):
                 return False
         elif filename == "grading_company_updates.json":
+            import grading_company_watch
+            from urllib.parse import urlsplit
             if data.get("schema_version") != 1:
                 return False
             if set(data["companies"]) != {"PSA","BGS","CGC","TAG","BRG"} or len(data["sources"]) < 10:
@@ -219,6 +221,9 @@ def _valid_project_payload(filename: str, data: Any) -> bool:
                 return False
             for row in data["sources"].values():
                 validate_public_https_url(row["url"])
+                parts=urlsplit(row["url"])
+                if parts.scheme != "https" or (parts.hostname or "").lower() not in grading_company_watch.ALLOWED_HOSTS:
+                    return False
             if any(not isinstance(row,dict) or row.get("verified_official_source") is not True for row in (data.get("recent_changes") or [])):
                 return False
         elif filename == "graded_photo_candidates.json":
