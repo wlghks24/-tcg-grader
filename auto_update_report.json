@@ -3,7 +3,7 @@
   "engine": "v98-camera-resilience-full-runtime",
   "trigger": "github-pages-static-refresh",
   "selected_files": [],
-  "started_at": "2026-09-10T04:46:46+00:00",
+  "started_at": "2026-09-10T06:59:16+00:00",
   "preflight_monitor": {
     "ok": true,
     "results": [
@@ -49,8 +49,8 @@
       }
     ]
   },
-  "finished_at": "2026-09-10T04:50:08+00:00",
-  "duration_seconds": 202.3,
+  "finished_at": "2026-09-10T07:02:27+00:00",
+  "duration_seconds": 191.2,
   "parallel_workers": 2,
   "ok": true,
   "success_count": 7,
@@ -77,7 +77,7 @@
       "file": "releases.json",
       "ok": true,
       "status": "일부 출처 확인 실패 · 기존 전체 출시이력 보존",
-      "updated_at": "2026-09-10T04:47:07+00:00",
+      "updated_at": "2026-09-10T06:59:30+00:00",
       "count": 10,
       "retry_count": 0,
       "max_attempts": 2,
@@ -89,7 +89,7 @@
       "remaining_collection_errors": [
         "Pokémon KR index: HTTPError"
       ],
-      "duration_seconds": 20.62,
+      "duration_seconds": 14.16,
       "adaptive_timeout_seconds": 300,
       "last_attempt_timeout_seconds": 299,
       "collection_stage": "primary",
@@ -100,7 +100,7 @@
       "file": "market_watch.json",
       "ok": true,
       "status": "정상",
-      "updated_at": "2026-09-10T04:48:30+00:00",
+      "updated_at": "2026-09-10T07:00:17+00:00",
       "count": 19,
       "retry_count": 0,
       "max_attempts": 2,
@@ -108,9 +108,9 @@
       "auto_action": "학습형 수집 · 검증 후 정상 반영",
       "collection_errors": [],
       "remaining_collection_errors": [],
-      "duration_seconds": 0.06,
-      "adaptive_timeout_seconds": 30,
-      "last_attempt_timeout_seconds": 30,
+      "duration_seconds": 0.07,
+      "adaptive_timeout_seconds": 300,
+      "last_attempt_timeout_seconds": 299,
       "collection_stage": "primary",
       "timeout_exhausted": false
     },
@@ -119,7 +119,7 @@
       "file": "market_prices.json",
       "ok": true,
       "status": "정상",
-      "updated_at": "2026-09-10T04:50:08+00:00",
+      "updated_at": "2026-09-10T07:02:27+00:00",
       "count": 38,
       "retry_count": 0,
       "max_attempts": 2,
@@ -127,7 +127,7 @@
       "auto_action": "학습형 수집 · 검증 후 정상 반영",
       "collection_errors": [],
       "remaining_collection_errors": [],
-      "duration_seconds": 202.27,
+      "duration_seconds": 191.16,
       "adaptive_timeout_seconds": 300,
       "last_attempt_timeout_seconds": 299,
       "collection_stage": "primary",
@@ -138,7 +138,7 @@
       "file": "promo_events.json",
       "ok": true,
       "status": "기존 확인자료 유지 · 일부 출처 재확인 필요 · 한·일·미 영화정보 9/9 조합 추적",
-      "updated_at": "2026-09-10T04:47:44+00:00",
+      "updated_at": "2026-09-10T07:00:01+00:00",
       "count": 37,
       "retry_count": 0,
       "max_attempts": 2,
@@ -154,7 +154,7 @@
         "2026 성남CITY 배틀 토너먼트 × GXG 2026: HTTPError: status 410",
         "KR 포켓몬 카드 신규행사 탐색: HTTPError: status 410"
       ],
-      "duration_seconds": 37.58,
+      "duration_seconds": 30.78,
       "adaptive_timeout_seconds": 300,
       "last_attempt_timeout_seconds": 299,
       "collection_stage": "primary",
@@ -165,7 +165,7 @@
       "file": "purchase_sources.json",
       "ok": true,
       "status": "일부 구매처 재확인 필요·기존 목록 유지",
-      "updated_at": "2026-09-10T04:48:04+00:00",
+      "updated_at": "2026-09-10T07:00:04+00:00",
       "count": 205,
       "retry_count": 0,
       "max_attempts": 2,
@@ -179,7 +179,7 @@
         "포켓몬 카드 게임 코리아 제품: 재확인 필요·기존 주소 유지 (HTTPError: status 410)",
         "포켓몬 공인 카드샵 안내: 재확인 필요·기존 주소 유지 (HTTPError: status 410)"
       ],
-      "duration_seconds": 22.69,
+      "duration_seconds": 3.39,
       "adaptive_timeout_seconds": 300,
       "last_attempt_timeout_seconds": 299,
       "collection_stage": "primary",
@@ -190,7 +190,7 @@
       "file": "exchange_rates.json",
       "ok": true,
       "status": "정상",
-      "updated_at": "2026-09-10T04:48:31+00:00",
+      "updated_at": "2026-09-10T07:00:17+00:00",
       "count": 2,
       "retry_count": 0,
       "max_attempts": 2,
@@ -198,7 +198,7 @@
       "auto_action": "학습형 수집 · 검증 후 정상 반영",
       "collection_errors": [],
       "remaining_collection_errors": [],
-      "duration_seconds": 0.61,
+      "duration_seconds": 0.51,
       "adaptive_timeout_seconds": 300,
       "last_attempt_timeout_seconds": 299,
       "collection_stage": "primary",
@@ -210,14 +210,14 @@
       "ok": true,
       "status": "정상",
       "updated_at": null,
-      "count": 37,
+      "count": 35,
       "retry_count": 0,
       "max_attempts": 2,
       "recovered_after_retry": false,
       "auto_action": "학습형 수집 · 검증 후 정상 반영",
       "collection_errors": [],
       "remaining_collection_errors": [],
-      "duration_seconds": 23.21,
+      "duration_seconds": 12.03,
       "adaptive_timeout_seconds": 300,
       "last_attempt_timeout_seconds": 299,
       "collection_stage": "primary",
@@ -235,7 +235,7 @@
     "degraded": false,
     "candidate_count": 282,
     "social_candidate_count": 250,
-    "official_social_candidate_count": 3,
+    "official_social_candidate_count": 5,
     "failure_count": 0,
     "error": "",
     "platform": {
@@ -244,33 +244,36 @@
       "data_dir": "<app-data>",
       "storage_scope": "user-app-data",
       "writable": true,
-      "checked_at": "2026-09-10T04:52:16+00:00"
+      "checked_at": "2026-09-10T07:04:03+00:00"
     },
     "note": "검색/SNS/뉴스/공식사이트/공식 YouTube/사이트맵 후보 자료입니다. 발견 경로가 공식이어도 내용 검증 전에는 자동 확정하지 않습니다.",
-    "duration_seconds": 127.47,
-    "adaptive_timeout_seconds": 189,
-    "last_attempt_timeout_seconds": 189,
+    "duration_seconds": 95.22,
+    "adaptive_timeout_seconds": 300,
+    "last_attempt_timeout_seconds": 300,
     "retry_count": 0,
     "recovered_after_retry": false
   },
   "link_audit": {
     "ok": true,
-    "degraded": false,
-    "warning": "",
-    "reachable_count": 227,
+    "degraded": true,
+    "warning": "미보정 깨진 링크 2개 · https://pokemoncard.co.kr/ [purchase_sources.json:url, purchase_sources.json:url, purchase_sources.json:official_reference_url] | https://pokemonkorea.co.kr/ [promo_events.json:source]",
+    "reachable_count": 229,
     "transient_deferred": true,
-    "transient_notice": "일시 확인불가 19개 · 기존 링크 유지 · 다음 업데이트 재확인",
-    "unresolved_broken": 0,
-    "unresolved_summary": [],
-    "updated_at": "2026-09-10T04:50:08+00:00",
-    "checked": 267,
+    "transient_notice": "일시 확인불가 17개 · 기존 링크 유지 · 다음 업데이트 재확인",
+    "unresolved_broken": 2,
+    "unresolved_summary": [
+      "https://pokemoncard.co.kr/ [purchase_sources.json:url, purchase_sources.json:url, purchase_sources.json:official_reference_url]",
+      "https://pokemonkorea.co.kr/ [promo_events.json:source]"
+    ],
+    "updated_at": "2026-09-10T07:02:28+00:00",
+    "checked": 266,
     "audit_timeout_seconds": 289,
     "request_timeout_seconds": 5,
     "restricted": 17,
-    "broken": 4,
-    "transient": 19,
+    "broken": 3,
+    "transient": 17,
     "blocked": 0,
-    "repaired": 4,
+    "repaired": 1,
     "same_host_fallback_stats": {
       "eligible": 0,
       "probes": 0,
@@ -281,24 +284,16 @@
       "probes": 0,
       "recovered": 0
     },
-    "unresolved_details": [],
-    "repaired_details": [
+    "unresolved_details": [
       {
-        "url": "https://pokemoncard.co.kr/card/category/product",
-        "fallback_url": "https://pokemoncard.co.kr/",
-        "code": 410,
+        "url": "https://pokemoncard.co.kr/",
+        "http_code": 410,
+        "confirmed_by": "GET",
         "references": [
           {
             "file": "purchase_sources.json",
             "field": "url"
-          }
-        ]
-      },
-      {
-        "url": "https://pokemoncard.co.kr/card/225",
-        "fallback_url": "https://pokemoncard.co.kr/",
-        "code": 410,
-        "references": [
+          },
           {
             "file": "purchase_sources.json",
             "field": "url"
@@ -318,18 +313,20 @@
         ]
       },
       {
-        "url": "https://www.pokemonkorea.co.kr/",
-        "fallback_url": "https://pokemonkorea.co.kr/",
-        "code": 410,
+        "url": "https://pokemonkorea.co.kr/",
+        "http_code": 410,
+        "confirmed_by": "GET",
         "references": [
           {
             "file": "promo_events.json",
             "field": "source"
           }
         ]
-      },
+      }
+    ],
+    "repaired_details": [
       {
-        "url": "https://pokemonkorea.co.kr/2026_battle_tournament3/menu800",
+        "url": "https://www.pokemonkorea.co.kr/",
         "fallback_url": "https://pokemonkorea.co.kr/",
         "code": 410,
         "references": [
@@ -354,31 +351,9 @@
         ]
       },
       {
-        "url": "https://www.pokemoncenter-online.com/",
-        "detail": null,
-        "code": 302,
-        "references": [
-          {
-            "file": "purchase_sources.json",
-            "field": "url"
-          }
-        ]
-      },
-      {
         "url": "https://www.amazon.co.jp/s?k={query}",
         "detail": null,
         "code": 503,
-        "references": [
-          {
-            "file": "purchase_sources.json",
-            "field": "url_template"
-          }
-        ]
-      },
-      {
-        "url": "https://search.rakuten.co.jp/search/mall/{query}/",
-        "detail": "TimeoutError",
-        "code": null,
         "references": [
           {
             "file": "purchase_sources.json",
@@ -568,7 +543,7 @@
         ]
       }
     ],
-    "duration_seconds": 103.46,
+    "duration_seconds": 75.99,
     "adaptive_timeout_seconds": 300,
     "last_attempt_timeout_seconds": 299,
     "retry_count": 0,
@@ -581,9 +556,9 @@
     "successful_topic_cells": 216,
     "failed_topic_cells": 0,
     "undiscovered_topic_cells": 179,
-    "source_updated_at": "2026-09-10T04:52:16+00:00"
+    "source_updated_at": "2026-09-10T07:04:02+00:00"
   },
-  "ok_with_aux": true,
+  "ok_with_aux": false,
   "postflight_monitor": {
     "ok": true,
     "results": [
@@ -629,7 +604,7 @@
       }
     ]
   },
-  "ok_with_monitor": true,
+  "ok_with_monitor": false,
   "collection_job_neural": {
     "ingest": {
       "ok": true,
@@ -643,11 +618,11 @@
     "status": {
       "schema": 1,
       "feature_fingerprint": "f4761f0ce2326fe7c29fc318",
-      "updated_at": "2026-09-10T04:52:16+00:00",
+      "updated_at": "2026-09-10T07:04:03+00:00",
       "active": false,
       "label_count": 9,
-      "positive_labels": 6,
-      "negative_labels": 3,
+      "positive_labels": 5,
+      "negative_labels": 4,
       "minimum_labels": 1000,
       "labels_remaining": 991,
       "progress_percent": 0.9,
@@ -743,8 +718,8 @@
         "safe_action": "상태별 제한 재시도 · 영구 오류 중단",
         "analysis_status": "신규 분석",
         "last_outcome": "unresolved",
-        "first_seen": "2026-09-10T04:50:08+00:00",
-        "last_seen": "2026-09-10T04:50:08+00:00",
+        "first_seen": "2026-09-10T07:02:27+00:00",
+        "last_seen": "2026-09-10T07:02:27+00:00",
         "occurrences": 1,
         "unresolved_count": 1,
         "http_status": null,
@@ -772,8 +747,8 @@
         "safe_action": "상태별 제한 재시도 · 영구 오류 중단",
         "analysis_status": "반복 발생",
         "last_outcome": "unresolved",
-        "first_seen": "2026-09-10T04:50:08+00:00",
-        "last_seen": "2026-09-10T04:50:08+00:00",
+        "first_seen": "2026-09-10T07:02:27+00:00",
+        "last_seen": "2026-09-10T07:02:27+00:00",
         "occurrences": 5,
         "unresolved_count": 5,
         "http_status": 410,
@@ -1076,8 +1051,8 @@
         "occurrences": 5,
         "resolved_count": 0,
         "unresolved_count": 5,
-        "first_seen": "2026-09-10T04:50:08+00:00",
-        "last_seen": "2026-09-10T04:50:08+00:00",
+        "first_seen": "2026-09-10T07:02:27+00:00",
+        "last_seen": "2026-09-10T07:02:27+00:00",
         "last_outcome": "unresolved",
         "analysis_status": "반복 발생",
         "affected_files": [
@@ -1129,8 +1104,8 @@
         "occurrences": 1,
         "resolved_count": 0,
         "unresolved_count": 1,
-        "first_seen": "2026-09-10T04:50:08+00:00",
-        "last_seen": "2026-09-10T04:50:08+00:00",
+        "first_seen": "2026-09-10T07:02:27+00:00",
+        "last_seen": "2026-09-10T07:02:27+00:00",
         "last_outcome": "unresolved",
         "analysis_status": "신규 분석",
         "affected_files": [
