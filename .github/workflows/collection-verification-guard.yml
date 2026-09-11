@@ -1,4 +1,5 @@
 name: Collection Verification Guard
+# final verification trigger v230 — no runtime behavior change
 
 on:
   workflow_dispatch:
