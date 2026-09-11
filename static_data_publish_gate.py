@@ -22,15 +22,9 @@ import update_promo_events
 from safe_runtime import atomic_write_json
 
 ROOT = Path(__file__).resolve().parent
-PUBLIC_OUTPUTS = (
-    "releases.json",
-    "market_watch.json",
-    "market_prices.json",
-    "promo_events.json",
-    "purchase_sources.json",
-    "exchange_rates.json",
-    "graded_photo_candidates.json",
-)
+# Single source of truth: every public output produced by auto_update_all must also be
+# validated by this publish gate.  Do not maintain a second hand-written 7/8 list here.
+PUBLIC_OUTPUTS = tuple(output_name for _, _, output_name in auto_update_all.JOBS)
 AUX_OUTPUTS = (
     "supplementary_candidates.json",
     "social_event_candidates.json",
