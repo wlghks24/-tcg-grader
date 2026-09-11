@@ -1,5 +1,5 @@
 {
-  "updated_at": "2026-09-11T00:58:26+00:00",
+  "updated_at": "2026-09-11T03:58:18+00:00",
   "collection_status": "정상 · 한·일·미 영화정보 9/9 조합 추적",
   "items": [
     {
@@ -40,7 +40,7 @@
       "collected_at": "2026-09-08T15:35:00+09:00",
       "lifecycle": "current",
       "archive_on": "2027-01-30",
-      "link_checked_at": "2026-09-11T00:59:25+00:00",
+      "link_checked_at": "2026-09-11T04:00:52+00:00",
       "link_statuses": {
         "source": "정상",
         "verification_source": "정상"
@@ -61,7 +61,7 @@
       "location": "일본 전국 포켓몬 카드짐",
       "status": "진행 중",
       "source": "https://www.pokemon-card.com/info/005397.html",
-      "link_checked_at": "2026-09-11T00:59:25+00:00",
+      "link_checked_at": "2026-09-11T04:00:52+00:00",
       "link_status": "정상",
       "source_grade": "official",
       "link_statuses": {
@@ -84,7 +84,7 @@
       "location": "일본 전국 포켓몬 카드짐",
       "status": "진행 중",
       "source": "https://www.pokemon-card.com/info/005516.html",
-      "link_checked_at": "2026-09-11T00:59:25+00:00",
+      "link_checked_at": "2026-09-11T04:00:52+00:00",
       "link_status": "정상",
       "source_grade": "official",
       "link_statuses": {
@@ -109,7 +109,7 @@
       "source": "https://naruto-official.com/en/news/01_2648",
       "source_grade": "official",
       "date_precision": "day",
-      "link_checked_at": "2026-09-11T00:59:25+00:00",
+      "link_checked_at": "2026-09-11T04:00:52+00:00",
       "link_status": "정상",
       "link_statuses": {
         "source": "정상"
@@ -131,7 +131,7 @@
       "location": "일본 전국 포켓몬 카드짐",
       "status": "진행 중",
       "source": "https://www.pokemon-card.com/info/005569.html",
-      "link_checked_at": "2026-09-11T00:59:25+00:00",
+      "link_checked_at": "2026-09-11T04:00:52+00:00",
       "link_status": "정상",
       "source_grade": "official",
       "link_statuses": {
@@ -157,7 +157,7 @@
       "verification_source": "https://www.kobis.or.kr/kobis/business/mast/mvie/searchMovieList.do",
       "tracking_only": true,
       "link_status": "정상",
-      "link_checked_at": "2026-09-11T00:59:25+00:00",
+      "link_checked_at": "2026-09-11T04:00:52+00:00",
       "date_precision": "unannounced",
       "date_label": "개봉·공개일 공식 미발표 · 공식 발표 추적 중",
       "source_grade": "official",
@@ -167,7 +167,7 @@
       },
       "lifecycle": "current",
       "archive_on": "2028-01-06",
-      "verification_checked_at": "2026-09-11T00:57:51+00:00",
+      "verification_checked_at": "2026-09-11T03:57:46+00:00",
       "verification_status": "secondary_reachable"
     },
     {
@@ -187,7 +187,7 @@
       "verification_source": "https://www.kobis.or.kr/kobis/business/mast/mvie/searchMovieList.do",
       "tracking_only": true,
       "link_status": "정상",
-      "link_checked_at": "2026-09-11T00:59:25+00:00",
+      "link_checked_at": "2026-09-11T04:00:52+00:00",
       "date_precision": "unannounced",
       "date_label": "개봉·공개일 공식 미발표 · 공식 발표 추적 중",
       "source_grade": "official",
@@ -197,7 +197,7 @@
       },
       "lifecycle": "current",
       "archive_on": "2028-01-06",
-      "verification_checked_at": "2026-09-11T00:57:52+00:00",
+      "verification_checked_at": "2026-09-11T03:57:47+00:00",
       "verification_status": "secondary_reachable"
     },
     {
@@ -217,7 +217,7 @@
       "verification_source": "https://www.kobis.or.kr/kobis/business/mast/mvie/searchMovieList.do",
       "tracking_only": true,
       "link_status": "정상",
-      "link_checked_at": "2026-09-11T00:59:25+00:00",
+      "link_checked_at": "2026-09-11T04:00:52+00:00",
       "date_precision": "unannounced",
       "date_label": "개봉·공개일 공식 미발표 · 공식 발표 추적 중",
       "source_grade": "official",
@@ -229,7 +229,7 @@
       "archive_on": "2028-01-06",
       "collection_source": "https://new.pokemonkorea.co.kr/card",
       "original_source": "https://www.pokemonkorea.co.kr/",
-      "verification_checked_at": "2026-09-11T00:57:52+00:00",
+      "verification_checked_at": "2026-09-11T03:57:46+00:00",
       "verification_status": "secondary_reachable"
     },
     {
@@ -247,7 +247,7 @@
       "status": "공식정보",
       "source": "https://www.pokemon.com/us/animation",
       "link_status": "정상",
-      "link_checked_at": "2026-09-11T00:59:25+00:00",
+      "link_checked_at": "2026-09-11T04:00:52+00:00",
       "tracking_only": true,
       "date_precision": "unannounced",
       "date_label": "개봉·공개일 공식 미발표 · 공식 발표 추적 중",
@@ -276,7 +276,7 @@
       "source": "https://naruto-official.com/en/news/01_2649",
       "source_grade": "official",
       "tracking_only": true,
-      "link_checked_at": "2026-09-11T00:59:25+00:00",
+      "link_checked_at": "2026-09-11T04:00:52+00:00",
       "link_status": "정상",
       "link_statuses": {
         "source": "정상"
@@ -302,7 +302,7 @@
       "source": "https://naruto-official.com/en/news/01_2649",
       "source_grade": "official",
       "tracking_only": true,
-      "link_checked_at": "2026-09-11T00:59:25+00:00",
+      "link_checked_at": "2026-09-11T04:00:52+00:00",
       "link_status": "정상",
       "link_statuses": {
         "source": "정상"
@@ -328,7 +328,7 @@
       "source": "https://one-piece.com/news/index.html",
       "source_grade": "official",
       "tracking_only": true,
-      "link_checked_at": "2026-09-11T00:59:25+00:00",
+      "link_checked_at": "2026-09-11T04:00:52+00:00",
       "link_status": "정상",
       "link_statuses": {
         "source": "정상"
@@ -354,7 +354,7 @@
       "source": "https://www.pokemon.co.jp/info/",
       "source_grade": "official",
       "tracking_only": true,
-      "link_checked_at": "2026-09-11T00:59:25+00:00",
+      "link_checked_at": "2026-09-11T04:00:52+00:00",
       "link_status": "정상",
       "link_statuses": {
         "source": "정상"
@@ -376,7 +376,7 @@
       "location": "전국 포켓몬 카드샵 14개점 · 본선: 현대백화점 판교점 10층 토파즈홀",
       "status": "예정",
       "source": "https://new.pokemonkorea.co.kr/card",
-      "link_checked_at": "2026-09-11T00:59:25+00:00",
+      "link_checked_at": "2026-09-11T04:00:52+00:00",
       "link_status": "정상",
       "source_grade": "official",
       "link_statuses": {
@@ -404,7 +404,7 @@
       "status": "예약 종료 · 2026년 9월 배송 예정",
       "source": "https://one-piece.com/news/79713/index.html",
       "source_grade": "official",
-      "link_checked_at": "2026-09-11T00:59:25+00:00",
+      "link_checked_at": "2026-09-11T04:00:52+00:00",
       "link_status": "정상",
       "link_statuses": {
         "source": "정상"
@@ -426,7 +426,7 @@
       "location": "한국 전국 원피스 카드게임 공인·취급 점포",
       "status": "예정",
       "source": "https://onepiece-cardgame.kr/events/view.do?brdno=6439",
-      "link_checked_at": "2026-09-11T00:59:25+00:00",
+      "link_checked_at": "2026-09-11T04:00:52+00:00",
       "link_status": "정상",
       "source_grade": "official",
       "link_statuses": {
@@ -449,7 +449,7 @@
       "location": "한국 전국 원피스 카드게임 공인 점포",
       "status": "예정",
       "source": "https://onepiece-cardgame.kr/events/view.do?brdno=6441",
-      "link_checked_at": "2026-09-11T00:59:25+00:00",
+      "link_checked_at": "2026-09-11T04:00:52+00:00",
       "link_status": "정상",
       "source_grade": "official",
       "link_statuses": {
@@ -481,7 +481,7 @@
       "internal_tracking_end": true,
       "lifecycle": "current",
       "archive_on": "2028-01-06",
-      "link_checked_at": "2026-09-11T00:59:25+00:00",
+      "link_checked_at": "2026-09-11T04:00:52+00:00",
       "link_statuses": {
         "source": "정상",
         "verification_source": "정상"
@@ -503,7 +503,7 @@
       "status": "예정",
       "source": "https://onepiece-cardgame.kr/events/view.do?brdno=6440",
       "discovered_at": "2026-08-22T13:10:51+00:00",
-      "link_checked_at": "2026-09-11T00:59:25+00:00",
+      "link_checked_at": "2026-09-11T04:00:52+00:00",
       "link_status": "정상",
       "source_grade": "official",
       "link_statuses": {
@@ -526,7 +526,7 @@
       "location": "미국 북미 파이널 지정 행사장",
       "status": "예정·세부 일정 확인 필요",
       "source": "https://en.onepiece-cardgame.com/events/2026/championship/",
-      "link_checked_at": "2026-09-11T00:59:25+00:00",
+      "link_checked_at": "2026-09-11T04:00:52+00:00",
       "link_status": "정상",
       "source_grade": "official",
       "link_statuses": {
@@ -549,7 +549,7 @@
       "location": "일본 전국 포켓몬 카드짐",
       "status": "예정",
       "source": "https://www.pokemon-card.com/info/005614.html",
-      "link_checked_at": "2026-09-11T00:59:25+00:00",
+      "link_checked_at": "2026-09-11T04:00:52+00:00",
       "link_status": "정상",
       "source_grade": "official",
       "link_statuses": {
@@ -576,7 +576,7 @@
       "status": "2026-09-02 시작 예정",
       "source": "https://www.pokemon-card.com/info/005604.html",
       "source_grade": "official",
-      "link_checked_at": "2026-09-11T00:59:25+00:00",
+      "link_checked_at": "2026-09-11T04:00:52+00:00",
       "link_status": "정상",
       "link_statuses": {
         "source": "정상"
@@ -598,7 +598,7 @@
       "location": "Yankee Stadium, New York, USA",
       "status": "예정",
       "source": "https://www.naruto-cardgame.com/en/news/nyy-collab.php",
-      "link_checked_at": "2026-09-11T00:59:25+00:00",
+      "link_checked_at": "2026-09-11T04:00:52+00:00",
       "link_status": "정상",
       "source_grade": "official",
       "link_statuses": {
@@ -621,7 +621,7 @@
       "location": "Kay Bailey Hutchison Convention Center Dallas",
       "status": "예정",
       "source": "https://en.onepiece-cardgame.com/events/2026/bcgfest26-27/dallas/",
-      "link_checked_at": "2026-09-11T00:59:25+00:00",
+      "link_checked_at": "2026-09-11T04:00:52+00:00",
       "link_status": "정상",
       "source_grade": "official",
       "link_statuses": {
@@ -644,7 +644,7 @@
       "location": "파시피코 요코하마",
       "status": "예정",
       "source": "https://www.pokemon-card.com/info/005563.html",
-      "link_checked_at": "2026-09-11T00:59:25+00:00",
+      "link_checked_at": "2026-09-11T04:00:52+00:00",
       "link_status": "정상",
       "source_grade": "official",
       "link_statuses": {
@@ -673,7 +673,7 @@
       "event_scope": "licensed_ip_popup_not_tcg_tournament",
       "lifecycle": "current",
       "archive_on": "2026-10-12",
-      "link_checked_at": "2026-09-11T00:59:25+00:00",
+      "link_checked_at": "2026-09-11T04:00:52+00:00",
       "link_statuses": {
         "source": "정상",
         "verification_source": "정상"
@@ -700,7 +700,7 @@
       "event_scope": "licensed_ip_popup_not_tcg_tournament",
       "lifecycle": "current",
       "archive_on": "2026-10-12",
-      "link_checked_at": "2026-09-11T00:59:25+00:00",
+      "link_checked_at": "2026-09-11T04:00:52+00:00",
       "link_statuses": {
         "source": "정상",
         "verification_source": "정상"
@@ -721,7 +721,7 @@
       "location": "Javits Center, New York, USA",
       "status": "예정",
       "source": "https://www.naruto-cardgame.com/en/news/nycc-2026.php",
-      "link_checked_at": "2026-09-11T00:59:25+00:00",
+      "link_checked_at": "2026-09-11T04:00:52+00:00",
       "link_status": "정상",
       "source_grade": "official",
       "link_statuses": {
@@ -744,7 +744,7 @@
       "location": "마쿠하리 멧세·인텍스 오사카",
       "status": "예정",
       "source": "https://www.30th.pokemon-card.com/event",
-      "link_checked_at": "2026-09-11T00:59:25+00:00",
+      "link_checked_at": "2026-09-11T04:00:52+00:00",
       "link_status": "정상",
       "source_grade": "official",
       "link_statuses": {
@@ -767,7 +767,7 @@
       "location": "Orange County Convention Center, Orlando, USA",
       "status": "예정",
       "source": "https://www.naruto-cardgame.com/en/news/bcgfes26-27-orlando.php",
-      "link_checked_at": "2026-09-11T00:59:25+00:00",
+      "link_checked_at": "2026-09-11T04:00:52+00:00",
       "link_status": "정상",
       "source_grade": "official",
       "link_statuses": {
@@ -794,7 +794,7 @@
       "status": "2027년 2월 공개 예정",
       "source": "https://one-piece.com/news/79329/index.html",
       "source_grade": "official",
-      "link_checked_at": "2026-09-11T00:59:25+00:00",
+      "link_checked_at": "2026-09-11T04:00:52+00:00",
       "link_status": "정상",
       "link_statuses": {
         "source": "정상"
@@ -820,7 +820,7 @@
       "source": "https://www.naruto-cardgame.com/asia-en/",
       "source_grade": "official",
       "tracking_only": true,
-      "link_checked_at": "2026-09-11T00:59:25+00:00",
+      "link_checked_at": "2026-09-11T04:00:52+00:00",
       "link_status": "정상",
       "link_statuses": {
         "source": "정상"
@@ -846,7 +846,7 @@
       "discovered_at": "2026-09-10T04:47:10+00:00",
       "lifecycle": "current",
       "archive_on": "2026-11-28",
-      "link_checked_at": "2026-09-11T00:59:25+00:00",
+      "link_checked_at": "2026-09-11T04:00:52+00:00",
       "link_statuses": {
         "source": "정상"
       },
@@ -870,7 +870,7 @@
       "discovered_at": "2026-09-10T04:47:15+00:00",
       "lifecycle": "current",
       "archive_on": "2026-09-26",
-      "link_checked_at": "2026-09-11T00:59:25+00:00",
+      "link_checked_at": "2026-09-11T04:00:52+00:00",
       "link_statuses": {
         "source": "정상"
       },
@@ -894,7 +894,7 @@
       "discovered_at": "2026-09-10T04:47:09+00:00",
       "lifecycle": "recently_ended",
       "archive_on": "2026-09-16",
-      "link_checked_at": "2026-09-11T00:59:25+00:00",
+      "link_checked_at": "2026-09-11T04:00:52+00:00",
       "link_statuses": {
         "source": "정상"
       },
@@ -918,7 +918,7 @@
       "discovered_at": "2026-09-10T04:47:14+00:00",
       "lifecycle": "current",
       "archive_on": "2026-10-17",
-      "link_checked_at": "2026-09-11T00:59:25+00:00",
+      "link_checked_at": "2026-09-11T04:00:52+00:00",
       "link_statuses": {
         "source": "정상"
       },
@@ -942,7 +942,7 @@
       "discovered_at": "2026-09-10T04:47:14+00:00",
       "lifecycle": "current",
       "archive_on": "2026-10-31",
-      "link_checked_at": "2026-09-11T00:59:25+00:00",
+      "link_checked_at": "2026-09-11T04:00:52+00:00",
       "link_statuses": {
         "source": "정상"
       },
@@ -966,7 +966,7 @@
       "discovered_at": "2026-09-11T00:57:13+00:00",
       "lifecycle": "current",
       "archive_on": "2026-09-17",
-      "link_checked_at": "2026-09-11T00:59:25+00:00",
+      "link_checked_at": "2026-09-11T04:00:52+00:00",
       "link_statuses": {
         "source": "정상"
       },
@@ -990,7 +990,31 @@
       "discovered_at": "2026-09-11T00:57:13+00:00",
       "lifecycle": "current",
       "archive_on": "2026-09-17",
-      "link_checked_at": "2026-09-11T00:59:25+00:00",
+      "link_checked_at": "2026-09-11T04:00:52+00:00",
+      "link_statuses": {
+        "source": "정상"
+      },
+      "link_status": "정상"
+    },
+    {
+      "game": "원피스 카드",
+      "region": "JP",
+      "category": "merch",
+      "name_ko": "일본 공식 행사 · NEW 麦わらストア 福岡店にてストアネームシリーズなどの新商品が多数登場 2026/09/11 グッズ",
+      "name_native": "NEW 麦わらストア 福岡店にてストアネームシリーズなどの新商品が多数登場 2026/09/11 グッズ",
+      "start_date": "2026-09-11",
+      "end_date": "2026-09-11",
+      "claim_deadline": "2026-09-11",
+      "reward": "공식 행사 안내에서 참가·입상 보상 확인",
+      "condition": "공식 안내의 참가 자격·접수 일정·현장 조건을 확인하세요.",
+      "location": "일본 공식 개최점",
+      "status": "진행 중",
+      "source": "https://one-piece.com/news/82095/index.html",
+      "source_grade": "official",
+      "discovered_at": "2026-09-11T03:57:47+00:00",
+      "lifecycle": "current",
+      "archive_on": "2026-09-17",
+      "link_checked_at": "2026-09-11T04:00:52+00:00",
       "link_statuses": {
         "source": "정상"
       },
@@ -998,7 +1022,7 @@
     }
   ],
   "collection_errors": [],
-  "new_event_count": 5,
+  "new_event_count": 6,
   "discovery_sources": 20,
   "naruto_collection_enabled": true,
   "naruto_official_sources": [
@@ -1017,9 +1041,9 @@
     "2026 포켓몬 월드 챔피언십·PokémonXP",
     "원피스 밀짚모자 스토어 나고야 공식 개점 행사"
   ],
-  "last_expiry_cleanup_at": "2026-09-11T00:58:26+00:00",
+  "last_expiry_cleanup_at": "2026-09-11T03:58:18+00:00",
   "expiry_policy": "end_date/claim_deadline 중 더 늦은 종료일까지 표시하고 종료 후 5일차까지 현재 목록 유지, 6일째부터 지난 행사 보관함으로 이동하며 삭제하지 않음",
-  "link_audit_at": "2026-09-11T00:59:25+00:00",
+  "link_audit_at": "2026-09-11T04:00:52+00:00",
   "kr_movie_tracking_count": 3,
   "supplementary_candidate_count": 8,
   "startup_expired_removed": 1,
@@ -1077,7 +1101,7 @@
         "game": "원피스 카드",
         "region": "JP",
         "official_source_count": 2,
-        "official_item_count": 5,
+        "official_item_count": 6,
         "movie_item_count": 1,
         "status": "공식 정보 확인"
       },
@@ -1143,7 +1167,7 @@
       "status": "진행 중",
       "source": "https://onepiece-cardgame.kr/events/view.do?brdno=6442",
       "source_grade": "official",
-      "discovered_at": "2026-09-11T00:57:54+00:00",
+      "discovered_at": "2026-09-11T03:57:48+00:00",
       "lifecycle": "archive",
       "archive_on": "2026-09-10"
     },
@@ -1162,7 +1186,7 @@
       "status": "진행 중",
       "source": "https://www.pokemon-card.com/info/005397.html",
       "source_grade": "official",
-      "discovered_at": "2026-09-11T00:58:01+00:00",
+      "discovered_at": "2026-09-11T03:57:53+00:00",
       "lifecycle": "archive",
       "archive_on": "2026-03-26"
     },
@@ -1181,7 +1205,7 @@
       "status": "진행 중",
       "source": "https://en.onepiece-cardgame.com/products/?subcategory=boosters",
       "source_grade": "official",
-      "discovered_at": "2026-09-11T00:57:55+00:00",
+      "discovered_at": "2026-09-11T03:57:49+00:00",
       "lifecycle": "archive",
       "archive_on": "2026-09-03"
     },
@@ -1200,7 +1224,7 @@
       "status": "진행 중",
       "source": "https://en.onepiece-cardgame.com/products/?subcategory=others",
       "source_grade": "official",
-      "discovered_at": "2026-09-11T00:57:56+00:00",
+      "discovered_at": "2026-09-11T03:57:50+00:00",
       "lifecycle": "archive",
       "archive_on": "2026-09-10"
     },
@@ -1219,7 +1243,7 @@
       "status": "진행 중",
       "source": "https://www.naruto-cardgame.com/en/news/gencon-2026.php",
       "source_grade": "official",
-      "discovered_at": "2026-09-11T00:57:54+00:00",
+      "discovered_at": "2026-09-11T03:57:49+00:00",
       "lifecycle": "archive",
       "archive_on": "2026-08-08"
     },
@@ -1305,7 +1329,7 @@
   "secondary_verification_warnings": [],
   "social_candidate_count": 250,
   "official_social_candidate_count": 5,
-  "social_cross_checked_count": 3,
+  "social_cross_checked_count": 5,
   "social_topic_coverage": {
     "포켓몬 카드/KR/event": 5,
     "포켓몬 카드/KR/tournament": 1,
@@ -1338,7 +1362,7 @@
     "포켓몬 카드/JP/movie": 1,
     "포켓몬 카드/JP/release": 0,
     "포켓몬 카드/JP/reprint": 0,
-    "포켓몬 카드/JP/merch": 0,
+    "포켓몬 카드/JP/merch": 2,
     "포켓몬 카드/JP/anniversary": 1,
     "포켓몬 카드/JP/stock": 0,
     "포켓몬 카드/JP/entry": 0,
@@ -1516,7 +1540,7 @@
     "나루토 카드/US/authenticity_notice": 0
   },
   "social_topic_expected_cells": 216,
-  "social_topic_covered_cells": 43,
+  "social_topic_covered_cells": 44,
   "social_topic_missing_cells": [
     "포켓몬 카드/KR/festival",
     "포켓몬 카드/KR/popup",
@@ -1541,7 +1565,6 @@
     "포켓몬 카드/JP/collab",
     "포켓몬 카드/JP/release",
     "포켓몬 카드/JP/reprint",
-    "포켓몬 카드/JP/merch",
     "포켓몬 카드/JP/stock",
     "포켓몬 카드/JP/entry",
     "포켓몬 카드/JP/broadcast",
@@ -1716,7 +1739,6 @@
     "포켓몬 카드/JP/collab",
     "포켓몬 카드/JP/release",
     "포켓몬 카드/JP/reprint",
-    "포켓몬 카드/JP/merch",
     "포켓몬 카드/JP/stock",
     "포켓몬 카드/JP/entry",
     "포켓몬 카드/JP/broadcast",
@@ -1871,8 +1893,8 @@
   "social_topic_successful_cells": 216,
   "social_topic_failed_cells": [],
   "social_topic_collection_complete": true,
-  "social_topic_source_updated_at": "2026-09-11T01:01:35+00:00",
+  "social_topic_source_updated_at": "2026-09-11T04:02:53+00:00",
   "social_collection_mode": "post-integration-synchronized",
-  "auxiliary_coverage_synced_at": "2026-09-11T01:01:35+00:00",
+  "auxiliary_coverage_synced_at": "2026-09-11T04:02:54+00:00",
   "auxiliary_coverage_errors": []
 }

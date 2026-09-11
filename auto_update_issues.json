@@ -1,27 +1,27 @@
 {
-  "updated_at": "2026-09-11T00:59:25+00:00",
-  "issue_count": 2,
+  "updated_at": "2026-09-11T04:00:51+00:00",
+  "issue_count": 1,
   "issues": [
     {
       "name": "현재 거래시세",
       "file": "market_prices.json",
       "severity": "주의",
-      "auto_action": "느린 출처 격리 · 이전 정상본 유지",
-      "detail": "RuntimeError: update_market_prices 종료코드 1: he/Python/3.11.16/x64/lib/python3.11/http/client.py\", line 599, in _get_chunk_left raise IncompleteRead(b'') http.client.IncompleteRead: IncompleteRead(0 bytes read) The above exception was the direct cause of the following exception: Traceback (most recent call last): File \"<string>\", line 1, in <module> File \"<path>, line 242, in main crosscheck_market_db(db) File \"<path>, line 196, in crosscheck_market_db text=html_to_text(fetcher(url)) ^^^^^^^^^^^^ File \"<path>, line 48, in _public_fetch return r.read(2_000_000).decode('utf-8','replace') ^^^^^^^^^^^^^^^^^ File \"<path>, line 482, in read return self._read_chunked(amt) ^^^^^^^^^^^^^^^^^^^^^^^ File \"<path>, line 629, in _read_chunked raise IncompleteRead(b''.join(value)) from exc http.client.Inco",
+      "auto_action": "일부 출처 오류 격리 · 정상자료 반영 · 다음 실행 제한시간 확대",
+      "detail": "Pack Magik OP14-009: HTTPError: status 402",
       "recommended_action": "가격 출처의 공개 거래표시와 상품명을 확인하세요.",
-      "error_group_id": "ddf1f473b0f1313d",
-      "error_code": "RUNTIME_ERROR",
-      "error_subtype": "runtimeerror-update_market_prices-n-he-path-line-n-in-_get_chunk_left-raise-inco",
-      "http_status": null,
+      "error_group_id": "d1993cf268f4f06b",
+      "error_code": "NETWORK_HTTP_ERROR",
+      "error_subtype": "client-402",
+      "http_status": 402,
       "bounded_retry_allowed": false,
-      "probable_cause": "수집 함수가 안전조건을 충족하지 못해 실행을 중단했을 가능성이 큽니다.",
+      "probable_cause": "원출처가 오류·차단 응답을 반환했거나 접근 정책이 바뀌었을 가능성이 큽니다.",
       "resolution_steps": [
-        "오류가 난 함수와 입력자료를 격리합니다.",
-        "동일 입력으로 한 번 재현해 원인을 좁힙니다.",
-        "수정 뒤 해당 기능과 전체 회귀검사를 실행합니다."
+        "HTTP 상태와 공식 주소 변경 여부를 확인합니다.",
+        "인증정보 없이 제한된 재시도를 실행합니다.",
+        "기존 정상자료 보존과 다음 실행 결과를 비교합니다."
       ],
       "verification_steps": [
-        "수정 뒤 해당 기능과 전체 회귀검사를 실행합니다.",
+        "기존 정상자료 보존과 다음 실행 결과를 비교합니다.",
         "기존 정상자료가 손상되지 않았는지 확인합니다."
       ],
       "scenario_prepared": false,
@@ -30,47 +30,6 @@
       "first_checks": [],
       "fast_resolution_steps": [],
       "stop_conditions": [],
-      "deferred_timeout_attempted": false,
-      "deferred_timeout_recovered": false,
-      "deferred_timeout_pending": false,
-      "deferred_timeout_seconds": 0
-    },
-    {
-      "name": "프로모·콜라보 행사",
-      "file": "promo_events.json",
-      "severity": "주의",
-      "auto_action": "재시도 후 복구 성공 · 깨끗한 성공으로 학습하지 않음 · 다음 실행 여유시간 유지",
-      "detail": "JP 나루토 카드 신규행사 탐색: URLError: [Errno 104] Connection reset by peer",
-      "recommended_action": "공식 행사 페이지의 기간·수령조건을 확인하세요.",
-      "error_group_id": "819660722644a1bb",
-      "error_code": "NETWORK_CONNECTION_ERROR",
-      "error_subtype": "url-connection",
-      "http_status": null,
-      "bounded_retry_allowed": true,
-      "probable_cause": "인터넷, DNS 또는 원출처 연결이 일시적으로 실패했을 가능성이 큽니다.",
-      "resolution_steps": [
-        "인터넷과 DNS 상태를 확인합니다.",
-        "공식 HTTPS 주소만 제한적으로 재시도합니다.",
-        "복구되지 않으면 기존 검증자료를 유지합니다."
-      ],
-      "verification_steps": [
-        "복구되지 않으면 기존 검증자료를 유지합니다.",
-        "기존 정상자료가 손상되지 않았는지 확인합니다."
-      ],
-      "scenario_prepared": true,
-      "scenario_profile_id": "6c10af0bebb0301c",
-      "diagnostic_priority": 20,
-      "first_checks": [
-        "DNS·Wi-Fi·공식 호스트 접근을 분리 확인합니다."
-      ],
-      "fast_resolution_steps": [
-        "인터넷과 DNS 상태를 확인합니다.",
-        "공식 HTTPS 주소만 제한적으로 재시도합니다.",
-        "복구되지 않으면 기존 검증자료를 유지합니다."
-      ],
-      "stop_conditions": [
-        "사설주소 또는 비공식 주소로 우회하지 않습니다."
-      ],
       "deferred_timeout_attempted": false,
       "deferred_timeout_recovered": false,
       "deferred_timeout_pending": false,

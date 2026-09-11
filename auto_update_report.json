@@ -3,7 +3,7 @@
   "engine": "v98-camera-resilience-full-runtime",
   "trigger": "github-pages-static-refresh",
   "selected_files": [],
-  "started_at": "2026-09-11T00:57:11+00:00",
+  "started_at": "2026-09-11T03:57:45+00:00",
   "preflight_monitor": {
     "ok": true,
     "results": [
@@ -54,15 +54,15 @@
       }
     ]
   },
-  "finished_at": "2026-09-11T00:59:25+00:00",
-  "duration_seconds": 133.95,
+  "finished_at": "2026-09-11T04:00:51+00:00",
+  "duration_seconds": 186.67,
   "parallel_workers": 2,
   "ok": true,
   "success_count": 8,
   "failure_count": 0,
-  "fresh_success_count": 6,
-  "degraded_count": 2,
-  "restored_count": 1,
+  "fresh_success_count": 7,
+  "degraded_count": 1,
+  "restored_count": 0,
   "fresh_failure_count": 0,
   "deferred_timeout_recovery": {
     "enabled": true,
@@ -82,7 +82,7 @@
       "file": "releases.json",
       "ok": true,
       "status": "정상",
-      "updated_at": "2026-09-11T00:58:58+00:00",
+      "updated_at": "2026-09-11T03:58:41+00:00",
       "count": 10,
       "retry_count": 0,
       "max_attempts": 2,
@@ -90,9 +90,9 @@
       "auto_action": "학습형 수집 · 검증 후 정상 반영",
       "collection_errors": [],
       "remaining_collection_errors": [],
-      "duration_seconds": 32.54,
-      "adaptive_timeout_seconds": 180,
-      "last_attempt_timeout_seconds": 180,
+      "duration_seconds": 22.79,
+      "adaptive_timeout_seconds": 120,
+      "last_attempt_timeout_seconds": 120,
       "collection_stage": "primary",
       "timeout_exhausted": false
     },
@@ -101,7 +101,7 @@
       "file": "market_watch.json",
       "ok": true,
       "status": "정상",
-      "updated_at": "2026-09-11T00:59:24+00:00",
+      "updated_at": "2026-09-11T03:58:58+00:00",
       "count": 19,
       "retry_count": 0,
       "max_attempts": 2,
@@ -119,19 +119,22 @@
       "name": "현재 거래시세",
       "file": "market_prices.json",
       "ok": true,
-      "status": "공식 출처 지연 · 기존 검증자료 유지 · 실패 항목만 재수집 가능",
-      "error": "RuntimeError: update_market_prices 종료코드 1: he/Python/3.11.16/x64/lib/python3.11/http/client.py\", line 599, in _get_chunk_left raise IncompleteRead(b'') http.client.IncompleteRead: IncompleteRead(0 bytes read) The above exception was the direct cause of the following exception: Traceback (most recent call last): File \"<string>\", line 1, in <module> File \"<path>, line 242, in main crosscheck_market_db(db) File \"<path>, line 196, in crosscheck_market_db text=html_to_text(fetcher(url)) ^^^^^^^^^^^^ File \"<path>, line 48, in _public_fetch return r.read(2_000_000).decode('utf-8','replace') ^^^^^^^^^^^^^^^^^ File \"<path>, line 482, in read return self._read_chunked(amt) ^^^^^^^^^^^^^^^^^^^^^^^ File \"<path>, line 629, in _read_chunked raise IncompleteRead(b''.join(value)) from exc http.client.Inco",
+      "status": "일부 가격 출처 확인 실패",
+      "updated_at": "2026-09-11T04:00:51+00:00",
+      "count": 38,
       "retry_count": 0,
       "max_attempts": 2,
-      "auto_action": "느린 출처 격리 · 이전 정상본 유지",
+      "recovered_after_retry": false,
+      "auto_action": "일부 출처 오류 격리 · 정상자료 반영 · 다음 실행 제한시간 확대",
       "collection_errors": [
-        "RuntimeError: update_market_prices 종료코드 1: he/Python/3.11.16/x64/lib/python3.11/http/client.py\", line 599, in _get_chunk_left raise IncompleteRead(b'') http.client.IncompleteRead: IncompleteRead(0 bytes read) The above exception was the direct cause of the following exception: Traceback (most recent call last): File \"<string>\", line 1, in <module> File \"<path>, line 242, in main crosscheck_market_db(db) File \"<path>, line 196, in crosscheck_market_db text=html_to_text(fetcher(url)) ^^^^^^^^^^^^ File \"<path>, line 48, in _public_fetch return r.read(2_000_000).decode('utf-8','replace') ^^^^^^^^^^^^^^^^^ File \"<path>, line 482, in read return self._read_chunked(amt) ^^^^^^^^^^^^^^^^^^^^^^^ File \"<path>, line 629, in _read_chunked raise IncompleteRead(b''.join(value)) from exc http.client.Inco"
+        "Pack Magik OP14-009: HTTPError: status 402"
       ],
-      "updated_at": "2026-09-10T19:00:33+00:00",
-      "count": 38,
-      "duration_seconds": 133.75,
+      "remaining_collection_errors": [
+        "Pack Magik OP14-009: HTTPError: status 402"
+      ],
+      "duration_seconds": 186.59,
       "adaptive_timeout_seconds": 300,
-      "last_attempt_timeout_seconds": 300,
+      "last_attempt_timeout_seconds": 299,
       "collection_stage": "primary",
       "timeout_exhausted": false
     },
@@ -140,19 +143,17 @@
       "file": "promo_events.json",
       "ok": true,
       "status": "정상 · 한·일·미 영화정보 9/9 조합 추적",
-      "updated_at": "2026-09-11T00:58:26+00:00",
-      "count": 39,
-      "retry_count": 1,
+      "updated_at": "2026-09-11T03:58:18+00:00",
+      "count": 40,
+      "retry_count": 0,
       "max_attempts": 2,
-      "recovered_after_retry": true,
-      "auto_action": "재시도 후 복구 성공 · 깨끗한 성공으로 학습하지 않음 · 다음 실행 여유시간 유지",
-      "collection_errors": [
-        "JP 나루토 카드 신규행사 탐색: URLError: [Errno 104] Connection reset by peer"
-      ],
+      "recovered_after_retry": false,
+      "auto_action": "학습형 수집 · 검증 후 정상 반영",
+      "collection_errors": [],
       "remaining_collection_errors": [],
-      "duration_seconds": 75.32,
-      "adaptive_timeout_seconds": 180,
-      "last_attempt_timeout_seconds": 260,
+      "duration_seconds": 33.35,
+      "adaptive_timeout_seconds": 201,
+      "last_attempt_timeout_seconds": 201,
       "collection_stage": "primary",
       "timeout_exhausted": false
     },
@@ -161,7 +162,7 @@
       "file": "purchase_sources.json",
       "ok": true,
       "status": "정상",
-      "updated_at": "2026-09-11T00:59:19+00:00",
+      "updated_at": "2026-09-11T03:58:55+00:00",
       "count": 205,
       "retry_count": 0,
       "max_attempts": 2,
@@ -169,9 +170,9 @@
       "auto_action": "학습형 수집 · 검증 후 정상 반영",
       "collection_errors": [],
       "remaining_collection_errors": [],
-      "duration_seconds": 2.99,
-      "adaptive_timeout_seconds": 180,
-      "last_attempt_timeout_seconds": 180,
+      "duration_seconds": 2.46,
+      "adaptive_timeout_seconds": 120,
+      "last_attempt_timeout_seconds": 120,
       "collection_stage": "primary",
       "timeout_exhausted": false
     },
@@ -180,7 +181,7 @@
       "file": "exchange_rates.json",
       "ok": true,
       "status": "정상",
-      "updated_at": "2026-09-11T00:59:24+00:00",
+      "updated_at": "2026-09-11T03:58:58+00:00",
       "count": 2,
       "retry_count": 0,
       "max_attempts": 2,
@@ -188,7 +189,7 @@
       "auto_action": "학습형 수집 · 검증 후 정상 반영",
       "collection_errors": [],
       "remaining_collection_errors": [],
-      "duration_seconds": 0.76,
+      "duration_seconds": 0.24,
       "adaptive_timeout_seconds": 90,
       "last_attempt_timeout_seconds": 90,
       "collection_stage": "primary",
@@ -207,7 +208,7 @@
       "auto_action": "학습형 수집 · 검증 후 정상 반영",
       "collection_errors": [],
       "remaining_collection_errors": [],
-      "duration_seconds": 3.23,
+      "duration_seconds": 2.2,
       "adaptive_timeout_seconds": 300,
       "last_attempt_timeout_seconds": 299,
       "collection_stage": "primary",
@@ -219,14 +220,14 @@
       "ok": true,
       "status": "정상",
       "updated_at": null,
-      "count": 36,
+      "count": 37,
       "retry_count": 0,
       "max_attempts": 2,
       "recovered_after_retry": false,
       "auto_action": "학습형 수집 · 검증 후 정상 반영",
       "collection_errors": [],
       "remaining_collection_errors": [],
-      "duration_seconds": 18.8,
+      "duration_seconds": 12.36,
       "adaptive_timeout_seconds": 90,
       "last_attempt_timeout_seconds": 90,
       "collection_stage": "primary",
@@ -253,10 +254,10 @@
       "data_dir": "<app-data>",
       "storage_scope": "user-app-data",
       "writable": true,
-      "checked_at": "2026-09-11T01:01:35+00:00"
+      "checked_at": "2026-09-11T04:02:53+00:00"
     },
     "note": "검색/SNS/뉴스/공식사이트/공식 YouTube/사이트맵 후보 자료입니다. 발견 경로가 공식이어도 내용 검증 전에는 자동 확정하지 않습니다.",
-    "duration_seconds": 130.85,
+    "duration_seconds": 122.04,
     "adaptive_timeout_seconds": 300,
     "last_attempt_timeout_seconds": 300,
     "retry_count": 0,
@@ -266,18 +267,18 @@
     "ok": true,
     "degraded": false,
     "warning": "",
-    "reachable_count": 233,
+    "reachable_count": 234,
     "transient_deferred": true,
-    "transient_notice": "일시 확인불가 18개 · 기존 링크 유지 · 다음 업데이트 재확인",
+    "transient_notice": "일시 확인불가 19개 · 기존 링크 유지 · 다음 업데이트 재확인",
     "unresolved_broken": 0,
     "unresolved_summary": [],
-    "updated_at": "2026-09-11T00:59:25+00:00",
-    "checked": 265,
-    "audit_timeout_seconds": 281,
+    "updated_at": "2026-09-11T04:00:52+00:00",
+    "checked": 266,
+    "audit_timeout_seconds": 279,
     "request_timeout_seconds": 5,
-    "restricted": 14,
+    "restricted": 13,
     "broken": 0,
-    "transient": 18,
+    "transient": 19,
     "blocked": 0,
     "repaired": 0,
     "same_host_fallback_stats": {
@@ -307,6 +308,17 @@
       },
       {
         "url": "https://www.amazon.co.jp/s?k={query}",
+        "detail": null,
+        "code": 503,
+        "references": [
+          {
+            "file": "purchase_sources.json",
+            "field": "url_template"
+          }
+        ]
+      },
+      {
+        "url": "https://www.amazon.com/s?k={query}",
         "detail": null,
         "code": 503,
         "references": [
@@ -380,25 +392,6 @@
         ]
       },
       {
-        "url": "https://www.alpha.co.kr/",
-        "detail": "DNS:gaierror",
-        "code": null,
-        "references": [
-          {
-            "file": "purchase_sources.json",
-            "field": "official_reference_url"
-          },
-          {
-            "file": "purchase_sources.json",
-            "field": "url"
-          },
-          {
-            "file": "purchase_sources.json",
-            "field": "official_reference_url"
-          }
-        ]
-      },
-      {
         "url": "https://kream.co.kr/products/959332",
         "detail": "TimeoutError",
         "code": null,
@@ -424,6 +417,17 @@
         "url": "https://kream.co.kr/products/627575",
         "detail": "TimeoutError",
         "code": null,
+        "references": [
+          {
+            "file": "market_prices.json",
+            "field": "source"
+          }
+        ]
+      },
+      {
+        "url": "https://www.packmagik.com/cards/op-op14-op14-009-p1",
+        "detail": null,
+        "code": 402,
         "references": [
           {
             "file": "market_prices.json",
@@ -517,9 +521,9 @@
         ]
       }
     ],
-    "duration_seconds": 89.98,
-    "adaptive_timeout_seconds": 291,
-    "last_attempt_timeout_seconds": 291,
+    "duration_seconds": 80.96,
+    "adaptive_timeout_seconds": 289,
+    "last_attempt_timeout_seconds": 289,
     "retry_count": 0,
     "recovered_after_retry": false
   },
@@ -529,8 +533,8 @@
     "attempted_topic_cells": 216,
     "successful_topic_cells": 216,
     "failed_topic_cells": 0,
-    "undiscovered_topic_cells": 173,
-    "source_updated_at": "2026-09-11T01:01:35+00:00"
+    "undiscovered_topic_cells": 172,
+    "source_updated_at": "2026-09-11T04:02:53+00:00"
   },
   "ok_with_aux": true,
   "postflight_monitor": {
@@ -597,11 +601,11 @@
     "status": {
       "schema": 1,
       "feature_fingerprint": "0bac15bf0ad62e49a7c7d300",
-      "updated_at": "2026-09-11T01:01:35+00:00",
+      "updated_at": "2026-09-11T04:02:54+00:00",
       "active": false,
       "label_count": 10,
-      "positive_labels": 8,
-      "negative_labels": 2,
+      "positive_labels": 9,
+      "negative_labels": 1,
       "minimum_labels": 1000,
       "labels_remaining": 990,
       "progress_percent": 1.0,
@@ -653,7 +657,7 @@
       "resolved_group_count": 7,
       "verified_solution_group_count": 7,
       "scenario_prepared_group_count": 1,
-      "consolidated_event_total": 1012
+      "consolidated_event_total": 1011
     },
     "new_errors": [
       {
@@ -669,8 +673,8 @@
         "last_outcome": "resolved",
         "proven_action": "일부 출처 오류 격리 · 정상자료 반영 · 다음 실행 제한시간 확대",
         "first_seen": "2026-08-25T07:15:31+00:00",
-        "last_seen": "2026-09-11T00:59:25+00:00",
-        "occurrences": 833,
+        "last_seen": "2026-08-26T10:47:11+00:00",
+        "occurrences": 832,
         "unresolved_count": 0,
         "http_status": null,
         "bounded_retry_allowed": true,
@@ -687,33 +691,35 @@
         "group_id": "819660722644a1bb"
       },
       {
-        "code": "RUNTIME_ERROR",
-        "title": "실행 중 기능 오류",
-        "category": "실행 오류",
-        "error_subtype": "runtimeerror-update_market_prices-n-he-path-line-n-in-_get_chunk_left-raise-inco",
+        "code": "NETWORK_HTTP_ERROR",
+        "title": "HTTP 응답 오류",
+        "category": "통신 오류",
+        "error_subtype": "client-402",
         "file": "market_prices.json",
-        "detail": "RuntimeError: update_market_prices 종료코드 1: he/Python/3.11.16/x64/lib/python3.11/http/client.py\", line 599, in _get_chunk_left raise IncompleteRead(b'') http.client.IncompleteRead: IncompleteRead(0 bytes read) The above exception was the direct cause of the following exception: Traceback (most recent call last): File \"<string>\", line 1, in <module> File \"<path>, line 242, in main crosscheck_market_db(db) File \"<path>, line 196, in crosscheck_market_db text=html_to_text(fetcher(url)) ^^^^^^^^^^^^ ",
-        "probable_cause": "수집 함수가 안전조건을 충족하지 못해 실행을 중단했을 가능성이 큽니다.",
-        "safe_action": "자동 재시도 중단 · 실패 함수 격리",
+        "detail": "Pack Magik OP14-009: HTTPError: status 402",
+        "probable_cause": "원출처가 오류·차단 응답을 반환했거나 접근 정책이 바뀌었을 가능성이 큽니다.",
+        "safe_action": "상태별 제한 재시도 · 영구 오류 중단",
         "analysis_status": "신규 분석",
         "last_outcome": "unresolved",
-        "first_seen": "2026-09-11T00:59:25+00:00",
-        "last_seen": "2026-09-11T00:59:25+00:00",
+        "first_seen": "2026-09-11T04:00:51+00:00",
+        "last_seen": "2026-09-11T04:00:51+00:00",
         "occurrences": 1,
         "unresolved_count": 1,
-        "http_status": null,
+        "http_status": 402,
         "bounded_retry_allowed": false,
-        "http_statuses": [],
+        "http_statuses": [
+          402
+        ],
         "resolution_steps": [
-          "오류가 난 함수와 입력자료를 격리합니다.",
-          "동일 입력으로 한 번 재현해 원인을 좁힙니다.",
-          "수정 뒤 해당 기능과 전체 회귀검사를 실행합니다."
+          "HTTP 상태와 공식 주소 변경 여부를 확인합니다.",
+          "인증정보 없이 제한된 재시도를 실행합니다.",
+          "기존 정상자료 보존과 다음 실행 결과를 비교합니다."
         ],
         "verification_steps": [
-          "수정 뒤 해당 기능과 전체 회귀검사를 실행합니다.",
+          "기존 정상자료 보존과 다음 실행 결과를 비교합니다.",
           "기존 정상자료가 손상되지 않았는지 확인합니다."
         ],
-        "group_id": "ddf1f473b0f1313d"
+        "group_id": "d1993cf268f4f06b"
       }
     ],
     "top_groups": [
@@ -726,11 +732,11 @@
         "http_status": null,
         "http_statuses": [],
         "bounded_retry_allowed": true,
-        "occurrences": 833,
-        "resolved_count": 833,
+        "occurrences": 832,
+        "resolved_count": 832,
         "unresolved_count": 0,
         "first_seen": "2026-08-25T07:15:31+00:00",
-        "last_seen": "2026-09-11T00:59:25+00:00",
+        "last_seen": "2026-08-26T10:47:11+00:00",
         "last_outcome": "resolved",
         "analysis_status": "해결 확인",
         "affected_files": [
@@ -754,7 +760,7 @@
           "기존 정상자료가 손상되지 않았는지 확인합니다."
         ],
         "proven_action": "일부 출처 오류 격리 · 정상자료 반영 · 다음 실행 제한시간 확대",
-        "last_detail": "JP 나루토 카드 신규행사 탐색: URLError: [Errno 104] Connection reset by peer",
+        "last_detail": "URLError",
         "scenario_prepared": true,
         "scenario_profile_id": "6c10af0bebb0301c",
         "prepared_scenario_count": 1,
@@ -986,19 +992,21 @@
         "stop_conditions": []
       },
       {
-        "group_id": "ddf1f473b0f1313d",
-        "code": "RUNTIME_ERROR",
-        "title": "실행 중 기능 오류",
-        "category": "실행 오류",
-        "error_subtype": "runtimeerror-update_market_prices-n-he-path-line-n-in-_get_chunk_left-raise-inco",
-        "http_status": null,
-        "http_statuses": [],
+        "group_id": "d1993cf268f4f06b",
+        "code": "NETWORK_HTTP_ERROR",
+        "title": "HTTP 응답 오류",
+        "category": "통신 오류",
+        "error_subtype": "client-402",
+        "http_status": 402,
+        "http_statuses": [
+          402
+        ],
         "bounded_retry_allowed": false,
         "occurrences": 1,
         "resolved_count": 0,
         "unresolved_count": 1,
-        "first_seen": "2026-09-11T00:59:25+00:00",
-        "last_seen": "2026-09-11T00:59:25+00:00",
+        "first_seen": "2026-09-11T04:00:51+00:00",
+        "last_seen": "2026-09-11T04:00:51+00:00",
         "last_outcome": "unresolved",
         "analysis_status": "신규 분석",
         "affected_files": [
@@ -1007,19 +1015,19 @@
         "unresolved_files": [
           "market_prices.json"
         ],
-        "probable_cause": "수집 함수가 안전조건을 충족하지 못해 실행을 중단했을 가능성이 큽니다.",
-        "safe_action": "자동 재시도 중단 · 실패 함수 격리",
-        "recommended_action": "동일 입력 재현과 전체 회귀검사를 실행하세요.",
+        "probable_cause": "원출처가 오류·차단 응답을 반환했거나 접근 정책이 바뀌었을 가능성이 큽니다.",
+        "safe_action": "상태별 제한 재시도 · 영구 오류 중단",
+        "recommended_action": "HTTP 상태·Retry-After·공식 주소 변경 여부를 확인하세요.",
         "resolution_steps": [
-          "오류가 난 함수와 입력자료를 격리합니다.",
-          "동일 입력으로 한 번 재현해 원인을 좁힙니다.",
-          "수정 뒤 해당 기능과 전체 회귀검사를 실행합니다."
+          "HTTP 상태와 공식 주소 변경 여부를 확인합니다.",
+          "인증정보 없이 제한된 재시도를 실행합니다.",
+          "기존 정상자료 보존과 다음 실행 결과를 비교합니다."
         ],
         "verification_steps": [
-          "수정 뒤 해당 기능과 전체 회귀검사를 실행합니다.",
+          "기존 정상자료 보존과 다음 실행 결과를 비교합니다.",
           "기존 정상자료가 손상되지 않았는지 확인합니다."
         ],
-        "last_detail": "RuntimeError: update_market_prices 종료코드 1: he/Python/3.11.16/x64/lib/python3.11/http/client.py\", line 599, in _get_chunk_left raise IncompleteRead(b'') http.client.IncompleteRead: IncompleteRead(0 bytes read) The above exception was the direct cause of the following exception: Traceback (most recent call last): File \"<string>\", line 1, in <module> File \"<path>, line 242, in main crosscheck_market_db(db) File \"<path>, line 196, in crosscheck_market_db text=html_to_text(fetcher(url)) ^^^^^^^^^^^^ ",
+        "last_detail": "Pack Magik OP14-009: HTTPError: status 402",
         "scenario_prepared": false,
         "scenario_profile_id": null,
         "prepared_scenario_count": 0,

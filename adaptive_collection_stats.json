@@ -2,20 +2,20 @@
   "version": 1,
   "jobs": {
     "exchange_rates.json": {
-      "runs": 26,
-      "successes": 7,
+      "runs": 27,
+      "successes": 8,
       "failures": 0,
       "timeouts": 0,
       "partial_successes": 19,
       "recovered_successes": 17,
-      "last_seconds": 0.756,
+      "last_seconds": 0.235,
       "last_ok": true,
       "last_recovered": false,
-      "success_streak": 6,
+      "success_streak": 7,
       "consecutive_failures": 0,
-      "success_ewma_seconds": 0.632,
-      "ewma_seconds": 0.632,
-      "last_run": "2026-09-11T00:59:25+00:00",
+      "success_ewma_seconds": 0.513,
+      "ewma_seconds": 0.513,
+      "last_run": "2026-09-11T03:58:58+00:00",
       "error_patterns": {
         "93697047de8f": {
           "count": 1,
@@ -45,20 +45,20 @@
       "streak_reset_reason": "observation_gap_over_72h"
     },
     "__integration__": {
-      "runs": 23,
-      "successes": 9,
+      "runs": 24,
+      "successes": 10,
       "failures": 13,
       "timeouts": 1,
       "partial_successes": 0,
       "recovered_successes": 1,
-      "last_seconds": 130.853,
+      "last_seconds": 122.04,
       "last_ok": true,
       "last_recovered": false,
-      "success_streak": 1,
+      "success_streak": 2,
       "consecutive_failures": 0,
-      "success_ewma_seconds": 97.543,
-      "ewma_seconds": 97.543,
-      "last_run": "2026-09-11T01:01:35+00:00",
+      "success_ewma_seconds": 104.892,
+      "ewma_seconds": 104.892,
+      "last_run": "2026-09-11T04:02:54+00:00",
       "timeout_exhaustions": 0,
       "deferred_attempts": 0,
       "deferred_successes": 0,
@@ -83,16 +83,16 @@
       "streak_reset_reason": "observation_gap_over_72h"
     },
     "__link_audit__": {
-      "runs": 23,
-      "successes": 5,
+      "runs": 24,
+      "successes": 6,
       "failures": 0,
       "timeouts": 0,
       "partial_successes": 18,
       "recovered_successes": 0,
-      "last_seconds": 89.984,
+      "last_seconds": 80.955,
       "last_ok": true,
       "last_recovered": false,
-      "success_streak": 4,
+      "success_streak": 5,
       "consecutive_failures": 0,
       "error_patterns": {
         "355705cf62a5": {
@@ -132,7 +132,7 @@
         }
       },
       "dominant_error_signature": "cf8b8ee20def",
-      "last_run": "2026-09-11T01:00:54+00:00",
+      "last_run": "2026-09-11T04:02:12+00:00",
       "timeout_exhaustions": 0,
       "deferred_attempts": 0,
       "deferred_successes": 0,
@@ -142,12 +142,12 @@
       "deferred_pending": false,
       "streak_reset_at": "2026-09-10T04:51:52+00:00",
       "streak_reset_reason": "observation_gap_over_72h",
-      "success_ewma_seconds": 91.506,
-      "ewma_seconds": 91.506
+      "success_ewma_seconds": 88.341,
+      "ewma_seconds": 88.341
     },
     "market_watch.json": {
-      "runs": 19,
-      "successes": 19,
+      "runs": 20,
+      "successes": 20,
       "failures": 0,
       "timeouts": 0,
       "partial_successes": 0,
@@ -155,11 +155,11 @@
       "last_seconds": 0.073,
       "last_ok": true,
       "last_recovered": false,
-      "success_streak": 6,
+      "success_streak": 7,
       "consecutive_failures": 0,
-      "success_ewma_seconds": 0.11,
-      "ewma_seconds": 0.11,
-      "last_run": "2026-09-11T00:59:24+00:00",
+      "success_ewma_seconds": 0.099,
+      "ewma_seconds": 0.099,
+      "last_run": "2026-09-11T03:58:58+00:00",
       "timeout_exhaustions": 0,
       "deferred_attempts": 0,
       "deferred_successes": 0,
@@ -172,16 +172,16 @@
       "streak_reset_reason": "observation_gap_over_72h"
     },
     "releases.json": {
-      "runs": 19,
-      "successes": 4,
+      "runs": 20,
+      "successes": 5,
       "failures": 0,
       "timeouts": 0,
       "partial_successes": 15,
       "recovered_successes": 13,
-      "last_seconds": 32.544,
+      "last_seconds": 22.787,
       "last_ok": true,
       "last_recovered": false,
-      "success_streak": 4,
+      "success_streak": 5,
       "consecutive_failures": 0,
       "error_patterns": {
         "366db33edeb6": {
@@ -256,7 +256,7 @@
         }
       },
       "dominant_error_signature": "dc7a3dae4914",
-      "last_run": "2026-09-11T00:58:58+00:00",
+      "last_run": "2026-09-11T03:58:41+00:00",
       "timeout_exhaustions": 0,
       "deferred_attempts": 0,
       "deferred_successes": 0,
@@ -266,21 +266,21 @@
       "deferred_pending": false,
       "streak_reset_at": "2026-09-10T04:47:07+00:00",
       "streak_reset_reason": "observation_gap_over_72h",
-      "success_ewma_seconds": 30.669,
-      "ewma_seconds": 30.669
+      "success_ewma_seconds": 28.304,
+      "ewma_seconds": 28.304
     },
     "market_prices.json": {
-      "runs": 19,
+      "runs": 20,
       "successes": 5,
       "failures": 1,
       "timeouts": 0,
-      "partial_successes": 13,
+      "partial_successes": 14,
       "recovered_successes": 13,
-      "last_seconds": 133.557,
+      "last_seconds": 186.591,
       "last_ok": false,
       "last_recovered": false,
       "success_streak": 0,
-      "consecutive_failures": 1,
+      "consecutive_failures": 2,
       "error_patterns": {
         "0e8e4bf5d058": {
           "count": 13,
@@ -291,10 +291,15 @@
           "count": 1,
           "sample": " call last): File \"<string>\", line 1, in <module> File \"<path>, line 242, in main crosscheck_market_db(db) File \"<path>, line 196, in crosscheck_market_db text=html_to_text(fetcher(url)) ^^^^^^^^^^^^ File \"<path>, line 48, in _public_fetch return r.read(2_000_000).decode('utf-8','replace') ^^^^^^^^^^^^^^^^^ File \"<path>, line 482, in read return self._read_chunked(amt) ^^^^^^^^^^^^^^^^^^^^^^^ File \"<path>, line 629, in _read_chunked raise IncompleteRead(b''.join(value)) from exc http.client.Inco",
           "last_seen": "2026-09-11T00:59:24+00:00"
+        },
+        "8e9628a647c1": {
+          "count": 1,
+          "sample": "Pack Magik OP14-009: HTTPError: status 402",
+          "last_seen": "2026-09-11T04:00:51+00:00"
         }
       },
       "dominant_error_signature": "0e8e4bf5d058",
-      "last_run": "2026-09-11T00:59:24+00:00",
+      "last_run": "2026-09-11T04:00:51+00:00",
       "timeout_exhaustions": 0,
       "deferred_attempts": 0,
       "deferred_successes": 0,
@@ -306,20 +311,20 @@
       "streak_reset_reason": "observation_gap_over_72h",
       "success_ewma_seconds": 204.294,
       "ewma_seconds": 204.294,
-      "last_error_signature": "3e88e47995dd"
+      "last_error_signature": "8e9628a647c1"
     },
     "promo_events.json": {
-      "runs": 19,
-      "successes": 3,
+      "runs": 20,
+      "successes": 4,
       "failures": 0,
       "timeouts": 0,
       "partial_successes": 15,
       "recovered_successes": 14,
-      "last_seconds": 75.318,
-      "last_ok": false,
-      "last_recovered": true,
-      "success_streak": 0,
-      "consecutive_failures": 1,
+      "last_seconds": 33.346,
+      "last_ok": true,
+      "last_recovered": false,
+      "success_streak": 1,
+      "consecutive_failures": 0,
       "error_patterns": {
         "386416d74406": {
           "count": 13,
@@ -338,7 +343,7 @@
         }
       },
       "dominant_error_signature": "386416d74406",
-      "last_run": "2026-09-11T00:58:26+00:00",
+      "last_run": "2026-09-11T03:58:18+00:00",
       "timeout_exhaustions": 0,
       "deferred_attempts": 0,
       "deferred_successes": 0,
@@ -348,21 +353,20 @@
       "deferred_pending": false,
       "streak_reset_at": "2026-09-10T04:47:44+00:00",
       "streak_reset_reason": "observation_gap_over_72h",
-      "success_ewma_seconds": 34.237,
-      "ewma_seconds": 34.237,
-      "last_error_signature": "725abc1caa06"
+      "success_ewma_seconds": 33.97,
+      "ewma_seconds": 33.97
     },
     "purchase_sources.json": {
-      "runs": 19,
-      "successes": 4,
+      "runs": 20,
+      "successes": 5,
       "failures": 0,
       "timeouts": 0,
       "partial_successes": 15,
       "recovered_successes": 13,
-      "last_seconds": 2.988,
+      "last_seconds": 2.459,
       "last_ok": true,
       "last_recovered": false,
-      "success_streak": 4,
+      "success_streak": 5,
       "consecutive_failures": 0,
       "error_patterns": {
         "763f8bb5b931": {
@@ -377,7 +381,7 @@
         }
       },
       "dominant_error_signature": "763f8bb5b931",
-      "last_run": "2026-09-11T00:59:20+00:00",
+      "last_run": "2026-09-11T03:58:56+00:00",
       "timeout_exhaustions": 0,
       "deferred_attempts": 0,
       "deferred_successes": 0,
@@ -387,24 +391,24 @@
       "deferred_pending": false,
       "streak_reset_at": "2026-09-10T04:48:07+00:00",
       "streak_reset_reason": "observation_gap_over_72h",
-      "success_ewma_seconds": 3.739,
-      "ewma_seconds": 3.739
+      "success_ewma_seconds": 3.355,
+      "ewma_seconds": 3.355
     },
     "graded_photo_candidates.json": {
-      "runs": 6,
-      "successes": 6,
+      "runs": 7,
+      "successes": 7,
       "failures": 0,
       "timeouts": 0,
       "partial_successes": 0,
       "recovered_successes": 0,
-      "last_seconds": 18.802,
+      "last_seconds": 12.356,
       "last_ok": true,
       "last_recovered": false,
-      "success_streak": 6,
+      "success_streak": 7,
       "consecutive_failures": 0,
-      "success_ewma_seconds": 17.842,
-      "ewma_seconds": 17.842,
-      "last_run": "2026-09-11T00:59:17+00:00",
+      "success_ewma_seconds": 16.196,
+      "ewma_seconds": 16.196,
+      "last_run": "2026-09-11T03:58:53+00:00",
       "timeout_exhaustions": 0,
       "deferred_attempts": 0,
       "deferred_successes": 0,
@@ -415,20 +419,20 @@
       "error_patterns": {}
     },
     "grading_company_updates.json": {
-      "runs": 2,
-      "successes": 2,
+      "runs": 3,
+      "successes": 3,
       "failures": 0,
       "timeouts": 0,
       "partial_successes": 0,
       "recovered_successes": 0,
-      "last_seconds": 3.227,
+      "last_seconds": 2.203,
       "last_ok": true,
       "last_recovered": false,
-      "success_streak": 2,
+      "success_streak": 3,
       "consecutive_failures": 0,
-      "success_ewma_seconds": 3.126,
-      "ewma_seconds": 3.126,
-      "last_run": "2026-09-11T00:59:24+00:00",
+      "success_ewma_seconds": 2.849,
+      "ewma_seconds": 2.849,
+      "last_run": "2026-09-11T03:58:58+00:00",
       "timeout_exhaustions": 0,
       "deferred_attempts": 0,
       "deferred_successes": 0,
@@ -439,5 +443,5 @@
       "error_patterns": {}
     }
   },
-  "updated_at": "2026-09-11T01:01:35+00:00"
+  "updated_at": "2026-09-11T04:02:54+00:00"
 }

@@ -1,7 +1,7 @@
 {
   "schema_version": 8,
   "engine": "v157-reverify-prune-fair-budget-collection",
-  "created_at": "2026-09-11T00:59:17+00:00",
+  "created_at": "2026-09-11T03:58:53+00:00",
   "records": [
     {
       "source_id": "official_registry",
@@ -98,8 +98,8 @@
         "official_verification_missing"
       ],
       "evidence_confidence": 0.0,
-      "quarantine_review_count": 6,
-      "last_quarantine_review_at": "2026-09-11T00:59:17+00:00"
+      "quarantine_review_count": 7,
+      "last_quarantine_review_at": "2026-09-11T03:58:53+00:00"
     },
     {
       "source_id": "library_candidate",
@@ -151,8 +151,8 @@
         "official_verification_missing"
       ],
       "evidence_confidence": 0.0,
-      "quarantine_review_count": 6,
-      "last_quarantine_review_at": "2026-09-11T00:59:17+00:00"
+      "quarantine_review_count": 7,
+      "last_quarantine_review_at": "2026-09-11T03:58:53+00:00"
     },
     {
       "source_id": "library_candidate",
@@ -204,8 +204,8 @@
         "official_verification_missing"
       ],
       "evidence_confidence": 0.0,
-      "quarantine_review_count": 6,
-      "last_quarantine_review_at": "2026-09-11T00:59:17+00:00"
+      "quarantine_review_count": 7,
+      "last_quarantine_review_at": "2026-09-11T03:58:53+00:00"
     },
     {
       "source_id": "library_candidate",
@@ -257,8 +257,8 @@
         "official_verification_missing"
       ],
       "evidence_confidence": 0.0,
-      "quarantine_review_count": 6,
-      "last_quarantine_review_at": "2026-09-11T00:59:17+00:00"
+      "quarantine_review_count": 7,
+      "last_quarantine_review_at": "2026-09-11T03:58:53+00:00"
     },
     {
       "source_id": "library_candidate",
@@ -310,8 +310,8 @@
         "official_verification_missing"
       ],
       "evidence_confidence": 0.0,
-      "quarantine_review_count": 6,
-      "last_quarantine_review_at": "2026-09-11T00:59:17+00:00"
+      "quarantine_review_count": 7,
+      "last_quarantine_review_at": "2026-09-11T03:58:53+00:00"
     },
     {
       "source_id": "library_candidate",
@@ -358,8 +358,8 @@
         "official_verification_missing"
       ],
       "evidence_confidence": 0.0,
-      "quarantine_review_count": 6,
-      "last_quarantine_review_at": "2026-09-11T00:59:17+00:00"
+      "quarantine_review_count": 7,
+      "last_quarantine_review_at": "2026-09-11T03:58:53+00:00"
     },
     {
       "source_id": "library_candidate",
@@ -406,8 +406,8 @@
         "official_verification_missing"
       ],
       "evidence_confidence": 0.0,
-      "quarantine_review_count": 6,
-      "last_quarantine_review_at": "2026-09-11T00:59:17+00:00"
+      "quarantine_review_count": 7,
+      "last_quarantine_review_at": "2026-09-11T03:58:53+00:00"
     },
     {
       "source_id": "library_candidate",
@@ -454,8 +454,8 @@
         "official_verification_missing"
       ],
       "evidence_confidence": 0.0,
-      "quarantine_review_count": 6,
-      "last_quarantine_review_at": "2026-09-11T00:59:17+00:00"
+      "quarantine_review_count": 7,
+      "last_quarantine_review_at": "2026-09-11T03:58:53+00:00"
     },
     {
       "source_id": "library_candidate",
@@ -507,8 +507,8 @@
         "official_verification_missing"
       ],
       "evidence_confidence": 0.0,
-      "quarantine_review_count": 6,
-      "last_quarantine_review_at": "2026-09-11T00:59:17+00:00"
+      "quarantine_review_count": 7,
+      "last_quarantine_review_at": "2026-09-11T03:58:53+00:00"
     },
     {
       "source_id": "library_candidate",
@@ -560,8 +560,8 @@
         "official_verification_missing"
       ],
       "evidence_confidence": 0.0,
-      "quarantine_review_count": 6,
-      "last_quarantine_review_at": "2026-09-11T00:59:17+00:00"
+      "quarantine_review_count": 7,
+      "last_quarantine_review_at": "2026-09-11T03:58:53+00:00"
     },
     {
       "source_id": "library_candidate",
@@ -613,8 +613,8 @@
         "official_verification_missing"
       ],
       "evidence_confidence": 0.0,
-      "quarantine_review_count": 6,
-      "last_quarantine_review_at": "2026-09-11T00:59:17+00:00"
+      "quarantine_review_count": 7,
+      "last_quarantine_review_at": "2026-09-11T03:58:53+00:00"
     },
     {
       "source_id": "library_candidate",
@@ -666,8 +666,50 @@
         "official_verification_missing"
       ],
       "evidence_confidence": 0.0,
-      "quarantine_review_count": 6,
-      "last_quarantine_review_at": "2026-09-11T00:59:17+00:00"
+      "quarantine_review_count": 7,
+      "last_quarantine_review_at": "2026-09-11T03:58:53+00:00"
+    },
+    {
+      "source_id": "amazon_jp",
+      "source": "Amazon JP",
+      "search_provider": "duckduckgo",
+      "url": "https://www.amazon.co.jp/-/en/Pokemon-Mystery-Gems-birthdays-occasions/dp/B0FWK419KX",
+      "title": "Amazon.co.jp: Pokemon Mystery Gems - 1 CGC Grade Card and 1 Booster ...",
+      "snippet": "",
+      "image_url": "",
+      "company": "CGC",
+      "grade": null,
+      "certification_id": "",
+      "game": "pokemon",
+      "mode": "slab",
+      "source_weight": 0.68,
+      "grade_from_search": false,
+      "official_result": false,
+      "verification_method": null,
+      "official_lookup_suppressed": true,
+      "automatic_official_lookup_used": false,
+      "manual_official_verification_required": true,
+      "official_verification": "manual_verification_required",
+      "measurement_photo_quality": 0.0,
+      "measurement_photo_view_ok": false,
+      "measurement_photo_view_reason": "geometry_exposure_or_sharpness_failed",
+      "measurement_photo_ready": false,
+      "measurement_photo_policy": "official+validated+high_resolution+ocr_identity+front_view_quality+no_conflict",
+      "cross_source_count": 1,
+      "cross_sources": [
+        "amazon_jp"
+      ],
+      "quarantine_reasons": [
+        "certification_unresolved",
+        "grade_unresolved",
+        "image_url_missing",
+        "official_verification_missing"
+      ],
+      "status": "quarantine_candidate",
+      "learning_eligibility": "not_eligible_unverified",
+      "evidence_confidence": 0.5034,
+      "quarantine_review_count": 1,
+      "last_quarantine_review_at": "2026-09-11T03:58:53+00:00"
     },
     {
       "source_id": "library_candidate",
@@ -719,8 +761,8 @@
         "official_verification_missing"
       ],
       "evidence_confidence": 0.0,
-      "quarantine_review_count": 6,
-      "last_quarantine_review_at": "2026-09-11T00:59:17+00:00"
+      "quarantine_review_count": 7,
+      "last_quarantine_review_at": "2026-09-11T03:58:53+00:00"
     },
     {
       "source_id": "library_candidate",
@@ -767,8 +809,8 @@
         "official_verification_missing"
       ],
       "evidence_confidence": 0.0,
-      "quarantine_review_count": 6,
-      "last_quarantine_review_at": "2026-09-11T00:59:17+00:00"
+      "quarantine_review_count": 7,
+      "last_quarantine_review_at": "2026-09-11T03:58:53+00:00"
     },
     {
       "source_id": "library_candidate",
@@ -820,8 +862,8 @@
         "official_verification_missing"
       ],
       "evidence_confidence": 0.0,
-      "quarantine_review_count": 6,
-      "last_quarantine_review_at": "2026-09-11T00:59:17+00:00"
+      "quarantine_review_count": 7,
+      "last_quarantine_review_at": "2026-09-11T03:58:53+00:00"
     },
     {
       "source_id": "library_candidate",
@@ -874,8 +916,8 @@
         "official_verification_missing"
       ],
       "evidence_confidence": 0.0,
-      "quarantine_review_count": 6,
-      "last_quarantine_review_at": "2026-09-11T00:59:17+00:00"
+      "quarantine_review_count": 7,
+      "last_quarantine_review_at": "2026-09-11T03:58:53+00:00"
     },
     {
       "source_id": "library_candidate",
@@ -927,8 +969,8 @@
         "official_verification_missing"
       ],
       "evidence_confidence": 0.0,
-      "quarantine_review_count": 6,
-      "last_quarantine_review_at": "2026-09-11T00:59:17+00:00"
+      "quarantine_review_count": 7,
+      "last_quarantine_review_at": "2026-09-11T03:58:53+00:00"
     },
     {
       "source_id": "library_candidate",
@@ -980,8 +1022,8 @@
         "official_verification_missing"
       ],
       "evidence_confidence": 0.0,
-      "quarantine_review_count": 6,
-      "last_quarantine_review_at": "2026-09-11T00:59:17+00:00"
+      "quarantine_review_count": 7,
+      "last_quarantine_review_at": "2026-09-11T03:58:53+00:00"
     },
     {
       "source_id": "library_candidate",
@@ -1033,8 +1075,8 @@
         "official_verification_missing"
       ],
       "evidence_confidence": 0.0,
-      "quarantine_review_count": 6,
-      "last_quarantine_review_at": "2026-09-11T00:59:17+00:00"
+      "quarantine_review_count": 7,
+      "last_quarantine_review_at": "2026-09-11T03:58:53+00:00"
     },
     {
       "source_id": "library_candidate",
@@ -1081,8 +1123,8 @@
         "official_verification_missing"
       ],
       "evidence_confidence": 0.0,
-      "quarantine_review_count": 6,
-      "last_quarantine_review_at": "2026-09-11T00:59:17+00:00"
+      "quarantine_review_count": 7,
+      "last_quarantine_review_at": "2026-09-11T03:58:53+00:00"
     },
     {
       "source_id": "library_candidate",
@@ -1134,8 +1176,8 @@
         "official_verification_missing"
       ],
       "evidence_confidence": 0.0,
-      "quarantine_review_count": 6,
-      "last_quarantine_review_at": "2026-09-11T00:59:17+00:00"
+      "quarantine_review_count": 7,
+      "last_quarantine_review_at": "2026-09-11T03:58:53+00:00"
     },
     {
       "source_id": "library_candidate",
@@ -1187,8 +1229,8 @@
         "official_verification_missing"
       ],
       "evidence_confidence": 0.0,
-      "quarantine_review_count": 6,
-      "last_quarantine_review_at": "2026-09-11T00:59:17+00:00"
+      "quarantine_review_count": 7,
+      "last_quarantine_review_at": "2026-09-11T03:58:53+00:00"
     },
     {
       "source_id": "library_candidate",
@@ -1240,8 +1282,8 @@
         "official_verification_missing"
       ],
       "evidence_confidence": 0.0,
-      "quarantine_review_count": 6,
-      "last_quarantine_review_at": "2026-09-11T00:59:17+00:00"
+      "quarantine_review_count": 7,
+      "last_quarantine_review_at": "2026-09-11T03:58:53+00:00"
     },
     {
       "source_id": "library_candidate",
@@ -1293,8 +1335,8 @@
         "official_verification_missing"
       ],
       "evidence_confidence": 0.0,
-      "quarantine_review_count": 6,
-      "last_quarantine_review_at": "2026-09-11T00:59:17+00:00"
+      "quarantine_review_count": 7,
+      "last_quarantine_review_at": "2026-09-11T03:58:53+00:00"
     },
     {
       "source_id": "library_candidate",
@@ -1346,8 +1388,50 @@
         "official_verification_missing"
       ],
       "evidence_confidence": 0.0,
-      "quarantine_review_count": 6,
-      "last_quarantine_review_at": "2026-09-11T00:59:17+00:00"
+      "quarantine_review_count": 7,
+      "last_quarantine_review_at": "2026-09-11T03:58:53+00:00"
+    },
+    {
+      "source_id": "amazon_jp",
+      "source": "Amazon JP",
+      "search_provider": "duckduckgo",
+      "url": "https://www.amazon.co.jp/-/en/Pokemon-Certified-Product-Expansion-Collection/dp/B0HCN21D6R",
+      "title": "Pokemon PSA Certified Product Expansion Pack MEGA Dream ... - Amazon",
+      "snippet": "",
+      "image_url": "",
+      "company": "PSA",
+      "grade": null,
+      "certification_id": "",
+      "game": "pokemon",
+      "mode": "slab",
+      "source_weight": 0.68,
+      "grade_from_search": false,
+      "official_result": false,
+      "verification_method": null,
+      "official_lookup_suppressed": true,
+      "automatic_official_lookup_used": false,
+      "manual_official_verification_required": true,
+      "official_verification": "manual_verification_required",
+      "measurement_photo_quality": 0.0,
+      "measurement_photo_view_ok": false,
+      "measurement_photo_view_reason": "geometry_exposure_or_sharpness_failed",
+      "measurement_photo_ready": false,
+      "measurement_photo_policy": "official+validated+high_resolution+ocr_identity+front_view_quality+no_conflict",
+      "cross_source_count": 1,
+      "cross_sources": [
+        "amazon_jp"
+      ],
+      "quarantine_reasons": [
+        "certification_unresolved",
+        "grade_unresolved",
+        "image_url_missing",
+        "official_verification_missing"
+      ],
+      "status": "quarantine_candidate",
+      "learning_eligibility": "not_eligible_unverified",
+      "evidence_confidence": 0.5034,
+      "quarantine_review_count": 1,
+      "last_quarantine_review_at": "2026-09-11T03:58:53+00:00"
     },
     {
       "source_id": "library_candidate",
@@ -1399,8 +1483,8 @@
         "official_verification_missing"
       ],
       "evidence_confidence": 0.0,
-      "quarantine_review_count": 6,
-      "last_quarantine_review_at": "2026-09-11T00:59:17+00:00"
+      "quarantine_review_count": 7,
+      "last_quarantine_review_at": "2026-09-11T03:58:53+00:00"
     },
     {
       "source_id": "library_candidate",
@@ -1452,15 +1536,15 @@
         "official_verification_missing"
       ],
       "evidence_confidence": 0.0,
-      "quarantine_review_count": 6,
-      "last_quarantine_review_at": "2026-09-11T00:59:17+00:00"
+      "quarantine_review_count": 7,
+      "last_quarantine_review_at": "2026-09-11T03:58:53+00:00"
     },
     {
-      "source_id": "ebay_public",
-      "source": "eBay 공개검색",
+      "source_id": "amazon_us",
+      "source": "Amazon US",
       "search_provider": "duckduckgo",
-      "url": "https://www.ebay.com/str/psa",
-      "title": "PSA | eBay Stores",
+      "url": "https://www.amazon.com/clp/B0FXVLH7QM",
+      "title": "Amazon.com: Pokemon TCG: 1x Random Graded Pokemon Card (Beckett, PSA or ...",
       "snippet": "",
       "image_url": "",
       "company": "PSA",
@@ -1468,7 +1552,7 @@
       "certification_id": "",
       "game": "pokemon",
       "mode": "slab",
-      "source_weight": 0.9,
+      "source_weight": 0.65,
       "grade_from_search": false,
       "official_result": false,
       "verification_method": null,
@@ -1483,7 +1567,7 @@
       "measurement_photo_policy": "official+validated+high_resolution+ocr_identity+front_view_quality+no_conflict",
       "cross_source_count": 1,
       "cross_sources": [
-        "ebay_public"
+        "amazon_us"
       ],
       "quarantine_reasons": [
         "certification_unresolved",
@@ -1493,9 +1577,9 @@
       ],
       "status": "quarantine_candidate",
       "learning_eligibility": "not_eligible_unverified",
-      "evidence_confidence": 0.0,
+      "evidence_confidence": 0.4934,
       "quarantine_review_count": 1,
-      "last_quarantine_review_at": "2026-09-11T00:59:17+00:00"
+      "last_quarantine_review_at": "2026-09-11T03:58:53+00:00"
     },
     {
       "source_id": "library_candidate",
@@ -1547,8 +1631,8 @@
         "official_verification_missing"
       ],
       "evidence_confidence": 0.0,
-      "quarantine_review_count": 6,
-      "last_quarantine_review_at": "2026-09-11T00:59:17+00:00"
+      "quarantine_review_count": 7,
+      "last_quarantine_review_at": "2026-09-11T03:58:53+00:00"
     },
     {
       "source_id": "library_candidate",
@@ -1600,50 +1684,8 @@
         "official_verification_missing"
       ],
       "evidence_confidence": 0.0,
-      "quarantine_review_count": 6,
-      "last_quarantine_review_at": "2026-09-11T00:59:17+00:00"
-    },
-    {
-      "source_id": "amazon_jp",
-      "source": "Amazon JP",
-      "search_provider": "duckduckgo",
-      "url": "https://www.amazon.co.jp/-/en/Marking-Confirmed-Pokemon-Olympa-Single/dp/B0GH6BBGH2",
-      "title": "[First Edition (No Marking) PSA Confirmed] Pokemon ALPHA ... - Amazon",
-      "snippet": "",
-      "image_url": "",
-      "company": "PSA",
-      "grade": null,
-      "certification_id": "",
-      "game": "pokemon",
-      "mode": "slab",
-      "source_weight": 0.68,
-      "grade_from_search": false,
-      "official_result": false,
-      "verification_method": null,
-      "official_lookup_suppressed": true,
-      "automatic_official_lookup_used": false,
-      "manual_official_verification_required": true,
-      "official_verification": "manual_verification_required",
-      "measurement_photo_quality": 0.0,
-      "measurement_photo_view_ok": false,
-      "measurement_photo_view_reason": "geometry_exposure_or_sharpness_failed",
-      "measurement_photo_ready": false,
-      "measurement_photo_policy": "official+validated+high_resolution+ocr_identity+front_view_quality+no_conflict",
-      "cross_source_count": 1,
-      "cross_sources": [
-        "amazon_jp"
-      ],
-      "quarantine_reasons": [
-        "certification_unresolved",
-        "grade_unresolved",
-        "image_url_missing",
-        "official_verification_missing"
-      ],
-      "status": "quarantine_candidate",
-      "learning_eligibility": "not_eligible_unverified",
-      "evidence_confidence": 0.5034,
-      "quarantine_review_count": 1,
-      "last_quarantine_review_at": "2026-09-11T00:59:17+00:00"
+      "quarantine_review_count": 7,
+      "last_quarantine_review_at": "2026-09-11T03:58:53+00:00"
     },
     {
       "source_id": "library_candidate",
@@ -1695,8 +1737,8 @@
         "official_verification_missing"
       ],
       "evidence_confidence": 0.0,
-      "quarantine_review_count": 6,
-      "last_quarantine_review_at": "2026-09-11T00:59:17+00:00"
+      "quarantine_review_count": 7,
+      "last_quarantine_review_at": "2026-09-11T03:58:53+00:00"
     },
     {
       "source_id": "library_candidate",
@@ -1748,8 +1790,8 @@
         "official_verification_missing"
       ],
       "evidence_confidence": 0.0,
-      "quarantine_review_count": 6,
-      "last_quarantine_review_at": "2026-09-11T00:59:17+00:00"
+      "quarantine_review_count": 7,
+      "last_quarantine_review_at": "2026-09-11T03:58:53+00:00"
     },
     {
       "source_id": "library_candidate",
@@ -1801,8 +1843,8 @@
         "official_verification_missing"
       ],
       "evidence_confidence": 0.0,
-      "quarantine_review_count": 6,
-      "last_quarantine_review_at": "2026-09-11T00:59:17+00:00"
+      "quarantine_review_count": 7,
+      "last_quarantine_review_at": "2026-09-11T03:58:53+00:00"
     },
     {
       "source_id": "library_candidate",
@@ -1854,12 +1896,12 @@
         "official_verification_missing"
       ],
       "evidence_confidence": 0.0,
-      "quarantine_review_count": 6,
-      "last_quarantine_review_at": "2026-09-11T00:59:17+00:00"
+      "quarantine_review_count": 7,
+      "last_quarantine_review_at": "2026-09-11T03:58:53+00:00"
     }
   ],
   "summary": {
-    "total_candidates": 36,
+    "total_candidates": 37,
     "with_image_url": 0,
     "validated_images": 34,
     "ocr_readable": 34,
@@ -1870,11 +1912,11 @@
     "game_grader_buckets_covered": 6,
     "candidate_cap_dropped": 0,
     "raw_grade_calibration_eligible": 0,
-    "quarantined": 35,
-    "quarantine_reviewed": 41,
-    "quarantine_pruned": 6,
+    "quarantined": 36,
+    "quarantine_reviewed": 38,
+    "quarantine_pruned": 2,
     "quarantine_retryable_kept": 33,
-    "quarantine_grace_kept": 2,
+    "quarantine_grace_kept": 3,
     "sources": 4,
     "status": "ok",
     "queries_attempted": 90,
@@ -1888,14 +1930,14 @@
     ],
     "timed_out_sources": 0,
     "initial_bootstrap_collection": true,
-    "previous_candidates": 40,
+    "previous_candidates": 36,
     "registry_seed_count": 1,
     "reference_learning_seed_count": 1,
     "baseline_verified_seed_count": 0,
     "library_candidate_seed_count": 33,
-    "raw_results": 154,
-    "domain_matches": 42,
-    "company_matches": 8,
+    "raw_results": 150,
+    "domain_matches": 38,
+    "company_matches": 4,
     "resolved_redirects": 0,
     "image_results": 0,
     "google_image_results": 0,
@@ -1907,7 +1949,7 @@
     "near_duplicate_label_conflicts": 0,
     "near_duplicate_references_suppressed": 0,
     "adaptive_timeout_seconds": 3600,
-    "elapsed_seconds": 18.5,
+    "elapsed_seconds": 12.2,
     "next_timeout_seconds": 3600
   },
   "image_probe_stats": {
@@ -1968,91 +2010,47 @@
     "near_duplicate_label_conflicts": 0
   },
   "quarantine_cleanup_stats": {
-    "reviewed": 41,
-    "pruned": 6,
+    "reviewed": 38,
+    "pruned": 2,
     "retained_retryable": 33,
-    "retained_grace": 2,
+    "retained_grace": 3,
     "pruned_reasons": {
-      "image_url_missing": 6
+      "image_url_missing": 2
     },
     "policy": "two_pass_confirmed_unusable_only"
   },
   "quarantine_cleanup_audit": [
     {
-      "at": "2026-09-11T00:59:17+00:00",
-      "key": "url:https://www.amazon.co.jp/-/en/Pokemon-Mystery-Gems-birthdays-occasions/dp/B0FWK419KX",
-      "company": "CGC",
-      "certification_id": "",
-      "grade": null,
-      "source_id": "amazon_jp",
-      "reason": "image_url_missing",
-      "title": "Amazon.co.jp: Pokemon Mystery Gems - 1 CGC Grade Card and 1 Booster ...",
-      "url": "https://www.amazon.co.jp/-/en/Pokemon-Mystery-Gems-birthdays-occasions/dp/B0FWK419KX"
-    },
-    {
-      "at": "2026-09-11T00:59:17+00:00",
-      "key": "url:https://www.ebay.com/b/PSA-Graded-Pokemon-Cards/183454/bn_7023355264",
+      "at": "2026-09-11T03:58:53+00:00",
+      "key": "url:https://www.ebay.com/str/psa",
       "company": "PSA",
       "certification_id": "",
       "grade": null,
       "source_id": "ebay_public",
       "reason": "image_url_missing",
-      "title": "Psa Graded Pokemon Cards for sale - eBay",
-      "url": "https://www.ebay.com/b/PSA-Graded-Pokemon-Cards/183454/bn_7023355264"
+      "title": "PSA | eBay Stores",
+      "url": "https://www.ebay.com/str/psa"
     },
     {
-      "at": "2026-09-11T00:59:17+00:00",
-      "key": "url:https://il.ebay.com/b/PSA-Graded-Pokemon-Cards/183454/bn_7023355264",
-      "company": "PSA",
-      "certification_id": "",
-      "grade": null,
-      "source_id": "ebay_public",
-      "reason": "image_url_missing",
-      "title": "PSA Graded Pokemon Cards | eBay",
-      "url": "https://il.ebay.com/b/PSA-Graded-Pokemon-Cards/183454/bn_7023355264"
-    },
-    {
-      "at": "2026-09-11T00:59:17+00:00",
-      "key": "url:https://pr.ebay.com/b/PSA-Graded-Pokemon-Cards/183454/bn_7023355264",
-      "company": "PSA",
-      "certification_id": "",
-      "grade": null,
-      "source_id": "ebay_public",
-      "reason": "image_url_missing",
-      "title": "Cartas de Pokémon con clasificación PSA - eBay",
-      "url": "https://pr.ebay.com/b/PSA-Graded-Pokemon-Cards/183454/bn_7023355264"
-    },
-    {
-      "at": "2026-09-11T00:59:17+00:00",
-      "key": "url:https://www.amazon.co.jp/-/en/Pokemon-Certified-Product-Expansion-Collection/dp/B0HCN21D6R",
+      "at": "2026-09-11T03:58:53+00:00",
+      "key": "url:https://www.amazon.co.jp/-/en/Marking-Confirmed-Pokemon-Olympa-Single/dp/B0GH6BBGH2",
       "company": "PSA",
       "certification_id": "",
       "grade": null,
       "source_id": "amazon_jp",
       "reason": "image_url_missing",
-      "title": "Pokemon PSA Certified Product Expansion Pack MEGA Dream ... - Amazon",
-      "url": "https://www.amazon.co.jp/-/en/Pokemon-Certified-Product-Expansion-Collection/dp/B0HCN21D6R"
-    },
-    {
-      "at": "2026-09-11T00:59:17+00:00",
-      "key": "url:https://www.amazon.com/clp/B0FXVLH7QM",
-      "company": "PSA",
-      "certification_id": "",
-      "grade": null,
-      "source_id": "amazon_us",
-      "reason": "image_url_missing",
-      "title": "Amazon.com: Pokemon TCG: 1x Random Graded Pokemon Card (Beckett, PSA or ...",
-      "url": "https://www.amazon.com/clp/B0FXVLH7QM"
+      "title": "[First Edition (No Marking) PSA Confirmed] Pokemon ALPHA ... - Amazon",
+      "url": "https://www.amazon.co.jp/-/en/Marking-Confirmed-Pokemon-Olympa-Single/dp/B0GH6BBGH2"
     }
   ],
   "global_candidate_balance": {
-    "input_candidates": 42,
-    "retained_candidates": 42,
+    "input_candidates": 39,
+    "retained_candidates": 39,
     "dropped_by_cap": 0,
     "covered_game_grader_buckets": 6,
     "matrix": {
       "PSA": {
-        "pokemon": 10,
+        "pokemon": 7,
         "onepiece": 3,
         "naruto": 0
       },
@@ -2117,8 +2115,8 @@
         "measurement_ready": 0
       }
     },
-    "productive_routes": 3,
-    "recovery_routes": 10,
+    "productive_routes": 2,
+    "recovery_routes": 11,
     "open_route_circuits": 0,
     "official_feedback": 0,
     "measurement_ready_feedback": 0,
@@ -2162,7 +2160,7 @@
     }
   },
   "collection_learning_feedback": {
-    "rows_observed": 2,
+    "rows_observed": 3,
     "official_verified": 0,
     "measurement_ready": 0,
     "identifiers_learned": 0,
@@ -2171,13 +2169,13 @@
   "game_stats": {
     "pokemon": {
       "name": "포켓몬",
-      "candidates": 18,
+      "candidates": 19,
       "with_image_url": 0,
       "validated_images": 16,
       "ocr_readable": 16,
       "measurement_ready": 0,
       "verified_references": 1,
-      "quarantined": 17
+      "quarantined": 18
     },
     "onepiece": {
       "name": "원피스",
@@ -2222,14 +2220,14 @@
       "quarantined": 9
     },
     "CGC": {
-      "candidates": 2,
+      "candidates": 3,
       "with_image_url": 0,
       "validated_images": 2,
       "ocr_readable": 2,
       "measurement_ready": 0,
       "verified_references": 0,
       "games_covered": 1,
-      "quarantined": 2
+      "quarantined": 3
     },
     "TAG": {
       "candidates": 1,
@@ -2254,7 +2252,7 @@
   },
   "provider_stats": {
     "library_manifest": 33,
-    "duckduckgo": 2,
+    "duckduckgo": 3,
     "official_registry": 1
   },
   "source_stats": {
@@ -2266,11 +2264,48 @@
       "queries": 0,
       "configured": false
     },
+    "daangn": {
+      "candidates": 0,
+      "image_hits": 0,
+      "verified_hits": 0,
+      "errors": 2,
+      "queries": 15,
+      "raw_results": 10,
+      "domain_matches": 0,
+      "company_matches": 0,
+      "resolved_redirects": 0,
+      "image_results": 0,
+      "google_image_results": 0,
+      "recovery_queries": 6,
+      "recovery_company_matches": 0,
+      "circuit_deferred_games": 0,
+      "circuit_recovery_probes": 0,
+      "deadline_stops": 0,
+      "game_candidates": {
+        "pokemon": 0,
+        "onepiece": 0,
+        "naruto": 0
+      },
+      "company_candidates": {
+        "PSA": 0,
+        "BGS": 0,
+        "CGC": 0,
+        "TAG": 0,
+        "BRG": 0
+      },
+      "company_shortfalls": {
+        "PSA": 1,
+        "BGS": 1,
+        "CGC": 1,
+        "TAG": 1,
+        "BRG": 1
+      }
+    },
     "amazon_jp": {
       "candidates": 3,
       "image_hits": 0,
       "verified_hits": 0,
-      "errors": 1,
+      "errors": 2,
       "queries": 15,
       "raw_results": 30,
       "domain_matches": 10,
@@ -2341,14 +2376,14 @@
       }
     },
     "ebay_public": {
-      "candidates": 4,
+      "candidates": 0,
       "image_hits": 0,
       "verified_hits": 0,
-      "errors": 1,
+      "errors": 2,
       "queries": 15,
-      "raw_results": 31,
-      "domain_matches": 10,
-      "company_matches": 4,
+      "raw_results": 21,
+      "domain_matches": 0,
+      "company_matches": 0,
       "resolved_redirects": 0,
       "image_results": 0,
       "google_image_results": 0,
@@ -2358,33 +2393,33 @@
       "circuit_recovery_probes": 0,
       "deadline_stops": 0,
       "game_candidates": {
-        "pokemon": 4,
+        "pokemon": 0,
         "onepiece": 0,
         "naruto": 0
       },
       "company_candidates": {
-        "PSA": 4,
+        "PSA": 0,
         "BGS": 0,
         "CGC": 0,
         "TAG": 0,
         "BRG": 0
       },
       "company_shortfalls": {
-        "PSA": 0,
+        "PSA": 1,
         "BGS": 1,
         "CGC": 1,
         "TAG": 1,
         "BRG": 1
       }
     },
-    "daangn": {
+    "kream": {
       "candidates": 0,
       "image_hits": 0,
       "verified_hits": 0,
-      "errors": 2,
+      "errors": 1,
       "queries": 15,
-      "raw_results": 12,
-      "domain_matches": 2,
+      "raw_results": 29,
+      "domain_matches": 8,
       "company_matches": 0,
       "resolved_redirects": 0,
       "image_results": 0,
@@ -2422,43 +2457,6 @@
       "queries": 15,
       "raw_results": 30,
       "domain_matches": 10,
-      "company_matches": 0,
-      "resolved_redirects": 0,
-      "image_results": 0,
-      "google_image_results": 0,
-      "recovery_queries": 6,
-      "recovery_company_matches": 0,
-      "circuit_deferred_games": 0,
-      "circuit_recovery_probes": 0,
-      "deadline_stops": 0,
-      "game_candidates": {
-        "pokemon": 0,
-        "onepiece": 0,
-        "naruto": 0
-      },
-      "company_candidates": {
-        "PSA": 0,
-        "BGS": 0,
-        "CGC": 0,
-        "TAG": 0,
-        "BRG": 0
-      },
-      "company_shortfalls": {
-        "PSA": 1,
-        "BGS": 1,
-        "CGC": 1,
-        "TAG": 1,
-        "BRG": 1
-      }
-    },
-    "kream": {
-      "candidates": 0,
-      "image_hits": 0,
-      "verified_hits": 0,
-      "errors": 0,
-      "queries": 15,
-      "raw_results": 21,
-      "domain_matches": 0,
       "company_matches": 0,
       "resolved_redirects": 0,
       "image_results": 0,
@@ -2569,11 +2567,14 @@
     }
   },
   "errors": [
-    "amazon_jp:adaptive_search:bing_news_rss: ParseError: not well-formed (invalid token): line 1, column 41",
-    "amazon_us:adaptive_search:ddg_lite: HTTPError: HTTP Error 403: Forbidden",
-    "ebay_public:adaptive_search:bing_news_rss: ParseError: not well-formed (invalid token): line 1, column 41",
     "daangn:adaptive_search:naver_news_html: HTTPError: HTTP Error 403: Forbidden",
-    "daangn:adaptive_search:bing_news_rss: ParseError: not well-formed (invalid token): line 1, column 41",
+    "daangn:adaptive_search:ddg_lite: HTTPError: HTTP Error 403: Forbidden",
+    "amazon_jp:adaptive_search:naver_news_html: HTTPError: HTTP Error 403: Forbidden",
+    "amazon_jp:adaptive_search:ddg_lite: HTTPError: HTTP Error 403: Forbidden",
+    "amazon_us:adaptive_search:ddg_lite: HTTPError: HTTP Error 403: Forbidden",
+    "ebay_public:adaptive_search:naver_news_html: HTTPError: HTTP Error 403: Forbidden",
+    "ebay_public:adaptive_search:ddg_lite: HTTPError: HTTP Error 403: Forbidden",
+    "kream:adaptive_search:ddg_lite: HTTPError: HTTP Error 403: Forbidden",
     "collectory:adaptive_search:naver_news_html: HTTPError: HTTP Error 403: Forbidden",
     "collectory:adaptive_search:ddg_lite: HTTPError: HTTP Error 403: Forbidden"
   ],
