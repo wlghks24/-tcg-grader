@@ -180,6 +180,7 @@ jobs:
             echo "- stage changed: ${{ steps.stage.outputs.changed || 'not-reached' }}"
             echo "- stage reason: ${{ steps.stage.outputs.reason || 'not-reached' }}"
             echo "- publish policy: validated public JSON only; no force push"
+            echo "- restored-state policy: a last-good restore or recovered retry is degraded evidence, never a clean fresh success"
             echo "- lifecycle policy: end/release + 5 days, archive on day 6"
             echo "- topic policy: collection attempts are distinct from zero discovered leads"
             echo "- core coverage policy: KR/JP/US 3x3 must remain complete even when ASIA lanes are added"
