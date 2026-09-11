@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "checked_at": "2026-09-11T15:34:33+00:00",
+  "checked_at": "2026-09-11T18:36:20+00:00",
   "policy": {
     "official_sources_only": true,
     "community_posts_are_leads_only": true,
@@ -20,7 +20,7 @@
     "sources": 11,
     "healthy_sources": 6,
     "degraded_sources": 5,
-    "new_changes": 0
+    "new_changes": 15
   },
   "companies": {
     "PSA": {
@@ -248,7 +248,7 @@
       "services": [],
       "announcements": [],
       "status": "degraded",
-      "checked_at": "2026-09-11T15:34:33+00:00",
+      "checked_at": "2026-09-11T18:36:20+00:00",
       "last_error": "HTTPError: status 403",
       "verified_official_source": true
     },
@@ -262,7 +262,7 @@
       "services": [],
       "announcements": [],
       "status": "degraded",
-      "checked_at": "2026-09-11T15:34:33+00:00",
+      "checked_at": "2026-09-11T18:36:20+00:00",
       "last_error": "HTTPError: status 403",
       "verified_official_source": true
     },
@@ -276,7 +276,7 @@
       "services": [],
       "announcements": [],
       "status": "degraded",
-      "checked_at": "2026-09-11T15:34:33+00:00",
+      "checked_at": "2026-09-11T18:36:20+00:00",
       "last_error": "HTTPError: status 403",
       "verified_official_source": true
     },
@@ -290,7 +290,7 @@
       "services": [],
       "announcements": [],
       "status": "degraded",
-      "checked_at": "2026-09-11T15:34:33+00:00",
+      "checked_at": "2026-09-11T18:36:20+00:00",
       "last_error": "ValueError: unapproved host",
       "verified_official_source": true
     },
@@ -304,7 +304,7 @@
       "services": [],
       "announcements": [],
       "status": "degraded",
-      "checked_at": "2026-09-11T15:34:33+00:00",
+      "checked_at": "2026-09-11T18:36:20+00:00",
       "last_error": "ValueError: unapproved host",
       "verified_official_source": true
     },
@@ -316,7 +316,7 @@
       "currency": "USD",
       "url": "https://www.cgccards.com/submit/services-fees/cgc-grading/?view=cards",
       "status": "ok",
-      "checked_at": "2026-09-11T15:34:33+00:00",
+      "checked_at": "2026-09-11T18:36:20+00:00",
       "signal_fingerprint": "af82d832ddfe6e187951aa755446dee325211eb78f2dc630439cc458baf503d6",
       "services": [
         {
@@ -392,7 +392,7 @@
       "currency": "USD",
       "url": "https://www.cgccards.com/submit/events/",
       "status": "ok",
-      "checked_at": "2026-09-11T15:34:33+00:00",
+      "checked_at": "2026-09-11T18:36:20+00:00",
       "signal_fingerprint": "7769c565b846014d8aba26bd33584dafdb45022331dad2f4e075167344d979d0",
       "services": [],
       "announcements": [
@@ -464,7 +464,7 @@
       "currency": "USD",
       "url": "https://www.cgccards.com/news/",
       "status": "ok",
-      "checked_at": "2026-09-11T15:34:33+00:00",
+      "checked_at": "2026-09-11T18:36:20+00:00",
       "signal_fingerprint": "c9a9ff709278a690617ad86220533f8a9ca5ebe6fd0a7090928e3418f23d79a2",
       "services": [],
       "announcements": [
@@ -536,8 +536,8 @@
       "currency": "USD",
       "url": "https://taggrading.com/pages/pricing",
       "status": "ok",
-      "checked_at": "2026-09-11T15:34:33+00:00",
-      "signal_fingerprint": "0e9f55411a94d2016974a85632d9fa32e343c02e94c65a3a1f347a2615dc4c82",
+      "checked_at": "2026-09-11T18:36:20+00:00",
+      "signal_fingerprint": "1e0551a224566e80fa6080e5341053e6894fc5b926568018fea01a76b7b1a3e0",
       "services": [],
       "announcements": [],
       "verified_official_source": true,
@@ -551,29 +551,29 @@
       "currency": "USD",
       "url": "https://taggrading.com/",
       "status": "ok",
-      "checked_at": "2026-09-11T15:34:33+00:00",
-      "signal_fingerprint": "d24613f879d3faf33de85d19ab671c19dbf1be64033b5270313756c608b2a2ef",
+      "checked_at": "2026-09-11T18:36:20+00:00",
+      "signal_fingerprint": "850a84de68f533b9763dca218f0b50cd959c48a07670cb2402250d8660a7388a",
       "services": [],
       "announcements": [
         {
           "company": "TAG",
           "source_id": "tag-home",
           "title": "PRIORITY GRADING",
-          "url": "https://taggrading.com/pages/pricing",
+          "url": "https://taggrading.com/en-ca/pages/pricing",
           "verified_official_source": true
         },
         {
           "company": "TAG",
           "source_id": "tag-home",
           "title": "GRADING",
-          "url": "https://taggrading.com/pages/grading",
+          "url": "https://taggrading.com/en-ca/pages/grading",
           "verified_official_source": true
         },
         {
           "company": "TAG",
           "source_id": "tag-home",
           "title": "EVENTS",
-          "url": "https://taggrading.com/pages/events",
+          "url": "https://taggrading.com/en-ca/pages/events",
           "verified_official_source": true
         },
         {
@@ -587,77 +587,77 @@
           "company": "TAG",
           "source_id": "tag-home",
           "title": "TERMS OF SERVICE",
-          "url": "https://taggrading.com/pages/terms",
+          "url": "https://taggrading.com/en-ca/pages/terms",
           "verified_official_source": true
         },
         {
           "company": "TAG",
           "source_id": "tag-home",
           "title": "GRADING SCALE",
-          "url": "https://taggrading.com/pages/scale",
+          "url": "https://taggrading.com/en-ca/pages/scale",
           "verified_official_source": true
         },
         {
           "company": "TAG",
           "source_id": "tag-home",
           "title": "GRADING RUBRIC",
-          "url": "https://taggrading.com/pages/rubric",
+          "url": "https://taggrading.com/en-ca/pages/rubric",
           "verified_official_source": true
         },
         {
           "company": "TAG",
           "source_id": "tag-home",
           "title": "GRADING GLOSSARY",
-          "url": "https://taggrading.com/pages/glossary",
+          "url": "https://taggrading.com/en-ca/pages/glossary",
           "verified_official_source": true
         },
         {
           "company": "TAG",
           "source_id": "tag-home",
           "title": "ELIGIBLE FOR GRADING",
-          "url": "https://taggrading.com/pages/currently-grading",
+          "url": "https://taggrading.com/en-ca/pages/currently-grading",
           "verified_official_source": true
         },
         {
           "company": "TAG",
           "source_id": "tag-home",
           "title": "PRICING & SERVICES",
-          "url": "https://taggrading.com/pages/pricing",
+          "url": "https://taggrading.com/en-ca/pages/pricing",
           "verified_official_source": true
         },
         {
           "company": "TAG",
           "source_id": "tag-home",
           "title": "SUBMISSION KITS",
-          "url": "https://taggrading.com/pages/subkit",
+          "url": "https://taggrading.com/en-ca/pages/subkit",
           "verified_official_source": true
         },
         {
           "company": "TAG",
           "source_id": "tag-home",
           "title": "TAG VS MANUAL GRADING",
-          "url": "https://taggrading.com/pages/tagvsother",
+          "url": "https://taggrading.com/en-ca/pages/tagvsother",
           "verified_official_source": true
         },
         {
           "company": "TAG",
           "source_id": "tag-home",
           "title": "PURCHASE GRADING",
-          "url": "https://taggrading.com/pages/pricing",
+          "url": "https://taggrading.com/en-ca/pages/pricing",
           "verified_official_source": true
         },
         {
           "company": "TAG",
           "source_id": "tag-home",
           "title": "GRADING DECKBOX",
-          "url": "https://taggrading.com/products/tag-deckbox-1",
+          "url": "https://taggrading.com/en-ca/products/tag-deckbox-1",
           "verified_official_source": true
         },
         {
           "company": "TAG",
           "source_id": "tag-home",
           "title": "CURRENTLY GRADING",
-          "url": "https://taggrading.com/pages/currently-grading",
+          "url": "https://taggrading.com/en-ca/pages/currently-grading",
           "verified_official_source": true
         }
       ],
@@ -672,7 +672,7 @@
       "currency": "KRW",
       "url": "https://break.co.kr/",
       "status": "ok",
-      "checked_at": "2026-09-11T15:34:33+00:00",
+      "checked_at": "2026-09-11T18:36:20+00:00",
       "signal_fingerprint": "a4b3f397492317435fdf3b29d0a799fc47c5cc679cf36d24d983c7c80facb2e7",
       "services": [
         {
@@ -909,9 +909,243 @@
       "title": "공지사항 & 이벤트",
       "url": "https://break.co.kr/notice",
       "verified_official_source": true
+    },
+    {
+      "company": "TAG",
+      "source_id": "tag-home",
+      "title": "PRIORITY GRADING",
+      "url": "https://taggrading.com/en-ca/pages/pricing",
+      "verified_official_source": true
+    },
+    {
+      "company": "TAG",
+      "source_id": "tag-home",
+      "title": "GRADING",
+      "url": "https://taggrading.com/en-ca/pages/grading",
+      "verified_official_source": true
+    },
+    {
+      "company": "TAG",
+      "source_id": "tag-home",
+      "title": "EVENTS",
+      "url": "https://taggrading.com/en-ca/pages/events",
+      "verified_official_source": true
+    },
+    {
+      "company": "TAG",
+      "source_id": "tag-home",
+      "title": "TERMS OF SERVICE",
+      "url": "https://taggrading.com/en-ca/pages/terms",
+      "verified_official_source": true
+    },
+    {
+      "company": "TAG",
+      "source_id": "tag-home",
+      "title": "GRADING SCALE",
+      "url": "https://taggrading.com/en-ca/pages/scale",
+      "verified_official_source": true
+    },
+    {
+      "company": "TAG",
+      "source_id": "tag-home",
+      "title": "GRADING RUBRIC",
+      "url": "https://taggrading.com/en-ca/pages/rubric",
+      "verified_official_source": true
+    },
+    {
+      "company": "TAG",
+      "source_id": "tag-home",
+      "title": "GRADING GLOSSARY",
+      "url": "https://taggrading.com/en-ca/pages/glossary",
+      "verified_official_source": true
+    },
+    {
+      "company": "TAG",
+      "source_id": "tag-home",
+      "title": "ELIGIBLE FOR GRADING",
+      "url": "https://taggrading.com/en-ca/pages/currently-grading",
+      "verified_official_source": true
+    },
+    {
+      "company": "TAG",
+      "source_id": "tag-home",
+      "title": "PRICING & SERVICES",
+      "url": "https://taggrading.com/en-ca/pages/pricing",
+      "verified_official_source": true
+    },
+    {
+      "company": "TAG",
+      "source_id": "tag-home",
+      "title": "SUBMISSION KITS",
+      "url": "https://taggrading.com/en-ca/pages/subkit",
+      "verified_official_source": true
+    },
+    {
+      "company": "TAG",
+      "source_id": "tag-home",
+      "title": "TAG VS MANUAL GRADING",
+      "url": "https://taggrading.com/en-ca/pages/tagvsother",
+      "verified_official_source": true
+    },
+    {
+      "company": "TAG",
+      "source_id": "tag-home",
+      "title": "PURCHASE GRADING",
+      "url": "https://taggrading.com/en-ca/pages/pricing",
+      "verified_official_source": true
+    },
+    {
+      "company": "TAG",
+      "source_id": "tag-home",
+      "title": "GRADING DECKBOX",
+      "url": "https://taggrading.com/en-ca/products/tag-deckbox-1",
+      "verified_official_source": true
+    },
+    {
+      "company": "TAG",
+      "source_id": "tag-home",
+      "title": "CURRENTLY GRADING",
+      "url": "https://taggrading.com/en-ca/pages/currently-grading",
+      "verified_official_source": true
     }
   ],
-  "recent_changes": [],
+  "recent_changes": [
+    {
+      "company": "TAG",
+      "source_id": "tag-pricing",
+      "type": "official_page_changed_unparsed",
+      "detected_at": "2026-09-11T18:36:20+00:00",
+      "source": "https://taggrading.com/pages/pricing",
+      "requires_review": true,
+      "verified_official_source": true
+    },
+    {
+      "company": "TAG",
+      "source_id": "tag-home",
+      "type": "official_announcement",
+      "title": "PRIORITY GRADING",
+      "url": "https://taggrading.com/en-ca/pages/pricing",
+      "detected_at": "2026-09-11T18:36:20+00:00",
+      "verified_official_source": true
+    },
+    {
+      "company": "TAG",
+      "source_id": "tag-home",
+      "type": "official_announcement",
+      "title": "GRADING",
+      "url": "https://taggrading.com/en-ca/pages/grading",
+      "detected_at": "2026-09-11T18:36:20+00:00",
+      "verified_official_source": true
+    },
+    {
+      "company": "TAG",
+      "source_id": "tag-home",
+      "type": "official_announcement",
+      "title": "EVENTS",
+      "url": "https://taggrading.com/en-ca/pages/events",
+      "detected_at": "2026-09-11T18:36:20+00:00",
+      "verified_official_source": true
+    },
+    {
+      "company": "TAG",
+      "source_id": "tag-home",
+      "type": "official_announcement",
+      "title": "TERMS OF SERVICE",
+      "url": "https://taggrading.com/en-ca/pages/terms",
+      "detected_at": "2026-09-11T18:36:20+00:00",
+      "verified_official_source": true
+    },
+    {
+      "company": "TAG",
+      "source_id": "tag-home",
+      "type": "official_announcement",
+      "title": "GRADING SCALE",
+      "url": "https://taggrading.com/en-ca/pages/scale",
+      "detected_at": "2026-09-11T18:36:20+00:00",
+      "verified_official_source": true
+    },
+    {
+      "company": "TAG",
+      "source_id": "tag-home",
+      "type": "official_announcement",
+      "title": "GRADING RUBRIC",
+      "url": "https://taggrading.com/en-ca/pages/rubric",
+      "detected_at": "2026-09-11T18:36:20+00:00",
+      "verified_official_source": true
+    },
+    {
+      "company": "TAG",
+      "source_id": "tag-home",
+      "type": "official_announcement",
+      "title": "GRADING GLOSSARY",
+      "url": "https://taggrading.com/en-ca/pages/glossary",
+      "detected_at": "2026-09-11T18:36:20+00:00",
+      "verified_official_source": true
+    },
+    {
+      "company": "TAG",
+      "source_id": "tag-home",
+      "type": "official_announcement",
+      "title": "ELIGIBLE FOR GRADING",
+      "url": "https://taggrading.com/en-ca/pages/currently-grading",
+      "detected_at": "2026-09-11T18:36:20+00:00",
+      "verified_official_source": true
+    },
+    {
+      "company": "TAG",
+      "source_id": "tag-home",
+      "type": "official_announcement",
+      "title": "PRICING & SERVICES",
+      "url": "https://taggrading.com/en-ca/pages/pricing",
+      "detected_at": "2026-09-11T18:36:20+00:00",
+      "verified_official_source": true
+    },
+    {
+      "company": "TAG",
+      "source_id": "tag-home",
+      "type": "official_announcement",
+      "title": "SUBMISSION KITS",
+      "url": "https://taggrading.com/en-ca/pages/subkit",
+      "detected_at": "2026-09-11T18:36:20+00:00",
+      "verified_official_source": true
+    },
+    {
+      "company": "TAG",
+      "source_id": "tag-home",
+      "type": "official_announcement",
+      "title": "TAG VS MANUAL GRADING",
+      "url": "https://taggrading.com/en-ca/pages/tagvsother",
+      "detected_at": "2026-09-11T18:36:20+00:00",
+      "verified_official_source": true
+    },
+    {
+      "company": "TAG",
+      "source_id": "tag-home",
+      "type": "official_announcement",
+      "title": "PURCHASE GRADING",
+      "url": "https://taggrading.com/en-ca/pages/pricing",
+      "detected_at": "2026-09-11T18:36:20+00:00",
+      "verified_official_source": true
+    },
+    {
+      "company": "TAG",
+      "source_id": "tag-home",
+      "type": "official_announcement",
+      "title": "GRADING DECKBOX",
+      "url": "https://taggrading.com/en-ca/products/tag-deckbox-1",
+      "detected_at": "2026-09-11T18:36:20+00:00",
+      "verified_official_source": true
+    },
+    {
+      "company": "TAG",
+      "source_id": "tag-home",
+      "type": "official_announcement",
+      "title": "CURRENTLY GRADING",
+      "url": "https://taggrading.com/en-ca/pages/currently-grading",
+      "detected_at": "2026-09-11T18:36:20+00:00",
+      "verified_official_source": true
+    }
+  ],
   "history": [
     {
       "company": "CGC",
@@ -1380,6 +1614,132 @@
       "detected_at": "2026-09-10T18:35:55+00:00",
       "source": "https://taggrading.com/pages/pricing",
       "requires_review": true,
+      "verified_official_source": true
+    },
+    {
+      "company": "TAG",
+      "source_id": "tag-home",
+      "type": "official_announcement",
+      "title": "PRIORITY GRADING",
+      "url": "https://taggrading.com/en-ca/pages/pricing",
+      "detected_at": "2026-09-11T18:36:20+00:00",
+      "verified_official_source": true
+    },
+    {
+      "company": "TAG",
+      "source_id": "tag-home",
+      "type": "official_announcement",
+      "title": "GRADING",
+      "url": "https://taggrading.com/en-ca/pages/grading",
+      "detected_at": "2026-09-11T18:36:20+00:00",
+      "verified_official_source": true
+    },
+    {
+      "company": "TAG",
+      "source_id": "tag-home",
+      "type": "official_announcement",
+      "title": "EVENTS",
+      "url": "https://taggrading.com/en-ca/pages/events",
+      "detected_at": "2026-09-11T18:36:20+00:00",
+      "verified_official_source": true
+    },
+    {
+      "company": "TAG",
+      "source_id": "tag-home",
+      "type": "official_announcement",
+      "title": "TERMS OF SERVICE",
+      "url": "https://taggrading.com/en-ca/pages/terms",
+      "detected_at": "2026-09-11T18:36:20+00:00",
+      "verified_official_source": true
+    },
+    {
+      "company": "TAG",
+      "source_id": "tag-home",
+      "type": "official_announcement",
+      "title": "GRADING SCALE",
+      "url": "https://taggrading.com/en-ca/pages/scale",
+      "detected_at": "2026-09-11T18:36:20+00:00",
+      "verified_official_source": true
+    },
+    {
+      "company": "TAG",
+      "source_id": "tag-home",
+      "type": "official_announcement",
+      "title": "GRADING RUBRIC",
+      "url": "https://taggrading.com/en-ca/pages/rubric",
+      "detected_at": "2026-09-11T18:36:20+00:00",
+      "verified_official_source": true
+    },
+    {
+      "company": "TAG",
+      "source_id": "tag-home",
+      "type": "official_announcement",
+      "title": "GRADING GLOSSARY",
+      "url": "https://taggrading.com/en-ca/pages/glossary",
+      "detected_at": "2026-09-11T18:36:20+00:00",
+      "verified_official_source": true
+    },
+    {
+      "company": "TAG",
+      "source_id": "tag-home",
+      "type": "official_announcement",
+      "title": "ELIGIBLE FOR GRADING",
+      "url": "https://taggrading.com/en-ca/pages/currently-grading",
+      "detected_at": "2026-09-11T18:36:20+00:00",
+      "verified_official_source": true
+    },
+    {
+      "company": "TAG",
+      "source_id": "tag-home",
+      "type": "official_announcement",
+      "title": "PRICING & SERVICES",
+      "url": "https://taggrading.com/en-ca/pages/pricing",
+      "detected_at": "2026-09-11T18:36:20+00:00",
+      "verified_official_source": true
+    },
+    {
+      "company": "TAG",
+      "source_id": "tag-home",
+      "type": "official_announcement",
+      "title": "SUBMISSION KITS",
+      "url": "https://taggrading.com/en-ca/pages/subkit",
+      "detected_at": "2026-09-11T18:36:20+00:00",
+      "verified_official_source": true
+    },
+    {
+      "company": "TAG",
+      "source_id": "tag-home",
+      "type": "official_announcement",
+      "title": "TAG VS MANUAL GRADING",
+      "url": "https://taggrading.com/en-ca/pages/tagvsother",
+      "detected_at": "2026-09-11T18:36:20+00:00",
+      "verified_official_source": true
+    },
+    {
+      "company": "TAG",
+      "source_id": "tag-home",
+      "type": "official_announcement",
+      "title": "PURCHASE GRADING",
+      "url": "https://taggrading.com/en-ca/pages/pricing",
+      "detected_at": "2026-09-11T18:36:20+00:00",
+      "verified_official_source": true
+    },
+    {
+      "company": "TAG",
+      "source_id": "tag-home",
+      "type": "official_announcement",
+      "title": "GRADING DECKBOX",
+      "url": "https://taggrading.com/en-ca/products/tag-deckbox-1",
+      "detected_at": "2026-09-11T18:36:20+00:00",
+      "verified_official_source": true
+    },
+    {
+      "company": "TAG",
+      "source_id": "tag-home",
+      "type": "official_announcement",
+      "title": "CURRENTLY GRADING",
+      "url": "https://taggrading.com/en-ca/pages/currently-grading",
+      "detected_at": "2026-09-11T18:36:20+00:00",
       "verified_official_source": true
     }
   ]
