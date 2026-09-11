@@ -8,6 +8,7 @@ verified price unless a caller explicitly chooses to do so.
 from __future__ import annotations
 
 import datetime as dt
+import http.client
 import json
 import re
 import unicodedata
@@ -23,7 +24,10 @@ ROOT=Path(__file__).resolve().parent
 WATCH=ROOT/'market_watch.json'
 STATE=ROOT/'market_public_crosscheck_state.json'
 ALLOWED={'collectory.cc','www.collectory.cc','kream.co.kr','www.kream.co.kr'}
-NETWORK_ERRORS=(urllib.error.URLError, TimeoutError, OSError, UnicodeDecodeError, ValueError)
+# HTTP protocol failures (including IncompleteRead) are source-level network failures.
+# Never use partial bodies as verified prices; preserve the previous observation and
+# continue checking the remaining public sources instead of aborting market_prices.
+NETWORK_ERRORS=(urllib.error.URLError, TimeoutError, OSError, UnicodeDecodeError, ValueError, http.client.HTTPException)
 HEADERS={'User-Agent':'TCG-Grader-Public-Market-Crosscheck/1.0'}
 
 
