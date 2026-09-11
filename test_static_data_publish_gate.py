@@ -7,6 +7,12 @@ import static_data_publish_gate as gate
 
 
 class StaticDataPublishGateTests(unittest.TestCase):
+    def test_public_outputs_follow_auto_update_contract(self):
+        expected = tuple(output_name for _, _, output_name in gate.auto_update_all.JOBS)
+        self.assertEqual(expected, gate.PUBLIC_OUTPUTS)
+        self.assertEqual(8, len(gate.PUBLIC_OUTPUTS))
+        self.assertIn("grading_company_updates.json", gate.PUBLIC_OUTPUTS)
+
     def test_expected_topic_matrix_matches_shared_collector_contract(self):
         self.assertGreaterEqual(gate.EXPECTED_TOPIC_CELLS, 207)
         self.assertEqual(
