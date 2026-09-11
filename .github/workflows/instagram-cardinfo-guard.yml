@@ -44,13 +44,16 @@ jobs:
             instagram_tcg_content/persisted_crosscheck_export.py \
             instagram_tcg_content/collection_health.py \
             instagram_tcg_content/pause_monitor_exchange.py \
+            instagram_tcg_content/monitor_receipt_lifecycle.py \
             instagram_tcg_content/test_collection_pipeline_hardening.py \
-            instagram_tcg_content/test_market_evidence_bridge.py
-      - name: Collection and market bridge regression
+            instagram_tcg_content/test_market_evidence_bridge.py \
+            instagram_tcg_content/test_monitor_receipt_lifecycle.py
+      - name: Collection, market bridge, and monitor receipt regression
         run: |
           python -m unittest -v \
             instagram_tcg_content.test_collection_pipeline_hardening \
-            instagram_tcg_content.test_market_evidence_bridge
+            instagram_tcg_content.test_market_evidence_bridge \
+            instagram_tcg_content.test_monitor_receipt_lifecycle
       - name: Taxonomy self-test
         run: python -m instagram_tcg_content.canonical_taxonomy
       - name: Registry validation
