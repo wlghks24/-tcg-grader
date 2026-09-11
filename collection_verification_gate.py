@@ -16,17 +16,12 @@ from pathlib import Path
 from typing import Any
 from urllib.parse import urlparse
 
+import auto_update_all
+
 ROOT = Path(__file__).resolve().parent
-MANDATORY_OUTPUT_FILES = (
-    "releases.json",
-    "market_watch.json",
-    "market_prices.json",
-    "promo_events.json",
-    "purchase_sources.json",
-    "exchange_rates.json",
-    "grading_company_updates.json",
-    "graded_photo_candidates.json",
-)
+# Single source of truth: collection verification must follow every mandatory output
+# registered by the production collector. A ninth collector cannot silently bypass this gate.
+MANDATORY_OUTPUT_FILES = tuple(job[2] for job in auto_update_all.JOBS)
 # Backward-compatible public name used by existing tests/callers. It now means every
 # mandatory collector output, not the historical four-file subset.
 CRITICAL_FILES = MANDATORY_OUTPUT_FILES
@@ -47,7 +42,7 @@ ALLOWED_REGIONS = {"KR", "JP", "US", "ALL", "GLOBAL"}
 # stricter shared region set above.
 ALLOWED_EVENT_REGIONS = ALLOWED_REGIONS | {"ASIA"}
 HTTP_BLOCK_RE = re.compile(r"HTTPError: status (403|429)\b", re.I)
-TRANSIENT_RE = re.compile(r"HTTPError: status (?:408|425|429|5(?:00|02|03|04))\b|URLError|TimeoutError|timed out|connection reset|name resolution|DNS", re.I)
+TRANSIENT_RE = re.compile(r"HTTPError: status (?:408|425|429|5(?:00|02|03|04))\b|URLError|TimeoutError|IncompleteRead|RemoteDisconnected|HTTPException|timed out|connection reset|name resolution|DNS", re.I)
 
 
 def _load(path: Path) -> Any:
@@ -376,13 +371,28 @@ def _audit_auto_update(root: Path, findings: list[dict[str, Any]]) -> dict[str, 
             findings.append({"severity": "critical", "code": "CRITICAL_OUTPUT_NOT_REPORTED", "target": filename})
             continue
         seen += 1
-        errors = [str(x)[:300] for x in (row.get("remaining_collection_errors") or [])]
-        blocked = [x for x in errors if HTTP_BLOCK_RE.search(x)]
-        hard = [x for x in errors if not TRANSIENT_RE.search(x)]
+        remaining = [str(x)[:300] for x in (row.get("remaining_collection_errors") or []) if str(x).strip()]
+        historical = [str(x)[:300] for x in (row.get("collection_errors") or []) if str(x).strip()]
+        primary_error = str(row.get("error") or "").strip()[:300]
+        evidence = list(dict.fromkeys(remaining + historical + ([primary_error] if primary_error else [])))
+        status_text = str(row.get("status") or "")
+        restored = "기존 검증자료 유지" in status_text
+        recovered = row.get("recovered_after_retry") is True or row.get("recovered_after_deferred_timeout") is True
+        cooldown = row.get("cooldown_deferred") is True
+        degraded_evidence = bool(evidence or restored or recovered or cooldown)
+        # Only unresolved errors on a failed row can become a hard failure. A successful
+        # retry remains degraded evidence, while a last-good restore can never masquerade
+        # as a fresh success merely because the preserved JSON is structurally valid.
+        active_errors = remaining or (([primary_error] if primary_error else historical) if row.get("ok") is not True else [])
+        blocked = [x for x in evidence if HTTP_BLOCK_RE.search(x)]
+        hard = [x for x in active_errors if not TRANSIENT_RE.search(x)]
         if row.get("ok") is not True and hard:
             findings.append({"severity": "critical", "code": "HARD_COLLECTION_FAILURE", "target": filename, "errors": hard[:5]})
-        elif row.get("ok") is not True or errors:
-            findings.append({"severity": "high", "code": "DEGRADED_COLLECTION_OUTPUT", "target": filename, "blocked_403_429": len(blocked), "errors": errors[:5]})
+        elif row.get("ok") is not True or degraded_evidence:
+            findings.append({"severity": "high", "code": "DEGRADED_COLLECTION_OUTPUT", "target": filename,
+                             "blocked_403_429": len(blocked), "errors": evidence[:5],
+                             "restored_last_good": restored, "recovered_after_retry": recovered,
+                             "cooldown_deferred": cooldown})
     return {"critical_outputs_seen": seen, "mandatory_outputs_expected": len(MANDATORY_OUTPUT_FILES)}
 
 

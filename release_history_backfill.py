@@ -503,6 +503,39 @@ def coverage_progress(items):
     }
 
 
+def _coverage_basis(current_items):
+    """Return unique current + persisted verified release rows for coverage accounting.
+
+    Backfill collectors are intentionally bounded per run. Coverage must therefore be
+    cumulative, otherwise a cell already present in the append-only release history can
+    be falsely reported as missing when that region yields zero rows in this one run.
+    """
+    rows = []
+    persisted = ROOT / "releases.json"
+    try:
+        existing = json.loads(safe_read_text(persisted, max_bytes=8_000_000)) if persisted.exists() else {}
+    except (OSError, ValueError, TypeError, UnicodeError):
+        existing = {}
+    if isinstance(existing, dict):
+        for key in ("items", "archive_items"):
+            value = existing.get(key)
+            if isinstance(value, list):
+                rows.extend(row for row in value if isinstance(row, dict))
+    rows.extend(row for row in (current_items or []) if isinstance(row, dict))
+
+    out, seen = [], set()
+    for row in rows:
+        key = (
+            row.get("game"), row.get("region"), _norm(row.get("name")).casefold(),
+            row.get("release_date"), row.get("release_window"), row.get("source"),
+        )
+        if key in seen:
+            continue
+        seen.add(key)
+        out.append(row)
+    return out
+
+
 def run(fetch, html_to_text, collect_onepiece_kr, collect_onepiece_jp, collect_onepiece_us, collect_naruto):
     items, errors = [], []
 
@@ -517,7 +550,8 @@ def run(fetch, html_to_text, collect_onepiece_kr, collect_onepiece_jp, collect_o
 
     items = _dedupe(items, MAX_TOTAL_ROWS)
     state = _load_state()
-    matrix = coverage_progress(items)
+    matrix = coverage_progress(_coverage_basis(items))
+    matrix["coverage_scope"] = "current_run_plus_persisted_verified_history"
     state["coverage_matrix"] = matrix
     state["last_matrix_run"] = dt.datetime.now(dt.timezone.utc).isoformat(timespec="seconds")
     _save_state(state)

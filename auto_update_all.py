@@ -797,7 +797,7 @@ def atomic_issues(report: dict) -> None:
 def run_all(trigger: str = "manual", selected_files=None, progress_callback=None) -> dict:
     """병렬·학습형 안전 업데이트.
 
-    - 서로 다른 JSON을 갱신하는 6개 수집기를 제한된 병렬로 실행해 전체 시간을 단축한다.
+    - 서로 다른 JSON을 갱신하는 8개 수집기를 제한된 병렬로 실행해 전체 시간을 단축한다.
     - 최근 실제 소요시간(EWMA)을 학습해 작업별 timeout과 실행순서를 자동 조정한다.
     - 느린/고장 출처는 해당 작업에만 격리하고 이전 정상본을 유지한다.
     """
@@ -1014,7 +1014,7 @@ def run_all(trigger: str = "manual", selected_files=None, progress_callback=None
             lambda job,budget: one_job(job,backup_root,deferred_budget=budget),
         )
 
-    # 화면/보고서에서는 원래 1~6 단계 순서를 유지한다.
+    # 화면/보고서에서는 등록된 1~8 수집기 순서를 유지한다.
     order={j[2]:i for i,j in enumerate(JOBS)}
     results.sort(key=lambda r:order.get(r['file'],99))
     finished=dt.datetime.now(dt.timezone.utc)
