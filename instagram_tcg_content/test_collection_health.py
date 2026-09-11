@@ -15,6 +15,9 @@ from instagram_tcg_content.collection_health import (
 from instagram_tcg_content.persisted_crosscheck_export import export_snapshot
 
 
+OBSERVED_AT = "2026-09-09T20:30:00+09:00"
+
+
 class CollectionHealthTests(unittest.TestCase):
     def _routes(self):
         return {
@@ -29,46 +32,67 @@ class CollectionHealthTests(unittest.TestCase):
             }
         }
 
+    def _verified_base(self):
+        return {
+            "verification_status": "verified",
+            "verification_mode": VERIFICATION_MODE,
+            "verification_engine": VERIFICATION_ENGINE,
+            "observed_at": OBSERVED_AT,
+        }
+
     def _official_facts(self):
+        base = self._verified_base()
         return [
             {
+                **base,
                 "canonical_key": f"{game}|release|{language.lower()}",
                 "fact_type": "release",
+                "content_type": "release",
+                "lifecycle_bucket": "CURRENT",
                 "lineage_key": f"{game}:{language}:release",
-                "identity": {"game": game},
+                "identity": {"game": game, "language": language},
                 "language": language,
                 "source_locator": "https://example.invalid/official",
-                "verification_status": "verified",
-                "verification_mode": VERIFICATION_MODE,
-                "verification_engine": VERIFICATION_ENGINE,
             }
             for game, language in EXPECTED_OUTPUTS
         ]
 
     def _facts(self):
         facts = self._official_facts()
+        base = self._verified_base()
         for game, language in EXPECTED_OUTPUTS:
             for index in range(MIN_COMPLETED_SALES_PER_OUTPUT):
                 facts.append({
+                    **base,
                     "canonical_key": f"{game}|sale-{index}|{language.lower()}",
                     "fact_type": "completed_sale",
                     "lineage_key": f"{game}:{language}:sale:{index}",
-                    "identity": {"game": game},
+                    "identity": {"game": game, "language": language},
                     "language": language,
                     "source_locator": "https://example.invalid/sale",
-                    "verification_status": "verified",
-                    "verification_mode": VERIFICATION_MODE,
-                    "verification_engine": VERIFICATION_ENGINE,
                 })
+            facts.append({
+                **base,
+                "canonical_key": f"{game}|market|{language.lower()}",
+                "fact_type": "market_reference",
+                "lineage_key": f"{game}:{language}:market",
+                "identity": {"game": game, "language": language},
+                "language": language,
+                "source_locator": "https://example.invalid/market",
+            })
         return facts
 
     def _snapshot(self, facts):
         return {
+            "schema_version": "1.1-lifecycle",
             "namespace": "IG_CARDINFO",
             "status": "finalized",
-            "built_at": "2026-09-09T20:30:00+09:00",
+            "built_at": OBSERVED_AT,
             "facts": facts,
-            "validation": {"write_readback_verified": True},
+            "validation": {
+                "write_readback_verified": True,
+                "lifecycle_routing_enforced": True,
+            },
             "latest_attempt": {"status": "verified_facts_written"},
         }
 
@@ -93,6 +117,7 @@ class CollectionHealthTests(unittest.TestCase):
         self.assertFalse(report["market_price_ready"], report)
         self.assertEqual(report["status"], "GENERAL_READY_MARKET_NOT_READY")
         self.assertIn("COMPLETED_SALE_COVERAGE_INSUFFICIENT", report["reasons"])
+        self.assertIn("MARKET_REFERENCE_COVERAGE_INSUFFICIENT", report["reasons"])
         self.assertEqual(
             report["next_action"],
             "PROCEED_GENERAL_CARDINFO_WITHOUT_UNVERIFIED_MARKET_SECTIONS",
@@ -100,11 +125,15 @@ class CollectionHealthTests(unittest.TestCase):
 
     def test_stale_or_thin_snapshot_fails_closed(self):
         snapshot = {
+            "schema_version": "1.1-lifecycle",
             "namespace": "IG_CARDINFO",
             "status": "finalized",
             "built_at": "2026-09-06T20:30:00+09:00",
             "facts": self._facts()[:1],
-            "validation": {"write_readback_verified": True},
+            "validation": {
+                "write_readback_verified": True,
+                "lifecycle_routing_enforced": True,
+            },
             "latest_attempt": {"status": "NO_VERIFIED_FACTS"},
         }
         report = audit_collection(
@@ -121,7 +150,7 @@ class CollectionHealthTests(unittest.TestCase):
         row = {
             "information_family": "official_release",
             "canonical_key": "pokemon|release|kr",
-            "identity": {"game": "pokemon"},
+            "identity": {"game": "pokemon", "language": "KR"},
             "value": "2026-09-16",
             "language": "KR",
             "source_code": "pokemon-official",
