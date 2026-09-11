@@ -1,5 +1,47 @@
 {
-  "updated_at": "2026-09-11T15:09:28+00:00",
-  "issue_count": 0,
-  "issues": []
+  "updated_at": "2026-09-11T19:01:40+00:00",
+  "issue_count": 1,
+  "issues": [
+    {
+      "name": "업체별 등급카드 사진 후보",
+      "file": "graded_photo_candidates.json",
+      "severity": "해결",
+      "auto_action": "시간초과 자료만 격리 재수집 · 확대 제한시간으로 검증 복구 · 다음 예산 학습",
+      "detail": "TIMEOUT: graded_photo_multi_source 63초 초과 · TIMEOUT: graded_photo_multi_source 126초 초과",
+      "recommended_action": "별도 복구수집으로 정상자료가 검증됐습니다. 다음 자동수집 결과를 확인하세요.",
+      "error_group_id": "111a2ddd056db938",
+      "error_code": "NETWORK_TIMEOUT",
+      "error_subtype": "general",
+      "http_status": null,
+      "bounded_retry_allowed": true,
+      "probable_cause": "공식 사이트 응답 지연, 연결 불안정 또는 학습된 제한시간 부족 가능성이 큽니다.",
+      "resolution_steps": [
+        "공식 출처 연결과 응답시간을 확인합니다.",
+        "제한된 1회 재시도와 확대된 시간예산을 적용합니다.",
+        "실패 시 기존 정상자료가 유지됐는지 확인합니다."
+      ],
+      "verification_steps": [
+        "실패 시 기존 정상자료가 유지됐는지 확인합니다.",
+        "기존 정상자료가 손상되지 않았는지 확인합니다."
+      ],
+      "scenario_prepared": true,
+      "scenario_profile_id": "8f2964a4e191d68f",
+      "diagnostic_priority": 20,
+      "first_checks": [
+        "출처별 최근 성공시간과 현재 제한시간을 비교합니다."
+      ],
+      "fast_resolution_steps": [
+        "공식 출처 연결과 응답시간을 확인합니다.",
+        "제한된 1회 재시도와 확대된 시간예산을 적용합니다.",
+        "실패 시 기존 정상자료가 유지됐는지 확인합니다."
+      ],
+      "stop_conditions": [
+        "동일 출처가 연속 실패하면 현재 실행의 추가 재시도를 중단합니다."
+      ],
+      "deferred_timeout_attempted": true,
+      "deferred_timeout_recovered": true,
+      "deferred_timeout_pending": false,
+      "deferred_timeout_seconds": 220
+    }
+  ]
 }
