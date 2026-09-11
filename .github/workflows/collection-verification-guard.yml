@@ -1,5 +1,5 @@
 name: Collection Verification Guard
-# final verification trigger v230 — no runtime behavior change
+# final verification trigger v231 — grading status contract aligned
 
 on:
   workflow_dispatch:
