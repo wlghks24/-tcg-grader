@@ -10,6 +10,8 @@ on:
       - 'auto_update_all.py'
       - 'update_market_watch.py'
       - 'update_market_prices.py'
+      - 'market_public_crosscheck.py'
+      - 'test_market_public_crosscheck_resilience_v228.py'
       - 'multi_market_price_collector.py'
       - 'update_releases.py'
       - 'update_promo_events.py'
@@ -48,6 +50,8 @@ on:
       - 'auto_update_all.py'
       - 'update_market_watch.py'
       - 'update_market_prices.py'
+      - 'market_public_crosscheck.py'
+      - 'test_market_public_crosscheck_resilience_v228.py'
       - 'multi_market_price_collector.py'
       - 'update_releases.py'
       - 'update_promo_events.py'
@@ -73,6 +77,8 @@ on:
       - 'test_grading_company_watch_v215.py'
       - 'test_grading_watch_integration_v220.py'
       - 'test_verified_collection_job_neural_v212.py'
+      - 'source_collection_stats.json'
+      - 'adaptive_collection_stats.json'
       - '.github/workflows/collection-verification-guard.yml'
       - '.github/workflows/tcg-static-data-refresh.yml'
 
@@ -106,10 +112,12 @@ jobs:
         run: |
           python -m py_compile \
             collection_verification_gate.py static_data_publish_gate.py feature_contract.py \
-            update_market_watch.py update_purchase_sources.py update_exchange_rates.py \
+            update_market_watch.py update_market_prices.py market_public_crosscheck.py \
+            update_purchase_sources.py update_exchange_rates.py \
             grading_company_watch.py graded_photo_multi_source.py verified_collection_job_neural.py \
             validate_external_links.py \
             test_collection_verification_gate.py test_static_data_publish_gate.py \
+            test_market_public_crosscheck_resilience_v228.py \
             test_collection_scope_compat_v214.py test_social_event_topic_coverage.py \
             test_social_topic_capacity_v213.py test_information_lifecycle_archive_v209.py \
             test_grading_company_watch_v215.py test_grading_watch_integration_v220.py \
@@ -117,6 +125,7 @@ jobs:
           python -m unittest -v \
             test_collection_verification_gate.py \
             test_static_data_publish_gate.py \
+            test_market_public_crosscheck_resilience_v228.py \
             test_collection_scope_compat_v214.py \
             test_social_event_topic_coverage.py \
             test_social_topic_capacity_v213.py \
