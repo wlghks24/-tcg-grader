@@ -1,0 +1,65 @@
+name: Fix grading status contract v230
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/fix-grading-status-contract-v230.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  repair:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 8
+    env:
+      PYTHONPATH: ${{ github.workspace }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          fetch-depth: 2
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97
+        with:
+          python-version: '3.11'
+      - name: Patch producer-consumer status contract
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+
+          gate = Path('collection_verification_gate.py')
+          text = gate.read_text(encoding='utf-8')
+          old = '''            company = str(row.get("company") or "").upper()\n            status = str(row.get("status") or "").lower()\n'''
+          new = '''            company = str(row.get("company") or "").upper()\n            raw_status = str(row.get("status") or "").lower()\n            # grading_company_watch writes "ok" for a healthy official source.\n            # Keep accepting the older "healthy" spelling for stored/test snapshots.\n            status = "healthy" if raw_status in {"ok", "healthy"} else raw_status\n'''
+          if old not in text:
+              raise SystemExit('collection verifier status anchor not found')
+          text = text.replace(old, new, 1)
+          gate.write_text(text, encoding='utf-8')
+
+          test = Path('test_collection_verification_gate.py')
+          text = test.read_text(encoding='utf-8')
+          old = '''                    "status": "healthy",\n                    "checked_at": stamp,\n'''
+          new = '''                    # Match the production grading_company_watch contract.\n                    "status": "ok",\n                    "checked_at": stamp,\n'''
+          if old not in text:
+              raise SystemExit('grading fixture status anchor not found')
+          text = text.replace(old, new, 1)
+          test.write_text(text, encoding='utf-8')
+          PY
+      - name: Verify status contract and full collection regressions
+        run: |
+          python -m py_compile collection_verification_gate.py test_collection_verification_gate.py
+          python -m unittest -v \
+            test_collection_verification_gate.py \
+            test_collection_restored_state_guard_v229.py \
+            test_release_history_cumulative_coverage_v229.py \
+            test_grading_company_watch_v215.py \
+            test_grading_watch_integration_v220.py
+      - name: Commit verified source repair
+        run: |
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add collection_verification_gate.py test_collection_verification_gate.py
+          git diff --cached --check
+          git commit -m 'fix: align grading source health status contract'
+          git push origin HEAD:main
