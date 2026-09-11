@@ -298,7 +298,10 @@ def _audit_grading_companies(root: Path, now: dt.datetime, findings: list[dict[s
             status = ""
         else:
             company = str(row.get("company") or "").upper()
-            status = str(row.get("status") or "").lower()
+            raw_status = str(row.get("status") or "").lower()
+            # grading_company_watch writes "ok" for a healthy official source.
+            # Keep accepting the older "healthy" spelling for stored/test snapshots.
+            status = "healthy" if raw_status in {"ok", "healthy"} else raw_status
             if company not in EXPECTED_GRADING_COMPANIES:
                 reasons.append("unknown_company")
             else:

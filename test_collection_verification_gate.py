@@ -38,7 +38,8 @@ class CollectionVerificationGateTests(unittest.TestCase):
                 sources[f"{company.lower()}-{index}"] = {
                     "company": company,
                     "url": f"https://{host}/official-{index}",
-                    "status": "healthy",
+                    # Match the production grading_company_watch contract.
+                    "status": "ok",
                     "checked_at": stamp,
                 }
         return {
