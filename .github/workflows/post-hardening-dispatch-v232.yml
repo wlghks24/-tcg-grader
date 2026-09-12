@@ -1,4 +1,4 @@
-name: Post-hardening verification dispatch v233
+name: Final current-head collection verification dispatch
 
 on:
   push:
@@ -8,69 +8,29 @@ on:
 
 permissions:
   actions: write
-  contents: write
+  contents: read
 
 jobs:
-  patch-and-dispatch:
+  dispatch:
     runs-on: ubuntu-24.04
-    timeout-minutes: 5
+    timeout-minutes: 3
     steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
-        with:
-          fetch-depth: 2
-      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97
-        with:
-          python-version: '3.11'
-      - name: Harden failed topic-cell verification
-        run: |
-          python - <<'PY'
-          from pathlib import Path
-          gate = Path('collection_verification_gate.py')
-          text = gate.read_text(encoding='utf-8')
-          old = '''    if topic_contract_present and attempted_topics < EXPECTED_EVENT_TOPIC_CELLS:\n        findings.append({"severity": "high", "code": "INCOMPLETE_EVENT_TOPIC_COLLECTION_ATTEMPTS",\n                         "target": "promo_events.json", "expected_cells": EXPECTED_EVENT_TOPIC_CELLS,\n                         "attempted_cells": attempted_topics})\n'''
-          new = old + '''    if isinstance(failed_topics, list) and failed_topics:\n        findings.append({"severity": "high", "code": "FAILED_EVENT_TOPIC_COLLECTION",\n                         "target": "promo_events.json", "count": len(failed_topics),\n                         "cells": [str(x)[:180] for x in failed_topics[:20]]})\n'''
-          if old not in text:
-              raise SystemExit('event topic audit anchor missing')
-          gate.write_text(text.replace(old, new, 1), encoding='utf-8')
-
-          test = Path('test_collection_verification_gate.py')
-          text = test.read_text(encoding='utf-8')
-          old = '''        self.assertFalse(any(x["code"] == "INCOMPLETE_EVENT_TOPIC_COLLECTION_ATTEMPTS" for x in report["findings"]))\n        self.assertEqual(216, report["metrics"]["attempted_event_topic_cells"])\n'''
-          new = '''        self.assertFalse(any(x["code"] == "INCOMPLETE_EVENT_TOPIC_COLLECTION_ATTEMPTS" for x in report["findings"]))\n        self.assertEqual("degraded", report["status"])\n        self.assertTrue(any(x["code"] == "FAILED_EVENT_TOPIC_COLLECTION" for x in report["findings"]))\n        self.assertEqual(216, report["metrics"]["attempted_event_topic_cells"])\n'''
-          if old not in text:
-              raise SystemExit('event topic regression anchor missing')
-          test.write_text(text.replace(old, new, 1), encoding='utf-8')
-          PY
-          python -m py_compile collection_verification_gate.py test_collection_verification_gate.py
-          python -m unittest -v test_collection_verification_gate.py test_static_data_publish_gate.py test_social_event_topic_coverage.py
-      - name: Commit verified final guard fix
-        run: |
-          set -euo pipefail
-          git config user.name 'github-actions[bot]'
-          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git add collection_verification_gate.py test_collection_verification_gate.py
-          git diff --cached --check
-          git commit -m 'fix: fail strict verification on topic provider failures'
-          git push origin HEAD:main
       - name: Dispatch current-main collection verification
         env:
           GH_TOKEN: ${{ github.token }}
           REPO: ${{ github.repository }}
         run: |
           set -euo pipefail
-          api="https://api.github.com/repos/${REPO}/actions/workflows"
-          for workflow in collection-verification-guard.yml tcg-static-data-refresh.yml; do
-            code=$(curl --silent --show-error --output /tmp/resp --write-out '%{http_code}' \
-              --request POST \
-              --header 'Accept: application/vnd.github+json' \
-              --header "Authorization: Bearer ${GH_TOKEN}" \
-              --header 'X-GitHub-Api-Version: 2022-11-28' \
-              "${api}/${workflow}/dispatches" \
-              --data '{"ref":"main"}')
-            if [ "$code" != '204' ]; then
-              cat /tmp/resp
-              echo "dispatch failed for ${workflow}: HTTP ${code}" >&2
-              exit 1
-            fi
-            echo "dispatched ${workflow}"
-          done
+          code=$(curl --silent --show-error --output /tmp/resp --write-out '%{http_code}' \
+            --request POST \
+            --header 'Accept: application/vnd.github+json' \
+            --header "Authorization: Bearer ${GH_TOKEN}" \
+            --header 'X-GitHub-Api-Version: 2022-11-28' \
+            "https://api.github.com/repos/${REPO}/actions/workflows/collection-verification-guard.yml/dispatches" \
+            --data '{"ref":"main"}')
+          if [ "$code" != '204' ]; then
+            cat /tmp/resp
+            echo "dispatch failed: HTTP ${code}" >&2
+            exit 1
+          fi
+          echo 'dispatched collection-verification-guard.yml on current main'
