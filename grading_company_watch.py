@@ -393,6 +393,8 @@ def collect(previous: dict | None = None, fetcher=_fetch_raw) -> dict:
                 if len(text) < 80:
                     raise ValueError("official page body too short")
                 services = parse_services(company, spec["market"], spec["currency"], text, spec["url"]) if "pricing" in spec["kind"] else []
+                if "pricing" in spec["kind"] and not services:
+                    raise ValueError("pricing parser yielded zero verified services")
                 found = extract_announcements(raw, spec["url"], company, source_id) if spec["kind"] in {"news", "events", "pricing_news"} else []
                 fingerprint = _relevant_fingerprint(text)
                 row = {
@@ -426,6 +428,10 @@ def collect(previous: dict | None = None, fetcher=_fetch_raw) -> dict:
                 announcements.extend(found)
                 health.append({"source_id": source_id, "status": "ok", "url": spec["url"]})
             except Exception as exc:
+                old_verified = bool(
+                    old.get("verified_official_source") is True
+                    and old.get("signal_fingerprint")
+                )
                 retained = dict(old) if old else {
                     "company": company, "source_id": source_id, "kind": spec["kind"],
                     "market": spec["market"], "currency": spec["currency"], "url": spec["url"],
@@ -433,16 +439,17 @@ def collect(previous: dict | None = None, fetcher=_fetch_raw) -> dict:
                 }
                 retained.update({
                     "status": "degraded", "checked_at": checked_at,
-                    "last_error": diagnostic_exception(exc), "verified_official_source": bool(old),
+                    "last_error": diagnostic_exception(exc), "verified_official_source": old_verified,
                 })
                 sources[source_id] = retained
-                if retained.get("services"):
+                if old_verified and retained.get("services"):
                     markets[spec["market"]] = {
                         "currency": spec["currency"], "source": spec["url"],
                         "services": retained["services"], "retained_last_good": True,
-                        "verified_official_source": bool(old),
+                        "verified_official_source": True,
                     }
-                announcements.extend(retained.get("announcements", []) or [])
+                if old_verified:
+                    announcements.extend(retained.get("announcements", []) or [])
                 health.append({
                     "source_id": source_id, "status": "degraded", "url": spec["url"],
                     "error": diagnostic_exception(exc),

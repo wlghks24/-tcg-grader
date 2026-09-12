@@ -98,6 +98,20 @@ class CollectionVerificationGateTests(unittest.TestCase):
         self.assertEqual(216, report["metrics"]["attempted_event_topic_cells"])
         self.assertEqual(216, report["metrics"]["undiscovered_event_topic_cells"])
 
+    def test_topic_matrix_cannot_silently_shrink_below_shared_contract(self):
+        self.valid_fixture()
+        self.write("promo_events.json", {
+            "items": [{"region": "KR", "category": "promo", "name_ko": "Test",
+                       "source": "https://example.com/event", "source_grade": "official"}],
+            "social_topic_expected_cells": gate.EXPECTED_EVENT_TOPIC_CELLS - 1,
+            "social_topic_attempted_cells": gate.EXPECTED_EVENT_TOPIC_CELLS - 1,
+            "social_topic_successful_cells": gate.EXPECTED_EVENT_TOPIC_CELLS - 1,
+        })
+        report = gate.verify(self.root, now=self.now)
+        self.assertEqual(216, gate.EXPECTED_EVENT_TOPIC_CELLS)
+        self.assertEqual("degraded", report["status"])
+        self.assertTrue(any(x["code"] == "INCOMPLETE_EVENT_TOPIC_MATRIX" for x in report["findings"]))
+
     def test_missing_topic_collection_attempt_is_degraded(self):
         self.valid_fixture()
         self.write("promo_events.json", {

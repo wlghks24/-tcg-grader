@@ -105,6 +105,30 @@ class GradingCompanyWatchV215Tests(unittest.TestCase):
         self.assertEqual(source["services"][0]["fee"], 29980)
         self.assertTrue(data["companies"]["PSA"]["markets"]["JP"]["retained_last_good"])
 
+    def test_repeated_failure_never_promotes_unverified_source(self):
+        specs = ({"id": "psa-jp-pricing", "kind": "pricing", "market": "JP", "currency": "JPY",
+                  "url": "https://www.psacard.com/ja-JP/services/tradingcardgrading/grading"},)
+        previous = {"sources": {"psa-jp-pricing": {
+            "company": "PSA", "source_id": "psa-jp-pricing", "kind": "pricing",
+            "market": "JP", "currency": "JPY", "url": specs[0]["url"],
+            "status": "degraded", "services": [], "announcements": [],
+            "verified_official_source": False,
+        }}, "announcements": [], "history": []}
+        with mock.patch.object(watch, "WATCH_SOURCES", {"PSA": specs}):
+            data = watch.collect(previous, fetcher=mock.Mock(side_effect=OSError("still blocked")))
+        self.assertFalse(data["sources"]["psa-jp-pricing"]["verified_official_source"])
+
+    def test_pricing_fetch_without_verified_services_is_degraded(self):
+        specs = ({"id": "tag-pricing", "kind": "pricing", "market": "US", "currency": "USD",
+                  "url": "https://taggrading.com/pages/pricing"},)
+        html = "<html><body>TAG official grading pricing page is reachable but the dynamic price table is unavailable in this response.</body></html>"
+        with mock.patch.object(watch, "WATCH_SOURCES", {"TAG": specs}):
+            data = watch.collect({}, fetcher=lambda _url: html)
+        source = data["sources"]["tag-pricing"]
+        self.assertEqual("degraded", source["status"])
+        self.assertIn("zero verified services", source["last_error"])
+        self.assertFalse(source["verified_official_source"])
+
     def test_initial_baseline_does_not_claim_every_current_service_changed(self):
         specs = ({"id": "psa-jp-pricing", "kind": "pricing", "market": "JP", "currency": "JPY",
                   "url": "https://www.psacard.com/ja-JP/services/tradingcardgrading/grading"},)

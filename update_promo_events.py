@@ -94,7 +94,7 @@ KR_MOVIE_TRACKERS = (
         "reward": "한국 극장 개봉·재개봉·특별상영 일정이 공식 발표되면 날짜와 극장 정보를 표시",
         "condition": "포켓몬코리아 및 KOBIS 기준. 현재 확인 가능한 2026년 한국 신작 극장 개봉일은 공식 발표되지 않아 임의 날짜를 만들지 않음.",
         "location": "대한민국", "status": "한국 개봉일 미발표",
-        "source": "https://www.pokemonkorea.co.kr/",
+        "source": "https://new.pokemonkorea.co.kr/card",
         "collection_source": "https://new.pokemonkorea.co.kr/card",
         "verification_source": "https://www.kobis.or.kr/kobis/business/mast/mvie/searchMovieList.do",
         "tracking_only": True,

@@ -101,7 +101,7 @@ DATE_RE = re.compile(
 
 OFFICIAL_HOSTS = {
     "www.pokemon-card.com", "www.30th.pokemon-card.com", "pokemon.co.jp", "www.pokemon.co.jp",
-    "pokemoncard.co.kr", "www.pokemoncard.co.kr", "pokemonkorea.co.kr", "www.pokemonkorea.co.kr",
+    "new.pokemonkorea.co.kr",
     "www.pokemon.com", "pokemon.com", "support.pokemon.com",
     "onepiece-cardgame.kr", "www.onepiece-cardgame.kr", "www.onepiece-cardgame.com",
     "en.onepiece-cardgame.com", "cp.onepiece-cardgame.com", "one-piece.com", "www.one-piece.com",
@@ -110,7 +110,7 @@ OFFICIAL_HOSTS = {
     "ktwizstore.co.kr", "www.ktwizstore.co.kr", "playgo.bandainamcokorea.co.kr",
 }
 OFFICIAL_DISCOVERY_PAGES = (
-    ("포켓몬 카드", "KR", "https://www.pokemonkorea.co.kr/"),
+    ("포켓몬 카드", "KR", "https://new.pokemonkorea.co.kr/card"),
     ("포켓몬 카드", "JP", "https://www.pokemon.co.jp/"),
     ("포켓몬 카드", "US", "https://www.pokemon.com/us"),
     ("원피스 카드", "KR", "https://onepiece-cardgame.kr/"),

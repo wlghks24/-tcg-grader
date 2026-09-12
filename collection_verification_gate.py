@@ -17,6 +17,7 @@ from typing import Any
 from urllib.parse import urlparse
 
 import auto_update_all
+import multi_route_event_discovery
 
 ROOT = Path(__file__).resolve().parent
 # Single source of truth: collection verification must follow every mandatory output
@@ -25,6 +26,14 @@ MANDATORY_OUTPUT_FILES = tuple(job[2] for job in auto_update_all.JOBS)
 # Backward-compatible public name used by existing tests/callers. It now means every
 # mandatory collector output, not the historical four-file subset.
 CRITICAL_FILES = MANDATORY_OUTPUT_FILES
+EXPECTED_EVENT_TOPIC_CELLS = (
+    len(multi_route_event_discovery.GAMES)
+    * len(multi_route_event_discovery.REGIONS)
+    * len(multi_route_event_discovery.COVERAGE_TOPICS)
+)
+EXPECTED_RELEASE_COVERAGE_CELLS = (
+    len(multi_route_event_discovery.GAMES) * len(multi_route_event_discovery.REGIONS)
+)
 EXPECTED_GRADING_COMPANIES = {"PSA", "BGS", "CGC", "TAG", "BRG"}
 GRADING_ALLOWED_HOSTS = {
     "psacard.com", "www.psacard.com",
@@ -164,13 +173,16 @@ def _audit_releases(root: Path, findings: list[dict[str, Any]]) -> dict[str, int
             if invalid <= 20: findings.append({"severity": "high", "code": "INVALID_RELEASE_ROW", "target": idx, "reasons": reasons})
     if "archive_grace_days" in db and db.get("archive_grace_days") != 5:
         findings.append({"severity": "critical", "code": "INVALID_RELEASE_ARCHIVE_POLICY", "target": "releases.json"})
-    coverage = db.get("collection_coverage") if isinstance(db.get("collection_coverage"), dict) else {}
+    history_progress = db.get("history_backfill_progress") if isinstance(db.get("history_backfill_progress"), dict) else {}
+    coverage = history_progress.get("coverage_matrix") if isinstance(history_progress.get("coverage_matrix"), dict) else {}
+    if not coverage:
+        coverage = db.get("collection_coverage") if isinstance(db.get("collection_coverage"), dict) else {}
     expected = int(coverage.get("expected_cells") or 0)
     configured = int(coverage.get("configured_cells") or 0)
-    if expected and configured < expected:
+    if coverage and (expected != EXPECTED_RELEASE_COVERAGE_CELLS or configured < EXPECTED_RELEASE_COVERAGE_CELLS):
         findings.append({"severity": "high", "code": "INCOMPLETE_RELEASE_SOURCE_MATRIX",
-                         "target": "releases.json", "expected_cells": expected,
-                         "configured_cells": configured})
+                         "target": "releases.json", "expected_cells": EXPECTED_RELEASE_COVERAGE_CELLS,
+                         "reported_expected_cells": expected, "configured_cells": configured})
     return {"release_items": len(rows), "current_release_items": len(current),
             "archive_release_items": len(archive), "invalid_release_items": invalid}
 
@@ -225,13 +237,16 @@ def _audit_events(root: Path, findings: list[dict[str, Any]]) -> dict[str, int]:
     attempted_topics = int(db.get("social_topic_attempted_cells") or 0)
     successful_topics = int(db.get("social_topic_successful_cells") or 0)
     failed_topics = db.get("social_topic_failed_cells", [])
-    if expected_topics and expected_topics < 207:
+    topic_contract_present = any(key in db for key in (
+        "social_topic_expected_cells", "social_topic_attempted_cells", "social_topic_successful_cells"
+    ))
+    if topic_contract_present and expected_topics != EXPECTED_EVENT_TOPIC_CELLS:
         findings.append({"severity": "high", "code": "INCOMPLETE_EVENT_TOPIC_MATRIX",
-                         "target": "promo_events.json", "expected_minimum": 207,
+                         "target": "promo_events.json", "expected_cells": EXPECTED_EVENT_TOPIC_CELLS,
                          "configured_cells": expected_topics})
-    if expected_topics and attempted_topics < expected_topics:
+    if topic_contract_present and attempted_topics < EXPECTED_EVENT_TOPIC_CELLS:
         findings.append({"severity": "high", "code": "INCOMPLETE_EVENT_TOPIC_COLLECTION_ATTEMPTS",
-                         "target": "promo_events.json", "expected_cells": expected_topics,
+                         "target": "promo_events.json", "expected_cells": EXPECTED_EVENT_TOPIC_CELLS,
                          "attempted_cells": attempted_topics})
     return {"promo_event_items": len(rows), "current_promo_event_items": len(current),
             "archive_promo_event_items": len(archive), "invalid_promo_event_items": invalid,
@@ -327,7 +342,7 @@ def _audit_grading_companies(root: Path, now: dt.datetime, findings: list[dict[s
         else:
             degraded += 1
             if len(degraded_errors) < 20:
-                degraded_errors.append({"source": str(source_id), "error": str(row.get("error") or "")[:300]})
+                degraded_errors.append({"source": str(source_id), "error": str(row.get("error") or row.get("last_error") or "")[:300]})
 
     missing_source_companies = EXPECTED_GRADING_COMPANIES - source_companies
     if missing_source_companies:
