@@ -3,7 +3,7 @@
   "engine": "v98-camera-resilience-full-runtime",
   "trigger": "github-pages-static-refresh",
   "selected_files": [],
-  "started_at": "2026-09-12T00:58:33+00:00",
+  "started_at": "2026-09-12T06:57:05+00:00",
   "preflight_monitor": {
     "ok": true,
     "results": [
@@ -54,8 +54,8 @@
       }
     ]
   },
-  "finished_at": "2026-09-12T01:01:38+00:00",
-  "duration_seconds": 184.95,
+  "finished_at": "2026-09-12T07:00:05+00:00",
+  "duration_seconds": 180.61,
   "parallel_workers": 2,
   "ok": true,
   "success_count": 8,
@@ -82,7 +82,7 @@
       "file": "releases.json",
       "ok": true,
       "status": "정상",
-      "updated_at": "2026-09-12T01:00:20+00:00",
+      "updated_at": "2026-09-12T06:59:00+00:00",
       "count": 10,
       "retry_count": 0,
       "max_attempts": 2,
@@ -90,9 +90,9 @@
       "auto_action": "학습형 수집 · 검증 후 정상 반영",
       "collection_errors": [],
       "remaining_collection_errors": [],
-      "duration_seconds": 33.63,
-      "adaptive_timeout_seconds": 109,
-      "last_attempt_timeout_seconds": 109,
+      "duration_seconds": 36.17,
+      "adaptive_timeout_seconds": 111,
+      "last_attempt_timeout_seconds": 111,
       "collection_stage": "primary",
       "timeout_exhausted": false
     },
@@ -101,7 +101,7 @@
       "file": "market_watch.json",
       "ok": true,
       "status": "정상",
-      "updated_at": "2026-09-12T01:01:18+00:00",
+      "updated_at": "2026-09-12T06:59:17+00:00",
       "count": 19,
       "retry_count": 0,
       "max_attempts": 2,
@@ -120,7 +120,7 @@
       "file": "market_prices.json",
       "ok": true,
       "status": "정상",
-      "updated_at": "2026-09-12T01:01:38+00:00",
+      "updated_at": "2026-09-12T07:00:05+00:00",
       "count": 38,
       "retry_count": 0,
       "max_attempts": 2,
@@ -128,7 +128,7 @@
       "auto_action": "학습형 수집 · 검증 후 정상 반영",
       "collection_errors": [],
       "remaining_collection_errors": [],
-      "duration_seconds": 184.9,
+      "duration_seconds": 180.56,
       "adaptive_timeout_seconds": 300,
       "last_attempt_timeout_seconds": 299,
       "collection_stage": "primary",
@@ -139,17 +139,17 @@
       "file": "promo_events.json",
       "ok": true,
       "status": "정상 · 보조검증 1건 재확인 대기 · 한·일·미 영화정보 9/9 조합 추적",
-      "updated_at": "2026-09-12T00:59:47+00:00",
-      "count": 43,
+      "updated_at": "2026-09-12T06:58:24+00:00",
+      "count": 44,
       "retry_count": 0,
       "max_attempts": 2,
       "recovered_after_retry": false,
       "auto_action": "학습형 수집 · 검증 후 정상 반영",
       "collection_errors": [],
       "remaining_collection_errors": [],
-      "duration_seconds": 73.41,
-      "adaptive_timeout_seconds": 125,
-      "last_attempt_timeout_seconds": 125,
+      "duration_seconds": 79.08,
+      "adaptive_timeout_seconds": 158,
+      "last_attempt_timeout_seconds": 158,
       "collection_stage": "primary",
       "timeout_exhausted": false
     },
@@ -158,7 +158,7 @@
       "file": "purchase_sources.json",
       "ok": true,
       "status": "정상",
-      "updated_at": "2026-09-12T01:00:34+00:00",
+      "updated_at": "2026-09-12T06:59:17+00:00",
       "count": 205,
       "retry_count": 0,
       "max_attempts": 2,
@@ -166,9 +166,9 @@
       "auto_action": "학습형 수집 · 검증 후 정상 반영",
       "collection_errors": [],
       "remaining_collection_errors": [],
-      "duration_seconds": 2.76,
-      "adaptive_timeout_seconds": 60,
-      "last_attempt_timeout_seconds": 60,
+      "duration_seconds": 2.62,
+      "adaptive_timeout_seconds": 45,
+      "last_attempt_timeout_seconds": 45,
       "collection_stage": "primary",
       "timeout_exhausted": false
     },
@@ -177,7 +177,7 @@
       "file": "exchange_rates.json",
       "ok": true,
       "status": "정상",
-      "updated_at": "2026-09-12T01:01:18+00:00",
+      "updated_at": "2026-09-12T06:59:18+00:00",
       "count": 2,
       "retry_count": 0,
       "max_attempts": 2,
@@ -185,7 +185,7 @@
       "auto_action": "학습형 수집 · 검증 후 정상 반영",
       "collection_errors": [],
       "remaining_collection_errors": [],
-      "duration_seconds": 0.44,
+      "duration_seconds": 0.29,
       "adaptive_timeout_seconds": 45,
       "last_attempt_timeout_seconds": 45,
       "collection_stage": "primary",
@@ -204,9 +204,9 @@
       "auto_action": "학습형 수집 · 검증 후 정상 반영",
       "collection_errors": [],
       "remaining_collection_errors": [],
-      "duration_seconds": 42.53,
-      "adaptive_timeout_seconds": 90,
-      "last_attempt_timeout_seconds": 90,
+      "duration_seconds": 2.28,
+      "adaptive_timeout_seconds": 60,
+      "last_attempt_timeout_seconds": 60,
       "collection_stage": "primary",
       "timeout_exhausted": false
     },
@@ -216,16 +216,16 @@
       "ok": true,
       "status": "정상",
       "updated_at": null,
-      "count": 36,
+      "count": 37,
       "retry_count": 0,
       "max_attempts": 2,
       "recovered_after_retry": false,
       "auto_action": "학습형 수집 · 검증 후 정상 반영",
       "collection_errors": [],
       "remaining_collection_errors": [],
-      "duration_seconds": 12.23,
-      "adaptive_timeout_seconds": 126,
-      "last_attempt_timeout_seconds": 126,
+      "duration_seconds": 12.41,
+      "adaptive_timeout_seconds": 300,
+      "last_attempt_timeout_seconds": 299,
       "collection_stage": "primary",
       "timeout_exhausted": false
     }
@@ -250,10 +250,10 @@
       "data_dir": "<app-data>",
       "storage_scope": "user-app-data",
       "writable": true,
-      "checked_at": "2026-09-12T01:03:48+00:00"
+      "checked_at": "2026-09-12T07:05:02+00:00"
     },
     "note": "검색/SNS/뉴스/공식사이트/공식 YouTube/사이트맵 후보 자료입니다. 발견 경로가 공식이어도 내용 검증 전에는 자동 확정하지 않습니다.",
-    "duration_seconds": 129.62,
+    "duration_seconds": 297.0,
     "adaptive_timeout_seconds": 300,
     "last_attempt_timeout_seconds": 300,
     "retry_count": 0,
@@ -265,16 +265,16 @@
     "warning": "",
     "reachable_count": 237,
     "transient_deferred": true,
-    "transient_notice": "일시 확인불가 19개 · 기존 링크 유지 · 다음 업데이트 재확인",
+    "transient_notice": "일시 확인불가 20개 · 기존 링크 유지 · 다음 업데이트 재확인",
     "unresolved_broken": 0,
     "unresolved_summary": [],
-    "updated_at": "2026-09-12T01:01:38+00:00",
+    "updated_at": "2026-09-12T07:00:05+00:00",
     "checked": 269,
-    "audit_timeout_seconds": 287,
+    "audit_timeout_seconds": 285,
     "request_timeout_seconds": 5,
-    "restricted": 13,
+    "restricted": 12,
     "broken": 0,
-    "transient": 19,
+    "transient": 20,
     "blocked": 0,
     "repaired": 0,
     "same_host_fallback_stats": {
@@ -303,7 +303,7 @@
         ]
       },
       {
-        "url": "https://www.amazon.com/s?k={query}",
+        "url": "https://www.amazon.co.jp/s?k={query}",
         "detail": null,
         "code": 503,
         "references": [
@@ -371,6 +371,25 @@
       {
         "url": "https://www.7-eleven.co.kr/",
         "detail": "URLError",
+        "code": null,
+        "references": [
+          {
+            "file": "purchase_sources.json",
+            "field": "official_reference_url"
+          },
+          {
+            "file": "purchase_sources.json",
+            "field": "url"
+          },
+          {
+            "file": "purchase_sources.json",
+            "field": "official_reference_url"
+          }
+        ]
+      },
+      {
+        "url": "https://www.alpha.co.kr/",
+        "detail": "DNS:gaierror",
         "code": null,
         "references": [
           {
@@ -521,9 +540,9 @@
         ]
       }
     ],
-    "duration_seconds": 92.16,
-    "adaptive_timeout_seconds": 297,
-    "last_attempt_timeout_seconds": 297,
+    "duration_seconds": 92.98,
+    "adaptive_timeout_seconds": 295,
+    "last_attempt_timeout_seconds": 295,
     "retry_count": 0,
     "recovered_after_retry": false
   },
@@ -533,8 +552,8 @@
     "attempted_topic_cells": 216,
     "successful_topic_cells": 216,
     "failed_topic_cells": 0,
-    "undiscovered_topic_cells": 172,
-    "source_updated_at": "2026-09-12T01:03:48+00:00"
+    "undiscovered_topic_cells": 170,
+    "source_updated_at": "2026-09-12T07:05:02+00:00"
   },
   "ok_with_aux": true,
   "postflight_monitor": {
@@ -601,7 +620,7 @@
     "status": {
       "schema": 1,
       "feature_fingerprint": "0bac15bf0ad62e49a7c7d300",
-      "updated_at": "2026-09-12T01:03:48+00:00",
+      "updated_at": "2026-09-12T07:05:02+00:00",
       "active": false,
       "label_count": 10,
       "positive_labels": 10,
