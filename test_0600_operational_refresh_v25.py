@@ -159,8 +159,9 @@ class Operational0600RefreshV25Tests(unittest.TestCase):
 
     def test_pokemon_kr_event_uses_same_company_collection_fallback(self):
         tracker = dict(update_promo_events.KR_MOVIE_TRACKERS[0])
-        self.assertEqual(tracker["source"], "https://www.pokemonkorea.co.kr/")
+        self.assertEqual(tracker["source"], "https://new.pokemonkorea.co.kr/card")
         self.assertEqual(tracker["collection_source"], "https://new.pokemonkorea.co.kr/card")
+        self.assertEqual(tracker["source"], tracker["collection_source"])
         with mock.patch.object(
             update_promo_events,
             "fetch",
