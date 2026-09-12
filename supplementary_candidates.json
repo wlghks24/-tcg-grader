@@ -19,7 +19,7 @@
       "verified": false,
       "official_source": "https://naruto-official.com/en/news/01_2649",
       "confidence": 0.6,
-      "link_checked_at": "2026-09-11T19:01:40+00:00",
+      "link_checked_at": "2026-09-12T01:01:38+00:00",
       "link_statuses": {
         "official_source": "정상",
         "source": "정상"
@@ -42,7 +42,7 @@
       "status": "공식확인",
       "verified": true,
       "confidence": 1.0,
-      "link_checked_at": "2026-09-11T19:01:40+00:00",
+      "link_checked_at": "2026-09-12T01:01:38+00:00",
       "link_statuses": {
         "source": "정상"
       },
@@ -64,7 +64,7 @@
       "status": "공식확인",
       "verified": true,
       "confidence": 1.0,
-      "link_checked_at": "2026-09-11T19:01:40+00:00",
+      "link_checked_at": "2026-09-12T01:01:38+00:00",
       "link_statuses": {
         "source": "정상"
       },
@@ -89,7 +89,7 @@
       "status": "보조출처 후보",
       "verified": false,
       "collected_at": "2026-09-10T19:07:30+00:00",
-      "link_checked_at": "2026-09-11T19:01:40+00:00",
+      "link_checked_at": "2026-09-12T01:01:38+00:00",
       "link_statuses": {
         "source": "정상"
       },
@@ -109,7 +109,7 @@
       "verified": false,
       "error": "HTTPError",
       "collected_at": "2026-09-10T19:07:30+00:00",
-      "link_checked_at": "2026-09-11T19:01:40+00:00",
+      "link_checked_at": "2026-09-12T01:01:38+00:00",
       "link_statuses": {
         "source": "사이트 접속 제한 · 브라우저 이용 가능 (HTTP 403)"
       },
@@ -130,7 +130,7 @@
       "status": "보조출처 후보",
       "verified": false,
       "collected_at": "2026-09-10T19:07:32+00:00",
-      "link_checked_at": "2026-09-11T19:01:40+00:00",
+      "link_checked_at": "2026-09-12T01:01:38+00:00",
       "link_statuses": {
         "source": "정상"
       },
@@ -150,7 +150,7 @@
       "verified": false,
       "error": "HTTPError",
       "collected_at": "2026-09-10T19:07:32+00:00",
-      "link_checked_at": "2026-09-11T19:01:40+00:00",
+      "link_checked_at": "2026-09-12T01:01:38+00:00",
       "link_statuses": {
         "source": "사이트 접속 제한 · 브라우저 이용 가능 (HTTP 403)"
       },
@@ -170,12 +170,12 @@
       "verified": false,
       "error": "HTTPError",
       "collected_at": "2026-09-10T19:07:32+00:00",
-      "link_checked_at": "2026-09-11T19:01:40+00:00",
+      "link_checked_at": "2026-09-12T01:01:38+00:00",
       "link_statuses": {
         "source": "사이트 접속 제한 · 브라우저 이용 가능 (HTTP 403)"
       },
       "link_status": "사이트 접속 제한 · 브라우저 이용 가능 (HTTP 403)"
     }
   ],
-  "link_audit_at": "2026-09-11T19:01:40+00:00"
+  "link_audit_at": "2026-09-12T01:01:38+00:00"
 }
