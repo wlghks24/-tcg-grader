@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "checked_at": "2026-09-12T03:34:17+00:00",
+  "checked_at": "2026-09-12T04:33:05+00:00",
   "policy": {
     "official_sources_only": true,
     "community_posts_are_leads_only": true,
@@ -18,8 +18,8 @@
   "summary": {
     "companies": 5,
     "sources": 11,
-    "healthy_sources": 6,
-    "degraded_sources": 5,
+    "healthy_sources": 5,
+    "degraded_sources": 6,
     "new_changes": 0
   },
   "companies": {
@@ -156,8 +156,9 @@
       "source_health": [
         {
           "source_id": "tag-pricing",
-          "status": "ok",
-          "url": "https://taggrading.com/pages/pricing"
+          "status": "degraded",
+          "url": "https://taggrading.com/pages/pricing",
+          "error": "ValueError: pricing parser yielded zero verified services"
         },
         {
           "source_id": "tag-home",
@@ -248,9 +249,9 @@
       "services": [],
       "announcements": [],
       "status": "degraded",
-      "checked_at": "2026-09-12T03:34:17+00:00",
+      "checked_at": "2026-09-12T04:33:05+00:00",
       "last_error": "HTTPError: status 403",
-      "verified_official_source": true
+      "verified_official_source": false
     },
     "psa-jp-pricing": {
       "company": "PSA",
@@ -262,9 +263,9 @@
       "services": [],
       "announcements": [],
       "status": "degraded",
-      "checked_at": "2026-09-12T03:34:17+00:00",
+      "checked_at": "2026-09-12T04:33:05+00:00",
       "last_error": "HTTPError: status 403",
-      "verified_official_source": true
+      "verified_official_source": false
     },
     "psa-jp-news": {
       "company": "PSA",
@@ -276,9 +277,9 @@
       "services": [],
       "announcements": [],
       "status": "degraded",
-      "checked_at": "2026-09-12T03:34:17+00:00",
+      "checked_at": "2026-09-12T04:33:05+00:00",
       "last_error": "HTTPError: status 403",
-      "verified_official_source": true
+      "verified_official_source": false
     },
     "bgs-pricing": {
       "company": "BGS",
@@ -290,9 +291,9 @@
       "services": [],
       "announcements": [],
       "status": "degraded",
-      "checked_at": "2026-09-12T03:34:17+00:00",
+      "checked_at": "2026-09-12T04:33:05+00:00",
       "last_error": "ValueError: unapproved host",
-      "verified_official_source": true
+      "verified_official_source": false
     },
     "bgs-news": {
       "company": "BGS",
@@ -304,9 +305,9 @@
       "services": [],
       "announcements": [],
       "status": "degraded",
-      "checked_at": "2026-09-12T03:34:17+00:00",
+      "checked_at": "2026-09-12T04:33:05+00:00",
       "last_error": "ValueError: unapproved host",
-      "verified_official_source": true
+      "verified_official_source": false
     },
     "cgc-pricing": {
       "company": "CGC",
@@ -316,7 +317,7 @@
       "currency": "USD",
       "url": "https://www.cgccards.com/submit/services-fees/cgc-grading/?view=cards",
       "status": "ok",
-      "checked_at": "2026-09-12T03:34:17+00:00",
+      "checked_at": "2026-09-12T04:33:05+00:00",
       "signal_fingerprint": "af82d832ddfe6e187951aa755446dee325211eb78f2dc630439cc458baf503d6",
       "services": [
         {
@@ -392,7 +393,7 @@
       "currency": "USD",
       "url": "https://www.cgccards.com/submit/events/",
       "status": "ok",
-      "checked_at": "2026-09-12T03:34:17+00:00",
+      "checked_at": "2026-09-12T04:33:05+00:00",
       "signal_fingerprint": "7769c565b846014d8aba26bd33584dafdb45022331dad2f4e075167344d979d0",
       "services": [],
       "announcements": [
@@ -464,7 +465,7 @@
       "currency": "USD",
       "url": "https://www.cgccards.com/news/",
       "status": "ok",
-      "checked_at": "2026-09-12T03:34:17+00:00",
+      "checked_at": "2026-09-12T04:33:05+00:00",
       "signal_fingerprint": "c9a9ff709278a690617ad86220533f8a9ca5ebe6fd0a7090928e3418f23d79a2",
       "services": [],
       "announcements": [
@@ -535,13 +536,14 @@
       "market": "US",
       "currency": "USD",
       "url": "https://taggrading.com/pages/pricing",
-      "status": "ok",
-      "checked_at": "2026-09-12T03:34:17+00:00",
+      "status": "degraded",
+      "checked_at": "2026-09-12T04:33:05+00:00",
       "signal_fingerprint": "0e9f55411a94d2016974a85632d9fa32e343c02e94c65a3a1f347a2615dc4c82",
       "services": [],
       "announcements": [],
       "verified_official_source": true,
-      "parser_version": 2
+      "parser_version": 2,
+      "last_error": "ValueError: pricing parser yielded zero verified services"
     },
     "tag-home": {
       "company": "TAG",
@@ -551,7 +553,7 @@
       "currency": "USD",
       "url": "https://taggrading.com/",
       "status": "ok",
-      "checked_at": "2026-09-12T03:34:17+00:00",
+      "checked_at": "2026-09-12T04:33:05+00:00",
       "signal_fingerprint": "d24613f879d3faf33de85d19ab671c19dbf1be64033b5270313756c608b2a2ef",
       "services": [],
       "announcements": [
@@ -672,7 +674,7 @@
       "currency": "KRW",
       "url": "https://break.co.kr/",
       "status": "ok",
-      "checked_at": "2026-09-12T03:34:17+00:00",
+      "checked_at": "2026-09-12T04:33:05+00:00",
       "signal_fingerprint": "a4b3f397492317435fdf3b29d0a799fc47c5cc679cf36d24d983c7c80facb2e7",
       "services": [
         {
