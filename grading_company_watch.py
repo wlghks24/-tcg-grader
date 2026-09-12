@@ -19,7 +19,7 @@ import json
 import re
 import urllib.request
 
-from safe_runtime import atomic_write_json, diagnostic_exception, safe_read_text, safe_urlopen
+from safe_runtime import atomic_write_json, diagnostic_exception, safe_read_text, safe_urlopen, validate_public_https_url
 
 ROOT = Path(__file__).resolve().parent
 OUT = ROOT / "grading_company_updates.json"
@@ -168,10 +168,24 @@ def _fetch_raw(url: str) -> str:
 
 def _source_host_allowed(url: str) -> bool:
     try:
+        validate_public_https_url(url, allowed_hosts=ALLOWED_HOSTS)
         parts = urlsplit(url)
-    except ValueError:
+    except (TypeError, ValueError):
         return False
     return parts.scheme == "https" and (parts.hostname or "").lower() in ALLOWED_HOSTS
+
+
+def official_record_tree(value) -> bool:
+    """Validate provenance URLs throughout retained and published records."""
+    if isinstance(value, dict):
+        for key, item in value.items():
+            if key in {"url", "source"} and not _source_host_allowed(item):
+                return False
+            if not official_record_tree(item):
+                return False
+    elif isinstance(value, list):
+        return all(official_record_tree(item) for item in value)
+    return True
 
 
 def _window(text: str, alias: str, radius: int = 420) -> str | None:
@@ -246,6 +260,8 @@ def _availability(window: str) -> str:
 
 
 def parse_services(company: str, market: str, currency: str, text: str, source: str) -> list[dict]:
+    if not _source_host_allowed(source):
+        return []
     rows: list[dict] = []
     for canonical, aliases in SERVICE_ALIASES.get((company, market), {}).items():
         best: tuple[str, str] | None = None
@@ -387,7 +403,11 @@ def collect(previous: dict | None = None, fetcher=_fetch_raw) -> dict:
         for spec in specs:
             source_id = spec["id"]
             old = prev_sources.get(source_id, {}) if isinstance(prev_sources.get(source_id), dict) else {}
+            if old.get("url") != spec["url"] or not official_record_tree(old):
+                old = {}
             try:
+                if not _source_host_allowed(spec["url"]):
+                    raise ValueError("unapproved official source")
                 raw = fetcher(spec["url"])
                 text = _text(raw)
                 if len(text) < 80:
@@ -473,7 +493,7 @@ def collect(previous: dict | None = None, fetcher=_fetch_raw) -> dict:
 
     announcement_map: dict[tuple[str, str, str], dict] = {}
     for row in [*previous_announcements, *announcements]:
-        if isinstance(row, dict) and row.get("url") and row.get("title"):
+        if isinstance(row, dict) and row.get("url") and row.get("title") and official_record_tree(row):
             announcement_map[_announcement_key(row)] = row
     merged_announcements = list(announcement_map.values())[-MAX_ANNOUNCEMENTS:]
 
@@ -481,7 +501,7 @@ def collect(previous: dict | None = None, fetcher=_fetch_raw) -> dict:
     seen_changes: set[str] = set()
     merged_history: list[dict] = []
     for row in [*prior_history, *changes]:
-        if not isinstance(row, dict):
+        if not isinstance(row, dict) or not official_record_tree(row):
             continue
         stable = {k: v for k, v in row.items() if k != "detected_at"}
         key = sha256(json.dumps(stable, ensure_ascii=False, sort_keys=True, allow_nan=False).encode("utf-8")).hexdigest()
@@ -495,6 +515,10 @@ def collect(previous: dict | None = None, fetcher=_fetch_raw) -> dict:
     return {
         "schema_version": 1,
         "checked_at": checked_at,
+        "updated_at": checked_at,
+        "collection_status": ("정상" if ok_sources == len(health_rows) else "감정업체 일부 출처 확인 실패 · 검증된 기존자료 보존"),
+        "collection_errors": [f"{row['source_id']}: {row.get('error', 'source degraded')}"
+                              for row in health_rows if row["status"] != "ok"],
         "policy": {
             "official_sources_only": True,
             "community_posts_are_leads_only": True,

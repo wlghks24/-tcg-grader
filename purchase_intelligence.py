@@ -53,7 +53,7 @@ def _score(title: str, desc: str) -> tuple[int,str,list[str]]:
     return score,label,reasons
 
 
-def search_web_signals(query: str, region: str="KR", game: str="", limit: int=MAX_ITEMS) -> dict:
+def _search_web_signals_base(query: str, region: str="KR", game: str="", limit: int=MAX_ITEMS) -> dict:
     query=query.strip()[:120] if isinstance(query,str) else ""
     if not query:
         return {"ok":False,"error":"검색어가 필요합니다","items":[]}
@@ -113,7 +113,7 @@ def search_web_signals(query: str, region: str="KR", game: str="", limit: int=MA
 # v112-social-stock-merge
 # Merge recent social *reports* above public web search results. These rows never
 # become official/realtime inventory; official lookup remains inventory_lookup.py.
-_BASE_SEARCH_WEB_SIGNALS_V112 = search_web_signals
+_BASE_SEARCH_WEB_SIGNALS_V112 = _search_web_signals_base
 
 
 def _social_stock_rows_v112(query: str, region: str, game: str, limit: int) -> list[dict]:
