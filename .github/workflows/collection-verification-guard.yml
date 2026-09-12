@@ -119,6 +119,7 @@ jobs:
         run: |
           python -m py_compile \
             collection_verification_gate.py static_data_publish_gate.py feature_contract.py \
+            tcg_updater.py auto_update_all.py runtime_bundle_guard_v143.py \
             update_market_watch.py update_market_prices.py market_public_crosscheck.py release_history_backfill.py \
             update_purchase_sources.py update_exchange_rates.py \
             grading_company_watch.py graded_photo_multi_source.py verified_collection_job_neural.py \
@@ -129,7 +130,7 @@ jobs:
             test_collection_scope_compat_v214.py test_social_event_topic_coverage.py \
             test_social_topic_capacity_v213.py test_information_lifecycle_archive_v209.py \
             test_grading_company_watch_v215.py test_grading_watch_integration_v220.py \
-            test_verified_collection_job_neural_v212.py
+            test_verified_collection_job_neural_v212.py test_runtime_bundle_guard_v143.py
           python -m unittest -v \
             test_collection_verification_gate.py \
             test_static_data_publish_gate.py \
