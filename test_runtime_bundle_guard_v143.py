@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 from __future__ import annotations
 
+from pathlib import Path
 import unittest
 
 import auto_repair_engine
@@ -10,6 +11,15 @@ import runtime_bundle_guard_v143 as guard
 from multi_channel_agent import MultiChannelCollector
 
 
+ROOT = Path(__file__).resolve().parent
+LEGACY_7STEP_MUTATORS = (
+    ".github/workflows/apply-android-7step-display.yml",
+    ".github/workflows/apply-top-7step-ui.yml",
+    "apply_android_7step_display_patch.py",
+    "apply_top_7step_ui_patch.py",
+)
+
+
 class RuntimeBundleGuardV143Tests(unittest.TestCase):
     def test_bundle_contracts_pass(self):
         result = guard.audit()
@@ -17,6 +27,17 @@ class RuntimeBundleGuardV143Tests(unittest.TestCase):
         self.assertEqual(result["patch"], 143)
         self.assertEqual(result["missing_file_count"], 0)
         self.assertEqual(result["issue_count"], 0)
+
+    def test_collection_jobs_match_eight_stage_runtime_contract(self):
+        jobs = getattr(auto_update_all, "JOBS", ())
+        self.assertEqual(len(jobs), 8, jobs)
+        job_files = {row[2] for row in jobs if isinstance(row, tuple) and len(row) >= 3}
+        self.assertEqual(job_files, guard.EXPECTED_JOB_FILES)
+        self.assertEqual(len(guard.EXPECTED_JOB_FILES), 8)
+
+    def test_legacy_seven_step_mutators_are_absent(self):
+        present = [path for path in LEGACY_7STEP_MUTATORS if (ROOT / path).exists()]
+        self.assertEqual(present, [], f"legacy 7-step mutation paths restored: {present}")
 
     def test_graded_photo_is_preflight_allowlisted(self):
         self.assertIn("graded_photo_candidates.json", auto_repair_engine.SAFE_JSON_FILES)
