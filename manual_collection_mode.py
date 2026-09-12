@@ -55,6 +55,14 @@ def _registry_only_official_verify_rows(rows: list[dict], registry: dict, max_li
     output: list[dict] = []
     for raw in rows:
         item = dict(raw)
+        # Candidate flags are not evidence: rebuild trust from the registry.
+        item.update({"official_result": False, "verification_method": None,
+                     "manual_official_verification_required": True,
+                     "official_verification": "manual_verification_required",
+                     "official_lookup_suppressed": True,
+                     "automatic_official_lookup_used": False})
+        item.pop("official_grade", None)
+        item.pop("official_lookup_status", None)
         company = str(item.get("company") or "").upper()
         cert = normalize_cert(item.get("certification_id"))
         grade = _finite_grade(item.get("grade"))
@@ -72,12 +80,14 @@ def _registry_only_official_verify_rows(rows: list[dict], registry: dict, max_li
                     "verification_method": "persisted_official_registry",
                     "official_grade": registered_grade,
                     "manual_official_verification_required": False,
+                    "official_verification": "validated_manual_registry",
                 })
                 stats["registry_matches"] += 1
             else:
                 item["evidence_conflicts"] = sorted(set(
                     (item.get("evidence_conflicts") or []) + ["official_grade_conflict"]
                 ))
+                item["official_verification"] = "manual_registry_grade_conflict"
                 item["official_grade"] = registered_grade
                 stats["conflicts"] += 1
             output.append(item)
