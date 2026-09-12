@@ -2,10 +2,6 @@ name: TCG Static Data Refresh
 
 on:
   workflow_dispatch:
-  pull_request:
-    paths:
-      - "**/*.py"
-      - ".github/workflows/tcg-static-data-refresh.yml"
   schedule:
     - cron: '47 */6 * * *'
   push:
@@ -50,7 +46,7 @@ permissions:
   contents: write
 
 concurrency:
-  group: tcg-static-data-refresh-main-${{ github.ref }}
+  group: tcg-static-data-refresh-main
   # A result collected against an older main commit is intentionally discarded.
   # Cancel it immediately when a newer collector/policy commit arrives.
   cancel-in-progress: true
@@ -128,7 +124,6 @@ jobs:
 
       - name: Stage only approved public collection outputs
         id: stage
-        if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
         shell: bash
         run: |
           set -euo pipefail
@@ -153,7 +148,7 @@ jobs:
           fi
 
       - name: Commit validated static data snapshot
-        if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main' && steps.stage.outputs.changed == 'true'
+        if: steps.stage.outputs.changed == 'true'
         shell: bash
         run: |
           set -euo pipefail

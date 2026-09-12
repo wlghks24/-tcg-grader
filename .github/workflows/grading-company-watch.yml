@@ -3,10 +3,6 @@ name: Grading Company Watch
 
 on:
   workflow_dispatch:
-  pull_request:
-    paths:
-      - "**/*.py"
-      - ".github/workflows/grading-company-watch.yml"
   schedule:
     - cron: '23 */3 * * *'
   push:
@@ -23,7 +19,7 @@ permissions:
   contents: write
 
 concurrency:
-  group: grading-company-watch-main-${{ github.ref }}
+  group: grading-company-watch-main
   cancel-in-progress: true
 
 jobs:
@@ -81,7 +77,6 @@ jobs:
 
       - name: Stage only validated watcher snapshot
         id: stage
-        if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
         shell: bash
         run: |
           set -euo pipefail
@@ -101,7 +96,7 @@ jobs:
           fi
 
       - name: Commit validated watcher snapshot
-        if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main' && steps.stage.outputs.changed == 'true'
+        if: steps.stage.outputs.changed == 'true'
         shell: bash
         run: |
           set -euo pipefail
