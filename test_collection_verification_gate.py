@@ -95,6 +95,8 @@ class CollectionVerificationGateTests(unittest.TestCase):
         })
         report = gate.verify(self.root, now=self.now)
         self.assertFalse(any(x["code"] == "INCOMPLETE_EVENT_TOPIC_COLLECTION_ATTEMPTS" for x in report["findings"]))
+        self.assertEqual("degraded", report["status"])
+        self.assertTrue(any(x["code"] == "FAILED_EVENT_TOPIC_COLLECTION" for x in report["findings"]))
         self.assertEqual(216, report["metrics"]["attempted_event_topic_cells"])
         self.assertEqual(216, report["metrics"]["undiscovered_event_topic_cells"])
 

@@ -248,6 +248,10 @@ def _audit_events(root: Path, findings: list[dict[str, Any]]) -> dict[str, int]:
         findings.append({"severity": "high", "code": "INCOMPLETE_EVENT_TOPIC_COLLECTION_ATTEMPTS",
                          "target": "promo_events.json", "expected_cells": EXPECTED_EVENT_TOPIC_CELLS,
                          "attempted_cells": attempted_topics})
+    if isinstance(failed_topics, list) and failed_topics:
+        findings.append({"severity": "high", "code": "FAILED_EVENT_TOPIC_COLLECTION",
+                         "target": "promo_events.json", "count": len(failed_topics),
+                         "cells": [str(x)[:180] for x in failed_topics[:20]]})
     return {"promo_event_items": len(rows), "current_promo_event_items": len(current),
             "archive_promo_event_items": len(archive), "invalid_promo_event_items": invalid,
             "configured_event_topic_cells": expected_topics,
