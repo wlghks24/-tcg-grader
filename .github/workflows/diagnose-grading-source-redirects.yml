@@ -1,0 +1,80 @@
+name: Diagnose grading source redirects
+
+on:
+  pull_request:
+    paths:
+      - '.github/workflows/diagnose-grading-source-redirects.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  diagnose:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          persist-credentials: false
+          fetch-depth: 1
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97
+        with:
+          python-version: '3.11'
+      - name: Inspect redirect hosts without following them
+        run: |
+          python - <<'PY'
+          import urllib.error
+          import urllib.request
+          from urllib.parse import urlsplit
+
+          class NoRedirect(urllib.request.HTTPRedirectHandler):
+              def redirect_request(self, req, fp, code, msg, headers, newurl):
+                  return None
+
+          opener = urllib.request.build_opener(NoRedirect())
+          urls = (
+              'https://www.beckett.com/grading',
+              'https://beckett.com/grading',
+              'https://www.beckett.com/news/',
+              'https://beckett.com/news/',
+              'https://www.psacard.com/services/tradingcardgrading',
+              'https://www.psacard.com/services/t',
+          )
+          for url in urls:
+              req = urllib.request.Request(url, headers={
+                  'User-Agent': 'Mozilla/5.0 TCG-Grader-Redirect-Diagnostic/1.0',
+                  'Accept-Language': 'en-US,en;q=0.8',
+              })
+              try:
+                  with opener.open(req, timeout=20) as response:
+                      final = urlsplit(response.geturl())
+                      print(f'CHECK source={urlsplit(url).hostname} path={urlsplit(url).path} status={response.status} final_host={final.hostname}')
+              except urllib.error.HTTPError as exc:
+                  location = exc.headers.get('Location') if exc.headers else None
+                  target = urlsplit(urllib.request.urljoin(url, location or '')) if location else None
+                  print(f'CHECK source={urlsplit(url).hostname} path={urlsplit(url).path} status={exc.code} redirect_host={target.hostname if target else None} redirect_path={target.path if target else None}')
+              except Exception as exc:
+                  print(f'CHECK source={urlsplit(url).hostname} path={urlsplit(url).path} error={type(exc).__name__}')
+          PY
+      - name: Exercise current safe opener on candidate official URLs
+        run: |
+          python - <<'PY'
+          import urllib.request
+          from grading_company_watch import ALLOWED_HOSTS
+          from safe_runtime import safe_urlopen
+
+          urls = (
+              'https://beckett.com/grading',
+              'https://beckett.com/news/',
+              'https://www.psacard.com/services/t',
+          )
+          for url in urls:
+              req = urllib.request.Request(url, headers={'User-Agent':'Mozilla/5.0 TCG-Grader-GradingCompanyWatch/1.0'})
+              try:
+                  with safe_urlopen(req, timeout=20, allowed_hosts=ALLOWED_HOSTS, max_redirects=3) as response:
+                      response.read(256)
+                      print(f'SAFE_OK {url} status={response.status}')
+              except Exception as exc:
+                  print(f'SAFE_FAIL {url} {type(exc).__name__}: {exc}')
+          PY
