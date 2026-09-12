@@ -49,6 +49,27 @@ jobs:
           assert data['summary']['healthy_sources'] >= 1, data['summary']
           print(json.dumps(data['summary'],ensure_ascii=False))
           PY
+      - name: Explain verification findings
+        if: always()
+        run: |
+          python - <<'PYCODE'
+          import json
+          from pathlib import Path
+          for name in ('STATIC_DATA_PUBLISH_REPORT.json', 'COLLECTION_VERIFICATION_REPORT.json'):
+              path = Path(name)
+              if not path.is_file():
+                  print(f'MISSING_VERIFICATION_REPORT {name}')
+                  continue
+              data = json.loads(path.read_text(encoding='utf-8'))
+              print(json.dumps({'report': name, 'status': data.get('status'),
+                                'findings': data.get('findings', [])}, ensure_ascii=False))
+          path = Path('grading_company_updates.json')
+          if path.is_file():
+              data = json.loads(path.read_text(encoding='utf-8'))
+              print(json.dumps({'grading_sources': [
+                  {'id': key, 'status': row.get('status'), 'error': row.get('last_error')}
+                  for key, row in data.get('sources', {}).items()]}, ensure_ascii=False))
+          PYCODE
       - name: Preserve validation evidence
         if: always()
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
