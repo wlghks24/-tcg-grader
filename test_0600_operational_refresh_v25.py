@@ -158,9 +158,48 @@ class Operational0600RefreshV25Tests(unittest.TestCase):
             update_promo_events.OFFICIAL_SOURCE_REPLACEMENTS[
                 "https://pokemonkorea.co.kr/2026_battle_tournament3"
             ],
-            current,
+            update_promo_events.POKEMON_KR_SEONGNAM_TOURNAMENT_PAGE,
         )
         self.assertNotIn("new.pokemonkorea.co.kr", update_promo_events.ALLOWED)
+
+    def test_specific_seongnam_event_keeps_live_detail_evidence(self):
+        legacy = {
+            "game": "포켓몬 카드",
+            "region": "KR",
+            "category": "collaboration",
+            "name_ko": "2026 성남CITY 배틀 토너먼트 × GXG 2026",
+            "name_native": "포켓몬 카드 게임 2026 성남CITY 배틀 토너먼트",
+            "source": "https://new.pokemonkorea.co.kr/card",
+            "collection_source": "https://new.pokemonkorea.co.kr/card",
+            "original_source": update_promo_events.POKEMON_KR_SEONGNAM_TOURNAMENT_PAGE,
+        }
+        repaired, changes = update_promo_events._migrate_pokemon_kr_event_source(legacy)
+        self.assertGreaterEqual(changes, 2)
+        self.assertEqual(repaired["source"], update_promo_events.POKEMON_KR_SEONGNAM_TOURNAMENT_PAGE)
+        self.assertEqual(repaired["collection_source"], update_promo_events.POKEMON_KR_SEONGNAM_TOURNAMENT_PAGE)
+        with mock.patch.object(
+            update_promo_events, "fetch",
+            return_value="포켓몬 카드 게임 2026 성남CITY 배틀 토너먼트 현장 예선",
+        ):
+            _, error = update_promo_events.check_existing(repaired)
+        self.assertIsNone(error)
+
+    def test_movie_tracker_refresh_removes_retired_generic_secondary_probe(self):
+        tracker = dict(update_promo_events.KR_MOVIE_TRACKERS[0])
+        previous = {
+            **tracker,
+            "verification_source": "https://www.kobis.or.kr/kobis/business/mast/mvie/searchMovieList.do",
+            "verification_status": "secondary_temporarily_unavailable",
+            "verification_error": "URLError: timed out",
+            "verification_checked_at": "2026-09-12T00:00:00+00:00",
+            "link_statuses": {"source": "정상", "verification_source": "네트워크 지연"},
+        }
+        refreshed = update_promo_events._refresh_movie_tracker(previous, tracker)
+        self.assertNotIn("verification_source", refreshed)
+        self.assertNotIn("verification_status", refreshed)
+        self.assertNotIn("verification_error", refreshed)
+        self.assertNotIn("verification_checked_at", refreshed)
+        self.assertNotIn("verification_source", refreshed.get("link_statuses", {}))
 
     def test_pokemon_kr_event_uses_current_same_company_collection_source(self):
         tracker = dict(update_promo_events.KR_MOVIE_TRACKERS[0])

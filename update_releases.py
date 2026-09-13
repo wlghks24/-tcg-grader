@@ -27,12 +27,41 @@ HEADERS = {
     "Accept-Language": "ko-KR,ko;q=0.9,ja-JP;q=0.8,en;q=0.6",
 }
 ALLOWED = {
-    "pokemoncard.co.kr", "www.pokemoncard.co.kr", "new.pokemonkorea.co.kr",
+    "pokemoncard.co.kr", "www.pokemoncard.co.kr",
     "www.pokemon-card.com", "www.30th.pokemon-card.com", "www.pokemon.com",
     "onepiece-cardgame.kr", "www.onepiece-cardgame.kr",
     "www.onepiece-cardgame.com", "en.onepiece-cardgame.com",
     "www.naruto-cardgame.com",
 }
+
+POKEMON_KR_PRODUCT_INDEX = "https://pokemoncard.co.kr/card/category/info1"
+POKEMON_KR_LEGACY_HOSTS = {"new.pokemonkorea.co.kr"}
+
+
+def _migrate_pokemon_kr_release_source(item: dict) -> dict:
+    """Move verified KR Pokémon history to the current official host without changing product identity."""
+    row = dict(item)
+    if row.get("game") != "Pokémon" or row.get("region") != "KR":
+        return row
+    source = str(row.get("source") or "")
+    try:
+        parsed = urllib.parse.urlsplit(source)
+    except ValueError:
+        return row
+    if (parsed.hostname or "").lower() not in POKEMON_KR_LEGACY_HOSTS:
+        return row
+
+    row.setdefault("original_source", source)
+    if re.fullmatch(r"/card/\d{1,8}/?", parsed.path or ""):
+        row["source"] = urllib.parse.urlunsplit(
+            ("https", "pokemoncard.co.kr", parsed.path, parsed.query, "")
+        )
+    else:
+        row["source"] = POKEMON_KR_PRODUCT_INDEX
+    for field in ("link_checked_at", "link_status", "link_statuses"):
+        row.pop(field, None)
+    return row
+
 
 # Plausibility guard only.  Do NOT use a rolling recent-date window here: that used
 # to delete old official products from the archive on every refresh.
@@ -766,7 +795,10 @@ def main() -> None:
     stored_archive = current.get("archive_items", [])
     if not isinstance(stored_items, list) or not isinstance(stored_archive, list):
         raise ValueError("출시 목록 형식 오류")
-    stored_history = [*stored_items, *stored_archive]
+    stored_history = [
+        _migrate_pokemon_kr_release_source(x) if isinstance(x, dict) else x
+        for x in [*stored_items, *stored_archive]
+    ]
     candidates: list[dict] = []
     errors: list[str] = []
     parser_drift_warnings: list[str] = []

@@ -10,15 +10,10 @@
         "Pokemon"
       ],
       "type": "official",
-      "url": "https://new.pokemonkorea.co.kr/card",
+      "url": "https://pokemoncard.co.kr/card/category/info1",
       "note": "한국 공식 제품·출시정보",
-      "link_status": "정상",
-      "last_checked_at": "2026-09-12T18:56:24+00:00",
-      "link_checked_at": "2026-09-12T18:57:39+00:00",
+      "link_status": "주소 이전 · 다음 갱신에서 연결상태 재확인",
       "retailer_category": "general",
-      "link_statuses": {
-        "url": "정상"
-      },
       "original_url": "https://pokemoncard.co.kr/card/category/product"
     },
     {
@@ -473,18 +468,13 @@
       ],
       "type": "official",
       "channel": "offline",
-      "url": "https://new.pokemonkorea.co.kr/card",
+      "url": "https://pokemonkorea.co.kr/BeginnerChallenge",
       "note": "한국 공식 공인 카드샵 점포 안내",
-      "link_status": "정상",
-      "last_checked_at": "2026-09-12T18:56:24+00:00",
-      "link_checked_at": "2026-09-12T18:57:39+00:00",
+      "link_status": "주소 이전 · 다음 갱신에서 연결상태 재확인",
       "retailer_category": "cardshop",
       "inventory_status": "TCG 취급·재고 미확인 · 방문 전 공식 매장/전화 확인",
       "inventory_checked_at": null,
       "inventory_verified": false,
-      "link_statuses": {
-        "url": "정상"
-      },
       "original_url": "https://pokemoncard.co.kr/card/225"
     },
     {
@@ -3227,14 +3217,8 @@
       "note": "영업·카드 취급·재고는 점포별로 다르므로 공식 안내 또는 전화 확인",
       "data_basis": "공식 점포 안내 또는 지역 지도 검색 · 개별 카드 재고 미검증",
       "url_template": "https://map.naver.com/p/search/%ED%8F%AC%EC%BC%93%EB%AA%AC%20%EC%B9%B4%EB%93%9C%EC%83%B5%20{query}",
-      "official_reference_url": "https://new.pokemonkorea.co.kr/card",
-      "link_status": "정상",
-      "last_checked_at": "2026-09-12T18:56:24+00:00",
-      "link_checked_at": "2026-09-12T18:57:39+00:00",
-      "link_statuses": {
-        "official_reference_url": "정상",
-        "url_template": "정상"
-      },
+      "official_reference_url": "https://pokemonkorea.co.kr/BeginnerChallenge",
+      "link_status": "주소 이전 · 다음 갱신에서 연결상태 재확인",
       "original_url": "https://pokemoncard.co.kr/card/225"
     },
     {
@@ -3254,15 +3238,9 @@
       "inventory_verified": false,
       "note": "영업·카드 취급·재고는 점포별로 다르므로 공식 안내 또는 전화 확인",
       "data_basis": "공식 점포 안내 또는 지역 지도 검색 · 개별 카드 재고 미검증",
-      "url": "https://new.pokemonkorea.co.kr/card",
-      "official_reference_url": "https://new.pokemonkorea.co.kr/card",
-      "link_status": "정상",
-      "last_checked_at": "2026-09-12T18:56:24+00:00",
-      "link_checked_at": "2026-09-12T18:57:39+00:00",
-      "link_statuses": {
-        "url": "정상",
-        "official_reference_url": "정상"
-      },
+      "url": "https://pokemonkorea.co.kr/BeginnerChallenge",
+      "official_reference_url": "https://pokemonkorea.co.kr/BeginnerChallenge",
+      "link_status": "주소 이전 · 다음 갱신에서 연결상태 재확인",
       "original_url": "https://pokemoncard.co.kr/card/225"
     },
     {

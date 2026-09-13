@@ -61,6 +61,35 @@ class ReleaseHistoryCoverageV4Tests(unittest.TestCase):
         )
         self.assertTrue(all("new.pokemonkorea.co.kr" not in url for url in backfill.POKEMON_KR_INDEXES))
 
+    def test_legacy_korean_pokemon_detail_keeps_product_id_on_current_host(self):
+        row = releases._migrate_pokemon_kr_release_source({
+            "game": "Pokémon", "region": "KR", "name": "나이트원더러",
+            "source": "https://new.pokemonkorea.co.kr/card/650",
+            "release_date": "2024-08-09",
+            "link_status": "정상", "link_checked_at": "2026-09-12T00:00:00+00:00",
+        })
+        self.assertEqual(row["source"], "https://pokemoncard.co.kr/card/650")
+        self.assertEqual(row["original_source"], "https://new.pokemonkorea.co.kr/card/650")
+        self.assertNotIn("link_status", row)
+        self.assertNotIn("link_checked_at", row)
+
+    def test_legacy_korean_pokemon_root_moves_to_current_product_index(self):
+        row = releases._migrate_pokemon_kr_release_source({
+            "game": "Pokémon", "region": "KR", "name": "legacy",
+            "source": "https://new.pokemonkorea.co.kr/card",
+            "release_date": "2025-01-01",
+        })
+        self.assertEqual(row["source"], releases.POKEMON_KR_PRODUCT_INDEX)
+        self.assertNotIn("new.pokemonkorea.co.kr", releases.ALLOWED)
+
+    def test_release_source_migration_is_scoped_to_korean_pokemon(self):
+        row = {
+            "game": "ONE PIECE", "region": "KR", "name": "legacy",
+            "source": "https://new.pokemonkorea.co.kr/card/650",
+            "release_date": "2025-01-01",
+        }
+        self.assertEqual(releases._migrate_pokemon_kr_release_source(row), row)
+
     def test_current_korean_index_collects_same_host_product_details(self):
         detail_html = '<a href="/card/907">MEGA 확장팩 「어비스아이」</a>'
         calls = []

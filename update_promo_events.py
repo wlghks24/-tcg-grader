@@ -23,6 +23,7 @@ import supplementary_discovery
 ROOT = Path(__file__).resolve().parent
 DATA = ROOT / "promo_events.json"
 POKEMON_KR_EVENT_INDEX = "https://pokemonkorea.co.kr/news/2"
+POKEMON_KR_SEONGNAM_TOURNAMENT_PAGE = "https://pokemonkorea.co.kr/2026_battle_tournament3/menu800"
 ALLOWED = {
     "www.pokemon-card.com", "www.30th.pokemon-card.com",
     "pokemon.co.jp", "www.pokemon.co.jp",
@@ -78,8 +79,7 @@ OFFICIAL_SOURCE_REPLACEMENTS = {
     "https://new.pokemonkorea.co.kr/card/": POKEMON_KR_EVENT_INDEX,
     "https://new.pokemonkorea.co.kr/card/category/5": POKEMON_KR_EVENT_INDEX,
     "https://pokemoncard.co.kr/card/category/5": POKEMON_KR_EVENT_INDEX,
-    "https://pokemonkorea.co.kr/2026_battle_tournament3": POKEMON_KR_EVENT_INDEX,
-    "https://pokemonkorea.co.kr/2026_battle_tournament3/menu800": POKEMON_KR_EVENT_INDEX,
+    "https://pokemonkorea.co.kr/2026_battle_tournament3": POKEMON_KR_SEONGNAM_TOURNAMENT_PAGE,
     "https://pokemonkorea.co.kr/": POKEMON_KR_EVENT_INDEX,
     "https://www.pokemonkorea.co.kr/": POKEMON_KR_EVENT_INDEX,
 }
@@ -985,6 +985,86 @@ def refresh_auxiliary_coverage_metadata(data: dict | None = None, *, write: bool
     return data
 
 
+
+def _migrate_pokemon_kr_event_source(item: dict) -> tuple[dict, int]:
+    """Move retired Korean Pokémon routes without discarding live event-level evidence."""
+    repaired = dict(item)
+    if repaired.get("game") != "포켓몬 카드" or repaired.get("region") != "KR":
+        return repaired, 0
+
+    changes = 0
+    old_source = str(repaired.get("source") or "")
+    original_source = str(repaired.get("original_source") or "")
+    label = f"{repaired.get('name_ko', '')} {repaired.get('name_native', '')}".casefold()
+
+    # The Seongnam tournament detail page is still live and contains the exact
+    # event title/schedule. Prefer it over a generic news index when provenance
+    # already points to that page, otherwise title verification loses evidence.
+    seongnam_specific = (
+        old_source == POKEMON_KR_SEONGNAM_TOURNAMENT_PAGE
+        or old_source == "https://pokemonkorea.co.kr/2026_battle_tournament3"
+        or original_source == POKEMON_KR_SEONGNAM_TOURNAMENT_PAGE
+        or ("성남city" in label and original_source.startswith("https://pokemonkorea.co.kr/2026_battle_tournament3"))
+    )
+    if seongnam_specific:
+        new_source = POKEMON_KR_SEONGNAM_TOURNAMENT_PAGE
+    else:
+        new_source = OFFICIAL_SOURCE_REPLACEMENTS.get(old_source, old_source)
+
+    if new_source and new_source != old_source:
+        repaired["source"] = new_source
+        changes += 1
+        # Link-health evidence belongs to the old URL and must not be carried
+        # forward as though the replacement endpoint had already been checked.
+        for field in ("link_checked_at", "link_status", "link_statuses"):
+            repaired.pop(field, None)
+
+    existing_collection = str(repaired.get("collection_source") or "")
+    legacy_collection = {
+        "https://new.pokemonkorea.co.kr/card",
+        "https://new.pokemonkorea.co.kr/card/",
+        "https://new.pokemonkorea.co.kr/card/category/5",
+        "https://pokemoncard.co.kr/card/category/5",
+    }
+    desired_collection = None
+    if str(repaired.get("source") or "") == POKEMON_KR_SEONGNAM_TOURNAMENT_PAGE:
+        desired_collection = POKEMON_KR_SEONGNAM_TOURNAMENT_PAGE
+    elif not existing_collection or existing_collection in legacy_collection:
+        desired_collection = POKEMON_KR_EVENT_INDEX
+
+    if desired_collection and desired_collection != existing_collection:
+        repaired["collection_source"] = desired_collection
+        changes += 1
+        for field in ("link_checked_at", "link_status", "link_statuses"):
+            repaired.pop(field, None)
+    return repaired, changes
+
+
+def _refresh_movie_tracker(previous: dict, tracker: dict) -> dict:
+    """Refresh a tracker without retaining verification fields removed by policy."""
+    refreshed = {**previous, **tracker}
+    same_source = str(previous.get("source") or "") == str(tracker.get("source") or "")
+    if same_source:
+        for field in ("link_checked_at", "link_status", "link_statuses"):
+            if field in previous:
+                refreshed[field] = previous[field]
+
+    if "verification_source" not in tracker:
+        for field in (
+            "verification_source", "verification_checked_at",
+            "verification_status", "verification_error",
+        ):
+            refreshed.pop(field, None)
+        statuses = refreshed.get("link_statuses")
+        if isinstance(statuses, dict) and "verification_source" in statuses:
+            statuses = dict(statuses)
+            statuses.pop("verification_source", None)
+            if statuses:
+                refreshed["link_statuses"] = statuses
+            else:
+                refreshed.pop("link_statuses", None)
+    return normalize_event_dates(refreshed)
+
 def main() -> dict:
     data = json.loads(safe_read_text(DATA))
     original = data.get("items", [])
@@ -1000,21 +1080,8 @@ def main() -> dict:
             errors.append("구조 오류: 잘못된 행사 항목")
             continue
         repaired = normalize_event_dates(item)
-        old_source = str(repaired.get("source") or "")
-        replacement_source = OFFICIAL_SOURCE_REPLACEMENTS.get(old_source)
-        if replacement_source:
-            repaired["source"] = replacement_source
-            repaired_count += 1
-        if repaired.get("game") == "포켓몬 카드" and repaired.get("region") == "KR":
-            existing_collection = str(repaired.get("collection_source") or "")
-            if not existing_collection or existing_collection in {
-                "https://new.pokemonkorea.co.kr/card",
-                "https://new.pokemonkorea.co.kr/card/",
-                "https://new.pokemonkorea.co.kr/card/category/5",
-            }:
-                repaired["collection_source"] = POKEMON_KR_EVENT_INDEX
-                if existing_collection != POKEMON_KR_EVENT_INDEX:
-                    repaired_count += 1
+        repaired, source_repairs = _migrate_pokemon_kr_event_source(repaired)
+        repaired_count += source_repairs
         actual_region = event_region(str(repaired.get("region", "")), repaired.get("name_native"),
                                      repaired.get("name_ko"), repaired.get("source"), repaired.get("location"))
         if actual_region is None:
@@ -1040,11 +1107,7 @@ def main() -> dict:
             movie_tracker_key.add(key)
         else:
             previous=valid_original[found]
-            refreshed={**previous,**tracker}
-            for field in ("link_checked_at","link_status","link_statuses"):
-                if field in previous:
-                    refreshed[field]=previous[field]
-            valid_original[found]=normalize_event_dates(refreshed)
+            valid_original[found]=_refresh_movie_tracker(previous, tracker)
 
     seeded_count = 0
     for seed in OFFICIAL_VERIFIED_SEEDS:

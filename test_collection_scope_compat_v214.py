@@ -52,19 +52,27 @@ class CollectionScopeCompatV214Tests(unittest.TestCase):
         self.assertNotIn("verification_source", tracker)
         self.assertNotIn("new.pokemonkorea.co.kr", update_promo_events.ALLOWED)
 
-    def test_retired_event_sources_are_migrated_to_current_news_index(self):
+    def test_retired_event_sources_use_role_specific_current_evidence(self):
         expected = update_promo_events.POKEMON_KR_EVENT_INDEX
         for legacy in (
             "https://new.pokemonkorea.co.kr/card",
             "https://new.pokemonkorea.co.kr/card/",
             "https://new.pokemonkorea.co.kr/card/category/5",
             "https://pokemoncard.co.kr/card/category/5",
-            "https://pokemonkorea.co.kr/2026_battle_tournament3",
-            "https://pokemonkorea.co.kr/2026_battle_tournament3/menu800",
             "https://pokemonkorea.co.kr/",
             "https://www.pokemonkorea.co.kr/",
         ):
             self.assertEqual(update_promo_events.OFFICIAL_SOURCE_REPLACEMENTS[legacy], expected)
+        self.assertEqual(
+            update_promo_events.OFFICIAL_SOURCE_REPLACEMENTS[
+                "https://pokemonkorea.co.kr/2026_battle_tournament3"
+            ],
+            update_promo_events.POKEMON_KR_SEONGNAM_TOURNAMENT_PAGE,
+        )
+        self.assertNotIn(
+            update_promo_events.POKEMON_KR_SEONGNAM_TOURNAMENT_PAGE,
+            update_promo_events.OFFICIAL_SOURCE_REPLACEMENTS,
+        )
 
     def test_auxiliary_discovery_routes_use_current_event_source(self):
         current = update_promo_events.POKEMON_KR_EVENT_INDEX
