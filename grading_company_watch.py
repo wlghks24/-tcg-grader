@@ -531,6 +531,23 @@ def _load_previous(path: Path = OUT) -> dict:
         return {}
 
 
+def _source_failure_class(exc: Exception) -> str:
+    """Classify source failures without weakening the official-source gate."""
+    code = getattr(exc, "code", None)
+    if code == 403:
+        return "http_forbidden"
+    if code == 429:
+        return "rate_limited"
+    message = str(exc).casefold()
+    if "unapproved host" in message:
+        return "redirect_unapproved_host"
+    if "pricing parser yielded zero verified services" in message:
+        return "parser_no_verified_services"
+    if "official page body too short" in message:
+        return "source_body_invalid"
+    return "source_error"
+
+
 def collect(previous: dict | None = None, fetcher=_fetch_raw) -> dict:
     previous = previous if isinstance(previous, dict) else {}
     checked_at = datetime.now(timezone.utc).isoformat(timespec="seconds")
@@ -599,6 +616,7 @@ def collect(previous: dict | None = None, fetcher=_fetch_raw) -> dict:
                 announcements.extend(found)
                 health.append({"source_id": source_id, "status": "ok", "url": spec["url"]})
             except Exception as exc:
+                failure_class = _source_failure_class(exc)
                 old_verified = bool(
                     old.get("verified_official_source") is True
                     and old.get("signal_fingerprint")
@@ -610,7 +628,8 @@ def collect(previous: dict | None = None, fetcher=_fetch_raw) -> dict:
                 }
                 retained.update({
                     "status": "degraded", "checked_at": checked_at,
-                    "last_error": diagnostic_exception(exc), "verified_official_source": old_verified,
+                    "last_error": diagnostic_exception(exc), "failure_class": failure_class,
+                    "verified_official_source": old_verified,
                 })
                 sources[source_id] = retained
                 if old_verified and retained.get("services"):
@@ -624,7 +643,7 @@ def collect(previous: dict | None = None, fetcher=_fetch_raw) -> dict:
                     announcements.extend(retained.get("announcements", []) or [])
                 health.append({
                     "source_id": source_id, "status": "degraded", "url": spec["url"],
-                    "error": diagnostic_exception(exc),
+                    "error": diagnostic_exception(exc), "failure_class": failure_class,
                 })
         companies[company] = {"markets": markets, "source_health": health}
 

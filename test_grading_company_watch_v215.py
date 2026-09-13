@@ -326,5 +326,36 @@ class GradingCompanyWatchV215Tests(unittest.TestCase):
         self.assertEqual(by["Super Express"]["fee"], 299.0)
 
 
+    def test_source_failure_classes_keep_blocked_sources_distinct(self):
+        class Blocked(Exception):
+            code = 403
+
+        class Limited(Exception):
+            code = 429
+
+        self.assertEqual(watch._source_failure_class(Blocked("forbidden")), "http_forbidden")
+        self.assertEqual(watch._source_failure_class(Limited("rate limited")), "rate_limited")
+        self.assertEqual(watch._source_failure_class(ValueError("unapproved host")), "redirect_unapproved_host")
+        self.assertEqual(
+            watch._source_failure_class(ValueError("pricing parser yielded zero verified services")),
+            "parser_no_verified_services",
+        )
+        self.assertEqual(watch._source_failure_class(OSError("network down")), "source_error")
+
+    def test_failure_class_is_persisted_in_source_and_health_rows(self):
+        class Blocked(Exception):
+            code = 403
+
+        def fail(_url):
+            raise Blocked("forbidden")
+
+        out = watch.collect({}, fail)
+        self.assertTrue(out["sources"])
+        self.assertTrue(all(row.get("failure_class") == "http_forbidden" for row in out["sources"].values()))
+        health = [row for company in out["companies"].values() for row in company["source_health"]]
+        self.assertTrue(health)
+        self.assertTrue(all(row.get("failure_class") == "http_forbidden" for row in health))
+
+
 if __name__ == "__main__":
     unittest.main()
