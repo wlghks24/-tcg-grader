@@ -23,7 +23,10 @@ jobs:
         with:
           python-version: '3.11'
       - name: Apply provider-specific parser hardening
-        run: python v238_psa_bgs_parser_repair.py
+        run: |
+          set -euo pipefail
+          python v238_psa_bgs_parser_repair.py
+          python v238_psa_bgs_parser_followup.py
       - name: Run grading regression
         run: |
           set -euo pipefail
