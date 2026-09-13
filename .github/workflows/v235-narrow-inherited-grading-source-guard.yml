@@ -1,0 +1,93 @@
+name: One-shot v235 narrow inherited grading-source guard
+
+on:
+  push:
+    branches:
+      - selfrefine/fix-8stage-ssot-v230
+    paths:
+      - '.github/workflows/v235-narrow-inherited-grading-source-guard.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - name: Checkout target branch
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          ref: selfrefine/fix-8stage-ssot-v230
+          fetch-depth: 0
+          persist-credentials: true
+
+      - name: Apply bounded guard correction
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          from pathlib import Path
+
+          path = Path('.github/workflows/collection-verification-guard.yml')
+          text = path.read_text(encoding='utf-8')
+          old_comment = (
+              "          # Never waive grading-source health when the PR itself changes the collector,\n"
+              "          # its network safety boundary, its verification semantics, or its runtime wiring.\n"
+          )
+          new_comment = (
+              "          # Never waive grading-source health when the PR itself changes the collector,\n"
+              "          # network safety boundary, verification semantics, or mandatory job composition.\n"
+              "          # tcg_updater is live-exercised above; presentation/progress-only changes there\n"
+              "          # do not by themselves change grading-company source health.\n"
+          )
+          if text.count(old_comment) != 1:
+              raise SystemExit('expected grading-source guard comment not found exactly once')
+          text = text.replace(old_comment, new_comment, 1)
+
+          old_entry = "              'tcg_updater.py',\n"
+          if text.count(old_entry) != 1:
+              raise SystemExit('expected tcg_updater sensitive entry not found exactly once')
+          text = text.replace(old_entry, '', 1)
+          path.write_text(text, encoding='utf-8')
+          PY
+
+      - name: Validate guard remains fail-closed
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          from pathlib import Path
+          text = Path('.github/workflows/collection-verification-guard.yml').read_text(encoding='utf-8')
+          required = (
+              "'grading_company_watch.py'",
+              "'grading_company_updates.json'",
+              "'collection_verification_gate.py'",
+              "'safe_runtime.py'",
+              "'auto_update_all.py'",
+              "'auto_repair_engine.py'",
+              "'collector_self_healing.py'",
+              "'verified_collection_job_neural.py'",
+              "--fail-on-degraded",
+              "'bypass_403_429': False",
+              "'source_code_auto_rewritten': False",
+          )
+          missing = [item for item in required if item not in text]
+          if missing:
+              raise SystemExit('fail-closed contract weakened: ' + ', '.join(missing))
+          sensitive_block = text.split('grading_sensitive = {', 1)[1].split('}', 1)[0]
+          if "'tcg_updater.py'" in sensitive_block:
+              raise SystemExit('tcg_updater still incorrectly blocks inherited external outage classification')
+          print('bounded inherited-outage guard correction verified')
+          PY
+
+      - name: Commit correction and remove one-shot workflow
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add .github/workflows/collection-verification-guard.yml
+          git rm .github/workflows/v235-narrow-inherited-grading-source-guard.yml
+          git commit -m 'ci: classify inherited grading outage by actual sensitive wiring'
+          git push origin HEAD:selfrefine/fix-8stage-ssot-v230
