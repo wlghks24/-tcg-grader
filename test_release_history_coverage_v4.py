@@ -54,30 +54,30 @@ class ReleaseHistoryCoverageV4Tests(unittest.TestCase):
         )
         self.assertEqual(links, ['https://pokemoncard.co.kr/card/907'])
 
-    def test_korean_release_indexes_prefer_current_official_host(self):
+    def test_korean_release_indexes_use_current_official_product_index_only(self):
         self.assertEqual(
-            backfill.POKEMON_KR_INDEXES[0],
-            "https://new.pokemonkorea.co.kr/card/category/3",
+            backfill.POKEMON_KR_INDEXES,
+            ("https://pokemoncard.co.kr/card/category/info1",),
         )
-        self.assertIn("https://new.pokemonkorea.co.kr/card", backfill.POKEMON_KR_INDEXES)
+        self.assertTrue(all("new.pokemonkorea.co.kr" not in url for url in backfill.POKEMON_KR_INDEXES))
 
-    def test_one_failed_fallback_index_does_not_poison_successful_korean_collection(self):
-        detail_html = (
-            '<a href="/card/907">MEGA 확장팩 「어비스아이」</a>'
-        )
+    def test_current_korean_index_collects_same_host_product_details(self):
+        detail_html = '<a href="/card/907">MEGA 확장팩 「어비스아이」</a>'
         calls = []
+
         def fake_fetch(url):
             calls.append(url)
-            if url == "https://new.pokemonkorea.co.kr/card/category/3":
+            if url == "https://pokemoncard.co.kr/card/category/info1":
                 return detail_html
-            if url == "https://new.pokemonkorea.co.kr/card/907":
+            if url == "https://pokemoncard.co.kr/card/907":
                 return 'MEGA 확장팩 「어비스아이」 발매일 2026-06-26 가격 1,500원'
-            raise OSError("retired fallback unavailable")
+            raise OSError("unexpected URL")
 
         rows, errors = backfill._collect_pokemon_region_details(fake_fetch, lambda x: x, "KR")
         self.assertEqual(errors, [])
         self.assertTrue(any(row.get("release_date") == "2026-06-26" for row in rows))
-        self.assertIn("https://new.pokemonkorea.co.kr/card/category/3", calls)
+        self.assertEqual(calls[0], "https://pokemoncard.co.kr/card/category/info1")
+        self.assertIn("https://pokemoncard.co.kr/card/907", calls)
 
     def test_us_pokemon_launch_date_is_parsed(self):
         rows = backfill.parse_pokemon_us(
