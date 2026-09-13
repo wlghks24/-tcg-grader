@@ -22,11 +22,12 @@ import supplementary_discovery
 
 ROOT = Path(__file__).resolve().parent
 DATA = ROOT / "promo_events.json"
+POKEMON_KR_EVENT_INDEX = "https://pokemonkorea.co.kr/news/2"
 ALLOWED = {
     "www.pokemon-card.com", "www.30th.pokemon-card.com",
     "pokemon.co.jp", "www.pokemon.co.jp",
     "pokemoncard.co.kr", "www.pokemoncard.co.kr",
-    "pokemonkorea.co.kr", "www.pokemonkorea.co.kr", "new.pokemonkorea.co.kr",
+    "pokemonkorea.co.kr", "www.pokemonkorea.co.kr",
     "onepiece-cardgame.kr", "www.onepiece-cardgame.kr",
     "www.onepiece-cardgame.com", "en.onepiece-cardgame.com",
     "cp.onepiece-cardgame.com", "one-piece.com", "www.one-piece.com",
@@ -46,7 +47,7 @@ FETCH_ALLOWED = ALLOWED | OFFICIAL_SOCIAL_HOSTS
 INDEXES = (
     ("KR", "원피스 카드", "https://onepiece-cardgame.kr/events.do"),
     ("KR", "원피스 카드", "https://onepiece-cardgame.kr/topics.do"),
-    ("KR", "포켓몬 카드", "https://new.pokemonkorea.co.kr/card"),
+    ("KR", "포켓몬 카드", POKEMON_KR_EVENT_INDEX),
     ("KR", "나루토 카드", "https://www.naruto-cardgame.com/asia-en/"),
     ("JP", "포켓몬 카드", "https://www.pokemon-card.com/info/"),
     ("JP", "포켓몬 카드", "https://www.pokemon.co.jp/info/"),
@@ -73,18 +74,21 @@ EVENT_SCOPE_PAIRS = tuple((game, region) for game in GAMES for region in CORE_RE
 DATE_PRECISIONS = {"day", "month", "season", "start-only", "unannounced"}
 ARCHIVE_GRACE_DAYS = 5
 OFFICIAL_SOURCE_REPLACEMENTS = {
-    "https://pokemonkorea.co.kr/2026_battle_tournament3":
-        "https://new.pokemonkorea.co.kr/card",
-    "https://pokemonkorea.co.kr/2026_battle_tournament3/menu800":
-        "https://new.pokemonkorea.co.kr/card",
-    "https://pokemonkorea.co.kr/": "https://new.pokemonkorea.co.kr/card",
-    "https://www.pokemonkorea.co.kr/": "https://new.pokemonkorea.co.kr/card",
+    "https://new.pokemonkorea.co.kr/card": POKEMON_KR_EVENT_INDEX,
+    "https://new.pokemonkorea.co.kr/card/": POKEMON_KR_EVENT_INDEX,
+    "https://new.pokemonkorea.co.kr/card/category/5": POKEMON_KR_EVENT_INDEX,
+    "https://pokemoncard.co.kr/card/category/5": POKEMON_KR_EVENT_INDEX,
+    "https://pokemonkorea.co.kr/2026_battle_tournament3": POKEMON_KR_EVENT_INDEX,
+    "https://pokemonkorea.co.kr/2026_battle_tournament3/menu800": POKEMON_KR_EVENT_INDEX,
+    "https://pokemonkorea.co.kr/": POKEMON_KR_EVENT_INDEX,
+    "https://www.pokemonkorea.co.kr/": POKEMON_KR_EVENT_INDEX,
 }
 
 
-# 한국 영화 정보는 "없음"으로 숨기지 않고, 한국 공식/공공 출처에서
+# 한국 영화 정보는 "없음"으로 숨기지 않고, 한국 공식 출처에서
 # 개봉일이 확인될 때까지 명시적인 추적 카드로 유지한다.
-# 확인되지 않은 날짜를 임의 생성하지 않는 것이 원칙이다.
+# KOBIS의 일반 검색화면은 특정 영화의 검증 증거가 아니므로 건강성 probe에 쓰지 않는다.
+# 후보 영화의 개별 KOBIS 레코드가 발견됐을 때만 별도 교차검증한다.
 KR_MOVIE_TRACKERS = (
     {
         "game": "포켓몬 카드", "region": "KR", "category": "movie",
@@ -92,11 +96,10 @@ KR_MOVIE_TRACKERS = (
         "name_native": "Pokémon Movie Korea Release Watch",
         "start_date": "2026-08-23", "end_date": "2027-12-31", "claim_deadline": "2027-12-31",
         "reward": "한국 극장 개봉·재개봉·특별상영 일정이 공식 발표되면 날짜와 극장 정보를 표시",
-        "condition": "포켓몬코리아 및 KOBIS 기준. 현재 확인 가능한 2026년 한국 신작 극장 개봉일은 공식 발표되지 않아 임의 날짜를 만들지 않음.",
+        "condition": "포켓몬코리아 공식 발표를 우선 확인하고, 후보 영화가 발견되면 해당 영화의 KOBIS 개별 레코드를 교차검증. 미발표 날짜는 만들지 않음.",
         "location": "대한민국", "status": "한국 개봉일 미발표",
-        "source": "https://new.pokemonkorea.co.kr/card",
-        "collection_source": "https://new.pokemonkorea.co.kr/card",
-        "verification_source": "https://www.kobis.or.kr/kobis/business/mast/mvie/searchMovieList.do",
+        "source": POKEMON_KR_EVENT_INDEX,
+        "collection_source": POKEMON_KR_EVENT_INDEX,
         "tracking_only": True,
     },
     {
@@ -105,10 +108,9 @@ KR_MOVIE_TRACKERS = (
         "name_native": "ONE PIECE Movie Korea Release Watch",
         "start_date": "2026-08-23", "end_date": "2027-12-31", "claim_deadline": "2027-12-31",
         "reward": "한국 극장 개봉·재개봉·특별상영 일정이 확정되면 개봉일·배급 정보를 표시",
-        "condition": "대원미디어(국내 원피스 IP 사업)와 KOBIS 기준. 현재 확인 가능한 2026년 한국 신작 극장판 개봉일은 공식 발표되지 않음.",
+        "condition": "대원미디어 공식 발표를 우선 확인하고, 후보 영화가 발견되면 해당 영화의 KOBIS 개별 레코드를 교차검증. 미발표 날짜는 만들지 않음.",
         "location": "대한민국", "status": "한국 개봉일 미발표",
         "source": "https://daewonmedia.com/business",
-        "verification_source": "https://www.kobis.or.kr/kobis/business/mast/mvie/searchMovieList.do",
         "tracking_only": True,
     },
     {
@@ -117,10 +119,9 @@ KR_MOVIE_TRACKERS = (
         "name_native": "NARUTO Film Korea Release Watch",
         "start_date": "2026-08-23", "end_date": "2027-12-31", "claim_deadline": "2027-12-31",
         "reward": "실사 영화 또는 애니 극장판의 한국 개봉·배급 일정이 확정되면 한국 일정 표시",
-        "condition": "NARUTO 공식 제작 발표와 KOBIS 한국 개봉 등록을 교차 확인. 실사 영화는 제작 진행 중이지만 한국 개봉일은 아직 공식 발표되지 않음.",
+        "condition": "NARUTO 공식 제작 발표를 우선 확인하고, 후보 영화가 발견되면 해당 영화의 KOBIS 개별 레코드를 교차검증. 한국 개봉일은 임의 생성하지 않음.",
         "location": "대한민국", "status": "한국 개봉일 미발표",
         "source": "https://naruto-official.com/en/news/01_2649",
-        "verification_source": "https://www.kobis.or.kr/kobis/business/mast/mvie/searchMovieList.do",
         "tracking_only": True,
     },
 )
@@ -215,9 +216,6 @@ OFFICIAL_VERIFIED_SEEDS = (
         "start_date": "2026-09-01", "end_date": "2027-12-31", "claim_deadline": "2027-12-31",
         "date_precision": "start-only",
         "date_label": "2026년 9월 1일 시작 · PLAYGO 앱 출시 시 종료(종료일 미발표)",
-        # ``end_date`` is an internal re-check horizon, not an announced end date.
-        # Keep the field name aligned with ``valid()`` so this official seed can
-        # repair an older row instead of being rejected by the preflight gate.
         "internal_review_until": "2027-12-31",
         "reward": "출시 알림 신청 후 발급되는 QR을 이벤트 진행 점포에서 제시하면 특별 프로모션 팩 수령. FUN EXPO 2026 수령자는 중복 수령 불가.",
         "condition": "매장별 재고가 다르며 소진 시 종료될 수 있습니다. 공식 공지와 PLAYGO QR 교환 상태를 확인하세요.",
@@ -578,20 +576,11 @@ def _stable_source(value: object) -> str:
         parsed = urllib.parse.urlsplit(text)
     except ValueError:
         return text
-    # Keep query parameters because board-style official sites often use them
-    # as the actual article id. Only fragments are presentation state.
     return urllib.parse.urlunsplit((parsed.scheme.lower(), (parsed.netloc or "").lower(),
                                     parsed.path.rstrip("/") or "/", parsed.query, ""))
 
 
 def event_identity_key(item: dict) -> tuple[str, str, str, str, str]:
-    """Stable identity used only for superseding changed versions of one URL.
-
-    It intentionally differs from event_key(): dates are excluded so a schedule
-    update on the same official article can replace the old row, but the exact
-    source URL and normalized event title remain required so unrelated recurring
-    events are not collapsed.
-    """
     title = str(item.get("name_native") or item.get("name_ko") or "").lower()
     title = re.sub(
         r"일정\s*(?:변경|연기|취소)\s*(?:안내|공지)?|시간\s*변경|장소\s*변경|"
@@ -692,9 +681,6 @@ def merge_duplicate_events(items: list[dict]) -> tuple[list[dict], int]:
         removed += 1
         same_event_changed_version = previous_key is not None and previous_key != key
         if same_event_changed_version:
-            # Discovery rows carry a collection timestamp. If both versions have
-            # timestamps, the newer official observation wins. If only the
-            # incoming row has one, it is also the newly observed version.
             previous_stamp = _version_stamp(previous)
             incoming_stamp = _version_stamp(item)
             newer = item if incoming_stamp >= previous_stamp else previous
@@ -749,7 +735,6 @@ def coverage_summary(items: list[dict]) -> dict:
 
 
 def social_topic_expected_keys() -> list[str]:
-    """Derive the full matrix from the shared discovery topics, never a stale constant."""
     return [
         f"{game}/{region}/{topic}"
         for game in GAMES
@@ -767,18 +752,12 @@ def effective_expiry(item: dict) -> dt.date | None:
 
 
 def is_expired(item: dict, today: dt.date | None = None) -> bool:
-    """Return True only after the five full post-event display days.
-
-    Example: an event ending September 5 remains in the current category through
-    September 10 and moves to the archive on September 11.
-    """
     today = today or dt.date.today()
     expiry = effective_expiry(item)
     return bool(expiry and today > expiry + dt.timedelta(days=ARCHIVE_GRACE_DAYS))
 
 
 def lifecycle_state(item: dict, today: dt.date | None = None) -> str:
-    """Classify an item without dropping verified history."""
     today = today or dt.date.today()
     expiry = effective_expiry(item)
     if expiry is None:
@@ -791,7 +770,6 @@ def lifecycle_state(item: dict, today: dt.date | None = None) -> str:
 
 
 def partition_event_lifecycle(items: list[dict], today: dt.date | None = None) -> tuple[list[dict], list[dict]]:
-    """Keep current/recent rows visible and retain older rows in a separate archive."""
     today = today or dt.date.today()
     current, archived = [], []
     for source in items:
@@ -806,7 +784,6 @@ def partition_event_lifecycle(items: list[dict], today: dt.date | None = None) -
 
 
 def purge_expired(items: list[dict], today: dt.date | None = None) -> tuple[list[dict], list[dict]]:
-    """Backward-compatible name: the second list is archived, never deleted."""
     return partition_event_lifecycle(items, today)
 
 
@@ -945,7 +922,6 @@ def check_existing(item: dict) -> tuple[dict, str | None]:
 
 
 def refresh_auxiliary_coverage_metadata(data: dict | None = None, *, write: bool = False) -> dict:
-    """Synchronize candidate metadata after the integrated pipeline, without network I/O."""
     if data is None:
         data = json.loads(safe_read_text(DATA))
     if not isinstance(data, dict):
@@ -1029,12 +1005,16 @@ def main() -> dict:
         if replacement_source:
             repaired["source"] = replacement_source
             repaired_count += 1
-        if (
-            repaired.get("game") == "포켓몬 카드"
-            and repaired.get("region") == "KR"
-            and str(repaired.get("source") or "").startswith("https://pokemonkorea.co.kr/")
-        ):
-            repaired.setdefault("collection_source", "https://new.pokemonkorea.co.kr/card")
+        if repaired.get("game") == "포켓몬 카드" and repaired.get("region") == "KR":
+            existing_collection = str(repaired.get("collection_source") or "")
+            if not existing_collection or existing_collection in {
+                "https://new.pokemonkorea.co.kr/card",
+                "https://new.pokemonkorea.co.kr/card/",
+                "https://new.pokemonkorea.co.kr/card/category/5",
+            }:
+                repaired["collection_source"] = POKEMON_KR_EVENT_INDEX
+                if existing_collection != POKEMON_KR_EVENT_INDEX:
+                    repaired_count += 1
         actual_region = event_region(str(repaired.get("region", "")), repaired.get("name_native"),
                                      repaired.get("name_ko"), repaired.get("source"), repaired.get("location"))
         if actual_region is None:
@@ -1128,9 +1108,6 @@ def main() -> dict:
                 known_identities.add(identity)
 
     checked, merged_discovered = merge_duplicate_events(checked)
-
-    # Rejoin the untouched archive before the final partition so a newly found
-    # schedule for the same official event can supersede its archived version.
     all_verified, merged_archive = merge_duplicate_events([*checked, *archived])
     checked, archived = partition_event_lifecycle(all_verified)
     archived_names = [item.get("name_ko", "이름 없음") for item in archived]
