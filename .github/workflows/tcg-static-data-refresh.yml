@@ -20,8 +20,10 @@ on:
       - 'release_history_backfill.py'
       - 'update_market_watch.py'
       - 'update_promo_events.py'
+      - 'supplementary_discovery.py'
       - 'update_market_prices.py'
       - 'market_public_crosscheck.py'
+      - 'box_hit_market_discovery.py'
       - 'test_market_public_crosscheck_resilience_v228.py'
       - 'test_release_history_cumulative_coverage_v229.py'
       - 'test_collection_restored_state_guard_v229.py'
@@ -31,6 +33,9 @@ on:
       - 'detailed_collection_intelligence.py'
       - 'graded_photo_evidence.py'
       - 'grading_cert_verifier.py'
+      - 'ebay_grader_learning.py'
+      - 'multi_channel_agent.py'
+      - 'social_stock_discovery.py'
       - 'verified_collection_job_neural.py'
       - 'verified_collection_neural.py'
       - 'validate_external_links.py'
@@ -92,9 +97,11 @@ jobs:
             static_data_publish_gate.py auto_update_all.py tcg_updater.py feature_contract.py \
             auto_repair_engine.py collector_self_healing.py safe_runtime.py runtime_bundle_guard_v143.py \
             update_releases.py release_parser_learning.py release_history_backfill.py \
-            update_market_watch.py update_promo_events.py update_market_prices.py market_public_crosscheck.py \
+            update_market_watch.py update_promo_events.py supplementary_discovery.py \
+            update_market_prices.py market_public_crosscheck.py box_hit_market_discovery.py \
             update_purchase_sources.py update_exchange_rates.py validate_external_links.py \
             graded_photo_multi_source.py detailed_collection_intelligence.py graded_photo_evidence.py grading_cert_verifier.py \
+            ebay_grader_learning.py multi_channel_agent.py social_stock_discovery.py \
             verified_collection_job_neural.py verified_collection_neural.py \
             multi_route_event_discovery.py social_event_discovery.py auto_pipeline_runner.py \
             grading_company_watch.py grading_costs_live.py \
