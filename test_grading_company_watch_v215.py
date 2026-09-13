@@ -274,5 +274,125 @@ class GradingCompanyWatchV215Tests(unittest.TestCase):
         self.assertEqual(len(data["announcements"]), 1)
 
 
+    def test_bgs_current_layout_parses_base_variants_and_tier_local_availability(self):
+        source = "https://www.beckett.com/grading"
+        text = (
+            "Base 75+ business days $14.95 per card $3 fee for any 10s where subgrades are added "
+            "Sold Out Without Subgrades Notify me $17.95 per card Sold Out Subgrades Notify me "
+            "Standard 45 business days $34.95 per card Sold Out Subgrades Notify me "
+            "Express 15 business days $79.95 per card Subgrades Submit Now "
+            "Priority 5 business days $124.95 per card Subgrades Submit Now"
+        )
+        rows = watch.parse_services("BGS", "US", "USD", text, source)
+        by = {row["name"]: row for row in rows}
+        self.assertEqual(set(by), {"Base", "Base + Subgrades", "Standard", "Express", "Priority"})
+        self.assertEqual(by["Base"]["fee"], 14.95)
+        self.assertEqual(by["Base + Subgrades"]["fee"], 17.95)
+        self.assertEqual(by["Standard"]["fee"], 34.95)
+        self.assertEqual(by["Express"]["fee"], 79.95)
+        self.assertEqual(by["Priority"]["fee"], 124.95)
+        self.assertEqual(by["Base"]["turnaround_business_days"], 75)
+        self.assertEqual(by["Standard"]["turnaround_business_days"], 45)
+        self.assertEqual(by["Express"]["turnaround_business_days"], 15)
+        self.assertEqual(by["Priority"]["turnaround_business_days"], 5)
+        self.assertEqual(by["Base"]["availability"], "paused")
+        self.assertEqual(by["Base + Subgrades"]["availability"], "paused")
+        self.assertEqual(by["Standard"]["availability"], "paused")
+        self.assertEqual(by["Express"]["availability"], "open")
+        self.assertEqual(by["Priority"]["availability"], "open")
+
+    def test_bgs_partial_layout_fails_closed_instead_of_publishing_mixed_tiers(self):
+        text = "Base 75+ business days $14.95 per card Sold Out Without Subgrades $17.95 per card Sold Out Subgrades"
+        self.assertEqual(watch.parse_services("BGS", "US", "USD", text, "https://www.beckett.com/grading"), [])
+
+    def test_psa_overlapping_aliases_do_not_duplicate_longer_tiers(self):
+        source = "https://www.psacard.com/services/t"
+        text = (
+            "Currently Unavailable Value Bulk Max Insured Value: $500 "
+            "Currently Unavailable Value Max Insured Value: $500 "
+            "Currently Unavailable Value Plus Max Insured Value: $500 "
+            "Currently Unavailable Value Max Max Insured Value: $1,000 "
+            "Regular $79.99/Card Max Insured Value: $1,500 Estimated Turnaround Time: 70 - 80 Business Days Get Started "
+            "Express $149.00/Card Max Insured Value: $2,500 Estimated Turnaround Time: 20 - 30 Business Days Get Started "
+            "Super Express $299.00/Card Max Insured Value: $5,000 Estimated Turnaround Time: 10 Business Days Get Started"
+        )
+        rows = watch.parse_services("PSA", "US", "USD", text, source)
+        by = {row["name"]: row for row in rows}
+        self.assertEqual(by["Value Bulk"]["max_declared_or_insured_value"], 500.0)
+        self.assertEqual(by["Value"]["max_declared_or_insured_value"], 500.0)
+        self.assertEqual(by["Value Plus"]["max_declared_or_insured_value"], 500.0)
+        self.assertEqual(by["Value Max"]["max_declared_or_insured_value"], 1000.0)
+        self.assertEqual(by["Express"]["fee"], 149.0)
+        self.assertEqual(by["Super Express"]["fee"], 299.0)
+
+
+    def test_source_failure_classes_keep_blocked_sources_distinct(self):
+        class Blocked(Exception):
+            code = 403
+
+        class Limited(Exception):
+            code = 429
+
+        self.assertEqual(watch._source_failure_class(Blocked("forbidden")), "http_forbidden")
+        self.assertEqual(watch._source_failure_class(Limited("rate limited")), "rate_limited")
+        self.assertEqual(watch._source_failure_class(ValueError("unapproved host")), "redirect_unapproved_host")
+        self.assertEqual(
+            watch._source_failure_class(ValueError("pricing parser yielded zero verified services")),
+            "parser_no_verified_services",
+        )
+        self.assertEqual(watch._source_failure_class(OSError("network down")), "source_error")
+
+    def test_failure_class_is_persisted_in_source_and_health_rows(self):
+        class Blocked(Exception):
+            code = 403
+
+        def fail(_url):
+            raise Blocked("forbidden")
+
+        out = watch.collect({}, fail)
+        self.assertTrue(out["sources"])
+        self.assertTrue(all(row.get("failure_class") == "http_forbidden" for row in out["sources"].values()))
+        health = [row for company in out["companies"].values() for row in company["source_health"]]
+        self.assertTrue(health)
+        self.assertTrue(all(row.get("failure_class") == "http_forbidden" for row in health))
+
+
+    def test_provider_parser_revisions_are_isolated_to_changed_pricing_parsers(self):
+        self.assertEqual(watch._service_parser_version("PSA", "US"), 3)
+        self.assertEqual(watch._service_parser_version("PSA", "JP"), 3)
+        self.assertEqual(watch._service_parser_version("BGS", "US"), 3)
+        self.assertEqual(watch._service_parser_version("CGC", "US"), watch.PARSER_VERSION)
+        self.assertEqual(watch._service_parser_version("TAG", "US"), watch.PARSER_VERSION)
+
+    def test_provider_parser_revision_upgrade_establishes_new_baseline(self):
+        spec = {"id": "psa-us-pricing", "kind": "pricing", "market": "US", "currency": "USD",
+                "url": "https://www.psacard.com/services/tradingcardgrading"}
+        previous = {"sources": {"psa-us-pricing": {
+            "company": "PSA", "source_id": "psa-us-pricing", "kind": "pricing", "market": "US",
+            "currency": "USD", "url": spec["url"], "status": "ok", "checked_at": "2026-09-12T00:00:00+00:00",
+            "signal_fingerprint": "old-parser-fingerprint", "verified_official_source": True,
+            "parser_version": watch.PARSER_VERSION,
+            "services": [{"name": "Express", "fee": 99.0, "availability": "open"}],
+            "announcements": [],
+        }}, "announcements": [], "history": []}
+        body = (
+            "Official PSA grading service pricing and turnaround information. "
+            "Regular $79.99/Card Max Insured Value: $1,500 Estimated Turnaround Time: 70 Business Days Get Started "
+            "Express $149.00/Card Max Insured Value: $2,500 Estimated Turnaround Time: 25 Business Days Get Started "
+            "Super Express $299.00/Card Max Insured Value: $5,000 Estimated Turnaround Time: 10 Business Days Get Started"
+        )
+        with mock.patch.object(watch, "WATCH_SOURCES", {"PSA": (spec,)}):
+            data = watch.collect(previous, fetcher=lambda _url: body)
+        source = data["sources"]["psa-us-pricing"]
+        self.assertEqual(source["parser_version"], 3)
+        self.assertTrue(source["services"])
+        self.assertFalse(any(
+            row.get("source_id") == "psa-us-pricing" and row.get("type") in {
+                "service_added", "service_removed", "service_changed", "official_page_changed_unparsed"
+            }
+            for row in data["recent_changes"]
+        ))
+
+
 if __name__ == "__main__":
     unittest.main()
