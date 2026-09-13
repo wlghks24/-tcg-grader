@@ -16,11 +16,31 @@ class CollectionScopeCompatV214Tests(unittest.TestCase):
         feature = next(row for row in report["features"] if row["id"] == "promo_collab_movies")
         self.assertTrue(feature["implemented"], feature)
 
-    def test_retired_pokemon_korea_urls_canonicalize_to_current_official_card_page(self):
-        expected = "https://new.pokemonkorea.co.kr/card"
-        self.assertEqual(update_purchase_sources.checked_url("https://pokemoncard.co.kr/"), expected)
-        self.assertEqual(update_purchase_sources.checked_url("https://pokemoncard.co.kr/card/225"), expected)
-        self.assertIn("new.pokemonkorea.co.kr", update_purchase_sources.OFFICIAL_CHAIN_HOSTS["포켓몬 카드샵"])
+    def test_retired_pokemon_korea_urls_canonicalize_by_current_source_role(self):
+        self.assertEqual(
+            update_purchase_sources.checked_url("https://pokemoncard.co.kr/"),
+            update_purchase_sources.POKEMON_KR_PRODUCT_INDEX,
+        )
+        product = update_purchase_sources.normalize_source({
+            "name": "포켓몬 카드 게임 코리아 제품",
+            "region": "KR",
+            "games": ["Pokemon"],
+            "type": "official",
+            "url": "https://new.pokemonkorea.co.kr/card",
+            "original_url": "https://pokemoncard.co.kr/card/category/product",
+        })
+        shop = update_purchase_sources.normalize_source({
+            "name": "포켓몬 공인 카드샵 안내",
+            "region": "KR",
+            "games": ["Pokemon"],
+            "type": "official",
+            "url": "https://new.pokemonkorea.co.kr/card",
+            "original_url": "https://pokemoncard.co.kr/card/225",
+        })
+        self.assertEqual(product["url"], update_purchase_sources.POKEMON_KR_PRODUCT_INDEX)
+        self.assertEqual(shop["url"], update_purchase_sources.POKEMON_KR_CARD_SHOP_DIRECTORY)
+        self.assertIn("pokemonkorea.co.kr", update_purchase_sources.OFFICIAL_CHAIN_HOSTS["포켓몬 카드샵"])
+        self.assertNotIn("new.pokemonkorea.co.kr", update_purchase_sources.OFFICIAL_CHAIN_HOSTS["포켓몬 카드샵"])
 
     def test_retired_pokemon_korea_urls_are_not_active_discovery_routes(self):
         current = "https://new.pokemonkorea.co.kr/card"
