@@ -18,13 +18,7 @@
       "status": "보조후보 · 한국 개봉일 미발표",
       "verified": false,
       "official_source": "https://naruto-official.com/en/news/01_2649",
-      "confidence": 0.6,
-      "link_checked_at": "2026-09-13T07:01:44+00:00",
-      "link_statuses": {
-        "official_source": "정상",
-        "source": "정상"
-      },
-      "link_status": "정상"
+      "confidence": 0.6
     },
     {
       "game": "원피스 카드",
@@ -41,12 +35,7 @@
       "excerpt": "NBA HOUSE JAPAN 협업 상품은 예약이 종료됐으며 공식 배송 예정은 2026년 9월입니다.",
       "status": "공식확인",
       "verified": true,
-      "confidence": 1.0,
-      "link_checked_at": "2026-09-13T07:01:44+00:00",
-      "link_statuses": {
-        "source": "정상"
-      },
-      "link_status": "정상"
+      "confidence": 1.0
     },
     {
       "game": "원피스 카드",
@@ -63,12 +52,7 @@
       "excerpt": "WIT STUDIO의 새 애니메이션 시리즈는 2027년 2월 Netflix 공개 예정이며 정확한 공개일은 미발표입니다.",
       "status": "공식확인",
       "verified": true,
-      "confidence": 1.0,
-      "link_checked_at": "2026-09-13T07:01:44+00:00",
-      "link_statuses": {
-        "source": "정상"
-      },
-      "link_status": "정상"
+      "confidence": 1.0
     },
     {
       "game": "나루토 카드",
@@ -88,12 +72,7 @@
       "excerpt": "나루토(영화) 나무모에 미러 모바일 화면 · 어두운 화면 랜덤 (A) 역링크 편집 최근 수정 시각 : 2026-08-21 23:57:05 나루토(영화) {{{#!wiki style=\"margin: -10px; word-break: keep-all\" <table width=100%><table bordercolor=transparent> 나루토 NARUTO }}} {{{#!wiki style=",
       "status": "보조출처 후보",
       "verified": false,
-      "collected_at": "2026-09-13T01:03:04+00:00",
-      "link_checked_at": "2026-09-13T07:01:44+00:00",
-      "link_statuses": {
-        "source": "정상"
-      },
-      "link_status": "정상"
+      "collected_at": "2026-09-13T01:03:04+00:00"
     },
     {
       "game": "포켓몬 카드",
@@ -108,12 +87,7 @@
       "status": "재확인 대기",
       "verified": false,
       "error": "HTTPError",
-      "collected_at": "2026-09-13T01:03:05+00:00",
-      "link_checked_at": "2026-09-13T07:01:44+00:00",
-      "link_statuses": {
-        "source": "사이트 접속 제한 · 브라우저 이용 가능 (HTTP 403)"
-      },
-      "link_status": "사이트 접속 제한 · 브라우저 이용 가능 (HTTP 403)"
+      "collected_at": "2026-09-13T01:03:05+00:00"
     },
     {
       "game": "원피스 카드",
@@ -129,12 +103,7 @@
       "excerpt": "원피스(만화)/애니메이션/극장판 나무모에 미러 모바일 화면 · 어두운 화면 랜덤 (A) 역링크 편집 최근 수정 시각 : 2026-06-19 19:34:10 원피스(만화)/애니메이션/극장판 원피스(애니메이션)/극장판 에서 넘어옴 #!if top = 문서명1 != null ? 문서명1 : calleeTitle != null ? (i = calleeTitle.lastIndexOf(\"/\")) != ",
       "status": "보조출처 후보",
       "verified": false,
-      "collected_at": "2026-09-13T01:03:06+00:00",
-      "link_checked_at": "2026-09-13T07:01:44+00:00",
-      "link_statuses": {
-        "source": "정상"
-      },
-      "link_status": "정상"
+      "collected_at": "2026-09-13T01:03:06+00:00"
     },
     {
       "game": "원피스 카드",
@@ -149,12 +118,7 @@
       "status": "재확인 대기",
       "verified": false,
       "error": "HTTPError",
-      "collected_at": "2026-09-13T01:03:06+00:00",
-      "link_checked_at": "2026-09-13T07:01:44+00:00",
-      "link_statuses": {
-        "source": "사이트 접속 제한 · 브라우저 이용 가능 (HTTP 403)"
-      },
-      "link_status": "사이트 접속 제한 · 브라우저 이용 가능 (HTTP 403)"
+      "collected_at": "2026-09-13T01:03:06+00:00"
     },
     {
       "game": "포켓몬 카드",
@@ -169,13 +133,7 @@
       "status": "재확인 대기",
       "verified": false,
       "error": "HTTPError",
-      "collected_at": "2026-09-13T01:03:07+00:00",
-      "link_checked_at": "2026-09-13T07:01:44+00:00",
-      "link_statuses": {
-        "source": "사이트 접속 제한 · 브라우저 이용 가능 (HTTP 403)"
-      },
-      "link_status": "사이트 접속 제한 · 브라우저 이용 가능 (HTTP 403)"
+      "collected_at": "2026-09-13T01:03:07+00:00"
     }
-  ],
-  "link_audit_at": "2026-09-13T07:01:44+00:00"
+  ]
 }

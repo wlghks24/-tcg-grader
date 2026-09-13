@@ -10,16 +10,20 @@ retained and the source is marked degraded instead of replacing facts with empti
 from __future__ import annotations
 
 from datetime import datetime, timezone
+from email.utils import parsedate_to_datetime
 from hashlib import sha256
 from html import unescape
 from html.parser import HTMLParser
 from pathlib import Path
 from urllib.parse import urljoin, urlsplit
 import json
+import math
 import re
+import time
+import urllib.error
 import urllib.request
 
-from safe_runtime import atomic_write_json, diagnostic_exception, safe_read_text, safe_urlopen
+from safe_runtime import atomic_write_json, diagnostic_exception, safe_read_text, safe_urlopen, validate_public_https_url
 
 ROOT = Path(__file__).resolve().parent
 OUT = ROOT / "grading_company_updates.json"
@@ -27,7 +31,7 @@ UA = "Mozilla/5.0 TCG-Grader-GradingCompanyWatch/1.0"
 MAX_PAGE_BYTES = 2_000_000
 MAX_HISTORY = 240
 MAX_ANNOUNCEMENTS = 120
-PARSER_VERSION = 2
+PARSER_VERSION = 3
 
 ALLOWED_HOSTS = {
     "psacard.com", "www.psacard.com",
@@ -71,6 +75,106 @@ WATCH_SOURCES = {
          "url": "https://break.co.kr/"},
     ),
 }
+
+# Official product pages provide machine-readable offers when the pricing
+# overview renders its service table as an image. Require the whole tier set.
+TAG_PRODUCT_SOURCES = {
+    "Basic": "https://taggrading.com/products/grading-regular-new",
+    "Standard": "https://taggrading.com/products/grading-standard",
+    "Express": "https://taggrading.com/products/grading-express",
+    "Priority": "https://taggrading.com/collections/grading-services-official/products/grading-priority",
+    "Walkthrough": "https://taggrading.com/products/grading-walkthrough",
+}
+
+
+def parse_tag_product_offers(raw: str, name: str, source: str) -> dict:
+    """Read only the named official product's offers, never review/add-on prices."""
+    if source != TAG_PRODUCT_SOURCES.get(name) or not _source_host_allowed(source):
+        raise ValueError("unapproved TAG product source")
+    products = []
+    for block in re.findall(r"<script\b[^>]*type=[\"']application/ld\+json[\"'][^>]*>(.*?)</script>", raw, re.I | re.S):
+        try:
+            value = json.loads(block)
+        except (TypeError, ValueError):
+            continue
+        nodes = value if isinstance(value, list) else [value]
+        for node in nodes:
+            if isinstance(node, dict) and node.get("@type") == "Product":
+                products.append(node)
+    expected = "GRADING | " + name.upper()
+    matches = [p for p in products if str(p.get("name", "")).strip().upper() == expected]
+    # The sold-out Express template omits JSON-LD but embeds the same
+    # product/variant data as JSON (Shopify prices are integer minor units).
+    if not matches:
+        blocks = re.findall(r"<script\b(?=[^>]*\bid=[\"']tpo-store-data[\"'])[^>]*>(.*?)</script>", raw, re.I | re.S)
+        if len(blocks) == 1:
+            try:
+                data = json.loads(blocks[0])
+                product = data["product"]
+                if (product["title"].strip().upper() == expected
+                        and product["handle"] == urlsplit(source).path.rsplit("/", 1)[-1]
+                        and data["shop"]["money_with_currency_format"].strip().endswith(" USD")):
+                    offers = []
+                    for variant in product["variants"]:
+                        if type(variant["price"]) is not int or type(variant["available"]) is not bool:
+                            raise ValueError("invalid TAG variant")
+                        offers.append({"@type": "Offer", "url": source,
+                                       "priceCurrency": "USD", "price": variant["price"] / 100,
+                                       "availability": "https://schema.org/" + ("InStock" if variant["available"] else "OutOfStock")})
+                    matches = [{"name": product["title"], "url": source, "offers": offers}]
+            except (KeyError, TypeError, ValueError, AttributeError):
+                pass
+    if len(matches) != 1:
+        raise ValueError("TAG product identity missing or ambiguous")
+    product = matches[0]
+    slug = urlsplit(source).path.rsplit("/products/", 1)[-1]
+
+    def same_product(url):
+        return (isinstance(url, str) and _source_host_allowed(url)
+                and urlsplit(url).hostname == "taggrading.com"
+                and urlsplit(url).path.rsplit("/products/", 1)[-1] == slug)
+
+    if not same_product(product.get("url")):
+        raise ValueError("TAG product URL mismatch")
+    offers = product.get("offers")
+    offers = [offers] if isinstance(offers, dict) else offers
+    if not isinstance(offers, list) or not offers or len(offers) > 100:
+        raise ValueError("TAG product offers missing")
+    prices, states = [], []
+    availability = {"InStock": "open", "OutOfStock": "paused", "SoldOut": "paused"}
+    for offer in offers:
+        if (not isinstance(offer, dict) or offer.get("@type") != "Offer"
+                or offer.get("priceCurrency") != "USD" or not same_product(offer.get("url"))):
+            raise ValueError("TAG offer provenance or currency mismatch")
+        value = offer.get("price")
+        if isinstance(value, bool):
+            raise ValueError("invalid TAG offer price")
+        price = float(value)
+        if not math.isfinite(price) or not 5 <= price <= 50_000:
+            raise ValueError("invalid TAG offer price")
+        state = str(offer.get("availability", ""))
+        if state not in {prefix + key for prefix in ("https://schema.org/", "http://schema.org/") for key in availability}:
+            raise ValueError("unknown TAG offer availability")
+        prices.append(price)
+        states.append(availability[state.rsplit("/", 1)[-1]])
+    # If any variant is purchasable, quote the lowest purchasable variant.
+    eligible = [price for price, state in zip(prices, states) if state == "open"] or prices
+    return {"name": name, "observed_label": product["name"], "currency": "USD",
+            "fee": min(eligible), "fee_basis": "lowest_available_variant_or_listed_if_paused",
+            "availability": "open" if "open" in states else "paused",
+            "source": source, "verified_official_source": True,
+            "parser_version": PARSER_VERSION, "evidence_format": "official_product_structured_offers"}
+
+
+def fetch_tag_product_services(fetcher) -> list[dict]:
+    # Fail atomically: one missing tier must retain the previous complete snapshot.
+    rows = []
+    for name, url in TAG_PRODUCT_SOURCES.items():
+        if not _source_host_allowed(url) or urlsplit(url).hostname != "taggrading.com":
+            raise ValueError("unapproved TAG product source")
+        rows.append(parse_tag_product_offers(fetcher(url), name, url))
+    return rows
+
 
 SERVICE_ALIASES = {
     ("PSA", "US"): {
@@ -157,21 +261,64 @@ def _text(raw: str) -> str:
     return re.sub(r"\s+", " ", unescape(raw)).strip()
 
 
+def _transient_retry_delay(exc: Exception) -> float | None:
+    """One short retry for transport failures; never retry access/policy denial."""
+    if isinstance(exc, urllib.error.HTTPError):
+        if exc.code not in {502, 503, 504}:
+            return None
+        value = exc.headers.get("Retry-After") if exc.headers else None
+        if value is not None:
+            try:
+                delay = float(int(value.strip())) if value.strip().isdigit() else (
+                    parsedate_to_datetime(value) - datetime.now(timezone.utc)
+                ).total_seconds()
+            except (ValueError, TypeError, OverflowError, AttributeError):
+                return None
+            # Do not ignore server-directed waits or stall a collection job.
+            return max(0.0, delay) if math.isfinite(delay) and delay <= 2 else None
+        return 1.0
+    reason = exc.reason if isinstance(exc, urllib.error.URLError) else exc
+    return 1.0 if isinstance(reason, (TimeoutError, ConnectionResetError)) else None
+
+
 def _fetch_raw(url: str) -> str:
     req = urllib.request.Request(url, headers={
         "User-Agent": UA,
         "Accept-Language": "ko-KR,ja-JP;q=0.9,en-US;q=0.8,en;q=0.7",
     })
-    with safe_urlopen(req, timeout=20, allowed_hosts=ALLOWED_HOSTS, max_redirects=3) as response:
-        return response.read(MAX_PAGE_BYTES).decode("utf-8", "ignore")
+    for attempt in range(2):
+        try:
+            with safe_urlopen(req, timeout=20, allowed_hosts=ALLOWED_HOSTS, max_redirects=3) as response:
+                return response.read(MAX_PAGE_BYTES).decode("utf-8", "ignore")
+        except (OSError, ValueError) as exc:
+            delay = _transient_retry_delay(exc) if attempt == 0 else None
+            if delay is None:
+                raise
+            if isinstance(exc, urllib.error.HTTPError):
+                exc.close()
+            time.sleep(delay)
 
 
 def _source_host_allowed(url: str) -> bool:
     try:
+        validate_public_https_url(url, allowed_hosts=ALLOWED_HOSTS)
         parts = urlsplit(url)
-    except ValueError:
+    except (TypeError, ValueError):
         return False
     return parts.scheme == "https" and (parts.hostname or "").lower() in ALLOWED_HOSTS
+
+
+def official_record_tree(value) -> bool:
+    """Validate provenance URLs throughout retained and published records."""
+    if isinstance(value, dict):
+        for key, item in value.items():
+            if key in {"url", "source"} and not _source_host_allowed(item):
+                return False
+            if not official_record_tree(item):
+                return False
+    elif isinstance(value, list):
+        return all(official_record_tree(item) for item in value)
+    return True
 
 
 def _window(text: str, alias: str, radius: int = 420) -> str | None:
@@ -246,6 +393,8 @@ def _availability(window: str) -> str:
 
 
 def parse_services(company: str, market: str, currency: str, text: str, source: str) -> list[dict]:
+    if not _source_host_allowed(source):
+        return []
     rows: list[dict] = []
     for canonical, aliases in SERVICE_ALIASES.get((company, market), {}).items():
         best: tuple[str, str] | None = None
@@ -387,12 +536,21 @@ def collect(previous: dict | None = None, fetcher=_fetch_raw) -> dict:
         for spec in specs:
             source_id = spec["id"]
             old = prev_sources.get(source_id, {}) if isinstance(prev_sources.get(source_id), dict) else {}
+            if old.get("url") != spec["url"] or not official_record_tree(old):
+                old = {}
             try:
+                if not _source_host_allowed(spec["url"]):
+                    raise ValueError("unapproved official source")
                 raw = fetcher(spec["url"])
                 text = _text(raw)
                 if len(text) < 80:
                     raise ValueError("official page body too short")
                 services = parse_services(company, spec["market"], spec["currency"], text, spec["url"]) if "pricing" in spec["kind"] else []
+                if company == "TAG" and "pricing" in spec["kind"] and not services:
+                    try:
+                        services = fetch_tag_product_services(fetcher)
+                    except Exception as exc:
+                        raise ValueError("pricing parser yielded zero verified services; TAG official fallback failed: " + diagnostic_exception(exc)) from exc
                 if "pricing" in spec["kind"] and not services:
                     raise ValueError("pricing parser yielded zero verified services")
                 found = extract_announcements(raw, spec["url"], company, source_id) if spec["kind"] in {"news", "events", "pricing_news"} else []
@@ -473,7 +631,7 @@ def collect(previous: dict | None = None, fetcher=_fetch_raw) -> dict:
 
     announcement_map: dict[tuple[str, str, str], dict] = {}
     for row in [*previous_announcements, *announcements]:
-        if isinstance(row, dict) and row.get("url") and row.get("title"):
+        if isinstance(row, dict) and row.get("url") and row.get("title") and official_record_tree(row):
             announcement_map[_announcement_key(row)] = row
     merged_announcements = list(announcement_map.values())[-MAX_ANNOUNCEMENTS:]
 
@@ -481,7 +639,7 @@ def collect(previous: dict | None = None, fetcher=_fetch_raw) -> dict:
     seen_changes: set[str] = set()
     merged_history: list[dict] = []
     for row in [*prior_history, *changes]:
-        if not isinstance(row, dict):
+        if not isinstance(row, dict) or not official_record_tree(row):
             continue
         stable = {k: v for k, v in row.items() if k != "detected_at"}
         key = sha256(json.dumps(stable, ensure_ascii=False, sort_keys=True, allow_nan=False).encode("utf-8")).hexdigest()
@@ -495,6 +653,10 @@ def collect(previous: dict | None = None, fetcher=_fetch_raw) -> dict:
     return {
         "schema_version": 1,
         "checked_at": checked_at,
+        "updated_at": checked_at,
+        "collection_status": ("정상" if ok_sources == len(health_rows) else "감정업체 일부 출처 확인 실패 · 검증된 기존자료 보존"),
+        "collection_errors": [f"{row['source_id']}: {row.get('error', 'source degraded')}"
+                              for row in health_rows if row["status"] != "ok"],
         "policy": {
             "official_sources_only": True,
             "community_posts_are_leads_only": True,
