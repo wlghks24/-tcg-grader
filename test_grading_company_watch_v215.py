@@ -274,5 +274,57 @@ class GradingCompanyWatchV215Tests(unittest.TestCase):
         self.assertEqual(len(data["announcements"]), 1)
 
 
+    def test_bgs_current_layout_parses_base_variants_and_tier_local_availability(self):
+        source = "https://www.beckett.com/grading"
+        text = (
+            "Base 75+ business days $14.95 per card $3 fee for any 10s where subgrades are added "
+            "Sold Out Without Subgrades Notify me $17.95 per card Sold Out Subgrades Notify me "
+            "Standard 45 business days $34.95 per card Sold Out Subgrades Notify me "
+            "Express 15 business days $79.95 per card Subgrades Submit Now "
+            "Priority 5 business days $124.95 per card Subgrades Submit Now"
+        )
+        rows = watch.parse_services("BGS", "US", "USD", text, source)
+        by = {row["name"]: row for row in rows}
+        self.assertEqual(set(by), {"Base", "Base + Subgrades", "Standard", "Express", "Priority"})
+        self.assertEqual(by["Base"]["fee"], 14.95)
+        self.assertEqual(by["Base + Subgrades"]["fee"], 17.95)
+        self.assertEqual(by["Standard"]["fee"], 34.95)
+        self.assertEqual(by["Express"]["fee"], 79.95)
+        self.assertEqual(by["Priority"]["fee"], 124.95)
+        self.assertEqual(by["Base"]["turnaround_business_days"], 75)
+        self.assertEqual(by["Standard"]["turnaround_business_days"], 45)
+        self.assertEqual(by["Express"]["turnaround_business_days"], 15)
+        self.assertEqual(by["Priority"]["turnaround_business_days"], 5)
+        self.assertEqual(by["Base"]["availability"], "paused")
+        self.assertEqual(by["Base + Subgrades"]["availability"], "paused")
+        self.assertEqual(by["Standard"]["availability"], "paused")
+        self.assertEqual(by["Express"]["availability"], "open")
+        self.assertEqual(by["Priority"]["availability"], "open")
+
+    def test_bgs_partial_layout_fails_closed_instead_of_publishing_mixed_tiers(self):
+        text = "Base 75+ business days $14.95 per card Sold Out Without Subgrades $17.95 per card Sold Out Subgrades"
+        self.assertEqual(watch.parse_services("BGS", "US", "USD", text, "https://www.beckett.com/grading"), [])
+
+    def test_psa_overlapping_aliases_do_not_duplicate_longer_tiers(self):
+        source = "https://www.psacard.com/services/t"
+        text = (
+            "Currently Unavailable Value Bulk Max Insured Value: $500 "
+            "Currently Unavailable Value Max Insured Value: $500 "
+            "Currently Unavailable Value Plus Max Insured Value: $500 "
+            "Currently Unavailable Value Max Max Insured Value: $1,000 "
+            "Regular $79.99/Card Max Insured Value: $1,500 Estimated Turnaround Time: 70 - 80 Business Days Get Started "
+            "Express $149.00/Card Max Insured Value: $2,500 Estimated Turnaround Time: 20 - 30 Business Days Get Started "
+            "Super Express $299.00/Card Max Insured Value: $5,000 Estimated Turnaround Time: 10 Business Days Get Started"
+        )
+        rows = watch.parse_services("PSA", "US", "USD", text, source)
+        by = {row["name"]: row for row in rows}
+        self.assertEqual(by["Value Bulk"]["max_declared_or_insured_value"], 500.0)
+        self.assertEqual(by["Value"]["max_declared_or_insured_value"], 500.0)
+        self.assertEqual(by["Value Plus"]["max_declared_or_insured_value"], 500.0)
+        self.assertEqual(by["Value Max"]["max_declared_or_insured_value"], 1000.0)
+        self.assertEqual(by["Express"]["fee"], 149.0)
+        self.assertEqual(by["Super Express"]["fee"], 299.0)
+
+
 if __name__ == "__main__":
     unittest.main()

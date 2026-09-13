@@ -183,6 +183,71 @@ def _window(text: str, alias: str, radius: int = 420) -> str | None:
     return text[match.start():min(len(text), match.end() + radius)]
 
 
+def _nonoverlap_alias_match(text: str, alias: str, peer_aliases: tuple[str, ...]) -> re.Match[str] | None:
+    """Find a PSA tier label, not a substring inside another tier or field label."""
+    pattern = re.compile(rf"(?<!\w){re.escape(alias)}(?!\w)", re.I)
+    lower_alias = alias.casefold()
+    peers = tuple(value for value in peer_aliases if value.casefold() != lower_alias)
+    for match in pattern.finditer(text):
+        start, end = match.span()
+        # PSA repeatedly uses service-name words inside field labels. Reject those
+        # field-label occurrences before comparing against longer peer tier names.
+        if lower_alias == "value":
+            prefix = text[max(0, start - 32):start]
+            if re.search(r"(?i)(?:insured|declared|max)\s+$", prefix):
+                continue
+        if lower_alias == "value max":
+            suffix = text[end:end + 32]
+            if re.match(r"(?i)\s+(?:insured|declared)\s+value\b", suffix):
+                continue
+        contaminated = False
+        for peer in peers:
+            folded = peer.casefold()
+            if folded.startswith(lower_alias):
+                tail = peer[len(alias):]
+                if tail and text[end:end + len(tail)].casefold() == tail.casefold():
+                    # "Value Max Insured Value" is the Value tier followed by
+                    # its Max Insured Value field. The actual Value Max tier is
+                    # rendered as "Value Max Max Insured Value".
+                    if lower_alias == "value" and folded == "value max":
+                        after_peer = text[end + len(tail):end + len(tail) + 32]
+                        if re.match(r"(?i)\s+(?:insured|declared)\s+value\b", after_peer):
+                            continue
+                    contaminated = True
+                    break
+            if folded.endswith(lower_alias):
+                head = peer[:-len(alias)]
+                if head and text[max(0, start - len(head)):start].casefold() == head.casefold():
+                    contaminated = True
+                    break
+        if not contaminated:
+            return match
+    return None
+
+
+def _psa_service_window(text: str, alias: str, peer_aliases: tuple[str, ...], radius: int = 520) -> str | None:
+    """Bound one PSA tier and keep only its immediately preceding status marker."""
+    match = _nonoverlap_alias_match(text, alias, peer_aliases)
+    if not match:
+        return None
+    start = match.start()
+    prefix_start = max(0, start - 48)
+    prefix = text[prefix_start:start]
+    unavailable = re.search(r"(?i)currently\s+unavailable\s*$", prefix)
+    if unavailable:
+        start = prefix_start + unavailable.start()
+    end = min(len(text), match.end() + radius)
+    next_starts = []
+    remainder = text[match.end():]
+    for peer in peer_aliases:
+        peer_match = _nonoverlap_alias_match(remainder, peer, peer_aliases)
+        if peer_match:
+            next_starts.append(match.end() + peer_match.start())
+    if next_starts:
+        end = min(end, min(next_starts))
+    return text[start:end]
+
+
 def _tag_service_window(text: str, alias: str, radius: int = 520) -> str | None:
     """Return one TAG product-card segment without leaking the next tier's status.
 
@@ -265,16 +330,84 @@ def _availability(window: str) -> str:
     return "unknown"
 
 
-def parse_services(company: str, market: str, currency: str, text: str, source: str) -> list[dict]:
+def _service_row(name: str, observed_label: str, currency: str, source: str, *,
+                 fee=None, turnaround=None, max_value=None, availability: str = "unknown") -> dict:
+    row = {
+        "name": name, "observed_label": observed_label, "currency": currency,
+        "availability": availability, "source": source, "verified_official_source": True,
+        "parser_version": PARSER_VERSION,
+    }
+    if fee is not None:
+        row["fee"] = fee
+    if turnaround is not None:
+        row["turnaround_business_days"] = turnaround
+    if max_value is not None:
+        row["max_declared_or_insured_value"] = max_value
+    return row
+
+
+def _parse_bgs_services(currency: str, text: str, source: str) -> list[dict]:
+    """Parse Beckett's current tier cards, including both Base price variants."""
+    tier_names = ("Base", "Standard", "Express", "Priority")
+    markers: list[tuple[int, int, str, int]] = []
+    for name in tier_names:
+        pattern = re.compile(rf"(?i)\b{re.escape(name)}\b\s+(\d{{1,3}})\+?\s+business\s+days?")
+        match = pattern.search(text)
+        if not match:
+            # Fail closed: a partial layout must not be accepted as a current BGS table.
+            return []
+        markers.append((match.start(), match.end(), name, int(match.group(1))))
+    markers.sort()
+    segments: dict[str, tuple[str, int]] = {}
+    for index, (start, _end, name, days) in enumerate(markers):
+        stop = markers[index + 1][0] if index + 1 < len(markers) else min(len(text), start + 900)
+        segments[name] = (text[start:stop], days)
+
     rows: list[dict] = []
-    for canonical, aliases in SERVICE_ALIASES.get((company, market), {}).items():
+    base, base_days = segments["Base"]
+    base_prices = [float(value.replace(",", "")) for value in
+                   re.findall(r"\$\s*([0-9][0-9,]*(?:\.[0-9]{1,2})?)\s+per\s+card", base, re.I)]
+    if len(base_prices) != 2:
+        return []
+    first_price = re.search(r"\$\s*[0-9][0-9,]*(?:\.[0-9]{1,2})?\s+per\s+card", base, re.I)
+    second_price = list(re.finditer(r"\$\s*[0-9][0-9,]*(?:\.[0-9]{1,2})?\s+per\s+card", base, re.I))[1]
+    without_window = base[first_price.start():second_price.start()] if first_price else base[:second_price.start()]
+    with_window = base[second_price.start():]
+    rows.append(_service_row(
+        "Base", "Base / Without Subgrades", currency, source,
+        fee=base_prices[0], turnaround=base_days, availability=_availability(without_window),
+    ))
+    rows.append(_service_row(
+        "Base + Subgrades", "Base / Subgrades", currency, source,
+        fee=base_prices[1], turnaround=base_days, availability=_availability(with_window),
+    ))
+
+    for name in ("Standard", "Express", "Priority"):
+        segment, days = segments[name]
+        prices = [float(value.replace(",", "")) for value in
+                  re.findall(r"\$\s*([0-9][0-9,]*(?:\.[0-9]{1,2})?)\s+per\s+card", segment, re.I)]
+        if len(prices) != 1:
+            return []
+        rows.append(_service_row(
+            name, name, currency, source, fee=prices[0], turnaround=days,
+            availability=_availability(segment),
+        ))
+    return rows
+
+
+def _parse_alias_services(company: str, market: str, currency: str, text: str, source: str) -> list[dict]:
+    rows: list[dict] = []
+    alias_map = SERVICE_ALIASES.get((company, market), {})
+    peer_aliases = tuple(dict.fromkeys(alias for aliases in alias_map.values() for alias in aliases))
+    for canonical, aliases in alias_map.items():
         best: tuple[str, str] | None = None
         for alias in sorted(aliases, key=len, reverse=True):
-            win = (
-                _tag_service_window(text, alias)
-                if (company, market) == ("TAG", "US")
-                else _window(text, alias)
-            )
+            if (company, market) == ("TAG", "US"):
+                win = _tag_service_window(text, alias)
+            elif company == "PSA":
+                win = _psa_service_window(text, alias, peer_aliases)
+            else:
+                win = _window(text, alias)
             if win:
                 best = (alias, win)
                 break
@@ -284,28 +417,25 @@ def parse_services(company: str, market: str, currency: str, text: str, source: 
         fee = _price(win, currency)
         availability = _availability(win)
         if (company, market) == ("TAG", "US") and fee is not None and availability == "unknown":
-            # On TAG's official service collection, an individual tier card carrying
-            # a Quick buy control and no Sold Out marker is currently orderable.
             if re.search(r"(?i)\bquick\s+buy\b", win):
                 availability = "open"
         turnaround = _turnaround(win)
         max_value = _max_value(win, currency)
-        # A menu label alone is too weak to become a service fact.
         if fee is None and turnaround is None and max_value is None and availability != "paused":
             continue
-        row = {
-            "name": canonical, "observed_label": alias, "currency": currency,
-            "availability": availability, "source": source, "verified_official_source": True,
-            "parser_version": PARSER_VERSION,
-        }
-        if fee is not None:
-            row["fee"] = fee
-        if turnaround is not None:
-            row["turnaround_business_days"] = turnaround
-        if max_value is not None:
-            row["max_declared_or_insured_value"] = max_value
-        rows.append(row)
+        rows.append(_service_row(
+            canonical, alias, currency, source, fee=fee, turnaround=turnaround,
+            max_value=max_value, availability=availability,
+        ))
     return rows
+
+
+def parse_services(company: str, market: str, currency: str, text: str, source: str) -> list[dict]:
+    # Beckett's Base tier contains two distinct price variants inside one tier card,
+    # so a generic alias/radius parser cannot represent it safely. Keep it isolated.
+    if (company, market) == ("BGS", "US"):
+        return _parse_bgs_services(currency, text, source)
+    return _parse_alias_services(company, market, currency, text, source)
 
 
 def _relevant_fingerprint(text: str) -> str:
