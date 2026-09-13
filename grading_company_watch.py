@@ -62,7 +62,7 @@ WATCH_SOURCES = {
     ),
     "TAG": (
         {"id": "tag-pricing", "kind": "pricing", "market": "US", "currency": "USD",
-         "url": "https://taggrading.com/pages/pricing"},
+         "url": "https://taggrading.com/collections/grading-services-official"},
         {"id": "tag-home", "kind": "news", "market": "GLOBAL", "currency": "USD",
          "url": "https://taggrading.com/"},
     ),
@@ -183,6 +183,26 @@ def _window(text: str, alias: str, radius: int = 420) -> str | None:
     return text[match.start():min(len(text), match.end() + radius)]
 
 
+def _tag_service_window(text: str, alias: str, radius: int = 520) -> str | None:
+    """Return one TAG product-card segment without leaking the next tier's status.
+
+    TAG's official Shopify collection renders each grading tier as a repeated
+    "Quick buy ... GRADING | <tier> ..." card. Bounding the window at the next
+    card prevents a later tier's Sold Out state from contaminating the current one.
+    """
+    pattern = re.compile(
+        rf"(?i)(?:quick\s+buy\s+)?(?:tag\s+)?grading\s*\|\s*{re.escape(alias)}\b"
+    )
+    match = pattern.search(text)
+    if not match:
+        return _window(text, alias, radius)
+    next_card = re.search(r"(?i)\bquick\s+buy\b|(?:tag\s+)?grading\s*\|", text[match.end():])
+    end = min(len(text), match.end() + radius)
+    if next_card:
+        end = min(end, match.end() + next_card.start())
+    return text[match.start():end]
+
+
 def _price(window: str, currency: str) -> float | int | None:
     if currency == "JPY":
         values = [int(v.replace(",", "")) for v in re.findall(r"[￥¥]\s*([0-9][0-9,]*)", window)]
@@ -250,7 +270,11 @@ def parse_services(company: str, market: str, currency: str, text: str, source: 
     for canonical, aliases in SERVICE_ALIASES.get((company, market), {}).items():
         best: tuple[str, str] | None = None
         for alias in sorted(aliases, key=len, reverse=True):
-            win = _window(text, alias)
+            win = (
+                _tag_service_window(text, alias)
+                if (company, market) == ("TAG", "US")
+                else _window(text, alias)
+            )
             if win:
                 best = (alias, win)
                 break
@@ -259,6 +283,11 @@ def parse_services(company: str, market: str, currency: str, text: str, source: 
         alias, win = best
         fee = _price(win, currency)
         availability = _availability(win)
+        if (company, market) == ("TAG", "US") and fee is not None and availability == "unknown":
+            # On TAG's official service collection, an individual tier card carrying
+            # a Quick buy control and no Sold Out marker is currently orderable.
+            if re.search(r"(?i)\bquick\s+buy\b", win):
+                availability = "open"
         turnaround = _turnaround(win)
         max_value = _max_value(win, currency)
         # A menu label alone is too weak to become a service fact.

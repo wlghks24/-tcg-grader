@@ -173,5 +173,37 @@ class GradingCompanyWatchV215Tests(unittest.TestCase):
         self.assertFalse(data["policy"]["automatic_source_code_mutation"])
 
 
+    def test_tag_official_collection_layout_parses_price_and_stock_per_tier(self):
+        source = "https://taggrading.com/collections/grading-services-official"
+        text = (
+            "TAG GRADING SERVICES OFFICIAL "
+            "Quick buy GRADING | BASIC From $22.00 USD Sold Out "
+            "Quick buy GRADING | STANDARD From $39.00 USD Sold Out "
+            "Quick buy GRADING | EXPRESS $79.00 USD Sold Out "
+            "Quick buy GRADING | PRIORITY $149.00 USD "
+            "Quick buy GRADING | WALKTHROUGH $299.00 USD"
+        )
+        rows = watch.parse_services("TAG", "US", "USD", text, source)
+        by = {row["name"]: row for row in rows}
+        self.assertEqual(set(by), {"Basic", "Standard", "Express", "Priority", "Walkthrough"})
+        self.assertEqual(by["Basic"]["fee"], 22.0)
+        self.assertEqual(by["Standard"]["fee"], 39.0)
+        self.assertEqual(by["Express"]["fee"], 79.0)
+        self.assertEqual(by["Priority"]["fee"], 149.0)
+        self.assertEqual(by["Walkthrough"]["fee"], 299.0)
+        self.assertEqual(by["Basic"]["availability"], "paused")
+        self.assertEqual(by["Standard"]["availability"], "paused")
+        self.assertEqual(by["Express"]["availability"], "paused")
+        self.assertEqual(by["Priority"]["availability"], "open")
+        self.assertEqual(by["Walkthrough"]["availability"], "open")
+        self.assertTrue(all(row["source"] == source for row in rows))
+
+    def test_tag_pricing_source_uses_official_service_collection_without_widening_hosts(self):
+        spec = next(row for row in watch.WATCH_SOURCES["TAG"] if row["id"] == "tag-pricing")
+        self.assertEqual(spec["url"], "https://taggrading.com/collections/grading-services-official")
+        self.assertTrue(watch._source_host_allowed(spec["url"]))
+        self.assertNotIn("help.taggrading.com", watch.ALLOWED_HOSTS)
+
+
 if __name__ == "__main__":
     unittest.main()
