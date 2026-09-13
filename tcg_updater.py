@@ -203,7 +203,7 @@ SEARCH_LIMIT_WINDOW_SECONDS=10.0
 SEARCH_LIMIT_REQUESTS=12
 UPDATE_JOB={
     'id':None,'state':'idle','trigger':None,'started_at':None,'finished_at':None,
-    'current':0,'total':7,'label':'대기 중','file':None,'message':'대기 중',
+    'current':0,'total':0,'label':'대기 중','file':None,'message':'대기 중',
     'error':None,'report':None,'retry_only':False,
 }
 GRADED_PHOTO_JOB_LOCK=threading.Lock()
@@ -771,7 +771,11 @@ def update_cycle(trigger='manual', progress_callback=None):
 
 def _job_snapshot():
     with UPDATE_JOB_LOCK:
-        return copy.deepcopy(UPDATE_JOB)
+        snapshot=copy.deepcopy(UPDATE_JOB)
+    # Idle state has no active step yet; expose the live job-count SSOT instead of a stale banner count.
+    if int(snapshot.get('total') or 0) <= 0:
+        snapshot['total']=_full_update_job_count()
+    return snapshot
 
 def _job_set(**changes):
     with UPDATE_JOB_LOCK:

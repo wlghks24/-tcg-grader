@@ -27,15 +27,20 @@ RETAILER_CATEGORIES = {
 UNVERIFIED_INVENTORY = "TCG 취급·재고 미확인 · 방문 전 공식 매장/전화 확인"
 TIMEOUT_SECONDS = env_int('TCG_HTTP_TIMEOUT',20,5,60)
 MAX_ONLINE_CHECKS = 12
+POKEMON_KR_PRODUCT_INDEX = "https://pokemoncard.co.kr/card/category/info1"
+POKEMON_KR_CARD_SHOP_DIRECTORY = "https://pokemonkorea.co.kr/BeginnerChallenge"
+POKEMON_KR_LEGACY_CARD_ROOTS = {
+    "https://new.pokemonkorea.co.kr/card",
+    "https://new.pokemonkorea.co.kr/card/",
+    "https://pokemoncard.co.kr/card/225",
+    "https://pokemoncard.co.kr/card/category/product",
+}
 CANONICAL_URLS = {
     "https://events.pokemon.com/en-us/locations": "https://events.pokemon.com/EventLocator",
     "https://www.gamestop.com/stores/": "https://www.gamestop.com/stores",
-    "https://pokemoncard.co.kr/": "https://new.pokemonkorea.co.kr/card",
-    "https://www.pokemoncard.co.kr/": "https://new.pokemonkorea.co.kr/card",
-    "https://pokemoncard.co.kr/card/225": "https://new.pokemonkorea.co.kr/card",
-    "https://pokemoncard.co.kr/card/category/product": "https://new.pokemonkorea.co.kr/card",
-    "https://pokemonkorea.co.kr/": "https://new.pokemonkorea.co.kr/card",
-    "https://www.pokemonkorea.co.kr/": "https://new.pokemonkorea.co.kr/card",
+    "https://pokemoncard.co.kr/": POKEMON_KR_PRODUCT_INDEX,
+    "https://www.pokemoncard.co.kr/": POKEMON_KR_PRODUCT_INDEX,
+    "https://pokemoncard.co.kr/card/category/product": POKEMON_KR_PRODUCT_INDEX,
 }
 
 # 주소·좌표는 거리 정렬용이며, 카드 재고는 매장별 전화/지도 검색으로만 확정한다.
@@ -127,7 +132,7 @@ RETAIL_CHANNEL_DEFINITIONS = (
     ("토이저러스 완구점", "toy", "토이저러스", None),
     ("완구할인점", "toy", "완구할인점", None),
     ("동네 장난감·완구점", "toy", "장난감 완구점", None),
-    ("포켓몬 카드 전문점", "cardshop", "포켓몬 카드샵", "https://pokemoncard.co.kr/card/225"),
+    ("포켓몬 카드 전문점", "cardshop", "포켓몬 카드샵", POKEMON_KR_CARD_SHOP_DIRECTORY),
     ("원피스 카드 전문점", "cardshop", "원피스 카드샵", "https://www.onepiece-cardgame.kr/shoplist.do"),
     ("TCG 트레이딩카드 전문점", "cardshop", "TCG 카드샵 카드게임", None),
     ("보드게임·취미 전문점", "cardshop", "보드게임 카드게임 전문점", None),
@@ -165,7 +170,7 @@ OFFICIAL_CHAIN_HOSTS = {
     "아트박스": {"company.artbox.kr"},
     "교보문고 핫트랙스": {"store.kyobobook.co.kr"},
     "토이킹덤": {"store.emart.com"},
-    "포켓몬 카드샵": {"pokemoncard.co.kr", "www.pokemoncard.co.kr", "new.pokemonkorea.co.kr"},
+    "포켓몬 카드샵": {"pokemoncard.co.kr", "www.pokemoncard.co.kr", "pokemonkorea.co.kr", "www.pokemonkorea.co.kr"},
     "원피스 카드샵": {"www.onepiece-cardgame.kr"},
     "다이소": {"www.daisomall.co.kr"},
     "노브랜드": {"store.emart.com"},
@@ -319,6 +324,36 @@ def checked_url(value: str, template: bool = False) -> str:
     return CANONICAL_URLS.get(value, value)
 
 
+def _canonicalize_pokemon_kr_source(clean: dict) -> dict:
+    """Migrate ambiguous legacy Korean Pokémon links by source role, not host alone."""
+    name = str(clean.get("name") or "")
+    chain = str(clean.get("chain") or "")
+    original = str(clean.get("original_url") or "")
+    category = str(clean.get("retailer_category") or "")
+    current_url = str(clean.get("url") or "")
+    current_reference = str(clean.get("official_reference_url") or "")
+    is_cardshop = (
+        chain == "포켓몬 카드샵"
+        or category == "cardshop" and "포켓몬" in name
+        or "공인 카드샵" in name
+        or original == "https://pokemoncard.co.kr/card/225"
+    )
+    is_product = (
+        name == "포켓몬 카드 게임 코리아 제품"
+        or original == "https://pokemoncard.co.kr/card/category/product"
+    )
+    if is_cardshop:
+        if current_url in POKEMON_KR_LEGACY_CARD_ROOTS or current_url.startswith("https://pokemoncard.co.kr/card/225"):
+            clean["url"] = POKEMON_KR_CARD_SHOP_DIRECTORY
+        if current_reference in POKEMON_KR_LEGACY_CARD_ROOTS or current_reference.startswith("https://pokemoncard.co.kr/card/225"):
+            clean["official_reference_url"] = POKEMON_KR_CARD_SHOP_DIRECTORY
+    elif is_product:
+        if current_url in POKEMON_KR_LEGACY_CARD_ROOTS:
+            clean["url"] = POKEMON_KR_PRODUCT_INDEX
+        if current_reference in POKEMON_KR_LEGACY_CARD_ROOTS:
+            clean["official_reference_url"] = POKEMON_KR_PRODUCT_INDEX
+    return clean
+
 
 def resolve_public_host(host: str) -> None:
     """Block DNS names that resolve to loopback/private/link-local/reserved addresses."""
@@ -355,6 +390,7 @@ def normalize_source(source: dict) -> dict:
     if clean.get("channel", "online") not in {"online", "offline"}:
         raise ValueError("구매처 채널 오류")
     clean["retailer_category"] = retailer_category(clean)
+    clean = _canonicalize_pokemon_kr_source(clean)
     chain = clean.get("chain")
     if chain is not None and (not isinstance(chain, str) or not chain.strip()
                               or len(chain) > 80 or any(ord(char) < 32 for char in chain)):

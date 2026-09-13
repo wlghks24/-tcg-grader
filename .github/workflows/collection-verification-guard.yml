@@ -1,5 +1,5 @@
 name: Collection Verification Guard
-# final verification trigger v231 — grading status contract aligned
+# final verification trigger v234 — direct 8-stage dependency coverage
 
 on:
   workflow_dispatch:
@@ -9,14 +9,19 @@ on:
       - 'test_collection_verification_gate.py'
       - 'tcg_updater.py'
       - 'auto_update_all.py'
+      - 'auto_repair_engine.py'
+      - 'collector_self_healing.py'
+      - 'safe_runtime.py'
       - 'update_market_watch.py'
       - 'update_market_prices.py'
       - 'market_public_crosscheck.py'
+      - 'box_hit_market_discovery.py'
       - 'test_market_public_crosscheck_resilience_v228.py'
       - 'test_collection_restored_state_guard_v229.py'
       - 'test_release_history_cumulative_coverage_v229.py'
       - 'multi_market_price_collector.py'
       - 'update_releases.py'
+      - 'release_parser_learning.py'
       - 'release_history_backfill.py'
       - 'update_promo_events.py'
       - 'update_purchase_sources.py'
@@ -24,10 +29,18 @@ on:
       - 'grading_company_watch.py'
       - 'grading_company_updates.json'
       - 'graded_photo_multi_source.py'
+      - 'detailed_collection_intelligence.py'
+      - 'graded_photo_evidence.py'
+      - 'grading_cert_verifier.py'
+      - 'ebay_grader_learning.py'
+      - 'multi_channel_agent.py'
+      - 'social_stock_discovery.py'
       - 'verified_collection_job_neural.py'
+      - 'verified_collection_neural.py'
       - 'validate_external_links.py'
       - 'feature_contract.py'
       - 'runtime_bundle_guard_v143.py'
+      - 'test_runtime_bundle_guard_v143.py'
       - 'multi_route_event_discovery.py'
       - 'social_event_discovery.py'
       - 'auto_pipeline_runner.py'
@@ -52,14 +65,19 @@ on:
       - 'test_collection_verification_gate.py'
       - 'tcg_updater.py'
       - 'auto_update_all.py'
+      - 'auto_repair_engine.py'
+      - 'collector_self_healing.py'
+      - 'safe_runtime.py'
       - 'update_market_watch.py'
       - 'update_market_prices.py'
       - 'market_public_crosscheck.py'
+      - 'box_hit_market_discovery.py'
       - 'test_market_public_crosscheck_resilience_v228.py'
       - 'test_collection_restored_state_guard_v229.py'
       - 'test_release_history_cumulative_coverage_v229.py'
       - 'multi_market_price_collector.py'
       - 'update_releases.py'
+      - 'release_parser_learning.py'
       - 'release_history_backfill.py'
       - 'update_promo_events.py'
       - 'update_purchase_sources.py'
@@ -67,10 +85,18 @@ on:
       - 'grading_company_watch.py'
       - 'grading_company_updates.json'
       - 'graded_photo_multi_source.py'
+      - 'detailed_collection_intelligence.py'
+      - 'graded_photo_evidence.py'
+      - 'grading_cert_verifier.py'
+      - 'ebay_grader_learning.py'
+      - 'multi_channel_agent.py'
+      - 'social_stock_discovery.py'
       - 'verified_collection_job_neural.py'
+      - 'verified_collection_neural.py'
       - 'validate_external_links.py'
       - 'feature_contract.py'
       - 'runtime_bundle_guard_v143.py'
+      - 'test_runtime_bundle_guard_v143.py'
       - 'multi_route_event_discovery.py'
       - 'social_event_discovery.py'
       - 'auto_pipeline_runner.py'
@@ -110,7 +136,8 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
         with:
           persist-credentials: false
-          fetch-depth: 1
+          # PR regression policy compares the tested merge commit with its base parent.
+          fetch-depth: 2
       - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97
         with:
           python-version: '3.11'
@@ -119,17 +146,22 @@ jobs:
         run: |
           python -m py_compile \
             collection_verification_gate.py static_data_publish_gate.py feature_contract.py \
-            update_market_watch.py update_market_prices.py market_public_crosscheck.py release_history_backfill.py \
-            update_purchase_sources.py update_exchange_rates.py \
-            grading_company_watch.py graded_photo_multi_source.py verified_collection_job_neural.py \
-            validate_external_links.py \
+            tcg_updater.py auto_update_all.py auto_repair_engine.py collector_self_healing.py safe_runtime.py \
+            update_market_watch.py update_market_prices.py market_public_crosscheck.py box_hit_market_discovery.py \
+            update_releases.py release_parser_learning.py release_history_backfill.py \
+            update_purchase_sources.py update_exchange_rates.py update_promo_events.py \
+            grading_company_watch.py graded_photo_multi_source.py detailed_collection_intelligence.py \
+            graded_photo_evidence.py grading_cert_verifier.py ebay_grader_learning.py multi_channel_agent.py \
+            social_stock_discovery.py multi_route_event_discovery.py supplementary_discovery.py \
+            verified_collection_job_neural.py verified_collection_neural.py validate_external_links.py \
+            runtime_bundle_guard_v143.py \
             test_collection_verification_gate.py test_static_data_publish_gate.py \
             test_market_public_crosscheck_resilience_v228.py \
             test_collection_restored_state_guard_v229.py test_release_history_cumulative_coverage_v229.py \
             test_collection_scope_compat_v214.py test_social_event_topic_coverage.py \
             test_social_topic_capacity_v213.py test_information_lifecycle_archive_v209.py \
             test_grading_company_watch_v215.py test_grading_watch_integration_v220.py \
-            test_verified_collection_job_neural_v212.py
+            test_verified_collection_job_neural_v212.py test_runtime_bundle_guard_v143.py
           python -m unittest -v \
             test_collection_verification_gate.py \
             test_static_data_publish_gate.py \
@@ -161,10 +193,97 @@ jobs:
 
       - name: Verify collected evidence fail-closed
         run: |
-          python collection_verification_gate.py \
-            --max-health-age-seconds 900 \
-            --fail-on-degraded \
-            --report COLLECTION_VERIFICATION_REPORT.json
+          if [[ "$GITHUB_EVENT_NAME" == "pull_request" ]]; then
+            # Critical findings still fail inside the gate. High findings are then
+            # classified below so only a source outage already present on the PR base
+            # can be treated as an inherited operational warning.
+            python collection_verification_gate.py \
+              --max-health-age-seconds 900 \
+              --report COLLECTION_VERIFICATION_REPORT.json
+            python - <<'PY'
+          import json
+          import subprocess
+          from pathlib import Path
+
+          report = json.loads(Path('COLLECTION_VERIFICATION_REPORT.json').read_text(encoding='utf-8'))
+          high = [row for row in (report.get('findings') or []) if row.get('severity') == 'high']
+          if not high:
+              print('PR collection verification has no high findings')
+              raise SystemExit(0)
+
+          ambient_code = 'GRADING_COMPANY_NO_HEALTHY_SOURCE'
+          non_ambient = [row for row in high if row.get('code') != ambient_code]
+          if non_ambient:
+              raise SystemExit('PR introduced or exposed blocking high findings: ' + json.dumps(non_ambient, ensure_ascii=False))
+
+          # Never waive grading-source health when the PR itself changes the collector,
+          # network safety boundary, verification semantics, or mandatory job composition.
+          # tcg_updater is live-exercised above; presentation/progress-only changes there
+          # do not by themselves change grading-company source health.
+          changed = set(subprocess.check_output(
+              ['git', 'diff', '--name-only', 'HEAD^1', 'HEAD^2'], text=True
+          ).splitlines())
+          grading_sensitive = {
+              'grading_company_watch.py',
+              'grading_company_updates.json',
+              'collection_verification_gate.py',
+              'safe_runtime.py',
+              'auto_update_all.py',
+              'auto_repair_engine.py',
+              'collector_self_healing.py',
+              'verified_collection_job_neural.py',
+          }
+          touched = sorted(changed & grading_sensitive)
+          if touched:
+              raise SystemExit('grading-source degradation cannot be inherited when sensitive files changed: ' + ', '.join(touched))
+
+          base_payload = json.loads(subprocess.check_output(
+              ['git', 'show', 'HEAD^1:grading_company_updates.json'], text=True
+          ))
+
+          def no_healthy_companies(payload):
+              companies = payload.get('companies') if isinstance(payload, dict) else None
+              result = set()
+              if not isinstance(companies, dict):
+                  return result
+              for company, row in companies.items():
+                  health = row.get('source_health') if isinstance(row, dict) else None
+                  if not isinstance(health, list):
+                      result.add(str(company).upper())
+                      continue
+                  healthy = any(
+                      isinstance(item, dict) and str(item.get('status') or '').lower() in {'ok', 'healthy'}
+                      for item in health
+                  )
+                  if not healthy:
+                      result.add(str(company).upper())
+              return result
+
+          baseline = no_healthy_companies(base_payload)
+          current = set()
+          for row in high:
+              current.update(str(value).upper() for value in (row.get('companies') or []))
+          if not current:
+              raise SystemExit('grading-company high finding missing company evidence')
+          if not current.issubset(baseline):
+              raise SystemExit(
+                  'new grading-company source outage detected; '
+                  f'baseline={sorted(baseline)} current={sorted(current)}'
+              )
+          print(
+              '::warning title=Inherited grading-source outage::'
+              f'PR code/output contracts passed; base already had no healthy source for {sorted(current)}. '
+              'Operational main/manual verification remains strict.'
+          )
+          PY
+          else
+            # Main/manual operational verification remains strict: any degraded
+            # collection health still fails and keeps the fail-closed alert visible.
+            python collection_verification_gate.py \
+              --max-health-age-seconds 900 \
+              --fail-on-degraded \
+              --report COLLECTION_VERIFICATION_REPORT.json
+          fi
 
       - name: Validate verification safety contract
         if: always()
