@@ -357,5 +357,42 @@ class GradingCompanyWatchV215Tests(unittest.TestCase):
         self.assertTrue(all(row.get("failure_class") == "http_forbidden" for row in health))
 
 
+    def test_provider_parser_revisions_are_isolated_to_changed_pricing_parsers(self):
+        self.assertEqual(watch._service_parser_version("PSA", "US"), 3)
+        self.assertEqual(watch._service_parser_version("PSA", "JP"), 3)
+        self.assertEqual(watch._service_parser_version("BGS", "US"), 3)
+        self.assertEqual(watch._service_parser_version("CGC", "US"), watch.PARSER_VERSION)
+        self.assertEqual(watch._service_parser_version("TAG", "US"), watch.PARSER_VERSION)
+
+    def test_provider_parser_revision_upgrade_establishes_new_baseline(self):
+        spec = {"id": "psa-us-pricing", "kind": "pricing", "market": "US", "currency": "USD",
+                "url": "https://www.psacard.com/services/tradingcardgrading"}
+        previous = {"sources": {"psa-us-pricing": {
+            "company": "PSA", "source_id": "psa-us-pricing", "kind": "pricing", "market": "US",
+            "currency": "USD", "url": spec["url"], "status": "ok", "checked_at": "2026-09-12T00:00:00+00:00",
+            "signal_fingerprint": "old-parser-fingerprint", "verified_official_source": True,
+            "parser_version": watch.PARSER_VERSION,
+            "services": [{"name": "Express", "fee": 99.0, "availability": "open"}],
+            "announcements": [],
+        }}, "announcements": [], "history": []}
+        body = (
+            "Official PSA grading service pricing and turnaround information. "
+            "Regular $79.99/Card Max Insured Value: $1,500 Estimated Turnaround Time: 70 Business Days Get Started "
+            "Express $149.00/Card Max Insured Value: $2,500 Estimated Turnaround Time: 25 Business Days Get Started "
+            "Super Express $299.00/Card Max Insured Value: $5,000 Estimated Turnaround Time: 10 Business Days Get Started"
+        )
+        with mock.patch.object(watch, "WATCH_SOURCES", {"PSA": (spec,)}):
+            data = watch.collect(previous, fetcher=lambda _url: body)
+        source = data["sources"]["psa-us-pricing"]
+        self.assertEqual(source["parser_version"], 3)
+        self.assertTrue(source["services"])
+        self.assertFalse(any(
+            row.get("source_id") == "psa-us-pricing" and row.get("type") in {
+                "service_added", "service_removed", "service_changed", "official_page_changed_unparsed"
+            }
+            for row in data["recent_changes"]
+        ))
+
+
 if __name__ == "__main__":
     unittest.main()

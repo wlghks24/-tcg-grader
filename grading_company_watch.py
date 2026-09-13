@@ -28,6 +28,19 @@ MAX_PAGE_BYTES = 2_000_000
 MAX_HISTORY = 240
 MAX_ANNOUNCEMENTS = 120
 PARSER_VERSION = 2
+# Provider-specific revisions prevent a parser implementation change from being
+# misreported as a real grading-company price/service change. Unchanged providers
+# stay on the global parser version so they do not lose a detection cycle.
+SERVICE_PARSER_VERSIONS = {
+    ("PSA", "US"): 3,
+    ("PSA", "JP"): 3,
+    ("BGS", "US"): 3,
+}
+
+
+def _service_parser_version(company: str, market: str) -> int:
+    return SERVICE_PARSER_VERSIONS.get((company, market), PARSER_VERSION)
+
 
 ALLOWED_HOSTS = {
     "psacard.com", "www.psacard.com",
@@ -331,11 +344,12 @@ def _availability(window: str) -> str:
 
 
 def _service_row(name: str, observed_label: str, currency: str, source: str, *,
-                 fee=None, turnaround=None, max_value=None, availability: str = "unknown") -> dict:
+                 fee=None, turnaround=None, max_value=None, availability: str = "unknown",
+                 parser_version: int = PARSER_VERSION) -> dict:
     row = {
         "name": name, "observed_label": observed_label, "currency": currency,
         "availability": availability, "source": source, "verified_official_source": True,
-        "parser_version": PARSER_VERSION,
+        "parser_version": parser_version,
     }
     if fee is not None:
         row["fee"] = fee
@@ -348,6 +362,7 @@ def _service_row(name: str, observed_label: str, currency: str, source: str, *,
 
 def _parse_bgs_services(currency: str, text: str, source: str) -> list[dict]:
     """Parse Beckett's current tier cards, including both Base price variants."""
+    parser_version = _service_parser_version("BGS", "US")
     tier_names = ("Base", "Standard", "Express", "Priority")
     markers: list[tuple[int, int, str, int]] = []
     for name in tier_names:
@@ -376,10 +391,12 @@ def _parse_bgs_services(currency: str, text: str, source: str) -> list[dict]:
     rows.append(_service_row(
         "Base", "Base / Without Subgrades", currency, source,
         fee=base_prices[0], turnaround=base_days, availability=_availability(without_window),
+        parser_version=parser_version,
     ))
     rows.append(_service_row(
         "Base + Subgrades", "Base / Subgrades", currency, source,
         fee=base_prices[1], turnaround=base_days, availability=_availability(with_window),
+        parser_version=parser_version,
     ))
 
     for name in ("Standard", "Express", "Priority"):
@@ -390,13 +407,14 @@ def _parse_bgs_services(currency: str, text: str, source: str) -> list[dict]:
             return []
         rows.append(_service_row(
             name, name, currency, source, fee=prices[0], turnaround=days,
-            availability=_availability(segment),
+            availability=_availability(segment), parser_version=parser_version,
         ))
     return rows
 
 
 def _parse_alias_services(company: str, market: str, currency: str, text: str, source: str) -> list[dict]:
     rows: list[dict] = []
+    parser_version = _service_parser_version(company, market)
     alias_map = SERVICE_ALIASES.get((company, market), {})
     peer_aliases = tuple(dict.fromkeys(alias for aliases in alias_map.values() for alias in aliases))
     for canonical, aliases in alias_map.items():
@@ -425,7 +443,7 @@ def _parse_alias_services(company: str, market: str, currency: str, text: str, s
             continue
         rows.append(_service_row(
             canonical, alias, currency, source, fee=fee, turnaround=turnaround,
-            max_value=max_value, availability=availability,
+            max_value=max_value, availability=availability, parser_version=parser_version,
         ))
     return rows
 
@@ -485,7 +503,8 @@ def _service_map(rows: list[dict]) -> dict[str, dict]:
     return {str(row.get("name")): row for row in rows if isinstance(row, dict) and row.get("name")}
 
 
-def _service_changes(company: str, source_id: str, before: list[dict], after: list[dict], checked_at: str) -> list[dict]:
+def _service_changes(company: str, source_id: str, before: list[dict], after: list[dict], checked_at: str,
+                     parser_version: int = PARSER_VERSION) -> list[dict]:
     old, new = _service_map(before), _service_map(after)
     changes: list[dict] = []
     # Do not misread a parser collapse as every service being removed.
@@ -495,7 +514,7 @@ def _service_changes(company: str, source_id: str, before: list[dict], after: li
             changes.append({
                 "company": company, "source_id": source_id, "type": "service_added",
                 "service": name, "after": row, "detected_at": checked_at,
-                "verified_official_source": True, "parser_version": PARSER_VERSION,
+                "verified_official_source": True, "parser_version": parser_version,
             })
             continue
         prior = old[name]
@@ -506,7 +525,7 @@ def _service_changes(company: str, source_id: str, before: list[dict], after: li
             changes.append({
                 "company": company, "source_id": source_id, "type": "service_changed",
                 "service": name, "changes": diffs, "after": row, "detected_at": checked_at,
-                "verified_official_source": True, "parser_version": PARSER_VERSION,
+                "verified_official_source": True, "parser_version": parser_version,
             })
     if allow_removal:
         for name, row in old.items():
@@ -514,7 +533,7 @@ def _service_changes(company: str, source_id: str, before: list[dict], after: li
                 changes.append({
                     "company": company, "source_id": source_id, "type": "service_removed",
                     "service": name, "before": row, "detected_at": checked_at,
-                    "verified_official_source": True, "parser_version": PARSER_VERSION,
+                    "verified_official_source": True, "parser_version": parser_version,
                 })
     return changes
 
@@ -562,6 +581,10 @@ def collect(previous: dict | None = None, fetcher=_fetch_raw) -> dict:
         health: list[dict] = []
         for spec in specs:
             source_id = spec["id"]
+            source_parser_version = (
+                _service_parser_version(company, spec["market"])
+                if "pricing" in spec["kind"] else PARSER_VERSION
+            )
             old = prev_sources.get(source_id, {}) if isinstance(prev_sources.get(source_id), dict) else {}
             try:
                 raw = fetcher(spec["url"])
@@ -578,25 +601,28 @@ def collect(previous: dict | None = None, fetcher=_fetch_raw) -> dict:
                     "market": spec["market"], "currency": spec["currency"], "url": spec["url"],
                     "status": "ok", "checked_at": checked_at, "signal_fingerprint": fingerprint,
                     "services": services, "announcements": found, "verified_official_source": True,
-                    "parser_version": PARSER_VERSION,
+                    "parser_version": source_parser_version,
                 }
                 # First successful observation of a source establishes its baseline.
                 # A previously verified source may emit service changes, including
                 # recovery after a temporary degraded fetch that retained last-good data.
                 same_source_url = str(old.get("url") or "") == str(spec["url"])
                 structured = (
-                    _service_changes(company, source_id, old.get("services", []) or [], services, checked_at)
+                    _service_changes(
+                        company, source_id, old.get("services", []) or [], services, checked_at,
+                        parser_version=source_parser_version,
+                    )
                     if (
                         same_source_url
                         and old.get("verified_official_source") is True
-                        and old.get("parser_version") == PARSER_VERSION
+                        and old.get("parser_version") == source_parser_version
                     ) else []
                 )
                 changes.extend(structured)
                 old_fp = old.get("signal_fingerprint")
                 if (
                     same_source_url
-                    and old.get("parser_version") == PARSER_VERSION
+                    and old.get("parser_version") == source_parser_version
                     and old_fp
                     and old_fp != fingerprint
                     and not structured
