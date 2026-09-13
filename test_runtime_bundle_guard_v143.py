@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 from __future__ import annotations
 
+import ast
 from pathlib import Path
 import unittest
 
@@ -18,6 +19,38 @@ LEGACY_7STEP_MUTATORS = (
     "apply_android_7step_display_patch.py",
     "apply_top_7step_ui_patch.py",
 )
+COLLECTION_WORKFLOW = ROOT / ".github/workflows/collection-verification-guard.yml"
+STATIC_REFRESH_WORKFLOW = ROOT / ".github/workflows/tcg-static-data-refresh.yml"
+
+
+def _direct_collection_runtime_files() -> set[str]:
+    """Return entry modules plus their direct local Python imports.
+
+    This intentionally stops after one import hop. It protects workflow triggers
+    from silently missing a collector's direct runtime dependency without turning
+    the targeted collection workflows into a full-repository dependency graph.
+    """
+    entries = {"auto_update_all.py"}
+    entries.update(
+        f"{row[1]}.py"
+        for row in getattr(auto_update_all, "JOBS", ())
+        if isinstance(row, tuple) and len(row) >= 3 and isinstance(row[1], str)
+    )
+    required = set(entries)
+    for filename in sorted(entries):
+        path = ROOT / filename
+        tree = ast.parse(path.read_text(encoding="utf-8"), filename=filename)
+        module_names: set[str] = set()
+        for node in ast.walk(tree):
+            if isinstance(node, ast.Import):
+                module_names.update(alias.name.split(".", 1)[0] for alias in node.names)
+            elif isinstance(node, ast.ImportFrom) and node.level == 0 and node.module:
+                module_names.add(node.module.split(".", 1)[0])
+        for module_name in module_names:
+            local = f"{module_name}.py"
+            if (ROOT / local).is_file():
+                required.add(local)
+    return required
 
 
 class RuntimeBundleGuardV143Tests(unittest.TestCase):
@@ -34,6 +67,23 @@ class RuntimeBundleGuardV143Tests(unittest.TestCase):
         job_files = {row[2] for row in jobs if isinstance(row, tuple) and len(row) >= 3}
         self.assertEqual(job_files, guard.EXPECTED_JOB_FILES)
         self.assertEqual(len(guard.EXPECTED_JOB_FILES), 8)
+
+    def test_collection_workflows_cover_direct_runtime_dependencies(self):
+        required = _direct_collection_runtime_files()
+        collection_text = COLLECTION_WORKFLOW.read_text(encoding="utf-8")
+        static_text = STATIC_REFRESH_WORKFLOW.read_text(encoding="utf-8")
+        missing_collection = sorted(name for name in required if collection_text.count(name) < 3)
+        missing_static = sorted(name for name in required if static_text.count(name) < 2)
+        self.assertEqual(
+            missing_collection,
+            [],
+            f"collection verification must list each direct dependency in PR path, push path, and compile: {missing_collection}",
+        )
+        self.assertEqual(
+            missing_static,
+            [],
+            f"static refresh must list each direct dependency in push path and compile: {missing_static}",
+        )
 
     def test_legacy_seven_step_mutators_are_absent(self):
         present = [path for path in LEGACY_7STEP_MUTATORS if (ROOT / path).exists()]
