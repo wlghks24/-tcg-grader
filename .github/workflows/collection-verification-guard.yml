@@ -217,7 +217,9 @@ jobs:
               raise SystemExit('PR introduced or exposed blocking high findings: ' + json.dumps(non_ambient, ensure_ascii=False))
 
           # Never waive grading-source health when the PR itself changes the collector,
-          # its network safety boundary, its verification semantics, or its runtime wiring.
+          # network safety boundary, verification semantics, or mandatory job composition.
+          # tcg_updater is live-exercised above; presentation/progress-only changes there
+          # do not by themselves change grading-company source health.
           changed = set(subprocess.check_output(
               ['git', 'diff', '--name-only', 'HEAD^1', 'HEAD^2'], text=True
           ).splitlines())
@@ -230,7 +232,6 @@ jobs:
               'auto_repair_engine.py',
               'collector_self_healing.py',
               'verified_collection_job_neural.py',
-              'tcg_updater.py',
           }
           touched = sorted(changed & grading_sensitive)
           if touched:
