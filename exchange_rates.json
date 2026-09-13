@@ -1,8 +1,8 @@
 {
-  "updated_at": "2026-09-13T07:00:01+00:00",
+  "updated_at": "2026-09-13T12:57:33+00:00",
   "base": "KRW",
   "rates": {
-    "JPY_KRW": 8.7193,
+    "JPY_KRW": 8.71987,
     "USD_KRW": 1343.47
   },
   "source": "https://api.frankfurter.dev/v2/rates?base=USD&quotes=KRW,JPY",
