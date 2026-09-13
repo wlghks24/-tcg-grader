@@ -33,8 +33,6 @@ EXPECTED_CELLS = tuple(
     for region in ("KR", "JP", "US")
 )
 POKEMON_KR_INDEXES = (
-    "https://new.pokemonkorea.co.kr/card/category/3",
-    "https://new.pokemonkorea.co.kr/card",
     "https://pokemoncard.co.kr/card/category/info1",
 )
 POKEMON_US_INDEXES = (
