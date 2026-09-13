@@ -205,5 +205,74 @@ class GradingCompanyWatchV215Tests(unittest.TestCase):
         self.assertNotIn("help.taggrading.com", watch.ALLOWED_HOSTS)
 
 
+    def test_source_url_migration_establishes_new_baseline_without_false_service_changes(self):
+        old_url = "https://taggrading.com/pages/pricing"
+        new_url = "https://taggrading.com/collections/grading-services-official"
+        specs = ({"id": "tag-pricing", "kind": "pricing", "market": "US", "currency": "USD", "url": new_url},)
+        previous = {
+            "sources": {"tag-pricing": {
+                "company": "TAG", "source_id": "tag-pricing", "kind": "pricing", "market": "US", "currency": "USD",
+                "url": old_url, "status": "ok", "signal_fingerprint": "old-fingerprint",
+                "services": [{"name": "Basic", "fee": 19.0, "currency": "USD", "availability": "open",
+                              "source": old_url, "verified_official_source": True, "parser_version": watch.PARSER_VERSION}],
+                "announcements": [], "verified_official_source": True, "parser_version": watch.PARSER_VERSION,
+            }},
+            "announcements": [], "history": [],
+        }
+        html = ("<html><body>TAG GRADING SERVICES OFFICIAL "
+                "Quick buy GRADING | BASIC From $22.00 USD Sold Out "
+                "Quick buy GRADING | STANDARD From $39.00 USD Sold Out</body></html>")
+        with mock.patch.object(watch, "WATCH_SOURCES", {"TAG": specs}):
+            data = watch.collect(previous, fetcher=lambda _url: html)
+        self.assertEqual(data["recent_changes"], [])
+        self.assertEqual(data["sources"]["tag-pricing"]["url"], new_url)
+        self.assertEqual(data["companies"]["TAG"]["markets"]["US"]["source"], new_url)
+
+    def test_failed_source_url_migration_retains_last_good_original_source_identity(self):
+        old_url = "https://taggrading.com/pages/pricing"
+        new_url = "https://taggrading.com/collections/grading-services-official"
+        specs = ({"id": "tag-pricing", "kind": "pricing", "market": "US", "currency": "USD", "url": new_url},)
+        previous = {
+            "sources": {"tag-pricing": {
+                "company": "TAG", "source_id": "tag-pricing", "kind": "pricing", "market": "US", "currency": "USD",
+                "url": old_url, "status": "ok", "signal_fingerprint": "last-good",
+                "services": [{"name": "Basic", "fee": 19.0, "currency": "USD", "availability": "open",
+                              "source": old_url, "verified_official_source": True, "parser_version": watch.PARSER_VERSION}],
+                "announcements": [], "verified_official_source": True, "parser_version": watch.PARSER_VERSION,
+            }},
+            "announcements": [], "history": [],
+        }
+        with mock.patch.object(watch, "WATCH_SOURCES", {"TAG": specs}):
+            data = watch.collect(previous, fetcher=mock.Mock(side_effect=OSError("new source temporarily unavailable")))
+        source = data["sources"]["tag-pricing"]
+        market = data["companies"]["TAG"]["markets"]["US"]
+        health = data["companies"]["TAG"]["source_health"][0]
+        self.assertEqual(source["status"], "degraded")
+        self.assertEqual(source["url"], old_url)
+        self.assertEqual(market["source"], old_url)
+        self.assertTrue(market["retained_last_good"])
+        self.assertEqual(health["url"], new_url)
+
+    def test_migrated_news_source_does_not_emit_all_current_links_as_new_announcements(self):
+        old_url = "https://taggrading.com/pages/news"
+        new_url = "https://taggrading.com/"
+        specs = ({"id": "tag-home", "kind": "news", "market": "GLOBAL", "currency": "USD", "url": new_url},)
+        previous = {
+            "sources": {"tag-home": {
+                "company": "TAG", "source_id": "tag-home", "kind": "news", "market": "GLOBAL", "currency": "USD",
+                "url": old_url, "status": "ok", "signal_fingerprint": "old-fingerprint", "services": [], "announcements": [],
+                "verified_official_source": True, "parser_version": watch.PARSER_VERSION,
+            }},
+            "announcements": [], "history": [],
+        }
+        html = ("<html><body>TAG grading service pricing event announcement and updates. "
+                "<a href='/blogs/news/grading-service-update'>Grading service pricing update 2026/09/13</a>"
+                "</body></html>")
+        with mock.patch.object(watch, "WATCH_SOURCES", {"TAG": specs}):
+            data = watch.collect(previous, fetcher=lambda _url: html)
+        self.assertEqual(data["recent_changes"], [])
+        self.assertEqual(len(data["announcements"]), 1)
+
+
 if __name__ == "__main__":
     unittest.main()

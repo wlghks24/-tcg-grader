@@ -436,13 +436,25 @@ def collect(previous: dict | None = None, fetcher=_fetch_raw) -> dict:
                 # First successful observation of a source establishes its baseline.
                 # A previously verified source may emit service changes, including
                 # recovery after a temporary degraded fetch that retained last-good data.
+                same_source_url = str(old.get("url") or "") == str(spec["url"])
                 structured = (
                     _service_changes(company, source_id, old.get("services", []) or [], services, checked_at)
-                    if old.get("verified_official_source") is True and old.get("parser_version") == PARSER_VERSION else []
+                    if (
+                        same_source_url
+                        and old.get("verified_official_source") is True
+                        and old.get("parser_version") == PARSER_VERSION
+                    ) else []
                 )
                 changes.extend(structured)
                 old_fp = old.get("signal_fingerprint")
-                if old.get("parser_version") == PARSER_VERSION and old_fp and old_fp != fingerprint and not structured and not found:
+                if (
+                    same_source_url
+                    and old.get("parser_version") == PARSER_VERSION
+                    and old_fp
+                    and old_fp != fingerprint
+                    and not structured
+                    and not found
+                ):
                     changes.append({
                         "company": company, "source_id": source_id, "type": "official_page_changed_unparsed",
                         "detected_at": checked_at, "source": spec["url"], "requires_review": True,
@@ -472,8 +484,9 @@ def collect(previous: dict | None = None, fetcher=_fetch_raw) -> dict:
                 })
                 sources[source_id] = retained
                 if old_verified and retained.get("services"):
+                    retained_source = str(retained.get("url") or spec["url"])
                     markets[spec["market"]] = {
-                        "currency": spec["currency"], "source": spec["url"],
+                        "currency": spec["currency"], "source": retained_source,
                         "services": retained["services"], "retained_last_good": True,
                         "verified_official_source": True,
                     }
@@ -488,10 +501,17 @@ def collect(previous: dict | None = None, fetcher=_fetch_raw) -> dict:
     previous_announcements = previous.get("announcements", []) if isinstance(previous.get("announcements"), list) else []
     old_keys = {_announcement_key(row) for row in previous_announcements if isinstance(row, dict)}
     for row in announcements:
-        prior_source = prev_sources.get(str(row.get("source_id", "")), {})
-        # A newly introduced official source is baseline inventory even when the
-        # repository already has snapshots for other companies/sources.
-        if not (isinstance(prior_source, dict) and prior_source.get("verified_official_source") is True):
+        source_id = str(row.get("source_id", ""))
+        prior_source = prev_sources.get(source_id, {})
+        current_source = sources.get(source_id, {})
+        # A newly introduced or migrated official source is baseline inventory even
+        # when the logical source_id already existed at a different URL.
+        if not (
+            isinstance(prior_source, dict)
+            and prior_source.get("verified_official_source") is True
+            and isinstance(current_source, dict)
+            and str(prior_source.get("url") or "") == str(current_source.get("url") or "")
+        ):
             continue
         if _announcement_key(row) not in old_keys:
             changes.append({
