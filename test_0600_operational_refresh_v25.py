@@ -123,6 +123,9 @@ class Operational0600RefreshV25Tests(unittest.TestCase):
 
     def test_tracking_secondary_timeout_is_warning_not_hard_collection_error(self):
         tracker = dict(update_promo_events.KR_MOVIE_TRACKERS[2])
+        tracker["verification_source"] = (
+            "https://www.kobis.or.kr/kobis/business/mast/mvie/searchMovieDtl.do?movieCd=synthetic"
+        )
         with mock.patch.object(
             update_promo_events,
             "fetch",
@@ -136,6 +139,9 @@ class Operational0600RefreshV25Tests(unittest.TestCase):
 
     def test_tracking_secondary_configuration_error_remains_fail_closed(self):
         tracker = dict(update_promo_events.KR_MOVIE_TRACKERS[2])
+        tracker["verification_source"] = (
+            "https://www.kobis.or.kr/kobis/business/mast/mvie/searchMovieDtl.do?movieCd=synthetic"
+        )
         with mock.patch.object(
             update_promo_events,
             "fetch",
@@ -146,31 +152,37 @@ class Operational0600RefreshV25Tests(unittest.TestCase):
         self.assertIn("보조검증", error)
 
     def test_retired_pokemon_routes_are_replaced(self):
-        self.assertEqual(
-            update_promo_events.INDEXES[2][2],
-            "https://new.pokemonkorea.co.kr/card",
-        )
+        current = update_promo_events.POKEMON_KR_EVENT_INDEX
+        self.assertEqual(update_promo_events.INDEXES[2][2], current)
         self.assertEqual(
             update_promo_events.OFFICIAL_SOURCE_REPLACEMENTS[
                 "https://pokemonkorea.co.kr/2026_battle_tournament3"
             ],
-            "https://new.pokemonkorea.co.kr/card",
+            current,
         )
+        self.assertNotIn("new.pokemonkorea.co.kr", update_promo_events.ALLOWED)
 
-    def test_pokemon_kr_event_uses_same_company_collection_fallback(self):
+    def test_pokemon_kr_event_uses_current_same_company_collection_source(self):
         tracker = dict(update_promo_events.KR_MOVIE_TRACKERS[0])
-        self.assertEqual(tracker["source"], "https://new.pokemonkorea.co.kr/card")
-        self.assertEqual(tracker["collection_source"], "https://new.pokemonkorea.co.kr/card")
-        self.assertEqual(tracker["source"], tracker["collection_source"])
+        current = update_promo_events.POKEMON_KR_EVENT_INDEX
+        self.assertEqual(tracker["source"], current)
+        self.assertEqual(tracker["collection_source"], current)
+        self.assertNotIn("verification_source", tracker)
         with mock.patch.object(
             update_promo_events,
             "fetch",
-            side_effect=["official collection page ok", "secondary ok"],
+            return_value="official collection page ok",
         ) as mocked:
             checked, error = update_promo_events.check_existing(tracker)
         self.assertIsNone(error)
-        self.assertEqual(mocked.call_args_list[0].args[0], "https://new.pokemonkorea.co.kr/card")
-        self.assertEqual(checked["verification_status"], "secondary_reachable")
+        self.assertEqual(mocked.call_count, 1)
+        self.assertEqual(mocked.call_args.args[0], current)
+        self.assertNotIn("verification_status", checked)
+
+    def test_idle_update_status_uses_runtime_job_count(self):
+        snapshot = tcg_updater._job_snapshot()
+        self.assertEqual(len(auto_update_all.JOBS), 8)
+        self.assertEqual(snapshot["total"], len(auto_update_all.JOBS))
 
     def test_factual_exchange_writers_use_atomic_runtime_helper(self):
         with tempfile.TemporaryDirectory() as tmp:

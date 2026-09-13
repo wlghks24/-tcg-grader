@@ -66,19 +66,24 @@ class CollectionScopeCompatV214Tests(unittest.TestCase):
         ):
             self.assertEqual(update_promo_events.OFFICIAL_SOURCE_REPLACEMENTS[legacy], expected)
 
-    def test_auxiliary_discovery_legacy_routes_are_visible_until_migrated(self):
-        """Do not let old helper routes disappear from review without an explicit migration."""
-        legacy = "https://new.pokemonkorea.co.kr/card"
-        self.assertEqual((legacy,), multi_route_event_discovery.OFFICIAL_ROUTES[("포켓몬 카드", "KR")])
+    def test_auxiliary_discovery_routes_use_current_event_source(self):
+        current = update_promo_events.POKEMON_KR_EVENT_INDEX
+        self.assertEqual((current,), multi_route_event_discovery.OFFICIAL_ROUTES[("포켓몬 카드", "KR")])
         pages = {row[:2]: row[2] for row in social_event_discovery.OFFICIAL_DISCOVERY_PAGES}
-        self.assertEqual(legacy, pages[("포켓몬 카드", "KR")])
-        self.assertIn("new.pokemonkorea.co.kr", social_event_discovery.OFFICIAL_HOSTS)
+        self.assertEqual(current, pages[("포켓몬 카드", "KR")])
+        self.assertIn("pokemonkorea.co.kr", social_event_discovery.OFFICIAL_HOSTS)
+        self.assertNotIn("new.pokemonkorea.co.kr", social_event_discovery.OFFICIAL_HOSTS)
 
-    def test_link_audit_legacy_fallback_is_explicitly_visible_until_migrated(self):
-        legacy = "https://new.pokemonkorea.co.kr/card"
-        self.assertEqual(validate_external_links.FALLBACKS["pokemoncard.co.kr"], legacy)
-        self.assertEqual(validate_external_links.FALLBACKS["pokemonkorea.co.kr"], legacy)
-
+    def test_link_audit_uses_role_safe_current_fallbacks(self):
+        product = update_purchase_sources.POKEMON_KR_PRODUCT_INDEX
+        self.assertEqual(validate_external_links.FALLBACKS["pokemoncard.co.kr"], product)
+        self.assertEqual(validate_external_links.FALLBACKS["www.pokemoncard.co.kr"], product)
+        self.assertNotIn("pokemonkorea.co.kr", validate_external_links.FALLBACKS)
+        self.assertNotIn("www.pokemonkorea.co.kr", validate_external_links.FALLBACKS)
+        self.assertNotIn(
+            "new.pokemonkorea.co.kr",
+            " ".join(validate_external_links.FALLBACKS.values()),
+        )
 
 if __name__ == "__main__":
     unittest.main()
