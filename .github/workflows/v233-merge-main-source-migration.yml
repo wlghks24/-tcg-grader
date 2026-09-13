@@ -22,6 +22,12 @@ jobs:
           fetch-depth: 0
           persist-credentials: true
 
+      - name: Install repository requirements
+        shell: bash
+        run: |
+          set -euo pipefail
+          python -m pip install -r requirements.txt
+
       - name: Merge latest main with bounded conflict policy
         shell: bash
         run: |
@@ -132,7 +138,6 @@ jobs:
                   break
           save('promo_events.json', promo_data)
 
-          # Executable/current source fields must not retain the retired host.
           for row in [*release_data.get('items', []), *release_data.get('archive_items', [])]:
               if isinstance(row, dict) and str(row.get('source') or '').startswith('https://new.pokemonkorea.co.kr'):
                   raise SystemExit('retired release source survived migration')
