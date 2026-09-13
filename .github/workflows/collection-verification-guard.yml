@@ -1,5 +1,5 @@
 name: Collection Verification Guard
-# final verification trigger v232 — PR regression vs operational source health split
+# final verification trigger v233 — direct 8-stage dependency coverage
 
 on:
   workflow_dispatch:
@@ -9,6 +9,9 @@ on:
       - 'test_collection_verification_gate.py'
       - 'tcg_updater.py'
       - 'auto_update_all.py'
+      - 'auto_repair_engine.py'
+      - 'collector_self_healing.py'
+      - 'safe_runtime.py'
       - 'update_market_watch.py'
       - 'update_market_prices.py'
       - 'market_public_crosscheck.py'
@@ -17,6 +20,7 @@ on:
       - 'test_release_history_cumulative_coverage_v229.py'
       - 'multi_market_price_collector.py'
       - 'update_releases.py'
+      - 'release_parser_learning.py'
       - 'release_history_backfill.py'
       - 'update_promo_events.py'
       - 'update_purchase_sources.py'
@@ -24,10 +28,15 @@ on:
       - 'grading_company_watch.py'
       - 'grading_company_updates.json'
       - 'graded_photo_multi_source.py'
+      - 'detailed_collection_intelligence.py'
+      - 'graded_photo_evidence.py'
+      - 'grading_cert_verifier.py'
       - 'verified_collection_job_neural.py'
+      - 'verified_collection_neural.py'
       - 'validate_external_links.py'
       - 'feature_contract.py'
       - 'runtime_bundle_guard_v143.py'
+      - 'test_runtime_bundle_guard_v143.py'
       - 'multi_route_event_discovery.py'
       - 'social_event_discovery.py'
       - 'auto_pipeline_runner.py'
@@ -52,6 +61,9 @@ on:
       - 'test_collection_verification_gate.py'
       - 'tcg_updater.py'
       - 'auto_update_all.py'
+      - 'auto_repair_engine.py'
+      - 'collector_self_healing.py'
+      - 'safe_runtime.py'
       - 'update_market_watch.py'
       - 'update_market_prices.py'
       - 'market_public_crosscheck.py'
@@ -60,6 +72,7 @@ on:
       - 'test_release_history_cumulative_coverage_v229.py'
       - 'multi_market_price_collector.py'
       - 'update_releases.py'
+      - 'release_parser_learning.py'
       - 'release_history_backfill.py'
       - 'update_promo_events.py'
       - 'update_purchase_sources.py'
@@ -67,10 +80,15 @@ on:
       - 'grading_company_watch.py'
       - 'grading_company_updates.json'
       - 'graded_photo_multi_source.py'
+      - 'detailed_collection_intelligence.py'
+      - 'graded_photo_evidence.py'
+      - 'grading_cert_verifier.py'
       - 'verified_collection_job_neural.py'
+      - 'verified_collection_neural.py'
       - 'validate_external_links.py'
       - 'feature_contract.py'
       - 'runtime_bundle_guard_v143.py'
+      - 'test_runtime_bundle_guard_v143.py'
       - 'multi_route_event_discovery.py'
       - 'social_event_discovery.py'
       - 'auto_pipeline_runner.py'
@@ -120,11 +138,13 @@ jobs:
         run: |
           python -m py_compile \
             collection_verification_gate.py static_data_publish_gate.py feature_contract.py \
-            tcg_updater.py auto_update_all.py runtime_bundle_guard_v143.py \
-            update_market_watch.py update_market_prices.py market_public_crosscheck.py release_history_backfill.py \
-            update_purchase_sources.py update_exchange_rates.py \
-            grading_company_watch.py graded_photo_multi_source.py verified_collection_job_neural.py \
-            validate_external_links.py \
+            tcg_updater.py auto_update_all.py auto_repair_engine.py collector_self_healing.py safe_runtime.py \
+            update_market_watch.py update_market_prices.py market_public_crosscheck.py \
+            update_releases.py release_parser_learning.py release_history_backfill.py \
+            update_purchase_sources.py update_exchange_rates.py update_promo_events.py \
+            grading_company_watch.py graded_photo_multi_source.py detailed_collection_intelligence.py \
+            graded_photo_evidence.py grading_cert_verifier.py verified_collection_job_neural.py \
+            verified_collection_neural.py validate_external_links.py runtime_bundle_guard_v143.py \
             test_collection_verification_gate.py test_static_data_publish_gate.py \
             test_market_public_crosscheck_resilience_v228.py \
             test_collection_restored_state_guard_v229.py test_release_history_cumulative_coverage_v229.py \
