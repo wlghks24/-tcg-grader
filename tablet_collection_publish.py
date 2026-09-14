@@ -59,6 +59,8 @@ def verify_receipt(root, base):
     changed = set(git(root, 'diff', '--name-only', base, 'HEAD').splitlines())
     if RECEIPT not in changed or not changed <= set(OUTPUTS) | {RECEIPT}:
         raise ValueError('태블릿 자료 PR에 코드 또는 허용하지 않은 파일 포함')
+    if git(root, 'status', '--porcelain', '--', *OUTPUTS, RECEIPT):
+        raise ValueError('검증할 자료가 커밋 이후 변경됐습니다. 전송을 중단합니다')
     if data.get('sha256') != hashes(root):
         raise ValueError('수집 산출물 해시 불일치')
     stamp = dt.datetime.fromisoformat(data['collected_at'])
@@ -79,12 +81,19 @@ def collect(root, publish):
         raise ValueError('업로드는 최신 main 코드에서만 가능합니다. 현재 수정 PR 병합 후 다시 실행하세요')
     if publish:
         run(['gh', 'auth', 'status'], root)
-    parent = Path(tempfile.mkdtemp(prefix='tcg-tablet-'))
+    # Termux may clear temporary storage. Keep failed runs across app restarts.
+    runs = Path.home() / '.local' / 'state' / 'tcg-grader' / 'collection-runs'
+    runs.mkdir(parents=True, exist_ok=True)
+    parent = Path(tempfile.mkdtemp(prefix='run-', dir=runs))
     work = parent / 'collection'
     git(root, 'worktree', 'add', '--detach', str(work), source)
     print(f'수집·실패 기록 보존 위치: {work}', flush=True)
     # Existing server, personal photos, credentials and its index are never staged.
-    run([sys.executable, '-c', "import tcg_updater; tcg_updater.update_cycle('tablet-public-collection')"], work)
+    log = parent / 'collection.log'
+    print(f'수집 로그: {log}', flush=True)
+    with log.open('w', encoding='utf-8') as out:
+        subprocess.run([sys.executable, '-c', "import tcg_updater; tcg_updater.update_cycle('tablet-public-collection')"],
+                       cwd=work, stdout=out, stderr=subprocess.STDOUT, check=True)
     gates(work)
     payload = hashes(work)
     receipt = {'schema_version': 1, 'repository': REPO, 'base_sha': base,

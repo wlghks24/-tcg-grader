@@ -221,7 +221,7 @@ jobs:
           metrics = report.get('metrics') or {}
           if metrics.get('mandatory_outputs_expected') != 8:
               raise SystemExit(f'unexpected mandatory collector count: {metrics.get("mandatory_outputs_expected")}')
-          print(json.dumps({'status': report.get('status'), 'counts': report.get('counts'), 'metrics': metrics}, ensure_ascii=False))
+          print(json.dumps({'status': report.get('status'), 'counts': report.get('counts'), 'metrics': metrics, 'findings': report.get('findings', [])}, ensure_ascii=False))
           PY
 
       - name: Upload collection verification report

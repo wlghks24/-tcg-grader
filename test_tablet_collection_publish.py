@@ -25,7 +25,7 @@ class TabletPublishTests(unittest.TestCase):
 
     def test_valid_snapshot_runs_real_gate_entrypoint(self):
         self.save()
-        with patch.object(p, 'git', return_value=p.RECEIPT), patch.object(p, 'gates') as gates:
+        with patch.object(p, 'git', side_effect=lambda root, *a: '' if a[0] == 'status' else p.RECEIPT), patch.object(p, 'gates') as gates:
             p.verify_receipt(self.root, 'abc')
         gates.assert_called_once_with(self.root)
 
@@ -39,7 +39,7 @@ class TabletPublishTests(unittest.TestCase):
                 if failure == 'age': receipt['collected_at'] = '2000-01-01T00:00:00+00:00'
                 (self.root / p.RECEIPT).write_text(json.dumps(receipt))
                 changed = p.RECEIPT + ('\nauto_update_all.py' if failure == 'code' else '')
-                with patch.object(p, 'git', return_value=changed), patch.object(p, 'gates') as gates:
+                with patch.object(p, 'git', side_effect=lambda root, *a: '' if a[0] == 'status' else changed), patch.object(p, 'gates') as gates:
                     with self.assertRaises(ValueError): p.verify_receipt(self.root, 'abc')
                     gates.assert_not_called()
 
@@ -56,9 +56,34 @@ class TabletPublishTests(unittest.TestCase):
             if args[:3] == ('remote', 'get-url', 'origin'): return f'https://github.com/{p.REPO}.git'
             return 'abc'
         with patch.object(p, 'git', side_effect=fake_git), patch.object(p, 'run'), \
+             patch.object(p.subprocess, 'run'), patch.object(p.Path, 'home', return_value=self.root), \
              patch.object(p, 'gates', side_effect=ValueError('PSA blocked')):
             with self.assertRaises(ValueError): p.collect(self.root, True)
         self.assertFalse(any('push' in cmd or 'add' == cmd[0] for cmd in commands))
+
+    def test_committed_bytes_cannot_be_replaced_before_validation(self):
+        import subprocess
+        subprocess.run(['git', 'init', '-q', str(self.root)], check=True)
+        def git(*args):
+            return subprocess.check_output(['git', '-C', str(self.root), *args], text=True).strip()
+        git('add', '.')
+        git('-c', 'user.name=Test', '-c', 'user.email=test@example.com', 'commit', '-qm', 'base')
+        base = git('rev-parse', 'HEAD')
+        self.receipt.update(base_sha=base, source_sha=base)
+        self.save()
+        git('add', '.')
+        git('-c', 'user.name=Test', '-c', 'user.email=test@example.com', 'commit', '-qm', 'snapshot')
+        with patch.object(p, 'gates') as gates:
+            p.verify_receipt(self.root, base)
+            gates.assert_called_once()
+        # Both local data AND its receipt are changed together, so hashes alone match.
+        (self.root / p.OUTPUTS[0]).write_text('{"replaced":true}')
+        self.receipt['sha256'] = p.hashes(self.root)
+        self.save()
+        with patch.object(p, 'gates') as gates:
+            with self.assertRaisesRegex(ValueError, '커밋 이후'):
+                p.verify_receipt(self.root, base)
+            gates.assert_not_called()
 
 
 if __name__ == '__main__':

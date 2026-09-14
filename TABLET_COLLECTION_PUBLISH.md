@@ -20,6 +20,8 @@ bash TABLET_COLLECT_AND_SEND.sh
 ```
 
 운영 중인 폴더를 수정하지 않고 별도 git worktree에서 동일한 8단계 수집기를 실행합니다.
+결과는 Termux 홈의 `.local/state/tcg-grader/collection-runs/`에 보존하며 각 실행 폴더의 `collection.log`에 수집 표준출력과 오류를 기록합니다.
+전송 전 산출물·영수증이 실제 커밋과 일치하는지도 확인합니다.
 기존 최신 main의 공개 자료를 기준으로 시작하며 개인 사진/인증키/학습 폴더는 가져오거나 업로드하지 않습니다.
 서버의 로컬 미반영 코드나 개인 사진 수집을 포함하려면 별도 검토가 필요합니다.
 
