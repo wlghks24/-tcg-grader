@@ -2,7 +2,7 @@
 """Fail-closed repository health audit for the production TCG collector.
 
 The guard intentionally uses only the Python standard library so it can run on
-GitHub Actions, Windows, and Termux without installing packages.  It protects
+GitHub Actions, Windows, and Termux without installing packages. It protects
 production invariants and reports legacy workflow debt without automatically
 rewriting source code.
 """
@@ -12,12 +12,14 @@ import argparse
 import ast
 import datetime as dt
 import json
+import re
 from pathlib import Path
 from typing import Any
 
 ROOT = Path(__file__).resolve().parent
 REPORT_PATH = ROOT / "REPOSITORY_HEALTH_REPORT.json"
 EXPECTED_JOB_COUNT = 8
+EXPECTED_TABLET_OUTPUT_COUNT = 17
 LEGACY_7STEP_PATHS = (
     ".github/workflows/apply-android-7step-display.yml",
     ".github/workflows/apply-top-7step-ui.yml",
@@ -72,6 +74,69 @@ def _workflow_debt(root: Path) -> list[dict[str, str]]:
                 "reason": "manual apply workflow retains write/push behavior",
             })
     return debt
+
+
+def _tablet_publish_controls(root: Path) -> dict[str, Any]:
+    controls: dict[str, Any] = {}
+    publisher_path = root / "tablet_collection_publish.py"
+    test_path = root / "test_tablet_collection_publish.py"
+    workflow_path = root / ".github" / "workflows" / "collection-verification-guard.yml"
+    launcher_path = root / "TABLET_COLLECT_AND_SEND.sh"
+    doc_path = root / "TABLET_COLLECTION_PUBLISH.md"
+
+    controls["publisher_present"] = publisher_path.is_file()
+    controls["regression_present"] = test_path.is_file()
+    controls["launcher_present"] = launcher_path.is_file()
+    controls["documentation_present"] = doc_path.is_file()
+    controls["ci_workflow_present"] = workflow_path.is_file()
+
+    if publisher_path.is_file():
+        publisher = publisher_path.read_text(encoding="utf-8", errors="replace")
+        match = re.search(r"OUTPUTS\s*=\s*tuple\('([^']+)'\.split\(\)\)", publisher)
+        output_count = len(match.group(1).split()) if match else 0
+        controls.update({
+            "fixed_repository": "REPO = 'wlghks24/-tcg-grader'" in publisher,
+            "public_output_count": output_count,
+            "public_output_count_ok": output_count == EXPECTED_TABLET_OUTPUT_COUNT,
+            "sha256_receipt": "hashlib.sha256(raw).hexdigest()" in publisher,
+            "symlink_rejected": "path.is_symlink()" in publisher,
+            "code_mixing_rejected": "changed <= set(OUTPUTS) | {RECEIPT}" in publisher,
+            "post_commit_clean_check": "git(root, 'status', '--porcelain', '--', *OUTPUTS, RECEIPT)" in publisher,
+            "receipt_freshness_bounded": "not -300 <= age <= 900" in publisher,
+            "fail_on_degraded": "'--fail-on-degraded'" in publisher,
+            "source_and_base_sha_bound": "data.get('source_sha') != base" in publisher and "data.get('base_sha') != base" in publisher,
+            "latest_main_before_publish": "if publish and source != base" in publisher,
+            "latest_main_after_collection": "if git(root, 'rev-parse', 'FETCH_HEAD') != base" in publisher,
+            "isolated_worktree": "'worktree', 'add', '--detach'" in publisher,
+            "persistent_run_evidence": "'.local' / 'state' / 'tcg-grader' / 'collection-runs'" in publisher,
+            "pr_only_delivery": "'gh', 'pr', 'create'" in publisher and "'gh', 'pr', 'merge'" not in publisher,
+        })
+        push_pos = publisher.find("git(work, 'push'")
+        verify_pos = publisher.find("verify_receipt(work, base)")
+        controls["verify_before_push"] = verify_pos >= 0 and push_pos >= 0 and verify_pos < push_pos
+    else:
+        controls["public_output_count"] = 0
+        controls["public_output_count_ok"] = False
+
+    if workflow_path.is_file():
+        workflow = workflow_path.read_text(encoding="utf-8", errors="replace")
+        controls.update({
+            "ci_receipt_trigger": "'tablet_collection_receipt.json'" in workflow,
+            "ci_snapshot_verification": "tablet_collection_publish.py --verify-base" in workflow,
+            "ci_full_history_for_base_diff": "fetch-depth: 0" in workflow,
+            "ci_does_not_replace_snapshot": "Verify tablet snapshot without replacing it with cloud collection" in workflow,
+        })
+
+    if test_path.is_file():
+        tests = test_path.read_text(encoding="utf-8", errors="replace")
+        controls.update({
+            "tamper_regression": "test_committed_bytes_cannot_be_replaced_before_validation" in tests,
+            "code_mixing_regression": "failure == 'code'" in tests,
+            "failed_gate_blocks_push_regression": "test_failed_collection_gate_never_pushes" in tests,
+            "symlink_regression": "test_symlink_not_uploaded" in tests,
+        })
+
+    return controls
 
 
 def audit(root: Path = ROOT) -> dict[str, Any]:
@@ -145,6 +210,24 @@ def audit(root: Path = ROOT) -> dict[str, Any]:
     except OSError as exc:
         blockers.append({"code": "COLLECTOR_RUNTIME_MISSING", "detail": str(exc)})
 
+    tablet = _tablet_publish_controls(root)
+    checks["tablet_publish_controls"] = tablet
+    required_tablet = (
+        "publisher_present", "regression_present", "launcher_present", "documentation_present", "ci_workflow_present",
+        "fixed_repository", "public_output_count_ok", "sha256_receipt", "symlink_rejected", "code_mixing_rejected",
+        "post_commit_clean_check", "receipt_freshness_bounded", "fail_on_degraded", "source_and_base_sha_bound",
+        "latest_main_before_publish", "latest_main_after_collection", "isolated_worktree", "persistent_run_evidence",
+        "pr_only_delivery", "verify_before_push", "ci_receipt_trigger", "ci_snapshot_verification",
+        "ci_full_history_for_base_diff", "ci_does_not_replace_snapshot", "tamper_regression",
+        "code_mixing_regression", "failed_gate_blocks_push_regression", "symlink_regression",
+    )
+    missing_tablet = [name for name in required_tablet if tablet.get(name) is not True]
+    if missing_tablet:
+        blockers.append({
+            "code": "TABLET_PUBLISH_CONTROL_MISSING",
+            "detail": ", ".join(missing_tablet),
+        })
+
     debt = _workflow_debt(root)
     checks["manual_apply_workflow_debt"] = {
         "count": len(debt),
@@ -158,7 +241,7 @@ def audit(root: Path = ROOT) -> dict[str, Any]:
         })
 
     report = {
-        "schema_version": 1,
+        "schema_version": 2,
         "generated_at": dt.datetime.now(dt.timezone.utc).isoformat(timespec="seconds"),
         "root": str(root),
         "status": "PASS" if not blockers else "BLOCKED",
@@ -166,6 +249,7 @@ def audit(root: Path = ROOT) -> dict[str, Any]:
             "blockers": len(blockers),
             "warnings": len(warnings),
             "expected_collection_jobs": EXPECTED_JOB_COUNT,
+            "expected_tablet_outputs": EXPECTED_TABLET_OUTPUT_COUNT,
         },
         "checks": checks,
         "blockers": blockers,
