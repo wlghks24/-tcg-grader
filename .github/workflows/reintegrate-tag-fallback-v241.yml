@@ -1,0 +1,62 @@
+name: Reintegrate TAG fallback v241
+
+on:
+  push:
+    branches: [audit/grading-source-reintegration-v241]
+    paths:
+      - '.github/workflows/reintegrate-tag-fallback-v241.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  apply-tag-fallback:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          ref: audit/grading-source-reintegration-v241
+          fetch-depth: 0
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97
+        with:
+          python-version: '3.11'
+      - name: Apply validated TAG fallback commit only
+        shell: bash
+        run: |
+          set -euo pipefail
+          git show e7293178d3766e055eebc26d0514db761ee302be --format= -- \
+            grading_company_watch.py test_tag_official_offers_v235.py > /tmp/tag-fallback.patch
+          test -s /tmp/tag-fallback.patch
+          git apply --3way /tmp/tag-fallback.patch
+          python - <<'PY'
+          from pathlib import Path
+          p=Path('grading_company_watch.py')
+          text=p.read_text(encoding='utf-8')
+          text=text.replace('PARSER_VERSION = 3\n', 'PARSER_VERSION = 2\n', 1)
+          if 'SERVICE_PARSER_VERSIONS' not in text:
+              raise SystemExit('provider-specific parser revisions were lost')
+          p.write_text(text, encoding='utf-8')
+          PY
+      - name: Validate fallback and provider revision isolation
+        run: |
+          python -m py_compile grading_company_watch.py test_tag_official_offers_v235.py test_grading_company_watch_v215.py
+          python -m unittest -v test_tag_official_offers_v235.py test_grading_company_watch_v215.py test_grading_watch_integration_v220.py
+          python - <<'PY'
+          import grading_company_watch as w
+          assert w.PARSER_VERSION == 2
+          assert w._service_parser_version('PSA','US') == 3
+          assert w._service_parser_version('BGS','US') == 3
+          assert w._service_parser_version('TAG','US') == 2
+          print('provider parser revision isolation preserved')
+          PY
+      - name: Remove one-shot workflow and commit
+        shell: bash
+        run: |
+          set -euo pipefail
+          git rm .github/workflows/reintegrate-tag-fallback-v241.yml
+          git add grading_company_watch.py test_tag_official_offers_v235.py
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git commit -m 'fix: add validated TAG official product fallback'
+          git push origin HEAD:audit/grading-source-reintegration-v241
