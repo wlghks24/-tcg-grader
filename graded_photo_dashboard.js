@@ -13,7 +13,7 @@ function companyOf(r){return String(r.company||r.grader||r.grading_company||r.pr
 function gameOf(r){const value=String(r.game||'').toLowerCase().replace(/[\s_-]+/g,'');if(value==='onepiece')return 'onepiece';if(value==='naruto')return 'naruto';if(value==='pokemon'||value==='pokémon')return 'pokemon';return 'unknown'}
 function sourceOf(r){return String(r.source||r.market||r.source_name||r.search_provider||'기타')}
 function statusOf(r){return String(r.status||r.verification_status||r.learning_status||'').toLowerCase()}
-function isVerified(r){const s=statusOf(r);return r.official_result===true||r.verified===true||r.official_verified===true||s==='verified_reference'||s.includes('공식검증')}
+function isVerified(r){return r.official_result===true&&!r.manual_official_verification_required&&!r.evidence_conflicts?.length&&!statusOf(r).includes('quarantine')}
 function isReferenceLearning(r){return isVerified(r)&&String(r.learning_eligibility||'').includes('reference')}
 function isRawEligible(r){return ['calibration_eligible','training_eligible'].includes(String(r.learning_eligibility||''))||r.calibration_eligible===true}
 function isQuarantine(r){return !isVerified(r)||Boolean(r.evidence_conflicts?.length)||statusOf(r).includes('quarantine')}

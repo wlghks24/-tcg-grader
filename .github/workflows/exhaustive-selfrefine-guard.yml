@@ -118,9 +118,10 @@ jobs:
             [ -f "$file" ] || continue
             total=$((total+1))
             echo "===== isolated root test: $file ====="
-            python -m unittest discover -v -s . -p "$file"
+            python -m unittest discover -v -s . -p "$file" > /tmp/selfrefine-module.log 2>&1
             rc=$?
-            if [ "$rc" -eq 5 ]; then
+            cat /tmp/selfrefine-module.log
+            if [ "$rc" -eq 5 ] || { [ "$rc" -eq 0 ] && grep -q "^Ran 0 tests" /tmp/selfrefine-module.log; }; then
               echo "SELFREFINE_FALLBACK file=$file mode=standalone"
               python selfrefine_standalone_test_runner.py "$file"
               rc=$?

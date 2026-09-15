@@ -24,7 +24,7 @@ TIMEOUT = env_int("TCG_HTTP_TIMEOUT", 20, 5, 60)
 OFFICIAL_ENTRY_PAGES = {
     "포켓몬": {
         "KR": (
-            "https://www.pokemonkorea.co.kr/",
+            "https://new.pokemonkorea.co.kr/card",
         ),
         "JP": (
             "https://www.pokemon-card.com/info/",
