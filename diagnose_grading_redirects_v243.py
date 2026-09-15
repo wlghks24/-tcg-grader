@@ -1,8 +1,9 @@
 #!/usr/bin/env python3
 """Read-only grading-source redirect diagnostics.
 
-Never follows redirects and never prints full redirect URLs. Only status and host are
-reported so allowlist changes can be evidence-based without leaking query/path data.
+Never follows redirects in the first probe and never prints full redirect URLs. Only
+status and host are reported. A second probe calls the production grading fetcher so
+transient provider behavior can be separated from collector-policy behavior.
 """
 from __future__ import annotations
 
@@ -11,7 +12,8 @@ import urllib.error
 import urllib.parse
 import urllib.request
 
-from safe_runtime import validate_public_https_url
+import grading_company_watch as grading
+from safe_runtime import diagnostic_exception, validate_public_https_url
 
 SOURCES = {
     "psa-us-pricing": "https://www.psacard.com/services/tradingcardgrading",
@@ -58,9 +60,19 @@ def inspect(source_id: str, url: str) -> dict:
         return {"source": source_id, "status": None, "redirect": False, "network_error": type(exc.reason).__name__}
 
 
+def inspect_production(source_id: str, url: str) -> dict:
+    try:
+        body = grading._fetch_raw(url)
+        return {"source": source_id, "ok": True, "bytes": len(body.encode("utf-8"))}
+    except (OSError, ValueError) as exc:
+        return {"source": source_id, "ok": False, "error": diagnostic_exception(exc)}
+
+
 def main() -> int:
-    rows = [inspect(source_id, url) for source_id, url in SOURCES.items()]
-    print(json.dumps(rows, ensure_ascii=False, indent=2))
+    print("NO_FOLLOW")
+    print(json.dumps([inspect(source_id, url) for source_id, url in SOURCES.items()], ensure_ascii=False, indent=2))
+    print("PRODUCTION_FETCH")
+    print(json.dumps([inspect_production(source_id, url) for source_id, url in SOURCES.items()], ensure_ascii=False, indent=2))
     return 0
 
 
