@@ -28,6 +28,19 @@ MAX_PAGE_BYTES = 2_000_000
 MAX_HISTORY = 240
 MAX_ANNOUNCEMENTS = 120
 PARSER_VERSION = 2
+# Provider-specific revisions prevent a parser implementation change from being
+# misreported as a real grading-company price/service change. Unchanged providers
+# stay on the global parser version so they do not lose a detection cycle.
+SERVICE_PARSER_VERSIONS = {
+    ("PSA", "US"): 3,
+    ("PSA", "JP"): 3,
+    ("BGS", "US"): 3,
+}
+
+
+def _service_parser_version(company: str, market: str) -> int:
+    return SERVICE_PARSER_VERSIONS.get((company, market), PARSER_VERSION)
+
 
 ALLOWED_HOSTS = {
     "psacard.com", "www.psacard.com",
@@ -62,7 +75,7 @@ WATCH_SOURCES = {
     ),
     "TAG": (
         {"id": "tag-pricing", "kind": "pricing", "market": "US", "currency": "USD",
-         "url": "https://taggrading.com/pages/pricing"},
+         "url": "https://taggrading.com/collections/grading-services-official"},
         {"id": "tag-home", "kind": "news", "market": "GLOBAL", "currency": "USD",
          "url": "https://taggrading.com/"},
     ),
@@ -183,6 +196,91 @@ def _window(text: str, alias: str, radius: int = 420) -> str | None:
     return text[match.start():min(len(text), match.end() + radius)]
 
 
+def _nonoverlap_alias_match(text: str, alias: str, peer_aliases: tuple[str, ...]) -> re.Match[str] | None:
+    """Find a PSA tier label, not a substring inside another tier or field label."""
+    pattern = re.compile(rf"(?<!\w){re.escape(alias)}(?!\w)", re.I)
+    lower_alias = alias.casefold()
+    peers = tuple(value for value in peer_aliases if value.casefold() != lower_alias)
+    for match in pattern.finditer(text):
+        start, end = match.span()
+        # PSA repeatedly uses service-name words inside field labels. Reject those
+        # field-label occurrences before comparing against longer peer tier names.
+        if lower_alias == "value":
+            prefix = text[max(0, start - 32):start]
+            if re.search(r"(?i)(?:insured|declared|max)\s+$", prefix):
+                continue
+        if lower_alias == "value max":
+            suffix = text[end:end + 32]
+            if re.match(r"(?i)\s+(?:insured|declared)\s+value\b", suffix):
+                continue
+        contaminated = False
+        for peer in peers:
+            folded = peer.casefold()
+            if folded.startswith(lower_alias):
+                tail = peer[len(alias):]
+                if tail and text[end:end + len(tail)].casefold() == tail.casefold():
+                    # "Value Max Insured Value" is the Value tier followed by
+                    # its Max Insured Value field. The actual Value Max tier is
+                    # rendered as "Value Max Max Insured Value".
+                    if lower_alias == "value" and folded == "value max":
+                        after_peer = text[end + len(tail):end + len(tail) + 32]
+                        if re.match(r"(?i)\s+(?:insured|declared)\s+value\b", after_peer):
+                            continue
+                    contaminated = True
+                    break
+            if folded.endswith(lower_alias):
+                head = peer[:-len(alias)]
+                if head and text[max(0, start - len(head)):start].casefold() == head.casefold():
+                    contaminated = True
+                    break
+        if not contaminated:
+            return match
+    return None
+
+
+def _psa_service_window(text: str, alias: str, peer_aliases: tuple[str, ...], radius: int = 520) -> str | None:
+    """Bound one PSA tier and keep only its immediately preceding status marker."""
+    match = _nonoverlap_alias_match(text, alias, peer_aliases)
+    if not match:
+        return None
+    start = match.start()
+    prefix_start = max(0, start - 48)
+    prefix = text[prefix_start:start]
+    unavailable = re.search(r"(?i)currently\s+unavailable\s*$", prefix)
+    if unavailable:
+        start = prefix_start + unavailable.start()
+    end = min(len(text), match.end() + radius)
+    next_starts = []
+    remainder = text[match.end():]
+    for peer in peer_aliases:
+        peer_match = _nonoverlap_alias_match(remainder, peer, peer_aliases)
+        if peer_match:
+            next_starts.append(match.end() + peer_match.start())
+    if next_starts:
+        end = min(end, min(next_starts))
+    return text[start:end]
+
+
+def _tag_service_window(text: str, alias: str, radius: int = 520) -> str | None:
+    """Return one TAG product-card segment without leaking the next tier's status.
+
+    TAG's official Shopify collection renders each grading tier as a repeated
+    "Quick buy ... GRADING | <tier> ..." card. Bounding the window at the next
+    card prevents a later tier's Sold Out state from contaminating the current one.
+    """
+    pattern = re.compile(
+        rf"(?i)(?:quick\s+buy\s+)?(?:tag\s+)?grading\s*\|\s*{re.escape(alias)}\b"
+    )
+    match = pattern.search(text)
+    if not match:
+        return _window(text, alias, radius)
+    next_card = re.search(r"(?i)\bquick\s+buy\b|(?:tag\s+)?grading\s*\|", text[match.end():])
+    end = min(len(text), match.end() + radius)
+    if next_card:
+        end = min(end, match.end() + next_card.start())
+    return text[match.start():end]
+
+
 def _price(window: str, currency: str) -> float | int | None:
     if currency == "JPY":
         values = [int(v.replace(",", "")) for v in re.findall(r"[￥¥]\s*([0-9][0-9,]*)", window)]
@@ -245,12 +343,89 @@ def _availability(window: str) -> str:
     return "unknown"
 
 
-def parse_services(company: str, market: str, currency: str, text: str, source: str) -> list[dict]:
+def _service_row(name: str, observed_label: str, currency: str, source: str, *,
+                 fee=None, turnaround=None, max_value=None, availability: str = "unknown",
+                 parser_version: int = PARSER_VERSION) -> dict:
+    row = {
+        "name": name, "observed_label": observed_label, "currency": currency,
+        "availability": availability, "source": source, "verified_official_source": True,
+        "parser_version": parser_version,
+    }
+    if fee is not None:
+        row["fee"] = fee
+    if turnaround is not None:
+        row["turnaround_business_days"] = turnaround
+    if max_value is not None:
+        row["max_declared_or_insured_value"] = max_value
+    return row
+
+
+def _parse_bgs_services(currency: str, text: str, source: str) -> list[dict]:
+    """Parse Beckett's current tier cards, including both Base price variants."""
+    parser_version = _service_parser_version("BGS", "US")
+    tier_names = ("Base", "Standard", "Express", "Priority")
+    markers: list[tuple[int, int, str, int]] = []
+    for name in tier_names:
+        pattern = re.compile(rf"(?i)\b{re.escape(name)}\b\s+(\d{{1,3}})\+?\s+business\s+days?")
+        match = pattern.search(text)
+        if not match:
+            # Fail closed: a partial layout must not be accepted as a current BGS table.
+            return []
+        markers.append((match.start(), match.end(), name, int(match.group(1))))
+    markers.sort()
+    segments: dict[str, tuple[str, int]] = {}
+    for index, (start, _end, name, days) in enumerate(markers):
+        stop = markers[index + 1][0] if index + 1 < len(markers) else min(len(text), start + 900)
+        segments[name] = (text[start:stop], days)
+
     rows: list[dict] = []
-    for canonical, aliases in SERVICE_ALIASES.get((company, market), {}).items():
+    base, base_days = segments["Base"]
+    base_prices = [float(value.replace(",", "")) for value in
+                   re.findall(r"\$\s*([0-9][0-9,]*(?:\.[0-9]{1,2})?)\s+per\s+card", base, re.I)]
+    if len(base_prices) != 2:
+        return []
+    first_price = re.search(r"\$\s*[0-9][0-9,]*(?:\.[0-9]{1,2})?\s+per\s+card", base, re.I)
+    second_price = list(re.finditer(r"\$\s*[0-9][0-9,]*(?:\.[0-9]{1,2})?\s+per\s+card", base, re.I))[1]
+    without_window = base[first_price.start():second_price.start()] if first_price else base[:second_price.start()]
+    with_window = base[second_price.start():]
+    rows.append(_service_row(
+        "Base", "Base / Without Subgrades", currency, source,
+        fee=base_prices[0], turnaround=base_days, availability=_availability(without_window),
+        parser_version=parser_version,
+    ))
+    rows.append(_service_row(
+        "Base + Subgrades", "Base / Subgrades", currency, source,
+        fee=base_prices[1], turnaround=base_days, availability=_availability(with_window),
+        parser_version=parser_version,
+    ))
+
+    for name in ("Standard", "Express", "Priority"):
+        segment, days = segments[name]
+        prices = [float(value.replace(",", "")) for value in
+                  re.findall(r"\$\s*([0-9][0-9,]*(?:\.[0-9]{1,2})?)\s+per\s+card", segment, re.I)]
+        if len(prices) != 1:
+            return []
+        rows.append(_service_row(
+            name, name, currency, source, fee=prices[0], turnaround=days,
+            availability=_availability(segment), parser_version=parser_version,
+        ))
+    return rows
+
+
+def _parse_alias_services(company: str, market: str, currency: str, text: str, source: str) -> list[dict]:
+    rows: list[dict] = []
+    parser_version = _service_parser_version(company, market)
+    alias_map = SERVICE_ALIASES.get((company, market), {})
+    peer_aliases = tuple(dict.fromkeys(alias for aliases in alias_map.values() for alias in aliases))
+    for canonical, aliases in alias_map.items():
         best: tuple[str, str] | None = None
         for alias in sorted(aliases, key=len, reverse=True):
-            win = _window(text, alias)
+            if (company, market) == ("TAG", "US"):
+                win = _tag_service_window(text, alias)
+            elif company == "PSA":
+                win = _psa_service_window(text, alias, peer_aliases)
+            else:
+                win = _window(text, alias)
             if win:
                 best = (alias, win)
                 break
@@ -259,24 +434,26 @@ def parse_services(company: str, market: str, currency: str, text: str, source: 
         alias, win = best
         fee = _price(win, currency)
         availability = _availability(win)
+        if (company, market) == ("TAG", "US") and fee is not None and availability == "unknown":
+            if re.search(r"(?i)\bquick\s+buy\b", win):
+                availability = "open"
         turnaround = _turnaround(win)
         max_value = _max_value(win, currency)
-        # A menu label alone is too weak to become a service fact.
         if fee is None and turnaround is None and max_value is None and availability != "paused":
             continue
-        row = {
-            "name": canonical, "observed_label": alias, "currency": currency,
-            "availability": availability, "source": source, "verified_official_source": True,
-            "parser_version": PARSER_VERSION,
-        }
-        if fee is not None:
-            row["fee"] = fee
-        if turnaround is not None:
-            row["turnaround_business_days"] = turnaround
-        if max_value is not None:
-            row["max_declared_or_insured_value"] = max_value
-        rows.append(row)
+        rows.append(_service_row(
+            canonical, alias, currency, source, fee=fee, turnaround=turnaround,
+            max_value=max_value, availability=availability, parser_version=parser_version,
+        ))
     return rows
+
+
+def parse_services(company: str, market: str, currency: str, text: str, source: str) -> list[dict]:
+    # Beckett's Base tier contains two distinct price variants inside one tier card,
+    # so a generic alias/radius parser cannot represent it safely. Keep it isolated.
+    if (company, market) == ("BGS", "US"):
+        return _parse_bgs_services(currency, text, source)
+    return _parse_alias_services(company, market, currency, text, source)
 
 
 def _relevant_fingerprint(text: str) -> str:
@@ -326,7 +503,8 @@ def _service_map(rows: list[dict]) -> dict[str, dict]:
     return {str(row.get("name")): row for row in rows if isinstance(row, dict) and row.get("name")}
 
 
-def _service_changes(company: str, source_id: str, before: list[dict], after: list[dict], checked_at: str) -> list[dict]:
+def _service_changes(company: str, source_id: str, before: list[dict], after: list[dict], checked_at: str,
+                     parser_version: int = PARSER_VERSION) -> list[dict]:
     old, new = _service_map(before), _service_map(after)
     changes: list[dict] = []
     # Do not misread a parser collapse as every service being removed.
@@ -336,7 +514,7 @@ def _service_changes(company: str, source_id: str, before: list[dict], after: li
             changes.append({
                 "company": company, "source_id": source_id, "type": "service_added",
                 "service": name, "after": row, "detected_at": checked_at,
-                "verified_official_source": True, "parser_version": PARSER_VERSION,
+                "verified_official_source": True, "parser_version": parser_version,
             })
             continue
         prior = old[name]
@@ -347,7 +525,7 @@ def _service_changes(company: str, source_id: str, before: list[dict], after: li
             changes.append({
                 "company": company, "source_id": source_id, "type": "service_changed",
                 "service": name, "changes": diffs, "after": row, "detected_at": checked_at,
-                "verified_official_source": True, "parser_version": PARSER_VERSION,
+                "verified_official_source": True, "parser_version": parser_version,
             })
     if allow_removal:
         for name, row in old.items():
@@ -355,7 +533,7 @@ def _service_changes(company: str, source_id: str, before: list[dict], after: li
                 changes.append({
                     "company": company, "source_id": source_id, "type": "service_removed",
                     "service": name, "before": row, "detected_at": checked_at,
-                    "verified_official_source": True, "parser_version": PARSER_VERSION,
+                    "verified_official_source": True, "parser_version": parser_version,
                 })
     return changes
 
@@ -372,6 +550,23 @@ def _load_previous(path: Path = OUT) -> dict:
         return {}
 
 
+def _source_failure_class(exc: Exception) -> str:
+    """Classify source failures without weakening the official-source gate."""
+    code = getattr(exc, "code", None)
+    if code == 403:
+        return "http_forbidden"
+    if code == 429:
+        return "rate_limited"
+    message = str(exc).casefold()
+    if "unapproved host" in message:
+        return "redirect_unapproved_host"
+    if "pricing parser yielded zero verified services" in message:
+        return "parser_no_verified_services"
+    if "official page body too short" in message:
+        return "source_body_invalid"
+    return "source_error"
+
+
 def collect(previous: dict | None = None, fetcher=_fetch_raw) -> dict:
     previous = previous if isinstance(previous, dict) else {}
     checked_at = datetime.now(timezone.utc).isoformat(timespec="seconds")
@@ -386,6 +581,10 @@ def collect(previous: dict | None = None, fetcher=_fetch_raw) -> dict:
         health: list[dict] = []
         for spec in specs:
             source_id = spec["id"]
+            source_parser_version = (
+                _service_parser_version(company, spec["market"])
+                if "pricing" in spec["kind"] else PARSER_VERSION
+            )
             old = prev_sources.get(source_id, {}) if isinstance(prev_sources.get(source_id), dict) else {}
             try:
                 raw = fetcher(spec["url"])
@@ -402,18 +601,33 @@ def collect(previous: dict | None = None, fetcher=_fetch_raw) -> dict:
                     "market": spec["market"], "currency": spec["currency"], "url": spec["url"],
                     "status": "ok", "checked_at": checked_at, "signal_fingerprint": fingerprint,
                     "services": services, "announcements": found, "verified_official_source": True,
-                    "parser_version": PARSER_VERSION,
+                    "parser_version": source_parser_version,
                 }
                 # First successful observation of a source establishes its baseline.
                 # A previously verified source may emit service changes, including
                 # recovery after a temporary degraded fetch that retained last-good data.
+                same_source_url = str(old.get("url") or "") == str(spec["url"])
                 structured = (
-                    _service_changes(company, source_id, old.get("services", []) or [], services, checked_at)
-                    if old.get("verified_official_source") is True and old.get("parser_version") == PARSER_VERSION else []
+                    _service_changes(
+                        company, source_id, old.get("services", []) or [], services, checked_at,
+                        parser_version=source_parser_version,
+                    )
+                    if (
+                        same_source_url
+                        and old.get("verified_official_source") is True
+                        and old.get("parser_version") == source_parser_version
+                    ) else []
                 )
                 changes.extend(structured)
                 old_fp = old.get("signal_fingerprint")
-                if old.get("parser_version") == PARSER_VERSION and old_fp and old_fp != fingerprint and not structured and not found:
+                if (
+                    same_source_url
+                    and old.get("parser_version") == source_parser_version
+                    and old_fp
+                    and old_fp != fingerprint
+                    and not structured
+                    and not found
+                ):
                     changes.append({
                         "company": company, "source_id": source_id, "type": "official_page_changed_unparsed",
                         "detected_at": checked_at, "source": spec["url"], "requires_review": True,
@@ -428,6 +642,7 @@ def collect(previous: dict | None = None, fetcher=_fetch_raw) -> dict:
                 announcements.extend(found)
                 health.append({"source_id": source_id, "status": "ok", "url": spec["url"]})
             except Exception as exc:
+                failure_class = _source_failure_class(exc)
                 old_verified = bool(
                     old.get("verified_official_source") is True
                     and old.get("signal_fingerprint")
@@ -439,12 +654,14 @@ def collect(previous: dict | None = None, fetcher=_fetch_raw) -> dict:
                 }
                 retained.update({
                     "status": "degraded", "checked_at": checked_at,
-                    "last_error": diagnostic_exception(exc), "verified_official_source": old_verified,
+                    "last_error": diagnostic_exception(exc), "failure_class": failure_class,
+                    "verified_official_source": old_verified,
                 })
                 sources[source_id] = retained
                 if old_verified and retained.get("services"):
+                    retained_source = str(retained.get("url") or spec["url"])
                     markets[spec["market"]] = {
-                        "currency": spec["currency"], "source": spec["url"],
+                        "currency": spec["currency"], "source": retained_source,
                         "services": retained["services"], "retained_last_good": True,
                         "verified_official_source": True,
                     }
@@ -452,17 +669,24 @@ def collect(previous: dict | None = None, fetcher=_fetch_raw) -> dict:
                     announcements.extend(retained.get("announcements", []) or [])
                 health.append({
                     "source_id": source_id, "status": "degraded", "url": spec["url"],
-                    "error": diagnostic_exception(exc),
+                    "error": diagnostic_exception(exc), "failure_class": failure_class,
                 })
         companies[company] = {"markets": markets, "source_health": health}
 
     previous_announcements = previous.get("announcements", []) if isinstance(previous.get("announcements"), list) else []
     old_keys = {_announcement_key(row) for row in previous_announcements if isinstance(row, dict)}
     for row in announcements:
-        prior_source = prev_sources.get(str(row.get("source_id", "")), {})
-        # A newly introduced official source is baseline inventory even when the
-        # repository already has snapshots for other companies/sources.
-        if not (isinstance(prior_source, dict) and prior_source.get("verified_official_source") is True):
+        source_id = str(row.get("source_id", ""))
+        prior_source = prev_sources.get(source_id, {})
+        current_source = sources.get(source_id, {})
+        # A newly introduced or migrated official source is baseline inventory even
+        # when the logical source_id already existed at a different URL.
+        if not (
+            isinstance(prior_source, dict)
+            and prior_source.get("verified_official_source") is True
+            and isinstance(current_source, dict)
+            and str(prior_source.get("url") or "") == str(current_source.get("url") or "")
+        ):
             continue
         if _announcement_key(row) not in old_keys:
             changes.append({
