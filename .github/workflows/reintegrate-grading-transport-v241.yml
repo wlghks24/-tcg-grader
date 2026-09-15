@@ -1,0 +1,41 @@
+name: Reintegrate grading transport v241
+
+on:
+  push:
+    branches: [audit/grading-source-reintegration-v241]
+    paths:
+      - '.github/workflows/reintegrate-grading-transport-v241.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  apply-transport-recovery:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          ref: audit/grading-source-reintegration-v241
+          fetch-depth: 0
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97
+        with:
+          python-version: '3.11'
+      - name: Apply bounded transport recovery
+        run: |
+          python apply_grading_transport_v241.py
+          git show 9f226ac4d51c6fa3bf2e8270681e1a34fe47b547:test_grading_transport_recovery_v236.py > test_grading_transport_recovery_v236.py
+      - name: Validate retry policy and parser regressions
+        run: |
+          python -m py_compile grading_company_watch.py test_grading_transport_recovery_v236.py
+          python -m unittest -v test_grading_transport_recovery_v236.py test_tag_official_offers_v235.py test_grading_company_watch_v215.py test_grading_watch_integration_v220.py
+      - name: Remove one-shot helpers and commit
+        shell: bash
+        run: |
+          set -euo pipefail
+          git rm .github/workflows/reintegrate-grading-transport-v241.yml apply_grading_transport_v241.py
+          git add grading_company_watch.py test_grading_transport_recovery_v236.py
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git commit -m 'fix: add bounded grading transport recovery'
+          git push origin HEAD:audit/grading-source-reintegration-v241
