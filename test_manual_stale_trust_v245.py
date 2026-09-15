@@ -23,13 +23,13 @@ class ManualStaleTrustV245Tests(unittest.TestCase):
 
     def test_stale_trust_is_cleared_when_registry_cannot_revalidate_candidate(self):
         cases = [
-            (self._stale_row(), {}, None, "manual_verification_required"),
-            (self._stale_row(), {("PSA", "12345678"): 9}, 9, "manual_registry_grade_conflict"),
-            (self._stale_row(company="UNKNOWN"), {}, None, "manual_verification_required"),
-            (self._stale_row(certification_id=""), {}, None, "manual_verification_required"),
-            (self._stale_row(grade=float("nan")), {}, None, "manual_verification_required"),
+            (self._stale_row(), {}, None, "manual_verification_required", "automatic_official_lookup_disabled"),
+            (self._stale_row(), {("PSA", "12345678"): 9}, 9, "manual_registry_grade_conflict", None),
+            (self._stale_row(company="UNKNOWN"), {}, None, "manual_verification_required", None),
+            (self._stale_row(certification_id=""), {}, None, "manual_verification_required", None),
+            (self._stale_row(grade=float("nan")), {}, None, "manual_verification_required", None),
         ]
-        for original, registry, expected_registry_grade, expected_state in cases:
+        for original, registry, expected_registry_grade, expected_state, expected_lookup_status in cases:
             with self.subTest(company=original.get("company"), cert=original.get("certification_id"), grade=original.get("grade")):
                 out, stats = mode._registry_only_official_verify_rows([original], registry)
                 result = out[0]
@@ -37,7 +37,11 @@ class ManualStaleTrustV245Tests(unittest.TestCase):
                 self.assertFalse(result["official_result"])
                 self.assertTrue(result["manual_official_verification_required"])
                 self.assertNotEqual(result.get("verification_method"), "live_official_lookup")
-                self.assertNotIn("official_lookup_status", result)
+                self.assertNotEqual(result.get("official_lookup_status"), "healthy")
+                if expected_lookup_status is None:
+                    self.assertNotIn("official_lookup_status", result)
+                else:
+                    self.assertEqual(result.get("official_lookup_status"), expected_lookup_status)
                 self.assertEqual(result.get("official_verification"), expected_state)
                 if expected_registry_grade is None:
                     self.assertNotIn("official_grade", result)
