@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
-# v243 rerun after correcting the failure-classifier regression test signature.
+# One-shot narrowing patch: preserve global URL-validation error contracts and
+# expose the target host only when a redirect is rejected by the allowlist.
 from pathlib import Path
 
 
@@ -17,28 +18,26 @@ def replace_once(path: str, old: str, new: str) -> None:
 
 
 def main() -> int:
+    safe = "safe_runtime.py"
     replace_once(
-        "grading_company_watch.py",
-        '        "Accept-Language": "ko-KR,ja-JP;q=0.9,en-US;q=0.8,en;q=0.7",\n',
-        '        "Accept-Language": "ko-KR,ja-JP;q=0.9,en-US;q=0.8,en;q=0.7",\n'
-        '        # Match the existing bounded read contract at the HTTP layer too.\n'
-        '        # This is a transfer-size limit, not a 403/429 retry or access bypass.\n'
-        '        "Range": f"bytes=0-{MAX_PAGE_BYTES - 1}",\n',
-    )
-    replace_once(
-        "safe_runtime.py",
-        '            raise ValueError("unapproved host")\n',
+        safe,
         '            # Host-only detail is safe to expose and lets provider maintenance\n'
         '            # redirects be distinguished without following or allowlisting them.\n'
         '            raise ValueError(f"unapproved host: {host}")\n',
+        '            raise ValueError("unapproved host")\n',
     )
     replace_once(
-        "grading_company_watch.py",
-        '    if "unapproved host" in message:\n        return "redirect_unapproved_host"\n',
-        '    if "beckett-maintenance-page.s3.amazonaws.com" in message:\n'
-        '        return "provider_maintenance_redirect"\n'
-        '    if "unapproved host" in message:\n'
-        '        return "redirect_unapproved_host"\n',
+        safe,
+        '        require_public_https(absolute, self.allowed_hosts)\n'
+        '        redirected = super().redirect_request(req, fp, code, msg, headers, absolute)\n',
+        '        try:\n'
+        '            require_public_https(absolute, self.allowed_hosts)\n'
+        '        except ValueError as exc:\n'
+        '            if str(exc) == "unapproved host":\n'
+        '                host = (urllib.parse.urlsplit(absolute).hostname or "").rstrip(".").lower()\n'
+        '                raise ValueError(f"unapproved host: {host}") from exc\n'
+        '            raise\n'
+        '        redirected = super().redirect_request(req, fp, code, msg, headers, absolute)\n',
     )
     return 0
 
