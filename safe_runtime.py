@@ -301,9 +301,7 @@ def validate_public_https_url(url: str, allowed_hosts: set[str] | None = None) -
     if allowed_hosts is not None:
         allowed = {str(x).rstrip(".").lower() for x in allowed_hosts}
         if host not in allowed:
-            # Host-only detail is safe to expose and lets provider maintenance
-            # redirects be distinguished without following or allowlisting them.
-            raise ValueError(f"unapproved host: {host}")
+            raise ValueError("unapproved host")
     if host in {"localhost", "localhost.localdomain"} or host.endswith(".local") or host.endswith(".localhost"):
         raise ValueError("local host blocked")
     try:
@@ -509,7 +507,13 @@ class PublicHTTPSRedirect(urllib.request.HTTPRedirectHandler):
         count = int(getattr(req, "_tcg_redirect_count", 0)) + 1
         if count > self.max_redirects:
             raise urllib.error.HTTPError(absolute, 508, "too many redirects", headers, fp)
-        require_public_https(absolute, self.allowed_hosts)
+        try:
+            require_public_https(absolute, self.allowed_hosts)
+        except ValueError as exc:
+            if str(exc) == "unapproved host":
+                host = (urllib.parse.urlsplit(absolute).hostname or "").rstrip(".").lower()
+                raise ValueError(f"unapproved host: {host}") from exc
+            raise
         redirected = super().redirect_request(req, fp, code, msg, headers, absolute)
         if redirected is not None:
             setattr(redirected, "_tcg_redirect_count", count)
