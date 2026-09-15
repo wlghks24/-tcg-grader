@@ -1,4 +1,5 @@
 name: Grading Source Live Verify v243
+# Final scoped verification: redirect host diagnostics only, no allowlist widening.
 
 on:
   push:
