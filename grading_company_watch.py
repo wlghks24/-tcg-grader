@@ -313,6 +313,9 @@ def _fetch_raw(url: str) -> str:
     req = urllib.request.Request(url, headers={
         "User-Agent": UA,
         "Accept-Language": "ko-KR,ja-JP;q=0.9,en-US;q=0.8,en;q=0.7",
+        # Match the existing bounded read contract at the HTTP layer too.
+        # This is a transfer-size limit, not a 403/429 retry or access bypass.
+        "Range": f"bytes=0-{MAX_PAGE_BYTES - 1}",
     })
     for attempt in range(2):
         try:
@@ -706,6 +709,8 @@ def _source_failure_class(exc: Exception) -> str:
     if code == 429:
         return "rate_limited"
     message = str(exc).casefold()
+    if "beckett-maintenance-page.s3.amazonaws.com" in message:
+        return "provider_maintenance_redirect"
     if "unapproved host" in message:
         return "redirect_unapproved_host"
     if "pricing parser yielded zero verified services" in message:

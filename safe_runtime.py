@@ -301,7 +301,9 @@ def validate_public_https_url(url: str, allowed_hosts: set[str] | None = None) -
     if allowed_hosts is not None:
         allowed = {str(x).rstrip(".").lower() for x in allowed_hosts}
         if host not in allowed:
-            raise ValueError("unapproved host")
+            # Host-only detail is safe to expose and lets provider maintenance
+            # redirects be distinguished without following or allowlisting them.
+            raise ValueError(f"unapproved host: {host}")
     if host in {"localhost", "localhost.localdomain"} or host.endswith(".local") or host.endswith(".localhost"):
         raise ValueError("local host blocked")
     try:
