@@ -2,20 +2,20 @@
   "version": 1,
   "jobs": {
     "exchange_rates.json": {
-      "runs": 45,
-      "successes": 26,
+      "runs": 46,
+      "successes": 27,
       "failures": 0,
       "timeouts": 0,
       "partial_successes": 19,
       "recovered_successes": 17,
-      "last_seconds": 0.474,
+      "last_seconds": 0.552,
       "last_ok": true,
       "last_recovered": false,
-      "success_streak": 25,
+      "success_streak": 26,
       "consecutive_failures": 0,
-      "success_ewma_seconds": 0.627,
-      "ewma_seconds": 0.627,
-      "last_run": "2026-09-15T13:00:45+00:00",
+      "success_ewma_seconds": 0.605,
+      "ewma_seconds": 0.605,
+      "last_run": "2026-09-15T18:59:04+00:00",
       "error_patterns": {
         "93697047de8f": {
           "count": 1,
@@ -45,20 +45,20 @@
       "streak_reset_reason": "observation_gap_over_72h"
     },
     "__integration__": {
-      "runs": 42,
+      "runs": 43,
       "successes": 27,
       "failures": 13,
-      "timeouts": 2,
+      "timeouts": 3,
       "partial_successes": 0,
-      "recovered_successes": 2,
-      "last_seconds": 97.706,
-      "last_ok": true,
-      "last_recovered": false,
-      "success_streak": 2,
-      "consecutive_failures": 0,
+      "recovered_successes": 3,
+      "last_seconds": 479.107,
+      "last_ok": false,
+      "last_recovered": true,
+      "success_streak": 0,
+      "consecutive_failures": 1,
       "success_ewma_seconds": 160.456,
       "ewma_seconds": 160.456,
-      "last_run": "2026-09-15T13:04:05+00:00",
+      "last_run": "2026-09-15T19:08:14+00:00",
       "timeout_exhaustions": 0,
       "deferred_attempts": 0,
       "deferred_successes": 0,
@@ -78,26 +78,27 @@
           "last_seen": "2026-09-10T19:08:32+00:00"
         },
         "fb993a4d4732": {
-          "count": 1,
+          "count": 2,
           "sample": "TIMEOUT: __integration__ 300초 초과 / TIMEOUT: __integration__ 177초 초과",
-          "last_seen": "2026-09-15T01:11:08+00:00"
+          "last_seen": "2026-09-15T19:08:14+00:00"
         }
       },
       "dominant_error_signature": "5af71b60988f",
       "streak_reset_at": "2026-09-10T04:52:16+00:00",
-      "streak_reset_reason": "observation_gap_over_72h"
+      "streak_reset_reason": "observation_gap_over_72h",
+      "last_error_signature": "fb993a4d4732"
     },
     "__link_audit__": {
-      "runs": 42,
-      "successes": 22,
+      "runs": 43,
+      "successes": 23,
       "failures": 0,
       "timeouts": 0,
       "partial_successes": 20,
       "recovered_successes": 0,
-      "last_seconds": 77.979,
+      "last_seconds": 90.557,
       "last_ok": true,
       "last_recovered": false,
-      "success_streak": 2,
+      "success_streak": 3,
       "consecutive_failures": 0,
       "error_patterns": {
         "355705cf62a5": {
@@ -147,7 +148,7 @@
         }
       },
       "dominant_error_signature": "cf8b8ee20def",
-      "last_run": "2026-09-15T13:03:45+00:00",
+      "last_run": "2026-09-15T19:01:45+00:00",
       "timeout_exhaustions": 0,
       "deferred_attempts": 0,
       "deferred_successes": 0,
@@ -157,24 +158,24 @@
       "deferred_pending": false,
       "streak_reset_at": "2026-09-10T04:51:52+00:00",
       "streak_reset_reason": "observation_gap_over_72h",
-      "success_ewma_seconds": 87.609,
-      "ewma_seconds": 87.609
+      "success_ewma_seconds": 88.494,
+      "ewma_seconds": 88.494
     },
     "market_watch.json": {
-      "runs": 38,
-      "successes": 38,
+      "runs": 39,
+      "successes": 39,
       "failures": 0,
       "timeouts": 0,
       "partial_successes": 0,
       "recovered_successes": 0,
-      "last_seconds": 0.098,
+      "last_seconds": 0.251,
       "last_ok": true,
       "last_recovered": false,
-      "success_streak": 25,
+      "success_streak": 26,
       "consecutive_failures": 0,
-      "success_ewma_seconds": 0.09,
-      "ewma_seconds": 0.09,
-      "last_run": "2026-09-15T13:00:44+00:00",
+      "success_ewma_seconds": 0.138,
+      "ewma_seconds": 0.138,
+      "last_run": "2026-09-15T18:59:03+00:00",
       "timeout_exhaustions": 0,
       "deferred_attempts": 0,
       "deferred_successes": 0,
@@ -187,16 +188,16 @@
       "streak_reset_reason": "observation_gap_over_72h"
     },
     "releases.json": {
-      "runs": 38,
-      "successes": 21,
+      "runs": 39,
+      "successes": 22,
       "failures": 0,
       "timeouts": 0,
       "partial_successes": 17,
       "recovered_successes": 13,
-      "last_seconds": 23.902,
+      "last_seconds": 32.687,
       "last_ok": true,
       "last_recovered": false,
-      "success_streak": 2,
+      "success_streak": 3,
       "consecutive_failures": 0,
       "error_patterns": {
         "366db33edeb6": {
@@ -271,7 +272,7 @@
         }
       },
       "dominant_error_signature": "dc7a3dae4914",
-      "last_run": "2026-09-15T13:00:24+00:00",
+      "last_run": "2026-09-15T18:58:34+00:00",
       "timeout_exhaustions": 0,
       "deferred_attempts": 0,
       "deferred_successes": 0,
@@ -281,20 +282,20 @@
       "deferred_pending": false,
       "streak_reset_at": "2026-09-10T04:47:07+00:00",
       "streak_reset_reason": "observation_gap_over_72h",
-      "success_ewma_seconds": 28.567,
-      "ewma_seconds": 28.567
+      "success_ewma_seconds": 29.803,
+      "ewma_seconds": 29.803
     },
     "market_prices.json": {
-      "runs": 38,
-      "successes": 23,
+      "runs": 39,
+      "successes": 24,
       "failures": 1,
       "timeouts": 0,
       "partial_successes": 14,
       "recovered_successes": 13,
-      "last_seconds": 177.761,
+      "last_seconds": 170.997,
       "last_ok": true,
       "last_recovered": false,
-      "success_streak": 18,
+      "success_streak": 19,
       "consecutive_failures": 0,
       "error_patterns": {
         "0e8e4bf5d058": {
@@ -314,7 +315,7 @@
         }
       },
       "dominant_error_signature": "0e8e4bf5d058",
-      "last_run": "2026-09-15T13:02:27+00:00",
+      "last_run": "2026-09-15T19:00:15+00:00",
       "timeout_exhaustions": 0,
       "deferred_attempts": 0,
       "deferred_successes": 0,
@@ -324,20 +325,20 @@
       "deferred_pending": false,
       "streak_reset_at": "2026-09-10T04:50:08+00:00",
       "streak_reset_reason": "observation_gap_over_72h",
-      "success_ewma_seconds": 184.853,
-      "ewma_seconds": 184.853
+      "success_ewma_seconds": 180.696,
+      "ewma_seconds": 180.696
     },
     "promo_events.json": {
-      "runs": 38,
-      "successes": 20,
+      "runs": 39,
+      "successes": 21,
       "failures": 0,
       "timeouts": 0,
       "partial_successes": 17,
       "recovered_successes": 14,
-      "last_seconds": 30.308,
+      "last_seconds": 37.98,
       "last_ok": true,
       "last_recovered": false,
-      "success_streak": 2,
+      "success_streak": 3,
       "consecutive_failures": 0,
       "error_patterns": {
         "386416d74406": {
@@ -357,7 +358,7 @@
         }
       },
       "dominant_error_signature": "386416d74406",
-      "last_run": "2026-09-15T13:00:00+00:00",
+      "last_run": "2026-09-15T18:58:02+00:00",
       "timeout_exhaustions": 0,
       "deferred_attempts": 0,
       "deferred_successes": 0,
@@ -367,20 +368,20 @@
       "deferred_pending": false,
       "streak_reset_at": "2026-09-10T04:47:44+00:00",
       "streak_reset_reason": "observation_gap_over_72h",
-      "success_ewma_seconds": 36.152,
-      "ewma_seconds": 36.152
+      "success_ewma_seconds": 36.7,
+      "ewma_seconds": 36.7
     },
     "purchase_sources.json": {
-      "runs": 38,
-      "successes": 21,
+      "runs": 39,
+      "successes": 22,
       "failures": 0,
       "timeouts": 0,
       "partial_successes": 17,
       "recovered_successes": 13,
-      "last_seconds": 3.066,
+      "last_seconds": 3.804,
       "last_ok": true,
       "last_recovered": false,
-      "success_streak": 2,
+      "success_streak": 3,
       "consecutive_failures": 0,
       "error_patterns": {
         "763f8bb5b931": {
@@ -395,7 +396,7 @@
         }
       },
       "dominant_error_signature": "763f8bb5b931",
-      "last_run": "2026-09-15T13:00:42+00:00",
+      "last_run": "2026-09-15T18:58:59+00:00",
       "timeout_exhaustions": 0,
       "deferred_attempts": 0,
       "deferred_successes": 0,
@@ -405,24 +406,24 @@
       "deferred_pending": false,
       "streak_reset_at": "2026-09-10T04:48:07+00:00",
       "streak_reset_reason": "observation_gap_over_72h",
-      "success_ewma_seconds": 10.935,
-      "ewma_seconds": 10.935
+      "success_ewma_seconds": 8.796,
+      "ewma_seconds": 8.796
     },
     "graded_photo_candidates.json": {
-      "runs": 26,
-      "successes": 24,
+      "runs": 27,
+      "successes": 25,
       "failures": 1,
       "timeouts": 1,
       "partial_successes": 0,
       "recovered_successes": 1,
-      "last_seconds": 14.921,
+      "last_seconds": 20.843,
       "last_ok": true,
       "last_recovered": false,
-      "success_streak": 15,
+      "success_streak": 16,
       "consecutive_failures": 0,
-      "success_ewma_seconds": 15.695,
-      "ewma_seconds": 15.695,
-      "last_run": "2026-09-15T13:00:39+00:00",
+      "success_ewma_seconds": 17.239,
+      "ewma_seconds": 17.239,
+      "last_run": "2026-09-15T18:58:55+00:00",
       "timeout_exhaustions": 1,
       "deferred_attempts": 1,
       "deferred_successes": 1,
@@ -448,20 +449,20 @@
       "last_deferred_status": "recovered"
     },
     "grading_company_updates.json": {
-      "runs": 21,
-      "successes": 20,
+      "runs": 22,
+      "successes": 21,
       "failures": 0,
       "timeouts": 0,
       "partial_successes": 0,
       "recovered_successes": 1,
-      "last_seconds": 2.394,
+      "last_seconds": 3.566,
       "last_ok": true,
       "last_recovered": false,
-      "success_streak": 2,
+      "success_streak": 3,
       "consecutive_failures": 0,
-      "success_ewma_seconds": 3.393,
-      "ewma_seconds": 3.393,
-      "last_run": "2026-09-15T13:00:44+00:00",
+      "success_ewma_seconds": 3.445,
+      "ewma_seconds": 3.445,
+      "last_run": "2026-09-15T18:59:03+00:00",
       "timeout_exhaustions": 0,
       "deferred_attempts": 0,
       "deferred_successes": 0,
@@ -479,5 +480,5 @@
       "dominant_error_signature": "646ed4d2673b"
     }
   },
-  "updated_at": "2026-09-15T13:04:05+00:00"
+  "updated_at": "2026-09-15T19:08:14+00:00"
 }
