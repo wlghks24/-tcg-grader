@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 from __future__ import annotations
 
+import urllib.request
 import unittest
 from unittest import mock
 
@@ -24,14 +25,26 @@ class _Response:
 
 class GradingSourceTransportV243Tests(unittest.TestCase):
     def test_unapproved_redirect_reports_host_without_allowing_it(self):
+        handler = safe_runtime.PublicHTTPSRedirect({"beckett.com", "www.beckett.com"})
+        request = urllib.request.Request("https://www.beckett.com/grading")
         with self.assertRaises(ValueError) as caught:
-            safe_runtime.validate_public_https_url(
+            handler.redirect_request(
+                request,
+                None,
+                302,
+                "Found",
+                {},
                 "https://beckett-maintenance-page.s3.amazonaws.com/maintenance.html",
-                {"beckett.com", "www.beckett.com"},
             )
         message = str(caught.exception)
         self.assertIn("unapproved host", message)
         self.assertIn("beckett-maintenance-page.s3.amazonaws.com", message)
+        with self.assertRaises(ValueError) as direct:
+            safe_runtime.validate_public_https_url(
+                "https://beckett-maintenance-page.s3.amazonaws.com/maintenance.html",
+                {"beckett.com", "www.beckett.com"},
+            )
+        self.assertEqual(str(direct.exception), "unapproved host")
 
     def test_beckett_maintenance_redirect_has_distinct_failure_class(self):
         result = watch._source_failure_class(
