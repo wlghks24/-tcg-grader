@@ -1,0 +1,27 @@
+name: Grading Source Diagnostic v243
+
+on:
+  push:
+    branches:
+      - fix/grading-source-finalization-v243
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  diagnose:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          persist-credentials: false
+          fetch-depth: 1
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97
+        with:
+          python-version: '3.11'
+      - name: Compile diagnostic
+        run: python -m py_compile diagnose_grading_redirects_v243.py
+      - name: Inspect grading source status and redirect hosts
+        run: python diagnose_grading_redirects_v243.py
