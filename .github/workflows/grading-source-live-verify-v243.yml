@@ -1,0 +1,95 @@
+name: Grading Source Live Verify v243
+
+on:
+  push:
+    branches:
+      - fix/grading-source-finalization-v243
+    paths:
+      - 'grading_company_watch.py'
+      - 'safe_runtime.py'
+      - 'test_grading_source_transport_v243.py'
+      - '.github/workflows/grading-source-live-verify-v243.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      PYTHONDONTWRITEBYTECODE: '1'
+      PYTHONUNBUFFERED: '1'
+      TCG_SOURCE_TIMEOUT_CAP: '30'
+      TCG_HTTP_TIMEOUT: '30'
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          persist-credentials: false
+          fetch-depth: 1
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97
+        with:
+          python-version: '3.11'
+      - name: Targeted regression
+        run: |
+          python -m py_compile grading_company_watch.py safe_runtime.py test_grading_source_transport_v243.py
+          python -m unittest -v test_grading_source_transport_v243.py test_grading_company_watch_v215.py
+      - name: Run full bounded collection cycle
+        run: |
+          python - <<'PY'
+          import json
+          import tcg_updater
+          result = tcg_updater.update_cycle('grading-source-live-verify-v243')
+          print(json.dumps({
+              'auto_update_status': (result.get('auto_update') or {}).get('status'),
+              'trigger': result.get('trigger'),
+          }, ensure_ascii=False))
+          PY
+      - name: Inspect grading source result without weakening fail-closed policy
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          data=json.loads(Path('grading_company_updates.json').read_text(encoding='utf-8'))
+          sources=data.get('sources') or {}
+          summary=data.get('summary') or {}
+          assert len(sources) >= 10, len(sources)
+          bgs=[row for row in sources.values() if isinstance(row,dict) and row.get('company')=='BGS']
+          for row in bgs:
+              if row.get('status') == 'degraded' and 'beckett-maintenance-page.s3.amazonaws.com' in str(row.get('error') or row.get('last_error') or ''):
+                  assert row.get('failure_class') == 'provider_maintenance_redirect', row
+          assert 'beckett-maintenance-page.s3.amazonaws.com' not in __import__('grading_company_watch').ALLOWED_HOSTS
+          print(json.dumps({
+              'summary': summary,
+              'PSA': [
+                  {'id': k, 'status': v.get('status'), 'failure_class': v.get('failure_class'), 'error': v.get('error') or v.get('last_error')}
+                  for k,v in sources.items() if isinstance(v,dict) and v.get('company')=='PSA'
+              ],
+              'BGS': [
+                  {'id': k, 'status': v.get('status'), 'failure_class': v.get('failure_class'), 'error': v.get('error') or v.get('last_error')}
+                  for k,v in sources.items() if isinstance(v,dict) and v.get('company')=='BGS'
+              ],
+          }, ensure_ascii=False))
+          PY
+      - name: Produce fail-closed verification evidence
+        run: |
+          python collection_verification_gate.py --max-health-age-seconds 900 --report COLLECTION_VERIFICATION_REPORT.json || true
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          report=json.loads(Path('COLLECTION_VERIFICATION_REPORT.json').read_text(encoding='utf-8'))
+          safety=report.get('safety') or {}
+          assert safety.get('bypass_403_429') is False
+          assert safety.get('learned_text_executable') is False
+          assert safety.get('source_code_auto_rewritten') is False
+          assert (report.get('metrics') or {}).get('mandatory_outputs_expected') == 8
+          print(json.dumps({
+              'status': report.get('status'),
+              'counts': report.get('counts'),
+              'grading_sources': (report.get('metrics') or {}).get('grading_sources'),
+              'healthy_grading_sources': (report.get('metrics') or {}).get('healthy_grading_sources'),
+              'degraded_grading_sources': (report.get('metrics') or {}).get('degraded_grading_sources'),
+              'findings': report.get('findings'),
+          }, ensure_ascii=False))
+          PY
