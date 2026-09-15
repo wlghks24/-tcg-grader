@@ -1,0 +1,69 @@
+name: Repository Health v239
+
+on:
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - 'auto_update_all.py'
+      - 'repository_health_guard.py'
+      - 'test_repository_health_guard_v239.py'
+      - '.github/workflows/**'
+      - 'apply_*step*.py'
+  push:
+    branches: [main]
+    paths:
+      - 'auto_update_all.py'
+      - 'repository_health_guard.py'
+      - 'test_repository_health_guard_v239.py'
+      - '.github/workflows/**'
+      - 'apply_*step*.py'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: repository-health-v239-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  health:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      - name: Checkout exact revision
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+
+      - name: Set up Python
+        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97
+        with:
+          python-version: '3.11'
+
+      - name: Compile guard
+        run: python -m py_compile repository_health_guard.py test_repository_health_guard_v239.py
+
+      - name: Run health regression
+        run: python -m unittest -v test_repository_health_guard_v239.py
+
+      - name: Audit repository invariants
+        run: python repository_health_guard.py --report REPOSITORY_HEALTH_REPORT.json
+
+      - name: Upload health report
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        with:
+          name: repository-health-v239
+          path: REPOSITORY_HEALTH_REPORT.json
+          if-no-files-found: error
+          retention-days: 14
+
+      - name: Summary
+        if: always()
+        run: |
+          {
+            echo '## Repository Health v239'
+            echo
+            echo '- collection SSOT: 8 jobs required'
+            echo '- obsolete 7-step mutators: blocked'
+            echo '- collection concurrency/timeouts/stale-main guard: required'
+            echo '- write-capable apply workflows: reported as debt; never auto-deleted'
+          } >> "$GITHUB_STEP_SUMMARY"
