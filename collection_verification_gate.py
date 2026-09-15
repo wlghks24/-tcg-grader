@@ -309,6 +309,7 @@ def _audit_grading_companies(root: Path, now: dt.datetime, findings: list[dict[s
     source_companies: set[str] = set()
     healthy_companies: set[str] = set()
     degraded_errors: list[dict[str, str]] = []
+    degraded_errors_by_company: dict[str, list[dict[str, str]]] = {}
     for source_id, row in sources.items():
         reasons = []
         if not isinstance(row, dict):
@@ -345,8 +346,12 @@ def _audit_grading_companies(root: Path, now: dt.datetime, findings: list[dict[s
             healthy_companies.add(company)
         else:
             degraded += 1
+            sample = {"source": str(source_id), "error": str(row.get("error") or row.get("last_error") or "")[:300]}
             if len(degraded_errors) < 20:
-                degraded_errors.append({"source": str(source_id), "error": str(row.get("error") or row.get("last_error") or "")[:300]})
+                degraded_errors.append(sample)
+            company_samples = degraded_errors_by_company.setdefault(company, [])
+            if len(company_samples) < 20:
+                company_samples.append(sample)
 
     missing_source_companies = EXPECTED_GRADING_COMPANIES - source_companies
     if missing_source_companies:
@@ -354,8 +359,11 @@ def _audit_grading_companies(root: Path, now: dt.datetime, findings: list[dict[s
                          "companies": sorted(missing_source_companies)})
     no_healthy = EXPECTED_GRADING_COMPANIES - healthy_companies
     if no_healthy:
+        no_healthy_samples: list[dict[str, str]] = []
+        for company in sorted(no_healthy):
+            no_healthy_samples.extend(degraded_errors_by_company.get(company, []))
         findings.append({"severity": "high", "code": "GRADING_COMPANY_NO_HEALTHY_SOURCE", "target": path.name,
-                         "companies": sorted(no_healthy), "degraded_samples": degraded_errors})
+                         "companies": sorted(no_healthy), "degraded_samples": no_healthy_samples[:20]})
     elif degraded:
         findings.append({"severity": "medium", "code": "DEGRADED_GRADING_SOURCE", "target": path.name,
                          "count": degraded, "samples": degraded_errors})
