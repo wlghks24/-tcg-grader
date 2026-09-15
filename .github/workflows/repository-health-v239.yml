@@ -1,4 +1,4 @@
-name: Repository Health v239
+name: Repository Health v240
 
 on:
   workflow_dispatch:
@@ -7,6 +7,10 @@ on:
       - 'auto_update_all.py'
       - 'repository_health_guard.py'
       - 'test_repository_health_guard_v239.py'
+      - 'tablet_collection_publish.py'
+      - 'test_tablet_collection_publish.py'
+      - 'TABLET_COLLECT_AND_SEND.sh'
+      - 'TABLET_COLLECTION_PUBLISH.md'
       - '.github/workflows/**'
       - 'apply_*step*.py'
   push:
@@ -15,6 +19,10 @@ on:
       - 'auto_update_all.py'
       - 'repository_health_guard.py'
       - 'test_repository_health_guard_v239.py'
+      - 'tablet_collection_publish.py'
+      - 'test_tablet_collection_publish.py'
+      - 'TABLET_COLLECT_AND_SEND.sh'
+      - 'TABLET_COLLECTION_PUBLISH.md'
       - '.github/workflows/**'
       - 'apply_*step*.py'
 
@@ -22,7 +30,7 @@ permissions:
   contents: read
 
 concurrency:
-  group: repository-health-v239-${{ github.ref }}
+  group: repository-health-v240-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
@@ -38,11 +46,13 @@ jobs:
         with:
           python-version: '3.11'
 
-      - name: Compile guard
-        run: python -m py_compile repository_health_guard.py test_repository_health_guard_v239.py
+      - name: Compile guards
+        run: |
+          python -m py_compile repository_health_guard.py test_repository_health_guard_v239.py \
+            tablet_collection_publish.py test_tablet_collection_publish.py
 
-      - name: Run health regression
-        run: python -m unittest -v test_repository_health_guard_v239.py
+      - name: Run health and tablet regressions
+        run: python -m unittest -v test_repository_health_guard_v239.py test_tablet_collection_publish.py
 
       - name: Audit repository invariants
         run: python repository_health_guard.py --report REPOSITORY_HEALTH_REPORT.json
@@ -51,7 +61,7 @@ jobs:
         if: always()
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
         with:
-          name: repository-health-v239
+          name: repository-health-v240
           path: REPOSITORY_HEALTH_REPORT.json
           if-no-files-found: error
           retention-days: 14
@@ -60,10 +70,11 @@ jobs:
         if: always()
         run: |
           {
-            echo '## Repository Health v239'
+            echo '## Repository Health v240'
             echo
             echo '- collection SSOT: 8 jobs required'
             echo '- obsolete 7-step mutators: blocked'
             echo '- collection concurrency/timeouts/stale-main guard: required'
+            echo '- tablet snapshot: fixed repo + 17 outputs + SHA-256 + commit-clean + freshness + fail-closed verification required'
             echo '- write-capable apply workflows: reported as debt; never auto-deleted'
           } >> "$GITHUB_STEP_SUMMARY"
