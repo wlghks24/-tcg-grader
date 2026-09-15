@@ -34,9 +34,8 @@ class GradingSourceTransportV243Tests(unittest.TestCase):
         self.assertIn("beckett-maintenance-page.s3.amazonaws.com", message)
 
     def test_beckett_maintenance_redirect_has_distinct_failure_class(self):
-        spec = {"id": "bgs-pricing", "kind": "pricing", "market": "US", "currency": "USD"}
         result = watch._source_failure_class(
-            ValueError("unapproved host: beckett-maintenance-page.s3.amazonaws.com"), spec
+            ValueError("unapproved host: beckett-maintenance-page.s3.amazonaws.com")
         )
         self.assertEqual(result, "provider_maintenance_redirect")
 
