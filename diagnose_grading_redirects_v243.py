@@ -20,8 +20,13 @@ BGS_URLS = {
     "grading": "https://www.beckett.com/grading",
     "grading-modal": "https://www.beckett.com/grading?slide=modal",
     "grading-bare": "https://beckett.com/grading",
+    "grading-submit": "https://www.beckett.com/grading/submit",
+    "turnaround-policy": "https://www.beckett.com/grading/turnaround-policy",
+    "availability": "https://www.beckett.com/card-grading-availability",
+    "global-services": "https://www.beckett.com/grading/beckett-global-services",
     "news-index": "https://www.beckett.com/news/",
     "news-turnaround": "https://www.beckett.com/news/beckett-turnaround-time-updates/",
+    "nscc-2026": "https://www.beckett.com/nscc-2026",
 }
 ALLOWED_INITIAL = {"psacard.com", "www.psacard.com", "beckett.com", "www.beckett.com"}
 PRODUCTION_UA = grading.UA
@@ -80,7 +85,8 @@ def main() -> int:
     print("PSA_MATRIX")
     print(json.dumps([probe(label, PSA_URL, headers) for label, headers in psa_matrix], ensure_ascii=False, indent=2))
     print("BGS_ENDPOINTS")
-    bgs_headers = {"User-Agent": DIAGNOSTIC_UA, "Accept-Language": "en-US,en;q=0.8",
+    bgs_headers = {"User-Agent": PRODUCTION_UA,
+                   "Accept-Language": "ko-KR,ja-JP;q=0.9,en-US;q=0.8,en;q=0.7",
                    "Range": "bytes=0-1999999"}
     print(json.dumps([probe(label, url, bgs_headers) for label, url in BGS_URLS.items()], ensure_ascii=False, indent=2))
     print("PRODUCTION_FETCH")
