@@ -1,0 +1,37 @@
+name: One-shot Grading Diagnostics v248
+
+on:
+  push:
+    branches: [fix/grading-diagnostics-v248]
+    paths:
+      - '.github/workflows/one-shot-grading-diagnostics-v248.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  apply-and-verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          fetch-depth: 0
+      - name: Apply exact diagnostics patch
+        run: python apply_grading_diagnostics_v248.py
+      - name: Targeted regression
+        run: |
+          python -m py_compile collection_verification_gate.py test_grading_diagnostics_v248.py
+          python -m unittest -v \
+            test_grading_diagnostics_v248.py \
+            test_collection_verification_gate.py \
+            test_collection_verification_reporting_v244.py
+          git diff --check
+      - name: Commit verified patch only
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add collection_verification_gate.py test_grading_diagnostics_v248.py
+          git diff --cached --quiet && exit 1
+          git commit -m 'fix: enrich and balance grading degradation diagnostics'
+          git push origin HEAD:fix/grading-diagnostics-v248
