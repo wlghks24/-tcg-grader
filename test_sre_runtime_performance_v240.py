@@ -23,7 +23,7 @@ class SreRuntimePerformanceV240Tests(unittest.TestCase):
                 "started_at": None,
                 "finished_at": None,
                 "current": 0,
-                "total": 7,
+                "total": updater._full_update_job_count(),
                 "label": "대기 중",
                 "file": None,
                 "message": "대기 중",
