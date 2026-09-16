@@ -1,0 +1,45 @@
+name: One-shot grading diagnostics v248 current
+
+on:
+  push:
+    branches:
+      - fix/grading-diagnostics-v248-current
+
+permissions:
+  contents: write
+
+jobs:
+  apply:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          ref: fix/grading-diagnostics-v248-current
+          fetch-depth: 0
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97
+        with:
+          python-version: '3.11'
+      - name: Apply bounded patch
+        run: python apply_grading_diagnostics_v248_current.py
+      - name: Targeted regression
+        run: |
+          python test_grading_diagnostics_v248.py
+          python test_collection_verification_reporting_v244.py
+          python test_collection_verification_gate.py
+      - name: Syntax and diff validation
+        run: |
+          python -m py_compile collection_verification_gate.py test_grading_diagnostics_v248.py
+          git diff --check
+      - name: Commit patched production code
+        run: |
+          if git diff --quiet; then
+            echo 'No patch changes detected'
+            exit 0
+          fi
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add collection_verification_gate.py test_grading_diagnostics_v248.py
+          git commit -m 'fix: balance grading RCA diagnostics by company'
+          git push origin HEAD:fix/grading-diagnostics-v248-current
