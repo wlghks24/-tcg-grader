@@ -1,0 +1,1 @@
+Temporary PR validation marker for SRE performance hardening.
