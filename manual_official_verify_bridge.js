@@ -77,18 +77,15 @@ function mergeVerifiedLearningSummary(){
  const reference=cards.find(card=>String(card.querySelector('span')?.textContent||'').trim()==='참고학습 반영');
  const cert=cards.find(card=>String(card.querySelector('span')?.textContent||'').trim()==='인증번호 확보');
  if(!official)return false;
- const merged=Math.max(countFromCard(official),countFromCard(reference));
- const label=official.querySelector('span'),value=official.querySelector('b');
- const mergedText=`${merged.toLocaleString()}세트 · 사진 ${(merged*2).toLocaleString()}장`;
- if(label&&label.textContent!=='공식검증·학습반영')label.textContent='공식검증·학습반영';
- if(value&&value.textContent!==mergedText)value.textContent=mergedText;
- if(reference)reference.remove();
+ // Preserve independent counts; a reference does not prove a photo pair or training.
+ const label=official.querySelector('span');
+ if(label&&label.textContent!=='공식검증')label.textContent='공식검증';
  if(cert){
   const certCount=countFromCard(cert),certValue=cert.querySelector('b'),certText=`${certCount.toLocaleString()}개`;
   if(certValue&&certValue.textContent!==certText)certValue.textContent=certText;
  }
  const footer=document.querySelector('#gpdBody .gpd-foot .gpd-safe');
- const footerText='공식검증은 카드 세트 기준 · 앞면+뒷면 사진은 모두 학습에 사용 · 인증번호는 고유번호 기준';
+ const footerText='공식검증과 참고학습은 별도 집계 · 사진 첨부 및 학습 가능 여부는 개별 검증 결과로 확인';
  if(footer&&footer.textContent!==footerText)footer.textContent=footerText;
  return true;
 }
