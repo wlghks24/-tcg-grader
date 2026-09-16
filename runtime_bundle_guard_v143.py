@@ -26,6 +26,7 @@ PATCH_ID = 143
 
 REQUIRED_FILES = (
     "safe_runtime.py",
+    "runtime_sre_metrics.py",
     "auto_repair_engine.py",
     "auto_update_all.py",
     "collector_self_healing.py",

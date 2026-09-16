@@ -132,5 +132,12 @@ class SreRuntimePerformanceV240Tests(unittest.TestCase):
             self.assertEqual(dict(second.sent_headers)["ETag"], header_map["ETag"])
 
 
+    def test_runtime_metrics_module_is_in_tablet_and_bundle_ssot(self):
+        import tablet_runtime_manifest
+        import runtime_bundle_guard_v143
+        self.assertIn("runtime_sre_metrics.py", tablet_runtime_manifest.ACTIVE_RUNTIME_FILES)
+        self.assertIn("runtime_sre_metrics.py", runtime_bundle_guard_v143.REQUIRED_FILES)
+
+
 if __name__ == "__main__":
     unittest.main()
