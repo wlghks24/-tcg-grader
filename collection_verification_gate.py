@@ -346,7 +346,15 @@ def _audit_grading_companies(root: Path, now: dt.datetime, findings: list[dict[s
             healthy_companies.add(company)
         else:
             degraded += 1
-            sample = {"source": str(source_id), "error": str(row.get("error") or row.get("last_error") or "")[:300]}
+            error_text = str(row.get("error") or row.get("last_error") or "")[:300]
+            sample = {
+                "company": company,
+                "source": str(source_id)[:160],
+                "market": str(row.get("market") or "")[:40],
+                "kind": str(row.get("kind") or "")[:40],
+                "failure_class": str(row.get("failure_class") or "unclassified")[:80],
+                "error": error_text,
+            }
             if len(degraded_errors) < 20:
                 degraded_errors.append(sample)
             company_samples = degraded_errors_by_company.setdefault(company, [])
@@ -359,11 +367,25 @@ def _audit_grading_companies(root: Path, now: dt.datetime, findings: list[dict[s
                          "companies": sorted(missing_source_companies)})
     no_healthy = EXPECTED_GRADING_COMPANIES - healthy_companies
     if no_healthy:
+        ordered_companies = sorted(no_healthy)
+        samples_by_company = {
+            company: degraded_errors_by_company.get(company, [])[:5]
+            for company in ordered_companies
+        }
         no_healthy_samples: list[dict[str, str]] = []
-        for company in sorted(no_healthy):
-            no_healthy_samples.extend(degraded_errors_by_company.get(company, []))
-        findings.append({"severity": "high", "code": "GRADING_COMPANY_NO_HEALTHY_SOURCE", "target": path.name,
-                         "companies": sorted(no_healthy), "degraded_samples": no_healthy_samples[:20]})
+        for index in range(5):
+            for company in ordered_companies:
+                company_samples = samples_by_company[company]
+                if index < len(company_samples):
+                    no_healthy_samples.append(company_samples[index])
+        findings.append({
+            "severity": "high",
+            "code": "GRADING_COMPANY_NO_HEALTHY_SOURCE",
+            "target": path.name,
+            "companies": ordered_companies,
+            "degraded_samples": no_healthy_samples[:20],
+            "degraded_samples_by_company": samples_by_company,
+        })
     elif degraded:
         findings.append({"severity": "medium", "code": "DEGRADED_GRADING_SOURCE", "target": path.name,
                          "count": degraded, "samples": degraded_errors})
