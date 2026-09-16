@@ -1,7 +1,7 @@
 {
   "schema_version": 8,
   "engine": "v157-reverify-prune-fair-budget-collection",
-  "created_at": "2026-09-16T00:59:27+00:00",
+  "created_at": "2026-09-16T07:00:29+00:00",
   "records": [
     {
       "source_id": "official_registry",
@@ -98,8 +98,8 @@
         "official_verification_missing"
       ],
       "evidence_confidence": 0.0,
-      "quarantine_review_count": 27,
-      "last_quarantine_review_at": "2026-09-16T00:59:27+00:00"
+      "quarantine_review_count": 28,
+      "last_quarantine_review_at": "2026-09-16T07:00:29+00:00"
     },
     {
       "source_id": "library_candidate",
@@ -151,8 +151,8 @@
         "official_verification_missing"
       ],
       "evidence_confidence": 0.0,
-      "quarantine_review_count": 27,
-      "last_quarantine_review_at": "2026-09-16T00:59:27+00:00"
+      "quarantine_review_count": 28,
+      "last_quarantine_review_at": "2026-09-16T07:00:29+00:00"
     },
     {
       "source_id": "library_candidate",
@@ -204,8 +204,8 @@
         "official_verification_missing"
       ],
       "evidence_confidence": 0.0,
-      "quarantine_review_count": 27,
-      "last_quarantine_review_at": "2026-09-16T00:59:27+00:00"
+      "quarantine_review_count": 28,
+      "last_quarantine_review_at": "2026-09-16T07:00:29+00:00"
     },
     {
       "source_id": "library_candidate",
@@ -257,8 +257,8 @@
         "official_verification_missing"
       ],
       "evidence_confidence": 0.0,
-      "quarantine_review_count": 27,
-      "last_quarantine_review_at": "2026-09-16T00:59:27+00:00"
+      "quarantine_review_count": 28,
+      "last_quarantine_review_at": "2026-09-16T07:00:29+00:00"
     },
     {
       "source_id": "library_candidate",
@@ -310,8 +310,8 @@
         "official_verification_missing"
       ],
       "evidence_confidence": 0.0,
-      "quarantine_review_count": 27,
-      "last_quarantine_review_at": "2026-09-16T00:59:27+00:00"
+      "quarantine_review_count": 28,
+      "last_quarantine_review_at": "2026-09-16T07:00:29+00:00"
     },
     {
       "source_id": "library_candidate",
@@ -358,8 +358,8 @@
         "official_verification_missing"
       ],
       "evidence_confidence": 0.0,
-      "quarantine_review_count": 27,
-      "last_quarantine_review_at": "2026-09-16T00:59:27+00:00"
+      "quarantine_review_count": 28,
+      "last_quarantine_review_at": "2026-09-16T07:00:29+00:00"
     },
     {
       "source_id": "library_candidate",
@@ -406,8 +406,8 @@
         "official_verification_missing"
       ],
       "evidence_confidence": 0.0,
-      "quarantine_review_count": 27,
-      "last_quarantine_review_at": "2026-09-16T00:59:27+00:00"
+      "quarantine_review_count": 28,
+      "last_quarantine_review_at": "2026-09-16T07:00:29+00:00"
     },
     {
       "source_id": "library_candidate",
@@ -454,8 +454,8 @@
         "official_verification_missing"
       ],
       "evidence_confidence": 0.0,
-      "quarantine_review_count": 27,
-      "last_quarantine_review_at": "2026-09-16T00:59:27+00:00"
+      "quarantine_review_count": 28,
+      "last_quarantine_review_at": "2026-09-16T07:00:29+00:00"
     },
     {
       "source_id": "library_candidate",
@@ -507,8 +507,8 @@
         "official_verification_missing"
       ],
       "evidence_confidence": 0.0,
-      "quarantine_review_count": 27,
-      "last_quarantine_review_at": "2026-09-16T00:59:27+00:00"
+      "quarantine_review_count": 28,
+      "last_quarantine_review_at": "2026-09-16T07:00:29+00:00"
     },
     {
       "source_id": "library_candidate",
@@ -560,8 +560,8 @@
         "official_verification_missing"
       ],
       "evidence_confidence": 0.0,
-      "quarantine_review_count": 27,
-      "last_quarantine_review_at": "2026-09-16T00:59:27+00:00"
+      "quarantine_review_count": 28,
+      "last_quarantine_review_at": "2026-09-16T07:00:29+00:00"
     },
     {
       "source_id": "library_candidate",
@@ -613,8 +613,8 @@
         "official_verification_missing"
       ],
       "evidence_confidence": 0.0,
-      "quarantine_review_count": 27,
-      "last_quarantine_review_at": "2026-09-16T00:59:27+00:00"
+      "quarantine_review_count": 28,
+      "last_quarantine_review_at": "2026-09-16T07:00:29+00:00"
     },
     {
       "source_id": "library_candidate",
@@ -666,8 +666,8 @@
         "official_verification_missing"
       ],
       "evidence_confidence": 0.0,
-      "quarantine_review_count": 27,
-      "last_quarantine_review_at": "2026-09-16T00:59:27+00:00"
+      "quarantine_review_count": 28,
+      "last_quarantine_review_at": "2026-09-16T07:00:29+00:00"
     },
     {
       "source_id": "library_candidate",
@@ -719,8 +719,8 @@
         "official_verification_missing"
       ],
       "evidence_confidence": 0.0,
-      "quarantine_review_count": 27,
-      "last_quarantine_review_at": "2026-09-16T00:59:27+00:00"
+      "quarantine_review_count": 28,
+      "last_quarantine_review_at": "2026-09-16T07:00:29+00:00"
     },
     {
       "source_id": "library_candidate",
@@ -767,8 +767,8 @@
         "official_verification_missing"
       ],
       "evidence_confidence": 0.0,
-      "quarantine_review_count": 27,
-      "last_quarantine_review_at": "2026-09-16T00:59:27+00:00"
+      "quarantine_review_count": 28,
+      "last_quarantine_review_at": "2026-09-16T07:00:29+00:00"
     },
     {
       "source_id": "library_candidate",
@@ -820,8 +820,8 @@
         "official_verification_missing"
       ],
       "evidence_confidence": 0.0,
-      "quarantine_review_count": 27,
-      "last_quarantine_review_at": "2026-09-16T00:59:27+00:00"
+      "quarantine_review_count": 28,
+      "last_quarantine_review_at": "2026-09-16T07:00:29+00:00"
     },
     {
       "source_id": "library_candidate",
@@ -874,8 +874,8 @@
         "official_verification_missing"
       ],
       "evidence_confidence": 0.0,
-      "quarantine_review_count": 27,
-      "last_quarantine_review_at": "2026-09-16T00:59:27+00:00"
+      "quarantine_review_count": 28,
+      "last_quarantine_review_at": "2026-09-16T07:00:29+00:00"
     },
     {
       "source_id": "library_candidate",
@@ -927,8 +927,8 @@
         "official_verification_missing"
       ],
       "evidence_confidence": 0.0,
-      "quarantine_review_count": 27,
-      "last_quarantine_review_at": "2026-09-16T00:59:27+00:00"
+      "quarantine_review_count": 28,
+      "last_quarantine_review_at": "2026-09-16T07:00:29+00:00"
     },
     {
       "source_id": "library_candidate",
@@ -980,8 +980,8 @@
         "official_verification_missing"
       ],
       "evidence_confidence": 0.0,
-      "quarantine_review_count": 27,
-      "last_quarantine_review_at": "2026-09-16T00:59:27+00:00"
+      "quarantine_review_count": 28,
+      "last_quarantine_review_at": "2026-09-16T07:00:29+00:00"
     },
     {
       "source_id": "library_candidate",
@@ -1033,8 +1033,8 @@
         "official_verification_missing"
       ],
       "evidence_confidence": 0.0,
-      "quarantine_review_count": 27,
-      "last_quarantine_review_at": "2026-09-16T00:59:27+00:00"
+      "quarantine_review_count": 28,
+      "last_quarantine_review_at": "2026-09-16T07:00:29+00:00"
     },
     {
       "source_id": "library_candidate",
@@ -1081,8 +1081,8 @@
         "official_verification_missing"
       ],
       "evidence_confidence": 0.0,
-      "quarantine_review_count": 27,
-      "last_quarantine_review_at": "2026-09-16T00:59:27+00:00"
+      "quarantine_review_count": 28,
+      "last_quarantine_review_at": "2026-09-16T07:00:29+00:00"
     },
     {
       "source_id": "library_candidate",
@@ -1134,8 +1134,8 @@
         "official_verification_missing"
       ],
       "evidence_confidence": 0.0,
-      "quarantine_review_count": 27,
-      "last_quarantine_review_at": "2026-09-16T00:59:27+00:00"
+      "quarantine_review_count": 28,
+      "last_quarantine_review_at": "2026-09-16T07:00:29+00:00"
     },
     {
       "source_id": "library_candidate",
@@ -1187,8 +1187,8 @@
         "official_verification_missing"
       ],
       "evidence_confidence": 0.0,
-      "quarantine_review_count": 27,
-      "last_quarantine_review_at": "2026-09-16T00:59:27+00:00"
+      "quarantine_review_count": 28,
+      "last_quarantine_review_at": "2026-09-16T07:00:29+00:00"
     },
     {
       "source_id": "library_candidate",
@@ -1240,8 +1240,8 @@
         "official_verification_missing"
       ],
       "evidence_confidence": 0.0,
-      "quarantine_review_count": 27,
-      "last_quarantine_review_at": "2026-09-16T00:59:27+00:00"
+      "quarantine_review_count": 28,
+      "last_quarantine_review_at": "2026-09-16T07:00:29+00:00"
     },
     {
       "source_id": "library_candidate",
@@ -1293,8 +1293,8 @@
         "official_verification_missing"
       ],
       "evidence_confidence": 0.0,
-      "quarantine_review_count": 27,
-      "last_quarantine_review_at": "2026-09-16T00:59:27+00:00"
+      "quarantine_review_count": 28,
+      "last_quarantine_review_at": "2026-09-16T07:00:29+00:00"
     },
     {
       "source_id": "library_candidate",
@@ -1346,8 +1346,8 @@
         "official_verification_missing"
       ],
       "evidence_confidence": 0.0,
-      "quarantine_review_count": 27,
-      "last_quarantine_review_at": "2026-09-16T00:59:27+00:00"
+      "quarantine_review_count": 28,
+      "last_quarantine_review_at": "2026-09-16T07:00:29+00:00"
     },
     {
       "source_id": "library_candidate",
@@ -1399,8 +1399,8 @@
         "official_verification_missing"
       ],
       "evidence_confidence": 0.0,
-      "quarantine_review_count": 27,
-      "last_quarantine_review_at": "2026-09-16T00:59:27+00:00"
+      "quarantine_review_count": 28,
+      "last_quarantine_review_at": "2026-09-16T07:00:29+00:00"
     },
     {
       "source_id": "library_candidate",
@@ -1452,8 +1452,8 @@
         "official_verification_missing"
       ],
       "evidence_confidence": 0.0,
-      "quarantine_review_count": 27,
-      "last_quarantine_review_at": "2026-09-16T00:59:27+00:00"
+      "quarantine_review_count": 28,
+      "last_quarantine_review_at": "2026-09-16T07:00:29+00:00"
     },
     {
       "source_id": "library_candidate",
@@ -1505,8 +1505,8 @@
         "official_verification_missing"
       ],
       "evidence_confidence": 0.0,
-      "quarantine_review_count": 27,
-      "last_quarantine_review_at": "2026-09-16T00:59:27+00:00"
+      "quarantine_review_count": 28,
+      "last_quarantine_review_at": "2026-09-16T07:00:29+00:00"
     },
     {
       "source_id": "library_candidate",
@@ -1558,50 +1558,8 @@
         "official_verification_missing"
       ],
       "evidence_confidence": 0.0,
-      "quarantine_review_count": 27,
-      "last_quarantine_review_at": "2026-09-16T00:59:27+00:00"
-    },
-    {
-      "source_id": "amazon_us",
-      "source": "Amazon US",
-      "search_provider": "duckduckgo",
-      "url": "https://www.amazon.com/clp/B0FXVLH7QM",
-      "title": "Amazon.com: Pokemon TCG: 1x Random Graded Pokemon Card (Beckett, PSA or ...",
-      "snippet": "",
-      "image_url": "",
-      "company": "PSA",
-      "grade": null,
-      "certification_id": "",
-      "game": "pokemon",
-      "mode": "slab",
-      "source_weight": 0.65,
-      "grade_from_search": false,
-      "official_result": false,
-      "verification_method": null,
-      "official_lookup_suppressed": true,
-      "automatic_official_lookup_used": false,
-      "manual_official_verification_required": true,
-      "official_verification": "manual_verification_required",
-      "measurement_photo_quality": 0.0,
-      "measurement_photo_view_ok": false,
-      "measurement_photo_view_reason": "geometry_exposure_or_sharpness_failed",
-      "measurement_photo_ready": false,
-      "measurement_photo_policy": "official+validated+high_resolution+ocr_identity+front_view_quality+no_conflict",
-      "cross_source_count": 1,
-      "cross_sources": [
-        "amazon_us"
-      ],
-      "quarantine_reasons": [
-        "certification_unresolved",
-        "grade_unresolved",
-        "image_url_missing",
-        "official_verification_missing"
-      ],
-      "status": "quarantine_candidate",
-      "learning_eligibility": "not_eligible_unverified",
-      "evidence_confidence": 0.4934,
-      "quarantine_review_count": 1,
-      "last_quarantine_review_at": "2026-09-16T00:59:27+00:00"
+      "quarantine_review_count": 28,
+      "last_quarantine_review_at": "2026-09-16T07:00:29+00:00"
     },
     {
       "source_id": "library_candidate",
@@ -1653,8 +1611,8 @@
         "official_verification_missing"
       ],
       "evidence_confidence": 0.0,
-      "quarantine_review_count": 27,
-      "last_quarantine_review_at": "2026-09-16T00:59:27+00:00"
+      "quarantine_review_count": 28,
+      "last_quarantine_review_at": "2026-09-16T07:00:29+00:00"
     },
     {
       "source_id": "library_candidate",
@@ -1706,8 +1664,8 @@
         "official_verification_missing"
       ],
       "evidence_confidence": 0.0,
-      "quarantine_review_count": 27,
-      "last_quarantine_review_at": "2026-09-16T00:59:27+00:00"
+      "quarantine_review_count": 28,
+      "last_quarantine_review_at": "2026-09-16T07:00:29+00:00"
     },
     {
       "source_id": "library_candidate",
@@ -1759,8 +1717,8 @@
         "official_verification_missing"
       ],
       "evidence_confidence": 0.0,
-      "quarantine_review_count": 27,
-      "last_quarantine_review_at": "2026-09-16T00:59:27+00:00"
+      "quarantine_review_count": 28,
+      "last_quarantine_review_at": "2026-09-16T07:00:29+00:00"
     },
     {
       "source_id": "library_candidate",
@@ -1812,12 +1770,12 @@
         "official_verification_missing"
       ],
       "evidence_confidence": 0.0,
-      "quarantine_review_count": 27,
-      "last_quarantine_review_at": "2026-09-16T00:59:27+00:00"
+      "quarantine_review_count": 28,
+      "last_quarantine_review_at": "2026-09-16T07:00:29+00:00"
     }
   ],
   "summary": {
-    "total_candidates": 35,
+    "total_candidates": 34,
     "with_image_url": 0,
     "validated_images": 34,
     "ocr_readable": 34,
@@ -1825,15 +1783,15 @@
     "verified_references": 1,
     "measurement_photo_ready": 0,
     "reference_learning_count": 1,
-    "game_grader_buckets_covered": 7,
+    "game_grader_buckets_covered": 6,
     "candidate_cap_dropped": 0,
     "raw_grade_calibration_eligible": 0,
-    "quarantined": 34,
-    "quarantine_reviewed": 40,
-    "quarantine_pruned": 6,
+    "quarantined": 33,
+    "quarantine_reviewed": 34,
+    "quarantine_pruned": 1,
     "quarantine_retryable_kept": 33,
-    "quarantine_grace_kept": 1,
-    "sources": 3,
+    "quarantine_grace_kept": 0,
+    "sources": 2,
     "status": "ok",
     "queries_attempted": 90,
     "markets_this_run": [
@@ -1846,16 +1804,16 @@
     ],
     "timed_out_sources": 0,
     "initial_bootstrap_collection": true,
-    "previous_candidates": 40,
+    "previous_candidates": 35,
     "registry_seed_count": 1,
     "reference_learning_seed_count": 1,
     "baseline_verified_seed_count": 0,
     "library_candidate_seed_count": 33,
-    "raw_results": 148,
-    "domain_matches": 38,
-    "company_matches": 2,
+    "raw_results": 137,
+    "domain_matches": 27,
+    "company_matches": 1,
     "resolved_redirects": 0,
-    "image_results": 1,
+    "image_results": 0,
     "google_image_results": 0,
     "undercovered_recovery_queries": 36,
     "recovery_company_matches": 0,
@@ -1865,25 +1823,19 @@
     "near_duplicate_label_conflicts": 0,
     "near_duplicate_references_suppressed": 0,
     "adaptive_timeout_seconds": 3600,
-    "elapsed_seconds": 18.7,
+    "elapsed_seconds": 14.2,
     "next_timeout_seconds": 3600
   },
   "image_probe_stats": {
-    "attempted": 2,
-    "rows_attempted": 2,
+    "attempted": 0,
+    "rows_attempted": 0,
     "gallery_alternate_attempts": 0,
     "validated": 0,
     "ocr_readable": 0,
     "certs_extracted": 0,
-    "failed": 2,
-    "company_attempted": {
-      "PSA": 1,
-      "TAG": 1
-    },
-    "game_attempted": {
-      "pokemon": 1,
-      "naruto": 1
-    },
+    "failed": 0,
+    "company_attempted": {},
+    "game_attempted": {},
     "prevalidated_library": 1
   },
   "game_inference_stats": {
@@ -1932,92 +1884,36 @@
     "near_duplicate_label_conflicts": 0
   },
   "quarantine_cleanup_stats": {
-    "reviewed": 40,
-    "pruned": 6,
+    "reviewed": 34,
+    "pruned": 1,
     "retained_retryable": 33,
-    "retained_grace": 1,
+    "retained_grace": 0,
     "pruned_reasons": {
-      "image_url_missing": 4,
-      "image_validation_failed": 2
+      "image_url_missing": 1
     },
     "policy": "two_pass_confirmed_unusable_only"
   },
   "quarantine_cleanup_audit": [
     {
-      "at": "2026-09-16T00:59:27+00:00",
-      "key": "url:https://www.amazon.com/Naruto-Part-4/dp/B0B8S8ZDDS",
-      "company": "TAG",
+      "at": "2026-09-16T07:00:29+00:00",
+      "key": "url:https://www.amazon.com/clp/B0FXVLH7QM",
+      "company": "PSA",
       "certification_id": "",
       "grade": null,
       "source_id": "amazon_us",
-      "reason": "image_validation_failed",
-      "title": "Watch Naruto - Part 4 | Prime Video",
-      "url": "https://www.amazon.com/Naruto-Part-4/dp/B0B8S8ZDDS"
-    },
-    {
-      "at": "2026-09-16T00:59:27+00:00",
-      "key": "url:https://www.ebay.com/str/psa",
-      "company": "PSA",
-      "certification_id": "",
-      "grade": null,
-      "source_id": "ebay_public",
-      "reason": "image_validation_failed",
-      "title": "PSA | eBay Stores",
-      "url": "https://www.ebay.com/str/psa"
-    },
-    {
-      "at": "2026-09-16T00:59:27+00:00",
-      "key": "url:https://il.ebay.com/b/PSA-Graded-Pokemon-Cards/183454/bn_7023355264",
-      "company": "PSA",
-      "certification_id": "",
-      "grade": null,
-      "source_id": "ebay_public",
       "reason": "image_url_missing",
-      "title": "PSA Graded Pokemon Cards - eBay",
-      "url": "https://il.ebay.com/b/PSA-Graded-Pokemon-Cards/183454/bn_7023355264"
-    },
-    {
-      "at": "2026-09-16T00:59:27+00:00",
-      "key": "url:https://pr.ebay.com/b/PSA-Graded-Pokemon-Cards/183454/bn_7023355264",
-      "company": "PSA",
-      "certification_id": "",
-      "grade": null,
-      "source_id": "ebay_public",
-      "reason": "image_url_missing",
-      "title": "Cartas de Pokémon con clasificación PSA - eBay",
-      "url": "https://pr.ebay.com/b/PSA-Graded-Pokemon-Cards/183454/bn_7023355264"
-    },
-    {
-      "at": "2026-09-16T00:59:27+00:00",
-      "key": "url:https://mx.ebay.com/b/PSA-Graded-Pokemon-Cards/183454/bn_7023355264",
-      "company": "PSA",
-      "certification_id": "",
-      "grade": null,
-      "source_id": "ebay_public",
-      "reason": "image_url_missing",
-      "title": "Cartas de Pokémon con clasificación PSA - eBay",
-      "url": "https://mx.ebay.com/b/PSA-Graded-Pokemon-Cards/183454/bn_7023355264"
-    },
-    {
-      "at": "2026-09-16T00:59:27+00:00",
-      "key": "url:https://br.ebay.com/b/PSA-Graded-Pokemon-Cards/183454/bn_7023355264",
-      "company": "PSA",
-      "certification_id": "",
-      "grade": null,
-      "source_id": "ebay_public",
-      "reason": "image_url_missing",
-      "title": "Cartões Pokemon com classificação PSA - eBay",
-      "url": "https://br.ebay.com/b/PSA-Graded-Pokemon-Cards/183454/bn_7023355264"
+      "title": "Amazon.com: Pokemon TCG: 1x Random Graded Pokemon Card (Beckett, PSA or ...",
+      "url": "https://www.amazon.com/clp/B0FXVLH7QM"
     }
   ],
   "global_candidate_balance": {
-    "input_candidates": 41,
-    "retained_candidates": 41,
+    "input_candidates": 35,
+    "retained_candidates": 35,
     "dropped_by_cap": 0,
-    "covered_game_grader_buckets": 7,
+    "covered_game_grader_buckets": 6,
     "matrix": {
       "PSA": {
-        "pokemon": 9,
+        "pokemon": 4,
         "onepiece": 3,
         "naruto": 0
       },
@@ -2034,7 +1930,7 @@
       "TAG": {
         "pokemon": 0,
         "onepiece": 0,
-        "naruto": 1
+        "naruto": 0
       },
       "BRG": {
         "pokemon": 12,
@@ -2071,7 +1967,7 @@
       },
       "TAG": {
         "runs": 11,
-        "images": 1,
+        "images": 0,
         "verified": 0,
         "measurement_ready": 0
       },
@@ -2082,8 +1978,8 @@
         "measurement_ready": 0
       }
     },
-    "productive_routes": 2,
-    "recovery_routes": 10,
+    "productive_routes": 1,
+    "recovery_routes": 15,
     "open_route_circuits": 0,
     "official_feedback": 0,
     "measurement_ready_feedback": 0,
@@ -2127,7 +2023,7 @@
     }
   },
   "collection_learning_feedback": {
-    "rows_observed": 1,
+    "rows_observed": 0,
     "official_verified": 0,
     "measurement_ready": 0,
     "identifiers_learned": 0,
@@ -2136,13 +2032,13 @@
   "game_stats": {
     "pokemon": {
       "name": "포켓몬",
-      "candidates": 17,
+      "candidates": 16,
       "with_image_url": 0,
       "validated_images": 16,
       "ocr_readable": 16,
       "measurement_ready": 0,
       "verified_references": 1,
-      "quarantined": 16
+      "quarantined": 15
     },
     "onepiece": {
       "name": "원피스",
@@ -2167,14 +2063,14 @@
   },
   "company_stats": {
     "PSA": {
-      "candidates": 7,
+      "candidates": 6,
       "with_image_url": 0,
       "validated_images": 6,
       "ocr_readable": 6,
       "measurement_ready": 0,
       "verified_references": 1,
       "games_covered": 2,
-      "quarantined": 6
+      "quarantined": 5
     },
     "BGS": {
       "candidates": 9,
@@ -2219,7 +2115,6 @@
   },
   "provider_stats": {
     "library_manifest": 33,
-    "duckduckgo": 1,
     "official_registry": 1
   },
   "source_stats": {
@@ -2231,122 +2126,11 @@
       "queries": 0,
       "configured": false
     },
-    "amazon_us": {
-      "candidates": 2,
-      "image_hits": 1,
-      "verified_hits": 0,
-      "errors": 2,
-      "queries": 15,
-      "raw_results": 31,
-      "domain_matches": 11,
-      "company_matches": 2,
-      "resolved_redirects": 0,
-      "image_results": 1,
-      "google_image_results": 0,
-      "recovery_queries": 6,
-      "recovery_company_matches": 0,
-      "circuit_deferred_games": 0,
-      "circuit_recovery_probes": 0,
-      "deadline_stops": 0,
-      "game_candidates": {
-        "pokemon": 1,
-        "onepiece": 0,
-        "naruto": 1
-      },
-      "company_candidates": {
-        "PSA": 1,
-        "BGS": 0,
-        "CGC": 0,
-        "TAG": 1,
-        "BRG": 0
-      },
-      "company_shortfalls": {
-        "PSA": 0,
-        "BGS": 1,
-        "CGC": 1,
-        "TAG": 0,
-        "BRG": 1
-      }
-    },
-    "amazon_jp": {
-      "candidates": 0,
-      "image_hits": 0,
-      "verified_hits": 0,
-      "errors": 1,
-      "queries": 15,
-      "raw_results": 30,
-      "domain_matches": 10,
-      "company_matches": 0,
-      "resolved_redirects": 0,
-      "image_results": 0,
-      "google_image_results": 0,
-      "recovery_queries": 6,
-      "recovery_company_matches": 0,
-      "circuit_deferred_games": 0,
-      "circuit_recovery_probes": 0,
-      "deadline_stops": 0,
-      "game_candidates": {
-        "pokemon": 0,
-        "onepiece": 0,
-        "naruto": 0
-      },
-      "company_candidates": {
-        "PSA": 0,
-        "BGS": 0,
-        "CGC": 0,
-        "TAG": 0,
-        "BRG": 0
-      },
-      "company_shortfalls": {
-        "PSA": 1,
-        "BGS": 1,
-        "CGC": 1,
-        "TAG": 1,
-        "BRG": 1
-      }
-    },
-    "kream": {
-      "candidates": 0,
-      "image_hits": 0,
-      "verified_hits": 0,
-      "errors": 1,
-      "queries": 15,
-      "raw_results": 25,
-      "domain_matches": 5,
-      "company_matches": 0,
-      "resolved_redirects": 0,
-      "image_results": 0,
-      "google_image_results": 0,
-      "recovery_queries": 6,
-      "recovery_company_matches": 0,
-      "circuit_deferred_games": 0,
-      "circuit_recovery_probes": 0,
-      "deadline_stops": 0,
-      "game_candidates": {
-        "pokemon": 0,
-        "onepiece": 0,
-        "naruto": 0
-      },
-      "company_candidates": {
-        "PSA": 0,
-        "BGS": 0,
-        "CGC": 0,
-        "TAG": 0,
-        "BRG": 0
-      },
-      "company_shortfalls": {
-        "PSA": 1,
-        "BGS": 1,
-        "CGC": 1,
-        "TAG": 1,
-        "BRG": 1
-      }
-    },
     "daangn": {
       "candidates": 0,
       "image_hits": 0,
       "verified_hits": 0,
-      "errors": 2,
+      "errors": 4,
       "queries": 15,
       "raw_results": 12,
       "domain_matches": 2,
@@ -2383,10 +2167,10 @@
       "candidates": 0,
       "image_hits": 0,
       "verified_hits": 0,
-      "errors": 0,
+      "errors": 3,
       "queries": 15,
-      "raw_results": 30,
-      "domain_matches": 10,
+      "raw_results": 20,
+      "domain_matches": 0,
       "company_matches": 0,
       "resolved_redirects": 0,
       "image_results": 0,
@@ -2420,10 +2204,121 @@
       "candidates": 0,
       "image_hits": 0,
       "verified_hits": 0,
-      "errors": 0,
+      "errors": 6,
       "queries": 15,
       "raw_results": 20,
       "domain_matches": 0,
+      "company_matches": 0,
+      "resolved_redirects": 0,
+      "image_results": 0,
+      "google_image_results": 0,
+      "recovery_queries": 6,
+      "recovery_company_matches": 0,
+      "circuit_deferred_games": 0,
+      "circuit_recovery_probes": 0,
+      "deadline_stops": 0,
+      "game_candidates": {
+        "pokemon": 0,
+        "onepiece": 0,
+        "naruto": 0
+      },
+      "company_candidates": {
+        "PSA": 0,
+        "BGS": 0,
+        "CGC": 0,
+        "TAG": 0,
+        "BRG": 0
+      },
+      "company_shortfalls": {
+        "PSA": 1,
+        "BGS": 1,
+        "CGC": 1,
+        "TAG": 1,
+        "BRG": 1
+      }
+    },
+    "amazon_jp": {
+      "candidates": 0,
+      "image_hits": 0,
+      "verified_hits": 0,
+      "errors": 3,
+      "queries": 15,
+      "raw_results": 30,
+      "domain_matches": 10,
+      "company_matches": 0,
+      "resolved_redirects": 0,
+      "image_results": 0,
+      "google_image_results": 0,
+      "recovery_queries": 6,
+      "recovery_company_matches": 0,
+      "circuit_deferred_games": 0,
+      "circuit_recovery_probes": 0,
+      "deadline_stops": 0,
+      "game_candidates": {
+        "pokemon": 0,
+        "onepiece": 0,
+        "naruto": 0
+      },
+      "company_candidates": {
+        "PSA": 0,
+        "BGS": 0,
+        "CGC": 0,
+        "TAG": 0,
+        "BRG": 0
+      },
+      "company_shortfalls": {
+        "PSA": 1,
+        "BGS": 1,
+        "CGC": 1,
+        "TAG": 1,
+        "BRG": 1
+      }
+    },
+    "amazon_us": {
+      "candidates": 1,
+      "image_hits": 0,
+      "verified_hits": 0,
+      "errors": 4,
+      "queries": 15,
+      "raw_results": 30,
+      "domain_matches": 10,
+      "company_matches": 1,
+      "resolved_redirects": 0,
+      "image_results": 0,
+      "google_image_results": 0,
+      "recovery_queries": 6,
+      "recovery_company_matches": 0,
+      "circuit_deferred_games": 0,
+      "circuit_recovery_probes": 0,
+      "deadline_stops": 0,
+      "game_candidates": {
+        "pokemon": 1,
+        "onepiece": 0,
+        "naruto": 0
+      },
+      "company_candidates": {
+        "PSA": 1,
+        "BGS": 0,
+        "CGC": 0,
+        "TAG": 0,
+        "BRG": 0
+      },
+      "company_shortfalls": {
+        "PSA": 0,
+        "BGS": 1,
+        "CGC": 1,
+        "TAG": 1,
+        "BRG": 1
+      }
+    },
+    "kream": {
+      "candidates": 0,
+      "image_hits": 0,
+      "verified_hits": 0,
+      "errors": 2,
+      "queries": 15,
+      "raw_results": 25,
+      "domain_matches": 5,
       "company_matches": 0,
       "resolved_redirects": 0,
       "image_results": 0,
@@ -2534,12 +2429,26 @@
     }
   },
   "errors": [
-    "amazon_us:adaptive_search:naver_news_html: HTTPError: HTTP Error 403: Forbidden",
-    "amazon_us:adaptive_search:ddg_lite: HTTPError: HTTP Error 403: Forbidden",
-    "amazon_jp:adaptive_search:ddg_lite: HTTPError: HTTP Error 403: Forbidden",
-    "kream:adaptive_search:ddg_lite: HTTPError: HTTP Error 403: Forbidden",
     "daangn:adaptive_search:naver_news_html: HTTPError: HTTP Error 403: Forbidden",
-    "daangn:adaptive_search:ddg_lite: HTTPError: HTTP Error 403: Forbidden"
+    "daangn:adaptive_search:bing_news_rss: ParseError: not well-formed (invalid token): line 1, column 41",
+    "daangn:adaptive_search:ddg_lite: HTTPError: HTTP Error 403: Forbidden",
+    "daangn:adaptive_search:bing_news_rss: ParseError: not well-formed (invalid token): line 1, column 41",
+    "collectory:adaptive_search:naver_news_html: HTTPError: HTTP Error 403: Forbidden",
+    "collectory:adaptive_search:ddg_lite: HTTPError: HTTP Error 403: Forbidden",
+    "collectory:adaptive_search:bing_news_rss: ParseError: not well-formed (invalid token): line 1, column 41",
+    "ebay_public:adaptive_search:naver_news_html: HTTPError: HTTP Error 403: Forbidden",
+    "ebay_public:adaptive_search:bing_news_rss: ParseError: not well-formed (invalid token): line 1, column 41",
+    "ebay_public:adaptive_search:ddg_lite: HTTPError: HTTP Error 403: Forbidden",
+    "ebay_public:adaptive_search:bing_news_rss: ParseError: not well-formed (invalid token): line 1, column 41",
+    "amazon_jp:adaptive_search:naver_news_html: HTTPError: HTTP Error 403: Forbidden",
+    "amazon_jp:adaptive_search:bing_news_rss: ParseError: not well-formed (invalid token): line 1, column 41",
+    "amazon_jp:adaptive_search:ddg_lite: HTTPError: HTTP Error 403: Forbidden",
+    "amazon_us:adaptive_search:naver_news_html: HTTPError: HTTP Error 403: Forbidden",
+    "amazon_us:adaptive_search:bing_news_rss: ParseError: not well-formed (invalid token): line 1, column 41",
+    "amazon_us:adaptive_search:ddg_lite: HTTPError: HTTP Error 403: Forbidden",
+    "amazon_us:adaptive_search:bing_news_rss: ParseError: not well-formed (invalid token): line 1, column 41",
+    "kream:adaptive_search:naver_news_html: HTTPError: HTTP Error 403: Forbidden",
+    "kream:adaptive_search:ddg_lite: HTTPError: HTTP Error 403: Forbidden"
   ],
   "configuration": {
     "google_cse_configured": false,

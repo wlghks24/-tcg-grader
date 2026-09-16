@@ -2,20 +2,20 @@
   "version": 1,
   "jobs": {
     "exchange_rates.json": {
-      "runs": 47,
-      "successes": 28,
+      "runs": 48,
+      "successes": 29,
       "failures": 0,
       "timeouts": 0,
       "partial_successes": 19,
       "recovered_successes": 17,
-      "last_seconds": 0.213,
+      "last_seconds": 8.748,
       "last_ok": true,
       "last_recovered": false,
-      "success_streak": 27,
+      "success_streak": 28,
       "consecutive_failures": 0,
-      "success_ewma_seconds": 0.487,
-      "ewma_seconds": 0.487,
-      "last_run": "2026-09-16T00:59:34+00:00",
+      "success_ewma_seconds": 2.965,
+      "ewma_seconds": 2.965,
+      "last_run": "2026-09-16T07:00:45+00:00",
       "error_patterns": {
         "93697047de8f": {
           "count": 1,
@@ -45,20 +45,20 @@
       "streak_reset_reason": "observation_gap_over_72h"
     },
     "__integration__": {
-      "runs": 44,
-      "successes": 28,
+      "runs": 45,
+      "successes": 29,
       "failures": 13,
       "timeouts": 3,
       "partial_successes": 0,
       "recovered_successes": 3,
-      "last_seconds": 121.163,
+      "last_seconds": 203.406,
       "last_ok": true,
       "last_recovered": false,
-      "success_streak": 1,
+      "success_streak": 2,
       "consecutive_failures": 0,
-      "success_ewma_seconds": 148.668,
-      "ewma_seconds": 148.668,
-      "last_run": "2026-09-16T01:03:11+00:00",
+      "success_ewma_seconds": 165.089,
+      "ewma_seconds": 165.089,
+      "last_run": "2026-09-16T07:06:16+00:00",
       "timeout_exhaustions": 0,
       "deferred_attempts": 0,
       "deferred_successes": 0,
@@ -88,17 +88,17 @@
       "streak_reset_reason": "observation_gap_over_72h"
     },
     "__link_audit__": {
-      "runs": 44,
+      "runs": 45,
       "successes": 24,
       "failures": 0,
       "timeouts": 0,
-      "partial_successes": 20,
+      "partial_successes": 21,
       "recovered_successes": 0,
-      "last_seconds": 82.505,
-      "last_ok": true,
+      "last_seconds": 85.876,
+      "last_ok": false,
       "last_recovered": false,
-      "success_streak": 4,
-      "consecutive_failures": 0,
+      "success_streak": 0,
+      "consecutive_failures": 1,
       "error_patterns": {
         "355705cf62a5": {
           "count": 1,
@@ -141,13 +141,13 @@
           "last_seen": "2026-09-14T13:04:09+00:00"
         },
         "8317cba3f9cd": {
-          "count": 1,
+          "count": 2,
           "sample": "미보정 깨진 링크 2개 · https://new.pokemonkorea.co.kr/card [purchase_sources.json:url, purchase_sources.json:url, purchase_sources.json:official_reference_url] | https://new.pokemonkorea.co.kr/card/960 [market_watch.json:source, releases.json:source]",
-          "last_seen": "2026-09-15T01:04:44+00:00"
+          "last_seen": "2026-09-16T07:04:18+00:00"
         }
       },
       "dominant_error_signature": "cf8b8ee20def",
-      "last_run": "2026-09-16T01:02:32+00:00",
+      "last_run": "2026-09-16T07:04:18+00:00",
       "timeout_exhaustions": 0,
       "deferred_attempts": 0,
       "deferred_successes": 0,
@@ -158,23 +158,24 @@
       "streak_reset_at": "2026-09-10T04:51:52+00:00",
       "streak_reset_reason": "observation_gap_over_72h",
       "success_ewma_seconds": 86.697,
-      "ewma_seconds": 86.697
+      "ewma_seconds": 86.697,
+      "last_error_signature": "8317cba3f9cd"
     },
     "market_watch.json": {
-      "runs": 40,
-      "successes": 40,
+      "runs": 41,
+      "successes": 41,
       "failures": 0,
       "timeouts": 0,
       "partial_successes": 0,
       "recovered_successes": 0,
-      "last_seconds": 0.089,
+      "last_seconds": 0.129,
       "last_ok": true,
       "last_recovered": false,
-      "success_streak": 27,
+      "success_streak": 28,
       "consecutive_failures": 0,
-      "success_ewma_seconds": 0.123,
-      "ewma_seconds": 0.123,
-      "last_run": "2026-09-16T00:59:34+00:00",
+      "success_ewma_seconds": 0.125,
+      "ewma_seconds": 0.125,
+      "last_run": "2026-09-16T07:00:37+00:00",
       "timeout_exhaustions": 0,
       "deferred_attempts": 0,
       "deferred_successes": 0,
@@ -187,17 +188,17 @@
       "streak_reset_reason": "observation_gap_over_72h"
     },
     "releases.json": {
-      "runs": 40,
+      "runs": 41,
       "successes": 23,
       "failures": 0,
       "timeouts": 0,
-      "partial_successes": 17,
+      "partial_successes": 18,
       "recovered_successes": 13,
-      "last_seconds": 28.977,
-      "last_ok": true,
+      "last_seconds": 13.09,
+      "last_ok": false,
       "last_recovered": false,
-      "success_streak": 4,
-      "consecutive_failures": 0,
+      "success_streak": 0,
+      "consecutive_failures": 1,
       "error_patterns": {
         "366db33edeb6": {
           "count": 1,
@@ -265,13 +266,13 @@
           "last_seen": "2026-08-26T10:47:08+00:00"
         },
         "dc7a3dae4914": {
-          "count": 4,
+          "count": 5,
           "sample": "Pokémon KR index: HTTPError",
-          "last_seen": "2026-09-15T01:01:04+00:00"
+          "last_seen": "2026-09-16T07:00:15+00:00"
         }
       },
       "dominant_error_signature": "dc7a3dae4914",
-      "last_run": "2026-09-16T00:59:08+00:00",
+      "last_run": "2026-09-16T07:00:15+00:00",
       "timeout_exhaustions": 0,
       "deferred_attempts": 0,
       "deferred_successes": 0,
@@ -282,19 +283,20 @@
       "streak_reset_at": "2026-09-10T04:47:07+00:00",
       "streak_reset_reason": "observation_gap_over_72h",
       "success_ewma_seconds": 29.555,
-      "ewma_seconds": 29.555
+      "ewma_seconds": 29.555,
+      "last_error_signature": "dc7a3dae4914"
     },
     "market_prices.json": {
-      "runs": 40,
-      "successes": 25,
+      "runs": 41,
+      "successes": 26,
       "failures": 1,
       "timeouts": 0,
       "partial_successes": 14,
       "recovered_successes": 13,
-      "last_seconds": 191.124,
+      "last_seconds": 206.225,
       "last_ok": true,
       "last_recovered": false,
-      "success_streak": 20,
+      "success_streak": 21,
       "consecutive_failures": 0,
       "error_patterns": {
         "0e8e4bf5d058": {
@@ -314,7 +316,7 @@
         }
       },
       "dominant_error_signature": "0e8e4bf5d058",
-      "last_run": "2026-09-16T01:01:10+00:00",
+      "last_run": "2026-09-16T07:02:52+00:00",
       "timeout_exhaustions": 0,
       "deferred_attempts": 0,
       "deferred_successes": 0,
@@ -324,21 +326,21 @@
       "deferred_pending": false,
       "streak_reset_at": "2026-09-10T04:50:08+00:00",
       "streak_reset_reason": "observation_gap_over_72h",
-      "success_ewma_seconds": 183.825,
-      "ewma_seconds": 183.825
+      "success_ewma_seconds": 190.545,
+      "ewma_seconds": 190.545
     },
     "promo_events.json": {
-      "runs": 40,
+      "runs": 41,
       "successes": 22,
       "failures": 0,
       "timeouts": 0,
-      "partial_successes": 17,
+      "partial_successes": 18,
       "recovered_successes": 14,
-      "last_seconds": 39.945,
-      "last_ok": true,
+      "last_seconds": 35.686,
+      "last_ok": false,
       "last_recovered": false,
-      "success_streak": 4,
-      "consecutive_failures": 0,
+      "success_streak": 0,
+      "consecutive_failures": 1,
       "error_patterns": {
         "386416d74406": {
           "count": 13,
@@ -346,9 +348,9 @@
           "last_seen": "2026-08-26T10:47:08+00:00"
         },
         "20c21cef7f6d": {
-          "count": 4,
+          "count": 5,
           "sample": "한국 포켓몬 영화·극장판 개봉 확인: HTTPError: status 410 / 2026 성남CITY 배틀 토너먼트 × GXG 2026: HTTPError: status 410 / KR 포켓몬 카드 신규행사 탐색: HTTPError: status 410",
-          "last_seen": "2026-09-15T01:00:48+00:00"
+          "last_seen": "2026-09-16T07:00:02+00:00"
         },
         "725abc1caa06": {
           "count": 1,
@@ -357,7 +359,7 @@
         }
       },
       "dominant_error_signature": "386416d74406",
-      "last_run": "2026-09-16T00:58:39+00:00",
+      "last_run": "2026-09-16T07:00:02+00:00",
       "timeout_exhaustions": 0,
       "deferred_attempts": 0,
       "deferred_successes": 0,
@@ -368,20 +370,21 @@
       "streak_reset_at": "2026-09-10T04:47:44+00:00",
       "streak_reset_reason": "observation_gap_over_72h",
       "success_ewma_seconds": 37.673,
-      "ewma_seconds": 37.673
+      "ewma_seconds": 37.673,
+      "last_error_signature": "20c21cef7f6d"
     },
     "purchase_sources.json": {
-      "runs": 40,
+      "runs": 41,
       "successes": 23,
       "failures": 0,
       "timeouts": 0,
-      "partial_successes": 17,
+      "partial_successes": 18,
       "recovered_successes": 13,
-      "last_seconds": 4.313,
-      "last_ok": true,
+      "last_seconds": 4.068,
+      "last_ok": false,
       "last_recovered": false,
-      "success_streak": 4,
-      "consecutive_failures": 0,
+      "success_streak": 0,
+      "consecutive_failures": 1,
       "error_patterns": {
         "763f8bb5b931": {
           "count": 13,
@@ -389,13 +392,13 @@
           "last_seen": "2026-08-26T10:47:11+00:00"
         },
         "a4559fc1aea8": {
-          "count": 4,
+          "count": 5,
           "sample": "포켓몬 카드 게임 코리아 제품: 재확인 필요·기존 주소 유지 (HTTPError: status 410) / 포켓몬 공인 카드샵 안내: 재확인 필요·기존 주소 유지 (HTTPError: status 410)",
-          "last_seen": "2026-09-15T01:01:27+00:00"
+          "last_seen": "2026-09-16T07:00:33+00:00"
         }
       },
       "dominant_error_signature": "763f8bb5b931",
-      "last_run": "2026-09-16T00:59:31+00:00",
+      "last_run": "2026-09-16T07:00:33+00:00",
       "timeout_exhaustions": 0,
       "deferred_attempts": 0,
       "deferred_successes": 0,
@@ -406,23 +409,24 @@
       "streak_reset_at": "2026-09-10T04:48:07+00:00",
       "streak_reset_reason": "observation_gap_over_72h",
       "success_ewma_seconds": 7.451,
-      "ewma_seconds": 7.451
+      "ewma_seconds": 7.451,
+      "last_error_signature": "a4559fc1aea8"
     },
     "graded_photo_candidates.json": {
-      "runs": 28,
-      "successes": 26,
+      "runs": 29,
+      "successes": 27,
       "failures": 1,
       "timeouts": 1,
       "partial_successes": 0,
       "recovered_successes": 1,
-      "last_seconds": 18.859,
+      "last_seconds": 14.295,
       "last_ok": true,
       "last_recovered": false,
-      "success_streak": 17,
+      "success_streak": 18,
       "consecutive_failures": 0,
-      "success_ewma_seconds": 17.725,
-      "ewma_seconds": 17.725,
-      "last_run": "2026-09-16T00:59:27+00:00",
+      "success_ewma_seconds": 16.696,
+      "ewma_seconds": 16.696,
+      "last_run": "2026-09-16T07:00:29+00:00",
       "timeout_exhaustions": 1,
       "deferred_attempts": 1,
       "deferred_successes": 1,
@@ -448,20 +452,20 @@
       "last_deferred_status": "recovered"
     },
     "grading_company_updates.json": {
-      "runs": 23,
-      "successes": 22,
+      "runs": 24,
+      "successes": 23,
       "failures": 0,
       "timeouts": 0,
       "partial_successes": 0,
       "recovered_successes": 1,
-      "last_seconds": 2.792,
+      "last_seconds": 3.158,
       "last_ok": true,
       "last_recovered": false,
-      "success_streak": 4,
+      "success_streak": 5,
       "consecutive_failures": 0,
-      "success_ewma_seconds": 3.249,
-      "ewma_seconds": 3.249,
-      "last_run": "2026-09-16T00:59:34+00:00",
+      "success_ewma_seconds": 3.222,
+      "ewma_seconds": 3.222,
+      "last_run": "2026-09-16T07:00:36+00:00",
       "timeout_exhaustions": 0,
       "deferred_attempts": 0,
       "deferred_successes": 0,
@@ -479,5 +483,5 @@
       "dominant_error_signature": "646ed4d2673b"
     }
   },
-  "updated_at": "2026-09-16T01:03:11+00:00"
+  "updated_at": "2026-09-16T07:06:16+00:00"
 }
