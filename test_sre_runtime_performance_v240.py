@@ -2,8 +2,10 @@ from __future__ import annotations
 
 import concurrent.futures
 import copy
+import tempfile
 import time
 import unittest
+from pathlib import Path
 from unittest import mock
 
 import runtime_sre_metrics
@@ -46,14 +48,12 @@ class SreRuntimePerformanceV240Tests(unittest.TestCase):
             self.assertEqual(first_status, 202)
             self.assertTrue(first_payload["accepted"])
             self.assertFalse(first_payload.get("joined_existing", False))
-
             for _ in range(99):
                 job_id, payload, status = updater._start_background_update(False)
                 self.assertEqual(status, 202)
                 self.assertEqual(job_id, first_id)
                 self.assertEqual(payload["job_id"], first_id)
                 self.assertTrue(payload["joined_existing"])
-
             self.assertEqual(thread_cls.call_count, 1)
             thread_cls.return_value.start.assert_called_once_with()
 
@@ -82,15 +82,12 @@ class SreRuntimePerformanceV240Tests(unittest.TestCase):
 
     def test_fixed_cardinality_metrics_survive_hundred_concurrent_requests(self):
         metrics = runtime_sre_metrics.RuntimeMetrics()
-
         def one_request(_):
             started = metrics.request_started()
             time.sleep(0.001)
             metrics.request_finished(started)
-
         with concurrent.futures.ThreadPoolExecutor(max_workers=32) as executor:
             list(executor.map(one_request, range(100)))
-
         snap = metrics.snapshot()
         self.assertEqual(snap["http"]["accepted_requests"], 100)
         self.assertEqual(snap["http"]["completed_requests"], 100)
@@ -98,6 +95,41 @@ class SreRuntimePerformanceV240Tests(unittest.TestCase):
         self.assertGreaterEqual(snap["http"]["max_active_requests"], 1)
         self.assertEqual(snap["cardinality"], "fixed")
         self.assertEqual(set(snap), {"schema_version", "uptime_seconds", "http", "updates", "cardinality"})
+
+    def test_static_asset_revalidation_returns_304_without_reopening_payload(self):
+        with tempfile.TemporaryDirectory() as td:
+            target = Path(td) / "index.html"
+            target.write_text("<html>stable</html>", encoding="utf-8")
+
+            def make_handler(headers):
+                handler = object.__new__(updater.Handler)
+                handler.directory = td
+                handler.path = "/index.html"
+                handler.command = "GET"
+                handler.headers = headers
+                handler.responses = []
+                handler.sent_headers = []
+                handler.send_response = lambda code: handler.responses.append(code)
+                handler.send_header = lambda key, value: handler.sent_headers.append((key, value))
+                handler.end_headers = lambda: None
+                handler.json = lambda data, status=200: None
+                return handler
+
+            first = make_handler({})
+            handle = updater.Handler.send_head(first)
+            self.assertIsNotNone(handle)
+            handle.close()
+            header_map = dict(first.sent_headers)
+            self.assertEqual(first.responses, [200])
+            self.assertIn("ETag", header_map)
+            self.assertIn("no-cache", header_map["Cache-Control"])
+            self.assertNotIn("no-store", header_map["Cache-Control"])
+
+            second = make_handler({"If-None-Match": header_map["ETag"]})
+            handle = updater.Handler.send_head(second)
+            self.assertIsNone(handle)
+            self.assertEqual(second.responses, [304])
+            self.assertEqual(dict(second.sent_headers)["ETag"], header_map["ETag"])
 
 
 if __name__ == "__main__":
