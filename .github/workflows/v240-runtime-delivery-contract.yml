@@ -1,0 +1,45 @@
+name: One-shot v240 runtime delivery contract
+
+on:
+  push:
+    branches: [selfrefine/sre-performance-v240]
+    paths:
+      - 'v240_runtime_delivery_contract_patch.py'
+      - '.github/workflows/v240-runtime-delivery-contract.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          ref: selfrefine/sre-performance-v240
+          fetch-depth: 0
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97
+        with:
+          python-version: '3.11'
+      - name: Install runtime test dependency
+        run: python -m pip install --disable-pip-version-check pillow
+      - name: Apply runtime delivery contract patch
+        run: python v240_runtime_delivery_contract_patch.py
+      - name: Verify targeted runtime and tablet regressions
+        run: |
+          python -m py_compile tcg_updater.py runtime_sre_metrics.py tablet_runtime_manifest.py runtime_bundle_guard_v143.py test_sre_runtime_performance_v240.py test_runtime_delivery_guards.py
+          python -m unittest -v test_sre_runtime_performance_v240.py
+          python test_runtime_delivery_guards.py
+          python tablet_runtime_manifest.py --check --compile
+          python runtime_bundle_guard_v143.py
+          python tablet_runtime_qa.py --profile runtime
+          TCG_FINAL_SKIP_HEAD_MATCH=1 bash VERIFY_TABLET_FINAL.sh
+      - name: Commit verified contract fix and remove helpers
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git rm v240_runtime_delivery_contract_patch.py .github/workflows/v240-runtime-delivery-contract.yml
+          git add tablet_runtime_manifest.py runtime_bundle_guard_v143.py test_runtime_delivery_guards.py test_sre_runtime_performance_v240.py
+          git commit -m 'test: align runtime delivery with ETag revalidation'
+          git push origin HEAD:selfrefine/sre-performance-v240
