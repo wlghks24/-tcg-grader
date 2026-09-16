@@ -59,13 +59,46 @@ console.log(JSON.stringify({
             "공식검증과 참고학습은 별도 집계 · 사진 첨부 및 학습 가능 여부는 개별 검증 결과로 확인",
         )
 
+    def test_legacy_merged_label_is_input_compatibility_only(self):
+        functions = self._summary_functions()
+        script = functions + r'''
+const card=(label,value)=>({
+ label:{textContent:label}, value:{textContent:value}, removed:false,
+ querySelector(selector){return selector==='span'?this.label:selector==='b'?this.value:null},
+ remove(){this.removed=true}
+});
+const official=card('공식검증·학습반영','4세트 · 사진 8장');
+const reference=card('참고학습 반영','2건');
+const summary={children:[official,reference]};
+const footer={textContent:''};
+global.document={querySelector(selector){
+ if(selector==='#gpdBody .gpd-summary')return summary;
+ if(selector==='#gpdBody .gpd-foot .gpd-safe')return footer;
+ return null;
+}};
+mergeVerifiedLearningSummary();
+console.log(JSON.stringify({
+ label:official.label.textContent,
+ value:official.value.textContent,
+ referenceRemoved:reference.removed,
+ referenceValue:reference.value.textContent
+}));
+'''
+        result = json.loads(subprocess.check_output(["node", "-e", script], text=True))
+        self.assertEqual(result["label"], "공식검증")
+        self.assertEqual(result["value"], "4세트 · 사진 8장")
+        self.assertFalse(result["referenceRemoved"])
+        self.assertEqual(result["referenceValue"], "2건")
+
     def test_summary_bridge_does_not_synthesize_photo_or_merged_counts(self):
         source = Path("manual_official_verify_bridge.js").read_text(encoding="utf-8")
         functions = self._summary_functions()
         self.assertNotIn("Math.max(countFromCard(official),countFromCard(reference))", functions)
         self.assertNotIn("merged*2", functions)
         self.assertNotIn("reference.remove()", functions)
-        self.assertNotIn("공식검증·학습반영", functions)
+        self.assertIn("['공식검증','공식검증·학습반영']", functions)
+        self.assertNotIn("textContent='공식검증·학습반영'", functions)
+        self.assertIn("textContent='공식검증'", functions)
         self.assertIn("공식검증과 참고학습은 별도 집계", source)
 
 
