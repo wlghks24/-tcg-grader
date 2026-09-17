@@ -1,0 +1,60 @@
+name: One-shot v240 grading source probe
+
+on:
+  push:
+    branches:
+      - selfrefine/sre-performance-v240
+    paths:
+      - .github/workflows/v240-grading-source-probe.yml
+
+permissions:
+  contents: read
+
+jobs:
+  probe:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97
+        with:
+          python-version: '3.11'
+      - name: Probe official source status and redirect hosts
+        run: |
+          python - <<'PY'
+          import urllib.error, urllib.parse, urllib.request
+
+          class NoRedirect(urllib.request.HTTPRedirectHandler):
+              def redirect_request(self, req, fp, code, msg, headers, newurl):
+                  return None
+
+          opener = urllib.request.build_opener(NoRedirect())
+          urls = [
+              'https://www.beckett.com/grading',
+              'https://beckett.com/grading',
+              'https://www.beckett.com/news/',
+              'https://www.beckett.com/card-grading-availability',
+              'https://www.psacard.com/services/tradingcardgrading',
+              'https://www.psacard.com/services',
+              'https://www.psacard.com/ja-JP/services/tradingcardgrading/grading',
+              'https://www.psacard.com/ja-JP/services',
+              'https://www.psacard.com/ja-JP/articles',
+          ]
+          headers = {
+              'User-Agent': 'Mozilla/5.0 TCG-Grader-GradingCompanyWatch/1.0',
+              'Accept-Language': 'ko-KR,ja-JP;q=0.9,en-US;q=0.8,en;q=0.7',
+          }
+          for url in urls:
+              req = urllib.request.Request(url, headers=headers)
+              try:
+                  with opener.open(req, timeout=20) as response:
+                      final = urllib.parse.urlsplit(response.geturl())
+                      print(url, 'status=', response.status, 'final_host=', final.hostname, 'final_path=', final.path)
+              except urllib.error.HTTPError as exc:
+                  location = exc.headers.get('Location') if exc.headers else None
+                  parsed = urllib.parse.urlsplit(urllib.parse.urljoin(url, location or '')) if location else None
+                  print(url, 'status=', exc.code, 'redirect_host=', parsed.hostname if parsed else None,
+                        'redirect_path=', parsed.path if parsed else None)
+              except Exception as exc:
+                  print(url, 'error=', type(exc).__name__, str(exc)[:120])
+          PY
