@@ -13,6 +13,7 @@ on:
       - 'update_market_prices.py'
       - 'market_public_crosscheck.py'
       - 'test_market_public_crosscheck_resilience_v228.py'
+      - 'test_market_public_crosscheck_performance_v251.py'
       - 'test_collection_restored_state_guard_v229.py'
       - 'test_release_history_cumulative_coverage_v229.py'
       - 'multi_market_price_collector.py'
@@ -56,6 +57,7 @@ on:
       - 'update_market_prices.py'
       - 'market_public_crosscheck.py'
       - 'test_market_public_crosscheck_resilience_v228.py'
+      - 'test_market_public_crosscheck_performance_v251.py'
       - 'test_collection_restored_state_guard_v229.py'
       - 'test_release_history_cumulative_coverage_v229.py'
       - 'multi_market_price_collector.py'
@@ -124,7 +126,7 @@ jobs:
             grading_company_watch.py graded_photo_multi_source.py verified_collection_job_neural.py \
             validate_external_links.py \
             test_collection_verification_gate.py test_static_data_publish_gate.py \
-            test_market_public_crosscheck_resilience_v228.py \
+            test_market_public_crosscheck_resilience_v228.py test_market_public_crosscheck_performance_v251.py \
             test_collection_restored_state_guard_v229.py test_release_history_cumulative_coverage_v229.py \
             test_collection_scope_compat_v214.py test_social_event_topic_coverage.py \
             test_social_topic_capacity_v213.py test_information_lifecycle_archive_v209.py \
@@ -134,6 +136,7 @@ jobs:
             test_collection_verification_gate.py \
             test_static_data_publish_gate.py \
             test_market_public_crosscheck_resilience_v228.py \
+            test_market_public_crosscheck_performance_v251.py \
             test_collection_restored_state_guard_v229.py \
             test_release_history_cumulative_coverage_v229.py \
             test_collection_scope_compat_v214.py \
@@ -161,10 +164,36 @@ jobs:
 
       - name: Verify collected evidence fail-closed
         run: |
+          set -euo pipefail
+          extra=()
+          # PRs must still fail on critical correctness/safety regressions, but an
+          # unrelated external provider outage (403/429/timeout/degraded source)
+          # is surfaced as health evidence instead of blocking the code change.
+          # Main/manual verification remains strict and fails on degraded output.
+          if [ "${{ github.event_name }}" != "pull_request" ]; then
+            extra+=(--fail-on-degraded)
+          fi
           python collection_verification_gate.py \
             --max-health-age-seconds 900 \
-            --fail-on-degraded \
-            --report COLLECTION_VERIFICATION_REPORT.json
+            --report COLLECTION_VERIFICATION_REPORT.json \
+            "${extra[@]}"
+
+      - name: Surface external provider degradation on PRs
+        if: always() && github.event_name == 'pull_request'
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          path = Path('COLLECTION_VERIFICATION_REPORT.json')
+          if not path.is_file():
+              raise SystemExit(0)
+          report = json.loads(path.read_text(encoding='utf-8'))
+          if report.get('status') == 'degraded':
+              counts = report.get('counts') or {}
+              findings = report.get('findings') or []
+              codes = sorted({str(row.get('code')) for row in findings if row.get('severity') == 'high'})
+              print(f"::warning title=External collection degraded::high={counts.get('high', 0)} codes={','.join(codes[:12])}")
+          PY
 
       - name: Validate verification safety contract
         if: always()
