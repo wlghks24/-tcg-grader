@@ -164,10 +164,36 @@ jobs:
 
       - name: Verify collected evidence fail-closed
         run: |
+          set -euo pipefail
+          extra=()
+          # PRs must still fail on critical correctness/safety regressions, but an
+          # unrelated external provider outage (403/429/timeout/degraded source)
+          # is surfaced as health evidence instead of blocking the code change.
+          # Main/manual verification remains strict and fails on degraded output.
+          if [ "${{ github.event_name }}" != "pull_request" ]; then
+            extra+=(--fail-on-degraded)
+          fi
           python collection_verification_gate.py \
             --max-health-age-seconds 900 \
-            --fail-on-degraded \
-            --report COLLECTION_VERIFICATION_REPORT.json
+            --report COLLECTION_VERIFICATION_REPORT.json \
+            "${extra[@]}"
+
+      - name: Surface external provider degradation on PRs
+        if: always() && github.event_name == 'pull_request'
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          path = Path('COLLECTION_VERIFICATION_REPORT.json')
+          if not path.is_file():
+              raise SystemExit(0)
+          report = json.loads(path.read_text(encoding='utf-8'))
+          if report.get('status') == 'degraded':
+              counts = report.get('counts') or {}
+              findings = report.get('findings') or []
+              codes = sorted({str(row.get('code')) for row in findings if row.get('severity') == 'high'})
+              print(f"::warning title=External collection degraded::high={counts.get('high', 0)} codes={','.join(codes[:12])}")
+          PY
 
       - name: Validate verification safety contract
         if: always()
