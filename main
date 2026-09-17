@@ -19,19 +19,35 @@ case "$cmd" in
   recover)
     exec bash ANDROID_RECOVER_UPDATE.sh
     ;;
+  update-install)
+    exec bash TABLET_SCHEDULED_UPDATE.sh install
+    ;;
+  update-now)
+    exec bash TABLET_SCHEDULED_UPDATE.sh run
+    ;;
+  update-status)
+    exec bash TABLET_SCHEDULED_UPDATE.sh status
+    ;;
+  update-remove)
+    exec bash TABLET_SCHEDULED_UPDATE.sh remove
+    ;;
   help|-h|--help)
     cat <<'EOF'
 태블릿 Termux 통합 실행
-  bash main            최신 main 안전검증/업데이트 후 서버 시작
-  bash main collect    공개 TCG 자료 8단계 수집 + 로컬 검증(업로드 없음)
-  bash main publish    최신 main에서만 수집/검증 후 자료 PR 생성
-  bash main verify     현재 태블릿 빌드 최종 검증
-  bash main recover    오래된 Android 업데이터 복구
+  bash main                 최신 main 안전검증/업데이트 후 서버 시작
+  bash main collect         공개 TCG 자료 8단계 수집 + 로컬 검증(업로드 없음)
+  bash main publish         최신 main에서만 수집/검증 후 자료 PR 생성
+  bash main verify          현재 태블릿 빌드 최종 검증
+  bash main recover         오래된 Android 업데이터 복구
+  bash main update-install  부팅 후 + 하루 1회 안전 업데이트 확인 설치
+  bash main update-now      지금 최신 main 확인/안전 업데이트
+  bash main update-status   마지막 업데이트 확인 결과 표시
+  bash main update-remove   예약 업데이트 제거
 EOF
     ;;
   *)
     echo "[오류] 알 수 없는 명령: $cmd" >&2
-    echo "사용법: bash main [start|collect|publish|verify|recover|help]" >&2
+    echo "사용법: bash main [start|collect|publish|verify|recover|update-install|update-now|update-status|update-remove|help]" >&2
     exit 2
     ;;
 esac
