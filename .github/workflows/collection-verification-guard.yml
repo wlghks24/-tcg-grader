@@ -13,6 +13,7 @@ on:
       - 'update_market_prices.py'
       - 'market_public_crosscheck.py'
       - 'test_market_public_crosscheck_resilience_v228.py'
+      - 'test_market_public_crosscheck_performance_v251.py'
       - 'test_collection_restored_state_guard_v229.py'
       - 'test_release_history_cumulative_coverage_v229.py'
       - 'multi_market_price_collector.py'
@@ -56,6 +57,7 @@ on:
       - 'update_market_prices.py'
       - 'market_public_crosscheck.py'
       - 'test_market_public_crosscheck_resilience_v228.py'
+      - 'test_market_public_crosscheck_performance_v251.py'
       - 'test_collection_restored_state_guard_v229.py'
       - 'test_release_history_cumulative_coverage_v229.py'
       - 'multi_market_price_collector.py'
@@ -124,7 +126,7 @@ jobs:
             grading_company_watch.py graded_photo_multi_source.py verified_collection_job_neural.py \
             validate_external_links.py \
             test_collection_verification_gate.py test_static_data_publish_gate.py \
-            test_market_public_crosscheck_resilience_v228.py \
+            test_market_public_crosscheck_resilience_v228.py test_market_public_crosscheck_performance_v251.py \
             test_collection_restored_state_guard_v229.py test_release_history_cumulative_coverage_v229.py \
             test_collection_scope_compat_v214.py test_social_event_topic_coverage.py \
             test_social_topic_capacity_v213.py test_information_lifecycle_archive_v209.py \
@@ -134,6 +136,7 @@ jobs:
             test_collection_verification_gate.py \
             test_static_data_publish_gate.py \
             test_market_public_crosscheck_resilience_v228.py \
+            test_market_public_crosscheck_performance_v251.py \
             test_collection_restored_state_guard_v229.py \
             test_release_history_cumulative_coverage_v229.py \
             test_collection_scope_compat_v214.py \
