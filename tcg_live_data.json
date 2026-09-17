@@ -1,13 +1,13 @@
 {
-  "updated_at": "2026-09-17T00:58:28+0000",
+  "updated_at": "2026-09-17T06:59:31+0000",
   "sources": {
     "포켓몬 일본 공식": {
       "url": "https://www.pokemon-card.com/products/index.html",
       "kind": "공식",
       "title": "商品情報 | ポケモンカードゲーム公式ホームページ",
       "fingerprint": "02ffa44d0206862f068176911cd94a61f83e284ffb5210dcc23f01e4ca12bded",
-      "checked_at": "2026-09-17T00:58:28+0000",
-      "last_seconds": 0.868,
+      "checked_at": "2026-09-17T06:59:31+0000",
+      "last_seconds": 0.54,
       "recovered": false
     },
     "포켓몬 30주년 공식": {
@@ -15,8 +15,8 @@
       "kind": "공식",
       "title": "トップ｜ポケモンカードゲーム30周年特別サイト",
       "fingerprint": "e0439d3cb5ea21fc8ae19ff3888647974257b77635148d41da0881738c1e523e",
-      "checked_at": "2026-09-17T00:58:28+0000",
-      "last_seconds": 0.21,
+      "checked_at": "2026-09-17T06:59:31+0000",
+      "last_seconds": 0.166,
       "recovered": false
     },
     "원피스 한국 공식": {
@@ -24,35 +24,35 @@
       "kind": "공식",
       "title": "ONE PIECE 원피스 카드게임",
       "fingerprint": "214e5a8cede88a70688c53c46d5e212eca9bbc315d1e459767481af2928f5d3d",
-      "checked_at": "2026-09-17T00:58:28+0000",
-      "last_seconds": 1.994,
+      "checked_at": "2026-09-17T06:59:31+0000",
+      "last_seconds": 1.468,
       "recovered": false
     },
     "원피스 일본 공식": {
       "url": "https://www.onepiece-cardgame.com/",
       "kind": "공식",
       "title": "ONE PIECEカードゲーム公式サイト｜ワンピース",
-      "fingerprint": "985710fc94ead0bcc19191a76ba57d50637db0560f5b311d40844aa94b55ca10",
-      "checked_at": "2026-09-17T00:58:28+0000",
-      "last_seconds": 1.761,
+      "fingerprint": "717a1618368fb8deb94284182f81d32b01fb7c1fb61241dad2baa3759ad826dc",
+      "checked_at": "2026-09-17T06:59:31+0000",
+      "last_seconds": 2.109,
       "recovered": false
     },
     "원피스 미국 공식": {
       "url": "https://en.onepiece-cardgame.com/products/",
       "kind": "공식",
       "title": "PRODUCTS｜ONE PIECE CARD GAME - Official Web Site",
-      "fingerprint": "6d4157d4c208dc082d1f92acf9d4b524a1c8c673773c96f199bde5f8f7b28abf",
-      "checked_at": "2026-09-17T00:58:28+0000",
-      "last_seconds": 1.181,
+      "fingerprint": "7295634fb2b6e0ca7d39e6c261704bc1303c41eae2f84b7edbd40432148fd1d9",
+      "checked_at": "2026-09-17T06:59:31+0000",
+      "last_seconds": 1.649,
       "recovered": false
     },
     "나루토 카드게임 글로벌 공식": {
       "url": "https://www.naruto-cardgame.com/asia-en/",
       "kind": "공식",
       "title": "NARUTO CARD GAME OFFICIAL WEBSITE",
-      "fingerprint": "a9710a27da90d344c721c5088cb09772562409e4ec8362d9a473b12bd68eacac",
-      "checked_at": "2026-09-17T00:58:28+0000",
-      "last_seconds": 0.495,
+      "fingerprint": "005ef3211d9a283a489927966b7db4e43e37804f38a0a7e9db187d5a5aa9e608",
+      "checked_at": "2026-09-17T06:59:31+0000",
+      "last_seconds": 0.799,
       "recovered": false
     },
     "포켓몬 일본 프로모 행사 공식": {
@@ -60,33 +60,33 @@
       "kind": "행사",
       "title": "ポケカジムエントリーキャンペーン2026年前期、3月1日スタート！ | ポケモンカードゲーム公式ホームページ",
       "fingerprint": "855adf18f6831b9be9b110bb108ffc31856753b87e5838d9e7a528f171937624",
-      "checked_at": "2026-09-17T00:58:28+0000",
-      "last_seconds": 0.208,
+      "checked_at": "2026-09-17T06:59:31+0000",
+      "last_seconds": 0.298,
       "recovered": false
     },
     "CGC 공식 등급": {
       "url": "https://www.cgccards.com/card-grading/grading-scale/",
       "kind": "등급",
       "title": "Grading Scale | Sports Card Grading | CGC",
-      "fingerprint": "b13f1aea9e0d6925b6e0705f94d5531ce477f90028c2acfbebc2b46907378bc5",
-      "checked_at": "2026-09-17T00:58:28+0000",
-      "last_seconds": 0.411,
+      "fingerprint": "0a60e66d7bbfb33cffaf88cf6e327f644bf5dbc40a5b7a68aeae48649eef6490",
+      "checked_at": "2026-09-17T06:59:31+0000",
+      "last_seconds": 0.164,
       "recovered": false
     },
     "포켓몬 한국 공식": {
       "url": "https://pokemoncard.co.kr/card/category/info1",
       "kind": "공식",
       "title": "포켓몬 카드 게임",
-      "fingerprint": "75a5b9d0c7e3c8a9ce3108c6b3fa5048bfc0d9562c3a0a5d578cac277b62e585",
-      "checked_at": "2026-09-17T00:58:28+0000",
-      "last_seconds": 1.427,
+      "fingerprint": "61b03bd81c4cbeae29917904b810281ee74d8a3acaf28c4ec89219ccd78ce320",
+      "checked_at": "2026-09-17T06:59:31+0000",
+      "last_seconds": 1.766,
       "recovered": false
     },
     "PSA 공식 등급기준": {
       "url": "https://www.psacard.com/gradingstandards",
       "kind": "등급",
       "title": "PSA Grading Standards",
-      "checked_at": "2026-09-17T00:58:28+0000",
+      "checked_at": "2026-09-17T06:59:31+0000",
       "browser_verified_at": "2026-08-26T18:48:15+0900",
       "verification_method": "공식 페이지 브라우저 확인",
       "automation_access": "restricted",
@@ -97,71 +97,71 @@
       "kind": "등급",
       "title": "Base &amp; Standard Submissions Are Open | Beckett",
       "fingerprint": "03d536e3399b3d42dd41747157a24e968f377479a520d636db8634a4beb5f965",
-      "checked_at": "2026-09-17T00:58:28+0000",
-      "last_seconds": 0.562,
+      "checked_at": "2026-09-17T06:59:31+0000",
+      "last_seconds": 0.308,
       "recovered": false
     },
     "TAG 공식 등급": {
       "url": "https://taggrading.com/pages/scale",
       "kind": "등급",
       "title": "GRADING SCALE &ndash; TAG Grading",
-      "fingerprint": "8d4ce1c2324b563c901a10ea9fa4faa3fcc4f52fd4679df1d87999d589e46569",
-      "checked_at": "2026-09-17T00:58:28+0000",
-      "last_seconds": 0.708,
+      "fingerprint": "835b334c5bcea3bb014d4c52d1dea3af9364bd23ef2a5f07a0309325665c76de",
+      "checked_at": "2026-09-17T06:59:31+0000",
+      "last_seconds": 0.51,
       "recovered": false
     },
     "SNKRDUNK 포켓몬 공개 TCG 시세": {
       "url": "https://snkrdunk.com/en/brands/pokemon/trading-cards?categoryId=25",
       "kind": "참고시세",
       "title": "Pokemon Card Game | SNKRDUNK",
-      "fingerprint": "085bb97357740edd156c0936f5b10aa1e5f5cdb0587eb99e908b448c41025f5c",
-      "checked_at": "2026-09-17T00:58:28+0000",
-      "last_seconds": 0.532,
+      "fingerprint": "d2d1f75b034458f103516d6ee9e6e751ec1424d825211940748c284d27b4486d",
+      "checked_at": "2026-09-17T06:59:31+0000",
+      "last_seconds": 0.703,
       "recovered": false
     },
     "BRG 공식 등급": {
       "url": "https://break.co.kr/",
       "kind": "등급",
       "title": "brg grading | 트레이딩 카드 그레이딩 서비스",
-      "fingerprint": "94f89741ed00abbbc0d8c6a2f1fa16d4ba4c4a1a3526f6ad50dda01c063e39fb",
-      "checked_at": "2026-09-17T00:58:28+0000",
-      "last_seconds": 0.747,
+      "fingerprint": "9bacd0e6bd6f2fac0c51bc0317b43f1971d7e3e19082a798c8b2aed55976e400",
+      "checked_at": "2026-09-17T06:59:31+0000",
+      "last_seconds": 0.67,
       "recovered": false
     },
     "SNKRDUNK 원피스 공개 TCG 시세": {
       "url": "https://snkrdunk.com/en/brands/onepiece/trading-cards?categoryId=14",
       "kind": "참고시세",
       "title": "ONE PIECE | SNKRDUNK",
-      "fingerprint": "79acb75c83b767a3918e258f43f3f11c127083b185b57e09428a0da08a19bc1c",
-      "checked_at": "2026-09-17T00:58:28+0000",
-      "last_seconds": 0.601,
+      "fingerprint": "b29d03a82fcad54557c32fe53a3e21742f07c953b1e8251b1b4140b8f93b2f2d",
+      "checked_at": "2026-09-17T06:59:31+0000",
+      "last_seconds": 0.524,
       "recovered": false
     },
     "JustTCG 가격 API 문서": {
       "url": "https://justtcg.com/docs/quickstart",
       "kind": "참고시세",
       "title": "Quickstart — JustTCG API Documentation",
-      "fingerprint": "37178f1966f390003098d96c48b4035a2aab541cbe3cb70fda1e37fa5760ecfa",
-      "checked_at": "2026-09-17T00:58:28+0000",
-      "last_seconds": 0.365,
+      "fingerprint": "a8d37767de64ad999b21a7418ee2b2cbcc9c98f011d5526f0d470abaab224fb6",
+      "checked_at": "2026-09-17T06:59:31+0000",
+      "last_seconds": 0.199,
       "recovered": false
     },
     "Collectory 공개 카드시세": {
       "url": "https://collectory.cc/cards",
       "kind": "시세",
       "title": "포켓몬카드 검색 · 시세 비교 | Collectory",
-      "fingerprint": "6a45fa1fbcd88e2c51fb1f7b1383fe666adb75a9dda9b15656c250585ed13597",
-      "checked_at": "2026-09-17T00:58:28+0000",
-      "last_seconds": 4.498,
+      "fingerprint": "77b7c2a7256e72aa8e7ec4a20423c705736658727e6c912af3d1f18e49c005e1",
+      "checked_at": "2026-09-17T06:59:31+0000",
+      "last_seconds": 3.67,
       "recovered": false
     },
     "Pavilion TCG 통합 참고시세": {
       "url": "https://pavilion-tcg.com/search?language=ko",
       "kind": "참고시세",
-      "title": "카드 찾기 — 포켓몬 · 원피스 카드 검색 · Pavilion 파빌리온",
-      "fingerprint": "0777e8fa1ec7d9e35b3b6cf73b62fdfc2d8c8b5ddaa10f61fc292fffe128fefd",
-      "checked_at": "2026-09-17T00:58:28+0000",
-      "last_seconds": 0.915,
+      "title": "카드 찾기 — 포켓몬 · 원피스 · 리프트바운드 카드 검색 · Pavilion 파빌리온",
+      "fingerprint": "858b9867927b08106c60cab93d8dafe5a607280928528f76b0a7a82aafe27080",
+      "checked_at": "2026-09-17T06:59:31+0000",
+      "last_seconds": 0.897,
       "recovered": false
     },
     "TCGdex 포켓몬 가격 API": {
@@ -169,8 +169,8 @@
       "kind": "참고시세",
       "title": "Pokémon TCG Markets Integration - TCGdex API",
       "fingerprint": "2a9f6304d7983f8eb56f719128fd764170b6675ae97ff9d6a0293d2dfc9b5ff4",
-      "checked_at": "2026-09-17T00:58:28+0000",
-      "last_seconds": 1.209,
+      "checked_at": "2026-09-17T06:59:31+0000",
+      "last_seconds": 0.608,
       "recovered": false
     }
   },
@@ -181,7 +181,7 @@
       "kind": "시세",
       "status": "수집 오류",
       "error": "HTTPError: HTTP Error 500: Internal Server Error",
-      "checked_at": "2026-09-17T00:58:28+0000"
+      "checked_at": "2026-09-17T06:59:31+0000"
     }
   ],
   "applied": [
@@ -190,136 +190,6 @@
       "url": "https://www.cgccards.com/card-grading/grading-scale/",
       "kind": "등급",
       "status": "변경 확인 필요",
-      "checked_at": "2026-09-10T08:25:11+0000",
-      "approved": true,
-      "apply_mode": "통합 자동검증",
-      "applied_at": "2026-09-10T08:30:13+0000"
-    },
-    {
-      "source": "TAG 공식 등급",
-      "url": "https://taggrading.com/pages/scale",
-      "kind": "등급",
-      "status": "변경 확인 필요",
-      "checked_at": "2026-09-10T08:25:11+0000",
-      "approved": true,
-      "apply_mode": "통합 자동검증",
-      "applied_at": "2026-09-10T08:30:13+0000"
-    },
-    {
-      "source": "원피스 일본 공식",
-      "url": "https://www.onepiece-cardgame.com/",
-      "kind": "공식",
-      "status": "변경 확인 필요",
-      "checked_at": "2026-09-10T08:25:11+0000",
-      "approved": true,
-      "apply_mode": "통합 자동검증",
-      "applied_at": "2026-09-10T08:30:13+0000"
-    },
-    {
-      "source": "SNKRDUNK 포켓몬 공개 TCG 시세",
-      "url": "https://snkrdunk.com/en/brands/pokemon/trading-cards?categoryId=25",
-      "kind": "참고시세",
-      "status": "변경 확인 필요",
-      "checked_at": "2026-09-10T08:25:11+0000",
-      "approved": true,
-      "apply_mode": "통합 자동검증",
-      "applied_at": "2026-09-10T08:30:13+0000"
-    },
-    {
-      "source": "SNKRDUNK 원피스 공개 TCG 시세",
-      "url": "https://snkrdunk.com/en/brands/onepiece/trading-cards?categoryId=14",
-      "kind": "참고시세",
-      "status": "변경 확인 필요",
-      "checked_at": "2026-09-10T08:25:11+0000",
-      "approved": true,
-      "apply_mode": "통합 자동검증",
-      "applied_at": "2026-09-10T08:30:13+0000"
-    },
-    {
-      "source": "JustTCG 가격 API 문서",
-      "url": "https://justtcg.com/docs/quickstart",
-      "kind": "참고시세",
-      "status": "변경 확인 필요",
-      "checked_at": "2026-09-10T08:25:11+0000",
-      "approved": true,
-      "apply_mode": "통합 자동검증",
-      "applied_at": "2026-09-10T08:30:13+0000"
-    },
-    {
-      "source": "Collectory 공개 카드시세",
-      "url": "https://collectory.cc/cards",
-      "kind": "시세",
-      "status": "변경 확인 필요",
-      "checked_at": "2026-09-10T08:25:11+0000",
-      "approved": true,
-      "apply_mode": "통합 자동검증",
-      "applied_at": "2026-09-10T08:30:13+0000"
-    },
-    {
-      "source": "Pavilion TCG 통합 참고시세",
-      "url": "https://pavilion-tcg.com/search?language=ko",
-      "kind": "참고시세",
-      "status": "변경 확인 필요",
-      "checked_at": "2026-09-10T08:25:11+0000",
-      "approved": true,
-      "apply_mode": "통합 자동검증",
-      "applied_at": "2026-09-10T08:30:13+0000"
-    },
-    {
-      "source": "포켓몬 한국 공식",
-      "url": "https://pokemoncard.co.kr/card/category/info1",
-      "kind": "공식",
-      "status": "변경 확인 필요",
-      "checked_at": "2026-09-10T12:58:39+0000",
-      "approved": true,
-      "apply_mode": "통합 자동검증",
-      "applied_at": "2026-09-10T13:04:00+0000"
-    },
-    {
-      "source": "PSA 공식 등급기준",
-      "url": "https://www.psacard.com/gradingstandards",
-      "kind": "등급",
-      "status": "자동접근 제한 · 브라우저 링크 사용 가능 (HTTP 403)",
-      "checked_at": "2026-09-10T12:58:39+0000",
-      "approved": true,
-      "apply_mode": "통합 자동검증",
-      "applied_at": "2026-09-10T13:04:00+0000"
-    },
-    {
-      "source": "나루토 카드게임 글로벌 공식",
-      "url": "https://www.naruto-cardgame.com/asia-en/",
-      "kind": "공식",
-      "status": "변경 확인 필요",
-      "checked_at": "2026-09-10T12:58:39+0000",
-      "approved": true,
-      "apply_mode": "통합 자동검증",
-      "applied_at": "2026-09-10T13:04:00+0000"
-    },
-    {
-      "source": "원피스 미국 공식",
-      "url": "https://en.onepiece-cardgame.com/products/",
-      "kind": "공식",
-      "status": "변경 확인 필요",
-      "checked_at": "2026-09-10T12:58:39+0000",
-      "approved": true,
-      "apply_mode": "통합 자동검증",
-      "applied_at": "2026-09-10T13:04:00+0000"
-    },
-    {
-      "source": "원피스 일본 공식",
-      "url": "https://www.onepiece-cardgame.com/",
-      "kind": "공식",
-      "status": "변경 확인 필요",
-      "checked_at": "2026-09-10T12:58:39+0000",
-      "approved": true,
-      "apply_mode": "통합 자동검증",
-      "applied_at": "2026-09-10T13:04:00+0000"
-    },
-    {
-      "source": "CGC 공식 등급",
-      "url": "https://www.cgccards.com/card-grading/grading-scale/",
-      "kind": "등급",
-      "status": "변경 확인 필요",
       "checked_at": "2026-09-10T12:58:39+0000",
       "approved": true,
       "apply_mode": "통합 자동검증",
@@ -3184,14 +3054,144 @@
       "approved": true,
       "apply_mode": "통합 자동검증",
       "applied_at": "2026-09-17T01:04:19+0000"
+    },
+    {
+      "source": "포켓몬 한국 공식",
+      "url": "https://pokemoncard.co.kr/card/category/info1",
+      "kind": "공식",
+      "status": "변경 확인 필요",
+      "checked_at": "2026-09-17T06:59:31+0000",
+      "approved": true,
+      "apply_mode": "통합 자동검증",
+      "applied_at": "2026-09-17T07:04:35+0000"
+    },
+    {
+      "source": "PSA 공식 등급기준",
+      "url": "https://www.psacard.com/gradingstandards",
+      "kind": "등급",
+      "status": "자동접근 제한 · 브라우저 링크 사용 가능 (HTTP 403)",
+      "checked_at": "2026-09-17T06:59:31+0000",
+      "approved": true,
+      "apply_mode": "통합 자동검증",
+      "applied_at": "2026-09-17T07:04:35+0000"
+    },
+    {
+      "source": "원피스 미국 공식",
+      "url": "https://en.onepiece-cardgame.com/products/",
+      "kind": "공식",
+      "status": "변경 확인 필요",
+      "checked_at": "2026-09-17T06:59:31+0000",
+      "approved": true,
+      "apply_mode": "통합 자동검증",
+      "applied_at": "2026-09-17T07:04:35+0000"
+    },
+    {
+      "source": "나루토 카드게임 글로벌 공식",
+      "url": "https://www.naruto-cardgame.com/asia-en/",
+      "kind": "공식",
+      "status": "변경 확인 필요",
+      "checked_at": "2026-09-17T06:59:31+0000",
+      "approved": true,
+      "apply_mode": "통합 자동검증",
+      "applied_at": "2026-09-17T07:04:35+0000"
+    },
+    {
+      "source": "원피스 일본 공식",
+      "url": "https://www.onepiece-cardgame.com/",
+      "kind": "공식",
+      "status": "변경 확인 필요",
+      "checked_at": "2026-09-17T06:59:31+0000",
+      "approved": true,
+      "apply_mode": "통합 자동검증",
+      "applied_at": "2026-09-17T07:04:35+0000"
+    },
+    {
+      "source": "CGC 공식 등급",
+      "url": "https://www.cgccards.com/card-grading/grading-scale/",
+      "kind": "등급",
+      "status": "변경 확인 필요",
+      "checked_at": "2026-09-17T06:59:31+0000",
+      "approved": true,
+      "apply_mode": "통합 자동검증",
+      "applied_at": "2026-09-17T07:04:35+0000"
+    },
+    {
+      "source": "TAG 공식 등급",
+      "url": "https://taggrading.com/pages/scale",
+      "kind": "등급",
+      "status": "변경 확인 필요",
+      "checked_at": "2026-09-17T06:59:31+0000",
+      "approved": true,
+      "apply_mode": "통합 자동검증",
+      "applied_at": "2026-09-17T07:04:35+0000"
+    },
+    {
+      "source": "BRG 공식 등급",
+      "url": "https://break.co.kr/",
+      "kind": "등급",
+      "status": "변경 확인 필요",
+      "checked_at": "2026-09-17T06:59:31+0000",
+      "approved": true,
+      "apply_mode": "통합 자동검증",
+      "applied_at": "2026-09-17T07:04:35+0000"
+    },
+    {
+      "source": "SNKRDUNK 원피스 공개 TCG 시세",
+      "url": "https://snkrdunk.com/en/brands/onepiece/trading-cards?categoryId=14",
+      "kind": "참고시세",
+      "status": "변경 확인 필요",
+      "checked_at": "2026-09-17T06:59:31+0000",
+      "approved": true,
+      "apply_mode": "통합 자동검증",
+      "applied_at": "2026-09-17T07:04:35+0000"
+    },
+    {
+      "source": "SNKRDUNK 포켓몬 공개 TCG 시세",
+      "url": "https://snkrdunk.com/en/brands/pokemon/trading-cards?categoryId=25",
+      "kind": "참고시세",
+      "status": "변경 확인 필요",
+      "checked_at": "2026-09-17T06:59:31+0000",
+      "approved": true,
+      "apply_mode": "통합 자동검증",
+      "applied_at": "2026-09-17T07:04:35+0000"
+    },
+    {
+      "source": "JustTCG 가격 API 문서",
+      "url": "https://justtcg.com/docs/quickstart",
+      "kind": "참고시세",
+      "status": "변경 확인 필요",
+      "checked_at": "2026-09-17T06:59:31+0000",
+      "approved": true,
+      "apply_mode": "통합 자동검증",
+      "applied_at": "2026-09-17T07:04:35+0000"
+    },
+    {
+      "source": "Pavilion TCG 통합 참고시세",
+      "url": "https://pavilion-tcg.com/search?language=ko",
+      "kind": "참고시세",
+      "status": "변경 확인 필요",
+      "checked_at": "2026-09-17T06:59:31+0000",
+      "approved": true,
+      "apply_mode": "통합 자동검증",
+      "applied_at": "2026-09-17T07:04:35+0000"
+    },
+    {
+      "source": "Collectory 공개 카드시세",
+      "url": "https://collectory.cc/cards",
+      "kind": "시세",
+      "status": "변경 확인 필요",
+      "checked_at": "2026-09-17T06:59:31+0000",
+      "approved": true,
+      "apply_mode": "통합 자동검증",
+      "applied_at": "2026-09-17T07:04:35+0000"
     }
   ],
   "auto_update": {
     "enabled": true,
     "interval_hours": 6,
     "trigger": "github-pages-static-refresh",
-    "last_run": "2026-09-17T00:58:28+0000",
-    "next_run": "2026-09-17T06:58:28+0000",
+    "last_run": "2026-09-17T06:59:31+0000",
+    "next_run": "2026-09-17T12:59:31+0000",
     "status": "정상",
     "market_status": "정상",
     "watch_status": "정상",
@@ -3200,7 +3200,7 @@
     "fx_status": "정상",
     "grading_status": "정상",
     "source_checked_count": 20,
-    "source_auto_applied_count": 10,
+    "source_auto_applied_count": 13,
     "source_error_count": 1,
     "report_ok": true,
     "full_update": true
