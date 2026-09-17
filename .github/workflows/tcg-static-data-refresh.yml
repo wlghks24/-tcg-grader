@@ -16,6 +16,7 @@ on:
       - 'update_market_prices.py'
       - 'market_public_crosscheck.py'
       - 'test_market_public_crosscheck_resilience_v228.py'
+      - 'test_market_public_crosscheck_performance_v251.py'
       - 'test_release_history_cumulative_coverage_v229.py'
       - 'test_collection_restored_state_guard_v229.py'
       - 'update_purchase_sources.py'
@@ -81,13 +82,14 @@ jobs:
             update_purchase_sources.py validate_external_links.py \
             multi_route_event_discovery.py social_event_discovery.py auto_pipeline_runner.py \
             grading_company_watch.py grading_costs_live.py \
-            test_market_public_crosscheck_resilience_v228.py \
+            test_market_public_crosscheck_resilience_v228.py test_market_public_crosscheck_performance_v251.py \
             test_release_history_cumulative_coverage_v229.py \
             test_collection_restored_state_guard_v229.py
           python -m unittest -v \
             test_static_data_publish_gate.py \
             test_collection_verification_gate.py \
             test_market_public_crosscheck_resilience_v228.py \
+            test_market_public_crosscheck_performance_v251.py \
             test_release_history_cumulative_coverage_v229.py \
             test_collection_restored_state_guard_v229.py \
             test_collection_scope_compat_v214.py \
