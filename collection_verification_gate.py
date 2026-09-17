@@ -306,7 +306,7 @@ def _audit_grading_companies(root: Path, now: dt.datetime, findings: list[dict[s
     invalid = 0
     degraded = 0
     healthy = 0
-    source_companies: set[str] = set()
+    valid_source_companies: set[str] = set()
     healthy_companies: set[str] = set()
     degraded_errors: list[dict[str, str]] = []
     degraded_errors_by_company: dict[str, list[dict[str, str]]] = {}
@@ -325,8 +325,6 @@ def _audit_grading_companies(root: Path, now: dt.datetime, findings: list[dict[s
             status = "healthy" if raw_status in {"ok", "healthy"} else raw_status
             if company not in EXPECTED_GRADING_COMPANIES:
                 reasons.append("unknown_company")
-            else:
-                source_companies.add(company)
             url = row.get("url")
             if not _valid_public_https(url):
                 reasons.append("invalid_source_url")
@@ -342,6 +340,9 @@ def _audit_grading_companies(root: Path, now: dt.datetime, findings: list[dict[s
                 findings.append({"severity": "critical", "code": "INVALID_GRADING_SOURCE", "target": str(source_id)[:160],
                                  "reasons": reasons})
             continue
+        # A company only has an official source when the complete source row
+        # passed company, public-HTTPS, approved-host and status validation.
+        valid_source_companies.add(company)
         if status == "healthy":
             healthy += 1
             healthy_companies.add(company)
@@ -363,7 +364,7 @@ def _audit_grading_companies(root: Path, now: dt.datetime, findings: list[dict[s
             if len(company_samples) < 20:
                 company_samples.append(sample)
 
-    missing_source_companies = EXPECTED_GRADING_COMPANIES - source_companies
+    missing_source_companies = EXPECTED_GRADING_COMPANIES - valid_source_companies
     if missing_source_companies:
         findings.append({"severity": "critical", "code": "GRADING_COMPANY_WITHOUT_OFFICIAL_SOURCE", "target": path.name,
                          "companies": sorted(missing_source_companies)})
