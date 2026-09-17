@@ -8,6 +8,12 @@ on:
       - 'tablet_collection_publish.py'
       - 'test_tablet_collection_publish.py'
       - 'test_tablet_main_entrypoint_v251.py'
+      - 'test_tablet_feature_surface_v252.py'
+      - 'index.html'
+      - 'inventory_lookup.py'
+      - 'inventory_lookup.js'
+      - 'grade_market_flow.js'
+      - 'tcg_updater.py'
       - 'TABLET_COLLECT_AND_SEND.sh'
       - 'TABLET_COLLECTION_PUBLISH.md'
       - 'tablet_collection_receipt.json'
@@ -36,6 +42,12 @@ on:
       - 'tablet_collection_publish.py'
       - 'test_tablet_collection_publish.py'
       - 'test_tablet_main_entrypoint_v251.py'
+      - 'test_tablet_feature_surface_v252.py'
+      - 'index.html'
+      - 'inventory_lookup.py'
+      - 'inventory_lookup.js'
+      - 'grade_market_flow.js'
+      - 'tcg_updater.py'
       - 'TABLET_COLLECT_AND_SEND.sh'
       - 'TABLET_COLLECTION_PUBLISH.md'
       - '.github/workflows/tablet-termux-main-guard.yml'
@@ -66,10 +78,10 @@ jobs:
 
       - name: Static and targeted regression
         run: |
-          python -m py_compile tablet_collection_publish.py test_tablet_collection_publish.py test_tablet_main_entrypoint_v251.py
+          python -m py_compile tablet_collection_publish.py test_tablet_collection_publish.py test_tablet_main_entrypoint_v251.py test_tablet_feature_surface_v252.py
           bash -n main
           bash -n TABLET_COLLECT_AND_SEND.sh
-          python -m unittest -v test_tablet_collection_publish.py test_tablet_main_entrypoint_v251.py
+          python -m unittest -v test_tablet_collection_publish.py test_tablet_main_entrypoint_v251.py test_tablet_feature_surface_v252.py
           git diff --check origin/${{ github.base_ref || 'main' }}...HEAD || git diff --check HEAD^
 
       - name: Detect submitted tablet snapshot
