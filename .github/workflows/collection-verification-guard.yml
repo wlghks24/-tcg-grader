@@ -1,5 +1,5 @@
 name: Collection Verification Guard
-# final verification trigger v231 — grading status contract aligned
+# v252 — grading-provider RCA diagnostics are part of the verified regression chain.
 
 on:
   workflow_dispatch:
@@ -23,6 +23,7 @@ on:
       - 'update_purchase_sources.py'
       - 'update_exchange_rates.py'
       - 'grading_company_watch.py'
+      - 'grading_company_health_diagnostics.py'
       - 'grading_company_updates.json'
       - 'graded_photo_multi_source.py'
       - 'verified_collection_job_neural.py'
@@ -40,12 +41,14 @@ on:
       - 'test_social_topic_capacity_v213.py'
       - 'test_information_lifecycle_archive_v209.py'
       - 'test_grading_company_watch_v215.py'
+      - 'test_grading_company_health_diagnostics_v252.py'
       - 'test_grading_watch_integration_v220.py'
       - 'test_verified_collection_job_neural_v212.py'
       - 'source_collection_stats.json'
       - 'adaptive_collection_stats.json'
       - '.github/workflows/collection-verification-guard.yml'
       - '.github/workflows/tcg-static-data-refresh.yml'
+      - '.github/workflows/grading-company-watch.yml'
   push:
     branches: [main]
     paths:
@@ -67,6 +70,7 @@ on:
       - 'update_purchase_sources.py'
       - 'update_exchange_rates.py'
       - 'grading_company_watch.py'
+      - 'grading_company_health_diagnostics.py'
       - 'grading_company_updates.json'
       - 'graded_photo_multi_source.py'
       - 'verified_collection_job_neural.py'
@@ -84,12 +88,14 @@ on:
       - 'test_social_topic_capacity_v213.py'
       - 'test_information_lifecycle_archive_v209.py'
       - 'test_grading_company_watch_v215.py'
+      - 'test_grading_company_health_diagnostics_v252.py'
       - 'test_grading_watch_integration_v220.py'
       - 'test_verified_collection_job_neural_v212.py'
       - 'source_collection_stats.json'
       - 'adaptive_collection_stats.json'
       - '.github/workflows/collection-verification-guard.yml'
       - '.github/workflows/tcg-static-data-refresh.yml'
+      - '.github/workflows/grading-company-watch.yml'
 
 permissions:
   contents: read
@@ -123,14 +129,14 @@ jobs:
             collection_verification_gate.py static_data_publish_gate.py feature_contract.py \
             update_market_watch.py update_market_prices.py market_public_crosscheck.py release_history_backfill.py \
             update_purchase_sources.py update_exchange_rates.py \
-            grading_company_watch.py graded_photo_multi_source.py verified_collection_job_neural.py \
+            grading_company_watch.py grading_company_health_diagnostics.py graded_photo_multi_source.py verified_collection_job_neural.py \
             validate_external_links.py \
             test_collection_verification_gate.py test_static_data_publish_gate.py \
             test_market_public_crosscheck_resilience_v228.py test_market_public_crosscheck_performance_v251.py \
             test_collection_restored_state_guard_v229.py test_release_history_cumulative_coverage_v229.py \
             test_collection_scope_compat_v214.py test_social_event_topic_coverage.py \
             test_social_topic_capacity_v213.py test_information_lifecycle_archive_v209.py \
-            test_grading_company_watch_v215.py test_grading_watch_integration_v220.py \
+            test_grading_company_watch_v215.py test_grading_company_health_diagnostics_v252.py test_grading_watch_integration_v220.py \
             test_verified_collection_job_neural_v212.py
           python -m unittest -v \
             test_collection_verification_gate.py \
@@ -144,6 +150,7 @@ jobs:
             test_social_topic_capacity_v213.py \
             test_information_lifecycle_archive_v209.py \
             test_grading_company_watch_v215.py \
+            test_grading_company_health_diagnostics_v252.py \
             test_grading_watch_integration_v220.py \
             test_verified_collection_job_neural_v212.py
           python feature_contract.py
@@ -166,9 +173,8 @@ jobs:
         run: |
           set -euo pipefail
           extra=()
-          # PRs must still fail on critical correctness/safety regressions, but an
-          # unrelated external provider outage (403/429/timeout/degraded source)
-          # is surfaced as health evidence instead of blocking the code change.
+          # PRs still fail on critical correctness/safety regressions. External provider
+          # degradation is reported but cannot mask or rewrite the verified facts.
           # Main/manual verification remains strict and fails on degraded output.
           if [ "${{ github.event_name }}" != "pull_request" ]; then
             extra+=(--fail-on-degraded)
@@ -178,6 +184,15 @@ jobs:
             --report COLLECTION_VERIFICATION_REPORT.json \
             "${extra[@]}"
 
+      - name: Build grading-provider RCA diagnostics
+        if: always()
+        run: |
+          if [ -f grading_company_updates.json ]; then
+            python grading_company_health_diagnostics.py \
+              --snapshot grading_company_updates.json \
+              --report GRADING_COMPANY_HEALTH_DIAGNOSTICS.json
+          fi
+
       - name: Surface external provider degradation on PRs
         if: always() && github.event_name == 'pull_request'
         run: |
@@ -185,14 +200,19 @@ jobs:
           import json
           from pathlib import Path
           path = Path('COLLECTION_VERIFICATION_REPORT.json')
-          if not path.is_file():
-              raise SystemExit(0)
-          report = json.loads(path.read_text(encoding='utf-8'))
-          if report.get('status') == 'degraded':
-              counts = report.get('counts') or {}
-              findings = report.get('findings') or []
-              codes = sorted({str(row.get('code')) for row in findings if row.get('severity') == 'high'})
-              print(f"::warning title=External collection degraded::high={counts.get('high', 0)} codes={','.join(codes[:12])}")
+          if path.is_file():
+              report = json.loads(path.read_text(encoding='utf-8'))
+              if report.get('status') == 'degraded':
+                  counts = report.get('counts') or {}
+                  findings = report.get('findings') or []
+                  codes = sorted({str(row.get('code')) for row in findings if row.get('severity') == 'high'})
+                  print(f"::warning title=External collection degraded::high={counts.get('high', 0)} codes={','.join(codes[:12])}")
+          health_path = Path('GRADING_COMPANY_HEALTH_DIAGNOSTICS.json')
+          if health_path.is_file():
+              health = json.loads(health_path.read_text(encoding='utf-8'))
+              providers = ','.join((health.get('summary') or {}).get('companies_without_healthy_source') or [])
+              if providers:
+                  print(f"::warning title=Grading provider health degraded::companies_without_healthy_source={providers}")
           PY
 
       - name: Validate verification safety contract
@@ -222,11 +242,13 @@ jobs:
           print(json.dumps({'status': report.get('status'), 'counts': report.get('counts'), 'metrics': metrics}, ensure_ascii=False))
           PY
 
-      - name: Upload collection verification report
+      - name: Upload collection verification reports
         if: always()
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
         with:
-          name: collection-verification-report
-          path: COLLECTION_VERIFICATION_REPORT.json
+          name: collection-verification-reports
+          path: |
+            COLLECTION_VERIFICATION_REPORT.json
+            GRADING_COMPANY_HEALTH_DIAGNOSTICS.json
           if-no-files-found: error
           retention-days: 30
