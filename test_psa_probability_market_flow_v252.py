@@ -47,7 +47,7 @@ class PsaProbabilityMarketFlowV252Tests(unittest.TestCase):
         self.assertIn('<script src="grade_market_flow.js"></script>', page)
         self.assertIn("'grade_market_flow.js'", updater)
         self.assertIn("'market_prices.json'", updater)
-        self.assertIn("'grade_market_flow.js'", worker)
+        self.assertIn("'./grade_market_flow.js'", worker)
 
 
 if __name__ == "__main__":
