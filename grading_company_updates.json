@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "checked_at": "2026-09-17T01:00:09+00:00",
+  "checked_at": "2026-09-17T03:35:15+00:00",
   "policy": {
     "official_sources_only": true,
     "community_posts_are_leads_only": true,
@@ -249,7 +249,7 @@
       "services": [],
       "announcements": [],
       "status": "degraded",
-      "checked_at": "2026-09-17T01:00:09+00:00",
+      "checked_at": "2026-09-17T03:35:15+00:00",
       "last_error": "HTTPError: status 403",
       "verified_official_source": false
     },
@@ -263,7 +263,7 @@
       "services": [],
       "announcements": [],
       "status": "degraded",
-      "checked_at": "2026-09-17T01:00:09+00:00",
+      "checked_at": "2026-09-17T03:35:15+00:00",
       "last_error": "HTTPError: status 403",
       "verified_official_source": false
     },
@@ -277,7 +277,7 @@
       "services": [],
       "announcements": [],
       "status": "degraded",
-      "checked_at": "2026-09-17T01:00:09+00:00",
+      "checked_at": "2026-09-17T03:35:15+00:00",
       "last_error": "HTTPError: status 403",
       "verified_official_source": false
     },
@@ -291,7 +291,7 @@
       "services": [],
       "announcements": [],
       "status": "degraded",
-      "checked_at": "2026-09-17T01:00:09+00:00",
+      "checked_at": "2026-09-17T03:35:15+00:00",
       "last_error": "ValueError: unapproved host",
       "verified_official_source": false
     },
@@ -305,7 +305,7 @@
       "services": [],
       "announcements": [],
       "status": "degraded",
-      "checked_at": "2026-09-17T01:00:09+00:00",
+      "checked_at": "2026-09-17T03:35:15+00:00",
       "last_error": "ValueError: unapproved host",
       "verified_official_source": false
     },
@@ -317,7 +317,7 @@
       "currency": "USD",
       "url": "https://www.cgccards.com/submit/services-fees/cgc-grading/?view=cards",
       "status": "ok",
-      "checked_at": "2026-09-17T01:00:09+00:00",
+      "checked_at": "2026-09-17T03:35:15+00:00",
       "signal_fingerprint": "06b8289033083f680c2c00bfe7513d8f4e1336ec62167ec60c828a4a713cac4a",
       "services": [
         {
@@ -393,7 +393,7 @@
       "currency": "USD",
       "url": "https://www.cgccards.com/submit/events/",
       "status": "ok",
-      "checked_at": "2026-09-17T01:00:09+00:00",
+      "checked_at": "2026-09-17T03:35:15+00:00",
       "signal_fingerprint": "a7e4a8eeedae59acddd83d607c57bdb46b352fa3c4bde4e889317352666d4f33",
       "services": [],
       "announcements": [
@@ -465,7 +465,7 @@
       "currency": "USD",
       "url": "https://www.cgccards.com/news/",
       "status": "ok",
-      "checked_at": "2026-09-17T01:00:09+00:00",
+      "checked_at": "2026-09-17T03:35:15+00:00",
       "signal_fingerprint": "ab793ace2efa70dbf6b47cadeb4f03c2502a63af3997acc982d98310bec3014d",
       "services": [],
       "announcements": [
@@ -537,7 +537,7 @@
       "currency": "USD",
       "url": "https://taggrading.com/pages/pricing",
       "status": "degraded",
-      "checked_at": "2026-09-17T01:00:09+00:00",
+      "checked_at": "2026-09-17T03:35:15+00:00",
       "signal_fingerprint": "0e9f55411a94d2016974a85632d9fa32e343c02e94c65a3a1f347a2615dc4c82",
       "services": [],
       "announcements": [],
@@ -553,7 +553,7 @@
       "currency": "USD",
       "url": "https://taggrading.com/",
       "status": "ok",
-      "checked_at": "2026-09-17T01:00:09+00:00",
+      "checked_at": "2026-09-17T03:35:15+00:00",
       "signal_fingerprint": "66d286051d0e634def53c4774654457b5a98f7dff3c19e41ecce07ec1c637e20",
       "services": [],
       "announcements": [
@@ -674,7 +674,7 @@
       "currency": "KRW",
       "url": "https://break.co.kr/",
       "status": "ok",
-      "checked_at": "2026-09-17T01:00:09+00:00",
+      "checked_at": "2026-09-17T03:35:15+00:00",
       "signal_fingerprint": "a4b3f397492317435fdf3b29d0a799fc47c5cc679cf36d24d983c7c80facb2e7",
       "services": [
         {
