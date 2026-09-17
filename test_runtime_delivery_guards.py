@@ -36,7 +36,11 @@ def main():
     server=text('tcg_updater.py')
     assert "target.suffix.lower() in {'.html','.js','.css','.json','.webmanifest'}" in server
     assert "'feature_category_nav.css'" in server and "'feature_category_nav.js'" in server
-    assert 'no-store, no-cache, must-revalidate, max-age=0' in server
+    assert 'private, no-cache, must-revalidate, max-age=0' in server
+    assert "self.headers.get('If-None-Match','').strip()==etag" in server
+    assert 'self.send_response(304)' in server
+    assert "self.send_header('ETag',etag)" in server
+    assert 'no-store, no-cache, must-revalidate, max-age=0' not in server
 
     updater=text('ANDROID_UPDATE_AND_START.sh')
     assert '정상 수집/학습으로 변경된 런타임 JSON만 감지했습니다' in updater
