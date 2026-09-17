@@ -67,6 +67,7 @@ class MarketPublicCrosscheckPerformanceV251Tests(unittest.TestCase):
             'TCG_MARKET_CROSSCHECK_QUERIES':'4',
             'TCG_MARKET_CROSSCHECK_SOURCE_WORKERS':'2',
             'TCG_MARKET_CROSSCHECK_CACHE_SECONDS':'60',
+            'TCG_MARKET_CROSSCHECK_SOURCE_BUDGET_SECONDS':'90',
         }
         with mock.patch.dict(os.environ,env,clear=False):
             summary=crosscheck.crosscheck_market_db(db,fetcher=fetcher)
@@ -74,7 +75,8 @@ class MarketPublicCrosscheckPerformanceV251Tests(unittest.TestCase):
         self.assertEqual(summary['requests_checked'],8)
         self.assertEqual(summary['matches'],8)
         self.assertEqual(summary['source_workers'],2)
-        self.assertEqual(summary['worker_policy'],'max-one-inflight-request-per-source')
+        self.assertEqual(summary['requests_deferred'],0)
+        self.assertEqual(summary['worker_policy'],'max-one-inflight-request-per-source + bounded-source-budget')
         self.assertGreaterEqual(max_global,2)
         self.assertTrue(max_active)
         self.assertTrue(all(value==1 for value in max_active.values()))
@@ -93,6 +95,7 @@ class MarketPublicCrosscheckPerformanceV251Tests(unittest.TestCase):
             'TCG_MARKET_CROSSCHECK_QUERIES':'2',
             'TCG_MARKET_CROSSCHECK_SOURCE_WORKERS':'2',
             'TCG_MARKET_CROSSCHECK_CACHE_SECONDS':'900',
+            'TCG_MARKET_CROSSCHECK_SOURCE_BUDGET_SECONDS':'90',
         }
         with mock.patch.dict(os.environ,env,clear=False):
             first=crosscheck.crosscheck_market_db(db,fetcher=fetcher)
@@ -105,6 +108,7 @@ class MarketPublicCrosscheckPerformanceV251Tests(unittest.TestCase):
         self.assertEqual(second['requests_checked'],0)
         self.assertEqual(second['cache_hits'],4)
         self.assertEqual(second['external_requests_saved'],4)
+        self.assertEqual(second['requests_deferred'],0)
         self.assertEqual(second['source_workers'],0)
 
     def test_network_failure_preserves_previous_observation(self):
@@ -124,6 +128,7 @@ class MarketPublicCrosscheckPerformanceV251Tests(unittest.TestCase):
             'TCG_MARKET_CROSSCHECK_QUERIES':'1',
             'TCG_MARKET_CROSSCHECK_SOURCE_WORKERS':'2',
             'TCG_MARKET_CROSSCHECK_CACHE_SECONDS':'60',
+            'TCG_MARKET_CROSSCHECK_SOURCE_BUDGET_SECONDS':'90',
         }
         with mock.patch.dict(os.environ,env,clear=False):
             summary=crosscheck.crosscheck_market_db(db,fetcher=fetcher)
@@ -133,6 +138,29 @@ class MarketPublicCrosscheckPerformanceV251Tests(unittest.TestCase):
         self.assertEqual(checks['KREAM']['price_krw'],110000)
         self.assertEqual(summary['sources']['Collectory']['errors'],1)
         self.assertTrue(summary['errors'])
+
+    def test_source_budget_defers_overflow_without_extra_requests(self):
+        row={'key':'KR|테스트|HIT','card_name':'테스트카드','card_number':'001/100','name':'테스트카드'}
+        jobs=[
+            (dict(row,key=f'KR|테스트{i}|HIT',card_number=f'{i+1:03d}/100'),f'테스트카드{i} {i+1:03d}/100',
+             f'https://collectory.cc/cards?search={i}')
+            for i in range(3)
+        ]
+        calls=[]
+        monotonic_values=iter([0.0,0.0,1.0,16.0,16.0])
+
+        def fetcher(url):
+            calls.append(url)
+            return '테스트카드0 001/100 현재 시세 ₩100,000'
+
+        with mock.patch.object(crosscheck.time,'monotonic',side_effect=lambda:next(monotonic_values)):
+            result=crosscheck._run_source_batch('Collectory',jobs,fetcher,'2026-09-17T00:00:00+00:00',15)
+
+        self.assertEqual(len(calls),1)
+        self.assertEqual(result['checked'],1)
+        self.assertEqual(result['deferred'],2)
+        self.assertTrue(result['budget_exhausted'])
+        self.assertEqual(result['budget_seconds'],15)
 
 
 if __name__=='__main__':
