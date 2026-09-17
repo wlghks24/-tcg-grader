@@ -1,0 +1,117 @@
+name: Tablet Termux Main Guard
+
+on:
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - 'main'
+      - 'tablet_collection_publish.py'
+      - 'test_tablet_collection_publish.py'
+      - 'test_tablet_main_entrypoint_v251.py'
+      - 'TABLET_COLLECT_AND_SEND.sh'
+      - 'TABLET_COLLECTION_PUBLISH.md'
+      - 'tablet_collection_receipt.json'
+      - 'releases.json'
+      - 'promo_events.json'
+      - 'supplementary_candidates.json'
+      - 'social_event_candidates.json'
+      - 'purchase_signals.json'
+      - 'social_stock_signals.json'
+      - 'market_prices.json'
+      - 'market_watch.json'
+      - 'purchase_sources.json'
+      - 'exchange_rates.json'
+      - 'grading_company_updates.json'
+      - 'graded_photo_candidates.json'
+      - 'source_collection_stats.json'
+      - 'adaptive_collection_stats.json'
+      - 'auto_update_report.json'
+      - 'auto_update_issues.json'
+      - 'tcg_live_data.json'
+      - '.github/workflows/tablet-termux-main-guard.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'main'
+      - 'tablet_collection_publish.py'
+      - 'test_tablet_collection_publish.py'
+      - 'test_tablet_main_entrypoint_v251.py'
+      - 'TABLET_COLLECT_AND_SEND.sh'
+      - 'TABLET_COLLECTION_PUBLISH.md'
+      - '.github/workflows/tablet-termux-main-guard.yml'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: tablet-termux-main-${{ github.event_name }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+jobs:
+  verify:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 12
+    env:
+      PYTHONPATH: ${{ github.workspace }}
+      PYTHONDONTWRITEBYTECODE: '1'
+      PYTHONUNBUFFERED: '1'
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          persist-credentials: false
+          fetch-depth: 0
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97
+        with:
+          python-version: '3.11'
+
+      - name: Static and targeted regression
+        run: |
+          python -m py_compile tablet_collection_publish.py test_tablet_collection_publish.py test_tablet_main_entrypoint_v251.py
+          bash -n main
+          bash -n TABLET_COLLECT_AND_SEND.sh
+          python -m unittest -v test_tablet_collection_publish.py test_tablet_main_entrypoint_v251.py
+          git diff --check origin/${{ github.base_ref || 'main' }}...HEAD || git diff --check HEAD^
+
+      - name: Detect submitted tablet snapshot
+        if: github.event_name == 'pull_request'
+        id: snapshot
+        env:
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+        run: |
+          python - <<'PY'
+          import os, subprocess
+          base = os.environ['BASE_SHA']
+          changed = subprocess.check_output(['git', 'diff', '--name-only', base, 'HEAD'], text=True).splitlines()
+          mode = 'snapshot' if 'tablet_collection_receipt.json' in changed else 'code'
+          with open(os.environ['GITHUB_OUTPUT'], 'a', encoding='utf-8') as out:
+              out.write(f'mode={mode}\n')
+          print({'mode': mode, 'changed_count': len(changed)})
+          PY
+
+      - name: Verify submitted tablet snapshot fail-closed
+        if: github.event_name == 'pull_request' && steps.snapshot.outputs.mode == 'snapshot'
+        env:
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+        run: python tablet_collection_publish.py --verify-base "$BASE_SHA"
+
+      - name: Safety contract
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          p = Path('tablet_collection_publish.py').read_text(encoding='utf-8')
+          required = [
+              "'--fail-on-degraded'",
+              "if publish and source != base",
+              "changed <= set(OUTPUTS) | {RECEIPT}",
+              "git(work, 'push', 'origin', f'HEAD:refs/heads/{branch}')",
+              "'gh', 'pr', 'create'",
+          ]
+          missing = [item for item in required if item not in p]
+          if missing:
+              raise SystemExit(f'tablet fail-closed contract missing: {missing}')
+          forbidden = ["--force", "push', 'origin', 'main'"]
+          bad = [item for item in forbidden if item in p]
+          if bad:
+              raise SystemExit(f'unsafe tablet publish contract detected: {bad}')
+          print('tablet Termux fail-closed contract: PASS')
+          PY
