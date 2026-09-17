@@ -232,7 +232,7 @@ PUBLIC_STATIC_FILES={
     'purchase_sources.json','purchase_signals.json','social_stock_signals.json','exchange_rates.json','purchase_ui_polish.css','inventory_lookup.js','inventory_lookup.css','grade_market_flow.js','grade_market_flow.css','auto_market_center.js','auto_market_center.css','multi_market_prices.js','multi_market_prices.css','grading_proxy_costs.js','grading_proxy_costs.css','grading_total_cost.js','grading_total_cost.css','grading_costs_live.js','grading_costs_live.css','auto_validation_flow.js','auto_validation_flow.css','graded_photo_dashboard.js','graded_photo_dashboard.css','graded_photo_candidates.json','market_catalog_expander.js','box_knowledge_stats.js','box_knowledge_stats.css','image_quality_guard.js','ui_polish_v121.css','ui_tablet_refine_v122.css'
 }
 SOURCES=[
- ('포켓몬 한국 공식','https://pokemoncard.co.kr/card/category/info1','공식'),
+ ('포켓몬 한국 공식','https://new.pokemonkorea.co.kr/card','공식'),
  ('포켓몬 일본 공식','https://www.pokemon-card.com/products/index.html','공식'),
  ('포켓몬 30주년 공식','https://www.30th.pokemon-card.com/','공식'),
  ('원피스 한국 공식','https://onepiece-cardgame.kr/products.do','공식'),

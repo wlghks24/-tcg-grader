@@ -207,6 +207,8 @@ def _valid_project_payload(filename: str, data: Any) -> bool:
         elif filename == "grading_company_updates.json":
             import grading_company_watch
             from urllib.parse import urlsplit
+            if not grading_company_watch.official_record_tree(data):
+                return False
             if data.get("schema_version") != 1:
                 return False
             if set(data["companies"]) != {"PSA","BGS","CGC","TAG","BRG"} or len(data["sources"]) < 10:

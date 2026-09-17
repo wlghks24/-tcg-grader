@@ -5,6 +5,9 @@ on:
   workflow_dispatch:
   pull_request:
     paths:
+      - 'tablet_collection_publish.py'
+      - 'test_tablet_collection_publish.py'
+      - 'tablet_collection_receipt.json'
       - 'collection_verification_gate.py'
       - 'test_collection_verification_gate.py'
       - 'tcg_updater.py'
@@ -48,6 +51,9 @@ on:
   push:
     branches: [main]
     paths:
+      - 'tablet_collection_publish.py'
+      - 'test_tablet_collection_publish.py'
+      - 'tablet_collection_receipt.json'
       - 'collection_verification_gate.py'
       - 'test_collection_verification_gate.py'
       - 'tcg_updater.py'
@@ -110,7 +116,7 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
         with:
           persist-credentials: false
-          fetch-depth: 1
+          fetch-depth: 0
       - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97
         with:
           python-version: '3.11'
@@ -146,7 +152,32 @@ jobs:
           python feature_contract.py
           python selfrefine_domain_boundary_guard.py
 
+      - name: Select submitted tablet snapshot or live collection
+        id: collection_mode
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+        run: |
+          python - <<'PY'
+          import os, subprocess
+          mode = 'live'
+          if os.environ['EVENT_NAME'] == 'pull_request':
+              base = os.environ['BASE_SHA']
+              changed = subprocess.check_output(['git', 'diff', '--name-only', base, 'HEAD'], text=True).splitlines()
+              if 'tablet_collection_receipt.json' in changed:
+                  mode = 'snapshot'
+          with open(os.environ['GITHUB_OUTPUT'], 'a') as out:
+              out.write(f'mode={mode}\n')
+          PY
+
+      - name: Verify tablet snapshot without replacing it with cloud collection
+        if: steps.collection_mode.outputs.mode == 'snapshot'
+        env:
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+        run: python tablet_collection_publish.py --verify-base "$BASE_SHA"
+
       - name: Run bounded live collection cycle
+        if: steps.collection_mode.outputs.mode == 'live'
         timeout-minutes: 22
         run: |
           python - <<'PY'
@@ -190,7 +221,7 @@ jobs:
           metrics = report.get('metrics') or {}
           if metrics.get('mandatory_outputs_expected') != 8:
               raise SystemExit(f'unexpected mandatory collector count: {metrics.get("mandatory_outputs_expected")}')
-          print(json.dumps({'status': report.get('status'), 'counts': report.get('counts'), 'metrics': metrics}, ensure_ascii=False))
+          print(json.dumps({'status': report.get('status'), 'counts': report.get('counts'), 'metrics': metrics, 'findings': report.get('findings', [])}, ensure_ascii=False))
           PY
 
       - name: Upload collection verification report
