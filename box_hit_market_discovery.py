@@ -11,11 +11,19 @@ from xml.etree import ElementTree as ET
 from html import unescape
 import json, os, re
 
-from safe_runtime import safe_urlopen
+from safe_runtime import env_int, safe_read_text, safe_urlopen
 
 BASE=Path(__file__).resolve().parent
 OUT=BASE/'box_hit_market_candidates.json'
 LEARNING=BASE/'box_hit_market_learning.json'
+# Candidate discovery is supplementary lead generation, not a verified live-price feed.
+# A 7h default lets one normal 6h cycle reuse the prior verified candidate set, while
+# forcing a fresh discovery by the following cycle.  The bound prevents accidental
+# indefinite staleness or hyper-frequent provider traffic.
+MARKET_DISCOVERY_CACHE_TTL_SECONDS=env_int(
+    'TCG_MARKET_DISCOVERY_CACHE_SECONDS',7*60*60,60*60,24*60*60
+)
+MARKET_DISCOVERY_CACHE_FUTURE_SKEW_SECONDS=300
 UA='Mozilla/5.0 TCG-Grader/1.1'
 
 SOURCES=[
@@ -42,6 +50,55 @@ REGION_TERMS={
  'US':('english','미국판','영문판'),
 }
 
+
+def _parse_cache_time(value):
+    text=str(value or '').strip()
+    if not text:
+        return None
+    try:
+        parsed=datetime.fromisoformat(text.replace('Z','+00:00'))
+    except (TypeError,ValueError):
+        return None
+    if parsed.tzinfo is None:
+        parsed=parsed.replace(tzinfo=timezone.utc)
+    return parsed.astimezone(timezone.utc)
+
+def _load_fresh_discovery_cache(now=None):
+    """Return a fresh, structurally valid supplementary candidate cache.
+
+    This never refreshes the cache timestamp.  A reused candidate set therefore
+    expires from its original collection time and cannot become immortal merely
+    because market_prices runs frequently.  Missing/corrupt/future/stale caches
+    fail open to a *fresh discovery*, not to stale data.
+    """
+    if OUT.is_symlink() or not OUT.is_file():
+        return None
+    try:
+        payload=json.loads(safe_read_text(OUT))
+    except (OSError,UnicodeError,ValueError,TypeError,json.JSONDecodeError):
+        return None
+    if (not isinstance(payload,dict) or payload.get('version')!=2
+            or not isinstance(payload.get('candidates'),list)
+            or not isinstance(payload.get('summary'),dict)
+            or not isinstance(payload.get('source_stats'),dict)
+            or any(not isinstance(row,dict) for row in payload.get('candidates',[]))):
+        return None
+    stamped=_parse_cache_time(payload.get('updated_at'))
+    if stamped is None:
+        return None
+    moment=now or datetime.now(timezone.utc)
+    if moment.tzinfo is None:
+        moment=moment.replace(tzinfo=timezone.utc)
+    moment=moment.astimezone(timezone.utc)
+    age=(moment-stamped).total_seconds()
+    if age < -MARKET_DISCOVERY_CACHE_FUTURE_SKEW_SECONDS or age > MARKET_DISCOVERY_CACHE_TTL_SECONDS:
+        return None
+    cached=dict(payload)
+    cached['cache_reused']=True
+    cached['cache_age_seconds']=round(max(0.0,age),3)
+    cached['cache_ttl_seconds']=MARKET_DISCOVERY_CACHE_TTL_SECONDS
+    cached['cache_policy']='supplementary-discovery-only'
+    return cached
 
 def _atomic(path,data):
     tmp=Path(str(path)+'.tmp');tmp.write_text(json.dumps(data,ensure_ascii=False,indent=2),encoding='utf-8');tmp.replace(path)
@@ -208,12 +265,17 @@ def discover_market_catalog():
     payload={'version':2,'updated_at':datetime.now(timezone.utc).isoformat(timespec='seconds'),'candidates':candidates[:260],
              'summary':{'total':len(candidates),'promoted':sum(1 for x in candidates if x['promoted']),'with_image':sum(1 for x in candidates if x['image_url']),
                         'source_count':len([x for x in source_stats if source_stats[x]['results']])},'source_stats':dict(source_stats),'errors':errors[:60],
+             'cache_reused':False,'cache_age_seconds':0.0,'cache_ttl_seconds':MARKET_DISCOVERY_CACHE_TTL_SECONDS,
+             'cache_policy':'supplementary-discovery-only',
              'notice':'공개 검색결과와 공식 API/공개 상품 메타데이터만 사용합니다. 2개 이상 독립 출처 또는 eBay API 이미지 근거가 있는 후보만 카탈로그 승격 대상으로 표시합니다.'}
     _atomic(OUT,payload);_atomic(LEARNING,{'updated_at':payload['updated_at'],'source_stats':dict(source_stats)})
     return payload
 
-def merge_market_catalog(db):
-    payload=discover_market_catalog();entries=db.setdefault('entries',{})
+def merge_market_catalog(db, *, force_refresh=False):
+    payload=None if force_refresh else _load_fresh_discovery_cache()
+    if payload is None:
+        payload=discover_market_catalog()
+    entries=db.setdefault('entries',{})
     added=0;updated=0
     for x in payload.get('candidates',[]):
         if not x.get('promoted'):continue
@@ -230,7 +292,14 @@ def merge_market_catalog(db):
         if asset=='HIT':row.setdefault('card_name',name)
         if was:updated+=1
         else:added+=1
-    db['box_hit_market_discovery']={'updated_at':payload.get('updated_at'),'added':added,'updated':updated,**payload.get('summary',{})}
+    db['box_hit_market_discovery']={
+        'updated_at':payload.get('updated_at'),'added':added,'updated':updated,
+        'cache_reused':bool(payload.get('cache_reused')),
+        'cache_age_seconds':payload.get('cache_age_seconds',0.0),
+        'cache_ttl_seconds':payload.get('cache_ttl_seconds',MARKET_DISCOVERY_CACHE_TTL_SECONDS),
+        'cache_policy':'supplementary-discovery-only',
+        **payload.get('summary',{})
+    }
     return payload
 
 if __name__=='__main__':
