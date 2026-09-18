@@ -19,7 +19,10 @@ on:
       - 'grading_cert_verifier.py'
       - 'manual_graded_photo_registration.py'
       - 'manual_official_proof.py'
+      - 'manual_official_verified_integration_v154.py'
       - 'manual_official_verify_bridge.js'
+      - 'test_manual_official_verified_integration_v154.py'
+      - 'test_manual_official_verify_ui_v194.py'
       - 'pending_official_candidate_v161.py'
       - 'pending_official_candidate_bridge_v161.js'
       - 'graded_photo_multi_source.py'
@@ -75,7 +78,10 @@ on:
       - 'grading_cert_verifier.py'
       - 'manual_graded_photo_registration.py'
       - 'manual_official_proof.py'
+      - 'manual_official_verified_integration_v154.py'
       - 'manual_official_verify_bridge.js'
+      - 'test_manual_official_verified_integration_v154.py'
+      - 'test_manual_official_verify_ui_v194.py'
       - 'pending_official_candidate_v161.py'
       - 'pending_official_candidate_bridge_v161.js'
       - 'graded_photo_multi_source.py'
@@ -150,8 +156,10 @@ jobs:
           python test_graded_photo_game_inference_v188.py
           python test_manual_only_official_verification_v192.py
           python test_manual_official_proof.py
+          python -m unittest -v test_manual_official_verified_integration_v154.py
+          python -m unittest -v test_manual_official_verify_ui_v194.py
           python test_pending_official_candidate_v161.py
-          python -m py_compile safe_runtime.py collection_runtime_health.py tablet_runtime_manifest.py verified_collection_neural.py verified_collection_job_neural.py verify_current_runtime.py tcg_updater.py tcg_updater_v135.py update_market_prices.py validate_external_links.py grading_cert_verifier.py manual_graded_photo_registration.py manual_official_proof.py pending_official_candidate_v161.py graded_photo_multi_source.py auto_update_all.py auto_repair_engine.py error_scenario_lab.py tablet_runtime_qa.py test_tablet_runtime_qa_integration.py
+          python -m py_compile safe_runtime.py collection_runtime_health.py tablet_runtime_manifest.py verified_collection_neural.py verified_collection_job_neural.py verify_current_runtime.py tcg_updater.py tcg_updater_v135.py update_market_prices.py validate_external_links.py grading_cert_verifier.py manual_graded_photo_registration.py manual_official_proof.py manual_official_verified_integration_v154.py test_manual_official_verified_integration_v154.py test_manual_official_verify_ui_v194.py pending_official_candidate_v161.py graded_photo_multi_source.py auto_update_all.py auto_repair_engine.py error_scenario_lab.py tablet_runtime_qa.py test_tablet_runtime_qa_integration.py
           python test_tablet_runtime_qa_integration.py
           node --check multi_market_prices.js
           node --check manual_official_verify_bridge.js
