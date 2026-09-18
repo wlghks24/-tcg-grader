@@ -1,5 +1,5 @@
 name: Grading Company Watch
-# v217: fee/declared-value separation and parser-version gate verified before live activation.
+# v252: provider RCA diagnostics classify blocked/redirect/parser/transient failures without weakening trust.
 
 on:
   workflow_dispatch:
@@ -9,9 +9,11 @@ on:
     branches: [main]
     paths:
       - 'grading_company_watch.py'
+      - 'grading_company_health_diagnostics.py'
       - 'grading_costs_live.py'
       - 'grading_costs_live.js'
       - 'test_grading_company_watch_v215.py'
+      - 'test_grading_company_health_diagnostics_v252.py'
       - 'test_grading_costs_live.py'
       - '.github/workflows/grading-company-watch.yml'
 
@@ -40,14 +42,39 @@ jobs:
         with:
           python-version: '3.12'
 
-      - name: Verify watcher and live-cost contracts
+      - name: Verify watcher, diagnostics and live-cost contracts
         run: |
-          python -m py_compile grading_company_watch.py grading_costs_live.py
-          python -m unittest -v test_grading_company_watch_v215.py test_grading_costs_live.py
+          python -m py_compile grading_company_watch.py grading_company_health_diagnostics.py grading_costs_live.py
+          python -m unittest -v \
+            test_grading_company_watch_v215.py \
+            test_grading_company_health_diagnostics_v252.py \
+            test_grading_costs_live.py
           node --check grading_costs_live.js
 
       - name: Collect official grading company changes
         run: python grading_company_watch.py
+
+      - name: Build provider RCA diagnostics
+        id: diagnostics
+        shell: bash
+        run: |
+          set -euo pipefail
+          python grading_company_health_diagnostics.py \
+            --snapshot grading_company_updates.json \
+            --report GRADING_COMPANY_HEALTH_DIAGNOSTICS.json
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          data=json.loads(Path('GRADING_COMPANY_HEALTH_DIAGNOSTICS.json').read_text(encoding='utf-8'))
+          summary=data.get('summary') or {}
+          providers=','.join(summary.get('companies_without_healthy_source') or [])
+          print(f"healthy={summary.get('healthy',0)} degraded={summary.get('degraded',0)} no_healthy={providers or 'none'}")
+          if providers:
+              print(f"::warning title=Grading provider health degraded::companies_without_healthy_source={providers}")
+          for row in data.get('sources') or []:
+              if row.get('failure_class') == 'ROOT_CAUSE_UNRESOLVED':
+                  print(f"::warning title=Unresolved grading provider RCA::{row.get('company')} {row.get('source_id')} requires more evidence")
+          PY
 
       - name: Validate official-only public snapshot
         run: |
@@ -105,6 +132,15 @@ jobs:
           git commit -m 'data: refresh grading company official watch'
           git push origin HEAD:main
 
+      - name: Upload provider RCA diagnostics
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        with:
+          name: grading-company-health-diagnostics
+          path: GRADING_COMPANY_HEALTH_DIAGNOSTICS.json
+          if-no-files-found: warn
+          retention-days: 30
+
       - name: Write watcher summary
         if: always()
         shell: bash
@@ -117,6 +153,7 @@ jobs:
             echo '- tracked: fee, service level, turnaround, availability, official event/news'
             echo '- trust: official HTTPS sources only; community/Instagram are leads only'
             echo '- failure policy: preserve last-good structured facts; expose degraded source health'
+            echo '- RCA classes: blocked / rate-limit / transient / unapproved redirect / maintenance redirect / parser-change-suspected / unresolved'
             echo "- snapshot changed: ${{ steps.stage.outputs.changed || 'not-reached' }}"
             echo "- reason: ${{ steps.stage.outputs.reason || 'not-reached' }}"
           } >> "$GITHUB_STEP_SUMMARY"
