@@ -372,4 +372,9 @@ if [ "${LOCKED:-0}" = "1" ]; then
   LOCKED=0
 fi
 
+if [ "${TCG_UPDATE_ONLY:-0}" = "1" ]; then
+  echo "[OK] Android 안전 업데이트 전용 모드 완료. 서버 시작은 생략합니다."
+  exit 0
+fi
+
 exec bash START_TCG_UPDATER_ANDROID.sh
