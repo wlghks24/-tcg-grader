@@ -10,6 +10,7 @@ class TabletScheduledUpdateV256Tests(unittest.TestCase):
         cls.script = (ROOT / 'TABLET_SCHEDULED_UPDATE.sh').read_text(encoding='utf-8')
         cls.main = (ROOT / 'main').read_text(encoding='utf-8')
         cls.updater = (ROOT / 'ANDROID_UPDATE_AND_START.sh').read_text(encoding='utf-8')
+        cls.recover = (ROOT / 'ANDROID_RECOVER_UPDATE.sh').read_text(encoding='utf-8')
         cls.manifest = (ROOT / 'tablet_runtime_manifest.py').read_text(encoding='utf-8')
         cls.final_verify = (ROOT / 'VERIFY_TABLET_FINAL.sh').read_text(encoding='utf-8')
 
@@ -19,8 +20,13 @@ class TabletScheduledUpdateV256Tests(unittest.TestCase):
         self.assertIn('TABLET_SCHEDULED_UPDATE.sh', self.main)
 
     def test_schedule_uses_canonical_main_and_update_only_path(self):
+        canonical = 'git fetch "$OFFICIAL_HTTPS" refs/heads/main:refs/remotes/origin/main'
         self.assertIn('OFFICIAL_HTTPS="https://github.com/wlghks24/-tcg-grader.git"', self.script)
-        self.assertIn('git fetch --prune "$OFFICIAL_HTTPS" main:refs/remotes/origin/main', self.script)
+        self.assertIn(canonical, self.script)
+        self.assertIn(canonical, self.updater)
+        self.assertIn(canonical, self.recover)
+        for source in (self.script, self.updater, self.recover):
+            self.assertNotIn('git fetch --prune "$OFFICIAL_HTTPS"', source)
         self.assertIn('TCG_UPDATE_ONLY=1 bash "$ROOT/ANDROID_UPDATE_AND_START.sh"', self.script)
         self.assertIn('remote_after="$(sha origin/main)"', self.script)
 
