@@ -7,6 +7,8 @@ on:
   push:
     branches: [main]
     paths:
+      - 'safe_runtime.py'
+      - 'test_safe_runtime_redirect_diagnostics_v253.py'
       - 'static_data_publish_gate.py'
       - 'auto_update_all.py'
       - 'tcg_updater.py'
@@ -76,7 +78,7 @@ jobs:
       - name: Compile and run collection publish regressions
         run: |
           python -m py_compile \
-            static_data_publish_gate.py auto_update_all.py tcg_updater.py feature_contract.py \
+            safe_runtime.py test_safe_runtime_redirect_diagnostics_v253.py static_data_publish_gate.py auto_update_all.py tcg_updater.py feature_contract.py \
             update_releases.py release_history_backfill.py update_promo_events.py \
             update_market_prices.py market_public_crosscheck.py \
             update_purchase_sources.py validate_external_links.py \
@@ -86,6 +88,7 @@ jobs:
             test_release_history_cumulative_coverage_v229.py \
             test_collection_restored_state_guard_v229.py
           python -m unittest -v \
+            test_safe_runtime_redirect_diagnostics_v253.py \
             test_static_data_publish_gate.py \
             test_collection_verification_gate.py \
             test_market_public_crosscheck_resilience_v228.py \
