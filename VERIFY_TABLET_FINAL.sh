@@ -20,6 +20,7 @@ echo "========================================"
 required_files="
 ANDROID_RECOVER_UPDATE.sh
 ANDROID_UPDATE_AND_START.sh
+TABLET_SCHEDULED_UPDATE.sh
 ANDROID_AUTO_START_INSTALL.sh
 START_TCG_UPDATER_ANDROID.sh
 VERIFY_TABLET_RUNTIME.sh
@@ -85,6 +86,8 @@ done
 echo "[1/9] 필수 파일 확인: OK"
 
 python tablet_runtime_qa.py --profile final >/dev/null
+bash -n TABLET_SCHEDULED_UPDATE.sh
+bash -n ANDROID_UPDATE_AND_START.sh
 bash -n GRAPHIFY_UPDATE.sh
 bash -n SETUP_GRAPHIFY_TERMUX.sh
 echo "[2/9] Android/Graphify 셸 문법: OK"
