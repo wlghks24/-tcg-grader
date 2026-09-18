@@ -36,7 +36,11 @@ if ! is_official_origin "$origin_url"; then
 fi
 
 echo "[복구] GitHub main 최신 업데이트 스크립트를 준비합니다..."
-git fetch --prune "$OFFICIAL_HTTPS" main:refs/remotes/origin/main
+# Do not use --prune while fetching from a raw URL into origin/main. Git treats
+# that URL as a different fetch source and can prune the destination tracking ref
+# itself, leaving refs/remotes/origin/HEAD dangling. The explicit refspec is
+# sufficient and recreates origin/main if an older buggy run deleted it.
+git fetch "$OFFICIAL_HTTPS" refs/heads/main:refs/remotes/origin/main
 
 tmp="$(mktemp "${TMPDIR:-/tmp}/tcg-android-updater.XXXXXX.sh")"
 cleanup() { rm -f "$tmp" 2>/dev/null || true; }
