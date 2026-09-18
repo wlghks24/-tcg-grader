@@ -15,7 +15,7 @@ from safe_runtime import reject_nonstandard_json, safe_read_text, unique_json_ob
 
 
 REQUIRED_FILES = (
-    "index.html", "tcg_updater.py", "auto_update_all.py", "auto_pipeline_runner.py", "auto_repair_engine.py",
+    "index.html", "tcg_updater.py", "auto_update_all.py", "collection_job_contract.py", "auto_pipeline_runner.py", "auto_repair_engine.py",
     "error_scenario_lab.py", "scenario_learning_profiles.json",
     "ai_code_improver.py", "ai_code_learning.json", "verify_ai_code_improver.py",
     "verify_link_runtime.py", "verify_camera_runtime.js",
@@ -54,6 +54,7 @@ def audit_feature_contract(root: str | Path | None = None) -> dict[str, Any]:
     vision_engine = safe_read_text(base / "grading_vision_engine.js")
     server = safe_read_text(base / "tcg_updater.py")
     automatic = safe_read_text(base / "auto_update_all.py")
+    collection_contract = safe_read_text(base / "collection_job_contract.py")
     pipeline = safe_read_text(base / "auto_pipeline_runner.py")
     learner = safe_read_text(base / "auto_repair_engine.py")
     scenario_lab = safe_read_text(base / "error_scenario_lab.py")
@@ -168,14 +169,19 @@ def audit_feature_contract(root: str | Path | None = None) -> dict[str, Any]:
                                               "DEFERRED_TIMEOUT_MAX_SECONDS = 600",
                                               "_deferred_timeout_eligible")),
         "시간초과 전용 분리예산")
-    add("six_collection_jobs", "출시·재발매·시세·행사·구매처·환율·감정업체·등급사진 8단계 자동수집",
+    add("eight_collection_jobs", "출시·재발매·시세·행사·구매처·환율·감정업체·등급사진 8단계 자동수집",
         "_full_update_job_count" in server
-        and all(token in automatic for token in ("grading_company_watch", "grading_company_updates.json", "graded_photo_multi_source"))
+        and "from collection_job_contract import JOB_COUNT as COLLECTION_JOB_COUNT" in server
+        and "'total':COLLECTION_JOB_COUNT" in server
+        and "from collection_job_contract import COLLECTION_JOBS" in automatic
+        and "JOBS = COLLECTION_JOBS" in automatic
+        and "JOB_COUNT = len(COLLECTION_JOBS)" in collection_contract
+        and all(token in collection_contract for token in ("grading_company_watch", "grading_company_updates.json", "graded_photo_multi_source", "graded_photo_candidates.json"))
         and all(token in server for token in ("grading_status", "/api/run-graded-photo-collection", "/api/graded-photo-collection-status"))
         and grading_updates.get("policy",{}).get("official_sources_only") is True
         and set(grading_updates.get("companies",{})) == {"PSA","BGS","CGC","TAG","BRG"}
         and "WATCH_SOURCES" in grading_watch,
-        "6개 기존 자료 + 공식 감정업체 변경감시 + OCR·공식 인증검증 등급사진 작업")
+        "8개 정규 작업의 단일 SSOT + 공식 감정업체 변경감시 + OCR·공식 인증검증 등급사진 작업")
     add("scheduled_precollection", "6시간 자동반영·30분 전 사전수집",
         "AUTO_INTERVAL_SECONDS=6*60*60" in server and "PRECOLLECT_LEAD_SECONDS=30*60" in server,
         "PC·안드로이드 공통 일정")

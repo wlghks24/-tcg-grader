@@ -21,6 +21,8 @@ from __future__ import annotations
 import importlib
 from pathlib import Path
 
+from collection_job_contract import COLLECTION_JOBS, JOB_COUNT as COLLECTION_JOB_COUNT, MANDATORY_OUTPUTS
+
 ROOT = Path(__file__).resolve().parent
 PATCH_ID = 143
 
@@ -28,6 +30,7 @@ REQUIRED_FILES = (
     "safe_runtime.py",
     "auto_repair_engine.py",
     "auto_update_all.py",
+    "collection_job_contract.py",
     "collector_self_healing.py",
     "tcg_code_repair_learning.py",
     "tcg_updater.py",
@@ -70,16 +73,8 @@ REQUIRED_FILES = (
     "graded_photo_manual_pair_queue.py",
 )
 
-EXPECTED_JOB_FILES = {
-    "releases.json",
-    "market_watch.json",
-    "market_prices.json",
-    "promo_events.json",
-    "purchase_sources.json",
-    "exchange_rates.json",
-    "grading_company_updates.json",
-    "graded_photo_candidates.json",
-}
+EXPECTED_JOB_FILES = set(MANDATORY_OUTPUTS)
+
 
 MANUAL_REQUIRED = {
     "manual_graded_photo_registration.py",
@@ -167,6 +162,8 @@ def audit() -> dict:
     if update_all is not None:
         jobs = getattr(update_all, "JOBS", ())
         files = {row[2] for row in jobs if isinstance(row, tuple) and len(row) >= 3}
+        if tuple(jobs) != COLLECTION_JOBS or len(jobs) != COLLECTION_JOB_COUNT:
+            issues.append("정규 수집 작업이 collection_job_contract SSOT와 불일치합니다")
         if files != EXPECTED_JOB_FILES:
             issues.append(f"{len(EXPECTED_JOB_FILES)}개 정규 수집 작업 구성이 현재 번들과 맞지 않습니다")
         try:

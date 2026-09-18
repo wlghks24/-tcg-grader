@@ -23,6 +23,7 @@ PY_RUNTIME_FILES=(
   server_security_guard.py
   auto_repair_engine.py
   auto_update_all.py
+  collection_job_contract.py
   tcg_updater.py
   tcg_updater_v135.py
   runtime_bundle_guard_v143.py

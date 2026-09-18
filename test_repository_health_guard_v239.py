@@ -5,12 +5,35 @@ from pathlib import Path
 import repository_health_guard as health
 
 
+def write_contract(root: Path, count: int = 8) -> None:
+    (root / "collection_job_contract.py").write_text(
+        "COLLECTION_JOBS = (\n" + "".join(
+            f"    ('job{i}', 'module{i}', 'out{i}.json'),\n" for i in range(count)
+        ) + ")\n",
+        encoding="utf-8",
+    )
+
+
+def write_executor(root: Path, *, delegate: bool = True) -> None:
+    prefix = "from collection_job_contract import COLLECTION_JOBS\n"
+    jobs = "JOBS = COLLECTION_JOBS\n" if delegate else "JOBS = (('wrong','wrong','wrong.json'),)\n"
+    (root / "auto_update_all.py").write_text(
+        prefix + jobs +
+        "def _worker_count(n): return 1\n"
+        "def _job_timeout(name, stats): return 30\n"
+        "def _run_managed_process(*a, **k): return None\n"
+        "# ThreadPoolExecutor\n# atomic_write_json\n",
+        encoding="utf-8",
+    )
+
+
 class RepositoryHealthGuardTests(unittest.TestCase):
     def test_current_repository_has_no_blocking_health_drift(self):
         report = health.audit(Path(__file__).resolve().parent)
         self.assertEqual("PASS", report["status"], report["blockers"])
         self.assertEqual(0, report["summary"]["blockers"])
         self.assertEqual(8, report["checks"]["collection_jobs"]["count"])
+        self.assertTrue(report["checks"]["collection_jobs"]["executor_delegates_to_contract"])
         self.assertTrue(report["checks"]["legacy_7step_removed"])
 
     def test_legacy_7step_mutator_is_fail_closed(self):
@@ -25,20 +48,39 @@ class RepositoryHealthGuardTests(unittest.TestCase):
                 "# git diff --cached --quiet\n",
                 encoding="utf-8",
             )
-            (root / "auto_update_all.py").write_text(
-                "JOBS = (\n" + "".join(
-                    f"    ('job{i}', 'module{i}', 'out{i}.json'),\n" for i in range(8)
-                ) + ")\n\n"
-                "def _worker_count(n): return 1\n"
-                "def _job_timeout(name, stats): return 30\n"
-                "def _run_managed_process(*a, **k): return None\n"
-                "# ThreadPoolExecutor\n# atomic_write_json\n",
-                encoding="utf-8",
-            )
+            write_contract(root)
+            write_executor(root)
             report = health.audit(root)
             self.assertEqual("BLOCKED", report["status"])
             self.assertIn(
                 "LEGACY_7STEP_MUTATOR_PRESENT",
+                {row["code"] for row in report["blockers"]},
+            )
+
+    def test_executor_must_delegate_to_contract(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            write_contract(root)
+            write_executor(root, delegate=False)
+            with self.assertRaisesRegex(RuntimeError, "must delegate"):
+                health._find_jobs(root)
+
+    def test_contract_job_count_is_fail_closed(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            (root / ".github/workflows").mkdir(parents=True)
+            (root / ".github/workflows/tcg-static-data-refresh.yml").write_text(
+                "concurrency:\n  group: x\n  cancel-in-progress: true\n"
+                "jobs:\n  x:\n    timeout-minutes: 1\n"
+                "# main advanced during collection; discard this snapshot\n"
+                "# git diff --cached --quiet\n",
+                encoding="utf-8",
+            )
+            write_contract(root, count=7)
+            write_executor(root)
+            report = health.audit(root)
+            self.assertIn(
+                "COLLECTION_JOB_COUNT_DRIFT",
                 {row["code"] for row in report["blockers"]},
             )
 
