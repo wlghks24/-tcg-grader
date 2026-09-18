@@ -4,6 +4,9 @@ import tempfile
 import unittest
 
 import quality_review_policy as q
+import tablet_runtime_manifest as manifest
+
+ROOT = Path(__file__).resolve().parent
 
 
 class QualityReviewPolicyV2Tests(unittest.TestCase):
@@ -44,6 +47,20 @@ class QualityReviewPolicyV2Tests(unittest.TestCase):
         data = json.loads(q.POLICY.read_text(encoding="utf-8"))
         self.assertFalse(data["tablet"]["claim_parallel_1000_external_reviewers"])
         self.assertIn("not a claim that 1000 external people", data["description"])
+
+    def test_tablet_manifest_requires_and_validates_policy(self):
+        self.assertIn("quality_review_policy.py", manifest.ACTIVE_RUNTIME_FILES)
+        self.assertIn("quality_review_policy_v2.json", manifest.ACTIVE_RUNTIME_FILES)
+        result = manifest.audit(ROOT, compile_python=True)
+        self.assertTrue(result["ok"], result)
+        self.assertTrue(result["quality_policy"]["ok"], result)
+        self.assertEqual(result["quality_policy"]["review_cells"], 1000)
+
+    def test_main_exposes_local_quality_check(self):
+        entry = (ROOT / "main").read_text(encoding="utf-8")
+        self.assertIn("quality)", entry)
+        self.assertIn("quality_review_policy.py --check", entry)
+        self.assertIn("bash main quality", entry)
 
 
 if __name__ == "__main__":
