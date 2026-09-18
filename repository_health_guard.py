@@ -2,7 +2,7 @@
 """Fail-closed repository health audit for the production TCG collector.
 
 The guard intentionally uses only the Python standard library so it can run on
-GitHub Actions, Windows, and Termux without installing packages.  It protects
+GitHub Actions, Windows, and Termux without installing packages. It protects
 production invariants and reports legacy workflow debt without automatically
 rewriting source code.
 """
@@ -23,6 +23,8 @@ LEGACY_7STEP_PATHS = (
     ".github/workflows/apply-top-7step-ui.yml",
     "apply_android_7step_display_patch.py",
     "apply_top_7step_ui_patch.py",
+    ".github/workflows/apply-graded-photo-collection.yml",
+    "apply_graded_photo_collection_patch.py",
 )
 
 
@@ -30,27 +32,53 @@ def _read(root: Path, relative: str) -> str:
     return (root / relative).read_text(encoding="utf-8")
 
 
-def _find_jobs(root: Path) -> tuple[int, list[str]]:
-    path = root / "auto_update_all.py"
+def _literal_assignment(path: Path, variable: str) -> Any:
     if not path.is_file():
-        raise RuntimeError("auto_update_all.py missing")
+        raise RuntimeError(f"{path.name} missing")
     tree = ast.parse(path.read_text(encoding="utf-8"), filename=str(path))
     for node in tree.body:
         if not isinstance(node, (ast.Assign, ast.AnnAssign)):
             continue
         targets = node.targets if isinstance(node, ast.Assign) else [node.target]
-        if not any(isinstance(target, ast.Name) and target.id == "JOBS" for target in targets):
-            continue
-        value = ast.literal_eval(node.value)
-        if not isinstance(value, (tuple, list)):
-            raise RuntimeError("auto_update_all.JOBS must be a literal sequence")
-        files: list[str] = []
-        for row in value:
-            if not isinstance(row, (tuple, list)) or len(row) < 3:
-                raise RuntimeError("auto_update_all.JOBS row schema invalid")
-            files.append(str(row[2]))
-        return len(value), files
-    raise RuntimeError("auto_update_all.JOBS assignment not found")
+        if any(isinstance(target, ast.Name) and target.id == variable for target in targets):
+            try:
+                return ast.literal_eval(node.value)
+            except (ValueError, TypeError) as exc:
+                raise RuntimeError(f"{path.name}.{variable} must be a literal") from exc
+    raise RuntimeError(f"{path.name}.{variable} assignment not found")
+
+
+def _executor_delegates_to_contract(root: Path) -> bool:
+    path = root / "auto_update_all.py"
+    if not path.is_file():
+        raise RuntimeError("auto_update_all.py missing")
+    tree = ast.parse(path.read_text(encoding="utf-8"), filename=str(path))
+    imported = False
+    delegated = False
+    for node in tree.body:
+        if isinstance(node, ast.ImportFrom) and node.module == "collection_job_contract":
+            imported = any(alias.name == "COLLECTION_JOBS" for alias in node.names)
+        elif isinstance(node, ast.Assign):
+            if any(isinstance(target, ast.Name) and target.id == "JOBS" for target in node.targets):
+                delegated = isinstance(node.value, ast.Name) and node.value.id == "COLLECTION_JOBS"
+        elif isinstance(node, ast.AnnAssign):
+            if isinstance(node.target, ast.Name) and node.target.id == "JOBS":
+                delegated = isinstance(node.value, ast.Name) and node.value.id == "COLLECTION_JOBS"
+    return imported and delegated
+
+
+def _find_jobs(root: Path) -> tuple[int, list[str]]:
+    value = _literal_assignment(root / "collection_job_contract.py", "COLLECTION_JOBS")
+    if not isinstance(value, (tuple, list)):
+        raise RuntimeError("collection_job_contract.COLLECTION_JOBS must be a literal sequence")
+    files: list[str] = []
+    for row in value:
+        if not isinstance(row, (tuple, list)) or len(row) < 3:
+            raise RuntimeError("collection_job_contract.COLLECTION_JOBS row schema invalid")
+        files.append(str(row[2]))
+    if not _executor_delegates_to_contract(root):
+        raise RuntimeError("auto_update_all.JOBS must delegate to collection_job_contract.COLLECTION_JOBS")
+    return len(value), files
 
 
 def _workflow_debt(root: Path) -> list[dict[str, str]]:
@@ -90,7 +118,12 @@ def audit(root: Path = ROOT) -> dict[str, Any]:
 
     try:
         job_count, job_files = _find_jobs(root)
-        checks["collection_jobs"] = {"count": job_count, "files": job_files}
+        checks["collection_jobs"] = {
+            "count": job_count,
+            "files": job_files,
+            "source": "collection_job_contract.py",
+            "executor_delegates_to_contract": True,
+        }
         if job_count != EXPECTED_JOB_COUNT:
             blockers.append({
                 "code": "COLLECTION_JOB_COUNT_DRIFT",
@@ -99,7 +132,7 @@ def audit(root: Path = ROOT) -> dict[str, Any]:
         if len(set(job_files)) != len(job_files):
             blockers.append({
                 "code": "COLLECTION_OUTPUT_DUPLICATE",
-                "detail": "auto_update_all.JOBS contains duplicate output files",
+                "detail": "collection_job_contract.COLLECTION_JOBS contains duplicate output files",
             })
     except (OSError, SyntaxError, ValueError, RuntimeError) as exc:
         checks["collection_jobs"] = {"error": str(exc)}

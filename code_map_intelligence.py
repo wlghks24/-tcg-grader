@@ -36,6 +36,7 @@ PATH_KEYS = (
 CRITICAL_RUNTIME_EXACT = {
     "tcg_updater.py",
     "tcg_updater_v135.py",
+    "collection_job_contract.py",
     "index.html",
     "service-worker.js",
     "START_TCG_UPDATER_ANDROID.sh",

@@ -5,6 +5,8 @@ on:
   pull_request:
     paths:
       - 'auto_update_all.py'
+      - 'collection_job_contract.py'
+      - 'feature_contract.py'
       - 'repository_health_guard.py'
       - 'test_repository_health_guard_v239.py'
       - '.github/workflows/**'
@@ -13,6 +15,8 @@ on:
     branches: [main]
     paths:
       - 'auto_update_all.py'
+      - 'collection_job_contract.py'
+      - 'feature_contract.py'
       - 'repository_health_guard.py'
       - 'test_repository_health_guard_v239.py'
       - '.github/workflows/**'
@@ -39,12 +43,16 @@ jobs:
           python-version: '3.11'
 
       - name: Compile guard
-        run: python -m py_compile repository_health_guard.py test_repository_health_guard_v239.py
+        run: python -m py_compile repository_health_guard.py test_repository_health_guard_v239.py collection_job_contract.py
 
       - name: Run health regression
         run: python -m unittest -v test_repository_health_guard_v239.py
 
-      - name: Audit repository invariants
+      - name: Always build health diagnostics
+        if: always()
+        run: python repository_health_guard.py --no-fail --report REPOSITORY_HEALTH_REPORT.json
+
+      - name: Enforce repository invariants
         run: python repository_health_guard.py --report REPOSITORY_HEALTH_REPORT.json
 
       - name: Upload health report
@@ -62,7 +70,8 @@ jobs:
           {
             echo '## Repository Health v239'
             echo
-            echo '- collection SSOT: 8 jobs required'
+            echo '- collection SSOT: collection_job_contract.py; exactly 8 jobs required'
+            echo '- executor delegation: auto_update_all.JOBS must point to COLLECTION_JOBS'
             echo '- obsolete 7-step mutators: blocked'
             echo '- collection concurrency/timeouts/stale-main guard: required'
             echo '- write-capable apply workflows: reported as debt; never auto-deleted'

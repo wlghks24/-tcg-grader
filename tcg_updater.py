@@ -9,6 +9,7 @@ from urllib.parse import urlparse, parse_qs
 from http.server import ThreadingHTTPServer, SimpleHTTPRequestHandler
 from urllib.request import Request, urlopen
 from grading_accuracy_v99 import valid_actual_grade
+from collection_job_contract import JOB_COUNT as COLLECTION_JOB_COUNT
 from server_security_guard import OFFICIAL_LOOKUP_GUARD, client_network_allowed
 from safe_runtime import (
     MAX_SAFE_FILE_BYTES,
@@ -203,7 +204,7 @@ SEARCH_LIMIT_WINDOW_SECONDS=10.0
 SEARCH_LIMIT_REQUESTS=12
 UPDATE_JOB={
     'id':None,'state':'idle','trigger':None,'started_at':None,'finished_at':None,
-    'current':0,'total':7,'label':'대기 중','file':None,'message':'대기 중',
+    'current':0,'total':COLLECTION_JOB_COUNT,'label':'대기 중','file':None,'message':'대기 중',
     'error':None,'report':None,'retry_only':False,
 }
 GRADED_PHOTO_JOB_LOCK=threading.Lock()
@@ -935,11 +936,8 @@ def _progress_update(current,total,label,filename,state,result=None):
     _job_set(**changes)
 
 def _full_update_job_count():
-    try:
-        import auto_update_all
-        return max(1,len(auto_update_all.JOBS))
-    except (ImportError,AttributeError,TypeError):
-        return 8
+    """Return the immutable mandatory job count without importing heavy collectors."""
+    return COLLECTION_JOB_COUNT
 
 def _background_full_update(job_id):
     try:
