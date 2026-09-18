@@ -1,7 +1,7 @@
 {
   "schema_version": 8,
   "engine": "v157-reverify-prune-fair-budget-collection",
-  "created_at": "2026-09-17T18:59:02+00:00",
+  "created_at": "2026-09-18T00:58:46+00:00",
   "records": [
     {
       "source_id": "official_registry",
@@ -98,8 +98,8 @@
         "official_verification_missing"
       ],
       "evidence_confidence": 0.0,
-      "quarantine_review_count": 35,
-      "last_quarantine_review_at": "2026-09-17T18:59:02+00:00"
+      "quarantine_review_count": 36,
+      "last_quarantine_review_at": "2026-09-18T00:58:46+00:00"
     },
     {
       "source_id": "library_candidate",
@@ -151,8 +151,8 @@
         "official_verification_missing"
       ],
       "evidence_confidence": 0.0,
-      "quarantine_review_count": 35,
-      "last_quarantine_review_at": "2026-09-17T18:59:02+00:00"
+      "quarantine_review_count": 36,
+      "last_quarantine_review_at": "2026-09-18T00:58:46+00:00"
     },
     {
       "source_id": "library_candidate",
@@ -204,8 +204,8 @@
         "official_verification_missing"
       ],
       "evidence_confidence": 0.0,
-      "quarantine_review_count": 35,
-      "last_quarantine_review_at": "2026-09-17T18:59:02+00:00"
+      "quarantine_review_count": 36,
+      "last_quarantine_review_at": "2026-09-18T00:58:46+00:00"
     },
     {
       "source_id": "library_candidate",
@@ -257,8 +257,56 @@
         "official_verification_missing"
       ],
       "evidence_confidence": 0.0,
-      "quarantine_review_count": 35,
-      "last_quarantine_review_at": "2026-09-17T18:59:02+00:00"
+      "quarantine_review_count": 36,
+      "last_quarantine_review_at": "2026-09-18T00:58:46+00:00"
+    },
+    {
+      "source_id": "amazon_us",
+      "source": "Amazon US",
+      "search_provider": "bing_images_v2",
+      "url": "https://www.amazon.com/Naruto-Part-4/dp/B0B8S8ZDDS",
+      "title": "Watch Naruto - Part 4 | Prime Video",
+      "snippet": "",
+      "image_url": "https://m.media-amazon.com/images/I/81L94vkJmXL._RI_.jpg",
+      "company": "TAG",
+      "grade": null,
+      "certification_id": "",
+      "game": "naruto",
+      "mode": "slab",
+      "source_weight": 0.65,
+      "grade_from_search": false,
+      "image_probe_attempts": 1,
+      "image_probe_last_at": "2026-09-18T00:58:46+00:00",
+      "image_probe_status": "failed",
+      "image_probe_error": "pillow_not_installed",
+      "image_gallery_candidates": 1,
+      "image_gallery_probed": 1,
+      "official_result": false,
+      "verification_method": null,
+      "official_lookup_suppressed": true,
+      "automatic_official_lookup_used": false,
+      "manual_official_verification_required": true,
+      "official_verification": "manual_verification_required",
+      "measurement_photo_quality": 0.0,
+      "measurement_photo_view_ok": false,
+      "measurement_photo_view_reason": "geometry_exposure_or_sharpness_failed",
+      "measurement_photo_ready": false,
+      "measurement_photo_policy": "official+validated+high_resolution+ocr_identity+front_view_quality+no_conflict",
+      "cross_source_count": 1,
+      "cross_sources": [
+        "amazon_us"
+      ],
+      "quarantine_reasons": [
+        "certification_unresolved",
+        "grade_unresolved",
+        "image_validation_failed",
+        "official_verification_missing"
+      ],
+      "status": "quarantine_candidate",
+      "learning_eligibility": "not_eligible_unverified",
+      "evidence_confidence": 0.4934,
+      "quarantine_review_count": 1,
+      "last_quarantine_review_at": "2026-09-18T00:58:46+00:00"
     },
     {
       "source_id": "library_candidate",
@@ -310,8 +358,8 @@
         "official_verification_missing"
       ],
       "evidence_confidence": 0.0,
-      "quarantine_review_count": 35,
-      "last_quarantine_review_at": "2026-09-17T18:59:02+00:00"
+      "quarantine_review_count": 36,
+      "last_quarantine_review_at": "2026-09-18T00:58:46+00:00"
     },
     {
       "source_id": "library_candidate",
@@ -358,8 +406,8 @@
         "official_verification_missing"
       ],
       "evidence_confidence": 0.0,
-      "quarantine_review_count": 35,
-      "last_quarantine_review_at": "2026-09-17T18:59:02+00:00"
+      "quarantine_review_count": 36,
+      "last_quarantine_review_at": "2026-09-18T00:58:46+00:00"
     },
     {
       "source_id": "library_candidate",
@@ -406,8 +454,8 @@
         "official_verification_missing"
       ],
       "evidence_confidence": 0.0,
-      "quarantine_review_count": 35,
-      "last_quarantine_review_at": "2026-09-17T18:59:02+00:00"
+      "quarantine_review_count": 36,
+      "last_quarantine_review_at": "2026-09-18T00:58:46+00:00"
     },
     {
       "source_id": "library_candidate",
@@ -454,8 +502,8 @@
         "official_verification_missing"
       ],
       "evidence_confidence": 0.0,
-      "quarantine_review_count": 35,
-      "last_quarantine_review_at": "2026-09-17T18:59:02+00:00"
+      "quarantine_review_count": 36,
+      "last_quarantine_review_at": "2026-09-18T00:58:46+00:00"
     },
     {
       "source_id": "library_candidate",
@@ -507,8 +555,8 @@
         "official_verification_missing"
       ],
       "evidence_confidence": 0.0,
-      "quarantine_review_count": 35,
-      "last_quarantine_review_at": "2026-09-17T18:59:02+00:00"
+      "quarantine_review_count": 36,
+      "last_quarantine_review_at": "2026-09-18T00:58:46+00:00"
     },
     {
       "source_id": "library_candidate",
@@ -560,8 +608,8 @@
         "official_verification_missing"
       ],
       "evidence_confidence": 0.0,
-      "quarantine_review_count": 35,
-      "last_quarantine_review_at": "2026-09-17T18:59:02+00:00"
+      "quarantine_review_count": 36,
+      "last_quarantine_review_at": "2026-09-18T00:58:46+00:00"
     },
     {
       "source_id": "library_candidate",
@@ -613,8 +661,8 @@
         "official_verification_missing"
       ],
       "evidence_confidence": 0.0,
-      "quarantine_review_count": 35,
-      "last_quarantine_review_at": "2026-09-17T18:59:02+00:00"
+      "quarantine_review_count": 36,
+      "last_quarantine_review_at": "2026-09-18T00:58:46+00:00"
     },
     {
       "source_id": "library_candidate",
@@ -666,8 +714,56 @@
         "official_verification_missing"
       ],
       "evidence_confidence": 0.0,
-      "quarantine_review_count": 35,
-      "last_quarantine_review_at": "2026-09-17T18:59:02+00:00"
+      "quarantine_review_count": 36,
+      "last_quarantine_review_at": "2026-09-18T00:58:46+00:00"
+    },
+    {
+      "source_id": "collectory",
+      "source": "Collectory",
+      "search_provider": "duckduckgo",
+      "url": "https://collectory.cc/cards?lang=en",
+      "title": "Pokémon Card Search - Price Lookup | Collectory",
+      "snippet": "",
+      "image_url": "https://collectory.cc/opengraph-image",
+      "company": "CGC",
+      "grade": null,
+      "certification_id": "",
+      "game": "pokemon",
+      "mode": "slab",
+      "source_weight": 0.78,
+      "grade_from_search": false,
+      "image_probe_attempts": 1,
+      "image_probe_last_at": "2026-09-18T00:58:46+00:00",
+      "image_probe_status": "failed",
+      "image_probe_error": "pillow_not_installed",
+      "image_gallery_candidates": 1,
+      "image_gallery_probed": 1,
+      "official_result": false,
+      "verification_method": null,
+      "official_lookup_suppressed": true,
+      "automatic_official_lookup_used": false,
+      "manual_official_verification_required": true,
+      "official_verification": "manual_verification_required",
+      "measurement_photo_quality": 0.0,
+      "measurement_photo_view_ok": false,
+      "measurement_photo_view_reason": "geometry_exposure_or_sharpness_failed",
+      "measurement_photo_ready": false,
+      "measurement_photo_policy": "official+validated+high_resolution+ocr_identity+front_view_quality+no_conflict",
+      "cross_source_count": 1,
+      "cross_sources": [
+        "collectory"
+      ],
+      "quarantine_reasons": [
+        "certification_unresolved",
+        "grade_unresolved",
+        "image_validation_failed",
+        "official_verification_missing"
+      ],
+      "status": "quarantine_candidate",
+      "learning_eligibility": "not_eligible_unverified",
+      "evidence_confidence": 0.5507,
+      "quarantine_review_count": 1,
+      "last_quarantine_review_at": "2026-09-18T00:58:46+00:00"
     },
     {
       "source_id": "library_candidate",
@@ -719,8 +815,8 @@
         "official_verification_missing"
       ],
       "evidence_confidence": 0.0,
-      "quarantine_review_count": 35,
-      "last_quarantine_review_at": "2026-09-17T18:59:02+00:00"
+      "quarantine_review_count": 36,
+      "last_quarantine_review_at": "2026-09-18T00:58:46+00:00"
     },
     {
       "source_id": "library_candidate",
@@ -767,8 +863,8 @@
         "official_verification_missing"
       ],
       "evidence_confidence": 0.0,
-      "quarantine_review_count": 35,
-      "last_quarantine_review_at": "2026-09-17T18:59:02+00:00"
+      "quarantine_review_count": 36,
+      "last_quarantine_review_at": "2026-09-18T00:58:46+00:00"
     },
     {
       "source_id": "library_candidate",
@@ -820,8 +916,8 @@
         "official_verification_missing"
       ],
       "evidence_confidence": 0.0,
-      "quarantine_review_count": 35,
-      "last_quarantine_review_at": "2026-09-17T18:59:02+00:00"
+      "quarantine_review_count": 36,
+      "last_quarantine_review_at": "2026-09-18T00:58:46+00:00"
     },
     {
       "source_id": "library_candidate",
@@ -874,8 +970,8 @@
         "official_verification_missing"
       ],
       "evidence_confidence": 0.0,
-      "quarantine_review_count": 35,
-      "last_quarantine_review_at": "2026-09-17T18:59:02+00:00"
+      "quarantine_review_count": 36,
+      "last_quarantine_review_at": "2026-09-18T00:58:46+00:00"
     },
     {
       "source_id": "library_candidate",
@@ -927,8 +1023,8 @@
         "official_verification_missing"
       ],
       "evidence_confidence": 0.0,
-      "quarantine_review_count": 35,
-      "last_quarantine_review_at": "2026-09-17T18:59:02+00:00"
+      "quarantine_review_count": 36,
+      "last_quarantine_review_at": "2026-09-18T00:58:46+00:00"
     },
     {
       "source_id": "library_candidate",
@@ -980,8 +1076,56 @@
         "official_verification_missing"
       ],
       "evidence_confidence": 0.0,
-      "quarantine_review_count": 35,
-      "last_quarantine_review_at": "2026-09-17T18:59:02+00:00"
+      "quarantine_review_count": 36,
+      "last_quarantine_review_at": "2026-09-18T00:58:46+00:00"
+    },
+    {
+      "source_id": "collectory",
+      "source": "Collectory",
+      "search_provider": "duckduckgo",
+      "url": "https://collectory.cc/",
+      "title": "collectory.cc · 포켓몬 카드 시세 비교 — 한국/일본/미국/중국",
+      "snippet": "",
+      "image_url": "https://collectory.cc/opengraph-image?d240643227c9f011",
+      "company": "CGC",
+      "grade": null,
+      "certification_id": "",
+      "game": "pokemon",
+      "mode": "slab",
+      "source_weight": 0.78,
+      "grade_from_search": false,
+      "image_probe_attempts": 1,
+      "image_probe_last_at": "2026-09-18T00:58:46+00:00",
+      "image_probe_status": "failed",
+      "image_probe_error": "pillow_not_installed",
+      "image_gallery_candidates": 1,
+      "image_gallery_probed": 1,
+      "official_result": false,
+      "verification_method": null,
+      "official_lookup_suppressed": true,
+      "automatic_official_lookup_used": false,
+      "manual_official_verification_required": true,
+      "official_verification": "manual_verification_required",
+      "measurement_photo_quality": 0.0,
+      "measurement_photo_view_ok": false,
+      "measurement_photo_view_reason": "geometry_exposure_or_sharpness_failed",
+      "measurement_photo_ready": false,
+      "measurement_photo_policy": "official+validated+high_resolution+ocr_identity+front_view_quality+no_conflict",
+      "cross_source_count": 1,
+      "cross_sources": [
+        "collectory"
+      ],
+      "quarantine_reasons": [
+        "certification_unresolved",
+        "grade_unresolved",
+        "image_validation_failed",
+        "official_verification_missing"
+      ],
+      "status": "quarantine_candidate",
+      "learning_eligibility": "not_eligible_unverified",
+      "evidence_confidence": 0.5507,
+      "quarantine_review_count": 1,
+      "last_quarantine_review_at": "2026-09-18T00:58:46+00:00"
     },
     {
       "source_id": "library_candidate",
@@ -1033,8 +1177,8 @@
         "official_verification_missing"
       ],
       "evidence_confidence": 0.0,
-      "quarantine_review_count": 35,
-      "last_quarantine_review_at": "2026-09-17T18:59:02+00:00"
+      "quarantine_review_count": 36,
+      "last_quarantine_review_at": "2026-09-18T00:58:46+00:00"
     },
     {
       "source_id": "library_candidate",
@@ -1081,8 +1225,8 @@
         "official_verification_missing"
       ],
       "evidence_confidence": 0.0,
-      "quarantine_review_count": 35,
-      "last_quarantine_review_at": "2026-09-17T18:59:02+00:00"
+      "quarantine_review_count": 36,
+      "last_quarantine_review_at": "2026-09-18T00:58:46+00:00"
     },
     {
       "source_id": "library_candidate",
@@ -1134,8 +1278,8 @@
         "official_verification_missing"
       ],
       "evidence_confidence": 0.0,
-      "quarantine_review_count": 35,
-      "last_quarantine_review_at": "2026-09-17T18:59:02+00:00"
+      "quarantine_review_count": 36,
+      "last_quarantine_review_at": "2026-09-18T00:58:46+00:00"
     },
     {
       "source_id": "library_candidate",
@@ -1187,8 +1331,56 @@
         "official_verification_missing"
       ],
       "evidence_confidence": 0.0,
-      "quarantine_review_count": 35,
-      "last_quarantine_review_at": "2026-09-17T18:59:02+00:00"
+      "quarantine_review_count": 36,
+      "last_quarantine_review_at": "2026-09-18T00:58:46+00:00"
+    },
+    {
+      "source_id": "collectory",
+      "source": "Collectory",
+      "search_provider": "duckduckgo",
+      "url": "https://collectory.cc/cards/92fa95e8-d6db-44c4-a881-b0c3493daa47",
+      "title": "로켓단의 나옹 AR 시세 ₩26,586 | Collectory",
+      "snippet": "",
+      "image_url": "https://cdn.collectory.cc/cards/jp/SV10/109_098.webp?v=t",
+      "company": "CGC",
+      "grade": null,
+      "certification_id": "",
+      "game": "pokemon",
+      "mode": "slab",
+      "source_weight": 0.78,
+      "grade_from_search": false,
+      "image_probe_attempts": 1,
+      "image_probe_last_at": "2026-09-18T00:58:46+00:00",
+      "image_probe_status": "failed",
+      "image_probe_error": "pillow_not_installed",
+      "image_gallery_candidates": 1,
+      "image_gallery_probed": 1,
+      "official_result": false,
+      "verification_method": null,
+      "official_lookup_suppressed": true,
+      "automatic_official_lookup_used": false,
+      "manual_official_verification_required": true,
+      "official_verification": "manual_verification_required",
+      "measurement_photo_quality": 0.0,
+      "measurement_photo_view_ok": false,
+      "measurement_photo_view_reason": "geometry_exposure_or_sharpness_failed",
+      "measurement_photo_ready": false,
+      "measurement_photo_policy": "official+validated+high_resolution+ocr_identity+front_view_quality+no_conflict",
+      "cross_source_count": 1,
+      "cross_sources": [
+        "collectory"
+      ],
+      "quarantine_reasons": [
+        "certification_unresolved",
+        "grade_unresolved",
+        "image_validation_failed",
+        "official_verification_missing"
+      ],
+      "status": "quarantine_candidate",
+      "learning_eligibility": "not_eligible_unverified",
+      "evidence_confidence": 0.5507,
+      "quarantine_review_count": 1,
+      "last_quarantine_review_at": "2026-09-18T00:58:46+00:00"
     },
     {
       "source_id": "library_candidate",
@@ -1240,50 +1432,8 @@
         "official_verification_missing"
       ],
       "evidence_confidence": 0.0,
-      "quarantine_review_count": 35,
-      "last_quarantine_review_at": "2026-09-17T18:59:02+00:00"
-    },
-    {
-      "source_id": "ebay_public",
-      "source": "eBay 공개검색",
-      "search_provider": "duckduckgo",
-      "url": "https://www.ebay.com/b/PSA-Graded-Pokemon-Cards/183454/bn_7023355264",
-      "title": "Psa Graded Pokemon Cards for sale - eBay",
-      "snippet": "",
-      "image_url": "",
-      "company": "PSA",
-      "grade": null,
-      "certification_id": "",
-      "game": "pokemon",
-      "mode": "slab",
-      "source_weight": 0.9,
-      "grade_from_search": false,
-      "official_result": false,
-      "verification_method": null,
-      "official_lookup_suppressed": true,
-      "automatic_official_lookup_used": false,
-      "manual_official_verification_required": true,
-      "official_verification": "manual_verification_required",
-      "measurement_photo_quality": 0.0,
-      "measurement_photo_view_ok": false,
-      "measurement_photo_view_reason": "geometry_exposure_or_sharpness_failed",
-      "measurement_photo_ready": false,
-      "measurement_photo_policy": "official+validated+high_resolution+ocr_identity+front_view_quality+no_conflict",
-      "cross_source_count": 1,
-      "cross_sources": [
-        "ebay_public"
-      ],
-      "quarantine_reasons": [
-        "certification_unresolved",
-        "grade_unresolved",
-        "image_url_missing",
-        "official_verification_missing"
-      ],
-      "status": "quarantine_candidate",
-      "learning_eligibility": "not_eligible_unverified",
-      "evidence_confidence": 0.0,
-      "quarantine_review_count": 1,
-      "last_quarantine_review_at": "2026-09-17T18:59:02+00:00"
+      "quarantine_review_count": 36,
+      "last_quarantine_review_at": "2026-09-18T00:58:46+00:00"
     },
     {
       "source_id": "library_candidate",
@@ -1335,8 +1485,50 @@
         "official_verification_missing"
       ],
       "evidence_confidence": 0.0,
-      "quarantine_review_count": 35,
-      "last_quarantine_review_at": "2026-09-17T18:59:02+00:00"
+      "quarantine_review_count": 36,
+      "last_quarantine_review_at": "2026-09-18T00:58:46+00:00"
+    },
+    {
+      "source_id": "collectory",
+      "source": "Collectory",
+      "search_provider": "duckduckgo",
+      "url": "https://collectory.cc/cards/99d7696e-65a1-43c9-b515-460093a6c3aa",
+      "title": "팬텀&따라큐-GX 시세 ₩168,980 | Collectory",
+      "snippet": "",
+      "image_url": "",
+      "company": "CGC",
+      "grade": null,
+      "certification_id": "",
+      "game": "pokemon",
+      "mode": "slab",
+      "source_weight": 0.78,
+      "grade_from_search": false,
+      "official_result": false,
+      "verification_method": null,
+      "official_lookup_suppressed": true,
+      "automatic_official_lookup_used": false,
+      "manual_official_verification_required": true,
+      "official_verification": "manual_verification_required",
+      "measurement_photo_quality": 0.0,
+      "measurement_photo_view_ok": false,
+      "measurement_photo_view_reason": "geometry_exposure_or_sharpness_failed",
+      "measurement_photo_ready": false,
+      "measurement_photo_policy": "official+validated+high_resolution+ocr_identity+front_view_quality+no_conflict",
+      "cross_source_count": 1,
+      "cross_sources": [
+        "collectory"
+      ],
+      "quarantine_reasons": [
+        "certification_unresolved",
+        "grade_unresolved",
+        "image_url_missing",
+        "official_verification_missing"
+      ],
+      "status": "quarantine_candidate",
+      "learning_eligibility": "not_eligible_unverified",
+      "evidence_confidence": 0.5507,
+      "quarantine_review_count": 1,
+      "last_quarantine_review_at": "2026-09-18T00:58:46+00:00"
     },
     {
       "source_id": "library_candidate",
@@ -1388,50 +1580,8 @@
         "official_verification_missing"
       ],
       "evidence_confidence": 0.0,
-      "quarantine_review_count": 35,
-      "last_quarantine_review_at": "2026-09-17T18:59:02+00:00"
-    },
-    {
-      "source_id": "ebay_public",
-      "source": "eBay 공개검색",
-      "search_provider": "duckduckgo",
-      "url": "https://il.ebay.com/b/PSA-Graded-Pokemon-Cards/183454/bn_7023355264",
-      "title": "PSA Graded Pokemon Cards - eBay",
-      "snippet": "",
-      "image_url": "",
-      "company": "PSA",
-      "grade": null,
-      "certification_id": "",
-      "game": "pokemon",
-      "mode": "slab",
-      "source_weight": 0.9,
-      "grade_from_search": false,
-      "official_result": false,
-      "verification_method": null,
-      "official_lookup_suppressed": true,
-      "automatic_official_lookup_used": false,
-      "manual_official_verification_required": true,
-      "official_verification": "manual_verification_required",
-      "measurement_photo_quality": 0.0,
-      "measurement_photo_view_ok": false,
-      "measurement_photo_view_reason": "geometry_exposure_or_sharpness_failed",
-      "measurement_photo_ready": false,
-      "measurement_photo_policy": "official+validated+high_resolution+ocr_identity+front_view_quality+no_conflict",
-      "cross_source_count": 1,
-      "cross_sources": [
-        "ebay_public"
-      ],
-      "quarantine_reasons": [
-        "certification_unresolved",
-        "grade_unresolved",
-        "image_url_missing",
-        "official_verification_missing"
-      ],
-      "status": "quarantine_candidate",
-      "learning_eligibility": "not_eligible_unverified",
-      "evidence_confidence": 0.0,
-      "quarantine_review_count": 1,
-      "last_quarantine_review_at": "2026-09-17T18:59:02+00:00"
+      "quarantine_review_count": 36,
+      "last_quarantine_review_at": "2026-09-18T00:58:46+00:00"
     },
     {
       "source_id": "library_candidate",
@@ -1483,8 +1633,50 @@
         "official_verification_missing"
       ],
       "evidence_confidence": 0.0,
-      "quarantine_review_count": 35,
-      "last_quarantine_review_at": "2026-09-17T18:59:02+00:00"
+      "quarantine_review_count": 36,
+      "last_quarantine_review_at": "2026-09-18T00:58:46+00:00"
+    },
+    {
+      "source_id": "collectory",
+      "source": "Collectory",
+      "search_provider": "duckduckgo",
+      "url": "https://collectory.cc/cards/69b7f61b-f4a5-47bc-a495-68acf0feba36",
+      "title": "폭거북스 GX HR 시세 $10 | Collectory",
+      "snippet": "",
+      "image_url": "",
+      "company": "CGC",
+      "grade": null,
+      "certification_id": "",
+      "game": "pokemon",
+      "mode": "slab",
+      "source_weight": 0.78,
+      "grade_from_search": false,
+      "official_result": false,
+      "verification_method": null,
+      "official_lookup_suppressed": true,
+      "automatic_official_lookup_used": false,
+      "manual_official_verification_required": true,
+      "official_verification": "manual_verification_required",
+      "measurement_photo_quality": 0.0,
+      "measurement_photo_view_ok": false,
+      "measurement_photo_view_reason": "geometry_exposure_or_sharpness_failed",
+      "measurement_photo_ready": false,
+      "measurement_photo_policy": "official+validated+high_resolution+ocr_identity+front_view_quality+no_conflict",
+      "cross_source_count": 1,
+      "cross_sources": [
+        "collectory"
+      ],
+      "quarantine_reasons": [
+        "certification_unresolved",
+        "grade_unresolved",
+        "image_url_missing",
+        "official_verification_missing"
+      ],
+      "status": "quarantine_candidate",
+      "learning_eligibility": "not_eligible_unverified",
+      "evidence_confidence": 0.5507,
+      "quarantine_review_count": 1,
+      "last_quarantine_review_at": "2026-09-18T00:58:46+00:00"
     },
     {
       "source_id": "library_candidate",
@@ -1536,23 +1728,64 @@
         "official_verification_missing"
       ],
       "evidence_confidence": 0.0,
-      "quarantine_review_count": 35,
-      "last_quarantine_review_at": "2026-09-17T18:59:02+00:00"
+      "quarantine_review_count": 36,
+      "last_quarantine_review_at": "2026-09-18T00:58:46+00:00"
     },
     {
       "source_id": "ebay_public",
       "source": "eBay 공개검색",
       "search_provider": "duckduckgo",
-      "url": "https://ec.ebay.com/b/PSA-Graded-Pokemon-Cards/183454/bn_7023355264",
-      "title": "Cartas de Pokémon con clasificación PSA - eBay",
+      "url": "https://www.ebay.com/sch/i.html?_nkw=pokemon+cards+psa+10&_sop=12",
+      "title": "Pokemon Cards Psa 10 for sale | eBay",
       "snippet": "",
       "image_url": "",
       "company": "PSA",
-      "grade": null,
+      "grade": 10.0,
       "certification_id": "",
       "game": "pokemon",
       "mode": "slab",
       "source_weight": 0.9,
+      "grade_from_search": true,
+      "official_result": false,
+      "verification_method": null,
+      "official_lookup_suppressed": true,
+      "automatic_official_lookup_used": false,
+      "manual_official_verification_required": true,
+      "official_verification": "manual_verification_required",
+      "measurement_photo_quality": 0.1,
+      "measurement_photo_view_ok": false,
+      "measurement_photo_view_reason": "geometry_exposure_or_sharpness_failed",
+      "measurement_photo_ready": false,
+      "measurement_photo_policy": "official+validated+high_resolution+ocr_identity+front_view_quality+no_conflict",
+      "cross_source_count": 1,
+      "cross_sources": [
+        "ebay_public"
+      ],
+      "quarantine_reasons": [
+        "certification_unresolved",
+        "image_url_missing",
+        "official_verification_missing"
+      ],
+      "status": "quarantine_candidate",
+      "learning_eligibility": "not_eligible_unverified",
+      "evidence_confidence": 0.0,
+      "quarantine_review_count": 1,
+      "last_quarantine_review_at": "2026-09-18T00:58:46+00:00"
+    },
+    {
+      "source_id": "collectory",
+      "source": "Collectory",
+      "search_provider": "duckduckgo",
+      "url": "https://collectory.cc/cards/41bd5d6a-62d6-4894-967a-ba8142972976",
+      "title": "두까비 AR 시세 ¥1,446 | Collectory",
+      "snippet": "",
+      "image_url": "",
+      "company": "CGC",
+      "grade": null,
+      "certification_id": "",
+      "game": "pokemon",
+      "mode": "slab",
+      "source_weight": 0.78,
       "grade_from_search": false,
       "official_result": false,
       "verification_method": null,
@@ -1567,7 +1800,7 @@
       "measurement_photo_policy": "official+validated+high_resolution+ocr_identity+front_view_quality+no_conflict",
       "cross_source_count": 1,
       "cross_sources": [
-        "ebay_public"
+        "collectory"
       ],
       "quarantine_reasons": [
         "certification_unresolved",
@@ -1577,9 +1810,9 @@
       ],
       "status": "quarantine_candidate",
       "learning_eligibility": "not_eligible_unverified",
-      "evidence_confidence": 0.0,
+      "evidence_confidence": 0.5507,
       "quarantine_review_count": 1,
-      "last_quarantine_review_at": "2026-09-17T18:59:02+00:00"
+      "last_quarantine_review_at": "2026-09-18T00:58:46+00:00"
     },
     {
       "source_id": "library_candidate",
@@ -1631,8 +1864,92 @@
         "official_verification_missing"
       ],
       "evidence_confidence": 0.0,
-      "quarantine_review_count": 35,
-      "last_quarantine_review_at": "2026-09-17T18:59:02+00:00"
+      "quarantine_review_count": 36,
+      "last_quarantine_review_at": "2026-09-18T00:58:46+00:00"
+    },
+    {
+      "source_id": "ebay_public",
+      "source": "eBay 공개검색",
+      "search_provider": "duckduckgo",
+      "url": "https://www.ebay.com/b/Pokemon-TCG-Professional-Sports-Authenticator-PSA-Grade-10-Individual-Trading-Card-Games/183454/bn_93430819",
+      "title": "Pokémon TCG Professional Sports Authenticator (PSA) Grade 10 ... - eBay",
+      "snippet": "",
+      "image_url": "",
+      "company": "PSA",
+      "grade": null,
+      "certification_id": "",
+      "game": "pokemon",
+      "mode": "slab",
+      "source_weight": 0.9,
+      "grade_from_search": false,
+      "official_result": false,
+      "verification_method": null,
+      "official_lookup_suppressed": true,
+      "automatic_official_lookup_used": false,
+      "manual_official_verification_required": true,
+      "official_verification": "manual_verification_required",
+      "measurement_photo_quality": 0.0,
+      "measurement_photo_view_ok": false,
+      "measurement_photo_view_reason": "geometry_exposure_or_sharpness_failed",
+      "measurement_photo_ready": false,
+      "measurement_photo_policy": "official+validated+high_resolution+ocr_identity+front_view_quality+no_conflict",
+      "cross_source_count": 1,
+      "cross_sources": [
+        "ebay_public"
+      ],
+      "quarantine_reasons": [
+        "certification_unresolved",
+        "grade_unresolved",
+        "image_url_missing",
+        "official_verification_missing"
+      ],
+      "status": "quarantine_candidate",
+      "learning_eligibility": "not_eligible_unverified",
+      "evidence_confidence": 0.0,
+      "quarantine_review_count": 1,
+      "last_quarantine_review_at": "2026-09-18T00:58:46+00:00"
+    },
+    {
+      "source_id": "collectory",
+      "source": "Collectory",
+      "search_provider": "duckduckgo",
+      "url": "https://collectory.cc/cards/d7053ef3-23cb-4783-a7a9-68b49f5af9c7",
+      "title": "릴리에의 에리본 AR 시세 ¥1,091 | Collectory",
+      "snippet": "",
+      "image_url": "",
+      "company": "CGC",
+      "grade": null,
+      "certification_id": "",
+      "game": "pokemon",
+      "mode": "slab",
+      "source_weight": 0.78,
+      "grade_from_search": false,
+      "official_result": false,
+      "verification_method": null,
+      "official_lookup_suppressed": true,
+      "automatic_official_lookup_used": false,
+      "manual_official_verification_required": true,
+      "official_verification": "manual_verification_required",
+      "measurement_photo_quality": 0.0,
+      "measurement_photo_view_ok": false,
+      "measurement_photo_view_reason": "geometry_exposure_or_sharpness_failed",
+      "measurement_photo_ready": false,
+      "measurement_photo_policy": "official+validated+high_resolution+ocr_identity+front_view_quality+no_conflict",
+      "cross_source_count": 1,
+      "cross_sources": [
+        "collectory"
+      ],
+      "quarantine_reasons": [
+        "certification_unresolved",
+        "grade_unresolved",
+        "image_url_missing",
+        "official_verification_missing"
+      ],
+      "status": "quarantine_candidate",
+      "learning_eligibility": "not_eligible_unverified",
+      "evidence_confidence": 0.5507,
+      "quarantine_review_count": 1,
+      "last_quarantine_review_at": "2026-09-18T00:58:46+00:00"
     },
     {
       "source_id": "library_candidate",
@@ -1684,8 +2001,92 @@
         "official_verification_missing"
       ],
       "evidence_confidence": 0.0,
-      "quarantine_review_count": 35,
-      "last_quarantine_review_at": "2026-09-17T18:59:02+00:00"
+      "quarantine_review_count": 36,
+      "last_quarantine_review_at": "2026-09-18T00:58:46+00:00"
+    },
+    {
+      "source_id": "ebay_public",
+      "source": "eBay 공개검색",
+      "search_provider": "duckduckgo",
+      "url": "https://il.ebay.com/b/Shaymin-Pokemon-TCG-Professional-Sports-Authenticator-PSA-Grade-10-Individual-Trading-Card-Games/183454/bn_119125618",
+      "title": "Shaymin Pokémon TCG Professional Sports Authenticator (PSA) Grade 10 ...",
+      "snippet": "",
+      "image_url": "",
+      "company": "PSA",
+      "grade": null,
+      "certification_id": "",
+      "game": "pokemon",
+      "mode": "slab",
+      "source_weight": 0.9,
+      "grade_from_search": false,
+      "official_result": false,
+      "verification_method": null,
+      "official_lookup_suppressed": true,
+      "automatic_official_lookup_used": false,
+      "manual_official_verification_required": true,
+      "official_verification": "manual_verification_required",
+      "measurement_photo_quality": 0.0,
+      "measurement_photo_view_ok": false,
+      "measurement_photo_view_reason": "geometry_exposure_or_sharpness_failed",
+      "measurement_photo_ready": false,
+      "measurement_photo_policy": "official+validated+high_resolution+ocr_identity+front_view_quality+no_conflict",
+      "cross_source_count": 1,
+      "cross_sources": [
+        "ebay_public"
+      ],
+      "quarantine_reasons": [
+        "certification_unresolved",
+        "grade_unresolved",
+        "image_url_missing",
+        "official_verification_missing"
+      ],
+      "status": "quarantine_candidate",
+      "learning_eligibility": "not_eligible_unverified",
+      "evidence_confidence": 0.0,
+      "quarantine_review_count": 1,
+      "last_quarantine_review_at": "2026-09-18T00:58:46+00:00"
+    },
+    {
+      "source_id": "collectory",
+      "source": "Collectory",
+      "search_provider": "duckduckgo",
+      "url": "https://collectory.cc/illustrator/Game?lang=en",
+      "title": "Game - All Cards | Collectory",
+      "snippet": "",
+      "image_url": "",
+      "company": "CGC",
+      "grade": null,
+      "certification_id": "",
+      "game": "pokemon",
+      "mode": "slab",
+      "source_weight": 0.78,
+      "grade_from_search": false,
+      "official_result": false,
+      "verification_method": null,
+      "official_lookup_suppressed": true,
+      "automatic_official_lookup_used": false,
+      "manual_official_verification_required": true,
+      "official_verification": "manual_verification_required",
+      "measurement_photo_quality": 0.0,
+      "measurement_photo_view_ok": false,
+      "measurement_photo_view_reason": "geometry_exposure_or_sharpness_failed",
+      "measurement_photo_ready": false,
+      "measurement_photo_policy": "official+validated+high_resolution+ocr_identity+front_view_quality+no_conflict",
+      "cross_source_count": 1,
+      "cross_sources": [
+        "collectory"
+      ],
+      "quarantine_reasons": [
+        "certification_unresolved",
+        "grade_unresolved",
+        "image_url_missing",
+        "official_verification_missing"
+      ],
+      "status": "quarantine_candidate",
+      "learning_eligibility": "not_eligible_unverified",
+      "evidence_confidence": 0.5507,
+      "quarantine_review_count": 1,
+      "last_quarantine_review_at": "2026-09-18T00:58:46+00:00"
     },
     {
       "source_id": "library_candidate",
@@ -1737,8 +2138,91 @@
         "official_verification_missing"
       ],
       "evidence_confidence": 0.0,
-      "quarantine_review_count": 35,
-      "last_quarantine_review_at": "2026-09-17T18:59:02+00:00"
+      "quarantine_review_count": 36,
+      "last_quarantine_review_at": "2026-09-18T00:58:46+00:00"
+    },
+    {
+      "source_id": "ebay_public",
+      "source": "eBay 공개검색",
+      "search_provider": "duckduckgo",
+      "url": "https://www.ebay.com/sch/i.html?_nkw=pokemon+psa+10&_sop=12",
+      "title": "Pokemon Psa 10 for sale - eBay",
+      "snippet": "",
+      "image_url": "",
+      "company": "PSA",
+      "grade": 10.0,
+      "certification_id": "",
+      "game": "pokemon",
+      "mode": "slab",
+      "source_weight": 0.9,
+      "grade_from_search": true,
+      "official_result": false,
+      "verification_method": null,
+      "official_lookup_suppressed": true,
+      "automatic_official_lookup_used": false,
+      "manual_official_verification_required": true,
+      "official_verification": "manual_verification_required",
+      "measurement_photo_quality": 0.1,
+      "measurement_photo_view_ok": false,
+      "measurement_photo_view_reason": "geometry_exposure_or_sharpness_failed",
+      "measurement_photo_ready": false,
+      "measurement_photo_policy": "official+validated+high_resolution+ocr_identity+front_view_quality+no_conflict",
+      "cross_source_count": 1,
+      "cross_sources": [
+        "ebay_public"
+      ],
+      "quarantine_reasons": [
+        "certification_unresolved",
+        "image_url_missing",
+        "official_verification_missing"
+      ],
+      "status": "quarantine_candidate",
+      "learning_eligibility": "not_eligible_unverified",
+      "evidence_confidence": 0.0,
+      "quarantine_review_count": 1,
+      "last_quarantine_review_at": "2026-09-18T00:58:46+00:00"
+    },
+    {
+      "source_id": "collectory",
+      "source": "Collectory",
+      "search_provider": "duckduckgo",
+      "url": "https://collectory.cc/cards/f328cd5f-256e-4d2c-ae33-253e25660118",
+      "title": "망나뇽 ★ 시세 ¥26,320 | Collectory",
+      "snippet": "",
+      "image_url": "",
+      "company": "CGC",
+      "grade": null,
+      "certification_id": "",
+      "game": "pokemon",
+      "mode": "slab",
+      "source_weight": 0.78,
+      "grade_from_search": false,
+      "official_result": false,
+      "verification_method": null,
+      "official_lookup_suppressed": true,
+      "automatic_official_lookup_used": false,
+      "manual_official_verification_required": true,
+      "official_verification": "manual_verification_required",
+      "measurement_photo_quality": 0.0,
+      "measurement_photo_view_ok": false,
+      "measurement_photo_view_reason": "geometry_exposure_or_sharpness_failed",
+      "measurement_photo_ready": false,
+      "measurement_photo_policy": "official+validated+high_resolution+ocr_identity+front_view_quality+no_conflict",
+      "cross_source_count": 1,
+      "cross_sources": [
+        "collectory"
+      ],
+      "quarantine_reasons": [
+        "certification_unresolved",
+        "grade_unresolved",
+        "image_url_missing",
+        "official_verification_missing"
+      ],
+      "status": "quarantine_candidate",
+      "learning_eligibility": "not_eligible_unverified",
+      "evidence_confidence": 0.5507,
+      "quarantine_review_count": 1,
+      "last_quarantine_review_at": "2026-09-18T00:58:46+00:00"
     },
     {
       "source_id": "library_candidate",
@@ -1790,8 +2274,91 @@
         "official_verification_missing"
       ],
       "evidence_confidence": 0.0,
-      "quarantine_review_count": 35,
-      "last_quarantine_review_at": "2026-09-17T18:59:02+00:00"
+      "quarantine_review_count": 36,
+      "last_quarantine_review_at": "2026-09-18T00:58:46+00:00"
+    },
+    {
+      "source_id": "ebay_public",
+      "source": "eBay 공개검색",
+      "search_provider": "duckduckgo",
+      "url": "https://www.ebay.com/sch/i.html?_nkw=psa+10+pokemon&_sop=12",
+      "title": "Psa 10 Pokemon for sale - eBay",
+      "snippet": "",
+      "image_url": "",
+      "company": "PSA",
+      "grade": 10.0,
+      "certification_id": "",
+      "game": "pokemon",
+      "mode": "slab",
+      "source_weight": 0.9,
+      "grade_from_search": true,
+      "official_result": false,
+      "verification_method": null,
+      "official_lookup_suppressed": true,
+      "automatic_official_lookup_used": false,
+      "manual_official_verification_required": true,
+      "official_verification": "manual_verification_required",
+      "measurement_photo_quality": 0.1,
+      "measurement_photo_view_ok": false,
+      "measurement_photo_view_reason": "geometry_exposure_or_sharpness_failed",
+      "measurement_photo_ready": false,
+      "measurement_photo_policy": "official+validated+high_resolution+ocr_identity+front_view_quality+no_conflict",
+      "cross_source_count": 1,
+      "cross_sources": [
+        "ebay_public"
+      ],
+      "quarantine_reasons": [
+        "certification_unresolved",
+        "image_url_missing",
+        "official_verification_missing"
+      ],
+      "status": "quarantine_candidate",
+      "learning_eligibility": "not_eligible_unverified",
+      "evidence_confidence": 0.0,
+      "quarantine_review_count": 1,
+      "last_quarantine_review_at": "2026-09-18T00:58:46+00:00"
+    },
+    {
+      "source_id": "collectory",
+      "source": "Collectory",
+      "search_provider": "duckduckgo",
+      "url": "https://collectory.cc/cards/2527dc54-3876-4f29-82d3-00d64e94eced",
+      "title": "박사의 연구 시세 ₩237,986 | Collectory",
+      "snippet": "",
+      "image_url": "",
+      "company": "CGC",
+      "grade": null,
+      "certification_id": "",
+      "game": "pokemon",
+      "mode": "slab",
+      "source_weight": 0.78,
+      "grade_from_search": false,
+      "official_result": false,
+      "verification_method": null,
+      "official_lookup_suppressed": true,
+      "automatic_official_lookup_used": false,
+      "manual_official_verification_required": true,
+      "official_verification": "manual_verification_required",
+      "measurement_photo_quality": 0.0,
+      "measurement_photo_view_ok": false,
+      "measurement_photo_view_reason": "geometry_exposure_or_sharpness_failed",
+      "measurement_photo_ready": false,
+      "measurement_photo_policy": "official+validated+high_resolution+ocr_identity+front_view_quality+no_conflict",
+      "cross_source_count": 1,
+      "cross_sources": [
+        "collectory"
+      ],
+      "quarantine_reasons": [
+        "certification_unresolved",
+        "grade_unresolved",
+        "image_url_missing",
+        "official_verification_missing"
+      ],
+      "status": "quarantine_candidate",
+      "learning_eligibility": "not_eligible_unverified",
+      "evidence_confidence": 0.5507,
+      "quarantine_review_count": 1,
+      "last_quarantine_review_at": "2026-09-18T00:58:46+00:00"
     },
     {
       "source_id": "library_candidate",
@@ -1843,8 +2410,49 @@
         "official_verification_missing"
       ],
       "evidence_confidence": 0.0,
-      "quarantine_review_count": 35,
-      "last_quarantine_review_at": "2026-09-17T18:59:02+00:00"
+      "quarantine_review_count": 36,
+      "last_quarantine_review_at": "2026-09-18T00:58:46+00:00"
+    },
+    {
+      "source_id": "ebay_public",
+      "source": "eBay 공개검색",
+      "search_provider": "duckduckgo",
+      "url": "https://www.ebay.com/shop/pokemon-psa-10?_nkw=pokemon+psa+10",
+      "title": "Pokemon Psa 10 - eBay",
+      "snippet": "",
+      "image_url": "",
+      "company": "PSA",
+      "grade": 10.0,
+      "certification_id": "",
+      "game": "pokemon",
+      "mode": "slab",
+      "source_weight": 0.9,
+      "grade_from_search": true,
+      "official_result": false,
+      "verification_method": null,
+      "official_lookup_suppressed": true,
+      "automatic_official_lookup_used": false,
+      "manual_official_verification_required": true,
+      "official_verification": "manual_verification_required",
+      "measurement_photo_quality": 0.1,
+      "measurement_photo_view_ok": false,
+      "measurement_photo_view_reason": "geometry_exposure_or_sharpness_failed",
+      "measurement_photo_ready": false,
+      "measurement_photo_policy": "official+validated+high_resolution+ocr_identity+front_view_quality+no_conflict",
+      "cross_source_count": 1,
+      "cross_sources": [
+        "ebay_public"
+      ],
+      "quarantine_reasons": [
+        "certification_unresolved",
+        "image_url_missing",
+        "official_verification_missing"
+      ],
+      "status": "quarantine_candidate",
+      "learning_eligibility": "not_eligible_unverified",
+      "evidence_confidence": 0.0,
+      "quarantine_review_count": 1,
+      "last_quarantine_review_at": "2026-09-18T00:58:46+00:00"
     },
     {
       "source_id": "library_candidate",
@@ -1896,28 +2504,606 @@
         "official_verification_missing"
       ],
       "evidence_confidence": 0.0,
-      "quarantine_review_count": 35,
-      "last_quarantine_review_at": "2026-09-17T18:59:02+00:00"
+      "quarantine_review_count": 36,
+      "last_quarantine_review_at": "2026-09-18T00:58:46+00:00"
+    },
+    {
+      "source_id": "ebay_public",
+      "source": "eBay 공개검색",
+      "search_provider": "duckduckgo",
+      "url": "https://www.ebay.com/shop/pokemon-card-psa-10?_nkw=pokemon+card+psa+10",
+      "title": "Pokemon Card Psa 10 - eBay",
+      "snippet": "",
+      "image_url": "",
+      "company": "PSA",
+      "grade": 10.0,
+      "certification_id": "",
+      "game": "pokemon",
+      "mode": "slab",
+      "source_weight": 0.9,
+      "grade_from_search": true,
+      "official_result": false,
+      "verification_method": null,
+      "official_lookup_suppressed": true,
+      "automatic_official_lookup_used": false,
+      "manual_official_verification_required": true,
+      "official_verification": "manual_verification_required",
+      "measurement_photo_quality": 0.1,
+      "measurement_photo_view_ok": false,
+      "measurement_photo_view_reason": "geometry_exposure_or_sharpness_failed",
+      "measurement_photo_ready": false,
+      "measurement_photo_policy": "official+validated+high_resolution+ocr_identity+front_view_quality+no_conflict",
+      "cross_source_count": 1,
+      "cross_sources": [
+        "ebay_public"
+      ],
+      "quarantine_reasons": [
+        "certification_unresolved",
+        "image_url_missing",
+        "official_verification_missing"
+      ],
+      "status": "quarantine_candidate",
+      "learning_eligibility": "not_eligible_unverified",
+      "evidence_confidence": 0.0,
+      "quarantine_review_count": 1,
+      "last_quarantine_review_at": "2026-09-18T00:58:46+00:00"
+    },
+    {
+      "source_id": "daangn",
+      "source": "당근",
+      "search_provider": "duckduckgo",
+      "url": "https://www.daangn.com/kr/buy-sell/brg-10-포켓몬-초판-근육몬-최고등급-카드-52rbv4tpp5cf/",
+      "title": "(brg 10) 포켓몬 초판 근육몬 최고등급 카드 | 취미/게임/음반 | 당근 중고거래",
+      "snippet": "",
+      "image_url": "",
+      "company": "BRG",
+      "grade": 10.0,
+      "certification_id": "",
+      "game": "pokemon",
+      "mode": "slab",
+      "source_weight": 0.64,
+      "grade_from_search": true,
+      "official_result": false,
+      "verification_method": null,
+      "official_lookup_suppressed": true,
+      "automatic_official_lookup_used": false,
+      "manual_official_verification_required": true,
+      "official_verification": "manual_verification_required",
+      "measurement_photo_quality": 0.1,
+      "measurement_photo_view_ok": false,
+      "measurement_photo_view_reason": "geometry_exposure_or_sharpness_failed",
+      "measurement_photo_ready": false,
+      "measurement_photo_policy": "official+validated+high_resolution+ocr_identity+front_view_quality+no_conflict",
+      "cross_source_count": 1,
+      "cross_sources": [
+        "daangn"
+      ],
+      "quarantine_reasons": [
+        "certification_unresolved",
+        "image_url_missing",
+        "official_verification_missing"
+      ],
+      "status": "quarantine_candidate",
+      "learning_eligibility": "not_eligible_unverified",
+      "evidence_confidence": 0.4934,
+      "quarantine_review_count": 1,
+      "last_quarantine_review_at": "2026-09-18T00:58:46+00:00"
+    },
+    {
+      "source_id": "ebay_public",
+      "source": "eBay 공개검색",
+      "search_provider": "duckduckgo",
+      "url": "https://www.ebay.com/sch/i.html?_nkw=psa+10+pokemon+cards&_sop=12",
+      "title": "Psa 10 Pokemon Cards for sale | eBay",
+      "snippet": "",
+      "image_url": "",
+      "company": "PSA",
+      "grade": 10.0,
+      "certification_id": "",
+      "game": "pokemon",
+      "mode": "slab",
+      "source_weight": 0.9,
+      "grade_from_search": true,
+      "official_result": false,
+      "verification_method": null,
+      "official_lookup_suppressed": true,
+      "automatic_official_lookup_used": false,
+      "manual_official_verification_required": true,
+      "official_verification": "manual_verification_required",
+      "measurement_photo_quality": 0.1,
+      "measurement_photo_view_ok": false,
+      "measurement_photo_view_reason": "geometry_exposure_or_sharpness_failed",
+      "measurement_photo_ready": false,
+      "measurement_photo_policy": "official+validated+high_resolution+ocr_identity+front_view_quality+no_conflict",
+      "cross_source_count": 1,
+      "cross_sources": [
+        "ebay_public"
+      ],
+      "quarantine_reasons": [
+        "certification_unresolved",
+        "image_url_missing",
+        "official_verification_missing"
+      ],
+      "status": "quarantine_candidate",
+      "learning_eligibility": "not_eligible_unverified",
+      "evidence_confidence": 0.0,
+      "quarantine_review_count": 1,
+      "last_quarantine_review_at": "2026-09-18T00:58:46+00:00"
+    },
+    {
+      "source_id": "daangn",
+      "source": "당근",
+      "search_provider": "duckduckgo",
+      "url": "https://cafe.daangn.com/seongsu-pokesmo/posts/Brg-10-무리-일까요-PVD2m4Kj",
+      "title": "Brg 10 무리 일까요..?? | 포켓몬 카드 재고 정보 공유 | 당근 카페",
+      "snippet": "",
+      "image_url": "",
+      "company": "BRG",
+      "grade": 10.0,
+      "certification_id": "",
+      "game": "pokemon",
+      "mode": "slab",
+      "source_weight": 0.64,
+      "grade_from_search": true,
+      "official_result": false,
+      "verification_method": null,
+      "official_lookup_suppressed": true,
+      "automatic_official_lookup_used": false,
+      "manual_official_verification_required": true,
+      "official_verification": "manual_verification_required",
+      "measurement_photo_quality": 0.1,
+      "measurement_photo_view_ok": false,
+      "measurement_photo_view_reason": "geometry_exposure_or_sharpness_failed",
+      "measurement_photo_ready": false,
+      "measurement_photo_policy": "official+validated+high_resolution+ocr_identity+front_view_quality+no_conflict",
+      "cross_source_count": 1,
+      "cross_sources": [
+        "daangn"
+      ],
+      "quarantine_reasons": [
+        "certification_unresolved",
+        "image_url_missing",
+        "official_verification_missing"
+      ],
+      "status": "quarantine_candidate",
+      "learning_eligibility": "not_eligible_unverified",
+      "evidence_confidence": 0.4934,
+      "quarantine_review_count": 1,
+      "last_quarantine_review_at": "2026-09-18T00:58:46+00:00"
+    },
+    {
+      "source_id": "ebay_public",
+      "source": "eBay 공개검색",
+      "search_provider": "duckduckgo",
+      "url": "https://www.ebay.com/sch/i.html?_nkw=psa+10+graded+pokemon+cards&_sop=12",
+      "title": "Psa 10 Graded Pokemon Cards for sale - eBay",
+      "snippet": "",
+      "image_url": "",
+      "company": "PSA",
+      "grade": 10.0,
+      "certification_id": "",
+      "game": "pokemon",
+      "mode": "slab",
+      "source_weight": 0.9,
+      "grade_from_search": true,
+      "official_result": false,
+      "verification_method": null,
+      "official_lookup_suppressed": true,
+      "automatic_official_lookup_used": false,
+      "manual_official_verification_required": true,
+      "official_verification": "manual_verification_required",
+      "measurement_photo_quality": 0.1,
+      "measurement_photo_view_ok": false,
+      "measurement_photo_view_reason": "geometry_exposure_or_sharpness_failed",
+      "measurement_photo_ready": false,
+      "measurement_photo_policy": "official+validated+high_resolution+ocr_identity+front_view_quality+no_conflict",
+      "cross_source_count": 1,
+      "cross_sources": [
+        "ebay_public"
+      ],
+      "quarantine_reasons": [
+        "certification_unresolved",
+        "image_url_missing",
+        "official_verification_missing"
+      ],
+      "status": "quarantine_candidate",
+      "learning_eligibility": "not_eligible_unverified",
+      "evidence_confidence": 0.0,
+      "quarantine_review_count": 1,
+      "last_quarantine_review_at": "2026-09-18T00:58:46+00:00"
+    },
+    {
+      "source_id": "daangn",
+      "source": "당근",
+      "search_provider": "duckduckgo",
+      "url": "https://www.daangn.com/kr/buy-sell/brg-10-포켓몬카드-비크티니-쟁탈전-bwr-프로모-카드-판매-33niwuwsqody/",
+      "title": "Brg 10 포켓몬카드 비크티니 쟁탈전 Bwr 프로모 카드 판매!! | 취미/게임/음반 | 당근 중고거래",
+      "snippet": "",
+      "image_url": "",
+      "company": "BRG",
+      "grade": 10.0,
+      "certification_id": "",
+      "game": "pokemon",
+      "mode": "slab",
+      "source_weight": 0.64,
+      "grade_from_search": true,
+      "official_result": false,
+      "verification_method": null,
+      "official_lookup_suppressed": true,
+      "automatic_official_lookup_used": false,
+      "manual_official_verification_required": true,
+      "official_verification": "manual_verification_required",
+      "measurement_photo_quality": 0.1,
+      "measurement_photo_view_ok": false,
+      "measurement_photo_view_reason": "geometry_exposure_or_sharpness_failed",
+      "measurement_photo_ready": false,
+      "measurement_photo_policy": "official+validated+high_resolution+ocr_identity+front_view_quality+no_conflict",
+      "cross_source_count": 1,
+      "cross_sources": [
+        "daangn"
+      ],
+      "quarantine_reasons": [
+        "certification_unresolved",
+        "image_url_missing",
+        "official_verification_missing"
+      ],
+      "status": "quarantine_candidate",
+      "learning_eligibility": "not_eligible_unverified",
+      "evidence_confidence": 0.4934,
+      "quarantine_review_count": 1,
+      "last_quarantine_review_at": "2026-09-18T00:58:46+00:00"
+    },
+    {
+      "source_id": "amazon_us",
+      "source": "Amazon US",
+      "search_provider": "duckduckgo",
+      "url": "https://www.amazon.com/clp/B0FXVLH7QM",
+      "title": "Amazon.com: Pokemon TCG: 1x Random Graded Pokemon Card (Beckett, PSA or ...",
+      "snippet": "",
+      "image_url": "",
+      "company": "PSA",
+      "grade": null,
+      "certification_id": "",
+      "game": "pokemon",
+      "mode": "slab",
+      "source_weight": 0.65,
+      "grade_from_search": false,
+      "official_result": false,
+      "verification_method": null,
+      "official_lookup_suppressed": true,
+      "automatic_official_lookup_used": false,
+      "manual_official_verification_required": true,
+      "official_verification": "manual_verification_required",
+      "measurement_photo_quality": 0.0,
+      "measurement_photo_view_ok": false,
+      "measurement_photo_view_reason": "geometry_exposure_or_sharpness_failed",
+      "measurement_photo_ready": false,
+      "measurement_photo_policy": "official+validated+high_resolution+ocr_identity+front_view_quality+no_conflict",
+      "cross_source_count": 1,
+      "cross_sources": [
+        "amazon_us"
+      ],
+      "quarantine_reasons": [
+        "certification_unresolved",
+        "grade_unresolved",
+        "image_url_missing",
+        "official_verification_missing"
+      ],
+      "status": "quarantine_candidate",
+      "learning_eligibility": "not_eligible_unverified",
+      "evidence_confidence": 0.4934,
+      "quarantine_review_count": 1,
+      "last_quarantine_review_at": "2026-09-18T00:58:46+00:00"
+    },
+    {
+      "source_id": "daangn",
+      "source": "당근",
+      "search_provider": "duckduckgo",
+      "url": "https://cafe.daangn.com/pokesmon-kade-2/posts/BRG-10등급-메개-다크라이-EX-일판-팝니다-P2BVvX3P",
+      "title": "Brg 10등급 - 메개 다크라이 Ex -일판 팝니다 | 포켓몬 카드 거래 카페",
+      "snippet": "",
+      "image_url": "",
+      "company": "BRG",
+      "grade": null,
+      "certification_id": "",
+      "game": "pokemon",
+      "mode": "slab",
+      "source_weight": 0.64,
+      "grade_from_search": false,
+      "official_result": false,
+      "verification_method": null,
+      "official_lookup_suppressed": true,
+      "automatic_official_lookup_used": false,
+      "manual_official_verification_required": true,
+      "official_verification": "manual_verification_required",
+      "measurement_photo_quality": 0.0,
+      "measurement_photo_view_ok": false,
+      "measurement_photo_view_reason": "geometry_exposure_or_sharpness_failed",
+      "measurement_photo_ready": false,
+      "measurement_photo_policy": "official+validated+high_resolution+ocr_identity+front_view_quality+no_conflict",
+      "cross_source_count": 1,
+      "cross_sources": [
+        "daangn"
+      ],
+      "quarantine_reasons": [
+        "certification_unresolved",
+        "grade_unresolved",
+        "image_url_missing",
+        "official_verification_missing"
+      ],
+      "status": "quarantine_candidate",
+      "learning_eligibility": "not_eligible_unverified",
+      "evidence_confidence": 0.4934,
+      "quarantine_review_count": 1,
+      "last_quarantine_review_at": "2026-09-18T00:58:46+00:00"
+    },
+    {
+      "source_id": "daangn",
+      "source": "당근",
+      "search_provider": "duckduckgo",
+      "url": "https://www.daangn.com/kr/buy-sell/brg-10-포켓몬-초판-1st-edition-최고등급-카드-26종-f34fdcm7p1ik/",
+      "title": "(brg 10) 포켓몬 초판 1st Edition 최고등급 카드 26종 | 취미/게임/음반 | 당근 중고거래",
+      "snippet": "",
+      "image_url": "",
+      "company": "BRG",
+      "grade": 10.0,
+      "certification_id": "",
+      "game": "pokemon",
+      "mode": "slab",
+      "source_weight": 0.64,
+      "grade_from_search": true,
+      "official_result": false,
+      "verification_method": null,
+      "official_lookup_suppressed": true,
+      "automatic_official_lookup_used": false,
+      "manual_official_verification_required": true,
+      "official_verification": "manual_verification_required",
+      "measurement_photo_quality": 0.1,
+      "measurement_photo_view_ok": false,
+      "measurement_photo_view_reason": "geometry_exposure_or_sharpness_failed",
+      "measurement_photo_ready": false,
+      "measurement_photo_policy": "official+validated+high_resolution+ocr_identity+front_view_quality+no_conflict",
+      "cross_source_count": 1,
+      "cross_sources": [
+        "daangn"
+      ],
+      "quarantine_reasons": [
+        "certification_unresolved",
+        "image_url_missing",
+        "official_verification_missing"
+      ],
+      "status": "quarantine_candidate",
+      "learning_eligibility": "not_eligible_unverified",
+      "evidence_confidence": 0.4934,
+      "quarantine_review_count": 1,
+      "last_quarantine_review_at": "2026-09-18T00:58:46+00:00"
+    },
+    {
+      "source_id": "daangn",
+      "source": "당근",
+      "search_provider": "duckduckgo",
+      "url": "https://www.daangn.com/kr/buy-sell/brg-10-포켓몬카드-복숭악동-ex-ur-ib8sgj7mivmh/",
+      "title": "(Brg 10) 포켓몬카드 복숭악동 Ex Ur | 취미/게임/음반 | 당근 중고거래",
+      "snippet": "",
+      "image_url": "",
+      "company": "BRG",
+      "grade": 10.0,
+      "certification_id": "",
+      "game": "pokemon",
+      "mode": "slab",
+      "source_weight": 0.64,
+      "grade_from_search": true,
+      "official_result": false,
+      "verification_method": null,
+      "official_lookup_suppressed": true,
+      "automatic_official_lookup_used": false,
+      "manual_official_verification_required": true,
+      "official_verification": "manual_verification_required",
+      "measurement_photo_quality": 0.1,
+      "measurement_photo_view_ok": false,
+      "measurement_photo_view_reason": "geometry_exposure_or_sharpness_failed",
+      "measurement_photo_ready": false,
+      "measurement_photo_policy": "official+validated+high_resolution+ocr_identity+front_view_quality+no_conflict",
+      "cross_source_count": 1,
+      "cross_sources": [
+        "daangn"
+      ],
+      "quarantine_reasons": [
+        "certification_unresolved",
+        "image_url_missing",
+        "official_verification_missing"
+      ],
+      "status": "quarantine_candidate",
+      "learning_eligibility": "not_eligible_unverified",
+      "evidence_confidence": 0.4934,
+      "quarantine_review_count": 1,
+      "last_quarantine_review_at": "2026-09-18T00:58:46+00:00"
+    },
+    {
+      "source_id": "daangn",
+      "source": "당근",
+      "search_provider": "duckduckgo",
+      "url": "https://www.daangn.com/kr/buy-sell/포켓몬카드-일본판-야도란-brg10-gngyoyadbu5k/",
+      "title": "포켓몬카드 일본판 야도란 brg10 | 취미/게임/음반 | 당근 중고거래",
+      "snippet": "",
+      "image_url": "",
+      "company": "BRG",
+      "grade": 10.0,
+      "certification_id": "",
+      "game": "pokemon",
+      "mode": "slab",
+      "source_weight": 0.64,
+      "grade_from_search": true,
+      "official_result": false,
+      "verification_method": null,
+      "official_lookup_suppressed": true,
+      "automatic_official_lookup_used": false,
+      "manual_official_verification_required": true,
+      "official_verification": "manual_verification_required",
+      "measurement_photo_quality": 0.1,
+      "measurement_photo_view_ok": false,
+      "measurement_photo_view_reason": "geometry_exposure_or_sharpness_failed",
+      "measurement_photo_ready": false,
+      "measurement_photo_policy": "official+validated+high_resolution+ocr_identity+front_view_quality+no_conflict",
+      "cross_source_count": 1,
+      "cross_sources": [
+        "daangn"
+      ],
+      "quarantine_reasons": [
+        "certification_unresolved",
+        "image_url_missing",
+        "official_verification_missing"
+      ],
+      "status": "quarantine_candidate",
+      "learning_eligibility": "not_eligible_unverified",
+      "evidence_confidence": 0.4934,
+      "quarantine_review_count": 1,
+      "last_quarantine_review_at": "2026-09-18T00:58:46+00:00"
+    },
+    {
+      "source_id": "daangn",
+      "source": "당근",
+      "search_provider": "duckduckgo",
+      "url": "https://cafe.daangn.com/pokesmonkadeu-m/posts/이거-brg-10등급-받을수-있을까요-PxNoOqBj",
+      "title": "이거 brg 10등급 받을수 있을까요? | 포켓몬카드 모임 mvc",
+      "snippet": "",
+      "image_url": "",
+      "company": "BRG",
+      "grade": null,
+      "certification_id": "",
+      "game": "pokemon",
+      "mode": "slab",
+      "source_weight": 0.64,
+      "grade_from_search": false,
+      "official_result": false,
+      "verification_method": null,
+      "official_lookup_suppressed": true,
+      "automatic_official_lookup_used": false,
+      "manual_official_verification_required": true,
+      "official_verification": "manual_verification_required",
+      "measurement_photo_quality": 0.0,
+      "measurement_photo_view_ok": false,
+      "measurement_photo_view_reason": "geometry_exposure_or_sharpness_failed",
+      "measurement_photo_ready": false,
+      "measurement_photo_policy": "official+validated+high_resolution+ocr_identity+front_view_quality+no_conflict",
+      "cross_source_count": 1,
+      "cross_sources": [
+        "daangn"
+      ],
+      "quarantine_reasons": [
+        "certification_unresolved",
+        "grade_unresolved",
+        "image_url_missing",
+        "official_verification_missing"
+      ],
+      "status": "quarantine_candidate",
+      "learning_eligibility": "not_eligible_unverified",
+      "evidence_confidence": 0.4934,
+      "quarantine_review_count": 1,
+      "last_quarantine_review_at": "2026-09-18T00:58:46+00:00"
+    },
+    {
+      "source_id": "daangn",
+      "source": "당근",
+      "search_provider": "duckduckgo",
+      "url": "https://www.daangn.com/kr/buy-sell/포켓몬카드-글레이시아-brg-10-2rymihdg4212/",
+      "title": "포켓몬카드 글레이시아 brg 10 | 취미/게임/음반 | 당근 중고거래",
+      "snippet": "",
+      "image_url": "",
+      "company": "BRG",
+      "grade": 10.0,
+      "certification_id": "",
+      "game": "pokemon",
+      "mode": "slab",
+      "source_weight": 0.64,
+      "grade_from_search": true,
+      "official_result": false,
+      "verification_method": null,
+      "official_lookup_suppressed": true,
+      "automatic_official_lookup_used": false,
+      "manual_official_verification_required": true,
+      "official_verification": "manual_verification_required",
+      "measurement_photo_quality": 0.1,
+      "measurement_photo_view_ok": false,
+      "measurement_photo_view_reason": "geometry_exposure_or_sharpness_failed",
+      "measurement_photo_ready": false,
+      "measurement_photo_policy": "official+validated+high_resolution+ocr_identity+front_view_quality+no_conflict",
+      "cross_source_count": 1,
+      "cross_sources": [
+        "daangn"
+      ],
+      "quarantine_reasons": [
+        "certification_unresolved",
+        "image_url_missing",
+        "official_verification_missing"
+      ],
+      "status": "quarantine_candidate",
+      "learning_eligibility": "not_eligible_unverified",
+      "evidence_confidence": 0.4934,
+      "quarantine_review_count": 1,
+      "last_quarantine_review_at": "2026-09-18T00:58:46+00:00"
+    },
+    {
+      "source_id": "daangn",
+      "source": "당근",
+      "search_provider": "duckduckgo",
+      "url": "https://www.daangn.com/kr/buy-sell/메가개굴닌자-mur-brg10등급-nopyb1ytgsej/",
+      "title": "메가개굴닌자 mur brg10등급 | 취미/게임/음반 | 당근 중고거래",
+      "snippet": "",
+      "image_url": "",
+      "company": "BRG",
+      "grade": null,
+      "certification_id": "",
+      "game": "pokemon",
+      "mode": "slab",
+      "source_weight": 0.64,
+      "grade_from_search": false,
+      "official_result": false,
+      "verification_method": null,
+      "official_lookup_suppressed": true,
+      "automatic_official_lookup_used": false,
+      "manual_official_verification_required": true,
+      "official_verification": "manual_verification_required",
+      "measurement_photo_quality": 0.0,
+      "measurement_photo_view_ok": false,
+      "measurement_photo_view_reason": "geometry_exposure_or_sharpness_failed",
+      "measurement_photo_ready": false,
+      "measurement_photo_policy": "official+validated+high_resolution+ocr_identity+front_view_quality+no_conflict",
+      "cross_source_count": 1,
+      "cross_sources": [
+        "daangn"
+      ],
+      "quarantine_reasons": [
+        "certification_unresolved",
+        "grade_unresolved",
+        "image_url_missing",
+        "official_verification_missing"
+      ],
+      "status": "quarantine_candidate",
+      "learning_eligibility": "not_eligible_unverified",
+      "evidence_confidence": 0.4934,
+      "quarantine_review_count": 1,
+      "last_quarantine_review_at": "2026-09-18T00:58:46+00:00"
     }
   ],
   "summary": {
-    "total_candidates": 37,
-    "with_image_url": 0,
+    "total_candidates": 65,
+    "with_image_url": 4,
     "validated_images": 34,
     "ocr_readable": 34,
     "certifications_resolved": 30,
     "verified_references": 1,
     "measurement_photo_ready": 0,
     "reference_learning_count": 1,
-    "game_grader_buckets_covered": 6,
+    "game_grader_buckets_covered": 7,
     "candidate_cap_dropped": 0,
     "raw_grade_calibration_eligible": 0,
-    "quarantined": 36,
-    "quarantine_reviewed": 38,
-    "quarantine_pruned": 2,
+    "quarantined": 64,
+    "quarantine_reviewed": 67,
+    "quarantine_pruned": 3,
     "quarantine_retryable_kept": 33,
-    "quarantine_grace_kept": 3,
-    "sources": 3,
+    "quarantine_grace_kept": 31,
+    "sources": 6,
     "status": "ok",
     "queries_attempted": 90,
     "markets_this_run": [
@@ -1930,16 +3116,16 @@
     ],
     "timed_out_sources": 0,
     "initial_bootstrap_collection": true,
-    "previous_candidates": 36,
+    "previous_candidates": 37,
     "registry_seed_count": 1,
     "reference_learning_seed_count": 1,
     "baseline_verified_seed_count": 0,
     "library_candidate_seed_count": 33,
-    "raw_results": 152,
-    "domain_matches": 42,
-    "company_matches": 4,
+    "raw_results": 161,
+    "domain_matches": 51,
+    "company_matches": 32,
     "resolved_redirects": 0,
-    "image_results": 0,
+    "image_results": 1,
     "google_image_results": 0,
     "undercovered_recovery_queries": 36,
     "recovery_company_matches": 0,
@@ -1949,19 +3135,25 @@
     "near_duplicate_label_conflicts": 0,
     "near_duplicate_references_suppressed": 0,
     "adaptive_timeout_seconds": 3600,
-    "elapsed_seconds": 12.8,
+    "elapsed_seconds": 18.9,
     "next_timeout_seconds": 3600
   },
   "image_probe_stats": {
-    "attempted": 0,
-    "rows_attempted": 0,
+    "attempted": 4,
+    "rows_attempted": 4,
     "gallery_alternate_attempts": 0,
     "validated": 0,
     "ocr_readable": 0,
     "certs_extracted": 0,
-    "failed": 0,
-    "company_attempted": {},
-    "game_attempted": {},
+    "failed": 4,
+    "company_attempted": {
+      "CGC": 3,
+      "TAG": 1
+    },
+    "game_attempted": {
+      "pokemon": 3,
+      "naruto": 1
+    },
     "prevalidated_library": 1
   },
   "game_inference_stats": {
@@ -2010,47 +3202,58 @@
     "near_duplicate_label_conflicts": 0
   },
   "quarantine_cleanup_stats": {
-    "reviewed": 38,
-    "pruned": 2,
+    "reviewed": 67,
+    "pruned": 3,
     "retained_retryable": 33,
-    "retained_grace": 3,
+    "retained_grace": 31,
     "pruned_reasons": {
-      "image_url_missing": 2
+      "image_url_missing": 3
     },
     "policy": "two_pass_confirmed_unusable_only"
   },
   "quarantine_cleanup_audit": [
     {
-      "at": "2026-09-17T18:59:02+00:00",
-      "key": "url:https://www.ebay.com/str/psa",
+      "at": "2026-09-18T00:58:46+00:00",
+      "key": "url:https://www.ebay.com/b/PSA-Graded-Pokemon-Cards/183454/bn_7023355264",
       "company": "PSA",
       "certification_id": "",
       "grade": null,
       "source_id": "ebay_public",
       "reason": "image_url_missing",
-      "title": "PSA | eBay Stores",
-      "url": "https://www.ebay.com/str/psa"
+      "title": "Psa Graded Pokemon Cards for sale - eBay",
+      "url": "https://www.ebay.com/b/PSA-Graded-Pokemon-Cards/183454/bn_7023355264"
     },
     {
-      "at": "2026-09-17T18:59:02+00:00",
-      "key": "url:https://www.amazon.com/clp/B0FXVLH7QM",
+      "at": "2026-09-18T00:58:46+00:00",
+      "key": "url:https://il.ebay.com/b/PSA-Graded-Pokemon-Cards/183454/bn_7023355264",
       "company": "PSA",
       "certification_id": "",
       "grade": null,
-      "source_id": "amazon_us",
+      "source_id": "ebay_public",
       "reason": "image_url_missing",
-      "title": "Amazon.com: Pokemon TCG: 1x Random Graded Pokemon Card (Beckett, PSA or ...",
-      "url": "https://www.amazon.com/clp/B0FXVLH7QM"
+      "title": "PSA Graded Pokemon Cards - eBay",
+      "url": "https://il.ebay.com/b/PSA-Graded-Pokemon-Cards/183454/bn_7023355264"
+    },
+    {
+      "at": "2026-09-18T00:58:46+00:00",
+      "key": "url:https://ec.ebay.com/b/PSA-Graded-Pokemon-Cards/183454/bn_7023355264",
+      "company": "PSA",
+      "certification_id": "",
+      "grade": null,
+      "source_id": "ebay_public",
+      "reason": "image_url_missing",
+      "title": "Cartas de Pokémon con clasificación PSA - eBay",
+      "url": "https://ec.ebay.com/b/PSA-Graded-Pokemon-Cards/183454/bn_7023355264"
     }
   ],
   "global_candidate_balance": {
-    "input_candidates": 39,
-    "retained_candidates": 39,
+    "input_candidates": 68,
+    "retained_candidates": 68,
     "dropped_by_cap": 0,
-    "covered_game_grader_buckets": 6,
+    "covered_game_grader_buckets": 7,
     "matrix": {
       "PSA": {
-        "pokemon": 8,
+        "pokemon": 16,
         "onepiece": 3,
         "naruto": 0
       },
@@ -2060,17 +3263,17 @@
         "naruto": 0
       },
       "CGC": {
-        "pokemon": 1,
+        "pokemon": 11,
         "onepiece": 0,
         "naruto": 0
       },
       "TAG": {
         "pokemon": 0,
         "onepiece": 0,
-        "naruto": 0
+        "naruto": 1
       },
       "BRG": {
-        "pokemon": 12,
+        "pokemon": 22,
         "onepiece": 4,
         "naruto": 0
       }
@@ -2104,7 +3307,7 @@
       },
       "TAG": {
         "runs": 11,
-        "images": 0,
+        "images": 1,
         "verified": 0,
         "measurement_ready": 0
       },
@@ -2115,8 +3318,8 @@
         "measurement_ready": 0
       }
     },
-    "productive_routes": 2,
-    "recovery_routes": 9,
+    "productive_routes": 5,
+    "recovery_routes": 7,
     "open_route_circuits": 0,
     "official_feedback": 0,
     "measurement_ready_feedback": 0,
@@ -2160,7 +3363,7 @@
     }
   },
   "collection_learning_feedback": {
-    "rows_observed": 3,
+    "rows_observed": 31,
     "official_verified": 0,
     "measurement_ready": 0,
     "identifiers_learned": 0,
@@ -2169,13 +3372,13 @@
   "game_stats": {
     "pokemon": {
       "name": "포켓몬",
-      "candidates": 19,
-      "with_image_url": 0,
+      "candidates": 46,
+      "with_image_url": 3,
       "validated_images": 16,
       "ocr_readable": 16,
       "measurement_ready": 0,
       "verified_references": 1,
-      "quarantined": 18
+      "quarantined": 45
     },
     "onepiece": {
       "name": "원피스",
@@ -2189,25 +3392,25 @@
     },
     "naruto": {
       "name": "나루토",
-      "candidates": 0,
-      "with_image_url": 0,
+      "candidates": 1,
+      "with_image_url": 1,
       "validated_images": 0,
       "ocr_readable": 0,
       "measurement_ready": 0,
       "verified_references": 0,
-      "quarantined": 0
+      "quarantined": 1
     }
   },
   "company_stats": {
     "PSA": {
-      "candidates": 9,
+      "candidates": 16,
       "with_image_url": 0,
       "validated_images": 6,
       "ocr_readable": 6,
       "measurement_ready": 0,
       "verified_references": 1,
       "games_covered": 2,
-      "quarantined": 8
+      "quarantined": 15
     },
     "BGS": {
       "candidates": 9,
@@ -2220,39 +3423,40 @@
       "quarantined": 9
     },
     "CGC": {
-      "candidates": 2,
-      "with_image_url": 0,
+      "candidates": 12,
+      "with_image_url": 3,
       "validated_images": 2,
       "ocr_readable": 2,
       "measurement_ready": 0,
       "verified_references": 0,
       "games_covered": 1,
-      "quarantined": 2
+      "quarantined": 12
     },
     "TAG": {
-      "candidates": 1,
-      "with_image_url": 0,
+      "candidates": 2,
+      "with_image_url": 1,
       "validated_images": 1,
       "ocr_readable": 1,
       "measurement_ready": 0,
       "verified_references": 0,
-      "games_covered": 0,
-      "quarantined": 1
+      "games_covered": 1,
+      "quarantined": 2
     },
     "BRG": {
-      "candidates": 16,
+      "candidates": 26,
       "with_image_url": 0,
       "validated_images": 16,
       "ocr_readable": 16,
       "measurement_ready": 0,
       "verified_references": 0,
       "games_covered": 2,
-      "quarantined": 16
+      "quarantined": 26
     }
   },
   "provider_stats": {
     "library_manifest": 33,
-    "duckduckgo": 3,
+    "duckduckgo": 30,
+    "bing_images_v2": 1,
     "official_registry": 1
   },
   "source_stats": {
@@ -2301,15 +3505,15 @@
         "BRG": 1
       }
     },
-    "ebay_public": {
-      "candidates": 3,
-      "image_hits": 0,
+    "collectory": {
+      "candidates": 10,
+      "image_hits": 3,
       "verified_hits": 0,
-      "errors": 2,
+      "errors": 1,
       "queries": 15,
       "raw_results": 30,
       "domain_matches": 10,
-      "company_matches": 3,
+      "company_matches": 10,
       "resolved_redirects": 0,
       "image_results": 0,
       "google_image_results": 0,
@@ -2319,110 +3523,36 @@
       "circuit_recovery_probes": 0,
       "deadline_stops": 0,
       "game_candidates": {
-        "pokemon": 3,
-        "onepiece": 0,
-        "naruto": 0
-      },
-      "company_candidates": {
-        "PSA": 3,
-        "BGS": 0,
-        "CGC": 0,
-        "TAG": 0,
-        "BRG": 0
-      },
-      "company_shortfalls": {
-        "PSA": 0,
-        "BGS": 1,
-        "CGC": 1,
-        "TAG": 1,
-        "BRG": 1
-      }
-    },
-    "kream": {
-      "candidates": 0,
-      "image_hits": 0,
-      "verified_hits": 0,
-      "errors": 1,
-      "queries": 15,
-      "raw_results": 22,
-      "domain_matches": 2,
-      "company_matches": 0,
-      "resolved_redirects": 0,
-      "image_results": 0,
-      "google_image_results": 0,
-      "recovery_queries": 6,
-      "recovery_company_matches": 0,
-      "circuit_deferred_games": 0,
-      "circuit_recovery_probes": 0,
-      "deadline_stops": 0,
-      "game_candidates": {
-        "pokemon": 0,
+        "pokemon": 10,
         "onepiece": 0,
         "naruto": 0
       },
       "company_candidates": {
         "PSA": 0,
         "BGS": 0,
-        "CGC": 0,
+        "CGC": 10,
         "TAG": 0,
         "BRG": 0
       },
       "company_shortfalls": {
         "PSA": 1,
         "BGS": 1,
-        "CGC": 1,
-        "TAG": 1,
-        "BRG": 1
-      }
-    },
-    "daangn": {
-      "candidates": 0,
-      "image_hits": 0,
-      "verified_hits": 0,
-      "errors": 1,
-      "queries": 15,
-      "raw_results": 10,
-      "domain_matches": 0,
-      "company_matches": 0,
-      "resolved_redirects": 0,
-      "image_results": 0,
-      "google_image_results": 0,
-      "recovery_queries": 6,
-      "recovery_company_matches": 0,
-      "circuit_deferred_games": 0,
-      "circuit_recovery_probes": 0,
-      "deadline_stops": 0,
-      "game_candidates": {
-        "pokemon": 0,
-        "onepiece": 0,
-        "naruto": 0
-      },
-      "company_candidates": {
-        "PSA": 0,
-        "BGS": 0,
         "CGC": 0,
-        "TAG": 0,
-        "BRG": 0
-      },
-      "company_shortfalls": {
-        "PSA": 1,
-        "BGS": 1,
-        "CGC": 1,
         "TAG": 1,
         "BRG": 1
       }
     },
     "amazon_us": {
-      "candidates": 1,
-      "image_hits": 0,
+      "candidates": 2,
+      "image_hits": 1,
       "verified_hits": 0,
-      "errors": 1,
+      "errors": 2,
       "queries": 15,
-      "raw_results": 30,
-      "domain_matches": 10,
-      "company_matches": 1,
+      "raw_results": 31,
+      "domain_matches": 11,
+      "company_matches": 2,
       "resolved_redirects": 0,
-      "image_results": 0,
+      "image_results": 1,
       "google_image_results": 0,
       "recovery_queries": 6,
       "recovery_company_matches": 0,
@@ -2432,10 +3562,47 @@
       "game_candidates": {
         "pokemon": 1,
         "onepiece": 0,
-        "naruto": 0
+        "naruto": 1
       },
       "company_candidates": {
         "PSA": 1,
+        "BGS": 0,
+        "CGC": 0,
+        "TAG": 1,
+        "BRG": 0
+      },
+      "company_shortfalls": {
+        "PSA": 0,
+        "BGS": 1,
+        "CGC": 1,
+        "TAG": 0,
+        "BRG": 1
+      }
+    },
+    "ebay_public": {
+      "candidates": 10,
+      "image_hits": 0,
+      "verified_hits": 0,
+      "errors": 2,
+      "queries": 15,
+      "raw_results": 30,
+      "domain_matches": 10,
+      "company_matches": 10,
+      "resolved_redirects": 0,
+      "image_results": 0,
+      "google_image_results": 0,
+      "recovery_queries": 6,
+      "recovery_company_matches": 0,
+      "circuit_deferred_games": 0,
+      "circuit_recovery_probes": 0,
+      "deadline_stops": 0,
+      "game_candidates": {
+        "pokemon": 10,
+        "onepiece": 0,
+        "naruto": 0
+      },
+      "company_candidates": {
+        "PSA": 10,
         "BGS": 0,
         "CGC": 0,
         "TAG": 0,
@@ -2449,14 +3616,51 @@
         "BRG": 1
       }
     },
-    "collectory": {
+    "daangn": {
+      "candidates": 10,
+      "image_hits": 0,
+      "verified_hits": 0,
+      "errors": 2,
+      "queries": 15,
+      "raw_results": 20,
+      "domain_matches": 10,
+      "company_matches": 10,
+      "resolved_redirects": 0,
+      "image_results": 0,
+      "google_image_results": 0,
+      "recovery_queries": 6,
+      "recovery_company_matches": 0,
+      "circuit_deferred_games": 0,
+      "circuit_recovery_probes": 0,
+      "deadline_stops": 0,
+      "game_candidates": {
+        "pokemon": 10,
+        "onepiece": 0,
+        "naruto": 0
+      },
+      "company_candidates": {
+        "PSA": 0,
+        "BGS": 0,
+        "CGC": 0,
+        "TAG": 0,
+        "BRG": 10
+      },
+      "company_shortfalls": {
+        "PSA": 1,
+        "BGS": 1,
+        "CGC": 1,
+        "TAG": 1,
+        "BRG": 0
+      }
+    },
+    "kream": {
       "candidates": 0,
       "image_hits": 0,
       "verified_hits": 0,
-      "errors": 1,
+      "errors": 2,
       "queries": 15,
-      "raw_results": 30,
-      "domain_matches": 10,
+      "raw_results": 20,
+      "domain_matches": 0,
       "company_matches": 0,
       "resolved_redirects": 0,
       "image_results": 0,
@@ -2569,12 +3773,15 @@
   "errors": [
     "amazon_jp:adaptive_search:naver_news_html: HTTPError: HTTP Error 403: Forbidden",
     "amazon_jp:adaptive_search:ddg_lite: HTTPError: HTTP Error 403: Forbidden",
+    "collectory:adaptive_search:naver_news_html: HTTPError: HTTP Error 403: Forbidden",
+    "amazon_us:adaptive_search:naver_news_html: HTTPError: HTTP Error 403: Forbidden",
+    "amazon_us:adaptive_search:ddg_lite: HTTPError: HTTP Error 403: Forbidden",
     "ebay_public:adaptive_search:naver_news_html: HTTPError: HTTP Error 403: Forbidden",
     "ebay_public:adaptive_search:ddg_lite: HTTPError: HTTP Error 403: Forbidden",
-    "kream:adaptive_search:ddg_lite: HTTPError: HTTP Error 403: Forbidden",
+    "daangn:adaptive_search:naver_news_html: HTTPError: HTTP Error 403: Forbidden",
     "daangn:adaptive_search:ddg_lite: HTTPError: HTTP Error 403: Forbidden",
-    "amazon_us:adaptive_search:ddg_lite: HTTPError: HTTP Error 403: Forbidden",
-    "collectory:adaptive_search:ddg_lite: HTTPError: HTTP Error 403: Forbidden"
+    "kream:adaptive_search:naver_news_html: HTTPError: HTTP Error 403: Forbidden",
+    "kream:adaptive_search:ddg_lite: HTTPError: HTTP Error 403: Forbidden"
   ],
   "configuration": {
     "google_cse_configured": false,
