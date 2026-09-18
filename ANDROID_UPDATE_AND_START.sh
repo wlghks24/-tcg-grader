@@ -242,7 +242,10 @@ if command -v git >/dev/null 2>&1 && git rev-parse --is-inside-work-tree >/dev/n
   if [ "$can_update" = "1" ]; then
     echo "[업데이트] 공식 GitHub main 최신 상태를 확인합니다..."
     # Fetch from the pinned canonical repository URL, not a mutable local remote.
-    if git fetch --prune "$OFFICIAL_HTTPS" main:refs/remotes/origin/main; then
+    # Do not use --prune here: when fetching from a raw URL into origin/main,
+    # Git can prune refs/remotes/origin/main itself and leave origin/HEAD dangling.
+    # The explicit refspec also recreates origin/main after an older buggy run.
+    if git fetch "$OFFICIAL_HTTPS" refs/heads/main:refs/remotes/origin/main; then
       remote_ready=1
     else
       echo "[안내] 네트워크/GitHub 연결 문제로 업데이트 확인을 건너뜁니다. 현재 버전으로 시작합니다."
