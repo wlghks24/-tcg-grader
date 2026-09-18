@@ -8,6 +8,9 @@ on:
       - 'ANDROID_UPDATE_AND_START.sh'
       - 'TABLET_SCHEDULED_UPDATE.sh'
       - 'tablet_runtime_manifest.py'
+      - 'quality_review_policy.py'
+      - 'quality_review_policy_v2.json'
+      - 'test_quality_review_policy_v2.py'
       - 'VERIFY_TABLET_FINAL.sh'
       - 'test_tablet_scheduled_update_v256.py'
       - 'tablet_collection_publish.py'
@@ -41,6 +44,9 @@ on:
       - 'ANDROID_UPDATE_AND_START.sh'
       - 'TABLET_SCHEDULED_UPDATE.sh'
       - 'tablet_runtime_manifest.py'
+      - 'quality_review_policy.py'
+      - 'quality_review_policy_v2.json'
+      - 'test_quality_review_policy_v2.py'
       - 'VERIFY_TABLET_FINAL.sh'
       - 'test_tablet_scheduled_update_v256.py'
       - 'tablet_collection_publish.py'
@@ -76,13 +82,15 @@ jobs:
 
       - name: Static and targeted regression
         run: |
-          python -m py_compile tablet_collection_publish.py test_tablet_collection_publish.py test_tablet_main_entrypoint_v251.py test_tablet_scheduled_update_v256.py
+          python -m py_compile tablet_collection_publish.py test_tablet_collection_publish.py test_tablet_main_entrypoint_v251.py test_tablet_scheduled_update_v256.py quality_review_policy.py test_quality_review_policy_v2.py tablet_runtime_manifest.py
           bash -n main
           bash -n ANDROID_UPDATE_AND_START.sh
           bash -n TABLET_SCHEDULED_UPDATE.sh
           bash -n VERIFY_TABLET_FINAL.sh
           bash -n TABLET_COLLECT_AND_SEND.sh
-          python -m unittest -v test_tablet_collection_publish.py test_tablet_main_entrypoint_v251.py test_tablet_scheduled_update_v256.py
+          python quality_review_policy.py --check
+          python tablet_runtime_manifest.py --check --compile
+          python -m unittest -v test_tablet_collection_publish.py test_tablet_main_entrypoint_v251.py test_tablet_scheduled_update_v256.py test_quality_review_policy_v2.py
           git diff --check origin/${{ github.base_ref || 'main' }}...HEAD || git diff --check HEAD^
 
       - name: Detect submitted tablet snapshot
