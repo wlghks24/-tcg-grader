@@ -39,6 +39,14 @@ def main():
     assert 'no-store, no-cache, must-revalidate, max-age=0' in server
 
     updater=text('ANDROID_UPDATE_AND_START.sh')
+    recover=text('ANDROID_RECOVER_UPDATE.sh')
+    scheduler=text('TABLET_SCHEDULED_UPDATE.sh')
+    canonical_fetch='git fetch "$OFFICIAL_HTTPS" refs/heads/main:refs/remotes/origin/main'
+    assert canonical_fetch in updater
+    assert canonical_fetch in recover
+    assert canonical_fetch in scheduler
+    for source in (updater, recover, scheduler):
+        assert 'git fetch --prune "$OFFICIAL_HTTPS"' not in source
     assert '정상 수집/학습으로 변경된 런타임 JSON만 감지했습니다' in updater
     assert 'market_prices.json' in updater and 'graded_photo_candidates.json' in updater
     assert 'graded_photo_reference_learning.json' in updater
@@ -51,7 +59,7 @@ def main():
     lock_gate='if [ "${UPDATE_LOCK_AVAILABLE:-0}" != "1" ]; then'
     assert lock_gate in updater
     assert '업데이트 잠금이 없어 원격 업데이트를 건너뜁니다.' in updater
-    assert updater.index(lock_gate) < updater.index('git fetch --prune "$OFFICIAL_HTTPS"')
+    assert updater.index(lock_gate) < updater.index(canonical_fetch)
     # The update lock must never survive the final exec handoff. exec preserves
     # the PID, so a stale lock would make the server look like an active updater.
     handoff=updater.rfind('exec bash START_TCG_UPDATER_ANDROID.sh')
