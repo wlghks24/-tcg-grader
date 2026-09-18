@@ -50,7 +50,7 @@ RUNTIME_MARKERS = (
 UPDATER_MARKERS = (
     'OFFICIAL_REPO="wlghks24/-tcg-grader"',
     'OFFICIAL_HTTPS="https://github.com/wlghks24/-tcg-grader.git"',
-    'git fetch --prune "$OFFICIAL_HTTPS" main:refs/remotes/origin/main',
+    'git fetch "$OFFICIAL_HTTPS" refs/heads/main:refs/remotes/origin/main',
     "git merge --ff-only origin/main",
     "restore_runtime_snapshot",
     "fatal_restore_error=1",
@@ -90,6 +90,7 @@ def _marker_checks() -> None:
         assert marker in runtime, f"tablet runtime contract missing: {marker}"
     for marker in UPDATER_MARKERS:
         assert marker in updater, f"android updater contract missing: {marker}"
+    assert 'git fetch --prune "$OFFICIAL_HTTPS"' not in updater, "canonical URL fetch must not prune origin/main"
 
 
 def _self_tests() -> None:

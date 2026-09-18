@@ -4,6 +4,7 @@ on:
     paths:
       - 'ANDROID_UPDATE_AND_START.sh'
       - 'ANDROID_RECOVER_UPDATE.sh'
+      - 'TABLET_SCHEDULED_UPDATE.sh'
       - 'ANDROID_AUTO_START_INSTALL.sh'
       - 'VERIFY_TABLET_FINAL.sh'
       - 'VERIFY_TABLET_RUNTIME.sh'
@@ -17,6 +18,7 @@ on:
       - 'test_tablet_standalone_hardening_v209.py'
       - 'tablet_runtime_probe.py'
       - 'test_runtime_delivery_guards.py'
+      - 'test_termux_canonical_fetch_v257.py'
       - 'tablet_runtime_qa.py'
       - 'test_tablet_runtime_qa_integration.py'
       - 'START_TCG_UPDATER_ANDROID.sh'
@@ -26,6 +28,7 @@ on:
     paths:
       - 'ANDROID_UPDATE_AND_START.sh'
       - 'ANDROID_RECOVER_UPDATE.sh'
+      - 'TABLET_SCHEDULED_UPDATE.sh'
       - 'ANDROID_AUTO_START_INSTALL.sh'
       - 'VERIFY_TABLET_FINAL.sh'
       - 'VERIFY_TABLET_RUNTIME.sh'
@@ -39,6 +42,7 @@ on:
       - 'test_tablet_standalone_hardening_v209.py'
       - 'tablet_runtime_probe.py'
       - 'test_runtime_delivery_guards.py'
+      - 'test_termux_canonical_fetch_v257.py'
       - 'tablet_runtime_qa.py'
       - 'test_tablet_runtime_qa_integration.py'
       - 'START_TCG_UPDATER_ANDROID.sh'
@@ -68,6 +72,7 @@ jobs:
           python -m unittest -v test_tablet_standalone_hardening_v209.py
           python -m unittest -v test_verified_collection_neural_v211.py
           python -m unittest -v test_verified_collection_job_neural_v212.py
+          python -m unittest -v test_termux_canonical_fetch_v257.py
       - name: Verify boot supervisor diagnostics and health route
         run: |
           grep -Fq 'api/v135-health' ANDROID_AUTO_START_INSTALL.sh
@@ -103,10 +108,14 @@ jobs:
         run: |
           grep -Fq 'OFFICIAL_REPO="wlghks24/-tcg-grader"' ANDROID_UPDATE_AND_START.sh
           grep -Fq 'OFFICIAL_HTTPS="https://github.com/wlghks24/-tcg-grader.git"' ANDROID_UPDATE_AND_START.sh
-          grep -Fq 'git fetch --prune "$OFFICIAL_HTTPS" main:refs/remotes/origin/main' ANDROID_UPDATE_AND_START.sh
+          grep -Fq 'git fetch "$OFFICIAL_HTTPS" refs/heads/main:refs/remotes/origin/main' ANDROID_UPDATE_AND_START.sh
           grep -Fq "OFFICIAL_REPO='wlghks24/-tcg-grader'" ANDROID_RECOVER_UPDATE.sh
           grep -Fq "OFFICIAL_HTTPS='https://github.com/wlghks24/-tcg-grader.git'" ANDROID_RECOVER_UPDATE.sh
-          grep -Fq 'git fetch --prune "$OFFICIAL_HTTPS" main:refs/remotes/origin/main' ANDROID_RECOVER_UPDATE.sh
+          grep -Fq 'git fetch "$OFFICIAL_HTTPS" refs/heads/main:refs/remotes/origin/main' ANDROID_RECOVER_UPDATE.sh
+          grep -Fq 'git fetch "$OFFICIAL_HTTPS" refs/heads/main:refs/remotes/origin/main' TABLET_SCHEDULED_UPDATE.sh
+          ! grep -Fq 'git fetch --prune "$OFFICIAL_HTTPS"' ANDROID_UPDATE_AND_START.sh
+          ! grep -Fq 'git fetch --prune "$OFFICIAL_HTTPS"' ANDROID_RECOVER_UPDATE.sh
+          ! grep -Fq 'git fetch --prune "$OFFICIAL_HTTPS"' TABLET_SCHEDULED_UPDATE.sh
           grep -Fq '공식 GitHub origin 확인: OK' VERIFY_TABLET_FINAL.sh
       - name: Verify fail-closed snapshot restore contracts
         run: |
