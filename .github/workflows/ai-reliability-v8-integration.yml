@@ -33,10 +33,12 @@ jobs:
           python - <<'PY'
           import hashlib, json
           from pathlib import Path
+          from instagram_tcg_content import automation_state_guard as state_guard
+
           root=Path('ai_reliability_v8')
           binding=json.loads((root/'binding.json').read_text())
-          assert binding['project']=='instagram_card'
-          assert binding['task_id']=='6a9b8a22e72c8191849c273e1240378e'
+          assert binding['project']==state_guard.AI_RELIABILITY_PROJECT
+          assert binding['task_id']==state_guard.AI_RELIABILITY_TASK_ID
           assert set(binding['files']) == {
             '__init__.py','guard.py','recovery.py','self_heal.py','diagnostics.py','ai_learning.py','bridge.py',
             'verification.py','evidence_learning.py','adaptive_learning.py','diverse_collection.py','social_evidence.py','code_optimizer.py',
