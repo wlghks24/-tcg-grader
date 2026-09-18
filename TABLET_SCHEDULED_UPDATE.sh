@@ -73,7 +73,9 @@ run_update() {
   log="${LOG_DIR}/update-$(date '+%Y%m%d-%H%M%S').log"
   echo "[$(now)] 예약 업데이트 확인 시작" | tee -a "$log"
 
-  if ! git fetch --prune "$OFFICIAL_HTTPS" main:refs/remotes/origin/main >>"$log" 2>&1; then
+  # A raw-URL fetch plus --prune can delete refs/remotes/origin/main itself.
+  # Fetch only the explicit canonical main ref so a prior deleted ref is rebuilt.
+  if ! git fetch "$OFFICIAL_HTTPS" refs/heads/main:refs/remotes/origin/main >>"$log" 2>&1; then
     write_status "FETCH_FAILED" "공식 main 확인 실패; 현재 정상 버전 유지" "$before" "unknown"
     echo "[경고] 공식 main 확인 실패. 현재 버전을 유지합니다."
     return 1
