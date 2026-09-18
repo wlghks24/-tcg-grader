@@ -44,7 +44,7 @@ jobs:
 
       - name: Verify watcher, diagnostics and live-cost contracts
         run: |
-          python -m py_compile grading_company_watch.py grading_company_health_diagnostics.py grading_costs_live.py
+          python -m py_compile safe_runtime.py test_safe_runtime_redirect_diagnostics_v253.py grading_company_watch.py grading_company_health_diagnostics.py grading_costs_live.py
           python -m unittest -v \
             test_grading_company_watch_v215.py \
             test_grading_company_health_diagnostics_v252.py \
