@@ -2,6 +2,8 @@ import json
 import unittest
 from pathlib import Path
 
+import collection_job_contract as contract
+
 ROOT = Path(__file__).resolve().parent
 
 
@@ -26,17 +28,23 @@ class SocialStockIntegrationTests(unittest.TestCase):
         self.assertFalse(row.get('verified'))
         self.assertFalse(row.get('official_account_verified'))
 
-    def test_step5_runs_social_stock_without_adding_job8(self):
+    def test_step5_runs_social_stock_inside_purchase_job_without_extra_job(self):
         text=(ROOT/'update_purchase_sources.py').read_text(encoding='utf-8')
         self.assertIn('social_stock_discovery.main()',text)
+
+        purchase_job=("구매처·링크 보안 확인", "update_purchase_sources", "purchase_sources.json")
+        self.assertEqual(contract.JOB_COUNT,8)
+        self.assertIn(purchase_job,contract.COLLECTION_JOBS)
+        self.assertFalse(any(str(row[0]).startswith('SNS 재고') for row in contract.COLLECTION_JOBS))
+
         auto=(ROOT/'auto_update_all.py').read_text(encoding='utf-8')
-        self.assertIn('("구매처·링크 보안 확인", "update_purchase_sources", "purchase_sources.json")',auto)
-        self.assertNotIn('("SNS 재고',auto)
+        self.assertIn('from collection_job_contract import COLLECTION_JOBS',auto)
+        self.assertIn('JOBS = COLLECTION_JOBS',auto)
 
     def test_live_purchase_merges_social_but_keeps_unverified_label(self):
         text=(ROOT/'purchase_intelligence.py').read_text(encoding='utf-8')
         self.assertIn('# v112-social-stock-merge',text)
-        self.assertIn('official_stock": False',text)
+        self.assertIn('official_stock\": False',text)
         self.assertIn('SNS 재고제보',text)
 
 
