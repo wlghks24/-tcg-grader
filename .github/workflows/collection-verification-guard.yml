@@ -5,6 +5,8 @@ on:
   workflow_dispatch:
   pull_request:
     paths:
+      - 'safe_runtime.py'
+      - 'test_safe_runtime_redirect_diagnostics_v253.py'
       - 'collection_verification_gate.py'
       - 'test_collection_verification_gate.py'
       - 'tcg_updater.py'
@@ -52,6 +54,8 @@ on:
   push:
     branches: [main]
     paths:
+      - 'safe_runtime.py'
+      - 'test_safe_runtime_redirect_diagnostics_v253.py'
       - 'collection_verification_gate.py'
       - 'test_collection_verification_gate.py'
       - 'tcg_updater.py'
@@ -126,7 +130,7 @@ jobs:
       - name: Static and regression verification
         run: |
           python -m py_compile \
-            collection_verification_gate.py static_data_publish_gate.py feature_contract.py \
+            safe_runtime.py test_safe_runtime_redirect_diagnostics_v253.py collection_verification_gate.py static_data_publish_gate.py feature_contract.py \
             update_market_watch.py update_market_prices.py market_public_crosscheck.py release_history_backfill.py \
             update_purchase_sources.py update_exchange_rates.py \
             grading_company_watch.py grading_company_health_diagnostics.py graded_photo_multi_source.py verified_collection_job_neural.py \
@@ -139,6 +143,7 @@ jobs:
             test_grading_company_watch_v215.py test_grading_company_health_diagnostics_v252.py test_grading_watch_integration_v220.py \
             test_verified_collection_job_neural_v212.py
           python -m unittest -v \
+            test_safe_runtime_redirect_diagnostics_v253.py \
             test_collection_verification_gate.py \
             test_static_data_publish_gate.py \
             test_market_public_crosscheck_resilience_v228.py \
