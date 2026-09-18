@@ -1,6 +1,8 @@
 from pathlib import Path
 import re
 
+from collection_job_contract import MANDATORY_OUTPUTS
+
 ROOT=Path(__file__).resolve().parent
 
 
@@ -48,6 +50,20 @@ def main():
     for source in (updater, recover, scheduler):
         assert 'git fetch --prune "$OFFICIAL_HTTPS"' not in source
     assert '정상 수집/학습으로 변경된 런타임 JSON만 감지했습니다' in updater
+
+    runtime_start=updater.index('is_runtime_path() {')
+    runtime_end=updater.index('\n}\n\nappend_line()', runtime_start)
+    runtime_contract=updater[runtime_start:runtime_end]
+    for output in MANDATORY_OUTPUTS:
+        assert output in runtime_contract, f'mandatory collector output missing from updater runtime allowlist: {output}'
+    assert 'social_source_registry.json' in runtime_contract
+
+    grading_writer=text('grading_company_watch.py')
+    social_writer=text('social_event_discovery.py')
+    assert 'OUT = ROOT / "grading_company_updates.json"' in grading_writer
+    assert 'REGISTRY = ROOT / "social_source_registry.json"' in social_writer
+    assert 'atomic_write_json(REGISTRY' in social_writer
+
     assert 'market_prices.json' in updater and 'graded_photo_candidates.json' in updater
     assert 'graded_photo_reference_learning.json' in updater
     assert 'library_verified_slab_references.json' in updater
@@ -146,7 +162,7 @@ def main():
     market=text('update_market_prices.py')
     assert 'catalog_marker_missing' in market
     assert 'kream_transient=(' in market
-    print('[OK] runtime delivery guards v185')
+    print('[OK] runtime delivery guards v186')
 
 
 if __name__=='__main__':
