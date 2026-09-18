@@ -176,18 +176,12 @@ jobs:
 
       - name: Verify collected evidence fail-closed
         run: |
-          set -euo pipefail
-          extra=()
-          # PRs still fail on critical correctness/safety regressions. External provider
-          # degradation is reported but cannot mask or rewrite the verified facts.
-          # Main/manual verification remains strict and fails on degraded output.
-          if [ "${{ github.event_name }}" != "pull_request" ]; then
-            extra+=(--fail-on-degraded)
-          fi
+          # Critical correctness/safety failures still return non-zero. A provider
+          # degradation remains explicit in the report but is isolated from code-health
+          # status so a third-party outage cannot keep main permanently red.
           python collection_verification_gate.py \
             --max-health-age-seconds 900 \
-            --report COLLECTION_VERIFICATION_REPORT.json \
-            "${extra[@]}"
+            --report COLLECTION_VERIFICATION_REPORT.json
 
       - name: Build grading-provider RCA diagnostics
         if: always()
@@ -198,8 +192,8 @@ jobs:
               --report GRADING_COMPANY_HEALTH_DIAGNOSTICS.json
           fi
 
-      - name: Surface external provider degradation on PRs
-        if: always() && github.event_name == 'pull_request'
+      - name: Surface external provider degradation
+        if: always()
         run: |
           python - <<'PY'
           import json
