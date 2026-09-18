@@ -1,7 +1,70 @@
 {
   "schema_version": 2,
-  "policy_name": "TCG Grader Expert 1000 Multi-Lens Review v2",
-  "description": "25 expert groups x 40 independent review lenses. This is a quality-control framework, not a claim that 1000 external people participate.",
+  "policy_name": "TCG Grader Senior-100 Data Prep + Expert-1000 Multi-Lens Review v2",
+  "description": "A two-stage quality framework: 100 independent senior-grade data-preparation perspectives run before the 25 expert groups x 40 independent review lenses = 1000 review cells. This is not a claim that 100 or 1000 external people participate.",
+  "pipeline_order": [
+    "senior_100_data_preparation",
+    "expert_1000_multi_lens_review",
+    "targeted_tests",
+    "full_regression",
+    "actual_output_validation",
+    "release_or_hold"
+  ],
+  "data_preparation": {
+    "name": "Senior 100 Data Collection & Preparation",
+    "independent_senior_perspectives": 100,
+    "separate_from_expert_1000_review": true,
+    "must_run_before_expert_1000_review": true,
+    "claim_parallel_100_external_reviewers": false,
+    "purpose": "Prepare clean, complete, traceable evidence and datasets before final expert review; this stage does not make the final quality decision.",
+    "responsibilities": [
+      "multi_source_discovery",
+      "official_source_collection",
+      "market_store_social_discovery",
+      "search_and_crawling",
+      "source_validation",
+      "source_independence_check",
+      "normalization",
+      "deduplication",
+      "typo_and_label_correction",
+      "identity_check",
+      "freshness_validation",
+      "date_time_price_location_product_validation",
+      "cross_validation",
+      "contrary_evidence_search",
+      "conflict_detection",
+      "gap_analysis",
+      "supplemental_collection",
+      "provenance_preservation"
+    ],
+    "stage_order": [
+      "DISCOVER",
+      "FETCH",
+      "PARSE",
+      "NORMALIZE",
+      "DEDUP",
+      "TYPO_IDENTITY_CHECK",
+      "FRESHNESS_CHECK",
+      "SOURCE_INDEPENDENCE_CHECK",
+      "CROSSCHECK",
+      "CONTRARY_EVIDENCE_CHECK",
+      "CONFLICT_CHECK",
+      "GAP_ANALYSIS",
+      "SUPPLEMENTAL_COLLECTION",
+      "PREPARED_DATASET"
+    ],
+    "handoff_requirements": [
+      "strong_primary_evidence_or_explicit_data_gap",
+      "duplicate_groups_resolved",
+      "typos_and_labels_normalized",
+      "date_time_location_price_product_crosschecked",
+      "conflicts_explicitly_marked",
+      "missing_areas_supplemented_or_marked_data_gap",
+      "provenance_and_freshness_preserved"
+    ],
+    "unresolved_conflict_action": "CONFLICT_OR_HOLD",
+    "unresolved_gap_action": "EXPLICIT_DATA_GAP"
+  },
   "expert_group_count": 25,
   "review_lens_count": 40,
   "expected_review_cells": 1000,
@@ -63,6 +126,9 @@
     "candidate_preflight_required": true,
     "ff_only_update_required": true,
     "final_verification_required": true,
+    "senior_100_prep_required": true,
+    "prepared_dataset_handoff_required": true,
+    "claim_parallel_100_external_reviewers": false,
     "claim_parallel_1000_external_reviewers": false
   }
 }
