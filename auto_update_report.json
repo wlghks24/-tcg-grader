@@ -3,7 +3,7 @@
   "engine": "v98-camera-resilience-full-runtime",
   "trigger": "github-pages-static-refresh",
   "selected_files": [],
-  "started_at": "2026-09-19T12:55:57+00:00",
+  "started_at": "2026-09-19T18:54:33+00:00",
   "preflight_monitor": {
     "ok": true,
     "results": [
@@ -54,15 +54,15 @@
       }
     ]
   },
-  "finished_at": "2026-09-19T12:57:58+00:00",
-  "duration_seconds": 120.75,
+  "finished_at": "2026-09-19T18:56:37+00:00",
+  "duration_seconds": 123.75,
   "parallel_workers": 2,
   "ok": true,
   "success_count": 8,
   "failure_count": 0,
-  "fresh_success_count": 7,
-  "degraded_count": 1,
-  "restored_count": 0,
+  "fresh_success_count": 6,
+  "degraded_count": 2,
+  "restored_count": 1,
   "fresh_failure_count": 0,
   "deferred_timeout_recovery": {
     "enabled": true,
@@ -82,7 +82,7 @@
       "file": "releases.json",
       "ok": true,
       "status": "정상",
-      "updated_at": "2026-09-19T12:57:19+00:00",
+      "updated_at": "2026-09-19T18:56:23+00:00",
       "count": 14,
       "retry_count": 0,
       "max_attempts": 2,
@@ -90,9 +90,9 @@
       "auto_action": "학습형 수집 · 검증 후 정상 반영",
       "collection_errors": [],
       "remaining_collection_errors": [],
-      "duration_seconds": 36.27,
-      "adaptive_timeout_seconds": 106,
-      "last_attempt_timeout_seconds": 106,
+      "duration_seconds": 35.26,
+      "adaptive_timeout_seconds": 112,
+      "last_attempt_timeout_seconds": 112,
       "collection_stage": "primary",
       "timeout_exhausted": false
     },
@@ -101,7 +101,7 @@
       "file": "market_watch.json",
       "ok": true,
       "status": "정상",
-      "updated_at": "2026-09-19T12:57:38+00:00",
+      "updated_at": "2026-09-19T18:56:28+00:00",
       "count": 23,
       "retry_count": 0,
       "max_attempts": 2,
@@ -109,7 +109,7 @@
       "auto_action": "학습형 수집 · 검증 후 정상 반영",
       "collection_errors": [],
       "remaining_collection_errors": [],
-      "duration_seconds": 0.07,
+      "duration_seconds": 0.06,
       "adaptive_timeout_seconds": 30,
       "last_attempt_timeout_seconds": 30,
       "collection_stage": "primary",
@@ -120,19 +120,19 @@
       "file": "market_prices.json",
       "ok": true,
       "status": "일부 가격 출처 확인 실패",
-      "updated_at": "2026-09-19T12:57:58+00:00",
+      "updated_at": "2026-09-19T18:56:22+00:00",
       "count": 38,
       "retry_count": 0,
       "max_attempts": 2,
       "recovered_after_retry": false,
       "auto_action": "일부 출처 오류 격리 · 정상자료 반영 · 다음 실행 제한시간 확대",
       "collection_errors": [
-        "NARUTO CP-001: HTTPError: status 403"
+        "KREAM HIT: 거래가격 패턴 0건"
       ],
       "remaining_collection_errors": [
-        "NARUTO CP-001: HTTPError: status 403"
+        "KREAM HIT: 거래가격 패턴 0건"
       ],
-      "duration_seconds": 120.7,
+      "duration_seconds": 108.75,
       "adaptive_timeout_seconds": 300,
       "last_attempt_timeout_seconds": 299,
       "collection_stage": "primary",
@@ -143,7 +143,7 @@
       "file": "promo_events.json",
       "ok": true,
       "status": "정상 · 보조검증 3건 재확인 대기 · 한·일·미 영화정보 9/9 조합 추적",
-      "updated_at": "2026-09-19T12:56:43+00:00",
+      "updated_at": "2026-09-19T18:55:48+00:00",
       "count": 53,
       "retry_count": 0,
       "max_attempts": 2,
@@ -151,7 +151,7 @@
       "auto_action": "학습형 수집 · 검증 후 정상 반영",
       "collection_errors": [],
       "remaining_collection_errors": [],
-      "duration_seconds": 45.85,
+      "duration_seconds": 74.36,
       "adaptive_timeout_seconds": 151,
       "last_attempt_timeout_seconds": 151,
       "collection_stage": "primary",
@@ -162,7 +162,7 @@
       "file": "purchase_sources.json",
       "ok": true,
       "status": "정상",
-      "updated_at": "2026-09-19T12:57:35+00:00",
+      "updated_at": "2026-09-19T18:56:25+00:00",
       "count": 205,
       "retry_count": 0,
       "max_attempts": 2,
@@ -170,7 +170,7 @@
       "auto_action": "학습형 수집 · 검증 후 정상 반영",
       "collection_errors": [],
       "remaining_collection_errors": [],
-      "duration_seconds": 2.87,
+      "duration_seconds": 2.92,
       "adaptive_timeout_seconds": 300,
       "last_attempt_timeout_seconds": 299,
       "collection_stage": "primary",
@@ -181,7 +181,7 @@
       "file": "exchange_rates.json",
       "ok": true,
       "status": "정상",
-      "updated_at": "2026-09-19T12:57:39+00:00",
+      "updated_at": "2026-09-19T18:56:29+00:00",
       "count": 2,
       "retry_count": 0,
       "max_attempts": 2,
@@ -189,7 +189,7 @@
       "auto_action": "학습형 수집 · 검증 후 정상 반영",
       "collection_errors": [],
       "remaining_collection_errors": [],
-      "duration_seconds": 0.42,
+      "duration_seconds": 0.4,
       "adaptive_timeout_seconds": 30,
       "last_attempt_timeout_seconds": 30,
       "collection_stage": "primary",
@@ -208,7 +208,7 @@
       "auto_action": "학습형 수집 · 검증 후 정상 반영",
       "collection_errors": [],
       "remaining_collection_errors": [],
-      "duration_seconds": 2.38,
+      "duration_seconds": 2.46,
       "adaptive_timeout_seconds": 30,
       "last_attempt_timeout_seconds": 30,
       "collection_stage": "primary",
@@ -218,18 +218,19 @@
       "name": "업체별 등급카드 사진 후보",
       "file": "graded_photo_candidates.json",
       "ok": true,
-      "status": "정상",
-      "updated_at": null,
-      "count": 34,
+      "status": "공식 출처 지연 · 기존 검증자료 유지 · 실패 항목만 재수집 가능",
+      "error": "ValueError: graded_photo_candidates.json 파일의 세부 보안·무결성 검증에 실패했습니다",
       "retry_count": 0,
       "max_attempts": 2,
-      "recovered_after_retry": false,
-      "auto_action": "학습형 수집 · 검증 후 정상 반영",
-      "collection_errors": [],
-      "remaining_collection_errors": [],
-      "duration_seconds": 13.52,
-      "adaptive_timeout_seconds": 90,
-      "last_attempt_timeout_seconds": 90,
+      "auto_action": "느린 출처 격리 · 이전 정상본 유지",
+      "collection_errors": [
+        "ValueError: graded_photo_candidates.json 파일의 세부 보안·무결성 검증에 실패했습니다"
+      ],
+      "updated_at": null,
+      "count": 34,
+      "duration_seconds": 14.94,
+      "adaptive_timeout_seconds": 73,
+      "last_attempt_timeout_seconds": 73,
       "collection_stage": "primary",
       "timeout_exhausted": false
     }
@@ -254,10 +255,10 @@
       "data_dir": "<app-data>",
       "storage_scope": "user-app-data",
       "writable": true,
-      "checked_at": "2026-09-19T12:59:40+00:00"
+      "checked_at": "2026-09-19T18:57:47+00:00"
     },
     "note": "검색/SNS/뉴스/공식사이트/공식 YouTube/사이트맵 후보 자료입니다. 발견 경로가 공식이어도 내용 검증 전에는 자동 확정하지 않습니다.",
-    "duration_seconds": 102.59,
+    "duration_seconds": 70.28,
     "adaptive_timeout_seconds": 300,
     "last_attempt_timeout_seconds": 300,
     "retry_count": 0,
@@ -267,18 +268,18 @@
     "ok": true,
     "degraded": false,
     "warning": "",
-    "reachable_count": 249,
+    "reachable_count": 250,
     "transient_deferred": true,
-    "transient_notice": "일시 확인불가 19개 · 기존 링크 유지 · 다음 업데이트 재확인",
+    "transient_notice": "일시 확인불가 20개 · 기존 링크 유지 · 다음 업데이트 재확인",
     "unresolved_broken": 0,
     "unresolved_summary": [],
-    "updated_at": "2026-09-19T12:57:58+00:00",
+    "updated_at": "2026-09-19T18:56:37+00:00",
     "checked": 283,
-    "audit_timeout_seconds": 266,
+    "audit_timeout_seconds": 271,
     "request_timeout_seconds": 5,
-    "restricted": 15,
+    "restricted": 13,
     "broken": 0,
-    "transient": 19,
+    "transient": 20,
     "blocked": 0,
     "repaired": 0,
     "same_host_fallback_stats": {
@@ -299,6 +300,28 @@
         "url": "https://search.shopping.naver.com/search/all?query={query}",
         "detail": null,
         "code": 418,
+        "references": [
+          {
+            "file": "purchase_sources.json",
+            "field": "url_template"
+          }
+        ]
+      },
+      {
+        "url": "https://www.amazon.co.jp/s?k={query}",
+        "detail": null,
+        "code": 503,
+        "references": [
+          {
+            "file": "purchase_sources.json",
+            "field": "url_template"
+          }
+        ]
+      },
+      {
+        "url": "https://www.amazon.com/s?k={query}",
+        "detail": null,
+        "code": 503,
         "references": [
           {
             "file": "purchase_sources.json",
@@ -370,55 +393,28 @@
         ]
       },
       {
-        "url": "https://www.alpha.co.kr/",
-        "detail": "DNS:gaierror",
-        "code": null,
+        "url": "https://www.namu.moe/w/%EB%82%98%EB%A3%A8%ED%86%A0%28%EC%98%81%ED%99%94%29",
+        "detail": null,
+        "code": 525,
         "references": [
           {
-            "file": "purchase_sources.json",
-            "field": "official_reference_url"
+            "file": "supplementary_candidates.json",
+            "field": "source"
           },
           {
-            "file": "purchase_sources.json",
-            "field": "url"
-          },
-          {
-            "file": "purchase_sources.json",
-            "field": "official_reference_url"
+            "file": "supplementary_candidates.json",
+            "field": "source"
           }
         ]
       },
       {
-        "url": "https://www.kobis.or.kr/kobis/business/mast/mvie/searchMovieList.do",
-        "detail": "DNS:gaierror",
-        "code": null,
+        "url": "https://www.namu.moe/w/%EC%9B%90%ED%94%BC%EC%8A%A4%28%EC%95%A0%EB%8B%88%EB%A9%94%EC%9D%B4%EC%85%98%29%2F%EA%B7%B9%EC%9E%A5%ED%8C%90",
+        "detail": null,
+        "code": 525,
         "references": [
           {
-            "file": "promo_events.json",
-            "field": "verification_source"
-          },
-          {
-            "file": "promo_events.json",
-            "field": "verification_source"
-          },
-          {
-            "file": "promo_events.json",
-            "field": "verification_source"
-          }
-        ]
-      },
-      {
-        "url": "https://www.seoulmediacomics.com/",
-        "detail": "DNS:gaierror",
-        "code": null,
-        "references": [
-          {
-            "file": "promo_events.json",
-            "field": "verification_source"
-          },
-          {
-            "file": "promo_events.json",
-            "field": "verification_source"
+            "file": "supplementary_candidates.json",
+            "field": "source"
           }
         ]
       },
@@ -541,9 +537,9 @@
         ]
       }
     ],
-    "duration_seconds": 92.54,
-    "adaptive_timeout_seconds": 276,
-    "last_attempt_timeout_seconds": 276,
+    "duration_seconds": 91.22,
+    "adaptive_timeout_seconds": 281,
+    "last_attempt_timeout_seconds": 281,
     "retry_count": 0,
     "recovered_after_retry": false
   },
@@ -554,7 +550,7 @@
     "successful_topic_cells": 216,
     "failed_topic_cells": 0,
     "undiscovered_topic_cells": 168,
-    "source_updated_at": "2026-09-19T12:59:40+00:00"
+    "source_updated_at": "2026-09-19T18:57:47+00:00"
   },
   "ok_with_aux": true,
   "postflight_monitor": {
@@ -621,11 +617,11 @@
     "status": {
       "schema": 1,
       "feature_fingerprint": "0bac15bf0ad62e49a7c7d300",
-      "updated_at": "2026-09-19T12:59:40+00:00",
+      "updated_at": "2026-09-19T18:58:08+00:00",
       "active": false,
       "label_count": 10,
-      "positive_labels": 9,
-      "negative_labels": 1,
+      "positive_labels": 8,
+      "negative_labels": 2,
       "minimum_labels": 1000,
       "labels_remaining": 990,
       "progress_percent": 1.0,
@@ -670,14 +666,14 @@
   },
   "error_learning": {
     "summary": {
-      "error_group_count": 8,
-      "new_group_count": 1,
+      "error_group_count": 9,
+      "new_group_count": 2,
       "recurring_group_count": 6,
-      "unresolved_group_count": 1,
+      "unresolved_group_count": 2,
       "resolved_group_count": 7,
       "verified_solution_group_count": 7,
-      "scenario_prepared_group_count": 2,
-      "consolidated_event_total": 1011
+      "scenario_prepared_group_count": 3,
+      "consolidated_event_total": 1012
     },
     "new_errors": [
       {
@@ -711,35 +707,62 @@
         "group_id": "819660722644a1bb"
       },
       {
-        "code": "NETWORK_HTTP_ERROR",
-        "title": "HTTP 접근 권한 오류",
-        "category": "통신 오류",
-        "error_subtype": "access-403",
+        "code": "UNCLASSIFIED_ERROR",
+        "title": "분류되지 않은 신규 오류",
+        "category": "기타 수집 오류",
+        "error_subtype": "general",
         "file": "market_prices.json",
-        "detail": "NARUTO CP-001: HTTPError: status 403",
-        "probable_cause": "원출처가 인증 또는 접근 권한 부족 응답을 반환했습니다. 같은 요청을 반복해도 해결되지 않습니다.",
-        "safe_action": "상태별 제한 재시도 · 영구 오류 중단",
+        "detail": "KREAM HIT: 거래가격 패턴 0건",
+        "probable_cause": "기존 규칙에 없는 오류입니다. 상세정보를 비식별화해 기록하고 재현 범위를 확인해야 합니다.",
+        "safe_action": "자동조치 확대 금지 · 신규 원인 기록",
         "analysis_status": "신규 분석",
         "last_outcome": "unresolved",
-        "first_seen": "2026-09-19T12:57:58+00:00",
-        "last_seen": "2026-09-19T12:57:58+00:00",
+        "first_seen": "2026-09-19T18:56:37+00:00",
+        "last_seen": "2026-09-19T18:56:37+00:00",
         "occurrences": 1,
         "unresolved_count": 1,
-        "http_status": 403,
+        "http_status": null,
         "bounded_retry_allowed": false,
-        "http_statuses": [
-          403
-        ],
+        "http_statuses": [],
         "resolution_steps": [
-          "공식 주소와 공개 접근 가능 여부를 확인합니다.",
-          "인증정보를 자동 생성하거나 우회하지 않습니다.",
-          "접근 가능한 공식 대체 출처와 기존 정상자료를 검증합니다."
+          "발생 함수·파일·입력 범위를 확인합니다.",
+          "동일 조건에서 안전하게 재현되는지 검사합니다.",
+          "원인을 확인한 뒤 전용 회귀검사를 추가합니다."
         ],
         "verification_steps": [
-          "접근 가능한 공식 대체 출처와 기존 정상자료를 검증합니다.",
+          "원인을 확인한 뒤 전용 회귀검사를 추가합니다.",
           "기존 정상자료가 손상되지 않았는지 확인합니다."
         ],
-        "group_id": "e4d8455ef1613f80"
+        "group_id": "aaa821f0d44d8cbf"
+      },
+      {
+        "code": "DATA_SCHEMA_ERROR",
+        "title": "JSON·자료 구조 오류",
+        "category": "데이터 구조 오류",
+        "error_subtype": "schema",
+        "file": "graded_photo_candidates.json",
+        "detail": "ValueError: graded_photo_candidates.json 파일의 세부 보안·무결성 검증에 실패했습니다",
+        "probable_cause": "수집 결과가 표준 JSON 또는 파일별 필수 구조와 맞지 않을 가능성이 큽니다.",
+        "safe_action": "손상 결과 폐기 · 마지막 정상본 복원",
+        "analysis_status": "신규 분석",
+        "last_outcome": "unresolved",
+        "first_seen": "2026-09-19T18:56:37+00:00",
+        "last_seen": "2026-09-19T18:56:37+00:00",
+        "occurrences": 1,
+        "unresolved_count": 1,
+        "http_status": null,
+        "bounded_retry_allowed": false,
+        "http_statuses": [],
+        "resolution_steps": [
+          "표준 JSON과 필수 필드를 검사합니다.",
+          "손상 결과를 폐기하고 검증된 정상 백업만 확인합니다.",
+          "복원 후 전체 데이터 회귀검사를 실행합니다."
+        ],
+        "verification_steps": [
+          "복원 후 전체 데이터 회귀검사를 실행합니다.",
+          "기존 정상자료가 손상되지 않았는지 확인합니다."
+        ],
+        "group_id": "e47739a8df7f24de"
       }
     ],
     "top_groups": [
@@ -1012,21 +1035,19 @@
         "stop_conditions": []
       },
       {
-        "group_id": "e4d8455ef1613f80",
-        "code": "NETWORK_HTTP_ERROR",
-        "title": "HTTP 접근 권한 오류",
-        "category": "통신 오류",
-        "error_subtype": "access-403",
-        "http_status": 403,
-        "http_statuses": [
-          403
-        ],
+        "group_id": "aaa821f0d44d8cbf",
+        "code": "UNCLASSIFIED_ERROR",
+        "title": "분류되지 않은 신규 오류",
+        "category": "기타 수집 오류",
+        "error_subtype": "general",
+        "http_status": null,
+        "http_statuses": [],
         "bounded_retry_allowed": false,
         "occurrences": 1,
         "resolved_count": 0,
         "unresolved_count": 1,
-        "first_seen": "2026-09-19T12:57:58+00:00",
-        "last_seen": "2026-09-19T12:57:58+00:00",
+        "first_seen": "2026-09-19T18:56:37+00:00",
+        "last_seen": "2026-09-19T18:56:37+00:00",
         "last_outcome": "unresolved",
         "analysis_status": "신규 분석",
         "affected_files": [
@@ -1035,33 +1056,84 @@
         "unresolved_files": [
           "market_prices.json"
         ],
-        "probable_cause": "원출처가 인증 또는 접근 권한 부족 응답을 반환했습니다. 같은 요청을 반복해도 해결되지 않습니다.",
-        "safe_action": "상태별 제한 재시도 · 영구 오류 중단",
-        "recommended_action": "HTTP 상태·Retry-After·공식 주소 변경 여부를 확인하세요.",
+        "probable_cause": "기존 규칙에 없는 오류입니다. 상세정보를 비식별화해 기록하고 재현 범위를 확인해야 합니다.",
+        "safe_action": "자동조치 확대 금지 · 신규 원인 기록",
+        "recommended_action": "오류 상세와 발생 범위를 비식별화해 확인하세요.",
         "resolution_steps": [
-          "공식 주소와 공개 접근 가능 여부를 확인합니다.",
-          "인증정보를 자동 생성하거나 우회하지 않습니다.",
-          "접근 가능한 공식 대체 출처와 기존 정상자료를 검증합니다."
+          "발생 함수·파일·입력 범위를 확인합니다.",
+          "동일 조건에서 안전하게 재현되는지 검사합니다.",
+          "원인을 확인한 뒤 전용 회귀검사를 추가합니다."
         ],
         "verification_steps": [
-          "접근 가능한 공식 대체 출처와 기존 정상자료를 검증합니다.",
+          "원인을 확인한 뒤 전용 회귀검사를 추가합니다.",
           "기존 정상자료가 손상되지 않았는지 확인합니다."
         ],
-        "last_detail": "NARUTO CP-001: HTTPError: status 403",
+        "last_detail": "KREAM HIT: 거래가격 패턴 0건",
         "scenario_prepared": true,
-        "scenario_profile_id": "86f264b1c7ed0a2c",
-        "prepared_scenario_count": 1,
-        "diagnostic_priority": 20,
+        "scenario_profile_id": "c1b51c7e7e7921f8",
+        "prepared_scenario_count": 2,
+        "diagnostic_priority": 25,
         "first_checks": [
-          "HTTP 상태와 Retry-After 존재 여부를 먼저 확인합니다."
+          "비식별화한 예외형·함수·입력 범위를 기록합니다."
         ],
         "fast_resolution_steps": [
-          "공식 주소와 공개 접근 가능 여부를 확인합니다.",
-          "인증정보를 자동 생성하거나 우회하지 않습니다.",
-          "접근 가능한 공식 대체 출처와 기존 정상자료를 검증합니다."
+          "발생 함수·파일·입력 범위를 확인합니다.",
+          "동일 조건에서 안전하게 재현되는지 검사합니다.",
+          "원인을 확인한 뒤 전용 회귀검사를 추가합니다."
         ],
         "stop_conditions": [
-          "401·403·404·410은 같은 주소를 자동 재시도하지 않습니다."
+          "전용 회귀검사가 생기기 전 자동조치를 확대하지 않습니다."
+        ]
+      },
+      {
+        "group_id": "e47739a8df7f24de",
+        "code": "DATA_SCHEMA_ERROR",
+        "title": "JSON·자료 구조 오류",
+        "category": "데이터 구조 오류",
+        "error_subtype": "schema",
+        "http_status": null,
+        "http_statuses": [],
+        "bounded_retry_allowed": false,
+        "occurrences": 1,
+        "resolved_count": 0,
+        "unresolved_count": 1,
+        "first_seen": "2026-09-19T18:56:37+00:00",
+        "last_seen": "2026-09-19T18:56:37+00:00",
+        "last_outcome": "unresolved",
+        "analysis_status": "신규 분석",
+        "affected_files": [
+          "graded_photo_candidates.json"
+        ],
+        "unresolved_files": [
+          "graded_photo_candidates.json"
+        ],
+        "probable_cause": "수집 결과가 표준 JSON 또는 파일별 필수 구조와 맞지 않을 가능성이 큽니다.",
+        "safe_action": "손상 결과 폐기 · 마지막 정상본 복원",
+        "recommended_action": "표준 JSON·최상위 형식·필수 항목을 확인하세요.",
+        "resolution_steps": [
+          "표준 JSON과 필수 필드를 검사합니다.",
+          "손상 결과를 폐기하고 검증된 정상 백업만 확인합니다.",
+          "복원 후 전체 데이터 회귀검사를 실행합니다."
+        ],
+        "verification_steps": [
+          "복원 후 전체 데이터 회귀검사를 실행합니다.",
+          "기존 정상자료가 손상되지 않았는지 확인합니다."
+        ],
+        "last_detail": "ValueError: graded_photo_candidates.json 파일의 세부 보안·무결성 검증에 실패했습니다",
+        "scenario_prepared": true,
+        "scenario_profile_id": "0d63d848a2cfe046",
+        "prepared_scenario_count": 1,
+        "diagnostic_priority": 8,
+        "first_checks": [
+          "표준 JSON·필수 필드·중복 키를 검사합니다."
+        ],
+        "fast_resolution_steps": [
+          "표준 JSON과 필수 필드를 검사합니다.",
+          "손상 결과를 폐기하고 검증된 정상 백업만 확인합니다.",
+          "복원 후 전체 데이터 회귀검사를 실행합니다."
+        ],
+        "stop_conditions": [
+          "손상 결과를 운영 파일에 저장하지 않습니다."
         ]
       },
       {
@@ -1117,16 +1189,16 @@
     "quarantined_for_code_repair": 0,
     "duplicate_active_signatures_suppressed": 0,
     "duplicate_policy_observations_suppressed": 0,
-    "active_files": 1,
+    "active_files": 0,
     "code_repair_learning": {
       "ok": true,
       "runs": 1,
-      "new_candidates": 0,
+      "new_candidates": 1,
       "repeated_candidates": 0,
       "verified_fix_regressions": 0,
       "duplicate_signatures_suppressed": 0,
       "observed_resolved": 0,
-      "open_candidates": 0,
+      "open_candidates": 1,
       "verified_fixed": 0,
       "safety": {
         "learned_text_executable": false,
