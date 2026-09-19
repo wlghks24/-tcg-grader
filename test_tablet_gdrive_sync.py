@@ -10,6 +10,9 @@ import unittest
 import tablet_gdrive_sync as sync
 
 
+ROOT = Path(__file__).resolve().parent
+
+
 class TabletGDriveSyncTests(unittest.TestCase):
     def build_fixture(self):
         td = Path(tempfile.mkdtemp())
@@ -86,6 +89,18 @@ class TabletGDriveSyncTests(unittest.TestCase):
         with self.assertRaises(ValueError):
             sync.safe_remote_name("gdrive\n--config=x")
         self.assertEqual(sync.safe_remote_name("gdrive:"), "gdrive")
+
+    def test_installer_polls_exactly_every_12_hours(self):
+        installer = (ROOT / "TABLET_GDRIVE_SYNC_INSTALL.sh").read_text(encoding="utf-8")
+        self.assertIn('CRON_LINE="0 8,20 * * *', installer)
+        self.assertNotIn('CRON_LINE="*/15 * * * *', installer)
+        self.assertIn('주기: 12시간마다 1회', installer)
+
+    def test_boot_only_recovers_crond_without_extra_sync(self):
+        installer = (ROOT / "TABLET_GDRIVE_SYNC_INSTALL.sh").read_text(encoding="utf-8")
+        boot_block = installer.split('cat > "$BOOT_FILE" <<EOF', 1)[1].split('EOF', 1)[0]
+        self.assertIn('crond', boot_block)
+        self.assertNotIn('TABLET_GDRIVE_SYNC.sh', boot_block)
 
 
 if __name__ == "__main__":

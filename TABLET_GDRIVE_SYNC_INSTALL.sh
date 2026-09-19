@@ -55,7 +55,9 @@ if ! rclone lsf "${REMOTE}:${REMOTE_ROOT}" --dirs-only --max-depth 1 >/dev/null 
   exit 4
 fi
 
-CRON_LINE="*/15 * * * * cd '$REPO' && bash '$REPO/TABLET_GDRIVE_SYNC.sh' >> '$STATE/cron.log' 2>&1"
+# GPT의 07:00 KST 검증 작업 이후 충분한 반영 여유를 두고 하루 2회 확인합니다.
+# 태블릿의 현지시간 기준 08:00 / 20:00이며 정확히 12시간 간격입니다.
+CRON_LINE="0 8,20 * * * cd '$REPO' && bash '$REPO/TABLET_GDRIVE_SYNC.sh' >> '$STATE/cron.log' 2>&1"
 ( crontab -l 2>/dev/null | grep -Fv "TABLET_GDRIVE_SYNC.sh" || true
   printf '%s\n' "$CRON_LINE"
 ) | crontab -
@@ -65,8 +67,6 @@ cat > "$BOOT_FILE" <<EOF
 set -u
 termux-wake-lock >/dev/null 2>&1 || true
 pgrep -x crond >/dev/null 2>&1 || crond
-cd '$REPO' || exit 0
-bash '$REPO/TABLET_GDRIVE_SYNC.sh' >> '$STATE/boot-sync.log' 2>&1 &
 EOF
 chmod +x "$BOOT_FILE"
 
@@ -77,10 +77,10 @@ rc=0
 bash "$REPO/TABLET_GDRIVE_SYNC.sh" || rc=$?
 if [ "$rc" = "0" ] || [ "$rc" = "75" ]; then
   echo "[OK] GPT→Drive→태블릿 자동 동기화 설치 완료"
-  echo "     주기: 15분"
+  echo "     주기: 12시간마다 1회 (08:00 / 20:00, 태블릿 현지시간)"
   echo "     Drive: ${REMOTE}:${REMOTE_ROOT}"
   echo "     부팅 자동실행: $BOOT_FILE"
-  echo "[중요] Termux:Boot 앱을 설치한 경우 재부팅 후에도 자동 시작됩니다."
+  echo "[중요] Termux:Boot 앱을 설치한 경우 재부팅 후 crond가 자동 시작됩니다."
   exit 0
 fi
 echo "[안내] 설치는 완료됐지만 첫 동기화가 HOLD 상태입니다(rc=$rc). 로그를 확인하세요: $STATE"
