@@ -11,7 +11,7 @@
 5. 로그인할 때 서버 자동실행이 필요하면 `PC_SERVER_AUTO_START_INSTALL.bat`을 한 번 실행합니다.
 6. 자동실행 해제는 `PC_SERVER_AUTO_START_REMOVE.bat`을 실행합니다.
 
-자료 7단계 업데이트와 5회 검사는 `TCG_AUTO_UPDATE.bat`, 검사만 실행할 때는 `RUN_FULL_VERIFICATION.bat`을 사용합니다.
+자료 8단계 업데이트와 5회 검사는 `TCG_AUTO_UPDATE.bat`, 검사만 실행할 때는 `RUN_FULL_VERIFICATION.bat`을 사용합니다.
 
 Node.js는 앱 실행에 필요하지 않습니다. 라벨 OCR까지 사용하려면 Tesseract OCR을 설치하고 `tesseract` 명령이 PATH에 보여야 합니다. 미설치 시에도 수집·이미지 유효성 검사는 작동하고 OCR 항목만 보류됩니다. Node.js가 설치되어 있으면 JavaScript·카메라·서비스워커 런타임 검사까지 실행하고, 없으면 해당 개발용 검사만 명확히 건너뜁니다. 배포 전 엄격검사는 `TCG_REQUIRE_NODE=1` 환경에서 수행합니다.
 
