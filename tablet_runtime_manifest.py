@@ -10,7 +10,7 @@ ACTIVE_RUNTIME_FILES=(
 "auto_repair_engine.py","auto_update_all.py","collection_job_contract.py","collector_self_healing.py","tcg_code_repair_learning.py",
 "tcg_updater.py","tcg_updater_v135.py","runtime_bundle_guard_v143.py","update_releases.py",
 "update_market_watch.py","update_market_prices.py","update_promo_events.py","update_purchase_sources.py",
-"update_exchange_rates.py","graded_photo_multi_source.py","graded_photo_manual_pair_queue.py",
+"update_exchange_rates.py","grading_company_watch.py","graded_photo_multi_source.py","graded_photo_manual_pair_queue.py",
 "grading_cert_verifier.py","manual_collection_mode.py","manual_graded_photo_registration.py",
 "manual_dual_photo_registration.py","manual_dual_photo_bridge.js","manual_official_proof.py",
 "ocr_accuracy_boost_v147.py","public_ocr_accuracy_boost_v147.py","ocr_front_back_fallback_v148.py",
@@ -23,7 +23,7 @@ ACTIVE_RUNTIME_FILES=(
 # Browser assets are executable/visible parts of the tablet runtime too. Keep
 # them in the fail-closed manifest so a partial checkout cannot pass startup
 # merely because the Python backend still compiles.
-"grading_vision_engine.js","grade_market_flow.js","inventory_lookup.js","inventory_lookup.css",
+"grading_vision_engine.js","grade_market_flow.js","grading_costs_live.js","grading_costs_live.css","inventory_lookup.js","inventory_lookup.css",
 "box_knowledge_stats.js","feature_category_nav.js","feature_category_nav.css","sw.js")
 def audit(root:Path=ROOT,*,compile_python:bool=False)->dict:
     missing=[]; symlinks=[]; compile_errors=[]; checked_python=0
