@@ -85,6 +85,32 @@ class PublicSearchUrlBudgetV216Tests(unittest.TestCase):
         self.assertIn("포켓몬", query)
         validate_public_https_url(url, social.DDG_HOSTS)
 
+    def test_cross_region_multilingual_anchors_survive_url_budget(self):
+        class GapLearner:
+            def top_terms_for_region(self, game, region, limit=8):
+                return ("Nike", "応募者全員サービス")
+
+        registry = {
+            "watch_accounts": [{
+                "game": "원피스 카드",
+                "region": "JP",
+                "content_regions": ["JP", "KR"],
+                "trusted": False,
+                "role": "collector community watch",
+                "username": "onepiececard_news",
+            }]
+        }
+        query = v144.build_public_social_query(
+            "원피스 카드", "JP", registry, fan_learner=None, gap_learner=GapLearner()
+        )
+        url = "https://html.duckduckgo.com/html/?" + urllib.parse.urlencode({"q": query})
+        self.assertIn("onepiececard_news", query)
+        self.assertIn("응모", query)
+        self.assertIn("応募", query)
+        self.assertIn("application", query)
+        self.assertIn("Nike", query)
+        self.assertLessEqual(len(url), v144.MAX_PUBLIC_SEARCH_URL_CHARS)
+
     def test_diagnostics_preserve_valueerror_reason_without_bypass(self):
         summary = routes._error_summary("Bing social 포켓몬 카드/KR", ValueError("invalid url"))
         self.assertIn("ValueError", summary)

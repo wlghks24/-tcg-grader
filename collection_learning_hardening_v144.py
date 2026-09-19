@@ -198,10 +198,27 @@ def build_public_social_query(game: str, region: str, registry: dict, fan_learne
         learned_terms = ()
 
     lang_order = (lang,) + tuple(key for key in ("ko", "ja", "en") if key != lang)
-    multilingual = []
-    for key in lang_order:
-        multilingual.extend(RECOVERY_TERMS[key])
-    multilingual.extend(learned_terms)
+    # Preserve cross-region recovery semantics even when the encoded URL must be
+    # shortened.  The previous target-language-first concatenation could fill
+    # the watch-term budget before Korean/Japanese/English evidence from the
+    # other regions was reached (for example JP lost the verified KR term 응모).
+    # Put one stable application anchor from every language first, then interleave
+    # the remaining language vocabularies round-robin.  This changes search
+    # ordering only; it never changes trust/verification state.
+    mandatory_multilingual = ("응모", "応募", "application")
+    multilingual = list(mandatory_multilingual)
+    max_recovery_terms = max(len(RECOVERY_TERMS[key]) for key in lang_order)
+    for index in range(max_recovery_terms):
+        for key in lang_order:
+            values = RECOVERY_TERMS[key]
+            if index >= len(values):
+                continue
+            value = values[index]
+            if value not in multilingual:
+                multilingual.append(value)
+    for value in learned_terms:
+        if value not in multilingual:
+            multilingual.append(value)
 
     # Richest-first presets.  Query semantics degrade gracefully by dropping
     # optional fan/account/learned expansion before the shared HTTPS guard would
