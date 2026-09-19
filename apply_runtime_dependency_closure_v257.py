@@ -15,7 +15,8 @@ if text.count(old_tail)!=1:
 text=text.replace(old_tail,new_tail,1)
 path.write_text(text,encoding='utf-8')
 
-manifest=Path('tablet_runtime_manifest.py').read_text(encoding='utf-8')
+manifest_path=Path('tablet_runtime_manifest.py')
+manifest=manifest_path.read_text(encoding='utf-8')
 required=(
     'grading_accuracy_v99.py','server_security_guard.py','grading_accuracy_v99.js','card_identity_recognition.js',
     'auto_market_center.js','multi_market_prices.js','auto_validation_flow.js','grading_proxy_costs.js',
@@ -26,4 +27,6 @@ required=(
 missing=[item for item in required if item not in manifest]
 if missing:
     raise SystemExit(f'manifest patch incomplete: {missing}')
+manifest=manifest.replace('"schema_version":2,','"schema_version":1,')
+manifest_path.write_text(manifest,encoding='utf-8')
 print('runtime dependency closure v257 patch applied')
