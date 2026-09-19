@@ -1,6 +1,7 @@
 name: Apply eight-job guidance v219
 
 on:
+  workflow_dispatch:
   push:
     branches:
       - fix/update-guidance-eight-jobs-v219
