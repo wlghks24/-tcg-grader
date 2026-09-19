@@ -2,20 +2,20 @@
   "version": 1,
   "jobs": {
     "exchange_rates.json": {
-      "runs": 64,
-      "successes": 45,
+      "runs": 65,
+      "successes": 46,
       "failures": 0,
       "timeouts": 0,
       "partial_successes": 19,
       "recovered_successes": 17,
-      "last_seconds": 0.557,
+      "last_seconds": 0.418,
       "last_ok": true,
       "last_recovered": false,
-      "success_streak": 44,
+      "success_streak": 45,
       "consecutive_failures": 0,
-      "success_ewma_seconds": 0.512,
-      "ewma_seconds": 0.512,
-      "last_run": "2026-09-19T11:51:33+00:00",
+      "success_ewma_seconds": 0.484,
+      "ewma_seconds": 0.484,
+      "last_run": "2026-09-19T12:57:39+00:00",
       "error_patterns": {
         "93697047de8f": {
           "count": 1,
@@ -45,20 +45,20 @@
       "streak_reset_reason": "observation_gap_over_72h"
     },
     "__integration__": {
-      "runs": 61,
-      "successes": 45,
+      "runs": 62,
+      "successes": 46,
       "failures": 13,
       "timeouts": 3,
       "partial_successes": 0,
       "recovered_successes": 3,
-      "last_seconds": 126.2,
+      "last_seconds": 102.594,
       "last_ok": true,
       "last_recovered": false,
-      "success_streak": 18,
+      "success_streak": 19,
       "consecutive_failures": 0,
-      "success_ewma_seconds": 185.321,
-      "ewma_seconds": 185.321,
-      "last_run": "2026-09-19T11:55:18+00:00",
+      "success_ewma_seconds": 160.503,
+      "ewma_seconds": 160.503,
+      "last_run": "2026-09-19T12:59:40+00:00",
       "timeout_exhaustions": 0,
       "deferred_attempts": 0,
       "deferred_successes": 0,
@@ -88,16 +88,16 @@
       "streak_reset_reason": "observation_gap_over_72h"
     },
     "__link_audit__": {
-      "runs": 61,
-      "successes": 39,
+      "runs": 62,
+      "successes": 40,
       "failures": 0,
       "timeouts": 0,
       "partial_successes": 22,
       "recovered_successes": 0,
-      "last_seconds": 75.022,
+      "last_seconds": 92.54,
       "last_ok": true,
       "last_recovered": false,
-      "success_streak": 7,
+      "success_streak": 8,
       "consecutive_failures": 0,
       "error_patterns": {
         "355705cf62a5": {
@@ -147,7 +147,7 @@
         }
       },
       "dominant_error_signature": "cf8b8ee20def",
-      "last_run": "2026-09-19T11:54:27+00:00",
+      "last_run": "2026-09-19T12:59:30+00:00",
       "timeout_exhaustions": 0,
       "deferred_attempts": 0,
       "deferred_successes": 0,
@@ -157,12 +157,12 @@
       "deferred_pending": false,
       "streak_reset_at": "2026-09-10T04:51:52+00:00",
       "streak_reset_reason": "observation_gap_over_72h",
-      "success_ewma_seconds": 87.056,
-      "ewma_seconds": 87.056
+      "success_ewma_seconds": 88.701,
+      "ewma_seconds": 88.701
     },
     "market_watch.json": {
-      "runs": 57,
-      "successes": 57,
+      "runs": 58,
+      "successes": 58,
       "failures": 0,
       "timeouts": 0,
       "partial_successes": 0,
@@ -170,11 +170,11 @@
       "last_seconds": 0.07,
       "last_ok": true,
       "last_recovered": false,
-      "success_streak": 44,
+      "success_streak": 45,
       "consecutive_failures": 0,
-      "success_ewma_seconds": 0.067,
-      "ewma_seconds": 0.067,
-      "last_run": "2026-09-19T11:51:33+00:00",
+      "success_ewma_seconds": 0.068,
+      "ewma_seconds": 0.068,
+      "last_run": "2026-09-19T12:57:38+00:00",
       "timeout_exhaustions": 0,
       "deferred_attempts": 0,
       "deferred_successes": 0,
@@ -187,16 +187,16 @@
       "streak_reset_reason": "observation_gap_over_72h"
     },
     "releases.json": {
-      "runs": 57,
-      "successes": 38,
+      "runs": 58,
+      "successes": 39,
       "failures": 0,
       "timeouts": 0,
       "partial_successes": 19,
       "recovered_successes": 13,
-      "last_seconds": 26.558,
+      "last_seconds": 36.271,
       "last_ok": true,
       "last_recovered": false,
-      "success_streak": 7,
+      "success_streak": 8,
       "consecutive_failures": 0,
       "error_patterns": {
         "366db33edeb6": {
@@ -271,7 +271,7 @@
         }
       },
       "dominant_error_signature": "dc7a3dae4914",
-      "last_run": "2026-09-19T11:51:14+00:00",
+      "last_run": "2026-09-19T12:57:19+00:00",
       "timeout_exhaustions": 0,
       "deferred_attempts": 0,
       "deferred_successes": 0,
@@ -281,21 +281,21 @@
       "deferred_pending": false,
       "streak_reset_at": "2026-09-10T04:47:07+00:00",
       "streak_reset_reason": "observation_gap_over_72h",
-      "success_ewma_seconds": 30.663,
-      "ewma_seconds": 30.663
+      "success_ewma_seconds": 32.345,
+      "ewma_seconds": 32.345
     },
     "market_prices.json": {
-      "runs": 57,
+      "runs": 58,
       "successes": 41,
       "failures": 1,
       "timeouts": 0,
-      "partial_successes": 15,
+      "partial_successes": 16,
       "recovered_successes": 13,
-      "last_seconds": 181.003,
-      "last_ok": true,
+      "last_seconds": 120.696,
+      "last_ok": false,
       "last_recovered": false,
-      "success_streak": 7,
-      "consecutive_failures": 0,
+      "success_streak": 0,
+      "consecutive_failures": 1,
       "error_patterns": {
         "0e8e4bf5d058": {
           "count": 13,
@@ -313,13 +313,13 @@
           "last_seen": "2026-09-11T04:00:51+00:00"
         },
         "8190fad5ba14": {
-          "count": 1,
+          "count": 2,
           "sample": "NARUTO CP-001: HTTPError: status 403",
-          "last_seen": "2026-09-18T07:01:06+00:00"
+          "last_seen": "2026-09-19T12:57:58+00:00"
         }
       },
       "dominant_error_signature": "0e8e4bf5d058",
-      "last_run": "2026-09-19T11:53:12+00:00",
+      "last_run": "2026-09-19T12:57:58+00:00",
       "timeout_exhaustions": 0,
       "deferred_attempts": 0,
       "deferred_successes": 0,
@@ -330,19 +330,20 @@
       "streak_reset_at": "2026-09-10T04:50:08+00:00",
       "streak_reset_reason": "observation_gap_over_72h",
       "success_ewma_seconds": 169.312,
-      "ewma_seconds": 169.312
+      "ewma_seconds": 169.312,
+      "last_error_signature": "8190fad5ba14"
     },
     "promo_events.json": {
-      "runs": 57,
-      "successes": 37,
+      "runs": 58,
+      "successes": 38,
       "failures": 0,
       "timeouts": 0,
       "partial_successes": 19,
       "recovered_successes": 14,
-      "last_seconds": 36.387,
+      "last_seconds": 45.853,
       "last_ok": true,
       "last_recovered": false,
-      "success_streak": 7,
+      "success_streak": 8,
       "consecutive_failures": 0,
       "error_patterns": {
         "386416d74406": {
@@ -367,7 +368,7 @@
         }
       },
       "dominant_error_signature": "386416d74406",
-      "last_run": "2026-09-19T11:50:47+00:00",
+      "last_run": "2026-09-19T12:56:43+00:00",
       "timeout_exhaustions": 0,
       "deferred_attempts": 0,
       "deferred_successes": 0,
@@ -377,20 +378,20 @@
       "deferred_pending": false,
       "streak_reset_at": "2026-09-10T04:47:44+00:00",
       "streak_reset_reason": "observation_gap_over_72h",
-      "success_ewma_seconds": 45.578,
-      "ewma_seconds": 45.578
+      "success_ewma_seconds": 45.661,
+      "ewma_seconds": 45.661
     },
     "purchase_sources.json": {
-      "runs": 58,
-      "successes": 37,
+      "runs": 59,
+      "successes": 38,
       "failures": 2,
       "timeouts": 2,
       "partial_successes": 19,
       "recovered_successes": 13,
-      "last_seconds": 2.512,
+      "last_seconds": 2.87,
       "last_ok": true,
       "last_recovered": false,
-      "success_streak": 1,
+      "success_streak": 2,
       "consecutive_failures": 0,
       "error_patterns": {
         "763f8bb5b931": {
@@ -415,7 +416,7 @@
         }
       },
       "dominant_error_signature": "763f8bb5b931",
-      "last_run": "2026-09-19T11:51:29+00:00",
+      "last_run": "2026-09-19T12:57:36+00:00",
       "timeout_exhaustions": 1,
       "deferred_attempts": 1,
       "deferred_successes": 0,
@@ -425,27 +426,27 @@
       "deferred_pending": true,
       "streak_reset_at": "2026-09-10T04:48:07+00:00",
       "streak_reset_reason": "observation_gap_over_72h",
-      "success_ewma_seconds": 9.476,
-      "ewma_seconds": 9.476,
+      "success_ewma_seconds": 7.494,
+      "ewma_seconds": 7.494,
       "last_deferred_duration_seconds": 183.109,
       "last_deferred_at": "2026-09-19T07:06:02+00:00",
       "last_deferred_status": "pending"
     },
     "graded_photo_candidates.json": {
-      "runs": 45,
-      "successes": 42,
+      "runs": 46,
+      "successes": 43,
       "failures": 1,
       "timeouts": 1,
       "partial_successes": 0,
       "recovered_successes": 2,
-      "last_seconds": 12.772,
+      "last_seconds": 13.519,
       "last_ok": true,
       "last_recovered": false,
-      "success_streak": 6,
+      "success_streak": 7,
       "consecutive_failures": 0,
-      "success_ewma_seconds": 22.268,
-      "ewma_seconds": 22.268,
-      "last_run": "2026-09-19T11:51:27+00:00",
+      "success_ewma_seconds": 19.643,
+      "ewma_seconds": 19.643,
+      "last_run": "2026-09-19T12:57:33+00:00",
       "timeout_exhaustions": 1,
       "deferred_attempts": 1,
       "deferred_successes": 1,
@@ -476,20 +477,20 @@
       "last_deferred_status": "recovered"
     },
     "grading_company_updates.json": {
-      "runs": 40,
-      "successes": 39,
+      "runs": 41,
+      "successes": 40,
       "failures": 0,
       "timeouts": 0,
       "partial_successes": 0,
       "recovered_successes": 1,
-      "last_seconds": 3.306,
+      "last_seconds": 2.382,
       "last_ok": true,
       "last_recovered": false,
-      "success_streak": 21,
+      "success_streak": 22,
       "consecutive_failures": 0,
-      "success_ewma_seconds": 3.789,
-      "ewma_seconds": 3.789,
-      "last_run": "2026-09-19T11:51:33+00:00",
+      "success_ewma_seconds": 3.367,
+      "ewma_seconds": 3.367,
+      "last_run": "2026-09-19T12:57:38+00:00",
       "timeout_exhaustions": 0,
       "deferred_attempts": 0,
       "deferred_successes": 0,
@@ -507,5 +508,5 @@
       "dominant_error_signature": "646ed4d2673b"
     }
   },
-  "updated_at": "2026-09-19T11:55:18+00:00"
+  "updated_at": "2026-09-19T12:59:40+00:00"
 }
