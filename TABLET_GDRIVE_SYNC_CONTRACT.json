@@ -1,0 +1,38 @@
+{
+  "schema_version": "1.0-tcg-tablet-drive-sync",
+  "repository": "wlghks24/-tcg-grader",
+  "transport": "google_drive",
+  "remote_root": "TCG_Grader_Sync",
+  "folders": {
+    "inbound": "to_tablet",
+    "receipts": "receipts",
+    "last_good": "last_good",
+    "quarantine": "quarantine"
+  },
+  "source": "chatgpt_automation",
+  "required_outputs": [
+    "releases.json",
+    "promo_events.json",
+    "supplementary_candidates.json",
+    "social_event_candidates.json",
+    "purchase_signals.json",
+    "social_stock_signals.json",
+    "market_prices.json",
+    "market_watch.json",
+    "purchase_sources.json",
+    "exchange_rates.json",
+    "grading_company_updates.json",
+    "graded_photo_candidates.json",
+    "source_collection_stats.json",
+    "adaptive_collection_stats.json",
+    "auto_update_report.json",
+    "auto_update_issues.json",
+    "tcg_live_data.json"
+  ],
+  "manifest_pattern": "manifest_YYYYMMDDTHHMMSSZ_<run_id>.json",
+  "bundle_pattern": "TCG_VERIFIED_YYYYMMDDTHHMMSSZ_<run_id>.tar.gz",
+  "receipt_pattern": "TABLET_SYNC_RECEIPT_<run_id>.json",
+  "success_status": "TABLET_SYNC_OK",
+  "failure_status": "FAILED_ROLLED_BACK",
+  "no_receipt_status": "TABLET_SYNC_PENDING"
+}

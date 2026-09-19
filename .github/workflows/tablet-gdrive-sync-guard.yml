@@ -1,0 +1,43 @@
+name: Tablet Google Drive Sync Guard
+
+on:
+  pull_request:
+    paths:
+      - 'tablet_gdrive_sync.py'
+      - 'TABLET_GDRIVE_SYNC.sh'
+      - 'TABLET_GDRIVE_SYNC_INSTALL.sh'
+      - 'TABLET_GDRIVE_SYNC_CONTRACT.json'
+      - 'TABLET_GDRIVE_SYNC.md'
+      - 'test_tablet_gdrive_sync.py'
+      - '.github/workflows/tablet-gdrive-sync-guard.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'tablet_gdrive_sync.py'
+      - 'TABLET_GDRIVE_SYNC.sh'
+      - 'TABLET_GDRIVE_SYNC_INSTALL.sh'
+      - 'TABLET_GDRIVE_SYNC_CONTRACT.json'
+      - 'TABLET_GDRIVE_SYNC.md'
+      - 'test_tablet_gdrive_sync.py'
+      - '.github/workflows/tablet-gdrive-sync-guard.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97
+        with:
+          python-version: '3.11'
+      - name: Syntax
+        run: |
+          python -m py_compile tablet_gdrive_sync.py test_tablet_gdrive_sync.py
+          bash -n TABLET_GDRIVE_SYNC.sh
+          bash -n TABLET_GDRIVE_SYNC_INSTALL.sh
+          python -m json.tool TABLET_GDRIVE_SYNC_CONTRACT.json >/dev/null
+      - name: Targeted sync tests
+        run: python -m unittest -v test_tablet_gdrive_sync.py
