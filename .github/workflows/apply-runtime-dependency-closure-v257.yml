@@ -39,6 +39,47 @@ jobs:
           python tablet_runtime_manifest.py --check --compile
       - name: Main SELFREFINE smoke gate
         run: python main_selfrefine_gate.py --self-test
+      - name: Restore expected mutable test outputs and reject source drift
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import subprocess
+
+          intended_patch_outputs={
+              'tablet_runtime_manifest.py',
+              'sw.js',
+          }
+          mutable_runtime_outputs={
+              'adaptive_collection_stats.json',
+              'auto_update_issues.json',
+              'auto_update_report.json',
+              'exchange_rates.json',
+              'graded_photo_candidates.json',
+              'grading_company_updates.json',
+              'market_prices.json',
+              'market_watch.json',
+              'promo_events.json',
+              'purchase_signals.json',
+              'purchase_sources.json',
+              'releases.json',
+              'social_event_candidates.json',
+              'social_stock_signals.json',
+              'source_collection_stats.json',
+              'supplementary_candidates.json',
+              'tcg_live_data.json',
+          }
+          changed=set(filter(None,subprocess.check_output(['git','diff','--name-only'],text=True).splitlines()))
+          unexpected=changed-intended_patch_outputs-mutable_runtime_outputs
+          assert not unexpected, f'unexpected source mutation during tests: {sorted(unexpected)}'
+          restore=sorted(changed & mutable_runtime_outputs)
+          if restore:
+              subprocess.run(['git','restore','--source=HEAD','--worktree','--',*restore],check=True)
+          after=set(filter(None,subprocess.check_output(['git','diff','--name-only'],text=True).splitlines()))
+          leftover=after-intended_patch_outputs
+          assert not leftover, f'mutable runtime cleanup incomplete: {sorted(leftover)}'
+          print('runtime test-output isolation OK:',restore)
+          PY
       - name: Remove one-shot machinery
         run: git rm apply_runtime_dependency_closure_v257.py .github/workflows/apply-runtime-dependency-closure-v257.yml
       - name: Refresh and diagnose integrity baseline
