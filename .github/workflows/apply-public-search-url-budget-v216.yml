@@ -1,0 +1,47 @@
+name: Apply public search URL budget v216
+
+on:
+  push:
+    branches:
+      - fix/public-search-url-budget-v216
+    paths:
+      - apply_public_search_url_budget_v216.py
+
+permissions:
+  contents: write
+
+jobs:
+  apply-and-verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Apply bounded public-search URL patch
+        run: python apply_public_search_url_budget_v216.py
+      - name: Compile changed collectors
+        run: python -m py_compile multi_route_event_discovery.py social_event_discovery.py collection_learning_hardening_v144.py
+      - name: Targeted regressions
+        run: >-
+          python -m unittest -v
+          test_public_search_url_budget_v216.py
+          test_multi_route_event_discovery.py
+          test_event_quick_watch.py
+          test_event_source_expansion_v145.py
+      - name: Tablet runtime compile audit
+        run: python tablet_runtime_manifest.py --check --compile
+      - name: Commit verified fix to branch
+        shell: bash
+        run: |
+          if git diff --quiet -- multi_route_event_discovery.py social_event_discovery.py collection_learning_hardening_v144.py test_public_search_url_budget_v216.py; then
+            echo 'Expected collector changes were not produced.'
+            exit 1
+          fi
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add multi_route_event_discovery.py social_event_discovery.py collection_learning_hardening_v144.py test_public_search_url_budget_v216.py
+          git commit -m 'fix: bound public search URLs before safe fetch'
+          git push origin HEAD:fix/public-search-url-budget-v216
