@@ -14,7 +14,7 @@
       "note": "한국 공식 제품·출시정보",
       "link_status": "정상",
       "last_checked_at": "2026-09-19T03:59:38+00:00",
-      "link_checked_at": "2026-09-19T03:59:55+00:00",
+      "link_checked_at": "2026-09-19T07:06:02+00:00",
       "retailer_category": "general",
       "link_statuses": {
         "url": "정상"
@@ -32,7 +32,7 @@
       "note": "한국 공식 제품·행사 정보",
       "link_status": "정상",
       "last_checked_at": "2026-09-19T03:59:38+00:00",
-      "link_checked_at": "2026-09-19T03:59:55+00:00",
+      "link_checked_at": "2026-09-19T07:06:02+00:00",
       "retailer_category": "general",
       "link_statuses": {
         "url": "정상"
@@ -49,7 +49,7 @@
       "note": "아시아 공식 출시정보·판매 안내 확인",
       "link_status": "정상",
       "last_checked_at": "2026-09-19T03:59:38+00:00",
-      "link_checked_at": "2026-09-19T03:59:55+00:00",
+      "link_checked_at": "2026-09-19T07:06:02+00:00",
       "retailer_category": "general",
       "link_statuses": {
         "url": "정상"
@@ -68,7 +68,7 @@
       "note": "판매자·정품·국가판 표기를 비교",
       "link_status": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인",
       "last_checked_at": "2026-09-19T03:59:38+00:00",
-      "link_checked_at": "2026-09-19T03:59:55+00:00",
+      "link_checked_at": "2026-09-19T07:06:02+00:00",
       "retailer_category": "general",
       "link_statuses": {
         "url_template": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인"
@@ -87,7 +87,7 @@
       "note": "판매자와 해외판 표기를 확인",
       "link_status": "사이트 접속 제한 · 브라우저 이용 가능 (HTTP 403)",
       "last_checked_at": "2026-09-19T03:59:38+00:00",
-      "link_checked_at": "2026-09-19T03:59:55+00:00",
+      "link_checked_at": "2026-09-19T07:06:02+00:00",
       "retailer_category": "general",
       "link_statuses": {
         "url_template": "사이트 접속 제한 · 브라우저 이용 가능 (HTTP 403)"
@@ -106,7 +106,7 @@
       "note": "중고·개인거래, 실물과 판매자 검증 필요",
       "link_status": "정상",
       "last_checked_at": "2026-09-19T03:59:38+00:00",
-      "link_checked_at": "2026-09-19T03:59:55+00:00",
+      "link_checked_at": "2026-09-19T07:06:02+00:00",
       "retailer_category": "general",
       "link_statuses": {
         "url_template": "정상"
@@ -125,7 +125,7 @@
       "note": "입고·후기 참고용, 판매 재고 보장 아님",
       "link_status": "정상",
       "last_checked_at": "2026-09-19T03:59:38+00:00",
-      "link_checked_at": "2026-09-19T03:59:55+00:00",
+      "link_checked_at": "2026-09-19T07:06:02+00:00",
       "retailer_category": "general",
       "link_statuses": {
         "url_template": "정상"
@@ -142,7 +142,7 @@
       "note": "일본 공식 제품·출시정보",
       "link_status": "정상",
       "last_checked_at": "2026-09-19T03:59:38+00:00",
-      "link_checked_at": "2026-09-19T03:59:55+00:00",
+      "link_checked_at": "2026-09-19T07:06:02+00:00",
       "retailer_category": "general",
       "link_statuses": {
         "url": "정상"
@@ -159,7 +159,7 @@
       "note": "일본 공식 온라인 스토어",
       "link_status": "정상",
       "last_checked_at": "2026-09-19T03:59:38+00:00",
-      "link_checked_at": "2026-09-19T03:59:55+00:00",
+      "link_checked_at": "2026-09-19T07:06:02+00:00",
       "retailer_category": "general",
       "link_statuses": {
         "url": "정상"
@@ -176,7 +176,7 @@
       "note": "일본 공식 제품정보",
       "link_status": "정상",
       "last_checked_at": "2026-09-19T03:59:38+00:00",
-      "link_checked_at": "2026-09-19T03:59:55+00:00",
+      "link_checked_at": "2026-09-19T07:06:02+00:00",
       "retailer_category": "general",
       "link_statuses": {
         "url": "정상"
@@ -193,7 +193,7 @@
       "note": "공식 출시·지역정보 확인",
       "link_status": "정상",
       "last_checked_at": "2026-09-19T03:59:38+00:00",
-      "link_checked_at": "2026-09-19T03:59:55+00:00",
+      "link_checked_at": "2026-09-19T07:06:02+00:00",
       "retailer_category": "general",
       "link_statuses": {
         "url": "정상"
@@ -212,7 +212,7 @@
       "note": "판매·배송 주체와 정품 여부 확인",
       "link_status": "사이트 접속 제한 · 브라우저 이용 가능 (HTTP 405)",
       "last_checked_at": "2026-09-19T03:59:38+00:00",
-      "link_checked_at": "2026-09-19T03:59:55+00:00",
+      "link_checked_at": "2026-09-19T07:06:02+00:00",
       "retailer_category": "general",
       "link_statuses": {
         "url_template": "사이트 접속 제한 · 브라우저 이용 가능 (HTTP 405)"
@@ -231,7 +231,7 @@
       "note": "일본 판매점 비교 검색",
       "link_status": "정상",
       "last_checked_at": "2026-09-19T03:59:38+00:00",
-      "link_checked_at": "2026-09-19T03:59:55+00:00",
+      "link_checked_at": "2026-09-19T07:06:02+00:00",
       "retailer_category": "general",
       "link_statuses": {
         "url_template": "정상"
@@ -250,7 +250,7 @@
       "note": "중고·개인거래, 상태와 진품 검증 필요",
       "link_status": "정상",
       "last_checked_at": "2026-09-19T03:59:38+00:00",
-      "link_checked_at": "2026-09-19T03:59:55+00:00",
+      "link_checked_at": "2026-09-19T07:06:02+00:00",
       "retailer_category": "general",
       "link_statuses": {
         "url_template": "정상"
@@ -269,7 +269,7 @@
       "note": "상점·블로그·입고정보 통합 참고",
       "link_status": "정상",
       "last_checked_at": "2026-09-19T03:59:38+00:00",
-      "link_checked_at": "2026-09-19T03:59:55+00:00",
+      "link_checked_at": "2026-09-19T07:06:02+00:00",
       "retailer_category": "general",
       "link_statuses": {
         "url_template": "정상"
@@ -286,7 +286,7 @@
       "note": "미국 공식 온라인 스토어",
       "link_status": "정상",
       "last_checked_at": "2026-09-19T03:59:38+00:00",
-      "link_checked_at": "2026-09-19T03:59:55+00:00",
+      "link_checked_at": "2026-09-19T07:06:02+00:00",
       "retailer_category": "general",
       "link_statuses": {
         "url": "정상"
@@ -303,7 +303,7 @@
       "note": "미국 공식 취급점·행사 위치 검색",
       "link_status": "정상",
       "last_checked_at": "2026-09-19T03:59:38+00:00",
-      "link_checked_at": "2026-09-19T03:59:55+00:00",
+      "link_checked_at": "2026-09-19T07:06:02+00:00",
       "retailer_category": "general",
       "link_statuses": {
         "url": "정상"
@@ -320,7 +320,7 @@
       "note": "영문판 공식 제품·스토어 안내",
       "link_status": "정상",
       "last_checked_at": "2026-09-19T03:59:38+00:00",
-      "link_checked_at": "2026-09-19T03:59:55+00:00",
+      "link_checked_at": "2026-09-19T07:06:02+00:00",
       "retailer_category": "general",
       "link_statuses": {
         "url": "정상"
@@ -337,7 +337,7 @@
       "note": "공식 글로벌 출시정보 확인",
       "link_status": "정상",
       "last_checked_at": "2026-09-19T03:59:38+00:00",
-      "link_checked_at": "2026-09-19T03:59:55+00:00",
+      "link_checked_at": "2026-09-19T07:06:02+00:00",
       "retailer_category": "general",
       "link_statuses": {
         "url": "정상"
@@ -356,7 +356,7 @@
       "note": "TCG 전문 마켓, 판본·상태·판매자 확인",
       "link_status": "정상",
       "last_checked_at": "2026-09-19T03:59:38+00:00",
-      "link_checked_at": "2026-09-19T03:59:55+00:00",
+      "link_checked_at": "2026-09-19T07:06:02+00:00",
       "retailer_category": "general",
       "link_statuses": {
         "url_template": "정상"
@@ -375,7 +375,7 @@
       "note": "신품·중고 혼합, 판매완료·평점 확인",
       "link_status": "정상",
       "last_checked_at": "2026-09-19T03:59:38+00:00",
-      "link_checked_at": "2026-09-19T03:59:55+00:00",
+      "link_checked_at": "2026-09-19T07:06:02+00:00",
       "retailer_category": "general",
       "link_statuses": {
         "url_template": "정상"
@@ -392,12 +392,12 @@
       "type": "marketplace",
       "url_template": "https://www.amazon.com/s?k={query}",
       "note": "판매·배송 주체와 정품 여부 확인",
-      "link_status": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인",
+      "link_status": "사이트 접속 제한 · 브라우저 이용 가능 (HTTP 405)",
       "last_checked_at": "2026-09-19T03:59:38+00:00",
-      "link_checked_at": "2026-09-19T03:59:55+00:00",
+      "link_checked_at": "2026-09-19T07:06:02+00:00",
       "retailer_category": "general",
       "link_statuses": {
-        "url_template": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인"
+        "url_template": "사이트 접속 제한 · 브라우저 이용 가능 (HTTP 405)"
       }
     },
     {
@@ -413,7 +413,7 @@
       "note": "상점·블로그·입고정보 참고용",
       "link_status": "정상",
       "last_checked_at": "2026-09-19T03:59:38+00:00",
-      "link_checked_at": "2026-09-19T03:59:55+00:00",
+      "link_checked_at": "2026-09-19T07:06:02+00:00",
       "retailer_category": "general",
       "link_statuses": {
         "url_template": "정상"
@@ -433,7 +433,7 @@
       "note": "현 위치 주변 매장 검색 · 방문 전 전화로 재고 확인",
       "link_status": "정상",
       "last_checked_at": "2026-09-19T03:59:38+00:00",
-      "link_checked_at": "2026-09-19T03:59:55+00:00",
+      "link_checked_at": "2026-09-19T07:06:02+00:00",
       "retailer_category": "general",
       "inventory_status": "TCG 취급·재고 미확인 · 방문 전 공식 매장/전화 확인",
       "inventory_checked_at": null,
@@ -456,7 +456,7 @@
       "note": "한국 오프라인 매장 위치·전화번호 확인",
       "link_status": "정상",
       "last_checked_at": "2026-09-19T03:59:38+00:00",
-      "link_checked_at": "2026-09-19T03:59:55+00:00",
+      "link_checked_at": "2026-09-19T07:06:02+00:00",
       "retailer_category": "general",
       "inventory_status": "TCG 취급·재고 미확인 · 방문 전 공식 매장/전화 확인",
       "inventory_checked_at": null,
@@ -477,7 +477,7 @@
       "note": "한국 공식 공인 카드샵 점포 안내",
       "link_status": "정상",
       "last_checked_at": "2026-09-19T03:59:38+00:00",
-      "link_checked_at": "2026-09-19T03:59:55+00:00",
+      "link_checked_at": "2026-09-19T07:06:02+00:00",
       "retailer_category": "cardshop",
       "inventory_status": "TCG 취급·재고 미확인 · 방문 전 공식 매장/전화 확인",
       "inventory_checked_at": null,
@@ -499,7 +499,7 @@
       "note": "한국 공식 원피스 카드게임 점포 검색",
       "link_status": "정상",
       "last_checked_at": "2026-09-19T03:59:38+00:00",
-      "link_checked_at": "2026-09-19T03:59:55+00:00",
+      "link_checked_at": "2026-09-19T07:06:02+00:00",
       "retailer_category": "cardshop",
       "inventory_status": "TCG 취급·재고 미확인 · 방문 전 공식 매장/전화 확인",
       "inventory_checked_at": null,
@@ -522,7 +522,7 @@
       "note": "일본 현지 카드숍 지도 검색 · 영업시간 확인",
       "link_status": "정상",
       "last_checked_at": "2026-09-19T03:59:38+00:00",
-      "link_checked_at": "2026-09-19T03:59:55+00:00",
+      "link_checked_at": "2026-09-19T07:06:02+00:00",
       "retailer_category": "general",
       "inventory_status": "TCG 취급·재고 미확인 · 방문 전 공식 매장/전화 확인",
       "inventory_checked_at": null,
@@ -543,7 +543,7 @@
       "note": "일본 공식 포켓몬센터·스토어 매장 안내",
       "link_status": "정상",
       "last_checked_at": "2026-09-19T03:59:38+00:00",
-      "link_checked_at": "2026-09-19T03:59:55+00:00",
+      "link_checked_at": "2026-09-19T07:06:02+00:00",
       "retailer_category": "general",
       "inventory_status": "TCG 취급·재고 미확인 · 방문 전 공식 매장/전화 확인",
       "inventory_checked_at": null,
@@ -564,7 +564,7 @@
       "note": "일본 공식 행사·취급점 정보 확인",
       "link_status": "정상",
       "last_checked_at": "2026-09-19T03:59:38+00:00",
-      "link_checked_at": "2026-09-19T03:59:55+00:00",
+      "link_checked_at": "2026-09-19T07:06:02+00:00",
       "retailer_category": "general",
       "inventory_status": "TCG 취급·재고 미확인 · 방문 전 공식 매장/전화 확인",
       "inventory_checked_at": null,
@@ -587,7 +587,7 @@
       "note": "미국 주변 카드숍 검색 · 방문 전 재고 확인",
       "link_status": "정상",
       "last_checked_at": "2026-09-19T03:59:38+00:00",
-      "link_checked_at": "2026-09-19T03:59:55+00:00",
+      "link_checked_at": "2026-09-19T07:06:02+00:00",
       "retailer_category": "general",
       "inventory_status": "TCG 취급·재고 미확인 · 방문 전 공식 매장/전화 확인",
       "inventory_checked_at": null,
@@ -608,7 +608,7 @@
       "note": "미국 공식 Pokémon 취급점·행사 위치 검색",
       "link_status": "정상",
       "last_checked_at": "2026-09-19T03:59:38+00:00",
-      "link_checked_at": "2026-09-19T03:59:55+00:00",
+      "link_checked_at": "2026-09-19T07:06:02+00:00",
       "retailer_category": "general",
       "inventory_status": "TCG 취급·재고 미확인 · 방문 전 공식 매장/전화 확인",
       "inventory_checked_at": null,
@@ -629,7 +629,7 @@
       "note": "공식 앱·웹에서 원피스 취급점과 행사 검색",
       "link_status": "정상",
       "last_checked_at": "2026-09-19T03:59:38+00:00",
-      "link_checked_at": "2026-09-19T03:59:55+00:00",
+      "link_checked_at": "2026-09-19T07:06:02+00:00",
       "retailer_category": "general",
       "inventory_status": "TCG 취급·재고 미확인 · 방문 전 공식 매장/전화 확인",
       "inventory_checked_at": null,
@@ -651,7 +651,7 @@
       "note": "국내·해외 판매자와 판본 비교",
       "link_status": "정상",
       "last_checked_at": "2026-09-19T03:59:38+00:00",
-      "link_checked_at": "2026-09-19T03:59:55+00:00",
+      "link_checked_at": "2026-09-19T07:06:02+00:00",
       "retailer_category": "general",
       "link_statuses": {
         "url_template": "정상"
@@ -670,7 +670,7 @@
       "note": "판매자·배송·국가판 표기 확인",
       "link_status": "사이트 접속 제한 · 브라우저 이용 가능 (HTTP 403)",
       "last_checked_at": "2026-09-19T03:59:38+00:00",
-      "link_checked_at": "2026-09-19T03:59:55+00:00",
+      "link_checked_at": "2026-09-19T07:06:02+00:00",
       "retailer_category": "general",
       "link_statuses": {
         "url_template": "사이트 접속 제한 · 브라우저 이용 가능 (HTTP 403)"
@@ -689,7 +689,7 @@
       "note": "신품·해외구매 상품 비교",
       "link_status": "사이트 접속 제한 · 브라우저 이용 가능 (HTTP 403)",
       "last_checked_at": "2026-09-19T03:59:38+00:00",
-      "link_checked_at": "2026-09-19T03:59:55+00:00",
+      "link_checked_at": "2026-09-19T07:06:02+00:00",
       "retailer_category": "general",
       "link_statuses": {
         "url_template": "사이트 접속 제한 · 브라우저 이용 가능 (HTTP 403)"
@@ -708,7 +708,7 @@
       "note": "롯데 계열 온라인 판매 검색",
       "link_status": "사이트 접속 제한 · 브라우저 이용 가능 (HTTP 403)",
       "last_checked_at": "2026-09-19T03:59:38+00:00",
-      "link_checked_at": "2026-09-19T03:59:55+00:00",
+      "link_checked_at": "2026-09-19T07:06:02+00:00",
       "retailer_category": "general",
       "link_statuses": {
         "url_template": "사이트 접속 제한 · 브라우저 이용 가능 (HTTP 403)"
@@ -727,7 +727,7 @@
       "note": "신세계·이마트 계열 상품 검색",
       "link_status": "정상",
       "last_checked_at": "2026-09-19T03:59:38+00:00",
-      "link_checked_at": "2026-09-19T03:59:55+00:00",
+      "link_checked_at": "2026-09-19T07:06:02+00:00",
       "retailer_category": "general",
       "link_statuses": {
         "url_template": "정상"
@@ -745,7 +745,7 @@
       "note": "검수·거래 상품 검색, 체결가와 판매가 구분",
       "link_status": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인",
       "last_checked_at": "2026-09-19T03:59:38+00:00",
-      "link_checked_at": "2026-09-19T03:59:55+00:00",
+      "link_checked_at": "2026-09-19T07:06:02+00:00",
       "retailer_category": "general",
       "link_statuses": {
         "url_template": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인"
@@ -764,7 +764,7 @@
       "note": "개인거래 상태·판매자 확인",
       "link_status": "정상",
       "last_checked_at": "2026-09-19T03:59:38+00:00",
-      "link_checked_at": "2026-09-19T03:59:55+00:00",
+      "link_checked_at": "2026-09-19T07:06:02+00:00",
       "retailer_category": "general",
       "link_statuses": {
         "url_template": "정상"
@@ -783,7 +783,7 @@
       "note": "지역 중고거래, 앱에서 위치·판매자 확인",
       "link_status": "정상",
       "last_checked_at": "2026-09-19T03:59:38+00:00",
-      "link_checked_at": "2026-09-19T03:59:55+00:00",
+      "link_checked_at": "2026-09-19T07:06:02+00:00",
       "retailer_category": "general",
       "link_statuses": {
         "url_template": "정상"
@@ -802,7 +802,7 @@
       "note": "여러 온라인 판매처 가격 비교",
       "link_status": "정상",
       "last_checked_at": "2026-09-19T03:59:38+00:00",
-      "link_checked_at": "2026-09-19T03:59:55+00:00",
+      "link_checked_at": "2026-09-19T07:06:02+00:00",
       "retailer_category": "general",
       "link_statuses": {
         "url_template": "정상"
@@ -821,7 +821,7 @@
       "note": "매장 위치 검색 · 카드 입점과 재고는 전화 확인",
       "link_status": "정상",
       "last_checked_at": "2026-09-19T03:59:38+00:00",
-      "link_checked_at": "2026-09-19T03:59:55+00:00",
+      "link_checked_at": "2026-09-19T07:06:02+00:00",
       "retailer_category": "toy",
       "inventory_status": "TCG 취급·재고 미확인 · 방문 전 공식 매장/전화 확인",
       "inventory_checked_at": null,
@@ -843,7 +843,7 @@
       "note": "주변 이마트 위치 검색 · 방문 전 재고 확인",
       "link_status": "정상",
       "last_checked_at": "2026-09-19T03:59:38+00:00",
-      "link_checked_at": "2026-09-19T03:59:55+00:00",
+      "link_checked_at": "2026-09-19T07:06:02+00:00",
       "retailer_category": "hypermarket",
       "inventory_status": "TCG 취급·재고 미확인 · 방문 전 공식 매장/전화 확인",
       "inventory_checked_at": null,
@@ -865,7 +865,7 @@
       "note": "주변 매장 검색 · 점포별 취급 여부 확인",
       "link_status": "정상",
       "last_checked_at": "2026-09-19T03:59:38+00:00",
-      "link_checked_at": "2026-09-19T03:59:55+00:00",
+      "link_checked_at": "2026-09-19T07:06:02+00:00",
       "retailer_category": "hypermarket",
       "inventory_status": "TCG 취급·재고 미확인 · 방문 전 공식 매장/전화 확인",
       "inventory_checked_at": null,
@@ -887,7 +887,7 @@
       "note": "일본 온라인 판매점 가격 비교",
       "link_status": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인",
       "last_checked_at": "2026-09-19T03:59:38+00:00",
-      "link_checked_at": "2026-09-19T03:59:55+00:00",
+      "link_checked_at": "2026-09-19T07:06:02+00:00",
       "retailer_category": "general",
       "link_statuses": {
         "url_template": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인"
@@ -905,7 +905,7 @@
       "note": "온라인·점포 재고 표시는 사이트에서 확인",
       "link_status": "사이트 접속 제한 · 브라우저 이용 가능 (HTTP 403)",
       "last_checked_at": "2026-09-19T03:59:38+00:00",
-      "link_checked_at": "2026-09-19T03:59:55+00:00",
+      "link_checked_at": "2026-09-19T07:06:02+00:00",
       "retailer_category": "general",
       "link_statuses": {
         "url_template": "사이트 접속 제한 · 브라우저 이용 가능 (HTTP 403)"
@@ -923,7 +923,7 @@
       "note": "온라인 판매와 일본 점포 검색",
       "link_status": "사이트 접속 제한 · 브라우저 이용 가능 (HTTP 403)",
       "last_checked_at": "2026-09-19T03:59:38+00:00",
-      "link_checked_at": "2026-09-19T03:59:55+00:00",
+      "link_checked_at": "2026-09-19T07:06:02+00:00",
       "retailer_category": "general",
       "link_statuses": {
         "url_template": "사이트 접속 제한 · 브라우저 이용 가능 (HTTP 403)"
@@ -942,7 +942,7 @@
       "note": "신품·중고 혼합, 상태등급 확인",
       "link_status": "사이트 접속 제한 · 브라우저 이용 가능 (HTTP 403)",
       "last_checked_at": "2026-09-19T03:59:38+00:00",
-      "link_checked_at": "2026-09-19T03:59:55+00:00",
+      "link_checked_at": "2026-09-19T07:06:02+00:00",
       "retailer_category": "general",
       "link_statuses": {
         "url_template": "사이트 접속 제한 · 브라우저 이용 가능 (HTTP 403)"
@@ -960,7 +960,7 @@
       "note": "일본 TCG 전문점 상품 검색",
       "link_status": "정상",
       "last_checked_at": "2026-09-19T03:59:38+00:00",
-      "link_checked_at": "2026-09-19T03:59:55+00:00",
+      "link_checked_at": "2026-09-19T07:06:02+00:00",
       "retailer_category": "general",
       "link_statuses": {
         "url_template": "정상"
@@ -978,7 +978,7 @@
       "note": "일본 카드 전문점 상품·점포 검색",
       "link_status": "정상",
       "last_checked_at": "2026-09-19T03:59:38+00:00",
-      "link_checked_at": "2026-09-19T03:59:55+00:00",
+      "link_checked_at": "2026-09-19T07:06:02+00:00",
       "retailer_category": "general",
       "link_statuses": {
         "url_template": "정상"
@@ -997,7 +997,7 @@
       "note": "일본 중고 상품 상태와 점포 재고 확인",
       "link_status": "정상",
       "last_checked_at": "2026-09-19T03:59:38+00:00",
-      "link_checked_at": "2026-09-19T03:59:55+00:00",
+      "link_checked_at": "2026-09-19T07:06:02+00:00",
       "retailer_category": "general",
       "link_statuses": {
         "url_template": "정상"
@@ -1016,7 +1016,7 @@
       "note": "수집품·중고 카드 검색",
       "link_status": "정상",
       "last_checked_at": "2026-09-19T03:59:38+00:00",
-      "link_checked_at": "2026-09-19T03:59:55+00:00",
+      "link_checked_at": "2026-09-19T07:06:02+00:00",
       "retailer_category": "general",
       "link_statuses": {
         "url_template": "정상"
@@ -1035,7 +1035,7 @@
       "note": "경매·중고 거래, 판매자와 상태 확인",
       "link_status": "정상",
       "last_checked_at": "2026-09-19T03:59:38+00:00",
-      "link_checked_at": "2026-09-19T03:59:55+00:00",
+      "link_checked_at": "2026-09-19T07:06:02+00:00",
       "retailer_category": "general",
       "link_statuses": {
         "url_template": "정상"
@@ -1055,7 +1055,7 @@
       "note": "주변 TCG 전문점과 영업시간 검색",
       "link_status": "정상",
       "last_checked_at": "2026-09-19T03:59:38+00:00",
-      "link_checked_at": "2026-09-19T03:59:55+00:00",
+      "link_checked_at": "2026-09-19T07:06:02+00:00",
       "retailer_category": "general",
       "inventory_status": "TCG 취급·재고 미확인 · 방문 전 공식 매장/전화 확인",
       "inventory_checked_at": null,
@@ -1076,7 +1076,7 @@
       "note": "온라인·점포 재고와 구매 제한 확인",
       "link_status": "정상",
       "last_checked_at": "2026-09-19T03:59:38+00:00",
-      "link_checked_at": "2026-09-19T03:59:55+00:00",
+      "link_checked_at": "2026-09-19T07:06:02+00:00",
       "retailer_category": "hypermarket",
       "link_statuses": {
         "url_template": "정상"
@@ -1094,7 +1094,7 @@
       "note": "판매 주체가 Walmart인지 제3자인지 확인",
       "link_status": "정상",
       "last_checked_at": "2026-09-19T03:59:38+00:00",
-      "link_checked_at": "2026-09-19T03:59:55+00:00",
+      "link_checked_at": "2026-09-19T07:06:02+00:00",
       "retailer_category": "hypermarket",
       "link_statuses": {
         "url_template": "정상"
@@ -1112,7 +1112,7 @@
       "note": "온라인·매장수령 재고 확인",
       "link_status": "정상",
       "last_checked_at": "2026-09-19T03:59:38+00:00",
-      "link_checked_at": "2026-09-19T03:59:55+00:00",
+      "link_checked_at": "2026-09-19T07:06:02+00:00",
       "retailer_category": "general",
       "link_statuses": {
         "url_template": "정상"
@@ -1130,7 +1130,7 @@
       "note": "온라인·오프라인 점포 재고 확인",
       "link_status": "사이트 접속 제한 · 브라우저 이용 가능 (HTTP 403)",
       "last_checked_at": "2026-09-19T03:59:38+00:00",
-      "link_checked_at": "2026-09-19T03:59:55+00:00",
+      "link_checked_at": "2026-09-19T07:06:02+00:00",
       "retailer_category": "general",
       "link_statuses": {
         "url_template": "사이트 접속 제한 · 브라우저 이용 가능 (HTTP 403)"
@@ -1148,7 +1148,7 @@
       "note": "공식 검색폼(/search?q=) 사용 · 매장수령 가능 여부 확인",
       "link_status": "정상",
       "last_checked_at": "2026-09-19T03:59:38+00:00",
-      "link_checked_at": "2026-09-19T03:59:55+00:00",
+      "link_checked_at": "2026-09-19T07:06:02+00:00",
       "retailer_category": "general",
       "link_statuses": {
         "url_template": "정상"
@@ -1165,7 +1165,7 @@
       "note": "회원 판매·묶음상품 재고 확인",
       "link_status": "정상",
       "last_checked_at": "2026-09-19T03:59:38+00:00",
-      "link_checked_at": "2026-09-19T03:59:55+00:00",
+      "link_checked_at": "2026-09-19T07:06:02+00:00",
       "retailer_category": "general",
       "link_statuses": {
         "url_template": "정상"
@@ -1182,7 +1182,7 @@
       "note": "회원제 묶음상품 검색",
       "link_status": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인",
       "last_checked_at": "2026-09-19T03:59:38+00:00",
-      "link_checked_at": "2026-09-19T03:59:55+00:00",
+      "link_checked_at": "2026-09-19T07:06:02+00:00",
       "retailer_category": "general",
       "link_statuses": {
         "url_template": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인"
@@ -1201,7 +1201,7 @@
       "note": "TCG 전문몰, 카드 상태·판본 확인",
       "link_status": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인",
       "last_checked_at": "2026-09-19T03:59:38+00:00",
-      "link_checked_at": "2026-09-19T03:59:55+00:00",
+      "link_checked_at": "2026-09-19T07:06:02+00:00",
       "retailer_category": "general",
       "link_statuses": {
         "url_template": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인"
@@ -1219,7 +1219,7 @@
       "note": "밀봉상품·싱글카드 검색",
       "link_status": "사이트 접속 제한 · 브라우저 이용 가능 (HTTP 403)",
       "last_checked_at": "2026-09-19T03:59:38+00:00",
-      "link_checked_at": "2026-09-19T03:59:55+00:00",
+      "link_checked_at": "2026-09-19T07:06:02+00:00",
       "retailer_category": "general",
       "link_statuses": {
         "url_template": "사이트 접속 제한 · 브라우저 이용 가능 (HTTP 403)"
@@ -1237,7 +1237,7 @@
       "note": "여러 대형 판매점의 온라인·점포 재고 참고, 독립 서비스",
       "link_status": "정상",
       "last_checked_at": "2026-09-19T03:59:38+00:00",
-      "link_checked_at": "2026-09-19T03:59:55+00:00",
+      "link_checked_at": "2026-09-19T07:06:02+00:00",
       "retailer_category": "general",
       "link_statuses": {
         "url": "정상"
@@ -1254,7 +1254,7 @@
       "note": "미국 판매점 재입고 알림, 독립 앱 서비스",
       "link_status": "정상",
       "last_checked_at": "2026-09-19T03:59:38+00:00",
-      "link_checked_at": "2026-09-19T03:59:55+00:00",
+      "link_checked_at": "2026-09-19T07:06:02+00:00",
       "retailer_category": "general",
       "link_statuses": {
         "url": "정상"
@@ -1273,7 +1273,7 @@
       "note": "가까운 Target 검색 · 방문 전 카드 재고 확인",
       "link_status": "정상",
       "last_checked_at": "2026-09-19T03:59:38+00:00",
-      "link_checked_at": "2026-09-19T03:59:55+00:00",
+      "link_checked_at": "2026-09-19T07:06:02+00:00",
       "retailer_category": "hypermarket",
       "inventory_status": "TCG 취급·재고 미확인 · 방문 전 공식 매장/전화 확인",
       "inventory_checked_at": null,
@@ -1295,7 +1295,7 @@
       "note": "가까운 Walmart 검색 · 점포 재고 확인",
       "link_status": "정상",
       "last_checked_at": "2026-09-19T03:59:38+00:00",
-      "link_checked_at": "2026-09-19T03:59:55+00:00",
+      "link_checked_at": "2026-09-19T07:06:02+00:00",
       "retailer_category": "hypermarket",
       "inventory_status": "TCG 취급·재고 미확인 · 방문 전 공식 매장/전화 확인",
       "inventory_checked_at": null,
@@ -1317,7 +1317,7 @@
       "note": "가까운 GameStop과 영업시간 확인",
       "link_status": "사이트 접속 제한 · 브라우저 이용 가능 (HTTP 403)",
       "last_checked_at": "2026-09-19T03:59:38+00:00",
-      "link_checked_at": "2026-09-19T03:59:55+00:00",
+      "link_checked_at": "2026-09-19T07:06:02+00:00",
       "retailer_category": "general",
       "inventory_status": "TCG 취급·재고 미확인 · 방문 전 공식 매장/전화 확인",
       "inventory_checked_at": null,
@@ -1347,7 +1347,7 @@
       "data_basis": "공개 점포 주소·지도 좌표",
       "link_status": "정상",
       "last_checked_at": "2026-09-19T03:59:38+00:00",
-      "link_checked_at": "2026-09-19T03:59:55+00:00",
+      "link_checked_at": "2026-09-19T07:06:02+00:00",
       "retailer_category": "hypermarket",
       "inventory_verified": false,
       "link_statuses": {
@@ -1375,7 +1375,7 @@
       "data_basis": "공개 점포 주소·지도 좌표",
       "link_status": "정상",
       "last_checked_at": "2026-09-19T03:59:38+00:00",
-      "link_checked_at": "2026-09-19T03:59:55+00:00",
+      "link_checked_at": "2026-09-19T07:06:02+00:00",
       "retailer_category": "hypermarket",
       "inventory_verified": false,
       "link_statuses": {
@@ -1403,7 +1403,7 @@
       "data_basis": "공개 점포 주소·지도 좌표",
       "link_status": "정상",
       "last_checked_at": "2026-09-19T03:59:38+00:00",
-      "link_checked_at": "2026-09-19T03:59:55+00:00",
+      "link_checked_at": "2026-09-19T07:06:02+00:00",
       "retailer_category": "hypermarket",
       "inventory_verified": false,
       "link_statuses": {
@@ -1431,7 +1431,7 @@
       "data_basis": "공개 점포 주소·지도 좌표",
       "link_status": "정상",
       "last_checked_at": "2026-09-19T03:59:38+00:00",
-      "link_checked_at": "2026-09-19T03:59:55+00:00",
+      "link_checked_at": "2026-09-19T07:06:02+00:00",
       "retailer_category": "hypermarket",
       "inventory_verified": false,
       "link_statuses": {
@@ -1459,7 +1459,7 @@
       "data_basis": "공개 점포 주소·지도 좌표",
       "link_status": "정상",
       "last_checked_at": "2026-09-19T03:59:38+00:00",
-      "link_checked_at": "2026-09-19T03:59:55+00:00",
+      "link_checked_at": "2026-09-19T07:06:02+00:00",
       "retailer_category": "hypermarket",
       "inventory_verified": false,
       "link_statuses": {
@@ -1487,7 +1487,7 @@
       "data_basis": "공개 점포 주소·지도 좌표",
       "link_status": "정상",
       "last_checked_at": "2026-09-19T03:59:38+00:00",
-      "link_checked_at": "2026-09-19T03:59:55+00:00",
+      "link_checked_at": "2026-09-19T07:06:02+00:00",
       "retailer_category": "toy",
       "inventory_verified": false,
       "link_statuses": {
@@ -1515,7 +1515,7 @@
       "data_basis": "공개 점포 주소·지도 좌표",
       "link_status": "정상",
       "last_checked_at": "2026-09-19T03:59:38+00:00",
-      "link_checked_at": "2026-09-19T03:59:55+00:00",
+      "link_checked_at": "2026-09-19T07:06:02+00:00",
       "retailer_category": "hypermarket",
       "inventory_verified": false,
       "link_statuses": {
@@ -1543,7 +1543,7 @@
       "data_basis": "공개 점포 주소·지도 좌표",
       "link_status": "정상",
       "last_checked_at": "2026-09-19T03:59:38+00:00",
-      "link_checked_at": "2026-09-19T03:59:55+00:00",
+      "link_checked_at": "2026-09-19T07:06:02+00:00",
       "retailer_category": "hypermarket",
       "inventory_verified": false,
       "link_statuses": {
@@ -1571,7 +1571,7 @@
       "data_basis": "공개 점포 주소·지도 좌표",
       "link_status": "정상",
       "last_checked_at": "2026-09-19T03:59:38+00:00",
-      "link_checked_at": "2026-09-19T03:59:55+00:00",
+      "link_checked_at": "2026-09-19T07:06:02+00:00",
       "retailer_category": "hypermarket",
       "inventory_verified": false,
       "link_statuses": {
@@ -1599,7 +1599,7 @@
       "data_basis": "공개 점포 주소·지도 좌표",
       "link_status": "정상",
       "last_checked_at": "2026-09-19T03:59:38+00:00",
-      "link_checked_at": "2026-09-19T03:59:55+00:00",
+      "link_checked_at": "2026-09-19T07:06:02+00:00",
       "retailer_category": "hypermarket",
       "inventory_verified": false,
       "link_statuses": {
@@ -1627,7 +1627,7 @@
       "data_basis": "공개 점포 주소·지도 좌표",
       "link_status": "정상",
       "last_checked_at": "2026-09-19T03:59:38+00:00",
-      "link_checked_at": "2026-09-19T03:59:55+00:00",
+      "link_checked_at": "2026-09-19T07:06:02+00:00",
       "retailer_category": "hypermarket",
       "inventory_verified": false,
       "link_statuses": {
@@ -1655,7 +1655,7 @@
       "data_basis": "공개 점포 주소·지도 좌표",
       "link_status": "정상",
       "last_checked_at": "2026-09-19T03:59:38+00:00",
-      "link_checked_at": "2026-09-19T03:59:55+00:00",
+      "link_checked_at": "2026-09-19T07:06:02+00:00",
       "retailer_category": "hypermarket",
       "inventory_verified": false,
       "link_statuses": {
@@ -1683,7 +1683,7 @@
       "data_basis": "공개 점포 주소·지도 좌표",
       "link_status": "정상",
       "last_checked_at": "2026-09-19T03:59:38+00:00",
-      "link_checked_at": "2026-09-19T03:59:55+00:00",
+      "link_checked_at": "2026-09-19T07:06:02+00:00",
       "retailer_category": "toy",
       "inventory_verified": false,
       "link_statuses": {
@@ -1711,7 +1711,7 @@
       "data_basis": "공개 점포 주소·지도 좌표",
       "link_status": "정상",
       "last_checked_at": "2026-09-19T03:59:38+00:00",
-      "link_checked_at": "2026-09-19T03:59:55+00:00",
+      "link_checked_at": "2026-09-19T07:06:02+00:00",
       "retailer_category": "hypermarket",
       "inventory_verified": false,
       "link_statuses": {
@@ -1739,7 +1739,7 @@
       "data_basis": "공개 점포 주소·지도 좌표",
       "link_status": "정상",
       "last_checked_at": "2026-09-19T03:59:38+00:00",
-      "link_checked_at": "2026-09-19T03:59:55+00:00",
+      "link_checked_at": "2026-09-19T07:06:02+00:00",
       "retailer_category": "hypermarket",
       "inventory_verified": false,
       "link_statuses": {
@@ -1767,7 +1767,7 @@
       "data_basis": "공개 점포 주소·지도 좌표",
       "link_status": "정상",
       "last_checked_at": "2026-09-19T03:59:38+00:00",
-      "link_checked_at": "2026-09-19T03:59:55+00:00",
+      "link_checked_at": "2026-09-19T07:06:02+00:00",
       "retailer_category": "hypermarket",
       "inventory_verified": false,
       "link_statuses": {
@@ -1795,7 +1795,7 @@
       "data_basis": "공개 점포 주소·지도 좌표",
       "link_status": "정상",
       "last_checked_at": "2026-09-19T03:59:38+00:00",
-      "link_checked_at": "2026-09-19T03:59:55+00:00",
+      "link_checked_at": "2026-09-19T07:06:02+00:00",
       "retailer_category": "hypermarket",
       "inventory_verified": false,
       "link_statuses": {
@@ -1823,7 +1823,7 @@
       "data_basis": "공개 점포 주소·지도 좌표",
       "link_status": "정상",
       "last_checked_at": "2026-09-19T03:59:38+00:00",
-      "link_checked_at": "2026-09-19T03:59:55+00:00",
+      "link_checked_at": "2026-09-19T07:06:02+00:00",
       "retailer_category": "hypermarket",
       "inventory_verified": false,
       "link_statuses": {
@@ -1851,7 +1851,7 @@
       "data_basis": "공개 점포 주소·지도 좌표",
       "link_status": "정상",
       "last_checked_at": "2026-09-19T03:59:38+00:00",
-      "link_checked_at": "2026-09-19T03:59:55+00:00",
+      "link_checked_at": "2026-09-19T07:06:02+00:00",
       "retailer_category": "hypermarket",
       "inventory_verified": false,
       "link_statuses": {
@@ -1879,7 +1879,7 @@
       "data_basis": "공개 점포 주소·지도 좌표",
       "link_status": "정상",
       "last_checked_at": "2026-09-19T03:59:38+00:00",
-      "link_checked_at": "2026-09-19T03:59:55+00:00",
+      "link_checked_at": "2026-09-19T07:06:02+00:00",
       "retailer_category": "toy",
       "inventory_verified": false,
       "link_statuses": {
@@ -1907,7 +1907,7 @@
       "data_basis": "공개 점포 주소·지도 좌표",
       "link_status": "정상",
       "last_checked_at": "2026-09-19T03:59:38+00:00",
-      "link_checked_at": "2026-09-19T03:59:55+00:00",
+      "link_checked_at": "2026-09-19T07:06:02+00:00",
       "retailer_category": "hypermarket",
       "inventory_verified": false,
       "link_statuses": {
@@ -1935,7 +1935,7 @@
       "data_basis": "공개 점포 주소·지도 좌표",
       "link_status": "정상",
       "last_checked_at": "2026-09-19T03:59:38+00:00",
-      "link_checked_at": "2026-09-19T03:59:55+00:00",
+      "link_checked_at": "2026-09-19T07:06:02+00:00",
       "retailer_category": "hypermarket",
       "inventory_verified": false,
       "link_statuses": {
@@ -1963,7 +1963,7 @@
       "data_basis": "공개 점포 주소·지도 좌표",
       "link_status": "정상",
       "last_checked_at": "2026-09-19T03:59:38+00:00",
-      "link_checked_at": "2026-09-19T03:59:55+00:00",
+      "link_checked_at": "2026-09-19T07:06:02+00:00",
       "retailer_category": "hypermarket",
       "inventory_verified": false,
       "link_statuses": {
@@ -1991,7 +1991,7 @@
       "data_basis": "공개 점포 주소·지도 좌표",
       "link_status": "정상",
       "last_checked_at": "2026-09-19T03:59:38+00:00",
-      "link_checked_at": "2026-09-19T03:59:55+00:00",
+      "link_checked_at": "2026-09-19T07:06:02+00:00",
       "retailer_category": "hypermarket",
       "inventory_verified": false,
       "link_statuses": {
@@ -2019,7 +2019,7 @@
       "data_basis": "공개 점포 주소·지도 좌표",
       "link_status": "정상",
       "last_checked_at": "2026-09-19T03:59:38+00:00",
-      "link_checked_at": "2026-09-19T03:59:55+00:00",
+      "link_checked_at": "2026-09-19T07:06:02+00:00",
       "retailer_category": "hypermarket",
       "inventory_verified": false,
       "link_statuses": {
@@ -2047,7 +2047,7 @@
       "data_basis": "공개 점포 주소·지도 좌표",
       "link_status": "정상",
       "last_checked_at": "2026-09-19T03:59:38+00:00",
-      "link_checked_at": "2026-09-19T03:59:55+00:00",
+      "link_checked_at": "2026-09-19T07:06:02+00:00",
       "retailer_category": "hypermarket",
       "inventory_verified": false,
       "link_statuses": {
@@ -2075,7 +2075,7 @@
       "data_basis": "공개 점포 주소·지도 좌표",
       "link_status": "정상",
       "last_checked_at": "2026-09-19T03:59:38+00:00",
-      "link_checked_at": "2026-09-19T03:59:55+00:00",
+      "link_checked_at": "2026-09-19T07:06:02+00:00",
       "retailer_category": "toy",
       "inventory_verified": false,
       "link_statuses": {
@@ -2103,7 +2103,7 @@
       "official_reference_url": "https://cu.bgfretail.com/",
       "link_status": "정상",
       "last_checked_at": "2026-09-19T03:59:38+00:00",
-      "link_checked_at": "2026-09-19T03:59:55+00:00",
+      "link_checked_at": "2026-09-19T07:06:02+00:00",
       "link_statuses": {
         "url_template": "정상",
         "official_reference_url": "정상"
@@ -2130,7 +2130,7 @@
       "official_reference_url": "https://cu.bgfretail.com/",
       "link_status": "정상",
       "last_checked_at": "2026-09-19T03:59:38+00:00",
-      "link_checked_at": "2026-09-19T03:59:55+00:00",
+      "link_checked_at": "2026-09-19T07:06:02+00:00",
       "link_statuses": {
         "url": "정상",
         "official_reference_url": "정상"
@@ -2157,7 +2157,7 @@
       "official_reference_url": "https://gs25.gsretail.com/",
       "link_status": "정상",
       "last_checked_at": "2026-09-19T03:59:38+00:00",
-      "link_checked_at": "2026-09-19T03:59:55+00:00",
+      "link_checked_at": "2026-09-19T07:06:02+00:00",
       "link_statuses": {
         "url_template": "정상",
         "official_reference_url": "정상"
@@ -2184,7 +2184,7 @@
       "official_reference_url": "https://gs25.gsretail.com/",
       "link_status": "정상",
       "last_checked_at": "2026-09-19T03:59:38+00:00",
-      "link_checked_at": "2026-09-19T03:59:55+00:00",
+      "link_checked_at": "2026-09-19T07:06:02+00:00",
       "link_statuses": {
         "url": "정상",
         "official_reference_url": "정상"
@@ -2211,7 +2211,7 @@
       "official_reference_url": "https://www.7-eleven.co.kr/",
       "link_status": "정상",
       "last_checked_at": "2026-09-19T03:59:38+00:00",
-      "link_checked_at": "2026-09-19T03:59:55+00:00",
+      "link_checked_at": "2026-09-19T07:06:02+00:00",
       "link_statuses": {
         "url_template": "정상",
         "official_reference_url": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인"
@@ -2238,7 +2238,7 @@
       "official_reference_url": "https://www.7-eleven.co.kr/",
       "link_status": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인",
       "last_checked_at": "2026-09-19T03:59:38+00:00",
-      "link_checked_at": "2026-09-19T03:59:55+00:00",
+      "link_checked_at": "2026-09-19T07:06:02+00:00",
       "link_statuses": {
         "url": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인",
         "official_reference_url": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인"
@@ -2265,7 +2265,7 @@
       "official_reference_url": "https://m.emart24.co.kr/store",
       "link_status": "정상",
       "last_checked_at": "2026-09-19T03:59:38+00:00",
-      "link_checked_at": "2026-09-19T03:59:55+00:00",
+      "link_checked_at": "2026-09-19T07:06:02+00:00",
       "link_statuses": {
         "url_template": "정상",
         "official_reference_url": "정상"
@@ -2292,7 +2292,7 @@
       "official_reference_url": "https://m.emart24.co.kr/store",
       "link_status": "정상",
       "last_checked_at": "2026-09-19T03:59:38+00:00",
-      "link_checked_at": "2026-09-19T03:59:55+00:00",
+      "link_checked_at": "2026-09-19T07:06:02+00:00",
       "link_statuses": {
         "url": "정상",
         "official_reference_url": "정상"
@@ -2318,7 +2318,7 @@
       "url_template": "https://map.naver.com/p/search/%EC%94%A8%EC%8A%A4%ED%8E%98%EC%9D%B4%EC%8A%A4%20{query}",
       "link_status": "정상",
       "last_checked_at": "2026-09-19T03:59:38+00:00",
-      "link_checked_at": "2026-09-19T03:59:55+00:00",
+      "link_checked_at": "2026-09-19T07:06:02+00:00",
       "link_statuses": {
         "url_template": "정상"
       }
@@ -2343,7 +2343,7 @@
       "url_template": "https://map.naver.com/p/search/%ED%8E%B8%EC%9D%98%EC%A0%90%20{query}",
       "link_status": "정상",
       "last_checked_at": "2026-09-19T03:59:38+00:00",
-      "link_checked_at": "2026-09-19T03:59:55+00:00",
+      "link_checked_at": "2026-09-19T07:06:02+00:00",
       "link_statuses": {
         "url_template": "정상"
       }
@@ -2369,7 +2369,7 @@
       "official_reference_url": "https://store.emart.com/branch/list.do",
       "link_status": "정상",
       "last_checked_at": "2026-09-19T03:59:38+00:00",
-      "link_checked_at": "2026-09-19T03:59:55+00:00",
+      "link_checked_at": "2026-09-19T07:06:02+00:00",
       "link_statuses": {
         "url_template": "정상",
         "official_reference_url": "정상"
@@ -2396,7 +2396,7 @@
       "official_reference_url": "https://store.emart.com/branch/list.do",
       "link_status": "정상",
       "last_checked_at": "2026-09-19T03:59:38+00:00",
-      "link_checked_at": "2026-09-19T03:59:55+00:00",
+      "link_checked_at": "2026-09-19T07:06:02+00:00",
       "link_statuses": {
         "url": "정상",
         "official_reference_url": "정상"
@@ -2423,7 +2423,7 @@
       "official_reference_url": "https://store.emart.com/branch/list.do",
       "link_status": "정상",
       "last_checked_at": "2026-09-19T03:59:38+00:00",
-      "link_checked_at": "2026-09-19T03:59:55+00:00",
+      "link_checked_at": "2026-09-19T07:06:02+00:00",
       "link_statuses": {
         "official_reference_url": "정상",
         "url_template": "정상"
@@ -2450,7 +2450,7 @@
       "official_reference_url": "https://store.emart.com/branch/list.do",
       "link_status": "정상",
       "last_checked_at": "2026-09-19T03:59:38+00:00",
-      "link_checked_at": "2026-09-19T03:59:55+00:00",
+      "link_checked_at": "2026-09-19T07:06:02+00:00",
       "link_statuses": {
         "url": "정상",
         "official_reference_url": "정상"
@@ -2477,7 +2477,7 @@
       "official_reference_url": "https://my.homeplus.co.kr/store",
       "link_status": "정상",
       "last_checked_at": "2026-09-19T03:59:38+00:00",
-      "link_checked_at": "2026-09-19T03:59:55+00:00",
+      "link_checked_at": "2026-09-19T07:06:02+00:00",
       "link_statuses": {
         "url_template": "정상",
         "official_reference_url": "정상"
@@ -2504,7 +2504,7 @@
       "official_reference_url": "https://my.homeplus.co.kr/store",
       "link_status": "정상",
       "last_checked_at": "2026-09-19T03:59:38+00:00",
-      "link_checked_at": "2026-09-19T03:59:55+00:00",
+      "link_checked_at": "2026-09-19T07:06:02+00:00",
       "link_statuses": {
         "url": "정상",
         "official_reference_url": "정상"
@@ -2530,7 +2530,7 @@
       "url_template": "https://map.naver.com/p/search/%EB%A1%AF%EB%8D%B0%EB%A7%88%ED%8A%B8%20{query}",
       "link_status": "정상",
       "last_checked_at": "2026-09-19T03:59:38+00:00",
-      "link_checked_at": "2026-09-19T03:59:55+00:00",
+      "link_checked_at": "2026-09-19T07:06:02+00:00",
       "link_statuses": {
         "url_template": "정상"
       }
@@ -2556,7 +2556,7 @@
       "official_reference_url": "https://www.costco.co.kr/store-finder",
       "link_status": "정상",
       "last_checked_at": "2026-09-19T03:59:38+00:00",
-      "link_checked_at": "2026-09-19T03:59:55+00:00",
+      "link_checked_at": "2026-09-19T07:06:02+00:00",
       "link_statuses": {
         "url_template": "정상",
         "official_reference_url": "정상"
@@ -2583,7 +2583,7 @@
       "official_reference_url": "https://www.costco.co.kr/store-finder",
       "link_status": "정상",
       "last_checked_at": "2026-09-19T03:59:38+00:00",
-      "link_checked_at": "2026-09-19T03:59:55+00:00",
+      "link_checked_at": "2026-09-19T07:06:02+00:00",
       "link_statuses": {
         "url": "정상",
         "official_reference_url": "정상"
@@ -2609,7 +2609,7 @@
       "url_template": "https://map.naver.com/p/search/%ED%95%98%EB%82%98%EB%A1%9C%EB%A7%88%ED%8A%B8%20{query}",
       "link_status": "정상",
       "last_checked_at": "2026-09-19T03:59:38+00:00",
-      "link_checked_at": "2026-09-19T03:59:55+00:00",
+      "link_checked_at": "2026-09-19T07:06:02+00:00",
       "link_statuses": {
         "url_template": "정상"
       }
@@ -2635,7 +2635,7 @@
       "official_reference_url": "https://store.emart.com/branch/list.do",
       "link_status": "정상",
       "last_checked_at": "2026-09-19T03:59:38+00:00",
-      "link_checked_at": "2026-09-19T03:59:55+00:00",
+      "link_checked_at": "2026-09-19T07:06:02+00:00",
       "link_statuses": {
         "official_reference_url": "정상",
         "url_template": "정상"
@@ -2662,7 +2662,7 @@
       "official_reference_url": "https://store.emart.com/branch/list.do",
       "link_status": "정상",
       "last_checked_at": "2026-09-19T03:59:38+00:00",
-      "link_checked_at": "2026-09-19T03:59:55+00:00",
+      "link_checked_at": "2026-09-19T07:06:02+00:00",
       "link_statuses": {
         "url": "정상",
         "official_reference_url": "정상"
@@ -2688,7 +2688,7 @@
       "url_template": "https://map.naver.com/p/search/GS%20THE%20FRESH%20{query}",
       "link_status": "정상",
       "last_checked_at": "2026-09-19T03:59:38+00:00",
-      "link_checked_at": "2026-09-19T03:59:55+00:00",
+      "link_checked_at": "2026-09-19T07:06:02+00:00",
       "link_statuses": {
         "url_template": "정상"
       }
@@ -2713,7 +2713,7 @@
       "url_template": "https://map.naver.com/p/search/%EB%8C%80%ED%98%95%EB%A7%88%ED%8A%B8%20%EC%8A%88%ED%8D%BC%EB%A7%88%EC%BC%93%20{query}",
       "link_status": "정상",
       "last_checked_at": "2026-09-19T03:59:38+00:00",
-      "link_checked_at": "2026-09-19T03:59:55+00:00",
+      "link_checked_at": "2026-09-19T07:06:02+00:00",
       "link_statuses": {
         "url_template": "정상"
       }
@@ -2739,7 +2739,7 @@
       "official_reference_url": "https://www.alpha.co.kr/",
       "link_status": "정상",
       "last_checked_at": "2026-09-19T03:59:38+00:00",
-      "link_checked_at": "2026-09-19T03:59:55+00:00",
+      "link_checked_at": "2026-09-19T07:06:02+00:00",
       "link_statuses": {
         "url_template": "정상",
         "official_reference_url": "정상"
@@ -2766,7 +2766,7 @@
       "official_reference_url": "https://www.alpha.co.kr/",
       "link_status": "정상",
       "last_checked_at": "2026-09-19T03:59:38+00:00",
-      "link_checked_at": "2026-09-19T03:59:55+00:00",
+      "link_checked_at": "2026-09-19T07:06:02+00:00",
       "link_statuses": {
         "url": "정상",
         "official_reference_url": "정상"
@@ -2792,7 +2792,7 @@
       "url_template": "https://map.naver.com/p/search/%EB%AA%A8%EB%8B%9D%EA%B8%80%EB%A1%9C%EB%A6%AC%20%EB%AC%B8%EA%B5%AC%20{query}",
       "link_status": "정상",
       "last_checked_at": "2026-09-19T03:59:38+00:00",
-      "link_checked_at": "2026-09-19T03:59:55+00:00",
+      "link_checked_at": "2026-09-19T07:06:02+00:00",
       "link_statuses": {
         "url_template": "정상"
       }
@@ -2817,7 +2817,7 @@
       "url_template": "https://map.naver.com/p/search/%EC%98%A4%ED%94%BC%EC%8A%A4%EB%94%94%ED%8F%AC%20%EB%AC%B8%EA%B5%AC%20{query}",
       "link_status": "정상",
       "last_checked_at": "2026-09-19T03:59:38+00:00",
-      "link_checked_at": "2026-09-19T03:59:55+00:00",
+      "link_checked_at": "2026-09-19T07:06:02+00:00",
       "link_statuses": {
         "url_template": "정상"
       }
@@ -2842,7 +2842,7 @@
       "url_template": "https://map.naver.com/p/search/%EC%98%A4%ED%94%BC%EC%8A%A4%EB%84%A5%EC%8A%A4%20%EB%AC%B8%EA%B5%AC%20{query}",
       "link_status": "정상",
       "last_checked_at": "2026-09-19T03:59:38+00:00",
-      "link_checked_at": "2026-09-19T03:59:55+00:00",
+      "link_checked_at": "2026-09-19T07:06:02+00:00",
       "link_statuses": {
         "url_template": "정상"
       }
@@ -2867,7 +2867,7 @@
       "url_template": "https://map.naver.com/p/search/%ED%95%99%EA%B5%90%20%EC%95%9E%20%EB%AC%B8%EA%B5%AC%EC%A0%90%20{query}",
       "link_status": "정상",
       "last_checked_at": "2026-09-19T03:59:38+00:00",
-      "link_checked_at": "2026-09-19T03:59:55+00:00",
+      "link_checked_at": "2026-09-19T07:06:02+00:00",
       "link_statuses": {
         "url_template": "정상"
       }
@@ -2892,7 +2892,7 @@
       "url_template": "https://map.naver.com/p/search/%EB%AC%B8%EA%B5%AC%EC%A0%90%20%ED%8C%AC%EC%8B%9C%EC%A0%90%20{query}",
       "link_status": "정상",
       "last_checked_at": "2026-09-19T03:59:38+00:00",
-      "link_checked_at": "2026-09-19T03:59:55+00:00",
+      "link_checked_at": "2026-09-19T07:06:02+00:00",
       "link_statuses": {
         "url_template": "정상"
       }
@@ -2917,7 +2917,7 @@
       "url_template": "https://map.naver.com/p/search/%EB%AC%B4%EC%9D%B8%20%EB%AC%B8%EA%B5%AC%EC%A0%90%20{query}",
       "link_status": "정상",
       "last_checked_at": "2026-09-19T03:59:38+00:00",
-      "link_checked_at": "2026-09-19T03:59:55+00:00",
+      "link_checked_at": "2026-09-19T07:06:02+00:00",
       "link_statuses": {
         "url_template": "정상"
       }
@@ -2943,7 +2943,7 @@
       "official_reference_url": "https://company.artbox.kr/",
       "link_status": "정상",
       "last_checked_at": "2026-09-19T03:59:38+00:00",
-      "link_checked_at": "2026-09-19T03:59:55+00:00",
+      "link_checked_at": "2026-09-19T07:06:02+00:00",
       "link_statuses": {
         "url_template": "정상",
         "official_reference_url": "정상"
@@ -2970,7 +2970,7 @@
       "official_reference_url": "https://company.artbox.kr/",
       "link_status": "정상",
       "last_checked_at": "2026-09-19T03:59:38+00:00",
-      "link_checked_at": "2026-09-19T03:59:55+00:00",
+      "link_checked_at": "2026-09-19T07:06:02+00:00",
       "link_statuses": {
         "url": "정상",
         "official_reference_url": "정상"
@@ -2997,7 +2997,7 @@
       "official_reference_url": "https://store.kyobobook.co.kr/",
       "link_status": "정상",
       "last_checked_at": "2026-09-19T03:59:38+00:00",
-      "link_checked_at": "2026-09-19T03:59:55+00:00",
+      "link_checked_at": "2026-09-19T07:06:02+00:00",
       "link_statuses": {
         "url_template": "정상",
         "official_reference_url": "정상"
@@ -3024,7 +3024,7 @@
       "official_reference_url": "https://store.kyobobook.co.kr/",
       "link_status": "정상",
       "last_checked_at": "2026-09-19T03:59:38+00:00",
-      "link_checked_at": "2026-09-19T03:59:55+00:00",
+      "link_checked_at": "2026-09-19T07:06:02+00:00",
       "link_statuses": {
         "url": "정상",
         "official_reference_url": "정상"
@@ -3050,7 +3050,7 @@
       "url_template": "https://map.naver.com/p/search/%EC%98%81%ED%92%8D%EB%AC%B8%EA%B3%A0%20{query}",
       "link_status": "정상",
       "last_checked_at": "2026-09-19T03:59:38+00:00",
-      "link_checked_at": "2026-09-19T03:59:55+00:00",
+      "link_checked_at": "2026-09-19T07:06:02+00:00",
       "link_statuses": {
         "url_template": "정상"
       }
@@ -3075,7 +3075,7 @@
       "url_template": "https://map.naver.com/p/search/%EC%84%9C%EC%A0%90%20%EC%BA%90%EB%A6%AD%ED%84%B0%20%EA%B5%BF%EC%A6%88%20{query}",
       "link_status": "정상",
       "last_checked_at": "2026-09-19T03:59:38+00:00",
-      "link_checked_at": "2026-09-19T03:59:55+00:00",
+      "link_checked_at": "2026-09-19T07:06:02+00:00",
       "link_statuses": {
         "url_template": "정상"
       }
@@ -3101,7 +3101,7 @@
       "official_reference_url": "https://store.emart.com/branch/list.do",
       "link_status": "정상",
       "last_checked_at": "2026-09-19T03:59:38+00:00",
-      "link_checked_at": "2026-09-19T03:59:55+00:00",
+      "link_checked_at": "2026-09-19T07:06:02+00:00",
       "link_statuses": {
         "official_reference_url": "정상",
         "url_template": "정상"
@@ -3128,7 +3128,7 @@
       "official_reference_url": "https://store.emart.com/branch/list.do",
       "link_status": "정상",
       "last_checked_at": "2026-09-19T03:59:38+00:00",
-      "link_checked_at": "2026-09-19T03:59:55+00:00",
+      "link_checked_at": "2026-09-19T07:06:02+00:00",
       "link_statuses": {
         "url": "정상",
         "official_reference_url": "정상"
@@ -3154,7 +3154,7 @@
       "url_template": "https://map.naver.com/p/search/%ED%86%A0%EC%9D%B4%EC%A0%80%EB%9F%AC%EC%8A%A4%20{query}",
       "link_status": "정상",
       "last_checked_at": "2026-09-19T03:59:38+00:00",
-      "link_checked_at": "2026-09-19T03:59:55+00:00",
+      "link_checked_at": "2026-09-19T07:06:02+00:00",
       "link_statuses": {
         "url_template": "정상"
       }
@@ -3179,7 +3179,7 @@
       "url_template": "https://map.naver.com/p/search/%EC%99%84%EA%B5%AC%ED%95%A0%EC%9D%B8%EC%A0%90%20{query}",
       "link_status": "정상",
       "last_checked_at": "2026-09-19T03:59:38+00:00",
-      "link_checked_at": "2026-09-19T03:59:55+00:00",
+      "link_checked_at": "2026-09-19T07:06:02+00:00",
       "link_statuses": {
         "url_template": "정상"
       }
@@ -3204,7 +3204,7 @@
       "url_template": "https://map.naver.com/p/search/%EC%9E%A5%EB%82%9C%EA%B0%90%20%EC%99%84%EA%B5%AC%EC%A0%90%20{query}",
       "link_status": "정상",
       "last_checked_at": "2026-09-19T03:59:38+00:00",
-      "link_checked_at": "2026-09-19T03:59:55+00:00",
+      "link_checked_at": "2026-09-19T07:06:02+00:00",
       "link_statuses": {
         "url_template": "정상"
       }
@@ -3230,7 +3230,7 @@
       "official_reference_url": "https://new.pokemonkorea.co.kr/card",
       "link_status": "정상",
       "last_checked_at": "2026-09-19T03:59:38+00:00",
-      "link_checked_at": "2026-09-19T03:59:55+00:00",
+      "link_checked_at": "2026-09-19T07:06:02+00:00",
       "link_statuses": {
         "official_reference_url": "정상",
         "url_template": "정상"
@@ -3258,7 +3258,7 @@
       "official_reference_url": "https://new.pokemonkorea.co.kr/card",
       "link_status": "정상",
       "last_checked_at": "2026-09-19T03:59:38+00:00",
-      "link_checked_at": "2026-09-19T03:59:55+00:00",
+      "link_checked_at": "2026-09-19T07:06:02+00:00",
       "link_statuses": {
         "url": "정상",
         "official_reference_url": "정상"
@@ -3286,7 +3286,7 @@
       "official_reference_url": "https://www.onepiece-cardgame.kr/shoplist.do",
       "link_status": "정상",
       "last_checked_at": "2026-09-19T03:59:38+00:00",
-      "link_checked_at": "2026-09-19T03:59:55+00:00",
+      "link_checked_at": "2026-09-19T07:06:02+00:00",
       "link_statuses": {
         "official_reference_url": "정상",
         "url_template": "정상"
@@ -3313,7 +3313,7 @@
       "official_reference_url": "https://www.onepiece-cardgame.kr/shoplist.do",
       "link_status": "정상",
       "last_checked_at": "2026-09-19T03:59:38+00:00",
-      "link_checked_at": "2026-09-19T03:59:55+00:00",
+      "link_checked_at": "2026-09-19T07:06:02+00:00",
       "link_statuses": {
         "url": "정상",
         "official_reference_url": "정상"
@@ -3339,7 +3339,7 @@
       "url_template": "https://map.naver.com/p/search/TCG%20%EC%B9%B4%EB%93%9C%EC%83%B5%20%EC%B9%B4%EB%93%9C%EA%B2%8C%EC%9E%84%20{query}",
       "link_status": "정상",
       "last_checked_at": "2026-09-19T03:59:38+00:00",
-      "link_checked_at": "2026-09-19T03:59:55+00:00",
+      "link_checked_at": "2026-09-19T07:06:02+00:00",
       "link_statuses": {
         "url_template": "정상"
       }
@@ -3364,7 +3364,7 @@
       "url_template": "https://map.naver.com/p/search/%EB%B3%B4%EB%93%9C%EA%B2%8C%EC%9E%84%20%EC%B9%B4%EB%93%9C%EA%B2%8C%EC%9E%84%20%EC%A0%84%EB%AC%B8%EC%A0%90%20{query}",
       "link_status": "정상",
       "last_checked_at": "2026-09-19T03:59:38+00:00",
-      "link_checked_at": "2026-09-19T03:59:55+00:00",
+      "link_checked_at": "2026-09-19T07:06:02+00:00",
       "link_statuses": {
         "url_template": "정상"
       }
@@ -3390,7 +3390,7 @@
       "official_reference_url": "https://www.daisomall.co.kr/",
       "link_status": "정상",
       "last_checked_at": "2026-09-19T03:59:38+00:00",
-      "link_checked_at": "2026-09-19T03:59:55+00:00",
+      "link_checked_at": "2026-09-19T07:06:02+00:00",
       "link_statuses": {
         "url_template": "정상",
         "official_reference_url": "정상"
@@ -3417,7 +3417,7 @@
       "official_reference_url": "https://www.daisomall.co.kr/",
       "link_status": "정상",
       "last_checked_at": "2026-09-19T03:59:38+00:00",
-      "link_checked_at": "2026-09-19T03:59:55+00:00",
+      "link_checked_at": "2026-09-19T07:06:02+00:00",
       "link_statuses": {
         "url": "정상",
         "official_reference_url": "정상"
@@ -3444,7 +3444,7 @@
       "official_reference_url": "https://store.emart.com/branch/list.do",
       "link_status": "정상",
       "last_checked_at": "2026-09-19T03:59:38+00:00",
-      "link_checked_at": "2026-09-19T03:59:55+00:00",
+      "link_checked_at": "2026-09-19T07:06:02+00:00",
       "link_statuses": {
         "official_reference_url": "정상",
         "url_template": "정상"
@@ -3471,7 +3471,7 @@
       "official_reference_url": "https://store.emart.com/branch/list.do",
       "link_status": "정상",
       "last_checked_at": "2026-09-19T03:59:38+00:00",
-      "link_checked_at": "2026-09-19T03:59:55+00:00",
+      "link_checked_at": "2026-09-19T07:06:02+00:00",
       "link_statuses": {
         "url": "정상",
         "official_reference_url": "정상"
@@ -3497,7 +3497,7 @@
       "url_template": "https://map.naver.com/p/search/%EC%BA%90%EB%A6%AD%ED%84%B0%20%EB%9E%9C%EB%8D%A4%EC%B9%B4%EB%93%9C%20%ED%95%A0%EC%9D%B8%EB%A7%A4%EC%9E%A5%20{query}",
       "link_status": "정상",
       "last_checked_at": "2026-09-19T03:59:38+00:00",
-      "link_checked_at": "2026-09-19T03:59:55+00:00",
+      "link_checked_at": "2026-09-19T07:06:02+00:00",
       "link_statuses": {
         "url_template": "정상"
       }
@@ -3523,7 +3523,7 @@
       "official_reference_url": "https://store.emart.com/branch/list.do",
       "link_status": "정상",
       "last_checked_at": "2026-09-19T03:59:38+00:00",
-      "link_checked_at": "2026-09-19T03:59:55+00:00",
+      "link_checked_at": "2026-09-19T07:06:02+00:00",
       "link_statuses": {
         "official_reference_url": "정상",
         "url": "정상"
@@ -3550,7 +3550,7 @@
       "official_reference_url": "https://store.emart.com/branch/list.do",
       "link_status": "정상",
       "last_checked_at": "2026-09-19T03:59:38+00:00",
-      "link_checked_at": "2026-09-19T03:59:55+00:00",
+      "link_checked_at": "2026-09-19T07:06:02+00:00",
       "link_statuses": {
         "official_reference_url": "정상",
         "url": "정상"
@@ -3577,7 +3577,7 @@
       "official_reference_url": "https://store.emart.com/branch/list.do",
       "link_status": "정상",
       "last_checked_at": "2026-09-19T03:59:38+00:00",
-      "link_checked_at": "2026-09-19T03:59:55+00:00",
+      "link_checked_at": "2026-09-19T07:06:02+00:00",
       "link_statuses": {
         "official_reference_url": "정상",
         "url": "정상"
@@ -3604,7 +3604,7 @@
       "official_reference_url": "https://store.emart.com/branch/list.do",
       "link_status": "정상",
       "last_checked_at": "2026-09-19T03:59:38+00:00",
-      "link_checked_at": "2026-09-19T03:59:55+00:00",
+      "link_checked_at": "2026-09-19T07:06:02+00:00",
       "link_statuses": {
         "official_reference_url": "정상",
         "url": "정상"
@@ -3631,7 +3631,7 @@
       "official_reference_url": "https://store.emart.com/branch/list.do",
       "link_status": "정상",
       "last_checked_at": "2026-09-19T03:59:38+00:00",
-      "link_checked_at": "2026-09-19T03:59:55+00:00",
+      "link_checked_at": "2026-09-19T07:06:02+00:00",
       "link_statuses": {
         "official_reference_url": "정상",
         "url": "정상"
@@ -3658,7 +3658,7 @@
       "official_reference_url": "https://store.emart.com/branch/list.do",
       "link_status": "정상",
       "last_checked_at": "2026-09-19T03:59:38+00:00",
-      "link_checked_at": "2026-09-19T03:59:55+00:00",
+      "link_checked_at": "2026-09-19T07:06:02+00:00",
       "link_statuses": {
         "official_reference_url": "정상",
         "url": "정상"
@@ -3685,7 +3685,7 @@
       "official_reference_url": "https://store.emart.com/branch/list.do",
       "link_status": "정상",
       "last_checked_at": "2026-09-19T03:59:38+00:00",
-      "link_checked_at": "2026-09-19T03:59:55+00:00",
+      "link_checked_at": "2026-09-19T07:06:02+00:00",
       "link_statuses": {
         "official_reference_url": "정상",
         "url": "정상"
@@ -3712,7 +3712,7 @@
       "official_reference_url": "https://store.emart.com/branch/list.do",
       "link_status": "정상",
       "last_checked_at": "2026-09-19T03:59:38+00:00",
-      "link_checked_at": "2026-09-19T03:59:55+00:00",
+      "link_checked_at": "2026-09-19T07:06:02+00:00",
       "link_statuses": {
         "official_reference_url": "정상",
         "url": "정상"
@@ -3739,7 +3739,7 @@
       "official_reference_url": "https://store.emart.com/branch/list.do",
       "link_status": "정상",
       "last_checked_at": "2026-09-19T03:59:38+00:00",
-      "link_checked_at": "2026-09-19T03:59:55+00:00",
+      "link_checked_at": "2026-09-19T07:06:02+00:00",
       "link_statuses": {
         "official_reference_url": "정상",
         "url": "정상"
@@ -3766,7 +3766,7 @@
       "official_reference_url": "https://store.emart.com/branch/list.do",
       "link_status": "정상",
       "last_checked_at": "2026-09-19T03:59:38+00:00",
-      "link_checked_at": "2026-09-19T03:59:55+00:00",
+      "link_checked_at": "2026-09-19T07:06:02+00:00",
       "link_statuses": {
         "official_reference_url": "정상",
         "url": "정상"
@@ -3793,7 +3793,7 @@
       "official_reference_url": "https://store.emart.com/branch/list.do",
       "link_status": "정상",
       "last_checked_at": "2026-09-19T03:59:38+00:00",
-      "link_checked_at": "2026-09-19T03:59:55+00:00",
+      "link_checked_at": "2026-09-19T07:06:02+00:00",
       "link_statuses": {
         "official_reference_url": "정상",
         "url": "정상"
@@ -3820,7 +3820,7 @@
       "official_reference_url": "https://store.emart.com/branch/list.do",
       "link_status": "정상",
       "last_checked_at": "2026-09-19T03:59:38+00:00",
-      "link_checked_at": "2026-09-19T03:59:55+00:00",
+      "link_checked_at": "2026-09-19T07:06:02+00:00",
       "link_statuses": {
         "official_reference_url": "정상",
         "url": "정상"
@@ -3847,7 +3847,7 @@
       "official_reference_url": "https://store.emart.com/branch/list.do",
       "link_status": "정상",
       "last_checked_at": "2026-09-19T03:59:38+00:00",
-      "link_checked_at": "2026-09-19T03:59:55+00:00",
+      "link_checked_at": "2026-09-19T07:06:02+00:00",
       "link_statuses": {
         "official_reference_url": "정상",
         "url": "정상"
@@ -3874,7 +3874,7 @@
       "official_reference_url": "https://store.emart.com/branch/list.do",
       "link_status": "정상",
       "last_checked_at": "2026-09-19T03:59:38+00:00",
-      "link_checked_at": "2026-09-19T03:59:55+00:00",
+      "link_checked_at": "2026-09-19T07:06:02+00:00",
       "link_statuses": {
         "official_reference_url": "정상",
         "url": "정상"
@@ -3901,7 +3901,7 @@
       "official_reference_url": "https://store.emart.com/branch/list.do",
       "link_status": "정상",
       "last_checked_at": "2026-09-19T03:59:38+00:00",
-      "link_checked_at": "2026-09-19T03:59:55+00:00",
+      "link_checked_at": "2026-09-19T07:06:02+00:00",
       "link_statuses": {
         "official_reference_url": "정상",
         "url": "정상"
@@ -3928,7 +3928,7 @@
       "official_reference_url": "https://store.emart.com/branch/list.do",
       "link_status": "정상",
       "last_checked_at": "2026-09-19T03:59:38+00:00",
-      "link_checked_at": "2026-09-19T03:59:55+00:00",
+      "link_checked_at": "2026-09-19T07:06:02+00:00",
       "link_statuses": {
         "official_reference_url": "정상",
         "url": "정상"
@@ -3955,7 +3955,7 @@
       "official_reference_url": "https://store.emart.com/branch/list.do",
       "link_status": "정상",
       "last_checked_at": "2026-09-19T03:59:38+00:00",
-      "link_checked_at": "2026-09-19T03:59:55+00:00",
+      "link_checked_at": "2026-09-19T07:06:02+00:00",
       "link_statuses": {
         "official_reference_url": "정상",
         "url": "정상"
@@ -3985,7 +3985,7 @@
       "lon": 126.8132034864,
       "link_status": "정상",
       "last_checked_at": "2026-09-19T03:59:38+00:00",
-      "link_checked_at": "2026-09-19T03:59:55+00:00",
+      "link_checked_at": "2026-09-19T07:06:02+00:00",
       "link_statuses": {
         "official_reference_url": "정상",
         "url": "정상"
@@ -4012,7 +4012,7 @@
       "official_reference_url": "https://store.emart.com/branch/list.do",
       "link_status": "정상",
       "last_checked_at": "2026-09-19T03:59:38+00:00",
-      "link_checked_at": "2026-09-19T03:59:55+00:00",
+      "link_checked_at": "2026-09-19T07:06:02+00:00",
       "link_statuses": {
         "official_reference_url": "정상",
         "url": "정상"
@@ -4039,7 +4039,7 @@
       "official_reference_url": "https://store.emart.com/branch/list.do",
       "link_status": "정상",
       "last_checked_at": "2026-09-19T03:59:38+00:00",
-      "link_checked_at": "2026-09-19T03:59:55+00:00",
+      "link_checked_at": "2026-09-19T07:06:02+00:00",
       "link_statuses": {
         "official_reference_url": "정상",
         "url": "정상"
@@ -4066,7 +4066,7 @@
       "official_reference_url": "https://store.emart.com/branch/list.do",
       "link_status": "정상",
       "last_checked_at": "2026-09-19T03:59:38+00:00",
-      "link_checked_at": "2026-09-19T03:59:55+00:00",
+      "link_checked_at": "2026-09-19T07:06:02+00:00",
       "link_statuses": {
         "official_reference_url": "정상",
         "url": "정상"
@@ -4093,7 +4093,7 @@
       "official_reference_url": "https://store.emart.com/branch/list.do",
       "link_status": "정상",
       "last_checked_at": "2026-09-19T03:59:38+00:00",
-      "link_checked_at": "2026-09-19T03:59:55+00:00",
+      "link_checked_at": "2026-09-19T07:06:02+00:00",
       "link_statuses": {
         "official_reference_url": "정상",
         "url": "정상"
@@ -4120,7 +4120,7 @@
       "official_reference_url": "https://store.emart.com/branch/list.do",
       "link_status": "정상",
       "last_checked_at": "2026-09-19T03:59:38+00:00",
-      "link_checked_at": "2026-09-19T03:59:55+00:00",
+      "link_checked_at": "2026-09-19T07:06:02+00:00",
       "link_statuses": {
         "official_reference_url": "정상",
         "url": "정상"
@@ -4147,7 +4147,7 @@
       "official_reference_url": "https://store.emart.com/branch/list.do",
       "link_status": "정상",
       "last_checked_at": "2026-09-19T03:59:38+00:00",
-      "link_checked_at": "2026-09-19T03:59:55+00:00",
+      "link_checked_at": "2026-09-19T07:06:02+00:00",
       "link_statuses": {
         "official_reference_url": "정상",
         "url": "정상"
@@ -4174,7 +4174,7 @@
       "official_reference_url": "https://store.emart.com/branch/list.do",
       "link_status": "정상",
       "last_checked_at": "2026-09-19T03:59:38+00:00",
-      "link_checked_at": "2026-09-19T03:59:55+00:00",
+      "link_checked_at": "2026-09-19T07:06:02+00:00",
       "link_statuses": {
         "official_reference_url": "정상",
         "url": "정상"
@@ -4201,7 +4201,7 @@
       "official_reference_url": "https://store.emart.com/branch/list.do",
       "link_status": "정상",
       "last_checked_at": "2026-09-19T03:59:38+00:00",
-      "link_checked_at": "2026-09-19T03:59:55+00:00",
+      "link_checked_at": "2026-09-19T07:06:02+00:00",
       "link_statuses": {
         "official_reference_url": "정상",
         "url": "정상"
@@ -4228,7 +4228,7 @@
       "official_reference_url": "https://store.emart.com/branch/list.do",
       "link_status": "정상",
       "last_checked_at": "2026-09-19T03:59:38+00:00",
-      "link_checked_at": "2026-09-19T03:59:55+00:00",
+      "link_checked_at": "2026-09-19T07:06:02+00:00",
       "link_statuses": {
         "official_reference_url": "정상",
         "url": "정상"
@@ -4255,7 +4255,7 @@
       "official_reference_url": "https://store.emart.com/branch/list.do",
       "link_status": "정상",
       "last_checked_at": "2026-09-19T03:59:38+00:00",
-      "link_checked_at": "2026-09-19T03:59:55+00:00",
+      "link_checked_at": "2026-09-19T07:06:02+00:00",
       "link_statuses": {
         "official_reference_url": "정상",
         "url": "정상"
@@ -4282,7 +4282,7 @@
       "official_reference_url": "https://store.emart.com/branch/list.do",
       "link_status": "정상",
       "last_checked_at": "2026-09-19T03:59:38+00:00",
-      "link_checked_at": "2026-09-19T03:59:55+00:00",
+      "link_checked_at": "2026-09-19T07:06:02+00:00",
       "link_statuses": {
         "official_reference_url": "정상",
         "url": "정상"
@@ -4309,7 +4309,7 @@
       "official_reference_url": "https://store.emart.com/branch/list.do",
       "link_status": "정상",
       "last_checked_at": "2026-09-19T03:59:38+00:00",
-      "link_checked_at": "2026-09-19T03:59:55+00:00",
+      "link_checked_at": "2026-09-19T07:06:02+00:00",
       "link_statuses": {
         "official_reference_url": "정상",
         "url": "정상"
@@ -4336,7 +4336,7 @@
       "official_reference_url": "https://store.emart.com/branch/list.do",
       "link_status": "정상",
       "last_checked_at": "2026-09-19T03:59:38+00:00",
-      "link_checked_at": "2026-09-19T03:59:55+00:00",
+      "link_checked_at": "2026-09-19T07:06:02+00:00",
       "link_statuses": {
         "official_reference_url": "정상",
         "url": "정상"
@@ -4363,7 +4363,7 @@
       "official_reference_url": "https://store.emart.com/branch/list.do",
       "link_status": "정상",
       "last_checked_at": "2026-09-19T03:59:38+00:00",
-      "link_checked_at": "2026-09-19T03:59:55+00:00",
+      "link_checked_at": "2026-09-19T07:06:02+00:00",
       "link_statuses": {
         "official_reference_url": "정상",
         "url": "정상"
@@ -4390,7 +4390,7 @@
       "official_reference_url": "https://store.emart.com/branch/list.do",
       "link_status": "정상",
       "last_checked_at": "2026-09-19T03:59:38+00:00",
-      "link_checked_at": "2026-09-19T03:59:55+00:00",
+      "link_checked_at": "2026-09-19T07:06:02+00:00",
       "link_statuses": {
         "official_reference_url": "정상",
         "url": "정상"
@@ -4417,7 +4417,7 @@
       "official_reference_url": "https://store.emart.com/branch/list.do",
       "link_status": "정상",
       "last_checked_at": "2026-09-19T03:59:38+00:00",
-      "link_checked_at": "2026-09-19T03:59:55+00:00",
+      "link_checked_at": "2026-09-19T07:06:02+00:00",
       "link_statuses": {
         "official_reference_url": "정상",
         "url": "정상"
@@ -4444,7 +4444,7 @@
       "official_reference_url": "https://store.emart.com/branch/list.do",
       "link_status": "정상",
       "last_checked_at": "2026-09-19T03:59:38+00:00",
-      "link_checked_at": "2026-09-19T03:59:55+00:00",
+      "link_checked_at": "2026-09-19T07:06:02+00:00",
       "link_statuses": {
         "official_reference_url": "정상",
         "url": "정상"
@@ -4471,7 +4471,7 @@
       "official_reference_url": "https://store.emart.com/branch/list.do",
       "link_status": "정상",
       "last_checked_at": "2026-09-19T03:59:38+00:00",
-      "link_checked_at": "2026-09-19T03:59:55+00:00",
+      "link_checked_at": "2026-09-19T07:06:02+00:00",
       "link_statuses": {
         "official_reference_url": "정상",
         "url": "정상"
@@ -4498,7 +4498,7 @@
       "official_reference_url": "https://store.emart.com/branch/list.do",
       "link_status": "정상",
       "last_checked_at": "2026-09-19T03:59:38+00:00",
-      "link_checked_at": "2026-09-19T03:59:55+00:00",
+      "link_checked_at": "2026-09-19T07:06:02+00:00",
       "link_statuses": {
         "official_reference_url": "정상",
         "url": "정상"
@@ -4525,7 +4525,7 @@
       "official_reference_url": "https://store.emart.com/branch/list.do",
       "link_status": "정상",
       "last_checked_at": "2026-09-19T03:59:38+00:00",
-      "link_checked_at": "2026-09-19T03:59:55+00:00",
+      "link_checked_at": "2026-09-19T07:06:02+00:00",
       "link_statuses": {
         "official_reference_url": "정상",
         "url": "정상"
@@ -4552,7 +4552,7 @@
       "official_reference_url": "https://store.emart.com/branch/list.do",
       "link_status": "정상",
       "last_checked_at": "2026-09-19T03:59:38+00:00",
-      "link_checked_at": "2026-09-19T03:59:55+00:00",
+      "link_checked_at": "2026-09-19T07:06:02+00:00",
       "link_statuses": {
         "official_reference_url": "정상",
         "url": "정상"
@@ -4579,7 +4579,7 @@
       "official_reference_url": "https://store.emart.com/branch/list.do",
       "link_status": "정상",
       "last_checked_at": "2026-09-19T03:59:38+00:00",
-      "link_checked_at": "2026-09-19T03:59:55+00:00",
+      "link_checked_at": "2026-09-19T07:06:02+00:00",
       "link_statuses": {
         "official_reference_url": "정상",
         "url": "정상"
@@ -4606,7 +4606,7 @@
       "official_reference_url": "https://store.emart.com/branch/list.do",
       "link_status": "정상",
       "last_checked_at": "2026-09-19T03:59:38+00:00",
-      "link_checked_at": "2026-09-19T03:59:55+00:00",
+      "link_checked_at": "2026-09-19T07:06:02+00:00",
       "link_statuses": {
         "official_reference_url": "정상",
         "url": "정상"
@@ -4633,7 +4633,7 @@
       "official_reference_url": "https://store.emart.com/branch/list.do",
       "link_status": "정상",
       "last_checked_at": "2026-09-19T03:59:38+00:00",
-      "link_checked_at": "2026-09-19T03:59:55+00:00",
+      "link_checked_at": "2026-09-19T07:06:02+00:00",
       "link_statuses": {
         "official_reference_url": "정상",
         "url": "정상"
@@ -4660,7 +4660,7 @@
       "official_reference_url": "https://store.emart.com/branch/list.do",
       "link_status": "정상",
       "last_checked_at": "2026-09-19T03:59:38+00:00",
-      "link_checked_at": "2026-09-19T03:59:55+00:00",
+      "link_checked_at": "2026-09-19T07:06:02+00:00",
       "link_statuses": {
         "official_reference_url": "정상",
         "url": "정상"
@@ -4687,7 +4687,7 @@
       "official_reference_url": "https://store.emart.com/branch/list.do",
       "link_status": "정상",
       "last_checked_at": "2026-09-19T03:59:38+00:00",
-      "link_checked_at": "2026-09-19T03:59:55+00:00",
+      "link_checked_at": "2026-09-19T07:06:02+00:00",
       "link_statuses": {
         "official_reference_url": "정상",
         "url": "정상"
@@ -4714,7 +4714,7 @@
       "official_reference_url": "https://store.emart.com/branch/list.do",
       "link_status": "정상",
       "last_checked_at": "2026-09-19T03:59:38+00:00",
-      "link_checked_at": "2026-09-19T03:59:55+00:00",
+      "link_checked_at": "2026-09-19T07:06:02+00:00",
       "link_statuses": {
         "official_reference_url": "정상",
         "url": "정상"
@@ -4741,7 +4741,7 @@
       "official_reference_url": "https://store.emart.com/branch/list.do",
       "link_status": "정상",
       "last_checked_at": "2026-09-19T03:59:38+00:00",
-      "link_checked_at": "2026-09-19T03:59:55+00:00",
+      "link_checked_at": "2026-09-19T07:06:02+00:00",
       "link_statuses": {
         "official_reference_url": "정상",
         "url": "정상"
@@ -4768,7 +4768,7 @@
       "official_reference_url": "https://store.emart.com/branch/list.do",
       "link_status": "정상",
       "last_checked_at": "2026-09-19T03:59:38+00:00",
-      "link_checked_at": "2026-09-19T03:59:55+00:00",
+      "link_checked_at": "2026-09-19T07:06:02+00:00",
       "link_statuses": {
         "official_reference_url": "정상",
         "url": "정상"
@@ -4795,7 +4795,7 @@
       "official_reference_url": "https://store.emart.com/branch/list.do",
       "link_status": "정상",
       "last_checked_at": "2026-09-19T03:59:38+00:00",
-      "link_checked_at": "2026-09-19T03:59:55+00:00",
+      "link_checked_at": "2026-09-19T07:06:02+00:00",
       "link_statuses": {
         "official_reference_url": "정상",
         "url": "정상"
@@ -4826,7 +4826,7 @@
       "lon": 126.78449703496,
       "link_status": "정상",
       "last_checked_at": "2026-09-19T03:59:38+00:00",
-      "link_checked_at": "2026-09-19T03:59:55+00:00",
+      "link_checked_at": "2026-09-19T07:06:02+00:00",
       "link_statuses": {
         "official_reference_url": "정상",
         "url": "정상"
@@ -4853,7 +4853,7 @@
       "official_reference_url": "https://store.emart.com/branch/list.do",
       "link_status": "정상",
       "last_checked_at": "2026-09-19T03:59:38+00:00",
-      "link_checked_at": "2026-09-19T03:59:55+00:00",
+      "link_checked_at": "2026-09-19T07:06:02+00:00",
       "link_statuses": {
         "official_reference_url": "정상",
         "url": "정상"
@@ -4880,7 +4880,7 @@
       "official_reference_url": "https://store.emart.com/branch/list.do",
       "link_status": "정상",
       "last_checked_at": "2026-09-19T03:59:38+00:00",
-      "link_checked_at": "2026-09-19T03:59:55+00:00",
+      "link_checked_at": "2026-09-19T07:06:02+00:00",
       "link_statuses": {
         "official_reference_url": "정상",
         "url": "정상"
@@ -4907,7 +4907,7 @@
       "official_reference_url": "https://store.emart.com/branch/list.do",
       "link_status": "정상",
       "last_checked_at": "2026-09-19T03:59:38+00:00",
-      "link_checked_at": "2026-09-19T03:59:55+00:00",
+      "link_checked_at": "2026-09-19T07:06:02+00:00",
       "link_statuses": {
         "official_reference_url": "정상",
         "url": "정상"
@@ -4934,7 +4934,7 @@
       "official_reference_url": "https://store.emart.com/branch/list.do",
       "link_status": "정상",
       "last_checked_at": "2026-09-19T03:59:38+00:00",
-      "link_checked_at": "2026-09-19T03:59:55+00:00",
+      "link_checked_at": "2026-09-19T07:06:02+00:00",
       "link_statuses": {
         "official_reference_url": "정상",
         "url": "정상"
@@ -4965,7 +4965,7 @@
       "lon": 127.04217618519,
       "link_status": "정상",
       "last_checked_at": "2026-09-19T03:59:38+00:00",
-      "link_checked_at": "2026-09-19T03:59:55+00:00",
+      "link_checked_at": "2026-09-19T07:06:02+00:00",
       "link_statuses": {
         "url": "정상",
         "official_reference_url": "정상"
@@ -4989,7 +4989,7 @@
       "data_basis": "이마트 공식 온라인 검색과 공식 점포 안내",
       "link_status": "정상",
       "last_checked_at": "2026-09-19T03:59:38+00:00",
-      "link_checked_at": "2026-09-19T03:59:55+00:00",
+      "link_checked_at": "2026-09-19T07:06:02+00:00",
       "link_statuses": {
         "official_reference_url": "정상",
         "url_template": "정상"
@@ -5000,7 +5000,7 @@
   "collection_errors": [],
   "checked_source_count": 205,
   "online_checked_count": 12,
-  "link_audit_at": "2026-09-19T03:59:55+00:00",
+  "link_audit_at": "2026-09-19T07:06:02+00:00",
   "purchase_intelligence": {
     "live_web_signals": true,
     "signal_types": [
