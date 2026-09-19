@@ -1,0 +1,78 @@
+name: Apply runtime dependency closure v257
+on:
+  push:
+    branches: [fix/runtime-dependency-closure-v257]
+    paths:
+      - '.github/workflows/apply-runtime-dependency-closure-v257.yml'
+permissions:
+  contents: write
+
+concurrency:
+  group: apply-runtime-dependency-closure-v257-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  apply:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
+        with:
+          ref: fix/runtime-dependency-closure-v257
+          fetch-depth: 0
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97
+        with:
+          python-version: '3.11'
+      - name: Apply bounded patch
+        run: python apply_runtime_dependency_closure_v257.py
+      - name: Compile and syntax check
+        run: |
+          python -m py_compile tablet_runtime_manifest.py tcg_updater.py grading_accuracy_v99.py server_security_guard.py test_tablet_runtime_dependency_closure_v257.py
+          node --check sw.js
+      - name: Targeted dependency regressions
+        run: |
+          python -m unittest -v test_tablet_runtime_dependency_closure_v257.py
+          python -m unittest -v test_tablet_runtime_manifest_ui_assets_v254.py
+          python -m unittest -v test_grading_runtime_fallback_v256.py
+          python -m unittest -v test_security_hardening.py
+          python tablet_runtime_manifest.py --check --compile
+      - name: Main SELFREFINE smoke gate
+        run: python main_selfrefine_gate.py --self-test
+      - name: Remove one-shot machinery
+        run: git rm apply_runtime_dependency_closure_v257.py .github/workflows/apply-runtime-dependency-closure-v257.yml
+      - name: Refresh and diagnose integrity baseline
+        run: |
+          python fault_injection_healing.py --manifest
+          python fault_injection_healing.py --diagnose
+      - name: Verify bounded final diff
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import subprocess
+          allowed={
+              'tablet_runtime_manifest.py',
+              'sw.js',
+              'test_tablet_runtime_dependency_closure_v257.py',
+              'integrity_manifest.json',
+          }
+          actual=set(filter(None,subprocess.check_output(['git','diff','--name-only','origin/main'],text=True).splitlines()))
+          extra=actual-allowed
+          required={'tablet_runtime_manifest.py','sw.js','test_tablet_runtime_dependency_closure_v257.py','integrity_manifest.json'}
+          missing=required-actual
+          assert not extra, f'unexpected final PR paths: {sorted(extra)}'
+          assert not missing, f'missing expected final changes: {sorted(missing)}'
+          assert 'apply_runtime_dependency_closure_v257.py' not in actual
+          assert '.github/workflows/apply-runtime-dependency-closure-v257.yml' not in actual
+          print('bounded final PR diff OK:',sorted(actual))
+          PY
+      - name: Commit verified patch
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add tablet_runtime_manifest.py sw.js test_tablet_runtime_dependency_closure_v257.py integrity_manifest.json
+          git commit -m 'Harden tablet runtime dependency closure'
+          git push origin HEAD:fix/runtime-dependency-closure-v257
