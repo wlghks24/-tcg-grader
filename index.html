@@ -385,7 +385,7 @@ async function refreshReleaseInfo(){
  try{
   server=await releaseServerAvailable();
   if(server){
-   btn.textContent="공식자료 수집 중…";status.textContent="PC·태블릿 서버에서 공식 출시·가격자료를 수집 중입니다. 출처 상황에 따라 잠시 기다려 주세요.";siteStatus.textContent="🖥️ 서버 연결됨 · 출시·재발매·시세·행사·구매처·환율·등급사진 7단계를 백그라운드에서 수집하고 있습니다.";
+   btn.textContent="공식자료 수집 중…";status.textContent="PC·태블릿 서버에서 공식 출시·가격자료를 수집 중입니다. 출처 상황에 따라 잠시 기다려 주세요.";siteStatus.textContent="🖥️ 서버 연결됨 · 출시·재발매·시세·행사·구매처·환율·등급사진 7단계 수집 → 변경내용 비교 → 구조·보안 검증 → 정상자료 반영을 진행 중입니다. 화면을 벗어나도 서버에서 계속 진행됩니다.";
    if(typeof window.tcgStartUpdateJob!=="function")throw new Error("background updater unavailable");
    const job=await window.tcgStartUpdateJob("/api/run-auto-update","사이트 전체정보 업데이트");
    if(!job?.ok)throw new Error(job?.error||"server update failed");
@@ -835,7 +835,7 @@ loadReleases();loadPromos();loadPurchaseSources();
 
 <div class="update-panel hidden" id="v16update">
 <button type="button" class="update-panel-close">닫기 ✕</button><h4>🔄 전체 안전 업데이트</h4>
-<div class="update-step-note">한 번 누르면 최신자료 확인 → 변경내용 비교 → 구조·보안 검증 → 정상자료 전체 반영까지 자동으로 진행합니다.</div>
+<div class="update-step-note">서버에서 출시·재발매·시세·행사·구매처·환율·등급사진 7단계를 수집하고, 변경내용 비교 → 구조·보안 검증 → 정상자료 반영까지 자동으로 진행합니다.</div>
 <button id="v16full" style="width:100%;margin-top:8px">🚀 전체 자료 한 번에 업데이트</button>
 <div class="grid2" style="margin-top:8px"><button id="v16report">📋 최근 업데이트 결과</button><button id="v16issues">🩹 오류·보정 내역</button></div><button id="v16retry" style="width:100%;margin-top:8px">🔁 실패 항목만 다시 수집</button>
 <div id="v16status" class="status" style="margin-top:10px">전체 업데이트 대기 중 · 학습형 병렬수집 최적화</div><div id="v16diffout" class="status" style="margin-top:8px"></div>
@@ -1954,7 +1954,7 @@ document.getElementById("reset15")?.addEventListener("click",()=>{
  };
  const setBusy=busy=>{
    const b=$("v16full"),r=$("v16retry");
-   if(b){b.disabled=busy;b.textContent=busy?"⏳ 서버에서 업데이트 진행 중...":"🚀 전체 자료 한 번에 업데이트";}
+   if(b){b.disabled=busy;b.textContent=busy?"⏳ 전체정보 업데이트 중…":"🚀 전체 자료 한 번에 업데이트";}
    if(r)r.disabled=busy;
  };
  async function jsonFetch(url,opt={}){
