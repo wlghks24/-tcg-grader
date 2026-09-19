@@ -1,13 +1,29 @@
 #!/data/data/com.termux/files/usr/bin/bash
 set -u
+
 SCRIPT_DIR="$(CDPATH= cd -- "$(dirname -- "$0")" 2>/dev/null && pwd)"
 cd "${TCG_REPO_DIR:-$SCRIPT_DIR}" || exit 1
 
-LOCK_GUARD="$HOME/.local/state/tcg-grader/gdrive-sync/wrapper.lock"
-mkdir -p "$(dirname "$LOCK_GUARD")"
-if ! mkdir "$LOCK_GUARD" 2>/dev/null; then
-  exit 0
-fi
-trap 'rm -rf "$LOCK_GUARD" 2>/dev/null || true' EXIT INT TERM
+WAKE_LOCKED=0
+cleanup_sync_wrapper() {
+  if [ "${WAKE_LOCKED:-0}" = "1" ] && command -v termux-wake-unlock >/dev/null 2>&1; then
+    termux-wake-unlock >/dev/null 2>&1 || true
+  fi
+  WAKE_LOCKED=0
+}
+trap cleanup_sync_wrapper EXIT INT TERM HUP
 
-exec python tablet_gdrive_sync.py "$@"
+if command -v termux-wake-lock >/dev/null 2>&1; then
+  if termux-wake-lock >/dev/null 2>&1; then
+    WAKE_LOCKED=1
+  fi
+fi
+
+if [ ! -s "tablet_gdrive_sync_hardening.py" ]; then
+  echo "[HOLD] tablet_gdrive_sync_hardening.py가 없습니다. 최신 main으로 갱신하세요." >&2
+  exit 2
+fi
+
+python tablet_gdrive_sync_hardening.py "$@"
+rc=$?
+exit "$rc"
