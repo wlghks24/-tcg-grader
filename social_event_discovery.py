@@ -33,6 +33,7 @@ from pathlib import Path
 
 from safe_runtime import (
     atomic_write_json,
+    diagnostic_exception,
     env_int,
     safe_read_text,
     safe_urlopen,
@@ -48,6 +49,7 @@ SOURCE_TIMEOUT = max(5, min(15, TIMEOUT))
 MAX_ITEMS = env_int("TCG_SOCIAL_MAX_ITEMS", 250, 50, 600)
 MAX_PER_QUERY = env_int("TCG_SOCIAL_MAX_PER_QUERY", 10, 3, 25)
 REGISTRY_TTL_HOURS = env_int("TCG_SOCIAL_REGISTRY_TTL_HOURS", 168, 6, 720)
+MAX_PUBLIC_SEARCH_URL_CHARS = 1900
 
 GAMES = {
     "포켓몬 카드": {
@@ -474,10 +476,21 @@ def collect_instagram(registry: dict) -> tuple[list[dict], list[str], dict]:
 
 
 def _google_news_url(game: str, region: str) -> str:
-    cfg = REGION_LANG[region]; lang = cfg["lang"]; names = " OR ".join(f'"{x}"' for x in GAMES[game][lang][:2])
-    query = f"({names}) ({EVENT_TERMS[lang]}) when:45d"
-    return "https://news.google.com/rss/search?" + urllib.parse.urlencode({"q": query, "hl": cfg["hl"], "gl": cfg["gl"], "ceid": cfg["ceid"]})
-
+    cfg = REGION_LANG[region]
+    lang = cfg["lang"]
+    names = " OR ".join(f'"{x}"' for x in GAMES[game][lang][:2])
+    for limit in (16, 12, 9, 6, 4):
+        terms = _or_terms(EVENT_TERMS[lang], limit)
+        query = f"({names}) ({terms}) when:45d"
+        url = "https://news.google.com/rss/search?" + urllib.parse.urlencode({
+            "q": query,
+            "hl": cfg["hl"],
+            "gl": cfg["gl"],
+            "ceid": cfg["ceid"],
+        })
+        if len(url) <= MAX_PUBLIC_SEARCH_URL_CHARS:
+            return url
+    raise ValueError("Google News query exceeds safe URL budget")
 
 def _parse_pubdate(value: str | None) -> str | None:
     if not value: return None
@@ -506,7 +519,7 @@ def _google_news_one(game: str, region: str) -> tuple[list[dict], str | None]:
                          "verified": official, "confidence": 0.90 if official else 0.66, "collected_at": _now()})
         return rows, None
     except (urllib.error.URLError, urllib.error.HTTPError, TimeoutError, OSError, ValueError, ET.ParseError) as exc:
-        return [], f"Google News {game}/{region}: {type(exc).__name__}"
+        return [], f"Google News {game}/{region}: {diagnostic_exception(exc)}"
 
 
 def collect_google_news() -> tuple[list[dict], list[str], dict]:

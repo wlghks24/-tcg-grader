@@ -40,11 +40,12 @@ import event_gap_learning
 import fan_social_learning
 import multi_route_event_discovery
 import social_event_discovery
-from safe_runtime import safe_urlopen
+from safe_runtime import diagnostic_exception, safe_urlopen
 
 ROOT = Path(__file__).resolve().parent
 MANUAL_EVIDENCE = ROOT / "manual_event_evidence.json"
 PATCH_ID = 144
+MAX_PUBLIC_SEARCH_URL_CHARS = 1900
 
 RECOVERY_TERMS = {
     "ko": (
@@ -175,12 +176,10 @@ def _watch_names_for(registry: dict, game: str, region: str):
 
 
 def build_public_social_query(game: str, region: str, registry: dict, fan_learner=None, gap_learner=None) -> str:
-    """Build a region-aware query whose watch-account clause is multilingual."""
+    """Build a multilingual discovery query that always fits the HTTPS URL budget."""
     lang = social_event_discovery.REGION_LANG[region]["lang"]
     names = social_event_discovery.GAMES[game][lang][:2]
     name_expr = " OR ".join(f'"{x}"' for x in names)
-    local_event = social_event_discovery._or_terms(social_event_discovery.EVENT_TERMS[lang], 18)
-    local_fan = social_event_discovery._or_terms(social_event_discovery.FAN_TERMS[lang], 14)
 
     watch_names = _watch_names_for(registry, game, region)
     learned_names = []
@@ -190,30 +189,74 @@ def build_public_social_query(game: str, region: str, registry: dict, fan_learne
         except Exception:
             learned_names = []
     account_names = list(dict.fromkeys(watch_names + [str(x).lstrip("@") for x in learned_names]))[:12]
-    account_expr = _quoted_terms(account_names, 12)
 
     if gap_learner is None:
         gap_learner = event_gap_learning.EventGapLearner()
     try:
-        learned_terms = gap_learner.top_terms_for_region(game, region, limit=8)
+        learned_terms = tuple(gap_learner.top_terms_for_region(game, region, limit=8))
     except Exception:
         learned_terms = ()
 
-    multilingual = []
-    for key in ("ko", "ja", "en"):
-        multilingual.extend(RECOVERY_TERMS[key])
-    multilingual.extend(learned_terms)
-    watch_term_expr = _quoted_terms(multilingual, 34)
+    lang_order = (lang,) + tuple(key for key in ("ko", "ja", "en") if key != lang)
+    # Preserve cross-region recovery semantics even when the encoded URL must be
+    # shortened.  The previous target-language-first concatenation could fill
+    # the watch-term budget before Korean/Japanese/English evidence from the
+    # other regions was reached (for example JP lost the verified KR term 응모).
+    # Put one stable application anchor from every language first, then interleave
+    # the remaining language vocabularies round-robin.  This changes search
+    # ordering only; it never changes trust/verification state.
+    mandatory_multilingual = ("응모", "応募", "application")
+    multilingual = list(mandatory_multilingual)
+    max_recovery_terms = max(len(RECOVERY_TERMS[key]) for key in lang_order)
+    for index in range(max_recovery_terms):
+        for key in lang_order:
+            values = RECOVERY_TERMS[key]
+            if index >= len(values):
+                continue
+            value = values[index]
+            if value not in multilingual:
+                multilingual.append(value)
+    for value in learned_terms:
+        if value not in multilingual:
+            multilingual.append(value)
 
-    general = f"({name_expr}) (({local_event}) OR ({local_fan}))"
-    if learned_terms:
-        learned_expr = _quoted_terms(learned_terms, 8)
-        if learned_expr:
-            general = f"({general}) OR (({name_expr}) ({learned_expr}))"
-    if account_expr and watch_term_expr:
-        general = f"({general}) OR (({account_expr}) ({watch_term_expr}))"
-    return f"({general}) (site:x.com OR site:instagram.com OR site:youtube.com)"
+    # Richest-first presets.  Query semantics degrade gracefully by dropping
+    # optional fan/account/learned expansion before the shared HTTPS guard would
+    # reject the encoded URL. Game identity and the public social site scope are
+    # never removed.
+    presets = (
+        (18, 14, 12, 28, 8),
+        (14, 10, 9, 20, 6),
+        (10, 8, 6, 14, 4),
+        (8, 6, 4, 10, 3),
+        (6, 4, 2, 6, 2),
+    )
+    site_clause = "(site:x.com OR site:instagram.com OR site:youtube.com)"
+    for event_limit, fan_limit, account_limit, watch_limit, learned_limit in presets:
+        local_event = social_event_discovery._or_terms(social_event_discovery.EVENT_TERMS[lang], event_limit)
+        local_fan = social_event_discovery._or_terms(social_event_discovery.FAN_TERMS[lang], fan_limit)
+        account_expr = _quoted_terms(account_names, account_limit)
+        watch_term_expr = _quoted_terms(multilingual, watch_limit)
+        chosen_learned = learned_terms[:learned_limit]
 
+        general = f"({name_expr}) (({local_event}) OR ({local_fan}))"
+        if chosen_learned:
+            learned_expr = _quoted_terms(chosen_learned, learned_limit)
+            if learned_expr:
+                general = f"({general}) OR (({name_expr}) ({learned_expr}))"
+        if account_expr and watch_term_expr:
+            general = f"({general}) OR (({account_expr}) ({watch_term_expr}))"
+        query = f"({general}) {site_clause}"
+        url = "https://html.duckduckgo.com/html/?" + urllib.parse.urlencode({"q": query})
+        if len(url) <= MAX_PUBLIC_SEARCH_URL_CHARS:
+            return query
+
+    local_event = social_event_discovery._or_terms(social_event_discovery.EVENT_TERMS[lang], 4)
+    query = f"(({name_expr}) ({local_event})) {site_clause}"
+    url = "https://html.duckduckgo.com/html/?" + urllib.parse.urlencode({"q": query})
+    if len(url) > MAX_PUBLIC_SEARCH_URL_CHARS:
+        raise ValueError("public social query exceeds safe URL budget")
+    return query
 
 def _infer_region(learner, game: str, row: dict, default: str):
     text = " ".join(
@@ -291,7 +334,7 @@ def _v144_ddg_social_one(game: str, region: str, registry: dict, fan_learner=Non
         ValueError,
         UnicodeDecodeError,
     ) as exc:
-        return [], f"공개 SNS/YouTube v144 검색 {game}/{region}: {type(exc).__name__}"
+        return [], f"공개 SNS/YouTube v144 검색 {game}/{region}: {diagnostic_exception(exc)}"
 
 
 def _v144_annotate_social_rows(rows: list[dict], registry: dict) -> list[dict]:
