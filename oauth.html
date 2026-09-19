@@ -1,0 +1,43 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>TCG-Grader-Sync</title>
+  <meta name="description" content="TCG-Grader-Sync Google Drive synchronization information">
+  <style>
+    body{font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;max-width:860px;margin:0 auto;padding:32px 20px;line-height:1.7;color:#202124;background:#fff}
+    h1,h2{line-height:1.3}.box{border:1px solid #dadce0;border-radius:14px;padding:20px;margin:20px 0}a{color:#0b57d0}code{background:#f1f3f4;padding:2px 6px;border-radius:5px}.muted{color:#5f6368}
+  </style>
+</head>
+<body>
+  <main>
+    <h1>TCG-Grader-Sync</h1>
+    <p>TCG-Grader-Sync는 개인용 TCG 데이터 동기화 도구입니다. 검증된 TCG 데이터를 Google Drive와 사용자의 Android/Termux 태블릿 사이에서 동기화하는 용도로 사용됩니다.</p>
+
+    <section class="box">
+      <h2>주요 기능</h2>
+      <ul>
+        <li>Google Drive의 <code>TCG_Grader_Sync</code> 폴더를 통한 데이터 전달</li>
+        <li>검증된 공개 TCG JSON 데이터의 태블릿 동기화</li>
+        <li>동기화 성공/실패 receipt 기록</li>
+        <li>무결성 검증, 백업 및 실패 시 복구</li>
+      </ul>
+    </section>
+
+    <section>
+      <h2>Google Drive 데이터 사용</h2>
+      <p>OAuth 승인 범위는 Google Drive 전체 접근 권한을 포함할 수 있지만, TCG-Grader-Sync의 동기화 로직은 <code>TCG_Grader_Sync</code> 폴더와 그 하위 동기화 경로를 대상으로 설계되어 있습니다. Google 사용자 데이터는 광고 목적으로 사용하거나 판매하지 않습니다.</p>
+      <p>자세한 내용은 <a href="./privacy.html">개인정보처리방침</a>을 확인하세요.</p>
+    </section>
+
+    <section>
+      <h2>운영 형태</h2>
+      <p>이 앱은 개인용으로 운영되며, Google OAuth 인증 정보는 사용자의 기기 내 rclone 설정에 보관됩니다. 공개 GitHub 저장소나 공개 동기화 payload에 OAuth 비밀값을 저장하지 않습니다.</p>
+    </section>
+
+    <hr>
+    <p class="muted">TCG-Grader-Sync · Personal Google Drive synchronization utility</p>
+  </main>
+</body>
+</html>
