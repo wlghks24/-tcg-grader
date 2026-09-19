@@ -1,6 +1,6 @@
 {
   "version": 2,
-  "updated_at": "2026-09-19T00:59:17+00:00",
+  "updated_at": "2026-09-19T03:59:39+00:00",
   "items": [],
   "summary": {
     "sources_watched": 2,
@@ -8,11 +8,8 @@
     "new_candidates": 0,
     "active_signals": 0,
     "stale_signals": 0,
-    "errors": 2
+    "errors": 0
   },
-  "collection_errors": [
-    "ttosatda:_ddg_rows:RemoteDisconnected",
-    "ttosatda:_ddg_rows:URLError"
-  ],
+  "collection_errors": [],
   "policy": "SNS는 재고 제보 신호만 생성합니다. 공식 실시간 재고·확정 수량으로 자동승격하지 않으며, 학습은 검색 우선순위만 조정합니다."
 }
