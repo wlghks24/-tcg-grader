@@ -49,17 +49,18 @@ jobs:
           PY
       - name: Refresh CSP hashes
         run: python csp_hash_hardening.py
-      - name: Verify eight-job SSOT and UI
+      - name: Verify focused eight-job contract
         run: |
           python -m unittest -v test_update_guidance_consistency_v218.py test_collection_job_contract_v255.py test_grading_watch_integration_v220.py test_csp_hash_hardening.py
           python csp_hash_hardening.py --check
           python feature_contract.py
-          bash VERIFY_TABLET_FINAL.sh
           git diff --check
-      - name: Commit correction
+      - name: Persist verified correction
         run: |
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           git add index.html START_TCG_UPDATER_ANDROID.sh README_v31.md
           git commit -m 'fix: align update guidance with eight-job collection contract'
           git push origin HEAD:fix/update-guidance-eight-jobs-v219
+      - name: Full tablet guard
+        run: bash VERIFY_TABLET_FINAL.sh
