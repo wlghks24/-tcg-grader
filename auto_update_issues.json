@@ -1,47 +1,5 @@
 {
-  "updated_at": "2026-09-19T07:06:02+00:00",
-  "issue_count": 1,
-  "issues": [
-    {
-      "name": "구매처·링크 보안 확인",
-      "file": "purchase_sources.json",
-      "severity": "주의",
-      "auto_action": "시간초과 자료만 별도 수집 완료 · 기존 정상자료 유지 · 다음 실행 예산 확대",
-      "detail": "TIMEOUT: update_purchase_sources 90초 초과 / TIMEOUT: update_purchase_sources 180초 초과",
-      "recommended_action": "공식 구매처 HTTPS 주소·접속 상태를 확인하세요.",
-      "error_group_id": "111a2ddd056db938",
-      "error_code": "NETWORK_TIMEOUT",
-      "error_subtype": "general",
-      "http_status": null,
-      "bounded_retry_allowed": true,
-      "probable_cause": "공식 사이트 응답 지연, 연결 불안정 또는 학습된 제한시간 부족 가능성이 큽니다.",
-      "resolution_steps": [
-        "공식 출처 연결과 응답시간을 확인합니다.",
-        "제한된 1회 재시도와 확대된 시간예산을 적용합니다.",
-        "실패 시 기존 정상자료가 유지됐는지 확인합니다."
-      ],
-      "verification_steps": [
-        "실패 시 기존 정상자료가 유지됐는지 확인합니다.",
-        "기존 정상자료가 손상되지 않았는지 확인합니다."
-      ],
-      "scenario_prepared": true,
-      "scenario_profile_id": "8f2964a4e191d68f",
-      "diagnostic_priority": 20,
-      "first_checks": [
-        "출처별 최근 성공시간과 현재 제한시간을 비교합니다."
-      ],
-      "fast_resolution_steps": [
-        "공식 출처 연결과 응답시간을 확인합니다.",
-        "제한된 1회 재시도와 확대된 시간예산을 적용합니다.",
-        "실패 시 기존 정상자료가 유지됐는지 확인합니다."
-      ],
-      "stop_conditions": [
-        "동일 출처가 연속 실패하면 현재 실행의 추가 재시도를 중단합니다."
-      ],
-      "deferred_timeout_attempted": true,
-      "deferred_timeout_recovered": false,
-      "deferred_timeout_pending": true,
-      "deferred_timeout_seconds": 184
-    }
-  ]
+  "updated_at": "2026-09-19T11:53:12+00:00",
+  "issue_count": 0,
+  "issues": []
 }
