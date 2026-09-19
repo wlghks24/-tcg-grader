@@ -28,13 +28,15 @@ import xml.etree.ElementTree as ET
 from html.parser import HTMLParser
 
 from event_gap_learning import EventGapLearner
-from safe_runtime import env_int, safe_urlopen, validate_public_https_url
+from safe_runtime import diagnostic_exception, env_int, safe_urlopen, validate_public_https_url
 
 TIMEOUT = env_int("TCG_HTTP_TIMEOUT", 20, 5, 60)
 SOURCE_TIMEOUT = max(5, min(12, TIMEOUT))
 MAX_PER_QUERY = env_int("TCG_ROUTE_MAX_PER_QUERY", 8, 3, 15)
 BING_HOSTS = {"www.bing.com", "bing.com"}
 DDG_HOSTS = {"html.duckduckgo.com", "duckduckgo.com", "www.duckduckgo.com"}
+MAX_PUBLIC_SEARCH_URL_CHARS = 1900
+BROAD_QUERY_TOPICS = ("event", "promo", "release", "reprint", "stock")
 
 GAMES = {
     "포켓몬 카드": {
@@ -325,8 +327,7 @@ def _error_summary(label: str, exc: Exception) -> str:
         if exc.code == 403:
             return f"{label}: HTTP 403 · access-denied · no-bypass"
         return f"{label}: HTTP {exc.code}"
-    return f"{label}: {type(exc).__name__}"
-
+    return f"{label}: {diagnostic_exception(exc)}"
 
 def _parse_pubdate(value: str | None) -> str | None:
     if not value: return None
@@ -344,7 +345,13 @@ def _query(game: str, region: str, *, scoped_hosts: tuple[str, ...] = (), topic:
     names = GAMES[game][lang][:2]
     name_expr = " OR ".join(f'"{x}"' for x in names)
     families = QUERY_FAMILIES[lang]
-    selected = {topic: families[topic]} if topic in families else families
+    if topic in families:
+        selected = {topic: families[topic]}
+    else:
+        # Broad source-family probes run in addition to the complete per-topic
+        # matrix.  Repeating every topic in one request only bloats the encoded
+        # URL and previously crossed safe_runtime's 2048-character ceiling.
+        selected = {name: families[name] for name in BROAD_QUERY_TOPICS if name in families}
     terms = " OR ".join(
         "(" + " OR ".join(f'\"{token}\"' if " " in token else token for token in shlex.split(value)) + ")"
         for value in selected.values()
@@ -362,10 +369,49 @@ def _query(game: str, region: str, *, scoped_hosts: tuple[str, ...] = (), topic:
     return f"({name_expr}) ({terms}{learned}){region_expr}{site_expr}"
 
 
+def _bing_search_url(query: str) -> str:
+    return "https://www.bing.com/search?" + urllib.parse.urlencode({"format": "rss", "q": query})
+
+
+def _bounded_bing_request(game: str, region: str, *, hosts: tuple[str, ...] = (),
+                          topic: str | None = None, extra_terms: tuple[str, ...] = ()) -> tuple[str, str]:
+    """Build a valid Bing RSS URL without weakening the shared HTTPS guard."""
+    host_limits = []
+    for value in (len(hosts), min(4, len(hosts)), min(2, len(hosts)), min(1, len(hosts)), 0):
+        if value not in host_limits:
+            host_limits.append(value)
+    extra_limits = []
+    for value in (len(extra_terms), min(3, len(extra_terms)), min(1, len(extra_terms)), 0):
+        if value not in extra_limits:
+            extra_limits.append(value)
+    for host_count in host_limits:
+        for extra_count in extra_limits:
+            query = _query(
+                game,
+                region,
+                scoped_hosts=tuple(hosts[:host_count]),
+                topic=topic,
+                extra_terms=tuple(extra_terms[:extra_count]),
+            )
+            url = _bing_search_url(query)
+            if len(url) <= MAX_PUBLIC_SEARCH_URL_CHARS:
+                return query, url
+
+    # Deterministic last-resort query: preserve identity + one topic family.
+    lang = REGION_LANG[region]
+    name_expr = " OR ".join(f'"{x}"' for x in GAMES[game][lang][:2])
+    family_name = topic if topic in QUERY_FAMILIES[lang] else "event"
+    tokens = shlex.split(QUERY_FAMILIES[lang][family_name])[:4]
+    term_expr = " OR ".join(f'"{token}"' if " " in token else token for token in tokens)
+    query = f"({name_expr}) ({term_expr})"
+    url = _bing_search_url(query)
+    if len(url) > MAX_PUBLIC_SEARCH_URL_CHARS:
+        raise ValueError("public search query exceeds safe URL budget")
+    return query, url
+
 def _bing_one(game: str, region: str, route: str, hosts: tuple[str, ...] = (), topic: str | None = None,
               extra_terms: tuple[str, ...] = ()) -> tuple[list[dict], str | None]:
-    q = _query(game, region, scoped_hosts=hosts, topic=topic, extra_terms=extra_terms)
-    url = "https://www.bing.com/search?" + urllib.parse.urlencode({"format": "rss", "q": q})
+    q, url = _bounded_bing_request(game, region, hosts=hosts, topic=topic, extra_terms=extra_terms)
     req = urllib.request.Request(url, headers={"User-Agent": "Mozilla/5.0 TCG-Grader-RouteDiversity/1.0", "Accept": "application/rss+xml,application/xml,text/xml;q=0.9,*/*;q=0.5"})
     try:
         with safe_urlopen(req, timeout=SOURCE_TIMEOUT, allowed_hosts=BING_HOSTS) as response:
