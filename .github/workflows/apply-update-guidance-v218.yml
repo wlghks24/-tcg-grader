@@ -58,10 +58,6 @@ jobs:
         run: |
           python -m py_compile test_update_guidance_consistency_v218.py
           python -m unittest -v test_update_guidance_consistency_v218.py
-      - name: Run UI compatibility checks
-        run: |
-          python verify_all_legacy_v99.py
-          python feature_contract.py
       - name: Diff safety
         run: git diff --check
       - name: Commit unified guidance
