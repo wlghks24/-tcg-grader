@@ -1,0 +1,56 @@
+name: Apply public-search auto-repair v217
+
+on:
+  push:
+    branches:
+      - fix/public-search-auto-repair-v217
+    paths:
+      - apply_public_search_auto_repair_v217.py
+      - verified_public_search_url_repair_v217.py
+      - test_public_search_url_auto_repair_v217.py
+      - .github/workflows/apply-public-search-auto-repair-v217.yml
+
+permissions:
+  contents: write
+
+concurrency:
+  group: apply-public-search-auto-repair-v217
+  cancel-in-progress: true
+
+jobs:
+  apply-and-test:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          ref: fix/public-search-auto-repair-v217
+          fetch-depth: 0
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97
+        with:
+          python-version: '3.11'
+      - name: Apply bounded repair integration
+        run: python apply_public_search_auto_repair_v217.py
+      - name: Compile changed runtime
+        run: |
+          python -m py_compile verified_code_repair_rules.py verified_public_search_url_repair_v217.py test_public_search_url_auto_repair_v217.py
+      - name: Targeted verified repair regression
+        run: |
+          python -m unittest -v \
+            test_public_search_url_auto_repair_v217.py \
+            test_public_search_url_budget_v216.py \
+            test_secure_self_modify_v21.py
+      - name: SELFREFINE domain self-test
+        run: python main_selfrefine_gate.py --self-test
+      - name: Diff safety
+        run: git diff --check
+      - name: Commit integrated engine
+        run: |
+          if git diff --quiet -- verified_code_repair_rules.py; then
+            echo 'No integration change required.'
+            exit 0
+          fi
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add verified_code_repair_rules.py
+          git commit -m 'feat: wire verified public-search URL auto-repair'
+          git push origin HEAD:fix/public-search-auto-repair-v217
