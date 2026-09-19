@@ -22,6 +22,7 @@ from typing import Any
 
 from safe_runtime import atomic_write_json, atomic_write_text, exclusive_file_lock, safe_read_text
 import verified_neural_self_refine as neural_refine
+import verified_public_search_url_repair_v217 as public_search_repair
 
 ROOT = Path(__file__).resolve().parent
 STATE = ROOT / "MAIN_SELFREFINE_VERIFIED_REPAIR_STATE.json"
@@ -61,6 +62,7 @@ FEATURE_VISION_RULE_ID = "align-photo-feature-contract-1-4-8-v1"
 OCR_COUNT_RULE_ID = "dynamic-feature-contract-count-v1"
 COLLECTION_HEALTH_RULE_ID = "collection-health-final-monitor-v1"
 TABLET_COLLECTION_HEALTH_RULE_ID = "tablet-runtime-require-collection-health-v1"
+PUBLIC_SEARCH_URL_RULE_ID = public_search_repair.RULE_ID
 ALL_RULE_IDS = (
     ACTION_RULE_ID,
     RESOURCE_RULE_ID,
@@ -68,6 +70,7 @@ ALL_RULE_IDS = (
     OCR_COUNT_RULE_ID,
     COLLECTION_HEALTH_RULE_ID,
     TABLET_COLLECTION_HEALTH_RULE_ID,
+    PUBLIC_SEARCH_URL_RULE_ID,
 )
 RULE_PATHS = {
     ACTION_RULE_ID: frozenset(CORE_WORKFLOWS),
@@ -76,6 +79,7 @@ RULE_PATHS = {
     OCR_COUNT_RULE_ID: frozenset({OCR_CONTRACT_PATH}),
     COLLECTION_HEALTH_RULE_ID: frozenset({COLLECTION_HEALTH_PATH}),
     TABLET_COLLECTION_HEALTH_RULE_ID: frozenset({TABLET_RUNTIME_VERIFY_PATH}),
+    PUBLIC_SEARCH_URL_RULE_ID: public_search_repair.RULE_PATHS,
 }
 
 STALE_FEATURE_BLOCK = """        and all(token in page for token in ("sceneDistance", "Camera", "_tcgCapturedFile", "visibilitychange",
@@ -163,6 +167,10 @@ def detect_text_issues(relative: str, text: str) -> list[dict[str, str]]:
             "fix_rule": TABLET_COLLECTION_HEALTH_RULE_ID,
         })
 
+    public_search_issue = public_search_repair.detect(relative, text)
+    if public_search_issue:
+        issues.append(public_search_issue)
+
     if relative in CORE_WORKFLOWS:
         stale = []
         for match in _ACTION_RE.finditer(text):
@@ -195,6 +203,8 @@ def rule_for_issue(issue: dict[str, Any]) -> str | None:
         return COLLECTION_HEALTH_RULE_ID
     if stage == "TABLET_COLLECTION_HEALTH_NOT_ENFORCED" and path == TABLET_RUNTIME_VERIFY_PATH:
         return TABLET_COLLECTION_HEALTH_RULE_ID
+    if stage == public_search_repair.STAGE and path in public_search_repair.RULE_PATHS:
+        return PUBLIC_SEARCH_URL_RULE_ID
     return None
 
 
@@ -245,6 +255,8 @@ def rule_fingerprint(rule_id: str) -> str:
             "before": STALE_TABLET_HEALTH,
             "after": CURRENT_TABLET_HEALTH,
         }
+    elif rule_id == PUBLIC_SEARCH_URL_RULE_ID:
+        payload = public_search_repair.fingerprint_payload()
     else:
         raise ValueError("unknown repair rule")
     raw = json.dumps(payload, ensure_ascii=False, sort_keys=True, separators=(",", ":"))
@@ -401,6 +413,8 @@ def transform_for_rule(rule_id: str, relative: str, text: str) -> str:
         return _transform_collection_health(relative, text)
     if rule_id == TABLET_COLLECTION_HEALTH_RULE_ID:
         return _transform_tablet_collection_health(relative, text)
+    if rule_id == PUBLIC_SEARCH_URL_RULE_ID:
+        return public_search_repair.transform(relative, text)
     return text
 
 
