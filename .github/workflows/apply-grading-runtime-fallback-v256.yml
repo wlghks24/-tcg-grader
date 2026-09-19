@@ -53,14 +53,14 @@ jobs:
               'test_grading_runtime_fallback_v256.py',
               'integrity_manifest.json',
           }
-          changed=set(filter(None,subprocess.check_output(['git','diff','--name-only','HEAD'],text=True).splitlines()))
-          untracked=set(filter(None,subprocess.check_output(['git','ls-files','--others','--exclude-standard'],text=True).splitlines()))
-          actual=changed|untracked
+          actual=set(filter(None,subprocess.check_output(['git','diff','--name-only','origin/main'],text=True).splitlines()))
           extra=actual-allowed
           missing={'tablet_runtime_manifest.py','tcg_updater.py','test_tablet_runtime_manifest_ui_assets_v254.py','test_grading_runtime_fallback_v256.py'}-actual
-          assert not extra, f'unexpected changed paths: {sorted(extra)}'
-          assert not missing, f'missing expected changes: {sorted(missing)}'
-          print('bounded diff OK:',sorted(actual))
+          assert not extra, f'unexpected final PR paths: {sorted(extra)}'
+          assert not missing, f'missing expected final changes: {sorted(missing)}'
+          assert 'apply_grading_runtime_fallback_v256.py' not in actual
+          assert '.github/workflows/apply-grading-runtime-fallback-v256.yml' not in actual
+          print('bounded final PR diff OK:',sorted(actual))
           PY
       - name: Commit verified patch
         shell: bash
