@@ -35,7 +35,9 @@ jobs:
           python -m unittest -v test_tablet_pause_recovery_v260.py
           python -m unittest -v test_tablet_runtime_dependency_closure_v257.py
           python -m unittest -v test_market_ai_auto_tracker.py
-      - name: Run related tablet and security regressions
+      - name: Remove one-shot machinery before repository-wide safety guards
+        run: git rm apply_pause_resilience_v260.py .github/workflows/apply-pause-resilience-v260.yml
+      - name: Run related tablet and security regressions on final tree
         run: |
           python tablet_runtime_qa.py --profile updater
           python test_tablet_runtime_qa_integration.py
@@ -46,8 +48,6 @@ jobs:
             test_termux_canonical_fetch_v257.py \
             test_security_hardening.py
           python main_selfrefine_gate.py --self-test
-      - name: Remove one-shot machinery
-        run: git rm apply_pause_resilience_v260.py .github/workflows/apply-pause-resilience-v260.yml
       - name: Refresh and diagnose integrity baseline
         run: |
           python fault_injection_healing.py --manifest
