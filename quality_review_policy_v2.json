@@ -1,7 +1,70 @@
 {
   "schema_version": 2,
-  "policy_name": "TCG Grader Expert 1000 Multi-Lens Review v2",
-  "description": "25 expert groups x 40 independent review lenses. This is a quality-control framework, not a claim that 1000 external people participate.",
+  "policy_name": "TCG Grader 100-Senior Prep + Expert 1000 Multi-Lens Review v2",
+  "description": "A mandatory 100-perspective senior data-collection preparation stage runs before the 25 x 40 = 1000-cell final review. This is a quality-control framework, not a claim that 100 or 1000 external people participate.",
+  "preparation_stage": {
+    "name": "100-SENIOR DATA COLLECTION & PREPARATION",
+    "independent_senior_perspectives": 100,
+    "separate_from_expert_review": true,
+    "must_run_before_expert_review": true,
+    "final_judgment_authority": false,
+    "claim_external_human_team": false,
+    "purpose": "Collect, clean, normalize, deduplicate, correct, supplement, and cross-validate evidence before final expert review.",
+    "workflow": [
+      "DISCOVER",
+      "FETCH",
+      "PARSE",
+      "NORMALIZE",
+      "DEDUP",
+      "TYPO_IDENTITY_CHECK",
+      "FRESHNESS_CHECK",
+      "SOURCE_INDEPENDENCE_CHECK",
+      "CROSSCHECK",
+      "CONTRARY_EVIDENCE_CHECK",
+      "CONFLICT_CHECK",
+      "GAP_ANALYSIS",
+      "SUPPLEMENTAL_COLLECTION",
+      "PREPARED_DATASET"
+    ],
+    "responsibilities": [
+      "official_source_collection",
+      "public_market_store_social_discovery",
+      "multi_region_collection",
+      "normalization",
+      "duplicate_removal",
+      "typo_and_label_correction",
+      "date_time_price_currency_place_product_identity_check",
+      "source_verification",
+      "source_independence_check",
+      "freshness_verification",
+      "contrary_evidence_search",
+      "conflict_detection",
+      "gap_analysis",
+      "supplemental_collection",
+      "cross_validation",
+      "provenance_preservation"
+    ],
+    "completion_conditions": [
+      "primary_evidence_or_data_gap_for_core_items",
+      "duplicates_removed",
+      "typos_and_labels_normalized",
+      "dates_times_places_prices_products_crosschecked",
+      "conflicts_marked",
+      "gaps_received_supplemental_collection_attempt",
+      "provenance_and_freshness_preserved"
+    ],
+    "rules": {
+      "same_origin_reposts_count_as_independent_sources": false,
+      "supplement_missing_data_from_independent_paths": true,
+      "correct_typos_against_source": true,
+      "cross_validate_all_material_facts": true,
+      "preserve_provenance": true,
+      "preserve_freshness": true,
+      "unresolved_conflict_must_hold": true,
+      "bypass_blocked_sources_allowed": false,
+      "degraded_may_be_reported_as_success": false
+    }
+  },
   "expert_group_count": 25,
   "review_lens_count": 40,
   "expected_review_cells": 1000,
@@ -42,6 +105,14 @@
     {"id":31,"name":"100배 부하"},{"id":32,"name":"데이터스키마"},{"id":33,"name":"provenance·freshness"},{"id":34,"name":"학습데이터 격리"},{"id":35,"name":"회귀테스트"},
     {"id":36,"name":"실제출력검증"},{"id":37,"name":"로그"},{"id":38,"name":"메트릭·알림"},{"id":39,"name":"유지보수·죽은경로"},{"id":40,"name":"릴리즈·인수인계"}
   ],
+  "quality_pipeline": [
+    "100_senior_data_prep",
+    "1000_expert_multi_lens_review",
+    "targeted_tests",
+    "full_regression",
+    "actual_output_validation",
+    "release_or_hold"
+  ],
   "required_gates": ["architecture","implementation_correctness","security","sre_recovery","performance","release_qa"],
   "verification_order": ["targeted_tests","full_regression","actual_output_validation"],
   "rca_order": ["failure_hypotheses","reproduction","call_path","state_changes","failure_point","root_cause"],
@@ -60,9 +131,11 @@
   "tablet": {
     "single_main_entrypoint": true,
     "policy_validation_fail_closed": true,
+    "prep_policy_validation_fail_closed": true,
     "candidate_preflight_required": true,
     "ff_only_update_required": true,
     "final_verification_required": true,
-    "claim_parallel_1000_external_reviewers": false
+    "claim_parallel_1000_external_reviewers": false,
+    "claim_parallel_100_external_collectors": false
   }
 }
