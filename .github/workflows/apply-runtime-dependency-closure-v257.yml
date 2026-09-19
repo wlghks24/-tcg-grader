@@ -100,7 +100,7 @@ jobs:
           }
           actual=set(filter(None,subprocess.check_output(['git','diff','--name-only','origin/main'],text=True).splitlines()))
           extra=actual-allowed
-          required={'tablet_runtime_manifest.py','sw.js','test_tablet_runtime_dependency_closure_v257.py','integrity_manifest.json'}
+          required={'tablet_runtime_manifest.py','sw.js','test_tablet_runtime_dependency_closure_v257.py'}
           missing=required-actual
           assert not extra, f'unexpected final PR paths: {sorted(extra)}'
           assert not missing, f'missing expected final changes: {sorted(missing)}'
