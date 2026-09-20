@@ -27,6 +27,19 @@ jobs:
           python-version: '3.12'
       - name: Apply exact bounded patch
         run: python apply_ai_score_freshness_v270.py
+      - name: Normalize generated test escapes
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          path = Path('test_ai_score_freshness_v270.py')
+          text = path.read_text(encoding='utf-8')
+          for count in (3, 2, 1):
+              bad = '+ "' + ('\n' * count) + '", encoding='
+              good = '+ "' + ('\\n' * count) + '", encoding='
+              text = text.replace(bad, good)
+          text = text.replace('+ "\nchanged-signature", encoding=', '+ "\\nchanged-signature", encoding=')
+          path.write_text(text, encoding='utf-8')
+          PY
       - name: Compile touched runtime
         run: python -m py_compile verified_collection_neural.py verified_collection_job_neural.py verify_current_runtime.py test_ai_score_freshness_v270.py
       - name: Run neural regressions
