@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 """Bounded public WYYYES market collector.
 
-Only public product pages are used.  Login/private APIs are never bypassed.
+Only public product pages are used. Login/private APIs are never bypassed.
 WYYYES prices are stored as platform quotes and never overwrite the canonical
-verified market price.  Listing/offer prices stay distinct from explicit sold
+verified market price. Listing/offer prices stay distinct from explicit sold
 or auction-complete evidence.
 """
 from __future__ import annotations
@@ -28,6 +28,7 @@ SEARCHES = (
     "site:wyyyes.com/category/trading-cards 원피스 카드",
     "site:wyyyes.com/category/trading-cards 나루토 카드",
 )
+_GRADING_LABELS = {"PSA", "BGS", "CGC", "TAG", "BRG"}
 
 
 def _now_iso() -> str:
@@ -89,14 +90,37 @@ def _extract_title(html: str, fallback: str = "") -> str:
     return _strip_tags(fallback)[:240]
 
 
+def _valid_price(value: int) -> int:
+    return value if 100 <= int(value) <= 100_000_000 else 0
+
+
+def _extract_structured_price_krw(html: str) -> int:
+    """Prefer product-price metadata over arbitrary KRW values elsewhere on page."""
+    source = html or ""
+    patterns = (
+        r'<meta[^>]+(?:property|itemprop|name)=["\'](?:product:price:amount|price)["\'][^>]+content=["\']([0-9,]+(?:\.\d+)?)',
+        r'<meta[^>]+content=["\']([0-9,]+(?:\.\d+)?)["\'][^>]+(?:property|itemprop|name)=["\'](?:product:price:amount|price)["\']',
+        r'["\']price["\']\s*:\s*["\']?([0-9,]+(?:\.\d+)?)',
+    )
+    for pattern in patterns:
+        match = re.search(pattern, source, re.I)
+        if not match:
+            continue
+        try:
+            return _valid_price(int(float(match.group(1).replace(",", ""))))
+        except (TypeError, ValueError, OverflowError):
+            continue
+    return 0
+
+
 def _extract_price_krw(text: str) -> int:
     candidates = []
     for raw in re.findall(r"(?<!\d)(\d{1,3}(?:,\d{3})+|\d{4,9})\s*원", text or ""):
         try:
-            value = int(raw.replace(",", ""))
+            value = _valid_price(int(raw.replace(",", "")))
         except ValueError:
             continue
-        if 100 <= value <= 100_000_000:
+        if value:
             candidates.append(value)
     return candidates[0] if candidates else 0
 
@@ -125,8 +149,6 @@ def infer_game(text: str) -> str:
 
 def infer_grade(text: str) -> tuple[str, int | None]:
     value = text or ""
-    # Prefer title/description evidence over platform badges because a badge can be
-    # stale or mislabeled for a differently graded item.
     match = re.search(r"\b(PSA|BGS|CGC|TAG|BRG)\s*[-:]?\s*(10|[1-9])\b", value, re.I)
     if not match:
         return "", None
@@ -144,34 +166,60 @@ def infer_price_type(text: str) -> str:
 
 def _card_number(text: str) -> str:
     value = text or ""
-    patterns = (
-        r"\b[A-Z]{1,5}\d{0,2}[A-Z]?[- ]?\d{2,3}(?:/\d{2,3})?\b",
-        r"\b\d{2,3}/\d{2,3}\b",
-    )
-    for pattern in patterns:
-        match = re.search(pattern, value, re.I)
-        if match:
-            return re.sub(r"\s+", "", match.group(0).upper())[:40]
+    # Slash-number forms are the strongest signal and must win over grading labels
+    # such as PSA 10 / BRG10.
+    slash = re.search(r"\b\d{2,3}/\d{2,3}\b", value, re.I)
+    if slash:
+        return slash.group(0).upper()
+    # Set/card codes require both an alpha prefix and a numeric set/card portion.
+    for match in re.finditer(r"\b([A-Z]{1,5}\d{1,2}[A-Z]?)[- ]?(\d{2,3})\b", value, re.I):
+        prefix = match.group(1).upper()
+        if prefix in _GRADING_LABELS or any(prefix.startswith(label) for label in _GRADING_LABELS):
+            continue
+        return re.sub(r"\s+", "", match.group(0).upper())[:40]
+    for match in re.finditer(r"\b([A-Z]{1,5})-(\d{2,3})\b", value, re.I):
+        prefix = match.group(1).upper()
+        if prefix in _GRADING_LABELS:
+            continue
+        return match.group(0).upper()[:40]
     return ""
+
+
+def _identity_value(primary: str, fallback: str, infer):
+    value = infer(primary)
+    if value and value not in {"UNKNOWN", ("", None)}:
+        return value
+    return infer(fallback)
 
 
 def parse_public_listing(html: str, url: str, fallback_title: str = "", snippet: str = "") -> dict | None:
     title = _extract_title(html, fallback_title)
     page_text = html_to_text(html)
-    combined = " ".join(part for part in (title, snippet, page_text[:30_000]) if part)
-    price = _extract_price_krw(combined)
-    game = infer_game(combined)
+    identity_text = " ".join(part for part in (title, snippet) if part)
+    fallback_identity = " ".join(part for part in (identity_text, page_text[:8_000]) if part)
+
+    price = _extract_structured_price_krw(html) or _extract_price_krw(" ".join((identity_text, page_text[:30_000])))
+    game = infer_game(identity_text) or infer_game(page_text[:8_000])
     if not title or not price or not game:
         return None
-    company, grade = infer_grade(" ".join((title, snippet, page_text[:8_000])))
+
+    card_region = infer_card_region(identity_text)
+    if card_region == "UNKNOWN":
+        card_region = infer_card_region(page_text[:8_000])
+
+    company, grade = infer_grade(identity_text)
+    if not company:
+        company, grade = infer_grade(page_text[:4_000])
+
+    card_number = _card_number(identity_text) or _card_number(page_text[:8_000])
     quote_type = infer_price_type(page_text)
     return {
         "platform": "WYYYES",
         "market_region": "KR",
-        "card_region": infer_card_region(combined),
+        "card_region": card_region,
         "game": game,
         "title": title,
-        "card_number": _card_number(combined),
+        "card_number": card_number,
         "grading_company": company,
         "grade": grade,
         "currency": "KRW",
@@ -180,7 +228,7 @@ def parse_public_listing(html: str, url: str, fallback_title: str = "", snippet:
         "is_completed_sale": quote_type in {"sold", "auction_result"},
         "source_url": url,
         "collected_at": _now_iso(),
-        "evidence_policy": "public-page-only; asking prices never promoted to sold",
+        "evidence_policy": "public-page-only; asking prices never promoted to sold; title/snippet identity evidence preferred",
     }
 
 
