@@ -35,6 +35,17 @@ class PcRuntimeEntrypointV264Tests(unittest.TestCase):
         self.assertIn('require_compatible()', text)
         self.assertIn("core.QuietThreadingHTTPServer(('0.0.0.0', core.PORT), Handler)", text)
 
+    def test_sre_runtime_is_wired_into_delivery_contract(self):
+        server = (ROOT / "tcg_updater.py").read_text(encoding="utf-8")
+        manifest = (ROOT / "tablet_runtime_manifest.py").read_text(encoding="utf-8")
+        bundle = (ROOT / "runtime_bundle_guard_v143.py").read_text(encoding="utf-8")
+        self.assertIn('from runtime_sre_metrics import RUNTIME_METRICS', server)
+        self.assertIn("if path=='/api/runtime-metrics':", server)
+        self.assertIn("'joined_existing':True", server)
+        self.assertIn("self.headers.get('If-None-Match','').strip()==etag", server)
+        self.assertIn('"runtime_sre_metrics.py"', manifest)
+        self.assertIn('"runtime_sre_metrics.py"', bundle)
+
 
 if __name__ == "__main__":
     unittest.main()
