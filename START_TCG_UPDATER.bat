@@ -3,6 +3,8 @@ setlocal
 chcp 65001 >nul
 cd /d "%~dp0"
 if not exist "tcg_updater.py" goto MISSING_FILES
+if not exist "tcg_updater_v135.py" goto MISSING_FILES
+if not exist "runtime_bundle_guard_v143.py" goto MISSING_FILES
 if not exist "index.html" goto MISSING_FILES
 where py.exe >nul 2>nul
 if errorlevel 1 goto CHECK_PYTHON
@@ -16,7 +18,8 @@ if errorlevel 1 (
 where tesseract.exe >nul 2>nul
 if errorlevel 1 echo [NOTICE] Tesseract OCR is not in PATH. Collection works, but label OCR will stay disabled.
 if exist "storage_optimizer.py" py.exe -3 storage_optimizer.py
-py.exe -3 tcg_updater.py
+echo [TCG] Starting verified v135 runtime bundle...
+py.exe -3 tcg_updater_v135.py
 goto FINISH
 :CHECK_PYTHON
 where python.exe >nul 2>nul
@@ -31,10 +34,12 @@ if errorlevel 1 (
 where tesseract.exe >nul 2>nul
 if errorlevel 1 echo [NOTICE] Tesseract OCR is not in PATH. Collection works, but label OCR will stay disabled.
 if exist "storage_optimizer.py" python.exe storage_optimizer.py
-python.exe tcg_updater.py
+echo [TCG] Starting verified v135 runtime bundle...
+python.exe tcg_updater_v135.py
 goto FINISH
 :MISSING_FILES
-echo [ERROR] Extract every file from the ZIP before starting the server.
+echo [ERROR] Required verified runtime files are missing.
+echo Extract or update the complete TCG_GRADER folder before starting the server.
 goto FAILED
 :NO_PYTHON
 echo [ERROR] Python 3 was not found. Install Python with Add Python to PATH enabled.

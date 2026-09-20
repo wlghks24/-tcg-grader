@@ -2,6 +2,8 @@
 setlocal
 cd /d "%~dp0"
 if not exist "tcg_updater.py" goto BAD_FOLDER
+if not exist "tcg_updater_v135.py" goto BAD_FOLDER
+if not exist "runtime_bundle_guard_v143.py" goto BAD_FOLDER
 if not exist "index.html" goto BAD_FOLDER
 if not exist "TCG_SERVER_AUTO_RUN.cmd" goto BAD_FOLDER
 where py.exe >nul 2>nul
@@ -21,15 +23,15 @@ if exist "%OLD_TARGET%" del /q "%OLD_TARGET%"
 >"%TARGET%" echo @echo off
 >>"%TARGET%" echo call "%~dp0TCG_SERVER_AUTO_RUN.cmd"
 if not exist "%TARGET%" goto INSTALL_FAILED
-echo [OK] TCG server auto-start installed.
+echo [OK] TCG verified v135 server auto-start installed.
 echo It starts 30 seconds after sign-in and restarts after an error.
 echo Program folder: %~dp0
 echo Startup file: %TARGET%
 pause
 exit /b 0
 :BAD_FOLDER
-echo [ERROR] Required files are missing.
-echo Put this installer inside the fully extracted TCG_GRADER folder and run it again.
+echo [ERROR] Required verified runtime files are missing.
+echo Put this installer inside the fully extracted or updated TCG_GRADER folder and run it again.
 pause
 exit /b 1
 :NO_PYTHON
