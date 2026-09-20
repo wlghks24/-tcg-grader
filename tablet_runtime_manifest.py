@@ -25,7 +25,7 @@ ACTIVE_RUNTIME_FILES=(
 # Browser assets are executable/visible parts of the tablet runtime too. Keep
 # them in the fail-closed manifest so a partial checkout cannot pass startup
 # merely because the Python backend still compiles.
-"grading_vision_engine.js","grade_market_flow.js","grading_costs_live.js","grading_costs_live.css","inventory_lookup.js","inventory_lookup.css",
+"grading_vision_engine.js","grade_market_flow.js","grade_market_flow.css","grading_costs_live.js","grading_costs_live.css","inventory_lookup.js","inventory_lookup.css",
 "box_knowledge_stats.js","feature_category_nav.js","feature_category_nav.css","sw.js")
 def audit(root:Path=ROOT,*,compile_python:bool=False)->dict:
     missing=[]; symlinks=[]; compile_errors=[]; checked_python=0
