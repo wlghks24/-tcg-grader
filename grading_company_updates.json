@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "checked_at": "2026-09-19T21:31:54+00:00",
+  "checked_at": "2026-09-20T00:40:14+00:00",
   "policy": {
     "official_sources_only": true,
     "community_posts_are_leads_only": true,
@@ -18,8 +18,8 @@
   "summary": {
     "companies": 5,
     "sources": 11,
-    "healthy_sources": 5,
-    "degraded_sources": 6,
+    "healthy_sources": 3,
+    "degraded_sources": 8,
     "new_changes": 0
   },
   "companies": {
@@ -130,19 +130,22 @@
               "max_declared_or_insured_value": 100000.0
             }
           ],
+          "retained_last_good": true,
           "verified_official_source": true
         }
       },
       "source_health": [
         {
           "source_id": "cgc-pricing",
-          "status": "ok",
-          "url": "https://www.cgccards.com/submit/services-fees/cgc-grading/?view=cards"
+          "status": "degraded",
+          "url": "https://www.cgccards.com/submit/services-fees/cgc-grading/?view=cards",
+          "error": "HTTPError: status 502"
         },
         {
           "source_id": "cgc-events",
-          "status": "ok",
-          "url": "https://www.cgccards.com/submit/events/"
+          "status": "degraded",
+          "url": "https://www.cgccards.com/submit/events/",
+          "error": "HTTPError: status 502"
         },
         {
           "source_id": "cgc-news",
@@ -249,7 +252,7 @@
       "services": [],
       "announcements": [],
       "status": "degraded",
-      "checked_at": "2026-09-19T21:31:54+00:00",
+      "checked_at": "2026-09-20T00:40:14+00:00",
       "last_error": "HTTPError: status 403",
       "verified_official_source": false
     },
@@ -263,7 +266,7 @@
       "services": [],
       "announcements": [],
       "status": "degraded",
-      "checked_at": "2026-09-19T21:31:54+00:00",
+      "checked_at": "2026-09-20T00:40:14+00:00",
       "last_error": "HTTPError: status 403",
       "verified_official_source": false
     },
@@ -277,7 +280,7 @@
       "services": [],
       "announcements": [],
       "status": "degraded",
-      "checked_at": "2026-09-19T21:31:54+00:00",
+      "checked_at": "2026-09-20T00:40:14+00:00",
       "last_error": "HTTPError: status 403",
       "verified_official_source": false
     },
@@ -291,7 +294,7 @@
       "services": [],
       "announcements": [],
       "status": "degraded",
-      "checked_at": "2026-09-19T21:31:54+00:00",
+      "checked_at": "2026-09-20T00:40:14+00:00",
       "last_error": "ValueError: unapproved host: maintenance.beckett.com",
       "verified_official_source": false
     },
@@ -305,7 +308,7 @@
       "services": [],
       "announcements": [],
       "status": "degraded",
-      "checked_at": "2026-09-19T21:31:54+00:00",
+      "checked_at": "2026-09-20T00:40:14+00:00",
       "last_error": "ValueError: unapproved host: maintenance.beckett.com",
       "verified_official_source": false
     },
@@ -316,8 +319,8 @@
       "market": "US",
       "currency": "USD",
       "url": "https://www.cgccards.com/submit/services-fees/cgc-grading/?view=cards",
-      "status": "ok",
-      "checked_at": "2026-09-19T21:31:54+00:00",
+      "status": "degraded",
+      "checked_at": "2026-09-20T00:40:14+00:00",
       "signal_fingerprint": "06b8289033083f680c2c00bfe7513d8f4e1336ec62167ec60c828a4a713cac4a",
       "services": [
         {
@@ -383,7 +386,8 @@
       ],
       "announcements": [],
       "verified_official_source": true,
-      "parser_version": 2
+      "parser_version": 2,
+      "last_error": "HTTPError: status 502"
     },
     "cgc-events": {
       "company": "CGC",
@@ -392,8 +396,8 @@
       "market": "GLOBAL",
       "currency": "USD",
       "url": "https://www.cgccards.com/submit/events/",
-      "status": "ok",
-      "checked_at": "2026-09-19T21:31:54+00:00",
+      "status": "degraded",
+      "checked_at": "2026-09-20T00:40:14+00:00",
       "signal_fingerprint": "a7e4a8eeedae59acddd83d607c57bdb46b352fa3c4bde4e889317352666d4f33",
       "services": [],
       "announcements": [
@@ -455,7 +459,8 @@
         }
       ],
       "verified_official_source": true,
-      "parser_version": 2
+      "parser_version": 2,
+      "last_error": "HTTPError: status 502"
     },
     "cgc-news": {
       "company": "CGC",
@@ -465,7 +470,7 @@
       "currency": "USD",
       "url": "https://www.cgccards.com/news/",
       "status": "ok",
-      "checked_at": "2026-09-19T21:31:54+00:00",
+      "checked_at": "2026-09-20T00:40:14+00:00",
       "signal_fingerprint": "ab793ace2efa70dbf6b47cadeb4f03c2502a63af3997acc982d98310bec3014d",
       "services": [],
       "announcements": [
@@ -537,7 +542,7 @@
       "currency": "USD",
       "url": "https://taggrading.com/pages/pricing",
       "status": "degraded",
-      "checked_at": "2026-09-19T21:31:54+00:00",
+      "checked_at": "2026-09-20T00:40:14+00:00",
       "signal_fingerprint": "0e9f55411a94d2016974a85632d9fa32e343c02e94c65a3a1f347a2615dc4c82",
       "services": [],
       "announcements": [],
@@ -553,7 +558,7 @@
       "currency": "USD",
       "url": "https://taggrading.com/",
       "status": "ok",
-      "checked_at": "2026-09-19T21:31:54+00:00",
+      "checked_at": "2026-09-20T00:40:14+00:00",
       "signal_fingerprint": "c1c821f768e541f0dbe54c4fc71e24dfbd144f5114593fd44abe09a4dd13ef92",
       "services": [],
       "announcements": [
@@ -674,7 +679,7 @@
       "currency": "KRW",
       "url": "https://break.co.kr/",
       "status": "ok",
-      "checked_at": "2026-09-19T21:31:54+00:00",
+      "checked_at": "2026-09-20T00:40:14+00:00",
       "signal_fingerprint": "a4b3f397492317435fdf3b29d0a799fc47c5cc679cf36d24d983c7c80facb2e7",
       "services": [
         {
