@@ -16,6 +16,7 @@ jobs:
     env:
       PYTHONDONTWRITEBYTECODE: '1'
       PYTHONUNBUFFERED: '1'
+      SRE_HEAD: a50b258e3a40b080cfde2eff74f0a80716e25e04
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
         with:
@@ -25,202 +26,50 @@ jobs:
       - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97
         with:
           python-version: '3.11'
-      - name: Port verified SRE behavior onto current runtime
+      - name: Port verified SRE blocks onto current runtime
         run: |
           set -euo pipefail
-          git fetch --no-tags origin a50b258e3a40b080cfde2eff74f0a80716e25e04
-          git show a50b258e3a40b080cfde2eff74f0a80716e25e04:runtime_sre_metrics.py > runtime_sre_metrics.py
-          git show a50b258e3a40b080cfde2eff74f0a80716e25e04:test_sre_runtime_performance_v240.py > test_sre_runtime_performance_v240.py
+          git fetch --no-tags origin "$SRE_HEAD"
+          git show "$SRE_HEAD:runtime_sre_metrics.py" > runtime_sre_metrics.py
+          git show "$SRE_HEAD:test_sre_runtime_performance_v240.py" > test_sre_runtime_performance_v240.py
           python - <<'PY'
           from pathlib import Path
+          import os, subprocess
 
-          def replace_once(text, old, new, label):
-              if old not in text:
-                  raise SystemExit(f'missing anchor: {label}')
-              if text.count(old) != 1:
-                  raise SystemExit(f'non-unique anchor: {label} count={text.count(old)}')
-              return text.replace(old, new, 1)
-
+          head=os.environ['SRE_HEAD']
+          old=subprocess.check_output(['git','show',f'{head}:tcg_updater.py'],text=True)
           p=Path('tcg_updater.py')
           text=p.read_text(encoding='utf-8')
-          text=replace_once(
-              text,
-              'from grading_accuracy_v99 import valid_actual_grade\nfrom collection_job_contract import JOB_COUNT as COLLECTION_JOB_COUNT\n',
-              'from grading_accuracy_v99 import valid_actual_grade\nfrom runtime_sre_metrics import RUNTIME_METRICS\nfrom collection_job_contract import JOB_COUNT as COLLECTION_JOB_COUNT\n',
-              'runtime metrics import',
-          )
 
-          start=text.index('def _start_background_update(retry_only=False):')
-          end=text.index('\ndef _write_precollect_status', start)
-          text=text[:start]+'''def _start_background_update(retry_only=False):
-              """Start one bounded update worker or join the same in-flight operation."""
-              global LAST_MANUAL_UPDATE
-              now=time.monotonic()
-              with MANUAL_UPDATE_LOCK:
-                  current=_job_snapshot()
-                  if current.get('state') in ('queued','running'):
-                      same_kind=bool(current.get('retry_only'))==bool(retry_only)
-                      if same_kind:
-                          RUNTIME_METRICS.update_request_joined()
-                          current_id=current.get('id')
-                          return current_id, {
-                              'ok':True,'accepted':True,'joined_existing':True,
-                              'job_id':current_id,'job':current,
-                              'message':'동일 업데이트가 이미 진행 중이어서 기존 작업에 연결했습니다.',
-                          }, 202
-                      RUNTIME_METRICS.update_request_conflicted()
-                      return None, {'ok':False,'error':'다른 종류의 업데이트가 이미 진행 중입니다','job':current}, 409
-                  wait=MANUAL_UPDATE_COOLDOWN_SECONDS-(now-LAST_MANUAL_UPDATE)
-                  if wait>0:
-                      RUNTIME_METRICS.update_request_rate_limited()
-                      return None, {'ok':False,'error':'업데이트 요청이 너무 빠릅니다','retry_after_seconds':round(wait,1)}, 429
-                  LAST_MANUAL_UPDATE=now
-                  job_id=f"{int(time.time())}-{os.getpid()}"
-                  total_jobs=_full_update_job_count()
-                  _job_set(id=job_id,state='queued',trigger='retry-failed' if retry_only else 'manual',
-                           started_at=time.strftime('%Y-%m-%dT%H:%M:%S%z'),finished_at=None,current=0,total=0 if retry_only else total_jobs,
-                           label='대기 중',file=None,message='업데이트 작업 준비 중',error=None,report=None,retry_only=retry_only)
-              target=_background_retry_failed if retry_only else _background_full_update
-              try:
-                  threading.Thread(target=target,args=(job_id,),name=f'tcg-update-{job_id}',daemon=True).start()
-              except RuntimeError as exc:
-                  _job_set(state='failed',finished_at=time.strftime('%Y-%m-%dT%H:%M:%S%z'),
-                           error=f'{type(exc).__name__}: background-thread-start-failed',
-                           message='업데이트 작업 스레드를 시작하지 못했습니다.')
-                  _collection_mark_failure('retry-failed' if retry_only else 'manual',exc)
-                  return None, {'ok':False,'error':'업데이트 작업을 시작하지 못했습니다','job':_job_snapshot()}, 500
-              RUNTIME_METRICS.update_job_started()
-              return job_id, {'ok':True,'accepted':True,'joined_existing':False,'job_id':job_id,'job':_job_snapshot()}, 202
-          '''.replace('\n          ','\n')+text[end:]
+          def block(src,start,end):
+              a=src.index(start); b=src.index(end,a); return src[a:b]
+          def replace_block(dst,start,end,source):
+              a=dst.index(start); b=dst.index(end,a); return dst[:a]+block(source,start,end)+dst[b:]
+          def replace_once(dst,old_value,new_value,label):
+              count=dst.count(old_value)
+              if count!=1: raise SystemExit(f'{label}: expected 1 anchor, got {count}')
+              return dst.replace(old_value,new_value,1)
 
-          start=text.index('    def _manual_update(self):')
-          end=text.index('    def _safe_static(self,path):', start)
-          text=text[:start]+'''    def _manual_update(self):
-              """Compatibility endpoint: never hold an HTTP worker for a full collection cycle."""
-              if not self._require_mutation_origin():
-                  return
-              _job_id,payload,status=_start_background_update(False)
-              body=dict(payload)
-              body['legacy_route']=True
-              body['execution_mode']='background-singleflight'
-              if status==202 and not body.get('message'):
-                  body['message']='업데이트를 백그라운드에서 시작했습니다. 작업 상태 API로 진행률을 확인하세요.'
-              return self.json(body,status)
-          '''.replace('\n          ','\n')+text[end:]
-
-          start=text.index('    def send_head(self):')
-          end=text.index('    def do_HEAD(self):', start)
-          text=text[:start]+'''    def send_head(self):
-              """Serve only an opened regular-file descriptor; never follow asset symlinks."""
-              path=urlparse(self.path).path
-              if not self._safe_static(path):
-                  self.json({'ok':False,'error':'공개되지 않은 파일'},404)
-                  return None
-              target=Path(self.directory)/(path.lstrip('/') or 'index.html')
-              try:
-                  handle=open_safe_binary(target,max_bytes=MAX_SAFE_FILE_BYTES)
-                  metadata=os.fstat(handle.fileno())
-              except (OSError,ValueError):
-                  self.json({'ok':False,'error':'공개 파일을 안전하게 열 수 없습니다.'},404)
-                  return None
-              try:
-                  etag=f'"{metadata.st_mtime_ns:x}-{metadata.st_size:x}"'
-                  revalidate=target.suffix.lower() in {'.html','.js','.css','.json','.webmanifest'}
-                  cache_control=('private, no-cache, must-revalidate, max-age=0' if revalidate
-                                 else 'public, max-age=3600')
-                  if self.headers.get('If-None-Match','').strip()==etag:
-                      self.send_response(304)
-                      self.send_header('ETag',etag)
-                      self.send_header('Last-Modified',self.date_time_string(metadata.st_mtime))
-                      self.send_header('Cache-Control',cache_control)
-                      self.end_headers()
-                      handle.close()
-                      return None
-                  self.send_response(200)
-                  self.send_header('Content-type',self.guess_type(str(target)))
-                  self.send_header('Content-Length',str(metadata.st_size))
-                  self.send_header('Last-Modified',self.date_time_string(metadata.st_mtime))
-                  self.send_header('ETag',etag)
-                  self.send_header('Cache-Control',cache_control)
-                  self.end_headers()
-                  return handle
-              except BaseException:
-                  handle.close()
-                  raise
-          '''.replace('\n          ','\n')+text[end:]
-
-          health="        if path=='/api/health':\n            return self.json({'ok':True,'service':SERVICE_NAME,'platform':PLATFORM,'port':PORT,'api_version':3,'integrated_version':INTEGRATED_VERSION,'learning_version':'v123-verified-multisource-photo-collection','collection_health':collection_health_status(),'collection_neural':collection_neural_status()})\n"
-          metrics=health+"        if path=='/api/runtime-metrics':\n            return self.json({'ok':True,'server':{'max_request_threads':QuietThreadingHTTPServer.max_request_threads,'request_queue_size':QuietThreadingHTTPServer.request_queue_size},'metrics':RUNTIME_METRICS.snapshot(),'update_job':_job_snapshot()})\n"
-          text=replace_once(text, health, metrics, 'runtime metrics endpoint')
-
-          start=text.index('class QuietThreadingHTTPServer(ThreadingHTTPServer):')
-          end=text.index("\nif __name__=='__main__':", start)
-          text=text[:start]+'''class QuietThreadingHTTPServer(ThreadingHTTPServer):
-              """Bounded local HTTP worker pool with overload shedding and fixed metrics."""
-              daemon_threads = True
-              block_on_close = False
-              allow_reuse_address = True
-              request_queue_size = 32
-              max_request_threads = env_int('TCG_HTTP_MAX_THREADS', 32, 8, 128)
-
-              def __init__(self, *args, **kwargs):
-                  self._request_slots = threading.BoundedSemaphore(self.max_request_threads)
-                  self._request_started_lock = threading.Lock()
-                  self._request_started = {}
-                  super().__init__(*args, **kwargs)
-
-              def process_request(self, request, client_address):
-                  if not self._request_slots.acquire(blocking=False):
-                      RUNTIME_METRICS.overload_rejected()
-                      body=b'{"ok":false,"error":"server_overloaded","retry_after_seconds":1}'
-                      try:
-                          request.sendall(
-                              b'HTTP/1.1 503 Service Unavailable\\r\\n'
-                              b'Content-Type: application/json; charset=utf-8\\r\\n'
-                              b'Connection: close\\r\\nRetry-After: 1\\r\\n'
-                              + f'Content-Length: {len(body)}\\r\\n\\r\\n'.encode('ascii')
-                              + body
-                          )
-                      except OSError:
-                          pass
-                      self.shutdown_request(request)
-                      return
-                  started=RUNTIME_METRICS.request_started()
-                  request_key=id(request)
-                  with self._request_started_lock:
-                      self._request_started[request_key]=started
-                  try:
-                      super().process_request(request, client_address)
-                  except BaseException:
-                      with self._request_started_lock:
-                          started=self._request_started.pop(request_key,None)
-                      RUNTIME_METRICS.request_finished(started)
-                      self._request_slots.release()
-                      raise
-
-              def process_request_thread(self, request, client_address):
-                  request_key=id(request)
-                  try:
-                      super().process_request_thread(request, client_address)
-                  finally:
-                      with self._request_started_lock:
-                          started=self._request_started.pop(request_key,None)
-                      RUNTIME_METRICS.request_finished(started)
-                      self._request_slots.release()
-
-              def handle_error(self, request, client_address):
-                  exc=sys.exc_info()[1]
-                  if isinstance(exc,(BrokenPipeError,ConnectionResetError)):
-                      return
-                  RUNTIME_METRICS.uncaught_request_error()
-                  return super().handle_error(request,client_address)
-          '''.replace('\n          ','\n')+text[end:]
+          if 'from runtime_sre_metrics import RUNTIME_METRICS' not in text:
+              text=replace_once(text,'from grading_accuracy_v99 import valid_actual_grade\n',
+                                'from grading_accuracy_v99 import valid_actual_grade\nfrom runtime_sre_metrics import RUNTIME_METRICS\n',
+                                'metrics import')
+          text=replace_block(text,'def _start_background_update(retry_only=False):','def _write_precollect_status',old)
+          text=replace_block(text,'    def _manual_update(self):','    def _safe_static(self,path):',old)
+          text=replace_block(text,'    def send_head(self):','    def do_HEAD(self):',old)
+          text=replace_block(text,'class QuietThreadingHTTPServer(ThreadingHTTPServer):',"if __name__=='__main__':",old)
+          if "if path=='/api/runtime-metrics':" not in text:
+              metric=block(old,"        if path=='/api/runtime-metrics':","        if path=='/api/collection-health':")
+              anchor="        if path=='/api/collection-health':"
+              text=replace_once(text,anchor,metric+anchor,'metrics endpoint')
           p.write_text(text,encoding='utf-8')
 
           p=Path('tablet_runtime_manifest.py')
           text=p.read_text(encoding='utf-8')
           if '"runtime_sre_metrics.py"' not in text:
-              text=replace_once(text,'"index.html","safe_runtime.py","collection_runtime_health.py"','"index.html","safe_runtime.py","runtime_sre_metrics.py","collection_runtime_health.py"','tablet runtime SRE module')
+              text=replace_once(text,'"index.html","safe_runtime.py","collection_runtime_health.py"',
+                                '"index.html","safe_runtime.py","runtime_sre_metrics.py","collection_runtime_health.py"',
+                                'tablet SRE module')
           p.write_text(text,encoding='utf-8')
 
           p=Path('runtime_bundle_guard_v143.py')
@@ -231,13 +80,14 @@ jobs:
 
           p=Path('test_runtime_delivery_guards.py')
           text=p.read_text(encoding='utf-8')
-          old="    assert 'no-store, no-cache, must-revalidate, max-age=0' in server\n"
-          new=("    assert 'private, no-cache, must-revalidate, max-age=0' in server\n"
-               "    assert \"self.headers.get('If-None-Match','').strip()==etag\" in server\n"
-               "    assert 'self.send_response(304)' in server\n"
-               "    assert \"self.send_header('ETag',etag)\" in server\n"
-               "    assert 'no-store, no-cache, must-revalidate, max-age=0' not in server\n")
-          text=replace_once(text,old,new,'runtime delivery cache assertion')
+          old_assert="    assert 'no-store, no-cache, must-revalidate, max-age=0' in server\n"
+          if old_assert in text:
+              new_assert=("    assert 'private, no-cache, must-revalidate, max-age=0' in server\n"
+                          "    assert \"self.headers.get('If-None-Match','').strip()==etag\" in server\n"
+                          "    assert 'self.send_response(304)' in server\n"
+                          "    assert \"self.send_header('ETag',etag)\" in server\n"
+                          "    assert 'no-store, no-cache, must-revalidate, max-age=0' not in server\n")
+              text=replace_once(text,old_assert,new_assert,'cache contract')
           p.write_text(text,encoding='utf-8')
           PY
           git add tcg_updater.py runtime_sre_metrics.py tablet_runtime_manifest.py runtime_bundle_guard_v143.py test_runtime_delivery_guards.py test_sre_runtime_performance_v240.py
