@@ -16,13 +16,14 @@ class MarketSourceHubV268Tests(unittest.TestCase):
         self.by_id = {row["id"]: row for row in self.rows}
 
     def test_registry_has_domestic_japan_global_and_europe_coverage(self):
-        self.assertGreaterEqual(len(self.rows), 15)
+        self.assertGreaterEqual(len(self.rows), 19)
         self.assertEqual(len(self.by_id), len(self.rows))
         self.assertTrue({"KR", "JP", "US_GLOBAL", "EU"}.issubset({row["region"] for row in self.rows}))
         required = {
             "collectory", "joongna", "kream", "bunjang", "daangn", "wyyyes",
             "yahoo_auction_jp", "mercari_jp", "snkrdunk", "ebay_sold",
             "tcgplayer", "pricecharting", "130point", "psa_apr", "cardmarket",
+            "collectr", "card_ladder", "tcgfish", "pokevalues_jp",
         }
         self.assertTrue(required.issubset(self.by_id))
 
@@ -40,11 +41,22 @@ class MarketSourceHubV268Tests(unittest.TestCase):
             self.assertEqual(self.by_id[source_id]["evidence_group"], "asking")
         for source_id in ("yahoo_auction_jp", "ebay_sold", "130point", "psa_apr"):
             self.assertEqual(self.by_id[source_id]["evidence_group"], "sold")
-        for source_id in ("tcgplayer", "pricecharting", "snkrdunk"):
+        for source_id in (
+            "tcgplayer", "pricecharting", "snkrdunk", "collectr",
+            "card_ladder", "tcgfish", "pokevalues_jp",
+        ):
             self.assertEqual(self.by_id[source_id]["evidence_group"], "guide")
         self.assertEqual(self.by_id["joongna"]["evidence_group"], "mixed")
         self.assertIn("체결가로 자동 간주하지 않음", self.by_id["bunjang"]["note"])
         self.assertIn("체결가로 간주하지 않음", self.by_id["mercari_jp"]["note"])
+
+    def test_new_global_sources_keep_navigation_only_boundary(self):
+        self.assertTrue(self.by_id["collectr"]["recommended"])
+        self.assertTrue(self.by_id["card_ladder"]["recommended"])
+        self.assertEqual(self.by_id["tcgfish"]["games"], ["Pokémon"])
+        self.assertEqual(self.by_id["pokevalues_jp"]["region"], "JP")
+        for source_id in ("collectr", "card_ladder", "tcgfish", "pokevalues_jp"):
+            self.assertFalse(self.by_id[source_id]["auto_collected"])
 
     def test_registry_attachment_adds_no_network_collection(self):
         db = {}
@@ -63,11 +75,14 @@ class MarketSourceHubV268Tests(unittest.TestCase):
         css = (ROOT / "grade_market_flow.css").read_text(encoding="utf-8")
         for label in ("⭐ 핵심", "🇰🇷 국내", "🇯🇵 일본", "🌎 미국·글로벌", "🇪🇺 유럽", "쉽게 보는 순서"):
             self.assertIn(label, flow)
+        for source_name in ("Collectr", "Card Ladder", "TCGFish", "PokeValues Japanese"):
+            self.assertIn(source_name, flow)
         self.assertIn("encodeURIComponent(query)", flow)
         self.assertIn("REFERENCE_HOSTS", flow)
         self.assertIn("이 카드 검색", flow)
         self.assertIn("체결·낙찰", flow)
         self.assertIn("판매중 호가", flow)
+        self.assertIn("최소 2~3곳을 교차확인", flow)
         self.assertIn("agm-source-grid", css)
         self.assertIn("agm-evidence-sold", css)
         self.assertIn("agm-evidence-asking", css)
