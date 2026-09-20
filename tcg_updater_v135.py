@@ -3,8 +3,10 @@
 """TCG updater v135 wrapper with verified-learning and v143 runtime bundle guard."""
 from __future__ import annotations
 
+import hashlib
 import os
 import threading
+import time
 import webbrowser
 from urllib.parse import parse_qs, urlparse
 
@@ -16,7 +18,32 @@ RUNTIME_DELIVERY_PATCH = 182
 RUNTIME_BUNDLE_STATUS = {"ok": False, "patch": 143, "issues": ["startup audit not completed"]}
 AI_RELIABILITY_BRIDGE = None
 DASHBOARD_BUNDLE_LOCK = threading.Lock()
-DASHBOARD_BUNDLE_CACHE = {"signature": None, "body": None}
+DASHBOARD_BUNDLE_CACHE = {"signature": None, "body": None, "etag": None}
+HEALTH_SNAPSHOT_LOCK = threading.Lock()
+HEALTH_SNAPSHOT_CACHE = {"expires_at": 0.0, "value": None}
+HEALTH_SNAPSHOT_TTL_SECONDS = core.env_int("TCG_HEALTH_SNAPSHOT_CACHE_MS", 500, 0, 5000) / 1000.0
+
+
+def _runtime_health_snapshot():
+    """Collapse concurrent health polling into one bounded refresh.
+
+    The public health payload changes slowly compared with browser polling. A
+    sub-second cache prevents repeated JSON parsing and neural-state file stats
+    during request bursts while keeping operational state effectively live.
+    """
+    now = time.monotonic()
+    with HEALTH_SNAPSHOT_LOCK:
+        cached = HEALTH_SNAPSHOT_CACHE.get("value")
+        expires_at = float(HEALTH_SNAPSHOT_CACHE.get("expires_at") or 0.0)
+        if HEALTH_SNAPSHOT_TTL_SECONDS > 0 and now < expires_at and isinstance(cached, dict):
+            return cached
+        value = {
+            "collection_health": core.collection_health_status(),
+            "collection_neural": core.collection_neural_status(),
+        }
+        HEALTH_SNAPSHOT_CACHE["value"] = value
+        HEALTH_SNAPSHOT_CACHE["expires_at"] = now + HEALTH_SNAPSHOT_TTL_SECONDS
+        return value
 
 
 def _dashboard_bundle_paths(directory):
@@ -61,9 +88,11 @@ def _dashboard_bundle_body(directory):
         if _dashboard_bundle_signature(files) != signature:
             continue
         body = text.encode('utf-8')
+        etag = '"' + hashlib.sha256(body).hexdigest() + '"'
         with DASHBOARD_BUNDLE_LOCK:
             DASHBOARD_BUNDLE_CACHE["signature"] = signature
             DASHBOARD_BUNDLE_CACHE["body"] = body
+            DASHBOARD_BUNDLE_CACHE["etag"] = etag
         return body
     raise OSError("dashboard bundle changed during read")
 
@@ -97,9 +126,23 @@ class Handler(core.Handler):
             return self.json({'ok': False, 'error': '등급사진 대시보드/앞뒤사진 브리지 파일 오류'}, 404)
         except (OSError, UnicodeError, ValueError):
             return self.json({'ok': False, 'error': '등급사진 대시보드 로드 오류'}, 500)
+        with DASHBOARD_BUNDLE_LOCK:
+            etag = DASHBOARD_BUNDLE_CACHE.get('etag')
+        if not isinstance(etag, str):
+            etag = '"' + hashlib.sha256(body).hexdigest() + '"'
+        cache_control = 'private, no-cache, must-revalidate, max-age=0'
+        if self.headers.get('If-None-Match', '').strip() == etag:
+            self.send_response(304)
+            self.send_header('ETag', etag)
+            self.send_header('Cache-Control', cache_control)
+            self.send_header('X-Content-Type-Options', 'nosniff')
+            self.send_header('X-TCG-Dual-Photo-UI', 'v158-eight-zone-inline')
+            self.end_headers()
+            return
         self.send_response(200)
         self.send_header('Content-Type', 'application/javascript; charset=utf-8')
-        self.send_header('Cache-Control', 'no-store, no-cache, must-revalidate, max-age=0')
+        self.send_header('Cache-Control', cache_control)
+        self.send_header('ETag', etag)
         self.send_header('Pragma', 'no-cache')
         self.send_header('Expires', '0')
         self.send_header('X-Content-Type-Options', 'nosniff')
@@ -118,8 +161,9 @@ class Handler(core.Handler):
         if path == '/api/v135-health':
             bundle = RUNTIME_BUNDLE_STATUS if isinstance(RUNTIME_BUNDLE_STATUS, dict) else {}
             contracts = bundle.get('contracts') if isinstance(bundle.get('contracts'), dict) else {}
-            collection_health = core.collection_health_status()
-            collection_neural = core.collection_neural_status()
+            snapshot = _runtime_health_snapshot()
+            collection_health = snapshot['collection_health']
+            collection_neural = snapshot['collection_neural']
             return self.json({
                 'ok': True,
                 'collection_health': collection_health,
@@ -161,6 +205,8 @@ class Handler(core.Handler):
                 'manual_dual_photo_ui': True,
                 'manual_dual_photo_bridge_inline': True,
                 'dashboard_bundle_stat_cache': True,
+                'dashboard_conditional_revalidation': True,
+                'health_snapshot_cache_ms': int(HEALTH_SNAPSHOT_TTL_SECONDS * 1000),
                 'manual_dual_photo_bridge_version': 158,
                 'graded_photo_eight_zone_ui': True,
                 'existing_photo_revalidation': True,
