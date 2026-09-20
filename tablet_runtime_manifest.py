@@ -9,7 +9,7 @@ ACTIVE_RUNTIME_FILES=(
 "quality_review_policy.py","quality_review_policy_v2.json",
 "auto_repair_engine.py","auto_update_all.py","collection_job_contract.py","collector_self_healing.py","tcg_code_repair_learning.py",
 "tcg_updater.py","tcg_updater_v135.py","runtime_bundle_guard_v143.py","update_releases.py",
-"update_market_watch.py","update_market_prices.py","update_promo_events.py","update_purchase_sources.py",
+"update_market_watch.py","update_market_prices.py","update_market_prices_parallel_v260.py","update_promo_events.py","update_purchase_sources.py",
 "update_exchange_rates.py","grading_company_watch.py","grading_company_watch_resilient.py","graded_photo_multi_source.py","graded_photo_manual_pair_queue.py",
 "collection_verification_gate.py","collection_verification_gate_contextual.py","tablet_collection_publish.py","tablet_collection_publish_contextual.py",
 "tablet_gdrive_sync.py","tablet_gdrive_sync_hardening.py","tablet_gdrive_sync_hardening_contextual.py","TABLET_GDRIVE_SYNC.sh",
