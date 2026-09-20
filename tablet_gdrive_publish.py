@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 """Build and optionally upload the exact verified 17-JSON tablet Drive package.
 
-The manifest is uploaded last and therefore acts as the remote commit marker.  A
+The manifest is uploaded last and therefore acts as the remote commit marker. A
 bundle can never become eligible for the tablet merely because a partial upload
-exists.  Existing remote object names are never overwritten.
+exists. Existing remote object names are never overwritten.
 """
 from __future__ import annotations
 
@@ -17,6 +17,7 @@ import re
 import secrets
 import shutil
 import subprocess
+import sys
 import tarfile
 import tempfile
 
@@ -77,7 +78,7 @@ def safe_remote_root(value: str) -> str:
 
 def _tar_exact(root: Path, bundle: Path) -> None:
     # Normalize archive metadata so identical source bytes produce stable tar
-    # members.  The gzip wrapper may still carry a stream timestamp; integrity is
+    # members. The gzip wrapper may still carry a stream timestamp; integrity is
     # always established by the manifest hash rather than filename assumptions.
     with tarfile.open(bundle, "w:gz", format=tarfile.PAX_FORMAT) as tf:
         for name in sync.OUTPUTS:
@@ -93,10 +94,14 @@ def _tar_exact(root: Path, bundle: Path) -> None:
 
 def build_package(root: Path, output_dir: Path, *, run_id: str | None = None,
                   main_sha: str | None = None, run_gates: bool = True) -> tuple[Path, Path, dict]:
-    root = root.resolve()
-    output_dir = output_dir.resolve()
-    if output_dir.is_symlink():
+    root_input = Path(root).expanduser()
+    output_input = Path(output_dir).expanduser()
+    if root_input.is_symlink():
+        raise ValueError("repository root symlink is not allowed")
+    if output_input.is_symlink():
         raise ValueError("output directory symlink is not allowed")
+    root = root_input.resolve()
+    output_dir = output_input.resolve()
     output_dir.mkdir(parents=True, exist_ok=True)
 
     if run_gates:
@@ -181,7 +186,7 @@ def upload_package(bundle: Path, manifest_path: Path, manifest: dict, *,
         if _remote_exists(remote, remote_root, name):
             raise FileExistsError(f"remote object already exists: {name}")
 
-    # Bundle first, manifest last.  The receiver only discovers manifest_*.json,
+    # Bundle first, manifest last. The receiver only discovers manifest_*.json,
     # so an interrupted bundle upload cannot be applied.
     _upload_one(remote, bundle, remote_root)
     _upload_one(remote, manifest_path, remote_root)
@@ -211,8 +216,8 @@ def main() -> int:
     parser.add_argument("--remote", default=os.environ.get("TCG_GDRIVE_REMOTE", sync.DEFAULT_REMOTE))
     parser.add_argument("--remote-root", default=os.environ.get("TCG_GDRIVE_ROOT", sync.DEFAULT_REMOTE_ROOT))
     args = parser.parse_args()
-    root = Path(args.root).resolve()
-    output_dir = Path(args.output_dir).expanduser().resolve() if args.output_dir else root / ".tcg_drive_outbox"
+    root = Path(args.root)
+    output_dir = Path(args.output_dir).expanduser() if args.output_dir else root / ".tcg_drive_outbox"
     try:
         bundle, manifest_path, manifest = build_package(root, output_dir, run_id=args.run_id)
         print(json.dumps({
@@ -233,5 +238,4 @@ def main() -> int:
 
 
 if __name__ == "__main__":
-    import sys
     raise SystemExit(main())
