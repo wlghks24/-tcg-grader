@@ -47,9 +47,12 @@ jobs:
           python -m unittest -v test_verified_neural_self_refine_v210.py
           python verified_neural_self_refine.py --self-test
           python verified_code_repair_rules.py --self-test
-          python repository_integrity_guard.py
       - name: Remove one-shot patch machinery
         run: rm -f apply_repair_ai_score_freshness_v271.py .github/workflows/one-shot-repair-ai-score-freshness-v271.yml
+      - name: Audit final repository state
+        run: |
+          python repository_integrity_guard.py
+          git diff --check
       - name: Commit verified result to branch
         run: |
           git config user.name 'github-actions[bot]'
