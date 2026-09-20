@@ -28,12 +28,14 @@ set "TCG_PYTHON_ARGS="
 
 :RUN
 if not exist "tcg_updater.py" goto MISSING_FILES
+if not exist "tcg_updater_v135.py" goto MISSING_FILES
+if not exist "runtime_bundle_guard_v143.py" goto MISSING_FILES
 if not exist "index.html" goto MISSING_FILES
 if exist "%LOG%" for %%I in ("%LOG%") do if %%~zI GTR 1048576 move /y "%LOG%" "%LOG%.old" >nul 2>nul
 echo [TCG] Server is running. Keep this window open.
 echo [TCG] PC: http://127.0.0.1:8765/index.html
-echo [%date% %time%] Starting server with %TCG_PYTHON_EXE%.>>"%LOG%"
-"%TCG_PYTHON_EXE%" %TCG_PYTHON_ARGS% tcg_updater.py >>"%LOG%" 2>&1
+echo [%date% %time%] Starting verified v135 runtime with %TCG_PYTHON_EXE%.>>"%LOG%"
+"%TCG_PYTHON_EXE%" %TCG_PYTHON_ARGS% tcg_updater_v135.py >>"%LOG%" 2>&1
 :STOPPED
 echo [TCG] Server stopped. Restarting in 10 seconds...
 echo [%date% %time%] Server stopped; restart scheduled.>>"%LOG%"
@@ -49,8 +51,8 @@ echo [%date% %time%] Python 3 missing or broken; restart loop stopped.>>"%LOG%"
 exit /b 1
 
 :MISSING_FILES
-echo [ERROR] Required server files are missing. Automatic restart stopped.
-echo [%date% %time%] Required server files missing; restart loop stopped.>>"%LOG%"
+echo [ERROR] Required verified runtime files are missing. Automatic restart stopped.
+echo [%date% %time%] Required verified runtime files missing; restart loop stopped.>>"%LOG%"
 exit /b 1
 
 :WAIT_FAILURE
