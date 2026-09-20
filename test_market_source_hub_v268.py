@@ -44,7 +44,7 @@ class MarketSourceHubV268Tests(unittest.TestCase):
             self.assertEqual(self.by_id[source_id]["evidence_group"], "guide")
         self.assertEqual(self.by_id["joongna"]["evidence_group"], "mixed")
         self.assertIn("체결가로 자동 간주하지 않음", self.by_id["bunjang"]["note"])
-        self.assertIn("판매중 가격은 체결가가 아님", self.by_id["mercari_jp"]["note"])
+        self.assertIn("체결가로 간주하지 않음", self.by_id["mercari_jp"]["note"])
 
     def test_registry_attachment_adds_no_network_collection(self):
         db = {}
