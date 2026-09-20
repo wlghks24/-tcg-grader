@@ -61,6 +61,22 @@ def _safe_error(value: Any) -> str:
         text = re.sub(r"[\\x00-\\x1f\\x7f]+", " ", text)
         text = re.sub(r"\\s+", " ", text).strip()
         return text[:600] or "collection_failed"
+
+def _ai_model_status() -> dict[str, Any]:
+    """Fail-soft AI visibility: deterministic collection remains usable if AI is degraded."""
+    try:
+        import ai_runtime_model_guard
+        result = ai_runtime_model_guard.public_status()
+        if isinstance(result, dict):
+            return result
+    except (ImportError, OSError, ValueError, TypeError, json.JSONDecodeError) as exc:
+        return {"schema_version":1,"status":"broken","healthy":False,"requires_attention":True,
+                "active_models":[],"degraded_models":[],"broken_models":["runtime_guard"],
+                "models":{},"reason":f"guard_unavailable:{type(exc).__name__}"}
+    return {"schema_version":1,"status":"broken","healthy":False,"requires_attention":True,
+            "active_models":[],"degraded_models":[],"broken_models":["runtime_guard"],
+            "models":{},"reason":"guard_invalid_result"}
+
 def mark_attempt(trigger: str, *, next_due_at: str | None=None, path: Path=STATE) -> dict[str,Any]:
     data=load(path); data["last_attempt_at"]=_now(); data["last_trigger"]=str(trigger or "unknown")[:120]
     if next_due_at: data["next_due_at"]=str(next_due_at)[:80]
@@ -106,19 +122,27 @@ def public_status(path: Path=STATE, *, now: datetime | None=None) -> dict[str,An
         healthy=True; status="degraded"
     else:
         healthy=True; status="ok"
+    ai_models=_ai_model_status()
+    ai_attention=bool(ai_models.get("requires_attention"))
+    # AI is advisory/priority-only. Corruption or staleness must be visible, but it
+    # must not turn a healthy deterministic collection path into a hard outage.
+    if status=="ok" and ai_attention:
+        status="degraded"
     return {**data,"healthy":healthy,"status":status,"stale":stale,"success_age_seconds":success_age,
             "attempt_age_seconds":attempt_age,"stale_after_seconds":STALE_AFTER_SECONDS,
-            "requires_attention":healthy is False or failures>0,"process_restart_required":False}
+            "requires_attention":healthy is False or failures>0 or ai_attention,"process_restart_required":False,
+            "ai_models":ai_models}
 
 def self_test() -> None:
     import tempfile
     with tempfile.TemporaryDirectory() as tmp:
         path=Path(tmp)/"health.json"
-        assert public_status(path)["status"]=="starting"
+        first=public_status(path); assert first["status"] in {"starting","degraded"}; assert "ai_models" in first
         mark_failure("test",ValueError("https://example.com token=secret"),path=path)
         assert public_status(path)["consecutive_failures"]==1
         mark_success("test-recovery",path=path)
         ok=public_status(path); assert ok["healthy"] is True and ok["consecutive_failures"]==0
+        assert ok["status"] in {"ok","degraded"}
     print("collection runtime health: PASS")
 
 if __name__=="__main__":

@@ -22,6 +22,8 @@ def _commands():
       ("repository_integrity",[py,"repository_integrity_guard.py"],240,False),
       ("active_tablet_runtime",[py,"tablet_runtime_manifest.py","--check","--compile"],120,False),
       ("collection_health_selftest",[py,"collection_runtime_health.py"],60,False),
+      ("ai_model_guard_selftest",[py,"ai_runtime_model_guard.py"],60,False),
+      ("ai_model_guard_regression",[py,"-m","unittest","-v","test_ai_runtime_model_guard_v269.py"],120,False),
       ("security_audit",[py,"security_self_audit.py","--no-memory","--fail-on","high"],240,False),
       ("security_hardening",[py,"security_hardening_apply.py","--check"],120,False),
       ("runtime_delivery",[py,"test_runtime_delivery_guards.py"],120,False),
