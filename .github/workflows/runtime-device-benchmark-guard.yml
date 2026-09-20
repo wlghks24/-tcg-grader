@@ -1,0 +1,79 @@
+name: Runtime Device Benchmark Guard
+
+on:
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - 'runtime_sre_metrics.py'
+      - 'runtime_device_benchmark.py'
+      - 'performance_baseline_guard.py'
+      - 'RUN_RUNTIME_BENCHMARK.bat'
+      - 'RUN_RUNTIME_BENCHMARK.sh'
+      - 'test_runtime_device_benchmark_v265.py'
+      - 'main_branch_protection_audit.py'
+      - 'test_main_branch_protection_audit_v265.py'
+      - '.github/main-branch-policy.json'
+      - '.github/workflows/runtime-device-benchmark-guard.yml'
+      - '.github/workflows/main-branch-protection-audit.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'runtime_sre_metrics.py'
+      - 'runtime_device_benchmark.py'
+      - 'performance_baseline_guard.py'
+      - 'RUN_RUNTIME_BENCHMARK.bat'
+      - 'RUN_RUNTIME_BENCHMARK.sh'
+      - 'test_runtime_device_benchmark_v265.py'
+      - 'main_branch_protection_audit.py'
+      - 'test_main_branch_protection_audit_v265.py'
+      - '.github/main-branch-policy.json'
+      - '.github/workflows/runtime-device-benchmark-guard.yml'
+      - '.github/workflows/main-branch-protection-audit.yml'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: runtime-device-benchmark-${{ github.event_name }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+jobs:
+  verify:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 12
+    env:
+      PYTHONDONTWRITEBYTECODE: '1'
+      PYTHONUNBUFFERED: '1'
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          persist-credentials: false
+          fetch-depth: 1
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97
+        with:
+          python-version: '3.11'
+      - name: Compile benchmark and protection audit
+        run: |
+          python -m py_compile \
+            runtime_sre_metrics.py \
+            runtime_device_benchmark.py \
+            performance_baseline_guard.py \
+            main_branch_protection_audit.py \
+            test_runtime_device_benchmark_v265.py \
+            test_main_branch_protection_audit_v265.py
+      - name: Run deterministic benchmark regressions
+        run: |
+          python -m unittest -v \
+            test_runtime_device_benchmark_v265.py \
+            test_main_branch_protection_audit_v265.py \
+            test_sre_runtime_performance_v240.py
+      - name: Re-run delivery and tablet contracts
+        run: |
+          python test_runtime_delivery_guards.py
+          python tablet_runtime_manifest.py --check --compile
+      - name: Validate launchers and diff hygiene
+        shell: bash
+        run: |
+          grep -F 'runtime_device_benchmark.py --label windows-pc' RUN_RUNTIME_BENCHMARK.bat
+          grep -F 'runtime_device_benchmark.py --label android-termux' RUN_RUNTIME_BENCHMARK.sh
+          git diff --check
