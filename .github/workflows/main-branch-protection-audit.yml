@@ -1,0 +1,54 @@
+name: Main Branch Protection Audit
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '17 2 * * *'
+  pull_request:
+    paths:
+      - '.github/main-branch-policy.json'
+      - 'main_branch_protection_audit.py'
+      - '.github/workflows/main-branch-protection-audit.yml'
+  push:
+    branches: [main]
+    paths:
+      - '.github/main-branch-policy.json'
+      - 'main_branch_protection_audit.py'
+      - '.github/workflows/main-branch-protection-audit.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  audit:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          persist-credentials: false
+          fetch-depth: 1
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97
+        with:
+          python-version: '3.11'
+      - name: Validate audit code and policy
+        run: |
+          python -m py_compile main_branch_protection_audit.py
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          policy=json.loads(Path('.github/main-branch-policy.json').read_text(encoding='utf-8'))
+          assert policy['schema_version']==1
+          assert policy['branch']=='main'
+          assert policy['require_protected_branch'] is True
+          assert policy['require_pull_request_before_merge'] is True
+          PY
+      - name: Audit current main protection
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          if [ "${{ github.event_name }}" = "schedule" ] || [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            python main_branch_protection_audit.py --enforce
+          else
+            python main_branch_protection_audit.py
+          fi
