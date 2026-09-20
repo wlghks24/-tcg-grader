@@ -138,7 +138,7 @@ jobs:
               raise SystemExit(f'tablet fail-closed contract missing: {missing}')
           contextual_required = [
               'collection_verification_gate_contextual.py',
-              "'--fail-on-degraded'",
+              '"--fail-on-degraded"',
               'core.gates = gates',
               'return core.main()',
           ]
