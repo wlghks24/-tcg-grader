@@ -1,0 +1,62 @@
+name: One-shot UI app shell v272
+
+on:
+  push:
+    branches: [improve/app-ui-ai-review-v272]
+    paths:
+      - 'apply_ui_app_shell_v272.py'
+      - '.github/workflows/one-shot-ui-app-shell-v272.yml'
+
+permissions:
+  contents: write
+
+concurrency:
+  group: one-shot-ui-app-shell-v272
+  cancel-in-progress: false
+
+jobs:
+  apply-and-verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          ref: improve/app-ui-ai-review-v272
+          fetch-depth: 0
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97
+        with:
+          python-version: '3.12'
+      - name: Apply bounded UI integration patch
+        run: python apply_ui_app_shell_v272.py
+      - name: Validate browser source syntax
+        run: |
+          node --check ui_app_shell_v272.js
+          python -m py_compile test_ui_app_shell_v272.py verify_current_runtime.py verify_critical_feature_matrix_v25.py tablet_runtime_manifest.py test_tablet_runtime_manifest_ui_assets_v254.py
+      - name: Run focused UI and runtime regressions
+        run: |
+          python -m unittest -v test_ui_app_shell_v272.py
+          python -m unittest -v test_feature_category_navigation_v26.py
+          python -m unittest -v test_tablet_runtime_manifest_ui_assets_v254.py
+          node verify_feature_category_navigation.js
+          python test_runtime_delivery_guards.py
+          python verify_critical_feature_matrix_v25.py
+          python tablet_runtime_manifest.py --check --compile
+      - name: Remove one-shot machinery and stage final tree
+        run: |
+          rm -f apply_ui_app_shell_v272.py .github/workflows/one-shot-ui-app-shell-v272.yml
+          git add -A
+      - name: Refresh integrity manifest for permanent v272 tree
+        run: |
+          python fault_injection_healing.py --manifest
+          git add integrity_manifest.json
+      - name: Audit final repository state
+        run: |
+          python repository_integrity_guard.py
+          git diff --cached --check
+      - name: Commit verified result to branch
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          if ! git diff --cached --quiet; then
+            git commit -m 'feat: harden app UI accessibility and tablet navigation'
+            git push origin HEAD:improve/app-ui-ai-review-v272
+          fi
