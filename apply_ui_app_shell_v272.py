@@ -98,6 +98,11 @@ def patch_tablet_final() -> None:
 
 
 def patch_final_tablet_workflow() -> None:
+    target = ROOT / ".github/workflows/final-tablet-guard.yml"
+    text = target.read_text(encoding="utf-8")
+    integrated = "      - 'ui_app_shell_v272.css'\n      - 'ui_app_shell_v272.js'\n      - 'test_ui_app_shell_v272.py'"
+    if text.count(integrated) == 2:
+        return
     replace_exact(
         ".github/workflows/final-tablet-guard.yml",
         "      - 'feature_category_nav.js'\n      - 'verify_feature_category_navigation.js'",
