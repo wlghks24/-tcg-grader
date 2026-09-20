@@ -25,6 +25,18 @@ jobs:
       - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97
         with:
           python-version: '3.12'
+      - name: Normalize unique status patch anchor
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          path = Path('apply_repair_ai_score_freshness_v271.py')
+          text = path.read_text(encoding='utf-8')
+          old = '''    text = once(text, '        "stale_rule_fingerprint_labels": max(0, len(all_labels) - len(labels)),\\n        "positive_labels":', '        "stale_rule_fingerprint_labels": max(0, len(all_labels) - len(labels)),\\n        "runtime_score_active": active,\\n        "runtime_score_reason": runtime_reason,\\n        "positive_labels":', "status fields")'''
+          new = '''    text = once(text, '        "model_source": model_source,\\n        "model_recovered_from_backup": model_recovered,\\n        "label_count": len(labels),\\n        "stored_label_count": len(all_labels),\\n        "stale_rule_fingerprint_labels": max(0, len(all_labels) - len(labels)),\\n        "positive_labels":', '        "model_source": model_source,\\n        "model_recovered_from_backup": model_recovered,\\n        "label_count": len(labels),\\n        "stored_label_count": len(all_labels),\\n        "stale_rule_fingerprint_labels": max(0, len(all_labels) - len(labels)),\\n        "runtime_score_active": active,\\n        "runtime_score_reason": runtime_reason,\\n        "positive_labels":', "status fields")'''
+          if text.count(old) != 1:
+              raise SystemExit(f'patch-script anchor count={text.count(old)}')
+          path.write_text(text.replace(old, new, 1), encoding='utf-8')
+          PY
       - name: Apply exact bounded patch
         run: python apply_repair_ai_score_freshness_v271.py
       - name: Compile touched runtime
