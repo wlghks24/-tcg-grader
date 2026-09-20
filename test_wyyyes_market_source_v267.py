@@ -66,7 +66,7 @@ class WyyyesMarketSourceV267Tests(unittest.TestCase):
         self.assertIn('db.setdefault("platform_quotes", {})', wrapper)
         self.assertIn('"wyyyes_market_source.py"', manifest)
         self.assertIn("asking_price_is_not_completed_sale", wrapper)
-        self.assertIn("판본별 공개시장 시세", flow)
+        self.assertIn("판본별 자동수집 공개시세", flow)
         self.assertIn("판매중/제안가", flow)
         self.assertIn("체결/판매완료", flow)
         self.assertIn("card_region", flow)
