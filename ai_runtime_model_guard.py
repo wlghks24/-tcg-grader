@@ -112,20 +112,15 @@ def _safety_contract(module: Any) -> list[str]:
     if not isinstance(safety, dict):
         return ["safety_contract_missing"]
     issues: list[str] = []
-    required_true = (
-        "neural_output_is_priority_only",
-    )
-    required_false = (
+    if safety.get("neural_output_is_priority_only") is not True:
+        issues.append("safety_true_missing:neural_output_is_priority_only")
+    for key in (
         "verification_bypass",
         "official_trust_auto_promotion",
         "candidate_database_auto_promotion",
         "source_code_auto_rewrite",
         "git_write",
-    )
-    for key in required_true:
-        if safety.get(key) is not True:
-            issues.append(f"safety_true_missing:{key}")
-    for key in required_false:
+    ):
         if key in safety and safety.get(key) is not False:
             issues.append(f"safety_false_missing:{key}")
     return issues
@@ -191,9 +186,14 @@ def inspect_module(module: Any, name: str, *, now: datetime | None = None) -> di
         base.update({"healthy": False, "requires_attention": True, "status": "broken", "reason": "feature_fingerprint_mismatch"})
         return base
     expected_protocol = getattr(module, "PROTOCOL_VERSION", None)
-    if expected_protocol is not None and int(model.get("protocol_version", -1)) != int(expected_protocol):
-        base.update({"healthy": False, "requires_attention": True, "status": "broken", "reason": "protocol_version_mismatch"})
-        return base
+    if expected_protocol is not None:
+        try:
+            protocol_ok = int(model.get("protocol_version", -1)) == int(expected_protocol)
+        except (TypeError, ValueError, OverflowError):
+            protocol_ok = False
+        if not protocol_ok:
+            base.update({"healthy": False, "requires_attention": True, "status": "broken", "reason": "protocol_version_mismatch"})
+            return base
 
     try:
         label_count = int(model.get("label_count", 0))
@@ -272,6 +272,7 @@ def _signature(modules: list[tuple[str, Any]]) -> tuple[Any, ...]:
 
 
 def public_status(*, now: datetime | None = None, use_cache: bool = True) -> dict[str, Any]:
+    global _CACHE_SIGNATURE, _CACHE_VALUE
     modules, failures = _load_modules()
     signature = _signature(modules)
     if use_cache and now is None:
@@ -308,7 +309,6 @@ def public_status(*, now: datetime | None = None, use_cache: bool = True) -> dic
     }
     if use_cache and now is None:
         with _CACHE_LOCK:
-            global _CACHE_SIGNATURE, _CACHE_VALUE
             _CACHE_SIGNATURE = signature
             _CACHE_VALUE = dict(payload)
     return payload
