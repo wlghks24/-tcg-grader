@@ -49,6 +49,7 @@ def _prefetch_group(urls: tuple[str, ...], fetcher):
 def prefetch(fetcher=None, urls=FIXED_URLS, max_workers: int = MAX_HOST_WORKERS):
     """Fetch different hosts concurrently while keeping each host strictly serial."""
     fetcher = fetcher or base.fetch
+    urls = tuple(urls)
     grouped: dict[str, list[str]] = defaultdict(list)
     for url in urls:
         host = _host(url)
@@ -60,7 +61,7 @@ def prefetch(fetcher=None, urls=FIXED_URLS, max_workers: int = MAX_HOST_WORKERS)
     result = {}
     stats = {
         "hosts": len(grouped),
-        "urls": len(tuple(urls)),
+        "urls": len(urls),
         "max_workers": workers,
         "network_calls": 0,
         "cache_hits": 0,
