@@ -33,6 +33,7 @@ def _commands():
       ("verified_collection_neural",[py,"-m","unittest","-v","test_verified_collection_neural_v211.py"],180,False),
       ("verified_collection_job_neural",[py,"-m","unittest","-v","test_verified_collection_job_neural_v212.py"],180,False),
       ("ai_score_freshness_v270",[py,"-m","unittest","-v","test_ai_score_freshness_v270.py"],180,False),
+      ("repair_ai_score_freshness_v271",[py,"-m","unittest","-v","test_repair_ai_score_freshness_v271.py"],180,False),
       ("current_runtime_regressions",[py,"-m","unittest","-v","test_runtime_resilience_v182.py","test_grading_hierarchy_v17.py",
        "test_ocr_multistage_v16.py","test_verified_grade_learning_v135_safe.py","test_collection_verification_gate.py",
        "test_multi_route_event_discovery.py","test_pokemon_run30_asia_recovery_v208.py",

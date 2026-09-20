@@ -20,7 +20,8 @@ import hashlib
 import json
 import math
 import random
-from datetime import datetime, timezone
+import threading
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from typing import Any
 
@@ -50,6 +51,8 @@ LEARNING_RATE = 0.035
 L2 = 0.0005
 ACTIVATION_MIN_ACCURACY = 0.65
 ACTIVATION_MIN_LOGLOSS_GAIN = 0.01
+MAX_RUNTIME_MODEL_AGE_SECONDS = 30 * 24 * 60 * 60
+RUNTIME_FUTURE_CLOCK_TOLERANCE_SECONDS = 5 * 60
 
 SAFETY = {
     "verified_labels_only": True,
@@ -65,6 +68,8 @@ SAFETY = {
     "full_regression_required_for_training_label": True,
     "neural_output_is_priority_only": True,
     "unknown_rule_auto_repair": False,
+    "runtime_stale_model_priority_allowed": False,
+    "runtime_future_model_priority_allowed": False,
 }
 
 RULE_ORDER = (
@@ -76,6 +81,10 @@ RULE_ORDER = (
     "tablet-runtime-require-collection-health-v1",
 )
 FEATURE_COUNT = len(RULE_ORDER) + PATH_BUCKETS + STAGE_BUCKETS + FAMILY_BUCKETS + 3
+
+_MODEL_CACHE_LOCK = threading.Lock()
+_MODEL_CACHE_KEY: tuple[Any, ...] | None = None
+_MODEL_CACHE_RESULT: tuple[dict[str, Any] | None, str, bool] | None = None
 
 
 def _now() -> str:
@@ -598,13 +607,63 @@ def _validate_model_payload(raw: object) -> bool:
     return isinstance(expected, dict)
 
 
+def _model_file_signature(path: Path) -> tuple[str, int, int, int, bool]:
+    try:
+        stat = path.stat()
+        return (
+            str(path),
+            int(stat.st_mtime_ns),
+            int(getattr(stat, "st_ctime_ns", 0)),
+            int(stat.st_size),
+            path.is_file() and not path.is_symlink(),
+        )
+    except OSError:
+        return (str(path), -1, -1, -1, False)
+
+
+def _runtime_model_reason(model: dict[str, Any], *, now: datetime | None = None) -> str | None:
+    try:
+        protocol = int(model.get("protocol_version") or 0)
+        label_count = int(model.get("label_count") or 0)
+    except (TypeError, ValueError, OverflowError):
+        return "runtime_contract_invalid"
+    if protocol != PROTOCOL_VERSION:
+        return "protocol_version_mismatch"
+    if label_count < MIN_INDEPENDENT_LABELS:
+        return "label_count_below_activation_gate"
+    text = str(model.get("trained_at") or "").strip()
+    try:
+        trained = datetime.fromisoformat(text.replace("Z", "+00:00"))
+    except (TypeError, ValueError, OverflowError):
+        return "trained_at_invalid"
+    if trained.tzinfo is None:
+        trained = trained.replace(tzinfo=timezone.utc)
+    trained = trained.astimezone(timezone.utc)
+    moment = (now or datetime.now(timezone.utc)).astimezone(timezone.utc)
+    if trained > moment + timedelta(seconds=RUNTIME_FUTURE_CLOCK_TOLERANCE_SECONDS):
+        return "trained_at_in_future"
+    if (moment - trained).total_seconds() > MAX_RUNTIME_MODEL_AGE_SECONDS:
+        return "active_model_stale"
+    return None
+
+
 def _load_model_with_source(path: Path = MODEL_PATH) -> tuple[dict[str, Any] | None, str, bool]:
+    global _MODEL_CACHE_KEY, _MODEL_CACHE_RESULT
     backup = _backup_path(path, MODEL_PATH, MODEL_BACKUP_PATH)
+    cache_key = (_model_file_signature(path), _model_file_signature(backup))
+    with _MODEL_CACHE_LOCK:
+        if cache_key == _MODEL_CACHE_KEY and _MODEL_CACHE_RESULT is not None:
+            return _MODEL_CACHE_RESULT
+    result: tuple[dict[str, Any] | None, str, bool] = (None, "none", False)
     for candidate, source in ((path, "primary"), (backup, "backup")):
         raw = _load_json(candidate, {})
         if _validate_model_payload(raw):
-            return raw, source, source == "backup"
-    return None, "none", False
+            result = (raw, source, source == "backup")
+            break
+    with _MODEL_CACHE_LOCK:
+        _MODEL_CACHE_KEY = cache_key
+        _MODEL_CACHE_RESULT = result
+    return result
 
 
 def _load_model(path: Path = MODEL_PATH) -> dict[str, Any] | None:
@@ -615,6 +674,7 @@ def score_issue(
     *,
     current_rule_fingerprints: dict[str, str] | None = None,
     model_path: Path = MODEL_PATH,
+    now: datetime | None = None,
 ) -> dict[str, Any]:
     rule_id = str(issue.get("auto_repair_rule") or issue.get("fix_rule") or "")
     if rule_id not in RULE_ORDER:
@@ -626,6 +686,14 @@ def score_issue(
     current = dict(sorted((current_rule_fingerprints or {}).items()))
     if not isinstance(expected, dict) or expected != current:
         return {"active": False, "score": 0.5, "reason": "rule_fingerprint_changed"}
+    runtime_reason = _runtime_model_reason(model, now=now)
+    if runtime_reason is not None:
+        return {
+            "active": False,
+            "score": 0.5,
+            "reason": runtime_reason,
+            "neural_output_is_priority_only": True,
+        }
     row = dict(issue)
     row["rule_id"] = rule_id
     probability = _calibrated_probability(model, _feature_vector(row))
@@ -652,13 +720,18 @@ def status(
     model, model_source, model_recovered = _load_model_with_source(model_path)
     active = False
     reason = "model_inactive"
+    runtime_reason = None
     if model is not None:
         expected = model.get("rule_fingerprints")
-        if isinstance(expected, dict) and expected == current:
-            active = True
-            reason = "active"
-        else:
+        if not isinstance(expected, dict) or expected != current:
             reason = "rule_fingerprint_changed"
+        else:
+            runtime_reason = _runtime_model_reason(model)
+            if runtime_reason is None:
+                active = True
+                reason = "active"
+            else:
+                reason = runtime_reason
     return {
         "ok": True,
         "active": active,
@@ -668,6 +741,8 @@ def status(
         "label_count": len(labels),
         "stored_label_count": len(all_labels),
         "stale_rule_fingerprint_labels": max(0, len(all_labels) - len(labels)),
+        "runtime_score_active": active,
+        "runtime_score_reason": runtime_reason,
         "positive_labels": sum(bool(row["outcome"]) for row in labels),
         "negative_labels": sum(not bool(row["outcome"]) for row in labels),
         "minimum_labels": MIN_INDEPENDENT_LABELS,
@@ -752,6 +827,8 @@ def self_test() -> None:
         atomic_write_json(model, {
             "schema": SCHEMA,
             "active": True,
+            "trained_at": _now(),
+            "label_count": MIN_INDEPENDENT_LABELS,
             "feature_count": FEATURE_COUNT,
             "hidden": 4,
             "w1": fake_model["w1"],
