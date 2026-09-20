@@ -1,5 +1,5 @@
 {
-  "updated_at": "2026-09-20T01:02:35+00:00",
+  "updated_at": "2026-09-20T06:34:52+00:00",
   "policy": "Tier C(나무위키/커뮤니티)는 발견용이며 단독으로 공식확정 처리하지 않음. 공식/공공/복수 독립출처와 교차 확인 후 승격.",
   "date_policy": "공식 발표가 월까지만 있으면 예정월만 표시하고 정확한 일자를 만들지 않습니다.",
   "items": [
@@ -67,7 +67,7 @@
       "status": "재확인 대기",
       "verified": false,
       "error": "HTTPError",
-      "collected_at": "2026-09-20T01:01:33+00:00"
+      "collected_at": "2026-09-20T06:34:51+00:00"
     },
     {
       "game": "포켓몬 카드",
@@ -82,7 +82,7 @@
       "status": "재확인 대기",
       "verified": false,
       "error": "HTTPError",
-      "collected_at": "2026-09-20T01:01:34+00:00"
+      "collected_at": "2026-09-20T06:34:51+00:00"
     },
     {
       "game": "원피스 카드",
@@ -97,7 +97,7 @@
       "status": "재확인 대기",
       "verified": false,
       "error": "HTTPError",
-      "collected_at": "2026-09-20T01:01:34+00:00"
+      "collected_at": "2026-09-20T06:34:52+00:00"
     },
     {
       "game": "원피스 카드",
@@ -112,7 +112,7 @@
       "status": "재확인 대기",
       "verified": false,
       "error": "HTTPError",
-      "collected_at": "2026-09-20T01:01:35+00:00"
+      "collected_at": "2026-09-20T06:34:52+00:00"
     },
     {
       "game": "포켓몬 카드",
@@ -126,8 +126,8 @@
       "excerpt": "자동 접근 제한 또는 네트워크 지연으로 다음 업데이트에서 재확인",
       "status": "재확인 대기",
       "verified": false,
-      "error": "TimeoutError",
-      "collected_at": "2026-09-20T01:02:35+00:00"
+      "error": "HTTPError",
+      "collected_at": "2026-09-20T06:34:52+00:00"
     }
   ]
 }

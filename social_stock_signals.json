@@ -1,15 +1,20 @@
 {
   "version": 2,
-  "updated_at": "2026-09-20T00:59:23+00:00",
+  "updated_at": "2026-09-20T06:27:39+00:00",
   "items": [],
   "summary": {
     "sources_watched": 2,
-    "raw_results": 33,
+    "raw_results": 40,
     "new_candidates": 0,
     "active_signals": 0,
     "stale_signals": 0,
-    "errors": 0
+    "errors": 4
   },
-  "collection_errors": [],
+  "collection_errors": [
+    "poke_vending_machine:_ddg_rows:URLError",
+    "poke_vending_machine:_ddg_rows:URLError",
+    "ttosatda:_ddg_rows:URLError",
+    "ttosatda:_ddg_rows:URLError"
+  ],
   "policy": "SNS는 재고 제보 신호만 생성합니다. 공식 실시간 재고·확정 수량으로 자동승격하지 않으며, 학습은 검색 우선순위만 조정합니다."
 }
