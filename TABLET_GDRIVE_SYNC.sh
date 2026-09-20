@@ -24,6 +24,8 @@ if [ ! -s "tablet_gdrive_sync_hardening_contextual.py" ]; then
   exit 2
 fi
 
+# tablet_gdrive_sync_hardening_contextual.py extends tablet_gdrive_sync_hardening.py;
+# backup hashing, inflight recovery, launcher-PID checks and receipt semantics stay unchanged.
 python tablet_gdrive_sync_hardening_contextual.py "$@"
 rc=$?
 exit "$rc"
