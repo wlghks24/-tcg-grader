@@ -1,0 +1,116 @@
+/* v272 app shell hardening: additive UI/UX/accessibility layer.
+   This file intentionally avoids changing grading/market/data logic. */
+:root{
+  --shell-content-max:1120px;
+  --shell-focus:#2563eb;
+  --shell-focus-ring:rgba(37,99,235,.28);
+  --shell-border:#cbd5e1;
+  --shell-muted:#64748b;
+  --shell-surface:#ffffff;
+  --shell-soft:#f8fafc;
+}
+
+html{scroll-padding-top:16px}
+body{overflow-wrap:anywhere}
+.app{width:min(100%,var(--shell-content-max));margin-inline:auto}
+[id]{scroll-margin-top:18px}
+button,a,input,select,textarea,summary{touch-action:manipulation}
+button,a{-webkit-tap-highlight-color:transparent}
+
+/* Keyboard users can bypass the large feature launcher. */
+.ui-skip-link{
+  position:fixed;left:12px;top:calc(8px + env(safe-area-inset-top,0px));z-index:2147483647;
+  transform:translateY(-180%);padding:10px 13px;border-radius:11px;
+  background:#0f172a;color:#fff;text-decoration:none;font-weight:900;font-size:13px;
+  box-shadow:0 8px 22px rgba(15,23,42,.28)
+}
+.ui-skip-link:focus,.ui-skip-link:focus-visible{transform:translateY(0);outline:3px solid #93c5fd;outline-offset:2px}
+
+/* Feature search is deliberately placed inside the existing category navigator. */
+.feature-quick-search{
+  margin:10px 0 12px;padding:11px;border:1px solid #dbe3ef;border-radius:14px;
+  background:linear-gradient(180deg,#fff,#f8fafc)
+}
+.feature-quick-search label{display:block;margin-bottom:6px;color:#334155;font-size:12px;font-weight:900}
+.feature-quick-search-row{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:7px;align-items:stretch}
+.feature-quick-search input{
+  width:100%;min-width:0;min-height:46px;margin:0!important;padding:10px 12px!important;
+  border:1px solid #94a3b8!important;border-radius:12px!important;background:#fff!important;color:#0f172a!important;
+  font-size:16px!important;box-shadow:none!important
+}
+.feature-quick-search input:focus-visible{
+  border-color:var(--shell-focus)!important;outline:3px solid var(--shell-focus-ring)!important;outline-offset:1px!important
+}
+.feature-quick-search-clear{
+  width:auto!important;min-width:72px!important;min-height:46px!important;margin:0!important;padding:8px 12px!important;
+  border:1px solid #cbd5e1!important;border-radius:12px!important;background:#fff!important;color:#334155!important;
+  box-shadow:none!important;font-size:13px!important
+}
+.feature-quick-search-clear:disabled{opacity:.45!important;cursor:default!important}
+.feature-quick-search-status{margin-top:7px;min-height:18px;color:#475569;font-size:11px;font-weight:750;line-height:1.45}
+.feature-quick-search-status[data-state="match"]{color:#166534}
+.feature-quick-search-status[data-state="empty"]{color:#b45309}
+.feature-category[data-ui-filter-hidden="true"],
+.feature-shortcut[data-ui-filter-hidden="true"]{display:none!important}
+.feature-category[data-ui-search-hit="true"]{border-color:#60a5fa;box-shadow:0 0 0 3px #dbeafe}
+
+/* Keep dense feature/action cards readable without making the phone layout wider than the viewport. */
+.feature-shortcut,.tablet-manager-action,.home-launch-btn,.box-menu-btn,.analysis-box,
+.purchase-source,.release-item,.metric,.status{min-width:0}
+.feature-shortcut b,.feature-shortcut small,.tablet-manager-action b,.tablet-manager-action small,
+.home-launch-btn b,.home-launch-btn small,.analysis-title,.analysis-sub,.release-name,.release-meta{
+  overflow-wrap:anywhere;word-break:keep-all
+}
+
+/* Stronger focus visibility across old and new controls. */
+:where(button,a,input,select,textarea,summary):focus-visible{
+  outline:3px solid var(--shell-focus)!important;outline-offset:2px!important
+}
+
+/* Wider tablets/desktop gain useful space, while phones keep the established one/two-column rules. */
+@media(min-width:960px){
+  .app{padding-left:20px!important;padding-right:20px!important}
+  .feature-category-nav,.release-board,.home-launcher,.card{max-width:none}
+}
+@media(min-width:1180px){
+  .app{--shell-content-max:1180px}
+  .feature-category-grid{gap:12px}
+  .feature-shortcut-grid{grid-template-columns:repeat(4,minmax(0,1fr))}
+}
+@media(max-width:650px){
+  .feature-quick-search{padding:9px;margin:9px 0 11px}
+  .feature-quick-search-row{grid-template-columns:minmax(0,1fr) auto}
+  .feature-quick-search-clear{min-width:64px!important;padding-inline:10px!important}
+}
+@media(max-width:350px){
+  .feature-quick-search-row{grid-template-columns:1fr}
+  .feature-quick-search-clear{width:100%!important}
+}
+
+/* Respect operating-system accessibility preferences beyond reduced motion. */
+@media(prefers-reduced-motion:reduce){
+  html{scroll-behavior:auto!important}
+  *,*::before,*::after{animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important}
+}
+@media(prefers-contrast:more){
+  .card,.home-launcher,.feature-category-nav,.feature-category,.feature-shortcut,.feature-quick-search,
+  input,select,textarea{border-color:#64748b!important}
+  .muted,.feature-category-sub,.feature-shortcut small{color:#475569!important}
+  :where(button,a,input,select,textarea,summary):focus-visible{outline-width:4px!important}
+}
+@media(forced-colors:active){
+  .ui-skip-link,.feature-category-nav,.feature-category,.feature-shortcut,.feature-quick-search,
+  .feature-quick-search-clear{forced-color-adjust:auto;border:1px solid CanvasText}
+  .feature-category[data-ui-search-hit="true"]{outline:2px solid Highlight;box-shadow:none}
+}
+
+@media(prefers-color-scheme:dark){
+  .feature-quick-search{background:#111827;border-color:#334155}
+  .feature-quick-search label{color:#e2e8f0}
+  .feature-quick-search input{background:#0f172a!important;color:#f8fafc!important;border-color:#475569!important}
+  .feature-quick-search input::placeholder{color:#94a3b8!important}
+  .feature-quick-search-clear{background:#172033!important;color:#e2e8f0!important;border-color:#475569!important}
+  .feature-quick-search-status{color:#cbd5e1}
+  .feature-quick-search-status[data-state="match"]{color:#86efac}
+  .feature-quick-search-status[data-state="empty"]{color:#fdba74}
+}
