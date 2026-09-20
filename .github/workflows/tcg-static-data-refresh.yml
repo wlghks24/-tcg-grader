@@ -27,12 +27,14 @@ on:
       - 'validate_external_links.py'
       - 'feature_contract.py'
       - 'grading_company_watch.py'
+      - 'grading_company_watch_resilient.py'
       - 'grading_costs_live.py'
       - 'multi_route_event_discovery.py'
       - 'social_event_discovery.py'
       - 'auto_pipeline_runner.py'
       - 'test_static_data_publish_gate.py'
       - 'test_collection_verification_gate.py'
+      - 'test_collection_verification_contextual_v257.py'
       - 'test_collection_scope_compat_v214.py'
       - 'test_information_lifecycle_archive_v209.py'
       - 'test_release_history_coverage_v4.py'
@@ -40,6 +42,7 @@ on:
       - 'test_social_event_topic_coverage.py'
       - 'test_social_topic_capacity_v213.py'
       - 'test_grading_company_watch_v215.py'
+      - 'test_grading_company_watch_resilient_v257.py'
       - 'test_grading_costs_live.py'
       - 'test_grading_watch_integration_v220.py'
       - '.github/workflows/tcg-static-data-refresh.yml'
@@ -81,19 +84,22 @@ jobs:
         run: |
           python -m py_compile \
             safe_runtime.py test_safe_runtime_redirect_diagnostics_v253.py collection_job_contract.py test_collection_job_contract_v255.py static_data_publish_gate.py auto_update_all.py tcg_updater.py feature_contract.py \
+            collection_verification_gate.py collection_verification_gate_contextual.py \
             update_releases.py release_history_backfill.py update_promo_events.py \
             update_market_prices.py market_public_crosscheck.py \
             update_purchase_sources.py validate_external_links.py \
             multi_route_event_discovery.py social_event_discovery.py auto_pipeline_runner.py \
-            grading_company_watch.py grading_costs_live.py \
+            grading_company_watch.py grading_company_watch_resilient.py grading_costs_live.py \
             test_market_public_crosscheck_resilience_v228.py test_market_public_crosscheck_performance_v251.py \
             test_release_history_cumulative_coverage_v229.py \
-            test_collection_restored_state_guard_v229.py
+            test_collection_restored_state_guard_v229.py \
+            test_collection_verification_contextual_v257.py test_grading_company_watch_resilient_v257.py
           python -m unittest -v \
             test_safe_runtime_redirect_diagnostics_v253.py \
             test_collection_job_contract_v255.py \
             test_static_data_publish_gate.py \
             test_collection_verification_gate.py \
+            test_collection_verification_contextual_v257.py \
             test_market_public_crosscheck_resilience_v228.py \
             test_market_public_crosscheck_performance_v251.py \
             test_release_history_cumulative_coverage_v229.py \
@@ -106,6 +112,7 @@ jobs:
             test_social_topic_capacity_v213.py \
             test_event_quick_watch.py \
             test_grading_company_watch_v215.py \
+            test_grading_company_watch_resilient_v257.py \
             test_grading_costs_live.py \
             test_grading_watch_integration_v220.py
           python feature_contract.py
@@ -192,6 +199,6 @@ jobs:
             echo "- lifecycle policy: end/release + 5 days, archive on day 6"
             echo "- topic policy: collection attempts are distinct from zero discovered leads"
             echo "- core coverage policy: KR/JP/US 3x3 must remain complete even when ASIA lanes are added"
-            echo "- grading policy: PSA/BGS/CGC/TAG/BRG official watch is mandatory and last-good protected"
+            echo "- grading policy: PSA/BGS/CGC/TAG/BRG official watch is mandatory, maintenance-aware, and last-good protected"
             echo "- public signal persistence: purchase_signals + social_stock_signals included"
           } >> "$GITHUB_STEP_SUMMARY"
