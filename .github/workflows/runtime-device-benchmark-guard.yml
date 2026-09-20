@@ -7,9 +7,11 @@ on:
       - 'runtime_sre_metrics.py'
       - 'runtime_device_benchmark.py'
       - 'performance_baseline_guard.py'
+      - 'tcg_updater_v135.py'
       - 'RUN_RUNTIME_BENCHMARK.bat'
       - 'RUN_RUNTIME_BENCHMARK.sh'
       - 'test_runtime_device_benchmark_v265.py'
+      - 'test_runtime_hotpath_v266.py'
       - 'main_branch_protection_audit.py'
       - 'test_main_branch_protection_audit_v265.py'
       - '.github/main-branch-policy.json'
@@ -21,9 +23,11 @@ on:
       - 'runtime_sre_metrics.py'
       - 'runtime_device_benchmark.py'
       - 'performance_baseline_guard.py'
+      - 'tcg_updater_v135.py'
       - 'RUN_RUNTIME_BENCHMARK.bat'
       - 'RUN_RUNTIME_BENCHMARK.sh'
       - 'test_runtime_device_benchmark_v265.py'
+      - 'test_runtime_hotpath_v266.py'
       - 'main_branch_protection_audit.py'
       - 'test_main_branch_protection_audit_v265.py'
       - '.github/main-branch-policy.json'
@@ -58,15 +62,20 @@ jobs:
             runtime_sre_metrics.py \
             runtime_device_benchmark.py \
             performance_baseline_guard.py \
+            tcg_updater_v135.py \
             main_branch_protection_audit.py \
             test_runtime_device_benchmark_v265.py \
+            test_runtime_hotpath_v266.py \
             test_main_branch_protection_audit_v265.py
       - name: Run deterministic benchmark regressions
         run: |
           python -m unittest -v \
             test_runtime_device_benchmark_v265.py \
+            test_runtime_hotpath_v266.py \
             test_main_branch_protection_audit_v265.py \
-            test_sre_runtime_performance_v240.py
+            test_sre_runtime_performance_v240.py \
+            test_graded_photo_runtime.py \
+            test_pc_runtime_entrypoint_v264.py
       - name: Re-run delivery and tablet contracts
         run: |
           python test_runtime_delivery_guards.py
