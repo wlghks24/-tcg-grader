@@ -14,7 +14,7 @@ COLLECTION_JOBS = (
     ("프로모·콜라보 행사", "update_promo_events", "promo_events.json"),
     ("구매처·링크 보안 확인", "update_purchase_sources", "purchase_sources.json"),
     ("원화 환산 환율", "update_exchange_rates", "exchange_rates.json"),
-    ("등급업체 요금·서비스·이벤트", "grading_company_watch", "grading_company_updates.json"),
+    ("등급업체 요금·서비스·이벤트", "grading_company_watch_resilient", "grading_company_updates.json"),
     ("업체별 등급카드 사진 후보", "graded_photo_multi_source", "graded_photo_candidates.json"),
 )
 

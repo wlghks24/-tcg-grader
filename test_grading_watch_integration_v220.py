@@ -7,6 +7,7 @@ import unittest
 import auto_repair_engine
 import auto_update_all
 import grading_company_watch
+import grading_company_watch_resilient
 import tcg_updater
 import verified_collection_job_neural
 
@@ -57,7 +58,10 @@ class GradingWatchIntegrationV220Tests(unittest.TestCase):
     def test_mandatory_local_collection_contains_grading_watch_exactly_once(self):
         rows = [row for row in auto_update_all.JOBS if row[2] == "grading_company_updates.json"]
         self.assertEqual(1, len(rows))
-        self.assertEqual("grading_company_watch", rows[0][1])
+        # The resilient wrapper is now the one mandatory execution lane. It still
+        # delegates canonical parsing/last-good semantics to grading_company_watch.
+        self.assertEqual("grading_company_watch_resilient", rows[0][1])
+        self.assertIs(grading_company_watch_resilient.base, grading_company_watch)
         self.assertEqual(8, len(auto_update_all.JOBS))
         self.assertEqual(len(auto_update_all.JOBS), tcg_updater._full_update_job_count())
 

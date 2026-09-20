@@ -5,22 +5,32 @@ on:
     paths:
       - 'tablet_gdrive_sync.py'
       - 'tablet_gdrive_sync_hardening.py'
+      - 'tablet_gdrive_sync_hardening_contextual.py'
+      - 'tablet_gdrive_publish.py'
+      - 'tablet_collection_publish.py'
+      - 'collection_verification_gate_contextual.py'
       - 'TABLET_GDRIVE_SYNC.sh'
       - 'TABLET_GDRIVE_SYNC_INSTALL.sh'
       - 'TABLET_GDRIVE_SYNC_CONTRACT.json'
       - 'TABLET_GDRIVE_SYNC.md'
       - 'test_tablet_gdrive_sync.py'
+      - 'test_tablet_gdrive_publish_v257.py'
       - '.github/workflows/tablet-gdrive-sync-guard.yml'
   push:
     branches: [main]
     paths:
       - 'tablet_gdrive_sync.py'
       - 'tablet_gdrive_sync_hardening.py'
+      - 'tablet_gdrive_sync_hardening_contextual.py'
+      - 'tablet_gdrive_publish.py'
+      - 'tablet_collection_publish.py'
+      - 'collection_verification_gate_contextual.py'
       - 'TABLET_GDRIVE_SYNC.sh'
       - 'TABLET_GDRIVE_SYNC_INSTALL.sh'
       - 'TABLET_GDRIVE_SYNC_CONTRACT.json'
       - 'TABLET_GDRIVE_SYNC.md'
       - 'test_tablet_gdrive_sync.py'
+      - 'test_tablet_gdrive_publish_v257.py'
       - '.github/workflows/tablet-gdrive-sync-guard.yml'
 
 permissions:
@@ -37,9 +47,20 @@ jobs:
           python-version: '3.11'
       - name: Syntax
         run: |
-          python -m py_compile tablet_gdrive_sync.py tablet_gdrive_sync_hardening.py test_tablet_gdrive_sync.py
+          python -m py_compile \
+            tablet_gdrive_sync.py \
+            tablet_gdrive_sync_hardening.py \
+            tablet_gdrive_sync_hardening_contextual.py \
+            tablet_gdrive_publish.py \
+            tablet_collection_publish.py \
+            collection_verification_gate_contextual.py \
+            test_tablet_gdrive_sync.py \
+            test_tablet_gdrive_publish_v257.py
           bash -n TABLET_GDRIVE_SYNC.sh
           bash -n TABLET_GDRIVE_SYNC_INSTALL.sh
           python -m json.tool TABLET_GDRIVE_SYNC_CONTRACT.json >/dev/null
-      - name: Targeted sync tests
-        run: python -m unittest -v test_tablet_gdrive_sync.py
+      - name: Targeted sync and producer tests
+        run: |
+          python -m unittest -v \
+            test_tablet_gdrive_sync.py \
+            test_tablet_gdrive_publish_v257.py

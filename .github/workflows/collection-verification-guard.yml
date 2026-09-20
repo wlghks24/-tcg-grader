@@ -1,5 +1,5 @@
 name: Collection Verification Guard
-# v252 — grading-provider RCA diagnostics are part of the verified regression chain.
+# v257 — provider resilience + transaction-aware freshness stay in the verified regression chain.
 
 on:
   workflow_dispatch:
@@ -10,7 +10,9 @@ on:
       - 'collection_job_contract.py'
       - 'test_collection_job_contract_v255.py'
       - 'collection_verification_gate.py'
+      - 'collection_verification_gate_contextual.py'
       - 'test_collection_verification_gate.py'
+      - 'test_collection_verification_contextual_v257.py'
       - 'tcg_updater.py'
       - 'auto_update_all.py'
       - 'update_market_watch.py'
@@ -27,6 +29,7 @@ on:
       - 'update_purchase_sources.py'
       - 'update_exchange_rates.py'
       - 'grading_company_watch.py'
+      - 'grading_company_watch_resilient.py'
       - 'grading_company_health_diagnostics.py'
       - 'grading_company_updates.json'
       - 'graded_photo_multi_source.py'
@@ -45,6 +48,7 @@ on:
       - 'test_social_topic_capacity_v213.py'
       - 'test_information_lifecycle_archive_v209.py'
       - 'test_grading_company_watch_v215.py'
+      - 'test_grading_company_watch_resilient_v257.py'
       - 'test_grading_company_health_diagnostics_v252.py'
       - 'test_grading_watch_integration_v220.py'
       - 'test_verified_collection_job_neural_v212.py'
@@ -61,7 +65,9 @@ on:
       - 'collection_job_contract.py'
       - 'test_collection_job_contract_v255.py'
       - 'collection_verification_gate.py'
+      - 'collection_verification_gate_contextual.py'
       - 'test_collection_verification_gate.py'
+      - 'test_collection_verification_contextual_v257.py'
       - 'tcg_updater.py'
       - 'auto_update_all.py'
       - 'update_market_watch.py'
@@ -78,6 +84,7 @@ on:
       - 'update_purchase_sources.py'
       - 'update_exchange_rates.py'
       - 'grading_company_watch.py'
+      - 'grading_company_watch_resilient.py'
       - 'grading_company_health_diagnostics.py'
       - 'grading_company_updates.json'
       - 'graded_photo_multi_source.py'
@@ -96,6 +103,7 @@ on:
       - 'test_social_topic_capacity_v213.py'
       - 'test_information_lifecycle_archive_v209.py'
       - 'test_grading_company_watch_v215.py'
+      - 'test_grading_company_watch_resilient_v257.py'
       - 'test_grading_company_health_diagnostics_v252.py'
       - 'test_grading_watch_integration_v220.py'
       - 'test_verified_collection_job_neural_v212.py'
@@ -134,22 +142,24 @@ jobs:
       - name: Static and regression verification
         run: |
           python -m py_compile \
-            safe_runtime.py test_safe_runtime_redirect_diagnostics_v253.py collection_job_contract.py test_collection_job_contract_v255.py collection_verification_gate.py static_data_publish_gate.py feature_contract.py \
+            safe_runtime.py test_safe_runtime_redirect_diagnostics_v253.py collection_job_contract.py test_collection_job_contract_v255.py \
+            collection_verification_gate.py collection_verification_gate_contextual.py static_data_publish_gate.py feature_contract.py \
             update_market_watch.py update_market_prices.py market_public_crosscheck.py release_history_backfill.py \
             update_purchase_sources.py update_exchange_rates.py \
-            grading_company_watch.py grading_company_health_diagnostics.py graded_photo_multi_source.py verified_collection_job_neural.py \
+            grading_company_watch.py grading_company_watch_resilient.py grading_company_health_diagnostics.py graded_photo_multi_source.py verified_collection_job_neural.py \
             validate_external_links.py \
-            test_collection_verification_gate.py test_static_data_publish_gate.py \
+            test_collection_verification_gate.py test_collection_verification_contextual_v257.py test_static_data_publish_gate.py \
             test_market_public_crosscheck_resilience_v228.py test_market_public_crosscheck_performance_v251.py \
             test_collection_restored_state_guard_v229.py test_release_history_cumulative_coverage_v229.py \
             test_collection_scope_compat_v214.py test_social_event_topic_coverage.py \
             test_social_topic_capacity_v213.py test_information_lifecycle_archive_v209.py \
-            test_grading_company_watch_v215.py test_grading_company_health_diagnostics_v252.py test_grading_watch_integration_v220.py \
+            test_grading_company_watch_v215.py test_grading_company_watch_resilient_v257.py test_grading_company_health_diagnostics_v252.py test_grading_watch_integration_v220.py \
             test_verified_collection_job_neural_v212.py
           python -m unittest -v \
             test_safe_runtime_redirect_diagnostics_v253.py \
             test_collection_job_contract_v255.py \
             test_collection_verification_gate.py \
+            test_collection_verification_contextual_v257.py \
             test_static_data_publish_gate.py \
             test_market_public_crosscheck_resilience_v228.py \
             test_market_public_crosscheck_performance_v251.py \
@@ -160,6 +170,7 @@ jobs:
             test_social_topic_capacity_v213.py \
             test_information_lifecycle_archive_v209.py \
             test_grading_company_watch_v215.py \
+            test_grading_company_watch_resilient_v257.py \
             test_grading_company_health_diagnostics_v252.py \
             test_grading_watch_integration_v220.py \
             test_verified_collection_job_neural_v212.py
@@ -184,7 +195,9 @@ jobs:
           # Critical correctness/safety failures still return non-zero. A provider
           # degradation remains explicit in the report but is isolated from code-health
           # status so a third-party outage cannot keep main permanently red.
-          python collection_verification_gate.py \
+          # The contextual layer never widens the 900s threshold: it can downgrade only
+          # a health-age finding proven to belong to this exact bounded collection run.
+          python collection_verification_gate_contextual.py \
             --max-health-age-seconds 900 \
             --report COLLECTION_VERIFICATION_REPORT.json
 
@@ -243,7 +256,11 @@ jobs:
           metrics = report.get('metrics') or {}
           if metrics.get('mandatory_outputs_expected') != 8:
               raise SystemExit(f'unexpected mandatory collector count: {metrics.get("mandatory_outputs_expected")}')
-          print(json.dumps({'status': report.get('status'), 'counts': report.get('counts'), 'metrics': metrics}, ensure_ascii=False))
+          contextual = report.get('contextual_freshness') or {}
+          if contextual.get('threshold_widened') is not False:
+              raise SystemExit('contextual freshness must never widen the point-in-time threshold')
+          print(json.dumps({'status': report.get('status'), 'counts': report.get('counts'), 'metrics': metrics,
+                            'contextual_freshness': contextual}, ensure_ascii=False))
           PY
 
       - name: Upload collection verification reports

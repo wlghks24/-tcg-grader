@@ -1,5 +1,5 @@
 name: Grading Company Watch
-# v252: provider RCA diagnostics classify blocked/redirect/parser/transient failures without weakening trust.
+# v257: maintenance-aware official-source recovery keeps pricing fail-closed while preserving provider observability.
 
 on:
   workflow_dispatch:
@@ -11,10 +11,12 @@ on:
       - 'safe_runtime.py'
       - 'test_safe_runtime_redirect_diagnostics_v253.py'
       - 'grading_company_watch.py'
+      - 'grading_company_watch_resilient.py'
       - 'grading_company_health_diagnostics.py'
       - 'grading_costs_live.py'
       - 'grading_costs_live.js'
       - 'test_grading_company_watch_v215.py'
+      - 'test_grading_company_watch_resilient_v257.py'
       - 'test_grading_company_health_diagnostics_v252.py'
       - 'test_grading_costs_live.py'
       - '.github/workflows/grading-company-watch.yml'
@@ -46,16 +48,17 @@ jobs:
 
       - name: Verify watcher, diagnostics and live-cost contracts
         run: |
-          python -m py_compile safe_runtime.py test_safe_runtime_redirect_diagnostics_v253.py grading_company_watch.py grading_company_health_diagnostics.py grading_costs_live.py
+          python -m py_compile safe_runtime.py test_safe_runtime_redirect_diagnostics_v253.py grading_company_watch.py grading_company_watch_resilient.py grading_company_health_diagnostics.py grading_costs_live.py
           python -m unittest -v \
             test_safe_runtime_redirect_diagnostics_v253.py \
             test_grading_company_watch_v215.py \
+            test_grading_company_watch_resilient_v257.py \
             test_grading_company_health_diagnostics_v252.py \
             test_grading_costs_live.py
           node --check grading_costs_live.js
 
       - name: Collect official grading company changes
-        run: python grading_company_watch.py
+        run: python grading_company_watch_resilient.py
 
       - name: Build provider RCA diagnostics
         id: diagnostics
@@ -95,11 +98,19 @@ jobs:
           assert set(data.get('companies',{}))=={'PSA','BGS','CGC','TAG','BRG'}
           assert int(data.get('summary',{}).get('sources',0))>=10
           assert int(data.get('summary',{}).get('healthy_sources',0))>=1
-          for source in data.get('sources',{}).values():
+          for source_id,source in data.get('sources',{}).items():
               url=source.get('url','')
               parts=urlsplit(url)
               assert parts.scheme=='https'
               assert (parts.hostname or '').lower() in w.ALLOWED_HOSTS
+              if source_id == 'bgs-maintenance-status':
+                  assert source.get('kind') == 'status'
+                  assert source.get('services') == []
+                  assert source.get('fact_scope') == 'service_availability_status_only_no_price_promotion'
+          resilience=data.get('resilience') or {}
+          maintenance=resilience.get('bgs_maintenance_status') or {}
+          if maintenance.get('ok') is True:
+              assert maintenance.get('price_facts_promoted') is False
           for row in data.get('recent_changes',[]):
               assert row.get('verified_official_source') is True
           print(json.dumps(data.get('summary',{}),ensure_ascii=False,indent=2))
@@ -155,6 +166,7 @@ jobs:
             echo '- cadence: every 3 hours + manual + relevant source pushes'
             echo '- tracked: fee, service level, turnaround, availability, official event/news'
             echo '- trust: official HTTPS sources only; community/Instagram are leads only'
+            echo '- maintenance policy: canonical Beckett redirect may prove status only; it never promotes price facts'
             echo '- failure policy: preserve last-good structured facts; expose degraded source health'
             echo '- RCA classes: blocked / rate-limit / transient / unapproved redirect / maintenance redirect / parser-change-suspected / unresolved'
             echo "- snapshot changed: ${{ steps.stage.outputs.changed || 'not-reached' }}"

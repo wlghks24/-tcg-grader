@@ -19,11 +19,13 @@ if command -v termux-wake-lock >/dev/null 2>&1; then
   fi
 fi
 
-if [ ! -s "tablet_gdrive_sync_hardening.py" ]; then
-  echo "[HOLD] tablet_gdrive_sync_hardening.py가 없습니다. 최신 main으로 갱신하세요." >&2
+if [ ! -s "tablet_gdrive_sync_hardening_contextual.py" ]; then
+  echo "[HOLD] contextual Drive sync runtime이 없습니다. 최신 main으로 갱신하세요." >&2
   exit 2
 fi
 
-python tablet_gdrive_sync_hardening.py "$@"
+# tablet_gdrive_sync_hardening_contextual.py extends tablet_gdrive_sync_hardening.py;
+# backup hashing, inflight recovery, launcher-PID checks and receipt semantics stay unchanged.
+python tablet_gdrive_sync_hardening_contextual.py "$@"
 rc=$?
 exit "$rc"
