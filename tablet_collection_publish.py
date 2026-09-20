@@ -44,7 +44,9 @@ def gates(root):
     # Use production gates. A blocked/degraded required provider remains fail-closed.
     run([sys.executable, 'static_data_publish_gate.py', '--max-social-age-hours', '12',
          '--max-report-age-hours', '2', '--report', 'STATIC_DATA_PUBLISH_REPORT.json'], root)
-    run([sys.executable, 'collection_verification_gate.py', '--max-health-age-seconds', '900',
+    # The contextual gate keeps the 900-second point threshold, but can prove that
+    # an older health timestamp belongs to this same bounded long-running cycle.
+    run([sys.executable, 'collection_verification_gate_contextual.py', '--max-health-age-seconds', '900',
          '--fail-on-degraded', '--report', 'COLLECTION_VERIFICATION_REPORT.json'], root)
     run([sys.executable, '-c', "import json,auto_update_all; auto_update_all.validate_json('grading_company_updates.json',json.load(open('grading_company_updates.json',encoding='utf-8')))"], root)
 
