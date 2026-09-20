@@ -8,10 +8,10 @@ case "$cmd" in
     exec bash ANDROID_UPDATE_AND_START.sh
     ;;
   collect)
-    exec python tablet_collection_publish_contextual.py
+    exec python tablet_collection_publish.py
     ;;
   publish|send)
-    exec python tablet_collection_publish_contextual.py --publish
+    exec python tablet_collection_publish.py --publish
     ;;
   verify)
     exec bash VERIFY_TABLET_FINAL.sh
@@ -38,7 +38,7 @@ case "$cmd" in
     cat <<'EOF'
 태블릿 Termux 통합 실행
   bash main            최신 main 안전검증/업데이트 후 서버 시작
-  bash main collect    공개 TCG 자료 8단계 수집 + 거래단위 최신성 검증(업로드 없음)
+  bash main collect    공개 TCG 자료 8단계 수집 + 로컬 검증(업로드 없음)
   bash main publish    최신 main에서만 수집/검증 후 자료 PR 생성
   bash main verify     현재 태블릿 빌드 최종 검증
   bash main quality    전문가 1000관점 품질정책(25×40) 로컬 검증
