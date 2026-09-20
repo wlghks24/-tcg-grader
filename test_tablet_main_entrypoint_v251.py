@@ -25,8 +25,8 @@ class TabletMainEntrypointTests(unittest.TestCase):
     def test_contextual_wrapper_preserves_fail_closed_publisher_and_same_cycle_freshness(self):
         self.assertIn('import tablet_collection_publish as core', self.contextual)
         self.assertIn('collection_verification_gate_contextual.py', self.contextual)
-        self.assertIn("'--max-health-age-seconds', '900'", self.contextual)
-        self.assertIn("'--fail-on-degraded'", self.contextual)
+        self.assertIn('"--max-health-age-seconds", "900"', self.contextual)
+        self.assertIn('"--fail-on-degraded"', self.contextual)
         self.assertIn('core.gates = gates', self.contextual)
         self.assertIn('return core.main()', self.contextual)
 
