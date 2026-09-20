@@ -11,7 +11,8 @@
     "Exhaustive SELFREFINE Guard",
     "Final Tablet Guard",
     "Runtime delivery guard",
-    "PC Runtime Entrypoint Guard"
+    "PC Runtime Entrypoint Guard",
+    "Runtime Device Benchmark Guard"
   ],
   "note": "Repository administration permission is required to enforce this contract in GitHub settings. The audit workflow verifies whether main is protected and reports drift."
 }
