@@ -1,0 +1,50 @@
+name: One-shot AI score freshness v270
+
+on:
+  push:
+    branches: [fix/ai-score-freshness-v270]
+    paths:
+      - 'apply_ai_score_freshness_v270.py'
+      - '.github/workflows/one-shot-ai-score-freshness-v270.yml'
+
+permissions:
+  contents: write
+
+concurrency:
+  group: one-shot-ai-score-freshness-v270
+  cancel-in-progress: false
+
+jobs:
+  apply-and-verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          ref: fix/ai-score-freshness-v270
+          fetch-depth: 0
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97
+        with:
+          python-version: '3.12'
+      - name: Apply exact bounded patch
+        run: python apply_ai_score_freshness_v270.py
+      - name: Compile touched runtime
+        run: python -m py_compile verified_collection_neural.py verified_collection_job_neural.py verify_current_runtime.py test_ai_score_freshness_v270.py
+      - name: Run neural regressions
+        run: |
+          python -m unittest -v test_ai_score_freshness_v270.py
+          python -m unittest -v test_verified_collection_neural_v211.py
+          python -m unittest -v test_verified_collection_job_neural_v212.py
+          python ai_runtime_model_guard.py
+          python tablet_runtime_manifest.py --check --compile
+      - name: Remove one-shot patch machinery
+        run: rm -f apply_ai_score_freshness_v270.py .github/workflows/one-shot-ai-score-freshness-v270.yml
+      - name: Commit verified result to branch
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add -A
+          git diff --cached --check
+          if ! git diff --cached --quiet; then
+            git commit -m 'fix: enforce AI score freshness and cache validated models'
+            git push origin HEAD:fix/ai-score-freshness-v270
+          fi
