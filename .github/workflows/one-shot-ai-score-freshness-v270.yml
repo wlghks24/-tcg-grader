@@ -61,7 +61,7 @@ jobs:
               'job strict runtime gate')
           j.write_text(text, encoding='utf-8')
           PY
-      - name: Normalize generated test source
+      - name: Normalize generated tests and current valid-model fixture
         run: |
           python - <<'PY'
           from pathlib import Path
@@ -74,9 +74,18 @@ jobs:
           text = text.replace('+ "\nchanged-signature", encoding=', '+ "\\nchanged-signature", encoding=')
           text = text.replace('self.assertEqual("model_inactive", low_labels["reason"])', 'self.assertEqual("label_count_below_activation_gate", low_labels["reason"])')
           path.write_text(text, encoding='utf-8')
+
+          legacy = Path('test_verified_collection_neural_v211.py')
+          old = legacy.read_text(encoding='utf-8')
+          marker = '                "metrics": {"accuracy": 0.7, "logloss": 0.5},\n                "safety": neural.SAFETY,\n'
+          replacement = '                "metrics": {"accuracy": 0.7, "logloss": 0.5},\n                "protocol_version": neural.PROTOCOL_VERSION,\n                "safety": neural.SAFETY,\n'
+          matches = old.count(marker)
+          if matches < 2:
+              raise SystemExit(f'legacy valid-model fixture: expected >=2 matches, got {matches}')
+          legacy.write_text(old.replace(marker, replacement), encoding='utf-8')
           PY
       - name: Compile touched runtime
-        run: python -m py_compile verified_collection_neural.py verified_collection_job_neural.py verify_current_runtime.py test_ai_score_freshness_v270.py
+        run: python -m py_compile verified_collection_neural.py verified_collection_job_neural.py verify_current_runtime.py test_ai_score_freshness_v270.py test_verified_collection_neural_v211.py
       - name: Run neural regressions
         run: |
           python -m unittest -v test_ai_score_freshness_v270.py
