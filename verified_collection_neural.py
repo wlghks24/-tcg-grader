@@ -24,7 +24,8 @@ import hashlib
 import json
 import math
 import random
-from datetime import datetime, timezone
+import threading
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from typing import Any, Iterable
 
@@ -53,6 +54,8 @@ L2 = 0.0005
 RETRAIN_LABEL_DELTA = 100
 ACTIVATION_MIN_ACCURACY = 0.60
 ACTIVATION_MIN_LOGLOSS_GAIN = 0.01
+MAX_RUNTIME_MODEL_AGE_SECONDS = 30 * 24 * 60 * 60
+RUNTIME_FUTURE_CLOCK_TOLERANCE_SECONDS = 5 * 60
 
 GAMES = ("포켓몬", "원피스", "나루토")
 REGIONS = ("KR", "JP", "US", "ASIA")
@@ -83,6 +86,8 @@ SAFETY = {
     "git_write": False,
     "neural_output_is_priority_only": True,
     "reserved_exploration_slots_unchanged": True,
+    "runtime_stale_model_priority_allowed": False,
+    "runtime_future_model_priority_allowed": False,
 }
 
 FEATURE_SCHEMA = {
@@ -104,6 +109,10 @@ FEATURE_FINGERPRINT = hashlib.sha256(
     json.dumps(FEATURE_SCHEMA, ensure_ascii=False, sort_keys=True, separators=(",", ":")).encode("utf-8")
 ).hexdigest()[:24]
 FEATURE_COUNT = len(GAMES) + len(REGIONS) + len(FAMILIES) + len(FEATURE_SCHEMA["numeric"])
+
+_MODEL_CACHE_LOCK = threading.Lock()
+_MODEL_CACHE_KEY: tuple[Any, ...] | None = None
+_MODEL_CACHE_RESULT: tuple[dict[str, Any] | None, str, bool] | None = None
 
 
 def _now() -> str:
@@ -608,8 +617,49 @@ def _validate_model_payload(raw: object, *, require_active: bool = True) -> bool
     return True
 
 
+def _model_file_signature(path: Path) -> tuple[str, int, int, int, bool]:
+    try:
+        stat = path.stat()
+        return (
+            str(path),
+            int(stat.st_mtime_ns),
+            int(getattr(stat, "st_ctime_ns", 0)),
+            int(stat.st_size),
+            path.is_file() and not path.is_symlink(),
+        )
+    except OSError:
+        return (str(path), -1, -1, -1, False)
+
+
+def _runtime_model_reason(model: dict[str, Any], *, now: datetime | None = None) -> str | None:
+    if int(model.get("protocol_version") or 0) != PROTOCOL_VERSION:
+        return "protocol_version_mismatch"
+    if int(model.get("label_count") or 0) < MIN_INDEPENDENT_LABELS:
+        return "label_count_below_activation_gate"
+    text = str(model.get("trained_at") or "").strip()
+    try:
+        trained = datetime.fromisoformat(text.replace("Z", "+00:00"))
+    except (TypeError, ValueError, OverflowError):
+        return "trained_at_invalid"
+    if trained.tzinfo is None:
+        trained = trained.replace(tzinfo=timezone.utc)
+    trained = trained.astimezone(timezone.utc)
+    moment = (now or datetime.now(timezone.utc)).astimezone(timezone.utc)
+    if trained > moment + timedelta(seconds=RUNTIME_FUTURE_CLOCK_TOLERANCE_SECONDS):
+        return "trained_at_in_future"
+    if (moment - trained).total_seconds() > MAX_RUNTIME_MODEL_AGE_SECONDS:
+        return "active_model_stale"
+    return None
+
+
 def _load_model_with_source(path: Path = MODEL_PATH) -> tuple[dict[str, Any] | None, str, bool]:
+    global _MODEL_CACHE_KEY, _MODEL_CACHE_RESULT
     backup = _backup_path(path, MODEL_PATH, MODEL_BACKUP_PATH)
+    cache_key = (_model_file_signature(path), _model_file_signature(backup))
+    with _MODEL_CACHE_LOCK:
+        if cache_key == _MODEL_CACHE_KEY and _MODEL_CACHE_RESULT is not None:
+            return _MODEL_CACHE_RESULT
+
     primary_raw = _load_json(path, {})
     if (
         isinstance(primary_raw, dict)
@@ -617,13 +667,17 @@ def _load_model_with_source(path: Path = MODEL_PATH) -> tuple[dict[str, Any] | N
         and primary_raw.get("feature_fingerprint") == FEATURE_FINGERPRINT
         and primary_raw.get("active") is False
     ):
-        return None, "disabled", False
-    if _validate_model_payload(primary_raw):
-        return primary_raw, "primary", False
-    backup_raw = _load_json(backup, {})
-    if _validate_model_payload(backup_raw):
-        return backup_raw, "backup", True
-    return None, "none", False
+        result = (None, "disabled", False)
+    elif _validate_model_payload(primary_raw):
+        result = (primary_raw, "primary", False)
+    else:
+        backup_raw = _load_json(backup, {})
+        result = (backup_raw, "backup", True) if _validate_model_payload(backup_raw) else (None, "none", False)
+
+    with _MODEL_CACHE_LOCK:
+        _MODEL_CACHE_KEY = cache_key
+        _MODEL_CACHE_RESULT = result
+    return result
 
 
 def _load_model(path: Path = MODEL_PATH) -> dict[str, Any] | None:
@@ -847,6 +901,7 @@ def score_query(
     row: dict[str, Any],
     *,
     model_path: Path = MODEL_PATH,
+    now: datetime | None = None,
 ) -> dict[str, Any]:
     model = _load_model(model_path)
     if model is None:
@@ -854,6 +909,14 @@ def score_query(
             "active": False,
             "score": 0.5,
             "reason": "model_inactive",
+            "neural_output_is_priority_only": True,
+        }
+    runtime_reason = _runtime_model_reason(model, now=now)
+    if runtime_reason is not None:
+        return {
+            "active": False,
+            "score": 0.5,
+            "reason": runtime_reason,
             "neural_output_is_priority_only": True,
         }
     probability = _calibrated_probability(model, feature_vector(row))
@@ -873,12 +936,14 @@ def status(
     label_payload, label_source, label_recovered = _load_labels_with_source(labels_path)
     labels = label_payload["labels"]
     model, model_source, model_recovered = _load_model_with_source(model_path)
+    runtime_reason = _runtime_model_reason(model) if model is not None else None
+    runtime_active = model is not None and runtime_reason is None
     positives = sum(bool(row["outcome"]) for row in labels)
     negatives = len(labels) - positives
     return {
         "ok": True,
-        "active": model is not None,
-        "reason": "active" if model is not None else ("model_disabled" if model_source == "disabled" else "model_inactive"),
+        "active": runtime_active,
+        "reason": "active" if runtime_active else (runtime_reason or ("model_disabled" if model_source == "disabled" else "model_inactive")),
         "label_count": len(labels),
         "positive_labels": positives,
         "negative_labels": negatives,
@@ -895,6 +960,8 @@ def status(
         "model_recovered_from_backup": model_recovered,
         "selected_hidden": model.get("hidden") if model else None,
         "selected_metrics": model.get("metrics") if model else None,
+        "runtime_score_active": runtime_active,
+        "runtime_score_reason": runtime_reason,
         "scope": "adaptive_public_search_priority_only",
         "deterministic_collectors": [
             "official_release_fetch",

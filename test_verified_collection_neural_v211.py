@@ -298,6 +298,7 @@ class VerifiedCollectionNeuralV211Tests(unittest.TestCase):
                 "w2": base["w2"],
                 "b2": base["b2"],
                 "metrics": {"accuracy": 0.7, "logloss": 0.5},
+                "protocol_version": neural.PROTOCOL_VERSION,
                 "safety": neural.SAFETY,
             }
             backup_path.write_text(json.dumps(payload), encoding="utf-8")
@@ -370,6 +371,7 @@ class VerifiedCollectionNeuralV211Tests(unittest.TestCase):
                 "w2": base["w2"],
                 "b2": base["b2"],
                 "metrics": {"accuracy": 0.7, "logloss": 0.5},
+                "protocol_version": neural.PROTOCOL_VERSION,
                 "safety": neural.SAFETY,
             }
             model_path.write_text(json.dumps(existing), encoding="utf-8")
