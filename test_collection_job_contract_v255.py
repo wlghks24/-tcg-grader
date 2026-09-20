@@ -39,6 +39,12 @@ class CollectionJobContractV255Tests(unittest.TestCase):
         self.assertIn("collection_job_contract.py", tablet_manifest.ACTIVE_RUNTIME_FILES)
         self.assertEqual(bundle_guard.EXPECTED_JOB_FILES, set(contract.MANDATORY_OUTPUTS))
 
+    def test_every_collection_module_is_present_in_tablet_runtime_manifest(self):
+        active = set(tablet_manifest.ACTIVE_RUNTIME_FILES)
+        missing = [f"{module}.py" for _label, module, _output in contract.COLLECTION_JOBS
+                   if f"{module}.py" not in active]
+        self.assertFalse(missing, f"mandatory collection runtime files missing from tablet manifest: {missing}")
+
     def test_feature_contract_uses_current_eight_stage_name(self):
         source = (ROOT / "feature_contract.py").read_text(encoding="utf-8")
         self.assertIn('add("eight_collection_jobs"', source)
