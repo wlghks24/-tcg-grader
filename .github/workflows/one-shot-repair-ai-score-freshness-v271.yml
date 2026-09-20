@@ -1,0 +1,50 @@
+name: One-shot repair AI score freshness v271
+
+on:
+  push:
+    branches: [fix/repair-ai-score-freshness-v271]
+    paths:
+      - 'apply_repair_ai_score_freshness_v271.py'
+      - '.github/workflows/one-shot-repair-ai-score-freshness-v271.yml'
+
+permissions:
+  contents: write
+
+concurrency:
+  group: one-shot-repair-ai-score-freshness-v271
+  cancel-in-progress: false
+
+jobs:
+  apply-and-verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          ref: fix/repair-ai-score-freshness-v271
+          fetch-depth: 0
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97
+        with:
+          python-version: '3.12'
+      - name: Apply exact bounded patch
+        run: python apply_repair_ai_score_freshness_v271.py
+      - name: Compile touched runtime
+        run: python -m py_compile verified_neural_self_refine.py verify_current_runtime.py test_repair_ai_score_freshness_v271.py
+      - name: Run repair AI regressions
+        run: |
+          python -m unittest -v test_repair_ai_score_freshness_v271.py
+          python -m unittest -v test_verified_neural_self_refine_v210.py
+          python verified_neural_self_refine.py --self-test
+          python verified_code_repair_rules.py --self-test
+          python repository_integrity_guard.py
+      - name: Remove one-shot patch machinery
+        run: rm -f apply_repair_ai_score_freshness_v271.py .github/workflows/one-shot-repair-ai-score-freshness-v271.yml
+      - name: Commit verified result to branch
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add -A
+          git diff --cached --check
+          if ! git diff --cached --quiet; then
+            git commit -m 'fix: enforce repair AI score freshness and cache model'
+            git push origin HEAD:fix/repair-ai-score-freshness-v271
+          fi
