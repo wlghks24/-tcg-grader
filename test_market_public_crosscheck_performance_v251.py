@@ -1,12 +1,15 @@
 import os
 import tempfile
 import threading
+import time
 import unittest
 import urllib.parse
+from collections import Counter, defaultdict
 from pathlib import Path
 from unittest import mock
 
 import market_public_crosscheck as crosscheck
+import update_market_prices_parallel_v260 as market_prefetch
 
 
 class MarketPublicCrosscheckPerformanceV251Tests(unittest.TestCase):
@@ -161,6 +164,68 @@ class MarketPublicCrosscheckPerformanceV251Tests(unittest.TestCase):
         self.assertEqual(result['deferred'],2)
         self.assertTrue(result['budget_exhausted'])
         self.assertEqual(result['budget_seconds'],15)
+
+
+class MarketFixedSourcePrefetchV260Tests(unittest.TestCase):
+    def test_cross_host_overlap_never_overlaps_same_host(self):
+        lock=threading.Lock()
+        active=defaultdict(int); max_active=defaultdict(int)
+        total=0; max_total=0
+
+        def fetcher(url):
+            nonlocal total,max_total
+            host=urllib.parse.urlparse(url).netloc
+            with lock:
+                active[host]+=1
+                max_active[host]=max(max_active[host],active[host])
+                total+=1;max_total=max(max_total,total)
+            try:
+                time.sleep(.025)
+                return f'body:{url}'
+            finally:
+                with lock:
+                    active[host]-=1;total-=1
+
+        cache,stats=market_prefetch.prefetch(fetcher=fetcher,max_workers=4)
+        self.assertEqual(len(cache),len(market_prefetch.FIXED_URLS))
+        self.assertEqual(stats['network_calls'],len(market_prefetch.FIXED_URLS))
+        self.assertGreaterEqual(max_total,2)
+        self.assertTrue(all(value==1 for value in max_active.values()))
+        self.assertEqual(stats['same_host_parallelism'],1)
+
+    def test_fixed_urls_are_fetched_once_then_reused_by_canonical_collector(self):
+        calls=Counter()
+
+        def fetcher(url):
+            calls[url]+=1
+            return f'payload:{url}'
+
+        def canonical_main():
+            for url in market_prefetch.FIXED_URLS:
+                self.assertEqual(market_prefetch.base.fetch(url),f'payload:{url}')
+            return {'entries':{}}
+
+        with mock.patch.object(market_prefetch.base,'fetch',side_effect=fetcher), \
+             mock.patch.object(market_prefetch.base,'main',side_effect=canonical_main), \
+             mock.patch.object(market_prefetch.base,'atomic_save'):
+            db=market_prefetch.run()
+
+        self.assertEqual(sum(calls.values()),len(market_prefetch.FIXED_URLS))
+        self.assertTrue(all(count==1 for count in calls.values()))
+        perf=db['market_collection_performance']
+        self.assertEqual(perf['cache_hits'],len(market_prefetch.FIXED_URLS))
+        self.assertEqual(perf['duplicate_network_requests_added'],0)
+        self.assertEqual(perf['same_host_parallelism'],1)
+
+    def test_failed_prefetch_preserves_exception_evidence(self):
+        broken=market_prefetch.FIXED_URLS[0]
+        def fetcher(url):
+            if url==broken: raise TimeoutError('provider timeout')
+            return 'ok'
+        cache,_=market_prefetch.prefetch(fetcher=fetcher,max_workers=4)
+        self.assertFalse(cache[broken]['ok'])
+        self.assertIsInstance(cache[broken]['error'],TimeoutError)
+        self.assertIsNone(cache[broken]['payload'])
 
 
 if __name__=='__main__':
