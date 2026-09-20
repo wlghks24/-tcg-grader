@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "checked_at": "2026-09-20T01:11:20+00:00",
+  "checked_at": "2026-09-20T03:34:23+00:00",
   "policy": {
     "official_sources_only": true,
     "community_posts_are_leads_only": true,
@@ -18,8 +18,8 @@
   "summary": {
     "companies": 5,
     "sources": 12,
-    "healthy_sources": 6,
-    "degraded_sources": 6,
+    "healthy_sources": 4,
+    "degraded_sources": 8,
     "new_changes": 0
   },
   "companies": {
@@ -148,13 +148,15 @@
         },
         {
           "source_id": "cgc-events",
-          "status": "ok",
-          "url": "https://www.cgccards.com/submit/events/"
+          "status": "degraded",
+          "url": "https://www.cgccards.com/submit/events/",
+          "error": "TimeoutError: The read operation timed out"
         },
         {
           "source_id": "cgc-news",
-          "status": "ok",
-          "url": "https://www.cgccards.com/news/"
+          "status": "degraded",
+          "url": "https://www.cgccards.com/news/",
+          "error": "TimeoutError: The read operation timed out"
         }
       ]
     },
@@ -256,7 +258,7 @@
       "services": [],
       "announcements": [],
       "status": "degraded",
-      "checked_at": "2026-09-20T01:11:20+00:00",
+      "checked_at": "2026-09-20T03:34:23+00:00",
       "last_error": "HTTPError: status 403",
       "verified_official_source": false
     },
@@ -270,7 +272,7 @@
       "services": [],
       "announcements": [],
       "status": "degraded",
-      "checked_at": "2026-09-20T01:11:20+00:00",
+      "checked_at": "2026-09-20T03:34:23+00:00",
       "last_error": "HTTPError: status 403",
       "verified_official_source": false
     },
@@ -284,7 +286,7 @@
       "services": [],
       "announcements": [],
       "status": "degraded",
-      "checked_at": "2026-09-20T01:11:20+00:00",
+      "checked_at": "2026-09-20T03:34:23+00:00",
       "last_error": "HTTPError: status 403",
       "verified_official_source": false
     },
@@ -298,7 +300,7 @@
       "services": [],
       "announcements": [],
       "status": "degraded",
-      "checked_at": "2026-09-20T01:11:20+00:00",
+      "checked_at": "2026-09-20T03:34:23+00:00",
       "last_error": "BeckettMaintenanceRedirect: canonical Beckett source temporarily redirected to maintenance.beckett.com",
       "verified_official_source": false,
       "failure_class": "planned_maintenance"
@@ -313,7 +315,7 @@
       "services": [],
       "announcements": [],
       "status": "degraded",
-      "checked_at": "2026-09-20T01:11:20+00:00",
+      "checked_at": "2026-09-20T03:34:23+00:00",
       "last_error": "BeckettMaintenanceRedirect: canonical Beckett source temporarily redirected to maintenance.beckett.com",
       "verified_official_source": false,
       "failure_class": "planned_maintenance"
@@ -326,7 +328,7 @@
       "currency": "USD",
       "url": "https://www.cgccards.com/submit/services-fees/cgc-grading/?view=cards",
       "status": "ok",
-      "checked_at": "2026-09-20T01:11:20+00:00",
+      "checked_at": "2026-09-20T03:34:23+00:00",
       "signal_fingerprint": "06b8289033083f680c2c00bfe7513d8f4e1336ec62167ec60c828a4a713cac4a",
       "services": [
         {
@@ -401,8 +403,8 @@
       "market": "GLOBAL",
       "currency": "USD",
       "url": "https://www.cgccards.com/submit/events/",
-      "status": "ok",
-      "checked_at": "2026-09-20T01:11:20+00:00",
+      "status": "degraded",
+      "checked_at": "2026-09-20T03:34:23+00:00",
       "signal_fingerprint": "a7e4a8eeedae59acddd83d607c57bdb46b352fa3c4bde4e889317352666d4f33",
       "services": [],
       "announcements": [
@@ -464,7 +466,8 @@
         }
       ],
       "verified_official_source": true,
-      "parser_version": 2
+      "parser_version": 2,
+      "last_error": "TimeoutError: The read operation timed out"
     },
     "cgc-news": {
       "company": "CGC",
@@ -473,8 +476,8 @@
       "market": "GLOBAL",
       "currency": "USD",
       "url": "https://www.cgccards.com/news/",
-      "status": "ok",
-      "checked_at": "2026-09-20T01:11:20+00:00",
+      "status": "degraded",
+      "checked_at": "2026-09-20T03:34:23+00:00",
       "signal_fingerprint": "ab793ace2efa70dbf6b47cadeb4f03c2502a63af3997acc982d98310bec3014d",
       "services": [],
       "announcements": [
@@ -536,7 +539,8 @@
         }
       ],
       "verified_official_source": true,
-      "parser_version": 2
+      "parser_version": 2,
+      "last_error": "TimeoutError: The read operation timed out"
     },
     "tag-pricing": {
       "company": "TAG",
@@ -546,7 +550,7 @@
       "currency": "USD",
       "url": "https://taggrading.com/pages/pricing",
       "status": "degraded",
-      "checked_at": "2026-09-20T01:11:20+00:00",
+      "checked_at": "2026-09-20T03:34:23+00:00",
       "signal_fingerprint": "0e9f55411a94d2016974a85632d9fa32e343c02e94c65a3a1f347a2615dc4c82",
       "services": [],
       "announcements": [],
@@ -562,7 +566,7 @@
       "currency": "USD",
       "url": "https://taggrading.com/",
       "status": "ok",
-      "checked_at": "2026-09-20T01:11:20+00:00",
+      "checked_at": "2026-09-20T03:34:23+00:00",
       "signal_fingerprint": "c1c821f768e541f0dbe54c4fc71e24dfbd144f5114593fd44abe09a4dd13ef92",
       "services": [],
       "announcements": [
@@ -683,7 +687,7 @@
       "currency": "KRW",
       "url": "https://break.co.kr/",
       "status": "ok",
-      "checked_at": "2026-09-20T01:11:20+00:00",
+      "checked_at": "2026-09-20T03:34:23+00:00",
       "signal_fingerprint": "a4b3f397492317435fdf3b29d0a799fc47c5cc679cf36d24d983c7c80facb2e7",
       "services": [
         {
@@ -760,7 +764,7 @@
       "url": "https://www.beckett.com/grading",
       "effective_url": "https://maintenance.beckett.com/",
       "status": "ok",
-      "checked_at": "2026-09-20T01:11:24+00:00",
+      "checked_at": "2026-09-20T03:35:17+00:00",
       "signal_fingerprint": "5d52605c2f07e5542610544b5c323c9e1a0c6f95bf08a593ecd893591306a40f",
       "services": [],
       "announcements": [],
