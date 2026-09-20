@@ -12,7 +12,7 @@ ACTIVE_RUNTIME_FILES=(
 "update_market_watch.py","update_market_prices.py","update_market_prices_parallel_v260.py","update_promo_events.py","update_purchase_sources.py",
 "update_exchange_rates.py","grading_company_watch.py","grading_company_watch_resilient.py","graded_photo_multi_source.py","graded_photo_manual_pair_queue.py",
 "collection_verification_gate.py","collection_verification_gate_contextual.py","tablet_collection_publish.py","tablet_collection_publish_contextual.py",
-"tablet_gdrive_sync.py","tablet_gdrive_sync_hardening.py","tablet_gdrive_sync_hardening_contextual.py","TABLET_GDRIVE_SYNC.sh",
+"tablet_gdrive_sync.py","tablet_gdrive_sync_hardening.py","tablet_gdrive_sync_hardening_contextual.py","tablet_gdrive_sync_perf_v262.py","TABLET_GDRIVE_SYNC.sh",
 "grading_cert_verifier.py","manual_collection_mode.py","manual_graded_photo_registration.py",
 "manual_dual_photo_registration.py","manual_dual_photo_bridge.js","manual_official_proof.py",
 "ocr_accuracy_boost_v147.py","public_ocr_accuracy_boost_v147.py","ocr_front_back_fallback_v148.py",

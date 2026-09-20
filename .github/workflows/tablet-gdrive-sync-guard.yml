@@ -6,6 +6,7 @@ on:
       - 'tablet_gdrive_sync.py'
       - 'tablet_gdrive_sync_hardening.py'
       - 'tablet_gdrive_sync_hardening_contextual.py'
+      - 'tablet_gdrive_sync_perf_v262.py'
       - 'tablet_gdrive_publish.py'
       - 'tablet_collection_publish.py'
       - 'collection_verification_gate_contextual.py'
@@ -14,6 +15,7 @@ on:
       - 'TABLET_GDRIVE_SYNC_CONTRACT.json'
       - 'TABLET_GDRIVE_SYNC.md'
       - 'test_tablet_gdrive_sync.py'
+      - 'test_tablet_gdrive_sync_perf_v262.py'
       - 'test_tablet_gdrive_publish_v257.py'
       - '.github/workflows/tablet-gdrive-sync-guard.yml'
   push:
@@ -22,6 +24,7 @@ on:
       - 'tablet_gdrive_sync.py'
       - 'tablet_gdrive_sync_hardening.py'
       - 'tablet_gdrive_sync_hardening_contextual.py'
+      - 'tablet_gdrive_sync_perf_v262.py'
       - 'tablet_gdrive_publish.py'
       - 'tablet_collection_publish.py'
       - 'collection_verification_gate_contextual.py'
@@ -30,6 +33,7 @@ on:
       - 'TABLET_GDRIVE_SYNC_CONTRACT.json'
       - 'TABLET_GDRIVE_SYNC.md'
       - 'test_tablet_gdrive_sync.py'
+      - 'test_tablet_gdrive_sync_perf_v262.py'
       - 'test_tablet_gdrive_publish_v257.py'
       - '.github/workflows/tablet-gdrive-sync-guard.yml'
 
@@ -51,10 +55,12 @@ jobs:
             tablet_gdrive_sync.py \
             tablet_gdrive_sync_hardening.py \
             tablet_gdrive_sync_hardening_contextual.py \
+            tablet_gdrive_sync_perf_v262.py \
             tablet_gdrive_publish.py \
             tablet_collection_publish.py \
             collection_verification_gate_contextual.py \
             test_tablet_gdrive_sync.py \
+            test_tablet_gdrive_sync_perf_v262.py \
             test_tablet_gdrive_publish_v257.py
           bash -n TABLET_GDRIVE_SYNC.sh
           bash -n TABLET_GDRIVE_SYNC_INSTALL.sh
@@ -63,4 +69,5 @@ jobs:
         run: |
           python -m unittest -v \
             test_tablet_gdrive_sync.py \
+            test_tablet_gdrive_sync_perf_v262.py \
             test_tablet_gdrive_publish_v257.py

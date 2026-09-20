@@ -19,13 +19,14 @@ if command -v termux-wake-lock >/dev/null 2>&1; then
   fi
 fi
 
-if [ ! -s "tablet_gdrive_sync_hardening_contextual.py" ]; then
-  echo "[HOLD] contextual Drive sync runtime이 없습니다. 최신 main으로 갱신하세요." >&2
+if [ ! -s "tablet_gdrive_sync_perf_v262.py" ]; then
+  echo "[HOLD] v262 Drive sync runtime이 없습니다. 최신 main으로 갱신하세요." >&2
   exit 2
 fi
 
-# tablet_gdrive_sync_hardening_contextual.py extends tablet_gdrive_sync_hardening.py;
-# backup hashing, inflight recovery, launcher-PID checks and receipt semantics stay unchanged.
-python tablet_gdrive_sync_hardening_contextual.py "$@"
+# v262 wraps the contextual + hardened sync stack. It only bounds manifest
+# discovery/health checks/history retention; SHA-256, exact-17-output gates,
+# inflight rollback, launcher-PID checks and receipt semantics remain unchanged.
+python tablet_gdrive_sync_perf_v262.py "$@"
 rc=$?
 exit "$rc"

@@ -136,9 +136,15 @@ class TabletGDriveSyncTests(unittest.TestCase):
 
     def test_wrapper_scopes_wakelock_to_one_sync_and_uses_hardened_runner(self):
         wrapper = (ROOT / "TABLET_GDRIVE_SYNC.sh").read_text(encoding="utf-8")
+        perf_runtime = (ROOT / "tablet_gdrive_sync_perf_v262.py").read_text(encoding="utf-8")
         self.assertIn('termux-wake-lock', wrapper)
         self.assertIn('termux-wake-unlock', wrapper)
-        self.assertIn('tablet_gdrive_sync_hardening.py', wrapper)
+        self.assertIn('tablet_gdrive_sync_perf_v262.py', wrapper)
+        self.assertNotIn('python tablet_gdrive_sync_hardening_contextual.py', wrapper)
+        self.assertIn('import tablet_gdrive_sync_hardening as hard', perf_runtime)
+        self.assertIn('import tablet_gdrive_sync_hardening_contextual as contextual', perf_runtime)
+        self.assertIn('rc = contextual.main()', perf_runtime)
+        self.assertIn('return rc', perf_runtime)
         self.assertNotIn('wrapper.lock', wrapper)
 
     def test_runner_lock_is_kernel_released_not_stale_directory(self):
