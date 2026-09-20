@@ -50,62 +50,63 @@ jobs:
               'DASHBOARD_BUNDLE_CACHE = {"signature": None, "body": None, "etag": None}\n',
               'dashboard cache',
           )
-          replace_once(
-              '''        body = text.encode('utf-8')
-          with DASHBOARD_BUNDLE_LOCK:
-              DASHBOARD_BUNDLE_CACHE["signature"] = signature
-              DASHBOARD_BUNDLE_CACHE["body"] = body
-          return body
-          ''',
-              '''        body = text.encode('utf-8')
-          etag = '"' + hashlib.sha256(body).hexdigest() + '"'
-          with DASHBOARD_BUNDLE_LOCK:
-              DASHBOARD_BUNDLE_CACHE["signature"] = signature
-              DASHBOARD_BUNDLE_CACHE["body"] = body
-              DASHBOARD_BUNDLE_CACHE["etag"] = etag
-          return body
-          ''',
-              'bundle etag cache',
+          old_body = (
+              "        body = text.encode('utf-8')\n"
+              "        with DASHBOARD_BUNDLE_LOCK:\n"
+              "            DASHBOARD_BUNDLE_CACHE[\"signature\"] = signature\n"
+              "            DASHBOARD_BUNDLE_CACHE[\"body\"] = body\n"
+              "        return body\n"
           )
-          replace_once(
-              '''        self.send_response(200)
-          self.send_header('Content-Type', 'application/javascript; charset=utf-8')
-          self.send_header('Cache-Control', 'no-store, no-cache, must-revalidate, max-age=0')
-          self.send_header('Pragma', 'no-cache')
-          self.send_header('Expires', '0')
-          self.send_header('X-Content-Type-Options', 'nosniff')
-          self.send_header('X-TCG-Dual-Photo-UI', 'v158-eight-zone-inline')
-          self.send_header('Content-Length', str(len(body)))
-          self.end_headers()
-          self.wfile.write(body)
-          ''',
-              '''        with DASHBOARD_BUNDLE_LOCK:
-              etag = DASHBOARD_BUNDLE_CACHE.get('etag')
-          if not isinstance(etag, str):
-              etag = '"' + hashlib.sha256(body).hexdigest() + '"'
-          cache_control = 'private, no-cache, must-revalidate, max-age=0'
-          if self.headers.get('If-None-Match', '').strip() == etag:
-              self.send_response(304)
-              self.send_header('ETag', etag)
-              self.send_header('Cache-Control', cache_control)
-              self.send_header('X-Content-Type-Options', 'nosniff')
-              self.send_header('X-TCG-Dual-Photo-UI', 'v158-eight-zone-inline')
-              self.end_headers()
-              return
-          self.send_response(200)
-          self.send_header('Content-Type', 'application/javascript; charset=utf-8')
-          self.send_header('Cache-Control', cache_control)
-          self.send_header('ETag', etag)
-          self.send_header('Pragma', 'no-cache')
-          self.send_header('Expires', '0')
-          self.send_header('X-Content-Type-Options', 'nosniff')
-          self.send_header('X-TCG-Dual-Photo-UI', 'v158-eight-zone-inline')
-          self.send_header('Content-Length', str(len(body)))
-          self.end_headers()
-          self.wfile.write(body)
-          ''',
-              'dashboard response',
+          new_body = (
+              "        body = text.encode('utf-8')\n"
+              "        etag = '\"' + hashlib.sha256(body).hexdigest() + '\"'\n"
+              "        with DASHBOARD_BUNDLE_LOCK:\n"
+              "            DASHBOARD_BUNDLE_CACHE[\"signature\"] = signature\n"
+              "            DASHBOARD_BUNDLE_CACHE[\"body\"] = body\n"
+              "            DASHBOARD_BUNDLE_CACHE[\"etag\"] = etag\n"
+              "        return body\n"
           )
+          replace_once(old_body, new_body, 'bundle etag cache')
+
+          old_response = (
+              "        self.send_response(200)\n"
+              "        self.send_header('Content-Type', 'application/javascript; charset=utf-8')\n"
+              "        self.send_header('Cache-Control', 'no-store, no-cache, must-revalidate, max-age=0')\n"
+              "        self.send_header('Pragma', 'no-cache')\n"
+              "        self.send_header('Expires', '0')\n"
+              "        self.send_header('X-Content-Type-Options', 'nosniff')\n"
+              "        self.send_header('X-TCG-Dual-Photo-UI', 'v158-eight-zone-inline')\n"
+              "        self.send_header('Content-Length', str(len(body)))\n"
+              "        self.end_headers()\n"
+              "        self.wfile.write(body)\n"
+          )
+          new_response = (
+              "        with DASHBOARD_BUNDLE_LOCK:\n"
+              "            etag = DASHBOARD_BUNDLE_CACHE.get('etag')\n"
+              "        if not isinstance(etag, str):\n"
+              "            etag = '\"' + hashlib.sha256(body).hexdigest() + '\"'\n"
+              "        cache_control = 'private, no-cache, must-revalidate, max-age=0'\n"
+              "        if self.headers.get('If-None-Match', '').strip() == etag:\n"
+              "            self.send_response(304)\n"
+              "            self.send_header('ETag', etag)\n"
+              "            self.send_header('Cache-Control', cache_control)\n"
+              "            self.send_header('X-Content-Type-Options', 'nosniff')\n"
+              "            self.send_header('X-TCG-Dual-Photo-UI', 'v158-eight-zone-inline')\n"
+              "            self.end_headers()\n"
+              "            return\n"
+              "        self.send_response(200)\n"
+              "        self.send_header('Content-Type', 'application/javascript; charset=utf-8')\n"
+              "        self.send_header('Cache-Control', cache_control)\n"
+              "        self.send_header('ETag', etag)\n"
+              "        self.send_header('Pragma', 'no-cache')\n"
+              "        self.send_header('Expires', '0')\n"
+              "        self.send_header('X-Content-Type-Options', 'nosniff')\n"
+              "        self.send_header('X-TCG-Dual-Photo-UI', 'v158-eight-zone-inline')\n"
+              "        self.send_header('Content-Length', str(len(body)))\n"
+              "        self.end_headers()\n"
+              "        self.wfile.write(body)\n"
+          )
+          replace_once(old_response, new_response, 'dashboard response')
           path.write_text(text, encoding='utf-8')
           PY
       - name: Verify targeted and full runtime guards
