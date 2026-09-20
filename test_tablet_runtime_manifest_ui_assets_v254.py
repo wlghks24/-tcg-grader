@@ -8,7 +8,7 @@ import tablet_runtime_manifest as manifest
 CRITICAL_UI_ASSETS={
     "index.html","grading_vision_engine.js","grade_market_flow.js",
     "inventory_lookup.js","inventory_lookup.css","grading_costs_live.js","grading_costs_live.css","box_knowledge_stats.js",
-    "feature_category_nav.js","feature_category_nav.css","sw.js",
+    "feature_category_nav.js","feature_category_nav.css","ui_app_shell_v272.js","ui_app_shell_v272.css","sw.js",
 }
 
 class TabletRuntimeManifestUiAssetsV254Tests(unittest.TestCase):
