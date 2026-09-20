@@ -6,6 +6,10 @@ truth. This module only moves network waiting earlier and overlaps *different*
 provider hosts. Requests to the same host stay serial, no source is queried more
 than once, and a prefetch failure is replayed into the canonical collector so its
 existing last-good/error policy remains unchanged.
+
+WYYYES is integrated as a separate public-platform quote lane.  Those quotes keep
+market location (KR), card edition (KR/JP/US), currency, and asking-vs-sold status
+separate and never overwrite the canonical verified price.
 """
 from __future__ import annotations
 
@@ -16,6 +20,7 @@ from collections import defaultdict
 from urllib.parse import urlsplit
 
 import update_market_prices as base
+import wyyyes_market_source as wyyyes
 
 # These are the fixed first-party/public-reference URLs already queried directly by
 # base.main(). Dynamic discovery/cross-check lanes keep their own bounded policies.
@@ -89,6 +94,40 @@ def prefetch(fetcher=None, urls=FIXED_URLS, max_workers: int = MAX_HOST_WORKERS)
     return result, stats
 
 
+def _merge_wyyyes_quotes(db: dict) -> dict:
+    platform_quotes = db.setdefault("platform_quotes", {})
+    previous = platform_quotes.get("WYYYES")
+    if not isinstance(previous, list):
+        previous = []
+    try:
+        result = wyyyes.collect_quotes(previous=previous)
+    except Exception as exc:
+        result = {
+            "status": "collector_error",
+            "quotes": previous,
+            "preserved_last_good": bool(previous),
+            "quote_count": len(previous),
+            "completed_sale_count": sum(1 for row in previous if isinstance(row, dict) and row.get("is_completed_sale") is True),
+            "asking_count": sum(1 for row in previous if isinstance(row, dict) and row.get("is_completed_sale") is not True),
+            "region_counts": {},
+            "errors": [f"collector:{type(exc).__name__}"],
+            "source": "https://wyyyes.com/",
+            "policy": "collector failed; preserve existing public quotes without promoting asking prices to sold",
+        }
+    platform_quotes["WYYYES"] = result.get("quotes") if isinstance(result.get("quotes"), list) else []
+    status = db.setdefault("platform_quote_status", {})
+    status["WYYYES"] = {key: value for key, value in result.items() if key != "quotes"}
+    db["platform_quote_schema_version"] = 1
+    db["platform_quote_policy"] = {
+        "market_region_separate_from_card_region": True,
+        "supported_card_regions": ["KR", "JP", "US", "UNKNOWN"],
+        "asking_price_is_not_completed_sale": True,
+        "public_pages_only": True,
+        "canonical_market_price_overwrite": False,
+    }
+    return result
+
+
 def run() -> dict:
     original_fetch = base.fetch
     cache, stats = prefetch(original_fetch)
@@ -115,8 +154,9 @@ def run() -> dict:
         base.fetch = original_fetch
 
     if isinstance(db, dict):
+        wyyyes_result = _merge_wyyyes_quotes(db)
         db["market_collection_performance"] = {
-            "mode": "bounded_cross_host_prefetch_v260",
+            "mode": "bounded_cross_host_prefetch_v267",
             "fixed_urls": stats["urls"],
             "network_calls": stats["network_calls"],
             "cache_hits": stats["cache_hits"],
@@ -124,6 +164,9 @@ def run() -> dict:
             "cross_host_workers": stats["max_workers"],
             "same_host_parallelism": 1,
             "duplicate_network_requests_added": 0,
+            "wyyyes_quote_count": int(wyyyes_result.get("quote_count") or 0),
+            "wyyyes_completed_sale_count": int(wyyyes_result.get("completed_sale_count") or 0),
+            "wyyyes_status": str(wyyyes_result.get("status") or "unknown"),
         }
         base.atomic_save(db)
     return db
