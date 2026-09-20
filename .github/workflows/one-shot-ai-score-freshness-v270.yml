@@ -27,6 +27,40 @@ jobs:
           python-version: '3.12'
       - name: Apply exact bounded patch
         run: python apply_ai_score_freshness_v270.py
+      - name: Preserve LKG recovery but enforce strict score-time eligibility
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+
+          def once(text, old, new, label):
+              if text.count(old) != 1:
+                  raise SystemExit(f'{label}: expected one match, got {text.count(old)}')
+              return text.replace(old, new, 1)
+
+          q = Path('verified_collection_neural.py')
+          text = q.read_text(encoding='utf-8')
+          text = once(text,
+              '    if raw.get("schema") != SCHEMA or raw.get("feature_fingerprint") != FEATURE_FINGERPRINT:\n        return False\n    protocol = raw.get("protocol_version")\n    if not isinstance(protocol, int) or isinstance(protocol, bool) or protocol != PROTOCOL_VERSION:\n        return False\n    if require_active and raw.get("active") is not True:',
+              '    if raw.get("schema") != SCHEMA or raw.get("feature_fingerprint") != FEATURE_FINGERPRINT:\n        return False\n    if require_active and raw.get("active") is not True:',
+              'query backward-compatible structural loader')
+          text = once(text,
+              'def _runtime_model_reason(model: dict[str, Any], *, now: datetime | None = None) -> str | None:\n    text = str(model.get("trained_at") or "").strip()',
+              'def _runtime_model_reason(model: dict[str, Any], *, now: datetime | None = None) -> str | None:\n    if int(model.get("protocol_version") or 0) != PROTOCOL_VERSION:\n        return "protocol_version_mismatch"\n    if int(model.get("label_count") or 0) < MIN_INDEPENDENT_LABELS:\n        return "label_count_below_activation_gate"\n    text = str(model.get("trained_at") or "").strip()',
+              'query strict runtime gate')
+          q.write_text(text, encoding='utf-8')
+
+          j = Path('verified_collection_job_neural.py')
+          text = j.read_text(encoding='utf-8')
+          text = once(text,
+              '        or _safe_int(raw.get("feature_count"), 0) != FEATURE_COUNT\n        or _safe_int(raw.get("protocol_version"), 0) != PROTOCOL_VERSION\n        or _safe_int(raw.get("label_count"), 0) < MIN_INDEPENDENT_LABELS\n        or hidden not in HIDDEN_SIZES',
+              '        or _safe_int(raw.get("feature_count"), 0) != FEATURE_COUNT\n        or hidden not in HIDDEN_SIZES',
+              'job backward-compatible structural loader')
+          text = once(text,
+              'def _runtime_model_reason(model: dict[str, Any], *, now: datetime | None = None) -> str | None:\n    text = str(model.get("trained_at") or "").strip()',
+              'def _runtime_model_reason(model: dict[str, Any], *, now: datetime | None = None) -> str | None:\n    if _safe_int(model.get("protocol_version"), 0) != PROTOCOL_VERSION:\n        return "protocol_version_mismatch"\n    if _safe_int(model.get("label_count"), 0) < MIN_INDEPENDENT_LABELS:\n        return "label_count_below_activation_gate"\n    text = str(model.get("trained_at") or "").strip()',
+              'job strict runtime gate')
+          j.write_text(text, encoding='utf-8')
+          PY
       - name: Normalize generated test escapes
         run: |
           python - <<'PY'
