@@ -7,7 +7,8 @@ const esc=s=>String(s??'').replace(/[&<>"']/g,ch=>({'&':'&amp;','<':'&lt;','>':'
 const REFERENCE_HOSTS=new Set([
  'collectory.cc','web.joongna.com','kream.co.kr','m.bunjang.co.kr','www.daangn.com','wyyyes.com',
  'auctions.yahoo.co.jp','jp.mercari.com','snkrdunk.com','www.ebay.com','www.tcgplayer.com',
- 'www.pricecharting.com','130point.com','www.psacard.com','www.cardmarket.com'
+ 'www.pricecharting.com','130point.com','www.psacard.com','www.cardmarket.com','app.getcollectr.com',
+ 'www.cardladder.com','www.tcgfish.net','www.pokevalues.com'
 ]);
 const REFERENCE_FALLBACK=[
  {id:'collectory',name:'Collectory',region:'KR',region_label:'국내 · 다국가 비교',evidence_group:'mixed',evidence_label:'집계 · 실거래/매물 혼합',url:'https://collectory.cc/',search_url_template:'https://collectory.cc/?q={query}',recommended:true,auto_collected:false,note:'한국·일본·미국 등 판본 비교와 가격 이력 교차확인'},
@@ -24,6 +25,10 @@ const REFERENCE_FALLBACK=[
  {id:'pricecharting',name:'PriceCharting',region:'US_GLOBAL',region_label:'미국 · 글로벌',evidence_group:'guide',evidence_label:'판매이력 · 등급별 가이드',url:'https://www.pricecharting.com/',search_url_template:'https://www.pricecharting.com/search-products?type=prices&q={query}',recommended:true,auto_collected:false,note:'Ungraded·Grade 9·PSA 10 등 등급별 가격과 sold listings 확인'},
  {id:'130point',name:'130point Sales',region:'US_GLOBAL',region_label:'미국 · 글로벌',evidence_group:'sold',evidence_label:'판매완료 집계 참고',url:'https://130point.com/sales/',search_url_template:'',recommended:true,auto_collected:false,note:'여러 경매/마켓 판매완료를 교차확인하는 보조 확인처'},
  {id:'psa_apr',name:'PSA Auction Prices Realized',region:'US_GLOBAL',region_label:'미국 · 글로벌',evidence_group:'sold',evidence_label:'PSA 등급품 낙찰결과',url:'https://www.psacard.com/auctionprices',search_url_template:'',recommended:true,auto_collected:false,note:'PSA 등급품의 경매 결과를 등급·기간별로 확인'},
+ {id:'collectr',name:'Collectr',region:'US_GLOBAL',region_label:'글로벌 · 포트폴리오',evidence_group:'guide',evidence_label:'카드·밀봉·등급품 시세 가이드',url:'https://app.getcollectr.com/',search_url_template:'',recommended:true,auto_collected:false,note:'Raw·밀봉·등급카드 가격과 언어별 포트폴리오 흐름을 글로벌 참고값으로 확인'},
+ {id:'card_ladder',name:'Card Ladder',region:'US_GLOBAL',region_label:'미국 · 글로벌',evidence_group:'guide',evidence_label:'공개 판매이력 · 장기 시장가이드',url:'https://www.cardladder.com/ladder',search_url_template:'',recommended:true,auto_collected:false,note:'eBay·Goldin·Heritage·Fanatics 등 공개 판매이력을 묶어 장기 시세와 최근 판매를 교차확인'},
+ {id:'tcgfish',name:'TCGFish',region:'US_GLOBAL',region_label:'글로벌 · 포켓몬',evidence_group:'guide',evidence_label:'일일 시세 · 시장지수',url:'https://www.tcgfish.net/pokemon-cards',search_url_template:'',recommended:false,auto_collected:false,note:'포켓몬 Raw/미감정 기준 일일 시세·시장지수·세트 모멘텀을 보조 지표로 확인'},
+ {id:'pokevalues_jp',name:'PokeValues Japanese',region:'JP',region_label:'일본 · 포켓몬',evidence_group:'guide',evidence_label:'일본판 세트별 가격 가이드',url:'https://www.pokevalues.com/japanese',search_url_template:'',recommended:false,auto_collected:false,note:'일본판 포켓몬 세트별 가격을 글로벌 참고값으로 비교할 때 사용하는 보조 가이드'},
  {id:'cardmarket',name:'Cardmarket',region:'EU',region_label:'유럽',evidence_group:'asking',evidence_label:'유럽 매물 · 시장 참고',url:'https://www.cardmarket.com/en/Pokemon',search_url_template:'https://www.cardmarket.com/en/Pokemon/Products/Search?searchString={query}',recommended:false,auto_collected:false,note:'유럽 P2P 마켓 가격 수준 비교용 · 지역 차이를 감안'}
 ];
 let lastIdentity='',lastGrades='',platformMarket=null,platformLoaded=false,platformLoading=false,sourceFilter='core';
@@ -112,7 +117,7 @@ function mount(){
  <div class="agm-raw"><span>등급 측정 전 RAW 현재 시세</span><b id="agmRawPrice">카드 인식 후 자동 조회</b><small id="agmRawSource">확인된 저장/수집 거래자료만 표시</small></div>
  <div><div class="agm-title">🇰🇷🇯🇵🇺🇸 판본별 자동수집 공개시세</div><div id="agmPlatformQuotes" class="agm-grade-rows">카드 인식 후 WYYYES 등 자동수집 공개시장 자료를 연결합니다.</div><small id="agmPlatformPolicy">판매중/가격제안 값과 실제 체결·낙찰 값은 섞지 않고 구분해 표시합니다.</small></div>
  <div class="agm-source-guide"><div class="agm-title">🔎 국내·해외 시세 교차확인</div>
-   <div class="agm-source-legend"><b>쉽게 보는 순서</b><span>✅ 체결·낙찰 → 📊 최근판매 기반 시장가이드 → 🔄 혼합 집계 → 🏷️ 판매중 호가</span><small>같은 카드라도 카드번호·한국/일본/영문판·등급·상태·거래일이 다르면 가격이 달라집니다.</small></div>
+   <div class="agm-source-legend"><b>쉽게 보는 순서</b><span>✅ 체결·낙찰 → 📊 최근판매 기반 시장가이드 → 🔄 혼합 집계 → 🏷️ 판매중 호가</span><small>같은 카드라도 카드번호·한국/일본/영문판·등급·상태·거래일이 다르면 가격이 달라집니다. 한 곳만 보지 말고 최소 2~3곳을 교차확인하세요.</small></div>
    <div class="agm-source-tabs" role="group" aria-label="시세 참고지역"><button type="button" class="agm-source-tab is-active" data-market-filter="core" aria-pressed="true">⭐ 핵심</button><button type="button" class="agm-source-tab" data-market-filter="KR" aria-pressed="false">🇰🇷 국내</button><button type="button" class="agm-source-tab" data-market-filter="JP" aria-pressed="false">🇯🇵 일본</button><button type="button" class="agm-source-tab" data-market-filter="US_GLOBAL" aria-pressed="false">🌎 미국·글로벌</button><button type="button" class="agm-source-tab" data-market-filter="EU" aria-pressed="false">🇪🇺 유럽</button><button type="button" class="agm-source-tab" data-market-filter="all" aria-pressed="false">전체</button></div>
    <small id="agmSourceQueryHint" class="agm-source-query">카드 촬영/인식 후 각 사이트의 “이 카드 검색” 링크가 자동 생성됩니다.</small><div id="agmSourceGrid" class="agm-source-grid"></div>
  </div>
