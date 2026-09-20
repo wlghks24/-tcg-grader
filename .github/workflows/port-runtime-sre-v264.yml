@@ -1,0 +1,54 @@
+name: Port Runtime SRE v264
+
+on:
+  push:
+    branches: [selfrefine/runtime-sre-v264]
+    paths:
+      - '.github/workflows/port-runtime-sre-v264.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  port:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    env:
+      PYTHONDONTWRITEBYTECODE: '1'
+      PYTHONUNBUFFERED: '1'
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          persist-credentials: true
+          fetch-depth: 0
+          ref: selfrefine/runtime-sre-v264
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97
+        with:
+          python-version: '3.11'
+      - name: Port only the previously verified SRE delta
+        run: |
+          set -euo pipefail
+          git fetch --no-tags origin 44f13f1d67ca1edfaa3879354c1b4b6b09f42a64 a50b258e3a40b080cfde2eff74f0a80716e25e04
+          git diff --binary 44f13f1d67ca1edfaa3879354c1b4b6b09f42a64 a50b258e3a40b080cfde2eff74f0a80716e25e04 -- \
+            tcg_updater.py \
+            runtime_sre_metrics.py \
+            tablet_runtime_manifest.py \
+            runtime_bundle_guard_v143.py \
+            test_runtime_delivery_guards.py \
+            test_sre_runtime_performance_v240.py > /tmp/runtime-sre-v264.patch
+          test -s /tmp/runtime-sre-v264.patch
+          git apply --3way --index /tmp/runtime-sre-v264.patch
+          python -m py_compile tcg_updater.py runtime_sre_metrics.py tablet_runtime_manifest.py runtime_bundle_guard_v143.py test_runtime_delivery_guards.py test_sre_runtime_performance_v240.py
+          python -m unittest -v test_sre_runtime_performance_v240.py
+          git diff --cached --check
+      - name: Commit ported runtime patch
+        run: |
+          set -euo pipefail
+          if git diff --cached --quiet; then
+            echo 'No SRE delta to commit.'
+            exit 0
+          fi
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git commit -m 'perf: port runtime single-flight and static revalidation v264'
+          git push origin HEAD:selfrefine/runtime-sre-v264
