@@ -143,7 +143,8 @@ class TabletGDriveSyncTests(unittest.TestCase):
         self.assertNotIn('python tablet_gdrive_sync_hardening_contextual.py', wrapper)
         self.assertIn('import tablet_gdrive_sync_hardening as hard', perf_runtime)
         self.assertIn('import tablet_gdrive_sync_hardening_contextual as contextual', perf_runtime)
-        self.assertIn('return contextual.main()', perf_runtime.replace('rc = contextual.main()\n    if rc == 0:', 'return contextual.main()') if False else perf_runtime)
+        self.assertIn('rc = contextual.main()', perf_runtime)
+        self.assertIn('return rc', perf_runtime)
         self.assertNotIn('wrapper.lock', wrapper)
 
     def test_runner_lock_is_kernel_released_not_stale_directory(self):
