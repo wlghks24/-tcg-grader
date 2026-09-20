@@ -14,6 +14,8 @@ on:
       - 'VERIFY_TABLET_FINAL.sh'
       - 'test_tablet_scheduled_update_v256.py'
       - 'tablet_collection_publish.py'
+      - 'tablet_collection_publish_contextual.py'
+      - 'collection_verification_gate_contextual.py'
       - 'test_tablet_collection_publish.py'
       - 'test_tablet_main_entrypoint_v251.py'
       - 'TABLET_COLLECT_AND_SEND.sh'
@@ -50,6 +52,8 @@ on:
       - 'VERIFY_TABLET_FINAL.sh'
       - 'test_tablet_scheduled_update_v256.py'
       - 'tablet_collection_publish.py'
+      - 'tablet_collection_publish_contextual.py'
+      - 'collection_verification_gate_contextual.py'
       - 'test_tablet_collection_publish.py'
       - 'test_tablet_main_entrypoint_v251.py'
       - 'TABLET_COLLECT_AND_SEND.sh'
@@ -82,7 +86,7 @@ jobs:
 
       - name: Static and targeted regression
         run: |
-          python -m py_compile tablet_collection_publish.py test_tablet_collection_publish.py test_tablet_main_entrypoint_v251.py test_tablet_scheduled_update_v256.py quality_review_policy.py test_quality_review_policy_v2.py tablet_runtime_manifest.py
+          python -m py_compile tablet_collection_publish.py tablet_collection_publish_contextual.py collection_verification_gate_contextual.py test_tablet_collection_publish.py test_tablet_main_entrypoint_v251.py test_tablet_scheduled_update_v256.py quality_review_policy.py test_quality_review_policy_v2.py tablet_runtime_manifest.py
           bash -n main
           bash -n ANDROID_UPDATE_AND_START.sh
           bash -n TABLET_SCHEDULED_UPDATE.sh
@@ -120,6 +124,8 @@ jobs:
           python - <<'PY'
           from pathlib import Path
           p = Path('tablet_collection_publish.py').read_text(encoding='utf-8')
+          contextual = Path('tablet_collection_publish_contextual.py').read_text(encoding='utf-8')
+          main = Path('main').read_text(encoding='utf-8')
           required = [
               "'--fail-on-degraded'",
               "if publish and source != base",
@@ -130,9 +136,20 @@ jobs:
           missing = [item for item in required if item not in p]
           if missing:
               raise SystemExit(f'tablet fail-closed contract missing: {missing}')
+          contextual_required = [
+              'collection_verification_gate_contextual.py',
+              "'--fail-on-degraded'",
+              'core.gates = gates',
+              'return core.main()',
+          ]
+          contextual_missing = [item for item in contextual_required if item not in contextual]
+          if contextual_missing:
+              raise SystemExit(f'contextual freshness contract missing: {contextual_missing}')
+          if 'tablet_collection_publish_contextual.py' not in main:
+              raise SystemExit('main entrypoint bypasses contextual collection gate')
           forbidden = ["--force", "push', 'origin', 'main'"]
           bad = [item for item in forbidden if item in p]
           if bad:
               raise SystemExit(f'unsafe tablet publish contract detected: {bad}')
-          print('tablet Termux fail-closed contract: PASS')
+          print('tablet Termux fail-closed + contextual freshness contract: PASS')
           PY
