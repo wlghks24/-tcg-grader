@@ -1,6 +1,7 @@
 name: Apply v265 Dashboard ETag
 
 on:
+  workflow_dispatch:
   push:
     branches: [perf/device-benchmark-main-guard-v265]
     paths:
