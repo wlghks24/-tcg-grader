@@ -5,7 +5,7 @@ import argparse, json
 from pathlib import Path
 ROOT=Path(__file__).resolve().parent
 ACTIVE_RUNTIME_FILES=(
-"index.html","safe_runtime.py","collection_runtime_health.py","tablet_runtime_manifest.py","TABLET_SCHEDULED_UPDATE.sh",
+"index.html","safe_runtime.py","runtime_sre_metrics.py","collection_runtime_health.py","tablet_runtime_manifest.py","TABLET_SCHEDULED_UPDATE.sh",
 "quality_review_policy.py","quality_review_policy_v2.json",
 "auto_repair_engine.py","auto_update_all.py","collection_job_contract.py","collector_self_healing.py","tcg_code_repair_learning.py",
 "tcg_updater.py","tcg_updater_v135.py","runtime_bundle_guard_v143.py","update_releases.py",
