@@ -5,6 +5,7 @@ from datetime import datetime, timezone
 from copy import deepcopy
 from html import unescape
 from pathlib import Path
+from urllib.parse import urlsplit
 import json,re,time,urllib.request
 
 from safe_runtime import atomic_write_json, safe_read_text, safe_urlopen
@@ -21,6 +22,10 @@ ALLOWED_HOSTS={
 }
 PREFERRED_MARKET={'PSA':'US','BGS':'US','CGC':'US','TAG':'US','BRG':'KR'}
 WATCH_PARSER_MIN_VERSION=2
+BGS_MAINTENANCE_SOURCE_ID='bgs-maintenance-status'
+BGS_CANONICAL_URL='https://www.beckett.com/grading'
+BGS_MAINTENANCE_HOST='maintenance.beckett.com'
+BGS_MAINTENANCE_FACT_SCOPE='service_availability_status_only_no_price_promotion'
 
 # Last-known official baselines are fail-safe fallbacks only. The scheduled official
 # watcher can overlay verified changes without mutating source code.
@@ -111,10 +116,30 @@ def _watch_parser_ok(row):
 def _current_watch_service(row):
     return _watch_parser_ok(row) and bool(row.get('name'))
 
+def _verified_bgs_maintenance_labels(watch):
+    sources=watch.get('sources',{}) if isinstance(watch.get('sources'),dict) else {}
+    row=sources.get(BGS_MAINTENANCE_SOURCE_ID)
+    if not isinstance(row,dict):return set()
+    if row.get('verified_official_source') is not True:return set()
+    if str(row.get('status') or '').lower() not in {'ok','healthy'}:return set()
+    if row.get('kind')!='status' or row.get('maintenance_mode') is not True:return set()
+    if row.get('fact_scope')!=BGS_MAINTENANCE_FACT_SCOPE:return set()
+    if row.get('url')!=BGS_CANONICAL_URL:return set()
+    try:host=(urlsplit(str(row.get('effective_url') or '')).hostname or '').lower().rstrip('.')
+    except ValueError:return set()
+    if host!=BGS_MAINTENANCE_HOST:return set()
+    # A status-only source must never carry parsed price/service rows.
+    if row.get('services') not in ([],None):return set()
+    labels=row.get('available_service_labels')
+    if not isinstance(labels,list):return set()
+    allowed={str(s.get('name')) for s in COMPANIES['BGS'].get('services',[]) if isinstance(s,dict) and s.get('name')}
+    return {str(label).strip() for label in labels if str(label).strip() in allowed}
+
 def _merge_watch(companies,watch):
     if not watch:return
     watched=watch.get('companies',{}) if isinstance(watch.get('companies'),dict) else {}
     changes=watch.get('history',[]) if isinstance(watch.get('history'),list) else []
+    maintenance_labels=_verified_bgs_maintenance_labels(watch)
     for name,out in companies.items():
         company=watched.get(name,{}) if isinstance(watched.get(name),dict) else {}
         markets=company.get('markets',{}) if isinstance(company.get('markets'),dict) else {}
@@ -143,6 +168,16 @@ def _merge_watch(companies,watch):
         removed={str(c.get('service')) for c in changes if _watch_parser_ok(c) and c.get('company')==name and c.get('type')=='service_removed'}
         for svc in out.get('services',[]):
             if str(svc.get('name')) in removed:svc['availability']='retired'
+        # During an official Beckett maintenance redirect, only exact verified
+        # service labels may update availability. Fees/turnaround/max value stay
+        # last-good/fallback and are never derived from the maintenance page.
+        if name=='BGS' and maintenance_labels:
+            for svc in out.get('services',[]):
+                if str(svc.get('name')) in maintenance_labels:
+                    svc['availability']='open'
+                    svc['availability_live_verified']=True
+                    svc['availability_watch_source']=BGS_CANONICAL_URL
+                    svc['availability_evidence']='beckett_maintenance_status'
         out['watch_source_health']=deepcopy(company.get('source_health',[]))
 
 def _load_cache():
