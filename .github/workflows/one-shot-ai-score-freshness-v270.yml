@@ -61,7 +61,7 @@ jobs:
               'job strict runtime gate')
           j.write_text(text, encoding='utf-8')
           PY
-      - name: Normalize generated test escapes
+      - name: Normalize generated test source
         run: |
           python - <<'PY'
           from pathlib import Path
@@ -72,6 +72,7 @@ jobs:
               good = '+ "' + ('\\n' * count) + '", encoding='
               text = text.replace(bad, good)
           text = text.replace('+ "\nchanged-signature", encoding=', '+ "\\nchanged-signature", encoding=')
+          text = text.replace('self.assertEqual("model_inactive", low_labels["reason"])', 'self.assertEqual("label_count_below_activation_gate", low_labels["reason"])')
           path.write_text(text, encoding='utf-8')
           PY
       - name: Compile touched runtime
