@@ -56,8 +56,13 @@ class TabletStandaloneHardeningV209(unittest.TestCase):
   self.assertIn("'report_ok':bool(final_report.get('ok_with_monitor', final_report.get('ok_with_aux', final_report.get('ok'))))",src)
   self.assertIn("'collection_health':collection_health_status()",src)
  def test_v135_health(self):
-  src=(ROOT/"tcg_updater_v135.py").read_text(encoding="utf-8"); self.assertIn("collection_health = core.collection_health_status()",src)
-  self.assertIn("collection_neural = core.collection_neural_status()",src)
+  src=(ROOT/"tcg_updater_v135.py").read_text(encoding="utf-8")
+  self.assertIn("def _runtime_health_snapshot():",src)
+  self.assertIn('"collection_health": core.collection_health_status()',src)
+  self.assertIn('"collection_neural": core.collection_neural_status()',src)
+  self.assertIn("snapshot = _runtime_health_snapshot()",src)
+  self.assertIn("collection_health = snapshot['collection_health']",src)
+  self.assertIn("collection_neural = snapshot['collection_neural']",src)
   self.assertIn("'collection_health': collection_health",src); self.assertIn("'collection_neural': collection_neural",src)
   self.assertIn("'collection_neural_active': collection_neural.get('active') is True",src); self.assertIn("'ok': True",src)
  def test_collection_neural_runtime_api(self):
