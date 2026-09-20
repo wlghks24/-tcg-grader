@@ -1,7 +1,63 @@
 from __future__ import annotations
 
+import os
+import sys
 import threading
 import time
+
+
+def _current_rss_bytes() -> int | None:
+    """Return current resident memory without adding a third-party dependency."""
+    if os.name == "nt":
+        try:
+            import ctypes
+            from ctypes import wintypes
+
+            class PROCESS_MEMORY_COUNTERS(ctypes.Structure):
+                _fields_ = [
+                    ("cb", wintypes.DWORD),
+                    ("PageFaultCount", wintypes.DWORD),
+                    ("PeakWorkingSetSize", ctypes.c_size_t),
+                    ("WorkingSetSize", ctypes.c_size_t),
+                    ("QuotaPeakPagedPoolUsage", ctypes.c_size_t),
+                    ("QuotaPagedPoolUsage", ctypes.c_size_t),
+                    ("QuotaPeakNonPagedPoolUsage", ctypes.c_size_t),
+                    ("QuotaNonPagedPoolUsage", ctypes.c_size_t),
+                    ("PagefileUsage", ctypes.c_size_t),
+                    ("PeakPagefileUsage", ctypes.c_size_t),
+                ]
+
+            counters = PROCESS_MEMORY_COUNTERS()
+            counters.cb = ctypes.sizeof(counters)
+            handle = ctypes.windll.kernel32.GetCurrentProcess()
+            ok = ctypes.windll.psapi.GetProcessMemoryInfo(
+                handle,
+                ctypes.byref(counters),
+                counters.cb,
+            )
+            if ok:
+                return int(counters.WorkingSetSize)
+        except (AttributeError, OSError, TypeError, ValueError):
+            pass
+
+    try:
+        with open("/proc/self/statm", "r", encoding="ascii") as handle:
+            parts = handle.read().split()
+        if len(parts) >= 2:
+            page_size = int(os.sysconf("SC_PAGE_SIZE"))
+            return max(0, int(parts[1]) * page_size)
+    except (OSError, ValueError, TypeError, AttributeError):
+        pass
+
+    try:
+        import resource
+
+        rss = int(resource.getrusage(resource.RUSAGE_SELF).ru_maxrss)
+        if sys.platform == "darwin":
+            return max(0, rss)
+        return max(0, rss * 1024)
+    except (ImportError, OSError, ValueError, TypeError, AttributeError):
+        return None
 
 
 class RuntimeMetrics:
@@ -16,6 +72,8 @@ class RuntimeMetrics:
     def __init__(self) -> None:
         self._lock = threading.Lock()
         self._started_at = time.monotonic()
+        self._last_resource_wall = self._started_at
+        self._last_resource_cpu = time.process_time()
         self._accepted_requests = 0
         self._completed_requests = 0
         self._overload_rejections = 0
@@ -72,12 +130,22 @@ class RuntimeMetrics:
             self._update_requests_conflicted += 1
 
     def snapshot(self) -> dict:
+        rss_bytes = _current_rss_bytes()
+        thread_count = threading.active_count()
+        logical_cpu_count = int(os.cpu_count() or 0)
         with self._lock:
             completed = self._completed_requests
             average_ms = self._request_duration_ms_total / completed if completed else 0.0
+            resource_wall = time.monotonic()
+            resource_cpu = time.process_time()
+            wall_delta = max(0.0, resource_wall - self._last_resource_wall)
+            cpu_delta = max(0.0, resource_cpu - self._last_resource_cpu)
+            cpu_percent = (cpu_delta / wall_delta * 100.0) if wall_delta >= 0.001 else 0.0
+            self._last_resource_wall = resource_wall
+            self._last_resource_cpu = resource_cpu
             return {
                 "schema_version": 1,
-                "uptime_seconds": round(max(0.0, time.monotonic() - self._started_at), 3),
+                "uptime_seconds": round(max(0.0, resource_wall - self._started_at), 3),
                 "http": {
                     "accepted_requests": self._accepted_requests,
                     "completed_requests": completed,
@@ -87,6 +155,10 @@ class RuntimeMetrics:
                     "uncaught_request_errors": self._uncaught_request_errors,
                     "average_duration_ms": round(average_ms, 3),
                     "max_duration_ms": round(self._request_duration_ms_max, 3),
+                    "process_rss_bytes": rss_bytes,
+                    "process_cpu_percent_since_last_snapshot": round(cpu_percent, 3),
+                    "python_thread_count": int(thread_count),
+                    "logical_cpu_count": logical_cpu_count,
                 },
                 "updates": {
                     "jobs_started": self._update_jobs_started,
