@@ -48,6 +48,29 @@ class FanSocialLearningTests(unittest.TestCase):
             self.assertEqual(learner.observe_discovered(official), 0)
             self.assertEqual(learner.report()["sources"], [])
 
+    def test_malformed_independent_count_and_limit_do_not_abort_learning(self):
+        with tempfile.TemporaryDirectory() as td:
+            learner = FanSocialLearner(memory_path=Path(td) / "fan.json")
+            discovered = [{
+                "game": "포켓몬 카드",
+                "region": "KR",
+                "source_kind": "x_public_search",
+                "author": "safeinput",
+                "fan_candidate": True,
+                "fan_source_key": "x:safeinput",
+            }]
+            self.assertEqual(learner.observe_discovered(discovered), 1)
+            self.assertEqual(learner.observe_selected([{
+                **discovered[0],
+                "fan_sources": ["x:safeinput"],
+                "cross_checked": False,
+                "independent_source_count": "NaN",
+            }]), 1)
+            row = learner.data["sources"]["x:safeinput"]
+            self.assertEqual(row.get("selected"), 1)
+            self.assertEqual(row.get("corroborated", 0), 0)
+            self.assertEqual(learner.preferred_authors("포켓몬 카드", "KR", "bad-limit"), ["safeinput"])
+
 
 if __name__ == "__main__":
     unittest.main()
