@@ -3,22 +3,30 @@
 
 This learner optimizes discovery only. It never turns a fan/community account into
 an official source. Official trust remains controlled by social_source_registry.json.
+Concurrent tablet/server/manual learners merge cumulative deltas under a file lock
+so one process cannot erase another process's discovery history.
 """
 from __future__ import annotations
 
+import copy
 import datetime as dt
 import json
 import math
 import urllib.parse
 from pathlib import Path
 
-from safe_runtime import atomic_write_json, safe_read_text
+from safe_runtime import atomic_write_json, exclusive_file_lock, safe_read_text
 
 ROOT = Path(__file__).resolve().parent
 MEMORY = ROOT / "fan_social_learning.json"
 BACKUP = ROOT / "fan_social_learning.json.bak"
 SCHEMA_VERSION = 1
 MAX_SOURCES = 300
+_COUNTER_FIELDS = ("discovered", "selected", "corroborated")
+_LATEST_FIELDS = (
+    "game", "region", "author", "platform", "known_watch_account",
+    "last_seen", "last_selected",
+)
 
 
 def _now() -> str:
@@ -62,7 +70,6 @@ def _score(stat: dict) -> float:
     cross_rate = corroborated / discovered
     select_rate = selected / discovered
     exploration = 0.55 / math.sqrt(discovered)
-    # This is utility/relevance only, not a trust score.
     return round(select_rate * 2.1 + cross_rate * 1.4 + exploration, 5)
 
 
@@ -80,11 +87,52 @@ def source_key(row: dict) -> str | None:
     return None
 
 
+def _timestamp(stat: dict) -> str:
+    return max(str(stat.get("last_seen") or ""), str(stat.get("last_selected") or ""))
+
+
+def _merge_source(base: object, local: object, disk: object) -> dict:
+    base_row = base if isinstance(base, dict) else {}
+    local_row = local if isinstance(local, dict) else {}
+    disk_row = disk if isinstance(disk, dict) else {}
+    merged = dict(disk_row)
+    for key in _COUNTER_FIELDS:
+        delta = max(0, _int(local_row.get(key)) - _int(base_row.get(key)))
+        merged[key] = _int(disk_row.get(key)) + delta
+    if _timestamp(local_row) >= _timestamp(disk_row):
+        for key in _LATEST_FIELDS:
+            if key in local_row:
+                merged[key] = local_row.get(key)
+    merged["score"] = _score(merged)
+    return merged
+
+
+def _merge_state(base: object, local: object, disk: object) -> dict:
+    base_data = base if isinstance(base, dict) else _fresh()
+    local_data = local if isinstance(local, dict) else _fresh()
+    disk_data = disk if isinstance(disk, dict) else _fresh()
+    merged = copy.deepcopy(disk_data)
+    run_delta = max(0, _int(local_data.get("runs")) - _int(base_data.get("runs")))
+    merged["runs"] = _int(disk_data.get("runs")) + run_delta
+    base_sources = base_data.get("sources") if isinstance(base_data.get("sources"), dict) else {}
+    local_sources = local_data.get("sources") if isinstance(local_data.get("sources"), dict) else {}
+    disk_sources = disk_data.get("sources") if isinstance(disk_data.get("sources"), dict) else {}
+    out = copy.deepcopy(disk_sources)
+    for key, local_row in local_sources.items():
+        if not isinstance(key, str) or not isinstance(local_row, dict):
+            continue
+        out[key] = _merge_source(base_sources.get(key), local_row, disk_sources.get(key))
+    merged["sources"] = out
+    merged["version"] = SCHEMA_VERSION
+    return merged
+
+
 class FanSocialLearner:
     def __init__(self, memory_path: Path | str = MEMORY, backup_path: Path | str | None = None):
         self.memory_path = Path(memory_path)
         self.backup_path = Path(backup_path) if backup_path else self.memory_path.with_suffix(self.memory_path.suffix + ".bak")
         self.data = _load(self.memory_path, self.backup_path)
+        self._base_data = copy.deepcopy(self.data)
         self.data["runs"] = _int(self.data.get("runs")) + 1
 
     def _row(self, key: str) -> dict:
@@ -141,18 +189,22 @@ class FanSocialLearner:
         return [author for _, _, _, author in rows[:safe_limit]]
 
     def save(self) -> None:
-        sources = self.data.setdefault("sources", {})
-        if len(sources) > MAX_SOURCES:
-            ranked = sorted(sources.items(), key=lambda kv: (_score(kv[1]), _int(kv[1].get("selected"))), reverse=True)
-            self.data["sources"] = dict(ranked[:MAX_SOURCES])
-        self.data["version"] = SCHEMA_VERSION
-        self.data["updated_at"] = _now()
-        if self.memory_path.exists():
-            try:
-                atomic_write_json(self.backup_path, _load(self.memory_path, self.backup_path), suffix=".fan-social.bak.tmp")
-            except Exception:
-                pass
-        atomic_write_json(self.memory_path, self.data, suffix=".fan-social.tmp")
+        with exclusive_file_lock(self.memory_path, timeout_seconds=10.0, stale_seconds=300):
+            latest = _load(self.memory_path, self.backup_path)
+            self.data = _merge_state(self._base_data, self.data, latest)
+            sources = self.data.setdefault("sources", {})
+            if len(sources) > MAX_SOURCES:
+                ranked = sorted(sources.items(), key=lambda kv: (_score(kv[1]), _int(kv[1].get("selected"))), reverse=True)
+                self.data["sources"] = dict(ranked[:MAX_SOURCES])
+            self.data["version"] = SCHEMA_VERSION
+            self.data["updated_at"] = _now()
+            if self.memory_path.exists():
+                try:
+                    atomic_write_json(self.backup_path, latest, suffix=".fan-social.bak.tmp")
+                except Exception:
+                    pass
+            atomic_write_json(self.memory_path, self.data, suffix=".fan-social.tmp")
+            self._base_data = copy.deepcopy(self.data)
 
     def report(self) -> dict:
         ranked = []
