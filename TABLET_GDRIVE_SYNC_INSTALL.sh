@@ -125,7 +125,7 @@ fi
 
 echo "[OK] GPT→Drive→태블릿 자동 동기화 설치/검증 완료"
 echo "     생산: 07:00 / 19:00 KST 검증 후 패키지 준비"
-echo "     태블릿: 08:00 / 20:00 (태블릿 현지시간)"
+echo "     주기: 12시간마다 1회 (08:00 / 20:00, 태블릿 현지시간)"
 echo "     Drive: ${REMOTE}:${REMOTE_ROOT}"
 echo "     부팅 선복구: $BOOT_RECOVERY_FILE"
 echo "     부팅 cron 복구: $BOOT_CRON_FILE"
