@@ -1,0 +1,46 @@
+name: Temporary v283 integrity regeneration
+
+on:
+  push:
+    branches:
+      - qa/ai-runtime-cache-boundary-v283
+    paths:
+      - ai_runtime_model_guard.py
+      - test_ai_runtime_model_guard_v269.py
+      - .github/workflows/temp-v283-integrity-regenerate.yml
+
+permissions:
+  contents: write
+
+jobs:
+  regenerate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97
+        with:
+          python-version: '3.x'
+      - name: Verify v283 regression before manifest generation
+        run: |
+          python -m py_compile ai_runtime_model_guard.py test_ai_runtime_model_guard_v269.py
+          python -m unittest -v test_ai_runtime_model_guard_v269.py
+          python ai_runtime_model_guard.py
+      - name: Regenerate final-tree integrity manifest and remove temporary workflow
+        shell: bash
+        run: |
+          set -euo pipefail
+          git rm .github/workflows/temp-v283-integrity-regenerate.yml
+          python fault_injection_healing.py --manifest
+          git diff --check
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add integrity_manifest.json .github/workflows/temp-v283-integrity-regenerate.yml
+          if git diff --cached --quiet; then
+            echo 'No manifest update required.'
+            exit 0
+          fi
+          git commit -m 'Regenerate integrity manifest for AI cache guard v283'
+          git push origin HEAD:qa/ai-runtime-cache-boundary-v283
