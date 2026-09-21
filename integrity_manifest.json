@@ -1,7 +1,7 @@
 {
   "version": 2,
   "engine": "v109-card-identity-ocr-learning",
-  "generated_at": "2026-09-21T23:00:12+00:00",
+  "generated_at": "2026-09-21T23:44:11+00:00",
   "files": {
     ".github/workflows/ai-auto-tracker-guard.yml": {
       "sha256": "636e750bd6d2619cce75d4bce2d68051eaa2209ae763bc8ec523ed73476728a6",
@@ -820,8 +820,8 @@
       "bytes": 3613
     },
     "ai_runtime_model_guard.py": {
-      "sha256": "947e4a0999c70e89af9576a9befd439dc6453f01426d9d6dd4ea9c5a6063ee47",
-      "bytes": 12963
+      "sha256": "f326a6cc2a7518f2d0d482d13f05e6c3a9fee162d990f9afce6d5c964e311fca",
+      "bytes": 14054
     },
     "apply_auto_market_center_patch.py": {
       "sha256": "c26491b61f522c8fe5ce21acbfe642020465af1bbc3d4ebba7742b9b50c3cb82",
@@ -2324,8 +2324,8 @@
       "bytes": 7705
     },
     "test_ai_runtime_model_guard_v269.py": {
-      "sha256": "af28b59fc12e9ef17e04acedb0ef636cb408d4bb6b99282022fe32da0a0ad017",
-      "bytes": 5247
+      "sha256": "fa14ce87cdf50ed907e90e5e6bf4983bd55b65f413f6b0ac35cacd95d8504732",
+      "bytes": 8463
     },
     "test_ai_score_freshness_v270.py": {
       "sha256": "60a0304d742f6e744fa44a49099fbc00e5be4695cc98a1144e40a2591f69fcb4",
