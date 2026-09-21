@@ -6,6 +6,7 @@ import unittest
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from types import SimpleNamespace
+from unittest import mock
 
 import ai_runtime_model_guard as guard
 import collection_runtime_health as health
@@ -13,6 +14,16 @@ import tablet_runtime_manifest as manifest
 
 
 class AIRuntimeModelGuardV269Tests(unittest.TestCase):
+    def setUp(self):
+        guard._CACHE_SIGNATURE = None
+        guard._CACHE_VALUE = None
+        guard._CACHE_EXPIRES_AT = None
+
+    def tearDown(self):
+        guard._CACHE_SIGNATURE = None
+        guard._CACHE_VALUE = None
+        guard._CACHE_EXPIRES_AT = None
+
     def _module(self, root: Path, *, model: dict | None, report: dict | None = None):
         model_path = root / "model.json"
         report_path = root / "report.json"
@@ -92,6 +103,20 @@ class AIRuntimeModelGuardV269Tests(unittest.TestCase):
             self.assertEqual("broken", row["status"])
             self.assertEqual("model_nonfinite_or_oversized", row["reason"])
 
+    def test_validator_exception_fails_closed(self):
+        now = datetime(2026, 9, 20, tzinfo=timezone.utc)
+        with tempfile.TemporaryDirectory() as tmp:
+            module = self._module(Path(tmp), model=self._model(now), report={"active": True})
+
+            def broken_validator(_payload):
+                raise RuntimeError("validator exploded")
+
+            module._validate_model_payload = broken_validator
+            row = guard.inspect_module(module, "query_strategy", now=now)
+            self.assertEqual("broken", row["status"])
+            self.assertFalse(row["healthy"])
+            self.assertEqual("module_model_validation_error", row["reason"])
+
     def test_inactive_model_is_not_a_runtime_failure(self):
         now = datetime(2026, 9, 20, tzinfo=timezone.utc)
         with tempfile.TemporaryDirectory() as tmp:
@@ -100,6 +125,50 @@ class AIRuntimeModelGuardV269Tests(unittest.TestCase):
             self.assertEqual("inactive", row["status"])
             self.assertTrue(row["healthy"])
             self.assertEqual("insufficient_labels", row["reason"])
+
+    def test_cache_expires_at_model_freshness_boundary(self):
+        base = datetime(2026, 9, 20, tzinfo=timezone.utc)
+        trained = base - timedelta(seconds=guard.MAX_ACTIVE_MODEL_AGE_SECONDS - 2)
+        with tempfile.TemporaryDirectory() as tmp:
+            module = self._module(Path(tmp), model=self._model(trained), report={"active": True})
+            modules = ([('query_strategy', module)], [])
+            with mock.patch.object(guard, "_load_modules", return_value=modules), mock.patch.object(
+                guard,
+                "_utc_now",
+                side_effect=[base, base + timedelta(seconds=1), base + timedelta(seconds=3)],
+            ):
+                first = guard.public_status()
+                cached = guard.public_status()
+                expired = guard.public_status()
+
+            self.assertEqual("active", first["status"])
+            self.assertFalse(first["cache_hit"])
+            self.assertEqual("active", cached["status"])
+            self.assertTrue(cached["cache_hit"])
+            self.assertEqual("degraded", expired["status"])
+            self.assertFalse(expired["cache_hit"])
+            self.assertEqual(
+                "active_model_stale",
+                expired["models"]["query_strategy"]["reason"],
+            )
+
+    def test_cached_payload_isolation_blocks_caller_mutation(self):
+        now = datetime(2026, 9, 20, tzinfo=timezone.utc)
+        with tempfile.TemporaryDirectory() as tmp:
+            module = self._module(Path(tmp), model=self._model(now), report={"active": True})
+            modules = ([('query_strategy', module)], [])
+            with mock.patch.object(guard, "_load_modules", return_value=modules), mock.patch.object(
+                guard,
+                "_utc_now",
+                side_effect=[now, now + timedelta(seconds=1)],
+            ):
+                first = guard.public_status()
+                first["models"]["query_strategy"]["status"] = "broken"
+                second = guard.public_status()
+
+            self.assertTrue(second["cache_hit"])
+            self.assertEqual("active", second["status"])
+            self.assertEqual("active", second["models"]["query_strategy"]["status"])
 
     def test_runtime_wiring_is_fail_closed_but_ai_is_fail_soft(self):
         self.assertIn("ai_runtime_model_guard.py", manifest.ACTIVE_RUNTIME_FILES)
