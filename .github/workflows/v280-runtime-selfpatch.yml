@@ -52,19 +52,51 @@ jobs:
             test_verified_neural_self_refine_v210.py
 
       - name: Run runtime contract verification
-        run: python verify_current_runtime.py
-
-      - name: Run isolated root regression
+        id: runtime
+        continue-on-error: true
         shell: bash
         run: |
-          set -euo pipefail
+          set -o pipefail
+          python verify_current_runtime.py 2>&1 | tee v280_runtime_verify.log
+
+      - name: Run isolated root regression
+        id: root_tests
+        continue-on-error: true
+        shell: bash
+        run: |
+          set -o pipefail
           count=0
+          : > v280_root_regression.log
           for file in test_*.py; do
-            python -m unittest -q "$file"
+            echo "=== $file ===" | tee -a v280_root_regression.log
+            python -m unittest -q "$file" 2>&1 | tee -a v280_root_regression.log || exit 1
             count=$((count+1))
           done
-          echo "isolated_root_test_modules=$count"
+          echo "isolated_root_test_modules=$count" | tee -a v280_root_regression.log
           test "$count" -gt 100
+
+      - name: Upload v280 diagnostics
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: v280-runtime-diagnostics
+          path: |
+            v280_runtime_verify.log
+            v280_root_regression.log
+          if-no-files-found: warn
+          retention-days: 3
+
+      - name: Gate runtime and root regression
+        if: always()
+        shell: bash
+        env:
+          RUNTIME_OUTCOME: ${{ steps.runtime.outcome }}
+          ROOT_OUTCOME: ${{ steps.root_tests.outcome }}
+        run: |
+          set -euo pipefail
+          echo "runtime=$RUNTIME_OUTCOME root=$ROOT_OUTCOME"
+          test "$RUNTIME_OUTCOME" = success
+          test "$ROOT_OUTCOME" = success
 
       - name: Ensure generated diff is scoped
         shell: bash
@@ -84,6 +116,7 @@ jobs:
           set -euo pipefail
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          rm -f v280_runtime_verify.log v280_root_regression.log
           git rm apply_learning_state_concurrency_v280.py .github/workflows/v280-runtime-selfpatch.yml
           git add \
             event_gap_learning.py \
