@@ -50,6 +50,9 @@ csp_hash_hardening.py
 index.html
 feature_category_nav.css
 feature_category_nav.js
+ui_app_shell_v272.css
+ui_app_shell_v272.js
+test_ui_app_shell_v272.py
 GRAPHIFY_UPDATE.sh
 GRAPHIFY_SELF_HEAL.py
 GRAPHIFY_AUDIT.py
@@ -323,8 +326,14 @@ fi
 grep -Fq "OFFICIAL_HTTPS='https://github.com/wlghks24/-tcg-grader.git'" ANDROID_RECOVER_UPDATE.sh
 grep -Fq 'feature_category_nav.css' index.html
 grep -Fq 'feature_category_nav.js' index.html
+grep -Fq 'ui_app_shell_v272.css?v=272' index.html
+grep -Fq 'ui_app_shell_v272.js?v=272' index.html
 grep -Fq "'feature_category_nav.css'" tcg_updater.py
 grep -Fq "'feature_category_nav.js'" tcg_updater.py
+grep -Fq "'ui_app_shell_v272.css'" tcg_updater.py
+grep -Fq "'ui_app_shell_v272.js'" tcg_updater.py
+node --check ui_app_shell_v272.js >/dev/null
+python -m unittest -v test_ui_app_shell_v272.py >/dev/null
 grep -Fq "script-src 'self' 'sha256-" index.html
 if grep -F "script-src 'self' 'unsafe-inline'" index.html >/dev/null; then
   echo "[오류] script-src에 unsafe-inline이 다시 활성화되었습니다."

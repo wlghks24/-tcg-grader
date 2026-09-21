@@ -87,6 +87,7 @@ input[type=range]{width:100%}
 <link rel="stylesheet" href="ui_polish_v121.css?v=121">
 <link rel="stylesheet" href="ui_tablet_refine_v122.css?v=122">
 <link rel="stylesheet" href="feature_category_nav.css?v=206">
+<link rel="stylesheet" href="ui_app_shell_v272.css?v=272">
 </head>
 <body>
 <main class="app">
@@ -2633,6 +2634,7 @@ document.querySelectorAll(".update-panel-close").forEach(btn=>btn.addEventListen
  S('startAutoCamera').onclick=start;S('stopAutoCamera').onclick=()=>stopCamera('카메라를 중지했습니다. 촬영을 다시 시작하거나 사진 파일을 선택할 수 있습니다.');S('manualCapture').onclick=()=>capture(frameMetric(),true);S('quickPriceSearch').onclick=quickPrice;S('quickCardQuery').addEventListener('keydown',e=>{if(e.key==='Enter')quickPrice()});window.addEventListener('pagehide',()=>stopCamera('',true));document.addEventListener('visibilitychange',()=>{if(document.hidden&&stream)stopCamera('앱이 백그라운드로 이동해 카메라를 안전하게 중지했습니다.')});window.tcgCameraRuntime=Object.freeze({version:'v104-camera-shake-stability',stop:()=>stopCamera('카메라를 중지했습니다.'),state:()=>({active:!!stream,stage,capturing,stableFrames:stable,frontReady:!!S('front')._tcgCapturedFile,backReady:!!S('back')._tcgCapturedFile})});
 })();
 </script><script src="feature_category_nav.js?v=206"></script>
+<script src="ui_app_shell_v272.js?v=272"></script>
 <script src="card_identity_recognition.js?v=207"></script>
 <script src="inventory_lookup.js"></script>
 <script src="grade_market_flow.js"></script>
