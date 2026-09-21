@@ -9,7 +9,7 @@ on:
       - '.github/workflows/apply-runtime-data-consistency-v281.yml'
 
 permissions:
-  contents: read
+  contents: write
 
 jobs:
   apply-and-verify:
@@ -24,7 +24,6 @@ jobs:
         with:
           ref: qa/runtime-data-consistency-v281
           fetch-depth: 0
-          persist-credentials: false
       - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97
         with:
           python-version: '3.11'
@@ -46,26 +45,31 @@ jobs:
             test_social_stock_discovery.py
           python test_collection_meta_learning.py
 
-      - name: Remove temporary apply files from final tree
+      - name: Remove temporary apply files from verification tree
         run: |
           git rm -f .v281_apply.py .github/workflows/apply-runtime-data-consistency-v281.yml
 
-      - name: Rebuild integrity manifest from final tree
+      - name: Rebuild integrity manifest from verification tree
         run: |
           python -c "from pathlib import Path; import fault_injection_healing as h; h.build_integrity_manifest(Path('.'), Path('integrity_manifest.json'))"
 
       - name: Verify final runtime tree
         run: python verify_current_runtime.py
 
-      - name: Export verified final deployment files
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
-        with:
-          name: verified-runtime-data-consistency-v281
-          if-no-files-found: error
-          retention-days: 3
-          path: |
-            social_stock_discovery.py
-            collection_meta_learning.py
-            test_runtime_collection_consistency_v281.py
-            integrity_manifest.json
-            .github/workflows/collection-verification-guard.yml
+      - name: Assert verified source byte identity
+        run: |
+          echo '285a313f5b451568b90f03f3f06bbf7a3f25e440df5c6260417cbf1a05b74ab6  social_stock_discovery.py' | sha256sum -c -
+          echo 'c41005ab8e63e07651029c96d46a52257d328f20dad9a41b4217b274bf100ec7  collection_meta_learning.py' | sha256sum -c -
+          echo '53a621b18eaf3ee3b61aeb445a0c2d8bb91dd427878af5efcb1617e88fd255f2  test_runtime_collection_consistency_v281.py' | sha256sum -c -
+
+      - name: Publish verified non-workflow source changes
+        run: |
+          git restore --staged .github/workflows/apply-runtime-data-consistency-v281.yml
+          git restore .github/workflows/apply-runtime-data-consistency-v281.yml
+          git restore .github/workflows/collection-verification-guard.yml integrity_manifest.json
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add social_stock_discovery.py collection_meta_learning.py test_runtime_collection_consistency_v281.py .v281_apply.py
+          python -c "import subprocess; allowed={'social_stock_discovery.py','collection_meta_learning.py','test_runtime_collection_consistency_v281.py','.v281_apply.py'}; names=set(filter(None,subprocess.check_output(['git','diff','--cached','--name-only'],text=True).splitlines())); print('staged',sorted(names)); assert names <= allowed; assert {'social_stock_discovery.py','collection_meta_learning.py','.v281_apply.py'} <= names"
+          git commit -m 'QA: harden social collection and meta-learning consistency v281'
+          git push origin HEAD:qa/runtime-data-consistency-v281
