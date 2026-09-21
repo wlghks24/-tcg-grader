@@ -28,13 +28,26 @@ if ! command -v crond >/dev/null 2>&1; then
 fi
 
 mkdir -p "$STATE" "$BOOT_DIR"
-for file in TABLET_GDRIVE_SYNC.sh tablet_gdrive_sync.py tablet_gdrive_sync_hardening.py; do
+# Keep this list aligned with TABLET_GDRIVE_SYNC.sh and the v273 runtime import
+# chain. The old installer could report success even when the performance or
+# contextual layer was missing, which would only fail later at 08:00/20:00.
+for file in \
+  TABLET_GDRIVE_SYNC.sh \
+  tablet_gdrive_sync.py \
+  tablet_gdrive_sync_hardening.py \
+  tablet_gdrive_sync_hardening_contextual.py \
+  tablet_gdrive_sync_perf_v262.py; do
   if [ ! -s "$REPO/$file" ]; then
     echo "[오류] 필수 동기화 파일 누락: $file"
     exit 2
   fi
 done
-chmod +x "$REPO/TABLET_GDRIVE_SYNC.sh" "$REPO/tablet_gdrive_sync.py" "$REPO/tablet_gdrive_sync_hardening.py"
+chmod +x \
+  "$REPO/TABLET_GDRIVE_SYNC.sh" \
+  "$REPO/tablet_gdrive_sync.py" \
+  "$REPO/tablet_gdrive_sync_hardening.py" \
+  "$REPO/tablet_gdrive_sync_hardening_contextual.py" \
+  "$REPO/tablet_gdrive_sync_perf_v262.py"
 
 if ! rclone listremotes 2>/dev/null | grep -Fxq "${REMOTE}:"; then
   cat <<EOF
@@ -61,8 +74,14 @@ if ! rclone lsf "${REMOTE}:${REMOTE_ROOT}" --dirs-only --max-depth 1 >/dev/null 
   echo "[오류] ${REMOTE}:${REMOTE_ROOT}에 접근할 수 없습니다. rclone 인증/권한을 확인하세요."
   exit 4
 fi
+for subdir in to_tablet receipts; do
+  if ! rclone lsf "${REMOTE}:${REMOTE_ROOT}/${subdir}" --max-depth 1 >/dev/null 2>&1; then
+    echo "[오류] 필수 Drive 경로에 접근할 수 없습니다: ${REMOTE}:${REMOTE_ROOT}/${subdir}"
+    exit 4
+  fi
+done
 
-# GPT의 07:00 KST 검증 이후 하루 2회만 확인합니다.
+# GPT의 07:00 / 19:00 KST 검증 이후 각각 1시간 뒤 확인합니다.
 # cron은 태블릿 현지시간을 사용하므로 한국시간 태블릿에서는 08:00 / 20:00입니다.
 CRON_LINE="0 8,20 * * * cd '$REPO' && bash '$REPO/TABLET_GDRIVE_SYNC.sh' >> '$STATE/cron.log' 2>&1"
 ( crontab -l 2>/dev/null | grep -Fv "TABLET_GDRIVE_SYNC.sh" || true
@@ -87,9 +106,17 @@ EOF
 chmod +x "$BOOT_CRON_FILE"
 
 pgrep -x crond >/dev/null 2>&1 || crond
+if ! pgrep -x crond >/dev/null 2>&1; then
+  echo "[오류] crond 시작 확인에 실패했습니다. 08:00/20:00 자동 동기화를 보장할 수 없습니다."
+  exit 6
+fi
 
 # 설치 자체가 08:00/20:00 외 추가 동기화를 만들지 않도록 기본값은 검사만 수행합니다.
-python -m py_compile "$REPO/tablet_gdrive_sync.py" "$REPO/tablet_gdrive_sync_hardening.py"
+python -m py_compile \
+  "$REPO/tablet_gdrive_sync.py" \
+  "$REPO/tablet_gdrive_sync_hardening.py" \
+  "$REPO/tablet_gdrive_sync_hardening_contextual.py" \
+  "$REPO/tablet_gdrive_sync_perf_v262.py"
 bash -n "$REPO/TABLET_GDRIVE_SYNC.sh"
 if ! crontab -l 2>/dev/null | grep -Fqx "$CRON_LINE"; then
   echo "[오류] 12시간 cron 등록 확인 실패"
@@ -97,7 +124,8 @@ if ! crontab -l 2>/dev/null | grep -Fqx "$CRON_LINE"; then
 fi
 
 echo "[OK] GPT→Drive→태블릿 자동 동기화 설치/검증 완료"
-echo "     주기: 12시간마다 1회 (08:00 / 20:00, 태블릿 현지시간)"
+echo "     생산: 07:00 / 19:00 KST 검증 후 패키지 준비"
+echo "     태블릿: 08:00 / 20:00 (태블릿 현지시간)"
 echo "     Drive: ${REMOTE}:${REMOTE_ROOT}"
 echo "     부팅 선복구: $BOOT_RECOVERY_FILE"
 echo "     부팅 cron 복구: $BOOT_CRON_FILE"
