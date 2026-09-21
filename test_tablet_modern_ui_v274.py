@@ -51,8 +51,20 @@ class TabletModernUIV274Tests(unittest.TestCase):
     def test_navigation_information_is_not_hidden_by_default(self) -> None:
         self.assertIn(".feature-category-grid", self.css)
         self.assertIn(".feature-shortcut-grid", self.css)
-        self.assertNotIn("display:none", self.css)
         self.assertIn("아래 기능 중 하나를 선택하세요", self.css)
+        # Only information-bearing containers must remain visible. Browser-native
+        # decoration such as ::-webkit-details-marker may legitimately be hidden.
+        for selector in (
+            r"\.feature-category-grid",
+            r"\.feature-shortcut-grid",
+            r"\.tablet-manager-hub",
+            r"\.tablet-manager-grid",
+        ):
+            self.assertNotRegex(
+                self.css,
+                selector + r"\s*\{[^}]*display\s*:\s*none",
+                msg=f"navigation container is hidden by default: {selector}",
+            )
 
 
 if __name__ == "__main__":
