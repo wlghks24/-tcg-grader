@@ -1,0 +1,63 @@
+name: Apply runtime data consistency v281
+
+on:
+  push:
+    branches:
+      - qa/runtime-data-consistency-v281
+    paths:
+      - '.v281_apply.py'
+      - '.github/workflows/apply-runtime-data-consistency-v281.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  apply-and-verify:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    env:
+      PYTHONPATH: ${{ github.workspace }}
+      PYTHONDONTWRITEBYTECODE: '1'
+      PYTHONUNBUFFERED: '1'
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          ref: qa/runtime-data-consistency-v281
+          fetch-depth: 0
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97
+        with:
+          python-version: '3.11'
+
+      - name: Apply v281 hardening
+        run: python .v281_apply.py
+
+      - name: Compile changed runtime modules
+        run: |
+          python -m py_compile social_stock_discovery.py collection_meta_learning.py test_runtime_collection_consistency_v281.py
+
+      - name: Run focused runtime and concurrency regression
+        run: |
+          python -m unittest -v \
+            test_runtime_collection_consistency_v281.py \
+            test_social_stock_discovery.py
+          python test_collection_meta_learning.py
+
+      - name: Remove temporary apply files
+        run: |
+          rm -f .v281_apply.py .github/workflows/apply-runtime-data-consistency-v281.yml
+
+      - name: Rebuild integrity manifest from final tree
+        run: |
+          python -c "from pathlib import Path; import fault_injection_healing as h; h.build_integrity_manifest(Path('.'), Path('integrity_manifest.json'))"
+
+      - name: Verify final runtime tree
+        run: python verify_current_runtime.py
+
+      - name: Commit verified source changes only
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add social_stock_discovery.py collection_meta_learning.py test_runtime_collection_consistency_v281.py integrity_manifest.json .github/workflows/collection-verification-guard.yml .v281_apply.py .github/workflows/apply-runtime-data-consistency-v281.yml
+          python -c "import subprocess; allowed={'social_stock_discovery.py','collection_meta_learning.py','test_runtime_collection_consistency_v281.py','integrity_manifest.json','.github/workflows/collection-verification-guard.yml','.v281_apply.py','.github/workflows/apply-runtime-data-consistency-v281.yml'}; names=set(filter(None,subprocess.check_output(['git','diff','--cached','--name-only'],text=True).splitlines())); extra=names-allowed; print('staged',sorted(names)); assert not extra, f'unexpected staged files: {sorted(extra)}'"
+          git commit -m 'QA: harden social collection and meta-learning consistency v281'
+          git push origin HEAD:qa/runtime-data-consistency-v281
