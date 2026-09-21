@@ -107,8 +107,9 @@ class AIRuntimeModelGuardV269Tests(unittest.TestCase):
         self.assertIsInstance(status, dict)
         self.assertIn(status.get("status"), {"inactive", "active", "degraded", "broken"})
         src = Path(health.__file__).read_text(encoding="utf-8")
-        self.assertIn('"ai_models":ai_models', src)
-        self.assertIn('if status=="ok" and ai_attention:', src)
+        compact_src = "".join(src.split())
+        self.assertIn('"ai_models":ai_models', compact_src)
+        self.assertIn('ifstatus=="ok"andai_attention:', compact_src)
 
 
 if __name__ == "__main__":
