@@ -635,7 +635,7 @@ def _load_model(path: Path = MODEL_PATH) -> dict[str, Any] | None:
     return _load_model_with_source(path)[0]
 
 
-def train_if_ready(
+def _train_if_ready_unlocked(
     *,
     labels_path: Path = LABELS_PATH,
     model_path: Path = MODEL_PATH,
@@ -812,6 +812,36 @@ def train_if_ready(
             })
     atomic_write_json(report_path, status, suffix=".collection-job-neural-report.tmp")
     return status
+
+
+def train_if_ready(
+    *,
+    labels_path: Path = LABELS_PATH,
+    model_path: Path = MODEL_PATH,
+    report_path: Path = REPORT_PATH,
+    force: bool = False,
+) -> dict[str, Any]:
+    """Serialize job-model training across server/tablet/manual processes."""
+    try:
+        with exclusive_file_lock(model_path, timeout_seconds=3.0, stale_seconds=1800):
+            return _train_if_ready_unlocked(
+                labels_path=labels_path,
+                model_path=model_path,
+                report_path=report_path,
+                force=force,
+            )
+    except TimeoutError:
+        labels = _load_labels(labels_path).get("labels", [])
+        current = _load_model(model_path)
+        return {
+            "schema": SCHEMA,
+            "feature_fingerprint": FEATURE_FINGERPRINT,
+            "updated_at": _now(),
+            "active": current is not None,
+            "label_count": len(labels),
+            "reason": "training_lock_busy",
+            "safety": SAFETY,
+        }
 
 
 def score_job(

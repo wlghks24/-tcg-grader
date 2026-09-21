@@ -129,6 +129,18 @@ def _safe_float(value: Any, default: float = 0.0) -> float:
     return number
 
 
+def _safe_int(value: Any, default: int = 0) -> int:
+    if isinstance(value, bool):
+        return default
+    try:
+        number = float(value)
+    except (TypeError, ValueError, OverflowError):
+        return default
+    if not math.isfinite(number):
+        return default
+    return max(-1_000_000, min(1_000_000, int(number)))
+
+
 def _clip01(value: Any) -> float:
     return max(0.0, min(1.0, _safe_float(value, 0.0)))
 
@@ -323,8 +335,8 @@ def observe_search_outcome(
     material = [row for row in rows if isinstance(row, dict)]
     if str(error or "").strip():
         return {"eligible": False, "added": 0, "reason": "error_observation_excluded"}
-    official_count = max(0, int(official_count or 0))
-    relevant_count = max(0, int(relevant_count or 0))
+    official_count = max(0, _safe_int(official_count, 0))
+    relevant_count = max(0, _safe_int(relevant_count, 0))
     if official_count > 0:
         outcome = True
         evidence = "official_result_observed"
@@ -584,10 +596,10 @@ def _validate_model_payload(raw: object, *, require_active: bool = True) -> bool
         return False
     if require_active and raw.get("active") is not True:
         return False
-    hidden = int(raw.get("hidden") or 0)
-    if hidden not in HIDDEN_SIZES or int(raw.get("feature_count") or 0) != FEATURE_COUNT:
+    hidden = _safe_int(raw.get("hidden"), 0)
+    if hidden not in HIDDEN_SIZES or _safe_int(raw.get("feature_count"), 0) != FEATURE_COUNT:
         return False
-    if int(raw.get("label_count") or 0) < MIN_INDEPENDENT_LABELS:
+    if _safe_int(raw.get("label_count"), 0) < MIN_INDEPENDENT_LABELS:
         return False
     w1 = raw.get("w1")
     if not isinstance(w1, list) or len(w1) != hidden:
@@ -632,9 +644,9 @@ def _model_file_signature(path: Path) -> tuple[str, int, int, int, bool]:
 
 
 def _runtime_model_reason(model: dict[str, Any], *, now: datetime | None = None) -> str | None:
-    if int(model.get("protocol_version") or 0) != PROTOCOL_VERSION:
+    if _safe_int(model.get("protocol_version"), 0) != PROTOCOL_VERSION:
         return "protocol_version_mismatch"
-    if int(model.get("label_count") or 0) < MIN_INDEPENDENT_LABELS:
+    if _safe_int(model.get("label_count"), 0) < MIN_INDEPENDENT_LABELS:
         return "label_count_below_activation_gate"
     text = str(model.get("trained_at") or "").strip()
     try:
@@ -693,7 +705,7 @@ def _model_gate(metrics: dict[str, Any], baseline: dict[str, Any]) -> tuple[bool
     )
 
 
-def train_if_ready(
+def _train_if_ready_unlocked(
     *,
     labels_path: Path = LABELS_PATH,
     model_path: Path = MODEL_PATH,
@@ -705,7 +717,7 @@ def train_if_ready(
     positives = sum(bool(row["outcome"]) for row in labels)
     negatives = len(labels) - positives
     existing, model_source, model_recovered = _load_model_with_source(model_path)
-    existing_count = int(existing.get("label_count") or 0) if existing else 0
+    existing_count = _safe_int(existing.get("label_count"), 0) if existing else 0
     status: dict[str, Any] = {
         "schema": SCHEMA,
         "feature_fingerprint": FEATURE_FINGERPRINT,
@@ -897,6 +909,36 @@ def train_if_ready(
 
     atomic_write_json(report_path, status, suffix=".collection-neural-report.tmp")
     return status
+def train_if_ready(
+    *,
+    labels_path: Path = LABELS_PATH,
+    model_path: Path = MODEL_PATH,
+    report_path: Path = REPORT_PATH,
+    force: bool = False,
+) -> dict[str, Any]:
+    """Serialize model training so an older label snapshot cannot overwrite a newer model."""
+    try:
+        with exclusive_file_lock(model_path, timeout_seconds=3.0, stale_seconds=1800):
+            return _train_if_ready_unlocked(
+                labels_path=labels_path,
+                model_path=model_path,
+                report_path=report_path,
+                force=force,
+            )
+    except TimeoutError:
+        labels = _load_labels(labels_path).get("labels", [])
+        current = _load_model(model_path)
+        return {
+            "schema": SCHEMA,
+            "feature_fingerprint": FEATURE_FINGERPRINT,
+            "updated_at": _now(),
+            "active": current is not None,
+            "label_count": len(labels),
+            "reason": "training_lock_busy",
+            "safety": SAFETY,
+        }
+
+
 def score_query(
     row: dict[str, Any],
     *,

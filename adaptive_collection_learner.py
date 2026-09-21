@@ -19,6 +19,7 @@ Persistent learning goals
 """
 from __future__ import annotations
 
+import copy
 import datetime as dt
 import hashlib
 import json
@@ -29,7 +30,7 @@ import urllib.parse
 from pathlib import Path
 from typing import Iterable
 
-from safe_runtime import atomic_write_json, safe_read_text
+from safe_runtime import atomic_write_json, exclusive_file_lock, safe_read_text
 import collection_meta_learning
 import provider_health_learning
 import verified_collection_neural
@@ -241,6 +242,90 @@ def sanitize_memory(data: object) -> dict:
     return out
 
 
+_ADAPTIVE_COUNTER_FIELDS = (
+    "runs", "hits", "relevant", "official", "cross_checked", "errors", "empty",
+    "successes", "failures", "ignored_unverified_search_rows", "ignored_unverified_payload_rows",
+    "removed_unverified_hosts", "removed_unverified_terms",
+)
+
+
+def _adaptive_timestamp(row: object) -> str:
+    value = row if isinstance(row, dict) else {}
+    return str(value.get("last_seen") or "")
+
+
+def _merge_adaptive_row(base, local, disk):
+    base_row = base if isinstance(base, dict) else {}
+    local_row = local if isinstance(local, dict) else {}
+    disk_row = disk if isinstance(disk, dict) else {}
+    merged = copy.deepcopy(disk_row)
+    for field in _ADAPTIVE_COUNTER_FIELDS:
+        if field not in base_row and field not in local_row and field not in disk_row:
+            continue
+        delta = max(0, _bounded_int(local_row.get(field)) - _bounded_int(base_row.get(field)))
+        merged[field] = _bounded_int(disk_row.get(field)) + delta
+
+    if any(field in base_row or field in local_row or field in disk_row for field in ("quality", "score")):
+        quality_delta = _bounded_float(local_row.get("quality")) - _bounded_float(base_row.get("quality"))
+        score_delta = _bounded_float(local_row.get("score")) - _bounded_float(base_row.get("score"))
+        if "quality" in base_row or "quality" in local_row or "quality" in disk_row:
+            merged["quality"] = round(_bounded_float(disk_row.get("quality")) + quality_delta, 4)
+        if "score" in base_row or "score" in local_row or "score" in disk_row:
+            merged["score"] = round(_bounded_float(disk_row.get("score")) + score_delta, 4)
+
+    if local_row != base_row and _adaptive_timestamp(local_row) >= _adaptive_timestamp(disk_row):
+        for field, value in local_row.items():
+            if field not in _ADAPTIVE_COUNTER_FIELDS and field not in {"quality", "score"}:
+                merged[field] = copy.deepcopy(value)
+    return merged
+
+
+def _merge_adaptive_map(base, local, disk):
+    base_map = base if isinstance(base, dict) else {}
+    local_map = local if isinstance(local, dict) else {}
+    disk_map = disk if isinstance(disk, dict) else {}
+    out = copy.deepcopy(disk_map)
+    for key, row in local_map.items():
+        if isinstance(key, str) and isinstance(row, dict):
+            out[key] = _merge_adaptive_row(base_map.get(key), row, disk_map.get(key))
+    for key in set(base_map) - set(local_map):
+        if disk_map.get(key) == base_map.get(key):
+            out.pop(key, None)
+    return out
+
+
+def _merge_adaptive_seen(disk, local, limit):
+    out = []
+    for value in list(disk or []) + list(local or []):
+        item = str(value)[:80]
+        if item and item not in out:
+            out.append(item)
+    return out[-max(1, int(limit)):]
+
+
+def _merge_adaptive_state(base, local, disk):
+    base_data = sanitize_memory(base)
+    local_data = sanitize_memory(local)
+    disk_data = sanitize_memory(disk)
+    merged = copy.deepcopy(disk_data)
+    rotation_delta = max(0, _bounded_int(local_data.get("rotation")) - _bounded_int(base_data.get("rotation")))
+    merged["rotation"] = _bounded_int(disk_data.get("rotation")) + rotation_delta
+    for name in ("query_stats", "term_stats", "host_stats", "channel_stats"):
+        merged[name] = _merge_adaptive_map(base_data.get(name), local_data.get(name), disk_data.get(name))
+    base_totals = base_data.get("totals") if isinstance(base_data.get("totals"), dict) else {}
+    local_totals = local_data.get("totals") if isinstance(local_data.get("totals"), dict) else {}
+    disk_totals = disk_data.get("totals") if isinstance(disk_data.get("totals"), dict) else {}
+    merged["totals"] = {}
+    for field in ("searches", "results", "relevant", "official", "errors"):
+        delta = max(0, _bounded_int(local_totals.get(field)) - _bounded_int(base_totals.get(field)))
+        merged["totals"][field] = _bounded_int(disk_totals.get(field)) + delta
+    merged["feedback_seen"] = _merge_adaptive_seen(disk_data.get("feedback_seen"), local_data.get("feedback_seen"), 300)
+    merged["payload_seen"] = _merge_adaptive_seen(disk_data.get("payload_seen"), local_data.get("payload_seen"), MAX_PAYLOAD_SEEN)
+    merged["version"] = SCHEMA_VERSION
+    merged["updated_at"] = _now()
+    return sanitize_memory(merged)
+
+
 class AdaptiveCollectionLearner:
     def __init__(self, memory_path: Path | str = MEMORY, backup_path: Path | str | None = None, report_path: Path | str = REPORT):
         self.memory_path = Path(memory_path)
@@ -255,6 +340,7 @@ class AdaptiveCollectionLearner:
             self.neural_model_path = self.memory_path.parent / "VERIFIED_COLLECTION_NEURAL_MODEL.json"
             self.neural_report_path = self.memory_path.parent / "VERIFIED_COLLECTION_NEURAL_REPORT.json"
         self.memory = self._load()
+        self._base_memory = copy.deepcopy(self.memory)
 
     def _load(self) -> dict:
         for path in (self.memory_path, self.backup_path):
@@ -267,24 +353,20 @@ class AdaptiveCollectionLearner:
         return _fresh_memory()
 
     def save(self) -> None:
-        self.memory["version"] = SCHEMA_VERSION
-        self.memory["updated_at"] = _now()
-        self.memory = sanitize_memory(self.memory)
-        if self.memory_path.exists():
-            try:
-                old = json.loads(safe_read_text(self.memory_path))
-                if isinstance(old, dict) and isinstance(old.get("query_stats", {}), dict):
-                    atomic_write_json(self.backup_path, sanitize_memory(old), suffix=".learn.bak.tmp")
-            except (OSError, ValueError, TypeError, json.JSONDecodeError):
-                pass
-        atomic_write_json(self.memory_path, self.memory, suffix=".learn.tmp")
+        with exclusive_file_lock(self.memory_path, timeout_seconds=10.0, stale_seconds=300):
+            latest = self._load()
+            self.memory = _merge_adaptive_state(self._base_memory, self.memory, latest)
+            if self.memory_path.exists():
+                atomic_write_json(self.backup_path, latest, suffix=".learn.bak.tmp")
+            atomic_write_json(self.memory_path, self.memory, suffix=".learn.tmp")
+            self._base_memory = copy.deepcopy(self.memory)
         try:
             verified_collection_neural.train_if_ready(
                 labels_path=self.neural_labels_path,
                 model_path=self.neural_model_path,
                 report_path=self.neural_report_path,
             )
-        except (OSError, ValueError, TypeError, OverflowError, json.JSONDecodeError):
+        except (OSError, ValueError, TypeError, OverflowError, TimeoutError, json.JSONDecodeError):
             pass
         atomic_write_json(self.report_path, self.report(), suffix=".learn.report.tmp")
 
