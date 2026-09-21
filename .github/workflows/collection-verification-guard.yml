@@ -6,6 +6,9 @@ on:
   pull_request:
     paths:
       - 'safe_runtime.py'
+      - 'social_stock_discovery.py'
+      - 'collection_meta_learning.py'
+      - 'test_runtime_collection_consistency_v281.py'
       - 'test_safe_runtime_redirect_diagnostics_v253.py'
       - 'collection_job_contract.py'
       - 'test_collection_job_contract_v255.py'
@@ -61,6 +64,9 @@ on:
     branches: [main]
     paths:
       - 'safe_runtime.py'
+      - 'social_stock_discovery.py'
+      - 'collection_meta_learning.py'
+      - 'test_runtime_collection_consistency_v281.py'
       - 'test_safe_runtime_redirect_diagnostics_v253.py'
       - 'collection_job_contract.py'
       - 'test_collection_job_contract_v255.py'
