@@ -20,6 +20,23 @@ RUNTIME_BACKUP_DIR=".tcg_runtime_preserved"
 SELF_PATH="ANDROID_UPDATE_AND_START.sh"
 OFFICIAL_REPO="wlghks24/-tcg-grader"
 OFFICIAL_HTTPS="https://github.com/wlghks24/-tcg-grader.git"
+TARGET_MAIN_SHA="${TCG_TARGET_MAIN_SHA:-}"
+
+# Normal/manual updates still follow the latest origin/main. The Drive sync may
+# pin an exact manifest SHA so a merge that lands between package production and
+# tablet pickup cannot make code jump past the package and then fail exact-match.
+if [ -n "$TARGET_MAIN_SHA" ]; then
+  if [ "${#TARGET_MAIN_SHA}" -ne 40 ]; then
+    echo "[안전] TCG_TARGET_MAIN_SHA 길이가 올바르지 않아 업데이트를 중단합니다."
+    exit 2
+  fi
+  case "$TARGET_MAIN_SHA" in
+    *[!0-9a-f]*)
+      echo "[안전] TCG_TARGET_MAIN_SHA 형식이 올바르지 않아 업데이트를 중단합니다."
+      exit 2
+      ;;
+  esac
+fi
 
 is_official_origin() {
   case "${1:-}" in
@@ -215,6 +232,7 @@ if command -v git >/dev/null 2>&1 && git rev-parse --is-inside-work-tree >/dev/n
   branch="$(git branch --show-current 2>/dev/null || true)"
   can_update=1
   remote_ready=0
+  target_head=""
   runtime_dirty_paths=""
   bootstrap_dirty_paths=""
 
@@ -256,9 +274,40 @@ if command -v git >/dev/null 2>&1 && git rev-parse --is-inside-work-tree >/dev/n
   if [ "$can_update" = "1" ] && [ "$remote_ready" = "1" ]; then
     local_head_candidate="$(git rev-parse HEAD 2>/dev/null || true)"
     remote_head="$(git rev-parse origin/main 2>/dev/null || true)"
-    if [ -n "$remote_head" ] && [ "$local_head_candidate" != "$remote_head" ]; then
+    target_head="$remote_head"
+
+    if [ -n "$TARGET_MAIN_SHA" ]; then
+      # A shallow tablet may not yet have the manifest commit object even though
+      # it is an ancestor of the fetched main. Deepen only when required.
+      if ! git cat-file -e "${TARGET_MAIN_SHA}^{commit}" 2>/dev/null; then
+        git fetch --deepen=128 "$OFFICIAL_HTTPS" refs/heads/main:refs/remotes/origin/main >/dev/null 2>&1 || true
+        remote_head="$(git rev-parse origin/main 2>/dev/null || true)"
+      fi
+      if ! git cat-file -e "${TARGET_MAIN_SHA}^{commit}" 2>/dev/null; then
+        echo "[안전] manifest main SHA를 공식 main 이력에서 찾을 수 없습니다: $TARGET_MAIN_SHA"
+        can_update=0
+      elif [ -z "$remote_head" ] || ! git merge-base --is-ancestor "$TARGET_MAIN_SHA" "$remote_head"; then
+        echo "[안전] manifest main SHA가 현재 공식 main의 조상이 아닙니다. 강제/다운그레이드는 하지 않습니다."
+        can_update=0
+      elif [ -z "$local_head_candidate" ] || ! git merge-base --is-ancestor "$local_head_candidate" "$TARGET_MAIN_SHA"; then
+        echo "[안전] 현재 태블릿 HEAD에서 manifest SHA로 fast-forward할 수 없습니다. 강제 reset은 하지 않습니다."
+        can_update=0
+      else
+        target_head="$TARGET_MAIN_SHA"
+        echo "[OK] Drive manifest가 지정한 검증 main SHA로 업데이트 대상을 고정합니다: ${TARGET_MAIN_SHA}"
+      fi
+    fi
+
+    if [ "$can_update" = "1" ] && [ -n "$target_head" ] && [ "$local_head_candidate" != "$target_head" ]; then
       echo "[검증] 새 GitHub main을 임시 worktree에서 먼저 검사합니다..."
-      if verify_remote_candidate "$remote_head"; then
+      if [ -n "$TARGET_MAIN_SHA" ]; then
+        if verify_remote_candidate "$TARGET_MAIN_SHA"; then
+          echo "[OK] manifest 지정 GitHub main 사전검사 통과. 실제 태블릿 코드에 반영합니다."
+        else
+          echo "[안전] manifest 지정 GitHub main 사전검사 실패. 현재 정상 로컬 버전을 유지합니다."
+          can_update=0
+        fi
+      elif verify_remote_candidate "$remote_head"; then
         echo "[OK] 새 GitHub main 사전검사 통과. 실제 태블릿 코드에 반영합니다."
       else
         echo "[안전] 새 GitHub main 사전검사 실패. 현재 정상 로컬 버전을 유지하고 서버를 시작합니다."
@@ -300,8 +349,12 @@ EOF
   if [ "$can_update" = "1" ] && [ "$remote_ready" = "1" ]; then
     local_head="$(git rev-parse HEAD 2>/dev/null || true)"
     remote_head="$(git rev-parse origin/main 2>/dev/null || true)"
-    if [ -n "$remote_head" ] && [ "$local_head" != "$remote_head" ]; then
-      remote_short="$(git rev-parse --short=8 origin/main 2>/dev/null || echo remote)"
+    merge_head="$remote_head"
+    if [ -n "$TARGET_MAIN_SHA" ]; then
+      merge_head="$TARGET_MAIN_SHA"
+    fi
+    if [ -n "$merge_head" ] && [ "$local_head" != "$merge_head" ]; then
+      remote_short="$(git rev-parse --short=8 "$merge_head" 2>/dev/null || echo remote)"
 
       if [ -n "$runtime_dirty_paths" ]; then
         if ! backup_and_normalize_runtime "$runtime_dirty_paths" "$remote_short"; then
@@ -326,7 +379,15 @@ EOF
       fi
 
       if [ "$can_update" = "1" ]; then
-        if git merge --ff-only origin/main; then
+        merge_ok=0
+        if [ -n "$TARGET_MAIN_SHA" ]; then
+          if git merge --ff-only "$TARGET_MAIN_SHA"; then
+            merge_ok=1
+          fi
+        elif git merge --ff-only origin/main; then
+          merge_ok=1
+        fi
+        if [ "$merge_ok" = "1" ]; then
           updated=1
           if [ -n "$runtime_dirty_paths" ]; then
             echo "[OK] 충돌하던 추적 런타임 JSON은 보존본을 남기고 원격 검증자료를 적용했습니다."
@@ -347,7 +408,11 @@ EOF
         fi
       fi
     else
-      echo "[OK] 이미 최신 main입니다."
+      if [ -n "$TARGET_MAIN_SHA" ]; then
+        echo "[OK] 이미 manifest 지정 main입니다."
+      else
+        echo "[OK] 이미 최신 main입니다."
+      fi
     fi
   fi
 
@@ -363,6 +428,16 @@ fi
 if [ "$fatal_restore_error" = "1" ]; then
   echo "[오류] 로컬 런타임 자료를 안전하게 복원하지 못해 서버 시작을 중단합니다. 보존본을 확인하세요."
   exit 2
+fi
+
+# A manifest-pinned update is successful only at the exact requested commit.
+# Never report success after a skipped update, later tip merge, or local divergence.
+if [ -n "$TARGET_MAIN_SHA" ]; then
+  final_exact_head="$(git rev-parse HEAD 2>/dev/null || true)"
+  if [ "$final_exact_head" != "$TARGET_MAIN_SHA" ]; then
+    echo "[HOLD] manifest 지정 main SHA에 도달하지 못했습니다: local=${final_exact_head:-없음} expected=$TARGET_MAIN_SHA"
+    exit 2
+  fi
 fi
 
 if [ ! -s "START_TCG_UPDATER_ANDROID.sh" ]; then
