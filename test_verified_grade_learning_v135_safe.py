@@ -3,7 +3,9 @@
 import json
 import tempfile
 import unittest
+from contextlib import contextmanager
 from pathlib import Path
+from unittest import mock
 
 import verified_grade_learning_v135 as base
 import verified_grade_learning_v135_safe as safe
@@ -46,6 +48,7 @@ class VerifiedGradeLearningV135SafeTests(unittest.TestCase):
         status = safe.model_status()
         self.assertEqual(status['vision_profiles'], {})
         self.assertTrue(status['policy']['vision_residual_registry_gate_required'])
+        self.assertTrue(status['policy']['cross_process_training_transaction_lock'])
 
     def test_safe_rebuild_marks_registry_gate(self):
         base.VERIFIED_CERTS.write_text(json.dumps({'version': 1, 'certifications': []}), encoding='utf-8')
@@ -65,6 +68,32 @@ class VerifiedGradeLearningV135SafeTests(unittest.TestCase):
         }), encoding='utf-8')
         status = safe.model_status()
         self.assertIn('PSA|centered|surface-low|multi', status['vision_profiles'])
+
+    def test_submit_wraps_base_learning_in_process_lock_and_restores_patch(self):
+        events = []
+
+        @contextmanager
+        def fake_lock(path, **kwargs):
+            events.append(('enter', Path(path), dict(kwargs)))
+            yield
+            events.append(('exit', Path(path), dict(kwargs)))
+
+        import vision_calibration
+        original_train = vision_calibration.train_file
+
+        def fake_submit(payload, verifier=None):
+            self.assertEqual(events[0][0], 'enter')
+            self.assertEqual(events[0][1], base.LEARNING_STORE)
+            self.assertIsNot(vision_calibration.train_file, original_train)
+            return {'ok': False, 'accepted': False, 'reason': 'test'}
+
+        with mock.patch.object(safe, 'exclusive_file_lock', fake_lock), \
+             mock.patch.object(base, 'submit_verified_sample', fake_submit):
+            result = safe.submit_verified_sample({'test': True})
+
+        self.assertFalse(result['accepted'])
+        self.assertEqual([row[0] for row in events], ['enter', 'exit'])
+        self.assertIs(vision_calibration.train_file, original_train)
 
 
 if __name__ == '__main__':
