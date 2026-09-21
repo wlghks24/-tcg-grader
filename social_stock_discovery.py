@@ -11,7 +11,9 @@ from __future__ import annotations
 
 import datetime as dt
 import html
+import hashlib
 import json
+import math
 import re
 import time
 import urllib.error
@@ -20,7 +22,7 @@ import urllib.request
 from pathlib import Path
 from xml.etree import ElementTree as ET
 
-from safe_runtime import atomic_write_json, env_int, safe_read_text, safe_urlopen, validate_public_https_url
+from safe_runtime import atomic_write_json, env_int, exclusive_file_lock, safe_read_text, safe_urlopen, validate_public_https_url
 
 ROOT = Path(__file__).resolve().parent
 SOURCE_DB = ROOT / "social_stock_sources.json"
@@ -56,6 +58,48 @@ def _clean(value: object, limit: int = 500) -> str:
 
 def _norm(value: object) -> str:
     return re.sub(r"[^0-9a-z가-힣]+", "", str(value or "").lower())
+
+
+def _safe_int(value: object, default: int = 0, low: int | None = None, high: int | None = None) -> int:
+    try:
+        if isinstance(value, bool):
+            parsed = int(value)
+        elif isinstance(value, (int, float)):
+            if isinstance(value, float) and not math.isfinite(value):
+                raise ValueError("non-finite")
+            parsed = int(value)
+        else:
+            number = float(str(value).strip())
+            if not math.isfinite(number):
+                raise ValueError("non-finite")
+            parsed = int(number)
+    except (TypeError, ValueError, OverflowError):
+        parsed = int(default)
+    if low is not None:
+        parsed = max(low, parsed)
+    if high is not None:
+        parsed = min(high, parsed)
+    return parsed
+
+
+def _safe_float(value: object, default: float = 0.0, low: float | None = None, high: float | None = None) -> float:
+    try:
+        parsed = float(value)
+        if not math.isfinite(parsed):
+            raise ValueError("non-finite")
+    except (TypeError, ValueError, OverflowError):
+        parsed = float(default)
+    if low is not None:
+        parsed = max(low, parsed)
+    if high is not None:
+        parsed = min(high, parsed)
+    return parsed
+
+
+def _stable_candidate_id(source: dict, text: str, status: str) -> str:
+    username = str(source.get("username") or source.get("id") or "unknown")
+    digest = hashlib.sha256(f"{username}|{_norm(text)}|{status}".encode("utf-8")).hexdigest()[:16]
+    return f"auto-{username}-{digest}"
 
 
 def _host(url: str) -> str:
@@ -126,8 +170,8 @@ def _age_hours(row: dict, now: dt.datetime | None = None) -> float:
 def age_adjusted_score(row: dict, now: dt.datetime | None = None) -> tuple[int, bool]:
     """Decay social reports quickly; official lookup remains a separate system."""
     age = _age_hours(row, now)
-    base = max(5, min(90, int(row.get("score") or 50)))
-    ttl = max(6, min(72, int(row.get("ttl_hours") or 24)))
+    base = _safe_int(row.get("score"), 50, 5, 90)
+    ttl = _safe_int(row.get("ttl_hours"), 24, 6, 72)
     if age <= ttl:
         return base, False
     if age <= ttl * 2:
@@ -200,9 +244,9 @@ def _learning() -> dict:
 
 def _source_priority(source: dict, learning: dict) -> tuple[float, str]:
     row = learning.get("sources", {}).get(str(source.get("username")), {})
-    runs = max(0, int(row.get("runs") or 0))
-    accepted = max(0, int(row.get("accepted") or 0))
-    errors = max(0, int(row.get("errors") or 0))
+    runs = _safe_int(row.get("runs"), 0, 0)
+    accepted = _safe_int(row.get("accepted"), 0, 0)
+    errors = _safe_int(row.get("errors"), 0, 0)
     score = (accepted + 1.0) / (runs + 2.0) - min(0.35, errors * 0.03)
     return (-score, str(source.get("username") or ""))
 
@@ -249,7 +293,7 @@ def _candidate_from_result(raw: dict, source: dict) -> dict | None:
     if _host(str(raw.get("url") or "")) in PUBLIC_SOCIAL_HOSTS:
         score += 5
     row = {
-        "id": f"auto-{source.get('username')}-{abs(hash((_norm(text), status))) % 10**10}",
+        "id": _stable_candidate_id(source, text, status),
         "game": source.get("game") or "Pokemon",
         "region": source.get("region") or "KR",
         "source_platform": source.get("platform") or "instagram",
@@ -272,7 +316,7 @@ def _candidate_from_result(raw: dict, source: dict) -> dict | None:
         "realtime_stock": False,
         "confidence": round(min(0.78, score / 100.0), 2),
         "score": min(78, score),
-        "ttl_hours": int(source.get("ttl_hours") or 24),
+        "ttl_hours": _safe_int(source.get("ttl_hours"), 24, 6, 72),
         "provider": raw.get("provider"),
         "signals": ["SNS 재고제보", status_label, "공식 재고 재확인 필요"],
     }
@@ -309,8 +353,8 @@ def _dedupe(rows: list[dict]) -> list[dict]:
             values = [x for x in (winner.get(field), other.get(field)) if isinstance(x, int)]
             if values:
                 winner[field] = max(values)
-        winner["confidence"] = max(float(winner.get("confidence") or 0), float(other.get("confidence") or 0))
-        winner["score"] = max(int(winner.get("score") or 0), int(other.get("score") or 0))
+        winner["confidence"] = max(_safe_float(winner.get("confidence"), 0.0, 0.0, 1.0), _safe_float(other.get("confidence"), 0.0, 0.0, 1.0))
+        winner["score"] = max(_safe_int(winner.get("score"), 0, 0, 100), _safe_int(other.get("score"), 0, 0, 100))
         groups[key] = winner
 
     now = dt.datetime.now(dt.timezone.utc)
@@ -329,14 +373,14 @@ def _dedupe(rows: list[dict]) -> list[dict]:
         row["independent_source_count"] = max(1, count)
         if count >= 2:
             row["cross_checked_social"] = True
-            row["confidence"] = round(min(0.86, float(row.get("confidence") or 0.5) + 0.08), 2)
+            row["confidence"] = round(min(0.86, _safe_float(row.get("confidence"), 0.5, 0.0, 1.0) + 0.08), 2)
             row["score"] = min(86, row["score"] + 8)
         # Learning never changes trust/official inventory status.
         row["verification_status"] = "social_unverified"
         row["official_stock"] = False
         row["realtime_stock"] = False
         out.append(row)
-    out.sort(key=lambda x: (bool(x.get("stale")), -int(x.get("score") or 0), float(x.get("age_hours") or 9999)))
+    out.sort(key=lambda x: (bool(x.get("stale")), -_safe_int(x.get("score"), 0, 0, 100), _safe_float(x.get("age_hours"), 9999.0, 0.0)))
     return out[:120]
 
 
@@ -344,13 +388,13 @@ def _record_learning(learning: dict, source: dict, *, raw_count: int, accepted: 
     rows = learning.setdefault("sources", {})
     key = str(source.get("username") or source.get("id") or "unknown")
     row = rows.setdefault(key, {"runs": 0, "raw_results": 0, "accepted": 0, "errors": 0})
-    row["runs"] = int(row.get("runs") or 0) + 1
-    row["raw_results"] = int(row.get("raw_results") or 0) + max(0, raw_count)
-    row["accepted"] = int(row.get("accepted") or 0) + max(0, accepted)
-    row["errors"] = int(row.get("errors") or 0) + max(0, errors)
-    row["last_seconds"] = round(max(0.0, seconds), 3)
+    row["runs"] = _safe_int(row.get("runs"), 0, 0) + 1
+    row["raw_results"] = _safe_int(row.get("raw_results"), 0, 0) + max(0, _safe_int(raw_count, 0))
+    row["accepted"] = _safe_int(row.get("accepted"), 0, 0) + max(0, _safe_int(accepted, 0))
+    row["errors"] = _safe_int(row.get("errors"), 0, 0) + max(0, _safe_int(errors, 0))
+    row["last_seconds"] = round(_safe_float(seconds, 0.0, 0.0), 3)
     row["last_run"] = _now()
-    row["success_rate"] = round(int(row.get("accepted") or 0) / max(1, int(row.get("runs") or 0)), 3)
+    row["success_rate"] = round(_safe_int(row.get("accepted"), 0, 0) / max(1, _safe_int(row.get("runs"), 0, 0)), 3)
     row["trust_learning_disabled"] = True
 
 
@@ -376,54 +420,82 @@ def _collect_source(source: dict) -> tuple[list[dict], int, list[str], float]:
     return candidates, len(raw_rows), errors, time.monotonic() - started
 
 
+def _commit_results(
+    *,
+    discovered: list[dict],
+    raw_total: int,
+    errors: list[str],
+    observations: list[tuple[dict, int, int, int, float]],
+    sources_watched: int,
+) -> dict:
+    # Serialize the complete state commit so stale tablet/server/manual processes
+    # cannot overwrite newer signal or learning data.
+    with exclusive_file_lock(LEARNING_DB, timeout_seconds=15.0, stale_seconds=300):
+        latest_signal = _load_json(SIGNAL_DB, {"version": 1, "items": []})
+        existing = [dict(x) for x in latest_signal.get("items", []) if isinstance(x, dict)]
+        merged = _dedupe(existing + [dict(x) for x in discovered if isinstance(x, dict)])
+        payload = {
+            "version": 3,
+            "updated_at": _now(),
+            "items": merged,
+            "summary": {
+                "sources_watched": max(0, _safe_int(sources_watched, 0)),
+                "raw_results": max(0, _safe_int(raw_total, 0)),
+                "new_candidates": len(discovered),
+                "active_signals": sum(1 for x in merged if not x.get("stale")),
+                "stale_signals": sum(1 for x in merged if x.get("stale")),
+                "errors": len(errors),
+            },
+            "collection_errors": [str(x)[:240] for x in errors[:30]],
+            "policy": "SNS는 재고 제보 신호만 생성합니다. 공식 실시간 재고·확정 수량으로 자동승격하지 않으며, 학습은 검색 우선순위만 조정합니다.",
+        }
+        atomic_write_json(SIGNAL_DB, payload, suffix=".social-stock.tmp")
+
+        purchase_payload = {
+            "version": 3,
+            "updated_at": payload["updated_at"],
+            "items": [x for x in merged if not x.get("stale")],
+            "social_stock_signal_count": sum(1 for x in merged if not x.get("stale")),
+            "notice": "최근 SNS 재고제보입니다. 실제 재고는 공식 재고조회·매장 확인이 필요합니다.",
+        }
+        atomic_write_json(PURCHASE_SIGNAL_DB, purchase_payload, suffix=".purchase-signal.tmp")
+
+        latest_learning = _learning()
+        for source, raw_count, accepted, source_errors, seconds in observations:
+            _record_learning(
+                latest_learning, source, raw_count=raw_count, accepted=accepted, errors=source_errors, seconds=seconds
+            )
+        latest_learning["version"] = 2
+        latest_learning["updated_at"] = _now()
+        latest_learning["policy"] = "검색 성공률·응답시간만 학습하며 계정 trusted/official 여부는 학습으로 변경하지 않습니다."
+        atomic_write_json(LEARNING_DB, latest_learning, suffix=".social-learning.tmp")
+        return payload
+
+
 def main() -> dict:
     source_data = _load_json(SOURCE_DB, {"sources": []})
-    signal_data = _load_json(SIGNAL_DB, {"version": 1, "items": []})
-    learning = _learning()
+    learning_snapshot = _learning()
     sources = [x for x in source_data.get("sources", []) if isinstance(x, dict) and "stock" in str(x.get("role") or "")]
-    sources.sort(key=lambda x: _source_priority(x, learning))
+    sources.sort(key=lambda x: _source_priority(x, learning_snapshot))
 
-    existing = [dict(x) for x in signal_data.get("items", []) if isinstance(x, dict)]
     discovered: list[dict] = []
     errors: list[str] = []
+    observations: list[tuple[dict, int, int, int, float]] = []
     raw_total = 0
     for source in sources:
         rows, raw_count, source_errors, seconds = _collect_source(source)
-        discovered.extend(rows); raw_total += raw_count
+        discovered.extend(rows)
+        raw_total += max(0, _safe_int(raw_count, 0))
         errors.extend(f"{source.get('username')}:{x}" for x in source_errors)
-        _record_learning(learning, source, raw_count=raw_count, accepted=len(rows), errors=len(source_errors), seconds=seconds)
+        observations.append((dict(source), raw_count, len(rows), len(source_errors), seconds))
 
-    merged = _dedupe(existing + discovered)
-    payload = {
-        "version": 2,
-        "updated_at": _now(),
-        "items": merged,
-        "summary": {
-            "sources_watched": len(sources),
-            "raw_results": raw_total,
-            "new_candidates": len(discovered),
-            "active_signals": sum(1 for x in merged if not x.get("stale")),
-            "stale_signals": sum(1 for x in merged if x.get("stale")),
-            "errors": len(errors),
-        },
-        "collection_errors": errors[:30],
-        "policy": "SNS는 재고 제보 신호만 생성합니다. 공식 실시간 재고·확정 수량으로 자동승격하지 않으며, 학습은 검색 우선순위만 조정합니다.",
-    }
-    atomic_write_json(SIGNAL_DB, payload, suffix=".social-stock.tmp")
-
-    purchase_payload = {
-        "version": 2,
-        "updated_at": payload["updated_at"],
-        "items": [x for x in merged if not x.get("stale")],
-        "social_stock_signal_count": sum(1 for x in merged if not x.get("stale")),
-        "notice": "최근 SNS 재고제보입니다. 실제 재고는 공식 재고조회·매장 확인이 필요합니다.",
-    }
-    atomic_write_json(PURCHASE_SIGNAL_DB, purchase_payload, suffix=".purchase-signal.tmp")
-    learning["version"] = 1
-    learning["updated_at"] = _now()
-    learning["policy"] = "검색 성공률·응답시간만 학습하며 계정 trusted/official 여부는 학습으로 변경하지 않습니다."
-    atomic_write_json(LEARNING_DB, learning, suffix=".social-learning.tmp")
-    return payload
+    return _commit_results(
+        discovered=discovered,
+        raw_total=raw_total,
+        errors=errors,
+        observations=observations,
+        sources_watched=len(sources),
+    )
 
 
 if __name__ == "__main__":
