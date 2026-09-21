@@ -7,17 +7,20 @@ Learns *how to search*, never whether a source is true/official.
 - Temporarily cools down unhealthy methods; never permanently blacklists them.
 - Keeps an exploration slot so recovered methods are retried later.
 - Stores bounded device-local state with atomic writes and backup recovery.
+- Merges stale in-memory observations under a cross-process lock so concurrent
+  tablet/server/manual jobs do not overwrite one another's learning.
 
 No proxy rotation, CAPTCHA bypass, login bypass or private API access is used.
 """
 from __future__ import annotations
 
+import copy
 import datetime as dt
 import json
 import math
 from pathlib import Path
 
-from safe_runtime import atomic_write_json, safe_read_text
+from safe_runtime import atomic_write_json, exclusive_file_lock, safe_read_text
 
 ROOT = Path(__file__).resolve().parent
 MEMORY = ROOT / "search_method_learning.json"
@@ -30,6 +33,16 @@ MAX_CONTEXTS = 240
 DEFAULT_METHODS = (
     "ddg_html", "ddg_lite", "bing_web_rss", "bing_news_rss",
     "google_news_rss", "naver_news_html",
+)
+
+_COUNTER_FIELDS = (
+    "attempts", "responses", "results", "nonempty", "empty", "errors",
+    "blocked", "rate_limited", "timeouts", "selected",
+)
+_TOTAL_COUNTER_FIELDS = ("runs", "attempts", "responses", "results", "selected", "errors")
+_LATEST_FIELDS = (
+    "last_error_kind", "last_seen", "avg_latency_ms", "failure_streak",
+    "cooldown_until",
 )
 
 
@@ -151,11 +164,69 @@ def _score(stat: dict) -> float:
     )
 
 
+def _merge_stat(base: object, local: object, disk: object) -> dict:
+    """Merge one cumulative method/context row without losing concurrent increments."""
+    base_row = base if isinstance(base, dict) else {}
+    local_row = local if isinstance(local, dict) else {}
+    disk_row = disk if isinstance(disk, dict) else {}
+    merged = dict(disk_row)
+    for key in _COUNTER_FIELDS:
+        delta = max(0, _int(local_row.get(key)) - _int(base_row.get(key)))
+        merged[key] = _int(disk_row.get(key)) + delta
+
+    # Health/cooldown fields represent the most recent observation rather than a
+    # cumulative counter. Keep the newest row by the recorded UTC timestamp.
+    local_seen = str(local_row.get("last_seen") or "")
+    disk_seen = str(disk_row.get("last_seen") or "")
+    if local_seen and local_seen >= disk_seen:
+        for key in _LATEST_FIELDS:
+            if key in local_row:
+                merged[key] = local_row.get(key)
+    elif not disk_seen:
+        for key in _LATEST_FIELDS:
+            if key in local_row:
+                merged[key] = local_row.get(key)
+    merged["score"] = round(_score(merged), 5)
+    return merged
+
+
+def _merge_state(base: object, local: object, disk: object) -> dict:
+    """Merge this learner's delta onto the latest on-disk state."""
+    base_data = base if isinstance(base, dict) else _fresh()
+    local_data = local if isinstance(local, dict) else _fresh()
+    disk_data = disk if isinstance(disk, dict) else _fresh()
+    merged = copy.deepcopy(disk_data)
+    merged["version"] = SCHEMA_VERSION
+
+    merged_totals = dict(disk_data.get("totals") or {})
+    base_totals = base_data.get("totals") if isinstance(base_data.get("totals"), dict) else {}
+    local_totals = local_data.get("totals") if isinstance(local_data.get("totals"), dict) else {}
+    for key in _TOTAL_COUNTER_FIELDS:
+        delta = max(0, _int(local_totals.get(key)) - _int(base_totals.get(key)))
+        merged_totals[key] = _int(merged_totals.get(key)) + delta
+    merged["totals"] = merged_totals
+    rotation_delta = max(0, _int(local_data.get("rotation")) - _int(base_data.get("rotation")))
+    merged["rotation"] = _int(disk_data.get("rotation")) + rotation_delta
+
+    for section in ("methods", "contexts"):
+        base_rows = base_data.get(section) if isinstance(base_data.get(section), dict) else {}
+        local_rows = local_data.get(section) if isinstance(local_data.get(section), dict) else {}
+        disk_rows = disk_data.get(section) if isinstance(disk_data.get(section), dict) else {}
+        out = copy.deepcopy(disk_rows)
+        for key, local_row in local_rows.items():
+            if not isinstance(key, str) or not isinstance(local_row, dict):
+                continue
+            out[key] = _merge_stat(base_rows.get(key), local_row, disk_rows.get(key))
+        merged[section] = out
+    return merged
+
+
 class SearchMethodLearner:
     def __init__(self, memory_path: Path | str = MEMORY, backup_path: Path | str | None = None):
         self.memory_path = Path(memory_path)
         self.backup_path = Path(backup_path) if backup_path else self.memory_path.with_suffix(self.memory_path.suffix + ".bak")
         self.data = _load(self.memory_path, self.backup_path)
+        self._base_data = copy.deepcopy(self.data)
 
     def start_run(self) -> None:
         totals = self.data.setdefault("totals", {})
@@ -193,16 +264,12 @@ class SearchMethodLearner:
         """Turn cumulative health metrics into a concrete runtime policy."""
         method = self._method(name)
         context = self._existing_context(name, region, family)
-        # Context statistics become authoritative only after a few samples; before
-        # that, global method history prevents unstable overfitting.
         source = context if _int(context.get("attempts")) >= 4 else method
         r = _rates(source)
         score = self.method_score(name, region, family)
         avg_seconds = r["avg_latency_ms"] / 1000.0
         timeout = 20 if avg_seconds <= 0 else int(round(avg_seconds * 2.6 + 4.0))
         timeout = max(7, min(50, timeout))
-        # A usually-responsive method that occasionally times out gets enough room
-        # to recover; a chronically failing method fails fast so fallbacks can run.
         if r["timeout_rate"] >= 0.20 and r["response_rate"] >= 0.55:
             timeout = min(55, max(timeout, int(round(avg_seconds * 3.2 + 6.0))))
         elif r["timeout_rate"] >= 0.30 and r["response_rate"] < 0.45:
@@ -232,7 +299,6 @@ class SearchMethodLearner:
         }
 
     def recommended_budget(self, names, *, region: str = "KR", family: str = "web", is_android: bool = False) -> int:
-        """Use more independent routes when health/yield is poor, fewer when mature and healthy."""
         candidates = [str(x) for x in names if str(x)]
         if not candidates:
             return 1
@@ -240,7 +306,7 @@ class SearchMethodLearner:
         stats = [self._method(name) for name in candidates]
         total_attempts = sum(_int(s.get("attempts")) for s in stats)
         if total_attempts < max(10, len(candidates) * 2):
-            return base_cap  # collect enough baseline evidence first
+            return base_cap
         rates = [_rates(s) for s in stats]
         response = sum(r["response_rate"] for r in rates) / len(rates)
         yield_rate = sum(r["nonempty_rate"] for r in rates) / len(rates)
@@ -261,14 +327,10 @@ class SearchMethodLearner:
         for index, name in enumerate(candidates):
             stat = self._method(name)
             score = self.method_score(name, region, family)
-            # Stable tiny rotation bonus preserves exploration without randomness.
             bonus = ((rotation + index * 3) % max(2, len(candidates))) * 0.015
             cooldown = _cooldown_until(stat)
             row = (score + bonus, name)
             if cooldown and cooldown > now:
-                # HTTP 403/429 means the public endpoint is actively refusing us.
-                # Do not use the generic recovery probe while that cooldown is active;
-                # other independent public routes can continue without hammering it.
                 kind = str(stat.get("last_error_kind") or "")
                 if kind in {"blocked", "rate_limited"}:
                     blocked_cooling.append(row)
@@ -280,16 +342,10 @@ class SearchMethodLearner:
         cooling.sort(reverse=True)
         blocked_cooling.sort(reverse=True)
         ordered = [name for _, name in healthy]
-        # Recovery probes are only for transient timeout/network style failures.
-        # Blocked/rate-limited routes wait until their cooldown actually expires.
         recovery = cooling[rotation % len(cooling)][1] if cooling else None
-        # If everything is cooling down, retry only the best candidate to detect recovery.
         if not ordered and recovery:
             ordered = [recovery]
         elif recovery:
-            # A cooled route is never permanently starved. On every fourth routing
-            # cycle reserve the final budget slot for a recovery probe; otherwise
-            # append it only when capacity remains.
             if budget is not None and int(budget) > 1 and len(ordered) >= int(budget) and rotation % 4 == 0:
                 ordered = ordered[: int(budget) - 1] + [recovery]
             else:
@@ -345,11 +401,6 @@ class SearchMethodLearner:
 
     def observe_selected(self, rows: list[dict], *, region: str | None = None,
                          family: str | None = None) -> None:
-        """Learn selected-result utility globally and for its search context.
-
-        Selection is an operational relevance signal only. It never changes a
-        source's verified/official status.
-        """
         counts: dict[str, int] = {}
         context_counts: dict[tuple[str, str, str], int] = {}
         for row in rows:
@@ -375,22 +426,26 @@ class SearchMethodLearner:
         totals["selected"] = _int(totals.get("selected")) + sum(counts.values())
 
     def save(self) -> None:
-        self.data["version"] = SCHEMA_VERSION
-        self.data["updated_at"] = _iso(_now())
-        methods = self.data.setdefault("methods", {})
-        if len(methods) > MAX_METHODS:
-            ranked = sorted(methods.items(), key=lambda kv: _score(kv[1]), reverse=True)
-            self.data["methods"] = dict(ranked[:MAX_METHODS])
-        contexts = self.data.setdefault("contexts", {})
-        if len(contexts) > MAX_CONTEXTS:
-            ranked = sorted(contexts.items(), key=lambda kv: (_score(kv[1]), _int(kv[1].get("attempts"))), reverse=True)
-            self.data["contexts"] = dict(ranked[:MAX_CONTEXTS])
-        if self.memory_path.exists():
-            try:
-                atomic_write_json(self.backup_path, _load(self.memory_path, self.backup_path), suffix=".search-method.bak.tmp")
-            except Exception:
-                pass
-        atomic_write_json(self.memory_path, self.data, suffix=".search-method.tmp")
+        with exclusive_file_lock(self.memory_path, timeout_seconds=10.0, stale_seconds=300):
+            latest = _load(self.memory_path, self.backup_path)
+            self.data = _merge_state(self._base_data, self.data, latest)
+            self.data["version"] = SCHEMA_VERSION
+            self.data["updated_at"] = _iso(_now())
+            methods = self.data.setdefault("methods", {})
+            if len(methods) > MAX_METHODS:
+                ranked = sorted(methods.items(), key=lambda kv: _score(kv[1]), reverse=True)
+                self.data["methods"] = dict(ranked[:MAX_METHODS])
+            contexts = self.data.setdefault("contexts", {})
+            if len(contexts) > MAX_CONTEXTS:
+                ranked = sorted(contexts.items(), key=lambda kv: (_score(kv[1]), _int(kv[1].get("attempts"))), reverse=True)
+                self.data["contexts"] = dict(ranked[:MAX_CONTEXTS])
+            if self.memory_path.exists():
+                try:
+                    atomic_write_json(self.backup_path, latest, suffix=".search-method.bak.tmp")
+                except Exception:
+                    pass
+            atomic_write_json(self.memory_path, self.data, suffix=".search-method.tmp")
+            self._base_data = copy.deepcopy(self.data)
         atomic_write_json(PROFILE, self.report(), suffix=".search-profile.tmp")
 
     def report(self) -> dict:
@@ -398,7 +453,6 @@ class SearchMethodLearner:
         rows = []
         for name, stat in self.data.get("methods", {}).items():
             cooldown = _cooldown_until(stat)
-            attempts = max(1, _int(stat.get("attempts"), 1))
             rows.append({
                 "method": name,
                 "score": round(_score(stat), 4),
