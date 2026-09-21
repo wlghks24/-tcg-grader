@@ -1,6 +1,6 @@
 "use strict";
 (() => {
-  const VERSION = "v272-accessible-app-shell";
+  const VERSION = "v273-accessible-result-cockpit";
   const main = document.querySelector("main.app");
   const nav = document.getElementById("featureCategories");
   if (!main || !nav) return;
@@ -159,9 +159,213 @@
     setTimeout(() => main.focus({ preventScroll: true }), 0);
   });
 
+  const RESULT_COMPANIES = Object.freeze(["PSA", "BGS", "CGC", "TAG", "BRG"]);
+  const gradeCockpitState = { signature: "", timer: 0 };
+  const byId = (id) => document.getElementById(id);
+  const nodeText = (id) => String(byId(id)?.textContent || "").trim();
+  const nodeValue = (id) => String(byId(id)?.value || "").trim();
+
+  function addCockpitCell(grid, labelText, valueId, wide = false) {
+    const cell = document.createElement("div");
+    cell.className = wide ? "grade-cockpit-cell grade-cockpit-cell-wide" : "grade-cockpit-cell";
+    const label = document.createElement("span");
+    label.textContent = labelText;
+    const value = document.createElement("b");
+    value.id = valueId;
+    value.textContent = "-";
+    cell.append(label, value);
+    grid.append(cell);
+  }
+
+  function addProbabilityCell(grid, grade) {
+    const cell = document.createElement("div");
+    cell.className = "grade-cockpit-probability";
+    const label = document.createElement("span");
+    label.textContent = `PSA ${grade}`;
+    const value = document.createElement("b");
+    value.id = `gradeCockpitPsa${grade}`;
+    value.textContent = "-";
+    cell.append(label, value);
+    grid.append(cell);
+  }
+
+  function addCompanyCell(grid, company) {
+    const cell = document.createElement("div");
+    cell.className = "grade-cockpit-company";
+    const label = document.createElement("span");
+    label.textContent = company;
+    const value = document.createElement("b");
+    value.id = `gradeCockpit${company}`;
+    value.textContent = "대기";
+    cell.append(label, value);
+    grid.append(cell);
+  }
+
+  function ensureGradeCockpit() {
+    if (byId("gradeResultCockpit")) return true;
+    const anchor = byId("autoGradeMarketFlow");
+    if (!anchor) return false;
+
+    const panel = document.createElement("div");
+    panel.id = "gradeResultCockpit";
+    panel.className = "grade-result-cockpit";
+    panel.dataset.state = "waiting";
+    panel.setAttribute("aria-labelledby", "gradeResultCockpitTitle");
+
+    const head = document.createElement("div");
+    head.className = "grade-cockpit-head";
+    const titleWrap = document.createElement("div");
+    const title = document.createElement("h4");
+    title.id = "gradeResultCockpitTitle";
+    title.textContent = "📋 등급 결과 한눈에 보기";
+    const subtitle = document.createElement("p");
+    subtitle.textContent = "카드정보 · 세대/세트 · 예상등급 · PSA 확률 · RAW 시세를 한 화면에 모읍니다.";
+    titleWrap.append(title, subtitle);
+    const badge = document.createElement("span");
+    badge.className = "grade-cockpit-ai-badge";
+    badge.textContent = "AI 추정 · 공식등급 아님";
+    head.append(titleWrap, badge);
+
+    const grid = document.createElement("div");
+    grid.className = "grade-cockpit-grid";
+    addCockpitCell(grid, "카드", "gradeCockpitCard", true);
+    addCockpitCell(grid, "판본", "gradeCockpitEdition");
+    addCockpitCell(grid, "세대 / 세트", "gradeCockpitGeneration");
+    addCockpitCell(grid, "종합 예상등급", "gradeCockpitOverall");
+    addCockpitCell(grid, "분석 신뢰도", "gradeCockpitConfidence");
+    addCockpitCell(grid, "RAW 현재 시세", "gradeCockpitRaw");
+
+    const probabilityBlock = document.createElement("div");
+    probabilityBlock.className = "grade-cockpit-block";
+    const probabilityTitle = document.createElement("b");
+    probabilityTitle.className = "grade-cockpit-block-title";
+    probabilityTitle.textContent = "PSA 예상확률";
+    const probabilityGrid = document.createElement("div");
+    probabilityGrid.className = "grade-cockpit-probabilities";
+    [8, 9, 10].forEach((grade) => addProbabilityCell(probabilityGrid, grade));
+    probabilityBlock.append(probabilityTitle, probabilityGrid);
+
+    const companyBlock = document.createElement("div");
+    companyBlock.className = "grade-cockpit-block";
+    const companyTitle = document.createElement("b");
+    companyTitle.className = "grade-cockpit-block-title";
+    companyTitle.textContent = "업체별 예상등급";
+    const companyGrid = document.createElement("div");
+    companyGrid.className = "grade-cockpit-companies";
+    RESULT_COMPANIES.forEach((company) => addCompanyCell(companyGrid, company));
+    companyBlock.append(companyTitle, companyGrid);
+
+    const source = document.createElement("p");
+    source.id = "gradeCockpitEvidence";
+    source.className = "grade-cockpit-evidence";
+    source.textContent = "시세는 체결·낙찰 / 시장가이드 / 판매중 호가를 구분해 확인하세요.";
+
+    const note = document.createElement("p");
+    note.className = "grade-cockpit-note";
+    note.textContent = "포켓몬은 세대 정보를 표시하고, 원피스·나루토는 세대 대신 탄/세트·판본 기준으로 확인합니다.";
+
+    panel.append(head, grid, probabilityBlock, companyBlock, source, note);
+    const anchorHead = anchor.querySelector(".agm-head");
+    if (anchorHead?.nextSibling) anchor.insertBefore(panel, anchorHead.nextSibling);
+    else anchor.prepend(panel);
+    return true;
+  }
+
+  function probabilityText(grade) {
+    const probabilities = window.tcgGradeProbabilities || {};
+    const raw = Number(probabilities[grade]);
+    if (Number.isFinite(raw)) return `${Math.max(0, Math.min(100, raw)).toFixed(0)}%`;
+    const fallback = nodeText(grade === 10 ? "p10prob" : grade === 9 ? "p9prob" : "");
+    return fallback && fallback !== "-" ? fallback : "-";
+  }
+
+  function generationText() {
+    const generation = byId("simplePokemonGeneration");
+    if (generation && !generation.hidden) {
+      const badge = nodeText("pokemonGenerationBadge");
+      const title = nodeText("pokemonGenerationTitle");
+      return [badge, title].filter(Boolean).join(" · ") || "판별 중";
+    }
+    const activeGame = document.querySelector("[data-simple-game].active")?.dataset?.simpleGame || "";
+    if (activeGame === "onepiece" || activeGame === "naruto") return "탄/세트 기준";
+    return activeGame === "pokemon" ? "세대 판별 대기" : "게임 선택 후 판별";
+  }
+
+  function formatCompanyGrade(company, grades) {
+    const raw = Number(grades?.[company]);
+    if (!Number.isFinite(raw)) return "대기";
+    const safe = Math.max(1, Math.min(10, raw));
+    return `${safe.toFixed(safe % 1 ? 1 : 0)} 예상`;
+  }
+
+  function syncGradeCockpit() {
+    if (!ensureGradeCockpit()) return false;
+    const grades = window.tcgLastGrades || {};
+    const name = nodeValue("identityCardName") || nodeText("agmName") || "인식 대기";
+    const number = nodeValue("identityCardNumber") || nodeText("agmNumber") || "";
+    const edition = nodeValue("identityRegion") || nodeText("agmRegion") || "판본 미확인";
+    const generation = generationText();
+    const overall = nodeText("simpleGradeLabel") || "분석 전";
+    const confidence = nodeText("simpleGradeConfidence") || "-";
+    const rawPrice = nodeText("agmRawPrice") || "카드 인식 후 조회";
+    const rawSource = nodeText("agmRawSource") || "확인된 거래자료만 표시";
+    const p8 = probabilityText(8);
+    const p9 = probabilityText(9);
+    const p10 = probabilityText(10);
+    const companyValues = RESULT_COMPANIES.map((company) => formatCompanyGrade(company, grades));
+    const signature = [name, number, edition, generation, overall, confidence, rawPrice, rawSource, p8, p9, p10, ...companyValues].join("|");
+    if (signature === gradeCockpitState.signature) return true;
+    gradeCockpitState.signature = signature;
+
+    byId("gradeCockpitCard").textContent = [name, number].filter(Boolean).join(" · ") || "인식 대기";
+    byId("gradeCockpitEdition").textContent = edition || "판본 미확인";
+    byId("gradeCockpitGeneration").textContent = generation;
+    byId("gradeCockpitOverall").textContent = overall;
+    byId("gradeCockpitConfidence").textContent = confidence;
+    byId("gradeCockpitRaw").textContent = rawPrice;
+    byId("gradeCockpitPsa8").textContent = p8;
+    byId("gradeCockpitPsa9").textContent = p9;
+    byId("gradeCockpitPsa10").textContent = p10;
+    RESULT_COMPANIES.forEach((company, index) => {
+      byId(`gradeCockpit${company}`).textContent = companyValues[index];
+    });
+    byId("gradeCockpitEvidence").textContent = `시세 근거: ${rawSource}`;
+
+    const ready = RESULT_COMPANIES.some((company) => Number.isFinite(Number(grades?.[company])));
+    byId("gradeResultCockpit").dataset.state = ready ? "ready" : "waiting";
+    return true;
+  }
+
+  function stopGradeCockpitTimer() {
+    if (gradeCockpitState.timer) {
+      clearInterval(gradeCockpitState.timer);
+      gradeCockpitState.timer = 0;
+    }
+  }
+
+  function startGradeCockpitTimer() {
+    if (document.hidden || gradeCockpitState.timer) return;
+    syncGradeCockpit();
+    gradeCockpitState.timer = setInterval(syncGradeCockpit, 1000);
+  }
+
+  document.addEventListener("visibilitychange", () => {
+    if (document.hidden) stopGradeCockpitTimer();
+    else startGradeCockpitTimer();
+  });
+  document.addEventListener("input", (event) => {
+    if (["identityCardName", "identityCardNumber", "identityRegion"].includes(event.target?.id)) syncGradeCockpit();
+  });
+  document.addEventListener("change", (event) => {
+    if (["identityCardName", "identityCardNumber", "identityRegion"].includes(event.target?.id)) syncGradeCockpit();
+  });
+  window.addEventListener("pagehide", stopGradeCockpitTimer, { once: true });
+  startGradeCockpitTimer();
+
   window.TCGAppShellV272 = Object.freeze({
     version: VERSION,
     filterFeatures,
     clear: () => clearSearch(),
+    refreshGradeSummary: syncGradeCockpit,
   });
 })();
