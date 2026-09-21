@@ -1,5 +1,5 @@
 name: Collection Verification Guard
-# v257 — provider resilience + transaction-aware freshness stay in the verified regression chain.
+# v282 — collection/data/learning state changes must execute their bound regressions before live verification.
 
 on:
   workflow_dispatch:
@@ -8,7 +8,9 @@ on:
       - 'safe_runtime.py'
       - 'social_stock_discovery.py'
       - 'collection_meta_learning.py'
+      - 'collection_runtime_health.py'
       - 'test_runtime_collection_consistency_v281.py'
+      - 'test_collection_runtime_health_concurrency_v282.py'
       - 'test_safe_runtime_redirect_diagnostics_v253.py'
       - 'collection_job_contract.py'
       - 'test_collection_job_contract_v255.py'
@@ -66,7 +68,9 @@ on:
       - 'safe_runtime.py'
       - 'social_stock_discovery.py'
       - 'collection_meta_learning.py'
+      - 'collection_runtime_health.py'
       - 'test_runtime_collection_consistency_v281.py'
+      - 'test_collection_runtime_health_concurrency_v282.py'
       - 'test_safe_runtime_redirect_diagnostics_v253.py'
       - 'collection_job_contract.py'
       - 'test_collection_job_contract_v255.py'
@@ -148,7 +152,9 @@ jobs:
       - name: Static and regression verification
         run: |
           python -m py_compile \
-            safe_runtime.py test_safe_runtime_redirect_diagnostics_v253.py collection_job_contract.py test_collection_job_contract_v255.py \
+            safe_runtime.py social_stock_discovery.py collection_meta_learning.py collection_runtime_health.py \
+            test_runtime_collection_consistency_v281.py test_collection_runtime_health_concurrency_v282.py \
+            test_safe_runtime_redirect_diagnostics_v253.py collection_job_contract.py test_collection_job_contract_v255.py \
             collection_verification_gate.py collection_verification_gate_contextual.py static_data_publish_gate.py feature_contract.py \
             update_market_watch.py update_market_prices.py market_public_crosscheck.py release_history_backfill.py \
             update_purchase_sources.py update_exchange_rates.py \
@@ -162,6 +168,8 @@ jobs:
             test_grading_company_watch_v215.py test_grading_company_watch_resilient_v257.py test_grading_company_health_diagnostics_v252.py test_grading_watch_integration_v220.py \
             test_verified_collection_job_neural_v212.py
           python -m unittest -v \
+            test_runtime_collection_consistency_v281.py \
+            test_collection_runtime_health_concurrency_v282.py \
             test_safe_runtime_redirect_diagnostics_v253.py \
             test_collection_job_contract_v255.py \
             test_collection_verification_gate.py \
@@ -180,6 +188,7 @@ jobs:
             test_grading_company_health_diagnostics_v252.py \
             test_grading_watch_integration_v220.py \
             test_verified_collection_job_neural_v212.py
+          python collection_runtime_health.py
           python feature_contract.py
           python selfrefine_domain_boundary_guard.py
 
