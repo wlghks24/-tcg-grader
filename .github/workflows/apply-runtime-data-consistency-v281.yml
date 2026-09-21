@@ -28,6 +28,9 @@ jobs:
         with:
           python-version: '3.11'
 
+      - name: Install runtime test dependencies
+        run: python -m pip install --disable-pip-version-check -r requirements.txt
+
       - name: Apply v281 hardening
         run: python .v281_apply.py
 
