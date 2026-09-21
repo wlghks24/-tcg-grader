@@ -9,7 +9,9 @@ of weakening any gate.  It only removes avoidable local/remote work:
   HTTP probes;
 - parse the rollback manifest once per restore verification;
 - prune old local receipts/completed markers/last-good copies with strict path
-  and symlink checks so long-running tablets do not accumulate unbounded state.
+  and symlink checks so long-running tablets do not accumulate unbounded state;
+- pin Android code updates to the exact main SHA carried by the verified Drive
+  manifest, eliminating the producer-to-tablet race when main advances later.
 
 All bundle hashes, 17-output exactness, transaction rollback, fail-closed
 collection gates, rclone retries, and receipt semantics remain owned by the
@@ -23,13 +25,14 @@ import os
 from pathlib import Path
 import re
 import shutil
+import subprocess
 import urllib.request
 
 import tablet_gdrive_sync as core
 import tablet_gdrive_sync_hardening as hard
 import tablet_gdrive_sync_hardening_contextual as contextual
 
-PATCH_ID = 262
+PATCH_ID = 273
 REMOTE_MANIFEST_MAX_AGE = "8d"
 HEALTH_TIMEOUT_SECONDS = 1.25
 RECEIPT_KEEP = 64
@@ -55,6 +58,44 @@ def bounded_list_manifests(remote: str, remote_root: str) -> list[str]:
         if core.MANIFEST_RE.fullmatch(line.strip())
     ]
     return sorted(set(names))
+
+
+def pinned_ensure_exact_main(repo: Path, expected_sha: str) -> None:
+    """Move only to the manifest-pinned official main commit, never a later tip."""
+    if not (repo / ".git").exists():
+        raise ValueError("TCG repository not found")
+    origin = core.run(["git", "remote", "get-url", "origin"], cwd=repo, capture=True)
+    ok = origin.rstrip("/") in {
+        "https://github.com/wlghks24/-tcg-grader",
+        "https://github.com/wlghks24/-tcg-grader.git",
+        "git@github.com:wlghks24/-tcg-grader.git",
+    }
+    if not ok:
+        raise ValueError("untrusted git origin")
+    if not isinstance(expected_sha, str) or not re.fullmatch(r"[0-9a-f]{40}", expected_sha):
+        raise ValueError("invalid expected main sha")
+
+    head = core.run(["git", "rev-parse", "HEAD"], cwd=repo, capture=True)
+    if head == expected_sha:
+        return
+
+    env = os.environ.copy()
+    env["TCG_UPDATE_ONLY"] = "1"
+    env["TCG_TARGET_MAIN_SHA"] = expected_sha
+    cp = subprocess.run(
+        ["bash", "ANDROID_UPDATE_AND_START.sh"],
+        cwd=repo,
+        text=True,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.STDOUT,
+        env=env,
+        timeout=300,
+    )
+    if cp.returncode != 0:
+        raise RuntimeError("tablet code update failed:\n" + cp.stdout[-4000:])
+    head = core.run(["git", "rev-parse", "HEAD"], cwd=repo, capture=True)
+    if head != expected_sha:
+        raise ValueError(f"manifest/main mismatch: local={head} manifest={expected_sha}")
 
 
 def fast_health_ok() -> bool:
@@ -193,6 +234,7 @@ def prune_state(state: Path) -> dict:
 
 def apply_runtime_patch() -> None:
     core.list_manifests = bounded_list_manifests
+    core.ensure_exact_main = pinned_ensure_exact_main
     core.health_ok = fast_health_ok
     hard.hardened_restore_backup = optimized_hardened_restore_backup
 
