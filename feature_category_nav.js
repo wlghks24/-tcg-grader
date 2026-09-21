@@ -3,6 +3,12 @@
   const VALID_TOP_PANELS = new Set(["releasePanel", "promoPanel", "purchasePanel"]);
   const VALID_TABLET_TARGETS = new Set(["v23dual", "v16update", "v20live", "tabletServerGuide"]);
   const VALID_TABLET_CLICKS = new Set(["v23check", "v20issues"]);
+  const APP_DOCK_ITEMS = Object.freeze([
+    Object.freeze({ key: "menu", icon: "☰", label: "메뉴", target: "featureCategories" }),
+    Object.freeze({ key: "grade", icon: "🎴", label: "등급", target: "simpleGradeV32" }),
+    Object.freeze({ key: "market", icon: "💰", label: "시세", target: "market12section" }),
+    Object.freeze({ key: "tablet", icon: "📱", label: "태블릿", target: "tabletManagerHub" }),
+  ]);
   const categories = [...document.querySelectorAll(".feature-category")];
   const selectedStatus = document.getElementById("featureCategorySelected");
   const nav = document.getElementById("featureCategories");
@@ -76,7 +82,7 @@
 
     if (selectedStatus) {
       selectedStatus.classList?.add?.("active");
-      selectedStatus.textContent = "✅ 기능 화면으로 이동했습니다. 오른쪽 아래 ‘☰ 메뉴’를 누르면 기능 메뉴로 돌아올 수 있습니다.";
+      selectedStatus.textContent = "✅ 기능 화면으로 이동했습니다. 아래 앱 메뉴 또는 오른쪽 아래 메뉴 버튼으로 주요 기능에 바로 이동할 수 있습니다.";
     }
 
     setTimeout(() => {
@@ -155,12 +161,116 @@
     });
   }
 
+  function ensureAppDockStyles() {
+    if (document.getElementById("tcgAppDockStyles")) return;
+    const style = document.createElement("style");
+    style.id = "tcgAppDockStyles";
+    style.textContent = `
+      .app-bottom-dock{display:none}
+      @media(max-width:1180px){
+        body.has-app-bottom-dock .app{padding-bottom:calc(118px + env(safe-area-inset-bottom,0px))!important}
+        body.has-app-bottom-dock .feature-category-fab{display:none!important}
+        .app-bottom-dock{
+          position:fixed;left:50%;bottom:calc(10px + env(safe-area-inset-bottom,0px));z-index:70;
+          transform:translateX(-50%);display:grid;grid-template-columns:repeat(4,minmax(0,1fr));
+          width:min(calc(100% - 20px),620px);padding:7px;border:1px solid rgba(148,163,184,.34);
+          border-radius:22px;background:rgba(255,255,255,.93);backdrop-filter:blur(18px) saturate(145%);
+          box-shadow:0 16px 38px rgba(15,23,42,.22)
+        }
+        .app-bottom-dock a{
+          min-width:0;min-height:58px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;
+          border-radius:16px;color:#64748b;text-decoration:none;font-size:10px;font-weight:850;line-height:1.1;
+          touch-action:manipulation;-webkit-tap-highlight-color:transparent
+        }
+        .app-bottom-dock a:active{transform:scale(.96)}
+        .app-bottom-dock a[aria-current="page"]{background:#eff6ff;color:#1d4ed8;box-shadow:inset 0 0 0 1px #dbeafe}
+        .app-bottom-dock-icon{font-size:22px;line-height:1}
+        .app-bottom-dock-label{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%}
+        .app-bottom-dock a:focus-visible{outline:3px solid #2563eb;outline-offset:1px}
+      }
+      @media(max-width:360px){
+        .app-bottom-dock{width:calc(100% - 12px);bottom:calc(6px + env(safe-area-inset-bottom,0px));padding:5px;border-radius:18px}
+        .app-bottom-dock a{min-height:54px;border-radius:13px;font-size:9px}
+        .app-bottom-dock-icon{font-size:20px}
+      }
+      @media(prefers-color-scheme:dark) and (max-width:1180px){
+        .app-bottom-dock{background:rgba(15,23,42,.94);border-color:#334155;box-shadow:0 16px 38px rgba(0,0,0,.38)}
+        .app-bottom-dock a{color:#cbd5e1}
+        .app-bottom-dock a[aria-current="page"]{background:#172554;color:#bfdbfe;box-shadow:inset 0 0 0 1px #1e3a8a}
+      }
+      @media(prefers-reduced-motion:reduce){.app-bottom-dock a{transition:none!important}}
+      @media(forced-colors:active){.app-bottom-dock{border:1px solid CanvasText}.app-bottom-dock a[aria-current="page"]{outline:2px solid Highlight}}
+    `;
+    document.head.append(style);
+  }
+
+  function createAppDock() {
+    if (document.getElementById("tcgAppBottomDock")) return true;
+    if (!APP_DOCK_ITEMS.every((item) => Boolean(safeTarget(item.target)))) return false;
+    ensureAppDockStyles();
+
+    const dock = document.createElement("nav");
+    dock.id = "tcgAppBottomDock";
+    dock.className = "app-bottom-dock";
+    dock.setAttribute("aria-label", "주요 기능 빠른 이동");
+
+    function setActive(key) {
+      dock.querySelectorAll("a[data-dock-key]").forEach((link) => {
+        const active = link.dataset.dockKey === key;
+        if (active) link.setAttribute("aria-current", "page");
+        else link.removeAttribute("aria-current");
+      });
+    }
+
+    APP_DOCK_ITEMS.forEach((item, index) => {
+      const link = document.createElement("a");
+      link.href = `#${item.target}`;
+      link.dataset.dockKey = item.key;
+      link.setAttribute("aria-label", `${item.label} 화면으로 이동`);
+      if (index === 0) link.setAttribute("aria-current", "page");
+
+      const icon = document.createElement("span");
+      icon.className = "app-bottom-dock-icon";
+      icon.setAttribute("aria-hidden", "true");
+      icon.textContent = item.icon;
+      const label = document.createElement("span");
+      label.className = "app-bottom-dock-label";
+      label.textContent = item.label;
+      link.append(icon, label);
+
+      link.addEventListener("click", (event) => {
+        event.preventDefault();
+        const target = safeTarget(item.target);
+        if (!target) return;
+        setActive(item.key);
+        try {
+          target.scrollIntoView({ behavior: "smooth", block: "start" });
+        } catch (_) {
+          target.scrollIntoView?.();
+        }
+        if (item.key === "menu") {
+          const openCategory = categories.find((category) => category.open) || categories[0];
+          setTimeout(() => openCategory?.querySelector?.("summary")?.focus?.(), 80);
+        }
+      });
+      dock.append(link);
+    });
+
+    document.body.append(dock);
+    document.body.classList.add("has-app-bottom-dock");
+    return true;
+  }
+
+  createAppDock();
+
   window.TCGFeatureCategoryNav = Object.freeze({
     version: "v30-tablet-manager-hub",
+    uiVersion: "v275-app-bottom-dock",
     activateTopPanel,
     navigateShortcut,
     openTabletAction,
     selectCategory,
+    createAppDock,
     targetExists: (id) => Boolean(safeTarget(id)),
   });
 })();
