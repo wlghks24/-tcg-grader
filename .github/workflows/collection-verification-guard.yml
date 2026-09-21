@@ -167,8 +167,10 @@ jobs:
             test_social_topic_capacity_v213.py test_information_lifecycle_archive_v209.py \
             test_grading_company_watch_v215.py test_grading_company_watch_resilient_v257.py test_grading_company_health_diagnostics_v252.py test_grading_watch_integration_v220.py \
             test_verified_collection_job_neural_v212.py
+          # Keep the v281 binding as an explicit command: an existing regression
+          # contract verifies this exact invocation and it is useful as a standalone gate.
+          python -m unittest -v test_runtime_collection_consistency_v281.py
           python -m unittest -v \
-            test_runtime_collection_consistency_v281.py \
             test_collection_runtime_health_concurrency_v282.py \
             test_safe_runtime_redirect_diagnostics_v253.py \
             test_collection_job_contract_v255.py \
