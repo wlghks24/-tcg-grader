@@ -65,6 +65,7 @@ jobs:
         env:
           TCG_REQUIRE_NODE: '1'
         run: |
+          set +e
           set -o pipefail
           : > v280_root_regression.log
           failed_count=0
@@ -76,14 +77,16 @@ jobs:
             python -m unittest discover -v -s . -p "$file" 2>&1 | tee -a v280_root_regression.log
             rc=${PIPESTATUS[0]}
             if [ "$rc" -eq 5 ]; then
+              echo "SELFREFINE_FALLBACK file=$file mode=standalone" | tee -a v280_root_regression.log
               python selfrefine_standalone_test_runner.py "$file" 2>&1 | tee -a v280_root_regression.log
               rc=${PIPESTATUS[0]}
             fi
+            echo "SELFREFINE_MODULE_RC file=$file rc=$rc" | tee -a v280_root_regression.log
             if [ "$rc" -ne 0 ]; then failed_count=$((failed_count+1)); fi
           done
           echo "isolated_root_test_modules=$total failed_modules=$failed_count" | tee -a v280_root_regression.log
-          test "$total" -gt 100
-          test "$failed_count" -eq 0
+          if [ "$total" -le 100 ] || [ "$failed_count" -ne 0 ]; then exit 1; fi
+          exit 0
 
       - name: Prepare final tree and rebuild integrity manifest
         shell: bash
