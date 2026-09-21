@@ -266,7 +266,7 @@
   }
 
   function requestServiceWorkerRefresh() {
-    if (!("serviceWorker" in navigator)) return false;
+    if (typeof navigator === "undefined" || !("serviceWorker" in navigator)) return false;
     navigator.serviceWorker.getRegistration()
       .then((registration) => registration?.update?.())
       .catch(() => {});
