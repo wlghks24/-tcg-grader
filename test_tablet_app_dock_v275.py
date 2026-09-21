@@ -6,11 +6,12 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parent
 
 
-class TabletAppDockV275Tests(unittest.TestCase):
+class TabletAppDockV276Tests(unittest.TestCase):
     @classmethod
     def setUpClass(cls) -> None:
         cls.js = (ROOT / "feature_category_nav.js").read_text(encoding="utf-8")
         cls.html = (ROOT / "index.html").read_text(encoding="utf-8")
+        cls.sw = (ROOT / "sw.js").read_text(encoding="utf-8")
 
     def test_existing_navigation_and_tablet_contracts_are_preserved(self) -> None:
         self.assertIn('version: "v30-tablet-manager-hub"', self.js)
@@ -21,7 +22,7 @@ class TabletAppDockV275Tests(unittest.TestCase):
             self.assertIn(label, self.html)
 
     def test_app_dock_has_four_clear_primary_destinations(self) -> None:
-        self.assertIn('uiVersion: "v275-app-bottom-dock"', self.js)
+        self.assertIn('uiVersion: "v276-motion-pwa-hardening"', self.js)
         for token in (
             '{ key: "menu", icon: "☰", label: "메뉴", target: "featureCategories" }',
             '{ key: "grade", icon: "🎴", label: "등급", target: "simpleGradeV32" }',
@@ -30,9 +31,11 @@ class TabletAppDockV275Tests(unittest.TestCase):
         ):
             self.assertIn(token, self.js)
         self.assertIn('dock.setAttribute("aria-label", "주요 기능 빠른 이동")', self.js)
-        self.assertIn('link.setAttribute("aria-current", "page")', self.js)
+        self.assertIn('link.setAttribute("aria-current", "location")', self.js)
+        self.assertIn('link.setAttribute("aria-controls", item.target)', self.js)
+        self.assertNotIn('aria-current="page"', self.js)
 
-    def test_dock_is_responsive_and_safe_area_aware(self) -> None:
+    def test_dock_is_responsive_safe_area_and_reduced_motion_aware(self) -> None:
         for token in (
             "@media(max-width:1180px)",
             "env(safe-area-inset-bottom,0px)",
@@ -42,8 +45,18 @@ class TabletAppDockV275Tests(unittest.TestCase):
             "@media(prefers-color-scheme:dark)",
             "@media(prefers-reduced-motion:reduce)",
             "@media(forced-colors:active)",
+            'window.matchMedia?.("(prefers-reduced-motion: reduce)")',
+            'reducedMotionPreferred() ? "auto" : "smooth"',
         ):
             self.assertIn(token, self.js)
+
+    def test_pwa_update_and_offline_cache_are_rotated_with_ui(self) -> None:
+        self.assertIn("const CACHE='tcg-v276-network-first-runtime';", self.sw)
+        self.assertIn("'./feature_category_nav.css'", self.sw)
+        self.assertIn("'./feature_category_nav.js'", self.sw)
+        self.assertIn("requestServiceWorkerRefresh();", self.js)
+        self.assertIn("navigator.serviceWorker.getRegistration()", self.js)
+        self.assertIn("registration?.update?.()", self.js)
 
     def test_dock_does_not_replace_or_hide_feature_data_logic(self) -> None:
         self.assertNotIn("innerHTML", self.js)
