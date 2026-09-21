@@ -53,6 +53,43 @@ class UIAppShellV272Tests(unittest.TestCase):
         self.assertIn('toggleAttribute("data-ui-filter-hidden"', self.js)
         self.assertIn('Object.freeze({', self.js)
 
+    def test_grading_result_cockpit_is_safe_and_explains_prediction_context(self):
+        for token in (
+            'panel.id = "gradeResultCockpit"',
+            'AI 추정 · 공식등급 아님',
+            '카드정보 · 세대/세트 · 예상등급 · PSA 확률 · RAW 시세',
+            'window.tcgGradeProbabilities',
+            'window.tcgLastGrades',
+            'simplePokemonGeneration',
+            'pokemonGenerationBadge',
+            'identityCardName',
+            'identityCardNumber',
+            'identityRegion',
+            'agmRawPrice',
+            'agmRawSource',
+            'RESULT_COMPANIES = Object.freeze(["PSA", "BGS", "CGC", "TAG", "BRG"])',
+            '포켓몬은 세대 정보를 표시하고, 원피스·나루토는 세대 대신 탄/세트',
+        ):
+            self.assertIn(token, self.js)
+        self.assertIn('gradeCockpitState.timer = setInterval(syncGradeCockpit, 1000)', self.js)
+        self.assertIn('if (document.hidden) stopGradeCockpitTimer()', self.js)
+        self.assertIn('window.addEventListener("pagehide", stopGradeCockpitTimer', self.js)
+        self.assertIn('refreshGradeSummary: syncGradeCockpit', self.js)
+
+    def test_grading_result_cockpit_responsive_accessibility_styles(self):
+        for token in (
+            '.grade-result-cockpit',
+            '.grade-cockpit-grid',
+            '.grade-cockpit-probabilities',
+            '.grade-cockpit-companies',
+            '@media(max-width:700px)',
+            '@media(max-width:450px)',
+            '.grade-cockpit-ai-badge',
+        ):
+            self.assertIn(token, self.css)
+        self.assertIn('.grade-result-cockpit[data-state="ready"]', self.css)
+        self.assertIn('grid-template-columns:repeat(5,minmax(0,1fr))', self.css)
+
     def test_responsive_shell_contract(self):
         self.assertIn('--shell-content-max:1120px', self.css)
         self.assertIn('@media(min-width:1180px)', self.css)
