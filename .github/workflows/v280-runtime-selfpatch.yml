@@ -1,0 +1,98 @@
+name: V280 Runtime Learning Selfpatch
+
+on:
+  push:
+    branches:
+      - qa/data-ai-runtime-v280
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+env:
+  PYTHONDONTWRITEBYTECODE: "1"
+
+jobs:
+  patch-and-validate:
+    if: ${{ !contains(github.event.head_commit.message || '', 'QA: harden remaining learning and neural concurrency v280') }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    steps:
+      - name: Checkout branch
+        uses: actions/checkout@v5
+        with:
+          ref: qa/data-ai-runtime-v280
+          fetch-depth: 0
+
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: '3.12'
+
+      - name: Generate v280 source changes
+        run: python apply_learning_state_concurrency_v280.py
+
+      - name: Compile changed runtime modules
+        run: |
+          python -m py_compile \
+            event_gap_learning.py \
+            adaptive_collection_learner.py \
+            verified_collection_neural.py \
+            verified_collection_job_neural.py \
+            verified_neural_self_refine.py \
+            test_learning_state_concurrency_v280.py
+
+      - name: Run v280 focused regression
+        run: |
+          python -m unittest -v \
+            test_learning_state_concurrency_v280.py \
+            test_event_gap_learning.py \
+            test_adaptive_collection_learner.py \
+            test_verified_collection_neural_v211.py \
+            test_verified_collection_job_neural_v212.py \
+            test_verified_neural_self_refine_v210.py
+
+      - name: Run runtime contract verification
+        run: python verify_current_runtime.py
+
+      - name: Run isolated root regression
+        shell: bash
+        run: |
+          set -euo pipefail
+          count=0
+          for file in test_*.py; do
+            python -m unittest -q "$file"
+            count=$((count+1))
+          done
+          echo "isolated_root_test_modules=$count"
+          test "$count" -gt 100
+
+      - name: Ensure generated diff is scoped
+        shell: bash
+        run: |
+          set -euo pipefail
+          allowed='^(event_gap_learning.py|adaptive_collection_learner.py|verified_collection_neural.py|verified_collection_job_neural.py|verified_neural_self_refine.py|test_learning_state_concurrency_v280.py|apply_learning_state_concurrency_v280.py|.github/workflows/v280-runtime-selfpatch.yml)$'
+          bad="$(git status --porcelain | sed -E 's/^.. //' | grep -Ev "$allowed" || true)"
+          if [ -n "$bad" ]; then
+            echo "Unexpected generated changes:"
+            echo "$bad"
+            exit 1
+          fi
+
+      - name: Commit validated source changes and remove bootstrap files
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git rm apply_learning_state_concurrency_v280.py .github/workflows/v280-runtime-selfpatch.yml
+          git add \
+            event_gap_learning.py \
+            adaptive_collection_learner.py \
+            verified_collection_neural.py \
+            verified_collection_job_neural.py \
+            verified_neural_self_refine.py \
+            test_learning_state_concurrency_v280.py
+          git diff --cached --check
+          git commit -m 'QA: harden remaining learning and neural concurrency v280'
+          git push origin HEAD:qa/data-ai-runtime-v280
