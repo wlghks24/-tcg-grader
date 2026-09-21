@@ -118,8 +118,10 @@ class FeatureCategoryNavigationV26Tests(unittest.TestCase):
         self.assertNotIn("innerHTML", self.js)
 
     def test_pwa_assets_are_versioned_once(self):
-        self.assertEqual(self.html.count('feature_category_nav.css?v=206'), 1)
-        self.assertEqual(self.html.count('feature_category_nav.js?v=206'), 1)
+        for asset in ("feature_category_nav.css", "feature_category_nav.js"):
+            matches = re.findall(re.escape(asset) + r"\?v=(\d+)", self.html)
+            self.assertEqual(len(matches), 1, f"{asset} must load exactly once with one numeric cache-buster")
+            self.assertGreaterEqual(int(matches[0]), 206, f"{asset} cache-buster regressed: {matches[0]}")
 
 
 if __name__ == "__main__":
