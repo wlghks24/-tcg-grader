@@ -1,4 +1,4 @@
-/* v272 app shell hardening: additive UI/UX/accessibility layer.
+/* v273 app shell hardening: additive UI/UX/accessibility/result-summary layer.
    This file intentionally avoids changing grading/market/data logic. */
 :root{
   --shell-content-max:1120px;
@@ -54,6 +54,37 @@ button,a{-webkit-tap-highlight-color:transparent}
 .feature-shortcut[data-ui-filter-hidden="true"]{display:none!important}
 .feature-category[data-ui-search-hit="true"]{border-color:#60a5fa;box-shadow:0 0 0 3px #dbeafe}
 
+/* Unified grading result cockpit: presentation-only aggregation of already verified runtime state. */
+.grade-result-cockpit{
+  margin:13px 0 15px;padding:14px;border:1px solid #bfdbfe;border-radius:16px;
+  background:linear-gradient(145deg,#eff6ff 0%,#fff 55%,#f8fafc 100%);
+  box-shadow:0 8px 22px rgba(37,99,235,.08)
+}
+.grade-result-cockpit[data-state="ready"]{border-color:#86efac;background:linear-gradient(145deg,#ecfdf5 0%,#fff 54%,#f8fafc 100%)}
+.grade-cockpit-head{display:flex;align-items:flex-start;justify-content:space-between;gap:10px;margin-bottom:11px}
+.grade-cockpit-head h4{margin:0;color:#0f172a;font-size:17px;line-height:1.3}
+.grade-cockpit-head p{margin:4px 0 0;color:#64748b;font-size:11px;line-height:1.5}
+.grade-cockpit-ai-badge{flex:0 0 auto;max-width:145px;padding:5px 8px;border-radius:999px;background:#fef3c7;color:#92400e;font-size:9px;font-weight:900;text-align:center;line-height:1.35}
+.grade-cockpit-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+.grade-cockpit-cell{min-width:0;padding:10px;border:1px solid #dbe3ef;border-radius:12px;background:#fff}
+.grade-cockpit-cell-wide{grid-column:span 2}
+.grade-cockpit-cell span{display:block;color:#64748b;font-size:9px;font-weight:850}
+.grade-cockpit-cell b{display:block;margin-top:4px;color:#0f172a;font-size:13px;line-height:1.35;overflow-wrap:anywhere}
+.grade-cockpit-cell-wide b{font-size:14px}
+.grade-cockpit-block{margin-top:10px;padding:10px;border:1px solid #e2e8f0;border-radius:12px;background:rgba(255,255,255,.78)}
+.grade-cockpit-block-title{display:block;margin-bottom:7px;color:#334155;font-size:11px}
+.grade-cockpit-probabilities{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:7px}
+.grade-cockpit-probability{padding:9px;border-radius:10px;background:#f8fafc;text-align:center}
+.grade-cockpit-probability span{display:block;color:#64748b;font-size:9px;font-weight:850}
+.grade-cockpit-probability b{display:block;margin-top:3px;color:#1d4ed8;font-size:17px}
+.grade-cockpit-companies{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:6px}
+.grade-cockpit-company{min-width:0;padding:8px 5px;border-radius:10px;background:#f8fafc;text-align:center}
+.grade-cockpit-company span{display:block;color:#64748b;font-size:9px;font-weight:850}
+.grade-cockpit-company b{display:block;margin-top:3px;color:#0f172a;font-size:11px;overflow-wrap:anywhere}
+.grade-cockpit-evidence,.grade-cockpit-note{margin:9px 1px 0;color:#475569;font-size:10px;line-height:1.55}
+.grade-cockpit-evidence{font-weight:800}
+.grade-cockpit-note{padding-top:8px;border-top:1px dashed #cbd5e1}
+
 /* Keep dense feature/action cards readable without making the phone layout wider than the viewport. */
 .feature-shortcut,.tablet-manager-action,.home-launch-btn,.box-menu-btn,.analysis-box,
 .purchase-source,.release-item,.metric,.status{min-width:0}
@@ -77,14 +108,28 @@ button,a{-webkit-tap-highlight-color:transparent}
   .feature-category-grid{gap:12px}
   .feature-shortcut-grid{grid-template-columns:repeat(4,minmax(0,1fr))}
 }
+@media(max-width:700px){
+  .grade-cockpit-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .grade-cockpit-cell-wide{grid-column:1/-1}
+  .grade-cockpit-companies{grid-template-columns:repeat(3,minmax(0,1fr))}
+}
 @media(max-width:650px){
   .feature-quick-search{padding:9px;margin:9px 0 11px}
   .feature-quick-search-row{grid-template-columns:minmax(0,1fr) auto}
   .feature-quick-search-clear{min-width:64px!important;padding-inline:10px!important}
 }
+@media(max-width:450px){
+  .grade-result-cockpit{padding:11px;margin-inline:-1px}
+  .grade-cockpit-head{display:grid}
+  .grade-cockpit-ai-badge{max-width:none;justify-self:start}
+  .grade-cockpit-grid{grid-template-columns:1fr}
+  .grade-cockpit-cell-wide{grid-column:auto}
+  .grade-cockpit-companies{grid-template-columns:repeat(2,minmax(0,1fr))}
+}
 @media(max-width:350px){
   .feature-quick-search-row{grid-template-columns:1fr}
   .feature-quick-search-clear{width:100%!important}
+  .grade-cockpit-probabilities{grid-template-columns:1fr}
 }
 
 /* Respect operating-system accessibility preferences beyond reduced motion. */
@@ -94,13 +139,14 @@ button,a{-webkit-tap-highlight-color:transparent}
 }
 @media(prefers-contrast:more){
   .card,.home-launcher,.feature-category-nav,.feature-category,.feature-shortcut,.feature-quick-search,
-  input,select,textarea{border-color:#64748b!important}
-  .muted,.feature-category-sub,.feature-shortcut small{color:#475569!important}
+  .grade-result-cockpit,.grade-cockpit-cell,.grade-cockpit-block,input,select,textarea{border-color:#64748b!important}
+  .muted,.feature-category-sub,.feature-shortcut small,.grade-cockpit-head p,.grade-cockpit-evidence,.grade-cockpit-note{color:#334155!important}
   :where(button,a,input,select,textarea,summary):focus-visible{outline-width:4px!important}
 }
 @media(forced-colors:active){
   .ui-skip-link,.feature-category-nav,.feature-category,.feature-shortcut,.feature-quick-search,
-  .feature-quick-search-clear{forced-color-adjust:auto;border:1px solid CanvasText}
+  .feature-quick-search-clear,.grade-result-cockpit,.grade-cockpit-cell,.grade-cockpit-block,
+  .grade-cockpit-probability,.grade-cockpit-company{forced-color-adjust:auto;border:1px solid CanvasText}
   .feature-category[data-ui-search-hit="true"]{outline:2px solid Highlight;box-shadow:none}
 }
 
@@ -113,4 +159,11 @@ button,a{-webkit-tap-highlight-color:transparent}
   .feature-quick-search-status{color:#cbd5e1}
   .feature-quick-search-status[data-state="match"]{color:#86efac}
   .feature-quick-search-status[data-state="empty"]{color:#fdba74}
+  .grade-result-cockpit,.grade-result-cockpit[data-state="ready"]{background:#111827;border-color:#334155}
+  .grade-cockpit-head h4,.grade-cockpit-cell b,.grade-cockpit-company b{color:#f8fafc}
+  .grade-cockpit-head p,.grade-cockpit-cell span,.grade-cockpit-block-title,.grade-cockpit-probability span,
+  .grade-cockpit-company span,.grade-cockpit-evidence,.grade-cockpit-note{color:#cbd5e1}
+  .grade-cockpit-cell,.grade-cockpit-block{background:#0f172a;border-color:#334155}
+  .grade-cockpit-probability,.grade-cockpit-company{background:#172033}
+  .grade-cockpit-probability b{color:#93c5fd}
 }
