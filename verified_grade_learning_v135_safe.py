@@ -12,6 +12,7 @@ from __future__ import annotations
 from typing import Any, Callable, Mapping
 
 import verified_grade_learning_v135 as base
+from safe_runtime import exclusive_file_lock
 
 # Re-export stable helpers used by the v135 server wrapper.
 ROOT = base.ROOT
@@ -55,6 +56,7 @@ def model_status() -> dict[str, Any]:
         **status.get("policy", {}),
         "vision_residual_registry_gate_required": True,
         "mixed_legacy_vision_calibration_used": False,
+        "cross_process_training_transaction_lock": True,
     }
     return status
 
@@ -64,20 +66,27 @@ def submit_verified_sample(
     *,
     verifier: Callable[[str, str, float], Mapping[str, Any]] | None = None,
 ) -> dict[str, Any]:
-    # The base function has a compatibility call to vision_calibration.train_file.
-    # Temporarily replace that single call, then immediately rebuild from the
-    # registry-gated dataset through rebuild_safe_vision_calibration().
-    import vision_calibration
-    original = vision_calibration.train_file
-    vision_calibration.train_file = lambda *args, **kwargs: {"skipped": "v135-safe-adapter"}
-    try:
-        result = base.submit_verified_sample(payload, verifier=verifier)
-    finally:
-        vision_calibration.train_file = original
-    if result.get("accepted"):
-        rebuild_safe_vision_calibration()
-        result["model"] = model_status()
-    return result
+    # Server requests are already protected by DATA_WRITE_LOCK, but this module
+    # is also used by manual import/maintenance entrypoints.  Serialize the
+    # complete load-modify-save + calibration rebuild transaction across OS
+    # processes so those paths cannot overwrite each other's verified learning.
+    with exclusive_file_lock(base.LEARNING_STORE, timeout_seconds=60.0, stale_seconds=600.0):
+        # The base function has a compatibility call to vision_calibration.train_file.
+        # Temporarily replace that single call, then immediately rebuild from the
+        # registry-gated dataset through rebuild_safe_vision_calibration().  The
+        # process lock also prevents another safe-adapter invocation from seeing
+        # this temporary replacement concurrently.
+        import vision_calibration
+        original = vision_calibration.train_file
+        vision_calibration.train_file = lambda *args, **kwargs: {"skipped": "v135-safe-adapter"}
+        try:
+            result = base.submit_verified_sample(payload, verifier=verifier)
+        finally:
+            vision_calibration.train_file = original
+        if result.get("accepted"):
+            rebuild_safe_vision_calibration()
+            result["model"] = model_status()
+        return result
 
 
 def audit() -> dict[str, Any]:

@@ -122,7 +122,7 @@ class FanSocialLearner:
             for key in dict.fromkeys(str(x).lower()[:140] for x in keys if x):
                 stat = self._row(key)
                 stat["selected"] = _int(stat.get("selected")) + 1
-                if item.get("cross_checked") is True or int(item.get("independent_source_count") or 0) >= 2:
+                if item.get("cross_checked") is True or _int(item.get("independent_source_count")) >= 2:
                     stat["corroborated"] = _int(stat.get("corroborated")) + 1
                 stat["last_selected"] = _now()
                 stat["score"] = _score(stat)
@@ -137,7 +137,8 @@ class FanSocialLearner:
                 continue
             rows.append((_score(stat), _int(stat.get("corroborated")), _int(stat.get("selected")), author))
         rows.sort(reverse=True)
-        return [author for _, _, _, author in rows[: max(1, min(12, int(limit)))] ]
+        safe_limit = max(1, min(12, _int(limit, 6)))
+        return [author for _, _, _, author in rows[:safe_limit]]
 
     def save(self) -> None:
         sources = self.data.setdefault("sources", {})
