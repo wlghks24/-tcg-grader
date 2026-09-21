@@ -37,7 +37,7 @@ jobs:
           git diff --check
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git add integrity_manifest.json .github/workflows/temp-v283-integrity-regenerate.yml
+          git add integrity_manifest.json
           if git diff --cached --quiet; then
             echo 'No manifest update required.'
             exit 0
