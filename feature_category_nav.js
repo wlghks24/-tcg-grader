@@ -21,6 +21,28 @@
     return document.getElementById(value);
   }
 
+  function reducedMotionPreferred() {
+    try {
+      return Boolean(window.matchMedia?.("(prefers-reduced-motion: reduce)")?.matches);
+    } catch (_) {
+      return false;
+    }
+  }
+
+  function scrollTarget(target, delay = 0) {
+    if (!target) return false;
+    const run = () => {
+      try {
+        target.scrollIntoView({ behavior: reducedMotionPreferred() ? "auto" : "smooth", block: "start" });
+      } catch (_) {
+        target.scrollIntoView?.();
+      }
+    };
+    if (delay > 0) setTimeout(run, delay);
+    else run();
+    return true;
+  }
+
   function categoryLabel(category) {
     return String(category?.dataset?.categoryLabel || "").trim() || "선택한 카테고리";
   }
@@ -85,13 +107,7 @@
       selectedStatus.textContent = "✅ 기능 화면으로 이동했습니다. 아래 앱 메뉴 또는 오른쪽 아래 메뉴 버튼으로 주요 기능에 바로 이동할 수 있습니다.";
     }
 
-    setTimeout(() => {
-      try {
-        target.scrollIntoView({ behavior: "smooth", block: "start" });
-      } catch (_) {
-        target.scrollIntoView();
-      }
-    }, panelId ? 50 : 0);
+    scrollTarget(target, panelId ? 50 : 0);
     return true;
   }
 
@@ -133,13 +149,7 @@
       status.classList?.add?.("active");
       status.textContent = `✅ ${label} 화면을 열었습니다.`;
     }
-    setTimeout(() => {
-      try {
-        target.scrollIntoView({ behavior: "smooth", block: "start" });
-      } catch (_) {
-        target.scrollIntoView?.();
-      }
-    }, 60);
+    scrollTarget(target, 60);
     return true;
   }
 
@@ -150,14 +160,10 @@
   if (fab) {
     fab.addEventListener("click", (event) => {
       event.preventDefault();
-      try {
-        nav?.scrollIntoView({ behavior: "smooth", block: "start" });
-      } catch (_) {
-        nav?.scrollIntoView?.();
-      }
+      scrollTarget(nav);
       const openCategory = categories.find((item) => item.open) || categories[0];
       const summary = openCategory?.querySelector?.("summary");
-      setTimeout(() => summary?.focus?.(), 80);
+      setTimeout(() => summary?.focus?.(), reducedMotionPreferred() ? 0 : 80);
     });
   }
 
@@ -183,7 +189,7 @@
           touch-action:manipulation;-webkit-tap-highlight-color:transparent
         }
         .app-bottom-dock a:active{transform:scale(.96)}
-        .app-bottom-dock a[aria-current="page"]{background:#eff6ff;color:#1d4ed8;box-shadow:inset 0 0 0 1px #dbeafe}
+        .app-bottom-dock a[aria-current="location"]{background:#eff6ff;color:#1d4ed8;box-shadow:inset 0 0 0 1px #dbeafe}
         .app-bottom-dock-icon{font-size:22px;line-height:1}
         .app-bottom-dock-label{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%}
         .app-bottom-dock a:focus-visible{outline:3px solid #2563eb;outline-offset:1px}
@@ -196,10 +202,10 @@
       @media(prefers-color-scheme:dark) and (max-width:1180px){
         .app-bottom-dock{background:rgba(15,23,42,.94);border-color:#334155;box-shadow:0 16px 38px rgba(0,0,0,.38)}
         .app-bottom-dock a{color:#cbd5e1}
-        .app-bottom-dock a[aria-current="page"]{background:#172554;color:#bfdbfe;box-shadow:inset 0 0 0 1px #1e3a8a}
+        .app-bottom-dock a[aria-current="location"]{background:#172554;color:#bfdbfe;box-shadow:inset 0 0 0 1px #1e3a8a}
       }
       @media(prefers-reduced-motion:reduce){.app-bottom-dock a{transition:none!important}}
-      @media(forced-colors:active){.app-bottom-dock{border:1px solid CanvasText}.app-bottom-dock a[aria-current="page"]{outline:2px solid Highlight}}
+      @media(forced-colors:active){.app-bottom-dock{border:1px solid CanvasText}.app-bottom-dock a[aria-current="location"]{outline:2px solid Highlight}}
     `;
     document.head.append(style);
   }
@@ -212,12 +218,13 @@
     const dock = document.createElement("nav");
     dock.id = "tcgAppBottomDock";
     dock.className = "app-bottom-dock";
+    dock.dataset.uiVersion = "v276";
     dock.setAttribute("aria-label", "주요 기능 빠른 이동");
 
     function setActive(key) {
       dock.querySelectorAll("a[data-dock-key]").forEach((link) => {
         const active = link.dataset.dockKey === key;
-        if (active) link.setAttribute("aria-current", "page");
+        if (active) link.setAttribute("aria-current", "location");
         else link.removeAttribute("aria-current");
       });
     }
@@ -227,7 +234,8 @@
       link.href = `#${item.target}`;
       link.dataset.dockKey = item.key;
       link.setAttribute("aria-label", `${item.label} 화면으로 이동`);
-      if (index === 0) link.setAttribute("aria-current", "page");
+      link.setAttribute("aria-controls", item.target);
+      if (index === 0) link.setAttribute("aria-current", "location");
 
       const icon = document.createElement("span");
       icon.className = "app-bottom-dock-icon";
@@ -243,14 +251,10 @@
         const target = safeTarget(item.target);
         if (!target) return;
         setActive(item.key);
-        try {
-          target.scrollIntoView({ behavior: "smooth", block: "start" });
-        } catch (_) {
-          target.scrollIntoView?.();
-        }
+        scrollTarget(target);
         if (item.key === "menu") {
           const openCategory = categories.find((category) => category.open) || categories[0];
-          setTimeout(() => openCategory?.querySelector?.("summary")?.focus?.(), 80);
+          setTimeout(() => openCategory?.querySelector?.("summary")?.focus?.(), reducedMotionPreferred() ? 0 : 80);
         }
       });
       dock.append(link);
@@ -261,16 +265,27 @@
     return true;
   }
 
+  function requestServiceWorkerRefresh() {
+    if (typeof navigator === "undefined" || !("serviceWorker" in navigator)) return false;
+    navigator.serviceWorker.getRegistration()
+      .then((registration) => registration?.update?.())
+      .catch(() => {});
+    return true;
+  }
+
   createAppDock();
+  requestServiceWorkerRefresh();
 
   window.TCGFeatureCategoryNav = Object.freeze({
     version: "v30-tablet-manager-hub",
-    uiVersion: "v275-app-bottom-dock",
+    uiVersion: "v276-motion-pwa-hardening",
     activateTopPanel,
     navigateShortcut,
     openTabletAction,
     selectCategory,
     createAppDock,
+    requestServiceWorkerRefresh,
+    reducedMotionPreferred,
     targetExists: (id) => Boolean(safeTarget(id)),
   });
 })();
