@@ -146,18 +146,17 @@ jobs:
             integrity_manifest.json
           git diff --cached --check
           git diff --cached --name-only | sort > /tmp/v280-staged.txt
-          cat >/tmp/v280-expected.txt <<'EOF'
-.github/workflows/v280-runtime-selfpatch.yml
-adaptive_collection_learner.py
-apply_learning_state_concurrency_v280.py
-event_gap_learning.py
-integrity_manifest.json
-test_learning_state_concurrency_v280.py
-verified_collection_job_neural.py
-verified_collection_neural.py
-verified_neural_self_refine.py
-EOF
-          sort -o /tmp/v280-expected.txt /tmp/v280-expected.txt
+          printf '%s\n' \
+            '.github/workflows/v280-runtime-selfpatch.yml' \
+            'adaptive_collection_learner.py' \
+            'apply_learning_state_concurrency_v280.py' \
+            'event_gap_learning.py' \
+            'integrity_manifest.json' \
+            'test_learning_state_concurrency_v280.py' \
+            'verified_collection_job_neural.py' \
+            'verified_collection_neural.py' \
+            'verified_neural_self_refine.py' \
+            | sort > /tmp/v280-expected.txt
           echo '--- staged deployment diff ---'
           cat /tmp/v280-staged.txt
           diff -u /tmp/v280-expected.txt /tmp/v280-staged.txt
