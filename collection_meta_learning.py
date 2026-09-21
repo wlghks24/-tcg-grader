@@ -24,7 +24,7 @@ import re
 import urllib.parse
 from pathlib import Path
 
-from safe_runtime import atomic_write_json, safe_read_text
+from safe_runtime import atomic_write_json, exclusive_file_lock, safe_read_text
 
 ROOT = Path(__file__).resolve().parent
 MEMORY = ROOT / "collection_meta_learning.json"
@@ -452,7 +452,7 @@ def _context_score(stat: dict) -> float:
     )
 
 
-def refresh_profile() -> dict:
+def _refresh_profile_unlocked() -> dict:
     memory = _load()
     memory["runs"] = _int(memory.get("runs")) + 1
     raw_rows, used_files = _collect_snapshot()
@@ -605,6 +605,13 @@ def refresh_profile() -> dict:
     }
     atomic_write_json(PROFILE, profile, suffix=".meta-profile.tmp")
     return profile
+
+
+def refresh_profile() -> dict:
+    # Atomic writes protect file bytes, but only this lock protects the complete
+    # load -> EMA/runs update -> memory/profile commit from stale concurrent writers.
+    with exclusive_file_lock(MEMORY, timeout_seconds=15.0, stale_seconds=300):
+        return _refresh_profile_unlocked()
 
 
 def recommended_focus(game: str) -> dict | None:
