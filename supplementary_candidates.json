@@ -1,5 +1,5 @@
 {
-  "updated_at": "2026-09-21T05:38:32+00:00",
+  "updated_at": "2026-09-21T13:28:52+00:00",
   "policy": "Tier C(나무위키/커뮤니티)는 발견용이며 단독으로 공식확정 처리하지 않음. 공식/공공/복수 독립출처와 교차 확인 후 승격.",
   "date_policy": "공식 발표가 월까지만 있으면 예정월만 표시하고 정확한 일자를 만들지 않습니다.",
   "items": [
@@ -59,15 +59,20 @@
       "category": "movie",
       "region": "KR",
       "title": "나루토(영화)",
-      "source": "https://namu.wiki/w/%EB%82%98%EB%A3%A8%ED%86%A0%28%EC%98%81%ED%99%94%29",
+      "source": "https://www.namu.moe/w/%EB%82%98%EB%A3%A8%ED%86%A0%28%EC%98%81%ED%99%94%29",
       "source_tier": "C",
-      "source_label": "나무위키 보조탐색",
-      "dates": [],
-      "excerpt": "자동 접근 제한 또는 네트워크 지연으로 다음 업데이트에서 재확인",
-      "status": "재확인 대기",
+      "source_label": "나무위키 미러 보조탐색",
+      "dates": [
+        "2016-12-17",
+        "2020-05-13",
+        "2026-07-09",
+        "2026-07-22",
+        "2026-08-21"
+      ],
+      "excerpt": "나루토(영화) 나무모에 미러 모바일 화면 · 어두운 화면 랜덤 (A) 역링크 편집 최근 수정 시각 : 2026-08-21 23:57:05 나루토(영화) {{{#!wiki style=\"margin: -10px; word-break: keep-all\" <table width=100%><table bordercolor=transparent> 나루토 NARUTO }}} {{{#!wiki style=",
+      "status": "보조출처 후보",
       "verified": false,
-      "error": "TimeoutError",
-      "collected_at": "2026-09-21T05:37:31+00:00"
+      "collected_at": "2026-09-21T13:28:44+00:00"
     },
     {
       "game": "포켓몬 카드",
@@ -82,22 +87,23 @@
       "status": "재확인 대기",
       "verified": false,
       "error": "HTTPError",
-      "collected_at": "2026-09-21T05:37:31+00:00"
+      "collected_at": "2026-09-21T13:28:45+00:00"
     },
     {
       "game": "원피스 카드",
       "category": "movie",
       "region": "KR",
       "title": "원피스(애니메이션)/극장판",
-      "source": "https://namu.wiki/w/%EC%9B%90%ED%94%BC%EC%8A%A4%28%EC%95%A0%EB%8B%88%EB%A9%94%EC%9D%B4%EC%85%98%29%2F%EA%B7%B9%EC%9E%A5%ED%8C%90",
+      "source": "https://www.namu.moe/w/%EC%9B%90%ED%94%BC%EC%8A%A4%28%EC%95%A0%EB%8B%88%EB%A9%94%EC%9D%B4%EC%85%98%29%2F%EA%B7%B9%EC%9E%A5%ED%8C%90",
       "source_tier": "C",
-      "source_label": "나무위키 보조탐색",
-      "dates": [],
-      "excerpt": "자동 접근 제한 또는 네트워크 지연으로 다음 업데이트에서 재확인",
-      "status": "재확인 대기",
+      "source_label": "나무위키 미러 보조탐색",
+      "dates": [
+        "2026-06-19"
+      ],
+      "excerpt": "원피스(만화)/애니메이션/극장판 나무모에 미러 모바일 화면 · 어두운 화면 랜덤 (A) 역링크 편집 최근 수정 시각 : 2026-06-19 19:34:10 원피스(만화)/애니메이션/극장판 원피스(애니메이션)/극장판 에서 넘어옴 #!if top = 문서명1 != null ? 문서명1 : calleeTitle != null ? (i = calleeTitle.lastIndexOf(\"/\")) != ",
+      "status": "보조출처 후보",
       "verified": false,
-      "error": "HTTPError",
-      "collected_at": "2026-09-21T05:37:31+00:00"
+      "collected_at": "2026-09-21T13:28:51+00:00"
     },
     {
       "game": "원피스 카드",
@@ -111,8 +117,8 @@
       "excerpt": "자동 접근 제한 또는 네트워크 지연으로 다음 업데이트에서 재확인",
       "status": "재확인 대기",
       "verified": false,
-      "error": "TimeoutError",
-      "collected_at": "2026-09-21T05:38:32+00:00"
+      "error": "HTTPError",
+      "collected_at": "2026-09-21T13:28:51+00:00"
     },
     {
       "game": "포켓몬 카드",
@@ -127,7 +133,7 @@
       "status": "재확인 대기",
       "verified": false,
       "error": "HTTPError",
-      "collected_at": "2026-09-21T05:38:32+00:00"
+      "collected_at": "2026-09-21T13:28:52+00:00"
     }
   ]
 }
