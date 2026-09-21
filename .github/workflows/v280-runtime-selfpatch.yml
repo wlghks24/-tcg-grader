@@ -131,24 +131,10 @@ jobs:
           test "$RUNTIME_OUTCOME" = success
           test "$ROOT_OUTCOME" = success
 
-      - name: Ensure generated diff is scoped
+      - name: Stage and verify deployment diff
         shell: bash
         run: |
           set -euo pipefail
-          allowed='^(event_gap_learning.py|adaptive_collection_learner.py|verified_collection_neural.py|verified_collection_job_neural.py|verified_neural_self_refine.py|test_learning_state_concurrency_v280.py|integrity_manifest.json|apply_learning_state_concurrency_v280.py|.github/workflows/v280-runtime-selfpatch.yml)$'
-          bad="$(git status --porcelain | sed -E 's/^.. //' | grep -Ev "$allowed" || true)"
-          if [ -n "$bad" ]; then
-            echo "Unexpected generated changes:"
-            echo "$bad"
-            exit 1
-          fi
-
-      - name: Commit validated source changes
-        shell: bash
-        run: |
-          set -euo pipefail
-          git config user.name 'github-actions[bot]'
-          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           rm -f v280_runtime_verify.log v280_root_regression.log
           git add \
             event_gap_learning.py \
@@ -159,5 +145,28 @@ jobs:
             test_learning_state_concurrency_v280.py \
             integrity_manifest.json
           git diff --cached --check
+          git diff --cached --name-only | sort > /tmp/v280-staged.txt
+          cat >/tmp/v280-expected.txt <<'EOF'
+.github/workflows/v280-runtime-selfpatch.yml
+adaptive_collection_learner.py
+apply_learning_state_concurrency_v280.py
+event_gap_learning.py
+integrity_manifest.json
+test_learning_state_concurrency_v280.py
+verified_collection_job_neural.py
+verified_collection_neural.py
+verified_neural_self_refine.py
+EOF
+          sort -o /tmp/v280-expected.txt /tmp/v280-expected.txt
+          echo '--- staged deployment diff ---'
+          cat /tmp/v280-staged.txt
+          diff -u /tmp/v280-expected.txt /tmp/v280-staged.txt
+
+      - name: Commit validated source changes
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           git commit -m 'QA: harden remaining learning and neural concurrency v280'
           git push origin HEAD:qa/data-ai-runtime-v280
