@@ -14,7 +14,6 @@ env:
 
 jobs:
   patch-and-validate:
-    if: ${{ !contains(github.event.head_commit.message || '', 'QA: harden remaining learning and neural concurrency v280') }}
     runs-on: ubuntu-latest
     timeout-minutes: 35
     steps:
