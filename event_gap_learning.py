@@ -12,6 +12,7 @@ v2 adds a bounded missed-event recovery loop:
 """
 from __future__ import annotations
 
+import copy
 import datetime as dt
 import hashlib
 import json
@@ -19,7 +20,7 @@ import math
 import re
 from pathlib import Path
 
-from safe_runtime import atomic_write_json, safe_read_text
+from safe_runtime import atomic_write_json, exclusive_file_lock, safe_read_text
 
 ROOT = Path(__file__).resolve().parent
 MEMORY = ROOT / "event_gap_learning.json"
@@ -220,11 +221,105 @@ def _official_manual_row(row: dict) -> bool:
     )
 
 
+def _merge_unique_tail(disk_values, local_values, limit):
+    out = []
+    for value in list(disk_values or []) + list(local_values or []):
+        item = str(value)[:48]
+        if item and item not in out:
+            out.append(item)
+    return out[-max(1, int(limit)):]
+
+
+def _merge_event_row(base, local, disk, *, score_cap=None):
+    base_row = base if isinstance(base, dict) else {}
+    local_row = local if isinstance(local, dict) else {}
+    disk_row = disk if isinstance(disk, dict) else {}
+    merged = copy.deepcopy(disk_row)
+    for field in ("attempts", "hits", "misses", "verified_events"):
+        if field not in base_row and field not in local_row and field not in disk_row:
+            continue
+        delta = max(0, _int(local_row.get(field)) - _int(base_row.get(field)))
+        merged[field] = _int(disk_row.get(field)) + delta
+
+    if score_cap is not None:
+        delta = _float(local_row.get("score")) - _float(base_row.get("score"))
+        merged["score"] = round(max(0.0, min(float(score_cap), _float(disk_row.get("score")) + delta)), 4)
+
+    local_changed = local_row != base_row
+    local_seen = str(local_row.get("last_seen") or "")
+    disk_seen = str(disk_row.get("last_seen") or "")
+    if local_changed and local_seen >= disk_seen:
+        for field in ("last_seen", "learned_from", "last_learning_weight"):
+            if field in local_row:
+                merged[field] = copy.deepcopy(local_row.get(field))
+    elif disk_seen:
+        merged["last_seen"] = disk_seen
+
+    last_hit = max(str(local_row.get("last_hit") or ""), str(disk_row.get("last_hit") or ""))
+    if last_hit:
+        merged["last_hit"] = last_hit
+
+    if any(field in base_row or field in local_row or field in disk_row for field in ("miss_streak", "hits", "misses")):
+        local_hit_delta = max(0, _int(local_row.get("hits")) - _int(base_row.get("hits")))
+        local_miss_delta = max(0, _int(local_row.get("misses")) - _int(base_row.get("misses")))
+        disk_hit_delta = max(0, _int(disk_row.get("hits")) - _int(base_row.get("hits")))
+        if local_hit_delta:
+            merged["miss_streak"] = 0
+        elif local_miss_delta:
+            merged["miss_streak"] = 0 if disk_hit_delta else _int(disk_row.get("miss_streak")) + local_miss_delta
+        else:
+            merged["miss_streak"] = _int(disk_row.get("miss_streak"))
+    return merged
+
+
+def _merge_event_gap_state(base, local, disk):
+    base_data = base if isinstance(base, dict) else _fresh()
+    local_data = local if isinstance(local, dict) else _fresh()
+    disk_data = disk if isinstance(disk, dict) else _fresh()
+    merged = copy.deepcopy(disk_data)
+    for field in ("runs", "rotation"):
+        delta = max(0, _int(local_data.get(field)) - _int(base_data.get(field)))
+        merged[field] = _int(disk_data.get(field)) + delta
+
+    specs = (("cells", None), ("terms", 20.0), ("region_hints", 12.0))
+    for name, score_cap in specs:
+        base_map = base_data.get(name) if isinstance(base_data.get(name), dict) else {}
+        local_map = local_data.get(name) if isinstance(local_data.get(name), dict) else {}
+        disk_map = disk_data.get(name) if isinstance(disk_data.get(name), dict) else {}
+        out = copy.deepcopy(disk_map)
+        for key, local_row in local_map.items():
+            if not isinstance(key, str) or not isinstance(local_row, dict):
+                continue
+            out[key] = _merge_event_row(base_map.get(key), local_row, disk_map.get(key), score_cap=score_cap)
+        merged[name] = out
+
+    merged["seen_verified"] = _merge_unique_tail(
+        disk_data.get("seen_verified"), local_data.get("seen_verified"), MAX_SEEN
+    )
+    base_recovery = base_data.get("miss_recoveries") if isinstance(base_data.get("miss_recoveries"), dict) else {}
+    local_recovery = local_data.get("miss_recoveries") if isinstance(local_data.get("miss_recoveries"), dict) else {}
+    disk_recovery = disk_data.get("miss_recoveries") if isinstance(disk_data.get("miss_recoveries"), dict) else {}
+    recoveries = copy.deepcopy(disk_recovery)
+    for key, row in local_recovery.items():
+        if not isinstance(key, str) or not isinstance(row, dict):
+            continue
+        if key not in base_recovery or str(row.get("learned_at") or "") >= str((recoveries.get(key) or {}).get("learned_at") or ""):
+            recoveries[key[:100]] = copy.deepcopy(row)
+    if len(recoveries) > MAX_RECOVERIES:
+        ranked = sorted(recoveries.items(), key=lambda item: str(item[1].get("learned_at") or ""), reverse=True)
+        recoveries = dict(ranked[:MAX_RECOVERIES])
+    merged["miss_recoveries"] = recoveries
+    merged["version"] = 2
+    merged["updated_at"] = _now()
+    return merged
+
+
 class EventGapLearner:
     def __init__(self, memory_path=MEMORY):
         self.memory_path = Path(memory_path)
         self.backup_path = self.memory_path.with_suffix(self.memory_path.suffix + ".bak")
         self.data = _load(self.memory_path)
+        self._base_data = copy.deepcopy(self.data)
 
     def _learn_terms(self, game, region, topic, row, *, weight=1.0, learned_from="official_event"):
         learned = 0
@@ -438,25 +533,34 @@ class EventGapLearner:
             stat["last_seen"] = _now()
 
     def save(self):
-        self.data["version"] = 2
-        self.data["updated_at"] = _now()
-        if len(self.data.get("terms", {})) > MAX_TERMS:
-            ranked = sorted(
-                self.data["terms"].items(),
-                key=lambda item: (_float(item[1].get("score")), str(item[1].get("last_seen") or "")),
-                reverse=True,
-            )[:MAX_TERMS]
-            self.data["terms"] = dict(ranked)
-        if len(self.data.get("region_hints", {})) > MAX_REGION_HINTS:
-            ranked = sorted(
-                self.data["region_hints"].items(),
-                key=lambda item: (_float(item[1].get("score")), str(item[1].get("last_seen") or "")),
-                reverse=True,
-            )[:MAX_REGION_HINTS]
-            self.data["region_hints"] = dict(ranked)
-        if self.memory_path.exists():
-            atomic_write_json(self.backup_path, _load(self.memory_path), suffix=".event-gap.bak.tmp")
-        atomic_write_json(self.memory_path, self.data, suffix=".event-gap.tmp")
+        with exclusive_file_lock(self.memory_path, timeout_seconds=10.0, stale_seconds=300):
+            latest = _load(self.memory_path)
+            self.data = _merge_event_gap_state(self._base_data, self.data, latest)
+            if len(self.data.get("cells", {})) > MAX_CELLS:
+                ranked = sorted(
+                    self.data["cells"].items(),
+                    key=lambda item: str(item[1].get("last_seen") or ""),
+                    reverse=True,
+                )[:MAX_CELLS]
+                self.data["cells"] = dict(ranked)
+            if len(self.data.get("terms", {})) > MAX_TERMS:
+                ranked = sorted(
+                    self.data["terms"].items(),
+                    key=lambda item: (_float(item[1].get("score")), str(item[1].get("last_seen") or "")),
+                    reverse=True,
+                )[:MAX_TERMS]
+                self.data["terms"] = dict(ranked)
+            if len(self.data.get("region_hints", {})) > MAX_REGION_HINTS:
+                ranked = sorted(
+                    self.data["region_hints"].items(),
+                    key=lambda item: (_float(item[1].get("score")), str(item[1].get("last_seen") or "")),
+                    reverse=True,
+                )[:MAX_REGION_HINTS]
+                self.data["region_hints"] = dict(ranked)
+            if self.memory_path.exists():
+                atomic_write_json(self.backup_path, latest, suffix=".event-gap.bak.tmp")
+            atomic_write_json(self.memory_path, self.data, suffix=".event-gap.tmp")
+            self._base_data = copy.deepcopy(self.data)
 
     def report(self):
         hardest = sorted(

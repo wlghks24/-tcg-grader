@@ -106,6 +106,18 @@ def _clip01(value: Any) -> float:
     return max(0.0, min(1.0, number))
 
 
+def _safe_int(value: Any, default: int = 0) -> int:
+    if isinstance(value, bool):
+        return default
+    try:
+        number = float(value)
+    except (TypeError, ValueError, OverflowError):
+        return default
+    if not math.isfinite(number):
+        return default
+    return max(-1_000_000, min(1_000_000, int(number)))
+
+
 def _feature_vector(row: dict[str, Any]) -> list[float]:
     rule_id = str(row.get("rule_id") or row.get("auto_repair_rule") or row.get("fix_rule") or "")
     values: list[float] = [1.0 if rule_id == rid else 0.0 for rid in RULE_ORDER]
@@ -439,7 +451,7 @@ def _split(rows: list[dict[str, Any]]) -> tuple[list[dict[str, Any]], list[dict[
     if not (0 < a < b < d < n):
         return ordered[:a], ordered[a:b], ordered[b:d], ordered[d:]
     return ordered[:a], ordered[a:b], ordered[b:d], ordered[d:]
-def train_if_ready(
+def _train_if_ready_unlocked(
     *,
     labels_path: Path = LABELS_PATH,
     model_path: Path = MODEL_PATH,
@@ -574,6 +586,35 @@ def train_if_ready(
     return status
 
 
+def train_if_ready(
+    *,
+    labels_path: Path = LABELS_PATH,
+    model_path: Path = MODEL_PATH,
+    report_path: Path = REPORT_PATH,
+    current_rule_fingerprints: dict[str, str] | None = None,
+) -> dict[str, Any]:
+    """Serialize verified repair-model training across concurrent runtimes."""
+    try:
+        with exclusive_file_lock(model_path, timeout_seconds=3.0, stale_seconds=1800):
+            return _train_if_ready_unlocked(
+                labels_path=labels_path,
+                model_path=model_path,
+                report_path=report_path,
+                current_rule_fingerprints=current_rule_fingerprints,
+            )
+    except TimeoutError:
+        labels = _load_labels(labels_path).get("labels", [])
+        current = _load_model(model_path)
+        return {
+            "schema": SCHEMA,
+            "updated_at": _now(),
+            "active": current is not None,
+            "stored_label_count": len(labels),
+            "reason": "training_lock_busy",
+            "safety": SAFETY,
+        }
+
+
 def _finite_number(value: Any) -> bool:
     return isinstance(value, (int, float)) and not isinstance(value, bool) and math.isfinite(float(value))
 
@@ -581,11 +622,11 @@ def _finite_number(value: Any) -> bool:
 def _validate_model_payload(raw: object) -> bool:
     if not isinstance(raw, dict):
         return False
-    hidden = int(raw.get("hidden") or 0)
+    hidden = _safe_int(raw.get("hidden"), 0)
     if (
         raw.get("schema") != SCHEMA
         or raw.get("active") is not True
-        or int(raw.get("feature_count") or 0) != FEATURE_COUNT
+        or _safe_int(raw.get("feature_count"), 0) != FEATURE_COUNT
         or hidden not in HIDDEN_SIZES
     ):
         return False
