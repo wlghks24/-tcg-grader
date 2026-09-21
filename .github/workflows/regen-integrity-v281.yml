@@ -1,0 +1,46 @@
+name: Regenerate v281 final integrity manifest
+
+on:
+  push:
+    branches:
+      - qa/runtime-data-consistency-v281
+    paths:
+      - '.github/workflows/regen-integrity-v281.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  regenerate-and-verify:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    env:
+      PYTHONPATH: ${{ github.workspace }}
+      PYTHONDONTWRITEBYTECODE: '1'
+      PYTHONUNBUFFERED: '1'
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          ref: qa/runtime-data-consistency-v281
+          fetch-depth: 0
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97
+        with:
+          python-version: '3.11'
+      - name: Install runtime test dependencies
+        run: python -m pip install --disable-pip-version-check -r requirements.txt
+      - name: Exclude temporary manifest workflow from final tree
+        run: git rm -f .github/workflows/regen-integrity-v281.yml
+      - name: Rebuild integrity manifest
+        run: python -c "from pathlib import Path; import fault_injection_healing as h; h.build_integrity_manifest(Path('.'), Path('integrity_manifest.json'))"
+      - name: Verify complete final runtime before publication
+        run: python verify_current_runtime.py
+      - name: Publish manifest without modifying workflow through GITHUB_TOKEN
+        run: |
+          git restore --staged .github/workflows/regen-integrity-v281.yml
+          git restore .github/workflows/regen-integrity-v281.yml
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add integrity_manifest.json
+          test "$(git diff --cached --name-only)" = "integrity_manifest.json"
+          git commit -m 'QA: refresh integrity manifest for v281 final tree'
+          git push origin HEAD:qa/runtime-data-consistency-v281
