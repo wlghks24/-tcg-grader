@@ -18,15 +18,22 @@ jobs:
     timeout-minutes: 35
     steps:
       - name: Checkout branch
-        uses: actions/checkout@v5
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
         with:
           ref: qa/data-ai-runtime-v280
           fetch-depth: 0
 
       - name: Set up Python
-        uses: actions/setup-python@v6
+        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97
         with:
           python-version: '3.12'
+          cache: 'pip'
+          cache-dependency-path: requirements.txt
+
+      - name: Install production test dependencies
+        run: |
+          python -m pip install --disable-pip-version-check -r requirements.txt
+          python -m pip install --disable-pip-version-check pyyaml
 
       - name: Generate v280 source changes
         run: python apply_learning_state_concurrency_v280.py
@@ -51,7 +58,46 @@ jobs:
             test_verified_collection_job_neural_v212.py \
             test_verified_neural_self_refine_v210.py
 
-      - name: Run runtime contract verification
+      - name: Run isolated root regression
+        id: root_tests
+        continue-on-error: true
+        shell: bash
+        env:
+          TCG_REQUIRE_NODE: '1'
+        run: |
+          set -o pipefail
+          : > v280_root_regression.log
+          failed_count=0
+          total=0
+          for file in test_*.py; do
+            [ -f "$file" ] || continue
+            total=$((total+1))
+            echo "===== isolated root test: $file =====" | tee -a v280_root_regression.log
+            python -m unittest discover -v -s . -p "$file" 2>&1 | tee -a v280_root_regression.log
+            rc=${PIPESTATUS[0]}
+            if [ "$rc" -eq 5 ]; then
+              python selfrefine_standalone_test_runner.py "$file" 2>&1 | tee -a v280_root_regression.log
+              rc=${PIPESTATUS[0]}
+            fi
+            if [ "$rc" -ne 0 ]; then failed_count=$((failed_count+1)); fi
+          done
+          echo "isolated_root_test_modules=$total failed_modules=$failed_count" | tee -a v280_root_regression.log
+          test "$total" -gt 100
+          test "$failed_count" -eq 0
+
+      - name: Prepare final tree and rebuild integrity manifest
+        shell: bash
+        run: |
+          set -euo pipefail
+          git rm apply_learning_state_concurrency_v280.py .github/workflows/v280-runtime-selfpatch.yml
+          python - <<'PY'
+          from pathlib import Path
+          import fault_injection_healing as healing
+          payload = healing.build_integrity_manifest(Path('.'), Path('integrity_manifest.json'))
+          print('integrity_files', len(payload.get('files', {})))
+          PY
+
+      - name: Run runtime contract verification on final tree
         id: runtime
         continue-on-error: true
         shell: bash
@@ -59,25 +105,9 @@ jobs:
           set -o pipefail
           python verify_current_runtime.py 2>&1 | tee v280_runtime_verify.log
 
-      - name: Run isolated root regression
-        id: root_tests
-        continue-on-error: true
-        shell: bash
-        run: |
-          set -o pipefail
-          count=0
-          : > v280_root_regression.log
-          for file in test_*.py; do
-            echo "=== $file ===" | tee -a v280_root_regression.log
-            python -m unittest -q "$file" 2>&1 | tee -a v280_root_regression.log || exit 1
-            count=$((count+1))
-          done
-          echo "isolated_root_test_modules=$count" | tee -a v280_root_regression.log
-          test "$count" -gt 100
-
       - name: Upload v280 diagnostics
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
         with:
           name: v280-runtime-diagnostics
           path: |
@@ -102,7 +132,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          allowed='^(event_gap_learning.py|adaptive_collection_learner.py|verified_collection_neural.py|verified_collection_job_neural.py|verified_neural_self_refine.py|test_learning_state_concurrency_v280.py|apply_learning_state_concurrency_v280.py|.github/workflows/v280-runtime-selfpatch.yml)$'
+          allowed='^(event_gap_learning.py|adaptive_collection_learner.py|verified_collection_neural.py|verified_collection_job_neural.py|verified_neural_self_refine.py|test_learning_state_concurrency_v280.py|integrity_manifest.json|apply_learning_state_concurrency_v280.py|.github/workflows/v280-runtime-selfpatch.yml)$'
           bad="$(git status --porcelain | sed -E 's/^.. //' | grep -Ev "$allowed" || true)"
           if [ -n "$bad" ]; then
             echo "Unexpected generated changes:"
@@ -110,21 +140,21 @@ jobs:
             exit 1
           fi
 
-      - name: Commit validated source changes and remove bootstrap files
+      - name: Commit validated source changes
         shell: bash
         run: |
           set -euo pipefail
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           rm -f v280_runtime_verify.log v280_root_regression.log
-          git rm apply_learning_state_concurrency_v280.py .github/workflows/v280-runtime-selfpatch.yml
           git add \
             event_gap_learning.py \
             adaptive_collection_learner.py \
             verified_collection_neural.py \
             verified_collection_job_neural.py \
             verified_neural_self_refine.py \
-            test_learning_state_concurrency_v280.py
+            test_learning_state_concurrency_v280.py \
+            integrity_manifest.json
           git diff --cached --check
           git commit -m 'QA: harden remaining learning and neural concurrency v280'
           git push origin HEAD:qa/data-ai-runtime-v280
