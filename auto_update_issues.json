@@ -1,5 +1,47 @@
 {
-  "updated_at": "2026-09-22T05:30:19+00:00",
-  "issue_count": 0,
-  "issues": []
+  "updated_at": "2026-09-22T11:44:47+00:00",
+  "issue_count": 1,
+  "issues": [
+    {
+      "name": "프로모·콜라보 행사",
+      "file": "promo_events.json",
+      "severity": "주의",
+      "auto_action": "일부 출처 오류 격리 · 정상자료 반영 · 다음 실행 제한시간 확대",
+      "detail": "PLAYGO 출시 알림 · 신사황 프로모션 팩 재배포: HTTPError: status 500",
+      "recommended_action": "공식 행사 페이지의 기간·수령조건을 확인하세요.",
+      "error_group_id": "583393d39efb2627",
+      "error_code": "NETWORK_HTTP_ERROR",
+      "error_subtype": "transient-server",
+      "http_status": 500,
+      "bounded_retry_allowed": true,
+      "probable_cause": "원출처의 요청 제한 또는 일시적인 서버 장애일 가능성이 큽니다.",
+      "resolution_steps": [
+        "HTTP 상태와 Retry-After 정책을 확인합니다.",
+        "제한된 재시도와 대기 시간을 적용합니다.",
+        "복구되지 않으면 기존 정상자료를 유지합니다."
+      ],
+      "verification_steps": [
+        "복구되지 않으면 기존 정상자료를 유지합니다.",
+        "기존 정상자료가 손상되지 않았는지 확인합니다."
+      ],
+      "scenario_prepared": true,
+      "scenario_profile_id": "bc4fcf90c104daf9",
+      "diagnostic_priority": 20,
+      "first_checks": [
+        "HTTP 상태와 Retry-After 존재 여부를 먼저 확인합니다."
+      ],
+      "fast_resolution_steps": [
+        "HTTP 상태와 Retry-After 정책을 확인합니다.",
+        "제한된 재시도와 대기 시간을 적용합니다.",
+        "복구되지 않으면 기존 정상자료를 유지합니다."
+      ],
+      "stop_conditions": [
+        "401·403·404·410은 같은 주소를 자동 재시도하지 않습니다."
+      ],
+      "deferred_timeout_attempted": false,
+      "deferred_timeout_recovered": false,
+      "deferred_timeout_pending": false,
+      "deferred_timeout_seconds": 0
+    }
+  ]
 }
