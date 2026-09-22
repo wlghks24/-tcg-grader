@@ -32,6 +32,7 @@ on:
       - 'multi_route_event_discovery.py'
       - 'social_event_discovery.py'
       - 'auto_pipeline_runner.py'
+      - 'fault_injection_healing.py'
       - 'test_static_data_publish_gate.py'
       - 'test_collection_verification_gate.py'
       - 'test_collection_verification_contextual_v257.py'
@@ -83,7 +84,7 @@ jobs:
       - name: Compile and run collection publish regressions
         run: |
           python -m py_compile \
-            safe_runtime.py test_safe_runtime_redirect_diagnostics_v253.py collection_job_contract.py test_collection_job_contract_v255.py static_data_publish_gate.py auto_update_all.py tcg_updater.py feature_contract.py \
+            safe_runtime.py test_safe_runtime_redirect_diagnostics_v253.py collection_job_contract.py test_collection_job_contract_v255.py static_data_publish_gate.py auto_update_all.py tcg_updater.py feature_contract.py fault_injection_healing.py \
             collection_verification_gate.py collection_verification_gate_contextual.py \
             update_releases.py release_history_backfill.py update_promo_events.py \
             update_market_prices.py market_public_crosscheck.py \
@@ -167,6 +168,13 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
+          # Several approved JSON outputs are immutable-hash inputs to the repository
+          # integrity contract. Rebuild the manifest from the exact staged snapshot so
+          # an automated data refresh cannot leave main internally inconsistent.
+          python fault_injection_healing.py --manifest
+          python fault_injection_healing.py --diagnose
+          git add -- integrity_manifest.json
+          git diff --cached --check
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           git commit -m 'data: refresh validated TCG static snapshot'
@@ -195,6 +203,7 @@ jobs:
             echo "- stage changed: ${{ steps.stage.outputs.changed || 'not-reached' }}"
             echo "- stage reason: ${{ steps.stage.outputs.reason || 'not-reached' }}"
             echo "- publish policy: validated public JSON only; no force push"
+            echo "- integrity policy: every published static-data commit regenerates and diagnoses integrity_manifest.json from the exact snapshot"
             echo "- restored-state policy: a last-good restore or recovered retry is degraded evidence, never a clean fresh success"
             echo "- lifecycle policy: end/release + 5 days, archive on day 6"
             echo "- topic policy: collection attempts are distinct from zero discovered leads"

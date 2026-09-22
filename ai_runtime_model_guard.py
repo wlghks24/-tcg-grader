@@ -12,6 +12,7 @@ verified deterministic pipeline remains available.
 """
 from __future__ import annotations
 
+import copy
 import importlib
 import json
 import math
@@ -27,6 +28,7 @@ SCHEMA_VERSION = 1
 MAX_ACTIVE_MODEL_AGE_SECONDS = 30 * 24 * 60 * 60
 FUTURE_CLOCK_TOLERANCE_SECONDS = 5 * 60
 MAX_JSON_BYTES = 3_000_000
+CACHE_MAX_AGE_SECONDS = 60
 MODEL_SPECS = (
     ("query_strategy", "verified_collection_neural"),
     ("job_strategy", "verified_collection_job_neural"),
@@ -35,6 +37,7 @@ MODEL_SPECS = (
 _CACHE_LOCK = threading.Lock()
 _CACHE_SIGNATURE: tuple[Any, ...] | None = None
 _CACHE_VALUE: dict[str, Any] | None = None
+_CACHE_EXPIRES_AT: datetime | None = None
 
 
 def _utc_now() -> datetime:
@@ -177,7 +180,7 @@ def inspect_module(module: Any, name: str, *, now: datetime | None = None) -> di
             if validator(model) is not True:
                 base.update({"healthy": False, "requires_attention": True, "status": "broken", "reason": "module_model_validation_failed"})
                 return base
-        except (TypeError, ValueError, OverflowError, KeyError, IndexError):
+        except Exception:
             base.update({"healthy": False, "requires_attention": True, "status": "broken", "reason": "module_model_validation_error"})
             return base
 
@@ -271,18 +274,43 @@ def _signature(modules: list[tuple[str, Any]]) -> tuple[Any, ...]:
     return tuple(parts)
 
 
+def _cache_expiry(moment: datetime, rows: list[dict[str, Any]]) -> datetime:
+    """Bound cache lifetime by wall time and the nearest active-model stale boundary."""
+    expiry = moment + timedelta(seconds=CACHE_MAX_AGE_SECONDS)
+    for row in rows:
+        if row.get("status") != "active":
+            continue
+        age = row.get("model_age_seconds")
+        if isinstance(age, bool):
+            continue
+        try:
+            seconds = max(0, int(age))
+        except (TypeError, ValueError, OverflowError):
+            continue
+        remaining = max(0, MAX_ACTIVE_MODEL_AGE_SECONDS - seconds)
+        expiry = min(expiry, moment + timedelta(seconds=remaining))
+    return expiry
+
+
 def public_status(*, now: datetime | None = None, use_cache: bool = True) -> dict[str, Any]:
-    global _CACHE_SIGNATURE, _CACHE_VALUE
+    global _CACHE_SIGNATURE, _CACHE_VALUE, _CACHE_EXPIRES_AT
+    moment = (now or _utc_now()).astimezone(timezone.utc)
     modules, failures = _load_modules()
     signature = _signature(modules)
-    if use_cache and now is None:
+    cache_enabled = use_cache and now is None
+    if cache_enabled:
         with _CACHE_LOCK:
-            if _CACHE_SIGNATURE == signature and isinstance(_CACHE_VALUE, dict):
-                cached = dict(_CACHE_VALUE)
+            if (
+                _CACHE_SIGNATURE == signature
+                and isinstance(_CACHE_VALUE, dict)
+                and isinstance(_CACHE_EXPIRES_AT, datetime)
+                and moment < _CACHE_EXPIRES_AT
+            ):
+                cached = copy.deepcopy(_CACHE_VALUE)
                 cached["cache_hit"] = True
                 return cached
 
-    rows = [inspect_module(module, name, now=now) for name, module in modules]
+    rows = [inspect_module(module, name, now=moment) for name, module in modules]
     rows.extend(failures)
     broken = [row["name"] for row in rows if row.get("status") == "broken"]
     degraded = [row["name"] for row in rows if row.get("status") == "degraded"]
@@ -307,10 +335,12 @@ def public_status(*, now: datetime | None = None, use_cache: bool = True) -> dic
         "max_active_model_age_seconds": MAX_ACTIVE_MODEL_AGE_SECONDS,
         "cache_hit": False,
     }
-    if use_cache and now is None:
+    if cache_enabled:
+        expires_at = _cache_expiry(moment, rows)
         with _CACHE_LOCK:
             _CACHE_SIGNATURE = signature
-            _CACHE_VALUE = dict(payload)
+            _CACHE_VALUE = copy.deepcopy(payload)
+            _CACHE_EXPIRES_AT = expires_at
     return payload
 
 

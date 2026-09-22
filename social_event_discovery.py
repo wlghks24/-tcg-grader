@@ -835,6 +835,19 @@ def merge_candidates(rows: list[dict]) -> list[dict]:
                             and _coverage_topic(item) == topic_name), None)
                 if row is not None and id(row) not in used:
                     selected.append(row); used.add(id(row))
+    # Manual user evidence has already passed the bounded age/shape filter in
+    # _previous_rows(). Reserve it before confidence filling so a successful,
+    # high-volume refresh cannot silently evict explicit user evidence. Keep the
+    # expansion bounded to avoid turning a malformed local snapshot into an
+    # unbounded output.
+    manual_reserved = 0
+    for row in result:
+        marker = id(row)
+        if row.get("manual_user_evidence") is True and marker not in used:
+            selected.append(row); used.add(marker); manual_reserved += 1
+            if manual_reserved >= 32:
+                break
+    output_limit = max(candidate_limit(), min(candidate_limit() + 32, len(selected)))
     for game_name in GAMES:
         for region_name in REGION_LANG:
             group = [row for row in result if row.get("game") == game_name and row.get("region") == region_name]
@@ -846,8 +859,8 @@ def merge_candidates(rows: list[dict]) -> list[dict]:
         marker = id(row)
         if marker not in used:
             selected.append(row); used.add(marker)
-        if len(selected) >= candidate_limit(): break
-    return selected[:candidate_limit()]
+        if len(selected) >= output_limit: break
+    return selected[:output_limit]
 
 
 def topic_coverage(rows: list[dict]) -> dict[str, int]:
