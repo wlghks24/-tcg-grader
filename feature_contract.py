@@ -19,7 +19,7 @@ REQUIRED_FILES = (
     "error_scenario_lab.py", "scenario_learning_profiles.json",
     "ai_code_improver.py", "ai_code_learning.json", "verify_ai_code_improver.py",
     "verify_link_runtime.py", "verify_camera_runtime.js",
-    "grading_vision_engine.js", "grading_accuracy_v99.js", "verify_vision_runtime.js",
+    "grading_vision_engine.js", "grading_accuracy_v99.js", "grading_probability_v292.js", "verify_vision_runtime.js",
     "card_identity_recognition.py", "card_identity_recognition.js", "card_identity_learning.json", "card_identity_reference_catalog.json",
     "graded_photo_multi_source.py", "graded_photo_evidence.py", "grading_cert_verifier.py",
     "graded_photo_dashboard.js", "graded_photo_dashboard.css", "graded_photo_candidates.json",

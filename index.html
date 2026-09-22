@@ -219,6 +219,7 @@ input[type=range]{width:100%}
 </section>
 <script src="./grading_vision_engine.js?v=160"></script>
 <script src="./grading_accuracy_v99.js"></script>
+<script src="./grading_probability_v292.js?v=292"></script>
 <script>
 const TCG_LOCAL_SERVER='http://127.0.0.1:8765';
 async function useCanonicalLocalServer(){
@@ -1018,12 +1019,14 @@ $("analyze").onclick=async()=>{
  $("advice").innerHTML=(r<15?`<span class="good">스크래치 후보 위험 낮음</span> — ${angleNote}`:r<35?`<span class="warn">스크래치 후보 중간 위험</span> — ${angleNote} · 확대 확인 권장`:`<span class="bad">표면 결함 후보 높음</span> — ${angleNote} · 등급 제출 전 실물 확대검사`)+`<br>1차 전체 위험 ${Math.max(frontSurface.risk,backSurface.risk)}/100 · ${quadrantNote}<br>${zoneNote} · 8개 구역 정밀 측정 신뢰도 ${zoneConfidence}/100`;
  let c=$("annot"),ctx=c.getContext("2d");c.width=F.w;c.height=F.h;ctx.drawImage(F.c,0,0);ctx.strokeStyle="#00ff66";ctx.lineWidth=6;ctx.strokeRect(F.minx,F.miny,F.rw,F.rh);const fm=FC.details;ctx.strokeStyle="#ffb000";ctx.lineWidth=4;ctx.strokeRect(F.minx+fm.boundaries.left.position,F.miny+fm.boundaries.top.position,fm.boundaries.right.position-fm.boundaries.left.position,fm.boundaries.bottom.position-fm.boundaries.top.position);ctx.strokeStyle="#20c8ff";ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(F.minx+F.rw/2,F.miny);ctx.lineTo(F.minx+F.rw/2,F.maxy);for(const ratio of [.25,.5,.75]){ctx.moveTo(F.minx,F.miny+F.rh*ratio);ctx.lineTo(F.maxx,F.miny+F.rh*ratio)}ctx.stroke();
  let best=window.TCGAccuracyV99?TCGAccuracyV99.estimateRawGrade(FC.worst,BC.worst,r,edgeRisk,cornerRisk,"PSA"):g(FC.worst,BC.worst,defectRisk,"PSA");
- let centerPenalty=Math.max(0,(45-Math.min(FC.worst,BC.worst))*2.0);
- let uncertaintyPenalty=Math.max(0,78-analysisConfidence)*.55;
- let p10=Math.max(1,Math.min(92,88-defectRisk*1.7-centerPenalty-uncertaintyPenalty));
- let p9=Math.max(p10,Math.min(98,97-defectRisk*0.9-Math.max(0,40-Math.min(FC.worst,BC.worst))*0.8));
- let p9only=Math.max(1,p9-p10),p8=Math.max(1,Math.min(60,(100-p9)*.65)),below=Math.max(0,100-p10-p9only-p8);
+ const probability=window.TCGGradeProbabilityV292?TCGGradeProbabilityV292.estimate({
+   psaGrade:Number(window.tcgLastGrades?.PSA??best),front:FC.worst,back:BC.worst,
+   surfaceRisk:r,edgeRisk,cornerRisk,analysisConfidence
+ }):{status:"insufficient_evidence",model:"unavailable",calibrated:false,exact:{8:0,9:0,10:0},p9plus:0,below8:100};
+ let p8=Number(probability.exact?.[8]||0),p9only=Number(probability.exact?.[9]||0),p10=Number(probability.exact?.[10]||0);
+ let p9=Number(probability.p9plus??(p9only+p10)),below=Number(probability.below8??Math.max(0,100-p8-p9only-p10));
  window.tcgGradeProbabilities={8:p8,9:p9only,10:p10,below};
+ window.tcgGradeProbabilityMeta={status:probability.status,model:probability.model,calibrated:false,evidenceComplete:probability.status==="estimated",note:probability.note||""};
  $("p10prob").textContent=p10.toFixed(0)+"%";$("p9prob").textContent=p9.toFixed(0)+"%";$("riskgrade").textContent=(100-p10).toFixed(0)+"/100";
  $("submitAdvice").innerHTML=best>=9.5&&defectRisk<15?'<span class="good"><b>등급 제출 추천</b></span><br>10 후보로 볼 가치가 있습니다.':best>=9?'<span class="warn"><b>조건부 추천</b></span><br>PSA 9 이상 가능성을 확인할 가치가 있습니다.':'<span class="bad"><b>보류 추천</b></span><br>사진상 결함 위험이 있어 재검사가 좋습니다.';
  $("out").classList.remove("hidden");$("status").textContent="분석 완료";

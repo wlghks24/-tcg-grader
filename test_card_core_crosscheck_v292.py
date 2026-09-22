@@ -127,7 +127,11 @@ process.stdout.write(JSON.stringify(out));
         self.assertEqual(1.0, accuracy.estimate_raw_grade(50, 50, 0, None, 0, "BGS"))
 
     def test_probability_asset_is_in_tablet_server_and_pwa_runtime(self):
-        self.assertIn("grading_probability_v292.js", tablet_runtime_manifest.ACTIVE_RUNTIME_FILES)
+        for dependency in (
+            "grading_accuracy_v99.py", "card_grading_valuation.py", "card_identity_recognition.py", "server_security_guard.py",
+            "grading_vision_engine.js", "grading_accuracy_v99.js", "grading_probability_v292.js", "card_identity_recognition.js",
+        ):
+            self.assertIn(dependency, tablet_runtime_manifest.ACTIVE_RUNTIME_FILES)
         self.assertIn("grading_probability_v292.js", tcg_updater.PUBLIC_STATIC_FILES)
         worker = (ROOT / "sw.js").read_text(encoding="utf-8")
         self.assertIn("./grading_probability_v292.js", worker)

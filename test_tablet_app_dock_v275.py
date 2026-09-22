@@ -51,7 +51,7 @@ class TabletAppDockV276Tests(unittest.TestCase):
             self.assertIn(token, self.js)
 
     def test_pwa_update_and_offline_cache_are_rotated_with_ui(self) -> None:
-        self.assertIn("const CACHE='tcg-v276-network-first-runtime';", self.sw)
+        self.assertIn("const CACHE='tcg-v292-card-core-runtime';", self.sw)
         self.assertIn("'./feature_category_nav.css'", self.sw)
         self.assertIn("'./feature_category_nav.js'", self.sw)
         self.assertIn("requestServiceWorkerRefresh();", self.js)

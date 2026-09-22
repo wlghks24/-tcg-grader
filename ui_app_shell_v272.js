@@ -239,7 +239,7 @@
     probabilityBlock.className = "grade-cockpit-block";
     const probabilityTitle = document.createElement("b");
     probabilityTitle.className = "grade-cockpit-block-title";
-    probabilityTitle.textContent = "PSA 예상확률";
+    probabilityTitle.textContent = "PSA 예상확률(휴리스틱)";
     const probabilityGrid = document.createElement("div");
     probabilityGrid.className = "grade-cockpit-probabilities";
     [8, 9, 10].forEach((grade) => addProbabilityCell(probabilityGrid, grade));
@@ -275,7 +275,7 @@
     const probabilities = window.tcgGradeProbabilities || {};
     const raw = Number(probabilities[grade]);
     if (Number.isFinite(raw)) return `${Math.max(0, Math.min(100, raw)).toFixed(0)}%`;
-    const fallback = nodeText(grade === 10 ? "p10prob" : grade === 9 ? "p9prob" : "");
+    const fallback = nodeText(grade === 10 ? "p10prob" : "");
     return fallback && fallback !== "-" ? fallback : "-";
   }
 

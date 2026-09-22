@@ -142,10 +142,67 @@ def _audit_market(root: Path, now: dt.datetime, findings: list[dict[str, Any]]) 
                 findings.append({"severity": "high", "code": "INVALID_MARKET_ENTRY", "target": str(key)[:160], "reasons": reasons})
     if bad > 20:
         findings.append({"severity": "high", "code": "INVALID_MARKET_ENTRY_OVERFLOW", "count": bad - 20})
+
+    graded_profiles = db.get("graded_prices") if isinstance(db, dict) else {}
+    invalid_grade_evidence = 0
+    positive_grade_prices = 0
+    allowed_companies = {"PSA", "BGS", "CGC", "TAG", "BRG"}
+    allowed_price_types = {"sold", "auction_result", "official_example", "market_guide"}
+    if graded_profiles is not None and not isinstance(graded_profiles, dict):
+        findings.append({"severity": "high", "code": "INVALID_GRADED_PRICE_PROFILES", "target": "market_prices.json"})
+        graded_profiles = {}
+    for market_key, profile in graded_profiles.items():
+        if not isinstance(profile, dict):
+            invalid_grade_evidence += 1
+            continue
+        grade_prices = profile.get("grade_prices_krw") if isinstance(profile.get("grade_prices_krw"), dict) else {}
+        evidence = profile.get("grade_price_evidence") if isinstance(profile.get("grade_price_evidence"), dict) else {}
+        for company, grade_rows in grade_prices.items():
+            if company not in allowed_companies or not isinstance(grade_rows, dict):
+                invalid_grade_evidence += 1
+                continue
+            for grade_key, raw_price in grade_rows.items():
+                try:
+                    amount = float(raw_price)
+                except (TypeError, ValueError, OverflowError):
+                    amount = -1.0
+                if not (0.0 <= amount <= 1_000_000_000_000.0):
+                    invalid_grade_evidence += 1
+                    continue
+                if amount == 0:
+                    continue
+                positive_grade_prices += 1
+                company_evidence = evidence.get(company) if isinstance(evidence.get(company), dict) else {}
+                row = company_evidence.get(str(grade_key)) if isinstance(company_evidence, dict) else None
+                reasons = []
+                if not isinstance(row, dict):
+                    reasons.append("missing_evidence")
+                else:
+                    if not _valid_public_https(row.get("source")): reasons.append("invalid_source")
+                    if row.get("price_type") not in allowed_price_types: reasons.append("invalid_price_type")
+                    observed_on = str(row.get("observed_on") or "").strip()
+                    observed_period = str(row.get("observed_period") or "").strip()
+                    if observed_on:
+                        try: dt.date.fromisoformat(observed_on)
+                        except ValueError: reasons.append("invalid_observed_on")
+                    elif observed_period:
+                        if not re.fullmatch(r"\d{4}-\d{2}", observed_period): reasons.append("invalid_observed_period")
+                    else:
+                        reasons.append("missing_observed_time")
+                if reasons:
+                    invalid_grade_evidence += 1
+                    if invalid_grade_evidence <= 20:
+                        findings.append({"severity": "high", "code": "INVALID_GRADED_PRICE_EVIDENCE",
+                                         "target": f"{market_key}|{company}|{grade_key}"[:220], "reasons": reasons})
+    if invalid_grade_evidence > 20:
+        findings.append({"severity": "high", "code": "INVALID_GRADED_PRICE_EVIDENCE_OVERFLOW",
+                         "count": invalid_grade_evidence - 20})
     updated = db.get("updated_at") if isinstance(db, dict) else None
     if updated:
         _fresh("market_prices.json", updated, now, 24 * 3600, findings)
-    return {"market_entries": len(entries), "invalid_market_entries": bad}
+    return {"market_entries": len(entries), "invalid_market_entries": bad,
+            "graded_price_profiles": len(graded_profiles), "positive_grade_prices": positive_grade_prices,
+            "invalid_graded_price_evidence": invalid_grade_evidence}
 
 
 def _audit_releases(root: Path, findings: list[dict[str, Any]]) -> dict[str, int]:

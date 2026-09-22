@@ -227,7 +227,7 @@ MANUAL_PHOTO_UPLOAD_BUCKETS={}
 MANUAL_PHOTO_UPLOAD_WINDOW_SECONDS=10*60.0
 MANUAL_PHOTO_UPLOAD_LIMIT=6
 PUBLIC_STATIC_FILES={
-    'index.html','icon.svg','manifest.webmanifest','sw.js','feature_category_nav.css','feature_category_nav.js','ui_app_shell_v272.css','ui_app_shell_v272.js','grading_vision_engine.js','grading_accuracy_v99.js','card_identity_recognition.js','manual_dual_photo_bridge.js',
+    'index.html','icon.svg','manifest.webmanifest','sw.js','feature_category_nav.css','feature_category_nav.js','ui_app_shell_v272.css','ui_app_shell_v272.js','grading_vision_engine.js','grading_accuracy_v99.js','grading_probability_v292.js','card_identity_recognition.js','manual_dual_photo_bridge.js',
     'vision_calibration.json',
     'releases.json','market_prices.json','market_watch.json',
     'promo_events.json','supplementary_candidates.json','social_event_candidates.json',
@@ -1841,6 +1841,7 @@ class Handler(SimpleHTTPRequestHandler):
                 exchange_rate=exchange.get('rates',{}).get('USD_KRW',1350.0)
                 result=verified_card_valuation(
                     card_name,values,grade_prices,
+                    grade_price_evidence=profile.get('grade_price_evidence',{}) if profile else None,
                     raw_krw=profile.get('raw_krw',incoming.get('raw_krw',0)),
                     exchange_rate=exchange_rate,
                     price_source='exact_company_grade_observation' if profile else 'user_provided_exact_grade',
