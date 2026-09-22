@@ -1,0 +1,23 @@
+{
+  "schema_version": "1.0-tablet-gpt-tcg-grader-learning-sync",
+  "purpose": "explicitly synchronize Tablet GPT patch lessons into TCG Grader without exporting ChatGPT model weights or overwriting device-local learning state",
+  "source_snapshot": "TCG_CROSSCHECK/TABLET_GPT/learning_snapshot.json",
+  "receiver_receipt": "TCG_CROSSCHECK/TCG_GRADER/tablet_gpt_learning_receipt.json",
+  "verification_test": "test_tablet_gpt_tcg_grader_sync_v285.py",
+  "required_equal_fields": [
+    "schema_version",
+    "source_repository",
+    "source_main_sha",
+    "lesson_digest_sha256/source_lesson_digest_sha256"
+  ],
+  "rules": {
+    "lesson_digest_must_match": true,
+    "lesson_id_set_must_match": true,
+    "source_main_sha_must_match": true,
+    "covered_patch_commits_must_be_ancestors_of_source_main": true,
+    "chatgpt_model_weights_transfer_forbidden": true,
+    "raw_grading_calibration_transfer_forbidden": true,
+    "device_local_learning_memory_blind_overwrite_forbidden": true,
+    "device_local_learning_memory_uses_existing_transactional_merge_rules": true
+  }
+}
