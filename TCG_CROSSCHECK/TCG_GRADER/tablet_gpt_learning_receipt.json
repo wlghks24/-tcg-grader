@@ -5,7 +5,7 @@
   "source_repository": "wlghks24/-tcg-grader",
   "source_main_sha": "003b55c2c41a6d8d6b3057586b442e01a8cf4b68",
   "received_at": "2026-09-22T10:09:53+09:00",
-  "status": "SYNCED_PENDING_CI",
+  "status": "SYNCED_VERIFIED",
   "source_snapshot_path": "TCG_CROSSCHECK/TABLET_GPT/learning_snapshot.json",
   "source_lesson_digest_sha256": "abb93a11e55259e4888d4e907aeaa37d7daa1dc7414b594b550e86c754065c93",
   "accepted_lesson_ids": [
@@ -33,5 +33,13 @@
     "patch_contract": "same repository main already contains covered code patches",
     "learning_contract": "TCG Grader consumes these lessons as prevention/verification guidance; local runtime learning memories remain local and merge by subsystem rules",
     "expected_result": "MATCH"
+  },
+  "verification": {
+    "sync_pr": 214,
+    "sync_pr_ci_total": 5,
+    "sync_pr_ci_passed": 5,
+    "sync_pr_ci_failed": 0,
+    "sync_merge_sha": "c7389b1a2950eb1d425cf47700dc0df4fc2f25f4",
+    "verified_result": "TABLET_GPT_TCG_GRADER_MATCH"
   }
 }
