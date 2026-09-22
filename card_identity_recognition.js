@@ -66,7 +66,24 @@ function generationByRegulation(mark){
  if(mark==='J')return {generation:9,generation_label:'9세대 계열',series:'MEGA/현행 시리즈',era:'MEGA'};
  return null;
 }
-function generationByYear(year){
+function generationRegion(value){
+ const r=generationText(value).replace(/\s+/g,'');
+ if(['JP','JAPAN','JAPANESE','日本','日版'].includes(r))return 'JP';
+ if(['US','USA','EN','ENGLISH'].includes(r))return 'US';
+ if(['KR','KOREA','KOREAN','한국','한국판'].includes(r))return 'KR';
+ return 'UNKNOWN';
+}
+function generationByYear(year,region){
+ if(!Number.isInteger(year))return null;
+ if(generationRegion(region)==='JP'){
+  if(year>=2023)return {generation:9,generation_label:'9세대',series:'SV/MEGA 시대',era:'CURRENT'};
+  if(year>=2019)return {generation:8,generation_label:'8세대',series:'소드&실드 시대',era:'S'};
+  if(year>=2016)return {generation:7,generation_label:'7세대',series:'썬&문 시대',era:'SM'};
+  if(year>=2013)return {generation:6,generation_label:'6세대',series:'XY 시대',era:'XY'};
+  if(year>=2010)return {generation:5,generation_label:'5세대',series:'BW 시대',era:'BW'};
+  if(year>=2006)return {generation:4,generation_label:'4세대',series:'DP/DPt 시대',era:'DP'};
+  return null;
+ }
  if(year>=2023)return {generation:9,generation_label:'9세대',series:'SV/MEGA 시대',era:'CURRENT'};
  if(year>=2020)return {generation:8,generation_label:'8세대',series:'소드&실드 시대',era:'S'};
  if(year>=2017)return {generation:7,generation_label:'7세대',series:'썬&문 시대',era:'SM'};
@@ -84,7 +101,7 @@ function inferPokemonGeneration(input={}){
  if(byExpansion)return {status:'estimated',game:'pokemon',...byExpansion,expansion_code:expansion,regulation_mark:regulationFromEvidence(input,text)||'',year:yearFromEvidence(input,text),confidence:.98,confidence_level:'high',basis:[`확장팩 코드 ${expansion}`],note:byExpansion.era==='MEGA'?'MEGA는 별도 TCG 시리즈명이므로 세대와 시리즈를 함께 표시합니다.':'확장팩 코드 기준 추정'};
  const regulation=regulationFromEvidence(input,text),byReg=generationByRegulation(regulation);
  if(byReg)return {status:'estimated',game:'pokemon',...byReg,expansion_code:'',regulation_mark:regulation,year:yearFromEvidence(input,text),confidence:.88,confidence_level:'medium',basis:[`레귤레이션 마크 ${regulation}`],note:'레귤레이션 마크는 플레이 규정 표기이며 세대는 시리즈 대응으로 추정'};
- const year=yearFromEvidence(input,text),byYear=generationByYear(year);
+ const year=yearFromEvidence(input,text),byYear=generationByYear(year,input?.region);
  if(byYear)return {status:'estimated',game:'pokemon',...byYear,expansion_code:'',regulation_mark:'',year,confidence:.64,confidence_level:'low',basis:[`©/제작연도 ${year}`],note:'연도만 확인되어 세대는 보조 추정'};
  if(year&&year<2007)return {status:'legacy',game:'pokemon',generation:null,generation_label:'고전 카드',series:'초기~ADV/PCG 계열',era:'LEGACY',expansion_code:'',regulation_mark:'',year,confidence:.55,confidence_level:'low',basis:[`©/제작연도 ${year}`],note:'고전 카드는 확장팩 코드 확인 전 세대 번호를 단정하지 않습니다.'};
  return {status:'unknown',game:'pokemon',generation:null,generation_label:'세대 확인 필요',series:'확장팩 코드·레귤레이션·©연도 OCR 부족',era:'UNKNOWN',expansion_code:'',regulation_mark:'',year:null,confidence:0,confidence_level:'unknown',basis:[],note:'근거가 부족해 세대를 생성하지 않았습니다.'};
