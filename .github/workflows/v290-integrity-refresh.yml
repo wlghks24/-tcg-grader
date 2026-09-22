@@ -1,0 +1,40 @@
+name: V290 Integrity Refresh
+
+on:
+  push:
+    branches:
+      - audit/tesseract-kor-supply-chain-v290
+
+permissions:
+  contents: write
+
+jobs:
+  refresh:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          fetch-depth: 2
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97
+        with:
+          python-version: '3.11'
+      - name: Validate v290 before manifest generation
+        run: |
+          set -euo pipefail
+          bash -n ensure_tesseract_kor.sh
+          python -m unittest -v test_tesseract_kor_supply_chain_v290.py
+          python -m py_compile fault_injection_healing.py test_tesseract_kor_supply_chain_v290.py
+      - name: Remove temporary workflow and regenerate exact manifest
+        shell: bash
+        run: |
+          set -euo pipefail
+          rm -f .github/workflows/v290-integrity-refresh.yml
+          python fault_injection_healing.py --manifest
+          python fault_injection_healing.py --diagnose
+          git add -A -- .github/workflows/v290-integrity-refresh.yml integrity_manifest.json
+          git diff --cached --check
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git commit -m 'QA: refresh integrity manifest for v290'
+          git push origin HEAD:audit/tesseract-kor-supply-chain-v290
