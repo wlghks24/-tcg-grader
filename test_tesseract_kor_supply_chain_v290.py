@@ -52,7 +52,7 @@ class TesseractKoreanSupplyChainV290Tests(unittest.TestCase):
     def test_atomic_install_happens_only_after_temp_verification(self) -> None:
         verify_index = self.source.index('verify_blob "$TMP"')
         move_index = self.source.index('mv -f -- "$TMP" "$TARGET"')
-        final_verify_index = self.source.index('verify_blob "$TARGET" >/dev/null')
+        final_verify_index = self.source.rindex('verify_blob "$TARGET" >/dev/null')
         self.assertLess(verify_index, move_index)
         self.assertLess(move_index, final_verify_index)
         self.assertIn("trap 'rm -f -- \"$TMP\"' EXIT HUP INT TERM", self.source)
