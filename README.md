@@ -1,1 +1,1 @@
-RECOVERING
+recovery
