@@ -20,6 +20,8 @@ class WyyyesMarketSourceV267Tests(unittest.TestCase):
         self.assertEqual("asking", wyyyes.infer_price_type("가격 제안하기 즉시 구매하기"))
         self.assertEqual("sold", wyyyes.infer_price_type("판매완료 상품"))
         self.assertEqual("auction_result", wyyyes.infer_price_type("경매 종료 낙찰 120,000원"))
+        self.assertEqual("auction_result", wyyyes.infer_price_type("낙찰완료 판매완료"))
+        self.assertEqual("asking", wyyyes.infer_price_type("SOLD OUT 재입고 알림"))
 
     def test_public_listing_parser_keeps_edition_market_currency_and_grade(self):
         html = """
@@ -45,6 +47,41 @@ class WyyyesMarketSourceV267Tests(unittest.TestCase):
         self.assertEqual("PSA", row["grading_company"])
         self.assertEqual(10, row["grade"])
         self.assertEqual("106/100", row["card_number"])
+
+    def test_unrelated_page_sold_badge_cannot_promote_listing(self):
+        html = """
+        <html><body>
+          <h1>피카츄 AR 173/165 일본판 포켓몬 카드</h1>
+          <meta itemprop="price" content="120000">
+          <p>가격 제안하기 · 즉시 구매하기</p>
+          <footer>추천 상품 A 판매완료 · 추천 상품 B 거래완료 · SOLD</footer>
+        </body></html>
+        """
+        row = wyyyes.parse_public_listing(
+            html,
+            "https://wyyyes.com/category/pokemon-card/9999999",
+            snippet="현재 판매중 · 가격 제안하기",
+        )
+        self.assertIsNotNone(row)
+        self.assertEqual("asking", row["price_type"])
+        self.assertFalse(row["is_completed_sale"])
+
+    def test_local_snippet_can_prove_completed_sale(self):
+        html = """
+        <html><body>
+          <h1>루피 OP05-119 원피스 카드</h1>
+          <meta itemprop="price" content="350000">
+          <footer>추천 상품 가격 제안하기</footer>
+        </body></html>
+        """
+        row = wyyyes.parse_public_listing(
+            html,
+            "https://wyyyes.com/category/trading-cards/9999998",
+            snippet="판매완료 · 거래완료 350,000원",
+        )
+        self.assertIsNotNone(row)
+        self.assertEqual("sold", row["price_type"])
+        self.assertTrue(row["is_completed_sale"])
 
     def test_brg_title_wins_over_unrelated_platform_badge(self):
         html = """

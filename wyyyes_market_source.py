@@ -156,11 +156,17 @@ def infer_grade(text: str) -> tuple[str, int | None]:
 
 
 def infer_price_type(text: str) -> str:
+    """Classify only explicit transaction evidence; ambiguous stock text stays asking."""
     low = (text or "").lower()
-    if any(token in low for token in ("판매완료", "거래완료", "거래 완료", "낙찰완료", "낙찰 완료", "sold out", "sold")):
-        return "sold"
-    if any(token in low for token in ("낙찰", "경매 종료", "경매종료")):
+    # Auction completion is a distinct evidence class and must win over generic
+    # sale words when both appear in the same local listing evidence.
+    if any(token in low for token in ("낙찰완료", "낙찰 완료", "낙찰", "경매 종료", "경매종료")):
         return "auction_result"
+    if any(token in low for token in ("판매완료", "거래완료", "거래 완료", "판매 완료")):
+        return "sold"
+    # "sold out" is inventory state, not proof of a completed transaction price.
+    if re.search(r"(?<![a-z])sold(?!\s*out\b)", low):
+        return "sold"
     return "asking"
 
 
@@ -196,7 +202,6 @@ def parse_public_listing(html: str, url: str, fallback_title: str = "", snippet:
     title = _extract_title(html, fallback_title)
     page_text = html_to_text(html)
     identity_text = " ".join(part for part in (title, snippet) if part)
-    fallback_identity = " ".join(part for part in (identity_text, page_text[:8_000]) if part)
 
     price = _extract_structured_price_krw(html) or _extract_price_krw(" ".join((identity_text, page_text[:30_000])))
     game = infer_game(identity_text) or infer_game(page_text[:8_000])
@@ -212,7 +217,10 @@ def parse_public_listing(html: str, url: str, fallback_title: str = "", snippet:
         company, grade = infer_grade(page_text[:4_000])
 
     card_number = _card_number(identity_text) or _card_number(page_text[:8_000])
-    quote_type = infer_price_type(page_text)
+    # Transaction state must be product-local.  A generic footer, recommendation
+    # carousel, or unrelated sold badge elsewhere on the page cannot promote a
+    # current listing to completed-sale evidence.
+    quote_type = infer_price_type(identity_text)
     return {
         "platform": "WYYYES",
         "market_region": "KR",
@@ -228,7 +236,7 @@ def parse_public_listing(html: str, url: str, fallback_title: str = "", snippet:
         "is_completed_sale": quote_type in {"sold", "auction_result"},
         "source_url": url,
         "collected_at": _now_iso(),
-        "evidence_policy": "public-page-only; asking prices never promoted to sold; title/snippet identity evidence preferred",
+        "evidence_policy": "public-page-only; completed-sale state requires title/snippet-local explicit transaction evidence",
     }
 
 
@@ -301,7 +309,7 @@ def collect_quotes(previous: list[dict] | None = None) -> dict:
         "errors": errors[:20],
         "source": "https://wyyyes.com/",
         "collected_at": _now_iso(),
-        "policy": "public pages only; KR market location is separate from KR/JP/US card edition; asking/offer price is not a completed sale",
+        "policy": "public pages only; KR market location is separate from KR/JP/US card edition; completed-sale evidence must be product-local and explicit",
     }
 
 
