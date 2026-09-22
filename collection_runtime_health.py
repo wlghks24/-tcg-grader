@@ -11,6 +11,7 @@ from datetime import datetime, timezone
 import json
 from pathlib import Path
 import re
+import subprocess
 from typing import Any, Callable
 from safe_runtime import atomic_write_json, diagnostic_exception, exclusive_file_lock, safe_read_text
 
@@ -20,6 +21,34 @@ STALE_AFTER_SECONDS = 8 * 60 * 60
 STARTUP_GRACE_SECONDS = 45 * 60
 LOCK_TIMEOUT_SECONDS = 15.0
 LOCK_STALE_SECONDS = 300
+
+
+def _startup_build_sha() -> str:
+    """Capture the checkout SHA once so a stale running server stays detectable.
+
+    Reading HEAD on every health request would be unsafe for runtime identity: an
+    old Python process could appear current immediately after the worktree is
+    updated. Capturing once at module import binds the health payload to the code
+    generation that actually started the server process.
+    """
+    try:
+        result = subprocess.run(
+            ["git", "-C", str(ROOT), "rev-parse", "HEAD"],
+            check=False,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.DEVNULL,
+            text=True,
+            timeout=2.0,
+        )
+    except (OSError, subprocess.SubprocessError):
+        return "unknown"
+    value = result.stdout.strip().lower() if result.returncode == 0 else ""
+    if len(value) != 40 or any(char not in "0123456789abcdef" for char in value):
+        return "unknown"
+    return value
+
+
+RUNTIME_BUILD_SHA = _startup_build_sha()
 
 
 def _now() -> str:
@@ -240,17 +269,25 @@ def public_status(path: Path = STATE, *, now: datetime | None = None) -> dict[st
         "stale_after_seconds": STALE_AFTER_SECONDS,
         "requires_attention": healthy is False or failures > 0 or ai_attention,
         "process_restart_required": False,
+        "runtime_build_sha": RUNTIME_BUILD_SHA,
+        "runtime_build_sha_verified": RUNTIME_BUILD_SHA != "unknown",
         "ai_models": ai_models,
     }
 
 
 def self_test() -> None:
     import tempfile
+    assert RUNTIME_BUILD_SHA == "unknown" or (
+        len(RUNTIME_BUILD_SHA) == 40
+        and all(char in "0123456789abcdef" for char in RUNTIME_BUILD_SHA)
+    )
     with tempfile.TemporaryDirectory() as tmp:
         path = Path(tmp) / "health.json"
         first = public_status(path)
         assert first["status"] in {"starting", "degraded"}
         assert "ai_models" in first
+        assert first["runtime_build_sha"] == RUNTIME_BUILD_SHA
+        assert first["runtime_build_sha_verified"] is (RUNTIME_BUILD_SHA != "unknown")
         mark_failure("test", ValueError("https://example.com token=secret"), path=path)
         assert public_status(path)["consecutive_failures"] == 1
         mark_success("test-recovery", path=path)
