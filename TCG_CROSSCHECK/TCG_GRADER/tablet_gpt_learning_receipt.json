@@ -5,7 +5,7 @@
   "source_repository": "wlghks24/-tcg-grader",
   "source_main_sha": "24bcebf7486198700c461d3a58d29e3839f54311",
   "received_at": "2026-09-22T16:24:00+09:00",
-  "status": "SYNCED_PENDING_CI",
+  "status": "SYNCED_VERIFIED",
   "source_snapshot_path": "TCG_CROSSCHECK/TABLET_GPT/learning_snapshot.json",
   "source_lesson_digest_sha256": "15e78e3270dca1c5ea0deda7acf8a0110c9da937dba62ce71df90c5d96a4c41f",
   "accepted_lesson_ids": [
@@ -38,11 +38,11 @@
     "expected_result": "MATCH"
   },
   "verification": {
-    "sync_pr": null,
-    "sync_pr_ci_total": 0,
-    "sync_pr_ci_passed": 0,
+    "sync_pr": 219,
+    "sync_pr_ci_total": 5,
+    "sync_pr_ci_passed": 5,
     "sync_pr_ci_failed": 0,
-    "sync_merge_sha": null,
-    "verified_result": "TABLET_GPT_TCG_GRADER_MATCH_PENDING_CI"
+    "sync_merge_sha": "8f761f3e4efb0ad1f22445f8dd2f32793f1483a4",
+    "verified_result": "TABLET_GPT_TCG_GRADER_MATCH"
   }
 }
