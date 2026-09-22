@@ -138,7 +138,7 @@ jobs:
             --max-report-age-hours 2 \
             --report STATIC_DATA_PUBLISH_REPORT.json
 
-      - name: Stage only approved public collection outputs
+      - name: Stage approved outputs and reconcile integrity manifest
         id: stage
         shell: bash
         run: |
@@ -155,12 +155,50 @@ jobs:
             market_prices.json market_watch.json purchase_sources.json exchange_rates.json \
             grading_company_updates.json graded_photo_candidates.json source_collection_stats.json adaptive_collection_stats.json \
             auto_update_report.json auto_update_issues.json tcg_live_data.json
+
+          data_changed=false
+          if ! git diff --cached --quiet; then
+            data_changed=true
+          fi
+
+          integrity_refresh=false
+          if ! python - <<'PY'
+          import json
+          from pathlib import Path
+          import fault_injection_healing as healing
+
+          root = Path('.').resolve()
+          manifest_path = root / 'integrity_manifest.json'
+          result = healing.diagnose_integrity(root, manifest_path)
+          try:
+              payload = json.loads(manifest_path.read_text(encoding='utf-8'))
+              listed = set((payload.get('files') or {}).keys()) if isinstance(payload, dict) else set()
+          except (OSError, ValueError, TypeError, UnicodeError):
+              listed = set()
+          current = {path.relative_to(root).as_posix() for path in healing.tracked_files(root)}
+          missing = sorted(current - listed)
+          extra = sorted(listed - current)
+          if not result.get('ok') or missing or extra:
+              print(json.dumps({
+                  'diagnose_ok': bool(result.get('ok')),
+                  'diagnose_failed': int(result.get('failed', 0) or 0),
+                  'missing_manifest_entries': missing[:50],
+                  'extra_manifest_entries': extra[:50],
+              }, ensure_ascii=False))
+              raise SystemExit(1)
+          PY
+          then
+            python fault_injection_healing.py --manifest
+            git add -- integrity_manifest.json
+            integrity_refresh=true
+          fi
+
           if git diff --cached --quiet; then
             echo "changed=false" >> "$GITHUB_OUTPUT"
-            echo "reason=no validated data changes" >> "$GITHUB_OUTPUT"
+            echo "reason=no validated data or integrity changes" >> "$GITHUB_OUTPUT"
           else
             echo "changed=true" >> "$GITHUB_OUTPUT"
-            echo "reason=validated data changed" >> "$GITHUB_OUTPUT"
+            echo "reason=validated_data_changed=${data_changed}; integrity_refresh=${integrity_refresh}" >> "$GITHUB_OUTPUT"
           fi
 
       - name: Commit validated static data snapshot
@@ -168,11 +206,22 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          # Several approved JSON outputs are immutable-hash inputs to the repository
-          # integrity contract. Rebuild the manifest from the exact staged snapshot so
-          # an automated data refresh cannot leave main internally inconsistent.
-          python fault_injection_healing.py --manifest
+          # Recheck the exact staged snapshot. This also repairs integrity metadata
+          # after source/test/workflow additions even when public JSON data itself
+          # did not change, without creating timestamp-only manifest commits.
           python fault_injection_healing.py --diagnose
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          import fault_injection_healing as healing
+
+          root = Path('.').resolve()
+          payload = json.loads((root / 'integrity_manifest.json').read_text(encoding='utf-8'))
+          listed = set((payload.get('files') or {}).keys())
+          current = {path.relative_to(root).as_posix() for path in healing.tracked_files(root)}
+          if listed != current:
+              raise SystemExit(f'integrity manifest coverage mismatch: missing={sorted(current-listed)[:20]} extra={sorted(listed-current)[:20]}')
+          PY
           git add -- integrity_manifest.json
           git diff --cached --check
           git config user.name 'github-actions[bot]'
@@ -204,6 +253,7 @@ jobs:
             echo "- stage reason: ${{ steps.stage.outputs.reason || 'not-reached' }}"
             echo "- publish policy: validated public JSON only; no force push"
             echo "- integrity policy: every published static-data commit regenerates and diagnoses integrity_manifest.json from the exact snapshot"
+            echo "- integrity reconciliation: stale hashes and missing/new tracked-file coverage trigger one manifest refresh even when public JSON is unchanged"
             echo "- restored-state policy: a last-good restore or recovered retry is degraded evidence, never a clean fresh success"
             echo "- lifecycle policy: end/release + 5 days, archive on day 6"
             echo "- topic policy: collection attempts are distinct from zero discovered leads"
