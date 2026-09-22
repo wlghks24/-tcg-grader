@@ -24,7 +24,7 @@ import threading
 from typing import Any
 
 from grading_cert_verifier import lookup_url
-from safe_runtime import atomic_write_bytes, atomic_write_json, safe_read_text
+from safe_runtime import atomic_write_bytes, atomic_write_json, exclusive_file_lock, safe_read_text
 
 
 ROOT = Path(__file__).resolve().parent
@@ -37,7 +37,56 @@ GAMES = {"pokemon", "onepiece", "naruto"}
 MAX_IMAGE_BYTES = 6_000_000
 MAX_IMAGE_PIXELS = 36_000_000
 MAX_REGISTRATIONS = 5000
-LOCK = threading.RLock()
+
+
+class _RegistryTransactionLock:
+    """Re-entrant thread lock backed by one cross-process registry transaction.
+
+    Existing callers already use ``with LOCK:`` around the complete
+    load-modify-save boundary. Keep that API, but make the outermost acquisition
+    also own the adjacent OS file lock so tablet server/background watcher/manual
+    tools cannot overwrite one another with stale registry snapshots.
+    """
+
+    def __init__(self) -> None:
+        self._thread_lock = threading.RLock()
+        self._local = threading.local()
+
+    def __enter__(self):
+        self._thread_lock.acquire()
+        depth = int(getattr(self._local, "depth", 0))
+        if depth > 0:
+            self._local.depth = depth + 1
+            return self
+        context = exclusive_file_lock(REGISTRY_PATH, timeout_seconds=10.0, stale_seconds=300.0)
+        try:
+            context.__enter__()
+        except BaseException:
+            self._thread_lock.release()
+            raise
+        self._local.depth = 1
+        self._local.context = context
+        return self
+
+    def __exit__(self, exc_type, exc, traceback):
+        depth = int(getattr(self._local, "depth", 0))
+        if depth <= 0:
+            raise RuntimeError("manual registry lock released without acquisition")
+        if depth > 1:
+            self._local.depth = depth - 1
+            self._thread_lock.release()
+            return False
+        context = getattr(self._local, "context", None)
+        try:
+            return context.__exit__(exc_type, exc, traceback) if context is not None else False
+        finally:
+            if hasattr(self._local, "context"):
+                del self._local.context
+            self._local.depth = 0
+            self._thread_lock.release()
+
+
+LOCK = _RegistryTransactionLock()
 PROCESS_LOCK = threading.Lock()
 PROCESSING_IDS: set[str] = set()
 
