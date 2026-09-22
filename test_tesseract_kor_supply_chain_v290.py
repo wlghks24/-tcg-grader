@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import re
 from pathlib import Path
 import unittest
 
@@ -58,9 +57,10 @@ class TesseractKoreanSupplyChainV290Tests(unittest.TestCase):
         self.assertLess(move_index, final_verify_index)
         self.assertIn("trap 'rm -f -- \"$TMP\"' EXIT HUP INT TERM", self.source)
 
-    def test_constants_are_not_environment_overridable(self) -> None:
-        for name in ("UPSTREAM_COMMIT", "EXPECTED_BLOB_SHA1", "EXPECTED_SIZE"):
-            self.assertNotRegex(self.source, rf"{name}=\"?\$\{{{name}[:-1] if name.endswith('_') else name}:-")
+    def test_integrity_constants_are_not_environment_overridable(self) -> None:
+        self.assertNotIn('${UPSTREAM_COMMIT:-', self.source)
+        self.assertNotIn('${EXPECTED_BLOB_SHA1:-', self.source)
+        self.assertNotIn('${EXPECTED_SIZE:-', self.source)
         self.assertNotIn("TCG_TESSDATA", self.source)
 
 
