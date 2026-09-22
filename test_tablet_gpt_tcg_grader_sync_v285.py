@@ -19,6 +19,8 @@ def _lesson_digest(lessons):
 
 
 class TabletGptTcgGraderSyncV285(unittest.TestCase):
+    """Historical v285 invariants that must remain true as the sync snapshot grows."""
+
     def setUp(self):
         self.snapshot = _load(SNAPSHOT)
         self.receipt = _load(RECEIPT)
@@ -60,11 +62,10 @@ class TabletGptTcgGraderSyncV285(unittest.TestCase):
         self.assertTrue(policy["blind_overwrite_forbidden"])
         self.assertTrue(policy["grading_calibration_auto_import_forbidden"])
 
-    def test_covered_merge_contract(self):
-        merges = self.snapshot["covered_merges"]
-        self.assertGreaterEqual(len(merges), 6)
-        self.assertEqual({206, 207, 208, 209, 210, 213}, {row["pr"] for row in merges})
-        for row in merges:
+    def test_original_v285_merge_contract_remains_covered(self):
+        merge_prs = {row["pr"] for row in self.snapshot["covered_merges"]}
+        self.assertTrue({206, 207, 208, 209, 210, 213}.issubset(merge_prs))
+        for row in self.snapshot["covered_merges"]:
             self.assertRegex(row["merge_sha"], r"^[0-9a-f]{40}$")
             self.assertRegex(row["version"], r"^v\d+$")
 
