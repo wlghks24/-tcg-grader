@@ -11,11 +11,11 @@ python tablet_runtime_probe.py --self-test >/dev/null
 
 REPORT="TCG_TABLET_RUNTIME_REPORT.json"
 TMP="${REPORT}.tmp.$$"
-python tablet_runtime_probe.py --require-health --require-collection-health > "$TMP" || {
+python tablet_runtime_probe.py --require-health --require-collection-health --require-runtime-contract > "$TMP" || {
   rc=$?
   cat "$TMP" 2>/dev/null || true
   rm -f "$TMP" 2>/dev/null || true
-  echo "[ERROR] local /api/v135-health is not healthy."
+  echo "[ERROR] local runtime health / collection health / running-build identity contract failed."
   echo "[FIX] bash ANDROID_UPDATE_AND_START.sh"
   exit "$rc"
 }
@@ -42,5 +42,5 @@ else
   echo "[WARN] Termux:Boot supervisor is not installed. Run: bash ANDROID_AUTO_START_INSTALL.sh"
 fi
 
-echo "[OK] Tablet local runtime verified."
+echo "[OK] Tablet local runtime verified: server build SHA == current tablet HEAD."
 echo "[INFO] Test one access_candidates URL from iPhone/PC on the same network or via Tailscale."

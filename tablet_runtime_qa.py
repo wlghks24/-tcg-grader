@@ -15,6 +15,7 @@ COMMON_REQUIRED = (
     "START_TCG_UPDATER_ANDROID.sh",
     "VERIFY_TABLET_RUNTIME.sh",
     "tablet_runtime_probe.py",
+    "collection_runtime_health.py",
     "test_runtime_delivery_guards.py",
 )
 
@@ -28,6 +29,7 @@ COMMON_SHELL = (
 
 COMMON_PYTHON = (
     "tablet_runtime_probe.py",
+    "collection_runtime_health.py",
     "test_runtime_delivery_guards.py",
 )
 
@@ -42,9 +44,12 @@ BOOT_MARKERS = (
 
 RUNTIME_MARKERS = (
     "--require-health",
+    "--require-collection-health",
+    "--require-runtime-contract",
     "api/v135-health",
     "origin/main",
     "tablet_runtime_probe.py",
+    "running-build identity contract failed",
 )
 
 UPDATER_MARKERS = (
@@ -94,9 +99,11 @@ def _marker_checks() -> None:
 
 
 def _self_tests() -> None:
+    import collection_runtime_health
     import tablet_runtime_probe
     import test_runtime_delivery_guards
 
+    collection_runtime_health.self_test()
     tablet_runtime_probe.self_test()
     test_runtime_delivery_guards.main()
 
