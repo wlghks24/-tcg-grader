@@ -1,7 +1,7 @@
 {
   "version": 2,
   "engine": "v109-card-identity-ocr-learning",
-  "generated_at": "2026-09-22T15:35:09+00:00",
+  "generated_at": "2026-09-22T16:10:15+00:00",
   "files": {
     ".github/workflows/ai-auto-tracker-guard.yml": {
       "sha256": "636e750bd6d2619cce75d4bce2d68051eaa2209ae763bc8ec523ed73476728a6",
@@ -430,6 +430,14 @@
     ".github/workflows/v108-regression-diagnostic.yml": {
       "sha256": "0bbc12618657de981deabd60c83d2c0091af636ffc7feab8fcd09bbf37002a7a",
       "bytes": 1415
+    },
+    ".github/workflows/v292-cache-contract-fix.yml": {
+      "sha256": "46e04c61f9022ec8bf6675f1b8db3d9ec53bb80960344ae1e69b1d0ba95af0ba",
+      "bytes": 1775
+    },
+    ".github/workflows/v292-followup.yml": {
+      "sha256": "fbced2c316d4dd5d714478ace1194191d5a2b0572886348eb238adeb127c7be0",
+      "bytes": 1955
     },
     ".github/workflows/verify-adaptive-collector.yml": {
       "sha256": "8d9fcc6fe1702f7b69bb9ab258cc796fc0009536cba856a950e2f9058e63597b",
@@ -1078,6 +1086,10 @@
     "apply_ui_tablet_refine_v122.py": {
       "sha256": "6b512f8a3cd354addd813665c63fdb65e3059a42c082524d309badea104c00d9",
       "bytes": 1601
+    },
+    "apply_v292_followup.py": {
+      "sha256": "c8c8411dac5b62a57260eccfc5b0d5058e118c0e4712bdb7189897137203e695",
+      "bytes": 522
     },
     "auto_market_center.js": {
       "sha256": "cf15a0150d8e8edf51e2acaa24ab12822df5805ae9cb2a744570e484caa07b68",
@@ -2172,8 +2184,8 @@
       "bytes": 11226
     },
     "sw.js": {
-      "sha256": "66c424babf8e02dac1361f6adcaabea3c622794643d6432f9a0b7fe8866a1abf",
-      "bytes": 13067
+      "sha256": "ffd99d0102bf20c0cf3c53c68deea3533eea0b25533cbb9e69ec75aa6a9057ee",
+      "bytes": 13071
     },
     "tablet_collection_publish.py": {
       "sha256": "493681c58dfb9dc34085ff597cf1b9c89946c7dbc6b286c99dfb21c995a6ad0a",
