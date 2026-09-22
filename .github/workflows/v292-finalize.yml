@@ -12,7 +12,7 @@ jobs:
   finalize:
     if: github.actor != 'github-actions[bot]'
     runs-on: ubuntu-24.04
-    timeout-minutes: 20
+    timeout-minutes: 45
     steps:
       - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
         with:
@@ -29,7 +29,7 @@ jobs:
           python fault_injection_healing.py --manifest
           python fault_injection_healing.py --diagnose
           python test_runtime_delivery_guards.py
-          python tablet_runtime_qa.py --profile quick
+          python tablet_runtime_qa.py --profile final
           python -m unittest -v test_card_core_crosscheck_v291.py test_card_core_crosscheck_v292.py test_psa_probability_market_flow_v252.py
           node --check grading_probability_v292.js
           node verify_v99_browser_accuracy.js
