@@ -34,12 +34,17 @@ jobs:
           set -euo pipefail
           git fetch origin audit/card-core-crosscheck-v292
       - name: Reapply v292 functional hardening and v293 fixes
-        run: python apply_v293_card_core.py
+        shell: bash
+        run: |
+          set -euo pipefail
+          python prepare_v293_port.py
+          python apply_v293_card_core.py
+          python apply_v293_period_patch.py
       - name: Remove one-shot machinery and regenerate integrity
         shell: bash
         run: |
           set -euo pipefail
-          rm -f apply_v293_card_core.py .github/workflows/v293-card-core-port.yml
+          rm -f apply_v293_card_core.py prepare_v293_port.py apply_v293_period_patch.py .github/workflows/v293-card-core-port.yml
           python fault_injection_healing.py --manifest
           python fault_injection_healing.py --diagnose
       - name: Targeted card-core and tablet validation
