@@ -1,1 +1,1 @@
-recovery-in-progress
+STOP
