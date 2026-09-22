@@ -1,7 +1,7 @@
 {
   "version": 2,
   "engine": "v109-card-identity-ocr-learning",
-  "generated_at": "2026-09-22T14:22:45+00:00",
+  "generated_at": "2026-09-22T17:04:31+00:00",
   "files": {
     ".github/workflows/ai-auto-tracker-guard.yml": {
       "sha256": "636e750bd6d2619cce75d4bce2d68051eaa2209ae763bc8ec523ed73476728a6",
@@ -474,6 +474,10 @@
     "FIX_SERVER_RUNTIME_V137.sh": {
       "sha256": "c566863a5ac3fb395e54e6a6f40805bcc3f40c3e8f1f91b2b7e1d19b4098d76b",
       "bytes": 3979
+    },
+    "GRADING_COMPANY_HEALTH_DIAGNOSTICS.json": {
+      "sha256": "d76746286e6b450db026f6c0cb0da5836a70d3d0d7070e72f0c7fa5669f2f58c",
+      "bytes": 4851
     },
     "GRAPHIFY_AUDIT.py": {
       "sha256": "1a2a1c46b001cf33516c9f6e24a9e0bf942c6aa8b6a159c8acbc9d82262c6229",
@@ -1504,7 +1508,7 @@
       "bytes": 7206
     },
     "grading_company_updates.json": {
-      "sha256": "c4839d83c03e1c92b9479cc46a677b3ca4225e9f28f8e1b38f9b9273ffb1c4b7",
+      "sha256": "9c4701920c8e14155855340ceb8fbfa83d8fb5c3eaecfb01a674649b89b76db4",
       "bytes": 53087
     },
     "grading_company_watch.py": {
