@@ -1,0 +1,90 @@
+name: Tablet GPT TCG Grader Main Alignment
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    paths:
+      - 'TCG_CROSSCHECK/TABLET_GPT/learning_snapshot.json'
+      - 'TCG_CROSSCHECK/TCG_GRADER/tablet_gpt_learning_receipt.json'
+      - 'TCG_CROSSCHECK/TABLET_GPT_TCG_GRADER_SYNC_CONTRACT.json'
+      - 'test_tablet_gpt_tcg_grader_sync_v289.py'
+      - '.github/workflows/tablet-gpt-tcg-grader-main-alignment.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: tablet-gpt-tcg-grader-main-alignment-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  alignment:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97
+        with:
+          python-version: '3.12'
+      - name: Verify canonical v289 learning contract
+        run: python -m unittest -v test_tablet_gpt_tcg_grader_sync_v289.py
+      - name: Verify current HEAD contains provenance and every covered merge
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import hashlib
+          import json
+          import subprocess
+          from pathlib import Path
+
+          root = Path('.')
+          snapshot = json.loads((root / 'TCG_CROSSCHECK/TABLET_GPT/learning_snapshot.json').read_text(encoding='utf-8'))
+          receipt = json.loads((root / 'TCG_CROSSCHECK/TCG_GRADER/tablet_gpt_learning_receipt.json').read_text(encoding='utf-8'))
+          contract = json.loads((root / 'TCG_CROSSCHECK/TABLET_GPT_TCG_GRADER_SYNC_CONTRACT.json').read_text(encoding='utf-8'))
+
+          lessons = snapshot['lessons']
+          raw = json.dumps(lessons, ensure_ascii=False, sort_keys=True, separators=(',', ':')).encode('utf-8')
+          digest = hashlib.sha256(raw).hexdigest()
+          assert digest == snapshot['lesson_digest_sha256'] == receipt['source_lesson_digest_sha256']
+
+          lesson_ids = [row['lesson_id'] for row in lessons]
+          assert lesson_ids == receipt['accepted_lesson_ids']
+          assert len(lesson_ids) == len(set(lesson_ids)) == contract['current_required_lesson_count'] == 13
+          assert contract['verification_test'] == 'test_tablet_gpt_tcg_grader_sync_v289.py'
+          assert set(contract['current_required_merge_prs']) == {206, 207, 208, 209, 210, 213, 216, 217, 218}
+
+          assert snapshot['schema_version'] == receipt['schema_version'] == contract['schema_version']
+          assert snapshot['source_repository'] == receipt['source_repository'] == 'wlghks24/-tcg-grader'
+          assert snapshot['source_main_sha'] == receipt['source_main_sha']
+
+          verification = receipt['verification']
+          assert receipt['status'] == 'SYNCED_VERIFIED'
+          assert verification['sync_pr'] == 219
+          assert verification['sync_pr_ci_total'] == 5
+          assert verification['sync_pr_ci_passed'] == 5
+          assert verification['sync_pr_ci_failed'] == 0
+          assert verification['sync_merge_sha'] == '8f761f3e4efb0ad1f22445f8dd2f32793f1483a4'
+          assert verification['verified_result'] == 'TABLET_GPT_TCG_GRADER_MATCH'
+
+          policy = snapshot['share_policy']
+          assert policy['chatgpt_model_weights_exported'] is False
+          assert policy['raw_grading_calibration_shared'] is False
+          assert policy['device_local_runtime_memory_overwritten'] is False
+          assert policy['peer_verified_never_auto_promotes_local'] is True
+
+          def ancestor(sha: str) -> None:
+              subprocess.run(['git', 'cat-file', '-e', f'{sha}^{{commit}}'], check=True)
+              subprocess.run(['git', 'merge-base', '--is-ancestor', sha, 'HEAD'], check=True)
+
+          ancestor(snapshot['source_main_sha'])
+          for row in snapshot['covered_merges']:
+              ancestor(row['merge_sha'])
+
+          head = subprocess.check_output(['git', 'rev-parse', 'HEAD'], text=True).strip()
+          print(f'TABLET_GPT_TCG_GRADER_MATCH digest={digest} provenance={snapshot["source_main_sha"]} current_head={head}')
+          PY
