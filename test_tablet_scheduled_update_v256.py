@@ -19,6 +19,14 @@ class TabletScheduledUpdateV256Tests(unittest.TestCase):
             self.assertIn(token, self.main)
         self.assertIn('TABLET_SCHEDULED_UPDATE.sh', self.main)
 
+    def test_main_auto_prepares_scheduler_before_server_start(self):
+        ensure = 'bash TABLET_SCHEDULED_UPDATE.sh ensure'
+        server = 'exec bash ANDROID_UPDATE_AND_START.sh'
+        self.assertIn(ensure, self.main)
+        self.assertIn(server, self.main)
+        self.assertLess(self.main.index(ensure), self.main.index(server))
+        self.assertIn('부팅 후 자동 main 확인 준비가 완전하지 않습니다', self.main)
+
     def test_schedule_uses_canonical_main_and_update_only_path(self):
         canonical = 'git fetch "$OFFICIAL_HTTPS" refs/heads/main:refs/remotes/origin/main'
         self.assertIn('OFFICIAL_HTTPS="https://github.com/wlghks24/-tcg-grader.git"', self.script)
@@ -54,9 +62,17 @@ class TabletScheduledUpdateV256Tests(unittest.TestCase):
         self.assertIn('INTERVAL_HOURS" -lt 1', self.script)
         self.assertIn('INTERVAL_HOURS" -gt 168', self.script)
         self.assertIn('sleep 30', self.script)
-        self.assertIn('sleep "\\$((INTERVAL*3600))"', self.script)
+        self.assertIn('sleep "$((INTERVAL_HOURS*3600))"', self.script)
         self.assertIn('kill -0 "$owner"', self.script)
-        self.assertIn('Termux:Boot', self.script)
+
+    def test_scheduler_self_heals_and_reports_termux_boot_readiness(self):
+        for token in ('ensure_schedule()', 'boot_loop()', 'write_boot_heartbeat()', 'termux_boot_state()'):
+            self.assertIn(token, self.script)
+        self.assertIn('com.termux.boot', self.script)
+        self.assertIn('TERMUX_BOOT=$boot_state', self.script)
+        self.assertIn('BOOT_LOOP_HEARTBEAT=not-seen', self.script)
+        self.assertIn('TABLET_SCHEDULED_UPDATE.sh" boot-loop', self.script)
+        self.assertIn('예약 업데이트 부팅 스크립트가 없거나 구형이라 자동 복구합니다', self.script)
 
     def test_runtime_delivery_fails_closed_if_scheduler_is_missing(self):
         self.assertIn('"TABLET_SCHEDULED_UPDATE.sh"', self.manifest)
