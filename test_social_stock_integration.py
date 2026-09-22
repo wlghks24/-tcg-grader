@@ -1,8 +1,10 @@
 import json
 import unittest
 from pathlib import Path
+from unittest import mock
 
 import collection_job_contract as contract
+import social_event_discovery as discovery
 
 ROOT = Path(__file__).resolve().parent
 
@@ -19,14 +21,29 @@ class SocialStockIntegrationTests(unittest.TestCase):
             self.assertIn(name,watch); self.assertFalse(watch[name].get('trusted'))
             self.assertIn('stock',watch[name].get('role',''))
 
-    def test_pokopia_user_evidence_is_visible_but_unverified(self):
-        data=json.loads((ROOT/'social_event_candidates.json').read_text(encoding='utf-8'))
-        row=next(x for x in data.get('items',[]) if 'Pokopia' in str(x.get('title','')))
-        self.assertEqual(row.get('dates'),['2026-09-12','2026-09-29'])
-        self.assertEqual(row.get('location'),'무신사 메가스토어 성수')
+    def test_manual_user_evidence_survives_high_volume_candidate_cap_without_trust_promotion(self):
+        manual = {
+            'game': '포켓몬 카드', 'region': 'KR', 'category': 'collaboration',
+            'title': 'manual-evidence-retention-probe', 'source': 'https://example.com/manual-evidence',
+            'source_kind': 'instagram_user_evidence', 'confidence': 0.46,
+            'manual_user_evidence': True, 'verified': False, 'official_account_verified': False,
+        }
+        noise = [
+            {
+                'game': '포켓몬 카드', 'region': 'KR', 'category': 'collaboration',
+                'title': f'high-confidence-{idx}', 'source': f'https://example.com/high-{idx}',
+                'source_kind': 'public_search', 'confidence': 0.99 - idx * 0.001,
+                'verified': False, 'official_account_verified': False,
+            }
+            for idx in range(12)
+        ]
+        with mock.patch.object(discovery, 'candidate_limit', return_value=5):
+            merged = discovery.merge_candidates(noise + [manual])
+        row = next(x for x in merged if x.get('title') == manual['title'])
         self.assertTrue(row.get('manual_user_evidence'))
         self.assertFalse(row.get('verified'))
         self.assertFalse(row.get('official_account_verified'))
+        self.assertLessEqual(len(merged), 6)
 
     def test_step5_runs_social_stock_inside_purchase_job_without_extra_job(self):
         text=(ROOT/'update_purchase_sources.py').read_text(encoding='utf-8')

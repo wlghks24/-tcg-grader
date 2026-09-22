@@ -8467,6 +8467,33 @@
         "www.pokemon.com"
       ],
       "cross_checked": false
+    },
+    {
+      "game": "포켓몬 카드",
+      "region": "KR",
+      "category": "collaboration",
+      "title": "Pokémon Pokopia 콘셉트 스토어 · 무신사 메가스토어 성수",
+      "source": "https://www.instagram.com/pokemon_korea_official/",
+      "source_kind": "instagram_user_evidence",
+      "source_tier": "B-social-user-evidence",
+      "source_label": "pokemon_korea_official Instagram 스토리 캡처",
+      "author": "pokemon_korea_official",
+      "official_account_verified": false,
+      "author_platform_verified_seen": true,
+      "manual_user_evidence": true,
+      "published_at": "2026-08-29",
+      "dates": [
+        "2026-09-12",
+        "2026-09-29"
+      ],
+      "location": "무신사 메가스토어 성수",
+      "excerpt": "사용자 제공 Instagram 스토리 캡처에서 Pokémon Pokopia CONCEPT STORE, 2026.09.12-29, 무신사 메가스토어 성수 문구가 확인됨. 계정 인증 배지는 화면에서 보이지만 자동 웹 교차검증은 아직 대기 상태.",
+      "status": "공식 계정 캡처 제보 · 웹 교차검증 대기",
+      "verified": false,
+      "cross_checked": false,
+      "confidence": 0.88,
+      "collected_at": "2026-08-29",
+      "evidence_origin": "user_screenshot"
     }
   ],
   "item_count": 250,
@@ -10826,5 +10853,6 @@
     "나루토 카드/US/official_price",
     "나루토 카드/US/product_issue",
     "나루토 카드/US/authenticity_notice"
-  ]
+  ],
+  "manual_user_evidence_policy": "사용자 제공 캡처는 후보로 보존하지만 공식 웹/공식 API 교차확인 전 verified=true로 자동승격하지 않음"
 }
