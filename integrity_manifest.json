@@ -1,7 +1,7 @@
 {
   "version": 2,
   "engine": "v109-card-identity-ocr-learning",
-  "generated_at": "2026-09-22T00:37:19+00:00",
+  "generated_at": "2026-09-22T05:10:13+00:00",
   "files": {
     ".github/workflows/ai-auto-tracker-guard.yml": {
       "sha256": "636e750bd6d2619cce75d4bce2d68051eaa2209ae763bc8ec523ed73476728a6",
@@ -476,7 +476,7 @@
       "bytes": 3979
     },
     "GRADING_COMPANY_HEALTH_DIAGNOSTICS.json": {
-      "sha256": "7548f90febe8d33ea545492c4cebaf1f2fe9b04120ce5c8f972812c2d5437a68",
+      "sha256": "2247ff6e74b0e1ff12a914a89a2bb27b9db7af78e7641a141aac933aa6ff0139",
       "bytes": 4851
     },
     "GRAPHIFY_AUDIT.py": {
@@ -623,6 +623,14 @@
       "sha256": "60de2efafdfe2680f92c26c10c1e53065acf0af178b2c13082d0ba99eeead6df",
       "bytes": 1446
     },
+    "TCG_CROSSCHECK/TABLET_GPT/learning_snapshot.json": {
+      "sha256": "ef2b3d74963eafd4c0b83fbef2c3ab37e09359304b398688bf1c7efb109ffcdf",
+      "bytes": 10327
+    },
+    "TCG_CROSSCHECK/TABLET_GPT_TCG_GRADER_SYNC_CONTRACT.json": {
+      "sha256": "872744e5a46376e1ee7ca48efc0103590833d979c92c84fbb94b553e17e8ca6e",
+      "bytes": 1072
+    },
     "TCG_CROSSCHECK/TCG_GRADER/AI_RELIABILITY_V8_ACTUAL_OUTPUT.json": {
       "sha256": "f56c12964705bf9e62bd655af80f1a292017b097e800d7f74521ad8b22f0b233",
       "bytes": 738
@@ -662,6 +670,10 @@
     "TCG_CROSSCHECK/TCG_GRADER/ai_reliability_v8_backup/task_settings_before.json": {
       "sha256": "13565b1754ec87e64c123509cc3e5eae4e28708048f308a8fa83190b9e5a7f20",
       "bytes": 667
+    },
+    "TCG_CROSSCHECK/TCG_GRADER/tablet_gpt_learning_receipt.json": {
+      "sha256": "607edb4e70e96a8e4fca3c51d1a7cbb46c8c43ac7328a4e49bdc02151ef12759",
+      "bytes": 1878
     },
     "TCG_CROSSCHECK/exchange_manifest.json": {
       "sha256": "4bba146c573d224a641e40416c9d4cf983e1100855f95841e9518ff9e7d925f6",
@@ -708,8 +720,8 @@
       "bytes": 17477
     },
     "VERIFY_TABLET_RUNTIME.sh": {
-      "sha256": "1e5a57e60d3bb60c7c1be837622ad7290cf355baf6c4fb19a0b276aa63019db4",
-      "bytes": 1866
+      "sha256": "eb178bd6e30fdd2bb24b97c49a996b276f0bbc6db08481b046cb9a95506ee0bb",
+      "bytes": 1978
     },
     "_audit_progress.py": {
       "sha256": "e4561a89779fc9c8f4b4d474bc2ce4285b65174eb29a6bf20f47a5e30456d674",
@@ -1148,8 +1160,8 @@
       "bytes": 35981
     },
     "collection_runtime_health.py": {
-      "sha256": "784860ade05b674595e942d34b2c11ec99c951176653848b449688df0792c995",
-      "bytes": 10203
+      "sha256": "71c103d21e91a128b89cbd078e96b3117ffbc796aaf72ace727ec117d2de24d1",
+      "bytes": 11654
     },
     "collection_verification_gate.py": {
       "sha256": "a4e8b5b4cbcfa76c1f69fbd1959dada63abf4c766e476d8c68eb78a3c581bae8",
@@ -1496,7 +1508,7 @@
       "bytes": 7206
     },
     "grading_company_updates.json": {
-      "sha256": "12205a76f2a5a4b78b4c31a1919192b5b656e820ad0394dad12a8a91b809eed8",
+      "sha256": "1613e7e1589515ce2a518ca2f6f698ffc08a229f688b1c0f734b83296e670276",
       "bytes": 53087
     },
     "grading_company_watch.py": {
@@ -1832,8 +1844,8 @@
       "bytes": 7839
     },
     "manual_graded_photo_registration.py": {
-      "sha256": "fbf7795900620bb67ff64bbe94387439711c282f9c386f1159d151e3a98caa67",
-      "bytes": 42843
+      "sha256": "62a8ee41f541e91b5ab1326e077241b02fa2244b3ac09960fae0a820618fc5ac",
+      "bytes": 44624
     },
     "manual_official_proof.py": {
       "sha256": "1be8f06ee44a477bbaac39f0ed6d83ddffee59db69fab6fe8e4447ac74bc4621",
@@ -2196,12 +2208,12 @@
       "bytes": 4497
     },
     "tablet_runtime_probe.py": {
-      "sha256": "e6c82dd0d436985e1fac5cb24c00553516990637147c6d785f2e949e951f609c",
-      "bytes": 5630
+      "sha256": "137a8632fa5c1301f9862177fe46b41b9ac7e3a6db6d5386d0b7305591bc8db0",
+      "bytes": 11617
     },
     "tablet_runtime_qa.py": {
-      "sha256": "2e543232e8a9f0e80adf27ad0455f99f6fd0410c78d7af2ede3ea54cca20441f",
-      "bytes": 3387
+      "sha256": "bb5f0576593a407d8e0d9a26a255d12ea6c0a390304c8fd538c204f68abc82a6",
+      "bytes": 3653
     },
     "tcg_code_repair_learning.py": {
       "sha256": "15325722ae1de7bcdd14b66281af96a781a879f805bc4b72f1a6a30466a79c7d",
@@ -2671,6 +2683,10 @@
       "sha256": "be4bdf6602b9f099ea3f5b7b84115ed5bc4a57e5c35352d770c5709d500b7747",
       "bytes": 2386
     },
+    "test_manual_registry_transaction_v288.py": {
+      "sha256": "95df64daa048a2300e3989e5bbd0e2b79e82ddaba7d5962cea1f3036a9415b3d",
+      "bytes": 4105
+    },
     "test_manual_stale_trust_v245.py": {
       "sha256": "291ce7679c429e518e505ba84c0d7871b230b66eb2983e6054677ddd11b18c88",
       "bytes": 4469
@@ -2975,6 +2991,10 @@
       "sha256": "3962183f1a17c57751c5d44c0efaf7b68456ecdc4aff4872acf01067269a83e3",
       "bytes": 6582
     },
+    "test_tablet_gpt_tcg_grader_sync_v285.py": {
+      "sha256": "019f8129325754e5d2ac63463b24ab53b7fe69698228d9d1f672d0821a047964",
+      "bytes": 3483
+    },
     "test_tablet_main_entrypoint_v251.py": {
       "sha256": "eeca09372b0dd587d6d74d8a1ec75f28e84aca07b7cc38d2bf61555ef992b2f8",
       "bytes": 2388
@@ -2992,8 +3012,8 @@
       "bytes": 2052
     },
     "test_tablet_runtime_qa_integration.py": {
-      "sha256": "460ad645ddd5a3e9d30e511410629cd991e0f4f10b424c0c6c75dc3c092775cc",
-      "bytes": 3275
+      "sha256": "dd9f95d847ec20e3f0e13c64943d0a65d549530f7d1da932d2412060eb87fc80",
+      "bytes": 5466
     },
     "test_tablet_scheduled_update_v256.py": {
       "sha256": "9bc5104b31ae69249de77488d0966696391c0353179e95058a9fdd85e57d15d1",
@@ -3068,8 +3088,8 @@
       "bytes": 7476
     },
     "test_verified_grade_learning_v135_safe.py": {
-      "sha256": "518955bb2e34413ee15fc15fcf9e1b5cc45030e9920fecf5c6f2dc580f417e4a",
-      "bytes": 4397
+      "sha256": "7bfdae2ff11d6b5d1de92af0de792afe771246763539a9d59896c30f0e2d787b",
+      "bytes": 8840
     },
     "test_verified_multilabel_coverage_v14.py": {
       "sha256": "7dcafbb1dc52b3348b19deb596261d2a92a278adca30b53c9f6375c757836536",
@@ -3168,8 +3188,8 @@
       "bytes": 19327
     },
     "verified_grade_learning_v135_safe.py": {
-      "sha256": "7804e0ff3016305929e93fcba2b18ee828aa7611cbe73f50b85ad0bc355b5c7a",
-      "bytes": 4360
+      "sha256": "c42328c186e58ccf8edb5d3b8d25bbbdbf1682e787ca88cc3bb47a0eb6148f9f",
+      "bytes": 9789
     },
     "verified_neural_self_refine.py": {
       "sha256": "52c0ad1fc1def8df319b92b6aa81fccad8c2e9a8309a6149767b1d997044dd38",
