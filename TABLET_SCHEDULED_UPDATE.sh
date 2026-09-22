@@ -5,6 +5,7 @@ ROOT="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
 STATE_DIR="${HOME}/.local/state/tcg-grader/scheduled-update"
 LOG_DIR="${STATE_DIR}/logs"
 STATUS_FILE="${STATE_DIR}/status.env"
+BOOT_HEARTBEAT_FILE="${STATE_DIR}/boot-heartbeat.env"
 LOCK_DIR="${STATE_DIR}/lock"
 LOCK_PID="${LOCK_DIR}/pid"
 BOOT_DIR="${HOME}/.termux/boot"
@@ -17,6 +18,36 @@ mkdir -p "$LOG_DIR"
 now() { date '+%Y-%m-%dT%H:%M:%S%z'; }
 sha() { git -C "$ROOT" rev-parse "$1" 2>/dev/null || printf 'unknown'; }
 
+validate_interval() {
+  case "$INTERVAL_HOURS" in
+    ''|*[!0-9]*) echo "[오류] TCG_UPDATE_INTERVAL_HOURS는 정수여야 합니다." >&2; return 2 ;;
+  esac
+  if [ "$INTERVAL_HOURS" -lt 1 ] || [ "$INTERVAL_HOURS" -gt 168 ]; then
+    echo "[오류] 예약 간격은 1~168시간만 허용합니다." >&2
+    return 2
+  fi
+}
+
+termux_boot_state() {
+  if command -v cmd >/dev/null 2>&1; then
+    if cmd package path com.termux.boot 2>/dev/null | grep -q '^package:'; then
+      printf 'detected'
+    else
+      printf 'not-detected'
+    fi
+    return 0
+  fi
+  if command -v pm >/dev/null 2>&1; then
+    if pm path com.termux.boot 2>/dev/null | grep -q '^package:'; then
+      printf 'detected'
+    else
+      printf 'not-detected'
+    fi
+    return 0
+  fi
+  printf 'unknown'
+}
+
 write_status() {
   local result="$1" message="$2" local_sha="$3" remote_sha="$4" tmp
   tmp="${STATUS_FILE}.tmp.$$"
@@ -28,6 +59,18 @@ REMOTE_SHA=$remote_sha
 MESSAGE=$message
 EOF
   mv "$tmp" "$STATUS_FILE"
+}
+
+write_boot_heartbeat() {
+  local tmp
+  tmp="${BOOT_HEARTBEAT_FILE}.tmp.$$"
+  cat >"$tmp" <<EOF
+BOOT_LOOP_STARTED_AT=$(now)
+BOOT_LOOP_PID=$$
+ROOT=$ROOT
+INTERVAL_HOURS=$INTERVAL_HOURS
+EOF
+  mv "$tmp" "$BOOT_HEARTBEAT_FILE"
 }
 
 cleanup_lock() {
@@ -119,29 +162,55 @@ run_update() {
 }
 
 install_schedule() {
-  case "$INTERVAL_HOURS" in
-    ''|*[!0-9]*) echo "[오류] TCG_UPDATE_INTERVAL_HOURS는 정수여야 합니다." >&2; exit 2 ;;
-  esac
-  if [ "$INTERVAL_HOURS" -lt 1 ] || [ "$INTERVAL_HOURS" -gt 168 ]; then
-    echo "[오류] 예약 간격은 1~168시간만 허용합니다." >&2
-    exit 2
-  fi
+  validate_interval
   mkdir -p "$BOOT_DIR"
   cat >"$BOOT_FILE" <<EOF
 #!/data/data/com.termux/files/usr/bin/bash
-set -u
+set -euo pipefail
 ROOT=$(printf '%q' "$ROOT")
-INTERVAL=$INTERVAL_HOURS
-sleep 30
-while true; do
-  bash "\$ROOT/TABLET_SCHEDULED_UPDATE.sh" run || true
-  sleep "\$((INTERVAL*3600))"
-done
+exec bash "\$ROOT/TABLET_SCHEDULED_UPDATE.sh" boot-loop
 EOF
   chmod 700 "$BOOT_FILE"
+  if [ ! -x "$BOOT_FILE" ] || ! grep -Fq 'TABLET_SCHEDULED_UPDATE.sh" boot-loop' "$BOOT_FILE"; then
+    echo "[오류] 태블릿 예약 업데이트 부팅 스크립트 설치 검증 실패" >&2
+    return 6
+  fi
   echo "[OK] 태블릿 예약 업데이트 설치: 부팅 후 30초, 이후 ${INTERVAL_HOURS}시간마다 확인"
-  echo "[안내] Termux:Boot이 설치/허용되어 있어야 부팅 시 자동 시작됩니다."
   echo "[안내] 설치 직후 확인하려면: bash main update-now"
+}
+
+ensure_schedule() {
+  local boot_state
+  validate_interval
+  if [ ! -x "$BOOT_FILE" ] || ! grep -Fq 'TABLET_SCHEDULED_UPDATE.sh" boot-loop' "$BOOT_FILE" 2>/dev/null; then
+    echo "[안내] 예약 업데이트 부팅 스크립트가 없거나 구형이라 자동 복구합니다."
+    install_schedule
+  fi
+  boot_state="$(termux_boot_state)"
+  case "$boot_state" in
+    detected)
+      echo "[OK] Termux:Boot 감지 · 자동 main 확인 준비 완료"
+      return 0
+      ;;
+    not-detected)
+      echo "[경고] Termux:Boot 앱을 감지하지 못했습니다. 부팅 후 자동 main 확인은 HOLD입니다." >&2
+      return 5
+      ;;
+    *)
+      echo "[경고] Termux:Boot 설치 상태를 판별할 수 없습니다. 부팅 후 자동 main 확인은 REVIEW_PENDING입니다." >&2
+      return 5
+      ;;
+  esac
+}
+
+boot_loop() {
+  validate_interval
+  write_boot_heartbeat
+  sleep 30
+  while true; do
+    bash "$ROOT/TABLET_SCHEDULED_UPDATE.sh" run || true
+    sleep "$((INTERVAL_HOURS*3600))"
+  done
 }
 
 remove_schedule() {
@@ -150,23 +219,33 @@ remove_schedule() {
 }
 
 show_status() {
+  local boot_state
+  boot_state="$(termux_boot_state)"
   echo "현재 HEAD: $(sha HEAD)"
   if [ -f "$STATUS_FILE" ]; then
     cat "$STATUS_FILE"
   else
     echo "예약 업데이트 실행 기록이 없습니다."
   fi
-  if [ -f "$BOOT_FILE" ]; then
+  if [ -x "$BOOT_FILE" ] && grep -Fq 'TABLET_SCHEDULED_UPDATE.sh" boot-loop' "$BOOT_FILE" 2>/dev/null; then
     echo "SCHEDULE=installed"
   else
     echo "SCHEDULE=not-installed"
+  fi
+  echo "TERMUX_BOOT=$boot_state"
+  if [ -f "$BOOT_HEARTBEAT_FILE" ]; then
+    cat "$BOOT_HEARTBEAT_FILE"
+  else
+    echo "BOOT_LOOP_HEARTBEAT=not-seen"
   fi
 }
 
 case "${1:-status}" in
   run|now) run_update ;;
   install) install_schedule ;;
+  ensure) ensure_schedule ;;
+  boot-loop) boot_loop ;;
   remove|uninstall) remove_schedule ;;
   status) show_status ;;
-  *) echo "사용법: bash TABLET_SCHEDULED_UPDATE.sh [install|run|status|remove]" >&2; exit 2 ;;
+  *) echo "사용법: bash TABLET_SCHEDULED_UPDATE.sh [install|ensure|run|status|remove]" >&2; exit 2 ;;
 esac
