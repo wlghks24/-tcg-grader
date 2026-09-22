@@ -1,7 +1,7 @@
 {
   "version": 2,
   "engine": "v109-card-identity-ocr-learning",
-  "generated_at": "2026-09-22T13:04:11+00:00",
+  "generated_at": "2026-09-22T14:22:45+00:00",
   "files": {
     ".github/workflows/ai-auto-tracker-guard.yml": {
       "sha256": "636e750bd6d2619cce75d4bce2d68051eaa2209ae763bc8ec523ed73476728a6",
@@ -1108,16 +1108,16 @@
       "bytes": 14102
     },
     "card_grading_valuation.py": {
-      "sha256": "66da5f9fb5d634ece6a1c7e873bdfc67763f5399f5d34bddc7ac6889cfcb3bb0",
-      "bytes": 19432
+      "sha256": "77add11e2eef60c86127dbec856ba225419b6bf09a433ba3cb4329182d311e35",
+      "bytes": 19931
     },
     "card_identity_learning.json": {
       "sha256": "f74df5e30fb02f4922e76be720581456765d5cdabdaeedd6cb27cfb3b2174408",
       "bytes": 120
     },
     "card_identity_recognition.js": {
-      "sha256": "a82ea154e34f19a26a19c58142170f21cab29757035e08fa5f6fcfc6a08ef8ad",
-      "bytes": 19394
+      "sha256": "7aa447c3811f60fb1a3ee2c1b9438f5235a87af99baffd17288ebe4c9699560f",
+      "bytes": 20415
     },
     "card_identity_recognition.py": {
       "sha256": "d5856faf041918102bf98cb06893faed9fe9d9cbd85a342f611f298f8de315ee",
@@ -1488,12 +1488,12 @@
       "bytes": 567
     },
     "grading_accuracy_v99.js": {
-      "sha256": "f674f723e8230d99ff493791bd61457cb9aaeb4c049c1ae51abe79de8e2136fc",
-      "bytes": 4105
+      "sha256": "8c57801bbd17960a1c96926b24112151212c349e3bd34c422ec64ec391da832f",
+      "bytes": 4294
     },
     "grading_accuracy_v99.py": {
-      "sha256": "d7846fbe1f1bb8886cd005c4584351738195bd8197ece4fc09495aa2c92bc42e",
-      "bytes": 9878
+      "sha256": "d02c89522344fd50a76a86f987670755ae594bc7744238b0caf8bf9d714012c4",
+      "bytes": 9957
     },
     "grading_cert_verifier.py": {
       "sha256": "a5024b3ea4932573d2772830d6c6c2af963b11126f0fc7cd54af4b41a4c9f65c",
@@ -2366,6 +2366,10 @@
     "test_brg_manual_server_error_v163.py": {
       "sha256": "8b6c3d9ca0ab067bc008cacdbe103be3a9584e10b872aa7e0189cfdb7b97c391",
       "bytes": 1137
+    },
+    "test_card_core_crosscheck_v291.py": {
+      "sha256": "4d818d3fcc825dee4d3fe21886313537b36b05dc4bb9219c6e7e1c26688cd2c8",
+      "bytes": 4817
     },
     "test_catalog_images.py": {
       "sha256": "1872e45e7c3651a1016d78c155f32844e35092434e18b07b594d056352d6a717",

@@ -232,6 +232,12 @@ class GradeInputs:
 
 def estimate_grades(values: Mapping[str, Any]) -> dict[str, Any]:
     """Estimate five grades conservatively using published information only."""
+    if not isinstance(values, Mapping):
+        return {"ok": False, "status": "FAILED", "reason": "카드 분석자료 형식 오류", "grades": {}}
+    required = ("centering_front", "centering_back", "corners", "edges", "surface", "micro_flaws", "is_authentic")
+    missing = [name for name in required if name not in values or values.get(name) is None]
+    if missing:
+        return {"ok": False, "status": "FAILED", "reason": "카드 분석자료 부족: " + ", ".join(missing), "grades": {}}
     card = GradeInputs.from_mapping(values)
     if not card.authentic:
         return {"ok": False, "status": "FAILED", "reason": "가품 의심 또는 진위 확인 실패", "grades": {}}

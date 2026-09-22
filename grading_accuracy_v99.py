@@ -31,6 +31,7 @@ OFFICIAL={
 }
 
 def finite(v:Any)->float|None:
+ if v is None or isinstance(v,bool) or (isinstance(v,str) and not v.strip()):return None
  try:x=float(v)
  except (TypeError,ValueError,OverflowError):return None
  return x if math.isfinite(x) else None
@@ -57,8 +58,9 @@ def combine_defect_risk(surface:float,edge:float,corner:float)->float:
  values=[]
  for value,weight in ((surface,1.0),(edge,.90),(corner,.95)):
   x=finite(value)
-  if x is not None:values.append(x*weight)
- return clamp(max(values) if values else 100,0,100)
+  if x is None:return 100
+  values.append(x*weight)
+ return clamp(max(values),0,100)
 
 def general_center_grade(front:float,back:float)->float:
  f,b=finite(front),finite(back)

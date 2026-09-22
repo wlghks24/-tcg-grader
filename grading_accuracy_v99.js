@@ -25,7 +25,11 @@
     TAG:{10:{f:45,b:35},9:{f:40,b:25},8.5:{f:37.5,b:15},8:{f:35,b:5}},
     BRG:{},
   };
-  const finite=x=>Number.isFinite(Number(x));
+  const finite=x=>{
+    if(x===null||x===undefined||typeof x==='boolean')return false;
+    if(typeof x==='string'&&!x.trim())return false;
+    return Number.isFinite(Number(x));
+  };
   const clamp=(x,a,b)=>Math.max(a,Math.min(b,Number(x)));
   function validSteps(company){return STEPS[String(company||'').toUpperCase()]||[]}
   function validActualGrade(company,value){
@@ -46,8 +50,9 @@
     if(r<70)return 5;if(r<80)return 4;if(r<88)return 3;if(r<94)return 2;return 1;
   }
   function combineDefectRisk(surface,edge,corner){
-    const values=[surface,Number(edge)*0.90,Number(corner)*0.95].filter(finite).map(Number);
-    return values.length?clamp(Math.max(...values),0,100):100;
+    const inputs=[[surface,1.0],[edge,0.90],[corner,0.95]];
+    if(!inputs.every(([value])=>finite(value)))return 100;
+    return clamp(Math.max(...inputs.map(([value,weight])=>Number(value)*weight)),0,100);
   }
   function generalCenterGrade(front,back){
     if(!finite(front)||!finite(back))return 1;
