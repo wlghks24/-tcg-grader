@@ -1,0 +1,81 @@
+name: Temporary V284 Bootstrap
+
+on:
+  push:
+    branches: [qa/tablet-gpt-crosscheck-v284]
+    paths:
+      - '.github/workflows/tmp-v284-bootstrap.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  bootstrap:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          fetch-depth: 2
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97
+        with:
+          python-version: '3.12'
+      - name: Apply bounded manual-evidence retention fix
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          from pathlib import Path
+
+          path = Path('social_event_discovery.py')
+          text = path.read_text(encoding='utf-8')
+          old = '''    for game_name in GAMES:\n        for region_name in REGION_LANG:\n            group = [row for row in result if row.get("game") == game_name and row.get("region") == region_name]\n            for row in group[:per_group_floor]:\n                marker = id(row)\n                if marker not in used:\n                    selected.append(row); used.add(marker)\n    for row in result:\n        marker = id(row)\n        if marker not in used:\n            selected.append(row); used.add(marker)\n        if len(selected) >= candidate_limit(): break\n    return selected[:candidate_limit()]\n'''
+          new = '''    # Manual user evidence has already passed the bounded age/shape filter in\n    # _previous_rows(). Reserve it before confidence filling so a successful,\n    # high-volume refresh cannot silently evict explicit user evidence. Keep the\n    # expansion bounded to avoid turning a malformed local snapshot into an\n    # unbounded output.\n    manual_reserved = 0\n    for row in result:\n        marker = id(row)\n        if row.get("manual_user_evidence") is True and marker not in used:\n            selected.append(row); used.add(marker); manual_reserved += 1\n            if manual_reserved >= 32:\n                break\n    output_limit = max(candidate_limit(), min(candidate_limit() + 32, len(selected)))\n    for game_name in GAMES:\n        for region_name in REGION_LANG:\n            group = [row for row in result if row.get("game") == game_name and row.get("region") == region_name]\n            for row in group[:per_group_floor]:\n                marker = id(row)\n                if marker not in used:\n                    selected.append(row); used.add(marker)\n    for row in result:\n        marker = id(row)\n        if marker not in used:\n            selected.append(row); used.add(marker)\n        if len(selected) >= output_limit: break\n    return selected[:output_limit]\n'''
+          if old not in text:
+              raise SystemExit('social_event_discovery anchor changed; fail closed')
+          path.write_text(text.replace(old, new, 1), encoding='utf-8')
+
+          test_path = Path('test_social_stock_integration.py')
+          test = test_path.read_text(encoding='utf-8')
+          old_import = 'import unittest\nfrom pathlib import Path\n\nimport collection_job_contract as contract\n'
+          new_import = 'import unittest\nfrom pathlib import Path\nfrom unittest import mock\n\nimport collection_job_contract as contract\nimport social_event_discovery as discovery\n'
+          if old_import not in test:
+              raise SystemExit('test import anchor changed; fail closed')
+          test = test.replace(old_import, new_import, 1)
+          old_test = '''    def test_pokopia_user_evidence_is_visible_but_unverified(self):\n        data=json.loads((ROOT/'social_event_candidates.json').read_text(encoding='utf-8'))\n        row=next(x for x in data.get('items',[]) if 'Pokopia' in str(x.get('title','')))\n        self.assertEqual(row.get('dates'),['2026-09-12','2026-09-29'])\n        self.assertEqual(row.get('location'),'무신사 메가스토어 성수')\n        self.assertTrue(row.get('manual_user_evidence'))\n        self.assertFalse(row.get('verified'))\n        self.assertFalse(row.get('official_account_verified'))\n'''
+          new_test = '''    def test_manual_user_evidence_survives_high_volume_candidate_cap_without_trust_promotion(self):\n        manual = {\n            'game': '포켓몬 카드', 'region': 'KR', 'category': 'collaboration',\n            'title': 'manual-evidence-retention-probe', 'source': 'https://example.com/manual-evidence',\n            'source_kind': 'instagram_user_evidence', 'confidence': 0.46,\n            'manual_user_evidence': True, 'verified': False, 'official_account_verified': False,\n        }\n        noise = [\n            {\n                'game': '포켓몬 카드', 'region': 'KR', 'category': 'collaboration',\n                'title': f'high-confidence-{idx}', 'source': f'https://example.com/high-{idx}',\n                'source_kind': 'public_search', 'confidence': 0.99 - idx * 0.001,\n                'verified': False, 'official_account_verified': False,\n            }\n            for idx in range(12)\n        ]\n        with mock.patch.object(discovery, 'candidate_limit', return_value=5):\n            merged = discovery.merge_candidates(noise + [manual])\n        row = next(x for x in merged if x.get('title') == manual['title'])\n        self.assertTrue(row.get('manual_user_evidence'))\n        self.assertFalse(row.get('verified'))\n        self.assertFalse(row.get('official_account_verified'))\n        self.assertLessEqual(len(merged), 6)\n'''
+          if old_test not in test:
+              raise SystemExit('brittle Pokopia test anchor changed; fail closed')
+          test_path.write_text(test.replace(old_test, new_test, 1), encoding='utf-8')
+          PY
+      - name: Restore retained manual evidence and rebuild integrity
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import apply_social_stock_event_upgrade as upgrade
+          upgrade.patch_social_event_seed()
+          PY
+          python fault_injection_healing.py --manifest
+          python fault_injection_healing.py --diagnose
+      - name: Targeted regression
+        shell: bash
+        run: |
+          set -euo pipefail
+          python -m py_compile social_event_discovery.py ai_runtime_model_guard.py
+          python -m unittest -v test_social_stock_integration.py test_ai_runtime_model_guard_v269.py
+          python test_runtime_learning_math_neural_v278.py
+          git diff --check
+      - name: Commit final branch without bootstrap workflow
+        shell: bash
+        run: |
+          set -euo pipefail
+          rm -f .github/workflows/tmp-v284-bootstrap.yml
+          python fault_injection_healing.py --manifest
+          python fault_injection_healing.py --diagnose
+          git add -- social_event_discovery.py test_social_stock_integration.py social_event_candidates.json integrity_manifest.json .github/workflows/tmp-v284-bootstrap.yml
+          git diff --cached --check
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git commit -m 'fix: retain bounded manual event evidence across refresh'
+          git push origin HEAD:qa/tablet-gpt-crosscheck-v284
