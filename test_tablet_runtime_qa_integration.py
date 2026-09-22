@@ -88,11 +88,13 @@ def main() -> None:
     require(health, '"runtime_build_sha_verified": RUNTIME_BUILD_SHA != "unknown"', "collection_runtime_health.py")
     assert health.count("RUNTIME_BUILD_SHA = _startup_build_sha()") == 1
 
-    # Required collection health is strict-boolean and missing/malformed health is
-    # never interpreted as success. The process build SHA must exactly match disk HEAD.
+    # Missing/malformed health must fail closed. The explicit first-boot startup
+    # grace remains valid only for status=starting with zero collection failures.
     require(probe, "def collection_health_contract", "tablet_runtime_probe.py")
-    require(probe, "health is not None and healthy is True", "tablet_runtime_probe.py")
-    require(probe, "type(healthy) is not bool", "tablet_runtime_probe.py")
+    require(probe, 'if "healthy" not in payload:', "tablet_runtime_probe.py")
+    require(probe, "type(healthy) is bool", "tablet_runtime_probe.py")
+    require(probe, 'payload.get("status") == "starting" and failures == 0', "tablet_runtime_probe.py")
+    require(probe, "collection_health_healthy_not_boolean_or_null", "tablet_runtime_probe.py")
     require(probe, "def runtime_contract", "tablet_runtime_probe.py")
     require(probe, "running_build_differs_from_disk_head", "tablet_runtime_probe.py")
     require(probe, 'collection.get("runtime_build_sha")', "tablet_runtime_probe.py")
