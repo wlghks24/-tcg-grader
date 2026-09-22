@@ -69,18 +69,29 @@ def health_probe(url: str = HEALTH_URL, timeout: float = 3.0) -> dict[str, Any]:
 
 
 def collection_health_contract(payload: Any) -> dict[str, Any]:
-    health = payload if isinstance(payload, dict) else None
-    healthy = health.get("healthy") if health is not None else None
-    ok = health is not None and healthy is True
-    if health is None:
-        reason = "collection_health_missing"
-    elif type(healthy) is not bool:
-        reason = "collection_health_healthy_not_boolean"
-    elif healthy is not True:
-        reason = "collection_health_unhealthy"
-    else:
-        reason = "ok"
-    return {"ok": ok, "reason": reason}
+    if not isinstance(payload, dict):
+        return {"ok": False, "ready": False, "startup_grace": False, "reason": "collection_health_missing"}
+    if "healthy" not in payload:
+        return {"ok": False, "ready": False, "startup_grace": False, "reason": "collection_health_healthy_missing"}
+
+    healthy = payload.get("healthy")
+    if type(healthy) is bool:
+        return {
+            "ok": healthy is True,
+            "ready": healthy is True,
+            "startup_grace": False,
+            "reason": "ok" if healthy is True else "collection_health_unhealthy",
+        }
+    if healthy is None:
+        failures = _strict_int(payload.get("consecutive_failures"))
+        startup_grace = payload.get("status") == "starting" and failures == 0
+        return {
+            "ok": startup_grace,
+            "ready": False,
+            "startup_grace": startup_grace,
+            "reason": "startup_grace" if startup_grace else "collection_health_unknown_outside_startup",
+        }
+    return {"ok": False, "ready": False, "startup_grace": False, "reason": "collection_health_healthy_not_boolean_or_null"}
 
 
 def runtime_contract(payload: Any, git: Any) -> dict[str, Any]:
@@ -171,6 +182,8 @@ def build_report(
         "collection_health": collection_health,
         "collection_health_contract": collection_contract,
         "collection_health_ok": collection_contract["ok"],
+        "collection_health_ready": collection_contract["ready"],
+        "collection_startup_grace": collection_contract["startup_grace"],
         "collection_requires_attention": bool(collection_health and collection_health.get("requires_attention") is True),
         "runtime_contract": runtime,
         "runtime_contract_ok": runtime["ok"],
@@ -198,6 +211,8 @@ def self_test() -> None:
         "runtime_delivery_patch": MIN_RUNTIME_DELIVERY_PATCH,
         "collection_health": {
             "healthy": True,
+            "status": "ok",
+            "consecutive_failures": 0,
             "runtime_build_sha": sha,
             "runtime_build_sha_verified": True,
         },
@@ -205,8 +220,14 @@ def self_test() -> None:
     assert collection_health_contract(payload["collection_health"])["ok"] is True
     assert runtime_contract(payload, git)["ok"] is True
 
-    for bad in (None, {}, {"healthy": None}, {"healthy": "true"}, {"healthy": False}):
-        assert collection_health_contract(bad)["ok"] is False
+    assert collection_health_contract(None)["ok"] is False
+    assert collection_health_contract({})["ok"] is False
+    assert collection_health_contract({"healthy": "true"})["ok"] is False
+    assert collection_health_contract({"healthy": False})["ok"] is False
+    assert collection_health_contract({"healthy": None})["ok"] is False
+    startup = collection_health_contract({"healthy": None, "status": "starting", "consecutive_failures": 0})
+    assert startup["ok"] is True and startup["startup_grace"] is True and startup["ready"] is False
+    assert collection_health_contract({"healthy": None, "status": "starting", "consecutive_failures": 1})["ok"] is False
 
     wrong_runtime = dict(payload)
     wrong_runtime["runtime"] = "other-server"
@@ -221,7 +242,7 @@ def self_test() -> None:
     assert "running_build_differs_from_disk_head" in runtime_contract(wrong_build, git)["errors"]
 
     missing_build = dict(payload)
-    missing_build["collection_health"] = {"healthy": True}
+    missing_build["collection_health"] = {"healthy": True, "status": "ok", "consecutive_failures": 0}
     assert runtime_contract(missing_build, git)["ok"] is False
 
     report = build_report(Path.cwd(), probe_health=False, probe_network=False)
