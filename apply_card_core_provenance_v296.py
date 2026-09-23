@@ -266,7 +266,9 @@ replace_once(
     positive_grade_prices = 0
     allowed_companies = {"PSA", "BGS", "CGC", "TAG", "BRG"}
     allowed_price_types = {"sold", "auction_result", "official_example", "market_guide"}
-    if graded_profiles is not None and not isinstance(graded_profiles, dict):
+    if graded_profiles is None:
+        graded_profiles = {}
+    elif not isinstance(graded_profiles, dict):
         findings.append({"severity": "high", "code": "INVALID_GRADED_PRICE_PROFILES", "target": "market_prices.json"})
         graded_profiles = {}
     for market_key, profile in graded_profiles.items():
