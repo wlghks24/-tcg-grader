@@ -2,9 +2,8 @@ name: V300 Card Data Consumer Finalize
 
 on:
   push:
-    branches: [audit/card-data-consumer-v300]
-    paths:
-      - '.github/workflows/v300-card-data-finalize.yml'
+    branches:
+      - audit/card-data-consumer-v300
 
 permissions:
   contents: write
@@ -71,24 +70,27 @@ jobs:
           unit_marker = "            test_static_data_publish_gate.py \\\n            test_collection_verification_gate.py \\\n"
           if refresh.count(unit_marker) != 1:
               raise SystemExit(f'static refresh unit marker count changed: {refresh.count(unit_marker)}')
-          refresh = refresh.replace(unit_marker, "            test_static_data_publish_gate.py \\\n            test_card_data_delivery_gate_v300.py \\\n            test_collection_verification_gate.py \\\n")
+          refresh = refresh.replace(
+              unit_marker,
+              "            test_static_data_publish_gate.py \\\n            test_card_data_delivery_gate_v300.py \\\n            test_collection_verification_gate.py \\\n",
+          )
           publish_marker = "      - name: Fail closed before publishing static data\n"
           if refresh.count(publish_marker) != 1:
               raise SystemExit(f'publish marker count changed: {refresh.count(publish_marker)}')
-          crosscheck = """      - name: Cross-check generated card data with runtime consumers
-        run: |
-          python -m unittest -v \\
-            test_card_core_provenance_v296.py \\
-            test_card_market_edition_v297.py \\
-            test_card_probability_ui_v298.py \\
-            test_psa_probability_market_flow_v252.py \\
-            test_card_data_delivery_gate_v300.py
-          python -m unittest -v \\
-            test_card_core_crosscheck_v292.py \\
-            test_card_core_crosscheck_v295.py \\
-            test_pokemon_generation_display_v207.py
-
-"""
+          crosscheck = (
+              "      - name: Cross-check generated card data with runtime consumers\n"
+              "        run: |\n"
+              "          python -m unittest -v \\\n"
+              "            test_card_core_provenance_v296.py \\\n"
+              "            test_card_market_edition_v297.py \\\n"
+              "            test_card_probability_ui_v298.py \\\n"
+              "            test_psa_probability_market_flow_v252.py \\\n"
+              "            test_card_data_delivery_gate_v300.py\n"
+              "          python -m unittest -v \\\n"
+              "            test_card_core_crosscheck_v292.py \\\n"
+              "            test_card_core_crosscheck_v295.py \\\n"
+              "            test_pokemon_generation_display_v207.py\n\n"
+          )
           refresh = refresh.replace(publish_marker, crosscheck + publish_marker)
           write(refresh_path, refresh)
 
@@ -97,69 +99,75 @@ jobs:
           old_tests = '       "test_card_probability_ui_v298.py","test_card_regression_gate_v299.py"],300,False),'
           if current.count(old_tests) != 1:
               raise SystemExit(f'current runtime card marker count changed: {current.count(old_tests)}')
-          current = current.replace(old_tests, '       "test_card_probability_ui_v298.py","test_card_regression_gate_v299.py","test_card_data_delivery_gate_v300.py"],300,False),')
+          current = current.replace(
+              old_tests,
+              '       "test_card_probability_ui_v298.py","test_card_regression_gate_v299.py","test_card_data_delivery_gate_v300.py"],300,False),',
+          )
+          if current.count('current-main-v299-card-core-gated') != 1:
+              raise SystemExit('current runtime engine marker changed')
           current = current.replace('current-main-v299-card-core-gated', 'current-main-v300-card-data-gated')
           write(current_path, current)
 
-          test = r'''from __future__ import annotations
-
-import unittest
-from pathlib import Path
-
-import verify_current_runtime as runtime
-
-ROOT = Path(__file__).resolve().parent
-
-
-class CardDataDeliveryGateV300Tests(unittest.TestCase):
-    def test_runtime_delivery_triggers_on_card_data_consumed_by_runtime(self) -> None:
-        workflow = (ROOT / ".github/workflows/runtime-delivery-guard.yml").read_text(encoding="utf-8")
-        for path in (
-            "market_prices.json",
-            "exchange_rates.json",
-            "grading_company_updates.json",
-            "vision_calibration.json",
-            "graded_photo_candidates.json",
-            "test_card_data_delivery_gate_v300.py",
-            ".github/workflows/tcg-static-data-refresh.yml",
-        ):
-            self.assertGreaterEqual(workflow.count(f"- '{path}'"), 2, path)
-
-    def test_fresh_static_snapshot_is_crosschecked_before_publish(self) -> None:
-        workflow = (ROOT / ".github/workflows/tcg-static-data-refresh.yml").read_text(encoding="utf-8")
-        collect = workflow.index("- name: Run full verified collection cycle")
-        cross = workflow.index("- name: Cross-check generated card data with runtime consumers")
-        publish = workflow.index("- name: Fail closed before publishing static data")
-        self.assertLess(collect, cross)
-        self.assertLess(cross, publish)
-        block = workflow[cross:publish]
-        for test_name in (
-            "test_card_core_provenance_v296.py",
-            "test_card_market_edition_v297.py",
-            "test_card_probability_ui_v298.py",
-            "test_psa_probability_market_flow_v252.py",
-            "test_card_core_crosscheck_v292.py",
-            "test_card_core_crosscheck_v295.py",
-            "test_pokemon_generation_display_v207.py",
-            "test_card_data_delivery_gate_v300.py",
-        ):
-            self.assertIn(test_name, block)
-
-    def test_current_runtime_keeps_v300_delivery_gate_in_card_regressions(self) -> None:
-        commands = {name: cmd for name, cmd, _timeout, _optional in runtime._commands()}
-        self.assertIn("card_core_static_regressions", commands)
-        self.assertIn("test_card_data_delivery_gate_v300.py", commands["card_core_static_regressions"])
-
-    def test_runtime_delivery_executes_and_compiles_v300_gate(self) -> None:
-        workflow = (ROOT / ".github/workflows/runtime-delivery-guard.yml").read_text(encoding="utf-8")
-        self.assertIn("test_card_regression_gate_v299.py test_card_data_delivery_gate_v300.py", workflow)
-        self.assertIn("test_card_data_delivery_gate_v300.py tcg_updater.py", workflow)
-
-
-if __name__ == "__main__":
-    unittest.main(verbosity=2)
-'''
-          Path('test_card_data_delivery_gate_v300.py').write_text(test, encoding='utf-8')
+          test_lines = [
+              'from __future__ import annotations',
+              '',
+              'import unittest',
+              'from pathlib import Path',
+              '',
+              'import verify_current_runtime as runtime',
+              '',
+              'ROOT = Path(__file__).resolve().parent',
+              '',
+              '',
+              'class CardDataDeliveryGateV300Tests(unittest.TestCase):',
+              '    def test_runtime_delivery_triggers_on_card_data_consumed_by_runtime(self) -> None:',
+              '        workflow = (ROOT / ".github/workflows/runtime-delivery-guard.yml").read_text(encoding="utf-8")',
+              '        for path in (',
+              '            "market_prices.json",',
+              '            "exchange_rates.json",',
+              '            "grading_company_updates.json",',
+              '            "vision_calibration.json",',
+              '            "graded_photo_candidates.json",',
+              '            "test_card_data_delivery_gate_v300.py",',
+              '            ".github/workflows/tcg-static-data-refresh.yml",',
+              '        ):',
+              '            self.assertGreaterEqual(workflow.count(f"- \'{path}\'"), 2, path)',
+              '',
+              '    def test_fresh_static_snapshot_is_crosschecked_before_publish(self) -> None:',
+              '        workflow = (ROOT / ".github/workflows/tcg-static-data-refresh.yml").read_text(encoding="utf-8")',
+              '        collect = workflow.index("- name: Run full verified collection cycle")',
+              '        cross = workflow.index("- name: Cross-check generated card data with runtime consumers")',
+              '        publish = workflow.index("- name: Fail closed before publishing static data")',
+              '        self.assertLess(collect, cross)',
+              '        self.assertLess(cross, publish)',
+              '        block = workflow[cross:publish]',
+              '        for test_name in (',
+              '            "test_card_core_provenance_v296.py",',
+              '            "test_card_market_edition_v297.py",',
+              '            "test_card_probability_ui_v298.py",',
+              '            "test_psa_probability_market_flow_v252.py",',
+              '            "test_card_core_crosscheck_v292.py",',
+              '            "test_card_core_crosscheck_v295.py",',
+              '            "test_pokemon_generation_display_v207.py",',
+              '            "test_card_data_delivery_gate_v300.py",',
+              '        ):',
+              '            self.assertIn(test_name, block)',
+              '',
+              '    def test_current_runtime_keeps_v300_delivery_gate_in_card_regressions(self) -> None:',
+              '        commands = {name: cmd for name, cmd, _timeout, _optional in runtime._commands()}',
+              '        self.assertIn("card_core_static_regressions", commands)',
+              '        self.assertIn("test_card_data_delivery_gate_v300.py", commands["card_core_static_regressions"])',
+              '',
+              '    def test_runtime_delivery_executes_and_compiles_v300_gate(self) -> None:',
+              '        workflow = (ROOT / ".github/workflows/runtime-delivery-guard.yml").read_text(encoding="utf-8")',
+              '        self.assertIn("test_card_regression_gate_v299.py test_card_data_delivery_gate_v300.py", workflow)',
+              '        self.assertIn("test_card_data_delivery_gate_v300.py tcg_updater.py", workflow)',
+              '',
+              '',
+              'if __name__ == "__main__":',
+              '    unittest.main(verbosity=2)',
+          ]
+          Path('test_card_data_delivery_gate_v300.py').write_text('\n'.join(test_lines) + '\n', encoding='utf-8')
           PY
 
       - name: Remove one-shot workflow and rebuild integrity manifest
