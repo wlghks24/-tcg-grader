@@ -737,6 +737,16 @@
           "9": 0,
           "10": 0
         }
+      },
+      "grade_price_evidence": {
+        "PSA": {
+          "10": {
+            "source": "https://kream.co.kr/products/911415",
+            "price_type": "sold",
+            "observed_on": "2026-09-22",
+            "label": "PSA 10 공개 체결가 범위 중앙값 · 페이지 확인일"
+          }
+        }
       }
     },
     "KR|릴리에 SM1M 065/060|HIT": {
@@ -803,7 +813,23 @@
           "10": 2000000
         }
       },
-      "note": "BRG 공식 페이지의 2025년 5월 특정 카드 거래 예시 · 다른 업체·등급에 일반화 금지"
+      "note": "BRG 공식 페이지의 2025년 5월 특정 카드 거래 예시 · 다른 업체·등급에 일반화 금지",
+      "grade_price_evidence": {
+        "BRG": {
+          "9": {
+            "source": "https://break.co.kr/",
+            "price_type": "official_example",
+            "observed_period": "2025-05",
+            "label": "BRG 공식 페이지 특정 카드 거래 예시"
+          },
+          "10": {
+            "source": "https://break.co.kr/",
+            "price_type": "official_example",
+            "observed_period": "2025-05",
+            "label": "BRG 공식 페이지 특정 카드 거래 예시"
+          }
+        }
+      }
     }
   },
   "grading_cost_defaults": {

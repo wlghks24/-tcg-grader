@@ -90,10 +90,20 @@ def keep_verified_seeds(db):
     profiles['JP|계승되는 의지 일본판 에이스 만화패러렐|HIT']['grade_prices_krw']['PSA']['10']=12_095_000
     profiles['KR|릴리에 SM1M 065/060|HIT']['grade_prices_krw']['BRG']['9']=450_000
     profiles['KR|릴리에 SM1M 065/060|HIT']['grade_prices_krw']['BRG']['10']=2_000_000
+    profiles['JP|계승되는 의지 일본판 에이스 만화패러렐|HIT']['grade_price_evidence']={
+      'PSA':{'10':{'source':'https://kream.co.kr/products/911415','price_type':'sold',
+                    'observed_on':'2026-09-22','label':'PSA 10 공개 체결가 범위 중앙값 · 페이지 확인일'}}
+    }
+    profiles['KR|릴리에 SM1M 065/060|HIT']['grade_price_evidence']={
+      'BRG':{
+        '9':{'source':'https://break.co.kr/','price_type':'official_example','observed_period':'2025-05','label':'BRG 공식 페이지 특정 카드 거래 예시'},
+        '10':{'source':'https://break.co.kr/','price_type':'official_example','observed_period':'2025-05','label':'BRG 공식 페이지 특정 카드 거래 예시'},
+      }
+    }
     for key,value in profiles.items():
         current=db['graded_prices'].setdefault(key,{})
         for field,field_value in value.items():
-            if field in ('grade_prices_krw','note'):
+            if field in ('grade_prices_krw','grade_price_evidence','note'):
                 current[field]=field_value
             else:
                 current.setdefault(field,field_value)

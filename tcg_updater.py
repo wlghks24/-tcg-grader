@@ -1838,9 +1838,10 @@ class Handler(SimpleHTTPRequestHandler):
                 if not isinstance(card_name,str) or len(card_name)>MAX_CARD_NAME:
                     raise ValueError('카드명 형식 오류')
                 exchange=load_json_file(os.path.join(BASE,'exchange_rates.json'),{'rates':{}})
-                exchange_rate=exchange.get('rates',{}).get('USD_KRW',1350.0)
+                exchange_rate=exchange.get('rates',{}).get('USD_KRW') if isinstance(exchange.get('rates'),dict) else None
                 result=verified_card_valuation(
                     card_name,values,grade_prices,
+                    grade_price_evidence=profile.get('grade_price_evidence',{}) if profile else None,
                     raw_krw=profile.get('raw_krw',incoming.get('raw_krw',0)),
                     exchange_rate=exchange_rate,
                     price_source='exact_company_grade_observation' if profile else 'user_provided_exact_grade',
