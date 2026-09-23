@@ -36,11 +36,11 @@ jobs:
             test_current_runtime_verifier_v295.py \
             test_wyyyes_market_source_v267.py
           node verify_pokemon_generation_runtime.js
-          python verify_current_runtime.py
       - name: Refresh and diagnose integrity
         run: |
           python fault_injection_healing.py --manifest
           python fault_injection_healing.py --diagnose
+          python verify_current_runtime.py
       - name: Remove one-shot patch controls
         run: |
           rm -f apply_card_core_v297.py .github/workflows/v297-card-core-refresh.yml
