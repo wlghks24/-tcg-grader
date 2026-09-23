@@ -53,8 +53,6 @@ jobs:
           assert report['ok'] and report['failed']==0, report
           print(report)
           PY
-      - name: Current runtime verification after manifest refresh
-        run: python verify_current_runtime.py
       - name: Commit bounded patch
         run: |
           if git diff --quiet -- index.html grade_market_flow.js grading_accuracy_v99.js integrity_manifest.json; then
@@ -66,3 +64,5 @@ jobs:
           git add index.html grade_market_flow.js grading_accuracy_v99.js integrity_manifest.json
           git commit -m 'Normalize PSA probability math and isolate market editions v295'
           git push origin HEAD:audit/card-core-crosscheck-v295
+      - name: Current runtime verification on committed tree
+        run: python verify_current_runtime.py
