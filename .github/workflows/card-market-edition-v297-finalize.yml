@@ -30,8 +30,9 @@ jobs:
           node verify_pokemon_generation_runtime.js
       - name: Preserve historical grading parity
         run: |
-          python verify_grading_accuracy_v99.py
-          python verify_grading_cross_runtime_v99.py
+          node verify_v99_browser_accuracy.js
+          python verify_v99_accuracy.py
+          python verify_v99_cross_runtime.py
       - name: Remove transient applicator and workflow
         run: |
           rm -f apply_card_market_edition_v297.py
