@@ -1,0 +1,210 @@
+name: V300 Card Data Consumer Finalize
+
+on:
+  push:
+    branches: [audit/card-data-consumer-v300]
+    paths:
+      - '.github/workflows/v300-card-data-finalize.yml'
+
+permissions:
+  contents: write
+
+concurrency:
+  group: v300-card-data-consumer-finalize
+  cancel-in-progress: true
+
+jobs:
+  finalize:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - name: Checkout branch
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          fetch-depth: 0
+          ref: audit/card-data-consumer-v300
+
+      - name: Apply bounded v300 hardening
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          from pathlib import Path
+
+          def read(path):
+              return Path(path).read_text(encoding='utf-8')
+
+          def write(path, text):
+              Path(path).write_text(text, encoding='utf-8')
+
+          runtime_path = Path('.github/workflows/runtime-delivery-guard.yml')
+          runtime = read(runtime_path)
+          marker = "      - 'update_market_prices.py'\n"
+          if runtime.count(marker) != 2:
+              raise SystemExit(f'runtime path marker count changed: {runtime.count(marker)}')
+          expanded = marker + (
+              "      - 'market_prices.json'\n"
+              "      - 'exchange_rates.json'\n"
+              "      - 'grading_company_updates.json'\n"
+              "      - 'vision_calibration.json'\n"
+              "      - 'graded_photo_candidates.json'\n"
+              "      - 'test_card_data_delivery_gate_v300.py'\n"
+              "      - '.github/workflows/tcg-static-data-refresh.yml'\n"
+          )
+          runtime = runtime.replace(marker, expanded)
+          old = "test_card_core_provenance_v296.py test_card_market_edition_v297.py test_card_probability_ui_v298.py test_card_regression_gate_v299.py"
+          if runtime.count(old) != 1:
+              raise SystemExit(f'runtime unittest marker count changed: {runtime.count(old)}')
+          runtime = runtime.replace(old, old + " test_card_data_delivery_gate_v300.py")
+          old_compile = "verify_current_runtime.py test_card_regression_gate_v299.py tcg_updater.py"
+          if runtime.count(old_compile) != 1:
+              raise SystemExit(f'runtime compile marker count changed: {runtime.count(old_compile)}')
+          runtime = runtime.replace(old_compile, "verify_current_runtime.py test_card_regression_gate_v299.py test_card_data_delivery_gate_v300.py tcg_updater.py")
+          write(runtime_path, runtime)
+
+          refresh_path = Path('.github/workflows/tcg-static-data-refresh.yml')
+          refresh = read(refresh_path)
+          path_marker = "      - 'test_static_data_publish_gate.py'\n"
+          if refresh.count(path_marker) != 1:
+              raise SystemExit(f'static refresh path marker count changed: {refresh.count(path_marker)}')
+          refresh = refresh.replace(path_marker, path_marker + "      - 'test_card_data_delivery_gate_v300.py'\n")
+          unit_marker = "            test_static_data_publish_gate.py \\\n            test_collection_verification_gate.py \\\n"
+          if refresh.count(unit_marker) != 1:
+              raise SystemExit(f'static refresh unit marker count changed: {refresh.count(unit_marker)}')
+          refresh = refresh.replace(unit_marker, "            test_static_data_publish_gate.py \\\n            test_card_data_delivery_gate_v300.py \\\n            test_collection_verification_gate.py \\\n")
+          publish_marker = "      - name: Fail closed before publishing static data\n"
+          if refresh.count(publish_marker) != 1:
+              raise SystemExit(f'publish marker count changed: {refresh.count(publish_marker)}')
+          crosscheck = """      - name: Cross-check generated card data with runtime consumers
+        run: |
+          python -m unittest -v \\
+            test_card_core_provenance_v296.py \\
+            test_card_market_edition_v297.py \\
+            test_card_probability_ui_v298.py \\
+            test_psa_probability_market_flow_v252.py \\
+            test_card_data_delivery_gate_v300.py
+          python -m unittest -v \\
+            test_card_core_crosscheck_v292.py \\
+            test_card_core_crosscheck_v295.py \\
+            test_pokemon_generation_display_v207.py
+
+"""
+          refresh = refresh.replace(publish_marker, crosscheck + publish_marker)
+          write(refresh_path, refresh)
+
+          current_path = Path('verify_current_runtime.py')
+          current = read(current_path)
+          old_tests = '       "test_card_probability_ui_v298.py","test_card_regression_gate_v299.py"],300,False),'
+          if current.count(old_tests) != 1:
+              raise SystemExit(f'current runtime card marker count changed: {current.count(old_tests)}')
+          current = current.replace(old_tests, '       "test_card_probability_ui_v298.py","test_card_regression_gate_v299.py","test_card_data_delivery_gate_v300.py"],300,False),')
+          current = current.replace('current-main-v299-card-core-gated', 'current-main-v300-card-data-gated')
+          write(current_path, current)
+
+          test = r'''from __future__ import annotations
+
+import unittest
+from pathlib import Path
+
+import verify_current_runtime as runtime
+
+ROOT = Path(__file__).resolve().parent
+
+
+class CardDataDeliveryGateV300Tests(unittest.TestCase):
+    def test_runtime_delivery_triggers_on_card_data_consumed_by_runtime(self) -> None:
+        workflow = (ROOT / ".github/workflows/runtime-delivery-guard.yml").read_text(encoding="utf-8")
+        for path in (
+            "market_prices.json",
+            "exchange_rates.json",
+            "grading_company_updates.json",
+            "vision_calibration.json",
+            "graded_photo_candidates.json",
+            "test_card_data_delivery_gate_v300.py",
+            ".github/workflows/tcg-static-data-refresh.yml",
+        ):
+            self.assertGreaterEqual(workflow.count(f"- '{path}'"), 2, path)
+
+    def test_fresh_static_snapshot_is_crosschecked_before_publish(self) -> None:
+        workflow = (ROOT / ".github/workflows/tcg-static-data-refresh.yml").read_text(encoding="utf-8")
+        collect = workflow.index("- name: Run full verified collection cycle")
+        cross = workflow.index("- name: Cross-check generated card data with runtime consumers")
+        publish = workflow.index("- name: Fail closed before publishing static data")
+        self.assertLess(collect, cross)
+        self.assertLess(cross, publish)
+        block = workflow[cross:publish]
+        for test_name in (
+            "test_card_core_provenance_v296.py",
+            "test_card_market_edition_v297.py",
+            "test_card_probability_ui_v298.py",
+            "test_psa_probability_market_flow_v252.py",
+            "test_card_core_crosscheck_v292.py",
+            "test_card_core_crosscheck_v295.py",
+            "test_pokemon_generation_display_v207.py",
+            "test_card_data_delivery_gate_v300.py",
+        ):
+            self.assertIn(test_name, block)
+
+    def test_current_runtime_keeps_v300_delivery_gate_in_card_regressions(self) -> None:
+        commands = {name: cmd for name, cmd, _timeout, _optional in runtime._commands()}
+        self.assertIn("card_core_static_regressions", commands)
+        self.assertIn("test_card_data_delivery_gate_v300.py", commands["card_core_static_regressions"])
+
+    def test_runtime_delivery_executes_and_compiles_v300_gate(self) -> None:
+        workflow = (ROOT / ".github/workflows/runtime-delivery-guard.yml").read_text(encoding="utf-8")
+        self.assertIn("test_card_regression_gate_v299.py test_card_data_delivery_gate_v300.py", workflow)
+        self.assertIn("test_card_data_delivery_gate_v300.py tcg_updater.py", workflow)
+
+
+if __name__ == "__main__":
+    unittest.main(verbosity=2)
+'''
+          Path('test_card_data_delivery_gate_v300.py').write_text(test, encoding='utf-8')
+          PY
+
+      - name: Remove one-shot workflow and rebuild integrity manifest
+        shell: bash
+        run: |
+          set -euo pipefail
+          rm -f .github/workflows/v300-card-data-finalize.yml
+          python fault_injection_healing.py --manifest
+          python fault_injection_healing.py --diagnose
+
+      - name: Run focused card regressions
+        shell: bash
+        run: |
+          set -euo pipefail
+          python -m pip install --disable-pip-version-check pillow
+          python -m py_compile verify_current_runtime.py test_card_data_delivery_gate_v300.py
+          python -m unittest -v test_card_data_delivery_gate_v300.py
+          python -m unittest -v \
+            test_card_core_provenance_v296.py \
+            test_card_market_edition_v297.py \
+            test_card_probability_ui_v298.py \
+            test_psa_probability_market_flow_v252.py \
+            test_card_core_crosscheck_v292.py \
+            test_card_core_crosscheck_v295.py \
+            test_pokemon_generation_display_v207.py
+          python tablet_runtime_manifest.py --check --compile
+          node --check grading_accuracy_v99.js
+          node --check grade_market_flow.js
+          node --check card_identity_recognition.js
+          node --check ui_app_shell_v272.js
+
+      - name: Final integrity diagnosis and commit
+        shell: bash
+        run: |
+          set -euo pipefail
+          python fault_injection_healing.py --diagnose
+          git add -- \
+            .github/workflows/runtime-delivery-guard.yml \
+            .github/workflows/tcg-static-data-refresh.yml \
+            verify_current_runtime.py \
+            test_card_data_delivery_gate_v300.py \
+            integrity_manifest.json \
+            .github/workflows/v300-card-data-finalize.yml
+          git diff --cached --check
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git commit -m 'Guard generated card data against runtime regressions (v300)'
+          git push origin HEAD:audit/card-data-consumer-v300
