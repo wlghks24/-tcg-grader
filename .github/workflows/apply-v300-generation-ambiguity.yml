@@ -1,0 +1,68 @@
+name: Apply v300 generation ambiguity guard
+
+on:
+  push:
+    branches: [audit/unknown-region-generation-v300]
+    paths:
+      - '.github/workflows/apply-v300-generation-ambiguity.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  apply-test-finalize:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          fetch-depth: 2
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97
+        with:
+          python-version: '3.11'
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: '22'
+      - name: Apply v300 patch
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          from pathlib import Path
+          js = Path('card_identity_recognition.js')
+          text = js.read_text(encoding='utf-8')
+          old = """function generationByYear(year,region){\n if(!Number.isInteger(year))return null;\n if(generationRegion(region)==='JP'){"""
+          new = """function generationByYear(year,region){\n if(!Number.isInteger(year))return null;\n const resolvedRegion=generationRegion(region);\n // Japan moves into several TCG eras one calendar year before KR/US.\n // If region is unknown, those transition years are ambiguous and must not\n // silently inherit the KR/US boundary. Fail closed until region or stronger\n // evidence (set code / regulation mark) is available.\n if(resolvedRegion==='UNKNOWN'&&[2006,2010,2013,2016,2019].includes(year))return null;\n if(resolvedRegion==='JP'){"""
+          if old not in text:
+              raise SystemExit('generationByYear patch anchor missing')
+          js.write_text(text.replace(old,new,1),encoding='utf-8')
+
+          test = Path('test_card_core_crosscheck_v291.py')
+          source = test.read_text(encoding='utf-8')
+          anchor = '''    def test_non_japanese_year_fallback_keeps_existing_conservative_contract(self) -> None:\n        source = (ROOT / "card_identity_recognition.js").read_text(encoding="utf-8")\n        self.assertIn("if(year>=2020)return {generation:8", source)\n        self.assertIn("generationByYear(year,input?.region)", source)\n\n'''
+          addition = anchor + '''    def test_unknown_region_transition_years_fail_closed(self) -> None:\n        script = r"""\nconst fs=require('fs'),vm=require('vm');\nglobal.window={};\nglobal.document={readyState:'loading',addEventListener(){},getElementById(){return null;}};\nglobal.localStorage={getItem(){return null;},setItem(){}};\nglobal.Option=function(){};\nvm.runInThisContext(fs.readFileSync('card_identity_recognition.js','utf8'),{filename:'card_identity_recognition.js'});\nconst api=global.window.TCGPokemonGeneration;\nconst ambiguous=[2006,2010,2013,2016,2019].map(year=>api.infer({game:'pokemon',ocr_text:`©${year} Pokémon`}));\nconst knownJp=api.infer({game:'pokemon',region:'JP',ocr_text:'©2019 Pokémon'});\nconst knownKr=api.infer({game:'pokemon',region:'KR',ocr_text:'©2019 Pokémon'});\nconst stable=api.infer({game:'pokemon',ocr_text:'©2020 Pokémon'});\nprocess.stdout.write(JSON.stringify({ambiguous,knownJp,knownKr,stable}));\n"""\n        proc = subprocess.run(["node", "-e", script], cwd=ROOT, text=True, capture_output=True, check=True, timeout=30)\n        result = json.loads(proc.stdout)\n        self.assertTrue(all(row["status"] == "unknown" and row["generation"] is None for row in result["ambiguous"]))\n        self.assertEqual(8, result["knownJp"]["generation"])\n        self.assertEqual(7, result["knownKr"]["generation"])\n        self.assertEqual(8, result["stable"]["generation"])\n\n'''
+          if anchor not in source:
+              raise SystemExit('test insertion anchor missing')
+          test.write_text(source.replace(anchor, addition, 1), encoding='utf-8')
+          PY
+      - name: Targeted regression
+        run: |
+          node --check card_identity_recognition.js
+          python -m unittest -v test_card_core_crosscheck_v291.py test_card_regression_gate_v299.py
+      - name: Remove transient workflow and refresh integrity
+        shell: bash
+        run: |
+          set -euo pipefail
+          git rm -- .github/workflows/apply-v300-generation-ambiguity.yml
+          python fault_injection_healing.py --manifest
+          python fault_injection_healing.py --diagnose
+          git add -- card_identity_recognition.js test_card_core_crosscheck_v291.py integrity_manifest.json
+          git diff --cached --check
+      - name: Commit finalized v300 tree
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git commit -m 'Fail closed ambiguous unknown-region generation years (v300)'
+          git push origin HEAD:audit/unknown-region-generation-v300
