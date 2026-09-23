@@ -150,9 +150,9 @@ function quoteScore(row,name,number,region){
  const tokens=String(name||'').toLowerCase().match(/[0-9a-z가-힣]{2,}/g)||[];
  const hits=tokens.filter(t=>title.includes(norm(t))).length;
  score+=Math.min(30,hits*10);
- const wanted=editionCode(region),actual=String(row.card_region||'UNKNOWN').toUpperCase();
+ const wanted=editionCode(region),actual=editionCode(row.card_region||'UNKNOWN');
  if(wanted!=='UNKNOWN'&&actual===wanted)score+=20;
- else if(wanted!=='UNKNOWN'&&actual!=='UNKNOWN'&&actual!==wanted)score-=40;
+ else if(wanted!=='UNKNOWN'&&actual!=='UNKNOWN'&&actual!==wanted)return -999;
  if(Number(row.price)>0)score+=5;
  return score;
 }

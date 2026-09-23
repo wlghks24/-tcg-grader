@@ -83,5 +83,15 @@
     const value=clamp(Number(raw)+corr,1,10);
     return steps.reduce((best,step)=>{const d=Math.abs(step-value),bd=Math.abs(best-value);return d<bd-1e-12||(Math.abs(d-bd)<=1e-12&&step<best)?step:best},steps[0]);
   }
-  return Object.freeze({VERSION,COMPANIES,STEPS,OFFICIAL,validSteps,validActualGrade,quantizeDown,riskToGrade,combineDefectRisk,generalCenterGrade,gradeByCenter,estimateRawGrade,applyDownwardCorrection});
+  function normalizePsaProbabilities(psa10Candidate,psa9Plus){
+    if(!finite(psa10Candidate)||!finite(psa9Plus))return Object.freeze({8:0,9:0,10:0,below:100,psa9plus:0});
+    const p10=clamp(psa10Candidate,0,100);
+    const p9plus=clamp(Math.max(p10,Number(psa9Plus)),0,100);
+    const p9=Math.max(0,p9plus-p10);
+    const remaining=Math.max(0,100-p9plus);
+    const p8=remaining*0.65;
+    const below=Math.max(0,100-p10-p9-p8);
+    return Object.freeze({8:p8,9:p9,10:p10,below,psa9plus:p9plus});
+  }
+  return Object.freeze({VERSION,COMPANIES,STEPS,OFFICIAL,validSteps,validActualGrade,quantizeDown,riskToGrade,combineDefectRisk,generalCenterGrade,gradeByCenter,estimateRawGrade,applyDownwardCorrection,normalizePsaProbabilities});
 });
