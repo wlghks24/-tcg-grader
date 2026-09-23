@@ -1,7 +1,7 @@
 {
   "version": 2,
   "engine": "v109-card-identity-ocr-learning",
-  "generated_at": "2026-09-23T05:24:19+00:00",
+  "generated_at": "2026-09-23T09:03:50+00:00",
   "files": {
     ".github/workflows/ai-auto-tracker-guard.yml": {
       "sha256": "636e750bd6d2619cce75d4bce2d68051eaa2209ae763bc8ec523ed73476728a6",
@@ -2391,6 +2391,10 @@
       "sha256": "09920e3fec73743095b60191148b206167228baa07e26c87d1909e15ad1d5588",
       "bytes": 2027
     },
+    "test_card_probability_ui_v298.py": {
+      "sha256": "f09f8bfacd502fcb8fb5cec43bef34dcf7be7d0a70e50a234ec2784e6ffe0e33",
+      "bytes": 1452
+    },
     "test_catalog_images.py": {
       "sha256": "1872e45e7c3651a1016d78c155f32844e35092434e18b07b594d056352d6a717",
       "bytes": 2577
@@ -3148,8 +3152,8 @@
       "bytes": 7915
     },
     "ui_app_shell_v272.js": {
-      "sha256": "98e600a855cdb9b5dc75c6548fdd20676bcb67a2817e0cdb371300d04f0b89e4",
-      "bytes": 15441
+      "sha256": "ac54e437e28d37c6e3303a2f21d3d79bf96225bd0bead2cb57fc8885ecee28b8",
+      "bytes": 15596
     },
     "update_exchange_rates.py": {
       "sha256": "848030a739a61b9576646d1f12a745ac349dfdb077d44f17ebb369d1dc7cff41",
