@@ -1,0 +1,47 @@
+name: Apply card price observation v300
+on:
+  push:
+    branches:
+      - audit/card-price-observation-v300
+permissions:
+  contents: write
+jobs:
+  apply-and-verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: audit/card-price-observation-v300
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Apply focused patch
+        run: |
+          python apply_card_price_observation_v300.py
+          rm -f apply_card_price_observation_v300.py .github/workflows/_apply-card-price-observation-v300.yml
+      - name: Rebuild exact-tree integrity manifest
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          import fault_injection_healing as h
+          root=Path('.').resolve()
+          h.build_integrity_manifest(root, root/'integrity_manifest.json')
+          result=h.diagnose_integrity(root, root/'integrity_manifest.json')
+          assert result['ok'] and result['failed']==0, result
+          print(result)
+          PY
+      - name: Targeted card-core regression
+        run: |
+          python -m py_compile card_grading_valuation.py collection_verification_gate.py test_card_price_observation_v300.py
+          python -m unittest -v test_card_price_observation_v300.py test_card_core_provenance_v296.py test_card_core_crosscheck_v295.py test_card_core_crosscheck_v292.py test_card_core_crosscheck_v291.py
+      - name: Current runtime regression
+        run: python verify_current_runtime.py
+      - name: Commit verified patch
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A card_grading_valuation.py collection_verification_gate.py test_card_price_observation_v300.py integrity_manifest.json apply_card_price_observation_v300.py .github/workflows/_apply-card-price-observation-v300.yml
+          git diff --cached --check
+          git commit -m "Validate exact-grade price observation time evidence (v300)"
+          git push origin HEAD:audit/card-price-observation-v300
