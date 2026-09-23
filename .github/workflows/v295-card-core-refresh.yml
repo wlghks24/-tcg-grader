@@ -53,8 +53,8 @@ jobs:
           assert report['ok'] and report['failed']==0, report
           print(report)
           PY
-      - name: Legacy V99 verification after manifest refresh
-        run: python verify_all_legacy_v99.py
+      - name: Current runtime verification after manifest refresh
+        run: python verify_current_runtime.py
       - name: Commit bounded patch
         run: |
           if git diff --quiet -- index.html grade_market_flow.js grading_accuracy_v99.js integrity_manifest.json; then
