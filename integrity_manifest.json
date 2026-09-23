@@ -1,7 +1,7 @@
 {
   "version": 2,
   "engine": "v109-card-identity-ocr-learning",
-  "generated_at": "2026-09-23T00:49:45+00:00",
+  "generated_at": "2026-09-23T00:52:27+00:00",
   "files": {
     ".github/workflows/ai-auto-tracker-guard.yml": {
       "sha256": "636e750bd6d2619cce75d4bce2d68051eaa2209ae763bc8ec523ed73476728a6",
@@ -435,10 +435,6 @@
       "sha256": "0bbc12618657de981deabd60c83d2c0091af636ffc7feab8fcd09bbf37002a7a",
       "bytes": 1415
     },
-    ".github/workflows/v295-card-core-refresh.yml": {
-      "sha256": "10942afd094fa8cb83be848365363537660cad8bf5879b0565854647b803c7ee",
-      "bytes": 2604
-    },
     ".github/workflows/verify-adaptive-collector.yml": {
       "sha256": "8d9fcc6fe1702f7b69bb9ab258cc796fc0009536cba856a950e2f9058e63597b",
       "bytes": 2932
@@ -870,10 +866,6 @@
     "apply_brg_registered_link_normalization_v190.py": {
       "sha256": "f294de8940910c0a30031d03ffe26a83895aa24203842e80c03219e15b11cc3e",
       "bytes": 3302
-    },
-    "apply_card_core_crosscheck_v295.py": {
-      "sha256": "351756ce4ccaf8892b1ef18390ad834fd2535a0c0b03a6a72e9e8916cff7d692",
-      "bytes": 1639
     },
     "apply_catalog_image_patch.py": {
       "sha256": "c4aba8c6520cf7fceb9d324d6716b400de41720c8bcabeacb59e8dadf3423d83",
