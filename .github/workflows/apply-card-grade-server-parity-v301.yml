@@ -1,0 +1,47 @@
+name: Apply card grade server parity v301
+on:
+  push:
+    branches: [audit/card-grade-server-parity-v301]
+    paths:
+      - 'apply_card_grade_server_parity_v301.py'
+      - '.github/workflows/apply-card-grade-server-parity-v301.yml'
+permissions:
+  contents: write
+jobs:
+  apply-and-verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          ref: audit/card-grade-server-parity-v301
+          fetch-depth: 0
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97
+        with:
+          python-version: '3.12'
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: '22'
+      - name: Apply bounded parity patch
+        run: python apply_card_grade_server_parity_v301.py
+      - name: Targeted card grading and market regression
+        run: |
+          python -m py_compile card_grading_valuation.py grading_accuracy_v99.py verify_current_runtime.py test_card_grade_server_parity_v301.py
+          python -m unittest -v test_card_grade_server_parity_v301.py
+          python -m unittest -v test_card_core_crosscheck_v291.py test_card_core_crosscheck_v292.py test_card_core_crosscheck_v295.py
+          python -m unittest -v test_card_core_provenance_v296.py test_card_market_edition_v297.py test_card_probability_ui_v298.py test_card_regression_gate_v299.py test_card_tablet_runtime_v300.py test_multi_market_price_collector.py
+          python verify_v99_cross_runtime.py
+          node --check grading_accuracy_v99.js
+      - name: Remove one-shot applicator and regenerate integrity snapshot
+        run: |
+          rm -f apply_card_grade_server_parity_v301.py .github/workflows/apply-card-grade-server-parity-v301.yml
+          python fault_injection_healing.py --manifest
+          python fault_injection_healing.py --diagnose
+          python repository_integrity_guard.py
+      - name: Commit finalized v301 tree
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add -A
+          git diff --cached --check
+          git commit -m 'Align server card grading with canonical V99 engine (v301)'
+          git push origin HEAD:audit/card-grade-server-parity-v301
