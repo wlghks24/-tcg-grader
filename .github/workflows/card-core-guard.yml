@@ -1,0 +1,69 @@
+name: Card Core Guard
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'grading_accuracy_v99.py'
+      - 'grading_accuracy_v99.js'
+      - 'card_grading_valuation.py'
+      - 'card_identity_recognition.py'
+      - 'card_identity_recognition.js'
+      - 'grade_market_flow.js'
+      - 'multi_market_price_collector.py'
+      - 'market_prices.json'
+      - 'test_card_*.py'
+      - 'test_market_reference_sources_v130.py'
+      - 'test_multi_market_price_collector.py'
+      - 'verify_v99_accuracy.py'
+      - 'verify_v99_browser_accuracy.js'
+      - '.github/workflows/card-core-guard.yml'
+  pull_request:
+    branches: [main]
+    paths:
+      - 'grading_accuracy_v99.py'
+      - 'grading_accuracy_v99.js'
+      - 'card_grading_valuation.py'
+      - 'card_identity_recognition.py'
+      - 'card_identity_recognition.js'
+      - 'grade_market_flow.js'
+      - 'multi_market_price_collector.py'
+      - 'market_prices.json'
+      - 'test_card_*.py'
+      - 'test_market_reference_sources_v130.py'
+      - 'test_multi_market_price_collector.py'
+      - 'verify_v99_accuracy.py'
+      - 'verify_v99_browser_accuracy.js'
+      - '.github/workflows/card-core-guard.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: card-core-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
+      - uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1
+        with:
+          python-version: '3.11'
+      - name: Compile card core
+        run: |
+          python -m py_compile grading_accuracy_v99.py card_grading_valuation.py card_identity_recognition.py multi_market_price_collector.py
+          node --check grading_accuracy_v99.js
+          node --check card_identity_recognition.js
+          node --check grade_market_flow.js
+      - name: Run focused card regressions
+        run: |
+          python -m unittest -v test_card_market_grade_separation_v299.py test_card_probability_ui_v298.py test_card_market_edition_v297.py test_card_core_provenance_v296.py test_card_core_crosscheck_v295.py test_card_core_crosscheck_v292.py test_card_core_crosscheck_v291.py test_market_reference_sources_v130.py test_pokemon_generation_display_v207.py test_psa_probability_market_flow_v252.py
+          python test_multi_market_price_collector.py
+          python verify_v99_accuracy.py
+          node verify_v99_browser_accuracy.js
+      - name: Verify tablet runtime manifest
+        run: python tablet_runtime_manifest.py --check --compile
