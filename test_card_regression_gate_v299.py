@@ -25,6 +25,7 @@ class CardRegressionGateV299Tests(unittest.TestCase):
     def test_node_card_regressions_are_wired_without_forcing_node_on_tablet(self) -> None:
         source = (ROOT / "verify_current_runtime.py").read_text(encoding="utf-8")
         for test_name in (
+            "test_card_core_crosscheck_v291.py",
             "test_card_core_crosscheck_v292.py",
             "test_card_core_crosscheck_v295.py",
             "test_pokemon_generation_display_v207.py",
@@ -62,6 +63,7 @@ class CardRegressionGateV299Tests(unittest.TestCase):
             "grading_accuracy_v99.js",
             "grade_market_flow.js",
             "ui_app_shell_v272.js",
+            "test_card_core_crosscheck_v291.py",
             "test_card_core_crosscheck_v292.py",
             "test_card_core_crosscheck_v295.py",
             "test_card_core_provenance_v296.py",
@@ -72,7 +74,8 @@ class CardRegressionGateV299Tests(unittest.TestCase):
         ):
             self.assertIn(token, workflow)
         self.assertIn("python -m unittest -v test_card_core_provenance_v296.py", workflow)
-        self.assertIn("python -m unittest -v test_card_core_crosscheck_v292.py", workflow)
+        self.assertIn("python -m unittest -v test_card_core_crosscheck_v291.py", workflow)
+        self.assertIn("test_card_core_crosscheck_v292.py", workflow)
 
 
 if __name__ == "__main__":
