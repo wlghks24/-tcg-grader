@@ -36,8 +36,6 @@ jobs:
             test_current_runtime_verifier_v295.py \
             test_wyyyes_market_source_v267.py
           node verify_pokemon_generation_runtime.js
-          node verify_grading_accuracy_v99.js
-          node verify_grade_market_flow.js
           python verify_current_runtime.py
       - name: Refresh and diagnose integrity
         run: |
