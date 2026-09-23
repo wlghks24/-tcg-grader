@@ -4,6 +4,8 @@ on:
   push:
     branches:
       - audit/card-server-parity-v301
+    paths-ignore:
+      - 'runtime-v301-failure.txt'
   workflow_dispatch:
 
 permissions:
@@ -27,7 +29,9 @@ jobs:
       - name: Install runtime test dependency
         run: python -m pip install pillow
       - name: Apply bounded v301 patch
-        run: python apply_card_server_parity_v301.py
+        run: |
+          rm -f runtime-v301-failure.txt
+          python apply_card_server_parity_v301.py
       - name: Targeted card grading parity regression
         run: |
           python -m py_compile card_grading_valuation.py grading_accuracy_v99.py verify_current_runtime.py test_card_server_parity_v301.py
@@ -47,10 +51,20 @@ jobs:
           python verify_current_runtime.py > runtime-v301.log 2>&1
           rc=$?
           echo "verify_current_runtime exit=$rc"
-          echo '--- failure markers ---'
-          grep -E -n -C 5 'FAIL|ERROR|Traceback|AssertionError|FAILED|RuntimeError|MISSING|DRIFT|mismatch' runtime-v301.log || true
-          echo '--- final 220 lines ---'
-          tail -n 220 runtime-v301.log
+          if [ "$rc" -ne 0 ]; then
+            {
+              echo "verify_current_runtime exit=$rc"
+              echo '--- failure markers ---'
+              grep -E -n -C 8 'FAIL|ERROR|Traceback|AssertionError|FAILED|RuntimeError|MISSING|DRIFT|mismatch' runtime-v301.log || true
+              echo '--- final 300 lines ---'
+              tail -n 300 runtime-v301.log
+            } > runtime-v301-failure.txt
+            git config user.name 'github-actions[bot]'
+            git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+            git add runtime-v301-failure.txt
+            git commit -m 'diagnostic: capture v301 aggregate failure [skip ci]' || true
+            git push origin HEAD:audit/card-server-parity-v301
+          fi
           exit "$rc"
       - name: Finalize integrity after runtime outputs
         run: |
@@ -59,6 +73,7 @@ jobs:
       - name: Commit finalized v301 tree
         run: |
           set -euo pipefail
+          rm -f runtime-v301-failure.txt
           git add -A
           git diff --cached --check
           if git diff --cached --quiet; then
