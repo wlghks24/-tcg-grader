@@ -31,12 +31,12 @@ jobs:
           assert result['ok'] and result['failed']==0, result
           print(result)
           PY
+      - name: Current runtime regression on exact manifest tree
+        run: python verify_current_runtime.py
       - name: Targeted card-core regression
         run: |
           python -m py_compile card_grading_valuation.py collection_verification_gate.py test_card_price_observation_v300.py
           python -m unittest -v test_card_price_observation_v300.py test_card_core_provenance_v296.py test_card_core_crosscheck_v295.py test_card_core_crosscheck_v292.py test_card_core_crosscheck_v291.py
-      - name: Current runtime regression
-        run: python verify_current_runtime.py
       - name: Commit verified patch
         run: |
           git config user.name "github-actions[bot]"
