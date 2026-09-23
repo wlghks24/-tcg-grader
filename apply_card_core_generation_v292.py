@@ -2,8 +2,13 @@ from pathlib import Path
 
 p=Path('card_identity_recognition.js')
 s=p.read_text(encoding='utf-8')
+old_generation="function generationText(value){return String(value??'').normalize?.('NFKC').toUpperCase().replace(/[\\u0000-\\u001f\\u007f]/g,' ').replace(/\\s+/g,' ').trim().slice(0,8000)}"
+new_generation="function generationText(value){return String(value??'').replace(/Ⓒ/g,'©').normalize?.('NFKC').toUpperCase().replace(/[\\u0000-\\u001f\\u007f]/g,' ').replace(/\\s+/g,' ').trim().slice(0,8000)}"
+if old_generation not in s:
+    raise SystemExit('generation text target not found')
+s=s.replace(old_generation,new_generation,1)
 old="for(const match of t.matchAll(/(?:©|COPYRIGHT\\s*)?\\s*((?:19|20)\\d{2})/g)){"
-new="for(const match of t.matchAll(/(?:©|Ⓒ|\\(C\\)|COPYRIGHT\\s*)\\s*((?:19|20)\\d{2})/g)){"
+new="for(const match of t.matchAll(/(?:©|\\(C\\)|COPYRIGHT\\s*)\\s*((?:19|20)\\d{2})/g)){"
 if old not in s:
     raise SystemExit('year parser target not found')
 s=s.replace(old,new,1)
