@@ -1,6 +1,6 @@
 "use strict";
 (() => {
-  const VERSION = "v273-accessible-result-cockpit";
+  const VERSION = "v298-exact-psa9-probability";
   const main = document.querySelector("main.app");
   const nav = document.getElementById("featureCategories");
   if (!main || !nav) return;
@@ -275,8 +275,13 @@
     const probabilities = window.tcgGradeProbabilities || {};
     const raw = Number(probabilities[grade]);
     if (Number.isFinite(raw)) return `${Math.max(0, Math.min(100, raw)).toFixed(0)}%`;
-    const fallback = nodeText(grade === 10 ? "p10prob" : grade === 9 ? "p9prob" : "");
-    return fallback && fallback !== "-" ? fallback : "-";
+    // PSA 9 must never fall back to the legacy p9prob element because that
+    // element represents cumulative PSA 9+ rather than the exact PSA 9 bucket.
+    if (grade === 10) {
+      const fallback = nodeText("p10prob");
+      if (fallback && fallback !== "-") return fallback;
+    }
+    return "-";
   }
 
   function generationText() {
