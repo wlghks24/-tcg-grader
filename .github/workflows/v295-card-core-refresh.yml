@@ -60,7 +60,7 @@ jobs:
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           git add index.html grade_market_flow.js grading_accuracy_v99.js integrity_manifest.json test_card_core_crosscheck_v295.py
-          git add -u .github/workflows/v295-card-core-refresh.yml apply_card_core_crosscheck_v295.py
+          git add -u
           if git diff --cached --quiet; then
             echo 'No final patch changes to commit.'
           else
