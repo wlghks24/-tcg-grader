@@ -1,7 +1,7 @@
 {
   "version": 2,
   "engine": "v109-card-identity-ocr-learning",
-  "generated_at": "2026-09-23T04:54:47+00:00",
+  "generated_at": "2026-09-23T05:24:19+00:00",
   "files": {
     ".github/workflows/ai-auto-tracker-guard.yml": {
       "sha256": "636e750bd6d2619cce75d4bce2d68051eaa2209ae763bc8ec523ed73476728a6",
@@ -478,10 +478,6 @@
     "FIX_SERVER_RUNTIME_V137.sh": {
       "sha256": "c566863a5ac3fb395e54e6a6f40805bcc3f40c3e8f1f91b2b7e1d19b4098d76b",
       "bytes": 3979
-    },
-    "GRADING_COMPANY_HEALTH_DIAGNOSTICS.json": {
-      "sha256": "a65c1abc56f4897e071b46574233aec082c8a47b9a891fc19afa3623de017753",
-      "bytes": 4851
     },
     "GRAPHIFY_AUDIT.py": {
       "sha256": "1a2a1c46b001cf33516c9f6e24a9e0bf942c6aa8b6a159c8acbc9d82262c6229",
@@ -1460,8 +1456,8 @@
       "bytes": 16149
     },
     "grade_market_flow.js": {
-      "sha256": "de4a5a77b265bda79329bace4c95db8e960ac2b0a52f00f52ac5e76faeeb824b",
-      "bytes": 22566
+      "sha256": "76d9fdeea201a8bb781487c4fce22e56191904cd94927651cb687d00c6c9ce73",
+      "bytes": 22546
     },
     "graded_photo_bootstrap.py": {
       "sha256": "57fe62df2fd54baf3ad1a20f52b9b760aa0d74f0d0af51f3db4856276527f151",
@@ -2390,6 +2386,10 @@
     "test_card_core_provenance_v296.py": {
       "sha256": "7d50b5943ddd846274d5c8b89e8209098f377d940e8d33c290b292d44ef7c2a2",
       "bytes": 5297
+    },
+    "test_card_market_edition_v297.py": {
+      "sha256": "09920e3fec73743095b60191148b206167228baa07e26c87d1909e15ad1d5588",
+      "bytes": 2027
     },
     "test_catalog_images.py": {
       "sha256": "1872e45e7c3651a1016d78c155f32844e35092434e18b07b594d056352d6a717",
