@@ -1,0 +1,57 @@
+name: Apply card server parity v301
+
+on:
+  push:
+    branches:
+      - audit/card-server-parity-v301
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: apply-card-server-parity-v301-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  apply-and-verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97
+        with:
+          python-version: '3.12'
+      - name: Install runtime test dependency
+        run: python -m pip install pillow
+      - name: Apply bounded v301 patch
+        run: python apply_card_server_parity_v301.py
+      - name: Targeted card grading parity regression
+        run: |
+          python -m py_compile card_grading_valuation.py grading_accuracy_v99.py verify_current_runtime.py test_card_server_parity_v301.py
+          python -m unittest -v test_card_server_parity_v301.py
+          python -m unittest -v test_card_core_crosscheck_v291.py test_card_core_crosscheck_v292.py test_card_core_crosscheck_v295.py
+          python -m unittest -v test_card_core_provenance_v296.py test_card_market_edition_v297.py test_card_probability_ui_v298.py
+          python -m unittest -v test_card_regression_gate_v299.py test_card_tablet_runtime_v300.py
+          python verify_v99_cross_runtime.py
+      - name: Full current runtime regression
+        run: python verify_current_runtime.py
+      - name: Regenerate and diagnose integrity manifest
+        run: |
+          python fault_injection_healing.py --manifest
+          python fault_injection_healing.py --diagnose
+      - name: Commit finalized v301 tree
+        run: |
+          set -euo pipefail
+          git add -A
+          git diff --cached --check
+          if git diff --cached --quiet; then
+            echo 'No finalized changes to commit.'
+            exit 0
+          fi
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git commit -m 'Unify server card grading with canonical V99 core (v301)'
+          git push origin HEAD:audit/card-server-parity-v301
