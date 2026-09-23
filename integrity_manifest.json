@@ -1,7 +1,7 @@
 {
   "version": 2,
   "engine": "v109-card-identity-ocr-learning",
-  "generated_at": "2026-09-22T22:36:40+00:00",
+  "generated_at": "2026-09-23T00:18:55+00:00",
   "files": {
     ".github/workflows/ai-auto-tracker-guard.yml": {
       "sha256": "636e750bd6d2619cce75d4bce2d68051eaa2209ae763bc8ec523ed73476728a6",
@@ -588,8 +588,8 @@
       "bytes": 5028
     },
     "TABLET_SCHEDULED_UPDATE.sh": {
-      "sha256": "035f3937b85557bec2c18508d938ec9f465573720716ccd7685e453eccfe35d1",
-      "bytes": 5624
+      "sha256": "e6886074f96ce5b94fbdacf217012ebdf7be8917b2cf9dbef8144dbbc2225487",
+      "bytes": 7808
     },
     "TCG_AUTO_UPDATE.bat": {
       "sha256": "0c80ed7f5a218d52cb6594032fac9180571598c776f786332a7fb53ed89f42da",
@@ -1120,8 +1120,8 @@
       "bytes": 120
     },
     "card_identity_recognition.js": {
-      "sha256": "7aa447c3811f60fb1a3ee2c1b9438f5235a87af99baffd17288ebe4c9699560f",
-      "bytes": 20415
+      "sha256": "b259bf4d5846158833fe9765dcdacdcfe242d62e0ea9643dbb2299c472a1d05e",
+      "bytes": 20611
     },
     "card_identity_recognition.py": {
       "sha256": "d5856faf041918102bf98cb06893faed9fe9d9cbd85a342f611f298f8de315ee",
@@ -2375,6 +2375,10 @@
       "sha256": "4d818d3fcc825dee4d3fe21886313537b36b05dc4bb9219c6e7e1c26688cd2c8",
       "bytes": 4817
     },
+    "test_card_core_crosscheck_v292.py": {
+      "sha256": "84484ea74ea3cebc81eae1ee44b63539c17a585df0877d79e7842acd38c13e37",
+      "bytes": 2376
+    },
     "test_catalog_images.py": {
       "sha256": "1872e45e7c3651a1016d78c155f32844e35092434e18b07b594d056352d6a717",
       "bytes": 2577
@@ -3024,8 +3028,8 @@
       "bytes": 5466
     },
     "test_tablet_scheduled_update_v256.py": {
-      "sha256": "9bc5104b31ae69249de77488d0966696391c0353179e95058a9fdd85e57d15d1",
-      "bytes": 3515
+      "sha256": "05fc1a3e4eca93a8a84769812804c9e2cb916ea6d7b38392f8669f860b713a8d",
+      "bytes": 4528
     },
     "test_tablet_standalone_hardening_v209.py": {
       "sha256": "db2fc2d92954695afbfab7ad8511480433e77e8caeed14e916ff161ffdb18e2a",
@@ -3120,8 +3124,8 @@
       "bytes": 6175
     },
     "test_wyyyes_market_source_v267.py": {
-      "sha256": "7b74d945940718a2dec4229f9e35eae4f7851434ce5269b5169e7968a5b08115",
-      "bytes": 3414
+      "sha256": "4320eba8bdc1fe4c624646265ed9c1a59d1b7b4b94866a607b1bfddc6814e9b3",
+      "bytes": 4990
     },
     "tests/test_control_plane_diagnostics.py": {
       "sha256": "237583de851ae61c023b88367200426f9c4e725b52ffa8ee3ec01c1f630df079",
@@ -3360,8 +3364,8 @@
       "bytes": 21567
     },
     "wyyyes_market_source.py": {
-      "sha256": "04ce1373b2cc1e363d14d3044eae33d6a3facb16a64175f03dc8a45ca155c0cd",
-      "bytes": 11983
+      "sha256": "a31d957d1ff97f0e48ebd46a11f954b4877736ecb98e4ff78619d9afb85f2f7f",
+      "bytes": 12513
     },
     "기존버전_학습자료_가져오기.bat": {
       "sha256": "0a55e0d01ba89921487ce0774724b4026d9570b19d486e1d8bb0eb7c1dc5a2cb",
