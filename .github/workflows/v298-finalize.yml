@@ -25,6 +25,16 @@ jobs:
             test_card_probability_ui_v298.py \
             test_card_core_crosscheck_v291.py \
             test_card_core_crosscheck_v292.py
+      - name: Run current-runtime regression aggregate directly
+        run: |
+          python -m unittest -v \
+            test_grading_hierarchy_v17.py \
+            test_ocr_multistage_v16.py \
+            test_verified_grade_learning_v135_safe.py \
+            test_collection_verification_gate.py \
+            test_multi_route_event_discovery.py \
+            test_pokemon_run30_asia_recovery_v208.py \
+            test_information_lifecycle_archive_v209.py
       - name: Remove temporary finalizer and regenerate integrity manifest
         run: |
           git rm .github/workflows/v298-finalize.yml
@@ -38,7 +48,6 @@ jobs:
           assert result['ok'], result
           print({'tracked': len(h.tracked_files(root)), 'checked': result['checked'], 'failed': result['failed']})
           PY
-          python verify_current_runtime.py
       - name: Commit finalized tree
         run: |
           git config user.name 'github-actions[bot]'
