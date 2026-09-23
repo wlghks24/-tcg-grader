@@ -16,7 +16,7 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: '3.11'
-      - name: Apply focused patch
+      - name: Apply focused patch and remove temporary machinery
         run: |
           python apply_card_price_observation_v300.py
           rm -f apply_card_price_observation_v300.py .github/workflows/_apply-card-price-observation-v300.yml
@@ -31,17 +31,21 @@ jobs:
           assert result['ok'] and result['failed']==0, result
           print(result)
           PY
-      - name: Current runtime regression on exact manifest tree
+      - name: Create local final commit before repository-integrity checks
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          git diff --cached --check
+          git commit -m "Validate exact-grade price observation time evidence (v300)"
+          test -z "$(git status --porcelain)"
+      - name: Current runtime regression on clean committed tree
         run: python verify_current_runtime.py
       - name: Targeted card-core regression
         run: |
           python -m py_compile card_grading_valuation.py collection_verification_gate.py test_card_price_observation_v300.py
           python -m unittest -v test_card_price_observation_v300.py test_card_core_provenance_v296.py test_card_core_crosscheck_v295.py test_card_core_crosscheck_v292.py test_card_core_crosscheck_v291.py
-      - name: Commit verified patch
+      - name: Push only the fully verified final commit
         run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add -A card_grading_valuation.py collection_verification_gate.py test_card_price_observation_v300.py integrity_manifest.json apply_card_price_observation_v300.py .github/workflows/_apply-card-price-observation-v300.yml
-          git diff --cached --check
-          git commit -m "Validate exact-grade price observation time evidence (v300)"
+          git reset --hard HEAD
           git push origin HEAD:audit/card-price-observation-v300
