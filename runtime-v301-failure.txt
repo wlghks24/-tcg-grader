@@ -1,0 +1,7 @@
+verify_current_runtime exit=1
+--- failure markers ---
+1:[FAIL] 1/1 repository_integrity
+2-{"engine": "current-main-v300-card-tablet-runtime-gated", "ok": false, "successful_passes": 0, "failed_passes": 1}
+--- final 300 lines ---
+[FAIL] 1/1 repository_integrity
+{"engine": "current-main-v300-card-tablet-runtime-gated", "ok": false, "successful_passes": 0, "failed_passes": 1}
