@@ -1,0 +1,68 @@
+name: V295 Card Core Refresh
+
+on:
+  push:
+    branches:
+      - audit/card-core-crosscheck-v295
+
+permissions:
+  contents: write
+
+jobs:
+  patch-and-verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Apply bounded patch
+        run: python apply_card_core_crosscheck_v295.py
+      - name: Syntax checks
+        run: |
+          python -m py_compile apply_card_core_crosscheck_v295.py test_card_core_crosscheck_v295.py card_grading_valuation.py grading_accuracy_v99.py
+          node --check grading_accuracy_v99.js
+          node --check grade_market_flow.js
+      - name: Focused card-core regression
+        run: |
+          python test_card_core_crosscheck_v295.py
+          python test_card_core_crosscheck_v292.py
+          python test_card_core_crosscheck_v291.py
+          python test_psa_probability_market_flow_v252.py
+          node verify_v99_browser_accuracy.js
+          python verify_v99_cross_runtime.py
+      - name: Tablet and market regression
+        run: |
+          python test_tablet_feature_surface_v252.py
+          python test_hot_box_hit_runtime_v252.py
+          python test_wyyyes_market_source.py
+      - name: Refresh integrity manifest
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          import fault_injection_healing as h
+          root=Path('.').resolve()
+          h.build_integrity_manifest(root, root/'integrity_manifest.json')
+          report=h.diagnose_integrity(root, root/'integrity_manifest.json')
+          assert report['ok'] and report['failed']==0, report
+          print(report)
+          PY
+      - name: Legacy V99 verification after manifest refresh
+        run: python verify_all_legacy_v99.py
+      - name: Commit bounded patch
+        run: |
+          if git diff --quiet -- index.html grade_market_flow.js grading_accuracy_v99.js integrity_manifest.json; then
+            echo 'No runtime patch changes to commit.'
+            exit 0
+          fi
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add index.html grade_market_flow.js grading_accuracy_v99.js integrity_manifest.json
+          git commit -m 'Normalize PSA probability math and isolate market editions v295'
+          git push origin HEAD:audit/card-core-crosscheck-v295
