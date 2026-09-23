@@ -1,7 +1,95 @@
 verify_current_runtime exit=1
+--- aggregate report ---
+{
+  "schema_version": 1,
+  "engine": "current-main-v300-card-tablet-runtime-gated",
+  "started_at": "2026-09-23T16:07:22Z",
+  "passes": [
+    {
+      "pass": 1,
+      "ok": false,
+      "checks": [
+        {
+          "name": "repository_integrity",
+          "ok": true,
+          "optional": false,
+          "seconds": 1.554,
+          "detail": "Repository integrity guard: OK (925 tracked text files checked; 934 tracked paths checked; .bat=15, .cmd=1, .command=1, .css=17, .html=5, .js=31, .json=99, .md=16, .py=593, .sh=27, .svg=1, .txt=7, .webmanifest=1, .yml=111)"
+        },
+        {
+          "name": "active_tablet_runtime",
+          "ok": true,
+          "optional": false,
+          "seconds": 0.396,
+          "detail": "{\"ok\":true,\"schema_version\":1,\"active_file_count\":100,\"python_checked\":69,\"missing\":[],\"symlinks\":[],\"compile_errors\":[],\"quality_policy\":{\"ok\":true,\"schema_version\":2,\"preparation_senior_perspectives\":100,\"preparation_before_expert_review\":true,\"expert_groups\":25,\"review_lenses\":40,\"review_cells\":1000,\"errors\":[]}}"
+        },
+        {
+          "name": "collection_health_selftest",
+          "ok": true,
+          "optional": false,
+          "seconds": 0.11,
+          "detail": "collection runtime health: PASS"
+        },
+        {
+          "name": "ai_model_guard_selftest",
+          "ok": true,
+          "optional": false,
+          "seconds": 0.074,
+          "detail": "AI runtime model guard: PASS"
+        },
+        {
+          "name": "ai_model_guard_regression",
+          "ok": true,
+          "optional": false,
+          "seconds": 0.247,
+          "detail": ""
+        },
+        {
+          "name": "security_audit",
+          "ok": true,
+          "optional": false,
+          "seconds": 2.348,
+          "detail": "{\"finding_counts\": {\"info\": 0, \"low\": 69, \"medium\": 0, \"high\": 0, \"critical\": 0}, \"report\": \"security_audit_report.json\", \"memory\": null}"
+        },
+        {
+          "name": "security_hardening",
+          "ok": true,
+          "optional": false,
+          "seconds": 0.058,
+          "detail": "security hardening already applied"
+        },
+        {
+          "name": "runtime_delivery",
+          "ok": false,
+          "optional": false,
+          "seconds": 0.038,
+          "detail": "Traceback (most recent call last):\n  File \"/home/runner/work/-tcg-grader/-tcg-grader/test_runtime_delivery_guards.py\", line 173, in <module>\n    main()\n  File \"/home/runner/work/-tcg-grader/-tcg-grader/test_runtime_delivery_guards.py\", line 162, in main\n    assert not re.search(r'^  push:\\s*$',trigger,re.M), (\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nAssertionError: apply-card-server-parity-v301.yml: self-mutating workflow must not run on push"
+        }
+      ]
+    }
+  ],
+  "ok": false,
+  "finished_at": "2026-09-23T16:07:27Z",
+  "successful_passes": 0,
+  "failed_passes": 1
+}
 --- failure markers ---
-1:[FAIL] 1/1 repository_integrity
-2-{"engine": "current-main-v300-card-tablet-runtime-gated", "ok": false, "successful_passes": 0, "failed_passes": 1}
+1-[PASS] 1/1 repository_integrity
+2-[PASS] 1/1 active_tablet_runtime
+3-[PASS] 1/1 collection_health_selftest
+4-[PASS] 1/1 ai_model_guard_selftest
+5-[PASS] 1/1 ai_model_guard_regression
+6-[PASS] 1/1 security_audit
+7-[PASS] 1/1 security_hardening
+8:[FAIL] 1/1 runtime_delivery
+9-{"engine": "current-main-v300-card-tablet-runtime-gated", "ok": false, "successful_passes": 0, "failed_passes": 1}
 --- final 300 lines ---
-[FAIL] 1/1 repository_integrity
+[PASS] 1/1 repository_integrity
+[PASS] 1/1 active_tablet_runtime
+[PASS] 1/1 collection_health_selftest
+[PASS] 1/1 ai_model_guard_selftest
+[PASS] 1/1 ai_model_guard_regression
+[PASS] 1/1 security_audit
+[PASS] 1/1 security_hardening
+[FAIL] 1/1 runtime_delivery
 {"engine": "current-main-v300-card-tablet-runtime-gated", "ok": false, "successful_passes": 0, "failed_passes": 1}
