@@ -7,8 +7,6 @@ ROOT = Path(__file__).resolve().parent
 VALUATION = ROOT / "card_grading_valuation.py"
 CURRENT = ROOT / "verify_current_runtime.py"
 DELIVERY = ROOT / ".github/workflows/runtime-delivery-guard.yml"
-SELF = ROOT / "apply_card_server_parity_v301.py"
-WORKFLOW = ROOT / ".github/workflows/apply-card-server-parity-v301.yml"
 
 
 def replace_once(text: str, old: str, new: str, label: str) -> str:
@@ -137,17 +135,10 @@ def patch_delivery_workflow() -> None:
     DELIVERY.write_text(text, encoding="utf-8")
 
 
-def cleanup_bootstrap() -> None:
-    for path in (SELF, WORKFLOW):
-        if path.exists():
-            path.unlink()
-
-
 def main() -> None:
     patch_valuation()
     patch_current_runtime()
     patch_delivery_workflow()
-    cleanup_bootstrap()
     print("v301 canonical card server parity patch applied")
 
 
