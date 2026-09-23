@@ -91,6 +91,30 @@ process.stdout.write(JSON.stringify(out.map(x=>({year:x.year,generation:x.genera
         self.assertIn("if(year>=2020)return {generation:8", source)
         self.assertIn("generationByYear(year,input?.region)", source)
 
+    def test_unknown_region_transition_years_fail_closed(self) -> None:
+        script = r"""
+const fs=require('fs'),vm=require('vm');
+global.window={};
+global.document={readyState:'loading',addEventListener(){},getElementById(){return null;}};
+global.localStorage={getItem(){return null;},setItem(){}};
+global.Option=function(){};
+vm.runInThisContext(fs.readFileSync('card_identity_recognition.js','utf8'),{filename:'card_identity_recognition.js'});
+const api=global.window.TCGPokemonGeneration;
+const ambiguous=[2006,2010,2013,2016,2019].map(year=>api.infer({game:'pokemon',ocr_text:`©${year} Pokémon`}));
+const knownJp=api.infer({game:'pokemon',region:'JP',ocr_text:'©2019 Pokémon'});
+const knownKr=api.infer({game:'pokemon',region:'KR',ocr_text:'©2019 Pokémon'});
+const knownUs=api.infer({game:'pokemon',region:'US',ocr_text:'©2019 Pokémon'});
+const stable=api.infer({game:'pokemon',ocr_text:'©2020 Pokémon'});
+process.stdout.write(JSON.stringify({ambiguous,knownJp,knownKr,knownUs,stable}));
+"""
+        proc = subprocess.run(["node", "-e", script], cwd=ROOT, text=True, capture_output=True, check=True, timeout=30)
+        result = json.loads(proc.stdout)
+        self.assertTrue(all(row["status"] == "unknown" and row["generation"] is None and row["era"] == "AMBIGUOUS" for row in result["ambiguous"]))
+        self.assertEqual(8, result["knownJp"]["generation"])
+        self.assertEqual(7, result["knownKr"]["generation"])
+        self.assertEqual(7, result["knownUs"]["generation"])
+        self.assertEqual(8, result["stable"]["generation"])
+
     def test_market_contract_keeps_completed_sales_separate_from_asking_prices(self) -> None:
         import wyyyes_market_source as market
 

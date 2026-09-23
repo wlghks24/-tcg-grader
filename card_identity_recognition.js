@@ -75,7 +75,11 @@ function generationRegion(value){
 }
 function generationByYear(year,region){
  if(!Number.isInteger(year))return null;
- if(generationRegion(region)==='JP'){
+ const resolvedRegion=generationRegion(region);
+ // Japan can enter a TCG era one calendar year before KR/US.
+ // A year-only observation at those boundaries is ambiguous without region.
+ if(resolvedRegion==='UNKNOWN'&&[2006,2010,2013,2016,2019].includes(year))return null;
+ if(resolvedRegion==='JP'){
   if(year>=2023)return {generation:9,generation_label:'9세대',series:'SV/MEGA 시대',era:'CURRENT'};
   if(year>=2019)return {generation:8,generation_label:'8세대',series:'소드&실드 시대',era:'S'};
   if(year>=2016)return {generation:7,generation_label:'7세대',series:'썬&문 시대',era:'SM'};
@@ -103,6 +107,7 @@ function inferPokemonGeneration(input={}){
  if(byReg)return {status:'estimated',game:'pokemon',...byReg,expansion_code:'',regulation_mark:regulation,year:yearFromEvidence(input,text),confidence:.88,confidence_level:'medium',basis:[`레귤레이션 마크 ${regulation}`],note:'레귤레이션 마크는 플레이 규정 표기이며 세대는 시리즈 대응으로 추정'};
  const year=yearFromEvidence(input,text),byYear=generationByYear(year,input?.region);
  if(byYear)return {status:'estimated',game:'pokemon',...byYear,expansion_code:'',regulation_mark:'',year,confidence:.64,confidence_level:'low',basis:[`©/제작연도 ${year}`],note:'연도만 확인되어 세대는 보조 추정'};
+ if(year&&generationRegion(input?.region)==='UNKNOWN'&&[2006,2010,2013,2016,2019].includes(year))return {status:'unknown',game:'pokemon',generation:null,generation_label:'세대 확인 필요',series:'지역 확인 필요',era:'AMBIGUOUS',expansion_code:'',regulation_mark:'',year,confidence:0,confidence_level:'unknown',basis:[`©/제작연도 ${year}`],note:'일본과 KR/US의 TCG 세대 전환연도가 달라 지역 확인 전에는 세대를 단정하지 않습니다.'};
  if(year&&year<2007)return {status:'legacy',game:'pokemon',generation:null,generation_label:'고전 카드',series:'초기~ADV/PCG 계열',era:'LEGACY',expansion_code:'',regulation_mark:'',year,confidence:.55,confidence_level:'low',basis:[`©/제작연도 ${year}`],note:'고전 카드는 확장팩 코드 확인 전 세대 번호를 단정하지 않습니다.'};
  return {status:'unknown',game:'pokemon',generation:null,generation_label:'세대 확인 필요',series:'확장팩 코드·레귤레이션·©연도 OCR 부족',era:'UNKNOWN',expansion_code:'',regulation_mark:'',year:null,confidence:0,confidence_level:'unknown',basis:[],note:'근거가 부족해 세대를 생성하지 않았습니다.'};
 }
