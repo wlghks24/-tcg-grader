@@ -54,7 +54,7 @@ jobs:
       - name: Targeted regression
         run: |
           node --check card_identity_recognition.js
-          python -m unittest -v test_card_core_crosscheck_v291.py test_card_generation_evidence_v292.py test_card_core_crosscheck_v295.py test_card_market_edition_v297.py test_card_probability_ui_v298.py test_card_regression_gate_v299.py
+          python -m unittest -v test_card_core_crosscheck_v291.py test_card_core_crosscheck_v292.py test_card_core_crosscheck_v295.py test_card_market_edition_v297.py test_card_probability_ui_v298.py test_card_regression_gate_v299.py
       - name: Remove transient workflow and refresh integrity
         shell: bash
         run: |
