@@ -48,7 +48,8 @@ process.stdout.write(JSON.stringify(rows));
         valuation = (ROOT / "card_grading_valuation.py").read_text(encoding="utf-8")
         self.assertIn("if(!inputs.every(([value])=>finite(value)))return 100", accuracy)
         self.assertIn("generationByYear(year,input?.region)", identity)
-        self.assertIn("explicit copyright", identity.lower())
+        self.assertIn("for(const match of t.matchAll(/(?:©|\\(C\\)|COPYRIGHT\\s*)", identity)
+        self.assertIn("identityRegion')?.addEventListener('change',refreshGenerationFromInputs", identity)
         self.assertIn("카드 분석자료 부족", valuation)
 
 
