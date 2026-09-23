@@ -1,0 +1,43 @@
+name: V295 Runtime Diagnostic
+
+on:
+  push:
+    branches:
+      - audit/card-core-crosscheck-v295
+
+permissions:
+  contents: read
+
+jobs:
+  isolate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Run current regression modules separately
+        shell: bash
+        run: |
+          set +e
+          failed=0
+          for test in \
+            test_runtime_resilience_v182.py \
+            test_grading_hierarchy_v17.py \
+            test_ocr_multistage_v16.py \
+            test_verified_grade_learning_v135_safe.py \
+            test_collection_verification_gate.py \
+            test_multi_route_event_discovery.py \
+            test_pokemon_run30_asia_recovery_v208.py \
+            test_information_lifecycle_archive_v209.py; do
+            echo "===== $test ====="
+            python -m unittest -v "$test"
+            rc=$?
+            echo "RESULT $test rc=$rc"
+            if [ $rc -ne 0 ]; then failed=1; fi
+          done
+          exit $failed
