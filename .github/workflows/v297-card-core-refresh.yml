@@ -1,0 +1,60 @@
+name: V297 Card Core Refresh
+
+on:
+  push:
+    branches:
+      - audit/card-core-crosscheck-v297
+
+permissions:
+  contents: write
+
+jobs:
+  patch-test-commit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Apply bounded v297 patch
+        run: python apply_card_core_v297.py
+      - name: Syntax and focused card-core tests
+        run: |
+          python -m py_compile card_grading_valuation.py collection_verification_gate.py test_card_core_provenance_v297.py
+          python -m unittest -v \
+            test_card_core_crosscheck_v291.py \
+            test_card_core_crosscheck_v292.py \
+            test_card_core_crosscheck_v295.py \
+            test_card_core_provenance_v296.py \
+            test_card_core_provenance_v297.py \
+            test_current_runtime_verifier_v295.py \
+            test_wyyyes_market_source_v267.py
+          node verify_pokemon_generation_runtime.js
+          node verify_grading_accuracy_v99.js
+          node verify_grade_market_flow.js
+          python verify_current_runtime.py
+      - name: Refresh and diagnose integrity
+        run: |
+          python fault_injection_healing.py --manifest
+          python fault_injection_healing.py --diagnose
+      - name: Remove one-shot patch controls
+        run: |
+          rm -f apply_card_core_v297.py .github/workflows/v297-card-core-refresh.yml
+      - name: Commit tested patch
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add -A
+          git diff --cached --check
+          if git diff --cached --quiet; then
+            echo 'No changes to commit'
+            exit 1
+          fi
+          git commit -m 'Harden exact-grade price provenance fail-closed v297'
+          git push origin HEAD:audit/card-core-crosscheck-v297
