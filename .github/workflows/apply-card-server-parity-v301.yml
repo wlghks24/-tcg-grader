@@ -30,6 +30,27 @@ jobs:
         run: python -m pip install pillow
       - name: Apply bounded v301 patch
         run: python apply_card_server_parity_v301.py
+      - name: Make bootstrap dispatch-only for aggregate guard
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          path = Path('.github/workflows/apply-card-server-parity-v301.yml')
+          text = path.read_text(encoding='utf-8')
+          old = """on:
+            push:
+              branches:
+                - audit/card-server-parity-v301
+              paths-ignore:
+                - 'runtime-v301-failure.txt'
+            workflow_dispatch:
+          """
+          # The triple-quoted source above inherits YAML indentation from this run block.
+          old = '\n'.join(line[10:] if line.startswith('          ') else line for line in old.splitlines()) + '\n'
+          new = "on:\n  workflow_dispatch:\n"
+          if old not in text:
+              raise SystemExit('bootstrap trigger anchor not found')
+          path.write_text(text.replace(old, new, 1), encoding='utf-8')
+          PY
       - name: Targeted card grading parity regression
         run: |
           python -m py_compile card_grading_valuation.py grading_accuracy_v99.py verify_current_runtime.py test_card_server_parity_v301.py
