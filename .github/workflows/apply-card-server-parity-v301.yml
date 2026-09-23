@@ -36,9 +36,13 @@ jobs:
           python -m unittest -v test_card_core_provenance_v296.py test_card_market_edition_v297.py test_card_probability_ui_v298.py
           python -m unittest -v test_card_regression_gate_v299.py test_card_tablet_runtime_v300.py
           python verify_v99_cross_runtime.py
+      - name: Refresh integrity before aggregate regression
+        run: |
+          python fault_injection_healing.py --manifest
+          python fault_injection_healing.py --diagnose
       - name: Full current runtime regression
         run: python verify_current_runtime.py
-      - name: Regenerate and diagnose integrity manifest
+      - name: Finalize integrity after runtime outputs
         run: |
           python fault_injection_healing.py --manifest
           python fault_injection_healing.py --diagnose
