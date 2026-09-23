@@ -1,0 +1,110 @@
+name: V292 Card Core Patch
+on:
+  push:
+    branches: [audit/card-core-v292-generation-evidence]
+permissions:
+  contents: write
+jobs:
+  patch-test-commit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Apply bounded v292 patch
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          p=Path('card_identity_recognition.js')
+          s=p.read_text(encoding='utf-8')
+          old="for(const match of t.matchAll(/(?:©|COPYRIGHT\\s*)?\\s*((?:19|20)\\d{2})/g)){"
+          new="for(const match of t.matchAll(/(?:©|Ⓒ|\\(C\\)|COPYRIGHT\\s*)\\s*((?:19|20)\\d{2})/g)){"
+          if old not in s:
+              raise SystemExit('year parser target not found')
+          s=s.replace(old,new,1)
+          old_init="function init(){const select=byId('identityCandidates');if(!select)return;select.addEventListener('change',()=>applyCandidate(select._rows?.[Number(select.value)]));byId('identityConfirm')?.addEventListener('click',confirmIdentity);byId('identityRetry')?.addEventListener('click',()=>recognize(window.tcgIdentityGame||'pokemon'));byId('identityCardNumber')?.addEventListener('input',()=>{if(gameName(window.tcgIdentityGame||'pokemon')==='pokemon'){const generation=inferPokemonGeneration({game:'pokemon',ocr_text:window.tcgIdentityOcrText||'',card_name:byId('identityCardName')?.value||'',card_number:byId('identityCardNumber')?.value||'',region:byId('identityRegion')?.value||'UNKNOWN'});renderPokemonGeneration(generation,'pokemon');window.tcgPokemonGeneration=generation}});window.tcgRecognizeCurrentCard=game=>recognize(gameName(game));window.tcgCardIdentityLearning=Object.freeze({version:'v16-ocr-hierarchical-1-4-8+v207-generation-display',rows:()=>localRows().length,recognize:window.tcgRecognizeCurrentCard,generation:window.TCGPokemonGeneration})}"
+          new_init="function refreshGenerationFromInputs(){if(gameName(window.tcgIdentityGame||'pokemon')!=='pokemon')return null;const generation=inferPokemonGeneration({game:'pokemon',ocr_text:window.tcgIdentityOcrText||'',card_name:byId('identityCardName')?.value||'',card_number:byId('identityCardNumber')?.value||'',region:byId('identityRegion')?.value||'UNKNOWN'});renderPokemonGeneration(generation,'pokemon');window.tcgPokemonGeneration=generation;return generation}\nfunction init(){const select=byId('identityCandidates');if(!select)return;select.addEventListener('change',()=>applyCandidate(select._rows?.[Number(select.value)]));byId('identityConfirm')?.addEventListener('click',confirmIdentity);byId('identityRetry')?.addEventListener('click',()=>recognize(window.tcgIdentityGame||'pokemon'));byId('identityCardNumber')?.addEventListener('input',refreshGenerationFromInputs);byId('identityRegion')?.addEventListener('change',refreshGenerationFromInputs);window.tcgRecognizeCurrentCard=game=>recognize(gameName(game));window.tcgCardIdentityLearning=Object.freeze({version:'v16-ocr-hierarchical-1-4-8+v292-generation-evidence',rows:()=>localRows().length,recognize:window.tcgRecognizeCurrentCard,generation:window.TCGPokemonGeneration})}"
+          if old_init not in s:
+              raise SystemExit('init target not found')
+          s=s.replace(old_init,new_init,1)
+          p.write_text(s,encoding='utf-8')
+          test=Path('test_card_core_crosscheck_v292.py')
+          test.write_text(r'''from __future__ import annotations
+import json
+from pathlib import Path
+import subprocess
+import unittest
+
+ROOT=Path(__file__).resolve().parent
+
+class CardCoreCrosscheckV292Tests(unittest.TestCase):
+    def _infer(self, payload):
+        script=r"""
+const fs=require('fs'),vm=require('vm');
+global.window={};
+global.document={readyState:'loading',addEventListener(){},getElementById(){return null;}};
+global.localStorage={getItem(){return null;},setItem(){}};
+global.Option=function(){};
+vm.runInThisContext(fs.readFileSync('card_identity_recognition.js','utf8'));
+process.stdout.write(JSON.stringify(global.window.TCGPokemonGeneration.infer(JSON.parse(process.argv[1]))));
+"""
+        proc=subprocess.run(['node','-e',script,json.dumps(payload)],cwd=ROOT,text=True,capture_output=True,check=True,timeout=30)
+        return json.loads(proc.stdout)
+
+    def test_plain_year_like_number_is_not_copyright_evidence(self):
+        result=self._infer({'game':'pokemon','region':'JP','ocr_text':'PIKACHU ITEM 2019 LIMITED'})
+        self.assertEqual('unknown',result['status'])
+        self.assertIsNone(result['generation'])
+
+    def test_explicit_copyright_markers_still_drive_low_confidence_fallback(self):
+        for marker in ('©2019 Pokémon','Ⓒ 2019 Pokémon','(C) 2019 Pokémon','COPYRIGHT 2019 Pokémon'):
+            with self.subTest(marker=marker):
+                result=self._infer({'game':'pokemon','region':'JP','ocr_text':marker})
+                self.assertEqual('estimated',result['status'])
+                self.assertEqual(8,result['generation'])
+                self.assertEqual('low',result['confidence_level'])
+
+    def test_region_selector_recalculates_generation_immediately(self):
+        source=(ROOT/'card_identity_recognition.js').read_text(encoding='utf-8')
+        self.assertIn("byId('identityRegion')?.addEventListener('change',refreshGenerationFromInputs)",source)
+        self.assertIn("byId('identityCardNumber')?.addEventListener('input',refreshGenerationFromInputs)",source)
+        self.assertIn("v292-generation-evidence",source)
+
+    def test_v291_core_regressions_remain_present(self):
+        proc=subprocess.run(['python','test_card_core_crosscheck_v291.py'],cwd=ROOT,text=True,capture_output=True,timeout=60)
+        self.assertEqual(0,proc.returncode,proc.stdout+proc.stderr)
+
+if __name__=='__main__':
+    unittest.main(verbosity=2)
+''',encoding='utf-8')
+          PY
+      - name: Remove one-shot workflow from final diff
+        run: git rm -- .github/workflows/v292-card-core-patch.yml
+      - name: Syntax and focused regression
+        run: |
+          node --check card_identity_recognition.js
+          python -m py_compile test_card_core_crosscheck_v291.py test_card_core_crosscheck_v292.py card_grading_valuation.py grading_accuracy_v99.py wyyyes_market_source.py
+          python test_card_core_crosscheck_v291.py
+          python test_card_core_crosscheck_v292.py
+          node verify_pokemon_generation_runtime.js
+          node verify_grading_accuracy_v99.js
+          python verify_grading_accuracy_v99.py
+          python test_wyyyes_market_source_v267.py
+      - name: Refresh integrity manifest
+        run: |
+          python fault_injection_healing.py --manifest
+          python fault_injection_healing.py --diagnose
+      - name: Commit final bounded patch
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add -- card_identity_recognition.js test_card_core_crosscheck_v292.py integrity_manifest.json .github/workflows/v292-card-core-patch.yml
+          git diff --cached --check
+          git commit -m 'Harden generation evidence and region refresh v292'
+          git push origin HEAD:audit/card-core-v292-generation-evidence
