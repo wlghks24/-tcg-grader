@@ -36,12 +36,12 @@ jobs:
           def write(path, text):
               Path(path).write_text(text, encoding='utf-8')
 
+          # 1) Any runtime-consumed grading/market data change must execute the same
+          # tablet/runtime regression guard as source-code changes.
           runtime_path = Path('.github/workflows/runtime-delivery-guard.yml')
           runtime = read(runtime_path)
-          marker = "      - 'update_market_prices.py'\n"
-          if runtime.count(marker) != 2:
-              raise SystemExit(f'runtime path marker count changed: {runtime.count(marker)}')
-          expanded = marker + (
+          runtime_anchor = "      - 'update_market_prices.py'\n"
+          additions = (
               "      - 'market_prices.json'\n"
               "      - 'exchange_rates.json'\n"
               "      - 'grading_company_updates.json'\n"
@@ -50,55 +50,74 @@ jobs:
               "      - 'test_card_data_delivery_gate_v300.py'\n"
               "      - '.github/workflows/tcg-static-data-refresh.yml'\n"
           )
-          runtime = runtime.replace(marker, expanded)
-          old = "test_card_core_provenance_v296.py test_card_market_edition_v297.py test_card_probability_ui_v298.py test_card_regression_gate_v299.py"
-          if runtime.count(old) != 1:
-              raise SystemExit(f'runtime unittest marker count changed: {runtime.count(old)}')
-          runtime = runtime.replace(old, old + " test_card_data_delivery_gate_v300.py")
-          old_compile = "verify_current_runtime.py test_card_regression_gate_v299.py tcg_updater.py"
-          if runtime.count(old_compile) != 1:
-              raise SystemExit(f'runtime compile marker count changed: {runtime.count(old_compile)}')
-          runtime = runtime.replace(old_compile, "verify_current_runtime.py test_card_regression_gate_v299.py test_card_data_delivery_gate_v300.py tcg_updater.py")
+          if runtime.count(runtime_anchor) != 2:
+              raise SystemExit(f'runtime path anchor count changed: {runtime.count(runtime_anchor)}')
+          if "      - 'market_prices.json'\n" not in runtime:
+              runtime = runtime.replace(runtime_anchor, runtime_anchor + additions)
+
+          suite = "test_card_core_provenance_v296.py test_card_market_edition_v297.py test_card_probability_ui_v298.py test_card_regression_gate_v299.py"
+          if runtime.count(suite) != 1:
+              raise SystemExit(f'runtime card suite anchor count changed: {runtime.count(suite)}')
+          if 'test_card_regression_gate_v299.py test_card_data_delivery_gate_v300.py' not in runtime:
+              runtime = runtime.replace(suite, suite + " test_card_data_delivery_gate_v300.py")
+
+          compile_anchor = "verify_current_runtime.py test_card_regression_gate_v299.py tcg_updater.py"
+          if runtime.count(compile_anchor) != 1:
+              raise SystemExit(f'runtime compile anchor count changed: {runtime.count(compile_anchor)}')
+          runtime = runtime.replace(
+              compile_anchor,
+              "verify_current_runtime.py test_card_regression_gate_v299.py test_card_data_delivery_gate_v300.py tcg_updater.py",
+          )
           write(runtime_path, runtime)
 
+          # 2) Generated data must be re-tested AFTER collection and BEFORE publish.
           refresh_path = Path('.github/workflows/tcg-static-data-refresh.yml')
           refresh = read(refresh_path)
-          path_marker = "      - 'test_static_data_publish_gate.py'\n"
-          if refresh.count(path_marker) != 1:
-              raise SystemExit(f'static refresh path marker count changed: {refresh.count(path_marker)}')
-          refresh = refresh.replace(path_marker, path_marker + "      - 'test_card_data_delivery_gate_v300.py'\n")
-          unit_marker = "            test_static_data_publish_gate.py \\\n            test_collection_verification_gate.py \\\n"
-          if refresh.count(unit_marker) != 1:
-              raise SystemExit(f'static refresh unit marker count changed: {refresh.count(unit_marker)}')
-          refresh = refresh.replace(
-              unit_marker,
-              "            test_static_data_publish_gate.py \\\n            test_card_data_delivery_gate_v300.py \\\n            test_collection_verification_gate.py \\\n",
-          )
-          publish_marker = "      - name: Fail closed before publishing static data\n"
-          if refresh.count(publish_marker) != 1:
-              raise SystemExit(f'publish marker count changed: {refresh.count(publish_marker)}')
-          crosscheck = (
-              "      - name: Cross-check generated card data with runtime consumers\n"
-              "        run: |\n"
-              "          python -m unittest -v \\\n"
-              "            test_card_core_provenance_v296.py \\\n"
-              "            test_card_market_edition_v297.py \\\n"
-              "            test_card_probability_ui_v298.py \\\n"
-              "            test_psa_probability_market_flow_v252.py \\\n"
-              "            test_card_data_delivery_gate_v300.py\n"
-              "          python -m unittest -v \\\n"
-              "            test_card_core_crosscheck_v292.py \\\n"
-              "            test_card_core_crosscheck_v295.py \\\n"
-              "            test_pokemon_generation_display_v207.py\n\n"
-          )
-          refresh = refresh.replace(publish_marker, crosscheck + publish_marker)
+          path_anchor = "      - 'test_static_data_publish_gate.py'\n"
+          if refresh.count(path_anchor) != 1:
+              raise SystemExit(f'static refresh path anchor count changed: {refresh.count(path_anchor)}')
+          if "      - 'test_card_data_delivery_gate_v300.py'\n" not in refresh:
+              refresh = refresh.replace(path_anchor, path_anchor + "      - 'test_card_data_delivery_gate_v300.py'\n")
+
+          lines = refresh.splitlines()
+          unit_hits = [i for i, line in enumerate(lines) if line.lstrip().startswith('test_static_data_publish_gate.py')]
+          if len(unit_hits) != 1:
+              raise SystemExit(f'static refresh unit anchor count changed: {len(unit_hits)}')
+          if not any(line.lstrip().startswith('test_card_data_delivery_gate_v300.py') for line in lines):
+              i = unit_hits[0]
+              indent = lines[i][:len(lines[i]) - len(lines[i].lstrip())]
+              lines.insert(i + 1, indent + 'test_card_data_delivery_gate_v300.py ' + chr(92))
+          refresh = '\n'.join(lines) + '\n'
+
+          publish_anchor = "      - name: Fail closed before publishing static data\n"
+          if refresh.count(publish_anchor) != 1:
+              raise SystemExit(f'publish anchor count changed: {refresh.count(publish_anchor)}')
+          if 'Cross-check generated card data with runtime consumers' not in refresh:
+              bs = chr(92)
+              cross_lines = [
+                  '      - name: Cross-check generated card data with runtime consumers',
+                  '        run: |',
+                  '          python -m unittest -v ' + bs,
+                  '            test_card_core_provenance_v296.py ' + bs,
+                  '            test_card_market_edition_v297.py ' + bs,
+                  '            test_card_probability_ui_v298.py ' + bs,
+                  '            test_psa_probability_market_flow_v252.py ' + bs,
+                  '            test_card_data_delivery_gate_v300.py',
+                  '          python -m unittest -v ' + bs,
+                  '            test_card_core_crosscheck_v292.py ' + bs,
+                  '            test_card_core_crosscheck_v295.py ' + bs,
+                  '            test_pokemon_generation_display_v207.py',
+                  '',
+              ]
+              refresh = refresh.replace(publish_anchor, '\n'.join(cross_lines) + '\n' + publish_anchor)
           write(refresh_path, refresh)
 
+          # 3) The normal current-runtime verifier permanently carries this delivery gate.
           current_path = Path('verify_current_runtime.py')
           current = read(current_path)
           old_tests = '       "test_card_probability_ui_v298.py","test_card_regression_gate_v299.py"],300,False),'
           if current.count(old_tests) != 1:
-              raise SystemExit(f'current runtime card marker count changed: {current.count(old_tests)}')
+              raise SystemExit(f'current runtime card anchor count changed: {current.count(old_tests)}')
           current = current.replace(
               old_tests,
               '       "test_card_probability_ui_v298.py","test_card_regression_gate_v299.py","test_card_data_delivery_gate_v300.py"],300,False),',
@@ -108,6 +127,7 @@ jobs:
           current = current.replace('current-main-v299-card-core-gated', 'current-main-v300-card-data-gated')
           write(current_path, current)
 
+          # 4) Self-test the end-to-end ordering/trigger contract so later refactors fail closed.
           test_lines = [
               'from __future__ import annotations',
               '',
