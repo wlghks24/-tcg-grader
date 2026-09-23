@@ -1,5 +1,5 @@
 name: Runtime delivery guard
-# SELFREFINE final same-SHA cross-check trigger v3
+# SELFREFINE final same-SHA cross-check trigger v4
 
 on:
   push:
@@ -8,6 +8,14 @@ on:
       - 'index.html'
       - 'sw.js'
       - 'multi_market_prices.js'
+      - 'multi_market_prices.css'
+      - 'multi_market_price_collector.py'
+      - 'auto_market_center.js'
+      - 'auto_market_center.css'
+      - 'auto_validation_flow.js'
+      - 'auto_validation_flow.css'
+      - 'image_quality_guard.js'
+      - 'market_catalog_expander.js'
       - 'safe_runtime.py'
       - 'tcg_updater.py'
       - 'tcg_updater_v135.py'
@@ -31,6 +39,9 @@ on:
       - 'test_card_market_edition_v297.py'
       - 'test_card_probability_ui_v298.py'
       - 'test_card_regression_gate_v299.py'
+      - 'test_card_tablet_runtime_v300.py'
+      - 'test_multi_market_price_collector.py'
+      - 'test_tablet_runtime_manifest_ui_assets_v254.py'
       - 'test_pokemon_generation_display_v207.py'
       - 'manual_graded_photo_registration.py'
       - 'manual_official_proof.py'
@@ -41,6 +52,8 @@ on:
       - 'pending_official_candidate_v161.py'
       - 'pending_official_candidate_bridge_v161.js'
       - 'graded_photo_multi_source.py'
+      - 'graded_photo_dashboard.js'
+      - 'graded_photo_dashboard.css'
       - 'card_identity_reference_catalog.json'
       - 'card_identity_recognition.js'
       - 'manual_dual_photo_bridge.js'
@@ -82,6 +95,14 @@ on:
       - 'index.html'
       - 'sw.js'
       - 'multi_market_prices.js'
+      - 'multi_market_prices.css'
+      - 'multi_market_price_collector.py'
+      - 'auto_market_center.js'
+      - 'auto_market_center.css'
+      - 'auto_validation_flow.js'
+      - 'auto_validation_flow.css'
+      - 'image_quality_guard.js'
+      - 'market_catalog_expander.js'
       - 'safe_runtime.py'
       - 'tcg_updater.py'
       - 'tcg_updater_v135.py'
@@ -105,6 +126,9 @@ on:
       - 'test_card_market_edition_v297.py'
       - 'test_card_probability_ui_v298.py'
       - 'test_card_regression_gate_v299.py'
+      - 'test_card_tablet_runtime_v300.py'
+      - 'test_multi_market_price_collector.py'
+      - 'test_tablet_runtime_manifest_ui_assets_v254.py'
       - 'test_pokemon_generation_display_v207.py'
       - 'manual_graded_photo_registration.py'
       - 'manual_official_proof.py'
@@ -115,6 +139,8 @@ on:
       - 'pending_official_candidate_v161.py'
       - 'pending_official_candidate_bridge_v161.js'
       - 'graded_photo_multi_source.py'
+      - 'graded_photo_dashboard.js'
+      - 'graded_photo_dashboard.css'
       - 'card_identity_reference_catalog.json'
       - 'card_identity_recognition.js'
       - 'manual_dual_photo_bridge.js'
@@ -182,7 +208,8 @@ jobs:
           python -m unittest -v test_verified_collection_job_neural_v212.py
           python -m unittest -v test_collection_job_contract_v255.py
           python -m unittest -v test_card_core_provenance_v296.py test_card_market_edition_v297.py test_card_probability_ui_v298.py test_card_regression_gate_v299.py
-          python -m unittest -v test_card_core_crosscheck_v292.py test_card_core_crosscheck_v295.py test_pokemon_generation_display_v207.py
+          python -m unittest -v test_card_tablet_runtime_v300.py test_multi_market_price_collector.py test_tablet_runtime_manifest_ui_assets_v254.py
+          python -m unittest -v test_card_core_crosscheck_v291.py test_card_core_crosscheck_v292.py test_card_core_crosscheck_v295.py test_pokemon_generation_display_v207.py
           python test_link_audit_hardening_v184.py
           python test_link_same_host_fallback_v189.py
           python test_psa_official_proof_grade_v187.py
@@ -192,9 +219,13 @@ jobs:
           python -m unittest -v test_manual_official_verified_integration_v154.py
           python -m unittest -v test_manual_official_verify_ui_v194.py
           python test_pending_official_candidate_v161.py
-          python -m py_compile safe_runtime.py collection_job_contract.py test_collection_job_contract_v255.py collection_runtime_health.py tablet_runtime_manifest.py verified_collection_neural.py verified_collection_job_neural.py verify_current_runtime.py test_card_regression_gate_v299.py tcg_updater.py tcg_updater_v135.py update_market_prices.py validate_external_links.py grading_cert_verifier.py manual_graded_photo_registration.py manual_official_proof.py manual_official_verified_integration_v154.py test_manual_official_verified_integration_v154.py test_manual_official_verify_ui_v194.py pending_official_candidate_v161.py graded_photo_multi_source.py auto_update_all.py auto_repair_engine.py error_scenario_lab.py tablet_runtime_qa.py test_tablet_runtime_qa_integration.py
+          python -m py_compile safe_runtime.py collection_job_contract.py test_collection_job_contract_v255.py collection_runtime_health.py tablet_runtime_manifest.py verified_collection_neural.py verified_collection_job_neural.py verify_current_runtime.py test_card_regression_gate_v299.py test_card_tablet_runtime_v300.py multi_market_price_collector.py tcg_updater.py tcg_updater_v135.py update_market_prices.py validate_external_links.py grading_cert_verifier.py manual_graded_photo_registration.py manual_official_proof.py manual_official_verified_integration_v154.py test_manual_official_verified_integration_v154.py test_manual_official_verify_ui_v194.py pending_official_candidate_v161.py graded_photo_multi_source.py auto_update_all.py auto_repair_engine.py error_scenario_lab.py tablet_runtime_qa.py test_tablet_runtime_qa_integration.py
           python test_tablet_runtime_qa_integration.py
           node --check multi_market_prices.js
+          node --check auto_market_center.js
+          node --check auto_validation_flow.js
+          node --check image_quality_guard.js
+          node --check market_catalog_expander.js
           node --check grading_accuracy_v99.js
           node --check grade_market_flow.js
           node --check ui_app_shell_v272.js
