@@ -1022,7 +1022,8 @@ $("analyze").onclick=async()=>{
  let uncertaintyPenalty=Math.max(0,78-analysisConfidence)*.55;
  let p10=Math.max(1,Math.min(92,88-defectRisk*1.7-centerPenalty-uncertaintyPenalty));
  let p9=Math.max(p10,Math.min(98,97-defectRisk*0.9-Math.max(0,40-Math.min(FC.worst,BC.worst))*0.8));
- let p9only=Math.max(1,p9-p10),p8=Math.max(1,Math.min(60,(100-p9)*.65)),below=Math.max(0,100-p10-p9only-p8);
+ const psaDist=window.TCGAccuracyV99?.normalizePsaProbabilities?window.TCGAccuracyV99.normalizePsaProbabilities(p10,p9):{10:Math.max(0,Math.min(100,p10)),9:0,8:0,below:100,psa9plus:Math.max(0,Math.min(100,p9))};
+ p10=psaDist[10];p9=psaDist.psa9plus;const p9only=psaDist[9],p8=psaDist[8],below=psaDist.below;
  window.tcgGradeProbabilities={8:p8,9:p9only,10:p10,below};
  $("p10prob").textContent=p10.toFixed(0)+"%";$("p9prob").textContent=p9.toFixed(0)+"%";$("riskgrade").textContent=(100-p10).toFixed(0)+"/100";
  $("submitAdvice").innerHTML=best>=9.5&&defectRisk<15?'<span class="good"><b>등급 제출 추천</b></span><br>10 후보로 볼 가치가 있습니다.':best>=9?'<span class="warn"><b>조건부 추천</b></span><br>PSA 9 이상 가능성을 확인할 가치가 있습니다.':'<span class="bad"><b>보류 추천</b></span><br>사진상 결함 위험이 있어 재검사가 좋습니다.';

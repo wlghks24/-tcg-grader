@@ -1,7 +1,7 @@
 {
   "version": 2,
   "engine": "v109-card-identity-ocr-learning",
-  "generated_at": "2026-09-23T00:18:55+00:00",
+  "generated_at": "2026-09-23T00:49:45+00:00",
   "files": {
     ".github/workflows/ai-auto-tracker-guard.yml": {
       "sha256": "636e750bd6d2619cce75d4bce2d68051eaa2209ae763bc8ec523ed73476728a6",
@@ -435,6 +435,10 @@
       "sha256": "0bbc12618657de981deabd60c83d2c0091af636ffc7feab8fcd09bbf37002a7a",
       "bytes": 1415
     },
+    ".github/workflows/v295-card-core-refresh.yml": {
+      "sha256": "10942afd094fa8cb83be848365363537660cad8bf5879b0565854647b803c7ee",
+      "bytes": 2604
+    },
     ".github/workflows/verify-adaptive-collector.yml": {
       "sha256": "8d9fcc6fe1702f7b69bb9ab258cc796fc0009536cba856a950e2f9058e63597b",
       "bytes": 2932
@@ -866,6 +870,10 @@
     "apply_brg_registered_link_normalization_v190.py": {
       "sha256": "f294de8940910c0a30031d03ffe26a83895aa24203842e80c03219e15b11cc3e",
       "bytes": 3302
+    },
+    "apply_card_core_crosscheck_v295.py": {
+      "sha256": "351756ce4ccaf8892b1ef18390ad834fd2535a0c0b03a6a72e9e8916cff7d692",
+      "bytes": 1639
     },
     "apply_catalog_image_patch.py": {
       "sha256": "c4aba8c6520cf7fceb9d324d6716b400de41720c8bcabeacb59e8dadf3423d83",
@@ -1456,8 +1464,8 @@
       "bytes": 16149
     },
     "grade_market_flow.js": {
-      "sha256": "616b06be570337eac45d5d44ab07bb8bc27d251bbc4c72afd35eaa743432ba15",
-      "bytes": 22573
+      "sha256": "de4a5a77b265bda79329bace4c95db8e960ac2b0a52f00f52ac5e76faeeb824b",
+      "bytes": 22566
     },
     "graded_photo_bootstrap.py": {
       "sha256": "57fe62df2fd54baf3ad1a20f52b9b760aa0d74f0d0af51f3db4856276527f151",
@@ -1492,8 +1500,8 @@
       "bytes": 567
     },
     "grading_accuracy_v99.js": {
-      "sha256": "8c57801bbd17960a1c96926b24112151212c349e3bd34c422ec64ec391da832f",
-      "bytes": 4294
+      "sha256": "c2e1c31890f5eac50fb0862c963b26b50e86152ea687cedd84b9dfa652154955",
+      "bytes": 4822
     },
     "grading_accuracy_v99.py": {
       "sha256": "d02c89522344fd50a76a86f987670755ae594bc7744238b0caf8bf9d714012c4",
@@ -1564,8 +1572,8 @@
       "bytes": 2161
     },
     "index.html": {
-      "sha256": "b3f0ecd46116aaa14f573e2b9f5adf9615f5b4df84e72689019794cee3e6ba67",
-      "bytes": 321832
+      "sha256": "9cefe9682daefac94dd4a0fcccffafe83a736d4c325615875cfd4bd52f32f50e",
+      "bytes": 322031
     },
     "instagram_tcg_content/__init__.py": {
       "sha256": "20e813d62cc0300556afe2947b692df2851d9bdba7ca2b0006c30626e2938a72",
@@ -2378,6 +2386,10 @@
     "test_card_core_crosscheck_v292.py": {
       "sha256": "84484ea74ea3cebc81eae1ee44b63539c17a585df0877d79e7842acd38c13e37",
       "bytes": 2376
+    },
+    "test_card_core_crosscheck_v295.py": {
+      "sha256": "8cfbe7d8163b440533d067ef3e668fabd9c2896ba92a2896f1dfcd35600fe3b3",
+      "bytes": 2799
     },
     "test_catalog_images.py": {
       "sha256": "1872e45e7c3651a1016d78c155f32844e35092434e18b07b594d056352d6a717",
