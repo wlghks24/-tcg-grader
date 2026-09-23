@@ -41,7 +41,17 @@ jobs:
           python fault_injection_healing.py --manifest
           python fault_injection_healing.py --diagnose
       - name: Full current runtime regression
-        run: python verify_current_runtime.py
+        shell: bash
+        run: |
+          set +e
+          python verify_current_runtime.py > runtime-v301.log 2>&1
+          rc=$?
+          echo "verify_current_runtime exit=$rc"
+          echo '--- failure markers ---'
+          grep -E -n -C 5 'FAIL|ERROR|Traceback|AssertionError|FAILED|RuntimeError|MISSING|DRIFT|mismatch' runtime-v301.log || true
+          echo '--- final 220 lines ---'
+          tail -n 220 runtime-v301.log
+          exit "$rc"
       - name: Finalize integrity after runtime outputs
         run: |
           python fault_injection_healing.py --manifest
