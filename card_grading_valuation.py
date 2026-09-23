@@ -304,13 +304,58 @@ def _grade_key(grade: float) -> str:
     return str(int(grade)) if grade.is_integer() else str(grade)
 
 
+def _clean_grade_price_evidence(value: Any) -> dict[str, str] | None:
+    # Validate provenance attached to one exact company+grade observation.
+    if not isinstance(value, Mapping) or len(value) > 12:
+        return None
+    source = str(value.get("source") or "").strip()
+    try:
+        parsed = urllib.parse.urlsplit(source)
+    except ValueError:
+        return None
+    if parsed.scheme != "https" or not parsed.hostname:
+        return None
+    price_type = str(value.get("price_type") or "").strip()
+    if price_type not in {"sold", "auction_result", "official_example", "market_guide", "user_provided"}:
+        return None
+    observed_on = str(value.get("observed_on") or "").strip()
+    observed_period = str(value.get("observed_period") or "").strip()
+    if not observed_on and not observed_period:
+        return None
+    result = {"source": source[:500], "price_type": price_type}
+    if observed_on:
+        result["observed_on"] = observed_on[:32]
+    if observed_period:
+        result["observed_period"] = observed_period[:32]
+    label = " ".join(str(value.get("label") or "").split())[:180]
+    if label:
+        result["label"] = label
+    return result
+
+
+def _validated_exchange_rate(value: Any) -> float | None:
+    # Return a real bounded USD/KRW rate or None; never fabricate a fallback.
+    if value is None or isinstance(value, bool):
+        return None
+    try:
+        if isinstance(value, str) and (not value.strip() or len(value.strip()) > 64):
+            return None
+        number = float(value)
+    except (TypeError, ValueError, OverflowError):
+        return None
+    if not math.isfinite(number) or not 100.0 <= number <= 10_000.0:
+        return None
+    return number
+
+
 def verified_card_valuation(
     card_name: str,
     card_values: Mapping[str, Any],
     grade_prices_krw: Mapping[str, Any] | None = None,
+    grade_price_evidence: Mapping[str, Any] | None = None,
     *,
     raw_krw: Any = 0,
-    exchange_rate: Any = 1350.0,
+    exchange_rate: Any = None,
     price_source: str = "exact_company_grade_observation",
 ) -> dict[str, Any]:
     """Use exact company+grade observations; never manufacture price multipliers."""
@@ -319,26 +364,49 @@ def verified_card_valuation(
     if not result["ok"]:
         return {**result, "card_name": name, "valuations": {}}
     profiles = grade_prices_krw if isinstance(grade_prices_krw, Mapping) else {}
+    evidence_profiles = grade_price_evidence if isinstance(grade_price_evidence, Mapping) else {}
     source_kind = price_source if price_source in {
         "exact_company_grade_observation", "user_provided_exact_grade"
     } else "user_provided_exact_grade"
-    rate = safe_float(exchange_rate, 1350.0, minimum=100.0, maximum=10_000.0)
+    # Public/static exact-grade observations must carry machine-readable provenance.
+    # Direct caller/manual values remain user-provided and are never auto-promoted.
+    enforce_public_evidence = source_kind == "exact_company_grade_observation" and grade_price_evidence is not None
+    rate = _validated_exchange_rate(exchange_rate)
     raw = safe_int(raw_krw, 0, minimum=0, maximum=MAX_PRICE_KRW)
     valuations = {}
     for company, grade in result["grades"].items():
+        grade_key = _grade_key(float(grade))
         company_prices = profiles.get(company, {})
-        exact = company_prices.get(_grade_key(float(grade)), 0) if isinstance(company_prices, Mapping) else 0
+        exact = company_prices.get(grade_key, 0) if isinstance(company_prices, Mapping) else 0
         krw = safe_int(exact, 0, minimum=0, maximum=MAX_PRICE_KRW)
+        company_evidence = evidence_profiles.get(company, {})
+        evidence = _clean_grade_price_evidence(company_evidence.get(grade_key)) if isinstance(company_evidence, Mapping) else None
+        available = krw > 0 and (not enforce_public_evidence or evidence is not None)
+        if krw > 0 and enforce_public_evidence and evidence is None:
+            reason = "확인 거래가격의 출처·유형·관측시점 근거 부족"
+        elif not krw:
+            reason = "해당 업체·정확한 등급의 확인 거래가격 없음"
+        else:
+            reason = None
         valuations[company] = {
             "grade": grade,
-            "grade_key": _grade_key(float(grade)),
-            "available": krw > 0,
-            "krw": krw if krw else None,
-            "usd": round(krw / rate, 2) if krw else None,
-            "source": source_kind if krw else "unavailable",
-            "reason": None if krw else "해당 업체·정확한 등급의 확인 거래가격 없음",
+            "grade_key": grade_key,
+            "available": available,
+            "krw": krw if available else None,
+            "usd": round(krw / rate, 2) if available and rate is not None else None,
+            "source": source_kind if available else "unavailable",
+            "evidence": evidence if available else None,
+            "evidence_verified": bool(evidence) if available else False,
+            "reason": reason,
         }
-    return {**result, "card_name": name, "raw_krw": raw or None, "exchange_rate": rate, "valuations": valuations}
+    return {
+        **result,
+        "card_name": name,
+        "raw_krw": raw or None,
+        "exchange_rate": rate,
+        "exchange_rate_available": rate is not None,
+        "valuations": valuations,
+    }
 
 
 class _SoldListingParser(HTMLParser):
