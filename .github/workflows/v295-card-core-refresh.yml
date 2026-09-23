@@ -39,9 +39,9 @@ jobs:
           python verify_v99_cross_runtime.py
       - name: Tablet and market regression
         run: |
-          python test_tablet_feature_surface_v252.py
+          python test_tablet_runtime_qa_integration.py
           python test_hot_box_hit_runtime_v252.py
-          python test_wyyyes_market_source.py
+          python test_wyyyes_market_source_v267.py
       - name: Refresh integrity manifest
         run: |
           python - <<'PY'
