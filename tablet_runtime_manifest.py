@@ -6,7 +6,7 @@ from pathlib import Path
 ROOT=Path(__file__).resolve().parent
 ACTIVE_RUNTIME_FILES=(
 "index.html","safe_runtime.py","runtime_sre_metrics.py","collection_runtime_health.py","ai_runtime_model_guard.py","tablet_runtime_manifest.py","TABLET_SCHEDULED_UPDATE.sh",
-"grading_accuracy_v99.py","card_grading_valuation.py","card_identity_recognition.py","server_security_guard.py",
+"grading_accuracy_v99.py","card_grading_valuation.py","card_identity_recognition.py","server_security_guard.py","multi_market_price_collector.py",
 "quality_review_policy.py","quality_review_policy_v2.json",
 "auto_repair_engine.py","auto_update_all.py","collection_job_contract.py","collector_self_healing.py","tcg_code_repair_learning.py",
 "tcg_updater.py","tcg_updater_v135.py","runtime_bundle_guard_v143.py","update_releases.py",
@@ -25,9 +25,16 @@ ACTIVE_RUNTIME_FILES=(
 "multi_route_event_discovery.py","adaptive_collection_learner.py","verified_collection_neural.py","verified_collection_job_neural.py","fan_social_learning.py",
 # Browser assets are executable/visible parts of the tablet runtime too. Keep
 # them in the fail-closed manifest so a partial checkout cannot pass startup
-# merely because the Python backend still compiles.
-"grading_vision_engine.js","grading_accuracy_v99.js","card_identity_recognition.js","grade_market_flow.js","grade_market_flow.css","grading_costs_live.js","grading_costs_live.css","inventory_lookup.js","inventory_lookup.css",
-"box_knowledge_stats.js","feature_category_nav.js","feature_category_nav.css","ui_app_shell_v272.js","ui_app_shell_v272.css","sw.js")
+# merely because the Python backend still compiles. The card-price/analysis
+# cockpit is one runtime chain: vision -> identity -> grading -> validation ->
+# market collection. Missing any member must fail the tablet preflight.
+"grading_vision_engine.js","grading_accuracy_v99.js","card_identity_recognition.js",
+"grade_market_flow.js","grade_market_flow.css","auto_market_center.js","auto_market_center.css",
+"multi_market_prices.js","multi_market_prices.css","auto_validation_flow.js","auto_validation_flow.css",
+"image_quality_guard.js","market_catalog_expander.js",
+"grading_costs_live.js","grading_costs_live.css","inventory_lookup.js","inventory_lookup.css",
+"box_knowledge_stats.js","box_knowledge_stats.css","graded_photo_dashboard.js","graded_photo_dashboard.css",
+"feature_category_nav.js","feature_category_nav.css","ui_app_shell_v272.js","ui_app_shell_v272.css","sw.js")
 def audit(root:Path=ROOT,*,compile_python:bool=False)->dict:
     missing=[]; symlinks=[]; compile_errors=[]; checked_python=0
     for name in ACTIVE_RUNTIME_FILES:
