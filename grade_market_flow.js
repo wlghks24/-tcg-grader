@@ -218,13 +218,19 @@ function applyIdentity(){
  renderPlatformQuotes();renderReferenceSources();updateGrades(true);
 }
 function gradeSale(company,grade){
+ const exact=Number(grade),normalizedCompany=String(company||'').toUpperCase();
+ if(!Number.isFinite(exact)||!Number.isInteger(exact)||exact<1||exact>10||!COMPANIES.includes(normalizedCompany))return 0;
+ const comp=el('econCompany'),gr=el('econGrade');if(!comp||!gr)return 0;
+ const gradeValue=String(exact);
+ if(![...gr.options].some(option=>option.value===gradeValue))return 0;
+ const oldC=comp.value,oldG=gr.value;
  try{
-   const comp=el('econCompany'),gr=el('econGrade'); if(!comp||!gr)return 0;
-   const oldC=comp.value,oldG=gr.value; comp.value=company; gr.value=String(Math.max(1,Math.min(10,Math.floor(Number(grade)))));
-   let sale=0;
-   if(typeof renderEconomics==='function'){const r=renderEconomics(); sale=Number(r?.expectedSale||0)}
-   comp.value=oldC;gr.value=oldG;return sale;
+   comp.value=normalizedCompany;gr.value=gradeValue;
+   if(typeof renderEconomics!=='function')return 0;
+   const result=renderEconomics(),sale=Number(result?.expectedSale||0);
+   return Number.isFinite(sale)&&sale>0?sale:0;
  }catch(_){return 0}
+ finally{comp.value=oldC;gr.value=oldG}
 }
 function updateGrades(force=false){
  const grades=window.tcgLastGrades||{}; const sig=COMPANIES.map(c=>`${c}:${grades[c]??''}`).join('|');
@@ -234,8 +240,8 @@ function updateGrades(force=false){
  if(!has){box.textContent='앞·뒷면 분석 완료 후 자동 표시됩니다.';return}
  box.innerHTML=COMPANIES.map(c=>{
    const g=Number(grades[c]); if(!Number.isFinite(g))return `<div class="agm-row"><b>${c}</b><span>등급 대기</span><strong>-</strong></div>`;
-   const rounded=Math.max(1,Math.min(10,Math.floor(g))),sale=gradeSale(c,rounded);
-   return `<div class="agm-row"><b>${c}</b><span>예상 ${g.toFixed(g%1?1:0)}등급</span><strong>${money(sale)}</strong></div>`;
+   const sale=gradeSale(c,g),price=Number.isInteger(g)?money(sale):'정확 등급 거래자료 없음';
+   return `<div class="agm-row"><b>${c}</b><span>예상 ${g.toFixed(g%1?1:0)}등급</span><strong>${price}</strong></div>`;
  }).join('');
 }
 function tick(){mount();if(el('autoGradeMarketFlow')){applyIdentity();updateGrades(false)}}
