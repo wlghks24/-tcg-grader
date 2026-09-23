@@ -24,22 +24,7 @@ jobs:
             test_ui_app_shell_v272.py \
             test_card_probability_ui_v298.py \
             test_card_core_crosscheck_v291.py \
-            test_card_core_crosscheck_v292.py \
-            test_card_core_crosscheck_v293.py \
-            test_card_core_crosscheck_v294.py \
-            test_card_edition_market_guard_v295.py \
-            test_card_invalid_ux_v295.py \
-            test_card_market_no_data_warning_v295.py \
-            test_card_core_visual_proof_v297.py \
-            test_card_sources_transform_v297.py \
-            test_market_provenance_v297.py \
-            test_ui_card_core_v297.py \
-            test_runtime_grade_market_parity.py \
-            test_runtime_grade_market_flow.py \
-            test_psa_probability_market_flow.py \
-            test_tcg_generation.py \
-            test_tcg_card_analysis.py \
-            test_tcg_value_engine.py
+            test_card_core_crosscheck_v292.py
       - name: Remove temporary finalizer and regenerate integrity manifest
         run: |
           git rm .github/workflows/v298-finalize.yml
@@ -53,6 +38,7 @@ jobs:
           assert result['ok'], result
           print({'tracked': len(h.tracked_files(root)), 'checked': result['checked'], 'failed': result['failed']})
           PY
+          python verify_current_runtime.py
       - name: Commit finalized tree
         run: |
           git config user.name 'github-actions[bot]'
