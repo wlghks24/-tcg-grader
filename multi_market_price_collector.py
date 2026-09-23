@@ -277,12 +277,25 @@ def _tcgdex_api(query,game,fx,region='ALL'):
     return rows[:18],'ok'
 
 GRADE_ORDER=('미감정','A','B','C','D','PSA 10','PSA 9','PSA 8 이하','BGS 10 블랙라벨')
+NON_PSA_GRADE_RE=re.compile(
+    r'\b(BGS|CGC|TAG|BRG)\s*(?:(?:PRISTINE|GEM\s*MINT|MINT|GRADE)\s*)?'
+    r'(10(?:\.0)?|[1-9](?:\.5)?)\b',re.I,
+)
+
+def _non_psa_grade_label(text):
+    m=NON_PSA_GRADE_RE.search(str(text or ''))
+    if not m:return ''
+    company=m.group(1).upper();grade=float(m.group(2))
+    grade_text=str(int(grade)) if grade.is_integer() else str(grade)
+    return f'{company} {grade_text}'
 
 def _grade_label(item):
     text=' '.join(str(item.get(k) or '') for k in ('title','snippet','price_kind'))
     if re.search(r'BGS\s*10.*(?:black|블랙)',text,re.I):return 'BGS 10 블랙라벨'
     m=re.search(r'PSA\s*(10|9|8|7|6|5|4|3|2|1)',text,re.I)
     if m:return 'PSA 10' if m.group(1)=='10' else ('PSA 9' if m.group(1)=='9' else 'PSA 8 이하')
+    company_grade=_non_psa_grade_label(text)
+    if company_grade:return company_grade
     m=re.search(r'(?:등급|grade)\s*[:\-]?\s*([ABCD])\b',text,re.I)
     if m:return m.group(1).upper()
     return '미감정'
@@ -291,17 +304,18 @@ def _grade_reference(items):
     grouped={label:[] for label in GRADE_ORDER}
     for item in items:
         price=int(item.get('price_krw') or 0)
-        if price>0:grouped[_grade_label(item)].append(price)
-    return [{'grade':label,'count':len(values),'price_krw':int(statistics.median(values)) if values else 0,
-             'min_krw':min(values) if values else 0,'max_krw':max(values) if values else 0}
-            for label,values in grouped.items()]
+        if price>0:grouped.setdefault(_grade_label(item),[]).append(price)
+    labels=list(GRADE_ORDER)+sorted(label for label in grouped if label not in GRADE_ORDER)
+    return [{'grade':label,'count':len(grouped[label]),'price_krw':int(statistics.median(grouped[label])) if grouped[label] else 0,
+             'min_krw':min(grouped[label]) if grouped[label] else 0,'max_krw':max(grouped[label]) if grouped[label] else 0}
+            for label in labels]
 
 def _query_grade_label(query):
     text=str(query or '')
     if re.search(r'BGS\s*10.*(?:black|블랙)',text,re.I):return 'BGS 10 블랙라벨'
     m=re.search(r'PSA\s*(10|9|8|7|6|5|4|3|2|1)',text,re.I)
     if m:return 'PSA 10' if m.group(1)=='10' else ('PSA 9' if m.group(1)=='9' else 'PSA 8 이하')
-    return ''
+    return _non_psa_grade_label(text)
 
 def _comparable_summary_items(query,items):
     """Keep the headline median on one grading basis.

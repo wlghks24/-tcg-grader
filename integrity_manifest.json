@@ -1,7 +1,7 @@
 {
   "version": 2,
   "engine": "v109-card-identity-ocr-learning",
-  "generated_at": "2026-09-23T09:03:50+00:00",
+  "generated_at": "2026-09-23T10:40:02+00:00",
   "files": {
     ".github/workflows/ai-auto-tracker-guard.yml": {
       "sha256": "636e750bd6d2619cce75d4bce2d68051eaa2209ae763bc8ec523ed73476728a6",
@@ -1456,8 +1456,8 @@
       "bytes": 16149
     },
     "grade_market_flow.js": {
-      "sha256": "76d9fdeea201a8bb781487c4fce22e56191904cd94927651cb687d00c6c9ce73",
-      "bytes": 22546
+      "sha256": "015d0c893d59c276713baf3abe1ffcd7e1afacf9de638ea86ff8c1b3a92149a4",
+      "bytes": 22759
     },
     "graded_photo_bootstrap.py": {
       "sha256": "57fe62df2fd54baf3ad1a20f52b9b760aa0d74f0d0af51f3db4856276527f151",
@@ -1908,8 +1908,8 @@
       "bytes": 38263
     },
     "multi_market_price_collector.py": {
-      "sha256": "d058baba2a7d0d4f5700eddae34a764fd2eb901bb968871700d73d23260d3a0b",
-      "bytes": 26738
+      "sha256": "7d7ceb60058090f8cd23bdae5e301e452e7ba483dbfda9bcd416df2f7de60aa3",
+      "bytes": 27404
     },
     "multi_market_prices.js": {
       "sha256": "33e43b69641808a9aa309af317f2889302fe1f020a6ca008d59426ea8a01b48a",
@@ -3410,6 +3410,10 @@
     "학습자료_백업.bat": {
       "sha256": "ede8c9bf5a23df86776c5d9b518c8031f9695bd69085259a18c7e5ed994a34e1",
       "bytes": 396
+    },
+    "test_card_market_grade_separation_v299.py": {
+      "sha256": "60960933999b47c53ae8551065b10c37d1773a5fea19cc53eb100256881fa4b7",
+      "bytes": 3326
     }
   },
   "mutable_json": {},

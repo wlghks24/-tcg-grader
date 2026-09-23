@@ -218,13 +218,19 @@ function applyIdentity(){
  renderPlatformQuotes();renderReferenceSources();updateGrades(true);
 }
 function gradeSale(company,grade){
+ const comp=el('econCompany'),gr=el('econGrade'); if(!comp||!gr)return 0;
+ const numeric=Number(grade);if(!Number.isFinite(numeric)||numeric<1||numeric>10)return 0;
+ const exact=String(numeric);
+ // Never silently substitute an integer price for a half-grade. If the
+ // exact grade has no evidence-backed economics option, fail closed.
+ if(![...gr.options].some(option=>option.value===exact))return 0;
+ const oldC=comp.value,oldG=gr.value;
  try{
-   const comp=el('econCompany'),gr=el('econGrade'); if(!comp||!gr)return 0;
-   const oldC=comp.value,oldG=gr.value; comp.value=company; gr.value=String(Math.max(1,Math.min(10,Math.floor(Number(grade)))));
-   let sale=0;
-   if(typeof renderEconomics==='function'){const r=renderEconomics(); sale=Number(r?.expectedSale||0)}
-   comp.value=oldC;gr.value=oldG;return sale;
+   comp.value=company;gr.value=exact;
+   if(typeof renderEconomics!=='function')return 0;
+   const r=renderEconomics();return Number(r?.expectedSale||0);
  }catch(_){return 0}
+ finally{comp.value=oldC;gr.value=oldG}
 }
 function updateGrades(force=false){
  const grades=window.tcgLastGrades||{}; const sig=COMPANIES.map(c=>`${c}:${grades[c]??''}`).join('|');
@@ -234,7 +240,7 @@ function updateGrades(force=false){
  if(!has){box.textContent='앞·뒷면 분석 완료 후 자동 표시됩니다.';return}
  box.innerHTML=COMPANIES.map(c=>{
    const g=Number(grades[c]); if(!Number.isFinite(g))return `<div class="agm-row"><b>${c}</b><span>등급 대기</span><strong>-</strong></div>`;
-   const rounded=Math.max(1,Math.min(10,Math.floor(g))),sale=gradeSale(c,rounded);
+   const sale=gradeSale(c,g);
    return `<div class="agm-row"><b>${c}</b><span>예상 ${g.toFixed(g%1?1:0)}등급</span><strong>${money(sale)}</strong></div>`;
  }).join('');
 }
