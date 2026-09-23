@@ -78,6 +78,15 @@ class CardTabletRuntimeV300Tests(unittest.TestCase):
         self.assertNotIn('grade === 9 ? "p9prob"', shell)
         self.assertIn("actual!==wanted)return -999", market)
 
+    def test_half_grade_market_price_never_falls_back_to_lower_integer_grade(self) -> None:
+        market = (ROOT / "grade_market_flow.js").read_text(encoding="utf-8")
+        self.assertIn("!Number.isInteger(exact)", market)
+        self.assertIn("const sale=gradeSale(c,g)", market)
+        self.assertIn("'정확 등급 거래자료 없음'", market)
+        self.assertIn("finally{comp.value=oldC;gr.value=oldG}", market)
+        self.assertNotIn("Math.floor(Number(grade))", market)
+        self.assertNotIn("sale=gradeSale(c,rounded)", market)
+
     def test_multi_market_prices_do_not_fabricate_empty_results_or_largest_number(self) -> None:
         self.assertEqual([], multi_market.search_multi_market("", force=True)["items"])
         fx = {"KRW": 1.0, "USD": 1400.0, "JPY": 9.0}
