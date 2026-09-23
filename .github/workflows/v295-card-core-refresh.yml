@@ -42,7 +42,9 @@ jobs:
           python test_tablet_runtime_qa_integration.py
           python test_hot_box_hit_runtime_v252.py
           python test_wyyyes_market_source_v267.py
-      - name: Refresh integrity manifest
+      - name: Remove transient audit mutators before final integrity snapshot
+        run: git rm -- .github/workflows/v295-card-core-refresh.yml apply_card_core_crosscheck_v295.py
+      - name: Refresh final integrity manifest
         run: |
           python - <<'PY'
           from pathlib import Path
@@ -53,16 +55,17 @@ jobs:
           assert report['ok'] and report['failed']==0, report
           print(report)
           PY
-      - name: Commit bounded patch
+      - name: Commit final bounded patch state
         run: |
-          if git diff --quiet -- index.html grade_market_flow.js grading_accuracy_v99.js integrity_manifest.json; then
-            echo 'No runtime patch changes to commit.'
-            exit 0
-          fi
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git add index.html grade_market_flow.js grading_accuracy_v99.js integrity_manifest.json
-          git commit -m 'Normalize PSA probability math and isolate market editions v295'
-          git push origin HEAD:audit/card-core-crosscheck-v295
-      - name: Current runtime verification on committed tree
+          git add index.html grade_market_flow.js grading_accuracy_v99.js integrity_manifest.json test_card_core_crosscheck_v295.py
+          git add -u .github/workflows/v295-card-core-refresh.yml apply_card_core_crosscheck_v295.py
+          if git diff --cached --quiet; then
+            echo 'No final patch changes to commit.'
+          else
+            git commit -m 'Finalize card probability and edition isolation v295'
+            git push origin HEAD:audit/card-core-crosscheck-v295
+          fi
+      - name: Current runtime verification on clean committed tree
         run: python verify_current_runtime.py
