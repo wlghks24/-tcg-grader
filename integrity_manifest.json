@@ -1,7 +1,7 @@
 {
   "version": 2,
   "engine": "v109-card-identity-ocr-learning",
-  "generated_at": "2026-09-23T09:03:50+00:00",
+  "generated_at": "2026-09-23T11:52:03+00:00",
   "files": {
     ".github/workflows/ai-auto-tracker-guard.yml": {
       "sha256": "636e750bd6d2619cce75d4bce2d68051eaa2209ae763bc8ec523ed73476728a6",
@@ -392,8 +392,8 @@
       "bytes": 3256
     },
     ".github/workflows/runtime-delivery-guard.yml": {
-      "sha256": "62717e8c184a2fc16a5a6f619b00781a6e05ff2e928a8524ab62b7d5d0b20339",
-      "bytes": 8226
+      "sha256": "3146bae036c35c6ca782fb800b31df3712c545563f65e5dc70b739e1c522e032",
+      "bytes": 9745
     },
     ".github/workflows/runtime-device-benchmark-guard.yml": {
       "sha256": "49c17d4d839110444d1168147578991cfc599f67a86c0918ec6c9d5f009609d0",
@@ -478,6 +478,10 @@
     "FIX_SERVER_RUNTIME_V137.sh": {
       "sha256": "c566863a5ac3fb395e54e6a6f40805bcc3f40c3e8f1f91b2b7e1d19b4098d76b",
       "bytes": 3979
+    },
+    "GRADING_COMPANY_HEALTH_DIAGNOSTICS.json": {
+      "sha256": "387521513db348d05bdacab9f226d99021190191f19462a5c69dd605394162d3",
+      "bytes": 4851
     },
     "GRAPHIFY_AUDIT.py": {
       "sha256": "1a2a1c46b001cf33516c9f6e24a9e0bf942c6aa8b6a159c8acbc9d82262c6229",
@@ -1508,7 +1512,7 @@
       "bytes": 7206
     },
     "grading_company_updates.json": {
-      "sha256": "c0cc18d016d07b106392bffb09769ea9a3736b1a855bd2a88a9b4d26b2bb5f0f",
+      "sha256": "4c59ac1c1e1d1c2d6de7acc68c91e63a0f59e7c0d3e005bbf72f99410f46cba8",
       "bytes": 53087
     },
     "grading_company_watch.py": {
@@ -2395,6 +2399,10 @@
       "sha256": "f09f8bfacd502fcb8fb5cec43bef34dcf7be7d0a70e50a234ec2784e6ffe0e33",
       "bytes": 1452
     },
+    "test_card_regression_gate_v299.py": {
+      "sha256": "1e68f818f1a6a06d51beb66df7ba4e98f567db6ea47bbcb8e12adf51dd57a902",
+      "bytes": 3769
+    },
     "test_catalog_images.py": {
       "sha256": "1872e45e7c3651a1016d78c155f32844e35092434e18b07b594d056352d6a717",
       "bytes": 2577
@@ -3276,8 +3284,8 @@
       "bytes": 12067
     },
     "verify_current_runtime.py": {
-      "sha256": "69aa190c35c3efa20234d8e2fc3e14f1b1c60f320385bfd48df7df9ff9cccbb6",
-      "bytes": 5446
+      "sha256": "c8c406224cecabb29a543d1d2289144be5944a8ac29a3a8cbeb5d3298de1a43c",
+      "bytes": 5914
     },
     "verify_fault_injection_healing.py": {
       "sha256": "40f0d3565ea8094b4deb2cf407550eaf41928f3f7fbfc2863ead0053f7cb25f8",
