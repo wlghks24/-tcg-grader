@@ -35,7 +35,11 @@ def _commands():
       ("ai_score_freshness_v270",[py,"-m","unittest","-v","test_ai_score_freshness_v270.py"],180,False),
       ("repair_ai_score_freshness_v271",[py,"-m","unittest","-v","test_repair_ai_score_freshness_v271.py"],180,False),
       ("ui_app_shell_v272",[py,"-m","unittest","-v","test_ui_app_shell_v272.py"],180,False),
-      ("current_runtime_regressions",[py,"-m","unittest","-v","test_runtime_resilience_v182.py","test_grading_hierarchy_v17.py",
+      # v182 is an executable assert-based self-test, not a unittest.TestCase module.
+      # Running it through `python -m unittest` yields 0 tests / rc=5 and makes
+      # the aggregate verifier fail even when the runtime is healthy.
+      ("runtime_resilience_v182",[py,"test_runtime_resilience_v182.py"],180,False),
+      ("current_runtime_regressions",[py,"-m","unittest","-v","test_grading_hierarchy_v17.py",
        "test_ocr_multistage_v16.py","test_verified_grade_learning_v135_safe.py","test_collection_verification_gate.py",
        "test_multi_route_event_discovery.py","test_pokemon_run30_asia_recovery_v208.py",
        "test_information_lifecycle_archive_v209.py"],600,False)]
