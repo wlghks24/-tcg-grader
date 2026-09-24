@@ -30,6 +30,7 @@ concurrency:
 
 jobs:
   deep-audit:
+    name: Deep SELFREFINE Guard
     runs-on: ubuntu-latest
     timeout-minutes: 18
     steps:
