@@ -1,0 +1,47 @@
+name: GPT Integrity Manifest Finalizer
+
+on:
+  pull_request:
+    paths:
+      - '.github/workflows/gpt-required-checks-bootstrap.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  finalize:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - name: Checkout PR head branch
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          ref: ${{ github.head_ref }}
+          fetch-depth: 0
+      - name: Set up Python
+        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97
+        with:
+          python-version: '3.11'
+      - name: Generate manifest for the final tree without this one-shot workflow
+        shell: bash
+        run: |
+          set -euo pipefail
+          rm .github/workflows/gpt-required-checks-bootstrap.yml
+          python fault_injection_healing.py --manifest
+          python fault_injection_healing.py --diagnose
+          python -m json.tool integrity_manifest.json >/dev/null
+          git diff --check
+      - name: Commit only the regenerated manifest
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add -- integrity_manifest.json
+          if git diff --cached --quiet; then
+            echo 'integrity manifest already matches final tree'
+            exit 0
+          fi
+          git commit -m 'chore: refresh integrity manifest for required check contexts'
+          git push origin "HEAD:${GITHUB_HEAD_REF}"
