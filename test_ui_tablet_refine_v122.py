@@ -71,5 +71,10 @@ def test_card_identity_jpeg_encoding_is_async_and_single_pass_on_save():
     assert "blob.size<=6_000_000" in source
     assert "data:await canvasJpegDataUrl(dataCanvas)" in source
     assert "function identityKey(item)" in source
-    assert "for(const item of rows)" in source
+    # Enforce the behavior, not one historical loop syntax. v302 uses an indexed
+    # single pass so it can safely promote UNKNOWN→confirmed edition in-place.
+    assert re.search(r"for\((?:const item of rows|let i=0;i<rows\.length;i\+\+)\)", source)
+    assert "sameHash=item.image_hash===row.image_hash" in source
+    assert "identityCoreKey(item)!==targetCore" in source
+    assert "if(conflict)return {ok:false,conflict:true}" in source
     assert "const rows=localRows(),same=rows.filter" not in source
