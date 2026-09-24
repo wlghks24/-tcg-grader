@@ -3,42 +3,6 @@ name: Tablet Termux Main Guard
 on:
   workflow_dispatch:
   pull_request:
-    paths:
-      - 'main'
-      - 'ANDROID_UPDATE_AND_START.sh'
-      - 'TABLET_SCHEDULED_UPDATE.sh'
-      - 'tablet_runtime_manifest.py'
-      - 'quality_review_policy.py'
-      - 'quality_review_policy_v2.json'
-      - 'test_quality_review_policy_v2.py'
-      - 'VERIFY_TABLET_FINAL.sh'
-      - 'test_tablet_scheduled_update_v256.py'
-      - 'tablet_collection_publish.py'
-      - 'tablet_collection_publish_contextual.py'
-      - 'collection_verification_gate_contextual.py'
-      - 'test_tablet_collection_publish.py'
-      - 'test_tablet_main_entrypoint_v251.py'
-      - 'TABLET_COLLECT_AND_SEND.sh'
-      - 'TABLET_COLLECTION_PUBLISH.md'
-      - 'tablet_collection_receipt.json'
-      - 'releases.json'
-      - 'promo_events.json'
-      - 'supplementary_candidates.json'
-      - 'social_event_candidates.json'
-      - 'purchase_signals.json'
-      - 'social_stock_signals.json'
-      - 'market_prices.json'
-      - 'market_watch.json'
-      - 'purchase_sources.json'
-      - 'exchange_rates.json'
-      - 'grading_company_updates.json'
-      - 'graded_photo_candidates.json'
-      - 'source_collection_stats.json'
-      - 'adaptive_collection_stats.json'
-      - 'auto_update_report.json'
-      - 'auto_update_issues.json'
-      - 'tcg_live_data.json'
-      - '.github/workflows/tablet-termux-main-guard.yml'
   push:
     branches: [main]
     paths:
