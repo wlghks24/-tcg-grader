@@ -1,7 +1,7 @@
 {
   "version": 2,
   "engine": "v109-card-identity-ocr-learning",
-  "generated_at": "2026-09-24T12:46:07+00:00",
+  "generated_at": "2026-09-24T14:04:44+00:00",
   "files": {
     ".github/workflows/ai-auto-tracker-guard.yml": {
       "sha256": "636e750bd6d2619cce75d4bce2d68051eaa2209ae763bc8ec523ed73476728a6",
@@ -328,8 +328,8 @@
       "bytes": 1065
     },
     ".github/workflows/gpt-tcg-drive-package.yml": {
-      "sha256": "c6ab28b668b70f4f36dfb18673b02816cc72bf26d72eb9b7b6609f10d4ee0293",
-      "bytes": 1667
+      "sha256": "739e01ef6ac4f0de305667124ab0ade938bb8e944f809db649312d20c2ae79b5",
+      "bytes": 1507
     },
     ".github/workflows/grading-company-watch.yml": {
       "sha256": "d591e1f81dc8cf596105e5e132259b750c93485b44432a698cde7698bbd36b73",
@@ -388,8 +388,8 @@
       "bytes": 2492
     },
     ".github/workflows/repository-integrity-guard.yml": {
-      "sha256": "56f1bd9d631859517b945734c14641dcb4d50e1ac44a5f53a22d65e90cc15aa3",
-      "bytes": 5741
+      "sha256": "4643f46f0efcac98c4b15899dca94a888eb565564cd802a18b1484ab1674434b",
+      "bytes": 5780
     },
     ".github/workflows/runtime-correctness-guard.yml": {
       "sha256": "c0a82d48b34c880972693a491a1be49a32ab682034d05f746f02953430582a26",
@@ -432,8 +432,8 @@
       "bytes": 4856
     },
     ".github/workflows/tcg-static-data-refresh.yml": {
-      "sha256": "214ec3936f4617081db7337f960374d60f7301ea48da3f1a737b436098ff49f9",
-      "bytes": 11989
+      "sha256": "b2d5e3a190e84a649f29167fccdd27eb29a21b6e03271a7c1b7804e8a9ed264e",
+      "bytes": 18291
     },
     ".github/workflows/v108-regression-diagnostic.yml": {
       "sha256": "0bbc12618657de981deabd60c83d2c0091af636ffc7feab8fcd09bbf37002a7a",
@@ -2830,6 +2830,10 @@
     "test_promo_event_keyword_coverage_v5.py": {
       "sha256": "0ca35ad1ad49c1a0676bd3dcbf86da68a8309c4c5d34abfb0bd725559e81f77e",
       "bytes": 2506
+    },
+    "test_protected_static_pipeline_v305.py": {
+      "sha256": "b599b62f76f3a71266e6aff035a922746772beb70a0faae07cbd51bb9a085ba6",
+      "bytes": 3243
     },
     "test_provider_source_gap_learning_v5.py": {
       "sha256": "ef4c731696641dcf5ec0e8db75335fd09b4edfcd2d2b1d1f8ebea7c5fb103dad",
