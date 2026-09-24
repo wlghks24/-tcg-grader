@@ -87,6 +87,32 @@ class CardTabletRuntimeV300Tests(unittest.TestCase):
         self.assertNotIn("Math.floor(Number(grade))", market)
         self.assertNotIn("sale=gradeSale(c,rounded)", market)
 
+    def test_v302_edition_ocr_generation_and_saved_market_guards(self) -> None:
+        identity = (ROOT / "card_identity_recognition.js").read_text(encoding="utf-8")
+        market = (ROOT / "grade_market_flow.js").read_text(encoding="utf-8")
+        for token in (
+            "EN_SV_CODES",
+            "EN_MEGA_CODES",
+            "inferEditionFromText",
+            "requestRegion=selected!=='UNKNOWN'?selected:browserRegion.region",
+            "const retry=await request(effectiveRegion)",
+            "identityCoreKey",
+            "oldRegion!=='UNKNOWN'&&targetRegion!=='UNKNOWN'&&oldRegion!==targetRegion",
+            "version:'v302'",
+        ):
+            self.assertIn(token, identity)
+        for token in (
+            "function marketKeyEdition",
+            "function editionSearchToken",
+            "function findMarketKey(name,number,region)",
+            "wanted==='UNKNOWN'||marketKeyEdition(direct)===wanted",
+            "if(wanted!=='UNKNOWN'&&actual!==wanted)continue",
+            "ranked[0].score===ranked[1].score",
+            "findMarketKey(name,number,region)",
+            "다른 판본 가격은 자동 대체하지 않습니다.",
+        ):
+            self.assertIn(token, market)
+
     def test_multi_market_prices_do_not_fabricate_empty_results_or_largest_number(self) -> None:
         self.assertEqual([], multi_market.search_multi_market("", force=True)["items"])
         fx = {"KRW": 1.0, "USD": 1400.0, "JPY": 9.0}
@@ -105,6 +131,7 @@ class CardTabletRuntimeV300Tests(unittest.TestCase):
             "test_card_probability_ui_v298.py",
             "test_card_regression_gate_v299.py",
             "test_card_tablet_runtime_v300.py",
+            "test_card_edition_precision_v302.py",
             "test_multi_market_price_collector.py",
             "test_tablet_runtime_manifest_ui_assets_v254.py",
         ):
