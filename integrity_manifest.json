@@ -1,7 +1,7 @@
 {
   "version": 2,
   "engine": "v109-card-identity-ocr-learning",
-  "generated_at": "2026-09-24T12:36:41+00:00",
+  "generated_at": "2026-09-24T12:46:07+00:00",
   "files": {
     ".github/workflows/ai-auto-tracker-guard.yml": {
       "sha256": "636e750bd6d2619cce75d4bce2d68051eaa2209ae763bc8ec523ed73476728a6",
@@ -12,8 +12,8 @@
       "bytes": 2896
     },
     ".github/workflows/android-updater-guard.yml": {
-      "sha256": "736d560b0e260346836fe6dbf1fdb1ddb78eced92ab0d128b3eaccb5111cca16",
-      "bytes": 8508
+      "sha256": "3fb228ab53e344059b4974d71bd04fa4a9fbcace94446c0a07ef4e64c7c3fac6",
+      "bytes": 8540
     },
     ".github/workflows/apply-android-manual-proof-input-v164.yml": {
       "sha256": "7d65f855184767dd933b1eb0ed0d07397490a4f49285c050f0987aa353404243",
@@ -304,16 +304,16 @@
       "bytes": 498
     },
     ".github/workflows/deep-selfrefine-guard.yml": {
-      "sha256": "fd946298ffcd5147d4201fd2c287bea1c18a7262b19d0720e7888beb267d26a9",
-      "bytes": 4310
+      "sha256": "48dd3a5081109ee2701129a74986f3cbaee697af19e9490487c72527764cd970",
+      "bytes": 4342
     },
     ".github/workflows/exhaustive-failure-isolation.yml": {
       "sha256": "2fdd391ef79902e56ef04f43d282d44cd3f7b324fbad6b797475132f34a90df3",
       "bytes": 1560
     },
     ".github/workflows/exhaustive-selfrefine-guard.yml": {
-      "sha256": "171dd1ab573435edf05b151bb3697d7635ebafdadf02a242afb4b86282aac3c5",
-      "bytes": 5971
+      "sha256": "01dea7d16872f7db47ca59a0d2780587970fa7fcad213ee414be13933ca48456",
+      "bytes": 6009
     },
     ".github/workflows/external-link-reachability-audit.yml": {
       "sha256": "95b8d629d956218ba33fdf1d7c3840ba27f14f2fa16a87684f11df4382f5425c",
@@ -388,8 +388,8 @@
       "bytes": 2492
     },
     ".github/workflows/repository-integrity-guard.yml": {
-      "sha256": "cbb5b009c562f888e0591d84b1e9e730b0432f175cf6879317f24064c2c4497a",
-      "bytes": 5704
+      "sha256": "56f1bd9d631859517b945734c14641dcb4d50e1ac44a5f53a22d65e90cc15aa3",
+      "bytes": 5741
     },
     ".github/workflows/runtime-correctness-guard.yml": {
       "sha256": "c0a82d48b34c880972693a491a1be49a32ab682034d05f746f02953430582a26",
@@ -412,20 +412,20 @@
       "bytes": 1829
     },
     ".github/workflows/selfrefine-full-repo.yml": {
-      "sha256": "960c50b6a5a229fe2bdd358279ea6d733964b840f0b12f04bf562baa12f73769",
-      "bytes": 5600
+      "sha256": "bc2eec79a41d03647eb1beecc337922f8222b141b5f4111e021ae16fd0b3632a",
+      "bytes": 5626
     },
     ".github/workflows/tablet-gdrive-sync-guard.yml": {
       "sha256": "12b5461abb4f657793d1fb89b75706633bbec98bfcbc041c3a923585d2f0c4bf",
       "bytes": 2601
     },
     ".github/workflows/tablet-gpt-tcg-grader-main-alignment.yml": {
-      "sha256": "45af610a54c26fa8564521cf38fe4705b23e117680d2051aaab4c40cc726383d",
-      "bytes": 3822
+      "sha256": "c7a1a995785ca54ac6a0c292bef1f9e516478cc46256a6f81d0abb5c3a8ec035",
+      "bytes": 3869
     },
     ".github/workflows/tablet-termux-main-guard.yml": {
-      "sha256": "821863ae8d32aebcc07683bdd67d566e53d31dc60c0ebd96d0e8ad8122ad2886",
-      "bytes": 5140
+      "sha256": "00c8e054f113cb0e25b71e65ae245af341fc6f1590add250b4c3e68f710a7fbc",
+      "bytes": 5175
     },
     ".github/workflows/tcg-code-repair-learning-guard.yml": {
       "sha256": "d3c7c4757066013e33aa27f41ccb7fbde24eea1d933c66795dbd44a8424fc611",
