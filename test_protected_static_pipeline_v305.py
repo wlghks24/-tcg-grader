@@ -14,6 +14,12 @@ class ProtectedStaticPipelineV305Tests(unittest.TestCase):
         self.assertIn('actions: write', self.refresh)
         self.assertIn('checks: read', self.refresh)
 
+    def test_write_capable_static_refresh_is_not_push_triggered(self):
+        trigger_block = self.refresh.split('on:\n', 1)[1].split('\npermissions:', 1)[0]
+        self.assertIn('  workflow_dispatch:', trigger_block)
+        self.assertIn('  schedule:', trigger_block)
+        self.assertNotIn('  push:', trigger_block)
+
     def test_exact_required_checks_gate_merge(self):
         for value in (
             'tablet-gpt-tcg-grader-main-alignment.yml', 'Repository Integrity Guard',
