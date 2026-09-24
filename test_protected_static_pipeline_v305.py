@@ -42,6 +42,11 @@ class ProtectedStaticPipelineV305Tests(unittest.TestCase):
             self.assertIn(required, push)
         self.assertIn('  workflow_dispatch:', self.package)
 
+    def test_drive_package_has_twice_daily_fresh_manifest_schedule(self):
+        self.assertIn('  schedule:', self.package)
+        self.assertIn("    - cron: '0 8,20 * * *'", self.package)
+        self.assertIn('before the tablet\'s 08:00/20:00 checks', self.package)
+
     def test_fail_closed_fallback_and_no_bypass(self):
         self.assertIn('PENDING_EXTERNAL_PR', self.refresh)
         self.assertIn('REQUIRED_CHECK_FAILED', self.refresh)
