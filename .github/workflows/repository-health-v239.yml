@@ -76,3 +76,62 @@ jobs:
             echo '- collection concurrency/timeouts/stale-main guard: required'
             echo '- write-capable apply workflows: reported as debt; never auto-deleted'
           } >> "$GITHUB_STEP_SUMMARY"
+
+  v305-bootstrap:
+    if: github.event_name == 'pull_request' && github.head_ref == 'fix/protected-static-data-pipeline-v305'
+    permissions:
+      contents: write
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - name: Checkout PR head branch
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          ref: ${{ github.head_ref }}
+          fetch-depth: 0
+
+      - name: Set up Python
+        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97
+        with:
+          python-version: '3.11'
+
+      - name: Apply protection-safe static pipeline
+        run: python v305_apply_protected_static_pipeline.py
+
+      - name: Targeted v305 regression
+        run: python -m unittest -v test_protected_static_pipeline_v305.py
+
+      - name: Regenerate exact final-tree integrity manifest
+        shell: bash
+        run: |
+          set -euo pipefail
+          python fault_injection_healing.py --manifest
+          python fault_injection_healing.py --diagnose
+          python -m json.tool integrity_manifest.json >/dev/null
+          git diff --check
+
+      - name: Commit verified final tree to PR branch
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add -A
+          python - <<'PY'
+          import subprocess
+          expected = {
+              '.github/workflows/tcg-static-data-refresh.yml',
+              '.github/workflows/gpt-tcg-drive-package.yml',
+              '.github/workflows/repository-integrity-guard.yml',
+              'test_protected_static_pipeline_v305.py',
+              'integrity_manifest.json',
+              '.github/workflows/repository-health-v239.yml',
+              '.github/workflows/v305-protected-static-pipeline-bootstrap.yml',
+              'v305_apply_protected_static_pipeline.py',
+          }
+          staged = set(subprocess.check_output(['git', 'diff', '--cached', '--name-only'], text=True).splitlines())
+          if staged != expected:
+              raise SystemExit(f'unexpected staged files: {sorted(staged ^ expected)}')
+          PY
+          git commit -m 'ci: make static refresh protection-safe v305'
+          git push origin "HEAD:${GITHUB_HEAD_REF}"
