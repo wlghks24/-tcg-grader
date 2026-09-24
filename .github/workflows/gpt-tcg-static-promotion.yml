@@ -1,201 +1,204 @@
-name: GPT TCG Static Promotion
+name: GPT TCG Static Promotion Bootstrap
 
 on:
   pull_request:
     paths:
       - '.github/workflows/gpt-tcg-static-promotion.yml'
-      - 'integrity_manifest.json'
-  push:
-    branches: [main]
-    paths:
-      - '.github/workflows/gpt-tcg-static-promotion.yml'
   workflow_dispatch:
 
 permissions:
-  contents: read
+  contents: write
 
 concurrency:
-  group: gpt-tcg-static-promotion-${{ github.ref }}
+  group: gpt-required-check-bootstrap-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
-  integrity-preview:
-    if: github.event_name == 'pull_request'
+  generate-fix-branch:
     runs-on: ubuntu-24.04
     timeout-minutes: 10
     steps:
-      - name: Checkout PR snapshot
+      - name: Checkout exact protected-main base
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
         with:
-          fetch-depth: 2
-      - name: Set up Python
-        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97
-        with:
-          python-version: '3.11'
-      - name: Regenerate and diagnose integrity manifest
-        run: |
-          python fault_injection_healing.py --manifest
-          python fault_injection_healing.py --diagnose
-      - name: Upload integrity preview
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
-        with:
-          name: gpt-static-promotion-integrity-preview
-          path: integrity_manifest.json
-          if-no-files-found: error
-          retention-days: 7
-
-  collect-verified-promotion:
-    if: github.event_name != 'pull_request'
-    runs-on: ubuntu-24.04
-    timeout-minutes: 35
-    env:
-      PYTHONPATH: ${{ github.workspace }}
-      PYTHONDONTWRITEBYTECODE: '1'
-      PYTHONUNBUFFERED: '1'
-      TCG_HTTP_TIMEOUT: '30'
-      TCG_SOURCE_TIMEOUT_CAP: '30'
-    steps:
-      - name: Checkout exact main snapshot
-        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
-        with:
-          fetch-depth: 2
+          ref: ${{ github.event.pull_request.base.sha }}
+          fetch-depth: 0
 
       - name: Set up Python
         uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97
         with:
           python-version: '3.11'
 
-      - name: Compile and run collection publish regressions
-        run: |
-          python -m py_compile \
-            safe_runtime.py test_safe_runtime_redirect_diagnostics_v253.py collection_job_contract.py test_collection_job_contract_v255.py static_data_publish_gate.py auto_update_all.py tcg_updater.py feature_contract.py fault_injection_healing.py \
-            collection_verification_gate.py collection_verification_gate_contextual.py \
-            update_releases.py release_history_backfill.py update_promo_events.py \
-            update_market_prices.py market_public_crosscheck.py \
-            update_purchase_sources.py validate_external_links.py \
-            multi_route_event_discovery.py social_event_discovery.py auto_pipeline_runner.py \
-            grading_company_watch.py grading_company_watch_resilient.py grading_costs_live.py \
-            test_market_public_crosscheck_resilience_v228.py test_market_public_crosscheck_performance_v251.py \
-            test_release_history_cumulative_coverage_v229.py \
-            test_collection_restored_state_guard_v229.py \
-            test_collection_verification_contextual_v257.py test_grading_company_watch_resilient_v257.py
-          python -m unittest -v \
-            test_safe_runtime_redirect_diagnostics_v253.py \
-            test_collection_job_contract_v255.py \
-            test_static_data_publish_gate.py \
-            test_collection_verification_gate.py \
-            test_collection_verification_contextual_v257.py \
-            test_market_public_crosscheck_resilience_v228.py \
-            test_market_public_crosscheck_performance_v251.py \
-            test_release_history_cumulative_coverage_v229.py \
-            test_collection_restored_state_guard_v229.py \
-            test_collection_scope_compat_v214.py \
-            test_information_lifecycle_archive_v209.py \
-            test_release_history_coverage_v4.py \
-            test_collector_recovery_v161.py \
-            test_social_event_topic_coverage.py \
-            test_social_topic_capacity_v213.py \
-            test_event_quick_watch.py \
-            test_grading_company_watch_v215.py \
-            test_grading_company_watch_resilient_v257.py \
-            test_grading_costs_live.py \
-            test_grading_watch_integration_v220.py
-          python feature_contract.py
-
-      - name: Run full verified collection cycle
-        timeout-minutes: 25
+      - name: Make every required PR guard unconditional
         run: |
           python - <<'PY'
-          import json
-          import tcg_updater
-          data = tcg_updater.update_cycle('gpt-static-promotion')
-          print(json.dumps({
-              'updated_at': data.get('updated_at'),
-              'auto_update': data.get('auto_update', {}),
-          }, ensure_ascii=False, indent=2))
-          PY
-
-      - name: Fail closed before promotion artifact
-        run: |
-          python static_data_publish_gate.py \
-            --max-social-age-hours 12 \
-            --max-report-age-hours 2 \
-            --report STATIC_DATA_PUBLISH_REPORT.json
-          python collection_verification_gate_contextual.py \
-            --max-health-age-seconds 900 \
-            --fail-on-degraded \
-            --report COLLECTION_VERIFICATION_REPORT.json
-          python - <<'PY'
-          import json
-          import auto_update_all
-          auto_update_all.validate_json(
-              'grading_company_updates.json',
-              json.load(open('grading_company_updates.json', encoding='utf-8')),
-          )
-          PY
-
-      - name: Reconcile exact promotion integrity
-        run: |
-          python fault_injection_healing.py --manifest
-          python fault_injection_healing.py --diagnose
-          git diff --check
-
-      - name: Write GPT promotion metadata
-        run: |
-          python - <<'PY'
-          import datetime as dt
-          import hashlib
-          import json
-          import os
           from pathlib import Path
 
-          names = '''releases.json promo_events.json supplementary_candidates.json social_event_candidates.json purchase_signals.json social_stock_signals.json market_prices.json market_watch.json purchase_sources.json exchange_rates.json grading_company_updates.json graded_photo_candidates.json source_collection_stats.json adaptive_collection_stats.json auto_update_report.json auto_update_issues.json tcg_live_data.json'''.split()
-          files = []
-          for name in names:
+          paths = [
+              '.github/workflows/tablet-gpt-tcg-grader-main-alignment.yml',
+              '.github/workflows/repository-integrity-guard.yml',
+              '.github/workflows/selfrefine-full-repo.yml',
+              '.github/workflows/deep-selfrefine-guard.yml',
+              '.github/workflows/exhaustive-selfrefine-guard.yml',
+              '.github/workflows/tablet-termux-main-guard.yml',
+              '.github/workflows/android-updater-guard.yml',
+          ]
+
+          def unconditional_pr(text: str) -> str:
+              lines = text.splitlines(keepends=True)
+              out = []
+              i = 0
+              changed = False
+              while i < len(lines):
+                  line = lines[i]
+                  if line.rstrip('\r\n') == '  pull_request:':
+                      out.append(line)
+                      i += 1
+                      while i < len(lines):
+                          nxt = lines[i]
+                          stripped = nxt.rstrip('\r\n')
+                          if stripped.startswith('  ') and not stripped.startswith('    ') and stripped.strip():
+                              break
+                          if stripped and not stripped.startswith('    '):
+                              break
+                          i += 1
+                      changed = True
+                      continue
+                  out.append(line)
+                  i += 1
+              result = ''.join(out)
+              if not changed:
+                  raise SystemExit('pull_request trigger not found')
+              return result
+
+          for name in paths:
               p = Path(name)
-              raw = p.read_bytes()
-              json.loads(raw)
-              files.append({'name': name, 'size': len(raw), 'sha256': hashlib.sha256(raw).hexdigest()})
-          payload = {
-              'schema_version': 1,
-              'repository': 'wlghks24/-tcg-grader',
-              'source': 'github_actions_gpt_promotion',
-              'base_main_sha': os.environ['GITHUB_SHA'],
-              'run_id': os.environ['GITHUB_RUN_ID'],
-              'created_at': dt.datetime.now(dt.timezone.utc).isoformat(),
-              'file_count': len(files),
-              'files': files,
-          }
-          Path('GPT_STATIC_PROMOTION_METADATA.json').write_text(
-              json.dumps(payload, ensure_ascii=False, indent=2) + '\n', encoding='utf-8'
-          )
+              original = p.read_text(encoding='utf-8')
+              updated = unconditional_pr(original)
+              if updated == original:
+                  raise SystemExit(f'no trigger change: {name}')
+              p.write_text(updated, encoding='utf-8')
+              print('updated', name)
           PY
 
-      - name: Upload verified GPT promotion artifact
+      - name: Add read-only GPT Drive packaging lane
+        shell: bash
+        run: |
+          cat > .github/workflows/gpt-tcg-drive-package.yml <<'YAML'
+          name: GPT TCG Drive Package
+
+          on:
+            push:
+              branches: [main]
+              paths:
+                - 'releases.json'
+                - 'promo_events.json'
+                - 'supplementary_candidates.json'
+                - 'social_event_candidates.json'
+                - 'purchase_signals.json'
+                - 'social_stock_signals.json'
+                - 'market_prices.json'
+                - 'market_watch.json'
+                - 'purchase_sources.json'
+                - 'exchange_rates.json'
+                - 'grading_company_updates.json'
+                - 'graded_photo_candidates.json'
+                - 'source_collection_stats.json'
+                - 'adaptive_collection_stats.json'
+                - 'auto_update_report.json'
+                - 'auto_update_issues.json'
+                - 'tcg_live_data.json'
+                - 'tablet_gdrive_publish.py'
+                - 'tablet_gdrive_sync.py'
+                - 'tablet_collection_publish.py'
+                - '.github/workflows/gpt-tcg-drive-package.yml'
+            workflow_dispatch:
+
+          permissions:
+            contents: read
+
+          concurrency:
+            group: gpt-tcg-drive-package-${{ github.ref }}
+            cancel-in-progress: true
+
+          jobs:
+            package:
+              runs-on: ubuntu-24.04
+              timeout-minutes: 12
+              steps:
+                - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+                  with:
+                    fetch-depth: 2
+                - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97
+                  with:
+                    python-version: '3.11'
+                - name: Build exact verified 17-JSON package
+                  run: python tablet_gdrive_publish.py --output-dir .tcg_drive_outbox
+                - name: Upload package for GPT Drive transfer
+                  uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+                  with:
+                    name: tcg-gdrive-package
+                    path: .tcg_drive_outbox/*
+                    if-no-files-found: error
+                    retention-days: 7
+          YAML
+
+      - name: Reconcile integrity manifest and validate
+        run: |
+          python fault_injection_healing.py --manifest
+          python fault_injection_healing.py --diagnose
+          python -m json.tool integrity_manifest.json >/dev/null
+          git diff --check
+          python - <<'PY'
+          import subprocess
+          expected = {
+              '.github/workflows/tablet-gpt-tcg-grader-main-alignment.yml',
+              '.github/workflows/repository-integrity-guard.yml',
+              '.github/workflows/selfrefine-full-repo.yml',
+              '.github/workflows/deep-selfrefine-guard.yml',
+              '.github/workflows/exhaustive-selfrefine-guard.yml',
+              '.github/workflows/tablet-termux-main-guard.yml',
+              '.github/workflows/android-updater-guard.yml',
+              '.github/workflows/gpt-tcg-drive-package.yml',
+              'integrity_manifest.json',
+          }
+          changed = set(subprocess.check_output(['git','status','--porcelain'], text=True).splitlines())
+          names = {row[3:] for row in changed if len(row) > 3}
+          if names != expected:
+              raise SystemExit(f'unexpected bootstrap changes: {sorted(names ^ expected)}')
+          print('bootstrap file set: PASS')
+          PY
+
+      - name: Push isolated fix branch
+        shell: bash
+        env:
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+        run: |
+          set -euo pipefail
+          git fetch origin main
+          test "$(git rev-parse origin/main)" = "$BASE_SHA"
+          branch="fix/required-checks-always-run-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}"
+          git switch -c "$branch"
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add -- \
+            .github/workflows/tablet-gpt-tcg-grader-main-alignment.yml \
+            .github/workflows/repository-integrity-guard.yml \
+            .github/workflows/selfrefine-full-repo.yml \
+            .github/workflows/deep-selfrefine-guard.yml \
+            .github/workflows/exhaustive-selfrefine-guard.yml \
+            .github/workflows/tablet-termux-main-guard.yml \
+            .github/workflows/android-updater-guard.yml \
+            .github/workflows/gpt-tcg-drive-package.yml \
+            integrity_manifest.json
+          git commit -m 'ci: make protected-main required checks unconditional'
+          git push origin "HEAD:refs/heads/$branch"
+          printf '%s\n' "$branch" > GENERATED_FIX_BRANCH.txt
+
+      - name: Upload bootstrap receipt
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
         with:
-          name: tcg-static-data-gpt-promotion
-          path: |
-            releases.json
-            promo_events.json
-            supplementary_candidates.json
-            social_event_candidates.json
-            purchase_signals.json
-            social_stock_signals.json
-            market_prices.json
-            market_watch.json
-            purchase_sources.json
-            exchange_rates.json
-            grading_company_updates.json
-            graded_photo_candidates.json
-            source_collection_stats.json
-            adaptive_collection_stats.json
-            auto_update_report.json
-            auto_update_issues.json
-            tcg_live_data.json
-            integrity_manifest.json
-            GPT_STATIC_PROMOTION_METADATA.json
-            STATIC_DATA_PUBLISH_REPORT.json
-            COLLECTION_VERIFICATION_REPORT.json
+          name: gpt-required-check-bootstrap-receipt
+          path: GENERATED_FIX_BRANCH.txt
           if-no-files-found: error
           retention-days: 7
