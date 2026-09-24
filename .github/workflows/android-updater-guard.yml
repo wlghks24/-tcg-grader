@@ -1,28 +1,6 @@
 name: Android Updater Guard
 on:
   pull_request:
-    paths:
-      - 'ANDROID_UPDATE_AND_START.sh'
-      - 'ANDROID_RECOVER_UPDATE.sh'
-      - 'TABLET_SCHEDULED_UPDATE.sh'
-      - 'ANDROID_AUTO_START_INSTALL.sh'
-      - 'VERIFY_TABLET_FINAL.sh'
-      - 'VERIFY_TABLET_RUNTIME.sh'
-      - 'tablet_runtime_manifest.py'
-      - 'collection_runtime_health.py'
-      - 'verified_collection_neural.py'
-      - 'verified_collection_job_neural.py'
-      - 'test_verified_collection_neural_v211.py'
-      - 'test_verified_collection_job_neural_v212.py'
-      - 'verify_current_runtime.py'
-      - 'test_tablet_standalone_hardening_v209.py'
-      - 'tablet_runtime_probe.py'
-      - 'test_runtime_delivery_guards.py'
-      - 'test_termux_canonical_fetch_v257.py'
-      - 'tablet_runtime_qa.py'
-      - 'test_tablet_runtime_qa_integration.py'
-      - 'START_TCG_UPDATER_ANDROID.sh'
-      - '.github/workflows/android-updater-guard.yml'
   push:
     branches: [main]
     paths:
