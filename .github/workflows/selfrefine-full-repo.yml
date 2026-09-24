@@ -38,6 +38,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
+          python -m pip install --disable-pip-version-check pillow
           python apply_card_region_generation_precision_v306.py
           node --check card_identity_recognition.js
           node --check grade_market_flow.js
