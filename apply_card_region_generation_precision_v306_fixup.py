@@ -48,25 +48,22 @@ def main() -> int:
         '    candidates = list(NUMBER_RE.findall(normalized))\n',
     )
 
-    # The product source now has the correct entity. Test the safety outcome, not an
-    # accidentally backslash-escaped source spelling.
+    # Test the actual escaping safety property without embedding a fragile escaped
+    # source-code literal in this patch script.
     test_path = ROOT / "test_card_region_generation_precision_v306.py"
     text = test_path.read_text(encoding="utf-8")
-    old = '        self.assertIn("\'\\\\\\\"\':\'&quot;\'", source)\n'
-    replacement = "        self.assertIn(\"&quot;\", source)\n        self.assertNotIn(\"&quot'\", source)\n"
-    if old not in text:
-        # Accept the exact generated line when represented by Python differently.
-        lines = text.splitlines(True)
-        matches = [i for i, line in enumerate(lines) if "&quot;" in line and "assertIn" in line]
-        if len(matches) != 1:
-            raise SystemExit(f"v306 html assertion: expected one line, found {len(matches)}")
-        idx = matches[0]
-        lines[idx] = '        self.assertIn("&quot;", source)\n'
-        lines.insert(idx + 1, "        self.assertNotIn(\"&quot'\", source)\n")
-        text = "".join(lines)
+    lines = text.splitlines(True)
+    matches = [i for i, line in enumerate(lines) if "&quot;" in line and "assertIn" in line]
+    if len(matches) != 1:
+        raise SystemExit(f"v306 html assertion: expected one line, found {len(matches)}")
+    idx = matches[0]
+    lines[idx] = '        self.assertIn("&quot;", source)\n'
+    negative = "        self.assertNotIn(\"&quot'\", source)\n"
+    if idx + 1 < len(lines) and "assertNotIn" in lines[idx + 1] and "&quot" in lines[idx + 1]:
+        lines[idx + 1] = negative
     else:
-        text = text.replace(old, replacement, 1)
-    test_path.write_text(text, encoding="utf-8")
+        lines.insert(idx + 1, negative)
+    test_path.write_text("".join(lines), encoding="utf-8")
 
     # Legacy v252 asserted a particular source spelling. The current code is more
     # explicitly fail-closed: absent renderEconomics => zero, otherwise call it.
