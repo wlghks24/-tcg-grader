@@ -21,6 +21,12 @@ on:
       - 'auto_update_report.json'
       - 'auto_update_issues.json'
       - 'tcg_live_data.json'
+  # The protected static refresh runs at :47 every six hours. These two runs
+  # are 73 minutes after the 03:47 / 15:47 KST refreshes, so the producer gates
+  # remain inside their two-hour report freshness window while also producing a
+  # fresh manifest for code-only main changes before the tablet's 08:00/20:00 checks.
+  schedule:
+    - cron: '0 8,20 * * *'
   workflow_dispatch:
 
 permissions:
