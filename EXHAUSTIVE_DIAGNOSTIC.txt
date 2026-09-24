@@ -1,0 +1,15 @@
+test_ui_tablet_refine_v122.py rc=1
+RUN_STANDALONE test_ui_tablet_refine_v122.py:test_background_pollers_pause_when_tablet_page_is_hidden
+RUN_STANDALONE test_ui_tablet_refine_v122.py:test_card_identity_jpeg_encoding_is_async_and_single_pass_on_save
+Traceback (most recent call last):
+  File "/home/runner/work/-tcg-grader/-tcg-grader/selfrefine_standalone_test_runner.py", line 65, in <module>
+    raise SystemExit(run(sys.argv[1]))
+                     ^^^^^^^^^^^^^^^^
+  File "/home/runner/work/-tcg-grader/-tcg-grader/selfrefine_standalone_test_runner.py", line 57, in run
+    value()
+  File "/home/runner/work/-tcg-grader/-tcg-grader/test_ui_tablet_refine_v122.py", line 74, in test_card_identity_jpeg_encoding_is_async_and_single_pass_on_save
+    assert "for(const item of rows)" in source
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError
+---
+TOTAL=213 FAILED=1
