@@ -26,7 +26,7 @@ class CardEditionPrecisionV302Tests(unittest.TestCase):
             "hangul_script",
             "kana_script",
             "english_set_code_",
-            "generic Latin text" if False else "insufficient_evidence",
+            "insufficient_evidence",
         ):
             self.assertIn(token, source)
         self.assertIn("MEGA는 별도 TCG 시리즈/블록", source)
@@ -38,7 +38,10 @@ class CardEditionPrecisionV302Tests(unittest.TestCase):
         self.assertIn("requestRegion=selected!=='UNKNOWN'?selected:browserRegion.region", source)
         self.assertIn("selected==='UNKNOWN'&&requestRegion==='UNKNOWN'&&effectiveRegion!=='UNKNOWN'", source)
         self.assertIn("const retry=await request(effectiveRegion)", source)
-        self.assertNotIn("region:'US'", source.split("function inferEditionFromText", 1)[1].split("function expansionFromCardNumber", 1)[0].replace("english_set_code_", ""))
+        self.assertIn("if(kana>=2)return {region:'JP'", source)
+        self.assertIn("if(hangul>=2&&hangul>=kana)return {region:'KR'", source)
+        self.assertIn("if(englishSet)return {region:'US'", source)
+        self.assertIn("return {region:'UNKNOWN',confidence:0,basis:'insufficient_evidence'}", source)
 
     def test_local_identity_learning_is_edition_aware(self) -> None:
         source = (ROOT / "card_identity_recognition.js").read_text(encoding="utf-8")
