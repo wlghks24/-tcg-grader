@@ -1,19 +1,19 @@
 name: PR Card Main Sync v307
 
 on:
-  pull_request:
-    branches: [main]
+  push:
+    branches: [audit/card-edition-ocr-generation-v302]
 
 permissions:
   contents: write
 
 concurrency:
-  group: pr-card-main-sync-v307-${{ github.event.pull_request.number }}
+  group: pr-card-main-sync-v307
   cancel-in-progress: true
 
 jobs:
   sync:
-    if: github.event.pull_request.head.repo.full_name == github.repository && github.event.pull_request.head.ref == 'audit/card-edition-ocr-generation-v302'
+    if: github.repository == 'wlghks24/-tcg-grader' && github.ref == 'refs/heads/audit/card-edition-ocr-generation-v302'
     runs-on: ubuntu-latest
     steps:
       - name: Checkout card audit branch
