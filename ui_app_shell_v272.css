@@ -353,7 +353,7 @@ body .app-bottom-dock-label{font-size:10px!important;font-weight:850!important}
   backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px)
 }
 .card>h2:first-child,.card>h3:first-child,.card>h4:first-child,
-.feature-category-head h2,.home-launcher h2y
+.feature-category-head h2,.home-launcher h2{
   letter-spacing:-.025em!important;font-weight:900!important;color:var(--v308-ink)!important
 }
 .card>.muted:first-of-type,.feature-category-head .muted,.home-launcher .muted{
@@ -407,7 +407,7 @@ button{border-radius:14px!important;letter-spacing:-.01em}
 .grade-cockpit-probability,.grade-cockpit-company{
   border-radius:14px!important;border-color:#dbe4ee!important
 }
-.metric,.status,.workflow-part{background:linear-gradient(180deg,#fff,#fafcff)important}
+.metric,.status,.workflow-part{background:linear-gradient(180deg,#fff,#fafcff)!important}
 .metric b,.validation-stats .metric b{font-variant-numeric:tabular-nums;color:#0f172a!important;letter-spacing:-.025em}
 .grade-result-cockpit{
   border-radius:20px!important;border-color:#bfdbfe!important;
@@ -428,7 +428,7 @@ button{border-radius:14px!important;letter-spacing:-.01em}
 .analysis-price,.analysis-box .price,.price-current{font-weight:850!important;color:#0f172a!important}
 .release-board{
   background:linear-gradient(140deg,#0f172a 0%,#172554 50%,#1d4ed8 115%)!important;
-  border:1px solid rgba(255,255,255,.10)!important;box-shadow:0 15px 38px rgba(30,58,138,.18)important
+  border:1px solid rgba(255,255,255,.10)!important;box-shadow:0 15px 38px rgba(30,58,138,.18)!important
 }
 .release-item{background:rgba(255,255,255,.97)!important}
 .top-info-tab{border-radius:13px!important}
