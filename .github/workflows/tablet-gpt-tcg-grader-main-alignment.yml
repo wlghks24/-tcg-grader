@@ -4,12 +4,6 @@ on:
   push:
     branches: [main]
   pull_request:
-    paths:
-      - 'TCG_CROSSCHECK/TABLET_GPT/learning_snapshot.json'
-      - 'TCG_CROSSCHECK/TCG_GRADER/tablet_gpt_learning_receipt.json'
-      - 'TCG_CROSSCHECK/TABLET_GPT_TCG_GRADER_SYNC_CONTRACT.json'
-      - 'test_tablet_gpt_tcg_grader_sync_v289.py'
-      - '.github/workflows/tablet-gpt-tcg-grader-main-alignment.yml'
   workflow_dispatch:
 
 permissions:
@@ -21,6 +15,7 @@ concurrency:
 
 jobs:
   alignment:
+    name: Tablet GPT TCG Grader Main Alignment
     runs-on: ubuntu-24.04
     timeout-minutes: 10
     steps:

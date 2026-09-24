@@ -1,0 +1,56 @@
+name: GPT TCG Drive Package
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'releases.json'
+      - 'promo_events.json'
+      - 'supplementary_candidates.json'
+      - 'social_event_candidates.json'
+      - 'purchase_signals.json'
+      - 'social_stock_signals.json'
+      - 'market_prices.json'
+      - 'market_watch.json'
+      - 'purchase_sources.json'
+      - 'exchange_rates.json'
+      - 'grading_company_updates.json'
+      - 'graded_photo_candidates.json'
+      - 'source_collection_stats.json'
+      - 'adaptive_collection_stats.json'
+      - 'auto_update_report.json'
+      - 'auto_update_issues.json'
+      - 'tcg_live_data.json'
+      - 'tablet_gdrive_publish.py'
+      - 'tablet_gdrive_sync.py'
+      - 'tablet_collection_publish.py'
+      - '.github/workflows/gpt-tcg-drive-package.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: gpt-tcg-drive-package-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  package:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          fetch-depth: 2
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97
+        with:
+          python-version: '3.11'
+      - name: Build exact verified 17-JSON package
+        run: python tablet_gdrive_publish.py --output-dir .tcg_drive_outbox
+      - name: Upload package for GPT Drive transfer
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        with:
+          name: tcg-gdrive-package
+          path: .tcg_drive_outbox/*
+          if-no-files-found: error
+          retention-days: 7
