@@ -15,6 +15,7 @@ concurrency:
 
 jobs:
   alignment:
+    name: Tablet GPT TCG Grader Main Alignment
     runs-on: ubuntu-24.04
     timeout-minutes: 10
     steps:
