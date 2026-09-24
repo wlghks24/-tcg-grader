@@ -3,55 +3,33 @@ name: Exhaustive Failure Isolation
 on:
   workflow_dispatch:
   push:
-    branches: [audit/card-edition-ocr-generation-v302]
+    branches: [main]
     paths:
       - '.github/workflows/exhaustive-failure-isolation.yml'
 
 permissions:
-  contents: write
+  contents: read
 
 jobs:
   isolate:
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 18
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
-        with:
-          ref: audit/card-edition-ocr-generation-v302
-          fetch-depth: 0
       - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97
         with:
           python-version: '3.12'
-      - run: |
-          python -m pip install --disable-pip-version-check -r requirements.txt
-          python -m pip install --disable-pip-version-check pyyaml
-      - name: Isolate every root regression module
-        env:
-          TCG_REQUIRE_NODE: '1'
+      - run: python -m pip install --disable-pip-version-check -r requirements.txt
+      - name: Run previously failing modules in isolated interpreters
         run: |
           set +e
-          : > EXHAUSTIVE_DIAGNOSTIC.txt
           failed=0
-          total=0
-          for file in test_*.py; do
-            [ -f "$file" ] || continue
-            total=$((total+1))
-            python -m unittest discover -v -s . -p "$file" > /tmp/test.out 2>&1
+          for mod in             test_extended_discovery_channels_v5             test_source_gap_taxonomy_v6             test_graded_photo_multi_source             test_library_slab_corpus             test_manual_graded_photo_registration             test_manual_official_proof             test_brg_manual_server_error_v163             test_collector_recovery_v161             test_collector_self_healing             test_error_recovery_learning_v134             test_jump_shop_event_watch             test_manual_only_official_verification_v192             test_psa_manual_proof_match_v166             test_security_hardening
+          do
+            echo "===== $mod ====="
+            python -m unittest -v "$mod"
             rc=$?
-            if [ "$rc" -eq 5 ]; then
-              python selfrefine_standalone_test_runner.py "$file" > /tmp/test.out 2>&1
-              rc=$?
-            fi
-            if [ "$rc" -ne 0 ]; then
-              failed=$((failed+1))
-              echo "$file rc=$rc" >> EXHAUSTIVE_DIAGNOSTIC.txt
-              tail -n 120 /tmp/test.out >> EXHAUSTIVE_DIAGNOSTIC.txt
-              echo '---' >> EXHAUSTIVE_DIAGNOSTIC.txt
-            fi
+            if [ "$rc" -ne 0 ]; then failed=$((failed+1)); fi
           done
-          echo "TOTAL=$total FAILED=$failed" >> EXHAUSTIVE_DIAGNOSTIC.txt
-          git config user.name 'github-actions[bot]'
-          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git add EXHAUSTIVE_DIAGNOSTIC.txt
-          git commit -m 'ci: record current exhaustive failure isolation'
-          git push origin HEAD:audit/card-edition-ocr-generation-v302
+          echo "isolated failing modules: $failed"
+          exit "$failed"
