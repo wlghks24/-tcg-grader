@@ -1,4 +1,4 @@
-name: GPT Required Checks Bootstrap
+name: GPT Integrity Manifest Finalizer
 
 on:
   pull_request:
@@ -10,7 +10,7 @@ permissions:
   contents: write
 
 jobs:
-  apply:
+  finalize:
     runs-on: ubuntu-24.04
     timeout-minutes: 10
     steps:
@@ -23,165 +23,25 @@ jobs:
         uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97
         with:
           python-version: '3.11'
-      - name: Make all seven required PR checks unconditional
+      - name: Generate manifest for the final tree without this one-shot workflow
+        shell: bash
         run: |
-          python - <<'PY'
-          from pathlib import Path
-
-          paths = [
-              '.github/workflows/tablet-gpt-tcg-grader-main-alignment.yml',
-              '.github/workflows/repository-integrity-guard.yml',
-              '.github/workflows/selfrefine-full-repo.yml',
-              '.github/workflows/deep-selfrefine-guard.yml',
-              '.github/workflows/exhaustive-selfrefine-guard.yml',
-              '.github/workflows/tablet-termux-main-guard.yml',
-              '.github/workflows/android-updater-guard.yml',
-          ]
-
-          def unconditional_pr(text: str) -> str:
-              lines = text.splitlines(keepends=True)
-              out = []
-              i = 0
-              found = False
-              while i < len(lines):
-                  line = lines[i]
-                  if line.rstrip('\r\n') == '  pull_request:':
-                      out.append(line)
-                      i += 1
-                      while i < len(lines):
-                          stripped = lines[i].rstrip('\r\n')
-                          if stripped.startswith('  ') and not stripped.startswith('    ') and stripped.strip():
-                              break
-                          if stripped and not stripped.startswith('    '):
-                              break
-                          i += 1
-                      found = True
-                      continue
-                  out.append(line)
-                  i += 1
-              if not found:
-                  raise SystemExit('pull_request trigger not found')
-              return ''.join(out)
-
-          for name in paths:
-              p = Path(name)
-              original = p.read_text(encoding='utf-8')
-              updated = unconditional_pr(original)
-              if updated == original:
-                  raise SystemExit(f'no trigger change: {name}')
-              p.write_text(updated, encoding='utf-8')
-              print('updated', name)
-          PY
-      - name: Add permanent read-only GPT Drive packaging lane
-        run: |
-          python - <<'PY'
-          from pathlib import Path
-          expr = '$' + '{{ github.ref }}'
-          text = f'''name: GPT TCG Drive Package
-
-          on:
-            push:
-              branches: [main]
-              paths:
-                - 'releases.json'
-                - 'promo_events.json'
-                - 'supplementary_candidates.json'
-                - 'social_event_candidates.json'
-                - 'purchase_signals.json'
-                - 'social_stock_signals.json'
-                - 'market_prices.json'
-                - 'market_watch.json'
-                - 'purchase_sources.json'
-                - 'exchange_rates.json'
-                - 'grading_company_updates.json'
-                - 'graded_photo_candidates.json'
-                - 'source_collection_stats.json'
-                - 'adaptive_collection_stats.json'
-                - 'auto_update_report.json'
-                - 'auto_update_issues.json'
-                - 'tcg_live_data.json'
-                - 'tablet_gdrive_publish.py'
-                - 'tablet_gdrive_sync.py'
-                - 'tablet_collection_publish.py'
-                - '.github/workflows/gpt-tcg-drive-package.yml'
-            workflow_dispatch:
-
-          permissions:
-            contents: read
-
-          concurrency:
-            group: gpt-tcg-drive-package-{expr}
-            cancel-in-progress: true
-
-          jobs:
-            package:
-              runs-on: ubuntu-24.04
-              timeout-minutes: 12
-              steps:
-                - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
-                  with:
-                    fetch-depth: 2
-                - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97
-                  with:
-                    python-version: '3.11'
-                - name: Build exact verified 17-JSON package
-                  run: python tablet_gdrive_publish.py --output-dir .tcg_drive_outbox
-                - name: Upload package for GPT Drive transfer
-                  uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
-                  with:
-                    name: tcg-gdrive-package
-                    path: .tcg_drive_outbox/*
-                    if-no-files-found: error
-                    retention-days: 7
-          '''
-          lines = [line[10:] if line.startswith('          ') else line for line in text.splitlines()]
-          Path('.github/workflows/gpt-tcg-drive-package.yml').write_text('\n'.join(lines) + '\n', encoding='utf-8')
-          PY
-      - name: Remove bootstrap and regenerate exact integrity manifest
-        run: |
+          set -euo pipefail
           rm .github/workflows/gpt-required-checks-bootstrap.yml
           python fault_injection_healing.py --manifest
           python fault_injection_healing.py --diagnose
           python -m json.tool integrity_manifest.json >/dev/null
           git diff --check
-      - name: Verify exact change surface
-        run: |
-          python - <<'PY'
-          import subprocess
-          expected = {
-              '.github/workflows/gpt-required-checks-bootstrap.yml',
-              '.github/workflows/tablet-gpt-tcg-grader-main-alignment.yml',
-              '.github/workflows/repository-integrity-guard.yml',
-              '.github/workflows/selfrefine-full-repo.yml',
-              '.github/workflows/deep-selfrefine-guard.yml',
-              '.github/workflows/exhaustive-selfrefine-guard.yml',
-              '.github/workflows/tablet-termux-main-guard.yml',
-              '.github/workflows/android-updater-guard.yml',
-              '.github/workflows/gpt-tcg-drive-package.yml',
-              'integrity_manifest.json',
-          }
-          rows = subprocess.check_output(['git','status','--porcelain'], text=True).splitlines()
-          names = {row[3:] for row in rows if len(row) > 3}
-          if names != expected:
-              raise SystemExit(f'unexpected bootstrap changes: {sorted(names ^ expected)}')
-          print('exact bootstrap change surface: PASS')
-          PY
-      - name: Commit verified result to existing PR branch
+      - name: Commit only the regenerated manifest
         shell: bash
         run: |
           set -euo pipefail
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git add -A -- \
-            .github/workflows/gpt-required-checks-bootstrap.yml \
-            .github/workflows/tablet-gpt-tcg-grader-main-alignment.yml \
-            .github/workflows/repository-integrity-guard.yml \
-            .github/workflows/selfrefine-full-repo.yml \
-            .github/workflows/deep-selfrefine-guard.yml \
-            .github/workflows/exhaustive-selfrefine-guard.yml \
-            .github/workflows/tablet-termux-main-guard.yml \
-            .github/workflows/android-updater-guard.yml \
-            .github/workflows/gpt-tcg-drive-package.yml \
-            integrity_manifest.json
-          git commit -m 'ci: make protected-main required checks unconditional'
+          git add -- integrity_manifest.json
+          if git diff --cached --quiet; then
+            echo 'integrity manifest already matches final tree'
+            exit 0
+          fi
+          git commit -m 'chore: refresh integrity manifest for required checks'
           git push origin "HEAD:${GITHUB_HEAD_REF}"
