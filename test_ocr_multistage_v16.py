@@ -141,7 +141,7 @@ class OcrMultistageV16Tests(unittest.TestCase):
 
     def test_browser_contract_reports_three_stage_analysis(self):
         source = (Path(__file__).resolve().parent / "card_identity_recognition.js").read_text(encoding="utf-8")
-        self.assertIn("v302-edition-aware-ocr-learning", source)
+        self.assertIn("v309-edition-isolated-ocr-learning", source)
         self.assertIn("1차 전체→2차 4분할→3차 8분할 완료", source)
         self.assertIn("setTimeout(()=>controller.abort(),120000)", source)
         self.assertIn("const retry=await request(effectiveRegion)", source)

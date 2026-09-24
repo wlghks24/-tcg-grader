@@ -148,7 +148,10 @@ function quoteScore(row,name,number,region){
  if(!row||row.platform!=='WYYYES')return -999;
  const title=norm(row.title),n=norm(name),cn=norm(number),qcn=norm(row.card_number);
  let score=0;
- if(cn&&qcn&&cn===qcn)score+=120;
+ if(cn){
+   if(!qcn||cn!==qcn)return -999;
+   score+=120;
+ }
  if(n&&n.length>=4&&(title.includes(n)||n.includes(title)))score+=50;
  const tokens=String(name||'').toLowerCase().match(/[0-9a-z가-힣]{2,}/g)||[];
  const hits=tokens.filter(t=>title.includes(norm(t))).length;
@@ -187,13 +190,18 @@ function renderPlatformQuotes(){
 function findMarketKey(name,number,region){
  const select=el('econCard');if(!select)return '';
  const wanted=editionCode(region),options=[...select.options].filter(option=>option.value);
- const direct=(el('identityMarketKey')?.value||'').trim();
- if(direct&&options.some(option=>option.value===direct)&&(wanted==='UNKNOWN'||marketKeyEdition(direct)===wanted))return direct;
- const n=norm(name),cn=norm(number),ranked=[];
+ const n=norm(name),cn=norm(number),direct=(el('identityMarketKey')?.value||'').trim();
+ const directOption=options.find(option=>option.value===direct);
+ if(directOption&&(wanted==='UNKNOWN'||marketKeyEdition(direct)===wanted)){
+   const directBlob=norm(directOption.textContent+' '+directOption.value);
+   if(!cn||directBlob.includes(cn))return direct;
+ }
+ const ranked=[];
  for(const option of options){
    const actual=marketKeyEdition(option.value);if(wanted!=='UNKNOWN'&&actual!==wanted)continue;
    const blob=norm(option.textContent+' '+option.value);let score=0;
-   if(cn&&blob.includes(cn))score+=100;
+   if(cn&&!blob.includes(cn))continue;
+   if(cn)score+=100;
    if(n&&n.length>=3&&blob.includes(n))score+=60;
    if(wanted!=='UNKNOWN'&&actual===wanted)score+=20;
    if(score>0)ranked.push({value:option.value,score});

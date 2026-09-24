@@ -21,7 +21,7 @@ from typing import Any
 from PIL import Image, ImageFilter, ImageOps
 
 from ocr_multistage_regions_v16 import STAGE_REGION_COUNTS, crop_region, region_specs
-from safe_runtime import atomic_write_json, safe_read_text
+from safe_runtime import atomic_write_json, exclusive_file_lock, safe_read_text
 
 ROOT = Path(__file__).resolve().parent
 MARKET = ROOT / "market_prices.json"
@@ -115,7 +115,11 @@ def infer_region_from_text(value: Any) -> str:
         return "US"
     hangul = len(re.findall(r"[가-힣]", text))
     kana = len(re.findall(r"[ぁ-んァ-ヶー]", text))
-    if hangul >= 2 and hangul >= kana:
+    # Mixed strong scripts are conflicting edition evidence. Do not pick a
+    # region by character-count tie breaking; require user/catalog confirmation.
+    if hangul >= 2 and kana >= 2:
+        return "UNKNOWN"
+    if hangul >= 2:
         return "KR"
     if kana >= 2:
         return "JP"
@@ -792,19 +796,37 @@ def match_learning(image_hash: str, game: str, region: str = "UNKNOWN") -> list[
     if not HASH_RE.fullmatch(image_hash or ""):
         return []
     requested_region = normalize_region(region)
+
+    def region_matches(row: dict[str, Any]) -> bool:
+        row_region = normalize_region(row.get("region"))
+        return requested_region == "UNKNOWN" or row_region == requested_region
+
     rows = [
         row for row in learning_payload().get("confirmed", [])
-        if isinstance(row, dict) and row.get("game") == game
-        and (requested_region == "UNKNOWN" or normalize_region(row.get("region")) in {"UNKNOWN", requested_region})
+        if isinstance(row, dict) and row.get("game") == game and region_matches(row)
     ]
-    identities = Counter((row.get("card_name"), row.get("card_number"), row.get("market_key")) for row in rows)
+    # Similar-image support is counted inside one exact edition only.
+    identities = Counter(
+        (
+            row.get("card_name"),
+            row.get("card_number"),
+            row.get("market_key"),
+            normalize_region(row.get("region")),
+        )
+        for row in rows
+    )
     hits = []
     for row in rows:
         stored = str(row.get("image_hash") or "")
         if not HASH_RE.fullmatch(stored):
             continue
         distance = _hamming(image_hash, stored)
-        identity = (row.get("card_name"), row.get("card_number"), row.get("market_key"))
+        identity = (
+            row.get("card_name"),
+            row.get("card_number"),
+            row.get("market_key"),
+            normalize_region(row.get("region")),
+        )
         exact = distance == 0
         if exact or (distance <= 8 and identities[identity] >= 3):
             hits.append({
@@ -816,7 +838,7 @@ def match_learning(image_hash: str, game: str, region: str = "UNKNOWN") -> list[
             })
     unique = {}
     for row in hits:
-        key = (row["card_name"], row["card_number"], row["market_key"])
+        key = (row["card_name"], row["card_number"], row["market_key"], normalize_region(row.get("region")))
         if key not in unique or row["confidence"] > unique[key]["confidence"]:
             unique[key] = row
     return sorted(unique.values(), key=lambda row: -row["confidence"])[:5]
@@ -839,11 +861,15 @@ def recognize(payload: dict[str, Any]) -> dict[str, Any]:
             data, game=game, region=region, seed_text=supplied_text
         )
         supplied_text = (supplied_text + " " + text).strip()[:MAX_OCR_TEXT]
-    if region == "UNKNOWN":
-        inferred_region = infer_region_from_text(supplied_text)
-        if inferred_region != "UNKNOWN":
-            region = inferred_region
-    elif not HASH_RE.fullmatch(image_hash):
+    inferred_region = infer_region_from_text(supplied_text)
+    region_conflict = (
+        region in {"KR", "JP", "US"}
+        and inferred_region in {"KR", "JP", "US"}
+        and inferred_region != region
+    )
+    if region == "UNKNOWN" and inferred_region != "UNKNOWN":
+        region = inferred_region
+    elif region != "UNKNOWN" and not HASH_RE.fullmatch(image_hash):
         raise ValueError("이미지 또는 특징값 필요")
     learned = match_learning(image_hash, game, region)
     catalog_hits = match_catalog(supplied_text, game, region=region)
@@ -855,7 +881,8 @@ def recognize(payload: dict[str, Any]) -> dict[str, Any]:
             unique[key] = row
     candidates = sorted(unique.values(), key=lambda row: -row["confidence"])[:5]
     return {
-        "ok": True, "game": game, "region_hint": region, "image_hash": image_hash, "ocr_text": supplied_text,
+        "ok": True, "game": game, "region_hint": region, "inferred_region": inferred_region,
+        "region_conflict": region_conflict, "image_hash": image_hash, "ocr_text": supplied_text,
         "ocr_error": ocr_error, "ocr_diagnostics": ocr_diagnostics,
         "numbers_detected": extract_numbers(supplied_text),
         "candidates": candidates, "best": candidates[0] if candidates else None,
@@ -885,29 +912,91 @@ def save_confirmation(payload: dict[str, Any]) -> dict[str, Any]:
     known = {row["market_key"]: row for row in catalog()}
     if market_key and market_key not in known:
         raise ValueError("시세 키 오류")
-    region = str(payload.get("region") or (known.get(market_key) or {}).get("region") or "UNKNOWN").upper()
-    if region not in REGIONS:
-        region = "UNKNOWN"
-    data = learning_payload()
-    identity = (card_name, card_number, market_key, game, region)
-    same_hash = [row for row in data["confirmed"] if row.get("image_hash") == image_hash]
-    if any((row.get("card_name"), row.get("card_number"), row.get("market_key"), row.get("game"), normalize_region(row.get("region"))) != identity for row in same_hash):
-        conflict = {"image_hash": image_hash, "card_name": card_name, "card_number": card_number,
-                    "market_key": market_key, "game": game, "reason": "same_image_conflicting_identity"}
-        data["conflicts"] = (data["conflicts"] + [conflict])[-200:]
+    incoming_region = normalize_region(
+        payload.get("region") or (known.get(market_key) or {}).get("region") or "UNKNOWN"
+    )
+    core_identity = (card_name, card_number, market_key, game)
+
+    with exclusive_file_lock(LEARNING, timeout_seconds=10.0, stale_seconds=300.0):
+        data = learning_payload()
+        confirmed = [row for row in data.get("confirmed", []) if isinstance(row, dict)]
+        effective_region = incoming_region
+        conflicting = False
+
+        for item in confirmed:
+            if item.get("image_hash") != image_hash:
+                continue
+            item_core = (
+                item.get("card_name"),
+                item.get("card_number"),
+                item.get("market_key"),
+                item.get("game"),
+            )
+            if item_core != core_identity:
+                conflicting = True
+                break
+            old_region = normalize_region(item.get("region"))
+            if old_region in {"KR", "JP", "US"} and incoming_region in {"KR", "JP", "US"} and old_region != incoming_region:
+                conflicting = True
+                break
+            if old_region in {"KR", "JP", "US"} and incoming_region == "UNKNOWN":
+                effective_region = old_region
+
+        if conflicting:
+            conflict = {
+                "image_hash": image_hash, "card_name": card_name, "card_number": card_number,
+                "market_key": market_key, "game": game, "region": incoming_region,
+                "reason": "same_image_conflicting_identity_or_edition",
+            }
+            data["conflicts"] = (list(data.get("conflicts", [])) + [conflict])[-200:]
+            atomic_write_json(LEARNING, data, suffix=".identity.tmp")
+            return {"ok": False, "conflict": True, "saved": False}
+
+        promoted = False
+        if effective_region in {"KR", "JP", "US"}:
+            for item in confirmed:
+                item_core = (
+                    item.get("card_name"),
+                    item.get("card_number"),
+                    item.get("market_key"),
+                    item.get("game"),
+                )
+                if (
+                    item.get("image_hash") == image_hash
+                    and item_core == core_identity
+                    and normalize_region(item.get("region")) == "UNKNOWN"
+                ):
+                    item["region"] = effective_region
+                    promoted = True
+
+        identity = (*core_identity, effective_region)
+        keys = {
+            (
+                item.get("image_hash"), item.get("card_name"), item.get("card_number"),
+                item.get("market_key"), item.get("game"), normalize_region(item.get("region")),
+            )
+            for item in confirmed
+        }
+        if (image_hash, *identity) not in keys:
+            confirmed.append({
+                "image_hash": image_hash, "card_name": card_name, "card_number": card_number,
+                "market_key": market_key, "game": game, "region": effective_region, "confirmed": True,
+            })
+        data["confirmed"] = confirmed[-MAX_ROWS:]
+        data.update({"version": 1, "confirmed_only": True, "auto_prediction_learning": False})
         atomic_write_json(LEARNING, data, suffix=".identity.tmp")
-        return {"ok": False, "conflict": True, "saved": False}
-    row = {"image_hash": image_hash, "card_name": card_name, "card_number": card_number,
-           "market_key": market_key, "game": game, "region": region, "confirmed": True}
-    keys = {(item.get("image_hash"), item.get("card_name"), item.get("card_number"), item.get("market_key"), item.get("game"), normalize_region(item.get("region")))
-            for item in data["confirmed"]}
-    if (image_hash, card_name, card_number, market_key, game, region) not in keys:
-        data["confirmed"] = (data["confirmed"] + [row])[-MAX_ROWS:]
-    data.update({"version": 1, "confirmed_only": True, "auto_prediction_learning": False})
-    atomic_write_json(LEARNING, data, suffix=".identity.tmp")
-    count = sum(1 for item in data["confirmed"] if (item.get("card_name"), item.get("card_number"), item.get("market_key"), item.get("game"), normalize_region(item.get("region"))) == identity)
-    return {"ok": True, "saved": True, "identity_confirmations": count,
-            "similar_image_learning_enabled": count >= 3}
+        count = sum(
+            1 for item in data["confirmed"]
+            if (
+                item.get("card_name"), item.get("card_number"), item.get("market_key"),
+                item.get("game"), normalize_region(item.get("region")),
+            ) == identity
+        )
+        return {
+            "ok": True, "saved": True, "promoted_region": promoted,
+            "region": effective_region, "identity_confirmations": count,
+            "similar_image_learning_enabled": count >= 3,
+        }
 
 
 def self_test() -> dict[str, Any]:

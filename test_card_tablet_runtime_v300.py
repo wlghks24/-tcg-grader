@@ -98,14 +98,15 @@ class CardTabletRuntimeV300Tests(unittest.TestCase):
             "const retry=await request(effectiveRegion)",
             "identityCoreKey",
             "oldRegion!=='UNKNOWN'&&targetRegion!=='UNKNOWN'&&oldRegion!==targetRegion",
-            "version:'v306'",
+            "version:'v309'",
         ):
             self.assertIn(token, identity)
         for token in (
             "function marketKeyEdition",
             "function editionSearchToken",
             "function findMarketKey(name,number,region)",
-            "wanted==='UNKNOWN'||marketKeyEdition(direct)===wanted",
+            "if(!cn||directBlob.includes(cn))return direct",
+            "if(cn&&!blob.includes(cn))continue",
             "if(wanted!=='UNKNOWN'&&actual!==wanted)continue",
             "ranked[0].score===ranked[1].score",
             "findMarketKey(name,number,region)",
@@ -132,6 +133,8 @@ class CardTabletRuntimeV300Tests(unittest.TestCase):
             "test_card_regression_gate_v299.py",
             "test_card_tablet_runtime_v300.py",
             "test_card_edition_precision_v302.py",
+            "test_card_region_generation_precision_v306.py",
+            "test_card_identity_market_precision_v309.py",
             "test_multi_market_price_collector.py",
             "test_tablet_runtime_manifest_ui_assets_v254.py",
         ):

@@ -30,8 +30,10 @@ class CardRegionGenerationPrecisionV306Tests(unittest.TestCase):
 
     def test_confirmation_identity_includes_region(self) -> None:
         source=(ROOT/'card_identity_recognition.py').read_text(encoding='utf-8')
-        self.assertIn('identity = (card_name, card_number, market_key, game, region)', source)
-        self.assertIn('normalize_region(row.get("region"))) != identity', source)
+        self.assertIn('core_identity = (card_name, card_number, market_key, game)', source)
+        self.assertIn('identity = (*core_identity, effective_region)', source)
+        self.assertIn('with exclusive_file_lock(LEARNING', source)
+        self.assertIn('same_image_conflicting_identity_or_edition', source)
 
     def test_market_html_escape_and_exact_grade_contract(self) -> None:
         source=(ROOT/'grade_market_flow.js').read_text(encoding='utf-8')
@@ -43,7 +45,7 @@ class CardRegionGenerationPrecisionV306Tests(unittest.TestCase):
     def test_generation_runtime(self) -> None:
         proc=subprocess.run(['node','verify_pokemon_generation_runtime.js'],cwd=ROOT,text=True,capture_output=True,timeout=30,check=False)
         self.assertEqual(0,proc.returncode,proc.stdout+proc.stderr)
-        self.assertIn('Pokémon generation runtime v306: PASS',proc.stdout)
+        self.assertIn('Pokémon generation runtime v309: PASS',proc.stdout)
 
 
 if __name__ == '__main__':

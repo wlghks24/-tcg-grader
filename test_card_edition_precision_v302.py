@@ -38,8 +38,10 @@ class CardEditionPrecisionV302Tests(unittest.TestCase):
         self.assertIn("requestRegion=selected!=='UNKNOWN'?selected:browserRegion.region", source)
         self.assertIn("selected==='UNKNOWN'&&requestRegion==='UNKNOWN'&&effectiveRegion!=='UNKNOWN'", source)
         self.assertIn("const retry=await request(effectiveRegion)", source)
+        self.assertIn("if(hangul>=2&&kana>=2)return {region:'UNKNOWN'", source)
+        self.assertIn("mixed_script_conflict", source)
         self.assertIn("if(kana>=2)return {region:'JP'", source)
-        self.assertIn("if(hangul>=2&&hangul>=kana)return {region:'KR'", source)
+        self.assertIn("if(hangul>=2)return {region:'KR'", source)
         self.assertIn("if(englishSet)return {region:'US'", source)
         self.assertIn("return {region:'UNKNOWN',confidence:0,basis:'insufficient_evidence'}", source)
 
@@ -85,7 +87,7 @@ class CardEditionPrecisionV302Tests(unittest.TestCase):
             check=False,
         )
         self.assertEqual(0, result.returncode, result.stdout + result.stderr)
-        self.assertIn("Pokémon generation runtime v306: PASS", result.stdout)
+        self.assertIn("Pokémon generation runtime v309: PASS", result.stdout)
 
 
 if __name__ == "__main__":
