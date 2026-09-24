@@ -44,6 +44,7 @@ jobs:
             git add integrity_manifest.json
           fi
           git rm .github/workflows/pr-card-main-sync-v307.yml
+          python -m pip install --disable-pip-version-check pillow
           python fault_injection_healing.py --manifest
           python -m py_compile card_identity_recognition.py verify_current_runtime.py test_card_region_generation_precision_v306.py test_protected_static_pipeline_v305.py
           node --check card_identity_recognition.js
