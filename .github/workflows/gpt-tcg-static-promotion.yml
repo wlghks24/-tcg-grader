@@ -7,14 +7,14 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: write
+  contents: read
 
 concurrency:
   group: gpt-required-check-bootstrap-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
-  generate-fix-branch:
+  generate-fix-artifact:
     runs-on: ubuntu-24.04
     timeout-minutes: 10
     steps:
@@ -22,7 +22,7 @@ jobs:
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
         with:
           ref: ${{ github.event.pull_request.base.sha }}
-          fetch-depth: 0
+          fetch-depth: 2
 
       - name: Set up Python
         uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97
@@ -162,26 +162,16 @@ jobs:
               '.github/workflows/gpt-tcg-drive-package.yml',
               'integrity_manifest.json',
           }
-          changed = set(subprocess.check_output(['git','status','--porcelain'], text=True).splitlines())
-          names = {row[3:] for row in changed if len(row) > 3}
+          rows = subprocess.check_output(['git','status','--porcelain'], text=True).splitlines()
+          names = {row[3:] for row in rows if len(row) > 3}
           if names != expected:
               raise SystemExit(f'unexpected bootstrap changes: {sorted(names ^ expected)}')
           print('bootstrap file set: PASS')
           PY
 
-      - name: Push isolated fix branch
-        shell: bash
-        env:
-          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+      - name: Pack exact generated patch inputs
         run: |
-          set -euo pipefail
-          git fetch origin main
-          test "$(git rev-parse origin/main)" = "$BASE_SHA"
-          branch="fix/required-checks-always-run-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}"
-          git switch -c "$branch"
-          git config user.name 'github-actions[bot]'
-          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git add -- \
+          tar -czf GPT_REQUIRED_CHECK_FIX.tar.gz \
             .github/workflows/tablet-gpt-tcg-grader-main-alignment.yml \
             .github/workflows/repository-integrity-guard.yml \
             .github/workflows/selfrefine-full-repo.yml \
@@ -191,14 +181,14 @@ jobs:
             .github/workflows/android-updater-guard.yml \
             .github/workflows/gpt-tcg-drive-package.yml \
             integrity_manifest.json
-          git commit -m 'ci: make protected-main required checks unconditional'
-          git push origin "HEAD:refs/heads/$branch"
-          printf '%s\n' "$branch" > GENERATED_FIX_BRANCH.txt
+          sha256sum GPT_REQUIRED_CHECK_FIX.tar.gz > GPT_REQUIRED_CHECK_FIX.sha256
 
-      - name: Upload bootstrap receipt
+      - name: Upload verified bootstrap patch
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
         with:
-          name: gpt-required-check-bootstrap-receipt
-          path: GENERATED_FIX_BRANCH.txt
+          name: gpt-required-check-fix
+          path: |
+            GPT_REQUIRED_CHECK_FIX.tar.gz
+            GPT_REQUIRED_CHECK_FIX.sha256
           if-no-files-found: error
           retention-days: 7
