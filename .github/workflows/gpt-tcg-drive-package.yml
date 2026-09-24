@@ -21,10 +21,6 @@ on:
       - 'auto_update_report.json'
       - 'auto_update_issues.json'
       - 'tcg_live_data.json'
-      - 'tablet_gdrive_publish.py'
-      - 'tablet_gdrive_sync.py'
-      - 'tablet_collection_publish.py'
-      - '.github/workflows/gpt-tcg-drive-package.yml'
   workflow_dispatch:
 
 permissions:
