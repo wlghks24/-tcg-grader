@@ -53,6 +53,7 @@ def main() -> int:
     test_path = ROOT / "test_card_region_generation_precision_v306.py"
     text = test_path.read_text(encoding="utf-8")
     old = '        self.assertIn("\'\\\\\\\"\':\'&quot;\'", source)\n'
+    replacement = "        self.assertIn(\"&quot;\", source)\n        self.assertNotIn(\"&quot'\", source)\n"
     if old not in text:
         # Accept the exact generated line when represented by Python differently.
         lines = text.splitlines(True)
@@ -61,10 +62,10 @@ def main() -> int:
             raise SystemExit(f"v306 html assertion: expected one line, found {len(matches)}")
         idx = matches[0]
         lines[idx] = '        self.assertIn("&quot;", source)\n'
-        lines.insert(idx + 1, '        self.assertNotIn("&quot\'", source)\n')
+        lines.insert(idx + 1, "        self.assertNotIn(\"&quot'\", source)\n")
         text = "".join(lines)
     else:
-        text = text.replace(old, '        self.assertIn("&quot;", source)\n        self.assertNotIn("&quot\'", source)\n', 1)
+        text = text.replace(old, replacement, 1)
     test_path.write_text(text, encoding="utf-8")
 
     # Legacy v252 asserted a particular source spelling. The current code is more
