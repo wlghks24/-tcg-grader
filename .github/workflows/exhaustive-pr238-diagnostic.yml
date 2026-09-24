@@ -1,0 +1,56 @@
+name: PR238 Exhaustive Root Diagnostic
+
+on:
+  push:
+    branches: [audit/card-edition-ocr-generation-v302]
+    paths:
+      - '.github/workflows/exhaustive-pr238-diagnostic.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  diagnose:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          ref: audit/card-edition-ocr-generation-v302
+          fetch-depth: 0
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97
+        with:
+          python-version: '3.12'
+      - run: |
+          python -m pip install --disable-pip-version-check -r requirements.txt
+          python -m pip install --disable-pip-version-check pyyaml
+      - name: Isolate failing root test modules
+        env:
+          TCG_REQUIRE_NODE: '1'
+        run: |
+          set +e
+          : > EXHAUSTIVE_DIAGNOSTIC.txt
+          total=0
+          failed=0
+          for file in test_*.py; do
+            [ -f "$file" ] || continue
+            total=$((total+1))
+            python -m unittest discover -v -s . -p "$file" > /tmp/test.out 2>&1
+            rc=$?
+            if [ "$rc" -eq 5 ]; then
+              python selfrefine_standalone_test_runner.py "$file" > /tmp/test.out 2>&1
+              rc=$?
+            fi
+            if [ "$rc" -ne 0 ]; then
+              failed=$((failed+1))
+              echo "$file rc=$rc" >> EXHAUSTIVE_DIAGNOSTIC.txt
+              tail -n 80 /tmp/test.out >> EXHAUSTIVE_DIAGNOSTIC.txt
+              echo '---' >> EXHAUSTIVE_DIAGNOSTIC.txt
+            fi
+          done
+          echo "TOTAL=$total FAILED=$failed" >> EXHAUSTIVE_DIAGNOSTIC.txt
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add EXHAUSTIVE_DIAGNOSTIC.txt
+          git commit -m 'ci: record PR238 exhaustive failure diagnostic'
+          git push origin HEAD:audit/card-edition-ocr-generation-v302
