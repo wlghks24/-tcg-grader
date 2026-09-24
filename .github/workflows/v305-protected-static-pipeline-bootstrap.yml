@@ -1,0 +1,394 @@
+name: Protected Static Data Pipeline v305 Bootstrap
+
+on:
+  pull_request:
+    paths:
+      - '.github/workflows/v305-protected-static-pipeline-bootstrap.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  apply:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - name: Checkout PR head branch
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          ref: ${{ github.head_ref }}
+          fetch-depth: 0
+
+      - name: Set up Python
+        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97
+        with:
+          python-version: '3.11'
+
+      - name: Apply protected-main compatible static-data pipeline
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          from pathlib import Path
+
+          refresh_path = Path('.github/workflows/tcg-static-data-refresh.yml')
+          refresh = refresh_path.read_text(encoding='utf-8')
+          old_permissions = "permissions:\n  contents: write\n"
+          new_permissions = "permissions:\n  actions: write\n  checks: read\n  contents: write\n  pull-requests: write\n"
+          if old_permissions not in refresh:
+              raise SystemExit('static refresh permissions marker not found')
+          refresh = refresh.replace(old_permissions, new_permissions, 1)
+          refresh = refresh.replace('    timeout-minutes: 35\n', '    timeout-minutes: 55\n', 1)
+
+          start_marker = '      - name: Commit validated static data snapshot\n'
+          end_marker = '      - name: Upload publish evidence\n'
+          start = refresh.find(start_marker)
+          end = refresh.find(end_marker, start + 1)
+          if start < 0 or end < 0 or end <= start:
+              raise SystemExit('static refresh commit block markers not found')
+
+          replacement = r'''      - name: Commit validated static data candidate
+        id: candidate
+        if: steps.stage.outputs.changed == 'true'
+        shell: bash
+        run: |
+          set -euo pipefail
+          # Recheck the exact staged snapshot before it leaves this runner.
+          python fault_injection_healing.py --diagnose
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          import fault_injection_healing as healing
+
+          root = Path('.').resolve()
+          payload = json.loads((root / 'integrity_manifest.json').read_text(encoding='utf-8'))
+          listed = set((payload.get('files') or {}).keys())
+          current = {path.relative_to(root).as_posix() for path in healing.tracked_files(root)}
+          if listed != current:
+              raise SystemExit(f'integrity manifest coverage mismatch: missing={sorted(current-listed)[:20]} extra={sorted(listed-current)[:20]}')
+          PY
+          git add -- integrity_manifest.json
+          git diff --cached --check
+
+          base_sha="$(git rev-parse HEAD)"
+          candidate_branch="auto/static-data-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}"
+          git switch -c "${candidate_branch}"
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git commit -m 'data: refresh validated TCG static snapshot'
+          candidate_sha="$(git rev-parse HEAD)"
+
+          # Strict branch freshness: never publish a candidate whose parent is no
+          # longer the exact protected main tip.
+          git fetch origin main
+          if [ "$(git rev-parse origin/main)" != "${base_sha}" ]; then
+            echo "published=false" >> "$GITHUB_OUTPUT"
+            echo "reason=main advanced after validation; discard local candidate" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          git push origin "HEAD:refs/heads/${candidate_branch}"
+          export BASE_SHA="${base_sha}" CANDIDATE_BRANCH="${candidate_branch}" CANDIDATE_SHA="${candidate_sha}"
+          python - <<'PY'
+          import hashlib
+          import json
+          import os
+          from pathlib import Path
+
+          names = tuple('releases.json promo_events.json supplementary_candidates.json social_event_candidates.json purchase_signals.json social_stock_signals.json market_prices.json market_watch.json purchase_sources.json exchange_rates.json grading_company_updates.json graded_photo_candidates.json source_collection_stats.json adaptive_collection_stats.json auto_update_report.json auto_update_issues.json tcg_live_data.json'.split())
+          files = []
+          for name in names:
+              raw = Path(name).read_bytes()
+              json.loads(raw)
+              files.append({'name': name, 'bytes': len(raw), 'sha256': hashlib.sha256(raw).hexdigest()})
+          payload = {
+              'schema_version': 1,
+              'repository': os.environ['GITHUB_REPOSITORY'],
+              'run_id': os.environ['GITHUB_RUN_ID'],
+              'run_attempt': int(os.environ['GITHUB_RUN_ATTEMPT']),
+              'base_sha': os.environ['BASE_SHA'],
+              'candidate_branch': os.environ['CANDIDATE_BRANCH'],
+              'candidate_sha': os.environ['CANDIDATE_SHA'],
+              'files': files,
+          }
+          Path('STATIC_DATA_CANDIDATE.json').write_text(json.dumps(payload, ensure_ascii=False, indent=2) + '\n', encoding='utf-8')
+          PY
+          echo "branch=${candidate_branch}" >> "$GITHUB_OUTPUT"
+          echo "commit=${candidate_sha}" >> "$GITHUB_OUTPUT"
+          echo "base=${base_sha}" >> "$GITHUB_OUTPUT"
+          echo "published=true" >> "$GITHUB_OUTPUT"
+          echo "reason=validated candidate branch published" >> "$GITHUB_OUTPUT"
+
+      - name: Upload protected-main candidate evidence
+        if: steps.candidate.outputs.published == 'true'
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        with:
+          name: tcg-static-data-candidate-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            STATIC_DATA_CANDIDATE.json
+            releases.json
+            promo_events.json
+            supplementary_candidates.json
+            social_event_candidates.json
+            purchase_signals.json
+            social_stock_signals.json
+            market_prices.json
+            market_watch.json
+            purchase_sources.json
+            exchange_rates.json
+            grading_company_updates.json
+            graded_photo_candidates.json
+            source_collection_stats.json
+            adaptive_collection_stats.json
+            auto_update_report.json
+            auto_update_issues.json
+            tcg_live_data.json
+            integrity_manifest.json
+            STATIC_DATA_PUBLISH_REPORT.json
+          if-no-files-found: error
+          retention-days: 14
+
+      - name: Promote candidate through protected main
+        id: promote
+        if: steps.candidate.outputs.published == 'true'
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+          CANDIDATE_BRANCH: ${{ steps.candidate.outputs.branch }}
+          CANDIDATE_SHA: ${{ steps.candidate.outputs.commit }}
+          BASE_SHA: ${{ steps.candidate.outputs.base }}
+        run: |
+          set -euo pipefail
+          owner="${GITHUB_REPOSITORY_OWNER}"
+          pr_number="$(gh api -X GET "repos/${REPO}/pulls" \
+            -f state=open -f head="${owner}:${CANDIDATE_BRANCH}" -f base=main \
+            --jq '.[0].number // empty')"
+
+          if [ -z "${pr_number}" ]; then
+            title="data: validated static snapshot ${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}"
+            body="Protected-main candidate from TCG Static Data Refresh. Base: ${BASE_SHA}. Candidate: ${CANDIDATE_SHA}. Run: ${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}. Only validated public JSON and integrity metadata are eligible."
+            if ! pr_json="$(gh api --method POST "repos/${REPO}/pulls" \
+              -f title="${title}" -f head="${CANDIDATE_BRANCH}" -f base=main -f body="${body}" 2>/tmp/create-pr.err)"; then
+              cat /tmp/create-pr.err >&2 || true
+              echo 'status=PENDING_EXTERNAL_PR' >> "$GITHUB_OUTPUT"
+              echo 'GitHub Actions PR creation is unavailable; candidate branch is retained for external protected-main promotion.'
+              exit 0
+            fi
+            pr_number="$(printf '%s' "${pr_json}" | jq -r '.number')"
+          fi
+          echo "pr_number=${pr_number}" >> "$GITHUB_OUTPUT"
+
+          required_workflows=(
+            tablet-gpt-tcg-grader-main-alignment.yml
+            repository-integrity-guard.yml
+            selfrefine-full-repo.yml
+            deep-selfrefine-guard.yml
+            exhaustive-selfrefine-guard.yml
+            tablet-termux-main-guard.yml
+            android-updater-guard.yml
+          )
+          for workflow in "${required_workflows[@]}"; do
+            gh api --method POST "repos/${REPO}/actions/workflows/${workflow}/dispatches" -f ref="${CANDIDATE_BRANCH}"
+          done
+
+          required_checks=(
+            'Tablet GPT TCG Grader Main Alignment'
+            'Repository Integrity Guard'
+            'Main SELFREFINE'
+            'Deep SELFREFINE Guard'
+            'Exhaustive SELFREFINE Guard'
+            'Tablet Termux Main Guard'
+            'Android Updater Guard'
+          )
+          deadline=$((SECONDS + 1200))
+          while (( SECONDS < deadline )); do
+            checks="$(gh api -H 'Accept: application/vnd.github+json' "repos/${REPO}/commits/${CANDIDATE_SHA}/check-runs?per_page=100")"
+            pending=0
+            failed=0
+            for name in "${required_checks[@]}"; do
+              state="$(printf '%s' "${checks}" | jq -r --arg name "${name}" '[.check_runs[] | select(.name == $name)] | sort_by(.started_at // "") | last | if . == null then "missing" elif .status != "completed" then .status else (.conclusion // "unknown") end')"
+              printf '%s: %s\n' "${name}" "${state}"
+              case "${state}" in
+                success) ;;
+                failure|cancelled|timed_out|action_required|stale|skipped|neutral) failed=1 ;;
+                *) pending=1 ;;
+              esac
+            done
+            if (( failed )); then
+              echo 'status=REQUIRED_CHECK_FAILED' >> "$GITHUB_OUTPUT"
+              exit 1
+            fi
+            if (( ! pending )); then
+              break
+            fi
+            sleep 20
+          done
+          if (( SECONDS >= deadline )); then
+            echo 'status=REQUIRED_CHECK_TIMEOUT' >> "$GITHUB_OUTPUT"
+            exit 1
+          fi
+
+          git fetch origin main
+          if [ "$(git rev-parse origin/main)" != "${BASE_SHA}" ]; then
+            echo 'status=BASE_ADVANCED' >> "$GITHUB_OUTPUT"
+            echo 'Protected main advanced before merge; leave the candidate PR open and wait for a fresh collection run.'
+            exit 0
+          fi
+
+          merge_json="$(gh api --method PUT "repos/${REPO}/pulls/${pr_number}/merge" -f merge_method=merge -f sha="${CANDIDATE_SHA}")"
+          if [ "$(printf '%s' "${merge_json}" | jq -r '.merged')" != 'true' ]; then
+            printf '%s\n' "${merge_json}" >&2
+            echo 'status=MERGE_REJECTED' >> "$GITHUB_OUTPUT"
+            exit 1
+          fi
+          echo 'status=MERGED' >> "$GITHUB_OUTPUT"
+
+          # GITHUB_TOKEN-generated merge events do not reliably fan out to new
+          # workflows, so explicitly dispatch the exact-main Drive package lane.
+          gh api --method POST "repos/${REPO}/actions/workflows/gpt-tcg-drive-package.yml/dispatches" -f ref=main
+
+'''
+          refresh = refresh[:start] + replacement + refresh[end:]
+          refresh = refresh.replace('            echo "- publish policy: validated public JSON only; no force push"\n', '            echo "- publish policy: validated candidate branch -> PR -> seven required checks -> protected-main merge; no direct/force push"\n            echo "- candidate branch: ${{ steps.candidate.outputs.branch || \'none\' }}"\n            echo "- promotion status: ${{ steps.promote.outputs.status || \'not-attempted\' }}"\n', 1)
+          if 'git push origin HEAD:main' in refresh:
+              raise SystemExit('direct main push still present')
+          refresh_path.write_text(refresh, encoding='utf-8')
+
+          package_path = Path('.github/workflows/gpt-tcg-drive-package.yml')
+          package = package_path.read_text(encoding='utf-8')
+          for line in (
+              "      - 'tablet_gdrive_publish.py'\n",
+              "      - 'tablet_gdrive_sync.py'\n",
+              "      - 'tablet_collection_publish.py'\n",
+              "      - '.github/workflows/gpt-tcg-drive-package.yml'\n",
+          ):
+              if line not in package:
+                  raise SystemExit(f'package trigger marker missing: {line.strip()}')
+              package = package.replace(line, '', 1)
+          package_path.write_text(package, encoding='utf-8')
+
+          guard_path = Path('.github/workflows/repository-integrity-guard.yml')
+          guard = guard_path.read_text(encoding='utf-8')
+          old = 'python -m unittest -v test_code_map_fast_route_v195.py test_ai_auto_tracker.py test_market_ai_auto_tracker.py'
+          new = old + ' test_protected_static_pipeline_v305.py'
+          if old not in guard:
+              raise SystemExit('repository integrity test marker missing')
+          guard_path.write_text(guard.replace(old, new, 1), encoding='utf-8')
+
+          test = r'''import unittest
+from pathlib import Path
+
+
+class ProtectedStaticPipelineV305Tests(unittest.TestCase):
+    def setUp(self):
+        self.refresh = Path('.github/workflows/tcg-static-data-refresh.yml').read_text(encoding='utf-8')
+        self.package = Path('.github/workflows/gpt-tcg-drive-package.yml').read_text(encoding='utf-8')
+
+    def test_static_refresh_never_direct_pushes_main(self):
+        self.assertNotIn('git push origin HEAD:main', self.refresh)
+        self.assertIn('auto/static-data-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}', self.refresh)
+        self.assertIn('pull-requests: write', self.refresh)
+        self.assertIn('actions: write', self.refresh)
+        self.assertIn('checks: read', self.refresh)
+
+    def test_exact_required_checks_are_dispatched_before_merge(self):
+        workflows = (
+            'tablet-gpt-tcg-grader-main-alignment.yml',
+            'repository-integrity-guard.yml',
+            'selfrefine-full-repo.yml',
+            'deep-selfrefine-guard.yml',
+            'exhaustive-selfrefine-guard.yml',
+            'tablet-termux-main-guard.yml',
+            'android-updater-guard.yml',
+        )
+        checks = (
+            'Tablet GPT TCG Grader Main Alignment',
+            'Repository Integrity Guard',
+            'Main SELFREFINE',
+            'Deep SELFREFINE Guard',
+            'Exhaustive SELFREFINE Guard',
+            'Tablet Termux Main Guard',
+            'Android Updater Guard',
+        )
+        for value in workflows + checks:
+            self.assertIn(value, self.refresh)
+        self.assertIn("if [ \"$(git rev-parse origin/main)\" != \"${BASE_SHA}\" ]", self.refresh)
+        self.assertIn("-f merge_method=merge -f sha=\"${CANDIDATE_SHA}\"", self.refresh)
+
+    def test_drive_package_push_trigger_is_data_only(self):
+        push = self.package.split('  push:\n', 1)[1].split('  workflow_dispatch:\n', 1)[0]
+        for forbidden in (
+            'tablet_gdrive_publish.py',
+            'tablet_gdrive_sync.py',
+            'tablet_collection_publish.py',
+            '.github/workflows/gpt-tcg-drive-package.yml',
+        ):
+            self.assertNotIn(forbidden, push)
+        for required in (
+            'releases.json', 'promo_events.json', 'supplementary_candidates.json',
+            'social_event_candidates.json', 'purchase_signals.json', 'social_stock_signals.json',
+            'market_prices.json', 'market_watch.json', 'purchase_sources.json', 'exchange_rates.json',
+            'grading_company_updates.json', 'graded_photo_candidates.json', 'source_collection_stats.json',
+            'adaptive_collection_stats.json', 'auto_update_report.json', 'auto_update_issues.json',
+            'tcg_live_data.json',
+        ):
+            self.assertIn(required, push)
+        self.assertIn('  workflow_dispatch:', self.package)
+
+    def test_external_pr_fallback_is_explicit_and_non_bypass(self):
+        self.assertIn('PENDING_EXTERNAL_PR', self.refresh)
+        self.assertNotIn('--admin', self.refresh)
+        self.assertNotIn('--force', self.refresh)
+        self.assertIn('gpt-tcg-drive-package.yml/dispatches', self.refresh)
+
+
+if __name__ == '__main__':
+    unittest.main()
+'''
+          Path('test_protected_static_pipeline_v305.py').write_text(test, encoding='utf-8')
+          PY
+
+      - name: Validate transformed pipeline
+        run: |
+          python -m unittest -v test_protected_static_pipeline_v305.py
+          git diff --check
+
+      - name: Regenerate integrity manifest for final tree
+        shell: bash
+        run: |
+          set -euo pipefail
+          rm .github/workflows/v305-protected-static-pipeline-bootstrap.yml
+          python fault_injection_healing.py --manifest
+          python fault_injection_healing.py --diagnose
+          python -m json.tool integrity_manifest.json >/dev/null
+          git diff --check
+
+      - name: Commit final protected pipeline files
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add -- \
+            .github/workflows/tcg-static-data-refresh.yml \
+            .github/workflows/gpt-tcg-drive-package.yml \
+            .github/workflows/repository-integrity-guard.yml \
+            test_protected_static_pipeline_v305.py \
+            integrity_manifest.json
+          python - <<'PY'
+          import subprocess
+          expected = {
+              '.github/workflows/tcg-static-data-refresh.yml',
+              '.github/workflows/gpt-tcg-drive-package.yml',
+              '.github/workflows/repository-integrity-guard.yml',
+              'test_protected_static_pipeline_v305.py',
+              'integrity_manifest.json',
+          }
+          staged = set(subprocess.check_output(['git','diff','--cached','--name-only'], text=True).splitlines())
+          if staged != expected:
+              raise SystemExit(f'unexpected staged files: {sorted(staged ^ expected)}')
+          PY
+          git commit -m 'ci: make static refresh protection-safe'
+          git push origin "HEAD:${GITHUB_HEAD_REF}"
