@@ -29,6 +29,7 @@ concurrency:
 
 jobs:
   exhaustive:
+    name: Exhaustive SELFREFINE Guard
     runs-on: ubuntu-latest
     timeout-minutes: 25
     steps:
