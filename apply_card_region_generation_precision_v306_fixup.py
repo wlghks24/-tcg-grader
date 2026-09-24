@@ -42,7 +42,7 @@ def main() -> int:
         '    normalized = unicodedata.normalize("NFKC", text or "").upper()\n'
         '    for known in _POKEMON_EN_NUMBER_RE.finditer(normalized):\n'
         '        compact_number = re.sub(r"\\s+", "", known.group("number"))\n'
-        '        canonical = normalize_number(f"{known.group(\"code\").upper()}{compact_number}")\n'
+        '        canonical = normalize_number(f"{known.group(\'code\').upper()}{compact_number}")\n'
         '        if canonical and canonical not in values:\n'
         '            values.append(canonical)\n'
         '    candidates = list(NUMBER_RE.findall(normalized))\n',
