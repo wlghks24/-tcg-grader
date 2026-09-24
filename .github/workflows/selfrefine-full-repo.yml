@@ -14,7 +14,7 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: write
+  contents: read
 
 concurrency:
   group: main-selfrefine-${{ github.ref }}
@@ -27,42 +27,9 @@ jobs:
     timeout-minutes: 20
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
-        with:
-          ref: ${{ github.head_ref || github.ref_name }}
-          fetch-depth: 0
       - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97
         with:
           python-version: '3.11'
-      - name: Apply v306 card precision patch once
-        if: github.event_name == 'pull_request' && github.head_ref == 'audit/card-edition-ocr-generation-v302'
-        shell: bash
-        run: |
-          set -euo pipefail
-          python -m pip install --disable-pip-version-check pillow
-          python apply_card_region_generation_precision_v306.py
-          python apply_card_region_generation_precision_v306_fixup.py
-          node --check card_identity_recognition.js
-          node --check grade_market_flow.js
-          node verify_pokemon_generation_runtime.js
-          python verify_card_identity_recognition.py
-          python -m unittest -v \
-            test_card_region_generation_precision_v306.py \
-            test_card_edition_precision_v302.py \
-            test_card_market_edition_v297.py \
-            test_card_core_crosscheck_v295.py \
-            test_card_tablet_runtime_v300.py \
-            test_psa_probability_market_flow_v252.py
-          git fetch origin main
-          git show origin/main:.github/workflows/selfrefine-full-repo.yml > .github/workflows/selfrefine-full-repo.yml
-          rm -f apply_card_region_generation_precision_v306.py apply_card_region_generation_precision_v306_fixup.py
-          python fault_injection_healing.py --manifest
-          python fault_injection_healing.py --diagnose
-          git diff --check
-          git config user.name 'github-actions[bot]'
-          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git add -A
-          git commit -m 'fix: harden card edition OCR and generation precision v306'
-          git push origin HEAD:${GITHUB_HEAD_REF}
       - name: Enforce Main vs Instagram domain boundary
         run: python selfrefine_domain_boundary_guard.py
       - name: Verify shared stateless learning and crosscheck contracts
@@ -81,7 +48,10 @@ jobs:
           assert result['content_used_for_patch'] is False, result
           assert result['search_result_patch_generation'] is False, result
           assert result['raw_body_persisted'] is False, result
-          assert all(row.get('host') in research.RESEARCH_ALLOWED_HOSTS for row in result.get('results', [])), result
+          assert all(
+              row.get('host') in research.RESEARCH_ALLOWED_HOSTS
+              for row in result.get('results', [])
+          ), result
           print('bounded official SELFREFINE research probe: PASS', result['status'])
           PY
           python main_crosscheck_export.py --self-test
@@ -136,6 +106,7 @@ jobs:
           name: main-selfrefine-error-ledger
           path: MAIN_SELFREFINE_ERROR_LEDGER.json
           if-no-files-found: ignore
+
       - name: Upload Main SELFREFINE error quarantine state
         if: always()
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
@@ -143,6 +114,7 @@ jobs:
           name: main-selfrefine-error-quarantine
           path: MAIN_SELFREFINE_ERROR_QUARANTINE_STATE.json
           if-no-files-found: ignore
+
       - name: Upload Main SELFREFINE resolution research
         if: always()
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a

@@ -7,7 +7,7 @@ const safeText=value=>String(value??'').replace(/[\u0000-\u001f\u007f]/g,' ').tr
 const gameName=value=>['pokemon','onepiece','naruto'].includes(value)?value:'pokemon';
 const REGION_CODES=new Set(['KR','JP','US']);
 const EN_SV_CODES=new Set(['SVI','PAL','OBF','MEW','PAR','PAF','TEF','TWM','SFA','SCR','SSP','PRE','JTG','DRI','BLK','WHT']);
-const EN_MEGA_CODES=new Set(['MEG','PFL','ASC','POR']);
+const EN_MEGA_CODES=new Set(['MEG','PFL','ASC','POR','CRI','PBL']);
 const EN_SET_CODES=new Set([...EN_SV_CODES,...EN_MEGA_CODES]);
 
 function generationText(value){return String(value??'').replace(/Ⓒ/g,'©').normalize?.('NFKC').toUpperCase().replace(/[\u0000-\u001f\u007f]/g,' ').replace(/\s+/g,' ').trim().slice(0,8000)}
@@ -68,10 +68,10 @@ function yearFromEvidence(input,text){
 }
 function generationBySetCode(code){
  const c=generationText(code).replace(/\s+/g,'');
- if(EN_MEGA_CODES.has(c))return {generation:9,generation_label:'9세대 계열',series:'MEGA 시리즈',era:'MEGA',set_region:'US'};
+ if(EN_MEGA_CODES.has(c))return {generation:null,generation_label:'세대 단정 안 함',series:'MEGA Evolution 시리즈',era:'MEGA',set_region:'US'};
  if(EN_SV_CODES.has(c))return {generation:9,generation_label:'9세대',series:'스칼렛&바이올렛',era:'SV',set_region:'US'};
  if(/^SV/.test(c))return {generation:9,generation_label:'9세대',series:'스칼렛&바이올렛',era:'SV'};
- if(/^M\d/.test(c))return {generation:9,generation_label:'9세대 계열',series:'MEGA 시리즈',era:'MEGA'};
+ if(/^M\d/.test(c))return {generation:null,generation_label:'세대 단정 안 함',series:'MEGA 시리즈',era:'MEGA'};
  if(/^SM/.test(c))return {generation:7,generation_label:'7세대',series:'썬&문',era:'SM'};
  if(/^S(?!M|V)\d/.test(c))return {generation:8,generation_label:'8세대',series:'소드&실드',era:'S'};
  if(/^XY/.test(c))return {generation:6,generation_label:'6세대',series:'XY',era:'XY'};
@@ -83,14 +83,14 @@ function generationByRegulation(mark){
  if(/^[ABC]$/.test(mark))return {generation:7,generation_label:'7세대 보조추정',series:'썬&문 시기',era:'SM'};
  if(/^[DEF]$/.test(mark))return {generation:8,generation_label:'8세대 보조추정',series:'소드&실드 시기',era:'S'};
  if(/^[GHI]$/.test(mark))return {generation:9,generation_label:'9세대 보조추정',series:'스칼렛&바이올렛 시기',era:'SV'};
- if(mark==='J')return {generation:9,generation_label:'9세대 계열 보조추정',series:'MEGA/현행 시리즈',era:'MEGA'};
+ if(mark==='J')return {generation:null,generation_label:'세대 단정 안 함',series:'MEGA/현행 TCG 시기',era:'CURRENT'};
  return null;
 }
 function generationRegion(value){return normalizeRegion(value)}
 function generationByYear(year,region){
  if(!Number.isInteger(year))return null;
  if(generationRegion(region)==='JP'){
-  if(year>=2025)return {generation:9,generation_label:'9세대 계열',series:'SV→MEGA 전환/현행 시기',era:'CURRENT'};
+  if(year>=2025)return {generation:null,generation_label:'세대 단정 안 함',series:'SV/MEGA 전환·현행 TCG 시기',era:'CURRENT'};
   if(year>=2023)return {generation:9,generation_label:'9세대',series:'스칼렛&바이올렛 시대',era:'SV'};
   if(year>=2019)return {generation:8,generation_label:'8세대',series:'소드&실드 시대',era:'S'};
   if(year>=2016)return {generation:7,generation_label:'7세대',series:'썬&문 시대',era:'SM'};
@@ -99,7 +99,7 @@ function generationByYear(year,region){
   if(year>=2006)return {generation:4,generation_label:'4세대',series:'DP/DPt 시대',era:'DP'};
   return null;
  }
- if(year>=2025)return {generation:9,generation_label:'9세대 계열',series:'SV→MEGA 전환/현행 시기',era:'CURRENT'};
+ if(year>=2025)return {generation:null,generation_label:'세대 단정 안 함',series:'SV/MEGA 전환·현행 TCG 시기',era:'CURRENT'};
  if(year>=2023)return {generation:9,generation_label:'9세대',series:'스칼렛&바이올렛 시대',era:'SV'};
  if(year>=2020)return {generation:8,generation_label:'8세대',series:'소드&실드 시대',era:'S'};
  if(year>=2017)return {generation:7,generation_label:'7세대',series:'썬&문 시대',era:'SM'};
@@ -114,7 +114,7 @@ function inferPokemonGeneration(input={}){
  const text=[input.ocr_text,input.card_name,input.market_key].map(generationText).filter(Boolean).join(' ');
  const expansion=expansionFromCardNumber(input.card_number)||expansionFromOcr(text);
  const byExpansion=generationBySetCode(expansion);
- if(byExpansion)return {status:'estimated',game:'pokemon',...byExpansion,expansion_code:expansion,regulation_mark:regulationFromEvidence(input,text)||'',year:yearFromEvidence(input,text),confidence:.98,confidence_level:'high',basis:[`확장팩/세트 코드 ${expansion}`],note:byExpansion.era==='MEGA'?'MEGA는 별도 TCG 시리즈/블록이므로 세대 계열과 시리즈를 함께 표시합니다.':'확장팩/세트 코드 기준 추정'};
+ if(byExpansion)return {status:'estimated',game:'pokemon',...byExpansion,expansion_code:expansion,regulation_mark:regulationFromEvidence(input,text)||'',year:yearFromEvidence(input,text),confidence:.98,confidence_level:'high',basis:[`확장팩/세트 코드 ${expansion}`],note:byExpansion.era==='MEGA'?'MEGA는 별도 TCG 시리즈/블록이므로 TCG 시리즈와 포켓몬 세대 번호를 분리해 표시합니다.':'확장팩/세트 코드 기준 추정'};
  const regulation=regulationFromEvidence(input,text),byReg=generationByRegulation(regulation);
  if(byReg)return {status:'estimated',game:'pokemon',...byReg,expansion_code:'',regulation_mark:regulation,year:yearFromEvidence(input,text),confidence:.72,confidence_level:'medium',basis:[`레귤레이션 마크 ${regulation}`],note:'레귤레이션 마크는 대회 사용 가능성 표기이며 세대/시리즈는 보조 추정입니다.'};
  const year=yearFromEvidence(input,text),byYear=generationByYear(year,input?.region);
@@ -130,7 +130,7 @@ function renderPokemonGeneration(info,game='pokemon'){
  if(info.status==='estimated'){if(badge)badge.textContent=info.generation_label||(`${info.generation}세대`);if(title)title.textContent=`${info.generation_label||info.generation+'세대'} · ${info.series}`;const evidence=[info.expansion_code&&`확장팩/세트 ${info.expansion_code}`,info.regulation_mark&&`레귤레이션 ${info.regulation_mark}`,info.year&&`©${info.year}`].filter(Boolean);if(meta)meta.textContent=`${evidence.join(' · ')||info.basis?.join(' · ')||'OCR 근거'} · 신뢰도 ${info.confidence_level==='high'?'높음':info.confidence_level==='medium'?'중간(보조)':'보조'}`;return info}
  if(badge)badge.textContent=info.status==='legacy'?'고전':'?';if(title)title.textContent=info.status==='legacy'?info.generation_label:'세대 확인 필요';if(meta)meta.textContent=info.status==='legacy'?`${info.series}${info.year?' · ©'+info.year:''} · 확장팩 코드 확인 권장`:'확장팩/세트 코드·레귤레이션·©연도를 충분히 읽지 못했습니다.';return info
 }
-window.TCGPokemonGeneration=Object.freeze({version:'v302',infer:inferPokemonGeneration,render:renderPokemonGeneration,inferRegion:inferEditionFromText});
+window.TCGPokemonGeneration=Object.freeze({version:'v306',infer:inferPokemonGeneration,render:renderPokemonGeneration,inferRegion:inferEditionFromText});
 function localRows(){try{const value=JSON.parse(localStorage.getItem(MEMORY_KEY)||'[]');return Array.isArray(value)?value.filter(row=>row&&row.confirmed===true).slice(-MAX_LOCAL):[]}catch(_){return []}}
 function hamming(a,b){if(!/^[0-9a-f]{16}$/.test(a)||!/^[0-9a-f]{16}$/.test(b))return 65;let value=BigInt('0x'+a)^BigInt('0x'+b),count=0;while(value){count+=Number(value&1n);value>>=1n}return count}
 function blobDataUrl(blob){return new Promise((resolve,reject)=>{const reader=new FileReader();reader.onload=()=>resolve(String(reader.result||''));reader.onerror=()=>reject(new Error('image_encode'));reader.readAsDataURL(blob)})}

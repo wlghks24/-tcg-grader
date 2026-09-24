@@ -85,7 +85,7 @@ class CardEditionPrecisionV302Tests(unittest.TestCase):
             check=False,
         )
         self.assertEqual(0, result.returncode, result.stdout + result.stderr)
-        self.assertIn("Pokémon generation runtime v302: PASS", result.stdout)
+        self.assertIn("Pokémon generation runtime v306: PASS", result.stdout)
 
 
 if __name__ == "__main__":

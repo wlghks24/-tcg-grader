@@ -32,16 +32,25 @@ r=api.infer({game:'pokemon',ocr_text:'REGULATION MARK H'});
 eq(r.generation,9,'reg H generation');eq(r.regulation_mark,'H','reg H mark');eq(r.confidence_level,'medium','reg H confidence');ok(/보조/.test(r.note),'regulation must be advisory');
 
 r=api.infer({game:'pokemon',ocr_text:'REGULATION MARK J'});
-eq(r.generation,9,'reg J generation');ok(/MEGA/.test(r.series),'reg J series should identify current MEGA era');
+eq(r.generation,null,'reg J must not invent generation');ok(/MEGA/.test(r.series),'reg J series should identify current MEGA era');
 
 r=api.infer({game:'pokemon',card_number:'M5114'});
-eq(r.generation,9,'MEGA generation');eq(r.series,'MEGA 시리즈','MEGA series');eq(r.expansion_code,'M5','MEGA set code');
+eq(r.generation,null,'MEGA series must not invent generation');eq(r.series,'MEGA 시리즈','MEGA series');eq(r.expansion_code,'M5','MEGA set code');
 
 r=api.infer({game:'pokemon',card_number:'PAL185/193'});
 eq(r.generation,9,'English PAL generation');eq(r.expansion_code,'PAL','English PAL code');eq(r.set_region,'US','English PAL region');
 
 r=api.infer({game:'pokemon',ocr_text:'MEG 060/132 Pikachu ex'});
-eq(r.generation,9,'English MEGA generation');eq(r.series,'MEGA 시리즈','English MEGA series');eq(r.expansion_code,'MEG','English MEGA code');eq(r.set_region,'US','English MEGA region');
+eq(r.generation,null,'English MEGA must not invent generation');eq(r.series,'MEGA Evolution 시리즈','English MEGA series');eq(r.expansion_code,'MEG','English MEGA code');eq(r.set_region,'US','English MEGA region');
+
+r=api.infer({game:'pokemon',ocr_text:'Mega Greninja ex CRI 22'});
+eq(r.generation,null,'Chaos Rising must not invent generation');eq(r.series,'MEGA Evolution 시리즈','Chaos Rising series');eq(r.expansion_code,'CRI','Chaos Rising code');
+
+r=api.infer({game:'pokemon',ocr_text:'Pitch Black PBL 79'});
+eq(r.generation,null,'Pitch Black must not invent generation');eq(r.expansion_code,'PBL','Pitch Black code');
+
+r=api.infer({game:'pokemon',ocr_text:'©2026 Pokémon',region:'US'});
+eq(r.generation,null,'2026 year-only evidence must not invent generation');eq(r.confidence_level,'low','2026 year-only confidence');
 
 r=api.infer({game:'pokemon',ocr_text:'©2021 Pokémon'});
 eq(r.generation,8,'year fallback generation');eq(r.confidence_level,'low','year fallback confidence');
@@ -60,5 +69,5 @@ region=api.inferRegion('ポケモンカード ミミッキュ');eq(region.region
 region=api.inferRegion('Pokémon TCG PAL 185/193');eq(region.region,'US','English set edition');ok(region.confidence>=0.9,'English set confidence');
 region=api.inferRegion('Pikachu 25/102');eq(region.region,'UNKNOWN','generic Latin text must not invent edition');
 
-eq(api.version,'v302','generation runtime version');
-console.log('Pokémon generation runtime v302: PASS');
+eq(api.version,'v306','generation runtime version');
+console.log('Pokémon generation runtime v306: PASS');

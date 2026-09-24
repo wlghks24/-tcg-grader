@@ -3,7 +3,7 @@
 const COMPANIES=['PSA','BGS','CGC','TAG','BRG'];
 const norm=s=>String(s||'').toLowerCase().replace(/\s+/g,'').replace(/[^0-9a-z가-힣/.-]/g,'');
 const money=n=>Number(n)>0?`₩${Math.round(Number(n)).toLocaleString('ko-KR')}`:'거래자료 없음';
-const esc=s=>String(s??'').replace(/[&<>"']/g,ch=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot',"'":'&#39;'}[ch]));
+const esc=s=>String(s??'').replace(/[&<>"']/g,ch=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));
 const REFERENCE_HOSTS=new Set([
  'collectory.cc','web.joongna.com','kream.co.kr','m.bunjang.co.kr','www.daangn.com','wyyyes.com',
  'auctions.yahoo.co.jp','jp.mercari.com','snkrdunk.com','www.ebay.com','www.tcgplayer.com',
