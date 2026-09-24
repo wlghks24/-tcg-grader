@@ -14,10 +14,31 @@ def require(text: str, marker: str, label: str) -> None:
     assert marker in text, f"{label}: missing {marker!r}"
 
 
+def event_block(workflow: str, event: str, label: str) -> list[str]:
+    lines = workflow.splitlines()
+    header = f"  {event}:"
+    try:
+        start = lines.index(header) + 1
+    except ValueError as exc:
+        raise AssertionError(f"{label}: missing {event} trigger") from exc
+    block: list[str] = []
+    for line in lines[start:]:
+        if line.strip() and len(line) - len(line.lstrip()) <= 2:
+            break
+        block.append(line)
+    return block
+
+
 def require_path_in_push_and_pr(workflow: str, path: str, label: str) -> None:
     marker = f"      - '{path}'"
-    count = workflow.count(marker)
-    assert count >= 2, f"{label}: {path} must trigger both push and pull_request (found {count})"
+    push = event_block(workflow, "push", label)
+    pull_request = event_block(workflow, "pull_request", label)
+    assert marker in push, f"{label}: {path} must trigger push"
+    # Protected-main required checks intentionally use an unconditional PR trigger.
+    # Legacy guards may still use a PR path filter; both forms must preserve coverage.
+    configured_pr = [line for line in pull_request if line.strip()]
+    if configured_pr:
+        assert marker in pull_request, f"{label}: {path} must trigger pull_request or pull_request must be unconditional"
 
 
 def main() -> None:
