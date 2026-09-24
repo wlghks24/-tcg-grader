@@ -69,5 +69,13 @@ region=api.inferRegion('ポケモンカード ミミッキュ');eq(region.region
 region=api.inferRegion('Pokémon TCG PAL 185/193');eq(region.region,'US','English set edition');ok(region.confidence>=0.9,'English set confidence');
 region=api.inferRegion('Pikachu 25/102');eq(region.region,'UNKNOWN','generic Latin text must not invent edition');
 
-eq(api.version,'v306','generation runtime version');
-console.log('Pokémon generation runtime v306: PASS');
+region=api.inferRegion('포켓몬 카드 ポケモン カード');eq(region.region,'UNKNOWN','mixed strong scripts must not invent edition');eq(region.basis,'mixed_script_conflict','mixed script basis');
+
+r=api.infer({game:'pokemon',card_number:'PAL185/193',region:'JP'});
+eq(r.status,'conflict','English set code vs Japanese edition must conflict');eq(r.generation,null,'edition conflict must not invent generation');
+
+r=api.infer({game:'pokemon',card_number:'PAL185/193',region:'US',regulation_mark:'F'});
+eq(r.status,'conflict','set generation vs regulation generation must conflict');eq(r.generation,null,'generation evidence conflict must fail closed');
+
+eq(api.version,'v309','generation runtime version');
+console.log('Pokémon generation runtime v309: PASS');
