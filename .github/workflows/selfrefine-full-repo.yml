@@ -22,6 +22,7 @@ concurrency:
 
 jobs:
   selfrefine:
+    name: Main SELFREFINE
     runs-on: ubuntu-latest
     timeout-minutes: 20
     steps:
