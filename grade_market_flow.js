@@ -36,11 +36,13 @@ function el(id){return document.getElementById(id)}
 function editionCode(value){
  const low=String(value||'').toLowerCase();
  if(/(^|\b)(jp|japan|japanese)(\b|$)|일본|일판|일어판|日版|日本版/.test(low))return 'JP';
- if(/(^|\b)(kr|korea|korean)(\b|$)|한국|한글판|국판/.test(low))return 'KR';
- if(/(^|\b)(us|usa|english)(\b|$)|미국|영문판/.test(low))return 'US';
+ if(/(^|\b)(kr|korea|korean)(\b|$)|한국|한글판|한국판|국판/.test(low))return 'KR';
+ if(/(^|\b)(us|usa|english)(\b|$)|미국|미국판|영문판/.test(low))return 'US';
  return 'UNKNOWN';
 }
 function editionLabel(code){return ({KR:'🇰🇷 한국판',JP:'🇯🇵 일본판',US:'🇺🇸 미국/영문판',UNKNOWN:'🌐 판본 미확인'})[code]||'🌐 판본 미확인'}
+function editionSearchToken(code){return ({KR:'Korean',JP:'Japanese',US:'English'})[code]||''}
+function marketKeyEdition(value){const first=String(value||'').split('|',1)[0].toUpperCase();return ['KR','JP','US'].includes(first)?first:'UNKNOWN'}
 function quoteTypeLabel(row){
  if(row?.price_type==='sold')return '체결/판매완료';
  if(row?.price_type==='auction_result')return '경매결과';
@@ -66,7 +68,8 @@ function safeReferenceUrl(row,query){
 function marketQuery(){
  const name=(el('identityCardName')?.value||'').trim();
  const number=(el('identityCardNumber')?.value||'').trim();
- return [name,number].filter(Boolean).join(' ').trim();
+ const edition=editionSearchToken(editionCode(el('identityRegion')?.value||''));
+ return [name,number,edition].filter(Boolean).join(' ').trim();
 }
 function referenceSources(){
  const live=platformMarket?.market_reference_sources;
@@ -181,30 +184,36 @@ function renderPlatformQuotes(){
  }).join('');
  renderReferenceSources();
 }
-function findMarketKey(name,number){
- const select=el('econCard'); if(!select)return '';
+function findMarketKey(name,number,region){
+ const select=el('econCard');if(!select)return '';
+ const wanted=editionCode(region),options=[...select.options].filter(option=>option.value);
  const direct=(el('identityMarketKey')?.value||'').trim();
- if(direct&&[...select.options].some(o=>o.value===direct))return direct;
- const n=norm(name),cn=norm(number);
- let best='';
- for(const o of [...select.options]){
-   if(!o.value)continue; const blob=norm(o.textContent+' '+o.value);
-   if(cn&&blob.includes(cn))return o.value;
-   if(n&&blob.includes(n)&&!best)best=o.value;
+ if(direct&&options.some(option=>option.value===direct)&&(wanted==='UNKNOWN'||marketKeyEdition(direct)===wanted))return direct;
+ const n=norm(name),cn=norm(number),ranked=[];
+ for(const option of options){
+   const actual=marketKeyEdition(option.value);if(wanted!=='UNKNOWN'&&actual!==wanted)continue;
+   const blob=norm(option.textContent+' '+option.value);let score=0;
+   if(cn&&blob.includes(cn))score+=100;
+   if(n&&n.length>=3&&blob.includes(n))score+=60;
+   if(wanted!=='UNKNOWN'&&actual===wanted)score+=20;
+   if(score>0)ranked.push({value:option.value,score});
  }
- return best;
+ ranked.sort((a,b)=>b.score-a.score||a.value.localeCompare(b.value));
+ if(!ranked.length)return '';
+ if(ranked.length>1&&ranked[0].score===ranked[1].score)return '';
+ return ranked[0].value;
 }
 function applyIdentity(){
  const name=(el('identityCardName')?.value||'').trim();
  const number=(el('identityCardNumber')?.value||'').trim();
  const region=(el('identityRegion')?.value||'').trim();
  const sig=[name,number,region,el('identityMarketKey')?.value||''].join('|');
- if(sig===lastIdentity)return; lastIdentity=sig;
- el('agmName').textContent=name||'인식 대기'; el('agmNumber').textContent=number||'-'; el('agmRegion').textContent=region||'-';
+ if(sig===lastIdentity)return;lastIdentity=sig;
+ el('agmName').textContent=name||'인식 대기';el('agmNumber').textContent=number||'-';el('agmRegion').textContent=region||'-';
  if(!name&&!number){el('agmRawPrice').textContent='카드 인식 후 자동 조회';renderPlatformQuotes();renderReferenceSources();return}
- const q=[name,number].filter(Boolean).join(' ');
- if(el('quickCardQuery')){el('quickCardQuery').value=q; el('quickPriceSearch')?.click();}
- const key=findMarketKey(name,number),select=el('econCard');
+ const q=[name,number,editionSearchToken(editionCode(region))].filter(Boolean).join(' ');
+ if(el('quickCardQuery')){el('quickCardQuery').value=q;el('quickPriceSearch')?.click();}
+ const key=findMarketKey(name,number,region),select=el('econCard');
  if(key&&select){
    select.value=key;
    try{if(typeof applyEconomicsProfile==='function')applyEconomicsProfile()}catch(_){ }
@@ -212,30 +221,36 @@ function applyIdentity(){
    el('agmRawPrice').textContent=raw>0?money(raw):'저장 시세 연결됨 · RAW 거래자료 없음';
    el('agmRawSource').textContent=(el('econSource')?.textContent||'확인된 저장/수집 거래자료').trim();
  }else{
-   el('agmRawPrice').textContent='저장 시세 자동 연결 대기';
-   el('agmRawSource').textContent='빠른 시세검색은 자동 실행됨 · 정확히 일치하는 카드 키 확인 중';
+   el('agmRawPrice').textContent=editionCode(region)!=='UNKNOWN'?'동일 판본의 저장 시세 없음':'저장 시세 자동 연결 대기';
+   el('agmRawSource').textContent=editionCode(region)!=='UNKNOWN'?'다른 판본 가격은 자동 대체하지 않습니다.':'빠른 시세검색은 자동 실행됨 · 판본과 카드 키 확인 중';
  }
  renderPlatformQuotes();renderReferenceSources();updateGrades(true);
 }
 function gradeSale(company,grade){
+ const exact=Number(grade),normalizedCompany=String(company||'').toUpperCase();
+ if(!Number.isFinite(exact)||!Number.isInteger(exact)||exact<1||exact>10||!COMPANIES.includes(normalizedCompany))return 0;
+ const comp=el('econCompany'),gr=el('econGrade');if(!comp||!gr)return 0;
+ const gradeValue=String(exact);
+ if(![...gr.options].some(option=>option.value===gradeValue))return 0;
+ const oldC=comp.value,oldG=gr.value;
  try{
-   const comp=el('econCompany'),gr=el('econGrade'); if(!comp||!gr)return 0;
-   const oldC=comp.value,oldG=gr.value; comp.value=company; gr.value=String(Math.max(1,Math.min(10,Math.floor(Number(grade)))));
-   let sale=0;
-   if(typeof renderEconomics==='function'){const r=renderEconomics(); sale=Number(r?.expectedSale||0)}
-   comp.value=oldC;gr.value=oldG;return sale;
+   comp.value=normalizedCompany;gr.value=gradeValue;
+   if(typeof renderEconomics!=='function')return 0;
+   const result=renderEconomics(),sale=Number(result?.expectedSale||0);
+   return Number.isFinite(sale)&&sale>0?sale:0;
  }catch(_){return 0}
+ finally{comp.value=oldC;gr.value=oldG}
 }
 function updateGrades(force=false){
- const grades=window.tcgLastGrades||{}; const sig=COMPANIES.map(c=>`${c}:${grades[c]??''}`).join('|');
- if(!force&&sig===lastGrades)return; lastGrades=sig;
+ const grades=window.tcgLastGrades||{};const sig=COMPANIES.map(c=>`${c}:${grades[c]??''}`).join('|');
+ if(!force&&sig===lastGrades)return;lastGrades=sig;
  const box=el('agmGradeRows');if(!box)return;
  const has=COMPANIES.some(c=>Number.isFinite(Number(grades[c])));
  if(!has){box.textContent='앞·뒷면 분석 완료 후 자동 표시됩니다.';return}
  box.innerHTML=COMPANIES.map(c=>{
-   const g=Number(grades[c]); if(!Number.isFinite(g))return `<div class="agm-row"><b>${c}</b><span>등급 대기</span><strong>-</strong></div>`;
-   const rounded=Math.max(1,Math.min(10,Math.floor(g))),sale=gradeSale(c,rounded);
-   return `<div class="agm-row"><b>${c}</b><span>예상 ${g.toFixed(g%1?1:0)}등급</span><strong>${money(sale)}</strong></div>`;
+   const g=Number(grades[c]);if(!Number.isFinite(g))return `<div class="agm-row"><b>${c}</b><span>등급 대기</span><strong>-</strong></div>`;
+   const sale=gradeSale(c,g),price=Number.isInteger(g)?money(sale):'정확 등급 거래자료 없음';
+   return `<div class="agm-row"><b>${c}</b><span>예상 ${g.toFixed(g%1?1:0)}등급</span><strong>${price}</strong></div>`;
  }).join('');
 }
 function tick(){mount();if(el('autoGradeMarketFlow')){applyIdentity();updateGrades(false)}}

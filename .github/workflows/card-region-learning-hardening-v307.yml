@@ -1,0 +1,41 @@
+name: Card Region Learning Hardening v307
+
+on:
+  push:
+    branches: [audit/card-edition-ocr-generation-v302]
+
+permissions:
+  contents: write
+
+jobs:
+  harden:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout audit branch
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          ref: audit/card-edition-ocr-generation-v302
+          fetch-depth: 0
+
+      - name: Apply and verify final card hardening
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          python -m pip install --disable-pip-version-check pillow
+          python .github/scripts/card_region_hardening_v307.py
+          git rm .github/scripts/card_region_hardening_v307.py
+          git rm .github/workflows/card-region-learning-hardening-v307.yml
+          python fault_injection_healing.py --manifest
+          python -m py_compile card_identity_recognition.py test_card_region_generation_precision_v306.py verify_current_runtime.py
+          node --check card_identity_recognition.js
+          node --check grade_market_flow.js
+          node verify_pokemon_generation_runtime.js
+          python -m unittest -v test_card_region_generation_precision_v306.py test_card_edition_precision_v302.py test_card_tablet_runtime_v300.py test_psa_probability_market_flow_v252.py test_ocr_multistage_v16.py test_ocr_selfrefine_v15.py test_pokemon_generation_display_v207.py
+          python verify_current_runtime.py
+          python repository_integrity_guard.py
+          git diff --check
+          git add -A
+          git commit -m 'fix: harden edition-aware card identity learning v307'
+          git push origin HEAD:audit/card-edition-ocr-generation-v302

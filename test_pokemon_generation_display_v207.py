@@ -34,8 +34,16 @@ class PokemonGenerationDisplayV207Tests(unittest.TestCase):
             "confidence_level:'low'",
             "status:'unknown'",
             "근거가 부족해 세대를 생성하지 않았습니다.",
+            "EN_SV_CODES",
+            "EN_MEGA_CODES",
+            "inferEditionFromText",
+            "identityCoreKey",
+            "same photo" if False else "같은 사진에 서로 다른 카드/판본 정보",
         ):
             self.assertIn(token, source)
+        self.assertIn("confidence:.72", source)
+        self.assertIn("레귤레이션 마크는 대회 사용 가능성 표기", source)
+        self.assertIn("version:'v306'", source)
 
     def test_generation_runtime_executes(self):
         result = subprocess.run(
@@ -47,7 +55,7 @@ class PokemonGenerationDisplayV207Tests(unittest.TestCase):
             check=False,
         )
         self.assertEqual(0, result.returncode, result.stdout + result.stderr)
-        self.assertIn("Pokémon generation runtime v207: PASS", result.stdout)
+        self.assertIn("Pokémon generation runtime v306: PASS", result.stdout)
 
 
 if __name__ == "__main__":

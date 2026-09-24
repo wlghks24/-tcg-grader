@@ -29,6 +29,15 @@ LEARNING = ROOT / "card_identity_learning.json"
 REFERENCE = ROOT / "card_identity_reference_catalog.json"
 GAMES = {"pokemon", "onepiece", "naruto"}
 REGIONS = {"KR", "JP", "US", "UNKNOWN"}
+POKEMON_EN_SET_CODES = (
+    "SVI", "PAL", "OBF", "MEW", "PAR", "PAF", "TEF", "TWM", "SFA", "SCR", "SSP",
+    "PRE", "JTG", "DRI", "BLK", "WHT", "MEG", "PFL", "ASC", "POR", "CRI", "PBL",
+)
+_POKEMON_EN_SET_PATTERN = "|".join(map(re.escape, POKEMON_EN_SET_CODES))
+_POKEMON_EN_SET_EVIDENCE_RE = re.compile(
+    rf"(?<![A-Z0-9])(?:{_POKEMON_EN_SET_PATTERN})\s*[- ]?\s*\d{{1,3}}(?:\s*/\s*\d{{2,3}})?(?![A-Z0-9])",
+    re.I,
+)
 MAX_IMAGE_BYTES = 6_000_000
 MAX_IMAGE_PIXELS = 24_000_000
 MAX_OCR_TEXT = 5000
@@ -36,7 +45,12 @@ MAX_ROWS = 2000
 Image.MAX_IMAGE_PIXELS = MAX_IMAGE_PIXELS
 HASH_RE = re.compile(r"^[0-9a-f]{16}$")
 NUMBER_RE = re.compile(
-    r"(?<![A-Z0-9])(?:[A-Z]{1,6}\s*)?(?:\d{1,3}/\d{2,3}|(?:OP|ST|EB|PRB|P|CP|FB|SV|SM|S)\s*-?\s*\d{1,3}(?:-\d{2,3})?)(?![A-Z0-9])",
+    r"(?<![A-Z0-9])(?:\d{1,3}/\d{2,3}|(?:MEG|PFL|ASC|POR|CRI|PBL|SVI|PAL|OBF|MEW|PAR|PAF|TEF|TWM|SFA|SCR|SSP|PRE|JTG|DRI|BLK|WHT|OP|ST|EB|PRB|P|CP|FB|SV|SM|S)\s*-?\s*\d{1,3}(?:-\d{2,3})?)(?![A-Z0-9])",
+    re.I,
+)
+_POKEMON_EN_NUMBER_RE = re.compile(
+    rf"(?<![A-Z0-9])(?P<code>{_POKEMON_EN_SET_PATTERN})\s*[- ]?\s*"
+    r"(?P<number>\d{1,3}(?:\s*/\s*\d{2,3})?)(?![A-Z0-9])",
     re.I,
 )
 _DIGITISH_MAP = str.maketrans({
@@ -86,6 +100,28 @@ def normalize_game(value: Any) -> str:
 def normalize_region(value: Any) -> str:
     region = str(value or "").strip().upper()
     return region if region in REGIONS else "UNKNOWN"
+
+
+def infer_region_from_text(value: Any) -> str:
+    """Infer KR/JP/US only from strong OCR evidence; otherwise fail closed."""
+    text = unicodedata.normalize("NFKC", str(value or ""))
+    upper = text.upper()
+    compact = re.sub(r"\s+", "", upper)
+    if compact in {"JP", "JAPAN", "JAPANESE", "日本", "日版", "日本版"}:
+        return "JP"
+    if compact in {"KR", "KOREA", "KOREAN", "한국", "한국판", "한글판"}:
+        return "KR"
+    if compact in {"US", "USA", "EN", "ENGLISH", "영문판", "미국판"}:
+        return "US"
+    hangul = len(re.findall(r"[가-힣]", text))
+    kana = len(re.findall(r"[ぁ-んァ-ヶー]", text))
+    if hangul >= 2 and hangul >= kana:
+        return "KR"
+    if kana >= 2:
+        return "JP"
+    if _POKEMON_EN_SET_EVIDENCE_RE.search(upper):
+        return "US"
+    return "UNKNOWN"
 
 
 def _json(path: Path, fallback: dict) -> dict:
@@ -177,7 +213,7 @@ def _digitish(value: str) -> str:
 def _repair_set_code(value: str) -> str:
     raw = unicodedata.normalize("NFKC", str(value or "")).upper().strip()
     match = re.fullmatch(
-        r"(OP|ST|EB|PRB|P|CP|FB|SV|SM|S)\s*(-?)\s*([0-9OQDIL|ZSBG]{1,3})"
+        r"(MEG|PFL|ASC|POR|CRI|PBL|SVI|PAL|OBF|MEW|PAR|PAF|TEF|TWM|SFA|SCR|SSP|PRE|JTG|DRI|BLK|WHT|OP|ST|EB|PRB|P|CP|FB|SV|SM|S)\s*(-?)\s*([0-9OQDIL|ZSBG]{1,3})"
         r"(?:\s*-\s*([0-9OQDIL|ZSBG]{2,3}))?",
         raw,
     )
@@ -197,10 +233,15 @@ def extract_numbers(text: str) -> list[str]:
     """Extract card numbers while repairing OCR glyph confusion only in numeric segments."""
     values: list[str] = []
     normalized = unicodedata.normalize("NFKC", text or "").upper()
+    for known in _POKEMON_EN_NUMBER_RE.finditer(normalized):
+        compact_number = re.sub(r"\s+", "", known.group("number"))
+        canonical = normalize_number(f"{known.group('code').upper()}{compact_number}")
+        if canonical and canonical not in values:
+            values.append(canonical)
     candidates = list(NUMBER_RE.findall(normalized))
     candidates += re.findall(r"(?<!\d)\d{1,3}/\d{2,3}(?!\d)", normalized)
     candidates += re.findall(
-        r"(?<![A-Z0-9])(?:OP|ST|EB|PRB|P|CP|FB|SV|SM|S)\s*-?\s*\d{1,3}(?:-\d{2,3})?(?![A-Z0-9])",
+        r"(?<![A-Z0-9])(?:MEG|PFL|ASC|POR|CRI|PBL|SVI|PAL|OBF|MEW|PAR|PAF|TEF|TWM|SFA|SCR|SSP|PRE|JTG|DRI|BLK|WHT|OP|ST|EB|PRB|P|CP|FB|SV|SM|S)\s*-?\s*\d{1,3}(?:-\d{2,3})?(?![A-Z0-9])",
         normalized,
     )
     for left, right in re.findall(
@@ -211,7 +252,7 @@ def extract_numbers(text: str) -> list[str]:
         if repaired and repaired not in candidates:
             candidates.append(repaired)
     candidates += re.findall(
-        r"(?<![A-Z0-9])(?:OP|ST|EB|PRB|P|CP|FB|SV|SM|S)\s*-?\s*[0-9OQDIL|ZSBG]{1,3}"
+        r"(?<![A-Z0-9])(?:MEG|PFL|ASC|POR|CRI|PBL|SVI|PAL|OBF|MEW|PAR|PAF|TEF|TWM|SFA|SCR|SSP|PRE|JTG|DRI|BLK|WHT|OP|ST|EB|PRB|P|CP|FB|SV|SM|S)\s*-?\s*[0-9OQDIL|ZSBG]{1,3}"
         r"(?:\s*-\s*[0-9OQDIL|ZSBG]{2,3})?(?![A-Z0-9])",
         normalized,
     )
@@ -302,8 +343,11 @@ def match_catalog(
 
         if game in GAMES and row["game"] in GAMES:
             score += 0.015 if row["game"] == game else -0.15
-        if region in {"KR", "JP", "US"} and row.get("region") in {"KR", "JP", "US"}:
-            score += 0.012 if row["region"] == region else -0.035
+        row_region = normalize_region(row.get("region"))
+        if region in {"KR", "JP", "US"} and row_region in {"KR", "JP", "US"}:
+            if row_region != region:
+                continue
+            score += 0.012
 
         score = max(0.0, min(0.999, score))
         if score >= 0.58:
@@ -744,10 +788,15 @@ def learning_payload() -> dict[str, Any]:
     return payload
 
 
-def match_learning(image_hash: str, game: str) -> list[dict[str, Any]]:
+def match_learning(image_hash: str, game: str, region: str = "UNKNOWN") -> list[dict[str, Any]]:
     if not HASH_RE.fullmatch(image_hash or ""):
         return []
-    rows = [row for row in learning_payload().get("confirmed", []) if isinstance(row, dict) and row.get("game") == game]
+    requested_region = normalize_region(region)
+    rows = [
+        row for row in learning_payload().get("confirmed", [])
+        if isinstance(row, dict) and row.get("game") == game
+        and (requested_region == "UNKNOWN" or normalize_region(row.get("region")) in {"UNKNOWN", requested_region})
+    ]
     identities = Counter((row.get("card_name"), row.get("card_number"), row.get("market_key")) for row in rows)
     hits = []
     for row in rows:
@@ -790,9 +839,13 @@ def recognize(payload: dict[str, Any]) -> dict[str, Any]:
             data, game=game, region=region, seed_text=supplied_text
         )
         supplied_text = (supplied_text + " " + text).strip()[:MAX_OCR_TEXT]
+    if region == "UNKNOWN":
+        inferred_region = infer_region_from_text(supplied_text)
+        if inferred_region != "UNKNOWN":
+            region = inferred_region
     elif not HASH_RE.fullmatch(image_hash):
         raise ValueError("이미지 또는 특징값 필요")
-    learned = match_learning(image_hash, game)
+    learned = match_learning(image_hash, game, region)
     catalog_hits = match_catalog(supplied_text, game, region=region)
     merged = learned + catalog_hits
     unique = {}
@@ -836,9 +889,9 @@ def save_confirmation(payload: dict[str, Any]) -> dict[str, Any]:
     if region not in REGIONS:
         region = "UNKNOWN"
     data = learning_payload()
-    identity = (card_name, card_number, market_key, game)
+    identity = (card_name, card_number, market_key, game, region)
     same_hash = [row for row in data["confirmed"] if row.get("image_hash") == image_hash]
-    if any((row.get("card_name"), row.get("card_number"), row.get("market_key"), row.get("game")) != identity for row in same_hash):
+    if any((row.get("card_name"), row.get("card_number"), row.get("market_key"), row.get("game"), normalize_region(row.get("region"))) != identity for row in same_hash):
         conflict = {"image_hash": image_hash, "card_name": card_name, "card_number": card_number,
                     "market_key": market_key, "game": game, "reason": "same_image_conflicting_identity"}
         data["conflicts"] = (data["conflicts"] + [conflict])[-200:]
@@ -846,13 +899,13 @@ def save_confirmation(payload: dict[str, Any]) -> dict[str, Any]:
         return {"ok": False, "conflict": True, "saved": False}
     row = {"image_hash": image_hash, "card_name": card_name, "card_number": card_number,
            "market_key": market_key, "game": game, "region": region, "confirmed": True}
-    keys = {(item.get("image_hash"), item.get("card_name"), item.get("card_number"), item.get("market_key"), item.get("game"))
+    keys = {(item.get("image_hash"), item.get("card_name"), item.get("card_number"), item.get("market_key"), item.get("game"), normalize_region(item.get("region")))
             for item in data["confirmed"]}
-    if (image_hash, card_name, card_number, market_key, game) not in keys:
+    if (image_hash, card_name, card_number, market_key, game, region) not in keys:
         data["confirmed"] = (data["confirmed"] + [row])[-MAX_ROWS:]
     data.update({"version": 1, "confirmed_only": True, "auto_prediction_learning": False})
     atomic_write_json(LEARNING, data, suffix=".identity.tmp")
-    count = sum(1 for item in data["confirmed"] if (item.get("card_name"), item.get("card_number"), item.get("market_key"), item.get("game")) == identity)
+    count = sum(1 for item in data["confirmed"] if (item.get("card_name"), item.get("card_number"), item.get("market_key"), item.get("game"), normalize_region(item.get("region"))) == identity)
     return {"ok": True, "saved": True, "identity_confirmations": count,
             "similar_image_learning_enabled": count >= 3}
 

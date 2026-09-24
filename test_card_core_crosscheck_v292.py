@@ -37,7 +37,8 @@ process.stdout.write(JSON.stringify(global.window.TCGPokemonGeneration.infer(JSO
         source=(ROOT/'card_identity_recognition.js').read_text(encoding='utf-8')
         self.assertIn("byId('identityRegion')?.addEventListener('change',refreshGenerationFromInputs)",source)
         self.assertIn("byId('identityCardNumber')?.addEventListener('input',refreshGenerationFromInputs)",source)
-        self.assertIn('v292-generation-evidence',source)
+        self.assertIn("version:'v306'",source)
+        self.assertIn('inferEditionFromText',source)
 
     def test_v291_core_regressions_remain_present(self):
         proc=subprocess.run(['python','test_card_core_crosscheck_v291.py'],cwd=ROOT,text=True,capture_output=True,timeout=60)

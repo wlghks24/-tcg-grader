@@ -173,7 +173,8 @@ class OcrSelfrefineV15Tests(unittest.TestCase):
         self.assertEqual(source.count("window.loadCardImage(file)"), 1)
         self.assertNotIn("async function imageHash(file)", source)
         self.assertNotIn("async function imageData(file)", source)
-        self.assertIn("v16-ocr-hierarchical-1-4-8", source)
+        self.assertIn("v302-edition-aware-ocr-learning", source)
+        self.assertIn("const retry=await request(effectiveRegion)", source)
 
 
 if __name__ == "__main__":
