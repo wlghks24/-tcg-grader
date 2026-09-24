@@ -1,0 +1,200 @@
+name: GPT TCG Static Promotion
+
+on:
+  pull_request:
+    paths:
+      - '.github/workflows/gpt-tcg-static-promotion.yml'
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/gpt-tcg-static-promotion.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: gpt-tcg-static-promotion-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  integrity-preview:
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - name: Checkout PR snapshot
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          fetch-depth: 2
+      - name: Set up Python
+        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97
+        with:
+          python-version: '3.11'
+      - name: Regenerate and diagnose integrity manifest
+        run: |
+          python fault_injection_healing.py --manifest
+          python fault_injection_healing.py --diagnose
+      - name: Upload integrity preview
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        with:
+          name: gpt-static-promotion-integrity-preview
+          path: integrity_manifest.json
+          if-no-files-found: error
+          retention-days: 7
+
+  collect-verified-promotion:
+    if: github.event_name != 'pull_request'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 35
+    env:
+      PYTHONPATH: ${{ github.workspace }}
+      PYTHONDONTWRITEBYTECODE: '1'
+      PYTHONUNBUFFERED: '1'
+      TCG_HTTP_TIMEOUT: '30'
+      TCG_SOURCE_TIMEOUT_CAP: '30'
+    steps:
+      - name: Checkout exact main snapshot
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          fetch-depth: 2
+
+      - name: Set up Python
+        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97
+        with:
+          python-version: '3.11'
+
+      - name: Compile and run collection publish regressions
+        run: |
+          python -m py_compile \
+            safe_runtime.py test_safe_runtime_redirect_diagnostics_v253.py collection_job_contract.py test_collection_job_contract_v255.py static_data_publish_gate.py auto_update_all.py tcg_updater.py feature_contract.py fault_injection_healing.py \
+            collection_verification_gate.py collection_verification_gate_contextual.py \
+            update_releases.py release_history_backfill.py update_promo_events.py \
+            update_market_prices.py market_public_crosscheck.py \
+            update_purchase_sources.py validate_external_links.py \
+            multi_route_event_discovery.py social_event_discovery.py auto_pipeline_runner.py \
+            grading_company_watch.py grading_company_watch_resilient.py grading_costs_live.py \
+            test_market_public_crosscheck_resilience_v228.py test_market_public_crosscheck_performance_v251.py \
+            test_release_history_cumulative_coverage_v229.py \
+            test_collection_restored_state_guard_v229.py \
+            test_collection_verification_contextual_v257.py test_grading_company_watch_resilient_v257.py
+          python -m unittest -v \
+            test_safe_runtime_redirect_diagnostics_v253.py \
+            test_collection_job_contract_v255.py \
+            test_static_data_publish_gate.py \
+            test_collection_verification_gate.py \
+            test_collection_verification_contextual_v257.py \
+            test_market_public_crosscheck_resilience_v228.py \
+            test_market_public_crosscheck_performance_v251.py \
+            test_release_history_cumulative_coverage_v229.py \
+            test_collection_restored_state_guard_v229.py \
+            test_collection_scope_compat_v214.py \
+            test_information_lifecycle_archive_v209.py \
+            test_release_history_coverage_v4.py \
+            test_collector_recovery_v161.py \
+            test_social_event_topic_coverage.py \
+            test_social_topic_capacity_v213.py \
+            test_event_quick_watch.py \
+            test_grading_company_watch_v215.py \
+            test_grading_company_watch_resilient_v257.py \
+            test_grading_costs_live.py \
+            test_grading_watch_integration_v220.py
+          python feature_contract.py
+
+      - name: Run full verified collection cycle
+        timeout-minutes: 25
+        run: |
+          python - <<'PY'
+          import json
+          import tcg_updater
+          data = tcg_updater.update_cycle('gpt-static-promotion')
+          print(json.dumps({
+              'updated_at': data.get('updated_at'),
+              'auto_update': data.get('auto_update', {}),
+          }, ensure_ascii=False, indent=2))
+          PY
+
+      - name: Fail closed before promotion artifact
+        run: |
+          python static_data_publish_gate.py \
+            --max-social-age-hours 12 \
+            --max-report-age-hours 2 \
+            --report STATIC_DATA_PUBLISH_REPORT.json
+          python collection_verification_gate_contextual.py \
+            --max-health-age-seconds 900 \
+            --fail-on-degraded \
+            --report COLLECTION_VERIFICATION_REPORT.json
+          python - <<'PY'
+          import json
+          import auto_update_all
+          auto_update_all.validate_json(
+              'grading_company_updates.json',
+              json.load(open('grading_company_updates.json', encoding='utf-8')),
+          )
+          PY
+
+      - name: Reconcile exact promotion integrity
+        run: |
+          python fault_injection_healing.py --manifest
+          python fault_injection_healing.py --diagnose
+          git diff --check
+
+      - name: Write GPT promotion metadata
+        run: |
+          python - <<'PY'
+          import datetime as dt
+          import hashlib
+          import json
+          import os
+          from pathlib import Path
+
+          names = '''releases.json promo_events.json supplementary_candidates.json social_event_candidates.json purchase_signals.json social_stock_signals.json market_prices.json market_watch.json purchase_sources.json exchange_rates.json grading_company_updates.json graded_photo_candidates.json source_collection_stats.json adaptive_collection_stats.json auto_update_report.json auto_update_issues.json tcg_live_data.json'''.split()
+          files = []
+          for name in names:
+              p = Path(name)
+              raw = p.read_bytes()
+              json.loads(raw)
+              files.append({'name': name, 'size': len(raw), 'sha256': hashlib.sha256(raw).hexdigest()})
+          payload = {
+              'schema_version': 1,
+              'repository': 'wlghks24/-tcg-grader',
+              'source': 'github_actions_gpt_promotion',
+              'base_main_sha': os.environ['GITHUB_SHA'],
+              'run_id': os.environ['GITHUB_RUN_ID'],
+              'created_at': dt.datetime.now(dt.timezone.utc).isoformat(),
+              'file_count': len(files),
+              'files': files,
+          }
+          Path('GPT_STATIC_PROMOTION_METADATA.json').write_text(
+              json.dumps(payload, ensure_ascii=False, indent=2) + '\n', encoding='utf-8'
+          )
+          PY
+
+      - name: Upload verified GPT promotion artifact
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        with:
+          name: tcg-static-data-gpt-promotion
+          path: |
+            releases.json
+            promo_events.json
+            supplementary_candidates.json
+            social_event_candidates.json
+            purchase_signals.json
+            social_stock_signals.json
+            market_prices.json
+            market_watch.json
+            purchase_sources.json
+            exchange_rates.json
+            grading_company_updates.json
+            graded_photo_candidates.json
+            source_collection_stats.json
+            adaptive_collection_stats.json
+            auto_update_report.json
+            auto_update_issues.json
+            tcg_live_data.json
+            integrity_manifest.json
+            GPT_STATIC_PROMOTION_METADATA.json
+            STATIC_DATA_PUBLISH_REPORT.json
+            COLLECTION_VERIFICATION_REPORT.json
+          if-no-files-found: error
+          retention-days: 7
