@@ -1,7 +1,7 @@
 {
   "version": 2,
   "engine": "v109-card-identity-ocr-learning",
-  "generated_at": "2026-09-24T13:49:11+00:00",
+  "generated_at": "2026-09-24T14:04:44+00:00",
   "files": {
     ".github/workflows/ai-auto-tracker-guard.yml": {
       "sha256": "636e750bd6d2619cce75d4bce2d68051eaa2209ae763bc8ec523ed73476728a6",
@@ -432,8 +432,8 @@
       "bytes": 4856
     },
     ".github/workflows/tcg-static-data-refresh.yml": {
-      "sha256": "8338bc78771dba2dc277a1fd609662e1e19fbc467927d7ad654057ab73fc9835",
-      "bytes": 20198
+      "sha256": "b2d5e3a190e84a649f29167fccdd27eb29a21b6e03271a7c1b7804e8a9ed264e",
+      "bytes": 18291
     },
     ".github/workflows/v108-regression-diagnostic.yml": {
       "sha256": "0bbc12618657de981deabd60c83d2c0091af636ffc7feab8fcd09bbf37002a7a",
@@ -2832,8 +2832,8 @@
       "bytes": 2506
     },
     "test_protected_static_pipeline_v305.py": {
-      "sha256": "066d85f094d3706d658b72a0d896ba50bfefe33dfe60676c176bf5787d1668ad",
-      "bytes": 2919
+      "sha256": "b599b62f76f3a71266e6aff035a922746772beb70a0faae07cbd51bb9a085ba6",
+      "bytes": 3243
     },
     "test_provider_source_gap_learning_v5.py": {
       "sha256": "ef4c731696641dcf5ec0e8db75335fd09b4edfcd2d2b1d1f8ebea7c5fb103dad",
