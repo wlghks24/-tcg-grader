@@ -167,3 +167,134 @@ button,a{-webkit-tap-highlight-color:transparent}
   .grade-cockpit-probability,.grade-cockpit-company{background:#172033}
   .grade-cockpit-probability b{color:#93c5fd}
 }
+
+/* v307 expert-view tablet composition refinement.
+   Presentation-only: based on the real Lenovo recording; no grading, market, sync, or collection logic changes. */
+:root{
+  --v307-primary:#2563eb;
+  --v307-primary-deep:#1d4ed8;
+  --v307-soft:#f8fafc;
+  --v307-line:#dbe4ee;
+  --v307-ink:#0f172a;
+  --v307-muted:#64748b;
+  --v307-shadow:0 6px 18px rgba(15,23,42,.065);
+}
+
+/* Fix the title contrast seen on the recorded tablet and reduce top-of-page visual weight. */
+.app-title-primary{padding:17px 18px!important;margin-bottom:12px!important;box-shadow:0 12px 30px rgba(15,23,42,.20)!important}
+.app-title-primary h1{
+  color:#fff!important;-webkit-text-fill-color:#fff!important;text-shadow:0 1px 2px rgba(0,0,0,.18)!important;
+  font-size:clamp(26px,4.5vw,32px)!important;margin-bottom:6px!important
+}
+.app-title-kicker{color:#dbeafe!important}
+.app-title-summary{color:#e8f1ff!important;line-height:1.55!important}
+.app-title-help{margin-top:9px!important;padding:7px 10px!important}
+
+/* Clearer section hierarchy: important content reads first, secondary help stays quieter. */
+.card,.home-launcher,.feature-category-nav,.tablet-manager-hub{
+  border-color:var(--v307-line)!important;box-shadow:var(--v307-shadow)!important
+}
+.card{padding:15px!important;margin:11px 0!important}
+.card>h2:first-child,.card>h3:first-child,.card>h4:first-child{
+  color:var(--v307-ink)!important;line-height:1.3!important;margin-bottom:6px!important
+}
+.card>.muted:first-of-type{margin-top:4px!important;margin-bottom:10px!important;color:#5b6b80!important}
+.status{border:1px solid #e2e8f0!important;background:#f8fafc!important;box-shadow:none!important}
+.metric{box-shadow:none!important}
+
+/* Primary vs secondary actions. Reset/destructive-neutral actions should not look equally primary. */
+#v13search,#recalcCalibration{
+  background:linear-gradient(135deg,var(--v307-primary),var(--v307-primary-deep))!important;
+  color:#fff!important;border:1px solid transparent!important;box-shadow:0 5px 14px rgba(37,99,235,.20)!important
+}
+#v13clear,#resetCalibration{
+  background:#fff!important;color:#334155!important;border:1px solid #cbd5e1!important;box-shadow:none!important
+}
+#v13clear:active,#resetCalibration:active{background:#f1f5f9!important}
+
+/* Launcher cards: compact, consistent, and faster to scan. */
+.feature-category-nav{padding:14px!important}
+.feature-category-head{margin-bottom:9px!important}
+.feature-category-head h2{font-size:21px!important}
+.feature-category-steps{margin:9px 0!important}
+.feature-category-selected{margin:8px 0 10px!important;padding:9px 11px!important}
+.feature-category summary{min-height:102px!important;padding:11px 8px!important;gap:5px!important}
+.feature-category-icon{width:43px!important;height:43px!important;border-radius:14px!important;font-size:25px!important}
+.feature-category-title{font-size:13px!important}
+.feature-category-sub{font-size:9.5px!important;line-height:1.35!important}
+.feature-category summary::after{min-height:21px!important;padding:3px 8px!important;font-size:8.5px!important}
+.feature-category[open] summary{min-height:64px!important;padding:9px 11px!important}
+.feature-shortcut-grid{padding:10px!important;gap:8px!important}
+.feature-shortcut{min-height:70px!important;padding:10px 34px 10px 11px!important}
+
+/* Grading calibration/statistics: keep evidence visible without five full-width cards in portrait tablet mode. */
+.validation-stats .metric{min-height:82px!important;padding:10px!important;display:flex;flex-direction:column;justify-content:center}
+.validation-stats .metric b{font-variant-numeric:tabular-nums;font-size:20px!important;letter-spacing:-.02em}
+.validation-actions{gap:8px!important}
+.workflow-part{border-color:#e2e8f0!important;box-shadow:none!important}
+
+/* Catalogue/market cards: reduce repeated empty-image blocks and improve data density. */
+.analysis-list{gap:11px!important;align-items:stretch}
+.analysis-box{background:#fff!important;border-color:#dbe4ee!important;border-radius:16px!important;box-shadow:0 4px 14px rgba(15,23,42,.055)!important}
+.analysis-box:hover{transform:none!important;box-shadow:0 5px 16px rgba(15,23,42,.07)!important}
+.analysis-head{padding:10px!important;min-height:0!important}
+.analysis-title{font-size:14px!important;line-height:1.3!important}
+.analysis-native,.analysis-sub{font-size:10.5px!important;line-height:1.4!important}
+.catalog-main-image{background:#f8fafc!important}
+.catalog-main-image:has(.analysis-image-wait){height:78px!important;min-height:78px!important}
+.analysis-image-wait{
+  min-height:78px!important;padding:9px 10px!important;gap:6px!important;font-size:11px!important;
+  color:#64748b!important;background:linear-gradient(180deg,#f8fafc,#f1f5f9)!important
+}
+.analysis-image-wait b{font-size:20px!important}
+.analysis-box .price,.analysis-price,.price-current{font-variant-numeric:tabular-nums!important;letter-spacing:-.015em}
+.analysis-box a{font-weight:800;text-underline-offset:3px}
+
+/* Fixed app dock: keep navigation reachable without covering as much content. */
+body.has-app-bottom-dock .app{padding-bottom:calc(94px + env(safe-area-inset-bottom,0px))!important}
+body .app-bottom-dock{
+  width:min(calc(100% - 24px),560px)!important;bottom:calc(7px + env(safe-area-inset-bottom,0px))!important;
+  padding:5px!important;border-radius:18px!important;box-shadow:0 10px 28px rgba(15,23,42,.18)!important
+}
+body .app-bottom-dock a{min-height:51px!important;border-radius:13px!important;gap:2px!important}
+body .app-bottom-dock-icon{font-size:20px!important}
+body .app-bottom-dock-label{font-size:10px!important;font-weight:850!important}
+
+/* The recorded Lenovo portrait viewport lands near phone breakpoints.
+   Recover tablet density from 540px upward without changing true phone layouts. */
+@media(min-width:540px) and (max-width:760px){
+  .app{max-width:720px!important;padding-left:12px!important;padding-right:12px!important}
+  body .feature-category-grid{grid-template-columns:repeat(4,minmax(0,1fr))!important;gap:8px!important}
+  body .feature-category summary{min-height:96px!important;padding:9px 6px!important}
+  body .feature-category-sub{display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;overflow:hidden}
+  body .feature-shortcut-grid{grid-template-columns:repeat(2,minmax(0,1fr))!important}
+  body .validation-hub .grid2{grid-template-columns:repeat(2,minmax(0,1fr))!important}
+  body .validation-actions{grid-template-columns:repeat(2,minmax(0,1fr))!important}
+  body .validation-stats{grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:8px!important}
+  body .grade-cockpit-grid{grid-template-columns:repeat(3,minmax(0,1fr))!important}
+  body .grade-cockpit-cell-wide{grid-column:span 2!important}
+  body .grade-cockpit-companies{grid-template-columns:repeat(5,minmax(0,1fr))!important}
+  body .analysis-list{grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:11px!important}
+  body .catalog-main-image{height:178px!important}
+  body .catalog-main-image:has(.analysis-image-wait){height:72px!important;min-height:72px!important}
+  body .analysis-image-wait{min-height:72px!important}
+  body .purchase-controls{grid-template-columns:repeat(2,minmax(0,1fr))!important}
+  body .promo-tools{grid-template-columns:repeat(2,minmax(0,1fr))!important}
+  body .grid3{grid-template-columns:repeat(3,minmax(0,1fr))!important}
+}
+
+/* Phones retain one-column safety where content genuinely needs it. */
+@media(max-width:539px){
+  .app-title-primary{padding:15px 13px!important}
+  .app-title-primary h1{font-size:25px!important}
+  .feature-category-nav{padding:12px!important}
+  body .app-bottom-dock{width:calc(100% - 14px)!important;bottom:calc(5px + env(safe-area-inset-bottom,0px))!important}
+  body .app-bottom-dock a{min-height:49px!important}
+}
+
+@media(prefers-color-scheme:dark){
+  #v13clear,#resetCalibration{background:#172033!important;color:#e2e8f0!important;border-color:#475569!important}
+  .analysis-box{background:#111827!important;border-color:#334155!important}
+  .catalog-main-image:has(.analysis-image-wait),.analysis-image-wait{background:#172033!important;color:#cbd5e1!important}
+  .status{background:#172033!important;border-color:#334155!important;color:#cbd5e1!important}
+}
