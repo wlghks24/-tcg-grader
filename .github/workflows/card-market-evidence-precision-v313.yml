@@ -1,0 +1,53 @@
+name: Card Market Evidence Precision v313
+
+on:
+  push:
+    branches:
+      - fix/card-market-evidence-precision-v313
+
+permissions:
+  contents: write
+
+jobs:
+  harden:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - name: Checkout v313 branch
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          ref: fix/card-market-evidence-precision-v313
+          fetch-depth: 0
+
+      - name: Set up Python
+        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97
+        with:
+          python-version: '3.11'
+
+      - name: Apply, validate, self-clean and commit v313
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          python -m pip install --disable-pip-version-check pillow
+          python .github/scripts/card_market_precision_v313.py
+          git rm .github/scripts/card_market_precision_v313.py
+          git rm .github/workflows/card-market-evidence-precision-v313.yml
+          python fault_injection_healing.py --manifest
+          python -m py_compile multi_market_price_collector.py test_multi_market_price_collector.py
+          node --check multi_market_prices.js
+          grep -Fq "row.basis||'공개가격'" multi_market_prices.js
+          python -m unittest -v \
+            test_multi_market_price_collector.py \
+            test_card_identity_market_precision_v309.py \
+            test_card_tablet_runtime_v300.py \
+            test_market_ai_auto_tracker.py \
+            test_market_reference_sources_v130.py
+          python verify_current_runtime.py
+          python repository_integrity_guard.py
+          git diff --check
+          git add -A
+          git status --short
+          git commit -m 'fix: separate exact card identity and market evidence v313'
+          git push origin HEAD:fix/card-market-evidence-precision-v313
