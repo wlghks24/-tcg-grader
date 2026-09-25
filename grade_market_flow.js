@@ -146,6 +146,12 @@ async function loadPlatformQuotes(){
 }
 function quoteScore(row,name,number,region){
  if(!row||row.platform!=='WYYYES')return -999;
+ const metadata=window.TCGCardMetadata;
+ if(metadata){
+   const card=metadata.classify({game:window.tcgIdentityGame||'',region,card_name:name,card_number:number});
+   const bound=metadata.bindPrice(card,{game:row.game||window.tcgIdentityGame||'',region:row.card_region||'UNKNOWN',card_name:row.card_name||row.title||'',card_number:row.card_number||''});
+   if(!bound.safe)return -999;
+ }
  const title=norm(row.title),n=norm(name),cn=norm(number),qcn=norm(row.card_number);
  let score=0;
  if(cn){
