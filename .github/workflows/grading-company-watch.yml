@@ -1,29 +1,16 @@
 name: Grading Company Watch
-# v257: maintenance-aware official-source recovery keeps pricing fail-closed while preserving provider observability.
+# v320: official-source watch publishes validated snapshots only through protected-main PRs.
 
 on:
   workflow_dispatch:
   schedule:
     - cron: '23 */3 * * *'
-  push:
-    branches: [main]
-    paths:
-      - 'safe_runtime.py'
-      - 'test_safe_runtime_redirect_diagnostics_v253.py'
-      - 'grading_company_watch.py'
-      - 'grading_company_watch_resilient.py'
-      - 'grading_company_health_diagnostics.py'
-      - 'grading_costs_live.py'
-      - 'grading_costs_live.js'
-      - 'fault_injection_healing.py'
-      - 'test_grading_company_watch_v215.py'
-      - 'test_grading_company_watch_resilient_v257.py'
-      - 'test_grading_company_health_diagnostics_v252.py'
-      - 'test_grading_costs_live.py'
-      - '.github/workflows/grading-company-watch.yml'
 
 permissions:
+  actions: write
+  checks: read
   contents: write
+  pull-requests: write
 
 concurrency:
   group: grading-company-watch-main
@@ -32,7 +19,7 @@ concurrency:
 jobs:
   verify-watch-publish:
     runs-on: ubuntu-24.04
-    timeout-minutes: 15
+    timeout-minutes: 30
     env:
       PYTHONDONTWRITEBYTECODE: '1'
       PYTHONUNBUFFERED: '1'
@@ -47,22 +34,22 @@ jobs:
         with:
           python-version: '3.12'
 
-      - name: Verify watcher, diagnostics and live-cost contracts
+      - name: Verify watcher diagnostics and protected publish contracts
         run: |
-          python -m py_compile safe_runtime.py test_safe_runtime_redirect_diagnostics_v253.py grading_company_watch.py grading_company_watch_resilient.py grading_company_health_diagnostics.py grading_costs_live.py fault_injection_healing.py
+          python -m py_compile safe_runtime.py test_safe_runtime_redirect_diagnostics_v253.py grading_company_watch.py grading_company_watch_resilient.py grading_company_health_diagnostics.py grading_costs_live.py fault_injection_healing.py test_grading_company_watch_protected_publish_v320.py
           python -m unittest -v \
             test_safe_runtime_redirect_diagnostics_v253.py \
             test_grading_company_watch_v215.py \
             test_grading_company_watch_resilient_v257.py \
             test_grading_company_health_diagnostics_v252.py \
-            test_grading_costs_live.py
+            test_grading_costs_live.py \
+            test_grading_company_watch_protected_publish_v320.py
           node --check grading_costs_live.js
 
       - name: Collect official grading company changes
         run: python grading_company_watch_resilient.py
 
       - name: Build provider RCA diagnostics
-        id: diagnostics
         shell: bash
         run: |
           set -euo pipefail
@@ -78,17 +65,14 @@ jobs:
           print(f"healthy={summary.get('healthy',0)} degraded={summary.get('degraded',0)} no_healthy={providers or 'none'}")
           if providers:
               print(f"::warning title=Grading provider health degraded::companies_without_healthy_source={providers}")
-          for row in data.get('sources') or []:
-              if row.get('failure_class') == 'ROOT_CAUSE_UNRESOLVED':
-                  print(f"::warning title=Unresolved grading provider RCA::{row.get('company')} {row.get('source_id')} requires more evidence")
           PY
 
       - name: Validate official-only public snapshot
         run: |
           python - <<'PY'
           import json
-          from urllib.parse import urlsplit
           from pathlib import Path
+          from urllib.parse import urlsplit
           import grading_company_watch as w
           data=json.loads(Path('grading_company_updates.json').read_text(encoding='utf-8'))
           assert data.get('schema_version')==1
@@ -100,16 +84,14 @@ jobs:
           assert int(data.get('summary',{}).get('sources',0))>=10
           assert int(data.get('summary',{}).get('healthy_sources',0))>=1
           for source_id,source in data.get('sources',{}).items():
-              url=source.get('url','')
-              parts=urlsplit(url)
+              parts=urlsplit(source.get('url',''))
               assert parts.scheme=='https'
               assert (parts.hostname or '').lower() in w.ALLOWED_HOSTS
-              if source_id == 'bgs-maintenance-status':
-                  assert source.get('kind') == 'status'
-                  assert source.get('services') == []
-                  assert source.get('fact_scope') == 'service_availability_status_only_no_price_promotion'
-          resilience=data.get('resilience') or {}
-          maintenance=resilience.get('bgs_maintenance_status') or {}
+              if source_id=='bgs-maintenance-status':
+                  assert source.get('kind')=='status'
+                  assert source.get('services')==[]
+                  assert source.get('fact_scope')=='service_availability_status_only_no_price_promotion'
+          maintenance=(data.get('resilience') or {}).get('bgs_maintenance_status') or {}
           if maintenance.get('ok') is True:
               assert maintenance.get('price_facts_promoted') is False
           for row in data.get('recent_changes',[]):
@@ -124,35 +106,141 @@ jobs:
           set -euo pipefail
           git fetch origin main
           if [ "$(git rev-parse HEAD)" != "$(git rev-parse origin/main)" ]; then
-            echo "changed=false" >> "$GITHUB_OUTPUT"
-            echo "reason=main advanced during grading-company collection; discard stale snapshot" >> "$GITHUB_OUTPUT"
+            echo 'changed=false' >> "$GITHUB_OUTPUT"
+            echo 'reason=main advanced during collection; discard stale snapshot' >> "$GITHUB_OUTPUT"
             exit 0
           fi
           git add -- grading_company_updates.json
           if git diff --cached --quiet; then
-            echo "changed=false" >> "$GITHUB_OUTPUT"
-            echo "reason=no verified grading-company changes" >> "$GITHUB_OUTPUT"
+            echo 'changed=false' >> "$GITHUB_OUTPUT"
+            echo 'reason=no verified grading-company changes' >> "$GITHUB_OUTPUT"
           else
-            echo "changed=true" >> "$GITHUB_OUTPUT"
-            echo "reason=official grading-company snapshot changed" >> "$GITHUB_OUTPUT"
+            echo 'changed=true' >> "$GITHUB_OUTPUT"
+            echo 'reason=official grading-company snapshot changed' >> "$GITHUB_OUTPUT"
           fi
 
-      - name: Commit validated watcher snapshot
+      - name: Build protected-main candidate branch
+        id: candidate
         if: steps.stage.outputs.changed == 'true'
         shell: bash
         run: |
           set -euo pipefail
-          # grading_company_updates.json is an immutable-hash input to the repository
-          # integrity contract. Rebuild and diagnose from the exact staged snapshot so
-          # the 3-hour watcher cannot publish a data commit with a stale manifest.
           python fault_injection_healing.py --manifest
           python fault_injection_healing.py --diagnose
           git add -- integrity_manifest.json
           git diff --cached --check
+
+          base_sha="$(git rev-parse HEAD)"
+          candidate_branch="auto/grading-company-watch-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}"
+          git switch -c "${candidate_branch}"
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           git commit -m 'data: refresh grading company official watch'
-          git push origin HEAD:main
+          candidate_sha="$(git rev-parse HEAD)"
+
+          git fetch origin main
+          if [ "$(git rev-parse origin/main)" != "${base_sha}" ]; then
+            echo 'published=false' >> "$GITHUB_OUTPUT"
+            echo 'reason=main advanced after validation; discard local candidate' >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          git push origin "HEAD:refs/heads/${candidate_branch}"
+          echo "branch=${candidate_branch}" >> "$GITHUB_OUTPUT"
+          echo "commit=${candidate_sha}" >> "$GITHUB_OUTPUT"
+          echo "base=${base_sha}" >> "$GITHUB_OUTPUT"
+          echo 'published=true' >> "$GITHUB_OUTPUT"
+          echo 'reason=validated candidate branch published' >> "$GITHUB_OUTPUT"
+
+      - name: Promote candidate through protected main
+        id: promote
+        if: steps.candidate.outputs.published == 'true'
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+          CANDIDATE_BRANCH: ${{ steps.candidate.outputs.branch }}
+          CANDIDATE_SHA: ${{ steps.candidate.outputs.commit }}
+          BASE_SHA: ${{ steps.candidate.outputs.base }}
+        run: |
+          set -euo pipefail
+          owner="${GITHUB_REPOSITORY_OWNER}"
+          pr_number="$(gh api -X GET "repos/${REPO}/pulls" -f state=open -f head="${owner}:${CANDIDATE_BRANCH}" -f base=main --jq '.[0].number // empty')"
+          if [ -z "${pr_number}" ]; then
+            title="data: grading company watch ${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}"
+            body="Protected-main grading-company snapshot. Base: ${BASE_SHA}. Candidate: ${CANDIDATE_SHA}. Run: ${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}."
+            if ! pr_json="$(gh api --method POST "repos/${REPO}/pulls" -f title="${title}" -f head="${CANDIDATE_BRANCH}" -f base=main -f body="${body}" 2>/tmp/create-pr.err)"; then
+              cat /tmp/create-pr.err >&2 || true
+              echo 'status=PENDING_EXTERNAL_PR' >> "$GITHUB_OUTPUT"
+              echo 'reason=Actions PR creation unavailable; candidate branch retained' >> "$GITHUB_OUTPUT"
+              exit 0
+            fi
+            pr_number="$(printf '%s' "${pr_json}" | jq -r '.number')"
+          fi
+          echo "pr_number=${pr_number}" >> "$GITHUB_OUTPUT"
+
+          required_workflows=(
+            tablet-gpt-tcg-grader-main-alignment.yml
+            repository-integrity-guard.yml
+            selfrefine-full-repo.yml
+            deep-selfrefine-guard.yml
+            exhaustive-selfrefine-guard.yml
+            tablet-termux-main-guard.yml
+            android-updater-guard.yml
+          )
+          for workflow in "${required_workflows[@]}"; do
+            gh api --method POST "repos/${REPO}/actions/workflows/${workflow}/dispatches" -f ref="${CANDIDATE_BRANCH}"
+          done
+
+          required_checks=(
+            'Tablet GPT TCG Grader Main Alignment'
+            'Repository Integrity Guard'
+            'Main SELFREFINE'
+            'Deep SELFREFINE Guard'
+            'Exhaustive SELFREFINE Guard'
+            'Tablet Termux Main Guard'
+            'Android Updater Guard'
+          )
+          deadline=$((SECONDS + 900))
+          while (( SECONDS < deadline )); do
+            checks="$(gh api -H 'Accept: application/vnd.github+json' "repos/${REPO}/commits/${CANDIDATE_SHA}/check-runs?per_page=100")"
+            pending=0
+            failed=0
+            for name in "${required_checks[@]}"; do
+              state="$(printf '%s' "${checks}" | jq -r --arg name "${name}" '[.check_runs[] | select(.name == $name)] | sort_by(.started_at // "") | last | if . == null then "missing" elif .status != "completed" then .status else (.conclusion // "unknown") end')"
+              printf '%s: %s\n' "${name}" "${state}"
+              case "${state}" in
+                success) ;;
+                failure|cancelled|timed_out|action_required|stale|skipped|neutral) failed=1 ;;
+                *) pending=1 ;;
+              esac
+            done
+            if (( failed )); then
+              echo 'status=REQUIRED_CHECK_FAILED' >> "$GITHUB_OUTPUT"
+              exit 1
+            fi
+            if (( ! pending )); then break; fi
+            sleep 20
+          done
+          if (( SECONDS >= deadline )); then
+            echo 'status=REQUIRED_CHECK_TIMEOUT' >> "$GITHUB_OUTPUT"
+            exit 1
+          fi
+
+          git fetch origin main
+          if [ "$(git rev-parse origin/main)" != "${BASE_SHA}" ]; then
+            echo 'status=BASE_ADVANCED' >> "$GITHUB_OUTPUT"
+            echo 'reason=protected main advanced before merge; leave PR open for fresh run' >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          merge_json="$(gh api --method PUT "repos/${REPO}/pulls/${pr_number}/merge" -f merge_method=merge -f sha="${CANDIDATE_SHA}")"
+          if [ "$(printf '%s' "${merge_json}" | jq -r '.merged')" != 'true' ]; then
+            printf '%s\n' "${merge_json}" >&2
+            echo 'status=MERGE_REJECTED' >> "$GITHUB_OUTPUT"
+            exit 1
+          fi
+          echo 'status=MERGED' >> "$GITHUB_OUTPUT"
+          echo 'reason=validated snapshot merged through protected checks' >> "$GITHUB_OUTPUT"
+          git push origin --delete "${CANDIDATE_BRANCH}" || true
 
       - name: Upload provider RCA diagnostics
         if: always()
@@ -171,13 +259,14 @@ jobs:
             echo '## Grading Company Watch'
             echo
             echo '- companies: PSA / BGS / CGC / TAG / BRG'
-            echo '- cadence: every 3 hours + manual + relevant source pushes'
-            echo '- tracked: fee, service level, turnaround, availability, official event/news'
+            echo '- cadence: every 3 hours + manual'
             echo '- trust: official HTTPS sources only; community/Instagram are leads only'
-            echo '- maintenance policy: canonical Beckett redirect may prove status only; it never promotes price facts'
+            echo '- maintenance policy: status evidence never promotes price facts'
             echo '- failure policy: preserve last-good structured facts; expose degraded source health'
-            echo '- RCA classes: blocked / rate-limit / transient / unapproved redirect / maintenance redirect / parser-change-suspected / unresolved'
-            echo '- integrity policy: every grading-company data commit regenerates and diagnoses integrity_manifest.json from the exact snapshot'
+            echo '- publish policy: protected main via candidate branch + PR + seven required checks; no direct main push'
             echo "- snapshot changed: ${{ steps.stage.outputs.changed || 'not-reached' }}"
-            echo "- reason: ${{ steps.stage.outputs.reason || 'not-reached' }}"
+            echo "- stage reason: ${{ steps.stage.outputs.reason || 'not-reached' }}"
+            echo "- candidate: ${{ steps.candidate.outputs.reason || 'not-created' }}"
+            echo "- promotion: ${{ steps.promote.outputs.status || 'not-run' }}"
+            echo "- promotion reason: ${{ steps.promote.outputs.reason || 'not-run' }}"
           } >> "$GITHUB_STEP_SUMMARY"
