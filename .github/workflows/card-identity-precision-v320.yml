@@ -24,8 +24,10 @@ jobs:
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           python -m pip install --disable-pip-version-check pillow
+          python .github/scripts/card_identity_precision_v320_fixup.py
           python .github/scripts/card_identity_precision_v320.py
           git rm .github/scripts/card_identity_precision_v320.py
+          git rm .github/scripts/card_identity_precision_v320_fixup.py
           git rm .github/workflows/card-identity-precision-v320.yml
           python fault_injection_healing.py --manifest
           python -m py_compile card_identity_recognition.py test_card_identity_ambiguity_v320.py test_card_edition_precision_v302.py test_card_region_generation_precision_v306.py verify_current_runtime.py
