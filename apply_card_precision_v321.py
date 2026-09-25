@@ -49,6 +49,10 @@ patch('card_grading_valuation.py',
 '''        raw_krw=300_000,\n    )''',
 '''        raw_krw=300_000,\n        price_source="user_provided_exact_grade",\n    )''',
 'manual example source')
+patch('verify_all_legacy_v99.py',
+'''        valued=engine.verified_card_valuation('LILLIE SM1M 065/060',pristine,profile,raw_krw=300000)''',
+'''        valued=engine.verified_card_valuation('LILLIE SM1M 065/060',pristine,profile,raw_krw=300000,\n                                               price_source='user_provided_exact_grade')''',
+'legacy manual valuation source')
 
 # Current runtime gate must execute the new regressions.
 patch('verify_current_runtime.py',
