@@ -163,6 +163,7 @@ function quoteScore(row,name,number,region){
  return score;
 }
 function matchingPlatformQuotes(name,number,region){
+ if(editionCode(region)==='UNKNOWN')return [];
  const all=platformMarket?.platform_quotes?.WYYYES;
  if(!Array.isArray(all))return [];
  return all.map(row=>({row,score:quoteScore(row,name,number,region)}))
@@ -174,6 +175,7 @@ function renderPlatformQuotes(){
  const box=el('agmPlatformQuotes');if(!box)return;
  const name=(el('identityCardName')?.value||'').trim(),number=(el('identityCardNumber')?.value||'').trim(),region=(el('identityRegion')?.value||'').trim();
  if(!name&&!number){box.textContent='카드 인식 후 판본별 자동수집 공개시장 자료를 연결합니다.';renderReferenceSources();return}
+ if(editionCode(region)==='UNKNOWN'){box.textContent='판본 확인 후 동일 판본 시세만 연결합니다.';renderReferenceSources();return}
  if(!platformLoaded){box.textContent='공개시장 자료 불러오는 중…';loadPlatformQuotes();return}
  const rows=matchingPlatformQuotes(name,number,region);
  if(!rows.length){
@@ -190,6 +192,7 @@ function renderPlatformQuotes(){
 function findMarketKey(name,number,region){
  const select=el('econCard');if(!select)return '';
  const wanted=editionCode(region),options=[...select.options].filter(option=>option.value);
+ if(wanted==='UNKNOWN')return '';
  const n=norm(name),cn=norm(number),direct=(el('identityMarketKey')?.value||'').trim();
  const directOption=options.find(option=>option.value===direct);
  if(directOption&&(wanted==='UNKNOWN'||marketKeyEdition(direct)===wanted)){

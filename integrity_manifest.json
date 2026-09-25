@@ -1,7 +1,7 @@
 {
   "version": 2,
   "engine": "v109-card-identity-ocr-learning",
-  "generated_at": "2026-09-25T13:12:32+00:00",
+  "generated_at": "2026-09-25T13:52:37+00:00",
   "files": {
     ".github/workflows/ai-auto-tracker-guard.yml": {
       "sha256": "636e750bd6d2619cce75d4bce2d68051eaa2209ae763bc8ec523ed73476728a6",
@@ -1128,12 +1128,12 @@
       "bytes": 120
     },
     "card_identity_recognition.js": {
-      "sha256": "2b99b57a3cefde836c76b9ec1bbba7b800398acee23e84dc4ba39518bd699f23",
-      "bytes": 31293
+      "sha256": "eb8c45acb7e0067b48394737e922ec3c1bc449dc382937b4ed15b882a1ce289e",
+      "bytes": 32385
     },
     "card_identity_recognition.py": {
-      "sha256": "60f4c2ff16c7f5c5befb1b9d88ba9be775311c97d218d2e24968f0b4bd24f9c6",
-      "bytes": 41904
+      "sha256": "88b8eb9ec9a6349363b6900bba0b0ba5d926c6475bcc08f6931aac9ffaf4344c",
+      "bytes": 45098
     },
     "card_identity_reference_catalog.json": {
       "sha256": "45a99a4520d2ccca217e196e49db016481105283e8a53b1e7dec2c11bb4a7c04",
@@ -1464,8 +1464,8 @@
       "bytes": 16149
     },
     "grade_market_flow.js": {
-      "sha256": "c5157848669e5baec2a40a4119ee2e59fff00462597aaae0d66237557bb7140b",
-      "bytes": 24130
+      "sha256": "fa2793c8ab1b12771804c2f511c1cbdfc6c0193f73c4e9f3a7cf0122bad90536",
+      "bytes": 24358
     },
     "graded_photo_bootstrap.py": {
       "sha256": "57fe62df2fd54baf3ad1a20f52b9b760aa0d74f0d0af51f3db4856276527f151",
@@ -2388,8 +2388,8 @@
       "bytes": 4817
     },
     "test_card_core_crosscheck_v292.py": {
-      "sha256": "751fdf4f62d4efcfae4e69767cb0bbd0dcec9ef28f86691ef4daa9b36fe7ec01",
-      "bytes": 2419
+      "sha256": "277d2c5f5153262c236bd254a86d36ef9a4e409fb641fcca38ed2bb0381629cb",
+      "bytes": 2494
     },
     "test_card_core_crosscheck_v295.py": {
       "sha256": "8cfbe7d8163b440533d067ef3e668fabd9c2896ba92a2896f1dfcd35600fe3b3",
@@ -2400,8 +2400,12 @@
       "bytes": 5297
     },
     "test_card_edition_precision_v302.py": {
-      "sha256": "30438efccb79c13286f7ca608543260a477153be0083362c026fe68ca6b535c3",
-      "bytes": 6060
+      "sha256": "3fdaeae16030e7a822b7f841825e745d5ff5c69d86ea023e5b2e4914c586263f",
+      "bytes": 6106
+    },
+    "test_card_identity_ambiguity_v320.py": {
+      "sha256": "dcf4e6de020815d7c3ca616d31f4fe7b4765c352ce15117cb14872b7bfe85051",
+      "bytes": 4999
     },
     "test_card_identity_market_precision_v309.py": {
       "sha256": "7b8366e0dfc704507ba43e0b06c37ee3b0f498015beb81f860e0fb60840a8d4a",
@@ -2420,7 +2424,7 @@
       "bytes": 3166
     },
     "test_card_region_generation_precision_v306.py": {
-      "sha256": "ae2b31356fe5826b206fa86691b0ac82a3ad61a66d88edef8aa315e599a79cea",
+      "sha256": "93c6e0c748f4cb3bef35671e6b4ffa88fd80b688bc2e356712164755812b12a7",
       "bytes": 3067
     },
     "test_card_regression_gate_v299.py": {
@@ -2428,7 +2432,7 @@
       "bytes": 3936
     },
     "test_card_tablet_runtime_v300.py": {
-      "sha256": "f2a1bffd1b271ac8dcd9af794541ce044b8c76d447a02f60f93150ad54a9b083",
+      "sha256": "e61eeda6afbb3e7308e623401a58391ef9e6078a3ebf8d875cdf4a1192be8eb5",
       "bytes": 6547
     },
     "test_catalog_images.py": {
@@ -2844,8 +2848,8 @@
       "bytes": 1286
     },
     "test_pokemon_generation_display_v207.py": {
-      "sha256": "152acf24b4262dbb69e5504393d8a4a71aa5da0f29ea4d9246306b4e0fc0edfd",
-      "bytes": 2399
+      "sha256": "80297bb5e1b54326a59ab6f747d70d4cb4d1421ee10a8fc14823cf8bf95134ea",
+      "bytes": 2479
     },
     "test_pokemon_run30_asia_recovery_v208.py": {
       "sha256": "0d5ab52c926da45c28e0572e6d4fc137e69be7c08d30ca4418718ae0ce03fd65",
@@ -3316,8 +3320,8 @@
       "bytes": 12067
     },
     "verify_current_runtime.py": {
-      "sha256": "a13fdfa9adbda5bbb33bdcf1096fd82411177fa3b87d702c06c52b65589f3e17",
-      "bytes": 6491
+      "sha256": "74a0f5d692689dec2eadec975e8a004083086014b9a53ccacb6f77217a0a1786",
+      "bytes": 6588
     },
     "verify_fault_injection_healing.py": {
       "sha256": "40f0d3565ea8094b4deb2cf407550eaf41928f3f7fbfc2863ead0053f7cb25f8",
@@ -3336,8 +3340,8 @@
       "bytes": 10913
     },
     "verify_pokemon_generation_runtime.js": {
-      "sha256": "f456056319c01e4f5ab8e29cae32f2e3fbe5dd004049ef4eb0ae9a6b46bf51ee",
-      "bytes": 5929
+      "sha256": "d75df45b5202a7ac0ba915fc95facaab898eed93ea40e7872eca97fd26b815ce",
+      "bytes": 6252
     },
     "verify_service_worker_runtime.js": {
       "sha256": "7ab3409f6e6541f87187db58cf00ee692c022905534118ba0f44203e6b0eaf38",

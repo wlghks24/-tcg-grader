@@ -59,10 +59,11 @@ process.stdout.write(JSON.stringify(out));
         self.assertIn("레귤레이션 마크는 대회 사용 가능성 표기", source)
         if shutil.which("node"):
             result = self._browser_identity("generation", {"game": "pokemon", "regulation_mark": "G"})
-            self.assertEqual("estimated", result["status"])
-            self.assertEqual(9, result["generation"])
-            self.assertEqual("medium", result["confidence_level"])
-            self.assertAlmostEqual(0.72, float(result["confidence"]), places=6)
+            self.assertEqual("context_only", result["status"])
+            self.assertIsNone(result["generation"])
+            self.assertEqual("context", result["confidence_level"])
+            self.assertEqual(0, result["evidence_count"])
+            self.assertEqual(1, result["context_evidence_count"])
 
     def test_unknown_region_can_retry_ocr_with_evidence_bounded_edition(self) -> None:
         source = (ROOT / "card_identity_recognition.js").read_text(encoding="utf-8")

@@ -29,10 +29,10 @@ r=api.infer({game:'pokemon',card_number:'SM1M065/060'});
 eq(r.generation,7,'SM generation');eq(r.series,'썬&문','SM series');eq(r.expansion_code,'SM1M','SM code');
 
 r=api.infer({game:'pokemon',ocr_text:'REGULATION MARK H'});
-eq(r.generation,9,'reg H generation');eq(r.regulation_mark,'H','reg H mark');eq(r.confidence_level,'medium','reg H confidence');ok(/보조/.test(r.note),'regulation must be advisory');
+eq(r.generation,null,'reg H must not invent generation');eq(r.regulation_mark,'H','reg H mark');eq(r.status,'context_only','reg H context status');eq(r.confidence_level,'context','reg H context confidence');ok(/세대 번호로 변환하지/.test(r.note),'regulation must remain context only');
 
 r=api.infer({game:'pokemon',ocr_text:'REGULATION MARK J'});
-eq(r.generation,null,'reg J must not invent generation');ok(/MEGA/.test(r.series),'reg J series should identify current MEGA era');
+eq(r.generation,null,'reg J must not invent generation');eq(r.status,'context_only','reg J context status');eq(r.regulation_mark,'J','reg J mark');ok(/레귤레이션 J/.test(r.series),'reg J remains regulation context');
 
 r=api.infer({game:'pokemon',card_number:'M5114'});
 eq(r.generation,null,'MEGA series must not invent generation');eq(r.series,'MEGA 시리즈','MEGA series');eq(r.expansion_code,'M5','MEGA set code');
@@ -76,13 +76,13 @@ r=api.infer({game:'pokemon',card_number:'PAL185/193',region:'JP'});
 eq(r.status,'conflict','English set code vs Japanese edition must conflict');eq(r.generation,null,'edition conflict must not invent generation');
 
 r=api.infer({game:'pokemon',card_number:'PAL185/193',region:'US',regulation_mark:'F'});
-eq(r.status,'conflict','set generation vs regulation generation must conflict');eq(r.generation,null,'generation evidence conflict must fail closed');
+eq(r.status,'estimated','regulation context must not override exact set generation');eq(r.generation,9,'set code remains generation evidence');eq(r.context_evidence_count,1,'regulation recorded as context');
 
 r=api.infer({game:'pokemon',card_number:'PAL185/193',region:'US',ocr_text:'©2020 Pokémon'});
 eq(r.status,'conflict','set code vs impossible copyright year must conflict');eq(r.generation,null,'year conflict must fail closed');
 
 r=api.infer({game:'pokemon',card_number:'PAL185/193',region:'US',regulation_mark:'H',ocr_text:'©2024 Pokémon'});
-eq(r.generation,9,'three-evidence generation');ok(r.evidence_count>=3,'three independent generation evidence');ok(r.basis.some(x=>x.includes('©/제작연도')),'year evidence retained');
+eq(r.generation,9,'set+year generation');eq(r.evidence_count,2,'only set and year count as generation evidence');eq(r.context_evidence_count,1,'regulation is context evidence');ok(r.basis.some(x=>x.includes('©/제작연도')),'year evidence retained');
 
-eq(api.version,'v315','generation runtime version');
-console.log('Pokémon generation runtime v315: PASS');
+eq(api.version,'v320','generation runtime version');
+console.log('Pokémon generation runtime v320: PASS');

@@ -87,11 +87,8 @@ function generationBySetCode(code){
  return null;
 }
 function generationByRegulation(mark){
- if(/^[ABC]$/.test(mark))return {generation:7,generation_label:'7세대 보조추정',series:'썬&문 시기',era:'SM'};
- if(/^[DEF]$/.test(mark))return {generation:8,generation_label:'8세대 보조추정',series:'소드&실드 시기',era:'S'};
- if(/^[GHI]$/.test(mark))return {generation:9,generation_label:'9세대 보조추정',series:'스칼렛&바이올렛 시기',era:'SV'};
- if(mark==='J')return {generation:null,generation_label:'세대 단정 안 함',series:'MEGA/현행 TCG 시기',era:'CURRENT'};
- return null;
+ if(!/^[A-J]$/.test(mark))return null;
+ return {generation:null,generation_label:'세대 단정 안 함',series:`레귤레이션 ${mark} 시기`,era:'REGULATION',context_only:true};
 }
 function generationRegion(value){return normalizeRegion(value)}
 function generationByYear(year,region){
@@ -124,13 +121,10 @@ function generationYearConflict(base,year,expansion,regulation){
  const range=generationYearRange(base.era);if(!range||year>=range[0]&&year<=range[1])return null;
  return {status:'conflict',game:'pokemon',generation:null,generation_label:'근거 충돌',series:'세트/레귤레이션과 ©연도 재확인',era:'CONFLICT',expansion_code:expansion||'',regulation_mark:regulation||'',year,confidence:0,confidence_level:'conflict',basis:[base.era&&`시리즈 ${base.era}`,`©/제작연도 ${year}`].filter(Boolean),note:'세트·레귤레이션 시기와 OCR 연도가 넓은 허용범위 밖이라 세대를 단정하지 않았습니다.'};
 }
-function generationConflict(inputRegion,byExpansion,expansion,regulation,byReg){
+function generationConflict(inputRegion,byExpansion,expansion){
  const setRegion=normalizeRegion(byExpansion?.set_region||'UNKNOWN');
  if(inputRegion!=='UNKNOWN'&&setRegion!=='UNKNOWN'&&inputRegion!==setRegion){
-  return {status:'conflict',game:'pokemon',generation:null,generation_label:'근거 충돌',series:'판본/세트코드 재확인',era:'CONFLICT',expansion_code:expansion||'',regulation_mark:regulation||'',year:null,confidence:0,confidence_level:'conflict',basis:[`선택 판본 ${inputRegion}`,`세트코드 판본 ${setRegion}`],note:'판본과 세트코드 근거가 충돌해 세대를 단정하지 않았습니다.'};
- }
- if(byExpansion&&byReg&&Number.isInteger(byExpansion.generation)&&Number.isInteger(byReg.generation)&&byExpansion.generation!==byReg.generation){
-  return {status:'conflict',game:'pokemon',generation:null,generation_label:'근거 충돌',series:'세트코드/레귤레이션 재확인',era:'CONFLICT',expansion_code:expansion||'',regulation_mark:regulation||'',year:null,confidence:0,confidence_level:'conflict',basis:[`세트코드 ${expansion}`,`레귤레이션 ${regulation}`],note:'세트코드와 레귤레이션 근거가 서로 다른 세대를 가리켜 단정하지 않았습니다.'};
+  return {status:'conflict',game:'pokemon',generation:null,generation_label:'근거 충돌',series:'판본/세트코드 재확인',era:'CONFLICT',expansion_code:expansion||'',regulation_mark:'',year:null,confidence:0,confidence_level:'conflict',basis:[`선택 판본 ${inputRegion}`,`세트코드 판본 ${setRegion}`],note:'판본과 세트코드 근거가 충돌해 세대를 단정하지 않았습니다.'};
  }
  return null;
 }
@@ -142,40 +136,37 @@ function inferPokemonGeneration(input={}){
  const expansion=expansionFromCardNumber(input.card_number)||expansionFromOcr(text);
  const byExpansion=generationBySetCode(expansion);
  const regulation=regulationFromEvidence(input,text),byReg=generationByRegulation(regulation);
- const conflict=generationConflict(inputRegion,byExpansion,expansion,regulation,byReg);
- if(conflict){conflict.year=year;return conflict}
- if(byExpansion&&byReg&&byReg.era==='CURRENT'&&byExpansion.era!=='MEGA'){
-  return {status:'conflict',game:'pokemon',generation:null,generation_label:'근거 충돌',series:'세트코드/레귤레이션 재확인',era:'CONFLICT',expansion_code:expansion||'',regulation_mark:regulation||'',year,confidence:0,confidence_level:'conflict',basis:[`세트코드 ${expansion}`,`레귤레이션 ${regulation}`],note:'현행 레귤레이션과 이전 시리즈 세트코드가 함께 검출되어 세대를 단정하지 않았습니다.'};
- }
- const timeConflict=generationYearConflict(byExpansion||byReg,year,expansion,regulation);
+ const conflict=generationConflict(inputRegion,byExpansion,expansion);
+ if(conflict){conflict.year=year;conflict.regulation_mark=regulation||'';return conflict}
+ const timeConflict=generationYearConflict(byExpansion,year,expansion,regulation);
  if(timeConflict)return timeConflict;
  if(byExpansion){
-  const basis=[`확장팩/세트 코드 ${expansion}`];
-  if(byReg)basis.push(`레귤레이션 마크 ${regulation}`);
-  if(year)basis.push(`©/제작연도 ${year}`);
-  const evidence_count=basis.length;
-  return {status:'estimated',game:'pokemon',...byExpansion,expansion_code:expansion,regulation_mark:regulation||'',year,confidence:evidence_count>=2?.995:.98,confidence_level:'high',evidence_count,basis,note:byExpansion.era==='MEGA'?'MEGA는 별도 TCG 시리즈/블록이므로 TCG 시리즈와 포켓몬 세대 번호를 분리해 표시합니다.':'확장팩/세트 코드와 독립 OCR 근거를 교차검증한 추정'};
+  const generationBasis=[`확장팩/세트 코드 ${expansion}`];
+  if(year)generationBasis.push(`©/제작연도 ${year}`);
+  const contextBasis=byReg?[`레귤레이션 마크 ${regulation}`]:[];
+  const evidence_count=generationBasis.length;
+  return {status:'estimated',game:'pokemon',...byExpansion,expansion_code:expansion,regulation_mark:regulation||'',year,confidence:evidence_count>=2?.995:.98,confidence_level:'high',evidence_count,context_evidence_count:contextBasis.length,basis:[...generationBasis,...contextBasis],note:byExpansion.era==='MEGA'?'MEGA는 별도 TCG 시리즈/블록이므로 TCG 시리즈와 포켓몬 세대 번호를 분리해 표시합니다.':(byReg?'확장팩/세트 코드가 세대 근거이며 레귤레이션 마크는 사용 가능 시기 문맥으로만 표시합니다.':'확장팩/세트 코드와 독립 OCR 근거를 교차검증한 추정')};
  }
  if(byReg){
   const basis=[`레귤레이션 마크 ${regulation}`];if(year)basis.push(`©/제작연도 ${year}`);
-  return {status:'estimated',game:'pokemon',...byReg,expansion_code:'',regulation_mark:regulation,year,confidence:year?.78:.72,confidence_level:'medium',evidence_count:basis.length,basis,note:'레귤레이션 마크는 대회 사용 가능성 표기이며 세대/시리즈는 보조 추정입니다.'};
+  return {status:'context_only',game:'pokemon',...byReg,expansion_code:'',regulation_mark:regulation,year,confidence:.50,confidence_level:'context',evidence_count:0,context_evidence_count:1,basis,note:'레귤레이션 마크는 대회 사용 가능성 표기이며 사용 가능 범위를 관리하므로 포켓몬 세대 번호로 변환하지 않습니다.'};
  }
  const byYear=generationByYear(year,input?.region);
- if(byYear)return {status:'estimated',game:'pokemon',...byYear,expansion_code:'',regulation_mark:'',year,confidence:.58,confidence_level:'low',evidence_count:1,basis:[`©/제작연도 ${year}`],note:'연도만 확인되어 세대/시리즈는 보조 추정입니다.'};
- if(year&&year<2007)return {status:'legacy',game:'pokemon',generation:null,generation_label:'고전 카드',series:'초기~ADV/PCG 계열',era:'LEGACY',expansion_code:'',regulation_mark:'',year,confidence:.55,confidence_level:'low',evidence_count:1,basis:[`©/제작연도 ${year}`],note:'고전 카드는 확장팩 코드 확인 전 세대 번호를 단정하지 않습니다.'};
- return {status:'unknown',game:'pokemon',generation:null,generation_label:'세대 확인 필요',series:'확장팩 코드·레귤레이션·©연도 OCR 부족',era:'UNKNOWN',expansion_code:'',regulation_mark:'',year:null,confidence:0,confidence_level:'unknown',evidence_count:0,basis:[],note:'근거가 부족해 세대를 생성하지 않았습니다.'};
+ if(byYear)return {status:'estimated',game:'pokemon',...byYear,expansion_code:'',regulation_mark:'',year,confidence:.58,confidence_level:'low',evidence_count:1,context_evidence_count:0,basis:[`©/제작연도 ${year}`],note:'연도만 확인되어 세대/시리즈는 보조 추정입니다.'};
+ if(year&&year<2007)return {status:'legacy',game:'pokemon',generation:null,generation_label:'고전 카드',series:'초기~ADV/PCG 계열',era:'LEGACY',expansion_code:'',regulation_mark:'',year,confidence:.55,confidence_level:'low',evidence_count:1,context_evidence_count:0,basis:[`©/제작연도 ${year}`],note:'고전 카드는 확장팩 코드 확인 전 세대 번호를 단정하지 않습니다.'};
+ return {status:'unknown',game:'pokemon',generation:null,generation_label:'세대 확인 필요',series:'확장팩 코드·©연도 OCR 부족',era:'UNKNOWN',expansion_code:'',regulation_mark:regulation||'',year:null,confidence:0,confidence_level:'unknown',evidence_count:0,context_evidence_count:byReg?1:0,basis:byReg?[`레귤레이션 마크 ${regulation}`]:[],note:'세대 근거가 부족해 번호를 생성하지 않았습니다.'};
 }
-
 function renderPokemonGeneration(info,game='pokemon'){
  const box=byId('simplePokemonGeneration');if(!box)return info;
  const isPokemon=gameName(game)==='pokemon';box.hidden=!isPokemon;if(!isPokemon)return info;
  const badge=byId('pokemonGenerationBadge'),title=byId('pokemonGenerationTitle'),meta=byId('pokemonGenerationMeta');
  if(!info||info.status==='pending'){if(badge)badge.textContent='…';if(title)title.textContent='세대 판별 중…';if(meta)meta.textContent='앞면 OCR에서 확장팩/세트 코드 · 레귤레이션 · ©연도를 확인합니다.';return info}
  if(info.status==='conflict'){if(badge)badge.textContent='!';if(title)title.textContent='세대/판본 근거 충돌';if(meta)meta.textContent=`${info.basis?.join(' · ')||'OCR 근거 충돌'} · 자동 분류 중단 · 카드번호/판본을 확인해 주세요.`;return info}
- if(info.status==='estimated'){if(badge)badge.textContent=info.generation_label||(`${info.generation}세대`);if(title)title.textContent=`${info.generation_label||info.generation+'세대'} · ${info.series}`;const evidence=[info.expansion_code&&`확장팩/세트 ${info.expansion_code}`,info.regulation_mark&&`레귤레이션 ${info.regulation_mark}`,info.year&&`©${info.year}`].filter(Boolean);if(meta)meta.textContent=`${evidence.join(' · ')||info.basis?.join(' · ')||'OCR 근거'} · 신뢰도 ${info.confidence_level==='high'?'높음':info.confidence_level==='medium'?'중간(보조)':'보조'}`;return info}
- if(badge)badge.textContent=info.status==='legacy'?'고전':'?';if(title)title.textContent=info.status==='legacy'?info.generation_label:'세대 확인 필요';if(meta)meta.textContent=info.status==='legacy'?`${info.series}${info.year?' · ©'+info.year:''} · 확장팩 코드 확인 권장`:'확장팩/세트 코드·레귤레이션·©연도를 충분히 읽지 못했습니다.';return info
+ if(info.status==='context_only'){if(badge)badge.textContent='?';if(title)title.textContent=`세대 확인 필요 · 레귤레이션 ${info.regulation_mark||''}`.trim();if(meta)meta.textContent='레귤레이션은 사용 가능 시기 표기이며 세대 번호 근거로 사용하지 않습니다. 확장팩/세트 코드 또는 ©연도를 확인해 주세요.';return info}
+ if(info.status==='estimated'){if(badge)badge.textContent=info.generation_label||(`${info.generation}세대`);if(title)title.textContent=`${info.generation_label||info.generation+'세대'} · ${info.series}`;const evidence=[info.expansion_code&&`확장팩/세트 ${info.expansion_code}`,info.regulation_mark&&`레귤레이션 ${info.regulation_mark}(문맥)`,info.year&&`©${info.year}`].filter(Boolean);if(meta)meta.textContent=`${evidence.join(' · ')||info.basis?.join(' · ')||'OCR 근거'} · 신뢰도 ${info.confidence_level==='high'?'높음':info.confidence_level==='medium'?'중간(보조)':'보조'}`;return info}
+ if(badge)badge.textContent=info.status==='legacy'?'고전':'?';if(title)title.textContent=info.status==='legacy'?info.generation_label:'세대 확인 필요';if(meta)meta.textContent=info.status==='legacy'?`${info.series}${info.year?' · ©'+info.year:''} · 확장팩 코드 확인 권장`:'확장팩/세트 코드·©연도를 충분히 읽지 못했습니다.';return info
 }
-window.TCGPokemonGeneration=Object.freeze({version:'v315',infer:inferPokemonGeneration,render:renderPokemonGeneration,inferRegion:inferEditionFromText});
+window.TCGPokemonGeneration=Object.freeze({version:'v320',infer:inferPokemonGeneration,render:renderPokemonGeneration,inferRegion:inferEditionFromText});
 function localRows(){try{const value=JSON.parse(localStorage.getItem(MEMORY_KEY)||'[]');return Array.isArray(value)?value.filter(row=>row&&row.confirmed===true).slice(-MAX_LOCAL):[]}catch(_){return []}}
 function hamming(a,b){if(!/^[0-9a-f]{16}$/.test(a)||!/^[0-9a-f]{16}$/.test(b))return 65;let value=BigInt('0x'+a)^BigInt('0x'+b),count=0;while(value){count+=Number(value&1n);value>>=1n}return count}
 function blobDataUrl(blob){return new Promise((resolve,reject)=>{const reader=new FileReader();reader.onload=()=>resolve(String(reader.result||''));reader.onerror=()=>reject(new Error('image_encode'));reader.readAsDataURL(blob)})}
@@ -187,11 +178,11 @@ function mergeCandidates(rows){const found=new Map();for(const row of rows.filte
 function filterCandidatesByRegion(rows,region){const requested=normalizeRegion(region);return requested==='UNKNOWN'?rows:rows.filter(row=>normalizeRegion(row?.region)===requested)}
 function updateGenerationForCandidate(row){
  const game=gameName(window.tcgIdentityGame||'pokemon');
- const info=inferPokemonGeneration({game,ocr_text:window.tcgIdentityOcrText||'',card_name:row?.card_name||'',card_number:row?.card_number||'',market_key:row?.market_key||'',region:row?.region||byId('identityRegion')?.value||'UNKNOWN'});
+ const info=inferPokemonGeneration({game,ocr_text:window.tcgIdentityOcrText||'',card_name:row?.card_name||'',card_number:row?.card_number||'',market_key:row?.market_key||'',region:byId('identityRegion')?.value||'UNKNOWN'});
  renderPokemonGeneration(info,game);window.tcgPokemonGeneration=info;return info;
 }
-function displayCandidates(rows){const select=byId('identityCandidates');select.innerHTML='';if(!rows.length){select.append(new Option('일치 후보 없음 · 직접 확인 입력',''));updateGenerationForCandidate(null);return}rows.forEach((row,index)=>{const region=REGION_CODES.has(String(row.region||'').toUpperCase())?` · ${String(row.region).toUpperCase()}`:'';const option=new Option(`${Math.round(Number(row.confidence)*100)}% · ${row.card_name}${row.card_number?' · '+row.card_number:''}${region}`,String(index));select.append(option)});select._rows=rows;select.value='0';applyCandidate(rows[0])}
-function applyCandidate(row){if(!row){updateGenerationForCandidate(null);return}byId('identityCardName').value=safeText(row.card_name);byId('identityCardNumber').value=safeText(row.card_number);byId('identityMarketKey').value=safeText(row.market_key);byId('identityRegion').value=REGION_CODES.has(String(row.region||'').toUpperCase())?String(row.region).toUpperCase():'UNKNOWN';updateGenerationForCandidate(row)}
+function displayCandidates(rows,opts={}){const select=byId('identityCandidates');select.innerHTML='';select._rows=rows;if(!rows.length){select.append(new Option('일치 후보 없음 · 직접 확인 입력',''));updateGenerationForCandidate(null);return}if(opts.autoApply===false){select.append(new Option('후보가 겹칩니다 · 직접 선택해 확인',''));rows.forEach((row,index)=>{const region=REGION_CODES.has(String(row.region||'').toUpperCase())?` · ${String(row.region).toUpperCase()}`:'';select.append(new Option(`${Math.round(Number(row.confidence)*100)}% · ${row.card_name}${row.card_number?' · '+row.card_number:''}${region}`,String(index)))});select.value='';updateGenerationForCandidate(null);return}rows.forEach((row,index)=>{const region=REGION_CODES.has(String(row.region||'').toUpperCase())?` · ${String(row.region).toUpperCase()}`:'';select.append(new Option(`${Math.round(Number(row.confidence)*100)}% · ${row.card_name}${row.card_number?' · '+row.card_number:''}${region}`,String(index)))});select.value='0';applyCandidate(rows[0],opts)}
+function applyCandidate(row,opts={}){if(!row){updateGenerationForCandidate(null);return}const current=normalizeRegion(byId('identityRegion')?.value||'UNKNOWN'),candidateRegion=normalizeRegion(row.region),allowRegionAutofill=opts.allowRegionAutofill===true;if(byId('identityCardName'))byId('identityCardName').value=safeText(row.card_name);if(byId('identityCardNumber'))byId('identityCardNumber').value=safeText(row.card_number);if(allowRegionAutofill&&current==='UNKNOWN'&&candidateRegion!=='UNKNOWN'&&byId('identityRegion'))byId('identityRegion').value=candidateRegion;const effective=normalizeRegion(byId('identityRegion')?.value||'UNKNOWN'),marketLinkBlocked=opts.marketLinkBlocked===true||effective==='UNKNOWN'||(candidateRegion!=='UNKNOWN'&&effective!==candidateRegion);if(byId('identityMarketKey'))byId('identityMarketKey').value=marketLinkBlocked?'':safeText(row.market_key);updateGenerationForCandidate(row)}
 async function recognize(game){
  const resolvedGame=gameName(game);window.tcgIdentityGame=resolvedGame;renderPokemonGeneration({status:'pending'},resolvedGame);
  const file=window.tcgCardInputFile?.('front');if(!file){byId('identityStatus').textContent='앞면 사진이 없어 카드명을 인식할 수 없습니다.';updateGenerationForCandidate(null);return null}
@@ -205,6 +196,7 @@ async function recognize(game){
   server=await request(requestRegion);
   if(server?.image_hash)window.tcgIdentityImageHash=server.image_hash;
   const identityConflict=browserConflict||server?.region_conflict===true;
+  const identityAmbiguous=server?.identity_ambiguous===true||server?.region_ambiguous===true||server?.market_ambiguous===true;
   if(server&&!identityConflict)candidates=mergeCandidates([...candidates,...(server.candidates||[])]);
   let detected=inferEditionFromText(server?.ocr_text||text),effectiveRegion=selected!=='UNKNOWN'?selected:(browserRegion.region!=='UNKNOWN'?browserRegion.region:detected.region);
   if(identityConflict){
@@ -219,18 +211,23 @@ async function recognize(game){
    return {hash:window.tcgIdentityImageHash,candidates:[],generation:null,region:'UNKNOWN',region_conflict:true};
   }
   if(effectiveRegion!=='UNKNOWN')candidates=filterCandidatesByRegion(candidates,effectiveRegion);
-  let best=candidates[0];
-  if(selected==='UNKNOWN'&&effectiveRegion==='UNKNOWN'&&REGION_CODES.has(String(best?.region||'').toUpperCase()))effectiveRegion=String(best.region).toUpperCase();
   if(selected==='UNKNOWN'&&requestRegion==='UNKNOWN'&&effectiveRegion!=='UNKNOWN'){
-   const retry=await request(effectiveRegion);if(retry){server=retry;if(retry.image_hash)window.tcgIdentityImageHash=retry.image_hash;candidates=filterCandidatesByRegion(mergeCandidates([...candidates,...(retry.candidates||[])]),effectiveRegion);detected=inferEditionFromText(retry.ocr_text||server?.ocr_text||text);best=candidates[0]}
+   const retry=await request(effectiveRegion);if(retry){server=retry;if(retry.image_hash)window.tcgIdentityImageHash=retry.image_hash;candidates=filterCandidatesByRegion(mergeCandidates([...candidates,...(retry.candidates||[])]),effectiveRegion);detected=inferEditionFromText(retry.ocr_text||server?.ocr_text||text)}
   }
   window.tcgIdentityOcrText=generationText(server?.ocr_text||text);
   if(selected==='UNKNOWN'&&effectiveRegion!=='UNKNOWN'&&byId('identityRegion'))byId('identityRegion').value=effectiveRegion;
-  displayCandidates(candidates);best=candidates[0];const generation=updateGenerationForCandidate(best||null);
-  if(best){const diag=server?.ocr_diagnostics||{},passes=Number(diag.pass_count||0),stages=Array.isArray(diag.stages_completed)?diag.stages_completed:[],cross=diag.cross_validation?.cross_validated===true,edition=normalizeRegion(byId('identityRegion')?.value||'UNKNOWN');status.textContent=`✅ 후보 ${Math.round(best.confidence*100)}%${edition!=='UNKNOWN'?' · 판본 '+edition:''} · OCR ${stages.length===3?'1차 전체→2차 4분할→3차 8분할 완료':stages.length+'단계'}${passes?' · '+passes+'영역':''}${cross?' · 교차검증 일치':''}${resolvedGame==='pokemon'&&generation?.status==='estimated'?' · '+generation.generation_label:''} · 자동 추정값은 아래에서 확인해야 학습됩니다.`}
+  const marketLinkBlocked=server?.market_link_blocked===true||effectiveRegion==='UNKNOWN';
+  if(identityAmbiguous){
+   if(byId('identityCardName'))byId('identityCardName').value='';if(byId('identityCardNumber'))byId('identityCardNumber').value='';if(byId('identityMarketKey'))byId('identityMarketKey').value='';
+   displayCandidates(candidates,{autoApply:false,marketLinkBlocked:true});
+   status.textContent='⚠️ 카드/판본 후보가 근접해 자동 선택과 시세 연결을 중단했습니다. 후보를 직접 선택하고 카드번호·판본을 확인해 주세요.';
+   return {hash:window.tcgIdentityImageHash,candidates,generation:null,region:effectiveRegion,identity_ambiguous:true,market_link_blocked:true};
+  }
+  displayCandidates(candidates,{marketLinkBlocked});const best=candidates[0],generation=updateGenerationForCandidate(best||null);
+  if(best){const diag=server?.ocr_diagnostics||{},passes=Number(diag.pass_count||0),stages=Array.isArray(diag.stages_completed)?diag.stages_completed:[],cross=diag.cross_validation?.cross_validated===true,edition=normalizeRegion(byId('identityRegion')?.value||'UNKNOWN');status.textContent=`✅ 후보 ${Math.round(best.confidence*100)}%${edition!=='UNKNOWN'?' · 판본 '+edition:' · 판본 확인 필요'} · OCR ${stages.length===3?'1차 전체→2차 4분할→3차 8분할 완료':stages.length+'단계'}${passes?' · '+passes+'영역':''}${cross?' · 교차검증 일치':''}${resolvedGame==='pokemon'&&generation?.status==='estimated'?' · '+generation.generation_label:''}${marketLinkBlocked?' · 시세 자동연결 보류':''} · 자동 추정값은 아래에서 확인해야 학습됩니다.`}
   else if(['tesseract_not_installed','dependency_not_installed'].includes(server?.ocr_error)){status.textContent='OCR 구성요소가 없어 자동 문자 인식을 못했습니다. 판본·카드명·번호를 확인 저장하면 이후 동일 카드 재인식에 학습됩니다.'}
   else{status.textContent='일치 후보를 찾지 못했습니다. 판본·카드명·번호를 확인 입력한 뒤 학습해 주세요.'}
-  return {hash:window.tcgIdentityImageHash,candidates,generation,region:normalizeRegion(byId('identityRegion')?.value||'UNKNOWN')}
+  return {hash:window.tcgIdentityImageHash,candidates,generation,region:normalizeRegion(byId('identityRegion')?.value||'UNKNOWN'),market_link_blocked:marketLinkBlocked}
  }catch(_){status.textContent='카드 문자 인식 중 오류가 발생했습니다. 카드 전체가 선명한 앞면 사진인지 확인해 주세요.';updateGenerationForCandidate(null);return null}
 }
 function identityCoreKey(item){return [item.card_name,item.card_number,item.market_key,item.game].join('|')}
@@ -263,6 +260,6 @@ async function confirmIdentity(){
  byId('identityStatus').textContent=`✅ 인식 결과 확인 완료 · ${local.region!=='UNKNOWN'?local.region+' 판본 · ':''}이 카드 ${local.count}회 확인 학습${local.count>=3?' · 동일 판본 유사 사진 재인식 활성화':''}${serverSaved?' · 서버 동기화':''}`;byId('quickPriceSearch')?.click()
 }
 function refreshGenerationFromInputs(){if(gameName(window.tcgIdentityGame||'pokemon')!=='pokemon')return null;const generation=inferPokemonGeneration({game:'pokemon',ocr_text:window.tcgIdentityOcrText||'',card_name:byId('identityCardName')?.value||'',card_number:byId('identityCardNumber')?.value||'',region:byId('identityRegion')?.value||'UNKNOWN'});renderPokemonGeneration(generation,'pokemon');window.tcgPokemonGeneration=generation;return generation}
-function init(){const select=byId('identityCandidates');if(!select)return;select.addEventListener('change',()=>applyCandidate(select._rows?.[Number(select.value)]));byId('identityConfirm')?.addEventListener('click',confirmIdentity);byId('identityRetry')?.addEventListener('click',()=>recognize(window.tcgIdentityGame||'pokemon'));byId('identityCardNumber')?.addEventListener('input',refreshGenerationFromInputs);byId('identityRegion')?.addEventListener('change',refreshGenerationFromInputs);window.tcgRecognizeCurrentCard=game=>recognize(gameName(game));window.tcgCardIdentityLearning=Object.freeze({version:'v315-evidence-isolated-confirmed-learning',rows:()=>localRows().length,recognize:window.tcgRecognizeCurrentCard,generation:window.TCGPokemonGeneration})}
+function init(){const select=byId('identityCandidates');if(!select)return;select.addEventListener('change',()=>applyCandidate(select._rows?.[Number(select.value)],{allowRegionAutofill:true}));byId('identityConfirm')?.addEventListener('click',confirmIdentity);byId('identityRetry')?.addEventListener('click',()=>recognize(window.tcgIdentityGame||'pokemon'));byId('identityCardNumber')?.addEventListener('input',refreshGenerationFromInputs);byId('identityRegion')?.addEventListener('change',refreshGenerationFromInputs);window.tcgRecognizeCurrentCard=game=>recognize(gameName(game));window.tcgCardIdentityLearning=Object.freeze({version:'v315-evidence-isolated-confirmed-learning',rows:()=>localRows().length,recognize:window.tcgRecognizeCurrentCard,generation:window.TCGPokemonGeneration})}
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init,{once:true});else init();
 })();
