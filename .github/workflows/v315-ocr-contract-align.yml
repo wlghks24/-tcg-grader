@@ -1,0 +1,51 @@
+name: V315 OCR Contract Alignment
+
+on:
+  push:
+    branches: [card-intelligence-v315-precision]
+
+permissions:
+  contents: write
+
+jobs:
+  align:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          ref: card-intelligence-v315-precision
+          fetch-depth: 0
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97
+        with:
+          python-version: '3.11'
+      - name: Align exact OCR learning-version assertions
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          for name in ('test_ocr_selfrefine_v15.py','test_ocr_multistage_v16.py'):
+              p=Path(name);text=p.read_text(encoding='utf-8')
+              old='v309-edition-isolated-ocr-learning';new='v315-evidence-isolated-confirmed-learning'
+              if old not in text: raise SystemExit(f'{name}: expected old contract missing')
+              p.write_text(text.replace(old,new),encoding='utf-8')
+          PY
+          git rm -f .github/workflows/v315-ocr-contract-align.yml
+      - name: Run OCR and card intelligence regressions
+        run: |
+          python -m unittest -v test_ocr_selfrefine_v15.py test_ocr_multistage_v16.py test_card_region_generation_precision_v306.py test_pokemon_generation_display_v207.py test_multi_market_price_collector.py test_market_reference_sources_v130.py
+          node verify_pokemon_generation_runtime.js
+          node --check card_identity_recognition.js
+          python -m py_compile card_identity_recognition.py multi_market_price_collector.py
+      - name: Refresh integrity manifest after final file set
+        run: python fault_injection_healing.py --manifest
+      - name: Re-run critical regressions and diff checks
+        run: |
+          python -m unittest -v test_ocr_selfrefine_v15.py test_ocr_multistage_v16.py test_card_region_generation_precision_v306.py test_pokemon_generation_display_v207.py test_multi_market_price_collector.py test_market_reference_sources_v130.py
+          python -m unittest -v test_card_regression_gate_v299.py test_card_tablet_runtime_v300.py
+          git diff --check
+      - name: Commit validated contract alignment
+        run: |
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add -A
+          git commit -m 'test: align OCR learning contracts with v315'
+          git push origin HEAD:card-intelligence-v315-precision
