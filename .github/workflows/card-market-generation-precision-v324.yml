@@ -36,6 +36,7 @@ jobs:
           rm .github/scripts/apply_card_market_generation_v324.py
           rm .github/scripts/fix_v324_verify_2026.py
           rm .github/workflows/card-market-generation-precision-v324.yml
+          git add -A
           python fault_injection_healing.py --manifest
       - name: Related runtime verification
         run: |
