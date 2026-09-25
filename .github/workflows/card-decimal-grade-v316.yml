@@ -24,6 +24,7 @@ jobs:
           set -euo pipefail
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          python -m pip install --disable-pip-version-check pillow
           python .github/scripts/card_decimal_grade_v316.py
           git rm .github/scripts/card_decimal_grade_v316.py
           git rm .github/workflows/card-decimal-grade-v316.yml
