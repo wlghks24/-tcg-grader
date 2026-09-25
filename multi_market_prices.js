@@ -2,7 +2,7 @@
 'use strict';
 const GLOBAL_KEY='__TCG_MULTI_MARKET_PRICES__';
 if(globalThis[GLOBAL_KEY]?.loaded)return;
-globalThis[GLOBAL_KEY]={loaded:true,version:181};
+globalThis[GLOBAL_KEY]={loaded:true,version:313};
 const $=id=>document.getElementById(id);
 const krw=n=>Number(n)>0?`₩${Math.round(Number(n)).toLocaleString('ko-KR')}`:'—';
 const esc=value=>String(value??'').replace(/[&<>"']/g,ch=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));
@@ -36,7 +36,7 @@ function renderGrades(list){
  const box=$('multiMarketGrade');if(!box)return;
  const rows=Array.isArray(list)?list:[];box.hidden=!rows.length;
  if(!rows.length){box.innerHTML='';return;}
- box.innerHTML=`<div class="mmp-subhead"><div><b>등급별 참고시세</b><small>확인된 공개가격의 중앙값이며, 자료가 없는 등급은 추정하지 않습니다.</small></div><span>Pavilion형 보기</span></div><div class="mmp-grade-grid">${rows.map(row=>`<div class="mmp-grade-card${row.price_krw?'':' mmp-grade-empty'}"><span>${esc(row.grade)}</span><b>${krw(row.price_krw)}</b><small>${row.count?`${Number(row.count)}건 확인`:'공개가격 없음'}</small></div>`).join('')}</div>`;
+ box.innerHTML=`<div class="mmp-subhead"><div><b>등급별 참고시세</b><small>완료거래를 우선하고, 없으면 API 참고시세·판매중/호가를 서로 섞지 않고 표시합니다.</small></div><span>Pavilion형 보기</span></div><div class="mmp-grade-grid">${rows.map(row=>`<div class="mmp-grade-card${row.price_krw?'':' mmp-grade-empty'}"><span>${esc(row.grade)}</span><b>${krw(row.price_krw)}</b><small>${row.count?`${Number(row.count)}건 · ${esc(row.basis||'공개가격')}`:'공개가격 없음'}</small></div>`).join('')}</div>`;
 }
 
 function renderReferences(list){

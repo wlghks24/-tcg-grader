@@ -92,10 +92,10 @@ class MarketReferenceSourcesV130Tests(unittest.TestCase):
             {'title':'Pikachu PSA 10','price_krw':100000,'source_id':'b'},
         ]
         comparable,basis=market._comparable_summary_items('Pikachu',items)
-        self.assertEqual(basis,'미감정')
+        self.assertEqual(basis,'미감정 · 판매중/호가')
         self.assertEqual([row['price_krw'] for row in comparable],[10000])
         comparable,basis=market._comparable_summary_items('Pikachu PSA 10',items)
-        self.assertEqual(basis,'PSA 10')
+        self.assertEqual(basis,'PSA 10 · 판매중/호가')
         self.assertEqual([row['price_krw'] for row in comparable],[100000])
 
     def test_price_parser_prefers_market_price_over_shipping_or_msrp(self):
