@@ -50,7 +50,7 @@ jobs:
           node verify_pokemon_generation_runtime.js
       - name: Remove bootstrap files and regenerate integrity manifest
         run: |
-          rm -f apply_card_collector_alias_v324.py .github/workflows/card-collector-edition-alias-v324.yml
+          git rm -f apply_card_collector_alias_v324.py .github/workflows/card-collector-edition-alias-v324.yml
           python - <<'PY'
           from fault_injection_healing import build_integrity_manifest, MANIFEST_PATH
           build_integrity_manifest(target=MANIFEST_PATH)
