@@ -11,7 +11,7 @@ permissions:
 jobs:
   apply-test-finalize:
     runs-on: ubuntu-latest
-    timeout-minutes: 40
+    timeout-minutes: 45
     steps:
       - uses: actions/checkout@v4
         with:
@@ -42,11 +42,9 @@ jobs:
             test_card_region_generation_precision_v306.py \
             test_multi_market_price_collector.py
           node verify_pokemon_generation_runtime.js
-      - name: Full current runtime verification
-        run: python verify_current_runtime.py --passes 1
-      - name: Diff sanity
+      - name: Diff sanity before finalization
         run: git diff --check
-      - name: Commit final v317 tree
+      - name: Commit and push exact final v317 tree
         env:
           BRANCH: fix/card-region-conflict-v317
         run: |
@@ -59,3 +57,10 @@ jobs:
           fi
           git commit -m "fix: fail closed on card edition evidence conflicts v317"
           git push origin "HEAD:${BRANCH}"
+      - name: Verify committed final tree is clean
+        run: |
+          test -z "$(git status --porcelain)"
+          test ! -e .github/workflows/card-region-conflict-v317.yml
+          test ! -e .github/scripts/card_region_conflict_failclosed_v317.py
+      - name: Full current runtime verification on committed tree
+        run: python verify_current_runtime.py --passes 1
