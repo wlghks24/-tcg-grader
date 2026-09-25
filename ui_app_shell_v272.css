@@ -676,3 +676,215 @@ button:active,.feature-shortcut:active,.home-launch-btn:active,.box-menu-btn:act
     color:#bfdbfe!important;background:#172554!important
   }
 }
+
+/* v312 clarity-first UI refinement.
+   Presentation-only additive overrides: clearer information hierarchy and tablet scanability.
+   No grading, OCR, market, sync, collection, or runtime logic changes. */
+:root{
+  --v312-ink:#0f172a;
+  --v312-muted:#64748b;
+  --v312-line:#dbe3ee;
+  --v312-soft:#f8fafc;
+  --v312-primary:#2563eb;
+  --v312-primary-soft:#eff6ff;
+  --v312-success:#15803d;
+  --v312-radius:16px;
+}
+
+.app-title-primary{
+  padding:18px 19px!important;
+  border-radius:18px!important;
+  background:linear-gradient(135deg,#111827 0%,#172554 72%,#1e40af 100%)!important;
+  box-shadow:0 10px 26px rgba(15,23,42,.14)!important;
+}
+.app-title-primary::after{opacity:.28!important}
+.app-title-primary h1{font-size:clamp(25px,4vw,30px)!important;margin-bottom:7px!important}
+.app-title-summary{font-size:12.5px!important;line-height:1.6!important;max-width:70ch!important}
+.app-title-help{
+  margin-top:10px!important;padding:7px 10px!important;
+  border:1px solid rgba(255,255,255,.16)!important;background:rgba(255,255,255,.08)!important
+}
+
+.card,.home-launcher,.feature-category-nav,.tablet-manager-hub{
+  border-color:var(--v312-line)!important;border-radius:var(--v312-radius)!important;
+  box-shadow:0 4px 16px rgba(15,23,42,.045(!important
+}
+.card{padding:16px!important;margin:11px 0!important}
+.card>h2:first-child{font-size:19px!important;line-height:1.28!important}
+.card>h3:first-child{font-size:17px!important;line-height:1.3!important}
+.card>h4:first-child{font-size:15px!important;line-height:1.32!important}
+.card>.muted:first-of-type,.feature-category-head .muted,.home-launcher .muted{
+  font-size:12px!important;line-height:1.58!important;color:#64748b!important
+}
+
+/* Category navigator: prioritize scanability over density. */
+.feature-category-nav{padding:16px!important}
+.feature-category-head{margin-bottom:10px!important}
+.feature-category-head h2{font-size:21px!important;line-height:1.22!important}
+.feature-category-head p{font-size:12.5px!important;line-height:1.55!important}
+.feature-category-count{min-height:28px!important;font-size:10.5px!important}
+.feature-category-steps{
+  gap:7px!important;margin:9px 0!important
+}
+.feature-category-steps span{
+  min-height:38px!important;background:#f8fbff!important;border-color:#dbeafe!important;
+  font-size:11.5px!important
+}
+.feature-category-selected{
+  margin:8px 0 11px!important;padding:9px 11px!important;
+  background:#f8fafc!important;border-color:#e2e8f0!important;color:#475569!important
+}
+.feature-category-selected.active{
+  background:#f0fdf4!important;border-color:#bbf7d0!important;color:#166534!important;
+  box-shadow:inset 3px 0 0 #22c55e!important
+}
+.feature-category-grid{gap:8px!important}
+.feature-category{
+  border-radius:13px!important;border-color:#e2e8f0!important;background:#fff!important
+}
+.feature-category summary{
+  min-height:78px!important;padding:10px 11px!important;gap:10px!important;
+  flex-direction:row!important;justify-content:flex-start!important;text-align:left!important
+}
+.feature-category summary>span:nth-child(2){min-width:0;flex:1}
+.feature-category summary::after{
+  content:'기능 보기'!important;flex:0 0 auto;margin:0 0 0 auto!important;
+  min-height:24px!important;padding:4px 8px!important;border-radius:999px!important;
+  background:#f1f5f9!important;color:#64748b!important;font-size:9px!important
+}
+.feature-category-icon{
+  width:42px!important;height:42px!important;flex:0 0 42px!important;
+  border-radius:12px!important;font-size:23px!important;background:#f1f5f9!important
+}
+.feature-category-title{
+  font-size:14px!important;line-height:1.3!important;font-weight:900!important;color:var(--v312-ink)!important
+}
+.feature-category-sub{
+  max-width:none!important;margin-top:3px!important;font-size:10.5px!important;line-height:1.42!important;
+  color:#64748b!important
+}
+.feature-category[open]{
+  border-color:#93c5fd!important;background:#fbfdff!important;
+  box-shadow:0 0 0 2px rgba(59,130,246,.07)!important
+}
+.feature-category[open] summary{
+  min-height:70px!important;padding:10px 12px!important;background:#f8fbff!important
+}
+.feature-category[open] summary::after{
+  content:'선택남'!important;background:#2563eb!important;color:#fff!important
+}
+.feature-shortcut-grid{
+  gap:8px!important;padding:10px!important;border-top-color:#e5edf6!important
+}
+.feature-shortcut-grid::before{
+  content:'원하는 기능을 선택하면 해당 화면으로 바로 이동합니다' important;
+  font-size:10.5px!important;color:#64748b!important;padding:2px 2px 4px!important
+}
+.feature-shortcut{
+  min-height:70px!important;padding:10px 34px 10px 11px!important;
+  border-radius:11px!important;border-color:#dbe3ee!important;background:#fff!important
+}
+.feature-shortcut b{font-size:12px!important;line-height:1.35!important;color:#172033!important}
+.feature-shortcut small{font-size:9.5px!important;line-height:1.45!important;color:#718096!important}
+.feature-shortcut::after{
+  width:23px!important;height:23px!important;right:10px!important;border-radius:8px!important;
+  background:#eff6ff!important;color:#2563eb!important
+}
+
+/* Search reads as a utility, not another large card. */
+.feature-quick-search{
+  margin:9px 0 11px!important;padding:10px 11px!important;
+  border-radius:12px!important;border-color:#e2e8f0!important;background:#f8fafc!important
+}
+.feature-quick-search label{font-size:12px!important;margin-bottom:6px!important}
+.feature-quick-search input{min-height:44px!important;font-size:15px!important}
+.feature-quick-search-status{font-size:10.5px!important;line-height:1.45!important}
+
+/* Results and dense information: stronger labels, quieter containers. */
+.grade-result-cockpit{
+  padding:14px!important;border-radius:14px!important;border-left:4px solid var(--v312-primary)!important
+}
+.grade-cockpit-head h4{font-size:17px!important}
+.grade-cockpit-head p{font-size:11px!important;line-height:1.5!important}
+.grade-cockpit-cell{padding:10px!important}
+.grade-cockpit-cell span,.grade-cockpit-probability span,.grade-cockpit-company span{
+  font-size:9.5px!important
+}
+.grade-cockpit-cell b{font-size:14px!important}
+.grade-cockpit-probability b{font-size:19px!important}
+.validation-stats .metric{min-height:76px!important}
+.validation-stats .metric b{font-size:20px!important}
+.analysis-title{font-size:14px!important;line-height:1.3!important}
+.analysis-sub,.release-meta{font-size:10.5px!important;line-height:1.45!important}
+.analysis-price,.analysis-box .price,.price-current{font-size:15px!important}
+
+/* Inputs and actions: clear primary/secondary hierarchy. */
+input,select,textarea{
+  min-height:44px!important;border-radius:10px!important;border-color:#cbd5e1!important
+}
+button{min-height:42px!important;border-radius:10px!important}
+#v13search,#recalcCalibration,#siteUpdateAll{
+  background:#2563eb!important;box-shadow:none!important
+}
+#v13clear,#resetCalibration{
+  background:#fff!important;color:#334155!important;border:1px solid #cbd5e1!important
+}
+.top-info-tabs{border-radius:12px!important}
+.top-info-tab{min-height:42px!important;border-radius:9px!important}
+
+/* Fix active bottom-dock state: JS uses aria-current="location". */
+body .app-bottom-dock{
+  width:min(calc(100% - 24px),560px)!important;
+  border-radius:15px!important;box-shadow:0 6px 20px rgba(15,23,42,.12)!important
+}
+body .app-bottom-dock a{min-height:48px!important;border-radius:10px!important}
+body .app-bottom-dock a[aria-current="location"],
+body .app-bottom-dock a[aria-current="page"],
+body .app-bottom-dock a.active{
+  color:#1d4ed8!important;background:#eff6ff!important;box-shadow:none!important
+}
+
+/* Lenovo/tablet range: two readable category columns instead of four compressed tiles. */
+@media(min-width:540px) and (max-width:900px){
+  .app{max-width:850px!important;padding-left:18px!important;padding-right:18px!important}
+  .feature-category-grid{grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:9px!important}
+  .feature-category summary{min-height:82px!important;padding:11px 12px!important}
+  .feature-shortcut-grid{grid-template-columns:repeat(2,minmax(0,1fr))!important}
+  .feature-category-title{font-size:14.5px!important}
+  .feature-category-sub{font-size:10.5px!important}
+  .card{padding:16px!important}
+  .analysis-list{gap:11px!important}
+}
+@media(min-width:901px){
+  .feature-category-grid{grid-template-columns:repeat(4,minmax(0,1fr))!important}
+}
+@media(max-width:539px){
+  .feature-category-nav{padding:12px!important}
+  .feature-category summary{min-height:74px!important;padding:9px 10px!important}
+  .feature-category-title{font-size:13.5px!important}
+  .feature-category-sub{font-size:10px!important}
+  .feature-category summary::after{font-size:8.5px!important;padding:3px 7px!important}
+  .feature-shortcut{min-height:66px!important}
+}
+@media(max-width:430px){
+  .feature-category-grid{grid-template-columns:1fr)mportant}
+}
+
+/* Dark mode parity. */
+@media(prefers-color-scheme:dark){
+  .feature-category,.feature-shortcut{background:#111827!important;border-color:#2b3a4f!important}
+  .feature-category[open]{background:#121d2f!important;border-color:#315b86!important}
+  .feature-category[open] summary{background:#152238!important}
+  .feature-category-title,.feature-shortcut b{color:#f8fafc!important}
+  .feature-category-sub,.feature-shortcut small,.feature-shortcut-grid::before{color:#94a3b8!important}
+  .feature-category summary::after{background:#1e293b!important;color:#cbd5e1!important}
+  .feature-category[open] summary::after{background:#1d4ed8!important;color:#fff!important}
+  .feature-category-selected{background:#172033!important;border-color:#334155!important;color:#cbd5e1!important}
+  .feature-category-selected.active{background:#10261c!important;border-color:#166534!important;color:#bbf7d0!important}
+  .feature-quick-search{background:#172033!important;border-color:#334155!important}
+  body .app-bottom-dock a[aria-current="location"],
+  body .app-bottom-dock a[aria-current="page"],
+  body .app-bottom-dock a.active{
+    color:#bfdbfe!important;background:#172554!important
+  }
+}
