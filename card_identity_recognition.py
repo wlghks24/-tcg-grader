@@ -201,7 +201,13 @@ def catalog() -> list[dict[str, Any]]:
             "_normalized_aliases": [normalize(x) for x in aliases if len(normalize(x)) >= 2],
         })
     reference = _json(REFERENCE, {"cards": []})
-    known = {(row["game"], normalize(row["card_name"]), row["card_number"]) for row in rows}
+    # Catalog identity is edition-specific. The same card name/number may exist
+    # in KR/JP/US; one region must never suppress a verified reference row from
+    # another region.
+    known = {
+        (row["game"], normalize(row["card_name"]), row["card_number"], normalize_region(row.get("region")))
+        for row in rows
+    }
     for value in reference.get("cards", []):
         if not isinstance(value, dict):
             continue
@@ -211,7 +217,7 @@ def catalog() -> list[dict[str, Any]]:
         region = normalize_region(value.get("region"))
         if game not in GAMES or not name:
             continue
-        key = (game, normalize(name), number)
+        key = (game, normalize(name), number, region)
         if key in known:
             continue
         aliases = sorted({
