@@ -7,7 +7,9 @@ import fcntl
 import json
 import os
 from pathlib import Path
+import re
 import shutil
+import stat
 import subprocess
 import sys
 import tarfile
@@ -37,20 +39,48 @@ def _is_within(path: Path, parent: Path) -> bool:
 
 
 def acquire_runner_lock(state: Path):
+    if state.is_symlink():
+        raise RuntimeError("sync state directory is a symlink")
     state.mkdir(parents=True, exist_ok=True)
+    if state.is_symlink() or not state.is_dir():
+        raise RuntimeError("sync state directory is unsafe")
     path = state / RUNNER_LOCK
-    handle = path.open("a+", encoding="utf-8")
+    flags = os.O_RDWR | os.O_CREAT | os.O_APPEND | getattr(os, "O_NOFOLLOW", 0)
     try:
-        fcntl.flock(handle.fileno(), fcntl.LOCK_EX | fcntl.LOCK_NB)
-    except BlockingIOError:
-        handle.close()
-        return None
-    handle.seek(0)
-    handle.truncate()
-    handle.write(f"pid={os.getpid()} started_at={dt.datetime.now(dt.timezone.utc).isoformat()}\n")
-    handle.flush()
-    return handle
-
+        descriptor = os.open(path, flags, 0o600)
+    except OSError as exc:
+        raise RuntimeError("runner lock open failed safely") from exc
+    handle = None
+    try:
+        metadata = os.fstat(descriptor)
+        if not stat.S_ISREG(metadata.st_mode) or metadata.st_nlink != 1:
+            raise RuntimeError("runner lock is not a private regular file")
+        try:
+            os.fchmod(descriptor, 0o600)
+        except OSError:
+            pass
+        handle = os.fdopen(descriptor, "r+", encoding="utf-8")
+        descriptor = -1
+        try:
+            fcntl.flock(handle.fileno(), fcntl.LOCK_EX | fcntl.LOCK_NB)
+        except BlockingIOError:
+            handle.close()
+            return None
+        handle.seek(0)
+        handle.truncate()
+        handle.write(f"pid={os.getpid()} started_at={dt.datetime.now(dt.timezone.utc).isoformat()}\n")
+        handle.flush()
+        try:
+            os.fsync(handle.fileno())
+        except OSError:
+            pass
+        return handle
+    except BaseException:
+        if handle is not None and not handle.closed:
+            handle.close()
+        elif descriptor >= 0:
+            os.close(descriptor)
+        raise
 
 def release_runner_lock(handle) -> None:
     if handle is None:
@@ -83,26 +113,33 @@ def rotate_existing_backup(backup: Path) -> Path | None:
     return rotated
 
 
-def verify_backup(backup: Path) -> None:
+def verify_backup(backup: Path) -> dict[str, str]:
     if backup.is_symlink() or not backup.is_dir():
         raise RuntimeError("backup directory is missing or unsafe")
     manifest_path = backup / "backup_manifest.json"
     if manifest_path.is_symlink() or not manifest_path.is_file():
         raise RuntimeError("backup manifest is missing or unsafe")
-    data = json.loads(manifest_path.read_text(encoding="utf-8"))
+    raw = manifest_path.read_bytes()
+    if len(raw) > 1_000_000:
+        raise RuntimeError("backup manifest is too large")
+    data = core.strict_json_loads(raw)
+    if not isinstance(data, dict):
+        raise RuntimeError("backup manifest must be an object")
     hashes = data.get("sha256")
     if not isinstance(hashes, dict) or set(hashes) != set(core.OUTPUTS):
         raise RuntimeError("backup manifest does not cover exact runtime outputs")
+    trusted: dict[str, str] = {}
     for name in core.OUTPUTS:
         path = backup / name
         expected = hashes.get(name)
         if path.is_symlink() or not path.is_file():
             raise RuntimeError(f"backup file missing or unsafe: {name}")
-        if not isinstance(expected, str) or len(expected) != 64:
+        if not isinstance(expected, str) or not re.fullmatch(r"[0-9a-f]{64}", expected):
             raise RuntimeError(f"backup hash invalid: {name}")
         if core.sha256(path) != expected:
             raise RuntimeError(f"backup hash mismatch: {name}")
-
+        trusted[name] = expected
+    return trusted
 
 def transaction_path(state: Path) -> Path:
     return state / INFLIGHT
@@ -140,13 +177,11 @@ def hardened_backup_current(repo: Path, backup: Path) -> None:
 
 
 def hardened_restore_backup(repo: Path, backup: Path) -> None:
-    verify_backup(backup)
+    hashes = verify_backup(backup)
     _ORIGINAL_RESTORE_BACKUP(repo, backup)
     for name in core.OUTPUTS:
-        expected = json.loads((backup / "backup_manifest.json").read_text(encoding="utf-8"))["sha256"][name]
-        if core.sha256(repo / name) != expected:
+        if core.sha256(repo / name) != hashes[name]:
             raise RuntimeError(f"rollback readback mismatch: {name}")
-
 
 def hardened_stop_server(repo: Path) -> None:
     pid = core.read_launcher_pid(repo)
@@ -175,7 +210,12 @@ def recover_incomplete(repo: Path, state: Path) -> bool:
         return False
     if marker.is_symlink() or not marker.is_file():
         raise RuntimeError("inflight transaction marker is unsafe")
-    data = json.loads(marker.read_text(encoding="utf-8"))
+    raw = marker.read_bytes()
+    if len(raw) > 1_000_000:
+        raise RuntimeError("inflight transaction marker is too large")
+    data = core.strict_json_loads(raw)
+    if not isinstance(data, dict):
+        raise RuntimeError("inflight transaction marker must be an object")
     marker_repo = Path(str(data.get("repo", ""))).expanduser().resolve()
     if marker_repo != repo.resolve():
         raise RuntimeError("inflight transaction repo mismatch")

@@ -99,35 +99,21 @@ def pinned_ensure_exact_main(repo: Path, expected_sha: str) -> None:
 
 
 def fast_health_ok() -> bool:
-    """Probe the universal runtime health endpoint once with bounded payload."""
-    try:
-        request = urllib.request.Request(
-            "http://127.0.0.1:8765/api/health",
-            headers={"Accept": "application/json", "Connection": "close"},
-        )
-        with urllib.request.urlopen(request, timeout=HEALTH_TIMEOUT_SECONDS) as resp:
-            if not (200 <= int(getattr(resp, "status", 200)) < 300):
-                return False
-            raw = resp.read(64 * 1024 + 1)
-        if len(raw) > 64 * 1024:
-            return False
-        payload = json.loads(raw.decode("utf-8"))
-        return isinstance(payload, dict) and payload.get("ok") is True
-    except Exception:
-        return False
-
+    """Probe one bounded endpoint and verify the expected TCG service identity."""
+    payload = core._read_health_json("/api/health", timeout=HEALTH_TIMEOUT_SECONDS)
+    return bool(
+        isinstance(payload, dict)
+        and payload.get("ok") is True
+        and payload.get("service") == core.EXPECTED_HEALTH_SERVICE
+    )
 
 def optimized_hardened_restore_backup(repo: Path, backup: Path) -> None:
-    """Verify once, restore once, and reuse one parsed backup manifest."""
-    hard.verify_backup(backup)
-    manifest_path = backup / "backup_manifest.json"
-    data = json.loads(manifest_path.read_text(encoding="utf-8"))
-    hashes = data["sha256"]
+    """Verify once, restore once, and reuse the verified hash map."""
+    hashes = hard.verify_backup(backup)
     hard._ORIGINAL_RESTORE_BACKUP(repo, backup)
     for name in core.OUTPUTS:
         if core.sha256(repo / name) != hashes[name]:
             raise RuntimeError(f"rollback readback mismatch: {name}")
-
 
 def _safe_age_key(path: Path) -> tuple[int, str]:
     try:
@@ -163,7 +149,12 @@ def _inflight_backup(state: Path) -> Path | None:
     try:
         if marker.is_symlink() or not marker.is_file():
             return None
-        data = json.loads(marker.read_text(encoding="utf-8"))
+        payload = marker.read_bytes()
+        if len(payload) > 1_000_000:
+            return None
+        data = core.strict_json_loads(payload)
+        if not isinstance(data, dict):
+            return None
         raw = data.get("backup")
         if not isinstance(raw, str) or not raw:
             return None

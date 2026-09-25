@@ -31,7 +31,37 @@ OUTPUTS = tuple(
 )
 MAX_FILE_SIZE = 20_000_000
 MAX_BUNDLE_SIZE = 200_000_000
+MAX_MANIFEST_SIZE = 2_000_000
+MAX_HEALTH_BYTES = 64 * 1024
+EXPECTED_HEALTH_SERVICE = "TCG v109 Updater"
+EXPECTED_V135_RUNTIME_ID = "tcg-updater-v135-verified-learning"
 MANIFEST_RE = re.compile(r"^manifest_\d{8}T\d{6}Z_[A-Za-z0-9._-]+\.json$")
+
+
+def _reject_nonstandard_json(value: str) -> None:
+    raise ValueError(f"non-standard JSON number blocked: {value}")
+
+
+def _unique_json_object(pairs):
+    result = {}
+    for key, value in pairs:
+        if key in result:
+            raise ValueError(f"duplicate JSON key blocked: {key}")
+        result[key] = value
+    return result
+
+
+def strict_json_loads(raw):
+    try:
+        if isinstance(raw, bytes):
+            raw = raw.decode("utf-8")
+        return json.loads(
+            raw,
+            parse_constant=_reject_nonstandard_json,
+            object_pairs_hook=_unique_json_object,
+        )
+    except RecursionError as exc:
+        raise ValueError("JSON nesting is too deep") from exc
 
 def run(args, cwd=None, check=True, capture=False, timeout=None):
     cp = subprocess.run(
@@ -51,7 +81,10 @@ def sha256(path: Path) -> str:
 def atomic_write_json(path: Path, data: dict) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
     tmp = path.with_name(f".{path.name}.tmp.{os.getpid()}")
-    tmp.write_text(json.dumps(data, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+    tmp.write_text(
+        json.dumps(data, ensure_ascii=False, indent=2, allow_nan=False) + "\n",
+        encoding="utf-8",
+    )
     os.replace(tmp, path)
 
 def safe_remote_name(value: str) -> str:
@@ -62,9 +95,11 @@ def safe_remote_name(value: str) -> str:
 
 def load_manifest(path: Path) -> dict:
     raw = path.read_bytes()
-    if len(raw) > 2_000_000:
+    if len(raw) > MAX_MANIFEST_SIZE:
         raise ValueError("manifest too large")
-    data = json.loads(raw)
+    data = strict_json_loads(raw)
+    if not isinstance(data, dict):
+        raise ValueError("manifest must be a JSON object")
     if data.get("schema_version") != SCHEMA:
         raise ValueError("manifest schema mismatch")
     if data.get("repository") != REPO:
@@ -78,6 +113,8 @@ def load_manifest(path: Path) -> dict:
     if not isinstance(created_at, str):
         raise ValueError("missing created_at")
     stamp = dt.datetime.fromisoformat(created_at.replace("Z", "+00:00"))
+    if stamp.tzinfo is None or stamp.utcoffset() is None:
+        raise ValueError("manifest timestamp must include a timezone")
     age = (dt.datetime.now(dt.timezone.utc) - stamp.astimezone(dt.timezone.utc)).total_seconds()
     if age < -600:
         raise ValueError("manifest timestamp is in the future")
@@ -87,19 +124,17 @@ def load_manifest(path: Path) -> dict:
     if not isinstance(main_sha, str) or not re.fullmatch(r"[0-9a-f]{40}", main_sha):
         raise ValueError("invalid main_sha")
     bundle = data.get("bundle") or {}
+    if not isinstance(bundle, dict):
+        raise ValueError("invalid bundle metadata")
     bundle_name = bundle.get("name")
     bundle_hash = bundle.get("sha256")
     bundle_size = bundle.get("size")
-    if (
-        not isinstance(bundle_name, str)
-        or "/" in bundle_name or "\\" in bundle_name
-        or not bundle_name.endswith(".tar.gz")
-        or not re.fullmatch(r"[A-Za-z0-9._-]+", bundle_name)
-    ):
+    expected_bundle = rf"TCG_VERIFIED_\d{{8}}T\d{{6}}Z_{re.escape(run_id)}\.tar\.gz"
+    if not isinstance(bundle_name, str) or not re.fullmatch(expected_bundle, bundle_name):
         raise ValueError("invalid bundle name")
     if not isinstance(bundle_hash, str) or not re.fullmatch(r"[0-9a-f]{64}", bundle_hash):
         raise ValueError("invalid bundle sha256")
-    if not isinstance(bundle_size, int) or bundle_size <= 0 or bundle_size > MAX_BUNDLE_SIZE:
+    if type(bundle_size) is not int or bundle_size <= 0 or bundle_size > MAX_BUNDLE_SIZE:
         raise ValueError("invalid bundle size")
     files = data.get("files")
     if not isinstance(files, list):
@@ -115,7 +150,7 @@ def load_manifest(path: Path) -> dict:
         size = item.get("size")
         if not isinstance(digest, str) or not re.fullmatch(r"[0-9a-f]{64}", digest):
             raise ValueError(f"bad sha256 for {name}")
-        if not isinstance(size, int) or size < 0 or size > MAX_FILE_SIZE:
+        if type(size) is not int or size < 0 or size > MAX_FILE_SIZE:
             raise ValueError(f"bad size for {name}")
     return data
 
@@ -169,36 +204,37 @@ def ensure_exact_main(repo: Path, expected_sha: str) -> None:
 def extract_bundle(bundle_path: Path, stage: Path, manifest: dict) -> None:
     expected = {item["name"]: item for item in manifest["files"]}
     with tarfile.open(bundle_path, "r:gz") as tf:
-        members = tf.getmembers()
         file_members = []
-        for m in members:
-            if m.isdir():
-                continue
-            if not m.isreg():
-                raise ValueError("bundle contains link/device/non-regular entry")
-            name = Path(m.name).name
-            if m.name != name or name not in OUTPUTS:
-                raise ValueError(f"unsafe/unexpected archive entry: {m.name}")
-            if m.size < 0 or m.size > MAX_FILE_SIZE:
+        for member in tf:
+            if len(file_members) >= len(OUTPUTS):
+                raise ValueError("bundle contains extra archive entries")
+            if not member.isreg():
+                raise ValueError("bundle contains directory/link/device/non-regular entry")
+            name = Path(member.name).name
+            if member.name != name or name not in OUTPUTS:
+                raise ValueError(f"unsafe/unexpected archive entry: {member.name}")
+            if member.size < 0 or member.size > MAX_FILE_SIZE:
                 raise ValueError(f"oversized archive entry: {name}")
-            file_members.append(m)
-        names = [Path(m.name).name for m in file_members]
+            file_members.append(member)
+        names = [Path(member.name).name for member in file_members]
         if set(names) != set(OUTPUTS) or len(names) != len(OUTPUTS):
             raise ValueError("bundle must contain exact 17 outputs")
-        for m in file_members:
-            name = Path(m.name).name
+        for member in file_members:
+            name = Path(member.name).name
             target = stage / name
-            src = tf.extractfile(m)
+            src = tf.extractfile(member)
             if src is None:
                 raise ValueError(f"cannot extract {name}")
             with target.open("wb") as out:
-                shutil.copyfileobj(src, out)
+                shutil.copyfileobj(src, out, length=1024 * 1024)
             item = expected[name]
             if target.stat().st_size != item["size"]:
                 raise ValueError(f"size mismatch: {name}")
             if sha256(target) != item["sha256"]:
                 raise ValueError(f"sha mismatch: {name}")
-            json.loads(target.read_text(encoding="utf-8"))
+            payload = strict_json_loads(target.read_bytes())
+            if not isinstance(payload, (dict, list)):
+                raise ValueError(f"JSON root must be object/array: {name}")
 
 def run_project_gates(repo: Path, stage: Path) -> None:
     tmp_root = Path(tempfile.mkdtemp(prefix="tcg-gdrive-verify-"))
@@ -240,14 +276,56 @@ def read_launcher_pid(repo: Path) -> int | None:
     except Exception:
         return None
 
+def _read_health_json(path: str, timeout: float = 2.0) -> dict | None:
+    if path not in {"/api/v135-health", "/api/health"}:
+        return None
+    try:
+        request = urllib.request.Request(
+            f"http://127.0.0.1:8765{path}",
+            headers={"Accept": "application/json", "Connection": "close"},
+        )
+        with urllib.request.urlopen(request, timeout=max(0.25, min(5.0, float(timeout)))) as resp:
+            if not (200 <= int(getattr(resp, "status", 200)) < 300):
+                return None
+            raw = resp.read(MAX_HEALTH_BYTES + 1)
+        if len(raw) > MAX_HEALTH_BYTES:
+            return None
+        payload = strict_json_loads(raw)
+        return payload if isinstance(payload, dict) else None
+    except (OSError, ValueError, TypeError, UnicodeError, json.JSONDecodeError):
+        return None
+
+
+def _health_identity_ok(path: str, payload: dict | None) -> bool:
+    if not isinstance(payload, dict) or payload.get("ok") is not True:
+        return False
+    if path == "/api/v135-health":
+        return payload.get("runtime") == EXPECTED_V135_RUNTIME_ID
+    if path == "/api/health":
+        return payload.get("service") == EXPECTED_HEALTH_SERVICE
+    return False
+
+
 def health_ok() -> bool:
     for path in ("/api/v135-health", "/api/health"):
-        try:
-            with urllib.request.urlopen(f"http://127.0.0.1:8765{path}", timeout=2) as resp:
-                if 200 <= getattr(resp, "status", 200) < 300:
-                    return True
-        except Exception:
-            pass
+        if _health_identity_ok(path, _read_health_json(path)):
+            return True
+    return False
+
+
+def runtime_matches_main(expected_sha: str) -> bool:
+    if not isinstance(expected_sha, str) or not re.fullmatch(r"[0-9a-f]{40}", expected_sha):
+        return False
+    for path in ("/api/v135-health", "/api/health"):
+        payload = _read_health_json(path)
+        if not _health_identity_ok(path, payload):
+            continue
+        collection = payload.get("collection_health")
+        if not isinstance(collection, dict):
+            continue
+        running_sha = str(collection.get("runtime_build_sha") or "").strip().lower()
+        if running_sha == expected_sha and collection.get("runtime_build_sha_verified") is True:
+            return True
     return False
 
 def stop_server(repo: Path) -> None:
@@ -363,6 +441,9 @@ def sync_once(repo: Path, remote: str, remote_root: str) -> int:
             rclone_copyto(remote, f"{remote_root}/to_tablet/{manifest_name}", manifest_path)
             manifest = load_manifest(manifest_path)
             manifest["_manifest_name"] = manifest_name
+            expected_manifest = rf"manifest_\d{{8}}T\d{{6}}Z_{re.escape(manifest['run_id'])}\.json"
+            if not re.fullmatch(expected_manifest, manifest_name):
+                raise ValueError("manifest filename/run_id mismatch")
             completed = state / "completed" / manifest["run_id"]
             if completed.exists():
                 print(f"[OK] 이미 반영된 run_id입니다: {manifest['run_id']}")
@@ -395,6 +476,8 @@ def sync_once(repo: Path, remote: str, remote_root: str) -> int:
                 start_server(repo, state)
                 if not health_ok():
                     raise RuntimeError("post-apply runtime health failed")
+                if not runtime_matches_main(manifest["main_sha"]):
+                    raise RuntimeError("post-apply runtime build SHA mismatch")
             except Exception as exc:
                 restore_backup(repo, backup)
                 try:
@@ -416,7 +499,7 @@ def sync_once(repo: Path, remote: str, remote_root: str) -> int:
             completed.write_text(manifest_name + "\n", encoding="utf-8")
             receipt = write_receipt(
                 state, manifest, "TABLET_SYNC_OK",
-                {"runtime_health": True, "file_count": len(OUTPUTS)}
+                {"runtime_health": True, "runtime_main_sha_verified": True, "file_count": len(OUTPUTS)}
             )
             rclone_upload(remote, receipt, f"{remote_root}/receipts/{receipt.name}")
             receipt.with_suffix(receipt.suffix + ".sent").write_text("sent\n", encoding="utf-8")

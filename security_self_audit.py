@@ -25,7 +25,7 @@ from safe_runtime import atomic_write_json, safe_read_text
 ROOT = Path(__file__).resolve().parent
 REPORT = ROOT / "security_audit_report.json"
 MEMORY = ROOT / "security_learning_memory.json"
-TEXT_EXTENSIONS = {".py", ".js", ".html", ".yml", ".yaml", ".sh", ".bat", ".ps1"}
+TEXT_EXTENSIONS = {".py", ".js", ".html", ".yml", ".yaml", ".sh", ".bat", ".cmd", ".ps1"}
 MAX_SCAN_BYTES = 2_000_000
 SEVERITY_ORDER = {"info": 0, "low": 1, "medium": 2, "high": 3, "critical": 4}
 EXCLUDED_SCAN_DIRS = {
@@ -203,6 +203,21 @@ def scan_workflow(text: str, findings: list[dict[str, Any]], rel: str) -> None:
             add(findings, "GHA_REMOTE_PIPE_SHELL", "critical", rel, lineno, "Remote content is piped directly to a shell.", line.strip())
 
 
+
+def scan_script(text: str, findings: list[dict[str, Any]], rel: str) -> None:
+    """Audit high-signal command-script execution boundaries without broad false positives."""
+    suffix = Path(rel).suffix.lower()
+    for lineno, line in enumerate(text.splitlines(), 1):
+        if re.search(r"(?:curl|wget)\b[^\n|]*\|\s*(?:ba)?sh\b", line, re.I):
+            add(findings, "SCRIPT_REMOTE_PIPE_SHELL", "critical", rel, lineno,
+                "Remote content is piped directly to a shell.", line.strip())
+        if suffix == ".ps1" and re.search(r"(?:\bInvoke-Expression\b|(?:^|[;&|\s])iex(?:[;&|\s(]|$))", line, re.I):
+            add(findings, "POWERSHELL_DYNAMIC_EXEC", "high", rel, lineno,
+                "PowerShell dynamic expression execution requires manual review.", line.strip())
+        if suffix in {".bat", ".cmd"} and re.search(r"\bpowershell(?:\.exe)?\b.*(?:-enc|-encodedcommand)\b", line, re.I):
+            add(findings, "BATCH_ENCODED_POWERSHELL", "high", rel, lineno,
+                "Encoded PowerShell launched from batch/cmd requires manual review.", line.strip())
+
 def _csp_directive(text: str, name: str) -> str:
     meta = re.search(r'http-equiv=["\']Content-Security-Policy["\'][^>]*content="([^"]*)"', text, re.I)
     if not meta:
@@ -252,6 +267,8 @@ def scan_repository(root: Path = ROOT) -> list[dict[str, Any]]:
             scan_python(path, text, findings, rel)
         if suffix in {".yml", ".yaml"} and "/workflows/" in f"/{rel}":
             scan_workflow(text, findings, rel)
+        if suffix in {".sh", ".bat", ".cmd", ".ps1"}:
+            scan_script(text, findings, rel)
         if suffix in {".js", ".html"}:
             scan_js_html(text, findings, rel)
 
