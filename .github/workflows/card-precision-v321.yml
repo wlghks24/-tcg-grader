@@ -42,11 +42,13 @@ jobs:
       - name: Remove bootstrap files and regenerate integrity manifest
         run: |
           rm -f apply_card_precision_v321.py .github/workflows/card-precision-v321.yml
+          git add -A
           python - <<'PY'
           from fault_injection_healing import build_integrity_manifest, MANIFEST_PATH
           build_integrity_manifest(target=MANIFEST_PATH)
           print('integrity manifest regenerated')
           PY
+          git add integrity_manifest.json
       - name: Final repository verification
         run: |
           python repository_integrity_guard.py
