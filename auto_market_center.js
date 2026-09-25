@@ -19,8 +19,9 @@ function run(force=false){
  const region=normRegion($('identityRegion')?.value||'');
  const game=gameValue();
  if(!name&&!number)return;
- const query=[name,number].filter(Boolean).join(' ').trim();
- const sig=[query,region,game].join('|');
+ const meta=window.TCGCardIdentityMeta?.infer?.({game:window.tcgIdentityGame||'pokemon',card_name:name,card_number:number,set_code:$('identitySetCode')?.value||'',variant:$('identityVariant')?.value||'UNKNOWN',finish:$('identityFinish')?.value||'UNKNOWN',rarity:$('identityRarity')?.value||''})||{},tokens=window.TCGCardIdentityMeta?.searchTokens?.(meta)||[];
+ const query=[name,number,...tokens].filter(Boolean).join(' ').trim();
+ const sig=[query,region,game,meta.set_code||'',meta.variant||'',meta.finish||'',meta.rarity||''].join('|');
  if(!force&&sig===lastSig)return;
  lastSig=sig;
  setValue('market12',region);
@@ -40,6 +41,6 @@ function run(force=false){
 let pulseTimer=0;
 function startPulse(){if(pulseTimer||document.hidden)return;pulseTimer=setInterval(()=>run(false),500)}
 function stopPulse(){if(pulseTimer){clearInterval(pulseTimer);pulseTimer=0}}
-function boot(){ensureStatus();startPulse();document.addEventListener('visibilitychange',()=>{if(document.hidden)stopPulse();else{run(false);startPulse()}});['identityCardName','identityCardNumber','identityRegion'].forEach(id=>$(id)?.addEventListener('input',()=>run(true)));window.tcgAutoMarketCenter=Object.freeze({refresh:()=>run(true)})}
+function boot(){ensureStatus();startPulse();document.addEventListener('visibilitychange',()=>{if(document.hidden)stopPulse();else{run(false);startPulse()}});['identityCardName','identityCardNumber','identityRegion','identitySetCode','identityVariant','identityFinish','identityRarity'].forEach(id=>$(id)?.addEventListener('input',()=>run(true)));window.tcgAutoMarketCenter=Object.freeze({refresh:()=>run(true)})}
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',boot,{once:true});else boot();
 })();

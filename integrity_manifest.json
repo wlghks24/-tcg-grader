@@ -1,7 +1,7 @@
 {
   "version": 2,
   "engine": "v109-card-identity-ocr-learning",
-  "generated_at": "2026-09-25T14:21:40+00:00",
+  "generated_at": "2026-09-25T14:35:51+00:00",
   "files": {
     ".github/workflows/ai-auto-tracker-guard.yml": {
       "sha256": "636e750bd6d2619cce75d4bce2d68051eaa2209ae763bc8ec523ed73476728a6",
@@ -1092,8 +1092,8 @@
       "bytes": 1601
     },
     "auto_market_center.js": {
-      "sha256": "cf15a0150d8e8edf51e2acaa24ab12822df5805ae9cb2a744570e484caa07b68",
-      "bytes": 2844
+      "sha256": "a3aed8668757c8081e2cc8aa2327980761dd3f2fe039d7bb1967155c0fc3a0fd",
+      "bytes": 3351
     },
     "auto_pipeline_runner.py": {
       "sha256": "9aac7b8d9efac6864a5449142633c230f1ad8618f1e6caf078092ee0665da053",
@@ -1108,8 +1108,8 @@
       "bytes": 74869
     },
     "auto_validation_flow.js": {
-      "sha256": "264280b17ce3306b92e3a46821d05d18f9f92b2757c84924222119601b32aa81",
-      "bytes": 4723
+      "sha256": "cab815436ee3299b7b26b445e3a3fbccf62308b4c38b262aa4aa8a640ff3edfe",
+      "bytes": 5023
     },
     "box_hit_market_discovery.py": {
       "sha256": "c8ea1d2bacb2b179af2e0ccc956476ed764634d991d1a778cf87baa0cfffe10e",
@@ -1128,12 +1128,12 @@
       "bytes": 120
     },
     "card_identity_recognition.js": {
-      "sha256": "b5e3b943378dca9a0c7493169bdbc3013b56786da5210c467aee69bbe9068146",
-      "bytes": 32388
+      "sha256": "d3915f09d9f0cc4caa60d1a3f4b0761d72f7e734820fbb0a69bd056a374076f5",
+      "bytes": 42903
     },
     "card_identity_recognition.py": {
-      "sha256": "d6e75d7843e9f7a555a7b4ef986234674640433197a92c243fc0676a8317773e",
-      "bytes": 45214
+      "sha256": "4f4295944afc7e2881c10551050c4560c8501425677f8cc1379c42b24a3d0f60",
+      "bytes": 57510
     },
     "card_identity_reference_catalog.json": {
       "sha256": "45a99a4520d2ccca217e196e49db016481105283e8a53b1e7dec2c11bb4a7c04",
@@ -1464,8 +1464,8 @@
       "bytes": 16149
     },
     "grade_market_flow.js": {
-      "sha256": "fa2793c8ab1b12771804c2f511c1cbdfc6c0193f73c4e9f3a7cf0122bad90536",
-      "bytes": 24358
+      "sha256": "8da4b53de3aa3119af2a99f9409a425fab4dc1df71b976d83a8bd98cc81e9cc3",
+      "bytes": 27137
     },
     "graded_photo_bootstrap.py": {
       "sha256": "57fe62df2fd54baf3ad1a20f52b9b760aa0d74f0d0af51f3db4856276527f151",
@@ -1572,8 +1572,8 @@
       "bytes": 2161
     },
     "index.html": {
-      "sha256": "dc25d37cb2cc797dc1f3059a09e55aa1f3c1054c279d6074028b5bc96a528337",
-      "bytes": 322031
+      "sha256": "cdd98ab881be8d5e769f0c499beea94b37bf4762efb44cdd3c05950002eefba6",
+      "bytes": 324123
     },
     "instagram_tcg_content/__init__.py": {
       "sha256": "20e813d62cc0300556afe2947b692df2851d9bdba7ca2b0006c30626e2938a72",
@@ -2438,6 +2438,10 @@
     "test_card_tablet_runtime_v300.py": {
       "sha256": "e61eeda6afbb3e7308e623401a58391ef9e6078a3ebf8d875cdf4a1192be8eb5",
       "bytes": 6547
+    },
+    "test_card_variant_market_precision_v322.py": {
+      "sha256": "3da817ad318bdf9cc7f7439bee42f4efc576adf0d896110911dff87fece6e3d9",
+      "bytes": 5435
     },
     "test_catalog_images.py": {
       "sha256": "1872e45e7c3651a1016d78c155f32844e35092434e18b07b594d056352d6a717",
@@ -3324,8 +3328,8 @@
       "bytes": 12067
     },
     "verify_current_runtime.py": {
-      "sha256": "f2af055ab977f55a1daaf12e5d2f9244a2ffdcce5b7689342cd3e7d0a76d24c1",
-      "bytes": 6625
+      "sha256": "24de16306dfd4b71b8b62987ceba8ce8cd9468b989d4047bde3c9b7660c4f856",
+      "bytes": 6710
     },
     "verify_fault_injection_healing.py": {
       "sha256": "40f0d3565ea8094b4deb2cf407550eaf41928f3f7fbfc2863ead0053f7cb25f8",
