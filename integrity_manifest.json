@@ -1,7 +1,7 @@
 {
   "version": 2,
   "engine": "v109-card-identity-ocr-learning",
-  "generated_at": "2026-09-25T13:07:15+00:00",
+  "generated_at": "2026-09-25T13:12:32+00:00",
   "files": {
     ".github/workflows/ai-auto-tracker-guard.yml": {
       "sha256": "636e750bd6d2619cce75d4bce2d68051eaa2209ae763bc8ec523ed73476728a6",
@@ -2196,12 +2196,12 @@
       "bytes": 9925
     },
     "tablet_gdrive_sync.py": {
-      "sha256": "761b16509daa2dcc429f2eee0df94ae7466d0b641d5702b90bb97db39a0c7ea7",
-      "bytes": 22547
+      "sha256": "6e73f65fcf0d0b61ceb53c39e7f37c3ab60057f75179d07660111ab067305428",
+      "bytes": 23124
     },
     "tablet_gdrive_sync_hardening.py": {
-      "sha256": "fd08aa6233a884673f6a7a59e4648113bee89e757684b7ef18bb6f3ca154af15",
-      "bytes": 10255
+      "sha256": "089f6921c5816158ebc89b3778c2c52f517a766b675b6cd593f13883761f07f8",
+      "bytes": 10098
     },
     "tablet_gdrive_sync_hardening_contextual.py": {
       "sha256": "b7252af7f52acac3ba3d1ed6340b91409a3cb297a17302835e9d70b723f8c20e",
@@ -3052,8 +3052,8 @@
       "bytes": 4208
     },
     "test_tablet_gdrive_sync.py": {
-      "sha256": "ed5830f76a5157e4002521779fa1b0249c1ed6b408c3036cf51e24dc00b1b993",
-      "bytes": 13727
+      "sha256": "55cfbc08df9f5fd461c58f9ec60843cf4636cb864bee041f5f1287dc2b1b248b",
+      "bytes": 14193
     },
     "test_tablet_gdrive_sync_perf_v262.py": {
       "sha256": "65b2e646cae157ed549fdb3d089e964708e5afd01d7e9234707603818e420737",

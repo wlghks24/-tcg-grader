@@ -266,9 +266,7 @@ def main() -> int:
     repo = Path(args.repo).expanduser().resolve() if args.repo else Path(__file__).resolve().parent
     try:
         remote = core.safe_remote_name(args.remote)
-        remote_root = args.remote_root.strip("/")
-        if not remote_root or ".." in Path(remote_root).parts or any(c in remote_root for c in "\r\n"):
-            raise ValueError("invalid Google Drive remote root")
+        remote_root = core.safe_remote_root(args.remote_root)
         return run_sync(repo, remote, remote_root, args.recover_only)
     except subprocess.TimeoutExpired as exc:
         print(f"[DEFERRED] timeout: {exc}", file=sys.stderr)

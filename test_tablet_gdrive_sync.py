@@ -122,10 +122,16 @@ class TabletGDriveSyncTests(unittest.TestCase):
         with self.assertRaises(ValueError):
             sync.load_manifest(mp)
 
-    def test_remote_name_rejects_newline(self):
-        with self.assertRaises(ValueError):
-            sync.safe_remote_name("gdrive\n--config=x")
+    def test_rclone_remote_and_root_reject_argument_and_path_injection(self):
+        for value in ("gdrive\n--config=x", "--config=x", "/tmp", "gdrive/name", ""):
+            with self.subTest(remote=value), self.assertRaises(ValueError):
+                sync.safe_remote_name(value)
         self.assertEqual(sync.safe_remote_name("gdrive:"), "gdrive")
+
+        for value in ("../secrets", "TCG_Grader_Sync/../secrets", "/../x", "a\\b", "bad\nroot", ""):
+            with self.subTest(root=value), self.assertRaises(ValueError):
+                sync.safe_remote_root(value)
+        self.assertEqual(sync.safe_remote_root("/TCG_Grader_Sync/to_tablet/"), "TCG_Grader_Sync/to_tablet")
 
 
     def test_manifest_json_is_strict_timezone_aware_and_bool_sizes_are_rejected(self):

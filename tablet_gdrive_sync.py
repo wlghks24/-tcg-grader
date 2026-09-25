@@ -88,10 +88,20 @@ def atomic_write_json(path: Path, data: dict) -> None:
     os.replace(tmp, path)
 
 def safe_remote_name(value: str) -> str:
-    value = value.strip()
-    if not value or any(c in value for c in "\r\n"):
+    value = str(value or "").strip().rstrip(":")
+    if not re.fullmatch(r"[A-Za-z0-9][A-Za-z0-9._-]{0,63}", value):
         raise ValueError("invalid rclone remote")
-    return value.rstrip(":")
+    return value
+
+
+def safe_remote_root(value: str) -> str:
+    value = str(value or "").strip().strip("/")
+    if not value or len(value) > 512 or "\\" in value or any(ord(char) < 32 for char in value):
+        raise ValueError("invalid Google Drive remote root")
+    parts = value.split("/")
+    if any(not part or part in {".", ".."} for part in parts):
+        raise ValueError("invalid Google Drive remote root")
+    return "/".join(parts)
 
 def load_manifest(path: Path) -> dict:
     raw = path.read_bytes()
@@ -420,6 +430,8 @@ def flush_pending_receipts(remote: str, remote_root: str, state: Path) -> None:
             pass
 
 def sync_once(repo: Path, remote: str, remote_root: str) -> int:
+    remote = safe_remote_name(remote)
+    remote_root = safe_remote_root(remote_root)
     state = Path.home() / ".local" / "state" / "tcg-grader" / "gdrive-sync"
     state.mkdir(parents=True, exist_ok=True)
     lock = state / "sync.lock"
@@ -517,9 +529,10 @@ def main() -> int:
     p.add_argument("--repo", default=os.environ.get("TCG_REPO_DIR"))
     args = p.parse_args()
     remote = safe_remote_name(args.remote)
+    remote_root = safe_remote_root(args.remote_root)
     repo = Path(args.repo).expanduser().resolve() if args.repo else Path(__file__).resolve().parent
     try:
-        return sync_once(repo, remote, args.remote_root.strip("/"))
+        return sync_once(repo, remote, remote_root)
     except subprocess.TimeoutExpired as exc:
         print(f"[DEFERRED] timeout: {exc}", file=sys.stderr)
         return 75
