@@ -24,24 +24,25 @@ jobs:
         run: |
           python v315_card_intelligence_patch.py
           python v315_card_intelligence_hotfix.py
+          python v315_test_alignment.py
       - name: Remove temporary bootstrap files before manifest
         run: |
-          git rm -f v315_card_intelligence_patch.py v315_card_intelligence_hotfix.py .github/workflows/v315-card-intelligence-bootstrap.yml
+          git rm -f v315_card_intelligence_patch.py v315_card_intelligence_hotfix.py v315_test_alignment.py .github/workflows/v315-card-intelligence-bootstrap.yml
       - name: Targeted identity generation and market tests
         run: |
-          python -m unittest -v test_card_region_generation_precision_v306.py test_multi_market_price_collector.py test_market_reference_sources_v130.py
+          python -m unittest -v test_card_region_generation_precision_v306.py test_pokemon_generation_display_v207.py test_multi_market_price_collector.py test_market_reference_sources_v130.py
           node verify_pokemon_generation_runtime.js
           node --check card_identity_recognition.js
           node --check multi_market_prices.js
           python -m py_compile card_identity_recognition.py multi_market_price_collector.py
       - name: Related card-core regression
         run: |
-          python -m unittest -v test_card_core_crosscheck_v291.py test_card_core_crosscheck_v292.py test_card_core_crosscheck_v295.py test_card_core_provenance_v296.py test_card_market_edition_v297.py test_card_probability_ui_v298.py test_card_regression_gate_v299.py test_card_tablet_runtime_v300.py
+          python -m unittest -v test_card_core_crosscheck_v291.py test_card_core_crosscheck_v292.py test_card_core_crosscheck_v295.py test_card_core_provenance_v296.py test_card_market_edition_v297.py test_card_probability_ui_v298.py test_card_regression_gate_v299.py test_card_tablet_runtime_v300.py test_pokemon_generation_display_v207.py
       - name: Refresh integrity manifest after final file set
         run: python fault_injection_healing.py --manifest
       - name: Re-run targeted tests against refreshed manifest
         run: |
-          python -m unittest -v test_card_region_generation_precision_v306.py test_multi_market_price_collector.py test_market_reference_sources_v130.py
+          python -m unittest -v test_card_region_generation_precision_v306.py test_pokemon_generation_display_v207.py test_multi_market_price_collector.py test_market_reference_sources_v130.py
           python -m unittest -v test_card_regression_gate_v299.py test_card_tablet_runtime_v300.py
           git diff --check
       - name: Commit validated v315 changes
