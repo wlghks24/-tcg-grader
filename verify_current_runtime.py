@@ -40,7 +40,7 @@ def _commands():
        "test_card_probability_ui_v298.py","test_card_regression_gate_v299.py",
        "test_card_tablet_runtime_v300.py","test_card_edition_precision_v302.py","test_card_region_generation_precision_v306.py",
        "test_card_identity_market_precision_v309.py","test_card_region_conflict_failclosed_v318.py",
-       "test_card_identity_ambiguity_v320.py","test_card_precision_v321.py","test_card_promo_precision_v322.py","test_card_variant_market_precision_v323.py","test_card_collector_edition_alias_v324.py","test_multi_market_price_collector.py","test_tablet_runtime_manifest_ui_assets_v254.py"],360,False),
+       "test_card_identity_ambiguity_v320.py","test_card_precision_v321.py","test_card_promo_precision_v322.py","test_card_variant_market_precision_v323.py","test_card_collector_edition_alias_v324.py","test_card_market_generation_precision_v325.py","test_multi_market_price_collector.py","test_tablet_runtime_manifest_ui_assets_v254.py"],360,False),
       # v182 is an executable assert-based self-test, not a unittest.TestCase module.
       # Running it through `python -m unittest` yields 0 tests / rc=5 and makes
       # the aggregate verifier fail even when the runtime is healthy.
@@ -62,7 +62,7 @@ def _commands():
     else: rows.append(("node_optional",[py,"-c","print('Node.js optional: skipped')"],30,True))
     return rows
 def run(passes:int):
-    passes=max(1,min(5,int(passes))); payload={"schema_version":1,"engine":"current-main-v323-variant-edition-price-precision","started_at":_now(),"passes":[],"ok":False}
+    passes=max(1,min(5,int(passes))); payload={"schema_version":1,"engine":"current-main-v325-market-generation-failclosed","started_at":_now(),"passes":[],"ok":False}
     for number in range(1,passes+1):
         checks=[]
         for name,cmd,timeout,optional in _commands():

@@ -50,10 +50,10 @@ r=api.infer({game:'pokemon',ocr_text:'Pitch Black PBL 79'});
 eq(r.generation,null,'Pitch Black must not invent generation');eq(r.expansion_code,'PBL','Pitch Black code');
 
 r=api.infer({game:'pokemon',ocr_text:'©2026 Pokémon',region:'US'});
-eq(r.generation,null,'2026 year-only evidence must not invent generation');eq(r.confidence_level,'low','2026 year-only confidence');
+eq(r.generation,null,'2026 year-only evidence must not invent generation');eq(r.generation_hint,null,'2026 transition era must not invent generation hint');eq(r.status,'context_only','2026 year-only context status');eq(r.confidence_level,'context','2026 year-only confidence');
 
 r=api.infer({game:'pokemon',ocr_text:'©2021 Pokémon'});
-eq(r.generation,8,'year fallback generation');eq(r.confidence_level,'low','year fallback confidence');
+eq(r.generation,null,'year-only evidence must not invent generation');eq(r.generation_hint,8,'year-only era hint');eq(r.status,'context_only','year-only context status');eq(r.confidence_level,'context','year-only context confidence');
 
 r=api.infer({game:'pokemon',ocr_text:'©2004 Pokémon'});
 eq(r.status,'legacy','legacy status');eq(r.generation,null,'legacy must not invent exact generation');
@@ -84,5 +84,5 @@ eq(r.status,'conflict','set code vs impossible copyright year must conflict');eq
 r=api.infer({game:'pokemon',card_number:'PAL185/193',region:'US',regulation_mark:'H',ocr_text:'©2024 Pokémon'});
 eq(r.generation,9,'set+year generation');eq(r.evidence_count,2,'only set and year count as generation evidence');eq(r.context_evidence_count,1,'regulation is context evidence');ok(r.basis.some(x=>x.includes('©/제작연도')),'year evidence retained');
 
-eq(api.version,'v320','generation runtime version');
-console.log('Pokémon generation runtime v320: PASS');
+eq(api.version,'v325','generation runtime version');
+console.log('Pokémon generation runtime v325: PASS');
