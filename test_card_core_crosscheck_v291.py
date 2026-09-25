@@ -66,7 +66,7 @@ process.stdout.write(JSON.stringify(out));
         self.assertIn("surface", result["reason"])
         self.assertTrue(valuation.estimate_grades(pristine)["ok"])
 
-    def test_japanese_year_fallback_uses_japan_release_boundaries(self) -> None:
+    def test_japanese_year_fallback_is_context_only_with_japan_era_hints(self) -> None:
         script = r"""
 const fs=require('fs'),vm=require('vm');
 global.window={};
@@ -77,14 +77,16 @@ vm.runInThisContext(fs.readFileSync('card_identity_recognition.js','utf8'),{file
 const api=global.window.TCGPokemonGeneration;
 const years=[2019,2016,2013,2010,2006];
 const out=years.map(year=>api.infer({game:'pokemon',region:'JP',ocr_text:`©${year} Pokémon`}));
-process.stdout.write(JSON.stringify(out.map(x=>({year:x.year,generation:x.generation,status:x.status}))));
+process.stdout.write(JSON.stringify(out.map(x=>({year:x.year,generation:x.generation,generation_hint:x.generation_hint,status:x.status,confidence_level:x.confidence_level}))));
 """
         proc = subprocess.run(
             ["node", "-e", script], cwd=ROOT, text=True, capture_output=True, check=True, timeout=30
         )
         rows = json.loads(proc.stdout)
-        self.assertEqual([8, 7, 6, 5, 4], [row["generation"] for row in rows])
-        self.assertTrue(all(row["status"] == "estimated" for row in rows))
+        self.assertEqual([None, None, None, None, None], [row["generation"] for row in rows])
+        self.assertEqual([8, 7, 6, 5, 4], [row["generation_hint"] for row in rows])
+        self.assertTrue(all(row["status"] == "context_only" for row in rows))
+        self.assertTrue(all(row["confidence_level"] == "context" for row in rows))
 
     def test_non_japanese_year_fallback_keeps_existing_conservative_contract(self) -> None:
         source = (ROOT / "card_identity_recognition.js").read_text(encoding="utf-8")

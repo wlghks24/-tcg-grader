@@ -98,7 +98,7 @@ class CardTabletRuntimeV300Tests(unittest.TestCase):
             "const retry=await request(effectiveRegion)",
             "identityCoreKey",
             "oldRegion!=='UNKNOWN'&&targetRegion!=='UNKNOWN'&&oldRegion!==targetRegion",
-            "version:'v320'",
+            "version:'v325'",
         ):
             self.assertIn(token, identity)
         for token in (
@@ -135,6 +135,7 @@ class CardTabletRuntimeV300Tests(unittest.TestCase):
             "test_card_edition_precision_v302.py",
             "test_card_region_generation_precision_v306.py",
             "test_card_identity_market_precision_v309.py",
+            "test_card_market_generation_precision_v325.py",
             "test_multi_market_price_collector.py",
             "test_tablet_runtime_manifest_ui_assets_v254.py",
         ):

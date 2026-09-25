@@ -24,19 +24,20 @@ class CardCoreCrosscheckV292Tests(unittest.TestCase):
         self.assertIsNone(result['year'])
 
     @unittest.skipUnless(shutil.which('node'),'node required')
-    def test_explicit_copyright_markers_still_drive_low_confidence_fallback(self):
+    def test_explicit_copyright_markers_are_context_only_without_set_identity(self):
         for marker in ('©2021 Pokémon','(C) 2021 Pokémon','COPYRIGHT 2021 Pokémon'):
             with self.subTest(marker=marker):
                 result=self._infer({'game':'pokemon','region':'JP','ocr_text':marker})
-                self.assertEqual('estimated',result['status'])
-                self.assertEqual(8,result['generation'])
-                self.assertEqual('low',result['confidence_level'])
+                self.assertEqual('context_only',result['status'])
+                self.assertIsNone(result['generation'])
+                self.assertEqual(8,result['generation_hint'])
+                self.assertEqual('context',result['confidence_level'])
 
     def test_region_selector_recalculates_generation_immediately(self):
         source=(ROOT/'card_identity_recognition.js').read_text(encoding='utf-8')
         self.assertIn("byId('identityRegion')?.addEventListener('change',refreshGenerationFromInputs)",source)
         self.assertIn("byId('identityCardNumber')?.addEventListener('input',refreshGenerationFromInputs)",source)
-        self.assertIn("version:'v320'",source)
+        self.assertIn("version:'v325'",source)
         self.assertIn('inferEditionFromText',source)
 
     def test_v291_core_regressions_remain_present(self):
