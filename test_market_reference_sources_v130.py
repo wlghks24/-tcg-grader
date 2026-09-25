@@ -28,6 +28,7 @@ class MarketReferenceSourcesV130Tests(unittest.TestCase):
         self.assertEqual(by_grade['미감정']['price_krw'],20020)
         self.assertEqual(by_grade['PSA 10']['price_krw'],88246)
         self.assertEqual(by_grade['PSA 9']['price_krw'],0)
+        self.assertEqual(by_grade['PSA 8']['price_krw'],0)
 
     def test_missing_justtcg_key_is_not_an_error(self):
         with mock.patch.dict(os.environ,{},clear=True):

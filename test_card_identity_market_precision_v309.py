@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import json
 import multiprocessing as mp
+import re
 import subprocess
 import tempfile
 import unittest
@@ -97,7 +98,9 @@ class CardIdentityMarketPrecisionV309Tests(unittest.TestCase):
             capture_output=True, timeout=30, check=False,
         )
         self.assertEqual(0, proc.returncode, proc.stdout + proc.stderr)
-        self.assertIn("Pokémon generation runtime v309: PASS", proc.stdout)
+        match = re.search(r"Pokémon generation runtime v(\d+): PASS", proc.stdout)
+        self.assertIsNotNone(match, proc.stdout)
+        self.assertGreaterEqual(int(match.group(1)), 309)
 
 
 if __name__ == "__main__":

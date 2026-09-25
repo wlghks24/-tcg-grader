@@ -68,8 +68,9 @@ let region=api.inferRegion('포켓몬 카드 블래키 ex');eq(region.region,'KR
 region=api.inferRegion('ポケモンカード ミミッキュ');eq(region.region,'JP','Kana edition');ok(region.confidence>=0.9,'Kana confidence');
 region=api.inferRegion('Pokémon TCG PAL 185/193');eq(region.region,'US','English set edition');ok(region.confidence>=0.9,'English set confidence');
 region=api.inferRegion('Pikachu 25/102');eq(region.region,'UNKNOWN','generic Latin text must not invent edition');
+region=api.inferRegion('2026 Japanese Pokémon card Pikachu');eq(region.region,'JP','embedded Japanese label');ok(region.basis.includes('explicit_region_label'),'embedded label basis');
 
-region=api.inferRegion('포켓몬 카드 ポケモン カード');eq(region.region,'UNKNOWN','mixed strong scripts must not invent edition');eq(region.basis,'mixed_script_conflict','mixed script basis');
+region=api.inferRegion('포켓몬 카드 ポケモン カード');eq(region.region,'UNKNOWN','mixed strong scripts must not invent edition');eq(region.basis,'edition_evidence_conflict','mixed script basis');ok(region.conflict===true,'mixed script conflict flag');
 
 r=api.infer({game:'pokemon',card_number:'PAL185/193',region:'JP'});
 eq(r.status,'conflict','English set code vs Japanese edition must conflict');eq(r.generation,null,'edition conflict must not invent generation');
@@ -77,5 +78,11 @@ eq(r.status,'conflict','English set code vs Japanese edition must conflict');eq(
 r=api.infer({game:'pokemon',card_number:'PAL185/193',region:'US',regulation_mark:'F'});
 eq(r.status,'conflict','set generation vs regulation generation must conflict');eq(r.generation,null,'generation evidence conflict must fail closed');
 
-eq(api.version,'v309','generation runtime version');
-console.log('Pokémon generation runtime v309: PASS');
+r=api.infer({game:'pokemon',card_number:'PAL185/193',region:'US',ocr_text:'©2020 Pokémon'});
+eq(r.status,'conflict','set code vs impossible copyright year must conflict');eq(r.generation,null,'year conflict must fail closed');
+
+r=api.infer({game:'pokemon',card_number:'PAL185/193',region:'US',regulation_mark:'H',ocr_text:'©2024 Pokémon'});
+eq(r.generation,9,'three-evidence generation');ok(r.evidence_count>=3,'three independent generation evidence');ok(r.basis.some(x=>x.includes('©/제작연도')),'year evidence retained');
+
+eq(api.version,'v315','generation runtime version');
+console.log('Pokémon generation runtime v315: PASS');

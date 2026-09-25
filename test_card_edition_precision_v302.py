@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import json
+import re
 import shutil
 import subprocess
 import unittest
@@ -9,6 +11,30 @@ ROOT = Path(__file__).resolve().parent
 
 
 class CardEditionPrecisionV302Tests(unittest.TestCase):
+    def _browser_identity(self, mode: str, payload: dict) -> dict:
+        script = r"""
+const fs=require('fs'),vm=require('vm');
+global.window={};
+global.document={readyState:'loading',addEventListener(){},getElementById(){return null;}};
+global.localStorage={getItem(){return null;},setItem(){}};
+global.Option=function(){};
+vm.runInThisContext(fs.readFileSync('card_identity_recognition.js','utf8'));
+const mode=process.argv[1], input=JSON.parse(process.argv[2]);
+const out=mode==='region'
+  ? global.window.TCGPokemonGeneration.inferRegion(input.text||'')
+  : global.window.TCGPokemonGeneration.infer(input);
+process.stdout.write(JSON.stringify(out));
+"""
+        proc = subprocess.run(
+            ["node", "-e", script, mode, json.dumps(payload, ensure_ascii=False)],
+            cwd=ROOT,
+            text=True,
+            capture_output=True,
+            timeout=20,
+            check=True,
+        )
+        return json.loads(proc.stdout)
+
     def test_identity_tracks_modern_english_sets_and_safe_region_evidence(self) -> None:
         source = (ROOT / "card_identity_recognition.js").read_text(encoding="utf-8")
         for token in (
@@ -31,19 +57,31 @@ class CardEditionPrecisionV302Tests(unittest.TestCase):
             self.assertIn(token, source)
         self.assertIn("MEGA는 별도 TCG 시리즈/블록", source)
         self.assertIn("레귤레이션 마크는 대회 사용 가능성 표기", source)
-        self.assertIn("confidence:.72", source)
+        if shutil.which("node"):
+            result = self._browser_identity("generation", {"game": "pokemon", "regulation_mark": "G"})
+            self.assertEqual("estimated", result["status"])
+            self.assertEqual(9, result["generation"])
+            self.assertEqual("medium", result["confidence_level"])
+            self.assertAlmostEqual(0.72, float(result["confidence"]), places=6)
 
     def test_unknown_region_can_retry_ocr_with_evidence_bounded_edition(self) -> None:
         source = (ROOT / "card_identity_recognition.js").read_text(encoding="utf-8")
         self.assertIn("requestRegion=selected!=='UNKNOWN'?selected:browserRegion.region", source)
         self.assertIn("selected==='UNKNOWN'&&requestRegion==='UNKNOWN'&&effectiveRegion!=='UNKNOWN'", source)
         self.assertIn("const retry=await request(effectiveRegion)", source)
-        self.assertIn("if(hangul>=2&&kana>=2)return {region:'UNKNOWN'", source)
-        self.assertIn("mixed_script_conflict", source)
-        self.assertIn("if(kana>=2)return {region:'JP'", source)
-        self.assertIn("if(hangul>=2)return {region:'KR'", source)
-        self.assertIn("if(englishSet)return {region:'US'", source)
-        self.assertIn("return {region:'UNKNOWN',confidence:0,basis:'insufficient_evidence'}", source)
+        self.assertIn("edition_evidence_conflict", source)
+        if shutil.which("node"):
+            cases = (
+                ("포켓몬 카드 피카츄", "KR", False),
+                ("ポケモンカード ピカチュウ", "JP", False),
+                ("PAL 001/193", "US", False),
+                ("포켓몬 카드 ポケモン カード", "UNKNOWN", True),
+            )
+            for text, expected_region, expected_conflict in cases:
+                with self.subTest(text=text):
+                    result = self._browser_identity("region", {"text": text})
+                    self.assertEqual(expected_region, result["region"])
+                    self.assertEqual(expected_conflict, bool(result.get("conflict", False)))
 
     def test_local_identity_learning_is_edition_aware(self) -> None:
         source = (ROOT / "card_identity_recognition.js").read_text(encoding="utf-8")
@@ -87,7 +125,9 @@ class CardEditionPrecisionV302Tests(unittest.TestCase):
             check=False,
         )
         self.assertEqual(0, result.returncode, result.stdout + result.stderr)
-        self.assertIn("Pokémon generation runtime v309: PASS", result.stdout)
+        match = re.search(r"Pokémon generation runtime v(\d+): PASS", result.stdout)
+        self.assertIsNotNone(match, result.stdout)
+        self.assertGreaterEqual(int(match.group(1)), 309)
 
 
 if __name__ == "__main__":

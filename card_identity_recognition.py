@@ -102,31 +102,55 @@ def normalize_region(value: Any) -> str:
     return region if region in REGIONS else "UNKNOWN"
 
 
-def infer_region_from_text(value: Any) -> str:
-    """Infer KR/JP/US only from strong OCR evidence; otherwise fail closed."""
-    text = unicodedata.normalize("NFKC", str(value or ""))
+def infer_region_evidence(value: Any) -> dict[str, Any]:
+    """Return bounded KR/JP/US evidence and fail closed when strong signals disagree."""
+    text = unicodedata.normalize("NFKC", str(value or ""))[:MAX_OCR_TEXT]
     upper = text.upper()
-    compact = re.sub(r"\s+", "", upper)
-    if compact in {"JP", "JAPAN", "JAPANESE", "日本", "日版", "日本版"}:
-        return "JP"
-    if compact in {"KR", "KOREA", "KOREAN", "한국", "한국판", "한글판"}:
-        return "KR"
-    if compact in {"US", "USA", "EN", "ENGLISH", "영문판", "미국판"}:
-        return "US"
+    signals: list[dict[str, Any]] = []
+
+    explicit_patterns = (
+        ("KR", r"(?:\b(?:KR|KOREA|KOREAN)\b|한국판|한글판|국판)"),
+        ("JP", r"(?:\b(?:JP|JAPAN|JAPANESE)\b|日本版|日版)"),
+        ("US", r"(?:\b(?:US|USA|ENGLISH)\b|영문판|미국판)"),
+    )
+    for region, pattern in explicit_patterns:
+        if re.search(pattern, upper, re.I):
+            signals.append({"region": region, "basis": "explicit_region_label", "confidence": 0.99})
+
     hangul = len(re.findall(r"[가-힣]", text))
     kana = len(re.findall(r"[ぁ-んァ-ヶー]", text))
-    # Mixed strong scripts are conflicting edition evidence. Do not pick a
-    # region by character-count tie breaking; require user/catalog confirmation.
-    if hangul >= 2 and kana >= 2:
-        return "UNKNOWN"
     if hangul >= 2:
-        return "KR"
+        signals.append({"region": "KR", "basis": "hangul_script", "confidence": 0.96, "count": hangul})
     if kana >= 2:
-        return "JP"
+        signals.append({"region": "JP", "basis": "kana_script", "confidence": 0.96, "count": kana})
     if _POKEMON_EN_SET_EVIDENCE_RE.search(upper):
-        return "US"
-    return "UNKNOWN"
+        signals.append({"region": "US", "basis": "english_set_code", "confidence": 0.92})
 
+    regions = sorted({str(item["region"]) for item in signals})
+    if len(regions) > 1:
+        return {
+            "region": "UNKNOWN", "confidence": 0.0, "basis": "edition_evidence_conflict",
+            "conflict": True, "signals": signals,
+        }
+    if not regions:
+        return {
+            "region": "UNKNOWN", "confidence": 0.0, "basis": "insufficient_evidence",
+            "conflict": False, "signals": [],
+        }
+    region = regions[0]
+    matching = [item for item in signals if item["region"] == region]
+    return {
+        "region": region,
+        "confidence": round(max(float(item["confidence"]) for item in matching), 3),
+        "basis": "+".join(dict.fromkeys(str(item["basis"]) for item in matching)),
+        "conflict": False,
+        "signals": matching,
+    }
+
+
+def infer_region_from_text(value: Any) -> str:
+    """Compatibility wrapper for callers that only need the edition code."""
+    return str(infer_region_evidence(value).get("region") or "UNKNOWN")
 
 def _json(path: Path, fallback: dict) -> dict:
     try:
@@ -861,8 +885,9 @@ def recognize(payload: dict[str, Any]) -> dict[str, Any]:
             data, game=game, region=region, seed_text=supplied_text
         )
         supplied_text = (supplied_text + " " + text).strip()[:MAX_OCR_TEXT]
-    inferred_region = infer_region_from_text(supplied_text)
-    region_conflict = (
+    region_evidence = infer_region_evidence(supplied_text)
+    inferred_region = str(region_evidence.get("region") or "UNKNOWN")
+    region_conflict = bool(region_evidence.get("conflict")) or (
         region in {"KR", "JP", "US"}
         and inferred_region in {"KR", "JP", "US"}
         and inferred_region != region
@@ -882,7 +907,8 @@ def recognize(payload: dict[str, Any]) -> dict[str, Any]:
     candidates = sorted(unique.values(), key=lambda row: -row["confidence"])[:5]
     return {
         "ok": True, "game": game, "region_hint": region, "inferred_region": inferred_region,
-        "region_conflict": region_conflict, "image_hash": image_hash, "ocr_text": supplied_text,
+        "region_conflict": region_conflict, "region_evidence": region_evidence,
+        "image_hash": image_hash, "ocr_text": supplied_text,
         "ocr_error": ocr_error, "ocr_diagnostics": ocr_diagnostics,
         "numbers_detected": extract_numbers(supplied_text),
         "candidates": candidates, "best": candidates[0] if candidates else None,

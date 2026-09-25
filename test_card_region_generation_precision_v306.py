@@ -16,6 +16,11 @@ class CardRegionGenerationPrecisionV306Tests(unittest.TestCase):
         self.assertEqual('US', identity.infer_region_from_text('Mega Greninja ex CRI 22'))
         self.assertEqual('US', identity.infer_region_from_text('Kirlia MEG 59/132'))
         self.assertEqual('UNKNOWN', identity.infer_region_from_text('Pikachu 25/102'))
+        self.assertEqual('JP', identity.infer_region_from_text('2026 Japanese Pokémon card Pikachu'))
+        evidence=identity.infer_region_evidence('Korean 포켓몬 ポケモン card')
+        self.assertEqual('UNKNOWN',evidence['region'])
+        self.assertTrue(evidence['conflict'])
+        self.assertGreaterEqual(len(evidence['signals']),2)
 
     def test_server_extracts_current_english_set_codes(self) -> None:
         self.assertIn('MEG59/132', identity.extract_numbers('Kirlia MEG 59/132'))
@@ -45,7 +50,7 @@ class CardRegionGenerationPrecisionV306Tests(unittest.TestCase):
     def test_generation_runtime(self) -> None:
         proc=subprocess.run(['node','verify_pokemon_generation_runtime.js'],cwd=ROOT,text=True,capture_output=True,timeout=30,check=False)
         self.assertEqual(0,proc.returncode,proc.stdout+proc.stderr)
-        self.assertIn('Pokémon generation runtime v309: PASS',proc.stdout)
+        self.assertIn('Pokémon generation runtime v315: PASS',proc.stdout)
 
 
 if __name__ == '__main__':

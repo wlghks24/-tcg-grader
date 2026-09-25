@@ -39,14 +39,14 @@ class PokemonGenerationDisplayV207Tests(unittest.TestCase):
             "inferEditionFromText",
             "identityCoreKey",
             "generationConflict",
-            "mixed_script_conflict",
-            "v309-edition-isolated-ocr-learning",
+            "edition_evidence_conflict",
+            "v315-evidence-isolated-confirmed-learning",
             "same photo" if False else "같은 사진에 서로 다른 카드/판본 정보",
         ):
             self.assertIn(token, source)
-        self.assertIn("confidence:.72", source)
+        self.assertIn("confidence:year?.78:.72", source)
         self.assertIn("레귤레이션 마크는 대회 사용 가능성 표기", source)
-        self.assertIn("version:'v309'", source)
+        self.assertIn("version:'v315'", source)
 
     def test_generation_runtime_executes(self):
         result = subprocess.run(
@@ -58,7 +58,7 @@ class PokemonGenerationDisplayV207Tests(unittest.TestCase):
             check=False,
         )
         self.assertEqual(0, result.returncode, result.stdout + result.stderr)
-        self.assertIn("Pokémon generation runtime v309: PASS", result.stdout)
+        self.assertIn("Pokémon generation runtime v315: PASS", result.stdout)
 
 
 if __name__ == "__main__":

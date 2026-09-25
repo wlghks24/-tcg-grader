@@ -2,7 +2,7 @@
 'use strict';
 const GLOBAL_KEY='__TCG_MULTI_MARKET_PRICES__';
 if(globalThis[GLOBAL_KEY]?.loaded)return;
-globalThis[GLOBAL_KEY]={loaded:true,version:313};
+globalThis[GLOBAL_KEY]={loaded:true,version:315};
 const $=id=>document.getElementById(id);
 const krw=n=>Number(n)>0?`₩${Math.round(Number(n)).toLocaleString('ko-KR')}`:'—';
 const esc=value=>String(value??'').replace(/[&<>"']/g,ch=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));
@@ -24,7 +24,8 @@ function mount(){
 }
 
 function sourceBadge(item){
- return `<span class="mmp-source">${esc(item.source)}</span><span class="mmp-kind">${esc(item.price_kind||'가격')}</span>${item.verified_api?'<span class="mmp-api">API</span>':''}`;
+ const identity=item.summary_eligible===false?'<span class="mmp-kind">참고만</span>':(String(item.identity_basis||'').includes('card_number')?'<span class="mmp-api">카드일치</span>':'');
+ return `<span class="mmp-source">${esc(item.source)}</span><span class="mmp-kind">${esc(item.price_kind||'가격')}</span>${item.verified_api?'<span class="mmp-api">API</span>':''}${identity}`;
 }
 
 function renderSources(list){
@@ -36,7 +37,7 @@ function renderGrades(list){
  const box=$('multiMarketGrade');if(!box)return;
  const rows=Array.isArray(list)?list:[];box.hidden=!rows.length;
  if(!rows.length){box.innerHTML='';return;}
- box.innerHTML=`<div class="mmp-subhead"><div><b>등급별 참고시세</b><small>완료거래를 우선하고, 없으면 API 참고시세·판매중/호가를 서로 섞지 않고 표시합니다.</small></div><span>Pavilion형 보기</span></div><div class="mmp-grade-grid">${rows.map(row=>`<div class="mmp-grade-card${row.price_krw?'':' mmp-grade-empty'}"><span>${esc(row.grade)}</span><b>${krw(row.price_krw)}</b><small>${row.count?`${Number(row.count)}건 · ${esc(row.basis||'공개가격')}`:'공개가격 없음'}</small></div>`).join('')}</div>`;
+ box.innerHTML=`<div class="mmp-subhead"><div><b>등급별 참고시세</b><small>카드번호 일치 자료에서 업체·숫자등급을 분리하고, 완료거래→API 참고시세→판매중/호가 순으로 표시합니다.</small></div><span>Pavilion형 보기</span></div><div class="mmp-grade-grid">${rows.map(row=>`<div class="mmp-grade-card${row.price_krw?'':' mmp-grade-empty'}"><span>${esc(row.grade)}</span><b>${krw(row.price_krw)}</b><small>${row.count?`${Number(row.count)}건 · ${esc(row.basis||'공개가격')}`:'공개가격 없음'}</small></div>`).join('')}</div>`;
 }
 
 function renderReferences(list){
@@ -50,7 +51,7 @@ function render(data){
  const summary=$('multiMarketSummary'),rows=$('multiMarketRows');if(!summary||!rows)return;
  const info=data.summary||{};summary.className='mmp-summary';
  const basis=esc(info.basis||'동일 기준'),region=esc(info.region_scope||'ALL');
- summary.innerHTML=`<div><span>비교가능가격</span><b>${info.count||0}건</b><small>전체 ${info.total_count??info.count??0}건</small></div><div><span>출처</span><b>${info.source_count||0}곳</b><small>지역 ${region}</small></div><div><span>${basis} 중앙값</span><b>${krw(info.median_krw)}</b></div><div><span>동일기준 범위</span><b>${krw(info.min_krw)} ~ ${krw(info.max_krw)}</b></div>`;
+ summary.innerHTML=`<div><span>비교가능가격</span><b>${info.count||0}건</b><small>정확범위 ${info.total_count??info.count??0}건${Number(info.identity_excluded_count)>0?` · 불일치 제외 ${Number(info.identity_excluded_count)}건`:''}</small></div><div><span>출처</span><b>${info.source_count||0}곳</b><small>지역 ${region}</small></div><div><span>${basis} 중앙값</span><b>${krw(info.median_krw)}</b></div><div><span>동일기준 범위</span><b>${krw(info.min_krw)} ~ ${krw(info.max_krw)}</b></div>`;
  renderSources(data.source_status);renderGrades(data.grade_reference);renderReferences(data.reference_links);
  rows.innerHTML=(data.items||[]).slice(0,24).map(item=>`<article class="mmp-row"><div class="mmp-top"><div class="mmp-badges">${sourceBadge(item)}</div><strong>${krw(item.price_krw)}</strong></div><div class="mmp-title">${esc(item.title)}</div><div class="mmp-meta"><span>${item.currency&&item.price_native?`${esc(item.currency)} ${Number(item.price_native).toLocaleString()}`:'원화 환산'}</span><span>${esc(item.date||'최근 검색 확인')}</span></div><a href="${esc(item.url)}" target="_blank" rel="noopener noreferrer">원문 확인 →</a></article>`).join('')||'<div class="mmp-empty"><b>가격 결과 없음</b><span>현재 공개 검색결과에서 확인 가능한 가격을 찾지 못했습니다. 위 참고사이트 원문도 함께 확인해 주세요.</span></div>';
  $('multiMarketNote').textContent=(data.notice||'')+(data.errors?.length?` · 일부 출처 실패 ${data.errors.length}곳`:``);
