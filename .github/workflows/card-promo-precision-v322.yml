@@ -54,6 +54,7 @@ jobs:
       - name: Remove bootstrap files and regenerate integrity manifest
         run: |
           rm -f apply_card_promo_precision_v322.py .github/workflows/card-promo-precision-v322.yml
+          git add -u
           python - <<'PY'
           from fault_injection_healing import build_integrity_manifest, MANIFEST_PATH
           build_integrity_manifest(target=MANIFEST_PATH)
