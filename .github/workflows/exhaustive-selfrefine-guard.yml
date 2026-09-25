@@ -104,19 +104,21 @@ jobs:
           for file in test_*.py; do
             [ -f "$file" ] || continue
             total=$((total+1))
-            echo "===== isolated root test: $file ====="
-            python -m unittest discover -v -s . -p "$file"
+            out="$(mktemp)"
+            python -m unittest discover -v -s . -p "$file" >"$out" 2>&1
             rc=$?
             if [ "$rc" -eq 5 ]; then
-              echo "SELFREFINE_FALLBACK file=$file mode=standalone"
-              python selfrefine_standalone_test_runner.py "$file"
+              python selfrefine_standalone_test_runner.py "$file" >"$out" 2>&1
               rc=$?
             fi
-            echo "SELFREFINE_MODULE_RC file=$file rc=$rc"
             if [ "$rc" -ne 0 ]; then
               failed_count=$((failed_count+1))
               failed_files="$failed_files $file"
+              echo "::error file=${file}::root regression failed with exit code ${rc}"
+              echo "===== FAIL ${file} ====="
+              tail -n 160 "$out"
             fi
+            rm -f "$out"
           done
           echo "isolated root test modules: $total; failed modules: $failed_count"
           echo "failed root test files:$failed_files"
