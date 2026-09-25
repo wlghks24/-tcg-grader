@@ -17,8 +17,10 @@ class UiVersionCoherenceV276Tests(unittest.TestCase):
 
     def test_component_versions_are_explicit_but_not_forced_to_match(self) -> None:
         self.assertIn('uiVersion: "v276-motion-pwa-hardening"', self.nav_js)
-        self.assertIn("const CACHE='tcg-v276-network-first-runtime';", self.sw)
-        # Manifest/app-shell versions are independent component generations.
+        cache = re.search(r"const CACHE='tcg-v(\d+)-network-first-runtime';", self.sw)
+        self.assertIsNotNone(cache, "service-worker cache must keep the network-first runtime naming contract")
+        self.assertGreaterEqual(int(cache.group(1)), 276, "service-worker cache generation regressed below v276")
+        # Manifest/app-shell/cache versions are independent component generations.
         # Do not force unrelated components to share the v276 number.
         self.assertRegex(self.manifest, r'"version"\s*:\s*"?\d+"?')
 
