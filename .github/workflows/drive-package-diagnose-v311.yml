@@ -1,0 +1,32 @@
+name: Drive Package Diagnose v311
+on:
+  push:
+    branches: ['fix/drive-package-degraded-policy-v311']
+    paths: ['.github/workflows/drive-package-diagnose-v311.yml']
+permissions:
+  contents: read
+jobs:
+  diagnose:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97
+        with:
+          python-version: '3.11'
+      - name: Print exact collection verification findings
+        shell: bash
+        run: |
+          set +e
+          python collection_verification_gate_contextual.py --max-health-age-seconds 900 --report /tmp/collection.json
+          rc=$?
+          set -e
+          python - <<'PY'
+          import json
+          p=json.load(open('/tmp/collection.json',encoding='utf-8'))
+          print('STATUS',p.get('status'))
+          print('COUNTS',json.dumps(p.get('counts'),ensure_ascii=False,sort_keys=True))
+          for row in p.get('findings',[]):
+              if row.get('severity') in {'critical','high'}:
+                  print('FINDING',json.dumps(row,ensure_ascii=False,sort_keys=True))
+          PY
+          test "$rc" -ne 2
