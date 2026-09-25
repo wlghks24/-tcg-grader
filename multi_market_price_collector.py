@@ -338,23 +338,108 @@ def _identity_name_token(value):
     return re.sub(r'[^0-9a-z가-힣ぁ-んァ-ヶ一-龯]+','',str(value or '').casefold())[:160]
 
 
-def _item_identity_eligibility(query,item):
-    """Gate headline/grade prices on exact card-number evidence when one was requested."""
+_PRINT_VARIANT_RULES=(
+    ('manga',re.compile(r'\b(?:manga(?:\s+rare)?)\b|만화\s*(?:레어)?|マンガ',re.I)),
+    ('parallel',re.compile(r'\bparallel\b|패러렐|パラレル',re.I)),
+    ('special_art',re.compile(r'\b(?:special\s+art(?:\s+rare)?|sar)\b|스페셜\s*아트',re.I)),
+    ('alt_art',re.compile(r'\b(?:alt(?:ernate|ernative)?\s+art)\b|얼터(?:너티브)?\s*아트|別イラスト',re.I)),
+    ('full_art',re.compile(r'\bfull\s+art\b|풀\s*아트',re.I)),
+    ('reverse_holo',re.compile(r'\b(?:reverse\s+(?:holo(?:foil)?|foil)|reverseholofoil)\b|리버스\s*홀로|リバース',re.I)),
+    ('standard',re.compile(r'\b(?:normal|regular|standard|non[- ]?holo)\b|일반판|ノーマル',re.I)),
+    ('holo',re.compile(r'\b(?:holo(?:foil)?|holographic)\b|홀로|キラ',re.I)),
+    ('foil',re.compile(r'\bfoil\b|포일|フォイル',re.I)),
+    ('promo',re.compile(r'\bpromo(?:tional)?\b|프로모|プロモ',re.I)),
+)
+
+
+def _card_variant(value):
+    text=str(value or '')[:500]
+    for key,pattern in _PRINT_VARIANT_RULES:
+        if pattern.search(text):
+            return key
+    return ''
+
+
+def _item_variant(item):
+    return _card_variant(' '.join(str(item.get(key) or '') for key in ('variant_name','print_variant','title','snippet')))
+
+
+def _explicit_listing_regions(item):
+    blob=' '.join(str(item.get(key) or '') for key in ('title','snippet')).casefold()
+    found=set()
+    patterns=(
+        ('KR',r'\b(?:korean|korea\s+(?:version|edition)|kr\s+(?:version|edition))\b|한국판|한글판|국판'),
+        ('JP',r'\b(?:japanese|japan\s+(?:version|edition)|jp\s+(?:version|edition))\b|日本版|日版|일판'),
+        ('US',r'\b(?:english|us\s+(?:version|edition)|en\s+(?:version|edition))\b|영문판|미국판'),
+    )
+    for region,pattern in patterns:
+        if re.search(pattern,blob,re.I):found.add(region)
+    return found
+
+
+def _item_region_eligibility(region,item):
+    requested=str(region or 'ALL').upper()
+    if requested not in ('KR','JP','US'):
+        return True,'edition_unscoped'
+    structured=str(item.get('region_scope') or '').upper()
+    if structured in ('KR','JP','US') and structured!=requested:
+        return False,'edition_scope_mismatch'
+    explicit=_explicit_listing_regions(item)
+    if len(explicit)>1:
+        return False,'edition_evidence_conflict'
+    if explicit and requested not in explicit:
+        return False,'edition_explicit_mismatch'
+    return True,'edition_match_or_neutral'
+
+
+def _item_variant_eligibility(query,item):
+    wanted=_card_variant(query)
+    actual=_item_variant(item)
+    if not wanted:
+        return True,'variant_unspecified',actual
+    if actual==wanted:
+        return True,'variant_exact',actual
+    if actual:
+        return False,'variant_mismatch',actual
+    return False,'variant_evidence_missing',actual
+
+
+def _variant_summary_state(query,items):
+    wanted=_card_variant(query)
+    variants=[]
+    for item in items:
+        if int(item.get('price_krw') or 0)<=0:continue
+        variants.append(_item_variant(item))
+    explicit=sorted({value for value in variants if value})
+    has_unknown=any(not value for value in variants)
+    ambiguous=bool(not wanted and (len(explicit)>1 or (explicit and has_unknown)))
+    scope=wanted or ('AMBIGUOUS' if ambiguous else (explicit[0] if len(explicit)==1 and not has_unknown else 'UNSPECIFIED'))
+    return {'wanted':wanted,'observed':explicit,'has_unknown':has_unknown,'ambiguous':ambiguous,'scope':scope}
+
+
+def _item_identity_eligibility(query,item,region='ALL'):
+    """Fail closed on wrong edition, wrong print variant, or card-number mismatch."""
+    region_ok,region_basis=_item_region_eligibility(region,item)
+    if not region_ok:return False,region_basis
+    variant_ok,variant_basis,_=_item_variant_eligibility(query,item)
+    if not variant_ok:return False,variant_basis
     wanted_name,wanted_number=_tcgdex_query_parts(query)
-    if not wanted_number:return True,'name_only_query'
+    def accepted(base):return True,base+'+'+region_basis+'+'+variant_basis
+    if not wanted_number:return accepted('name_only_query')
     wanted=_normalize_card_number(wanted_number)
     actual=_normalize_card_number(item.get('card_number'))
     title_blob=' '.join(str(item.get(key) or '') for key in ('title','snippet'))
     name_token=_identity_name_token(wanted_name)
     name_ok=bool(name_token and name_token in _identity_name_token(title_blob))
     if actual and _card_number_matches(wanted,actual):
-        if _has_explicit_set_prefix(wanted) or name_ok:return True,'structured_card_number_exact'
+        if _has_explicit_set_prefix(wanted) or name_ok:return accepted('structured_card_number_exact')
         return False,'local_number_without_name_corroboration'
     candidates=_identity_blob_numbers(title_blob)
     if any(_card_number_matches(wanted,candidate) for candidate in candidates):
-        if _has_explicit_set_prefix(wanted) or name_ok:return True,'text_card_number_exact'
+        if _has_explicit_set_prefix(wanted) or name_ok:return accepted('text_card_number_exact')
         return False,'local_number_without_name_corroboration'
     return False,'card_number_mismatch'
+
 
 def _tcgdex_api(query,game,fx,region='ALL'):
     if _game_key(game) not in ('pokemon','all'):return [],'unsupported'
@@ -392,6 +477,8 @@ def _tcgdex_api(query,game,fx,region='ALL'):
                              'price_native':float(amount),'currency':'USD','price_kind':'TCGplayer API 통합시세',
                              'verified_api':True,'date':str(tcgp.get('updated') or ''),'score':0.96,
                              'card_number':str(card.get('localId') or '')[:60],
+                             'variant_name':str(variant_name)[:60],
+                             'print_variant':_card_variant(variant_name),
                              'region_scope':'JP' if language=='ja' else 'US'})
     return rows[:18],'ok'
 
@@ -620,16 +707,23 @@ def search_multi_market(query,region='ALL',game='ALL',force=False):
         if not old or float(x.get('score',1))>float(old.get('score',1)):dedup[k]=x
     items=list(dedup.values());items.sort(key=lambda x:(-float(x.get('score',1)),-int(x.get('price_krw',0))))
     for item in items:
-        eligible,identity_basis=_item_identity_eligibility(query,item)
+        eligible,identity_basis=_item_identity_eligibility(query,item,region)
         item['summary_eligible']=bool(eligible);item['identity_basis']=identity_basis
+        item['print_variant']=_item_variant(item)
     eligible_items=[item for item in items if item.get('summary_eligible') is True]
-    comparable,basis=_comparable_summary_items(query,eligible_items)
+    variant_state=_variant_summary_state(query,eligible_items)
+    if variant_state['ambiguous']:
+        comparable=[];basis='인쇄/아트 변형 미지정 · 서로 다른 변형 혼재'
+    else:
+        comparable,basis=_comparable_summary_items(query,eligible_items)
     prices=[int(x['price_krw']) for x in comparable if int(x.get('price_krw',0))>0]
     _,query_card_number=_tcgdex_query_parts(query)
     summary={'count':len(prices),'total_count':len([x for x in eligible_items if int(x.get('price_krw',0))>0]),
              'observed_total_count':len([x for x in items if int(x.get('price_krw',0))>0]),
              'identity_excluded_count':len([x for x in items if x.get('summary_eligible') is False and int(x.get('price_krw',0))>0]),
              'identity_scope':'exact_card_number' if query_card_number else 'name_only',
+             'variant_scope':variant_state['scope'],'variant_ambiguous':variant_state['ambiguous'],
+             'observed_variants':variant_state['observed'],'variant_unknown_evidence':variant_state['has_unknown'],
              'median_krw':int(statistics.median(prices)) if prices else 0,'min_krw':min(prices) if prices else 0,'max_krw':max(prices) if prices else 0,
              'source_count':len({x.get('source_id') for x in comparable}),'basis':basis,
              'region_scope':region if region in ('KR','JP','US') else 'ALL'}
@@ -638,8 +732,8 @@ def search_multi_market(query,region='ALL',game='ALL',force=False):
                    for src in SOURCES if src['id'] in ('snkrdunk','justtcg','tcgdex','pavilion')]
     data={'ok':True,'query':query,'region':region,'game':game,'checked_at':datetime.now(timezone.utc).isoformat(timespec='seconds'),'refresh_minutes':15,
           'summary':summary,'items':items[:60],'errors':errors,'source_stats':stats,'source_status':source_status,
-          'reference_links':_reference_links(query,game),'grade_reference':_grade_reference(eligible_items),
-          'notice':'SNKRDUNK·JustTCG·TCGdex·Pavilion을 포함한 공개 참고시세를 교차수집합니다. 카드번호가 있으면 정확 번호(+로컬번호는 카드명 확인)와 일치한 자료만 중앙값·등급별 시세에 사용합니다. 완료거래→API 참고시세→호가 순으로 분리하며, 없는 등급값은 추정하지 않습니다. 403/429는 우회하지 않고 안전 대기합니다.',
+          'reference_links':_reference_links(query,game),'grade_reference':_grade_reference(eligible_items) if not variant_state['ambiguous'] else [],
+          'notice':'SNKRDUNK·JustTCG·TCGdex·Pavilion을 포함한 공개 참고시세를 교차수집합니다. 카드번호·판본·인쇄/아트 변형이 확인된 자료만 중앙값·등급별 시세에 사용합니다. 같은 카드번호에서 Standard·Holo·Reverse Holo·Parallel·Alt Art·Manga 등이 섞이면 자동 중앙값을 보류합니다. 완료거래→API 참고시세→호가 순으로 분리하며, 없는 등급값은 추정하지 않습니다. 403/429는 우회하지 않고 안전 대기합니다.',
           '_epoch':time.time(),'cache':'refresh'}
     _save_learning(stats);_save_cache(key,data);return data
 
