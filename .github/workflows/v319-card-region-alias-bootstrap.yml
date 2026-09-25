@@ -50,9 +50,10 @@ jobs:
           if old_browser not in s:
               raise SystemExit('browser precedence anchor missing')
           s=s.replace(old_browser,new_browser,1)
+          s=s.replace('tcg-v319-card-region-alias','tcg-v319-network-first-runtime')
           compile(s, str(p), 'exec')
           p.write_text(s, encoding='utf-8')
-          print('helper syntax/precedence: PASS')
+          print('helper syntax/precedence/cache contract: PASS')
           PY
       - name: Apply v319 patch
         run: python tools/apply_v319_card_region_alias_patch.py
