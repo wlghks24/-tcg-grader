@@ -1,0 +1,311 @@
+name: Card v323 Variant Price Precision Reconcile
+
+on:
+  push:
+    branches: [fix/card-variant-price-precision-v323]
+
+permissions:
+  contents: write
+
+jobs:
+  reconcile:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout precision branch
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          ref: fix/card-variant-price-precision-v323
+          fetch-depth: 0
+
+      - name: Patch, test, reconcile manifest, and self-remove
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          python -m pip install --disable-pip-version-check pillow
+          git rm .github/workflows/card-v323-precision-reconcile.yml
+          python - <<'PY'
+          from pathlib import Path
+          import re
+
+          root=Path('.')
+          path=root/'multi_market_price_collector.py'
+          text=path.read_text(encoding='utf-8')
+
+          anchor="""def _identity_name_token(value):
+              return re.sub(r'[^0-9a-z가-힣ぁ-んァ-ヶ一-龯]+','',str(value or '').casefold())[:160]
+
+
+          """
+          if anchor not in text:
+              raise SystemExit('identity helper anchor missing')
+          helpers=r'''def _identity_name_token(value):
+              return re.sub(r'[^0-9a-z가-힣ぁ-んァ-ヶ一-龯]+','',str(value or '').casefold())[:160]
+
+
+          _PRINT_VARIANT_RULES=(
+              ('manga',re.compile(r'\b(?:manga(?:\s+rare)?)\b|만화\s*(?:레어)?|マンガ',re.I)),
+              ('parallel',re.compile(r'\bparallel\b|패러렐|パラレル',re.I)),
+              ('special_art',re.compile(r'\b(?:special\s+art(?:\s+rare)?|sar)\b|스페셜\s*아트',re.I)),
+              ('alt_art',re.compile(r'\b(?:alt(?:ernate|ernative)?\s+art)\b|얼터(?:너티브)?\s*아트|別イラスト',re.I)),
+              ('full_art',re.compile(r'\bfull\s+art\b|풀\s*아트',re.I)),
+              ('reverse_holo',re.compile(r'\b(?:reverse\s+(?:holo(?:foil)?|foil)|reverseholofoil)\b|리버스\s*홀로|リバース',re.I)),
+              ('standard',re.compile(r'\b(?:normal|regular|standard|non[- ]?holo)\b|일반판|ノーマル',re.I)),
+              ('holo',re.compile(r'\b(?:holo(?:foil)?|holographic)\b|홀로|キラ',re.I)),
+              ('foil',re.compile(r'\bfoil\b|포일|フォイル',re.I)),
+              ('promo',re.compile(r'\bpromo(?:tional)?\b|프로모|プロモ',re.I)),
+          )
+          _PRINT_VARIANT_LABELS={
+              'manga':'Manga','parallel':'Parallel','special_art':'Special Art','alt_art':'Alt Art',
+              'full_art':'Full Art','reverse_holo':'Reverse Holo','standard':'Standard',
+              'holo':'Holo','foil':'Foil','promo':'Promo',
+          }
+
+
+          def _card_variant(value):
+              text=str(value or '')[:500]
+              for key,pattern in _PRINT_VARIANT_RULES:
+                  if pattern.search(text):
+                      return key
+              return ''
+
+
+          def _item_variant(item):
+              return _card_variant(' '.join(str(item.get(key) or '') for key in ('variant_name','print_variant','title','snippet')))
+
+
+          def _explicit_listing_regions(item):
+              blob=' '.join(str(item.get(key) or '') for key in ('title','snippet')).casefold()
+              found=set()
+              patterns=(
+                  ('KR',r'\b(?:korean|korea\s+(?:version|edition)|kr\s+(?:version|edition))\b|한국판|한글판|국판'),
+                  ('JP',r'\b(?:japanese|japan\s+(?:version|edition)|jp\s+(?:version|edition))\b|日本版|日版|일판'),
+                  ('US',r'\b(?:english|us\s+(?:version|edition)|en\s+(?:version|edition))\b|영문판|미국판'),
+              )
+              for region,pattern in patterns:
+                  if re.search(pattern,blob,re.I):found.add(region)
+              return found
+
+
+          def _item_region_eligibility(region,item):
+              requested=str(region or 'ALL').upper()
+              if requested not in ('KR','JP','US'):
+                  return True,'edition_unscoped'
+              structured=str(item.get('region_scope') or '').upper()
+              if structured in ('KR','JP','US') and structured!=requested:
+                  return False,'edition_scope_mismatch'
+              explicit=_explicit_listing_regions(item)
+              if len(explicit)>1:
+                  return False,'edition_evidence_conflict'
+              if explicit and requested not in explicit:
+                  return False,'edition_explicit_mismatch'
+              return True,'edition_match_or_neutral'
+
+
+          def _item_variant_eligibility(query,item):
+              wanted=_card_variant(query)
+              actual=_item_variant(item)
+              if not wanted:
+                  return True,'variant_unspecified',actual
+              if actual==wanted:
+                  return True,'variant_exact',actual
+              if actual:
+                  return False,'variant_mismatch',actual
+              return False,'variant_evidence_missing',actual
+
+
+          def _variant_summary_state(query,items):
+              wanted=_card_variant(query)
+              variants=[]
+              for item in items:
+                  if int(item.get('price_krw') or 0)<=0:continue
+                  variants.append(_item_variant(item))
+              explicit=sorted({value for value in variants if value})
+              has_unknown=any(not value for value in variants)
+              ambiguous=bool(not wanted and (len(explicit)>1 or (explicit and has_unknown)))
+              scope=wanted or ('AMBIGUOUS' if ambiguous else (explicit[0] if len(explicit)==1 and not has_unknown else 'UNSPECIFIED'))
+              return {
+                  'wanted':wanted,
+                  'observed':explicit,
+                  'has_unknown':has_unknown,
+                  'ambiguous':ambiguous,
+                  'scope':scope,
+              }
+
+
+          '''
+          text=text.replace(anchor,helpers,1)
+
+          pattern=r"def _item_identity_eligibility\(query,item\):\n.*?\n(?=def _tcgdex_api)"
+          replacement=r'''def _item_identity_eligibility(query,item,region='ALL'):
+              """Fail closed on wrong edition, wrong print variant, or card-number mismatch."""
+              region_ok,region_basis=_item_region_eligibility(region,item)
+              if not region_ok:return False,region_basis
+              variant_ok,variant_basis,_=_item_variant_eligibility(query,item)
+              if not variant_ok:return False,variant_basis
+              wanted_name,wanted_number=_tcgdex_query_parts(query)
+              def accepted(base):return True,base+'+'+region_basis+'+'+variant_basis
+              if not wanted_number:return accepted('name_only_query')
+              wanted=_normalize_card_number(wanted_number)
+              actual=_normalize_card_number(item.get('card_number'))
+              title_blob=' '.join(str(item.get(key) or '') for key in ('title','snippet'))
+              name_token=_identity_name_token(wanted_name)
+              name_ok=bool(name_token and name_token in _identity_name_token(title_blob))
+              if actual and _card_number_matches(wanted,actual):
+                  if _has_explicit_set_prefix(wanted) or name_ok:return accepted('structured_card_number_exact')
+                  return False,'local_number_without_name_corroboration'
+              candidates=_identity_blob_numbers(title_blob)
+              if any(_card_number_matches(wanted,candidate) for candidate in candidates):
+                  if _has_explicit_set_prefix(wanted) or name_ok:return accepted('text_card_number_exact')
+                  return False,'local_number_without_name_corroboration'
+              return False,'card_number_mismatch'
+
+
+          '''
+          text,count=re.subn(pattern,replacement,text,count=1,flags=re.S)
+          if count!=1:raise SystemExit('identity eligibility replacement failed')
+
+          old="""                             'card_number':str(card.get('localId') or '')[:60],
+                             'region_scope':'JP' if language=='ja' else 'US'})"""
+          new="""                             'card_number':str(card.get('localId') or '')[:60],
+                             'variant_name':str(variant_name)[:60],
+                             'print_variant':_card_variant(variant_name),
+                             'region_scope':'JP' if language=='ja' else 'US'})"""
+          if old not in text:raise SystemExit('TCGdex variant anchor missing')
+          text=text.replace(old,new,1)
+
+          old="""    for item in items:
+              eligible,identity_basis=_item_identity_eligibility(query,item)
+              item['summary_eligible']=bool(eligible);item['identity_basis']=identity_basis
+              eligible_items=[item for item in items if item.get('summary_eligible') is True]
+              comparable,basis=_comparable_summary_items(query,eligible_items)
+              prices=[int(x['price_krw']) for x in comparable if int(x.get('price_krw',0))>0]
+"""
+          new="""    for item in items:
+              eligible,identity_basis=_item_identity_eligibility(query,item,region)
+              item['summary_eligible']=bool(eligible);item['identity_basis']=identity_basis
+              item['print_variant']=_item_variant(item)
+              eligible_items=[item for item in items if item.get('summary_eligible') is True]
+              variant_state=_variant_summary_state(query,eligible_items)
+              if variant_state['ambiguous']:
+                  comparable=[];basis='인쇄/아트 변형 미지정 · 서로 다른 변형 혼재'
+              else:
+                  comparable,basis=_comparable_summary_items(query,eligible_items)
+              prices=[int(x['price_krw']) for x in comparable if int(x.get('price_krw',0))>0]
+"""
+          if old not in text:raise SystemExit('summary eligibility anchor missing')
+          text=text.replace(old,new,1)
+
+          old="""             'identity_scope':'exact_card_number' if query_card_number else 'name_only',
+             'median_krw':int(statistics.median(prices)) if prices else 0,'min_krw':min(prices) if prices else 0,'max_krw':max(prices) if prices else 0,
+"""
+          new="""             'identity_scope':'exact_card_number' if query_card_number else 'name_only',
+             'variant_scope':variant_state['scope'],'variant_ambiguous':variant_state['ambiguous'],
+             'observed_variants':variant_state['observed'],'variant_unknown_evidence':variant_state['has_unknown'],
+             'median_krw':int(statistics.median(prices)) if prices else 0,'min_krw':min(prices) if prices else 0,'max_krw':max(prices) if prices else 0,
+"""
+          if old not in text:raise SystemExit('summary fields anchor missing')
+          text=text.replace(old,new,1)
+
+          old="""          'reference_links':_reference_links(query,game),'grade_reference':_grade_reference(eligible_items),
+          'notice':'SNKRDUNK·JustTCG·TCGdex·Pavilion을 포함한 공개 참고시세를 교차수집합니다. 카드번호가 있으면 정확 번호(+로컬번호는 카드명 확인)와 일치한 자료만 중앙값·등급별 시세에 사용합니다. 완료거래→API 참고시세→호가 순으로 분리하며, 없는 등급값은 추정하지 않습니다. 403/429는 우회하지 않고 안전 대기합니다.',
+"""
+          new="""          'reference_links':_reference_links(query,game),'grade_reference':_grade_reference(eligible_items) if not variant_state['ambiguous'] else [],
+          'notice':'SNKRDUNK·JustTCG·TCGdex·Pavilion을 포함한 공개 참고시세를 교차수집합니다. 카드번호·판본·인쇄/아트 변형이 확인된 자료만 중앙값·등급별 시세에 사용합니다. 같은 카드번호에서 Standard·Holo·Reverse Holo·Parallel·Alt Art·Manga 등이 섞이면 자동 중앙값을 보류합니다. 완료거래→API 참고시세→호가 순으로 분리하며, 없는 등급값은 추정하지 않습니다. 403/429는 우회하지 않고 안전 대기합니다.',
+"""
+          if old not in text:raise SystemExit('notice anchor missing')
+          text=text.replace(old,new,1)
+          path.write_text(text,encoding='utf-8')
+
+          test=(root/'test_card_variant_market_precision_v323.py')
+          test.write_text(r'''#!/usr/bin/env python3
+          import unittest
+          from unittest import mock
+          import multi_market_price_collector as m
+
+
+          class CardVariantMarketPrecisionV323Tests(unittest.TestCase):
+              def test_variant_normalization_separates_finishes_and_art(self):
+                  self.assertEqual('standard',m._card_variant('normal'))
+                  self.assertEqual('reverse_holo',m._card_variant('ReverseHolofoil'))
+                  self.assertEqual('holo',m._card_variant('Holofoil'))
+                  self.assertEqual('parallel',m._card_variant('Parallel card'))
+                  self.assertEqual('manga',m._card_variant('Manga Rare'))
+                  self.assertEqual('alt_art',m._card_variant('Alternate Art'))
+
+              def test_exact_card_number_still_rejects_wrong_variant(self):
+                  item={'title':'Pikachu PAL 185/193 Holofoil','snippet':'','card_number':'PAL185/193'}
+                  ok,basis=m._item_identity_eligibility('Pikachu PAL185/193 Reverse Holo',item,'US')
+                  self.assertFalse(ok)
+                  self.assertEqual('variant_mismatch',basis)
+
+              def test_explicit_wrong_edition_is_excluded(self):
+                  item={'title':'Pikachu PAL 185/193 Japanese version','snippet':'','card_number':'PAL185/193'}
+                  ok,basis=m._item_identity_eligibility('Pikachu PAL185/193',item,'US')
+                  self.assertFalse(ok)
+                  self.assertEqual('edition_explicit_mismatch',basis)
+
+              def test_variant_unspecified_is_ambiguous_when_multiple_finishes_exist(self):
+                  rows=[
+                      {'title':'Pikachu PAL185/193 normal','price_krw':10000},
+                      {'title':'Pikachu PAL185/193 reverse holo','price_krw':20000},
+                  ]
+                  state=m._variant_summary_state('Pikachu PAL185/193',rows)
+                  self.assertTrue(state['ambiguous'])
+                  self.assertEqual({'standard','reverse_holo'},set(state['observed']))
+
+              def test_search_suppresses_mixed_variant_headline_and_grade_reference(self):
+                  ebay=[
+                      {'source':'eBay','source_id':'ebay','title':'Pikachu PAL185/193 normal sold','snippet':'','url':'https://www.ebay.com/itm/1','price_krw':10000,'price_native':10,'currency':'USD','price_kind':'실거래/완료 신호','verified_api':True,'date':'','score':1},
+                      {'source':'eBay','source_id':'ebay','title':'Pikachu PAL185/193 reverse holo sold','snippet':'','url':'https://www.ebay.com/itm/2','price_krw':20000,'price_native':20,'currency':'USD','price_kind':'실거래/완료 신호','verified_api':True,'date':'','score':1},
+                  ]
+                  patches=(
+                      mock.patch.object(m,'_ebay_api',return_value=ebay),
+                      mock.patch.object(m,'_justtcg_api',return_value=([],'not_configured')),
+                      mock.patch.object(m,'_tcgdex_api',return_value=([],'ok')),
+                      mock.patch.object(m,'_rss',return_value=[]),
+                      mock.patch.object(m,'_fx',return_value={'USD':1000,'JPY':10,'EUR':1500,'KRW':1}),
+                      mock.patch.object(m,'_learning',return_value={}),
+                      mock.patch.object(m,'_save_learning'),
+                      mock.patch.object(m,'_save_cache'),
+                      mock.patch.object(m,'_cached',return_value=None),
+                  )
+                  with patches[0],patches[1],patches[2],patches[3],patches[4],patches[5],patches[6],patches[7],patches[8]:
+                      result=m.search_multi_market('Pikachu PAL185/193',region='US',game='pokemon',force=True)
+                  self.assertTrue(result['summary']['variant_ambiguous'])
+                  self.assertEqual(0,result['summary']['median_krw'])
+                  self.assertEqual([],result['grade_reference'])
+
+              def test_requested_variant_keeps_only_matching_finish(self):
+                  reverse={'title':'Pikachu PAL185/193 reverse holo sold','snippet':'','card_number':'PAL185/193','price_krw':20000}
+                  normal={'title':'Pikachu PAL185/193 normal sold','snippet':'','card_number':'PAL185/193','price_krw':10000}
+                  self.assertTrue(m._item_identity_eligibility('Pikachu PAL185/193 reverse holo',reverse,'US')[0])
+                  self.assertFalse(m._item_identity_eligibility('Pikachu PAL185/193 reverse holo',normal,'US')[0])
+
+
+          if __name__=='__main__':
+              unittest.main(verbosity=2)
+          '''.replace('          ','',1),encoding='utf-8')
+
+          verify=root/'verify_current_runtime.py'
+          source=verify.read_text(encoding='utf-8')
+          marker='"test_card_identity_ambiguity_v320.py","test_card_precision_v321.py","test_card_promo_precision_v322.py","test_multi_market_price_collector.py"'
+          replacement='"test_card_identity_ambiguity_v320.py","test_card_precision_v321.py","test_card_promo_precision_v322.py","test_card_variant_market_precision_v323.py","test_multi_market_price_collector.py"'
+          if marker not in source:raise SystemExit('runtime regression list anchor missing')
+          source=source.replace(marker,replacement,1)
+          old_engine='current-main-v322-promo-identity-generation-market-precision'
+          if old_engine not in source:raise SystemExit('runtime engine anchor missing')
+          source=source.replace(old_engine,'current-main-v323-variant-edition-price-precision',1)
+          verify.write_text(source,encoding='utf-8')
+          PY
+          python fault_injection_healing.py --manifest
+          python -m py_compile multi_market_price_collector.py test_card_variant_market_precision_v323.py verify_current_runtime.py
+          python -m unittest -v test_card_variant_market_precision_v323.py test_multi_market_price_collector.py test_card_promo_precision_v322.py test_card_identity_ambiguity_v320.py
+          python security_self_audit.py --no-memory --fail-on high
+          python repository_integrity_guard.py
+          python verify_current_runtime.py --passes 1
+          git diff --check
+          git add -A
+          git commit -m 'fix: separate card print variants and edition evidence v323'
+          git push origin HEAD:fix/card-variant-price-precision-v323
