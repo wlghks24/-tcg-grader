@@ -98,8 +98,17 @@ def normalize_game(value: Any) -> str:
 
 
 def normalize_region(value: Any) -> str:
-    region = str(value or "").strip().upper()
-    return region if region in REGIONS else "UNKNOWN"
+    region = unicodedata.normalize("NFKC", str(value or "")).strip().upper().replace(" ", "")
+    aliases = {
+        "KR": "KR", "KOR": "KR", "KOREA": "KR", "KOREAN": "KR",
+        "한국": "KR", "한국판": "KR", "한글판": "KR", "한판": "KR", "국판": "KR",
+        "JP": "JP", "JPN": "JP", "JAPAN": "JP", "JAPANESE": "JP",
+        "日本": "JP", "日本版": "JP", "日版": "JP", "일본판": "JP", "일판": "JP",
+        "US": "US", "USA": "US", "EN": "US", "ENG": "US", "ENGLISH": "US",
+        "영문판": "US", "영판": "US", "미국판": "US",
+        "UNKNOWN": "UNKNOWN",
+    }
+    return aliases.get(region, "UNKNOWN")
 
 
 def infer_region_evidence(value: Any) -> dict[str, Any]:
@@ -109,17 +118,24 @@ def infer_region_evidence(value: Any) -> dict[str, Any]:
     signals: list[dict[str, Any]] = []
 
     explicit_patterns = (
-        ("KR", r"(?:\b(?:KR|KOREA|KOREAN)\b|한국판|한글판|국판)"),
-        ("JP", r"(?:\b(?:JP|JAPAN|JAPANESE)\b|日本版|日版)"),
-        ("US", r"(?:\b(?:US|USA|ENGLISH)\b|영문판|미국판)"),
+        ("KR", r"(?:\b(?:KR|KOR|KOREA|KOREAN)\b|한국판|한글판|한판|국판)"),
+        ("JP", r"(?:\b(?:JP|JPN|JAPAN|JAPANESE)\b|日本版|日版|일본판|일판)"),
+        ("US", r"(?:\b(?:US|USA|EN|ENG|ENGLISH)\b|영문판|영판|미국판)"),
     )
+    explicit_regions = set()
     for region, pattern in explicit_patterns:
         if re.search(pattern, upper, re.I):
+            explicit_regions.add(region)
             signals.append({"region": region, "basis": "explicit_region_label", "confidence": 0.99})
 
+    # Explicit collector-facing labels ("일판", "영문판", etc.) are metadata,
+    # not text printed on the card.  Once one is present, do not let the Hangul
+    # inside the descriptor itself create a fake KR conflict.  Independent set
+    # code evidence is still evaluated below and can correctly conflict.
+    suppress_hangul = bool(re.search(r"(?:일본판|일판|영문판|영판|미국판)", text, re.I))
     hangul = len(re.findall(r"[가-힣]", text))
     kana = len(re.findall(r"[ぁ-んァ-ヶー]", text))
-    if hangul >= 2:
+    if hangul >= 2 and not suppress_hangul:
         signals.append({"region": "KR", "basis": "hangul_script", "confidence": 0.96, "count": hangul})
     if kana >= 2:
         signals.append({"region": "JP", "basis": "kana_script", "confidence": 0.96, "count": kana})
