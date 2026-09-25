@@ -22,7 +22,7 @@ def replace_once(text: str, old: str, new: str, label: str) -> str:
 
 core_path = ROOT / "tablet_gdrive_sync.py"
 core = core_path.read_text(encoding="utf-8")
-core = replace_function(core, "safe_remote_name", '''def safe_remote_name(value: str) -> str:
+core = replace_function(core, "safe_remote_name", r'''def safe_remote_name(value: str) -> str:
     value = str(value or "").strip().rstrip(":")
     if not re.fullmatch(r"[A-Za-z0-9][A-Za-z0-9._-]{0,63}", value):
         raise ValueError("invalid rclone remote")
