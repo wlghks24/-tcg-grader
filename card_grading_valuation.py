@@ -370,7 +370,7 @@ def verified_card_valuation(
     } else "user_provided_exact_grade"
     # Public/static exact-grade observations must carry machine-readable provenance.
     # Direct caller/manual values remain user-provided and are never auto-promoted.
-    enforce_public_evidence = source_kind == "exact_company_grade_observation" and grade_price_evidence is not None
+    enforce_public_evidence = source_kind == "exact_company_grade_observation"
     rate = _validated_exchange_rate(exchange_rate)
     raw = safe_int(raw_krw, 0, minimum=0, maximum=MAX_PRICE_KRW)
     valuations = {}
@@ -531,6 +531,7 @@ if __name__ == "__main__":
          "surface": 10, "micro_flaws": 0, "is_authentic": True},
         {"BRG": {"9": 450_000, "10": 2_000_000}},
         raw_krw=300_000,
+        price_source="user_provided_exact_grade",
     )
     assert example["grades"]["PSA"] == 10
     assert example["grades"]["TAG"] == 10

@@ -17,7 +17,7 @@ function inferEditionFromText(value){
  const add=(region,basis,confidence,extra={})=>signals.push({region,basis,confidence,...extra});
  if(/(?:\b(?:KR|KOREA|KOREAN)\b|한국판|한글판|국판)/i.test(upper))add('KR','explicit_region_label',.99);
  if(/(?:\b(?:JP|JAPAN|JAPANESE)\b|日本版|日版)/i.test(upper))add('JP','explicit_region_label',.99);
- if(/(?:\b(?:US|USA|ENGLISH)\b|영문판|미국판)/i.test(upper))add('US','explicit_region_label',.99);
+ if(/(?:\b(?:US|USA|EN|ENGLISH)\b|영문판|미국판)/i.test(upper))add('US','explicit_region_label',.99);
  const hangul=(raw.match(/[가-힣]/g)||[]).length,kana=(raw.match(/[ぁ-んァ-ヶー]/g)||[]).length;
  if(hangul>=2)add('KR','hangul_script',.96,{count:hangul});
  if(kana>=2)add('JP','kana_script',.96,{count:kana});
