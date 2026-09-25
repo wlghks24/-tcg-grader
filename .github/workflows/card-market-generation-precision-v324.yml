@@ -23,7 +23,9 @@ jobs:
         with:
           node-version: '22'
       - name: Apply precision patch
-        run: python .github/scripts/apply_card_market_generation_v324.py
+        run: |
+          python .github/scripts/apply_card_market_generation_v324.py
+          python .github/scripts/fix_v324_verify_2026.py
       - name: Targeted market and generation tests
         run: |
           python -m unittest -v test_card_variant_market_precision_v323.py test_card_market_generation_precision_v324.py test_multi_market_price_collector.py
@@ -32,6 +34,7 @@ jobs:
       - name: Remove one-shot helpers and refresh integrity manifest
         run: |
           rm .github/scripts/apply_card_market_generation_v324.py
+          rm .github/scripts/fix_v324_verify_2026.py
           rm .github/workflows/card-market-generation-precision-v324.yml
           python fault_injection_healing.py --manifest
       - name: Related runtime verification
