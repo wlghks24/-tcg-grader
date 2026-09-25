@@ -1,0 +1,39 @@
+name: Core Remote Hardening v319
+
+on:
+  push:
+    branches: [audit/v319-core-hardening]
+
+permissions:
+  contents: write
+
+jobs:
+  harden:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout audit branch
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          ref: audit/v319-core-hardening
+          fetch-depth: 0
+
+      - name: Apply and verify remote argument hardening
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          python -m pip install --disable-pip-version-check pillow
+          python .github/scripts/core_remote_hardening_v319.py
+          git rm .github/scripts/core_remote_hardening_v319.py
+          git rm .github/workflows/core-remote-hardening-v319.yml
+          python fault_injection_healing.py --manifest
+          python -m py_compile tablet_gdrive_sync.py tablet_gdrive_sync_hardening.py test_tablet_gdrive_sync.py
+          python -m unittest -v test_tablet_gdrive_sync.py test_tablet_gdrive_sync_perf_v262.py test_security_hardening.py
+          python security_self_audit.py --no-memory --fail-on high
+          python repository_integrity_guard.py
+          python verify_current_runtime.py
+          git diff --check
+          git add -A
+          git commit -m 'fix: reject rclone argument and root injection v319'
+          git push origin HEAD:audit/v319-core-hardening
