@@ -8,6 +8,7 @@ replacements={
         ('v309-edition-isolated-ocr-learning','v315-evidence-isolated-confirmed-learning'),
         ("version:'v309'","version:'v315'"),
         ('Pokémon generation runtime v309: PASS','Pokémon generation runtime v315: PASS'),
+        ('self.assertIn("confidence:.72", source)','self.assertIn("confidence:year?.78:.72", source)'),
     ],
 }
 for filename,pairs in replacements.items():
