@@ -91,12 +91,26 @@ class MultiMarketPriceCollectorTests(unittest.TestCase):
         self.assertEqual(by_grade['BRG 8']['price_krw'],81000)
 
     def test_grade_number_is_not_mistaken_for_card_number(self):
-        name,number=m._tcgdex_query_parts('Pikachu PSA 10 English')
-        self.assertEqual(number,'')
-        self.assertEqual(name,'Pikachu')
-        name,number=m._tcgdex_query_parts('Pikachu 025 PSA 10 English')
+        for label in ('PSA 10','PSA 10.0','BGS 9.5','CGC 9.5','TAG 9.5','BRG 9.5','BGS:9.5'):
+            with self.subTest(label=label):
+                name,number=m._tcgdex_query_parts(f'Pikachu {label} English')
+                self.assertEqual(number,'')
+                self.assertEqual(name,'Pikachu')
+        name,number=m._tcgdex_query_parts('Pikachu 025 BGS 9.5 English')
         self.assertEqual(m._normalize_card_number(number),'025')
         self.assertEqual(name,'Pikachu')
+        name,number=m._tcgdex_query_parts('Pikachu PAL185/193 CGC 9.5 English')
+        self.assertEqual(m._normalize_card_number(number),'PAL185/193')
+        self.assertEqual(name,'Pikachu')
+
+    def test_decimal_grade_fragments_never_become_listing_card_numbers(self):
+        self.assertEqual(m._identity_blob_numbers('Pikachu BGS 9.5 sold'),[])
+        self.assertEqual(m._identity_blob_numbers('Pikachu PSA 10.0 sold'),[])
+        self.assertIn('005',m._identity_blob_numbers('Pikachu 005 BGS 9.5 sold'))
+        listing={'title':'Pikachu BGS 9.5 sold','snippet':'Pikachu','price_krw':95000}
+        eligible,basis=m._item_identity_eligibility('Pikachu 005',listing)
+        self.assertFalse(eligible)
+        self.assertEqual(basis,'card_number_mismatch')
 
     def test_summary_identity_gate_rejects_wrong_card_number(self):
         good={'title':'Pikachu PAL 185/193 sold','snippet':'Pikachu','card_number':'PAL185/193','price_krw':100000}
