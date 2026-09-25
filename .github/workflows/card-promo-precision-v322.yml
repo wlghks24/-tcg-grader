@@ -1,0 +1,95 @@
+name: Card Promo Precision v322
+
+on:
+  push:
+    branches:
+      - fix/card-promo-precision-v322
+
+permissions:
+  contents: write
+
+jobs:
+  harden-and-verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install OCR image dependency
+        run: python -m pip install --disable-pip-version-check pillow
+      - name: Apply v322 promo precision patch
+        run: |
+          python apply_card_promo_precision_v322.py
+          python - <<'PY'
+          from pathlib import Path
+          p=Path('test_card_promo_precision_v322.py')
+          text=p.read_text(encoding='utf-8')
+          old="""                self.assertTrue(market._card_number_matches(number,listing.split()[1]+' '+(listing.split()[2] if listing.split()[1]=='SVP' else '')) if listing.split()[1]=='SVP' else market._card_number_matches(number,listing.split()[1]))"""
+          new="""                numbers=market._identity_blob_numbers(listing)\n                self.assertIn(expected,numbers)\n                eligible,basis=market._item_identity_eligibility(query,{'title':listing,'snippet':'','card_number':expected})\n                self.assertTrue(eligible,basis)"""
+          if text.count(old)!=1:
+              raise SystemExit('v322 generated market test repair anchor mismatch')
+          p.write_text(text.replace(old,new,1),encoding='utf-8')
+          PY
+      - name: Targeted card precision regressions
+        run: |
+          python -m py_compile card_identity_recognition.py multi_market_price_collector.py verify_current_runtime.py test_card_promo_precision_v322.py
+          node --check card_identity_recognition.js
+          python -m unittest -v \
+            test_card_promo_precision_v322.py \
+            test_card_precision_v321.py \
+            test_card_identity_ambiguity_v320.py \
+            test_card_region_conflict_failclosed_v318.py \
+            test_card_identity_market_precision_v309.py \
+            test_card_region_generation_precision_v306.py \
+            test_card_edition_precision_v302.py \
+            test_multi_market_price_collector.py
+          node verify_pokemon_generation_runtime.js
+      - name: Remove bootstrap files and regenerate integrity manifest
+        run: |
+          rm -f apply_card_promo_precision_v322.py .github/workflows/card-promo-precision-v322.yml
+          python - <<'PY'
+          from fault_injection_healing import build_integrity_manifest, MANIFEST_PATH
+          build_integrity_manifest(target=MANIFEST_PATH)
+          print('integrity manifest regenerated')
+          PY
+      - name: Final repository verification
+        run: |
+          python repository_integrity_guard.py
+          python -m unittest -v \
+            test_card_promo_precision_v322.py \
+            test_card_precision_v321.py \
+            test_card_identity_ambiguity_v320.py \
+            test_card_region_conflict_failclosed_v318.py \
+            test_card_identity_market_precision_v309.py \
+            test_card_core_provenance_v296.py \
+            test_card_core_crosscheck_v291.py \
+            test_card_core_crosscheck_v292.py \
+            test_card_core_crosscheck_v295.py \
+            test_card_market_edition_v297.py \
+            test_card_probability_ui_v298.py \
+            test_card_regression_gate_v299.py \
+            test_card_tablet_runtime_v300.py \
+            test_card_edition_precision_v302.py \
+            test_card_region_generation_precision_v306.py \
+            test_multi_market_price_collector.py
+          python security_self_audit.py --no-memory --fail-on high
+          python verify_current_runtime.py --passes 1
+          git diff --check
+      - name: Commit verified v322 tree
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add -A
+          if git diff --cached --quiet; then
+            echo 'No changes to commit'
+            exit 1
+          fi
+          git commit -m 'fix: cover JP KR EN promo identity generation and market matching v322'
+          git push origin HEAD:fix/card-promo-precision-v322
