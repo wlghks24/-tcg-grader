@@ -30,8 +30,6 @@ jobs:
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           python -m pip install --disable-pip-version-check pillow
 
-          # Squash the already validated variant/finish/rarity implementation onto
-          # the newer main that contains PR #266 edition-consensus/provenance hardening.
           git merge --squash a9fc174de5454084c9d0778d8d302f01223c3593 || true
           git checkout dde6e04fa4f45cd40fcaf7787440dd31fd45d69a -- integrity_manifest.json verify_current_runtime.py
           git add integrity_manifest.json verify_current_runtime.py
@@ -42,7 +40,6 @@ jobs:
             exit 1
           fi
 
-          # This is the follow-up to the already merged v321 precision work.
           git mv test_card_variant_market_precision_v321.py test_card_variant_market_precision_v322.py
           python - <<'PY'
           from pathlib import Path
@@ -56,7 +53,7 @@ jobs:
           replace('card_identity_recognition.py','CARD_IDENTITY_METADATA_VERSION = 321','CARD_IDENTITY_METADATA_VERSION = 322','metadata version')
           replace('card_identity_recognition.js',"version:'v321'","version:'v322'",'browser metadata version')
           page=Path('index.html'); text=page.read_text(encoding='utf-8')
-          for old,new in (('meta=321','meta=322'),('grade_market_flow.js?v=321','grade_market_flow.js?v=322'),('auto_market_center.js?v=321','auto_market_center.js?v=322'),('auto_validation_flow.js?v=321','auto_validation_flow.js?v=322')):
+          for old,new in (('meta=321','meta=322'),('grade_market_flow.js?v=321','grade_market_flow.js?v=322'),('auto_market_center.js?v=321','auto_market_center.js?v=322'),('auto_validation_flow.js?v=200','auto_validation_flow.js?v=322')):
               if text.count(old)!=1: raise SystemExit(f'index version {old}: count={text.count(old)}')
               text=text.replace(old,new,1)
           page.write_text(text,encoding='utf-8')
@@ -82,7 +79,6 @@ jobs:
           verify.write_text(v.replace(old,new,1),encoding='utf-8')
           PY
 
-          # The bootstrap workflow must not survive into production or its integrity manifest.
           git rm .github/workflows/card-variant-rebase-v322.yml
           python fault_injection_healing.py --manifest
 
