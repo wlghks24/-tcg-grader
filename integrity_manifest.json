@@ -1,7 +1,7 @@
 {
   "version": 2,
   "engine": "v109-card-identity-ocr-learning",
-  "generated_at": "2026-09-25T13:04:36+00:00",
+  "generated_at": "2026-09-25T13:11:08+00:00",
   "files": {
     ".github/workflows/ai-auto-tracker-guard.yml": {
       "sha256": "636e750bd6d2619cce75d4bce2d68051eaa2209ae763bc8ec523ed73476728a6",
@@ -336,8 +336,8 @@
       "bytes": 1869
     },
     ".github/workflows/grading-company-watch.yml": {
-      "sha256": "c2254492c8493f9a0d9234a5eaf81eb83646f48756106fa8d90d697b63bfd810",
-      "bytes": 14487
+      "sha256": "1b813f4c7e081dc1b4697b9f48dcb970edf720a8a5729a73a4619a123872d201",
+      "bytes": 13798
     },
     ".github/workflows/grading-vision-selfrefine-guard.yml": {
       "sha256": "70abfd7fc4849c43276709e993dabad989bac278d45602c5eb3573e21d1b9cfa",
@@ -2616,8 +2616,8 @@
       "bytes": 3509
     },
     "test_grading_company_watch_protected_publish_v319.py": {
-      "sha256": "0a33d6a68d5fc0bd706a6f6efb4d6b3c0ca397d5d577a03fe3a521333de9846b",
-      "bytes": 3876
+      "sha256": "bd28906f01582f3bda43351bb1946c885ac95aed84281ad93c3aeed68982b103",
+      "bytes": 4244
     },
     "test_grading_company_watch_resilient_v257.py": {
       "sha256": "29fb9338301f26b44f8fc114816d86cb65aaa9d04aa2da69a4bccbf8a11d8301",
