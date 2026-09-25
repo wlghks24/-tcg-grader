@@ -1,0 +1,51 @@
+name: Card Market Generation Precision v324
+
+on:
+  push:
+    branches:
+      - card-market-generation-precision-v324
+
+permissions:
+  contents: write
+
+jobs:
+  apply-and-verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: card-market-generation-precision-v324
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Apply precision patch
+        run: python .github/scripts/apply_card_market_generation_v324.py
+      - name: Targeted market and generation tests
+        run: |
+          python -m unittest -v test_card_variant_market_precision_v323.py test_card_market_generation_precision_v324.py test_multi_market_price_collector.py
+          node --check card_identity_recognition.js
+          node verify_pokemon_generation_runtime.js
+      - name: Remove one-shot helpers and refresh integrity manifest
+        run: |
+          rm .github/scripts/apply_card_market_generation_v324.py
+          rm .github/workflows/card-market-generation-precision-v324.yml
+          python fault_injection_healing.py --manifest
+      - name: Related runtime verification
+        run: |
+          python repository_integrity_guard.py
+          python -m unittest -v test_card_identity_market_precision_v309.py test_card_identity_ambiguity_v320.py test_card_precision_v321.py test_card_promo_precision_v322.py test_card_variant_market_precision_v323.py test_card_market_generation_precision_v324.py
+      - name: Commit verified patch
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add -A
+          if git diff --cached --quiet; then
+            echo 'No changes to commit'
+            exit 0
+          fi
+          git commit -m 'fix: fail closed name-only prices and year-only generation v324'
+          git push origin HEAD:card-market-generation-precision-v324
