@@ -1,7 +1,7 @@
 {
   "version": 2,
   "engine": "v109-card-identity-ocr-learning",
-  "generated_at": "2026-09-25T15:07:03+00:00",
+  "generated_at": "2026-09-25T15:28:04+00:00",
   "files": {
     ".github/workflows/ai-auto-tracker-guard.yml": {
       "sha256": "636e750bd6d2619cce75d4bce2d68051eaa2209ae763bc8ec523ed73476728a6",
@@ -1916,8 +1916,8 @@
       "bytes": 38263
     },
     "multi_market_price_collector.py": {
-      "sha256": "462b40406b02e04994f5fe64800fe045c7d33de4e4ecf2d24f6f578fdbb7975d",
-      "bytes": 34872
+      "sha256": "cb1bdecca37f077ab7a7246069be478f398b91eeb9285a187180e374e86ea982",
+      "bytes": 39428
     },
     "multi_market_prices.js": {
       "sha256": "5774fdd171dbc45c8556c802692ecd90e4eb14f9267de7b4d9d5dcd72991a291",
@@ -2442,6 +2442,10 @@
     "test_card_tablet_runtime_v300.py": {
       "sha256": "e61eeda6afbb3e7308e623401a58391ef9e6078a3ebf8d875cdf4a1192be8eb5",
       "bytes": 6547
+    },
+    "test_card_variant_market_precision_v323.py": {
+      "sha256": "0080226124e9e882503b75b94f6e50f029eb4e01820ba2e4eebc74770187452e",
+      "bytes": 3706
     },
     "test_catalog_images.py": {
       "sha256": "1872e45e7c3651a1016d78c155f32844e35092434e18b07b594d056352d6a717",
@@ -3328,8 +3332,8 @@
       "bytes": 12067
     },
     "verify_current_runtime.py": {
-      "sha256": "4e06ac39f2130ea7acba7ffb14eb693a5dc69f16b1b60b62a8aa292dbb549e13",
-      "bytes": 6665
+      "sha256": "c730e7bd4a91a258403dbfea062747e0869a29e0dd63a92f57d404b06f2d9e57",
+      "bytes": 6699
     },
     "verify_fault_injection_healing.py": {
       "sha256": "40f0d3565ea8094b4deb2cf407550eaf41928f3f7fbfc2863ead0053f7cb25f8",
