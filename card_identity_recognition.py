@@ -874,11 +874,62 @@ def match_learning(image_hash: str, game: str, region: str = "UNKNOWN") -> list[
     return sorted(unique.values(), key=lambda row: -row["confidence"])[:5]
 
 
+def _candidate_identity_signature(row: dict[str, Any]) -> tuple[str, str, str, str, str]:
+    return (
+        normalize_game(row.get("game")),
+        normalize_region(row.get("region")),
+        normalize(row.get("card_name")),
+        normalize_number(row.get("card_number")),
+        str(row.get("market_key") or "").strip(),
+    )
+
+
+def _candidate_ambiguity(candidates: list[dict[str, Any]], requested_region: str) -> dict[str, Any]:
+    if not candidates:
+        return {
+            "identity_ambiguous": False,
+            "region_ambiguous": False,
+            "market_ambiguous": False,
+            "contender_count": 0,
+            "regions": [],
+            "top_confidence": 0.0,
+        }
+    top = max(0.0, min(1.0, float(candidates[0].get("confidence") or 0.0)))
+    # Only high-confidence candidates close enough to the top can block automatic
+    # selection. Lower-scored alternatives remain visible for manual review.
+    contenders = [
+        row for row in candidates
+        if float(row.get("confidence") or 0.0) >= 0.90
+        and top - float(row.get("confidence") or 0.0) <= 0.02
+    ]
+    signatures = {_candidate_identity_signature(row) for row in contenders}
+    regions = sorted({
+        normalize_region(row.get("region")) for row in contenders
+        if normalize_region(row.get("region")) in {"KR", "JP", "US"}
+    })
+    market_keys = {str(row.get("market_key") or "").strip() for row in contenders if str(row.get("market_key") or "").strip()}
+    requested_region = normalize_region(requested_region)
+    region_ambiguous = requested_region == "UNKNOWN" and len(regions) > 1
+    # Distinct edition rows are distinct identities for automatic selection even
+    # when the printed name/number is identical.
+    identity_ambiguous = len(signatures) > 1
+    market_ambiguous = len(market_keys) > 1
+    return {
+        "identity_ambiguous": identity_ambiguous,
+        "region_ambiguous": region_ambiguous,
+        "market_ambiguous": market_ambiguous,
+        "contender_count": len(contenders),
+        "regions": regions,
+        "top_confidence": round(top, 4),
+    }
+
+
 def recognize(payload: dict[str, Any]) -> dict[str, Any]:
     game = normalize_game(payload.get("game"))
     if game not in GAMES:
         raise ValueError("게임 구분 오류")
-    region = normalize_region(payload.get("region"))
+    requested_region = normalize_region(payload.get("region"))
+    region = requested_region
     supplied_text = str(payload.get("ocr_text") or "")[:MAX_OCR_TEXT]
     image_data = payload.get("image_data")
     image_hash = str(payload.get("image_hash") or "").lower()
@@ -905,26 +956,42 @@ def recognize(payload: dict[str, Any]) -> dict[str, Any]:
     learned = match_learning(image_hash, game, region)
     catalog_hits = match_catalog(supplied_text, game, region=region)
     merged = learned + catalog_hits
-    unique = {}
+    unique: dict[tuple[str, str, str, str], dict[str, Any]] = {}
     for row in merged:
-        key = (row.get("card_name"), row.get("card_number"), row.get("market_key"))
-        if key not in unique or row["confidence"] > unique[key]["confidence"]:
+        key = (
+            str(row.get("card_name") or ""),
+            str(row.get("card_number") or ""),
+            str(row.get("market_key") or ""),
+            normalize_region(row.get("region")),
+        )
+        if key not in unique or float(row.get("confidence") or 0.0) > float(unique[key].get("confidence") or 0.0):
             unique[key] = row
-    candidates = sorted(unique.values(), key=lambda row: -row["confidence"])[:5]
+    candidates = sorted(unique.values(), key=lambda row: -float(row.get("confidence") or 0.0))[:5]
+    ambiguity = _candidate_ambiguity(candidates, region)
+    identity_ambiguous = bool(ambiguity["identity_ambiguous"])
+    region_ambiguous = bool(ambiguity["region_ambiguous"])
+    market_ambiguous = bool(ambiguity["market_ambiguous"])
+    auto_selection_blocked = bool(region_conflict or identity_ambiguous or region_ambiguous or market_ambiguous)
+    market_link_blocked = bool(auto_selection_blocked or region == "UNKNOWN")
     return {
-        "ok": True, "game": game, "region_hint": region, "inferred_region": inferred_region,
+        "ok": True, "game": game, "region_hint": region, "requested_region": requested_region,
+        "inferred_region": inferred_region,
         "region_conflict": region_conflict, "region_evidence": region_evidence,
+        "region_ambiguous": region_ambiguous, "identity_ambiguous": identity_ambiguous,
+        "market_ambiguous": market_ambiguous, "market_link_blocked": market_link_blocked,
+        "ambiguity": ambiguity,
         "image_hash": image_hash, "ocr_text": supplied_text,
         "ocr_error": ocr_error, "ocr_diagnostics": ocr_diagnostics,
         "numbers_detected": extract_numbers(supplied_text),
         "candidates": candidates,
-        "best": None if region_conflict else (candidates[0] if candidates else None),
-        "auto_selection_blocked": bool(region_conflict),
+        "best": None if auto_selection_blocked else (candidates[0] if candidates else None),
+        "auto_selection_blocked": auto_selection_blocked,
         "requires_confirmation": True,
         "policy": {"prediction_auto_learned": False, "user_confirmation_required": True,
-                   "similar_image_learning_min_confirmations": 3},
+                   "similar_image_learning_min_confirmations": 3,
+                   "unknown_edition_market_link": False,
+                   "ambiguous_identity_auto_selection": False},
     }
-
 
 def save_confirmation(payload: dict[str, Any]) -> dict[str, Any]:
     if payload.get("confirmed") is not True:
