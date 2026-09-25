@@ -72,5 +72,41 @@ class MultiMarketPriceCollectorTests(unittest.TestCase):
         self.assertEqual(row['basis'],'API 참고시세')
         self.assertEqual(row['count'],1)
 
+
+    def test_exact_numeric_grades_stay_separate_across_companies(self):
+        items=[
+            {'title':'Pikachu PSA 8 sold','price_kind':'실거래/완료 신호','price_krw':80000},
+            {'title':'Pikachu PSA 7 sold','price_kind':'실거래/완료 신호','price_krw':70000},
+            {'title':'Pikachu BGS 9.5 sold','price_kind':'실거래/완료 신호','price_krw':95000},
+            {'title':'Pikachu CGC 10 sold','price_kind':'실거래/완료 신호','price_krw':110000},
+            {'title':'Pikachu TAG 9 sold','price_kind':'실거래/완료 신호','price_krw':90000},
+            {'title':'Pikachu BRG 8 sold','price_kind':'실거래/완료 신호','price_krw':81000},
+        ]
+        by_grade={row['grade']:row for row in m._grade_reference(items)}
+        self.assertEqual(by_grade['PSA 8']['price_krw'],80000)
+        self.assertEqual(by_grade['PSA 7']['price_krw'],70000)
+        self.assertEqual(by_grade['BGS 9.5']['price_krw'],95000)
+        self.assertEqual(by_grade['CGC 10']['price_krw'],110000)
+        self.assertEqual(by_grade['TAG 9']['price_krw'],90000)
+        self.assertEqual(by_grade['BRG 8']['price_krw'],81000)
+
+    def test_grade_number_is_not_mistaken_for_card_number(self):
+        name,number=m._tcgdex_query_parts('Pikachu PSA 10 English')
+        self.assertEqual(number,'')
+        self.assertEqual(name,'Pikachu')
+        name,number=m._tcgdex_query_parts('Pikachu 025 PSA 10 English')
+        self.assertEqual(m._normalize_card_number(number),'025')
+        self.assertEqual(name,'Pikachu')
+
+    def test_summary_identity_gate_rejects_wrong_card_number(self):
+        good={'title':'Pikachu PAL 185/193 sold','snippet':'Pikachu','card_number':'PAL185/193','price_krw':100000}
+        wrong={'title':'Pikachu PAL 186/193 sold','snippet':'Pikachu','card_number':'PAL186/193','price_krw':90000}
+        self.assertEqual(m._item_identity_eligibility('Pikachu PAL185/193',good)[0],True)
+        self.assertEqual(m._item_identity_eligibility('Pikachu PAL185/193',wrong)[0],False)
+        local_good={'title':'Pikachu card 025 sold','snippet':'Pikachu','price_krw':50000}
+        local_wrong_name={'title':'Raichu card 025 sold','snippet':'Raichu','price_krw':50000}
+        self.assertTrue(m._item_identity_eligibility('Pikachu 025',local_good)[0])
+        self.assertFalse(m._item_identity_eligibility('Pikachu 025',local_wrong_name)[0])
+
 if __name__=='__main__':
     unittest.main()
