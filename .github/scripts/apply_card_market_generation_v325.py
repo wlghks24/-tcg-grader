@@ -108,6 +108,9 @@ replace_once(tablet_test,
 '            "test_card_identity_market_precision_v309.py",\n            "test_multi_market_price_collector.py",',
 '            "test_card_identity_market_precision_v309.py",\n            "test_card_market_generation_precision_v325.py",\n            "test_multi_market_price_collector.py",')
 
+ambiguity_test=ROOT/'test_card_identity_ambiguity_v320.py'
+replace_once(ambiguity_test,'self.assertIn("Pokémon generation runtime v320: PASS", proc.stdout)','self.assertIn("Pokémon generation runtime v325: PASS", proc.stdout)')
+
 new_test=ROOT/'test_card_market_generation_precision_v325.py'
 new_test.write_text(r'''#!/usr/bin/env python3
 import subprocess
