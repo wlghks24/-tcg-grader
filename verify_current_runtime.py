@@ -39,7 +39,7 @@ def _commands():
        "test_card_core_provenance_v296.py","test_card_market_edition_v297.py",
        "test_card_probability_ui_v298.py","test_card_regression_gate_v299.py",
        "test_card_tablet_runtime_v300.py","test_card_edition_precision_v302.py","test_card_region_generation_precision_v306.py",
-       "test_card_identity_market_precision_v309.py",
+       "test_card_identity_market_precision_v309.py","test_card_region_conflict_failclosed_v317.py",
        "test_multi_market_price_collector.py","test_tablet_runtime_manifest_ui_assets_v254.py"],360,False),
       # v182 is an executable assert-based self-test, not a unittest.TestCase module.
       # Running it through `python -m unittest` yields 0 tests / rc=5 and makes
@@ -53,7 +53,7 @@ def _commands():
         rows += [("card_core_node_regressions",[py,"-m","unittest","-v",
                   "test_card_core_crosscheck_v291.py","test_card_core_crosscheck_v292.py","test_card_core_crosscheck_v295.py",
                   "test_pokemon_generation_display_v207.py","test_card_edition_precision_v302.py","test_card_region_generation_precision_v306.py",
-                  "test_card_identity_market_precision_v309.py"],360,False),
+                  "test_card_identity_market_precision_v309.py","test_card_region_conflict_failclosed_v317.py"],360,False),
                  ("browser_runtime",["node","verify_browser_runtime.js"],180,False),
                  ("camera_runtime",["node","verify_camera_runtime.js"],180,False),
                  ("service_worker_runtime",["node","verify_service_worker_runtime.js"],180,False)]
@@ -61,7 +61,7 @@ def _commands():
     else: rows.append(("node_optional",[py,"-c","print('Node.js optional: skipped')"],30,True))
     return rows
 def run(passes:int):
-    passes=max(1,min(5,int(passes))); payload={"schema_version":1,"engine":"current-main-v309-card-identity-market-precision-gated","started_at":_now(),"passes":[],"ok":False}
+    passes=max(1,min(5,int(passes))); payload={"schema_version":1,"engine":"current-main-v317-card-region-conflict-failclosed","started_at":_now(),"passes":[],"ok":False}
     for number in range(1,passes+1):
         checks=[]
         for name,cmd,timeout,optional in _commands():

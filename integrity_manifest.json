@@ -1,7 +1,7 @@
 {
   "version": 2,
   "engine": "v109-card-identity-ocr-learning",
-  "generated_at": "2026-09-25T09:26:11+00:00",
+  "generated_at": "2026-09-25T11:06:23+00:00",
   "files": {
     ".github/workflows/ai-auto-tracker-guard.yml": {
       "sha256": "636e750bd6d2619cce75d4bce2d68051eaa2209ae763bc8ec523ed73476728a6",
@@ -1128,12 +1128,12 @@
       "bytes": 120
     },
     "card_identity_recognition.js": {
-      "sha256": "f90126d334ba7a1a88c58f94c06446dc0c976d8dfe0363b3c7fcab78460b8a75",
-      "bytes": 30269
+      "sha256": "2b99b57a3cefde836c76b9ec1bbba7b800398acee23e84dc4ba39518bd699f23",
+      "bytes": 31293
     },
     "card_identity_recognition.py": {
-      "sha256": "b1d432156e3bd9cebb3ef37e9f687f46abc0471b55ea45e4faf1195a8fe678fa",
-      "bytes": 41559
+      "sha256": "06bde60396f3e49ea48596106bf0140f7e6c975487e0a828f97efda1d3816edd",
+      "bytes": 41655
     },
     "card_identity_reference_catalog.json": {
       "sha256": "45a99a4520d2ccca217e196e49db016481105283e8a53b1e7dec2c11bb4a7c04",
@@ -2411,6 +2411,10 @@
       "sha256": "f09f8bfacd502fcb8fb5cec43bef34dcf7be7d0a70e50a234ec2784e6ffe0e33",
       "bytes": 1452
     },
+    "test_card_region_conflict_failclosed_v317.py": {
+      "sha256": "1ce8a08c33d919f1969d95cac8e48482312ab923c10538408178555f9c05e5b7",
+      "bytes": 3286
+    },
     "test_card_region_generation_precision_v306.py": {
       "sha256": "ae2b31356fe5826b206fa86691b0ac82a3ad61a66d88edef8aa315e599a79cea",
       "bytes": 3067
@@ -3308,8 +3312,8 @@
       "bytes": 12067
     },
     "verify_current_runtime.py": {
-      "sha256": "9ff937cd3affae25ac8f55dfef18e6ece781be2eaa02c86e1364fa09dc71b94b",
-      "bytes": 6402
+      "sha256": "a6f3b76290ce9e60d3592023da21c90282ea7d444efd966194389e61049e8d57",
+      "bytes": 6491
     },
     "verify_fault_injection_healing.py": {
       "sha256": "40f0d3565ea8094b4deb2cf407550eaf41928f3f7fbfc2863ead0053f7cb25f8",

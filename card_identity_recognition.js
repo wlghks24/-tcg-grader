@@ -199,12 +199,25 @@ async function recognize(game){
  try{
   const [{hash,data},text]=await Promise.all([imageArtifacts(file),browserText(file)]);window.tcgIdentityImageHash=hash;
   const selected=normalizeRegion(byId('identityRegion')?.value||'UNKNOWN'),browserRegion=inferEditionFromText(text),requestRegion=selected!=='UNKNOWN'?selected:browserRegion.region;
+  const browserConflict=browserRegion.conflict===true||(selected!=='UNKNOWN'&&browserRegion.region!=='UNKNOWN'&&selected!==browserRegion.region);
   let candidates=learnedCandidates(hash,resolvedGame,requestRegion),server=null;
   async function request(region){const controller=new AbortController(),timer=setTimeout(()=>controller.abort(),120000);try{const response=await fetch('/api/recognize-card',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({game:resolvedGame,region,image_hash:hash,image_data:data,ocr_text:text}),signal:controller.signal,cache:'no-store'});const payload=await response.json().catch(()=>null);return response.ok?payload:null}catch(_){return null}finally{clearTimeout(timer)}}
   server=await request(requestRegion);
   if(server?.image_hash)window.tcgIdentityImageHash=server.image_hash;
-  if(server)candidates=mergeCandidates([...candidates,...(server.candidates||[])]);
+  const identityConflict=browserConflict||server?.region_conflict===true;
+  if(server&&!identityConflict)candidates=mergeCandidates([...candidates,...(server.candidates||[])]);
   let detected=inferEditionFromText(server?.ocr_text||text),effectiveRegion=selected!=='UNKNOWN'?selected:(browserRegion.region!=='UNKNOWN'?browserRegion.region:detected.region);
+  if(identityConflict){
+   window.tcgIdentityOcrText=generationText(server?.ocr_text||text);
+   candidates=[];effectiveRegion='UNKNOWN';
+   if(byId('identityRegion'))byId('identityRegion').value='UNKNOWN';
+   if(byId('identityCardName'))byId('identityCardName').value='';
+   if(byId('identityCardNumber'))byId('identityCardNumber').value='';
+   if(byId('identityMarketKey'))byId('identityMarketKey').value='';
+   displayCandidates([]);updateGenerationForCandidate(null);
+   status.textContent='⚠️ 한판·일판·영판 근거가 충돌해 자동 카드 선택·세대·시세 연결을 중단했습니다. 판본과 카드번호를 직접 확인해 주세요.';
+   return {hash:window.tcgIdentityImageHash,candidates:[],generation:null,region:'UNKNOWN',region_conflict:true};
+  }
   if(effectiveRegion!=='UNKNOWN')candidates=filterCandidatesByRegion(candidates,effectiveRegion);
   let best=candidates[0];
   if(selected==='UNKNOWN'&&effectiveRegion==='UNKNOWN'&&REGION_CODES.has(String(best?.region||'').toUpperCase()))effectiveRegion=String(best.region).toUpperCase();
