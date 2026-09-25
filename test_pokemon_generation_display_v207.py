@@ -48,7 +48,7 @@ class PokemonGenerationDisplayV207Tests(unittest.TestCase):
         self.assertIn("confidence:evidence_count>=2?.995:.98", source)
         self.assertIn("confidence:.50", source)
         self.assertIn("레귤레이션 마크는 대회 사용 가능성 표기", source)
-        self.assertIn("version:'v320'", source)
+        self.assertIn("version:'v325'", source)
 
     def test_generation_runtime_executes(self):
         result = subprocess.run(
@@ -60,7 +60,7 @@ class PokemonGenerationDisplayV207Tests(unittest.TestCase):
             check=False,
         )
         self.assertEqual(0, result.returncode, result.stdout + result.stderr)
-        self.assertIn("Pokémon generation runtime v320: PASS", result.stdout)
+        self.assertIn("Pokémon generation runtime v325: PASS", result.stdout)
 
 
 if __name__ == "__main__":
