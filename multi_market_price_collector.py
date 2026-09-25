@@ -197,7 +197,14 @@ def _normalize_card_number(value):
     """Canonicalize a card number without turning substring overlap into identity."""
     text=str(value or '').upper().strip().replace('–','-').replace('—','-')
     text=re.sub(r'\s+','',text)
-    return re.sub(r'[^A-Z0-9/-]','',text)
+    text=re.sub(r'[^A-Z0-9/-]','',text)
+    suffix=re.fullmatch(r'(\d{1,3})/(SV-P|S-P|SM-P|XY-P|BW-P|DP-P|M-P)',text)
+    if suffix:return f"{suffix.group(2)}{int(suffix.group(1)):03d}"
+    prefix=re.fullmatch(r'(SV-P|S-P|SM-P|XY-P|BW-P|DP-P|M-P)-?(\d{1,3})',text)
+    if prefix:return f"{prefix.group(1)}{int(prefix.group(2)):03d}"
+    english=re.fullmatch(r'(SWSH|SVP|MEP)-?(\d{1,3})',text)
+    if english:return f"{english.group(1)}{int(english.group(2)):03d}"
+    return text
 
 
 def _has_explicit_set_prefix(value):
@@ -267,7 +274,10 @@ def _justtcg_api(query,game,fx,region='ALL'):
 
 CARD_NUMBER_QUERY_RE=re.compile(
     r'(?<![A-Z0-9])(?:'
-    r'(?:SVI|PAL|OBF|MEW|PAR|PAF|TEF|TWM|SFA|SCR|SSP|PRE|JTG|DRI|BLK|WHT|MEG|PFL|ASC|POR|CRI|PBL)\s*-?\s*\d{1,4}(?:/\d{2,4})?'
+    r'\d{1,3}/(?:SV-P|S-P|SM-P|XY-P|BW-P|DP-P|M-P)'
+    r'|(?:SV-P|S-P|SM-P|XY-P|BW-P|DP-P|M-P)\s*\d{1,3}'
+    r'|(?:SWSH|SVP|MEP)\s*-?\s*\d{1,3}'
+    r'|(?:SVI|PAL|OBF|MEW|PAR|PAF|TEF|TWM|SFA|SCR|SSP|PRE|JTG|DRI|BLK|WHT|MEG|PFL|ASC|POR|CRI|PBL)\s*-?\s*\d{1,4}(?:/\d{2,4})?'
     r'|[A-Z]{1,4}\d{1,3}[A-Z]{0,2}-?\d{1,4}(?:/\d{2,4})?'
     r'|\d{1,4}/\d{2,4}'
     r'|\d{1,4}'
