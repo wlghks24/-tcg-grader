@@ -1,5 +1,5 @@
 {
-  "updated_at": "2026-09-25T00:11:26+00:00",
+  "updated_at": "2026-09-25T05:30:38+00:00",
   "issue_count": 1,
   "issues": [
     {
@@ -7,7 +7,7 @@
       "file": "promo_events.json",
       "severity": "주의",
       "auto_action": "일부 출처 오류 격리 · 정상자료 반영 · 다음 실행 제한시간 확대",
-      "detail": "PLAYGO 출시 알림 · 신사황 프로모션 팩 재배포: HTTPError: status 500 · JP 원피스 카드 신규행사 탐색: HTTPError: status 500 · US 원피스 카드 신규행사 탐색: HTTPError: status 500",
+      "detail": "PLAYGO 출시 알림 · 신사황 프로모션 팩 재배포: HTTPError: status 500",
       "recommended_action": "공식 행사 페이지의 기간·수령조건을 확인하세요.",
       "error_group_id": "583393d39efb2627",
       "error_code": "NETWORK_HTTP_ERROR",

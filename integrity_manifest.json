@@ -1,7 +1,7 @@
 {
   "version": 2,
   "engine": "v109-card-identity-ocr-learning",
-  "generated_at": "2026-09-25T03:41:43+00:00",
+  "generated_at": "2026-09-25T05:32:43+00:00",
   "files": {
     ".github/workflows/ai-auto-tracker-guard.yml": {
       "sha256": "636e750bd6d2619cce75d4bce2d68051eaa2209ae763bc8ec523ed73476728a6",
@@ -579,6 +579,10 @@
       "sha256": "f885535c224584ce2fb1a4bb16978e707b5661d002b9f888a524f69a34403667",
       "bytes": 13631
     },
+    "STATIC_DATA_PUBLISH_REPORT.json": {
+      "sha256": "5c90ed1e0440cc3dff46f4687118f797c54b4a4631bb497078dbdf7693fce1fd",
+      "bytes": 467
+    },
     "TABLET_COLLECT_AND_SEND.sh": {
       "sha256": "248c5ce5945dcb803d45c8dd9d0744a132538523458394937cf1c4f6b6037574",
       "bytes": 131
@@ -722,6 +726,18 @@
     "V107_FINAL_VERIFICATION_REPORT.json": {
       "sha256": "994b7222a57df096d75c563438815538653cd7644bd72c42b83ceec6e3da1d4d",
       "bytes": 3437
+    },
+    "VERIFIED_COLLECTION_JOB_NEURAL_LABELS.json": {
+      "sha256": "5f4a4d0342aca050b2204821a6f8c8d17e8338193fcd4297840f215c97207982",
+      "bytes": 5486
+    },
+    "VERIFIED_COLLECTION_JOB_NEURAL_REPORT.json": {
+      "sha256": "189e38aa4f41a69756246c67f6f1011a77c3b76f8685809f9461f2bb92487c54",
+      "bytes": 1330
+    },
+    "VERIFIED_COLLECTION_NEURAL_REPORT.json": {
+      "sha256": "9ae7132add1300bd273127cb4aacecdb755b9d5ffd410829d1d050dc67068f4b",
+      "bytes": 1657
     },
     "VERIFY_TABLET_FINAL.sh": {
       "sha256": "60a886d3e8e96da3befe3f2a22bd6c7ffe904664a1c2733acd9b2ef52ea1004f",
@@ -1111,9 +1127,17 @@
       "sha256": "264280b17ce3306b92e3a46821d05d18f9f92b2757c84924222119601b32aa81",
       "bytes": 4723
     },
+    "box_hit_market_candidates.json": {
+      "sha256": "dd2e575299e7f21e0df4d0f60ef624b61afd8a4ef57b9c6a0c4ddcfe437cf19b",
+      "bytes": 2593
+    },
     "box_hit_market_discovery.py": {
       "sha256": "c8ea1d2bacb2b179af2e0ccc956476ed764634d991d1a778cf87baa0cfffe10e",
       "bytes": 17298
+    },
+    "box_hit_market_learning.json": {
+      "sha256": "6eb85d2364d78b796e060972e5cab211faf0b086b813837c60adbbb622637aab",
+      "bytes": 2081
     },
     "box_knowledge_stats.js": {
       "sha256": "669a57a65900fc11e9d177a985e84e0e239cc57725a7ef036ebd99fdf8221d2e",
@@ -1163,9 +1187,29 @@
       "sha256": "b874bb72d29bba439a9a8a26a0aacf342d3f54ecddea4a54a3d8f5e5486ce8cf",
       "bytes": 20444
     },
+    "collection_learning_report.json": {
+      "sha256": "468b4033920477cbcc28207a7e7284fa8ee731a0634e77d305a6f1102881b83c",
+      "bytes": 20225
+    },
+    "collection_meta_learning.json": {
+      "sha256": "c0cb68855b5946e52411f5c32184ed2d349c52dd3c9544770de2b05af3989963",
+      "bytes": 109914
+    },
     "collection_meta_learning.py": {
       "sha256": "c41005ab8e63e07651029c96d46a52257d328f20dad9a41b4217b274bf100ec7",
       "bytes": 35981
+    },
+    "collection_meta_profile.json": {
+      "sha256": "58011eac70c5dc9e0d4ba4d2f188eb46c1053070aa16b633ca2fc82a37a3d045",
+      "bytes": 142536
+    },
+    "collection_provider_health.json": {
+      "sha256": "99c33e182f93e9de47312ad4de56502d53e5b6ce5dfc57cc396b963009c8b70e",
+      "bytes": 157735
+    },
+    "collection_runtime_health.json": {
+      "sha256": "70f1613d3381d3cb635b8cd091782c5acca4ac05f3627476ff0a410f35023718",
+      "bytes": 403
     },
     "collection_runtime_health.py": {
       "sha256": "71c103d21e91a128b89cbd078e96b3117ffbc796aaf72ace727ec117d2de24d1",
@@ -1182,6 +1226,10 @@
     "collector_live_independence_audit.py": {
       "sha256": "f98479b133cb1242331e50722b0a1e5da8b4d1e388e1f8a123118b8032ffa917",
       "bytes": 3508
+    },
+    "collector_self_heal_memory.json": {
+      "sha256": "0e4a843a9e4badea0bfd8f86dfb487b76f9ed425d2efbd5738ad663f4f48666e",
+      "bytes": 4004
     },
     "collector_self_healing.py": {
       "sha256": "7a58eefda8e3933285bd96a3fd197438e766b7921027d74e8cb22c77c1e3bb34",
@@ -1268,8 +1316,12 @@
       "bytes": 8134
     },
     "exchange_rates.json": {
-      "sha256": "b104d2c90c9b5eb67ae3ef47189babf4ac492d84cb37e862803d851ad97bfe5d",
+      "sha256": "e7013a33005b53f65bb17701330604c81ca16d575eb867b8245535e8c320594c",
       "bytes": 394
+    },
+    "fan_social_learning.json": {
+      "sha256": "07e2df95f2610f92b23eb846fac514df4e5e9d317291f71b9bd35abfc40069ac",
+      "bytes": 984
     },
     "fan_social_learning.py": {
       "sha256": "13d21f53e42f7c5d6d8c83cd4a6bfa1f9f4a71d8b980abc50a3dc4dcca59e48f",
@@ -1516,7 +1568,7 @@
       "bytes": 7206
     },
     "grading_company_updates.json": {
-      "sha256": "32a37d6f505dad69ad7b84ce7e8f5880b37e287f7f9dd17034be4edcf5ab5be5",
+      "sha256": "24cf6c5da8ac545ebee9b3536f14acbe887362ec4381c8de1703b1c812acea3e",
       "bytes": 53087
     },
     "grading_company_watch.py": {
@@ -1888,15 +1940,19 @@
       "bytes": 4126
     },
     "market_prices.json": {
-      "sha256": "847405eee477dcb5db29648dc9ac0cb7520795bf39cdfddb533c0e09cb98cc27",
-      "bytes": 43027
+      "sha256": "3708a10c77a89de44db88cb366703d0aa3a41c5f6fe758a1077fda6cfda0de31",
+      "bytes": 43022
     },
     "market_public_crosscheck.py": {
       "sha256": "1c3d93d56d7a192e89e08594b2dbc8958ca456a435b72c69fc6adc09f292fd7f",
       "bytes": 17748
     },
+    "market_public_crosscheck_state.json": {
+      "sha256": "97981d91155fc5533783d22b0c228dac022130073265e3dbbe2797c1fef02576",
+      "bytes": 138
+    },
     "market_watch.json": {
-      "sha256": "f8097926f9a55463b15b2c498d534c2595490dddc79091cae04b089e16e4a73b",
+      "sha256": "7c2caa10a4565bc19f4b5869307f120e46c71fb581f5b1b45640369182586b23",
       "bytes": 16459
     },
     "migrate_old_data.py": {
@@ -1984,8 +2040,8 @@
       "bytes": 4433
     },
     "promo_events.json": {
-      "sha256": "aa9c71339ba6a1c8d57f9e51b20b92fa2bf29bef91bff53b1d4892fe74ca40b3",
-      "bytes": 119872
+      "sha256": "6b60c7ff500c824579f1b6eb0d2280a11675dd6a36c5c6172717b4a993eda850",
+      "bytes": 123925
     },
     "provider_health_learning.py": {
       "sha256": "97c807d2656608f7408561e91a8af10588d55f773d9f7c09bfe31fb32219d5df",
@@ -2004,11 +2060,11 @@
       "bytes": 10520
     },
     "purchase_signals.json": {
-      "sha256": "2100103b899ee24be37849bff22223f7538add11f82de6a8ce31132aeaa29b91",
+      "sha256": "c4c24278b1bb174662fb4ae31ff1a83d20b6dcfe2ebfd7b2e6624834a57c4af8",
       "bytes": 234
     },
     "purchase_sources.json": {
-      "sha256": "abf5b2aaa3c3641d09725ddf94d76b869b36cab65d3c9969aff9e39685dd4eb9",
+      "sha256": "3b536d11091fcd21a4cfe55ce4dd8308a150741b2796ba8b15d8fde8b2e9c1d6",
       "bytes": 196072
     },
     "quality_review_policy.py": {
@@ -2023,9 +2079,13 @@
       "sha256": "f3c06f8089bbb489bcf869fd4ccd8086478451d2de42a0468f60af5dfaf9fe81",
       "bytes": 20685
     },
+    "release_history_progress.json": {
+      "sha256": "f07a2ac7cc1ec87e3fb350ac6f5723bbef9054a7e2e973e3970c423489b04dc6",
+      "bytes": 1279
+    },
     "release_parser_learning.json": {
-      "sha256": "6f04fa4ec27f6f304ea8249265e2d680a00c52e915208c0e1c13e412c2695e8f",
-      "bytes": 994
+      "sha256": "9f122fc0d2edc5022d83699bc17ed6d83aa8f99a13ec2e38f8078931d121405f",
+      "bytes": 990
     },
     "release_parser_learning.py": {
       "sha256": "8438bd9d1c379e1aa81e7037a4c6cb4ec403390ec959c5ce0260ca39b3d4d784",
@@ -2036,8 +2096,8 @@
       "bytes": 3066
     },
     "releases.json": {
-      "sha256": "a3390af6094c3b32f70dd5e355a9957044bfdbebaf54fc96f422e02d3a2f0966",
-      "bytes": 44557
+      "sha256": "af07785a22eb992d44a90fabd3ebfab9e054fdc34d85bc4b2dd6286881044dbf",
+      "bytes": 44398
     },
     "repository_health_guard.py": {
       "sha256": "7946af24acb4cd9a75fd8dd15920cbd8695aee86729d6d322c34e9f388bcfc77",
@@ -2155,8 +2215,12 @@
       "sha256": "285a313f5b451568b90f03f3f06bbf7a3f25e440df5c6260417cbf1a05b74ab6",
       "bytes": 21246
     },
+    "social_stock_learning.json": {
+      "sha256": "b07d00c2e2fe7eca102b2675d13a85ccd88838e9d4b8f53c218a3ae480f0f04b",
+      "bytes": 727
+    },
     "social_stock_signals.json": {
-      "sha256": "ad1da67b241d52224465a786eca242a1d7ebf3ea14aaf30c177c9807e6bb715d",
+      "sha256": "95cec4a8b72ddbf809841871a07d55b8a185200fca995262a16fa6ab3fa554d9",
       "bytes": 453
     },
     "social_stock_sources.json": {
@@ -2172,8 +2236,8 @@
       "bytes": 6377
     },
     "supplementary_candidates.json": {
-      "sha256": "82d4347e8f559368e0f1ee377eb66096f2921f3668c97353dc56dc63eb851d0d",
-      "bytes": 8323
+      "sha256": "9df4ca4fb56ef1024eb03d48736dbc9e7508dfda93281a720bec569801e3557d",
+      "bytes": 7867
     },
     "supplementary_discovery.py": {
       "sha256": "0b74fa083171123ba61fb8da124f0e093d8cde7c1fc1168716d1cc90781472b6",
@@ -2223,13 +2287,25 @@
       "sha256": "bb5f0576593a407d8e0d9a26a255d12ea6c0a390304c8fd538c204f68abc82a6",
       "bytes": 3653
     },
+    "tcg_code_repair_candidates.json": {
+      "sha256": "1fae6ffa638cd88dac150f3d3cb7a2cce92419d738bb5af6eaa788a1b2d60585",
+      "bytes": 78
+    },
+    "tcg_code_repair_learning.json": {
+      "sha256": "000a990c2f19101d2d92ed9cda28b30cbb171517a09e6fc99c8ede37b09216c1",
+      "bytes": 477
+    },
     "tcg_code_repair_learning.py": {
       "sha256": "15325722ae1de7bcdd14b66281af96a781a879f805bc4b72f1a6a30466a79c7d",
       "bytes": 39105
     },
+    "tcg_code_repair_report.json": {
+      "sha256": "760a4650285aac6d28980f70af2eb47242e1c1f0d1a052bc33f43966a7739728",
+      "bytes": 651
+    },
     "tcg_live_data.json": {
-      "sha256": "738564b3140c9488fb22f2976702a6c04569bb0bc93221f2db9f2277002a681c",
-      "bytes": 112048
+      "sha256": "d7c9aa6fb1bceddb24d22249e06292daec3df367d243b752863ef5502878f685",
+      "bytes": 112076
     },
     "tcg_reliability/__init__.py": {
       "sha256": "3e6bcd161ad0dfcd323c560703d86be1f22c9ab98055eef50ef91e9065e5d648",
