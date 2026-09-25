@@ -691,9 +691,13 @@ def search_multi_market(query,region='ALL',game='ALL',force=False):
             if not p:continue
             blob=(r['title']+' '+r['snippet']).lower();kind='실거래/완료 신호' if any(w in blob for w in SOLD_WORDS) else src['kind']
             weight=float(src['weight'])*_health(sid,learn)*(1.08 if kind=='실거래/완료 신호' else 1.0)
+            listing_regions=_explicit_listing_regions(r)
+            listing_region=next(iter(listing_regions)) if len(listing_regions)==1 else 'ALL'
             items.append({'source':src['name'],'source_id':sid,'title':r['title'],'url':r['url'],'snippet':r['snippet'],'date':r['date'],
                           **p,'price_kind':kind,'verified_api':False,'score':round(weight,3),
-                          'region_scope':region if region in ('KR','JP','US') else 'ALL'})
+                          # RSS discovery is not edition proof. Preserve only explicit
+                          # listing evidence; never stamp the requested region onto a row.
+                          'region_scope':listing_region})
             seen+=1
         stats[sid]['hits']+=seen
         if seen:stats[sid]['status']='ok'
@@ -712,16 +716,22 @@ def search_multi_market(query,region='ALL',game='ALL',force=False):
         item['print_variant']=_item_variant(item)
     eligible_items=[item for item in items if item.get('summary_eligible') is True]
     variant_state=_variant_summary_state(query,eligible_items)
-    if variant_state['ambiguous']:
+    _,query_card_number=_tcgdex_query_parts(query)
+    identity_ambiguous=not bool(_normalize_card_number(query_card_number))
+    if identity_ambiguous:
+        # A name-only query can span many sets, promos, reprints and printings.
+        # Keep raw evidence visible, but never manufacture one headline/grade price.
+        comparable=[];basis='카드번호/세트 식별자 필요 · 이름만으로 시세 요약 보류'
+    elif variant_state['ambiguous']:
         comparable=[];basis='인쇄/아트 변형 미지정 · 서로 다른 변형 혼재'
     else:
         comparable,basis=_comparable_summary_items(query,eligible_items)
     prices=[int(x['price_krw']) for x in comparable if int(x.get('price_krw',0))>0]
-    _,query_card_number=_tcgdex_query_parts(query)
     summary={'count':len(prices),'total_count':len([x for x in eligible_items if int(x.get('price_krw',0))>0]),
              'observed_total_count':len([x for x in items if int(x.get('price_krw',0))>0]),
              'identity_excluded_count':len([x for x in items if x.get('summary_eligible') is False and int(x.get('price_krw',0))>0]),
-             'identity_scope':'exact_card_number' if query_card_number else 'name_only',
+             'identity_scope':'exact_card_number' if query_card_number else 'name_only_hold',
+             'identity_ambiguous':identity_ambiguous,
              'variant_scope':variant_state['scope'],'variant_ambiguous':variant_state['ambiguous'],
              'observed_variants':variant_state['observed'],'variant_unknown_evidence':variant_state['has_unknown'],
              'median_krw':int(statistics.median(prices)) if prices else 0,'min_krw':min(prices) if prices else 0,'max_krw':max(prices) if prices else 0,
@@ -732,8 +742,8 @@ def search_multi_market(query,region='ALL',game='ALL',force=False):
                    for src in SOURCES if src['id'] in ('snkrdunk','justtcg','tcgdex','pavilion')]
     data={'ok':True,'query':query,'region':region,'game':game,'checked_at':datetime.now(timezone.utc).isoformat(timespec='seconds'),'refresh_minutes':15,
           'summary':summary,'items':items[:60],'errors':errors,'source_stats':stats,'source_status':source_status,
-          'reference_links':_reference_links(query,game),'grade_reference':_grade_reference(eligible_items) if not variant_state['ambiguous'] else [],
-          'notice':'SNKRDUNK·JustTCG·TCGdex·Pavilion을 포함한 공개 참고시세를 교차수집합니다. 카드번호·판본·인쇄/아트 변형이 확인된 자료만 중앙값·등급별 시세에 사용합니다. 같은 카드번호에서 Standard·Holo·Reverse Holo·Parallel·Alt Art·Manga 등이 섞이면 자동 중앙값을 보류합니다. 완료거래→API 참고시세→호가 순으로 분리하며, 없는 등급값은 추정하지 않습니다. 403/429는 우회하지 않고 안전 대기합니다.',
+          'reference_links':_reference_links(query,game),'grade_reference':_grade_reference(eligible_items) if query_card_number and not variant_state['ambiguous'] else [],
+          'notice':'SNKRDUNK·JustTCG·TCGdex·Pavilion을 포함한 공개 참고시세를 교차수집합니다. 카드번호·판본·인쇄/아트 변형이 확인된 자료만 중앙값·등급별 시세에 사용합니다. 카드명만 입력한 경우 여러 세트·프로모·재록이 섞일 수 있어 중앙값과 등급별 시세를 보류하고 원자료만 표시합니다. 같은 카드번호에서 Standard·Holo·Reverse Holo·Parallel·Alt Art·Manga 등이 섞여도 자동 중앙값을 보류합니다. 완료거래→API 참고시세→호가 순으로 분리하며, 없는 등급값은 추정하지 않습니다. RSS 검색의 요청 판본은 증거로 재사용하지 않으며 실제 매물의 판본 표기만 보존합니다. 403/429는 우회하지 않고 안전 대기합니다.',
           '_epoch':time.time(),'cache':'refresh'}
     _save_learning(stats);_save_cache(key,data);return data
 
