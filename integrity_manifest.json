@@ -1,7 +1,7 @@
 {
   "version": 2,
   "engine": "v109-card-identity-ocr-learning",
-  "generated_at": "2026-09-25T09:26:11+00:00",
+  "generated_at": "2026-09-25T10:34:23+00:00",
   "files": {
     ".github/workflows/ai-auto-tracker-guard.yml": {
       "sha256": "636e750bd6d2619cce75d4bce2d68051eaa2209ae763bc8ec523ed73476728a6",
@@ -470,6 +470,10 @@
     "BACKUP_TCG_LEARNING_DATA.bat": {
       "sha256": "e0d2ae003b4246b9c2218485f9309adb920de547db24a7a72691b178349256a8",
       "bytes": 942
+    },
+    "CURRENT_RUNTIME_VERIFICATION_REPORT.json": {
+      "sha256": "6bd20d1b3f5f6badb3f1c6398e845b169b7c21eb9545048849840ac1eed0b413",
+      "bytes": 5997
     },
     "FIX_GRADE_LEARNING_V136.sh": {
       "sha256": "1e5e7c482dfb4ee764f83c32a615a61239ecdac2226423b06e720fd2e2a4ecb3",
@@ -1132,8 +1136,8 @@
       "bytes": 30269
     },
     "card_identity_recognition.py": {
-      "sha256": "b1d432156e3bd9cebb3ef37e9f687f46abc0471b55ea45e4faf1195a8fe678fa",
-      "bytes": 41559
+      "sha256": "78d9bbc956c9bff2c1e5830e42df89844f755776c2b624551395306d940743fb",
+      "bytes": 41808
     },
     "card_identity_reference_catalog.json": {
       "sha256": "45a99a4520d2ccca217e196e49db016481105283e8a53b1e7dec2c11bb4a7c04",
@@ -2379,6 +2383,10 @@
       "sha256": "8b6c3d9ca0ab067bc008cacdbe103be3a9584e10b872aa7e0189cfdb7b97c391",
       "bytes": 1137
     },
+    "test_card_catalog_region_isolation_v317.py": {
+      "sha256": "f98502a8bbe4cef9366e25b55a13c8997ba28c47b746fcfe35a1153114e28cbe",
+      "bytes": 3475
+    },
     "test_card_core_crosscheck_v291.py": {
       "sha256": "4d818d3fcc825dee4d3fe21886313537b36b05dc4bb9219c6e7e1c26688cd2c8",
       "bytes": 4817
@@ -3444,7 +3452,19 @@
       "bytes": 396
     }
   },
-  "mutable_json": {},
+  "mutable_json": {
+    "security_audit_report.json": {
+      "required": {
+        "schema_version": "int",
+        "generated_at": "str",
+        "scope": "str",
+        "finding_counts": "dict",
+        "findings": "list",
+        "note": "str"
+      },
+      "max_bytes": 20971520
+    }
+  },
   "policy": {
     "generated_code_auto_applied": false,
     "code_corruption_auto_repaired": false,
