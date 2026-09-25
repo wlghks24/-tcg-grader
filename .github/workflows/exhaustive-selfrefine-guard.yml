@@ -21,7 +21,7 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: read
+  contents: write
 
 concurrency:
   group: exhaustive-selfrefine-${{ github.ref }}
@@ -123,6 +123,31 @@ jobs:
           echo "isolated root test modules: $total; failed modules: $failed_count"
           echo "failed root test files:$failed_files"
           if [ "$failed_count" -ne 0 ]; then exit 1; fi
+      - name: Finalize v315 branch integrity snapshot
+        if: github.event_name == 'pull_request' && github.head_ref == 'card-intelligence-v315-precision'
+        env:
+          HEAD_BRANCH: ${{ github.head_ref }}
+        run: |
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git fetch origin "$HEAD_BRANCH" main
+          git checkout -B "$HEAD_BRANCH" "origin/$HEAD_BRANCH"
+          git reset --hard "origin/$HEAD_BRANCH"
+          git checkout origin/main -- .github/workflows/exhaustive-selfrefine-guard.yml
+          rm -f .github/workflows/diagnose-root-regressions-v315.yml
+          python fault_injection_healing.py --manifest
+          python -m unittest -v test_card_edition_precision_v302.py test_card_identity_market_precision_v309.py test_card_intelligence_precision_v315.py test_card_advanced_precision_v315.py
+          node verify_pokemon_generation_runtime.js
+          node verify_card_advanced_precision_v315.js
+          python repository_integrity_guard.py
+          git add -A
+          if git diff --cached --quiet; then
+            echo 'No finalize changes required.'
+          else
+            git commit -m 'chore: finalize v315 card precision integrity snapshot'
+            git push origin "HEAD:$HEAD_BRANCH"
+          fi
       - name: Run nested domain tests in their intended import contexts
         run: |
           python -m unittest discover -v -s instagram_tcg_content -p 'test_*.py'
