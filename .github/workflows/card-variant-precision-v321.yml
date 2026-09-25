@@ -40,7 +40,7 @@ jobs:
           p.write_text(s.replace(old,new,1),encoding='utf-8')
           PY
           python apply_card_identity_variant_v321.py
-          git rm apply_card_identity_variant_v321.py .github/workflows/card-variant-precision-v321.yml
+          git rm -f apply_card_identity_variant_v321.py .github/workflows/card-variant-precision-v321.yml
           python fault_injection_healing.py --manifest
           python -m py_compile card_identity_recognition.py verify_current_runtime.py test_card_variant_market_precision_v321.py
           node --check card_identity_recognition.js
