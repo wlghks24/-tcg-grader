@@ -273,19 +273,37 @@ CARD_NUMBER_QUERY_RE=re.compile(
     r'|\d{1,4}'
     r')(?![A-Z0-9])',re.I
 )
-GRADER_QUERY_RE=re.compile(r'\b(?:PSA|BGS|CGC|TAG|BRG)\s*(?:10|[1-9])(?:\.5)?(?:\s*BLACK\s*LABEL)?\b',re.I)
+GRADER_QUERY_RE=re.compile(
+    r'\b(?:PSA|BGS|CGC|TAG|BRG)\s*[:#-]?\s*(?:10|[1-9])(?:\s*\.\s*(?:0|5))?(?:\s*BLACK\s*LABEL)?\b',
+    re.I,
+)
+
+
+def _iter_card_number_matches(text):
+    """Yield card-number tokens while excluding grader scores and copyright years.
+
+    Decimal grading labels such as BGS 9.5 or PSA 10.0 contain standalone digit
+    fragments that also satisfy the generic card-number regex.  Excluding the
+    complete grader span prevents the decimal tail from becoming a fake card ID
+    in both query parsing and listing identity checks.
+    """
+    text=str(text or '')
+    grade_spans=[(match.start(),match.end()) for match in GRADER_QUERY_RE.finditer(text)]
+    for match in CARD_NUMBER_QUERY_RE.finditer(text):
+        if any(match.start()<end and match.end()>start for start,end in grade_spans):
+            continue
+        token=match.group(0).strip()
+        prefix=text[max(0,match.start()-16):match.start()]
+        if re.search(r'(?:PSA|BGS|CGC|TAG|BRG)\s*[:#-]?\s*$',prefix,re.I):
+            continue
+        compact=_normalize_card_number(token)
+        if compact.isdigit() and len(compact)==4 and 1996<=int(compact)<=2099:
+            continue
+        yield match
 
 
 def _query_card_number_match(query):
-    text=str(query or '')
-    for match in CARD_NUMBER_QUERY_RE.finditer(text):
-        token=match.group(0).strip()
-        prefix=text[max(0,match.start()-16):match.start()]
-        if GRADER_QUERY_RE.fullmatch(token) or re.search(r'(?:PSA|BGS|CGC|TAG|BRG)\s*$',prefix,re.I):continue
-        compact=_normalize_card_number(token)
-        if compact.isdigit() and len(compact)==4 and 1996<=int(compact)<=2099:continue
-        return match
-    return None
+    return next(_iter_card_number_matches(query),None)
 
 
 def _tcgdex_query_parts(query):
@@ -300,7 +318,7 @@ def _tcgdex_query_parts(query):
 def _identity_blob_numbers(value):
     text=str(value or '').upper().replace('–','-').replace('—','-')
     found=[]
-    for match in CARD_NUMBER_QUERY_RE.finditer(text):
+    for match in _iter_card_number_matches(text):
         token=_normalize_card_number(match.group(0))
         if token and token not in found:found.append(token)
     return found[:32]
