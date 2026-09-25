@@ -9,6 +9,8 @@ const REGION_CODES=new Set(['KR','JP','US']);
 const EN_SV_CODES=new Set(['SVI','PAL','OBF','MEW','PAR','PAF','TEF','TWM','SFA','SCR','SSP','PRE','JTG','DRI','BLK','WHT']);
 const EN_MEGA_CODES=new Set(['MEG','PFL','ASC','POR','CRI','PBL']);
 const EN_SET_CODES=new Set([...EN_SV_CODES,...EN_MEGA_CODES]);
+const EN_PROMO_CODES=new Set(['SWSH','SVP','MEP']);
+const SHARED_PROMO_CODES=new Set(['SV-P','S-P','SM-P','XY-P','BW-P','DP-P','M-P']);
 
 function generationText(value){return String(value??'').replace(/Ⓒ/g,'©').normalize?.('NFKC').toUpperCase().replace(/[\u0000-\u001f\u007f]/g,' ').replace(/\s+/g,' ').trim().slice(0,8000)}
 function normalizeRegion(value){const r=generationText(value).replace(/\s+/g,'');if(['JP','JAPAN','JAPANESE','日本','日版','日本版'].includes(r))return 'JP';if(['US','USA','EN','ENGLISH','영문판','미국판'].includes(r))return 'US';if(['KR','KOREA','KOREAN','한국','한국판','한글판'].includes(r))return 'KR';return 'UNKNOWN'}
@@ -23,6 +25,8 @@ function inferEditionFromText(value){
  if(kana>=2)add('JP','kana_script',.96,{count:kana});
  const englishSet=upper.match(new RegExp(`(?:^|[^A-Z0-9])(${[...EN_SET_CODES].join('|')})\\s*[- ]?\\s*\\d{1,3}(?:\\s*/\\s*\\d{2,3})?(?=[^A-Z0-9]|$)`));
  if(englishSet)add('US',`english_set_code_${englishSet[1]}`,.92);
+ const englishPromo=upper.match(/(?:^|[^A-Z0-9])(SWSH|SVP|MEP)\s*-?\s*\d{1,3}(?=[^A-Z0-9]|$)/);
+ if(englishPromo)add('US',`english_promo_code_${englishPromo[1]}`,.94);
  const regions=[...new Set(signals.map(row=>row.region))].sort();
  if(regions.length>1)return {region:'UNKNOWN',confidence:0,basis:'edition_evidence_conflict',conflict:true,signals};
  if(!regions.length)return {region:'UNKNOWN',confidence:0,basis:'insufficient_evidence',conflict:false,signals:[]};
@@ -33,6 +37,9 @@ function inferEditionFromText(value){
 function expansionFromCardNumber(value){
  const n=generationText(value).replace(/\s+/g,'');
  let m;
+ if((m=n.match(/^(\d{1,3})\/(SV-P|S-P|SM-P|XY-P|BW-P|DP-P|M-P)$/)))return m[2];
+ if((m=n.match(/^(SV-P|S-P|SM-P|XY-P|BW-P|DP-P|M-P)-?\d{1,3}$/)))return m[1];
+ if((m=n.match(/^(SWSH|SVP|MEP)-?\d{1,3}$/)))return m[1];
  if((m=n.match(new RegExp(`^(${[...EN_SET_CODES].join('|')})(?=\\d|[-/])`))))return m[1];
  if((m=n.match(/^SV(?:-?P|\d{1,2}[A-Z]{0,2})/)))return m[0];
  if((m=n.match(/^SM\d{1,2}[A-Z]{0,2}/)))return m[0];
@@ -45,6 +52,9 @@ function expansionFromCardNumber(value){
 }
 function expansionFromOcr(text){
  const t=generationText(text),patterns=[
+  /(?:^|[^A-Z0-9])\d{1,3}\s*\/\s*(SV-P|S-P|SM-P|XY-P|BW-P|DP-P|M-P)(?=[^A-Z0-9]|$)/,
+  /(?:^|[^A-Z0-9])(SV-P|S-P|SM-P|XY-P|BW-P|DP-P|M-P)\s*\d{1,3}(?=[^A-Z0-9]|$)/,
+  /(?:^|[^A-Z0-9])(SWSH|SVP|MEP)\s*-?\s*\d{1,3}(?=[^A-Z0-9]|$)/,
   new RegExp(`(?:^|[^A-Z0-9])(${[...EN_SET_CODES].join('|')})\\s*[- ]?\\s*\\d{1,3}(?:\\s*/\\s*\\d{2,3})?(?=[^A-Z0-9]|$)`),
   /(?:^|[^A-Z0-9])(SV(?:-?P|\d{1,2}[A-Z]{0,2}))(?=[^A-Z0-9]|$)/,
   /(?:^|[^A-Z0-9])(SM\d{1,2}[A-Z]{0,2})(?=[^A-Z0-9]|$)/,
@@ -75,6 +85,13 @@ function yearFromEvidence(input,text){
 }
 function generationBySetCode(code){
  const c=generationText(code).replace(/\s+/g,'');
+ if(c==='M-P'||c==='MEP')return {generation:null,generation_label:'세대 단정 안 함',series:'MEGA 프로모',era:'MEGA',...(c==='MEP'?{set_region:'US'}:{})};
+ if(c==='SV-P'||c==='SVP')return {generation:9,generation_label:'9세대',series:'스칼렛&바이올렛 프로모',era:'SV',...(c==='SVP'?{set_region:'US'}:{})};
+ if(c==='S-P'||c==='SWSH')return {generation:8,generation_label:'8세대',series:'소드&실드 프로모',era:'S',...(c==='SWSH'?{set_region:'US'}:{})};
+ if(c==='SM-P')return {generation:7,generation_label:'7세대',series:'썬&문 프로모',era:'SM'};
+ if(c==='XY-P')return {generation:6,generation_label:'6세대',series:'XY 프로모',era:'XY'};
+ if(c==='BW-P')return {generation:5,generation_label:'5세대',series:'BW 프로모',era:'BW'};
+ if(c==='DP-P')return {generation:4,generation_label:'4세대',series:'DP 프로모',era:'DP'};
  if(EN_MEGA_CODES.has(c))return {generation:null,generation_label:'세대 단정 안 함',series:'MEGA Evolution 시리즈',era:'MEGA',set_region:'US'};
  if(EN_SV_CODES.has(c))return {generation:9,generation_label:'9세대',series:'스칼렛&바이올렛',era:'SV',set_region:'US'};
  if(/^SV/.test(c))return {generation:9,generation_label:'9세대',series:'스칼렛&바이올렛',era:'SV'};

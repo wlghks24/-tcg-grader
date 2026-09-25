@@ -38,6 +38,10 @@ _POKEMON_EN_SET_EVIDENCE_RE = re.compile(
     rf"(?<![A-Z0-9])(?:{_POKEMON_EN_SET_PATTERN})\s*[- ]?\s*\d{{1,3}}(?:\s*/\s*\d{{2,3}})?(?![A-Z0-9])",
     re.I,
 )
+_POKEMON_EN_PROMO_EVIDENCE_RE = re.compile(
+    r"(?<![A-Z0-9])(?:SWSH|SVP|MEP)\s*-?\s*\d{1,3}(?![A-Z0-9])", re.I
+)
+_SHARED_PROMO_CODE_PATTERN = r"(?:SV-P|S-P|SM-P|XY-P|BW-P|DP-P|M-P)"
 MAX_IMAGE_BYTES = 6_000_000
 MAX_IMAGE_PIXELS = 24_000_000
 MAX_OCR_TEXT = 5000
@@ -45,7 +49,13 @@ MAX_ROWS = 2000
 Image.MAX_IMAGE_PIXELS = MAX_IMAGE_PIXELS
 HASH_RE = re.compile(r"^[0-9a-f]{16}$")
 NUMBER_RE = re.compile(
-    r"(?<![A-Z0-9])(?:\d{1,3}/\d{2,3}|(?:MEG|PFL|ASC|POR|CRI|PBL|SVI|PAL|OBF|MEW|PAR|PAF|TEF|TWM|SFA|SCR|SSP|PRE|JTG|DRI|BLK|WHT|OP|ST|EB|PRB|P|CP|FB|SV|SM|S)\s*-?\s*\d{1,3}(?:-\d{2,3})?)(?![A-Z0-9])",
+    r"(?<![A-Z0-9])(?:"
+    r"\d{1,3}/(?:SV-P|S-P|SM-P|XY-P|BW-P|DP-P|M-P)"
+    r"|(?:SV-P|S-P|SM-P|XY-P|BW-P|DP-P|M-P)\s*\d{1,3}"
+    r"|(?:SWSH|SVP|MEP)\s*-?\s*\d{1,3}"
+    r"|\d{1,3}/\d{2,3}"
+    r"|(?:MEG|PFL|ASC|POR|CRI|PBL|SVI|PAL|OBF|MEW|PAR|PAF|TEF|TWM|SFA|SCR|SSP|PRE|JTG|DRI|BLK|WHT|OP|ST|EB|PRB|P|CP|FB|SV|SM|S)\s*-?\s*\d{1,3}(?:-\d{2,3})?"
+    r")(?![A-Z0-9])",
     re.I,
 )
 _POKEMON_EN_NUMBER_RE = re.compile(
@@ -83,6 +93,15 @@ def normalize_number(value: Any) -> str:
     text = re.sub(r"\s+", "", text).replace("—", "-").replace("–", "-")
     if not text or len(text) > 32 or not re.fullmatch(r"[A-Z0-9./-]+", text):
         return ""
+    suffix = re.fullmatch(r"(\d{1,3})/(SV-P|S-P|SM-P|XY-P|BW-P|DP-P|M-P)", text)
+    if suffix:
+        return f"{suffix.group(2)}{int(suffix.group(1)):03d}"
+    prefix = re.fullmatch(r"(SV-P|S-P|SM-P|XY-P|BW-P|DP-P|M-P)-?(\d{1,3})", text)
+    if prefix:
+        return f"{prefix.group(1)}{int(prefix.group(2)):03d}"
+    english = re.fullmatch(r"(SWSH|SVP|MEP)-?(\d{1,3})", text)
+    if english:
+        return f"{english.group(1)}{int(english.group(2)):03d}"
     return text
 
 
@@ -125,6 +144,8 @@ def infer_region_evidence(value: Any) -> dict[str, Any]:
         signals.append({"region": "JP", "basis": "kana_script", "confidence": 0.96, "count": kana})
     if _POKEMON_EN_SET_EVIDENCE_RE.search(upper):
         signals.append({"region": "US", "basis": "english_set_code", "confidence": 0.92})
+    if _POKEMON_EN_PROMO_EVIDENCE_RE.search(upper):
+        signals.append({"region": "US", "basis": "english_promo_code", "confidence": 0.94})
 
     regions = sorted({str(item["region"]) for item in signals})
     if len(regions) > 1:

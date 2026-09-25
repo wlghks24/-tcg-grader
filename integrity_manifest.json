@@ -1,7 +1,7 @@
 {
   "version": 2,
   "engine": "v109-card-identity-ocr-learning",
-  "generated_at": "2026-09-25T14:21:40+00:00",
+  "generated_at": "2026-09-25T15:07:03+00:00",
   "files": {
     ".github/workflows/ai-auto-tracker-guard.yml": {
       "sha256": "636e750bd6d2619cce75d4bce2d68051eaa2209ae763bc8ec523ed73476728a6",
@@ -1128,12 +1128,12 @@
       "bytes": 120
     },
     "card_identity_recognition.js": {
-      "sha256": "b5e3b943378dca9a0c7493169bdbc3013b56786da5210c467aee69bbe9068146",
-      "bytes": 32388
+      "sha256": "f9cd1f243257586a080efc37e022bae96e3bc8e7fbc0064bc00a2a9a6d2a3b20",
+      "bytes": 34007
     },
     "card_identity_recognition.py": {
-      "sha256": "d6e75d7843e9f7a555a7b4ef986234674640433197a92c243fc0676a8317773e",
-      "bytes": 45214
+      "sha256": "eb9bf20c13622e66275ca79a4c8fd2989601c88c7ea13c2caa413d8daa0999cf",
+      "bytes": 46175
     },
     "card_identity_reference_catalog.json": {
       "sha256": "45a99a4520d2ccca217e196e49db016481105283e8a53b1e7dec2c11bb4a7c04",
@@ -1916,8 +1916,8 @@
       "bytes": 38263
     },
     "multi_market_price_collector.py": {
-      "sha256": "9dfb79e52ceb5c4cfdc6037dbbe98975092c9c4c4d0c028c3ec4587177ac24ec",
-      "bytes": 34286
+      "sha256": "462b40406b02e04994f5fe64800fe045c7d33de4e4ecf2d24f6f578fdbb7975d",
+      "bytes": 34872
     },
     "multi_market_prices.js": {
       "sha256": "5774fdd171dbc45c8556c802692ecd90e4eb14f9267de7b4d9d5dcd72991a291",
@@ -2422,6 +2422,10 @@
     "test_card_probability_ui_v298.py": {
       "sha256": "f09f8bfacd502fcb8fb5cec43bef34dcf7be7d0a70e50a234ec2784e6ffe0e33",
       "bytes": 1452
+    },
+    "test_card_promo_precision_v322.py": {
+      "sha256": "f2c23d129140012d208457b968d89c5ab220cb4a4ab13309fc56f95770ec8dc1",
+      "bytes": 4735
     },
     "test_card_region_conflict_failclosed_v318.py": {
       "sha256": "5509cfac1bf4216979c4b443135ac677a6085231400a52e54ce80f612b99b8c2",
@@ -3324,8 +3328,8 @@
       "bytes": 12067
     },
     "verify_current_runtime.py": {
-      "sha256": "f2af055ab977f55a1daaf12e5d2f9244a2ffdcce5b7689342cd3e7d0a76d24c1",
-      "bytes": 6625
+      "sha256": "4e06ac39f2130ea7acba7ffb14eb693a5dc69f16b1b60b62a8aa292dbb549e13",
+      "bytes": 6665
     },
     "verify_fault_injection_healing.py": {
       "sha256": "40f0d3565ea8094b4deb2cf407550eaf41928f3f7fbfc2863ead0053f7cb25f8",
