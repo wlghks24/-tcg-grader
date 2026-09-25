@@ -18,6 +18,13 @@ class GradingCompanyWatchProtectedPublishV319Tests(unittest.TestCase):
         self.assertIn("candidate_branch=\"auto/grading-company-watch-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}\"", self.source)
         self.assertIn('git push origin "HEAD:refs/heads/${candidate_branch}"', self.source)
 
+    def test_writable_watcher_has_no_push_event_scope_conflict(self) -> None:
+        trigger_block = self.source.split("\npermissions:", 1)[0]
+        self.assertIn("workflow_dispatch:", trigger_block)
+        self.assertIn("schedule:", trigger_block)
+        self.assertNotIn("\n  push:", trigger_block)
+        self.assertIn("cron: '23 */3 * * *'", trigger_block)
+
     def test_workflow_has_pr_and_check_permissions(self) -> None:
         self.assertIn("pull-requests: write", self.source)
         self.assertIn("actions: write", self.source)
