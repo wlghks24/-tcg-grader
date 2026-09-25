@@ -3,7 +3,7 @@
   "engine": "v98-camera-resilience-full-runtime",
   "trigger": "github-pages-static-refresh",
   "selected_files": [],
-  "started_at": "2026-09-24T05:29:58+00:00",
+  "started_at": "2026-09-24T21:51:08+00:00",
   "preflight_monitor": {
     "ok": true,
     "results": [
@@ -54,14 +54,14 @@
       }
     ]
   },
-  "finished_at": "2026-09-24T05:33:09+00:00",
-  "duration_seconds": 190.07,
+  "finished_at": "2026-09-24T21:54:11+00:00",
+  "duration_seconds": 182.72,
   "parallel_workers": 2,
   "ok": true,
   "success_count": 8,
   "failure_count": 0,
-  "fresh_success_count": 7,
-  "degraded_count": 1,
+  "fresh_success_count": 6,
+  "degraded_count": 2,
   "restored_count": 0,
   "fresh_failure_count": 0,
   "deferred_timeout_recovery": {
@@ -81,8 +81,8 @@
       "name": "출시일",
       "file": "releases.json",
       "ok": true,
-      "status": "정상",
-      "updated_at": "2026-09-24T05:31:07+00:00",
+      "status": "일부 파서 자동복구 미해결 · 기존 검증자료 보존",
+      "updated_at": "2026-09-24T21:51:54+00:00",
       "count": 9,
       "retry_count": 0,
       "max_attempts": 2,
@@ -90,9 +90,9 @@
       "auto_action": "학습형 수집 · 검증 후 정상 반영",
       "collection_errors": [],
       "remaining_collection_errors": [],
-      "duration_seconds": 31.68,
-      "adaptive_timeout_seconds": 111,
-      "last_attempt_timeout_seconds": 111,
+      "duration_seconds": 23.34,
+      "adaptive_timeout_seconds": 110,
+      "last_attempt_timeout_seconds": 110,
       "collection_stage": "primary",
       "timeout_exhausted": false
     },
@@ -101,7 +101,7 @@
       "file": "market_watch.json",
       "ok": true,
       "status": "정상",
-      "updated_at": "2026-09-24T05:31:28+00:00",
+      "updated_at": "2026-09-24T21:52:16+00:00",
       "count": 23,
       "retry_count": 0,
       "max_attempts": 2,
@@ -109,7 +109,7 @@
       "auto_action": "학습형 수집 · 검증 후 정상 반영",
       "collection_errors": [],
       "remaining_collection_errors": [],
-      "duration_seconds": 0.06,
+      "duration_seconds": 0.05,
       "adaptive_timeout_seconds": 30,
       "last_attempt_timeout_seconds": 30,
       "collection_stage": "primary",
@@ -119,16 +119,20 @@
       "name": "현재 거래시세",
       "file": "market_prices.json",
       "ok": true,
-      "status": "정상",
-      "updated_at": "2026-09-24T05:33:08+00:00",
+      "status": "일부 가격 출처 확인 실패",
+      "updated_at": "2026-09-24T21:54:11+00:00",
       "count": 38,
       "retry_count": 0,
       "max_attempts": 2,
       "recovered_after_retry": false,
-      "auto_action": "학습형 수집 · 검증 후 정상 반영",
-      "collection_errors": [],
-      "remaining_collection_errors": [],
-      "duration_seconds": 190.04,
+      "auto_action": "일부 출처 오류 격리 · 정상자료 반영 · 다음 실행 제한시간 확대",
+      "collection_errors": [
+        "NARUTO CP-001: HTTPError: status 403"
+      ],
+      "remaining_collection_errors": [
+        "NARUTO CP-001: HTTPError: status 403"
+      ],
+      "duration_seconds": 182.69,
       "adaptive_timeout_seconds": 300,
       "last_attempt_timeout_seconds": 299,
       "collection_stage": "primary",
@@ -139,19 +143,21 @@
       "file": "promo_events.json",
       "ok": true,
       "status": "기존 확인자료 유지 · 일부 출처 재확인 필요 · 한·일·미 영화정보 9/9 조합 추적",
-      "updated_at": "2026-09-24T05:30:35+00:00",
+      "updated_at": "2026-09-24T21:51:31+00:00",
       "count": 44,
       "retry_count": 0,
       "max_attempts": 2,
       "recovered_after_retry": false,
       "auto_action": "일부 출처 오류 격리 · 정상자료 반영 · 다음 실행 제한시간 확대",
       "collection_errors": [
-        "PLAYGO 출시 알림 · 신사황 프로모션 팩 재배포: HTTPError: status 500"
+        "PLAYGO 출시 알림 · 신사황 프로모션 팩 재배포: HTTPError: status 500",
+        "US 원피스 카드 신규행사 탐색: HTTPError: status 500"
       ],
       "remaining_collection_errors": [
-        "PLAYGO 출시 알림 · 신사황 프로모션 팩 재배포: HTTPError: status 500"
+        "PLAYGO 출시 알림 · 신사황 프로모션 팩 재배포: HTTPError: status 500",
+        "US 원피스 카드 신규행사 탐색: HTTPError: status 500"
       ],
-      "duration_seconds": 36.66,
+      "duration_seconds": 22.13,
       "adaptive_timeout_seconds": 300,
       "last_attempt_timeout_seconds": 299,
       "collection_stage": "primary",
@@ -162,7 +168,7 @@
       "file": "purchase_sources.json",
       "ok": true,
       "status": "정상",
-      "updated_at": "2026-09-24T05:31:22+00:00",
+      "updated_at": "2026-09-24T21:52:11+00:00",
       "count": 205,
       "retry_count": 0,
       "max_attempts": 2,
@@ -170,9 +176,9 @@
       "auto_action": "학습형 수집 · 검증 후 정상 반영",
       "collection_errors": [],
       "remaining_collection_errors": [],
-      "duration_seconds": 3.15,
-      "adaptive_timeout_seconds": 31,
-      "last_attempt_timeout_seconds": 31,
+      "duration_seconds": 3.02,
+      "adaptive_timeout_seconds": 30,
+      "last_attempt_timeout_seconds": 30,
       "collection_stage": "primary",
       "timeout_exhausted": false
     },
@@ -181,7 +187,7 @@
       "file": "exchange_rates.json",
       "ok": true,
       "status": "정상",
-      "updated_at": "2026-09-24T05:31:29+00:00",
+      "updated_at": "2026-09-24T21:52:16+00:00",
       "count": 2,
       "retry_count": 0,
       "max_attempts": 2,
@@ -189,7 +195,7 @@
       "auto_action": "학습형 수집 · 검증 후 정상 반영",
       "collection_errors": [],
       "remaining_collection_errors": [],
-      "duration_seconds": 0.48,
+      "duration_seconds": 0.24,
       "adaptive_timeout_seconds": 30,
       "last_attempt_timeout_seconds": 30,
       "collection_stage": "primary",
@@ -208,7 +214,7 @@
       "auto_action": "학습형 수집 · 검증 후 정상 반영",
       "collection_errors": [],
       "remaining_collection_errors": [],
-      "duration_seconds": 4.74,
+      "duration_seconds": 4.19,
       "adaptive_timeout_seconds": 30,
       "last_attempt_timeout_seconds": 30,
       "collection_stage": "primary",
@@ -220,16 +226,16 @@
       "ok": true,
       "status": "정상",
       "updated_at": null,
-      "count": 37,
+      "count": 35,
       "retry_count": 0,
       "max_attempts": 2,
       "recovered_after_retry": false,
       "auto_action": "학습형 수집 · 검증 후 정상 반영",
       "collection_errors": [],
       "remaining_collection_errors": [],
-      "duration_seconds": 13.3,
-      "adaptive_timeout_seconds": 60,
-      "last_attempt_timeout_seconds": 60,
+      "duration_seconds": 15.03,
+      "adaptive_timeout_seconds": 58,
+      "last_attempt_timeout_seconds": 58,
       "collection_stage": "primary",
       "timeout_exhausted": false
     }
@@ -245,7 +251,7 @@
     "degraded": false,
     "candidate_count": 282,
     "social_candidate_count": 250,
-    "official_social_candidate_count": 7,
+    "official_social_candidate_count": 6,
     "failure_count": 0,
     "error": "",
     "platform": {
@@ -254,10 +260,10 @@
       "data_dir": "<app-data>",
       "storage_scope": "user-app-data",
       "writable": true,
-      "checked_at": "2026-09-24T05:36:26+00:00"
+      "checked_at": "2026-09-24T21:56:18+00:00"
     },
     "note": "검색/SNS/뉴스/공식사이트/공식 YouTube/사이트맵 후보 자료입니다. 발견 경로가 공식이어도 내용 검증 전에는 자동 확정하지 않습니다.",
-    "duration_seconds": 197.27,
+    "duration_seconds": 126.66,
     "adaptive_timeout_seconds": 300,
     "last_attempt_timeout_seconds": 300,
     "retry_count": 0,
@@ -269,16 +275,16 @@
     "warning": "",
     "reachable_count": 240,
     "transient_deferred": true,
-    "transient_notice": "일시 확인불가 21개 · 기존 링크 유지 · 다음 업데이트 재확인",
+    "transient_notice": "일시 확인불가 20개 · 기존 링크 유지 · 다음 업데이트 재확인",
     "unresolved_broken": 0,
     "unresolved_summary": [],
-    "updated_at": "2026-09-24T05:33:09+00:00",
+    "updated_at": "2026-09-24T21:54:11+00:00",
     "checked": 273,
-    "audit_timeout_seconds": 277,
+    "audit_timeout_seconds": 281,
     "request_timeout_seconds": 5,
-    "restricted": 12,
+    "restricted": 13,
     "broken": 0,
-    "transient": 21,
+    "transient": 20,
     "blocked": 0,
     "repaired": 0,
     "same_host_fallback_stats": {
@@ -373,6 +379,17 @@
         ]
       },
       {
+        "url": "https://www.walmart.com/store/finder",
+        "detail": null,
+        "code": 412,
+        "references": [
+          {
+            "file": "purchase_sources.json",
+            "field": "url"
+          }
+        ]
+      },
+      {
         "url": "https://www.7-eleven.co.kr/",
         "detail": "URLError",
         "code": null,
@@ -398,32 +415,6 @@
         "references": [
           {
             "file": "promo_events.json",
-            "field": "source"
-          }
-        ]
-      },
-      {
-        "url": "https://www.namu.moe/w/%EB%82%98%EB%A3%A8%ED%86%A0%28%EC%98%81%ED%99%94%29",
-        "detail": "TimeoutError",
-        "code": null,
-        "references": [
-          {
-            "file": "supplementary_candidates.json",
-            "field": "source"
-          },
-          {
-            "file": "supplementary_candidates.json",
-            "field": "source"
-          }
-        ]
-      },
-      {
-        "url": "https://www.namu.moe/w/%EC%9B%90%ED%94%BC%EC%8A%A4%28%EC%95%A0%EB%8B%88%EB%A9%94%EC%9D%B4%EC%85%98%29%2F%EA%B7%B9%EC%9E%A5%ED%8C%90",
-        "detail": "TimeoutError",
-        "code": null,
-        "references": [
-          {
-            "file": "supplementary_candidates.json",
             "field": "source"
           }
         ]
@@ -547,9 +538,9 @@
         ]
       }
     ],
-    "duration_seconds": 94.82,
-    "adaptive_timeout_seconds": 287,
-    "last_attempt_timeout_seconds": 287,
+    "duration_seconds": 80.6,
+    "adaptive_timeout_seconds": 291,
+    "last_attempt_timeout_seconds": 291,
     "retry_count": 0,
     "recovered_after_retry": false
   },
@@ -559,8 +550,8 @@
     "attempted_topic_cells": 216,
     "successful_topic_cells": 216,
     "failed_topic_cells": 0,
-    "undiscovered_topic_cells": 167,
-    "source_updated_at": "2026-09-24T05:36:26+00:00"
+    "undiscovered_topic_cells": 166,
+    "source_updated_at": "2026-09-24T21:56:18+00:00"
   },
   "ok_with_aux": true,
   "postflight_monitor": {
@@ -627,11 +618,11 @@
     "status": {
       "schema": 1,
       "feature_fingerprint": "0bac15bf0ad62e49a7c7d300",
-      "updated_at": "2026-09-24T05:36:26+00:00",
+      "updated_at": "2026-09-24T21:56:18+00:00",
       "active": false,
       "label_count": 10,
-      "positive_labels": 9,
-      "negative_labels": 1,
+      "positive_labels": 8,
+      "negative_labels": 2,
       "minimum_labels": 1000,
       "labels_remaining": 990,
       "progress_percent": 1.0,
@@ -678,14 +669,14 @@
   },
   "error_learning": {
     "summary": {
-      "error_group_count": 8,
+      "error_group_count": 9,
       "new_group_count": 1,
-      "recurring_group_count": 6,
-      "unresolved_group_count": 1,
+      "recurring_group_count": 7,
+      "unresolved_group_count": 2,
       "resolved_group_count": 7,
       "verified_solution_group_count": 7,
-      "scenario_prepared_group_count": 2,
-      "consolidated_event_total": 1011
+      "scenario_prepared_group_count": 3,
+      "consolidated_event_total": 1013
     },
     "new_errors": [
       {
@@ -720,6 +711,37 @@
       },
       {
         "code": "NETWORK_HTTP_ERROR",
+        "title": "HTTP 접근 권한 오류",
+        "category": "통신 오류",
+        "error_subtype": "access-403",
+        "file": "market_prices.json",
+        "detail": "NARUTO CP-001: HTTPError: status 403",
+        "probable_cause": "원출처가 인증 또는 접근 권한 부족 응답을 반환했습니다. 같은 요청을 반복해도 해결되지 않습니다.",
+        "safe_action": "상태별 제한 재시도 · 영구 오류 중단",
+        "analysis_status": "신규 분석",
+        "last_outcome": "unresolved",
+        "first_seen": "2026-09-24T21:54:11+00:00",
+        "last_seen": "2026-09-24T21:54:11+00:00",
+        "occurrences": 1,
+        "unresolved_count": 1,
+        "http_status": 403,
+        "bounded_retry_allowed": false,
+        "http_statuses": [
+          403
+        ],
+        "resolution_steps": [
+          "공식 주소와 공개 접근 가능 여부를 확인합니다.",
+          "인증정보를 자동 생성하거나 우회하지 않습니다.",
+          "접근 가능한 공식 대체 출처와 기존 정상자료를 검증합니다."
+        ],
+        "verification_steps": [
+          "접근 가능한 공식 대체 출처와 기존 정상자료를 검증합니다.",
+          "기존 정상자료가 손상되지 않았는지 확인합니다."
+        ],
+        "group_id": "e4d8455ef1613f80"
+      },
+      {
+        "code": "NETWORK_HTTP_ERROR",
         "title": "HTTP 일시 응답 오류",
         "category": "통신 오류",
         "error_subtype": "transient-server",
@@ -727,12 +749,12 @@
         "detail": "PLAYGO 출시 알림 · 신사황 프로모션 팩 재배포: HTTPError: status 500",
         "probable_cause": "원출처의 요청 제한 또는 일시적인 서버 장애일 가능성이 큽니다.",
         "safe_action": "상태별 제한 재시도 · 영구 오류 중단",
-        "analysis_status": "신규 분석",
+        "analysis_status": "반복 발생",
         "last_outcome": "unresolved",
-        "first_seen": "2026-09-24T05:33:09+00:00",
-        "last_seen": "2026-09-24T05:33:09+00:00",
-        "occurrences": 1,
-        "unresolved_count": 1,
+        "first_seen": "2026-09-24T21:54:11+00:00",
+        "last_seen": "2026-09-24T21:54:11+00:00",
+        "occurrences": 2,
+        "unresolved_count": 2,
         "http_status": 500,
         "bounded_retry_allowed": true,
         "http_statuses": [
@@ -1030,13 +1052,13 @@
           500
         ],
         "bounded_retry_allowed": true,
-        "occurrences": 1,
+        "occurrences": 2,
         "resolved_count": 0,
-        "unresolved_count": 1,
-        "first_seen": "2026-09-24T05:33:09+00:00",
-        "last_seen": "2026-09-24T05:33:09+00:00",
+        "unresolved_count": 2,
+        "first_seen": "2026-09-24T21:54:11+00:00",
+        "last_seen": "2026-09-24T21:54:11+00:00",
         "last_outcome": "unresolved",
-        "analysis_status": "신규 분석",
+        "analysis_status": "반복 발생",
         "affected_files": [
           "promo_events.json"
         ],
@@ -1055,7 +1077,7 @@
           "복구되지 않으면 기존 정상자료를 유지합니다.",
           "기존 정상자료가 손상되지 않았는지 확인합니다."
         ],
-        "last_detail": "PLAYGO 출시 알림 · 신사황 프로모션 팩 재배포: HTTPError: status 500",
+        "last_detail": "US 원피스 카드 신규행사 탐색: HTTPError: status 500",
         "scenario_prepared": true,
         "scenario_profile_id": "bc4fcf90c104daf9",
         "prepared_scenario_count": 8,
@@ -1067,6 +1089,59 @@
           "HTTP 상태와 Retry-After 정책을 확인합니다.",
           "제한된 재시도와 대기 시간을 적용합니다.",
           "복구되지 않으면 기존 정상자료를 유지합니다."
+        ],
+        "stop_conditions": [
+          "401·403·404·410은 같은 주소를 자동 재시도하지 않습니다."
+        ]
+      },
+      {
+        "group_id": "e4d8455ef1613f80",
+        "code": "NETWORK_HTTP_ERROR",
+        "title": "HTTP 접근 권한 오류",
+        "category": "통신 오류",
+        "error_subtype": "access-403",
+        "http_status": 403,
+        "http_statuses": [
+          403
+        ],
+        "bounded_retry_allowed": false,
+        "occurrences": 1,
+        "resolved_count": 0,
+        "unresolved_count": 1,
+        "first_seen": "2026-09-24T21:54:11+00:00",
+        "last_seen": "2026-09-24T21:54:11+00:00",
+        "last_outcome": "unresolved",
+        "analysis_status": "신규 분석",
+        "affected_files": [
+          "market_prices.json"
+        ],
+        "unresolved_files": [
+          "market_prices.json"
+        ],
+        "probable_cause": "원출처가 인증 또는 접근 권한 부족 응답을 반환했습니다. 같은 요청을 반복해도 해결되지 않습니다.",
+        "safe_action": "상태별 제한 재시도 · 영구 오류 중단",
+        "recommended_action": "HTTP 상태·Retry-After·공식 주소 변경 여부를 확인하세요.",
+        "resolution_steps": [
+          "공식 주소와 공개 접근 가능 여부를 확인합니다.",
+          "인증정보를 자동 생성하거나 우회하지 않습니다.",
+          "접근 가능한 공식 대체 출처와 기존 정상자료를 검증합니다."
+        ],
+        "verification_steps": [
+          "접근 가능한 공식 대체 출처와 기존 정상자료를 검증합니다.",
+          "기존 정상자료가 손상되지 않았는지 확인합니다."
+        ],
+        "last_detail": "NARUTO CP-001: HTTPError: status 403",
+        "scenario_prepared": true,
+        "scenario_profile_id": "86f264b1c7ed0a2c",
+        "prepared_scenario_count": 1,
+        "diagnostic_priority": 20,
+        "first_checks": [
+          "HTTP 상태와 Retry-After 존재 여부를 먼저 확인합니다."
+        ],
+        "fast_resolution_steps": [
+          "공식 주소와 공개 접근 가능 여부를 확인합니다.",
+          "인증정보를 자동 생성하거나 우회하지 않습니다.",
+          "접근 가능한 공식 대체 출처와 기존 정상자료를 검증합니다."
         ],
         "stop_conditions": [
           "401·403·404·410은 같은 주소를 자동 재시도하지 않습니다."
@@ -1123,9 +1198,9 @@
     "policy_recovered": 0,
     "next_policy_prepared": 1,
     "quarantined_for_code_repair": 0,
-    "duplicate_active_signatures_suppressed": 0,
+    "duplicate_active_signatures_suppressed": 1,
     "duplicate_policy_observations_suppressed": 0,
-    "active_files": 1,
+    "active_files": 2,
     "code_repair_learning": {
       "ok": true,
       "runs": 1,
