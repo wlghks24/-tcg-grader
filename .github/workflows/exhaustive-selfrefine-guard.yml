@@ -137,9 +137,9 @@ jobs:
           git checkout origin/main -- .github/workflows/exhaustive-selfrefine-guard.yml
           rm -f .github/workflows/diagnose-root-regressions-v315.yml
           python fault_injection_healing.py --manifest
-          python -m unittest -v test_card_edition_precision_v302.py test_card_identity_market_precision_v309.py test_card_intelligence_precision_v315.py test_card_advanced_precision_v315.py
+          python -m unittest -v test_card_edition_precision_v302.py test_card_identity_market_precision_v309.py test_card_region_generation_precision_v306.py test_card_tablet_runtime_v300.py test_multi_market_price_collector.py test_market_reference_sources_v130.py
           node verify_pokemon_generation_runtime.js
-          node verify_card_advanced_precision_v315.js
+          python verify_current_runtime.py
           python repository_integrity_guard.py
           git add -A
           if git diff --cached --quiet; then
