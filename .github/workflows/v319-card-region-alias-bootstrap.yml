@@ -1,0 +1,78 @@
+name: V319 Card Region Alias Bootstrap
+
+on:
+  push:
+    branches: ['fix/card-region-label-alias-v319']
+    paths:
+      - 'tools/apply_v319_card_region_alias_patch.py'
+      - '.github/workflows/v319-card-region-alias-bootstrap.yml'
+
+permissions:
+  contents: write
+
+concurrency:
+  group: v319-card-region-alias-bootstrap
+  cancel-in-progress: true
+
+jobs:
+  apply-and-verify:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          ref: fix/card-region-label-alias-v319
+          fetch-depth: 0
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97
+        with:
+          python-version: '3.12'
+      - name: Install test dependency
+        run: python -m pip install pillow
+      - name: Apply v319 patch
+        run: python tools/apply_v319_card_region_alias_patch.py
+      - name: Focused and related regressions
+        run: |
+          python -m unittest -v test_card_region_label_alias_v319.py
+          python -m unittest -v test_card_region_conflict_failclosed_v318.py test_card_identity_market_precision_v309.py
+          python -m unittest -v test_card_core_crosscheck_v291.py test_card_core_crosscheck_v292.py test_card_core_crosscheck_v295.py
+          python -m unittest -v test_card_region_generation_precision_v306.py test_card_edition_precision_v302.py
+          python -m unittest -v test_card_tablet_runtime_v300.py test_multi_market_price_collector.py
+          node --check card_identity_recognition.js
+          node --check sw.js
+          node verify_pokemon_generation_runtime.js
+      - name: Remove bootstrap artifacts and refresh integrity
+        run: |
+          rm -f tools/apply_v319_card_region_alias_patch.py .github/workflows/v319-card-region-alias-bootstrap.yml
+          python - <<'PY'
+          from pathlib import Path
+          from fault_injection_healing import build_integrity_manifest, diagnose_integrity
+          root=Path('.').resolve()
+          build_integrity_manifest(root, root/'integrity_manifest.json')
+          result=diagnose_integrity(root, root/'integrity_manifest.json')
+          if not result.get('ok'):
+              raise SystemExit(result)
+          print('integrity: PASS')
+          PY
+      - name: Final tree verification
+        run: |
+          python -m unittest -v test_card_region_label_alias_v319.py test_card_region_conflict_failclosed_v318.py test_card_identity_market_precision_v309.py
+          python -m unittest -v test_card_core_crosscheck_v291.py test_card_core_crosscheck_v292.py test_card_core_crosscheck_v295.py
+          python -m unittest -v test_card_region_generation_precision_v306.py test_card_edition_precision_v302.py
+          python -m unittest -v test_card_tablet_runtime_v300.py test_multi_market_price_collector.py
+          python verify_current_runtime.py
+          python - <<'PY'
+          from pathlib import Path
+          from fault_injection_healing import diagnose_integrity
+          result=diagnose_integrity(Path('.').resolve(), Path('integrity_manifest.json').resolve())
+          if not result.get('ok'):
+              raise SystemExit(result)
+          print('final integrity: PASS')
+          PY
+          git diff --check
+      - name: Commit verified final tree
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add -A
+          git commit -m 'fix: normalize Korean collector edition labels v319'
+          git push origin HEAD:fix/card-region-label-alias-v319
