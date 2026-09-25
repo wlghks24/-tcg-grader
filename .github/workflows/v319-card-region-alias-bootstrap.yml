@@ -28,7 +28,7 @@ jobs:
           python-version: '3.12'
       - name: Install test dependency
         run: python -m pip install pillow
-      - name: Repair helper quoting
+      - name: Repair helper quoting and narrow alias precedence
         run: |
           python - <<'PY'
           from pathlib import Path
@@ -40,9 +40,21 @@ jobs:
               raise SystemExit('v319 helper quote anchors missing')
           s=s.replace(opener, 'test = r"""from __future__ import annotations', 1)
           s=s.replace(closer, '''if __name__ == "__main__":\n    unittest.main(verbosity=2)\n"""\nwrite("test_card_region_label_alias_v319.py", test)''', 1)
+
+          old_server='''    if not explicit_regions:\\n        hangul = len(re.findall(r"[가-힣]", text))\\n        kana = len(re.findall(r"[ぁ-んァ-ヶー]", text))\\n        if hangul >= 2:\\n            signals.append({"region": "KR", "basis": "hangul_script", "confidence": 0.96, "count": hangul})\\n        if kana >= 2:\\n            signals.append({"region": "JP", "basis": "kana_script", "confidence": 0.96, "count": kana})\\n'''
+          new_server='''    suppress_hangul = bool(re.search(r"(?:일본판|일판|영문판|영판|미국판)", text, re.I))\\n    hangul = len(re.findall(r"[가-힣]", text))\\n    kana = len(re.findall(r"[ぁ-んァ-ヶー]", text))\\n    if hangul >= 2 and not suppress_hangul:\\n        signals.append({"region": "KR", "basis": "hangul_script", "confidence": 0.96, "count": hangul})\\n    if kana >= 2:\\n        signals.append({"region": "JP", "basis": "kana_script", "confidence": 0.96, "count": kana})\\n'''
+          if old_server not in s:
+              raise SystemExit('server precedence anchor missing')
+          s=s.replace(old_server,new_server,1)
+
+          old_browser=''' if(!explicit.length){\\n  const hangul=(raw.match(/[가-힣]/g)||[]).length,kana=(raw.match(/[ぁ-んァ-ヶー]/g)||[]).length;\\n  if(hangul>=2)add('KR','hangul_script',.96,{count:hangul});\\n  if(kana>=2)add('JP','kana_script',.96,{count:kana});\\n }\\n'''
+          new_browser=''' const suppressHangul=/(?:일본판|일판|영문판|영판|미국판)/i.test(raw);\\n const hangul=(raw.match(/[가-힣]/g)||[]).length,kana=(raw.match(/[ぁ-んァ-ヶー]/g)||[]).length;\\n if(hangul>=2&&!suppressHangul)add('KR','hangul_script',.96,{count:hangul});\\n if(kana>=2)add('JP','kana_script',.96,{count:kana});\\n'''
+          if old_browser not in s:
+              raise SystemExit('browser precedence anchor missing')
+          s=s.replace(old_browser,new_browser,1)
           compile(s, str(p), 'exec')
           p.write_text(s, encoding='utf-8')
-          print('helper syntax: PASS')
+          print('helper syntax/precedence: PASS')
           PY
       - name: Apply v319 patch
         run: python tools/apply_v319_card_region_alias_patch.py
