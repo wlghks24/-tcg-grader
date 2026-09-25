@@ -1,7 +1,7 @@
 {
   "version": 2,
   "engine": "v109-card-identity-ocr-learning",
-  "generated_at": "2026-09-25T10:34:23+00:00",
+  "generated_at": "2026-09-25T11:09:34+00:00",
   "files": {
     ".github/workflows/ai-auto-tracker-guard.yml": {
       "sha256": "636e750bd6d2619cce75d4bce2d68051eaa2209ae763bc8ec523ed73476728a6",
@@ -470,10 +470,6 @@
     "BACKUP_TCG_LEARNING_DATA.bat": {
       "sha256": "e0d2ae003b4246b9c2218485f9309adb920de547db24a7a72691b178349256a8",
       "bytes": 942
-    },
-    "CURRENT_RUNTIME_VERIFICATION_REPORT.json": {
-      "sha256": "6bd20d1b3f5f6badb3f1c6398e845b169b7c21eb9545048849840ac1eed0b413",
-      "bytes": 5997
     },
     "FIX_GRADE_LEARNING_V136.sh": {
       "sha256": "1e5e7c482dfb4ee764f83c32a615a61239ecdac2226423b06e720fd2e2a4ecb3",
@@ -1132,12 +1128,12 @@
       "bytes": 120
     },
     "card_identity_recognition.js": {
-      "sha256": "f90126d334ba7a1a88c58f94c06446dc0c976d8dfe0363b3c7fcab78460b8a75",
-      "bytes": 30269
+      "sha256": "2b99b57a3cefde836c76b9ec1bbba7b800398acee23e84dc4ba39518bd699f23",
+      "bytes": 31293
     },
     "card_identity_recognition.py": {
-      "sha256": "78d9bbc956c9bff2c1e5830e42df89844f755776c2b624551395306d940743fb",
-      "bytes": 41808
+      "sha256": "60f4c2ff16c7f5c5befb1b9d88ba9be775311c97d218d2e24968f0b4bd24f9c6",
+      "bytes": 41904
     },
     "card_identity_reference_catalog.json": {
       "sha256": "45a99a4520d2ccca217e196e49db016481105283e8a53b1e7dec2c11bb4a7c04",
@@ -2419,6 +2415,10 @@
       "sha256": "f09f8bfacd502fcb8fb5cec43bef34dcf7be7d0a70e50a234ec2784e6ffe0e33",
       "bytes": 1452
     },
+    "test_card_region_conflict_failclosed_v318.py": {
+      "sha256": "5509cfac1bf4216979c4b443135ac677a6085231400a52e54ce80f612b99b8c2",
+      "bytes": 3166
+    },
     "test_card_region_generation_precision_v306.py": {
       "sha256": "ae2b31356fe5826b206fa86691b0ac82a3ad61a66d88edef8aa315e599a79cea",
       "bytes": 3067
@@ -3316,8 +3316,8 @@
       "bytes": 12067
     },
     "verify_current_runtime.py": {
-      "sha256": "9ff937cd3affae25ac8f55dfef18e6ece781be2eaa02c86e1364fa09dc71b94b",
-      "bytes": 6402
+      "sha256": "a13fdfa9adbda5bbb33bdcf1096fd82411177fa3b87d702c06c52b65589f3e17",
+      "bytes": 6491
     },
     "verify_fault_injection_healing.py": {
       "sha256": "40f0d3565ea8094b4deb2cf407550eaf41928f3f7fbfc2863ead0053f7cb25f8",
@@ -3452,19 +3452,7 @@
       "bytes": 396
     }
   },
-  "mutable_json": {
-    "security_audit_report.json": {
-      "required": {
-        "schema_version": "int",
-        "generated_at": "str",
-        "scope": "str",
-        "finding_counts": "dict",
-        "findings": "list",
-        "note": "str"
-      },
-      "max_bytes": 20971520
-    }
-  },
+  "mutable_json": {},
   "policy": {
     "generated_code_auto_applied": false,
     "code_corruption_auto_repaired": false,
