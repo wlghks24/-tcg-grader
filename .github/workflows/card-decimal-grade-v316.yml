@@ -1,0 +1,38 @@
+name: Card Decimal Grade v316
+
+on:
+  push:
+    branches:
+      - fix/decimal-grade-card-number-v316
+
+permissions:
+  contents: write
+
+jobs:
+  harden:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout v316 branch
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          ref: fix/decimal-grade-card-number-v316
+          fetch-depth: 0
+
+      - name: Apply and verify v316 precision fix
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          python .github/scripts/card_decimal_grade_v316.py
+          git rm .github/scripts/card_decimal_grade_v316.py
+          git rm .github/workflows/card-decimal-grade-v316.yml
+          python fault_injection_healing.py --manifest
+          python -m py_compile multi_market_price_collector.py test_multi_market_price_collector.py
+          python -m unittest -v test_multi_market_price_collector.py test_market_reference_sources_v130.py test_card_tablet_runtime_v300.py
+          python verify_current_runtime.py
+          python repository_integrity_guard.py
+          git diff --check
+          git add -A
+          git commit -m 'fix: prevent decimal grade fragments from becoming card numbers v316'
+          git push origin HEAD:fix/decimal-grade-card-number-v316
