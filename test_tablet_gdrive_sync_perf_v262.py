@@ -45,8 +45,8 @@ class TabletGDriveSyncPerfV262Tests(unittest.TestCase):
         self.assertEqual(command[command.index("--max-age") + 1], perf.REMOTE_MANIFEST_MAX_AGE)
         self.assertEqual(run.call_args.kwargs["timeout"], 30)
 
-    def test_health_probe_is_single_bounded_universal_request(self):
-        response = _Response(b'{"ok":true}')
+    def test_health_probe_is_single_bounded_identity_checked_request(self):
+        response = _Response(b'{"ok":true,"service":"TCG v109 Updater"}')
         with mock.patch.object(perf.urllib.request, "urlopen", return_value=response) as urlopen:
             self.assertTrue(perf.fast_health_ok())
         self.assertEqual(urlopen.call_count, 1)
@@ -57,7 +57,9 @@ class TabletGDriveSyncPerfV262Tests(unittest.TestCase):
         oversized = _Response(b"x" * (64 * 1024 + 1))
         with mock.patch.object(perf.urllib.request, "urlopen", return_value=oversized):
             self.assertFalse(perf.fast_health_ok())
-        with mock.patch.object(perf.urllib.request, "urlopen", return_value=_Response(b'{"ok":false}')):
+        with mock.patch.object(perf.urllib.request, "urlopen", return_value=_Response(b'{"ok":true}')):
+            self.assertFalse(perf.fast_health_ok())
+        with mock.patch.object(perf.urllib.request, "urlopen", return_value=_Response(b'{"ok":true,"service":"other"}')):
             self.assertFalse(perf.fast_health_ok())
 
     def test_restore_reads_backup_manifest_once_after_verified_backup(self):
@@ -72,15 +74,14 @@ class TabletGDriveSyncPerfV262Tests(unittest.TestCase):
                 json.dumps({"sha256": {name: digest for name in core.OUTPUTS}}),
                 encoding="utf-8",
             )
-            real_loads = json.loads
-            with mock.patch.object(perf.hard, "verify_backup") as verify, \
+            hashes = {name: digest for name in core.OUTPUTS}
+            with mock.patch.object(perf.hard, "verify_backup", return_value=hashes) as verify, \
                  mock.patch.object(perf.hard, "_ORIGINAL_RESTORE_BACKUP") as restore, \
                  mock.patch.object(perf.core, "sha256", return_value=digest), \
-                 mock.patch.object(perf.json, "loads", side_effect=real_loads) as loads:
+                 mock.patch.object(perf.json, "loads", side_effect=AssertionError("manifest must not be reparsed")):
                 perf.optimized_hardened_restore_backup(repo, backup)
             verify.assert_called_once_with(backup)
             restore.assert_called_once_with(repo, backup)
-            self.assertEqual(loads.call_count, 1)
 
     def test_state_retention_is_bounded_and_preserves_inflight_backup(self):
         with tempfile.TemporaryDirectory() as tmp:

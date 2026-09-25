@@ -1,7 +1,7 @@
 {
   "version": 2,
   "engine": "v109-card-identity-ocr-learning",
-  "generated_at": "2026-09-25T11:09:34+00:00",
+  "generated_at": "2026-09-25T13:12:32+00:00",
   "files": {
     ".github/workflows/ai-auto-tracker-guard.yml": {
       "sha256": "636e750bd6d2619cce75d4bce2d68051eaa2209ae763bc8ec523ed73476728a6",
@@ -2088,8 +2088,8 @@
       "bytes": 21313
     },
     "security_self_audit.py": {
-      "sha256": "c2e9fea1cc13bf7a08557457b05a6534e73926abf2d541e07475d159b330bccb",
-      "bytes": 15778
+      "sha256": "f90c3848cbd23882f3d654ac816cf449c8098828eeda91ec3641a557f2b82f72",
+      "bytes": 16973
     },
     "selfrefine_crosscheck_gate.py": {
       "sha256": "931e970739ac63a4d5babd9abd93e0c8a61b7728050eddcf76d61ba0cf5fe357",
@@ -2196,20 +2196,20 @@
       "bytes": 9925
     },
     "tablet_gdrive_sync.py": {
-      "sha256": "665b8f99f27efc52eb0dbaa05108eabe6db85c18d48b0ecdd74499be8dac9e79",
-      "bytes": 18939
+      "sha256": "6e73f65fcf0d0b61ceb53c39e7f37c3ab60057f75179d07660111ab067305428",
+      "bytes": 23124
     },
     "tablet_gdrive_sync_hardening.py": {
-      "sha256": "9d1ce538fdb5727de8444c8694a7d9e50f638d82a2c91c157346c0eb1eac78bb",
-      "bytes": 8691
+      "sha256": "089f6921c5816158ebc89b3778c2c52f517a766b675b6cd593f13883761f07f8",
+      "bytes": 10098
     },
     "tablet_gdrive_sync_hardening_contextual.py": {
       "sha256": "b7252af7f52acac3ba3d1ed6340b91409a3cb297a17302835e9d70b723f8c20e",
       "bytes": 2059
     },
     "tablet_gdrive_sync_perf_v262.py": {
-      "sha256": "a3126cfaa1af13526ece8793e9b1c62189d63c8548018429b78eb75b288dc1fb",
-      "bytes": 8895
+      "sha256": "fea70b4ceb92866860ef78763538c73284ad4f497585bff2e33e26b08a329fce",
+      "bytes": 8514
     },
     "tablet_runtime_manifest.py": {
       "sha256": "53d466374f636c391ebe6c2ef17f1091d553d90428d88e2506eee46a4c452443",
@@ -2976,8 +2976,8 @@
       "bytes": 5643
     },
     "test_security_hardening.py": {
-      "sha256": "48ca7e7176fe30a37be8bbdbb2cf8b5dfe8edfd8f811530d71efbb3f68f08d27",
-      "bytes": 17878
+      "sha256": "5a03537e22d1c8cb06b1b4ab9a8f1fab65b25967173715f10b57495fc229e0fe",
+      "bytes": 18657
     },
     "test_security_self_audit.py": {
       "sha256": "dd2b659aaf9995e52cebd838fd6498d8117b5527042aa39e3228e39040c5a7b2",
@@ -3052,12 +3052,12 @@
       "bytes": 4208
     },
     "test_tablet_gdrive_sync.py": {
-      "sha256": "a5100c408b02fc32c4d8404f7c5dad3e8805419ccb5858a31d29a435a8accc64",
-      "bytes": 9459
+      "sha256": "55cfbc08df9f5fd461c58f9ec60843cf4636cb864bee041f5f1287dc2b1b248b",
+      "bytes": 14193
     },
     "test_tablet_gdrive_sync_perf_v262.py": {
-      "sha256": "3962183f1a17c57751c5d44c0efaf7b68456ecdc4aff4872acf01067269a83e3",
-      "bytes": 6582
+      "sha256": "65b2e646cae157ed549fdb3d089e964708e5afd01d7e9234707603818e420737",
+      "bytes": 6815
     },
     "test_tablet_gpt_tcg_grader_sync_v285.py": {
       "sha256": "2031ea1fb427c24b2e3e1751d982fd80a5c1733401f07f6ae731cbae76f2ed03",

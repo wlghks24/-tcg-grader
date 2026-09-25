@@ -15,6 +15,21 @@ import tablet_gdrive_sync_hardening as hardening
 ROOT = Path(__file__).resolve().parent
 
 
+class _Response:
+    def __init__(self, body: bytes, status: int = 200):
+        self._body = body
+        self.status = status
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, exc_type, exc, tb):
+        return False
+
+    def read(self, limit=-1):
+        return self._body if limit is None or limit < 0 else self._body[:limit]
+
+
 class TabletGDriveSyncTests(unittest.TestCase):
     def build_fixture(self):
         td = Path(tempfile.mkdtemp())
@@ -107,10 +122,102 @@ class TabletGDriveSyncTests(unittest.TestCase):
         with self.assertRaises(ValueError):
             sync.load_manifest(mp)
 
-    def test_remote_name_rejects_newline(self):
-        with self.assertRaises(ValueError):
-            sync.safe_remote_name("gdrive\n--config=x")
+    def test_rclone_remote_and_root_reject_argument_and_path_injection(self):
+        for value in ("gdrive\n--config=x", "--config=x", "/tmp", "gdrive/name", ""):
+            with self.subTest(remote=value), self.assertRaises(ValueError):
+                sync.safe_remote_name(value)
         self.assertEqual(sync.safe_remote_name("gdrive:"), "gdrive")
+
+        for value in ("../secrets", "TCG_Grader_Sync/../secrets", "/../x", "a\\b", "bad\nroot", ""):
+            with self.subTest(root=value), self.assertRaises(ValueError):
+                sync.safe_remote_root(value)
+        self.assertEqual(sync.safe_remote_root("/TCG_Grader_Sync/to_tablet/"), "TCG_Grader_Sync/to_tablet")
+
+
+    def test_manifest_json_is_strict_timezone_aware_and_bool_sizes_are_rejected(self):
+        _, _, mp, manifest = self.build_fixture()
+        raw = mp.read_text(encoding="utf-8")
+        duplicate = raw[:-1] + ',"run_id":"duplicate01"}'
+        mp.write_text(duplicate, encoding="utf-8")
+        with self.assertRaises(ValueError):
+            sync.load_manifest(mp)
+
+        manifest["created_at"] = "2026-09-25T12:00:00"
+        mp.write_text(json.dumps(manifest), encoding="utf-8")
+        with self.assertRaises(ValueError):
+            sync.load_manifest(mp)
+
+        manifest["created_at"] = dt.datetime.now(dt.timezone.utc).isoformat()
+        manifest["bundle"]["size"] = True
+        mp.write_text(json.dumps(manifest), encoding="utf-8")
+        with self.assertRaises(ValueError):
+            sync.load_manifest(mp)
+
+        manifest["bundle"]["size"] = 1
+        manifest["files"][0]["size"] = True
+        mp.write_text(json.dumps(manifest), encoding="utf-8")
+        with self.assertRaises(ValueError):
+            sync.load_manifest(mp)
+
+        raw = json.dumps(manifest).replace('"size": true', '"size": NaN', 1)
+        mp.write_text(raw, encoding="utf-8")
+        with self.assertRaises(ValueError):
+            sync.load_manifest(mp)
+
+    def test_bundle_rejects_directory_entries_instead_of_ignoring_them(self):
+        td, _, _, manifest = self.build_fixture()
+        bundle = td / "TCG_VERIFIED_20260919T000000Z_testrun01.tar.gz"
+        with tarfile.open(bundle, "w:gz") as tf:
+            directory = tarfile.TarInfo("extra/")
+            directory.type = tarfile.DIRTYPE
+            tf.addfile(directory)
+            for item in manifest["files"]:
+                source = td / "src" / item["name"]
+                tf.add(source, arcname=item["name"])
+        stage = td / "strict-stage"
+        stage.mkdir()
+        with self.assertRaises(ValueError):
+            sync.extract_bundle(bundle, stage, manifest)
+
+    def test_runtime_health_requires_service_identity_and_exact_verified_main_sha(self):
+        expected = "a" * 40
+        body = json.dumps({
+            "ok": True,
+            "service": sync.EXPECTED_HEALTH_SERVICE,
+            "collection_health": {
+                "runtime_build_sha": expected,
+                "runtime_build_sha_verified": True,
+            },
+        }).encode("utf-8")
+        with mock.patch.object(sync.urllib.request, "urlopen", return_value=_Response(body)):
+            self.assertTrue(sync.runtime_matches_main(expected))
+        with mock.patch.object(sync.urllib.request, "urlopen", return_value=_Response(body)):
+            self.assertFalse(sync.runtime_matches_main("b" * 40))
+        with mock.patch.object(sync.urllib.request, "urlopen", return_value=_Response(b'{"ok":true}')):
+            self.assertFalse(sync.health_ok())
+
+    def test_runner_lock_symlink_is_rejected_without_touching_target(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            state = Path(tmp) / "state"
+            state.mkdir()
+            victim = Path(tmp) / "victim.txt"
+            victim.write_text("keep-me", encoding="utf-8")
+            (state / hardening.RUNNER_LOCK).symlink_to(victim)
+            with self.assertRaises(RuntimeError):
+                hardening.acquire_runner_lock(state)
+            self.assertEqual(victim.read_text(encoding="utf-8"), "keep-me")
+
+    def test_backup_manifest_duplicate_keys_fail_closed(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            backup = self.build_backup(Path(tmp))
+            manifest = backup / "backup_manifest.json"
+            good = json.loads(manifest.read_text(encoding="utf-8"))["sha256"]
+            manifest.write_text(
+                '{"sha256":' + json.dumps(good) + ',"sha256":' + json.dumps(good) + '}',
+                encoding="utf-8",
+            )
+            with self.assertRaises(ValueError):
+                hardening.verify_backup(backup)
 
     def test_installer_polls_exactly_every_12_hours(self):
         installer = (ROOT / "TABLET_GDRIVE_SYNC_INSTALL.sh").read_text(encoding="utf-8")
