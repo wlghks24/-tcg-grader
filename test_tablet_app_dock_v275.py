@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import re
 import unittest
 from pathlib import Path
 
@@ -51,7 +52,9 @@ class TabletAppDockV276Tests(unittest.TestCase):
             self.assertIn(token, self.js)
 
     def test_pwa_update_and_offline_cache_are_rotated_with_ui(self) -> None:
-        self.assertIn("const CACHE='tcg-v276-network-first-runtime';", self.sw)
+        cache = re.search(r"const CACHE='tcg-v(\d+)-network-first-runtime';", self.sw)
+        self.assertIsNotNone(cache, "service-worker cache must keep the network-first runtime naming contract")
+        self.assertGreaterEqual(int(cache.group(1)), 276, "service-worker cache generation regressed below v276")
         self.assertIn("'./feature_category_nav.css'", self.sw)
         self.assertIn("'./feature_category_nav.js'", self.sw)
         self.assertIn("requestServiceWorkerRefresh();", self.js)
