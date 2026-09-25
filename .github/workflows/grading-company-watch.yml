@@ -5,23 +5,6 @@ on:
   workflow_dispatch:
   schedule:
     - cron: '23 */3 * * *'
-  push:
-    branches: [main]
-    paths:
-      - 'safe_runtime.py'
-      - 'test_safe_runtime_redirect_diagnostics_v253.py'
-      - 'grading_company_watch.py'
-      - 'grading_company_watch_resilient.py'
-      - 'grading_company_health_diagnostics.py'
-      - 'grading_costs_live.py'
-      - 'grading_costs_live.js'
-      - 'fault_injection_healing.py'
-      - 'test_grading_company_watch_v215.py'
-      - 'test_grading_company_watch_resilient_v257.py'
-      - 'test_grading_company_health_diagnostics_v252.py'
-      - 'test_grading_costs_live.py'
-      - 'test_grading_company_watch_protected_publish_v319.py'
-      - '.github/workflows/grading-company-watch.yml'
 
 permissions:
   actions: write
@@ -289,7 +272,7 @@ jobs:
             echo '## Grading Company Watch'
             echo
             echo '- companies: PSA / BGS / CGC / TAG / BRG'
-            echo '- cadence: every 3 hours + manual + relevant source pushes'
+            echo '- cadence: every 3 hours + manual'
             echo '- tracked: fee, service level, turnaround, availability, official event/news'
             echo '- trust: official HTTPS sources only; community/Instagram are leads only'
             echo '- maintenance policy: canonical Beckett redirect may prove status only; it never promotes price facts'
