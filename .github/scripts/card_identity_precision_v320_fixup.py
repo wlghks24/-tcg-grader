@@ -16,5 +16,9 @@ for old, new in replacements:
     if count != 1:
         raise RuntimeError(f"temporary patch marker expected once, got {count}: {old[:50]}")
     text = text.replace(old, new, 1)
+paren_old = "String(index))});"
+if text.count(paren_old) != 2:
+    raise RuntimeError(f"candidate option parentheses expected twice, got {text.count(paren_old)}")
+text = text.replace(paren_old, "String(index)))});")
 path.write_text(text, encoding="utf-8")
 print("v320 temporary patch markers repaired")
