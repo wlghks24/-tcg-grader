@@ -16,8 +16,8 @@ function ensureVerifiedLearningGuard(){
 }
 function gameKey(){const g=String(window.tcgIdentityGame||'pokemon').toLowerCase();return ['pokemon','onepiece','naruto'].includes(g)?g:'pokemon'}
 function predictedCompany(){return $('econCompany')?.value||$('actualCompany')?.value||'PSA'}
-function identity(){return {name:clean($('identityCardName')?.value),number:clean($('identityCardNumber')?.value),region:clean($('identityRegion')?.value)||'UNKNOWN'}}
-function makeKey(){const x=identity();return [gameKey(),x.region,x.name,x.number].filter(Boolean).join('|').slice(0,180)}
+function identity(){return {name:clean($('identityCardName')?.value),number:clean($('identityCardNumber')?.value),region:clean($('identityRegion')?.value)||'UNKNOWN',set_code:clean($('identitySetCode')?.value),variant:clean($('identityVariant')?.value)||'UNKNOWN',finish:clean($('identityFinish')?.value)||'UNKNOWN',rarity:clean($('identityRarity')?.value)}}
+function makeKey(){const x=identity();return [gameKey(),x.region,x.name,x.number,x.set_code,x.variant,x.finish,x.rarity].filter(Boolean).join('|').slice(0,180)}
 function syncIdentity(){
  const company=predictedCompany();
  if($('actualCompany'))$('actualCompany').value=company;
@@ -50,7 +50,7 @@ function mount(){
  const box=document.createElement('div');box.id='autoValidationPanel';box.className='auto-validation-panel';
  box.innerHTML=`<div class="av-head"><div><b>🔐 공식 인증 수동확인</b><small>자동 인증조회는 사용하지 않습니다. 인증번호를 입력하고 공식사이트를 직접 연 뒤 결과화면을 캡처해 수동 검증등록하세요.</small></div><span>MANUAL</span></div><div class="av-actions"><a id="autoVerifyOfficialLink" href="#" target="_blank" rel="noopener noreferrer" style="display:none">공식 조회 열기</a></div><div id="autoValidationStatus" class="av-status">인증번호 입력 대기</div>`;
  const first=root.querySelector('.workflow-part');(first||root).insertAdjacentElement(first?'afterbegin':'beforeend',box);
- ['identityCardName','identityCardNumber','identityRegion','actualCompany'].forEach(id=>$(id)?.addEventListener('change',syncManualPanel));
+ ['identityCardName','identityCardNumber','identityRegion','identitySetCode','identityVariant','identityFinish','identityRarity','actualCompany'].forEach(id=>$(id)?.addEventListener('change',syncManualPanel));
  $('certificationId')?.addEventListener('input',syncManualPanel);
  $('certificationId')?.addEventListener('change',syncManualPanel);
  syncManualPanel();return true;

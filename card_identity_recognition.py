@@ -102,6 +102,154 @@ def normalize_region(value: Any) -> str:
     return region if region in REGIONS else "UNKNOWN"
 
 
+CARD_IDENTITY_METADATA_VERSION = 321
+VARIANTS = {"UNKNOWN", "MANGA", "PARALLEL", "ALT_ART", "FULL_ART", "SPECIAL_ART", "PROMO", "STAMPED", "FIRST_EDITION"}
+FINISHES = {"UNKNOWN", "HOLO", "REVERSE_HOLO", "FOIL", "NON_HOLO"}
+RARITIES = {"UNKNOWN", "BWR", "MUR", "SAR", "CSR", "CHR", "SSR", "RRR", "SEC", "SR", "UR", "HR", "AR", "SP", "TR", "RR", "R", "U", "C", "L"}
+
+
+def normalize_set_code(value: Any) -> str:
+    text = unicodedata.normalize("NFKC", str(value or "")).upper().strip()
+    text = re.sub(r"\s+", "", text).replace("—", "-").replace("–", "-")
+    if not text or len(text) > 20:
+        return ""
+    if re.fullmatch(r"(?:MEG|PFL|ASC|POR|CRI|PBL|SVI|PAL|OBF|MEW|PAR|PAF|TEF|TWM|SFA|SCR|SSP|PRE|JTG|DRI|BLK|WHT)", text):
+        return text
+    if re.fullmatch(r"(?:SV|SM|S|M|XY|BW|DPT?|DP)\d{1,2}[A-Z]{0,2}", text):
+        return text
+    match = re.fullmatch(r"(OP|ST|EB|PRB)-?(\d{1,2})", text)
+    if match:
+        return f"{match.group(1)}{int(match.group(2)):02d}"
+    if re.fullmatch(r"P", text):
+        return "P"
+    if re.fullmatch(r"CP", text):
+        return "CP"
+    return ""
+
+
+def infer_set_code(value: Any, game: Any = "unknown") -> str:
+    raw = unicodedata.normalize("NFKC", str(value or "")).upper()
+    compact = re.sub(r"\s+", "", raw)
+    game_name = normalize_game(game)
+    patterns: list[str]
+    if game_name == "onepiece":
+        patterns = [r"(?<![A-Z0-9])(OP|ST|EB|PRB)-?(\d{1,2})(?![A-Z0-9])", r"(?<![A-Z0-9])(P)-?\d{1,3}(?![A-Z0-9])"]
+    elif game_name == "naruto":
+        patterns = [r"(?<![A-Z0-9])(CP)-?\d{1,3}(?![A-Z0-9])"]
+    else:
+        patterns = [
+            rf"(?<![A-Z0-9])({_POKEMON_EN_SET_PATTERN})(?=\s*[- ]?\s*\d{{1,3}}|[^A-Z0-9]|$)",
+            r"(?<![A-Z0-9])((?:SV|SM|S|M|XY|BW|DPT?|DP)\d{1,2}[A-Z]{0,2})(?=\d|[-/\s]|$)",
+        ]
+    for pattern in patterns:
+        match = re.search(pattern, raw, re.I)
+        if not match:
+            match = re.search(pattern, compact, re.I)
+        if not match:
+            continue
+        if game_name == "onepiece" and match.lastindex and match.lastindex >= 2:
+            return normalize_set_code(f"{match.group(1)}{match.group(2)}")
+        return normalize_set_code(match.group(1))
+    return ""
+
+
+def normalize_variant(value: Any) -> str:
+    token = str(value or "").strip().upper().replace("-", "_").replace(" ", "_")
+    aliases = {"MANGA_RARE": "MANGA", "ALT": "ALT_ART", "ALTERNATE_ART": "ALT_ART", "ALTERNATIVE_ART": "ALT_ART", "FA": "FULL_ART", "FULLART": "FULL_ART", "SPECIALART": "SPECIAL_ART", "PROMOTIONAL": "PROMO", "1ST_EDITION": "FIRST_EDITION"}
+    token = aliases.get(token, token)
+    return token if token in VARIANTS else "UNKNOWN"
+
+
+def infer_variant(value: Any) -> str:
+    text = unicodedata.normalize("NFKC", str(value or ""))
+    upper = text.upper()
+    rules = (
+        ("MANGA", r"(?:\bMANGA(?:\s+RARE)?\b|만화\s*패러렐|망가\s*패러렐|コミパラ)"),
+        ("ALT_ART", r"(?:\bALT(?:ERNATE|ERNATIVE)?\s*ART\b|\bALT\s*ART\b|얼터너티브\s*아트|대체\s*일러스트)"),
+        ("FULL_ART", r"(?:\bFULL\s*ART\b|풀\s*아트|\bFA\b)"),
+        ("SPECIAL_ART", r"(?:\bSPECIAL\s*ART\b|스페셜\s*아트)"),
+        ("PROMO", r"(?:\bPROMO(?:TIONAL)?\b|프로모|プロモ)"),
+        ("STAMPED", r"(?:\bSTAMPED\b|스탬프|スタンプ)"),
+        ("FIRST_EDITION", r"(?:\b1ST\s*EDITION\b|\bFIRST\s*EDITION\b|초판)"),
+        ("PARALLEL", r"(?:\bPARALLEL\b|패러렐|パラレル|(?<![A-Z0-9])(?:R|L|SR|SEC)-P(?![A-Z0-9]))"),
+    )
+    for label, pattern in rules:
+        if re.search(pattern, upper, re.I):
+            return label
+    return "UNKNOWN"
+
+
+def normalize_finish(value: Any) -> str:
+    token = str(value or "").strip().upper().replace("-", "_").replace(" ", "_")
+    aliases = {"REVERSE": "REVERSE_HOLO", "REVERSEHOLO": "REVERSE_HOLO", "HOLOFOIL": "HOLO", "NONHOLO": "NON_HOLO"}
+    token = aliases.get(token, token)
+    return token if token in FINISHES else "UNKNOWN"
+
+
+def infer_finish(value: Any) -> str:
+    text = unicodedata.normalize("NFKC", str(value or "")).upper()
+    if re.search(r"(?:\bREVERSE\s*HOLO(?:FOIL)?\b|리버스\s*홀로|リバース)", text, re.I):
+        return "REVERSE_HOLO"
+    if re.search(r"(?:\bNON[- ]?HOLO\b|논\s*홀로)", text, re.I):
+        return "NON_HOLO"
+    if re.search(r"(?:\bHOLO(?:GRAPHIC|FOIL)?\b|홀로|ホロ)", text, re.I):
+        return "HOLO"
+    if re.search(r"(?:\bFOIL\b|포일|箔)", text, re.I):
+        return "FOIL"
+    return "UNKNOWN"
+
+
+def normalize_rarity(value: Any) -> str:
+    token = re.sub(r"[^A-Z]", "", str(value or "").upper())
+    return token if token in RARITIES else "UNKNOWN"
+
+
+def infer_rarity(value: Any) -> str:
+    text = unicodedata.normalize("NFKC", str(value or "")).upper()
+    for rarity in ("BWR", "MUR", "SAR", "CSR", "CHR", "SSR", "RRR", "SEC", "SR", "UR", "HR", "AR", "SP", "TR", "RR"):
+        if re.search(rf"(?<![A-Z0-9]){re.escape(rarity)}(?![A-Z0-9])", text):
+            return rarity
+    return "UNKNOWN"
+
+
+def infer_card_family(game: Any, set_code: Any) -> str:
+    game_name = normalize_game(game)
+    code = normalize_set_code(set_code)
+    if game_name == "onepiece":
+        if code.startswith("OP"): return "BOOSTER"
+        if code.startswith("ST"): return "STARTER"
+        if code.startswith("EB"): return "EXTRA_BOOSTER"
+        if code.startswith("PRB"): return "PREMIUM_BOOSTER"
+        if code == "P": return "PROMO"
+        return "UNKNOWN"
+    if game_name == "naruto":
+        return "PROMO" if code == "CP" else "UNKNOWN"
+    if game_name == "pokemon":
+        if code in POKEMON_EN_SET_CODES or re.fullmatch(r"(?:SV|SM|S|M|XY|BW|DPT?|DP)\d{1,2}[A-Z]{0,2}", code):
+            return "EXPANSION"
+        return "UNKNOWN"
+    return "UNKNOWN"
+
+
+def classify_identity_metadata(text: Any, game: Any = "unknown", card_number: Any = "", explicit: dict[str, Any] | None = None) -> dict[str, str]:
+    explicit = explicit if isinstance(explicit, dict) else {}
+    combined = " ".join(str(x or "") for x in (text, card_number, explicit.get("card_name"), explicit.get("product_name"), explicit.get("market_key")))
+    set_code = normalize_set_code(explicit.get("set_code")) or infer_set_code(" ".join((str(card_number or ""), combined)), game)
+    variant = normalize_variant(explicit.get("variant"))
+    if variant == "UNKNOWN": variant = infer_variant(combined)
+    finish = normalize_finish(explicit.get("finish"))
+    if finish == "UNKNOWN": finish = infer_finish(combined)
+    rarity = normalize_rarity(explicit.get("rarity"))
+    if rarity == "UNKNOWN": rarity = infer_rarity(combined)
+    return {
+        "set_code": set_code,
+        "variant": variant,
+        "finish": finish,
+        "rarity": rarity,
+        "card_family": infer_card_family(game, set_code),
+    }
+
+
 def infer_region_evidence(value: Any) -> dict[str, Any]:
     """Return bounded KR/JP/US evidence and fail closed when strong signals disagree."""
     text = unicodedata.normalize("NFKC", str(value or ""))[:MAX_OCR_TEXT]
@@ -169,7 +317,7 @@ def _path_signature(path: Path) -> tuple[str, int, int]:
 
 
 def catalog() -> list[dict[str, Any]]:
-    """Load the identity catalog once per file revision, not once per OCR pass."""
+    """Load the identity catalog once per file revision, keeping print variants isolated."""
     global _CATALOG_CACHE_SIGNATURE, _CATALOG_CACHE_ROWS
     signature = (_path_signature(MARKET), _path_signature(REFERENCE))
     if signature == _CATALOG_CACHE_SIGNATURE:
@@ -186,26 +334,29 @@ def catalog() -> list[dict[str, Any]]:
         game = normalize_game(value.get("game"))
         if not name:
             continue
-        aliases = sorted({
-            name,
-            parts[1] if len(parts) > 1 else "",
-            str(value.get("product_name") or ""),
-        } - {""})
+        aliases = sorted({name, parts[1] if len(parts) > 1 else "", str(value.get("product_name") or "")} - {""})
+        meta = classify_identity_metadata(
+            " ".join((key, name, str(value.get("product_name") or ""))),
+            game,
+            number,
+            explicit={**value, "market_key": key, "card_name": name},
+        )
         rows.append({
             "market_key": key[:180],
             "region": parts[0] if parts and parts[0] in REGIONS else "UNKNOWN",
             "game": game,
             "card_name": name,
             "card_number": number,
+            **meta,
             "aliases": [x[:140] for x in aliases],
             "_normalized_aliases": [normalize(x) for x in aliases if len(normalize(x)) >= 2],
         })
     reference = _json(REFERENCE, {"cards": []})
-    # Catalog identity is edition-specific. The same card name/number may exist
-    # in KR/JP/US; one region must never suppress a verified reference row from
-    # another region.
     known = {
-        (row["game"], normalize(row["card_name"]), row["card_number"], normalize_region(row.get("region")))
+        (
+            row["game"], normalize(row["card_name"]), row["card_number"], normalize_region(row.get("region")),
+            row.get("set_code", ""), row.get("variant", "UNKNOWN"), row.get("finish", "UNKNOWN"), row.get("rarity", "UNKNOWN"),
+        )
         for row in rows
     }
     for value in reference.get("cards", []):
@@ -217,23 +368,24 @@ def catalog() -> list[dict[str, Any]]:
         region = normalize_region(value.get("region"))
         if game not in GAMES or not name:
             continue
-        key = (game, normalize(name), number, region)
-        if key in known:
+        aliases = sorted({name, *(str(alias)[:140] for alias in value.get("aliases", []) if isinstance(alias, str))})
+        meta = classify_identity_metadata(
+            " ".join((name, *aliases)), game, number, explicit={**value, "card_name": name}
+        )
+        identity_key = (game, normalize(name), number, region, meta["set_code"], meta["variant"], meta["finish"], meta["rarity"])
+        if identity_key in known:
             continue
-        aliases = sorted({
-            name,
-            *(str(alias)[:140] for alias in value.get("aliases", []) if isinstance(alias, str)),
-        })
         rows.append({
             "market_key": "",
             "region": region,
             "game": game,
             "card_name": name,
             "card_number": number,
+            **meta,
             "aliases": [alias for alias in aliases if alias],
             "_normalized_aliases": [normalize(alias) for alias in aliases if len(normalize(alias)) >= 2],
         })
-        known.add(key)
+        known.add(identity_key)
 
     _CATALOG_CACHE_SIGNATURE = signature
     _CATALOG_CACHE_ROWS = rows
@@ -340,9 +492,8 @@ def match_catalog(
     region = normalize_region(region)
     numbers = tuple(extract_numbers(text))
     rows = catalog()
+    query_meta = classify_identity_metadata(text, game)
 
-    # Fraction-only card numbers can recur in many sets. Measure ambiguity before
-    # assigning confidence so a generic 001/100 never looks like a 98% exact ID.
     partial_counts: Counter[str] = Counter()
     for candidate in numbers:
         for row in rows:
@@ -358,6 +509,29 @@ def match_catalog(
         exact_candidate = next((candidate for candidate, relation in relations if relation == "exact"), "")
         partial_candidate = next((candidate for candidate, relation in relations if relation == "partial"), "")
         name_score = _name_score(text, row)
+        row_meta = {
+            "set_code": normalize_set_code(row.get("set_code")),
+            "variant": normalize_variant(row.get("variant")),
+            "finish": normalize_finish(row.get("finish")),
+            "rarity": normalize_rarity(row.get("rarity")),
+            "card_family": str(row.get("card_family") or infer_card_family(row.get("game"), row.get("set_code"))),
+        }
+        for field in ("set_code", "variant", "finish", "rarity"):
+            wanted = query_meta.get(field) or ("UNKNOWN" if field != "set_code" else "")
+            actual = row_meta.get(field) or ("UNKNOWN" if field != "set_code" else "")
+            wanted_known = bool(wanted and wanted != "UNKNOWN")
+            actual_known = bool(actual and actual != "UNKNOWN")
+            if wanted_known and actual_known and wanted != actual:
+                break
+        else:
+            pass
+        if any(
+            (query_meta.get(field) not in (None, "", "UNKNOWN"))
+            and (row_meta.get(field) not in (None, "", "UNKNOWN"))
+            and query_meta.get(field) != row_meta.get(field)
+            for field in ("set_code", "variant", "finish", "rarity")
+        ):
+            continue
 
         if exact_candidate:
             number_score = 0.985
@@ -383,14 +557,25 @@ def match_catalog(
                 continue
             score += 0.012
 
+        matched_meta: list[str] = []
+        for field, bonus in (("set_code", 0.012), ("variant", 0.015), ("finish", 0.008), ("rarity", 0.010)):
+            wanted = query_meta.get(field)
+            actual = row_meta.get(field)
+            if wanted not in (None, "", "UNKNOWN") and wanted == actual:
+                score += bonus
+                matched_meta.append(field)
+        if matched_meta:
+            matched_by += "+" + "+".join(matched_meta)
+
         score = max(0.0, min(0.999, score))
         if score >= 0.58:
             results.append({
                 **{key: row[key] for key in ("market_key", "region", "game", "card_name", "card_number")},
+                **row_meta,
                 "confidence": round(score, 4),
                 "matched_by": matched_by,
             })
-    results.sort(key=lambda row: (-row["confidence"], 0 if row["card_number"] else 1, row["card_name"]))
+    results.sort(key=lambda row: (-row["confidence"], 0 if row["card_number"] else 1, row["card_name"], row.get("variant", "UNKNOWN")))
     return results[:max(1, min(10, int(limit)))]
 
 
@@ -835,13 +1020,11 @@ def match_learning(image_hash: str, game: str, region: str = "UNKNOWN") -> list[
         row for row in learning_payload().get("confirmed", [])
         if isinstance(row, dict) and row.get("game") == game and region_matches(row)
     ]
-    # Similar-image support is counted inside one exact edition only.
     identities = Counter(
         (
-            row.get("card_name"),
-            row.get("card_number"),
-            row.get("market_key"),
-            normalize_region(row.get("region")),
+            row.get("card_name"), row.get("card_number"), row.get("market_key"), normalize_region(row.get("region")),
+            normalize_set_code(row.get("set_code")), normalize_variant(row.get("variant")),
+            normalize_finish(row.get("finish")), normalize_rarity(row.get("rarity")),
         )
         for row in rows
     )
@@ -851,35 +1034,34 @@ def match_learning(image_hash: str, game: str, region: str = "UNKNOWN") -> list[
         if not HASH_RE.fullmatch(stored):
             continue
         distance = _hamming(image_hash, stored)
-        identity = (
-            row.get("card_name"),
-            row.get("card_number"),
-            row.get("market_key"),
-            normalize_region(row.get("region")),
+        identity_key = (
+            row.get("card_name"), row.get("card_number"), row.get("market_key"), normalize_region(row.get("region")),
+            normalize_set_code(row.get("set_code")), normalize_variant(row.get("variant")),
+            normalize_finish(row.get("finish")), normalize_rarity(row.get("rarity")),
         )
         exact = distance == 0
-        if exact or (distance <= 8 and identities[identity] >= 3):
+        if exact or (distance <= 8 and identities[identity_key] >= 3):
+            meta = classify_identity_metadata("", row.get("game", game), row.get("card_number"), explicit=row)
             hits.append({
                 "market_key": row.get("market_key", ""), "region": row.get("region", "UNKNOWN"),
                 "game": row.get("game", game), "card_name": row.get("card_name", ""),
-                "card_number": row.get("card_number", ""),
+                "card_number": row.get("card_number", ""), **meta,
                 "confidence": 0.999 if exact else round(max(0.86, 0.98 - distance * 0.012), 4),
                 "matched_by": "confirmed_exact_image" if exact else "confirmed_visual_learning",
             })
     unique = {}
     for row in hits:
-        key = (row["card_name"], row["card_number"], row["market_key"], normalize_region(row.get("region")))
+        key = _candidate_identity_signature(row)
         if key not in unique or row["confidence"] > unique[key]["confidence"]:
             unique[key] = row
     return sorted(unique.values(), key=lambda row: -row["confidence"])[:5]
 
 
-def _candidate_identity_signature(row: dict[str, Any]) -> tuple[str, str, str, str, str]:
+def _candidate_identity_signature(row: dict[str, Any]) -> tuple[str, ...]:
     return (
-        normalize_game(row.get("game")),
-        normalize_region(row.get("region")),
-        normalize(row.get("card_name")),
-        normalize_number(row.get("card_number")),
+        normalize_game(row.get("game")), normalize_region(row.get("region")), normalize(row.get("card_name")),
+        normalize_number(row.get("card_number")), normalize_set_code(row.get("set_code")),
+        normalize_variant(row.get("variant")), normalize_finish(row.get("finish")), normalize_rarity(row.get("rarity")),
         str(row.get("market_key") or "").strip(),
     )
 
@@ -887,40 +1069,40 @@ def _candidate_identity_signature(row: dict[str, Any]) -> tuple[str, str, str, s
 def _candidate_ambiguity(candidates: list[dict[str, Any]], requested_region: str) -> dict[str, Any]:
     if not candidates:
         return {
-            "identity_ambiguous": False,
-            "region_ambiguous": False,
-            "market_ambiguous": False,
-            "contender_count": 0,
-            "regions": [],
-            "top_confidence": 0.0,
+            "identity_ambiguous": False, "region_ambiguous": False, "market_ambiguous": False,
+            "metadata_ambiguous": False, "variant_ambiguous": False, "finish_ambiguous": False,
+            "rarity_ambiguous": False, "set_ambiguous": False, "contender_count": 0,
+            "regions": [], "top_confidence": 0.0,
         }
     top = max(0.0, min(1.0, float(candidates[0].get("confidence") or 0.0)))
-    # Only high-confidence candidates close enough to the top can block automatic
-    # selection. Lower-scored alternatives remain visible for manual review.
     contenders = [
         row for row in candidates
-        if float(row.get("confidence") or 0.0) >= 0.90
-        and top - float(row.get("confidence") or 0.0) <= 0.02
+        if float(row.get("confidence") or 0.0) >= 0.90 and top - float(row.get("confidence") or 0.0) <= 0.02
     ]
     signatures = {_candidate_identity_signature(row) for row in contenders}
-    regions = sorted({
-        normalize_region(row.get("region")) for row in contenders
-        if normalize_region(row.get("region")) in {"KR", "JP", "US"}
-    })
+    regions = sorted({normalize_region(row.get("region")) for row in contenders if normalize_region(row.get("region")) in {"KR", "JP", "US"}})
     market_keys = {str(row.get("market_key") or "").strip() for row in contenders if str(row.get("market_key") or "").strip()}
+    variants = {normalize_variant(row.get("variant")) for row in contenders if normalize_variant(row.get("variant")) != "UNKNOWN"}
+    finishes = {normalize_finish(row.get("finish")) for row in contenders if normalize_finish(row.get("finish")) != "UNKNOWN"}
+    rarities = {normalize_rarity(row.get("rarity")) for row in contenders if normalize_rarity(row.get("rarity")) != "UNKNOWN"}
+    set_codes = {normalize_set_code(row.get("set_code")) for row in contenders if normalize_set_code(row.get("set_code"))}
     requested_region = normalize_region(requested_region)
     region_ambiguous = requested_region == "UNKNOWN" and len(regions) > 1
-    # Distinct edition rows are distinct identities for automatic selection even
-    # when the printed name/number is identical.
-    identity_ambiguous = len(signatures) > 1
-    market_ambiguous = len(market_keys) > 1
+    variant_ambiguous = len(variants) > 1
+    finish_ambiguous = len(finishes) > 1
+    rarity_ambiguous = len(rarities) > 1
+    set_ambiguous = len(set_codes) > 1
+    metadata_ambiguous = variant_ambiguous or finish_ambiguous or rarity_ambiguous or set_ambiguous
     return {
-        "identity_ambiguous": identity_ambiguous,
+        "identity_ambiguous": len(signatures) > 1,
         "region_ambiguous": region_ambiguous,
-        "market_ambiguous": market_ambiguous,
-        "contender_count": len(contenders),
-        "regions": regions,
-        "top_confidence": round(top, 4),
+        "market_ambiguous": len(market_keys) > 1,
+        "metadata_ambiguous": metadata_ambiguous,
+        "variant_ambiguous": variant_ambiguous,
+        "finish_ambiguous": finish_ambiguous,
+        "rarity_ambiguous": rarity_ambiguous,
+        "set_ambiguous": set_ambiguous,
+        "contender_count": len(contenders), "regions": regions, "top_confidence": round(top, 4),
     }
 
 
@@ -956,14 +1138,9 @@ def recognize(payload: dict[str, Any]) -> dict[str, Any]:
     learned = match_learning(image_hash, game, region)
     catalog_hits = match_catalog(supplied_text, game, region=region)
     merged = learned + catalog_hits
-    unique: dict[tuple[str, str, str, str], dict[str, Any]] = {}
+    unique: dict[tuple[str, ...], dict[str, Any]] = {}
     for row in merged:
-        key = (
-            str(row.get("card_name") or ""),
-            str(row.get("card_number") or ""),
-            str(row.get("market_key") or ""),
-            normalize_region(row.get("region")),
-        )
+        key = _candidate_identity_signature(row)
         if key not in unique or float(row.get("confidence") or 0.0) > float(unique[key].get("confidence") or 0.0):
             unique[key] = row
     candidates = sorted(unique.values(), key=lambda row: -float(row.get("confidence") or 0.0))[:5]
@@ -971,14 +1148,19 @@ def recognize(payload: dict[str, Any]) -> dict[str, Any]:
     identity_ambiguous = bool(ambiguity["identity_ambiguous"])
     region_ambiguous = bool(ambiguity["region_ambiguous"])
     market_ambiguous = bool(ambiguity["market_ambiguous"])
-    auto_selection_blocked = bool(region_conflict or identity_ambiguous or region_ambiguous or market_ambiguous)
+    metadata_ambiguous = bool(ambiguity["metadata_ambiguous"])
+    auto_selection_blocked = bool(region_conflict or identity_ambiguous or region_ambiguous or market_ambiguous or metadata_ambiguous)
     market_link_blocked = bool(auto_selection_blocked or region == "UNKNOWN")
+    detected_metadata = classify_identity_metadata(supplied_text, game)
     return {
         "ok": True, "game": game, "region_hint": region, "requested_region": requested_region,
         "inferred_region": inferred_region,
         "region_conflict": region_conflict, "region_evidence": region_evidence,
         "region_ambiguous": region_ambiguous, "identity_ambiguous": identity_ambiguous,
-        "market_ambiguous": market_ambiguous, "market_link_blocked": market_link_blocked,
+        "market_ambiguous": market_ambiguous, "metadata_ambiguous": metadata_ambiguous,
+        "variant_ambiguous": bool(ambiguity["variant_ambiguous"]), "finish_ambiguous": bool(ambiguity["finish_ambiguous"]),
+        "rarity_ambiguous": bool(ambiguity["rarity_ambiguous"]), "set_ambiguous": bool(ambiguity["set_ambiguous"]),
+        "market_link_blocked": market_link_blocked, "identity_metadata": detected_metadata,
         "ambiguity": ambiguity,
         "image_hash": image_hash, "ocr_text": supplied_text,
         "ocr_error": ocr_error, "ocr_diagnostics": ocr_diagnostics,
@@ -990,7 +1172,9 @@ def recognize(payload: dict[str, Any]) -> dict[str, Any]:
         "policy": {"prediction_auto_learned": False, "user_confirmation_required": True,
                    "similar_image_learning_min_confirmations": 3,
                    "unknown_edition_market_link": False,
-                   "ambiguous_identity_auto_selection": False},
+                   "ambiguous_identity_auto_selection": False,
+                   "ambiguous_print_variant_market_link": False,
+                   "metadata_axes": ["set_code", "variant", "finish", "rarity"]},
     }
 
 def save_confirmation(payload: dict[str, Any]) -> dict[str, Any]:
@@ -1010,30 +1194,38 @@ def save_confirmation(payload: dict[str, Any]) -> dict[str, Any]:
         raise ValueError("카드명 오류")
     card_number = normalize_number(payload.get("card_number"))
     market_key = str(payload.get("market_key") or "")
-    known = {row["market_key"]: row for row in catalog()}
+    known = {row["market_key"]: row for row in catalog() if row.get("market_key")}
     if market_key and market_key not in known:
         raise ValueError("시세 키 오류")
-    incoming_region = normalize_region(
-        payload.get("region") or (known.get(market_key) or {}).get("region") or "UNKNOWN"
+    known_row = known.get(market_key) or {}
+    incoming_region = normalize_region(payload.get("region") or known_row.get("region") or "UNKNOWN")
+    meta = classify_identity_metadata(
+        " ".join((card_name, card_number, market_key)), game, card_number,
+        explicit={**known_row, **payload, "card_name": card_name, "market_key": market_key},
     )
+    for field, normalizer in (("set_code", normalize_set_code), ("variant", normalize_variant), ("finish", normalize_finish), ("rarity", normalize_rarity)):
+        supplied = normalizer(payload.get(field))
+        verified = normalizer(known_row.get(field))
+        if supplied not in ("", "UNKNOWN") and verified not in ("", "UNKNOWN") and supplied != verified:
+            raise ValueError("시세 키와 카드 분류 불일치")
     core_identity = (card_name, card_number, market_key, game)
+    metadata_identity = (meta["set_code"], meta["variant"], meta["finish"], meta["rarity"])
+    full_core_identity = (*core_identity, *metadata_identity)
 
     with exclusive_file_lock(LEARNING, timeout_seconds=10.0, stale_seconds=300.0):
         data = learning_payload()
         confirmed = [row for row in data.get("confirmed", []) if isinstance(row, dict)]
         effective_region = incoming_region
         conflicting = False
-
         for item in confirmed:
             if item.get("image_hash") != image_hash:
                 continue
+            item_meta = classify_identity_metadata("", item.get("game"), item.get("card_number"), explicit=item)
             item_core = (
-                item.get("card_name"),
-                item.get("card_number"),
-                item.get("market_key"),
-                item.get("game"),
+                item.get("card_name"), item.get("card_number"), item.get("market_key"), item.get("game"),
+                item_meta["set_code"], item_meta["variant"], item_meta["finish"], item_meta["rarity"],
             )
-            if item_core != core_identity:
+            if item_core != full_core_identity:
                 conflicting = True
                 break
             old_region = normalize_region(item.get("region"))
@@ -1046,8 +1238,9 @@ def save_confirmation(payload: dict[str, Any]) -> dict[str, Any]:
         if conflicting:
             conflict = {
                 "image_hash": image_hash, "card_name": card_name, "card_number": card_number,
-                "market_key": market_key, "game": game, "region": incoming_region,
+                "market_key": market_key, "game": game, "region": incoming_region, **meta,
                 "reason": "same_image_conflicting_identity_or_edition",
+                "conflict_scope": "identity_edition_or_variant",
             }
             data["conflicts"] = (list(data.get("conflicts", [])) + [conflict])[-200:]
             atomic_write_json(LEARNING, data, suffix=".identity.tmp")
@@ -1056,47 +1249,44 @@ def save_confirmation(payload: dict[str, Any]) -> dict[str, Any]:
         promoted = False
         if effective_region in {"KR", "JP", "US"}:
             for item in confirmed:
+                item_meta = classify_identity_metadata("", item.get("game"), item.get("card_number"), explicit=item)
                 item_core = (
-                    item.get("card_name"),
-                    item.get("card_number"),
-                    item.get("market_key"),
-                    item.get("game"),
+                    item.get("card_name"), item.get("card_number"), item.get("market_key"), item.get("game"),
+                    item_meta["set_code"], item_meta["variant"], item_meta["finish"], item_meta["rarity"],
                 )
-                if (
-                    item.get("image_hash") == image_hash
-                    and item_core == core_identity
-                    and normalize_region(item.get("region")) == "UNKNOWN"
-                ):
+                if item.get("image_hash") == image_hash and item_core == full_core_identity and normalize_region(item.get("region")) == "UNKNOWN":
                     item["region"] = effective_region
                     promoted = True
 
         identity = (*core_identity, effective_region)
-        keys = {
-            (
-                item.get("image_hash"), item.get("card_name"), item.get("card_number"),
-                item.get("market_key"), item.get("game"), normalize_region(item.get("region")),
-            )
-            for item in confirmed
-        }
-        if (image_hash, *identity) not in keys:
+        full_identity = (*core_identity, *metadata_identity, effective_region)
+        keys = set()
+        for item in confirmed:
+            item_meta = classify_identity_metadata("", item.get("game"), item.get("card_number"), explicit=item)
+            keys.add((
+                item.get("image_hash"), item.get("card_name"), item.get("card_number"), item.get("market_key"), item.get("game"),
+                item_meta["set_code"], item_meta["variant"], item_meta["finish"], item_meta["rarity"], normalize_region(item.get("region")),
+            ))
+        if (image_hash, *full_identity) not in keys:
             confirmed.append({
                 "image_hash": image_hash, "card_name": card_name, "card_number": card_number,
-                "market_key": market_key, "game": game, "region": effective_region, "confirmed": True,
+                "market_key": market_key, "game": game, "region": effective_region, **meta, "confirmed": True,
             })
         data["confirmed"] = confirmed[-MAX_ROWS:]
-        data.update({"version": 1, "confirmed_only": True, "auto_prediction_learning": False})
+        data.update({"version": 2, "identity_metadata_version": CARD_IDENTITY_METADATA_VERSION, "confirmed_only": True, "auto_prediction_learning": False})
         atomic_write_json(LEARNING, data, suffix=".identity.tmp")
-        count = sum(
-            1 for item in data["confirmed"]
-            if (
-                item.get("card_name"), item.get("card_number"), item.get("market_key"),
-                item.get("game"), normalize_region(item.get("region")),
-            ) == identity
-        )
+        count = 0
+        for item in data["confirmed"]:
+            item_meta = classify_identity_metadata("", item.get("game"), item.get("card_number"), explicit=item)
+            item_identity = (
+                item.get("card_name"), item.get("card_number"), item.get("market_key"), item.get("game"),
+                item_meta["set_code"], item_meta["variant"], item_meta["finish"], item_meta["rarity"], normalize_region(item.get("region")),
+            )
+            if item_identity == full_identity:
+                count += 1
         return {
-            "ok": True, "saved": True, "promoted_region": promoted,
-            "region": effective_region, "identity_confirmations": count,
-            "similar_image_learning_enabled": count >= 3,
+            "ok": True, "saved": True, "promoted_region": promoted, "region": effective_region,
+            **meta, "identity_confirmations": count, "similar_image_learning_enabled": count >= 3,
         }
 
 
@@ -1111,7 +1301,10 @@ def self_test() -> dict[str, Any]:
     assert "065/060" in extract_numbers("O65/O6O")
     assert normalize_game("ONE PIECE") == "onepiece"
     assert normalize_region("jp") == "JP"
-    return {"ok": True, "tests": 8, "best": hits[0]}
+    assert infer_set_code("OP13-007", "onepiece") == "OP13"
+    assert infer_variant("manga parallel") == "MANGA"
+    assert infer_finish("reverse holo") == "REVERSE_HOLO"
+    return {"ok": True, "tests": 11, "best": hits[0]}
 
 
 if __name__ == "__main__":

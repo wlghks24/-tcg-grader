@@ -43,6 +43,12 @@ function editionCode(value){
 function editionLabel(code){return ({KR:'🇰🇷 한국판',JP:'🇯🇵 일본판',US:'🇺🇸 미국/영문판',UNKNOWN:'🌐 판본 미확인'})[code]||'🌐 판본 미확인'}
 function editionSearchToken(code){return ({KR:'Korean',JP:'Japanese',US:'English'})[code]||''}
 function marketKeyEdition(value){const first=String(value||'').split('|',1)[0].toUpperCase();return ['KR','JP','US'].includes(first)?first:'UNKNOWN'}
+function currentIdentityMeta(){const infer=window.TCGCardIdentityMeta?.infer;if(typeof infer!=='function')return {set_code:'',variant:'UNKNOWN',finish:'UNKNOWN',rarity:'UNKNOWN',card_family:'UNKNOWN'};return infer({game:window.tcgIdentityGame||'pokemon',card_name:el('identityCardName')?.value||'',card_number:el('identityCardNumber')?.value||'',market_key:el('identityMarketKey')?.value||'',ocr_text:window.tcgIdentityOcrText||'',set_code:el('identitySetCode')?.value||'',variant:el('identityVariant')?.value||'UNKNOWN',finish:el('identityFinish')?.value||'UNKNOWN',rarity:el('identityRarity')?.value||''})}
+function optionIdentityMeta(option){const infer=window.TCGCardIdentityMeta?.infer;if(typeof infer!=='function')return {set_code:'',variant:'UNKNOWN',finish:'UNKNOWN',rarity:'UNKNOWN'};return infer({game:window.tcgIdentityGame||'pokemon',card_name:option?.textContent||'',market_key:option?.value||'',set_code:option?.dataset?.setCode||'',variant:option?.dataset?.variant||'UNKNOWN',finish:option?.dataset?.finish||'UNKNOWN',rarity:option?.dataset?.rarity||'UNKNOWN'})}
+function quoteIdentityMeta(row){const infer=window.TCGCardIdentityMeta?.infer;if(typeof infer!=='function')return {set_code:'',variant:'UNKNOWN',finish:'UNKNOWN',rarity:'UNKNOWN'};return infer({game:window.tcgIdentityGame||'pokemon',card_name:row?.title||'',card_number:row?.card_number||'',product_name:row?.product_name||'',set_code:row?.set_code||'',variant:row?.variant||'UNKNOWN',finish:row?.finish||'UNKNOWN',rarity:row?.rarity||'UNKNOWN'})}
+function metadataKnown(value){return Boolean(value&&value!=='UNKNOWN')}
+function marketMetadataCompatible(target,actual){for(const field of ['set_code','variant','finish','rarity']){const t=target?.[field]||'',a=actual?.[field]||'',tk=metadataKnown(t),ak=metadataKnown(a);if(tk&&ak&&t!==a)return false;if(['variant','finish','rarity'].includes(field)&&tk!==ak)return false}return true}
+function marketMetadataTokens(meta){const fn=window.TCGCardIdentityMeta?.searchTokens;return typeof fn==='function'?fn(meta):[meta?.set_code,meta?.rarity].filter(Boolean)}
 function quoteTypeLabel(row){
  if(row?.price_type==='sold')return '체결/판매완료';
  if(row?.price_type==='auction_result')return '경매결과';
@@ -66,10 +72,8 @@ function safeReferenceUrl(row,query){
  }catch(_){return ''}
 }
 function marketQuery(){
- const name=(el('identityCardName')?.value||'').trim();
- const number=(el('identityCardNumber')?.value||'').trim();
- const edition=editionSearchToken(editionCode(el('identityRegion')?.value||''));
- return [name,number,edition].filter(Boolean).join(' ').trim();
+ const name=(el('identityCardName')?.value||'').trim(),number=(el('identityCardNumber')?.value||'').trim(),edition=editionSearchToken(editionCode(el('identityRegion')?.value||'')),meta=currentIdentityMeta();
+ return [name,number,edition,...marketMetadataTokens(meta)].filter(Boolean).join(' ').trim();
 }
 function referenceSources(){
  const live=platformMarket?.market_reference_sources;
@@ -146,21 +150,15 @@ async function loadPlatformQuotes(){
 }
 function quoteScore(row,name,number,region){
  if(!row||row.platform!=='WYYYES')return -999;
- const title=norm(row.title),n=norm(name),cn=norm(number),qcn=norm(row.card_number);
+ const title=norm(row.title),n=norm(name),cn=norm(number),qcn=norm(row.card_number),target=currentIdentityMeta(),quoteMeta=quoteIdentityMeta(row);
+ if(!marketMetadataCompatible(target,actual))return -999;
  let score=0;
- if(cn){
-   if(!qcn||cn!==qcn)return -999;
-   score+=120;
- }
+ if(cn){if(!qcn||cn!==qcn)return -999;score+=120}
  if(n&&n.length>=4&&(title.includes(n)||n.includes(title)))score+=50;
- const tokens=String(name||'').toLowerCase().match(/[0-9a-z가-힣]{2,}/g)||[];
- const hits=tokens.filter(t=>title.includes(norm(t))).length;
- score+=Math.min(30,hits*10);
- const wanted=editionCode(region),actual=editionCode(row.card_region||'UNKNOWN');
- if(wanted!=='UNKNOWN'&&actual===wanted)score+=20;
- else if(wanted!=='UNKNOWN'&&actual!==wanted)return -999;
- if(Number(row.price)>0)score+=5;
- return score;
+ const tokens=String(name||'').toLowerCase().match(/[0-9a-z가-힣]{2,}/g)||[];score+=Math.min(30,tokens.filter(t=>title.includes(norm(t))).length*10);
+ const wanted=editionCode(region),actual=editionCode(row.card_region||'UNKNOWN');if(wanted!=='UNKNOWN'&&actual===wanted)score+=20;else if(wanted!=='UNKNOWN'&&actual!==wanted)return -999;
+ for(const field of ['set_code','variant','finish','rarity'])if(metadataKnown(target[field])&&target[field]===quoteMeta[field])score+=8;
+ if(Number(row.price)>0)score+=5;return score;
 }
 function matchingPlatformQuotes(name,number,region){
  if(editionCode(region)==='UNKNOWN')return [];
@@ -191,38 +189,23 @@ function renderPlatformQuotes(){
 }
 function findMarketKey(name,number,region){
  const select=el('econCard');if(!select)return '';
- const wanted=editionCode(region),options=[...select.options].filter(option=>option.value);
+ const wanted=editionCode(region),options=[...select.options].filter(option=>option.value),target=currentIdentityMeta();
  if(wanted==='UNKNOWN')return '';
- const n=norm(name),cn=norm(number),direct=(el('identityMarketKey')?.value||'').trim();
- const directOption=options.find(option=>option.value===direct);
- if(directOption&&(wanted==='UNKNOWN'||marketKeyEdition(direct)===wanted)){
-   const directBlob=norm(directOption.textContent+' '+directOption.value);
-   if(!cn||directBlob.includes(cn))return direct;
- }
+ const n=norm(name),cn=norm(number),direct=(el('identityMarketKey')?.value||'').trim(),directOption=options.find(option=>option.value===direct);
+ if(directOption&&(wanted==='UNKNOWN'||marketKeyEdition(direct)===wanted)&&marketMetadataCompatible(target,optionIdentityMeta(directOption))){const directBlob=norm(directOption.textContent+' '+directOption.value);if(!cn||directBlob.includes(cn))return direct}
  const ranked=[];
- for(const option of options){
-   const actual=marketKeyEdition(option.value);if(wanted!=='UNKNOWN'&&actual!==wanted)continue;
-   const blob=norm(option.textContent+' '+option.value);let score=0;
-   if(cn&&!blob.includes(cn))continue;
-   if(cn)score+=100;
-   if(n&&n.length>=3&&blob.includes(n))score+=60;
-   if(wanted!=='UNKNOWN'&&actual===wanted)score+=20;
-   if(score>0)ranked.push({value:option.value,score});
- }
- ranked.sort((a,b)=>b.score-a.score||a.value.localeCompare(b.value));
- if(!ranked.length)return '';
- if(ranked.length>1&&ranked[0].score===ranked[1].score)return '';
- return ranked[0].value;
+ for(const option of options){const actual=marketKeyEdition(option.value);if(wanted!=='UNKNOWN'&&actual!==wanted)continue;const optionMeta=optionIdentityMeta(option);if(!marketMetadataCompatible(target,optionMeta))continue;const blob=norm(option.textContent+' '+option.value);let score=0;if(cn&&!blob.includes(cn))continue;if(cn)score+=100;if(n&&n.length>=3&&blob.includes(n))score+=60;score+=20;for(const field of ['set_code','variant','finish','rarity'])if(metadataKnown(target[field])&&target[field]===optionMeta[field])score+=10;if(score>0)ranked.push({value:option.value,score,meta:optionMeta})}
+ ranked.sort((a,b)=>b.score-a.score||a.value.localeCompare(b.value));if(!ranked.length)return '';if(ranked.length>1&&ranked[0].score===ranked[1].score)return '';return ranked[0].value;
 }
 function applyIdentity(){
  const name=(el('identityCardName')?.value||'').trim();
  const number=(el('identityCardNumber')?.value||'').trim();
  const region=(el('identityRegion')?.value||'').trim();
- const sig=[name,number,region,el('identityMarketKey')?.value||''].join('|');
+ const meta=currentIdentityMeta(),sig=[name,number,region,meta.set_code,meta.variant,meta.finish,meta.rarity,el('identityMarketKey')?.value||''].join('|');
  if(sig===lastIdentity)return;lastIdentity=sig;
  el('agmName').textContent=name||'인식 대기';el('agmNumber').textContent=number||'-';el('agmRegion').textContent=region||'-';
  if(!name&&!number){el('agmRawPrice').textContent='카드 인식 후 자동 조회';renderPlatformQuotes();renderReferenceSources();return}
- const q=[name,number,editionSearchToken(editionCode(region))].filter(Boolean).join(' ');
+ const q=[name,number,editionSearchToken(editionCode(region)),...marketMetadataTokens(meta)].filter(Boolean).join(' ').trim();
  if(el('quickCardQuery')){el('quickCardQuery').value=q;el('quickPriceSearch')?.click();}
  const key=findMarketKey(name,number,region),select=el('econCard');
  if(key&&select){
@@ -233,7 +216,7 @@ function applyIdentity(){
    el('agmRawSource').textContent=(el('econSource')?.textContent||'확인된 저장/수집 거래자료').trim();
  }else{
    el('agmRawPrice').textContent=editionCode(region)!=='UNKNOWN'?'동일 판본의 저장 시세 없음':'저장 시세 자동 연결 대기';
-   el('agmRawSource').textContent=editionCode(region)!=='UNKNOWN'?'다른 판본 가격은 자동 대체하지 않습니다.':'빠른 시세검색은 자동 실행됨 · 판본과 카드 키 확인 중';
+   el('agmRawSource').textContent=editionCode(region)!=='UNKNOWN'?'다른 판본 가격은 자동 대체하지 않습니다. 세트·버전·홀로·레어도도 일치해야 합니다.':'빠른 시세검색은 자동 실행됨 · 판본과 카드 분류 확인 중';
  }
  renderPlatformQuotes();renderReferenceSources();updateGrades(true);
 }

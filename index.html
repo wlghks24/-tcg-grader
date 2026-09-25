@@ -509,8 +509,13 @@ loadReleases();loadPromos();loadPurchaseSources();
     <label>확인할 카드명<input id="identityCardName" maxlength="120" autocomplete="off" placeholder="예: 릴리에 Full Art"></label>
     <label>확인할 카드번호<input id="identityCardNumber" maxlength="32" autocomplete="off" placeholder="예: 065/060 또는 OP13-007"></label>
     <label>국가<select id="identityRegion"><option>KR</option><option>JP</option><option>US</option><option>UNKNOWN</option></select></label>
-    <label>연결된 시세 키<input id="identityMarketKey" maxlength="180" readonly placeholder="저장된 시세와 일치하면 자동 연결"></label>
+    <label>세트/확장 코드<input id="identitySetCode" maxlength="20" autocomplete="off" placeholder="예: SV8A · OP13 · ST01 · CP"></label>
+    <label>카드 버전<select id="identityVariant"><option value="UNKNOWN">확인 필요</option><option value="MANGA">만화 패러렐</option><option value="PARALLEL">패러렐</option><option value="ALT_ART">얼터너티브 아트</option><option value="FULL_ART">풀아트</option><option value="SPECIAL_ART">스페셜 아트</option><option value="PROMO">프로모</option><option value="STAMPED">스탬프</option><option value="FIRST_EDITION">초판</option></select></label>
+    <label>표면/홀로<select id="identityFinish"><option value="UNKNOWN">확인 필요</option><option value="HOLO">홀로</option><option value="REVERSE_HOLO">리버스 홀로</option><option value="FOIL">포일</option><option value="NON_HOLO">논홀로</option></select></label>
+    <label>레어도<input id="identityRarity" maxlength="12" autocomplete="off" placeholder="예: SAR · SR · SEC · SP · MUR"></label>
+    <label>연결된 시세 키<input id="identityMarketKey" maxlength="180" readonly placeholder="저장된 시세와 세트·버전까지 일치하면 자동 연결"></label>
   </div>
+  <div id="identityClassification" class="simple-note">세트/버전/레어도 분류 대기</div>
   <div class="grid2"><button id="identityRetry" type="button">🔄 다시 인식</button><button id="identityConfirm" type="button">✅ 인식 결과 확인·학습</button></div>
   <div class="simple-note">자동 추정은 학습하지 않습니다. 카드명과 번호를 직접 확인하고 버튼을 눌러야 저장되며, 동일 카드 3회 이상 확인 후 비슷한 촬영 사진 재인식에 사용합니다.</div>
 
@@ -1792,7 +1797,7 @@ function renderEconomics(){
  const r=calculateGradingEconomics(economicsInput()),result=document.getElementById("econResult");
  result.innerHTML=`<table class="economics-table"><tr><th>${escapeDisplayText(r.company)} 등급</th><th>예상 판매가</th><th>비용 차감 순수익</th></tr>${r.rows.slice().reverse().map(row=>`<tr class="${row.grade===r.grade?"selected-grade-row":""}"><td>${row.grade}</td><td>₩${row.sale.toLocaleString("ko-KR")}</td><td class="${row.net>=0?"good":"bad"}">${formatProfit(row.net)}</td></tr>`).join("")}</table><div class="economics-result-grid"><div class="economics-result">${escapeDisplayText(r.company)} ${r.grade} 예상 판매가<b>₩${r.expectedSale.toLocaleString("ko-KR")}</b></div><div class="economics-result">예상 순수익<b class="${r.expectedProfit>=0?"good":"bad"}">${formatProfit(r.expectedProfit)}</b></div><div class="economics-result">손익분기 판매가<b>₩${Number.isFinite(r.breakEven)?Math.ceil(r.breakEven).toLocaleString("ko-KR"):"계산 불가"}</b></div><div class="economics-result">예상 ROI<b class="${r.roi>=0?"good":"bad"}">${r.roi.toFixed(1)}%</b></div></div><div class="simple-note">미감정 판매 순수익 ${formatProfit(r.netRaw)} · ${!r.hasPrice?"⚠️ 선택 등급의 확인 가격을 입력하세요":r.submit?"✅ 입력값 기준 등급 제출이 미감정 판매보다 유리":"⚠️ 입력값 기준 미감정 판매 또는 보류가 유리"}</div>`;return r;
 }
-function populateEconomicsCards(){const select=document.getElementById("econCard");if(!select)return;const rows=Object.entries(popularityMarketEntries).filter(([key])=>key.endsWith("|HIT"));select.innerHTML='<option value="">직접 입력</option>'+rows.map(([key,value])=>`<option value="${escapeDisplayText(key)}">${escapeDisplayText(value.card_name||key.split("|")[1])} · ${escapeDisplayText(key.split("|")[0])}</option>`).join("")}
+function populateEconomicsCards(){const select=document.getElementById("econCard");if(!select)return;const rows=Object.entries(popularityMarketEntries).filter(([key])=>key.endsWith("|HIT"));select.innerHTML='<option value="">직접 입력</option>'+rows.map(([key,value])=>{const infer=window.TCGCardIdentityMeta?.infer,meta=infer?infer({game:value.game||"pokemon",card_name:value.card_name||key.split("|")[1],card_number:value.card_number||"",market_key:key,product_name:value.product_name||"",set_code:value.set_code,variant:value.variant,finish:value.finish,rarity:value.rarity}):{set_code:value.set_code||"",variant:value.variant||"UNKNOWN",finish:value.finish||"UNKNOWN",rarity:value.rarity||"UNKNOWN"};const bits=[meta.set_code,meta.rarity,meta.variant&&meta.variant!=="UNKNOWN"?meta.variant:"",meta.finish&&meta.finish!=="UNKNOWN"?meta.finish:""].filter(Boolean).join(" · ");return `<option value="${escapeDisplayText(key)}" data-set-code="${escapeDisplayText(meta.set_code||"")}" data-variant="${escapeDisplayText(meta.variant||"UNKNOWN")}" data-finish="${escapeDisplayText(meta.finish||"UNKNOWN")}" data-rarity="${escapeDisplayText(meta.rarity||"UNKNOWN")}">${escapeDisplayText(value.card_name||key.split("|")[1])} · ${escapeDisplayText(key.split("|")[0])}${bits?" · "+escapeDisplayText(bits):""}</option>`}).join("")}
 function applyEconomicsProfile(){
  const key=document.getElementById("econCard").value;if(!key)return;const price=popularityMarketEntries[key]||{},profile=gradedPriceProfiles[key]||{},amount=marketAmountKrw(price.display),set=(id,value)=>{if(Number.isFinite(Number(value))&&Number(value)>=0)document.getElementById(id).value=Math.round(Number(value))};
  set("econRaw",profile.raw_krw??(String(price.kind||"").includes("PSA10")?0:amount));economicsPriceBook=Object.fromEntries(GRADING_COMPANIES.map(company=>[company,normalizeGradePrices(profile.grade_prices_krw?.[company])]));renderGradePriceInputs();document.getElementById("econSource").textContent=`${price.card_name||key.split("|")[1]} · ${price.kind||"공개 가격"} · ${profile.note||"확인되지 않은 업체·등급 가격은 직접 입력"}`;renderEconomics();
@@ -2636,10 +2641,10 @@ document.querySelectorAll(".update-panel-close").forEach(btn=>btn.addEventListen
 })();
 </script><script src="feature_category_nav.js?v=206"></script>
 <script src="ui_app_shell_v272.js?v=272"></script>
-<script src="card_identity_recognition.js?v=207"></script>
+<script src="card_identity_recognition.js?v=207&meta=321"></script>
 <script src="inventory_lookup.js"></script>
-<script src="grade_market_flow.js"></script>
-<script src="auto_market_center.js"></script>
+<script src="grade_market_flow.js?v=321"></script>
+<script src="auto_market_center.js?v=321"></script>
 <script src="multi_market_prices.js?v=181"></script>
 <script src="auto_validation_flow.js?v=200"></script>
 <script src="grading_costs_live.js"></script>
