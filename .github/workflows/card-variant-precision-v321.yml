@@ -29,6 +29,16 @@ jobs:
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           python -m pip install --disable-pip-version-check pillow
+          python - <<'PY'
+          from pathlib import Path
+          p=Path('apply_card_identity_variant_v321.py')
+          s=p.read_text(encoding='utf-8')
+          old='out, count = re.subn(pattern, replacement, text, count=1, flags=re.S)'
+          new='out, count = re.subn(pattern, lambda _m: replacement, text, count=1, flags=re.S)'
+          if s.count(old)!=1:
+              raise SystemExit(f'replace_regex anchor count={s.count(old)}')
+          p.write_text(s.replace(old,new,1),encoding='utf-8')
+          PY
           python apply_card_identity_variant_v321.py
           git rm apply_card_identity_variant_v321.py .github/workflows/card-variant-precision-v321.yml
           python fault_injection_healing.py --manifest
