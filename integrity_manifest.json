@@ -1,7 +1,7 @@
 {
   "version": 2,
   "engine": "v109-card-identity-ocr-learning",
-  "generated_at": "2026-09-25T06:38:09+00:00",
+  "generated_at": "2026-09-25T07:58:06+00:00",
   "files": {
     ".github/workflows/ai-auto-tracker-guard.yml": {
       "sha256": "636e750bd6d2619cce75d4bce2d68051eaa2209ae763bc8ec523ed73476728a6",
@@ -526,6 +526,18 @@
     "INSTALL_VERIFIED_SLAB_ARCHIVE_V152.sh": {
       "sha256": "1fc6d8853be3a389c974f38741b16cb571905c820d729148762da15c98705135",
       "bytes": 3662
+    },
+    "MAIN_SELFREFINE_ERROR_QUARANTINE_STATE.json": {
+      "sha256": "b3667ddfa47653d424328da13d785ad80767a3275b6c59957716d30787f2a96f",
+      "bytes": 3236
+    },
+    "MAIN_SELFREFINE_RESEARCH_REPORT.json": {
+      "sha256": "a44161537b8798bad303b4374f75c53235c403e1842d9e10c7f5698f90700ade",
+      "bytes": 1197
+    },
+    "MAIN_SELFREFINE_RESOLUTION_LEARNING_STATE.json": {
+      "sha256": "024736cc8d5a52ed4b2222640282ae8864e33549e2cccdbb040a5be78197ab94",
+      "bytes": 914
     },
     "MIGRATE_OLD_TCG_DATA.bat": {
       "sha256": "44bba1ea7634b645e53d0fb3c29570d0668d6436ff66d360d8e0c36c522e7985",
@@ -2223,9 +2235,21 @@
       "sha256": "bb5f0576593a407d8e0d9a26a255d12ea6c0a390304c8fd538c204f68abc82a6",
       "bytes": 3653
     },
+    "tcg_code_repair_candidates.json": {
+      "sha256": "746540dbe32808931426a9a8ecbc86307401813d8593ffdf2a51c32172f77ebf",
+      "bytes": 1684
+    },
+    "tcg_code_repair_learning.json": {
+      "sha256": "85cebde12f4985b4f42e0d8ca0950c4d13421a22b83056be8f1b5003abadb1e5",
+      "bytes": 1119
+    },
     "tcg_code_repair_learning.py": {
       "sha256": "15325722ae1de7bcdd14b66281af96a781a879f805bc4b72f1a6a30466a79c7d",
       "bytes": 39105
+    },
+    "tcg_code_repair_report.json": {
+      "sha256": "d5488fcaeeb394d0ccf0fb3628ba9d396ce7f3bc07c51bf791deac672df97099",
+      "bytes": 651
     },
     "tcg_live_data.json": {
       "sha256": "738564b3140c9488fb22f2976702a6c04569bb0bc93221f2db9f2277002a681c",
@@ -2396,12 +2420,12 @@
       "bytes": 5297
     },
     "test_card_edition_precision_v302.py": {
-      "sha256": "ae95ac507c1eabd0abe4be0f748a4041f066eea80db808556863fe7f0ba5bb80",
-      "bytes": 4316
+      "sha256": "30438efccb79c13286f7ca608543260a477153be0083362c026fe68ca6b535c3",
+      "bytes": 6060
     },
     "test_card_identity_market_precision_v309.py": {
-      "sha256": "79b2ee50d9cffecd108b3e214fc582bfb3d4c8ea07a66cc849b85935ab5e1bab",
-      "bytes": 5409
+      "sha256": "7b8366e0dfc704507ba43e0b06c37ee3b0f498015beb81f860e0fb60840a8d4a",
+      "bytes": 5533
     },
     "test_card_market_edition_v297.py": {
       "sha256": "09920e3fec73743095b60191148b206167228baa07e26c87d1909e15ad1d5588",
