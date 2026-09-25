@@ -21,10 +21,12 @@ jobs:
       - name: Install bounded test dependencies
         run: python -m pip install -q pillow pyyaml
       - name: Apply v315 precision patch
-        run: python v315_card_intelligence_patch.py
+        run: |
+          python v315_card_intelligence_patch.py
+          python v315_card_intelligence_hotfix.py
       - name: Remove temporary bootstrap files before manifest
         run: |
-          git rm -f v315_card_intelligence_patch.py .github/workflows/v315-card-intelligence-bootstrap.yml
+          git rm -f v315_card_intelligence_patch.py v315_card_intelligence_hotfix.py .github/workflows/v315-card-intelligence-bootstrap.yml
       - name: Targeted identity generation and market tests
         run: |
           python -m unittest -v test_card_region_generation_precision_v306.py test_multi_market_price_collector.py test_market_reference_sources_v130.py
