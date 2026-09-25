@@ -13,15 +13,16 @@ const EN_PROMO_CODES=new Set(['SWSH','SVP','MEP']);
 const SHARED_PROMO_CODES=new Set(['SV-P','S-P','SM-P','XY-P','BW-P','DP-P','M-P']);
 
 function generationText(value){return String(value??'').replace(/Ⓒ/g,'©').normalize?.('NFKC').toUpperCase().replace(/[\u0000-\u001f\u007f]/g,' ').replace(/\s+/g,' ').trim().slice(0,8000)}
-function normalizeRegion(value){const r=generationText(value).replace(/\s+/g,'');if(['JP','JAPAN','JAPANESE','日本','日版','日本版'].includes(r))return 'JP';if(['US','USA','EN','ENGLISH','영문판','미국판'].includes(r))return 'US';if(['KR','KOREA','KOREAN','한국','한국판','한글판'].includes(r))return 'KR';return 'UNKNOWN'}
+function normalizeRegion(value){const r=generationText(value).replace(/\s+/g,'');if(['JP','JPN','JAPAN','JAPANESE','日本','日版','日本版','일본판','일판'].includes(r))return 'JP';if(['US','USA','EN','ENGLISH','ENG','영문판','영판','미국판'].includes(r))return 'US';if(['KR','KOR','KOREA','KOREAN','한국','한국판','한글판','한판','국판'].includes(r))return 'KR';return 'UNKNOWN'}
 function inferEditionFromText(value){
  const raw=String(value??'').normalize?.('NFKC')||String(value??''),upper=generationText(raw),signals=[];
  const add=(region,basis,confidence,extra={})=>signals.push({region,basis,confidence,...extra});
- if(/(?:\b(?:KR|KOREA|KOREAN)\b|한국판|한글판|국판)/i.test(upper))add('KR','explicit_region_label',.99);
- if(/(?:\b(?:JP|JAPAN|JAPANESE)\b|日本版|日版)/i.test(upper))add('JP','explicit_region_label',.99);
- if(/(?:\b(?:US|USA|EN|ENGLISH)\b|영문판|미국판)/i.test(upper))add('US','explicit_region_label',.99);
+ if(/(?:\b(?:KR|KOR|KOREA|KOREAN)\b|한국판|한글판|한판|국판)/i.test(upper))add('KR','explicit_region_label',.99);
+ if(/(?:\b(?:JP|JPN|JAPAN|JAPANESE)\b|日本版|日版|일본판|일판)/i.test(upper))add('JP','explicit_region_label',.99);
+ if(/(?:\b(?:US|USA|EN|ENGLISH|ENG)\b|영문판|영판|미국판)/i.test(upper))add('US','explicit_region_label',.99);
+ const suppressHangul=/(?:일본판|일판|영문판|영판|미국판)/i.test(raw);
  const hangul=(raw.match(/[가-힣]/g)||[]).length,kana=(raw.match(/[ぁ-んァ-ヶー]/g)||[]).length;
- if(hangul>=2)add('KR','hangul_script',.96,{count:hangul});
+ if(hangul>=2&&!suppressHangul)add('KR','hangul_script',.96,{count:hangul});
  if(kana>=2)add('JP','kana_script',.96,{count:kana});
  const englishSet=upper.match(new RegExp(`(?:^|[^A-Z0-9])(${[...EN_SET_CODES].join('|')})\\s*[- ]?\\s*\\d{1,3}(?:\\s*/\\s*\\d{2,3})?(?=[^A-Z0-9]|$)`));
  if(englishSet)add('US',`english_set_code_${englishSet[1]}`,.92);
