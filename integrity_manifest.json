@@ -1,7 +1,7 @@
 {
   "version": 2,
   "engine": "v109-card-identity-ocr-learning",
-  "generated_at": "2026-09-25T13:52:37+00:00",
+  "generated_at": "2026-09-25T14:21:40+00:00",
   "files": {
     ".github/workflows/ai-auto-tracker-guard.yml": {
       "sha256": "636e750bd6d2619cce75d4bce2d68051eaa2209ae763bc8ec523ed73476728a6",
@@ -1120,20 +1120,20 @@
       "bytes": 14102
     },
     "card_grading_valuation.py": {
-      "sha256": "9d0a7ddfc869cbf3ab4fb92f4824e6acfcc61b434227d0e2bc327edb934581a2",
-      "bytes": 22856
+      "sha256": "50f3f6b46f661594b51b460ae546bf2d49410be339da03430f02da40113f3db8",
+      "bytes": 22869
     },
     "card_identity_learning.json": {
       "sha256": "f74df5e30fb02f4922e76be720581456765d5cdabdaeedd6cb27cfb3b2174408",
       "bytes": 120
     },
     "card_identity_recognition.js": {
-      "sha256": "eb8c45acb7e0067b48394737e922ec3c1bc449dc382937b4ed15b882a1ce289e",
-      "bytes": 32385
+      "sha256": "b5e3b943378dca9a0c7493169bdbc3013b56786da5210c467aee69bbe9068146",
+      "bytes": 32388
     },
     "card_identity_recognition.py": {
-      "sha256": "88b8eb9ec9a6349363b6900bba0b0ba5d926c6475bcc08f6931aac9ffaf4344c",
-      "bytes": 45098
+      "sha256": "d6e75d7843e9f7a555a7b4ef986234674640433197a92c243fc0676a8317773e",
+      "bytes": 45214
     },
     "card_identity_reference_catalog.json": {
       "sha256": "45a99a4520d2ccca217e196e49db016481105283e8a53b1e7dec2c11bb4a7c04",
@@ -2415,6 +2415,10 @@
       "sha256": "09920e3fec73743095b60191148b206167228baa07e26c87d1909e15ad1d5588",
       "bytes": 2027
     },
+    "test_card_precision_v321.py": {
+      "sha256": "9adcd147f2430a7edcc514df70786ebe4f5519af27da5e73017b7077d1ee9840",
+      "bytes": 3300
+    },
     "test_card_probability_ui_v298.py": {
       "sha256": "f09f8bfacd502fcb8fb5cec43bef34dcf7be7d0a70e50a234ec2784e6ffe0e33",
       "bytes": 1452
@@ -3296,8 +3300,8 @@
       "bytes": 381
     },
     "verify_all_legacy_v99.py": {
-      "sha256": "bf445c660ad25d8f54b1dea1ce28a9e0b4253736707d5513f824ad5ebd7bd9f2",
-      "bytes": 258299
+      "sha256": "d61729ada28344cc32dea53fbcbab5c61debfc032a92e21f3dbac7653f985098",
+      "bytes": 258388
     },
     "verify_browser_runtime.js": {
       "sha256": "6257b72677188f01b54a43cefa1d6530055786fbbdc13fc3c43dbcfc828321ca",
@@ -3320,8 +3324,8 @@
       "bytes": 12067
     },
     "verify_current_runtime.py": {
-      "sha256": "74a0f5d692689dec2eadec975e8a004083086014b9a53ccacb6f77217a0a1786",
-      "bytes": 6588
+      "sha256": "f2af055ab977f55a1daaf12e5d2f9244a2ffdcce5b7689342cd3e7d0a76d24c1",
+      "bytes": 6625
     },
     "verify_fault_injection_healing.py": {
       "sha256": "40f0d3565ea8094b4deb2cf407550eaf41928f3f7fbfc2863ead0053f7cb25f8",

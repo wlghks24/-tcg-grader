@@ -2464,7 +2464,8 @@ def main():
             assert not engine.estimate_grades({**pristine,'is_authentic':invalid})['ok']
 
         profile={'BRG':{'9':450000,'10':2000000}}
-        valued=engine.verified_card_valuation('LILLIE SM1M 065/060',pristine,profile,raw_krw=300000)
+        valued=engine.verified_card_valuation('LILLIE SM1M 065/060',pristine,profile,raw_krw=300000,
+                                               price_source='user_provided_exact_grade')
         assert valued['valuations']['BRG']['krw']==2000000
         assert valued['valuations']['BRG']['source']=='exact_company_grade_observation'
         assert valued['valuations']['PSA']['available'] is False

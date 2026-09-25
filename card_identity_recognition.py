@@ -111,7 +111,7 @@ def infer_region_evidence(value: Any) -> dict[str, Any]:
     explicit_patterns = (
         ("KR", r"(?:\b(?:KR|KOREA|KOREAN)\b|한국판|한글판|국판)"),
         ("JP", r"(?:\b(?:JP|JAPAN|JAPANESE)\b|日本版|日版)"),
-        ("US", r"(?:\b(?:US|USA|ENGLISH)\b|영문판|미국판)"),
+        ("US", r"(?:\b(?:US|USA|EN|ENGLISH)\b|영문판|미국판)"),
     )
     for region, pattern in explicit_patterns:
         if re.search(pattern, upper, re.I):
@@ -597,8 +597,8 @@ def _stage_identity_summary(stage: int, text: str, game: str, region: str) -> di
 
 def _identity_stage_consensus(stage_summaries: list[dict[str, Any]]) -> dict[str, Any]:
     number_votes: Counter[str] = Counter()
-    candidate_votes: Counter[tuple[str, str, str]] = Counter()
-    candidate_confidence: dict[tuple[str, str, str], float] = {}
+    candidate_votes: Counter[tuple[str, str, str, str]] = Counter()
+    candidate_confidence: dict[tuple[str, str, str, str], float] = {}
 
     for summary in stage_summaries:
         for number in set(summary.get("numbers_detected") or []):
@@ -609,6 +609,7 @@ def _identity_stage_consensus(stage_summaries: list[dict[str, Any]]) -> dict[str
                 str(best.get("card_name") or ""),
                 str(best.get("card_number") or ""),
                 str(best.get("market_key") or ""),
+                normalize_region(best.get("region")),
             )
             if any(key):
                 candidate_votes[key] += 1
@@ -623,7 +624,7 @@ def _identity_stage_consensus(stage_summaries: list[dict[str, Any]]) -> dict[str
             number_votes.items(), key=lambda item: (item[1], len(item[0]), item[0])
         )
 
-    best_identity: tuple[str, str, str] | None = None
+    best_identity: tuple[str, str, str, str] | None = None
     best_identity_votes = 0
     if candidate_votes:
         best_identity = max(
@@ -645,6 +646,7 @@ def _identity_stage_consensus(stage_summaries: list[dict[str, Any]]) -> dict[str
                 "card_name": best_identity[0],
                 "card_number": best_identity[1],
                 "market_key": best_identity[2],
+                "region": best_identity[3],
                 "stage_votes": best_identity_votes,
                 "max_confidence": round(candidate_confidence.get(best_identity, 0.0), 4),
             }
