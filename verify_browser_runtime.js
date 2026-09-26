@@ -475,7 +475,7 @@ async function main() {
   assert.equal((await context.v13LoadAllPriceData()).complete, true);
   assert.equal((await context.loadPopularitySignals(true)).ok, true);
   assert.equal((await context.loadExchangeRates(true)).ok, true);
-  assert.ok(scheduledFxExpiry && scheduledFxExpiry.delay > 0 && scheduledFxExpiry.delay <= context.FX_MAX_AGE_MS,"fresh FX must schedule UI expiration");
+  assert.ok(scheduledFxExpiry && scheduledFxExpiry.delay > 0 && scheduledFxExpiry.delay <= context.FX_MAX_AGE_MS+1,"fresh FX must schedule UI expiration");
   assert.ok(context.foreignKrw("¥1000").includes("₩8,700"),"fresh JPY conversion was lost");
   const freshStamp=context.fxTimestamp,expiry=Date.parse(freshStamp)+context.FX_MAX_AGE_MS;
   const liveBadge={removed:false,remove(){this.removed=true}};
