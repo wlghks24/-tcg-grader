@@ -2,7 +2,9 @@ name: V326 Branch Finalizer
 
 on:
   push:
-    branches: [main]
+    branches:
+      - main
+      - fix/card-classification-price-generation-v326
     paths:
       - '.github/workflows/v326-branch-finalizer.yml'
 
@@ -15,6 +17,7 @@ concurrency:
 
 jobs:
   finalize:
+    if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-24.04
     timeout-minutes: 45
     steps:
