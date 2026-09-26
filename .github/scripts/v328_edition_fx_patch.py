@@ -205,4 +205,15 @@ patch(
     encoding="utf-8",
 )
 
+patch(
+    "verify_pokemon_generation_runtime.js",
+    "eq(api.version,'v325','generation runtime version');",
+    "eq(api.version,'v328','generation runtime version');",
+)
+patch(
+    "verify_pokemon_generation_runtime.js",
+    "console.log('Pokémon generation runtime v325: PASS');",
+    "console.log('Pokémon generation runtime v328: PASS');",
+)
+
 print("v328 patch applied")
