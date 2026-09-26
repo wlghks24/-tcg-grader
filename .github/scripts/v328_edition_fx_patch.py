@@ -236,4 +236,15 @@ patch(
     '  loadAsyncBlock("loadExchangeRates");',
 )
 
+patch(
+    "test_card_market_generation_precision_v325.py",
+    "v325: PASS",
+    "v328: PASS",
+)
+patch(
+    "test_pokemon_generation_display_v207.py",
+    "Pokémon generation runtime v325: PASS",
+    "Pokémon generation runtime v328: PASS",
+)
+
 print("v328 patch applied")
