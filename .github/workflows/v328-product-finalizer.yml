@@ -203,4 +203,4 @@ jobs:
           git commit -m 'fix: separate EN edition from US market and enforce FX freshness'
           git push origin HEAD:fix/edition-fx-failclosed-v328
 
-# retrigger after browser harness newline correction
+# retrigger after browser harness actual newline encoding fix
