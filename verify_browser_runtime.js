@@ -157,6 +157,7 @@ async function main() {
   loadAsyncBlock("loadExchangeRates");
   context.setTimeout=(callback,delay)=>{scheduledFxExpiry={callback,delay,id:++nextFxTimerId,cancelled:false};return scheduledFxExpiry.id};
   context.clearTimeout=(id)=>{if(scheduledFxExpiry?.id===id)scheduledFxExpiry.cancelled=true};
+  context.fxExpiryTimer=null;
   context.fxRates={JPY_KRW:0,USD_KRW:0};
   context.fxTimestamp="";
   assert.equal(context.foreignKrw("¥1000"),"","missing FX must not render a fabricated zero price");
