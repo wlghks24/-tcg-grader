@@ -1,0 +1,61 @@
+name: Tablet GPT Sync v330 Finalize
+
+on:
+  push:
+    branches:
+      - fix/tablet-gpt-continuous-crosscheck-v330
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: tablet-gpt-sync-v330-finalize
+  cancel-in-progress: false
+
+jobs:
+  finalize:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          fetch-depth: 0
+          ref: fix/tablet-gpt-continuous-crosscheck-v330
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97
+        with:
+          python-version: '3.12'
+      - name: Install repository runtime dependencies
+        run: python -m pip install --disable-pip-version-check -r requirements.txt
+      - name: Remove one-shot finalizer before final-tree validation
+        shell: bash
+        run: git rm -- .github/workflows/tablet-gpt-sync-v330-finalize.yml
+      - name: Verify Tablet GPT historical and current sync contracts
+        run: python -m unittest -v test_tablet_gpt_tcg_grader_sync_v285.py test_tablet_gpt_tcg_grader_sync_v289.py test_tablet_gpt_tcg_grader_sync_v330.py
+      - name: Regenerate exact final-tree integrity manifest
+        run: python fault_injection_healing.py --manifest
+      - name: Diagnose regenerated integrity manifest
+        run: python fault_injection_healing.py --diagnose
+      - name: Run repository structural integrity guard
+        run: python repository_integrity_guard.py
+      - name: Run current runtime regression once
+        run: python verify_current_runtime.py --passes 1
+      - name: Verify staged final tree
+        shell: bash
+        run: |
+          set -euo pipefail
+          git add -A
+          git diff --cached --check
+          git status --short
+      - name: Commit finalized manifest and remove helper
+        shell: bash
+        run: |
+          set -euo pipefail
+          if git diff --cached --quiet; then
+            echo 'No finalizer changes to commit.'
+            exit 0
+          fi
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git commit -m 'ci: finalize Tablet GPT continuous cross-check v330'
+          git push origin HEAD:fix/tablet-gpt-continuous-crosscheck-v330
