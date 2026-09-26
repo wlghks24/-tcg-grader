@@ -202,3 +202,5 @@ jobs:
           git diff --cached --check
           git commit -m 'fix: separate EN edition from US market and enforce FX freshness'
           git push origin HEAD:fix/edition-fx-failclosed-v328
+
+# retrigger after browser harness dependency fix
