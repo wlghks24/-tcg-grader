@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "checked_at": "2026-09-25T00:10:26+00:00",
+  "checked_at": "2026-09-26T16:48:30+00:00",
   "policy": {
     "official_sources_only": true,
     "community_posts_are_leads_only": true,
@@ -263,7 +263,7 @@
       "services": [],
       "announcements": [],
       "status": "degraded",
-      "checked_at": "2026-09-25T00:10:26+00:00",
+      "checked_at": "2026-09-26T16:48:30+00:00",
       "last_error": "HTTPError: status 403",
       "verified_official_source": false
     },
@@ -277,7 +277,7 @@
       "services": [],
       "announcements": [],
       "status": "degraded",
-      "checked_at": "2026-09-25T00:10:26+00:00",
+      "checked_at": "2026-09-26T16:48:30+00:00",
       "last_error": "HTTPError: status 403",
       "verified_official_source": false
     },
@@ -291,7 +291,7 @@
       "services": [],
       "announcements": [],
       "status": "degraded",
-      "checked_at": "2026-09-25T00:10:26+00:00",
+      "checked_at": "2026-09-26T16:48:30+00:00",
       "last_error": "HTTPError: status 403",
       "verified_official_source": false
     },
@@ -305,7 +305,7 @@
       "services": [],
       "announcements": [],
       "status": "degraded",
-      "checked_at": "2026-09-25T00:10:26+00:00",
+      "checked_at": "2026-09-26T16:48:30+00:00",
       "last_error": "BeckettMaintenanceRedirect: canonical Beckett source temporarily redirected to maintenance.beckett.com",
       "verified_official_source": false,
       "failure_class": "planned_maintenance"
@@ -320,7 +320,7 @@
       "services": [],
       "announcements": [],
       "status": "degraded",
-      "checked_at": "2026-09-25T00:10:26+00:00",
+      "checked_at": "2026-09-26T16:48:30+00:00",
       "last_error": "BeckettMaintenanceRedirect: canonical Beckett source temporarily redirected to maintenance.beckett.com",
       "verified_official_source": false,
       "failure_class": "planned_maintenance"
@@ -333,7 +333,7 @@
       "currency": "USD",
       "url": "https://www.cgccards.com/submit/services-fees/cgc-grading/?view=cards",
       "status": "ok",
-      "checked_at": "2026-09-25T00:10:26+00:00",
+      "checked_at": "2026-09-26T16:48:30+00:00",
       "signal_fingerprint": "4fbf897db3a6138f795ba1ce0208999b02992c6cfd724519e4c8f48624342936",
       "services": [
         {
@@ -409,7 +409,7 @@
       "currency": "USD",
       "url": "https://www.cgccards.com/submit/events/",
       "status": "ok",
-      "checked_at": "2026-09-25T00:10:26+00:00",
+      "checked_at": "2026-09-26T16:48:30+00:00",
       "signal_fingerprint": "c3d7a17861833ca591699e5f4496a6d583c6e69ddede606d2dd17a41e6e8a1ca",
       "services": [],
       "announcements": [
@@ -481,7 +481,7 @@
       "currency": "USD",
       "url": "https://www.cgccards.com/news/",
       "status": "ok",
-      "checked_at": "2026-09-25T00:10:26+00:00",
+      "checked_at": "2026-09-26T16:48:30+00:00",
       "signal_fingerprint": "8c2d03da4dc96b2f82e094aa4ef2e299b5740e70fa90a634354b058bbe98cac5",
       "services": [],
       "announcements": [
@@ -553,7 +553,7 @@
       "currency": "USD",
       "url": "https://taggrading.com/pages/pricing",
       "status": "degraded",
-      "checked_at": "2026-09-25T00:10:26+00:00",
+      "checked_at": "2026-09-26T16:48:30+00:00",
       "signal_fingerprint": "0e9f55411a94d2016974a85632d9fa32e343c02e94c65a3a1f347a2615dc4c82",
       "services": [],
       "announcements": [],
@@ -569,8 +569,8 @@
       "currency": "USD",
       "url": "https://taggrading.com/",
       "status": "ok",
-      "checked_at": "2026-09-25T00:10:26+00:00",
-      "signal_fingerprint": "c1c821f768e541f0dbe54c4fc71e24dfbd144f5114593fd44abe09a4dd13ef92",
+      "checked_at": "2026-09-26T16:48:30+00:00",
+      "signal_fingerprint": "3a6682e1a49a58c4a0beb5e00308630cb13ec9c935ac21ac4bafb99d2d2b7e4a",
       "services": [],
       "announcements": [
         {
@@ -690,7 +690,7 @@
       "currency": "KRW",
       "url": "https://break.co.kr/",
       "status": "ok",
-      "checked_at": "2026-09-25T00:10:26+00:00",
+      "checked_at": "2026-09-26T16:48:30+00:00",
       "signal_fingerprint": "a4b3f397492317435fdf3b29d0a799fc47c5cc679cf36d24d983c7c80facb2e7",
       "services": [
         {
@@ -767,7 +767,7 @@
       "url": "https://www.beckett.com/grading",
       "effective_url": "https://maintenance.beckett.com/",
       "status": "ok",
-      "checked_at": "2026-09-25T00:10:29+00:00",
+      "checked_at": "2026-09-26T16:48:33+00:00",
       "signal_fingerprint": "7c44b06928966c6f8e874833c553d45eb87301495ceb07512dcd62a73cbccb75",
       "services": [],
       "announcements": [],
