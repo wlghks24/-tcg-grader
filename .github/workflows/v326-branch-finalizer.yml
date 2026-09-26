@@ -85,6 +85,9 @@ jobs:
                 '"card_identity_recognition.js", "card_metadata_classifier_v326.js", "tcgRecognizeCurrentCard"))')
           PY
           git show origin/main:.github/workflows/repository-integrity-guard.yml > .github/workflows/repository-integrity-guard.yml
+          # Apply removals/renames to the Git index before generating and checking the
+          # manifest because repository_integrity_guard intentionally uses git ls-files.
+          git add -A
           python fault_injection_healing.py --manifest
       - name: Targeted card identity generation grade and market validation
         shell: bash
