@@ -191,6 +191,7 @@ jobs:
           set -euo pipefail
           git diff --check
           git rm -f .github/workflows/v328-product-finalizer.yml
+          git add -N -f test_edition_fx_failclosed_v328.py
           git diff --name-only origin/main | sort > /tmp/actual.txt
           cat > /tmp/expected.txt <<'EOF'
           auto_market_center.js
@@ -243,4 +244,4 @@ jobs:
           git commit -m 'fix: separate EN edition from US market and enforce FX freshness'
           git push origin HEAD:fix/edition-fx-failclosed-v328
 
-# retrigger after fixing the CSP helper import path
+# retrigger after adding generated test to scoped diff
