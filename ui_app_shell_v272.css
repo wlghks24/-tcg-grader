@@ -50,9 +50,9 @@ button,a{-webkit-tap-highlight-color:transparent}
 .feature-quick-search-status{margin-top:7px;min-height:18px;color:#475569;font-size:11px;font-weight:750;line-height:1.45}
 .feature-quick-search-status[data-state="match"]{color:#166534}
 .feature-quick-search-status[data-state="empty"]{color:#b45309}
-.feature-category[data-ui-filter-hidden="true"],
-.feature-shortcut[data-ui-filter-hidden="true"]{display:none!important}
-.feature-category[data-ui-search-hit="true"]{border-color:#60a5fa;box-shadow:0 0 0 3px #dbeafe}
+.feature-category[data-ui-filter-hidden],
+.feature-shortcut[data-ui-filter-hidden]{display:none!important}
+.feature-category[data-ui-search-hit]{border-color:#60a5fa;box-shadow:0 0 0 3px #dbeafe}
 
 /* Unified grading result cockpit: presentation-only aggregation of already verified runtime state. */
 .grade-result-cockpit{
@@ -147,7 +147,7 @@ button,a{-webkit-tap-highlight-color:transparent}
   .ui-skip-link,.feature-category-nav,.feature-category,.feature-shortcut,.feature-quick-search,
   .feature-quick-search-clear,.grade-result-cockpit,.grade-cockpit-cell,.grade-cockpit-block,
   .grade-cockpit-probability,.grade-cockpit-company{forced-color-adjust:auto;border:1px solid CanvasText}
-  .feature-category[data-ui-search-hit="true"]{outline:2px solid Highlight;box-shadow:none}
+  .feature-category[data-ui-search-hit]{outline:2px solid Highlight;box-shadow:none}
 }
 
 @media(prefers-color-scheme:dark){
@@ -934,3 +934,27 @@ body.has-app-bottom-dock .app{padding-bottom:calc(88px + env(safe-area-inset-bot
 @media(hover:hover) and (pointer:fine){.feature-category:hover,.feature-shortcut:hover,.analysis-box:hover,.purchase-source:hover,.home-launch-btn:hover{transform:none!important;border-color:#bfdbfe!important;box-shadow:0 3px 10px rgba(15,23,42,.045)!important}}
 @media(prefers-reduced-motion:reduce){.feature-category,.feature-shortcut,.home-launch-btn,.tablet-manager-action,button{transition:none!important;transform:none!important}}
 @media(prefers-color-scheme:dark){.card,.home-launcher,.feature-category-nav,.tablet-manager-hub,.home-launch-btn,.feature-category,.feature-shortcut,.analysis-box,.release-item,.purchase-region,.purchase-source{background:#111827!important;border-color:#2b3a4f!important;box-shadow:none!important}.home-launch-btn:first-child,.home-launch-btn:last-child{background:#111827!important;border-color:#334155!important}.home-launch-icon,.feature-category-icon{background:#172033!important}.feature-category[data-category-key="grading"] .feature-category-icon{background:#172554!important;color:#bfdbfe!important}.feature-category[data-category-key="market"] .feature-category-icon{background:#10261c!important;color:#86efac!important}.feature-category[data-category-key="box"] .feature-category-icon{background:#2a210d!important;color:#fde68a!important}.feature-category[data-category-key="tablet"] .feature-category-icon{background:#251640!important;color:#ddd6fe!important}.feature-category-title,.feature-shortcut b,.home-launch-btn b,.tablet-manager-action b{color:#f8fafc!important}.feature-category-sub,.feature-shortcut small,.home-launch-btn small,.tablet-manager-action small{color:#94a3b8!important}.feature-category-steps span,.feature-category-selected,.feature-quick-search,.grade-cockpit-cell,.grade-cockpit-block,.grade-cockpit-probability,.grade-cockpit-company,.metric,.status,.workflow-part{background:#172033!important;border-color:#334155!important;color:#cbd5e1!important}.feature-category[open]{background:#121d2f!important;border-color:#315b86!important}.feature-category[open] summary{background:#152238!important}input,select,textarea{background:#0f172a!important;color:#f8fafc!important;border-color:#475569!important}body .app-bottom-dock{background:rgba(15,23,42,.96)!important;border-color:#334155!important}body .app-bottom-dock a[aria-current="location"],body .app-bottom-dock a[aria-current="page"],body .app-bottom-dock a.active{color:#bfdbfe!important;background:#172554!important}}
+
+/* Tablet usability repair: readable controls and captions in both orientations. */
+.feature-quick-search input{font-size:16px!important;min-height:48px!important}
+.feature-quick-search-clear{min-height:48px!important}
+.feature-quick-search-status{font-size:12px!important;line-height:1.6!important}
+.tablet-manager-action b{font-size:15px!important;line-height:1.4!important}
+.tablet-manager-action small{font-size:12px!important;line-height:1.6!important}
+.tablet-manager-action{min-height:100px!important}
+.tablet-manager-status{font-size:13px!important;line-height:1.6!important}
+.tablet-manager-action:focus-visible{outline:3px solid #2563eb!important;outline-offset:3px!important}
+@media(pointer:coarse){
+  .app button,.app select,.app input:not([type="checkbox"]):not([type="radio"]){min-height:48px!important}
+}
+@media(prefers-color-scheme:dark){
+  .tablet-manager-action{background:#172033!important;border-color:#475569!important}
+  .tablet-manager-icon{background:#253349!important}
+  .feature-quick-search label{color:#e2e8f0!important}
+  .feature-quick-search-clear{background:#172033!important;color:#e2e8f0!important;border-color:#64748b!important}
+  .feature-quick-search-status{color:#cbd5e1!important}
+  .feature-quick-search-status[data-state="match"]{color:#86efac!important}
+  .feature-quick-search-status[data-state="empty"]{color:#fcd34d!important}
+  .grade-result-cockpit,.grade-result-cockpit[data-state="ready"]{background:#111827!important}
+  .grade-cockpit-cell b,.grade-cockpit-probability b,.grade-cockpit-company b{color:#f8fafc!important}
+}

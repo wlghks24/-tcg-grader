@@ -1,0 +1,30 @@
+{
+  "status": "VERIFIED_PATCH_PENDING_MAIN_AND_DEVICE",
+  "base_main_sha": "dda6190adf97652e677de5c5690af130f56b202e",
+  "changes": [
+    "Boolean search attributes now match CSS selectors",
+    "Missing/out-of-range grade and probability values remain unknown",
+    "Repeated back-forward page restoration resumes a single refresh timer",
+    "Larger tablet touch controls and readable dark surfaces",
+    "Existing-install help uses bash main"
+  ],
+  "verification": {
+    "targeted_unittest_count": 38,
+    "final_tablet_preflight": "9/9 passed; CI skip-head-match mode on base checkout",
+    "current_runtime_regression": "25/25 groups passed",
+    "visual_rendering": "not run: Chromium download returned an invalid archive",
+    "device_installation": "not verified"
+  },
+  "crosscheck": {
+    "status": "PENDING_NEW_VERIFIED_DELTA_AFTER_MERGE",
+    "prior_contract": "TCG_CROSSCHECK/TABLET_GPT_TCG_GRADER_SYNC_CONTRACT_V331.json",
+    "policy": "Preserve historical v330/v331 receipts; index.html changes must report TABLET_GPT_SYNC_STALE until a new verified delta covers the merged patch."
+  },
+  "sha256": {
+    "index.html": "f6faec8a635a1fded27bf73128216031d35e2a7cf7b037f72ccf562f6418b50d",
+    "sw.js": "7387111476f053074083dc5fc51e062641986a54cfaad2e1a7e3aad5dbb0bc91",
+    "ui_app_shell_v272.css": "51f459716be82ddbb6f2bdfe19af9d9b38bafddfe980a46742225bedddd284a2",
+    "ui_app_shell_v272.js": "9f2c4ac04509c3b83b83eb89ace2db738a4f0fda71dcde2660e47c88b8b9c66d",
+    "verify_tablet_ui_repair.js": "614cc58396dffd9d6cfc912cbe7247bb936041461e1c16559a164576a4b0eab3"
+  }
+}

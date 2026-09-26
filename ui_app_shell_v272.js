@@ -165,6 +165,14 @@
   const nodeText = (id) => String(byId(id)?.textContent || "").trim();
   const nodeValue = (id) => String(byId(id)?.value || "").trim();
 
+  // Empty, boolean and out-of-range values are missing evidence, not grades.
+  function boundedNumber(value, min, max) {
+    if (typeof value !== "number" && typeof value !== "string") return null;
+    if (typeof value === "string" && !value.trim()) return null;
+    const number = Number(value);
+    return Number.isFinite(number) && number >= min && number <= max ? number : null;
+  }
+
   function addCockpitCell(grid, labelText, valueId, wide = false) {
     const cell = document.createElement("div");
     cell.className = wide ? "grade-cockpit-cell grade-cockpit-cell-wide" : "grade-cockpit-cell";
@@ -273,8 +281,8 @@
 
   function probabilityText(grade) {
     const probabilities = window.tcgGradeProbabilities || {};
-    const raw = Number(probabilities[grade]);
-    if (Number.isFinite(raw)) return `${Math.max(0, Math.min(100, raw)).toFixed(0)}%`;
+    const raw = boundedNumber(probabilities[grade], 0, 100);
+    if (raw !== null) return `${raw.toFixed(0)}%`;
     // PSA 9 must never fall back to the legacy p9prob element because that
     // element represents cumulative PSA 9+ rather than the exact PSA 9 bucket.
     if (grade === 10) {
@@ -297,10 +305,9 @@
   }
 
   function formatCompanyGrade(company, grades) {
-    const raw = Number(grades?.[company]);
-    if (!Number.isFinite(raw)) return "대기";
-    const safe = Math.max(1, Math.min(10, raw));
-    return `${safe.toFixed(safe % 1 ? 1 : 0)} 예상`;
+    const raw = boundedNumber(grades?.[company], 1, 10);
+    if (raw === null) return "대기";
+    return `${raw.toFixed(raw % 1 ? 1 : 0)} 예상`;
   }
 
   function syncGradeCockpit() {
@@ -336,7 +343,7 @@
     });
     byId("gradeCockpitEvidence").textContent = `시세 근거: ${rawSource}`;
 
-    const ready = RESULT_COMPANIES.some((company) => Number.isFinite(Number(grades?.[company])));
+    const ready = RESULT_COMPANIES.some((company) => boundedNumber(grades?.[company], 1, 10) !== null);
     byId("gradeResultCockpit").dataset.state = ready ? "ready" : "waiting";
     return true;
   }
@@ -364,7 +371,8 @@
   document.addEventListener("change", (event) => {
     if (["identityCardName", "identityCardNumber", "identityRegion"].includes(event.target?.id)) syncGradeCockpit();
   });
-  window.addEventListener("pagehide", stopGradeCockpitTimer, { once: true });
+  window.addEventListener("pagehide", stopGradeCockpitTimer);
+  window.addEventListener("pageshow", startGradeCockpitTimer);
   startGradeCockpitTimer();
 
   window.TCGAppShellV272 = Object.freeze({
