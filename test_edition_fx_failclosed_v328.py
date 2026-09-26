@@ -68,7 +68,7 @@ class EditionFxFailClosedV328Tests(unittest.TestCase):
         self.assertIn('document.addEventListener("visibilitychange"',html)
         self.assertIn('window.addEventListener("focus"',html)
         self.assertIn('if(!fxTimestampFresh(fxTimestamp)',html)
-        self.assertIn('fxTimestamp=stamp;result.ok=true;',html)
+        self.assertIn('fxTimestamp=stamp;scheduleFxExpiry();result.ok=true;',html)
         self.assertIn('fxTimestamp="";result.errors.push("환율자료")',html)
         self.assertIn('normalizeEditionLanguage',browser)
         self.assertIn('marketRegionForEdition',browser)
