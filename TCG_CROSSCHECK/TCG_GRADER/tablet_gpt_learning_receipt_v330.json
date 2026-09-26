@@ -1,0 +1,62 @@
+{
+  "schema_version": "1.1-tablet-gpt-tcg-grader-learning-sync",
+  "receiver": "TCG_GRADER",
+  "source_namespace": "TABLET_GPT",
+  "source_repository": "wlghks24/-tcg-grader",
+  "source_main_sha": "279fec44f3064332bcfc02c868f80c2cfd67fa18",
+  "received_at": "2026-09-26T21:17:00+09:00",
+  "status": "SYNCED_VERIFIED",
+  "source_snapshots": [
+    "TCG_CROSSCHECK/TABLET_GPT/learning_snapshot.json",
+    "TCG_CROSSCHECK/TABLET_GPT/learning_snapshot_v330_delta.json"
+  ],
+  "base_lesson_digest_sha256": "15e78e3270dca1c5ea0deda7acf8a0110c9da937dba62ce71df90c5d96a4c41f",
+  "delta_lesson_digest_sha256": "07b7eb872fd0d1b8e52c6b6b81c804761826b2ad5067e1456ecc3b6f11c7c048",
+  "combined_lesson_id_digest_sha256": "bf6981836f41175b12f94494a6b8db9b3dc80c3085bde3261662d90c412e146e",
+  "accepted_lesson_ids": [
+    "TABLET-GPT-UI-INVARIANTS-V274",
+    "TABLET-GPT-NAV-ACCESSIBILITY-V275-V276",
+    "TABLET-GPT-VERSION-DOMAIN-COHERENCE-V276",
+    "TABLET-GPT-LEARNING-TXN-LOCK-V278",
+    "TABLET-GPT-STALE-STATE-MERGE-V279",
+    "TABLET-GPT-NEURAL-FINITE-CONCURRENCY-V280",
+    "TABLET-GPT-SIGNAL-ID-META-TXN-V281",
+    "TABLET-GPT-RUNTIME-HEALTH-TXN-V282",
+    "TABLET-GPT-SEMANTIC-REGRESSION-GUARD-V282",
+    "TABLET-GPT-AI-CACHE-INTEGRITY-EVIDENCE-V284",
+    "TABLET-GPT-RUNTIME-PROCESS-IDENTITY-V286",
+    "TABLET-GPT-GRADE-LEARNING-STORE-TXN-V287",
+    "TABLET-GPT-MANUAL-REGISTRY-TXN-V288",
+    "TABLET-GPT-AUTO-MAIN-READINESS-V295",
+    "TABLET-GPT-PRICE-PROVENANCE-RUNTIME-BUNDLE-V296-V300",
+    "TABLET-GPT-EDITION-OCR-GENERATION-MARKET-V302-V309",
+    "TABLET-GPT-PROTECTED-DATA-DRIVE-CADENCE-V305-V306",
+    "TABLET-GPT-VERIFIED-LEARNING-REGION-TXN-V309",
+    "TABLET-GPT-SYNC-TRUST-BOUNDARY-V319",
+    "TABLET-GPT-CARD-CLASSIFICATION-EXACT-BINDING-V320-V327",
+    "TABLET-GPT-FX-FRESHNESS-FAILCLOSED-V328-V329"
+  ],
+  "alignment_policy": {
+    "same_digest_required": true,
+    "same_lesson_ids_required": true,
+    "same_source_main_required_for_delta": true,
+    "covered_patch_commits_must_be_ancestors": true,
+    "future_watched_main_changes_require_new_delta": true,
+    "pull_request_freshness_check_nonblocking": true,
+    "device_local_learning_state_merge_required": true,
+    "blind_overwrite_forbidden": true,
+    "grading_calibration_auto_import_forbidden": true,
+    "peer_verified_never_auto_promotes_local": true
+  },
+  "alignment": {
+    "patch_contract": "main contains the base and delta covered patches; later watched changes must not remain silently green without a new verified delta",
+    "learning_contract": "TCG Grader consumes the verified prevention lessons only; device-local runtime learning remains local and merges through existing transactional subsystem rules",
+    "expected_result": "MATCH_OR_EXPLICIT_STALE"
+  },
+  "verification": {
+    "contract_version": "v330",
+    "verification_test": "test_tablet_gpt_tcg_grader_sync_v330.py",
+    "verification_mode": "pull_request_contract_plus_main_freshness_watch",
+    "verified_result": "TABLET_GPT_TCG_GRADER_MATCH"
+  }
+}
