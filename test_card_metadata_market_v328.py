@@ -45,8 +45,9 @@ class CardMetadataMarketV328Tests(unittest.TestCase):
         for path in ("tcg_updater.py", "tablet_runtime_manifest.py", "feature_contract.py", "sw.js"):
             source = (ROOT / path).read_text(encoding="utf-8")
             self.assertIn("card_metadata_classifier_v328.js", source, path)
-        workflow = (ROOT / ".github/workflows/runtime-delivery-guard.yml").read_text(encoding="utf-8")
-        self.assertIn("verify_card_metadata_classifier_v328.js", workflow)
+        runtime = (ROOT / "verify_current_runtime.py").read_text(encoding="utf-8")
+        self.assertIn("card_metadata_classifier_v328", runtime)
+        self.assertIn("verify_card_metadata_classifier_v328.js", runtime)
 
     def test_market_key_regions_and_pending_coverage_are_explicit(self) -> None:
         data = json.loads((ROOT / "market_prices.json").read_text(encoding="utf-8"))

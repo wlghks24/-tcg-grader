@@ -98,6 +98,9 @@ const context = vm.createContext({
   populateEconomicsCards() {},
 });
 
+context.window = context;
+vm.runInContext(fs.readFileSync(path.join(__dirname, 'card_metadata_classifier_v328.js'), 'utf8'), context, { filename: 'card_metadata_classifier_v328.js' });
+
 function loadOneLine(name, asynchronous = false) {
   const prefix = `${asynchronous ? "async " : ""}function ${name}(`;
   const line = lines.find((item) => item.trimStart().startsWith(prefix));
@@ -423,7 +426,10 @@ async function main() {
   assert.ok(element("tradeCatalogList").innerHTML.includes("&lt;img"));
 
   element("quickCardQuery").value = "pokemon";
-  context.fetch = async () => ({ json: async () => ({ entries: { [`pokemon-${attack}`]: { detail: attack } } }) });
+  element("identityRegion").value = "KR";
+  element("identityCardName").value = "pokemon";
+  element("identityCardNumber").value = "SV1S001/078";
+  context.fetch = async () => ({ json: async () => ({ entries: { [`KR|pokemon-${attack}|HIT`]: { game: "Pokémon", card_name: `pokemon ${attack}`, card_number: "SV1S001/078", variant: "base", condition: "raw", detail: attack } } }) });
   await context.quickPrice();
   assert.ok(!element("quickPriceResults").innerHTML.includes("<img"));
   assert.ok(element("quickPriceResults").innerHTML.includes("&lt;img"));

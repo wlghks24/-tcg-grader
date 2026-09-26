@@ -20,7 +20,7 @@ REQUIRED_FILES = (
     "ai_code_improver.py", "ai_code_learning.json", "verify_ai_code_improver.py",
     "verify_link_runtime.py", "verify_camera_runtime.js",
     "grading_vision_engine.js", "grading_accuracy_v99.js", "verify_vision_runtime.js",
-    "card_identity_recognition.py", "card_identity_recognition.js", "card_identity_learning.json", "card_identity_reference_catalog.json",
+    "card_identity_recognition.py", "card_identity_recognition.js", "card_metadata_classifier_v328.js", "card_identity_learning.json", "card_identity_reference_catalog.json",
     "graded_photo_multi_source.py", "graded_photo_evidence.py", "grading_cert_verifier.py",
     "graded_photo_dashboard.js", "graded_photo_dashboard.css", "graded_photo_candidates.json",
     "fault_injection_healing.py", "verify_fault_injection_healing.py", "fault_learning.json",
@@ -109,7 +109,7 @@ def audit_feature_contract(root: str | Path | None = None) -> dict[str, Any]:
         "앞·뒤 파일입력·자동촬영·1→4→8 비전·독립 코너/엣지·백화·사선광·카메라 수명주기")
     add("card_identity_ocr_learning", "카드명·카드번호 자동인식·확인형 이미지학습",
         all(token in page for token in ("identityCardName", "identityCardNumber", "identityConfirm",
-                                         "card_identity_recognition.js", "tcgRecognizeCurrentCard"))
+                                         "card_identity_recognition.js", "card_metadata_classifier_v328.js", "tcgRecognizeCurrentCard"))
         and all(token in server for token in ("/api/recognize-card", "/api/confirm-card-identity",
                                                "/api/card-identity-learning"))
         and identity_learning.get("confirmed_only") is True

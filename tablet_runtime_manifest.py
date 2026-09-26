@@ -28,7 +28,7 @@ ACTIVE_RUNTIME_FILES=(
 # merely because the Python backend still compiles. The card-price/analysis
 # cockpit is one runtime chain: vision -> identity -> grading -> validation ->
 # market collection. Missing any member must fail the tablet preflight.
-"grading_vision_engine.js","grading_accuracy_v99.js","card_identity_recognition.js",
+"grading_vision_engine.js","grading_accuracy_v99.js","card_metadata_classifier_v328.js","card_identity_recognition.js",
 "grade_market_flow.js","grade_market_flow.css","auto_market_center.js","auto_market_center.css",
 "multi_market_prices.js","multi_market_prices.css","auto_validation_flow.js","auto_validation_flow.css",
 "image_quality_guard.js","market_catalog_expander.js",

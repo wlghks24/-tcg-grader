@@ -146,6 +146,10 @@ async function loadPlatformQuotes(){
 }
 function quoteScore(row,name,number,region){
  if(!row||row.platform!=='WYYYES')return -999;
+ const metadata=window.TCGCardMetadata;if(!metadata)return -999;
+ const card=metadata.classify({game:window.tcgIdentityGame||'',region,card_name:name,card_number:number,condition:'raw'});
+ const quote=metadata.classify({game:row.game||'',region:row.card_region||'UNKNOWN',card_name:row.card_name||row.title||'',card_number:row.card_number||'',product_name:row.product_name||row.title||'',title:row.title||'',market_key:row.market_key||'',rarity:row.rarity||'',variant:row.variant||'',grading_company:row.grading_company||'',grade:row.grade,condition:row.condition||''});
+ const bound=metadata.bindPrice(card,quote);if(!bound.identity_safe)return -999;
  const title=norm(row.title),n=norm(name),cn=norm(number),qcn=norm(row.card_number);
  let score=0;
  if(cn){
@@ -194,6 +198,8 @@ function findMarketKey(name,number,region){
  const wanted=editionCode(region),options=[...select.options].filter(option=>option.value);
  if(wanted==='UNKNOWN')return '';
  const n=norm(name),cn=norm(number),direct=(el('identityMarketKey')?.value||'').trim();
+ if(!cn)return '';
+ if(/^\d+\/\d+$/.test(cn))return '';
  const directOption=options.find(option=>option.value===direct);
  if(directOption&&(wanted==='UNKNOWN'||marketKeyEdition(direct)===wanted)){
    const directBlob=norm(directOption.textContent+' '+directOption.value);

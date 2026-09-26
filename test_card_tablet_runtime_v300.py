@@ -21,6 +21,7 @@ class CardTabletRuntimeV300Tests(unittest.TestCase):
             "grading_vision_engine.js",
             "grading_accuracy_v99.js",
             "card_identity_recognition.js",
+            "card_metadata_classifier_v328.js",
             "grade_market_flow.js",
             "auto_market_center.js",
             "multi_market_prices.js",

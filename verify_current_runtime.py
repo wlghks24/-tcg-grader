@@ -55,6 +55,7 @@ def _commands():
                   "test_pokemon_generation_display_v207.py","test_card_edition_precision_v302.py","test_card_region_generation_precision_v306.py",
                   "test_card_identity_market_precision_v309.py","test_card_region_conflict_failclosed_v318.py",
                   "test_card_identity_ambiguity_v320.py"],360,False),
+                 ("card_metadata_classifier_v328",["node","verify_card_metadata_classifier_v328.js"],60,False),
                  ("browser_runtime",["node","verify_browser_runtime.js"],180,False),
                  ("camera_runtime",["node","verify_camera_runtime.js"],180,False),
                  ("service_worker_runtime",["node","verify_service_worker_runtime.js"],180,False)]
