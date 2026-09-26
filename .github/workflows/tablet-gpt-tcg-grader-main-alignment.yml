@@ -42,6 +42,7 @@ jobs:
 
           root = Path('.')
           base = json.loads((root / 'TCG_CROSSCHECK/TABLET_GPT/learning_snapshot.json').read_text(encoding='utf-8'))
+          prior = json.loads((root / 'TCG_CROSSCHECK/TABLET_GPT/learning_snapshot_v330_delta.json').read_text(encoding='utf-8'))
           delta = json.loads((root / 'TCG_CROSSCHECK/TABLET_GPT/learning_snapshot_v331_delta.json').read_text(encoding='utf-8'))
           receipt = json.loads((root / 'TCG_CROSSCHECK/TCG_GRADER/tablet_gpt_learning_receipt_v331.json').read_text(encoding='utf-8'))
           contract = json.loads((root / 'TCG_CROSSCHECK/TABLET_GPT_TCG_GRADER_SYNC_CONTRACT_V331.json').read_text(encoding='utf-8'))
@@ -58,8 +59,9 @@ jobs:
               subprocess.run(['git', 'merge-base', '--is-ancestor', sha, 'HEAD'], check=True)
 
           ancestor(base['source_main_sha'])
+          ancestor(prior['source_main_sha'])
           ancestor(delta['source_main_sha'])
-          for snapshot in (base, delta):
+          for snapshot in (base, prior, delta):
               for row in snapshot['covered_merges']:
                   ancestor(row['merge_sha'])
 
