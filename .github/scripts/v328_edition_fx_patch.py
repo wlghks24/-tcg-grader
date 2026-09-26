@@ -243,8 +243,18 @@ patch(
 )
 patch(
     "test_pokemon_generation_display_v207.py",
+    "version:'v325'",
+    "version:'v328'",
+)
+patch(
+    "test_pokemon_generation_display_v207.py",
     "Pokémon generation runtime v325: PASS",
     "Pokémon generation runtime v328: PASS",
+)
+patch(
+    "test_card_core_crosscheck_v292.py",
+    "version:'v325'",
+    "version:'v328'",
 )
 
 patch(
