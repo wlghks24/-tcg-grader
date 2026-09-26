@@ -1,4 +1,3 @@
-# retrigger: 2026-09-26T12:33+09:00
 name: Card v326 Runtime Publication Finalizer
 
 on:
@@ -9,10 +8,14 @@ on:
 permissions:
   contents: write
 
+concurrency:
+  group: card-v326-finalize
+  cancel-in-progress: true
+
 jobs:
-  finalize-and-verify:
+  finalize-and-publish:
     runs-on: ubuntu-24.04
-    timeout-minutes: 30
+    timeout-minutes: 35
     steps:
       - name: Checkout v326 branch
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
@@ -30,38 +33,76 @@ jobs:
         with:
           node-version: '20'
 
-      - name: Apply v326 runtime wiring and publish clean verified tree
+      - name: Build exact final tree and verify
         shell: bash
         run: |
           set -euo pipefail
-          git config user.name 'github-actions[bot]'
-          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-
-          # Remove both bootstrap workflows from the final tree before integrity checks.
-          rm -f .github/workflows/card-region-learning-hardening-v307.yml
-          rm -f .github/workflows/v326-runtime-publish-fix.yml
-
+          git fetch origin main --no-tags
           python apply_v326_runtime_publish_fix.py
-          rm -f apply_v326_runtime_publish_fix.py
+          rm -f apply_v326_runtime_publish_fix.py .github/workflows/v326-runtime-publish-fix.yml
+          git show origin/main:.github/workflows/card-region-learning-hardening-v307.yml > .github/workflows/card-region-learning-hardening-v307.yml
 
-          # Rebuild integrity metadata from the exact final tree.
           python fault_injection_healing.py --manifest
           python fault_injection_healing.py --diagnose
 
-          # Targeted card classification / market / runtime gates.
           node --check card_metadata_classifier_v326.js
           node verify_card_metadata_classifier_v326.js
+          node --check card_identity_recognition.js
+          node verify_pokemon_generation_runtime.js
           node --check grade_market_flow.js
           node verify_service_worker_runtime.js
+          python -m unittest -v test_card_region_generation_precision_v306.py test_card_market_generation_precision_v325.py test_card_tablet_runtime_v300.py test_tablet_runtime_manifest_ui_assets_v254.py
           python verify_link_runtime.py
           python tablet_runtime_manifest.py --check --compile
-          python -m unittest -v test_tablet_runtime_manifest_ui_assets_v254.py test_card_tablet_runtime_v300.py
-
-          # Full current-runtime and integrity gates on the clean tree.
           python verify_current_runtime.py
           python repository_integrity_guard.py
           git diff --check
 
-          git add -A
-          git commit -m 'fix: publish card classification runtime v326'
-          git push origin HEAD:fix/card-classification-price-generation-v326
+      - name: Publish verified tree via GitHub contents API
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import base64, json, os, subprocess, urllib.error, urllib.parse, urllib.request
+          repo=os.environ['GITHUB_REPOSITORY']; branch=os.environ['GITHUB_REF_NAME']; token=os.environ['GH_TOKEN']
+          api='https://api.github.com/repos/'+repo+'/contents/'
+          headers={'Authorization':'Bearer '+token,'Accept':'application/vnd.github+json','X-GitHub-Api-Version':'2022-11-28'}
+          raw=subprocess.check_output(['git','status','--porcelain=v1','-z'])
+          parts=raw.decode('utf-8').split('\0'); paths=[]
+          for item in parts:
+              if not item: continue
+              status=item[:2]; path=item[3:]
+              if ' -> ' in path: path=path.split(' -> ',1)[1]
+              paths.append((status,path))
+          # Restore the repository's normal workflow first; this prevents recursive finalizer runs.
+          paths.sort(key=lambda sp: (0 if sp[1]=='.github/workflows/card-region-learning-hardening-v307.yml' else 1, sp[1]))
+          def request(method,url,payload=None):
+              data=None if payload is None else json.dumps(payload).encode()
+              req=urllib.request.Request(url,data=data,headers=headers,method=method)
+              try:
+                  with urllib.request.urlopen(req,timeout=30) as resp: return resp.status,json.loads(resp.read().decode() or '{}')
+              except urllib.error.HTTPError as exc:
+                  body=exc.read().decode(errors='replace')
+                  if exc.code==404: return 404,{}
+                  raise RuntimeError(f'{method} {url} -> {exc.code}: {body[:500]}')
+          for status,path in paths:
+              url=api+urllib.parse.quote(path,safe='/')+'?ref='+urllib.parse.quote(branch,safe='')
+              code,current=request('GET',url)
+              sha=current.get('sha') if code==200 else None
+              base_url=api+urllib.parse.quote(path,safe='/')
+              if status.strip().startswith('D') or not os.path.exists(path):
+                  if sha:
+                      request('DELETE',base_url,{'message':'cleanup: remove v326 bootstrap artifact','branch':branch,'sha':sha})
+                      print('deleted',path)
+                  continue
+              content=base64.b64encode(open(path,'rb').read()).decode()
+              payload={'message':'fix: publish verified v326 runtime '+path,'branch':branch,'content':content}
+              if sha: payload['sha']=sha
+              request('PUT',base_url,payload)
+              print('published',path)
+          ref_url='https://api.github.com/repos/'+repo+'/git/ref/heads/'+urllib.parse.quote(branch,safe='/')
+          _,ref=request('GET',ref_url)
+          print('FINAL_BRANCH_SHA='+str(ref.get('object',{}).get('sha','')))
+          PY
