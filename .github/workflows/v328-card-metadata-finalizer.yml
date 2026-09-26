@@ -1,0 +1,200 @@
+name: V328 Card Metadata Finalizer
+
+on:
+  push:
+    branches:
+      - fix/card-metadata-market-v328
+    paths:
+      - '.github/workflows/v328-card-metadata-finalizer.yml'
+
+permissions:
+  contents: write
+
+concurrency:
+  group: v328-card-metadata-finalizer
+  cancel-in-progress: false
+
+jobs:
+  finalize:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 50
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          ref: fix/card-metadata-market-v328
+          fetch-depth: 0
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97
+        with:
+          python-version: '3.12'
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: '20'
+      - name: Install audited dependencies
+        run: python -m pip install --disable-pip-version-check -r requirements.txt
+      - name: Wire v328 into browser market and tablet runtime
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          from pathlib import Path
+          import re
+          ROOT=Path('.')
+
+          def patch(path, old, new):
+              p=ROOT/path
+              text=p.read_text(encoding='utf-8')
+              if new in text:
+                  return
+              if old not in text:
+                  raise SystemExit(f'{path}: marker missing: {old!r}')
+              p.write_text(text.replace(old,new,1),encoding='utf-8')
+
+          patch('index.html',
+                '<script src="ui_app_shell_v272.js?v=272"></script>\n<script src="card_identity_recognition.js?v=207"></script>',
+                '<script src="ui_app_shell_v272.js?v=272"></script>\n<script src="card_metadata_classifier_v328.js?v=328"></script>\n<script src="card_identity_recognition.js?v=207"></script>')
+
+          page=(ROOT/'index.html').read_text(encoding='utf-8')
+          replacement=r"""async function quickPrice(){
+           const q=S('quickCardQuery').value.trim();
+           if(!q){S('quickPriceResults').textContent='카드명 또는 카드번호를 입력하세요.';return}
+           const region=String(S('identityRegion')?.value||'UNKNOWN').toUpperCase();
+           if(region==='UNKNOWN'){S('quickPriceResults').innerHTML='<b>판본(KR/JP/US)을 먼저 확인하세요.</b> 판본 미확인 상태에서는 다른 판본 가격을 자동 혼합하지 않습니다.';return}
+           const metadata=window.TCGCardMetadata;
+           if(!metadata){S('quickPriceResults').textContent='카드 분류 모듈을 불러오지 못했습니다. 새로고침 후 다시 시도하세요.';return}
+           S('quickPriceResults').textContent='동일 게임·판본·카드 근거를 확인하는 중…';
+           try{
+            const r=await fetch(`market_prices.json?t=${Date.now()}`,{cache:'no-store'}),d=await r.json(),entries=d.entries&&typeof d.entries==='object'?d.entries:{};
+            const cardName=(S('identityCardName')?.value||q).trim(),cardNumber=(S('identityCardNumber')?.value||'').trim();
+            const target=metadata.classify({game:simpleGame,region,card_name:cardName,card_number:cardNumber,ocr_text:q,condition:'raw'});
+            const tokens=(q.toLowerCase().match(/[0-9a-z가-힣ぁ-んァ-ヶ一-龯]{2,}/g)||[]).slice(0,12),exact=[],reference=[];
+            for(const [k,v] of Object.entries(entries)){
+             if(!v||typeof v!=='object')continue;
+             const keyRegion=String(k).split('|',1)[0].toUpperCase();
+             const candidate=metadata.classify({game:v.game||'',region:keyRegion,card_name:v.card_name||'',card_number:v.card_number||'',product_name:v.product_name||'',title:v.title||'',market_key:k,rarity:v.rarity||'',variant:v.variant||'',grading_company:v.grading_company||'',grade:v.grade,condition:v.condition||''});
+             if(candidate.game!==target.game||candidate.region!==target.region||candidate.product_type!=='CARD')continue;
+             const blob=(k+' '+JSON.stringify(v)).toLowerCase(),tokenHit=!tokens.length||tokens.some(t=>blob.includes(t));
+             if(!tokenHit)continue;
+             const bound=metadata.bindPrice(target,candidate);
+             if(bound.identity_safe)exact.push([k,v,bound]);
+             else reference.push([k,v,bound]);
+            }
+            const rows=[...exact.slice(0,8),...reference.slice(0,Math.max(0,8-exact.length))];
+            if(!rows.length){S('quickPriceResults').innerHTML='동일 게임·판본에서 일치 후보를 찾지 못했습니다. <b>카드번호·세트·희귀도까지 확인</b>하면 정확도가 올라갑니다.';return}
+            S('quickPriceResults').innerHTML=rows.map(([k,v,bound])=>`<div class="price-item"><b>${bound.identity_safe?'✅ 카드번호·판본 일치':'⚠ 판본 일치 참고 · 추가확인 필요'} · ${escapeDisplayText(k)}</b><br><span class="muted">${Object.entries(v).filter(([a,b])=>['string','number'].includes(typeof b)).slice(0,8).map(([a,b])=>`${escapeDisplayText(a)}: ${escapeDisplayText(b)}`).join(' · ')}</span></div>`).join('');
+           }catch(e){S('quickPriceResults').textContent='시세자료를 불러오지 못했습니다. 업데이트 후 다시 시도하세요.'}
+          }"""
+          pattern=r"async function quickPrice\(\)\{.*?(?=\n S\('startAutoCamera'\)\.onclick=start;)"
+          page2,count=re.subn(pattern,replacement,page,count=1,flags=re.S)
+          if count!=1:
+              raise SystemExit(f'index.html quickPrice patch count={count}')
+          (ROOT/'index.html').write_text(page2,encoding='utf-8')
+
+          market=(ROOT/'grade_market_flow.js').read_text(encoding='utf-8')
+          old="""function quoteScore(row,name,number,region){
+           if(!row||row.platform!=='WYYYES')return -999;
+           const title=norm(row.title),n=norm(name),cn=norm(number),qcn=norm(row.card_number);"""
+          new="""function quoteScore(row,name,number,region){
+           if(!row||row.platform!=='WYYYES')return -999;
+           const metadata=window.TCGCardMetadata;if(!metadata)return -999;
+           const card=metadata.classify({game:window.tcgIdentityGame||'',region,card_name:name,card_number:number,condition:'raw'});
+           const quote=metadata.classify({game:row.game||'',region:row.card_region||'UNKNOWN',card_name:row.card_name||row.title||'',card_number:row.card_number||'',product_name:row.product_name||row.title||'',title:row.title||'',market_key:row.market_key||'',rarity:row.rarity||'',variant:row.variant||'',grading_company:row.grading_company||'',grade:row.grade,condition:row.condition||''});
+           const bound=metadata.bindPrice(card,quote);if(!bound.identity_safe)return -999;
+           const title=norm(row.title),n=norm(name),cn=norm(number),qcn=norm(row.card_number);"""
+          if new not in market:
+              if old not in market:
+                  raise SystemExit('grade_market_flow.js quoteScore marker missing')
+              market=market.replace(old,new,1)
+          old2=""" const n=norm(name),cn=norm(number),direct=(el('identityMarketKey')?.value||'').trim();
+           const directOption=options.find(option=>option.value===direct);"""
+          new2=""" const n=norm(name),cn=norm(number),direct=(el('identityMarketKey')?.value||'').trim();
+           if(!cn)return '';
+           const directOption=options.find(option=>option.value===direct);"""
+          if new2 not in market:
+              if old2 not in market:
+                  raise SystemExit('grade_market_flow.js findMarketKey marker missing')
+              market=market.replace(old2,new2,1)
+          (ROOT/'grade_market_flow.js').write_text(market,encoding='utf-8')
+
+          patch('tcg_updater.py',
+                "'grading_accuracy_v99.js','card_identity_recognition.js','manual_dual_photo_bridge.js'",
+                "'grading_accuracy_v99.js','card_metadata_classifier_v328.js','card_identity_recognition.js','manual_dual_photo_bridge.js'")
+          patch('tablet_runtime_manifest.py',
+                '"grading_vision_engine.js","grading_accuracy_v99.js","card_identity_recognition.js",',
+                '"grading_vision_engine.js","grading_accuracy_v99.js","card_metadata_classifier_v328.js","card_identity_recognition.js",')
+          patch('test_tablet_runtime_manifest_ui_assets_v254.py',
+                '"index.html","grading_vision_engine.js","grading_accuracy_v99.js","card_identity_recognition.js",',
+                '"index.html","grading_vision_engine.js","grading_accuracy_v99.js","card_metadata_classifier_v328.js","card_identity_recognition.js",')
+          patch('test_card_tablet_runtime_v300.py',
+                '            "card_identity_recognition.js",\n            "grade_market_flow.js",',
+                '            "card_identity_recognition.js",\n            "card_metadata_classifier_v328.js",\n            "grade_market_flow.js",')
+          patch('sw.js',
+                "'./grading_accuracy_v99.js','./card_identity_recognition.js'",
+                "'./grading_accuracy_v99.js','./card_metadata_classifier_v328.js','./card_identity_recognition.js'")
+          patch('feature_contract.py',
+                '"card_identity_recognition.py", "card_identity_recognition.js", "card_identity_learning.json",',
+                '"card_identity_recognition.py", "card_identity_recognition.js", "card_metadata_classifier_v328.js", "card_identity_learning.json",')
+          patch('feature_contract.py',
+                '"card_identity_recognition.js", "tcgRecognizeCurrentCard"))',
+                '"card_identity_recognition.js", "card_metadata_classifier_v328.js", "tcgRecognizeCurrentCard"))')
+          patch('.github/workflows/runtime-delivery-guard.yml',
+                "      - 'card_identity_recognition.js'\n",
+                "      - 'card_identity_recognition.js'\n      - 'card_metadata_classifier_v328.js'\n")
+          patch('.github/workflows/runtime-delivery-guard.yml',
+                '          node --check card_identity_recognition.js\n',
+                '          node --check card_identity_recognition.js\n          node --check card_metadata_classifier_v328.js\n          node verify_card_metadata_classifier_v328.js\n')
+          patch('verify_current_runtime.py',
+                '                 ("browser_runtime",["node","verify_browser_runtime.js"],180,False),',
+                '                 ("card_metadata_classifier_v328",["node","verify_card_metadata_classifier_v328.js"],60,False),\n                 ("browser_runtime",["node","verify_browser_runtime.js"],180,False),')
+          PY
+
+          rm -f .github/workflows/v328-card-metadata-finalizer.yml
+          git add -A
+          python fault_injection_healing.py --manifest
+
+      - name: Targeted card metadata identity generation and price validation
+        shell: bash
+        run: |
+          set -euo pipefail
+          node --check card_metadata_classifier_v328.js
+          node verify_card_metadata_classifier_v328.js
+          node --check card_identity_recognition.js
+          node verify_pokemon_generation_runtime.js
+          node --check grade_market_flow.js
+          python -m unittest -v \
+            test_card_metadata_market_v328.py \
+            test_card_identity_ambiguity_v320.py \
+            test_card_market_generation_precision_v325.py \
+            test_card_region_generation_precision_v306.py \
+            test_card_edition_precision_v302.py \
+            test_card_market_edition_v297.py \
+            test_card_core_provenance_v296.py \
+            test_card_tablet_runtime_v300.py
+
+      - name: Tablet runtime and delivery validation
+        shell: bash
+        run: |
+          set -euo pipefail
+          node verify_service_worker_runtime.js
+          python verify_link_runtime.py
+          python tablet_runtime_manifest.py --check --compile
+          python -m unittest -v test_tablet_runtime_manifest_ui_assets_v254.py
+
+      - name: Full integrity and runtime validation
+        shell: bash
+        run: |
+          set -euo pipefail
+          python repository_integrity_guard.py
+          python verify_current_runtime.py
+          python feature_contract.py
+          git diff --check
+
+      - name: Commit verified branch state
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add -A
+          git commit -m 'fix: harden card metadata classification and price isolation v328'
+          git push origin HEAD:fix/card-metadata-market-v328
