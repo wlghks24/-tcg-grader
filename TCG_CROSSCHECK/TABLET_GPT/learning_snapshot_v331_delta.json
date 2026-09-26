@@ -1,0 +1,44 @@
+{
+  "schema_version": "1.1-tablet-gpt-tcg-grader-learning-sync",
+  "namespace": "TABLET_GPT",
+  "snapshot_kind": "learning_delta",
+  "run_date_kst": "2026-09-26",
+  "built_at": "2026-09-26T21:52:00+09:00",
+  "status": "finalized",
+  "source_repository": "wlghks24/-tcg-grader",
+  "prior_delta": "TCG_CROSSCHECK/TABLET_GPT/learning_snapshot_v330_delta.json",
+  "prior_lesson_digest_sha256": "07b7eb872fd0d1b8e52c6b6b81c804761826b2ad5067e1456ecc3b6f11c7c048",
+  "source_main_sha": "6d9377077f02e2b8b7e0101bc5d1edd327b12f13",
+  "share_policy": {
+    "explicit_patch_and_learning_lessons_only": true,
+    "chatgpt_model_weights_exported": false,
+    "raw_grading_calibration_shared": false,
+    "device_local_runtime_memory_overwritten": false,
+    "peer_verified_never_auto_promotes_local": true
+  },
+  "covered_merges": [
+    {
+      "pr": 282,
+      "version": "v331",
+      "merge_sha": "6d9377077f02e2b8b7e0101bc5d1edd327b12f13"
+    }
+  ],
+  "lesson_digest_sha256": "77bf143284454b1177636fa59e7a20574b181d60496d7ce932f15f0cc805937d",
+  "lessons": [
+    {
+      "lesson_id": "TABLET-GPT-FX-LIVE-EXPIRY-V331",
+      "subsystem": "fx_conversion_browser_runtime",
+      "issue_class": "rendered_fx_conversion_survives_source_expiry",
+      "trigger_condition": "a page remains open beyond the 72-hour FX freshness limit or a rate refresh fails after conversion badges were rendered",
+      "symptom_summary": "already-rendered KRW badges can remain visible after the backing FX timestamp expires or a refresh clears the rates",
+      "root_cause_class": "rate_state_invalidated_without_dom_conversion_cleanup",
+      "fix_pattern": "schedule expiry from the accepted source timestamp, clear cached rates and rendered badges at expiry or failed refresh, recheck on tab visibility and focus, and test the exact age boundary",
+      "prevention_rule_id": "TGPT-PREV-FX-LIVE-EXPIRY",
+      "verification_result": "passed",
+      "regression_pass": true,
+      "recurrence_count": 1,
+      "applicable_scope": "both",
+      "confidence_level": "high"
+    }
+  ]
+}
