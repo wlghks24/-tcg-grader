@@ -62,20 +62,29 @@ jobs:
           text = text.replace(timer_old, timer_new, 1)
           verifier.write_text(text, encoding='utf-8')
           PY
-      - name: Remove one-shot finalizer before final-tree manifest
-        run: rm .github/workflows/fx-v330-finalize.yml
+      - name: Remove one-shot finalizer and stage exact final tree
+        shell: bash
+        run: |
+          set -euo pipefail
+          rm .github/workflows/fx-v330-finalize.yml
+          git add -A
+          git diff --cached --check
       - name: Targeted FX regressions
         run: |
           python -m unittest -v test_edition_fx_failclosed_v328.py
           node verify_browser_runtime.js
       - name: Regenerate final-tree integrity manifest
-        run: python fault_injection_healing.py --manifest
-      - name: Validate final tree
         run: |
-          python fault_injection_healing.py --diagnose
-          python repository_integrity_guard.py
-          python verify_current_runtime.py --passes 1
-          git diff --check
+          python fault_injection_healing.py --manifest
+          git add -- integrity_manifest.json
+      - name: Diagnose regenerated manifest
+        run: python fault_injection_healing.py --diagnose
+      - name: Repository structural integrity
+        run: python repository_integrity_guard.py
+      - name: Current runtime regression
+        run: python verify_current_runtime.py --passes 1
+      - name: Final diff validation
+        run: git diff --cached --check
       - name: Commit verified final branch
         shell: bash
         run: |
