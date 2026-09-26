@@ -1,0 +1,127 @@
+name: V326 Branch Finalizer
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/v326-branch-finalizer.yml'
+
+permissions:
+  contents: write
+
+concurrency:
+  group: v326-branch-finalizer
+  cancel-in-progress: false
+
+jobs:
+  finalize:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          ref: fix/card-classification-price-generation-v326
+          fetch-depth: 0
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97
+        with:
+          python-version: '3.12'
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: '20'
+      - name: Install audited dependencies
+        run: python -m pip install --disable-pip-version-check -r requirements.txt
+      - name: Finalize permanent v326 runtime wiring
+        shell: bash
+        run: |
+          set -euo pipefail
+          git fetch origin main --no-tags
+          rm -f .github/workflows/card-region-learning-hardening-v307.yml \
+                .github/workflows/v326-runtime-publish-fix.yml \
+                .github/workflows/v326-finalize-on-branch.yml \
+                apply_v326_runtime_publish_fix.py
+          python - <<'PY'
+          from pathlib import Path
+          ROOT=Path('.')
+          def patch(path, old, new):
+              p=ROOT/path
+              text=p.read_text(encoding='utf-8')
+              if new in text:
+                  return
+              if old not in text:
+                  raise SystemExit(f'{path}: marker missing: {old!r}')
+              p.write_text(text.replace(old,new,1),encoding='utf-8')
+          patch('tcg_updater.py',
+                "'grading_accuracy_v99.js','card_identity_recognition.js','manual_dual_photo_bridge.js'",
+                "'grading_accuracy_v99.js','card_metadata_classifier_v326.js','card_identity_recognition.js','manual_dual_photo_bridge.js'")
+          patch('tablet_runtime_manifest.py',
+                '"grading_vision_engine.js","grading_accuracy_v99.js","card_identity_recognition.js",',
+                '"grading_vision_engine.js","grading_accuracy_v99.js","card_metadata_classifier_v326.js","card_identity_recognition.js",')
+          patch('test_tablet_runtime_manifest_ui_assets_v254.py',
+                '"index.html","grading_vision_engine.js","grading_accuracy_v99.js","card_identity_recognition.js",',
+                '"index.html","grading_vision_engine.js","grading_accuracy_v99.js","card_metadata_classifier_v326.js","card_identity_recognition.js",')
+          patch('test_card_tablet_runtime_v300.py',
+                '            "card_identity_recognition.js",\n            "grade_market_flow.js",',
+                '            "card_identity_recognition.js",\n            "card_metadata_classifier_v326.js",\n            "grade_market_flow.js",')
+          patch('sw.js',
+                "'./grading_accuracy_v99.js','./card_identity_recognition.js'",
+                "'./grading_accuracy_v99.js','./card_metadata_classifier_v326.js','./card_identity_recognition.js'")
+          patch('.github/workflows/runtime-delivery-guard.yml',
+                "      - 'card_identity_recognition.js'\n",
+                "      - 'card_identity_recognition.js'\n      - 'card_metadata_classifier_v326.js'\n")
+          patch('.github/workflows/runtime-delivery-guard.yml',
+                '          node --check card_identity_recognition.js\n',
+                '          node --check card_identity_recognition.js\n          node --check card_metadata_classifier_v326.js\n          node verify_card_metadata_classifier_v326.js\n')
+          patch('verify_current_runtime.py',
+                '                 ("browser_runtime",["node","verify_browser_runtime.js"],180,False),',
+                '                 ("card_metadata_classifier_v326",["node","verify_card_metadata_classifier_v326.js"],60,False),\n                 ("browser_runtime",["node","verify_browser_runtime.js"],180,False),')
+          patch('feature_contract.py',
+                '"card_identity_recognition.py", "card_identity_recognition.js", "card_identity_learning.json",',
+                '"card_identity_recognition.py", "card_identity_recognition.js", "card_metadata_classifier_v326.js", "card_identity_learning.json",')
+          patch('feature_contract.py',
+                '"card_identity_recognition.js", "tcgRecognizeCurrentCard"))',
+                '"card_identity_recognition.js", "card_metadata_classifier_v326.js", "tcgRecognizeCurrentCard"))')
+          PY
+          git show origin/main:.github/workflows/repository-integrity-guard.yml > .github/workflows/repository-integrity-guard.yml
+          python fault_injection_healing.py --manifest
+      - name: Targeted card identity generation grade and market validation
+        shell: bash
+        run: |
+          set -euo pipefail
+          node --check card_metadata_classifier_v326.js
+          node verify_card_metadata_classifier_v326.js
+          node --check card_identity_recognition.js
+          node verify_pokemon_generation_runtime.js
+          node --check grade_market_flow.js
+          python -m unittest -v \
+            test_card_identity_ambiguity_v320.py \
+            test_card_market_generation_precision_v325.py \
+            test_card_region_generation_precision_v306.py \
+            test_card_edition_precision_v302.py \
+            test_card_market_edition_v297.py \
+            test_card_core_provenance_v296.py \
+            test_card_tablet_runtime_v300.py
+      - name: Tablet runtime and publication validation
+        shell: bash
+        run: |
+          set -euo pipefail
+          node verify_service_worker_runtime.js
+          python verify_link_runtime.py
+          python tablet_runtime_manifest.py --check --compile
+          python -m unittest -v test_tablet_runtime_manifest_ui_assets_v254.py
+      - name: Full integrity and runtime validation
+        shell: bash
+        run: |
+          set -euo pipefail
+          python repository_integrity_guard.py
+          python verify_current_runtime.py
+          python feature_contract.py
+          git diff --check
+      - name: Commit verified branch state
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add -A
+          git commit -m 'fix: finalize v326 card classification and price runtime'
+          git push origin HEAD:fix/card-classification-price-generation-v326
