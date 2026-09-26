@@ -167,6 +167,8 @@ jobs:
         env:
           TCG_FINAL_SKIP_HEAD_MATCH: '1'
         run: bash VERIFY_TABLET_FINAL.sh
+      - name: Verify tablet UI behavioral regressions
+        run: node verify_tablet_ui_repair.js
       - name: Verify unified tablet runtime QA wiring
         run: |
           python test_tablet_runtime_qa_integration.py
