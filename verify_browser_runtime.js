@@ -449,7 +449,8 @@ async function main() {
   const failedFxLoad = await context.loadExchangeRates(true);
   assert.equal(failedFxLoad.ok, false);
   assert.deepEqual(Array.from(failedFxLoad.errors), ["환율자료"]);
-  assert.deepEqual(context.fxRates,{JPY_KRW:0,USD_KRW:0},"failed refresh must clear previously accepted FX");
+  assert.equal(context.fxRates.JPY_KRW,0,"failed refresh must clear accepted JPY FX");
+  assert.equal(context.fxRates.USD_KRW,0,"failed refresh must clear accepted USD FX");
   assert.equal(context.fxTimestamp,"");
   assert.equal(context.foreignKrw("¥1000"),"","failed refresh must not retain stale conversion");
 
