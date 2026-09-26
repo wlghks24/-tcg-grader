@@ -263,4 +263,13 @@ patch(
     "\"version:'v328'\"",
 )
 
+# Keep the strict script-src allowlist synchronized with the edited UI.
+from csp_hash_hardening import harden_html
+
+index_path = ROOT / "index.html"
+index_html = index_path.read_text(encoding="utf-8")
+hardened_index_html = harden_html(index_html)
+if hardened_index_html != index_html:
+    index_path.write_text(hardened_index_html, encoding="utf-8")
+
 print("v328 patch applied")
