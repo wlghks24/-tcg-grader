@@ -1,7 +1,7 @@
 {
   "version": 2,
   "engine": "v109-card-identity-ocr-learning",
-  "generated_at": "2026-09-26T11:38:28+00:00",
+  "generated_at": "2026-09-26T12:54:13+00:00",
   "files": {
     ".github/workflows/ai-auto-tracker-guard.yml": {
       "sha256": "636e750bd6d2619cce75d4bce2d68051eaa2209ae763bc8ec523ed73476728a6",
@@ -400,8 +400,8 @@
       "bytes": 3256
     },
     ".github/workflows/runtime-delivery-guard.yml": {
-      "sha256": "64a245aa71f2bd538afd5101e410fc9a8c62002e0e36905d9a97bdc5812795dc",
-      "bytes": 11181
+      "sha256": "d8e704f3abfe84c65292bc6879db3e654c8f76d6a706582774f62e4417074b0c",
+      "bytes": 11261
     },
     ".github/workflows/runtime-device-benchmark-guard.yml": {
       "sha256": "49c17d4d839110444d1168147578991cfc599f67a86c0918ec6c9d5f009609d0",
@@ -1576,8 +1576,8 @@
       "bytes": 2161
     },
     "index.html": {
-      "sha256": "eadccdcd377cf7a9ca6a5c1214f35e88a999f1eb90c2a65e6a6f1839de5b9e88",
-      "bytes": 322489
+      "sha256": "64f619694716b1b9ef37a1501e35e26f84caa1b9d3c0f5aa77b00a97747c7e9b",
+      "bytes": 323984
     },
     "instagram_tcg_content/__init__.py": {
       "sha256": "20e813d62cc0300556afe2947b692df2851d9bdba7ca2b0006c30626e2938a72",
@@ -2448,8 +2448,8 @@
       "bytes": 3067
     },
     "test_card_regression_gate_v299.py": {
-      "sha256": "af573e82845b0f59816f8b0f3090dde57c1aa78aa91d00e6c43da0fd07c60b62",
-      "bytes": 3936
+      "sha256": "c4ef2b2ad8f77a2f248144a8ae19457155fa404f86ef6bbb1d75da8f9ca5fbe4",
+      "bytes": 4262
     },
     "test_card_tablet_runtime_v300.py": {
       "sha256": "13da971e094f8b83577d045a9f325be30f1a60883bd544c45dae19a25e965f02",
@@ -2560,8 +2560,8 @@
       "bytes": 12704
     },
     "test_edition_fx_failclosed_v328.py": {
-      "sha256": "4551a521d5aca40ebe6c39dfcea0c62e9629cfb1755c58ccc7f0374ff359e2b1",
-      "bytes": 3422
+      "sha256": "8ea14952ae638a4a57c7a389fbd1d860e33391f2c50f952ff1d152bc75aaf607",
+      "bytes": 4099
     },
     "test_error_recovery_learning_v134.py": {
       "sha256": "2c13d61a90802e0c635ffc8322252a0953cb2a630cb85eb481e1e1077dab6478",
@@ -3328,8 +3328,8 @@
       "bytes": 258388
     },
     "verify_browser_runtime.js": {
-      "sha256": "ebf5b085df61ce808829fb4e59cb863e94f96bfe3b0c3b4fe02d40f41e9ecf5d",
-      "bytes": 26415
+      "sha256": "702d553d0f2b3c51b291179520016a577caf1b7133736527e0203727175e9a2b",
+      "bytes": 28904
     },
     "verify_camera_runtime.js": {
       "sha256": "a90c55d90f1b135c18f083197d9d520f035a420f7a0f4fea79023129aab71a19",
@@ -3352,8 +3352,8 @@
       "bytes": 12067
     },
     "verify_current_runtime.py": {
-      "sha256": "2c2b5b8e716cd08237606e446e3d406307c1f6db5c0832517ba93886c24edf5b",
-      "bytes": 6900
+      "sha256": "dda15025df1d3fd677282811f8b4d60238503c9239b87a662306e8b464e1a35a",
+      "bytes": 6943
     },
     "verify_fault_injection_healing.py": {
       "sha256": "40f0d3565ea8094b4deb2cf407550eaf41928f3f7fbfc2863ead0053f7cb25f8",
