@@ -6,6 +6,7 @@ on:
       - fix/edition-fx-failclosed-v328
     paths:
       - '.github/workflows/v328-product-finalizer.yml'
+      - 'verify_pokemon_generation_runtime.js'
 
 permissions:
   contents: write
@@ -55,6 +56,7 @@ jobs:
           node --check card_identity_recognition.js
           node --check auto_market_center.js
           node --check grade_market_flow.js
+          node --check verify_pokemon_generation_runtime.js
 
       - name: Regenerate final-tree integrity manifest
         shell: bash
@@ -156,6 +158,7 @@ jobs:
         run: |
           set -euo pipefail
           git diff --check
+          git rm -f .github/workflows/v328-product-finalizer.yml
           git diff --name-only origin/main | sort > /tmp/actual.txt
           cat > /tmp/expected.txt <<'EOF'
           auto_market_center.js
@@ -167,6 +170,7 @@ jobs:
           multi_market_price_collector.py
           test_edition_fx_failclosed_v328.py
           verify_browser_runtime.js
+          verify_pokemon_generation_runtime.js
           EOF
           sort -o /tmp/expected.txt /tmp/expected.txt
           echo 'Final branch diff:'
@@ -189,6 +193,7 @@ jobs:
             multi_market_price_collector.py \
             test_edition_fx_failclosed_v328.py \
             verify_browser_runtime.js \
+            verify_pokemon_generation_runtime.js \
             .github/scripts/v328_edition_fx_patch.py
           git diff --cached --check
           git commit -m 'fix: separate EN edition from US market and enforce FX freshness'
