@@ -26,12 +26,14 @@ def _lesson_digest(lessons):
 
 
 class TabletGptTcgGraderSyncV289(unittest.TestCase):
+    """Historical v289 receipt remains immutable while the current contract may advance."""
+
     def setUp(self):
         self.snapshot = _load(SNAPSHOT)
         self.receipt = _load(RECEIPT)
         self.contract = _load(CONTRACT)
 
-    def test_current_digest_and_ids_exactly_match(self):
+    def test_historical_digest_and_ids_exactly_match(self):
         calculated = _lesson_digest(self.snapshot["lessons"])
         self.assertEqual(calculated, self.snapshot["lesson_digest_sha256"])
         self.assertEqual(calculated, self.receipt["source_lesson_digest_sha256"])
@@ -41,15 +43,19 @@ class TabletGptTcgGraderSyncV289(unittest.TestCase):
         self.assertEqual(len(source_ids), len(set(source_ids)))
         self.assertTrue(EXPECTED_NEW_LESSONS.issubset(set(source_ids)))
 
-    def test_current_merge_provenance_exactly_covers_v286_to_v288(self):
+    def test_historical_merge_provenance_is_retained_by_current_contract(self):
         rows = self.snapshot["covered_merges"]
         self.assertEqual(EXPECTED_PRS, {row["pr"] for row in rows})
         by_pr = {row["pr"]: row for row in rows}
         self.assertEqual("50b31177216e300107b6187a7bf84238da93ae17", by_pr[216]["merge_sha"])
         self.assertEqual("acca7b8e1f6c1443e7eb9cea800651e4a4fc134b", by_pr[217]["merge_sha"])
         self.assertEqual("21083d72d82e5e8559eb45607374714958146876", by_pr[218]["merge_sha"])
-        self.assertEqual([*sorted(EXPECTED_PRS)], self.contract["current_required_merge_prs"])
-        self.assertEqual(13, self.contract["current_required_lesson_count"])
+        self.assertTrue(EXPECTED_PRS.issubset(set(self.contract["current_required_merge_prs"])))
+        self.assertGreaterEqual(self.contract["current_required_lesson_count"], 13)
+        self.assertEqual(
+            "TCG_CROSSCHECK/TABLET_GPT/learning_snapshot.json",
+            self.contract["base_snapshot"],
+        )
 
     def test_provenance_and_safe_share_boundary(self):
         self.assertEqual(self.snapshot["source_repository"], self.receipt["source_repository"])

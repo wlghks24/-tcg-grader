@@ -4,6 +4,8 @@ on:
   push:
     branches: [main]
   pull_request:
+  schedule:
+    - cron: '17 */6 * * *'
   workflow_dispatch:
 
 permissions:
@@ -25,61 +27,95 @@ jobs:
       - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97
         with:
           python-version: '3.12'
-      - name: Verify canonical v289 learning contract
-        run: python -m unittest -v test_tablet_gpt_tcg_grader_sync_v289.py
-      - name: Verify current HEAD contains provenance and every covered merge
+
+      - name: Verify canonical v330 base plus delta contract
+        run: python -m unittest -v test_tablet_gpt_tcg_grader_sync_v330.py
+
+      - name: Verify current HEAD contains every covered patch
         shell: bash
         run: |
           set -euo pipefail
           python - <<'PY'
-          import hashlib
           import json
           import subprocess
           from pathlib import Path
 
           root = Path('.')
-          snapshot = json.loads((root / 'TCG_CROSSCHECK/TABLET_GPT/learning_snapshot.json').read_text(encoding='utf-8'))
-          receipt = json.loads((root / 'TCG_CROSSCHECK/TCG_GRADER/tablet_gpt_learning_receipt.json').read_text(encoding='utf-8'))
+          base = json.loads((root / 'TCG_CROSSCHECK/TABLET_GPT/learning_snapshot.json').read_text(encoding='utf-8'))
+          delta = json.loads((root / 'TCG_CROSSCHECK/TABLET_GPT/learning_snapshot_v330_delta.json').read_text(encoding='utf-8'))
+          receipt = json.loads((root / 'TCG_CROSSCHECK/TCG_GRADER/tablet_gpt_learning_receipt_v330.json').read_text(encoding='utf-8'))
           contract = json.loads((root / 'TCG_CROSSCHECK/TABLET_GPT_TCG_GRADER_SYNC_CONTRACT.json').read_text(encoding='utf-8'))
 
-          lessons = snapshot['lessons']
-          raw = json.dumps(lessons, ensure_ascii=False, sort_keys=True, separators=(',', ':')).encode('utf-8')
-          digest = hashlib.sha256(raw).hexdigest()
-          assert digest == snapshot['lesson_digest_sha256'] == receipt['source_lesson_digest_sha256']
-
-          lesson_ids = [row['lesson_id'] for row in lessons]
-          assert lesson_ids == receipt['accepted_lesson_ids']
-          assert len(lesson_ids) == len(set(lesson_ids)) == contract['current_required_lesson_count'] == 13
-          assert contract['verification_test'] == 'test_tablet_gpt_tcg_grader_sync_v289.py'
-          assert set(contract['current_required_merge_prs']) == {206, 207, 208, 209, 210, 213, 216, 217, 218}
-
-          assert snapshot['schema_version'] == receipt['schema_version'] == contract['schema_version']
-          assert snapshot['source_repository'] == receipt['source_repository'] == 'wlghks24/-tcg-grader'
-          assert snapshot['source_main_sha'] == receipt['source_main_sha']
-
-          verification = receipt['verification']
+          assert delta['schema_version'] == receipt['schema_version'] == contract['schema_version']
+          assert delta['source_repository'] == receipt['source_repository'] == 'wlghks24/-tcg-grader'
+          assert delta['source_main_sha'] == receipt['source_main_sha']
           assert receipt['status'] == 'SYNCED_VERIFIED'
-          assert verification['sync_pr'] == 219
-          assert verification['sync_pr_ci_total'] == 5
-          assert verification['sync_pr_ci_passed'] == 5
-          assert verification['sync_pr_ci_failed'] == 0
-          assert verification['sync_merge_sha'] == '8f761f3e4efb0ad1f22445f8dd2f32793f1483a4'
-          assert verification['verified_result'] == 'TABLET_GPT_TCG_GRADER_MATCH'
-
-          policy = snapshot['share_policy']
-          assert policy['chatgpt_model_weights_exported'] is False
-          assert policy['raw_grading_calibration_shared'] is False
-          assert policy['device_local_runtime_memory_overwritten'] is False
-          assert policy['peer_verified_never_auto_promotes_local'] is True
+          assert receipt['verification']['verification_test'] == 'test_tablet_gpt_tcg_grader_sync_v330.py'
+          assert receipt['verification']['verified_result'] == 'TABLET_GPT_TCG_GRADER_MATCH'
 
           def ancestor(sha: str) -> None:
               subprocess.run(['git', 'cat-file', '-e', f'{sha}^{{commit}}'], check=True)
               subprocess.run(['git', 'merge-base', '--is-ancestor', sha, 'HEAD'], check=True)
 
-          ancestor(snapshot['source_main_sha'])
-          for row in snapshot['covered_merges']:
-              ancestor(row['merge_sha'])
+          ancestor(base['source_main_sha'])
+          ancestor(delta['source_main_sha'])
+          for snapshot in (base, delta):
+              for row in snapshot['covered_merges']:
+                  ancestor(row['merge_sha'])
 
           head = subprocess.check_output(['git', 'rev-parse', 'HEAD'], text=True).strip()
-          print(f'TABLET_GPT_TCG_GRADER_MATCH digest={digest} provenance={snapshot["source_main_sha"]} current_head={head}')
+          print(f'TABLET_GPT_TCG_GRADER_CONTRACT_OK source={delta["source_main_sha"]} current_head={head}')
+          PY
+
+      - name: Fail visibly when main has watched changes after the verified delta
+        if: github.event_name != 'pull_request'
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import json
+          import subprocess
+          from pathlib import Path
+
+          root = Path('.')
+          delta = json.loads((root / 'TCG_CROSSCHECK/TABLET_GPT/learning_snapshot_v330_delta.json').read_text(encoding='utf-8'))
+          contract = json.loads((root / 'TCG_CROSSCHECK/TABLET_GPT_TCG_GRADER_SYNC_CONTRACT.json').read_text(encoding='utf-8'))
+          source = delta['source_main_sha']
+          head = subprocess.check_output(['git', 'rev-parse', 'HEAD'], text=True).strip()
+
+          subprocess.run(['git', 'merge-base', '--is-ancestor', source, head], check=True)
+          if source == head:
+              print(f'TABLET_GPT_SYNC_FRESH source={source} head={head}')
+              raise SystemExit(0)
+
+          changed = subprocess.check_output(
+              ['git', 'diff', '--name-only', f'{source}..{head}'],
+              text=True,
+          ).splitlines()
+          watch = contract['freshness_watch']
+          exact = set(watch['exact_paths'])
+          prefixes = tuple(watch['path_prefixes'])
+          excluded = set(watch['exclude_paths'])
+
+          def watched(path: str) -> bool:
+              if path in excluded:
+                  return False
+              return path in exact or path.startswith(prefixes)
+
+          relevant = sorted(path for path in changed if watched(path))
+          if relevant:
+              print('TABLET_GPT_SYNC_STALE', flush=True)
+              print(f'verified_source={source}', flush=True)
+              print(f'current_head={head}', flush=True)
+              print('watched_changes_after_verified_delta:', flush=True)
+              for path in relevant:
+                  print(f' - {path}', flush=True)
+              raise SystemExit(
+                  'Tablet GPT cross-check snapshot is stale: create a verified learning delta before treating alignment as current.'
+              )
+
+          print(
+              f'TABLET_GPT_SYNC_FRESH_NO_WATCHED_CHANGE source={source} head={head} '
+              f'changed_files={len(changed)}'
+          )
           PY

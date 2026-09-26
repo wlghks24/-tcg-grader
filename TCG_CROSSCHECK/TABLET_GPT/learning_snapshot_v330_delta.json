@@ -1,0 +1,209 @@
+{
+  "schema_version": "1.1-tablet-gpt-tcg-grader-learning-sync",
+  "namespace": "TABLET_GPT",
+  "snapshot_kind": "learning_delta",
+  "run_date_kst": "2026-09-26",
+  "built_at": "2026-09-26T21:17:00+09:00",
+  "status": "finalized",
+  "source_repository": "wlghks24/-tcg-grader",
+  "base_snapshot": "TCG_CROSSCHECK/TABLET_GPT/learning_snapshot.json",
+  "base_lesson_digest_sha256": "15e78e3270dca1c5ea0deda7acf8a0110c9da937dba62ce71df90c5d96a4c41f",
+  "source_main_sha": "279fec44f3064332bcfc02c868f80c2cfd67fa18",
+  "share_policy": {
+    "explicit_patch_and_learning_lessons_only": true,
+    "chatgpt_model_weights_exported": false,
+    "raw_grading_calibration_shared": false,
+    "device_local_runtime_memory_overwritten": false,
+    "peer_verified_never_auto_promotes_local": true
+  },
+  "covered_merges": [
+    {
+      "pr": 227,
+      "version": "v295",
+      "merge_sha": "e67694073c8b6c73ed8f1aa06942345a2403dc3c"
+    },
+    {
+      "pr": 230,
+      "version": "v296",
+      "merge_sha": "ceefab4f80164973e5afa1f064035ce628733785"
+    },
+    {
+      "pr": 234,
+      "version": "v300",
+      "merge_sha": "59f6b5f85ea9b76c72e28ca319f73b7a62297fe4"
+    },
+    {
+      "pr": 238,
+      "version": "v302",
+      "merge_sha": "1dcc17e7610bfa59ede0385abec72b86129c6269"
+    },
+    {
+      "pr": 243,
+      "version": "v305",
+      "merge_sha": "913f5eed00541edfbf77ee42500fa1123e8b378f"
+    },
+    {
+      "pr": 245,
+      "version": "v306",
+      "merge_sha": "7b6c3a3d999940419db6754c3fda884463f71bf8"
+    },
+    {
+      "pr": 249,
+      "version": "v309",
+      "merge_sha": "aa368e738474a33c979c33275da830a4b10c2966"
+    },
+    {
+      "pr": 263,
+      "version": "v319",
+      "merge_sha": "ec9d2849355261a4c572edeeae73fc8b002627c7"
+    },
+    {
+      "pr": 273,
+      "version": "v327",
+      "merge_sha": "19467f564e7ca5408af4f31137ec60b0b837f7b0"
+    },
+    {
+      "pr": 278,
+      "version": "v328",
+      "merge_sha": "ab10b9f3a572b568f18d58a7909d956c159394d7"
+    },
+    {
+      "pr": 279,
+      "version": "v329",
+      "merge_sha": "279fec44f3064332bcfc02c868f80c2cfd67fa18"
+    }
+  ],
+  "lesson_digest_sha256": "07b7eb872fd0d1b8e52c6b6b81c804761826b2ad5067e1456ecc3b6f11c7c048",
+  "combined_lesson_id_digest_sha256": "bf6981836f41175b12f94494a6b8db9b3dc80c3085bde3261662d90c412e146e",
+  "lessons": [
+    {
+      "lesson_id": "TABLET-GPT-AUTO-MAIN-READINESS-V295",
+      "subsystem": "tablet_termux_runtime",
+      "issue_class": "scheduled_main_alignment_readiness_gap",
+      "trigger_condition": "tablet runtime starts or restarts while scheduled updater or Termux:Boot readiness is missing, legacy, or unknown",
+      "symptom_summary": "a device can appear configured while the updater or boot supervisor is not actually ready to keep the running checkout aligned with protected main",
+      "root_cause_class": "configuration_presence_without_runtime_readiness_evidence",
+      "fix_pattern": "self-prepare the updater idempotently, repair legacy boot scripts, hold on unknown Termux:Boot readiness, require boot heartbeat evidence, and retain fast-forward-only updates",
+      "prevention_rule_id": "TGPT-PREV-AUTO-MAIN-READINESS",
+      "verification_result": "passed",
+      "regression_pass": true,
+      "recurrence_count": 1,
+      "applicable_scope": "both",
+      "confidence_level": "high"
+    },
+    {
+      "lesson_id": "TABLET-GPT-PRICE-PROVENANCE-RUNTIME-BUNDLE-V296-V300",
+      "subsystem": "grading_market_tablet_runtime",
+      "issue_class": "provenance_and_runtime_bundle_gap",
+      "trigger_condition": "exact-grade prices or card-analysis dependencies reach the tablet without complete provenance or manifest/regression coverage",
+      "symptom_summary": "unsupported grade prices or a partial stale tablet checkout can look usable even though required grading, identity, market, or security dependencies are absent",
+      "root_cause_class": "valuation_provenance_gap_and_incomplete_runtime_manifest",
+      "fix_pattern": "require machine-readable exact-grade provenance, fail closed when FX or evidence is invalid, include the complete card/market/security dependency chain in the tablet manifest, and run it in current-runtime and delivery gates",
+      "prevention_rule_id": "TGPT-PREV-PROVENANCE-RUNTIME-BUNDLE",
+      "verification_result": "passed",
+      "regression_pass": true,
+      "recurrence_count": 1,
+      "applicable_scope": "both",
+      "confidence_level": "high"
+    },
+    {
+      "lesson_id": "TABLET-GPT-EDITION-OCR-GENERATION-MARKET-V302-V309",
+      "subsystem": "card_identity_ocr_generation_market",
+      "issue_class": "cross_edition_identity_and_market_contamination",
+      "trigger_condition": "KR/JP/EN evidence, generation hints, verified learning, and market candidates are combined without the same edition and exact-card identity boundary",
+      "symptom_summary": "a same-name or same-number card from a different edition or conflicting generation evidence can contaminate automatic identity or pricing",
+      "root_cause_class": "identity_dimensions_collapsed_across_edition_generation_market",
+      "fix_pattern": "keep KR/JP/EN evidence explicit, isolate verified learning by edition, fail closed on generation conflicts, and require exact card-number plus edition matching for automatic market linkage",
+      "prevention_rule_id": "TGPT-PREV-EDITION-IDENTITY-MARKET",
+      "verification_result": "passed",
+      "regression_pass": true,
+      "recurrence_count": 1,
+      "applicable_scope": "both",
+      "confidence_level": "high"
+    },
+    {
+      "lesson_id": "TABLET-GPT-PROTECTED-DATA-DRIVE-CADENCE-V305-V306",
+      "subsystem": "protected_data_delivery",
+      "issue_class": "protected_main_publish_and_package_freshness_gap",
+      "trigger_condition": "scheduled data refresh or GPT Drive packaging runs while protected-main rules or freshness windows are active",
+      "symptom_summary": "direct-main publication is unsafe and a stale package can leave the tablet behind even when collection itself succeeded",
+      "root_cause_class": "delivery_path_not_bound_to_protected_pr_and_fresh_manifest",
+      "fix_pattern": "publish validated data through a candidate branch and PR with exact-SHA checks, never direct-push protected main, and build fresh GPT Drive packages on a bounded cadence before tablet sync windows",
+      "prevention_rule_id": "TGPT-PREV-PROTECTED-DELIVERY-CADENCE",
+      "verification_result": "passed",
+      "regression_pass": true,
+      "recurrence_count": 1,
+      "applicable_scope": "both",
+      "confidence_level": "high"
+    },
+    {
+      "lesson_id": "TABLET-GPT-VERIFIED-LEARNING-REGION-TXN-V309",
+      "subsystem": "verified_card_learning",
+      "issue_class": "region_learning_transaction_and_conflict_risk",
+      "trigger_condition": "multiple learners or ambiguous UNKNOWN/confirmed editions update verified card identity state",
+      "symptom_summary": "stale concurrent writers or cross-edition evidence can overwrite valid learning or promote an ambiguous sample",
+      "root_cause_class": "multi_writer_learning_without_complete_region_transaction",
+      "fix_pattern": "serialize the full learning transaction, permit UNKNOWN to confirmed promotion only with verified evidence, reject confirmed-edition conflicts, and partition similarity support by edition",
+      "prevention_rule_id": "TGPT-PREV-VERIFIED-REGION-TXN",
+      "verification_result": "passed",
+      "regression_pass": true,
+      "recurrence_count": 1,
+      "applicable_scope": "both",
+      "confidence_level": "high"
+    },
+    {
+      "lesson_id": "TABLET-GPT-SYNC-TRUST-BOUNDARY-V319",
+      "subsystem": "tablet_drive_sync_security",
+      "issue_class": "sync_manifest_and_runtime_trust_boundary",
+      "trigger_condition": "Drive/rclone packages, rollback metadata, locks, or running service identity are accepted without strict structure and exact build binding",
+      "symptom_summary": "malformed or redirected sync state can otherwise be mistaken for a trusted current tablet runtime",
+      "root_cause_class": "sync_transport_metadata_not_bound_to_exact_runtime_identity",
+      "fix_pattern": "use strict duplicate-safe manifests, bind service identity and running build SHA to the expected main SHA, harden rclone and lock/rollback metadata, and fail closed on trust-boundary violations",
+      "prevention_rule_id": "TGPT-PREV-SYNC-TRUST-BOUNDARY",
+      "verification_result": "passed",
+      "regression_pass": true,
+      "recurrence_count": 1,
+      "applicable_scope": "both",
+      "confidence_level": "high"
+    },
+    {
+      "lesson_id": "TABLET-GPT-CARD-CLASSIFICATION-EXACT-BINDING-V320-V327",
+      "subsystem": "card_classification_generation_exact_binding",
+      "issue_class": "ambiguous_dimension_collapse",
+      "trigger_condition": "game, edition, product type, set, rarity, variant, or generation evidence is incomplete or conflicting before automatic selection or market binding",
+      "symptom_summary": "UNKNOWN or ambiguous card dimensions can be silently collapsed into a plausible but incorrect generation or price candidate",
+      "root_cause_class": "automatic_binding_before_identity_dimensions_are_resolved",
+      "fix_pattern": "classify game, edition, product type, set, rarity, and variant independently; block UNKNOWN/conflict automatic selection; do not invent generation; bind market evidence only to the exact resolved identity",
+      "prevention_rule_id": "TGPT-PREV-EXACT-CLASSIFICATION-BINDING",
+      "verification_result": "passed",
+      "regression_pass": true,
+      "recurrence_count": 1,
+      "applicable_scope": "both",
+      "confidence_level": "high"
+    },
+    {
+      "lesson_id": "TABLET-GPT-FX-FRESHNESS-FAILCLOSED-V328-V329",
+      "subsystem": "market_fx_and_browser_runtime",
+      "issue_class": "stale_or_zero_fx_conversion",
+      "trigger_condition": "edition/market mapping changes or an FX refresh fails, expires, or returns zero/non-finite values",
+      "symptom_summary": "the browser can otherwise display a converted KRW amount using stale or invalid rates and blur edition identity with sales-market routing",
+      "root_cause_class": "fx_state_survives_failure_or_freshness_boundary",
+      "fix_pattern": "separate card edition from sales market, require fresh finite positive FX at render time, clear FX state after refresh failure, and keep the regression in recurring runtime/delivery gates",
+      "prevention_rule_id": "TGPT-PREV-FX-FRESHNESS-FAILCLOSED",
+      "verification_result": "passed",
+      "regression_pass": true,
+      "recurrence_count": 1,
+      "applicable_scope": "both",
+      "confidence_level": "high"
+    }
+  ],
+  "validation": {
+    "learning_fields_only": true,
+    "raw_grading_share_count": 0,
+    "device_local_memory_copy_count": 0,
+    "delta_lesson_count": 8,
+    "combined_lesson_count": 21,
+    "source_main_contains_covered_merges": true,
+    "freshness_watch_required": true
+  }
+}

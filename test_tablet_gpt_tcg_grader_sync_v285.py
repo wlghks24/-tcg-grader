@@ -19,19 +19,23 @@ def _lesson_digest(lessons):
 
 
 class TabletGptTcgGraderSyncV285(unittest.TestCase):
-    """Historical v285 invariants that must remain true as the sync snapshot grows."""
+    """Historical v285 invariants must remain true after later append-only deltas."""
 
     def setUp(self):
         self.snapshot = _load(SNAPSHOT)
         self.receipt = _load(RECEIPT)
         self.contract = _load(CONTRACT)
 
-    def test_schema_and_source_match(self):
+    def test_historical_schema_and_source_stay_self_consistent(self):
         self.assertEqual(self.snapshot["schema_version"], self.receipt["schema_version"])
-        self.assertEqual(self.snapshot["schema_version"], self.contract["schema_version"])
         self.assertEqual(self.snapshot["source_repository"], self.receipt["source_repository"])
         self.assertEqual(self.snapshot["source_main_sha"], self.receipt["source_main_sha"])
         self.assertRegex(self.snapshot["source_main_sha"], r"^[0-9a-f]{40}$")
+        self.assertEqual(
+            "TCG_CROSSCHECK/TABLET_GPT/learning_snapshot.json",
+            self.contract["base_snapshot"],
+        )
+        self.assertGreaterEqual(self.contract["base_required_lesson_count"], 13)
 
     def test_digest_and_lesson_ids_match_exactly(self):
         calculated = _lesson_digest(self.snapshot["lessons"])
@@ -65,6 +69,7 @@ class TabletGptTcgGraderSyncV285(unittest.TestCase):
     def test_original_v285_merge_contract_remains_covered(self):
         merge_prs = {row["pr"] for row in self.snapshot["covered_merges"]}
         self.assertTrue({206, 207, 208, 209, 210, 213}.issubset(merge_prs))
+        self.assertTrue(merge_prs.issubset(set(self.contract["current_required_merge_prs"])))
         for row in self.snapshot["covered_merges"]:
             self.assertRegex(row["merge_sha"], r"^[0-9a-f]{40}$")
             self.assertRegex(row["version"], r"^v\d+$")
