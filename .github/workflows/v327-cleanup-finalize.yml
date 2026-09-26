@@ -29,6 +29,8 @@ jobs:
       - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
         with:
           node-version: '20'
+      - name: Install audited dependencies
+        run: python -m pip install --disable-pip-version-check -r requirements.txt
       - name: Remove temporary finalizers and regenerate integrity metadata
         shell: bash
         run: |
