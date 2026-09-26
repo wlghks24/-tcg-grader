@@ -1,0 +1,32 @@
+const fs=require('fs'),vm=require('vm');
+vm.runInThisContext(fs.readFileSync('card_metadata_classifier_v328.js','utf8'));
+const api=globalThis.TCGCardMetadata;
+function ok(v,m){if(!v)throw new Error(m)}
+function eq(a,b,m){if(a!==b)throw new Error(`${m}: ${JSON.stringify(a)} !== ${JSON.stringify(b)}`)}
+ok(api&&api.version==='v328','API v328 missing');
+let c=api.classify({game:'pokemon',region:'US',card_name:'Pikachu ex SAR',card_number:'PAL 185/193',variant:'base',condition:'raw'});
+eq(c.game,'pokemon','pokemon game');eq(c.region,'US','pokemon region');eq(c.set_code,'PAL','pokemon set');eq(c.rarity,'SAR','pokemon rarity');eq(c.generation,9,'pokemon generation');
+let m=api.classify({game:'Pokémon',market_key:'US|Pikachu ex|HIT',card_name:'Pikachu ex SAR',card_number:'PAL185/193',variant:'base',condition:'raw'});
+let b=api.bindPrice(c,m);ok(b.price_safe,'exact raw/base pokemon price should be safe');
+m=api.classify({game:'pokemon',region:'JP',card_name:'Pikachu ex SAR',card_number:'PAL185/193',variant:'base',condition:'raw'});
+b=api.bindPrice(c,m);ok(!b.price_safe&&b.conflicts.includes('region'),'cross-edition price must block');
+m=api.classify({game:'pokemon',region:'US',card_name:'Pikachu ex SAR PSA 10',card_number:'PAL185/193',variant:'base',grading_company:'PSA',grade:10});
+b=api.bindPrice(c,m);ok(!b.price_safe&&b.conflicts.includes('grade_state'),'raw vs graded must block');
+c=api.classify({game:'pokemon',region:'US',card_name:'Mega card',card_number:'MEG 001',variant:'base',condition:'raw'});
+eq(c.generation,null,'MEGA must not invent generation');eq(c.era,'MEGA','MEGA era');
+c=api.classify({game:'onepiece',region:'JP',card_name:'Ace Manga Parallel SEC',card_number:'OP13-119',condition:'raw'});
+eq(c.set_code,'OP-13','onepiece set');eq(c.variant,'manga_parallel','onepiece manga');eq(c.generation,null,'onepiece no pokemon generation');
+m=api.classify({game:'onepiece',region:'JP',card_name:'Ace SEC',card_number:'OP13-119',variant:'base',condition:'raw'});
+b=api.bindPrice(c,m);ok(!b.price_safe&&b.conflicts.includes('variant'),'manga/base must block');
+c=api.classify({game:'naruto',region:'US',card_name:'Chakra Card Promo',card_number:'CP001',condition:'raw'});
+eq(c.card_number,'CP-001','naruto number');eq(c.set_code,'CP','naruto set family');eq(c.generation,null,'naruto no pokemon generation');
+c=api.classify({game:'pokemon',region:'UNKNOWN',card_name:'Pikachu',card_number:'025/100',variant:'base',condition:'raw'});
+m=api.classify({game:'pokemon',region:'US',card_name:'Pikachu',card_number:'025/100',variant:'base',condition:'raw'});
+b=api.bindPrice(c,m);ok(!b.price_safe&&b.conflicts.includes('region_missing'),'unknown region must block');
+c=api.classify({game:'pokemon',region:'US',card_name:'Pikachu',card_number:'025/100',variant:'base',condition:'raw'});
+m=api.classify({game:'pokemon',region:'US',card_name:'Pikachu',card_number:'025/100',variant:'base',condition:'raw'});
+b=api.bindPrice(c,m);ok(!b.price_safe&&b.conflicts.includes('set_code_missing'),'fraction-only number must not auto-bind without set');
+c=api.classify({game:'pokemon',region:'US',card_name:'Pikachu ex SAR',card_number:'PAL185/193',variant:'base',condition:'raw'});
+m=api.classify({game:'pokemon',region:'US',product_name:'Pikachu ex Booster Box PAL',card_number:'PAL185/193',variant:'base',condition:'raw'});
+b=api.bindPrice(c,m);ok(!b.price_safe&&b.conflicts.includes('product_type'),'CARD/BOX must not mix');
+console.log('card metadata classifier v328: PASS');
