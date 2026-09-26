@@ -216,4 +216,15 @@ patch(
     "console.log('Pokémon generation runtime v328: PASS');",
 )
 
+patch(
+    "test_card_region_generation_precision_v306.py",
+    "Pokémon generation runtime v325: PASS",
+    "Pokémon generation runtime v328: PASS",
+)
+patch(
+    "test_card_identity_ambiguity_v320.py",
+    "Pokémon generation runtime v325: PASS",
+    "Pokémon generation runtime v328: PASS",
+)
+
 print("v328 patch applied")
