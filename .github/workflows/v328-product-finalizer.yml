@@ -173,6 +173,8 @@ jobs:
           verify_pokemon_generation_runtime.js
           test_card_region_generation_precision_v306.py
           test_card_identity_ambiguity_v320.py
+          test_card_market_generation_precision_v325.py
+          test_pokemon_generation_display_v207.py
           EOF
           sort -o /tmp/expected.txt /tmp/expected.txt
           echo 'Final branch diff:'
@@ -198,9 +200,11 @@ jobs:
             verify_pokemon_generation_runtime.js \
             test_card_region_generation_precision_v306.py \
             test_card_identity_ambiguity_v320.py \
+            test_card_market_generation_precision_v325.py \
+            test_pokemon_generation_display_v207.py \
             .github/scripts/v328_edition_fx_patch.py
           git diff --cached --check
           git commit -m 'fix: separate EN edition from US market and enforce FX freshness'
           git push origin HEAD:fix/edition-fx-failclosed-v328
 
-# retrigger to expose full-regression diagnostics
+# retrigger after v325 output assertions are updated
