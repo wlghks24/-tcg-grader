@@ -123,3 +123,5 @@ jobs:
           fi
           git commit -m 'fix: finalize v326 card classification and price binding runtime'
           git push origin HEAD:fix/card-classification-price-generation-v326
+
+# retrigger-finalize: 2026-09-26
