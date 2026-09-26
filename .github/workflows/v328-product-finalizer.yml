@@ -77,6 +77,7 @@ jobs:
           set -euo pipefail
           python -m unittest -v \
             test_edition_fx_failclosed_v328.py \
+            test_card_tablet_runtime_v300.py \
             test_card_precision_v321.py \
             test_card_collector_edition_alias_v324.py \
             test_card_identity_market_precision_v309.py \
@@ -190,6 +191,7 @@ jobs:
           integrity_manifest.json
           multi_market_price_collector.py
           test_edition_fx_failclosed_v328.py
+          test_card_tablet_runtime_v300.py
           verify_browser_runtime.js
           verify_pokemon_generation_runtime.js
           test_card_region_generation_precision_v306.py
@@ -228,4 +230,4 @@ jobs:
           git commit -m 'fix: separate EN edition from US market and enforce FX freshness'
           git push origin HEAD:fix/edition-fx-failclosed-v328
 
-# retrigger to expose the exact remaining card regression
+# retrigger after tablet runtime version contract update
