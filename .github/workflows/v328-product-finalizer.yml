@@ -100,7 +100,28 @@ jobs:
       - name: Full current regression
         env:
           TCG_REQUIRE_NODE: '1'
-        run: python verify_current_runtime.py --passes 3 || { cat CURRENT_RUNTIME_VERIFICATION_REPORT.json; exit 1; }
+        shell: bash
+        run: |
+          set -euo pipefail
+          python -m unittest -v \
+            test_card_core_provenance_v296.py \
+            test_card_market_edition_v297.py \
+            test_card_probability_ui_v298.py \
+            test_card_regression_gate_v299.py \
+            test_card_tablet_runtime_v300.py \
+            test_card_edition_precision_v302.py \
+            test_card_region_generation_precision_v306.py \
+            test_card_identity_market_precision_v309.py \
+            test_card_region_conflict_failclosed_v318.py \
+            test_card_identity_ambiguity_v320.py \
+            test_card_precision_v321.py \
+            test_card_promo_precision_v322.py \
+            test_card_variant_market_precision_v323.py \
+            test_card_collector_edition_alias_v324.py \
+            test_card_market_generation_precision_v325.py \
+            test_multi_market_price_collector.py \
+            test_tablet_runtime_manifest_ui_assets_v254.py
+          python verify_current_runtime.py --passes 3 || { cat CURRENT_RUNTIME_VERIFICATION_REPORT.json; exit 1; }
 
       - name: Actual output fail-closed validation
         shell: bash
@@ -207,4 +228,4 @@ jobs:
           git commit -m 'fix: separate EN edition from US market and enforce FX freshness'
           git push origin HEAD:fix/edition-fx-failclosed-v328
 
-# retrigger after v325 output assertions are updated
+# retrigger to expose the exact remaining card regression
