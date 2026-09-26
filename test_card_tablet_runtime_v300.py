@@ -99,7 +99,7 @@ class CardTabletRuntimeV300Tests(unittest.TestCase):
             "const retry=await request(effectiveRegion)",
             "identityCoreKey",
             "oldRegion!=='UNKNOWN'&&targetRegion!=='UNKNOWN'&&oldRegion!==targetRegion",
-            "version:'v325'",
+            "version:'v328'",
         ):
             self.assertIn(token, identity)
         for token in (

@@ -37,10 +37,10 @@ function editionCode(value){
  const low=String(value||'').toLowerCase();
  if(/(^|\b)(jp|japan|japanese)(\b|$)|일본|일판|일어판|日版|日本版/.test(low))return 'JP';
  if(/(^|\b)(kr|korea|korean)(\b|$)|한국|한글판|한국판|국판/.test(low))return 'KR';
- if(/(^|\b)(us|usa|english)(\b|$)|미국|미국판|영문판/.test(low))return 'US';
+ if(/(^|\b)(us|usa|en|english)(\b|$)|미국|미국판|영문판/.test(low))return 'US';
  return 'UNKNOWN';
 }
-function editionLabel(code){return ({KR:'🇰🇷 한국판',JP:'🇯🇵 일본판',US:'🇺🇸 미국/영문판',UNKNOWN:'🌐 판본 미확인'})[code]||'🌐 판본 미확인'}
+function editionLabel(code){return ({KR:'🇰🇷 한국판',JP:'🇯🇵 일본판',US:'🌐 영문판(EN)',UNKNOWN:'🌐 판본 미확인'})[code]||'🌐 판본 미확인'}
 function editionSearchToken(code){return ({KR:'Korean',JP:'Japanese',US:'English'})[code]||''}
 function marketKeyEdition(value){const first=String(value||'').split('|',1)[0].toUpperCase();return ['KR','JP','US'].includes(first)?first:'UNKNOWN'}
 function quoteTypeLabel(row){

@@ -57,9 +57,23 @@ def _atomic(path,data):
         tmp=Path(str(path)+'.tmp');tmp.write_text(json.dumps(data,ensure_ascii=False,indent=2),encoding='utf-8');tmp.replace(path)
     except Exception:pass
 
+FX_MAX_AGE_SECONDS=72*60*60
+FX_MAX_FUTURE_SKEW_SECONDS=6*60*60
+
 def _fx():
     d=_safe_json(FX,{})
     rates=d.get('rates') if isinstance(d,dict) else {}
+    stamp=str(d.get('updated_at') or '') if isinstance(d,dict) else ''
+    try:
+        parsed=datetime.fromisoformat(stamp.replace('Z','+00:00'))
+        if parsed.tzinfo is None:
+            raise ValueError('timezone_required')
+        age=(datetime.now(timezone.utc)-parsed.astimezone(timezone.utc)).total_seconds()
+        fresh=(-FX_MAX_FUTURE_SKEW_SECONDS <= age <= FX_MAX_AGE_SECONDS)
+    except (TypeError,ValueError,OverflowError):
+        fresh=False
+    if not fresh:
+        return {'USD':0.0,'JPY':0.0,'EUR':0.0,'KRW':1.0}
     return {'USD':float((rates or {}).get('USD_KRW') or 0),'JPY':float((rates or {}).get('JPY_KRW') or 0),
             'EUR':float((rates or {}).get('EUR_KRW') or 0),'KRW':1.0}
 

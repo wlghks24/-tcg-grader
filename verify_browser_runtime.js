@@ -147,6 +147,9 @@ async function main() {
   loadOneLine("quickPrice", true);
   loadAsyncBlock("v13LoadAllPriceData");
   loadAsyncBlock("loadPopularitySignals");
+  context.FX_MAX_AGE_MS=72*60*60*1000;
+  context.FX_MAX_FUTURE_SKEW_MS=6*60*60*1000;
+  loadOneLine("fxTimestampFresh");
   loadAsyncBlock("loadExchangeRates");
 
   for (const name of ["loadCardImage", "load", "v6Load", "v7Image", "v30Load"]) {
@@ -447,7 +450,7 @@ async function main() {
       ? { entries: { "KR|TEST|BOX": { display: "₩1" } }, graded_prices: {}, grading_cost_defaults: {} }
       : String(url).includes("market_watch")
         ? { items: [{ region: "KR", name: "TEST", asset: "BOX" }] }
-        : { rates: { JPY_KRW: 8.7, USD_KRW: 1380 }, updated_at: "2026-08-25" },
+        : { rates: { JPY_KRW: 8.7, USD_KRW: 1380 }, updated_at: new Date().toISOString() },
   });
   assert.equal((await context.v13LoadAllPriceData()).complete, true);
   assert.equal((await context.loadPopularitySignals(true)).ok, true);

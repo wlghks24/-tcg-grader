@@ -3,7 +3,7 @@
 const $=id=>document.getElementById(id);
 const GAME_MAP={pokemon:'Pokémon',onepiece:'ONE PIECE',naruto:'NARUTO'};
 let lastSig='';
-function normRegion(v){return ['KR','JP','US'].includes(v)?v:'ALL'}
+function normRegion(v){const raw=String(v||'').toUpperCase();return raw==='EN'?'US':(['KR','JP','US'].includes(raw)?raw:'ALL')}
 function gameValue(){return GAME_MAP[String(window.tcgIdentityGame||'').toLowerCase()]||'ALL'}
 function setValue(id,value){const el=$(id);if(!el)return false;if([...el.options||[]].some(o=>o.value===value))el.value=value;else if(el.tagName!=='SELECT')el.value=value;return true}
 function ensureStatus(){

@@ -33,7 +33,7 @@ class CardMarketGenerationPrecisionV325Tests(unittest.TestCase):
     def test_generation_runtime_fail_closes_year_only_evidence(self):
         proc=subprocess.run(['node','verify_pokemon_generation_runtime.js'],capture_output=True,text=True,encoding='utf-8',errors='replace',check=False)
         self.assertEqual(0,proc.returncode,proc.stderr or proc.stdout)
-        self.assertIn('v325: PASS',proc.stdout)
+        self.assertIn('v328: PASS',proc.stdout)
 
 if __name__=='__main__':
     unittest.main(verbosity=2)
