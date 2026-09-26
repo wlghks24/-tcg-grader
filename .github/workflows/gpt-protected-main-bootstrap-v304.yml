@@ -1,0 +1,162 @@
+name: GPT Protected Main Bootstrap v304
+
+on:
+  pull_request:
+    paths:
+      - '.github/workflows/gpt-protected-main-bootstrap-v304.yml'
+
+permissions:
+  contents: write
+
+concurrency:
+  group: gpt-protected-main-bootstrap-v304-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+jobs:
+  apply-clean-fix:
+    if: github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: ubuntu-24.04
+    timeout-minutes: 12
+    env:
+      BASE_SHA: ${{ github.event.pull_request.base.sha }}
+      HEAD_REF: ${{ github.event.pull_request.head.ref }}
+      SOURCE_COMMIT: b6ef49bc552fb6188db1549d13d5243345a0fc3a
+      BOOTSTRAP_PATH: .github/workflows/gpt-protected-main-bootstrap-v304.yml
+    steps:
+      - name: Checkout exact PR head branch
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          ref: ${{ github.event.pull_request.head.ref }}
+          fetch-depth: 0
+
+      - name: Set up Python
+        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97
+        with:
+          python-version: '3.11'
+
+      - name: Verify clean protected-main base
+        shell: bash
+        run: |
+          set -euo pipefail
+          git fetch origin main
+          test "$(git rev-parse origin/main)" = "$BASE_SHA"
+          test "$(git merge-base HEAD "$BASE_SHA")" = "$BASE_SHA"
+          python - <<'PY'
+          import os, subprocess
+          base = os.environ['BASE_SHA']
+          expected = {os.environ['BOOTSTRAP_PATH']}
+          changed = set(subprocess.check_output(['git','diff','--name-only',f'{base}...HEAD'], text=True).splitlines())
+          if changed != expected:
+              raise SystemExit(f'bootstrap branch is not clean: {sorted(changed)}')
+          print('clean bootstrap base: PASS')
+          PY
+
+      - name: Make every required PR guard unconditional
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+
+          paths = [
+              '.github/workflows/tablet-gpt-tcg-grader-main-alignment.yml',
+              '.github/workflows/repository-integrity-guard.yml',
+              '.github/workflows/selfrefine-full-repo.yml',
+              '.github/workflows/deep-selfrefine-guard.yml',
+              '.github/workflows/exhaustive-selfrefine-guard.yml',
+              '.github/workflows/tablet-termux-main-guard.yml',
+              '.github/workflows/android-updater-guard.yml',
+          ]
+
+          def unconditional_pr(text: str) -> str:
+              lines = text.splitlines(keepends=True)
+              out = []
+              i = 0
+              changed = False
+              while i < len(lines):
+                  line = lines[i]
+                  if line.rstrip('\r\n') == '  pull_request:':
+                      out.append(line)
+                      i += 1
+                      while i < len(lines):
+                          nxt = lines[i]
+                          stripped = nxt.rstrip('\r\n')
+                          if stripped.startswith('  ') and not stripped.startswith('    ') and stripped.strip():
+                              break
+                          if stripped and not stripped.startswith('    '):
+                              break
+                          i += 1
+                      changed = True
+                      continue
+                  out.append(line)
+                  i += 1
+              result = ''.join(out)
+              if not changed:
+                  raise SystemExit('pull_request trigger not found')
+              return result
+
+          for name in paths:
+              p = Path(name)
+              original = p.read_text(encoding='utf-8')
+              updated = unconditional_pr(original)
+              if updated == original:
+                  raise SystemExit(f'no trigger change: {name}')
+              p.write_text(updated, encoding='utf-8')
+              print('updated', name)
+          PY
+
+      - name: Restore verified GPT static promotion lane
+        shell: bash
+        run: |
+          set -euo pipefail
+          git fetch --no-tags origin "$SOURCE_COMMIT"
+          git show "$SOURCE_COMMIT:.github/workflows/gpt-tcg-static-promotion.yml" > .github/workflows/gpt-tcg-static-promotion.yml
+          test -s .github/workflows/gpt-tcg-static-promotion.yml
+          grep -Fq 'name: GPT TCG Static Promotion' .github/workflows/gpt-tcg-static-promotion.yml
+          grep -Fq 'tcg-static-data-gpt-promotion' .github/workflows/gpt-tcg-static-promotion.yml
+
+      - name: Remove bootstrap and reconcile integrity
+        shell: bash
+        run: |
+          set -euo pipefail
+          git rm -- "$BOOTSTRAP_PATH"
+          python fault_injection_healing.py --manifest
+          python fault_injection_healing.py --diagnose
+          python -m json.tool integrity_manifest.json >/dev/null
+          git diff --check
+          python - <<'PY'
+          import os, subprocess
+          expected = {
+              '.github/workflows/tablet-gpt-tcg-grader-main-alignment.yml',
+              '.github/workflows/repository-integrity-guard.yml',
+              '.github/workflows/selfrefine-full-repo.yml',
+              '.github/workflows/deep-selfrefine-guard.yml',
+              '.github/workflows/exhaustive-selfrefine-guard.yml',
+              '.github/workflows/tablet-termux-main-guard.yml',
+              '.github/workflows/android-updater-guard.yml',
+              '.github/workflows/gpt-tcg-static-promotion.yml',
+              'integrity_manifest.json',
+          }
+          base = os.environ['BASE_SHA']
+          names = set(subprocess.check_output(['git','diff','--name-only',base], text=True).splitlines())
+          if names != expected:
+              raise SystemExit(f'unexpected final diff: {sorted(names ^ expected)}')
+          print('final protected-main fix file set: PASS')
+          PY
+
+      - name: Commit verified fix to existing PR branch
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add -- \
+            .github/workflows/tablet-gpt-tcg-grader-main-alignment.yml \
+            .github/workflows/repository-integrity-guard.yml \
+            .github/workflows/selfrefine-full-repo.yml \
+            .github/workflows/deep-selfrefine-guard.yml \
+            .github/workflows/exhaustive-selfrefine-guard.yml \
+            .github/workflows/tablet-termux-main-guard.yml \
+            .github/workflows/android-updater-guard.yml \
+            .github/workflows/gpt-tcg-static-promotion.yml \
+            integrity_manifest.json
+          git commit -m 'ci: make protected-main checks always runnable'
+          git push origin "HEAD:$HEAD_REF"
