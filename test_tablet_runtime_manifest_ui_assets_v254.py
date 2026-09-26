@@ -6,7 +6,7 @@ from pathlib import Path
 import tablet_runtime_manifest as manifest
 
 CRITICAL_UI_ASSETS={
-    "index.html","grading_vision_engine.js","grading_accuracy_v99.js","card_identity_recognition.js",
+    "index.html","grading_vision_engine.js","grading_accuracy_v99.js","card_metadata_classifier_v326.js","card_identity_recognition.js",
     "grade_market_flow.js","grade_market_flow.css","auto_market_center.js","auto_market_center.css",
     "multi_market_prices.js","multi_market_prices.css","auto_validation_flow.js","auto_validation_flow.css",
     "image_quality_guard.js","market_catalog_expander.js",
