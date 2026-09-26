@@ -1,0 +1,49 @@
+name: V328 Repair Finalizer
+
+on:
+  push:
+    branches:
+      - fix/edition-fx-failclosed-v328
+    paths:
+      - '.github/workflows/v328-repair-finalizer.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  repair:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          ref: fix/edition-fx-failclosed-v328
+          fetch-depth: 0
+      - name: Guard exact latest main
+        shell: bash
+        run: |
+          set -euo pipefail
+          git fetch origin main --no-tags
+          test "$(git rev-parse origin/main)" = "b1ac89c1d4b59bc9e46789160118908cc3c11558" || { echo 'main moved; fail closed'; exit 1; }
+      - name: Repair original writer and remove failed helpers
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          from pathlib import Path
+          target=Path('.github/workflows/v328-edition-fx-finalizer.yml')
+          text=target.read_text(encoding='utf-8')
+          old="(ROOT/'test_edition_fx_failclosed_v328.py').write_text(r'''from __future__ import annotations"
+          new="(ROOT/'test_edition_fx_failclosed_v328.py').write_text('''from __future__ import annotations"
+          if old not in text:
+              raise SystemExit('original finalizer writer marker missing')
+          target.write_text(text.replace(old,new,1),encoding='utf-8')
+          for name in ('.github/workflows/v328-edition-fx-finalizer-r2.yml','.github/workflows/v328-repair-finalizer.yml'):
+              path=Path(name)
+              if path.exists(): path.unlink()
+          PY
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add -A
+          git commit -m 'chore: repair v328 finalizer writer'
+          git push origin HEAD:fix/edition-fx-failclosed-v328
