@@ -34,8 +34,7 @@ jobs:
         run: |
           set -euo pipefail
           git fetch origin main --no-tags
-          git show origin/main:.github/workflows/card-region-learning-hardening-v307.yml > .github/workflows/card-region-learning-hardening-v307.yml
-          rm -f .github/workflows/v326-runtime-publish-fix.yml apply_v326_runtime_publish_fix.py
+          rm -f .github/workflows/card-region-learning-hardening-v307.yml .github/workflows/v326-runtime-publish-fix.yml apply_v326_runtime_publish_fix.py
           python - <<'PY'
           from pathlib import Path
 
