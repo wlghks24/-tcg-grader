@@ -58,7 +58,7 @@ class EditionFxFailClosedV328Tests(unittest.TestCase):
         market_ui=(ROOT/"auto_market_center.js").read_text(encoding="utf-8")
         self.assertIn('언어·판본<select id="identityRegion">',html)
         self.assertIn('<option value="EN">EN</option>',html)
-        self.assertIn('let fxRates={JPY_KRW:0,USD_KRW:0},fxUpdated="",fxTimestamp="";',html)
+        self.assertIn('let fxRates={JPY_KRW:0,USD_KRW:0},fxUpdated="",fxTimestamp="",fxExpiryTimer=null;',html)
         self.assertIn('FX_MAX_AGE_MS',html)
         self.assertIn('fxTimestampFresh',html)
         self.assertIn('function clearExpiredFx(now=Date.now())',html)
