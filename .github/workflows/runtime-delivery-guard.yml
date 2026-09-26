@@ -43,6 +43,7 @@ on:
       - 'test_multi_market_price_collector.py'
       - 'test_tablet_runtime_manifest_ui_assets_v254.py'
       - 'test_pokemon_generation_display_v207.py'
+      - 'test_edition_fx_failclosed_v328.py'
       - 'manual_graded_photo_registration.py'
       - 'manual_official_proof.py'
       - 'manual_official_verified_integration_v154.py'
@@ -207,7 +208,7 @@ jobs:
           python -m unittest -v test_verified_collection_neural_v211.py
           python -m unittest -v test_verified_collection_job_neural_v212.py
           python -m unittest -v test_collection_job_contract_v255.py
-          python -m unittest -v test_card_core_provenance_v296.py test_card_market_edition_v297.py test_card_probability_ui_v298.py test_card_regression_gate_v299.py
+          python -m unittest -v test_card_core_provenance_v296.py test_card_market_edition_v297.py test_card_probability_ui_v298.py test_card_regression_gate_v299.py test_edition_fx_failclosed_v328.py
           python -m unittest -v test_card_tablet_runtime_v300.py test_multi_market_price_collector.py test_tablet_runtime_manifest_ui_assets_v254.py
           python -m unittest -v test_card_core_crosscheck_v291.py test_card_core_crosscheck_v292.py test_card_core_crosscheck_v295.py test_pokemon_generation_display_v207.py
           python test_link_audit_hardening_v184.py

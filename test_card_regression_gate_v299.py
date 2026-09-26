@@ -18,6 +18,7 @@ class CardRegressionGateV299Tests(unittest.TestCase):
             "test_card_core_provenance_v296.py",
             "test_card_market_edition_v297.py",
             "test_card_probability_ui_v298.py",
+            "test_edition_fx_failclosed_v328.py",
             "test_card_regression_gate_v299.py",
         ):
             self.assertIn(test_name, command)
@@ -29,6 +30,7 @@ class CardRegressionGateV299Tests(unittest.TestCase):
             "test_card_core_crosscheck_v292.py",
             "test_card_core_crosscheck_v295.py",
             "test_pokemon_generation_display_v207.py",
+            "test_edition_fx_failclosed_v328.py",
         ):
             self.assertIn(test_name, source)
         self.assertIn('if shutil.which("node"):', source)
@@ -76,6 +78,7 @@ class CardRegressionGateV299Tests(unittest.TestCase):
         self.assertIn("python -m unittest -v test_card_core_provenance_v296.py", workflow)
         self.assertIn("python -m unittest -v test_card_core_crosscheck_v291.py", workflow)
         self.assertIn("test_card_core_crosscheck_v292.py", workflow)
+        self.assertIn("python -m unittest -v test_card_core_provenance_v296.py test_card_market_edition_v297.py test_card_probability_ui_v298.py test_card_regression_gate_v299.py test_edition_fx_failclosed_v328.py", workflow)
 
 
 if __name__ == "__main__":

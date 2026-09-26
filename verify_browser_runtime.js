@@ -88,6 +88,7 @@ const context = vm.createContext({
   gameKorean: { "Pokémon": "포켓몬 카드" },
   fxRates: { JPY_KRW: 8.7, USD_KRW: 1380 },
   fxUpdated: "2026-08-25",
+  fxTimestamp: "",
   simpleGame: "pokemon",
   INFO_ARCHIVE_GRACE_DAYS: 5,
   profiles: { pokemon: { name: "Pokémon" } },
@@ -151,6 +152,10 @@ async function main() {
   context.FX_MAX_FUTURE_SKEW_MS=6*60*60*1000;
   loadOneLine("fxTimestampFresh");
   loadAsyncBlock("loadExchangeRates");
+  context.fxRates={JPY_KRW:0,USD_KRW:0};
+  context.fxTimestamp="";
+  assert.equal(context.foreignKrw("¥1000"),"","missing FX must not render a fabricated zero price");
+  assert.equal(context.foreignKrw("$10"),"","missing FX must not render a fabricated zero price");
 
   for (const name of ["loadCardImage", "load", "v6Load", "v7Image", "v30Load"]) {
     const image = await context[name]({ name });
@@ -439,9 +444,15 @@ async function main() {
   assert.equal(failedMarketLoad.ok, false);
   assert.equal(failedMarketLoad.priceOk, false);
   assert.equal(failedMarketLoad.watchOk, false);
+  context.fxRates={JPY_KRW:8.7,USD_KRW:1380};
+  context.fxTimestamp=new Date().toISOString();
   const failedFxLoad = await context.loadExchangeRates(true);
   assert.equal(failedFxLoad.ok, false);
   assert.deepEqual(Array.from(failedFxLoad.errors), ["환율자료"]);
+  assert.equal(context.fxRates.JPY_KRW,0,"failed refresh must clear accepted JPY FX");
+  assert.equal(context.fxRates.USD_KRW,0,"failed refresh must clear accepted USD FX");
+  assert.equal(context.fxTimestamp,"");
+  assert.equal(context.foreignKrw("¥1000"),"","failed refresh must not retain stale conversion");
 
   context.fetch = async (url) => ({
     ok: true,
@@ -455,6 +466,9 @@ async function main() {
   assert.equal((await context.v13LoadAllPriceData()).complete, true);
   assert.equal((await context.loadPopularitySignals(true)).ok, true);
   assert.equal((await context.loadExchangeRates(true)).ok, true);
+  assert.ok(context.foreignKrw("¥1000").includes("₩8,700"),"fresh JPY conversion was lost");
+  context.fxTimestamp=new Date(Date.now()-73*60*60*1000).toISOString();
+  assert.equal(context.foreignKrw("¥1000"),"","expired FX must not render a KRW conversion");
 
   assert.ok(!/JSON\.parse\(localStorage\.getItem/.test(html), "Unsafe direct localStorage parsing remains");
   assert.ok(!html.includes('fetch(`/api/update?t=${Date.now()}`,{cache:'), "Top update still performs a GET mutation");
