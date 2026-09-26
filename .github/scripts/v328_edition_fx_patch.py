@@ -230,9 +230,9 @@ patch(
 patch(
     "verify_browser_runtime.js",
     '  loadAsyncBlock("loadExchangeRates");',
-    '  context.FX_MAX_AGE_MS=72*60*60*1000;\\n'
-    '  context.FX_MAX_FUTURE_SKEW_MS=6*60*60*1000;\\n'
-    '  loadOneLine("fxTimestampFresh");\\n'
+    '  context.FX_MAX_AGE_MS=72*60*60*1000;\n'
+    '  context.FX_MAX_FUTURE_SKEW_MS=6*60*60*1000;\n'
+    '  loadOneLine("fxTimestampFresh");\n'
     '  loadAsyncBlock("loadExchangeRates");',
 )
 
