@@ -1,0 +1,82 @@
+name: V326 Clean Card Metadata Finalizer 2
+
+on:
+  push:
+    branches: [fix/card-metadata-price-generation-v326-clean]
+    paths: ['.v326-clean-trigger2']
+
+permissions:
+  contents: write
+
+concurrency:
+  group: v326-clean-card-metadata-finalizer-2
+  cancel-in-progress: true
+
+jobs:
+  finalize:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          ref: fix/card-metadata-price-generation-v326-clean
+          fetch-depth: 0
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97
+        with: {python-version: '3.12'}
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with: {node-version: '20'}
+      - run: python -m pip install --disable-pip-version-check pillow
+      - name: Build final tracked tree
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          from pathlib import Path
+          def rep(path,old,new,count=1):
+              p=Path(path); t=p.read_text(encoding='utf-8'); n=t.count(old)
+              if new in t and n==0: return
+              if n!=count: raise SystemExit(f'{path}: marker count {n}, expected {count}')
+              p.write_text(t.replace(old,new,count),encoding='utf-8')
+          rep('index.html','<script src="ui_app_shell_v272.js?v=272"></script>\n<script src="card_identity_recognition.js?v=207"></script>','<script src="ui_app_shell_v272.js?v=272"></script>\n<script src="card_metadata_classifier_v326.js?v=326"></script>\n<script src="card_identity_recognition.js?v=207"></script>')
+          rep('grade_market_flow.js',"function quoteScore(row,name,number,region){\n if(!row||row.platform!=='WYYYES')return -999;","function quoteScore(row,name,number,region){\n if(!row||row.platform!=='WYYYES')return -999;\n const metadata=window.TCGCardMetadata;\n if(metadata){\n  const card=metadata.classify({game:window.tcgIdentityGame||'',region,card_name:name,card_number:number});\n  const bound=metadata.bindPrice(card,{game:row.game||window.tcgIdentityGame||'',region:row.card_region||'UNKNOWN',card_name:row.card_name||row.title||'',card_number:row.card_number||'',product_name:row.product_name||row.title||''});\n  if(!bound.safe)return -999;\n }")
+          rep('tcg_updater.py',"'grading_accuracy_v99.js','card_identity_recognition.js','manual_dual_photo_bridge.js'","'grading_accuracy_v99.js','card_metadata_classifier_v326.js','card_identity_recognition.js','manual_dual_photo_bridge.js'")
+          rep('tablet_runtime_manifest.py','"grading_vision_engine.js","grading_accuracy_v99.js","card_identity_recognition.js",','"grading_vision_engine.js","grading_accuracy_v99.js","card_metadata_classifier_v326.js","card_identity_recognition.js",')
+          rep('test_tablet_runtime_manifest_ui_assets_v254.py','"index.html","grading_vision_engine.js","grading_accuracy_v99.js","card_identity_recognition.js",','"index.html","grading_vision_engine.js","grading_accuracy_v99.js","card_metadata_classifier_v326.js","card_identity_recognition.js",')
+          rep('test_card_tablet_runtime_v300.py','            "card_identity_recognition.js",\n            "grade_market_flow.js",','            "card_identity_recognition.js",\n            "card_metadata_classifier_v326.js",\n            "grade_market_flow.js",')
+          rep('test_card_core_provenance_v296.py','            "server_security_guard.py", "grading_vision_engine.js", "grading_accuracy_v99.js",\n            "card_identity_recognition.js",','            "server_security_guard.py", "grading_vision_engine.js", "grading_accuracy_v99.js",\n            "card_metadata_classifier_v326.js", "card_identity_recognition.js",')
+          rep('sw.js',"'./grading_accuracy_v99.js','./card_identity_recognition.js'","'./grading_accuracy_v99.js','./card_metadata_classifier_v326.js','./card_identity_recognition.js'")
+          rep('.github/workflows/runtime-delivery-guard.yml',"      - 'card_identity_recognition.js'\n","      - 'card_identity_recognition.js'\n      - 'card_metadata_classifier_v326.js'\n      - 'verify_card_metadata_classifier_v326.js'\n",2)
+          rep('.github/workflows/runtime-delivery-guard.yml','          python tablet_runtime_qa.py --profile runtime\n','          node --check card_metadata_classifier_v326.js\n          node verify_card_metadata_classifier_v326.js\n          python tablet_runtime_qa.py --profile runtime\n')
+          rep('verify_current_runtime.py','                 ("browser_runtime",["node","verify_browser_runtime.js"],180,False),','                 ("card_metadata_classifier_v326",["node","verify_card_metadata_classifier_v326.js"],60,False),\n                 ("browser_runtime",["node","verify_browser_runtime.js"],180,False),')
+          rep('feature_contract.py','"card_identity_recognition.py", "card_identity_recognition.js", "card_identity_learning.json",','"card_identity_recognition.py", "card_identity_recognition.js", "card_metadata_classifier_v326.js", "card_identity_learning.json",')
+          rep('feature_contract.py','"card_identity_recognition.js", "tcgRecognizeCurrentCard"))','"card_identity_recognition.js", "card_metadata_classifier_v326.js", "tcgRecognizeCurrentCard"))')
+          PY
+          rm -f .v326-clean-trigger .v326-clean-trigger2 .github/workflows/v326-clean-finalize.yml .github/workflows/v326-clean-finalize-2.yml
+          python fault_injection_healing.py --manifest
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add -A
+          git commit -m 'fix: finalize exact card classification and price binding v326'
+      - name: Targeted and related regression on committed tree
+        shell: bash
+        run: |
+          set -euo pipefail
+          node --check card_metadata_classifier_v326.js
+          node verify_card_metadata_classifier_v326.js
+          node --check card_identity_recognition.js
+          node verify_pokemon_generation_runtime.js
+          node --check grade_market_flow.js
+          python -m unittest -v test_card_identity_ambiguity_v320.py test_card_market_generation_precision_v325.py test_card_region_generation_precision_v306.py test_card_edition_precision_v302.py
+          node verify_service_worker_runtime.js
+          python verify_link_runtime.py
+          python tablet_runtime_manifest.py --check --compile
+          python -m unittest -v test_tablet_runtime_manifest_ui_assets_v254.py test_card_tablet_runtime_v300.py test_card_market_edition_v297.py test_card_core_provenance_v296.py
+      - name: Full integrity and actual-output validation
+        shell: bash
+        run: |
+          set -euo pipefail
+          python repository_integrity_guard.py
+          python feature_contract.py
+          git diff --check HEAD^ HEAD
+      - name: Push exact validated commit
+        run: git push origin HEAD:fix/card-metadata-price-generation-v326-clean
