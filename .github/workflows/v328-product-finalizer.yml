@@ -238,10 +238,9 @@ jobs:
             test_card_market_generation_precision_v325.py \
             test_pokemon_generation_display_v207.py \
             test_card_core_crosscheck_v292.py \
-            test_card_tablet_runtime_v300.py \
-            .github/scripts/v328_edition_fx_patch.py
+            test_card_tablet_runtime_v300.py
           git diff --cached --check
           git commit -m 'fix: separate EN edition from US market and enforce FX freshness'
           git push origin HEAD:fix/edition-fx-failclosed-v328
 
-# retrigger after adding generated test to scoped diff
+# retrigger after removing the deleted patch helper from git add
