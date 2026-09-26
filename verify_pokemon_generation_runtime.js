@@ -84,5 +84,5 @@ eq(r.status,'conflict','set code vs impossible copyright year must conflict');eq
 r=api.infer({game:'pokemon',card_number:'PAL185/193',region:'US',regulation_mark:'H',ocr_text:'©2024 Pokémon'});
 eq(r.generation,9,'set+year generation');eq(r.evidence_count,2,'only set and year count as generation evidence');eq(r.context_evidence_count,1,'regulation is context evidence');ok(r.basis.some(x=>x.includes('©/제작연도')),'year evidence retained');
 
-eq(api.version,'v325','generation runtime version');
-console.log('Pokémon generation runtime v325: PASS');
+eq(api.version,'v328','generation runtime version');
+console.log('Pokémon generation runtime v328: PASS');

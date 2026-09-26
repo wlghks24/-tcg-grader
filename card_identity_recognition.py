@@ -28,7 +28,9 @@ MARKET = ROOT / "market_prices.json"
 LEARNING = ROOT / "card_identity_learning.json"
 REFERENCE = ROOT / "card_identity_reference_catalog.json"
 GAMES = {"pokemon", "onepiece", "naruto"}
-REGIONS = {"KR", "JP", "US", "UNKNOWN"}
+MARKET_REGIONS = {"KR", "JP", "US", "UNKNOWN"}
+EDITION_LANGUAGES = {"KR", "JP", "EN", "UNKNOWN"}
+REGIONS = MARKET_REGIONS  # legacy market/catalog compatibility only
 POKEMON_EN_SET_CODES = (
     "SVI", "PAL", "OBF", "MEW", "PAR", "PAF", "TEF", "TWM", "SFA", "SCR", "SSP",
     "PRE", "JTG", "DRI", "BLK", "WHT", "MEG", "PFL", "ASC", "POR", "CRI", "PBL",
@@ -130,8 +132,32 @@ def normalize_region(value: Any) -> str:
     return aliases.get(region, "UNKNOWN")
 
 
+def normalize_edition_language(value: Any) -> str:
+    """Normalize a card edition/language independently from a sales market."""
+    token = unicodedata.normalize("NFKC", str(value or "")).strip().upper().replace(" ", "")
+    if token in {"KR", "KOR", "KOREA", "KOREAN", "한국", "한국판", "한글판", "한판", "국판"}:
+        return "KR"
+    if token in {"JP", "JPN", "JAPAN", "JAPANESE", "日本", "日本版", "日版", "일본판", "일판"}:
+        return "JP"
+    if token in {"EN", "ENG", "ENGLISH", "영문판", "영판", "US", "USA", "미국판"}:
+        return "EN"
+    return "UNKNOWN"
+
+
+def market_region_for_edition(value: Any) -> str:
+    """Translate an edition/language to the legacy market/catalog region once."""
+    edition = normalize_edition_language(value)
+    return {"KR": "KR", "JP": "JP", "EN": "US"}.get(edition, "UNKNOWN")
+
+
+def edition_language_for_market_region(value: Any) -> str:
+    """Translate a legacy market/catalog region to a card edition/language."""
+    region = normalize_region(value)
+    return {"KR": "KR", "JP": "JP", "US": "EN"}.get(region, "UNKNOWN")
+
+
 def infer_region_evidence(value: Any) -> dict[str, Any]:
-    """Return bounded KR/JP/US evidence and fail closed when strong signals disagree."""
+    """Return fail-closed edition evidence with an explicit market boundary."""
     text = unicodedata.normalize("NFKC", str(value or ""))[:MAX_OCR_TEXT]
     upper = text.upper()
     signals: list[dict[str, Any]] = []
@@ -163,18 +189,21 @@ def infer_region_evidence(value: Any) -> dict[str, Any]:
     regions = sorted({str(item["region"]) for item in signals})
     if len(regions) > 1:
         return {
-            "region": "UNKNOWN", "confidence": 0.0, "basis": "edition_evidence_conflict",
+            "region": "UNKNOWN", "market_region": "UNKNOWN", "edition_language": "UNKNOWN",
+            "confidence": 0.0, "basis": "edition_evidence_conflict",
             "conflict": True, "signals": signals,
         }
     if not regions:
         return {
-            "region": "UNKNOWN", "confidence": 0.0, "basis": "insufficient_evidence",
+            "region": "UNKNOWN", "market_region": "UNKNOWN", "edition_language": "UNKNOWN",
+            "confidence": 0.0, "basis": "insufficient_evidence",
             "conflict": False, "signals": [],
         }
     region = regions[0]
     matching = [item for item in signals if item["region"] == region]
+    edition = edition_language_for_market_region(region)
     return {
-        "region": region,
+        "region": region, "market_region": region, "edition_language": edition,
         "confidence": round(max(float(item["confidence"]) for item in matching), 3),
         "basis": "+".join(dict.fromkeys(str(item["basis"]) for item in matching)),
         "conflict": False,
@@ -183,8 +212,13 @@ def infer_region_evidence(value: Any) -> dict[str, Any]:
 
 
 def infer_region_from_text(value: Any) -> str:
-    """Compatibility wrapper for callers that only need the edition code."""
-    return str(infer_region_evidence(value).get("region") or "UNKNOWN")
+    """Compatibility wrapper returning the legacy market/catalog region."""
+    return str(infer_region_evidence(value).get("market_region") or "UNKNOWN")
+
+
+def infer_edition_from_text(value: Any) -> str:
+    """Return KR/JP/EN without conflating EN with the US sales market."""
+    return str(infer_region_evidence(value).get("edition_language") or "UNKNOWN")
 
 def _json(path: Path, fallback: dict) -> dict:
     try:
@@ -964,7 +998,8 @@ def recognize(payload: dict[str, Any]) -> dict[str, Any]:
     game = normalize_game(payload.get("game"))
     if game not in GAMES:
         raise ValueError("게임 구분 오류")
-    requested_region = normalize_region(payload.get("region"))
+    requested_edition = normalize_edition_language(payload.get("edition_language") or payload.get("region"))
+    requested_region = market_region_for_edition(requested_edition)
     region = requested_region
     supplied_text = str(payload.get("ocr_text") or "")[:MAX_OCR_TEXT]
     image_data = payload.get("image_data")
@@ -979,11 +1014,12 @@ def recognize(payload: dict[str, Any]) -> dict[str, Any]:
         )
         supplied_text = (supplied_text + " " + text).strip()[:MAX_OCR_TEXT]
     region_evidence = infer_region_evidence(supplied_text)
-    inferred_region = str(region_evidence.get("region") or "UNKNOWN")
+    inferred_region = str(region_evidence.get("market_region") or region_evidence.get("region") or "UNKNOWN")
+    inferred_edition = str(region_evidence.get("edition_language") or edition_language_for_market_region(inferred_region))
     region_conflict = bool(region_evidence.get("conflict")) or (
-        region in {"KR", "JP", "US"}
-        and inferred_region in {"KR", "JP", "US"}
-        and inferred_region != region
+        requested_edition in EDITION_LANGUAGES - {"UNKNOWN"}
+        and inferred_edition in EDITION_LANGUAGES - {"UNKNOWN"}
+        and inferred_edition != requested_edition
     )
     if region == "UNKNOWN" and inferred_region != "UNKNOWN":
         region = inferred_region
@@ -1003,6 +1039,9 @@ def recognize(payload: dict[str, Any]) -> dict[str, Any]:
         if key not in unique or float(row.get("confidence") or 0.0) > float(unique[key].get("confidence") or 0.0):
             unique[key] = row
     candidates = sorted(unique.values(), key=lambda row: -float(row.get("confidence") or 0.0))[:5]
+    for row in candidates:
+        row["market_region"] = normalize_region(row.get("region"))
+        row["edition_language"] = edition_language_for_market_region(row["market_region"])
     ambiguity = _candidate_ambiguity(candidates, region)
     identity_ambiguous = bool(ambiguity["identity_ambiguous"])
     region_ambiguous = bool(ambiguity["region_ambiguous"])
@@ -1010,8 +1049,10 @@ def recognize(payload: dict[str, Any]) -> dict[str, Any]:
     auto_selection_blocked = bool(region_conflict or identity_ambiguous or region_ambiguous or market_ambiguous)
     market_link_blocked = bool(auto_selection_blocked or region == "UNKNOWN")
     return {
-        "ok": True, "game": game, "region_hint": region, "requested_region": requested_region,
-        "inferred_region": inferred_region,
+        "ok": True, "game": game, "region_hint": region, "market_region": region,
+        "edition_language": edition_language_for_market_region(region),
+        "requested_region": requested_region, "requested_edition_language": requested_edition,
+        "inferred_region": inferred_region, "inferred_edition_language": inferred_edition,
         "region_conflict": region_conflict, "region_evidence": region_evidence,
         "region_ambiguous": region_ambiguous, "identity_ambiguous": identity_ambiguous,
         "market_ambiguous": market_ambiguous, "market_link_blocked": market_link_blocked,
@@ -1049,9 +1090,11 @@ def save_confirmation(payload: dict[str, Any]) -> dict[str, Any]:
     known = {row["market_key"]: row for row in catalog()}
     if market_key and market_key not in known:
         raise ValueError("시세 키 오류")
-    incoming_region = normalize_region(
-        payload.get("region") or (known.get(market_key) or {}).get("region") or "UNKNOWN"
+    incoming_edition = normalize_edition_language(
+        payload.get("edition_language") or payload.get("region")
+        or edition_language_for_market_region((known.get(market_key) or {}).get("region"))
     )
+    incoming_region = market_region_for_edition(incoming_edition)
     core_identity = (card_name, card_number, market_key, game)
 
     with exclusive_file_lock(LEARNING, timeout_seconds=10.0, stale_seconds=300.0):
@@ -1104,6 +1147,7 @@ def save_confirmation(payload: dict[str, Any]) -> dict[str, Any]:
                     and normalize_region(item.get("region")) == "UNKNOWN"
                 ):
                     item["region"] = effective_region
+                    item["edition_language"] = edition_language_for_market_region(effective_region)
                     promoted = True
 
         identity = (*core_identity, effective_region)
@@ -1117,7 +1161,8 @@ def save_confirmation(payload: dict[str, Any]) -> dict[str, Any]:
         if (image_hash, *identity) not in keys:
             confirmed.append({
                 "image_hash": image_hash, "card_name": card_name, "card_number": card_number,
-                "market_key": market_key, "game": game, "region": effective_region, "confirmed": True,
+                "market_key": market_key, "game": game, "region": effective_region,
+                "edition_language": edition_language_for_market_region(effective_region), "confirmed": True,
             })
         data["confirmed"] = confirmed[-MAX_ROWS:]
         data.update({"version": 1, "confirmed_only": True, "auto_prediction_learning": False})
@@ -1131,7 +1176,8 @@ def save_confirmation(payload: dict[str, Any]) -> dict[str, Any]:
         )
         return {
             "ok": True, "saved": True, "promoted_region": promoted,
-            "region": effective_region, "identity_confirmations": count,
+            "region": effective_region, "edition_language": edition_language_for_market_region(effective_region),
+            "identity_confirmations": count,
             "similar_image_learning_enabled": count >= 3,
         }
 

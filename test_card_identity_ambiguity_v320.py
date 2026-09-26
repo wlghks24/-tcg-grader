@@ -104,7 +104,7 @@ class CardIdentityAmbiguityV320Tests(unittest.TestCase):
             check=False,
         )
         self.assertEqual(0, proc.returncode, proc.stdout + proc.stderr)
-        self.assertIn("Pokémon generation runtime v325: PASS", proc.stdout)
+        self.assertIn("Pokémon generation runtime v328: PASS", proc.stdout)
 
 
 if __name__ == "__main__":

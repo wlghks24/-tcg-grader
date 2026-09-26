@@ -50,7 +50,7 @@ class CardRegionGenerationPrecisionV306Tests(unittest.TestCase):
     def test_generation_runtime(self) -> None:
         proc=subprocess.run(['node','verify_pokemon_generation_runtime.js'],cwd=ROOT,text=True,capture_output=True,timeout=30,check=False)
         self.assertEqual(0,proc.returncode,proc.stdout+proc.stderr)
-        self.assertIn('Pokémon generation runtime v325: PASS',proc.stdout)
+        self.assertIn('Pokémon generation runtime v328: PASS',proc.stdout)
 
 
 if __name__ == '__main__':
