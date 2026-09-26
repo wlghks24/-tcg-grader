@@ -1,0 +1,126 @@
+name: V326 Clean Card Metadata Finalizer
+
+on:
+  push:
+    branches: [fix/card-metadata-price-generation-v326-clean]
+    paths: ['.v326-clean-trigger']
+
+permissions:
+  contents: write
+
+concurrency:
+  group: v326-clean-card-metadata-finalizer
+  cancel-in-progress: true
+
+jobs:
+  finalize:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          ref: fix/card-metadata-price-generation-v326-clean
+          fetch-depth: 0
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97
+        with:
+          python-version: '3.12'
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: '20'
+      - name: Install targeted runtime dependency
+        run: python -m pip install --disable-pip-version-check pillow
+      - name: Wire v326 into browser, market, tablet and verification surfaces
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          from pathlib import Path
+
+          def replace(path, old, new, *, count=None):
+              p=Path(path); text=p.read_text(encoding='utf-8')
+              found=text.count(old)
+              if new in text and (count is None or found==0):
+                  print('already wired', path); return
+              expected = 1 if count is None else count
+              if found != expected:
+                  raise SystemExit(f'{path}: expected {expected} markers, found {found}: {old!r}')
+              p.write_text(text.replace(old,new,expected),encoding='utf-8')
+              print('wired', path)
+
+          replace('index.html',
+              '<script src="ui_app_shell_v272.js?v=272"></script>\n<script src="card_identity_recognition.js?v=207"></script>',
+              '<script src="ui_app_shell_v272.js?v=272"></script>\n<script src="card_metadata_classifier_v326.js?v=326"></script>\n<script src="card_identity_recognition.js?v=207"></script>')
+          replace('grade_market_flow.js',
+              "function quoteScore(row,name,number,region){\n if(!row||row.platform!=='WYYYES')return -999;",
+              "function quoteScore(row,name,number,region){\n if(!row||row.platform!=='WYYYES')return -999;\n const metadata=window.TCGCardMetadata;\n if(metadata){\n  const card=metadata.classify({game:window.tcgIdentityGame||'',region,card_name:name,card_number:number});\n  const bound=metadata.bindPrice(card,{game:row.game||window.tcgIdentityGame||'',region:row.card_region||'UNKNOWN',card_name:row.card_name||row.title||'',card_number:row.card_number||'',product_name:row.product_name||row.title||''});\n  if(!bound.safe)return -999;\n }")
+          replace('tcg_updater.py',
+              "'grading_accuracy_v99.js','card_identity_recognition.js','manual_dual_photo_bridge.js'",
+              "'grading_accuracy_v99.js','card_metadata_classifier_v326.js','card_identity_recognition.js','manual_dual_photo_bridge.js'")
+          replace('tablet_runtime_manifest.py',
+              '"grading_vision_engine.js","grading_accuracy_v99.js","card_identity_recognition.js",',
+              '"grading_vision_engine.js","grading_accuracy_v99.js","card_metadata_classifier_v326.js","card_identity_recognition.js",')
+          replace('test_tablet_runtime_manifest_ui_assets_v254.py',
+              '"index.html","grading_vision_engine.js","grading_accuracy_v99.js","card_identity_recognition.js",',
+              '"index.html","grading_vision_engine.js","grading_accuracy_v99.js","card_metadata_classifier_v326.js","card_identity_recognition.js",')
+          replace('test_card_tablet_runtime_v300.py',
+              '            "card_identity_recognition.js",\n            "grade_market_flow.js",',
+              '            "card_identity_recognition.js",\n            "card_metadata_classifier_v326.js",\n            "grade_market_flow.js",')
+          replace('test_card_core_provenance_v296.py',
+              '            "server_security_guard.py", "grading_vision_engine.js", "grading_accuracy_v99.js",\n            "card_identity_recognition.js",',
+              '            "server_security_guard.py", "grading_vision_engine.js", "grading_accuracy_v99.js",\n            "card_metadata_classifier_v326.js", "card_identity_recognition.js",')
+          replace('sw.js',
+              "'./grading_accuracy_v99.js','./card_identity_recognition.js'",
+              "'./grading_accuracy_v99.js','./card_metadata_classifier_v326.js','./card_identity_recognition.js'")
+          replace('.github/workflows/runtime-delivery-guard.yml',
+              "      - 'card_identity_recognition.js'\n",
+              "      - 'card_identity_recognition.js'\n      - 'card_metadata_classifier_v326.js'\n      - 'verify_card_metadata_classifier_v326.js'\n",
+              count=2)
+          replace('.github/workflows/runtime-delivery-guard.yml',
+              '          python tablet_runtime_qa.py --profile runtime\n',
+              '          node --check card_metadata_classifier_v326.js\n          node verify_card_metadata_classifier_v326.js\n          python tablet_runtime_qa.py --profile runtime\n')
+          replace('verify_current_runtime.py',
+              '                 ("browser_runtime",["node","verify_browser_runtime.js"],180,False),',
+              '                 ("card_metadata_classifier_v326",["node","verify_card_metadata_classifier_v326.js"],60,False),\n                 ("browser_runtime",["node","verify_browser_runtime.js"],180,False),')
+          replace('feature_contract.py',
+              '"card_identity_recognition.py", "card_identity_recognition.js", "card_identity_learning.json",',
+              '"card_identity_recognition.py", "card_identity_recognition.js", "card_metadata_classifier_v326.js", "card_identity_learning.json",')
+          replace('feature_contract.py',
+              '"card_identity_recognition.js", "tcgRecognizeCurrentCard"))',
+              '"card_identity_recognition.js", "card_metadata_classifier_v326.js", "tcgRecognizeCurrentCard"))')
+          PY
+          rm -f .v326-clean-trigger .github/workflows/v326-clean-finalize.yml
+          python fault_injection_healing.py --manifest
+      - name: Targeted card classification validation
+        shell: bash
+        run: |
+          set -euo pipefail
+          node --check card_metadata_classifier_v326.js
+          node verify_card_metadata_classifier_v326.js
+          node --check card_identity_recognition.js
+          node verify_pokemon_generation_runtime.js
+          node --check grade_market_flow.js
+          python -m unittest -v test_card_identity_ambiguity_v320.py test_card_market_generation_precision_v325.py test_card_region_generation_precision_v306.py test_card_edition_precision_v302.py
+      - name: Related runtime/tablet regression
+        shell: bash
+        run: |
+          set -euo pipefail
+          node verify_service_worker_runtime.js
+          python verify_link_runtime.py
+          python tablet_runtime_manifest.py --check --compile
+          python -m unittest -v test_tablet_runtime_manifest_ui_assets_v254.py test_card_tablet_runtime_v300.py test_card_market_edition_v297.py test_card_core_provenance_v296.py
+      - name: Integrity and actual-output validation
+        shell: bash
+        run: |
+          set -euo pipefail
+          python repository_integrity_guard.py
+          python feature_contract.py
+          git diff --check
+      - name: Commit verified final branch state
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add -A
+          git commit -m 'fix: finalize exact card classification and price binding v326'
+          git push origin HEAD:fix/card-metadata-price-generation-v326-clean
