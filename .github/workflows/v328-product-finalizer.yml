@@ -243,4 +243,4 @@ jobs:
           git commit -m 'fix: separate EN edition from US market and enforce FX freshness'
           git push origin HEAD:fix/edition-fx-failclosed-v328
 
-# retrigger after v328 Node version-contract repairs
+# retrigger after recalculating UI CSP hashes
