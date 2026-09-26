@@ -28,8 +28,8 @@ jobs:
         with:
           python-version: '3.12'
 
-      - name: Verify canonical v330 base plus delta contract
-        run: python -m unittest -v test_tablet_gpt_tcg_grader_sync_v330.py
+      - name: Verify historical v330 and current v331 delta contracts
+        run: python -m unittest -v test_tablet_gpt_tcg_grader_sync_v330.py test_tablet_gpt_tcg_grader_sync_v331.py
 
       - name: Verify current HEAD contains every covered patch
         shell: bash
@@ -42,15 +42,15 @@ jobs:
 
           root = Path('.')
           base = json.loads((root / 'TCG_CROSSCHECK/TABLET_GPT/learning_snapshot.json').read_text(encoding='utf-8'))
-          delta = json.loads((root / 'TCG_CROSSCHECK/TABLET_GPT/learning_snapshot_v330_delta.json').read_text(encoding='utf-8'))
-          receipt = json.loads((root / 'TCG_CROSSCHECK/TCG_GRADER/tablet_gpt_learning_receipt_v330.json').read_text(encoding='utf-8'))
-          contract = json.loads((root / 'TCG_CROSSCHECK/TABLET_GPT_TCG_GRADER_SYNC_CONTRACT.json').read_text(encoding='utf-8'))
+          delta = json.loads((root / 'TCG_CROSSCHECK/TABLET_GPT/learning_snapshot_v331_delta.json').read_text(encoding='utf-8'))
+          receipt = json.loads((root / 'TCG_CROSSCHECK/TCG_GRADER/tablet_gpt_learning_receipt_v331.json').read_text(encoding='utf-8'))
+          contract = json.loads((root / 'TCG_CROSSCHECK/TABLET_GPT_TCG_GRADER_SYNC_CONTRACT_V331.json').read_text(encoding='utf-8'))
 
           assert delta['schema_version'] == receipt['schema_version'] == contract['schema_version']
           assert delta['source_repository'] == receipt['source_repository'] == 'wlghks24/-tcg-grader'
           assert delta['source_main_sha'] == receipt['source_main_sha']
           assert receipt['status'] == 'SYNCED_VERIFIED'
-          assert receipt['verification']['verification_test'] == 'test_tablet_gpt_tcg_grader_sync_v330.py'
+          assert receipt['verification']['verification_test'] == 'test_tablet_gpt_tcg_grader_sync_v331.py'
           assert receipt['verification']['verified_result'] == 'TABLET_GPT_TCG_GRADER_MATCH'
 
           def ancestor(sha: str) -> None:
@@ -78,8 +78,8 @@ jobs:
           from pathlib import Path
 
           root = Path('.')
-          delta = json.loads((root / 'TCG_CROSSCHECK/TABLET_GPT/learning_snapshot_v330_delta.json').read_text(encoding='utf-8'))
-          contract = json.loads((root / 'TCG_CROSSCHECK/TABLET_GPT_TCG_GRADER_SYNC_CONTRACT.json').read_text(encoding='utf-8'))
+          delta = json.loads((root / 'TCG_CROSSCHECK/TABLET_GPT/learning_snapshot_v331_delta.json').read_text(encoding='utf-8'))
+          contract = json.loads((root / 'TCG_CROSSCHECK/TABLET_GPT_TCG_GRADER_SYNC_CONTRACT_V331.json').read_text(encoding='utf-8'))
           source = delta['source_main_sha']
           head = subprocess.check_output(['git', 'rev-parse', 'HEAD'], text=True).strip()
 
