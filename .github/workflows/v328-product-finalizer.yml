@@ -100,7 +100,7 @@ jobs:
       - name: Full current regression
         env:
           TCG_REQUIRE_NODE: '1'
-        run: python verify_current_runtime.py --passes 3
+        run: python verify_current_runtime.py --passes 3 || { cat CURRENT_RUNTIME_VERIFICATION_REPORT.json; exit 1; }
 
       - name: Actual output fail-closed validation
         shell: bash
@@ -203,4 +203,4 @@ jobs:
           git commit -m 'fix: separate EN edition from US market and enforce FX freshness'
           git push origin HEAD:fix/edition-fx-failclosed-v328
 
-# retrigger after browser harness actual newline encoding fix
+# retrigger to expose full-regression diagnostics
