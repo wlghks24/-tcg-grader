@@ -1,0 +1,80 @@
+{
+  "schema_version": "1.1-tablet-gpt-tcg-grader-learning-sync",
+  "namespace": "TABLET_GPT",
+  "snapshot_kind": "learning_delta",
+  "run_date_kst": "2026-09-27",
+  "built_at": "2026-09-27T01:10:11+09:00",
+  "status": "finalized",
+  "source_repository": "wlghks24/-tcg-grader",
+  "prior_delta": "TCG_CROSSCHECK/TABLET_GPT/learning_snapshot_v331_delta.json",
+  "prior_lesson_digest_sha256": "77bf143284454b1177636fa59e7a20574b181d60496d7ce932f15f0cc805937d",
+  "source_main_sha": "a4c43b6c8fe495d2eec2808d543f3b8e74db0542",
+  "share_policy": {
+    "explicit_patch_and_learning_lessons_only": true,
+    "chatgpt_model_weights_exported": false,
+    "raw_grading_calibration_shared": false,
+    "device_local_runtime_memory_overwritten": false,
+    "peer_verified_never_auto_promotes_local": true
+  },
+  "covered_merges": [
+    {
+      "pr": 283,
+      "version": "v331-sync",
+      "merge_sha": "6c54ab50b04ae772b22dea143937e7c8becdee07"
+    },
+    {
+      "pr": 284,
+      "version": "v332",
+      "merge_sha": "dda6190adf97652e677de5c5690af130f56b202e"
+    },
+    {
+      "pr": 285,
+      "version": "v333-ui",
+      "merge_sha": "896f272c8e14e5427c05cbedb17e2b75898be00d"
+    },
+    {
+      "pr": 286,
+      "version": "v333-iphone-candidate",
+      "merge_sha": "1438d1aaecb5f616ab89badbf46b6d66d1c8d5dd"
+    },
+    {
+      "pr": 287,
+      "version": "v334",
+      "merge_sha": "a4c43b6c8fe495d2eec2808d543f3b8e74db0542"
+    }
+  ],
+  "lesson_digest_sha256": "ee19de403a2362f7c91f461c505fa3c4ce19e6cc418d3a13dbb6e1dcfa65f068",
+  "lessons": [
+    {
+      "lesson_id": "TABLET-GPT-UI-STATE-BOUNDARIES-V333",
+      "subsystem": "tablet_browser_ui_state",
+      "issue_class": "boolean_selector_and_missing_numeric_evidence_can_render_incorrect_ui_state",
+      "trigger_condition": "boolean data attributes are toggled by presence while CSS expects literal true, or empty/out-of-range grade and PSA probability values reach the summary UI",
+      "symptom_summary": "feature filtering can disagree with DOM state and missing grading evidence can be rendered as if it were a valid numeric result",
+      "root_cause_class": "dom_state_contract_and_numeric_evidence_boundary_mismatch",
+      "fix_pattern": "match CSS selectors to boolean attribute presence, reject empty/non-finite/out-of-range grade evidence, and keep only one refresh timer after page restoration",
+      "prevention_rule_id": "TGPT-PREV-UI-STATE-BOUNDARIES",
+      "verification_result": "passed_repo_ci",
+      "regression_pass": true,
+      "recurrence_count": 1,
+      "applicable_scope": "both",
+      "confidence_level": "high"
+    },
+    {
+      "lesson_id": "TABLET-GPT-IPHONE-RELEASE-LAYOUT-V334",
+      "subsystem": "iphone_release_promo_layout",
+      "issue_class": "long_status_badge_collapses_release_title_on_narrow_viewport",
+      "trigger_condition": "a narrow iPhone viewport renders a release title beside a long nonshrinking status badge while global anywhere wrapping is active",
+      "symptom_summary": "release and promo titles can collapse to a one-or-two-character column and appear vertically letter-by-letter",
+      "root_cause_class": "flex_shrink_competition_plus_global_anywhere_wrap",
+      "fix_pattern": "on narrow phones stack title and badge in a one-column grid, keep the title min-width at zero with Korean word boundaries, and place the rule in a stylesheet that index.html actually loads",
+      "prevention_rule_id": "TGPT-PREV-IPHONE-RELEASE-LAYOUT",
+      "verification_result": "passed_repo_ci_static_delivery",
+      "regression_pass": true,
+      "recurrence_count": 1,
+      "applicable_scope": "both",
+      "confidence_level": "high",
+      "device_visual_reverification_required": true
+    }
+  ]
+}
