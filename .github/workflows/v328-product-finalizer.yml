@@ -122,6 +122,16 @@ jobs:
             test_card_market_generation_precision_v325.py \
             test_multi_market_price_collector.py \
             test_tablet_runtime_manifest_ui_assets_v254.py
+          python -m unittest -v \
+            test_card_core_crosscheck_v291.py \
+            test_card_core_crosscheck_v292.py \
+            test_card_core_crosscheck_v295.py \
+            test_pokemon_generation_display_v207.py \
+            test_card_edition_precision_v302.py \
+            test_card_region_generation_precision_v306.py \
+            test_card_identity_market_precision_v309.py \
+            test_card_region_conflict_failclosed_v318.py \
+            test_card_identity_ambiguity_v320.py
           python verify_current_runtime.py --passes 3 || { cat CURRENT_RUNTIME_VERIFICATION_REPORT.json; exit 1; }
 
       - name: Actual output fail-closed validation
@@ -230,4 +240,4 @@ jobs:
           git commit -m 'fix: separate EN edition from US market and enforce FX freshness'
           git push origin HEAD:fix/edition-fx-failclosed-v328
 
-# retrigger after tablet runtime version contract update
+# retrigger to isolate Node-backed card regressions
