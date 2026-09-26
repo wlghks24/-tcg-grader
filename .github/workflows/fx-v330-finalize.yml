@@ -50,11 +50,17 @@ jobs:
 
           verifier = Path('verify_browser_runtime.js')
           text = verifier.read_text(encoding='utf-8')
-          old = '  fxTimestamp: "",\n  simpleGame: "pokemon",'
-          new = '  fxTimestamp: "",\n  fxExpiryTimer: null,\n  simpleGame: "pokemon",'
-          if old not in text:
+          state_old = '  fxTimestamp: "",\n  simpleGame: "pokemon",'
+          state_new = '  fxTimestamp: "",\n  fxExpiryTimer: null,\n  simpleGame: "pokemon",'
+          if state_old not in text:
               raise SystemExit('missing browser VM FX state insertion point')
-          verifier.write_text(text.replace(old, new, 1), encoding='utf-8')
+          text = text.replace(state_old, state_new, 1)
+          timer_old = 'scheduledFxExpiry.delay <= context.FX_MAX_AGE_MS,"fresh FX must schedule UI expiration"'
+          timer_new = 'scheduledFxExpiry.delay <= context.FX_MAX_AGE_MS+context.FX_MAX_FUTURE_SKEW_MS+1,"fresh FX must schedule UI expiration"'
+          if timer_old not in text:
+              raise SystemExit('missing stale FX expiry timer assertion')
+          text = text.replace(timer_old, timer_new, 1)
+          verifier.write_text(text, encoding='utf-8')
           PY
       - name: Remove one-shot finalizer before final-tree manifest
         run: rm .github/workflows/fx-v330-finalize.yml
