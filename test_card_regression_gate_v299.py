@@ -18,6 +18,7 @@ class CardRegressionGateV299Tests(unittest.TestCase):
             "test_card_core_provenance_v296.py",
             "test_card_market_edition_v297.py",
             "test_card_probability_ui_v298.py",
+            "test_edition_fx_failclosed_v328.py",
             "test_card_regression_gate_v299.py",
         ):
             self.assertIn(test_name, command)
