@@ -1,0 +1,27 @@
+{
+  "schema_version": 1,
+  "audit_id": "v318-full-repo-structural-safety",
+  "base_main_sha": "29fca80df8d91e04799e19603574c996e6f83a46",
+  "status": "REVIEW_PENDING",
+  "principles": {
+    "external_expert_claim": false,
+    "fail_closed": true,
+    "test_weakening_allowed": false,
+    "unexecuted_is_pass": false
+  },
+  "scope": [
+    "all tracked active Python AST parse and duplicate top-level definitions",
+    "production Python unsafe dynamic execution/deserialization/shell/TLS checks",
+    "all tracked JSON strict parse with duplicate-key and non-finite rejection",
+    "all tracked JavaScript syntax via node --check",
+    "all tracked shell syntax via bash -n",
+    "existing specialized grading/OCR/CV/data/runtime/security regression chain"
+  ],
+  "findings": [],
+  "test_evidence": {
+    "targeted": "NOT_EXECUTED",
+    "related": "NOT_EXECUTED",
+    "full": "NOT_EXECUTED",
+    "actual_output": "NOT_EXECUTED"
+  }
+}
