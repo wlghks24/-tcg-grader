@@ -13,6 +13,9 @@ const records = new Map();
 const elements = new Map();
 const createdObjectUrls = [];
 const releasedObjectUrls = [];
+const fxBadges = [];
+let scheduledFxExpiry = null;
+let nextFxTimerId = 0;
 let storageUnavailable = false;
 let imageShouldFail = false;
 
@@ -64,7 +67,7 @@ const context = vm.createContext({
   Image: BrowserRuntimeImage,
   console,
   localStorage,
-  document: { getElementById: element },
+  document: { getElementById: element, querySelectorAll: (selector) => selector === ".krw-converted" ? fxBadges : [] },
   HKEY: "history",
   V11KEY: "v11",
   V11CORR: "correction",
@@ -121,7 +124,7 @@ function loadAsyncBlock(name) {
 }
 
 async function main() {
-  for (const name of ["loadCardImage", "load", "v6Load", "v7Image", "v30Load", "cardInputFile", "escapeDisplayText", "safeStoredJson", "safeVisionFeatures", "validCompanyActual", "safeExternalUrl", "trustedPromoOfficialUrl", "localDateOnly", "addLocalDays", "promoLifecycle", "renderHistory", "v11Get", "v11Correction", "v17get", "foreignKrw", "finiteMoney", "normalizeGradePrices"]) {
+  for (const name of ["loadCardImage", "load", "v6Load", "v7Image", "v30Load", "cardInputFile", "escapeDisplayText", "safeStoredJson", "safeVisionFeatures", "validCompanyActual", "safeExternalUrl", "trustedPromoOfficialUrl", "localDateOnly", "addLocalDays", "promoLifecycle", "renderHistory", "v11Get", "v11Correction", "v17get", "foreignKrw", "clearFxConversionDisplay", "clearExpiredFx", "scheduleFxExpiry", "finiteMoney", "normalizeGradePrices"]) {
     loadOneLine(name);
   }
   loadBlock("safeGradeRows");
@@ -152,6 +155,8 @@ async function main() {
   context.FX_MAX_FUTURE_SKEW_MS=6*60*60*1000;
   loadOneLine("fxTimestampFresh");
   loadAsyncBlock("loadExchangeRates");
+  context.setTimeout=(callback,delay)=>{scheduledFxExpiry={callback,delay,id:++nextFxTimerId,cancelled:false};return scheduledFxExpiry.id};
+  context.clearTimeout=(id)=>{if(scheduledFxExpiry?.id===id)scheduledFxExpiry.cancelled=true};
   context.fxRates={JPY_KRW:0,USD_KRW:0};
   context.fxTimestamp="";
   assert.equal(context.foreignKrw("¥1000"),"","missing FX must not render a fabricated zero price");
@@ -446,6 +451,8 @@ async function main() {
   assert.equal(failedMarketLoad.watchOk, false);
   context.fxRates={JPY_KRW:8.7,USD_KRW:1380};
   context.fxTimestamp=new Date().toISOString();
+  const failedFxBadge={removed:false,remove(){this.removed=true}};
+  fxBadges.push(failedFxBadge);
   const failedFxLoad = await context.loadExchangeRates(true);
   assert.equal(failedFxLoad.ok, false);
   assert.deepEqual(Array.from(failedFxLoad.errors), ["환율자료"]);
@@ -453,6 +460,7 @@ async function main() {
   assert.equal(context.fxRates.USD_KRW,0,"failed refresh must clear accepted USD FX");
   assert.equal(context.fxTimestamp,"");
   assert.equal(context.foreignKrw("¥1000"),"","failed refresh must not retain stale conversion");
+  assert.equal(failedFxBadge.removed,true,"failed FX refresh must remove already-rendered conversion");
 
   context.fetch = async (url) => ({
     ok: true,
@@ -466,7 +474,17 @@ async function main() {
   assert.equal((await context.v13LoadAllPriceData()).complete, true);
   assert.equal((await context.loadPopularitySignals(true)).ok, true);
   assert.equal((await context.loadExchangeRates(true)).ok, true);
+  assert.ok(scheduledFxExpiry && scheduledFxExpiry.delay > 0 && scheduledFxExpiry.delay <= context.FX_MAX_AGE_MS,"fresh FX must schedule UI expiration");
   assert.ok(context.foreignKrw("¥1000").includes("₩8,700"),"fresh JPY conversion was lost");
+  const freshStamp=context.fxTimestamp,expiry=Date.parse(freshStamp)+context.FX_MAX_AGE_MS;
+  const liveBadge={removed:false,remove(){this.removed=true}};
+  fxBadges.push(liveBadge);
+  assert.equal(context.clearExpiredFx(expiry),false,"FX must remain valid through its exact age limit");
+  assert.equal(context.clearExpiredFx(expiry+1),true,"FX must expire immediately after its age limit");
+  assert.equal(liveBadge.removed,true,"expired FX must remove already-rendered conversion");
+  assert.equal(context.fxRates.JPY_KRW,0);
+  assert.equal(context.fxRates.USD_KRW,0);
+  assert.equal(context.foreignKrw("¥1000"),"","expired FX must not render a KRW conversion");
   context.fxTimestamp=new Date(Date.now()-73*60*60*1000).toISOString();
   assert.equal(context.foreignKrw("¥1000"),"","expired FX must not render a KRW conversion");
 
