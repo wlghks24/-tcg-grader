@@ -1726,9 +1726,9 @@ let popularityMarketKeys=new Set();
 let popularityMarketEntries={};
 let marketWatchEntries={};
 let selectedTradeAsset="BOX",selectedTradeCountry="ALL";
-let fxRates={JPY_KRW:0,USD_KRW:0},fxUpdated="";
+let fxRates={JPY_KRW:0,USD_KRW:0},fxUpdated="",fxTimestamp="";
 const gameKorean={Pokémon:"포켓몬 카드","ONE PIECE":"원피스 카드",NARUTO:"나루토 카드"};
-function foreignKrw(price){const text=String(price??""),yen=[...text.matchAll(/¥\s*([0-9,.]+)/g)].map(x=>Number(x[1].replace(/,/g,""))).filter(Number.isFinite),usd=[...text.matchAll(/\$\s*([0-9,.]+)/g)].map(x=>Number(x[1].replace(/,/g,""))).filter(Number.isFinite);let value=0,rateText="";if(yen.length){value=yen.at(-1)*fxRates.JPY_KRW;rateText=`¥1=₩${fxRates.JPY_KRW.toFixed(2)}`}else if(usd.length){value=usd.at(-1)*fxRates.USD_KRW;rateText=`$1=₩${fxRates.USD_KRW.toLocaleString("ko-KR")}`}else return "";const rounded=Math.round(value/100)*100;return `<span class="krw-converted">🇰🇷 한화 약 ₩${rounded.toLocaleString("ko-KR")}<small>${rateText} · ${escapeDisplayText(fxUpdated)} 참고환율 · 수수료 제외</small></span>`}
+function foreignKrw(price){const text=String(price??""),yen=[...text.matchAll(/¥\s*([0-9,.]+)/g)].map(x=>Number(x[1].replace(/,/g,""))).filter(Number.isFinite),usd=[...text.matchAll(/\$\s*([0-9,.]+)/g)].map(x=>Number(x[1].replace(/,/g,""))).filter(Number.isFinite);let value=0,rateText="",rate=0;if(yen.length){rate=Number(fxRates.JPY_KRW);if(!fxTimestampFresh(fxTimestamp)||!Number.isFinite(rate)||rate<=0)return "";value=yen.at(-1)*rate;rateText=`¥1=₩${rate.toFixed(2)}`}else if(usd.length){rate=Number(fxRates.USD_KRW);if(!fxTimestampFresh(fxTimestamp)||!Number.isFinite(rate)||rate<=0)return "";value=usd.at(-1)*rate;rateText=`$1=₩${rate.toLocaleString("ko-KR")}`}else return "";const rounded=Math.round(value/100)*100;return `<span class="krw-converted">🇰🇷 한화 약 ₩${rounded.toLocaleString("ko-KR")}<small>${rateText} · ${escapeDisplayText(fxUpdated)} 참고환율 · 수수료 제외</small></span>`}
 function marketFallback(item,asset,price){return asset==="BOX"?{display:price.retail||"공식 출고가 확인 중",kind:"공식 출고가 대체표시 · 거래시세 자동수집 대기",market:"전체 가격 커버리지 점검",transactions:"판매완료·체결자료 수집 대기",source:null}:{display:price.hitPrice||`${item.hitName||item.hit} 가격 자동수집 대기`,kind:"HIT 거래시세 자동수집 대기",market:"전체 가격 커버리지 점검",transactions:"국내·해외 판매완료 자료 수집 대기",source:null}}
 function analysisDateValue(value){const nums=(value||"").match(/\d+/g)||[];return nums.length>=3?Number(`${nums[0]}${String(nums[1]).padStart(2,"0")}${String(nums[2]).padStart(2,"0")}`):0}
 function popularityScore(x){const pref={"매우 높음":70,"높음":58,"중간":44,"보통":38,"출시 전":30}[x.preference]||34;const age=analysisDateValue(x.release)>=20260000?14:analysisDateValue(x.release)>=20250000?9:4;const market=popularityMarketKeys.has(`${x.country}|${x.name}|${selectedCatalogMode}`)?16:0;return Math.min(100,pref+age+market)}
@@ -1835,8 +1835,8 @@ async function loadExchangeRates(force=false){
   const d=await r.json(),jpy=Number(d.rates?.JPY_KRW),usd=Number(d.rates?.USD_KRW),stamp=String(d.updated_at||"");
   if(!(Number.isFinite(jpy)&&jpy>0&&jpy<30&&Number.isFinite(usd)&&usd>500&&usd<3000))throw new Error("fx schema");
   if(!fxTimestampFresh(stamp))throw new Error("fx timestamp stale");
-  fxRates={JPY_KRW:jpy,USD_KRW:usd};fxUpdated=stamp.slice(0,10)||fxUpdated;result.ok=true;
- }catch(e){result.errors.push("환율자료")}
+  fxRates={JPY_KRW:jpy,USD_KRW:usd};fxUpdated=stamp.slice(0,10)||fxUpdated;fxTimestamp=stamp;result.ok=true;
+ }catch(e){fxRates={JPY_KRW:0,USD_KRW:0};fxUpdated="";fxTimestamp="";result.errors.push("환율자료")}
  renderCountryAnalysis();renderTradeCatalog();return result;
 }
 loadPopularitySignals();loadExchangeRates();
