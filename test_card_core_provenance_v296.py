@@ -95,7 +95,7 @@ class CardCoreProvenanceV296Tests(unittest.TestCase):
         required = {
             "grading_accuracy_v99.py", "card_grading_valuation.py", "card_identity_recognition.py",
             "server_security_guard.py", "grading_vision_engine.js", "grading_accuracy_v99.js",
-            "card_identity_recognition.js",
+            "card_metadata_classifier_v326.js", "card_identity_recognition.js",
         }
         self.assertTrue(required.issubset(set(manifest.ACTIVE_RUNTIME_FILES)))
 
