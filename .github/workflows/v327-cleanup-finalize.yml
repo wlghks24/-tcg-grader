@@ -1,0 +1,59 @@
+name: V327 Cleanup Finalize
+
+on:
+  push:
+    branches:
+      - cleanup/v327-finalizer
+    paths:
+      - '.github/workflows/v327-cleanup-finalize.yml'
+
+permissions:
+  contents: write
+
+concurrency:
+  group: v327-cleanup-finalize
+  cancel-in-progress: false
+
+jobs:
+  finalize:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          ref: cleanup/v327-finalizer
+          fetch-depth: 0
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97
+        with:
+          python-version: '3.12'
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: '20'
+      - name: Remove temporary finalizers and regenerate integrity metadata
+        shell: bash
+        run: |
+          set -euo pipefail
+          rm -f .github/workflows/v326-branch-finalizer.yml \
+                .github/workflows/v327-cleanup-finalize.yml
+          git add -A
+          python fault_injection_healing.py --manifest
+      - name: Validate final card runtime and repository integrity
+        shell: bash
+        run: |
+          set -euo pipefail
+          node --check card_metadata_classifier_v326.js
+          node verify_card_metadata_classifier_v326.js
+          node verify_pokemon_generation_runtime.js
+          python repository_integrity_guard.py
+          python verify_current_runtime.py
+          python feature_contract.py
+          git diff --check
+      - name: Commit verified cleanup
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add -A
+          git commit -m 'chore: remove temporary v326/v327 finalizers after verified merge'
+          git push origin HEAD:cleanup/v327-finalizer
