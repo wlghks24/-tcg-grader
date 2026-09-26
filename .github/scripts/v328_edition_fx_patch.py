@@ -247,4 +247,10 @@ patch(
     "Pokémon generation runtime v328: PASS",
 )
 
+patch(
+    "test_card_tablet_runtime_v300.py",
+    "\"version:'v325'\"",
+    "\"version:'v328'\"",
+)
+
 print("v328 patch applied")
