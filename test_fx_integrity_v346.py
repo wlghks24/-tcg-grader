@@ -77,6 +77,11 @@ class FxIntegrityV346Tests(unittest.TestCase):
         self.assertFalse(fx_policy.validate_exchange_payload(untrusted, now=now)[0])
         mismatch = dict(valid, source_route="frankfurter-legacy")
         self.assertFalse(fx_policy.validate_exchange_payload(mismatch, now=now)[0])
+        query_tamper = dict(
+            valid,
+            source="https://api.frankfurter.dev/v2/rates?base=EUR&quotes=KRW,JPY",
+        )
+        self.assertFalse(fx_policy.validate_exchange_payload(query_tamper, now=now)[0])
 
     def test_shared_loader_rejects_ambiguous_json(self):
         now = dt.datetime(2026, 9, 27, 16, 0, tzinfo=dt.timezone.utc)
