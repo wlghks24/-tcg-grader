@@ -1,0 +1,52 @@
+name: Tablet GPT v343 post-merge one-shot finalizer
+
+on:
+  push:
+    branches:
+      - sync/tablet-gpt-v343-post-merge
+
+permissions:
+  contents: write
+
+jobs:
+  finalize:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: sync/tablet-gpt-v343-post-merge
+          fetch-depth: 0
+
+      - name: Remove one-shot helper before manifest generation
+        shell: bash
+        run: |
+          set -euo pipefail
+          rm -f .github/workflows/tablet-gpt-v343-post-merge-finalize.yml
+          git add -A .github/workflows/tablet-gpt-v343-post-merge-finalize.yml
+
+      - name: Regenerate exact-tree integrity manifest
+        shell: bash
+        run: |
+          set -euo pipefail
+          python fault_injection_healing.py --manifest
+
+      - name: Validate V343 post-merge alignment generation
+        shell: bash
+        run: |
+          set -euo pipefail
+          python test_tablet_gpt_tcg_grader_sync_v343.py
+          python test_tablet_gpt_tcg_grader_sync_v342.py
+          python test_runtime_hardening_v342.py
+          python repository_integrity_guard.py
+
+      - name: Commit regenerated manifest and self-removal
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add integrity_manifest.json
+          git diff --cached --check
+          git commit -m "Finalize Tablet GPT post-merge sync v343 manifest"
+          git push origin HEAD:sync/tablet-gpt-v343-post-merge
