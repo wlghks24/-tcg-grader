@@ -104,7 +104,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          git fetch origin main
+          git fetch origin +refs/heads/main:refs/remotes/origin/main
           if [ "$(git rev-parse HEAD)" != "$(git rev-parse origin/main)" ]; then
             echo 'changed=false' >> "$GITHUB_OUTPUT"
             echo 'reason=main advanced during collection; discard stale snapshot' >> "$GITHUB_OUTPUT"
@@ -138,7 +138,7 @@ jobs:
           git commit -m 'data: refresh grading company official watch'
           candidate_sha="$(git rev-parse HEAD)"
 
-          git fetch origin main
+          git fetch origin +refs/heads/main:refs/remotes/origin/main
           if [ "$(git rev-parse origin/main)" != "${base_sha}" ]; then
             echo 'published=false' >> "$GITHUB_OUTPUT"
             echo 'reason=main advanced after validation; discard local candidate' >> "$GITHUB_OUTPUT"
@@ -226,7 +226,7 @@ jobs:
             exit 1
           fi
 
-          git fetch origin main
+          git fetch origin +refs/heads/main:refs/remotes/origin/main
           if [ "$(git rev-parse origin/main)" != "${BASE_SHA}" ]; then
             echo 'status=BASE_ADVANCED' >> "$GITHUB_OUTPUT"
             echo 'reason=protected main advanced before merge; leave PR open for fresh run' >> "$GITHUB_OUTPUT"
