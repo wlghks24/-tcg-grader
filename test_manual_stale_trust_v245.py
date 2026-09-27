@@ -67,7 +67,7 @@ class ManualStaleTrustV245Tests(unittest.TestCase):
 
         self.assertTrue(result["official_result"])
         self.assertEqual(result["official_grade"], 10)
-        self.assertEqual(result["verification_method"], "persisted_official_registry")
+        self.assertEqual(result["verification_method"], "persisted_manual_verified_registry")
         self.assertEqual(result["official_verification"], "validated_manual_registry")
         self.assertFalse(result["manual_official_verification_required"])
         self.assertTrue(result["official_lookup_suppressed"])

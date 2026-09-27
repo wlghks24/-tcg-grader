@@ -252,7 +252,36 @@ def _hardened_observe_search(self, keyword: str, query: str, rows, *, error: str
     safety = self.memory["channel_stats"].setdefault("v142_learning_safety", {})
     safety["ignored_unverified_search_rows"] = adaptive_collection_learner._bounded_int(safety.get("ignored_unverified_search_rows")) + max(0, len(relevant_rows) - len(official_rows))
     safety["last_seen"] = adaptive_collection_learner._now()
-    return {"results": len(rows), "relevant": len(relevant_rows), "official": len(official_rows), "error": bool(error)}
+    # Preserve the base learner's verified-neural observation contract. In
+    # particular, a provider warning plus an empty result is not a trustworthy
+    # negative label and must remain excluded after this overlay is installed.
+    try:
+        neural_observation = adaptive_collection_learner.verified_collection_neural.observe_search_outcome(
+            game=game,
+            region=region,
+            family=family,
+            query=query,
+            rows=rows,
+            relevant_count=len(relevant_rows),
+            official_count=len(official_rows),
+            error=error,
+            query_stats=qrow,
+            labels_path=self.neural_labels_path,
+        )
+    except (OSError, ValueError, TypeError, OverflowError, json.JSONDecodeError):
+        neural_observation = {
+            "eligible": False,
+            "added": 0,
+            "reason": "collection_neural_observation_failed",
+        }
+    return {
+        "results": len(rows),
+        "relevant": len(relevant_rows),
+        "official": len(official_rows),
+        "error": bool(error),
+        "neural_label_added": int(neural_observation.get("added") or 0),
+        "neural_label_reason": str(neural_observation.get("reason") or "")[:80],
+    }
 
 
 def _safe_payload_row(raw: dict) -> bool:
@@ -304,7 +333,8 @@ def _hardened_preferred_authors(self, game: str, region: str, limit: int = 6) ->
             continue
         rows.append((fan_social_learning._score(stat), corroborated, selected, author))
     rows.sort(reverse=True)
-    return [author for _, _, _, author in rows[: max(1, min(12, int(limit)))]]
+    safe_limit = adaptive_collection_learner._bounded_int(limit, default=6, low=1, high=12)
+    return [author for _, _, _, author in rows[:safe_limit]]
 
 
 def _reward_grade(row: dict) -> str | None:
