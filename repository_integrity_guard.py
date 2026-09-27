@@ -58,6 +58,33 @@ def tracked_entries() -> list[tuple[str, Path, bool]]:
     return entries
 
 
+def _git_tracked_paths(root: Path) -> set[str] | None:
+    """Return Git-indexed paths, or None for an intentionally non-Git test root.
+
+    Runtime/CI jobs legitimately create ignored JSON ledgers and reports. They are
+    not repository source truth and therefore must not become fixed-hash manifest
+    requirements merely because they exist on disk. In an actual checkout the Git
+    index is authoritative for whether a path is repository-owned. Temporary unit
+    test roots without a Git index retain the filesystem-only fallback.
+    """
+    root = root.resolve()
+    git_marker = root / ".git"
+    if not git_marker.exists():
+        return None
+    result = subprocess.run(
+        ["git", "ls-files", "-z"],
+        cwd=root,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        check=True,
+    )
+    return {
+        raw.decode("utf-8", "strict")
+        for raw in result.stdout.split(b"\0")
+        if raw
+    }
+
+
 def unsafe_windows_component(component: str) -> str | None:
     if component in {"", ".", ".."}:
         return "invalid path component"
@@ -125,10 +152,10 @@ def legacy_runtime_reference(relative: str, text: str) -> str | None:
 def integrity_manifest_findings(root: Path = ROOT) -> list[str]:
     """Return hash/schema/coverage drift for the generated integrity manifest.
 
-    ``diagnose_integrity`` intentionally validates the entries that are already in
-    the manifest. This wrapper also compares that manifest entry set with the
-    current tracked-file policy so a newly added source/config file cannot remain
-    invisible merely because the manifest finalizer was skipped.
+    ``diagnose_integrity`` validates entries already recorded in the manifest. This
+    wrapper additionally proves that every Git-tracked source/config path selected
+    by the manifest policy is present. Ignored/untracked runtime artifacts are not
+    repository source truth and remain outside the fixed-hash contract.
     """
     try:
         import fault_injection_healing as healing
@@ -148,7 +175,12 @@ def integrity_manifest_findings(root: Path = ROOT) -> list[str]:
         if not isinstance(listed_raw, dict):
             return ["integrity_manifest.json: files mapping missing or invalid"]
         listed = set(listed_raw)
-        current = {path.relative_to(root).as_posix() for path in healing.tracked_files(root)}
+        policy_paths = {
+            path.relative_to(root).as_posix()
+            for path in healing.tracked_files(root)
+        }
+        git_paths = _git_tracked_paths(root)
+        current = policy_paths if git_paths is None else policy_paths & git_paths
         findings: list[str] = []
         for relative in sorted(current - listed):
             findings.append(f"integrity manifest missing tracked path: {relative}")
@@ -168,7 +200,7 @@ def integrity_manifest_findings(root: Path = ROOT) -> list[str]:
                     f"integrity manifest diagnose failed: {result.get('error', 'unknown')}"
                 )
         return findings
-    except (OSError, RuntimeError, TypeError, ValueError, subprocess.SubprocessError) as exc:
+    except (OSError, RuntimeError, TypeError, ValueError, UnicodeError, subprocess.SubprocessError) as exc:
         return [f"integrity manifest validation failed closed: {exc.__class__.__name__}"]
 
 
