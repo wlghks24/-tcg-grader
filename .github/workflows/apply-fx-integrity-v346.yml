@@ -1,0 +1,47 @@
+name: Apply FX Integrity v346
+
+on:
+  push:
+    branches:
+      - fix/v346-fx-integrity
+    paths:
+      - .github/workflows/apply-fx-integrity-v346.yml
+
+permissions:
+  contents: write
+
+jobs:
+  patch-and-test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
+        with:
+          python-version: '3.11'
+      - name: Apply bounded patch
+        run: python apply_fx_integrity_v346_patch.py
+      - name: Refresh CSP hashes
+        run: python csp_hash_hardening.py
+      - name: Compile changed Python paths
+        run: python -m py_compile fx_policy.py update_exchange_rates.py multi_market_price_collector.py auto_repair_engine.py auto_update_all.py test_fx_integrity_v346.py test_edition_fx_failclosed_v328.py
+      - name: Targeted regressions
+        run: python -m unittest -v test_fx_integrity_v346.py test_edition_fx_failclosed_v328.py test_error_recovery_learning_v134.py
+      - name: Legacy integration regression
+        run: python verify_all_legacy_v99.py
+      - name: CSP and diff validation
+        run: |
+          python csp_hash_hardening.py --check
+          git diff --check
+      - name: Commit validated generated patch
+        run: |
+          if git diff --quiet -- multi_market_price_collector.py auto_repair_engine.py auto_update_all.py index.html; then
+            echo 'Expected v346 patch produced no diff' >&2
+            exit 1
+          fi
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add multi_market_price_collector.py auto_repair_engine.py auto_update_all.py index.html
+          git commit -m 'fix: enforce FX provenance across consumers'
+          git push origin HEAD:fix/v346-fx-integrity
