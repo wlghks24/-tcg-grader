@@ -1,7 +1,7 @@
 {
   "version": 2,
   "engine": "v109-card-identity-ocr-learning",
-  "generated_at": "2026-09-27T08:23:08+00:00",
+  "generated_at": "2026-09-27T10:09:14+00:00",
   "files": {
     ".github/workflows/ai-auto-tracker-guard.yml": {
       "sha256": "636e750bd6d2619cce75d4bce2d68051eaa2209ae763bc8ec523ed73476728a6",
@@ -2684,8 +2684,8 @@
       "bytes": 3509
     },
     "test_grading_company_watch_protected_publish_v335.py": {
-      "sha256": "3a8d76bfb6ca6a71a67595572e8bfe2457252c7090a13c79cddbd38e2a699d50",
-      "bytes": 3216
+      "sha256": "1b73cf317a9eff8f0e70f199504323cef6380c7a0e067b8ad6e511c6e926b9ee",
+      "bytes": 3398
     },
     "test_grading_company_watch_resilient_v257.py": {
       "sha256": "29fb9338301f26b44f8fc114816d86cb65aaa9d04aa2da69a4bccbf8a11d8301",
