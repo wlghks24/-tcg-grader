@@ -1,0 +1,44 @@
+name: Finalize fan social corruption hold v344
+
+on:
+  push:
+    branches:
+      - fix/fan-social-corruption-hold-v344
+
+permissions:
+  contents: write
+
+concurrency:
+  group: finalize-fan-social-corruption-v344
+  cancel-in-progress: true
+
+jobs:
+  finalize:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - name: Checkout exact branch head
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          ref: fix/fan-social-corruption-hold-v344
+          fetch-depth: 0
+
+      - name: Build final tree and verify
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git rm -- .github/workflows/finalize-fan-social-corruption-v344.yml
+          python fault_injection_healing.py --manifest
+          python -m unittest -v \
+            test_fan_social_learning.py \
+            test_fan_social_learning_concurrency_v279.py \
+            test_fan_social_learning_corruption_v344.py \
+            test_collection_learning_hardening_v142.py
+          python fault_injection_healing.py --diagnose
+          git add -- integrity_manifest.json
+          git diff --cached --check
+          git commit -m 'Finalize v344 corruption hold on latest main'
+          git push origin HEAD:fix/fan-social-corruption-hold-v344
