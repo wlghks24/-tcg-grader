@@ -1,0 +1,53 @@
+name: v338 Sync Manifest Finalizer
+
+on:
+  push:
+    branches:
+      - fix/tablet-gpt-sync-v338-audit
+
+permissions:
+  contents: write
+
+concurrency:
+  group: v338-sync-manifest-finalizer
+  cancel-in-progress: false
+
+jobs:
+  finalize:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          fetch-depth: 0
+          ref: fix/tablet-gpt-sync-v338-audit
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97
+        with:
+          python-version: '3.12'
+      - name: Verify v338 targeted contracts
+        run: |
+          python -m unittest -v test_tablet_gpt_tcg_grader_sync_v330.py test_tablet_gpt_tcg_grader_sync_v331.py test_tablet_gpt_tcg_grader_sync_v334.py test_tablet_gpt_tcg_grader_sync_v338.py
+          bash -n TABLET_SCHEDULED_UPDATE.sh
+          bash -n main
+      - name: Remove one-shot workflow and regenerate final-tree integrity manifest
+        shell: bash
+        run: |
+          set -euo pipefail
+          rm -- .github/workflows/v338-sync-manifest-finalizer.yml
+          python fault_injection_healing.py --manifest
+          python fault_injection_healing.py --diagnose
+          python repository_integrity_guard.py
+          git diff --check
+      - name: Commit exact final tree
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add -A -- .github/workflows/v338-sync-manifest-finalizer.yml integrity_manifest.json
+          if git diff --cached --quiet; then
+            echo 'No finalization change required.'
+            exit 0
+          fi
+          git commit -m 'Finalize v338 sync integrity manifest'
+          git push origin "HEAD:refs/heads/${GITHUB_REF_NAME}"
