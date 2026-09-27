@@ -64,6 +64,8 @@ jobs:
           assert contract['delta_snapshot'] == expected_delta
           assert contract['receiver_receipt'] == expected_receipt
           assert contract['verification_test'] == expected_test
+          prior_match = contract_re.fullmatch(Path(contract['prior_contract']).name)
+          assert prior_match and int(prior_match.group(1)) < version
           delta_path = root / contract['delta_snapshot']
           receipt_path = root / contract['receiver_receipt']
           test_path = root / contract['verification_test']
