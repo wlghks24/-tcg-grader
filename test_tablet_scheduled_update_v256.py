@@ -77,7 +77,10 @@ class TabletScheduledUpdateV256Tests(unittest.TestCase):
         self.assertIn('매일 23:00 KST 기능 업데이트 확인', self.main)
 
     def test_scheduler_self_heals_starts_now_and_reports_termux_boot_readiness(self):
-        for token in ('ensure_schedule()', 'boot_loop()', 'write_boot_heartbeat()', 'termux_boot_state()', 'start_loop_if_needed()'):
+        for token in (
+            'ensure_schedule()', 'boot_loop()', 'write_boot_heartbeat()',
+            'termux_boot_state()', 'start_loop_if_needed()',
+        ):
             self.assertIn(token, self.script)
         self.assertIn('com.termux.boot', self.script)
         self.assertIn('TERMUX_BOOT=$boot_state', self.script)
@@ -89,6 +92,37 @@ class TabletScheduledUpdateV256Tests(unittest.TestCase):
         self.assertIn('예약 업데이트 부팅 스크립트가 없거나 구형이라 자동 복구합니다', self.script)
         self.assertIn('start_loop_if_needed', self.script[self.script.index('install_schedule()'):self.script.index('ensure_schedule()')])
         self.assertIn('start_loop_if_needed', self.script[self.script.index('ensure_schedule()'):self.script.index('boot_loop()')])
+
+    def test_scheduler_validates_pid_identity_before_trusting_or_killing(self):
+        for token in (
+            'pid_cmdline()', 'pid_matches_mode()', 'pid_matches_update()',
+            'stop_verified_loop_process()', '기록된 PID가 예약 루프가 아니므로 종료하지 않고',
+            '기록된 PID가 예약 루프가 아니므로 종료 신호를 보내지 않습니다',
+        ):
+            self.assertIn(token, self.script)
+        self.assertIn('[[ "$cmdline" == *"TABLET_SCHEDULED_UPDATE.sh"* ]]', self.script)
+        self.assertIn('if ! pid_matches_mode "$owner" "boot-loop"; then', self.script)
+        self.assertNotIn('if [ -n "$owner" ] && kill -0 "$owner" 2>/dev/null; then', self.script)
+
+    def test_scheduler_versions_pid_state_and_migrates_legacy_loop(self):
+        for token in (
+            'SCHEDULER_VERSION="daily-2300-kst-v2"',
+            'read_boot_loop_pid()', 'read_boot_loop_version()', 'write_boot_loop_identity()',
+            'VERSION=$SCHEDULER_VERSION', 'BOOT_LOOP_VERSION=$SCHEDULER_VERSION',
+            'stale-version:$owner:$owner_version',
+            '구형 예약 루프를 현재 23:00 KST 스케줄로 교체합니다',
+        ):
+            self.assertIn(token, self.script)
+        self.assertIn("printf 'legacy'", self.script)
+        self.assertIn('[ "$owner_version" = "$SCHEDULER_VERSION" ]', self.script)
+
+    def test_each_run_reconciles_scheduler_so_old_hourly_parent_can_self_migrate(self):
+        self.assertIn('run_and_reconcile_schedule()', self.script)
+        body = self.script[self.script.index('run_and_reconcile_schedule()'):self.script.index('case "${1:-status}"')]
+        self.assertIn('run_update || rc=$?', body)
+        self.assertIn('ensure_schedule || true', body)
+        self.assertLess(body.index('run_update || rc=$?'), body.index('ensure_schedule || true'))
+        self.assertIn('run|now) run_and_reconcile_schedule', self.script)
 
     def test_runtime_delivery_fails_closed_if_scheduler_is_missing(self):
         self.assertIn('"TABLET_SCHEDULED_UPDATE.sh"', self.manifest)
