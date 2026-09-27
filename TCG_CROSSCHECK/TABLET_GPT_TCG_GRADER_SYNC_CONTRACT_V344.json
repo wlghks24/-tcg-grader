@@ -1,6 +1,6 @@
 {
   "schema_version": "1.1-tablet-gpt-tcg-grader-learning-sync",
-  "purpose": "generalize Tablet GPT candidate freshness so a PR-verified watched-path generation remains valid on immediate post-merge main only under exact source/base, generation-file and watched-path-set equality",
+  "purpose": "generalize Tablet GPT candidate freshness so a PR-verified watched-path generation remains valid on immediate post-merge main only under exact source/base, generation-file and watched-path-set equality, and is invalidated by any later watched mainline change",
   "prior_contract": "TCG_CROSSCHECK/TABLET_GPT_TCG_GRADER_SYNC_CONTRACT_V343.json",
   "prior_delta_snapshot": "TCG_CROSSCHECK/TABLET_GPT/learning_snapshot_v343_delta.json",
   "delta_snapshot": "TCG_CROSSCHECK/TABLET_GPT/learning_snapshot_v344_delta.json",
@@ -17,6 +17,8 @@
     "pull_request_candidate_sync_requires_exact_base_and_generation_files": true,
     "post_merge_candidate_sync_requires_exact_base_generation_and_watched_path_set": true,
     "post_merge_candidate_sync_must_fail_on_any_extra_watched_path": true,
+    "post_merge_candidate_sync_requires_immediate_mainline_merge_parent": true,
+    "post_merge_candidate_sync_invalidated_by_any_later_watched_mainline_change": true,
     "chatgpt_model_weights_transfer_forbidden": true,
     "raw_grading_calibration_transfer_forbidden": true,
     "device_local_learning_memory_blind_overwrite_forbidden": true,
