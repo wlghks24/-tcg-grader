@@ -30,7 +30,9 @@ class GradingCompanyWatchProtectedPublishV335Tests(unittest.TestCase):
         self.assertIn('checks: read',self.source)
 
     def test_exact_main_and_integrity_are_rechecked(self):
-        self.assertGreaterEqual(self.source.count('git fetch origin main'),3)
+        refresh='git fetch origin +refs/heads/main:refs/remotes/origin/main'
+        self.assertGreaterEqual(self.source.count(refresh),3)
+        self.assertNotIn('git fetch origin main\n',self.source)
         self.assertIn('if [ "$(git rev-parse HEAD)" != "$(git rev-parse origin/main)" ]; then',self.source)
         self.assertIn('if [ "$(git rev-parse origin/main)" != "${base_sha}" ]; then',self.source)
         self.assertIn('if [ "$(git rev-parse origin/main)" != "${BASE_SHA}" ]; then',self.source)
