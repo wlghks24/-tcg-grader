@@ -54,6 +54,10 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
+          # Freeze the intended final path set in Git's index first. The integrity
+          # completeness guard deliberately trusts Git-tracked paths, not transient
+          # untracked runtime artifacts.
+          git add -A
           python fault_injection_healing.py --manifest
           python repository_integrity_guard.py
           python fault_injection_healing.py diagnose
