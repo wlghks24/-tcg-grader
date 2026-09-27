@@ -57,6 +57,14 @@ jobs:
           assert candidates, 'no versioned Tablet GPT sync contract'
           version, contract_path = max(candidates)
           contract = json.loads(contract_path.read_text(encoding='utf-8'))
+          expected_delta = f'TCG_CROSSCHECK/TABLET_GPT/learning_snapshot_v{version}_delta.json'
+          expected_receipt = f'TCG_CROSSCHECK/TCG_GRADER/tablet_gpt_learning_receipt_v{version}.json'
+          expected_test = f'test_tablet_gpt_tcg_grader_sync_v{version}.py'
+          assert contract['delta_snapshot'] == expected_delta
+          assert contract['receiver_receipt'] == expected_receipt
+          assert contract['verification_test'] == expected_test
+          prior_match = contract_re.fullmatch(Path(contract['prior_contract']).name)
+          assert prior_match and int(prior_match.group(1)) < version
           delta_path = root / contract['delta_snapshot']
           receipt_path = root / contract['receiver_receipt']
           test_path = root / contract['verification_test']
