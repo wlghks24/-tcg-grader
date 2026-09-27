@@ -25,6 +25,20 @@ import tablet_collection_publish as publisher
 import tablet_gdrive_sync as sync
 
 RUN_ID_RE = re.compile(r"^[A-Za-z0-9._-]{8,120}$")
+REMOTE_RETENTION_DAYS = 14
+REMOTE_PACKAGE_MIN_KEEP = 4
+REMOTE_PACKAGE_MAX_KEEP = 40
+REMOTE_RECEIPT_MIN_KEEP = 16
+REMOTE_RECEIPT_MAX_KEEP = 64
+_REMOTE_MANIFEST_RE = re.compile(
+    r"^manifest_(?P<stamp>\d{8}T\d{6}Z)_(?P<run>[A-Za-z0-9._-]{8,120})\.json$"
+)
+_REMOTE_BUNDLE_RE = re.compile(
+    r"^TCG_VERIFIED_(?P<stamp>\d{8}T\d{6}Z)_(?P<run>[A-Za-z0-9._-]{8,120})\.tar\.gz$"
+)
+_REMOTE_RECEIPT_RE = re.compile(
+    r"^TABLET_SYNC_RECEIPT_(?P<run>[A-Za-z0-9._-]{8,120})\.json$"
+)
 
 
 def run(args, *, cwd=None, capture=False, timeout=120):
@@ -174,9 +188,157 @@ def _upload_one(remote: str, local: Path, remote_root: str) -> None:
     ], timeout=120)
 
 
+def _parse_package_name(name: str) -> tuple[dt.datetime, str] | None:
+    match = _REMOTE_MANIFEST_RE.fullmatch(name) or _REMOTE_BUNDLE_RE.fullmatch(name)
+    if not match:
+        return None
+    stamp = dt.datetime.strptime(match.group("stamp"), "%Y%m%dT%H%M%SZ").replace(tzinfo=dt.timezone.utc)
+    return stamp, match.group("run")
+
+
+def _safe_remote_rows(remote: str, remote_root: str, subdir: str) -> list[dict]:
+    if subdir not in {"to_tablet", "receipts"}:
+        raise ValueError("unsupported retention subdir")
+    out = run(
+        [
+            "rclone", "lsjson", f"{remote}:{remote_root}/{subdir}",
+            "--files-only", "--no-mimetype",
+        ],
+        capture=True,
+        timeout=60,
+    )
+    rows = json.loads(out or "[]")
+    if not isinstance(rows, list):
+        raise ValueError("invalid rclone lsjson response")
+    safe_rows = []
+    for row in rows:
+        if not isinstance(row, dict) or row.get("IsDir") is True:
+            continue
+        name = row.get("Path") or row.get("Name")
+        if not isinstance(name, str) or not name or "/" in name or "\\" in name or name in {".", ".."}:
+            continue
+        safe_rows.append({"name": name, "mod_time": row.get("ModTime")})
+    return safe_rows
+
+
+def _delete_remote_retention_file(remote: str, remote_root: str, subdir: str, name: str) -> None:
+    if subdir == "to_tablet":
+        if not (_REMOTE_MANIFEST_RE.fullmatch(name) or _REMOTE_BUNDLE_RE.fullmatch(name)):
+            raise ValueError("refusing to delete unknown to_tablet object")
+    elif subdir == "receipts":
+        if not _REMOTE_RECEIPT_RE.fullmatch(name):
+            raise ValueError("refusing to delete unknown receipt object")
+    else:
+        raise ValueError("unsupported retention subdir")
+    run(
+        [
+            "rclone", "deletefile", f"{remote}:{remote_root}/{subdir}/{name}",
+            "--retries", "2", "--low-level-retries", "2",
+            "--timeout", "20s", "--contimeout", "10s",
+        ],
+        timeout=90,
+    )
+
+
+def _receipt_modtime(value) -> dt.datetime | None:
+    if not isinstance(value, str) or not value:
+        return None
+    try:
+        parsed = dt.datetime.fromisoformat(value.replace("Z", "+00:00"))
+    except ValueError:
+        return None
+    if parsed.tzinfo is None or parsed.utcoffset() is None:
+        return None
+    return parsed.astimezone(dt.timezone.utc)
+
+
+def prune_remote_drive(remote: str = sync.DEFAULT_REMOTE,
+                       remote_root: str = sync.DEFAULT_REMOTE_ROOT,
+                       *,
+                       now: dt.datetime | None = None) -> dict:
+    """Bound only TCG-managed Drive objects; unknown user files are never deleted."""
+    remote = sync.safe_remote_name(remote)
+    remote_root = safe_remote_root(remote_root)
+    now = now or dt.datetime.now(dt.timezone.utc)
+    if now.tzinfo is None or now.utcoffset() is None:
+        raise ValueError("retention clock must be timezone-aware")
+    now = now.astimezone(dt.timezone.utc)
+    cutoff = now - dt.timedelta(days=REMOTE_RETENTION_DAYS)
+
+    package_rows = []
+    for row in _safe_remote_rows(remote, remote_root, "to_tablet"):
+        parsed = _parse_package_name(row["name"])
+        if parsed is None:
+            continue
+        stamp, run_id = parsed
+        package_rows.append({
+            "name": row["name"],
+            "stamp": stamp,
+            "key": (stamp.strftime("%Y%m%dT%H%M%SZ"), run_id),
+        })
+
+    grouped: dict[tuple[str, str], list[dict]] = {}
+    for row in package_rows:
+        grouped.setdefault(row["key"], []).append(row)
+    keys = sorted(
+        grouped,
+        key=lambda key: max(item["stamp"] for item in grouped[key]),
+        reverse=True,
+    )
+    complete_keys = [
+        key for key in keys
+        if any(_REMOTE_MANIFEST_RE.fullmatch(item["name"]) for item in grouped[key])
+        and any(_REMOTE_BUNDLE_RE.fullmatch(item["name"]) for item in grouped[key])
+    ]
+    protected = set(complete_keys[:REMOTE_PACKAGE_MIN_KEEP])
+    deleted_packages = 0
+    for index, key in enumerate(keys):
+        rows = grouped[key]
+        stamp = max(item["stamp"] for item in rows)
+        beyond_cap = index >= REMOTE_PACKAGE_MAX_KEEP
+        expired = stamp < cutoff
+        if key in protected or not (expired or beyond_cap):
+            continue
+        for item in rows:
+            _delete_remote_retention_file(remote, remote_root, "to_tablet", item["name"])
+            deleted_packages += 1
+
+    receipt_rows = []
+    for row in _safe_remote_rows(remote, remote_root, "receipts"):
+        if not _REMOTE_RECEIPT_RE.fullmatch(row["name"]):
+            continue
+        mod_time = _receipt_modtime(row["mod_time"])
+        receipt_rows.append({"name": row["name"], "mod_time": mod_time})
+    receipt_rows.sort(
+        key=lambda row: row["mod_time"] or dt.datetime.max.replace(tzinfo=dt.timezone.utc),
+        reverse=True,
+    )
+    deleted_receipts = 0
+    for index, row in enumerate(receipt_rows):
+        if index < REMOTE_RECEIPT_MIN_KEEP:
+            continue
+        expired = row["mod_time"] is not None and row["mod_time"] < cutoff
+        beyond_cap = index >= REMOTE_RECEIPT_MAX_KEEP
+        if not (expired or beyond_cap):
+            continue
+        _delete_remote_retention_file(remote, remote_root, "receipts", row["name"])
+        deleted_receipts += 1
+
+    return {
+        "status": "DRIVE_RETENTION_OK",
+        "retention_days": REMOTE_RETENTION_DAYS,
+        "package_min_keep": REMOTE_PACKAGE_MIN_KEEP,
+        "package_max_keep": REMOTE_PACKAGE_MAX_KEEP,
+        "receipt_min_keep": REMOTE_RECEIPT_MIN_KEEP,
+        "receipt_max_keep": REMOTE_RECEIPT_MAX_KEEP,
+        "deleted_package_objects": deleted_packages,
+        "deleted_receipts": deleted_receipts,
+    }
+
+
 def upload_package(bundle: Path, manifest_path: Path, manifest: dict, *,
                    remote: str = sync.DEFAULT_REMOTE,
-                   remote_root: str = sync.DEFAULT_REMOTE_ROOT) -> None:
+                   remote_root: str = sync.DEFAULT_REMOTE_ROOT) -> dict:
     remote = sync.safe_remote_name(remote)
     remote_root = safe_remote_root(remote_root)
     expected = sync.load_manifest(manifest_path)
@@ -206,6 +368,18 @@ def upload_package(bundle: Path, manifest_path: Path, manifest: dict, *,
         stage.mkdir()
         sync.extract_bundle(read_bundle, stage, loaded)
 
+    try:
+        return prune_remote_drive(remote, remote_root)
+    except (OSError, ValueError, KeyError, TypeError, json.JSONDecodeError,
+            subprocess.CalledProcessError, subprocess.TimeoutExpired) as exc:
+        # The just-uploaded verified package remains valid. Retention failure is
+        # surfaced separately so a retry does not create duplicate package names.
+        return {
+            "status": "DRIVE_RETENTION_WARNING",
+            "error_type": type(exc).__name__,
+            "message": str(exc)[:300],
+        }
+
 
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
@@ -229,8 +403,15 @@ def main() -> int:
             "file_count": len(manifest["files"]),
         }, ensure_ascii=False))
         if args.upload:
-            upload_package(bundle, manifest_path, manifest, remote=args.remote, remote_root=args.remote_root)
-            print(json.dumps({"status": "DRIVE_UPLOAD_VERIFIED", "run_id": manifest["run_id"]}, ensure_ascii=False))
+            retention = upload_package(
+                bundle, manifest_path, manifest,
+                remote=args.remote, remote_root=args.remote_root,
+            )
+            print(json.dumps({
+                "status": "DRIVE_UPLOAD_VERIFIED",
+                "run_id": manifest["run_id"],
+                "retention": retention,
+            }, ensure_ascii=False))
     except (OSError, ValueError, KeyError, TypeError, json.JSONDecodeError, subprocess.CalledProcessError) as exc:
         print(f"검증/전송 중단: {type(exc).__name__}: {exc}", file=sys.stderr)
         return 1
