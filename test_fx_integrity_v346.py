@@ -5,6 +5,8 @@ import unittest
 from pathlib import Path
 from unittest import mock
 
+import auto_repair_engine as repair
+import auto_update_all as update_all
 import fx_policy
 import update_exchange_rates as exchange
 
@@ -91,6 +93,42 @@ class FxIntegrityV346Tests(unittest.TestCase):
                 encoding="utf-8",
             )
             self.assertEqual(fx_policy.load_krw_rates(path, now=now)["USD"], 0.0)
+
+    def test_auto_repair_and_orchestrator_use_same_fx_policy(self):
+        now = dt.datetime.now(dt.timezone.utc)
+        trusted = self._trusted_payload((now - dt.timedelta(minutes=5)).isoformat())
+        self.assertTrue(repair._valid_project_payload("exchange_rates.json", trusted))
+        update_all.validate_json("exchange_rates.json", trusted)
+
+        untrusted = dict(trusted, source="https://example.com/v2/rates")
+        self.assertFalse(repair._valid_project_payload("exchange_rates.json", untrusted))
+        with self.assertRaisesRegex(ValueError, "provenance/freshness"):
+            update_all.validate_json("exchange_rates.json", untrusted)
+
+        stale = dict(trusted, updated_at=(now - dt.timedelta(hours=73)).isoformat())
+        self.assertFalse(repair._valid_project_payload("exchange_rates.json", stale))
+        with self.assertRaisesRegex(ValueError, "provenance/freshness"):
+            update_all.validate_json("exchange_rates.json", stale)
+
+    def test_adaptive_stats_duplicate_keys_recover_from_last_good(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            primary = root / "adaptive_collection_stats.json"
+            backup = root / "adaptive_collection_stats.json.bak"
+            primary.write_text(
+                '{"jobs":{"first":{"runs":1}},"jobs":{"poison":{"runs":999}}}',
+                encoding="utf-8",
+            )
+            backup.write_text(
+                json.dumps({"version":1,"jobs":{"good":{"runs":2,"successes":2}},"updated_at":None}),
+                encoding="utf-8",
+            )
+            with mock.patch.object(update_all, "ADAPTIVE_STATS", primary), mock.patch.object(
+                update_all, "ADAPTIVE_STATS_BAK", backup
+            ):
+                loaded = update_all._load_adaptive_stats()
+            self.assertIn("good", loaded["jobs"])
+            self.assertNotIn("poison", loaded["jobs"])
 
 
 if __name__ == "__main__":
