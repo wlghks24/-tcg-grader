@@ -28,67 +28,104 @@ jobs:
         with:
           python-version: '3.12'
 
-      - name: Verify historical v330/v331 and current v334 delta contracts
-        run: python -m unittest -v test_tablet_gpt_tcg_grader_sync_v330.py test_tablet_gpt_tcg_grader_sync_v331.py test_tablet_gpt_tcg_grader_sync_v334.py
+      - name: Verify every discovered Tablet GPT sync generation
+        shell: bash
+        run: |
+          set -euo pipefail
+          mapfile -t tests < <(find . -maxdepth 1 -type f -name 'test_tablet_gpt_tcg_grader_sync_v*.py' -printf '%f\n' | sort -V)
+          test "${#tests[@]}" -gt 0
+          python -m unittest -v "${tests[@]}"
 
-      - name: Verify current HEAD contains every covered patch
+      - name: Verify latest discovered contract, receipt and covered patches
         shell: bash
         run: |
           set -euo pipefail
           python - <<'PY'
+          import hashlib
           import json
+          import re
           import subprocess
           from pathlib import Path
 
           root = Path('.')
-          base = json.loads((root / 'TCG_CROSSCHECK/TABLET_GPT/learning_snapshot.json').read_text(encoding='utf-8'))
-          v330 = json.loads((root / 'TCG_CROSSCHECK/TABLET_GPT/learning_snapshot_v330_delta.json').read_text(encoding='utf-8'))
-          v331 = json.loads((root / 'TCG_CROSSCHECK/TABLET_GPT/learning_snapshot_v331_delta.json').read_text(encoding='utf-8'))
-          delta = json.loads((root / 'TCG_CROSSCHECK/TABLET_GPT/learning_snapshot_v334_delta.json').read_text(encoding='utf-8'))
-          receipt = json.loads((root / 'TCG_CROSSCHECK/TCG_GRADER/tablet_gpt_learning_receipt_v334.json').read_text(encoding='utf-8'))
-          contract = json.loads((root / 'TCG_CROSSCHECK/TABLET_GPT_TCG_GRADER_SYNC_CONTRACT_V334.json').read_text(encoding='utf-8'))
+          contract_re = re.compile(r'TABLET_GPT_TCG_GRADER_SYNC_CONTRACT_V(\d+)\.json$')
+          candidates = []
+          for path in (root / 'TCG_CROSSCHECK').glob('TABLET_GPT_TCG_GRADER_SYNC_CONTRACT_V*.json'):
+              match = contract_re.fullmatch(path.name)
+              if match:
+                  candidates.append((int(match.group(1)), path))
+          assert candidates, 'no versioned Tablet GPT sync contract'
+          version, contract_path = max(candidates)
+          contract = json.loads(contract_path.read_text(encoding='utf-8'))
+          delta_path = root / contract['delta_snapshot']
+          receipt_path = root / contract['receiver_receipt']
+          test_path = root / contract['verification_test']
+          assert delta_path.is_file() and receipt_path.is_file() and test_path.is_file()
+          delta = json.loads(delta_path.read_text(encoding='utf-8'))
+          receipt = json.loads(receipt_path.read_text(encoding='utf-8'))
 
           assert delta['schema_version'] == receipt['schema_version'] == contract['schema_version']
           assert delta['source_repository'] == receipt['source_repository'] == 'wlghks24/-tcg-grader'
           assert delta['source_main_sha'] == receipt['source_main_sha']
           assert receipt['status'] == 'SYNCED_VERIFIED'
-          assert receipt['verification']['verification_test'] == 'test_tablet_gpt_tcg_grader_sync_v334.py'
+          assert receipt['verification']['verification_test'] == contract['verification_test']
+          assert receipt['verification']['contract_version'] == f'v{version}'
           assert receipt['verification']['verified_result'] == 'TABLET_GPT_TCG_GRADER_MATCH'
-          assert receipt['verification']['device_visual_rendering_verified'] is False
-          assert receipt['verification']['device_visual_reverification_required'] is True
+          assert delta['share_policy']['chatgpt_model_weights_exported'] is False
+          assert delta['share_policy']['raw_grading_calibration_shared'] is False
+          assert delta['share_policy']['device_local_runtime_memory_overwritten'] is False
+          raw = json.dumps(delta['lessons'], ensure_ascii=False, sort_keys=True, separators=(',', ':'))
+          digest = hashlib.sha256(raw.encode('utf-8')).hexdigest()
+          assert digest == delta['lesson_digest_sha256'] == receipt['delta_lesson_digest_sha256']
+          assert [row['lesson_id'] for row in delta['lessons']] == receipt['accepted_lesson_ids']
 
           def ancestor(sha: str) -> None:
               subprocess.run(['git', 'cat-file', '-e', f'{sha}^{{commit}}'], check=True)
               subprocess.run(['git', 'merge-base', '--is-ancestor', sha, 'HEAD'], check=True)
 
-          for snapshot in (base, v330, v331, delta):
+          snapshots = [root / 'TCG_CROSSCHECK/TABLET_GPT/learning_snapshot.json']
+          snapshots.extend(sorted((root / 'TCG_CROSSCHECK/TABLET_GPT').glob('learning_snapshot_v*_delta.json')))
+          for path in snapshots:
+              snapshot = json.loads(path.read_text(encoding='utf-8'))
               ancestor(snapshot['source_main_sha'])
               for row in snapshot['covered_merges']:
                   ancestor(row['merge_sha'])
 
           head = subprocess.check_output(['git', 'rev-parse', 'HEAD'], text=True).strip()
-          print(f'TABLET_GPT_TCG_GRADER_CONTRACT_OK source={delta["source_main_sha"]} current_head={head}')
+          print(
+              f'TABLET_GPT_TCG_GRADER_CONTRACT_OK version=v{version} '
+              f'source={delta["source_main_sha"]} current_head={head}'
+          )
           PY
 
-      - name: Fail visibly when main has watched changes after the verified delta
+      - name: Fail visibly when main has watched changes after the latest verified delta
         if: github.event_name != 'pull_request'
         shell: bash
         run: |
           set -euo pipefail
           python - <<'PY'
           import json
+          import re
           import subprocess
           from pathlib import Path
 
           root = Path('.')
-          delta = json.loads((root / 'TCG_CROSSCHECK/TABLET_GPT/learning_snapshot_v334_delta.json').read_text(encoding='utf-8'))
-          contract = json.loads((root / 'TCG_CROSSCHECK/TABLET_GPT_TCG_GRADER_SYNC_CONTRACT_V334.json').read_text(encoding='utf-8'))
+          pattern = re.compile(r'TABLET_GPT_TCG_GRADER_SYNC_CONTRACT_V(\d+)\.json$')
+          candidates = []
+          for path in (root / 'TCG_CROSSCHECK').glob('TABLET_GPT_TCG_GRADER_SYNC_CONTRACT_V*.json'):
+              match = pattern.fullmatch(path.name)
+              if match:
+                  candidates.append((int(match.group(1)), path))
+          assert candidates, 'no versioned Tablet GPT sync contract'
+          version, contract_path = max(candidates)
+          contract = json.loads(contract_path.read_text(encoding='utf-8'))
+          delta = json.loads((root / contract['delta_snapshot']).read_text(encoding='utf-8'))
           source = delta['source_main_sha']
           head = subprocess.check_output(['git', 'rev-parse', 'HEAD'], text=True).strip()
 
           subprocess.run(['git', 'merge-base', '--is-ancestor', source, head], check=True)
           if source == head:
-              print(f'TABLET_GPT_SYNC_FRESH source={source} head={head}')
+              print(f'TABLET_GPT_SYNC_FRESH version=v{version} source={source} head={head}')
               raise SystemExit(0)
 
           changed = subprocess.check_output(
@@ -108,6 +145,7 @@ jobs:
           relevant = sorted(path for path in changed if watched(path))
           if relevant:
               print('TABLET_GPT_SYNC_STALE', flush=True)
+              print(f'latest_contract=v{version}', flush=True)
               print(f'verified_source={source}', flush=True)
               print(f'current_head={head}', flush=True)
               print('watched_changes_after_verified_delta:', flush=True)
@@ -118,7 +156,7 @@ jobs:
               )
 
           print(
-              f'TABLET_GPT_SYNC_FRESH_NO_WATCHED_CHANGE source={source} head={head} '
-              f'changed_files={len(changed)}'
+              f'TABLET_GPT_SYNC_FRESH_NO_WATCHED_CHANGE version=v{version} '
+              f'source={source} head={head} changed_files={len(changed)}'
           )
           PY
