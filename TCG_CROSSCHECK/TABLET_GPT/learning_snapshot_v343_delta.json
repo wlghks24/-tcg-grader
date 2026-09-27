@@ -1,0 +1,45 @@
+{
+  "schema_version": "1.1-tablet-gpt-tcg-grader-learning-sync",
+  "namespace": "TABLET_GPT",
+  "snapshot_kind": "learning_delta",
+  "run_date_kst": "2026-09-28",
+  "built_at": "2026-09-28T00:29:04+09:00",
+  "status": "finalized",
+  "source_repository": "wlghks24/-tcg-grader",
+  "prior_delta": "TCG_CROSSCHECK/TABLET_GPT/learning_snapshot_v342_delta.json",
+  "prior_lesson_digest_sha256": "599e01c4a4b4412eee549a52e7c56cacef7cb4132acb2b27f985ebff9ce1dba7",
+  "source_main_sha": "fd52a17e817cfd8e057893bea91a0047858ce853",
+  "share_policy": {
+    "explicit_patch_and_learning_lessons_only": true,
+    "chatgpt_model_weights_exported": false,
+    "raw_grading_calibration_shared": false,
+    "device_local_runtime_memory_overwritten": false,
+    "peer_verified_never_auto_promotes_local": true
+  },
+  "covered_merges": [
+    {
+      "pr": 301,
+      "version": "v342-runtime-hardening",
+      "merge_sha": "fd52a17e817cfd8e057893bea91a0047858ce853"
+    }
+  ],
+  "lesson_digest_sha256": "5e8436650884c4cdadec1227e1184a25154a0ff93a8b2064b47a7a2104d6d89c",
+  "lessons": [
+    {
+      "lesson_id": "TABLET-GPT-POST-MERGE-FRESHNESS-ANCHOR-V343",
+      "subsystem": "tablet_gpt_tcg_grader_alignment",
+      "issue_class": "pr_candidate_sync_can_pass_exact_base_but_merged_main_requires_new_main_anchor",
+      "trigger_condition": "a pull request bundles a verified sync generation anchored to the exact PR base and changes watched runtime paths; after merge the main head contains those watched changes after the candidate source_main_sha",
+      "symptom_summary": "pull-request alignment passes but post-merge main correctly reports TABLET_GPT_SYNC_STALE until a generation anchored to the merged main is published",
+      "root_cause_class": "candidate_base_anchor_is_not_post_merge_main_anchor",
+      "fix_pattern": "after a watched-path repair merges, publish a follow-up sync generation anchored to the exact merged main SHA, include the merge in covered_merges, keep generation files excluded from freshness watch, and require post-merge main alignment to pass",
+      "prevention_rule_id": "TGPT-PREV-POST-MERGE-FRESHNESS-ANCHOR",
+      "verification_result": "post_merge_v343_alignment_required",
+      "regression_pass": true,
+      "recurrence_count": 1,
+      "applicable_scope": "both",
+      "confidence_level": "high",
+      "physical_tablet_runtime_reverification_required": true
+    }
+  ]
+}
