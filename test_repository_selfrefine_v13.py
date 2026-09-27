@@ -1,8 +1,10 @@
 #!/usr/bin/env python3
 import json
+import tempfile
 import unittest
 from pathlib import Path
 
+import fault_injection_healing as healing
 import repository_integrity_guard as guard
 
 
@@ -27,6 +29,35 @@ class RepositorySelfrefineV13Tests(unittest.TestCase):
         )
         self.assertIsInstance(parsed, dict)
         self.assertTrue(parsed.get("name") or parsed.get("short_name"))
+
+    def test_integrity_manifest_rejects_new_unlisted_tracked_file(self):
+        with tempfile.TemporaryDirectory(prefix="tcg-manifest-completeness-") as directory:
+            root = Path(directory)
+            (root / "sample.py").write_text("VALUE = 1\n", encoding="utf-8")
+            manifest = root / "integrity_manifest.json"
+            healing.build_integrity_manifest(root, manifest)
+            self.assertEqual(guard.integrity_manifest_findings(root), [])
+
+            (root / "late_added.py").write_text("VALUE = 2\n", encoding="utf-8")
+            findings = guard.integrity_manifest_findings(root)
+            self.assertIn(
+                "integrity manifest missing tracked path: late_added.py",
+                findings,
+            )
+
+    def test_integrity_manifest_rejects_hash_drift(self):
+        with tempfile.TemporaryDirectory(prefix="tcg-manifest-hash-") as directory:
+            root = Path(directory)
+            target = root / "sample.py"
+            target.write_text("VALUE = 1\n", encoding="utf-8")
+            manifest = root / "integrity_manifest.json"
+            healing.build_integrity_manifest(root, manifest)
+            target.write_text("VALUE = 9\n", encoding="utf-8")
+            findings = guard.integrity_manifest_findings(root)
+            self.assertIn(
+                "integrity manifest hash/schema mismatch: sample.py",
+                findings,
+            )
 
     def test_current_runtime_cannot_import_one_shot_patchers(self):
         self.assertIsNotNone(
