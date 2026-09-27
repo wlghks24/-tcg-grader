@@ -32,6 +32,18 @@ Lenovo/Termux 태블릿이 **12시간마다 1회(태블릿 현지시간 08:00 / 
 - 업로드 뒤 Drive에서 manifest와 bundle을 다시 내려받아 크기·SHA-256·압축 내부 파일을 read-back 검증
 - 부분 업로드나 read-back 불일치가 있으면 성공으로 판정하지 않음
 
+## Google Drive 용량 자동 정리
+검증 패키지를 Drive에 성공적으로 업로드하고 read-back 검증까지 끝낸 뒤 TCG 전용 경로만 자동 정리합니다.
+
+- `to_tablet/`의 검증 패키지/manifest 기본 보존기간: **14일**
+- 최신 완전한 패키지 세트는 최소 **4세트** 강제 보존
+- 수동 실행이 많아도 패키지 세트는 최대 **40세트**까지만 유지
+- `receipts/`는 최신 **16개를 최소 보존**, 최대 **64개**로 제한하고 14일 초과분을 정리
+- 삭제 허용 이름은 `manifest_*.json`, `TCG_VERIFIED_*.tar.gz`, `TABLET_SYNC_RECEIPT_*.json` 세 종류뿐임
+- 사진, 일반 문서, 알 수 없는 파일명, 다른 폴더는 보존기간과 관계없이 자동 삭제하지 않음
+- 원격 정리 실패는 새 검증 패키지 자체를 실패로 바꾸지 않고 `DRIVE_RETENTION_WARNING`으로 별도 보고하여 중복 업로드 재시도를 막음
+- 태블릿 로컬 rollback용 `last_good`은 기존 정책대로 최신 **8개**를 유지하며 진행 중 transaction의 backup은 추가 보존
+
 `source=chatgpt_automation`은 실제 ChatGPT 자동화 생산 경로에만 사용합니다. 태블릿에서 임의로 만든 로컬 자료를 이 provenance로 가장하지 않습니다.
 
 ## 장시간 수집 최신성
