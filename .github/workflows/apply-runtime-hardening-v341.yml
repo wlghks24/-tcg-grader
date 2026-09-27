@@ -1,0 +1,78 @@
+name: Apply runtime hardening v341
+
+on:
+  push:
+    branches: [fix/runtime-hardening-v341]
+
+permissions:
+  contents: write
+
+concurrency:
+  group: apply-runtime-hardening-v341
+  cancel-in-progress: false
+
+jobs:
+  finalize:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97
+        with:
+          python-version: '3.12'
+      - name: Guard exact base main
+        shell: bash
+        run: |
+          set -euo pipefail
+          BASE=be144184da52d16ccde3d7d2c65fa37953d55bac
+          git fetch origin +refs/heads/main:refs/remotes/origin/main
+          test "$(git rev-parse origin/main)" = "$BASE"
+          git merge-base --is-ancestor "$BASE" HEAD
+      - name: Apply bounded repair
+        run: python apply_runtime_hardening_v341.py
+      - name: Targeted and related regression
+        shell: bash
+        run: |
+          set -euo pipefail
+          bash -n TABLET_SCHEDULED_UPDATE.sh
+          node --check sw.js
+          python -m py_compile test_runtime_hardening_v341.py test_tablet_scheduled_update_v256.py
+          python -m unittest -v \
+            test_runtime_hardening_v341.py \
+            test_tablet_scheduled_update_v256.py \
+            test_ui_version_coherence_v276.py \
+            test_tablet_app_dock_v275.py \
+            test_tablet_gpt_tcg_grader_sync_v339.py
+      - name: Finalize exact tree and manifest
+        shell: bash
+        run: |
+          set -euo pipefail
+          rm -- .github/workflows/apply-runtime-hardening-v341.yml apply_runtime_hardening_v341.py V341_RUNTIME_REPAIR_PLAN.md
+          python fault_injection_healing.py --manifest
+          git add -A
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          import fault_injection_healing as healing
+          root=Path('.').resolve()
+          payload=json.loads((root/'integrity_manifest.json').read_text(encoding='utf-8'))
+          listed=set((payload.get('files') or {}).keys())
+          current={p.relative_to(root).as_posix() for p in healing.tracked_files(root)}
+          assert listed==current, f'manifest coverage mismatch missing={sorted(current-listed)[:10]} extra={sorted(listed-current)[:10]}'
+          PY
+          python fault_injection_healing.py --diagnose
+          python repository_integrity_guard.py
+          git diff --cached --check
+          test ! -e .github/workflows/apply-runtime-hardening-v341.yml
+          test ! -e apply_runtime_hardening_v341.py
+          test ! -e V341_RUNTIME_REPAIR_PLAN.md
+      - name: Commit finalized repair
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git commit -m 'Harden tablet runtime safety and PWA fallback v341'
+          git push origin HEAD:fix/runtime-hardening-v341
