@@ -142,10 +142,14 @@ def record_blocked_production_attempt(state:dict[str,Any],*,production_date_kst:
     if isinstance(verified_fact_count,bool) or not isinstance(verified_fact_count,int) or verified_fact_count<0: raise ValueError("verified_fact_count must be a non-negative integer")
     if finalized_record_for_date(state,production_date_kst): raise RuntimeError("FINALIZED_PRODUCTION_ALREADY_EXISTS")
     row={"production_date_kst":production_date_kst,"scheduled_slot_kst":scheduled_slot_kst,"reason_code":reason_code,"verified_fact_count":verified_fact_count,"recorded_at_kst":recorded_at_kst,"detail":str(detail or "")}; state.setdefault("blocked_attempts",{})[production_date_kst]=row; return row
-def can_start_user_requested_recovery(state:dict[str,Any],production_date_kst:str,*,user_requested:bool)->tuple[bool,str]:
+def can_start_user_requested_recovery(state:dict[str,Any],production_date_kst:str,*,user_requested:bool,missed_scheduled_slot_evidence:bool=False)->tuple[bool,str]:
     if finalized_record_for_date(state,production_date_kst): return False,"FINALIZED_PRODUCTION_ALREADY_EXISTS"
     blocked=state.setdefault("blocked_attempts",{}).get(production_date_kst)
-    if not isinstance(blocked,dict): return False,"NO_BLOCKED_BASELINE_EVIDENCE"
+    if not isinstance(blocked,dict):
+        if missed_scheduled_slot_evidence is not True: return False,"NO_BLOCKED_BASELINE_EVIDENCE"
+        if user_requested is not True: return False,"USER_REQUEST_REQUIRED"
+        if int(state.setdefault("catchup_attempts",{}).get(production_date_kst,0) or 0)>=1: return False,"CATCHUP_BUDGET_EXHAUSTED"
+        return True,"USER_REQUESTED_RECOVERY_ALLOWED_WITH_MISSED_SLOT_EVIDENCE"
     if blocked.get("reason_code") not in RECOVERABLE_BLOCK_REASONS: return False,"BLOCK_REASON_NOT_RECOVERABLE"
     if user_requested is not True: return False,"USER_REQUEST_REQUIRED"
     if int(state.setdefault("catchup_attempts",{}).get(production_date_kst,0) or 0)>=1: return False,"CATCHUP_BUDGET_EXHAUSTED"
