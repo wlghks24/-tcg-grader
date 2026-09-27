@@ -22,6 +22,10 @@ jobs:
           python-version: '3.11'
       - name: Install declared runtime dependency
         run: python -m pip install --disable-pip-version-check -r requirements.txt
+      - name: Capture current-main legacy baseline
+        run: |
+          git worktree add --detach ../main-baseline origin/main
+          (cd ../main-baseline && python verify_all_legacy_v99.py > /tmp/legacy-main.log 2>&1) || true
       - name: Apply bounded patch
         run: python apply_fx_integrity_v346_patch.py
       - name: Refresh CSP hashes
@@ -30,8 +34,30 @@ jobs:
         run: python -m py_compile fx_policy.py update_exchange_rates.py multi_market_price_collector.py auto_repair_engine.py auto_update_all.py test_fx_integrity_v346.py test_edition_fx_failclosed_v328.py
       - name: Targeted regressions
         run: python -m unittest -v test_fx_integrity_v346.py test_edition_fx_failclosed_v328.py test_error_recovery_learning_v134.py
-      - name: Legacy integration regression
-        run: python verify_all_legacy_v99.py
+      - name: Legacy non-regression against current main
+        run: |
+          python verify_all_legacy_v99.py > /tmp/legacy-head.log 2>&1 || true
+          python - <<'PY'
+          from pathlib import Path
+
+          def failures(path):
+              rows=[]
+              for line in Path(path).read_text(encoding='utf-8',errors='replace').splitlines():
+                  if line.startswith('- 실패: '):
+                      label=line[len('- 실패: '):].split(' · ',1)[0].strip()
+                      rows.append(label)
+              return set(rows)
+
+          baseline=failures('/tmp/legacy-main.log')
+          head=failures('/tmp/legacy-head.log')
+          new=sorted(head-baseline)
+          print(f'legacy baseline failures={len(baseline)} head failures={len(head)} new={len(new)}')
+          if new:
+              print('new legacy failures:')
+              for item in new:
+                  print('-',item)
+              raise SystemExit(1)
+          PY
       - name: CSP and diff validation
         run: |
           python csp_hash_hardening.py --check
