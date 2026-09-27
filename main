@@ -49,9 +49,9 @@ case "$cmd" in
   bash main verify     현재 태블릿 빌드 최종 검증
   bash main quality    전문가 1000관점 품질정책(25×40) 로컬 검증
   bash main recover         오래된 Android 업데이터 복구
-  bash main update-install  현재 세션 자동루프 + 부팅 후 자동루프 설치/복구 (기본 1시간마다 확인)
-  bash main update-now      지금 최신 main 확인/안전 업데이트 후 자동루프 보장
-  bash main update-status   예약/간격/실행-loop/Termux:Boot/heartbeat/마지막 업데이트 상태 표시
+  bash main update-install  현재 세션 자동루프 + 부팅 후 자동루프 설치/복구 (매일 23:00 KST 기능 업데이트 확인)
+  bash main update-now      지금 최신 main 확인/안전 업데이트 후 23:00 KST 자동루프 보장
+  bash main update-status   예약/다음 실행시각/실행-loop/Termux:Boot/heartbeat/마지막 업데이트 상태 표시
   bash main update-remove   예약 업데이트 제거
 EOF
     ;;
