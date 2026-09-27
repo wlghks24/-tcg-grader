@@ -1,7 +1,7 @@
 {
   "version": 2,
   "engine": "v109-card-identity-ocr-learning",
-  "generated_at": "2026-09-27T14:56:07+00:00",
+  "generated_at": "2026-09-27T15:17:17+00:00",
   "files": {
     ".github/workflows/ai-auto-tracker-guard.yml": {
       "sha256": "636e750bd6d2619cce75d4bce2d68051eaa2209ae763bc8ec523ed73476728a6",
@@ -596,8 +596,8 @@
       "bytes": 5028
     },
     "TABLET_SCHEDULED_UPDATE.sh": {
-      "sha256": "88abee5a17e80e77202afc28f2b7ef0c5705495ff63b43e267a7af22ff3decfb",
-      "bytes": 10968
+      "sha256": "007ab85365925ad0ad03e67fcf447a1cf89084935b5c7b1c10cf97de665d247d",
+      "bytes": 14544
     },
     "TCG_AUTO_UPDATE.bat": {
       "sha256": "0c80ed7f5a218d52cb6594032fac9180571598c776f786332a7fb53ed89f42da",
@@ -2244,8 +2244,8 @@
       "bytes": 11226
     },
     "sw.js": {
-      "sha256": "7387111476f053074083dc5fc51e062641986a54cfaad2e1a7e3aad5dbb0bc91",
-      "bytes": 13111
+      "sha256": "45936e547737882fe74ef542f6d8a51fd8fdc74bee117934790e5081fdbad52a",
+      "bytes": 13282
     },
     "tablet_collection_publish.py": {
       "sha256": "493681c58dfb9dc34085ff597cf1b9c89946c7dbc6b286c99dfb21c995a6ad0a",
@@ -3023,6 +3023,10 @@
       "sha256": "a328fa6b59a34ed0d9bc3cf02ec18537d9e85f2c0c5f47c581b948b6f81809b9",
       "bytes": 5635
     },
+    "test_runtime_hardening_v342.py": {
+      "sha256": "655a4ae84e31fb11eaca54dc87e17f3b55f4d3530801f08c67b6c2a1fd0ffe49",
+      "bytes": 2149
+    },
     "test_runtime_hotpath_v266.py": {
       "sha256": "b5f92eeb0b78867f72f4a5e5fb3005d5d163ce889a3d1c3026a37def0bdaf8a9",
       "bytes": 6612
@@ -3204,8 +3208,8 @@
       "bytes": 6362
     },
     "test_tablet_scheduled_update_v256.py": {
-      "sha256": "04b659bc618cbbf90b55783efc22c72c2518f5a58bef566461f9b715e365adc2",
-      "bytes": 5783
+      "sha256": "b78f90369f2cd880946ca56d6b8711d05c3d62434b9b458ea92cd5f79c79fa50",
+      "bytes": 7753
     },
     "test_tablet_standalone_hardening_v209.py": {
       "sha256": "db2fc2d92954695afbfab7ad8511480433e77e8caeed14e916ff161ffdb18e2a",
