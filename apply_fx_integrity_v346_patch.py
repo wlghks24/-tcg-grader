@@ -98,8 +98,8 @@ replace_once(
     """function fxTimestampFresh(value,now=Date.now()){const parsed=Date.parse(String(value||''));if(!Number.isFinite(parsed))return false;const age=now-parsed;return age>=-FX_MAX_FUTURE_SKEW_MS&&age<=FX_MAX_AGE_MS}
 function clearFxConversionDisplay()""",
     """function fxTimestampFresh(value,now=Date.now()){const parsed=Date.parse(String(value||''));if(!Number.isFinite(parsed))return false;const age=now-parsed;return age>=-FX_MAX_FUTURE_SKEW_MS&&age<=FX_MAX_AGE_MS}
-const FX_ROUTE_HOST={\"frankfurter-v2\":\"api.frankfurter.dev\",\"frankfurter-v1\":\"api.frankfurter.dev\",\"frankfurter-legacy\":\"api.frankfurter.app\"};
-function fxSourceTrusted(d){try{const route=String(d?.source_route||''),u=new URL(String(d?.source||''),window.location.href),pathOk=(route===\"frankfurter-v2\"&&u.pathname===\"/v2/rates\")||(route===\"frankfurter-v1\"&&u.pathname===\"/v1/latest\")||(route===\"frankfurter-legacy\"&&u.pathname===\"/latest\");return u.protocol===\"https:\"&&!u.username&&!u.password&&(u.port===\"\"||u.port===\"443\")&&FX_ROUTE_HOST[route]===u.hostname.toLowerCase()&&pathOk}catch{return false}}
+const FX_ROUTE_SOURCE={\"frankfurter-v2\":\"https://api.frankfurter.dev/v2/rates?base=USD&quotes=KRW,JPY\",\"frankfurter-v1\":\"https://api.frankfurter.dev/v1/latest?base=USD&symbols=KRW,JPY\",\"frankfurter-legacy\":\"https://api.frankfurter.app/latest?from=USD&to=KRW,JPY\"};
+function fxSourceTrusted(d){const route=String(d?.source_route||'');return Object.prototype.hasOwnProperty.call(FX_ROUTE_SOURCE,route)&&String(d?.source||'')===FX_ROUTE_SOURCE[route]}
 function clearFxConversionDisplay()""",
 )
 replace_once(
