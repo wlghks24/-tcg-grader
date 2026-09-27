@@ -1,0 +1,45 @@
+{
+  "schema_version": "1.1-tablet-gpt-tcg-grader-learning-sync",
+  "namespace": "TABLET_GPT",
+  "snapshot_kind": "learning_delta",
+  "run_date_kst": "2026-09-28",
+  "built_at": "2026-09-28T00:41:00+09:00",
+  "status": "finalized",
+  "source_repository": "wlghks24/-tcg-grader",
+  "prior_delta": "TCG_CROSSCHECK/TABLET_GPT/learning_snapshot_v343_delta.json",
+  "prior_lesson_digest_sha256": "5e8436650884c4cdadec1227e1184a25154a0ff93a8b2064b47a7a2104d6d89c",
+  "source_main_sha": "21cd3ee0d7be34ff96c3098a16712d0a8debd696",
+  "share_policy": {
+    "explicit_patch_and_learning_lessons_only": true,
+    "chatgpt_model_weights_exported": false,
+    "raw_grading_calibration_shared": false,
+    "device_local_runtime_memory_overwritten": false,
+    "peer_verified_never_auto_promotes_local": true
+  },
+  "covered_merges": [
+    {
+      "pr": 302,
+      "version": "v343-post-merge-anchor",
+      "merge_sha": "21cd3ee0d7be34ff96c3098a16712d0a8debd696"
+    }
+  ],
+  "lesson_digest_sha256": "4dc9275efed268320c84de9e7267ddf49f669f5935373ea7b818938cb64c281d",
+  "lessons": [
+    {
+      "lesson_id": "TABLET-GPT-POSTMERGE-CANDIDATE-COVERAGE-V344",
+      "subsystem": "tablet_gpt_tcg_grader_alignment",
+      "issue_class": "pull_request_candidate_sync_passes_but_merged_main_rejects_same_watched_changes_as_stale",
+      "trigger_condition": "a PR bundles a verified sync generation anchored to its exact base and passes the PR freshness gate, then the merge commit is evaluated as a main push without equivalent candidate-generation coverage logic",
+      "symptom_summary": "the PR is green but the immediate merged main fails TABLET_GPT_SYNC_STALE for the same already-verified watched paths",
+      "root_cause_class": "candidate_sync_coverage_applied_only_to_pull_request_events",
+      "fix_pattern": "support post-merge candidate coverage only when the declared source/base, all generation files, and the exact set of watched paths match source..HEAD with no extra watched path; otherwise remain fail-closed",
+      "prevention_rule_id": "TGPT-PREV-POSTMERGE-CANDIDATE-COVERAGE",
+      "verification_result": "reproduced_on_main_run_36329658673_then_v343_anchor_and_v344_generalized_guard",
+      "regression_pass": true,
+      "recurrence_count": 1,
+      "applicable_scope": "both",
+      "confidence_level": "high",
+      "physical_tablet_runtime_reverification_required": false
+    }
+  ]
+}
