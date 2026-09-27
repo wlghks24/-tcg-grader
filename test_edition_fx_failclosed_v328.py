@@ -12,6 +12,17 @@ import multi_market_price_collector as market
 
 ROOT=Path(__file__).resolve().parent
 
+
+def fx_payload(stamp, *, source="https://api.frankfurter.dev/v2/rates?base=USD&quotes=KRW,JPY", route="frankfurter-v2"):
+    return {
+        "updated_at":stamp,
+        "base":"KRW",
+        "rates":{"JPY_KRW":9.1,"USD_KRW":1400.0},
+        "source":source,
+        "source_route":route,
+    }
+
+
 class EditionFxFailClosedV328Tests(unittest.TestCase):
     def test_english_edition_is_distinct_from_us_market(self):
         self.assertEqual("EN", identity.normalize_edition_language("EN"))
@@ -35,22 +46,28 @@ class EditionFxFailClosedV328Tests(unittest.TestCase):
     def test_stale_fx_is_not_used(self):
         with tempfile.TemporaryDirectory() as directory:
             path=Path(directory)/"exchange_rates.json"
-            path.write_text(json.dumps({"updated_at":"2000-01-01T00:00:00+00:00","rates":{"JPY_KRW":9.1,"USD_KRW":1400.0}}),encoding="utf-8")
+            path.write_text(json.dumps(fx_payload("2000-01-01T00:00:00+00:00")),encoding="utf-8")
             with mock.patch.object(market,"FX",path):
                 rates=market._fx()
             self.assertEqual(0.0,rates["JPY"])
             self.assertEqual(0.0,rates["USD"])
             self.assertEqual(1.0,rates["KRW"])
 
-    def test_fresh_fx_is_accepted(self):
+    def test_fresh_fx_is_accepted_only_with_trusted_provenance(self):
         with tempfile.TemporaryDirectory() as directory:
             path=Path(directory)/"exchange_rates.json"
             stamp=(datetime.now(timezone.utc)-timedelta(minutes=5)).isoformat()
-            path.write_text(json.dumps({"updated_at":stamp,"rates":{"JPY_KRW":9.1,"USD_KRW":1400.0}}),encoding="utf-8")
+            path.write_text(json.dumps(fx_payload(stamp)),encoding="utf-8")
             with mock.patch.object(market,"FX",path):
                 rates=market._fx()
             self.assertEqual(9.1,rates["JPY"])
             self.assertEqual(1400.0,rates["USD"])
+
+            path.write_text(json.dumps(fx_payload(stamp,source="https://example.com/v2/rates")),encoding="utf-8")
+            with mock.patch.object(market,"FX",path):
+                rates=market._fx()
+            self.assertEqual(0.0,rates["JPY"])
+            self.assertEqual(0.0,rates["USD"])
 
     def test_ui_has_explicit_edition_and_no_static_fx_fallback(self):
         html=(ROOT/"index.html").read_text(encoding="utf-8")
@@ -61,6 +78,8 @@ class EditionFxFailClosedV328Tests(unittest.TestCase):
         self.assertIn('let fxRates={JPY_KRW:0,USD_KRW:0},fxUpdated="",fxTimestamp="",fxExpiryTimer=null;',html)
         self.assertIn('FX_MAX_AGE_MS',html)
         self.assertIn('fxTimestampFresh',html)
+        self.assertIn('FX_ROUTE_HOST',html)
+        self.assertIn('fxSourceTrusted',html)
         self.assertIn('function clearExpiredFx(now=Date.now())',html)
         self.assertIn('function scheduleFxExpiry()',html)
         self.assertIn('scheduleFxExpiry();result.ok=true;',html)
@@ -68,6 +87,7 @@ class EditionFxFailClosedV328Tests(unittest.TestCase):
         self.assertIn('document.addEventListener("visibilitychange"',html)
         self.assertIn('window.addEventListener("focus"',html)
         self.assertIn('if(!fxTimestampFresh(fxTimestamp)',html)
+        self.assertIn('if(!fxSourceTrusted(d))throw new Error("fx provenance")',html)
         self.assertIn('fxTimestamp=stamp;scheduleFxExpiry();result.ok=true;',html)
         self.assertIn('fxTimestamp="";clearFxConversionDisplay();result.errors.push("환율자료")',html)
         self.assertIn('normalizeEditionLanguage',browser)
