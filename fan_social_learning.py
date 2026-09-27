@@ -15,7 +15,13 @@ import math
 import urllib.parse
 from pathlib import Path
 
-from safe_runtime import atomic_write_json, exclusive_file_lock, safe_read_text
+from safe_runtime import (
+    atomic_write_json,
+    exclusive_file_lock,
+    reject_nonstandard_json,
+    safe_read_text,
+    unique_json_object,
+)
 
 ROOT = Path(__file__).resolve().parent
 MEMORY = ROOT / "fan_social_learning.json"
@@ -51,6 +57,21 @@ def _fresh() -> dict:
     return {"version": SCHEMA_VERSION, "updated_at": None, "sources": {}, "runs": 0}
 
 
+def _valid_store(data: object) -> bool:
+    """Accept only the structural subset that runtime methods can safely consume.
+
+    Older stores may omit optional metadata, so this intentionally does not perform a
+    schema migration.  It only rejects parseable corruption that would otherwise make
+    ``report``/``save`` call ``.get`` on a non-mapping source row.
+    """
+    if not isinstance(data, dict):
+        return False
+    sources = data.get("sources")
+    if not isinstance(sources, dict):
+        return False
+    return all(isinstance(key, str) and isinstance(row, dict) for key, row in sources.items())
+
+
 def _load_with_status(path: Path, backup: Path) -> tuple[dict, str]:
     """Load the newest usable device-local state without erasing corrupt evidence.
 
@@ -66,11 +87,15 @@ def _load_with_status(path: Path, backup: Path) -> tuple[dict, str]:
             continue
         existing_seen = True
         try:
-            data = json.loads(safe_read_text(candidate))
-            if isinstance(data, dict) and isinstance(data.get("sources"), dict):
+            data = json.loads(
+                safe_read_text(candidate),
+                parse_constant=reject_nonstandard_json,
+                object_pairs_hook=unique_json_object,
+            )
+            if _valid_store(data):
                 data.setdefault("runs", 0)
                 return data, source
-        except Exception:
+        except (OSError, UnicodeError, ValueError, TypeError, RecursionError):
             continue
     if existing_seen:
         return _fresh(), "corrupt"
