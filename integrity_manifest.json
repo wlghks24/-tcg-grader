@@ -1,7 +1,7 @@
 {
   "version": 2,
   "engine": "v109-card-identity-ocr-learning",
-  "generated_at": "2026-09-27T19:44:48+00:00",
+  "generated_at": "2026-09-27T19:50:21+00:00",
   "files": {
     ".github/workflows/ai-auto-tracker-guard.yml": {
       "sha256": "636e750bd6d2619cce75d4bce2d68051eaa2209ae763bc8ec523ed73476728a6",
@@ -3664,19 +3664,7 @@
       "bytes": 396
     }
   },
-  "mutable_json": {
-    "security_audit_report.json": {
-      "required": {
-        "schema_version": "int",
-        "generated_at": "str",
-        "scope": "str",
-        "finding_counts": "dict",
-        "findings": "list",
-        "note": "str"
-      },
-      "max_bytes": 20971520
-    }
-  },
+  "mutable_json": {},
   "policy": {
     "generated_code_auto_applied": false,
     "code_corruption_auto_repaired": false,
