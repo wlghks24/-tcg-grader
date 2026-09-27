@@ -78,7 +78,7 @@ class EditionFxFailClosedV328Tests(unittest.TestCase):
         self.assertIn('let fxRates={JPY_KRW:0,USD_KRW:0},fxUpdated="",fxTimestamp="",fxExpiryTimer=null;',html)
         self.assertIn('FX_MAX_AGE_MS',html)
         self.assertIn('fxTimestampFresh',html)
-        self.assertIn('FX_ROUTE_HOST',html)
+        self.assertIn('FX_ROUTE_SOURCE',html)
         self.assertIn('fxSourceTrusted',html)
         self.assertIn('function clearExpiredFx(now=Date.now())',html)
         self.assertIn('function scheduleFxExpiry()',html)
