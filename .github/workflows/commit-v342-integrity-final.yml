@@ -1,0 +1,54 @@
+name: Commit v342 final integrity manifest after PWA repair
+
+on:
+  push:
+    branches: [fix/runtime-hardening-v341]
+    paths:
+      - '.github/workflows/commit-v342-integrity-final.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  commit-manifest:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97
+        with:
+          python-version: '3.12'
+      - name: Verify repaired PWA contract and commit final manifest only
+        shell: bash
+        run: |
+          set -euo pipefail
+          TEMP=.github/workflows/commit-v342-integrity-final.yml
+          rm -f "$TEMP"
+          node --check sw.js
+          python -m unittest -v test_card_collector_edition_alias_v324.py test_runtime_hardening_v341.py test_tablet_scheduled_update_v256.py test_tablet_gpt_tcg_grader_sync_v339.py
+          python - <<'PY'
+          from pathlib import Path
+          import fault_injection_healing as healing
+          root=Path('.').resolve()
+          target=root/'integrity_manifest.json'
+          payload=healing.build_integrity_manifest(root,target)
+          result=healing.diagnose_integrity(root,target)
+          if not result.get('ok'):
+              raise SystemExit(result)
+          temp='.github/workflows/commit-v342-integrity-final.yml'
+          if temp in payload.get('files',{}):
+              raise SystemExit('temporary workflow leaked into final manifest')
+          current={p.relative_to(root).as_posix() for p in healing.tracked_files(root)}
+          listed=set(payload.get('files',{}))
+          if listed != current:
+              raise SystemExit(f'manifest coverage mismatch missing={sorted(current-listed)[:10]} extra={sorted(listed-current)[:10]}')
+          print({'manifest_ok': True, 'tracked_files': len(current)})
+          PY
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add integrity_manifest.json
+          git diff --cached --check
+          git commit -m 'Reconcile v342 integrity after PWA compatibility repair'
+          git push origin HEAD:fix/runtime-hardening-v341
