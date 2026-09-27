@@ -9,12 +9,31 @@ from instagram_tcg_content.automation_state_guard import CANONICAL_ID
 PROJECT = "instagram_card"
 TASK_ID = CANONICAL_ID
 KST = timezone(timedelta(hours=9))
+# Only data-state failures that a fresh IG-local capture can actually repair are
+# retryable. Route/configuration failures stay fail-closed so a collection retry
+# cannot hide a broken source contract.
 RECOVERABLE_COLLECTION_REASONS = {
     "COMPLETED_SALE_COVERAGE_INSUFFICIENT",
     "NO_VERIFIED_FACTS",
+    "SNAPSHOT_NAMESPACE_INVALID",
     "SNAPSHOT_NOT_FINALIZED",
     "SNAPSHOT_WRITE_READBACK_UNVERIFIED",
+    "SNAPSHOT_BUILT_AT_INVALID",
+    "SNAPSHOT_FACTS_INVALID",
 }
+RECOVERABLE_COLLECTION_PREFIXES = (
+    "SNAPSHOT_STALE:",
+    "LATEST_COLLECTION_ATTEMPT_NOT_READY:",
+    "MALFORMED_VERIFIED_FACTS:",
+    "DUPLICATE_FACT_LINEAGE:",
+    "OUTPUT_MATRIX_COVERAGE_MISSING:",
+)
+NONRECOVERABLE_ROUTE_PREFIXES = (
+    "PROVIDER_GROUP_MISSING:",
+    "OFFICIAL_ROUTE_SHORTAGE:",
+    "COMPLETED_SALE_ROUTE_SHORTAGE:",
+    "MARKET_ROUTE_SHORTAGE:",
+)
 RECOVERY_MODE = "PREPRODUCTION_RECOVERY_COLLECTION"
 BLOCKED_MODE = "PRODUCTION_BLOCKED_COLLECTION_NOT_READY"
 GENERAL_MODE = "PROCEED_GENERAL_CARDINFO_WITHOUT_UNVERIFIED_MARKET_SECTIONS"
@@ -47,8 +66,18 @@ def is_weekly_production_slot(scheduled_slot_kst: str) -> bool:
     return dt.weekday() == 0 and dt.hour == 19 and dt.minute == 0 and dt.second == 0
 
 
-def _has_stale_reason(reasons: list[str]) -> bool:
-    return any(str(r).startswith("SNAPSHOT_STALE:") for r in reasons)
+def _is_recoverable_collection_reason(reason: str) -> bool:
+    value = str(reason or "")
+    if value in RECOVERABLE_COLLECTION_REASONS:
+        return True
+    return any(value.startswith(prefix) for prefix in RECOVERABLE_COLLECTION_PREFIXES)
+
+
+def _has_nonrecoverable_route_problem(reasons: list[str]) -> bool:
+    return any(
+        any(str(reason).startswith(prefix) for prefix in NONRECOVERABLE_ROUTE_PREFIXES)
+        for reason in reasons
+    ) or "PROVIDER_GROUPS_MISSING" in reasons
 
 
 def decide_preproduction_recovery(
@@ -65,10 +94,18 @@ def decide_preproduction_recovery(
         if market_ready:
             return RecoveryDecision("PROCEED_TO_PRODUCTION_PREFLIGHT", "GENERAL_AND_MARKET_READY", False, True, True, True, 1)
         return RecoveryDecision(GENERAL_MODE, "GENERAL_READY_MARKET_NOT_READY", False, True, False, True, 1)
-    recoverable = _has_stale_reason(reasons) or any(r in RECOVERABLE_COLLECTION_REASONS for r in reasons)
-    if recoverable and recovery_collection_attempts < 1:
+
+    recoverable = any(_is_recoverable_collection_reason(reason) for reason in reasons)
+    route_problem = _has_nonrecoverable_route_problem(reasons)
+    if recoverable and not route_problem and recovery_collection_attempts < 1:
         return RecoveryDecision(RECOVERY_MODE, "GENERAL_CARDINFO_NOT_READY_TRY_ONE_BOUNDED_REFRESH", True, False, False, True, 1)
-    return RecoveryDecision(BLOCKED_MODE, "GENERAL_CARDINFO_NOT_READY_AFTER_RECOVERY_OR_NOT_RECOVERABLE", False, False, False, True, 1)
+
+    blocked_reason = (
+        "SOURCE_ROUTE_CONFIGURATION_NOT_RECOVERABLE_BY_COLLECTION"
+        if route_problem
+        else "GENERAL_CARDINFO_NOT_READY_AFTER_RECOVERY_OR_NOT_RECOVERABLE"
+    )
+    return RecoveryDecision(BLOCKED_MODE, blocked_reason, False, False, False, True, 1)
 
 
 def decide_for_slot(
@@ -84,10 +121,10 @@ def decide_for_slot(
 def _failure_root_cause(collection_report: dict[str, Any], direct_root_cause: str | None) -> str:
     """Return the most specific root cause supported by verified readiness fields.
 
-    Do not label a known readiness failure as unresolved.  A caller-supplied direct
+    Do not label a known readiness failure as unresolved. A caller-supplied direct
     cause remains authoritative, but otherwise a false general-card-info readiness
     flag is already sufficient evidence that verified general requirements were not
-    met.  This keeps the visible report useful without inventing a lower-level
+    met. This keeps the visible report useful without inventing a lower-level
     network/source cause that the collection report did not prove.
     """
     if direct_root_cause is not None:
@@ -135,6 +172,12 @@ def build_visible_failure_report(
 def self_test() -> None:
     stale = {"general_cardinfo_ready": False, "market_price_ready": False, "reasons": ["SNAPSHOT_STALE:90.0h>36h"]}
     assert decide_for_slot(stale, scheduled_slot_kst="2026-09-14T19:00:00+09:00", recovery_collection_attempts=0).action == RECOVERY_MODE
+    matrix_gap = {"general_cardinfo_ready": False, "market_price_ready": False, "reasons": ["OUTPUT_MATRIX_COVERAGE_MISSING:pokemon:KR"]}
+    assert decide_preproduction_recovery(matrix_gap, is_production_slot=True, recovery_collection_attempts=0).action == RECOVERY_MODE
+    route_gap = {"general_cardinfo_ready": False, "market_price_ready": False, "reasons": ["OFFICIAL_ROUTE_SHORTAGE:pokemon:0/1"]}
+    route_decision = decide_preproduction_recovery(route_gap, is_production_slot=True, recovery_collection_attempts=0)
+    assert route_decision.action == BLOCKED_MODE and not route_decision.run_bounded_collection
+    assert route_decision.reason == "SOURCE_ROUTE_CONFIGURATION_NOT_RECOVERABLE_BY_COLLECTION"
     c = decide_for_slot(stale, scheduled_slot_kst="2026-09-14T18:00:00+09:00", recovery_collection_attempts=0)
     assert c.action == COLLECTION_ONLY_MODE and not c.render_allowed and not c.must_emit_visible_report
     report = build_visible_failure_report(
