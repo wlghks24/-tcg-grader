@@ -1,0 +1,81 @@
+name: Finalize alignment integrity v341
+
+on:
+  push:
+    branches: [fix/alignment-integrity-v341]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: finalize-alignment-integrity-v341
+  cancel-in-progress: true
+
+jobs:
+  finalize:
+    if: github.repository == 'wlghks24/-tcg-grader'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - name: Checkout exact repair branch
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          fetch-depth: 0
+
+      - name: Set up Python
+        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97
+        with:
+          python-version: '3.11'
+
+      - name: Install audited test dependencies
+        run: python -m pip install --disable-pip-version-check -r requirements.txt
+
+      - name: Apply bounded v341 repair and remove one-shot sources
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "${GITHUB_REF_NAME}" = "fix/alignment-integrity-v341"
+          python apply_alignment_integrity_v341.py
+          git rm -- apply_alignment_integrity_v341.py .github/workflows/finalize-alignment-integrity-v341.yml
+
+      - name: Rebuild final-tree integrity manifest
+        shell: bash
+        run: |
+          set -euo pipefail
+          python fault_injection_healing.py --manifest
+          python repository_integrity_guard.py
+          python fault_injection_healing.py diagnose
+
+      - name: Run targeted and related regressions
+        shell: bash
+        run: |
+          set -euo pipefail
+          python -m unittest -v \
+            test_repository_selfrefine_v13.py \
+            test_tablet_gpt_tcg_grader_sync_v330.py \
+            test_tablet_gpt_tcg_grader_sync_v331.py \
+            test_tablet_gpt_tcg_grader_sync_v334.py \
+            test_tablet_gpt_tcg_grader_sync_v339.py \
+            test_tablet_gpt_tcg_grader_sync_v341.py
+          python test_runtime_delivery_guards.py
+          python verify_fault_injection_healing.py
+          python verify_current_runtime.py
+          git diff --check
+
+      - name: Commit exact finalized tree to repair branch only
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "${GITHUB_REF_NAME}" = "fix/alignment-integrity-v341"
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add -A
+          test ! -e apply_alignment_integrity_v341.py
+          test ! -e .github/workflows/finalize-alignment-integrity-v341.yml
+          if git diff --cached --quiet; then
+            echo 'No finalized changes to commit.' >&2
+            exit 1
+          fi
+          git commit -m 'Fix pre-merge Tablet GPT freshness and manifest completeness v341'
+          git push origin "HEAD:${GITHUB_REF_NAME}"
