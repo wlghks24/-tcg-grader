@@ -98,8 +98,7 @@ replace_once(
     """function fxTimestampFresh(value,now=Date.now()){const parsed=Date.parse(String(value||''));if(!Number.isFinite(parsed))return false;const age=now-parsed;return age>=-FX_MAX_FUTURE_SKEW_MS&&age<=FX_MAX_AGE_MS}
 function clearFxConversionDisplay()""",
     """function fxTimestampFresh(value,now=Date.now()){const parsed=Date.parse(String(value||''));if(!Number.isFinite(parsed))return false;const age=now-parsed;return age>=-FX_MAX_FUTURE_SKEW_MS&&age<=FX_MAX_AGE_MS}
-const FX_ROUTE_SOURCE={\"frankfurter-v2\":\"https://api.frankfurter.dev/v2/rates?base=USD&quotes=KRW,JPY\",\"frankfurter-v1\":\"https://api.frankfurter.dev/v1/latest?base=USD&symbols=KRW,JPY\",\"frankfurter-legacy\":\"https://api.frankfurter.app/latest?from=USD&to=KRW,JPY\"};
-function fxSourceTrusted(d){const route=String(d?.source_route||'');return Object.prototype.hasOwnProperty.call(FX_ROUTE_SOURCE,route)&&String(d?.source||'')===FX_ROUTE_SOURCE[route]}
+function fxSourceTrusted(d){const route=String(d&&d.source_route||''),source=String(d&&d.source||'');return (route==='frankfurter-v2'&&source==='https://api.frankfurter.dev/v2/rates?base=USD&quotes=KRW,JPY')||(route==='frankfurter-v1'&&source==='https://api.frankfurter.dev/v1/latest?base=USD&symbols=KRW,JPY')||(route==='frankfurter-legacy'&&source==='https://api.frankfurter.app/latest?from=USD&to=KRW,JPY')}
 function clearFxConversionDisplay()""",
 )
 replace_once(
@@ -109,6 +108,30 @@ replace_once(
     """  if(!fxTimestampFresh(stamp))throw new Error(\"fx timestamp stale\");
   if(!fxSourceTrusted(d))throw new Error(\"fx provenance\");
   fxRates={JPY_KRW:jpy,USD_KRW:usd};""",
+)
+
+# Existing browser runtime verifier executes selected functions in a VM. Keep the
+# verifier at least as strict as production by loading the new helper and giving
+# the successful fixture exact provenance. This fixes a harness drift, not a
+# production exception or bypass.
+replace_once(
+    "verify_browser_runtime.js",
+    '  loadOneLine("fxTimestampFresh");\n  loadAsyncBlock("loadExchangeRates");',
+    '  loadOneLine("fxTimestampFresh");\n  loadOneLine("fxSourceTrusted");\n  loadAsyncBlock("loadExchangeRates");',
+)
+replace_once(
+    "verify_browser_runtime.js",
+    ': { rates: { JPY_KRW: 8.7, USD_KRW: 1380 }, updated_at: new Date().toISOString() },',
+    ': { rates: { JPY_KRW: 8.7, USD_KRW: 1380 }, updated_at: new Date().toISOString(), base: "KRW", source: "https://api.frankfurter.dev/v2/rates?base=USD&quotes=KRW,JPY", source_route: "frankfurter-v2" },',
+)
+
+# Legacy recovery test used an intentionally underspecified synthetic last-good
+# payload. The strengthened policy requires the same timestamp/provenance proof
+# as production, so make the fixture a real trusted/fresh payload.
+replace_once(
+    "test_error_recovery_learning_v134.py",
+    '        initial={"rates":{"JPY_KRW":9.0,"USD_KRW":1350.0},"source":"old"}',
+    '        initial={"updated_at":"2099-01-01T00:00:00+00:00","base":"KRW","rates":{"JPY_KRW":9.0,"USD_KRW":1350.0},"source":"https://api.frankfurter.dev/v2/rates?base=USD&quotes=KRW,JPY","source_route":"frankfurter-v2"}',
 )
 
 print("v346 FX integrity patch applied")
