@@ -37,10 +37,14 @@ Lenovo/Termux 태블릿이 **12시간마다 1회(태블릿 현지시간 08:00 / 
 
 - `to_tablet/`의 검증 패키지/manifest 기본 보존기간: **14일**
 - 최신 완전한 패키지 세트는 최소 **4세트** 강제 보존
-- 수동 실행이 많아도 패키지 세트는 최대 **40세트**까지만 유지
+- 완전한 패키지 세트 기준으로 최대 **40세트**를 유지하며, 불완전 orphan은 40세트 계산을 소모하지 않고 14일이 지나면 정리
 - `receipts/`는 최신 **16개를 최소 보존**, 최대 **64개**로 제한하고 14일 초과분을 정리
 - 삭제 허용 이름은 `manifest_*.json`, `TCG_VERIFIED_*.tar.gz`, `TABLET_SYNC_RECEIPT_*.json` 세 종류뿐임
 - 사진, 일반 문서, 알 수 없는 파일명, 다른 폴더는 보존기간과 관계없이 자동 삭제하지 않음
+- Drive에서 TCG 파일을 지울 때는 정확한 파일 1개씩 `rclone deletefile --drive-use-trash=false`로 영구삭제하여 휴지통 용량 누적을 방지
+- Drive 전체 `rclone cleanup`/휴지통 비우기는 사용하지 않음. 사용자가 직접 버린 다른 파일까지 영구삭제할 수 있기 때문임
+- 완전 패키지 삭제는 **manifest(commit marker) → bundle** 순서로 실행하여 중간 실패가 나도 bundle orphan만 남도록 함
+- 방금 업로드하고 read-back까지 성공한 패키지 key는 해당 정리 실행에서 명시적으로 보호하고, 정리 성공 후 manifest/bundle이 둘 다 남아 있는지 다시 확인
 - 원격 정리 실패는 새 검증 패키지 자체를 실패로 바꾸지 않고 `DRIVE_RETENTION_WARNING`으로 별도 보고하여 중복 업로드 재시도를 막음
 - 태블릿 로컬 rollback용 `last_good`은 기존 정책대로 최신 **8개**를 유지하며 진행 중 transaction의 backup은 추가 보존
 
