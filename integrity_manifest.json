@@ -1,7 +1,7 @@
 {
   "version": 2,
   "engine": "v109-card-identity-ocr-learning",
-  "generated_at": "2026-09-27T16:08:11+00:00",
+  "generated_at": "2026-09-27T16:09:05+00:00",
   "files": {
     ".github/workflows/ai-auto-tracker-guard.yml": {
       "sha256": "636e750bd6d2619cce75d4bce2d68051eaa2209ae763bc8ec523ed73476728a6",
@@ -428,8 +428,8 @@
       "bytes": 2601
     },
     ".github/workflows/tablet-gpt-tcg-grader-main-alignment.yml": {
-      "sha256": "195b6f12572fb624e2d5e721039a1e61e1cbadc27bf9c310efc2dc332a0d1971",
-      "bytes": 10979
+      "sha256": "bcbdcd17fb35791af5752e53cb5dec98b68c43e51d469d37e3ee2eacb0668245",
+      "bytes": 12769
     },
     ".github/workflows/tablet-termux-main-guard.yml": {
       "sha256": "00c8e054f113cb0e25b71e65ae245af341fc6f1590add250b4c3e68f710a7fbc",
@@ -704,8 +704,8 @@
       "bytes": 4510
     },
     "TCG_CROSSCHECK/TABLET_GPT_TCG_GRADER_SYNC_CONTRACT_V344.json": {
-      "sha256": "f3597e15bac162ca39e4111ced3af22a4147052bfeb44ce766568cb9f3a3afcc",
-      "bytes": 5021
+      "sha256": "dff60f7e0c574aa07c2441538092951ed993d5948b02c06fd10c87c8c79ba749",
+      "bytes": 5246
     },
     "TCG_CROSSCHECK/TCG_GRADER/AI_RELIABILITY_V8_ACTUAL_OUTPUT.json": {
       "sha256": "f56c12964705bf9e62bd655af80f1a292017b097e800d7f74521ad8b22f0b233",
@@ -3240,8 +3240,8 @@
       "bytes": 3467
     },
     "test_tablet_gpt_tcg_grader_sync_v344.py": {
-      "sha256": "90af2c0bfd4f267a9c93be08e901f32d7b17d7bf34df215321e4645b72169ce9",
-      "bytes": 4781
+      "sha256": "af069b736eef103425fc46ace215e963411016e8a573a391ef2e96a2f48566f3",
+      "bytes": 5440
     },
     "test_tablet_main_entrypoint_v251.py": {
       "sha256": "eeca09372b0dd587d6d74d8a1ec75f28e84aca07b7cc38d2bf61555ef992b2f8",
