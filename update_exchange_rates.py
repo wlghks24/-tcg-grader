@@ -1,7 +1,9 @@
 #!/usr/bin/env python3
-"""Refresh KRW reference exchange rates; preserve only structurally valid last values on failure."""
+"""Refresh KRW reference exchange rates; preserve only trusted fresh last values on failure."""
 import datetime as dt,json,math,urllib.error,urllib.request
 from pathlib import Path
+
+from fx_policy import TRUSTED_ROUTE_SOURCES, validate_exchange_payload
 from safe_runtime import (
     atomic_write_json,
     diagnostic_exception,
@@ -11,13 +13,11 @@ from safe_runtime import (
     safe_urlopen,
     unique_json_object,
 )
+
 DATA=Path(__file__).resolve().parent/'exchange_rates.json'
-SOURCES=(
-    ('frankfurter-v2','https://api.frankfurter.dev/v2/rates?base=USD&quotes=KRW,JPY'),
-    ('frankfurter-v1','https://api.frankfurter.dev/v1/latest?base=USD&symbols=KRW,JPY'),
-    ('frankfurter-legacy','https://api.frankfurter.app/latest?from=USD&to=KRW,JPY'),
-)
+SOURCES=tuple(TRUSTED_ROUTE_SOURCES.items())
 ALLOWED_HOSTS={'api.frankfurter.dev','api.frankfurter.app'}
+MAX_RESPONSE_BYTES=500_000
 
 
 def _empty_current():
@@ -33,24 +33,31 @@ def _empty_current():
     }
 
 
+def _strict_json_bytes(raw: bytes):
+    if len(raw)>MAX_RESPONSE_BYTES:
+        raise ValueError('환율 응답 크기 제한 초과')
+    try:
+        text=raw.decode('utf-8')
+    except UnicodeDecodeError as exc:
+        raise ValueError('환율 응답 UTF-8 오류') from exc
+    return json.loads(
+        text,
+        parse_constant=reject_nonstandard_json,
+        object_pairs_hook=unique_json_object,
+    )
+
+
 def _load_current():
-    """Load the last state without allowing ambiguous/non-standard JSON through."""
+    """Load only a trusted, fresh last-good state; stale/unproven values fail closed."""
     try:
         current=json.loads(
             safe_read_text(DATA),
             parse_constant=reject_nonstandard_json,
             object_pairs_hook=unique_json_object,
         )
-        if not isinstance(current,dict) or not isinstance(current.get('rates'),dict):
-            raise ValueError('환율 파일 구조 오류')
-        rates=current['rates']
-        values=(rates.get('JPY_KRW'),rates.get('USD_KRW'))
-        if any(isinstance(value,bool) or not isinstance(value,(int,float)) for value in values):
-            raise ValueError('기존 환율 값 형식 오류')
-        if not all(math.isfinite(float(value)) for value in values):
-            raise ValueError('기존 환율 값은 유한해야 합니다')
-        if not (0<float(values[0])<30 and 500<float(values[1])<3000):
-            raise ValueError('기존 환율 값 범위 오류')
+        valid,_reason=validate_exchange_payload(current,require_fresh=True)
+        if not valid:
+            raise ValueError('기존 환율 provenance/freshness 오류')
         return current,True
     except (OSError,ValueError,TypeError,json.JSONDecodeError):
         return _empty_current(),False
@@ -59,17 +66,33 @@ def _load_current():
 def fetch(url):
     req=urllib.request.Request(url,headers={'User-Agent':'TCG-Grader-FX-Updater/2.0'})
     with safe_urlopen(req,timeout=env_int('TCG_HTTP_TIMEOUT',20,5,60),allowed_hosts=ALLOWED_HOSTS) as r:
-        return json.load(r)
+        raw=r.read(MAX_RESPONSE_BYTES+1)
+    return _strict_json_bytes(raw)
 
 
 def parse_rates(raw):
-    """Accept Frankfurter v1's mapping and v2's flat rate rows."""
+    """Accept Frankfurter v1 mapping or v2 rows, always bound to USD as base."""
     if isinstance(raw,dict) and isinstance(raw.get('rates'),dict):
-        rates=raw['rates']; return float(rates['KRW']),float(rates['JPY'])
+        base=str(raw.get('base') or 'USD').upper()
+        if base!='USD':
+            raise ValueError('환율 응답 base가 USD가 아닙니다')
+        rates=raw['rates']
+        return float(rates['KRW']),float(rates['JPY'])
     rows=raw.get('data') if isinstance(raw,dict) and isinstance(raw.get('data'),list) else raw
     if isinstance(rows,list):
-        quotes={str(row.get('quote') or row.get('currency') or '').upper():row.get('rate')
-                for row in rows if isinstance(row,dict)}
+        quotes={}
+        for row in rows:
+            if not isinstance(row,dict):
+                raise ValueError('환율 응답 행 구조 오류')
+            base=str(row.get('base') or 'USD').upper()
+            if base!='USD':
+                raise ValueError('환율 응답 행 base가 USD가 아닙니다')
+            quote=str(row.get('quote') or row.get('currency') or '').upper()
+            if not quote:
+                continue
+            if quote in quotes:
+                raise ValueError(f'환율 응답 중복 통화: {quote}')
+            quotes[quote]=row.get('rate')
         return float(quotes['KRW']),float(quotes['JPY'])
     raise ValueError('환율 응답의 KRW·JPY 필수값을 읽지 못했습니다')
 
@@ -94,9 +117,6 @@ def main():
         current['collection_error']=None;current['collection_errors']=[]
     else:
         current['collection_status']='기존 확인환율 유지' if has_valid_current else '유효 환율 없음'
-        # Keep the singular compatibility field equal to one list entry.  The
-        # orchestrator merges both fields and de-duplicates exact strings; a
-        # concatenated summary made the same outage look like an extra failure.
         current['collection_error']=errors[-1] if errors else '환율 수집 실패'
         current['collection_errors']=errors
     atomic_write_json(DATA,current);return current
