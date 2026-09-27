@@ -6,21 +6,15 @@ import datetime as dt
 import json
 import math
 from pathlib import Path
-from urllib.parse import urlsplit
 
 from safe_runtime import reject_nonstandard_json, safe_read_text, unique_json_object
 
 FX_MAX_AGE_SECONDS = 72 * 60 * 60
 FX_MAX_FUTURE_SKEW_SECONDS = 6 * 60 * 60
-TRUSTED_ROUTE_HOSTS = {
-    "frankfurter-v2": "api.frankfurter.dev",
-    "frankfurter-v1": "api.frankfurter.dev",
-    "frankfurter-legacy": "api.frankfurter.app",
-}
-TRUSTED_ROUTE_PATHS = {
-    "frankfurter-v2": "/v2/rates",
-    "frankfurter-v1": "/v1/latest",
-    "frankfurter-legacy": "/latest",
+TRUSTED_ROUTE_SOURCES = {
+    "frankfurter-v2": "https://api.frankfurter.dev/v2/rates?base=USD&quotes=KRW,JPY",
+    "frankfurter-v1": "https://api.frankfurter.dev/v1/latest?base=USD&symbols=KRW,JPY",
+    "frankfurter-legacy": "https://api.frankfurter.app/latest?from=USD&to=KRW,JPY",
 }
 
 
@@ -67,16 +61,9 @@ def validate_exchange_payload(data, *, now: dt.datetime | None = None, require_f
 
     route = data.get("source_route")
     source = data.get("source")
-    if route not in TRUSTED_ROUTE_HOSTS or not isinstance(source, str):
+    if route not in TRUSTED_ROUTE_SOURCES or not isinstance(source, str):
         return False, "source_route"
-    try:
-        parts = urlsplit(source)
-    except ValueError:
-        return False, "source_url"
-    host = (parts.hostname or "").lower()
-    if parts.scheme != "https" or parts.username or parts.password or parts.port not in (None, 443):
-        return False, "source_url"
-    if host != TRUSTED_ROUTE_HOSTS[route] or parts.path != TRUSTED_ROUTE_PATHS[route]:
+    if source != TRUSTED_ROUTE_SOURCES[route]:
         return False, "source_provenance"
     return True, "ok"
 
