@@ -1,7 +1,7 @@
 {
   "version": 2,
   "engine": "v109-card-identity-ocr-learning",
-  "generated_at": "2026-09-27T15:20:53+00:00",
+  "generated_at": "2026-09-27T15:24:10+00:00",
   "files": {
     ".github/workflows/ai-auto-tracker-guard.yml": {
       "sha256": "636e750bd6d2619cce75d4bce2d68051eaa2209ae763bc8ec523ed73476728a6",
@@ -396,8 +396,8 @@
       "bytes": 5780
     },
     ".github/workflows/repository-integrity-manifest-sync.yml": {
-      "sha256": "61bc15c78ac841b2ecb099f45239091a3cf1fa78b2695aca4e24fd7b1bb07498",
-      "bytes": 2186
+      "sha256": "202ece219e06c481f92c6155e9bbdd6e8abacce836b02438898ef8f07300cdc4",
+      "bytes": 2206
     },
     ".github/workflows/runtime-correctness-guard.yml": {
       "sha256": "c0a82d48b34c880972693a491a1be49a32ab682034d05f746f02953430582a26",
@@ -3204,8 +3204,8 @@
       "bytes": 4204
     },
     "test_tablet_gpt_tcg_grader_sync_v343.py": {
-      "sha256": "a875aac953517fb82acc6796c3274d4aa255a21dc3d14d9229991846b886b4bb",
-      "bytes": 5360
+      "sha256": "d31c50013a33110936a6e4e1d796d9f4d5827d99a80069fbbe26f5624c38f07a",
+      "bytes": 5380
     },
     "test_tablet_main_entrypoint_v251.py": {
       "sha256": "eeca09372b0dd587d6d74d8a1ec75f28e84aca07b7cc38d2bf61555ef992b2f8",
