@@ -1,0 +1,63 @@
+name: Diagnose Exhaustive v342
+
+on:
+  push:
+    branches: [diag/exhaustive-v342-1a2776]
+    paths:
+      - '.github/workflows/diagnose-exhaustive-v342.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  diagnose:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97
+        with:
+          python-version: '3.12'
+      - name: Install dependencies
+        run: |
+          python -m pip install --disable-pip-version-check -r requirements.txt
+          python -m pip install --disable-pip-version-check pyyaml
+      - name: Reproduce isolated root tests and collect failures
+        env:
+          TCG_REQUIRE_NODE: '1'
+        shell: bash
+        run: |
+          set +e
+          : > exhaustive_failure_report.txt
+          failed=0
+          total=0
+          for file in test_*.py; do
+            [ -f "$file" ] || continue
+            total=$((total+1))
+            tmp="$(mktemp)"
+            python -m unittest discover -v -s . -p "$file" >"$tmp" 2>&1
+            rc=$?
+            if [ "$rc" -eq 5 ]; then
+              python selfrefine_standalone_test_runner.py "$file" >>"$tmp" 2>&1
+              rc=$?
+            fi
+            if [ "$rc" -ne 0 ]; then
+              failed=$((failed+1))
+              {
+                echo "===== FAILED $file rc=$rc ====="
+                tail -n 120 "$tmp"
+                echo
+              } >> exhaustive_failure_report.txt
+            fi
+            rm -f "$tmp"
+          done
+          echo "TOTAL=$total" >> exhaustive_failure_report.txt
+          echo "FAILED=$failed" >> exhaustive_failure_report.txt
+          cat exhaustive_failure_report.txt
+      - name: Upload diagnostic report
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        with:
+          name: exhaustive-v342-failure-report
+          path: exhaustive_failure_report.txt
+          if-no-files-found: error
+          retention-days: 1
