@@ -1,7 +1,7 @@
 {
   "version": 2,
   "engine": "v109-card-identity-ocr-learning",
-  "generated_at": "2026-09-27T13:37:01+00:00",
+  "generated_at": "2026-09-27T14:02:27+00:00",
   "files": {
     ".github/workflows/ai-auto-tracker-guard.yml": {
       "sha256": "636e750bd6d2619cce75d4bce2d68051eaa2209ae763bc8ec523ed73476728a6",
@@ -2096,8 +2096,8 @@
       "bytes": 9701
     },
     "repository_integrity_guard.py": {
-      "sha256": "900427cec9bdc66b5f52582c4cba349e734adfb12e0ac2825a6971959058797d",
-      "bytes": 9110
+      "sha256": "0e637ac970ec87ffdb203bf8f4c8ea78932ce71342629d7ecd040d30b79c7d41",
+      "bytes": 11687
     },
     "run_github_pipeline.py": {
       "sha256": "2682cab4353ff651922c04f2fe58cb0a7fa4e5547298cdd9dac284a830ae8e27",
@@ -2992,8 +2992,8 @@
       "bytes": 4430
     },
     "test_repository_selfrefine_v13.py": {
-      "sha256": "378ef7b6a0e79b6671d214a6b657706c5b1914b4fcd2f1edffe8ad6ea8010f91",
-      "bytes": 4829
+      "sha256": "985791ce6ab5c32b9bde6104524e510db93a7a590e6b31b31b0005963027a182",
+      "bytes": 6303
     },
     "test_runtime_bundle_guard_v143.py": {
       "sha256": "bc567e85756d4890aca07f6bc5d9f0d25e7d8a4eb6672d6ec5d744b92358aa99",
