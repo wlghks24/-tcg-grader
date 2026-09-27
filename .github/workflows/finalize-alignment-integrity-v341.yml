@@ -31,11 +31,21 @@ jobs:
       - name: Install audited test dependencies
         run: python -m pip install --disable-pip-version-check -r requirements.txt
 
-      - name: Apply bounded v341 repair and remove one-shot sources
+      - name: Repair helper ambiguity, apply bounded v341 repair and remove one-shot sources
         shell: bash
         run: |
           set -euo pipefail
           test "${GITHUB_REF_NAME}" = "fix/alignment-integrity-v341"
+          python - <<'PY'
+          from pathlib import Path
+          p = Path('apply_alignment_integrity_v341.py')
+          s = p.read_text(encoding='utf-8')
+          old = 's = one(s, "          import json\\n          import re\\n", "          import json\\n          import os\\n          import re\\n", "freshness os import")'
+          new = 's = s.replace("          import json\\n          import re\\n", "          import json\\n          import os\\n          import re\\n")'
+          if s.count(old) != 1:
+              raise SystemExit(f'helper ambiguity repair expected one match, got {s.count(old)}')
+          p.write_text(s.replace(old, new, 1), encoding='utf-8')
+          PY
           python apply_alignment_integrity_v341.py
           git rm -- apply_alignment_integrity_v341.py .github/workflows/finalize-alignment-integrity-v341.yml
 
