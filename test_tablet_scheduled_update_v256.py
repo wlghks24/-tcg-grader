@@ -27,6 +27,12 @@ class TabletScheduledUpdateV256Tests(unittest.TestCase):
         self.assertLess(self.main.index(ensure), self.main.index(server))
         self.assertIn('부팅 후 자동 main 확인 준비가 완전하지 않습니다', self.main)
 
+    def test_update_now_rechecks_scheduler_after_updating_code(self):
+        case = self.main[self.main.index('  update-now)'):self.main.index('  update-status)')]
+        self.assertIn('bash TABLET_SCHEDULED_UPDATE.sh run', case)
+        self.assertIn('bash TABLET_SCHEDULED_UPDATE.sh ensure || true', case)
+        self.assertNotIn('exec bash TABLET_SCHEDULED_UPDATE.sh run', case)
+
     def test_schedule_uses_canonical_main_and_update_only_path(self):
         canonical = 'git fetch "$OFFICIAL_HTTPS" refs/heads/main:refs/remotes/origin/main'
         self.assertIn('OFFICIAL_HTTPS="https://github.com/wlghks24/-tcg-grader.git"', self.script)
@@ -57,22 +63,29 @@ class TabletScheduledUpdateV256Tests(unittest.TestCase):
         for token in forbidden:
             self.assertNotIn(token, self.script)
 
-    def test_schedule_is_bounded_boot_supervised_and_recovers_stale_lock(self):
-        self.assertIn('TCG_UPDATE_INTERVAL_HOURS:-24', self.script)
+    def test_schedule_is_hourly_bounded_boot_supervised_and_recovers_stale_lock(self):
+        self.assertIn('TCG_UPDATE_INTERVAL_HOURS:-1', self.script)
+        self.assertNotIn('TCG_UPDATE_INTERVAL_HOURS:-24', self.script)
         self.assertIn('INTERVAL_HOURS" -lt 1', self.script)
         self.assertIn('INTERVAL_HOURS" -gt 168', self.script)
         self.assertIn('sleep 30', self.script)
         self.assertIn('sleep "$((INTERVAL_HOURS*3600))"', self.script)
         self.assertIn('kill -0 "$owner"', self.script)
+        self.assertIn('UPDATE_INTERVAL_HOURS=$INTERVAL_HOURS', self.script)
 
-    def test_scheduler_self_heals_and_reports_termux_boot_readiness(self):
-        for token in ('ensure_schedule()', 'boot_loop()', 'write_boot_heartbeat()', 'termux_boot_state()'):
+    def test_scheduler_self_heals_starts_now_and_reports_termux_boot_readiness(self):
+        for token in ('ensure_schedule()', 'boot_loop()', 'write_boot_heartbeat()', 'termux_boot_state()', 'start_loop_if_needed()'):
             self.assertIn(token, self.script)
         self.assertIn('com.termux.boot', self.script)
         self.assertIn('TERMUX_BOOT=$boot_state', self.script)
         self.assertIn('BOOT_LOOP_HEARTBEAT=not-seen', self.script)
+        self.assertIn('BOOT_LOOP_PID_FILE=', self.script)
+        self.assertIn('BOOT_LOOP=$loop_state', self.script)
+        self.assertIn('nohup bash "$ROOT/TABLET_SCHEDULED_UPDATE.sh" boot-loop', self.script)
         self.assertIn('TABLET_SCHEDULED_UPDATE.sh" boot-loop', self.script)
         self.assertIn('예약 업데이트 부팅 스크립트가 없거나 구형이라 자동 복구합니다', self.script)
+        self.assertIn('start_loop_if_needed', self.script[self.script.index('install_schedule()'):self.script.index('ensure_schedule()')])
+        self.assertIn('start_loop_if_needed', self.script[self.script.index('ensure_schedule()'):self.script.index('boot_loop()')])
 
     def test_runtime_delivery_fails_closed_if_scheduler_is_missing(self):
         self.assertIn('"TABLET_SCHEDULED_UPDATE.sh"', self.manifest)
