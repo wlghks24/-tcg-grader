@@ -15,7 +15,7 @@ class RuntimeHardeningV341Tests(unittest.TestCase):
         for token in (
             'SCHEDULER_VERSION="daily-2300-kst-v2"',
             'pid_matches_mode()',
-            'stop_verified_boot_loop()',
+            'stop_verified_loop_process()',
             'read_boot_loop_version()',
             'run_and_reconcile_schedule()',
             'ensure_schedule || true',

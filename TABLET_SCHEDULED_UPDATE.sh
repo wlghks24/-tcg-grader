@@ -237,7 +237,7 @@ run_update() {
   return "$rc"
 }
 
-stop_verified_boot_loop() {
+stop_verified_loop_process() {
   local owner="$1" attempt
   if ! pid_matches_mode "$owner" "boot-loop"; then
     return 0
@@ -265,7 +265,7 @@ start_loop_if_needed() {
       return 0
     fi
     echo "[안내] 구형 예약 루프를 현재 23:00 KST 스케줄로 교체합니다(PID $owner, version=$owner_version)."
-    stop_verified_boot_loop "$owner" || return $?
+    stop_verified_loop_process "$owner" || return $?
   elif [ -n "$owner" ]; then
     echo "[안내] 기록된 PID가 예약 루프가 아니므로 종료하지 않고 오래된 상태만 폐기합니다: $owner"
   fi
@@ -343,7 +343,7 @@ boot_loop() {
       return 0
     fi
     echo "[안내] 부팅 중 구형 예약 루프를 교체합니다(PID $owner, version=$owner_version)."
-    stop_verified_boot_loop "$owner" || return $?
+    stop_verified_loop_process "$owner" || return $?
   elif [ -n "$owner" ] && [ "$owner" != "$$" ]; then
     echo "[안내] 예약 PID가 다른 프로세스를 가리켜 상태만 폐기합니다: $owner"
   fi
@@ -371,7 +371,7 @@ remove_schedule() {
   owner="$(read_boot_loop_pid)"
   case "$owner" in ''|*[!0-9]*) owner="" ;; esac
   if [ -n "$owner" ] && pid_matches_mode "$owner" "boot-loop"; then
-    stop_verified_boot_loop "$owner" || true
+    stop_verified_loop_process "$owner" || true
   elif [ -n "$owner" ]; then
     echo "[안내] 기록된 PID가 예약 루프가 아니므로 종료 신호를 보내지 않습니다: $owner"
   fi

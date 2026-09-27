@@ -96,7 +96,7 @@ class TabletScheduledUpdateV256Tests(unittest.TestCase):
     def test_scheduler_validates_pid_identity_before_trusting_or_killing(self):
         for token in (
             'pid_cmdline()', 'pid_matches_mode()', 'pid_matches_update()',
-            'stop_verified_boot_loop()', '기록된 PID가 예약 루프가 아니므로 종료하지 않고',
+            'stop_verified_loop_process()', '기록된 PID가 예약 루프가 아니므로 종료하지 않고',
             '기록된 PID가 예약 루프가 아니므로 종료 신호를 보내지 않습니다',
         ):
             self.assertIn(token, self.script)
