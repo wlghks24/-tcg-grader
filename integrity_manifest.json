@@ -1,7 +1,7 @@
 {
   "version": 2,
   "engine": "v109-card-identity-ocr-learning",
-  "generated_at": "2026-09-27T10:09:14+00:00",
+  "generated_at": "2026-09-27T13:26:44+00:00",
   "files": {
     ".github/workflows/ai-auto-tracker-guard.yml": {
       "sha256": "636e750bd6d2619cce75d4bce2d68051eaa2209ae763bc8ec523ed73476728a6",
@@ -596,8 +596,8 @@
       "bytes": 5028
     },
     "TABLET_SCHEDULED_UPDATE.sh": {
-      "sha256": "e6886074f96ce5b94fbdacf217012ebdf7be8917b2cf9dbef8144dbbc2225487",
-      "bytes": 7808
+      "sha256": "88abee5a17e80e77202afc28f2b7ef0c5705495ff63b43e267a7af22ff3decfb",
+      "bytes": 10968
     },
     "TCG_AUTO_UPDATE.bat": {
       "sha256": "0c80ed7f5a218d52cb6594032fac9180571598c776f786332a7fb53ed89f42da",
@@ -2232,8 +2232,8 @@
       "bytes": 1038
     },
     "tablet_gdrive_publish.py": {
-      "sha256": "e38222fbbed4d5843aa78d68452f1bb44c073a5b6e26f1fed4ed8078ee6684f9",
-      "bytes": 9925
+      "sha256": "aafe1afda5b3023e8312b4d793032b751fe0822bd7831cc0e04f3a0b931ffd3a",
+      "bytes": 16849
     },
     "tablet_gdrive_sync.py": {
       "sha256": "6e73f65fcf0d0b61ceb53c39e7f37c3ab60057f75179d07660111ab067305428",
@@ -3120,8 +3120,8 @@
       "bytes": 4226
     },
     "test_tablet_gdrive_publish_v257.py": {
-      "sha256": "632ef750971c59fdab8e8e41c8649e900b16784f7a2a374929fbdf7bf1eb3d9a",
-      "bytes": 4208
+      "sha256": "5614f819d6d98d89a35b46e2a9a22a636b1d70c659e40efa09a37c867c1fdbfd",
+      "bytes": 8660
     },
     "test_tablet_gdrive_sync.py": {
       "sha256": "55cfbc08df9f5fd461c58f9ec60843cf4636cb864bee041f5f1287dc2b1b248b",
@@ -3172,8 +3172,8 @@
       "bytes": 6362
     },
     "test_tablet_scheduled_update_v256.py": {
-      "sha256": "05fc1a3e4eca93a8a84769812804c9e2cb916ea6d7b38392f8669f860b713a8d",
-      "bytes": 4528
+      "sha256": "04b659bc618cbbf90b55783efc22c72c2518f5a58bef566461f9b715e365adc2",
+      "bytes": 5783
     },
     "test_tablet_standalone_hardening_v209.py": {
       "sha256": "db2fc2d92954695afbfab7ad8511480433e77e8caeed14e916ff161ffdb18e2a",
