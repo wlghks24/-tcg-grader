@@ -63,15 +63,18 @@ class TabletScheduledUpdateV256Tests(unittest.TestCase):
         for token in forbidden:
             self.assertNotIn(token, self.script)
 
-    def test_schedule_is_hourly_bounded_boot_supervised_and_recovers_stale_lock(self):
-        self.assertIn('TCG_UPDATE_INTERVAL_HOURS:-1', self.script)
-        self.assertNotIn('TCG_UPDATE_INTERVAL_HOURS:-24', self.script)
-        self.assertIn('INTERVAL_HOURS" -lt 1', self.script)
-        self.assertIn('INTERVAL_HOURS" -gt 168', self.script)
-        self.assertIn('sleep 30', self.script)
-        self.assertIn('sleep "$((INTERVAL_HOURS*3600))"', self.script)
-        self.assertIn('kill -0 "$owner"', self.script)
-        self.assertIn('UPDATE_INTERVAL_HOURS=$INTERVAL_HOURS', self.script)
+    def test_schedule_runs_once_daily_at_2300_kst(self):
+        self.assertIn('SCHEDULE_HOUR="23"', self.script)
+        self.assertIn('SCHEDULE_MINUTE="00"', self.script)
+        self.assertIn('timezone(timedelta(hours=9))', self.script)
+        self.assertIn('seconds_until_next_run()', self.script)
+        self.assertIn('sleep "$wait_seconds"', self.script)
+        self.assertIn('UPDATE_SCHEDULE=DAILY_${SCHEDULE_HOUR}:${SCHEDULE_MINUTE}_KST', self.script)
+        self.assertIn('NEXT_RUN_KST=', self.script)
+        self.assertNotIn('TCG_UPDATE_INTERVAL_HOURS', self.script)
+        self.assertNotIn('INTERVAL_HOURS', self.script)
+        self.assertNotIn('sleep "$((INTERVAL_HOURS*3600))"', self.script)
+        self.assertIn('매일 23:00 KST 기능 업데이트 확인', self.main)
 
     def test_scheduler_self_heals_starts_now_and_reports_termux_boot_readiness(self):
         for token in ('ensure_schedule()', 'boot_loop()', 'write_boot_heartbeat()', 'termux_boot_state()', 'start_loop_if_needed()'):
