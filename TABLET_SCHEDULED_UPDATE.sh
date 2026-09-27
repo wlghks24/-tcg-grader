@@ -13,12 +13,59 @@ BOOT_DIR="${HOME}/.termux/boot"
 BOOT_FILE="${BOOT_DIR}/tcg-grader-scheduled-update.sh"
 SCHEDULE_HOUR="23"
 SCHEDULE_MINUTE="00"
+SCHEDULER_VERSION="daily-2300-kst-v2"
 OFFICIAL_HTTPS="https://github.com/wlghks24/-tcg-grader.git"
 
 mkdir -p "$LOG_DIR"
 
 now() { date '+%Y-%m-%dT%H:%M:%S%z'; }
 sha() { git -C "$ROOT" rev-parse "$1" 2>/dev/null || printf 'unknown'; }
+
+pid_cmdline() {
+  local pid="$1"
+  case "$pid" in ''|*[!0-9]*) return 1 ;; esac
+  [ -r "/proc/$pid/cmdline" ] || return 1
+  tr '\000' ' ' <"/proc/$pid/cmdline" 2>/dev/null
+}
+
+pid_matches_mode() {
+  local pid="$1" mode="$2" cmdline=""
+  case "$pid" in ''|*[!0-9]*) return 1 ;; esac
+  kill -0 "$pid" 2>/dev/null || return 1
+  cmdline="$(pid_cmdline "$pid")" || return 1
+  [[ "$cmdline" == *"TABLET_SCHEDULED_UPDATE.sh"* ]] || return 1
+  [[ " $cmdline " == *" $mode "* ]]
+}
+
+pid_matches_update() {
+  pid_matches_mode "$1" "run" || pid_matches_mode "$1" "now"
+}
+
+read_boot_loop_pid() {
+  local first=""
+  [ -r "$BOOT_LOOP_PID_FILE" ] || return 0
+  first="$(sed -n '1p' "$BOOT_LOOP_PID_FILE" 2>/dev/null || true)"
+  case "$first" in
+    PID=*) printf '%s' "${first#PID=}" ;;
+    *) printf '%s' "$first" ;;
+  esac
+}
+
+read_boot_loop_version() {
+  local version=""
+  [ -r "$BOOT_LOOP_PID_FILE" ] || { printf 'none'; return 0; }
+  version="$(sed -n 's/^VERSION=//p' "$BOOT_LOOP_PID_FILE" 2>/dev/null | head -n1)"
+  if [ -n "$version" ]; then printf '%s' "$version"; else printf 'legacy'; fi
+}
+
+write_boot_loop_identity() {
+  local pid="$1" tmp="${BOOT_LOOP_PID_FILE}.tmp.$$"
+  cat >"$tmp" <<EOF_PID
+PID=$pid
+VERSION=$SCHEDULER_VERSION
+EOF_PID
+  mv "$tmp" "$BOOT_LOOP_PID_FILE"
+}
 
 next_run_kst() {
   python - "$SCHEDULE_HOUR" "$SCHEDULE_MINUTE" <<'PY'
@@ -82,14 +129,16 @@ EOF_STATUS
 }
 
 write_boot_heartbeat() {
-  local tmp
+  local started_at="${1:-unknown}" tmp
   tmp="${BOOT_HEARTBEAT_FILE}.tmp.$$"
   cat >"$tmp" <<EOF_HEARTBEAT
-BOOT_LOOP_STARTED_AT=$(now)
+BOOT_LOOP_STARTED_AT=$started_at
+BOOT_LOOP_HEARTBEAT_AT=$(now)
 BOOT_LOOP_PID=$$
+BOOT_LOOP_VERSION=$SCHEDULER_VERSION
 ROOT=$ROOT
 UPDATE_SCHEDULE=DAILY_${SCHEDULE_HOUR}:${SCHEDULE_MINUTE}_KST
-NEXT_RUN_KST=$(next_run_kst)
+HEARTBEAT_NEXT_RUN_KST=$(next_run_kst)
 EOF_HEARTBEAT
   mv "$tmp" "$BOOT_HEARTBEAT_FILE"
 }
@@ -101,9 +150,7 @@ cleanup_lock() {
 
 cleanup_boot_loop_pid() {
   local recorded=""
-  if [ -r "$BOOT_LOOP_PID_FILE" ]; then
-    recorded="$(cat "$BOOT_LOOP_PID_FILE" 2>/dev/null || true)"
-  fi
+  recorded="$(read_boot_loop_pid)"
   if [ "$recorded" = "$$" ]; then
     rm -f "$BOOT_LOOP_PID_FILE" 2>/dev/null || true
   fi
@@ -122,7 +169,7 @@ acquire_lock() {
   case "$owner" in
     ''|*[!0-9]*) owner="" ;;
   esac
-  if [ -n "$owner" ] && kill -0 "$owner" 2>/dev/null; then
+  if [ -n "$owner" ] && pid_matches_update "$owner"; then
     echo "[안내] 예약 업데이트가 이미 실행 중입니다(PID $owner)."
     exit 0
   fi
@@ -190,27 +237,54 @@ run_update() {
   return "$rc"
 }
 
-start_loop_if_needed() {
-  local owner="" loop_log="${LOG_DIR}/boot-loop.log"
-  if [ -r "$BOOT_LOOP_PID_FILE" ]; then
-    owner="$(cat "$BOOT_LOOP_PID_FILE" 2>/dev/null || true)"
-  fi
-  case "$owner" in
-    ''|*[!0-9]*) owner="" ;;
-  esac
-  if [ -n "$owner" ] && kill -0 "$owner" 2>/dev/null; then
-    echo "[OK] 예약 업데이트 루프 실행 중(PID $owner)"
+stop_verified_boot_loop() {
+  local owner="$1" attempt
+  if ! pid_matches_mode "$owner" "boot-loop"; then
     return 0
   fi
+  kill "$owner" 2>/dev/null || true
+  for attempt in 1 2 3 4 5 6 7 8 9 10; do
+    if ! pid_matches_mode "$owner" "boot-loop"; then
+      return 0
+    fi
+    sleep 1
+  done
+  echo "[오류] 구형 예약 업데이트 루프를 안전하게 종료하지 못했습니다(PID $owner)." >&2
+  return 8
+}
+
+start_loop_if_needed() {
+  local owner="" owner_version="" loop_log="${LOG_DIR}/boot-loop.log"
+  owner="$(read_boot_loop_pid)"
+  case "$owner" in ''|*[!0-9]*) owner="" ;; esac
+  owner_version="$(read_boot_loop_version)"
+
+  if [ -n "$owner" ] && pid_matches_mode "$owner" "boot-loop"; then
+    if [ "$owner_version" = "$SCHEDULER_VERSION" ]; then
+      echo "[OK] 예약 업데이트 루프 실행 중(PID $owner, $SCHEDULER_VERSION)"
+      return 0
+    fi
+    echo "[안내] 구형 예약 루프를 현재 23:00 KST 스케줄로 교체합니다(PID $owner, version=$owner_version)."
+    stop_verified_boot_loop "$owner" || return $?
+  elif [ -n "$owner" ]; then
+    echo "[안내] 기록된 PID가 예약 루프가 아니므로 종료하지 않고 오래된 상태만 폐기합니다: $owner"
+  fi
+
   rm -f "$BOOT_LOOP_PID_FILE" 2>/dev/null || true
   nohup bash "$ROOT/TABLET_SCHEDULED_UPDATE.sh" boot-loop >>"$loop_log" 2>&1 </dev/null &
   owner=$!
   sleep 1
-  if kill -0 "$owner" 2>/dev/null; then
-    echo "[OK] 예약 업데이트 루프 자동 시작(PID $owner)"
+  if pid_matches_mode "$owner" "boot-loop" \
+     && [ "$(read_boot_loop_pid)" = "$owner" ] \
+     && [ "$(read_boot_loop_version)" = "$SCHEDULER_VERSION" ]; then
+    echo "[OK] 예약 업데이트 루프 자동 시작(PID $owner, $SCHEDULER_VERSION)"
     return 0
   fi
-  echo "[오류] 예약 업데이트 루프 자동 시작 실패. 로그: $loop_log" >&2
+  if pid_matches_mode "$owner" "boot-loop"; then
+    kill "$owner" 2>/dev/null || true
+  fi
+  rm -f "$BOOT_LOOP_PID_FILE" 2>/dev/null || true
+  echo "[오류] 예약 업데이트 루프 자동 시작 검증 실패. 로그: $loop_log" >&2
   return 7
 }
 
@@ -258,20 +332,26 @@ ensure_schedule() {
 }
 
 boot_loop() {
-  local owner="" wait_seconds next_target
-  if [ -r "$BOOT_LOOP_PID_FILE" ]; then
-    owner="$(cat "$BOOT_LOOP_PID_FILE" 2>/dev/null || true)"
+  local owner="" owner_version="" wait_seconds next_target started_at
+  owner="$(read_boot_loop_pid)"
+  case "$owner" in ''|*[!0-9]*) owner="" ;; esac
+  owner_version="$(read_boot_loop_version)"
+
+  if [ -n "$owner" ] && [ "$owner" != "$$" ] && pid_matches_mode "$owner" "boot-loop"; then
+    if [ "$owner_version" = "$SCHEDULER_VERSION" ]; then
+      echo "[안내] 현재 버전 예약 업데이트 루프가 이미 실행 중입니다(PID $owner)."
+      return 0
+    fi
+    echo "[안내] 부팅 중 구형 예약 루프를 교체합니다(PID $owner, version=$owner_version)."
+    stop_verified_boot_loop "$owner" || return $?
+  elif [ -n "$owner" ] && [ "$owner" != "$$" ]; then
+    echo "[안내] 예약 PID가 다른 프로세스를 가리켜 상태만 폐기합니다: $owner"
   fi
-  case "$owner" in
-    ''|*[!0-9]*) owner="" ;;
-  esac
-  if [ -n "$owner" ] && [ "$owner" != "$$" ] && kill -0 "$owner" 2>/dev/null; then
-    echo "[안내] 예약 업데이트 루프가 이미 실행 중입니다(PID $owner)."
-    return 0
-  fi
-  printf '%s\n' "$$" >"$BOOT_LOOP_PID_FILE"
+
+  write_boot_loop_identity "$$"
   trap cleanup_boot_loop_pid EXIT INT TERM HUP
-  write_boot_heartbeat
+  started_at="$(now)"
+  write_boot_heartbeat "$started_at"
   while true; do
     wait_seconds="$(seconds_until_next_run)" || {
       echo "[경고] 다음 23:00 KST 계산 실패; 60초 후 재시도" >&2
@@ -282,36 +362,37 @@ boot_loop() {
     echo "[$(now)] 다음 기능 업데이트 확인: ${next_target} (KST)"
     sleep "$wait_seconds" || true
     bash "$ROOT/TABLET_SCHEDULED_UPDATE.sh" run || true
-    write_boot_heartbeat
+    write_boot_heartbeat "$started_at"
   done
 }
 
 remove_schedule() {
   local owner=""
-  if [ -r "$BOOT_LOOP_PID_FILE" ]; then
-    owner="$(cat "$BOOT_LOOP_PID_FILE" 2>/dev/null || true)"
-  fi
-  case "$owner" in
-    ''|*[!0-9]*) owner="" ;;
-  esac
-  if [ -n "$owner" ] && kill -0 "$owner" 2>/dev/null; then
-    kill "$owner" 2>/dev/null || true
+  owner="$(read_boot_loop_pid)"
+  case "$owner" in ''|*[!0-9]*) owner="" ;; esac
+  if [ -n "$owner" ] && pid_matches_mode "$owner" "boot-loop"; then
+    stop_verified_boot_loop "$owner" || true
+  elif [ -n "$owner" ]; then
+    echo "[안내] 기록된 PID가 예약 루프가 아니므로 종료 신호를 보내지 않습니다: $owner"
   fi
   rm -f "$BOOT_LOOP_PID_FILE" "$BOOT_FILE"
   echo "[OK] 태블릿 예약 업데이트를 제거했습니다."
 }
 
 show_status() {
-  local boot_state loop_state="not-running" owner=""
+  local boot_state loop_state="not-running" owner="" owner_version=""
   boot_state="$(termux_boot_state)"
-  if [ -r "$BOOT_LOOP_PID_FILE" ]; then
-    owner="$(cat "$BOOT_LOOP_PID_FILE" 2>/dev/null || true)"
-  fi
-  case "$owner" in
-    ''|*[!0-9]*) owner="" ;;
-  esac
-  if [ -n "$owner" ] && kill -0 "$owner" 2>/dev/null; then
-    loop_state="running:$owner"
+  owner="$(read_boot_loop_pid)"
+  case "$owner" in ''|*[!0-9]*) owner="" ;; esac
+  owner_version="$(read_boot_loop_version)"
+  if [ -n "$owner" ] && pid_matches_mode "$owner" "boot-loop"; then
+    if [ "$owner_version" = "$SCHEDULER_VERSION" ]; then
+      loop_state="running:$owner"
+    else
+      loop_state="stale-version:$owner:$owner_version"
+    fi
+  elif [ -n "$owner" ]; then
+    loop_state="stale-pid:$owner"
   fi
   echo "현재 HEAD: $(sha HEAD)"
   if [ -f "$STATUS_FILE" ]; then
@@ -324,6 +405,7 @@ show_status() {
   else
     echo "SCHEDULE=not-installed"
   fi
+  echo "SCHEDULER_VERSION=$SCHEDULER_VERSION"
   echo "UPDATE_SCHEDULE=DAILY_${SCHEDULE_HOUR}:${SCHEDULE_MINUTE}_KST"
   echo "NEXT_RUN_KST=$(next_run_kst 2>/dev/null || echo unknown)"
   echo "BOOT_LOOP=$loop_state"
@@ -335,8 +417,18 @@ show_status() {
   fi
 }
 
+run_and_reconcile_schedule() {
+  local rc=0
+  run_update || rc=$?
+  # Bootstrap migration path: an old hourly parent loop invokes this new on-disk
+  # run command after a code update. Re-ensuring here safely replaces that
+  # verified old loop with the current daily 23:00 scheduler.
+  ensure_schedule || true
+  return "$rc"
+}
+
 case "${1:-status}" in
-  run|now) run_update ;;
+  run|now) run_and_reconcile_schedule ;;
   install) install_schedule ;;
   ensure) ensure_schedule ;;
   boot-loop) boot_loop ;;
