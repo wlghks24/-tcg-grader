@@ -21,6 +21,7 @@ jobs:
     env:
       PYTHONDONTWRITEBYTECODE: '1'
       PYTHONUNBUFFERED: '1'
+      TCG_REQUIRE_NODE: '1'
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
         with:
@@ -212,14 +213,18 @@ jobs:
           set -euo pipefail
           git checkout origin/main -- .github/workflows/repository-integrity-manifest-sync-v344.yml
           git diff --exit-code -- .github/workflows/repository-integrity-manifest-sync-v344.yml
-      - name: Run targeted and related regressions
+      - name: Run targeted and current release regressions
         shell: bash
         run: |
           set -euo pipefail
           python -m pip install --disable-pip-version-check --no-input -r requirements.txt
+          python -m pip install --disable-pip-version-check --no-input pyyaml
           python -m py_compile auto_repair_engine.py update_exchange_rates.py test_fx_provenance_freshness_v345.py
           python -m unittest -v test_fx_provenance_freshness_v345.py test_edition_fx_failclosed_v328.py test_error_recovery_learning_v134.py
-          python verify_all_legacy_v99.py
+          python verify_all.py
+          python verify_v107_runtime_integration.py
+          python security_self_audit.py --fail-on medium
+          python main_selfrefine_gate.py
       - name: Rebuild exact-tree integrity manifest
         shell: bash
         run: |
