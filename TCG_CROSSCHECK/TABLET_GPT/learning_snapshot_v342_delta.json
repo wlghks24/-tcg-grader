@@ -1,0 +1,76 @@
+{
+  "schema_version": "1.1-tablet-gpt-tcg-grader-learning-sync",
+  "namespace": "TABLET_GPT",
+  "snapshot_kind": "learning_delta",
+  "run_date_kst": "2026-09-28",
+  "built_at": "2026-09-28T00:21:22+09:00",
+  "status": "finalized",
+  "source_repository": "wlghks24/-tcg-grader",
+  "prior_delta": "TCG_CROSSCHECK/TABLET_GPT/learning_snapshot_v341_delta.json",
+  "prior_lesson_digest_sha256": "01b2f700fc1dd32879dd67ebc453e2791ad07d06a4e99cf8bc89927e0bbcda61",
+  "source_main_sha": "e6c09a75f5906aa4b7490577decebb1dc424e2f8",
+  "share_policy": {
+    "explicit_patch_and_learning_lessons_only": true,
+    "chatgpt_model_weights_exported": false,
+    "raw_grading_calibration_shared": false,
+    "device_local_runtime_memory_overwritten": false,
+    "peer_verified_never_auto_promotes_local": true
+  },
+  "covered_merges": [
+    {
+      "pr": 299,
+      "version": "v341-sync-manifest",
+      "merge_sha": "e6c09a75f5906aa4b7490577decebb1dc424e2f8"
+    }
+  ],
+  "lesson_digest_sha256": "599e01c4a4b4412eee549a52e7c56cacef7cb4132acb2b27f985ebff9ce1dba7",
+  "lessons": [
+    {
+      "lesson_id": "TABLET-GPT-SCHEDULER-PID-IDENTITY-V342",
+      "subsystem": "tablet_scheduled_update",
+      "issue_class": "persisted_pid_can_be_reused_by_unrelated_process",
+      "trigger_condition": "scheduler or update lock trusts a recorded numeric PID using kill -0 without validating the live process command line",
+      "symptom_summary": "a reused PID can be mistaken for the TCG scheduler/update process, causing false running state or signalling the wrong process",
+      "root_cause_class": "pid_existence_without_process_identity_validation",
+      "fix_pattern": "validate /proc/<pid>/cmdline for the exact TABLET_SCHEDULED_UPDATE.sh mode before trusting or signalling a PID, version persisted loop identity, and migrate only verified legacy scheduler processes",
+      "prevention_rule_id": "TGPT-PREV-SCHEDULER-PID-IDENTITY",
+      "verification_result": "targeted_v342_and_pr_ci",
+      "regression_pass": true,
+      "recurrence_count": 1,
+      "applicable_scope": "both",
+      "confidence_level": "high",
+      "physical_tablet_runtime_reverification_required": true
+    },
+    {
+      "lesson_id": "TABLET-GPT-SCHEDULER-HEARTBEAT-SEMANTICS-V342",
+      "subsystem": "tablet_scheduled_update",
+      "issue_class": "heartbeat_overwrites_loop_start_timestamp",
+      "trigger_condition": "periodic heartbeat rewrites BOOT_LOOP_STARTED_AT with the current time instead of retaining the original loop start",
+      "symptom_summary": "runtime diagnostics cannot distinguish a newly started scheduler from a long-running healthy loop with a recent heartbeat",
+      "root_cause_class": "lifecycle_start_and_liveness_timestamp_conflation",
+      "fix_pattern": "capture loop start once, keep it immutable for the process lifetime, record a separate BOOT_LOOP_HEARTBEAT_AT value, and reconcile the installed scheduler after code-update runs",
+      "prevention_rule_id": "TGPT-PREV-SCHEDULER-HEARTBEAT-SEMANTICS",
+      "verification_result": "targeted_v342_and_pr_ci",
+      "regression_pass": true,
+      "recurrence_count": 1,
+      "applicable_scope": "both",
+      "confidence_level": "high",
+      "physical_tablet_runtime_reverification_required": true
+    },
+    {
+      "lesson_id": "TABLET-GPT-PWA-EXACT-OFFLINE-FALLBACK-V342",
+      "subsystem": "tablet_pwa_cache",
+      "issue_class": "query_agnostic_cache_lookup_can_precede_exact_request",
+      "trigger_condition": "offline fallback uses ignoreSearch=true before attempting an exact cache match for a request with query parameters",
+      "symptom_summary": "a cached response for a different query can be returned even when the exact request variant is available",
+      "root_cause_class": "broad_cache_match_precedes_exact_identity_match",
+      "fix_pattern": "try caches.match(request) first, use ignoreSearch=true only as a secondary fallback, and preserve the existing cache ABI and network-first behavior",
+      "prevention_rule_id": "TGPT-PREV-PWA-EXACT-OFFLINE-FALLBACK",
+      "verification_result": "targeted_v342_and_pr_ci",
+      "regression_pass": true,
+      "recurrence_count": 1,
+      "applicable_scope": "both",
+      "confidence_level": "high"
+    }
+  ]
+}

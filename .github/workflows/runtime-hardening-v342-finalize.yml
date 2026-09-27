@@ -1,0 +1,53 @@
+name: Runtime hardening v342 one-shot finalizer
+
+on:
+  push:
+    branches:
+      - fix/runtime-hardening-v342-main
+
+permissions:
+  contents: write
+
+jobs:
+  finalize:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: fix/runtime-hardening-v342-main
+          fetch-depth: 0
+
+      - name: Remove one-shot helper before manifest generation
+        shell: bash
+        run: |
+          set -euo pipefail
+          rm -f .github/workflows/runtime-hardening-v342-finalize.yml
+          git add -A .github/workflows/runtime-hardening-v342-finalize.yml
+
+      - name: Regenerate exact-tree integrity manifest
+        shell: bash
+        run: |
+          set -euo pipefail
+          python fault_injection_healing.py --manifest
+
+      - name: Targeted runtime validation
+        shell: bash
+        run: |
+          set -euo pipefail
+          bash -n TABLET_SCHEDULED_UPDATE.sh
+          node --check sw.js
+          python test_runtime_hardening_v342.py
+          python test_tablet_scheduled_update_v256.py
+          python repository_integrity_guard.py
+
+      - name: Commit regenerated manifest and self-removal
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add integrity_manifest.json
+          git diff --cached --check
+          git commit -m "Finalize runtime hardening v342 integrity manifest"
+          git push origin HEAD:fix/runtime-hardening-v342-main
