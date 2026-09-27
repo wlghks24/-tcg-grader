@@ -81,6 +81,14 @@
 - 외부 장애나 접근제한이 남으면 해결된 것으로 표시하지 않는다.
 - 현재 기준을 변경할 때는 새로운 버전의 인수인계 계약으로 명시적으로 갱신한다.
 
+## 11. v340 무결성 manifest 완전성 계약
+
+- `integrity_manifest.json`의 완전성 비교 기준은 **현재 Git index에 실제로 추적되는 파일 ∩ `fault_injection_healing`의 manifest 추적 suffix 정책**이다.
+- CI/SELFREFINE 실행 중 생성되는 `.gitignore` 대상 또는 기타 비추적 런타임 ledger/report는 고정 해시 manifest 대상에 자동 편입하지 않는다.
+- 반대로 새로 Git 추적된 in-scope 소스·설정 파일이 manifest에서 누락되면 repository integrity 검사는 fail-closed로 실패해야 한다.
+- manifest에 기록된 파일의 hash/schema drift와, manifest에만 남은 비현재 추적 경로도 실패로 처리한다.
+- finalizer 또는 manifest 재생성 절차가 중단된 채로 신규 추적 파일을 병합하지 않는다. exact-head CI에서 무결성 guard와 SELFREFINE를 함께 통과해야 한다.
+
 ## 기준 시점
 
 - 이 문서를 만든 기준 main: `6c54ab50b04ae772b22dea143937e7c8becdee07` (PR #283 병합 후)
