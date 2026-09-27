@@ -60,7 +60,7 @@ jobs:
           git add -A
           python fault_injection_healing.py --manifest
           python repository_integrity_guard.py
-          python fault_injection_healing.py diagnose
+          python fault_injection_healing.py --diagnose
 
       - name: Run targeted and related regressions
         shell: bash
