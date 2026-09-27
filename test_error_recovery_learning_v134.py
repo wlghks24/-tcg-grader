@@ -188,7 +188,13 @@ class ErrorRecoveryLearningV134Tests(unittest.TestCase):
         ]),(1400.0,150.0))
 
     def test_exchange_main_uses_fallback_and_preserves_last_good(self):
-        initial={"rates":{"JPY_KRW":9.0,"USD_KRW":1350.0},"source":"old"}
+        initial={
+            "updated_at":exchange.dt.datetime.now(exchange.dt.timezone.utc).isoformat(),
+            "base":"KRW",
+            "rates":{"JPY_KRW":9.0,"USD_KRW":1350.0},
+            "source":"https://api.frankfurter.dev/v2/rates?base=USD&quotes=KRW,JPY",
+            "source_route":"frankfurter-v2",
+        }
         with tempfile.TemporaryDirectory() as directory:
             data=Path(directory)/"exchange_rates.json"
             data.write_text(json.dumps(initial),encoding="utf-8")
