@@ -96,7 +96,7 @@ class TabletGptTcgGraderSyncV343(unittest.TestCase):
             encoding="utf-8"
         )
         for token in (
-            "- 'fix/**'",
+            "- 'fix/runtime-hardening-v343'",
             "paths-ignore:",
             "- 'integrity_manifest.json'",
             "github.ref != 'refs/heads/main'",
