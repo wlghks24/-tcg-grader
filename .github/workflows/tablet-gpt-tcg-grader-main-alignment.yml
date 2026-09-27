@@ -154,7 +154,6 @@ jobs:
               ['git', 'diff', '--name-only', f'{source}..{head}'],
               text=True,
           ).splitlines()
-          changed_set = set(changed)
           watch = contract['freshness_watch']
           exact = set(watch['exact_paths'])
           prefixes = tuple(watch['path_prefixes'])
@@ -197,21 +196,58 @@ jobs:
                   )
                   raise SystemExit(0)
 
-          # The same verified candidate may cover the immediate post-merge main state,
-          # but only when source/base, all generation files and the exact watched set match.
+          # A verified candidate may cover the first mainline merge after its source. It remains
+          # valid across later non-watched commits, but any later watched-path touch invalidates it.
           if event_name != 'pull_request' and relevant and candidate:
+              mainline = subprocess.check_output(
+                  ['git', 'rev-list', '--first-parent', '--reverse', f'{source}..{head}'],
+                  text=True,
+              ).splitlines()
+              candidate_merge = mainline[0] if mainline else ''
+              parents = (
+                  subprocess.check_output(
+                      ['git', 'rev-list', '--parents', '-n', '1', candidate_merge], text=True
+                  ).strip().split()
+                  if candidate_merge
+                  else []
+              )
+              immediate_merge = len(parents) >= 3 and parents[1] == source
+              candidate_branch_head = parents[2] if immediate_merge else ''
+              branch_changed = set()
+              branch_watched = set()
+              if candidate_branch_head:
+                  branch_changed = set(subprocess.check_output(
+                      ['git', 'diff', '--name-only', f'{source}..{candidate_branch_head}'],
+                      text=True,
+                  ).splitlines())
+                  branch_watched = {path for path in branch_changed if watched(path)}
+
+              later_watched = set()
+              for commit in mainline[1:]:
+                  first_parent = subprocess.check_output(
+                      ['git', 'rev-parse', f'{commit}^1'], text=True
+                  ).strip()
+                  touched = subprocess.check_output(
+                      ['git', 'diff', '--name-only', f'{first_parent}..{commit}'], text=True
+                  ).splitlines()
+                  later_watched.update(path for path in touched if watched(path))
+
               post_merge_sync = (
                   source == candidate_base
                   and candidate.get('post_merge_coverage_allowed') is True
                   and candidate.get('requires_exact_watched_path_match') is True
-                  and generation_files.issubset(changed_set)
+                  and immediate_merge
+                  and generation_files.issubset(branch_changed)
+                  and expected_watched == branch_watched
                   and expected_watched == set(relevant)
                   and bool(expected_watched)
+                  and not later_watched
               )
               if post_merge_sync:
                   print(
                       f'TABLET_GPT_MAIN_SYNC_GENERATION_COVERED version=v{version} '
-                      f'source={source} head={head} watched_changes={len(relevant)}'
+                      f'source={source} candidate_merge={candidate_merge} head={head} '
+                      f'watched_changes={len(relevant)}'
                   )
                   raise SystemExit(0)
 
