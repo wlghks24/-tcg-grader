@@ -3,6 +3,7 @@ name: Apply runtime hardening v341
 on:
   push:
     branches: [fix/runtime-hardening-v341]
+  workflow_dispatch:
 
 permissions:
   contents: write
