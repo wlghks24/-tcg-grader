@@ -1,7 +1,7 @@
 {
   "version": 2,
   "engine": "v109-card-identity-ocr-learning",
-  "generated_at": "2026-09-27T16:40:37+00:00",
+  "generated_at": "2026-09-27T16:57:26+00:00",
   "files": {
     ".github/workflows/ai-auto-tracker-guard.yml": {
       "sha256": "636e750bd6d2619cce75d4bce2d68051eaa2209ae763bc8ec523ed73476728a6",
@@ -352,8 +352,8 @@
       "bytes": 2537
     },
     ".github/workflows/instagram-tcg-selfrefine.yml": {
-      "sha256": "2931b7f5e347b156908d5bb6f3a8aaad33a1401ea0041df68ef9fab4aa80449a",
-      "bytes": 3762
+      "sha256": "b70fd48d958fc39830f139fbbde5e2d911abfbfb86064ce76d7eec253e9a7657",
+      "bytes": 4479
     },
     ".github/workflows/main-branch-protection-audit.yml": {
       "sha256": "3de64b3cfbfc9939a6d16659775fb0446d0afcd478ffa113e68b2eae5056c7a5",
@@ -1703,6 +1703,10 @@
       "sha256": "80d57d80c255dbea10237347f76ed03648b9cb79a07e183c41a230eba4a0c826",
       "bytes": 2036
     },
+    "instagram_tcg_content/collection_freshness_gap_guard.py": {
+      "sha256": "6625d3539a398709f31f4cad0f247733dd171276a59128c015d5eb2218574e14",
+      "bytes": 7032
+    },
     "instagram_tcg_content/collection_health.py": {
       "sha256": "4aedb793747a1a0d01dc447ad998cb8c79690ad4e3573fa3b59affadb172ebff",
       "bytes": 14855
@@ -1710,6 +1714,10 @@
     "instagram_tcg_content/collection_normalizer.py": {
       "sha256": "de5e6eb3b0df2743c6361532f5cc82c80ec4a68f8fa24638eb77b935306ef4dd",
       "bytes": 2294
+    },
+    "instagram_tcg_content/collection_recovery_runner.py": {
+      "sha256": "ce80f83a049506239d73ea62cb54b84ec5cc1edef8489fae6f46dec1f3dafc13",
+      "bytes": 16784
     },
     "instagram_tcg_content/collector_runtime.py": {
       "sha256": "596414e35ef62e47be154ca21dba1cf1732cf9e373e952cfa6bda59e246160a3",
@@ -1756,8 +1764,8 @@
       "bytes": 9121
     },
     "instagram_tcg_content/production_state.py": {
-      "sha256": "1debac75f3e21bd7502f4b5c6770f23c946568bf9c03203c63b0c5aecac9f56d",
-      "bytes": 15037
+      "sha256": "58c02328829e40f0568d8dcb84ba05af305fe0bd350980671d1fa3c2a8a38399",
+      "bytes": 15422
     },
     "instagram_tcg_content/root_cause_diagnostics.py": {
       "sha256": "5ae2ebc6cbd0543b29f9252b928cf88b5523db46ee2f225c8be108236b8fc4e9",
@@ -1815,6 +1823,10 @@
       "sha256": "6ee2159c07673c76aacc6aa1a3de0248fe5398392a5269adb63e5fd781419bc3",
       "bytes": 5519
     },
+    "instagram_tcg_content/test_collection_freshness_gap_guard.py": {
+      "sha256": "4337604dd2699394903d132afc413274de8f834803ce5ee25aa6b4432627066a",
+      "bytes": 2789
+    },
     "instagram_tcg_content/test_collection_health.py": {
       "sha256": "b48366b92ed7989929448d4a74079e9c3767f8c0bbb8d024c1d8fd3da52cafa4",
       "bytes": 7202
@@ -1822,6 +1834,10 @@
     "instagram_tcg_content/test_collection_pipeline_hardening.py": {
       "sha256": "c6288679c24d544a5ddda117e30a92eaac60ca14b2df099b6d6a43ee7cd53274",
       "bytes": 3520
+    },
+    "instagram_tcg_content/test_collection_recovery_runner.py": {
+      "sha256": "589083efe9cea151a96984d9b133971b3cf2f7a1cd9ece00e85a22ab05666220",
+      "bytes": 5029
     },
     "instagram_tcg_content/test_instagram_tcg_root_cause_diagnostics.py": {
       "sha256": "969448c020caf1fbc1df16996391bf77e7b4ae1510ecb35b55acc9fbd491a1af",
@@ -1834,6 +1850,10 @@
     "instagram_tcg_content/test_market_evidence_bridge.py": {
       "sha256": "31df4652fa7b249a93c0b475ea2b6bd303c317b9758716706ca48f8fdb9790fc",
       "bytes": 9766
+    },
+    "instagram_tcg_content/test_missed_slot_recovery_v346.py": {
+      "sha256": "9bb0d5da7f230c258b3867d0c1891541911e6c6d30a3d1c021bf66342d55db16",
+      "bytes": 1875
     },
     "instagram_tcg_content/test_monitor_receipt_lifecycle.py": {
       "sha256": "5d16465aebf52f85f8f953e52883759331834d0489eccf2a85686c831a2d79f4",
