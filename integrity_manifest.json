@@ -1,7 +1,7 @@
 {
   "version": 2,
   "engine": "v109-card-identity-ocr-learning",
-  "generated_at": "2026-09-27T15:11:42+00:00",
+  "generated_at": "2026-09-27T15:20:53+00:00",
   "files": {
     ".github/workflows/ai-auto-tracker-guard.yml": {
       "sha256": "636e750bd6d2619cce75d4bce2d68051eaa2209ae763bc8ec523ed73476728a6",
@@ -428,8 +428,8 @@
       "bytes": 2601
     },
     ".github/workflows/tablet-gpt-tcg-grader-main-alignment.yml": {
-      "sha256": "a6faa2811af1f347203a251392e5df5781f95acfeedef636ab6e7c1d32e811e8",
-      "bytes": 9074
+      "sha256": "dbda5fc1bc7b3d84000067454191efc1db562732483a692a8241e5c80e51ba61",
+      "bytes": 11101
     },
     ".github/workflows/tablet-termux-main-guard.yml": {
       "sha256": "00c8e054f113cb0e25b71e65ae245af341fc6f1590add250b4c3e68f710a7fbc",
@@ -659,6 +659,10 @@
       "sha256": "5d523f3498ba5c801b44bac9160c11575ae8f741a74698e5c148361f63414a73",
       "bytes": 4382
     },
+    "TCG_CROSSCHECK/TABLET_GPT/learning_snapshot_v343_delta.json": {
+      "sha256": "bbf88b33ab0ffc722b4ca9b6e029583cb3a534c590fca8986ce79ea523b1c68c",
+      "bytes": 4451
+    },
     "TCG_CROSSCHECK/TABLET_GPT/ui_repair_candidate_20260926.json": {
       "sha256": "26cb1d421670ea1be7e2b686438226653b0574efc20e5ca0dcc965d34b8b949f",
       "bytes": 1585
@@ -682,6 +686,10 @@
     "TCG_CROSSCHECK/TABLET_GPT_TCG_GRADER_SYNC_CONTRACT_V341.json": {
       "sha256": "9df757b969a6514cd7b4e7b9cbdafe8ff7e1a47da8f2957215214e689bc4d61f",
       "bytes": 4453
+    },
+    "TCG_CROSSCHECK/TABLET_GPT_TCG_GRADER_SYNC_CONTRACT_V343.json": {
+      "sha256": "f2798953a3ea31859acdeac42c546924cfa11b48491f98640907e163992fa694",
+      "bytes": 5493
     },
     "TCG_CROSSCHECK/TCG_GRADER/AI_RELIABILITY_V8_ACTUAL_OUTPUT.json": {
       "sha256": "f56c12964705bf9e62bd655af80f1a292017b097e800d7f74521ad8b22f0b233",
@@ -746,6 +754,10 @@
     "TCG_CROSSCHECK/TCG_GRADER/tablet_gpt_learning_receipt_v341.json": {
       "sha256": "05966b75ca1856128c54e3d13c98de595392022282fbf02b109c5177edd7c706",
       "bytes": 1836
+    },
+    "TCG_CROSSCHECK/TCG_GRADER/tablet_gpt_learning_receipt_v343.json": {
+      "sha256": "e9383a579c5361413530a614e90f3af605f14a0abd9542b57c9378c5c580c4e1",
+      "bytes": 1921
     },
     "TCG_CROSSCHECK/exchange_manifest.json": {
       "sha256": "4bba146c573d224a641e40416c9d4cf983e1100855f95841e9518ff9e7d925f6",
@@ -3190,6 +3202,10 @@
     "test_tablet_gpt_tcg_grader_sync_v341.py": {
       "sha256": "b4063bc968d34e3e3f3af42928eafd4798782fb67a41666bd52ca906c6935e2c",
       "bytes": 4204
+    },
+    "test_tablet_gpt_tcg_grader_sync_v343.py": {
+      "sha256": "a875aac953517fb82acc6796c3274d4aa255a21dc3d14d9229991846b886b4bb",
+      "bytes": 5360
     },
     "test_tablet_main_entrypoint_v251.py": {
       "sha256": "eeca09372b0dd587d6d74d8a1ec75f28e84aca07b7cc38d2bf61555ef992b2f8",
