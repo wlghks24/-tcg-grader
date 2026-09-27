@@ -192,8 +192,21 @@ def _parse_package_name(name: str) -> tuple[dt.datetime, str] | None:
     match = _REMOTE_MANIFEST_RE.fullmatch(name) or _REMOTE_BUNDLE_RE.fullmatch(name)
     if not match:
         return None
-    stamp = dt.datetime.strptime(match.group("stamp"), "%Y%m%dT%H%M%SZ").replace(tzinfo=dt.timezone.utc)
+    try:
+        stamp = dt.datetime.strptime(match.group("stamp"), "%Y%m%dT%H%M%SZ").replace(
+            tzinfo=dt.timezone.utc
+        )
+    except ValueError:
+        return None
     return stamp, match.group("run")
+
+
+def _package_key(name: str) -> tuple[str, str] | None:
+    parsed = _parse_package_name(name)
+    if parsed is None:
+        return None
+    stamp, run_id = parsed
+    return stamp.strftime("%Y%m%dT%H%M%SZ"), run_id
 
 
 def _safe_remote_rows(remote: str, remote_root: str, subdir: str) -> list[dict]:
@@ -230,9 +243,13 @@ def _delete_remote_retention_file(remote: str, remote_root: str, subdir: str, na
             raise ValueError("refusing to delete unknown receipt object")
     else:
         raise ValueError("unsupported retention subdir")
+    # Google Drive's rclone backend sends deletes to Trash by default. These are
+    # exact TCG-generated names, so permanently delete just these individual
+    # objects; never run a Drive-wide trash cleanup that could affect user files.
     run(
         [
             "rclone", "deletefile", f"{remote}:{remote_root}/{subdir}/{name}",
+            "--drive-use-trash=false",
             "--retries", "2", "--low-level-retries", "2",
             "--timeout", "20s", "--contimeout", "10s",
         ],
@@ -252,13 +269,36 @@ def _receipt_modtime(value) -> dt.datetime | None:
     return parsed.astimezone(dt.timezone.utc)
 
 
+def _normalize_protected_package_keys(values) -> set[tuple[str, str]]:
+    protected: set[tuple[str, str]] = set()
+    for value in values or ():
+        if not isinstance(value, tuple) or len(value) != 2:
+            raise ValueError("invalid protected package key")
+        stamp, run_id = value
+        if (
+            not isinstance(stamp, str)
+            or not re.fullmatch(r"\d{8}T\d{6}Z", stamp)
+            or not isinstance(run_id, str)
+            or not RUN_ID_RE.fullmatch(run_id)
+        ):
+            raise ValueError("invalid protected package key")
+        try:
+            dt.datetime.strptime(stamp, "%Y%m%dT%H%M%SZ")
+        except ValueError as exc:
+            raise ValueError("invalid protected package timestamp") from exc
+        protected.add((stamp, run_id))
+    return protected
+
+
 def prune_remote_drive(remote: str = sync.DEFAULT_REMOTE,
                        remote_root: str = sync.DEFAULT_REMOTE_ROOT,
                        *,
-                       now: dt.datetime | None = None) -> dict:
+                       now: dt.datetime | None = None,
+                       protected_keys=None) -> dict:
     """Bound only TCG-managed Drive objects; unknown user files are never deleted."""
     remote = sync.safe_remote_name(remote)
     remote_root = safe_remote_root(remote_root)
+    explicit_protected = _normalize_protected_package_keys(protected_keys)
     now = now or dt.datetime.now(dt.timezone.utc)
     if now.tzinfo is None or now.utcoffset() is None:
         raise ValueError("retention clock must be timezone-aware")
@@ -290,18 +330,35 @@ def prune_remote_drive(remote: str = sync.DEFAULT_REMOTE,
         if any(_REMOTE_MANIFEST_RE.fullmatch(item["name"]) for item in grouped[key])
         and any(_REMOTE_BUNDLE_RE.fullmatch(item["name"]) for item in grouped[key])
     ]
-    protected = set(complete_keys[:REMOTE_PACKAGE_MIN_KEEP])
+    complete_rank = {key: index for index, key in enumerate(complete_keys)}
+    protected = set(complete_keys[:REMOTE_PACKAGE_MIN_KEEP]) | explicit_protected
+
     deleted_packages = 0
-    for index, key in enumerate(keys):
+    deleted_complete_sets = 0
+    deleted_incomplete_groups = 0
+    for key in keys:
         rows = grouped[key]
         stamp = max(item["stamp"] for item in rows)
-        beyond_cap = index >= REMOTE_PACKAGE_MAX_KEEP
+        is_complete = key in complete_rank
+        beyond_cap = is_complete and complete_rank[key] >= REMOTE_PACKAGE_MAX_KEEP
         expired = stamp < cutoff
         if key in protected or not (expired or beyond_cap):
             continue
-        for item in rows:
+
+        # Manifest is the remote commit marker. Delete it before its bundle so a
+        # mid-cleanup failure can only leave a harmless bundle orphan, never a
+        # manifest that points at a deleted bundle.
+        ordered_rows = sorted(
+            rows,
+            key=lambda item: 0 if _REMOTE_MANIFEST_RE.fullmatch(item["name"]) else 1,
+        )
+        for item in ordered_rows:
             _delete_remote_retention_file(remote, remote_root, "to_tablet", item["name"])
             deleted_packages += 1
+        if is_complete:
+            deleted_complete_sets += 1
+        else:
+            deleted_incomplete_groups += 1
 
     receipt_rows = []
     for row in _safe_remote_rows(remote, remote_root, "receipts"):
@@ -332,6 +389,8 @@ def prune_remote_drive(remote: str = sync.DEFAULT_REMOTE,
         "receipt_min_keep": REMOTE_RECEIPT_MIN_KEEP,
         "receipt_max_keep": REMOTE_RECEIPT_MAX_KEEP,
         "deleted_package_objects": deleted_packages,
+        "deleted_complete_package_sets": deleted_complete_sets,
+        "deleted_incomplete_package_groups": deleted_incomplete_groups,
         "deleted_receipts": deleted_receipts,
     }
 
@@ -344,6 +403,14 @@ def upload_package(bundle: Path, manifest_path: Path, manifest: dict, *,
     expected = sync.load_manifest(manifest_path)
     if expected != manifest:
         raise ValueError("manifest changed after package build")
+
+    manifest_key = _package_key(manifest_path.name)
+    bundle_key = _package_key(bundle.name)
+    if manifest_key is None or bundle_key is None or manifest_key != bundle_key:
+        raise ValueError("package manifest/bundle filename key mismatch")
+    if manifest_key[1] != manifest.get("run_id"):
+        raise ValueError("package filename/run_id mismatch")
+
     for name in (bundle.name, manifest_path.name):
         if _remote_exists(remote, remote_root, name):
             raise FileExistsError(f"remote object already exists: {name}")
@@ -369,16 +436,25 @@ def upload_package(bundle: Path, manifest_path: Path, manifest: dict, *,
         sync.extract_bundle(read_bundle, stage, loaded)
 
     try:
-        return prune_remote_drive(remote, remote_root)
+        retention = prune_remote_drive(
+            remote, remote_root, protected_keys={manifest_key}
+        )
     except (OSError, ValueError, KeyError, TypeError, json.JSONDecodeError,
             subprocess.CalledProcessError, subprocess.TimeoutExpired) as exc:
-        # The just-uploaded verified package remains valid. Retention failure is
-        # surfaced separately so a retry does not create duplicate package names.
+        # The just-uploaded package passed full Drive read-back. A cleanup outage
+        # is reported separately so retrying does not create duplicate objects.
         return {
             "status": "DRIVE_RETENTION_WARNING",
             "error_type": type(exc).__name__,
             "message": str(exc)[:300],
         }
+
+    # Defensive postcondition: successful retention must never remove the package
+    # that triggered it. If it did, do not claim a verified Drive upload.
+    for name in (bundle.name, manifest_path.name):
+        if not _remote_exists(remote, remote_root, name):
+            raise RuntimeError(f"verified Drive package disappeared after retention: {name}")
+    return retention
 
 
 def main() -> int:
@@ -412,7 +488,8 @@ def main() -> int:
                 "run_id": manifest["run_id"],
                 "retention": retention,
             }, ensure_ascii=False))
-    except (OSError, ValueError, KeyError, TypeError, json.JSONDecodeError, subprocess.CalledProcessError) as exc:
+    except (OSError, RuntimeError, ValueError, KeyError, TypeError, json.JSONDecodeError,
+            subprocess.CalledProcessError, subprocess.TimeoutExpired) as exc:
         print(f"검증/전송 중단: {type(exc).__name__}: {exc}", file=sys.stderr)
         return 1
     return 0
