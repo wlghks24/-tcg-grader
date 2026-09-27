@@ -30,6 +30,9 @@ jobs:
         with:
           python-version: '3.12'
 
+      - name: Install current runtime dependencies
+        run: python -m pip install --disable-pip-version-check -r requirements.txt
+
       - name: Final-tree validation and manifest refresh
         shell: bash
         run: |
