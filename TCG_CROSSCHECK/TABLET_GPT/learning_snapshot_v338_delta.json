@@ -1,0 +1,99 @@
+{
+  "schema_version": "1.1-tablet-gpt-tcg-grader-learning-sync",
+  "namespace": "TABLET_GPT",
+  "snapshot_kind": "learning_delta",
+  "run_date_kst": "2026-09-27",
+  "built_at": "2026-09-27T22:40:00+09:00",
+  "status": "finalized",
+  "source_repository": "wlghks24/-tcg-grader",
+  "prior_delta": "TCG_CROSSCHECK/TABLET_GPT/learning_snapshot_v334_delta.json",
+  "prior_lesson_digest_sha256": "ee19de403a2362f7c91f461c505fa3c4ce19e6cc418d3a13dbb6e1dcfa65f068",
+  "source_main_sha": "1705e419c79772d5439dc473ee64e9e627b42b34",
+  "share_policy": {
+    "explicit_patch_and_learning_lessons_only": true,
+    "chatgpt_model_weights_exported": false,
+    "raw_grading_calibration_shared": false,
+    "device_local_runtime_memory_overwritten": false,
+    "peer_verified_never_auto_promotes_local": true
+  },
+  "covered_merges": [
+    {
+      "pr": 288,
+      "version": "v334-sync",
+      "merge_sha": "59b9cfab8cc9a4658d900244d21383880a4f3761"
+    },
+    {
+      "pr": 289,
+      "version": "v335",
+      "merge_sha": "f6d89eea420fffe5efafa4653eee7f6ef0749982"
+    },
+    {
+      "pr": 290,
+      "version": "v336-integrity",
+      "merge_sha": "e7bdaa34470531a1f7296e1a9541f342bbc06559"
+    },
+    {
+      "pr": 291,
+      "version": "v336-scheduler",
+      "merge_sha": "32ae74201eec1ae781432a24edf725f3693ae526"
+    },
+    {
+      "pr": 292,
+      "version": "v337",
+      "merge_sha": "7d0992122e100a0230147fa6005d608980f64365"
+    },
+    {
+      "pr": 293,
+      "version": "v338",
+      "merge_sha": "1705e419c79772d5439dc473ee64e9e627b42b34"
+    }
+  ],
+  "lesson_digest_sha256": "ee4e07d78627b7c306b0b5b495f6bab3fda23f596075a2e7b476ed701e4ce218",
+  "lessons": [
+    {
+      "lesson_id": "TABLET-GPT-PROTECTED-MAIN-PUBLISH-V335",
+      "subsystem": "grading_company_watch_delivery",
+      "issue_class": "scheduled_watch_can_bypass_protected_main_or_publish_stale_snapshot",
+      "trigger_condition": "an automated grading-company watch has write authority and publishes collected output directly to main, or main advances after collection before publication",
+      "symptom_summary": "validated provider data can bypass the repository PR/check path or a stale snapshot can race a newer main revision",
+      "root_cause_class": "direct_main_mutation_plus_missing_exact_base_drift_gate",
+      "fix_pattern": "publish only to a candidate branch, fail closed on main SHA drift, regenerate and diagnose integrity metadata, and merge only after the required protected-main checks pass",
+      "prevention_rule_id": "TGPT-PREV-PROTECTED-MAIN-PUBLISH",
+      "verification_result": "passed_repo_ci",
+      "regression_pass": true,
+      "recurrence_count": 1,
+      "applicable_scope": "both",
+      "confidence_level": "high"
+    },
+    {
+      "lesson_id": "TABLET-GPT-DAILY-UPDATE-SCHEDULER-V337",
+      "subsystem": "tablet_feature_update_scheduler",
+      "issue_class": "relative_interval_scheduler_can_miss_requested_clock_time_or_leave_stale_loop_state",
+      "trigger_condition": "tablet feature updates rely on a 24-hour or hourly relative sleep loop instead of the requested daily 23:00 KST schedule, or install only prepares boot wiring without a live current-session loop",
+      "symptom_summary": "the tablet can remain on an older main longer than intended or run updates at a drifting clock time",
+      "root_cause_class": "relative_interval_timing_plus_incomplete_current_session_supervision",
+      "fix_pattern": "compute the next absolute 23:00 KST run, maintain one PID-tracked live loop, start it during install/ensure, preserve Termux:Boot supervision, and re-ensure scheduling after manual update-now",
+      "prevention_rule_id": "TGPT-PREV-DAILY-UPDATE-SCHEDULER",
+      "verification_result": "passed_repo_ci",
+      "regression_pass": true,
+      "recurrence_count": 1,
+      "applicable_scope": "both",
+      "confidence_level": "high"
+    },
+    {
+      "lesson_id": "TABLET-GPT-GDRIVE-RETENTION-V338",
+      "subsystem": "tablet_gdrive_delivery",
+      "issue_class": "verified_sync_artifacts_can_accumulate_or_cleanup_can_delete_unowned_files",
+      "trigger_condition": "verified tablet packages and receipts accumulate without a bounded retention policy, or cleanup is implemented with broad wildcard or purge semantics",
+      "symptom_summary": "Drive storage can grow without bound or a cleanup routine can risk deleting user or unknown files",
+      "root_cause_class": "unbounded_artifact_retention_or_unsafe_cleanup_scope",
+      "fix_pattern": "retain bounded recent TCG-managed package and receipt sets, match only exact managed filename patterns, delete per file only after upload/read-back verification, preserve unknown files, and report cleanup failure separately from package validity",
+      "prevention_rule_id": "TGPT-PREV-GDRIVE-RETENTION",
+      "verification_result": "passed_repo_ci",
+      "regression_pass": true,
+      "recurrence_count": 1,
+      "applicable_scope": "both",
+      "confidence_level": "high"
+    }
+  ]
+}
