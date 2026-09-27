@@ -4,8 +4,9 @@
 This guard is intentionally read-only. It catches syntax damage and audit blind spots
 that targeted runtime tests can miss: unresolved merge markers, Trojan Source bidi
 controls, oversized executable text that the security scanner would otherwise skip,
-malformed/duplicate-key JSON, Python syntax errors, unsafe tracked symlinks, and
-cross-platform filename collisions that can break the Windows/Android deployment path.
+malformed/duplicate-key JSON, Python syntax errors, unsafe tracked symlinks,
+cross-platform filename collisions that can break the Windows/Android deployment path,
+and integrity-manifest hash/coverage drift.
 """
 from __future__ import annotations
 
@@ -121,11 +122,62 @@ def legacy_runtime_reference(relative: str, text: str) -> str | None:
     return None
 
 
+def integrity_manifest_findings(root: Path = ROOT) -> list[str]:
+    """Return hash/schema/coverage drift for the generated integrity manifest.
+
+    ``diagnose_integrity`` intentionally validates the entries that are already in
+    the manifest. This wrapper also compares that manifest entry set with the
+    current tracked-file policy so a newly added source/config file cannot remain
+    invisible merely because the manifest finalizer was skipped.
+    """
+    try:
+        import fault_injection_healing as healing
+
+        root = root.resolve()
+        manifest_path = root / "integrity_manifest.json"
+        result = healing.diagnose_integrity(root, manifest_path)
+        try:
+            payload = json.loads(
+                manifest_path.read_text(encoding="utf-8"),
+                object_pairs_hook=unique_object,
+                parse_constant=reject_constant,
+            )
+        except (OSError, UnicodeError, ValueError, TypeError) as exc:
+            return [f"integrity_manifest.json: strict read failed: {exc.__class__.__name__}"]
+        listed_raw = payload.get("files") if isinstance(payload, dict) else None
+        if not isinstance(listed_raw, dict):
+            return ["integrity_manifest.json: files mapping missing or invalid"]
+        listed = set(listed_raw)
+        current = {path.relative_to(root).as_posix() for path in healing.tracked_files(root)}
+        findings: list[str] = []
+        for relative in sorted(current - listed):
+            findings.append(f"integrity manifest missing tracked path: {relative}")
+        for relative in sorted(listed - current):
+            findings.append(f"integrity manifest contains non-current tracked path: {relative}")
+        if not result.get("ok"):
+            failed_rows = [
+                str(row.get("file", "<unknown>"))
+                for row in result.get("files", [])
+                if isinstance(row, dict) and not row.get("ok")
+            ]
+            if failed_rows:
+                for relative in failed_rows[:50]:
+                    findings.append(f"integrity manifest hash/schema mismatch: {relative}")
+            else:
+                findings.append(
+                    f"integrity manifest diagnose failed: {result.get('error', 'unknown')}"
+                )
+        return findings
+    except (OSError, RuntimeError, TypeError, ValueError, subprocess.SubprocessError) as exc:
+        return [f"integrity manifest validation failed closed: {exc.__class__.__name__}"]
+
+
 def main() -> int:
     findings: list[str] = []
     checked = 0
     suffix_counts: dict[str, int] = {}
     entries = tracked_entries()
+    findings.extend(integrity_manifest_findings(ROOT))
 
     # A case-insensitive checkout (the user's Windows PC) cannot safely represent
     # two different tracked paths that case-fold to the same value.
