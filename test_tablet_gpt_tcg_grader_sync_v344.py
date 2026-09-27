@@ -45,15 +45,21 @@ class TabletGptTcgGraderSyncV344(unittest.TestCase):
             "TABLET_GPT_PR_SYNC_CANDIDATE_COVERED",
             "TABLET_GPT_MAIN_SYNC_GENERATION_COVERED",
             "generation_files.issubset(pr_changed)",
-            "generation_files.issubset(changed_set)",
-            "expected_watched == set(relevant)",
             "source == base_sha == candidate_base",
             "candidate.get('post_merge_coverage_allowed') is True",
             "candidate.get('requires_exact_watched_path_match') is True",
+            "['git', 'rev-list', '--first-parent', '--reverse', f'{source}..{head}']",
+            "candidate_merge = mainline[0] if mainline else ''",
+            "immediate_merge = len(parents) >= 3 and parents[1] == source",
+            "generation_files.issubset(branch_changed)",
+            "expected_watched == branch_watched",
+            "later_watched.update(path for path in touched if watched(path))",
+            "and not later_watched",
         ):
             self.assertIn(token, workflow)
         self.assertIn("if relevant:", workflow)
         self.assertIn("TABLET_GPT_SYNC_STALE", workflow)
+        self.assertNotIn("generation_files.issubset(changed_set)", workflow)
 
     def test_v344_generation_is_bound_and_excluded(self):
         contract = read(CONTRACT)
@@ -69,6 +75,8 @@ class TabletGptTcgGraderSyncV344(unittest.TestCase):
         self.assertTrue(expected.issubset(set(contract["freshness_watch"]["exclude_paths"])))
         self.assertTrue(contract["rules"]["post_merge_candidate_sync_requires_exact_base_generation_and_watched_path_set"])
         self.assertTrue(contract["rules"]["post_merge_candidate_sync_must_fail_on_any_extra_watched_path"])
+        self.assertTrue(contract["rules"]["post_merge_candidate_sync_requires_immediate_mainline_merge_parent"])
+        self.assertTrue(contract["rules"]["post_merge_candidate_sync_invalidated_by_any_later_watched_mainline_change"])
 
     def test_manifest_sync_writer_is_exact_branch_scoped(self):
         workflow = (ROOT / ".github/workflows/repository-integrity-manifest-sync-v344.yml").read_text(
