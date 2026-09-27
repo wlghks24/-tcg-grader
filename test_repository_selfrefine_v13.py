@@ -1,12 +1,19 @@
 #!/usr/bin/env python3
 import json
+import subprocess
+import tempfile
 import unittest
 from pathlib import Path
 
+import fault_injection_healing as healing
 import repository_integrity_guard as guard
 
 
 ROOT = Path(__file__).resolve().parent
+
+
+def _git(root: Path, *args: str) -> None:
+    subprocess.run(["git", *args], cwd=root, stdout=subprocess.PIPE, stderr=subprocess.PIPE, check=True)
 
 
 class RepositorySelfrefineV13Tests(unittest.TestCase):
@@ -27,6 +34,48 @@ class RepositorySelfrefineV13Tests(unittest.TestCase):
         )
         self.assertIsInstance(parsed, dict)
         self.assertTrue(parsed.get("name") or parsed.get("short_name"))
+
+
+    def test_integrity_manifest_rejects_new_unlisted_git_tracked_file(self):
+        with tempfile.TemporaryDirectory(prefix="tcg-manifest-completeness-") as directory:
+            root = Path(directory)
+            _git(root, "init", "-q")
+            (root / "sample.py").write_text("VALUE = 1\n", encoding="utf-8")
+            _git(root, "add", "sample.py")
+            manifest = root / "integrity_manifest.json"
+            healing.build_integrity_manifest(root, manifest)
+            self.assertEqual(guard.integrity_manifest_findings(root), [])
+            (root / "late_added.py").write_text("VALUE = 2\n", encoding="utf-8")
+            _git(root, "add", "late_added.py")
+            self.assertIn(
+                "integrity manifest missing tracked path: late_added.py",
+                guard.integrity_manifest_findings(root),
+            )
+
+    def test_integrity_manifest_ignores_untracked_runtime_artifact(self):
+        with tempfile.TemporaryDirectory(prefix="tcg-manifest-runtime-") as directory:
+            root = Path(directory)
+            _git(root, "init", "-q")
+            (root / ".gitignore").write_text("RUNTIME_REPORT.json\n", encoding="utf-8")
+            (root / "sample.py").write_text("VALUE = 1\n", encoding="utf-8")
+            _git(root, "add", ".gitignore", "sample.py")
+            manifest = root / "integrity_manifest.json"
+            healing.build_integrity_manifest(root, manifest)
+            (root / "RUNTIME_REPORT.json").write_text('{"status":"runtime"}\n', encoding="utf-8")
+            self.assertEqual(guard.integrity_manifest_findings(root), [])
+
+    def test_integrity_manifest_rejects_hash_drift(self):
+        with tempfile.TemporaryDirectory(prefix="tcg-manifest-hash-") as directory:
+            root = Path(directory)
+            target = root / "sample.py"
+            target.write_text("VALUE = 1\n", encoding="utf-8")
+            manifest = root / "integrity_manifest.json"
+            healing.build_integrity_manifest(root, manifest)
+            target.write_text("VALUE = 9\n", encoding="utf-8")
+            self.assertIn(
+                "integrity manifest hash/schema mismatch: sample.py",
+                guard.integrity_manifest_findings(root),
+            )
 
     def test_current_runtime_cannot_import_one_shot_patchers(self):
         self.assertIsNotNone(

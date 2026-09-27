@@ -4,8 +4,9 @@
 This guard is intentionally read-only. It catches syntax damage and audit blind spots
 that targeted runtime tests can miss: unresolved merge markers, Trojan Source bidi
 controls, oversized executable text that the security scanner would otherwise skip,
-malformed/duplicate-key JSON, Python syntax errors, unsafe tracked symlinks, and
-cross-platform filename collisions that can break the Windows/Android deployment path.
+malformed/duplicate-key JSON, Python syntax errors, unsafe tracked symlinks,
+cross-platform filename collisions that can break the Windows/Android deployment path,
+and integrity-manifest hash/coverage drift.
 """
 from __future__ import annotations
 
@@ -55,6 +56,25 @@ def tracked_entries() -> list[tuple[str, Path, bool]]:
         path = ROOT / relative
         entries.append((relative, path, path.is_symlink()))
     return entries
+
+
+def _git_tracked_paths(root: Path) -> set[str] | None:
+    """Return Git-indexed paths, or None for an intentionally non-Git test root.
+
+    Runtime jobs legitimately create ignored ledgers/reports. Those are not source
+    truth. In a real checkout the Git index decides whether a path is repository-owned.
+    """
+    root = root.resolve()
+    if not (root / ".git").exists():
+        return None
+    result = subprocess.run(
+        ["git", "ls-files", "-z"],
+        cwd=root,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        check=True,
+    )
+    return {raw.decode("utf-8", "strict") for raw in result.stdout.split(b"\0") if raw}
 
 
 def unsafe_windows_component(component: str) -> str | None:
@@ -121,11 +141,56 @@ def legacy_runtime_reference(relative: str, text: str) -> str | None:
     return None
 
 
+
+def integrity_manifest_findings(root: Path = ROOT) -> list[str]:
+    """Return hash/schema/coverage drift for the generated integrity manifest."""
+    try:
+        import fault_injection_healing as healing
+
+        root = root.resolve()
+        manifest_path = root / "integrity_manifest.json"
+        result = healing.diagnose_integrity(root, manifest_path)
+        try:
+            payload = json.loads(
+                manifest_path.read_text(encoding="utf-8"),
+                object_pairs_hook=unique_object,
+                parse_constant=reject_constant,
+            )
+        except (OSError, UnicodeError, ValueError, TypeError) as exc:
+            return [f"integrity_manifest.json: strict read failed: {exc.__class__.__name__}"]
+        listed_raw = payload.get("files") if isinstance(payload, dict) else None
+        if not isinstance(listed_raw, dict):
+            return ["integrity_manifest.json: files mapping missing or invalid"]
+        listed = set(listed_raw)
+        policy_paths = {path.relative_to(root).as_posix() for path in healing.tracked_files(root)}
+        git_paths = _git_tracked_paths(root)
+        current = policy_paths if git_paths is None else policy_paths & git_paths
+        findings: list[str] = []
+        for relative in sorted(current - listed):
+            findings.append(f"integrity manifest missing tracked path: {relative}")
+        for relative in sorted(listed - current):
+            findings.append(f"integrity manifest contains non-current tracked path: {relative}")
+        if not result.get("ok"):
+            failed_rows = [
+                str(row.get("file", "<unknown>"))
+                for row in result.get("files", [])
+                if isinstance(row, dict) and not row.get("ok")
+            ]
+            if failed_rows:
+                for relative in failed_rows[:50]:
+                    findings.append(f"integrity manifest hash/schema mismatch: {relative}")
+            else:
+                findings.append(f"integrity manifest diagnose failed: {result.get('error', 'unknown')}")
+        return findings
+    except (OSError, RuntimeError, TypeError, ValueError, UnicodeError, subprocess.SubprocessError) as exc:
+        return [f"integrity manifest validation failed closed: {exc.__class__.__name__}"]
+
 def main() -> int:
     findings: list[str] = []
     checked = 0
     suffix_counts: dict[str, int] = {}
     entries = tracked_entries()
+    findings.extend(integrity_manifest_findings(ROOT))
 
     # A case-insensitive checkout (the user's Windows PC) cannot safely represent
     # two different tracked paths that case-fold to the same value.
