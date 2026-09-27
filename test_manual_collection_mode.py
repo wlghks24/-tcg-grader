@@ -66,7 +66,7 @@ class ManualCollectionModeTests(unittest.TestCase):
         output, stats = mode._registry_only_official_verify_rows(rows, {("BGS", "0012345678"): 9.5})
         self.assertEqual(stats["live_attempts"], 0, stats)
         self.assertTrue(output[0]["official_result"])
-        self.assertEqual(output[0]["verification_method"], "persisted_official_registry")
+        self.assertEqual(output[0]["verification_method"], "persisted_manual_verified_registry")
 
 
 if __name__ == "__main__":

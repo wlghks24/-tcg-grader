@@ -678,6 +678,15 @@ def _balanced_runtime_hosts(existing, verified_hosts, adaptive_hosts, static_hos
 
 def _build_runtime_targets() -> None:
     global _RUNTIME_TARGETS, _LEARNED_TARGETS
+    # PARTNER_HOSTS is the discovery allow-list, while PARTNER_DOMAINS below is
+    # also used for bounded rotating query targets. Preserve every declared
+    # exact hostname (including www aliases) even when the runtime query list is
+    # canonicalized or capped.
+    declared_partner_hosts = {
+        host
+        for hosts in multi_route_event_discovery.PARTNER_DOMAINS.values()
+        for host in hosts
+    }
     verified = _verified_file_targets()
     adaptive = _adaptive_targets()
     runtime: dict[tuple[str, str], tuple[str, ...]] = {}
@@ -699,7 +708,7 @@ def _build_runtime_targets() -> None:
             multi_route_event_discovery.PARTNER_DOMAINS[key] = runtime[key]
     _RUNTIME_TARGETS = runtime
     _LEARNED_TARGETS = learned
-    multi_route_event_discovery.PARTNER_HOSTS = {
+    multi_route_event_discovery.PARTNER_HOSTS = declared_partner_hosts | {
         host for hosts in multi_route_event_discovery.PARTNER_DOMAINS.values() for host in hosts
     }
 

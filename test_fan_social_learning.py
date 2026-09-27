@@ -57,6 +57,7 @@ class FanSocialLearningTests(unittest.TestCase):
                 "source_kind": "x_public_search",
                 "author": "safeinput",
                 "fan_candidate": True,
+                "fan_account_known": True,
                 "fan_source_key": "x:safeinput",
             }]
             self.assertEqual(learner.observe_discovered(discovered), 1)

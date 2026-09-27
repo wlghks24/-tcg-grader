@@ -231,7 +231,12 @@ def build_public_social_query(game: str, region: str, registry: dict, fan_learne
         (8, 6, 4, 10, 3),
         (6, 4, 2, 6, 2),
     )
-    site_clause = "(site:x.com OR site:instagram.com OR site:youtube.com)"
+    # Keep every currently supported public-social discovery route when this
+    # overlay replaces the base collector. These hosts remain discovery-only.
+    site_clause = (
+        "(site:x.com OR site:instagram.com OR site:youtube.com OR "
+        "site:tiktok.com OR site:twitch.tv OR site:facebook.com)"
+    )
     for event_limit, fan_limit, account_limit, watch_limit, learned_limit in presets:
         local_event = social_event_discovery._or_terms(social_event_discovery.EVENT_TERMS[lang], event_limit)
         local_fan = social_event_discovery._or_terms(social_event_discovery.FAN_TERMS[lang], fan_limit)
@@ -275,7 +280,10 @@ def _v144_ddg_social_one(game: str, region: str, registry: dict, fan_learner=Non
     url = "https://html.duckduckgo.com/html/?" + urllib.parse.urlencode({"q": query})
     req = urllib.request.Request(url, headers={"User-Agent": "Mozilla/5.0 TCG-Grader-SocialFallback/2.1"})
     try:
-        with safe_urlopen(
+        # Resolve through the canonical collector module so runtime security
+        # wrapping and deterministic test injection cannot be bypassed by the
+        # overlay's import-time alias.
+        with social_event_discovery.safe_urlopen(
             req,
             timeout=social_event_discovery.SOURCE_TIMEOUT,
             allowed_hosts=social_event_discovery.DDG_HOSTS,
@@ -297,7 +305,18 @@ def _v144_ddg_social_one(game: str, region: str, registry: dict, fan_learner=Non
             detected_region, region_confidence, region_signals = gap_learner.infer_region(game, title, region)
             official, author = _strict_official_social_match(registry, source, title, game, detected_region)
             host = social_event_discovery._host(source)
-            kind = "x" if "x.com" in host or "twitter.com" in host else ("instagram" if "instagram.com" in host else "youtube")
+            if "x.com" in host or "twitter.com" in host:
+                kind = "x"
+            elif "instagram.com" in host:
+                kind = "instagram"
+            elif "tiktok.com" in host:
+                kind = "tiktok"
+            elif "twitch.tv" in host:
+                kind = "twitch"
+            elif "facebook.com" in host:
+                kind = "facebook"
+            else:
+                kind = "youtube"
             row = {
                 "game": game,
                 "region": detected_region,

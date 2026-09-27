@@ -77,7 +77,7 @@ def _registry_only_official_verify_rows(rows: list[dict], registry: dict, max_li
                 item.update({
                     "official_result": True,
                     "official_reference_url": lookup_url(company, cert),
-                    "verification_method": "persisted_official_registry",
+                    "verification_method": "persisted_manual_verified_registry",
                     "official_grade": registered_grade,
                     "manual_official_verification_required": False,
                     "official_verification": "validated_manual_registry",

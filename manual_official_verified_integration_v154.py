@@ -315,6 +315,25 @@ def _submit_integrated(payload: dict[str, Any]) -> dict[str, Any]:
     registration_id = str((registration or {}).get("registration_id") or "")
     if not registration_id or result.get("accepted") is not True:
         return result
+    # Current manual_official_proof.submit already publishes the exact
+    # company+certificate+grade anchor and persists the fully gated official
+    # row atomically. Re-running the legacy promotion path can apply a second,
+    # different readiness check and overwrite that accepted row. Treat the
+    # current result as authoritative and keep the wrapper idempotent.
+    if (
+        registration.get("official_result") is True
+        and str(registration.get("official_verification_source") or "") == _MANUAL_OFFICIAL_SOURCE
+    ):
+        output = dict(result)
+        output["official_promotion"] = {
+            "ok": True,
+            "promoted": False,
+            "already_official": True,
+            "registration": registration,
+        }
+        output["official_result"] = True
+        output["integrated_official_verified"] = True
+        return output
     promotion = promote_registration(registration_id)
     output = dict(result)
     output["official_promotion"] = promotion

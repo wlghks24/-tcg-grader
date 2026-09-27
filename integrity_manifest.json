@@ -1,7 +1,7 @@
 {
   "version": 2,
   "engine": "v109-card-identity-ocr-learning",
-  "generated_at": "2026-09-27T16:57:26+00:00",
+  "generated_at": "2026-09-27T19:44:48+00:00",
   "files": {
     ".github/workflows/ai-auto-tracker-guard.yml": {
       "sha256": "636e750bd6d2619cce75d4bce2d68051eaa2209ae763bc8ec523ed73476728a6",
@@ -1260,12 +1260,12 @@
       "bytes": 1814
     },
     "collection_learning_hardening_v142.py": {
-      "sha256": "2a3ac3f7a227b8d516b562239daa9bb5e349d6b1972354f5866e338bfe6c3bc6",
-      "bytes": 20787
+      "sha256": "a9cb2b9d2a6ab1f5ab063791a512fadaf11cb7e067c335abe8419645e4934dfe",
+      "bytes": 21977
     },
     "collection_learning_hardening_v144.py": {
-      "sha256": "b874bb72d29bba439a9a8a26a0aacf342d3f54ecddea4a54a3d8f5e5486ce8cf",
-      "bytes": 20444
+      "sha256": "02298515ebc3be491019ba3c26391370dee1cd12aa895517e17e8b3bfda2be06",
+      "bytes": 21201
     },
     "collection_meta_learning.py": {
       "sha256": "c41005ab8e63e07651029c96d46a52257d328f20dad9a41b4217b274bf100ec7",
@@ -1364,8 +1364,8 @@
       "bytes": 10113
     },
     "event_source_expansion_v145.py": {
-      "sha256": "2a433fc602e1d01aea155d72759b9044580b533eab5b804cf6a6b1a01ddeb969",
-      "bytes": 39717
+      "sha256": "576630a126678667455ee5463df5defec346564abd38391733da39579e5e4918",
+      "bytes": 40160
     },
     "event_source_overlay_v144.py": {
       "sha256": "bf6fc9f4d46a481c2a3c21f026d262b9a5b6a2af81b92af41e240a73acdc80a3",
@@ -1960,8 +1960,8 @@
       "bytes": 514
     },
     "manual_collection_mode.py": {
-      "sha256": "bcaf108c5297add992ea635e2e24dcc27bb70b8044cf284e683c63729026127a",
-      "bytes": 13416
+      "sha256": "754234f3d966d306b0297c4b526c4e8b6fadbfc20165409ee32cbf8565a4294e",
+      "bytes": 13423
     },
     "manual_dual_photo_bridge.js": {
       "sha256": "ccaf751f63c19aa2e6546b22ba17a4afa5970942136183a648f208c97b7ef60e",
@@ -1984,8 +1984,8 @@
       "bytes": 40296
     },
     "manual_official_verified_integration_v154.py": {
-      "sha256": "62fee3e989f79bb7c6983dd740f7cf968377e0871af9b1cbf4d78d78daea3b4b",
-      "bytes": 17754
+      "sha256": "7567a65b70c977becc7c4e1b1a94b7f660c4435af0453fda475954faa4706827",
+      "bytes": 18627
     },
     "manual_official_verify_bridge.js": {
       "sha256": "c3ddcd74ab39e8191eff2743fcbb9f006e4587b016075ac11b4c64ec389b2096",
@@ -2708,8 +2708,8 @@
       "bytes": 3254
     },
     "test_fan_social_learning.py": {
-      "sha256": "72543d99d1b9362bec3e1fa4c37cbfdd2dc4fbd815fb0569b8980062b334430a",
-      "bytes": 3212
+      "sha256": "61821bfc3e6995c937fbc2699faf629fbb29fcee2b917a72abe0de1b5fe0c5ed",
+      "bytes": 3255
     },
     "test_fan_social_learning_concurrency_v279.py": {
       "sha256": "dc2d7754905771b2ee77bc038ebe41cacd9f6e0ae04ec055859e315e9c559195",
@@ -2872,8 +2872,8 @@
       "bytes": 1950
     },
     "test_manual_collection_mode.py": {
-      "sha256": "4c085ed10e156fb02e736397b87c504c0b87b2138e75db52a17f503016060d84",
-      "bytes": 3487
+      "sha256": "cb4024665656254fe3a0deb6fd4a00d1995b7d76bb6fb8ed9fe9b809217b067e",
+      "bytes": 3494
     },
     "test_manual_graded_photo_registration.py": {
       "sha256": "87849dceb7a03a06623e6163eff5d11f1dafa67ebdf0b93428abbf8eb62fd07b",
@@ -2912,8 +2912,8 @@
       "bytes": 4105
     },
     "test_manual_stale_trust_v245.py": {
-      "sha256": "291ce7679c429e518e505ba84c0d7871b230b66eb2983e6054677ddd11b18c88",
-      "bytes": 4469
+      "sha256": "d4bfc991f52c2ff95fd66cfb444507b39de4b91da288a9eeb5c4b8a30e25ff21",
+      "bytes": 4476
     },
     "test_manual_summary_counter_boundary_v247.py": {
       "sha256": "ceafcadc75539af46a55d19b420b005a11355a2a16208decbc99cd432d96011d",
@@ -3098,6 +3098,10 @@
     "test_runtime_learning_math_neural_v278.py": {
       "sha256": "cc26425304a5e929fac30701a02cae5aaa2be184d8691b42a8dc3b826a9e5c9f",
       "bytes": 2673
+    },
+    "test_runtime_overlay_composition_v347.py": {
+      "sha256": "4402487aa72d221eccfb31018ccfee055896928ef53b127aa681c4a72c884620",
+      "bytes": 5096
     },
     "test_runtime_resilience_v182.py": {
       "sha256": "53fff55eaada95cc4b11dd31420f63c5c4dd1d22435eb991c9d54137f22057a3",
@@ -3660,7 +3664,19 @@
       "bytes": 396
     }
   },
-  "mutable_json": {},
+  "mutable_json": {
+    "security_audit_report.json": {
+      "required": {
+        "schema_version": "int",
+        "generated_at": "str",
+        "scope": "str",
+        "finding_counts": "dict",
+        "findings": "list",
+        "note": "str"
+      },
+      "max_bytes": 20971520
+    }
+  },
   "policy": {
     "generated_code_auto_applied": false,
     "code_corruption_auto_repaired": false,
