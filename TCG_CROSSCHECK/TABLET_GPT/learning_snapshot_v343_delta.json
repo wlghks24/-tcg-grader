@@ -1,0 +1,75 @@
+{
+  "schema_version": "1.1-tablet-gpt-tcg-grader-learning-sync",
+  "namespace": "TABLET_GPT",
+  "snapshot_kind": "learning_delta",
+  "run_date_kst": "2026-09-28",
+  "built_at": "2026-09-28T00:18:00+09:00",
+  "status": "finalized",
+  "source_repository": "wlghks24/-tcg-grader",
+  "prior_delta": "TCG_CROSSCHECK/TABLET_GPT/learning_snapshot_v341_delta.json",
+  "prior_lesson_digest_sha256": "01b2f700fc1dd32879dd67ebc453e2791ad07d06a4e99cf8bc89927e0bbcda61",
+  "source_main_sha": "e6c09a75f5906aa4b7490577decebb1dc424e2f8",
+  "share_policy": {
+    "explicit_patch_and_learning_lessons_only": true,
+    "chatgpt_model_weights_exported": false,
+    "raw_grading_calibration_shared": false,
+    "device_local_runtime_memory_overwritten": false,
+    "peer_verified_never_auto_promotes_local": true
+  },
+  "covered_merges": [
+    {
+      "pr": 299,
+      "version": "v341-premerge-freshness-manifest",
+      "merge_sha": "e6c09a75f5906aa4b7490577decebb1dc424e2f8"
+    }
+  ],
+  "lesson_digest_sha256": "c2079bc16048096c4392b83a4d195c863aa5bf38afbf6d6aedc547664195a5a7",
+  "lessons": [
+    {
+      "lesson_id": "TABLET-GPT-SCHEDULER-LIVE-MIGRATION-V343",
+      "subsystem": "tablet_scheduled_update",
+      "issue_class": "legacy_live_updater_loop_can_survive_schedule_change_or_pid_reuse",
+      "trigger_condition": "the on-disk scheduler changes from an older hourly loop to daily 23:00 KST while an already-running parent loop or stale/reused PID file remains active",
+      "symptom_summary": "new scheduler code can be present while the old process keeps its previous cadence, or an unrelated reused PID can be trusted or signalled incorrectly",
+      "root_cause_class": "scheduler_process_identity_and_version_migration_gap",
+      "fix_pattern": "version persisted loop identity, verify /proc command-line ownership before trusting or signalling a PID, safely replace verified legacy loops, and re-run ensure after every code update so an old parent can self-migrate",
+      "prevention_rule_id": "TGPT-PREV-SCHEDULER-LIVE-MIGRATION",
+      "verification_result": "candidate_runtime_regression_and_pr_ci_required",
+      "regression_pass": true,
+      "recurrence_count": 1,
+      "applicable_scope": "both",
+      "confidence_level": "high",
+      "physical_tablet_runtime_reverification_required": true
+    },
+    {
+      "lesson_id": "TABLET-GPT-PWA-EXACT-OFFLINE-FALLBACK-V343",
+      "subsystem": "tablet_pwa_runtime",
+      "issue_class": "query_agnostic_cache_fallback_can_return_wrong_variant",
+      "trigger_condition": "a mutable navigation or asset request fails live fetch and the service worker searches cache with ignoreSearch before checking the exact request",
+      "symptom_summary": "offline fallback can serve a cached response for a different query variant instead of the exact cached request",
+      "root_cause_class": "offline_cache_lookup_specificity_order_gap",
+      "fix_pattern": "prefer exact request cache lookup first, then use ignoreSearch as a secondary compatibility fallback while preserving the existing cache ABI and network-first behavior",
+      "prevention_rule_id": "TGPT-PREV-PWA-EXACT-FALLBACK",
+      "verification_result": "candidate_runtime_regression_and_pr_ci_required",
+      "regression_pass": true,
+      "recurrence_count": 1,
+      "applicable_scope": "both",
+      "confidence_level": "high"
+    },
+    {
+      "lesson_id": "TABLET-GPT-FIX-BRANCH-MANIFEST-SYNC-V343",
+      "subsystem": "repository_integrity",
+      "issue_class": "final_tree_manifest_can_drift_after_fix_branch_code_changes",
+      "trigger_condition": "a fix branch changes tracked source or workflow files after the last integrity manifest generation",
+      "symptom_summary": "repository integrity CI can fail even when code changes are valid because the manifest no longer describes the exact branch tree",
+      "root_cause_class": "manifest_refresh_not_bound_to_final_fix_branch_tree",
+      "fix_pattern": "on owner-authored fix branches only, require current main ancestry, rebuild and diagnose the manifest, commit only integrity_manifest.json when changed, and ignore manifest-only pushes to prevent recursion",
+      "prevention_rule_id": "TGPT-PREV-FIX-BRANCH-MANIFEST-SYNC",
+      "verification_result": "repository_integrity_manifest_sync_run_36328644408_success",
+      "regression_pass": true,
+      "recurrence_count": 1,
+      "applicable_scope": "tcg_grader",
+      "confidence_level": "high"
+    }
+  ]
+}

@@ -43,7 +43,6 @@ jobs:
           python - <<'PY'
           import hashlib
           import json
-          import os
           import re
           import subprocess
           from pathlib import Path
@@ -87,6 +86,20 @@ jobs:
           digest = hashlib.sha256(raw.encode('utf-8')).hexdigest()
           assert digest == delta['lesson_digest_sha256'] == receipt['delta_lesson_digest_sha256']
           assert [row['lesson_id'] for row in delta['lessons']] == receipt['accepted_lesson_ids']
+
+          generation_files = {
+              contract_path.as_posix(),
+              contract['delta_snapshot'],
+              contract['receiver_receipt'],
+              contract['verification_test'],
+          }
+          candidate = contract.get('candidate_sync') or {}
+          if candidate:
+              assert candidate['base_main_sha'] == delta['source_main_sha']
+              assert set(candidate['generation_files']) == generation_files
+              assert candidate['requires_exact_watched_path_match'] is True
+              assert candidate['post_merge_coverage_allowed'] is True
+              assert candidate['watched_paths']
 
           def ancestor(sha: str) -> None:
               subprocess.run(['git', 'cat-file', '-e', f'{sha}^{{commit}}'], check=True)
@@ -141,6 +154,7 @@ jobs:
               ['git', 'diff', '--name-only', f'{source}..{head}'],
               text=True,
           ).splitlines()
+          changed_set = set(changed)
           watch = contract['freshness_watch']
           exact = set(watch['exact_paths'])
           prefixes = tuple(watch['path_prefixes'])
@@ -152,9 +166,18 @@ jobs:
               return path in exact or path.startswith(prefixes)
 
           relevant = sorted(path for path in changed if watched(path))
+          generation_files = {
+              contract_path.as_posix(),
+              contract['delta_snapshot'],
+              contract['receiver_receipt'],
+              contract['verification_test'],
+          }
+          candidate = contract.get('candidate_sync') or {}
+          candidate_base = candidate.get('base_main_sha')
+          expected_watched = set(candidate.get('watched_paths') or [])
 
-          # PRs may bundle a new verified sync generation, but it must be anchored
-          # to the exact PR base and all four generation files must be part of the PR.
+          # A PR may bundle a verified candidate generation only when the generation
+          # is anchored to the exact PR base and exactly covers every watched change.
           event_name = os.environ.get('GITHUB_EVENT_NAME', '')
           if event_name == 'pull_request' and relevant:
               payload = json.loads(Path(os.environ['GITHUB_EVENT_PATH']).read_text(encoding='utf-8'))
@@ -162,17 +185,35 @@ jobs:
               pr_changed = set(subprocess.check_output(
                   ['git', 'diff', '--name-only', f'{base_sha}..{head}'], text=True
               ).splitlines())
-              generation_files = {
-                  contract_path.as_posix(),
-                  contract['delta_snapshot'],
-                  contract['receiver_receipt'],
-                  contract['verification_test'],
-              }
-              bundled_sync = source == base_sha and generation_files.issubset(pr_changed)
+              bundled_sync = (
+                  source == base_sha == candidate_base
+                  and generation_files.issubset(pr_changed)
+                  and expected_watched == set(relevant)
+                  and expected_watched.issubset(pr_changed)
+              )
               if bundled_sync:
                   print(
                       f'TABLET_GPT_PR_SYNC_CANDIDATE_COVERED version=v{version} '
                       f'base={base_sha} head={head} watched_changes={len(relevant)}'
+                  )
+                  raise SystemExit(0)
+
+          # After merge, accept that same candidate exactly once when the full
+          # generation and exactly the declared watched paths are present in the
+          # source..HEAD range. Any additional watched path makes this fail closed.
+          if event_name != 'pull_request' and relevant and candidate:
+              post_merge_sync = (
+                  source == candidate_base
+                  and candidate.get('post_merge_coverage_allowed') is True
+                  and candidate.get('requires_exact_watched_path_match') is True
+                  and generation_files.issubset(changed_set)
+                  and expected_watched == set(relevant)
+                  and bool(expected_watched)
+              )
+              if post_merge_sync:
+                  print(
+                      f'TABLET_GPT_MAIN_SYNC_GENERATION_COVERED version=v{version} '
+                      f'source={source} head={head} watched_changes={len(relevant)}'
                   )
                   raise SystemExit(0)
 
