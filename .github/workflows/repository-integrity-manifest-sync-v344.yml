@@ -216,6 +216,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
+          python -m pip install --disable-pip-version-check --no-input -r requirements.txt
           python -m py_compile auto_repair_engine.py update_exchange_rates.py test_fx_provenance_freshness_v345.py
           python -m unittest -v test_fx_provenance_freshness_v345.py test_edition_fx_failclosed_v328.py test_error_recovery_learning_v134.py
           python verify_all_legacy_v99.py
