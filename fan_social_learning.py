@@ -51,16 +51,35 @@ def _fresh() -> dict:
     return {"version": SCHEMA_VERSION, "updated_at": None, "sources": {}, "runs": 0}
 
 
-def _load(path: Path, backup: Path) -> dict:
-    for candidate in (path, backup):
+def _load_with_status(path: Path, backup: Path) -> tuple[dict, str]:
+    """Load the newest usable device-local state without erasing corrupt evidence.
+
+    ``fresh`` is only returned when neither path exists.  If at least one persisted
+    file exists but neither can be parsed as a valid learning store, ``corrupt`` is
+    returned so callers can hold writes fail-closed instead of replacing the files
+    with an empty state.
+    """
+    existing_seen = False
+    candidates = (("primary", path), ("backup", backup))
+    for source, candidate in candidates:
+        if not candidate.exists():
+            continue
+        existing_seen = True
         try:
             data = json.loads(safe_read_text(candidate))
             if isinstance(data, dict) and isinstance(data.get("sources"), dict):
                 data.setdefault("runs", 0)
-                return data
+                return data, source
         except Exception:
             continue
-    return _fresh()
+    if existing_seen:
+        return _fresh(), "corrupt"
+    return _fresh(), "fresh"
+
+
+def _load(path: Path, backup: Path) -> dict:
+    # Compatibility wrapper for older tests/callers that only need the payload.
+    return _load_with_status(path, backup)[0]
 
 
 def _score(stat: dict) -> float:
@@ -131,7 +150,8 @@ class FanSocialLearner:
     def __init__(self, memory_path: Path | str = MEMORY, backup_path: Path | str | None = None):
         self.memory_path = Path(memory_path)
         self.backup_path = Path(backup_path) if backup_path else self.memory_path.with_suffix(self.memory_path.suffix + ".bak")
-        self.data = _load(self.memory_path, self.backup_path)
+        self.data, self._storage_source = _load_with_status(self.memory_path, self.backup_path)
+        self._corruption_hold = self._storage_source == "corrupt"
         self._base_data = copy.deepcopy(self.data)
         self.data["runs"] = _int(self.data.get("runs")) + 1
 
@@ -188,9 +208,17 @@ class FanSocialLearner:
         safe_limit = max(1, min(12, _int(limit, 6)))
         return [author for _, _, _, author in rows[:safe_limit]]
 
-    def save(self) -> None:
+    def save(self) -> bool:
         with exclusive_file_lock(self.memory_path, timeout_seconds=10.0, stale_seconds=300):
-            latest = _load(self.memory_path, self.backup_path)
+            latest, latest_source = _load_with_status(self.memory_path, self.backup_path)
+            if latest_source == "corrupt":
+                # Existing device-local evidence is unreadable and there is no
+                # verified backup to merge.  Preserve both files byte-for-byte;
+                # discovery can continue in memory, but persistence is held until
+                # a valid primary/backup is restored.
+                self._corruption_hold = True
+                self._storage_source = "corrupt"
+                return False
             self.data = _merge_state(self._base_data, self.data, latest)
             sources = self.data.setdefault("sources", {})
             if len(sources) > MAX_SOURCES:
@@ -205,6 +233,9 @@ class FanSocialLearner:
                     pass
             atomic_write_json(self.memory_path, self.data, suffix=".fan-social.tmp")
             self._base_data = copy.deepcopy(self.data)
+            self._corruption_hold = False
+            self._storage_source = "primary"
+            return True
 
     def report(self) -> dict:
         ranked = []
@@ -226,11 +257,18 @@ class FanSocialLearner:
                 "last_seen": stat.get("last_seen"),
             })
         ranked.sort(key=lambda x: (x["utility_score"], x["corroborated"], x["selected"]), reverse=True)
+        if self._corruption_hold:
+            storage_status = "CORRUPTION_HOLD"
+        elif self._storage_source == "backup":
+            storage_status = "BACKUP_RECOVERY"
+        else:
+            storage_status = "OK"
         return {
             "version": SCHEMA_VERSION,
             "updated_at": self.data.get("updated_at"),
             "runs": _int(self.data.get("runs")),
             "sources": ranked[:80],
+            "storage_status": storage_status,
             "policy": "팬/커뮤니티 계정은 발견 유용성만 학습하며 공식성·사실성은 자동 승격하지 않음",
         }
 

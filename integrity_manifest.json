@@ -1,7 +1,7 @@
 {
   "version": 2,
   "engine": "v109-card-identity-ocr-learning",
-  "generated_at": "2026-09-27T15:40:23+00:00",
+  "generated_at": "2026-09-27T15:51:00+00:00",
   "files": {
     ".github/workflows/ai-auto-tracker-guard.yml": {
       "sha256": "636e750bd6d2619cce75d4bce2d68051eaa2209ae763bc8ec523ed73476728a6",
@@ -1376,8 +1376,8 @@
       "bytes": 394
     },
     "fan_social_learning.py": {
-      "sha256": "13d21f53e42f7c5d6d8c83cd4a6bfa1f9f4a71d8b980abc50a3dc4dcca59e48f",
-      "bytes": 10137
+      "sha256": "7a2d255240afb2bad2387a19b84178a13a92b4a4df5795763ab29f448b611c84",
+      "bytes": 11916
     },
     "fault_injection_healing.py": {
       "sha256": "fb887c45461f1370f58fa55f164bde2c125d865396c8cdf3025edafa90e1862d",
@@ -2694,6 +2694,10 @@
     "test_fan_social_learning_concurrency_v279.py": {
       "sha256": "dc2d7754905771b2ee77bc038ebe41cacd9f6e0ae04ec055859e315e9c559195",
       "bytes": 3824
+    },
+    "test_fan_social_learning_corruption_v344.py": {
+      "sha256": "12a5fe54200cd49322e1abf3262c8547ce4187d575365188a53f83c67baee401",
+      "bytes": 3665
     },
     "test_feature_category_navigation_v26.py": {
       "sha256": "7c4522c416e60d005412cbaf846aa8a4f0d0b54b79aee40b3b24ce2f72d159c5",
