@@ -43,6 +43,7 @@ jobs:
           python - <<'PY'
           import hashlib
           import json
+          import os
           import re
           import subprocess
           from pathlib import Path
@@ -57,6 +58,12 @@ jobs:
           assert candidates, 'no versioned Tablet GPT sync contract'
           version, contract_path = max(candidates)
           contract = json.loads(contract_path.read_text(encoding='utf-8'))
+          expected_delta = f'TCG_CROSSCHECK/TABLET_GPT/learning_snapshot_v{version}_delta.json'
+          expected_receipt = f'TCG_CROSSCHECK/TCG_GRADER/tablet_gpt_learning_receipt_v{version}.json'
+          expected_test = f'test_tablet_gpt_tcg_grader_sync_v{version}.py'
+          assert contract['delta_snapshot'] == expected_delta
+          assert contract['receiver_receipt'] == expected_receipt
+          assert contract['verification_test'] == expected_test
           delta_path = root / contract['delta_snapshot']
           receipt_path = root / contract['receiver_receipt']
           test_path = root / contract['verification_test']
@@ -98,13 +105,13 @@ jobs:
           )
           PY
 
-      - name: Fail visibly when main has watched changes after the latest verified delta
-        if: github.event_name != 'pull_request'
+      - name: Fail visibly when watched changes are not covered by the latest verified delta
         shell: bash
         run: |
           set -euo pipefail
           python - <<'PY'
           import json
+          import os
           import re
           import subprocess
           from pathlib import Path
@@ -143,6 +150,30 @@ jobs:
               return path in exact or path.startswith(prefixes)
 
           relevant = sorted(path for path in changed if watched(path))
+
+          # PRs may bundle a new verified sync generation, but it must be anchored
+          # to the exact PR base and all four generation files must be part of the PR.
+          event_name = os.environ.get('GITHUB_EVENT_NAME', '')
+          if event_name == 'pull_request' and relevant:
+              payload = json.loads(Path(os.environ['GITHUB_EVENT_PATH']).read_text(encoding='utf-8'))
+              base_sha = payload['pull_request']['base']['sha']
+              pr_changed = set(subprocess.check_output(
+                  ['git', 'diff', '--name-only', f'{base_sha}..{head}'], text=True
+              ).splitlines())
+              generation_files = {
+                  contract_path.as_posix(),
+                  contract['delta_snapshot'],
+                  contract['receiver_receipt'],
+                  contract['verification_test'],
+              }
+              bundled_sync = source == base_sha and generation_files.issubset(pr_changed)
+              if bundled_sync:
+                  print(
+                      f'TABLET_GPT_PR_SYNC_CANDIDATE_COVERED version=v{version} '
+                      f'base={base_sha} head={head} watched_changes={len(relevant)}'
+                  )
+                  raise SystemExit(0)
+
           if relevant:
               print('TABLET_GPT_SYNC_STALE', flush=True)
               print(f'latest_contract=v{version}', flush=True)
