@@ -5,6 +5,7 @@ import unittest
 
 ROOT=Path(__file__).resolve().parent
 WORKFLOW=ROOT/'.github'/'workflows'/'grading-company-watch.yml'
+FINALIZER=ROOT/'.github'/'workflows'/'grading-watch-v335-finalize.yml'
 
 
 class GradingCompanyWatchProtectedPublishV335Tests(unittest.TestCase):
@@ -52,6 +53,9 @@ class GradingCompanyWatchProtectedPublishV335Tests(unittest.TestCase):
         self.assertIn('status=REQUIRED_CHECK_FAILED',self.source)
         self.assertIn('status=REQUIRED_CHECK_TIMEOUT',self.source)
         self.assertIn('merge_method=merge -f sha="${CANDIDATE_SHA}"',self.source)
+
+    def test_one_shot_finalizer_is_absent_from_final_tree(self):
+        self.assertFalse(FINALIZER.exists())
 
     def test_provider_policy_remains_fail_closed(self):
         for text in ('official_sources_only','community_posts_are_leads_only','automatic_source_code_mutation','service_availability_status_only_no_price_promotion','price_facts_promoted'):
