@@ -54,7 +54,20 @@ jobs:
           python fault_injection_healing.py --manifest
           python fault_injection_healing.py --diagnose
           python repository_integrity_guard.py
-          python verify_current_runtime.py --passes 1
+          if ! python verify_current_runtime.py --passes 1; then
+            python - <<'PY'
+          import json
+          from pathlib import Path
+
+          report = json.loads(Path('CURRENT_RUNTIME_VERIFICATION_REPORT.json').read_text(encoding='utf-8'))
+          for verification_pass in report.get('passes', []):
+              for check in verification_pass.get('checks', []):
+                  if not check.get('ok'):
+                      print(f"failed_check={check.get('name')}")
+                      print(check.get('detail', ''))
+          PY
+            exit 1
+          fi
           git diff --check
 
           git add -A
