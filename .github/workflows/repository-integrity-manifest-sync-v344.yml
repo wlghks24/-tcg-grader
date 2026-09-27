@@ -1,0 +1,64 @@
+name: Repository Integrity Manifest Sync v344
+
+on:
+  push:
+    branches:
+      - 'fix/tablet-sync-postmerge-v344-main'
+    paths-ignore:
+      - 'integrity_manifest.json'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: repository-integrity-manifest-sync-v344-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  sync-manifest:
+    if: github.ref != 'refs/heads/main' && github.actor == github.repository_owner
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    env:
+      PYTHONDONTWRITEBYTECODE: '1'
+      PYTHONUNBUFFERED: '1'
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97
+        with:
+          python-version: '3.12'
+      - name: Require exact repair branch ancestry
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "${GITHUB_REF_NAME}" = "fix/tablet-sync-postmerge-v344-main"
+          git fetch origin +refs/heads/main:refs/remotes/origin/main
+          git merge-base --is-ancestor origin/main HEAD
+          test "$(git rev-parse --abbrev-ref HEAD)" != "main"
+      - name: Rebuild and verify exact-tree integrity manifest
+        shell: bash
+        run: |
+          set -euo pipefail
+          python fault_injection_healing.py --manifest
+          python fault_injection_healing.py --diagnose
+          python repository_integrity_guard.py
+          git diff --check
+      - name: Commit manifest only when changed
+        shell: bash
+        run: |
+          set -euo pipefail
+          if git diff --quiet -- integrity_manifest.json; then
+            echo "[OK] integrity_manifest.json already matches the exact branch tree"
+            exit 0
+          fi
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add -- integrity_manifest.json
+          test "$(git diff --cached --name-only | wc -l | tr -d ' ')" = "1"
+          test "$(git diff --cached --name-only)" = "integrity_manifest.json"
+          git diff --cached --check
+          git commit -m 'Reconcile integrity manifest for v344 repair tree'
+          git push origin "HEAD:${GITHUB_REF_NAME}"
