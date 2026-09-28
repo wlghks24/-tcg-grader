@@ -3,7 +3,7 @@ name: Repository Integrity Manifest Sync v345
 on:
   push:
     branches:
-      - 'fix/fx-failclosed-recovery-v349'
+      - 'fix/drive-package-code-main-trigger-v350'
     paths-ignore:
       - 'integrity_manifest.json'
   workflow_dispatch:
@@ -35,7 +35,6 @@ jobs:
         run: |
           set -euo pipefail
           test "${GITHUB_ACTOR}" = "${GITHUB_REPOSITORY_OWNER}"
-          test "${GITHUB_REF_NAME}" = "fix/fx-failclosed-recovery-v349"
           git fetch origin +refs/heads/main:refs/remotes/origin/main
           git merge-base --is-ancestor origin/main HEAD
           test "$(git rev-parse --abbrev-ref HEAD)" != "main"
@@ -66,5 +65,5 @@ jobs:
           test "$(git diff --cached --name-only | wc -l | tr -d ' ')" = "1"
           test "$(git diff --cached --name-only)" = "integrity_manifest.json"
           git diff --cached --check
-          git commit -m 'Reconcile integrity manifest for FX recovery repair'
+          git commit -m 'Reconcile integrity manifest for exact branch tree'
           git push origin "HEAD:${GITHUB_REF_NAME}"
