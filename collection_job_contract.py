@@ -10,10 +10,10 @@ from __future__ import annotations
 COLLECTION_JOBS = (
     ("출시일", "update_releases", "releases.json"),
     ("판매·재발매 추적", "update_market_watch", "market_watch.json"),
+    ("원화 환산 환율", "update_exchange_rates", "exchange_rates.json"),
     ("현재 거래시세", "update_market_prices_parallel_v260", "market_prices.json"),
     ("프로모·콜라보 행사", "update_promo_events", "promo_events.json"),
     ("구매처·링크 보안 확인", "update_purchase_sources", "purchase_sources.json"),
-    ("원화 환산 환율", "update_exchange_rates", "exchange_rates.json"),
     ("등급업체 요금·서비스·이벤트", "grading_company_watch_resilient", "grading_company_updates.json"),
     ("업체별 등급카드 사진 후보", "graded_photo_multi_source", "graded_photo_candidates.json"),
 )
@@ -32,6 +32,8 @@ def validate_contract() -> None:
         raise RuntimeError("mandatory collection modules must be unique")
     if any(not label or not module or not output for label, module, output in COLLECTION_JOBS):
         raise RuntimeError("mandatory collection job entries must be complete")
+    if MANDATORY_OUTPUTS.index("exchange_rates.json") > MANDATORY_OUTPUTS.index("market_prices.json"):
+        raise RuntimeError("exchange rates must refresh before market price collection")
 
 
 validate_contract()
