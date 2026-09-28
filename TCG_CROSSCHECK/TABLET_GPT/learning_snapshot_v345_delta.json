@@ -1,0 +1,44 @@
+{
+  "schema_version": "1.1-tablet-gpt-tcg-grader-learning-sync",
+  "namespace": "TABLET_GPT",
+  "snapshot_kind": "learning_delta",
+  "run_date_kst": "2026-09-28",
+  "built_at": "2026-09-28T08:52:00+09:00",
+  "status": "finalized",
+  "source_repository": "wlghks24/-tcg-grader",
+  "prior_delta": "TCG_CROSSCHECK/TABLET_GPT/learning_snapshot_v344_delta.json",
+  "prior_lesson_digest_sha256": "4dc9275efed268320c84de9e7267ddf49f669f5935373ea7b818938cb64c281d",
+  "source_main_sha": "0b7b547c7fc4d12761743c5251a6db060f6c84cc",
+  "share_policy": {
+    "explicit_patch_and_learning_lessons_only": true,
+    "chatgpt_model_weights_exported": false,
+    "raw_grading_calibration_shared": false,
+    "device_local_runtime_memory_overwritten": false,
+    "peer_verified_never_auto_promotes_local": true
+  },
+  "covered_merges": [
+    {"pr": 303, "version": "v344-postmerge-generalization", "merge_sha": "f9328e4414fab823af7470fa31b7ac2c54ba7246"},
+    {"pr": 304, "version": "v344-fan-corruption-hold", "merge_sha": "a8fe77bc38c51816f31b74320a786d45f3e5d346"},
+    {"pr": 305, "version": "v344-later-watched-fail-closed", "merge_sha": "1cf30454aa7b4b990a75cdcc8575a3d00ce1499b"},
+    {"pr": 306, "version": "v345-fan-structural-corruption", "merge_sha": "8508d26d8caf7045d4fc5cae8a599a259330bc93"},
+    {"pr": 307, "version": "v345-instagram-recovery-classification", "merge_sha": "c4351c086eab3ca1ce21640dfdf144fc48ad323b"},
+    {"pr": 308, "version": "v345-instagram-missed-slot-recovery", "merge_sha": "5688133dee23f5859e7b47b59960c09ead3b0575"},
+    {"pr": 309, "version": "v347-runtime-overlay-composition", "merge_sha": "0b7b547c7fc4d12761743c5251a6db060f6c84cc"}
+  ],
+  "lesson_digest_sha256": "291412f4758142f3a8f36ccd8bbcce5c225fc5d9b23159f0e9b52ae78d7f4778",
+  "lessons": [
+    {
+      "lesson_id": "TABLET-GPT-STATIC-INTEGRITY-CANDIDATE-V345",
+      "subsystem": "tablet_gpt_tcg_grader_alignment",
+      "issue_class": "static_refresh_integrity_manifest_can_capture_untracked_or_unstaged_runtime_artifacts",
+      "trigger_condition": "validated static collection stages the approved public JSON set while the working tree still contains runtime-generated untracked JSON or tracked-but-unstaged learning/report changes",
+      "prevention_rule": "build static publish integrity coverage only from Git-tracked paths after restoring tracked-but-unstaged files that are outside the approved candidate set; keep untracked runtime artifacts outside the fixed-hash manifest",
+      "validation_required": [
+        "manifest file set equals the Git-tracked policy surface for the candidate tree",
+        "repository_integrity_guard passes on the exact candidate head",
+        "Tablet GPT candidate sync declares the exact watched path set"
+      ],
+      "safety_boundary": "do not delete or promote device-local learning, do not weaken repository integrity coverage, and do not treat an unexecuted or stale check as PASS"
+    }
+  ]
+}

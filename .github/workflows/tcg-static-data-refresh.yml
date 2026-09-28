@@ -41,7 +41,7 @@ jobs:
       - name: Compile and run collection publish regressions
         run: |
           python -m py_compile \
-            safe_runtime.py test_safe_runtime_redirect_diagnostics_v253.py collection_job_contract.py test_collection_job_contract_v255.py static_data_publish_gate.py auto_update_all.py tcg_updater.py feature_contract.py fault_injection_healing.py \
+            safe_runtime.py test_safe_runtime_redirect_diagnostics_v253.py collection_job_contract.py test_collection_job_contract_v255.py static_data_publish_gate.py static_integrity_manifest.py test_static_integrity_manifest_v345.py auto_update_all.py tcg_updater.py feature_contract.py fault_injection_healing.py \
             collection_verification_gate.py collection_verification_gate_contextual.py \
             update_releases.py release_history_backfill.py update_promo_events.py \
             update_market_prices.py market_public_crosscheck.py \
@@ -56,6 +56,7 @@ jobs:
             test_safe_runtime_redirect_diagnostics_v253.py \
             test_collection_job_contract_v255.py \
             test_static_data_publish_gate.py \
+            test_static_integrity_manifest_v345.py \
             test_collection_verification_gate.py \
             test_collection_verification_contextual_v257.py \
             test_market_public_crosscheck_resilience_v228.py \
@@ -118,34 +119,18 @@ jobs:
             data_changed=true
           fi
 
-          integrity_refresh=false
-          if ! python - <<'PY'
-          import json
-          from pathlib import Path
-          import fault_injection_healing as healing
+          # Collection may update tracked runtime-learning/report files that are not
+          # approved static outputs.  Keep the staged allowlist, but restore all
+          # remaining tracked working-tree drift before computing fixed hashes.
+          mapfile -d '' -t unstaged_tracked < <(git diff --name-only -z)
+          if [ "${#unstaged_tracked[@]}" -gt 0 ]; then
+            git restore --worktree -- "${unstaged_tracked[@]}"
+          fi
 
-          root = Path('.').resolve()
-          manifest_path = root / 'integrity_manifest.json'
-          result = healing.diagnose_integrity(root, manifest_path)
-          try:
-              payload = json.loads(manifest_path.read_text(encoding='utf-8'))
-              listed = set((payload.get('files') or {}).keys()) if isinstance(payload, dict) else set()
-          except (OSError, ValueError, TypeError, UnicodeError):
-              listed = set()
-          current = {path.relative_to(root).as_posix() for path in healing.tracked_files(root)}
-          missing = sorted(current - listed)
-          extra = sorted(listed - current)
-          if not result.get('ok') or missing or extra:
-              print(json.dumps({
-                  'diagnose_ok': bool(result.get('ok')),
-                  'diagnose_failed': int(result.get('failed', 0) or 0),
-                  'missing_manifest_entries': missing[:50],
-                  'extra_manifest_entries': extra[:50],
-              }, ensure_ascii=False))
-              raise SystemExit(1)
-          PY
-          then
-            python fault_injection_healing.py --manifest
+          integrity_refresh=false
+          if ! python static_integrity_manifest.py --check integrity_manifest.json; then
+            python static_integrity_manifest.py --write integrity_manifest.json
+            python static_integrity_manifest.py --check integrity_manifest.json
             git add -- integrity_manifest.json
             integrity_refresh=true
           fi
@@ -165,18 +150,7 @@ jobs:
         run: |
           set -euo pipefail
           python fault_injection_healing.py --diagnose
-          python - <<'PY'
-          import json
-          from pathlib import Path
-          import fault_injection_healing as healing
-
-          root = Path('.').resolve()
-          payload = json.loads((root / 'integrity_manifest.json').read_text(encoding='utf-8'))
-          listed = set((payload.get('files') or {}).keys())
-          current = {path.relative_to(root).as_posix() for path in healing.tracked_files(root)}
-          if listed != current:
-              raise SystemExit(f'integrity manifest coverage mismatch: missing={sorted(current-listed)[:20]} extra={sorted(listed-current)[:20]}')
-          PY
+          python static_integrity_manifest.py --check integrity_manifest.json
           git add -- integrity_manifest.json
           git diff --cached --check
 
@@ -376,8 +350,8 @@ jobs:
             echo "- publish policy: validated candidate branch -> PR -> seven required checks -> protected-main merge; no direct/force push"
             echo "- candidate branch: ${{ steps.candidate.outputs.branch || 'none' }}"
             echo "- promotion status: ${{ steps.promote.outputs.status || 'not-attempted' }}"
-            echo "- integrity policy: every published static-data commit regenerates and diagnoses integrity_manifest.json from the exact snapshot"
-            echo "- integrity reconciliation: stale hashes and missing/new tracked-file coverage trigger one manifest refresh even when public JSON is unchanged"
+            echo "- integrity policy: every published static-data commit regenerates and diagnoses integrity_manifest.json from the exact Git-tracked candidate snapshot"
+            echo "- integrity reconciliation: untracked runtime reports are excluded and unstaged tracked runtime drift is restored before fixed-hash generation"
             echo "- restored-state policy: a last-good restore or recovered retry is degraded evidence, never a clean fresh success"
             echo "- lifecycle policy: end/release + 5 days, archive on day 6"
             echo "- topic policy: collection attempts are distinct from zero discovered leads"
