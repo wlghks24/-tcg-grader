@@ -1,0 +1,66 @@
+name: Repository Integrity Manifest Sync v345
+
+on:
+  push:
+    branches:
+      - 'auto/static-data-36352505005-1'
+    paths-ignore:
+      - 'integrity_manifest.json'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: repository-integrity-manifest-sync-v345-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  sync-manifest:
+    if: github.ref != 'refs/heads/main' && github.actor == github.repository_owner
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    env:
+      PYTHONDONTWRITEBYTECODE: '1'
+      PYTHONUNBUFFERED: '1'
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97
+        with:
+          python-version: '3.12'
+      - name: Require exact static candidate branch ancestry
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "${GITHUB_REF_NAME}" = "auto/static-data-36352505005-1"
+          git fetch origin +refs/heads/main:refs/remotes/origin/main
+          git merge-base --is-ancestor origin/main HEAD
+          test "$(git rev-parse --abbrev-ref HEAD)" != "main"
+      - name: Rebuild and verify Git-tracked candidate integrity manifest
+        shell: bash
+        run: |
+          set -euo pipefail
+          python static_integrity_manifest.py --write integrity_manifest.json
+          python static_integrity_manifest.py --check integrity_manifest.json
+          python fault_injection_healing.py --diagnose
+          python repository_integrity_guard.py
+          python -m unittest -v test_static_integrity_manifest_v345.py test_tablet_gpt_tcg_grader_sync_v345.py
+          git diff --check
+      - name: Commit manifest only when changed
+        shell: bash
+        run: |
+          set -euo pipefail
+          if git diff --quiet -- integrity_manifest.json; then
+            echo "[OK] integrity_manifest.json already matches the exact branch tree"
+            exit 0
+          fi
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add -- integrity_manifest.json
+          test "$(git diff --cached --name-only | wc -l | tr -d ' ')" = "1"
+          test "$(git diff --cached --name-only)" = "integrity_manifest.json"
+          git diff --cached --check
+          git commit -m 'Reconcile integrity manifest for v345 static candidate'
+          git push origin "HEAD:${GITHUB_REF_NAME}"
