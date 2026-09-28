@@ -66,7 +66,7 @@ class TabletGptTcgGraderSyncV345(unittest.TestCase):
         self.assertIn("git restore --worktree --", workflow)
         self.assertIn("static_integrity_manifest.py --check", workflow)
         self.assertIn("static_integrity_manifest.py --write", workflow)
-        self.assertIn("git ls-files", helper)
+        self.assertIn('["git", "ls-files", "-z"]', helper)
         self.assertIn("healing.tracked_files(root)", helper)
         self.assertNotIn("HEAD:main", workflow)
         self.assertNotIn("--force", workflow)
