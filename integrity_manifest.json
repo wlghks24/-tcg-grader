@@ -1,7 +1,7 @@
 {
   "version": 2,
   "engine": "v109-card-identity-ocr-learning",
-  "generated_at": "2026-09-28T00:21:33+00:00",
+  "generated_at": "2026-09-28T00:44:41+00:00",
   "files": {
     ".github/workflows/ai-auto-tracker-guard.yml": {
       "sha256": "636e750bd6d2619cce75d4bce2d68051eaa2209ae763bc8ec523ed73476728a6",
@@ -400,8 +400,8 @@
       "bytes": 2289
     },
     ".github/workflows/repository-integrity-manifest-sync-v345.yml": {
-      "sha256": "216d662beb34c08e4c8d971c3defc1cc5978a5c82075d5aaf7ae931cbb1f2738",
-      "bytes": 2517
+      "sha256": "9fbdb88bedaf1911aadc9429bc671f5213a2b1d1580d2bcdfdf6166e9a00bb52",
+      "bytes": 2647
     },
     ".github/workflows/runtime-correctness-guard.yml": {
       "sha256": "c0a82d48b34c880972693a491a1be49a32ab682034d05f746f02953430582a26",
@@ -442,6 +442,10 @@
     ".github/workflows/tcg-code-repair-learning-guard.yml": {
       "sha256": "d3c7c4757066013e33aa27f41ccb7fbde24eea1d933c66795dbd44a8424fc611",
       "bytes": 4856
+    },
+    ".github/workflows/tcg-static-data-refresh-kick-v346.yml": {
+      "sha256": "369b857558f6fa702a4912cac73f1cb203b435e32fcd090bc9c4c301fa9810c7",
+      "bytes": 802
     },
     ".github/workflows/tcg-static-data-refresh.yml": {
       "sha256": "ca854b3858dcb61ed4530263e3cf76569eb2b3f148e17abd667ccdc83374add3",
