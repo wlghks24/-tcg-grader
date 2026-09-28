@@ -46,7 +46,13 @@ class EditionFxFailClosedV328Tests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as directory:
             path=Path(directory)/"exchange_rates.json"
             stamp=(datetime.now(timezone.utc)-timedelta(minutes=5)).isoformat()
-            path.write_text(json.dumps({"updated_at":stamp,"rates":{"JPY_KRW":9.1,"USD_KRW":1400.0}}),encoding="utf-8")
+            path.write_text(json.dumps({
+                "updated_at":stamp,
+                "source_timestamp":stamp,
+                "source":"https://api.frankfurter.dev/v2/rates?base=USD&quotes=KRW,JPY",
+                "source_route":"frankfurter-v2",
+                "rates":{"JPY_KRW":9.1,"USD_KRW":1400.0},
+            }),encoding="utf-8")
             with mock.patch.object(market,"FX",path):
                 rates=market._fx()
             self.assertEqual(9.1,rates["JPY"])

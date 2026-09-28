@@ -159,7 +159,8 @@ class CollectionVerificationGateTests(unittest.TestCase):
     def test_429_is_degraded_not_bypassed(self):
         self.valid_fixture()
         rows = [{"file": name, "ok": True, "remaining_collection_errors": []} for name in gate.MANDATORY_OUTPUT_FILES]
-        rows[0] = {"file": "releases.json", "ok": False, "remaining_collection_errors": ["official: HTTPError: status 429; Retry-After 120s"]}
+        release = next(row for row in rows if row["file"] == "releases.json")
+        release.update({"ok": False, "remaining_collection_errors": ["official: HTTPError: status 429; Retry-After 120s"]})
         self.write("auto_update_report.json", {"results": rows})
         report = gate.verify(self.root, now=self.now)
         self.assertEqual("degraded", report["status"])
@@ -170,7 +171,8 @@ class CollectionVerificationGateTests(unittest.TestCase):
     def test_hard_collection_failure_fails_closed(self):
         self.valid_fixture()
         rows = [{"file": name, "ok": True, "remaining_collection_errors": []} for name in gate.MANDATORY_OUTPUT_FILES]
-        rows[2] = {"file": "market_prices.json", "ok": False, "remaining_collection_errors": ["parser schema mismatch"]}
+        market = next(row for row in rows if row["file"] == "market_prices.json")
+        market.update({"ok": False, "remaining_collection_errors": ["parser schema mismatch"]})
         self.write("auto_update_report.json", {"results": rows})
         report = gate.verify(self.root, now=self.now)
         self.assertEqual("fail_closed", report["status"])

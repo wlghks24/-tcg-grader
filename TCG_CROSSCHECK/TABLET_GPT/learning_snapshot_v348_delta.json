@@ -1,0 +1,43 @@
+{
+  "schema_version": "1.1-tablet-gpt-tcg-grader-learning-sync",
+  "namespace": "TABLET_GPT",
+  "snapshot_kind": "learning_delta",
+  "run_date_kst": "2026-09-28",
+  "built_at": "2026-09-28T10:40:48+09:00",
+  "status": "finalized",
+  "source_repository": "wlghks24/-tcg-grader",
+  "prior_delta": "TCG_CROSSCHECK/TABLET_GPT/learning_snapshot_v347_delta.json",
+  "prior_lesson_digest_sha256": "3de176e53e18ce7884adc6f7f5e0b0a1bb5d57edb09f437e0d20eacf455cf8df",
+  "source_main_sha": "c5b464830b251b23be3337118f5bc93518f7dc7e",
+  "share_policy": {
+    "explicit_patch_and_learning_lessons_only": true,
+    "chatgpt_model_weights_exported": false,
+    "raw_grading_calibration_shared": false,
+    "device_local_runtime_memory_overwritten": false,
+    "peer_verified_never_auto_promotes_local": true
+  },
+  "covered_merges": [
+    {
+      "pr": 313,
+      "version": "v348-fx-source-provenance-failclosed",
+      "merge_sha": "c5b464830b251b23be3337118f5bc93518f7dc7e"
+    }
+  ],
+  "lesson_digest_sha256": "8c320d96ee70d10eedfc1f45e2cbcc111e569776eda5642c6608b9110e774d09",
+  "lessons": [
+    {
+      "lesson_id": "TABLET-GPT-FX-PROVENANCE-FAILCLOSED-V348",
+      "subsystem": "market_price_fx_provenance",
+      "issue_class": "fresh_collection_timestamp_can_mask_missing_or_stale_upstream_fx_observation",
+      "trigger_condition": "an FX response is fetched now but has no trustworthy upstream observation timestamp, or persisted rates are non-finite, non-positive, stale, future-dated, or from an unapproved route/host pair",
+      "prevention_rule": "accept currency conversion only when both collection time and upstream source timestamp are timezone-aware and fresh, route and host provenance match the allowlist, and every used rate and native amount is positive and finite; otherwise return zero conversion without inventing a rate or price",
+      "validation_required": [
+        "fresh known-provenance rates with a fresh source timestamp convert normally",
+        "missing, stale, or future source timestamps fail closed",
+        "corrupt FX cache can be replaced only by a fully validated fresh upstream response",
+        "watched market-runtime change is covered by the exact candidate generation and exact base main"
+      ],
+      "safety_boundary": "do not refresh freshness from local fetch time alone, do not accept name-only market matches, do not generate placeholder prices, and do not claim physical Tablet or Drive verification"
+    }
+  ]
+}

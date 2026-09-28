@@ -10,6 +10,7 @@ DELTA = ROOT / "TCG_CROSSCHECK/TABLET_GPT/learning_snapshot_v347_delta.json"
 RECEIPT = ROOT / "TCG_CROSSCHECK/TCG_GRADER/tablet_gpt_learning_receipt_v347.json"
 PRIOR_CONTRACT = ROOT / "TCG_CROSSCHECK/TABLET_GPT_TCG_GRADER_SYNC_CONTRACT_V346.json"
 CONTRACT = ROOT / "TCG_CROSSCHECK/TABLET_GPT_TCG_GRADER_SYNC_CONTRACT_V347.json"
+NEXT_DELTA = ROOT / "TCG_CROSSCHECK/TABLET_GPT/learning_snapshot_v348_delta.json"
 SOURCE = "fb9fe690596d65df6439e53d1b1dbcbb24ba60c1"
 
 
@@ -61,8 +62,14 @@ class TabletGptTcgGraderSyncV347(unittest.TestCase):
         self.assertTrue(watched(".github/workflows/gpt-tcg-drive-package.yml"))
         self.assertTrue(watched("grading_company_updates.json"))
         self.assertFalse(watched("TCG_CROSSCHECK/TABLET_GPT/learning_snapshot_v347_delta.json"))
+        # This historical contract proves that the first follow-up after the
+        # v347 checkpoint was unrelated. Once a later verified generation
+        # exists, bound the assertion to that generation's exact source main;
+        # comparing forever to HEAD would incorrectly reject later watched
+        # changes that have their own exact candidate generation.
+        comparison_head = read(NEXT_DELTA)["source_main_sha"] if NEXT_DELTA.is_file() else "HEAD"
         changed = subprocess.check_output(
-            ["git", "diff", "--name-only", f"{SOURCE}..HEAD"], text=True
+            ["git", "diff", "--name-only", f"{SOURCE}..{comparison_head}"], text=True
         ).splitlines()
         relevant = sorted(path for path in changed if watched(path))
         self.assertEqual([], relevant)

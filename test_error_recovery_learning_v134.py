@@ -1,3 +1,4 @@
+import datetime as dt
 import io
 import json
 import tempfile
@@ -192,8 +193,11 @@ class ErrorRecoveryLearningV134Tests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as directory:
             data=Path(directory)/"exchange_rates.json"
             data.write_text(json.dumps(initial),encoding="utf-8")
+            source_date=dt.datetime.now(dt.timezone.utc).date().isoformat()
             with mock.patch.object(exchange,"DATA",data), mock.patch.object(
-                exchange,"fetch",side_effect=[TimeoutError("timeout"),{"rates":{"KRW":1400,"JPY":140}}]
+                exchange,"fetch",side_effect=[TimeoutError("timeout"),{
+                    "date":source_date,"rates":{"KRW":1400,"JPY":140}
+                }]
             ):
                 result=exchange.main()
             self.assertEqual(result["source_route"],"frankfurter-v1")
