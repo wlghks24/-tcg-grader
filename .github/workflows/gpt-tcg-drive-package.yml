@@ -96,6 +96,20 @@ jobs:
             exit 0
           fi
 
+          external_hold=false
+          if [ -f COLLECTION_VERIFICATION_REPORT.json ]; then
+            if python drive_package_hold_policy.py COLLECTION_VERIFICATION_REPORT.json; then
+              external_hold=true
+            fi
+          fi
+
+          if [ "${external_hold}" = true ]; then
+            echo "::warning::Verified external provider degradation; keeping the package fail-closed without treating the scheduler as broken."
+            echo "ready=false" >> "$GITHUB_OUTPUT"
+            echo "recovery=EXTERNAL_PROVIDER_DEGRADED_HOLD" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
           exit "${rc}"
 
       - name: Upload package for GPT Drive transfer
@@ -117,4 +131,5 @@ jobs:
             echo "- package ready: ${{ steps.package.outputs.ready || 'false' }}"
             echo "- recovery: ${{ steps.package.outputs.recovery || 'none' }}"
             echo "- stale policy: never widen the two-hour report freshness gate; request a fresh protected collection instead"
+            echo "- degraded policy: upload remains blocked; only fully evidenced external provider degradation becomes EXTERNAL_PROVIDER_DEGRADED_HOLD"
           } >> "$GITHUB_STEP_SUMMARY"
