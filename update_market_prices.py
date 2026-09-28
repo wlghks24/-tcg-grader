@@ -44,6 +44,20 @@ def kream_label_prices(text:str,label_pattern:str,low:int,high:int,limit:int=12)
     values=[int(value.replace(',','')) for value in re.findall(label_pattern+r'\s*([0-9,]+)원',text,re.I)]
     return [value for value in values if low<=value<=high][:max(1,min(int(limit),30))]
 
+def packmagik_card_market_price(text:str,card_number:str,card_name:str)->str|None:
+    """Read one named card's public Pack Magik market value without crossing into a neighbour card."""
+    if not text or not card_number or not card_name:
+        return None
+    for match in re.finditer(re.escape(card_number),text,re.I):
+        context=text[max(0,match.start()-220):min(len(text),match.end()+220)]
+        if re.search(re.escape(card_name),context,re.I) is None:
+            continue
+        tail=text[match.end():min(len(text),match.end()+220)]
+        price=re.search(r'(?:Market(?:\s+Value)?|시장가)\s*\$([0-9]+(?:\.[0-9]+)?)',tail,re.I)
+        if price:
+            return price.group(1)
+    return None
+
 def set_price(db,key,display,kind,market,transactions,source):
     db['entries'][key]={'display':display,'kind':kind,'market':market,'transactions':transactions,
       'source_date':dt.date.today().isoformat(),'source':source}
@@ -231,9 +245,9 @@ def main():
         else: errors.append('KREAM 블랙볼트 BOX: 체결가격 패턴 0건')
     except NETWORK_ERRORS as e: errors.append('KREAM 블랙볼트 BOX: '+diagnostic_exception(e))
     try:
-        url='https://www.packmagik.com/cards/op-op14-op14-009-p1';text=html_to_text(fetch(url))
-        m=re.search(r'(?:Market|시장가)\s*\$([0-9]+(?:\.[0-9]+)?)',text,re.I)
-        if m:set_price(db,'KR|창해의 칠걸|HIT','$'+m.group(1),'OP14-009 패러렐 국제판 참고시세','Pack Magik 국제시장','한국판 실거래 아님 · 국제판 시장가 참고',url)
+        url='https://www.packmagik.com/sets/op-op14-en';text=html_to_text(fetch(url))
+        market=packmagik_card_market_price(text,'OP14-009','Trafalgar Law')
+        if market:set_price(db,'KR|창해의 칠걸|HIT','$'+market,'OP14-009 패러렐 국제판 참고시세','Pack Magik 국제시장','한국판 실거래 아님 · 국제판 시장가 참고',url)
         else: errors.append('Pack Magik OP14-009: 가격 패턴 0건')
     except NETWORK_ERRORS as e: errors.append('Pack Magik OP14-009: '+diagnostic_exception(e))
     try:
