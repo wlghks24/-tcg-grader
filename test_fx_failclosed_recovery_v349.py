@@ -87,6 +87,34 @@ class FxFailClosedRecoveryV349Tests(unittest.TestCase):
             self.assertEqual('frankfurter-v1',result['source_route'])
             self.assertTrue(result['source_timestamp'])
 
+    def test_updater_rejects_mixed_staleness_across_required_quotes(self):
+        now=dt.datetime.now(dt.timezone.utc)
+        raw=[
+            {'quote':'KRW','rate':1360.0,'updated_at':now.isoformat()},
+            {'quote':'JPY','rate':158.1,'updated_at':(now-dt.timedelta(hours=73)).isoformat()},
+        ]
+        with self.assertRaises(ValueError):
+            updater.parse_source_timestamp(raw)
+
+    def test_updater_requires_timestamp_for_both_required_quotes(self):
+        now=dt.datetime.now(dt.timezone.utc)
+        raw=[
+            {'quote':'KRW','rate':1360.0,'updated_at':now.isoformat()},
+            {'quote':'JPY','rate':158.1},
+        ]
+        with self.assertRaises(ValueError):
+            updater.parse_source_timestamp(raw)
+
+    def test_updater_ignores_unrelated_stale_quote_timestamp(self):
+        now=dt.datetime.now(dt.timezone.utc)
+        raw=[
+            {'quote':'KRW','rate':1360.0,'updated_at':now.isoformat()},
+            {'quote':'JPY','rate':158.1,'updated_at':now.isoformat()},
+            {'quote':'EUR','rate':0.86,'updated_at':(now-dt.timedelta(hours=120)).isoformat()},
+        ]
+        observed=dt.datetime.fromisoformat(updater.parse_source_timestamp(raw))
+        self.assertLess(abs((now-observed).total_seconds()),5)
+
     def test_fx_rejects_missing_stale_or_future_source_timestamp(self):
         with tempfile.TemporaryDirectory() as td:
             path=Path(td)/'exchange_rates.json'
