@@ -26,6 +26,7 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: |
           set -euo pipefail
+          # Dispatch only the existing protected refresh; this workflow never publishes data itself.
           gh api --method POST \
             "repos/${GITHUB_REPOSITORY}/actions/workflows/tcg-static-data-refresh.yml/dispatches" \
             -f ref=main
