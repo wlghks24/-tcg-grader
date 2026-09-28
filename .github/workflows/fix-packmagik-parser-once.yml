@@ -44,11 +44,11 @@ jobs:
               if not text or not card_number or not card_name:
                   return None
               for match in re.finditer(re.escape(card_number),text,re.I):
-                  start=max(0,match.start()-220);end=min(len(text),match.end()+220)
-                  window=text[start:end]
-                  if re.search(re.escape(card_name),window,re.I) is None:
+                  context=text[max(0,match.start()-220):min(len(text),match.end()+220)]
+                  if re.search(re.escape(card_name),context,re.I) is None:
                       continue
-                  price=re.search(r'(?:Market(?:\\s+Value)?|시장가)\\s*\\$([0-9]+(?:\\.[0-9]+)?)',window,re.I)
+                  tail=text[match.end():min(len(text),match.end()+220)]
+                  price=re.search(r'(?:Market(?:\\s+Value)?|시장가)\\s*\\$([0-9]+(?:\\.[0-9]+)?)',tail,re.I)
                   if price:
                       return price.group(1)
               return None
