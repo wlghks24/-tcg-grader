@@ -1,0 +1,48 @@
+{
+  "schema_version": "1.1-tablet-gpt-tcg-grader-learning-sync",
+  "namespace": "TABLET_GPT",
+  "snapshot_kind": "learning_delta",
+  "run_date_kst": "2026-09-28",
+  "built_at": "2026-09-28T16:02:00+09:00",
+  "status": "finalized",
+  "source_repository": "wlghks24/-tcg-grader",
+  "prior_delta": "TCG_CROSSCHECK/TABLET_GPT/learning_snapshot_v349_delta.json",
+  "prior_lesson_digest_sha256": "7ae10db08720eff93fd0bf0f0fd0e6cadeafcf3cb5eb9327df7f7bcd8294511c",
+  "source_main_sha": "f1e43e5b536d50e858376b88b2051257d1f2d969",
+  "share_policy": {
+    "explicit_patch_and_learning_lessons_only": true,
+    "chatgpt_model_weights_exported": false,
+    "raw_grading_calibration_shared": false,
+    "device_local_runtime_memory_overwritten": false,
+    "peer_verified_never_auto_promotes_local": true
+  },
+  "covered_merges": [
+    {
+      "pr": 316,
+      "version": "v350-drive-code-main-trigger-checkpoint",
+      "merge_sha": "24b66f0f474cc3320a652e044541f636c522cadf"
+    },
+    {
+      "pr": 318,
+      "version": "v350-integrity-writer-checkpoint",
+      "merge_sha": "f1e43e5b536d50e858376b88b2051257d1f2d969"
+    }
+  ],
+  "lesson_digest_sha256": "f99cf7f6d7865136f341076f12a5f4c7777c0f6156e696ca239292e001fe7b27",
+  "lessons": [
+    {
+      "lesson_id": "TABLET-GPT-STATIC-DATA-WATCH-SCOPE-V350",
+      "subsystem": "tablet_gpt_tcg_grader_alignment",
+      "issue_class": "mutable_public_static_output_misclassified_as_runtime_watched_path",
+      "trigger_condition": "a validated data-only static refresh changes grading_company_updates.json, whose filename matches the historical grading_ runtime prefix, so Tablet GPT alignment reports stale even though no grading runtime code changed",
+      "prevention_rule": "exclude the canonical mutable public static JSON outputs from Tablet GPT runtime-code freshness matching while keeping executable grading_, grade_, tablet_, OCR, vision, market, generation, server and workflow paths watched; anchor the correction to the current verified main checkpoint",
+      "validation_required": [
+        "grading_company_updates.json and the canonical public static outputs are excluded from runtime-code freshness matching",
+        "grading_company_watch.py and other executable grading_ paths remain watched",
+        "the PR 316 Drive workflow change is explicitly covered by the v350 checkpoint at the exact current main SHA",
+        "later executable watched-path changes still report TABLET_GPT_SYNC_STALE"
+      ],
+      "safety_boundary": "do not exclude executable grading or runtime code, do not weaken fail-closed freshness, do not auto-promote device-local learning, and do not claim physical Tablet or Drive verification"
+    }
+  ]
+}
