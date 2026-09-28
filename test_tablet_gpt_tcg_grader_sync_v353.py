@@ -82,7 +82,7 @@ class TabletGptTcgGraderSyncV353(unittest.TestCase):
         if not relevant:
             return
 
-        pattern = re.compile(r"TABLET_GPT_TCG_GRADER_SYNC_CONTRACT_V(\\d+)\\.json$")
+        pattern = re.compile(r"TABLET_GPT_TCG_GRADER_SYNC_CONTRACT_V(\d+)\.json$")
         successors = []
         for path in (ROOT / "TCG_CROSSCHECK").glob("TABLET_GPT_TCG_GRADER_SYNC_CONTRACT_V*.json"):
             match = pattern.fullmatch(path.name)
