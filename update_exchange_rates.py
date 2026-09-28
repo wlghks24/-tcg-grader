@@ -27,8 +27,22 @@ def parse_rates(raw):
         return float(quotes['KRW']),float(quotes['JPY'])
     raise ValueError('환율 응답의 KRW·JPY 필수값을 읽지 못했습니다')
 
+def _load_current():
+    """Load the persisted cache without letting corruption block a fresh fetch."""
+    try:
+        current=json.loads(safe_read_text(DATA))
+        if isinstance(current,dict):
+            return current
+    except (OSError,TypeError,ValueError):
+        pass
+    return {
+        'base':'KRW','rates':{},'source':'','source_route':'',
+        'collection_status':'사용 가능한 확인환율 없음',
+        'collection_error':None,'collection_errors':[],
+    }
+
 def main():
-    current=json.loads(safe_read_text(DATA))
+    current=_load_current()
     errors=[];selected=None
     for label,url in SOURCES:
         try:
@@ -45,7 +59,7 @@ def main():
         current['source']=url;current['source_route']=label;current['collection_status']='정상'
         current['collection_error']=None;current['collection_errors']=[]
     else:
-        current['collection_status']='기존 확인환율 유지'
+        current['collection_status']='기존 확인환율 유지' if current.get('rates') else '사용 가능한 확인환율 없음'
         # Keep the singular compatibility field equal to one list entry.  The
         # orchestrator merges both fields and de-duplicates exact strings; a
         # concatenated summary made the same outage look like an extra failure.
