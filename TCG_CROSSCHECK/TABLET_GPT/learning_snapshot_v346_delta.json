@@ -1,0 +1,43 @@
+{
+  "schema_version": "1.1-tablet-gpt-tcg-grader-learning-sync",
+  "namespace": "TABLET_GPT",
+  "snapshot_kind": "learning_delta",
+  "run_date_kst": "2026-09-28",
+  "built_at": "2026-09-28T09:46:26+09:00",
+  "status": "finalized",
+  "source_repository": "wlghks24/-tcg-grader",
+  "prior_delta": "TCG_CROSSCHECK/TABLET_GPT/learning_snapshot_v345_delta.json",
+  "prior_lesson_digest_sha256": "291412f4758142f3a8f36ccd8bbcce5c225fc5d9b23159f0e9b52ae78d7f4778",
+  "source_main_sha": "ad9d79f1ae656145302c7e6125f3139cb5d4cee8",
+  "share_policy": {
+    "explicit_patch_and_learning_lessons_only": true,
+    "chatgpt_model_weights_exported": false,
+    "raw_grading_calibration_shared": false,
+    "device_local_runtime_memory_overwritten": false,
+    "peer_verified_never_auto_promotes_local": true
+  },
+  "covered_merges": [
+    {
+      "pr": 310,
+      "version": "v346-static-candidate-fresh-recovery",
+      "merge_sha": "ad9d79f1ae656145302c7e6125f3139cb5d4cee8"
+    }
+  ],
+  "lesson_digest_sha256": "3c0e2bc2795be26ce4b50acba1be4cf9d4fa1536964f3a345daa10895cc43898",
+  "lessons": [
+    {
+      "lesson_id": "TABLET-GPT-STATIC-CANDIDATE-FRESH-RECOVERY-V346",
+      "subsystem": "tablet_gpt_tcg_grader_alignment",
+      "issue_class": "stale_static_candidate_merge_can_trigger_drive_package_failure_after_protected_promotion_delay",
+      "trigger_condition": "a validated static-data candidate remains unmerged beyond report freshness or receives code/workflow commits before external promotion",
+      "prevention_rule": "static-data candidate branches may change only the 17 approved public JSON outputs plus integrity_manifest.json; reject stale auto_update_report in candidate CI; Drive packaging must keep the two-hour freshness gate and dispatch a fresh protected static collection instead of publishing stale evidence",
+      "validation_required": [
+        "static candidate diff contains only approved public JSON outputs and integrity_manifest.json",
+        "auto_update_report remains within the two-hour freshness window when candidate CI runs",
+        "stale Drive packaging dispatches a fresh TCG Static Data Refresh without uploading a stale package",
+        "repository integrity and Tablet GPT exact watched-path alignment pass on the exact candidate head"
+      ],
+      "safety_boundary": "do not widen freshness limits, do not publish stale data, do not direct or force push main, and do not claim deferred physical Drive delivery as verified"
+    }
+  ]
+}

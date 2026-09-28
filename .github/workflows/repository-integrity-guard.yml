@@ -34,12 +34,14 @@ jobs:
           cache-dependency-path: requirements.txt
       - name: Install audited runtime test dependencies
         run: python -m pip install --disable-pip-version-check -r requirements.txt
+      - name: Enforce protected static candidate scope and freshness
+        run: python protected_static_candidate_guard.py
       - name: Run tracked repository integrity checks
         run: python repository_integrity_guard.py
       - name: Verify internal code-map contracts
         run: |
           python verify_code_map_internal.py
-          python -m unittest -v test_code_map_fast_route_v195.py test_ai_auto_tracker.py test_market_ai_auto_tracker.py test_protected_static_pipeline_v305.py
+          python -m unittest -v test_code_map_fast_route_v195.py test_ai_auto_tracker.py test_market_ai_auto_tracker.py test_protected_static_pipeline_v305.py test_protected_static_candidate_guard_v311.py
 
       - name: Validate all tracked shell entrypoints
         shell: bash
