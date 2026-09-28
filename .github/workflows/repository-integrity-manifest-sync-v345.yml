@@ -2,8 +2,8 @@ name: Repository Integrity Manifest Sync v345
 
 on:
   push:
-    branches-ignore:
-      - main
+    branches:
+      - 'fix/fresh-static-refresh-kick-v346'
     paths-ignore:
       - 'integrity_manifest.json'
   workflow_dispatch:
@@ -30,11 +30,11 @@ jobs:
       - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97
         with:
           python-version: '3.12'
-      - name: Require non-main latest-main descendant
+      - name: Require exact allowlisted branch ancestry
         shell: bash
         run: |
           set -euo pipefail
-          test "${GITHUB_REF}" != 'refs/heads/main'
+          test "${GITHUB_REF_NAME}" = "fix/fresh-static-refresh-kick-v346"
           git fetch origin +refs/heads/main:refs/remotes/origin/main
           git merge-base --is-ancestor origin/main HEAD
           test "$(git rev-parse --abbrev-ref HEAD)" != "main"
