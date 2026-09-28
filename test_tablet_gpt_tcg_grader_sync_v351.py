@@ -1,5 +1,6 @@
 import hashlib
 import json
+import re
 from pathlib import Path
 import subprocess
 import unittest
@@ -16,6 +17,21 @@ EXPECTED_DIGEST = "dd0c8324df37e0e3e7a1797f9c22b0d1dec828b9881f82ac229e12ce13d98
 
 def read(path):
     return json.loads(path.read_text(encoding="utf-8"))
+
+
+def watched_paths(contract, source, head="HEAD"):
+    watch = contract["freshness_watch"]
+    exact = set(watch["exact_paths"])
+    prefixes = tuple(watch["path_prefixes"])
+    excluded = set(watch["exclude_paths"])
+
+    def watched(path):
+        return path not in excluded and (path in exact or path.startswith(prefixes))
+
+    changed = subprocess.check_output(
+        ["git", "diff", "--name-only", f"{source}..{head}"], text=True
+    ).splitlines()
+    return sorted(path for path in changed if watched(path))
 
 
 class TabletGptTcgGraderSyncV351(unittest.TestCase):
@@ -55,30 +71,58 @@ class TabletGptTcgGraderSyncV351(unittest.TestCase):
         self.assertFalse(receipt["verification"]["physical_drive_readback_verified"])
         subprocess.run(["git", "merge-base", "--is-ancestor", SOURCE, "HEAD"], check=True)
 
-    def test_checkpoint_makes_nonwatched_playgo_followup_fresh_without_weakening_watch(self):
+    def test_checkpoint_remains_strict_but_can_delegate_to_exact_newer_generation(self):
         contract = read(CONTRACT)
         self.assertNotIn("candidate_sync", contract)
         self.assertTrue(contract["rules"]["post_merge_checkpoint_must_anchor_future_pr_freshness"])
         self.assertTrue(contract["rules"]["subsequent_watched_change_requires_new_generation"])
-        watch = contract["freshness_watch"]
-        exact = set(watch["exact_paths"])
-        prefixes = tuple(watch["path_prefixes"])
-        excluded = set(watch["exclude_paths"])
+        relevant = watched_paths(contract, SOURCE)
+        if not relevant:
+            return
 
-        def watched(path):
-            return path not in excluded and (path in exact or path.startswith(prefixes))
+        pattern = re.compile(r"TABLET_GPT_TCG_GRADER_SYNC_CONTRACT_V(\d+)\.json$")
+        successors = []
+        for path in (ROOT / "TCG_CROSSCHECK").glob("TABLET_GPT_TCG_GRADER_SYNC_CONTRACT_V*.json"):
+            match = pattern.fullmatch(path.name)
+            if match and int(match.group(1)) > 351:
+                successors.append((int(match.group(1)), path))
+        self.assertTrue(successors, f"v351 stale without verified successor: {relevant}")
+        version, successor_path = max(successors)
+        successor = read(successor_path)
+        candidate = successor.get("candidate_sync") or {}
+        self.assertTrue(candidate, f"v{version} lacks exact candidate_sync")
+        self.assertTrue(candidate["requires_exact_watched_path_match"])
+        self.assertTrue(candidate["post_merge_coverage_allowed"])
 
-        self.assertTrue(watched(".github/workflows/gpt-tcg-drive-package.yml"))
-        self.assertTrue(watched("multi_market_price_collector.py"))
-        self.assertTrue(watched("grading_company_updates.json"))
-        self.assertFalse(watched("update_promo_events.py"))
-        self.assertFalse(watched("promo_events.json"))
-        self.assertFalse(watched("TCG_CROSSCHECK/TABLET_GPT/learning_snapshot_v351_delta.json"))
-        changed = subprocess.check_output(
-            ["git", "diff", "--name-only", f"{SOURCE}..HEAD"], text=True
-        ).splitlines()
-        relevant = sorted(path for path in changed if watched(path))
-        self.assertEqual([], relevant)
+        delta = read(ROOT / successor["delta_snapshot"])
+        receipt = read(ROOT / successor["receiver_receipt"])
+        self.assertEqual(candidate["base_main_sha"], delta["source_main_sha"])
+        self.assertEqual(delta["source_main_sha"], receipt["source_main_sha"])
+        self.assertEqual("SYNCED_VERIFIED", receipt["status"])
+        raw = json.dumps(delta["lessons"], ensure_ascii=False, sort_keys=True, separators=(",", ":"))
+        digest = hashlib.sha256(raw.encode("utf-8")).hexdigest()
+        self.assertEqual(digest, delta["lesson_digest_sha256"])
+        self.assertEqual(digest, receipt["delta_lesson_digest_sha256"])
+        self.assertEqual([row["lesson_id"] for row in delta["lessons"]], receipt["accepted_lesson_ids"])
+
+        generation_files = {
+            successor_path.relative_to(ROOT).as_posix(),
+            successor["delta_snapshot"],
+            successor["receiver_receipt"],
+            successor["verification_test"],
+        }
+        self.assertEqual(generation_files, set(candidate["generation_files"]))
+        for path in generation_files:
+            self.assertTrue((ROOT / path).is_file(), path)
+
+        base = candidate["base_main_sha"]
+        successor_relevant = watched_paths(successor, base)
+        self.assertEqual(sorted(candidate["watched_paths"]), successor_relevant)
+        self.assertEqual(sorted(relevant), successor_relevant)
+        subprocess.run(["git", "merge-base", "--is-ancestor", base, "HEAD"], check=True)
+        subprocess.run(
+            ["git", "merge-base", "--is-ancestor", candidate["candidate_commit"], "HEAD"], check=True
+        )
 
     def test_latest_generation_is_complete_and_bound(self):
         contract = read(CONTRACT)

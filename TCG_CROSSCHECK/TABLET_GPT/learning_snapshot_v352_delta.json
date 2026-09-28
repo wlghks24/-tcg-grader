@@ -1,0 +1,50 @@
+{
+  "schema_version": "1.1-tablet-gpt-tcg-grader-learning-sync",
+  "namespace": "TABLET_GPT",
+  "snapshot_kind": "learning_delta",
+  "run_date_kst": "2026-09-29",
+  "built_at": "2026-09-29T00:10:00+09:00",
+  "status": "finalized",
+  "source_repository": "wlghks24/-tcg-grader",
+  "prior_delta": "TCG_CROSSCHECK/TABLET_GPT/learning_snapshot_v351_delta.json",
+  "prior_lesson_digest_sha256": "dd0c8324df37e0e3e7a1797f9c22b0d1dec828b9881f82ac229e12ce13d98eb2",
+  "source_main_sha": "3af7e77fd74af46ce5b82289100b8763a025de6f",
+  "share_policy": {
+    "explicit_patch_and_learning_lessons_only": true,
+    "chatgpt_model_weights_exported": false,
+    "raw_grading_calibration_shared": false,
+    "device_local_runtime_memory_overwritten": false,
+    "peer_verified_never_auto_promotes_local": true
+  },
+  "covered_merges": [
+    {
+      "pr": 321,
+      "version": "v352-playgo-drive-gate-postmerge-checkpoint",
+      "merge_sha": "5827538eec21252ceb1aca70a7b2456224deed7e"
+    },
+    {
+      "pr": 322,
+      "version": "v352-v351-integrity-postmerge-checkpoint",
+      "merge_sha": "3af7e77fd74af46ce5b82289100b8763a025de6f"
+    }
+  ],
+  "lesson_digest_sha256": "2be936e84be1bad9eed38eb70989ada9295d393d73843ad7648c007886fe7967",
+  "lessons": [
+    {
+      "lesson_id": "TABLET-GPT-STATIC-CANDIDATE-SUCCESSOR-COVERAGE-V352",
+      "subsystem": "tablet_gpt_tcg_grader_alignment",
+      "issue_class": "historical_generation_test_blocks_legitimate_new_verified_watched_path_generation",
+      "trigger_condition": "a fresh protected static-data candidate based on main 3af7e77fd74af46ce5b82289100b8763a025de6f updates grading_company_updates.json after v351, while the v351 regression still requires zero later watched-path changes even when an exact successor generation is bundled",
+      "prevention_rule": "keep watched-path fail-closed behavior, but allow a historical generation regression to delegate only to a strictly newer verified contract whose exact base, exact watched-path set, generation files, digest, receipt, and source ancestry all validate; the current v352 candidate remains limited to grading_company_updates.json",
+      "validation_required": [
+        "the candidate descends directly from exact main 3af7e77fd74af46ce5b82289100b8763a025de6f",
+        "the only newly changed watched path is grading_company_updates.json",
+        "v352 generation files are bundled in the same protected-main PR and exactly match the candidate contract",
+        "v351 successor delegation accepts only a numerically newer generation with exact candidate base and exact watched-path coverage",
+        "the generation carries no model weights, raw grading calibration, or device-local runtime memory",
+        "physical Tablet runtime and Drive readback remain unverified until matching external evidence exists"
+      ],
+      "safety_boundary": "do not exclude grading-company data from freshness checks, do not make pull-request freshness nonblocking, do not auto-confirm UNKNOWN or CONFLICT values, and do not claim physical Tablet or Drive verification"
+    }
+  ]
+}
