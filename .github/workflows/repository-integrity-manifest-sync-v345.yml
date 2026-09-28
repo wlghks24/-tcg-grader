@@ -2,8 +2,8 @@ name: Repository Integrity Manifest Sync v345
 
 on:
   push:
-    branches-ignore:
-      - main
+    branches:
+      - 'fix/drive-package-code-main-trigger-v350'
     paths-ignore:
       - 'integrity_manifest.json'
   workflow_dispatch:
