@@ -1,0 +1,45 @@
+{
+  "schema_version": "1.1-tablet-gpt-tcg-grader-learning-sync",
+  "namespace": "TABLET_GPT",
+  "snapshot_kind": "learning_delta",
+  "run_date_kst": "2026-09-29",
+  "built_at": "2026-09-29T07:40:00+09:00",
+  "status": "finalized",
+  "source_repository": "wlghks24/-tcg-grader",
+  "prior_delta": "TCG_CROSSCHECK/TABLET_GPT/learning_snapshot_v353_delta.json",
+  "prior_lesson_digest_sha256": "69b744427cc68159809ff9cf9a7693dd8bb0130937585211f10014f272dd6175",
+  "source_main_sha": "59fa7664f54413900c66fc0c2552baaf25e6309b",
+  "share_policy": {
+    "explicit_patch_and_learning_lessons_only": true,
+    "chatgpt_model_weights_exported": false,
+    "raw_grading_calibration_shared": false,
+    "device_local_runtime_memory_overwritten": false,
+    "peer_verified_never_auto_promotes_local": true
+  },
+  "covered_merges": [
+    {
+      "pr": 325,
+      "version": "v354-packmagik-parser-postmerge-base",
+      "merge_sha": "59fa7664f54413900c66fc0c2552baaf25e6309b"
+    }
+  ],
+  "lesson_digest_sha256": "64ebdc33098d255ab6acb0ec638aaaa3a8342c622f4f0beb23c757a2e32a6566",
+  "lessons": [
+    {
+      "lesson_id": "TABLET-GPT-STATIC-CANDIDATE-V354",
+      "subsystem": "tablet_gpt_tcg_grader_alignment",
+      "issue_class": "fresh_static_candidate_updates_watched_grading_company_snapshot_after_v353_checkpoint",
+      "trigger_condition": "the newest protected static-data candidate based on main 59fa7664f54413900c66fc0c2552baaf25e6309b refreshes grading_company_updates.json after the v353 post-merge checkpoint",
+      "prevention_rule": "bundle an exact successor generation with the protected static-data candidate; require exact base main, exact candidate commit, exact watched-path set, digest/receipt agreement, and ancestry before the candidate can satisfy historical freshness checks",
+      "validation_required": [
+        "candidate base equals main 59fa7664f54413900c66fc0c2552baaf25e6309b",
+        "candidate commit equals 11adfc9594fc5305632ec2c16e6cc52519f5f162 before generation files are added",
+        "the only newly changed watched runtime/data path is grading_company_updates.json",
+        "v354 generation files are present in the same protected-main PR and excluded only as generation metadata",
+        "model weights, raw grading calibration, and device-local runtime memory are not transferred",
+        "physical Tablet runtime and Drive readback remain unverified until matching external evidence exists"
+      ],
+      "safety_boundary": "do not exclude grading_company_updates.json, do not weaken freshness or static-data gates, do not auto-confirm UNKNOWN/CONFLICT, and do not claim physical Tablet or Drive verification"
+    }
+  ]
+}
