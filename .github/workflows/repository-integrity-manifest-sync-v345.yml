@@ -3,7 +3,7 @@ name: Repository Integrity Manifest Sync v345
 on:
   push:
     branches:
-      - 'fix/drive-package-code-main-trigger-v350'
+      - 'ops/integrity-manifest-sync'
     paths-ignore:
       - 'integrity_manifest.json'
   workflow_dispatch:
@@ -30,11 +30,12 @@ jobs:
       - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97
         with:
           python-version: '3.12'
-      - name: Require exact owner repair branch ancestry
+      - name: Require exact owner integrity-sync branch ancestry
         shell: bash
         run: |
           set -euo pipefail
           test "${GITHUB_ACTOR}" = "${GITHUB_REPOSITORY_OWNER}"
+          test "${GITHUB_REF_NAME}" = "ops/integrity-manifest-sync"
           git fetch origin +refs/heads/main:refs/remotes/origin/main
           git merge-base --is-ancestor origin/main HEAD
           test "$(git rev-parse --abbrev-ref HEAD)" != "main"
@@ -65,5 +66,5 @@ jobs:
           test "$(git diff --cached --name-only | wc -l | tr -d ' ')" = "1"
           test "$(git diff --cached --name-only)" = "integrity_manifest.json"
           git diff --cached --check
-          git commit -m 'Reconcile integrity manifest for exact branch tree'
+          git commit -m 'Reconcile integrity manifest for dedicated ops sync branch'
           git push origin "HEAD:${GITHUB_REF_NAME}"
