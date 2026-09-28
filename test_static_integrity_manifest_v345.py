@@ -45,6 +45,18 @@ class StaticIntegrityManifestV345Tests(unittest.TestCase):
         self.assertIn("python static_integrity_manifest.py --check integrity_manifest.json", workflow)
         self.assertNotIn("python fault_injection_healing.py --manifest", workflow)
 
+    def test_manifest_sync_uses_exact_dedicated_branch_and_fail_closed_guards(self):
+        workflow = Path('.github/workflows/repository-integrity-manifest-sync-v345.yml').read_text(encoding='utf-8')
+        self.assertIn("- 'fix/integrity-manifest-sync'", workflow)
+        self.assertIn('test "${GITHUB_REF_NAME}" = "fix/integrity-manifest-sync"', workflow)
+        self.assertIn('git merge-base --is-ancestor origin/main HEAD', workflow)
+        self.assertIn("test \"$(git diff --cached --name-only)\" = \"integrity_manifest.json\"", workflow)
+        self.assertIn("Reconcile integrity manifest for dedicated sync branch", workflow)
+        self.assertNotIn("fix/fx-failclosed-recovery-v349", workflow)
+        self.assertNotIn("'fix/**'", workflow)
+        self.assertNotIn("'ops/**'", workflow)
+        self.assertNotIn("HEAD:main", workflow)
+
 
 if __name__ == "__main__":
     unittest.main(verbosity=2)
