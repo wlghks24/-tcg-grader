@@ -1,7 +1,7 @@
 {
   "version": 2,
   "engine": "v109-card-identity-ocr-learning",
-  "generated_at": "2026-09-28T01:33:45+00:00",
+  "generated_at": "2026-09-28T01:45:16+00:00",
   "files": {
     ".github/workflows/ai-auto-tracker-guard.yml": {
       "sha256": "636e750bd6d2619cce75d4bce2d68051eaa2209ae763bc8ec523ed73476728a6",
@@ -1416,7 +1416,7 @@
       "bytes": 8134
     },
     "exchange_rates.json": {
-      "sha256": "b38eee3c1330e13fc30ad5c27522910e52938ca63294e754a6b8e8d9dcb3e138",
+      "sha256": "fe427ee24a418323d92e7ae2d95cc3af0a9fe2de34e66a6e129d6ccf2ec0334e",
       "bytes": 394
     },
     "fan_social_learning.py": {
@@ -1664,7 +1664,7 @@
       "bytes": 7206
     },
     "grading_company_updates.json": {
-      "sha256": "9e645c8fa4e214a88a391a055e605e6539e244a607a1696620d48e92f7641480",
+      "sha256": "50fd80ed9fad7ae4ea6d8ad1012c55929d26bbbeeacb8de08f4f62761e0d596b",
       "bytes": 53087
     },
     "grading_company_watch.py": {
@@ -2056,15 +2056,15 @@
       "bytes": 4126
     },
     "market_prices.json": {
-      "sha256": "4229827f33229c0abbc7d4aaefe817b20435fa03f1f302dd26d8ef0a008f3e10",
-      "bytes": 43023
+      "sha256": "1c600dce6d3d5ced1ef7357c762543a22365cce4f25e8d416d0d2f4c28b17505",
+      "bytes": 43025
     },
     "market_public_crosscheck.py": {
       "sha256": "1c3d93d56d7a192e89e08594b2dbc8958ca456a435b72c69fc6adc09f292fd7f",
       "bytes": 17748
     },
     "market_watch.json": {
-      "sha256": "c91ea1432d03f5cb044b84d9abf89c2a8333a7691569d9a1bd4780195079b1ad",
+      "sha256": "f3e97e0209b45e913a8051db21cc1aeb7cdaf668cc97d77f8d92dac12469c3d6",
       "bytes": 17799
     },
     "migrate_old_data.py": {
@@ -2152,8 +2152,8 @@
       "bytes": 4433
     },
     "promo_events.json": {
-      "sha256": "8bc4020c64914425b9236a8096d592a181e5c966d254c799a3a7e32c42af14e6",
-      "bytes": 120726
+      "sha256": "296d134de3165b9666d14a5ed0f685136b144323c1456a9b76ff72c090cac126",
+      "bytes": 122660
     },
     "protected_static_candidate_guard.py": {
       "sha256": "e39556619a1b1ba814cb8c90fcaef7a2d50c5cf1c6000ff2b297c8ab32040b61",
@@ -2176,12 +2176,12 @@
       "bytes": 10520
     },
     "purchase_signals.json": {
-      "sha256": "2c978ced7f4f45626c4094fbb505de05f3df55112e8b62d554e15fb8b5184c6d",
+      "sha256": "777c2d847d1e95faeddc4503f04fe0c11f6e563d06142daa1797f29465cf5ef5",
       "bytes": 234
     },
     "purchase_sources.json": {
-      "sha256": "8ee8b8f576db793e2f3d5b14fec02ccc5065a3972622f2dbb629454f52b16f81",
-      "bytes": 195732
+      "sha256": "4e25e7fbf06b21d09aba76224ebb473439db3c9c02d1201c4b4d1ebaa223ee7f",
+      "bytes": 196072
     },
     "quality_review_policy.py": {
       "sha256": "d33c417fe221640de679343fc6d9527984386b331edd4ce5663107fd25c34661",
@@ -2208,7 +2208,7 @@
       "bytes": 3066
     },
     "releases.json": {
-      "sha256": "9ade234840fecf539a602beab99e17de7409a5f43004b0c712a23a5270500b1f",
+      "sha256": "f89b8dbedb19d6d9a376014f6ac2ea36536356a723235e099426d44ba945086b",
       "bytes": 45594
     },
     "repository_health_guard.py": {
@@ -2328,8 +2328,8 @@
       "bytes": 21246
     },
     "social_stock_signals.json": {
-      "sha256": "ec81d0ff79bae4dbdc49bb39a757de130b8eb80c39d713d5a91075db8e02c802",
-      "bytes": 453
+      "sha256": "f058389e5f478bba8589a70cb89dfe28356c64b1c2c740663c2bb27a0d90d3a7",
+      "bytes": 500
     },
     "social_stock_sources.json": {
       "sha256": "3d18c05d0d4237b38e34895fd126eacc3ac792cae8930a67d12923fd7f90575d",
@@ -2348,7 +2348,7 @@
       "bytes": 6377
     },
     "supplementary_candidates.json": {
-      "sha256": "f8510b45b6433394b39a16590a1fc2cfc204cbdde3d36618a9cdd0c7c34261cc",
+      "sha256": "786badb36e013065b4cf005d98f3ad0a4399aed642b36f10dc9b69f6bdfacf43",
       "bytes": 7867
     },
     "supplementary_discovery.py": {
@@ -2404,8 +2404,8 @@
       "bytes": 39105
     },
     "tcg_live_data.json": {
-      "sha256": "4a2aecaa53d678ef35d9eb2b34bbfbb67ea3c28b69b91882243d10d5139cd2ca",
-      "bytes": 112038
+      "sha256": "a5e354c9dd8f8e8c66266c43d64f10a2821c7b9449a72dba92c01773c5e2c56b",
+      "bytes": 112057
     },
     "tcg_reliability/__init__.py": {
       "sha256": "3e6bcd161ad0dfcd323c560703d86be1f22c9ab98055eef50ef91e9065e5d648",
