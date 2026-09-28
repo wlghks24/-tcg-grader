@@ -1,7 +1,7 @@
 {
   "version": 2,
   "engine": "v109-card-identity-ocr-learning",
-  "generated_at": "2026-09-28T07:14:28+00:00",
+  "generated_at": "2026-09-28T08:41:50+00:00",
   "files": {
     ".github/workflows/ai-auto-tracker-guard.yml": {
       "sha256": "636e750bd6d2619cce75d4bce2d68051eaa2209ae763bc8ec523ed73476728a6",
@@ -1212,8 +1212,8 @@
       "bytes": 7244
     },
     "apply_playgo_event_data_sync.py": {
-      "sha256": "ae9baf3b8368bd902b1f7c2a8776d47d45e1487a9cb38f05c343b2b7d45cb3d9",
-      "bytes": 2580
+      "sha256": "8af366a28cc1c2e204fd33ad70697ef200776edbf03246bfdc7e6ef550dc1f61",
+      "bytes": 3587
     },
     "apply_playgo_event_watch_patch.py": {
       "sha256": "526c0d13f731596476a9209342229313ac6daa37cc2bd3c372c77135bc3567cd",
@@ -2188,8 +2188,8 @@
       "bytes": 4433
     },
     "promo_events.json": {
-      "sha256": "865033ecda72ebc36fefbbd3e1d0d713e08d4f19c0051223d0b9c0ff9e08fa69",
-      "bytes": 123587
+      "sha256": "320d25e0828230f320a5dbc3f013c0c54399b2a7dc463aa0ed1237fdac000b17",
+      "bytes": 123641
     },
     "protected_static_candidate_guard.py": {
       "sha256": "e39556619a1b1ba814cb8c90fcaef7a2d50c5cf1c6000ff2b297c8ab32040b61",
@@ -3092,7 +3092,7 @@
       "bytes": 10499
     },
     "test_playgo_event_watch.py": {
-      "sha256": "c5a8ce94865088502b1ae01a881b2c2390421b909fc499532ef8454be43bc2de",
+      "sha256": "55ecca55cc3ea8c2110ddfa1102b4e65a76216649bf5db842ee044dc32585023",
       "bytes": 1286
     },
     "test_pokemon_generation_display_v207.py": {
@@ -3540,7 +3540,7 @@
       "bytes": 6848
     },
     "update_promo_events.py": {
-      "sha256": "5910ddbe886979b3990e5688e38586db6c912ba9edeb4c363225c50e96135aa2",
+      "sha256": "c666bce2fa61d1aff467fe418410fbad54c3038cdbe31a196f80ec4cdcef4d2d",
       "bytes": 62629
     },
     "update_purchase_sources.py": {
