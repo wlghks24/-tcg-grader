@@ -45,18 +45,18 @@ class StaticIntegrityManifestV345Tests(unittest.TestCase):
         self.assertIn("python static_integrity_manifest.py --check integrity_manifest.json", workflow)
         self.assertNotIn("python fault_injection_healing.py --manifest", workflow)
 
-    def test_manifest_sync_uses_exact_dedicated_ops_branch(self):
+    def test_manifest_sync_allows_owner_fix_and_ops_branches_only(self):
         workflow = Path('.github/workflows/repository-integrity-manifest-sync-v345.yml').read_text(encoding='utf-8')
-        self.assertIn("- 'ops/integrity-manifest-sync'", workflow)
-        self.assertIn('test "${GITHUB_REF_NAME}" = "ops/integrity-manifest-sync"', workflow)
+        self.assertIn("- 'fix/**'", workflow)
+        self.assertIn("- 'ops/**'", workflow)
+        self.assertIn('test "${GITHUB_ACTOR}" = "${GITHUB_REPOSITORY_OWNER}"', workflow)
+        self.assertIn('fix/*|ops/*', workflow)
         self.assertIn('git merge-base --is-ancestor origin/main HEAD', workflow)
+        self.assertIn('test "$(git rev-parse --abbrev-ref HEAD)" != "main"', workflow)
         self.assertIn("test \"$(git diff --cached --name-only)\" = \"integrity_manifest.json\"", workflow)
-        self.assertIn("Reconcile integrity manifest for dedicated ops sync branch", workflow)
-        self.assertNotIn("fix/drive-package-code-main-trigger-v350", workflow)
-        self.assertNotIn("'fix/**'", workflow)
-        self.assertNotIn("'ops/**'", workflow)
-        self.assertNotIn("branches-ignore:", workflow)
+        self.assertIn("Reconcile integrity manifest for owner repair branch", workflow)
         self.assertNotIn("HEAD:main", workflow)
+        self.assertNotIn("branches-ignore:", workflow)
 
 
 if __name__ == "__main__":
