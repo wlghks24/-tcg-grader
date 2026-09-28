@@ -1,0 +1,43 @@
+{
+  "schema_version": "1.1-tablet-gpt-tcg-grader-learning-sync",
+  "namespace": "TABLET_GPT",
+  "snapshot_kind": "learning_delta",
+  "run_date_kst": "2026-09-28",
+  "built_at": "2026-09-28T17:28:00+09:00",
+  "status": "finalized",
+  "source_repository": "wlghks24/-tcg-grader",
+  "prior_delta": "TCG_CROSSCHECK/TABLET_GPT/learning_snapshot_v350_delta.json",
+  "prior_lesson_digest_sha256": "cd46abb3890edd2aca82cd2653a3330377845aa32b8f6e863c81a689e003bc17",
+  "source_main_sha": "c649f79f3183d615171a79a89af8731cc19c2398",
+  "share_policy": {
+    "explicit_patch_and_learning_lessons_only": true,
+    "chatgpt_model_weights_exported": false,
+    "raw_grading_calibration_shared": false,
+    "device_local_runtime_memory_overwritten": false,
+    "peer_verified_never_auto_promotes_local": true
+  },
+  "covered_merges": [
+    {
+      "pr": 320,
+      "version": "v351-post-v350-main-checkpoint",
+      "merge_sha": "c649f79f3183d615171a79a89af8731cc19c2398"
+    }
+  ],
+  "lesson_digest_sha256": "2329aa215e51444f3271717924409549883865ccb88fd1878d6ce2aff2323025",
+  "lessons": [
+    {
+      "lesson_id": "TABLET-GPT-DRIVE-PACKAGE-DEGRADED-HOLD-V351",
+      "subsystem": "drive_package_failclosed_delivery",
+      "issue_class": "expected_external_provider_degradation_is_reported_as_workflow_failure",
+      "trigger_condition": "package validation returns degraded with no critical findings because every high finding is bounded external HTTP/provider degradation while upload remains disallowed",
+      "prevention_rule": "classify only whitelisted external-degradation evidence as EXTERNAL_PROVIDER_DEGRADED_HOLD; keep ready=false, upload no artifact, and continue failing for stale, invalid, unclassified, or critical findings",
+      "validation_required": [
+        "PSA 403/451/429 and bounded transient HTTP 5xx/timeout/provider maintenance evidence may yield HOLD but never package ready",
+        "invalid market, stale collection state, hard parser/data-quality findings, unknown high codes, or missing evidence remain workflow failures",
+        "the Drive artifact upload step still runs only when steps.package.outputs.ready == 'true'",
+        "the watched workflow change is bound to exact current main c649f79f3183d615171a79a89af8731cc19c2398 and exact v351 generation files"
+      ],
+      "safety_boundary": "do not bypass provider blocks, do not widen freshness thresholds, do not upload degraded data, and do not claim physical Tablet or Drive verification"
+    }
+  ]
+}
