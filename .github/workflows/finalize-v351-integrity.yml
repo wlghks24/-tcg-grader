@@ -1,0 +1,40 @@
+name: Finalize V351 Integrity
+
+on:
+  push:
+    branches:
+      - fix/playgo-source-6517-20260928
+    paths:
+      - .github/workflows/finalize-v351-integrity.yml
+
+permissions:
+  contents: write
+
+jobs:
+  finalize:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repair branch
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          ref: fix/playgo-source-6517-20260928
+          fetch-depth: 1
+
+      - name: Remove one-shot workflow before manifest generation
+        run: git rm .github/workflows/finalize-v351-integrity.yml
+
+      - name: Regenerate exact tracked-tree integrity manifest
+        run: |
+          python static_integrity_manifest.py --write
+          python static_integrity_manifest.py --check
+          python test_tablet_gpt_tcg_grader_sync_v351.py
+          python repository_integrity_guard.py
+
+      - name: Commit finalized manifest and workflow removal
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add integrity_manifest.json
+          git diff --cached --check
+          git commit -m "fix: register v351 files in integrity manifest"
+          git push origin HEAD:fix/playgo-source-6517-20260928
