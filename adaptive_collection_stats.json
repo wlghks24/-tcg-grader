@@ -2,20 +2,20 @@
   "version": 1,
   "jobs": {
     "exchange_rates.json": {
-      "runs": 91,
-      "successes": 72,
+      "runs": 92,
+      "successes": 73,
       "failures": 0,
       "timeouts": 0,
       "partial_successes": 19,
       "recovered_successes": 17,
-      "last_seconds": 12.728,
+      "last_seconds": 0.629,
       "last_ok": true,
       "last_recovered": false,
-      "success_streak": 71,
+      "success_streak": 72,
       "consecutive_failures": 0,
-      "success_ewma_seconds": 4.108,
-      "ewma_seconds": 4.108,
-      "last_run": "2026-09-28T05:58:16+00:00",
+      "success_ewma_seconds": 3.064,
+      "ewma_seconds": 3.064,
+      "last_run": "2026-09-28T08:44:17+00:00",
       "error_patterns": {
         "93697047de8f": {
           "count": 1,
@@ -45,20 +45,20 @@
       "streak_reset_reason": "observation_gap_over_72h"
     },
     "__integration__": {
-      "runs": 88,
-      "successes": 70,
+      "runs": 89,
+      "successes": 71,
       "failures": 13,
       "timeouts": 5,
       "partial_successes": 0,
       "recovered_successes": 5,
-      "last_seconds": 205.639,
+      "last_seconds": 209.629,
       "last_ok": true,
       "last_recovered": false,
-      "success_streak": 19,
+      "success_streak": 20,
       "consecutive_failures": 0,
-      "success_ewma_seconds": 168.174,
-      "ewma_seconds": 168.174,
-      "last_run": "2026-09-28T06:02:26+00:00",
+      "success_ewma_seconds": 180.61,
+      "ewma_seconds": 180.61,
+      "last_run": "2026-09-28T08:52:56+00:00",
       "timeout_exhaustions": 0,
       "deferred_attempts": 0,
       "deferred_successes": 0,
@@ -88,16 +88,16 @@
       "streak_reset_reason": "observation_gap_over_72h"
     },
     "__link_audit__": {
-      "runs": 88,
-      "successes": 65,
+      "runs": 89,
+      "successes": 66,
       "failures": 0,
       "timeouts": 0,
       "partial_successes": 23,
       "recovered_successes": 0,
-      "last_seconds": 89.58,
+      "last_seconds": 85.719,
       "last_ok": true,
       "last_recovered": false,
-      "success_streak": 22,
+      "success_streak": 23,
       "consecutive_failures": 0,
       "error_patterns": {
         "355705cf62a5": {
@@ -147,7 +147,7 @@
         }
       },
       "dominant_error_signature": "cf8b8ee20def",
-      "last_run": "2026-09-28T06:00:30+00:00",
+      "last_run": "2026-09-28T08:50:52+00:00",
       "timeout_exhaustions": 0,
       "deferred_attempts": 0,
       "deferred_successes": 0,
@@ -157,24 +157,24 @@
       "deferred_pending": false,
       "streak_reset_at": "2026-09-10T04:51:52+00:00",
       "streak_reset_reason": "observation_gap_over_72h",
-      "success_ewma_seconds": 93.34,
-      "ewma_seconds": 93.34
+      "success_ewma_seconds": 91.054,
+      "ewma_seconds": 91.054
     },
     "market_watch.json": {
-      "runs": 84,
-      "successes": 84,
+      "runs": 85,
+      "successes": 85,
       "failures": 0,
       "timeouts": 0,
       "partial_successes": 0,
       "recovered_successes": 0,
-      "last_seconds": 0.073,
+      "last_seconds": 0.058,
       "last_ok": true,
       "last_recovered": false,
-      "success_streak": 71,
+      "success_streak": 72,
       "consecutive_failures": 0,
-      "success_ewma_seconds": 0.069,
-      "ewma_seconds": 0.069,
-      "last_run": "2026-09-28T05:58:03+00:00",
+      "success_ewma_seconds": 0.066,
+      "ewma_seconds": 0.066,
+      "last_run": "2026-09-28T08:45:52+00:00",
       "timeout_exhaustions": 0,
       "deferred_attempts": 0,
       "deferred_successes": 0,
@@ -187,16 +187,16 @@
       "streak_reset_reason": "observation_gap_over_72h"
     },
     "releases.json": {
-      "runs": 84,
-      "successes": 64,
+      "runs": 85,
+      "successes": 65,
       "failures": 0,
       "timeouts": 0,
       "partial_successes": 20,
       "recovered_successes": 13,
-      "last_seconds": 33.95,
+      "last_seconds": 28.966,
       "last_ok": true,
       "last_recovered": false,
-      "success_streak": 22,
+      "success_streak": 23,
       "consecutive_failures": 0,
       "error_patterns": {
         "366db33edeb6": {
@@ -271,7 +271,7 @@
         }
       },
       "dominant_error_signature": "dc7a3dae4914",
-      "last_run": "2026-09-28T05:57:46+00:00",
+      "last_run": "2026-09-28T08:44:02+00:00",
       "timeout_exhaustions": 0,
       "deferred_attempts": 0,
       "deferred_successes": 0,
@@ -281,20 +281,20 @@
       "deferred_pending": false,
       "streak_reset_at": "2026-09-10T04:47:07+00:00",
       "streak_reset_reason": "observation_gap_over_72h",
-      "success_ewma_seconds": 33.669,
-      "ewma_seconds": 33.669
+      "success_ewma_seconds": 32.258,
+      "ewma_seconds": 32.258
     },
     "market_prices.json": {
-      "runs": 84,
-      "successes": 65,
+      "runs": 85,
+      "successes": 66,
       "failures": 1,
       "timeouts": 0,
       "partial_successes": 18,
       "recovered_successes": 13,
-      "last_seconds": 173.41,
+      "last_seconds": 177.747,
       "last_ok": true,
       "last_recovered": false,
-      "success_streak": 3,
+      "success_streak": 4,
       "consecutive_failures": 0,
       "error_patterns": {
         "0e8e4bf5d058": {
@@ -324,7 +324,7 @@
         }
       },
       "dominant_error_signature": "0e8e4bf5d058",
-      "last_run": "2026-09-28T05:59:00+00:00",
+      "last_run": "2026-09-28T08:45:52+00:00",
       "timeout_exhaustions": 0,
       "deferred_attempts": 0,
       "deferred_successes": 0,
@@ -334,21 +334,21 @@
       "deferred_pending": false,
       "streak_reset_at": "2026-09-10T04:50:08+00:00",
       "streak_reset_reason": "observation_gap_over_72h",
-      "success_ewma_seconds": 180.689,
-      "ewma_seconds": 180.689
+      "success_ewma_seconds": 179.806,
+      "ewma_seconds": 179.806
     },
     "promo_events.json": {
-      "runs": 84,
+      "runs": 85,
       "successes": 50,
       "failures": 0,
       "timeouts": 0,
-      "partial_successes": 33,
+      "partial_successes": 34,
       "recovered_successes": 14,
-      "last_seconds": 65.249,
+      "last_seconds": 37.993,
       "last_ok": false,
       "last_recovered": false,
       "success_streak": 0,
-      "consecutive_failures": 13,
+      "consecutive_failures": 14,
       "error_patterns": {
         "386416d74406": {
           "count": 13,
@@ -371,9 +371,9 @@
           "last_seen": "2026-09-20T06:57:11+00:00"
         },
         "0710ae51b7e3": {
-          "count": 11,
+          "count": 12,
           "sample": "PLAYGO 출시 알림 · 신사황 프로모션 팩 재배포: HTTPError: status 500",
-          "last_seen": "2026-09-28T05:57:12+00:00"
+          "last_seen": "2026-09-28T08:43:33+00:00"
         },
         "2c48c7ca0bd9": {
           "count": 1,
@@ -387,7 +387,7 @@
         }
       },
       "dominant_error_signature": "386416d74406",
-      "last_run": "2026-09-28T05:57:12+00:00",
+      "last_run": "2026-09-28T08:43:33+00:00",
       "timeout_exhaustions": 0,
       "deferred_attempts": 0,
       "deferred_successes": 0,
@@ -402,17 +402,17 @@
       "last_error_signature": "0710ae51b7e3"
     },
     "purchase_sources.json": {
-      "runs": 86,
+      "runs": 88,
       "successes": 62,
-      "failures": 3,
-      "timeouts": 3,
+      "failures": 4,
+      "timeouts": 4,
       "partial_successes": 20,
-      "recovered_successes": 14,
-      "last_seconds": 2.75,
-      "last_ok": true,
-      "last_recovered": false,
-      "success_streak": 22,
-      "consecutive_failures": 0,
+      "recovered_successes": 15,
+      "last_seconds": 182.875,
+      "last_ok": false,
+      "last_recovered": true,
+      "success_streak": 0,
+      "consecutive_failures": 2,
       "error_patterns": {
         "763f8bb5b931": {
           "count": 13,
@@ -440,43 +440,49 @@
           "last_seen": "2026-09-20T06:24:35+00:00"
         },
         "26cf9476bd02": {
-          "count": 1,
+          "count": 2,
           "sample": "recovered after retry",
-          "last_seen": "2026-09-20T06:27:39+00:00"
+          "last_seen": "2026-09-28T08:49:27+00:00"
+        },
+        "1a693db0fa48": {
+          "count": 1,
+          "sample": "TIMEOUT: update_purchase_sources 30초 초과 / TIMEOUT: update_purchase_sources 90초 초과",
+          "last_seen": "2026-09-28T08:46:24+00:00"
         }
       },
       "dominant_error_signature": "763f8bb5b931",
-      "last_run": "2026-09-28T05:58:03+00:00",
-      "timeout_exhaustions": 2,
-      "deferred_attempts": 2,
-      "deferred_successes": 1,
+      "last_run": "2026-09-28T08:49:27+00:00",
+      "timeout_exhaustions": 3,
+      "deferred_attempts": 3,
+      "deferred_successes": 2,
       "deferred_failures": 1,
-      "last_deferred_budget_seconds": 300,
-      "deferred_recommended_timeout_seconds": 398,
+      "last_deferred_budget_seconds": 398,
+      "deferred_recommended_timeout_seconds": 395,
       "deferred_pending": false,
       "streak_reset_at": "2026-09-10T04:48:07+00:00",
       "streak_reset_reason": "observation_gap_over_72h",
       "success_ewma_seconds": 3.256,
       "ewma_seconds": 3.256,
-      "last_deferred_duration_seconds": 184.07,
-      "last_deferred_at": "2026-09-20T06:27:39+00:00",
-      "last_deferred_status": "recovered"
+      "last_deferred_duration_seconds": 182.877,
+      "last_deferred_at": "2026-09-28T08:49:27+00:00",
+      "last_deferred_status": "recovered",
+      "last_error_signature": "26cf9476bd02"
     },
     "graded_photo_candidates.json": {
-      "runs": 72,
-      "successes": 68,
+      "runs": 73,
+      "successes": 69,
       "failures": 2,
       "timeouts": 1,
       "partial_successes": 0,
       "recovered_successes": 2,
-      "last_seconds": 10.87,
+      "last_seconds": 14.312,
       "last_ok": true,
       "last_recovered": false,
-      "success_streak": 25,
+      "success_streak": 26,
       "consecutive_failures": 0,
-      "success_ewma_seconds": 14.094,
-      "ewma_seconds": 14.094,
-      "last_run": "2026-09-28T05:57:57+00:00",
+      "success_ewma_seconds": 14.159,
+      "ewma_seconds": 14.159,
+      "last_run": "2026-09-28T08:44:16+00:00",
       "timeout_exhaustions": 1,
       "deferred_attempts": 1,
       "deferred_successes": 1,
@@ -512,20 +518,20 @@
       "last_deferred_status": "recovered"
     },
     "grading_company_updates.json": {
-      "runs": 67,
-      "successes": 66,
+      "runs": 68,
+      "successes": 67,
       "failures": 0,
       "timeouts": 0,
       "partial_successes": 0,
       "recovered_successes": 1,
-      "last_seconds": 3.096,
+      "last_seconds": 5.119,
       "last_ok": true,
       "last_recovered": false,
-      "success_streak": 48,
+      "success_streak": 49,
       "consecutive_failures": 0,
-      "success_ewma_seconds": 3.518,
-      "ewma_seconds": 3.518,
-      "last_run": "2026-09-28T05:58:00+00:00",
+      "success_ewma_seconds": 3.998,
+      "ewma_seconds": 3.998,
+      "last_run": "2026-09-28T08:44:22+00:00",
       "timeout_exhaustions": 0,
       "deferred_attempts": 0,
       "deferred_successes": 0,
@@ -543,5 +549,5 @@
       "dominant_error_signature": "646ed4d2673b"
     }
   },
-  "updated_at": "2026-09-28T06:02:26+00:00"
+  "updated_at": "2026-09-28T08:52:56+00:00"
 }

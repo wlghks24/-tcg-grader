@@ -3,7 +3,7 @@
   "engine": "v98-camera-resilience-full-runtime",
   "trigger": "github-pages-static-refresh",
   "selected_files": [],
-  "started_at": "2026-09-28T05:56:07+00:00",
+  "started_at": "2026-09-28T08:42:55+00:00",
   "preflight_monitor": {
     "ok": true,
     "results": [
@@ -54,27 +54,36 @@
       }
     ]
   },
-  "finished_at": "2026-09-28T05:59:00+00:00",
-  "duration_seconds": 173.46,
+  "finished_at": "2026-09-28T08:49:27+00:00",
+  "duration_seconds": 392.12,
   "parallel_workers": 2,
   "ok": true,
   "success_count": 8,
   "failure_count": 0,
-  "fresh_success_count": 7,
-  "degraded_count": 1,
+  "fresh_success_count": 6,
+  "degraded_count": 2,
   "restored_count": 0,
   "fresh_failure_count": 0,
   "deferred_timeout_recovery": {
     "enabled": true,
-    "eligible_count": 0,
-    "selected_count": 0,
-    "attempted_count": 0,
-    "parallel_workers": 0,
-    "recovered_count": 0,
+    "eligible_count": 1,
+    "selected_count": 1,
+    "attempted_count": 1,
+    "parallel_workers": 1,
+    "recovered_count": 1,
     "pending_count": 0,
     "max_budget_seconds": 600,
     "only_timeout_affected_files": true,
-    "events": []
+    "events": [
+      {
+        "file": "purchase_sources.json",
+        "name": "구매처·링크 보안 확인",
+        "budget_seconds": 398,
+        "duration_seconds": 182.877,
+        "recovered": true,
+        "status": "별도 수집 복구 성공"
+      }
+    ]
   },
   "results": [
     {
@@ -82,7 +91,7 @@
       "file": "releases.json",
       "ok": true,
       "status": "정상",
-      "updated_at": "2026-09-28T05:57:46+00:00",
+      "updated_at": "2026-09-28T08:44:02+00:00",
       "count": 11,
       "retry_count": 0,
       "max_attempts": 2,
@@ -90,9 +99,9 @@
       "auto_action": "학습형 수집 · 검증 후 정상 반영",
       "collection_errors": [],
       "remaining_collection_errors": [],
-      "duration_seconds": 33.95,
-      "adaptive_timeout_seconds": 115,
-      "last_attempt_timeout_seconds": 115,
+      "duration_seconds": 28.97,
+      "adaptive_timeout_seconds": 116,
+      "last_attempt_timeout_seconds": 116,
       "collection_stage": "primary",
       "timeout_exhausted": false
     },
@@ -101,7 +110,7 @@
       "file": "market_watch.json",
       "ok": true,
       "status": "정상",
-      "updated_at": "2026-09-28T05:58:03+00:00",
+      "updated_at": "2026-09-28T08:45:52+00:00",
       "count": 25,
       "retry_count": 0,
       "max_attempts": 2,
@@ -109,7 +118,7 @@
       "auto_action": "학습형 수집 · 검증 후 정상 반영",
       "collection_errors": [],
       "remaining_collection_errors": [],
-      "duration_seconds": 0.07,
+      "duration_seconds": 0.06,
       "adaptive_timeout_seconds": 30,
       "last_attempt_timeout_seconds": 30,
       "collection_stage": "primary",
@@ -120,7 +129,7 @@
       "file": "exchange_rates.json",
       "ok": true,
       "status": "정상",
-      "updated_at": "2026-09-28T05:58:16+00:00",
+      "updated_at": "2026-09-28T08:44:17+00:00",
       "count": 2,
       "retry_count": 0,
       "max_attempts": 2,
@@ -128,7 +137,7 @@
       "auto_action": "학습형 수집 · 검증 후 정상 반영",
       "collection_errors": [],
       "remaining_collection_errors": [],
-      "duration_seconds": 12.73,
+      "duration_seconds": 0.63,
       "adaptive_timeout_seconds": 30,
       "last_attempt_timeout_seconds": 30,
       "collection_stage": "primary",
@@ -139,7 +148,7 @@
       "file": "market_prices.json",
       "ok": true,
       "status": "정상",
-      "updated_at": "2026-09-28T05:59:00+00:00",
+      "updated_at": "2026-09-28T08:45:52+00:00",
       "count": 38,
       "retry_count": 0,
       "max_attempts": 2,
@@ -147,7 +156,7 @@
       "auto_action": "학습형 수집 · 검증 후 정상 반영",
       "collection_errors": [],
       "remaining_collection_errors": [],
-      "duration_seconds": 173.41,
+      "duration_seconds": 177.75,
       "adaptive_timeout_seconds": 300,
       "last_attempt_timeout_seconds": 299,
       "collection_stage": "primary",
@@ -158,8 +167,8 @@
       "file": "promo_events.json",
       "ok": true,
       "status": "기존 확인자료 유지 · 일부 출처 재확인 필요 · 한·일·미 영화정보 9/9 조합 추적",
-      "updated_at": "2026-09-28T05:57:12+00:00",
-      "count": 41,
+      "updated_at": "2026-09-28T08:43:33+00:00",
+      "count": 42,
       "retry_count": 0,
       "max_attempts": 2,
       "recovered_after_retry": false,
@@ -170,7 +179,7 @@
       "remaining_collection_errors": [
         "PLAYGO 출시 알림 · 신사황 프로모션 팩 재배포: HTTPError: status 500"
       ],
-      "duration_seconds": 65.25,
+      "duration_seconds": 37.99,
       "adaptive_timeout_seconds": 300,
       "last_attempt_timeout_seconds": 299,
       "collection_stage": "primary",
@@ -180,20 +189,34 @@
       "name": "구매처·링크 보안 확인",
       "file": "purchase_sources.json",
       "ok": true,
-      "status": "정상",
-      "updated_at": "2026-09-28T05:58:02+00:00",
+      "status": "학습 제한시간 초과 후 해당 자료만 별도 수집하여 복구 성공",
+      "updated_at": "2026-09-28T08:46:26+00:00",
       "count": 205,
-      "retry_count": 0,
-      "max_attempts": 2,
-      "recovered_after_retry": false,
-      "auto_action": "학습형 수집 · 검증 후 정상 반영",
-      "collection_errors": [],
+      "retry_count": 2,
+      "max_attempts": 3,
+      "recovered_after_retry": true,
+      "auto_action": "시간초과 자료만 격리 재수집 · 확대 제한시간으로 검증 복구 · 다음 예산 학습",
+      "collection_errors": [
+        "TIMEOUT: update_purchase_sources 30초 초과",
+        "TIMEOUT: update_purchase_sources 90초 초과"
+      ],
       "remaining_collection_errors": [],
-      "duration_seconds": 2.75,
+      "duration_seconds": 305.037,
       "adaptive_timeout_seconds": 30,
-      "last_attempt_timeout_seconds": 30,
-      "collection_stage": "primary",
-      "timeout_exhausted": false
+      "last_attempt_timeout_seconds": 397,
+      "collection_stage": "deferred-timeout",
+      "timeout_exhausted": false,
+      "primary_timeout_errors": [
+        "TIMEOUT: update_purchase_sources 30초 초과",
+        "TIMEOUT: update_purchase_sources 90초 초과"
+      ],
+      "recovered_after_deferred_timeout": true,
+      "deferred_timeout_attempted": true,
+      "deferred_timeout_recovered": true,
+      "deferred_timeout_pending": false,
+      "deferred_timeout_seconds": 398,
+      "primary_duration_seconds": 122.16,
+      "deferred_duration_seconds": 182.877
     },
     {
       "name": "등급업체 요금·서비스·이벤트",
@@ -208,7 +231,7 @@
       "auto_action": "학습형 수집 · 검증 후 정상 반영",
       "collection_errors": [],
       "remaining_collection_errors": [],
-      "duration_seconds": 3.1,
+      "duration_seconds": 5.12,
       "adaptive_timeout_seconds": 30,
       "last_attempt_timeout_seconds": 30,
       "collection_stage": "primary",
@@ -220,16 +243,16 @@
       "ok": true,
       "status": "정상",
       "updated_at": null,
-      "count": 35,
+      "count": 38,
       "retry_count": 0,
       "max_attempts": 2,
       "recovered_after_retry": false,
       "auto_action": "학습형 수집 · 검증 후 정상 반영",
       "collection_errors": [],
       "remaining_collection_errors": [],
-      "duration_seconds": 10.87,
-      "adaptive_timeout_seconds": 61,
-      "last_attempt_timeout_seconds": 61,
+      "duration_seconds": 14.31,
+      "adaptive_timeout_seconds": 57,
+      "last_attempt_timeout_seconds": 57,
       "collection_stage": "primary",
       "timeout_exhausted": false
     }
@@ -245,7 +268,7 @@
     "degraded": false,
     "candidate_count": 282,
     "social_candidate_count": 250,
-    "official_social_candidate_count": 8,
+    "official_social_candidate_count": 6,
     "failure_count": 0,
     "error": "",
     "platform": {
@@ -254,10 +277,10 @@
       "data_dir": "<app-data>",
       "storage_scope": "user-app-data",
       "writable": true,
-      "checked_at": "2026-09-28T06:02:26+00:00"
+      "checked_at": "2026-09-28T08:52:56+00:00"
     },
     "note": "검색/SNS/뉴스/공식사이트/공식 YouTube/사이트맵 후보 자료입니다. 발견 경로가 공식이어도 내용 검증 전에는 자동 확정하지 않습니다.",
-    "duration_seconds": 205.64,
+    "duration_seconds": 209.63,
     "adaptive_timeout_seconds": 300,
     "last_attempt_timeout_seconds": 300,
     "retry_count": 0,
@@ -267,18 +290,18 @@
     "ok": true,
     "degraded": false,
     "warning": "",
-    "reachable_count": 239,
+    "reachable_count": 236,
     "transient_deferred": true,
-    "transient_notice": "일시 확인불가 18개 · 기존 링크 유지 · 다음 업데이트 재확인",
+    "transient_notice": "일시 확인불가 23개 · 기존 링크 유지 · 다음 업데이트 재확인",
     "unresolved_broken": 0,
     "unresolved_summary": [],
-    "updated_at": "2026-09-28T05:59:00+00:00",
-    "checked": 271,
-    "audit_timeout_seconds": 289,
+    "updated_at": "2026-09-28T08:49:27+00:00",
+    "checked": 272,
+    "audit_timeout_seconds": 285,
     "request_timeout_seconds": 5,
-    "restricted": 14,
+    "restricted": 13,
     "broken": 0,
-    "transient": 18,
+    "transient": 23,
     "blocked": 0,
     "repaired": 0,
     "same_host_fallback_stats": {
@@ -307,7 +330,7 @@
         ]
       },
       {
-        "url": "https://www.amazon.co.jp/s?k={query}",
+        "url": "https://www.amazon.com/s?k={query}",
         "detail": null,
         "code": 503,
         "references": [
@@ -381,12 +404,91 @@
         ]
       },
       {
+        "url": "https://www.alpha.co.kr/",
+        "detail": "DNS:gaierror",
+        "code": null,
+        "references": [
+          {
+            "file": "purchase_sources.json",
+            "field": "official_reference_url"
+          },
+          {
+            "file": "purchase_sources.json",
+            "field": "url"
+          },
+          {
+            "file": "purchase_sources.json",
+            "field": "official_reference_url"
+          }
+        ]
+      },
+      {
+        "url": "https://www.kobis.or.kr/kobis/business/mast/mvie/searchMovieList.do",
+        "detail": "DNS:gaierror",
+        "code": null,
+        "references": [
+          {
+            "file": "promo_events.json",
+            "field": "verification_source"
+          },
+          {
+            "file": "promo_events.json",
+            "field": "verification_source"
+          },
+          {
+            "file": "promo_events.json",
+            "field": "verification_source"
+          }
+        ]
+      },
+      {
         "url": "https://onepiece-cardgame.kr/topics/view.do?brdno=6516",
         "detail": null,
         "code": 500,
         "references": [
           {
             "file": "promo_events.json",
+            "field": "source"
+          }
+        ]
+      },
+      {
+        "url": "https://www.seoulmediacomics.com/",
+        "detail": "DNS:gaierror",
+        "code": null,
+        "references": [
+          {
+            "file": "promo_events.json",
+            "field": "verification_source"
+          },
+          {
+            "file": "promo_events.json",
+            "field": "verification_source"
+          }
+        ]
+      },
+      {
+        "url": "https://www.namu.moe/w/%EB%82%98%EB%A3%A8%ED%86%A0%28%EC%98%81%ED%99%94%29",
+        "detail": "TimeoutError",
+        "code": null,
+        "references": [
+          {
+            "file": "supplementary_candidates.json",
+            "field": "source"
+          },
+          {
+            "file": "supplementary_candidates.json",
+            "field": "source"
+          }
+        ]
+      },
+      {
+        "url": "https://www.namu.moe/w/%EC%9B%90%ED%94%BC%EC%8A%A4%28%EC%95%A0%EB%8B%88%EB%A9%94%EC%9D%B4%EC%85%98%29%2F%EA%B7%B9%EC%9E%A5%ED%8C%90",
+        "detail": "TimeoutError",
+        "code": null,
+        "references": [
+          {
+            "file": "supplementary_candidates.json",
             "field": "source"
           }
         ]
@@ -510,9 +612,9 @@
         ]
       }
     ],
-    "duration_seconds": 89.58,
-    "adaptive_timeout_seconds": 299,
-    "last_attempt_timeout_seconds": 299,
+    "duration_seconds": 85.72,
+    "adaptive_timeout_seconds": 295,
+    "last_attempt_timeout_seconds": 295,
     "retry_count": 0,
     "recovered_after_retry": false
   },
@@ -523,7 +625,7 @@
     "successful_topic_cells": 216,
     "failed_topic_cells": 0,
     "undiscovered_topic_cells": 165,
-    "source_updated_at": "2026-09-28T06:02:26+00:00"
+    "source_updated_at": "2026-09-28T08:52:56+00:00"
   },
   "ok_with_aux": true,
   "postflight_monitor": {
@@ -590,11 +692,11 @@
     "status": {
       "schema": 1,
       "feature_fingerprint": "0bac15bf0ad62e49a7c7d300",
-      "updated_at": "2026-09-28T06:02:26+00:00",
+      "updated_at": "2026-09-28T08:52:56+00:00",
       "active": false,
       "label_count": 10,
-      "positive_labels": 9,
-      "negative_labels": 1,
+      "positive_labels": 8,
+      "negative_labels": 2,
       "minimum_labels": 1000,
       "labels_remaining": 990,
       "progress_percent": 1.0,
@@ -647,8 +749,8 @@
       "unresolved_group_count": 1,
       "resolved_group_count": 7,
       "verified_solution_group_count": 7,
-      "scenario_prepared_group_count": 2,
-      "consolidated_event_total": 1011
+      "scenario_prepared_group_count": 3,
+      "consolidated_event_total": 1013
     },
     "new_errors": [
       {
@@ -692,8 +794,8 @@
         "safe_action": "상태별 제한 재시도 · 영구 오류 중단",
         "analysis_status": "신규 분석",
         "last_outcome": "unresolved",
-        "first_seen": "2026-09-28T05:59:00+00:00",
-        "last_seen": "2026-09-28T05:59:00+00:00",
+        "first_seen": "2026-09-28T08:49:27+00:00",
+        "last_seen": "2026-09-28T08:49:27+00:00",
         "occurrences": 1,
         "unresolved_count": 1,
         "http_status": 500,
@@ -858,14 +960,15 @@
         "code": "NETWORK_TIMEOUT",
         "title": "네트워크 시간초과",
         "category": "통신 오류",
+        "error_subtype": "general",
         "http_status": null,
         "http_statuses": [],
         "bounded_retry_allowed": true,
-        "occurrences": 24,
-        "resolved_count": 24,
+        "occurrences": 26,
+        "resolved_count": 26,
         "unresolved_count": 0,
         "first_seen": "2026-08-21T15:01:57+00:00",
-        "last_seen": "2026-08-23T15:57:24+00:00",
+        "last_seen": "2026-09-28T08:49:27+00:00",
         "last_outcome": "resolved",
         "analysis_status": "해결 확인",
         "affected_files": [
@@ -888,14 +991,22 @@
           "기존 정상자료가 손상되지 않았는지 확인합니다."
         ],
         "proven_action": "동일 파일 2회 연속 정상 실행으로 해결 확인",
-        "last_detail": "TIMEOUT: update_purchase_sources 5초 초과",
-        "scenario_prepared": false,
-        "scenario_profile_id": null,
-        "prepared_scenario_count": 0,
-        "diagnostic_priority": 50,
-        "first_checks": [],
-        "fast_resolution_steps": [],
-        "stop_conditions": []
+        "last_detail": "TIMEOUT: update_purchase_sources 90초 초과",
+        "scenario_prepared": true,
+        "scenario_profile_id": "8f2964a4e191d68f",
+        "prepared_scenario_count": 6,
+        "diagnostic_priority": 20,
+        "first_checks": [
+          "출처별 최근 성공시간과 현재 제한시간을 비교합니다."
+        ],
+        "fast_resolution_steps": [
+          "공식 출처 연결과 응답시간을 확인합니다.",
+          "제한된 1회 재시도와 확대된 시간예산을 적용합니다.",
+          "실패 시 기존 정상자료가 유지됐는지 확인합니다."
+        ],
+        "stop_conditions": [
+          "동일 출처가 연속 실패하면 현재 실행의 추가 재시도를 중단합니다."
+        ]
       },
       {
         "group_id": "c9b945a618435a60",
@@ -996,8 +1107,8 @@
         "occurrences": 1,
         "resolved_count": 0,
         "unresolved_count": 1,
-        "first_seen": "2026-09-28T05:59:00+00:00",
-        "last_seen": "2026-09-28T05:59:00+00:00",
+        "first_seen": "2026-09-28T08:49:27+00:00",
+        "last_seen": "2026-09-28T08:49:27+00:00",
         "last_outcome": "unresolved",
         "analysis_status": "신규 분석",
         "affected_files": [
