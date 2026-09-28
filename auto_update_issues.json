@@ -1,5 +1,5 @@
 {
-  "updated_at": "2026-09-28T14:36:52+00:00",
+  "updated_at": "2026-09-28T22:55:26+00:00",
   "issue_count": 1,
   "issues": [
     {
@@ -7,9 +7,9 @@
       "file": "market_prices.json",
       "severity": "주의",
       "auto_action": "일부 출처 오류 격리 · 정상자료 반영 · 다음 실행 제한시간 확대",
-      "detail": "Pack Magik OP14-009: 가격 패턴 0건",
+      "detail": "Pack Magik OP14-009 JP: 가격 패턴 0건",
       "recommended_action": "가격 출처의 공개 거래표시와 상품명을 확인하세요.",
-      "error_group_id": "4c098dedc57e750e",
+      "error_group_id": "7ececbb9b4982bc9",
       "error_code": "UNCLASSIFIED_ERROR",
       "error_subtype": "general",
       "http_status": null,
