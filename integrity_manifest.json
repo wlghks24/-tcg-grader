@@ -1,7 +1,7 @@
 {
   "version": 2,
   "engine": "v109-card-identity-ocr-learning",
-  "generated_at": "2026-09-28T03:11:28+00:00",
+  "generated_at": "2026-09-28T03:12:15+00:00",
   "files": {
     ".github/workflows/ai-auto-tracker-guard.yml": {
       "sha256": "636e750bd6d2619cce75d4bce2d68051eaa2209ae763bc8ec523ed73476728a6",
@@ -436,8 +436,8 @@
       "bytes": 2601
     },
     ".github/workflows/tablet-gpt-tcg-grader-main-alignment.yml": {
-      "sha256": "bcbdcd17fb35791af5752e53cb5dec98b68c43e51d469d37e3ee2eacb0668245",
-      "bytes": 12769
+      "sha256": "41e7d424fd98dbcb45d61397d399f95add7f8cbf37225346c1d86334fe2c53d7",
+      "bytes": 12732
     },
     ".github/workflows/tablet-termux-main-guard.yml": {
       "sha256": "00c8e054f113cb0e25b71e65ae245af341fc6f1590add250b4c3e68f710a7fbc",
