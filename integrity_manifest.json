@@ -1,7 +1,7 @@
 {
   "version": 2,
   "engine": "v109-card-identity-ocr-learning",
-  "generated_at": "2026-09-28T16:48:48+00:00",
+  "generated_at": "2026-09-28T22:49:00+00:00",
   "files": {
     ".github/workflows/ai-auto-tracker-guard.yml": {
       "sha256": "636e750bd6d2619cce75d4bce2d68051eaa2209ae763bc8ec523ed73476728a6",
@@ -2228,8 +2228,8 @@
       "bytes": 125208
     },
     "protected_static_candidate_guard.py": {
-      "sha256": "e39556619a1b1ba814cb8c90fcaef7a2d50c5cf1c6000ff2b297c8ab32040b61",
-      "bytes": 7091
+      "sha256": "d1d3ea5bf01f3a0c37b7d3a4cd4a415f1d8995be5b0bec07caedd863f549ef2a",
+      "bytes": 9444
     },
     "provider_health_learning.py": {
       "sha256": "97c807d2656608f7408561e91a8af10588d55f773d9f7c09bfe31fb32219d5df",
@@ -3144,8 +3144,8 @@
       "bytes": 2506
     },
     "test_protected_static_candidate_guard_v311.py": {
-      "sha256": "bc1f10a45750b87c5813d07d7e13ee27d6ceeecfcc8aeadd219450364cbf3b46",
-      "bytes": 3376
+      "sha256": "afc474615e9788dfb5f1b8db2050ea6e04e6b8da81f8833c03c26617b5afc546",
+      "bytes": 5426
     },
     "test_protected_static_pipeline_v305.py": {
       "sha256": "c1c6215514d7b1f2a71b3f160eb87c4c1e6c4f60992336edd7b4e6db7c5756bf",
@@ -3436,8 +3436,8 @@
       "bytes": 5538
     },
     "test_tablet_gpt_tcg_grader_sync_v353.py": {
-      "sha256": "4afb78be218f75bd555d172e4fcbf05c603edfe8e28001d973fd40cd4d1da4f5",
-      "bytes": 5123
+      "sha256": "18ce52290481b3e123bd6415704fab573d20aa41f7e700320dad1175a39003b3",
+      "bytes": 7606
     },
     "test_tablet_main_entrypoint_v251.py": {
       "sha256": "eeca09372b0dd587d6d74d8a1ec75f28e84aca07b7cc38d2bf61555ef992b2f8",

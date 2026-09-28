@@ -23,6 +23,30 @@ ALLOWED_FILES = frozenset(OUTPUTS) | {"integrity_manifest.json"}
 MAX_REPORT_AGE = dt.timedelta(hours=2)
 MAX_FUTURE_SKEW = dt.timedelta(minutes=5)
 DATA_COMMIT_PREFIX = "data: refresh validated TCG static snapshot"
+SYNC_COMMIT_PREFIX = "sync:"
+SYNC_PATTERNS = (
+    re.compile(r"^TCG_CROSSCHECK/TABLET_GPT_TCG_GRADER_SYNC_CONTRACT_V(\d+)\.json$"),
+    re.compile(r"^TCG_CROSSCHECK/TABLET_GPT/learning_snapshot_v(\d+)_delta\.json$"),
+    re.compile(r"^TCG_CROSSCHECK/TCG_GRADER/tablet_gpt_learning_receipt_v(\d+)\.json$"),
+    re.compile(r"^test_tablet_gpt_tcg_grader_sync_v(\d+)\.py$"),
+)
+
+
+def sync_generation_version(path: str) -> int | None:
+    for pattern in SYNC_PATTERNS:
+        match = pattern.fullmatch(path)
+        if match:
+            return int(match.group(1))
+    return None
+
+
+def expected_sync_generation_files(version: int) -> set[str]:
+    return {
+        f"TCG_CROSSCHECK/TABLET_GPT_TCG_GRADER_SYNC_CONTRACT_V{version}.json",
+        f"TCG_CROSSCHECK/TABLET_GPT/learning_snapshot_v{version}_delta.json",
+        f"TCG_CROSSCHECK/TCG_GRADER/tablet_gpt_learning_receipt_v{version}.json",
+        f"test_tablet_gpt_tcg_grader_sync_v{version}.py",
+    }
 
 
 class StaticCandidateGuardError(ValueError):
@@ -56,24 +80,55 @@ def validate_candidate(branch: str, commits: list[dict], report: dict,
         fail("STATIC_CANDIDATE_EMPTY", "candidate branch has no commits beyond its base")
 
     changed: set[str] = set()
+    sync_files_by_version: dict[int, set[str]] = {}
     for index, row in enumerate(commits):
         parents = row.get("parents")
         paths = set(row.get("paths") or ())
         subject = row.get("subject", "")
         if parents != 1:
             fail("STATIC_CANDIDATE_NONLINEAR_HISTORY", f"commit={row.get('sha')} parents={parents}")
-        forbidden = sorted(paths - ALLOWED_FILES)
+
+        sync_paths = {path for path in paths if sync_generation_version(path) is not None}
+        forbidden = sorted(paths - ALLOWED_FILES - sync_paths)
         if forbidden:
             fail(
                 "STATIC_CANDIDATE_SCOPE_VIOLATION",
                 f"commit={row.get('sha')} forbidden={','.join(forbidden)}",
             )
-        if index == 0 and not str(subject).startswith(DATA_COMMIT_PREFIX):
+        if index == 0:
+            if not str(subject).startswith(DATA_COMMIT_PREFIX):
+                fail(
+                    "STATIC_CANDIDATE_BAD_ORIGIN",
+                    f"first commit must start with {DATA_COMMIT_PREFIX!r}",
+                )
+            if sync_paths:
+                fail("STATIC_CANDIDATE_SYNC_IN_ORIGIN", "sync metadata must follow the data commit")
+        elif sync_paths and not str(subject).startswith(SYNC_COMMIT_PREFIX):
             fail(
-                "STATIC_CANDIDATE_BAD_ORIGIN",
-                f"first commit must start with {DATA_COMMIT_PREFIX!r}",
+                "STATIC_CANDIDATE_BAD_SYNC_COMMIT",
+                f"commit={row.get('sha')} sync metadata requires subject prefix {SYNC_COMMIT_PREFIX!r}",
             )
+
+        for path in sync_paths:
+            version = sync_generation_version(path)
+            assert version is not None
+            sync_files_by_version.setdefault(version, set()).add(path)
         changed.update(paths)
+
+    if len(sync_files_by_version) > 1:
+        fail(
+            "STATIC_CANDIDATE_MULTIPLE_SYNC_GENERATIONS",
+            f"versions={','.join(map(str, sorted(sync_files_by_version)))}",
+        )
+    for version, paths in sync_files_by_version.items():
+        expected = expected_sync_generation_files(version)
+        if paths != expected:
+            missing = sorted(expected - paths)
+            extra = sorted(paths - expected)
+            fail(
+                "STATIC_CANDIDATE_INCOMPLETE_SYNC_GENERATION",
+                f"version={version} missing={','.join(missing)} extra={','.join(extra)}",
+            )
 
     if not (changed & set(OUTPUTS)):
         fail("STATIC_CANDIDATE_NO_PUBLIC_DATA", "candidate changes no approved public JSON")
