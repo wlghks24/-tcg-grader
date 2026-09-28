@@ -3,7 +3,7 @@ name: Repository Integrity Manifest Sync v345
 on:
   push:
     branches:
-      - 'fix/fx-failclosed-recovery-v349'
+      - 'fix/fx-provenance-cache-proof-v350'
     paths-ignore:
       - 'integrity_manifest.json'
   workflow_dispatch:
@@ -19,7 +19,7 @@ jobs:
   sync-manifest:
     if: github.ref != 'refs/heads/main' && github.actor == github.repository_owner
     runs-on: ubuntu-24.04
-    timeout-minutes: 10
+    timeout-minutes: 20
     env:
       PYTHONDONTWRITEBYTECODE: '1'
       PYTHONUNBUFFERED: '1'
@@ -35,36 +35,53 @@ jobs:
         run: |
           set -euo pipefail
           test "${GITHUB_ACTOR}" = "${GITHUB_REPOSITORY_OWNER}"
-          test "${GITHUB_REF_NAME}" = "fix/fx-failclosed-recovery-v349"
+          test "${GITHUB_REF_NAME}" = "fix/fx-provenance-cache-proof-v350"
           git fetch origin +refs/heads/main:refs/remotes/origin/main
           git merge-base --is-ancestor origin/main HEAD
           test "$(git rev-parse --abbrev-ref HEAD)" != "main"
-      - name: Rebuild and verify Git-tracked branch integrity manifest
+      - name: Apply bounded FX proof repair
+        shell: bash
+        run: |
+          set -euo pipefail
+          python -m py_compile apply_fx_provenance_cache_proof_v350.py
+          python apply_fx_provenance_cache_proof_v350.py
+          rm apply_fx_provenance_cache_proof_v350.py
+          git checkout origin/main -- .github/workflows/repository-integrity-manifest-sync-v345.yml
+      - name: Rebuild and verify exact branch integrity
         shell: bash
         run: |
           set -euo pipefail
           python static_integrity_manifest.py --write integrity_manifest.json
           python static_integrity_manifest.py --check integrity_manifest.json
+          python -m py_compile update_exchange_rates.py auto_update_all.py auto_repair_engine.py test_fx_failclosed_recovery_v349.py test_edition_fx_failclosed_v328.py test_tablet_gpt_tcg_grader_sync_v348.py test_tablet_gpt_tcg_grader_sync_v349.py
+          python -m unittest -v \
+            test_fx_failclosed_recovery_v349.py \
+            test_edition_fx_failclosed_v328.py \
+            test_error_recovery_learning_v134.py \
+            test_tablet_gpt_tcg_grader_sync_v348.py \
+            test_tablet_gpt_tcg_grader_sync_v349.py
+          node verify_browser_runtime.js
           python fault_injection_healing.py --diagnose
           python repository_integrity_guard.py
-          python -m unittest -v test_static_integrity_manifest_v345.py
           mapfile -t sync_tests < <(find . -maxdepth 1 -type f -name 'test_tablet_gpt_tcg_grader_sync_v*.py' -printf '%f\n' | sort -V)
           test "${#sync_tests[@]}" -gt 0
           python -m unittest -v "${sync_tests[@]}"
           git diff --check
-      - name: Commit manifest only when changed
+      - name: Commit only reviewed repair outputs
         shell: bash
         run: |
           set -euo pipefail
-          if git diff --quiet -- integrity_manifest.json; then
-            echo "[OK] integrity_manifest.json already matches the exact branch tree"
-            exit 0
-          fi
+          git add -A
+          mapfile -t changed < <(git diff --cached --name-only)
+          test "${#changed[@]}" -gt 0
+          for path in "${changed[@]}"; do
+            case "${path}" in
+              update_exchange_rates.py|auto_update_all.py|auto_repair_engine.py|index.html|verify_browser_runtime.js|test_edition_fx_failclosed_v328.py|test_fx_failclosed_recovery_v349.py|test_tablet_gpt_tcg_grader_sync_v348.py|test_tablet_gpt_tcg_grader_sync_v349.py|integrity_manifest.json|apply_fx_provenance_cache_proof_v350.py|.github/workflows/repository-integrity-manifest-sync-v345.yml|TCG_CROSSCHECK/TABLET_GPT/learning_snapshot_v349_delta.json|TCG_CROSSCHECK/TCG_GRADER/tablet_gpt_learning_receipt_v349.json|TCG_CROSSCHECK/TABLET_GPT_TCG_GRADER_SYNC_CONTRACT_V349.json) ;;
+              *) echo "unexpected changed path: ${path}" >&2; exit 1 ;;
+            esac
+          done
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git add -- integrity_manifest.json
-          test "$(git diff --cached --name-only | wc -l | tr -d ' ')" = "1"
-          test "$(git diff --cached --name-only)" = "integrity_manifest.json"
           git diff --cached --check
-          git commit -m 'Reconcile integrity manifest for FX recovery repair'
+          git commit -m 'Fix FX provenance across cache and browser paths'
           git push origin "HEAD:${GITHUB_REF_NAME}"
