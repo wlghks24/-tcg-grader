@@ -1,7 +1,7 @@
 {
   "version": 2,
   "engine": "v109-card-identity-ocr-learning",
-  "generated_at": "2026-09-28T01:46:41+00:00",
+  "generated_at": "2026-09-28T02:00:22+00:00",
   "files": {
     ".github/workflows/ai-auto-tracker-guard.yml": {
       "sha256": "636e750bd6d2619cce75d4bce2d68051eaa2209ae763bc8ec523ed73476728a6",
@@ -404,8 +404,8 @@
       "bytes": 2289
     },
     ".github/workflows/repository-integrity-manifest-sync-v345.yml": {
-      "sha256": "7c6290692c9df82df903a77d89589d947433ff3d5592911953ecfe06562762aa",
-      "bytes": 2704
+      "sha256": "8be800176d9b26f4377376c8112a5148f6a4a88fef3dd44b9cc038ff6fff6522",
+      "bytes": 2717
     },
     ".github/workflows/runtime-correctness-guard.yml": {
       "sha256": "c0a82d48b34c880972693a491a1be49a32ab682034d05f746f02953430582a26",
@@ -1312,8 +1312,8 @@
       "bytes": 83352
     },
     "collection_job_contract.py": {
-      "sha256": "07177af54b0929ea82d0cd6ab189773c785346212303d73c925d4d8af2c378cd",
-      "bytes": 1814
+      "sha256": "e16c04da6eeaa89068dea74ebecda8300036a4279d3ab2869d6baf99a8151636",
+      "bytes": 2006
     },
     "collection_learning_hardening_v142.py": {
       "sha256": "a9cb2b9d2a6ab1f5ab063791a512fadaf11cb7e067c335abe8419645e4934dfe",
@@ -2664,8 +2664,8 @@
       "bytes": 3406
     },
     "test_collection_job_contract_v255.py": {
-      "sha256": "7e4ad2515e584f9bdc046f714d94619585622d769fb69b2ddf2baf287eddc7d9",
-      "bytes": 2679
+      "sha256": "82fc50736dec39aa7d0a7ae3ac6447c0166e13202fd9e723e8274f722e1a07e6",
+      "bytes": 2888
     },
     "test_collection_learning_hardening_v142.py": {
       "sha256": "4309755925f7e32abf339032a536b388bd130248aca0e6fb31800b3124aa104a",
@@ -2700,8 +2700,8 @@
       "bytes": 5384
     },
     "test_collection_verification_gate.py": {
-      "sha256": "181034170b2dd16a6409962323de43f4b739b30f178a8e3277922bcaa6a15889",
-      "bytes": 12993
+      "sha256": "9068e9c913c5eab0395665012e2d458f6d5d3be88b739cb1c2226d26fc1c0b86",
+      "bytes": 13110
     },
     "test_collection_verification_reporting_v244.py": {
       "sha256": "dc78bd5de0de91a3330bc556671d2d560eb06e74773c65e431b74790ca7e2135",
@@ -2792,8 +2792,8 @@
       "bytes": 5434
     },
     "test_fx_failclosed_recovery_v349.py": {
-      "sha256": "5607f222977f55fb4577e863bba1327d7fc9b9213d76ab0bf5c169c4adf96471",
-      "bytes": 6068
+      "sha256": "cef2653ce995aaf08c5e334eb20f0b631ad9b0fe87673f372bc745315ede3b55",
+      "bytes": 7341
     },
     "test_gap_result_event_supersession_v12.py": {
       "sha256": "16010db9952df5afc36f2ce54810b1cae173c914f500024d351c050058e60bec",
@@ -3492,8 +3492,8 @@
       "bytes": 15971
     },
     "update_exchange_rates.py": {
-      "sha256": "c8b55881bfcc684d317c29d080e1ac8c2c48f03278d67a2ab2674ab3134ee7c9",
-      "bytes": 5164
+      "sha256": "f3e15c140e3b0cb3e84dd0c6cf951ae7251eafd03e5b854c173a225c1f4f87b1",
+      "bytes": 6027
     },
     "update_market_prices.py": {
       "sha256": "b5969305d01f4874678100619c21efea29d4a6a12ae2e4b1c5f762f65505b6b5",
