@@ -1,0 +1,32 @@
+name: GPT Drive Package Kick v347
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/gpt-drive-package-kick-v347.yml'
+  workflow_dispatch:
+
+permissions:
+  actions: write
+  contents: read
+
+concurrency:
+  group: gpt-drive-package-kick-v347
+  cancel-in-progress: true
+
+jobs:
+  dispatch-package:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      - name: Dispatch Drive package on exact latest main
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          gh api --method POST \
+            "repos/${GITHUB_REPOSITORY}/actions/workflows/gpt-tcg-drive-package.yml/dispatches" \
+            -f ref=main
+          echo "Dispatched GPT TCG Drive Package for latest main ${GITHUB_SHA}."
