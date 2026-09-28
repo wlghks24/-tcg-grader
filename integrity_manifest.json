@@ -1,7 +1,7 @@
 {
   "version": 2,
   "engine": "v109-card-identity-ocr-learning",
-  "generated_at": "2026-09-28T03:14:33+00:00",
+  "generated_at": "2026-09-28T03:22:44+00:00",
   "files": {
     ".github/workflows/ai-auto-tracker-guard.yml": {
       "sha256": "636e750bd6d2619cce75d4bce2d68051eaa2209ae763bc8ec523ed73476728a6",
@@ -404,8 +404,8 @@
       "bytes": 2289
     },
     ".github/workflows/repository-integrity-manifest-sync-v345.yml": {
-      "sha256": "090e841941a5534c92f15b8734073c2693ab5901ae1cacde76e3e85f7df416da",
-      "bytes": 2696
+      "sha256": "142fa9162888523bbd8fa89409f9eed00f0b528e2f3dfb2c75345d45cf5225b3",
+      "bytes": 2767
     },
     ".github/workflows/runtime-correctness-guard.yml": {
       "sha256": "c0a82d48b34c880972693a491a1be49a32ab682034d05f746f02953430582a26",
@@ -3292,8 +3292,8 @@
       "bytes": 3073
     },
     "test_static_integrity_manifest_v345.py": {
-      "sha256": "b8a24263b51dc12e5e1d6a960cb2e4cc1ceb7dc91902df18ae463049d8f74564",
-      "bytes": 2431
+      "sha256": "2190c47dddadfb90aad4c0f794618f4a27b6824a31ec7bc4497fbcb1ff59f79d",
+      "bytes": 3333
     },
     "test_tablet_app_dock_v275.py": {
       "sha256": "c2eec9161bacffaccf1ae499f239e243bd170a3ecec3d303a91baf300c4c2020",
