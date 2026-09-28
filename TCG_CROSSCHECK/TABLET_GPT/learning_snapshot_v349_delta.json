@@ -1,0 +1,43 @@
+{
+  "schema_version": "1.1-tablet-gpt-tcg-grader-learning-sync",
+  "namespace": "TABLET_GPT",
+  "snapshot_kind": "learning_delta",
+  "run_date_kst": "2026-09-28",
+  "built_at": "2026-09-28T12:08:00+09:00",
+  "status": "finalized",
+  "source_repository": "wlghks24/-tcg-grader",
+  "prior_delta": "TCG_CROSSCHECK/TABLET_GPT/learning_snapshot_v348_delta.json",
+  "prior_lesson_digest_sha256": "8c320d96ee70d10eedfc1f45e2cbcc111e569776eda5642c6608b9110e774d09",
+  "source_main_sha": "9fdfe499139e2d68bc926e6655af058fbe116d29",
+  "share_policy": {
+    "explicit_patch_and_learning_lessons_only": true,
+    "chatgpt_model_weights_exported": false,
+    "raw_grading_calibration_shared": false,
+    "device_local_runtime_memory_overwritten": false,
+    "peer_verified_never_auto_promotes_local": true
+  },
+  "covered_merges": [
+    {
+      "pr": 314,
+      "version": "v349-fx-postmerge-checkpoint",
+      "merge_sha": "9fdfe499139e2d68bc926e6655af058fbe116d29"
+    }
+  ],
+  "lesson_digest_sha256": "7ae10db08720eff93fd0bf0f0fd0e6cadeafcf3cb5eb9327df7f7bcd8294511c",
+  "lessons": [
+    {
+      "lesson_id": "TABLET-GPT-FX-POSTMERGE-CHECKPOINT-V349",
+      "subsystem": "tablet_gpt_tcg_grader_alignment",
+      "issue_class": "verified_fx_candidate_merge_is_not_materialized_as_next_pr_freshness_checkpoint",
+      "trigger_condition": "the v348 FX watched-path candidate is correctly covered during its PR and immediate main merge, but a later unrelated PR compares from the older v348 source main and re-flags the already-verified multi_market_price_collector.py change as stale",
+      "prevention_rule": "after a verified watched-path candidate merges, materialize a new Tablet GPT sync generation anchored to the resulting main merge SHA before evaluating later PRs; later unrelated PRs compare freshness from that verified post-merge checkpoint while any subsequent watched-path change still fails closed",
+      "validation_required": [
+        "source_main_sha equals the exact verified post-PR-314 main SHA",
+        "PR 314 merge SHA is an ancestor of the current head",
+        "the new generation carries no model weights, raw grading calibration, or device-local runtime memory",
+        "a later PR with no watched-path changes reports fresh while any later watched-path change still reports TABLET_GPT_SYNC_STALE"
+      ],
+      "safety_boundary": "do not ignore watched changes, do not broaden exclusions, do not auto-promote device-local learning, and do not treat unverified physical Drive or tablet state as synchronized"
+    }
+  ]
+}
