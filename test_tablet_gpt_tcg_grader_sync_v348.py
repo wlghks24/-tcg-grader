@@ -44,4 +44,14 @@ class TabletGptTcgGraderSyncV348(unittest.TestCase):
         self.assertEqual(candidate["watched_paths"],relevant)
         for path in candidate["generation_files"]:self.assertTrue((ROOT/path).is_file(),path)
 
+    def test_unrelated_pr_reuses_exact_verified_mainline_candidate_without_weakening_watch(self):
+        workflow=(ROOT/".github/workflows/tablet-gpt-tcg-grader-main-alignment.yml").read_text(encoding="utf-8")
+        self.assertIn("if relevant and candidate:",workflow)
+        self.assertNotIn("if event_name != 'pull_request' and relevant and candidate:",workflow)
+        self.assertIn("later_watched.update(path for path in touched if watched(path))",workflow)
+        self.assertIn("and not later_watched",workflow)
+        self.assertIn("expected_watched == set(relevant)",workflow)
+        self.assertIn("source == base_sha == candidate_base",workflow)
+        self.assertIn("TABLET_GPT_SYNC_STALE",workflow)
+
 if __name__=="__main__":unittest.main(verbosity=2)
