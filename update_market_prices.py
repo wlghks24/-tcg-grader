@@ -44,6 +44,12 @@ def kream_label_prices(text:str,label_pattern:str,low:int,high:int,limit:int=12)
     values=[int(value.replace(',','')) for value in re.findall(label_pattern+r'\s*([0-9,]+)원',text,re.I)]
     return [value for value in values if low<=value<=high][:max(1,min(int(limit),30))]
 
+
+def packmagik_market_value(text:str)->str|None:
+    """Extract only Pack Magik raw Market/Market Value USD, never graded values."""
+    match=re.search(r'(?:Market(?:\s+Value)?|시장가)\s*\$([0-9]+(?:\.[0-9]+)?)',text,re.I)
+    return match.group(1) if match else None
+
 def set_price(db,key,display,kind,market,transactions,source):
     db['entries'][key]={'display':display,'kind':kind,'market':market,'transactions':transactions,
       'source_date':dt.date.today().isoformat(),'source':source}
@@ -231,11 +237,14 @@ def main():
         else: errors.append('KREAM 블랙볼트 BOX: 체결가격 패턴 0건')
     except NETWORK_ERRORS as e: errors.append('KREAM 블랙볼트 BOX: '+diagnostic_exception(e))
     try:
-        url='https://www.packmagik.com/cards/op-op14-op14-009-p1';text=html_to_text(fetch(url))
-        m=re.search(r'(?:Market|시장가)\s*\$([0-9]+(?:\.[0-9]+)?)',text,re.I)
-        if m:set_price(db,'KR|창해의 칠걸|HIT','$'+m.group(1),'OP14-009 패러렐 국제판 참고시세','Pack Magik 국제시장','한국판 실거래 아님 · 국제판 시장가 참고',url)
-        else: errors.append('Pack Magik OP14-009: 가격 패턴 0건')
-    except NETWORK_ERRORS as e: errors.append('Pack Magik OP14-009: '+diagnostic_exception(e))
+        url='https://www.packmagik.com/cards/1767522330718x781330136463076700';text=html_to_text(fetch(url))
+        value=packmagik_market_value(text)
+        if value:
+            key='JP|창해의 칠걸 일본판 OP14-009|HIT'
+            set_price(db,key,'$'+value,'OP14-009 얼터너티브 아트 일본판 참고시세','Pack Magik 일본판 국제시장','일본판 공개 Market Value · 한국판 시세로 결합 금지',url)
+            db['entries'][key].update({'game':'ONE PIECE','card_name':'Trafalgar Law [Alternate Art]','card_number':'OP14-009','product_name':"Azure Sea's Seven [Japanese]",'language':'JP','variant':'alternate_art'})
+        else: errors.append('Pack Magik OP14-009 JP: 가격 패턴 0건')
+    except NETWORK_ERRORS as e: errors.append('Pack Magik OP14-009 JP: '+diagnostic_exception(e))
     try:
         url='https://pokard.io/jpcard/SV8a-217/'; text=html_to_text(fetch(url))
         m=re.search(r'(?:Ungrade|미감정)\s*¥([0-9,]+)',text,re.I)
