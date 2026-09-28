@@ -1,0 +1,257 @@
+name: FX Provenance Clean Repair v348
+
+on:
+  push:
+    branches:
+      - 'fix/fx-provenance-clean-v348'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: fx-provenance-clean-v348-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  repair-test-and-self-clean:
+    if: github.ref == 'refs/heads/fix/fx-provenance-clean-v348' && github.actor == github.repository_owner
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+    env:
+      PYTHONDONTWRITEBYTECODE: '1'
+      PYTHONUNBUFFERED: '1'
+      TCG_REQUIRE_NODE: '1'
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97
+        with:
+          python-version: '3.12'
+      - name: Require exact protected-main base
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "${GITHUB_REF_NAME}" = "fix/fx-provenance-clean-v348"
+          test "$(git rev-parse --abbrev-ref HEAD)" != "main"
+          git fetch origin +refs/heads/main:refs/remotes/origin/main
+          test "$(git rev-parse origin/main)" = "0b7b547c7fc4d12761743c5251a6db060f6c84cc"
+          test "$(git merge-base origin/main HEAD)" = "0b7b547c7fc4d12761743c5251a6db060f6c84cc"
+          test "$(git rev-list --count origin/main..HEAD)" = "1"
+      - name: Apply bounded FX provenance and freshness repair
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          from pathlib import Path
+          from textwrap import dedent
+
+          repair = Path('auto_repair_engine.py')
+          text = repair.read_text(encoding='utf-8')
+          old = "\n".join([
+              '        elif filename == "exchange_rates.json":',
+              '            rates = data["rates"]',
+              '            values = [rates.get("JPY_KRW"), rates.get("USD_KRW")]',
+              '            if any(isinstance(value, bool) or not isinstance(value, (int, float)) for value in values):',
+              '                return False',
+              '            if not (0 < values[0] < 30 and 500 < values[1] < 3000):',
+              '                return False',
+              '',
+          ])
+          new = "\n".join([
+              '        elif filename == "exchange_rates.json":',
+              '            import update_exchange_rates',
+              '            rates = data["rates"]',
+              '            values = [rates.get("JPY_KRW"), rates.get("USD_KRW")]',
+              '            if any(isinstance(value, bool) or not isinstance(value, (int, float)) for value in values):',
+              '                return False',
+              '            if any(not math.isfinite(float(value)) for value in values):',
+              '                return False',
+              '            if not (0 < values[0] < 30 and 500 < values[1] < 3000):',
+              '                return False',
+              '            if data.get("base") != "KRW":',
+              '                return False',
+              '            stamp = data.get("updated_at")',
+              '            if not isinstance(stamp, str) or not stamp.strip() or len(stamp) > 80:',
+              '                return False',
+              '            parsed = dt.datetime.fromisoformat(',
+              '                stamp[:-1] + "+00:00" if stamp.endswith(("Z", "z")) else stamp',
+              '            )',
+              '            if parsed.tzinfo is None:',
+              '                return False',
+              '            age_seconds = (',
+              '                dt.datetime.now(dt.timezone.utc) - parsed.astimezone(dt.timezone.utc)',
+              '            ).total_seconds()',
+              '            if age_seconds < -15 * 60 or age_seconds > 72 * 60 * 60:',
+              '                return False',
+              '            expected_sources = dict(update_exchange_rates.SOURCES)',
+              '            source = data.get("source")',
+              '            route = data.get("source_route")',
+              '            if not isinstance(source, str) or not isinstance(route, str):',
+              '                return False',
+              '            if expected_sources.get(route) != source:',
+              '                return False',
+              '',
+          ])
+          if text.count(old) != 1:
+              raise SystemExit(f'FX validator source block count={text.count(old)}; refusing mutation')
+          text = text.replace(old, new, 1)
+          old_except = "\n".join([
+              '    except (KeyError, TypeError, ValueError):',
+              '        return False',
+              '    pending = [data]',
+          ])
+          new_except = "\n".join([
+              '    except (KeyError, TypeError, ValueError, OverflowError):',
+              '        return False',
+              '    pending = [data]',
+          ])
+          if text.count(old_except) != 1:
+              raise SystemExit(f'validator exception boundary count={text.count(old_except)}; refusing mutation')
+          repair.write_text(text.replace(old_except, new_except, 1), encoding='utf-8')
+
+          updater = Path('update_exchange_rates.py')
+          text = updater.read_text(encoding='utf-8')
+          old = "\n".join([
+              "        current['rates']={'JPY_KRW':round(krw/jpy,5),'USD_KRW':round(krw,2)}",
+              "        current['updated_at']=dt.datetime.now(dt.timezone.utc).isoformat(timespec='seconds')",
+          ])
+          new = "\n".join([
+              "        current['rates']={'JPY_KRW':round(krw/jpy,5),'USD_KRW':round(krw,2)}",
+              "        current['base']='KRW'",
+              "        current['updated_at']=dt.datetime.now(dt.timezone.utc).isoformat(timespec='seconds')",
+          ])
+          if text.count(old) != 1:
+              raise SystemExit(f'FX producer source block count={text.count(old)}; refusing mutation')
+          updater.write_text(text.replace(old, new, 1), encoding='utf-8')
+
+          test = Path('test_fx_provenance_freshness_v348.py')
+          if test.exists():
+              raise SystemExit('target regression test already exists; refusing overwrite')
+          test.write_text(dedent(r'''
+              import datetime as dt
+              import json
+              import tempfile
+              import unittest
+              from pathlib import Path
+              from unittest import mock
+
+              import auto_repair_engine as repair
+              import auto_update_all as updater
+              import update_exchange_rates as fx
+
+
+              class FxProvenanceFreshnessV348Tests(unittest.TestCase):
+                  def payload(self, *, age_hours=1, route="frankfurter-v2", source=None, base="KRW"):
+                      stamp = (dt.datetime.now(dt.timezone.utc) - dt.timedelta(hours=age_hours)).isoformat(timespec="seconds")
+                      sources = dict(fx.SOURCES)
+                      return {
+                          "updated_at": stamp,
+                          "base": base,
+                          "rates": {"JPY_KRW": 8.7, "USD_KRW": 1380.0},
+                          "source_route": route,
+                          "source": sources.get(route) if source is None else source,
+                          "collection_status": "정상",
+                      }
+
+                  def assert_rejected(self, data):
+                      self.assertFalse(repair._valid_project_payload("exchange_rates.json", data))
+                      with self.assertRaises(ValueError):
+                          updater.validate_json("exchange_rates.json", data)
+
+                  def test_fresh_allowlisted_provenance_passes_both_validators(self):
+                      data = self.payload()
+                      self.assertTrue(repair._valid_project_payload("exchange_rates.json", data))
+                      updater.validate_json("exchange_rates.json", data)
+
+                  def test_z_timestamp_is_accepted_when_fresh(self):
+                      data = self.payload()
+                      data["updated_at"] = data["updated_at"].replace("+00:00", "Z")
+                      self.assertTrue(repair._valid_project_payload("exchange_rates.json", data))
+
+                  def test_stale_fx_fails_closed(self):
+                      self.assert_rejected(self.payload(age_hours=73))
+
+                  def test_missing_or_mismatched_provenance_fails_closed(self):
+                      missing = self.payload()
+                      missing.pop("source")
+                      self.assert_rejected(missing)
+                      mismatch = self.payload(source=dict(fx.SOURCES)["frankfurter-v1"])
+                      self.assert_rejected(mismatch)
+
+                  def test_wrong_base_naive_and_future_timestamp_fail_closed(self):
+                      self.assert_rejected(self.payload(base="USD"))
+                      naive = self.payload()
+                      naive["updated_at"] = dt.datetime.now().isoformat(timespec="seconds")
+                      self.assert_rejected(naive)
+                      future = self.payload()
+                      future["updated_at"] = (dt.datetime.now(dt.timezone.utc) + dt.timedelta(hours=1)).isoformat(timespec="seconds")
+                      self.assert_rejected(future)
+
+                  def test_successful_refresh_stamps_base_and_provenance(self):
+                      initial = {"rates": {"JPY_KRW": 9.0, "USD_KRW": 1350.0}}
+                      with tempfile.TemporaryDirectory() as directory:
+                          target = Path(directory) / "exchange_rates.json"
+                          target.write_text(json.dumps(initial), encoding="utf-8")
+                          raw = {"rates": {"KRW": 1380.0, "JPY": 160.0}}
+                          with mock.patch.object(fx, "DATA", target), mock.patch.object(fx, "fetch", return_value=raw):
+                              result = fx.main()
+                      self.assertEqual(result["base"], "KRW")
+                      self.assertEqual(result["source_route"], "frankfurter-v2")
+                      self.assertEqual(result["source"], dict(fx.SOURCES)["frankfurter-v2"])
+                      self.assertTrue(repair._valid_project_payload("exchange_rates.json", result))
+
+
+              if __name__ == "__main__":
+                  unittest.main()
+          ''').lstrip(), encoding='utf-8')
+          PY
+          git diff --check
+      - name: Remove temporary workflow from final tree
+        shell: bash
+        run: |
+          set -euo pipefail
+          git rm -- .github/workflows/fx-provenance-clean-repair-v348.yml
+      - name: Install declared validation dependencies
+        shell: bash
+        run: |
+          set -euo pipefail
+          python -m pip install --disable-pip-version-check --no-input -r requirements.txt
+          python -m pip install --disable-pip-version-check --no-input pyyaml
+      - name: Targeted and related regression
+        shell: bash
+        run: |
+          set -euo pipefail
+          python -m py_compile auto_repair_engine.py update_exchange_rates.py test_fx_provenance_freshness_v348.py
+          python -m unittest -v test_fx_provenance_freshness_v348.py test_edition_fx_failclosed_v328.py test_error_recovery_learning_v134.py
+      - name: Full current release gates
+        shell: bash
+        run: |
+          set -euo pipefail
+          python verify_all.py
+          python verify_v107_runtime_integration.py
+          python security_self_audit.py --fail-on medium
+          python main_selfrefine_gate.py
+      - name: Rebuild exact-tree integrity manifest
+        shell: bash
+        run: |
+          set -euo pipefail
+          python fault_injection_healing.py --manifest
+          python fault_injection_healing.py --diagnose
+          python repository_integrity_guard.py
+          git diff --check
+      - name: Commit only verified repair files and workflow self-removal
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add -- auto_repair_engine.py update_exchange_rates.py test_fx_provenance_freshness_v348.py integrity_manifest.json
+          git add -u -- .github/workflows/fx-provenance-clean-repair-v348.yml
+          expected=$'.github/workflows/fx-provenance-clean-repair-v348.yml\nauto_repair_engine.py\nintegrity_manifest.json\ntest_fx_provenance_freshness_v348.py\nupdate_exchange_rates.py'
+          actual="$(git diff --cached --name-only | sort)"
+          test "$actual" = "$expected"
+          git diff --cached --check
+          git commit -m 'Fail closed on stale or unprovenanced FX data'
+          git push origin "HEAD:${GITHUB_REF_NAME}"
