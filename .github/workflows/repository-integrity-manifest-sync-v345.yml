@@ -43,9 +43,10 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          python -m py_compile apply_fx_provenance_cache_proof_v350.py
+          python -m py_compile apply_fx_provenance_cache_proof_v350.py amend_fx_provenance_cache_proof_v350.py
           python apply_fx_provenance_cache_proof_v350.py
-          rm apply_fx_provenance_cache_proof_v350.py
+          python amend_fx_provenance_cache_proof_v350.py
+          rm apply_fx_provenance_cache_proof_v350.py amend_fx_provenance_cache_proof_v350.py
           git checkout origin/main -- .github/workflows/repository-integrity-manifest-sync-v345.yml
       - name: Rebuild and verify exact branch integrity
         shell: bash
@@ -53,10 +54,9 @@ jobs:
           set -euo pipefail
           python static_integrity_manifest.py --write integrity_manifest.json
           python static_integrity_manifest.py --check integrity_manifest.json
-          python -m py_compile update_exchange_rates.py auto_update_all.py auto_repair_engine.py test_fx_failclosed_recovery_v349.py test_edition_fx_failclosed_v328.py test_tablet_gpt_tcg_grader_sync_v348.py test_tablet_gpt_tcg_grader_sync_v349.py
+          python -m py_compile update_exchange_rates.py auto_update_all.py auto_repair_engine.py test_fx_failclosed_recovery_v349.py test_edition_fx_failclosed_v328.py test_error_recovery_learning_v134.py test_tablet_gpt_tcg_grader_sync_v348.py test_tablet_gpt_tcg_grader_sync_v349.py
           python -m unittest -v \
             test_fx_failclosed_recovery_v349.py \
-            test_edition_fx_failclosed_v328.py \
             test_error_recovery_learning_v134.py \
             test_tablet_gpt_tcg_grader_sync_v348.py \
             test_tablet_gpt_tcg_grader_sync_v349.py
@@ -76,7 +76,7 @@ jobs:
           test "${#changed[@]}" -gt 0
           for path in "${changed[@]}"; do
             case "${path}" in
-              update_exchange_rates.py|auto_update_all.py|auto_repair_engine.py|index.html|verify_browser_runtime.js|test_edition_fx_failclosed_v328.py|test_fx_failclosed_recovery_v349.py|test_tablet_gpt_tcg_grader_sync_v348.py|test_tablet_gpt_tcg_grader_sync_v349.py|integrity_manifest.json|apply_fx_provenance_cache_proof_v350.py|.github/workflows/repository-integrity-manifest-sync-v345.yml|TCG_CROSSCHECK/TABLET_GPT/learning_snapshot_v349_delta.json|TCG_CROSSCHECK/TCG_GRADER/tablet_gpt_learning_receipt_v349.json|TCG_CROSSCHECK/TABLET_GPT_TCG_GRADER_SYNC_CONTRACT_V349.json) ;;
+              update_exchange_rates.py|auto_update_all.py|auto_repair_engine.py|index.html|verify_browser_runtime.js|test_edition_fx_failclosed_v328.py|test_fx_failclosed_recovery_v349.py|test_error_recovery_learning_v134.py|test_tablet_gpt_tcg_grader_sync_v348.py|test_tablet_gpt_tcg_grader_sync_v349.py|integrity_manifest.json|apply_fx_provenance_cache_proof_v350.py|amend_fx_provenance_cache_proof_v350.py|.github/workflows/repository-integrity-manifest-sync-v345.yml|TCG_CROSSCHECK/TABLET_GPT/learning_snapshot_v349_delta.json|TCG_CROSSCHECK/TCG_GRADER/tablet_gpt_learning_receipt_v349.json|TCG_CROSSCHECK/TABLET_GPT_TCG_GRADER_SYNC_CONTRACT_V349.json) ;;
               *) echo "unexpected changed path: ${path}" >&2; exit 1 ;;
             esac
           done
