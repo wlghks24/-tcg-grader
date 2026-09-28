@@ -1,0 +1,32 @@
+name: TCG Static Data Refresh Kick v346
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/tcg-static-data-refresh-kick-v346.yml'
+  workflow_dispatch:
+
+permissions:
+  actions: write
+  contents: read
+
+concurrency:
+  group: tcg-static-data-refresh-kick-v346
+  cancel-in-progress: true
+
+jobs:
+  dispatch-refresh:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      - name: Dispatch exact latest-main static refresh
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          gh api --method POST \
+            "repos/${GITHUB_REPOSITORY}/actions/workflows/tcg-static-data-refresh.yml/dispatches" \
+            -f ref=main
+          echo "Dispatched TCG Static Data Refresh on latest main ${GITHUB_SHA}."
