@@ -1,0 +1,60 @@
+name: Drive Source Probe 20260929
+
+on:
+  push:
+    branches:
+      - diag/drive-source-probe-20260929
+
+permissions:
+  contents: read
+
+jobs:
+  probe:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      - name: Probe official PSA routes and exact Pack Magik page
+        shell: python
+        run: |
+          import json, re, urllib.request, urllib.error
+
+          targets = [
+              ("psa-services", "https://www.psacard.com/services/tradingcardgrading"),
+              ("psa-articles-ca", "https://www.psacard.com/en-CA/articles"),
+              ("psa-submission-updates", "https://www.psacard.com/info/submission-updates"),
+              ("psa-priceguide", "https://www.psacard.com/priceguide"),
+              ("psa-service-update", "https://www.psacard.com/articles/articleview/15210/service-level-update-may-2026"),
+              ("packmagik-op14-009", "https://www.packmagik.com/cards/op-op14-op14-009-p1"),
+          ]
+          out = []
+          for name, url in targets:
+              row = {"name": name, "url": url}
+              try:
+                  req = urllib.request.Request(url, headers={
+                      "User-Agent": "Mozilla/5.0 TCG-Grader-Diagnostic/1.0",
+                      "Accept-Language": "ko-KR,ja-JP;q=0.9,en-US;q=0.8,en;q=0.7",
+                  })
+                  with urllib.request.urlopen(req, timeout=20) as resp:
+                      body = resp.read(2_000_000).decode("utf-8", "ignore")
+                      text = re.sub(r"(?is)<script.*?</script>|<style.*?</style>", " ", body)
+                      text = re.sub(r"(?s)<[^>]+>", " ", text)
+                      text = re.sub(r"\s+", " ", text)
+                      row.update({
+                          "status": int(resp.status),
+                          "final_url": resp.geturl(),
+                          "bytes": len(body.encode("utf-8", "ignore")),
+                      })
+                      if name.startswith("psa-"):
+                          row["has_psa_signal"] = bool(re.search(r"PSA|grading|submission|service", text, re.I))
+                      if name == "packmagik-op14-009":
+                          row["has_op14_009"] = bool(re.search(r"OP14[- ]?009", text, re.I))
+                          row["has_japanese"] = bool(re.search(r"Japanese|日本|Japan", text, re.I))
+                          row["has_alt_art"] = bool(re.search(r"Alternate Art|Alt(?:ernative)? Art|Parallel", text, re.I))
+                          m = re.search(r"(?:Market(?:\s+Value)?|시장가)\s*\$\s*([0-9]+(?:\.[0-9]+)?)", text, re.I)
+                          row["market_value"] = m.group(1) if m else None
+              except urllib.error.HTTPError as exc:
+                  row.update({"status": int(exc.code), "error": "HTTPError", "final_url": exc.geturl()})
+              except Exception as exc:
+                  row.update({"status": None, "error": type(exc).__name__})
+              out.append(row)
+          print(json.dumps(out, ensure_ascii=False, indent=2))
