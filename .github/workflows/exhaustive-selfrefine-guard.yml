@@ -35,7 +35,11 @@ jobs:
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
         with:
-          fetch-depth: 1
+          # Some sync regression tests compare the current tree with the
+          # verified post-merge checkpoint. Keep full history so those tests
+          # exercise the real ancestry contract instead of failing because a
+          # shallow checkout omitted the anchored commit.
+          fetch-depth: 0
       - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97
         with:
           python-version: '3.12'

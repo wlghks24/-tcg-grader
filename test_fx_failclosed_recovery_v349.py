@@ -14,6 +14,7 @@ class FxFailClosedRecoveryV349Tests(unittest.TestCase):
     def _write_fx(self, path, rates, *, source=True, route=True, age_hours=0):
         payload={
             'updated_at':(dt.datetime.now(dt.timezone.utc)-dt.timedelta(hours=age_hours)).isoformat(timespec='seconds'),
+            'source_timestamp':(dt.datetime.now(dt.timezone.utc)-dt.timedelta(hours=age_hours)).isoformat(timespec='seconds'),
             'base':'KRW',
             'rates':rates,
         }
@@ -72,7 +73,10 @@ class FxFailClosedRecoveryV349Tests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as td:
             path=Path(td)/'exchange_rates.json'
             path.write_text('{broken',encoding='utf-8')
-            raw={'rates':{'KRW':1360.0,'JPY':158.13953488372093}}
+            raw={
+                'date':dt.datetime.now(dt.timezone.utc).date().isoformat(),
+                'rates':{'KRW':1360.0,'JPY':158.13953488372093},
+            }
             with mock.patch.object(updater,'DATA',path), \
                  mock.patch.object(updater,'SOURCES',(('frankfurter-v1','https://api.frankfurter.dev/v1/latest'),)), \
                  mock.patch.object(updater,'fetch',return_value=raw):
@@ -81,6 +85,22 @@ class FxFailClosedRecoveryV349Tests(unittest.TestCase):
             self.assertEqual(1360.0,result['rates']['USD_KRW'])
             self.assertTrue(math.isclose(8.6,result['rates']['JPY_KRW'],rel_tol=0,abs_tol=0.001))
             self.assertEqual('frankfurter-v1',result['source_route'])
+            self.assertTrue(result['source_timestamp'])
+
+    def test_fx_rejects_missing_stale_or_future_source_timestamp(self):
+        with tempfile.TemporaryDirectory() as td:
+            path=Path(td)/'exchange_rates.json'
+            self._write_fx(path,{'USD_KRW':1360.65,'JPY_KRW':8.6})
+            payload=json.loads(path.read_text(encoding='utf-8'))
+            for value in (None,
+                          (dt.datetime.now(dt.timezone.utc)-dt.timedelta(hours=73)).isoformat(),
+                          (dt.datetime.now(dt.timezone.utc)+dt.timedelta(hours=7)).isoformat()):
+                with self.subTest(source_timestamp=value):
+                    if value is None:payload.pop('source_timestamp',None)
+                    else:payload['source_timestamp']=value
+                    path.write_text(json.dumps(payload),encoding='utf-8')
+                    with mock.patch.object(market,'FX',path):
+                        self.assertEqual(0.0,market._fx()['USD'])
 
     def test_updater_corrupt_cache_and_total_outage_never_invents_rates(self):
         with tempfile.TemporaryDirectory() as td:

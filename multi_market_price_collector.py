@@ -65,6 +65,15 @@ FX_SOURCE_PROVENANCE={
     'frankfurter-legacy':'api.frankfurter.app',
 }
 
+def _fresh_fx_timestamp(value):
+    try:
+        parsed=datetime.fromisoformat(str(value or '').replace('Z','+00:00'))
+        if parsed.tzinfo is None:raise ValueError('timezone_required')
+        age=(datetime.now(timezone.utc)-parsed.astimezone(timezone.utc)).total_seconds()
+        return -FX_MAX_FUTURE_SKEW_SECONDS <= age <= FX_MAX_AGE_SECONDS
+    except (TypeError,ValueError,OverflowError):
+        return False
+
 def _valid_fx_rate(value):
     try:rate=float(value)
     except (TypeError,ValueError,OverflowError):return 0.0
@@ -74,18 +83,12 @@ def _fx():
     d=_safe_json(FX,{})
     rates=d.get('rates') if isinstance(d,dict) else {}
     stamp=str(d.get('updated_at') or '') if isinstance(d,dict) else ''
+    source_stamp=str(d.get('source_timestamp') or '') if isinstance(d,dict) else ''
     source=str(d.get('source') or '').strip() if isinstance(d,dict) else ''
     route=str(d.get('source_route') or '').strip() if isinstance(d,dict) else ''
     source_host=(urlparse(source).hostname or '').lower() if source else ''
     provenance_ok=bool(route and FX_SOURCE_PROVENANCE.get(route)==source_host)
-    try:
-        parsed=datetime.fromisoformat(stamp.replace('Z','+00:00'))
-        if parsed.tzinfo is None:
-            raise ValueError('timezone_required')
-        age=(datetime.now(timezone.utc)-parsed.astimezone(timezone.utc)).total_seconds()
-        fresh=(-FX_MAX_FUTURE_SKEW_SECONDS <= age <= FX_MAX_AGE_SECONDS)
-    except (TypeError,ValueError,OverflowError):
-        fresh=False
+    fresh=_fresh_fx_timestamp(stamp) and _fresh_fx_timestamp(source_stamp)
     if not fresh or not provenance_ok or not isinstance(rates,dict):
         return {'USD':0.0,'JPY':0.0,'EUR':0.0,'KRW':1.0}
     return {'USD':_valid_fx_rate(rates.get('USD_KRW')),'JPY':_valid_fx_rate(rates.get('JPY_KRW')),

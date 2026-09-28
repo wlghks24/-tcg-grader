@@ -27,6 +27,36 @@ def parse_rates(raw):
         return float(quotes['KRW']),float(quotes['JPY'])
     raise ValueError('환율 응답의 KRW·JPY 필수값을 읽지 못했습니다')
 
+def parse_source_timestamp(raw):
+    """Return the upstream observation time, rejecting absent/stale/future data."""
+    candidates=[]
+    if isinstance(raw,dict):
+        candidates.extend(raw.get(key) for key in ('date','timestamp','updated_at'))
+        rows=raw.get('data') if isinstance(raw.get('data'),list) else []
+    else:
+        rows=raw if isinstance(raw,list) else []
+    for row in rows:
+        if isinstance(row,dict):
+            candidates.extend(row.get(key) for key in ('date','timestamp','updated_at'))
+    parsed_values=[]
+    for value in candidates:
+        if not isinstance(value,str) or not value.strip():
+            continue
+        try:
+            parsed=dt.datetime.fromisoformat(value.strip().replace('Z','+00:00'))
+            if parsed.tzinfo is None:
+                parsed=parsed.replace(tzinfo=dt.timezone.utc)
+            parsed_values.append(parsed.astimezone(dt.timezone.utc))
+        except (TypeError,ValueError,OverflowError):
+            continue
+    if not parsed_values:
+        raise ValueError('환율 응답의 source timestamp가 없습니다')
+    observed=max(parsed_values)
+    age=(dt.datetime.now(dt.timezone.utc)-observed).total_seconds()
+    if not (-6*60*60 <= age <= 72*60*60):
+        raise ValueError('환율 source timestamp가 stale 또는 future 입니다')
+    return observed.isoformat(timespec='seconds')
+
 def _load_current():
     """Load the persisted cache without letting corruption block a fresh fetch."""
     try:
@@ -46,16 +76,19 @@ def main():
     errors=[];selected=None
     for label,url in SOURCES:
         try:
-            krw,jpy=parse_rates(fetch(url))
+            raw=fetch(url)
+            krw,jpy=parse_rates(raw)
+            source_timestamp=parse_source_timestamp(raw)
             if not (math.isfinite(krw) and math.isfinite(jpy) and 500<krw<3000 and 50<jpy<250):
                 raise ValueError('원화 환산 환율 수집값이 허용 범위를 벗어났습니다')
-            selected=(label,url,krw,jpy);break
+            selected=(label,url,krw,jpy,source_timestamp);break
         except (urllib.error.URLError,TimeoutError,OSError,KeyError,TypeError,ValueError,ZeroDivisionError) as exc:
             errors.append(f'{label}: {diagnostic_exception(exc)}')
     if selected:
-        label,url,krw,jpy=selected
+        label,url,krw,jpy,source_timestamp=selected
         current['rates']={'JPY_KRW':round(krw/jpy,5),'USD_KRW':round(krw,2)}
         current['updated_at']=dt.datetime.now(dt.timezone.utc).isoformat(timespec='seconds')
+        current['source_timestamp']=source_timestamp
         current['source']=url;current['source_route']=label;current['collection_status']='정상'
         current['collection_error']=None;current['collection_errors']=[]
     else:
