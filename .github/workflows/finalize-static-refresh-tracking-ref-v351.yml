@@ -1,0 +1,92 @@
+name: Finalize static refresh tracking ref v351
+
+on:
+  push:
+    branches:
+      - fix/static-refresh-origin-main-v351
+    paths:
+      - .github/workflows/finalize-static-refresh-tracking-ref-v351.yml
+
+permissions:
+  contents: write
+
+jobs:
+  finalize:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - name: Checkout repair branch
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          ref: fix/static-refresh-origin-main-v351
+          fetch-depth: 2
+
+      - name: Set up Python
+        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97
+        with:
+          python-version: '3.12'
+
+      - name: Apply exact tracking-ref repair
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          from pathlib import Path
+
+          workflow = Path('.github/workflows/tcg-static-data-refresh.yml')
+          source = workflow.read_text(encoding='utf-8')
+          old = 'git fetch origin main'
+          new = 'git fetch origin +refs/heads/main:refs/remotes/origin/main'
+          count = source.count(old)
+          if count != 3:
+              raise SystemExit(f'expected exactly 3 unsafe main fetches, found {count}')
+          workflow.write_text(source.replace(old, new), encoding='utf-8')
+
+          test = Path('test_protected_static_pipeline_v305.py')
+          text = test.read_text(encoding='utf-8')
+          marker = "\n\nif __name__ == '__main__':\n"
+          if marker not in text:
+              raise SystemExit('test insertion marker missing')
+          method = r'''
+    def test_remote_main_refresh_updates_tracking_ref(self):
+        refresh_cmd = 'git fetch origin +refs/heads/main:refs/remotes/origin/main'
+        self.assertGreaterEqual(self.refresh.count(refresh_cmd), 3)
+        self.assertNotIn('git fetch origin main\n', self.refresh)
+        self.assertIn('if [ "$(git rev-parse HEAD)" != "$(git rev-parse origin/main)" ]; then', self.refresh)
+        self.assertIn('if [ "$(git rev-parse origin/main)" != "${base_sha}" ]; then', self.refresh)
+        self.assertIn('if [ "$(git rev-parse origin/main)" != "${BASE_SHA}" ]; then', self.refresh)
+'''
+          if 'def test_remote_main_refresh_updates_tracking_ref' in text:
+              raise SystemExit('regression test already exists unexpectedly')
+          test.write_text(text.replace(marker, '\n' + method + marker), encoding='utf-8')
+          PY
+
+      - name: Run focused regressions
+        run: |
+          python -m py_compile test_protected_static_pipeline_v305.py
+          python -m unittest -v \
+            test_protected_static_pipeline_v305.py \
+            test_grading_company_watch_protected_publish_v335.py
+
+      - name: Remove helper and rebuild integrity manifest
+        shell: bash
+        run: |
+          set -euo pipefail
+          git rm -- .github/workflows/finalize-static-refresh-tracking-ref-v351.yml
+          python fault_injection_healing.py --manifest
+          python fault_injection_healing.py --diagnose
+          git add -- \
+            .github/workflows/tcg-static-data-refresh.yml \
+            test_protected_static_pipeline_v305.py \
+            integrity_manifest.json
+          git diff --cached --check
+          git status --short
+
+      - name: Commit validated repair
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git commit -m 'fix: refresh origin main tracking ref before static publish'
+          git push origin HEAD:refs/heads/fix/static-refresh-origin-main-v351
