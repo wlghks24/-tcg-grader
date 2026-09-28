@@ -27,31 +27,46 @@ def parse_rates(raw):
         return float(quotes['KRW']),float(quotes['JPY'])
     raise ValueError('환율 응답의 KRW·JPY 필수값을 읽지 못했습니다')
 
+def _parse_observed_at(value):
+    if not isinstance(value,str) or not value.strip():
+        return None
+    try:
+        parsed=dt.datetime.fromisoformat(value.strip().replace('Z','+00:00'))
+        if parsed.tzinfo is None:
+            parsed=parsed.replace(tzinfo=dt.timezone.utc)
+        return parsed.astimezone(dt.timezone.utc)
+    except (TypeError,ValueError,OverflowError):
+        return None
+
 def parse_source_timestamp(raw):
-    """Return the upstream observation time, rejecting absent/stale/future data."""
-    candidates=[]
-    if isinstance(raw,dict):
-        candidates.extend(raw.get(key) for key in ('date','timestamp','updated_at'))
-        rows=raw.get('data') if isinstance(raw.get('data'),list) else []
-    else:
-        rows=raw if isinstance(raw,list) else []
-    for row in rows:
-        if isinstance(row,dict):
-            candidates.extend(row.get(key) for key in ('date','timestamp','updated_at'))
+    """Return the oldest required quote observation, rejecting mixed stale/future data."""
+    rows=raw.get('data') if isinstance(raw,dict) and isinstance(raw.get('data'),list) else (raw if isinstance(raw,list) else [])
     parsed_values=[]
-    for value in candidates:
-        if not isinstance(value,str) or not value.strip():
-            continue
-        try:
-            parsed=dt.datetime.fromisoformat(value.strip().replace('Z','+00:00'))
-            if parsed.tzinfo is None:
-                parsed=parsed.replace(tzinfo=dt.timezone.utc)
-            parsed_values.append(parsed.astimezone(dt.timezone.utc))
-        except (TypeError,ValueError,OverflowError):
-            continue
+    if rows:
+        required={'KRW','JPY'}
+        quote_values={quote:[] for quote in required}
+        for row in rows:
+            if not isinstance(row,dict):
+                continue
+            quote=str(row.get('quote') or row.get('currency') or '').upper()
+            if quote not in required:
+                continue
+            for key in ('date','timestamp','updated_at'):
+                parsed=_parse_observed_at(row.get(key))
+                if parsed is not None:
+                    quote_values[quote].append(parsed)
+        if any(not quote_values[quote] for quote in required):
+            raise ValueError('환율 응답의 KRW·JPY source timestamp가 모두 필요합니다')
+        parsed_values=[value for quote in required for value in quote_values[quote]]
+    elif isinstance(raw,dict):
+        parsed_values=[parsed for key in ('date','timestamp','updated_at')
+                       if (parsed:=_parse_observed_at(raw.get(key))) is not None]
     if not parsed_values:
         raise ValueError('환율 응답의 source timestamp가 없습니다')
-    observed=max(parsed_values)
+    # Both quotes are consumed together, so freshness is bounded by the oldest
+    # required observation. Using the newest row could let one stale quote ride
+    # on the timestamp of the other quote.
+    observed=min(parsed_values)
     age=(dt.datetime.now(dt.timezone.utc)-observed).total_seconds()
     if not (-6*60*60 <= age <= 72*60*60):
         raise ValueError('환율 source timestamp가 stale 또는 future 입니다')
