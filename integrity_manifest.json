@@ -1,7 +1,7 @@
 {
   "version": 2,
   "engine": "v109-card-identity-ocr-learning",
-  "generated_at": "2026-09-28T00:44:42+00:00",
+  "generated_at": "2026-09-28T00:53:16+00:00",
   "files": {
     ".github/workflows/ai-auto-tracker-guard.yml": {
       "sha256": "636e750bd6d2619cce75d4bce2d68051eaa2209ae763bc8ec523ed73476728a6",
@@ -332,8 +332,8 @@
       "bytes": 1065
     },
     ".github/workflows/gpt-tcg-drive-package.yml": {
-      "sha256": "575e04b3c4f04b107c2918b47998073d189bbb7b17da7554b05e31c271b1d26c",
-      "bytes": 1869
+      "sha256": "9a56716e64392618e193f4537be8c14f7b5f6b990e21d91d1e521633e9904518",
+      "bytes": 4034
     },
     ".github/workflows/grading-company-watch.yml": {
       "sha256": "2ad811bb051f58aea64d663cb12258ff39d9a29173c7467607a9443c9cd5b3b6",
@@ -392,8 +392,8 @@
       "bytes": 2492
     },
     ".github/workflows/repository-integrity-guard.yml": {
-      "sha256": "4643f46f0efcac98c4b15899dca94a888eb565564cd802a18b1484ab1674434b",
-      "bytes": 5780
+      "sha256": "0c3a8a645068bca1cc94054d13fd6ec7024616b613fc686d1ff97c0a8ccb06db",
+      "bytes": 5951
     },
     ".github/workflows/repository-integrity-manifest-sync-v344.yml": {
       "sha256": "ced8e91480ac8ee0def5b69a06981b84d8d0a7640c652e4c05f7474c24875626",
@@ -679,6 +679,10 @@
       "sha256": "3123b397142388bd085d63ada916fd909c409aabe73f4002a0e4f0a9780b9425",
       "bytes": 2932
     },
+    "TCG_CROSSCHECK/TABLET_GPT/learning_snapshot_v346_delta.json": {
+      "sha256": "40b3679d7bf6e6779079c909d335a8f3d4302e017611c73f2552251f28f7992d",
+      "bytes": 2479
+    },
     "TCG_CROSSCHECK/TABLET_GPT/ui_repair_candidate_20260926.json": {
       "sha256": "26cb1d421670ea1be7e2b686438226653b0574efc20e5ca0dcc965d34b8b949f",
       "bytes": 1585
@@ -718,6 +722,10 @@
     "TCG_CROSSCHECK/TABLET_GPT_TCG_GRADER_SYNC_CONTRACT_V345.json": {
       "sha256": "daf96059708c5a4bd8353cdfeea41a8a96ba0ce73f18b4307c80b1fbd7b5b0aa",
       "bytes": 6084
+    },
+    "TCG_CROSSCHECK/TABLET_GPT_TCG_GRADER_SYNC_CONTRACT_V346.json": {
+      "sha256": "034272de61a81b2063bce59dab44928420f9efcdeab6b08e8509fb30128fe17d",
+      "bytes": 6625
     },
     "TCG_CROSSCHECK/TCG_GRADER/AI_RELIABILITY_V8_ACTUAL_OUTPUT.json": {
       "sha256": "f56c12964705bf9e62bd655af80f1a292017b097e800d7f74521ad8b22f0b233",
@@ -798,6 +806,10 @@
     "TCG_CROSSCHECK/TCG_GRADER/tablet_gpt_learning_receipt_v345.json": {
       "sha256": "a64ee6e827fcea2556e1959bd7c55012168f6c955a48a8ca2a4e5661fd9f0511",
       "bytes": 1847
+    },
+    "TCG_CROSSCHECK/TCG_GRADER/tablet_gpt_learning_receipt_v346.json": {
+      "sha256": "d30939f1024b6dee5897a78691b8eac54c064918f5c8edfcda0dcb5361cb4442",
+      "bytes": 1840
     },
     "TCG_CROSSCHECK/exchange_manifest.json": {
       "sha256": "4bba146c573d224a641e40416c9d4cf983e1100855f95841e9518ff9e7d925f6",
@@ -2127,6 +2139,10 @@
       "sha256": "8bc4020c64914425b9236a8096d592a181e5c966d254c799a3a7e32c42af14e6",
       "bytes": 120726
     },
+    "protected_static_candidate_guard.py": {
+      "sha256": "e39556619a1b1ba814cb8c90fcaef7a2d50c5cf1c6000ff2b297c8ab32040b61",
+      "bytes": 7091
+    },
     "provider_health_learning.py": {
       "sha256": "97c807d2656608f7408561e91a8af10588d55f773d9f7c09bfe31fb32219d5df",
       "bytes": 43799
@@ -3035,6 +3051,10 @@
       "sha256": "0ca35ad1ad49c1a0676bd3dcbf86da68a8309c4c5d34abfb0bd725559e81f77e",
       "bytes": 2506
     },
+    "test_protected_static_candidate_guard_v311.py": {
+      "sha256": "bc1f10a45750b87c5813d07d7e13ee27d6ceeecfcc8aeadd219450364cbf3b46",
+      "bytes": 3376
+    },
     "test_protected_static_pipeline_v305.py": {
       "sha256": "c1c6215514d7b1f2a71b3f160eb87c4c1e6c4f60992336edd7b4e6db7c5756bf",
       "bytes": 3514
@@ -3294,6 +3314,10 @@
     "test_tablet_gpt_tcg_grader_sync_v345.py": {
       "sha256": "cf3a40d78713ae5ebb8240617d37e0185e2599c21b21df92085a73beb8eed63b",
       "bytes": 4193
+    },
+    "test_tablet_gpt_tcg_grader_sync_v346.py": {
+      "sha256": "f1af27668b566d3b9eb370383b1de3d4cb3bc61ea7f131ebcceb9665adc96f1f",
+      "bytes": 4413
     },
     "test_tablet_main_entrypoint_v251.py": {
       "sha256": "eeca09372b0dd587d6d74d8a1ec75f28e84aca07b7cc38d2bf61555ef992b2f8",
