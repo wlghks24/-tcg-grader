@@ -16,16 +16,20 @@ class CollectionJobContractV255Tests(unittest.TestCase):
         expected_outputs = (
             "releases.json",
             "market_watch.json",
+            "exchange_rates.json",
             "market_prices.json",
             "promo_events.json",
             "purchase_sources.json",
-            "exchange_rates.json",
             "grading_company_updates.json",
             "graded_photo_candidates.json",
         )
         self.assertEqual(contract.JOB_COUNT, 8)
         self.assertEqual(contract.MANDATORY_OUTPUTS, expected_outputs)
         self.assertEqual(tuple(auto_update_all.JOBS), contract.COLLECTION_JOBS)
+
+    def test_fx_refresh_precedes_market_price_collection(self):
+        outputs = contract.MANDATORY_OUTPUTS
+        self.assertLess(outputs.index("exchange_rates.json"), outputs.index("market_prices.json"))
 
     def test_server_idle_and_running_totals_use_same_contract(self):
         self.assertEqual(tcg_updater.UPDATE_JOB["total"], contract.JOB_COUNT)
