@@ -1,7 +1,7 @@
 {
   "version": 2,
   "engine": "v109-card-identity-ocr-learning",
-  "generated_at": "2026-09-28T00:53:16+00:00",
+  "generated_at": "2026-09-28T01:14:43+00:00",
   "files": {
     ".github/workflows/ai-auto-tracker-guard.yml": {
       "sha256": "636e750bd6d2619cce75d4bce2d68051eaa2209ae763bc8ec523ed73476728a6",
@@ -400,8 +400,8 @@
       "bytes": 2289
     },
     ".github/workflows/repository-integrity-manifest-sync-v345.yml": {
-      "sha256": "216d662beb34c08e4c8d971c3defc1cc5978a5c82075d5aaf7ae931cbb1f2738",
-      "bytes": 2517
+      "sha256": "7c6290692c9df82df903a77d89589d947433ff3d5592911953ecfe06562762aa",
+      "bytes": 2704
     },
     ".github/workflows/runtime-correctness-guard.yml": {
       "sha256": "c0a82d48b34c880972693a491a1be49a32ab682034d05f746f02953430582a26",
