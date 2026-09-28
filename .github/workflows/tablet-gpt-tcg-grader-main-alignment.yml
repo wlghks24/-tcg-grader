@@ -196,9 +196,9 @@ jobs:
                   )
                   raise SystemExit(0)
 
-          # A verified candidate may cover the first mainline merge after its source. It remains
-          # valid across later non-watched commits, but any later watched-path touch invalidates it.
-          if event_name != 'pull_request' and relevant and candidate:
+          # The same exact post-merge proof is valid on main and on a PR synthetic merge.
+          # For a later PR, any new watched-path touch appears in later_watched and still fails closed.
+          if relevant and candidate:
               mainline = subprocess.check_output(
                   ['git', 'rev-list', '--first-parent', '--reverse', f'{source}..{head}'],
                   text=True,
