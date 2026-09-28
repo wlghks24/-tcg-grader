@@ -1,10 +1,26 @@
-name: GPT Drive Package Kick v347
+name: GPT Drive Package Kick v350
 
 on:
   push:
     branches: [main]
-    paths:
-      - '.github/workflows/gpt-drive-package-kick-v347.yml'
+    paths-ignore:
+      - 'releases.json'
+      - 'promo_events.json'
+      - 'supplementary_candidates.json'
+      - 'social_event_candidates.json'
+      - 'purchase_signals.json'
+      - 'social_stock_signals.json'
+      - 'market_prices.json'
+      - 'market_watch.json'
+      - 'purchase_sources.json'
+      - 'exchange_rates.json'
+      - 'grading_company_updates.json'
+      - 'graded_photo_candidates.json'
+      - 'source_collection_stats.json'
+      - 'adaptive_collection_stats.json'
+      - 'auto_update_report.json'
+      - 'auto_update_issues.json'
+      - 'tcg_live_data.json'
   workflow_dispatch:
 
 permissions:
@@ -12,7 +28,7 @@ permissions:
   contents: read
 
 concurrency:
-  group: gpt-drive-package-kick-v347
+  group: gpt-drive-package-kick-v350
   cancel-in-progress: true
 
 jobs:
