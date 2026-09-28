@@ -42,7 +42,7 @@ def sync_generation_version(path: str) -> int | None:
 
 def expected_sync_generation_files(version: int) -> set[str]:
     return {
-    re.compile(r"^TCG_CROSSCHECK/TABLET_GPT_TCG_GRADER_SYNC_CONTRACT_V(\d+)\.json$"),
+        f"TCG_CROSSCHECK/TABLET_GPT_TCG_GRADER_SYNC_CONTRACT_V{version}.json",
         f"TCG_CROSSCHECK/TABLET_GPT/learning_snapshot_v{version}_delta.json",
         f"TCG_CROSSCHECK/TCG_GRADER/tablet_gpt_learning_receipt_v{version}.json",
         f"test_tablet_gpt_tcg_grader_sync_v{version}.py",
