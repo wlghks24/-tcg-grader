@@ -7,6 +7,10 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent
 DATA = ROOT / "promo_events.json"
+COLLECTOR = ROOT / "update_promo_events.py"
+TEST = ROOT / "test_playgo_event_watch.py"
+OLD_SOURCE = "https://onepiece-cardgame.kr/topics/view.do?brdno=6516"
+NEW_SOURCE = "https://onepiece-cardgame.kr/events/view.do?brdno=6517"
 
 EVENT = {
     "game": "원피스 카드",
@@ -24,14 +28,36 @@ EVENT = {
     "condition": "매장별 재고가 다르며 소진 시 별도 안내 없이 종료될 수 있습니다. 방문 전 공식 공지와 PLAYGO QR 교환 상태를 확인하세요.",
     "location": "한국 PLAYGO 이벤트 진행 점포",
     "status": "2026-09-01 시작 예정 · 앱 출시 시까지",
-    "source": "https://onepiece-cardgame.kr/topics/view.do?brdno=6516",
+    "source": NEW_SOURCE,
     "verification_source": "https://playgo.bandainamcokorea.co.kr/",
     "source_grade": "official",
-    "official_verified_at": "2026-08-29",
+    "official_verified_at": "2026-09-28",
 }
 
 
+def replace_source(path: Path, *, test_file: bool = False) -> bool:
+    text = path.read_text(encoding="utf-8")
+    if test_file:
+        old = "brdno=6516"
+        new = "brdno=6517"
+    else:
+        old = OLD_SOURCE
+        new = NEW_SOURCE
+    if old not in text:
+        if new not in text:
+            raise RuntimeError(f"PLAYGO source anchor missing: {path.name}")
+        return False
+    path.write_text(text.replace(old, new), encoding="utf-8")
+    return True
+
+
 def main() -> None:
+    # Keep the collector seed and regression expectation on the same currently
+    # reachable official ONE PIECE Korea event page.  Do not weaken the package
+    # fail-closed gate just because the retired topic URL returns HTTP 500.
+    replace_source(COLLECTOR)
+    replace_source(TEST, test_file=True)
+
     data = json.loads(DATA.read_text(encoding="utf-8"))
     items = data.setdefault("items", [])
     if not isinstance(items, list):
@@ -41,7 +67,7 @@ def main() -> None:
     for index, row in enumerate(items):
         if not isinstance(row, dict):
             continue
-        if row.get("source") == EVENT["source"] or row.get("name_ko") == EVENT["name_ko"]:
+        if row.get("source") in {OLD_SOURCE, NEW_SOURCE} or row.get("name_ko") == EVENT["name_ko"]:
             found = index
             break
 
@@ -57,9 +83,9 @@ def main() -> None:
         str(x.get("name_ko") or ""),
     ))
     data["updated_at"] = dt.datetime.now(dt.timezone.utc).isoformat(timespec="seconds")
-    data["manual_official_sync"] = "PLAYGO 2026-08-28 공식 공지 반영"
+    data["manual_official_sync"] = "PLAYGO 2026-09-28 공식 events/6517 경로 재검증 반영"
     DATA.write_text(json.dumps(data, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
-    print("PLAYGO official event synced to promo_events.json")
+    print("PLAYGO official event source migrated to events/6517 and synced")
 
 
 if __name__ == "__main__":

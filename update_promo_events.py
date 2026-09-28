@@ -223,7 +223,7 @@ OFFICIAL_VERIFIED_SEEDS = (
         "condition": "매장별 재고가 다르며 소진 시 종료될 수 있습니다. 공식 공지와 PLAYGO QR 교환 상태를 확인하세요.",
         "location": "한국 PLAYGO 이벤트 진행 점포",
         "status": "2026-09-01 시작 예정 · 앱 출시 시까지",
-        "source": "https://onepiece-cardgame.kr/topics/view.do?brdno=6516",
+        "source": "https://onepiece-cardgame.kr/events/view.do?brdno=6517",
         "verification_source": "https://playgo.bandainamcokorea.co.kr/",
         "source_grade": "official",
     },
