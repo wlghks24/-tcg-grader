@@ -89,14 +89,9 @@ class TabletGptTcgGraderSyncV351(unittest.TestCase):
         self.assertTrue(successors, f"v351 stale without verified successor: {relevant}")
         version, successor_path = max(successors)
         successor = read(successor_path)
-        candidate = successor.get("candidate_sync") or {}
-        self.assertTrue(candidate, f"v{version} lacks exact candidate_sync")
-        self.assertTrue(candidate["requires_exact_watched_path_match"])
-        self.assertTrue(candidate["post_merge_coverage_allowed"])
 
         delta = read(ROOT / successor["delta_snapshot"])
         receipt = read(ROOT / successor["receiver_receipt"])
-        self.assertEqual(candidate["base_main_sha"], delta["source_main_sha"])
         self.assertEqual(delta["source_main_sha"], receipt["source_main_sha"])
         self.assertEqual("SYNCED_VERIFIED", receipt["status"])
         raw = json.dumps(delta["lessons"], ensure_ascii=False, sort_keys=True, separators=(",", ":"))
@@ -111,18 +106,34 @@ class TabletGptTcgGraderSyncV351(unittest.TestCase):
             successor["receiver_receipt"],
             successor["verification_test"],
         }
-        self.assertEqual(generation_files, set(candidate["generation_files"]))
         for path in generation_files:
             self.assertTrue((ROOT / path).is_file(), path)
 
-        base = candidate["base_main_sha"]
-        successor_relevant = watched_paths(successor, base)
-        self.assertEqual(sorted(candidate["watched_paths"]), successor_relevant)
-        self.assertEqual(sorted(relevant), successor_relevant)
-        subprocess.run(["git", "merge-base", "--is-ancestor", base, "HEAD"], check=True)
-        subprocess.run(
-            ["git", "merge-base", "--is-ancestor", candidate["candidate_commit"], "HEAD"], check=True
+        candidate = successor.get("candidate_sync") or {}
+        if candidate:
+            self.assertTrue(candidate["requires_exact_watched_path_match"])
+            self.assertTrue(candidate["post_merge_coverage_allowed"])
+            self.assertEqual(candidate["base_main_sha"], delta["source_main_sha"])
+            self.assertEqual(generation_files, set(candidate["generation_files"]))
+            base = candidate["base_main_sha"]
+            successor_relevant = watched_paths(successor, base)
+            self.assertEqual(sorted(candidate["watched_paths"]), successor_relevant)
+            self.assertEqual(sorted(relevant), successor_relevant)
+            subprocess.run(["git", "merge-base", "--is-ancestor", base, "HEAD"], check=True)
+            subprocess.run(
+                ["git", "merge-base", "--is-ancestor", candidate["candidate_commit"], "HEAD"], check=True
+            )
+            return
+
+        self.assertTrue(
+            successor["rules"].get("post_merge_checkpoint_must_anchor_future_pr_freshness"),
+            f"v{version} must be an exact candidate or verified post-merge checkpoint",
         )
+        self.assertTrue(successor["rules"].get("subsequent_watched_change_requires_new_generation"))
+        base = delta["source_main_sha"]
+        successor_relevant = watched_paths(successor, base)
+        self.assertEqual([], successor_relevant, f"v{version} checkpoint has uncovered watched changes")
+        subprocess.run(["git", "merge-base", "--is-ancestor", base, "HEAD"], check=True)
 
     def test_latest_generation_is_complete_and_bound(self):
         contract = read(CONTRACT)
