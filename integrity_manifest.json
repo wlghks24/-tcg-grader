@@ -1,7 +1,7 @@
 {
   "version": 2,
   "engine": "v109-card-identity-ocr-learning",
-  "generated_at": "2026-09-28T01:14:59+00:00",
+  "generated_at": "2026-09-28T01:17:40+00:00",
   "files": {
     ".github/workflows/ai-auto-tracker-guard.yml": {
       "sha256": "636e750bd6d2619cce75d4bce2d68051eaa2209ae763bc8ec523ed73476728a6",
@@ -687,6 +687,10 @@
       "sha256": "40b3679d7bf6e6779079c909d335a8f3d4302e017611c73f2552251f28f7992d",
       "bytes": 2479
     },
+    "TCG_CROSSCHECK/TABLET_GPT/learning_snapshot_v347_delta.json": {
+      "sha256": "4dff61b96d73400a7b426b0e139617b8ec915582d6a5dd808f9a204d6ee22aa8",
+      "bytes": 2541
+    },
     "TCG_CROSSCHECK/TABLET_GPT/ui_repair_candidate_20260926.json": {
       "sha256": "26cb1d421670ea1be7e2b686438226653b0574efc20e5ca0dcc965d34b8b949f",
       "bytes": 1585
@@ -814,6 +818,10 @@
     "TCG_CROSSCHECK/TCG_GRADER/tablet_gpt_learning_receipt_v346.json": {
       "sha256": "d30939f1024b6dee5897a78691b8eac54c064918f5c8edfcda0dcb5361cb4442",
       "bytes": 1840
+    },
+    "TCG_CROSSCHECK/TCG_GRADER/tablet_gpt_learning_receipt_v347.json": {
+      "sha256": "df4192fb7357e47baf09659d0a6ab1491e7f30328487aa908ff6217582de2bdf",
+      "bytes": 1751
     },
     "TCG_CROSSCHECK/exchange_manifest.json": {
       "sha256": "4bba146c573d224a641e40416c9d4cf983e1100855f95841e9518ff9e7d925f6",
