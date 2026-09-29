@@ -157,6 +157,20 @@ class Operational0600RefreshV25Tests(unittest.TestCase):
             "https://pokemoncard.co.kr/main",
         )
 
+    def test_retired_pokemon_detail_urls_migrate_without_losing_detail_id(self):
+        self.assertEqual(
+            update_promo_events.canonical_pokemon_kr_card_url(
+                "https://new.pokemonkorea.co.kr/card/969"
+            ),
+            "https://pokemoncard.co.kr/card/969",
+        )
+        self.assertEqual(
+            update_promo_events.canonical_pokemon_kr_card_url(
+                "https://new.pokemonkorea.co.kr/card"
+            ),
+            "https://pokemoncard.co.kr/card",
+        )
+
     def test_pokemon_kr_event_uses_same_company_collection_fallback(self):
         tracker = dict(update_promo_events.KR_MOVIE_TRACKERS[0])
         self.assertEqual(tracker["source"], "https://pokemoncard.co.kr/main")
