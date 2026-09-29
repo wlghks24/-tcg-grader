@@ -44,7 +44,7 @@ jobs:
           set -euo pipefail
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git add -A -- integrity_manifest.json .github/workflows/integrity-v356-finalizer.yml
+          git add -A
           test "$(git diff --cached --name-only | sort | tr '\n' ' ')" = ".github/workflows/integrity-v356-finalizer.yml integrity_manifest.json "
           git diff --cached --check
           git commit -m 'Reconcile integrity manifest for v356 candidate'
