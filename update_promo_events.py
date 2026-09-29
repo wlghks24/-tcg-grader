@@ -1025,6 +1025,16 @@ def main() -> dict:
             continue
         repaired = normalize_event_dates(item)
         old_source = str(repaired.get("source") or "")
+        if old_source.startswith("https://new.pokemonkorea.co.kr/card"):
+            suffix = old_source[len("https://new.pokemonkorea.co.kr/card"):]
+            repaired["source"] = "https://pokemoncard.co.kr/card" + suffix
+            old_source = str(repaired["source"])
+            repaired_count += 1
+        old_collection_source = str(repaired.get("collection_source") or "")
+        if old_collection_source.startswith("https://new.pokemonkorea.co.kr/card"):
+            suffix = old_collection_source[len("https://new.pokemonkorea.co.kr/card"):]
+            repaired["collection_source"] = "https://pokemoncard.co.kr/card" + suffix
+            repaired_count += 1
         replacement_source = OFFICIAL_SOURCE_REPLACEMENTS.get(old_source)
         if replacement_source:
             repaired["source"] = replacement_source
