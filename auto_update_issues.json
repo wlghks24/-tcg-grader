@@ -1,47 +1,5 @@
 {
-  "updated_at": "2026-09-29T06:37:37+00:00",
-  "issue_count": 1,
-  "issues": [
-    {
-      "name": "현재 거래시세",
-      "file": "market_prices.json",
-      "severity": "주의",
-      "auto_action": "일부 출처 오류 격리 · 정상자료 반영 · 다음 실행 제한시간 확대",
-      "detail": "Pack Magik OP14-009 JP: 가격 패턴 0건",
-      "recommended_action": "가격 출처의 공개 거래표시와 상품명을 확인하세요.",
-      "error_group_id": "7ececbb9b4982bc9",
-      "error_code": "UNCLASSIFIED_ERROR",
-      "error_subtype": "general",
-      "http_status": null,
-      "bounded_retry_allowed": false,
-      "probable_cause": "기존 규칙에 없는 오류입니다. 상세정보를 비식별화해 기록하고 재현 범위를 확인해야 합니다.",
-      "resolution_steps": [
-        "발생 함수·파일·입력 범위를 확인합니다.",
-        "동일 조건에서 안전하게 재현되는지 검사합니다.",
-        "원인을 확인한 뒤 전용 회귀검사를 추가합니다."
-      ],
-      "verification_steps": [
-        "원인을 확인한 뒤 전용 회귀검사를 추가합니다.",
-        "기존 정상자료가 손상되지 않았는지 확인합니다."
-      ],
-      "scenario_prepared": true,
-      "scenario_profile_id": "c1b51c7e7e7921f8",
-      "diagnostic_priority": 25,
-      "first_checks": [
-        "비식별화한 예외형·함수·입력 범위를 기록합니다."
-      ],
-      "fast_resolution_steps": [
-        "발생 함수·파일·입력 범위를 확인합니다.",
-        "동일 조건에서 안전하게 재현되는지 검사합니다.",
-        "원인을 확인한 뒤 전용 회귀검사를 추가합니다."
-      ],
-      "stop_conditions": [
-        "전용 회귀검사가 생기기 전 자동조치를 확대하지 않습니다."
-      ],
-      "deferred_timeout_attempted": false,
-      "deferred_timeout_recovered": false,
-      "deferred_timeout_pending": false,
-      "deferred_timeout_seconds": 0
-    }
-  ]
+  "updated_at": "2026-09-29T14:08:21+00:00",
+  "issue_count": 0,
+  "issues": []
 }
