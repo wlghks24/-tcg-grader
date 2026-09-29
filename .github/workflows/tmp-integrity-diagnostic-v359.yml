@@ -1,0 +1,42 @@
+name: Temporary Integrity Diagnostic v359
+
+on:
+  push:
+    branches: ['ops/integrity-manifest-sync']
+
+permissions:
+  contents: read
+
+jobs:
+  diagnose:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    env:
+      PYTHONDONTWRITEBYTECODE: '1'
+      PYTHONUNBUFFERED: '1'
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97
+        with:
+          python-version: '3.11'
+      - name: Regenerate manifest
+        run: python -c "from pathlib import Path; import repository_integrity as r; r.regenerate(Path('.').resolve())"
+      - name: Verify regenerated manifest
+        run: python -c "from pathlib import Path; import repository_integrity as r; x=r.verify(Path('.').resolve()); print(x); raise SystemExit(0 if x.get('ok') else 1)"
+      - name: Fault injection unit tests
+        run: python -m unittest -v test_fault_injection_healing_v238.py
+      - name: Fault injection diagnosis
+        run: python fault_injection_healing.py diagnose --json
+      - name: Repository integrity guard unit tests
+        run: python -m unittest -v test_repository_integrity_guard_v202.py
+      - name: Repository integrity guard
+        run: python repository_integrity_guard.py
+      - name: Tablet GPT sync tests
+        shell: bash
+        run: |
+          set -euo pipefail
+          mapfile -t sync_tests < <(find . -maxdepth 1 -type f -name 'test_tablet_gpt_tcg_grader_sync_v*.py' -printf '%f\n' | sort -V)
+          test "${#sync_tests[@]}" -gt 0
+          python -m unittest -v "${sync_tests[@]}"
+      - name: Diff check
+        run: git diff --check
