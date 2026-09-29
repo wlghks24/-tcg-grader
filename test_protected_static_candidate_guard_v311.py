@@ -42,15 +42,14 @@ class ProtectedStaticCandidateGuardV311Tests(unittest.TestCase):
             ),
         )
 
-
-    def test_complete_sync_generation_metadata_is_allowed_after_data_commit(self):
+    def test_complete_sync_generation_metadata_is_path_bound_not_subject_bound(self):
         version = 354
         rows = [
             self.data_commit(),
             {
                 "sha": "b" * 40,
                 "parents": 1,
-                "subject": "sync: bind exact Tablet GPT candidate generation",
+                "subject": "Bind exact Tablet GPT candidate generation",
                 "paths": sorted(guard.expected_sync_generation_files(version)),
             },
             {
@@ -65,6 +64,25 @@ class ProtectedStaticCandidateGuardV311Tests(unittest.TestCase):
             guard.validate_candidate("auto/static-data-12345678-1", rows, self.report(), now=self.now()),
         )
 
+    def test_sync_metadata_cannot_mix_with_public_data(self):
+        version = 354
+        rows = [
+            self.data_commit(),
+            {
+                "sha": "b" * 40,
+                "parents": 1,
+                "subject": "sync metadata plus data",
+                "paths": [
+                    *sorted(guard.expected_sync_generation_files(version)),
+                    "market_prices.json",
+                ],
+            },
+        ]
+        with self.assertRaisesRegex(
+            guard.StaticCandidateGuardError, "STATIC_CANDIDATE_MIXED_SYNC_COMMIT"
+        ):
+            guard.validate_candidate("auto/static-data-12345678-1", rows, self.report(), now=self.now())
+
     def test_partial_or_unrelated_sync_metadata_is_rejected(self):
         version = 354
         rows = [
@@ -72,7 +90,7 @@ class ProtectedStaticCandidateGuardV311Tests(unittest.TestCase):
             {
                 "sha": "b" * 40,
                 "parents": 1,
-                "subject": "sync: incomplete",
+                "subject": "incomplete sync metadata",
                 "paths": [f"TCG_CROSSCHECK/TABLET_GPT_TCG_GRADER_SYNC_CONTRACT_V{version}.json"],
             },
         ]
@@ -86,7 +104,7 @@ class ProtectedStaticCandidateGuardV311Tests(unittest.TestCase):
             {
                 "sha": "c" * 40,
                 "parents": 1,
-                "subject": "sync: generation plus code",
+                "subject": "sync generation plus code",
                 "paths": [
                     *sorted(guard.expected_sync_generation_files(version)),
                     "server_v99.py",
@@ -95,6 +113,27 @@ class ProtectedStaticCandidateGuardV311Tests(unittest.TestCase):
         ]
         with self.assertRaisesRegex(
             guard.StaticCandidateGuardError, "STATIC_CANDIDATE_SCOPE_VIOLATION"
+        ):
+            guard.validate_candidate("auto/static-data-12345678-1", rows, self.report(), now=self.now())
+
+    def test_multiple_sync_generations_are_rejected(self):
+        rows = [
+            self.data_commit(),
+            {
+                "sha": "b" * 40,
+                "parents": 1,
+                "subject": "generation 354",
+                "paths": sorted(guard.expected_sync_generation_files(354)),
+            },
+            {
+                "sha": "c" * 40,
+                "parents": 1,
+                "subject": "generation 355",
+                "paths": sorted(guard.expected_sync_generation_files(355)),
+            },
+        ]
+        with self.assertRaisesRegex(
+            guard.StaticCandidateGuardError, "STATIC_CANDIDATE_MULTIPLE_SYNC_GENERATIONS"
         ):
             guard.validate_candidate("auto/static-data-12345678-1", rows, self.report(), now=self.now())
 

@@ -2,9 +2,9 @@
 """Fail closed for protected static-data candidate branches.
 
 A branch named auto/static-data-* is a data-only promotion surface. It may
-contain only the 17 approved public JSON outputs plus integrity_manifest.json,
-must remain linear, and must carry a fresh auto_update_report.json. This guard
-is intentionally a no-op for all other branches.
+contain only the approved public JSON outputs, integrity_manifest.json, and at
+most one complete Tablet GPT sync metadata generation. Security is enforced by
+exact paths and generation completeness rather than commit-message wording.
 """
 from __future__ import annotations
 
@@ -23,7 +23,6 @@ ALLOWED_FILES = frozenset(OUTPUTS) | {"integrity_manifest.json"}
 MAX_REPORT_AGE = dt.timedelta(hours=2)
 MAX_FUTURE_SKEW = dt.timedelta(minutes=5)
 DATA_COMMIT_PREFIX = "data: refresh validated TCG static snapshot"
-SYNC_COMMIT_PREFIX = "sync:"
 SYNC_PATTERNS = (
     re.compile(r"^TCG_CROSSCHECK/TABLET_GPT_TCG_GRADER_SYNC_CONTRACT_V(\d+)\.json$"),
     re.compile(r"^TCG_CROSSCHECK/TABLET_GPT/learning_snapshot_v(\d+)_delta\.json$"),
@@ -103,11 +102,16 @@ def validate_candidate(branch: str, commits: list[dict], report: dict,
                 )
             if sync_paths:
                 fail("STATIC_CANDIDATE_SYNC_IN_ORIGIN", "sync metadata must follow the data commit")
-        elif sync_paths and not str(subject).startswith(SYNC_COMMIT_PREFIX):
-            fail(
-                "STATIC_CANDIDATE_BAD_SYNC_COMMIT",
-                f"commit={row.get('sha')} sync metadata requires subject prefix {SYNC_COMMIT_PREFIX!r}",
-            )
+        elif sync_paths:
+            # Commit messages are descriptive metadata, not a security boundary. Keep
+            # sync follow-ups path-pure instead: only the exact versioned sync files
+            # and an optional integrity manifest may share the commit.
+            mixed = sorted(paths - sync_paths - {"integrity_manifest.json"})
+            if mixed:
+                fail(
+                    "STATIC_CANDIDATE_MIXED_SYNC_COMMIT",
+                    f"commit={row.get('sha')} mixed={','.join(mixed)}",
+                )
 
         for path in sync_paths:
             version = sync_generation_version(path)
