@@ -34,7 +34,6 @@ EXPECTED_CELLS = tuple(
 )
 POKEMON_KR_INDEXES = (
     "https://pokemoncard.co.kr/card",
-    "https://pokemoncard.co.kr/card",
     "https://pokemoncard.co.kr/card/category/info1",
 )
 POKEMON_US_INDEXES = (
