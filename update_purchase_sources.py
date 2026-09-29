@@ -28,6 +28,8 @@ UNVERIFIED_INVENTORY = "TCG 취급·재고 미확인 · 방문 전 공식 매장
 TIMEOUT_SECONDS = env_int('TCG_HTTP_TIMEOUT',20,5,60)
 MAX_ONLINE_CHECKS = 12
 CANONICAL_URLS = {
+    "https://new.pokemonkorea.co.kr/card": "https://pokemoncard.co.kr/main",
+    "https://new.pokemonkorea.co.kr/card/": "https://pokemoncard.co.kr/main",
     "https://events.pokemon.com/en-us/locations": "https://events.pokemon.com/EventLocator",
     "https://www.gamestop.com/stores/": "https://www.gamestop.com/stores",
     "https://pokemoncard.co.kr/": "https://pokemoncard.co.kr/main",
