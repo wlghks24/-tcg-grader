@@ -1,14 +1,14 @@
 {
-  "updated_at": "2026-09-29T06:37:37+00:00",
+  "updated_at": "2026-09-29T14:37:54+00:00",
   "entries": {
     "KR|테라스탈 페스타 ex|HIT": {
       "display": "₩119,000",
       "kind": "최근 미감정 거래 3건 중앙값",
       "market": "KREAM 한국판",
       "transactions": "공개 페이지 거래자료",
-      "source_date": "2026-09-28",
+      "source_date": "2026-09-29",
       "source": "https://kream.co.kr/products/959332",
-      "link_checked_at": "2026-09-29T06:37:38+00:00",
+      "link_checked_at": "2026-09-29T14:38:11+00:00",
       "link_statuses": {
         "source": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인"
       },
@@ -21,7 +21,7 @@
       "transactions": "공개 표시가격",
       "source_date": "2026-09-29",
       "source": "https://pokard.io/jpcard/SV8a-217/",
-      "link_checked_at": "2026-09-29T06:37:38+00:00",
+      "link_checked_at": "2026-09-29T14:38:11+00:00",
       "link_statuses": {
         "source": "정상"
       },
@@ -34,7 +34,7 @@
       "transactions": "표시가격 참고",
       "source_date": "2026-08-21",
       "source": "https://pokard.io/pokemon-card-price/us/",
-      "link_checked_at": "2026-09-29T06:37:38+00:00",
+      "link_checked_at": "2026-09-29T14:38:11+00:00",
       "link_status": "정상",
       "link_statuses": {
         "source": "정상"
@@ -47,7 +47,7 @@
       "transactions": "공개 표시가격",
       "source_date": "2026-09-29",
       "source": "https://pokard.io/",
-      "link_checked_at": "2026-09-29T06:37:38+00:00",
+      "link_checked_at": "2026-09-29T14:38:11+00:00",
       "link_statuses": {
         "source": "정상"
       },
@@ -60,7 +60,7 @@
       "transactions": "공개 표시가격",
       "source_date": "2026-09-29",
       "source": "https://pokard.io/",
-      "link_checked_at": "2026-09-29T06:37:38+00:00",
+      "link_checked_at": "2026-09-29T14:38:11+00:00",
       "link_statuses": {
         "source": "정상"
       },
@@ -73,7 +73,7 @@
       "transactions": "공개 표시가격",
       "source_date": "2026-09-29",
       "source": "https://pokard.io/",
-      "link_checked_at": "2026-09-29T06:37:38+00:00",
+      "link_checked_at": "2026-09-29T14:38:11+00:00",
       "link_statuses": {
         "source": "정상"
       },
@@ -86,7 +86,7 @@
       "transactions": "공개 표시가격",
       "source_date": "2026-09-29",
       "source": "https://pokard.io/",
-      "link_checked_at": "2026-09-29T06:37:38+00:00",
+      "link_checked_at": "2026-09-29T14:38:11+00:00",
       "link_statuses": {
         "source": "정상"
       },
@@ -99,7 +99,7 @@
       "transactions": "공개 표시가격",
       "source_date": "2026-09-29",
       "source": "https://pokard.io/",
-      "link_checked_at": "2026-09-29T06:37:38+00:00",
+      "link_checked_at": "2026-09-29T14:38:11+00:00",
       "link_statuses": {
         "source": "정상"
       },
@@ -110,9 +110,9 @@
       "kind": "KREAM 공개 상품 구매가",
       "market": "KREAM 한국판",
       "transactions": "공개 구매가 · 판매완료 체결가 아님",
-      "source_date": "2026-09-28",
+      "source_date": "2026-09-29",
       "source": "https://kream.co.kr/products/290634",
-      "link_checked_at": "2026-09-29T06:37:38+00:00",
+      "link_checked_at": "2026-09-29T14:38:11+00:00",
       "link_statuses": {
         "source": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인"
       },
@@ -123,26 +123,13 @@
       "kind": "최근 공개 체결가 범위",
       "market": "KREAM 한국판",
       "transactions": "최근 공개 체결 12건",
-      "source_date": "2026-09-28",
+      "source_date": "2026-09-29",
       "source": "https://kream.co.kr/products/627575",
-      "link_checked_at": "2026-09-29T06:37:38+00:00",
+      "link_checked_at": "2026-09-29T14:38:11+00:00",
       "link_statuses": {
         "source": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인"
       },
       "link_status": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인"
-    },
-    "KR|창해의 칠걸|HIT": {
-      "display": "$19.20",
-      "kind": "OP14-009 패러렐 국제판 참고시세",
-      "market": "Pack Magik 국제시장",
-      "transactions": "한국판 실거래 아님 · 국제판 시장가 참고",
-      "source_date": "2026-09-28",
-      "source": "https://www.packmagik.com/cards/op-op14-op14-009-p1",
-      "link_checked_at": "2026-09-29T06:37:38+00:00",
-      "link_statuses": {
-        "source": "정상"
-      },
-      "link_status": "정상"
     },
     "KR|신시대의 주역|BOX": {
       "display": "₩250,000~₩280,000",
@@ -153,7 +140,7 @@
       "source": "https://kream.co.kr/products/911161",
       "game": "ONE PIECE",
       "official_price": "₩48,000/BOX",
-      "link_checked_at": "2026-09-29T06:37:38+00:00",
+      "link_checked_at": "2026-09-29T14:38:11+00:00",
       "link_status": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인",
       "link_statuses": {
         "source": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인"
@@ -168,7 +155,7 @@
       "source": "https://pokard.io/box/sv8a/",
       "game": "Pokémon",
       "official_price": "₩50,000/BOX",
-      "link_checked_at": "2026-09-29T06:37:38+00:00",
+      "link_checked_at": "2026-09-29T14:38:11+00:00",
       "link_status": "정상",
       "link_statuses": {
         "source": "정상"
@@ -181,7 +168,7 @@
       "transactions": "공개 표시가격",
       "source_date": "2026-09-29",
       "source": "https://pokard.io/",
-      "link_checked_at": "2026-09-29T06:37:38+00:00",
+      "link_checked_at": "2026-09-29T14:38:11+00:00",
       "link_statuses": {
         "source": "정상"
       },
@@ -194,7 +181,7 @@
       "transactions": "공개 표시가격",
       "source_date": "2026-09-29",
       "source": "https://pokard.io/",
-      "link_checked_at": "2026-09-29T06:37:38+00:00",
+      "link_checked_at": "2026-09-29T14:38:11+00:00",
       "link_statuses": {
         "source": "정상"
       },
@@ -207,7 +194,7 @@
       "transactions": "공개 표시가격",
       "source_date": "2026-09-29",
       "source": "https://pokard.io/",
-      "link_checked_at": "2026-09-29T06:37:38+00:00",
+      "link_checked_at": "2026-09-29T14:38:11+00:00",
       "link_statuses": {
         "source": "정상"
       },
@@ -220,7 +207,7 @@
       "transactions": "공개 표시가격",
       "source_date": "2026-09-29",
       "source": "https://pokard.io/",
-      "link_checked_at": "2026-09-29T06:37:38+00:00",
+      "link_checked_at": "2026-09-29T14:38:11+00:00",
       "link_statuses": {
         "source": "정상"
       },
@@ -233,7 +220,7 @@
       "transactions": "공개 표시가격",
       "source_date": "2026-09-29",
       "source": "https://pokard.io/",
-      "link_checked_at": "2026-09-29T06:37:38+00:00",
+      "link_checked_at": "2026-09-29T14:38:11+00:00",
       "link_statuses": {
         "source": "정상"
       },
@@ -246,7 +233,7 @@
       "transactions": "공개 표시가격",
       "source_date": "2026-09-29",
       "source": "https://pokard.io/",
-      "link_checked_at": "2026-09-29T06:37:38+00:00",
+      "link_checked_at": "2026-09-29T14:38:11+00:00",
       "link_statuses": {
         "source": "정상"
       },
@@ -259,7 +246,7 @@
       "transactions": "공개 표시가격",
       "source_date": "2026-09-29",
       "source": "https://pokard.io/",
-      "link_checked_at": "2026-09-29T06:37:38+00:00",
+      "link_checked_at": "2026-09-29T14:38:11+00:00",
       "link_statuses": {
         "source": "정상"
       },
@@ -272,7 +259,7 @@
       "transactions": "공개 표시가격",
       "source_date": "2026-09-29",
       "source": "https://pokard.io/",
-      "link_checked_at": "2026-09-29T06:37:38+00:00",
+      "link_checked_at": "2026-09-29T14:38:11+00:00",
       "link_statuses": {
         "source": "정상"
       },
@@ -285,7 +272,7 @@
       "transactions": "공개 표시가격",
       "source_date": "2026-09-29",
       "source": "https://pokard.io/",
-      "link_checked_at": "2026-09-29T06:37:38+00:00",
+      "link_checked_at": "2026-09-29T14:38:11+00:00",
       "link_statuses": {
         "source": "정상"
       },
@@ -298,7 +285,7 @@
       "transactions": "공개 표시가격",
       "source_date": "2026-09-29",
       "source": "https://pokard.io/",
-      "link_checked_at": "2026-09-29T06:37:38+00:00",
+      "link_checked_at": "2026-09-29T14:38:11+00:00",
       "link_statuses": {
         "source": "정상"
       },
@@ -311,7 +298,7 @@
       "transactions": "공개 표시가격",
       "source_date": "2026-09-29",
       "source": "https://pokard.io/",
-      "link_checked_at": "2026-09-29T06:37:38+00:00",
+      "link_checked_at": "2026-09-29T14:38:11+00:00",
       "link_statuses": {
         "source": "정상"
       },
@@ -327,7 +314,7 @@
       "game": "Pokémon",
       "card_name": "피카츄 RR",
       "product_name": "피카츄 RR 포켓심쿵 컬렉션 RR",
-      "link_checked_at": "2026-09-29T06:37:38+00:00",
+      "link_checked_at": "2026-09-29T14:38:11+00:00",
       "link_statuses": {
         "source": "정상"
       },
@@ -343,7 +330,7 @@
       "game": "Pokémon",
       "card_name": "메가 리자몽 X ex",
       "product_name": "메가 리자몽 X ex",
-      "link_checked_at": "2026-09-29T06:37:38+00:00",
+      "link_checked_at": "2026-09-29T14:38:11+00:00",
       "link_statuses": {
         "source": "정상"
       },
@@ -359,7 +346,7 @@
       "game": "Pokémon",
       "card_name": "뮤 프로모",
       "product_name": "뮤 P 극장판 뮤츠의 역습 프로모 카드",
-      "link_checked_at": "2026-09-29T06:37:38+00:00",
+      "link_checked_at": "2026-09-29T14:38:11+00:00",
       "link_statuses": {
         "source": "정상"
       },
@@ -375,7 +362,7 @@
       "game": "Pokémon",
       "card_name": "리자몽 ex SR",
       "product_name": "리자몽ex SR",
-      "link_checked_at": "2026-09-29T06:37:38+00:00",
+      "link_checked_at": "2026-09-29T14:38:11+00:00",
       "link_statuses": {
         "source": "정상"
       },
@@ -391,7 +378,7 @@
       "product_name": "[OPK-13] 계승되는 의지",
       "official_price": "₩48,000/BOX",
       "source_date": "2026-08-21",
-      "link_checked_at": "2026-09-29T06:37:38+00:00",
+      "link_checked_at": "2026-09-29T14:38:11+00:00",
       "link_status": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인",
       "link_statuses": {
         "source": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인"
@@ -407,7 +394,7 @@
       "product_name": "[EBK-03] Heroines Edition 8BOX",
       "official_price": "8BOX 구성",
       "source_date": "2026-08-21",
-      "link_checked_at": "2026-09-29T06:37:38+00:00",
+      "link_checked_at": "2026-09-29T14:38:11+00:00",
       "link_status": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인",
       "link_statuses": {
         "source": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인"
@@ -423,7 +410,7 @@
       "product_name": "受け継がれる意志 [OP-13]",
       "official_price": "¥5,280/BOX",
       "source_date": "2026-08-21",
-      "link_checked_at": "2026-09-29T06:37:38+00:00",
+      "link_checked_at": "2026-09-29T14:38:11+00:00",
       "link_status": "정상",
       "link_statuses": {
         "source": "정상"
@@ -440,7 +427,7 @@
       "product_name": "Carrying On His Will [OP-13]",
       "official_price": "$4.99/팩 · 24팩",
       "source_date": "2026-08-21",
-      "link_checked_at": "2026-09-29T06:37:38+00:00",
+      "link_checked_at": "2026-09-29T14:38:11+00:00",
       "link_status": "정상",
       "link_statuses": {
         "source": "정상"
@@ -456,7 +443,7 @@
       "product_name": "Premium Booster -The Best- Vol.2 [PRB-02]",
       "official_price": "공식 BOX 구성 확인",
       "source_date": "2026-08-21",
-      "link_checked_at": "2026-09-29T06:37:38+00:00",
+      "link_checked_at": "2026-09-29T14:38:11+00:00",
       "link_status": "정상",
       "link_statuses": {
         "source": "정상"
@@ -472,7 +459,7 @@
       "card_name": "포트거스 D. 에이스 만화 패러렐",
       "product_name": "계승되는 의지 일본판",
       "source_date": "2026-08-21",
-      "link_checked_at": "2026-09-29T06:37:38+00:00",
+      "link_checked_at": "2026-09-29T14:38:11+00:00",
       "link_status": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인",
       "link_statuses": {
         "source": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인"
@@ -488,7 +475,7 @@
       "card_name": "에이스·사보·루피 SR",
       "product_name": "계승되는 의지 일본판",
       "source_date": "2026-08-21",
-      "link_checked_at": "2026-09-29T06:37:38+00:00",
+      "link_checked_at": "2026-09-29T14:38:11+00:00",
       "link_status": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인",
       "link_statuses": {
         "source": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인"
@@ -504,7 +491,7 @@
       "card_name": "카무사리 R-P",
       "product_name": "계승되는 의지 일본판",
       "source_date": "2026-08-21",
-      "link_checked_at": "2026-09-29T06:37:38+00:00",
+      "link_checked_at": "2026-09-29T14:38:11+00:00",
       "link_status": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인",
       "link_statuses": {
         "source": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인"
@@ -522,7 +509,7 @@
       "card_number": "CP-001",
       "product_name": "NARUTO CARD GAME Gen Con 2026 Promo",
       "image_url": "https://narutomarket.com/uploads/8a9ce860-f747-4f68-9082-85b22c39c7e5-237767__carta.webp?v=1786351506",
-      "link_checked_at": "2026-09-29T06:37:38+00:00",
+      "link_checked_at": "2026-09-29T14:38:11+00:00",
       "link_statuses": {
         "source": "정상"
       },
@@ -539,7 +526,7 @@
       "card_number": "SM1M 065/060",
       "product_name": "컬렉션 문 한국판",
       "source_date": "2026-08-25",
-      "link_checked_at": "2026-09-29T06:37:38+00:00",
+      "link_checked_at": "2026-09-29T14:38:11+00:00",
       "link_status": "정상",
       "link_statuses": {
         "source": "정상"
@@ -548,8 +535,8 @@
   },
   "catalog_price_coverage": {
     "total": 64,
-    "verified": 16,
-    "pending": 48,
+    "verified": 15,
+    "pending": 49,
     "missing_keys": [
       "JP|닌자스피너|HIT",
       "JP|메가 드림 ex|HIT",
@@ -578,6 +565,7 @@
       "KR|새로운 황제|HIT",
       "KR|신시대의 주역|HIT",
       "KR|창해의 칠걸|BOX",
+      "KR|창해의 칠걸|HIT",
       "KR|화이트플레어|BOX",
       "KR|화이트플레어|HIT",
       "KR|히로인즈 에디션|BOX",
@@ -601,11 +589,9 @@
       "US|혼돈의 부상|HIT"
     ]
   },
-  "collection_status": "일부 가격 출처 확인 실패",
-  "collection_errors": [
-    "Pack Magik OP14-009 JP: 가격 패턴 0건"
-  ],
-  "link_audit_at": "2026-09-29T06:37:38+00:00",
+  "collection_status": "정상",
+  "collection_errors": [],
+  "link_audit_at": "2026-09-29T14:38:11+00:00",
   "graded_prices": {
     "US|NARUTO CP-001 Gen Con 2026|HIT": {
       "raw_usd_low": 700,
@@ -860,24 +846,40 @@
     "KR|창해의 칠걸|BOX": {
       "value": {},
       "reason": "invalid market entry quarantined"
+    },
+    "KR|창해의 칠걸|HIT": {
+      "value": {
+        "display": "$19.20",
+        "kind": "OP14-009 패러렐 국제판 참고시세",
+        "market": "Pack Magik 국제시장",
+        "transactions": "한국판 실거래 아님 · 국제판 시장가 참고",
+        "source_date": "2026-09-28",
+        "source": "https://www.packmagik.com/cards/op-op14-op14-009-p1",
+        "link_checked_at": "2026-09-29T06:37:38+00:00",
+        "link_statuses": {
+          "source": "정상"
+        },
+        "link_status": "정상"
+      },
+      "reason": "legacy edition mismatch: international/JP OP14-009 evidence must not populate a KR market key"
     }
   },
   "box_hit_market_discovery": {
-    "updated_at": "2026-09-29T06:36:53+00:00",
+    "updated_at": "2026-09-29T14:37:10+00:00",
     "added": 0,
     "updated": 0,
     "cache_reused": false,
     "cache_age_seconds": 0.0,
     "cache_ttl_seconds": 25200,
     "cache_policy": "supplementary-discovery-only",
-    "total": 0,
+    "total": 2,
     "promoted": 0,
     "with_image": 0,
     "source_count": 16
   },
   "public_market_crosscheck": {
-    "updated_at": "2026-09-29T06:36:53+00:00",
-    "targets_total": 66,
+    "updated_at": "2026-09-29T14:37:10+00:00",
+    "targets_total": 65,
     "targets_checked": 4,
     "requests_checked": 8,
     "matches": 0,
@@ -887,10 +889,10 @@
         "matched": 0,
         "errors": 0,
         "cache_hits": 0,
-        "duration_ms": 5874.275,
-        "request_p50_ms": 1618.907,
-        "request_p95_ms": 1738.931,
-        "request_max_ms": 1738.931,
+        "duration_ms": 9458.461,
+        "request_p50_ms": 1996.52,
+        "request_p95_ms": 4910.989,
+        "request_max_ms": 4910.989,
         "deferred": 0,
         "budget_seconds": 90,
         "budget_exhausted": false
@@ -900,10 +902,10 @@
         "matched": 0,
         "errors": 4,
         "cache_hits": 0,
-        "duration_ms": 43988.469,
-        "request_p50_ms": 11139.368,
-        "request_p95_ms": 11161.772,
-        "request_max_ms": 11161.772,
+        "duration_ms": 43996.185,
+        "request_p50_ms": 11128.87,
+        "request_p95_ms": 11311.567,
+        "request_max_ms": 11311.567,
         "deferred": 0,
         "budget_seconds": 90,
         "budget_exhausted": false
@@ -915,10 +917,10 @@
       "KREAM:KR|창해의 칠걸|BOX:HTTPError",
       "KREAM:KR|계승되는 의지|BOX:HTTPError"
     ],
-    "duration_ms": 43990.927,
-    "request_p50_ms": 10833.788,
-    "request_p95_ms": 11161.772,
-    "request_max_ms": 11161.772,
+    "duration_ms": 43998.968,
+    "request_p50_ms": 10602.094,
+    "request_p95_ms": 11311.567,
+    "request_max_ms": 11311.567,
     "cache_hits": 0,
     "cache_ttl_seconds": 900,
     "external_requests_saved": 0,
@@ -930,15 +932,13 @@
     "policy": "공개 HTML 교차확인 · 로그인/비공개 API/우회 없음 · 단독값으로 주 시세 자동 덮어쓰기 금지"
   },
   "market_entry_repair": {
-    "repaired_count": 1,
+    "repaired_count": 2,
     "action": "malformed rows quarantined; verified rows preserved"
   },
   "collection_warnings": [
-    "KREAM HIT: HTTPError: status 500",
-    "KREAM 로맨스 던 BOX: HTTPError: status 500",
-    "KREAM 블랙볼트 BOX: HTTPError: status 500"
+    "Pack Magik OP14-009 JP: 가격 패턴 0건"
   ],
-  "collection_note": "KREAM 원출처 403/429/5xx/네트워크 지연 시 직전 검증자료 유지 · 다음 업데이트에서 재확인",
+  "collection_note": "선택적 가격 출처의 파싱/네트워크 실패는 해당 출처만 경고로 격리하며 검증된 다른 시장행과 판본을 결합하지 않음",
   "market_collection_performance": {
     "mode": "bounded_cross_host_prefetch_v268",
     "fixed_urls": 7,
@@ -972,7 +972,7 @@
       },
       "errors": [],
       "source": "https://wyyyes.com/",
-      "collected_at": "2026-09-29T06:37:37+00:00",
+      "collected_at": "2026-09-29T14:37:55+00:00",
       "policy": "public pages only; KR market location is separate from KR/JP/US card edition; completed-sale evidence must be product-local and explicit"
     }
   },
