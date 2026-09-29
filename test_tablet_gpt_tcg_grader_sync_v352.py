@@ -73,10 +73,11 @@ class TabletGptTcgGraderSyncV352(unittest.TestCase):
             return path not in excluded and (path in exact or path.startswith(prefixes))
 
         changed = subprocess.check_output(
-            ["git", "diff", "--name-only", f"{SOURCE}..HEAD"], text=True
+            ["git", "diff", "--name-only", f"{SOURCE}..{CANDIDATE}"], text=True
         ).splitlines()
         relevant = sorted(path for path in changed if watched(path))
         self.assertEqual(candidate["watched_paths"], relevant)
+        subprocess.run(["git", "merge-base", "--is-ancestor", CANDIDATE, "HEAD"], check=True)
 
         expected = {
             "TCG_CROSSCHECK/TABLET_GPT/learning_snapshot_v352_delta.json",

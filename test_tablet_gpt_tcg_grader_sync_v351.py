@@ -116,12 +116,13 @@ class TabletGptTcgGraderSyncV351(unittest.TestCase):
             self.assertEqual(candidate["base_main_sha"], delta["source_main_sha"])
             self.assertEqual(generation_files, set(candidate["generation_files"]))
             base = candidate["base_main_sha"]
-            successor_relevant = watched_paths(successor, base)
+            candidate_commit = candidate["candidate_commit"]
+            successor_relevant = watched_paths(successor, base, candidate_commit)
             self.assertEqual(sorted(candidate["watched_paths"]), successor_relevant)
-            self.assertEqual(sorted(relevant), successor_relevant)
+            self.assertEqual([], watched_paths(successor, candidate_commit), "latest successor has uncovered watched changes")
             subprocess.run(["git", "merge-base", "--is-ancestor", base, "HEAD"], check=True)
             subprocess.run(
-                ["git", "merge-base", "--is-ancestor", candidate["candidate_commit"], "HEAD"], check=True
+                ["git", "merge-base", "--is-ancestor", candidate_commit, "HEAD"], check=True
             )
             return
 
