@@ -30,12 +30,12 @@ MAX_ONLINE_CHECKS = 12
 CANONICAL_URLS = {
     "https://events.pokemon.com/en-us/locations": "https://events.pokemon.com/EventLocator",
     "https://www.gamestop.com/stores/": "https://www.gamestop.com/stores",
-    "https://pokemoncard.co.kr/": "https://new.pokemonkorea.co.kr/card",
-    "https://www.pokemoncard.co.kr/": "https://new.pokemonkorea.co.kr/card",
-    "https://pokemoncard.co.kr/card/225": "https://new.pokemonkorea.co.kr/card",
-    "https://pokemoncard.co.kr/card/category/product": "https://new.pokemonkorea.co.kr/card",
-    "https://pokemonkorea.co.kr/": "https://new.pokemonkorea.co.kr/card",
-    "https://www.pokemonkorea.co.kr/": "https://new.pokemonkorea.co.kr/card",
+    "https://pokemoncard.co.kr/": "https://pokemoncard.co.kr/main",
+    "https://www.pokemoncard.co.kr/": "https://pokemoncard.co.kr/main",
+    "https://pokemoncard.co.kr/card/225": "https://pokemoncard.co.kr/main",
+    "https://pokemoncard.co.kr/card/category/product": "https://pokemoncard.co.kr/main",
+    "https://pokemonkorea.co.kr/": "https://pokemoncard.co.kr/main",
+    "https://www.pokemonkorea.co.kr/": "https://pokemoncard.co.kr/main",
 }
 
 # 주소·좌표는 거리 정렬용이며, 카드 재고는 매장별 전화/지도 검색으로만 확정한다.
