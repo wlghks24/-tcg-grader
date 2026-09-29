@@ -1,0 +1,24 @@
+name: Temporary Dispatch Static Refresh v361
+
+on:
+  push:
+    branches:
+      - 'ops/dispatch-static-refresh-v361'
+
+permissions:
+  actions: write
+  contents: read
+
+jobs:
+  dispatch:
+    if: github.actor == github.repository_owner
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Dispatch current-main static refresh
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+        run: |
+          set -euo pipefail
+          gh api --method POST "repos/${REPO}/actions/workflows/tcg-static-data-refresh.yml/dispatches" -f ref=main
+          echo 'DISPATCHED_TCG_STATIC_DATA_REFRESH_MAIN'
