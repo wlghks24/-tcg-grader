@@ -6,10 +6,10 @@ import unittest
 
 ROOT=Path(__file__).resolve().parent
 SOURCE="c5b464830b251b23be3337118f5bc93518f7dc7e"
+NEXT_SOURCE="9fdfe499139e2d68bc926e6655af058fbe116d29"
 DELTA=ROOT/"TCG_CROSSCHECK/TABLET_GPT/learning_snapshot_v348_delta.json"
 RECEIPT=ROOT/"TCG_CROSSCHECK/TCG_GRADER/tablet_gpt_learning_receipt_v348.json"
 CONTRACT=ROOT/"TCG_CROSSCHECK/TABLET_GPT_TCG_GRADER_SYNC_CONTRACT_V348.json"
-NEXT_DELTA=ROOT/"TCG_CROSSCHECK/TABLET_GPT/learning_snapshot_v349_delta.json"
 
 def read(path):return json.loads(path.read_text(encoding="utf-8"))
 
@@ -40,8 +40,9 @@ class TabletGptTcgGraderSyncV348(unittest.TestCase):
         watch=contract["freshness_watch"]
         exact=set(watch["exact_paths"]);prefixes=tuple(watch["path_prefixes"]);excluded=set(watch["exclude_paths"])
         def watched(path):return path not in excluded and (path in exact or path.startswith(prefixes))
-        comparison_head=read(NEXT_DELTA)["source_main_sha"] if NEXT_DELTA.is_file() else "HEAD"
-        changed=subprocess.check_output(["git","diff","--name-only",f"{SOURCE}..{comparison_head}"],text=True).splitlines()
+        # Historical candidate scope ends at the next verified checkpoint. Newer
+        # watched changes are owned by their later exact generation.
+        changed=subprocess.check_output(["git","diff","--name-only",f"{SOURCE}..{NEXT_SOURCE}"],text=True).splitlines()
         relevant=sorted(path for path in changed if watched(path))
         self.assertEqual(candidate["watched_paths"],relevant)
         for path in candidate["generation_files"]:self.assertTrue((ROOT/path).is_file(),path)

@@ -148,19 +148,33 @@ class Operational0600RefreshV25Tests(unittest.TestCase):
     def test_retired_pokemon_routes_are_replaced(self):
         self.assertEqual(
             update_promo_events.INDEXES[2][2],
-            "https://new.pokemonkorea.co.kr/card",
+            "https://pokemoncard.co.kr/main",
         )
         self.assertEqual(
             update_promo_events.OFFICIAL_SOURCE_REPLACEMENTS[
                 "https://pokemonkorea.co.kr/2026_battle_tournament3"
             ],
-            "https://new.pokemonkorea.co.kr/card",
+            "https://pokemoncard.co.kr/main",
+        )
+
+    def test_retired_pokemon_detail_urls_migrate_without_losing_detail_id(self):
+        self.assertEqual(
+            update_promo_events.canonical_pokemon_kr_card_url(
+                "https://new.pokemonkorea.co.kr/card/969"
+            ),
+            "https://pokemoncard.co.kr/card/969",
+        )
+        self.assertEqual(
+            update_promo_events.canonical_pokemon_kr_card_url(
+                "https://new.pokemonkorea.co.kr/card"
+            ),
+            "https://pokemoncard.co.kr/card",
         )
 
     def test_pokemon_kr_event_uses_same_company_collection_fallback(self):
         tracker = dict(update_promo_events.KR_MOVIE_TRACKERS[0])
-        self.assertEqual(tracker["source"], "https://new.pokemonkorea.co.kr/card")
-        self.assertEqual(tracker["collection_source"], "https://new.pokemonkorea.co.kr/card")
+        self.assertEqual(tracker["source"], "https://pokemoncard.co.kr/main")
+        self.assertEqual(tracker["collection_source"], "https://pokemoncard.co.kr/main")
         self.assertEqual(tracker["source"], tracker["collection_source"])
         with mock.patch.object(
             update_promo_events,
@@ -169,7 +183,7 @@ class Operational0600RefreshV25Tests(unittest.TestCase):
         ) as mocked:
             checked, error = update_promo_events.check_existing(tracker)
         self.assertIsNone(error)
-        self.assertEqual(mocked.call_args_list[0].args[0], "https://new.pokemonkorea.co.kr/card")
+        self.assertEqual(mocked.call_args_list[0].args[0], "https://pokemoncard.co.kr/main")
         self.assertEqual(checked["verification_status"], "secondary_reachable")
 
     def test_factual_exchange_writers_use_atomic_runtime_helper(self):

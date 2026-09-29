@@ -26,7 +26,7 @@ ALLOWED = {
     "www.pokemon-card.com", "www.30th.pokemon-card.com",
     "pokemon.co.jp", "www.pokemon.co.jp",
     "pokemoncard.co.kr", "www.pokemoncard.co.kr",
-    "pokemonkorea.co.kr", "www.pokemonkorea.co.kr", "new.pokemonkorea.co.kr",
+    "pokemonkorea.co.kr", "www.pokemonkorea.co.kr",
     "onepiece-cardgame.kr", "www.onepiece-cardgame.kr",
     "www.onepiece-cardgame.com", "en.onepiece-cardgame.com",
     "cp.onepiece-cardgame.com", "one-piece.com", "www.one-piece.com",
@@ -46,7 +46,7 @@ FETCH_ALLOWED = ALLOWED | OFFICIAL_SOCIAL_HOSTS
 INDEXES = (
     ("KR", "원피스 카드", "https://onepiece-cardgame.kr/events.do"),
     ("KR", "원피스 카드", "https://onepiece-cardgame.kr/topics.do"),
-    ("KR", "포켓몬 카드", "https://new.pokemonkorea.co.kr/card"),
+    ("KR", "포켓몬 카드", "https://pokemoncard.co.kr/main"),
     ("KR", "나루토 카드", "https://www.naruto-cardgame.com/asia-en/"),
     ("JP", "포켓몬 카드", "https://www.pokemon-card.com/info/"),
     ("JP", "포켓몬 카드", "https://www.pokemon.co.jp/info/"),
@@ -74,12 +74,21 @@ DATE_PRECISIONS = {"day", "month", "season", "start-only", "unannounced"}
 ARCHIVE_GRACE_DAYS = 5
 OFFICIAL_SOURCE_REPLACEMENTS = {
     "https://pokemonkorea.co.kr/2026_battle_tournament3":
-        "https://new.pokemonkorea.co.kr/card",
+        "https://pokemoncard.co.kr/main",
     "https://pokemonkorea.co.kr/2026_battle_tournament3/menu800":
-        "https://new.pokemonkorea.co.kr/card",
-    "https://pokemonkorea.co.kr/": "https://new.pokemonkorea.co.kr/card",
-    "https://www.pokemonkorea.co.kr/": "https://new.pokemonkorea.co.kr/card",
+        "https://pokemoncard.co.kr/main",
+    "https://pokemonkorea.co.kr/": "https://pokemoncard.co.kr/main",
+    "https://www.pokemonkorea.co.kr/": "https://pokemoncard.co.kr/main",
 }
+
+def canonical_pokemon_kr_card_url(value: str) -> str:
+    """Move persisted retired Pokémon Korea card URLs to the current official host."""
+    prefix = "https://new.pokemonkorea.co.kr/card"
+    value = str(value or "")
+    if value.startswith(prefix):
+        return "https://pokemoncard.co.kr/card" + value[len(prefix):]
+    return value
+
 
 
 # 한국 영화 정보는 "없음"으로 숨기지 않고, 한국 공식/공공 출처에서
@@ -94,8 +103,8 @@ KR_MOVIE_TRACKERS = (
         "reward": "한국 극장 개봉·재개봉·특별상영 일정이 공식 발표되면 날짜와 극장 정보를 표시",
         "condition": "포켓몬코리아 및 KOBIS 기준. 현재 확인 가능한 2026년 한국 신작 극장 개봉일은 공식 발표되지 않아 임의 날짜를 만들지 않음.",
         "location": "대한민국", "status": "한국 개봉일 미발표",
-        "source": "https://new.pokemonkorea.co.kr/card",
-        "collection_source": "https://new.pokemonkorea.co.kr/card",
+        "source": "https://pokemoncard.co.kr/main",
+        "collection_source": "https://pokemoncard.co.kr/main",
         "verification_source": "https://www.kobis.or.kr/kobis/business/mast/mvie/searchMovieList.do",
         "tracking_only": True,
     },
@@ -223,7 +232,7 @@ OFFICIAL_VERIFIED_SEEDS = (
         "condition": "매장별 재고가 다르며 소진 시 종료될 수 있습니다. 공식 공지와 PLAYGO QR 교환 상태를 확인하세요.",
         "location": "한국 PLAYGO 이벤트 진행 점포",
         "status": "2026-09-01 시작 예정 · 앱 출시 시까지",
-        "source": "https://onepiece-cardgame.kr/topics/view.do?brdno=6516",
+        "source": "https://onepiece-cardgame.kr/events/view.do?brdno=6517",
         "verification_source": "https://playgo.bandainamcokorea.co.kr/",
         "source_grade": "official",
     },
@@ -1025,6 +1034,16 @@ def main() -> dict:
             continue
         repaired = normalize_event_dates(item)
         old_source = str(repaired.get("source") or "")
+        migrated_source = canonical_pokemon_kr_card_url(old_source)
+        if migrated_source != old_source:
+            repaired["source"] = migrated_source
+            old_source = migrated_source
+            repaired_count += 1
+        old_collection_source = str(repaired.get("collection_source") or "")
+        migrated_collection_source = canonical_pokemon_kr_card_url(old_collection_source)
+        if migrated_collection_source != old_collection_source:
+            repaired["collection_source"] = migrated_collection_source
+            repaired_count += 1
         replacement_source = OFFICIAL_SOURCE_REPLACEMENTS.get(old_source)
         if replacement_source:
             repaired["source"] = replacement_source
@@ -1034,7 +1053,7 @@ def main() -> dict:
             and repaired.get("region") == "KR"
             and str(repaired.get("source") or "").startswith("https://pokemonkorea.co.kr/")
         ):
-            repaired.setdefault("collection_source", "https://new.pokemonkorea.co.kr/card")
+            repaired.setdefault("collection_source", "https://pokemoncard.co.kr/main")
         actual_region = event_region(str(repaired.get("region", "")), repaired.get("name_native"),
                                      repaired.get("name_ko"), repaired.get("source"), repaired.get("location"))
         if actual_region is None:

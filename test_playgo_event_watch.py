@@ -22,7 +22,7 @@ class PlaygoEventWatchTests(unittest.TestCase):
     def test_official_topics_and_seed_are_present(self):
         text = (ROOT / "update_promo_events.py").read_text(encoding="utf-8")
         self.assertIn("https://onepiece-cardgame.kr/topics.do", text)
-        self.assertIn("brdno=6516", text)
+        self.assertIn("brdno=6517", text)
         self.assertIn("PLAYGO 출시 알림 · 신사황 프로모션 팩 재배포", text)
         self.assertIn("playgo.bandainamcokorea.co.kr", text)
 

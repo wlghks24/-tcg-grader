@@ -10,9 +10,8 @@ DELTA = ROOT / "TCG_CROSSCHECK/TABLET_GPT/learning_snapshot_v349_delta.json"
 RECEIPT = ROOT / "TCG_CROSSCHECK/TCG_GRADER/tablet_gpt_learning_receipt_v349.json"
 PRIOR_CONTRACT = ROOT / "TCG_CROSSCHECK/TABLET_GPT_TCG_GRADER_SYNC_CONTRACT_V348.json"
 CONTRACT = ROOT / "TCG_CROSSCHECK/TABLET_GPT_TCG_GRADER_SYNC_CONTRACT_V349.json"
-NEXT_DELTA = ROOT / "TCG_CROSSCHECK/TABLET_GPT/learning_snapshot_v350_delta.json"
-NEXT_CONTRACT = ROOT / "TCG_CROSSCHECK/TABLET_GPT_TCG_GRADER_SYNC_CONTRACT_V350.json"
 SOURCE = "9fdfe499139e2d68bc926e6655af058fbe116d29"
+NEXT_SOURCE = "f1e43e5b536d50e858376b88b2051257d1f2d969"
 
 
 def read(path):
@@ -47,7 +46,7 @@ class TabletGptTcgGraderSyncV349(unittest.TestCase):
         self.assertFalse(receipt["verification"]["physical_tablet_runtime_verified"])
         self.assertFalse(receipt["verification"]["physical_drive_readback_verified"])
 
-    def test_checkpoint_is_bounded_by_next_verified_generation(self):
+    def test_checkpoint_makes_unrelated_followup_fresh_without_weakening_watch(self):
         contract = read(CONTRACT)
         self.assertNotIn("candidate_sync", contract)
         self.assertTrue(contract["rules"]["post_merge_checkpoint_must_anchor_future_pr_freshness"])
@@ -64,17 +63,13 @@ class TabletGptTcgGraderSyncV349(unittest.TestCase):
         self.assertTrue(watched("multi_market_price_collector.py"))
         self.assertTrue(watched("grading_company_updates.json"))
         self.assertFalse(watched("TCG_CROSSCHECK/TABLET_GPT/learning_snapshot_v349_delta.json"))
-        if NEXT_DELTA.is_file() and NEXT_CONTRACT.is_file():
-            comparison_head = read(NEXT_DELTA)["source_main_sha"]
-            expected = sorted(read(NEXT_CONTRACT).get("checkpoint_covered_watched_paths") or [])
-        else:
-            comparison_head = "HEAD"
-            expected = []
+        # Bound this historical checkpoint at the next verified main. Later
+        # watched candidates must be covered by their own exact generation.
         changed = subprocess.check_output(
-            ["git", "diff", "--name-only", f"{SOURCE}..{comparison_head}"], text=True
+            ["git", "diff", "--name-only", f"{SOURCE}..{NEXT_SOURCE}"], text=True
         ).splitlines()
         relevant = sorted(path for path in changed if watched(path))
-        self.assertEqual(expected, relevant)
+        self.assertEqual([], relevant)
 
     def test_latest_generation_is_complete_and_bound(self):
         contract = read(CONTRACT)

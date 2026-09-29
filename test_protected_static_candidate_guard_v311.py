@@ -42,6 +42,62 @@ class ProtectedStaticCandidateGuardV311Tests(unittest.TestCase):
             ),
         )
 
+
+    def test_complete_sync_generation_metadata_is_allowed_after_data_commit(self):
+        version = 354
+        rows = [
+            self.data_commit(),
+            {
+                "sha": "b" * 40,
+                "parents": 1,
+                "subject": "sync: bind exact Tablet GPT candidate generation",
+                "paths": sorted(guard.expected_sync_generation_files(version)),
+            },
+            {
+                "sha": "c" * 40,
+                "parents": 1,
+                "subject": "Reconcile integrity manifest",
+                "paths": ["integrity_manifest.json"],
+            },
+        ]
+        self.assertEqual(
+            "STATIC_CANDIDATE_SCOPE_AND_FRESHNESS_OK",
+            guard.validate_candidate("auto/static-data-12345678-1", rows, self.report(), now=self.now()),
+        )
+
+    def test_partial_or_unrelated_sync_metadata_is_rejected(self):
+        version = 354
+        rows = [
+            self.data_commit(),
+            {
+                "sha": "b" * 40,
+                "parents": 1,
+                "subject": "sync: incomplete",
+                "paths": [f"TCG_CROSSCHECK/TABLET_GPT_TCG_GRADER_SYNC_CONTRACT_V{version}.json"],
+            },
+        ]
+        with self.assertRaisesRegex(
+            guard.StaticCandidateGuardError, "STATIC_CANDIDATE_INCOMPLETE_SYNC_GENERATION"
+        ):
+            guard.validate_candidate("auto/static-data-12345678-1", rows, self.report(), now=self.now())
+
+        rows = [
+            self.data_commit(),
+            {
+                "sha": "c" * 40,
+                "parents": 1,
+                "subject": "sync: generation plus code",
+                "paths": [
+                    *sorted(guard.expected_sync_generation_files(version)),
+                    "server_v99.py",
+                ],
+            },
+        ]
+        with self.assertRaisesRegex(
+            guard.StaticCandidateGuardError, "STATIC_CANDIDATE_SCOPE_VIOLATION"
+        ):
+            guard.validate_candidate("auto/static-data-12345678-1", rows, self.report(), now=self.now())
+
     def test_code_commit_is_rejected_even_if_later_reverted(self):
         rows = [
             self.data_commit(),
