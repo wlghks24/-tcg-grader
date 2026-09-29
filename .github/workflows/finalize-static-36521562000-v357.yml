@@ -1,0 +1,58 @@
+name: Finalize static 36521562000 v357 manifest
+
+on:
+  push:
+    branches:
+      - 'ops/finalize-static-36521562000-v357'
+
+permissions:
+  contents: write
+
+concurrency:
+  group: finalize-static-36521562000-v357
+  cancel-in-progress: true
+
+jobs:
+  finalize:
+    if: github.actor == github.repository_owner
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    env:
+      TARGET_BRANCH: auto/static-data-36521562000-2
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          ref: ${{ env.TARGET_BRANCH }}
+          fetch-depth: 0
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97
+        with:
+          python-version: '3.12'
+      - name: Verify candidate and rebuild exact manifest
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "${TARGET_BRANCH}" = "auto/static-data-36521562000-2"
+          export GITHUB_HEAD_REF="${TARGET_BRANCH}"
+          python protected_static_candidate_guard.py
+          python static_integrity_manifest.py --write integrity_manifest.json
+          python static_integrity_manifest.py --check integrity_manifest.json
+          python repository_integrity_guard.py
+          mapfile -t sync_tests < <(find . -maxdepth 1 -type f -name 'test_tablet_gpt_tcg_grader_sync_v*.py' -printf '%f\n' | sort -V)
+          test "${#sync_tests[@]}" -gt 0
+          python -m unittest -v "${sync_tests[@]}"
+          git diff --check
+      - name: Commit manifest only
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          if git diff --quiet -- integrity_manifest.json; then
+            echo '[OK] manifest already current'
+            exit 0
+          fi
+          git add -- integrity_manifest.json
+          test "$(git diff --cached --name-only)" = "integrity_manifest.json"
+          git diff --cached --check
+          git commit -m 'ci: reconcile v357 candidate integrity manifest'
+          git push origin "HEAD:${TARGET_BRANCH}"
