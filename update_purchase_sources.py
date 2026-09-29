@@ -165,7 +165,7 @@ OFFICIAL_CHAIN_HOSTS = {
     "아트박스": {"company.artbox.kr"},
     "교보문고 핫트랙스": {"store.kyobobook.co.kr"},
     "토이킹덤": {"store.emart.com"},
-    "포켓몬 카드샵": {"pokemoncard.co.kr", "www.pokemoncard.co.kr", "new.pokemonkorea.co.kr"},
+    "포켓몬 카드샵": {"pokemoncard.co.kr", "www.pokemoncard.co.kr"},
     "원피스 카드샵": {"www.onepiece-cardgame.kr"},
     "다이소": {"www.daisomall.co.kr"},
     "노브랜드": {"store.emart.com"},
