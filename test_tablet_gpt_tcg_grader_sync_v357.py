@@ -56,7 +56,7 @@ class TabletGptTcgGraderSyncV357(unittest.TestCase):
         self.assertTrue(cand["requires_exact_watched_path_match"])
         self.assertTrue(cand["post_merge_coverage_allowed"])
         w=c["freshness_watch"]; exact=set(w["exact_paths"]); prefixes=tuple(w["path_prefixes"]); excluded=set(w["exclude_paths"])
-        changed=subprocess.check_output(["git","diff","--name-only",f"{SOURCE}..HEAD"],text=True).splitlines()
+        changed=subprocess.check_output(["git","diff","--name-only",f"{SOURCE}..{CANDIDATE}"],text=True).splitlines()
         relevant=sorted(p for p in changed if p not in excluded and (p in exact or p.startswith(prefixes)))
         self.assertEqual(cand["watched_paths"],relevant)
         expected={"TCG_CROSSCHECK/TABLET_GPT_TCG_GRADER_SYNC_CONTRACT_V357.json","TCG_CROSSCHECK/TABLET_GPT/learning_snapshot_v357_delta.json","TCG_CROSSCHECK/TCG_GRADER/tablet_gpt_learning_receipt_v357.json","test_tablet_gpt_tcg_grader_sync_v357.py"}
