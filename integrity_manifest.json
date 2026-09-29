@@ -1,7 +1,7 @@
 {
   "version": 2,
   "engine": "v109-card-identity-ocr-learning",
-  "generated_at": "2026-09-28T22:58:00+00:00",
+  "generated_at": "2026-09-29T01:45:21+00:00",
   "files": {
     ".github/workflows/ai-auto-tracker-guard.yml": {
       "sha256": "636e750bd6d2619cce75d4bce2d68051eaa2209ae763bc8ec523ed73476728a6",
@@ -715,6 +715,14 @@
       "sha256": "f1fbdd63782a4018a129aed8cb144fdbe3a687ce582153eaeac59dd32ced6549",
       "bytes": 2611
     },
+    "TCG_CROSSCHECK/TABLET_GPT/learning_snapshot_v354_delta.json": {
+      "sha256": "0cd1985b20ffe6c9735b376e2e3acab2735849feb56af2f230f1337234659740",
+      "bytes": 3029
+    },
+    "TCG_CROSSCHECK/TABLET_GPT/learning_snapshot_v355_delta.json": {
+      "sha256": "e2a4b916ad90eec383ff1d5f462468936076b1790cc8aba425b2074a7bc7433b",
+      "bytes": 2639
+    },
     "TCG_CROSSCHECK/TABLET_GPT/ui_repair_candidate_20260926.json": {
       "sha256": "26cb1d421670ea1be7e2b686438226653b0574efc20e5ca0dcc965d34b8b949f",
       "bytes": 1585
@@ -786,6 +794,14 @@
     "TCG_CROSSCHECK/TABLET_GPT_TCG_GRADER_SYNC_CONTRACT_V353.json": {
       "sha256": "73a825b36a1723597fc8cc4b6e44d4fa7fd139aa8e49fd7b89ab42b287628132",
       "bytes": 3143
+    },
+    "TCG_CROSSCHECK/TABLET_GPT_TCG_GRADER_SYNC_CONTRACT_V354.json": {
+      "sha256": "4ec573501a795e8f44246cfa3ab1c3c8d801e62f7e13b282f3bddd18531ca139",
+      "bytes": 4628
+    },
+    "TCG_CROSSCHECK/TABLET_GPT_TCG_GRADER_SYNC_CONTRACT_V355.json": {
+      "sha256": "cf2f514fed2db0ad46965e764ec3499f59cc39b634df3ba7a7d0fdefc60c28f7",
+      "bytes": 4446
     },
     "TCG_CROSSCHECK/TCG_GRADER/AI_RELIABILITY_V8_ACTUAL_OUTPUT.json": {
       "sha256": "f56c12964705bf9e62bd655af80f1a292017b097e800d7f74521ad8b22f0b233",
@@ -897,6 +913,14 @@
     },
     "TCG_CROSSCHECK/TCG_GRADER/tablet_gpt_learning_receipt_v353.json": {
       "sha256": "84de863c73441fde610b20fb78a4ad09f497b25727bd2b59faba867f3e42fc66",
+      "bytes": 1746
+    },
+    "TCG_CROSSCHECK/TCG_GRADER/tablet_gpt_learning_receipt_v354.json": {
+      "sha256": "97349d819bb81b0a81433b94330830263ef34718a07698e8137c47ede34fd5b1",
+      "bytes": 1813
+    },
+    "TCG_CROSSCHECK/TCG_GRADER/tablet_gpt_learning_receipt_v355.json": {
+      "sha256": "aca561e85cf660865fe2f7568bdcaa7da2f0808ce674dc041ff3ceffaffca065",
       "bytes": 1746
     },
     "TCG_CROSSCHECK/exchange_manifest.json": {
@@ -2164,8 +2188,8 @@
       "bytes": 7715
     },
     "multi_route_event_discovery.py": {
-      "sha256": "a46a598df18906c2446ba1dbfcbe7249c19742a9f6d4f0010873b6b2edbeef71",
-      "bytes": 53055
+      "sha256": "14ec89c83517067943ad10dcf79edb92d418f76da0716dcab941487d94ae8f37",
+      "bytes": 53050
     },
     "oauth.html": {
       "sha256": "881fba6c292e9d2c888a5b2753a0a4d2320a00aab3279f78abc4a2d5085c06de",
@@ -2264,8 +2288,8 @@
       "bytes": 7202
     },
     "release_history_backfill.py": {
-      "sha256": "f3c06f8089bbb489bcf869fd4ccd8086478451d2de42a0468f60af5dfaf9fe81",
-      "bytes": 20685
+      "sha256": "f4b6b2efd80c588eb8d32018a0721b1d1643e7439c940ee29624600a025401bd",
+      "bytes": 20626
     },
     "release_parser_learning.json": {
       "sha256": "6f04fa4ec27f6f304ea8249265e2d680a00c52e915208c0e1c13e412c2695e8f",
@@ -2392,8 +2416,8 @@
       "bytes": 24754
     },
     "social_event_discovery.py": {
-      "sha256": "bc1c175880816dc82513924f115ce7ac9b6cd5e9c0e78fd0a0983d188fae04df",
-      "bytes": 60332
+      "sha256": "67ac9db2aad89b669492cac1e5b59fbe903bd216d6069186daca8be0a12d94f2",
+      "bytes": 60347
     },
     "social_stock_discovery.py": {
       "sha256": "285a313f5b451568b90f03f3f06bbf7a3f25e440df5c6260417cbf1a05b74ab6",
@@ -2572,8 +2596,8 @@
       "bytes": 21183
     },
     "test_0600_operational_refresh_v25.py": {
-      "sha256": "145ddc51ca4fb6da1709f57edc384dfb09b66fec25a80f55276f9657d29257a7",
-      "bytes": 10048
+      "sha256": "18eefb69f0b2438479613ddfd90846fa78a43d8f81ab7249dec58a7d90b18c73",
+      "bytes": 10541
     },
     "test_adaptive_collection_learner.py": {
       "sha256": "93ae49d960ea2468197242283bd99264fe320eb0d94f0baa455ee434b40253f1",
@@ -2752,8 +2776,8 @@
       "bytes": 4687
     },
     "test_collection_scope_compat_v214.py": {
-      "sha256": "d9bbd42c4a50e8ed666c3c209dc566b888438ff6ce3ab01a30b0f6d1de5157e6",
-      "bytes": 2514
+      "sha256": "5746b60738e966abb84b72a9af1226ae7bc7ecd7636d07ce53ea2aef2564fcfb",
+      "bytes": 2605
     },
     "test_collection_verification_contextual_v257.py": {
       "sha256": "6bca7eec9887c60e9771671203cba9e34c9847f3b4bc752f4a8f34e2d0b22622",
@@ -3135,6 +3159,10 @@
       "sha256": "11f302b2679397762aed4500865ecaf2d9262d388ab8bc1651d848345420393f",
       "bytes": 2478
     },
+    "test_pokemon_retired_link_migration_v356.py": {
+      "sha256": "256804420168f027279b1f1398359b83e700346a3aa152dbe42ed20ad4e27b49",
+      "bytes": 1191
+    },
     "test_pokemon_run30_asia_recovery_v208.py": {
       "sha256": "0d5ab52c926da45c28e0572e6d4fc137e69be7c08d30ca4418718ae0ce03fd65",
       "bytes": 4590
@@ -3180,8 +3208,8 @@
       "bytes": 5947
     },
     "test_release_history_coverage_v4.py": {
-      "sha256": "f24dfebf15236ad9559cf46f41305951354173b7ac59c279ac50114277ff51da",
-      "bytes": 7798
+      "sha256": "822de5decb52bb3df8fd0a11de5f0d5070fc29f1fa5f4c71f92ff2da964b43e6",
+      "bytes": 7755
     },
     "test_release_history_cumulative_coverage_v229.py": {
       "sha256": "74892232a7fca00d71f94a84f0f4d6013ce0cca5a47f74fc62e1acacb45e2c50",
@@ -3436,8 +3464,16 @@
       "bytes": 5538
     },
     "test_tablet_gpt_tcg_grader_sync_v353.py": {
-      "sha256": "18ce52290481b3e123bd6415704fab573d20aa41f7e700320dad1175a39003b3",
-      "bytes": 7606
+      "sha256": "69a9d378c3327aaab5b7e0e0545c1eecf52c1505f9abceaea4d62af73c4751de",
+      "bytes": 8075
+    },
+    "test_tablet_gpt_tcg_grader_sync_v354.py": {
+      "sha256": "9088a01c62ce09e44d2292abef059c0720794c9656ffade72e06327b13b73dff",
+      "bytes": 4226
+    },
+    "test_tablet_gpt_tcg_grader_sync_v355.py": {
+      "sha256": "f773c88b48322cae9c6a55373b9b565e9bdc9998365b55a082c29561d798661b",
+      "bytes": 4480
     },
     "test_tablet_main_entrypoint_v251.py": {
       "sha256": "eeca09372b0dd587d6d74d8a1ec75f28e84aca07b7cc38d2bf61555ef992b2f8",
@@ -3592,12 +3628,12 @@
       "bytes": 6848
     },
     "update_promo_events.py": {
-      "sha256": "c666bce2fa61d1aff467fe418410fbad54c3038cdbe31a196f80ec4cdcef4d2d",
-      "bytes": 62629
+      "sha256": "8c61fc01f440a9d75d98ca234f10916897ad74b2d44f8f5fd8953fbbfaf5c8bf",
+      "bytes": 63473
     },
     "update_purchase_sources.py": {
-      "sha256": "636492ea0975db6fdce02d9b18ead39f04e1d322de1eb828e5393de94de596de",
-      "bytes": 31096
+      "sha256": "173c8949ee44cdbfbffe50798081162a3844f7ff4f1632fc3d1089342cc0d009",
+      "bytes": 31195
     },
     "update_releases.py": {
       "sha256": "9fd873f5992fe10e47a0bb1a3060874798f898d73113c06023d199d4c09fedc3",
@@ -3620,8 +3656,8 @@
       "bytes": 1385
     },
     "validate_external_links.py": {
-      "sha256": "31a3f2a3bb6c7ac1b5c34767542d5f9f77172a28c7e4dde025b7e2ef4049381e",
-      "bytes": 21641
+      "sha256": "0c333ba27ad3e45a176782f259f40bd97a831f23de3933168b03f69d97313330",
+      "bytes": 23250
     },
     "verified_certifications.json": {
       "sha256": "8218d4862f7e7c207eff599d530414479939773df60f0c7fbaf99aaa648efd60",
@@ -3838,22 +3874,6 @@
     "학습자료_백업.bat": {
       "sha256": "ede8c9bf5a23df86776c5d9b518c8031f9695bd69085259a18c7e5ed994a34e1",
       "bytes": 396
-    },
-    "TCG_CROSSCHECK/TABLET_GPT_TCG_GRADER_SYNC_CONTRACT_V354.json": {
-      "sha256": "4ec573501a795e8f44246cfa3ab1c3c8d801e62f7e13b282f3bddd18531ca139",
-      "bytes": 4628
-    },
-    "TCG_CROSSCHECK/TABLET_GPT/learning_snapshot_v354_delta.json": {
-      "sha256": "0cd1985b20ffe6c9735b376e2e3acab2735849feb56af2f230f1337234659740",
-      "bytes": 3029
-    },
-    "TCG_CROSSCHECK/TCG_GRADER/tablet_gpt_learning_receipt_v354.json": {
-      "sha256": "97349d819bb81b0a81433b94330830263ef34718a07698e8137c47ede34fd5b1",
-      "bytes": 1813
-    },
-    "test_tablet_gpt_tcg_grader_sync_v354.py": {
-      "sha256": "9088a01c62ce09e44d2292abef059c0720794c9656ffade72e06327b13b73dff",
-      "bytes": 4226
     }
   },
   "mutable_json": {},
