@@ -1,7 +1,7 @@
 {
   "version": 2,
   "engine": "v109-card-identity-ocr-learning",
-  "generated_at": "2026-09-29T00:20:00+00:00",
+  "generated_at": "2026-09-29T00:27:00+00:00",
   "files": {
     ".github/workflows/ai-auto-tracker-guard.yml": {
       "sha256": "636e750bd6d2619cce75d4bce2d68051eaa2209ae763bc8ec523ed73476728a6",
@@ -2572,8 +2572,8 @@
       "bytes": 21183
     },
     "test_0600_operational_refresh_v25.py": {
-      "sha256": "c959f57499ffa22260d65b7bdbfdd8075523c1149b0cb61d2026852284a57e1d",
-      "bytes": 10023
+      "sha256": "18eefb69f0b2438479613ddfd90846fa78a43d8f81ab7249dec58a7d90b18c73",
+      "bytes": 10541
     },
     "test_adaptive_collection_learner.py": {
       "sha256": "93ae49d960ea2468197242283bd99264fe320eb0d94f0baa455ee434b40253f1",
@@ -2752,8 +2752,8 @@
       "bytes": 4687
     },
     "test_collection_scope_compat_v214.py": {
-      "sha256": "d5bec2ffba91ab9d82c4d19d1f39f0491030d81826c79e15ba856a9651c9f7c2",
-      "bytes": 2494
+      "sha256": "5746b60738e966abb84b72a9af1226ae7bc7ecd7636d07ce53ea2aef2564fcfb",
+      "bytes": 2605
     },
     "test_collection_verification_contextual_v257.py": {
       "sha256": "6bca7eec9887c60e9771671203cba9e34c9847f3b4bc752f4a8f34e2d0b22622",
@@ -3592,12 +3592,12 @@
       "bytes": 6848
     },
     "update_promo_events.py": {
-      "sha256": "53e48e5a17406a9b43f291f08e290869545b1dd431238c88b267f9ab9bdf8f04",
-      "bytes": 62563
+      "sha256": "8c61fc01f440a9d75d98ca234f10916897ad74b2d44f8f5fd8953fbbfaf5c8bf",
+      "bytes": 63473
     },
     "update_purchase_sources.py": {
-      "sha256": "be159bf18462f4ab9277a68c97d589ff3aae78cf604f5d198012733c4644af28",
-      "bytes": 31040
+      "sha256": "173c8949ee44cdbfbffe50798081162a3844f7ff4f1632fc3d1089342cc0d009",
+      "bytes": 31195
     },
     "update_releases.py": {
       "sha256": "9fd873f5992fe10e47a0bb1a3060874798f898d73113c06023d199d4c09fedc3",
