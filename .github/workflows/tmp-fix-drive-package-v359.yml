@@ -22,7 +22,20 @@ jobs:
         with:
           python-version: '3.11'
       - name: Apply bounded source-integrity fixes
-        run: python tmp_apply_v359.py
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          from pathlib import Path
+          p=Path('tmp_apply_v359.py')
+          s=p.read_text(encoding='utf-8')
+          old='None\\ndef set_price(db,key,display,kind,market,transactions,source):\\n'
+          new='None\\n\\ndef set_price(db,key,display,kind,market,transactions,source):\\n'
+          if s.count(old) != 1:
+              raise SystemExit(f'temporary anchor repair count={s.count(old)}')
+          p.write_text(s.replace(old,new,1),encoding='utf-8')
+          PY
+          python tmp_apply_v359.py
       - name: Run targeted regressions
         shell: bash
         run: |
