@@ -1,0 +1,61 @@
+name: Temporary v360 PR336 Finalizer
+
+on:
+  push:
+    branches:
+      - 'ops/v360-pr336-finalizer'
+
+permissions:
+  contents: write
+
+jobs:
+  finalize:
+    if: github.actor == github.repository_owner
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    env:
+      PYTHONDONTWRITEBYTECODE: '1'
+      PYTHONUNBUFFERED: '1'
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          ref: 'auto/static-data-36551718065-1'
+          fetch-depth: 0
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97
+        with:
+          python-version: '3.12'
+      - name: Require exact candidate ancestry
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse --abbrev-ref HEAD)" = "auto/static-data-36551718065-1"
+          git fetch origin +refs/heads/main:refs/remotes/origin/main
+          git merge-base --is-ancestor origin/main HEAD
+          git merge-base --is-ancestor c17ea49bb953fd6633f8b550302d7a84a4365a3a HEAD
+      - name: Rebuild manifest and validate v360 candidate
+        shell: bash
+        run: |
+          set -euo pipefail
+          python static_integrity_manifest.py --write integrity_manifest.json
+          python static_integrity_manifest.py --check integrity_manifest.json
+          python repository_integrity_guard.py
+          mapfile -t sync_tests < <(find . -maxdepth 1 -type f -name 'test_tablet_gpt_tcg_grader_sync_v*.py' -printf '%f\n' | sort -V)
+          test "${#sync_tests[@]}" -gt 0
+          python -m unittest -v "${sync_tests[@]}"
+          python -m unittest -v test_drive_package_blockers_v359.py test_update_market_prices_packmagik_v353.py test_collection_verification_contextual_v257.py
+          git diff --check
+      - name: Commit only regenerated integrity manifest
+        shell: bash
+        run: |
+          set -euo pipefail
+          if git diff --quiet -- integrity_manifest.json; then
+            echo '[OK] integrity manifest already exact'
+            exit 0
+          fi
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add -- integrity_manifest.json
+          test "$(git diff --cached --name-only)" = "integrity_manifest.json"
+          git diff --cached --check
+          git commit -m 'Reconcile integrity manifest for v360 static candidate'
+          git push origin HEAD:auto/static-data-36551718065-1
