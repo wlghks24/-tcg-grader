@@ -23,6 +23,8 @@ from safe_runtime import atomic_write_json, diagnostic_exception, safe_read_text
 
 ROOT = Path(__file__).resolve().parent
 OUT = ROOT / "grading_company_updates.json"
+BOOTSTRAP = ROOT / "grading_company_bootstrap.json"
+BOOTSTRAP_MAX_AGE_SECONDS = 30 * 24 * 3600
 UA = "Mozilla/5.0 TCG-Grader-GradingCompanyWatch/1.0"
 MAX_PAGE_BYTES = 2_000_000
 MAX_HISTORY = 240
@@ -372,10 +374,45 @@ def _load_previous(path: Path = OUT) -> dict:
         return {}
 
 
+def _load_bootstrap_sources(checked_at: str, path: Path = BOOTSTRAP) -> dict[str, dict]:
+    try:
+        data = json.loads(safe_read_text(path, max_bytes=2_000_000))
+        now = datetime.fromisoformat(str(checked_at).replace('Z', '+00:00')).astimezone(timezone.utc)
+        observed = datetime.fromisoformat(str(data.get('observed_at') or '').replace('Z', '+00:00')).astimezone(timezone.utc)
+        expires = datetime.fromisoformat(str(data.get('expires_at') or '').replace('Z', '+00:00')).astimezone(timezone.utc)
+    except (OSError, ValueError, TypeError, UnicodeError, json.JSONDecodeError):
+        return {}
+    age = (now - observed).total_seconds()
+    if data.get('schema_version') != 1 or age < -300 or age > BOOTSTRAP_MAX_AGE_SECONDS or now > expires:
+        return {}
+    rows = data.get('sources')
+    return rows if isinstance(rows, dict) else {}
+
+
+def _valid_bootstrap_source(company: str, spec: dict, source_id: str, row: object) -> bool:
+    if not isinstance(row, dict):
+        return False
+    return bool(
+        row.get('company') == company
+        and row.get('source_id') == source_id
+        and row.get('kind') == spec.get('kind')
+        and row.get('market') == spec.get('market')
+        and row.get('currency') == spec.get('currency')
+        and row.get('url') == spec.get('url')
+        and row.get('verified_official_source') is True
+        and row.get('parser_version') == PARSER_VERSION
+        and row.get('signal_fingerprint')
+        and isinstance(row.get('services'), list)
+        and bool(row.get('services'))
+        and row.get('last_verified_at')
+    )
+
+
 def collect(previous: dict | None = None, fetcher=_fetch_raw) -> dict:
     previous = previous if isinstance(previous, dict) else {}
     checked_at = datetime.now(timezone.utc).isoformat(timespec="seconds")
     prev_sources = previous.get("sources", {}) if isinstance(previous.get("sources"), dict) else {}
+    bootstrap_sources = _load_bootstrap_sources(checked_at)
     sources: dict[str, dict] = {}
     companies: dict[str, dict] = {}
     changes: list[dict] = []
@@ -402,7 +439,7 @@ def collect(previous: dict | None = None, fetcher=_fetch_raw) -> dict:
                     "market": spec["market"], "currency": spec["currency"], "url": spec["url"],
                     "status": "ok", "checked_at": checked_at, "signal_fingerprint": fingerprint,
                     "services": services, "announcements": found, "verified_official_source": True,
-                    "parser_version": PARSER_VERSION,
+                    "parser_version": PARSER_VERSION, "last_verified_at": checked_at,
                 }
                 # First successful observation of a source establishes its baseline.
                 # A previously verified source may emit service changes, including
@@ -432,6 +469,10 @@ def collect(previous: dict | None = None, fetcher=_fetch_raw) -> dict:
                     old.get("verified_official_source") is True
                     and old.get("signal_fingerprint")
                 )
+                bootstrap_row = bootstrap_sources.get(source_id, {})
+                if not old_verified and _valid_bootstrap_source(company, spec, source_id, bootstrap_row):
+                    old = dict(bootstrap_row)
+                    old_verified = True
                 retained = dict(old) if old else {
                     "company": company, "source_id": source_id, "kind": spec["kind"],
                     "market": spec["market"], "currency": spec["currency"], "url": spec["url"],
@@ -441,6 +482,8 @@ def collect(previous: dict | None = None, fetcher=_fetch_raw) -> dict:
                     "status": "degraded", "checked_at": checked_at,
                     "last_error": diagnostic_exception(exc), "verified_official_source": old_verified,
                 })
+                if old_verified:
+                    retained["retained_last_good"] = True
                 sources[source_id] = retained
                 if old_verified and retained.get("services"):
                     markets[spec["market"]] = {

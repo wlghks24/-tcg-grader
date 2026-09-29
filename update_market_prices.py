@@ -50,6 +50,45 @@ def packmagik_market_value(text:str)->str|None:
     match=re.search(r'(?:Market(?:\s+Value)?|시장가)\s*\$([0-9]+(?:\.[0-9]+)?)',text,re.I)
     return match.group(1) if match else None
 
+def quarantine_legacy_packmagik_misjoin(db):
+    """Remove only the known legacy KR key polluted by international/JP OP14-009 evidence."""
+    entries=db.get('entries') if isinstance(db,dict) else None
+    if not isinstance(entries,dict): return False
+    key='KR|창해의 칠걸|HIT'
+    row=entries.get(key)
+    if not isinstance(row,dict): return False
+    source=str(row.get('source') or '').lower()
+    evidence=' '.join(str(row.get(field) or '') for field in ('kind','transactions','card_number','language')).lower()
+    if 'packmagik.com/' not in source or not ('op14-009' in evidence or '국제판' in evidence or '일본판' in evidence):
+        return False
+    quarantine=db.setdefault('invalid_entries_quarantine',{})
+    quarantine[key]={
+        'value':row,
+        'reason':'legacy edition mismatch: international/JP OP14-009 evidence must not populate a KR market key',
+    }
+    entries.pop(key,None)
+    return True
+
+
+def market_error_is_warning(text:str)->bool:
+    """Optional provider degradation stays observable without invalidating other verified market rows."""
+    text=str(text)
+    kream_transient=(
+        re.search(r'^KREAM ',text,re.I) is not None and (
+            re.search(r'HTTPError: status (?:403|429|5(?:00|02|03|04))\b',text,re.I) is not None
+            or re.search(r'(?:URLError|TimeoutError|timed out|temporary failure|connection reset|name resolution|DNS)',text,re.I) is not None
+        )
+    )
+    packmagik_optional=(
+        text.startswith('Pack Magik OP14-009 JP:') and (
+            '가격 패턴 0건' in text
+            or re.search(r'HTTPError: status (?:403|429|5(?:00|02|03|04))\b',text,re.I) is not None
+            or re.search(r'(?:URLError|TimeoutError|timed out|temporary failure|connection reset|name resolution|DNS)',text,re.I) is not None
+        )
+    )
+    return bool(kream_transient or packmagik_optional)
+
+
 def set_price(db,key,display,kind,market,transactions,source):
     db['entries'][key]={'display':display,'kind':kind,'market':market,'transactions':transactions,
       'source_date':dt.date.today().isoformat(),'source':source}
@@ -170,6 +209,7 @@ def coverage(db):
 
 def main():
     db=json.loads(safe_read_text(DATA)); errors=[]; initial_repairs=_sanitize_entries(db)
+    if quarantine_legacy_packmagik_misjoin(db): initial_repairs+=1
     keep_verified_seeds(db)
     # 느린 외부 사이트가 응답하지 않아도 확인 완료 기준자료는 즉시 보존한다.
     atomic_save(db)
@@ -269,13 +309,7 @@ def main():
     hard_market_errors=[]
     for item in errors:
         text=str(item)
-        kream_transient=(
-            re.search(r'^KREAM ',text,re.I) is not None and (
-                re.search(r'HTTPError: status (?:403|429|5(?:00|02|03|04))\b',text,re.I) is not None
-                or re.search(r'(?:URLError|TimeoutError|timed out|temporary failure|connection reset|name resolution|DNS)',text,re.I) is not None
-            )
-        )
-        if kream_transient:
+        if market_error_is_warning(text):
             transient_market_errors.append(text)
         else:
             hard_market_errors.append(text)
@@ -283,7 +317,7 @@ def main():
     db['collection_status']='정상' if not hard_market_errors else '일부 가격 출처 확인 실패'
     db['collection_errors']=hard_market_errors
     db['collection_warnings']=transient_market_errors
-    db['collection_note']='KREAM 원출처 403/429/5xx/네트워크 지연 시 직전 검증자료 유지 · 다음 업데이트에서 재확인' if transient_market_errors else ''
+    db['collection_note']='선택적 가격 출처의 파싱/네트워크 실패는 해당 출처만 경고로 격리하며 검증된 다른 시장행과 판본을 결합하지 않음' if transient_market_errors else ''
     db['catalog_price_coverage']=coverage(db)
     atomic_save(db)
     return db
