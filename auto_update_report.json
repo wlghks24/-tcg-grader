@@ -3,7 +3,7 @@
   "engine": "v98-camera-resilience-full-runtime",
   "trigger": "github-pages-static-refresh",
   "selected_files": [],
-  "started_at": "2026-09-29T06:34:30+00:00",
+  "started_at": "2026-09-29T13:22:37+00:00",
   "preflight_monitor": {
     "ok": true,
     "results": [
@@ -54,8 +54,8 @@
       }
     ]
   },
-  "finished_at": "2026-09-29T06:37:37+00:00",
-  "duration_seconds": 187.55,
+  "finished_at": "2026-09-29T13:29:13+00:00",
+  "duration_seconds": 396.24,
   "parallel_workers": 2,
   "ok": true,
   "success_count": 8,
@@ -66,15 +66,24 @@
   "fresh_failure_count": 0,
   "deferred_timeout_recovery": {
     "enabled": true,
-    "eligible_count": 0,
-    "selected_count": 0,
-    "attempted_count": 0,
-    "parallel_workers": 0,
-    "recovered_count": 0,
+    "eligible_count": 1,
+    "selected_count": 1,
+    "attempted_count": 1,
+    "parallel_workers": 1,
+    "recovered_count": 1,
     "pending_count": 0,
     "max_budget_seconds": 600,
     "only_timeout_affected_files": true,
-    "events": []
+    "events": [
+      {
+        "file": "graded_photo_candidates.json",
+        "name": "업체별 등급카드 사진 후보",
+        "budget_seconds": 280,
+        "duration_seconds": 127.216,
+        "recovered": true,
+        "status": "별도 수집 복구 성공"
+      }
+    ]
   },
   "results": [
     {
@@ -82,7 +91,7 @@
       "file": "releases.json",
       "ok": true,
       "status": "정상",
-      "updated_at": "2026-09-29T06:35:45+00:00",
+      "updated_at": "2026-09-29T13:24:00+00:00",
       "count": 14,
       "retry_count": 0,
       "max_attempts": 2,
@@ -90,9 +99,9 @@
       "auto_action": "학습형 수집 · 검증 후 정상 반영",
       "collection_errors": [],
       "remaining_collection_errors": [],
-      "duration_seconds": 32.43,
-      "adaptive_timeout_seconds": 300,
-      "last_attempt_timeout_seconds": 299,
+      "duration_seconds": 35.87,
+      "adaptive_timeout_seconds": 180,
+      "last_attempt_timeout_seconds": 180,
       "collection_stage": "primary",
       "timeout_exhausted": false
     },
@@ -101,7 +110,7 @@
       "file": "market_watch.json",
       "ok": true,
       "status": "정상",
-      "updated_at": "2026-09-29T06:36:55+00:00",
+      "updated_at": "2026-09-29T13:25:38+00:00",
       "count": 28,
       "retry_count": 0,
       "max_attempts": 2,
@@ -109,7 +118,7 @@
       "auto_action": "학습형 수집 · 검증 후 정상 반영",
       "collection_errors": [],
       "remaining_collection_errors": [],
-      "duration_seconds": 0.06,
+      "duration_seconds": 0.07,
       "adaptive_timeout_seconds": 30,
       "last_attempt_timeout_seconds": 30,
       "collection_stage": "primary",
@@ -120,7 +129,7 @@
       "file": "exchange_rates.json",
       "ok": true,
       "status": "정상",
-      "updated_at": "2026-09-29T06:36:55+00:00",
+      "updated_at": "2026-09-29T13:25:38+00:00",
       "count": 2,
       "retry_count": 0,
       "max_attempts": 2,
@@ -128,7 +137,7 @@
       "auto_action": "학습형 수집 · 검증 후 정상 반영",
       "collection_errors": [],
       "remaining_collection_errors": [],
-      "duration_seconds": 0.66,
+      "duration_seconds": 0.53,
       "adaptive_timeout_seconds": 30,
       "last_attempt_timeout_seconds": 30,
       "collection_stage": "primary",
@@ -138,20 +147,16 @@
       "name": "현재 거래시세",
       "file": "market_prices.json",
       "ok": true,
-      "status": "일부 가격 출처 확인 실패",
-      "updated_at": "2026-09-29T06:37:37+00:00",
-      "count": 38,
+      "status": "정상",
+      "updated_at": "2026-09-29T13:25:34+00:00",
+      "count": 37,
       "retry_count": 0,
       "max_attempts": 2,
       "recovered_after_retry": false,
-      "auto_action": "일부 출처 오류 격리 · 정상자료 반영 · 다음 실행 제한시간 확대",
-      "collection_errors": [
-        "Pack Magik OP14-009 JP: 가격 패턴 0건"
-      ],
-      "remaining_collection_errors": [
-        "Pack Magik OP14-009 JP: 가격 패턴 0건"
-      ],
-      "duration_seconds": 187.5,
+      "auto_action": "학습형 수집 · 검증 후 정상 반영",
+      "collection_errors": [],
+      "remaining_collection_errors": [],
+      "duration_seconds": 177.43,
       "adaptive_timeout_seconds": 300,
       "last_attempt_timeout_seconds": 299,
       "collection_stage": "primary",
@@ -162,7 +167,7 @@
       "file": "promo_events.json",
       "ok": true,
       "status": "정상 · 보조검증 3건 재확인 대기 · 한·일·미 영화정보 9/9 조합 추적",
-      "updated_at": "2026-09-29T06:35:12+00:00",
+      "updated_at": "2026-09-29T13:23:24+00:00",
       "count": 43,
       "retry_count": 0,
       "max_attempts": 2,
@@ -170,9 +175,9 @@
       "auto_action": "학습형 수집 · 검증 후 정상 반영",
       "collection_errors": [],
       "remaining_collection_errors": [],
-      "duration_seconds": 42.54,
-      "adaptive_timeout_seconds": 300,
-      "last_attempt_timeout_seconds": 299,
+      "duration_seconds": 47.29,
+      "adaptive_timeout_seconds": 180,
+      "last_attempt_timeout_seconds": 180,
       "collection_stage": "primary",
       "timeout_exhausted": false
     },
@@ -181,7 +186,7 @@
       "file": "purchase_sources.json",
       "ok": true,
       "status": "정상",
-      "updated_at": "2026-09-29T06:36:08+00:00",
+      "updated_at": "2026-09-29T13:24:02+00:00",
       "count": 205,
       "retry_count": 0,
       "max_attempts": 2,
@@ -189,9 +194,9 @@
       "auto_action": "학습형 수집 · 검증 후 정상 반영",
       "collection_errors": [],
       "remaining_collection_errors": [],
-      "duration_seconds": 48.45,
-      "adaptive_timeout_seconds": 300,
-      "last_attempt_timeout_seconds": 299,
+      "duration_seconds": 3.61,
+      "adaptive_timeout_seconds": 180,
+      "last_attempt_timeout_seconds": 180,
       "collection_stage": "primary",
       "timeout_exhausted": false
     },
@@ -208,9 +213,9 @@
       "auto_action": "학습형 수집 · 검증 후 정상 반영",
       "collection_errors": [],
       "remaining_collection_errors": [],
-      "duration_seconds": 5.08,
-      "adaptive_timeout_seconds": 32,
-      "last_attempt_timeout_seconds": 32,
+      "duration_seconds": 3.69,
+      "adaptive_timeout_seconds": 31,
+      "last_attempt_timeout_seconds": 31,
       "collection_stage": "primary",
       "timeout_exhausted": false
     },
@@ -218,20 +223,34 @@
       "name": "업체별 등급카드 사진 후보",
       "file": "graded_photo_candidates.json",
       "ok": true,
-      "status": "정상",
+      "status": "학습 제한시간 초과 후 해당 자료만 별도 수집하여 복구 성공",
       "updated_at": null,
-      "count": 39,
-      "retry_count": 0,
-      "max_attempts": 2,
-      "recovered_after_retry": false,
-      "auto_action": "학습형 수집 · 검증 후 정상 반영",
-      "collection_errors": [],
+      "count": 35,
+      "retry_count": 2,
+      "max_attempts": 3,
+      "recovered_after_retry": true,
+      "auto_action": "시간초과 자료만 격리 재수집 · 확대 제한시간으로 검증 복구 · 다음 예산 학습",
+      "collection_errors": [
+        "TIMEOUT: graded_photo_multi_source 60초 초과",
+        "TIMEOUT: graded_photo_multi_source 120초 초과"
+      ],
       "remaining_collection_errors": [],
-      "duration_seconds": 15.85,
-      "adaptive_timeout_seconds": 59,
-      "last_attempt_timeout_seconds": 59,
-      "collection_stage": "primary",
-      "timeout_exhausted": false
+      "duration_seconds": 309.416,
+      "adaptive_timeout_seconds": 60,
+      "last_attempt_timeout_seconds": 279,
+      "collection_stage": "deferred-timeout",
+      "timeout_exhausted": false,
+      "primary_timeout_errors": [
+        "TIMEOUT: graded_photo_multi_source 60초 초과",
+        "TIMEOUT: graded_photo_multi_source 120초 초과"
+      ],
+      "recovered_after_deferred_timeout": true,
+      "deferred_timeout_attempted": true,
+      "deferred_timeout_recovered": true,
+      "deferred_timeout_pending": false,
+      "deferred_timeout_seconds": 280,
+      "primary_duration_seconds": 182.2,
+      "deferred_duration_seconds": 127.216
     }
   ],
   "optimization": {
@@ -245,7 +264,7 @@
     "degraded": false,
     "candidate_count": 282,
     "social_candidate_count": 250,
-    "official_social_candidate_count": 6,
+    "official_social_candidate_count": 8,
     "failure_count": 0,
     "error": "",
     "platform": {
@@ -254,10 +273,10 @@
       "data_dir": "<app-data>",
       "storage_scope": "user-app-data",
       "writable": true,
-      "checked_at": "2026-09-29T06:40:19+00:00"
+      "checked_at": "2026-09-29T13:31:40+00:00"
     },
     "note": "검색/SNS/뉴스/공식사이트/공식 YouTube/사이트맵 후보 자료입니다. 발견 경로가 공식이어도 내용 검증 전에는 자동 확정하지 않습니다.",
-    "duration_seconds": 161.31,
+    "duration_seconds": 146.88,
     "adaptive_timeout_seconds": 300,
     "last_attempt_timeout_seconds": 300,
     "retry_count": 0,
@@ -267,17 +286,17 @@
     "ok": true,
     "degraded": false,
     "warning": "",
-    "reachable_count": 245,
+    "reachable_count": 243,
     "transient_deferred": true,
     "transient_notice": "일시 확인불가 18개 · 기존 링크 유지 · 다음 업데이트 재확인",
     "unresolved_broken": 0,
     "unresolved_summary": [],
-    "updated_at": "2026-09-29T06:37:38+00:00",
-    "checked": 276,
-    "audit_timeout_seconds": 289,
+    "updated_at": "2026-09-29T13:29:13+00:00",
+    "checked": 275,
+    "audit_timeout_seconds": 276,
     "request_timeout_seconds": 5,
     "canonical_migrations": 0,
-    "restricted": 13,
+    "restricted": 14,
     "broken": 0,
     "transient": 18,
     "blocked": 0,
@@ -300,17 +319,6 @@
         "url": "https://search.shopping.naver.com/search/all?query={query}",
         "detail": null,
         "code": 418,
-        "references": [
-          {
-            "file": "purchase_sources.json",
-            "field": "url_template"
-          }
-        ]
-      },
-      {
-        "url": "https://www.amazon.co.jp/s?k={query}",
-        "detail": null,
-        "code": 503,
         "references": [
           {
             "file": "purchase_sources.json",
@@ -376,6 +384,25 @@
       {
         "url": "https://www.7-eleven.co.kr/",
         "detail": "URLError",
+        "code": null,
+        "references": [
+          {
+            "file": "purchase_sources.json",
+            "field": "official_reference_url"
+          },
+          {
+            "file": "purchase_sources.json",
+            "field": "url"
+          },
+          {
+            "file": "purchase_sources.json",
+            "field": "official_reference_url"
+          }
+        ]
+      },
+      {
+        "url": "https://www.alpha.co.kr/",
+        "detail": "DNS:gaierror",
         "code": null,
         "references": [
           {
@@ -511,9 +538,9 @@
         ]
       }
     ],
-    "duration_seconds": 89.97,
-    "adaptive_timeout_seconds": 300,
-    "last_attempt_timeout_seconds": 299,
+    "duration_seconds": 93.6,
+    "adaptive_timeout_seconds": 286,
+    "last_attempt_timeout_seconds": 286,
     "retry_count": 0,
     "recovered_after_retry": false
   },
@@ -524,7 +551,7 @@
     "successful_topic_cells": 216,
     "failed_topic_cells": 0,
     "undiscovered_topic_cells": 164,
-    "source_updated_at": "2026-09-29T06:40:19+00:00"
+    "source_updated_at": "2026-09-29T13:31:39+00:00"
   },
   "ok_with_aux": true,
   "postflight_monitor": {
@@ -591,7 +618,7 @@
     "status": {
       "schema": 1,
       "feature_fingerprint": "0bac15bf0ad62e49a7c7d300",
-      "updated_at": "2026-09-29T06:40:19+00:00",
+      "updated_at": "2026-09-29T13:31:40+00:00",
       "active": false,
       "label_count": 10,
       "positive_labels": 9,
@@ -642,14 +669,14 @@
   },
   "error_learning": {
     "summary": {
-      "error_group_count": 8,
-      "new_group_count": 1,
+      "error_group_count": 7,
+      "new_group_count": 0,
       "recurring_group_count": 6,
-      "unresolved_group_count": 1,
+      "unresolved_group_count": 0,
       "resolved_group_count": 7,
       "verified_solution_group_count": 7,
       "scenario_prepared_group_count": 2,
-      "consolidated_event_total": 1011
+      "consolidated_event_total": 1012
     },
     "new_errors": [
       {
@@ -681,35 +708,6 @@
           "기존 정상자료가 손상되지 않았는지 확인합니다."
         ],
         "group_id": "819660722644a1bb"
-      },
-      {
-        "code": "UNCLASSIFIED_ERROR",
-        "title": "분류되지 않은 신규 오류",
-        "category": "기타 수집 오류",
-        "error_subtype": "general",
-        "file": "market_prices.json",
-        "detail": "Pack Magik OP14-009 JP: 가격 패턴 0건",
-        "probable_cause": "기존 규칙에 없는 오류입니다. 상세정보를 비식별화해 기록하고 재현 범위를 확인해야 합니다.",
-        "safe_action": "자동조치 확대 금지 · 신규 원인 기록",
-        "analysis_status": "신규 분석",
-        "last_outcome": "unresolved",
-        "first_seen": "2026-09-29T06:37:37+00:00",
-        "last_seen": "2026-09-29T06:37:37+00:00",
-        "occurrences": 1,
-        "unresolved_count": 1,
-        "http_status": null,
-        "bounded_retry_allowed": false,
-        "http_statuses": [],
-        "resolution_steps": [
-          "발생 함수·파일·입력 범위를 확인합니다.",
-          "동일 조건에서 안전하게 재현되는지 검사합니다.",
-          "원인을 확인한 뒤 전용 회귀검사를 추가합니다."
-        ],
-        "verification_steps": [
-          "원인을 확인한 뒤 전용 회귀검사를 추가합니다.",
-          "기존 정상자료가 손상되지 않았는지 확인합니다."
-        ],
-        "group_id": "7ececbb9b4982bc9"
       }
     ],
     "top_groups": [
@@ -857,21 +855,23 @@
         "code": "NETWORK_TIMEOUT",
         "title": "네트워크 시간초과",
         "category": "통신 오류",
+        "error_subtype": "general",
         "http_status": null,
         "http_statuses": [],
         "bounded_retry_allowed": true,
-        "occurrences": 24,
-        "resolved_count": 24,
+        "occurrences": 26,
+        "resolved_count": 26,
         "unresolved_count": 0,
         "first_seen": "2026-08-21T15:01:57+00:00",
-        "last_seen": "2026-08-23T15:57:24+00:00",
+        "last_seen": "2026-09-29T13:29:13+00:00",
         "last_outcome": "resolved",
         "analysis_status": "해결 확인",
         "affected_files": [
           "market_prices.json",
           "releases.json",
           "promo_events.json",
-          "purchase_sources.json"
+          "purchase_sources.json",
+          "graded_photo_candidates.json"
         ],
         "unresolved_files": [],
         "probable_cause": "공식 사이트 응답 지연, 연결 불안정 또는 학습된 제한시간 부족 가능성이 큽니다.",
@@ -887,14 +887,22 @@
           "기존 정상자료가 손상되지 않았는지 확인합니다."
         ],
         "proven_action": "동일 파일 2회 연속 정상 실행으로 해결 확인",
-        "last_detail": "TIMEOUT: update_purchase_sources 5초 초과",
-        "scenario_prepared": false,
-        "scenario_profile_id": null,
-        "prepared_scenario_count": 0,
-        "diagnostic_priority": 50,
-        "first_checks": [],
-        "fast_resolution_steps": [],
-        "stop_conditions": []
+        "last_detail": "TIMEOUT: graded_photo_multi_source 120초 초과",
+        "scenario_prepared": true,
+        "scenario_profile_id": "8f2964a4e191d68f",
+        "prepared_scenario_count": 6,
+        "diagnostic_priority": 20,
+        "first_checks": [
+          "출처별 최근 성공시간과 현재 제한시간을 비교합니다."
+        ],
+        "fast_resolution_steps": [
+          "공식 출처 연결과 응답시간을 확인합니다.",
+          "제한된 1회 재시도와 확대된 시간예산을 적용합니다.",
+          "실패 시 기존 정상자료가 유지됐는지 확인합니다."
+        ],
+        "stop_conditions": [
+          "동일 출처가 연속 실패하면 현재 실행의 추가 재시도를 중단합니다."
+        ]
       },
       {
         "group_id": "c9b945a618435a60",
@@ -980,57 +988,6 @@
         "first_checks": [],
         "fast_resolution_steps": [],
         "stop_conditions": []
-      },
-      {
-        "group_id": "7ececbb9b4982bc9",
-        "code": "UNCLASSIFIED_ERROR",
-        "title": "분류되지 않은 신규 오류",
-        "category": "기타 수집 오류",
-        "error_subtype": "general",
-        "http_status": null,
-        "http_statuses": [],
-        "bounded_retry_allowed": false,
-        "occurrences": 1,
-        "resolved_count": 0,
-        "unresolved_count": 1,
-        "first_seen": "2026-09-29T06:37:37+00:00",
-        "last_seen": "2026-09-29T06:37:37+00:00",
-        "last_outcome": "unresolved",
-        "analysis_status": "신규 분석",
-        "affected_files": [
-          "market_prices.json"
-        ],
-        "unresolved_files": [
-          "market_prices.json"
-        ],
-        "probable_cause": "기존 규칙에 없는 오류입니다. 상세정보를 비식별화해 기록하고 재현 범위를 확인해야 합니다.",
-        "safe_action": "자동조치 확대 금지 · 신규 원인 기록",
-        "recommended_action": "오류 상세와 발생 범위를 비식별화해 확인하세요.",
-        "resolution_steps": [
-          "발생 함수·파일·입력 범위를 확인합니다.",
-          "동일 조건에서 안전하게 재현되는지 검사합니다.",
-          "원인을 확인한 뒤 전용 회귀검사를 추가합니다."
-        ],
-        "verification_steps": [
-          "원인을 확인한 뒤 전용 회귀검사를 추가합니다.",
-          "기존 정상자료가 손상되지 않았는지 확인합니다."
-        ],
-        "last_detail": "Pack Magik OP14-009 JP: 가격 패턴 0건",
-        "scenario_prepared": true,
-        "scenario_profile_id": "c1b51c7e7e7921f8",
-        "prepared_scenario_count": 2,
-        "diagnostic_priority": 25,
-        "first_checks": [
-          "비식별화한 예외형·함수·입력 범위를 기록합니다."
-        ],
-        "fast_resolution_steps": [
-          "발생 함수·파일·입력 범위를 확인합니다.",
-          "동일 조건에서 안전하게 재현되는지 검사합니다.",
-          "원인을 확인한 뒤 전용 회귀검사를 추가합니다."
-        ],
-        "stop_conditions": [
-          "전용 회귀검사가 생기기 전 자동조치를 확대하지 않습니다."
-        ]
       },
       {
         "group_id": "e717373c5d3b3852",
