@@ -1,7 +1,7 @@
 {
   "version": 2,
   "engine": "v109-card-identity-ocr-learning",
-  "generated_at": "2026-09-29T15:58:13+00:00",
+  "generated_at": "2026-09-29T17:00:31+00:00",
   "files": {
     ".github/workflows/ai-auto-tracker-guard.yml": {
       "sha256": "636e750bd6d2619cce75d4bce2d68051eaa2209ae763bc8ec523ed73476728a6",
@@ -2556,8 +2556,8 @@
       "bytes": 2059
     },
     "tablet_gdrive_sync_perf_v262.py": {
-      "sha256": "fea70b4ceb92866860ef78763538c73284ad4f497585bff2e33e26b08a329fce",
-      "bytes": 8514
+      "sha256": "87895d385d41623beb12801fdd5c1f3244afc6b69c6bd5745d6d1e6cadbc0c61",
+      "bytes": 17900
     },
     "tablet_runtime_manifest.py": {
       "sha256": "ef16b132cb662e03676bb2e8c00cf83257a6722bd87589c92ae26ddf6500e672",
@@ -3468,8 +3468,8 @@
       "bytes": 14193
     },
     "test_tablet_gdrive_sync_perf_v262.py": {
-      "sha256": "65b2e646cae157ed549fdb3d089e964708e5afd01d7e9234707603818e420737",
-      "bytes": 6815
+      "sha256": "a8737f925a4b4d4c2b51ec509e07a308946c56f8099a858088e6e5550cae7a30",
+      "bytes": 11183
     },
     "test_tablet_gpt_tcg_grader_sync_v285.py": {
       "sha256": "dd5421a8fff8ef04749614588d2722edce4bfb4b4947a42f9af3bf01448e35c7",
