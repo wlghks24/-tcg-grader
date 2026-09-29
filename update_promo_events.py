@@ -26,7 +26,7 @@ ALLOWED = {
     "www.pokemon-card.com", "www.30th.pokemon-card.com",
     "pokemon.co.jp", "www.pokemon.co.jp",
     "pokemoncard.co.kr", "www.pokemoncard.co.kr",
-    "pokemonkorea.co.kr", "www.pokemonkorea.co.kr", "new.pokemonkorea.co.kr",
+    "pokemonkorea.co.kr", "www.pokemonkorea.co.kr",
     "onepiece-cardgame.kr", "www.onepiece-cardgame.kr",
     "www.onepiece-cardgame.com", "en.onepiece-cardgame.com",
     "cp.onepiece-cardgame.com", "one-piece.com", "www.one-piece.com",
