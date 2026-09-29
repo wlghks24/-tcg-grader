@@ -57,7 +57,7 @@ jobs:
           set -euo pipefail
           log="$(mktemp)"
           set +e
-          python tablet_gdrive_publish.py --output-dir .tcg_drive_outbox >"${log}" 2>&1
+          python tablet_gdrive_publish.py --output-dir tcg_drive_outbox >"${log}" 2>&1
           rc=$?
           set -e
           cat "${log}"
@@ -103,7 +103,7 @@ jobs:
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
         with:
           name: tcg-gdrive-package
-          path: .tcg_drive_outbox/*
+          path: tcg_drive_outbox/*
           if-no-files-found: error
           retention-days: 7
 
