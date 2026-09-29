@@ -1,0 +1,28 @@
+name: Dispatch Current Main Static Refresh 1307c72c
+
+on:
+  push:
+    branches:
+      - 'ops/dispatch-static-refresh-1307c72c'
+    paths:
+      - '.github/workflows/dispatch-static-refresh-1307c72c.yml'
+
+permissions:
+  actions: write
+  contents: read
+
+jobs:
+  dispatch:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      - name: Dispatch protected static refresh on current main
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          gh api --method POST \
+            "repos/${GITHUB_REPOSITORY}/actions/workflows/tcg-static-data-refresh.yml/dispatches" \
+            -f ref=main
+          echo 'Static refresh dispatch accepted for main.'
