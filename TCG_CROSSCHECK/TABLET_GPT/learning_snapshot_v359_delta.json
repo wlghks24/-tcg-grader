@@ -1,0 +1,46 @@
+{
+  "schema_version": "1.1-tablet-gpt-tcg-grader-learning-sync",
+  "namespace": "TABLET_GPT",
+  "snapshot_kind": "learning_delta",
+  "run_date_kst": "2026-09-29",
+  "built_at": "2026-09-29T18:42:00+09:00",
+  "status": "finalized",
+  "source_repository": "wlghks24/-tcg-grader",
+  "prior_delta": "TCG_CROSSCHECK/TABLET_GPT/learning_snapshot_v358_delta.json",
+  "prior_lesson_digest_sha256": "ae7c7747393f3ef9774d8527b5c09e41879bc983b7480058437f53470cb287ab",
+  "source_main_sha": "901f83e7e0e25254676f079a1b275411ff2b168d",
+  "share_policy": {
+    "explicit_patch_and_learning_lessons_only": true,
+    "chatgpt_model_weights_exported": false,
+    "raw_grading_calibration_shared": false,
+    "device_local_runtime_memory_overwritten": false,
+    "peer_verified_never_auto_promotes_local": true
+  },
+  "covered_merges": [
+    {
+      "pr": 334,
+      "version": "v359-current-main-post-v358-checkpoint",
+      "merge_sha": "901f83e7e0e25254676f079a1b275411ff2b168d"
+    }
+  ],
+  "lesson_digest_sha256": "fbf9c5bccb753feaee6a458e9c128e60e83b3629b43cec22006021c4195a355b",
+  "lessons": [
+    {
+      "lesson_id": "TABLET-GPT-POSTMERGE-CHECKPOINT-V359",
+      "subsystem": "tablet_gpt_tcg_grader_alignment",
+      "issue_class": "v358_candidate_merged_to_main_and_watched_grading_update_requires_new_verified_main_anchor",
+      "trigger_condition": "PR 334 merged the validated v358 static candidate into main at 901f83e7e0e25254676f079a1b275411ff2b168d, so grading_company_updates.json is now a verified mainline watched-path change after the v358 source anchor",
+      "prevention_rule": "advance the verified Tablet GPT source anchor to the exact PR 334 merge commit while preserving the same fail-closed watched-path policy; subsequent watched changes still require a newer verified generation",
+      "validation_required": [
+        "source main is exactly 901f83e7e0e25254676f079a1b275411ff2b168d",
+        "PR 334 merge SHA is exactly 901f83e7e0e25254676f079a1b275411ff2b168d and is an ancestor of the current candidate head",
+        "v358 digest and receipt remain intact and v359 adds only this verified checkpoint lesson",
+        "the current PR candidate introduces no additional Tablet GPT watched-path change relative to the v359 source main",
+        "the v359 contract/delta/receipt/test quartet is complete and digest-consistent",
+        "model weights, raw grading calibration and device-local runtime memory are not transferred",
+        "physical Tablet runtime and Drive readback remain unverified until matching external evidence exists"
+      ],
+      "safety_boundary": "do not exclude grading_company_updates.json, weaken freshness checks, bypass source blocks, auto-confirm UNKNOWN/CONFLICT, or claim physical Tablet/Drive verification"
+    }
+  ]
+}
