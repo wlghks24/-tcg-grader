@@ -1,7 +1,7 @@
 {
   "version": 2,
   "engine": "v109-card-identity-ocr-learning",
-  "generated_at": "2026-09-29T04:15:58+00:00",
+  "generated_at": "2026-09-29T06:21:30+00:00",
   "files": {
     ".github/workflows/ai-auto-tracker-guard.yml": {
       "sha256": "636e750bd6d2619cce75d4bce2d68051eaa2209ae763bc8ec523ed73476728a6",
@@ -1524,7 +1524,7 @@
       "bytes": 8134
     },
     "exchange_rates.json": {
-      "sha256": "67af4b74e45249b35516e76b164a73bbf305db68c353ae40ed56e96bb35ff8cf",
+      "sha256": "966d7e93d0382e087819f8b32925e47ea99ae7a8eeb58ecb1e35e4b150f17661",
       "bytes": 445
     },
     "fan_social_learning.py": {
@@ -1772,7 +1772,7 @@
       "bytes": 7206
     },
     "grading_company_updates.json": {
-      "sha256": "4b2dc8a7614d759bff2541005fd93c8914cc0eeac9bd7265b8d6e3514394f002",
+      "sha256": "420703c3b2b30561b13bae2dcf361db861ca8d293313e16124d0fd90c101525d",
       "bytes": 53087
     },
     "grading_company_watch.py": {
@@ -2164,7 +2164,7 @@
       "bytes": 4126
     },
     "market_prices.json": {
-      "sha256": "f6bc5af9dfb2c1cc72174ca36da8b7566e1a576e41e9f03921b21ad63a53626c",
+      "sha256": "1c4c052c3497a467e1f1aabd919fafb636da40ddecaf3a886bb6a41f4bd173d8",
       "bytes": 43105
     },
     "market_public_crosscheck.py": {
@@ -2172,7 +2172,7 @@
       "bytes": 17748
     },
     "market_watch.json": {
-      "sha256": "90e0e6c79aeaac6d140e72270ed8bd9227abeedd35cc6a7a62acfa09948da0f9",
+      "sha256": "1ae72ecf9b2b1b37a16004ca614c572cc317e65ec24a4200adb7bf26baaa0d69",
       "bytes": 19858
     },
     "migrate_old_data.py": {
@@ -2260,8 +2260,8 @@
       "bytes": 4433
     },
     "promo_events.json": {
-      "sha256": "5e5c5447296443fe26e01294643bb8275cd35af429712f7aa5eac34068699f73",
-      "bytes": 126457
+      "sha256": "62ebac49cc290979f89ae225e0b0858e71f5ed794f83c21579023d335757f2a7",
+      "bytes": 126439
     },
     "protected_static_candidate_guard.py": {
       "sha256": "d1d3ea5bf01f3a0c37b7d3a4cd4a415f1d8995be5b0bec07caedd863f549ef2a",
@@ -2284,12 +2284,12 @@
       "bytes": 10520
     },
     "purchase_signals.json": {
-      "sha256": "686d294baf16a9379b4e38f4836a3b48d4dfb5044794e0c975fc701d25327ef1",
+      "sha256": "c624d8bd31ca23a826e233469184ebec37f9680c613490746d00ac4d72574927",
       "bytes": 234
     },
     "purchase_sources.json": {
-      "sha256": "502e248abddcd078fa0ac6357acc72e5fea9c1e44d9952a5d8d8b2211d1bc285",
-      "bytes": 195895
+      "sha256": "8fdaa891b33aaa4a74d5a2ceab0ad17b2dd5b65bb6ee8ea78f21bb1a218e5ff2",
+      "bytes": 195591
     },
     "quality_review_policy.py": {
       "sha256": "d33c417fe221640de679343fc6d9527984386b331edd4ce5663107fd25c34661",
@@ -2316,7 +2316,7 @@
       "bytes": 3066
     },
     "releases.json": {
-      "sha256": "88ca652dabdaa3f66d0a2bb9d977263616b18903e5d4deaf3225fabac90d80dc",
+      "sha256": "65239ff085abf22ef2521327fd2007a4dcf4ecf79fc28fea480f8414558778d1",
       "bytes": 49652
     },
     "repository_health_guard.py": {
@@ -2436,7 +2436,7 @@
       "bytes": 21246
     },
     "social_stock_signals.json": {
-      "sha256": "b956ad3d8e336a6bb77306525784c63c5f9c7c5055055c5dcc63de21e7ddcbc4",
+      "sha256": "9e9d82f2ee8781da820c2029a0072a20b8a03eaf5804c348decb91b8b884440d",
       "bytes": 453
     },
     "social_stock_sources.json": {
@@ -2456,7 +2456,7 @@
       "bytes": 6377
     },
     "supplementary_candidates.json": {
-      "sha256": "e20c12d25e73bae3c06d28b978d0622c946506d38a887d48caa98346d6537e9a",
+      "sha256": "75afab382c8e9bdd67438a3d059c0619f52bdb9997b7b06d048f773681132753",
       "bytes": 7867
     },
     "supplementary_discovery.py": {
@@ -2512,8 +2512,8 @@
       "bytes": 39105
     },
     "tcg_live_data.json": {
-      "sha256": "c0f4ba9d7bfa58a6fa70b5f7fab9ab356e14848ddd38e665fdc63995586dc5e1",
-      "bytes": 112007
+      "sha256": "1596dafe63a7e0f3d4b2c30b83a2d0a34bd8a15e52e786639ff8742c9c5b0d67",
+      "bytes": 111970
     },
     "tcg_reliability/__init__.py": {
       "sha256": "3e6bcd161ad0dfcd323c560703d86be1f22c9ab98055eef50ef91e9065e5d648",
