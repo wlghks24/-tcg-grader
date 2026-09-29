@@ -1,7 +1,7 @@
 {
   "version": 2,
   "engine": "v109-card-identity-ocr-learning",
-  "generated_at": "2026-09-29T05:02:40+00:00",
+  "generated_at": "2026-09-29T06:40:20+00:00",
   "files": {
     ".github/workflows/ai-auto-tracker-guard.yml": {
       "sha256": "636e750bd6d2619cce75d4bce2d68051eaa2209ae763bc8ec523ed73476728a6",
@@ -1536,7 +1536,7 @@
       "bytes": 8134
     },
     "exchange_rates.json": {
-      "sha256": "224fd4bfa07d24c6ad238cc9bfb72b1ccdf0842af3f1106a5bca46b745ba7180",
+      "sha256": "e92b6dc230781327bb85c229274f3949d48789d478f97b83de8be9f59381843a",
       "bytes": 445
     },
     "fan_social_learning.py": {
@@ -1784,7 +1784,7 @@
       "bytes": 7206
     },
     "grading_company_updates.json": {
-      "sha256": "36cd71de139c24b7adb2e1535f8decf075af3e197d67ebb985c71b859fce80f5",
+      "sha256": "43fca37a038a2a2037e9784133ee70ccf20ae103559fbaf41cc44bb3d923ae3c",
       "bytes": 53087
     },
     "grading_company_watch.py": {
@@ -2176,15 +2176,15 @@
       "bytes": 4126
     },
     "market_prices.json": {
-      "sha256": "cda6fa54f8bb31be22bf33f307dfdbe8ae389d75ee976e6d390b25405f160453",
-      "bytes": 43104
+      "sha256": "629bc2bee73260d04506735c9da2fc3ec2f33a1509529fc501bdab2e2f9387d4",
+      "bytes": 43105
     },
     "market_public_crosscheck.py": {
       "sha256": "1c3d93d56d7a192e89e08594b2dbc8958ca456a435b72c69fc6adc09f292fd7f",
       "bytes": 17748
     },
     "market_watch.json": {
-      "sha256": "93570425e5634c921a4bb8cd2d9002f6549465f51ddf6257803cd0610e0e9562",
+      "sha256": "6e24326f663831a59bbb229b5504f84ce7f4a5b3f240de5f0edb6bcff13fd120",
       "bytes": 19858
     },
     "migrate_old_data.py": {
@@ -2272,8 +2272,8 @@
       "bytes": 4433
     },
     "promo_events.json": {
-      "sha256": "90fa293b49b15f636632a0ee7d71dcaee66668b35de56bc743c672ce391c0691",
-      "bytes": 126439
+      "sha256": "8bec8cfb2cb09fd9b158b82893ebbe9f1d6acbb49510ab0edeebd603eefe96ea",
+      "bytes": 126782
     },
     "protected_static_candidate_guard.py": {
       "sha256": "d1d3ea5bf01f3a0c37b7d3a4cd4a415f1d8995be5b0bec07caedd863f549ef2a",
@@ -2296,11 +2296,11 @@
       "bytes": 10520
     },
     "purchase_signals.json": {
-      "sha256": "2b36f0fbe32a356cb93a8bab73e447b22eb64a0fda17362deee54b7a4c5166e0",
+      "sha256": "73e269c70ed8b57cc566755fa540413901c4706ab70125f4ca36ac13cb2cc5af",
       "bytes": 234
     },
     "purchase_sources.json": {
-      "sha256": "fc5bb06b008a43f8bfff88071c0e82f979e24a55cf10da9b3043d82eef2fdc57",
+      "sha256": "ff58ce7fad07f6b169d6840887f20824831958675951b18e4943618487b08e0b",
       "bytes": 195895
     },
     "quality_review_policy.py": {
@@ -2328,7 +2328,7 @@
       "bytes": 3066
     },
     "releases.json": {
-      "sha256": "d42c670b4bf0c41401b99416ed09866bb8b28c2b07472adb0982977af12889c9",
+      "sha256": "bc50b8fe372fb8f86ac0bf8586a360a6088201e2f9b54dd9e71b5b014b4a3308",
       "bytes": 49652
     },
     "repository_health_guard.py": {
@@ -2448,8 +2448,8 @@
       "bytes": 21246
     },
     "social_stock_signals.json": {
-      "sha256": "59313e6c577f28974e705ecac8ba42060332e8440ed314d513e7a3d22de01928",
-      "bytes": 453
+      "sha256": "0c015e322bfdfab489af2da586f8dfc2c036a7afe6f6753dd0e3d996bc54e641",
+      "bytes": 535
     },
     "social_stock_sources.json": {
       "sha256": "3d18c05d0d4237b38e34895fd126eacc3ac792cae8930a67d12923fd7f90575d",
@@ -2468,7 +2468,7 @@
       "bytes": 6377
     },
     "supplementary_candidates.json": {
-      "sha256": "e1d0483e9d453f483f5f91d8696c1dac6b1c1bf30ccac8abe34805338055aba4",
+      "sha256": "942e479941bb3ba2e47bee7641ac3cad84bb0e8f745d0c40209b4584d6aacc44",
       "bytes": 7867
     },
     "supplementary_discovery.py": {
@@ -2524,8 +2524,8 @@
       "bytes": 39105
     },
     "tcg_live_data.json": {
-      "sha256": "31e35cca16d852197a1e2c56f0567682ac98bc56713727ae4771968271f48de2",
-      "bytes": 111970
+      "sha256": "227aab59dcb85ff5a154d48abbcfbc303055d5d8e628f67737339f5bf429f6f5",
+      "bytes": 112020
     },
     "tcg_reliability/__init__.py": {
       "sha256": "3e6bcd161ad0dfcd323c560703d86be1f22c9ab98055eef50ef91e9065e5d648",
