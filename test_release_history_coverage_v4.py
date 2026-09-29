@@ -59,7 +59,7 @@ class ReleaseHistoryCoverageV4Tests(unittest.TestCase):
             backfill.POKEMON_KR_INDEXES[0],
             "https://pokemoncard.co.kr/card",
         )
-        self.assertIn("https://pokemoncard.co.kr/main", backfill.POKEMON_KR_INDEXES)
+        self.assertIn("https://pokemoncard.co.kr/card/category/info1", backfill.POKEMON_KR_INDEXES)
 
     def test_one_failed_fallback_index_does_not_poison_successful_korean_collection(self):
         detail_html = (
