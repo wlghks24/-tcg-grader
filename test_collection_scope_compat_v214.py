@@ -20,6 +20,7 @@ class CollectionScopeCompatV214Tests(unittest.TestCase):
         expected = "https://pokemoncard.co.kr/main"
         self.assertEqual(update_purchase_sources.checked_url("https://pokemoncard.co.kr/"), expected)
         self.assertEqual(update_purchase_sources.checked_url("https://pokemoncard.co.kr/card/225"), expected)
+        self.assertEqual(update_purchase_sources.checked_url("https://new.pokemonkorea.co.kr/card"), expected)
         self.assertIn("pokemoncard.co.kr", update_purchase_sources.OFFICIAL_CHAIN_HOSTS["포켓몬 카드샵"])
 
     def test_retired_pokemon_korea_urls_are_not_active_discovery_routes(self):
