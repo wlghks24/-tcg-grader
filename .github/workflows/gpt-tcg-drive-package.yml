@@ -105,6 +105,7 @@ jobs:
           name: tcg-gdrive-package
           path: .tcg_drive_outbox/*
           if-no-files-found: error
+          include-hidden-files: true
           retention-days: 7
 
       - name: Write package recovery summary
