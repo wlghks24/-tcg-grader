@@ -1,3 +1,4 @@
+# owner-triggered one-shot manifest reconciliation
 name: Finalize v356 integrity manifest
 
 on:
