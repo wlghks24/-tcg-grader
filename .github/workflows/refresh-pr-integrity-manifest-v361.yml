@@ -1,0 +1,38 @@
+name: Refresh PR Integrity Manifest v361
+
+on:
+  push:
+    branches:
+      - fix/gpt-drive-package-hidden-artifact-v361
+    paths:
+      - '.github/workflows/refresh-pr-integrity-manifest-v361.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  refresh:
+    if: github.repository == 'wlghks24/-tcg-grader'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          ref: fix/gpt-drive-package-hidden-artifact-v361
+          fetch-depth: 1
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97
+        with:
+          python-version: '3.11'
+      - name: Regenerate final manifest and remove one-shot helper
+        shell: bash
+        run: |
+          set -euo pipefail
+          rm .github/workflows/refresh-pr-integrity-manifest-v361.yml
+          python fault_injection_healing.py --manifest
+          git add -A
+          python repository_integrity_guard.py
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git diff --cached --quiet && exit 0
+          git commit -m 'chore: refresh v361 integrity manifest'
+          git push origin HEAD:fix/gpt-drive-package-hidden-artifact-v361
