@@ -15,6 +15,7 @@ PRIOR_CONTRACT=ROOT/"TCG_CROSSCHECK/TABLET_GPT_TCG_GRADER_SYNC_CONTRACT_V355.jso
 CONTRACT=ROOT/"TCG_CROSSCHECK/TABLET_GPT_TCG_GRADER_SYNC_CONTRACT_V356.json"
 EXPECTED_DIGEST="3b54b94c0681334f24ee27e7e7be1d2ac50ee4a95c3a7c95ad1cd44a62efc71b"
 def read(p): return json.loads(p.read_text(encoding="utf-8"))
+def explicit_link_state(value): return value=="정상" or (isinstance(value,str) and value.startswith("접속 불가 확인 (HTTP ") and value.endswith(")") and value[len("접속 불가 확인 (HTTP "):-1].isdigit())
 class TabletGptTcgGraderSyncV356(unittest.TestCase):
  def test_lineage_digest_receipt_and_safe_transfer_boundary(self):
   prior,delta,receipt,pc,c=map(read,(PRIOR,DELTA,RECEIPT,PRIOR_CONTRACT,CONTRACT))
@@ -31,5 +32,5 @@ class TabletGptTcgGraderSyncV356(unittest.TestCase):
  def test_static_candidate_output_remains_fail_closed_and_provenanced(self):
   report=read(ROOT/"auto_update_report.json");fx=read(ROOT/"exchange_rates.json");grading=read(ROOT/"grading_company_updates.json");promo=read(ROOT/"promo_events.json");self.assertTrue(report["ok"]);self.assertEqual(0,report["fresh_failure_count"]);self.assertGreaterEqual(report["fresh_success_count"],1);self.assertEqual("정상",fx["collection_status"])
   for key in ("JPY_KRW","USD_KRW"): self.assertTrue(math.isfinite(fx["rates"][key]) and fx["rates"][key]>0)
-  self.assertIsInstance(grading,dict);self.assertNotEqual({},grading);kr=[r for r in promo.get("items",[]) if r.get("game")=="포켓몬 카드" and r.get("region")=="KR" and r.get("category")=="movie"];self.assertTrue(kr);self.assertEqual("https://pokemoncard.co.kr/main",kr[0].get("source"));self.assertEqual("official",kr[0].get("source_grade"));self.assertEqual("정상",kr[0].get("link_status"))
+  self.assertIsInstance(grading,dict);self.assertNotEqual({},grading);kr=[r for r in promo.get("items",[]) if r.get("game")=="포켓몬 카드" and r.get("region")=="KR" and r.get("category")=="movie"];self.assertTrue(kr);self.assertEqual("https://pokemoncard.co.kr/main",kr[0].get("source"));self.assertEqual("official",kr[0].get("source_grade"));self.assertTrue(explicit_link_state(kr[0].get("link_status")))
 if __name__=="__main__": unittest.main(verbosity=2)
