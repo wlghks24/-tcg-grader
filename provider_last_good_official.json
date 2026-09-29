@@ -1,0 +1,128 @@
+{
+  "schema_version": 1,
+  "provider": "PSA",
+  "source_id": "psa-us-pricing",
+  "source_url": "https://www.psacard.com/services/tradingcardgrading",
+  "observed_at": "2026-09-29T08:11:00+00:00",
+  "expires_at": "2026-10-06T08:11:00+00:00",
+  "facts_sha256": "25daad1822695386592326b7b6ac1385cac26022bce038dc9d1d1f8f14403b87",
+  "services": [
+    {
+      "name": "Value Bulk",
+      "availability": "paused",
+      "max_insured_value_usd": 500.0
+    },
+    {
+      "name": "Value",
+      "availability": "paused",
+      "max_insured_value_usd": 500.0
+    },
+    {
+      "name": "Standard",
+      "availability": "open",
+      "fee_usd": 59.99,
+      "turnaround_business_days": [
+        90,
+        100
+      ],
+      "max_insured_value_usd": 1000.0
+    },
+    {
+      "name": "Priority",
+      "availability": "open",
+      "fee_usd": 79.99,
+      "turnaround_business_days": [
+        70,
+        80
+      ],
+      "max_insured_value_usd": 1500.0
+    },
+    {
+      "name": "Express",
+      "availability": "open",
+      "fee_usd": 199.0,
+      "turnaround_business_days": [
+        20,
+        30
+      ],
+      "max_insured_value_usd": 2500.0
+    },
+    {
+      "name": "Super Express",
+      "availability": "open",
+      "fee_usd": 349.0,
+      "turnaround_business_days": [
+        10,
+        15
+      ],
+      "max_insured_value_usd": 5000.0
+    },
+    {
+      "name": "Premier",
+      "availability": "open",
+      "fee_usd": 599.0,
+      "turnaround_business_days": [
+        7,
+        10
+      ],
+      "max_insured_value_usd": 10000.0
+    },
+    {
+      "name": "Premium 1",
+      "availability": "open",
+      "fee_usd": 999.0,
+      "turnaround_business_days": [
+        5,
+        7
+      ],
+      "max_insured_value_usd": 25000.0
+    },
+    {
+      "name": "Premium 2",
+      "availability": "open",
+      "fee_usd": 1999.0,
+      "turnaround_business_days": [
+        5,
+        7
+      ],
+      "max_insured_value_usd": 50000.0
+    },
+    {
+      "name": "Premium 3",
+      "availability": "open",
+      "fee_usd": 2999.0,
+      "turnaround_business_days": [
+        5,
+        7
+      ],
+      "max_insured_value_usd": 100000.0
+    },
+    {
+      "name": "Premium 5",
+      "availability": "open",
+      "fee_usd": 4999.0,
+      "turnaround_business_days": [
+        5,
+        7
+      ],
+      "max_insured_value_usd": 250000.0
+    },
+    {
+      "name": "Premium 10",
+      "availability": "open",
+      "fee_floor_usd": 9999.0,
+      "turnaround_business_days": [
+        5,
+        7
+      ],
+      "min_insured_value_usd": 250001.0
+    }
+  ],
+  "policy": {
+    "official_source_only": true,
+    "runtime_block_stays_degraded": true,
+    "bypass_blocked_source": false,
+    "max_age_seconds": 604800,
+    "not_injected_into_grading_company_updates": true
+  }
+}

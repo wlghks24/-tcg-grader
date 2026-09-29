@@ -1,7 +1,7 @@
 {
   "version": 2,
   "engine": "v109-card-identity-ocr-learning",
-  "generated_at": "2026-09-29T07:08:35+00:00",
+  "generated_at": "2026-09-29T09:13:02+00:00",
   "files": {
     ".github/workflows/ai-auto-tracker-guard.yml": {
       "sha256": "636e750bd6d2619cce75d4bce2d68051eaa2209ae763bc8ec523ed73476728a6",
@@ -1456,8 +1456,8 @@
       "bytes": 31296
     },
     "collection_verification_gate_contextual.py": {
-      "sha256": "ec6f0e64809dc3964bc9e64471cc515b51d059f27c1b9429aa163bd3a7a6c128",
-      "bytes": 6469
+      "sha256": "924d91e9320a322419bb01844edb86e30ae76bf136e32370cc2877edb1a28c90",
+      "bytes": 12176
     },
     "collector_live_independence_audit.py": {
       "sha256": "f98479b133cb1242331e50722b0a1e5da8b4d1e388e1f8a123118b8032ffa917",
@@ -2863,6 +2863,10 @@
       "sha256": "290970d60edc54300d68e20cb4f500d44de7f0e1870e4346a66382a325ddb83c",
       "bytes": 12704
     },
+    "test_drive_package_blockers_v359.py": {
+      "sha256": "fd2dcea447e2990a51dde7a7a3391e4d7058b0522ace0e37e1a46b20669befbf",
+      "bytes": 5099
+    },
     "test_edition_fx_failclosed_v328.py": {
       "sha256": "bd2ebf2cd4d5a44634d6c6b23232959cd4cf98e653b1a4285ca1e93f637a5904",
       "bytes": 4342
@@ -3664,8 +3668,8 @@
       "bytes": 6027
     },
     "update_market_prices.py": {
-      "sha256": "e35a8183512b5f13c5eefc48a67ddc8994f57177d188499cce5b713961d1335b",
-      "bytes": 21890
+      "sha256": "381f0d777c5f3eff815d4babe4ad6f64a2cc8a598683ef19222334f550f21e0f",
+      "bytes": 23533
     },
     "update_market_prices_parallel_v260.py": {
       "sha256": "49d55b17887187f5e79ebf2797552f68ce0a13948ab75b140941a1cd13776cc3",
