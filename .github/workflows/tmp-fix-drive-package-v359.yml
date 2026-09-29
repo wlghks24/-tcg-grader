@@ -37,10 +37,11 @@ jobs:
           git merge-base --is-ancestor origin/main HEAD
       - name: Apply isolated provider proof and revert watched experiment
         run: python tmp_apply_drive_package_fix_v359.py
-      - name: Remove one-shot helpers before manifest generation
+      - name: Stage obsolete bootstrap removal and remove one-shot helpers
         shell: bash
         run: |
           set -euo pipefail
+          git rm -f --ignore-unmatch -- grading_company_bootstrap.json
           git rm -- tmp_apply_drive_package_fix_v359.py .github/workflows/tmp-fix-drive-package-v359.yml
       - name: Targeted validation
         shell: bash
