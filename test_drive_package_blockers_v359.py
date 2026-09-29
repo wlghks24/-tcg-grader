@@ -1,9 +1,11 @@
 import datetime as dt
-import urllib.error
+import hashlib
+import json
+import tempfile
 import unittest
+from pathlib import Path
 
-import collection_verification_gate as gate
-import grading_company_watch as grading
+import collection_verification_gate_contextual as contextual
 import update_market_prices as market
 
 
@@ -20,45 +22,51 @@ class DrivePackageBlockersV359Tests(unittest.TestCase):
         self.assertTrue(market.market_error_is_warning('Pack Magik OP14-009 JP: HTTPError: status 403'))
         self.assertFalse(market.market_error_is_warning('BOX/HIT 다중마켓 자동발견: ValueError'))
 
-    def test_bootstrap_is_bounded_official_and_exact_source(self):
-        rows=grading._load_bootstrap_sources('2026-09-29T08:12:00+00:00')
-        row=rows['psa-us-pricing']
-        spec=grading.WATCH_SOURCES['PSA'][0]
-        self.assertTrue(grading._valid_bootstrap_source('PSA',spec,'psa-us-pricing',row))
-        self.assertEqual(row['url'],'https://www.psacard.com/services/tradingcardgrading')
-        self.assertTrue(row['services'])
-        self.assertEqual({},grading._load_bootstrap_sources('2026-11-01T00:00:00+00:00'))
-
-    def test_psa_403_retains_bootstrap_as_degraded_not_healthy(self):
-        def blocked(url):
-            raise urllib.error.HTTPError(url,403,'blocked',None,None)
-        data=grading.collect(previous={},fetcher=blocked)
-        row=data['sources']['psa-us-pricing']
-        self.assertEqual('degraded',row['status'])
-        self.assertTrue(row['verified_official_source'])
-        self.assertTrue(row['retained_last_good'])
-        self.assertTrue(row['services'])
-        self.assertIn('403',row['last_error'])
-
-    def test_gate_allows_only_fresh_verified_blocked_last_good(self):
-        now=dt.datetime(2026,9,29,8,12,tzinfo=dt.timezone.utc)
-        base={
-            'company':'PSA','status':'degraded','last_error':'HTTPError: status 403',
-            'verified_official_source':False,'services':[],'announcements':[]
+    def _write_fixture(self, root: Path, *, observed='2026-09-29T08:11:00+00:00', expires='2026-10-06T08:11:00+00:00', errors=None):
+        services=[{'name':'Standard','fee_usd':59.99,'availability':'open'}]
+        canonical=json.dumps(services,ensure_ascii=False,sort_keys=True,separators=(',',':'))
+        proof={
+            'schema_version':1,'provider':'PSA','source_id':'psa-us-pricing',
+            'source_url':'https://www.psacard.com/services/tradingcardgrading',
+            'observed_at':observed,'expires_at':expires,
+            'facts_sha256':hashlib.sha256(canonical.encode()).hexdigest(),'services':services,
+            'policy':{'official_source_only':True,'runtime_block_stays_degraded':True,'bypass_blocked_source':False,'max_age_seconds':604800,'not_injected_into_grading_company_updates':True},
         }
-        sources={
-            'psa-us-pricing':dict(base,verified_official_source=True,retained_last_good=True,
-                                  last_verified_at='2026-09-29T08:11:00+00:00',services=[{'name':'Regular'}]),
-            'psa-jp-pricing':dict(base),
-            'psa-jp-news':dict(base),
-        }
-        self.assertTrue(gate._grading_blocked_last_good_ok('PSA',sources,now))
-        stale={k:dict(v) for k,v in sources.items()}
-        stale['psa-us-pricing']['last_verified_at']='2026-08-01T00:00:00+00:00'
-        self.assertFalse(gate._grading_blocked_last_good_ok('PSA',stale,now))
-        parser_failure={k:dict(v) for k,v in sources.items()}
-        parser_failure['psa-jp-pricing']['last_error']='ValueError: pricing parser yielded zero verified services'
-        self.assertFalse(gate._grading_blocked_last_good_ok('PSA',parser_failure,now))
+        (root/'provider_last_good_official.json').write_text(json.dumps(proof),encoding='utf-8')
+        errs=errors or ['HTTPError: status 403','HTTPError: status 403','HTTPError: status 403']
+        sources={}
+        for source_id,error in zip(('psa-us-pricing','psa-jp-pricing','psa-jp-news'),errs):
+            sources[source_id]={'company':'PSA','status':'degraded','url':'https://www.psacard.com/services/tradingcardgrading','last_error':error,'services':[],'verified_official_source':False}
+        (root/'grading_company_updates.json').write_text(json.dumps({'sources':sources}),encoding='utf-8')
+
+    def test_recent_external_proof_downgrades_only_hard_block_to_medium(self):
+        with tempfile.TemporaryDirectory() as td:
+            root=Path(td); self._write_fixture(root)
+            finding={'severity':'high','code':'GRADING_COMPANY_NO_HEALTHY_SOURCE','companies':['PSA'],'degraded_samples_by_company':{'PSA':[]},'degraded_sample_counts_by_company':{'PSA':3}}
+            rows,proofs=contextual._contextualize_blocked_provider(root,finding,dt.datetime(2026,9,29,9,tzinfo=dt.timezone.utc))
+            self.assertEqual(1,len(proofs)); self.assertEqual('medium',rows[0]['severity'])
+            self.assertEqual('degraded',proofs[0]['runtime_status']); self.assertFalse(proofs[0]['bypass_attempted'])
+
+    def test_expired_or_nonblocked_provider_stays_high(self):
+        finding={'severity':'high','code':'GRADING_COMPANY_NO_HEALTHY_SOURCE','companies':['PSA'],'degraded_samples_by_company':{'PSA':[]},'degraded_sample_counts_by_company':{'PSA':3}}
+        with tempfile.TemporaryDirectory() as td:
+            root=Path(td); self._write_fixture(root)
+            rows,proofs=contextual._contextualize_blocked_provider(root,finding,dt.datetime(2026,10,6,8,11,1,tzinfo=dt.timezone.utc))
+            self.assertFalse(proofs); self.assertEqual('high',rows[0]['severity'])
+        with tempfile.TemporaryDirectory() as td:
+            root=Path(td); self._write_fixture(root,errors=['HTTPError: status 403','ValueError: parser changed','HTTPError: status 403'])
+            rows,proofs=contextual._contextualize_blocked_provider(root,finding,dt.datetime(2026,9,29,9,tzinfo=dt.timezone.utc))
+            self.assertFalse(proofs); self.assertEqual('high',rows[0]['severity'])
+
+    def test_tampered_proof_stays_high(self):
+        with tempfile.TemporaryDirectory() as td:
+            root=Path(td); self._write_fixture(root)
+            proof=json.loads((root/'provider_last_good_official.json').read_text())
+            proof['services'][0]['fee_usd']=1.0
+            (root/'provider_last_good_official.json').write_text(json.dumps(proof))
+            finding={'severity':'high','code':'GRADING_COMPANY_NO_HEALTHY_SOURCE','companies':['PSA'],'degraded_samples_by_company':{'PSA':[]},'degraded_sample_counts_by_company':{'PSA':3}}
+            rows,proofs=contextual._contextualize_blocked_provider(root,finding,dt.datetime(2026,9,29,9,tzinfo=dt.timezone.utc))
+            self.assertFalse(proofs); self.assertEqual('high',rows[0]['severity'])
 
 
 if __name__ == '__main__':

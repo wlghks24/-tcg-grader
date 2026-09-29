@@ -13,9 +13,12 @@ from __future__ import annotations
 
 import argparse
 import datetime as dt
+import hashlib
 import json
+import re
 from pathlib import Path
 from typing import Any
+from urllib.parse import urlparse
 
 import collection_verification_gate as base
 
@@ -24,6 +27,9 @@ MAX_REPORT_AGE_SECONDS = 2 * 3600
 MAX_COLLECTION_WINDOW_SECONDS = 2 * 3600
 MAX_START_SKEW_SECONDS = 30 * 60
 BOUNDARY_SLOP_SECONDS = 5 * 60
+PROVIDER_PROOF_FILE = 'provider_last_good_official.json'
+MAX_PROVIDER_PROOF_AGE_SECONDS = 7 * 24 * 3600
+_BLOCKED_PROVIDER_RE = re.compile(r'HTTPError:\s*status\s*(401|403|451)\b', re.I)
 
 
 def _load(path: Path) -> Any:
@@ -85,6 +91,116 @@ def _same_current_collection(root: Path, target: str, now: dt.datetime) -> dict[
     }
 
 
+def _blocked_provider_last_good_proof(root: Path, company: str, now: dt.datetime) -> dict[str, Any] | None:
+    try:
+        proof = _load(root / PROVIDER_PROOF_FILE)
+        snapshot = _load(root / "grading_company_updates.json")
+    except (OSError, UnicodeError, json.JSONDecodeError, TypeError, ValueError):
+        return None
+    if not isinstance(proof, dict) or proof.get("schema_version") != 1:
+        return None
+    company = str(company or "").upper()
+    if str(proof.get("provider") or "").upper() != company:
+        return None
+    policy = proof.get("policy") if isinstance(proof.get("policy"), dict) else {}
+    required_policy = {
+        "official_source_only": True,
+        "runtime_block_stays_degraded": True,
+        "bypass_blocked_source": False,
+        "not_injected_into_grading_company_updates": True,
+    }
+    if any(policy.get(k) is not v for k, v in required_policy.items()):
+        return None
+    try:
+        max_age = int(policy.get("max_age_seconds"))
+    except (TypeError, ValueError):
+        return None
+    if max_age <= 0 or max_age > MAX_PROVIDER_PROOF_AGE_SECONDS:
+        return None
+    observed = _timestamp(proof.get("observed_at"))
+    expires = _timestamp(proof.get("expires_at"))
+    if observed is None or expires is None or expires < observed:
+        return None
+    age = (now - observed).total_seconds()
+    if age < -BOUNDARY_SLOP_SECONDS or age > max_age or now > expires:
+        return None
+    source = str(proof.get("source_url") or "")
+    if not base._valid_public_https(source):
+        return None
+    host = (urlparse(source).hostname or "").lower().rstrip(".")
+    if host not in base.GRADING_ALLOWED_HOSTS:
+        return None
+    services = proof.get("services")
+    if not isinstance(services, list) or not services:
+        return None
+    canonical = json.dumps(services, ensure_ascii=False, sort_keys=True, separators=(",", ":"))
+    if hashlib.sha256(canonical.encode("utf-8")).hexdigest() != proof.get("facts_sha256"):
+        return None
+
+    sources = snapshot.get("sources") if isinstance(snapshot, dict) else None
+    if not isinstance(sources, dict):
+        return None
+    rows = [row for row in sources.values() if isinstance(row, dict) and str(row.get("company") or "").upper() == company]
+    if not rows:
+        return None
+    # Every current provider row must still be degraded because of an explicit hard block.
+    # Any healthy row, parser failure, timeout, rate limit, or unknown error invalidates this proof.
+    for row in rows:
+        if str(row.get("status") or "").lower() in {"ok", "healthy"}:
+            return None
+        if str(row.get("status") or "").lower() != "degraded":
+            return None
+        error = str(row.get("last_error") or row.get("error") or "")
+        if _BLOCKED_PROVIDER_RE.search(error) is None:
+            return None
+    return {
+        "provider": company,
+        "source": source,
+        "observed_at": observed.isoformat(),
+        "expires_at": expires.isoformat(),
+        "age_seconds": round(age, 1),
+        "facts_sha256": proof["facts_sha256"],
+        "service_fact_count": len(services),
+        "runtime_status": "degraded",
+        "failure_class": "SOURCE_BLOCKED",
+        "bypass_attempted": False,
+    }
+
+
+def _contextualize_blocked_provider(root: Path, finding: dict[str, Any], now: dt.datetime) -> tuple[list[dict[str, Any]], list[dict[str, Any]]]:
+    if finding.get("severity") != "high" or finding.get("code") != "GRADING_COMPANY_NO_HEALTHY_SOURCE":
+        return [finding], []
+    companies = [str(item).upper() for item in (finding.get("companies") or []) if str(item).strip()]
+    safe: list[dict[str, Any]] = []
+    unsafe: list[str] = []
+    for company in companies:
+        proof = _blocked_provider_last_good_proof(root, company, now)
+        if proof is None:
+            unsafe.append(company)
+        else:
+            safe.append(proof)
+    rows: list[dict[str, Any]] = []
+    if unsafe:
+        kept = dict(finding)
+        kept["companies"] = unsafe
+        by_company = finding.get("degraded_samples_by_company") or {}
+        counts = finding.get("degraded_sample_counts_by_company") or {}
+        kept["degraded_samples_by_company"] = {name: by_company.get(name, []) for name in unsafe}
+        kept["degraded_sample_counts_by_company"] = {name: counts.get(name, 0) for name in unsafe}
+        kept["degraded_samples"] = [sample for name in unsafe for sample in by_company.get(name, [])][:20]
+        rows.append(kept)
+    if safe:
+        rows.append({
+            "severity": "medium",
+            "code": "GRADING_COMPANY_SOURCE_BLOCKED_WITH_EXTERNAL_LAST_GOOD",
+            "target": "grading_company_updates.json",
+            "companies": [item["provider"] for item in safe],
+            "proof": safe,
+            "policy": "runtime snapshot remains degraded/empty; no source bypass; proof only permits unrelated verified outputs to publish",
+        })
+    return rows, safe
+
+
 def verify(root: Path | str = base.ROOT, *, max_health_age_seconds: int = 900,
            now: dt.datetime | None = None) -> dict[str, Any]:
     root = Path(root)
@@ -93,6 +209,7 @@ def verify(root: Path | str = base.ROOT, *, max_health_age_seconds: int = 900,
     original = list(report.get("findings") or [])
     filtered: list[dict[str, Any]] = []
     contextual: list[dict[str, Any]] = []
+    blocked_provider_proofs: list[dict[str, Any]] = []
 
     for finding in original:
         if (
@@ -111,6 +228,12 @@ def verify(root: Path | str = base.ROOT, *, max_health_age_seconds: int = 900,
                     "evidence": evidence,
                 })
                 continue
+        if isinstance(finding, dict):
+            provider_rows, provider_proofs = _contextualize_blocked_provider(root, finding, now)
+            if provider_proofs:
+                filtered.extend(provider_rows)
+                blocked_provider_proofs.extend(provider_proofs)
+                continue
         filtered.append(finding)
 
     filtered.extend(contextual)
@@ -126,7 +249,9 @@ def verify(root: Path | str = base.ROOT, *, max_health_age_seconds: int = 900,
         "threshold_widened": False,
         "same_run_proofs": len(contextual),
         "max_completed_report_age_seconds": MAX_REPORT_AGE_SECONDS,
+        "blocked_provider_proofs": len(blocked_provider_proofs),
     }
+    report["blocked_provider_last_good"] = blocked_provider_proofs
     return report
 
 

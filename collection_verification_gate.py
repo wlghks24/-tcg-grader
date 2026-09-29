@@ -43,7 +43,6 @@ GRADING_ALLOWED_HOSTS = {
     "break.co.kr", "www.break.co.kr",
 }
 GRADING_MIN_OFFICIAL_SOURCES = 10
-GRADING_BLOCKED_LAST_GOOD_MAX_AGE_SECONDS = 30 * 24 * 3600
 # GLOBAL is valid only for genuinely worldwide release/event rows. Market keys remain
 # region-specific and are validated separately, so allowing GLOBAL here cannot turn a
 # worldwide announcement into KR/JP/US price evidence.
@@ -212,11 +211,6 @@ def _audit_market(root: Path, now: dt.datetime, findings: list[dict[str, Any]]) 
             "code": "INVALID_GRADED_PRICE_EVIDENCE_OVERFLOW",
             "count": invalid_grade_evidence - 20,
         })
-    warnings = db.get("collection_warnings") if isinstance(db, dict) else []
-    if isinstance(warnings, list) and warnings:
-        findings.append({"severity": "medium", "code": "DEGRADED_MARKET_SOURCE",
-                         "target": "market_prices.json", "count": len(warnings),
-                         "samples": [str(x)[:300] for x in warnings[:5]]})
     updated = db.get("updated_at") if isinstance(db, dict) else None
     if updated:
         _fresh("market_prices.json", updated, now, 24 * 3600, findings)
@@ -226,7 +220,6 @@ def _audit_market(root: Path, now: dt.datetime, findings: list[dict[str, Any]]) 
         "graded_price_profiles": len(graded_profiles),
         "positive_grade_prices": positive_grade_prices,
         "invalid_graded_price_evidence": invalid_grade_evidence,
-        "market_source_warnings": len(warnings) if isinstance(warnings, list) else 0,
     }
 
 
@@ -344,35 +337,6 @@ def _audit_events(root: Path, findings: list[dict[str, Any]]) -> dict[str, int]:
             "missing_event_topic_cells": len(missing_topics) if isinstance(missing_topics, list) else 0}
 
 
-def _grading_blocked_last_good_ok(company: str, sources: dict[str, Any], now: dt.datetime) -> bool:
-    rows=[]
-    for row in sources.values():
-        if not isinstance(row, dict) or str(row.get('company') or '').upper() != company:
-            continue
-        raw_status=str(row.get('status') or '').lower()
-        status='healthy' if raw_status in {'ok','healthy'} else raw_status
-        if status == 'healthy' or status != 'degraded':
-            return False
-        error_text=str(row.get('error') or row.get('last_error') or '')
-        if HTTP_BLOCK_RE.search(error_text) is None:
-            return False
-        rows.append(row)
-    if not rows:
-        return False
-    for row in rows:
-        if row.get('verified_official_source') is not True or row.get('retained_last_good') is not True:
-            continue
-        if not (row.get('services') or row.get('announcements')):
-            continue
-        verified_at=_parse_time(row.get('last_verified_at'))
-        if verified_at is None:
-            continue
-        age=(now-verified_at).total_seconds()
-        if -300 <= age <= GRADING_BLOCKED_LAST_GOOD_MAX_AGE_SECONDS:
-            return True
-    return False
-
-
 def _audit_grading_companies(root: Path, now: dt.datetime, findings: list[dict[str, Any]]) -> dict[str, int]:
     """Verify that the eighth mandatory collector is official, current, and observable."""
     path = root / "grading_company_updates.json"
@@ -480,13 +444,8 @@ def _audit_grading_companies(root: Path, now: dt.datetime, findings: list[dict[s
         findings.append({"severity": "critical", "code": "GRADING_COMPANY_WITHOUT_OFFICIAL_SOURCE", "target": path.name,
                          "companies": sorted(missing_source_companies)})
     no_healthy = EXPECTED_GRADING_COMPANIES - healthy_companies
-    blocked_with_last_good = {
-        company for company in no_healthy
-        if _grading_blocked_last_good_ok(company, sources, now)
-    }
-    hard_no_healthy = no_healthy - blocked_with_last_good
-    if hard_no_healthy:
-        ordered_companies = sorted(hard_no_healthy)
+    if no_healthy:
+        ordered_companies = sorted(no_healthy)
         samples_by_company = {
             company: degraded_errors_by_company.get(company, [])[:5]
             for company in ordered_companies
@@ -495,6 +454,8 @@ def _audit_grading_companies(root: Path, now: dt.datetime, findings: list[dict[s
             company: degraded_counts_by_company.get(company, 0)
             for company in ordered_companies
         }
+        # Keep the legacy flat field for existing consumers, but populate it fairly so
+        # one noisy provider cannot hide another provider's RCA evidence.
         no_healthy_samples: list[dict[str, str]] = []
         for index in range(5):
             for company in ordered_companies:
@@ -510,16 +471,7 @@ def _audit_grading_companies(root: Path, now: dt.datetime, findings: list[dict[s
             "degraded_samples_by_company": samples_by_company,
             "degraded_sample_counts_by_company": counts_by_company,
         })
-    if blocked_with_last_good:
-        findings.append({
-            "severity": "medium",
-            "code": "GRADING_COMPANY_BLOCKED_USING_FRESH_LAST_GOOD",
-            "target": path.name,
-            "companies": sorted(blocked_with_last_good),
-            "max_last_good_age_seconds": GRADING_BLOCKED_LAST_GOOD_MAX_AGE_SECONDS,
-            "bypass_attempted": False,
-        })
-    elif degraded and not hard_no_healthy:
+    elif degraded:
         findings.append({"severity": "medium", "code": "DEGRADED_GRADING_SOURCE", "target": path.name,
                          "count": degraded, "samples": degraded_errors})
 

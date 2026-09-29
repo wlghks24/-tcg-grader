@@ -1,0 +1,53 @@
+{
+  "schema_version": "1.1-tablet-gpt-tcg-grader-learning-sync",
+  "namespace": "TABLET_GPT",
+  "snapshot_kind": "learning_delta",
+  "run_date_kst": "2026-09-29",
+  "built_at": "2026-09-29T23:42:00+09:00",
+  "status": "finalized",
+  "source_repository": "wlghks24/-tcg-grader",
+  "prior_delta": "TCG_CROSSCHECK/TABLET_GPT/learning_snapshot_v359_delta.json",
+  "prior_lesson_digest_sha256": "fbf9c5bccb753feaee6a458e9c128e60e83b3629b43cec22006021c4195a355b",
+  "source_main_sha": "90576f8d33680470cca3a1e770618132a995b93e",
+  "share_policy": {
+    "explicit_patch_and_learning_lessons_only": true,
+    "chatgpt_model_weights_exported": false,
+    "raw_grading_calibration_shared": false,
+    "device_local_runtime_memory_overwritten": false,
+    "peer_verified_never_auto_promotes_local": true
+  },
+  "covered_merges": [
+    {
+      "pr": 335,
+      "version": "v360-post-v359-drive-blocker-fix",
+      "merge_sha": "cf721e4367cb982733958076165c26ae92773abf"
+    },
+    {
+      "pr": 337,
+      "version": "v360-current-main-static-sync-hardening",
+      "merge_sha": "90576f8d33680470cca3a1e770618132a995b93e"
+    }
+  ],
+  "lesson_digest_sha256": "25a57897537a216f61620ce5e99bf761ea824067199a24a54653eb6e258897fd",
+  "lessons": [
+    {
+      "lesson_id": "TABLET-GPT-STATIC-CANDIDATE-SYNC-V360",
+      "subsystem": "tablet_gpt_tcg_grader_alignment",
+      "issue_class": "fresh_validated_static_candidate_updates_watched_grading_data_after_v359_checkpoint",
+      "trigger_condition": "TCG Static Data Refresh run 36583808778 produced validated candidate 2186be2fcc11a084e5700eef6ead3b2b8b13702f from current main 90576f8d33680470cca3a1e770618132a995b93e and changed grading_company_updates.json after v359",
+      "prevention_rule": "bind the validated static candidate to the exact current main, exact candidate commit, exact watched-path set, and complete v360 sync quartet while preserving fail-closed freshness for any later watched change",
+      "validation_required": [
+        "base main is exactly 90576f8d33680470cca3a1e770618132a995b93e",
+        "candidate commit is exactly 2186be2fcc11a084e5700eef6ead3b2b8b13702f",
+        "the candidate publish report is pass and publish_allowed=true with zero critical and warning findings",
+        "the candidate auto_update_report is fresh and ok with zero fresh failures",
+        "the only watched path changed by this candidate is grading_company_updates.json",
+        "the v360 contract/delta/receipt/test quartet is complete and digest-consistent",
+        "PR 335 and PR 337 merges are ancestors of the candidate head",
+        "model weights, raw grading calibration and device-local runtime memory are not transferred",
+        "physical Tablet runtime and Drive readback remain unverified until matching external evidence exists"
+      ],
+      "safety_boundary": "do not widen freshness limits, exclude grading_company_updates.json, weaken CI, bypass provider blocks, auto-confirm UNKNOWN/CONFLICT, or claim physical Tablet/Drive verification"
+    }
+  ]
+}
