@@ -112,7 +112,7 @@ OFFICIAL_HOSTS = {
     "ktwizstore.co.kr", "www.ktwizstore.co.kr", "playgo.bandainamcokorea.co.kr",
 }
 OFFICIAL_DISCOVERY_PAGES = (
-    ("포켓몬 카드", "KR", "https://new.pokemonkorea.co.kr/card"),
+    ("포켓몬 카드", "KR", "https://pokemoncard.co.kr/main"),
     ("포켓몬 카드", "JP", "https://www.pokemon.co.jp/"),
     ("포켓몬 카드", "US", "https://www.pokemon.com/us"),
     ("원피스 카드", "KR", "https://onepiece-cardgame.kr/"),
