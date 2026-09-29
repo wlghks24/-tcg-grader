@@ -81,6 +81,15 @@ OFFICIAL_SOURCE_REPLACEMENTS = {
     "https://www.pokemonkorea.co.kr/": "https://pokemoncard.co.kr/main",
 }
 
+def canonical_pokemon_kr_card_url(value: str) -> str:
+    """Move persisted retired Pokémon Korea card URLs to the current official host."""
+    prefix = "https://new.pokemonkorea.co.kr/card"
+    value = str(value or "")
+    if value.startswith(prefix):
+        return "https://pokemoncard.co.kr/card" + value[len(prefix):]
+    return value
+
+
 
 # 한국 영화 정보는 "없음"으로 숨기지 않고, 한국 공식/공공 출처에서
 # 개봉일이 확인될 때까지 명시적인 추적 카드로 유지한다.
@@ -1025,15 +1034,15 @@ def main() -> dict:
             continue
         repaired = normalize_event_dates(item)
         old_source = str(repaired.get("source") or "")
-        if old_source.startswith("https://new.pokemonkorea.co.kr/card"):
-            suffix = old_source[len("https://new.pokemonkorea.co.kr/card"):]
-            repaired["source"] = "https://pokemoncard.co.kr/card" + suffix
-            old_source = str(repaired["source"])
+        migrated_source = canonical_pokemon_kr_card_url(old_source)
+        if migrated_source != old_source:
+            repaired["source"] = migrated_source
+            old_source = migrated_source
             repaired_count += 1
         old_collection_source = str(repaired.get("collection_source") or "")
-        if old_collection_source.startswith("https://new.pokemonkorea.co.kr/card"):
-            suffix = old_collection_source[len("https://new.pokemonkorea.co.kr/card"):]
-            repaired["collection_source"] = "https://pokemoncard.co.kr/card" + suffix
+        migrated_collection_source = canonical_pokemon_kr_card_url(old_collection_source)
+        if migrated_collection_source != old_collection_source:
+            repaired["collection_source"] = migrated_collection_source
             repaired_count += 1
         replacement_source = OFFICIAL_SOURCE_REPLACEMENTS.get(old_source)
         if replacement_source:
