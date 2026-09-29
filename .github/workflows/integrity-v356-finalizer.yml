@@ -1,0 +1,50 @@
+name: Finalize v356 integrity manifest
+
+on:
+  push:
+    branches:
+      - 'repair/promote-static-36510457002'
+
+permissions:
+  contents: write
+
+concurrency:
+  group: finalize-v356-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  finalize:
+    if: github.actor == github.repository_owner
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97
+        with:
+          python-version: '3.12'
+      - name: Remove one-shot workflow and rebuild exact final manifest
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "${GITHUB_REF_NAME}" = "repair/promote-static-36510457002"
+          git rm -- .github/workflows/integrity-v356-finalizer.yml
+          python static_integrity_manifest.py --write integrity_manifest.json
+          python static_integrity_manifest.py --check integrity_manifest.json
+          python repository_integrity_guard.py
+          mapfile -t sync_tests < <(find . -maxdepth 1 -type f -name 'test_tablet_gpt_tcg_grader_sync_v*.py' -printf '%f\n' | sort -V)
+          test "${#sync_tests[@]}" -gt 0
+          python -m unittest -v "${sync_tests[@]}"
+          git diff --check
+      - name: Commit only final manifest and self-removal
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add -- integrity_manifest.json .github/workflows/integrity-v356-finalizer.yml
+          test "$(git diff --cached --name-only | sort | tr '\n' ' ')" = ".github/workflows/integrity-v356-finalizer.yml integrity_manifest.json "
+          git diff --cached --check
+          git commit -m 'Reconcile integrity manifest for v356 candidate'
+          git push origin "HEAD:${GITHUB_REF_NAME}"
