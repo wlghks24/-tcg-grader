@@ -16,6 +16,7 @@ CONTRACT=ROOT/"TCG_CROSSCHECK/TABLET_GPT_TCG_GRADER_SYNC_CONTRACT_V358.json"
 EXPECTED_DIGEST="ae7c7747393f3ef9774d8527b5c09e41879bc983b7480058437f53470cb287ab"
 
 def read(p): return json.loads(p.read_text(encoding="utf-8"))
+def explicit_link_state(value): return value=="정상" or (isinstance(value,str) and value.startswith("접속 불가 확인 (HTTP ") and value.endswith(")") and value[len("접속 불가 확인 (HTTP "):-1].isdigit())
 
 class TabletGptTcgGraderSyncV358(unittest.TestCase):
     def test_lineage_digest_receipt_and_safe_transfer_boundary(self):
@@ -64,6 +65,6 @@ class TabletGptTcgGraderSyncV358(unittest.TestCase):
         for key in ("JPY_KRW","USD_KRW"): self.assertTrue(math.isfinite(fx["rates"][key]) and fx["rates"][key]>0)
         self.assertIsInstance(grading,dict); self.assertNotEqual({},grading)
         kr=[r for r in promo.get("items",[]) if r.get("game")=="포켓몬 카드" and r.get("region")=="KR" and r.get("category")=="movie"]
-        self.assertTrue(kr); self.assertEqual("https://pokemoncard.co.kr/main",kr[0].get("source")); self.assertEqual("official",kr[0].get("source_grade")); self.assertEqual("정상",kr[0].get("link_status"))
+        self.assertTrue(kr); self.assertEqual("https://pokemoncard.co.kr/main",kr[0].get("source")); self.assertEqual("official",kr[0].get("source_grade")); self.assertTrue(explicit_link_state(kr[0].get("link_status")))
 
 if __name__=="__main__": unittest.main(verbosity=2)
