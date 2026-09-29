@@ -20,7 +20,9 @@
     "raw_grading_calibration_transfer_forbidden": true,
     "device_local_learning_memory_blind_overwrite_forbidden": true,
     "device_local_learning_memory_uses_existing_transactional_merge_rules": true,
-    "physical_tablet_and_drive_results_must_not_be_invented": true
+    "physical_tablet_and_drive_results_must_not_be_invented": true,
+    "post_merge_checkpoint_must_anchor_future_pr_freshness": true,
+    "subsequent_watched_change_requires_new_generation": true
   },
   "current_required_merge_prs": [
     206,
