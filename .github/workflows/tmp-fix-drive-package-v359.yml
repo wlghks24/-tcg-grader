@@ -35,7 +35,7 @@ jobs:
           test "${GITHUB_ACTOR}" = "${GITHUB_REPOSITORY_OWNER}"
           git fetch origin +refs/heads/main:refs/remotes/origin/main
           git merge-base --is-ancestor origin/main HEAD
-      - name: Normalize bounded source evidence
+      - name: Apply isolated provider proof and revert watched experiment
         run: python tmp_apply_drive_package_fix_v359.py
       - name: Remove one-shot helpers before manifest generation
         shell: bash
@@ -46,14 +46,15 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          python -m py_compile update_market_prices.py grading_company_watch.py grading_company_watch_resilient.py collection_verification_gate.py collection_verification_gate_contextual.py test_drive_package_blockers_v359.py
+          python -m py_compile update_market_prices.py collection_verification_gate_contextual.py test_drive_package_blockers_v359.py
           python -m unittest -v \
             test_drive_package_blockers_v359.py \
             test_update_market_prices_packmagik_v353.py \
-            test_grading_company_watch_resilient_v257.py \
-            test_grading_company_health_diagnostics_v252.py \
+            test_collection_verification_contextual_v257.py \
             test_collection_verification_gate.py \
-            test_collection_verification_reporting_v244.py
+            test_collection_verification_reporting_v244.py \
+            test_grading_company_watch_resilient_v257.py \
+            test_grading_company_health_diagnostics_v252.py
       - name: Rebuild exact integrity manifest and run repository guards
         shell: bash
         run: |
@@ -75,18 +76,18 @@ jobs:
           python - <<'PY'
           import subprocess
           allowed={
-            '.github/workflows/tmp-fix-drive-package-v359.yml',
-            'tmp_apply_drive_package_fix_v359.py',
-            'update_market_prices.py','grading_company_watch.py','grading_company_bootstrap.json',
-            'collection_verification_gate.py','test_drive_package_blockers_v359.py','integrity_manifest.json',
+            '.github/workflows/tmp-fix-drive-package-v359.yml','tmp_apply_drive_package_fix_v359.py',
+            'update_market_prices.py','collection_verification_gate_contextual.py','provider_last_good_official.json',
+            'test_drive_package_blockers_v359.py','integrity_manifest.json',
+            'grading_company_watch.py','collection_verification_gate.py','grading_company_bootstrap.json',
           }
           changed=set(subprocess.check_output(['git','diff','--cached','--name-only'],text=True).splitlines())
           unexpected=changed-allowed
-          required={'update_market_prices.py','grading_company_watch.py','grading_company_bootstrap.json','collection_verification_gate.py','test_drive_package_blockers_v359.py','integrity_manifest.json'}
+          required={'update_market_prices.py','collection_verification_gate_contextual.py','provider_last_good_official.json','test_drive_package_blockers_v359.py','integrity_manifest.json','grading_company_watch.py','collection_verification_gate.py','grading_company_bootstrap.json'}
           missing=required-changed
           if unexpected or missing:
               raise SystemExit(f'unexpected={sorted(unexpected)} missing={sorted(missing)} changed={sorted(changed)}')
           PY
           git diff --cached --check
-          git commit -m 'fix: bound PSA last-good and quarantine OP14 market misjoin'
+          git commit -m 'fix: isolate blocked PSA proof and quarantine OP14 market misjoin'
           git push origin "HEAD:${GITHUB_REF_NAME}"
