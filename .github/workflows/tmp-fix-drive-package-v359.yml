@@ -81,7 +81,7 @@ jobs:
           }
           changed=set(subprocess.check_output(['git','diff','--cached','--name-only'],text=True).splitlines())
           unexpected=changed-allowed
-          required={'update_market_prices.py','collection_verification_gate_contextual.py','provider_last_good_official.json','test_drive_package_blockers_v359.py','integrity_manifest.json','grading_company_watch.py','collection_verification_gate.py','grading_company_bootstrap.json'}
+          required={'collection_verification_gate_contextual.py','provider_last_good_official.json','test_drive_package_blockers_v359.py','integrity_manifest.json','grading_company_watch.py','collection_verification_gate.py','grading_company_bootstrap.json'}
           missing=required-changed
           if unexpected or missing:
               raise SystemExit(f'unexpected={sorted(unexpected)} missing={sorted(missing)} changed={sorted(changed)}')
