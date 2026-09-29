@@ -54,6 +54,7 @@ def _probe_pair(task):
     url, request_timeout = task
     return url, probe(url, request_timeout=request_timeout)
 FALLBACKS={
+ "new.pokemonkorea.co.kr":"https://pokemoncard.co.kr/main",
  "pokemoncard.co.kr":"https://pokemoncard.co.kr/main",
  "www.pokemoncard.co.kr":"https://pokemoncard.co.kr/main",
  "pokemonkorea.co.kr":"https://pokemoncard.co.kr/main",
@@ -85,6 +86,39 @@ TEMPLATE_PLACEHOLDER_PROBES = {
     "{card_no}": "OP01-001",
     "{set_code}": "OP01",
 }
+
+
+def _canonicalize_retired_pokemon_kr_url(url: str) -> str:
+    """Migrate only proven Pokémon Korea card routes to the current official host.
+
+    Numeric detail IDs are preserved exactly. Unknown retired paths stay
+    untouched so link audit can fail closed instead of inventing a route.
+    """
+    if not isinstance(url, str) or not url:
+        return url
+    try:
+        parsed = urllib.parse.urlsplit(url)
+    except ValueError:
+        return url
+    host = (parsed.hostname or "").rstrip(".").lower()
+    if parsed.scheme != "https" or host != "new.pokemonkorea.co.kr":
+        return url
+    old_path = parsed.path.rstrip("/") or "/"
+    if old_path in {"/", "/card"}:
+        new_path = "/main"
+    else:
+        parts = old_path.strip("/").split("/")
+        if not (
+            len(parts) == 2
+            and parts[0] == "card"
+            and parts[1].isdigit()
+            and 1 <= len(parts[1]) <= 8
+        ):
+            return url
+        new_path = f"/card/{parts[1]}"
+    return urllib.parse.urlunsplit(
+        ("https", "pokemoncard.co.kr", new_path, parsed.query, parsed.fragment)
+    )
 
 
 def _render_template_probe(url: str) -> str:
@@ -361,13 +395,20 @@ def _apply_results(tasks:dict, results:dict, now:str)->tuple[dict,list[dict]]:
 
 def main()->dict:
     now=dt.datetime.now(dt.timezone.utc).isoformat(timespec="seconds")
-    loaded={}; tasks={}
+    loaded={}; tasks={}; canonical_migrations=0
     for fn in FILES:
         p=ROOT/fn
         if not p.exists(): continue
         data=json.loads(safe_read_text(p)); loaded[fn]=data
         for row,key in _records(data):
             url=row.get(key)
+            canonical=_canonicalize_retired_pokemon_kr_url(url)
+            if canonical != url:
+                row.setdefault("original_source" if key=="source" else "original_url", url)
+                row[key]=canonical
+                url=canonical
+                canonical_migrations+=1
+                _record_status(row,key,"공식 도메인 이전 · 상세 경로 보존")
             try:_safe(url)
             except ValueError:
                 _record_status(row,key,"차단됨 · 잘못된 주소"); row["link_checked_at"]=now; continue
@@ -453,7 +494,7 @@ def main()->dict:
         data["link_audit_at"]=now
         atomic_write_json(ROOT/fn,data,suffix='.audit.tmp')
     report={"updated_at":now,"checked":len(tasks),"audit_timeout_seconds":audit_timeout,
-            "request_timeout_seconds":request_timeout,**counts,
+            "request_timeout_seconds":request_timeout,"canonical_migrations":canonical_migrations,**counts,
             "same_host_fallback_stats":same_host_fallback_stats,
             "template_route_recovery_stats":template_route_recovery_stats,
             "unresolved_details":unresolved_details,
