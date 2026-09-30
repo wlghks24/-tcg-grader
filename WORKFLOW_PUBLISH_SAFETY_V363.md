@@ -12,3 +12,5 @@ Tablet GPT sync generation v363 binds the newly watched `.github/workflows/runti
 Historical v362 validation remains strict: when later watched changes exist it must discover the newest verified successor, re-check its digest and receipt, require exact candidate watched-path coverage, and fail if that successor itself leaves any watched change uncovered.
 
 The v363 safety workflow itself is push/manual only on the exact `main` and `fix/remove-direct-main-publishers-v363-final` branches. No write token is reachable from a pull-request trigger and no wildcard branch is authorized for its write-capable reconciliation job.
+
+Integrity reconciliation compares manifests without `generated_at`; a timestamp-only rebuild restores the prior manifest instead of creating an otherwise meaningless bot commit, while any real tracked-file hash or policy change is retained and committed.
