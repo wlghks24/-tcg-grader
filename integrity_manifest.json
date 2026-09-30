@@ -1,7 +1,7 @@
 {
   "version": 2,
   "engine": "v109-card-identity-ocr-learning",
-  "generated_at": "2026-09-30T06:31:09+00:00",
+  "generated_at": "2026-09-30T06:42:29+00:00",
   "files": {
     ".github/workflows/ai-auto-tracker-guard.yml": {
       "sha256": "636e750bd6d2619cce75d4bce2d68051eaa2209ae763bc8ec523ed73476728a6",
@@ -336,8 +336,8 @@
       "bytes": 1303
     },
     ".github/workflows/gpt-tcg-drive-package.yml": {
-      "sha256": "52be70b7fc75306d8ea51876c941567fe4564f72750bc2f892cbf476bf56f40e",
-      "bytes": 4071
+      "sha256": "aeff690b706aa7eaafcc7479642526ac0d4396b54b5c45ce91aac738138177e7",
+      "bytes": 4145
     },
     ".github/workflows/grading-company-watch.yml": {
       "sha256": "2ad811bb051f58aea64d663cb12258ff39d9a29173c7467607a9443c9cd5b3b6",
@@ -3014,6 +3014,10 @@
     "test_gpt_data_engine.py": {
       "sha256": "715e185607fe8289e2f80adcbbcf2ec3aa27caefe9edf959f4f4d0dead07392a",
       "bytes": 1663
+    },
+    "test_gpt_tcg_drive_package_recovery.py": {
+      "sha256": "a965860bcf95016b85fb23eefffbde7bbe120548263d01803c1473d481760486",
+      "bytes": 962
     },
     "test_graded_photo_existing_revalidation_v159.py": {
       "sha256": "af411032e51b0b0fb43dc5320a4632694d7c6b6277f7e25693bdbac3c39c9dbb",
