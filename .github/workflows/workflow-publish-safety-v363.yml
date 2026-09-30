@@ -8,6 +8,7 @@ on:
     paths:
       - '.github/workflows/**'
       - 'scripts/publish_candidate_pr.sh'
+      - 'scripts/manifest_semantic_reconcile.py'
       - 'test_workflow_publish_safety_v363.py'
       - 'TCG_CROSSCHECK/**'
       - 'test_tablet_gpt_tcg_grader_sync_v*.py'
@@ -72,8 +73,12 @@ jobs:
           fi
           test "$(git rev-parse --abbrev-ref HEAD)" != 'main'
       - name: Rebuild and diagnose exact-tree integrity manifest
+        shell: bash
         run: |
+          set -euo pipefail
+          cp integrity_manifest.json /tmp/integrity_manifest.before.json
           python fault_injection_healing.py --manifest
+          python scripts/manifest_semantic_reconcile.py /tmp/integrity_manifest.before.json integrity_manifest.json
           python fault_injection_healing.py --diagnose
           python repository_integrity_guard.py
       - name: Allow only integrity-manifest reconciliation
@@ -86,7 +91,7 @@ jobs:
             exit 21
           fi
           if git diff --quiet -- integrity_manifest.json; then
-            echo 'Integrity manifest already exact.'
+            echo 'Integrity manifest already exact; no timestamp-only commit.'
             exit 0
           fi
           git config user.name 'github-actions[bot]'
