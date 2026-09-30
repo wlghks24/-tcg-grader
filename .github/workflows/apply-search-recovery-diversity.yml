@@ -6,6 +6,9 @@ on:
 
 permissions:
   contents: write
+  pull-requests: write
+  actions: write
+  checks: read
 
 jobs:
   patch:
@@ -37,5 +40,5 @@ jobs:
           git add search_method_learning.py multi_channel_agent.py auto_pipeline_runner.py test_search_recovery_slot.py
           if ! git diff --cached --quiet; then
             git commit -m 'feat: add adaptive search recovery exploration'
-            git push origin main
+            GH_TOKEN="${{ github.token }}" bash scripts/publish_candidate_pr.sh
           fi

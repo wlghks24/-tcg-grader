@@ -1,0 +1,52 @@
+{
+  "schema_version": "1.1-tablet-gpt-tcg-grader-learning-sync",
+  "namespace": "TABLET_GPT",
+  "snapshot_kind": "learning_delta",
+  "run_date_kst": "2026-09-30",
+  "built_at": "2026-09-30T16:33:08+09:00",
+  "status": "finalized",
+  "source_repository": "wlghks24/-tcg-grader",
+  "prior_delta": "TCG_CROSSCHECK/TABLET_GPT/learning_snapshot_v365_delta.json",
+  "prior_lesson_digest_sha256": "d9cc7ec86f347e834768069e30da8c3fb97eef769755f2fd2f52e5a3c6952abd",
+  "source_main_sha": "13d408aedaf802c61e17d47527aefc19e0586c4f",
+  "share_policy": {
+    "explicit_patch_and_learning_lessons_only": true,
+    "chatgpt_model_weights_exported": false,
+    "raw_grading_calibration_shared": false,
+    "device_local_runtime_memory_overwritten": false,
+    "peer_verified_never_auto_promotes_local": true
+  },
+  "covered_merges": [
+    {
+      "pr": 346,
+      "version": "v366-protected-static-grading-data-base",
+      "merge_sha": "13d408aedaf802c61e17d47527aefc19e0586c4f"
+    }
+  ],
+  "lesson_digest_sha256": "96d3e899b986191d3acf8179091616555029e82d30f5843a71963c303d06f0e1",
+  "lessons": [
+    {
+      "lesson_id": "TABLET-GPT-STATIC-GRADING-WATCHED-SUCCESSOR-V366",
+      "subsystem": "tablet_gpt_tcg_grader_alignment",
+      "issue_class": "validated_static_refresh_changed_watched_grading_output_without_successor_generation",
+      "trigger_condition": "a protected static-data candidate based on current main changes grading_company_updates.json after the latest Tablet GPT sync generation",
+      "symptom_summary": "historical successor-delegation tests fail closed because grading_company_updates.json is a watched path and v365 has no strictly newer verified generation covering the exact candidate",
+      "root_cause_class": "data_promotion_preceded_required_tablet_gpt_successor_checkpoint",
+      "fix_pattern": "bind a strictly newer generation to the exact source main and exact validated candidate commit, require grading_company_updates.json as the only newly watched path, exclude only the four generation files from freshness evaluation, and keep any later watched change fail-closed",
+      "prevention_rule_id": "TGPT-PREV-STATIC-GRADING-SUCCESSOR-BEFORE-MERGE",
+      "validation_required": [
+        "source main is exactly 13d408aedaf802c61e17d47527aefc19e0586c4f",
+        "validated static candidate is exactly fbf476fe563ed1b368727b2b8dcbbcc880a82282",
+        "the exact newly uncovered watched path is grading_company_updates.json",
+        "candidate generation files are present and excluded only from freshness self-observation",
+        "historical generations may delegate only to this strictly newer digest-consistent successor",
+        "no watched path remains after the exact candidate before protected-main merge",
+        "required CI must succeed before merge",
+        "direct main push, force push, admin bypass, and freshness-threshold widening remain forbidden",
+        "model weights, raw grading calibration, and device-local runtime memory are not transferred",
+        "physical Tablet runtime and Drive readback remain unverified without matching external evidence"
+      ],
+      "safety_boundary": "this generation proves repository alignment only; it does not convert stale, unknown, device-local, or physical-runtime evidence into verified success"
+    }
+  ]
+}

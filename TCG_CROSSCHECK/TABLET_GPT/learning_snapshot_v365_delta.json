@@ -1,0 +1,68 @@
+{
+  "schema_version": "1.1-tablet-gpt-tcg-grader-learning-sync",
+  "namespace": "TABLET_GPT",
+  "snapshot_kind": "learning_delta",
+  "run_date_kst": "2026-09-30",
+  "built_at": "2026-09-30T15:45:00+09:00",
+  "status": "finalized",
+  "source_repository": "wlghks24/-tcg-grader",
+  "prior_delta": "TCG_CROSSCHECK/TABLET_GPT/learning_snapshot_v364_delta.json",
+  "prior_lesson_digest_sha256": "01c64b1220a3479cc00ef9e237cdcfa1b7df26376326a1c0a4890d255f7fb10b",
+  "source_main_sha": "b5d85005fa7df5bac575641027e89cd5a9f12735",
+  "share_policy": {
+    "explicit_patch_and_learning_lessons_only": true,
+    "chatgpt_model_weights_exported": false,
+    "raw_grading_calibration_shared": false,
+    "device_local_runtime_memory_overwritten": false,
+    "peer_verified_never_auto_promotes_local": true
+  },
+  "covered_merges": [
+    {
+      "pr": 345,
+      "version": "v365-drive-dual-freshness-recovery-base",
+      "merge_sha": "b5d85005fa7df5bac575641027e89cd5a9f12735"
+    }
+  ],
+  "lesson_digest_sha256": "d9cc7ec86f347e834768069e30da8c3fb97eef769755f2fd2f52e5a3c6952abd",
+  "lessons": [
+    {
+      "lesson_id": "TABLET-GPT-DRIVE-DUAL-FRESHNESS-RECOVERY-V365",
+      "subsystem": "tablet_gpt_drive_package_freshness_recovery",
+      "issue_class": "multiple_freshness_only_critical_findings_bypass_single_code_recovery",
+      "trigger_condition": "GPT TCG Drive Package sees both STALE_SOCIAL_SNAPSHOT and STALE_AUTO_UPDATE_REPORT while the package remains fail-closed for stale evidence",
+      "symptom_summary": "the existing recovery recognizes only an exact singleton STALE_AUTO_UPDATE_REPORT set, so two freshness-only blockers return failure instead of dispatching the protected static refresh",
+      "root_cause_class": "recovery_classifier_was_narrower_than_the_existing_freshness_gate_set",
+      "fix_pattern": "keep stale upload forbidden, but treat a non-empty critical set as recoverable only when every code is in the explicit freshness-only allowlist; dispatch the protected static refresh and leave ready=false; preserve the original failure for any non-freshness critical code",
+      "prevention_rule_id": "TGPT-PREV-DRIVE-FRESHNESS-SET-RECOVERY",
+      "validation_required": [
+        "base main is exactly b5d85005fa7df5bac575641027e89cd5a9f12735",
+        "candidate commit is exactly 21ca7e359df36a848dd917d47acb67f2eb4386a6",
+        "the exact newly uncovered watched path is .github/workflows/gpt-tcg-drive-package.yml",
+        "STALE_AUTO_UPDATE_REPORT and STALE_SOCIAL_SNAPSHOT are the only recoverable critical codes",
+        "the recoverable set must be non-empty and a subset of the explicit freshness allowlist",
+        "stale package upload remains disabled while recovery dispatches tcg-static-data-refresh.yml",
+        "any non-freshness critical finding preserves the original package failure",
+        "the two-hour freshness gate is not widened",
+        "model weights, raw grading calibration, and device-local runtime memory are not transferred",
+        "physical Tablet runtime and Drive readback remain unverified until matching external evidence exists"
+      ],
+      "safety_boundary": "do not convert freshness failures into publish success; recovery may request fresh protected collection only, and all unknown or non-freshness critical findings remain fail-closed"
+    },
+    {
+      "lesson_id": "TABLET-GPT-HISTORICAL-SUCCESSOR-DELEGATION-V365",
+      "subsystem": "tablet_gpt_tcg_grader_alignment",
+      "issue_class": "historical_generation_test_requires_permanent_zero_watched_changes",
+      "trigger_condition": "a newer verified successor generation is added after v363/v364 and the historical tests still compare their old candidate or checkpoint directly to HEAD",
+      "symptom_summary": "legitimate new watched changes remain blocked even when a strictly newer digest-consistent successor exactly covers them",
+      "root_cause_class": "historical_test_did_not_implement_the_successor_delegation_rule_already_declared_by_the_sync contract",
+      "fix_pattern": "preserve each historical generation's exact original scope assertions, but when later watched changes exist require the newest strictly newer verified successor, validate its digest and receipt, require its generation files, and require exact candidate watched-path coverage with no uncovered changes after that candidate",
+      "prevention_rule_id": "TGPT-PREV-STRICT-SUCCESSOR-DELEGATION",
+      "verification_result": "historical_v363_v364_tests_delegate_only_to_verified_exact_newer_successor",
+      "regression_pass": true,
+      "recurrence_count": 1,
+      "applicable_scope": "both",
+      "confidence_level": "high",
+      "physical_tablet_runtime_reverification_required": true
+    }
+  ]
+}

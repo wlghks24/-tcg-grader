@@ -6,6 +6,9 @@ on:
 
 permissions:
   contents: write
+  pull-requests: write
+  actions: write
+  checks: read
 
 jobs:
   patch:
@@ -46,5 +49,5 @@ jobs:
           git add search_method_learning.py multi_channel_agent.py test_search_engine_optimizer.py
           if ! git diff --cached --quiet; then
             git commit -m 'feat: use cumulative metrics to optimize search routing'
-            git push origin main
+            GH_TOKEN="${{ github.token }}" bash scripts/publish_candidate_pr.sh
           fi

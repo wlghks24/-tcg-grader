@@ -51,7 +51,8 @@ jobs:
             test_market_public_crosscheck_resilience_v228.py test_market_public_crosscheck_performance_v251.py \
             test_release_history_cumulative_coverage_v229.py \
             test_collection_restored_state_guard_v229.py \
-            test_collection_verification_contextual_v257.py test_grading_company_watch_resilient_v257.py
+            test_collection_verification_contextual_v257.py test_grading_company_watch_resilient_v257.py \
+            test_auxiliary_freshness_coordination_v367.py
           python -m unittest -v \
             test_safe_runtime_redirect_diagnostics_v253.py \
             test_collection_job_contract_v255.py \
@@ -73,7 +74,8 @@ jobs:
             test_grading_company_watch_v215.py \
             test_grading_company_watch_resilient_v257.py \
             test_grading_costs_live.py \
-            test_grading_watch_integration_v220.py
+            test_grading_watch_integration_v220.py \
+            test_auxiliary_freshness_coordination_v367.py
           python feature_contract.py
 
       - name: Run full verified collection cycle
@@ -86,6 +88,122 @@ jobs:
           print(json.dumps({
               'updated_at': data.get('updated_at'),
               'auto_update': data.get('auto_update', {}),
+          }, ensure_ascii=False, indent=2))
+          PY
+
+      - name: Recover timeout-only supplementary integration
+        timeout-minutes: 15
+        env:
+          TCG_HTTP_TIMEOUT: '60'
+          TCG_SOURCE_TIMEOUT_CAP: '60'
+        run: |
+          python - <<'PY'
+          import datetime as dt
+          import json
+          import time
+          from pathlib import Path
+
+          import auto_pipeline_runner
+          import auto_update_all
+          import static_data_publish_gate as gate
+          import update_promo_events
+          from safe_runtime import atomic_write_json
+
+          root = Path('.')
+          report_path = root / 'auto_update_report.json'
+          report = json.loads(report_path.read_text(encoding='utf-8'))
+          integration = report.get('integration') if isinstance(report.get('integration'), dict) else {}
+          freshness = gate.audit_aux_freshness(root, now=dt.datetime.now(dt.timezone.utc))
+          stale_codes = {str(row.get('code')) for row in freshness if isinstance(row, dict)}
+          needs_recovery = bool(
+              integration.get('degraded') is True
+              or integration.get('deferred_timeout_pending') is True
+              or 'STALE_SUPPLEMENTARY_SNAPSHOT' in stale_codes
+          )
+          if not needs_recovery:
+              print('supplementary integration recovery not required')
+              raise SystemExit(0)
+
+          started = time.monotonic()
+          result = auto_pipeline_runner.run_pipeline()
+          if (not isinstance(result, dict) or result.get('ok') is not True
+                  or result.get('degraded') is True):
+              print(json.dumps({
+                  'ok': result.get('ok') if isinstance(result, dict) else None,
+                  'degraded': result.get('degraded') if isinstance(result, dict) else None,
+                  'failure_count': result.get('failure_count') if isinstance(result, dict) else None,
+              }, ensure_ascii=False, indent=2))
+              raise SystemExit('supplementary integration recovery did not finish cleanly')
+
+          post_freshness = gate.audit_aux_freshness(root, now=dt.datetime.now(dt.timezone.utc))
+          if any(row.get('code') == 'STALE_SUPPLEMENTARY_SNAPSHOT' for row in post_freshness):
+              raise SystemExit('supplementary integration recovery finished but snapshot is still stale')
+
+          errors = [str(x) for x in (result.get('errors') or []) if str(x).strip()]
+          report['integration'] = {
+              'ok': True,
+              'degraded': False,
+              'candidate_count': (
+                  sum(len(x.get('results', [])) for x in (result.get('queries') or []) if isinstance(x, dict))
+                  + int((result.get('supplementary') or {}).get('candidate_count') or 0)
+                  + int((result.get('social') or {}).get('candidate_count') or 0)
+              ),
+              'social_candidate_count': int((result.get('social') or {}).get('candidate_count') or 0),
+              'official_social_candidate_count': int((result.get('social') or {}).get('official_social_candidate_count') or 0),
+              'failure_count': int(result.get('failure_count') or len(errors)),
+              'error': ' / '.join(errors)[-1200:] if errors else '',
+              'platform': result.get('platform', {}),
+              'note': result.get('notice'),
+              'recovered_after_static_refresh': True,
+              'recovery_duration_seconds': round(time.monotonic() - started, 2),
+          }
+
+          synced = update_promo_events.refresh_auxiliary_coverage_metadata(write=True)
+          auto_update_all.validate_json('promo_events.json', synced)
+          report['auxiliary_coverage_sync'] = {
+              'ok': True,
+              'expected_topic_cells': int(synced.get('social_topic_expected_cells') or 0),
+              'attempted_topic_cells': int(synced.get('social_topic_attempted_cells') or 0),
+              'successful_topic_cells': int(synced.get('social_topic_successful_cells') or 0),
+              'failed_topic_cells': len(synced.get('social_topic_failed_cells') or []),
+              'undiscovered_topic_cells': len(synced.get('social_topic_undiscovered_cells') or []),
+              'source_updated_at': synced.get('social_topic_source_updated_at'),
+              'recovered_after_static_refresh': True,
+          }
+
+          link = report.get('link_audit') if isinstance(report.get('link_audit'), dict) else {}
+          report['ok_with_aux'] = bool(
+              report.get('ok')
+              and report['integration'].get('ok')
+              and not report['integration'].get('degraded')
+              and link.get('ok')
+              and not link.get('degraded')
+              and report['auxiliary_coverage_sync'].get('ok')
+          )
+          postflight = report.get('postflight_monitor') if isinstance(report.get('postflight_monitor'), dict) else {}
+          report['ok_with_monitor'] = bool(report['ok_with_aux'] and postflight.get('ok'))
+          report['static_refresh_recovery'] = {
+              'ok': True,
+              'reason': 'timeout-only supplementary integration recovered with a fresh verified pipeline run',
+              'recovered_at': dt.datetime.now(dt.timezone.utc).isoformat(timespec='seconds'),
+          }
+          auto_update_all.atomic_report(report)
+          auto_update_all.atomic_issues(report)
+
+          live_path = root / 'tcg_live_data.json'
+          if live_path.exists():
+              live = json.loads(live_path.read_text(encoding='utf-8'))
+              if isinstance(live, dict):
+                  auto = live.setdefault('auto_update', {})
+                  if isinstance(auto, dict):
+                      auto['report_ok'] = bool(report['ok_with_monitor'])
+                  atomic_write_json(live_path, live, suffix='.static-refresh-recovery.tmp')
+
+          print(json.dumps({
+              'recovered': True,
+              'integration': report['integration'],
+              'auxiliary_coverage_sync': report['auxiliary_coverage_sync'],
+              'report_ok': report['ok_with_monitor'],
           }, ensure_ascii=False, indent=2))
           PY
 

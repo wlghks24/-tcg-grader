@@ -53,11 +53,13 @@ class TabletGptTcgGraderSyncV350(unittest.TestCase):
         def watched(path):
             return path not in excluded and (path in exact or path.startswith(prefixes))
 
+        candidate_commit = candidate["candidate_commit"]
         changed = subprocess.check_output(
-            ["git", "diff", "--name-only", f"{SOURCE}..HEAD"], text=True
+            ["git", "diff", "--name-only", f"{SOURCE}..{candidate_commit}"], text=True
         ).splitlines()
         relevant = sorted(path for path in changed if watched(path))
         self.assertEqual(candidate["watched_paths"], relevant)
+        subprocess.run(["git", "merge-base", "--is-ancestor", candidate_commit, "HEAD"], check=True)
         for path in candidate["generation_files"]:
             self.assertTrue((ROOT / path).is_file(), path)
 

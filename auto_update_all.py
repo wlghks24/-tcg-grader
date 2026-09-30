@@ -1194,10 +1194,13 @@ def run_all(trigger: str = "manual", selected_files=None, progress_callback=None
                 "transient_deferred":bool(transient),"transient_notice":transient_notice,
                 "unresolved_broken":unresolved_broken,"unresolved_summary":detail_parts,**lr}
 
-    with concurrent.futures.ThreadPoolExecutor(max_workers=2) as ex:
-        fi=ex.submit(_run_aux_task,'__integration__',integration_runner)
-        fl=ex.submit(_run_aux_task,'__link_audit__',link_runner)
-        report['integration']=fi.result(); report['link_audit']=fl.result()
+    # v367: integrated discovery writes supplementary_candidates.json while the
+    # link audit reads and rewrites that same file. Running both concurrently can
+    # let the audit commit an older snapshot after discovery completed. Serialize
+    # the shared-file writers so the audit always starts from the newly collected
+    # candidate snapshot and cannot roll its updated_at/provenance backward.
+    report['integration']=_run_aux_task('__integration__',integration_runner)
+    report['link_audit']=_run_aux_task('__link_audit__',link_runner)
     try:
         import update_promo_events as _promo_sync
         synced = _promo_sync.refresh_auxiliary_coverage_metadata(write=True)

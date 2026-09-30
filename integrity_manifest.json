@@ -1,7 +1,7 @@
 {
   "version": 2,
   "engine": "v109-card-identity-ocr-learning",
-  "generated_at": "2026-09-29T15:00:09+00:00",
+  "generated_at": "2026-09-30T11:22:03+00:00",
   "files": {
     ".github/workflows/ai-auto-tracker-guard.yml": {
       "sha256": "636e750bd6d2619cce75d4bce2d68051eaa2209ae763bc8ec523ed73476728a6",
@@ -16,8 +16,8 @@
       "bytes": 8540
     },
     ".github/workflows/apply-android-manual-proof-input-v164.yml": {
-      "sha256": "7d65f855184767dd933b1eb0ed0d07397490a4f49285c050f0987aa353404243",
-      "bytes": 6636
+      "sha256": "9bdbb70899c37a837a57da82f55015084ef742688d0e8c08d6b1f29d78edb4a6",
+      "bytes": 6733
     },
     ".github/workflows/apply-auto-market-center.yml": {
       "sha256": "be53f77aea7e34744f9716a16c82a0a884be4424b58ce19c0001c890d972647b",
@@ -28,36 +28,36 @@
       "bytes": 4022
     },
     ".github/workflows/apply-bgs-cert-ocr-v169.yml": {
-      "sha256": "562bcc5d8666e5a4b23bbd66d735a5446e02ed2b68b0c8eaa789170a7aac74c6",
-      "bytes": 1395
+      "sha256": "51df180bcc5fd809aae03334c4d9b4e89f7d7cf144f8929c1400421b2491eb9e",
+      "bytes": 1492
     },
     ".github/workflows/apply-box-hit-market-expansion.yml": {
-      "sha256": "3c1a15b4654c5511cb99fddcebbe71dcd027da787139d8c224502c5911efdbeb",
-      "bytes": 1591
+      "sha256": "4036b758116022f9a41371228f81f208e0ed96c21e3ad9423cdd6203d2b0572d",
+      "bytes": 1693
     },
     ".github/workflows/apply-box-knowledge-stats.yml": {
       "sha256": "976e5d67352c03371e4b0a56ee4eb751de2ec9ab52a0d65cab428995e3450986",
       "bytes": 993
     },
     ".github/workflows/apply-brg-break-lookup-v173.yml": {
-      "sha256": "e8d5381a59eb38c42eb380c9a5dafad4432ff8d3c6bf6aa6bb88960d83118044",
-      "bytes": 1511
+      "sha256": "8382bf3407106435ad12b54e94f4bac424963f461e39eb9b9f1e5c2dfc0d0a84",
+      "bytes": 1608
     },
     ".github/workflows/apply-brg-manual-server-error-v163.yml": {
-      "sha256": "031264b1470a18bf29a87197501a65152bb54a0cc0f481d5c71e031fe61b5ab4",
-      "bytes": 1469
+      "sha256": "0126dc740ca7e5d8fd97f1489dca94af51d14beb27c30e2cc27b07c77e779b3f",
+      "bytes": 1566
     },
     ".github/workflows/apply-brg-registered-link-normalization-v190.yml": {
-      "sha256": "860f63eb40a3390fee24d60fb9f273988f9d327857f8024b261fdab4d1830238",
-      "bytes": 2027
+      "sha256": "7d87ed2dc45f200fc332bc07d179bbd0037a29742b9468b4b9122bc93617bf8b",
+      "bytes": 2084
     },
     ".github/workflows/apply-cgc-cert-ocr-v170.yml": {
-      "sha256": "4ecad233a99056197bcce9b1b48fe30d6f4b1762b3870d28bb7a793d4cd964fd",
-      "bytes": 1381
+      "sha256": "a4b74a71a714597b9ce42778ef3bd3aae34de48d3db0f1a60e2080491fd2e996",
+      "bytes": 1478
     },
     ".github/workflows/apply-collection-meta-learning.yml": {
-      "sha256": "ae4c05c8c8e0d3f9a81e3b12c15d340c9026b26ed9c6b40cda23af8ef3fdd5cc",
-      "bytes": 1754
+      "sha256": "ecfb3cf88f549d58bf686e3424543e10c284d99f083ae323d2e9cc11629c8975",
+      "bytes": 1856
     },
     ".github/workflows/apply-collection-resilience-v111.yml": {
       "sha256": "9eeaf9ca63c5389d0e5032a1c310a10515c9725efdefcd9be63fc97d0fee719e",
@@ -68,8 +68,8 @@
       "bytes": 2406
     },
     ".github/workflows/apply-collection-runtime-resilience-v177.yml": {
-      "sha256": "d65c44862feac499a230332e7c8755fde973985cc830c84cb72d872d9639800e",
-      "bytes": 1196
+      "sha256": "b3fadbf80b75a1dddb960cc33b1060900afe84985807501d92d5c3b1ab7554b6",
+      "bytes": 1298
     },
     ".github/workflows/apply-detailed-collection-intelligence.yml": {
       "sha256": "77c632e1b8c62afbab496446de172f1c5f3a1c5faaf434732792791939cb8efb",
@@ -80,48 +80,48 @@
       "bytes": 1842
     },
     ".github/workflows/apply-eight-zone-runtime-fix-v158.yml": {
-      "sha256": "7acf1494a104105e9cd17127773f6cdf9f88ab1c8a676b14f6a28554eaa44f1b",
-      "bytes": 1467
+      "sha256": "d1e328b95ccd5a801fc74f87e56d7b41bfa34091b155afa90a83a41a6c0ca600",
+      "bytes": 1569
     },
     ".github/workflows/apply-fan-social-discovery.yml": {
-      "sha256": "0f34f40693a956e70c9b2c2851b4dce794fdb40177acff6f7333ecaee8c2ce47",
-      "bytes": 2065
+      "sha256": "20c8977ebdbbdba511a3363ea883f35119cd61d18f9362445a7cc61b4c5cc68d",
+      "bytes": 2167
     },
     ".github/workflows/apply-final-graded-photo-integration.yml": {
-      "sha256": "fd250f073d3f8c02d37ae37649afc93bf6d8795603edfb3300664b48fa5e9797",
-      "bytes": 1094
+      "sha256": "d4873f6d7b36803137730a9c0f256801ceaced9ec17164bf7773de96bb50f2c9",
+      "bytes": 1196
     },
     ".github/workflows/apply-first-full-collection-no-timeout.yml": {
       "sha256": "92b8459630127ea5e57f112492e293403e12b6008d8c54721110819093d752c1",
       "bytes": 1185
     },
     ".github/workflows/apply-full-existing-photo-revalidation-v159.yml": {
-      "sha256": "0bd62f2ca5d56436c7ca8678af56026a53150eaafb95a731aa1545d37ab45677",
-      "bytes": 1676
+      "sha256": "58d9d6c159dc332cbb20f80e2bbab1bbbf6b2cc1b1b4f0b36edd38fcb0bc2907",
+      "bytes": 1778
     },
     ".github/workflows/apply-game-selection-ui.yml": {
-      "sha256": "9623244d98621a3ee3904ea92fd2a22e331d6df0d0cbb7d6cf8f8b8cc5b0b2b4",
-      "bytes": 1751
+      "sha256": "a57181792f6ce2e9690c4435e6d0d0934f3a94280bb14d9bea83c38635a2edc8",
+      "bytes": 1848
     },
     ".github/workflows/apply-grade-market-flow.yml": {
       "sha256": "5d1ffbba33e02c10ed631a798040926b2b850e3a2375ca134fe4b302cee6e2e9",
       "bytes": 1385
     },
     ".github/workflows/apply-graded-photo-adaptive-timeout.yml": {
-      "sha256": "78dafcfd07060f9711aa15292ed3c1ad3471748e6523229e790f59d0d712d6f9",
-      "bytes": 1005
+      "sha256": "51d0b5027fa1ded034c4f64376cedd5ee6b6fec08f90fe5953d400738ab4ad64",
+      "bytes": 1185
     },
     ".github/workflows/apply-graded-photo-bing-image-fallback.yml": {
       "sha256": "f41e98682279035e2365bab8f5ca6f0f4e9fe49e473ab7a9fa48b9c2aad50188",
       "bytes": 1210
     },
     ".github/workflows/apply-graded-photo-cumulative-patch.yml": {
-      "sha256": "3882f3d83e7db89364f85f31e332016e394ee711142a4ce49498798a8bfa7ebe",
-      "bytes": 1335
+      "sha256": "d53499b88c922e6a1c885417098d9098b8f2a94576e8865ac4d5cf6cca2fe308",
+      "bytes": 1437
     },
     ".github/workflows/apply-graded-photo-dashboard.yml": {
-      "sha256": "a9f9c08a7dce2cb7394763091b8da7483cf156c1cbf61863119a0217c5ae88cb",
-      "bytes": 1429
+      "sha256": "186f5653bc0c42d48e43d053467562599898c86cbc02832e3346e8d09a55144c",
+      "bytes": 1531
     },
     ".github/workflows/apply-graded-photo-hard-timeout.yml": {
       "sha256": "c886915667108d6d7781bc6fbf5352922497497e653aa2f04790e8f2bd68d5b8",
@@ -144,8 +144,8 @@
       "bytes": 920
     },
     ".github/workflows/apply-graded-photo-quarantine-cleanup-v157.yml": {
-      "sha256": "f58824c538924523eed9953b7e70369fa2b7c3b6d317815b149d61b9a197ed6a",
-      "bytes": 1180
+      "sha256": "65ac1d46e5ba2cd14a4f897778412b56ac29d81b38d3eaea1d2e8fe2263ad03d",
+      "bytes": 1282
     },
     ".github/workflows/apply-graded-photo-redirect-unwrap.yml": {
       "sha256": "8a5a655df7f582d13fe85bfb7f6fdd0d9e94fafbf3ab6b85903bc249edd1d436",
@@ -180,24 +180,24 @@
       "bytes": 1349
     },
     ".github/workflows/apply-integration-timeout-cache-v178.yml": {
-      "sha256": "6be8201417c943b64f65f71673f933f8c77a3c9040cd76b6f69d464ff374298c",
-      "bytes": 1789
+      "sha256": "be9a9bf9435178cfc0305956e5741027d41d7512db86e81038c4e5d1580c4cff",
+      "bytes": 1891
     },
     ".github/workflows/apply-inventory-lookup.yml": {
       "sha256": "29018ccc2258ad625e4045c0ad4f7a113293efb99d13da6252bbb2c2fad9377f",
       "bytes": 1206
     },
     ".github/workflows/apply-manual-dual-photo-index-v179.yml": {
-      "sha256": "bc397aa6ffa3c777f669d07a4f368811e05294b490b6202111b91a1077ad4aae",
-      "bytes": 1757
+      "sha256": "6e926325ead8549e742f5018dbdcda9ef5d4a58021063345c259434062cddcc6",
+      "bytes": 1854
     },
     ".github/workflows/apply-manual-official-ui-visibility-v162.yml": {
-      "sha256": "4af4d52aff709bd45294def55509db2acbb35233792546efd9d9e3a5ccea6706",
-      "bytes": 3209
+      "sha256": "afa86e69cc5af0551f83b48912f7ed18a15216d44b846c608117dc677a22e0fc",
+      "bytes": 3306
     },
     ".github/workflows/apply-manual-only-official-verification-v192b.yml": {
-      "sha256": "f81623ec3f217f10130f7aad2a96b76688e179b587cd447635805c30ffbf7238",
-      "bytes": 1402
+      "sha256": "2d69114a2c3a833b0d7c4883efaa8dd2c01211bbebbc1c633663a62923e5c428",
+      "bytes": 1499
     },
     ".github/workflows/apply-multi-market-prices.yml": {
       "sha256": "22fc730451b451c753b0213d5598d33e5189d1b38d0504bbca816d24cd69585b",
@@ -208,16 +208,16 @@
       "bytes": 2091
     },
     ".github/workflows/apply-negative-proof-korean-ocr-v171.yml": {
-      "sha256": "957ef79db9abc73716530a2ef90e6194a8ddb7c56d8b27489fe7908f6fc9563b",
-      "bytes": 1361
+      "sha256": "1f706a4bf6e60f2122fd291efab3bb6a907ab7a2a9721699949e7055a2d8b3b4",
+      "bytes": 1458
     },
     ".github/workflows/apply-official-proof-fullscreen-ocr-v168b.yml": {
-      "sha256": "0c0a50427799af46aa62c95b1521c12b1ba6cdde1dc08e09d3ed8a0441382f57",
-      "bytes": 1606
+      "sha256": "b4da7fc88839c25d3912e2a9835fd988b4bc4d23d58dccc408681b4c837474f9",
+      "bytes": 1703
     },
     ".github/workflows/apply-official-proof-fullscreen-ocr-v168c.yml": {
-      "sha256": "4ce3d9c625d5ce9d477bb0f03220fecd4f9750cecf737e4ad4af9fc6255653bd",
-      "bytes": 1760
+      "sha256": "ac33fdbe05c7fe1b0d382898d85cf46edf900d1e8d46b0ccf9252fcf79218091",
+      "bytes": 1857
     },
     ".github/workflows/apply-pending-official-candidate-v161.yml": {
       "sha256": "a409ba0d1ab72045857beae4ddbc1b0975afcc9467365eab38baada98949832e",
@@ -248,32 +248,32 @@
       "bytes": 3472
     },
     ".github/workflows/apply-search-403-cooldown-guard-v175.yml": {
-      "sha256": "b8e646353fd1722e2f9be14d64fe5919322b16b82f86cd67bc574179271bf8eb",
-      "bytes": 1664
+      "sha256": "372620e65146ba0398fde87348344efc0229d4fef67d148ea711fdd840b6d6ce",
+      "bytes": 1766
     },
     ".github/workflows/apply-search-engine-optimizer.yml": {
-      "sha256": "e00ad590e60c3f451ee533d0078507375fc9386f22da1aaa0151176471666430",
-      "bytes": 2118
+      "sha256": "dbcee2228e660dd178b25de9ed518556213a2f68b4addee9ff2dfeac54eeb4a9",
+      "bytes": 2220
     },
     ".github/workflows/apply-search-method-learning.yml": {
-      "sha256": "20732acfbb47eeb20c83603a48d71bcb96964489b1ed0d596b9b9c898ff140ef",
-      "bytes": 2088
+      "sha256": "dffb9af5ab403520da28fab8acdf0fafaa96abee00ae485bc320abe4b589f8f1",
+      "bytes": 2190
     },
     ".github/workflows/apply-search-recovery-diversity.yml": {
-      "sha256": "3de49d29a6f87edcad17f61a981950772c9d3ea2ec9d1e9ffd4e90b78f69d45d",
-      "bytes": 1694
+      "sha256": "a8c35b253bf2786f3f4da346c678a520bec3671ae9f5a236634b524c89277772",
+      "bytes": 1796
     },
     ".github/workflows/apply-security-hardening.yml": {
-      "sha256": "b9fe922015647bb18e1cffa104c23432bb035c91c3c4e93e158bcef296fa772c",
-      "bytes": 3999
+      "sha256": "b26ce1752c89322db415837ce2d87bd18133795027532a72d89476dd93ba8262",
+      "bytes": 4057
     },
     ".github/workflows/apply-social-stock-event-upgrade.yml": {
       "sha256": "0bb02daf1cf12d4ffc3d731a045c071c5c7791883d7d5ffaee8319a35a7c0b88",
       "bytes": 2110
     },
     ".github/workflows/apply-termux-korean-tessdata-v172.yml": {
-      "sha256": "1aa89d00ac91f2ffeee534b6fad266d484bab1fb6487d7e26e857633d00b3450",
-      "bytes": 1434
+      "sha256": "4615bb16966df1d73fe53d2baab97c04e6f02e61983cd52605a96a70fdeb129b",
+      "bytes": 1531
     },
     ".github/workflows/apply-ui-polish-v121.yml": {
       "sha256": "227a35122da63d07edafd2bab7bc411949f0cf0b911af6472b2b1f9034486644",
@@ -336,8 +336,8 @@
       "bytes": 1303
     },
     ".github/workflows/gpt-tcg-drive-package.yml": {
-      "sha256": "9a56716e64392618e193f4537be8c14f7b5f6b990e21d91d1e521633e9904518",
-      "bytes": 4034
+      "sha256": "923f385d2e5055d304d4a5cea76654160deba735e0bea26cb86af88ff04763e3",
+      "bytes": 4410
     },
     ".github/workflows/grading-company-watch.yml": {
       "sha256": "2ad811bb051f58aea64d663cb12258ff39d9a29173c7467607a9443c9cd5b3b6",
@@ -364,8 +364,8 @@
       "bytes": 1748
     },
     ".github/workflows/market-ai-auto-tracker.yml": {
-      "sha256": "68f4bc6359e362cbc30fa746c8d412ee9ff17506196fbab905d32f373fd9ed63",
-      "bytes": 11082
+      "sha256": "dfec18585c8e24cb3d2332fc9764ee77b5581488c0108675fcb7cd681a025090",
+      "bytes": 11162
     },
     ".github/workflows/ocr-selfrefine-guard.yml": {
       "sha256": "b1291d35e3122369f2c7620cba70866930b2c8b53de292e747a36ad1186b5073",
@@ -420,8 +420,8 @@
       "bytes": 3182
     },
     ".github/workflows/runtime-optimization-hardening.yml": {
-      "sha256": "3e2ab3782c82ec3913fdb4778c2a37eb4fbc2a89473b084e043b829c1c17b98d",
-      "bytes": 5981
+      "sha256": "4e2c603767cc48c50ec3c123cfcdf3bfeabe8c008a0a1059ef391abd442276a5",
+      "bytes": 6038
     },
     ".github/workflows/self-learning-upgrade.yml": {
       "sha256": "e6adab746bd8e1371553682d9ac314eb4b494ca3ab930b66ff12c23583a224e4",
@@ -448,8 +448,8 @@
       "bytes": 4856
     },
     ".github/workflows/tcg-static-data-refresh.yml": {
-      "sha256": "ca854b3858dcb61ed4530263e3cf76569eb2b3f148e17abd667ccdc83374add3",
-      "bytes": 17327
+      "sha256": "a86510786e46fc99184bf2626018e4eb56e796eb550c1d17dd77699afed9244d",
+      "bytes": 23540
     },
     ".github/workflows/v108-regression-diagnostic.yml": {
       "sha256": "0bbc12618657de981deabd60c83d2c0091af636ffc7feab8fcd09bbf37002a7a",
@@ -462,6 +462,10 @@
     ".github/workflows/verify-breaking-event-watch.yml": {
       "sha256": "162c93ce0ab10aee5f6b7ce58d68fbcf137535303e27490bc64bfc6ae35168ce",
       "bytes": 10405
+    },
+    ".github/workflows/workflow-publish-safety-v363.yml": {
+      "sha256": "56feef879d543e0972d21b2f83096f8cd6e17fc89296c82f9efabf774d13693e",
+      "bytes": 3863
     },
     "ANDROID_AUTO_START_INSTALL.sh": {
       "sha256": "3b350574a240c8e7b0aa64615d0d3f7c4bd1240d46c83fa9708ec486ea9550a0",
@@ -743,6 +747,42 @@
       "sha256": "d03413a77a14c78f912810d85db4be7745ba837aed6328974ebfffc21c4ce8c0",
       "bytes": 3022
     },
+    "TCG_CROSSCHECK/TABLET_GPT/learning_snapshot_v361_delta.json": {
+      "sha256": "3644260516d102b92da8f7a852fc8d3d9ec7e97e9ddb654bc45a5930029cb7cf",
+      "bytes": 2974
+    },
+    "TCG_CROSSCHECK/TABLET_GPT/learning_snapshot_v362_delta.json": {
+      "sha256": "49a605d7ea8621a7a5675050af2501c4afbe9e464869cd0096a956e98c689948",
+      "bytes": 3144
+    },
+    "TCG_CROSSCHECK/TABLET_GPT/learning_snapshot_v363_delta.json": {
+      "sha256": "3c0f8ade623dbaf98cac3a8682884cad374b582745d60494f3c77cff8ddf1e71",
+      "bytes": 3381
+    },
+    "TCG_CROSSCHECK/TABLET_GPT/learning_snapshot_v364_delta.json": {
+      "sha256": "85cd1e901268ba92f4954a38f777dbc64b44a6363c58b3f9bed6c4af6aff47d9",
+      "bytes": 2466
+    },
+    "TCG_CROSSCHECK/TABLET_GPT/learning_snapshot_v365_delta.json": {
+      "sha256": "82be791d2f638e56116820967c35f545030504dac4e0bedd41600062f3de64fc",
+      "bytes": 4735
+    },
+    "TCG_CROSSCHECK/TABLET_GPT/learning_snapshot_v366_delta.json": {
+      "sha256": "8f35897307c91cf4e7a3e3ff1adb4786669cfa33f7cd4c7d041099c8a67f3a7c",
+      "bytes": 3311
+    },
+    "TCG_CROSSCHECK/TABLET_GPT/learning_snapshot_v367_delta.json": {
+      "sha256": "4d13476a4f2895e7364be087a862e3561b3efdfa30935ac0a38445d6a4ffd74d",
+      "bytes": 2451
+    },
+    "TCG_CROSSCHECK/TABLET_GPT/learning_snapshot_v368_delta.json": {
+      "sha256": "d9287cf20282cf4d816b334bcfb731ff765c29c0dd3498f789eabc4b1c3678d5",
+      "bytes": 2537
+    },
+    "TCG_CROSSCHECK/TABLET_GPT/learning_snapshot_v369_delta.json": {
+      "sha256": "28a1b52568bdb8169b73fd7d120cefde35513505935dba8a0eda5a7264690b48",
+      "bytes": 2705
+    },
     "TCG_CROSSCHECK/TABLET_GPT/ui_repair_candidate_20260926.json": {
       "sha256": "26cb1d421670ea1be7e2b686438226653b0574efc20e5ca0dcc965d34b8b949f",
       "bytes": 1585
@@ -842,6 +882,42 @@
     "TCG_CROSSCHECK/TABLET_GPT_TCG_GRADER_SYNC_CONTRACT_V360.json": {
       "sha256": "a5c146a8703db9f57ae8ccbedf849d715f6e94bc70601b4efed128f5750126b3",
       "bytes": 5191
+    },
+    "TCG_CROSSCHECK/TABLET_GPT_TCG_GRADER_SYNC_CONTRACT_V361.json": {
+      "sha256": "67f0de2e7f7b778c4b22742ebe5f1cd39cfa7ff0ce99e3fae55626468347d938",
+      "bytes": 5506
+    },
+    "TCG_CROSSCHECK/TABLET_GPT_TCG_GRADER_SYNC_CONTRACT_V362.json": {
+      "sha256": "230ff4b57890ad33072ac213f52827376b6355c990077a37da58c2c8c2d00983",
+      "bytes": 6042
+    },
+    "TCG_CROSSCHECK/TABLET_GPT_TCG_GRADER_SYNC_CONTRACT_V363.json": {
+      "sha256": "74aca9fb256fae80a6ed4f3bc806092789dc5ac493eb01b034cf7aee333d7622",
+      "bytes": 6352
+    },
+    "TCG_CROSSCHECK/TABLET_GPT_TCG_GRADER_SYNC_CONTRACT_V364.json": {
+      "sha256": "63c09615ef233d73477bd047efa11f785ba58ea82cc5641ce81b468e61decfbd",
+      "bytes": 6404
+    },
+    "TCG_CROSSCHECK/TABLET_GPT_TCG_GRADER_SYNC_CONTRACT_V365.json": {
+      "sha256": "0ea19a520d602aa6eed081e46ca607a72e3d9852cf7872bf5da7fc67afc5093d",
+      "bytes": 7067
+    },
+    "TCG_CROSSCHECK/TABLET_GPT_TCG_GRADER_SYNC_CONTRACT_V366.json": {
+      "sha256": "741957fd5c0d1fc48173272dd22f4d1b29181a0ed86dabe663d64e87046b9a74",
+      "bytes": 7151
+    },
+    "TCG_CROSSCHECK/TABLET_GPT_TCG_GRADER_SYNC_CONTRACT_V367.json": {
+      "sha256": "e2411303c7bf6b430a6e5efb58193a02d7e46c2fd0e06bf1615753e5f2de0568",
+      "bytes": 6744
+    },
+    "TCG_CROSSCHECK/TABLET_GPT_TCG_GRADER_SYNC_CONTRACT_V368.json": {
+      "sha256": "7b885bff1899cb960d509948fccade909a1b26ef630af7328d51e565710d7ef2",
+      "bytes": 4373
+    },
+    "TCG_CROSSCHECK/TABLET_GPT_TCG_GRADER_SYNC_CONTRACT_V369.json": {
+      "sha256": "ddb5bac65887fa4a8ddbc38a1cc50281c4c567fd209583d8625caa1066e38698",
+      "bytes": 4500
     },
     "TCG_CROSSCHECK/TCG_GRADER/AI_RELIABILITY_V8_ACTUAL_OUTPUT.json": {
       "sha256": "f56c12964705bf9e62bd655af80f1a292017b097e800d7f74521ad8b22f0b233",
@@ -982,6 +1058,42 @@
     "TCG_CROSSCHECK/TCG_GRADER/tablet_gpt_learning_receipt_v360.json": {
       "sha256": "dd8de19b68cb5a3f00f2596b685f2e508e695c4dbc144af6204a0b14193ec47e",
       "bytes": 1813
+    },
+    "TCG_CROSSCHECK/TCG_GRADER/tablet_gpt_learning_receipt_v361.json": {
+      "sha256": "1dbf7b33a413f3fe5e6ffd6f41c70423083f9adbd9d870c805fdb8d8b9b38992",
+      "bytes": 1734
+    },
+    "TCG_CROSSCHECK/TCG_GRADER/tablet_gpt_learning_receipt_v362.json": {
+      "sha256": "aac64261b506a90475c123f0023fa37987153f7512488d7eda956d0fcd8b340f",
+      "bytes": 1742
+    },
+    "TCG_CROSSCHECK/TCG_GRADER/tablet_gpt_learning_receipt_v363.json": {
+      "sha256": "1f9d18340cb067a1f9d5af92f13dcfed8567d763bd0a12edbda8a43545e2238a",
+      "bytes": 1747
+    },
+    "TCG_CROSSCHECK/TCG_GRADER/tablet_gpt_learning_receipt_v364.json": {
+      "sha256": "29ff20d780d3928061d68db1418d334c8ccac5e4762a8dd4c57c7bb686ece46c",
+      "bytes": 1756
+    },
+    "TCG_CROSSCHECK/TCG_GRADER/tablet_gpt_learning_receipt_v365.json": {
+      "sha256": "08537783d798242fac5e9ad9210efe29cdb9f96d6f9d0e25f9cf613dcb5ef56e",
+      "bytes": 1798
+    },
+    "TCG_CROSSCHECK/TCG_GRADER/tablet_gpt_learning_receipt_v366.json": {
+      "sha256": "741b18f11dcee9cf9f93f744b999aafc7c824afc67c5d0f34ac1f8112f5146c9",
+      "bytes": 1754
+    },
+    "TCG_CROSSCHECK/TCG_GRADER/tablet_gpt_learning_receipt_v367.json": {
+      "sha256": "b9cac0f522edd50e7479de7c7918d2b2ec8ca64ced6141e6e5d33dc3fc1d87f0",
+      "bytes": 1768
+    },
+    "TCG_CROSSCHECK/TCG_GRADER/tablet_gpt_learning_receipt_v368.json": {
+      "sha256": "9a9fabbc17537f53352343e911217ab2313ac3c10d82e200647a3275840ec813",
+      "bytes": 1775
+    },
+    "TCG_CROSSCHECK/TCG_GRADER/tablet_gpt_learning_receipt_v369.json": {
+      "sha256": "052ab6b4c63a3905c92034c293c151688e97242581f07a7175177a0d66ca13c2",
+      "bytes": 1774
     },
     "TCG_CROSSCHECK/exchange_manifest.json": {
       "sha256": "4bba146c573d224a641e40416c9d4cf983e1100855f95841e9518ff9e7d925f6",
@@ -1404,8 +1516,8 @@
       "bytes": 143470
     },
     "auto_update_all.py": {
-      "sha256": "c99c8af2bd046fd3c8e3f34383fd5558e81b445f0b5a605f040c9a7549f3e489",
-      "bytes": 74869
+      "sha256": "5c4c391ff5f93b6d7c9d00128c3892f43074c0b976c7ac1817f03b0bca0bbb0b",
+      "bytes": 75136
     },
     "auto_validation_flow.js": {
       "sha256": "264280b17ce3306b92e3a46821d05d18f9f92b2757c84924222119601b32aa81",
@@ -1572,7 +1684,7 @@
       "bytes": 8134
     },
     "exchange_rates.json": {
-      "sha256": "7de009b456ab64cbbfb77c66571f055fc0b348c0803a0c09f4ec0a369d923ef5",
+      "sha256": "6df4f807410e47beb7d85a89fc85bc674df93cb8c25e177ff1dff4ed9e149475",
       "bytes": 445
     },
     "fan_social_learning.py": {
@@ -1820,7 +1932,7 @@
       "bytes": 7206
     },
     "grading_company_updates.json": {
-      "sha256": "910f408ab85f32804570ada5a7582e5e8d32abe37e8ffdac3f0bbe214f6cae10",
+      "sha256": "8bcec17e5fe97833df41513c687cb85866f6f078b22c07ec4a859acd14b0ba50",
       "bytes": 53087
     },
     "grading_company_watch.py": {
@@ -2212,15 +2324,15 @@
       "bytes": 4126
     },
     "market_prices.json": {
-      "sha256": "ac2d9dc104f6e959fe765e2f61de7e35fcfa280ba507d6757e1079a1b1209ef6",
-      "bytes": 43158
+      "sha256": "8920ff7a65654305b0e6f20dc7df6066b276e8615e409805c5a6cd34d14f0ff1",
+      "bytes": 43308
     },
     "market_public_crosscheck.py": {
       "sha256": "1c3d93d56d7a192e89e08594b2dbc8958ca456a435b72c69fc6adc09f292fd7f",
       "bytes": 17748
     },
     "market_watch.json": {
-      "sha256": "57ccf8f527ddea554c966c2424ca79a18d920951b49743dc0d36b0b1bda45393",
+      "sha256": "fbd646c98aa20d4f2facf93de9ed9309d574b576339e635741519c94ee804e15",
       "bytes": 19858
     },
     "migrate_old_data.py": {
@@ -2308,8 +2420,8 @@
       "bytes": 4433
     },
     "promo_events.json": {
-      "sha256": "0cedbe9dee5fd7839c83a494067d3fa52ab622f2adf33eee7c2b88e0f98e5ebb",
-      "bytes": 126458
+      "sha256": "59984cb943c56a6ee2b9b650c87a500e084845639a509b76c4265a588f2ff844",
+      "bytes": 128855
     },
     "protected_static_candidate_guard.py": {
       "sha256": "e539c1dff5ea210e1db4c374baa3a29b3f9cb7e7a3d7bb09a2cde78bbf67b6e5",
@@ -2336,12 +2448,12 @@
       "bytes": 10520
     },
     "purchase_signals.json": {
-      "sha256": "d25c2e1fe76884f51c5003c5a4fd5c60aa48a45bffbe8b6610a2fe03d7b8db85",
+      "sha256": "cfb77f972b1fb9fa465e67be1a1bdf65d0af46684e3bf76d63eefd96488c43a8",
       "bytes": 234
     },
     "purchase_sources.json": {
-      "sha256": "3988968f1df5460fa0db1ffa2303278b1a4bd33b6fa54aa0c0b660c79a18df27",
-      "bytes": 195895
+      "sha256": "15d59c1167963ddbd6cb9c4159355a6d52d65f85f2e4925aa5de55f39a605b4a",
+      "bytes": 195859
     },
     "quality_review_policy.py": {
       "sha256": "d33c417fe221640de679343fc6d9527984386b331edd4ce5663107fd25c34661",
@@ -2368,7 +2480,7 @@
       "bytes": 3066
     },
     "releases.json": {
-      "sha256": "97853e62dc68e22c46e52ca66c22f906b96c79582d12ea165707dc55b59e718b",
+      "sha256": "42609dcd9e47462a5c43938aa954168ad78814792600885404bc4a85265589aa",
       "bytes": 49652
     },
     "repository_health_guard.py": {
@@ -2410,6 +2522,14 @@
     "safe_runtime.py": {
       "sha256": "455720ebcb37e89fe2f6eff03a32ed528ab86c592efc9452d46c3bc09ae9eba2",
       "bytes": 22298
+    },
+    "scripts/manifest_semantic_reconcile.py": {
+      "sha256": "57d9499864a9aff2c80c134f1c6788db19acf09b3f03d4b40773f8ee1ad2fc92",
+      "bytes": 1179
+    },
+    "scripts/publish_candidate_pr.sh": {
+      "sha256": "eed93ba71d8c553c75490f94ed88dcc50d2fa5693db7dc9f3352f3b380b4f585",
+      "bytes": 5036
     },
     "search_method_learning.py": {
       "sha256": "2b65c865f2d2868215928f0b42457a525018baaf8c917a2a5773191dbc1c0c2a",
@@ -2488,7 +2608,7 @@
       "bytes": 21246
     },
     "social_stock_signals.json": {
-      "sha256": "90f406fb752fa2e30178b388f84655b7fc5466be014f31cfae347ae08509f0b8",
+      "sha256": "dd2a38ae0343cd4d5a8dabfe478f726e27cc840422d4d0e82f4041f8cf499350",
       "bytes": 453
     },
     "social_stock_sources.json": {
@@ -2496,8 +2616,8 @@
       "bytes": 1578
     },
     "static_data_publish_gate.py": {
-      "sha256": "c05b761e55abeae9b4ce69d7d94dd6b98c77afc51fb84ffb67714911e494b737",
-      "bytes": 9648
+      "sha256": "bd5d50d89b927c24de4ecbe14c6059ba656bf4c560e1a3a1ad9a899475288ad1",
+      "bytes": 11490
     },
     "static_integrity_manifest.py": {
       "sha256": "49a1133449f31e63630ae9fb9413b39faae9a58ce4f3c7954f743df35357c8d6",
@@ -2508,7 +2628,7 @@
       "bytes": 6377
     },
     "supplementary_candidates.json": {
-      "sha256": "8f10884901ee80d52ad91f05f6cfdaa1a73f1c066647eaac4bd4ce8d6ecba7e1",
+      "sha256": "23b19639d775c1e7ea445ca14e4dc02765ef46a14c8abe31010eddc25b81255d",
       "bytes": 7867
     },
     "supplementary_discovery.py": {
@@ -2544,8 +2664,8 @@
       "bytes": 2059
     },
     "tablet_gdrive_sync_perf_v262.py": {
-      "sha256": "fea70b4ceb92866860ef78763538c73284ad4f497585bff2e33e26b08a329fce",
-      "bytes": 8514
+      "sha256": "87895d385d41623beb12801fdd5c1f3244afc6b69c6bd5745d6d1e6cadbc0c61",
+      "bytes": 17900
     },
     "tablet_runtime_manifest.py": {
       "sha256": "ef16b132cb662e03676bb2e8c00cf83257a6722bd87589c92ae26ddf6500e672",
@@ -2564,8 +2684,8 @@
       "bytes": 39105
     },
     "tcg_live_data.json": {
-      "sha256": "819485c8d4f3a8f0279094486137e66b980ae80b97bad78d7145f92bd6ad2249",
-      "bytes": 112054
+      "sha256": "1b8a87d6553065dc389426c06978c6abfb57c86f367b02c2a67399c37365c53f",
+      "bytes": 112014
     },
     "tcg_reliability/__init__.py": {
       "sha256": "3e6bcd161ad0dfcd323c560703d86be1f22c9ab98055eef50ef91e9065e5d648",
@@ -2694,6 +2814,10 @@
     "test_apply_patch_idempotency.py": {
       "sha256": "2b67ea340d61fe0cb6173272a11a00ec7eb2e1e7fa79dba11e032355d2c160b7",
       "bytes": 1572
+    },
+    "test_auxiliary_freshness_coordination_v367.py": {
+      "sha256": "717d5e5270515e3657c4fefb3c55d9a0619e4bc769e3c000fa9823b067d0976a",
+      "bytes": 4959
     },
     "test_bgs_cert_ocr_v169.py": {
       "sha256": "02d091e139dadc709f7d302ecf6795e928d589d752437f1a468be35ef0a17dc2",
@@ -2954,6 +3078,10 @@
     "test_gpt_data_engine.py": {
       "sha256": "715e185607fe8289e2f80adcbbcf2ec3aa27caefe9edf959f4f4d0dead07392a",
       "bytes": 1663
+    },
+    "test_gpt_tcg_drive_package_recovery.py": {
+      "sha256": "a965860bcf95016b85fb23eefffbde7bbe120548263d01803c1473d481760486",
+      "bytes": 962
     },
     "test_graded_photo_existing_revalidation_v159.py": {
       "sha256": "af411032e51b0b0fb43dc5320a4632694d7c6b6277f7e25693bdbac3c39c9dbb",
@@ -3456,8 +3584,8 @@
       "bytes": 14193
     },
     "test_tablet_gdrive_sync_perf_v262.py": {
-      "sha256": "65b2e646cae157ed549fdb3d089e964708e5afd01d7e9234707603818e420737",
-      "bytes": 6815
+      "sha256": "a8737f925a4b4d4c2b51ec509e07a308946c56f8099a858088e6e5550cae7a30",
+      "bytes": 11183
     },
     "test_tablet_gpt_tcg_grader_sync_v285.py": {
       "sha256": "dd5421a8fff8ef04749614588d2722edce4bfb4b4947a42f9af3bf01448e35c7",
@@ -3520,48 +3648,84 @@
       "bytes": 4993
     },
     "test_tablet_gpt_tcg_grader_sync_v350.py": {
-      "sha256": "18680f375fbff068d95f02f3922a5dce07f9414a1487a56226a892703ac6d23e",
-      "bytes": 3950
+      "sha256": "81498ede233bd35cbd5995ef6239713e32c8d3e7ab1ac29f44787763a295ccda",
+      "bytes": 4122
     },
     "test_tablet_gpt_tcg_grader_sync_v351.py": {
-      "sha256": "cba3a9f7eb52e8d430e46ffb1b19cfcf6c33261811e4dc8b56db6927126bce75",
-      "bytes": 8075
+      "sha256": "3176015e230a57e39039ff8ad29f14ccf6c878bf78698655bee6d809f6c502ba",
+      "bytes": 8201
     },
     "test_tablet_gpt_tcg_grader_sync_v352.py": {
-      "sha256": "6ecee171227f85442202e06073f480132dcf1742c0a3f46f6d2cc3e221e6836b",
-      "bytes": 5538
+      "sha256": "2015a4365480a279b96346e5f88ab7476b8ba7a8c075998b2d5232b14cf0ec53",
+      "bytes": 5639
     },
     "test_tablet_gpt_tcg_grader_sync_v353.py": {
-      "sha256": "69a9d378c3327aaab5b7e0e0545c1eecf52c1505f9abceaea4d62af73c4751de",
-      "bytes": 8075
+      "sha256": "955171bbd3bd5ffe866d8cd9c4eb6b1a3808b0288c5660e4b3ceec2c3f4624ed",
+      "bytes": 8201
     },
     "test_tablet_gpt_tcg_grader_sync_v354.py": {
-      "sha256": "9088a01c62ce09e44d2292abef059c0720794c9656ffade72e06327b13b73dff",
-      "bytes": 4226
+      "sha256": "7bc99bbdf63ca7193d5cfd9fdf09475c807bd7b85e5c719844671a2eb02c24e0",
+      "bytes": 4233
     },
     "test_tablet_gpt_tcg_grader_sync_v355.py": {
       "sha256": "f773c88b48322cae9c6a55373b9b565e9bdc9998365b55a082c29561d798661b",
       "bytes": 4480
     },
     "test_tablet_gpt_tcg_grader_sync_v356.py": {
-      "sha256": "133cfccf1cf28abc32017dd636b7da51e238984a27a7ee376527d22bad59973c",
-      "bytes": 5001
+      "sha256": "3be4434c3ff3e33d8080c209a11f15ab2b7217bc8ec6dfc9c871f713819031de",
+      "bytes": 5008
     },
     "test_tablet_gpt_tcg_grader_sync_v357.py": {
-      "sha256": "e8e25152903ecbffa63ff1b5eb9acd4d5beaf40d8d38d2b6b5e1aee6cb299d5c",
-      "bytes": 5354
+      "sha256": "04317c4f2637f35d93ff836af956ddc060d9440fc7782fc83bef6cb8b5f85506",
+      "bytes": 5361
     },
     "test_tablet_gpt_tcg_grader_sync_v358.py": {
-      "sha256": "4bfdbf3bebbbddb883726ebe4aa98bed0855df1af8f824deb317651ecebddad8",
-      "bytes": 5354
+      "sha256": "3b75d27e5dfd12eec268245b878e6a8aea842ae274c6ed6153d7337ecc842270",
+      "bytes": 5361
     },
     "test_tablet_gpt_tcg_grader_sync_v359.py": {
-      "sha256": "cbb815df9b2ec5fcc1dcb6e79f79519c1c44c5e6b55d72812a432571c4fcdb1e",
-      "bytes": 7786
+      "sha256": "2af183a5ee9308430b9497d2ac3a98f394f71782bbda3d3b7fa5f862a88e9801",
+      "bytes": 7907
     },
     "test_tablet_gpt_tcg_grader_sync_v360.py": {
-      "sha256": "6c4d42b03a09797a20c811a5580f6c7dbbe9b09b535f04b833ae3471ae3cb6b5",
-      "bytes": 4721
+      "sha256": "2d505af4f313e2e453a9b0640a140ec5e0d7c9756fd4da825b3fef9b3415b7f9",
+      "bytes": 4728
+    },
+    "test_tablet_gpt_tcg_grader_sync_v361.py": {
+      "sha256": "b7abdaf01622458542bf13460fa2a7e20383963fb3f4b40d4f35e28d96a23a7d",
+      "bytes": 7510
+    },
+    "test_tablet_gpt_tcg_grader_sync_v362.py": {
+      "sha256": "b3bd853e7eb377b9df80680aa9e15bcae48075d40d84dce82f9d84370053ba27",
+      "bytes": 8201
+    },
+    "test_tablet_gpt_tcg_grader_sync_v363.py": {
+      "sha256": "e671bedd9938a9e6da79bea96bea79a75740224d5eb99b83320fdbc75ea1ce7d",
+      "bytes": 8349
+    },
+    "test_tablet_gpt_tcg_grader_sync_v364.py": {
+      "sha256": "382809f4eea3e03bdcebda633b4665203a3d61029590dfea4af7533678c792d5",
+      "bytes": 7777
+    },
+    "test_tablet_gpt_tcg_grader_sync_v365.py": {
+      "sha256": "51b7e48fa7573dddf996a020a0950f1124ac58c69f2c3813b836f1f598e892bf",
+      "bytes": 8174
+    },
+    "test_tablet_gpt_tcg_grader_sync_v366.py": {
+      "sha256": "df9bf870242f8eac5edb1e6e9321bbfe9e7956df9b5d1df1c21923240ae07d6a",
+      "bytes": 8439
+    },
+    "test_tablet_gpt_tcg_grader_sync_v367.py": {
+      "sha256": "64e84cea07157f8e07ea83b53112357a50100ce95a0475463f7cb6faf25c0dbd",
+      "bytes": 7594
+    },
+    "test_tablet_gpt_tcg_grader_sync_v368.py": {
+      "sha256": "a10511053f363bc59ae01e34e1fc56257409e88021f7ab62cf8a728d898608aa",
+      "bytes": 9301
+    },
+    "test_tablet_gpt_tcg_grader_sync_v369.py": {
+      "sha256": "63956f855172b09b1eaeb6f621cc75c611d86101f4f0b910f4afd37b3f5936c0",
+      "bytes": 6471
     },
     "test_tablet_main_entrypoint_v251.py": {
       "sha256": "eeca09372b0dd587d6d74d8a1ec75f28e84aca07b7cc38d2bf61555ef992b2f8",
@@ -3686,6 +3850,10 @@
     "test_verified_slab_training_archive_v152.py": {
       "sha256": "0413ee45802efb7a8d7c9c630206de94181ce280a54c6d159bfef346db6482bf",
       "bytes": 6175
+    },
+    "test_workflow_publish_safety_v363.py": {
+      "sha256": "4bfc423ad835de49fbd8b34b389b8920ade58f55e0d42befbbda381c22b9b86e",
+      "bytes": 5810
     },
     "test_wyyyes_market_source_v267.py": {
       "sha256": "4320eba8bdc1fe4c624646265ed9c1a59d1b7b4b94866a607b1bfddc6814e9b3",

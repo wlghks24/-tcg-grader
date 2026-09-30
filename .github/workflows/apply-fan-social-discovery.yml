@@ -6,6 +6,9 @@ on:
 
 permissions:
   contents: write
+  pull-requests: write
+  actions: write
+  checks: read
 
 jobs:
   patch:
@@ -46,5 +49,5 @@ jobs:
           git add social_event_discovery.py multi_route_event_discovery.py social_source_registry.json .gitignore
           if ! git diff --cached --quiet; then
             git commit -m 'feat: collect and learn TCG fan social sources safely'
-            git push origin main
+            GH_TOKEN="${{ github.token }}" bash scripts/publish_candidate_pr.sh
           fi

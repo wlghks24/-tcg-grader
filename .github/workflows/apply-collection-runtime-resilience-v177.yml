@@ -6,6 +6,9 @@ on:
 
 permissions:
   contents: write
+  pull-requests: write
+  actions: write
+  checks: read
 
 jobs:
   patch:
@@ -30,5 +33,5 @@ jobs:
           git add update_market_prices.py auto_update_all.py
           if ! git diff --cached --quiet; then
             git commit -m 'fix: defer transient market and auxiliary network failures v177'
-            git push origin main
+            GH_TOKEN="${{ github.token }}" bash scripts/publish_candidate_pr.sh
           fi

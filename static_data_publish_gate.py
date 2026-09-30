@@ -56,6 +56,35 @@ def _parse_time(value: Any) -> dt.datetime | None:
     return stamp.astimezone(dt.timezone.utc)
 
 
+def audit_aux_freshness(root: Path, *, now: dt.datetime, max_age_hours: float = 48.0) -> list[dict]:
+    """Fail closed when supplementary discovery was not refreshed recently.
+
+    The integrated discovery collector writes this timestamp on every completed
+    run, even when a secondary source is temporarily unavailable. A stale stamp
+    therefore means the current publish cycle did not safely produce this output.
+    """
+    findings: list[dict] = []
+    try:
+        payload = _load(root / "supplementary_candidates.json")
+    except ValueError:
+        return findings  # structural failure is already reported by AUX_OUTPUTS validation
+    stamp = _parse_time(payload.get("updated_at"))
+    if stamp is None:
+        findings.append({"severity": "critical", "code": "MISSING_SUPPLEMENTARY_TIMESTAMP",
+                         "target": "supplementary_candidates.json"})
+        return findings
+    age_seconds = (now - stamp).total_seconds()
+    if age_seconds < -300:
+        findings.append({"severity": "critical", "code": "FUTURE_SUPPLEMENTARY_TIMESTAMP",
+                         "target": "supplementary_candidates.json",
+                         "age_hours": round(age_seconds / 3600, 2)})
+    elif age_seconds > max_age_hours * 3600:
+        findings.append({"severity": "critical", "code": "STALE_SUPPLEMENTARY_SNAPSHOT",
+                         "target": "supplementary_candidates.json",
+                         "age_hours": round(age_seconds / 3600, 2)})
+    return findings
+
+
 def audit_topic_contract(promo: dict, social: dict) -> list[dict]:
     findings: list[dict] = []
     expected = int(promo.get("social_topic_expected_cells") or 0)
@@ -108,6 +137,8 @@ def verify(root: Path = ROOT, *, now: dt.datetime | None = None,
         if not isinstance(payload.get("items"), list):
             findings.append({"severity": "critical", "code": "INVALID_AUX_ITEMS",
                              "target": filename})
+
+    findings.extend(audit_aux_freshness(root, now=now))
 
     try:
         releases = _load(root / "releases.json")
@@ -172,6 +203,10 @@ def verify(root: Path = ROOT, *, now: dt.datetime | None = None,
         sync = report.get("auxiliary_coverage_sync")
         if not isinstance(sync, dict) or sync.get("ok") is not True:
             findings.append({"severity": "critical", "code": "AUXILIARY_COVERAGE_SYNC_FAILED"})
+        integration = report.get("integration")
+        if (not isinstance(integration, dict) or integration.get("ok") is not True
+                or integration.get("degraded") is True):
+            findings.append({"severity": "critical", "code": "AUXILIARY_INTEGRATION_NOT_CLEAN"})
 
     counts = {
         "critical": sum(x.get("severity") == "critical" for x in findings),
