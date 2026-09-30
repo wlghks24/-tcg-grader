@@ -1,0 +1,136 @@
+name: Apply no direct main publish v363
+
+on:
+  push:
+    branches:
+      - 'fix/no-direct-main-publish-v363'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: apply-no-direct-main-publish-v363-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  harden:
+    if: github.ref == 'refs/heads/fix/no-direct-main-publish-v363' && github.actor == github.repository_owner
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    env:
+      PYTHONDONTWRITEBYTECODE: '1'
+      PYTHONUNBUFFERED: '1'
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97
+        with:
+          python-version: '3.12'
+      - name: Require exact latest-main ancestry
+        shell: bash
+        run: |
+          set -euo pipefail
+          git fetch origin +refs/heads/main:refs/remotes/origin/main
+          git merge-base --is-ancestor origin/main HEAD
+          test "$(git rev-parse --abbrev-ref HEAD)" != "main"
+      - name: Replace every direct-main workflow publisher
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          from pathlib import Path
+
+          workflow_dir = Path('.github/workflows')
+          self_path = workflow_dir / 'apply-no-direct-main-publish-v363.yml'
+          forbidden = 'git push origin HEAD:main'
+          token_expr = '$' + '{{ github.token }}'
+          replacement = f'GH_TOKEN="{token_expr}" bash scripts/publish_candidate_pr.sh'
+          changed = []
+
+          def ensure_pr_permission(text: str, path: Path) -> str:
+              lines = text.splitlines(keepends=True)
+              try:
+                  pidx = next(i for i, line in enumerate(lines) if line.rstrip('\r\n') == 'permissions:')
+              except StopIteration as exc:
+                  raise SystemExit(f'MISSING_PERMISSIONS_BLOCK:{path}') from exc
+              j = pidx + 1
+              while j < len(lines):
+                  line = lines[j]
+                  if line.strip() and not line.startswith((' ', '\t')):
+                      break
+                  j += 1
+              block = ''.join(lines[pidx + 1:j])
+              if 'contents: write' not in block:
+                  raise SystemExit(f'MISSING_CONTENTS_WRITE:{path}')
+              if 'pull-requests: write' in block:
+                  return text
+              lines.insert(j, '  pull-requests: write\n')
+              return ''.join(lines)
+
+          for path in sorted(workflow_dir.glob('*.yml')):
+              if path == self_path:
+                  continue
+              text = path.read_text(encoding='utf-8')
+              count = text.count(forbidden)
+              if not count:
+                  continue
+              if count != 1:
+                  raise SystemExit(f'UNEXPECTED_DIRECT_MAIN_COUNT:{path}:{count}')
+              text = ensure_pr_permission(text, path)
+              text = text.replace(forbidden, replacement, 1)
+              path.write_text(text, encoding='utf-8')
+              changed.append(str(path))
+
+          if len(changed) != 17:
+              raise SystemExit(f'EXPECTED_17_DIRECT_MAIN_WORKFLOWS_FOUND_{len(changed)}:{changed}')
+
+          remaining = []
+          for path in sorted(workflow_dir.glob('*.yml')):
+              if path == self_path:
+                  continue
+              if forbidden in path.read_text(encoding='utf-8'):
+                  remaining.append(str(path))
+          if remaining:
+              raise SystemExit(f'DIRECT_MAIN_REMAINS:{remaining}')
+
+          print('hardened workflows:')
+          for path in changed:
+              print(f'  - {path}')
+          PY
+          git diff --check
+      - name: Remove one-shot migration workflow from final tree
+        shell: bash
+        run: |
+          set -euo pipefail
+          git rm -- .github/workflows/apply-no-direct-main-publish-v363.yml
+      - name: Run publish safety targeted regression
+        shell: bash
+        run: |
+          set -euo pipefail
+          bash -n scripts/publish_candidate_pr.sh
+          python -m unittest -v test_workflow_publish_safety_v363.py test_protected_static_pipeline_v305.py
+          git diff --check
+      - name: Rebuild exact-tree integrity manifest and diagnose
+        shell: bash
+        run: |
+          set -euo pipefail
+          python fault_injection_healing.py --manifest
+          python fault_injection_healing.py --diagnose
+          python repository_integrity_guard.py
+          git diff --check
+      - name: Commit verified repository-wide workflow hardening
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add -A
+          test -z "$(git diff --cached --name-only | grep -F '.github/workflows/apply-no-direct-main-publish-v363.yml' || true)" || {
+            echo 'ONE_SHOT_WORKFLOW_STILL_STAGED' >&2
+            exit 1
+          }
+          git diff --cached --check
+          git commit -m 'security: remove direct-main workflow publishers v363'
+          git push origin "HEAD:${GITHUB_REF_NAME}"
