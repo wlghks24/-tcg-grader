@@ -1,0 +1,50 @@
+{
+  "schema_version": "1.1-tablet-gpt-tcg-grader-learning-sync",
+  "namespace": "TABLET_GPT",
+  "snapshot_kind": "learning_delta",
+  "run_date_kst": "2026-09-30",
+  "built_at": "2026-09-30T15:25:00+09:00",
+  "status": "finalized",
+  "source_repository": "wlghks24/-tcg-grader",
+  "prior_delta": "TCG_CROSSCHECK/TABLET_GPT/learning_snapshot_v363_delta.json",
+  "prior_lesson_digest_sha256": "44454f70aec8a4ee5f261b9f25c3761b6c210f67038a4ba9cfcebdfa568d9902",
+  "source_main_sha": "f637f866aabbc1a76bcdd1a9b64744ed9a725b1c",
+  "share_policy": {
+    "explicit_patch_and_learning_lessons_only": true,
+    "chatgpt_model_weights_exported": false,
+    "raw_grading_calibration_shared": false,
+    "device_local_runtime_memory_overwritten": false,
+    "peer_verified_never_auto_promotes_local": true
+  },
+  "covered_merges": [
+    {
+      "pr": 342,
+      "version": "v364-dual-stale-package-recovery-base",
+      "merge_sha": "f637f866aabbc1a76bcdd1a9b64744ed9a725b1c"
+    }
+  ],
+  "lesson_digest_sha256": "ab76114736b636533cce3707c6442075058623e8be4e0b6a53e64307f50e83c2",
+  "lessons": [
+    {
+      "lesson_id": "TABLET-GPT-DUAL-STALE-PACKAGE-RECOVERY-V364",
+      "subsystem": "tablet_gpt_drive_package_freshness_recovery",
+      "issue_class": "freshness_only_package_failure_not_recovered_when_multiple_stale_codes_present",
+      "trigger_condition": "post-merge GPT TCG Drive Package sees both STALE_SOCIAL_SNAPSHOT and STALE_AUTO_UPDATE_REPORT; the previous recovery recognized only the single auto-update stale code and returned the original package failure instead of dispatching a fresh protected static refresh",
+      "prevention_rule": "keep all social/report freshness thresholds fail-closed; treat a non-empty critical-code set as freshness-only only when it is a subset of the explicit stale freshness allowlist; dispatch the protected static refresh, mark package ready=false, upload nothing, and preserve the original non-zero result for any non-freshness critical finding",
+      "validation_required": [
+        "base main is exactly f637f866aabbc1a76bcdd1a9b64744ed9a725b1c",
+        "candidate package-recovery commit is exactly bf581df26f1b222a3f70520e4df8e921de976616",
+        "the exact newly uncovered Tablet GPT watched path is .github/workflows/gpt-tcg-drive-package.yml",
+        "STALE_SOCIAL_SNAPSHOT and STALE_AUTO_UPDATE_REPORT are the only allowed freshness-only critical codes",
+        "the critical-code set must be non-empty and a subset of the explicit freshness allowlist",
+        "freshness-only recovery dispatches tcg-static-data-refresh.yml on main, sets ready=false, and uploads no stale package",
+        "any non-freshness critical finding preserves the original non-zero package result",
+        "freshness thresholds are not widened or bypassed",
+        "v364 contract/delta/receipt/test quartet is complete and digest-consistent",
+        "model weights, raw grading calibration, and device-local runtime memory are not transferred",
+        "physical Tablet runtime and Drive readback remain unverified until matching external evidence exists"
+      ],
+      "safety_boundary": "do not turn freshness-only recovery into stale-data acceptance; recovery may request a protected recollection but may never upload stale evidence or suppress unrelated critical findings"
+    }
+  ]
+}
