@@ -37,7 +37,7 @@
   "current_required_lesson_count": 56,
   "candidate_sync": {
     "base_main_sha": "f637f866aabbc1a76bcdd1a9b64744ed9a725b1c",
-    "candidate_commit": "bf581df26f1b222a3f70520e4df8e921de976616",
+    "candidate_commit": "94d72de19e35316a9f6a7a210f3fe538e8597e57",
     "generation_files": [
       "TCG_CROSSCHECK/TABLET_GPT_TCG_GRADER_SYNC_CONTRACT_V364.json",
       "TCG_CROSSCHECK/TABLET_GPT/learning_snapshot_v364_delta.json",
