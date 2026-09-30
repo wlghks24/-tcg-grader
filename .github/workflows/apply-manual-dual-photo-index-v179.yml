@@ -6,6 +6,9 @@ on:
 
 permissions:
   contents: write
+  pull-requests: write
+  actions: write
+  checks: read
 
 jobs:
   patch:
@@ -46,4 +49,4 @@ jobs:
           fi
           git add index.html
           git commit -m 'fix: restore manual dual-photo UI bridge v179'
-          git push origin HEAD:main
+          GH_TOKEN="${{ github.token }}" bash scripts/publish_candidate_pr.sh
