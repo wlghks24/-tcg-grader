@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+# Regression-only proof for the v362/v363 receipt-completion and rollback boundary.
 from pathlib import Path
 import subprocess
 import tempfile
