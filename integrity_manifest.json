@@ -1,7 +1,7 @@
 {
   "version": 2,
   "engine": "v109-card-identity-ocr-learning",
-  "generated_at": "2026-09-30T01:30:24+00:00",
+  "generated_at": "2026-09-30T05:55:52+00:00",
   "files": {
     ".github/workflows/ai-auto-tracker-guard.yml": {
       "sha256": "636e750bd6d2619cce75d4bce2d68051eaa2209ae763bc8ec523ed73476728a6",
@@ -16,8 +16,8 @@
       "bytes": 8540
     },
     ".github/workflows/apply-android-manual-proof-input-v164.yml": {
-      "sha256": "7d65f855184767dd933b1eb0ed0d07397490a4f49285c050f0987aa353404243",
-      "bytes": 6636
+      "sha256": "9bdbb70899c37a837a57da82f55015084ef742688d0e8c08d6b1f29d78edb4a6",
+      "bytes": 6733
     },
     ".github/workflows/apply-auto-market-center.yml": {
       "sha256": "be53f77aea7e34744f9716a16c82a0a884be4424b58ce19c0001c890d972647b",
@@ -28,36 +28,36 @@
       "bytes": 4022
     },
     ".github/workflows/apply-bgs-cert-ocr-v169.yml": {
-      "sha256": "562bcc5d8666e5a4b23bbd66d735a5446e02ed2b68b0c8eaa789170a7aac74c6",
-      "bytes": 1395
+      "sha256": "51df180bcc5fd809aae03334c4d9b4e89f7d7cf144f8929c1400421b2491eb9e",
+      "bytes": 1492
     },
     ".github/workflows/apply-box-hit-market-expansion.yml": {
-      "sha256": "3c1a15b4654c5511cb99fddcebbe71dcd027da787139d8c224502c5911efdbeb",
-      "bytes": 1591
+      "sha256": "4036b758116022f9a41371228f81f208e0ed96c21e3ad9423cdd6203d2b0572d",
+      "bytes": 1693
     },
     ".github/workflows/apply-box-knowledge-stats.yml": {
       "sha256": "976e5d67352c03371e4b0a56ee4eb751de2ec9ab52a0d65cab428995e3450986",
       "bytes": 993
     },
     ".github/workflows/apply-brg-break-lookup-v173.yml": {
-      "sha256": "e8d5381a59eb38c42eb380c9a5dafad4432ff8d3c6bf6aa6bb88960d83118044",
-      "bytes": 1511
+      "sha256": "8382bf3407106435ad12b54e94f4bac424963f461e39eb9b9f1e5c2dfc0d0a84",
+      "bytes": 1608
     },
     ".github/workflows/apply-brg-manual-server-error-v163.yml": {
-      "sha256": "031264b1470a18bf29a87197501a65152bb54a0cc0f481d5c71e031fe61b5ab4",
-      "bytes": 1469
+      "sha256": "0126dc740ca7e5d8fd97f1489dca94af51d14beb27c30e2cc27b07c77e779b3f",
+      "bytes": 1566
     },
     ".github/workflows/apply-brg-registered-link-normalization-v190.yml": {
-      "sha256": "860f63eb40a3390fee24d60fb9f273988f9d327857f8024b261fdab4d1830238",
-      "bytes": 2027
+      "sha256": "7d87ed2dc45f200fc332bc07d179bbd0037a29742b9468b4b9122bc93617bf8b",
+      "bytes": 2084
     },
     ".github/workflows/apply-cgc-cert-ocr-v170.yml": {
-      "sha256": "4ecad233a99056197bcce9b1b48fe30d6f4b1762b3870d28bb7a793d4cd964fd",
-      "bytes": 1381
+      "sha256": "a4b74a71a714597b9ce42778ef3bd3aae34de48d3db0f1a60e2080491fd2e996",
+      "bytes": 1478
     },
     ".github/workflows/apply-collection-meta-learning.yml": {
-      "sha256": "ae4c05c8c8e0d3f9a81e3b12c15d340c9026b26ed9c6b40cda23af8ef3fdd5cc",
-      "bytes": 1754
+      "sha256": "ecfb3cf88f549d58bf686e3424543e10c284d99f083ae323d2e9cc11629c8975",
+      "bytes": 1856
     },
     ".github/workflows/apply-collection-resilience-v111.yml": {
       "sha256": "9eeaf9ca63c5389d0e5032a1c310a10515c9725efdefcd9be63fc97d0fee719e",
@@ -68,8 +68,8 @@
       "bytes": 2406
     },
     ".github/workflows/apply-collection-runtime-resilience-v177.yml": {
-      "sha256": "d65c44862feac499a230332e7c8755fde973985cc830c84cb72d872d9639800e",
-      "bytes": 1196
+      "sha256": "b3fadbf80b75a1dddb960cc33b1060900afe84985807501d92d5c3b1ab7554b6",
+      "bytes": 1298
     },
     ".github/workflows/apply-detailed-collection-intelligence.yml": {
       "sha256": "77c632e1b8c62afbab496446de172f1c5f3a1c5faaf434732792791939cb8efb",
@@ -80,48 +80,48 @@
       "bytes": 1842
     },
     ".github/workflows/apply-eight-zone-runtime-fix-v158.yml": {
-      "sha256": "7acf1494a104105e9cd17127773f6cdf9f88ab1c8a676b14f6a28554eaa44f1b",
-      "bytes": 1467
+      "sha256": "d1e328b95ccd5a801fc74f87e56d7b41bfa34091b155afa90a83a41a6c0ca600",
+      "bytes": 1569
     },
     ".github/workflows/apply-fan-social-discovery.yml": {
-      "sha256": "0f34f40693a956e70c9b2c2851b4dce794fdb40177acff6f7333ecaee8c2ce47",
-      "bytes": 2065
+      "sha256": "20c8977ebdbbdba511a3363ea883f35119cd61d18f9362445a7cc61b4c5cc68d",
+      "bytes": 2167
     },
     ".github/workflows/apply-final-graded-photo-integration.yml": {
-      "sha256": "fd250f073d3f8c02d37ae37649afc93bf6d8795603edfb3300664b48fa5e9797",
-      "bytes": 1094
+      "sha256": "d4873f6d7b36803137730a9c0f256801ceaced9ec17164bf7773de96bb50f2c9",
+      "bytes": 1196
     },
     ".github/workflows/apply-first-full-collection-no-timeout.yml": {
       "sha256": "92b8459630127ea5e57f112492e293403e12b6008d8c54721110819093d752c1",
       "bytes": 1185
     },
     ".github/workflows/apply-full-existing-photo-revalidation-v159.yml": {
-      "sha256": "0bd62f2ca5d56436c7ca8678af56026a53150eaafb95a731aa1545d37ab45677",
-      "bytes": 1676
+      "sha256": "58d9d6c159dc332cbb20f80e2bbab1bbbf6b2cc1b1b4f0b36edd38fcb0bc2907",
+      "bytes": 1778
     },
     ".github/workflows/apply-game-selection-ui.yml": {
-      "sha256": "9623244d98621a3ee3904ea92fd2a22e331d6df0d0cbb7d6cf8f8b8cc5b0b2b4",
-      "bytes": 1751
+      "sha256": "a57181792f6ce2e9690c4435e6d0d0934f3a94280bb14d9bea83c38635a2edc8",
+      "bytes": 1848
     },
     ".github/workflows/apply-grade-market-flow.yml": {
       "sha256": "5d1ffbba33e02c10ed631a798040926b2b850e3a2375ca134fe4b302cee6e2e9",
       "bytes": 1385
     },
     ".github/workflows/apply-graded-photo-adaptive-timeout.yml": {
-      "sha256": "78dafcfd07060f9711aa15292ed3c1ad3471748e6523229e790f59d0d712d6f9",
-      "bytes": 1005
+      "sha256": "51d0b5027fa1ded034c4f64376cedd5ee6b6fec08f90fe5953d400738ab4ad64",
+      "bytes": 1185
     },
     ".github/workflows/apply-graded-photo-bing-image-fallback.yml": {
       "sha256": "f41e98682279035e2365bab8f5ca6f0f4e9fe49e473ab7a9fa48b9c2aad50188",
       "bytes": 1210
     },
     ".github/workflows/apply-graded-photo-cumulative-patch.yml": {
-      "sha256": "3882f3d83e7db89364f85f31e332016e394ee711142a4ce49498798a8bfa7ebe",
-      "bytes": 1335
+      "sha256": "d53499b88c922e6a1c885417098d9098b8f2a94576e8865ac4d5cf6cca2fe308",
+      "bytes": 1437
     },
     ".github/workflows/apply-graded-photo-dashboard.yml": {
-      "sha256": "a9f9c08a7dce2cb7394763091b8da7483cf156c1cbf61863119a0217c5ae88cb",
-      "bytes": 1429
+      "sha256": "186f5653bc0c42d48e43d053467562599898c86cbc02832e3346e8d09a55144c",
+      "bytes": 1531
     },
     ".github/workflows/apply-graded-photo-hard-timeout.yml": {
       "sha256": "c886915667108d6d7781bc6fbf5352922497497e653aa2f04790e8f2bd68d5b8",
@@ -144,8 +144,8 @@
       "bytes": 920
     },
     ".github/workflows/apply-graded-photo-quarantine-cleanup-v157.yml": {
-      "sha256": "f58824c538924523eed9953b7e70369fa2b7c3b6d317815b149d61b9a197ed6a",
-      "bytes": 1180
+      "sha256": "65ac1d46e5ba2cd14a4f897778412b56ac29d81b38d3eaea1d2e8fe2263ad03d",
+      "bytes": 1282
     },
     ".github/workflows/apply-graded-photo-redirect-unwrap.yml": {
       "sha256": "8a5a655df7f582d13fe85bfb7f6fdd0d9e94fafbf3ab6b85903bc249edd1d436",
@@ -180,24 +180,24 @@
       "bytes": 1349
     },
     ".github/workflows/apply-integration-timeout-cache-v178.yml": {
-      "sha256": "6be8201417c943b64f65f71673f933f8c77a3c9040cd76b6f69d464ff374298c",
-      "bytes": 1789
+      "sha256": "be9a9bf9435178cfc0305956e5741027d41d7512db86e81038c4e5d1580c4cff",
+      "bytes": 1891
     },
     ".github/workflows/apply-inventory-lookup.yml": {
       "sha256": "29018ccc2258ad625e4045c0ad4f7a113293efb99d13da6252bbb2c2fad9377f",
       "bytes": 1206
     },
     ".github/workflows/apply-manual-dual-photo-index-v179.yml": {
-      "sha256": "bc397aa6ffa3c777f669d07a4f368811e05294b490b6202111b91a1077ad4aae",
-      "bytes": 1757
+      "sha256": "6e926325ead8549e742f5018dbdcda9ef5d4a58021063345c259434062cddcc6",
+      "bytes": 1854
     },
     ".github/workflows/apply-manual-official-ui-visibility-v162.yml": {
-      "sha256": "4af4d52aff709bd45294def55509db2acbb35233792546efd9d9e3a5ccea6706",
-      "bytes": 3209
+      "sha256": "afa86e69cc5af0551f83b48912f7ed18a15216d44b846c608117dc677a22e0fc",
+      "bytes": 3306
     },
     ".github/workflows/apply-manual-only-official-verification-v192b.yml": {
-      "sha256": "f81623ec3f217f10130f7aad2a96b76688e179b587cd447635805c30ffbf7238",
-      "bytes": 1402
+      "sha256": "2d69114a2c3a833b0d7c4883efaa8dd2c01211bbebbc1c633663a62923e5c428",
+      "bytes": 1499
     },
     ".github/workflows/apply-multi-market-prices.yml": {
       "sha256": "22fc730451b451c753b0213d5598d33e5189d1b38d0504bbca816d24cd69585b",
@@ -208,16 +208,16 @@
       "bytes": 2091
     },
     ".github/workflows/apply-negative-proof-korean-ocr-v171.yml": {
-      "sha256": "957ef79db9abc73716530a2ef90e6194a8ddb7c56d8b27489fe7908f6fc9563b",
-      "bytes": 1361
+      "sha256": "1f706a4bf6e60f2122fd291efab3bb6a907ab7a2a9721699949e7055a2d8b3b4",
+      "bytes": 1458
     },
     ".github/workflows/apply-official-proof-fullscreen-ocr-v168b.yml": {
-      "sha256": "0c0a50427799af46aa62c95b1521c12b1ba6cdde1dc08e09d3ed8a0441382f57",
-      "bytes": 1606
+      "sha256": "b4da7fc88839c25d3912e2a9835fd988b4bc4d23d58dccc408681b4c837474f9",
+      "bytes": 1703
     },
     ".github/workflows/apply-official-proof-fullscreen-ocr-v168c.yml": {
-      "sha256": "4ce3d9c625d5ce9d477bb0f03220fecd4f9750cecf737e4ad4af9fc6255653bd",
-      "bytes": 1760
+      "sha256": "ac33fdbe05c7fe1b0d382898d85cf46edf900d1e8d46b0ccf9252fcf79218091",
+      "bytes": 1857
     },
     ".github/workflows/apply-pending-official-candidate-v161.yml": {
       "sha256": "a409ba0d1ab72045857beae4ddbc1b0975afcc9467365eab38baada98949832e",
@@ -248,32 +248,32 @@
       "bytes": 3472
     },
     ".github/workflows/apply-search-403-cooldown-guard-v175.yml": {
-      "sha256": "b8e646353fd1722e2f9be14d64fe5919322b16b82f86cd67bc574179271bf8eb",
-      "bytes": 1664
+      "sha256": "372620e65146ba0398fde87348344efc0229d4fef67d148ea711fdd840b6d6ce",
+      "bytes": 1766
     },
     ".github/workflows/apply-search-engine-optimizer.yml": {
-      "sha256": "e00ad590e60c3f451ee533d0078507375fc9386f22da1aaa0151176471666430",
-      "bytes": 2118
+      "sha256": "dbcee2228e660dd178b25de9ed518556213a2f68b4addee9ff2dfeac54eeb4a9",
+      "bytes": 2220
     },
     ".github/workflows/apply-search-method-learning.yml": {
-      "sha256": "20732acfbb47eeb20c83603a48d71bcb96964489b1ed0d596b9b9c898ff140ef",
-      "bytes": 2088
+      "sha256": "dffb9af5ab403520da28fab8acdf0fafaa96abee00ae485bc320abe4b589f8f1",
+      "bytes": 2190
     },
     ".github/workflows/apply-search-recovery-diversity.yml": {
-      "sha256": "3de49d29a6f87edcad17f61a981950772c9d3ea2ec9d1e9ffd4e90b78f69d45d",
-      "bytes": 1694
+      "sha256": "a8c35b253bf2786f3f4da346c678a520bec3671ae9f5a236634b524c89277772",
+      "bytes": 1796
     },
     ".github/workflows/apply-security-hardening.yml": {
-      "sha256": "b9fe922015647bb18e1cffa104c23432bb035c91c3c4e93e158bcef296fa772c",
-      "bytes": 3999
+      "sha256": "b26ce1752c89322db415837ce2d87bd18133795027532a72d89476dd93ba8262",
+      "bytes": 4057
     },
     ".github/workflows/apply-social-stock-event-upgrade.yml": {
       "sha256": "0bb02daf1cf12d4ffc3d731a045c071c5c7791883d7d5ffaee8319a35a7c0b88",
       "bytes": 2110
     },
     ".github/workflows/apply-termux-korean-tessdata-v172.yml": {
-      "sha256": "1aa89d00ac91f2ffeee534b6fad266d484bab1fb6487d7e26e857633d00b3450",
-      "bytes": 1434
+      "sha256": "4615bb16966df1d73fe53d2baab97c04e6f02e61983cd52605a96a70fdeb129b",
+      "bytes": 1531
     },
     ".github/workflows/apply-ui-polish-v121.yml": {
       "sha256": "227a35122da63d07edafd2bab7bc411949f0cf0b911af6472b2b1f9034486644",
@@ -364,8 +364,8 @@
       "bytes": 1748
     },
     ".github/workflows/market-ai-auto-tracker.yml": {
-      "sha256": "68f4bc6359e362cbc30fa746c8d412ee9ff17506196fbab905d32f373fd9ed63",
-      "bytes": 11082
+      "sha256": "dfec18585c8e24cb3d2332fc9764ee77b5581488c0108675fcb7cd681a025090",
+      "bytes": 11162
     },
     ".github/workflows/ocr-selfrefine-guard.yml": {
       "sha256": "b1291d35e3122369f2c7620cba70866930b2c8b53de292e747a36ad1186b5073",
@@ -420,8 +420,8 @@
       "bytes": 3182
     },
     ".github/workflows/runtime-optimization-hardening.yml": {
-      "sha256": "3e2ab3782c82ec3913fdb4778c2a37eb4fbc2a89473b084e043b829c1c17b98d",
-      "bytes": 5981
+      "sha256": "4e2c603767cc48c50ec3c123cfcdf3bfeabe8c008a0a1059ef391abd442276a5",
+      "bytes": 6038
     },
     ".github/workflows/self-learning-upgrade.yml": {
       "sha256": "e6adab746bd8e1371553682d9ac314eb4b494ca3ab930b66ff12c23583a224e4",
@@ -462,6 +462,10 @@
     ".github/workflows/verify-breaking-event-watch.yml": {
       "sha256": "162c93ce0ab10aee5f6b7ce58d68fbcf137535303e27490bc64bfc6ae35168ce",
       "bytes": 10405
+    },
+    ".github/workflows/workflow-publish-safety-v363.yml": {
+      "sha256": "856f4a8231630b7fedc51091ef2530ca99dbe3e594b539c0d085778b2ce20835",
+      "bytes": 3548
     },
     "ANDROID_AUTO_START_INSTALL.sh": {
       "sha256": "3b350574a240c8e7b0aa64615d0d3f7c4bd1240d46c83fa9708ec486ea9550a0",
@@ -2435,6 +2439,10 @@
       "sha256": "455720ebcb37e89fe2f6eff03a32ed528ab86c592efc9452d46c3bc09ae9eba2",
       "bytes": 22298
     },
+    "scripts/publish_candidate_pr.sh": {
+      "sha256": "eed93ba71d8c553c75490f94ed88dcc50d2fa5693db7dc9f3352f3b380b4f585",
+      "bytes": 5036
+    },
     "search_method_learning.py": {
       "sha256": "2b65c865f2d2868215928f0b42457a525018baaf8c917a2a5773191dbc1c0c2a",
       "bytes": 24206
@@ -3718,6 +3726,10 @@
     "test_verified_slab_training_archive_v152.py": {
       "sha256": "0413ee45802efb7a8d7c9c630206de94181ce280a54c6d159bfef346db6482bf",
       "bytes": 6175
+    },
+    "test_workflow_publish_safety_v363.py": {
+      "sha256": "b2ce0eb27dd20d8929fa1040ccc26ed4ddc8d0c22051e0468b72e2e0a03aa0bb",
+      "bytes": 3404
     },
     "test_wyyyes_market_source_v267.py": {
       "sha256": "4320eba8bdc1fe4c624646265ed9c1a59d1b7b4b94866a607b1bfddc6814e9b3",
