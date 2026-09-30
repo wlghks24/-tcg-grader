@@ -6,6 +6,9 @@ on:
 
 permissions:
   contents: write
+  pull-requests: write
+  actions: write
+  checks: read
 
 jobs:
   patch:
@@ -38,4 +41,4 @@ jobs:
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           git add pending_official_candidate_v161.py pending_official_candidate_bridge_v161.js test_brg_manual_server_error_v163.py
           git commit -m 'fix: handle BRG official-site server errors safely v163'
-          git push origin HEAD:main
+          GH_TOKEN="${{ github.token }}" bash scripts/publish_candidate_pr.sh

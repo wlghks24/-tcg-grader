@@ -6,6 +6,9 @@ on:
 
 permissions:
   contents: write
+  pull-requests: write
+  actions: write
+  checks: read
 
 jobs:
   patch:
@@ -36,5 +39,5 @@ jobs:
           git add search_method_learning.py test_search_method_learning.py test_search_recovery_slot.py graded_photo_dashboard.js index.html
           if ! git diff --cached --quiet; then
             git commit -m 'fix: quarantine blocked search routes during cooldown'
-            git push origin main
+            GH_TOKEN="${{ github.token }}" bash scripts/publish_candidate_pr.sh
           fi

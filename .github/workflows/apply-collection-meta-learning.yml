@@ -6,6 +6,9 @@ on:
 
 permissions:
   contents: write
+  pull-requests: write
+  actions: write
+  checks: read
 
 jobs:
   patch:
@@ -40,5 +43,5 @@ jobs:
           git add adaptive_collection_learner.py auto_pipeline_runner.py .gitignore
           if ! git diff --cached --quiet; then
             git commit -m 'feat: learn collection diversity and coverage gaps'
-            git push origin main
+            GH_TOKEN="${{ github.token }}" bash scripts/publish_candidate_pr.sh
           fi

@@ -14,6 +14,9 @@ on:
 
 permissions:
   contents: write
+  pull-requests: write
+  actions: write
+  checks: read
 
 concurrency:
   group: runtime-optimization-hardening-main
@@ -135,5 +138,4 @@ jobs:
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           git add collector_self_healing.py tcg_code_repair_learning.py runtime_bundle_guard_v143.py START_TCG_UPDATER_ANDROID.sh
           git commit -m 'optimize: gate recovered collector errors and status reads'
-          git pull --rebase origin main
-          git push origin HEAD:main
+          GH_TOKEN="${{ github.token }}" bash scripts/publish_candidate_pr.sh

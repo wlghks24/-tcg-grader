@@ -1,0 +1,50 @@
+{
+  "schema_version": "1.1-tablet-gpt-tcg-grader-learning-sync",
+  "namespace": "TABLET_GPT",
+  "snapshot_kind": "learning_delta",
+  "run_date_kst": "2026-09-30",
+  "built_at": "2026-09-30T14:58:03+09:00",
+  "status": "finalized",
+  "source_repository": "wlghks24/-tcg-grader",
+  "prior_delta": "TCG_CROSSCHECK/TABLET_GPT/learning_snapshot_v362_delta.json",
+  "prior_lesson_digest_sha256": "00d53569b2a916b5024bae663ec7485160ddc4f209bbe37f083d96072c3118ca",
+  "source_main_sha": "5b18eb7c0c0721bcbedf6697e6254fe2e830f1e3",
+  "share_policy": {
+    "explicit_patch_and_learning_lessons_only": true,
+    "chatgpt_model_weights_exported": false,
+    "raw_grading_calibration_shared": false,
+    "device_local_runtime_memory_overwritten": false,
+    "peer_verified_never_auto_promotes_local": true
+  },
+  "covered_merges": [
+    {
+      "pr": 341,
+      "version": "v363-protected-workflow-publish-base",
+      "merge_sha": "5b18eb7c0c0721bcbedf6697e6254fe2e830f1e3"
+    }
+  ],
+  "lesson_digest_sha256": "44454f70aec8a4ee5f261b9f25c3761b6c210f67038a4ba9cfcebdfa568d9902",
+  "lessons": [
+    {
+      "lesson_id": "TABLET-GPT-PROTECTED-WORKFLOW-PUBLISH-V363",
+      "subsystem": "tablet_gpt_workflow_publish_boundary",
+      "issue_class": "watched_runtime_workflow_changed_without_verified_successor_generation",
+      "trigger_condition": "repository-wide protected-main hardening changes .github/workflows/runtime-optimization-hardening.yml after the v362 candidate while the latest Tablet GPT successor does not exactly cover that watched path",
+      "prevention_rule": "bind the watched runtime-workflow change to the exact current-main base and verified candidate commit; publish workflow mutations only through a unique candidate branch and pull request; require the seven established checks before a normal merge; fail closed on base advance, failed or timed-out checks, or merge rejection; never use direct-main, force, reset, or admin bypass",
+      "validation_required": [
+        "base main is exactly 5b18eb7c0c0721bcbedf6697e6254fe2e830f1e3",
+        "candidate workflow-hardening commit is exactly 9c11f5390aad2b59dee8f067bffb571102130203",
+        "the exact newly uncovered Tablet GPT watched path is .github/workflows/runtime-optimization-hardening.yml",
+        "all workflow direct-main git push destinations are rejected by regression coverage",
+        "candidate publishers require contents write, pull-requests write, actions write, and checks read",
+        "the shared publisher requires Tablet GPT alignment, Repository Integrity, Main SELFREFINE, Deep SELFREFINE, Exhaustive SELFREFINE, Tablet Termux, and Android Updater checks",
+        "the shared publisher fails closed on base advance, required-check failure or timeout, empty candidate, and merge rejection",
+        "force push, reset force, and admin bypass remain forbidden",
+        "v363 contract/delta/receipt/test quartet is complete and digest-consistent",
+        "model weights, raw grading calibration, and device-local runtime memory are not transferred",
+        "physical Tablet runtime and Drive readback remain unverified until matching external evidence exists"
+      ],
+      "safety_boundary": "do not weaken watched-path freshness, exact-main ancestry, required checks, protected-main publication, provenance, or Tablet/Drive evidence boundaries merely to make CI pass"
+    }
+  ]
+}
