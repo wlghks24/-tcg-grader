@@ -1,0 +1,57 @@
+name: V369 Finalizer
+
+on:
+  push:
+    branches:
+      - fix/supplementary-timeout-recovery-v369
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  finalize:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - name: Checkout exact work branch
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          ref: fix/supplementary-timeout-recovery-v369
+          fetch-depth: 0
+      - name: Set up Python
+        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97
+        with:
+          python-version: '3.11'
+      - name: Validate and finalize exact v369 tree
+        shell: bash
+        run: |
+          set -euo pipefail
+          # This helper must never land on main. Remove it before building the
+          # integrity manifest so validation covers the exact intended PR tree.
+          rm -f .github/workflows/v369-finalizer.yml
+          python static_integrity_manifest.py --write
+          python static_integrity_manifest.py --check
+          python -m unittest -v \
+            test_auxiliary_freshness_coordination_v367.py \
+            test_tablet_gpt_tcg_grader_sync_v367.py \
+            test_tablet_gpt_tcg_grader_sync_v368.py \
+            test_tablet_gpt_tcg_grader_sync_v369.py
+          mapfile -t tests < <(find . -maxdepth 1 -type f -name 'test_tablet_gpt_tcg_grader_sync_v*.py' -printf '%f\n' | sort -V)
+          test "${#tests[@]}" -gt 0
+          python -m unittest -v "${tests[@]}"
+          git diff --check
+      - name: Commit exact final tree
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add -A .github/workflows/v369-finalizer.yml integrity_manifest.json
+          if git diff --cached --quiet; then
+            echo 'final tree already exact'
+            exit 0
+          fi
+          git commit -m 'fix: finalize v369 supplementary timeout recovery'
+          git push origin HEAD:fix/supplementary-timeout-recovery-v369
