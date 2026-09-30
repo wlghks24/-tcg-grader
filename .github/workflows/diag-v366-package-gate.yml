@@ -1,0 +1,36 @@
+name: Diagnose V366 Package Gate
+
+on:
+  push:
+    branches:
+      - 'diag/gdrive-package-gate-v366'
+
+permissions:
+  contents: read
+
+jobs:
+  diagnose:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          fetch-depth: 2
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97
+        with:
+          python-version: '3.11'
+      - name: Print exact contextual findings without changing policy
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import json
+          import collection_verification_gate_contextual as gate
+          report=gate.verify(max_health_age_seconds=900)
+          print(json.dumps({
+              'status': report.get('status'),
+              'counts': report.get('counts'),
+              'findings': report.get('findings'),
+              'contextual_freshness': report.get('contextual_freshness'),
+          }, ensure_ascii=False, indent=2))
+          PY
