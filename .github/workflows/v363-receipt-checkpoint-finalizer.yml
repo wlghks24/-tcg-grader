@@ -1,0 +1,45 @@
+name: V363 Receipt Checkpoint Finalizer
+
+on:
+  push:
+    branches:
+      - fix/receipt-regression-coverage-v363
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: v363-receipt-checkpoint-finalizer
+  cancel-in-progress: false
+
+jobs:
+  finalize:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          fetch-depth: 0
+          ref: fix/receipt-regression-coverage-v363
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97
+        with:
+          python-version: '3.12'
+      - name: Remove one-shot finalizer and regenerate exact integrity manifest
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git rm .github/workflows/v363-receipt-checkpoint-finalizer.yml
+          python static_integrity_manifest.py --write
+          python static_integrity_manifest.py --check
+          python test_tablet_gpt_tcg_grader_sync_v363.py
+          PYTHONPATH=. python -m unittest discover -v -s trusted_ai_tests -p 'test_tablet_gdrive_receipt_completion_regression.py'
+          python repository_integrity_guard.py
+          git add integrity_manifest.json
+          git diff --cached --check
+          git status --short
+          git commit -m 'chore: finalize v363 checkpoint integrity'
+          git push origin HEAD:fix/receipt-regression-coverage-v363
