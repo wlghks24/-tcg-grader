@@ -1,7 +1,7 @@
 {
   "version": 2,
   "engine": "v109-card-identity-ocr-learning",
-  "generated_at": "2026-09-30T06:54:28+00:00",
+  "generated_at": "2026-09-30T07:39:50+00:00",
   "files": {
     ".github/workflows/ai-auto-tracker-guard.yml": {
       "sha256": "636e750bd6d2619cce75d4bce2d68051eaa2209ae763bc8ec523ed73476728a6",
@@ -767,6 +767,10 @@
       "sha256": "82be791d2f638e56116820967c35f545030504dac4e0bedd41600062f3de64fc",
       "bytes": 4735
     },
+    "TCG_CROSSCHECK/TABLET_GPT/learning_snapshot_v366_delta.json": {
+      "sha256": "8f35897307c91cf4e7a3e3ff1adb4786669cfa33f7cd4c7d041099c8a67f3a7c",
+      "bytes": 3311
+    },
     "TCG_CROSSCHECK/TABLET_GPT/ui_repair_candidate_20260926.json": {
       "sha256": "26cb1d421670ea1be7e2b686438226653b0574efc20e5ca0dcc965d34b8b949f",
       "bytes": 1585
@@ -886,6 +890,10 @@
     "TCG_CROSSCHECK/TABLET_GPT_TCG_GRADER_SYNC_CONTRACT_V365.json": {
       "sha256": "0ea19a520d602aa6eed081e46ca607a72e3d9852cf7872bf5da7fc67afc5093d",
       "bytes": 7067
+    },
+    "TCG_CROSSCHECK/TABLET_GPT_TCG_GRADER_SYNC_CONTRACT_V366.json": {
+      "sha256": "741957fd5c0d1fc48173272dd22f4d1b29181a0ed86dabe663d64e87046b9a74",
+      "bytes": 7151
     },
     "TCG_CROSSCHECK/TCG_GRADER/AI_RELIABILITY_V8_ACTUAL_OUTPUT.json": {
       "sha256": "f56c12964705bf9e62bd655af80f1a292017b097e800d7f74521ad8b22f0b233",
@@ -1046,6 +1054,10 @@
     "TCG_CROSSCHECK/TCG_GRADER/tablet_gpt_learning_receipt_v365.json": {
       "sha256": "08537783d798242fac5e9ad9210efe29cdb9f96d6f9d0e25f9cf613dcb5ef56e",
       "bytes": 1798
+    },
+    "TCG_CROSSCHECK/TCG_GRADER/tablet_gpt_learning_receipt_v366.json": {
+      "sha256": "741b18f11dcee9cf9f93f744b999aafc7c824afc67c5d0f34ac1f8112f5146c9",
+      "bytes": 1754
     },
     "TCG_CROSSCHECK/exchange_manifest.json": {
       "sha256": "4bba146c573d224a641e40416c9d4cf983e1100855f95841e9518ff9e7d925f6",
@@ -1636,7 +1648,7 @@
       "bytes": 8134
     },
     "exchange_rates.json": {
-      "sha256": "7de009b456ab64cbbfb77c66571f055fc0b348c0803a0c09f4ec0a369d923ef5",
+      "sha256": "6df4f807410e47beb7d85a89fc85bc674df93cb8c25e177ff1dff4ed9e149475",
       "bytes": 445
     },
     "fan_social_learning.py": {
@@ -1884,7 +1896,7 @@
       "bytes": 7206
     },
     "grading_company_updates.json": {
-      "sha256": "910f408ab85f32804570ada5a7582e5e8d32abe37e8ffdac3f0bbe214f6cae10",
+      "sha256": "8bcec17e5fe97833df41513c687cb85866f6f078b22c07ec4a859acd14b0ba50",
       "bytes": 53087
     },
     "grading_company_watch.py": {
@@ -2276,15 +2288,15 @@
       "bytes": 4126
     },
     "market_prices.json": {
-      "sha256": "ac2d9dc104f6e959fe765e2f61de7e35fcfa280ba507d6757e1079a1b1209ef6",
-      "bytes": 43158
+      "sha256": "8920ff7a65654305b0e6f20dc7df6066b276e8615e409805c5a6cd34d14f0ff1",
+      "bytes": 43308
     },
     "market_public_crosscheck.py": {
       "sha256": "1c3d93d56d7a192e89e08594b2dbc8958ca456a435b72c69fc6adc09f292fd7f",
       "bytes": 17748
     },
     "market_watch.json": {
-      "sha256": "57ccf8f527ddea554c966c2424ca79a18d920951b49743dc0d36b0b1bda45393",
+      "sha256": "fbd646c98aa20d4f2facf93de9ed9309d574b576339e635741519c94ee804e15",
       "bytes": 19858
     },
     "migrate_old_data.py": {
@@ -2372,8 +2384,8 @@
       "bytes": 4433
     },
     "promo_events.json": {
-      "sha256": "0cedbe9dee5fd7839c83a494067d3fa52ab622f2adf33eee7c2b88e0f98e5ebb",
-      "bytes": 126458
+      "sha256": "59984cb943c56a6ee2b9b650c87a500e084845639a509b76c4265a588f2ff844",
+      "bytes": 128855
     },
     "protected_static_candidate_guard.py": {
       "sha256": "e539c1dff5ea210e1db4c374baa3a29b3f9cb7e7a3d7bb09a2cde78bbf67b6e5",
@@ -2400,12 +2412,12 @@
       "bytes": 10520
     },
     "purchase_signals.json": {
-      "sha256": "d25c2e1fe76884f51c5003c5a4fd5c60aa48a45bffbe8b6610a2fe03d7b8db85",
+      "sha256": "cfb77f972b1fb9fa465e67be1a1bdf65d0af46684e3bf76d63eefd96488c43a8",
       "bytes": 234
     },
     "purchase_sources.json": {
-      "sha256": "3988968f1df5460fa0db1ffa2303278b1a4bd33b6fa54aa0c0b660c79a18df27",
-      "bytes": 195895
+      "sha256": "15d59c1167963ddbd6cb9c4159355a6d52d65f85f2e4925aa5de55f39a605b4a",
+      "bytes": 195859
     },
     "quality_review_policy.py": {
       "sha256": "d33c417fe221640de679343fc6d9527984386b331edd4ce5663107fd25c34661",
@@ -2432,7 +2444,7 @@
       "bytes": 3066
     },
     "releases.json": {
-      "sha256": "97853e62dc68e22c46e52ca66c22f906b96c79582d12ea165707dc55b59e718b",
+      "sha256": "42609dcd9e47462a5c43938aa954168ad78814792600885404bc4a85265589aa",
       "bytes": 49652
     },
     "repository_health_guard.py": {
@@ -2560,7 +2572,7 @@
       "bytes": 21246
     },
     "social_stock_signals.json": {
-      "sha256": "90f406fb752fa2e30178b388f84655b7fc5466be014f31cfae347ae08509f0b8",
+      "sha256": "dd2a38ae0343cd4d5a8dabfe478f726e27cc840422d4d0e82f4041f8cf499350",
       "bytes": 453
     },
     "social_stock_sources.json": {
@@ -2580,7 +2592,7 @@
       "bytes": 6377
     },
     "supplementary_candidates.json": {
-      "sha256": "8f10884901ee80d52ad91f05f6cfdaa1a73f1c066647eaac4bd4ce8d6ecba7e1",
+      "sha256": "23b19639d775c1e7ea445ca14e4dc02765ef46a14c8abe31010eddc25b81255d",
       "bytes": 7867
     },
     "supplementary_discovery.py": {
@@ -2636,8 +2648,8 @@
       "bytes": 39105
     },
     "tcg_live_data.json": {
-      "sha256": "819485c8d4f3a8f0279094486137e66b980ae80b97bad78d7145f92bd6ad2249",
-      "bytes": 112054
+      "sha256": "1b8a87d6553065dc389426c06978c6abfb57c86f367b02c2a67399c37365c53f",
+      "bytes": 112014
     },
     "tcg_reliability/__init__.py": {
       "sha256": "3e6bcd161ad0dfcd323c560703d86be1f22c9ab98055eef50ef91e9065e5d648",
@@ -3658,6 +3670,10 @@
     "test_tablet_gpt_tcg_grader_sync_v365.py": {
       "sha256": "51b7e48fa7573dddf996a020a0950f1124ac58c69f2c3813b836f1f598e892bf",
       "bytes": 8174
+    },
+    "test_tablet_gpt_tcg_grader_sync_v366.py": {
+      "sha256": "6a2e5ba5c7fdc668ff39198cd3800b7cca3d1cdac712ee34704a504d54d8b16b",
+      "bytes": 5373
     },
     "test_tablet_main_entrypoint_v251.py": {
       "sha256": "eeca09372b0dd587d6d74d8a1ec75f28e84aca07b7cc38d2bf61555ef992b2f8",
