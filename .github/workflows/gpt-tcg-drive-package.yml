@@ -79,7 +79,8 @@ jobs:
               for row in data.get("findings", [])
               if isinstance(row, dict) and row.get("severity") == "critical"
           }
-          raise SystemExit(0 if critical == {"STALE_AUTO_UPDATE_REPORT"} else 1)
+          recoverable = {"STALE_AUTO_UPDATE_REPORT", "STALE_SOCIAL_SNAPSHOT"}
+          raise SystemExit(0 if critical and critical <= recoverable else 1)
           PY
             then
               stale_only=true
