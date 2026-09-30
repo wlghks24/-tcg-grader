@@ -47,7 +47,10 @@ class WorkflowPublishSafetyV363Tests(unittest.TestCase):
         missing = []
         for path in sorted(WORKFLOW_DIR.glob('*.yml')):
             text = path.read_text(encoding='utf-8')
-            if 'scripts/publish_candidate_pr.sh' not in text:
+            # Count only actual publisher invocations.  The safety workflow itself
+            # references the helper path in triggers and `bash -n`, but it does not
+            # publish a candidate and therefore must not be treated as one.
+            if 'bash scripts/publish_candidate_pr.sh' not in text:
                 continue
             publishers.append(str(path))
             absent = [value for value in REQUIRED_PUBLISH_PERMISSIONS if value not in text]
