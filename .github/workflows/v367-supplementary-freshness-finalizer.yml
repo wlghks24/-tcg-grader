@@ -59,14 +59,6 @@ jobs:
           if text.count(sync_old) != 1:
               raise SystemExit('static gate integration guard insertion point invalid')
           gate.write_text(text.replace(sync_old, sync_new), encoding='utf-8')
-
-          workflow = Path('.github/workflows/gpt-tcg-drive-package.yml')
-          text = workflow.read_text(encoding='utf-8')
-          old = 'recoverable = {"STALE_AUTO_UPDATE_REPORT", "STALE_SOCIAL_SNAPSHOT"}'
-          new = 'recoverable = {"STALE_AUTO_UPDATE_REPORT", "STALE_SOCIAL_SNAPSHOT", "STALE_SUPPLEMENTARY_SNAPSHOT"}'
-          if text.count(old) != 1:
-              raise SystemExit('package recovery set did not match exactly once')
-          workflow.write_text(text.replace(old, new), encoding='utf-8')
           PY
 
           git rm -- .github/workflows/v367-supplementary-freshness-finalizer.yml
@@ -85,6 +77,6 @@ jobs:
           set -euo pipefail
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git add -- auto_update_all.py static_data_publish_gate.py .github/workflows/gpt-tcg-drive-package.yml test_auxiliary_freshness_coordination_v367.py integrity_manifest.json
+          git add -- auto_update_all.py static_data_publish_gate.py test_auxiliary_freshness_coordination_v367.py integrity_manifest.json
           git commit -m 'fix: preserve supplementary freshness across auxiliary audit'
           git push origin "HEAD:${GITHUB_REF_NAME}"
