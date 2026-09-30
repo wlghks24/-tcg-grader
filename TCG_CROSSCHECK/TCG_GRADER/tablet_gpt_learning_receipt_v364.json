@@ -11,7 +11,7 @@
     "TCG_CROSSCHECK/TABLET_GPT/learning_snapshot_v364_delta.json"
   ],
   "prior_lesson_digest_sha256": "44454f70aec8a4ee5f261b9f25c3761b6c210f67038a4ba9cfcebdfa568d9902",
-  "delta_lesson_digest_sha256": "ab76114736b636533cce3707c6442075058623e8be4e0b6a53e64307f50e83c2",
+  "delta_lesson_digest_sha256": "e85554c336ac97ad1351bc1fb25b01985002a4e3f40bcbddf658ae088e9b40e0",
   "accepted_lesson_ids": [
     "TABLET-GPT-DUAL-STALE-PACKAGE-RECOVERY-V364"
   ],
