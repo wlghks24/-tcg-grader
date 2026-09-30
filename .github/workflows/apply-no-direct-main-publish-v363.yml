@@ -44,10 +44,14 @@ jobs:
 
           workflow_dir = Path('.github/workflows')
           self_path = workflow_dir / 'apply-no-direct-main-publish-v363.yml'
-          forbidden = 'git push origin HEAD:main'
+          variants = (
+              'git push origin HEAD:main',
+              'git push origin main',
+          )
           token_expr = '$' + '{{ github.token }}'
           replacement = f'GH_TOKEN="{token_expr}" bash scripts/publish_candidate_pr.sh'
           changed = []
+          replaced_occurrences = 0
 
           def ensure_pr_permission(text: str, path: Path) -> str:
               lines = text.splitlines(keepends=True)
@@ -73,29 +77,41 @@ jobs:
               if path == self_path:
                   continue
               text = path.read_text(encoding='utf-8')
-              count = text.count(forbidden)
-              if not count:
+              counts = {variant: text.count(variant) for variant in variants}
+              occurrences = sum(counts.values())
+              if not occurrences:
                   continue
-              if count != 1:
-                  raise SystemExit(f'UNEXPECTED_DIRECT_MAIN_COUNT:{path}:{count}')
+              # A legacy workflow should expose one publishing edge. Multiple
+              # direct-main writes in one workflow require manual review.
+              if occurrences != 1:
+                  raise SystemExit(f'UNEXPECTED_DIRECT_MAIN_COUNT:{path}:{counts}')
               text = ensure_pr_permission(text, path)
-              text = text.replace(forbidden, replacement, 1)
+              for variant, count in counts.items():
+                  if count:
+                      text = text.replace(variant, replacement, 1)
+                      replaced_occurrences += 1
               path.write_text(text, encoding='utf-8')
               changed.append(str(path))
 
-          if len(changed) != 17:
-              raise SystemExit(f'EXPECTED_17_DIRECT_MAIN_WORKFLOWS_FOUND_{len(changed)}:{changed}')
+          # Current main contains 17 HEAD:main and 16 origin-main legacy
+          # publishers. Fail closed if the tree changed instead of silently
+          # leaving a direct-main route behind.
+          if replaced_occurrences != 33:
+              raise SystemExit(
+                  f'EXPECTED_33_DIRECT_MAIN_PUBLISHERS_FOUND_{replaced_occurrences}:{changed}'
+              )
 
           remaining = []
           for path in sorted(workflow_dir.glob('*.yml')):
               if path == self_path:
                   continue
-              if forbidden in path.read_text(encoding='utf-8'):
+              text = path.read_text(encoding='utf-8')
+              if any(variant in text for variant in variants):
                   remaining.append(str(path))
           if remaining:
               raise SystemExit(f'DIRECT_MAIN_REMAINS:{remaining}')
 
-          print('hardened workflows:')
+          print(f'hardened workflow publishers: {replaced_occurrences}')
           for path in changed:
               print(f'  - {path}')
           PY
