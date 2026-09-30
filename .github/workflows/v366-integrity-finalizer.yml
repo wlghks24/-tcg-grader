@@ -1,0 +1,63 @@
+name: V366 Integrity Finalizer
+
+on:
+  push:
+    branches:
+      - 'auto/static-data-36682259722-1'
+
+permissions:
+  actions: write
+  contents: write
+
+concurrency:
+  group: v366-integrity-finalizer
+  cancel-in-progress: true
+
+jobs:
+  finalize:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - name: Checkout exact candidate branch
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          ref: ${{ github.ref_name }}
+          fetch-depth: 0
+
+      - name: Set up Python
+        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97
+        with:
+          python-version: '3.12'
+
+      - name: Finalize v366 integrity and alignment
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          test "${GITHUB_REF_NAME}" = 'auto/static-data-36682259722-1'
+          git rm -- .github/workflows/v366-integrity-finalizer.yml
+          python static_integrity_manifest.py --write integrity_manifest.json
+          python static_integrity_manifest.py --check integrity_manifest.json
+          mapfile -t tests < <(find . -maxdepth 1 -type f -name 'test_tablet_gpt_tcg_grader_sync_v*.py' -printf '%f\n' | sort -V)
+          test "${#tests[@]}" -gt 0
+          python -m unittest -v "${tests[@]}"
+          git diff --check
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add -- integrity_manifest.json
+          git commit -m 'sync: finalize v366 integrity manifest'
+          git push origin "HEAD:${GITHUB_REF_NAME}"
+
+          required_workflows=(
+            tablet-gpt-tcg-grader-main-alignment.yml
+            repository-integrity-guard.yml
+            selfrefine-full-repo.yml
+            deep-selfrefine-guard.yml
+            exhaustive-selfrefine-guard.yml
+            tablet-termux-main-guard.yml
+            android-updater-guard.yml
+          )
+          for workflow in "${required_workflows[@]}"; do
+            gh api --method POST "repos/${GITHUB_REPOSITORY}/actions/workflows/${workflow}/dispatches" -f ref="${GITHUB_REF_NAME}"
+          done
