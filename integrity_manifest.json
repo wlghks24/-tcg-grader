@@ -1,7 +1,7 @@
 {
   "version": 2,
   "engine": "v109-card-identity-ocr-learning",
-  "generated_at": "2026-09-30T07:39:50+00:00",
+  "generated_at": "2026-09-30T08:09:15+00:00",
   "files": {
     ".github/workflows/ai-auto-tracker-guard.yml": {
       "sha256": "636e750bd6d2619cce75d4bce2d68051eaa2209ae763bc8ec523ed73476728a6",
@@ -1480,8 +1480,8 @@
       "bytes": 143470
     },
     "auto_update_all.py": {
-      "sha256": "c99c8af2bd046fd3c8e3f34383fd5558e81b445f0b5a605f040c9a7549f3e489",
-      "bytes": 74869
+      "sha256": "5c4c391ff5f93b6d7c9d00128c3892f43074c0b976c7ac1817f03b0bca0bbb0b",
+      "bytes": 75136
     },
     "auto_validation_flow.js": {
       "sha256": "264280b17ce3306b92e3a46821d05d18f9f92b2757c84924222119601b32aa81",
@@ -2580,8 +2580,8 @@
       "bytes": 1578
     },
     "static_data_publish_gate.py": {
-      "sha256": "c05b761e55abeae9b4ce69d7d94dd6b98c77afc51fb84ffb67714911e494b737",
-      "bytes": 9648
+      "sha256": "bd5d50d89b927c24de4ecbe14c6059ba656bf4c560e1a3a1ad9a899475288ad1",
+      "bytes": 11490
     },
     "static_integrity_manifest.py": {
       "sha256": "49a1133449f31e63630ae9fb9413b39faae9a58ce4f3c7954f743df35357c8d6",
@@ -2778,6 +2778,10 @@
     "test_apply_patch_idempotency.py": {
       "sha256": "2b67ea340d61fe0cb6173272a11a00ec7eb2e1e7fa79dba11e032355d2c160b7",
       "bytes": 1572
+    },
+    "test_auxiliary_freshness_coordination_v367.py": {
+      "sha256": "a63e8619148df7ae5461173f37f9f4a1935abd218cc599fe3101956d2c454116",
+      "bytes": 3057
     },
     "test_bgs_cert_ocr_v169.py": {
       "sha256": "02d091e139dadc709f7d302ecf6795e928d589d752437f1a468be35ef0a17dc2",
