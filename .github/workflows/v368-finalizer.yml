@@ -28,6 +28,9 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
+          # This helper must never land on main. Remove it before building the
+          # integrity manifest so validation covers the exact intended PR tree.
+          rm -f .github/workflows/v368-finalizer.yml
           python static_integrity_manifest.py --write
           python static_integrity_manifest.py --check
           python -m unittest -v \
@@ -39,16 +42,16 @@ jobs:
           test "${#tests[@]}" -gt 0
           python -m unittest -v "${tests[@]}"
           git diff --check
-      - name: Commit finalized integrity manifest
+      - name: Commit exact final tree
         shell: bash
         run: |
           set -euo pipefail
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git add integrity_manifest.json
+          git add -A .github/workflows/v368-finalizer.yml integrity_manifest.json
           if git diff --cached --quiet; then
-            echo 'integrity manifest already exact'
+            echo 'final tree already exact'
             exit 0
           fi
-          git commit -m 'fix: finalize v368 supplementary recovery manifest'
+          git commit -m 'fix: finalize v368 supplementary recovery'
           git push origin HEAD:fix/gdrive-supplementary-recovery-v368
