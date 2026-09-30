@@ -122,5 +122,5 @@ jobs:
             echo
             echo "- package ready: ${{ steps.package.outputs.ready || 'false' }}"
             echo "- recovery: ${{ steps.package.outputs.recovery || 'none' }}"
-            echo "- stale policy: never widen report/social freshness gates; request a fresh protected collection instead"
+            echo "- stale policy: never widen the two-hour report freshness gate; never widen report/social freshness gates; request a fresh protected collection instead"
           } >> "$GITHUB_STEP_SUMMARY"
