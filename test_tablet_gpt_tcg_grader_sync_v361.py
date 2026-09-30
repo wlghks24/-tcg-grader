@@ -59,17 +59,34 @@ class TabletGptTcgGraderSyncV361(unittest.TestCase):
             m=pattern.fullmatch(path.name)
             if m and int(m.group(1))>361: successors.append((int(m.group(1)),path))
         self.assertTrue(successors,f"v361 stale without verified successor: {later}")
-        _,sp=max(successors); s=read(sp); d=read(ROOT/s["delta_snapshot"]); r=read(ROOT/s["receiver_receipt"])
+        version,sp=max(successors); s=read(sp); d=read(ROOT/s["delta_snapshot"]); r=read(ROOT/s["receiver_receipt"])
         raw=json.dumps(d["lessons"],ensure_ascii=False,sort_keys=True,separators=(",",":"))
         dg=hashlib.sha256(raw.encode()).hexdigest()
         self.assertEqual(dg,d["lesson_digest_sha256"]); self.assertEqual(dg,r["delta_lesson_digest_sha256"])
         self.assertEqual("SYNCED_VERIFIED",r["status"]); self.assertEqual("TABLET_GPT_TCG_GRADER_MATCH",r["verification"]["verified_result"])
-        sc=s.get("candidate_sync") or {}; self.assertTrue(sc)
+        self.assertEqual(d["source_main_sha"],r["source_main_sha"])
+        self.assertFalse(r["verification"]["physical_tablet_runtime_verified"])
+        self.assertFalse(r["verification"]["physical_drive_readback_verified"])
         files={sp.relative_to(ROOT).as_posix(),s["delta_snapshot"],s["receiver_receipt"],s["verification_test"]}
-        self.assertEqual(files,set(sc["generation_files"]))
-        self.assertEqual(sc["base_main_sha"],d["source_main_sha"])
-        self.assertEqual(sorted(sc["watched_paths"]),watched_paths(s,sc["base_main_sha"],sc["candidate_commit"]))
-        self.assertEqual([],watched_paths(s,sc["candidate_commit"]),"latest successor has uncovered watched changes")
+        [self.assertTrue((ROOT/p).is_file(),p) for p in files]
+        self.assertTrue(files.issubset(set(s["freshness_watch"]["exclude_paths"])))
+        sc=s.get("candidate_sync") or {}
+        if sc:
+            self.assertTrue(sc["requires_exact_watched_path_match"])
+            self.assertTrue(sc["post_merge_coverage_allowed"])
+            self.assertEqual(files,set(sc["generation_files"]))
+            self.assertEqual(sc["base_main_sha"],d["source_main_sha"])
+            self.assertEqual(sorted(sc["watched_paths"]),watched_paths(s,sc["base_main_sha"],sc["candidate_commit"]))
+            self.assertEqual([],watched_paths(s,sc["candidate_commit"]),"latest successor has uncovered watched changes")
+            subprocess.run(["git","merge-base","--is-ancestor",sc["base_main_sha"],"HEAD"],check=True)
+            subprocess.run(["git","merge-base","--is-ancestor",sc["candidate_commit"],"HEAD"],check=True)
+            return
+        self.assertTrue(s["rules"].get("post_merge_checkpoint_must_anchor_future_pr_freshness"),f"v{version} must be an exact candidate or verified post-merge checkpoint")
+        self.assertTrue(s["rules"].get("subsequent_watched_change_requires_new_generation"))
+        base=d["source_main_sha"]
+        self.assertIn(base,[row["merge_sha"] for row in d["covered_merges"]],"checkpoint source must be a covered merged-main SHA")
+        self.assertEqual([],watched_paths(s,base),f"v{version} checkpoint has uncovered watched changes")
+        subprocess.run(["git","merge-base","--is-ancestor",base,"HEAD"],check=True)
 
     def test_upload_artifact_explicitly_includes_hidden_outbox_without_weakening_gates(self):
         workflow=WORKFLOW.read_text(encoding="utf-8")

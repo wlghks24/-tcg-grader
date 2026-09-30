@@ -70,23 +70,34 @@ class TabletGptTcgGraderSyncV362(unittest.TestCase):
         delta=read(ROOT/successor["delta_snapshot"]); receipt=read(ROOT/successor["receiver_receipt"])
         self.assertEqual(delta["source_main_sha"],receipt["source_main_sha"])
         self.assertEqual("SYNCED_VERIFIED",receipt["status"])
+        self.assertEqual("TABLET_GPT_TCG_GRADER_MATCH",receipt["verification"]["verified_result"])
+        self.assertFalse(receipt["verification"]["physical_tablet_runtime_verified"])
+        self.assertFalse(receipt["verification"]["physical_drive_readback_verified"])
         raw=json.dumps(delta["lessons"],ensure_ascii=False,sort_keys=True,separators=(",",":"))
         digest=hashlib.sha256(raw.encode()).hexdigest()
         self.assertEqual(digest,delta["lesson_digest_sha256"]); self.assertEqual(digest,receipt["delta_lesson_digest_sha256"])
         self.assertEqual([r["lesson_id"] for r in delta["lessons"]],receipt["accepted_lesson_ids"])
         generation_files={successor_path.relative_to(ROOT).as_posix(),successor["delta_snapshot"],successor["receiver_receipt"],successor["verification_test"]}
         [self.assertTrue((ROOT/p).is_file(),p) for p in generation_files]
+        self.assertTrue(generation_files.issubset(set(successor["freshness_watch"]["exclude_paths"])))
         successor_candidate=successor.get("candidate_sync") or {}
-        self.assertTrue(successor_candidate,f"v{version} must exactly bind a successor candidate")
-        self.assertTrue(successor_candidate["requires_exact_watched_path_match"])
-        self.assertTrue(successor_candidate["post_merge_coverage_allowed"])
-        self.assertEqual(successor_candidate["base_main_sha"],delta["source_main_sha"])
-        self.assertEqual(generation_files,set(successor_candidate["generation_files"]))
-        base=successor_candidate["base_main_sha"]; head=successor_candidate["candidate_commit"]
-        self.assertEqual(sorted(successor_candidate["watched_paths"]),watched_paths(successor,base,head))
-        self.assertEqual([],watched_paths(successor,head),f"v{version} successor has uncovered watched changes")
+        if successor_candidate:
+            self.assertTrue(successor_candidate["requires_exact_watched_path_match"])
+            self.assertTrue(successor_candidate["post_merge_coverage_allowed"])
+            self.assertEqual(successor_candidate["base_main_sha"],delta["source_main_sha"])
+            self.assertEqual(generation_files,set(successor_candidate["generation_files"]))
+            base=successor_candidate["base_main_sha"]; head=successor_candidate["candidate_commit"]
+            self.assertEqual(sorted(successor_candidate["watched_paths"]),watched_paths(successor,base,head))
+            self.assertEqual([],watched_paths(successor,head),f"v{version} successor has uncovered watched changes")
+            subprocess.run(["git","merge-base","--is-ancestor",base,"HEAD"],check=True)
+            subprocess.run(["git","merge-base","--is-ancestor",head,"HEAD"],check=True)
+            return
+        self.assertTrue(successor["rules"].get("post_merge_checkpoint_must_anchor_future_pr_freshness"),f"v{version} must be an exact candidate or verified post-merge checkpoint")
+        self.assertTrue(successor["rules"].get("subsequent_watched_change_requires_new_generation"))
+        base=delta["source_main_sha"]
+        self.assertIn(base,[row["merge_sha"] for row in delta["covered_merges"]],"checkpoint source must be a covered merged-main SHA")
+        self.assertEqual([],watched_paths(successor,base),f"v{version} checkpoint has uncovered watched changes")
         subprocess.run(["git","merge-base","--is-ancestor",base,"HEAD"],check=True)
-        subprocess.run(["git","merge-base","--is-ancestor",head,"HEAD"],check=True)
 
     def test_receipt_delivery_precedes_completed_marker(self):
         text=RUNTIME.read_text(encoding="utf-8")
