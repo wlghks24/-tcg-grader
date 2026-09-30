@@ -1,0 +1,93 @@
+name: Workflow Publish Safety v363
+
+on:
+  pull_request:
+    paths:
+      - '.github/workflows/**'
+      - 'scripts/publish_candidate_pr.sh'
+      - 'test_workflow_publish_safety_v363.py'
+      - 'integrity_manifest.json'
+  push:
+    branches:
+      - main
+      - 'fix/**'
+    paths:
+      - '.github/workflows/**'
+      - 'scripts/publish_candidate_pr.sh'
+      - 'test_workflow_publish_safety_v363.py'
+      - 'integrity_manifest.json'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: workflow-publish-safety-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  verify:
+    name: Workflow Publish Safety v363
+    runs-on: ubuntu-24.04
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97
+        with:
+          python-version: '3.12'
+      - name: Validate shared publisher shell
+        run: bash -n scripts/publish_candidate_pr.sh
+      - name: Enforce no-direct-main publishing contracts
+        run: python -m unittest -v test_workflow_publish_safety_v363.py test_protected_static_pipeline_v305.py
+      - name: Reject whitespace corruption
+        run: git diff --check HEAD^
+
+  reconcile-candidate-manifest:
+    name: Reconcile candidate integrity manifest v363
+    needs: verify
+    if: github.event_name == 'push' && startsWith(github.ref, 'refs/heads/fix/') && github.actor == github.repository_owner
+    permissions:
+      contents: write
+    runs-on: ubuntu-24.04
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97
+        with:
+          python-version: '3.12'
+      - name: Require current-main ancestry
+        shell: bash
+        run: |
+          set -euo pipefail
+          git fetch origin +refs/heads/main:refs/remotes/origin/main
+          if ! git merge-base --is-ancestor origin/main HEAD; then
+            echo 'BASE_ADVANCED: candidate no longer descends from current main' >&2
+            exit 20
+          fi
+          test "$(git rev-parse --abbrev-ref HEAD)" != 'main'
+      - name: Rebuild and diagnose exact-tree integrity manifest
+        run: |
+          python fault_injection_healing.py --manifest
+          python fault_injection_healing.py --diagnose
+          python repository_integrity_guard.py
+      - name: Allow only integrity-manifest reconciliation
+        shell: bash
+        run: |
+          set -euo pipefail
+          unexpected="$(git diff --name-only | grep -v '^integrity_manifest.json$' || true)"
+          if [ -n "${unexpected}" ]; then
+            printf 'UNEXPECTED_RECONCILE_DIFF:\n%s\n' "${unexpected}" >&2
+            exit 21
+          fi
+          if git diff --quiet -- integrity_manifest.json; then
+            echo 'Integrity manifest already exact.'
+            exit 0
+          fi
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add -- integrity_manifest.json
+          git diff --cached --check
+          git commit -m 'chore: reconcile integrity manifest v363'
+          git push origin "HEAD:${GITHUB_REF_NAME}"
