@@ -23,7 +23,7 @@
       "merge_sha": "f637f866aabbc1a76bcdd1a9b64744ed9a725b1c"
     }
   ],
-  "lesson_digest_sha256": "ab76114736b636533cce3707c6442075058623e8be4e0b6a53e64307f50e83c2",
+  "lesson_digest_sha256": "e85554c336ac97ad1351bc1fb25b01985002a4e3f40bcbddf658ae088e9b40e0",
   "lessons": [
     {
       "lesson_id": "TABLET-GPT-DUAL-STALE-PACKAGE-RECOVERY-V364",
@@ -33,7 +33,7 @@
       "prevention_rule": "keep all social/report freshness thresholds fail-closed; treat a non-empty critical-code set as freshness-only only when it is a subset of the explicit stale freshness allowlist; dispatch the protected static refresh, mark package ready=false, upload nothing, and preserve the original non-zero result for any non-freshness critical finding",
       "validation_required": [
         "base main is exactly f637f866aabbc1a76bcdd1a9b64744ed9a725b1c",
-        "candidate package-recovery commit is exactly bf581df26f1b222a3f70520e4df8e921de976616",
+        "candidate package-recovery commit is exactly 94d72de19e35316a9f6a7a210f3fe538e8597e57",
         "the exact newly uncovered Tablet GPT watched path is .github/workflows/gpt-tcg-drive-package.yml",
         "STALE_SOCIAL_SNAPSHOT and STALE_AUTO_UPDATE_REPORT are the only allowed freshness-only critical codes",
         "the critical-code set must be non-empty and a subset of the explicit freshness allowlist",
