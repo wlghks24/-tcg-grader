@@ -6,6 +6,9 @@ on:
 
 permissions:
   contents: write
+  pull-requests: write
+  actions: write
+  checks: read
 
 jobs:
   patch:
@@ -47,5 +50,5 @@ jobs:
           git add multi_channel_agent.py .gitignore test_search_method_learning.py
           if ! git diff --cached --quiet; then
             git commit -m 'feat: integrate adaptive multi-method search routing'
-            git push origin main
+            GH_TOKEN="${{ github.token }}" bash scripts/publish_candidate_pr.sh
           fi
