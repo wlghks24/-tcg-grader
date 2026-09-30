@@ -1,9 +1,9 @@
 {
-  "updated_at": "2026-09-30T07:12:56+00:00",
+  "updated_at": "2026-09-30T13:04:47+00:00",
   "base": "KRW",
   "rates": {
-    "JPY_KRW": 8.61427,
-    "USD_KRW": 1355.37
+    "JPY_KRW": 8.61299,
+    "USD_KRW": 1354.91
   },
   "source": "https://api.frankfurter.dev/v2/rates?base=USD&quotes=KRW,JPY",
   "note": "참고환율 · 환전 및 결제 수수료 제외",
