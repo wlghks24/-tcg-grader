@@ -16,6 +16,8 @@
     "pull_request_freshness_check_is_nonblocking": false,
     "historical_generation_successor_delegation_requires_strictly_newer_verified_generation": true,
     "post_merge_checkpoint_requires_exact_merged_main": true,
+    "post_merge_checkpoint_must_anchor_future_pr_freshness": true,
+    "subsequent_watched_change_requires_new_generation": true,
     "pending_receipt_delivery_failure_must_propagate": true,
     "tablet_completion_requires_secured_success_receipt": true,
     "completed_marker_must_follow_remote_receipt_delivery": true,
