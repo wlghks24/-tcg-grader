@@ -79,7 +79,7 @@ jobs:
               for row in data.get("findings", [])
               if isinstance(row, dict) and row.get("severity") == "critical"
           }
-          recoverable = {"STALE_AUTO_UPDATE_REPORT", "STALE_SOCIAL_SNAPSHOT"}
+          recoverable = {"STALE_AUTO_UPDATE_REPORT", "STALE_SOCIAL_SNAPSHOT", "STALE_SUPPLEMENTARY_SNAPSHOT"}
           raise SystemExit(0 if critical and critical <= recoverable else 1)
           PY
             then
