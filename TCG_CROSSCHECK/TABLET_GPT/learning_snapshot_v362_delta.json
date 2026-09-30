@@ -1,0 +1,49 @@
+{
+  "schema_version": "1.1-tablet-gpt-tcg-grader-learning-sync",
+  "namespace": "TABLET_GPT",
+  "snapshot_kind": "learning_delta",
+  "run_date_kst": "2026-09-30",
+  "built_at": "2026-09-30T10:25:00+09:00",
+  "status": "finalized",
+  "source_repository": "wlghks24/-tcg-grader",
+  "prior_delta": "TCG_CROSSCHECK/TABLET_GPT/learning_snapshot_v361_delta.json",
+  "prior_lesson_digest_sha256": "5b144584a3740b5025223295b626da0818549256d31fa9331087b3324935c961",
+  "source_main_sha": "ce2e26b139b31ac62829332041bccef0f6158e7d",
+  "share_policy": {
+    "explicit_patch_and_learning_lessons_only": true,
+    "chatgpt_model_weights_exported": false,
+    "raw_grading_calibration_shared": false,
+    "device_local_runtime_memory_overwritten": false,
+    "peer_verified_never_auto_promotes_local": true
+  },
+  "covered_merges": [
+    {
+      "pr": 340,
+      "version": "v362-current-main-receipt-boundary-base",
+      "merge_sha": "ce2e26b139b31ac62829332041bccef0f6158e7d"
+    }
+  ],
+  "lesson_digest_sha256": "00d53569b2a916b5024bae663ec7485160ddc4f209bbe37f083d96072c3118ca",
+  "lessons": [
+    {
+      "lesson_id": "TABLET-GPT-GDRIVE-RECEIPT-COMPLETION-V362",
+      "subsystem": "tablet_gdrive_sync_receipt_boundary",
+      "issue_class": "completed_marker_can_precede_verified_remote_success_receipt_delivery",
+      "trigger_condition": "the active Tablet Drive sync writes a local completed marker before the exact TABLET_SYNC_OK receipt has been uploaded and locally marked sent, or a pending receipt upload failure is ignored",
+      "prevention_rule": "flush pending receipts fail-closed; require exact local TABLET_SYNC_OK receipt plus sent marker before trusting completed state; upload and mark the success receipt sent before atomically writing completed; never downgrade rollback/apply failures or invent physical Tablet/Drive verification",
+      "validation_required": [
+        "base main is exactly ce2e26b139b31ac62829332041bccef0f6158e7d",
+        "candidate runtime commit is exactly ea2b3a0dd8e358254f54d0324504189ca6dc6fbc",
+        "the only newly watched Tablet GPT runtime path for this repair is tablet_gdrive_sync_perf_v262.py",
+        "pending receipt upload failure propagates instead of being swallowed",
+        "completed markers require exact matching TABLET_SYNC_OK receipt evidence and a sent marker",
+        "success receipt remote upload and sent evidence occur before the completed marker is written",
+        "rollback keeps the original apply/runtime failure primary while receipt-delivery failure is surfaced as deferred evidence",
+        "v362 contract/delta/receipt/test quartet is complete and digest-consistent",
+        "model weights, raw grading calibration and device-local runtime memory are not transferred",
+        "physical Tablet runtime and Drive readback remain unverified until matching external evidence exists"
+      ],
+      "safety_boundary": "do not mark completion without secured receipt evidence, swallow pending receipt delivery errors, weaken exact-main/17-output/contextual collection/runtime health gates, or claim physical device success without external readback"
+    }
+  ]
+}
