@@ -1,5 +1,6 @@
 import hashlib
 import json
+import re
 from pathlib import Path
 import subprocess
 import unittest
@@ -26,6 +27,50 @@ def watched_paths(contract, source, head="HEAD"):
     return sorted(p for p in changed if p not in excluded and (p in exact or p.startswith(prefixes)))
 
 class TabletGptTcgGraderSyncV366(unittest.TestCase):
+    def _assert_newer_successor_covers(self, minimum_version, relevant):
+        pattern=re.compile(r"TABLET_GPT_TCG_GRADER_SYNC_CONTRACT_V(\d+)\.json$")
+        successors=[]
+        for path in (ROOT/"TCG_CROSSCHECK").glob("TABLET_GPT_TCG_GRADER_SYNC_CONTRACT_V*.json"):
+            match=pattern.fullmatch(path.name)
+            if match and int(match.group(1))>minimum_version:
+                successors.append((int(match.group(1)),path))
+        self.assertTrue(successors,f"v{minimum_version} stale without verified successor: {relevant}")
+        version,sp=max(successors)
+        s=read(sp)
+        d=read(ROOT/s["delta_snapshot"])
+        r=read(ROOT/s["receiver_receipt"])
+        raw=json.dumps(d["lessons"],ensure_ascii=False,sort_keys=True,separators=(",",":"))
+        digest=hashlib.sha256(raw.encode("utf-8")).hexdigest()
+        self.assertEqual(digest,d["lesson_digest_sha256"])
+        self.assertEqual(digest,r["delta_lesson_digest_sha256"])
+        self.assertEqual([row["lesson_id"] for row in d["lessons"]],r["accepted_lesson_ids"])
+        self.assertEqual("SYNCED_VERIFIED",r["status"])
+        self.assertEqual("TABLET_GPT_TCG_GRADER_MATCH",r["verification"]["verified_result"])
+        self.assertEqual(d["source_main_sha"],r["source_main_sha"])
+        self.assertFalse(r["verification"]["physical_tablet_runtime_verified"])
+        self.assertFalse(r["verification"]["physical_drive_readback_verified"])
+        files={sp.relative_to(ROOT).as_posix(),s["delta_snapshot"],s["receiver_receipt"],s["verification_test"]}
+        self.assertTrue(files.issubset(set(s["freshness_watch"]["exclude_paths"])))
+        [self.assertTrue((ROOT/path).is_file(),path) for path in files]
+        successor=s.get("candidate_sync") or {}
+        if successor:
+            self.assertTrue(successor["requires_exact_watched_path_match"])
+            self.assertTrue(successor["post_merge_coverage_allowed"])
+            self.assertEqual(files,set(successor["generation_files"]))
+            self.assertEqual(successor["base_main_sha"],d["source_main_sha"])
+            base=successor["base_main_sha"]
+            head=successor["candidate_commit"]
+            self.assertEqual(sorted(successor["watched_paths"]),watched_paths(s,base,head))
+            self.assertEqual([],watched_paths(s,head),"latest successor has uncovered watched changes")
+            subprocess.run(["git","merge-base","--is-ancestor",base,"HEAD"],check=True)
+            subprocess.run(["git","merge-base","--is-ancestor",head,"HEAD"],check=True)
+            return
+        self.assertTrue(s["rules"].get("post_merge_checkpoint_must_anchor_future_pr_freshness"),f"v{version} must be an exact candidate or verified post-merge checkpoint")
+        self.assertTrue(s["rules"].get("subsequent_watched_change_requires_new_generation"))
+        base=d["source_main_sha"]
+        self.assertEqual([],watched_paths(s,base),f"v{version} checkpoint has uncovered watched changes")
+        subprocess.run(["git","merge-base","--is-ancestor",base,"HEAD"],check=True)
+
     def test_lineage_digest_receipt_and_safe_transfer_boundary(self):
         prior,delta,receipt,pc,c=map(read,(PRIOR,DELTA,RECEIPT,PRIOR_CONTRACT,CONTRACT))
         self.assertEqual(prior["lesson_digest_sha256"],delta["prior_lesson_digest_sha256"])
@@ -70,7 +115,9 @@ class TabletGptTcgGraderSyncV366(unittest.TestCase):
         self.assertEqual(expected,set(cand["generation_files"]))
         self.assertTrue(expected.issubset(set(c["freshness_watch"]["exclude_paths"])))
         [self.assertTrue((ROOT/p).is_file(),p) for p in expected]
-        self.assertEqual([],watched_paths(c,CANDIDATE),"v366 successor has uncovered watched changes")
+        later=watched_paths(c,CANDIDATE)
+        if later:
+            self._assert_newer_successor_covers(366,later)
 
     def test_fail_closed_promotion_and_evidence_boundaries(self):
         c=read(CONTRACT)
