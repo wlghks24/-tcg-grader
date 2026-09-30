@@ -48,11 +48,14 @@ class AuxiliaryFreshnessCoordinationV367(unittest.TestCase):
         self.assertIn('"supplementary_candidates.json"', validator)
         self.assertIn('OUT = ROOT / "supplementary_candidates.json"', discovery)
 
-    def test_drive_package_recovers_only_by_requesting_fresh_static_collection(self):
+    def test_package_recovery_contract_is_not_widened_to_mask_supplementary_staleness(self):
         workflow = (ROOT / ".github/workflows/gpt-tcg-drive-package.yml").read_text(encoding="utf-8")
-        self.assertIn('"STALE_SUPPLEMENTARY_SNAPSHOT"', workflow)
-        self.assertIn("FRESH_STATIC_REFRESH_DISPATCHED", workflow)
+        static_refresh = (ROOT / ".github/workflows/tcg-static-data-refresh.yml").read_text(encoding="utf-8")
+        self.assertIn('recoverable = {"STALE_AUTO_UPDATE_REPORT", "STALE_SOCIAL_SNAPSHOT"}', workflow)
+        self.assertNotIn('"STALE_SUPPLEMENTARY_SNAPSHOT"', workflow)
         self.assertIn("never widen", workflow)
+        self.assertIn("static_data_publish_gate.py", static_refresh)
+        self.assertIn("schedule:", static_refresh)
 
 
 if __name__ == "__main__":
