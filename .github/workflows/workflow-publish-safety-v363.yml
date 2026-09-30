@@ -32,6 +32,8 @@ jobs:
     timeout-minutes: 12
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          fetch-depth: 0
       - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97
         with:
           python-version: '3.12'
@@ -40,7 +42,12 @@ jobs:
       - name: Enforce no-direct-main publishing contracts
         run: python -m unittest -v test_workflow_publish_safety_v363.py test_protected_static_pipeline_v305.py
       - name: Reject whitespace corruption
-        run: git diff --check HEAD^
+        shell: bash
+        run: |
+          set -euo pipefail
+          git fetch origin +refs/heads/main:refs/remotes/origin/main
+          base="$(git merge-base origin/main HEAD)"
+          git diff --check "${base}...HEAD"
 
   reconcile-candidate-manifest:
     name: Reconcile candidate integrity manifest v363
