@@ -71,6 +71,21 @@ class AuxiliaryFreshnessCoordinationV367(unittest.TestCase):
         self.assertIn("static_data_publish_gate.py", static_refresh)
         self.assertIn("schedule:", static_refresh)
 
+    def test_static_refresh_recovers_timeout_only_integration_before_gate_without_widening_freshness(self):
+        static_refresh = (ROOT / ".github/workflows/tcg-static-data-refresh.yml").read_text(encoding="utf-8")
+        self.assertIn("Recover timeout-only supplementary integration", static_refresh)
+        self.assertIn("auto_pipeline_runner.run_pipeline()", static_refresh)
+        self.assertIn("gate.audit_aux_freshness", static_refresh)
+        self.assertIn("STALE_SUPPLEMENTARY_SNAPSHOT", static_refresh)
+        self.assertIn("recovered_after_static_refresh", static_refresh)
+        self.assertIn("result.get('degraded') is True", static_refresh)
+        self.assertIn("raise SystemExit('supplementary integration recovery did not finish cleanly')", static_refresh)
+        self.assertIn("--max-social-age-hours 12", static_refresh)
+        self.assertIn("--max-report-age-hours 2", static_refresh)
+        recovery_pos = static_refresh.index("Recover timeout-only supplementary integration")
+        gate_pos = static_refresh.index("Fail closed before publishing static data")
+        self.assertLess(recovery_pos, gate_pos)
+
 
 if __name__ == "__main__":
     unittest.main(verbosity=2)

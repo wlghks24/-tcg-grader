@@ -1,0 +1,45 @@
+{
+  "schema_version": "1.1-tablet-gpt-tcg-grader-learning-sync",
+  "namespace": "TABLET_GPT",
+  "snapshot_kind": "learning_delta",
+  "run_date_kst": "2026-09-30",
+  "built_at": "2026-09-30T20:20:00+09:00",
+  "status": "finalized",
+  "source_repository": "wlghks24/-tcg-grader",
+  "prior_delta": "TCG_CROSSCHECK/TABLET_GPT/learning_snapshot_v368_delta.json",
+  "prior_lesson_digest_sha256": "24321d13b13ce2f3665ca054dfd29b9fff1e1d47f06a92c186a2eb4d4de08f82",
+  "source_main_sha": "a0748827519f9106c3c753bc00af70c445bba306",
+  "share_policy": {
+    "explicit_patch_and_learning_lessons_only": true,
+    "chatgpt_model_weights_exported": false,
+    "raw_grading_calibration_shared": false,
+    "device_local_runtime_memory_overwritten": false,
+    "peer_verified_never_auto_promotes_local": true
+  },
+  "covered_merges": [
+    {
+      "pr": 352,
+      "version": "v369-post-merge-supplementary-timeout-recovery-candidate",
+      "merge_sha": "a0748827519f9106c3c753bc00af70c445bba306"
+    }
+  ],
+  "lesson_digest_sha256": "96d22fbdfb581dbf9944ceef72aaff518b0c9e6ea5c00d7af3015edd3d897d49",
+  "lessons": [
+    {
+      "lesson_id": "TABLET-GPT-SUPPLEMENTARY-TIMEOUT-RECOVERY-V369",
+      "subsystem": "static_data_refresh_auxiliary_integration",
+      "issue_class": "bounded_auxiliary_timeout_preserved_stale_supplementary_snapshot",
+      "trigger_condition": "post-merge static refresh run 36700241171 exhausted the bounded supplementary integration window, preserved the last verified discovery cache, and the unchanged publish gate then reported STALE_SUPPLEMENTARY_SNAPSHOT together with AUXILIARY_INTEGRATION_NOT_CLEAN",
+      "symptom_summary": "core collectors completed, but supplementary discovery remained safely degraded and stale so protected publication was correctly blocked instead of publishing stale evidence",
+      "root_cause_class": "safe_timeout_cache_fallback_had_no_isolated_clean_recovery_lane_before_the_existing_publish_gate",
+      "fix_pattern": "keep the original freshness thresholds and fail-closed gate unchanged; before that gate, run one isolated supplementary pipeline recovery only when degraded/deferred/stale, require ok=true plus degraded=false and a fresh supplementary snapshot, then refresh coverage/report/live evidence from the verified recovery",
+      "prevention_rule_id": "TGPT-PREV-SUPPLEMENTARY-TIMEOUT-CLEAN-RECOVERY-BEFORE-GATE",
+      "verification_result": "timeout_only_supplementary_staleness_requires_clean_recovery_before_unchanged_publish_gate",
+      "regression_pass": true,
+      "recurrence_count": 1,
+      "applicable_scope": "both",
+      "confidence_level": "high",
+      "physical_tablet_runtime_reverification_required": true
+    }
+  ]
+}

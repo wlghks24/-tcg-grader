@@ -1,5 +1,6 @@
 import hashlib
 import json
+import re
 from pathlib import Path
 import subprocess
 import unittest
@@ -36,6 +37,67 @@ def watched_paths(contract, source, head="HEAD"):
 
 
 class TabletGptTcgGraderSyncV368(unittest.TestCase):
+    def _assert_newer_successor_covers(self, minimum_version, relevant):
+        pattern = re.compile(r"TABLET_GPT_TCG_GRADER_SYNC_CONTRACT_V(\d+)\.json$")
+        successors = []
+        for path in (ROOT / "TCG_CROSSCHECK").glob(
+            "TABLET_GPT_TCG_GRADER_SYNC_CONTRACT_V*.json"
+        ):
+            match = pattern.fullmatch(path.name)
+            if match and int(match.group(1)) > minimum_version:
+                successors.append((int(match.group(1)), path))
+        self.assertTrue(
+            successors,
+            f"v{minimum_version} stale without verified successor: {relevant}",
+        )
+        version, successor_path = max(successors)
+        successor = read(successor_path)
+        delta = read(ROOT / successor["delta_snapshot"])
+        receipt = read(ROOT / successor["receiver_receipt"])
+        raw = json.dumps(
+            delta["lessons"], ensure_ascii=False, sort_keys=True, separators=(",", ":")
+        )
+        digest = hashlib.sha256(raw.encode("utf-8")).hexdigest()
+        self.assertEqual(digest, delta["lesson_digest_sha256"])
+        self.assertEqual(digest, receipt["delta_lesson_digest_sha256"])
+        self.assertEqual(
+            [row["lesson_id"] for row in delta["lessons"]], receipt["accepted_lesson_ids"]
+        )
+        self.assertEqual("SYNCED_VERIFIED", receipt["status"])
+        self.assertEqual(
+            "TABLET_GPT_TCG_GRADER_MATCH", receipt["verification"]["verified_result"]
+        )
+        self.assertEqual(delta["source_main_sha"], receipt["source_main_sha"])
+        self.assertFalse(receipt["verification"]["physical_tablet_runtime_verified"])
+        self.assertFalse(receipt["verification"]["physical_drive_readback_verified"])
+        generation_files = {
+            successor_path.relative_to(ROOT).as_posix(),
+            successor["delta_snapshot"],
+            successor["receiver_receipt"],
+            successor["verification_test"],
+        }
+        self.assertTrue(
+            generation_files.issubset(set(successor["freshness_watch"]["exclude_paths"]))
+        )
+        for path in generation_files:
+            self.assertTrue((ROOT / path).is_file(), path)
+        candidate = successor.get("candidate_sync") or {}
+        self.assertTrue(candidate, f"v{version} must provide an exact candidate successor")
+        self.assertTrue(candidate["requires_exact_watched_path_match"])
+        self.assertTrue(candidate["post_merge_coverage_allowed"])
+        self.assertEqual(generation_files, set(candidate["generation_files"]))
+        self.assertEqual(candidate["base_main_sha"], delta["source_main_sha"])
+        base = candidate["base_main_sha"]
+        head = candidate["candidate_commit"]
+        self.assertEqual(
+            sorted(candidate["watched_paths"]), watched_paths(successor, base, head)
+        )
+        self.assertEqual(
+            [], watched_paths(successor, head), "latest successor has uncovered watched changes"
+        )
+        subprocess.run(["git", "merge-base", "--is-ancestor", base, "HEAD"], check=True)
+        subprocess.run(["git", "merge-base", "--is-ancestor", head, "HEAD"], check=True)
+
     def test_lineage_digest_receipt_and_merge_anchor(self):
         prior, delta, receipt, pc, contract = map(
             read, (PRIOR, DELTA, RECEIPT, PRIOR_CONTRACT, CONTRACT)
@@ -94,7 +156,9 @@ class TabletGptTcgGraderSyncV368(unittest.TestCase):
         self.assertTrue(expected_generation.issubset(set(contract["freshness_watch"]["exclude_paths"])))
         self.assertTrue(candidate["requires_exact_watched_path_match"])
         self.assertTrue(candidate["post_merge_coverage_allowed"])
-        self.assertEqual([], watched_paths(contract, CANDIDATE))
+        later = watched_paths(contract, CANDIDATE)
+        if later:
+            self._assert_newer_successor_covers(368, later)
 
     def test_supplementary_freshness_recovery_is_explicit_and_fail_closed(self):
         workflow = WORKFLOW.read_text(encoding="utf-8")
