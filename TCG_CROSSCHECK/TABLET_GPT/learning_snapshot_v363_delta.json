@@ -1,0 +1,45 @@
+{
+  "schema_version": "1.1-tablet-gpt-tcg-grader-learning-sync",
+  "namespace": "TABLET_GPT",
+  "snapshot_kind": "learning_delta",
+  "run_date_kst": "2026-09-30",
+  "built_at": "2026-09-30T15:20:00+09:00",
+  "status": "finalized",
+  "source_repository": "wlghks24/-tcg-grader",
+  "prior_delta": "TCG_CROSSCHECK/TABLET_GPT/learning_snapshot_v362_delta.json",
+  "prior_lesson_digest_sha256": "00d53569b2a916b5024bae663ec7485160ddc4f209bbe37f083d96072c3118ca",
+  "source_main_sha": "5b18eb7c0c0721bcbedf6697e6254fe2e830f1e3",
+  "share_policy": {
+    "explicit_patch_and_learning_lessons_only": true,
+    "chatgpt_model_weights_exported": false,
+    "raw_grading_calibration_shared": false,
+    "device_local_runtime_memory_overwritten": false,
+    "peer_verified_never_auto_promotes_local": true
+  },
+  "covered_merges": [
+    {
+      "pr": 341,
+      "version": "v362-receipt-fail-closed",
+      "merge_sha": "5b18eb7c0c0721bcbedf6697e6254fe2e830f1e3"
+    }
+  ],
+  "lesson_digest_sha256": "0b35917169df8b28054e36cf821e02baa0e2b1dc0ea700c10f28021a9283187f",
+  "lessons": [
+    {
+      "lesson_id": "TABLET-GPT-POST-MERGE-RECEIPT-CHECKPOINT-V363",
+      "subsystem": "tablet_gpt_tcg_grader_alignment",
+      "issue_class": "verified_watched_receipt_repair_merge_requires_post_merge_main_checkpoint",
+      "trigger_condition": "PR #341 merged the watched Tablet Drive receipt-boundary repair, while v362 remained anchored to its pre-merge base; a later unrelated PR therefore correctly reported TABLET_GPT_SYNC_STALE",
+      "symptom_summary": "the v362 candidate generation was valid for PR #341 and its immediate merge, but it was not a permanent merged-main freshness anchor for later pull requests",
+      "root_cause_class": "candidate_generation_anchor_is_not_successor_main_checkpoint",
+      "fix_pattern": "publish a successor generation anchored to the exact merged main SHA, record the watched repair merge, keep physical Tablet and Drive readback explicitly unverified, and preserve all exact-main, exact-output, runtime-SHA, receipt, rollback, and freshness gates",
+      "prevention_rule_id": "TGPT-PREV-POST-MERGE-WATCHED-REPAIR-CHECKPOINT",
+      "verification_result": "post_merge_v363_checkpoint_required",
+      "regression_pass": true,
+      "recurrence_count": 1,
+      "applicable_scope": "both",
+      "confidence_level": "high",
+      "physical_tablet_runtime_reverification_required": true
+    }
+  ]
+}
