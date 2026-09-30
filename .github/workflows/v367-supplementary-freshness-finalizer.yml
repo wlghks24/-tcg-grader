@@ -1,0 +1,90 @@
+name: V367 Supplementary Freshness Finalizer
+
+on:
+  push:
+    branches:
+      - 'fix/supplementary-freshness-v367'
+
+permissions:
+  contents: write
+
+concurrency:
+  group: v367-supplementary-freshness-finalizer
+  cancel-in-progress: true
+
+jobs:
+  finalize:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - name: Checkout exact fix branch
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          ref: ${{ github.ref_name }}
+          fetch-depth: 0
+
+      - name: Set up Python
+        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97
+        with:
+          python-version: '3.12'
+
+      - name: Apply deterministic v367 fix
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          from pathlib import Path
+
+          updater = Path('auto_update_all.py')
+          text = updater.read_text(encoding='utf-8')
+          old = """    with concurrent.futures.ThreadPoolExecutor(max_workers=2) as ex:\n        fi=ex.submit(_run_aux_task,'__integration__',integration_runner)\n        fl=ex.submit(_run_aux_task,'__link_audit__',link_runner)\n        report['integration']=fi.result(); report['link_audit']=fl.result()\n"""
+          new = """    # v367: integrated discovery writes supplementary_candidates.json while the\n    # link audit reads and rewrites that same file. Running both concurrently can\n    # let the audit commit an older snapshot after discovery completed. Serialize\n    # the shared-file writers so the audit always starts from the newly collected\n    # candidate snapshot and cannot roll its updated_at/provenance backward.\n    report['integration']=_run_aux_task('__integration__',integration_runner)\n    report['link_audit']=_run_aux_task('__link_audit__',link_runner)\n"""
+          if text.count(old) != 1:
+              raise SystemExit('auto_update_all concurrency block did not match exactly once')
+          updater.write_text(text.replace(old, new), encoding='utf-8')
+
+          gate = Path('static_data_publish_gate.py')
+          text = gate.read_text(encoding='utf-8')
+          marker = '\ndef audit_topic_contract(promo: dict, social: dict) -> list[dict]:\n'
+          helper = '''\ndef audit_aux_freshness(root: Path, *, now: dt.datetime, max_age_hours: float = 48.0) -> list[dict]:\n    """Fail closed when supplementary discovery was not refreshed recently.\n\n    The integrated discovery collector writes this timestamp on every completed\n    run, even when a secondary source is temporarily unavailable. A stale stamp\n    therefore means the current publish cycle did not safely produce this output.\n    """\n    findings: list[dict] = []\n    try:\n        payload = _load(root / "supplementary_candidates.json")\n    except ValueError:\n        return findings  # structural failure is already reported by AUX_OUTPUTS validation\n    stamp = _parse_time(payload.get("updated_at"))\n    if stamp is None:\n        findings.append({"severity": "critical", "code": "MISSING_SUPPLEMENTARY_TIMESTAMP",\n                         "target": "supplementary_candidates.json"})\n        return findings\n    age_seconds = (now - stamp).total_seconds()\n    if age_seconds < -300:\n        findings.append({"severity": "critical", "code": "FUTURE_SUPPLEMENTARY_TIMESTAMP",\n                         "target": "supplementary_candidates.json",\n                         "age_hours": round(age_seconds / 3600, 2)})\n    elif age_seconds > max_age_hours * 3600:\n        findings.append({"severity": "critical", "code": "STALE_SUPPLEMENTARY_SNAPSHOT",\n                         "target": "supplementary_candidates.json",\n                         "age_hours": round(age_seconds / 3600, 2)})\n    return findings\n\n'''
+          if text.count(marker) != 1 or 'def audit_aux_freshness(' in text:
+              raise SystemExit('static gate helper insertion point invalid')
+          text = text.replace(marker, helper + marker)
+          release_marker = '\n    try:\n        releases = _load(root / "releases.json")\n'
+          if text.count(release_marker) != 1:
+              raise SystemExit('static gate freshness call insertion point invalid')
+          text = text.replace(release_marker, '\n    findings.extend(audit_aux_freshness(root, now=now))\n' + release_marker)
+          sync_old = '''        sync = report.get("auxiliary_coverage_sync")\n        if not isinstance(sync, dict) or sync.get("ok") is not True:\n            findings.append({"severity": "critical", "code": "AUXILIARY_COVERAGE_SYNC_FAILED"})\n'''
+          sync_new = sync_old + '''        integration = report.get("integration")\n        if (not isinstance(integration, dict) or integration.get("ok") is not True\n                or integration.get("degraded") is True):\n            findings.append({"severity": "critical", "code": "AUXILIARY_INTEGRATION_NOT_CLEAN"})\n'''
+          if text.count(sync_old) != 1:
+              raise SystemExit('static gate integration guard insertion point invalid')
+          gate.write_text(text.replace(sync_old, sync_new), encoding='utf-8')
+
+          workflow = Path('.github/workflows/gpt-tcg-drive-package.yml')
+          text = workflow.read_text(encoding='utf-8')
+          old = 'recoverable = {"STALE_AUTO_UPDATE_REPORT", "STALE_SOCIAL_SNAPSHOT"}'
+          new = 'recoverable = {"STALE_AUTO_UPDATE_REPORT", "STALE_SOCIAL_SNAPSHOT", "STALE_SUPPLEMENTARY_SNAPSHOT"}'
+          if text.count(old) != 1:
+              raise SystemExit('package recovery set did not match exactly once')
+          workflow.write_text(text.replace(old, new), encoding='utf-8')
+          PY
+
+          git rm -- .github/workflows/v367-supplementary-freshness-finalizer.yml
+          python static_integrity_manifest.py --write integrity_manifest.json
+          python static_integrity_manifest.py --check integrity_manifest.json
+          python -m py_compile auto_update_all.py static_data_publish_gate.py
+          python -m unittest -v \
+            test_auxiliary_freshness_coordination_v367.py \
+            test_static_data_publish_gate.py \
+            test_collection_verification_contextual_v257.py
+          git diff --check
+
+      - name: Commit finalized fix branch
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add -- auto_update_all.py static_data_publish_gate.py .github/workflows/gpt-tcg-drive-package.yml test_auxiliary_freshness_coordination_v367.py integrity_manifest.json
+          git commit -m 'fix: preserve supplementary freshness across auxiliary audit'
+          git push origin "HEAD:${GITHUB_REF_NAME}"
