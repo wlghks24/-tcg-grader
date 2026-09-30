@@ -1,0 +1,45 @@
+{
+  "schema_version": "1.1-tablet-gpt-tcg-grader-learning-sync",
+  "namespace": "TABLET_GPT",
+  "snapshot_kind": "learning_delta",
+  "run_date_kst": "2026-09-30",
+  "built_at": "2026-09-30T21:15:00+09:00",
+  "status": "finalized",
+  "source_repository": "wlghks24/-tcg-grader",
+  "prior_delta": "TCG_CROSSCHECK/TABLET_GPT/learning_snapshot_v369_delta.json",
+  "prior_lesson_digest_sha256": "96d22fbdfb581dbf9944ceef72aaff518b0c9e6ea5c00d7af3015edd3d897d49",
+  "source_main_sha": "38306a236373db4473946205ee446eeeecc3663c",
+  "share_policy": {
+    "explicit_patch_and_learning_lessons_only": true,
+    "chatgpt_model_weights_exported": false,
+    "raw_grading_calibration_shared": false,
+    "device_local_runtime_memory_overwritten": false,
+    "peer_verified_never_auto_promotes_local": true
+  },
+  "covered_merges": [
+    {
+      "pr": 353,
+      "version": "v370-post-merge-static-grading-watch-candidate",
+      "merge_sha": "38306a236373db4473946205ee446eeeecc3663c"
+    }
+  ],
+  "lesson_digest_sha256": "9c4deafbb148b941e7fb083926707753224809523084f8a6ff964020865442ae",
+  "lessons": [
+    {
+      "lesson_id": "TABLET-GPT-GRADING-WATCH-STATIC-CANDIDATE-V370",
+      "subsystem": "grading_company_watch_static_refresh_alignment",
+      "issue_class": "verified_static_refresh_changed_grading_company_watch_without_successor_sync_generation",
+      "trigger_condition": "validated static refresh run 36709186962 produced candidate b1a8e6038233f9274a94bf02dcc71910851fac0e with a watched grading_company_updates.json change after v369, so Tablet GPT alignment correctly failed closed until an exact successor generation covered that change",
+      "symptom_summary": "the static candidate passed collection and publish validation, but protected promotion remained blocked because grading-company watch evidence is a Tablet GPT watched path and no newer verified sync generation yet bound the exact candidate",
+      "root_cause_class": "static_data_candidate_public_evidence_advanced_beyond_latest_tablet_gpt_sync_anchor",
+      "fix_pattern": "bind the exact base main and static candidate to a new append-only sync generation whose watched_paths contains only grading_company_updates.json; preserve official-source-only grading watch, five-company scope, no raw calibration transfer, and require all protected checks again before merge",
+      "prevention_rule_id": "TGPT-PREV-STATIC-GRADING-WATCH-REQUIRES-EXACT-SUCCESSOR-SYNC",
+      "verification_result": "grading_company_static_candidate_is_explicitly_bound_without_weakening_fail_closed_alignment",
+      "regression_pass": true,
+      "recurrence_count": 1,
+      "applicable_scope": "both",
+      "confidence_level": "high",
+      "physical_tablet_runtime_reverification_required": true
+    }
+  ]
+}
