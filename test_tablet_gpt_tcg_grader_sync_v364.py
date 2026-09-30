@@ -60,6 +60,9 @@ class TabletGptTcgGraderSyncV364(unittest.TestCase):
     def test_receipt_runtime_rollback_and_protected_main_rules_remain_explicit(self):
         rules=read(CONTRACT)["rules"]
         required=(
+            "post_merge_checkpoint_requires_exact_merged_main",
+            "post_merge_checkpoint_must_anchor_future_pr_freshness",
+            "subsequent_watched_change_requires_new_generation",
             "pending_receipt_delivery_failure_must_propagate",
             "tablet_completion_requires_secured_success_receipt",
             "completed_marker_must_follow_remote_receipt_delivery",
