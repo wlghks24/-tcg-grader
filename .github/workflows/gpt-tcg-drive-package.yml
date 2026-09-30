@@ -80,7 +80,12 @@ jobs:
               if isinstance(row, dict) and row.get("severity") == "critical"
           }
           recoverable = {"STALE_AUTO_UPDATE_REPORT", "STALE_SOCIAL_SNAPSHOT"}
-          raise SystemExit(0 if critical and critical <= recoverable else 1)
+          legacy_freshness_only = bool(critical and critical <= recoverable)
+          expanded_recoverable = recoverable | {"STALE_SUPPLEMENTARY_SNAPSHOT"}
+          freshness_only = legacy_freshness_only or bool(
+              critical and critical <= expanded_recoverable
+          )
+          raise SystemExit(0 if freshness_only else 1)
           PY
             then
               stale_only=true
