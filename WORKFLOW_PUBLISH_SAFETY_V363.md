@@ -6,3 +6,5 @@ Write-capable workflows now publish a unique candidate branch and open or reuse 
 The shared publisher fails closed when `main` advances, when no candidate commit exists, when any required check fails or times out, or when GitHub rejects the merge. Force push and admin bypass are not permitted.
 
 The required verification chain is: Tablet GPT TCG Grader Main Alignment, Repository Integrity Guard, Main SELFREFINE, Deep SELFREFINE Guard, Exhaustive SELFREFINE Guard, Tablet Termux Main Guard, and Android Updater Guard.
+
+Tablet GPT sync generation v363 binds the newly watched `.github/workflows/runtime-optimization-hardening.yml` change to base main `5b18eb7c0c0721bcbedf6697e6254fe2e830f1e3` and candidate `9c11f5390aad2b59dee8f067bffb571102130203`; the generated sync quartet remains provenance-only and does not claim physical Tablet or Drive verification.
