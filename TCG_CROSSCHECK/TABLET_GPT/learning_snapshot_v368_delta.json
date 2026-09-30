@@ -1,0 +1,45 @@
+{
+  "schema_version": "1.1-tablet-gpt-tcg-grader-learning-sync",
+  "namespace": "TABLET_GPT",
+  "snapshot_kind": "learning_delta",
+  "run_date_kst": "2026-09-30",
+  "built_at": "2026-09-30T18:50:00+09:00",
+  "status": "finalized",
+  "source_repository": "wlghks24/-tcg-grader",
+  "prior_delta": "TCG_CROSSCHECK/TABLET_GPT/learning_snapshot_v367_delta.json",
+  "prior_lesson_digest_sha256": "f4f8419f4998804650c33bdad406461f683a90aa5d373f6742f255fbce4c52cb",
+  "source_main_sha": "c6e7f04b998348f5cfc47b6cd9dc7adc14182a18",
+  "share_policy": {
+    "explicit_patch_and_learning_lessons_only": true,
+    "chatgpt_model_weights_exported": false,
+    "raw_grading_calibration_shared": false,
+    "device_local_runtime_memory_overwritten": false,
+    "peer_verified_never_auto_promotes_local": true
+  },
+  "covered_merges": [
+    {
+      "pr": 351,
+      "version": "v368-post-merge-supplementary-freshness-recovery-candidate",
+      "merge_sha": "c6e7f04b998348f5cfc47b6cd9dc7adc14182a18"
+    }
+  ],
+  "lesson_digest_sha256": "24321d13b13ce2f3665ca054dfd29b9fff1e1d47f06a92c186a2eb4d4de08f82",
+  "lessons": [
+    {
+      "lesson_id": "TABLET-GPT-SUPPLEMENTARY-FRESHNESS-RECOVERY-V368",
+      "subsystem": "gpt_drive_package_recovery",
+      "issue_class": "supplementary_snapshot_staleness_was_not_classified_as_refresh_recoverable",
+      "trigger_condition": "post-merge GPT Drive packaging saw STALE_SUPPLEMENTARY_SNAPSHOT together with STALE_AUTO_UPDATE_REPORT while the package workflow recognized only the older auto-update/social freshness codes",
+      "symptom_summary": "the fail-closed package job exited nonzero instead of requesting the existing protected static refresh, even though the critical findings were freshness-only and no stale data would have been uploaded",
+      "root_cause_class": "recovery_allowlist_did_not_evolve_with_new_fail_closed_freshness_signal",
+      "fix_pattern": "keep the historical freshness allowlist intact, extend recovery only with the explicit STALE_SUPPLEMENTARY_SNAPSHOT code, preserve ready=false and protected refresh dispatch, and continue to reject any non-freshness critical finding",
+      "prevention_rule_id": "TGPT-PREV-SUPPLEMENTARY-FRESHNESS-PROTECTED-RECOVERY",
+      "verification_result": "supplementary_staleness_routes_to_protected_refresh_without_widening_publish_gate",
+      "regression_pass": true,
+      "recurrence_count": 1,
+      "applicable_scope": "both",
+      "confidence_level": "high",
+      "physical_tablet_runtime_reverification_required": true
+    }
+  ]
+}
