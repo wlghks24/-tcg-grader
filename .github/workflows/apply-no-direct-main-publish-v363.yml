@@ -81,8 +81,6 @@ jobs:
               occurrences = sum(counts.values())
               if not occurrences:
                   continue
-              # A legacy workflow should expose one publishing edge. Multiple
-              # direct-main writes in one workflow require manual review.
               if occurrences != 1:
                   raise SystemExit(f'UNEXPECTED_DIRECT_MAIN_COUNT:{path}:{counts}')
               text = ensure_pr_permission(text, path)
@@ -93,9 +91,6 @@ jobs:
               path.write_text(text, encoding='utf-8')
               changed.append(str(path))
 
-          # Current main contains 17 HEAD:main and 16 origin-main legacy
-          # publishers. Fail closed if the tree changed instead of silently
-          # leaving a direct-main route behind.
           if replaced_occurrences != 33:
               raise SystemExit(
                   f'EXPECTED_33_DIRECT_MAIN_PUBLISHERS_FOUND_{replaced_occurrences}:{changed}'
@@ -143,10 +138,11 @@ jobs:
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           git add -A
-          test -z "$(git diff --cached --name-only | grep -F '.github/workflows/apply-no-direct-main-publish-v363.yml' || true)" || {
-            echo 'ONE_SHOT_WORKFLOW_STILL_STAGED' >&2
+          test ! -e .github/workflows/apply-no-direct-main-publish-v363.yml
+          if git ls-files --error-unmatch .github/workflows/apply-no-direct-main-publish-v363.yml >/dev/null 2>&1; then
+            echo 'ONE_SHOT_WORKFLOW_STILL_IN_INDEX' >&2
             exit 1
-          }
+          fi
           git diff --cached --check
           git commit -m 'security: remove direct-main workflow publishers v363'
           git push origin "HEAD:${GITHUB_REF_NAME}"
