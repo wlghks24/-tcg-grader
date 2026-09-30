@@ -68,6 +68,10 @@ jobs:
             exit 0
           fi
 
+          # A freshness-only failure is not a package failure. Keep every
+          # freshness threshold fail-closed, request a protected refresh, and
+          # leave this run without an upload. Any non-freshness critical finding
+          # still preserves the original non-zero result.
           stale_only=false
           if [ -f STATIC_DATA_PUBLISH_REPORT.json ]; then
             if python - <<'PY'
@@ -79,7 +83,8 @@ jobs:
               for row in data.get("findings", [])
               if isinstance(row, dict) and row.get("severity") == "critical"
           }
-          raise SystemExit(0 if critical == {"STALE_AUTO_UPDATE_REPORT"} else 1)
+          freshness = {"STALE_SOCIAL_SNAPSHOT", "STALE_AUTO_UPDATE_REPORT"}
+          raise SystemExit(0 if critical and critical <= freshness else 1)
           PY
             then
               stale_only=true
@@ -117,5 +122,5 @@ jobs:
             echo
             echo "- package ready: ${{ steps.package.outputs.ready || 'false' }}"
             echo "- recovery: ${{ steps.package.outputs.recovery || 'none' }}"
-            echo "- stale policy: never widen the two-hour report freshness gate; request a fresh protected collection instead"
+            echo "- stale policy: never widen report/social freshness gates; request a fresh protected collection instead"
           } >> "$GITHUB_STEP_SUMMARY"
