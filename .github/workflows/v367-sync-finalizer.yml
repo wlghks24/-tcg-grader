@@ -1,0 +1,50 @@
+name: V367 Sync Finalizer
+
+on:
+  push:
+    branches:
+      - 'fix/supplementary-freshness-v367-final'
+
+permissions:
+  contents: write
+
+concurrency:
+  group: v367-sync-finalizer
+  cancel-in-progress: true
+
+jobs:
+  finalize:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - name: Checkout exact work branch
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          ref: ${{ github.ref_name }}
+          fetch-depth: 0
+      - name: Set up Python
+        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97
+        with:
+          python-version: '3.12'
+      - name: Validate exact v367 tree
+        shell: bash
+        run: |
+          set -euo pipefail
+          git rm -- .github/workflows/v367-sync-finalizer.yml
+          python static_integrity_manifest.py --write integrity_manifest.json
+          python static_integrity_manifest.py --check integrity_manifest.json
+          python -m py_compile auto_update_all.py static_data_publish_gate.py test_tablet_gpt_tcg_grader_sync_v367.py
+          python -m unittest -v test_auxiliary_freshness_coordination_v367.py test_static_data_publish_gate.py test_collection_verification_contextual_v257.py
+          mapfile -t sync_tests < <(find . -maxdepth 1 -type f -name 'test_tablet_gpt_tcg_grader_sync_v*.py' -printf '%f\n' | sort -V)
+          test "${#sync_tests[@]}" -gt 0
+          python -m unittest -v "${sync_tests[@]}"
+          git diff --check
+      - name: Commit finalized work tree
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add -- integrity_manifest.json
+          git commit -m 'sync: finalize v367 post-merge checkpoint'
+          git push origin "HEAD:${GITHUB_REF_NAME}"
