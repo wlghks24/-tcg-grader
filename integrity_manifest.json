@@ -1,7 +1,7 @@
 {
   "version": 2,
   "engine": "v109-card-identity-ocr-learning",
-  "generated_at": "2026-09-30T15:52:13+00:00",
+  "generated_at": "2026-09-30T16:00:55+00:00",
   "files": {
     ".github/workflows/ai-auto-tracker-guard.yml": {
       "sha256": "636e750bd6d2619cce75d4bce2d68051eaa2209ae763bc8ec523ed73476728a6",
@@ -3384,8 +3384,8 @@
       "bytes": 6906
     },
     "test_protected_static_pipeline_v305.py": {
-      "sha256": "c1c6215514d7b1f2a71b3f160eb87c4c1e6c4f60992336edd7b4e6db7c5756bf",
-      "bytes": 3514
+      "sha256": "fea117f7c84d13e715733158ba1dfd9cb9cd16ee9cb0f7bdb4dfdfd219e01994",
+      "bytes": 3718
     },
     "test_provider_source_gap_learning_v5.py": {
       "sha256": "ef4c731696641dcf5ec0e8db75335fd09b4edfcd2d2b1d1f8ebea7c5fb103dad",
@@ -3644,8 +3644,8 @@
       "bytes": 4193
     },
     "test_tablet_gpt_tcg_grader_sync_v346.py": {
-      "sha256": "f1af27668b566d3b9eb370383b1de3d4cb3bc61ea7f131ebcceb9665adc96f1f",
-      "bytes": 4413
+      "sha256": "7cb1bf273e83ca0fdefd40b38e941e0de114675a3359f31d86290238d0f178e9",
+      "bytes": 5154
     },
     "test_tablet_gpt_tcg_grader_sync_v347.py": {
       "sha256": "64265f30549348ba4c6cc8b0ebc1e938800b097474e4a87c5c38551bf0f5ea3a",
@@ -3704,8 +3704,8 @@
       "bytes": 4728
     },
     "test_tablet_gpt_tcg_grader_sync_v361.py": {
-      "sha256": "b7abdaf01622458542bf13460fa2a7e20383963fb3f4b40d4f35e28d96a23a7d",
-      "bytes": 7510
+      "sha256": "a09cd50b9c421c5247f00e5e08484b52bccbbc5daba08dd7480b8058a1c0845a",
+      "bytes": 7910
     },
     "test_tablet_gpt_tcg_grader_sync_v362.py": {
       "sha256": "b3bd853e7eb377b9df80680aa9e15bcae48075d40d84dce82f9d84370053ba27",
@@ -3720,8 +3720,8 @@
       "bytes": 7777
     },
     "test_tablet_gpt_tcg_grader_sync_v365.py": {
-      "sha256": "51b7e48fa7573dddf996a020a0950f1124ac58c69f2c3813b836f1f598e892bf",
-      "bytes": 8174
+      "sha256": "3ff69931a5d04a1fef90d2eb3beb2ad599ca69171a6ac4dff3644f357cdf9800",
+      "bytes": 8589
     },
     "test_tablet_gpt_tcg_grader_sync_v366.py": {
       "sha256": "df9bf870242f8eac5edb1e6e9321bbfe9e7956df9b5d1df1c21923240ae07d6a",
@@ -3732,12 +3732,12 @@
       "bytes": 7594
     },
     "test_tablet_gpt_tcg_grader_sync_v368.py": {
-      "sha256": "a10511053f363bc59ae01e34e1fc56257409e88021f7ab62cf8a728d898608aa",
-      "bytes": 9301
+      "sha256": "694cc4bd190ffee06d7700bc12a6f203da74a77181c63de422977c8a29692c42",
+      "bytes": 9585
     },
     "test_tablet_gpt_tcg_grader_sync_v369.py": {
-      "sha256": "63956f855172b09b1eaeb6f621cc75c611d86101f4f0b910f4afd37b3f5936c0",
-      "bytes": 6471
+      "sha256": "6c029eac456d51f4a8ef42060d01ac14ab0d72fe1bfd5021edc91061799b8f31",
+      "bytes": 7859
     },
     "test_tablet_gpt_tcg_grader_sync_v370.py": {
       "sha256": "39dc1725fa11a02a38c3cbafde0c3c1f962866b045aa039541b8ae5b1797291e",

@@ -105,14 +105,20 @@ class TabletGptTcgGraderSyncV365(unittest.TestCase):
 
     def test_drive_package_recovery_is_freshness_only_and_fail_closed(self):
         workflow=WORKFLOW.read_text(encoding="utf-8")
-        self.assertIn('recoverable = {"STALE_AUTO_UPDATE_REPORT", "STALE_SOCIAL_SNAPSHOT"}',workflow)
+        self.assertIn("STALE_AUTO_UPDATE_REPORT",workflow)
+        self.assertIn("STALE_SOCIAL_SNAPSHOT",workflow)
+        self.assertIn("STALE_SUPPLEMENTARY_SNAPSHOT",workflow)
         self.assertIn("critical and critical <= recoverable",workflow)
-        self.assertIn("FRESH_STATIC_REFRESH_DISPATCHED",workflow)
-        self.assertIn("tcg-static-data-refresh.yml/dispatches",workflow)
-        self.assertIn('echo "ready=false"',workflow)
+        self.assertIn("tcg_updater.update_cycle('gpt-drive-package-refresh')",workflow)
+        self.assertIn("FRESH_LOCAL_COLLECTION_RETRY",workflow)
         self.assertIn('exit "${rc}"',workflow)
-        self.assertIn("never widen the two-hour report freshness gate",workflow)
+        self.assertIn("never widen freshness gates",workflow)
+        self.assertNotIn("tcg-static-data-refresh.yml/dispatches",workflow)
+        self.assertNotIn("actions: write",workflow)
         self.assertNotIn("publish_allowed = true",workflow)
+        latest=read(ROOT/"TCG_CROSSCHECK/TABLET_GPT_TCG_GRADER_SYNC_CONTRACT_V370.json")
+        self.assertTrue(latest["rules"]["drive_package_freshness_only_local_retry_required"])
+        self.assertTrue(latest["rules"]["drive_package_stale_inputs_upload_forbidden"])
 
 if __name__=="__main__":
     unittest.main(verbosity=2)
