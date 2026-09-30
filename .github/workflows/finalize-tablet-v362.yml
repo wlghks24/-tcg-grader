@@ -65,6 +65,6 @@ jobs:
           git status --short
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git add integrity_manifest.json .github/workflows/finalize-tablet-v362.yml
+          git add integrity_manifest.json
           git commit -m 'Reconcile integrity manifest for Tablet GPT v362'
           git push origin HEAD:fix/tablet-receipt-fail-closed-v362
