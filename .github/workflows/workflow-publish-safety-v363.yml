@@ -6,6 +6,8 @@ on:
       - '.github/workflows/**'
       - 'scripts/publish_candidate_pr.sh'
       - 'test_workflow_publish_safety_v363.py'
+      - 'TCG_CROSSCHECK/**'
+      - 'test_tablet_gpt_tcg_grader_sync_v*.py'
       - 'integrity_manifest.json'
   push:
     branches:
@@ -15,6 +17,8 @@ on:
       - '.github/workflows/**'
       - 'scripts/publish_candidate_pr.sh'
       - 'test_workflow_publish_safety_v363.py'
+      - 'TCG_CROSSCHECK/**'
+      - 'test_tablet_gpt_tcg_grader_sync_v*.py'
       - 'integrity_manifest.json'
   workflow_dispatch:
 
