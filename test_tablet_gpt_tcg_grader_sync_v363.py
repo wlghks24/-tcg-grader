@@ -1,5 +1,6 @@
 import hashlib
 import json
+import re
 from pathlib import Path
 import subprocess
 import unittest
@@ -47,17 +48,49 @@ class TabletGptTcgGraderSyncV363(unittest.TestCase):
         self.assertFalse(receipt["verification"]["physical_drive_readback_verified"])
         for sha in (SOURCE,CANDIDATE): subprocess.run(["git","merge-base","--is-ancestor",sha,"HEAD"],check=True)
 
-    def test_exact_candidate_scope_and_complete_generation(self):
+    def test_exact_candidate_scope_and_verified_successor_when_stale(self):
         c=read(CONTRACT); cand=c["candidate_sync"]
         self.assertEqual(SOURCE,cand["base_main_sha"]); self.assertEqual(CANDIDATE,cand["candidate_commit"])
         expected_watched=[".github/workflows/runtime-optimization-hardening.yml"]
         self.assertEqual(expected_watched,watched_paths(c,SOURCE,CANDIDATE))
         self.assertEqual(sorted(cand["watched_paths"]),watched_paths(c,SOURCE,CANDIDATE))
-        self.assertEqual([],watched_paths(c,CANDIDATE),"v363 candidate has uncovered later watched changes")
         expected={"TCG_CROSSCHECK/TABLET_GPT_TCG_GRADER_SYNC_CONTRACT_V363.json","TCG_CROSSCHECK/TABLET_GPT/learning_snapshot_v363_delta.json","TCG_CROSSCHECK/TCG_GRADER/tablet_gpt_learning_receipt_v363.json","test_tablet_gpt_tcg_grader_sync_v363.py"}
         self.assertEqual(expected,set(cand["generation_files"]))
         self.assertTrue(expected.issubset(set(c["freshness_watch"]["exclude_paths"])))
         [self.assertTrue((ROOT/p).is_file(),p) for p in expected]
+
+        later=watched_paths(c,CANDIDATE)
+        if not later:
+            return
+        pattern=re.compile(r"TABLET_GPT_TCG_GRADER_SYNC_CONTRACT_V(\d+)\.json$")
+        successors=[]
+        for path in (ROOT/"TCG_CROSSCHECK").glob("TABLET_GPT_TCG_GRADER_SYNC_CONTRACT_V*.json"):
+            m=pattern.fullmatch(path.name)
+            if m and int(m.group(1))>363:
+                successors.append((int(m.group(1)),path))
+        self.assertTrue(successors,f"v363 stale without verified successor: {later}")
+        version,successor_path=max(successors)
+        successor=read(successor_path)
+        delta=read(ROOT/successor["delta_snapshot"]); receipt=read(ROOT/successor["receiver_receipt"])
+        self.assertEqual(delta["source_main_sha"],receipt["source_main_sha"])
+        self.assertEqual("SYNCED_VERIFIED",receipt["status"])
+        raw=json.dumps(delta["lessons"],ensure_ascii=False,sort_keys=True,separators=(",",":"))
+        digest=hashlib.sha256(raw.encode()).hexdigest()
+        self.assertEqual(digest,delta["lesson_digest_sha256"]); self.assertEqual(digest,receipt["delta_lesson_digest_sha256"])
+        self.assertEqual([r["lesson_id"] for r in delta["lessons"]],receipt["accepted_lesson_ids"])
+        generation_files={successor_path.relative_to(ROOT).as_posix(),successor["delta_snapshot"],successor["receiver_receipt"],successor["verification_test"]}
+        [self.assertTrue((ROOT/p).is_file(),p) for p in generation_files]
+        successor_candidate=successor.get("candidate_sync") or {}
+        self.assertTrue(successor_candidate,f"v{version} must exactly bind a successor candidate")
+        self.assertTrue(successor_candidate["requires_exact_watched_path_match"])
+        self.assertTrue(successor_candidate["post_merge_coverage_allowed"])
+        self.assertEqual(successor_candidate["base_main_sha"],delta["source_main_sha"])
+        self.assertEqual(generation_files,set(successor_candidate["generation_files"]))
+        base=successor_candidate["base_main_sha"]; head=successor_candidate["candidate_commit"]
+        self.assertEqual(sorted(successor_candidate["watched_paths"]),watched_paths(successor,base,head))
+        self.assertEqual([],watched_paths(successor,head),f"v{version} successor has uncovered watched changes")
+        subprocess.run(["git","merge-base","--is-ancestor",base,"HEAD"],check=True)
+        subprocess.run(["git","merge-base","--is-ancestor",head,"HEAD"],check=True)
 
     def test_protected_runtime_workflow_publishes_only_verified_candidate(self):
         workflow=RUNTIME_WORKFLOW.read_text(encoding="utf-8")
