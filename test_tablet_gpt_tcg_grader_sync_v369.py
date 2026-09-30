@@ -1,6 +1,7 @@
 import hashlib
 import json
 from pathlib import Path
+import re
 import subprocess
 import unittest
 
@@ -20,6 +21,10 @@ def read(path):
     return json.loads(path.read_text(encoding="utf-8"))
 
 
+def repo_path(path):
+    return path.relative_to(ROOT).as_posix()
+
+
 def watched_paths(contract, source, head="HEAD"):
     watch = contract["freshness_watch"]
     exact = set(watch["exact_paths"])
@@ -35,7 +40,68 @@ def watched_paths(contract, source, head="HEAD"):
     )
 
 
+def generation(path):
+    match = re.search(r"_V(\d+)\.json$", path.name)
+    if not match:
+        raise AssertionError(f"invalid generation contract name: {path}")
+    return int(match.group(1))
+
+
 class TabletGptTcgGraderSyncV369(unittest.TestCase):
+    def assert_exact_verified_successor(self, paths):
+        direct = []
+        for path in sorted((ROOT / "TCG_CROSSCHECK").glob("TABLET_GPT_TCG_GRADER_SYNC_CONTRACT_V*.json")):
+            if path == CONTRACT or generation(path) <= 369:
+                continue
+            candidate = read(path)
+            if (
+                candidate.get("prior_contract") == repo_path(CONTRACT)
+                and candidate.get("prior_delta_snapshot") == repo_path(DELTA)
+            ):
+                direct.append((path, candidate))
+
+        self.assertEqual(1, len(direct), "stale v369 must have exactly one direct verified successor")
+        successor_path, successor = direct[0]
+        successor_generation = generation(successor_path)
+        self.assertGreater(successor_generation, 369)
+
+        candidate = successor["candidate_sync"]
+        self.assertTrue(candidate["requires_exact_watched_path_match"])
+        self.assertEqual(sorted(paths), sorted(candidate["watched_paths"]))
+        self.assertEqual(
+            sorted(paths),
+            watched_paths(successor, candidate["base_main_sha"], candidate["candidate_commit"]),
+        )
+
+        delta_path = ROOT / successor["delta_snapshot"]
+        receipt_path = ROOT / successor["receiver_receipt"]
+        verification_path = ROOT / successor["verification_test"]
+        self.assertTrue(delta_path.is_file())
+        self.assertTrue(receipt_path.is_file())
+        self.assertTrue(verification_path.is_file())
+
+        prior_delta = read(DELTA)
+        delta = read(delta_path)
+        receipt = read(receipt_path)
+        self.assertEqual(repo_path(DELTA), delta["prior_delta"])
+        self.assertEqual(prior_delta["lesson_digest_sha256"], delta["prior_lesson_digest_sha256"])
+        self.assertEqual(candidate["base_main_sha"], delta["source_main_sha"])
+        self.assertEqual(candidate["base_main_sha"], receipt["source_main_sha"])
+        self.assertEqual(delta["lesson_digest_sha256"], receipt["delta_lesson_digest_sha256"])
+        self.assertEqual(
+            [row["lesson_id"] for row in delta["lessons"]], receipt["accepted_lesson_ids"]
+        )
+        self.assertEqual("SYNCED_VERIFIED", receipt["status"])
+        self.assertEqual(
+            f"v{successor_generation}", receipt["verification"]["contract_version"]
+        )
+        self.assertEqual(successor["verification_test"], receipt["verification"]["verification_test"])
+        self.assertEqual(
+            "TABLET_GPT_TCG_GRADER_MATCH", receipt["verification"]["verified_result"]
+        )
+        self.assertFalse(receipt["verification"]["physical_tablet_runtime_verified"])
+        self.assertFalse(receipt["verification"]["physical_drive_readback_verified"])
+
     def test_lineage_digest_receipt_and_merge_anchor(self):
         prior, delta, receipt, pc, contract = map(
             read, (PRIOR, DELTA, RECEIPT, PRIOR_CONTRACT, CONTRACT)
@@ -94,7 +160,9 @@ class TabletGptTcgGraderSyncV369(unittest.TestCase):
         self.assertTrue(expected_generation.issubset(set(contract["freshness_watch"]["exclude_paths"])))
         self.assertTrue(candidate["requires_exact_watched_path_match"])
         self.assertTrue(candidate["post_merge_coverage_allowed"])
-        self.assertEqual([], watched_paths(contract, CANDIDATE))
+        remaining = watched_paths(contract, CANDIDATE)
+        if remaining:
+            self.assert_exact_verified_successor(remaining)
 
     def test_timeout_recovery_is_clean_bounded_and_fail_closed(self):
         workflow = WORKFLOW.read_text(encoding="utf-8")
