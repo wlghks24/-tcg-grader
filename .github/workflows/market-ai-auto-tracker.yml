@@ -36,6 +36,8 @@ permissions:
   contents: write
   actions: write
   pages: write
+  pull-requests: write
+  checks: read
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
@@ -171,7 +173,7 @@ jobs:
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           git add -u
           git commit -m 'selfheal: verified market AI tracker repair'
-          git push origin HEAD:main
+          GH_TOKEN="${{ github.token }}" bash scripts/publish_candidate_pr.sh
 
       - name: Request Pages rebuild when browser integration changed
         if: steps.changes.outputs.changed == 'true' && github.event_name != 'pull_request' && github.ref == 'refs/heads/main' && contains(steps.changes.outputs.paths, 'index.html')
