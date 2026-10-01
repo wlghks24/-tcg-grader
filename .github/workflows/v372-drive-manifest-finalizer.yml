@@ -1,0 +1,69 @@
+name: V372 Drive Manifest Finalizer
+
+on:
+  pull_request:
+    branches: [main]
+    types: [opened, synchronize, reopened]
+
+permissions:
+  contents: write
+
+concurrency:
+  group: v372-drive-manifest-finalizer-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+jobs:
+  finalize:
+    if: >-
+      github.actor == github.repository_owner &&
+      github.event.pull_request.head.repo.full_name == github.repository &&
+      github.event.pull_request.head.ref == 'ops/integrity-manifest-sync'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    env:
+      PYTHONDONTWRITEBYTECODE: '1'
+      PYTHONUNBUFFERED: '1'
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          ref: ops/integrity-manifest-sync
+          fetch-depth: 0
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97
+        with:
+          python-version: '3.12'
+      - name: Require current-main ancestry and expected change set
+        shell: bash
+        run: |
+          set -euo pipefail
+          git fetch origin +refs/heads/main:refs/remotes/origin/main
+          git merge-base --is-ancestor origin/main HEAD
+          test "${GITHUB_HEAD_REF}" = "ops/integrity-manifest-sync"
+          git diff --check origin/main...HEAD
+      - name: Remove one-shot workflow and build exact-tree manifest
+        shell: bash
+        run: |
+          set -euo pipefail
+          rm -- .github/workflows/v372-drive-manifest-finalizer.yml
+          python static_integrity_manifest.py --write integrity_manifest.json
+          python static_integrity_manifest.py --check integrity_manifest.json
+          python fault_injection_healing.py --diagnose
+          python repository_integrity_guard.py
+          python -m unittest -v test_auxiliary_freshness_coordination_v367.py test_static_integrity_manifest_v345.py
+          mapfile -t sync_tests < <(find . -maxdepth 1 -type f -name 'test_tablet_gpt_tcg_grader_sync_v*.py' -printf '%f\n' | sort -V)
+          test "${#sync_tests[@]}" -gt 0
+          python -m unittest -v "${sync_tests[@]}"
+          git diff --check
+      - name: Commit only manifest plus finalizer removal
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add -- integrity_manifest.json .github/workflows/v372-drive-manifest-finalizer.yml
+          mapfile -t changed < <(git diff --cached --name-only)
+          test "${#changed[@]}" -eq 2
+          printf '%s\n' "${changed[@]}" | grep -Fx '.github/workflows/v372-drive-manifest-finalizer.yml'
+          printf '%s\n' "${changed[@]}" | grep -Fx 'integrity_manifest.json'
+          git diff --cached --check
+          git commit -m 'Reconcile integrity manifest for Drive auxiliary recovery'
+          git push origin "HEAD:${GITHUB_HEAD_REF}"
