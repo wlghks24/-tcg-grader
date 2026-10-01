@@ -22,7 +22,7 @@ ACTIVE_RUNTIME_FILES=(
 "event_collection_hardening_v140.py","event_collection_hardening_v141.py","collection_learning_hardening_v142.py",
 "collection_learning_hardening_v144.py","event_source_overlay_v144.py","event_source_expansion_v145.py",
 "event_gap_learning.py","event_priority_watch.py","event_quick_watch.py","social_event_discovery.py",
-"multi_route_event_discovery.py","adaptive_collection_learner.py","verified_collection_neural.py","verified_collection_job_neural.py","fan_social_learning.py",
+"multi_route_event_discovery.py","adaptive_collection_learner.py","verified_collection_neural.py","verified_collection_job_neural.py","verified_autonomy_neural.py","tablet_autonomy_engine.py","fan_social_learning.py",
 # Browser assets are executable/visible parts of the tablet runtime too. Keep
 # them in the fail-closed manifest so a partial checkout cannot pass startup
 # merely because the Python backend still compiles. The card-price/analysis

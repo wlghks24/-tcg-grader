@@ -32,6 +32,7 @@ CACHE_MAX_AGE_SECONDS = 60
 MODEL_SPECS = (
     ("query_strategy", "verified_collection_neural"),
     ("job_strategy", "verified_collection_job_neural"),
+    ("autonomy_strategy", "verified_autonomy_neural"),
 )
 
 _CACHE_LOCK = threading.Lock()

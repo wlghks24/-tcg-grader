@@ -32,6 +32,7 @@ def _commands():
       ("verified_neural_selfrefine",[py,"-m","unittest","-v","test_verified_neural_self_refine_v210.py"],180,False),
       ("verified_collection_neural",[py,"-m","unittest","-v","test_verified_collection_neural_v211.py"],180,False),
       ("verified_collection_job_neural",[py,"-m","unittest","-v","test_verified_collection_job_neural_v212.py"],180,False),
+      ("tablet_autonomy_v371",[py,"-m","unittest","-v","test_tablet_autonomy_engine_v371.py"],180,False),
       ("ai_score_freshness_v270",[py,"-m","unittest","-v","test_ai_score_freshness_v270.py"],180,False),
       ("repair_ai_score_freshness_v271",[py,"-m","unittest","-v","test_repair_ai_score_freshness_v271.py"],180,False),
       ("ui_app_shell_v272",[py,"-m","unittest","-v","test_ui_app_shell_v272.py"],180,False),

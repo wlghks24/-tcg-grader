@@ -18,6 +18,7 @@ from pathlib import Path
 import auto_repair_engine
 import collector_self_healing
 import verified_collection_job_neural
+import tablet_autonomy_engine
 from collection_job_contract import COLLECTION_JOBS
 from safe_runtime import (
     atomic_write_bytes, atomic_write_json, atomic_write_text,
@@ -192,12 +193,18 @@ def _job_timeout(filename: str, stats: dict) -> int:
     return min(300, max(stage_floor, learned))
 
 
-def _ordered_jobs(jobs, stats: dict):
-    """Preserve LPT makespan efficiency and let neural risk adjust close calls."""
+def _ordered_jobs(jobs, stats: dict, autonomy_state: dict | None = None):
+    """Preserve LPT efficiency while applying bounded verified AI priorities.
+
+    Every mandatory collector still runs. The autonomy layer can only raise the
+    relative priority of market/exploration work; it cannot suppress a job.
+    """
     def order_key(job):
         filename=job[2]
         stat_row=stats.get('jobs',{}).get(filename,{})
         ewma=max(1.0,_safe_float(stat_row.get('ewma_seconds') or stat_row.get('success_ewma_seconds'),30.0,0.0,3600.0))
+        multiplier=tablet_autonomy_engine.job_priority_multiplier(filename,autonomy_state)
+        multiplier=max(1.0,min(1.15,_safe_float(multiplier,1.0,1.0,1.15)))
         try:
             neural=verified_collection_job_neural.score_job(
                 filename,
@@ -209,11 +216,11 @@ def _ordered_jobs(jobs, stats: dict):
         if neural.get('active') is True:
             risk=_safe_float(neural.get('risk_priority'),0.5,0.0,1.0)
             # Keep long-running work at the front of the bounded worker queue.
-            # Neural risk can raise priority by at most 25%, so a tiny risky job
-            # cannot push a much longer job to the tail and increase makespan.
-            effective_load=ewma*(1.0+0.25*risk)
+            # Neural risk can raise priority by at most 25%; autonomy adds at
+            # most another 15% and never lowers or skips mandatory work.
+            effective_load=ewma*(1.0+0.25*risk)*multiplier
             return (1,effective_load,risk,ewma)
-        return (0,ewma,0.0,ewma)
+        return (0,ewma*multiplier,0.0,ewma)
     return sorted(list(jobs),key=order_key,reverse=True)
 
 
@@ -812,8 +819,17 @@ def run_all(trigger: str = "manual", selected_files=None, progress_callback=None
     preflight_by_file = {r.get('file'): r for r in preflight.get('results', [])}
     worker_count = _worker_count(total_jobs)
 
+    # Tablet GPT bounded autonomy: verified local state may reprioritize work but
+    # cannot skip collectors, create facts, change trust, or write source/Git.
+    try:
+        autonomy_report=tablet_autonomy_engine.refresh_state(root=ROOT,execute_learning=True)
+        autonomy_state=autonomy_report.get('state',{}) if isinstance(autonomy_report,dict) else {}
+    except (OSError,ValueError,TypeError,OverflowError,json.JSONDecodeError,TimeoutError) as exc:
+        autonomy_report={'ok':False,'error':diagnostic_exception(exc,600),'state':{}}
+        autonomy_state={}
+
     # 신경망 비활성 시 기존 LPT(EWMA) 정렬을 그대로 유지한다. 활성 후에도 모든 작업은 필수 실행된다.
-    jobs = _ordered_jobs(jobs,stats)
+    jobs = _ordered_jobs(jobs,stats,autonomy_state)
     progress_counter = {'done':0}
     progress_lock = threading.Lock()
 
@@ -1021,6 +1037,13 @@ def run_all(trigger: str = "manual", selected_files=None, progress_callback=None
             "restored_count":sum(1 for r in results if r.get('ok') and '기존 검증자료 유지' in str(r.get('status',''))),
             "fresh_failure_count":sum(1 for r in results if not r.get('ok')),
             "deferred_timeout_recovery":deferred_timeout_recovery,
+            "autonomy":{
+                "ok":bool(autonomy_report.get('ok')) if isinstance(autonomy_report,dict) else False,
+                "mode":autonomy_state.get('mode') if isinstance(autonomy_state,dict) else None,
+                "selected_actions":autonomy_state.get('selected_actions',[]) if isinstance(autonomy_state,dict) else [],
+                "priority":autonomy_state.get('priority',{}) if isinstance(autonomy_state,dict) else {},
+                "source_changes_require_pr":True,
+            },
             "results":results,
             "optimization":{"method":"primary 5min budget + timeout-only isolated 3–10min deferred recovery + per-file learned recovery budget + clean-success-only timeout learning + unified root-cause error learning + bounded parallel primary collection",
                             "learned_job_count":len(stats.get('jobs',{})),
