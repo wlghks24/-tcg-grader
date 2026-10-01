@@ -1,13 +1,10 @@
 name: V377 Autonomy Heavy-Lane Finalizer
-
 on:
   pull_request:
     branches: [ main ]
-    types: [ opened, reopened, synchronize ]
-
+    types: [ reopened ]
 permissions:
   contents: write
-
 jobs:
   finalize:
     if: github.event.pull_request.head.repo.full_name == github.repository && github.head_ref == 'fix/tablet-autonomy-single-run-v377'
@@ -21,7 +18,7 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: '3.12'
-      - name: Finish V377 safely
+      - name: Finalize heavy-lane safety and exact-tree integrity
         shell: bash
         run: |
           set -euo pipefail
