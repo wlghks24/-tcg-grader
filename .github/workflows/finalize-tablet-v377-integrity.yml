@@ -1,0 +1,317 @@
+name: V377 Autonomy Heavy-Lane Finalizer
+
+on:
+  pull_request:
+    branches: [ main ]
+    types: [ opened, reopened, synchronize ]
+
+permissions:
+  contents: write
+
+jobs:
+  finalize:
+    if: github.event.pull_request.head.repo.full_name == github.repository && github.head_ref == 'fix/tablet-autonomy-single-run-v377'
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.head_ref }}
+          fetch-depth: 0
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Patch V376 heavy lane and activate V377
+        shell: bash
+        run: |
+          set -euo pipefail
+          git merge-base --is-ancestor 24cad558d756d57e06a8309c8d5fbc73626f1d45 HEAD
+          python - <<'PY'
+          from pathlib import Path
+
+          controller = Path('tablet_autonomous_evolution_v376.py')
+          text = controller.read_text(encoding='utf-8')
+          old = '''    operational = v375.v374.execute_operational_skill(selected, settled["plan"])
+    safe_learning = v375.v374.v373.v372.execute_safe_learning(
+        settled["plan"], state_path=state_path, now=moment
+    )
+'''
+          new = '''    recipe = str(selected.get("recipe") or "") if isinstance(selected, dict) else ""
+    selected_learning = settled["plan"].get("selected_safe_learning_actions")
+    has_learning = isinstance(selected_learning, list) and bool(selected_learning)
+    operational_recipes = {"RECOVER_FRESHNESS", "EXPAND_REGION_COVERAGE", "RECOVER_SOURCE_HEALTH"}
+    if recipe in operational_recipes:
+        heavy_lane = "operational"
+        operational = v375.v374.execute_operational_skill(selected, settled["plan"])
+        safe_learning = {
+            "status": "DEFERRED_HEAVY_LANE_OPERATIONAL",
+            "results": {},
+            "state": {"status": "NOT_WRITTEN", "written": False},
+            "proposals_executed": False,
+            "git_write": False,
+            "source_code_modified": False,
+        }
+    elif has_learning:
+        heavy_lane = "safe_learning"
+        operational = {
+            "status": "DEFERRED_HEAVY_LANE_SAFE_LEARNING",
+            "executed": False,
+            "verified": True,
+            "recipe": recipe or None,
+        }
+        safe_learning = v375.v374.v373.v372.execute_safe_learning(
+            settled["plan"], state_path=state_path, now=moment
+        )
+    else:
+        heavy_lane = "none"
+        operational = (
+            v375.v374.execute_operational_skill(selected, settled["plan"])
+            if recipe == "OBSERVE_ONLY"
+            else {"status": "NO_HEAVY_OPERATION", "executed": False, "verified": True, "recipe": recipe or None}
+        )
+        safe_learning = {
+            "status": "NO_SAFE_LEARNING_ACTION",
+            "results": {},
+            "state": {"status": "NOT_WRITTEN", "written": False},
+            "proposals_executed": False,
+            "git_write": False,
+            "source_code_modified": False,
+        }
+    settled["heavy_lane"] = heavy_lane
+'''
+          if text.count(old) != 1:
+              raise SystemExit(f'expected exactly one V376 dual-heavy block, got {text.count(old)}')
+          text = text.replace(old, new, 1)
+          safety_old = '    "price_or_grade_invention": False,\n    "market_direction_inferred": False,\n})'
+          safety_new = '    "price_or_grade_invention": False,\n    "market_direction_inferred": False,\n    "one_heavy_lane_arbiter_enforced": True,\n})'
+          if text.count(safety_old) != 1:
+              raise SystemExit('V376 safety anchor mismatch')
+          controller.write_text(text.replace(safety_old, safety_new, 1), encoding='utf-8')
+
+          main = Path('main')
+          m = main.read_text(encoding='utf-8')
+          old_route = 'tablet_autonomous_evolution_v376.py --execute-safe-learning --apply-capabilities --train-meta --apply-skills'
+          new_route = 'tablet_autonomous_evolution_v377.py --execute-safe-learning --apply-capabilities --train-meta --apply-skills'
+          if m.count(old_route) != 1:
+              raise SystemExit(f'main evolve route mismatch: {m.count(old_route)}')
+          main.write_text(m.replace(old_route, new_route, 1), encoding='utf-8')
+
+          manifest = Path('tablet_runtime_manifest.py')
+          rt = manifest.read_text(encoding='utf-8')
+          anchor = '"tablet_autonomous_evolution_v376.py"'
+          if '"tablet_autonomous_evolution_v377.py"' not in rt:
+              if rt.count(anchor) != 1:
+                  raise SystemExit('runtime manifest V376 anchor mismatch')
+              rt = rt.replace(anchor, anchor + ',"tablet_autonomous_evolution_v377.py"', 1)
+              manifest.write_text(rt, encoding='utf-8')
+
+          ignore = Path('.gitignore')
+          ig = ignore.read_text(encoding='utf-8')
+          additions = [
+              '.tablet_autonomy_execution_v377.lock',
+              'tablet_autonomy_v377_report.json',
+          ]
+          missing = [row for row in additions if row not in ig.splitlines()]
+          if missing:
+              ignore.write_text(ig.rstrip() + '\n' + '\n'.join(missing) + '\n', encoding='utf-8')
+
+          test = Path('test_tablet_autonomy_heavy_lane_v377.py')
+          test.write_text(r'''import tempfile
+import unittest
+from pathlib import Path
+from unittest import mock
+
+import tablet_autonomous_evolution_v376 as autonomy
+from test_tablet_autonomous_evolution_v376 import NOW, base_result
+
+
+class TabletAutonomyHeavyLaneV377Tests(unittest.TestCase):
+    def _common(self, settled, root):
+        skill_state = autonomy.v375.v374._default_skill_state()
+        return (
+            mock.patch.object(autonomy.v375, "run_cycle", return_value=settled),
+            mock.patch.object(autonomy.v375.v374.v373, "load_capabilities", return_value={"status": "loaded", "capabilities": [], "corruption_hold": False}),
+            mock.patch.object(autonomy.v375.v374.v373, "save_capabilities", return_value={"status": "CAPABILITIES_SAVED", "written": True}),
+            mock.patch.object(autonomy.v375.v374, "load_skill_state", return_value={"state": skill_state, "status": "loaded", "corruption_hold": False}),
+            mock.patch.object(autonomy.v375.v374, "save_skill_state", return_value={"status": "SKILL_STATE_SAVED", "written": True}),
+        )
+
+    def test_operational_recipe_never_trains_model_in_same_cycle(self):
+        settled = base_result()
+        settled["selected_skill"] = {"skill_id": "RECOVER_FRESHNESS:MARKET", "recipe": "RECOVER_FRESHNESS", "gap_id": "market_freshness", "score": 80.0, "risk": 0.1, "cost": 0.1}
+        settled["plan"]["selected_safe_learning_actions"] = ["TRAIN_QUERY_STRATEGY"]
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            common = self._common(settled, root)
+            with common[0], common[1], common[2], common[3], common[4], \
+                 mock.patch.object(autonomy.v375.v374, "execute_operational_skill", return_value={"status": "OPERATIONAL_REFRESH_EXECUTED", "executed": True}) as operational, \
+                 mock.patch.object(autonomy.v375.v374.v373.v372, "execute_safe_learning") as learning:
+                result = autonomy.run_cycle(execute=True, apply_capabilities=True, apply_skills=True, root=root, now=NOW, state_path=root/'state.json', journal_path=root/'journal.json', persist_outputs=False)
+            operational.assert_called_once()
+            learning.assert_not_called()
+            self.assertEqual("operational", result["heavy_lane"])
+            self.assertEqual("DEFERRED_HEAVY_LANE_OPERATIONAL", result["safe_learning"]["status"])
+
+    def test_model_recovery_never_runs_operational_recovery_in_same_cycle(self):
+        settled = base_result()
+        settled["selected_skill"] = {"skill_id": "RECOVER_MODEL:QUERY", "recipe": "RECOVER_MODEL", "gap_id": "query_model", "score": 85.0, "risk": 0.1, "cost": 0.2}
+        settled["plan"]["selected_safe_learning_actions"] = ["TRAIN_QUERY_STRATEGY"]
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            common = self._common(settled, root)
+            with common[0], common[1], common[2], common[3], common[4], \
+                 mock.patch.object(autonomy.v375.v374, "execute_operational_skill") as operational, \
+                 mock.patch.object(autonomy.v375.v374.v373.v372, "execute_safe_learning", return_value={"status": "SAFE_LEARNING_EXECUTED", "results": {"TRAIN_QUERY_STRATEGY": {"status": "TRAINING_VERIFIED"}}, "state": {"status": "STATE_SAVED", "written": True}, "proposals_executed": False, "git_write": False, "source_code_modified": False}) as learning:
+                result = autonomy.run_cycle(execute=True, apply_capabilities=True, apply_skills=True, root=root, now=NOW, state_path=root/'state.json', journal_path=root/'journal.json', persist_outputs=False)
+            operational.assert_not_called()
+            learning.assert_called_once()
+            self.assertEqual("safe_learning", result["heavy_lane"])
+            self.assertEqual("DEFERRED_HEAVY_LANE_SAFE_LEARNING", result["operational"]["status"])
+
+    def test_safety_contract_exposes_single_heavy_lane_arbiter(self):
+        self.assertTrue(autonomy.SAFETY["one_heavy_lane_arbiter_enforced"])
+        self.assertEqual(1, autonomy.v375.v374.SAFETY["max_heavy_operations_per_cycle"])
+
+
+if __name__ == '__main__':
+    unittest.main(verbosity=2)
+''', encoding='utf-8')
+          PY
+          python -m py_compile tablet_autonomous_evolution_v376.py tablet_autonomous_evolution_v377.py test_tablet_autonomy_heavy_lane_v377.py
+          python -m unittest -v test_tablet_autonomous_evolution_v376.py test_tablet_autonomous_evolution_v377.py test_tablet_autonomy_heavy_lane_v377.py
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add tablet_autonomous_evolution_v376.py tablet_autonomous_evolution_v377.py test_tablet_autonomous_evolution_v377.py test_tablet_autonomy_heavy_lane_v377.py main tablet_runtime_manifest.py .gitignore
+          git commit -m 'fix: enforce one heavy autonomy lane per cycle v377'
+          echo "CANDIDATE_SHA=$(git rev-parse HEAD)" >> "$GITHUB_ENV"
+
+      - name: Generate V377 Tablet GPT sync generation
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import hashlib, json, os
+          from datetime import datetime, timedelta, timezone
+          from pathlib import Path
+
+          source = '24cad558d756d57e06a8309c8d5fbc73626f1d45'
+          candidate = os.environ['CANDIDATE_SHA']
+          prior_digest = '4ffc881e5a91de40d8ff5ce6a0ab174e6edae0469eabc0501d498fbd79feb66f'
+          lesson = {
+            'lesson_id':'TABLET-GPT-SINGLE-HEAVY-LANE-ARBITER-V377',
+            'subsystem':'tablet_gpt_autonomous_execution_budget',
+            'issue_class':'one_cycle_can_execute_operational_refresh_and_model_training_together',
+            'trigger_condition':'v376 selects an operational recovery skill while the settled plan also contains a safe-learning action',
+            'prevention_rule':'before autonomous execution choose exactly one heavy lane: operational recovery for market/source/coverage recipes, safe-learning for model recovery or model-only work, otherwise none; never invoke both heavy paths in one cycle; keep transactional journal/evidence barriers, rollback, protected-main, provenance, and verified-only learning unchanged',
+            'validation_required':[
+              f'base main is exactly {source}',
+              'operational market/source/coverage recipes never call safe-learning in the same cycle',
+              'model-recovery or model-only work never calls operational recovery in the same cycle',
+              'the existing execution journal still reaches COMMITTED only after durable causal trial state',
+              'existing V376 persistence, evidence, capability, ambiguity and sanitized exchange boundaries remain enforced',
+              'V377 serializes every mutating autonomy cycle with a fail-closed OS lock',
+              'market direction, facts, prices, grades and trust are never invented or auto-promoted',
+              'source generation or rewrite, arbitrary command, direct-main and verification bypass remain forbidden',
+              'physical Tablet runtime and Drive readback remain unverified until matching external evidence exists'
+            ],
+            'safety_boundary':'the tablet may autonomously choose which verified heavy lane to spend its one-cycle budget on, but it may not run operational mutation and model training together or weaken any existing fail-closed gate'
+          }
+          lessons=[lesson]
+          digest=hashlib.sha256(json.dumps(lessons,ensure_ascii=False,sort_keys=True,separators=(',',':')).encode()).hexdigest()
+          if digest != 'b7f0e3dc0ed17617118db2671febf8bfa6cc607a0450f9c4b829cb6c34a73fc4':
+              raise SystemExit('lesson digest mismatch')
+          kst=timezone(timedelta(hours=9))
+          now=datetime.now(timezone.utc).astimezone(kst)
+          prev=json.loads(Path('TCG_CROSSCHECK/TABLET_GPT_TCG_GRADER_SYNC_CONTRACT_V376.json').read_text(encoding='utf-8'))
+          required=list(prev['current_required_merge_prs'])
+          if 364 not in required:
+              required.append(364)
+          generation=[
+            'TCG_CROSSCHECK/TABLET_GPT_TCG_GRADER_SYNC_CONTRACT_V377.json',
+            'TCG_CROSSCHECK/TABLET_GPT/learning_snapshot_v377_delta.json',
+            'TCG_CROSSCHECK/TCG_GRADER/tablet_gpt_learning_receipt_v377.json',
+            'test_tablet_gpt_tcg_grader_sync_v377.py',
+          ]
+          contract=json.loads(json.dumps(prev))
+          contract.update({
+            'purpose':'bind V377 single-run serialization and one-heavy-lane arbitration to exact current main without weakening V376 transactional, protected-main, verification, provenance, freshness, learning, or physical-device boundaries',
+            'prior_contract':'TCG_CROSSCHECK/TABLET_GPT_TCG_GRADER_SYNC_CONTRACT_V376.json',
+            'prior_delta_snapshot':'TCG_CROSSCHECK/TABLET_GPT/learning_snapshot_v376_delta.json',
+            'delta_snapshot':'TCG_CROSSCHECK/TABLET_GPT/learning_snapshot_v377_delta.json',
+            'receiver_receipt':'TCG_CROSSCHECK/TCG_GRADER/tablet_gpt_learning_receipt_v377.json',
+            'verification_test':'test_tablet_gpt_tcg_grader_sync_v377.py',
+            'current_required_merge_prs':required,
+            'prior_required_lesson_count':69,
+            'delta_required_lesson_count':1,
+            'current_required_lesson_count':70,
+            'candidate_sync':{
+              'base_main_sha':source,
+              'candidate_commit':candidate,
+              'watched_paths':['main','tablet_autonomous_evolution_v376.py','tablet_autonomous_evolution_v377.py','tablet_runtime_manifest.py'],
+              'generation_files':generation,
+              'requires_exact_watched_path_match':True,
+              'post_merge_coverage_allowed':True,
+            },
+          })
+          contract['rules']['closed_loop_max_one_heavy_operation_per_cycle']=True
+          contract['rules']['one_heavy_lane_arbiter_enforced']=True
+          contract['rules']['single_mutating_cycle_lock_required']=True
+          contract['rules']['concurrent_mutating_cycle_fail_closed']=True
+          contract['freshness_watch']['exclude_paths']=list(dict.fromkeys(contract['freshness_watch']['exclude_paths']+generation))
+          delta={
+            'schema_version':'1.1-tablet-gpt-tcg-grader-learning-sync','namespace':'TABLET_GPT','snapshot_kind':'learning_delta',
+            'run_date_kst':now.date().isoformat(),'built_at':now.isoformat(timespec='seconds'),'status':'finalized',
+            'source_repository':'wlghks24/-tcg-grader','prior_delta':'TCG_CROSSCHECK/TABLET_GPT/learning_snapshot_v376_delta.json',
+            'prior_lesson_digest_sha256':prior_digest,'source_main_sha':source,
+            'share_policy':{'explicit_patch_and_learning_lessons_only':True,'chatgpt_model_weights_exported':False,'raw_grading_calibration_shared':False,'device_local_runtime_memory_overwritten':False,'peer_verified_never_auto_promotes_local':True},
+            'covered_merges':[{'pr':364,'version':'v377-single-heavy-lane-base','merge_sha':source}],
+            'lesson_digest_sha256':digest,'lessons':lessons,
+          }
+          receipt={
+            'schema_version':'1.1-tablet-gpt-tcg-grader-learning-sync','receiver':'TCG_GRADER','source_namespace':'TABLET_GPT',
+            'source_repository':'wlghks24/-tcg-grader','source_main_sha':source,'received_at':now.isoformat(timespec='seconds'),'status':'SYNCED_VERIFIED',
+            'source_snapshots':['TCG_CROSSCHECK/TABLET_GPT/learning_snapshot_v376_delta.json','TCG_CROSSCHECK/TABLET_GPT/learning_snapshot_v377_delta.json'],
+            'prior_lesson_digest_sha256':prior_digest,'delta_lesson_digest_sha256':digest,
+            'accepted_lesson_ids':[lesson['lesson_id']],
+            'alignment_policy':{'same_digest_required':True,'same_lesson_ids_required':True,'same_source_main_required_for_delta':True,'covered_patch_commits_must_be_ancestors':True,'future_watched_main_changes_require_new_delta':True,'blind_overwrite_forbidden':True,'grading_calibration_auto_import_forbidden':True,'peer_verified_never_auto_promotes_local':True},
+            'verification':{'contract_version':'v377','verification_test':'test_tablet_gpt_tcg_grader_sync_v377.py','verification_mode':'exact_candidate_single_heavy_lane_and_serialized_mutation','verified_result':'TABLET_GPT_TCG_GRADER_MATCH','physical_tablet_runtime_verified':False,'physical_drive_readback_verified':False,'device_reverification_required':True},
+          }
+          for path,obj in [
+            ('TCG_CROSSCHECK/TABLET_GPT_TCG_GRADER_SYNC_CONTRACT_V377.json',contract),
+            ('TCG_CROSSCHECK/TABLET_GPT/learning_snapshot_v377_delta.json',delta),
+            ('TCG_CROSSCHECK/TCG_GRADER/tablet_gpt_learning_receipt_v377.json',receipt),
+          ]:
+              Path(path).write_text(json.dumps(obj,ensure_ascii=False,indent=2)+'\n',encoding='utf-8')
+          Path('test_tablet_gpt_tcg_grader_sync_v377.py').write_text(f'''import hashlib\nimport json\nimport subprocess\nimport unittest\nfrom pathlib import Path\n\nROOT=Path(__file__).resolve().parent\nSOURCE={source!r}\nCANDIDATE={candidate!r}\nCONTRACT=ROOT/'TCG_CROSSCHECK/TABLET_GPT_TCG_GRADER_SYNC_CONTRACT_V377.json'\nDELTA=ROOT/'TCG_CROSSCHECK/TABLET_GPT/learning_snapshot_v377_delta.json'\nRECEIPT=ROOT/'TCG_CROSSCHECK/TCG_GRADER/tablet_gpt_learning_receipt_v377.json'\nEXPECTED_DIGEST='b7f0e3dc0ed17617118db2671febf8bfa6cc607a0450f9c4b829cb6c34a73fc4'\n\ndef load(p): return json.loads(p.read_text(encoding='utf-8'))\ndef watched(c,a,b='HEAD'):\n    w=c['freshness_watch']; exact=set(w['exact_paths']); prefixes=tuple(w['path_prefixes']); excluded=set(w['exclude_paths'])\n    changed=subprocess.check_output(['git','diff','--name-only',f'{{a}}..{{b}}'],text=True).splitlines()\n    return sorted(p for p in changed if p not in excluded and (p in exact or p.startswith(prefixes)))\n\nclass TabletGptTcgGraderSyncV377(unittest.TestCase):\n    def test_generation_digest_receipt_and_scope(self):\n        c,d,r=load(CONTRACT),load(DELTA),load(RECEIPT)\n        raw=json.dumps(d['lessons'],ensure_ascii=False,sort_keys=True,separators=(',',':'))\n        dg=hashlib.sha256(raw.encode()).hexdigest()\n        self.assertEqual(EXPECTED_DIGEST,dg); self.assertEqual(dg,d['lesson_digest_sha256']); self.assertEqual(dg,r['delta_lesson_digest_sha256'])\n        self.assertEqual(SOURCE,d['source_main_sha']); self.assertEqual(SOURCE,r['source_main_sha'])\n        self.assertEqual(['TABLET-GPT-SINGLE-HEAVY-LANE-ARBITER-V377'],r['accepted_lesson_ids'])\n        self.assertEqual('SYNCED_VERIFIED',r['status']); self.assertFalse(r['verification']['physical_tablet_runtime_verified']); self.assertFalse(r['verification']['physical_drive_readback_verified'])\n        self.assertEqual(['main','tablet_autonomous_evolution_v376.py','tablet_autonomous_evolution_v377.py','tablet_runtime_manifest.py'], watched(c,SOURCE,CANDIDATE))\n        self.assertEqual([],watched(c,CANDIDATE))\n        subprocess.run(['git','merge-base','--is-ancestor',SOURCE,'HEAD'],check=True)\n        subprocess.run(['git','merge-base','--is-ancestor',CANDIDATE,'HEAD'],check=True)\n    def test_runtime_and_safety_boundaries(self):\n        c=load(CONTRACT); rules=c['rules']\n        for key in ('closed_loop_max_one_heavy_operation_per_cycle','one_heavy_lane_arbiter_enforced','single_mutating_cycle_lock_required','concurrent_mutating_cycle_fail_closed','direct_main_push_forbidden','autonomous_source_code_generation_forbidden','autonomous_git_write_forbidden','autonomous_verification_bypass_forbidden','physical_tablet_and_drive_results_must_not_be_invented'):\n            self.assertIs(rules[key],True,key)\n        main=(ROOT/'main').read_text(encoding='utf-8'); runtime=(ROOT/'tablet_runtime_manifest.py').read_text(encoding='utf-8'); core=(ROOT/'tablet_autonomous_evolution_v376.py').read_text(encoding='utf-8')\n        self.assertIn('tablet_autonomous_evolution_v377.py --execute-safe-learning --apply-capabilities --train-meta --apply-skills',main)\n        self.assertIn('"tablet_autonomous_evolution_v377.py"',runtime)\n        self.assertIn('DEFERRED_HEAVY_LANE_OPERATIONAL',core); self.assertIn('DEFERRED_HEAVY_LANE_SAFE_LEARNING',core); self.assertIn('one_heavy_lane_arbiter_enforced',core)\n\nif __name__=='__main__': unittest.main(verbosity=2)\n''',encoding='utf-8')
+          PY
+          git add TCG_CROSSCHECK/TABLET_GPT_TCG_GRADER_SYNC_CONTRACT_V377.json TCG_CROSSCHECK/TABLET_GPT/learning_snapshot_v377_delta.json TCG_CROSSCHECK/TCG_GRADER/tablet_gpt_learning_receipt_v377.json test_tablet_gpt_tcg_grader_sync_v377.py
+          git commit -m 'sync: bind V377 single heavy-lane autonomy generation'
+
+      - name: Validate V377 lineage and runtime
+        shell: bash
+        run: |
+          set -euo pipefail
+          python tablet_autonomous_evolution_v376.py --self-test
+          python tablet_autonomous_evolution_v377.py --self-test
+          python -m unittest -v test_tablet_autonomous_evolution_v376.py test_tablet_autonomous_evolution_v377.py test_tablet_autonomy_heavy_lane_v377.py test_tablet_gpt_tcg_grader_sync_v376.py test_tablet_gpt_tcg_grader_sync_v377.py
+          python -m unittest -v $(ls test_tablet_gpt_tcg_grader_sync_v*.py | sed 's/.py$//' | tr '\n' ' ')
+          python tablet_runtime_manifest.py --check --compile
+
+      - name: Remove one-shot workflow and rebuild exact-tree integrity
+        shell: bash
+        run: |
+          set -euo pipefail
+          git rm .github/workflows/finalize-tablet-v377-integrity.yml
+          git commit -m 'chore: remove V377 one-shot finalizer'
+          python static_integrity_manifest.py --write
+          python static_integrity_manifest.py --diagnose
+          python -m unittest -v test_tablet_autonomous_evolution_v376.py test_tablet_autonomous_evolution_v377.py test_tablet_autonomy_heavy_lane_v377.py test_tablet_gpt_tcg_grader_sync_v377.py
+          python -m unittest -v $(ls test_tablet_gpt_tcg_grader_sync_v*.py | sed 's/.py$//' | tr '\n' ' ')
+          git add integrity_manifest.json
+          git commit -m 'chore: refresh integrity manifest for V377' || true
+          test ! -e .github/workflows/finalize-tablet-v377-integrity.yml
+          git status --short
+          test -z "$(git status --porcelain)"
+          git push origin HEAD:${GITHUB_HEAD_REF}
