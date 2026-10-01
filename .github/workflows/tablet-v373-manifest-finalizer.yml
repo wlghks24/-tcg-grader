@@ -33,16 +33,21 @@ jobs:
           test "$(git rev-parse origin/main)" = "$base"
           git merge-base --is-ancestor "$base" HEAD
 
-      - name: Remove one-shot workflow before manifest generation
+      - name: Commit one-shot workflow deletion locally
         shell: bash
         run: |
           set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           git rm -- .github/workflows/tablet-v373-manifest-finalizer.yml
+          git diff --cached --check
+          git commit -m 'chore: remove one-shot v373 manifest finalizer'
 
-      - name: Build exact final-tree integrity manifest
+      - name: Build and verify exact final tree
         shell: bash
         run: |
           set -euo pipefail
+          test ! -e .github/workflows/tablet-v373-manifest-finalizer.yml
           python static_integrity_manifest.py --write
           python static_integrity_manifest.py --check
           python repository_integrity_guard.py
@@ -50,7 +55,7 @@ jobs:
           python -m unittest -v test_tablet_autonomous_evolution_v373.py test_tablet_gpt_tcg_grader_sync_v373.py test_tablet_gpt_tcg_grader_sync_v372.py
           python tablet_runtime_manifest.py --check --compile
 
-      - name: Commit exact final tree
+      - name: Commit manifest and push exact final tree
         shell: bash
         env:
           HEAD_REF: ${{ github.event.pull_request.head.ref }}
@@ -58,11 +63,8 @@ jobs:
           set -euo pipefail
           git add integrity_manifest.json
           git diff --cached --check
-          if git diff --cached --quiet; then
-            echo 'Nothing to finalize.'
-            exit 0
+          if ! git diff --cached --quiet; then
+            git commit -m 'chore: finalize v373 exact-tree integrity manifest'
           fi
-          git config user.name 'github-actions[bot]'
-          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git commit -m 'chore: finalize v373 exact-tree integrity manifest'
+          python static_integrity_manifest.py --check
           git push origin "HEAD:refs/heads/${HEAD_REF}"
