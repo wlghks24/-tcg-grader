@@ -5,7 +5,7 @@ import argparse, json
 from pathlib import Path
 ROOT=Path(__file__).resolve().parent
 ACTIVE_RUNTIME_FILES=(
-"index.html","safe_runtime.py","runtime_sre_metrics.py","collection_runtime_health.py","ai_runtime_model_guard.py","tablet_autonomous_evolution_v371.py","tablet_autonomous_evolution_v372.py","tablet_autonomous_evolution_v373.py","tablet_autonomous_evolution_v374.py","tablet_autonomous_evolution_v375.py","tablet_autonomous_evolution_v376.py","verified_neural_self_refine.py","tablet_runtime_manifest.py","TABLET_SCHEDULED_UPDATE.sh",
+"index.html","safe_runtime.py","runtime_sre_metrics.py","collection_runtime_health.py","ai_runtime_model_guard.py","tablet_autonomous_evolution_v371.py","tablet_autonomous_evolution_v372.py","tablet_autonomous_evolution_v373.py","tablet_autonomous_evolution_v374.py","tablet_autonomous_evolution_v375.py","tablet_autonomous_evolution_v376.py","tablet_autonomous_evolution_v377.py","verified_neural_self_refine.py","tablet_runtime_manifest.py","TABLET_SCHEDULED_UPDATE.sh",
 "grading_accuracy_v99.py","card_grading_valuation.py","card_identity_recognition.py","server_security_guard.py","multi_market_price_collector.py",
 "quality_review_policy.py","quality_review_policy_v2.json",
 "auto_repair_engine.py","auto_update_all.py","collection_job_contract.py","collector_self_healing.py","tcg_code_repair_learning.py",
@@ -50,7 +50,7 @@ def audit(root:Path=ROOT,*,compile_python:bool=False)->dict:
         import quality_review_policy
         quality_policy=quality_review_policy.validate(root/"quality_review_policy_v2.json")
     except Exception as exc:
-        quality_policy={"ok":False,"errors":[f"validator_error:{type(exc).__name__}"]}
+        quality_policy={"ok":False,"errors":[f"validator_error:{type(exc).__name__}"]
     return {"ok":not missing and not symlinks and not compile_errors and bool(quality_policy.get("ok")),"schema_version":1,
             "active_file_count":len(ACTIVE_RUNTIME_FILES),"python_checked":checked_python,
             "missing":missing,"symlinks":symlinks,"compile_errors":compile_errors,"quality_policy":quality_policy}
