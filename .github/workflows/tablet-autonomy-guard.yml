@@ -2,8 +2,17 @@ name: Tablet Autonomy Guard
 
 on:
   push:
-    branches:
-      - feat/tablet-autonomy-v371
+    branches: [main]
+    paths:
+      - 'verified_autonomy_neural.py'
+      - 'tablet_autonomy_engine.py'
+      - 'test_tablet_autonomy_engine_v371.py'
+      - 'auto_update_all.py'
+      - 'ai_runtime_model_guard.py'
+      - 'tablet_runtime_manifest.py'
+      - 'verify_current_runtime.py'
+      - '.gitignore'
+      - '.github/workflows/tablet-autonomy-guard.yml'
   pull_request:
     paths:
       - 'verified_autonomy_neural.py'
@@ -18,111 +27,13 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: write
-  pull-requests: read
+  contents: read
 
 concurrency:
   group: tablet-autonomy-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
-  bootstrap-v371:
-    if: github.event_name == 'push' && github.ref == 'refs/heads/feat/tablet-autonomy-v371' && github.actor != 'github-actions[bot]'
-    runs-on: ubuntu-24.04
-    timeout-minutes: 20
-    steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
-        with:
-          fetch-depth: 2
-      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97
-        with:
-          python-version: '3.11'
-      - name: Integrate bounded autonomy into active tablet runtime
-        run: |
-          python - <<'PY'
-          from pathlib import Path
-
-          def replace_once(path, old, new, label):
-              p = Path(path)
-              text = p.read_text(encoding='utf-8')
-              if new in text:
-                  return False
-              if text.count(old) != 1:
-                  raise SystemExit(f'{label}: expected exactly one source fragment, got {text.count(old)}')
-              p.write_text(text.replace(old, new, 1), encoding='utf-8')
-              return True
-
-          replace_once(
-              'auto_update_all.py',
-              'import verified_collection_job_neural\nfrom collection_job_contract import COLLECTION_JOBS\n',
-              'import verified_collection_job_neural\nimport tablet_autonomy_engine\nfrom collection_job_contract import COLLECTION_JOBS\n',
-              'auto-update autonomy import',
-          )
-          old_order = '''def _ordered_jobs(jobs, stats: dict):\n    """Preserve LPT makespan efficiency and let neural risk adjust close calls."""\n    def order_key(job):\n        filename=job[2]\n        stat_row=stats.get('jobs',{}).get(filename,{})\n        ewma=max(1.0,_safe_float(stat_row.get('ewma_seconds') or stat_row.get('success_ewma_seconds'),30.0,0.0,3600.0))\n        try:\n            neural=verified_collection_job_neural.score_job(\n                filename,\n                stat_row,\n                planned_timeout_seconds=_job_timeout(filename,stats),\n            )\n        except (OSError,ValueError,TypeError,OverflowError,json.JSONDecodeError):\n            neural={'active':False,'risk_priority':0.5}\n        if neural.get('active') is True:\n            risk=_safe_float(neural.get('risk_priority'),0.5,0.0,1.0)\n            # Keep long-running work at the front of the bounded worker queue.\n            # Neural risk can raise priority by at most 25%, so a tiny risky job\n            # cannot push a much longer job to the tail and increase makespan.\n            effective_load=ewma*(1.0+0.25*risk)\n            return (1,effective_load,risk,ewma)\n        return (0,ewma,0.0,ewma)\n    return sorted(list(jobs),key=order_key,reverse=True)\n'''
-          new_order = '''def _ordered_jobs(jobs, stats: dict, autonomy_state: dict | None = None):\n    """Preserve LPT efficiency while applying bounded verified AI priorities.\n\n    Every mandatory collector still runs. The autonomy layer can only raise the\n    relative priority of market/exploration work; it cannot suppress a job.\n    """\n    def order_key(job):\n        filename=job[2]\n        stat_row=stats.get('jobs',{}).get(filename,{})\n        ewma=max(1.0,_safe_float(stat_row.get('ewma_seconds') or stat_row.get('success_ewma_seconds'),30.0,0.0,3600.0))\n        multiplier=tablet_autonomy_engine.job_priority_multiplier(filename,autonomy_state)\n        multiplier=max(1.0,min(1.15,_safe_float(multiplier,1.0,1.0,1.15)))\n        try:\n            neural=verified_collection_job_neural.score_job(\n                filename,\n                stat_row,\n                planned_timeout_seconds=_job_timeout(filename,stats),\n            )\n        except (OSError,ValueError,TypeError,OverflowError,json.JSONDecodeError):\n            neural={'active':False,'risk_priority':0.5}\n        if neural.get('active') is True:\n            risk=_safe_float(neural.get('risk_priority'),0.5,0.0,1.0)\n            # Keep long-running work at the front of the bounded worker queue.\n            # Neural risk can raise priority by at most 25%; autonomy adds at\n            # most another 15% and never lowers or skips mandatory work.\n            effective_load=ewma*(1.0+0.25*risk)*multiplier\n            return (1,effective_load,risk,ewma)\n        return (0,ewma*multiplier,0.0,ewma)\n    return sorted(list(jobs),key=order_key,reverse=True)\n'''
-          replace_once('auto_update_all.py', old_order, new_order, 'bounded autonomy job ordering')
-
-          old_run = '''    worker_count = _worker_count(total_jobs)\n\n    # 신경망 비활성 시 기존 LPT(EWMA) 정렬을 그대로 유지한다. 활성 후에도 모든 작업은 필수 실행된다.\n    jobs = _ordered_jobs(jobs,stats)\n'''
-          new_run = '''    worker_count = _worker_count(total_jobs)\n\n    # Tablet GPT bounded autonomy: verified local state may reprioritize work but\n    # cannot skip collectors, create facts, change trust, or write source/Git.\n    try:\n        autonomy_report=tablet_autonomy_engine.refresh_state(root=ROOT,execute_learning=True)\n        autonomy_state=autonomy_report.get('state',{}) if isinstance(autonomy_report,dict) else {}\n    except (OSError,ValueError,TypeError,OverflowError,json.JSONDecodeError,TimeoutError) as exc:\n        autonomy_report={'ok':False,'error':diagnostic_exception(exc,600),'state':{}}\n        autonomy_state={}\n\n    # 신경망 비활성 시 기존 LPT(EWMA) 정렬을 그대로 유지한다. 활성 후에도 모든 작업은 필수 실행된다.\n    jobs = _ordered_jobs(jobs,stats,autonomy_state)\n'''
-          replace_once('auto_update_all.py', old_run, new_run, 'autonomy runtime integration')
-
-          old_report = '''            "deferred_timeout_recovery":deferred_timeout_recovery,\n            "results":results,\n'''
-          new_report = '''            "deferred_timeout_recovery":deferred_timeout_recovery,\n            "autonomy":{\n                "ok":bool(autonomy_report.get('ok')) if isinstance(autonomy_report,dict) else False,\n                "mode":autonomy_state.get('mode') if isinstance(autonomy_state,dict) else None,\n                "selected_actions":autonomy_state.get('selected_actions',[]) if isinstance(autonomy_state,dict) else [],\n                "priority":autonomy_state.get('priority',{}) if isinstance(autonomy_state,dict) else {},\n                "source_changes_require_pr":True,\n            },\n            "results":results,\n'''
-          replace_once('auto_update_all.py', old_report, new_report, 'autonomy report surface')
-
-          replace_once(
-              'ai_runtime_model_guard.py',
-              '''MODEL_SPECS = (\n    ("query_strategy", "verified_collection_neural"),\n    ("job_strategy", "verified_collection_job_neural"),\n)\n''',
-              '''MODEL_SPECS = (\n    ("query_strategy", "verified_collection_neural"),\n    ("job_strategy", "verified_collection_job_neural"),\n    ("autonomy_strategy", "verified_autonomy_neural"),\n)\n''',
-              'AI guard autonomy model registration',
-          )
-
-          replace_once(
-              'tablet_runtime_manifest.py',
-              '"multi_route_event_discovery.py","adaptive_collection_learner.py","verified_collection_neural.py","verified_collection_job_neural.py","fan_social_learning.py",\n',
-              '"multi_route_event_discovery.py","adaptive_collection_learner.py","verified_collection_neural.py","verified_collection_job_neural.py","verified_autonomy_neural.py","tablet_autonomy_engine.py","fan_social_learning.py",\n',
-              'tablet runtime autonomy files',
-          )
-
-          replace_once(
-              'verify_current_runtime.py',
-              '      ("verified_collection_job_neural",[py,"-m","unittest","-v","test_verified_collection_job_neural_v212.py"],180,False),\n',
-              '      ("verified_collection_job_neural",[py,"-m","unittest","-v","test_verified_collection_job_neural_v212.py"],180,False),\n      ("tablet_autonomy_v371",[py,"-m","unittest","-v","test_tablet_autonomy_engine_v371.py"],180,False),\n',
-              'current runtime autonomy regression',
-          )
-
-          gitignore = Path('.gitignore')
-          text = gitignore.read_text(encoding='utf-8')
-          block = '''\n# Bounded Tablet GPT autonomy state is device-local advisory learning/evidence.\nVERIFIED_AUTONOMY_NEURAL_LABELS.json\nVERIFIED_AUTONOMY_NEURAL_LABELS.json.bak\nVERIFIED_AUTONOMY_NEURAL_MODEL.json\nVERIFIED_AUTONOMY_NEURAL_MODEL.json.bak\nVERIFIED_AUTONOMY_NEURAL_REPORT.json\nTABLET_AUTONOMY_STATE.json\nTABLET_AUTONOMY_PROPOSALS.json\nTABLET_AUTONOMY_REPORT.json\n'''
-          if 'VERIFIED_AUTONOMY_NEURAL_LABELS.json' not in text:
-              gitignore.write_text(text.rstrip() + '\n' + block, encoding='utf-8')
-          PY
-      - name: Run autonomy targeted regressions
-        run: |
-          python -m py_compile verified_autonomy_neural.py tablet_autonomy_engine.py auto_update_all.py ai_runtime_model_guard.py tablet_runtime_manifest.py verify_current_runtime.py
-          python -m unittest -v test_tablet_autonomy_engine_v371.py test_verified_collection_job_neural_v212.py test_verified_collection_neural_v211.py test_ai_runtime_model_guard_v269.py
-          python tablet_runtime_manifest.py --check --compile
-          python ai_runtime_model_guard.py
-      - name: Reconcile exact integrity manifest
-        run: |
-          python static_integrity_manifest.py --write integrity_manifest.json
-          python static_integrity_manifest.py --check integrity_manifest.json
-          python repository_integrity_guard.py
-          git diff --check
-      - name: Commit verified runtime integration to feature branch
-        run: |
-          set -euo pipefail
-          if git diff --quiet; then
-            echo 'No integration changes required.'
-            exit 0
-          fi
-          git config user.name 'github-actions[bot]'
-          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git add -- auto_update_all.py ai_runtime_model_guard.py tablet_runtime_manifest.py verify_current_runtime.py .gitignore integrity_manifest.json
-          git diff --cached --check
-          git commit -m 'feat: integrate bounded Tablet GPT autonomy v371'
-          git push origin HEAD:refs/heads/feat/tablet-autonomy-v371
-
   guard:
     runs-on: ubuntu-24.04
     timeout-minutes: 20
@@ -133,7 +44,15 @@ jobs:
           python-version: '3.11'
       - name: Verify bounded autonomy safety and regressions
         run: |
-          python -m py_compile verified_autonomy_neural.py tablet_autonomy_engine.py
-          python -m unittest -v test_tablet_autonomy_engine_v371.py
+          python -m py_compile verified_autonomy_neural.py tablet_autonomy_engine.py auto_update_all.py ai_runtime_model_guard.py tablet_runtime_manifest.py verify_current_runtime.py
+          python -m unittest -v \
+            test_tablet_autonomy_engine_v371.py \
+            test_verified_collection_job_neural_v212.py \
+            test_verified_collection_neural_v211.py \
+            test_ai_runtime_model_guard_v269.py
           python tablet_runtime_manifest.py --check --compile
           python ai_runtime_model_guard.py
+      - name: Recheck repository safety boundaries
+        run: |
+          python security_self_audit.py --no-memory --fail-on high
+          python repository_integrity_guard.py
