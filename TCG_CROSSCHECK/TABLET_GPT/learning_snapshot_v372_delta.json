@@ -1,0 +1,45 @@
+{
+  "schema_version": "1.1-tablet-gpt-tcg-grader-learning-sync",
+  "namespace": "TABLET_GPT",
+  "snapshot_kind": "learning_delta",
+  "run_date_kst": "2026-10-01",
+  "built_at": "2026-10-01T16:37:00+09:00",
+  "status": "finalized",
+  "source_repository": "wlghks24/-tcg-grader",
+  "prior_delta": "TCG_CROSSCHECK/TABLET_GPT/learning_snapshot_v371_delta.json",
+  "prior_lesson_digest_sha256": "6e53081c6d1bbac2f946ac27c893a01e06b2513f34db6b27eb33bbcc60195779",
+  "source_main_sha": "6233891b75354972bcb382ffd7f01fcfde7ab3d3",
+  "share_policy": {
+    "explicit_patch_and_learning_lessons_only": true,
+    "chatgpt_model_weights_exported": false,
+    "raw_grading_calibration_shared": false,
+    "device_local_runtime_memory_overwritten": false,
+    "peer_verified_never_auto_promotes_local": true
+  },
+  "covered_merges": [
+    {
+      "pr": 357,
+      "version": "v372-resource-aware-autonomy-base",
+      "merge_sha": "6233891b75354972bcb382ffd7f01fcfde7ab3d3"
+    }
+  ],
+  "lesson_digest_sha256": "c92b1afefdc9989c7c6ed1b3b72f28631179e57f0e0535699bef0182788465a6",
+  "lessons": [
+    {
+      "lesson_id": "TABLET-GPT-RESOURCE-AWARE-AUTONOMOUS-EVOLUTION-V372",
+      "subsystem": "tablet_autonomous_neural_evolution",
+      "issue_class": "bounded_meta_controller_needed_resource_cooldown_fingerprint_and_rollback_gates",
+      "trigger_condition": "v371 can choose verified neural retraining but repair-neural fingerprints are not bound and repeated heavy training can run without device-pressure or cooldown arbitration",
+      "symptom_summary": "repair-priority autonomous retraining can remain inactive because current rule fingerprints are omitted, while multiple model needs can contend with long collection workloads and invalid post-training artifacts need controller-level rollback verification",
+      "root_cause_class": "meta_controller_missing_device_resource_scheduler_and_post_training_artifact_guard",
+      "fix_pattern": "bind repair-neural status/training to current verified rule fingerprints; permit at most one allowlisted trainer per cycle only under observed normal CPU/memory pressure; apply success/failure cooldowns; preserve corrupt state fail-closed; validate post-training model artifacts and restore the last valid local model on invalid replacement; profile KR/JP/US coverage and source health without inventing market direction; emit unmet capability needs only as non-executable evidence-backed PR proposals",
+      "prevention_rule_id": "TGPT-PREV-RESOURCE-AWARE-AUTONOMY-ROLLBACK",
+      "verification_result": "resource_scheduler_fingerprint_binding_cooldown_and_model_rollback_are_bounded_by_existing_training_and_pr_gates",
+      "regression_pass": true,
+      "recurrence_count": 1,
+      "applicable_scope": "both",
+      "confidence_level": "high",
+      "physical_tablet_runtime_reverification_required": true
+    }
+  ]
+}
