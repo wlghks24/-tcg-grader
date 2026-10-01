@@ -45,14 +45,30 @@
     "device_local_learning_memory_blind_overwrite_forbidden": true,
     "physical_tablet_and_drive_results_must_not_be_invented": true
   },
-  "current_required_merge_prs": [206,207,208,209,210,213,216,217,218,227,230,234,238,243,245,249,263,273,278,279,282,283,284,285,286,287,288,289,290,291,292,293,294,297,299,301,302,303,304,305,306,307,308,309,310,312,313,314,316,318,320,321,322,324,325,328,329,330,331,333,334,335,337,338,340,341,342,345,346,348,351,352,353,355,357,359,360,361,362,364],
+  "current_required_merge_prs": [
+    206, 207, 208, 209, 210, 213, 216, 217, 218, 227, 230, 234, 238, 243, 245, 249,
+    263, 273, 278, 279, 282, 283, 284, 285, 286, 287, 288, 289, 290, 291, 292, 293,
+    294, 297, 299, 301, 302, 303, 304, 305, 306, 307, 308, 309, 310, 312, 313, 314,
+    316, 318, 320, 321, 322, 324, 325, 328, 329, 330, 331, 333, 334, 335, 337, 338,
+    340, 341, 342, 345, 346, 348, 351, 352, 353, 355, 357, 359, 360, 361, 362, 364
+  ],
   "prior_required_lesson_count": 69,
   "delta_required_lesson_count": 1,
   "current_required_lesson_count": 70,
   "freshness_watch": {
     "schedule_cron_utc": "17 */6 * * *",
-    "exact_paths": ["main","index.html","server_v99.py","service-worker.js","sw.js","tablet_runtime_manifest.py","multi_market_price_collector.py","card_identity_recognition.js","card_metadata_classifier_v326.js","grade_market_flow.js","pokemon_generation_flow.js","generation_classifier.js","fault_injection_healing.py","verify_current_runtime.py","ui_tablet_refine_v122.css","ui_app_shell_v272.css","ui_app_shell_v272.js",".github/workflows/tcg-static-data-refresh.yml",".github/workflows/gpt-tcg-drive-package.yml"],
-    "path_prefixes": ["tablet_","TABLET_","card_","grading_","grade_","ocr_","vision_","multi_market_","generation_","server_","tcg_updater","safe_runtime","verified_","fault_",".github/workflows/tablet-",".github/workflows/runtime-"],
+    "exact_paths": [
+      "main", "index.html", "server_v99.py", "service-worker.js", "sw.js", "tablet_runtime_manifest.py",
+      "multi_market_price_collector.py", "card_identity_recognition.js", "card_metadata_classifier_v326.js",
+      "grade_market_flow.js", "pokemon_generation_flow.js", "generation_classifier.js", "fault_injection_healing.py",
+      "verify_current_runtime.py", "ui_tablet_refine_v122.css", "ui_app_shell_v272.css", "ui_app_shell_v272.js",
+      ".github/workflows/tcg-static-data-refresh.yml", ".github/workflows/gpt-tcg-drive-package.yml"
+    ],
+    "path_prefixes": [
+      "tablet_", "TABLET_", "card_", "grading_", "grade_", "ocr_", "vision_", "multi_market_",
+      "generation_", "server_", "tcg_updater", "safe_runtime", "verified_", "fault_",
+      ".github/workflows/tablet-", ".github/workflows/runtime-"
+    ],
     "exclude_paths": [
       ".github/workflows/tablet-gpt-tcg-grader-main-alignment.yml",
       "integrity_manifest.json",
@@ -64,8 +80,8 @@
   },
   "candidate_sync": {
     "base_main_sha": "24cad558d756d57e06a8309c8d5fbc73626f1d45",
-    "candidate_commit": "8e799bb42c94c7d7b73ed1636b9bd7e993343ebb",
-    "watched_paths": ["main","tablet_autonomous_evolution_v377.py","tablet_runtime_manifest.py"],
+    "candidate_commit": "b1000eb9f155ce343fc3bc59bcc0c35c5efb19c3",
+    "watched_paths": ["main", "tablet_autonomous_evolution_v377.py", "tablet_runtime_manifest.py"],
     "generation_files": [
       "TCG_CROSSCHECK/TABLET_GPT_TCG_GRADER_SYNC_CONTRACT_V377.json",
       "TCG_CROSSCHECK/TABLET_GPT/learning_snapshot_v377_delta.json",
