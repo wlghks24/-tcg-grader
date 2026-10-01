@@ -58,7 +58,6 @@ def _atomic(path,data):
     except Exception:pass
 
 FX_MAX_AGE_SECONDS=72*60*60
-FX_MAX_FUTURE_SKEW_SECONDS=6*60*60
 FX_SOURCE_PROVENANCE={
     'frankfurter-v2':'api.frankfurter.dev',
     'frankfurter-v1':'api.frankfurter.dev',
@@ -70,7 +69,7 @@ def _fresh_fx_timestamp(value):
         parsed=datetime.fromisoformat(str(value or '').replace('Z','+00:00'))
         if parsed.tzinfo is None:raise ValueError('timezone_required')
         age=(datetime.now(timezone.utc)-parsed.astimezone(timezone.utc)).total_seconds()
-        return -FX_MAX_FUTURE_SKEW_SECONDS <= age <= FX_MAX_AGE_SECONDS
+        return 0 <= age <= FX_MAX_AGE_SECONDS
     except (TypeError,ValueError,OverflowError):
         return False
 
