@@ -4,6 +4,8 @@ from pathlib import Path
 import subprocess
 import unittest
 
+from sync_v376_successor_test_support import assert_v376_successor
+
 import tablet_autonomous_evolution_v371 as autonomy
 
 ROOT = Path(__file__).resolve().parent
@@ -150,16 +152,25 @@ class TabletGptTcgGraderSyncV371(unittest.TestCase):
                     after374 = watched_paths(v374_contract, v374_candidate["candidate_commit"])
                     if after374:
                         v375_path = ROOT / "TCG_CROSSCHECK/TABLET_GPT_TCG_GRADER_SYNC_CONTRACT_V375.json"
+                        v375_commit = "d7c8577b514abdbbc15ba9323c4c0deb1945efed"
+                        v375_first_hop = watched_paths(
+                            v374_contract, v374_candidate["candidate_commit"], v375_commit
+                        )
                         v375_contract, v375_candidate = _verify_successor(
                             self,
                             v375_path,
                             "2b1112318fa23f4e8edd525695ee3711ea715e18",
-                            "d7c8577b514abdbbc15ba9323c4c0deb1945efed",
-                            after374,
+                            v375_commit,
+                            v375_first_hop,
                         )
+                        after375 = watched_paths(v375_contract, v375_candidate["candidate_commit"])
                         self.assertEqual(
-                            [], watched_paths(v375_contract, v375_candidate["candidate_commit"])
+                            sorted(after374), sorted(set(v375_first_hop) | set(after375))
                         )
+                        if after375:
+                            assert_v376_successor(self, after375)
+                        else:
+                            self.assertEqual([], after375)
                     else:
                         self.assertEqual([], after374)
                 else:
