@@ -4,7 +4,10 @@ from pathlib import Path
 import subprocess
 import unittest
 
-from sync_v376_successor_test_support import assert_v376_successor
+from sync_v376_successor_test_support import (
+    assert_current_autonomy_route_v377,
+    assert_v376_successor,
+)
 
 import tablet_autonomous_evolution_v373 as autonomy
 
@@ -196,18 +199,15 @@ class TabletGptTcgGraderSyncV373(unittest.TestCase):
         if "python tablet_autonomous_evolution_v373.py --execute-safe-learning --apply-capabilities --train-meta" not in main_text:
             v374_cmd = "python tablet_autonomous_evolution_v374.py --execute-safe-learning --apply-capabilities --train-meta --apply-skills"
             v375_cmd = "python tablet_autonomous_evolution_v375.py --execute-safe-learning --apply-capabilities --train-meta --apply-skills"
+            v376_cmd = "python tablet_autonomous_evolution_v376.py --execute-safe-learning --apply-capabilities --train-meta --apply-skills"
             if v374_cmd in main_text:
                 self.assertIn('"tablet_autonomous_evolution_v374.py"', manifest_text)
             elif v375_cmd in main_text:
                 self.assertIn('"tablet_autonomous_evolution_v375.py"', manifest_text)
-            else:
-                v376_cmd = "python tablet_autonomous_evolution_v376.py --execute-safe-learning --apply-capabilities --train-meta --apply-skills"
-                self.assertIn(v376_cmd, main_text)
+            elif v376_cmd in main_text:
                 self.assertIn('"tablet_autonomous_evolution_v376.py"', manifest_text)
-                assert_v376_successor(
-                    self,
-                    ["main", "tablet_autonomous_evolution_v376.py", "tablet_runtime_manifest.py"],
-                )
+            else:
+                assert_current_autonomy_route_v377(self, main_text, manifest_text)
         self.assertIn('"tablet_autonomous_evolution_v373.py"', manifest_text)
         self.assertIn('"tablet_autonomous_evolution_v372.py"', manifest_text)
         self.assertIn('"tablet_autonomous_evolution_v371.py"', manifest_text)
