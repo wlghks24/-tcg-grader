@@ -48,9 +48,9 @@ jobs:
           python fault_injection_healing.py --diagnose
           python repository_integrity_guard.py
           python -m unittest -v test_static_integrity_manifest_v345.py
-          mapfile -t sync_modules < <(find . -maxdepth 1 -type f -name 'test_tablet_gpt_tcg_grader_sync_v*.py' -printf '%f\n' | sed 's/\.py$//' | sort -V)
-          test "${#sync_modules[@]}" -gt 0
-          python -m unittest -v "${sync_modules[@]}"
+          mapfile -t sync_tests < <(find . -maxdepth 1 -type f -name 'test_tablet_gpt_tcg_grader_sync_v*.py' -printf '%f\n' | sort -V)
+          test "${#sync_tests[@]}" -gt 0
+          python -m unittest -v "${sync_tests[@]}"
           git diff --check
       - name: Commit manifest only when changed
         shell: bash

@@ -68,7 +68,7 @@ def parse_source_timestamp(raw):
     # on the timestamp of the other quote.
     observed=min(parsed_values)
     age=(dt.datetime.now(dt.timezone.utc)-observed).total_seconds()
-    if not (0 <= age <= 72*60*60):
+    if not (-6*60*60 <= age <= 72*60*60):
         raise ValueError('환율 source timestamp가 stale 또는 future 입니다')
     return observed.isoformat(timespec='seconds')
 

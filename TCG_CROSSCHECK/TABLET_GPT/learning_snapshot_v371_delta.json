@@ -3,7 +3,7 @@
   "namespace": "TABLET_GPT",
   "snapshot_kind": "learning_delta",
   "run_date_kst": "2026-10-01",
-  "built_at": "2026-10-01T11:58:22+09:00",
+  "built_at": "2026-10-01T15:40:00+09:00",
   "status": "finalized",
   "source_repository": "wlghks24/-tcg-grader",
   "prior_delta": "TCG_CROSSCHECK/TABLET_GPT/learning_snapshot_v370_delta.json",
@@ -19,22 +19,22 @@
   "covered_merges": [
     {
       "pr": 355,
-      "version": "v371-post-merge-fx-future-timestamp-hold-candidate",
+      "version": "v371-bounded-tablet-autonomous-evolution-base",
       "merge_sha": "a00ebfd3888740ee50c5e86c8ee6008fe8a54908"
     }
   ],
-  "lesson_digest_sha256": "48e22357c3e6a66bad4f0c920004db394b7f7aae8de3139c2a04fb9889c81b5c",
+  "lesson_digest_sha256": "6e53081c6d1bbac2f946ac27c893a01e06b2513f34db6b27eb33bbcc60195779",
   "lessons": [
     {
-      "lesson_id": "TABLET-GPT-FX-FUTURE-TIMESTAMP-HOLD-V371",
-      "subsystem": "market_price_fx_provenance",
-      "issue_class": "future_fx_timestamp_was_tolerated_by_producer_and_consumer",
-      "trigger_condition": "persisted or provider FX updated_at/source_timestamp is later than the verifier clock",
-      "symptom_summary": "the previous six-hour future-skew allowance could classify future-dated FX evidence as fresh even though the safety contract requires future FX to HOLD",
-      "root_cause_class": "clock_skew_allowance_conflicted_with_explicit_future_fx_hold_contract",
-      "fix_pattern": "reject any future FX observation at both collection and consumption boundaries while retaining the 72-hour maximum age, positive finite rate checks, exact provenance checks and last-good fail-closed behavior",
-      "prevention_rule_id": "TGPT-PREV-FX-FUTURE-TIMESTAMP-HOLD",
-      "verification_result": "producer_and_consumer_reject_future_timestamp_without_widening_freshness_or_inventing_rates",
+      "lesson_id": "TABLET-GPT-BOUNDED-AUTONOMOUS-EVOLUTION-V371",
+      "subsystem": "tablet_autonomous_neural_evolution",
+      "issue_class": "verified_neural_components_lacked_single_bounded_meta_controller",
+      "trigger_condition": "query-strategy, collection-job, repair-priority neural state or market freshness requires adaptation but each subsystem only makes a local decision",
+      "symptom_summary": "the tablet had verified neural learners and SELFREFINE gates, but no single bounded controller could inspect them together, choose safe retraining, expose an operator command, or turn unmet capability needs into non-executable proposals",
+      "root_cause_class": "missing_meta_control_plane_above_existing_verified_learning_components",
+      "fix_pattern": "add a fail-closed tablet autonomy controller that observes existing verified model guards plus market freshness, executes only allowlisted train_if_ready paths, keeps neural outputs advisory, converts unknown capability needs into normal branch/PR proposals, exposes bash main evolve, and fail-closes stale or invalid market evidence without generating code or writing Git",
+      "prevention_rule_id": "TGPT-PREV-BOUNDED-AUTONOMY-GATED-EVOLUTION",
+      "verification_result": "bounded_controller_coordinates_existing_verified_neural_learning_without_source_or_trust_autopromotion",
       "regression_pass": true,
       "recurrence_count": 1,
       "applicable_scope": "both",
