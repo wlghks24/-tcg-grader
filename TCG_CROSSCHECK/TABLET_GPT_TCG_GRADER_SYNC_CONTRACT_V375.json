@@ -72,7 +72,7 @@
   },
   "candidate_sync": {
     "base_main_sha": "2b1112318fa23f4e8edd525695ee3711ea715e18",
-    "candidate_commit": "d7c8577b514abdbbc15ba9323c4c0deb1945efed",
+    "candidate_commit": "c0fe7ed9b4e351ee18a0d76eab0424787cb7b2f2",
     "watched_paths": ["main","tablet_autonomous_evolution_v375.py","tablet_runtime_manifest.py"],
     "generation_files": [
       "TCG_CROSSCHECK/TABLET_GPT_TCG_GRADER_SYNC_CONTRACT_V375.json",
