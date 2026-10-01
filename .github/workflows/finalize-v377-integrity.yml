@@ -1,0 +1,66 @@
+name: Finalize V377 Integrity
+on:
+  push:
+    branches: ['fix/tablet-autonomy-single-run-v377']
+permissions:
+  contents: write
+concurrency:
+  group: finalize-v377-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  finalize:
+    if: github.actor == github.repository_owner
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    env:
+      PYTHONDONTWRITEBYTECODE: '1'
+      PYTHONUNBUFFERED: '1'
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97
+        with:
+          python-version: '3.12'
+      - name: Guard branch and remove one-shot workflow
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$GITHUB_REF_NAME" = "fix/tablet-autonomy-single-run-v377"
+          git fetch origin +refs/heads/main:refs/remotes/origin/main
+          git merge-base --is-ancestor origin/main HEAD
+          git rm -- .github/workflows/finalize-v377-integrity.yml
+      - name: Validate V377 and complete sync lineage
+        shell: bash
+        run: |
+          set -euo pipefail
+          python -m py_compile tablet_autonomous_evolution_v377.py test_tablet_autonomous_evolution_v377.py test_tablet_gpt_tcg_grader_sync_v377.py tablet_runtime_manifest.py
+          python -m unittest -v test_tablet_autonomous_evolution_v377.py test_tablet_gpt_tcg_grader_sync_v377.py
+          mapfile -t sync_tests < <(find . -maxdepth 1 -type f -name 'test_tablet_gpt_tcg_grader_sync_v*.py' -printf '%f\n' | sort -V)
+          test "${#sync_tests[@]}" -gt 0
+          python -m unittest -v "${sync_tests[@]}"
+          python tablet_runtime_manifest.py --check --compile
+      - name: Rebuild final-tree integrity manifest
+        shell: bash
+        run: |
+          set -euo pipefail
+          python static_integrity_manifest.py --write integrity_manifest.json
+          python static_integrity_manifest.py --check integrity_manifest.json
+          python fault_injection_healing.py --diagnose
+          python repository_integrity_guard.py
+          git diff --check
+      - name: Commit only final manifest and one-shot deletion
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add -- integrity_manifest.json .github/workflows/finalize-v377-integrity.yml
+          mapfile -t changed < <(git diff --cached --name-only | sort)
+          printf '%s\n' "${changed[@]}"
+          test "${#changed[@]}" -eq 2
+          test "${changed[0]}" = ".github/workflows/finalize-v377-integrity.yml"
+          test "${changed[1]}" = "integrity_manifest.json"
+          git diff --cached --check
+          git commit -m 'fix: finalize V377 single-run autonomy integrity'
+          git push origin "HEAD:${GITHUB_REF_NAME}"
