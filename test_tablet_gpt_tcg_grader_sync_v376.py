@@ -34,7 +34,7 @@ class TabletGptTcgGraderSyncV376Tests(unittest.TestCase):
         self.assertEqual([LESSON_ID], receipt["accepted_lesson_ids"])
         self.assertEqual(1, len(delta["lessons"]))
         self.assertEqual(LESSON_ID, delta["lessons"][0]["lesson_id"])
-        self.assertEqual(delta["lesson_digest_sha256"], digest(delta["lessons"][0]))
+        self.assertEqual(delta["lesson_digest_sha256"], digest(delta["lessons"]))
         self.assertEqual("SYNCED_VERIFIED", receipt["status"])
         self.assertFalse(receipt["verification"]["physical_tablet_runtime_verified"])
         self.assertFalse(receipt["verification"]["physical_drive_readback_verified"])
