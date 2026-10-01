@@ -11,6 +11,8 @@
   "source_main_sha": "d2813d753a2c5babcc014d3e8a28374fadd887bb",
   "share_policy": {
     "explicit_patch_and_learning_lessons_only": true,
+    "chatgpt_model_weights_exported": false,
+    "raw_grading_calibration_shared": false,
     "device_local_runtime_memory_overwritten": false,
     "peer_verified_never_auto_promotes_local": true
   },
