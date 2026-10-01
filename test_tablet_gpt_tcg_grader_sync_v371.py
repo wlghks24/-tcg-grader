@@ -11,12 +11,15 @@ SOURCE = "a00ebfd3888740ee50c5e86c8ee6008fe8a54908"
 CANDIDATE = "ae1262997cf6a60e9aba5d6be25559605787ed85"
 V372_SOURCE = "6233891b75354972bcb382ffd7f01fcfde7ab3d3"
 V372_CANDIDATE = "d77ec75aeb00e0c2394d0e8d3cf3259b9622c56b"
+V373_SOURCE = "24f7fa716d2f0300bd3d42645a279846f03ab53b"
+V373_CANDIDATE = "5364126c153b3f13704fbe07f0a56ad1c323f413"
 PRIOR = ROOT / "TCG_CROSSCHECK/TABLET_GPT/learning_snapshot_v370_delta.json"
 DELTA = ROOT / "TCG_CROSSCHECK/TABLET_GPT/learning_snapshot_v371_delta.json"
 RECEIPT = ROOT / "TCG_CROSSCHECK/TCG_GRADER/tablet_gpt_learning_receipt_v371.json"
 PRIOR_CONTRACT = ROOT / "TCG_CROSSCHECK/TABLET_GPT_TCG_GRADER_SYNC_CONTRACT_V370.json"
 CONTRACT = ROOT / "TCG_CROSSCHECK/TABLET_GPT_TCG_GRADER_SYNC_CONTRACT_V371.json"
 V372_CONTRACT = ROOT / "TCG_CROSSCHECK/TABLET_GPT_TCG_GRADER_SYNC_CONTRACT_V372.json"
+V373_CONTRACT = ROOT / "TCG_CROSSCHECK/TABLET_GPT_TCG_GRADER_SYNC_CONTRACT_V373.json"
 EXPECTED_DIGEST = "6e53081c6d1bbac2f946ac27c893a01e06b2513f34db6b27eb33bbcc60195779"
 
 
@@ -57,9 +60,33 @@ def assert_v372_successor(testcase, relevant):
     testcase.assertEqual("TABLET_GPT_TCG_GRADER_MATCH", receipt["verification"]["verified_result"])
     testcase.assertFalse(receipt["verification"]["physical_tablet_runtime_verified"])
     testcase.assertFalse(receipt["verification"]["physical_drive_readback_verified"])
-    testcase.assertEqual([], watched_paths(contract, V372_CANDIDATE))
     subprocess.run(["git", "merge-base", "--is-ancestor", V372_SOURCE, "HEAD"], check=True)
     subprocess.run(["git", "merge-base", "--is-ancestor", V372_CANDIDATE, "HEAD"], check=True)
+    return contract, candidate
+
+
+def assert_v373_successor(testcase, relevant):
+    testcase.assertTrue(V373_CONTRACT.is_file(), f"v372 stale without V373 successor: {relevant}")
+    contract = read(V373_CONTRACT)
+    delta = read(ROOT / contract["delta_snapshot"])
+    receipt = read(ROOT / contract["receiver_receipt"])
+    candidate = contract["candidate_sync"]
+    testcase.assertEqual(V373_SOURCE, candidate["base_main_sha"])
+    testcase.assertEqual(V373_CANDIDATE, candidate["candidate_commit"])
+    testcase.assertEqual(sorted(relevant), sorted(candidate["watched_paths"]))
+    testcase.assertEqual(sorted(relevant), watched_paths(contract, V373_SOURCE, V373_CANDIDATE))
+    raw = json.dumps(delta["lessons"], ensure_ascii=False, sort_keys=True, separators=(",", ":"))
+    digest = hashlib.sha256(raw.encode("utf-8")).hexdigest()
+    testcase.assertEqual(digest, delta["lesson_digest_sha256"])
+    testcase.assertEqual(digest, receipt["delta_lesson_digest_sha256"])
+    testcase.assertEqual([row["lesson_id"] for row in delta["lessons"]], receipt["accepted_lesson_ids"])
+    testcase.assertEqual("SYNCED_VERIFIED", receipt["status"])
+    testcase.assertEqual("TABLET_GPT_TCG_GRADER_MATCH", receipt["verification"]["verified_result"])
+    testcase.assertFalse(receipt["verification"]["physical_tablet_runtime_verified"])
+    testcase.assertFalse(receipt["verification"]["physical_drive_readback_verified"])
+    testcase.assertEqual([], watched_paths(contract, V373_CANDIDATE))
+    subprocess.run(["git", "merge-base", "--is-ancestor", V373_SOURCE, "HEAD"], check=True)
+    subprocess.run(["git", "merge-base", "--is-ancestor", V373_CANDIDATE, "HEAD"], check=True)
 
 
 class TabletGptTcgGraderSyncV371(unittest.TestCase):
@@ -112,7 +139,13 @@ class TabletGptTcgGraderSyncV371(unittest.TestCase):
         self.assertTrue(candidate["post_merge_coverage_allowed"])
         relevant = watched_paths(contract, CANDIDATE)
         if relevant:
-            assert_v372_successor(self, relevant)
+            first_hop = watched_paths(contract, CANDIDATE, V372_CANDIDATE)
+            v372_contract, v372_candidate = assert_v372_successor(self, first_hop)
+            after372 = watched_paths(v372_contract, v372_candidate["candidate_commit"])
+            if after372:
+                assert_v373_successor(self, after372)
+            else:
+                self.assertEqual([], after372)
 
     def test_autonomous_controller_is_bounded_and_uses_existing_gates(self):
         rules = read(CONTRACT)["rules"]
