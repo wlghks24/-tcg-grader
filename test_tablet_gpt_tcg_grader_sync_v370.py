@@ -177,11 +177,27 @@ class TabletGptTcgGraderSyncV370(unittest.TestCase):
                             candidate374["candidate_commit"],
                         )
                         self.assertEqual(sorted(fourth_hop), sorted(candidate374["watched_paths"]))
-                        self.assertEqual(
-                            [],
-                            watched_paths(successor374, candidate374["candidate_commit"]),
-                            "verified v374 successor has uncovered watched changes",
-                        )
+                        after374 = watched_paths(successor374, candidate374["candidate_commit"])
+                        if after374:
+                            successor375, candidate375 = assert_successor_generation(
+                                self,
+                                "TCG_CROSSCHECK/TABLET_GPT_TCG_GRADER_SYNC_CONTRACT_V374.json",
+                                "TCG_CROSSCHECK/TABLET_GPT/learning_snapshot_v374_delta.json",
+                                "TCG_CROSSCHECK/TABLET_GPT_TCG_GRADER_SYNC_CONTRACT_V375.json",
+                            )
+                            fifth_hop = watched_paths(
+                                successor374,
+                                candidate374["candidate_commit"],
+                                candidate375["candidate_commit"],
+                            )
+                            self.assertEqual(sorted(fifth_hop), sorted(candidate375["watched_paths"]))
+                            self.assertEqual(
+                                [],
+                                watched_paths(successor375, candidate375["candidate_commit"]),
+                                "verified v375 successor has uncovered watched changes",
+                            )
+                        else:
+                            self.assertEqual([], after374)
                     else:
                         self.assertEqual([], after373)
                 else:

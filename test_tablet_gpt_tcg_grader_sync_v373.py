@@ -95,7 +95,11 @@ class TabletGptTcgGraderSyncV373(unittest.TestCase):
             self.assertEqual(CONTRACT.relative_to(ROOT).as_posix(), successor["prior_contract"])
             self.assertEqual("514886ebad7209abb85e891fdd5d7ddbdc8561c4", sc["base_main_sha"])
             self.assertEqual("af47dc6e95735be99800669f57610069865efca6", sc["candidate_commit"])
-            self.assertEqual(later, watched_paths(successor, sc["base_main_sha"], sc["candidate_commit"]))
+            first_hop = watched_paths(contract, CANDIDATE, sc["candidate_commit"])
+            self.assertEqual(
+                first_hop,
+                watched_paths(successor, sc["base_main_sha"], sc["candidate_commit"]),
+            )
             expected_successor_generation = {
                 "TCG_CROSSCHECK/TABLET_GPT_TCG_GRADER_SYNC_CONTRACT_V374.json",
                 "TCG_CROSSCHECK/TABLET_GPT/learning_snapshot_v374_delta.json",
@@ -106,7 +110,33 @@ class TabletGptTcgGraderSyncV373(unittest.TestCase):
             self.assertTrue(expected_successor_generation.issubset(set(successor["freshness_watch"]["exclude_paths"])))
             self.assertTrue(sc["requires_exact_watched_path_match"])
             self.assertTrue(sc["post_merge_coverage_allowed"])
-            self.assertEqual([], watched_paths(successor, sc["candidate_commit"]))
+            after374 = watched_paths(successor, sc["candidate_commit"])
+            if after374:
+                successor375 = read(
+                    ROOT / "TCG_CROSSCHECK/TABLET_GPT_TCG_GRADER_SYNC_CONTRACT_V375.json"
+                )
+                sc375 = successor375["candidate_sync"]
+                self.assertEqual(
+                    "TCG_CROSSCHECK/TABLET_GPT_TCG_GRADER_SYNC_CONTRACT_V374.json",
+                    successor375["prior_contract"],
+                )
+                self.assertEqual(
+                    "TCG_CROSSCHECK/TABLET_GPT/learning_snapshot_v374_delta.json",
+                    successor375["prior_delta_snapshot"],
+                )
+                self.assertEqual(
+                    "2b1112318fa23f4e8edd525695ee3711ea715e18", sc375["base_main_sha"]
+                )
+                self.assertEqual(
+                    "d7c8577b514abdbbc15ba9323c4c0deb1945efed", sc375["candidate_commit"]
+                )
+                self.assertEqual(
+                    after374,
+                    watched_paths(successor375, sc375["base_main_sha"], sc375["candidate_commit"]),
+                )
+                self.assertEqual([], watched_paths(successor375, sc375["candidate_commit"]))
+            else:
+                self.assertEqual([], after374)
             subprocess.run(["git", "merge-base", "--is-ancestor", sc["base_main_sha"], "HEAD"], check=True)
             subprocess.run(["git", "merge-base", "--is-ancestor", sc["candidate_commit"], "HEAD"], check=True)
 
@@ -152,11 +182,13 @@ class TabletGptTcgGraderSyncV373(unittest.TestCase):
         main_text = (ROOT / "main").read_text(encoding="utf-8")
         manifest_text = (ROOT / "tablet_runtime_manifest.py").read_text(encoding="utf-8")
         if "python tablet_autonomous_evolution_v373.py --execute-safe-learning --apply-capabilities --train-meta" not in main_text:
-            self.assertIn(
-                "python tablet_autonomous_evolution_v374.py --execute-safe-learning --apply-capabilities --train-meta --apply-skills",
-                main_text,
-            )
-            self.assertIn('"tablet_autonomous_evolution_v374.py"', manifest_text)
+            v374_cmd = "python tablet_autonomous_evolution_v374.py --execute-safe-learning --apply-capabilities --train-meta --apply-skills"
+            v375_cmd = "python tablet_autonomous_evolution_v375.py --execute-safe-learning --apply-capabilities --train-meta --apply-skills"
+            if v374_cmd in main_text:
+                self.assertIn('"tablet_autonomous_evolution_v374.py"', manifest_text)
+            else:
+                self.assertIn(v375_cmd, main_text)
+                self.assertIn('"tablet_autonomous_evolution_v375.py"', manifest_text)
         self.assertIn('"tablet_autonomous_evolution_v373.py"', manifest_text)
         self.assertIn('"tablet_autonomous_evolution_v372.py"', manifest_text)
         self.assertIn('"tablet_autonomous_evolution_v371.py"', manifest_text)
