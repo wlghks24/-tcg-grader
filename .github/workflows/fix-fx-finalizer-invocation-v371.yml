@@ -1,0 +1,48 @@
+name: Fix FX Finalizer Invocation v371
+
+on:
+  push:
+    branches:
+      - 'fix/fx-future-hold-v371'
+
+permissions:
+  contents: write
+
+concurrency:
+  group: fix-fx-finalizer-invocation-v371
+  cancel-in-progress: false
+
+jobs:
+  repair:
+    if: github.actor == github.repository_owner
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          fetch-depth: 0
+      - name: Repair finalizer invocation and self-remove
+        shell: bash
+        run: |
+          set -euo pipefail
+          git fetch origin +refs/heads/main:refs/remotes/origin/main
+          test "$(git rev-parse origin/main)" = 'a00ebfd3888740ee50c5e86c8ee6008fe8a54908' || { echo BASE_ADVANCED; exit 20; }
+          python - <<'PY'
+          from pathlib import Path
+          p=Path('.github/workflows/fx-future-hold-finalizer-v371.yml')
+          text=p.read_text(encoding='utf-8')
+          old="""          mapfile -t sync_tests < <(find . -maxdepth 1 -type f -name 'test_tablet_gpt_tcg_grader_sync_v*.py' -printf '%f\\n' | sort -V)\n          test \"${#sync_tests[@]}\" -gt 0\n          python -m unittest -v \"${sync_tests[@]}\"\n"""
+          new="""          mapfile -t sync_modules < <(find . -maxdepth 1 -type f -name 'test_tablet_gpt_tcg_grader_sync_v*.py' -printf '%f\\n' | sed 's/\\.py$//' | sort -V)\n          test \"${#sync_modules[@]}\" -gt 0\n          python -m unittest -v \"${sync_modules[@]}\"\n"""
+          if text.count(old)!=1:
+              raise SystemExit('FINALIZER_INVOCATION_DRIFT')
+          p.write_text(text.replace(old,new,1),encoding='utf-8')
+          PY
+          git rm -- .github/workflows/fix-fx-finalizer-invocation-v371.yml
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add -- .github/workflows/fx-future-hold-finalizer-v371.yml
+          git diff --cached --check
+          git commit -m 'Fix v371 finalizer unittest module invocation'
+          git fetch origin +refs/heads/main:refs/remotes/origin/main
+          test "$(git rev-parse origin/main)" = 'a00ebfd3888740ee50c5e86c8ee6008fe8a54908' || { echo BASE_ADVANCED_BEFORE_PUSH; exit 21; }
+          git push origin HEAD:fix/fx-future-hold-v371
