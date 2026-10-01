@@ -19,7 +19,7 @@
   "covered_merges": [
     {"pr": 364, "version": "v377-single-run-autonomy-base", "merge_sha": "24cad558d756d57e06a8309c8d5fbc73626f1d45"}
   ],
-  "lesson_digest_sha256": "70e4a8ed30badf46b33baba630fc8c713aa7cd44844be76282df47cddcb42a49",
+  "lesson_digest_sha256": "ea50b3d696d6b2ae36ffa089ddcb52f67b8a24c51ffc5034e44408ba2639ebaa",
   "lessons": [
     {
       "lesson_id": "TABLET-GPT-SINGLE-RUN-AUTONOMY-GUARD-V377",
@@ -29,7 +29,7 @@
       "prevention_rule": "route the supported evolve entrypoint through a non-blocking OS file lock; concurrent or unsafe lock acquisition must fail closed before V376 is called or shared state/output is written; planning-only reads remain lock-free; preserve all V376 evidence, journal, neural, market, PR/CI, and physical-device boundaries",
       "validation_required": [
         "base main is exactly 24cad558d756d57e06a8309c8d5fbc73626f1d45",
-        "functional candidate commit is exactly 8e799bb42c94c7d7b73ed1636b9bd7e993343ebb",
+        "functional candidate commit is exactly b1000eb9f155ce343fc3bc59bcc0c35c5efb19c3",
         "main evolve route uses tablet_autonomous_evolution_v377.py",
         "tablet runtime manifest includes tablet_autonomous_evolution_v377.py",
         "mutating cycles acquire a non-blocking exclusive OS lock before invoking V376",
