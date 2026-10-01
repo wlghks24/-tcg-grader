@@ -1,0 +1,56 @@
+name: V376 Integrity Finalizer
+
+on:
+  push:
+    branches:
+      - 'feature/tablet-autonomous-evolution-v376'
+
+permissions:
+  contents: write
+
+concurrency:
+  group: v376-integrity-finalizer-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  finalize:
+    if: github.ref == 'refs/heads/feature/tablet-autonomous-evolution-v376'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          ref: feature/tablet-autonomous-evolution-v376
+          fetch-depth: 0
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97
+        with:
+          python-version: '3.12'
+      - name: Rebuild exact final tree and remove one-shot finalizer
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse --abbrev-ref HEAD)" = "feature/tablet-autonomous-evolution-v376"
+          git fetch origin +refs/heads/main:refs/remotes/origin/main
+          git merge-base --is-ancestor origin/main HEAD
+          git rm -- .github/workflows/v376-integrity-finalizer.yml
+          python static_integrity_manifest.py --write integrity_manifest.json
+          python static_integrity_manifest.py --check integrity_manifest.json
+          python repository_integrity_guard.py
+          python -m unittest -v test_tablet_autonomous_evolution_v376.py test_tablet_gpt_tcg_grader_sync_v376.py
+          python tablet_runtime_manifest.py --check --compile
+          git diff --check
+      - name: Commit manifest and finalizer removal
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add -- integrity_manifest.json
+          mapfile -t changed < <(git diff --cached --name-only)
+          printf '%s\n' "${changed[@]}"
+          test "${#changed[@]}" -eq 2
+          printf '%s\n' "${changed[@]}" | grep -Fx '.github/workflows/v376-integrity-finalizer.yml'
+          printf '%s\n' "${changed[@]}" | grep -Fx 'integrity_manifest.json'
+          git diff --cached --check
+          git commit -m 'chore: reconcile v376 integrity manifest after safety-policy fix'
+          git push origin HEAD:feature/tablet-autonomous-evolution-v376
