@@ -154,7 +154,7 @@ class TabletGptTcgGraderSyncV371(unittest.TestCase):
                             self,
                             v375_path,
                             "2b1112318fa23f4e8edd525695ee3711ea715e18",
-                            "d7c8577b514abdbbc15ba9323c4c0deb1945efed",
+                            "c0fe7ed9b4e351ee18a0d76eab0424787cb7b2f2",
                             after374,
                         )
                         self.assertEqual(

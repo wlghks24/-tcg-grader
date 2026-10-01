@@ -128,7 +128,7 @@ class TabletGptTcgGraderSyncV373(unittest.TestCase):
                     "2b1112318fa23f4e8edd525695ee3711ea715e18", sc375["base_main_sha"]
                 )
                 self.assertEqual(
-                    "d7c8577b514abdbbc15ba9323c4c0deb1945efed", sc375["candidate_commit"]
+                    "c0fe7ed9b4e351ee18a0d76eab0424787cb7b2f2", sc375["candidate_commit"]
                 )
                 self.assertEqual(
                     after374,
