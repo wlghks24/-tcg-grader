@@ -11,7 +11,7 @@
     "TCG_CROSSCHECK/TABLET_GPT/learning_snapshot_v377_delta.json"
   ],
   "prior_lesson_digest_sha256": "4ffc881e5a91de40d8ff5ce6a0ab174e6edae0469eabc0501d498fbd79feb66f",
-  "delta_lesson_digest_sha256": "70e4a8ed30badf46b33baba630fc8c713aa7cd44844be76282df47cddcb42a49",
+  "delta_lesson_digest_sha256": "ea50b3d696d6b2ae36ffa089ddcb52f67b8a24c51ffc5034e44408ba2639ebaa",
   "accepted_lesson_ids": ["TABLET-GPT-SINGLE-RUN-AUTONOMY-GUARD-V377"],
   "alignment_policy": {
     "same_digest_required": true,
