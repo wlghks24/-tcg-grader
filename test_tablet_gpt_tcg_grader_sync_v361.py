@@ -93,6 +93,12 @@ class TabletGptTcgGraderSyncV361(unittest.TestCase):
         self.assertIn("actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a",workflow)
         self.assertIn("path: .tcg_drive_outbox/*",workflow); self.assertIn("include-hidden-files: true",workflow)
         self.assertIn("if-no-files-found: error",workflow); self.assertIn("STALE_AUTO_UPDATE_REPORT",workflow)
-        self.assertIn("FRESH_STATIC_REFRESH_DISPATCHED",workflow); self.assertIn("never widen the two-hour report freshness gate",workflow)
+        self.assertIn("FRESH_LOCAL_COLLECTION_RETRY",workflow)
+        self.assertIn("tcg_updater.update_cycle('gpt-drive-package-refresh')",workflow)
+        self.assertIn("never widen freshness gates",workflow)
+        self.assertNotIn("actions: write",workflow)
+        latest=read(ROOT/"TCG_CROSSCHECK/TABLET_GPT_TCG_GRADER_SYNC_CONTRACT_V370.json")
+        self.assertTrue(latest["rules"]["drive_package_stale_inputs_upload_forbidden"])
+        self.assertTrue(latest["rules"]["drive_package_non_freshness_critical_remains_blocking"])
 
 if __name__=="__main__": unittest.main(verbosity=2)

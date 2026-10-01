@@ -162,24 +162,25 @@ class TabletGptTcgGraderSyncV368(unittest.TestCase):
 
     def test_supplementary_freshness_recovery_is_explicit_and_fail_closed(self):
         workflow = WORKFLOW.read_text(encoding="utf-8")
-        self.assertIn(
-            'recoverable = {"STALE_AUTO_UPDATE_REPORT", "STALE_SOCIAL_SNAPSHOT"}', workflow
-        )
+        self.assertIn("STALE_AUTO_UPDATE_REPORT", workflow)
+        self.assertIn("STALE_SOCIAL_SNAPSHOT", workflow)
+        self.assertIn("STALE_SUPPLEMENTARY_SNAPSHOT", workflow)
         self.assertIn("critical and critical <= recoverable", workflow)
-        self.assertIn(
-            'expanded_recoverable = recoverable | {"STALE_SUPPLEMENTARY_SNAPSHOT"}', workflow
-        )
-        self.assertIn("critical and critical <= expanded_recoverable", workflow)
-        self.assertIn("FRESH_STATIC_REFRESH_DISPATCHED", workflow)
-        self.assertIn("tcg-static-data-refresh.yml/dispatches", workflow)
-        self.assertIn('echo "ready=false"', workflow)
+        self.assertIn("tcg_updater.update_cycle('gpt-drive-package-refresh')", workflow)
+        self.assertIn("FRESH_LOCAL_COLLECTION_RETRY", workflow)
+        self.assertNotIn("tcg-static-data-refresh.yml/dispatches", workflow)
+        self.assertNotIn("actions: write", workflow)
         self.assertIn('exit "${rc}"', workflow)
-        self.assertIn("never widen the two-hour report freshness gate", workflow)
+        self.assertIn("never widen freshness gates", workflow)
         self.assertNotIn("publish_allowed = true", workflow)
         rules = read(CONTRACT)["rules"]
         self.assertIs(rules["supplementary_staleness_may_only_request_protected_refresh"], True)
         self.assertIs(rules["non_freshness_critical_findings_must_remain_blocking"], True)
         self.assertIs(rules["freshness_threshold_widening_forbidden"], True)
+        latest = read(ROOT / "TCG_CROSSCHECK/TABLET_GPT_TCG_GRADER_SYNC_CONTRACT_V370.json")["rules"]
+        self.assertIs(latest["drive_package_freshness_only_local_retry_required"], True)
+        self.assertIs(latest["drive_package_non_freshness_critical_remains_blocking"], True)
+        self.assertIs(latest["drive_package_stale_inputs_upload_forbidden"], True)
 
 
 if __name__ == "__main__":
