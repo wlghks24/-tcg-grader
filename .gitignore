@@ -153,3 +153,9 @@ VERIFIED_COLLECTION_JOB_NEURAL_LABELS.json.bak
 VERIFIED_COLLECTION_JOB_NEURAL_MODEL.json
 VERIFIED_COLLECTION_JOB_NEURAL_MODEL.json.bak
 VERIFIED_COLLECTION_JOB_NEURAL_REPORT.json
+
+# Tablet autonomous controller state is local operational evidence, never source truth.
+tablet_autonomy_state.json
+tablet_autonomy_state.json.bak
+tablet_autonomy_report.json
+tablet_autonomy_proposals.json
