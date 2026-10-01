@@ -1,4 +1,4 @@
-name: Finalize Tablet V376 Integrity
+name: Finalize Tablet V377 via Registered V376 Lane
 
 on:
   push:
@@ -9,14 +9,14 @@ permissions:
   contents: write
 
 concurrency:
-  group: finalize-tablet-v376-integrity-${{ github.ref }}
+  group: finalize-tablet-v377-bootstrap-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
   finalize:
-    if: github.actor == github.repository_owner
+    if: github.actor == github.repository_owner && !startsWith(github.event.head_commit.message, 'finalize v377 bootstrap')
     runs-on: ubuntu-24.04
-    timeout-minutes: 15
+    timeout-minutes: 20
     env:
       PYTHONDONTWRITEBYTECODE: '1'
       PYTHONUNBUFFERED: '1'
@@ -27,7 +27,7 @@ jobs:
       - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97
         with:
           python-version: '3.12'
-      - name: Require exact V376 feature branch ancestry
+      - name: Require exact helper branch and current-main ancestry
         shell: bash
         run: |
           set -euo pipefail
@@ -36,17 +36,19 @@ jobs:
           git fetch origin +refs/heads/main:refs/remotes/origin/main
           git merge-base --is-ancestor origin/main HEAD
           test "$(git rev-parse --abbrev-ref HEAD)" != "main"
-      - name: Remove one-shot finalizer from final tree
+      - name: Build exact V377 final tree
         shell: bash
         run: |
           set -euo pipefail
-          git rm -- .github/workflows/finalize-tablet-v376-integrity.yml
-      - name: Validate V376 safety contract and sync lineage
+          rm -f .github/workflows/finalize-tablet-v377-integrity.yml
+          rm -f .github/workflows/v377-finalize-now.yml
+          git checkout origin/main -- .github/workflows/finalize-tablet-v376-integrity.yml
+      - name: Validate V377 concurrency and complete sync lineage
         shell: bash
         run: |
           set -euo pipefail
-          python -m py_compile tablet_autonomous_evolution_v376.py test_tablet_autonomous_evolution_v376.py test_tablet_gpt_tcg_grader_sync_v376.py
-          python -m unittest -v test_tablet_autonomous_evolution_v376.py test_tablet_gpt_tcg_grader_sync_v376.py
+          python -m py_compile tablet_autonomous_evolution_v377.py test_tablet_autonomous_evolution_v377.py test_tablet_gpt_tcg_grader_sync_v377.py
+          python -m unittest -v test_tablet_autonomous_evolution_v377.py test_tablet_gpt_tcg_grader_sync_v377.py
           mapfile -t sync_tests < <(find . -maxdepth 1 -type f -name 'test_tablet_gpt_tcg_grader_sync_v*.py' -printf '%f\n' | sort -V)
           test "${#sync_tests[@]}" -gt 0
           python -m unittest -v "${sync_tests[@]}"
@@ -59,18 +61,20 @@ jobs:
           python fault_injection_healing.py --diagnose
           python repository_integrity_guard.py
           git diff --check
-      - name: Commit manifest and finalizer deletion only
+      - name: Commit only final-tree reconciliation
         shell: bash
         run: |
           set -euo pipefail
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git add -- integrity_manifest.json .github/workflows/finalize-tablet-v376-integrity.yml
+          git add -A -- .github/workflows/finalize-tablet-v376-integrity.yml .github/workflows/finalize-tablet-v377-integrity.yml .github/workflows/v377-finalize-now.yml integrity_manifest.json
           mapfile -t changed < <(git diff --cached --name-only | sort)
           printf '%s\n' "${changed[@]}"
-          test "${#changed[@]}" -eq 2
+          test "${#changed[@]}" -eq 4
           test "${changed[0]}" = ".github/workflows/finalize-tablet-v376-integrity.yml"
-          test "${changed[1]}" = "integrity_manifest.json"
+          test "${changed[1]}" = ".github/workflows/finalize-tablet-v377-integrity.yml"
+          test "${changed[2]}" = ".github/workflows/v377-finalize-now.yml"
+          test "${changed[3]}" = "integrity_manifest.json"
           git diff --cached --check
-          git commit -m 'fix: reconcile V376 safety contract integrity'
+          git commit -m 'finalize v377 bootstrap: reconcile exact final tree'
           git push origin "HEAD:${GITHUB_REF_NAME}"
