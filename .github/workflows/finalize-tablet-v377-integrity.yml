@@ -12,14 +12,10 @@ jobs:
     timeout-minutes: 30
     steps:
       - uses: actions/checkout@v4
-        with:
-          ref: ${{ github.head_ref }}
-          fetch-depth: 0
+        with: {ref: "${{ github.head_ref }}", fetch-depth: 0}
       - uses: actions/setup-python@v5
-        with:
-          python-version: '3.12'
-      - name: Finalize heavy-lane safety and exact-tree integrity
-        shell: bash
+        with: {python-version: '3.12'}
+      - name: Finalize V377
         run: |
           set -euo pipefail
           python - <<'PY'
@@ -49,21 +45,10 @@ jobs:
     settled["heavy_lane"] = heavy_lane
 '''
           if '"one_heavy_lane_arbiter_enforced": True' not in t:
-              if t.count(old)!=1: raise SystemExit('dual heavy block mismatch')
+              if t.count(old)!=1: raise SystemExit('dual-heavy block mismatch')
               t=t.replace(old,new,1).replace('    "market_direction_inferred": False,\n})','    "market_direction_inferred": False,\n    "one_heavy_lane_arbiter_enforced": True,\n})',1); p.write_text(t)
           PY
-          cat > test_tablet_autonomy_heavy_lane_v377.py <<'PY'
-          import unittest
-          import tablet_autonomous_evolution_v376 as a
-          class T(unittest.TestCase):
-              def test_contract(self):
-                  self.assertTrue(a.SAFETY['one_heavy_lane_arbiter_enforced'])
-                  self.assertEqual(1,a.v375.v374.SAFETY['max_heavy_operations_per_cycle'])
-                  text=open('tablet_autonomous_evolution_v376.py',encoding='utf-8').read()
-                  self.assertIn('DEFERRED_HEAVY_LANE_OPERATIONAL',text)
-                  self.assertIn('DEFERRED_HEAVY_LANE_SAFE_LEARNING',text)
-          if __name__=='__main__': unittest.main(verbosity=2)
-          PY
+          printf '%s\n' "import unittest" "import tablet_autonomous_evolution_v376 as a" "class T(unittest.TestCase):" "    def test_contract(self):" "        self.assertTrue(a.SAFETY['one_heavy_lane_arbiter_enforced'])" "        self.assertEqual(1,a.v375.v374.SAFETY['max_heavy_operations_per_cycle'])" "        text=open('tablet_autonomous_evolution_v376.py',encoding='utf-8').read()" "        self.assertIn('DEFERRED_HEAVY_LANE_OPERATIONAL',text)" "        self.assertIn('DEFERRED_HEAVY_LANE_SAFE_LEARNING',text)" "if __name__=='__main__': unittest.main(verbosity=2)" > test_tablet_autonomy_heavy_lane_v377.py
           git config user.name 'github-actions[bot]'; git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           git add tablet_autonomous_evolution_v376.py test_tablet_autonomy_heavy_lane_v377.py
           git diff --cached --quiet || git commit -m 'fix: enforce one heavy autonomy lane per cycle v377'
@@ -72,8 +57,8 @@ jobs:
           from pathlib import Path
           cp=Path('TCG_CROSSCHECK/TABLET_GPT_TCG_GRADER_SYNC_CONTRACT_V377.json'); dp=Path('TCG_CROSSCHECK/TABLET_GPT/learning_snapshot_v377_delta.json'); rp=Path('TCG_CROSSCHECK/TCG_GRADER/tablet_gpt_learning_receipt_v377.json')
           c=json.loads(cp.read_text()); d=json.loads(dp.read_text()); r=json.loads(rp.read_text())
-          lesson={'lesson_id':'TABLET-GPT-SINGLE-HEAVY-LANE-ARBITER-V377','subsystem':'tablet_gpt_autonomous_execution_budget','issue_class':'dual_heavy_execution','trigger_condition':'operational recovery and safe-learning are both selected','prevention_rule':'choose exactly one heavy lane per cycle and preserve all V376 fail-closed gates','validation_required':['operational lane defers model training','safe-learning lane defers operational recovery','V377 lock serializes mutating cycles'],'safety_boundary':'one heavy operation per cycle'}
-          d['lessons']=[x for x in d['lessons'] if x.get('lesson_id')!=lesson['lesson_id']]+[lesson]; dg=hashlib.sha256(json.dumps(d['lessons'],ensure_ascii=False,sort_keys=True,separators=(',',':')).encode()).hexdigest(); d['lesson_digest_sha256']=dg; r['delta_lesson_digest_sha256']=dg; r['accepted_lesson_ids']=[x['lesson_id'] for x in d['lessons']]; c['delta_required_lesson_count']=len(d['lessons']); c['current_required_lesson_count']=c['prior_required_lesson_count']+len(d['lessons']); c['rules']['one_heavy_lane_arbiter_enforced']=True; c['rules']['closed_loop_max_one_heavy_operation_per_cycle']=True
+          x={'lesson_id':'TABLET-GPT-SINGLE-HEAVY-LANE-ARBITER-V377','subsystem':'tablet_gpt_autonomous_execution_budget','issue_class':'dual_heavy_execution','trigger_condition':'operational recovery and safe-learning are both selected','prevention_rule':'choose exactly one heavy lane per cycle','validation_required':['operational lane defers learning','learning lane defers operational recovery','V377 lock serializes mutating cycles'],'safety_boundary':'one heavy operation per cycle'}
+          d['lessons']=[q for q in d['lessons'] if q.get('lesson_id')!=x['lesson_id']]+[x]; dg=hashlib.sha256(json.dumps(d['lessons'],ensure_ascii=False,sort_keys=True,separators=(',',':')).encode()).hexdigest(); d['lesson_digest_sha256']=dg; r['delta_lesson_digest_sha256']=dg; r['accepted_lesson_ids']=[q['lesson_id'] for q in d['lessons']]; c['delta_required_lesson_count']=len(d['lessons']); c['current_required_lesson_count']=c['prior_required_lesson_count']+len(d['lessons']); c['rules']['one_heavy_lane_arbiter_enforced']=True; c['rules']['closed_loop_max_one_heavy_operation_per_cycle']=True
           cp.write_text(json.dumps(c,ensure_ascii=False,indent=2)+'\n'); dp.write_text(json.dumps(d,ensure_ascii=False,indent=2)+'\n'); rp.write_text(json.dumps(r,ensure_ascii=False,indent=2)+'\n')
           PY
           git add TCG_CROSSCHECK/TABLET_GPT_TCG_GRADER_SYNC_CONTRACT_V377.json TCG_CROSSCHECK/TABLET_GPT/learning_snapshot_v377_delta.json TCG_CROSSCHECK/TCG_GRADER/tablet_gpt_learning_receipt_v377.json
