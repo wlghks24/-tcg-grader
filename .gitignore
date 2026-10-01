@@ -177,3 +177,6 @@ tablet_autonomy_v375_report.json
 tablet_autonomy_execution_journal_v376.json
 tablet_autonomy_v376_report.json
 tablet_autonomy_exchange_capsule_v376.json
+# v377 process lock/report are device-local; lock files never become source truth.
+.tablet_autonomy_execution_v377.lock
+tablet_autonomy_v377_report.json
