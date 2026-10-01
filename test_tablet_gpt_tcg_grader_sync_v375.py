@@ -4,6 +4,8 @@ from pathlib import Path
 import subprocess
 import unittest
 
+from sync_v376_successor_test_support import assert_current_autonomy_route_v377
+
 import tablet_autonomous_evolution_v375 as autonomy
 
 ROOT = Path(__file__).resolve().parent
@@ -187,11 +189,7 @@ class TabletGptTcgGraderSyncV375(unittest.TestCase):
             self.assertIn('"tablet_autonomous_evolution_v375.py"', manifest_text)
         else:
             self.assertTrue(complete_v376_successor())
-            self.assertIn(
-                "tablet_autonomous_evolution_v376.py --execute-safe-learning --apply-capabilities --train-meta --apply-skills",
-                main_text,
-            )
-            self.assertIn('"tablet_autonomous_evolution_v376.py"', manifest_text)
+            assert_current_autonomy_route_v377(self, main_text, manifest_text)
             self.assertIn('"tablet_autonomous_evolution_v375.py"', manifest_text)
         self.assertIn('"tablet_autonomous_evolution_v374.py"', manifest_text)
 

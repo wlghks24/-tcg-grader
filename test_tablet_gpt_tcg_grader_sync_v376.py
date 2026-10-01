@@ -3,6 +3,8 @@ import json
 import unittest
 from pathlib import Path
 
+from sync_v376_successor_test_support import assert_current_autonomy_route_v377
+
 ROOT = Path(__file__).resolve().parent
 CONTRACT = ROOT / "TCG_CROSSCHECK" / "TABLET_GPT_TCG_GRADER_SYNC_CONTRACT_V376.json"
 DELTA = ROOT / "TCG_CROSSCHECK" / "TABLET_GPT" / "learning_snapshot_v376_delta.json"
@@ -92,13 +94,13 @@ class TabletGptTcgGraderSyncV376Tests(unittest.TestCase):
         self.assertTrue(candidate["requires_exact_watched_path_match"])
         self.assertTrue(candidate["post_merge_coverage_allowed"])
 
-    def test_runtime_route_manifest_and_local_evidence_policy_use_v376(self):
+    def test_runtime_route_preserves_v376_evidence_and_uses_verified_v377_successor(self):
         main = (ROOT / "main").read_text(encoding="utf-8")
         runtime = (ROOT / "tablet_runtime_manifest.py").read_text(encoding="utf-8")
         ignore = (ROOT / ".gitignore").read_text(encoding="utf-8")
         controller = (ROOT / "tablet_autonomous_evolution_v376.py").read_text(encoding="utf-8")
-        self.assertIn("tablet_autonomous_evolution_v376.py --execute-safe-learning --apply-capabilities --train-meta --apply-skills", main)
         self.assertIn('"tablet_autonomous_evolution_v376.py"', runtime)
+        assert_current_autonomy_route_v377(self, main, runtime)
         self.assertIn("tablet_autonomy_execution_journal_v376.json", ignore)
         self.assertIn("tablet_autonomy_exchange_capsule_v376.json", ignore)
         self.assertIn("prior_evidence_commit_required_before_new_execution", controller)

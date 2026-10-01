@@ -1,0 +1,45 @@
+{
+  "schema_version": "1.1-tablet-gpt-tcg-grader-learning-sync",
+  "namespace": "TABLET_GPT",
+  "snapshot_kind": "learning_delta",
+  "run_date_kst": "2026-10-02",
+  "built_at": "2026-10-02T02:40:00+09:00",
+  "status": "finalized",
+  "source_repository": "wlghks24/-tcg-grader",
+  "prior_delta": "TCG_CROSSCHECK/TABLET_GPT/learning_snapshot_v376_delta.json",
+  "prior_lesson_digest_sha256": "4ffc881e5a91de40d8ff5ce6a0ab174e6edae0469eabc0501d498fbd79feb66f",
+  "source_main_sha": "24cad558d756d57e06a8309c8d5fbc73626f1d45",
+  "share_policy": {
+    "explicit_patch_and_learning_lessons_only": true,
+    "chatgpt_model_weights_exported": false,
+    "raw_grading_calibration_shared": false,
+    "device_local_runtime_memory_overwritten": false,
+    "peer_verified_never_auto_promotes_local": true
+  },
+  "covered_merges": [
+    {"pr": 364, "version": "v377-single-run-autonomy-base", "merge_sha": "24cad558d756d57e06a8309c8d5fbc73626f1d45"}
+  ],
+  "lesson_digest_sha256": "ea50b3d696d6b2ae36ffa089ddcb52f67b8a24c51ffc5034e44408ba2639ebaa",
+  "lessons": [
+    {
+      "lesson_id": "TABLET-GPT-SINGLE-RUN-AUTONOMY-GUARD-V377",
+      "subsystem": "tablet_gpt_autonomous_concurrency_control",
+      "issue_class": "concurrent_mutating_autonomy_cycles_can_race_transaction_journal_and_duplicate_execution",
+      "trigger_condition": "two or more mutating autonomy invocations enter the V376 core concurrently before either process establishes exclusive ownership",
+      "prevention_rule": "route the supported evolve entrypoint through a non-blocking OS file lock; concurrent or unsafe lock acquisition must fail closed before V376 is called or shared state/output is written; planning-only reads remain lock-free; preserve all V376 evidence, journal, neural, market, PR/CI, and physical-device boundaries",
+      "validation_required": [
+        "base main is exactly 24cad558d756d57e06a8309c8d5fbc73626f1d45",
+        "functional candidate commit is exactly b1000eb9f155ce343fc3bc59bcc0c35c5efb19c3",
+        "main evolve route uses tablet_autonomous_evolution_v377.py",
+        "tablet runtime manifest includes tablet_autonomous_evolution_v377.py",
+        "mutating cycles acquire a non-blocking exclusive OS lock before invoking V376",
+        "lock contention does not invoke V376 and does not create the V376 execution journal",
+        "unsafe or unavailable lock fails closed",
+        "planning-only calls remain lock-free",
+        "V376 evidence barrier, execution journal, verified learning, advisory neural, market freshness, and source-change PR/CI boundaries remain unchanged",
+        "physical Tablet runtime and Drive readback remain unverified until matching external evidence exists"
+      ],
+      "safety_boundary": "V377 serializes only the supported local mutating autonomy entrypoint; it does not widen autonomous actions, trust, model training, source writes, market inference, or physical-device claims"
+    }
+  ]
+}
