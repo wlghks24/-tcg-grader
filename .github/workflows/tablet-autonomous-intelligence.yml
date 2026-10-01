@@ -1,0 +1,187 @@
+name: Tablet Autonomous Intelligence
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - 'tablet_autonomous_ai.py'
+      - 'test_tablet_autonomous_ai_v371.py'
+      - '.github/workflows/tablet-autonomous-intelligence.yml'
+      - '.gitignore'
+  push:
+    branches: [main]
+    paths:
+      - 'tablet_autonomous_ai.py'
+      - 'test_tablet_autonomous_ai_v371.py'
+      - '.github/workflows/tablet-autonomous-intelligence.yml'
+      - '.gitignore'
+  workflow_run:
+    workflows: ['Market AI Auto Tracker']
+    types: [completed]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  actions: write
+
+concurrency:
+  group: tablet-autonomous-intelligence-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  decide-learn-act:
+    if: github.event_name != 'workflow_run' || github.event.workflow_run.conclusion == 'success'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          fetch-depth: 2
+
+      - name: Set up Python
+        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97
+        with:
+          python-version: '3.11'
+
+      - name: Restore previous verified autonomous state
+        if: github.event_name != 'pull_request'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          rm -rf /tmp/tablet-auto-previous /tmp/tablet-auto-previous.zip
+          mkdir -p /tmp/tablet-auto-previous
+          prior_run_id="$(gh api \
+            "repos/${GITHUB_REPOSITORY}/actions/workflows/tablet-autonomous-intelligence.yml/runs?branch=main&status=success&per_page=20" \
+            --jq '.workflow_runs[0].id // empty' 2>/dev/null || true)"
+          if [ -z "${prior_run_id}" ]; then
+            echo 'No prior successful autonomous run; starting with fresh local state.'
+            exit 0
+          fi
+          artifact_id="$(gh api \
+            "repos/${GITHUB_REPOSITORY}/actions/runs/${prior_run_id}/artifacts?per_page=100" \
+            --jq '.artifacts[] | select(.name == "tablet-autonomous-intelligence" and .expired == false) | .id' \
+            2>/dev/null | head -n 1 || true)"
+          if [ -z "${artifact_id}" ]; then
+            echo 'Prior run has no retained autonomous artifact; starting fresh.'
+            exit 0
+          fi
+          curl -fsSL \
+            -H "Authorization: Bearer ${GH_TOKEN}" \
+            -H 'Accept: application/vnd.github+json' \
+            -H 'X-GitHub-Api-Version: 2026-03-10' \
+            "https://api.github.com/repos/${GITHUB_REPOSITORY}/actions/artifacts/${artifact_id}/zip" \
+            -o /tmp/tablet-auto-previous.zip
+          unzip -q /tmp/tablet-auto-previous.zip -d /tmp/tablet-auto-previous
+          for name in \
+            TABLET_AUTONOMOUS_AI_STATE.json \
+            TABLET_AUTONOMOUS_AI_STATE.json.bak \
+            TABLET_AUTONOMOUS_AI_MODEL.json \
+            TABLET_AUTONOMOUS_AI_MODEL.json.bak; do
+            candidate="$(find /tmp/tablet-auto-previous -type f -name "${name}" -print -quit)"
+            if [ -n "${candidate}" ] && [ "$(stat -c '%s' "${candidate}")" -le 2000000 ]; then
+              cp -- "${candidate}" "${name}"
+            fi
+          done
+
+      - name: Verify autonomous and existing neural safety contracts
+        run: |
+          python -m py_compile tablet_autonomous_ai.py
+          python -m unittest -v \
+            test_tablet_autonomous_ai_v371.py \
+            test_verified_neural_self_refine_v210.py \
+            test_verified_collection_neural_v211.py \
+            test_verified_collection_job_neural_v212.py
+
+      - name: Run bounded autonomous decision cycle
+        if: github.event_name != 'pull_request'
+        run: |
+          python tablet_autonomous_ai.py
+          python tablet_autonomous_ai.py --train
+
+      - name: Verify PR decision logic without persistent actions
+        if: github.event_name == 'pull_request'
+        run: python tablet_autonomous_ai.py --dry-run
+
+      - name: Select at most one safe autonomous action
+        if: github.event_name != 'pull_request'
+        id: action
+        shell: bash
+        run: |
+          python - <<'PY' >> "$GITHUB_OUTPUT"
+          import json
+          from pathlib import Path
+          report = json.loads(Path('TABLET_AUTONOMOUS_AI_REPORT.json').read_text(encoding='utf-8'))
+          allowed = [row for row in report.get('decisions', []) if row.get('auto_execution_allowed') is True]
+          allowed.sort(key=lambda row: (-float(row.get('score') or 0.0), str(row.get('capability_id') or '')))
+          if not allowed:
+              print('capability=')
+              print('action=')
+          else:
+              row = allowed[0]
+              print('capability=' + str(row['capability_id']))
+              print('action=' + str(row['action']))
+          PY
+
+      - name: Execute selected protected control-plane action
+        if: github.event_name != 'pull_request' && steps.action.outputs.capability != ''
+        env:
+          GH_TOKEN: ${{ github.token }}
+          CAPABILITY: ${{ steps.action.outputs.capability }}
+          ACTION: ${{ steps.action.outputs.action }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          case "${ACTION}" in
+            COLLECT_AND_REEVALUATE|ADJUST_COLLECTION_PRIORITY)
+              workflow='tcg-static-data-refresh.yml'
+              ;;
+            SYNC_CHECK_AND_RECOVER)
+              workflow='tablet-gpt-tcg-grader-main-alignment.yml'
+              ;;
+            RUN_EXISTING_RECOVERY)
+              workflow='final-tablet-guard.yml'
+              ;;
+            *)
+              echo "::error::Autonomous action escaped the code-defined allowlist: ${ACTION}"
+              exit 2
+              ;;
+          esac
+          gh api --method POST \
+            "repos/${GITHUB_REPOSITORY}/actions/workflows/${workflow}/dispatches" \
+            -f ref=main
+          python tablet_autonomous_ai.py --mark-action "${CAPABILITY}"
+
+      - name: Upload autonomous learning and decision evidence
+        if: always() && github.event_name != 'pull_request'
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        with:
+          name: tablet-autonomous-intelligence
+          path: |
+            TABLET_AUTONOMOUS_AI_STATE.json
+            TABLET_AUTONOMOUS_AI_STATE.json.bak
+            TABLET_AUTONOMOUS_AI_MODEL.json
+            TABLET_AUTONOMOUS_AI_MODEL.json.bak
+            TABLET_AUTONOMOUS_AI_REPORT.json
+            TABLET_AUTONOMOUS_AI_PROPOSALS.json
+          if-no-files-found: ignore
+          retention-days: 30
+
+      - name: Write autonomous intelligence summary
+        if: always()
+        shell: bash
+        run: |
+          {
+            echo '## Tablet Autonomous Intelligence'
+            echo
+            echo "- source commit: ${GITHUB_SHA}"
+            echo "- selected capability: ${{ steps.action.outputs.capability || 'none' }}"
+            echo "- selected action: ${{ steps.action.outputs.action || 'none' }}"
+            echo '- neural scope: verified full-regression outcome priority only'
+            echo '- autonomous source/shell/git generation from learned text: disabled'
+            echo '- new capability path: structured proposal -> branch/PR -> full regression -> protected main'
+            echo '- market/price/grade trust: hard verification gates remain authoritative'
+            echo '- action loop guard: one safe action per run plus six-hour persisted cooldown'
+          } >> "$GITHUB_STEP_SUMMARY"
