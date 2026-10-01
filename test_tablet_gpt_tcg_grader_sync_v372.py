@@ -73,11 +73,9 @@ def assert_v373_successor(testcase, relevant):
 
 
 def assert_v374_successor(testcase, relevant):
-    contract, candidate = _verify_successor(
+    return _verify_successor(
         testcase, V374_CONTRACT, V374_SOURCE, V374_CANDIDATE, relevant
     )
-    testcase.assertEqual([], watched_paths(contract, V374_CANDIDATE))
-    return contract, candidate
 
 
 class TabletGptTcgGraderSyncV372(unittest.TestCase):
@@ -137,7 +135,25 @@ class TabletGptTcgGraderSyncV372(unittest.TestCase):
             v373_contract, v373_candidate = assert_v373_successor(self, first_hop)
             after373 = watched_paths(v373_contract, v373_candidate["candidate_commit"])
             if after373:
-                assert_v374_successor(self, after373)
+                second_hop = watched_paths(
+                    v373_contract, v373_candidate["candidate_commit"], V374_CANDIDATE
+                )
+                v374_contract, v374_candidate = assert_v374_successor(self, second_hop)
+                after374 = watched_paths(v374_contract, v374_candidate["candidate_commit"])
+                if after374:
+                    v375_path = ROOT / "TCG_CROSSCHECK/TABLET_GPT_TCG_GRADER_SYNC_CONTRACT_V375.json"
+                    v375_contract, v375_candidate = _verify_successor(
+                        self,
+                        v375_path,
+                        "2b1112318fa23f4e8edd525695ee3711ea715e18",
+                        "d7c8577b514abdbbc15ba9323c4c0deb1945efed",
+                        after374,
+                    )
+                    self.assertEqual(
+                        [], watched_paths(v375_contract, v375_candidate["candidate_commit"])
+                    )
+                else:
+                    self.assertEqual([], after374)
             else:
                 self.assertEqual([], after373)
 

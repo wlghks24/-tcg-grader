@@ -1,0 +1,50 @@
+{
+  "schema_version": "1.1-tablet-gpt-tcg-grader-learning-sync",
+  "namespace": "TABLET_GPT",
+  "snapshot_kind": "learning_delta",
+  "run_date_kst": "2026-10-01",
+  "built_at": "2026-10-01T23:10:00+09:00",
+  "status": "finalized",
+  "source_repository": "wlghks24/-tcg-grader",
+  "prior_delta": "TCG_CROSSCHECK/TABLET_GPT/learning_snapshot_v374_delta.json",
+  "prior_lesson_digest_sha256": "f52e3713a2363886e4b0af707c15c12eb61f1b0a3aea41733393932d686c45ce",
+  "source_main_sha": "2b1112318fa23f4e8edd525695ee3711ea715e18",
+  "share_policy": {
+    "explicit_patch_and_learning_lessons_only": true,
+    "chatgpt_model_weights_exported": false,
+    "raw_grading_calibration_shared": false,
+    "device_local_runtime_memory_overwritten": false,
+    "peer_verified_never_auto_promotes_local": true
+  },
+  "covered_merges": [
+    {
+      "pr": 361,
+      "version": "v375-verified-feedback-autonomy-base",
+      "merge_sha": "2b1112318fa23f4e8edd525695ee3711ea715e18"
+    }
+  ],
+  "lesson_digest_sha256": "7b6bd4191984bc6582121fa79518ebf6f5513f09a9b68454fad2e8115abf38c4",
+  "lessons": [
+    {
+      "lesson_id": "TABLET-GPT-VERIFIED-FEEDBACK-AUTONOMOUS-EVOLUTION-V375",
+      "subsystem": "tablet_gpt_autonomous_verified_feedback",
+      "issue_class": "closed_loop_skill_outcomes_not_fed_back_into_meta_neural_and_candidate_uncertainty",
+      "trigger_condition": "Tablet autonomy has verified prior trial outcomes but meta-neural ranking and next skill selection must learn from those outcomes without overwriting corrupt evidence or repeating failing recipes",
+      "prevention_rule": "evaluate prior trials before selection; persist skill/meta evidence fail-closed; bridge only verified outcomes with exact stored meta features; train the advisory meta-neural only from that verified store; bound exploration and failure penalties; hard-hold repeated negative recipes; compose only allowlisted declarative market capabilities; keep one heavy operation per cycle; source changes remain PR/CI-only",
+      "validation_required": [
+        "base main is exactly 2b1112318fa23f4e8edd525695ee3711ea715e18",
+        "functional candidate commit is exactly d7c8577b514abdbbc15ba9323c4c0deb1945efed",
+        "verified v374 skill outcomes carry exact pre-action meta features before they may enter v373 meta-neural learning",
+        "skill outcome and meta outcome JSONL corruption are fail-closed and never overwritten",
+        "candidate scoring includes bounded uncertainty exploration and verified failure penalties",
+        "three consecutive verified negative outcomes hard-hold the failing recipe",
+        "market gaps may compose only existing validated declarative capabilities",
+        "at most one heavy operational action remains allowed per cycle",
+        "source-code generation, arbitrary command execution, git write, direct-main, verification bypass, fact/trust/price/grade promotion remain forbidden",
+        "v375 controller, tests, main route and runtime manifest remain present",
+        "physical Tablet runtime and Drive readback remain unverified until matching external evidence exists"
+      ],
+      "safety_boundary": "autonomous improvement may adapt operational policies and advisory neural ranking only from verified evidence; it may not become unrestricted self-modifying code or silently replace corrupt learning evidence"
+    }
+  ]
+}

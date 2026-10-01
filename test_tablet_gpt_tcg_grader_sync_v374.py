@@ -14,6 +14,7 @@ DELTA = ROOT / "TCG_CROSSCHECK/TABLET_GPT/learning_snapshot_v374_delta.json"
 RECEIPT = ROOT / "TCG_CROSSCHECK/TCG_GRADER/tablet_gpt_learning_receipt_v374.json"
 PRIOR_CONTRACT = ROOT / "TCG_CROSSCHECK/TABLET_GPT_TCG_GRADER_SYNC_CONTRACT_V373.json"
 CONTRACT = ROOT / "TCG_CROSSCHECK/TABLET_GPT_TCG_GRADER_SYNC_CONTRACT_V374.json"
+SUCCESSOR_CONTRACT = ROOT / "TCG_CROSSCHECK/TABLET_GPT_TCG_GRADER_SYNC_CONTRACT_V375.json"
 EXPECTED_DIGEST = "f52e3713a2363886e4b0af707c15c12eb61f1b0a3aea41733393932d686c45ce"
 
 
@@ -36,6 +37,35 @@ def watched_paths(contract, source, head="HEAD"):
 
 
 class TabletGptTcgGraderSyncV374(unittest.TestCase):
+    def _assert_v375_successor(self, relevant):
+        successor = read(SUCCESSOR_CONTRACT)
+        delta = read(ROOT / successor["delta_snapshot"])
+        receipt = read(ROOT / successor["receiver_receipt"])
+        candidate = successor["candidate_sync"]
+        raw = json.dumps(delta["lessons"], ensure_ascii=False, sort_keys=True, separators=(",", ":"))
+        digest = hashlib.sha256(raw.encode("utf-8")).hexdigest()
+        self.assertEqual(digest, delta["lesson_digest_sha256"])
+        self.assertEqual(digest, receipt["delta_lesson_digest_sha256"])
+        self.assertEqual([row["lesson_id"] for row in delta["lessons"]], receipt["accepted_lesson_ids"])
+        self.assertEqual("SYNCED_VERIFIED", receipt["status"])
+        self.assertEqual("TABLET_GPT_TCG_GRADER_MATCH", receipt["verification"]["verified_result"])
+        self.assertEqual(delta["source_main_sha"], receipt["source_main_sha"])
+        self.assertEqual(candidate["base_main_sha"], delta["source_main_sha"])
+        expected_generation = {
+            "TCG_CROSSCHECK/TABLET_GPT_TCG_GRADER_SYNC_CONTRACT_V375.json",
+            "TCG_CROSSCHECK/TABLET_GPT/learning_snapshot_v375_delta.json",
+            "TCG_CROSSCHECK/TCG_GRADER/tablet_gpt_learning_receipt_v375.json",
+            "test_tablet_gpt_tcg_grader_sync_v375.py",
+        }
+        self.assertEqual(expected_generation, set(candidate["generation_files"]))
+        self.assertTrue(expected_generation.issubset(set(successor["freshness_watch"]["exclude_paths"])))
+        successor_relevant = watched_paths(successor, candidate["base_main_sha"], candidate["candidate_commit"])
+        self.assertEqual(sorted(candidate["watched_paths"]), successor_relevant)
+        self.assertEqual(relevant, successor_relevant)
+        self.assertEqual([], watched_paths(successor, candidate["candidate_commit"]))
+        subprocess.run(["git", "merge-base", "--is-ancestor", candidate["base_main_sha"], "HEAD"], check=True)
+        subprocess.run(["git", "merge-base", "--is-ancestor", candidate["candidate_commit"], "HEAD"], check=True)
+
     def test_lineage_digest_receipt_and_merge_anchor(self):
         prior, delta, receipt, pc, contract = map(
             read, (PRIOR, DELTA, RECEIPT, PRIOR_CONTRACT, CONTRACT)
@@ -46,15 +76,9 @@ class TabletGptTcgGraderSyncV374(unittest.TestCase):
         self.assertEqual(SOURCE, receipt["source_main_sha"])
         self.assertEqual([360], [row["pr"] for row in delta["covered_merges"]])
         self.assertEqual(SOURCE, delta["covered_merges"][0]["merge_sha"])
-        self.assertEqual(
-            set(contract["current_required_merge_prs"]),
-            set(pc["current_required_merge_prs"]) | {360},
-        )
+        self.assertEqual(set(contract["current_required_merge_prs"]), set(pc["current_required_merge_prs"]) | {360})
         self.assertEqual(pc["current_required_lesson_count"], contract["prior_required_lesson_count"])
-        self.assertEqual(
-            contract["prior_required_lesson_count"] + contract["delta_required_lesson_count"],
-            contract["current_required_lesson_count"],
-        )
+        self.assertEqual(contract["prior_required_lesson_count"] + contract["delta_required_lesson_count"], contract["current_required_lesson_count"])
         raw = json.dumps(delta["lessons"], ensure_ascii=False, sort_keys=True, separators=(",", ":"))
         digest_value = hashlib.sha256(raw.encode("utf-8")).hexdigest()
         self.assertEqual(EXPECTED_DIGEST, digest_value)
@@ -86,7 +110,9 @@ class TabletGptTcgGraderSyncV374(unittest.TestCase):
         self.assertTrue(expected_generation.issubset(set(contract["freshness_watch"]["exclude_paths"])))
         self.assertTrue(candidate["requires_exact_watched_path_match"])
         self.assertTrue(candidate["post_merge_coverage_allowed"])
-        self.assertEqual([], watched_paths(contract, CANDIDATE))
+        relevant = watched_paths(contract, CANDIDATE)
+        if relevant:
+            self._assert_v375_successor(relevant)
 
     def test_closed_loop_order_and_safety_remain_fail_closed(self):
         rules = read(CONTRACT)["rules"]
@@ -138,10 +164,8 @@ class TabletGptTcgGraderSyncV374(unittest.TestCase):
         main_text = (ROOT / "main").read_text(encoding="utf-8")
         manifest_text = (ROOT / "tablet_runtime_manifest.py").read_text(encoding="utf-8")
         ignore_text = (ROOT / ".gitignore").read_text(encoding="utf-8")
-        self.assertIn(
-            "python tablet_autonomous_evolution_v374.py --execute-safe-learning --apply-capabilities --train-meta --apply-skills",
-            main_text,
-        )
+        self.assertIn("python tablet_autonomous_evolution_v", main_text)
+        self.assertIn("--execute-safe-learning --apply-capabilities --train-meta --apply-skills", main_text)
         self.assertIn('"tablet_autonomous_evolution_v374.py"', manifest_text)
         for name in (
             "tablet_autonomy_skills_v374.json",
