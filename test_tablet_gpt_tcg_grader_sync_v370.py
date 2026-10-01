@@ -7,6 +7,10 @@ import unittest
 ROOT = Path(__file__).resolve().parent
 SOURCE = "38306a236373db4473946205ee446eeeecc3663c"
 CANDIDATE = "c144c08bc38fa36deb49c3b2dc3d1de28e5e5dee"
+V371_CANDIDATE = "ae1262997cf6a60e9aba5d6be25559605787ed85"
+V372_CANDIDATE = "d77ec75aeb00e0c2394d0e8d3cf3259b9622c56b"
+V373_CANDIDATE = "5364126c153b3f13704fbe07f0a56ad1c323f413"
+V374_CANDIDATE = "af47dc6e95735be99800669f57610069865efca6"
 PRIOR = ROOT / "TCG_CROSSCHECK/TABLET_GPT/learning_snapshot_v369_delta.json"
 DELTA = ROOT / "TCG_CROSSCHECK/TABLET_GPT/learning_snapshot_v370_delta.json"
 RECEIPT = ROOT / "TCG_CROSSCHECK/TCG_GRADER/tablet_gpt_learning_receipt_v370.json"
@@ -153,12 +157,33 @@ class TabletGptTcgGraderSyncV370(unittest.TestCase):
                         "TCG_CROSSCHECK/TABLET_GPT/learning_snapshot_v372_delta.json",
                         "TCG_CROSSCHECK/TABLET_GPT_TCG_GRADER_SYNC_CONTRACT_V373.json",
                     )
-                    self.assertEqual(sorted(after372), sorted(candidate373["watched_paths"]))
-                    self.assertEqual(
-                        [],
-                        watched_paths(successor373, candidate373["candidate_commit"]),
-                        "verified v373 successor has uncovered watched changes",
+                    third_hop = watched_paths(
+                        successor372,
+                        candidate372["candidate_commit"],
+                        candidate373["candidate_commit"],
                     )
+                    self.assertEqual(sorted(third_hop), sorted(candidate373["watched_paths"]))
+                    after373 = watched_paths(successor373, candidate373["candidate_commit"])
+                    if after373:
+                        successor374, candidate374 = assert_successor_generation(
+                            self,
+                            "TCG_CROSSCHECK/TABLET_GPT_TCG_GRADER_SYNC_CONTRACT_V373.json",
+                            "TCG_CROSSCHECK/TABLET_GPT/learning_snapshot_v373_delta.json",
+                            "TCG_CROSSCHECK/TABLET_GPT_TCG_GRADER_SYNC_CONTRACT_V374.json",
+                        )
+                        fourth_hop = watched_paths(
+                            successor373,
+                            candidate373["candidate_commit"],
+                            candidate374["candidate_commit"],
+                        )
+                        self.assertEqual(sorted(fourth_hop), sorted(candidate374["watched_paths"]))
+                        self.assertEqual(
+                            [],
+                            watched_paths(successor374, candidate374["candidate_commit"]),
+                            "verified v374 successor has uncovered watched changes",
+                        )
+                    else:
+                        self.assertEqual([], after373)
                 else:
                     self.assertEqual([], after372)
             else:

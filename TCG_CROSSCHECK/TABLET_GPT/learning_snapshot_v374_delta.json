@@ -1,0 +1,50 @@
+{
+  "schema_version": "1.1-tablet-gpt-tcg-grader-learning-sync",
+  "namespace": "TABLET_GPT",
+  "snapshot_kind": "learning_delta",
+  "run_date_kst": "2026-10-01",
+  "built_at": "2026-10-01T21:32:00+09:00",
+  "status": "finalized",
+  "source_repository": "wlghks24/-tcg-grader",
+  "prior_delta": "TCG_CROSSCHECK/TABLET_GPT/learning_snapshot_v373_delta.json",
+  "prior_lesson_digest_sha256": "dcb1347f2783f5ef2bfa21c5ec02f26d333b91a45d6a2ab90e7d6814b18f5d9c",
+  "source_main_sha": "514886ebad7209abb85e891fdd5d7ddbdc8561c4",
+  "share_policy": {
+    "explicit_patch_and_learning_lessons_only": true,
+    "chatgpt_model_weights_exported": false,
+    "raw_grading_calibration_shared": false,
+    "device_local_runtime_memory_overwritten": false,
+    "peer_verified_never_auto_promotes_local": true
+  },
+  "covered_merges": [
+    {
+      "pr": 360,
+      "version": "v374-closed-loop-autonomy-base",
+      "merge_sha": "514886ebad7209abb85e891fdd5d7ddbdc8561c4"
+    }
+  ],
+  "lesson_digest_sha256": "f52e3713a2363886e4b0af707c15c12eb61f1b0a3aea41733393932d686c45ce",
+  "lessons": [
+    {
+      "lesson_id": "TABLET-GPT-CLOSED-LOOP-AUTONOMOUS-EVOLUTION-V374",
+      "subsystem": "tablet_gpt_autonomous_closed_loop",
+      "issue_class": "single_step_autonomy_without_causal_outcome_feedback",
+      "trigger_condition": "tablet autonomy must choose among multiple operational improvements while avoiding repeated failed strategies and unverified source mutation",
+      "prevention_rule": "evaluate prior pending trials before any next selection; learn only verified outcomes; suspend recipes after bounded negative history/regression; select at most one resource-eligible runtime skill per cycle; reuse only allowlisted declarative capabilities and existing verified trainers/updater; emit source-level gaps as non-executing PR-required proposals",
+      "validation_required": [
+        "base main is exactly 514886ebad7209abb85e891fdd5d7ddbdc8561c4",
+        "functional candidate commit is exactly af47dc6e95735be99800669f57610069865efca6",
+        "prior pending trial outcomes are reconciled before new candidate selection",
+        "verified skill outcomes only may influence recipe history",
+        "negative verified history or regression suspends a recipe before next selection",
+        "at most one runtime skill and one heavy operation are selected per cycle",
+        "market freshness, coverage and source health remain operational evidence only",
+        "source-level feature gaps are non-executing proposals requiring normal branch PR CI",
+        "source-code generation, arbitrary command execution, git write, direct-main, verification bypass, fact/trust/price/grade promotion remain forbidden",
+        "v374 controller, test, main route, runtime manifest and device-local state exclusions remain present",
+        "physical Tablet runtime and Drive readback remain unverified until matching external evidence exists"
+      ],
+      "safety_boundary": "do not turn autonomous evolution into unrestricted self-modifying code; runtime evolution stays bounded, evidence-driven, reversible, and fail-closed"
+    }
+  ]
+}
