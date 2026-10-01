@@ -3,7 +3,7 @@ name: Repository Integrity Manifest Sync v345
 on:
   push:
     branches:
-      - 'ops/integrity-manifest-sync'
+      - 'fix/gpt-drive-aux-recovery-v372'
     paths-ignore:
       - 'integrity_manifest.json'
   workflow_dispatch:
@@ -30,41 +30,41 @@ jobs:
       - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97
         with:
           python-version: '3.12'
-      - name: Require exact owner integrity-sync branch ancestry
+      - name: Require exact owner v372 fix branch ancestry
         shell: bash
         run: |
           set -euo pipefail
           test "${GITHUB_ACTOR}" = "${GITHUB_REPOSITORY_OWNER}"
-          test "${GITHUB_REF_NAME}" = "ops/integrity-manifest-sync"
+          test "${GITHUB_REF_NAME}" = "fix/gpt-drive-aux-recovery-v372"
           git fetch origin +refs/heads/main:refs/remotes/origin/main
           git merge-base --is-ancestor origin/main HEAD
           test "$(git rev-parse --abbrev-ref HEAD)" != "main"
-      - name: Rebuild and verify Git-tracked branch integrity manifest
+      - name: Restore bootstrap workflow and rebuild exact-tree manifest
         shell: bash
         run: |
           set -euo pipefail
+          git fetch origin +refs/heads/main:refs/remotes/origin/main
+          git restore --source=origin/main -- .github/workflows/repository-integrity-manifest-sync-v345.yml
           python static_integrity_manifest.py --write integrity_manifest.json
           python static_integrity_manifest.py --check integrity_manifest.json
           python fault_injection_healing.py --diagnose
           python repository_integrity_guard.py
-          python -m unittest -v test_static_integrity_manifest_v345.py
+          python -m unittest -v test_auxiliary_freshness_coordination_v367.py test_static_integrity_manifest_v345.py
           mapfile -t sync_tests < <(find . -maxdepth 1 -type f -name 'test_tablet_gpt_tcg_grader_sync_v*.py' -printf '%f\n' | sort -V)
           test "${#sync_tests[@]}" -gt 0
           python -m unittest -v "${sync_tests[@]}"
           git diff --check
-      - name: Commit manifest only when changed
+      - name: Commit restored bootstrap workflow and manifest
         shell: bash
         run: |
           set -euo pipefail
-          if git diff --quiet -- integrity_manifest.json; then
-            echo "[OK] integrity_manifest.json already matches the exact branch tree"
-            exit 0
-          fi
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git add -- integrity_manifest.json
-          test "$(git diff --cached --name-only | wc -l | tr -d ' ')" = "1"
-          test "$(git diff --cached --name-only)" = "integrity_manifest.json"
+          git add -- .github/workflows/repository-integrity-manifest-sync-v345.yml integrity_manifest.json
+          mapfile -t changed < <(git diff --cached --name-only)
+          test "${#changed[@]}" -eq 2
+          printf '%s\n' "${changed[@]}" | grep -Fx '.github/workflows/repository-integrity-manifest-sync-v345.yml'
+          printf '%s\n' "${changed[@]}" | grep -Fx 'integrity_manifest.json'
           git diff --cached --check
-          git commit -m 'Reconcile integrity manifest for dedicated ops sync branch'
+          git commit -m 'Reconcile integrity manifest for Drive auxiliary recovery'
           git push origin "HEAD:${GITHUB_REF_NAME}"
