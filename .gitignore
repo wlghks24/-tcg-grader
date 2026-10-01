@@ -170,3 +170,6 @@ tablet_autonomy_skills_v374.json
 tablet_autonomy_verified_skill_outcomes_v374.jsonl
 tablet_autonomy_source_feature_proposals_v374.json
 tablet_autonomy_v374_report.json
+# v375 verified-feedback reports/proposals are device-local; v373/v374 learning stores stay the evidence roots.
+tablet_autonomy_source_feature_proposals_v375.json
+tablet_autonomy_v375_report.json
