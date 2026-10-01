@@ -1,0 +1,45 @@
+{
+  "schema_version": "1.1-tablet-gpt-tcg-grader-learning-sync",
+  "namespace": "TABLET_GPT",
+  "snapshot_kind": "learning_delta",
+  "run_date_kst": "2026-10-01",
+  "built_at": "2026-10-01T15:40:00+09:00",
+  "status": "finalized",
+  "source_repository": "wlghks24/-tcg-grader",
+  "prior_delta": "TCG_CROSSCHECK/TABLET_GPT/learning_snapshot_v370_delta.json",
+  "prior_lesson_digest_sha256": "9d114fc86068301b46f998e78d11f543b8e4ff4066d5f3dc2e9fe7fdb5dfacb4",
+  "source_main_sha": "a00ebfd3888740ee50c5e86c8ee6008fe8a54908",
+  "share_policy": {
+    "explicit_patch_and_learning_lessons_only": true,
+    "chatgpt_model_weights_exported": false,
+    "raw_grading_calibration_shared": false,
+    "device_local_runtime_memory_overwritten": false,
+    "peer_verified_never_auto_promotes_local": true
+  },
+  "covered_merges": [
+    {
+      "pr": 355,
+      "version": "v371-bounded-tablet-autonomous-evolution-base",
+      "merge_sha": "a00ebfd3888740ee50c5e86c8ee6008fe8a54908"
+    }
+  ],
+  "lesson_digest_sha256": "6e53081c6d1bbac2f946ac27c893a01e06b2513f34db6b27eb33bbcc60195779",
+  "lessons": [
+    {
+      "lesson_id": "TABLET-GPT-BOUNDED-AUTONOMOUS-EVOLUTION-V371",
+      "subsystem": "tablet_autonomous_neural_evolution",
+      "issue_class": "verified_neural_components_lacked_single_bounded_meta_controller",
+      "trigger_condition": "query-strategy, collection-job, repair-priority neural state or market freshness requires adaptation but each subsystem only makes a local decision",
+      "symptom_summary": "the tablet had verified neural learners and SELFREFINE gates, but no single bounded controller could inspect them together, choose safe retraining, expose an operator command, or turn unmet capability needs into non-executable proposals",
+      "root_cause_class": "missing_meta_control_plane_above_existing_verified_learning_components",
+      "fix_pattern": "add a fail-closed tablet autonomy controller that observes existing verified model guards plus market freshness, executes only allowlisted train_if_ready paths, keeps neural outputs advisory, converts unknown capability needs into normal branch/PR proposals, exposes bash main evolve, and fail-closes stale or invalid market evidence without generating code or writing Git",
+      "prevention_rule_id": "TGPT-PREV-BOUNDED-AUTONOMY-GATED-EVOLUTION",
+      "verification_result": "bounded_controller_coordinates_existing_verified_neural_learning_without_source_or_trust_autopromotion",
+      "regression_pass": true,
+      "recurrence_count": 1,
+      "applicable_scope": "both",
+      "confidence_level": "high",
+      "physical_tablet_runtime_reverification_required": true
+    }
+  ]
+}
