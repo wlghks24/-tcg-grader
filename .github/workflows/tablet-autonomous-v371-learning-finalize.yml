@@ -1,0 +1,392 @@
+name: Tablet Autonomous v371 Learning Finalizer
+
+on:
+  push:
+    branches: [feat/tablet-autonomous-intelligence-v371]
+    paths:
+      - '.github/workflows/tablet-autonomous-v371-learning-finalize.yml'
+
+permissions:
+  contents: write
+
+concurrency:
+  group: tablet-autonomous-v371-learning-finalizer
+  cancel-in-progress: true
+
+jobs:
+  finalize:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - name: Checkout exact feature branch
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          ref: feat/tablet-autonomous-intelligence-v371
+          fetch-depth: 0
+
+      - name: Set up Python
+        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97
+        with:
+          python-version: '3.11'
+
+      - name: Apply fail-closed autonomous learning hardening
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          from pathlib import Path
+
+          path = Path('tablet_autonomous_ai.py')
+          text = path.read_text(encoding='utf-8')
+
+          def replace_one(old, new):
+              global text
+              count = text.count(old)
+              if count != 1:
+                  raise SystemExit(f'expected one autonomous source patch target, got {count}: {old[:80]!r}')
+              text = text.replace(old, new, 1)
+
+          replace_one(
+          '''try:\n    from safe_runtime import atomic_write_json, exclusive_file_lock\nexcept ImportError:  # isolated unit-test fallback; repository runtime provides safe_runtime\n    from contextlib import contextmanager\n    def atomic_write_json(path: Path, payload: Any, suffix: str = ".tmp") -> None:\n        target = Path(path)\n        tmp = Path(str(target) + suffix)\n        tmp.write_text(json.dumps(payload, ensure_ascii=False, indent=2) + "\\n", encoding="utf-8")\n        os.replace(tmp, target)\n    @contextmanager\n    def exclusive_file_lock(_: Path, **__: Any):\n        yield\n''',
+          'from safe_runtime import atomic_write_json, exclusive_file_lock\n'
+          )
+
+          replace_one(
+          '''            payload = read_json(delta)\n            scan_payload(payload, signals)\n            evidence.append({"path": delta.relative_to(root).as_posix(), "domain": "tablet_sync", "fresh": fresh(payload, stamp, 168.0)})\n''',
+          '''            payload = read_json(delta)\n            scan_payload(payload, signals)\n            delta_fresh = fresh(payload, stamp, 168.0)\n            evidence.append({"path": delta.relative_to(root).as_posix(), "domain": "tablet_sync", "fresh": delta_fresh})\n            if not delta_fresh:\n                signals["sync_gap"] = max(signals["sync_gap"], 0.6)\n                signals["stale"] = max(signals["stale"], 0.35)\n'''
+          )
+
+          replace_one(
+          'return {"schema": SCHEMA, "updated_at": None, "labels": [], "history": [], "proposals": [], "last_actions": {}}',
+          'return {"schema": SCHEMA, "updated_at": None, "labels": [], "history": [], "proposals": [], "last_actions": {}, "pending_outcomes": {}}'
+          )
+          replace_one(
+          '''    state["last_actions"] = {str(k): str(v) for k, v in (raw.get("last_actions") or {}).items() if k in CAPABILITIES and isinstance(v, str)}\n    return state\n''',
+          '''    state["last_actions"] = {str(k): str(v) for k, v in (raw.get("last_actions") or {}).items() if k in CAPABILITIES and isinstance(v, str)}\n    state["pending_outcomes"] = {\n        str(k): dict(v) for k, v in (raw.get("pending_outcomes") or {}).items()\n        if k in CAPABILITIES and isinstance(v, dict)\n    }\n    return state\n'''
+          )
+
+          model_start = text.index('def load_model(')
+          model_end = text.index('\n\ndef deterministic_scores', model_start)
+          text = text[:model_start] + '''def valid_model_shape(model: Any) -> bool:\n    if not isinstance(model, dict):\n        return False\n    try:\n        w1, b1, w2 = model["w1"], model["b1"], model["w2"]\n        if len(w1) != HIDDEN or len(b1) != HIDDEN or len(w2) != HIDDEN:\n            return False\n        if any(not isinstance(row, list) or len(row) != FEATURE_COUNT for row in w1):\n            return False\n        values = [value for row in w1 for value in row] + list(b1) + list(w2) + [model["b2"]]\n        return all(math.isfinite(float(value)) for value in values)\n    except (KeyError, TypeError, ValueError, OverflowError):\n        return False\n\n\ndef load_model(path: Path = MODEL) -> dict[str, Any] | None:\n    try:\n        model = read_json(path, max_bytes=2_000_000)\n        if (\n            not isinstance(model, dict)\n            or model.get("schema") != MODEL_SCHEMA\n            or model.get("feature_count") != FEATURE_COUNT\n            or model.get("active") is not True\n            or not valid_model_shape(model)\n        ):\n            return None\n        stamp = datetime.fromisoformat(str(model["trained_at"]).replace("Z", "+00:00"))\n        age = datetime.now(timezone.utc) - stamp.astimezone(timezone.utc)\n        if age < timedelta(minutes=-5) or age > timedelta(days=MODEL_MAX_AGE_DAYS):\n            return None\n        return model\n    except (OSError, ValueError, TypeError, KeyError, UnicodeError, json.JSONDecodeError):\n        return None\n''' + text[model_end:]
+
+          replace_one(
+          '''    signals = {name: clip01((context.get("signals") or {}).get(name)) for name in SIGNALS}\n    sample_material = capability_id + "|" + json.dumps(signals, sort_keys=True) + "|" + str(outcome) + "|" + str(len(state.get("labels", [])))\n''',
+          '''    signals = {name: clip01((context.get("signals") or {}).get(name)) for name in SIGNALS}\n    try:\n        delta = float(metric_delta)\n    except (TypeError, ValueError, OverflowError):\n        delta = 0.0\n    if not math.isfinite(delta):\n        delta = 0.0\n    delta = max(-1.0, min(1.0, delta))\n    sample_material = capability_id + "|" + json.dumps(signals, sort_keys=True) + "|" + str(outcome) + "|" + str(len(state.get("labels", [])))\n'''
+          )
+          replace_one(
+          '"metric_delta": max(-1.0, min(1.0, float(metric_delta))), "verification_level": "full_regression", "recorded_at": now_iso(),',
+          '"metric_delta": delta, "verification_level": "full_regression", "recorded_at": now_iso(),'
+          )
+
+          action_start = text.index('def mark_action(')
+          action_end = text.index('\n\ndef run_cycle', action_start)
+          replacement = '''def mark_action(capability_id: str, state_path: Path = STATE, report_path: Path = REPORT) -> dict[str, Any]:\n    if capability_id not in CAPABILITIES or CAPABILITIES[capability_id]["action"] not in AUTO_ACTIONS:\n        return {"ok": False, "reason": "action_not_allowlisted"}\n    with exclusive_file_lock(state_path, timeout_seconds=3.0, stale_seconds=300):\n        state, source, corruption = load_state(state_path)\n        if corruption:\n            return {"ok": False, "reason": "state_corruption_hold", "source": source}\n        try:\n            report = read_json(report_path, max_bytes=2_000_000)\n            context = report.get("context") if isinstance(report, dict) and isinstance(report.get("context"), dict) else collect_context(ROOT)\n        except (OSError, ValueError, TypeError, UnicodeError, json.JSONDecodeError):\n            context = collect_context(ROOT)\n        baseline = deterministic_scores(context).get(capability_id, 0.0)\n        state["last_actions"][capability_id] = now_iso()\n        state["pending_outcomes"][capability_id] = {\n            "dispatched_at": now_iso(),\n            "baseline_score": round(clip01(baseline), 4),\n            "context": {"signals": {name: clip01((context.get("signals") or {}).get(name)) for name in SIGNALS}},\n        }\n        state["history"].append({"at": now_iso(), "event": "safe_action_dispatched", "capability_id": capability_id, "baseline_score": round(clip01(baseline), 4)})\n        save_state(state, state_path)\n    return {"ok": True, "capability_id": capability_id, "baseline_score": round(clip01(baseline), 4)}\n\n\ndef settle_verified_outcomes(root: Path = ROOT, state_path: Path = STATE) -> dict[str, Any]:\n    \"\"\"Settle pending strategy outcomes only after an external full regression succeeds.\"\"\"\n    with exclusive_file_lock(state_path, timeout_seconds=3.0, stale_seconds=300):\n        state, source, corruption = load_state(state_path)\n        if corruption:\n            return {"ok": False, "reason": "state_corruption_hold", "source": source, "settled": []}\n        context = collect_context(root)\n        current_scores = deterministic_scores(context)\n        now = datetime.now(timezone.utc)\n        settled: list[dict[str, Any]] = []\n        pending = dict(state.get("pending_outcomes") or {})\n        for capability_id, item in list(pending.items()):\n            if capability_id not in CAPABILITIES or not isinstance(item, dict):\n                pending.pop(capability_id, None)\n                continue\n            try:\n                dispatched = datetime.fromisoformat(str(item.get("dispatched_at") or "").replace("Z", "+00:00")).astimezone(timezone.utc)\n            except ValueError:\n                state["history"].append({"at": now_iso(), "event": "outcome_quarantined", "capability_id": capability_id, "reason": "invalid_dispatch_time"})\n                pending.pop(capability_id, None)\n                continue\n            age = (now - dispatched).total_seconds()\n            if age < 300:\n                continue\n            if age > 7 * 24 * 3600:\n                state["history"].append({"at": now_iso(), "event": "outcome_expired_without_label", "capability_id": capability_id})\n                pending.pop(capability_id, None)\n                continue\n            baseline = clip01(item.get("baseline_score"))\n            current = clip01(current_scores.get(capability_id))\n            improvement = baseline - current\n            if current < 0.28 or improvement >= 0.08:\n                outcome = True\n            elif current > baseline + 0.08:\n                outcome = False\n            else:\n                continue\n            accepted = record_verified_outcome(\n                state, capability_id=capability_id,\n                context=item.get("context") if isinstance(item.get("context"), dict) else context,\n                outcome=outcome, verification_level="full_regression", metric_delta=improvement,\n            )\n            if accepted.get("accepted"):\n                settled.append({"capability_id": capability_id, "outcome": outcome, "metric_delta": round(improvement, 4)})\n                pending.pop(capability_id, None)\n        state["pending_outcomes"] = pending\n        state["history"].append({"at": now_iso(), "event": "full_regression_outcomes_settled", "count": len(settled), "pending": len(pending)})\n        save_state(state, state_path)\n    return {"ok": True, "settled": settled, "pending": len(pending), "label_count": len(state["labels"])}\n'''
+          text = text[:action_start] + replacement + text[action_end:]
+
+          replace_one(
+          '''    parser.add_argument("--mark-action", choices=CAPABILITY_ORDER)\n    args = parser.parse_args(argv)\n    if args.mark_action:\n''',
+          '''    parser.add_argument("--mark-action", choices=CAPABILITY_ORDER)\n    parser.add_argument("--settle-verified-outcomes", action="store_true")\n    args = parser.parse_args(argv)\n    if args.settle_verified_outcomes:\n        result = settle_verified_outcomes(args.root)\n        print(json.dumps(result, ensure_ascii=False, sort_keys=True))\n        return 0 if result.get("ok") else 2\n    if args.mark_action:\n'''
+          )
+          path.write_text(text, encoding='utf-8')
+
+          test_path = Path('test_tablet_autonomous_ai_v371.py')
+          tests = test_path.read_text(encoding='utf-8')
+          if not tests.startswith('import tempfile'):
+              raise SystemExit('unexpected autonomous test header')
+          tests = 'import json\n' + tests
+          marker = '\n\nif __name__ == "__main__":'
+          if tests.count(marker) != 1:
+              raise SystemExit('unexpected autonomous test footer')
+          extra = '''\n    def test_mark_action_creates_pending_verified_outcome(self):\n        with tempfile.TemporaryDirectory() as td:\n            state_path = Path(td) / "state.json"\n            report_path = Path(td) / "report.json"\n            ai.atomic_write_json(report_path, {"context": context(market_shift=0.8)})\n            result = ai.mark_action("market_regime_adaptation", state_path=state_path, report_path=report_path)\n            self.assertTrue(result["ok"])\n            state, _, corruption = ai.load_state(state_path)\n            self.assertFalse(corruption)\n            self.assertIn("market_regime_adaptation", state["pending_outcomes"])\n\n    def test_full_regression_settlement_requires_measurable_change(self):\n        with tempfile.TemporaryDirectory() as td:\n            state_path = Path(td) / "state.json"\n            state = ai.default_state()\n            state["pending_outcomes"]["market_regime_adaptation"] = {\n                "dispatched_at": "2026-09-30T00:00:00+00:00",\n                "baseline_score": 0.8,\n                "context": context(market_shift=0.9),\n            }\n            ai.save_state(state, state_path)\n            improved = context(market_shift=0.1)\n            with patch.object(ai, "collect_context", return_value=improved):\n                result = ai.settle_verified_outcomes(Path(td), state_path)\n            self.assertTrue(result["ok"])\n            self.assertEqual(1, len(result["settled"]))\n            loaded, _, _ = ai.load_state(state_path)\n            self.assertEqual("full_regression", loaded["labels"][0]["verification_level"])\n\n    def test_corrupt_active_model_is_rejected(self):\n        with tempfile.TemporaryDirectory() as td:\n            path = Path(td) / "model.json"\n            model = ai.init_model()\n            model.update({"active": True, "trained_at": NOW.isoformat(), "feature_count": ai.FEATURE_COUNT})\n            model["w1"][0][0] = "not-a-number"\n            path.write_text(json.dumps(model), encoding="utf-8")\n            self.assertIsNone(ai.load_model(path))\n\n    def test_nonfinite_metric_delta_is_neutralized(self):\n        state = ai.default_state()\n        result = ai.record_verified_outcome(\n            state, capability_id="market_regime_adaptation", context=context(),\n            outcome=True, verification_level="full_regression", metric_delta=float("nan"),\n        )\n        self.assertTrue(result["accepted"])\n        self.assertEqual(0.0, state["labels"][0]["metric_delta"])\n'''
+          tests = tests.replace(marker, extra + marker, 1)
+          test_path.write_text(tests, encoding='utf-8')
+
+          workflow_path = Path('.github/workflows/tablet-autonomous-intelligence.yml')
+          workflow = workflow_path.read_text(encoding='utf-8')
+          def wreplace(old, new):
+              global workflow
+              count = workflow.count(old)
+              if count != 1:
+                  raise SystemExit(f'expected one workflow patch target, got {count}: {old[:80]!r}')
+              workflow = workflow.replace(old, new, 1)
+          wreplace("workflows: ['Market AI Auto Tracker']", "workflows: ['Market AI Auto Tracker', 'Exhaustive SELFREFINE Guard']")
+          wreplace(
+              "if: github.event_name != 'workflow_run' || github.event.workflow_run.conclusion == 'success'",
+              "if: github.event_name != 'workflow_run' || (github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.head_branch == 'main')",
+          )
+          restore_start = workflow.index('          unzip -q /tmp/tablet-auto-previous.zip -d /tmp/tablet-auto-previous\n')
+          restore_end = workflow.index('\n\n      - name: Verify autonomous and existing neural safety contracts', restore_start)
+          safe_restore = '''          python - <<'PY'\n          from pathlib import Path\n          from zipfile import ZipFile\n          allowed = {\n              'TABLET_AUTONOMOUS_AI_STATE.json',\n              'TABLET_AUTONOMOUS_AI_STATE.json.bak',\n              'TABLET_AUTONOMOUS_AI_MODEL.json',\n              'TABLET_AUTONOMOUS_AI_MODEL.json.bak',\n          }\n          with ZipFile('/tmp/tablet-auto-previous.zip') as archive:\n              for item in archive.infolist():\n                  name = Path(item.filename).name\n                  if name not in allowed or item.is_dir() or item.file_size > 2_000_000:\n                      continue\n                  if Path(item.filename).is_absolute() or '..' in Path(item.filename).parts:\n                      raise SystemExit('unsafe prior artifact path')\n                  Path(name).write_bytes(archive.read(item))\n          PY'''
+          workflow = workflow[:restore_start] + safe_restore + workflow[restore_end:]
+          wreplace(
+              '''      - name: Run bounded autonomous decision cycle\n        if: github.event_name != 'pull_request'\n''',
+              '''      - name: Learn only from successful full-repository regression outcomes\n        if: github.event_name == 'workflow_run' && github.event.workflow_run.name == 'Exhaustive SELFREFINE Guard'\n        run: python tablet_autonomous_ai.py --settle-verified-outcomes\n\n      - name: Run bounded autonomous decision cycle\n        if: github.event_name != 'pull_request'\n''',
+          )
+          wreplace(
+              '''      - name: Select at most one safe autonomous action\n        if: github.event_name != 'pull_request'\n''',
+              '''      - name: Select at most one safe autonomous action\n        if: github.event_name != 'pull_request' && (github.event_name != 'workflow_run' || github.event.workflow_run.name == 'Market AI Auto Tracker')\n''',
+          )
+          workflow_path.write_text(workflow, encoding='utf-8')
+          PY
+
+      - name: Remove one-shot workflow and verify hardened controller
+        shell: bash
+        run: |
+          set -euo pipefail
+          git rm -f -- .github/workflows/tablet-autonomous-v371-learning-finalize.yml
+          python -m py_compile tablet_autonomous_ai.py
+          python -m unittest -v \
+            test_tablet_autonomous_ai_v371.py \
+            test_verified_neural_self_refine_v210.py \
+            test_verified_collection_neural_v211.py \
+            test_verified_collection_job_neural_v212.py
+          git diff --check
+
+      - name: Commit exact autonomous candidate
+        id: candidate
+        shell: bash
+        run: |
+          set -euo pipefail
+          branch='feat/tablet-autonomous-intelligence-v371'
+          source_run_sha='${{ github.sha }}'
+          git fetch origin "${branch}"
+          test "$(git rev-parse FETCH_HEAD)" = "${source_run_sha}"
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add -- tablet_autonomous_ai.py test_tablet_autonomous_ai_v371.py .github/workflows/tablet-autonomous-intelligence.yml
+          git commit -m 'feat: close verified tablet autonomous learning loop'
+          echo "sha=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
+
+      - name: Build exact Tablet GPT v371 sync generation
+        env:
+          SOURCE_MAIN_SHA: a00ebfd3888740ee50c5e86c8ee6008fe8a54908
+          CANDIDATE_SHA: ${{ steps.candidate.outputs.sha }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import copy
+          import hashlib
+          import json
+          import os
+          import subprocess
+          from datetime import datetime
+          from pathlib import Path
+          from zoneinfo import ZoneInfo
+
+          root = Path('.')
+          source = os.environ['SOURCE_MAIN_SHA']
+          candidate = os.environ['CANDIDATE_SHA']
+          prior_contract_path = root / 'TCG_CROSSCHECK/TABLET_GPT_TCG_GRADER_SYNC_CONTRACT_V370.json'
+          prior_delta_path = root / 'TCG_CROSSCHECK/TABLET_GPT/learning_snapshot_v370_delta.json'
+          prior_contract = json.loads(prior_contract_path.read_text(encoding='utf-8'))
+          prior_delta = json.loads(prior_delta_path.read_text(encoding='utf-8'))
+          now = datetime.now(ZoneInfo('Asia/Seoul'))
+          built_at = now.isoformat(timespec='seconds')
+
+          lessons = [
+              {
+                  'lesson_id': 'TABLET-GPT-BOUNDED-AUTONOMOUS-META-CONTROLLER-V371',
+                  'subsystem': 'tablet_autonomous_meta_controller',
+                  'issue_class': 'tablet_ai_had_verified_neural_subsystems_but_no_bounded_cross_domain_capability_controller',
+                  'trigger_condition': 'market, OCR/grading, runtime, sync or performance evidence indicates a repeated gap that should be prioritized across existing verified subsystems',
+                  'symptom_summary': 'individual neural learners could rank local work but no single Tablet GPT layer could select the next safe capability or structure a missing-feature proposal',
+                  'root_cause_class': 'no_cross_domain_allowlisted_autonomy_policy',
+                  'fix_pattern': 'add an evidence-driven allowlisted controller whose neural output is priority-only, whose high-risk trust decisions remain verification-gated, and whose new-feature path is structured proposal then branch/PR/full regression',
+                  'prevention_rule_id': 'TGPT-PREV-BOUNDED-AUTONOMY-ALLOWLIST',
+                  'verification_result': 'targeted_controller_neural_and_safety_contracts_pass',
+                  'regression_pass': True,
+                  'recurrence_count': 1,
+                  'applicable_scope': 'both',
+                  'confidence_level': 'high',
+                  'physical_tablet_runtime_reverification_required': True,
+              },
+              {
+                  'lesson_id': 'TABLET-GPT-FULL-REGRESSION-CLOSED-LOOP-LEARNING-V371',
+                  'subsystem': 'tablet_autonomous_verified_learning',
+                  'issue_class': 'autonomous_strategy_learning_requires_measured_verified_outcomes_not_self_asserted_success',
+                  'trigger_condition': 'a safe autonomous action was dispatched and a later Exhaustive SELFREFINE main run succeeded',
+                  'symptom_summary': 'without a verified feedback loop a meta-policy could either stay permanently untrained or learn from unverified/self-reported outcomes',
+                  'root_cause_class': 'missing_verified_outcome_settlement_loop',
+                  'fix_pattern': 'persist the pre-action problem score, settle only after successful full regression, label only materially improved or worsened outcomes, keep unresolved outcomes unlabeled, and activate the neural policy only after minimum verified class-balanced volume and holdout improvement',
+                  'prevention_rule_id': 'TGPT-PREV-FULL-REGRESSION-OUTCOME-LEARNING',
+                  'verification_result': 'unverified_labels_rejected_and_measurable_full_regression_outcomes_only',
+                  'regression_pass': True,
+                  'recurrence_count': 1,
+                  'applicable_scope': 'both',
+                  'confidence_level': 'high',
+                  'physical_tablet_runtime_reverification_required': False,
+              },
+              {
+                  'lesson_id': 'TABLET-GPT-MARKET-RUNTIME-SYNC-AUTONOMOUS-SAFETY-V371',
+                  'subsystem': 'tablet_autonomous_control_plane',
+                  'issue_class': 'autonomous_market_and_tablet_recovery_needs_freshness_cooldown_and_protected_workflow_boundaries',
+                  'trigger_condition': 'market shift, degraded collection routes, Tablet runtime health or Tablet GPT sync evidence selects an executable recovery capability',
+                  'symptom_summary': 'unbounded dispatch could loop, act on stale evidence, or turn learned output into direct repository or trust changes',
+                  'root_cause_class': 'missing_autonomous_execution_boundary',
+                  'fix_pattern': 'permit at most one code-defined protected workflow dispatch per run, require fresh evidence where applicable, persist a six-hour cooldown, reject corrupt state/model input, and forbid learned source/shell/git/trust generation',
+                  'prevention_rule_id': 'TGPT-PREV-AUTONOMOUS-PROTECTED-ACTION-BOUNDARY',
+                  'verification_result': 'safe_dispatch_allowlist_cooldown_corruption_and_unknown_conflict_holds_pass',
+                  'regression_pass': True,
+                  'recurrence_count': 1,
+                  'applicable_scope': 'both',
+                  'confidence_level': 'high',
+                  'physical_tablet_runtime_reverification_required': True,
+              },
+          ]
+          raw = json.dumps(lessons, ensure_ascii=False, sort_keys=True, separators=(',', ':'))
+          digest = hashlib.sha256(raw.encode('utf-8')).hexdigest()
+          delta_path = root / 'TCG_CROSSCHECK/TABLET_GPT/learning_snapshot_v371_delta.json'
+          receipt_path = root / 'TCG_CROSSCHECK/TCG_GRADER/tablet_gpt_learning_receipt_v371.json'
+          contract_path = root / 'TCG_CROSSCHECK/TABLET_GPT_TCG_GRADER_SYNC_CONTRACT_V371.json'
+          test_path = root / 'test_tablet_gpt_tcg_grader_sync_v371.py'
+          generation = [contract_path.as_posix(), delta_path.as_posix(), receipt_path.as_posix(), test_path.as_posix()]
+
+          watch = copy.deepcopy(prior_contract['freshness_watch'])
+          watch['exclude_paths'] = [
+              '.github/workflows/tablet-gpt-tcg-grader-main-alignment.yml',
+              'integrity_manifest.json',
+              *generation,
+          ]
+          exact = set(watch['exact_paths'])
+          prefixes = tuple(watch['path_prefixes'])
+          excluded = set(watch['exclude_paths'])
+          changed = subprocess.check_output(['git', 'diff', '--name-only', f'{source}..{candidate}'], text=True).splitlines()
+          watched = sorted(path for path in changed if path not in excluded and (path in exact or path.startswith(prefixes)))
+          expected = ['.github/workflows/tablet-autonomous-intelligence.yml', 'tablet_autonomous_ai.py']
+          if watched != expected:
+              raise SystemExit(f'unexpected watched paths for v371: {watched!r}')
+
+          delta = {
+              'schema_version': '1.1-tablet-gpt-tcg-grader-learning-sync',
+              'namespace': 'TABLET_GPT',
+              'snapshot_kind': 'learning_delta',
+              'run_date_kst': now.date().isoformat(),
+              'built_at': built_at,
+              'status': 'finalized',
+              'source_repository': 'wlghks24/-tcg-grader',
+              'prior_delta': prior_delta_path.as_posix(),
+              'prior_lesson_digest_sha256': prior_delta['lesson_digest_sha256'],
+              'source_main_sha': source,
+              'share_policy': {
+                  'explicit_patch_and_learning_lessons_only': True,
+                  'chatgpt_model_weights_exported': False,
+                  'raw_grading_calibration_shared': False,
+                  'device_local_runtime_memory_overwritten': False,
+                  'peer_verified_never_auto_promotes_local': True,
+              },
+              'covered_merges': [{'pr': 355, 'version': 'v371-base-main-before-bounded-autonomy-candidate', 'merge_sha': source}],
+              'lesson_digest_sha256': digest,
+              'lessons': lessons,
+          }
+          delta_path.write_text(json.dumps(delta, ensure_ascii=False, indent=2) + '\n', encoding='utf-8')
+
+          receipt = {
+              'schema_version': delta['schema_version'],
+              'receiver': 'TCG_GRADER',
+              'source_namespace': 'TABLET_GPT',
+              'source_repository': delta['source_repository'],
+              'source_main_sha': source,
+              'received_at': built_at,
+              'status': 'SYNCED_VERIFIED',
+              'source_snapshots': [prior_delta_path.as_posix(), delta_path.as_posix()],
+              'prior_lesson_digest_sha256': prior_delta['lesson_digest_sha256'],
+              'delta_lesson_digest_sha256': digest,
+              'accepted_lesson_ids': [row['lesson_id'] for row in lessons],
+              'alignment_policy': {
+                  'same_digest_required': True,
+                  'same_lesson_ids_required': True,
+                  'same_source_main_required_for_delta': True,
+                  'covered_patch_commits_must_be_ancestors': True,
+                  'future_watched_main_changes_require_new_delta': True,
+                  'pull_request_freshness_check_nonblocking': False,
+                  'successor_generation_must_exactly_cover_prior_staleness': True,
+                  'device_local_learning_state_merge_required': True,
+                  'blind_overwrite_forbidden': True,
+                  'grading_calibration_auto_import_forbidden': True,
+                  'peer_verified_never_auto_promotes_local': True,
+              },
+              'verification': {
+                  'contract_version': 'v371',
+                  'verification_test': test_path.as_posix(),
+                  'verification_mode': 'bounded_autonomous_verified_learning_exact_successor_alignment',
+                  'verified_result': 'TABLET_GPT_TCG_GRADER_MATCH',
+                  'physical_tablet_runtime_verified': False,
+                  'physical_drive_readback_verified': False,
+                  'device_reverification_required': True,
+              },
+          }
+          receipt_path.write_text(json.dumps(receipt, ensure_ascii=False, indent=2) + '\n', encoding='utf-8')
+
+          rules = dict(prior_contract['rules'])
+          rules.update({
+              'autonomous_neural_output_priority_only': True,
+              'autonomous_safe_action_allowlist_required': True,
+              'autonomous_learned_source_shell_git_generation_forbidden': True,
+              'autonomous_new_feature_requires_structured_proposal_pr_full_regression': True,
+              'autonomous_full_regression_outcome_learning_required': True,
+              'autonomous_action_cooldown_required': True,
+              'autonomous_unknown_conflict_auto_promotion_forbidden': True,
+          })
+          merges = sorted(set(prior_contract['current_required_merge_prs']) | {355})
+          contract = {
+              'schema_version': delta['schema_version'],
+              'purpose': 'bind bounded Tablet GPT autonomous decision, verified closed-loop neural learning, market adaptation and protected recovery dispatch to an exact v371 successor without exporting model weights or weakening trust/freshness gates',
+              'prior_contract': prior_contract_path.as_posix(),
+              'prior_delta_snapshot': prior_delta_path.as_posix(),
+              'delta_snapshot': delta_path.as_posix(),
+              'receiver_receipt': receipt_path.as_posix(),
+              'verification_test': test_path.as_posix(),
+              'rules': rules,
+              'current_required_merge_prs': merges,
+              'prior_required_lesson_count': prior_contract['current_required_lesson_count'],
+              'delta_required_lesson_count': len(lessons),
+              'current_required_lesson_count': prior_contract['current_required_lesson_count'] + len(lessons),
+              'freshness_watch': watch,
+              'candidate_sync': {
+                  'base_main_sha': source,
+                  'candidate_commit': candidate,
+                  'watched_paths': watched,
+                  'generation_files': generation,
+                  'requires_exact_watched_path_match': True,
+                  'post_merge_coverage_allowed': True,
+              },
+          }
+          contract_path.write_text(json.dumps(contract, ensure_ascii=False, indent=2) + '\n', encoding='utf-8')
+
+          test = f'''import hashlib\nimport json\nfrom pathlib import Path\nimport subprocess\nimport unittest\n\nimport tablet_autonomous_ai as autonomous\n\nROOT = Path(__file__).resolve().parent\nSOURCE = {source!r}\nCANDIDATE = {candidate!r}\nPRIOR = ROOT / {prior_delta_path.as_posix()!r}\nDELTA = ROOT / {delta_path.as_posix()!r}\nRECEIPT = ROOT / {receipt_path.as_posix()!r}\nCONTRACT = ROOT / {contract_path.as_posix()!r}\nWORKFLOW = ROOT / '.github/workflows/tablet-autonomous-intelligence.yml'\nEXPECTED_DIGEST = {digest!r}\n\ndef read(path):\n    return json.loads(path.read_text(encoding='utf-8'))\n\ndef watched_paths(contract, source, head='HEAD'):\n    watch = contract['freshness_watch']\n    exact = set(watch['exact_paths'])\n    prefixes = tuple(watch['path_prefixes'])\n    excluded = set(watch['exclude_paths'])\n    changed = subprocess.check_output(['git','diff','--name-only',f'{{source}}..{{head}}'], text=True).splitlines()\n    return sorted(path for path in changed if path not in excluded and (path in exact or path.startswith(prefixes)))\n\nclass TabletGptTcgGraderSyncV371(unittest.TestCase):\n    def test_lineage_digest_and_receipt(self):\n        prior, delta, receipt, contract = map(read, (PRIOR, DELTA, RECEIPT, CONTRACT))\n        self.assertEqual(prior['lesson_digest_sha256'], delta['prior_lesson_digest_sha256'])\n        raw = json.dumps(delta['lessons'], ensure_ascii=False, sort_keys=True, separators=(',', ':'))\n        digest = hashlib.sha256(raw.encode('utf-8')).hexdigest()\n        self.assertEqual(EXPECTED_DIGEST, digest)\n        self.assertEqual(digest, delta['lesson_digest_sha256'])\n        self.assertEqual(digest, receipt['delta_lesson_digest_sha256'])\n        self.assertEqual([row['lesson_id'] for row in delta['lessons']], receipt['accepted_lesson_ids'])\n        self.assertEqual(SOURCE, delta['source_main_sha'])\n        self.assertEqual(SOURCE, receipt['source_main_sha'])\n        self.assertEqual([355], [row['pr'] for row in delta['covered_merges']])\n        self.assertEqual(SOURCE, delta['covered_merges'][0]['merge_sha'])\n        self.assertEqual('SYNCED_VERIFIED', receipt['status'])\n        self.assertFalse(receipt['verification']['physical_tablet_runtime_verified'])\n        self.assertFalse(receipt['verification']['physical_drive_readback_verified'])\n        self.assertEqual(contract['prior_required_lesson_count'] + 3, contract['current_required_lesson_count'])\n\n    def test_exact_candidate_scope(self):\n        contract = read(CONTRACT)\n        candidate = contract['candidate_sync']\n        expected = ['.github/workflows/tablet-autonomous-intelligence.yml', 'tablet_autonomous_ai.py']\n        self.assertEqual(SOURCE, candidate['base_main_sha'])\n        self.assertEqual(CANDIDATE, candidate['candidate_commit'])\n        self.assertEqual(expected, watched_paths(contract, SOURCE, CANDIDATE))\n        self.assertEqual(expected, sorted(candidate['watched_paths']))\n        generation = {{str(CONTRACT.relative_to(ROOT)), str(DELTA.relative_to(ROOT)), str(RECEIPT.relative_to(ROOT)), str(Path(__file__).relative_to(ROOT))}}\n        self.assertEqual(generation, set(candidate['generation_files']))\n        self.assertTrue(generation.issubset(set(contract['freshness_watch']['exclude_paths'])))\n        subprocess.run(['git','merge-base','--is-ancestor',SOURCE,'HEAD'], check=True)\n        subprocess.run(['git','merge-base','--is-ancestor',CANDIDATE,'HEAD'], check=True)\n\n    def test_autonomous_safety_and_learning_boundary(self):\n        self.assertTrue(all(value is False for value in autonomous.FORBIDDEN.values()))\n        self.assertEqual({{'COLLECT_AND_REEVALUATE','ADJUST_COLLECTION_PRIORITY','RUN_EXISTING_RECOVERY','SYNC_CHECK_AND_RECOVER'}}, autonomous.AUTO_ACTIONS)\n        workflow = WORKFLOW.read_text(encoding='utf-8')\n        self.assertIn('Exhaustive SELFREFINE Guard', workflow)\n        self.assertIn('--settle-verified-outcomes', workflow)\n        self.assertIn('tcg-static-data-refresh.yml', workflow)\n        self.assertIn('tablet-gpt-tcg-grader-main-alignment.yml', workflow)\n        self.assertIn('final-tablet-guard.yml', workflow)\n        self.assertNotIn('git push origin main', workflow)\n        self.assertNotIn('HEAD:main', workflow)\n        source_text = (ROOT / 'tablet_autonomous_ai.py').read_text(encoding='utf-8')\n        self.assertIn('verification_level != "full_regression"', source_text)\n        self.assertIn('pending_outcomes', source_text)\n        self.assertIn('ACTION_COOLDOWN_ACTIVE', source_text)\n        rules = read(CONTRACT)['rules']\n        self.assertTrue(rules['autonomous_neural_output_priority_only'])\n        self.assertTrue(rules['autonomous_safe_action_allowlist_required'])\n        self.assertTrue(rules['autonomous_full_regression_outcome_learning_required'])\n        self.assertTrue(rules['autonomous_unknown_conflict_auto_promotion_forbidden'])\n        ignore = (ROOT / '.gitignore').read_text(encoding='utf-8')\n        self.assertIn('TABLET_AUTONOMOUS_AI_STATE.json', ignore)\n        self.assertIn('TABLET_AUTONOMOUS_AI_MODEL.json', ignore)\n\nif __name__ == '__main__':\n    unittest.main(verbosity=2)\n'''
+          test_path.write_text(test, encoding='utf-8')
+          PY
+
+      - name: Verify v371 sync and whole-tree integrity
+        shell: bash
+        run: |
+          set -euo pipefail
+          python -m unittest -v \
+            test_tablet_autonomous_ai_v371.py \
+            test_tablet_gpt_tcg_grader_sync_v371.py \
+            test_tablet_gpt_tcg_grader_sync_v370.py \
+            test_verified_neural_self_refine_v210.py \
+            test_verified_collection_neural_v211.py \
+            test_verified_collection_job_neural_v212.py
+          python static_integrity_manifest.py --write integrity_manifest.json
+          python static_integrity_manifest.py --check integrity_manifest.json
+          python repository_integrity_guard.py
+          python security_self_audit.py --no-memory --fail-on high
+          git add -- \
+            TCG_CROSSCHECK/TABLET_GPT_TCG_GRADER_SYNC_CONTRACT_V371.json \
+            TCG_CROSSCHECK/TABLET_GPT/learning_snapshot_v371_delta.json \
+            TCG_CROSSCHECK/TCG_GRADER/tablet_gpt_learning_receipt_v371.json \
+            test_tablet_gpt_tcg_grader_sync_v371.py \
+            integrity_manifest.json
+          git diff --cached --check
+
+      - name: Commit verified v371 generation and push feature branch
+        shell: bash
+        run: |
+          set -euo pipefail
+          git commit -m 'chore: bind tablet autonomous learning to v371 sync'
+          branch='feat/tablet-autonomous-intelligence-v371'
+          git fetch origin "${branch}"
+          test "$(git rev-parse FETCH_HEAD)" = '${{ github.sha }}'
+          git push origin "HEAD:refs/heads/${branch}"
