@@ -1,0 +1,81 @@
+name: V372 Tablet Autonomy Finalizer
+
+on:
+  push:
+    branches:
+      - 'feature/tablet-autonomous-evolution-v372'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: v372-tablet-autonomy-finalizer-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  finalize:
+    if: github.ref == 'refs/heads/feature/tablet-autonomous-evolution-v372' && github.actor == github.repository_owner
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+    env:
+      PYTHONDONTWRITEBYTECODE: '1'
+      PYTHONUNBUFFERED: '1'
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97
+        with:
+          python-version: '3.12'
+      - name: Require exact branch ancestry
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "${GITHUB_REF_NAME}" = "feature/tablet-autonomous-evolution-v372"
+          git fetch origin +refs/heads/main:refs/remotes/origin/main
+          git merge-base --is-ancestor 6233891b75354972bcb382ffd7f01fcfde7ab3d3 HEAD
+          test "$(git rev-parse --abbrev-ref HEAD)" != "main"
+      - name: Run resource-aware autonomy targeted regression
+        shell: bash
+        run: |
+          set -euo pipefail
+          python -m py_compile \
+            tablet_autonomous_evolution_v371.py \
+            tablet_autonomous_evolution_v372.py \
+            test_tablet_autonomous_evolution_v371.py \
+            test_tablet_autonomous_evolution_v372.py \
+            test_tablet_gpt_tcg_grader_sync_v371.py \
+            test_tablet_gpt_tcg_grader_sync_v372.py
+          python tablet_autonomous_evolution_v372.py --self-test
+          python -m unittest -v \
+            test_tablet_autonomous_evolution_v371.py \
+            test_tablet_autonomous_evolution_v372.py \
+            test_tablet_gpt_tcg_grader_sync_v371.py \
+            test_tablet_gpt_tcg_grader_sync_v372.py
+          python tablet_runtime_manifest.py --check --compile
+          bash -n main
+      - name: Remove one-shot finalizer and rebuild exact-tree manifest
+        shell: bash
+        run: |
+          set -euo pipefail
+          git rm -- .github/workflows/v372-autonomy-finalizer.yml
+          python static_integrity_manifest.py --write
+          python static_integrity_manifest.py --check
+          python fault_injection_healing.py --diagnose
+          python repository_integrity_guard.py
+          git diff --check
+      - name: Commit verified final tree
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add -- integrity_manifest.json
+          changed="$(git diff --cached --name-only | sort)"
+          printf '%s\n' "$changed"
+          test "$(printf '%s\n' "$changed" | grep -c '^integrity_manifest.json$')" = "1"
+          test "$(printf '%s\n' "$changed" | grep -c '^.github/workflows/v372-autonomy-finalizer.yml$')" = "1"
+          git diff --cached --check
+          git commit -m 'Finalize resource-aware tablet autonomous evolution v372'
+          git push origin "HEAD:${GITHUB_REF_NAME}"
