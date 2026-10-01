@@ -9,7 +9,7 @@ commit barrier around autonomous execution:
 - a sanitized exchange capsule exposes verified operational context without model
   weights, secrets, raw grading calibration, or automatic fact/price/grade promotion.
 
-The runtime remains unable to generate/rewrite source code, run arbitrary commands,
+The runtime still cannot generate/rewrite source code, execute arbitrary commands,
 write Git/main, bypass CI, infer market direction, or invent card facts/prices/grades.
 """
 from __future__ import annotations
@@ -73,8 +73,7 @@ def _strict_json(path: Path, *, max_bytes: int = MAX_JOURNAL_BYTES) -> dict[str,
     try:
         if not path.is_file() or path.is_symlink():
             return None
-        raw = safe_read_text(path, max_bytes=max_bytes)
-        value = json.loads(raw)
+        value = json.loads(safe_read_text(path, max_bytes=max_bytes))
     except (OSError, UnicodeError, ValueError, TypeError, json.JSONDecodeError):
         return None
     return value if isinstance(value, dict) else None
@@ -88,14 +87,27 @@ def load_execution_journal(*, path: Path = EXECUTION_JOURNAL_PATH) -> dict[str, 
         return {"status": "corrupt", "recovery_hold": True, "record": None}
     status = str(row.get("status") or "")
     cycle_id = str(row.get("cycle_id") or "")
-    if status not in _JOURNAL_STATES or len(cycle_id) != 64:
+    if (
+        row.get("schema_version") != SCHEMA_VERSION
+        or row.get("controller_version") != CONTROLLER_VERSION
+        or status not in _JOURNAL_STATES
+        or len(cycle_id) != 64
+        or any(ch not in "0123456789abcdef" for ch in cycle_id.lower())
+    ):
         return {"status": "corrupt", "recovery_hold": True, "record": None}
-    recovery_hold = status in {"PREPARED", "EXECUTED_UNCOMMITTED"}
-    return {"status": "loaded", "recovery_hold": recovery_hold, "record": row}
+    return {
+        "status": "loaded",
+        "recovery_hold": status in {"PREPARED", "EXECUTED_UNCOMMITTED"},
+        "record": row,
+    }
 
 
 def _write_journal(payload: dict[str, Any], *, path: Path) -> dict[str, Any]:
-    if str(payload.get("status") or "") not in _JOURNAL_STATES:
+    if (
+        payload.get("schema_version") != SCHEMA_VERSION
+        or payload.get("controller_version") != CONTROLLER_VERSION
+        or str(payload.get("status") or "") not in _JOURNAL_STATES
+    ):
         return {"status": "INVALID_EXECUTION_JOURNAL", "written": False}
     try:
         atomic_write_json(path, payload, suffix=".v376-execution-journal.tmp")
@@ -116,7 +128,6 @@ def evidence_commit_barrier(result: dict[str, Any], *, apply_skills: bool, train
         reasons.append("SKILL_STATE_CORRUPTION_HOLD")
     if str(skill.get("skill_outcome_store_status") or "") == "corrupt":
         reasons.append("SKILL_OUTCOME_CORRUPTION_HOLD")
-
     if apply_skills:
         state_write = skill.get("write") if isinstance(skill.get("write"), dict) else {}
         if state_write.get("written") is not True:
@@ -131,7 +142,11 @@ def evidence_commit_barrier(result: dict[str, Any], *, apply_skills: bool, train
         training = meta.get("training") if isinstance(meta.get("training"), dict) else {}
         if train_meta and _hard_failure(training.get("status")):
             reasons.append(str(training.get("status")))
-    return {"ok": not reasons, "status": "EVIDENCE_COMMIT_OK" if not reasons else "EVIDENCE_COMMIT_HOLD", "reasons": sorted(set(reasons))}
+    return {
+        "ok": not reasons,
+        "status": "EVIDENCE_COMMIT_OK" if not reasons else "EVIDENCE_COMMIT_HOLD",
+        "reasons": sorted(set(reasons)),
+    }
 
 
 def neural_reliability(result: dict[str, Any], *, model_path: Path, now: datetime) -> dict[str, Any]:
@@ -140,7 +155,12 @@ def neural_reliability(result: dict[str, Any], *, model_path: Path, now: datetim
     history = result.get("skill_history") if isinstance(result.get("skill_history"), dict) else {}
     skill_samples = sum(int(row.get("samples") or 0) for row in history.values() if isinstance(row, dict))
     covered = sum(1 for row in history.values() if isinstance(row, dict) and int(row.get("samples") or 0) > 0)
-    confidence = min(1.0, 0.50 * min(1.0, skill_samples / 32.0) + 0.30 * min(1.0, meta_samples / 32.0) + 0.20 * min(1.0, covered / 5.0))
+    confidence = min(
+        1.0,
+        0.50 * min(1.0, skill_samples / 32.0)
+        + 0.30 * min(1.0, meta_samples / 32.0)
+        + 0.20 * min(1.0, covered / 5.0),
+    )
     return {
         "advisory_only": True,
         "meta_verified_samples": meta_samples,
@@ -153,16 +173,18 @@ def neural_reliability(result: dict[str, Any], *, model_path: Path, now: datetim
 
 def market_context(result: dict[str, Any]) -> dict[str, Any]:
     plan = result.get("plan") if isinstance(result.get("plan"), dict) else {}
-    regime = v375.v374.v373.market_regime(plan)
     gaps = result.get("gaps") if isinstance(result.get("gaps"), list) else []
     return {
-        "regime": regime,
+        "regime": v375.v374.v373.market_regime(plan),
         "gap_kinds": sorted({str(row.get("kind") or "") for row in gaps if isinstance(row, dict) and row.get("kind")}),
         "market_direction_inferred": False,
     }
 
 
-def build_exchange_capsule(result: dict[str, Any], *, cycle_id: str, journal_status: str, barrier: dict[str, Any], reliability: dict[str, Any], now: datetime) -> dict[str, Any]:
+def build_exchange_capsule(
+    result: dict[str, Any], *, cycle_id: str, journal_status: str,
+    barrier: dict[str, Any], reliability: dict[str, Any], now: datetime,
+) -> dict[str, Any]:
     selected = result.get("selected_skill") if isinstance(result.get("selected_skill"), dict) else None
     meta = result.get("meta_feedback") if isinstance(result.get("meta_feedback"), dict) else {}
     proposal_rows = result.get("source_feature_proposals") if isinstance(result.get("source_feature_proposals"), list) else []
@@ -211,31 +233,59 @@ def _persist_outputs(result: dict[str, Any], capsule: dict[str, Any], *, root: P
     return {"status": "SAVED", "report": True, "exchange_capsule": True}
 
 
-def _hold_result(base: dict[str, Any], *, status: str, reason: str, cycle_id: str, journal_status: str, barrier: dict[str, Any], reliability: dict[str, Any], now: datetime, root: Path, persist_outputs: bool) -> dict[str, Any]:
+def _hold_result(
+    base: dict[str, Any], *, status: str, reason: str, cycle_id: str,
+    journal_status: str, barrier: dict[str, Any], reliability: dict[str, Any],
+    now: datetime, root: Path, persist_outputs: bool,
+) -> dict[str, Any]:
     result = deepcopy(base)
     result.update({
         "controller_version": CONTROLLER_VERSION,
         "v376_status": status,
-        "execution": {"status": status, "executed": False, "reason": reason, "git_write": False, "source_code_modified": False, "proposals_executed": False},
+        "execution": {
+            "status": status,
+            "executed": False,
+            "reason": reason,
+            "git_write": False,
+            "source_code_modified": False,
+            "proposals_executed": False,
+        },
         "evidence_barrier": barrier,
         "neural_reliability": reliability,
         "execution_journal": {"status": journal_status},
         "safety": SAFETY,
     })
-    capsule = build_exchange_capsule(result, cycle_id=cycle_id, journal_status=journal_status, barrier=barrier, reliability=reliability, now=now)
+    capsule = build_exchange_capsule(
+        result, cycle_id=cycle_id, journal_status=journal_status,
+        barrier=barrier, reliability=reliability, now=now,
+    )
     result["exchange_capsule"] = capsule
     if persist_outputs:
         result["runtime_output"] = _persist_outputs(result, capsule, root=root)
     return result
 
 
-def run_cycle(*, execute: bool = False, apply_capabilities: bool = False, train_meta: bool = False, apply_skills: bool = False, root: Path = ROOT, now: datetime | None = None, proc_root: Path = Path("/proc"), state_path: Path | None = None, capability_path: Path | None = None, meta_model_path: Path | None = None, meta_outcomes_path: Path | None = None, skill_state_path: Path | None = None, skill_outcomes_path: Path | None = None, journal_path: Path | None = None, persist_outputs: bool = True) -> dict[str, Any]:
+def run_cycle(
+    *, execute: bool = False, apply_capabilities: bool = False, train_meta: bool = False,
+    apply_skills: bool = False, root: Path = ROOT, now: datetime | None = None,
+    proc_root: Path = Path("/proc"), state_path: Path | None = None,
+    capability_path: Path | None = None, meta_model_path: Path | None = None,
+    meta_outcomes_path: Path | None = None, skill_state_path: Path | None = None,
+    skill_outcomes_path: Path | None = None, journal_path: Path | None = None,
+    persist_outputs: bool = True,
+) -> dict[str, Any]:
     moment = (now or _now()).astimezone(timezone.utc)
+    cap_path = capability_path or (root / v375.v374.v373.CAPABILITY_PATH.name)
     meta_path = meta_model_path or (root / v375.v374.v373.META_MODEL_PATH.name)
     skill_state_file = skill_state_path or (root / v375.v374.SKILL_STATE_PATH.name)
     journal_file = journal_path or (root / EXECUTION_JOURNAL_PATH.name)
-
-    plan_only = dict(execute=False, apply_capabilities=False, train_meta=False, apply_skills=False, root=root, now=moment, proc_root=proc_root, state_path=state_path, capability_path=capability_path, meta_model_path=meta_path, meta_outcomes_path=meta_outcomes_path, skill_state_path=skill_state_file, skill_outcomes_path=skill_outcomes_path, persist_outputs=False)
+    plan_only = dict(
+        execute=False, apply_capabilities=False, train_meta=False, apply_skills=False,
+        root=root, now=moment, proc_root=proc_root, state_path=state_path,
+        capability_path=cap_path, meta_model_path=meta_path,
+        meta_outcomes_path=meta_outcomes_path, skill_state_path=skill_state_file,
+        skill_outcomes_path=skill_outcomes_path, persist_outputs=False,
+    )
 
     journal = load_execution_journal(path=journal_file)
     if journal["recovery_hold"]:
@@ -243,36 +293,86 @@ def run_cycle(*, execute: bool = False, apply_capabilities: bool = False, train_
         barrier = {"ok": False, "status": "EXECUTION_RECOVERY_HOLD", "reasons": ["AMBIGUOUS_PRIOR_EXECUTION"]}
         reliability = neural_reliability(base, model_path=meta_path, now=moment)
         cycle_id = str((journal.get("record") or {}).get("cycle_id") or "0" * 64)
-        return _hold_result(base, status="EXECUTION_RECOVERY_HOLD", reason="prior execution journal is not committed; do not repeat autonomously", cycle_id=cycle_id, journal_status=str((journal.get("record") or {}).get("status") or journal["status"]), barrier=barrier, reliability=reliability, now=moment, root=root, persist_outputs=persist_outputs)
+        return _hold_result(
+            base, status="EXECUTION_RECOVERY_HOLD",
+            reason="prior execution journal is not committed; do not repeat autonomously",
+            cycle_id=cycle_id,
+            journal_status=str((journal.get("record") or {}).get("status") or journal["status"]),
+            barrier=barrier, reliability=reliability, now=moment, root=root,
+            persist_outputs=persist_outputs,
+        )
 
     if execute and (not apply_skills or not apply_capabilities):
         base = v375.run_cycle(**plan_only)
-        barrier = {"ok": False, "status": "EXECUTION_PERSISTENCE_PRECONDITION_HOLD", "reasons": ["EXECUTION_REQUIRES_APPLY_SKILLS_AND_CAPABILITIES"]}
+        barrier = {
+            "ok": False,
+            "status": "EXECUTION_PERSISTENCE_PRECONDITION_HOLD",
+            "reasons": ["EXECUTION_REQUIRES_APPLY_SKILLS_AND_CAPABILITIES"],
+        }
         reliability = neural_reliability(base, model_path=meta_path, now=moment)
-        return _hold_result(base, status="EXECUTION_PERSISTENCE_PRECONDITION_HOLD", reason="autonomous execution requires durable skill and capability state", cycle_id="0" * 64, journal_status="NOT_STARTED", barrier=barrier, reliability=reliability, now=moment, root=root, persist_outputs=persist_outputs)
+        return _hold_result(
+            base, status="EXECUTION_PERSISTENCE_PRECONDITION_HOLD",
+            reason="autonomous execution requires durable skill and capability state",
+            cycle_id="0" * 64, journal_status="NOT_STARTED", barrier=barrier,
+            reliability=reliability, now=moment, root=root, persist_outputs=persist_outputs,
+        )
 
-    settled = v375.run_cycle(execute=False, apply_capabilities=False, train_meta=train_meta, apply_skills=apply_skills, root=root, now=moment, proc_root=proc_root, state_path=state_path, capability_path=capability_path, meta_model_path=meta_path, meta_outcomes_path=meta_outcomes_path, skill_state_path=skill_state_file, skill_outcomes_path=skill_outcomes_path, persist_outputs=False)
+    settled = v375.run_cycle(
+        execute=False, apply_capabilities=False, train_meta=train_meta,
+        apply_skills=apply_skills, root=root, now=moment, proc_root=proc_root,
+        state_path=state_path, capability_path=cap_path, meta_model_path=meta_path,
+        meta_outcomes_path=meta_outcomes_path, skill_state_path=skill_state_file,
+        skill_outcomes_path=skill_outcomes_path, persist_outputs=False,
+    )
     barrier = evidence_commit_barrier(settled, apply_skills=apply_skills, train_meta=train_meta)
 
     capability_write = {"status": "CAPABILITY_APPLY_NOT_REQUESTED", "written": False}
     desired_caps = settled.get("plan", {}).get("v374_active_capabilities", []) if isinstance(settled.get("plan"), dict) else []
     if apply_capabilities and barrier["ok"]:
-        base_cap_state = settled.get("plan", {}).get("active_capabilities", []) if isinstance(settled.get("plan"), dict) else []
-        _ = base_cap_state  # retained in report lineage; the merged v374 set is authoritative for this cycle.
-        capability_write = v375.v374.v373.save_capabilities(desired_caps if isinstance(desired_caps, list) else [], path=capability_path or (root / v375.v374.v373.CAPABILITY_PATH.name), corruption_hold=bool(settled.get("capability_state", {}).get("corruption_hold")) if isinstance(settled.get("capability_state"), dict) else False, now=moment)
-        if capability_write.get("written") is not True:
-            barrier = {"ok": False, "status": "EVIDENCE_COMMIT_HOLD", "reasons": sorted(set(barrier["reasons"] + [str(capability_write.get("status") or "CAPABILITY_NOT_DURABLE")]))}
+        capability_store = v375.v374.v373.load_capabilities(path=cap_path, now=moment)
+        if capability_store.get("corruption_hold") is True:
+            barrier = {
+                "ok": False,
+                "status": "EVIDENCE_COMMIT_HOLD",
+                "reasons": sorted(set(barrier["reasons"] + ["CAPABILITY_CORRUPTION_HOLD"])),
+            }
+            capability_write = {"status": "CAPABILITY_CORRUPTION_HOLD", "written": False}
+        else:
+            capability_write = v375.v374.v373.save_capabilities(
+                desired_caps if isinstance(desired_caps, list) else [],
+                path=cap_path, corruption_hold=False, now=moment,
+            )
+            if capability_write.get("written") is not True:
+                barrier = {
+                    "ok": False,
+                    "status": "EVIDENCE_COMMIT_HOLD",
+                    "reasons": sorted(set(barrier["reasons"] + [str(capability_write.get("status") or "CAPABILITY_NOT_DURABLE")])),
+                }
     settled["capability_write"] = capability_write
     reliability = neural_reliability(settled, model_path=meta_path, now=moment)
     selected = settled.get("selected_skill") if isinstance(settled.get("selected_skill"), dict) else None
-    cycle_seed = {"time": moment.isoformat(timespec="seconds"), "selected": selected, "market": market_context(settled), "plan_digest": _canonical_digest(settled.get("plan", {}))}
-    cycle_id = _canonical_digest(cycle_seed)
+    cycle_id = _canonical_digest({
+        "time": moment.isoformat(timespec="seconds"),
+        "selected": selected,
+        "market": market_context(settled),
+        "plan_digest": _canonical_digest(settled.get("plan", {})),
+    })
 
     if not barrier["ok"]:
-        return _hold_result(settled, status="EVIDENCE_COMMIT_HOLD", reason="prior verified evidence or durable controller state did not commit", cycle_id=cycle_id, journal_status="NOT_STARTED", barrier=barrier, reliability=reliability, now=moment, root=root, persist_outputs=persist_outputs)
+        return _hold_result(
+            settled, status="EVIDENCE_COMMIT_HOLD",
+            reason="prior verified evidence or durable controller state did not commit",
+            cycle_id=cycle_id, journal_status="NOT_STARTED", barrier=barrier,
+            reliability=reliability, now=moment, root=root, persist_outputs=persist_outputs,
+        )
     if not execute or selected is None:
         status = "PLAN_ONLY" if not execute else "NO_ELIGIBLE_AUTONOMOUS_ACTION"
-        return _hold_result(settled, status=status, reason="planning only" if not execute else "no eligible verified candidate", cycle_id=cycle_id, journal_status="NOT_STARTED", barrier=barrier, reliability=reliability, now=moment, root=root, persist_outputs=persist_outputs)
+        return _hold_result(
+            settled, status=status,
+            reason="planning only" if not execute else "no eligible verified candidate",
+            cycle_id=cycle_id, journal_status="NOT_STARTED", barrier=barrier,
+            reliability=reliability, now=moment, root=root, persist_outputs=persist_outputs,
+        )
 
     prepared = {
         "schema_version": SCHEMA_VERSION,
@@ -289,59 +389,156 @@ def run_cycle(*, execute: bool = False, apply_capabilities: bool = False, train_
     }
     journal_write = _write_journal(prepared, path=journal_file)
     if journal_write.get("written") is not True:
-        barrier = {"ok": False, "status": "EXECUTION_JOURNAL_HOLD", "reasons": [str(journal_write.get("status") or "EXECUTION_JOURNAL_WRITE_FAILED")]}
-        return _hold_result(settled, status="EXECUTION_JOURNAL_HOLD", reason="execution intent could not be durably journaled", cycle_id=cycle_id, journal_status="WRITE_FAILED", barrier=barrier, reliability=reliability, now=moment, root=root, persist_outputs=persist_outputs)
+        hold = {
+            "ok": False,
+            "status": "EXECUTION_JOURNAL_HOLD",
+            "reasons": [str(journal_write.get("status") or "EXECUTION_JOURNAL_WRITE_FAILED")],
+        }
+        return _hold_result(
+            settled, status="EXECUTION_JOURNAL_HOLD",
+            reason="execution intent could not be durably journaled",
+            cycle_id=cycle_id, journal_status="WRITE_FAILED", barrier=hold,
+            reliability=reliability, now=moment, root=root, persist_outputs=persist_outputs,
+        )
 
     operational = v375.v374.execute_operational_skill(selected, settled["plan"])
-    safe_learning = v375.v374.v373.v372.execute_safe_learning(settled["plan"], state_path=state_path or (root / v375.v374.v373.v372.STATE_PATH.name), now=moment)
+    safe_learning = v375.v374.v373.v372.execute_safe_learning(
+        settled["plan"],
+        state_path=state_path or (root / v375.v374.v373.v372.STATE_PATH.name),
+        now=moment,
+    )
     executed_record = deepcopy(prepared)
-    executed_record.update({"status": "EXECUTED_UNCOMMITTED", "executed_at": moment.isoformat(timespec="seconds"), "operational_status": str(operational.get("status") or ""), "safe_learning_status": str(safe_learning.get("status") or "")})
+    executed_record.update({
+        "status": "EXECUTED_UNCOMMITTED",
+        "executed_at": moment.isoformat(timespec="seconds"),
+        "operational_status": str(operational.get("status") or ""),
+        "safe_learning_status": str(safe_learning.get("status") or ""),
+    })
     after_exec_write = _write_journal(executed_record, path=journal_file)
     if after_exec_write.get("written") is not True:
-        barrier = {"ok": False, "status": "EXECUTED_JOURNAL_COMMIT_HOLD", "reasons": [str(after_exec_write.get("status") or "EXECUTION_JOURNAL_WRITE_FAILED")]}
-        result = _hold_result(settled, status="EXECUTED_JOURNAL_COMMIT_HOLD", reason="action may have executed but durable post-action journal commit failed; automatic retry is forbidden", cycle_id=cycle_id, journal_status="PREPARED", barrier=barrier, reliability=reliability, now=moment, root=root, persist_outputs=False)
-        result["execution"] = {"status": "EXECUTED_JOURNAL_COMMIT_HOLD", "executed": True, "operational": operational, "safe_learning": safe_learning, "git_write": False, "source_code_modified": False, "proposals_executed": False}
-        capsule = build_exchange_capsule(result, cycle_id=cycle_id, journal_status="PREPARED", barrier=barrier, reliability=reliability, now=moment)
+        hold = {
+            "ok": False,
+            "status": "EXECUTED_JOURNAL_COMMIT_HOLD",
+            "reasons": [str(after_exec_write.get("status") or "EXECUTION_JOURNAL_WRITE_FAILED")],
+        }
+        result = _hold_result(
+            settled, status="EXECUTED_JOURNAL_COMMIT_HOLD",
+            reason="action may have executed but durable post-action journal commit failed; automatic retry is forbidden",
+            cycle_id=cycle_id, journal_status="PREPARED", barrier=hold,
+            reliability=reliability, now=moment, root=root, persist_outputs=False,
+        )
+        result["execution"] = {
+            "status": "EXECUTED_JOURNAL_COMMIT_HOLD",
+            "executed": True,
+            "operational": operational,
+            "safe_learning": safe_learning,
+            "git_write": False,
+            "source_code_modified": False,
+            "proposals_executed": False,
+        }
+        capsule = build_exchange_capsule(
+            result, cycle_id=cycle_id, journal_status="PREPARED",
+            barrier=hold, reliability=reliability, now=moment,
+        )
         result["exchange_capsule"] = capsule
-        if persist_outputs: result["runtime_output"] = _persist_outputs(result, capsule, root=root)
+        if persist_outputs:
+            result["runtime_output"] = _persist_outputs(result, capsule, root=root)
         return result
 
     loaded = v375.v374.load_skill_state(path=skill_state_file, now=moment)
     if loaded.get("corruption_hold") is True:
-        barrier = {"ok": False, "status": "EXECUTED_STATE_COMMIT_HOLD", "reasons": ["SKILL_STATE_CORRUPTION_HOLD"]}
-        return _hold_result(settled, status="EXECUTED_STATE_COMMIT_HOLD", reason="action executed but skill state is corrupt; automatic retry is forbidden", cycle_id=cycle_id, journal_status="EXECUTED_UNCOMMITTED", barrier=barrier, reliability=reliability, now=moment, root=root, persist_outputs=persist_outputs)
-    next_state, unexpected = v375.reconcile_skill_state(loaded["state"], plan=settled["plan"], selected_skill=selected, history=settled.get("skill_history", {}), now=moment)
+        hold = {"ok": False, "status": "EXECUTED_STATE_COMMIT_HOLD", "reasons": ["SKILL_STATE_CORRUPTION_HOLD"]}
+        result = _hold_result(
+            settled, status="EXECUTED_STATE_COMMIT_HOLD",
+            reason="action executed but skill state is corrupt; automatic retry is forbidden",
+            cycle_id=cycle_id, journal_status="EXECUTED_UNCOMMITTED", barrier=hold,
+            reliability=reliability, now=moment, root=root, persist_outputs=False,
+        )
+        result["execution"]["executed"] = True
+        if persist_outputs:
+            result["runtime_output"] = _persist_outputs(result, result["exchange_capsule"], root=root)
+        return result
+
+    next_state, unexpected = v375.reconcile_skill_state(
+        loaded["state"], plan=settled["plan"], selected_skill=selected,
+        history=settled.get("skill_history", {}), now=moment,
+    )
     if unexpected:
-        barrier = {"ok": False, "status": "EXECUTED_STATE_COMMIT_HOLD", "reasons": ["UNEXPECTED_VERIFIED_OUTCOME_DURING_COMMIT"]}
-        return _hold_result(settled, status="EXECUTED_STATE_COMMIT_HOLD", reason="unexpected state transition during commit; automatic retry is forbidden", cycle_id=cycle_id, journal_status="EXECUTED_UNCOMMITTED", barrier=barrier, reliability=reliability, now=moment, root=root, persist_outputs=persist_outputs)
+        hold = {"ok": False, "status": "EXECUTED_STATE_COMMIT_HOLD", "reasons": ["UNEXPECTED_VERIFIED_OUTCOME_DURING_COMMIT"]}
+        result = _hold_result(
+            settled, status="EXECUTED_STATE_COMMIT_HOLD",
+            reason="unexpected state transition during commit; automatic retry is forbidden",
+            cycle_id=cycle_id, journal_status="EXECUTED_UNCOMMITTED", barrier=hold,
+            reliability=reliability, now=moment, root=root, persist_outputs=False,
+        )
+        result["execution"]["executed"] = True
+        if persist_outputs:
+            result["runtime_output"] = _persist_outputs(result, result["exchange_capsule"], root=root)
+        return result
+
     state_write = v375.v374.save_skill_state(next_state, path=skill_state_file, corruption_hold=False, now=moment)
     if state_write.get("written") is not True:
-        barrier = {"ok": False, "status": "EXECUTED_STATE_COMMIT_HOLD", "reasons": [str(state_write.get("status") or "SKILL_STATE_WRITE_FAILED")]}
-        return _hold_result(settled, status="EXECUTED_STATE_COMMIT_HOLD", reason="action executed but pending trial state did not commit; automatic retry is forbidden", cycle_id=cycle_id, journal_status="EXECUTED_UNCOMMITTED", barrier=barrier, reliability=reliability, now=moment, root=root, persist_outputs=persist_outputs)
+        hold = {"ok": False, "status": "EXECUTED_STATE_COMMIT_HOLD", "reasons": [str(state_write.get("status") or "SKILL_STATE_WRITE_FAILED")]}
+        result = _hold_result(
+            settled, status="EXECUTED_STATE_COMMIT_HOLD",
+            reason="action executed but pending trial state did not commit; automatic retry is forbidden",
+            cycle_id=cycle_id, journal_status="EXECUTED_UNCOMMITTED", barrier=hold,
+            reliability=reliability, now=moment, root=root, persist_outputs=False,
+        )
+        result["execution"]["executed"] = True
+        if persist_outputs:
+            result["runtime_output"] = _persist_outputs(result, result["exchange_capsule"], root=root)
+        return result
 
     committed = deepcopy(executed_record)
-    committed.update({"status": "COMMITTED", "committed_at": moment.isoformat(timespec="seconds"), "skill_state_status": str(state_write.get("status") or "")})
+    committed.update({
+        "status": "COMMITTED",
+        "committed_at": moment.isoformat(timespec="seconds"),
+        "skill_state_status": str(state_write.get("status") or ""),
+    })
     final_journal_write = _write_journal(committed, path=journal_file)
     journal_status = "COMMITTED" if final_journal_write.get("written") is True else "EXECUTED_UNCOMMITTED"
     final_status = "V376_EXECUTED" if journal_status == "COMMITTED" else "EXECUTED_STATE_COMMIT_HOLD"
+    final_barrier = barrier
     if journal_status != "COMMITTED":
-        barrier = {"ok": False, "status": "EXECUTED_STATE_COMMIT_HOLD", "reasons": [str(final_journal_write.get("status") or "EXECUTION_JOURNAL_WRITE_FAILED")]}
+        final_barrier = {
+            "ok": False,
+            "status": "EXECUTED_STATE_COMMIT_HOLD",
+            "reasons": [str(final_journal_write.get("status") or "EXECUTION_JOURNAL_WRITE_FAILED")],
+        }
 
     result = deepcopy(settled)
     result.update({
         "controller_version": CONTROLLER_VERSION,
         "v376_status": final_status,
-        "execution": {"status": final_status, "executed": True, "operational": operational, "safe_learning": safe_learning, "git_write": False, "source_code_modified": False, "proposals_executed": False},
-        "evidence_barrier": barrier,
+        "execution": {
+            "status": final_status,
+            "executed": True,
+            "operational": operational,
+            "safe_learning": safe_learning,
+            "git_write": False,
+            "source_code_modified": False,
+            "proposals_executed": False,
+        },
+        "evidence_barrier": final_barrier,
         "neural_reliability": reliability,
         "execution_journal": {"status": journal_status, "cycle_id": cycle_id},
         "safety": SAFETY,
     })
     result["skill_state"] = dict(result.get("skill_state") or {})
-    result["skill_state"].update({"write": state_write, "active_count": len(next_state.get("active_skills", [])), "pending_trial_count": len(next_state.get("pending_trials", [])), "suspended_recipes": list(next_state.get("suspended_recipes", []))})
-    capsule = build_exchange_capsule(result, cycle_id=cycle_id, journal_status=journal_status, barrier=barrier, reliability=reliability, now=moment)
+    result["skill_state"].update({
+        "write": state_write,
+        "active_count": len(next_state.get("active_skills", [])),
+        "pending_trial_count": len(next_state.get("pending_trials", [])),
+        "suspended_recipes": list(next_state.get("suspended_recipes", [])),
+    })
+    capsule = build_exchange_capsule(
+        result, cycle_id=cycle_id, journal_status=journal_status,
+        barrier=final_barrier, reliability=reliability, now=moment,
+    )
     result["exchange_capsule"] = capsule
-    if persist_outputs: result["runtime_output"] = _persist_outputs(result, capsule, root=root)
+    if persist_outputs:
+        result["runtime_output"] = _persist_outputs(result, capsule, root=root)
     return result
 
 
@@ -369,11 +566,25 @@ def main() -> int:
     parser.add_argument("--quiet", action="store_true")
     args = parser.parse_args()
     if args.self_test:
-        self_test(); return 0
-    result = run_cycle(execute=args.execute_safe_learning, apply_capabilities=args.apply_capabilities, train_meta=args.train_meta, apply_skills=args.apply_skills)
+        self_test()
+        return 0
+    result = run_cycle(
+        execute=args.execute_safe_learning,
+        apply_capabilities=args.apply_capabilities,
+        train_meta=args.train_meta,
+        apply_skills=args.apply_skills,
+    )
     if not args.quiet:
         print(json.dumps(result, ensure_ascii=False, sort_keys=True))
-    return 0 if result.get("v376_status") not in {"EXECUTION_RECOVERY_HOLD", "EXECUTION_PERSISTENCE_PRECONDITION_HOLD", "EVIDENCE_COMMIT_HOLD", "EXECUTION_JOURNAL_HOLD", "EXECUTED_JOURNAL_COMMIT_HOLD", "EXECUTED_STATE_COMMIT_HOLD"} else 2
+    holds = {
+        "EXECUTION_RECOVERY_HOLD",
+        "EXECUTION_PERSISTENCE_PRECONDITION_HOLD",
+        "EVIDENCE_COMMIT_HOLD",
+        "EXECUTION_JOURNAL_HOLD",
+        "EXECUTED_JOURNAL_COMMIT_HOLD",
+        "EXECUTED_STATE_COMMIT_HOLD",
+    }
+    return 2 if result.get("v376_status") in holds else 0
 
 
 if __name__ == "__main__":
