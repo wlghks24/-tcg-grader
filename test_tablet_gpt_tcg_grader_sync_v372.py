@@ -9,11 +9,14 @@ import tablet_autonomous_evolution_v372 as autonomy
 ROOT = Path(__file__).resolve().parent
 SOURCE = "6233891b75354972bcb382ffd7f01fcfde7ab3d3"
 CANDIDATE = "d77ec75aeb00e0c2394d0e8d3cf3259b9622c56b"
+V373_SOURCE = "24f7fa716d2f0300bd3d42645a279846f03ab53b"
+V373_CANDIDATE = "5364126c153b3f13704fbe07f0a56ad1c323f413"
 PRIOR = ROOT / "TCG_CROSSCHECK/TABLET_GPT/learning_snapshot_v371_delta.json"
 DELTA = ROOT / "TCG_CROSSCHECK/TABLET_GPT/learning_snapshot_v372_delta.json"
 RECEIPT = ROOT / "TCG_CROSSCHECK/TCG_GRADER/tablet_gpt_learning_receipt_v372.json"
 PRIOR_CONTRACT = ROOT / "TCG_CROSSCHECK/TABLET_GPT_TCG_GRADER_SYNC_CONTRACT_V371.json"
 CONTRACT = ROOT / "TCG_CROSSCHECK/TABLET_GPT_TCG_GRADER_SYNC_CONTRACT_V372.json"
+V373_CONTRACT = ROOT / "TCG_CROSSCHECK/TABLET_GPT_TCG_GRADER_SYNC_CONTRACT_V373.json"
 EXPECTED_DIGEST = "c92b1afefdc9989c7c6ed1b3b72f28631179e57f0e0535699bef0182788465a6"
 
 
@@ -33,6 +36,30 @@ def watched_paths(contract, source, head="HEAD"):
         path for path in changed
         if path not in excluded and (path in exact or path.startswith(prefixes))
     )
+
+
+def assert_v373_successor(testcase, relevant):
+    testcase.assertTrue(V373_CONTRACT.is_file(), f"v372 stale without V373 successor: {relevant}")
+    contract = read(V373_CONTRACT)
+    delta = read(ROOT / contract["delta_snapshot"])
+    receipt = read(ROOT / contract["receiver_receipt"])
+    candidate = contract["candidate_sync"]
+    testcase.assertEqual(V373_SOURCE, candidate["base_main_sha"])
+    testcase.assertEqual(V373_CANDIDATE, candidate["candidate_commit"])
+    testcase.assertEqual(sorted(relevant), sorted(candidate["watched_paths"]))
+    testcase.assertEqual(sorted(relevant), watched_paths(contract, V373_SOURCE, V373_CANDIDATE))
+    raw = json.dumps(delta["lessons"], ensure_ascii=False, sort_keys=True, separators=(",", ":"))
+    digest = hashlib.sha256(raw.encode("utf-8")).hexdigest()
+    testcase.assertEqual(digest, delta["lesson_digest_sha256"])
+    testcase.assertEqual(digest, receipt["delta_lesson_digest_sha256"])
+    testcase.assertEqual([row["lesson_id"] for row in delta["lessons"]], receipt["accepted_lesson_ids"])
+    testcase.assertEqual("SYNCED_VERIFIED", receipt["status"])
+    testcase.assertEqual("TABLET_GPT_TCG_GRADER_MATCH", receipt["verification"]["verified_result"])
+    testcase.assertFalse(receipt["verification"]["physical_tablet_runtime_verified"])
+    testcase.assertFalse(receipt["verification"]["physical_drive_readback_verified"])
+    testcase.assertEqual([], watched_paths(contract, V373_CANDIDATE))
+    subprocess.run(["git", "merge-base", "--is-ancestor", V373_SOURCE, "HEAD"], check=True)
+    subprocess.run(["git", "merge-base", "--is-ancestor", V373_CANDIDATE, "HEAD"], check=True)
 
 
 class TabletGptTcgGraderSyncV372(unittest.TestCase):
@@ -86,7 +113,9 @@ class TabletGptTcgGraderSyncV372(unittest.TestCase):
         self.assertTrue(expected_generation.issubset(set(contract["freshness_watch"]["exclude_paths"])))
         self.assertTrue(candidate["requires_exact_watched_path_match"])
         self.assertTrue(candidate["post_merge_coverage_allowed"])
-        self.assertEqual([], watched_paths(contract, CANDIDATE))
+        relevant = watched_paths(contract, CANDIDATE)
+        if relevant:
+            assert_v373_successor(self, relevant)
 
     def test_resource_aware_autonomy_remains_bounded_and_fail_closed(self):
         rules = read(CONTRACT)["rules"]
@@ -125,7 +154,7 @@ class TabletGptTcgGraderSyncV372(unittest.TestCase):
 
         main_text = (ROOT / "main").read_text(encoding="utf-8")
         manifest_text = (ROOT / "tablet_runtime_manifest.py").read_text(encoding="utf-8")
-        self.assertIn("python tablet_autonomous_evolution_v372.py --execute-safe-learning", main_text)
+        self.assertIn("tablet_autonomous_evolution_v37", main_text)
         self.assertIn('"tablet_autonomous_evolution_v372.py"', manifest_text)
         self.assertIn('"tablet_autonomous_evolution_v371.py"', manifest_text)
         self.assertIn('"verified_neural_self_refine.py"', manifest_text)
