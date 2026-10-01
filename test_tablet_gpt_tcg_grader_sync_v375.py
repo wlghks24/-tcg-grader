@@ -8,7 +8,7 @@ import tablet_autonomous_evolution_v375 as autonomy
 
 ROOT = Path(__file__).resolve().parent
 SOURCE = "2b1112318fa23f4e8edd525695ee3711ea715e18"
-CANDIDATE = "d7c8577b514abdbbc15ba9323c4c0deb1945efed"
+CANDIDATE = "c0fe7ed9b4e351ee18a0d76eab0424787cb7b2f2"
 PRIOR = ROOT / "TCG_CROSSCHECK/TABLET_GPT/learning_snapshot_v374_delta.json"
 DELTA = ROOT / "TCG_CROSSCHECK/TABLET_GPT/learning_snapshot_v375_delta.json"
 RECEIPT = ROOT / "TCG_CROSSCHECK/TCG_GRADER/tablet_gpt_learning_receipt_v375.json"
