@@ -147,14 +147,28 @@ def _walk_market_changes(value: Any, *, depth: int = 0, out: list[float] | None 
     return out
 
 
+def _contains_provenance(value: Any, *, depth: int = 0) -> bool:
+    if depth > 4:
+        return False
+    if isinstance(value, dict):
+        for key, child in list(value.items())[:300]:
+            low = str(key).casefold()
+            if low in {"source", "sources", "provenance", "source_url", "source_route"} and child:
+                return True
+            if isinstance(child, (dict, list)) and _contains_provenance(child, depth=depth + 1):
+                return True
+    elif isinstance(value, list):
+        return any(_contains_provenance(child, depth=depth + 1) for child in value[:300])
+    return False
+
+
 def _market_uncertainty(payloads: list[Any]) -> float:
     uncertainty = 0.0
     for data in payloads:
         if not isinstance(data, dict):
             uncertainty += 0.35
             continue
-        source = data.get("source") or data.get("provenance") or data.get("sources")
-        if not source:
+        if not _contains_provenance(data):
             uncertainty += 0.15
         if _updated_at(data) is None:
             uncertainty += 0.15
@@ -204,6 +218,24 @@ def _coverage_gap(source_stats: Any) -> float:
     return 0.25
 
 
+def _load_latest_sync_contract(root: Path) -> dict[str, Any]:
+    crosscheck = root / "TCG_CROSSCHECK"
+    candidates: list[tuple[int, Path]] = []
+    try:
+        for path in crosscheck.glob("TABLET_GPT_TCG_GRADER_SYNC_CONTRACT_V*.json"):
+            suffix = path.stem.rsplit("_V", 1)[-1]
+            if suffix.isdigit():
+                candidates.append((int(suffix), path))
+    except OSError:
+        candidates = []
+    for _version, path in sorted(candidates, reverse=True):
+        value = _read_json(path, {})
+        if isinstance(value, dict) and value:
+            return value
+    fallback = _read_json(crosscheck / "TABLET_GPT_TCG_GRADER_SYNC_CONTRACT.json", {})
+    return fallback if isinstance(fallback, dict) else {}
+
+
 def _sync_risk(contract: Any) -> float:
     if not isinstance(contract, dict):
         return 1.0
@@ -222,7 +254,7 @@ def collect_signals(root: Path = ROOT, *, now: datetime | None = None) -> dict[s
     adaptive = _read_json(root / "adaptive_collection_stats.json", {})
     source_stats = _read_json(root / "source_collection_stats.json", {})
     issues = _read_json(root / "auto_update_issues.json", {})
-    sync_contract = _read_json(root / "TCG_CROSSCHECK" / "TABLET_GPT_TCG_GRADER_SYNC_CONTRACT.json", {})
+    sync_contract = _load_latest_sync_contract(root)
 
     query_status = verified_collection_neural.status()
     job_status = verified_collection_job_neural.status()
