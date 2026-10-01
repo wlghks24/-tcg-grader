@@ -1,0 +1,50 @@
+name: Finalize Tablet autonomy v376
+
+on:
+  push:
+    branches:
+      - feature/tablet-autonomous-evolution-v376
+
+permissions:
+  contents: write
+
+jobs:
+  finalize:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Validate transactional autonomy
+        run: |
+          set -euo pipefail
+          python -m py_compile tablet_autonomous_evolution_v376.py test_tablet_autonomous_evolution_v376.py test_tablet_gpt_tcg_grader_sync_v375.py test_tablet_gpt_tcg_grader_sync_v376.py
+          python tablet_autonomous_evolution_v376.py --self-test
+          python test_tablet_autonomous_evolution_v376.py
+          python test_tablet_gpt_tcg_grader_sync_v375.py
+          python test_tablet_gpt_tcg_grader_sync_v376.py
+          python tablet_runtime_manifest.py --check --compile
+      - name: Remove one-shot workflow and rebuild exact-tree integrity
+        run: |
+          set -euo pipefail
+          git rm .github/workflows/v376-finalize.yml
+          python static_integrity_manifest.py --write
+          python static_integrity_manifest.py --check
+          python repository_integrity_guard.py
+      - name: Commit finalized tree
+        run: |
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add -A
+          if git diff --cached --quiet; then
+            echo 'No finalization changes'
+            exit 0
+          fi
+          git commit -m 'chore: finalize v376 integrity manifest'
+          git push origin HEAD:feature/tablet-autonomous-evolution-v376
