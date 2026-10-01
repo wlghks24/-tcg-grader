@@ -1,0 +1,78 @@
+name: Finalize Tablet Autonomy v372
+
+on:
+  push:
+    branches:
+      - 'feat/tablet-autonomy-v371'
+    paths:
+      - '.github/workflows/finalize-tablet-autonomy-v372.yml'
+
+permissions:
+  contents: write
+
+concurrency:
+  group: finalize-tablet-autonomy-v372
+  cancel-in-progress: false
+
+jobs:
+  finalize:
+    if: github.actor == github.repository_owner
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    env:
+      PYTHONDONTWRITEBYTECODE: '1'
+      PYTHONUNBUFFERED: '1'
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          fetch-depth: 0
+          ref: feat/tablet-autonomy-v371
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97
+        with:
+          python-version: '3.12'
+      - name: Require exact non-main branch and remove one-shot workflow
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "${GITHUB_REF_NAME}" = "feat/tablet-autonomy-v371"
+          test "$(git rev-parse --abbrev-ref HEAD)" != "main"
+          git fetch origin +refs/heads/main:refs/remotes/origin/main
+          git merge-base --is-ancestor origin/main HEAD
+          git rm -- .github/workflows/finalize-tablet-autonomy-v372.yml
+      - name: Rebuild exact-tree integrity manifest
+        shell: bash
+        run: |
+          set -euo pipefail
+          python fault_injection_healing.py --manifest
+          python fault_injection_healing.py --diagnose
+          python repository_integrity_guard.py
+      - name: Verify autonomy and every Tablet GPT sync generation
+        shell: bash
+        run: |
+          set -euo pipefail
+          python -m py_compile verified_autonomy_neural.py tablet_autonomy_engine.py auto_update_all.py ai_runtime_model_guard.py tablet_runtime_manifest.py verify_current_runtime.py
+          python -m unittest -v \
+            test_tablet_autonomy_engine_v371.py \
+            test_verified_collection_job_neural_v212.py \
+            test_verified_collection_neural_v211.py \
+            test_ai_runtime_model_guard_v269.py
+          mapfile -t sync_tests < <(find . -maxdepth 1 -type f -name 'test_tablet_gpt_tcg_grader_sync_v*.py' -printf '%f\n' | sort -V)
+          test "${#sync_tests[@]}" -gt 0
+          python -m unittest -v "${sync_tests[@]}"
+          python tablet_runtime_manifest.py --check --compile
+          python ai_runtime_model_guard.py
+          python security_self_audit.py --no-memory --fail-on high
+          python repository_integrity_guard.py
+          git diff --check
+      - name: Commit only final manifest and one-shot removal
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add -- integrity_manifest.json
+          git add -u -- .github/workflows/finalize-tablet-autonomy-v372.yml
+          git diff --cached --check
+          test ! -e .github/workflows/finalize-tablet-autonomy-v372.yml
+          git commit -m 'Finalize v372 autonomy sync and integrity manifest'
+          git push origin HEAD:feat/tablet-autonomy-v371
