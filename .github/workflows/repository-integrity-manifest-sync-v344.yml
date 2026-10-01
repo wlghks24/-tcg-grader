@@ -3,9 +3,9 @@ name: Repository Integrity Manifest Sync v344
 on:
   push:
     branches:
-      - 'fix/tablet-sync-postmerge-v344-main'
-    paths-ignore:
-      - 'integrity_manifest.json'
+      - 'feat/tablet-autonomy-v371'
+    paths:
+      - '.github/workflows/repository-integrity-manifest-sync-v344.yml'
   workflow_dispatch:
 
 permissions:
@@ -13,13 +13,13 @@ permissions:
 
 concurrency:
   group: repository-integrity-manifest-sync-v344-${{ github.ref }}
-  cancel-in-progress: true
+  cancel-in-progress: false
 
 jobs:
   sync-manifest:
-    if: github.ref != 'refs/heads/main' && github.actor == github.repository_owner
+    if: github.ref == 'refs/heads/feat/tablet-autonomy-v371' && github.actor == github.repository_owner
     runs-on: ubuntu-24.04
-    timeout-minutes: 10
+    timeout-minutes: 25
     env:
       PYTHONDONTWRITEBYTECODE: '1'
       PYTHONUNBUFFERED: '1'
@@ -27,18 +27,21 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
         with:
           fetch-depth: 0
+          ref: feat/tablet-autonomy-v371
       - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97
         with:
           python-version: '3.12'
-      - name: Require exact repair branch ancestry
+      - name: Restore temporary workflows before exact-tree manifest
         shell: bash
         run: |
           set -euo pipefail
-          test "${GITHUB_REF_NAME}" = "fix/tablet-sync-postmerge-v344-main"
+          test "${GITHUB_REF_NAME}" = "feat/tablet-autonomy-v371"
+          test "$(git rev-parse --abbrev-ref HEAD)" != "main"
           git fetch origin +refs/heads/main:refs/remotes/origin/main
           git merge-base --is-ancestor origin/main HEAD
-          test "$(git rev-parse --abbrev-ref HEAD)" != "main"
-      - name: Rebuild and verify exact-tree integrity manifest
+          git checkout origin/main -- .github/workflows/repository-integrity-manifest-sync-v344.yml
+          git rm --ignore-unmatch -- .github/workflows/finalize-tablet-autonomy-v372.yml
+      - name: Rebuild and verify exact final-tree integrity manifest
         shell: bash
         run: |
           set -euo pipefail
@@ -46,19 +49,32 @@ jobs:
           python fault_injection_healing.py --diagnose
           python repository_integrity_guard.py
           git diff --check
-      - name: Commit manifest only when changed
+      - name: Verify autonomy and all Tablet GPT sync generations
         shell: bash
         run: |
           set -euo pipefail
-          if git diff --quiet -- integrity_manifest.json; then
-            echo "[OK] integrity_manifest.json already matches the exact branch tree"
-            exit 0
-          fi
+          python -m py_compile verified_autonomy_neural.py tablet_autonomy_engine.py auto_update_all.py ai_runtime_model_guard.py tablet_runtime_manifest.py verify_current_runtime.py
+          python -m unittest -v \
+            test_tablet_autonomy_engine_v371.py \
+            test_verified_collection_job_neural_v212.py \
+            test_verified_collection_neural_v211.py \
+            test_ai_runtime_model_guard_v269.py
+          mapfile -t sync_tests < <(find . -maxdepth 1 -type f -name 'test_tablet_gpt_tcg_grader_sync_v*.py' -printf '%f\n' | sort -V)
+          test "${#sync_tests[@]}" -gt 0
+          python -m unittest -v "${sync_tests[@]}"
+          python tablet_runtime_manifest.py --check --compile
+          python ai_runtime_model_guard.py
+          python security_self_audit.py --no-memory --fail-on high
+          python repository_integrity_guard.py
+      - name: Commit verified final tree to feature branch only
+        shell: bash
+        run: |
+          set -euo pipefail
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git add -- integrity_manifest.json
-          test "$(git diff --cached --name-only | wc -l | tr -d ' ')" = "1"
-          test "$(git diff --cached --name-only)" = "integrity_manifest.json"
+          git add -- integrity_manifest.json .github/workflows/repository-integrity-manifest-sync-v344.yml
+          git add -u -- .github/workflows/finalize-tablet-autonomy-v372.yml
           git diff --cached --check
-          git commit -m 'Reconcile integrity manifest for v344 repair tree'
-          git push origin "HEAD:${GITHUB_REF_NAME}"
+          test ! -e .github/workflows/finalize-tablet-autonomy-v372.yml
+          git commit -m 'Finalize bounded Tablet autonomy v372 verification'
+          git push origin HEAD:feat/tablet-autonomy-v371
