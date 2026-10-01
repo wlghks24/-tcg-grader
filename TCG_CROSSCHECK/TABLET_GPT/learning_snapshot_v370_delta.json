@@ -1,0 +1,45 @@
+{
+  "schema_version": "1.1-tablet-gpt-tcg-grader-learning-sync",
+  "namespace": "TABLET_GPT",
+  "snapshot_kind": "learning_delta",
+  "run_date_kst": "2026-10-01",
+  "built_at": "2026-10-01T00:34:00+09:00",
+  "status": "finalized",
+  "source_repository": "wlghks24/-tcg-grader",
+  "prior_delta": "TCG_CROSSCHECK/TABLET_GPT/learning_snapshot_v369_delta.json",
+  "prior_lesson_digest_sha256": "96d22fbdfb581dbf9944ceef72aaff518b0c9e6ea5c00d7af3015edd3d897d49",
+  "source_main_sha": "38306a236373db4473946205ee446eeeecc3663c",
+  "share_policy": {
+    "explicit_patch_and_learning_lessons_only": true,
+    "chatgpt_model_weights_exported": false,
+    "raw_grading_calibration_shared": false,
+    "device_local_runtime_memory_overwritten": false,
+    "peer_verified_never_auto_promotes_local": true
+  },
+  "covered_merges": [
+    {
+      "pr": 353,
+      "version": "v370-post-merge-drive-package-local-freshness-recovery-candidate",
+      "merge_sha": "38306a236373db4473946205ee446eeeecc3663c"
+    }
+  ],
+  "lesson_digest_sha256": "9d114fc86068301b46f998e78d11f543b8e4ff4066d5f3dc2e9fe7fdb5dfacb4",
+  "lessons": [
+    {
+      "lesson_id": "TABLET-GPT-DRIVE-PACKAGE-LOCAL-FRESHNESS-RECOVERY-V370",
+      "subsystem": "gpt_tcg_drive_package_freshness_recovery",
+      "issue_class": "freshness_only_package_block_dispatched_refresh_but_did_not_produce_package_in_same_run",
+      "trigger_condition": "GPT TCG Drive Package encountered only STALE_AUTO_UPDATE_REPORT, STALE_SOCIAL_SNAPSHOT and/or STALE_SUPPLEMENTARY_SNAPSHOT after a code-only main change while stale inputs remained correctly ineligible for upload",
+      "symptom_summary": "the package workflow stayed fail-closed and dispatched protected static refresh, but the package run ended without a verified artifact and could repeat the stale recovery loop before refreshed data reached main",
+      "root_cause_class": "freshness_recovery_depended_on_asynchronous_cross_workflow_publication_instead_of_recollecting_and_revalidating_inside_the_isolated_package_run",
+      "fix_pattern": "for an explicit freshness-only critical set, run the existing verified updater inside the isolated package checkout, rerun the unchanged production gates, rebuild the exact 17-JSON package, and upload only after the retry validates; keep every non-freshness critical finding blocking and remove unnecessary actions write permission",
+      "prevention_rule_id": "TGPT-PREV-DRIVE-PACKAGE-FRESHNESS-LOCAL-REVALIDATION",
+      "verification_result": "freshness_only_drift_recollects_locally_without_widening_gates_or_uploading_stale_inputs",
+      "regression_pass": true,
+      "recurrence_count": 1,
+      "applicable_scope": "both",
+      "confidence_level": "high",
+      "physical_tablet_runtime_reverification_required": true
+    }
+  ]
+}

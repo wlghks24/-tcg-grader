@@ -94,7 +94,22 @@ class TabletGptTcgGraderSyncV369(unittest.TestCase):
         self.assertTrue(expected_generation.issubset(set(contract["freshness_watch"]["exclude_paths"])))
         self.assertTrue(candidate["requires_exact_watched_path_match"])
         self.assertTrue(candidate["post_merge_coverage_allowed"])
-        self.assertEqual([], watched_paths(contract, CANDIDATE))
+        remaining = watched_paths(contract, CANDIDATE)
+        if remaining:
+            successor = read(ROOT / "TCG_CROSSCHECK/TABLET_GPT_TCG_GRADER_SYNC_CONTRACT_V370.json")
+            self.assertEqual("TCG_CROSSCHECK/TABLET_GPT_TCG_GRADER_SYNC_CONTRACT_V369.json", successor["prior_contract"])
+            self.assertEqual("TCG_CROSSCHECK/TABLET_GPT/learning_snapshot_v369_delta.json", successor["prior_delta_snapshot"])
+            candidate2 = successor["candidate_sync"]
+            self.assertEqual(sorted(remaining), sorted(candidate2["watched_paths"]))
+            self.assertEqual(sorted(candidate2["watched_paths"]), watched_paths(successor, candidate2["base_main_sha"], candidate2["candidate_commit"]))
+            self.assertEqual([], watched_paths(successor, candidate2["candidate_commit"]), "verified v370 successor has uncovered watched changes")
+            for key in ("delta_snapshot", "receiver_receipt", "verification_test"):
+                self.assertTrue((ROOT / successor[key]).is_file(), successor[key])
+            receipt2 = read(ROOT / successor["receiver_receipt"])
+            self.assertEqual("SYNCED_VERIFIED", receipt2["status"])
+            self.assertEqual("TABLET_GPT_TCG_GRADER_MATCH", receipt2["verification"]["verified_result"])
+            self.assertFalse(receipt2["verification"]["physical_tablet_runtime_verified"])
+            self.assertFalse(receipt2["verification"]["physical_drive_readback_verified"])
 
     def test_timeout_recovery_is_clean_bounded_and_fail_closed(self):
         workflow = WORKFLOW.read_text(encoding="utf-8")

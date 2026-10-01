@@ -21,17 +21,15 @@ on:
       - 'auto_update_report.json'
       - 'auto_update_issues.json'
       - 'tcg_live_data.json'
-  # The protected static refresh runs at :47 every six hours. These two runs
-  # are 73 minutes after the 03:47 / 15:47 KST refreshes, so the producer gates
-  # remain inside their two-hour report freshness window while also producing a
-  # fresh manifest for code-only main changes before the tablet's 08:00/20:00 checks.
+  # The normal producer schedule remains aligned after the protected static refresh,
+  # while freshness-only drift can recover inside this isolated packaging run.
+  # Stale inputs are never uploaded and freshness thresholds remain unchanged.
   schedule:
     - cron: '0 8,20 * * *'
   workflow_dispatch:
 
 permissions:
   contents: read
-  actions: write
 
 concurrency:
   group: gpt-tcg-drive-package-${{ github.ref }}
@@ -40,7 +38,13 @@ concurrency:
 jobs:
   package:
     runs-on: ubuntu-24.04
-    timeout-minutes: 12
+    timeout-minutes: 35
+    env:
+      PYTHONPATH: ${{ github.workspace }}
+      PYTHONDONTWRITEBYTECODE: '1'
+      PYTHONUNBUFFERED: '1'
+      TCG_HTTP_TIMEOUT: '30'
+      TCG_SOURCE_TIMEOUT_CAP: '30'
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
         with:
@@ -51,8 +55,6 @@ jobs:
       - name: Build exact verified 17-JSON package
         id: package
         shell: bash
-        env:
-          GH_TOKEN: ${{ github.token }}
         run: |
           set -euo pipefail
           log="$(mktemp)"
@@ -79,13 +81,12 @@ jobs:
               for row in data.get("findings", [])
               if isinstance(row, dict) and row.get("severity") == "critical"
           }
-          recoverable = {"STALE_AUTO_UPDATE_REPORT", "STALE_SOCIAL_SNAPSHOT"}
-          legacy_freshness_only = bool(critical and critical <= recoverable)
-          expanded_recoverable = recoverable | {"STALE_SUPPLEMENTARY_SNAPSHOT"}
-          freshness_only = legacy_freshness_only or bool(
-              critical and critical <= expanded_recoverable
-          )
-          raise SystemExit(0 if freshness_only else 1)
+          recoverable = {
+              "STALE_AUTO_UPDATE_REPORT",
+              "STALE_SOCIAL_SNAPSHOT",
+              "STALE_SUPPLEMENTARY_SNAPSHOT",
+          }
+          raise SystemExit(0 if critical and critical <= recoverable else 1)
           PY
             then
               stale_only=true
@@ -93,12 +94,29 @@ jobs:
           fi
 
           if [ "${stale_only}" = true ]; then
-            echo "::warning::Freshness gate stayed fail-closed; dispatching a fresh protected static collection instead of uploading stale data."
-            gh api --method POST \
-              "repos/${GITHUB_REPOSITORY}/actions/workflows/tcg-static-data-refresh.yml/dispatches" \
-              -f ref=main
-            echo "ready=false" >> "$GITHUB_OUTPUT"
-            echo "recovery=FRESH_STATIC_REFRESH_DISPATCHED" >> "$GITHUB_OUTPUT"
+            echo "::warning::Freshness-only inputs are stale; collecting fresh verified inputs inside this isolated package run. Stale files remain ineligible for upload."
+            python - <<'PY'
+          import json
+          import tcg_updater
+          data = tcg_updater.update_cycle('gpt-drive-package-refresh')
+          print(json.dumps({
+              'updated_at': data.get('updated_at'),
+              'auto_update': data.get('auto_update', {}),
+          }, ensure_ascii=False, indent=2))
+          PY
+            rm -rf .tcg_drive_outbox
+            retry_log="$(mktemp)"
+            set +e
+            python tablet_gdrive_publish.py --output-dir .tcg_drive_outbox >"${retry_log}" 2>&1
+            retry_rc=$?
+            set -e
+            cat "${retry_log}"
+            if [ "${retry_rc}" -ne 0 ]; then
+              echo "::error::Fresh local collection did not satisfy the unchanged production gates; package remains blocked."
+              exit "${retry_rc}"
+            fi
+            echo "ready=true" >> "$GITHUB_OUTPUT"
+            echo "recovery=FRESH_LOCAL_COLLECTION_RETRY" >> "$GITHUB_OUTPUT"
             exit 0
           fi
 
@@ -123,5 +141,5 @@ jobs:
             echo
             echo "- package ready: ${{ steps.package.outputs.ready || 'false' }}"
             echo "- recovery: ${{ steps.package.outputs.recovery || 'none' }}"
-            echo "- stale policy: never widen the two-hour report freshness gate; request a fresh protected collection instead"
+            echo "- stale policy: never widen freshness gates and never upload stale inputs; freshness-only drift is recollected and fully revalidated in this isolated run"
           } >> "$GITHUB_STEP_SUMMARY"
