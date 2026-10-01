@@ -1,3 +1,4 @@
+# one-shot V377 final-tree validation; deleted before manifest generation
 name: Finalize V377 Integrity
 on:
   push:
