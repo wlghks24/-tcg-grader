@@ -50,7 +50,7 @@ def audit(root:Path=ROOT,*,compile_python:bool=False)->dict:
         import quality_review_policy
         quality_policy=quality_review_policy.validate(root/"quality_review_policy_v2.json")
     except Exception as exc:
-        quality_policy={"ok":False,"errors":[f"validator_error:{type(exc).__name__}"]
+        quality_policy={"ok":False,"errors":[f"validator_error:{type(exc).__name__}"]}
     return {"ok":not missing and not symlinks and not compile_errors and bool(quality_policy.get("ok")),"schema_version":1,
             "active_file_count":len(ACTIVE_RUNTIME_FILES),"python_checked":checked_python,
             "missing":missing,"symlinks":symlinks,"compile_errors":compile_errors,"quality_policy":quality_policy}
