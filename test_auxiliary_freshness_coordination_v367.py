@@ -52,21 +52,23 @@ class AuxiliaryFreshnessCoordinationV367(unittest.TestCase):
         workflow = (ROOT / ".github/workflows/gpt-tcg-drive-package.yml").read_text(encoding="utf-8")
         static_refresh = (ROOT / ".github/workflows/tcg-static-data-refresh.yml").read_text(encoding="utf-8")
 
-        # Preserve the historical freshness-only boundary while allowing the newly
-        # verified supplementary freshness signal to request the same protected
-        # refresh. This must never turn stale data into publishable data.
-        self.assertIn('recoverable = {"STALE_AUTO_UPDATE_REPORT", "STALE_SOCIAL_SNAPSHOT"}', workflow)
-        self.assertIn(
-            'expanded_recoverable = recoverable | {"STALE_SUPPLEMENTARY_SNAPSHOT"}',
-            workflow,
-        )
+        # Keep supplementary staleness fail-closed. Recovery may recollect only for
+        # the explicit freshness-only critical set and must rerun the unchanged
+        # production publisher before setting the package ready for upload.
+        for code in (
+            "STALE_AUTO_UPDATE_REPORT",
+            "STALE_SOCIAL_SNAPSHOT",
+            "STALE_SUPPLEMENTARY_SNAPSHOT",
+        ):
+            self.assertIn(code, workflow)
         self.assertIn("critical and critical <= recoverable", workflow)
-        self.assertIn("critical and critical <= expanded_recoverable", workflow)
-        self.assertIn("FRESH_STATIC_REFRESH_DISPATCHED", workflow)
-        self.assertIn("tcg-static-data-refresh.yml/dispatches", workflow)
-        self.assertIn('echo "ready=false"', workflow)
-        self.assertIn('exit "${rc}"', workflow)
+        self.assertIn("tcg_updater.update_cycle('gpt-drive-package-refresh')", workflow)
+        self.assertIn("python tablet_gdrive_publish.py --output-dir .tcg_drive_outbox", workflow)
+        self.assertIn('if [ "${retry_rc}" -ne 0 ]', workflow)
+        self.assertIn('echo "ready=true"', workflow)
+        self.assertIn("FRESH_LOCAL_COLLECTION_RETRY", workflow)
         self.assertNotIn("publish_allowed = true", workflow)
+        self.assertNotIn("actions: write", workflow)
         self.assertIn("never widen", workflow)
         self.assertIn("static_data_publish_gate.py", static_refresh)
         self.assertIn("schedule:", static_refresh)
