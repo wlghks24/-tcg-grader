@@ -38,7 +38,7 @@ concurrency:
 jobs:
   package:
     runs-on: ubuntu-24.04
-    timeout-minutes: 35
+    timeout-minutes: 55
     env:
       PYTHONPATH: ${{ github.workspace }}
       PYTHONDONTWRITEBYTECODE: '1'
@@ -104,6 +104,135 @@ jobs:
               'auto_update': data.get('auto_update', {}),
           }, ensure_ascii=False, indent=2))
           PY
+
+            # A full update can intentionally preserve the previous verified social
+            # snapshot when its first auxiliary pass times out/degrades. The normal
+            # static publisher already has a bounded second-pass recovery for this
+            # case. Reuse the same fail-closed recovery before rerunning the exact
+            # package gates; never widen freshness or accept degraded output.
+            TCG_HTTP_TIMEOUT=60 TCG_SOURCE_TIMEOUT_CAP=60 python - <<'PY'
+          import datetime as dt
+          import json
+          import time
+          from pathlib import Path
+
+          import auto_pipeline_runner
+          import auto_update_all
+          import static_data_publish_gate as gate
+          import update_promo_events
+          from safe_runtime import atomic_write_json
+
+          root = Path('.')
+          report_path = root / 'auto_update_report.json'
+          report = json.loads(report_path.read_text(encoding='utf-8'))
+          integration = report.get('integration') if isinstance(report.get('integration'), dict) else {}
+          preflight = gate.verify(
+              root,
+              now=dt.datetime.now(dt.timezone.utc),
+              max_social_age_hours=12,
+              max_report_age_hours=2,
+          )
+          critical_codes = {
+              str(row.get('code'))
+              for row in (preflight.get('findings') or [])
+              if isinstance(row, dict) and row.get('severity') == 'critical'
+          }
+          recoverable_aux = {
+              'STALE_SOCIAL_SNAPSHOT',
+              'STALE_SUPPLEMENTARY_SNAPSHOT',
+              'AUXILIARY_INTEGRATION_NOT_CLEAN',
+              'AUXILIARY_COVERAGE_SYNC_FAILED',
+              'SOCIAL_COVERAGE_SYNC_MISMATCH',
+              'SOCIAL_FRESH_COLLECTION_NOT_CONFIRMED',
+          }
+          needs_recovery = bool(
+              integration.get('degraded') is True
+              or integration.get('deferred_timeout_pending') is True
+              or critical_codes.intersection(recoverable_aux)
+          )
+          if not needs_recovery:
+              print('Drive package auxiliary recovery not required after fresh collection')
+              raise SystemExit(0)
+
+          started = time.monotonic()
+          result = auto_pipeline_runner.run_pipeline()
+          if (not isinstance(result, dict) or result.get('ok') is not True
+                  or result.get('degraded') is True):
+              print(json.dumps({
+                  'ok': result.get('ok') if isinstance(result, dict) else None,
+                  'degraded': result.get('degraded') if isinstance(result, dict) else None,
+                  'failure_count': result.get('failure_count') if isinstance(result, dict) else None,
+              }, ensure_ascii=False, indent=2))
+              raise SystemExit('Drive package auxiliary integration recovery did not finish cleanly')
+
+          errors = [str(x) for x in (result.get('errors') or []) if str(x).strip()]
+          report['integration'] = {
+              'ok': True,
+              'degraded': False,
+              'candidate_count': (
+                  sum(len(x.get('results', [])) for x in (result.get('queries') or []) if isinstance(x, dict))
+                  + int((result.get('supplementary') or {}).get('candidate_count') or 0)
+                  + int((result.get('social') or {}).get('candidate_count') or 0)
+              ),
+              'social_candidate_count': int((result.get('social') or {}).get('candidate_count') or 0),
+              'official_social_candidate_count': int((result.get('social') or {}).get('official_social_candidate_count') or 0),
+              'failure_count': int(result.get('failure_count') or len(errors)),
+              'error': ' / '.join(errors)[-1200:] if errors else '',
+              'platform': result.get('platform', {}),
+              'note': result.get('notice'),
+              'recovered_after_gpt_drive_refresh': True,
+              'recovery_duration_seconds': round(time.monotonic() - started, 2),
+          }
+
+          synced = update_promo_events.refresh_auxiliary_coverage_metadata(write=True)
+          auto_update_all.validate_json('promo_events.json', synced)
+          report['auxiliary_coverage_sync'] = {
+              'ok': True,
+              'expected_topic_cells': int(synced.get('social_topic_expected_cells') or 0),
+              'attempted_topic_cells': int(synced.get('social_topic_attempted_cells') or 0),
+              'successful_topic_cells': int(synced.get('social_topic_successful_cells') or 0),
+              'failed_topic_cells': len(synced.get('social_topic_failed_cells') or []),
+              'undiscovered_topic_cells': len(synced.get('social_topic_undiscovered_cells') or []),
+              'source_updated_at': synced.get('social_topic_source_updated_at'),
+              'recovered_after_gpt_drive_refresh': True,
+          }
+
+          link = report.get('link_audit') if isinstance(report.get('link_audit'), dict) else {}
+          report['ok_with_aux'] = bool(
+              report.get('ok')
+              and report['integration'].get('ok')
+              and not report['integration'].get('degraded')
+              and link.get('ok')
+              and not link.get('degraded')
+              and report['auxiliary_coverage_sync'].get('ok')
+          )
+          postflight = report.get('postflight_monitor') if isinstance(report.get('postflight_monitor'), dict) else {}
+          report['ok_with_monitor'] = bool(report['ok_with_aux'] and postflight.get('ok'))
+          report['gpt_drive_refresh_recovery'] = {
+              'ok': True,
+              'reason': 'fresh auxiliary integration recovered with a second verified pipeline pass',
+              'recovered_at': dt.datetime.now(dt.timezone.utc).isoformat(timespec='seconds'),
+          }
+          auto_update_all.atomic_report(report)
+          auto_update_all.atomic_issues(report)
+
+          live_path = root / 'tcg_live_data.json'
+          if live_path.exists():
+              live = json.loads(live_path.read_text(encoding='utf-8'))
+              if isinstance(live, dict):
+                  auto = live.setdefault('auto_update', {})
+                  if isinstance(auto, dict):
+                      auto['report_ok'] = bool(report['ok_with_monitor'])
+                  atomic_write_json(live_path, live, suffix='.gpt-drive-refresh-recovery.tmp')
+
+          print(json.dumps({
+              'recovered': True,
+              'integration': report['integration'],
+              'auxiliary_coverage_sync': report['auxiliary_coverage_sync'],
+              'report_ok': report['ok_with_monitor'],
+          }, ensure_ascii=False, indent=2))
+          PY
+
             rm -rf .tcg_drive_outbox
             retry_log="$(mktemp)"
             set +e
@@ -112,11 +241,11 @@ jobs:
             set -e
             cat "${retry_log}"
             if [ "${retry_rc}" -ne 0 ]; then
-              echo "::error::Fresh local collection did not satisfy the unchanged production gates; package remains blocked."
+              echo "::error::Fresh local collection and bounded auxiliary recovery did not satisfy the unchanged production gates; package remains blocked."
               exit "${retry_rc}"
             fi
             echo "ready=true" >> "$GITHUB_OUTPUT"
-            echo "recovery=FRESH_LOCAL_COLLECTION_RETRY" >> "$GITHUB_OUTPUT"
+            echo "recovery=FRESH_LOCAL_COLLECTION_PLUS_AUX_RETRY" >> "$GITHUB_OUTPUT"
             exit 0
           fi
 
@@ -141,5 +270,5 @@ jobs:
             echo
             echo "- package ready: ${{ steps.package.outputs.ready || 'false' }}"
             echo "- recovery: ${{ steps.package.outputs.recovery || 'none' }}"
-            echo "- stale policy: never widen freshness gates and never upload stale inputs; freshness-only drift is recollected and fully revalidated in this isolated run"
+            echo "- stale policy: never widen freshness gates and never upload stale inputs; freshness-only drift is recollected, bounded auxiliary recovery runs only when needed, and all unchanged production gates are rerun before upload"
           } >> "$GITHUB_STEP_SUMMARY"
