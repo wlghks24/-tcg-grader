@@ -39,6 +39,15 @@ class TabletGptTcgGraderSyncV376Tests(unittest.TestCase):
         self.assertFalse(receipt["verification"]["physical_tablet_runtime_verified"])
         self.assertFalse(receipt["verification"]["physical_drive_readback_verified"])
 
+    def test_share_policy_preserves_legacy_safety_contract(self):
+        delta = load(DELTA)
+        policy = delta["share_policy"]
+        self.assertIs(policy["explicit_patch_and_learning_lessons_only"], True)
+        self.assertIs(policy["chatgpt_model_weights_exported"], False)
+        self.assertIs(policy["raw_grading_calibration_shared"], False)
+        self.assertIs(policy["device_local_runtime_memory_overwritten"], False)
+        self.assertIs(policy["peer_verified_never_auto_promotes_local"], True)
+
     def test_contract_preserves_fail_closed_autonomy_boundaries(self):
         contract = load(CONTRACT)
         rules = contract["rules"]
