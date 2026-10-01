@@ -1,0 +1,77 @@
+{
+  "schema_version": "1.1-tablet-gpt-tcg-grader-learning-sync",
+  "namespace": "TABLET_GPT",
+  "snapshot_kind": "learning_delta",
+  "run_date_kst": "2026-10-01",
+  "built_at": "2026-10-01T14:55:11+09:00",
+  "status": "finalized",
+  "source_repository": "wlghks24/-tcg-grader",
+  "prior_delta": "TCG_CROSSCHECK/TABLET_GPT/learning_snapshot_v370_delta.json",
+  "prior_lesson_digest_sha256": "9d114fc86068301b46f998e78d11f543b8e4ff4066d5f3dc2e9fe7fdb5dfacb4",
+  "source_main_sha": "a00ebfd3888740ee50c5e86c8ee6008fe8a54908",
+  "share_policy": {
+    "explicit_patch_and_learning_lessons_only": true,
+    "chatgpt_model_weights_exported": false,
+    "raw_grading_calibration_shared": false,
+    "device_local_runtime_memory_overwritten": false,
+    "peer_verified_never_auto_promotes_local": true
+  },
+  "covered_merges": [
+    {
+      "pr": 355,
+      "version": "v372-base-main-drive-package-local-freshness-recovery",
+      "merge_sha": "a00ebfd3888740ee50c5e86c8ee6008fe8a54908"
+    }
+  ],
+  "lesson_digest_sha256": "97a5960b857bd52ad630097158a3c3492cf52f06fa40af77d6eca22317020340",
+  "lessons": [
+    {
+      "lesson_id": "TABLET-GPT-BOUNDED-AUTONOMY-VERIFIED-ONLY-V372",
+      "subsystem": "tablet_gpt_autonomy_neural",
+      "issue_class": "autonomous_improvement_needed_without_allowing_unverified_self_modification",
+      "trigger_condition": "Tablet GPT needs to choose learning, maintenance, and improvement priorities from runtime, market, sync, and verified-learning signals while source changes must remain protected",
+      "symptom_summary": "the existing query, job, and SELFREFINE neural models improved local decisions but lacked a verified meta-policy for choosing bounded maintenance actions and exposing auditable autonomy state",
+      "root_cause_class": "verified_specialist_neural_models_lacked_a_bounded_cross_subsystem_autonomy_orchestrator",
+      "fix_pattern": "add a verified-only autonomy MLP and deterministic controller that can rank only code-defined actions, retrain existing verified models, and emit non-executable capability proposals; require postflight-verified labels and keep all source changes behind regression-tested protected-main PRs",
+      "prevention_rule_id": "TGPT-PREV-BOUNDED-VERIFIED-AUTONOMY",
+      "verification_result": "autonomy_actions_are_allowlisted_priority_only_and_unverified_or_stale_model_state_fails_closed",
+      "regression_pass": true,
+      "recurrence_count": 1,
+      "applicable_scope": "both",
+      "confidence_level": "high",
+      "physical_tablet_runtime_reverification_required": true
+    },
+    {
+      "lesson_id": "TABLET-GPT-MARKET-ADAPTIVE-PRIORITY-BOUNDED-V372",
+      "subsystem": "tablet_collection_market_adaptation",
+      "issue_class": "market_flow_changes_needed_priority_adaptation_without_skipping_mandatory_collectors",
+      "trigger_condition": "verified market freshness, volatility, provenance uncertainty, coverage gaps, or provider error signals materially change",
+      "symptom_summary": "fixed collection ordering could not explicitly raise market and exploration work priority when market conditions changed while preserving deterministic collection requirements",
+      "root_cause_class": "market_state_was_not_connected_to_a_bounded_verified_runtime_priority_layer",
+      "fix_pattern": "derive bounded market signals from existing public evidence and apply only positive priority multipliers capped at fifteen percent for market jobs and ten percent for exploration jobs; never lower or skip mandatory collectors and never generate prices or trust",
+      "prevention_rule_id": "TGPT-PREV-MARKET-PRIORITY-BOUNDED",
+      "verification_result": "market_and_exploration_priority_adjustments_are_bounded_and_mandatory_collectors_remain_enabled",
+      "regression_pass": true,
+      "recurrence_count": 1,
+      "applicable_scope": "both",
+      "confidence_level": "high",
+      "physical_tablet_runtime_reverification_required": true
+    },
+    {
+      "lesson_id": "TABLET-GPT-CAPABILITY-PROPOSAL-PR-GATED-V372",
+      "subsystem": "tablet_gpt_capability_evolution",
+      "issue_class": "needed_new_capabilities_must_be_proposed_without_executable_self_rewrite",
+      "trigger_condition": "coverage, sync, repair, or market-provenance signals indicate a missing capability that cannot be satisfied by an existing allowlisted runtime action",
+      "symptom_summary": "autonomous analysis needed a safe way to identify future functions without turning learned text or model output into executable source changes",
+      "root_cause_class": "no_explicit_non_executable_capability_proposal_boundary",
+      "fix_pattern": "emit bounded non-executable capability proposals with explicit evidence reasons and required gates; implementation remains a separate code change requiring targeted tests, full regression, integrity/security validation, and protected-main PR review",
+      "prevention_rule_id": "TGPT-PREV-CAPABILITY-PROPOSAL-PR-GATE",
+      "verification_result": "capability_proposals_are_non_executable_and_marked_pr_required_with_source_rewrite_and_git_write_forbidden",
+      "regression_pass": true,
+      "recurrence_count": 1,
+      "applicable_scope": "both",
+      "confidence_level": "high",
+      "physical_tablet_runtime_reverification_required": true
+    }
+  ]
+}
