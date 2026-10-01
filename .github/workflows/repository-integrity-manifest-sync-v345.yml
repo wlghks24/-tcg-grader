@@ -4,7 +4,6 @@ on:
   push:
     branches:
       - 'ops/integrity-manifest-sync'
-      - 'feature/tablet-autonomous-evolution-v372'
     paths-ignore:
       - 'integrity_manifest.json'
   workflow_dispatch:
@@ -20,7 +19,7 @@ jobs:
   sync-manifest:
     if: github.ref != 'refs/heads/main' && github.actor == github.repository_owner
     runs-on: ubuntu-24.04
-    timeout-minutes: 25
+    timeout-minutes: 10
     env:
       PYTHONDONTWRITEBYTECODE: '1'
       PYTHONUNBUFFERED: '1'
@@ -31,53 +30,15 @@ jobs:
       - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97
         with:
           python-version: '3.12'
-      - name: Require exact owner branch ancestry
+      - name: Require exact owner integrity-sync branch ancestry
         shell: bash
         run: |
           set -euo pipefail
           test "${GITHUB_ACTOR}" = "${GITHUB_REPOSITORY_OWNER}"
+          test "${GITHUB_REF_NAME}" = "ops/integrity-manifest-sync"
           git fetch origin +refs/heads/main:refs/remotes/origin/main
+          git merge-base --is-ancestor origin/main HEAD
           test "$(git rev-parse --abbrev-ref HEAD)" != "main"
-          case "${GITHUB_REF_NAME}" in
-            ops/integrity-manifest-sync)
-              git merge-base --is-ancestor origin/main HEAD
-              ;;
-            feature/tablet-autonomous-evolution-v372)
-              git merge-base --is-ancestor 6233891b75354972bcb382ffd7f01fcfde7ab3d3 HEAD
-              test "$(git rev-parse origin/main)" = "6233891b75354972bcb382ffd7f01fcfde7ab3d3"
-              ;;
-            *)
-              echo "[BLOCK] unsupported integrity-sync branch: ${GITHUB_REF_NAME}" >&2
-              exit 2
-              ;;
-          esac
-      - name: Run v372 resource-aware autonomy regression
-        if: github.ref_name == 'feature/tablet-autonomous-evolution-v372'
-        shell: bash
-        run: |
-          set -euo pipefail
-          python -m py_compile \
-            tablet_autonomous_evolution_v371.py \
-            tablet_autonomous_evolution_v372.py \
-            test_tablet_autonomous_evolution_v371.py \
-            test_tablet_autonomous_evolution_v372.py \
-            test_tablet_gpt_tcg_grader_sync_v371.py \
-            test_tablet_gpt_tcg_grader_sync_v372.py
-          python tablet_autonomous_evolution_v372.py --self-test
-          python -m unittest -v \
-            test_tablet_autonomous_evolution_v371.py \
-            test_tablet_autonomous_evolution_v372.py \
-            test_tablet_gpt_tcg_grader_sync_v371.py \
-            test_tablet_gpt_tcg_grader_sync_v372.py
-          python tablet_runtime_manifest.py --check --compile
-          bash -n main
-      - name: Restore temporary workflow changes before manifest build
-        if: github.ref_name == 'feature/tablet-autonomous-evolution-v372'
-        shell: bash
-        run: |
-          set -euo pipefail
-          git checkout origin/main -- .github/workflows/repository-integrity-manifest-sync-v345.yml
-          git rm -- .github/workflows/v372-autonomy-finalizer.yml
       - name: Rebuild and verify Git-tracked branch integrity manifest
         shell: bash
         run: |
@@ -91,34 +52,19 @@ jobs:
           test "${#sync_tests[@]}" -gt 0
           python -m unittest -v "${sync_tests[@]}"
           git diff --check
-      - name: Commit verified exact tree
+      - name: Commit manifest only when changed
         shell: bash
         run: |
           set -euo pipefail
+          if git diff --quiet -- integrity_manifest.json; then
+            echo "[OK] integrity_manifest.json already matches the exact branch tree"
+            exit 0
+          fi
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          if [ "${GITHUB_REF_NAME}" = "feature/tablet-autonomous-evolution-v372" ]; then
-            git add -- integrity_manifest.json .github/workflows/repository-integrity-manifest-sync-v345.yml
-            git add -u -- .github/workflows/v372-autonomy-finalizer.yml
-            changed="$(git diff --cached --name-only | sort)"
-            printf '%s\n' "$changed"
-            test "$(printf '%s\n' "$changed" | grep -c '^integrity_manifest.json$')" = "1"
-            test "$(printf '%s\n' "$changed" | grep -c '^.github/workflows/repository-integrity-manifest-sync-v345.yml$')" = "1"
-            test "$(printf '%s\n' "$changed" | grep -c '^.github/workflows/v372-autonomy-finalizer.yml$')" = "1"
-            test "$(printf '%s\n' "$changed" | sed '/^$/d' | wc -l | tr -d ' ')" = "3"
-            message='Finalize resource-aware tablet autonomous evolution v372'
-          else
-            if git diff --quiet -- integrity_manifest.json; then
-              echo "[OK] integrity_manifest.json already matches the exact branch tree"
-              exit 0
-            fi
-            git add -- integrity_manifest.json
-            changed="$(git diff --cached --name-only | sort)"
-            printf '%s\n' "$changed"
-            test "$(printf '%s\n' "$changed" | sed '/^$/d' | wc -l | tr -d ' ')" = "1"
-            test "$changed" = "integrity_manifest.json"
-            message='Reconcile integrity manifest for dedicated ops sync branch'
-          fi
+          git add -- integrity_manifest.json
+          test "$(git diff --cached --name-only | wc -l | tr -d ' ')" = "1"
+          test "$(git diff --cached --name-only)" = "integrity_manifest.json"
           git diff --cached --check
-          git commit -m "$message"
+          git commit -m 'Reconcile integrity manifest for dedicated ops sync branch'
           git push origin "HEAD:${GITHUB_REF_NAME}"
