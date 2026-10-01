@@ -1,0 +1,88 @@
+name: V375 Tablet Autonomy Finalizer
+
+on:
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: write
+
+concurrency:
+  group: tablet-autonomy-v375-finalizer-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+jobs:
+  finalize:
+    if: >-
+      github.event.pull_request.head.repo.full_name == github.repository &&
+      github.event.pull_request.head.ref == 'feature/tablet-autonomous-evolution-v375'
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - name: Checkout exact PR head
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          ref: feature/tablet-autonomous-evolution-v375
+          fetch-depth: 0
+
+      - name: Refuse stale base or wrong branch
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git branch --show-current)" = "feature/tablet-autonomous-evolution-v375"
+          git fetch origin main --no-tags
+          test "$(git rev-parse origin/main)" = "2b1112318fa23f4e8edd525695ee3711ea715e18"
+          git merge-base --is-ancestor 2b1112318fa23f4e8edd525695ee3711ea715e18 HEAD
+          git merge-base --is-ancestor d7c8577b514abdbbc15ba9323c4c0deb1945efed HEAD
+
+      - name: Remove one-shot workflow from final tree first
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git rm -- .github/workflows/tablet-autonomy-v375-finalizer.yml
+          git commit -m "ci: remove v375 one-shot finalizer"
+
+      - name: Compile V375 and run focused autonomy regressions
+        run: |
+          python -m py_compile tablet_autonomous_evolution_v375.py tablet_runtime_manifest.py
+          python tablet_autonomous_evolution_v375.py --self-test
+          python -m unittest -v \
+            test_tablet_autonomous_evolution_v375.py \
+            test_tablet_gpt_tcg_grader_sync_v374.py \
+            test_tablet_gpt_tcg_grader_sync_v375.py
+
+      - name: Verify complete Tablet GPT sync lineage
+        run: python -m unittest discover -v -p 'test_tablet_gpt_tcg_grader_sync_v*.py'
+
+      - name: Verify tablet runtime bundle before manifest
+        run: python tablet_runtime_manifest.py --check --compile
+
+      - name: Rebuild exact-tree integrity manifest
+        run: |
+          python static_integrity_manifest.py --write integrity_manifest.json
+          python static_integrity_manifest.py --check integrity_manifest.json
+
+      - name: Run repository integrity on exact candidate tree
+        run: python repository_integrity_guard.py
+
+      - name: Commit only the exact-tree manifest
+        shell: bash
+        run: |
+          set -euo pipefail
+          git add -- integrity_manifest.json
+          git diff --cached --quiet && { echo "integrity manifest did not change" >&2; exit 1; }
+          git commit -m "chore: sync integrity manifest for Tablet autonomy v375"
+          test ! -e .github/workflows/tablet-autonomy-v375-finalizer.yml
+          test -z "$(git status --porcelain)"
+
+      - name: Push verified final tree to PR branch
+        shell: bash
+        run: |
+          set -euo pipefail
+          git fetch origin feature/tablet-autonomous-evolution-v375 --no-tags
+          remote_head="$(git rev-parse origin/feature/tablet-autonomous-evolution-v375)"
+          initial_head="${{ github.event.pull_request.head.sha }}"
+          test "$remote_head" = "$initial_head"
+          git push origin HEAD:feature/tablet-autonomous-evolution-v375
