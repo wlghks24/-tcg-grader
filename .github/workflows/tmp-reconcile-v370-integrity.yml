@@ -1,0 +1,42 @@
+name: Temporary v370 integrity reconcile
+
+on:
+  push:
+    branches:
+      - 'fix/drive-package-freshness-v370'
+
+permissions:
+  contents: write
+
+concurrency:
+  group: tmp-v370-integrity-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  reconcile:
+    if: github.actor == github.repository_owner
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97
+        with:
+          python-version: '3.12'
+      - name: Reconcile exact branch manifest and remove helper
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "${GITHUB_REF_NAME}" = "fix/drive-package-freshness-v370"
+          test "$(git rev-parse --abbrev-ref HEAD)" != "main"
+          git rm -- .github/workflows/tmp-reconcile-v370-integrity.yml
+          python static_integrity_manifest.py --write integrity_manifest.json
+          python static_integrity_manifest.py --check integrity_manifest.json
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add -- integrity_manifest.json
+          test "$(git diff --cached --name-only | sort | tr '\n' ' ')" = ".github/workflows/tmp-reconcile-v370-integrity.yml integrity_manifest.json "
+          git diff --cached --check
+          git commit -m 'ci: reconcile v370 integrity manifest'
+          git push origin "HEAD:${GITHUB_REF_NAME}"
