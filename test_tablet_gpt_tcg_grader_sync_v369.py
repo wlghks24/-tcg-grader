@@ -166,12 +166,33 @@ class TabletGptTcgGraderSyncV369(unittest.TestCase):
                             "TCG_CROSSCHECK/TABLET_GPT/learning_snapshot_v372_delta.json",
                             "TCG_CROSSCHECK/TABLET_GPT_TCG_GRADER_SYNC_CONTRACT_V373.json",
                         )
-                        self.assertEqual(sorted(after372), sorted(candidate373["watched_paths"]))
-                        self.assertEqual(
-                            [],
-                            watched_paths(successor373, candidate373["candidate_commit"]),
-                            "verified v373 successor has uncovered watched changes",
+                        fourth_hop = watched_paths(
+                            successor372,
+                            candidate372["candidate_commit"],
+                            candidate373["candidate_commit"],
                         )
+                        self.assertEqual(sorted(fourth_hop), sorted(candidate373["watched_paths"]))
+                        after373 = watched_paths(successor373, candidate373["candidate_commit"])
+                        if after373:
+                            successor374, candidate374 = assert_successor_generation(
+                                self,
+                                "TCG_CROSSCHECK/TABLET_GPT_TCG_GRADER_SYNC_CONTRACT_V373.json",
+                                "TCG_CROSSCHECK/TABLET_GPT/learning_snapshot_v373_delta.json",
+                                "TCG_CROSSCHECK/TABLET_GPT_TCG_GRADER_SYNC_CONTRACT_V374.json",
+                            )
+                            fifth_hop = watched_paths(
+                                successor373,
+                                candidate373["candidate_commit"],
+                                candidate374["candidate_commit"],
+                            )
+                            self.assertEqual(sorted(fifth_hop), sorted(candidate374["watched_paths"]))
+                            self.assertEqual(
+                                [],
+                                watched_paths(successor374, candidate374["candidate_commit"]),
+                                "verified v374 successor has uncovered watched changes",
+                            )
+                        else:
+                            self.assertEqual([], after373)
                     else:
                         self.assertEqual([], after372)
                 else:
