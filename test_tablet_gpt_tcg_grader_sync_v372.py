@@ -11,12 +11,15 @@ SOURCE = "6233891b75354972bcb382ffd7f01fcfde7ab3d3"
 CANDIDATE = "d77ec75aeb00e0c2394d0e8d3cf3259b9622c56b"
 V373_SOURCE = "24f7fa716d2f0300bd3d42645a279846f03ab53b"
 V373_CANDIDATE = "5364126c153b3f13704fbe07f0a56ad1c323f413"
+V374_SOURCE = "514886ebad7209abb85e891fdd5d7ddbdc8561c4"
+V374_CANDIDATE = "af47dc6e95735be99800669f57610069865efca6"
 PRIOR = ROOT / "TCG_CROSSCHECK/TABLET_GPT/learning_snapshot_v371_delta.json"
 DELTA = ROOT / "TCG_CROSSCHECK/TABLET_GPT/learning_snapshot_v372_delta.json"
 RECEIPT = ROOT / "TCG_CROSSCHECK/TCG_GRADER/tablet_gpt_learning_receipt_v372.json"
 PRIOR_CONTRACT = ROOT / "TCG_CROSSCHECK/TABLET_GPT_TCG_GRADER_SYNC_CONTRACT_V371.json"
 CONTRACT = ROOT / "TCG_CROSSCHECK/TABLET_GPT_TCG_GRADER_SYNC_CONTRACT_V372.json"
 V373_CONTRACT = ROOT / "TCG_CROSSCHECK/TABLET_GPT_TCG_GRADER_SYNC_CONTRACT_V373.json"
+V374_CONTRACT = ROOT / "TCG_CROSSCHECK/TABLET_GPT_TCG_GRADER_SYNC_CONTRACT_V374.json"
 EXPECTED_DIGEST = "c92b1afefdc9989c7c6ed1b3b72f28631179e57f0e0535699bef0182788465a6"
 
 
@@ -38,16 +41,19 @@ def watched_paths(contract, source, head="HEAD"):
     )
 
 
-def assert_v373_successor(testcase, relevant):
-    testcase.assertTrue(V373_CONTRACT.is_file(), f"v372 stale without V373 successor: {relevant}")
-    contract = read(V373_CONTRACT)
+def _verify_successor(testcase, contract_path, expected_source, expected_candidate, relevant):
+    testcase.assertTrue(contract_path.is_file(), f"missing successor contract: {contract_path}")
+    contract = read(contract_path)
     delta = read(ROOT / contract["delta_snapshot"])
     receipt = read(ROOT / contract["receiver_receipt"])
     candidate = contract["candidate_sync"]
-    testcase.assertEqual(V373_SOURCE, candidate["base_main_sha"])
-    testcase.assertEqual(V373_CANDIDATE, candidate["candidate_commit"])
+    testcase.assertEqual(expected_source, candidate["base_main_sha"])
+    testcase.assertEqual(expected_candidate, candidate["candidate_commit"])
     testcase.assertEqual(sorted(relevant), sorted(candidate["watched_paths"]))
-    testcase.assertEqual(sorted(relevant), watched_paths(contract, V373_SOURCE, V373_CANDIDATE))
+    testcase.assertEqual(
+        sorted(relevant),
+        watched_paths(contract, expected_source, expected_candidate),
+    )
     raw = json.dumps(delta["lessons"], ensure_ascii=False, sort_keys=True, separators=(",", ":"))
     digest = hashlib.sha256(raw.encode("utf-8")).hexdigest()
     testcase.assertEqual(digest, delta["lesson_digest_sha256"])
@@ -57,9 +63,21 @@ def assert_v373_successor(testcase, relevant):
     testcase.assertEqual("TABLET_GPT_TCG_GRADER_MATCH", receipt["verification"]["verified_result"])
     testcase.assertFalse(receipt["verification"]["physical_tablet_runtime_verified"])
     testcase.assertFalse(receipt["verification"]["physical_drive_readback_verified"])
-    testcase.assertEqual([], watched_paths(contract, V373_CANDIDATE))
-    subprocess.run(["git", "merge-base", "--is-ancestor", V373_SOURCE, "HEAD"], check=True)
-    subprocess.run(["git", "merge-base", "--is-ancestor", V373_CANDIDATE, "HEAD"], check=True)
+    subprocess.run(["git", "merge-base", "--is-ancestor", expected_source, "HEAD"], check=True)
+    subprocess.run(["git", "merge-base", "--is-ancestor", expected_candidate, "HEAD"], check=True)
+    return contract, candidate
+
+
+def assert_v373_successor(testcase, relevant):
+    return _verify_successor(testcase, V373_CONTRACT, V373_SOURCE, V373_CANDIDATE, relevant)
+
+
+def assert_v374_successor(testcase, relevant):
+    contract, candidate = _verify_successor(
+        testcase, V374_CONTRACT, V374_SOURCE, V374_CANDIDATE, relevant
+    )
+    testcase.assertEqual([], watched_paths(contract, V374_CANDIDATE))
+    return contract, candidate
 
 
 class TabletGptTcgGraderSyncV372(unittest.TestCase):
@@ -115,7 +133,13 @@ class TabletGptTcgGraderSyncV372(unittest.TestCase):
         self.assertTrue(candidate["post_merge_coverage_allowed"])
         relevant = watched_paths(contract, CANDIDATE)
         if relevant:
-            assert_v373_successor(self, relevant)
+            first_hop = watched_paths(contract, CANDIDATE, V373_CANDIDATE)
+            v373_contract, v373_candidate = assert_v373_successor(self, first_hop)
+            after373 = watched_paths(v373_contract, v373_candidate["candidate_commit"])
+            if after373:
+                assert_v374_successor(self, after373)
+            else:
+                self.assertEqual([], after373)
 
     def test_resource_aware_autonomy_remains_bounded_and_fail_closed(self):
         rules = read(CONTRACT)["rules"]
