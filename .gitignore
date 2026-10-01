@@ -165,3 +165,8 @@ tablet_autonomy_capabilities.json
 tablet_autonomy_meta_neural.json
 tablet_autonomy_verified_outcomes.jsonl
 tablet_autonomy_v373_report.json
+# v374 closed-loop skills/trials/outcomes are device-local operational learning evidence.
+tablet_autonomy_skills_v374.json
+tablet_autonomy_verified_skill_outcomes_v374.jsonl
+tablet_autonomy_source_feature_proposals_v374.json
+tablet_autonomy_v374_report.json
