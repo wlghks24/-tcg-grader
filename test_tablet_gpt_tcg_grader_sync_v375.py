@@ -14,6 +14,10 @@ DELTA = ROOT / "TCG_CROSSCHECK/TABLET_GPT/learning_snapshot_v375_delta.json"
 RECEIPT = ROOT / "TCG_CROSSCHECK/TCG_GRADER/tablet_gpt_learning_receipt_v375.json"
 PRIOR_CONTRACT = ROOT / "TCG_CROSSCHECK/TABLET_GPT_TCG_GRADER_SYNC_CONTRACT_V374.json"
 CONTRACT = ROOT / "TCG_CROSSCHECK/TABLET_GPT_TCG_GRADER_SYNC_CONTRACT_V375.json"
+SUCCESSOR_CONTRACT = ROOT / "TCG_CROSSCHECK/TABLET_GPT_TCG_GRADER_SYNC_CONTRACT_V376.json"
+SUCCESSOR_DELTA = ROOT / "TCG_CROSSCHECK/TABLET_GPT/learning_snapshot_v376_delta.json"
+SUCCESSOR_RECEIPT = ROOT / "TCG_CROSSCHECK/TCG_GRADER/tablet_gpt_learning_receipt_v376.json"
+SUCCESSOR_TEST = ROOT / "test_tablet_gpt_tcg_grader_sync_v376.py"
 EXPECTED_DIGEST = "7b6bd4191984bc6582121fa79518ebf6f5513f09a9b68454fad2e8115abf38c4"
 
 
@@ -33,6 +37,46 @@ def watched_paths(contract, source, head="HEAD"):
         path for path in changed
         if path not in excluded and (path in exact or path.startswith(prefixes))
     )
+
+
+def complete_v376_successor():
+    files = (SUCCESSOR_CONTRACT, SUCCESSOR_DELTA, SUCCESSOR_RECEIPT, SUCCESSOR_TEST)
+    if any(not path.is_file() for path in files):
+        return False
+    contract, delta, receipt = map(read, (SUCCESSOR_CONTRACT, SUCCESSOR_DELTA, SUCCESSOR_RECEIPT))
+    if contract.get("prior_contract") != "TCG_CROSSCHECK/TABLET_GPT_TCG_GRADER_SYNC_CONTRACT_V375.json":
+        return False
+    if contract.get("prior_delta_snapshot") != "TCG_CROSSCHECK/TABLET_GPT/learning_snapshot_v375_delta.json":
+        return False
+    if contract.get("verification_test") != "test_tablet_gpt_tcg_grader_sync_v376.py":
+        return False
+    if delta.get("prior_delta") != "TCG_CROSSCHECK/TABLET_GPT/learning_snapshot_v375_delta.json":
+        return False
+    if delta.get("source_main_sha") != receipt.get("source_main_sha"):
+        return False
+    if delta.get("lesson_digest_sha256") != receipt.get("delta_lesson_digest_sha256"):
+        return False
+    raw = json.dumps(delta.get("lessons"), ensure_ascii=False, sort_keys=True, separators=(",", ":"))
+    if hashlib.sha256(raw.encode("utf-8")).hexdigest() != delta.get("lesson_digest_sha256"):
+        return False
+    if [row.get("lesson_id") for row in delta.get("lessons", [])] != receipt.get("accepted_lesson_ids"):
+        return False
+    if receipt.get("status") != "SYNCED_VERIFIED":
+        return False
+    if receipt.get("verification", {}).get("verified_result") != "TABLET_GPT_TCG_GRADER_MATCH":
+        return False
+    candidate = contract.get("candidate_sync") or {}
+    base = str(candidate.get("base_main_sha") or "")
+    functional = str(candidate.get("candidate_commit") or "")
+    if not base or not functional or candidate.get("requires_exact_watched_path_match") is not True:
+        return False
+    try:
+        subprocess.run(["git", "merge-base", "--is-ancestor", CANDIDATE, base], check=True)
+        subprocess.run(["git", "merge-base", "--is-ancestor", base, "HEAD"], check=True)
+        subprocess.run(["git", "merge-base", "--is-ancestor", functional, "HEAD"], check=True)
+    except subprocess.CalledProcessError:
+        return False
+    return True
 
 
 class TabletGptTcgGraderSyncV375(unittest.TestCase):
@@ -86,7 +130,11 @@ class TabletGptTcgGraderSyncV375(unittest.TestCase):
         self.assertTrue(expected_generation.issubset(set(contract["freshness_watch"]["exclude_paths"])))
         self.assertTrue(candidate["requires_exact_watched_path_match"])
         self.assertTrue(candidate["post_merge_coverage_allowed"])
-        self.assertEqual([], watched_paths(contract, CANDIDATE))
+        remaining = watched_paths(contract, CANDIDATE)
+        if remaining:
+            self.assertTrue(complete_v376_successor(), f"uncovered v375 watched changes: {remaining}")
+        else:
+            self.assertEqual([], remaining)
 
     def test_verified_feedback_uncertainty_and_fail_closed_safety(self):
         rules = read(CONTRACT)["rules"]
@@ -135,11 +183,16 @@ class TabletGptTcgGraderSyncV375(unittest.TestCase):
 
         main_text = (ROOT / "main").read_text(encoding="utf-8")
         manifest_text = (ROOT / "tablet_runtime_manifest.py").read_text(encoding="utf-8")
-        self.assertIn(
-            "python tablet_autonomous_evolution_v375.py --execute-safe-learning --apply-capabilities --train-meta --apply-skills",
-            main_text,
-        )
-        self.assertIn('"tablet_autonomous_evolution_v375.py"', manifest_text)
+        if "tablet_autonomous_evolution_v375.py --execute-safe-learning --apply-capabilities --train-meta --apply-skills" in main_text:
+            self.assertIn('"tablet_autonomous_evolution_v375.py"', manifest_text)
+        else:
+            self.assertTrue(complete_v376_successor())
+            self.assertIn(
+                "tablet_autonomous_evolution_v376.py --execute-safe-learning --apply-capabilities --train-meta --apply-skills",
+                main_text,
+            )
+            self.assertIn('"tablet_autonomous_evolution_v376.py"', manifest_text)
+            self.assertIn('"tablet_autonomous_evolution_v375.py"', manifest_text)
         self.assertIn('"tablet_autonomous_evolution_v374.py"', manifest_text)
 
 

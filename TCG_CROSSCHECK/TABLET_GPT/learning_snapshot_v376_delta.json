@@ -1,0 +1,51 @@
+{
+  "schema_version": "1.1-tablet-gpt-tcg-grader-learning-sync",
+  "namespace": "TABLET_GPT",
+  "snapshot_kind": "learning_delta",
+  "run_date_kst": "2026-10-02",
+  "built_at": "2026-10-02T01:11:11+09:00",
+  "status": "finalized",
+  "source_repository": "wlghks24/-tcg-grader",
+  "prior_delta": "TCG_CROSSCHECK/TABLET_GPT/learning_snapshot_v375_delta.json",
+  "prior_lesson_digest_sha256": "7b6bd4191984bc6582121fa79518ebf6f5513f09a9b68454fad2e8115abf38c4",
+  "source_main_sha": "d2813d753a2c5babcc014d3e8a28374fadd887bb",
+  "share_policy": {
+    "explicit_patch_and_learning_lessons_only": true,
+    "chatgpt_model_weights_exported": false,
+    "raw_grading_calibration_shared": false,
+    "device_local_runtime_memory_overwritten": false,
+    "peer_verified_never_auto_promotes_local": true
+  },
+  "covered_merges": [
+    {
+      "pr": 362,
+      "version": "v376-transactional-autonomy-base",
+      "merge_sha": "d2813d753a2c5babcc014d3e8a28374fadd887bb"
+    }
+  ],
+  "lesson_digest_sha256": "4ffc881e5a91de40d8ff5ce6a0ab174e6edae0469eabc0501d498fbd79feb66f",
+  "lessons": [
+    {
+      "lesson_id": "TABLET-GPT-TRANSACTIONAL-AUTONOMOUS-EVOLUTION-V376",
+      "subsystem": "tablet_gpt_autonomous_transactional_feedback",
+      "issue_class": "autonomous_execution_can_outlive_evidence_or_state_persistence_without_durable_retry_barrier",
+      "trigger_condition": "A verified-feedback autonomous cycle is ready to execute a new bounded action but prior evidence, meta feedback, capability state, or post-action trial state may fail to persist, making a retry ambiguous",
+      "prevention_rule": "settle prior verified evidence before any new action; require durable skill and capability state; journal the action before and after execution; never auto-retry ambiguous execution; commit the pending causal trial before marking the cycle committed; export only a sanitized information-exchange summary; keep neural ranking advisory and market adaptation operational-only",
+      "validation_required": [
+        "base main is exactly d2813d753a2c5babcc014d3e8a28374fadd887bb",
+        "functional candidate commit is exactly 372e8fb1f1c546120fb49db3fea52d59129319ca",
+        "main evolve route uses tablet_autonomous_evolution_v376.py with skill, capability, and meta flags enabled",
+        "prior verified outcome or meta persistence failures block new execution",
+        "corrupt capability state blocks new execution without overwrite",
+        "autonomous execution requires skill and capability persistence",
+        "incomplete journal state blocks automatic retry",
+        "new action is journaled before execution and pending trial state is durable before journal committed",
+        "exchange capsule contains only sanitized operational summary",
+        "market direction, facts, prices, and grades are never invented or auto-promoted",
+        "source generation or rewrite, arbitrary command, direct-main, and verification bypass remain forbidden",
+        "physical Tablet runtime and Drive readback remain unverified until matching external evidence exists"
+      ],
+      "safety_boundary": "autonomous evolution may adapt verified operational policy and advisory neural ranking, but it must fail closed across evidence and state persistence and may not turn uncertain execution into an automatic retry or unrestricted source self-modification"
+    }
+  ]
+}

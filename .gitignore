@@ -173,3 +173,7 @@ tablet_autonomy_v374_report.json
 # v375 verified-feedback reports/proposals are device-local; v373/v374 learning stores stay the evidence roots.
 tablet_autonomy_source_feature_proposals_v375.json
 tablet_autonomy_v375_report.json
+# v376 transactional execution journal/report/exchange capsule are device-local operational evidence.
+tablet_autonomy_execution_journal_v376.json
+tablet_autonomy_v376_report.json
+tablet_autonomy_exchange_capsule_v376.json

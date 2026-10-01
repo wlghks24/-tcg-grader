@@ -4,6 +4,8 @@ from pathlib import Path
 import subprocess
 import unittest
 
+from sync_v376_successor_test_support import assert_v376_successor
+
 ROOT = Path(__file__).resolve().parent
 SOURCE = "38306a236373db4473946205ee446eeeecc3663c"
 CANDIDATE = "c144c08bc38fa36deb49c3b2dc3d1de28e5e5dee"
@@ -191,11 +193,13 @@ class TabletGptTcgGraderSyncV370(unittest.TestCase):
                                 candidate375["candidate_commit"],
                             )
                             self.assertEqual(sorted(fifth_hop), sorted(candidate375["watched_paths"]))
-                            self.assertEqual(
-                                [],
-                                watched_paths(successor375, candidate375["candidate_commit"]),
-                                "verified v375 successor has uncovered watched changes",
+                            after375 = watched_paths(
+                                successor375, candidate375["candidate_commit"]
                             )
+                            if after375:
+                                assert_v376_successor(self, after375)
+                            else:
+                                self.assertEqual([], after375)
                         else:
                             self.assertEqual([], after374)
                     else:

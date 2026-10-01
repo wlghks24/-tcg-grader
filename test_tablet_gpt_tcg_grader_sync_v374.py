@@ -4,6 +4,8 @@ from pathlib import Path
 import subprocess
 import unittest
 
+from sync_v376_successor_test_support import assert_v376_successor
+
 import tablet_autonomous_evolution_v374 as autonomy
 
 ROOT = Path(__file__).resolve().parent
@@ -61,8 +63,14 @@ class TabletGptTcgGraderSyncV374(unittest.TestCase):
         self.assertTrue(expected_generation.issubset(set(successor["freshness_watch"]["exclude_paths"])))
         successor_relevant = watched_paths(successor, candidate["base_main_sha"], candidate["candidate_commit"])
         self.assertEqual(sorted(candidate["watched_paths"]), successor_relevant)
-        self.assertEqual(relevant, successor_relevant)
-        self.assertEqual([], watched_paths(successor, candidate["candidate_commit"]))
+        after375 = watched_paths(successor, candidate["candidate_commit"])
+        self.assertEqual(
+            sorted(relevant), sorted(set(successor_relevant) | set(after375))
+        )
+        if after375:
+            assert_v376_successor(self, after375)
+        else:
+            self.assertEqual([], after375)
         subprocess.run(["git", "merge-base", "--is-ancestor", candidate["base_main_sha"], "HEAD"], check=True)
         subprocess.run(["git", "merge-base", "--is-ancestor", candidate["candidate_commit"], "HEAD"], check=True)
 

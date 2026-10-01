@@ -4,6 +4,8 @@ from pathlib import Path
 import subprocess
 import unittest
 
+from sync_v376_successor_test_support import assert_v376_successor
+
 import tablet_autonomous_evolution_v373 as autonomy
 
 ROOT = Path(__file__).resolve().parent
@@ -130,11 +132,21 @@ class TabletGptTcgGraderSyncV373(unittest.TestCase):
                 self.assertEqual(
                     "d7c8577b514abdbbc15ba9323c4c0deb1945efed", sc375["candidate_commit"]
                 )
+                v375_first_hop = watched_paths(
+                    successor, sc["candidate_commit"], sc375["candidate_commit"]
+                )
                 self.assertEqual(
-                    after374,
+                    v375_first_hop,
                     watched_paths(successor375, sc375["base_main_sha"], sc375["candidate_commit"]),
                 )
-                self.assertEqual([], watched_paths(successor375, sc375["candidate_commit"]))
+                after375 = watched_paths(successor375, sc375["candidate_commit"])
+                self.assertEqual(
+                    sorted(after374), sorted(set(v375_first_hop) | set(after375))
+                )
+                if after375:
+                    assert_v376_successor(self, after375)
+                else:
+                    self.assertEqual([], after375)
             else:
                 self.assertEqual([], after374)
             subprocess.run(["git", "merge-base", "--is-ancestor", sc["base_main_sha"], "HEAD"], check=True)
@@ -186,9 +198,16 @@ class TabletGptTcgGraderSyncV373(unittest.TestCase):
             v375_cmd = "python tablet_autonomous_evolution_v375.py --execute-safe-learning --apply-capabilities --train-meta --apply-skills"
             if v374_cmd in main_text:
                 self.assertIn('"tablet_autonomous_evolution_v374.py"', manifest_text)
-            else:
-                self.assertIn(v375_cmd, main_text)
+            elif v375_cmd in main_text:
                 self.assertIn('"tablet_autonomous_evolution_v375.py"', manifest_text)
+            else:
+                v376_cmd = "python tablet_autonomous_evolution_v376.py --execute-safe-learning --apply-capabilities --train-meta --apply-skills"
+                self.assertIn(v376_cmd, main_text)
+                self.assertIn('"tablet_autonomous_evolution_v376.py"', manifest_text)
+                assert_v376_successor(
+                    self,
+                    ["main", "tablet_autonomous_evolution_v376.py", "tablet_runtime_manifest.py"],
+                )
         self.assertIn('"tablet_autonomous_evolution_v373.py"', manifest_text)
         self.assertIn('"tablet_autonomous_evolution_v372.py"', manifest_text)
         self.assertIn('"tablet_autonomous_evolution_v371.py"', manifest_text)
