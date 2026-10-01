@@ -1,5 +1,6 @@
 import hashlib
 import json
+import subprocess
 import unittest
 from pathlib import Path
 
@@ -8,8 +9,9 @@ CONTRACT = ROOT / "TCG_CROSSCHECK" / "TABLET_GPT_TCG_GRADER_SYNC_CONTRACT_V377.j
 DELTA = ROOT / "TCG_CROSSCHECK" / "TABLET_GPT" / "learning_snapshot_v377_delta.json"
 RECEIPT = ROOT / "TCG_CROSSCHECK" / "TCG_GRADER" / "tablet_gpt_learning_receipt_v377.json"
 BASE_SHA = "24cad558d756d57e06a8309c8d5fbc73626f1d45"
-CANDIDATE_SHA = "8e799bb42c94c7d7b73ed1636b9bd7e993343ebb"
+CANDIDATE_SHA = "b1000eb9f155ce343fc3bc59bcc0c35c5efb19c3"
 LESSON_ID = "TABLET-GPT-SINGLE-RUN-AUTONOMY-GUARD-V377"
+EXPECTED_WATCHED = ["main", "tablet_autonomous_evolution_v377.py", "tablet_runtime_manifest.py"]
 
 
 def load(path: Path):
@@ -18,6 +20,20 @@ def load(path: Path):
 
 def digest(value) -> str:
     return hashlib.sha256(json.dumps(value, ensure_ascii=False, sort_keys=True, separators=(",", ":")).encode()).hexdigest()
+
+
+def watched_paths(contract, source, head="HEAD"):
+    watch = contract["freshness_watch"]
+    exact = set(watch["exact_paths"])
+    prefixes = tuple(watch["path_prefixes"])
+    excluded = set(watch["exclude_paths"])
+    changed = subprocess.check_output(
+        ["git", "diff", "--name-only", f"{source}..{head}"], text=True
+    ).splitlines()
+    return sorted(
+        path for path in changed
+        if path not in excluded and (path in exact or path.startswith(prefixes))
+    )
 
 
 class TabletGptTcgGraderSyncV377Tests(unittest.TestCase):
@@ -62,10 +78,13 @@ class TabletGptTcgGraderSyncV377Tests(unittest.TestCase):
         self.assertEqual(364, c["current_required_merge_prs"][-1])
 
     def test_candidate_exactly_covers_supported_runtime_entrypoint(self):
-        c = load(CONTRACT)["candidate_sync"]
+        contract = load(CONTRACT)
+        c = contract["candidate_sync"]
         self.assertEqual(BASE_SHA, c["base_main_sha"])
         self.assertEqual(CANDIDATE_SHA, c["candidate_commit"])
-        self.assertEqual(["main", "tablet_autonomous_evolution_v377.py", "tablet_runtime_manifest.py"], c["watched_paths"])
+        self.assertEqual(EXPECTED_WATCHED, c["watched_paths"])
+        self.assertEqual(EXPECTED_WATCHED, watched_paths(contract, BASE_SHA, CANDIDATE_SHA))
+        self.assertEqual([], watched_paths(contract, CANDIDATE_SHA))
         self.assertTrue(c["requires_exact_watched_path_match"])
         self.assertTrue(c["post_merge_coverage_allowed"])
         main = (ROOT / "main").read_text(encoding="utf-8")
