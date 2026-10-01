@@ -1,0 +1,57 @@
+name: V377 Final Tree Manifest
+on:
+  push:
+    branches: ['fix/tablet-autonomy-single-run-v377']
+permissions:
+  contents: write
+concurrency:
+  group: v377-final-tree-manifest-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  finalize:
+    if: github.actor == github.repository_owner
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+    env:
+      PYTHONDONTWRITEBYTECODE: '1'
+      PYTHONUNBUFFERED: '1'
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97
+        with:
+          python-version: '3.12'
+      - name: Guard exact branch and unchanged main
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$GITHUB_REF_NAME" = "fix/tablet-autonomy-single-run-v377"
+          git fetch origin +refs/heads/main:refs/remotes/origin/main
+          test "$(git rev-parse origin/main)" = "24cad558d756d57e06a8309c8d5fbc73626f1d45"
+          git merge-base --is-ancestor origin/main HEAD
+      - name: Verify V377 autonomy and complete Tablet lineage
+        shell: bash
+        run: |
+          set -euo pipefail
+          python -m py_compile tablet_autonomous_evolution_v377.py sync_v376_successor_test_support.py
+          python -m unittest -v test_tablet_autonomous_evolution_v377.py
+          mapfile -t tests < <(find . -maxdepth 1 -type f -name 'test_tablet_gpt_tcg_grader_sync_v*.py' -printf '%f\n' | sort -V)
+          test "${#tests[@]}" -gt 0
+          python -m unittest -v "${tests[@]}"
+      - name: Remove one-shot and rebuild exact-tree integrity
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git rm -f -- .github/workflows/v377-final-tree-manifest.yml
+          python static_integrity_manifest.py --write integrity_manifest.json
+          python static_integrity_manifest.py --check integrity_manifest.json
+          python fault_injection_healing.py --diagnose
+          python repository_integrity_guard.py
+          python tablet_runtime_manifest.py --check --compile
+          git diff --check
+          git add -A
+          git commit -m 'fix: finalize V377 exact-tree integrity'
+          git push origin "HEAD:${GITHUB_REF_NAME}"
