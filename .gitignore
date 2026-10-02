@@ -183,3 +183,5 @@ tablet_autonomy_v377_report.json
 # v378 100+1000 governed autonomy lock/report are device-local operational evidence.
 .tablet_autonomy_execution_v378.lock
 tablet_autonomy_v378_report.json
+# v379 validated information-exchange governance report is device-local.
+tablet_autonomy_v379_report.json
