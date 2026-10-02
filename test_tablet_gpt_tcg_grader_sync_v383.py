@@ -4,7 +4,7 @@ import subprocess
 import unittest
 from pathlib import Path
 
-from sync_v376_successor_test_support import V384_WATCHED, V385_WATCHED, V386_WATCHED, V387_WATCHED, V388_WATCHED, V389_WATCHED, assert_v383_successor
+from sync_v376_successor_test_support import V384_WATCHED, V385_WATCHED, V386_WATCHED, V387_WATCHED, V388_WATCHED, V389_WATCHED, V390_WATCHED, assert_v383_successor
 
 ROOT = Path(__file__).resolve().parent
 CONTRACT = ROOT / "TCG_CROSSCHECK" / "TABLET_GPT_TCG_GRADER_SYNC_CONTRACT_V383.json"
@@ -76,7 +76,7 @@ class TabletGptTcgGraderSyncV383Tests(unittest.TestCase):
         self.assertEqual(CANDIDATE_SHA, candidate["candidate_commit"])
         self.assertEqual(EXPECTED_WATCHED, candidate["watched_paths"])
         self.assertEqual(EXPECTED_WATCHED, watched_paths(c, BASE_SHA, CANDIDATE_SHA))
-        self.assertEqual(sorted(set(V384_WATCHED) | set(V385_WATCHED) | set(V386_WATCHED) | set(V387_WATCHED) | set(V388_WATCHED) | set(V389_WATCHED)), watched_paths(c, CANDIDATE_SHA))
+        self.assertEqual(sorted(set(V384_WATCHED) | set(V385_WATCHED) | set(V386_WATCHED) | set(V387_WATCHED) | set(V388_WATCHED) | set(V389_WATCHED) | set(V390_WATCHED)), watched_paths(c, CANDIDATE_SHA))
 
     def test_workflow_recovery_is_bounded_and_never_weakens_gate(self):
         workflow = WORKFLOW.read_text(encoding="utf-8")
