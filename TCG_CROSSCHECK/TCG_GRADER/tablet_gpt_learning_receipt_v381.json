@@ -11,7 +11,7 @@
     "TCG_CROSSCHECK/TABLET_GPT/learning_snapshot_v381_delta.json"
   ],
   "prior_lesson_digest_sha256": "8bc7fb12df703f625951c1d51fa08632d9206d7015d870f33f788c4ab228ceae",
-  "delta_lesson_digest_sha256": "0cf1609b97b99dded6507188601b90ffa93a097dd33a60b458b8f33e5109cbf1",
+  "delta_lesson_digest_sha256": "1998962c18badfc1e44942bffd9fe8d2f9c4b8275d6191605475a9df135548f0",
   "accepted_lesson_ids": [
     "TABLET-GPT-DRIFT-AWARE-VERIFIED-OUTCOME-GOVERNANCE-V381"
   ],
@@ -34,7 +34,8 @@
     "v380_gate_cannot_be_bypassed": true,
     "operational_drift_market_direction_free": true,
     "verified_regression_quarantine_required": true,
-    "feature_contracts_non_executable": true
+    "feature_contracts_non_executable": true,
+    "lock_acquisition_failure_fd_cleanup_required": true
   },
   "verification": {
     "contract_version": "v381",
