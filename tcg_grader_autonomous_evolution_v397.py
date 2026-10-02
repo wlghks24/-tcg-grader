@@ -98,6 +98,19 @@ def _clamp(value: float, low: float = 0.0, high: float = 1.0) -> float:
     return max(low, min(high, float(value)))
 
 
+def _finite_or(value: Any, default: float) -> float:
+    parsed = _finite(value)
+    return float(default) if parsed is None else float(parsed)
+
+
+def _first_finite(*values: Any, default: float) -> float:
+    for value in values:
+        parsed = _finite(value)
+        if parsed is not None:
+            return float(parsed)
+    return float(default)
+
+
 def _default_state() -> dict[str, Any]:
     return {
         "schema_version": STATE_SCHEMA_VERSION,
@@ -224,17 +237,17 @@ def self_diagnose(core: dict[str, Any], state: dict[str, Any]) -> dict[str, Any]
     dims = obs.get("dimensions")
     dims = dims if isinstance(dims, dict) else {}
 
-    quality = _clamp(float(_finite(v392.get("quality_score")) or 0.5))
-    drift = _clamp(float(_finite(obs.get("drift")) or 0.0))
-    coverage = _clamp(float(_finite(dims.get("market_coverage")) or 0.5))
-    source_health = _clamp(float(_finite(dims.get("source_health")) or 0.5))
-    neural_consensus = _clamp(float(_finite(dims.get("neural_consensus")) or 0.5))
-    headroom = _clamp(float(
-        _finite(schedule.get("resource_headroom"))
-        or _finite(dims.get("resource_headroom"))
-        or 0.5
+    quality = _clamp(_finite_or(v392.get("quality_score"), 0.5))
+    drift = _clamp(_finite_or(obs.get("drift"), 0.0))
+    coverage = _clamp(_finite_or(dims.get("market_coverage"), 0.5))
+    source_health = _clamp(_finite_or(dims.get("source_health"), 0.5))
+    neural_consensus = _clamp(_finite_or(dims.get("neural_consensus"), 0.5))
+    headroom = _clamp(_first_finite(
+        schedule.get("resource_headroom"),
+        dims.get("resource_headroom"),
+        default=0.5,
     ))
-    degraded = _clamp(float(_finite(source.get("degraded_or_cooldown_ratio")) or 0.0))
+    degraded = _clamp(_finite_or(source.get("degraded_or_cooldown_ratio"), 0.0))
     loss = _finite(sync.get("training_loss"))
     training_examples = max(0, int(sync.get("training_examples") or 0))
     peer_status = str(sync.get("peer_status") or "")
@@ -243,6 +256,8 @@ def self_diagnose(core: dict[str, Any], state: dict[str, Any]) -> dict[str, Any]
     raw: list[tuple[str, float, str]] = []
     if peer_status == "PEER_SUMMARY_REJECTED":
         raw.append(("PEER_SUMMARY_INVALID", 0.98, "hold_peer_mutation_and_revalidate_summary"))
+    if peer_status == "PEER_SUMMARY_MISSING":
+        raw.append(("PEER_SUMMARY_MISSING", 0.46, "refresh_peer_verified_summary_and_continue_local_only"))
     if strong_divergence:
         raw.append(("VERIFIED_PEER_DIVERGENCE", 0.90, "hold_and_collect_more_verified_outcomes"))
     if peer_status == "PEER_SUMMARY_VERIFIED" and training_examples == 0:
@@ -283,6 +298,8 @@ def self_diagnose(core: dict[str, Any], state: dict[str, Any]) -> dict[str, Any]
     top_id = str((top or {}).get("fault_id") or "")
     if top_id in {"PEER_SUMMARY_INVALID", "VERIFIED_PEER_DIVERGENCE"}:
         regime = "MUTUAL_SYNC_RECOVERY"
+    elif top_id == "PEER_SUMMARY_MISSING":
+        regime = "MUTUAL_SYNC_DEGRADED"
     elif top_id == "RESOURCE_PRESSURE":
         regime = "RESOURCE_CONSTRAINED"
     elif top_id in {"MARKET_COVERAGE_DEFICIT", "SOURCE_RELIABILITY_DEFICIT"}:
@@ -320,7 +337,7 @@ def counterfactual_stress_test(core: dict[str, Any], diagnosis: dict[str, Any]) 
     sync = payload.get("mutual_sync")
     sync = sync if isinstance(sync, dict) else {}
     selected = str(sync.get("selected_action") or "") or None
-    stress = _clamp(float(_finite(diagnosis.get("stress_score")) or 0.0))
+    stress = _clamp(_finite_or(diagnosis.get("stress_score"), 0.0))
 
     scenarios = {
         "balanced": (0.56, 0.24, 0.20),
@@ -514,6 +531,7 @@ def remediation_plan(core: dict[str, Any], diagnosis: dict[str, Any]) -> dict[st
     fault_id = str(top.get("fault_id") or "")
     mapping = {
         "PEER_SUMMARY_INVALID": "REVALIDATE_ONLY",
+        "PEER_SUMMARY_MISSING": "REVALIDATE_ONLY",
         "VERIFIED_PEER_DIVERGENCE": "REVALIDATE_ONLY",
         "MUTUAL_TRAINING_EVIDENCE_THIN": "PRIORITIZE_REPAIR_LEARNING",
         "MUTUAL_NEURAL_LOSS_HIGH": "PRIORITIZE_REPAIR_LEARNING",
@@ -566,7 +584,7 @@ def autonomous_gate(
         allow = False
         reasons.append("VERIFIED_NON_RECOVERY_REGRESSION")
 
-    stress = _clamp(float(_finite(diagnosis.get("stress_score")) or 0.0))
+    stress = _clamp(_finite_or(diagnosis.get("stress_score"), 0.0))
     selected = str(stress_test.get("selected_action") or "")
     if (
         allow
