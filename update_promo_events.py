@@ -91,12 +91,21 @@ def canonical_pokemon_kr_card_url(value: str) -> str:
     new.pokemonkorea.co.kr. Only this exact Pokémon Korea alias is allowed.
     """
     value = str(value or "")
-    modern = POKEMON_KR_NEWS
-    for prefix in ("https://pokemoncard.co.kr/card", "https://www.pokemoncard.co.kr/card"):
-        if value.startswith(prefix):
-            return modern + value[len(prefix):]
-    if value in {"https://pokemoncard.co.kr/main", "https://www.pokemoncard.co.kr/main"}:
-        return modern
+    generic = {
+        "https://pokemoncard.co.kr/",
+        "https://www.pokemoncard.co.kr/",
+        "https://pokemoncard.co.kr/main",
+        "https://www.pokemoncard.co.kr/main",
+        "https://pokemoncard.co.kr/card",
+        "https://www.pokemoncard.co.kr/card",
+        "https://new.pokemonkorea.co.kr/card",
+        "https://new.pokemonkorea.co.kr/card/",
+    }
+    if value.rstrip("/") in {item.rstrip("/") for item in generic}:
+        return POKEMON_KR_NEWS
+    # Numeric legacy detail IDs cannot be translated to pokemonkorea.co.kr news IDs.
+    # Keep the original source for provenance; check_existing() performs the
+    # same-company news-index fallback only after a confirmed 404/410.
     return value
 
 
