@@ -114,13 +114,13 @@ class TcgGraderMutualSyncV396Tests(unittest.TestCase):
 
     def test_shared_adapter_uses_verified_reward_history_and_v395_operational_context(self):
         rows = autonomy._shared_candidates(
-            core_fixture(reward=0.44, samples=7, market_mode="COVERAGE_EXPANSION", degraded=0.05)
+            core_fixture(reward=0.44, samples=mutual.MIN_VERIFIED_SAMPLES, market_mode="COVERAGE_EXPANSION", degraded=0.05)
         )
         by_action = {row["action_id"]: row for row in rows}
         self.assertIn("REFRESH_MARKET_DATA", by_action)
         self.assertIn("EXPAND_MARKET_COVERAGE", by_action)
         self.assertIn("RETRY_DEGRADED_SOURCES", by_action)
-        self.assertEqual(7, by_action["REFRESH_MARKET_DATA"]["verified_samples"])
+        self.assertEqual(mutual.MIN_VERIFIED_SAMPLES, by_action["REFRESH_MARKET_DATA"]["verified_samples"])
         self.assertEqual(0.44, by_action["REFRESH_MARKET_DATA"]["reward_mean"])
         self.assertEqual(0.79, by_action["EXPAND_MARKET_COVERAGE"]["score"])
         self.assertEqual(0.59, by_action["RETRY_DEGRADED_SOURCES"]["score"])
