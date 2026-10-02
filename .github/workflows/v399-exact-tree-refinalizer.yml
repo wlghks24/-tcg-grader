@@ -1,0 +1,49 @@
+name: V399 Exact Tree Refinalizer
+on:
+  push:
+    branches:
+      - feature/tablet-autonomous-evolution-v396
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  finalize:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          ref: feature/tablet-autonomous-evolution-v396
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - name: Remove one-shot finalizer from exact tree
+        run: git rm -f .github/workflows/v399-exact-tree-refinalizer.yml
+      - name: Recheck corrected V399 and Deep audit root cause
+        run: |
+          python -m py_compile tablet_autonomous_evolution_v399.py sync_v376_successor_test_support.py
+          node --check tablet_autonomy_dashboard_v399.js
+          python tablet_autonomous_evolution_v399.py --self-test
+          python -m unittest -v             test_tablet_autonomous_evolution_v399.py             test_tablet_autonomy_dashboard_v399.py             test_tablet_gpt_tcg_grader_sync_v392.py
+          python verify_v107_code_audit.py
+          python tablet_runtime_manifest.py --check --compile
+      - name: Rebuild and verify exact-tree integrity manifest
+        run: |
+          python fault_injection_healing.py --manifest
+          python repository_integrity_guard.py
+      - name: Commit exact final tree
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          if git diff --cached --quiet; then
+            echo "No exact-tree changes"
+            exit 0
+          fi
+          git commit -m "ci: refinalize v399 exact tree after runtime-report fix"
+          git push origin HEAD:feature/tablet-autonomous-evolution-v396
