@@ -62,7 +62,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          git add -A -- .github/workflows/v390-exact-tree-finalizer.yml integrity_manifest.json
+          git add -A
           git status --short
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
