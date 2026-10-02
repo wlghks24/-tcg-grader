@@ -11,7 +11,7 @@
     "TCG_CROSSCHECK/TABLET_GPT/learning_snapshot_v380_delta.json"
   ],
   "prior_lesson_digest_sha256": "59248d01be5d0843a882dfd19ac16e99c1fc9302940aafaf4800fb8a76dd7454",
-  "delta_lesson_digest_sha256": "d7533caa41c1ff3cf81361a0694435bf082ecf1c762d58f6e4aabc48c6026fc8",
+  "delta_lesson_digest_sha256": "8bc7fb12df703f625951c1d51fa08632d9206d7015d870f33f788c4ab228ceae",
   "accepted_lesson_ids": [
     "TABLET-GPT-DECISION-SPECIFIC-100-1000-GOVERNANCE-V380"
   ],
