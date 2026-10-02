@@ -1,0 +1,56 @@
+{
+  "schema_version": "1.1-tablet-gpt-tcg-grader-learning-sync",
+  "namespace": "TABLET_GPT",
+  "snapshot_kind": "learning_delta",
+  "run_date_kst": "2026-10-02",
+  "built_at": "2026-10-02T15:20:00+09:00",
+  "status": "finalized",
+  "source_repository": "wlghks24/-tcg-grader",
+  "prior_delta": "TCG_CROSSCHECK/TABLET_GPT/learning_snapshot_v386_delta.json",
+  "prior_lesson_digest_sha256": "1d8f379886360321717032308533d64c61e10f64ad04a955176b9c8cd7d302d7",
+  "source_main_sha": "b5b100f93e8180e81458612b450f9411546463bf",
+  "share_policy": {
+    "explicit_patch_and_learning_lessons_only": true,
+    "chatgpt_model_weights_exported": false,
+    "raw_grading_calibration_shared": false,
+    "device_local_runtime_memory_overwritten": false,
+    "peer_verified_never_auto_promotes_local": true,
+    "mutual_outcome_summary_only": true,
+    "policy_portfolio_summary_only": true
+  },
+  "covered_merges": [
+    {
+      "pr": 385,
+      "version": "v387-uncertainty-aware-mutual-autonomy",
+      "merge_sha": "b5b100f93e8180e81458612b450f9411546463bf"
+    }
+  ],
+  "lesson_digest_sha256": "c629e031276d5bff7cbb817ede6a281dc53d9ef6b822eee2343934b75384b1ca",
+  "lessons": [
+    {
+      "lesson_id": "TABLET-GPT-TCG-GRADER-REGIME-POLICY-PORTFOLIO-AUTONOMY-V388",
+      "subsystem": "tablet_gpt_tcg_grader_regime_policy_portfolio_autonomy",
+      "issue_class": "v387_uncertainty_autonomy_needs_long_horizon_regime_policy_portfolio_resource_budget_and_verified_regression_retirement",
+      "trigger_condition": "V387 can gate uncertainty and operational regime transitions, but it still evaluates each cycle primarily from the current candidate set. It does not maintain a long-horizon per-regime champion/challenger portfolio, conservative verified reward lower bounds, bounded policy quarantine/retirement, or explicit resource budgets for exploration, learning and revalidation.",
+      "prevention_rule": "V388 must preserve V387 as the upstream hard gate, learn portfolio memory only from verified V385 outcome rewards, track short and long reward EWMA plus conservative lower-confidence bounds per operational regime, quarantine or retire repeatedly regressing non-recovery policies, keep recovery actions available, use resource headroom/drift/uncertainty to bound optional learning and exploration, and prioritize source-level feature proposals without executing or generating source code.",
+      "validation_required": [
+        "base main is exactly b5b100f93e8180e81458612b450f9411546463bf",
+        "functional watched-path candidate is exactly 541e8835a93f2534fe49b0fe69ea762a1d897b63",
+        "watched paths are main, tablet_autonomous_evolution_v388.py and tablet_runtime_manifest.py",
+        "main evolve route uses tablet_autonomous_evolution_v388.py with tablet_gpt domain",
+        "tablet runtime manifest includes v388 while preserving v387 and prior controllers",
+        "portfolio memory uses only verified V385 reward rows meeting the minimum verified-sample gate",
+        "policy memory is partitioned by operational regime and never predicts market direction",
+        "short and long reward EWMA plus conservative reward lower-confidence bound are retained",
+        "repeated verified regression quarantines and eventually retires non-recovery policies",
+        "recovery-class actions are never quarantined solely by portfolio regression",
+        "resource critical or high-drift states reduce optional exploration and learning and increase revalidation",
+        "exploration budget is advisory only and can never force execution",
+        "V387 and all earlier hard gates cannot be bypassed",
+        "source-level feature backlog remains non-executable and requires protected PR/CI, regression, integrity, alignment and actual-output validation",
+        "physical Tablet runtime and Drive readback remain unverified until matching external evidence exists"
+      ],
+      "safety_boundary": "V388 adds verified long-horizon policy portfolio memory, resource budgeting and prioritized feature backlog only; it never imports peer model weights/raw state/grading calibration, generates or rewrites source code, executes arbitrary commands, writes Git/main, weakens verification, auto-promotes facts/prices/grades, predicts market direction, or claims physical-device success without evidence."
+    }
+  ]
+}
