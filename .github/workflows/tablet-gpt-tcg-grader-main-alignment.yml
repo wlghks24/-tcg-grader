@@ -224,6 +224,61 @@ jobs:
                   )
                   raise SystemExit(0)
 
+              # actions/checkout checks out GitHub's synthetic PR merge commit by default.
+              # A candidate that exactly covered the watched paths before the PR base
+              # advanced by unrelated/non-watched commits must be evaluated against the
+              # real PR head, not against that synthetic merge commit. Keep this fail-closed:
+              # the candidate must be an ancestor of the real PR head, the source->candidate
+              # watched set must be exact, base advancement must add no watched path, and
+              # no watched path may change again after the candidate on the PR branch.
+              pr_head_sha = payload['pull_request']['head']['sha']
+              candidate_commit = str(candidate.get('candidate_commit') or '')
+              candidate_on_pr_head = bool(candidate_commit) and subprocess.run(
+                  ['git', 'merge-base', '--is-ancestor', candidate_commit, pr_head_sha],
+                  check=False,
+              ).returncode == 0
+              source_to_candidate = (
+                  subprocess.check_output(
+                      ['git', 'diff', '--name-only', f'{source}..{candidate_commit}'],
+                      text=True,
+                  ).splitlines()
+                  if candidate_on_pr_head else []
+              )
+              candidate_watched = {path for path in source_to_candidate if watched(path)}
+              base_advance = subprocess.check_output(
+                  ['git', 'diff', '--name-only', f'{source}..{base_sha}'], text=True
+              ).splitlines()
+              base_advance_watched = {path for path in base_advance if watched(path)}
+              after_candidate = (
+                  subprocess.check_output(
+                      ['git', 'diff', '--name-only', f'{candidate_commit}..{pr_head_sha}'],
+                      text=True,
+                  ).splitlines()
+                  if candidate_on_pr_head else []
+              )
+              after_candidate_watched = {path for path in after_candidate if watched(path)}
+              real_pr_changed = set(subprocess.check_output(
+                  ['git', 'diff', '--name-only', f'{base_sha}..{pr_head_sha}'], text=True
+              ).splitlines())
+              exact_candidate_on_advanced_base = (
+                  source == candidate_base
+                  and candidate.get('post_merge_coverage_allowed') is True
+                  and candidate.get('requires_exact_watched_path_match') is True
+                  and candidate_on_pr_head
+                  and expected_watched == candidate_watched
+                  and not base_advance_watched
+                  and not after_candidate_watched
+                  and generation_files.issubset(real_pr_changed)
+              )
+              if exact_candidate_on_advanced_base:
+                  print(
+                      f'TABLET_GPT_PR_EXACT_CANDIDATE_ON_ADVANCED_BASE_COVERED '
+                      f'version=v{version} source={source} base={base_sha} '
+                      f'candidate={candidate_commit} pr_head={pr_head_sha} '
+                      f'watched_changes={len(expected_watched)}'
+                  )
+                  raise SystemExit(0)
+
           # A verified candidate may cover the first mainline merge after its source. It remains
           # valid across later non-watched commits, but any later watched-path touch invalidates it.
           if event_name != 'pull_request' and relevant and candidate:
