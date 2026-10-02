@@ -5,7 +5,7 @@ import unittest
 from pathlib import Path
 
 import tablet_autonomous_evolution_v385 as autonomy
-from sync_v376_successor_test_support import assert_v384_successor
+from sync_v376_successor_test_support import V385_WATCHED, assert_v384_successor, assert_v385_successor
 
 ROOT = Path(__file__).resolve().parent
 CONTRACT = ROOT / "TCG_CROSSCHECK" / "TABLET_GPT_TCG_GRADER_SYNC_CONTRACT_V384.json"
@@ -99,7 +99,8 @@ class TabletGptTcgGraderSyncV384Tests(unittest.TestCase):
         self.assertEqual(CANDIDATE_SHA, candidate["candidate_commit"])
         self.assertEqual(EXPECTED_WATCHED, candidate["watched_paths"])
         self.assertEqual(EXPECTED_WATCHED, watched_paths(c, BASE_SHA, CANDIDATE_SHA))
-        self.assertEqual([], watched_paths(c, CANDIDATE_SHA))
+        self.assertEqual(V385_WATCHED, watched_paths(c, CANDIDATE_SHA))
+        assert_v385_successor(self)
 
     def test_main_and_runtime_manifest_delegate_to_verified_v386_successor(self):
         main = (ROOT / "main").read_text(encoding="utf-8")
