@@ -225,3 +225,9 @@ tablet_autonomy_goal_plan_v390.json
 tcg_grader_autonomy*.json
 tcg_grader_autonomy*.jsonl
 tcg_grader_autonomy*.json.lock
+
+# V391 Tablet GPT self-diagnosis/stress/lifecycle state is device-local.
+.tablet_autonomy_v391_state.json
+.tablet_autonomy_execution_v391.lock
+tablet_autonomy_v391_report.json
+tablet_autonomy_improvement_plan_v391.json
