@@ -1,4 +1,4 @@
-import json, tempfile, unittest
+import json, stat, tempfile, unittest
 from copy import deepcopy
 from datetime import datetime, timezone
 from pathlib import Path
@@ -21,6 +21,11 @@ class V381Tests(unittest.TestCase):
   c=v381.challenger(healthy()); self.assertTrue(c["available"]); self.assertFalse(c["auto_execute"]); fs=v381.contracts(healthy()); self.assertEqual(1,len(fs)); self.assertFalse(fs[0]["auto_execute"]); self.assertFalse(fs[0]["auto_generate_source"]); self.assertTrue(fs[0]["protected_pr_ci_required"]); self.assertEqual(["targeted_tests","related_regression","full_current_runtime","repository_integrity","tablet_gpt_alignment","actual_output_validation"],fs[0]["acceptance_sequence"])
  def test_v380_hold_never_bypassed(self):
   b=healthy(); b["autonomous_decision"]={"allow_execution":False,"hard_blockers":["TEST"]}; g=v381.gate(b,v381._default(),{"level":"LOW","score":0},v381.reliability(b),v381.kpis(b),NOW); self.assertEqual("V381_UPSTREAM_HOLD",g["status"]); self.assertFalse(g["allow_execution"])
+ def test_lock_contention_closes_open_fd(self):
+  fake_info=type("Info",(),{"st_mode":stat.S_IFREG|0o600})()
+  with mock.patch.object(v381.os,"open",return_value=123), mock.patch.object(v381.os,"fstat",return_value=fake_info), mock.patch.object(v381.os,"fchmod"), mock.patch.object(v381.fcntl,"flock",side_effect=BlockingIOError), mock.patch.object(v381.os,"close") as close:
+   fd,status=v381._lock(Path("/tmp/v381-test-lock"))
+  self.assertIsNone(fd); self.assertEqual("V381_CONCURRENT_AUTONOMY_HOLD",status); close.assert_called_once_with(123)
  def test_blocked_cycle_only_previews(self):
   b=healthy(); b["autonomous_decision"]={"allow_execution":False,"hard_blockers":["TEST"]}
   with tempfile.TemporaryDirectory() as td, mock.patch.object(v381.v380,"run_cycle",return_value=b) as core:
