@@ -1,0 +1,49 @@
+{
+  "schema_version": "1.1-tablet-gpt-tcg-grader-learning-sync",
+  "namespace": "TABLET_GPT",
+  "snapshot_kind": "learning_delta",
+  "run_date_kst": "2026-10-02",
+  "built_at": "2026-10-02T12:48:00+09:00",
+  "status": "finalized",
+  "source_repository": "wlghks24/-tcg-grader",
+  "prior_delta": "TCG_CROSSCHECK/TABLET_GPT/learning_snapshot_v383_delta.json",
+  "prior_lesson_digest_sha256": "2833ab5f9b44468667ce7328eb84fb62bffaedb1b5f6c62fa0db8ef634a9323a",
+  "source_main_sha": "abb26d452696d91fd71ea46ea53c78f1af78a7c1",
+  "share_policy": {
+    "explicit_patch_and_learning_lessons_only": true,
+    "chatgpt_model_weights_exported": false,
+    "raw_grading_calibration_shared": false,
+    "device_local_runtime_memory_overwritten": false,
+    "peer_verified_never_auto_promotes_local": true
+  },
+  "covered_merges": [
+    {
+      "pr": 377,
+      "version": "v384-pokemon-jp-event-verification-base",
+      "merge_sha": "abb26d452696d91fd71ea46ea53c78f1af78a7c1"
+    }
+  ],
+  "lesson_digest_sha256": "0e2bc7f01603430d91d6ed30699786ab8e51e197c3d73e523dfa2a9e2079d85a",
+  "lessons": [
+    {
+      "lesson_id": "TABLET-GPT-POKEMON-JP-OFFICIAL-INDEX-EVENT-VERIFICATION-V384",
+      "subsystem": "promo_event_official_source_verification",
+      "issue_class": "official_pokemon_jp_detail_response_can_be_sparse_while_the_same_official_index_still_corroborates_the_exact_event_link_and_title",
+      "trigger_condition": "The V383 Drive package remained correctly fail-closed because the Pokémon Team Masters detail fetch returned content that did not contain the stored event identity tokens, producing a structural 행사명 확인 실패 even though the same official Pokémon news index still listed the exact detail URL and event title.",
+      "prevention_rule": "V384 keeps direct detail verification primary and permits a fallback only for https://www.pokemon-card.com/info/NNNNNN.html when the same official /info/ index contains an HTTPS anchor resolving to that exact detail path and the anchor label contains an already-derived event identity token; wrong links, title mismatches, unapproved hosts, fetch failures, or ambiguous evidence remain fail-closed.",
+      "validation_required": [
+        "base main is exactly abb26d452696d91fd71ea46ea53c78f1af78a7c1",
+        "functional candidate commit is exactly a6e1a7f1e63b5c26537c1a0dbb1c226d7f070a9f",
+        "V384 introduces no new watched-path runtime drift because update_promo_events.py is outside the Tablet GPT freshness watch",
+        "direct detail-page token verification remains the primary path",
+        "fallback is limited to www.pokemon-card.com /info/NNNNNN.html detail URLs",
+        "fallback requires the same official index to contain the exact resolved detail path",
+        "fallback requires an existing event identity token in the official anchor label",
+        "wrong detail links remain rejected even when the title text matches",
+        "unapproved hosts, parser failures, network failures, and ambiguous evidence remain rejected",
+        "physical Tablet runtime and Drive readback remain unverified until matching external evidence exists"
+      ],
+      "safety_boundary": "V384 strengthens official-source corroboration without weakening freshness, collection, access-control, data-integrity, or upload gates and does not claim physical-device or Drive success."
+    }
+  ]
+}
