@@ -133,11 +133,12 @@ class TabletAutonomousEvolutionV381Tests(unittest.TestCase):
 
     def test_information_exchange_memory_is_summary_only(self):
         memory = v381.information_exchange_memory(healthy_preview())
-        encoded = json.dumps(memory, sort_keys=True)
         self.assertTrue(memory["summary_only"])
         self.assertFalse(memory["raw_peer_lessons_persisted"])
-        self.assertNotIn("fix_pattern", encoded)
-        self.assertNotIn("lessons", encoded)
+        self.assertNotIn("fix_pattern", memory)
+        self.assertNotIn("lessons", memory)
+        self.assertNotIn("raw_peer_content", memory)
+        self.assertNotIn("card_facts", memory)
 
     def test_corrupt_policy_memory_blocks_before_mutating_v380(self):
         preview = healthy_preview()
