@@ -10,7 +10,7 @@ CONTRACT=ROOT/"TCG_CROSSCHECK/TABLET_GPT_TCG_GRADER_SYNC_CONTRACT_V381.json"
 DELTA=ROOT/"TCG_CROSSCHECK/TABLET_GPT/learning_snapshot_v381_delta.json"
 RECEIPT=ROOT/"TCG_CROSSCHECK/TCG_GRADER/tablet_gpt_learning_receipt_v381.json"
 BASE="108adece2681783ddb46f6911da345bdb938c0cd"
-CANDIDATE="f6e9557c4d528c0282b7cefebcee2609700ab5cd"
+CANDIDATE="f1e5987233b5ec4801e974ed4256206dd1d06998"
 LESSON="TABLET-GPT-DRIFT-AWARE-VERIFIED-OUTCOME-GOVERNANCE-V381"
 
 def load(path): return json.loads(path.read_text(encoding="utf-8"))
@@ -31,7 +31,7 @@ class TabletGptTcgGraderSyncV381Tests(unittest.TestCase):
   self.assertFalse(r["verification"]["physical_tablet_runtime_verified"]); self.assertFalse(r["verification"]["physical_drive_readback_verified"])
  def test_fail_closed_v381_rules(self):
   c=load(CONTRACT); rules=c["rules"]
-  for key in ("multi_objective_verified_feedback_governor_required","operational_concept_drift_detection_required","operational_drift_must_not_infer_market_direction","verified_history_confidence_bound_required","verified_regression_quarantine_required","shadow_challenger_advisory_only","feature_contracts_non_executable","feature_contracts_require_protected_pr_ci","v380_gate_cannot_be_bypassed","decision_specific_100_senior_matrix_required","decision_specific_1000_review_cells_required","information_exchange_conflict_blocks_mutation","single_mutating_cycle_lock_required","autonomous_source_code_generation_forbidden","autonomous_git_write_forbidden","autonomous_verification_bypass_forbidden","autonomous_price_or_grade_invention_forbidden","physical_tablet_and_drive_results_must_not_be_invented"):
+  for key in ("multi_objective_verified_feedback_governor_required","operational_concept_drift_detection_required","operational_drift_must_not_infer_market_direction","verified_history_confidence_bound_required","verified_regression_quarantine_required","shadow_challenger_advisory_only","feature_contracts_non_executable","feature_contracts_require_protected_pr_ci","v380_gate_cannot_be_bypassed","decision_specific_100_senior_matrix_required","decision_specific_1000_review_cells_required","information_exchange_conflict_blocks_mutation","single_mutating_cycle_lock_required","autonomous_source_code_generation_forbidden","autonomous_git_write_forbidden","autonomous_verification_bypass_forbidden","autonomous_price_or_grade_invention_forbidden","physical_tablet_and_drive_results_must_not_be_invented","lock_acquisition_failure_must_close_fd"):
    self.assertIs(rules[key],True,key)
   self.assertTrue(autonomy.SAFETY["multi_objective_verified_feedback_governor"])
   self.assertTrue(autonomy.SAFETY["v380_gate_cannot_be_bypassed"])
