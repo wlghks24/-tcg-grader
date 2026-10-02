@@ -529,8 +529,16 @@ def main() -> int:
             "shared_verified_actions": payload.get("shared_verified_actions"),
         }, ensure_ascii=False, sort_keys=True))
     return 2 if (
-        bool(execute or apply_capabilities or train_meta or apply_skills)
-        and (result.get("tcg_grader_autonomy_v396") or {}).get("mutual_sync", {}).get("gate", {}).get("allow_execution") is not True
+        bool(
+            args.execute_safe_learning
+            or args.apply_capabilities
+            or args.train_meta
+            or args.apply_skills
+        )
+        and (result.get("tcg_grader_autonomy_v396") or {})
+        .get("mutual_sync", {})
+        .get("gate", {})
+        .get("allow_execution") is not True
     ) else 0
 
 
