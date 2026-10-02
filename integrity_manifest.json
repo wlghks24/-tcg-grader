@@ -1,7 +1,7 @@
 {
   "version": 2,
   "engine": "v109-card-identity-ocr-learning",
-  "generated_at": "2026-10-02T02:28:00Z",
+  "generated_at": "2026-10-02T02:43:00Z",
   "files": {
     "_audit_progress.py": {
       "sha256": "e4561a89779fc9c8f4b4d474bc2ce4285b65174eb29a6bf20f47a5e30456d674",
@@ -470,10 +470,6 @@
     ".github/workflows/workflow-publish-safety-v363.yml": {
       "sha256": "56feef879d543e0972d21b2f83096f8cd6e17fc89296c82f9efabf774d13693e",
       "bytes": 3863
-    },
-    ".gitignore": {
-      "sha256": "fc4aa0b97194ce300b6cb66cfaa5d26e8e27c73c57b492ea99b58de253c5c580",
-      "bytes": 7255
     },
     "adaptive_collection_learner.py": {
       "sha256": "87c03074db9f8599e9b4ae197869d127c8ae955d3be71b10f441800239b7cd4a",
@@ -1643,10 +1639,6 @@
       "sha256": "4fa7e5f614d43372d3667d54c4dc5816966ac32c9aa414261a5d65e0c4916264",
       "bytes": 763
     },
-    "main": {
-      "sha256": "7aa26829877f80f515974999c76dc8af0dfd75298de8e5b21f2f8befb54fcbe5",
-      "bytes": 3312
-    },
     "main_branch_protection_audit.py": {
       "sha256": "f81ad7829bfb6692cce2e9ce622fbb267cc16d4fff351a7822608cf5a0466e82",
       "bytes": 3677
@@ -2100,8 +2092,8 @@
       "bytes": 13282
     },
     "sync_v376_successor_test_support.py": {
-      "sha256": "7dc5d95fd91d8a6518b829eafb7bf8206c53f8e1a769408d98744cd09d90ad79",
-      "bytes": 16022
+      "sha256": "6f3367af06b023ca80655f4442a2d268e9c422c2ef98ff0c2461ad16f538bbf7",
+      "bytes": 16055
     },
     "tablet_autonomous_evolution_v371.py": {
       "sha256": "cb794bc11ca5c9518a1f37a23e379f9dc192ac417829a70d9d9ce9b50468111b",
@@ -3980,8 +3972,8 @@
       "bytes": 5891
     },
     "test_tablet_gpt_tcg_grader_sync_v377.py": {
-      "sha256": "f7402dacf8a02b0b618573a618a176db5b46f60aa6bac6f673bed3b7e10055a8",
-      "bytes": 5015
+      "sha256": "5ca7ce21f7b0ebb120bde9ccb33a3385d20806b6fd017812f61cbc6afca56200",
+      "bytes": 5054
     },
     "test_tablet_gpt_tcg_grader_sync_v378.py": {
       "sha256": "e7c83c11f2105d1f15887585225a37e79b85d54bcdb57d5299eddbaa52445ef1",
