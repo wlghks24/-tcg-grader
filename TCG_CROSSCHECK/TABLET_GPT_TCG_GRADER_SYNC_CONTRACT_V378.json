@@ -1,0 +1,100 @@
+{
+  "schema_version": "1.1-tablet-gpt-tcg-grader-learning-sync",
+  "purpose": "bind v378 100+1000 quality-governed autonomy to an exact successor generation without weakening v377 single-run locking, v376 transactional evidence, verified-only neural learning, protected-main, provenance, market-freshness, or physical-device boundaries",
+  "prior_contract": "TCG_CROSSCHECK/TABLET_GPT_TCG_GRADER_SYNC_CONTRACT_V377.json",
+  "prior_delta_snapshot": "TCG_CROSSCHECK/TABLET_GPT/learning_snapshot_v377_delta.json",
+  "delta_snapshot": "TCG_CROSSCHECK/TABLET_GPT/learning_snapshot_v378_delta.json",
+  "receiver_receipt": "TCG_CROSSCHECK/TCG_GRADER/tablet_gpt_learning_receipt_v378.json",
+  "verification_test": "test_tablet_gpt_tcg_grader_sync_v378.py",
+  "rules": {
+    "base_snapshot_is_append_only_history": true,
+    "delta_lesson_digest_must_match": true,
+    "combined_lesson_id_set_must_match": true,
+    "delta_source_main_sha_must_match_receipt": true,
+    "covered_patch_commits_must_be_ancestors_of_current_head": true,
+    "watched_changes_after_delta_source_main_must_report_stale_on_main": true,
+    "pull_request_freshness_check_is_nonblocking": false,
+    "historical_generation_successor_delegation_requires_strictly_newer_verified_generation": true,
+    "protected_main_candidate_branch_required": true,
+    "required_checks_must_succeed_before_merge": true,
+    "direct_main_push_forbidden": true,
+    "force_or_admin_bypass_forbidden": true,
+    "freshness_threshold_widening_forbidden": true,
+    "autonomous_learning_allowlisted_only": true,
+    "existing_verified_model_training_gates_must_remain_enforced": true,
+    "neural_models_remain_advisory": true,
+    "hundred_senior_prep_required_before_mutating_autonomy": true,
+    "thousand_review_cells_required_before_mutating_autonomy": true,
+    "hard_blocker_cannot_be_outvoted": true,
+    "quality_governor_may_hold_but_never_bypass": true,
+    "market_recovery_must_remain_bounded": true,
+    "declarative_self_added_functions_allowlisted_only": true,
+    "source_level_gap_requires_normal_pr_ci": true,
+    "prior_evidence_commit_required_before_new_execution": true,
+    "ambiguous_execution_retry_forbidden": true,
+    "execution_journal_fail_closed": true,
+    "single_mutating_cycle_lock_required": true,
+    "concurrent_mutating_cycle_fail_closed": true,
+    "concurrent_mutating_cycle_state_write_forbidden": true,
+    "concurrent_mutating_cycle_execution_forbidden": true,
+    "sanitized_exchange_capsule_required": true,
+    "autonomous_source_code_generation_forbidden": true,
+    "autonomous_source_code_rewrite_forbidden": true,
+    "autonomous_arbitrary_command_execution_forbidden": true,
+    "autonomous_git_write_forbidden": true,
+    "autonomous_verification_bypass_forbidden": true,
+    "autonomous_trust_or_fact_promotion_forbidden": true,
+    "autonomous_price_or_grade_invention_forbidden": true,
+    "market_direction_invention_forbidden": true,
+    "autonomous_market_stale_or_invalid_is_hold": true,
+    "failed_learning_must_keep_existing_model": true,
+    "device_local_learning_memory_blind_overwrite_forbidden": true,
+    "physical_tablet_and_drive_results_must_not_be_invented": true
+  },
+  "current_required_merge_prs": [
+    206, 207, 208, 209, 210, 213, 216, 217, 218, 227, 230, 234, 238, 243, 245, 249,
+    263, 273, 278, 279, 282, 283, 284, 285, 286, 287, 288, 289, 290, 291, 292, 293,
+    294, 297, 299, 301, 302, 303, 304, 305, 306, 307, 308, 309, 310, 312, 313, 314,
+    316, 318, 320, 321, 322, 324, 325, 328, 329, 330, 331, 333, 334, 335, 337, 338,
+    340, 341, 342, 345, 346, 348, 351, 352, 353, 355, 357, 359, 360, 361, 362, 364, 365
+  ],
+  "prior_required_lesson_count": 70,
+  "delta_required_lesson_count": 1,
+  "current_required_lesson_count": 71,
+  "freshness_watch": {
+    "schedule_cron_utc": "17 */6 * * *",
+    "exact_paths": [
+      "main", "index.html", "server_v99.py", "service-worker.js", "sw.js", "tablet_runtime_manifest.py",
+      "multi_market_price_collector.py", "card_identity_recognition.js", "card_metadata_classifier_v326.js",
+      "grade_market_flow.js", "pokemon_generation_flow.js", "generation_classifier.js", "fault_injection_healing.py",
+      "verify_current_runtime.py", "ui_tablet_refine_v122.css", "ui_app_shell_v272.css", "ui_app_shell_v272.js",
+      ".github/workflows/tcg-static-data-refresh.yml", ".github/workflows/gpt-tcg-drive-package.yml"
+    ],
+    "path_prefixes": [
+      "tablet_", "TABLET_", "card_", "grading_", "grade_", "ocr_", "vision_", "multi_market_",
+      "generation_", "server_", "tcg_updater", "safe_runtime", "verified_", "fault_",
+      ".github/workflows/tablet-", ".github/workflows/runtime-"
+    ],
+    "exclude_paths": [
+      ".github/workflows/tablet-gpt-tcg-grader-main-alignment.yml",
+      "integrity_manifest.json",
+      "TCG_CROSSCHECK/TABLET_GPT_TCG_GRADER_SYNC_CONTRACT_V378.json",
+      "TCG_CROSSCHECK/TABLET_GPT/learning_snapshot_v378_delta.json",
+      "TCG_CROSSCHECK/TCG_GRADER/tablet_gpt_learning_receipt_v378.json",
+      "test_tablet_gpt_tcg_grader_sync_v378.py"
+    ]
+  },
+  "candidate_sync": {
+    "base_main_sha": "e318e7995eb35363256901197413f34aea4facb1",
+    "candidate_commit": "03cd6a1a66baef13697ca9b6614bb8510a50c3fd",
+    "watched_paths": ["main", "tablet_autonomous_evolution_v378.py", "tablet_runtime_manifest.py"],
+    "generation_files": [
+      "TCG_CROSSCHECK/TABLET_GPT_TCG_GRADER_SYNC_CONTRACT_V378.json",
+      "TCG_CROSSCHECK/TABLET_GPT/learning_snapshot_v378_delta.json",
+      "TCG_CROSSCHECK/TCG_GRADER/tablet_gpt_learning_receipt_v378.json",
+      "test_tablet_gpt_tcg_grader_sync_v378.py"
+    ],
+    "requires_exact_watched_path_match": true,
+    "post_merge_coverage_allowed": true
+  }
+}
