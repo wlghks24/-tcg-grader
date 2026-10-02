@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import datetime as dt
 import json
+import urllib.error
 import os
 import tempfile
 import unittest
@@ -148,13 +149,13 @@ class Operational0600RefreshV25Tests(unittest.TestCase):
     def test_retired_pokemon_routes_are_replaced(self):
         self.assertEqual(
             update_promo_events.INDEXES[2][2],
-            "https://pokemoncard.co.kr/main",
+            "https://pokemonkorea.co.kr/news/2",
         )
         self.assertEqual(
             update_promo_events.OFFICIAL_SOURCE_REPLACEMENTS[
                 "https://pokemonkorea.co.kr/2026_battle_tournament3"
             ],
-            "https://pokemoncard.co.kr/main",
+            "https://pokemonkorea.co.kr/news/2",
         )
 
     def test_retired_pokemon_detail_urls_migrate_without_losing_detail_id(self):
@@ -168,13 +169,13 @@ class Operational0600RefreshV25Tests(unittest.TestCase):
             update_promo_events.canonical_pokemon_kr_card_url(
                 "https://new.pokemonkorea.co.kr/card"
             ),
-            "https://pokemoncard.co.kr/card",
+            "https://pokemonkorea.co.kr/news/2",
         )
 
     def test_pokemon_kr_event_uses_same_company_collection_fallback(self):
         tracker = dict(update_promo_events.KR_MOVIE_TRACKERS[0])
-        self.assertEqual(tracker["source"], "https://pokemoncard.co.kr/main")
-        self.assertEqual(tracker["collection_source"], "https://pokemoncard.co.kr/main")
+        self.assertEqual(tracker["source"], "https://pokemonkorea.co.kr/news/2")
+        self.assertEqual(tracker["collection_source"], "https://pokemonkorea.co.kr/news/2")
         self.assertEqual(tracker["source"], tracker["collection_source"])
         with mock.patch.object(
             update_promo_events,
@@ -183,7 +184,7 @@ class Operational0600RefreshV25Tests(unittest.TestCase):
         ) as mocked:
             checked, error = update_promo_events.check_existing(tracker)
         self.assertIsNone(error)
-        self.assertEqual(mocked.call_args_list[0].args[0], "https://pokemoncard.co.kr/main")
+        self.assertEqual(mocked.call_args_list[0].args[0], "https://pokemonkorea.co.kr/news/2")
         self.assertEqual(checked["verification_status"], "secondary_reachable")
 
     def test_pokemon_kr_dynamic_detail_falls_back_to_same_company_event_index(self):
@@ -207,13 +208,44 @@ class Operational0600RefreshV25Tests(unittest.TestCase):
         self.assertIsNone(error)
         self.assertEqual(
             [call.args[0] for call in mocked.call_args_list],
-            ["https://pokemoncard.co.kr/card/969", "https://pokemoncard.co.kr/card"],
+            ["https://pokemoncard.co.kr/card/969", "https://pokemonkorea.co.kr/news/2"],
         )
         self.assertEqual(
             checked["collection_fallback_source"],
-            "https://pokemoncard.co.kr/card",
+            "https://pokemonkorea.co.kr/news/2",
         )
         self.assertIn("collection_fallback_checked_at", checked)
+
+    def test_pokemon_kr_retired_detail_410_recovers_only_through_current_official_news(self):
+        item = {
+            "game": "포켓몬 카드",
+            "region": "KR",
+            "category": "event",
+            "name_ko": "「Pokémon Team Masters」 개최 결정!",
+            "name_native": "「Pokémon Team Masters」 개최 결정!",
+            "source": "https://pokemoncard.co.kr/card/969",
+        }
+        gone = urllib.error.HTTPError(
+            item["source"], 410, "Gone", hdrs=None, fp=None
+        )
+        with mock.patch.object(
+            update_promo_events,
+            "fetch",
+            side_effect=[
+                gone,
+                "<html><body>공식뉴스 「Pokémon Team Masters」 개최 결정!</body></html>",
+            ],
+        ) as mocked:
+            checked, error = update_promo_events.check_existing(item)
+        self.assertIsNone(error)
+        self.assertEqual(
+            [call.args[0] for call in mocked.call_args_list],
+            [item["source"], "https://pokemonkorea.co.kr/news/2"],
+        )
+        self.assertEqual(
+            checked["collection_fallback_source"],
+            "https://pokemonkorea.co.kr/news/2",
+        )
 
     def test_pokemon_kr_dynamic_detail_still_fails_closed_when_index_lacks_title(self):
         item = {
