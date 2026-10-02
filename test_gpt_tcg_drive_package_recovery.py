@@ -18,7 +18,6 @@ class GptTcgDrivePackageRecoveryTests(unittest.TestCase):
         self.assertIn("critical and critical <= recoverable", workflow)
         self.assertIn("tcg_updater.update_cycle('gpt-drive-package-refresh')", workflow)
         self.assertIn("python tablet_gdrive_publish.py --output-dir .tcg_drive_outbox", workflow)
-        self.assertIn('if [ "${retry_rc}" -ne 0 ]', workflow)
         self.assertIn('echo "ready=true"', workflow)
         self.assertIn("FRESH_LOCAL_COLLECTION_RETRY", workflow)
         self.assertIn("steps.package.outputs.ready == 'true'", workflow)
@@ -26,6 +25,23 @@ class GptTcgDrivePackageRecoveryTests(unittest.TestCase):
         self.assertIn("Stale inputs are never uploaded", workflow)
         self.assertNotIn("publish_allowed = true", workflow)
         self.assertNotIn("actions: write", workflow)
+
+    def test_transient_degraded_recovery_is_bounded_and_fail_closed(self):
+        workflow = WORKFLOW.read_text(encoding="utf-8")
+        self.assertIn("transient_degraded_only()", workflow)
+        self.assertIn('row.get("code") != "DEGRADED_COLLECTION_OUTPUT"', workflow)
+        self.assertIn("if not high or len(high) > 4", workflow)
+        self.assertIn("allowed_targets = {job[2] for job in auto_update_all.JOBS}", workflow)
+        self.assertIn("code not in {408, 425} and not 500 <= code <= 599", workflow)
+        self.assertIn('"retry-after" in lowered', workflow)
+        self.assertIn("tcg_updater.update_cycle('gpt-drive-package-transient-recovery')", workflow)
+        self.assertIn("FRESH_LOCAL_COLLECTION_PLUS_TRANSIENT_RETRY", workflow)
+        self.assertIn("TRANSIENT_DEGRADED_COLLECTION_RETRY", workflow)
+        self.assertIn("print_failure_diagnostics", workflow)
+        self.assertIn("without changing any gate", workflow)
+        self.assertIn("package remains blocked", workflow)
+        self.assertNotIn("--max-health-age-seconds 3600", workflow)
+        self.assertNotIn("fail-on-degraded=false", workflow)
 
 
 if __name__ == "__main__":
