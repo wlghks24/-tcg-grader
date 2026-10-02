@@ -5,7 +5,7 @@ import unittest
 from pathlib import Path
 
 import tablet_autonomous_evolution_v385 as autonomy
-from sync_v376_successor_test_support import V385_WATCHED, V386_WATCHED, V387_WATCHED, V388_WATCHED, V389_WATCHED, V390_WATCHED, assert_v384_successor, assert_v385_successor
+from sync_v376_successor_test_support import V385_WATCHED, V386_WATCHED, V387_WATCHED, V388_WATCHED, V389_WATCHED, V390_WATCHED, V391_WATCHED, assert_v384_successor, assert_v385_successor
 
 ROOT = Path(__file__).resolve().parent
 CONTRACT = ROOT / "TCG_CROSSCHECK" / "TABLET_GPT_TCG_GRADER_SYNC_CONTRACT_V384.json"
@@ -99,7 +99,7 @@ class TabletGptTcgGraderSyncV384Tests(unittest.TestCase):
         self.assertEqual(CANDIDATE_SHA, candidate["candidate_commit"])
         self.assertEqual(EXPECTED_WATCHED, candidate["watched_paths"])
         self.assertEqual(EXPECTED_WATCHED, watched_paths(c, BASE_SHA, CANDIDATE_SHA))
-        self.assertEqual(sorted(set(V385_WATCHED) | set(V386_WATCHED) | set(V387_WATCHED) | set(V388_WATCHED) | set(V389_WATCHED) | set(V390_WATCHED)), watched_paths(c, CANDIDATE_SHA))
+        self.assertEqual(sorted(set(V385_WATCHED) | set(V386_WATCHED) | set(V387_WATCHED) | set(V388_WATCHED) | set(V389_WATCHED) | set(V390_WATCHED) | set(V391_WATCHED)), watched_paths(c, CANDIDATE_SHA))
         assert_v385_successor(self)
 
     def test_main_and_runtime_manifest_delegate_to_verified_v387_successor(self):
