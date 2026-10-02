@@ -1,0 +1,54 @@
+{
+  "schema_version": "1.1-tablet-gpt-tcg-grader-learning-sync",
+  "namespace": "TABLET_GPT",
+  "snapshot_kind": "learning_delta",
+  "run_date_kst": "2026-10-02",
+  "built_at": "2026-10-02T09:46:35+09:00",
+  "status": "finalized",
+  "source_repository": "wlghks24/-tcg-grader",
+  "prior_delta": "TCG_CROSSCHECK/TABLET_GPT/learning_snapshot_v379_delta.json",
+  "prior_lesson_digest_sha256": "59248d01be5d0843a882dfd19ac16e99c1fc9302940aafaf4800fb8a76dd7454",
+  "source_main_sha": "6a1006cc699133f0bf8a5b1e4ee40db01ffa605b",
+  "share_policy": {
+    "explicit_patch_and_learning_lessons_only": true,
+    "chatgpt_model_weights_exported": false,
+    "raw_grading_calibration_shared": false,
+    "device_local_runtime_memory_overwritten": false,
+    "peer_verified_never_auto_promotes_local": true
+  },
+  "covered_merges": [
+    {
+      "pr": 368,
+      "version": "v380-decision-specific-100-1000-governance-base",
+      "merge_sha": "6a1006cc699133f0bf8a5b1e4ee40db01ffa605b"
+    }
+  ],
+  "lesson_digest_sha256": "bd40117fc65838ecfffaaa78e147b0c5a5b28d6fafe3f1983cabccfcda4047e2",
+  "lessons": [
+    {
+      "lesson_id": "TABLET-GPT-DECISION-SPECIFIC-100-1000-GOVERNANCE-V380",
+      "subsystem": "tablet_gpt_decision_specific_autonomous_governance",
+      "issue_class": "static_100_plus_1000_policy_not_computed_for_each_autonomous_decision",
+      "trigger_condition": "V379 preserves static 100+1000 policy validation and safe information exchange, but the current mutation candidate is not yet scored through an explicit 100-perspective preparation matrix and 25x40=1000-cell decision matrix before execution",
+      "prevention_rule": "V380 must preview V379 without mutation, compute exactly 100 senior-preparation perspectives and 1000 review cells from current policy/safety/evidence/state/market/neural/resource/recovery/candidate/proposal signals, combine the matrix with the validated V379 information-exchange neural council, fail closed on any hard blocker or low-confidence non-recovery action, and only then delegate a bounded mutation to V379; source-level new functions remain proposal-only behind protected PR/CI",
+      "validation_required": [
+        "base main is exactly 6a1006cc699133f0bf8a5b1e4ee40db01ffa605b",
+        "functional candidate commit is exactly 888e596a789a0f5aeec5f3b9eb3ffd2ded2304d0",
+        "main evolve route uses tablet_autonomous_evolution_v380.py",
+        "tablet runtime manifest includes v380 while preserving v379 v378 v377 and v376",
+        "every mutating V380 cycle first previews V379 without applying capabilities meta training skills or execution",
+        "decision matrix computes exactly 100 preparation perspectives and 25x40=1000 expert review cells",
+        "review matrix digests are deterministic and included in the runtime decision evidence",
+        "V379 information-exchange conflict invalidity and input-stability protections remain hard blockers",
+        "V378 100+1000 policy validation remains required and cannot be outvoted",
+        "V377 concurrency and V376 evidence journal protections remain preserved",
+        "validated neural council participates only as advisory confidence and cannot override hard blockers",
+        "market freshness stress allows only bounded recovery behavior and never market-direction prediction",
+        "runtime self-extension remains allowlisted declarative capability composition only",
+        "source-level new functions remain evidence-backed non-executable proposals requiring protected PR CI and full regression",
+        "physical Tablet runtime and Drive readback remain unverified until matching external evidence exists"
+      ],
+      "safety_boundary": "V380 expands decision governance only; it does not auto-generate source code, execute arbitrary commands, write Git/main, weaken verification, promote trust/facts/prices/grades, copy peer fixes, infer market direction, or claim physical-device success without evidence"
+    }
+  ]
+}
