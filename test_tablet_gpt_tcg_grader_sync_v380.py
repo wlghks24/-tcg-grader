@@ -12,7 +12,7 @@ CONTRACT = ROOT / "TCG_CROSSCHECK" / "TABLET_GPT_TCG_GRADER_SYNC_CONTRACT_V380.j
 DELTA = ROOT / "TCG_CROSSCHECK" / "TABLET_GPT" / "learning_snapshot_v380_delta.json"
 RECEIPT = ROOT / "TCG_CROSSCHECK" / "TCG_GRADER" / "tablet_gpt_learning_receipt_v380.json"
 BASE_SHA = "6a1006cc699133f0bf8a5b1e4ee40db01ffa605b"
-CANDIDATE_SHA = "42ef920e8344ff2ae577f3d5467da465552ba42a"
+CANDIDATE_SHA = "9cbacbdaf65368ae4c98aca7424bfb7ccf1d549b"
 LESSON_ID = "TABLET-GPT-DECISION-SPECIFIC-100-1000-GOVERNANCE-V380"
 EXPECTED_WATCHED = ["main", "tablet_autonomous_evolution_v380.py", "tablet_runtime_manifest.py"]
 
