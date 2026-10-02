@@ -3000,8 +3000,8 @@
       "bytes": 21183
     },
     "test_0600_operational_refresh_v25.py": {
-      "sha256": "18eefb69f0b2438479613ddfd90846fa78a43d8f81ab7249dec58a7d90b18c73",
-      "bytes": 10541
+      "sha256": "524400b5afa2b15ea95cdaccab5176261c90187b679e3f668eb41a810a0fcced",
+      "bytes": 12957
     },
     "test_adaptive_collection_learner.py": {
       "sha256": "93ae49d960ea2468197242283bd99264fe320eb0d94f0baa455ee434b40253f1",
@@ -4208,8 +4208,8 @@
       "bytes": 6848
     },
     "update_promo_events.py": {
-      "sha256": "8c61fc01f440a9d75d98ca234f10916897ad74b2d44f8f5fd8953fbbfaf5c8bf",
-      "bytes": 63473
+      "sha256": "7b4d3f471e43f29462943ed5bace6f86e5bffbbbb023930cf9c68460a7b9764c",
+      "bytes": 65768
     },
     "update_purchase_sources.py": {
       "sha256": "173c8949ee44cdbfbffe50798081162a3844f7ff4f1632fc3d1089342cc0d009",
