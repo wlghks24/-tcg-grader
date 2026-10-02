@@ -91,7 +91,7 @@ class PokemonKrOfficialAliasRecoveryV387Tests(unittest.TestCase):
             "official_reference_url": "https://pokemoncard.co.kr/main",
         }
         normalized = purchase.normalize_source(source)
-        self.assertEqual(STABLE_NEWS, normalized["url"])
+        self.assertEqual(STABLE_HOME, normalized["url"])
         self.assertEqual(STABLE_HOME, normalized["official_reference_url"])
         self.assertFalse(normalized["inventory_verified"])
 
