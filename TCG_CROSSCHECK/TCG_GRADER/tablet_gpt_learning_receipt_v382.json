@@ -11,7 +11,7 @@
     "TCG_CROSSCHECK/TABLET_GPT/learning_snapshot_v382_delta.json"
   ],
   "prior_lesson_digest_sha256": "66f59903dce6e7542a1ee509373dce6920a9e07136df646120058caceb217a17",
-  "delta_lesson_digest_sha256": "968e1906e4cb3f6a0e869531895ee8b59bb32e5ad3a321ce1dffbb3fcaaefe87",
+  "delta_lesson_digest_sha256": "1b3c7eb2f5883ac1aa1d4ce92c4e4f80e3589319ccc88b3bd92b81f7724a917f",
   "accepted_lesson_ids": [
     "TABLET-GPT-DRIFT-AWARE-AUTONOMOUS-GOVERNOR-V382"
   ],
