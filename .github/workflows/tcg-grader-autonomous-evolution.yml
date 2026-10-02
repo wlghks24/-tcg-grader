@@ -20,7 +20,7 @@ permissions:
   contents: read
 
 concurrency:
-  group: tcg-grader-autonomy-v391-\${{ github.ref }}
+  group: tcg-grader-autonomy-v391-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
