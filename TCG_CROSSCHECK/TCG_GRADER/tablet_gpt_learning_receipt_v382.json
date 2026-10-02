@@ -1,0 +1,45 @@
+{
+  "schema_version": "1.1-tablet-gpt-tcg-grader-learning-sync",
+  "receiver": "TCG_GRADER",
+  "source_namespace": "TABLET_GPT",
+  "source_repository": "wlghks24/-tcg-grader",
+  "source_main_sha": "10265fdcf464fab80d396be1b8afdc2a906118c2",
+  "received_at": "2026-10-02T11:32:00+09:00",
+  "status": "SYNCED_VERIFIED",
+  "source_snapshots": [
+    "TCG_CROSSCHECK/TABLET_GPT/learning_snapshot_v381_delta.json",
+    "TCG_CROSSCHECK/TABLET_GPT/learning_snapshot_v382_delta.json"
+  ],
+  "prior_lesson_digest_sha256": "66f59903dce6e7542a1ee509373dce6920a9e07136df646120058caceb217a17",
+  "delta_lesson_digest_sha256": "9eca93146fb36bbb6b636a2bd3ee9a1dbe553caa8a1018eaf5b0cb662e6d0070",
+  "accepted_lesson_ids": [
+    "TABLET-GPT-DRIFT-NEURAL-CALIBRATION-AUTONOMOUS-META-GOVERNOR-V382"
+  ],
+  "alignment_policy": {
+    "same_digest_required": true,
+    "same_lesson_ids_required": true,
+    "same_source_main_required_for_delta": true,
+    "covered_patch_commits_must_be_ancestors": true,
+    "future_watched_main_changes_require_new_delta": true,
+    "pull_request_freshness_check_nonblocking": false,
+    "successor_generation_must_exactly_cover_prior_staleness": true,
+    "device_local_learning_state_merge_required": true,
+    "blind_overwrite_forbidden": true,
+    "grading_calibration_auto_import_forbidden": true,
+    "peer_verified_never_auto_promotes_local": true,
+    "v381_gate_cannot_be_bypassed": true,
+    "neural_calibration_verified_outcomes_only": true,
+    "verified_regression_quarantine_required": true,
+    "high_drift_recovery_only": true,
+    "feature_contracts_non_executable": true
+  },
+  "verification": {
+    "contract_version": "v382",
+    "verification_test": "test_tablet_gpt_tcg_grader_sync_v382.py",
+    "verification_mode": "exact_candidate_drift_neural_calibration_meta_governor",
+    "verified_result": "TABLET_GPT_TCG_GRADER_MATCH",
+    "physical_tablet_runtime_verified": false,
+    "physical_drive_readback_verified": false,
+    "device_reverification_required": true
+  }
+}
