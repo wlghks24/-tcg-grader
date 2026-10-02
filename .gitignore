@@ -180,3 +180,5 @@ tablet_autonomy_exchange_capsule_v376.json
 # v377 single-run process lock/report are device-local; lock files never become source truth.
 .tablet_autonomy_execution_v377.lock
 tablet_autonomy_v377_report.json
+# v378 100+1000 quality-governor report is device-local operational evidence.
+tablet_autonomy_v378_report.json
