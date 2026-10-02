@@ -1,7 +1,7 @@
 {
   "version": 2,
   "engine": "v109-card-identity-ocr-learning",
-  "generated_at": "2026-10-02T05:00:49+00:00",
+  "generated_at": "2026-10-02T05:13:12+00:00",
   "files": {
     ".github/workflows/ai-auto-tracker-guard.yml": {
       "sha256": "636e750bd6d2619cce75d4bce2d68051eaa2209ae763bc8ec523ed73476728a6",
@@ -2644,8 +2644,8 @@
       "bytes": 7202
     },
     "release_history_backfill.py": {
-      "sha256": "f4b6b2efd80c588eb8d32018a0721b1d1643e7439c940ee29624600a025401bd",
-      "bytes": 20626
+      "sha256": "12312feec89376342307eecfd730644af2e580b7ad6bf86e50d609fd20cc1aed",
+      "bytes": 20921
     },
     "release_parser_learning.json": {
       "sha256": "6f04fa4ec27f6f304ea8249265e2d680a00c52e915208c0e1c13e412c2695e8f",
@@ -3016,8 +3016,8 @@
       "bytes": 21183
     },
     "test_0600_operational_refresh_v25.py": {
-      "sha256": "90766a688ac549c607dfc537e97721d7a34f48cee5f51191bef9fb7e7e28226c",
-      "bytes": 12877
+      "sha256": "b112b778ff37ae47863ddc4786750d8b7489333f2f575fd8b88eed4b7d4e8a45",
+      "bytes": 13158
     },
     "test_adaptive_collection_learner.py": {
       "sha256": "93ae49d960ea2468197242283bd99264fe320eb0d94f0baa455ee434b40253f1",
@@ -3591,6 +3591,10 @@
       "sha256": "11f302b2679397762aed4500865ecaf2d9262d388ab8bc1651d848345420393f",
       "bytes": 2478
     },
+    "test_pokemon_kr_official_alias_recovery_v386.py": {
+      "sha256": "1ae0ddf7bea461af41d2b245e0679a658b19fef5e25c2039751fd50d9675ee64",
+      "bytes": 4483
+    },
     "test_pokemon_retired_link_migration_v356.py": {
       "sha256": "256804420168f027279b1f1398359b83e700346a3aa152dbe42ed20ad4e27b49",
       "bytes": 1191
@@ -3640,8 +3644,8 @@
       "bytes": 5947
     },
     "test_release_history_coverage_v4.py": {
-      "sha256": "822de5decb52bb3df8fd0a11de5f0d5070fc29f1fa5f4c71f92ff2da964b43e6",
-      "bytes": 7755
+      "sha256": "aab22b61842b9705ba262ed6aa38d9c0de65ee9cf70a499658794180a7ded88b",
+      "bytes": 7823
     },
     "test_release_history_cumulative_coverage_v229.py": {
       "sha256": "74892232a7fca00d71f94a84f0f4d6013ce0cca5a47f74fc62e1acacb45e2c50",
@@ -4232,12 +4236,12 @@
       "bytes": 6848
     },
     "update_promo_events.py": {
-      "sha256": "f2aa6708aeb4b9fb6e36738a072b83288ccb91bef56bac20718b208982e9ec3c",
-      "bytes": 64642
+      "sha256": "6461320de9b9fee00550aad921fde7dc3f75a20613f33cea69a1679b5962f741",
+      "bytes": 65155
     },
     "update_purchase_sources.py": {
-      "sha256": "173c8949ee44cdbfbffe50798081162a3844f7ff4f1632fc3d1089342cc0d009",
-      "bytes": 31195
+      "sha256": "fdbb5bb648929347918fe8db8f83ecc4c4958c58d1b8b04e88b25a295b46fffc",
+      "bytes": 31420
     },
     "update_releases.py": {
       "sha256": "9fd873f5992fe10e47a0bb1a3060874798f898d73113c06023d199d4c09fedc3",
