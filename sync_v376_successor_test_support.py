@@ -641,4 +641,3 @@ def assert_current_autonomy_route_v378(testcase, main_text=None, manifest_text=N
 
 def assert_current_autonomy_route_v377(testcase, main_text=None, manifest_text=None):
     return assert_current_autonomy_route_v391(testcase, main_text, manifest_text)
-
