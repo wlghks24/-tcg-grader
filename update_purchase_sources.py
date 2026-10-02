@@ -34,6 +34,8 @@ CANONICAL_URLS = {
     "https://www.gamestop.com/stores/": "https://www.gamestop.com/stores",
     "https://pokemoncard.co.kr/": "https://new.pokemonkorea.co.kr/card",
     "https://www.pokemoncard.co.kr/": "https://new.pokemonkorea.co.kr/card",
+    "https://pokemoncard.co.kr/main": "https://new.pokemonkorea.co.kr/card",
+    "https://www.pokemoncard.co.kr/main": "https://new.pokemonkorea.co.kr/card",
     "https://pokemoncard.co.kr/card/225": "https://new.pokemonkorea.co.kr/card",
     "https://pokemoncard.co.kr/card/category/product": "https://new.pokemonkorea.co.kr/card",
     "https://pokemonkorea.co.kr/": "https://new.pokemonkorea.co.kr/card",
