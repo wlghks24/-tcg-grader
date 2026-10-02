@@ -1,0 +1,53 @@
+{
+  "schema_version": "1.1-tablet-gpt-tcg-grader-learning-sync",
+  "namespace": "TABLET_GPT",
+  "snapshot_kind": "learning_delta",
+  "run_date_kst": "2026-10-02",
+  "built_at": "2026-10-02T11:28:00+09:00",
+  "status": "finalized",
+  "source_repository": "wlghks24/-tcg-grader",
+  "prior_delta": "TCG_CROSSCHECK/TABLET_GPT/learning_snapshot_v381_delta.json",
+  "prior_lesson_digest_sha256": "66f59903dce6e7542a1ee509373dce6920a9e07136df646120058caceb217a17",
+  "source_main_sha": "10265fdcf464fab80d396be1b8afdc2a906118c2",
+  "share_policy": {
+    "explicit_patch_and_learning_lessons_only": true,
+    "chatgpt_model_weights_exported": false,
+    "raw_grading_calibration_shared": false,
+    "device_local_runtime_memory_overwritten": false,
+    "peer_verified_never_auto_promotes_local": true
+  },
+  "covered_merges": [
+    {
+      "pr": 373,
+      "version": "v382-drift-aware-autonomous-governor-base",
+      "merge_sha": "10265fdcf464fab80d396be1b8afdc2a906118c2"
+    }
+  ],
+  "lesson_digest_sha256": "968e1906e4cb3f6a0e869531895ee8b59bb32e5ad3a321ce1dffbb3fcaaefe87",
+  "lessons": [
+    {
+      "lesson_id": "TABLET-GPT-DRIFT-AWARE-AUTONOMOUS-GOVERNOR-V382",
+      "subsystem": "tablet_gpt_drift_aware_autonomous_governor",
+      "issue_class": "verified_adaptive_policy_needs_cross_cycle_drift_quarantine_and_feature_contract_governance",
+      "trigger_condition": "V381 learns verified champion/challenger policy preferences and allowlisted capability recipes, but persistent operational drift, verified KPI regression, and source-level capability gaps need a higher-order fail-closed governor before additional mutation",
+      "prevention_rule": "V382 must keep V381 as the mandatory mutation path, score multi-objective verified KPIs, detect operational drift without predicting market direction, quarantine policy choices whose verified reward confidence degrades, restrict high-drift cycles to recovery actions, keep shadow challengers advisory, and convert source-level gaps into non-executable feature contracts that require protected PR/CI, full regression, alignment, actual-output validation, and rollback triggers",
+      "validation_required": [
+        "base main is exactly 10265fdcf464fab80d396be1b8afdc2a906118c2",
+        "functional candidate commit is exactly b4c3220b258d50f17ac5c7a06aa38e21c81bb2da",
+        "main evolve route uses tablet_autonomous_evolution_v382.py",
+        "tablet runtime manifest includes v382 while preserving v381 through v376",
+        "V381 remains the mandatory lower mutation gate and cannot be bypassed",
+        "multi-objective KPI drift monitors market freshness coverage source health neural consensus resource headroom model signature and exchange digest",
+        "verified outcome confidence degradation can quarantine a policy action",
+        "high drift permits only bounded recovery actions",
+        "shadow challenger remains advisory and cannot auto execute",
+        "source-level feature gaps become non-executable feature contracts requiring protected PR CI",
+        "feature contracts require targeted tests related regression full runtime repository integrity Tablet GPT alignment actual-output validation and rollback triggers",
+        "source code auto generation rewrite arbitrary commands Git main write verification bypass fact price grade invention remain forbidden",
+        "market direction is never inferred or predicted",
+        "physical Tablet runtime and Drive readback remain unverified until matching external evidence exists"
+      ],
+      "safety_boundary": "V382 autonomously learns and selects only inside verified allowlisted boundaries; it cannot generate arbitrary source code, write Git/main, bypass verification, invent market direction facts prices or grades, or claim physical-device success without external evidence"
+    }
+  ]
+}
