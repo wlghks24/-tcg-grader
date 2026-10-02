@@ -1,0 +1,53 @@
+{
+  "schema_version": "1.1-tablet-gpt-tcg-grader-learning-sync",
+  "namespace": "TABLET_GPT",
+  "snapshot_kind": "learning_delta",
+  "run_date_kst": "2026-10-02",
+  "built_at": "2026-10-02T12:12:00+09:00",
+  "status": "finalized",
+  "source_repository": "wlghks24/-tcg-grader",
+  "prior_delta": "TCG_CROSSCHECK/TABLET_GPT/learning_snapshot_v382_delta.json",
+  "prior_lesson_digest_sha256": "9eca93146fb36bbb6b636a2bd3ee9a1dbe553caa8a1018eaf5b0cb662e6d0070",
+  "source_main_sha": "8e8f8b0f5fa35c93507647d1ecfdc1d84786771d",
+  "share_policy": {
+    "explicit_patch_and_learning_lessons_only": true,
+    "chatgpt_model_weights_exported": false,
+    "raw_grading_calibration_shared": false,
+    "device_local_runtime_memory_overwritten": false,
+    "peer_verified_never_auto_promotes_local": true
+  },
+  "covered_merges": [
+    {
+      "pr": 375,
+      "version": "v383-drive-package-recovery-base",
+      "merge_sha": "8e8f8b0f5fa35c93507647d1ecfdc1d84786771d"
+    }
+  ],
+  "lesson_digest_sha256": "e83ac7d22ebbbc460767afa1a8a7477af74e72131ce0fb109f521c275ca60993",
+  "lessons": [
+    {
+      "lesson_id": "TABLET-GPT-DRIVE-PACKAGE-FAIL-CLOSED-TRANSIENT-RECOVERY-V383",
+      "subsystem": "tablet_gpt_drive_package_delivery_guard",
+      "issue_class": "verified_drive_package_can_remain_blocked_after_freshness_recovery_when_only_bounded_transient_collection_failures_remain",
+      "trigger_condition": "V382 post-merge core verification passed, but the exact Drive package run remained fail-closed after freshness recovery because collection verification still reported only degraded mandatory outputs caused by transient network or server conditions",
+      "prevention_rule": "V383 must keep every production freshness and verification threshold unchanged, permit at most one additional full verified collection cycle only when all remaining high findings are DEGRADED_COLLECTION_OUTPUT on mandatory collectors and every current error is an allowlisted transient timeout, URLError, HTTP 408/425, or HTTP 5xx condition, reject access, rate-limit, retired-source, structural, code, security, or critical failures, then rerun the unchanged package gates and upload only on full success",
+      "validation_required": [
+        "base main is exactly 8e8f8b0f5fa35c93507647d1ecfdc1d84786771d",
+        "functional candidate commit is exactly 5c32f8ba82f458316c7c3544c8f05539ae78b0c4",
+        "the only V383 watched-path change is .github/workflows/gpt-tcg-drive-package.yml",
+        "freshness thresholds are never widened",
+        "critical findings always block additional transient recovery",
+        "only DEGRADED_COLLECTION_OUTPUT high findings are eligible",
+        "eligible targets must belong to mandatory auto_update_all.JOBS",
+        "HTTP 401/403/404/410/429 and Retry-After never enter the extra retry path",
+        "structural, code, security, permission, SSRF and private-network failures never enter the extra retry path",
+        "one additional full verified collection cycle is the maximum package-level transient recovery",
+        "the exact production package and collection verification gates rerun after recovery",
+        "Drive upload remains conditional on package ready=true",
+        "final failures emit bounded redacted diagnostics",
+        "physical Tablet runtime and Drive readback remain unverified until matching external evidence exists"
+      ],
+      "safety_boundary": "V383 changes only the protected Drive packaging recovery workflow; it does not weaken verification, bypass access controls, upload stale or degraded data, auto-modify source code, write main directly, or claim physical Drive success without evidence"
+    }
+  ]
+}
