@@ -151,7 +151,7 @@ COVERAGE_TOPICS = ("event", "festival", "tournament", "popup", "promo", "collab"
 
 OFFICIAL_ROUTES = {
     ("포켓몬 카드", "KR"): (
-        "https://pokemoncard.co.kr/main",
+        "https://new.pokemonkorea.co.kr/card",
     ),
     ("포켓몬 카드", "JP"): (
         "https://www.pokemon-card.com/info/",
