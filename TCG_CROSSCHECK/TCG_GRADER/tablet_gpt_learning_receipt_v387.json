@@ -1,0 +1,49 @@
+{
+  "schema_version": "1.1-tablet-gpt-tcg-grader-learning-sync",
+  "receiver": "TCG_GRADER",
+  "source_namespace": "TABLET_GPT",
+  "source_repository": "wlghks24/-tcg-grader",
+  "source_main_sha": "b5b100f93e8180e81458612b450f9411546463bf",
+  "received_at": "2026-10-02T15:20:00+09:00",
+  "status": "SYNCED_VERIFIED",
+  "source_snapshots": [
+    "TCG_CROSSCHECK/TABLET_GPT/learning_snapshot_v386_delta.json",
+    "TCG_CROSSCHECK/TABLET_GPT/learning_snapshot_v387_delta.json"
+  ],
+  "prior_lesson_digest_sha256": "1d8f379886360321717032308533d64c61e10f64ad04a955176b9c8cd7d302d7",
+  "delta_lesson_digest_sha256": "c629e031276d5bff7cbb817ede6a281dc53d9ef6b822eee2343934b75384b1ca",
+  "accepted_lesson_ids": [
+    "TABLET-GPT-TCG-GRADER-REGIME-POLICY-PORTFOLIO-AUTONOMY-V388"
+  ],
+  "alignment_policy": {
+    "same_digest_required": true,
+    "same_lesson_ids_required": true,
+    "same_source_main_required_for_delta": true,
+    "covered_patch_commits_must_be_ancestors": true,
+    "future_watched_main_changes_require_new_delta": true,
+    "pull_request_freshness_check_nonblocking": false,
+    "successor_generation_must_exactly_cover_prior_staleness": true,
+    "device_local_learning_state_merge_required": true,
+    "blind_overwrite_forbidden": true,
+    "grading_calibration_auto_import_forbidden": true,
+    "peer_verified_never_auto_promotes_local": true,
+    "v387_gate_cannot_be_bypassed": true,
+    "verified_reward_portfolio_only": true,
+    "operational_regime_partition_required": true,
+    "policy_regression_quarantine_required": true,
+    "policy_regression_retirement_required": true,
+    "recovery_policy_availability_required": true,
+    "resource_budget_autonomy_required": true,
+    "exploration_budget_advisory_only": true,
+    "source_feature_backlog_non_executable": true
+  },
+  "verification": {
+    "contract_version": "v387",
+    "verification_test": "test_tablet_gpt_tcg_grader_sync_v387.py",
+    "verification_mode": "exact_candidate_v388_regime_policy_portfolio_autonomy",
+    "verified_result": "TABLET_GPT_TCG_GRADER_MATCH",
+    "physical_tablet_runtime_verified": false,
+    "physical_drive_readback_verified": false,
+    "device_reverification_required": true
+  }
+}
