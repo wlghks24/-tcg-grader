@@ -34,7 +34,7 @@ class TabletGptTcgGraderSyncV389Tests(unittest.TestCase):
         self.assertEqual([LESSON_ID],r["accepted_lesson_ids"])
         self.assertEqual(81,c["prior_required_lesson_count"])
         self.assertEqual(82,c["current_required_lesson_count"])
-        self.assertEqual(394,c["current_required_merge_prs"][-1])
+        self.assertEqual(395,c["current_required_merge_prs"][-1])
         self.assertEqual("SYNCED_VERIFIED",r["status"])
         self.assertFalse(r["verification"]["physical_tablet_runtime_verified"])
         self.assertFalse(r["verification"]["physical_drive_readback_verified"])
