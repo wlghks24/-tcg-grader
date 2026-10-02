@@ -2,8 +2,11 @@ import unittest
 import urllib.error
 
 import release_history_backfill as backfill
+import multi_route_event_discovery as multi_route
+import social_event_discovery as social
 import update_promo_events as promo
 import update_purchase_sources as purchase
+import validate_external_links as link_audit
 
 
 LIVE_ALIAS = "https://new.pokemonkorea.co.kr/card"
@@ -89,6 +92,36 @@ class PokemonKrOfficialAliasRecoveryV386Tests(unittest.TestCase):
         self.assertEqual(LIVE_ALIAS, normalized["url"])
         self.assertEqual(LIVE_ALIAS, normalized["official_reference_url"])
         self.assertFalse(normalized["inventory_verified"])
+
+    def test_all_active_kr_discovery_and_link_recovery_routes_use_live_alias(self):
+        self.assertEqual((LIVE_ALIAS,), multi_route.OFFICIAL_ROUTES[("포켓몬 카드", "KR")])
+        pages = {row[:2]: row[2] for row in social.OFFICIAL_DISCOVERY_PAGES}
+        self.assertEqual(LIVE_ALIAS, pages[("포켓몬 카드", "KR")])
+        self.assertIn("new.pokemonkorea.co.kr", social.OFFICIAL_HOSTS)
+        for host in (
+            "new.pokemonkorea.co.kr",
+            "pokemoncard.co.kr",
+            "www.pokemoncard.co.kr",
+            "pokemonkorea.co.kr",
+            "www.pokemonkorea.co.kr",
+        ):
+            self.assertEqual(LIVE_ALIAS, link_audit.FALLBACKS[host])
+        self.assertEqual(
+            LIVE_ALIAS + "/969",
+            link_audit._canonicalize_retired_pokemon_kr_url(
+                "https://pokemoncard.co.kr/card/969"
+            ),
+        )
+        self.assertEqual(
+            LIVE_ALIAS,
+            link_audit._canonicalize_retired_pokemon_kr_url(LIVE_ALIAS),
+        )
+        self.assertEqual(
+            "https://example.com/card/969",
+            link_audit._canonicalize_retired_pokemon_kr_url(
+                "https://example.com/card/969"
+            ),
+        )
 
     def test_no_verification_threshold_or_cross_company_fallback_is_added(self):
         promo_text = open("update_promo_events.py", encoding="utf-8").read()
