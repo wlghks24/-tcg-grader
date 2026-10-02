@@ -1,4 +1,4 @@
-name: TCG Grader Autonomous Evolution V394
+name: TCG Grader Autonomous Evolution V395
 
 on:
   workflow_dispatch:
@@ -10,10 +10,12 @@ on:
       - 'tcg_grader_autonomous_evolution_v392.py'
       - 'tcg_grader_autonomous_evolution_v393.py'
       - 'tcg_grader_autonomous_evolution_v394.py'
+      - 'tcg_grader_autonomous_evolution_v395.py'
       - 'test_tcg_grader_autonomous_evolution_v391.py'
       - 'test_tcg_grader_autonomous_evolution_v392.py'
       - 'test_tcg_grader_autonomous_evolution_v393.py'
       - 'test_tcg_grader_autonomous_evolution_v394.py'
+      - 'test_tcg_grader_autonomous_evolution_v395.py'
       - 'TCG_GRADER_AUTONOMY.cmd'
       - 'INSTALL_TCG_GRADER_AUTONOMY_SCHEDULE.cmd'
       - '.github/workflows/tcg-grader-autonomous-evolution.yml'
@@ -24,10 +26,12 @@ on:
       - 'tcg_grader_autonomous_evolution_v392.py'
       - 'tcg_grader_autonomous_evolution_v393.py'
       - 'tcg_grader_autonomous_evolution_v394.py'
+      - 'tcg_grader_autonomous_evolution_v395.py'
       - 'test_tcg_grader_autonomous_evolution_v391.py'
       - 'test_tcg_grader_autonomous_evolution_v392.py'
       - 'test_tcg_grader_autonomous_evolution_v393.py'
       - 'test_tcg_grader_autonomous_evolution_v394.py'
+      - 'test_tcg_grader_autonomous_evolution_v395.py'
       - 'TCG_GRADER_AUTONOMY.cmd'
       - 'INSTALL_TCG_GRADER_AUTONOMY_SCHEDULE.cmd'
       - '.github/workflows/tcg-grader-autonomous-evolution.yml'
@@ -36,22 +40,26 @@ permissions:
   contents: read
 
 concurrency:
-  group: tcg-grader-autonomy-v394-${{ github.ref }}
+  group: tcg-grader-autonomy-v395-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
   verify-autonomy:
     runs-on: ubuntu-latest
-    timeout-minutes: 35
+    timeout-minutes: 40
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
       - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97
         with:
           python-version: '3.11'
-      - name: Verify TCG Grader V394 multi-candidate safety contract
-        run: python tcg_grader_autonomous_evolution_v394.py --self-test
-      - name: Run focused V394 tournament tests
-        run: python -m unittest -v test_tcg_grader_autonomous_evolution_v394.py
+      - name: Verify TCG Grader V395 active-learning safety contract
+        run: python tcg_grader_autonomous_evolution_v395.py --self-test
+      - name: Run focused V395 active-learning and source-health tests
+        run: python -m unittest -v test_tcg_grader_autonomous_evolution_v395.py
+      - name: Preserve V394 multi-candidate regression
+        run: |
+          python tcg_grader_autonomous_evolution_v394.py --self-test
+          python -m unittest -v test_tcg_grader_autonomous_evolution_v394.py
       - name: Preserve V393 shadow-canary regression
         run: |
           python tcg_grader_autonomous_evolution_v393.py --self-test
@@ -64,14 +72,16 @@ jobs:
         run: |
           python tcg_grader_autonomous_evolution_v391.py --self-test
           python -m unittest -v test_tcg_grader_autonomous_evolution_v391.py
+      - name: Verify source-health learners
+        run: python -m unittest -v test_search_method_learning.py test_provider_source_gap_learning_v5.py
       - name: Run upstream autonomy and grading regression tests
         run: |
           python tablet_autonomous_evolution_v390.py --self-test
           python -m unittest -v test_verified_grade_learning_v135.py test_verified_grade_learning_v135_safe.py test_grading_hierarchy_v17.py verify_vision_calibration.py test_grading_company_health_diagnostics_v252.py
       - name: Run company calibration CV regression
         run: python verify_v99_accuracy.py
-      - name: Plan current TCG Grader V394 evolution without source mutation
-        run: python tcg_grader_autonomous_evolution_v394.py --quiet
+      - name: Plan current TCG Grader V395 evolution without source mutation
+        run: python tcg_grader_autonomous_evolution_v395.py --quiet
       - name: Confirm Main SELFREFINE remains fail-closed
         run: python main_selfrefine_gate.py --self-test
       - name: Confirm repository integrity
@@ -80,7 +90,7 @@ jobs:
         if: always()
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
         with:
-          name: tcg-grader-autonomy-v394-report
+          name: tcg-grader-autonomy-v395-report
           path: |
             tcg_grader_autonomy_v391_report.json
             tcg_grader_autonomy_v391_plan.json
@@ -90,4 +100,6 @@ jobs:
             tcg_grader_autonomy_v393_plan.json
             tcg_grader_autonomy_v394_report.json
             tcg_grader_autonomy_v394_plan.json
+            tcg_grader_autonomy_v395_report.json
+            tcg_grader_autonomy_v395_plan.json
           if-no-files-found: ignore
