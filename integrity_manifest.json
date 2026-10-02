@@ -440,7 +440,7 @@
       "bytes": 2601
     },
     ".github/workflows/tablet-gpt-tcg-grader-main-alignment.yml": {
-      "sha256": "90f327d636513d19b31ab151b86ceb15350f12761cefc54f95dea4d43ff5139e",
+      "sha256": "15250911998956cd2ddafe79c3a149dd76bc5d9a32f6e128c896e5074d27785f",
       "bytes": 14294
     },
     ".github/workflows/tablet-termux-main-guard.yml": {
@@ -2960,7 +2960,7 @@
       "bytes": 115273
     },
     "test_0600_operational_refresh_v25.py": {
-      "sha256": "9a5ca528e774459bfb3b3e0276c1d7e1826ada35b5e258798d995f3fc68ab895",
+      "sha256": "90766a688ac549c607dfc537e97721d7a34f48cee5f51191bef9fb7e7e28226c",
       "bytes": 12877
     },
     "test_adaptive_collection_learner.py": {
@@ -3852,7 +3852,7 @@
       "bytes": 3467
     },
     "test_tablet_gpt_tcg_grader_sync_v344.py": {
-      "sha256": "96cafefa28e121fca1048141ca75865d38e961634f13773b3ff5657f819c5626",
+      "sha256": "1d85f68193ba9e40ddd4d0c42ef3c81ed042b0e67680d93b11b1686e11f340e6",
       "bytes": 5610
     },
     "test_tablet_gpt_tcg_grader_sync_v345.py": {
@@ -4168,7 +4168,7 @@
       "bytes": 6848
     },
     "update_promo_events.py": {
-      "sha256": "a4fc7395224bfe1621665720119f4d7f3b9fbe3650cfac4b9a665458c821ce0f",
+      "sha256": "f2aa6708aeb4b9fb6e36738a072b83288ccb91bef56bac20718b208982e9ec3c",
       "bytes": 64642
     },
     "update_purchase_sources.py": {
