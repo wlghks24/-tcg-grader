@@ -12,7 +12,7 @@ CONTRACT = ROOT / "TCG_CROSSCHECK" / "TABLET_GPT_TCG_GRADER_SYNC_CONTRACT_V378.j
 DELTA = ROOT / "TCG_CROSSCHECK" / "TABLET_GPT" / "learning_snapshot_v378_delta.json"
 RECEIPT = ROOT / "TCG_CROSSCHECK" / "TCG_GRADER" / "tablet_gpt_learning_receipt_v378.json"
 BASE_SHA = "e318e7995eb35363256901197413f34aea4facb1"
-CANDIDATE_SHA = "839c5890752d39343c1345c996dd8568baeecdeb"
+CANDIDATE_SHA = "f4c81ab5901d9d7a9dc296ce5fb53b40348d3554"
 LESSON_ID = "TABLET-GPT-100-1000-GOVERNED-AUTONOMY-V378"
 EXPECTED_WATCHED = ["main", "tablet_autonomous_evolution_v378.py", "tablet_runtime_manifest.py"]
 
@@ -72,6 +72,12 @@ class TabletGptTcgGraderSyncV378Tests(unittest.TestCase):
             "declarative_runtime_self_extension_allowlisted_only",
             "source_level_feature_gap_requires_pr_ci",
             "market_regime_adaptation_operational_only",
+            "information_exchange_summary_only_required",
+            "information_exchange_conflict_blocks_mutation",
+            "information_exchange_invalid_blocks_mutation",
+            "peer_learning_requires_local_reproduction",
+            "peer_fix_auto_apply_forbidden",
+            "peer_exchange_fact_price_grade_promotion_forbidden",
             "single_mutating_cycle_lock_required",
             "prior_evidence_commit_required_before_new_execution",
             "ambiguous_execution_retry_forbidden",
@@ -93,6 +99,9 @@ class TabletGptTcgGraderSyncV378Tests(unittest.TestCase):
         self.assertFalse(autonomy.SAFETY["source_code_auto_generation"])
         self.assertFalse(autonomy.SAFETY["git_write"])
         self.assertFalse(autonomy.SAFETY["market_direction_inferred"])
+        self.assertTrue(autonomy.SAFETY["information_exchange_manager_enabled"])
+        self.assertTrue(autonomy.SAFETY["information_exchange_conflict_blocks_mutation"])
+        self.assertFalse(autonomy.SAFETY["peer_fix_auto_apply"])
 
     def test_candidate_exactly_covers_current_runtime_entrypoint(self):
         c = load(CONTRACT)
