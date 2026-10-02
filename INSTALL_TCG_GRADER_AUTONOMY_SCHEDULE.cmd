@@ -10,7 +10,7 @@ if not exist "%RUNNER%" (
   exit /b 2
 )
 
-schtasks /Create /F /TN "%TASK_NAME%" /SC HOURLY /MO 4 /TR "cmd.exe /d /c ^^^"%RUNNER%^^^""
+schtasks /Create /F /TN "%TASK_NAME%" /SC HOURLY /MO 4 /RL LIMITED /TR "cmd.exe /d /c ^""%RUNNER%"^""
 if errorlevel 1 (
   echo [ERROR] Failed to register Windows scheduled task.
   exit /b 1
