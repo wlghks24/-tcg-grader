@@ -25,7 +25,7 @@ DATA = ROOT / "promo_events.json"
 ALLOWED = {
     "www.pokemon-card.com", "www.30th.pokemon-card.com",
     "pokemon.co.jp", "www.pokemon.co.jp",
-    "pokemoncard.co.kr", "www.pokemoncard.co.kr",
+    "pokemoncard.co.kr", "www.pokemoncard.co.kr", "new.pokemonkorea.co.kr",
     "pokemonkorea.co.kr", "www.pokemonkorea.co.kr",
     "onepiece-cardgame.kr", "www.onepiece-cardgame.kr",
     "www.onepiece-cardgame.com", "en.onepiece-cardgame.com",
@@ -46,7 +46,7 @@ FETCH_ALLOWED = ALLOWED | OFFICIAL_SOCIAL_HOSTS
 INDEXES = (
     ("KR", "원피스 카드", "https://onepiece-cardgame.kr/events.do"),
     ("KR", "원피스 카드", "https://onepiece-cardgame.kr/topics.do"),
-    ("KR", "포켓몬 카드", "https://pokemoncard.co.kr/main"),
+    ("KR", "포켓몬 카드", "https://new.pokemonkorea.co.kr/card"),
     ("KR", "나루토 카드", "https://www.naruto-cardgame.com/asia-en/"),
     ("JP", "포켓몬 카드", "https://www.pokemon-card.com/info/"),
     ("JP", "포켓몬 카드", "https://www.pokemon.co.jp/info/"),
@@ -74,19 +74,27 @@ DATE_PRECISIONS = {"day", "month", "season", "start-only", "unannounced"}
 ARCHIVE_GRACE_DAYS = 5
 OFFICIAL_SOURCE_REPLACEMENTS = {
     "https://pokemonkorea.co.kr/2026_battle_tournament3":
-        "https://pokemoncard.co.kr/main",
+        "https://new.pokemonkorea.co.kr/card",
     "https://pokemonkorea.co.kr/2026_battle_tournament3/menu800":
-        "https://pokemoncard.co.kr/main",
-    "https://pokemonkorea.co.kr/": "https://pokemoncard.co.kr/main",
-    "https://www.pokemonkorea.co.kr/": "https://pokemoncard.co.kr/main",
+        "https://new.pokemonkorea.co.kr/card",
+    "https://pokemonkorea.co.kr/": "https://new.pokemonkorea.co.kr/card",
+    "https://www.pokemonkorea.co.kr/": "https://new.pokemonkorea.co.kr/card",
 }
 
 def canonical_pokemon_kr_card_url(value: str) -> str:
-    """Move persisted retired Pokémon Korea card URLs to the current official host."""
-    prefix = "https://new.pokemonkorea.co.kr/card"
+    """Use the verified same-company Pokémon Korea card alias for KR card pages.
+
+    GitHub-hosted collectors have observed HTTP 410 from some pokemoncard.co.kr
+    routes while the same current 2026 content remains available from
+    new.pokemonkorea.co.kr. Only this exact Pokémon Korea alias is allowed.
+    """
     value = str(value or "")
-    if value.startswith(prefix):
-        return "https://pokemoncard.co.kr/card" + value[len(prefix):]
+    modern = "https://new.pokemonkorea.co.kr/card"
+    for prefix in ("https://pokemoncard.co.kr/card", "https://www.pokemoncard.co.kr/card"):
+        if value.startswith(prefix):
+            return modern + value[len(prefix):]
+    if value in {"https://pokemoncard.co.kr/main", "https://www.pokemoncard.co.kr/main"}:
+        return modern
     return value
 
 
@@ -103,8 +111,8 @@ KR_MOVIE_TRACKERS = (
         "reward": "한국 극장 개봉·재개봉·특별상영 일정이 공식 발표되면 날짜와 극장 정보를 표시",
         "condition": "포켓몬코리아 및 KOBIS 기준. 현재 확인 가능한 2026년 한국 신작 극장 개봉일은 공식 발표되지 않아 임의 날짜를 만들지 않음.",
         "location": "대한민국", "status": "한국 개봉일 미발표",
-        "source": "https://pokemoncard.co.kr/main",
-        "collection_source": "https://pokemoncard.co.kr/main",
+        "source": "https://new.pokemonkorea.co.kr/card",
+        "collection_source": "https://new.pokemonkorea.co.kr/card",
         "verification_source": "https://www.kobis.or.kr/kobis/business/mast/mvie/searchMovieList.do",
         "tracking_only": True,
     },
@@ -928,11 +936,11 @@ def _pokemon_kr_same_company_event_index(url: str) -> str | None:
     except ValueError:
         return None
     host = (parsed.hostname or "").lower()
-    if host not in {"pokemoncard.co.kr", "www.pokemoncard.co.kr"}:
+    if host not in {"pokemoncard.co.kr", "www.pokemoncard.co.kr", "new.pokemonkorea.co.kr"}:
         return None
     if not re.fullmatch(r"/card/\d+/?", parsed.path or ""):
         return None
-    return "https://pokemoncard.co.kr/card"
+    return "https://new.pokemonkorea.co.kr/card"
 
 
 def check_existing(item: dict) -> tuple[dict, str | None]:
@@ -1078,7 +1086,7 @@ def main() -> dict:
             and repaired.get("region") == "KR"
             and str(repaired.get("source") or "").startswith("https://pokemonkorea.co.kr/")
         ):
-            repaired.setdefault("collection_source", "https://pokemoncard.co.kr/main")
+            repaired.setdefault("collection_source", "https://new.pokemonkorea.co.kr/card")
         actual_region = event_region(str(repaired.get("region", "")), repaired.get("name_native"),
                                      repaired.get("name_ko"), repaired.get("source"), repaired.get("location"))
         if actual_region is None:
