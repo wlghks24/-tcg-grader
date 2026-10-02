@@ -1,7 +1,7 @@
 {
   "version": 2,
   "engine": "v109-card-identity-ocr-learning",
-  "generated_at": "2026-10-02T07:30:00+00:00",
+  "generated_at": "2026-10-02T07:38:00+00:00",
   "files": {
     "_audit_progress.py": {
       "sha256": "e4561a89779fc9c8f4b4d474bc2ce4285b65174eb29a6bf20f47a5e30456d674",
@@ -3600,7 +3600,7 @@
       "bytes": 2478
     },
     "test_pokemon_kr_official_alias_recovery_v387.py": {
-      "sha256": "8d17eab122b7e515dd18369e47d9ee7a4ed8e4c6d50324fc544f20e230b3ac17",
+      "sha256": "18f0cb9f1a803a499a4aafc6ae55afca6bca98552a43719cecae2bcc6ceff87c",
       "bytes": 6046
     },
     "test_pokemon_retired_link_migration_v356.py": {
