@@ -145,6 +145,61 @@ class Operational0600RefreshV25Tests(unittest.TestCase):
         self.assertIsNotNone(error)
         self.assertIn("보조검증", error)
 
+    def test_pokemon_jp_sparse_detail_requires_exact_official_index_link_and_title(self):
+        item = {
+            "game": "포켓몬 카드",
+            "region": "JP",
+            "category": "event",
+            "name_ko": "일본 공식 행사 · イベント 「Pokémon Team Masters」の開催が決定！ 2026.9.28",
+            "name_native": "イベント 「Pokémon Team Masters」の開催が決定！ 2026.9.28",
+            "source": "https://www.pokemon-card.com/info/005678.html",
+        }
+        sparse_detail = "<html><body>official detail shell</body></html>"
+        official_index = (
+            '<html><body><a href="/info/005678.html">'
+            'イベント 「Pokémon Team Masters」の開催が決定！'
+            "</a></body></html>"
+        )
+        with mock.patch.object(
+            update_promo_events,
+            "fetch",
+            side_effect=[sparse_detail, official_index],
+        ):
+            checked, error = update_promo_events.check_existing(item)
+        self.assertIsNone(error)
+        self.assertEqual(
+            checked["verification_status"],
+            "official_index_exact_link_title_match",
+        )
+        self.assertEqual(
+            checked["verification_source"],
+            update_promo_events.POKEMON_JP_INFO_INDEX,
+        )
+
+    def test_pokemon_jp_index_title_without_exact_detail_link_remains_fail_closed(self):
+        item = {
+            "game": "포켓몬 카드",
+            "region": "JP",
+            "category": "event",
+            "name_ko": "일본 공식 행사 · イベント 「Pokémon Team Masters」の開催が決定！ 2026.9.28",
+            "name_native": "イベント 「Pokémon Team Masters」の開催が決定！ 2026.9.28",
+            "source": "https://www.pokemon-card.com/info/005678.html",
+        }
+        sparse_detail = "<html><body>official detail shell</body></html>"
+        wrong_index_link = (
+            '<html><body><a href="/info/999999.html">'
+            'イベント 「Pokémon Team Masters」の開催が決定！'
+            "</a></body></html>"
+        )
+        with mock.patch.object(
+            update_promo_events,
+            "fetch",
+            side_effect=[sparse_detail, wrong_index_link],
+        ):
+            _, error = update_promo_events.check_existing(item)
+        self.assertIsNotNone(error)
+        self.assertIn("행사명 확인 실패", error)
+
     def test_retired_pokemon_routes_are_replaced(self):
         self.assertEqual(
             update_promo_events.INDEXES[2][2],
