@@ -55,6 +55,10 @@ def healthy_preview():
             "mutation_allowed": True,
             "peer_influence_allowed": True,
         },
+        "improvement_queue": [
+            {"id": "refresh-source-health", "kind": "declarative", "priority": 90, "auto_apply": True, "pr_required": False},
+            {"id": "new-market-parser", "kind": "new_function", "priority": 100, "auto_apply": True, "pr_required": True},
+        ],
         "information_exchange_neural_council": {
             "advisory_only": True,
             "confidence": 0.90,
@@ -183,6 +187,28 @@ class TabletAutonomousEvolutionV380Tests(unittest.TestCase):
         self.assertEqual("V376_EXECUTED", result["v380_status"])
         self.assertEqual(100, result["decision_review_matrix"]["preparation"]["perspectives"])
         self.assertEqual(1000, result["decision_review_matrix"]["expert_review"]["cells"])
+
+    def test_capability_selection_applies_only_allowlisted_runtime_actions(self):
+        base = healthy_preview()
+        matrix = v380.decision_matrix(base, root=v380.ROOT)
+        decision = v380.decide(base, matrix)
+        self.assertTrue(decision["allow_execution"])
+        plan = v380.autonomous_capability_plan(base, decision)
+        self.assertEqual("ALLOWLISTED_RUNTIME_SELECTION", plan["status"])
+        self.assertEqual("refresh-source-health", plan["selected_runtime_capability"]["id"])
+        self.assertTrue(plan["selected_runtime_capability"]["auto_apply"])
+        self.assertTrue(plan["protected_pr_ci_required"])
+        self.assertEqual("new-market-parser", plan["source_level_proposals"][0]["id"])
+        self.assertFalse(plan["source_level_proposals"][0]["auto_apply"])
+        self.assertTrue(plan["source_level_proposals"][0]["pr_required"])
+        self.assertFalse(plan["source_level_auto_apply"])
+        self.assertFalse(plan["market_direction_inferred"])
+
+        blocked = deepcopy(decision)
+        blocked["allow_execution"] = False
+        blocked_plan = v380.autonomous_capability_plan(base, blocked)
+        self.assertEqual("DECISION_HOLD", blocked_plan["status"])
+        self.assertFalse(blocked_plan["runtime_candidates"][0]["auto_apply"])
 
     def test_source_level_extension_remains_pr_ci_only(self):
         self.assertTrue(v380.SAFETY["runtime_self_extension_allowlisted_declarative_only"])
