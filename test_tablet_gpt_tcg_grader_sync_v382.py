@@ -5,7 +5,7 @@ import unittest
 from pathlib import Path
 
 import tablet_autonomous_evolution_v382 as autonomy
-from sync_v376_successor_test_support import V383_WATCHED, V384_WATCHED, V385_WATCHED, V386_WATCHED, V387_WATCHED, V388_WATCHED, V389_WATCHED, V390_WATCHED, V391_WATCHED, assert_v382_successor
+from sync_v376_successor_test_support import V383_WATCHED, V384_WATCHED, V385_WATCHED, V386_WATCHED, V387_WATCHED, V388_WATCHED, V389_WATCHED, V390_WATCHED, V391_WATCHED, V392_LEGACY_VISIBLE_WATCHED, assert_v382_successor
 
 ROOT = Path(__file__).resolve().parent
 CONTRACT = ROOT / "TCG_CROSSCHECK" / "TABLET_GPT_TCG_GRADER_SYNC_CONTRACT_V382.json"
@@ -81,11 +81,11 @@ class TabletGptTcgGraderSyncV382Tests(unittest.TestCase):
         self.assertEqual(CANDIDATE_SHA,candidate["candidate_commit"])
         self.assertEqual(EXPECTED_WATCHED,candidate["watched_paths"])
         self.assertEqual(EXPECTED_WATCHED,watched_paths(c,BASE_SHA,CANDIDATE_SHA))
-        self.assertEqual(sorted(set(V383_WATCHED) | set(V384_WATCHED) | set(V385_WATCHED) | set(V386_WATCHED) | set(V387_WATCHED) | set(V388_WATCHED) | set(V389_WATCHED) | set(V390_WATCHED) | set(V391_WATCHED)),watched_paths(c,CANDIDATE_SHA))
+        self.assertEqual(sorted(set(V383_WATCHED) | set(V384_WATCHED) | set(V385_WATCHED) | set(V386_WATCHED) | set(V387_WATCHED) | set(V388_WATCHED) | set(V389_WATCHED) | set(V390_WATCHED) | set(V391_WATCHED) | set(V392_LEGACY_VISIBLE_WATCHED)),watched_paths(c,CANDIDATE_SHA))
         assert_v382_successor(self)
         main=(ROOT/"main").read_text(encoding="utf-8")
         manifest=(ROOT/"tablet_runtime_manifest.py").read_text(encoding="utf-8")
-        self.assertIn("tablet_autonomous_evolution_v398.py --domain tablet_gpt --execute-safe-learning --apply-capabilities --train-meta --apply-skills",main)
+        self.assertIn("tablet_autonomous_evolution_v399.py --domain tablet_gpt --execute-safe-learning --apply-capabilities --train-meta --apply-skills",main)
         for version in ("v397", "v388","v387","v386","v385","v382","v381","v380","v379","v378","v377","v376"):
             self.assertIn(f'"tablet_autonomous_evolution_{version}.py"',manifest)
 
