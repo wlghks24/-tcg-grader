@@ -1,7 +1,7 @@
-"""Strict successor support for historical Tablet GPT sync generations through V377.
+"""Strict successor support for historical Tablet GPT sync generations through V378.
 
-V376 remains immutable history. When later watched changes exist, V377 must be a
-fully bound exact successor; no historical generation is silently relaxed.
+V376/V377 remain immutable history. Later watched changes must be covered by a
+strictly newer exact generation; no historical generation is silently relaxed.
 """
 from __future__ import annotations
 
@@ -27,6 +27,14 @@ V377_TEST = "test_tablet_gpt_tcg_grader_sync_v377.py"
 V377_BASE = "24cad558d756d57e06a8309c8d5fbc73626f1d45"
 V377_CANDIDATE = "b1000eb9f155ce343fc3bc59bcc0c35c5efb19c3"
 V377_WATCHED = ["main", "tablet_autonomous_evolution_v377.py", "tablet_runtime_manifest.py"]
+
+V378_CONTRACT_PATH = ROOT / "TCG_CROSSCHECK/TABLET_GPT_TCG_GRADER_SYNC_CONTRACT_V378.json"
+V378_PRIOR_CONTRACT = "TCG_CROSSCHECK/TABLET_GPT_TCG_GRADER_SYNC_CONTRACT_V377.json"
+V378_PRIOR_DELTA = "TCG_CROSSCHECK/TABLET_GPT/learning_snapshot_v377_delta.json"
+V378_TEST = "test_tablet_gpt_tcg_grader_sync_v378.py"
+V378_BASE = "e318e7995eb35363256901197413f34aea4facb1"
+V378_CANDIDATE = "03cd6a1a66baef13697ca9b6614bb8510a50c3fd"
+V378_WATCHED = ["main", "tablet_autonomous_evolution_v378.py", "tablet_runtime_manifest.py"]
 
 
 def _read(path: Path):
@@ -105,9 +113,30 @@ def _validate_generation(
     return contract, candidate
 
 
-def assert_v377_successor(testcase):
-    """Validate V377 as the exact final watched-path successor of V376."""
+def assert_v378_successor(testcase):
+    """Validate V378 as the exact final watched-path successor of V377."""
     contract, candidate = _validate_generation(
+        testcase,
+        contract_path=V378_CONTRACT_PATH,
+        prior_contract=V378_PRIOR_CONTRACT,
+        prior_delta=V378_PRIOR_DELTA,
+        verification_test=V378_TEST,
+        base=V378_BASE,
+        candidate_sha=V378_CANDIDATE,
+        watched=V378_WATCHED,
+        version="V378",
+    )
+    testcase.assertEqual(
+        [],
+        _watched_paths(contract, V378_CANDIDATE),
+        "V378 successor has uncovered watched changes",
+    )
+    return contract, candidate
+
+
+def assert_v377_successor(testcase):
+    """Validate immutable V377 and its exact V378 successor when later watched changes exist."""
+    contract377, candidate377 = _validate_generation(
         testcase,
         contract_path=V377_CONTRACT_PATH,
         prior_contract=V377_PRIOR_CONTRACT,
@@ -118,16 +147,15 @@ def assert_v377_successor(testcase):
         watched=V377_WATCHED,
         version="V377",
     )
-    testcase.assertEqual(
-        [],
-        _watched_paths(contract, V377_CANDIDATE),
-        "V377 successor has uncovered watched changes",
-    )
-    return contract, candidate
+    after377 = _watched_paths(contract377, V377_CANDIDATE)
+    if not after377:
+        return contract377, candidate377
+    testcase.assertEqual(V378_WATCHED, after377)
+    return assert_v378_successor(testcase)
 
 
 def assert_v376_successor(testcase, relevant):
-    """Validate immutable V376 history and, when needed, its exact V377 successor."""
+    """Validate immutable V376 and the complete V377/V378 successor chain."""
     contract376, candidate376 = _validate_generation(
         testcase,
         contract_path=V376_CONTRACT_PATH,
@@ -145,18 +173,37 @@ def assert_v376_successor(testcase, relevant):
         testcase.assertEqual(V376_WATCHED, sorted(relevant))
         return contract376, candidate376
 
-    contract377, candidate377 = assert_v377_successor(testcase)
-    testcase.assertEqual(V377_WATCHED, after376)
+    latest_contract, latest_candidate = assert_v377_successor(testcase)
+    expected_after376 = sorted(set(V377_WATCHED) | set(V378_WATCHED))
+    testcase.assertEqual(expected_after376, after376)
     testcase.assertEqual(
-        sorted(set(V376_WATCHED) | set(V377_WATCHED)),
+        sorted(set(V376_WATCHED) | set(V377_WATCHED) | set(V378_WATCHED)),
         sorted(relevant),
     )
-    return contract377, candidate377
+    return latest_contract, latest_candidate
+
+
+def assert_current_autonomy_route_v378(testcase, main_text=None, manifest_text=None):
+    """Require current supported autonomy route V378 while preserving V377/V376."""
+    assert_v378_successor(testcase)
+    if main_text is None:
+        main_text = (ROOT / "main").read_text(encoding="utf-8")
+    if manifest_text is None:
+        manifest_text = (ROOT / "tablet_runtime_manifest.py").read_text(encoding="utf-8")
+    testcase.assertIn(
+        "tablet_autonomous_evolution_v378.py --execute-safe-learning --apply-capabilities --train-meta --apply-skills",
+        main_text,
+    )
+    testcase.assertIn('"tablet_autonomous_evolution_v378.py"', manifest_text)
+    testcase.assertIn('"tablet_autonomous_evolution_v377.py"', manifest_text)
+    testcase.assertIn('"tablet_autonomous_evolution_v376.py"', manifest_text)
 
 
 def assert_current_autonomy_route_v377(testcase, main_text=None, manifest_text=None):
-    """Require the current supported autonomy route to use verified V377 while preserving V376."""
-    assert_v377_successor(testcase)
+    """Historical helper: require the latest verified successor of V377."""
+    latest_contract, _ = assert_v377_successor(testcase)
+    if latest_contract.get("verification_test") == V378_TEST:
+        return assert_current_autonomy_route_v378(testcase, main_text, manifest_text)
     if main_text is None:
         main_text = (ROOT / "main").read_text(encoding="utf-8")
     if manifest_text is None:
