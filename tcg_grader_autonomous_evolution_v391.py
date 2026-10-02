@@ -246,13 +246,13 @@ def grader_specialization_plan(
     open_errors = max(0, int(selfrefine.get("open_error_count") or 0))
     market_age = _finite(market.get("market_prices_age_hours"))
 
+    audit_ok = grade.get("audit_ok") is True
     calibration_need = 0.0
-    if grade.get("audit_ok") is not True:
-        calibration_need = 0.95
-    elif verified_rows > 0 and profiles == 0:
-        calibration_need = 0.90
-    elif verified_rows > 0:
+    if audit_ok and verified_rows > 0 and profiles == 0:
+        calibration_need = 1.0
+    elif audit_ok and verified_rows > 0:
         calibration_need = 0.28
+    audit_recovery_need = 1.0 if not audit_ok else 0.0
 
     hierarchy_need = 0.15 if vision.get("one_four_eight_contract_present") is True else 1.0
     selfrefine_need = _clamp(open_errors / 12.0) if open_errors else 0.05
@@ -266,6 +266,12 @@ def grader_specialization_plan(
     )
 
     candidates = [
+        {
+            "action_id": "RECOVER_VERIFIED_GRADE_AUDIT",
+            "urgency": round(audit_recovery_need, 6),
+            "auto_execute": False,
+            "execution_boundary": "fail_closed_manual_or_verified_selfrefine_recovery",
+        },
         {
             "action_id": "REBUILD_VERIFIED_GRADE_CALIBRATION",
             "urgency": round(calibration_need, 6),
