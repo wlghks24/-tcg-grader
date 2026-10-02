@@ -4578,6 +4578,22 @@
     "학습자료_백업.bat": {
       "sha256": "ede8c9bf5a23df86776c5d9b518c8031f9695bd69085259a18c7e5ed994a34e1",
       "bytes": 396
+    },
+    "tcg_grader_autonomous_evolution_v391.py": {
+      "sha256": "ac73d42b59c655ee37599dca9740eae7b9e379b198a36da9fc6e43a2c5c934f1",
+      "bytes": 19850
+    },
+    "test_tcg_grader_autonomous_evolution_v391.py": {
+      "sha256": "d0cb695da3b7da0ee693480532c279e0cec07e2338b80debb2920e03e9e3d354",
+      "bytes": 6449
+    },
+    ".github/workflows/tcg-grader-autonomous-evolution.yml": {
+      "sha256": "40ca5814cdf351e34523c6756f8ff9ba7bcc532bb3cb3fc43d0b125a73cb2aef",
+      "bytes": 2156
+    },
+    "TCG_GRADER_AUTONOMY.cmd": {
+      "sha256": "4d26e41829a4adb47987f7936f050ef70cc06cc2c401fb2ace35a1c0cfe98a71",
+      "bytes": 349
     }
   },
   "mutable_json": {},

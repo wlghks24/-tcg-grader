@@ -218,3 +218,9 @@ tablet_autonomy_feature_backlog_v388.json
 .tablet_autonomy_execution_v390.lock
 tablet_autonomy_v390_report.json
 tablet_autonomy_goal_plan_v390.json
+
+# TCG Grader V391 domain-isolated autonomy runtime state.
+# Shared code is tracked, but TCG-specific learned state/models/locks/reports are device-local.
+.tcg_grader_autonomy*
+tcg_grader_autonomy*.json
+tcg_grader_autonomy*.jsonl
