@@ -23,7 +23,7 @@ case "$cmd" in
     exec python quality_review_policy.py --check
     ;;
   evolve|autonomy)
-    exec python tablet_autonomous_evolution_v381.py --execute-safe-learning --apply-capabilities --train-meta --apply-skills
+    exec python tablet_autonomous_evolution_v382.py --execute-safe-learning --apply-capabilities --train-meta --apply-skills
     ;;
   recover)
     exec bash ANDROID_RECOVER_UPDATE.sh
@@ -51,7 +51,7 @@ case "$cmd" in
   bash main publish    최신 main에서만 수집/동일사이클 검증 후 자료 PR 생성
   bash main verify     현재 태블릿 빌드 최종 검증
   bash main quality    100 시니어 자료준비 + 1000관점(25×40) 품질정책 로컬 검증
-  bash main evolve     V381 검증결과 기반 자율정책 진화: V380 100+1000 의사결정/V379 정보교환/V378 품질게이트/V377 단일실행/V376 증거장벽을 유지하고, 검증된 outcome만으로 정책 후보를 학습. champion/challenger를 표본수·승격마진으로 비교하고 시장 freshness/coverage/source-health와 정보교환 요약상태에 맞춰 최대 3개 허용형 capability recipe를 다음 회차용으로 자동 구성. 정책메모리 손상·hard blocker·충돌은 fail-closed, 시장방향 예측/사실·가격·등급 발명/임의명령/Git-main 직접수정 금지. 소스 신규기능은 비실행 proposal → protected PR/CI·전체 회귀 후에만 승격
+  bash main evolve     V382 상호동기화 자율정책 진화: V381 검증정책/V380 100+1000 의사결정/V379 정보교환/V378 품질게이트/V377 단일실행/V376 증거장벽을 유지하고, 검증된 outcome만으로 정책을 학습. 다중 KPI·시장 freshness/coverage/source-health·neural consensus·자원상태·동기화 digest drift를 감시하고 검증 성과 하락 정책을 quarantine하며 high-drift에서는 recovery action만 허용. 정책메모리 손상·hard blocker·충돌은 fail-closed, 시장방향 예측/사실·가격·등급 발명/임의명령/Git-main 직접수정 금지. 소스 신규기능은 비실행 proposal → protected PR/CI·전체 회귀 후에만 승격
   bash main recover         오래된 Android 업데이터 복구
   bash main update-install  현재 세션 자동루프 + 부팅 후 자동루프 설치/복구 (매일 23:00 KST 기능 업데이트 확인)
   bash main update-now      지금 최신 main 확인/안전 업데이트 후 23:00 KST 자동루프 보장
