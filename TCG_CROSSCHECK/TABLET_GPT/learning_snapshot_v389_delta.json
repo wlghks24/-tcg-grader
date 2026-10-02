@@ -1,0 +1,78 @@
+{
+  "schema_version": "1.1-tablet-gpt-tcg-grader-learning-sync",
+  "namespace": "TABLET_GPT",
+  "snapshot_kind": "learning_delta",
+  "run_date_kst": "2026-10-02",
+  "built_at": "2026-10-02T20:33:00+09:00",
+  "status": "finalized",
+  "source_repository": "wlghks24/-tcg-grader",
+  "prior_delta": "TCG_CROSSCHECK/TABLET_GPT/learning_snapshot_v388_delta.json",
+  "prior_lesson_digest_sha256": "729344408aa21087881f15a5d871e413ad65c06f5aef3293ec06a6cf5bfea5bd",
+  "source_main_sha": "d450fd918ebb2ed25adb49e2cbb14a4b14f6dadc",
+  "share_policy": {
+    "explicit_patch_and_learning_lessons_only": true,
+    "chatgpt_model_weights_exported": false,
+    "raw_grading_calibration_shared": false,
+    "device_local_runtime_memory_overwritten": false,
+    "peer_verified_never_auto_promotes_local": true,
+    "meta_critic_summary_only": true,
+    "self_diagnostic_fault_summary_only": true,
+    "source_feature_runtime_code_generation": false
+  },
+  "covered_merges": [
+    {
+      "pr": 390,
+      "version": "tablet-v390-goal-directed-verified-self-improvement",
+      "merge_sha": "ca7c8e312fcd77108c30fccb8aa7cfcf9c8fd03b"
+    },
+    {
+      "pr": 391,
+      "version": "tcg-grader-v391-domain-isolated-autonomy",
+      "merge_sha": "29a36256267adaff223910ab5345e98c49c0189d"
+    },
+    {
+      "pr": 392,
+      "version": "tcg-grader-v392-closed-loop-neural-capability",
+      "merge_sha": "6aa2448a47bd1def737f43694831edf4082efa25"
+    },
+    {
+      "pr": 393,
+      "version": "tcg-grader-v393-verified-shadow-canary",
+      "merge_sha": "727a81d69238129b82c290d7e4a6fd0e0c67230d"
+    },
+    {
+      "pr": 394,
+      "version": "tcg-grader-v394-multi-candidate-policy",
+      "merge_sha": "d450fd918ebb2ed25adb49e2cbb14a4b14f6dadc"
+    }
+  ],
+  "lesson_digest_sha256": "71d04a3d4bec14ad83cdb7f9e029c68484fdc841b942d849d7aa0b059a87c7ae",
+  "lessons": [
+    {
+      "lesson_id": "TABLET-GPT-SELF-DIAGNOSING-VERIFIED-ADAPTIVE-EVOLUTION-V391",
+      "subsystem": "tablet_gpt_self_diagnosing_verified_adaptive_evolution",
+      "issue_class": "v390_goal_directed_autonomy_needs_persistent_self_diagnosis_counterfactual_stress_testing_verified_regression_blocking_and_feature_lifecycle_rework",
+      "trigger_condition": "V390 can learn verified contribution quality and choose bounded operational goals, but repeated operational faults are not persisted as fault streaks, action choice is not stress-tested across deterministic counterfactual scoring views, and source-feature candidates do not yet carry a persistent observe-to-shadow-to-canary-spec-to-protected-PR-or-rework lifecycle.",
+      "prevention_rule": "V391 must keep V390 and every prior hard gate mandatory, diagnose only operational evidence, persist bounded device-local fault streaks, stress-test V390 decisions deterministically without inventing market direction, block verified regression for non-recovery actions while never using that regression rule to block recovery, and keep source-level feature evolution non-executable until protected PR/CI plus targeted, regression, canary, runtime, integrity, alignment and actual-output validation succeed.",
+      "validation_required": [
+        "base main is exactly d450fd918ebb2ed25adb49e2cbb14a4b14f6dadc",
+        "functional watched-path candidate is exactly fe3e8e00f3ed5293c6d4a3834e3a6b539891a829",
+        "watched paths are main, tablet_autonomous_evolution_v391.py and tablet_runtime_manifest.py",
+        "main evolve route uses tablet_autonomous_evolution_v391.py with tablet_gpt domain",
+        "tablet runtime manifest includes v391 while preserving v390 and prior controllers",
+        "self diagnosis uses operational KPI, drift, uncertainty, source health, resource and upstream gate evidence only",
+        "fault streak learning is bounded device-local operational state and never factual source truth",
+        "counterfactual stress testing is deterministic, advisory, and cannot override V390 or earlier hard gates",
+        "verified non-recovery regression can hold mutation only after minimum verified samples",
+        "recovery actions are observe-only under the V391 regression rule",
+        "source feature lifecycle remains non-executable and can move through observe, shadow spec, canary spec candidate, protected PR candidate, or rework required",
+        "source feature activation still requires protected PR/CI, targeted tests, related regression, canary, full runtime, repository integrity, Tablet GPT alignment and actual-output validation",
+        "runtime self-extension ownership remains V390 canonical V373 declarative allowlist only",
+        "market direction, facts, prices and grades are never invented",
+        "peer model weights and raw state are never imported",
+        "physical Tablet runtime and Drive readback remain unverified until matching external evidence exists"
+      ],
+      "safety_boundary": "V391 may autonomously diagnose, prioritize, stress-test, hold, re-plan and maintain non-executable feature lifecycle contracts. It does not generate or rewrite runtime source code, execute arbitrary commands, write Git/main, bypass V390/V388 or earlier verification, promote unverified facts/prices/grades, infer market direction, import peer weights/raw state, or claim physical-device success without evidence."
+    }
+  ]
+}\n
