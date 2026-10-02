@@ -85,7 +85,7 @@ class TabletGptTcgGraderSyncV382Tests(unittest.TestCase):
         assert_v382_successor(self)
         main=(ROOT/"main").read_text(encoding="utf-8")
         manifest=(ROOT/"tablet_runtime_manifest.py").read_text(encoding="utf-8")
-        self.assertIn("tablet_autonomous_evolution_v397.py --domain tablet_gpt --execute-safe-learning --apply-capabilities --train-meta --apply-skills",main)
+        self.assertIn("tablet_autonomous_evolution_v398.py --domain tablet_gpt --execute-safe-learning --apply-capabilities --train-meta --apply-skills",main)
         for version in ("v397", "v388","v387","v386","v385","v382","v381","v380","v379","v378","v377","v376"):
             self.assertIn(f'"tablet_autonomous_evolution_{version}.py"',manifest)
 
