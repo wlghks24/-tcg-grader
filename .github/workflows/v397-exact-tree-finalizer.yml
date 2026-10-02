@@ -1,0 +1,76 @@
+name: Tablet V397 Exact Tree Finalizer
+
+on:
+  push:
+    branches:
+      - 'feature/tablet-autonomous-evolution-v397'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: tablet-v397-exact-tree-finalizer
+  cancel-in-progress: true
+
+jobs:
+  finalize:
+    if: github.actor == github.repository_owner
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    env:
+      PYTHONDONTWRITEBYTECODE: '1'
+      PYTHONUNBUFFERED: '1'
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97
+        with:
+          python-version: '3.12'
+      - name: Require exact owner branch
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$GITHUB_ACTOR" = "$GITHUB_REPOSITORY_OWNER"
+          test "$GITHUB_REF_NAME" = "feature/tablet-autonomous-evolution-v397"
+          git fetch origin +refs/heads/main:refs/remotes/origin/main
+          test "$(git rev-parse origin/main)" = "8701be1d348cb024e9c9675d4fb0eb3034a75d9d"
+          git merge-base --is-ancestor origin/main HEAD
+      - name: Remove one-shot workflow before exact-tree validation
+        shell: bash
+        run: |
+          set -euo pipefail
+          git rm -- .github/workflows/v397-exact-tree-finalizer.yml
+      - name: Validate V397 and full Tablet sync chain
+        shell: bash
+        run: |
+          set -euo pipefail
+          python -m py_compile tablet_autonomous_evolution_v397.py sync_v376_successor_test_support.py test_tablet_autonomous_evolution_v397.py test_tablet_gpt_tcg_grader_sync_v390.py
+          python tablet_autonomous_evolution_v397.py --self-test
+          python -m unittest -v test_tablet_autonomous_evolution_v397.py test_tablet_autonomous_evolution_v391.py test_tablet_autonomous_evolution_v390.py
+          mapfile -t sync_tests < <(find . -maxdepth 1 -type f -name 'test_tablet_gpt_tcg_grader_sync_v*.py' -printf '%f\n' | sort -V)
+          test "${#sync_tests[@]}" -gt 0
+          python -m unittest -v "${sync_tests[@]}"
+          python tablet_runtime_manifest.py --check --compile
+          python quality_review_policy.py --check
+      - name: Rebuild and verify exact-tree integrity
+        shell: bash
+        run: |
+          set -euo pipefail
+          python static_integrity_manifest.py --write integrity_manifest.json
+          python static_integrity_manifest.py --check integrity_manifest.json
+          python fault_injection_healing.py --diagnose
+          python repository_integrity_guard.py
+          git diff --check
+      - name: Commit finalized exact tree
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add -A
+          test -n "$(git diff --cached --name-only)"
+          git diff --cached --check
+          git commit -m 'Finalize Tablet V397 exact tree and integrity manifest'
+          git push origin "HEAD:$GITHUB_REF_NAME"
