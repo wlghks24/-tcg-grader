@@ -214,3 +214,32 @@ crosscheck_exchange/tcg-grader-autonomy-summary.json
 .tablet_autonomy_execution_v388.lock
 tablet_autonomy_v388_report.json
 tablet_autonomy_feature_backlog_v388.json
+.tablet_autonomy_v390_state.json
+.tablet_autonomy_execution_v390.lock
+tablet_autonomy_v390_report.json
+tablet_autonomy_goal_plan_v390.json
+
+# TCG Grader V391 domain-isolated autonomy runtime state.
+# Shared code is tracked, but TCG-specific learned state/models/locks/reports are device-local.
+.tcg_grader_autonomy*
+tcg_grader_autonomy*.json
+tcg_grader_autonomy*.jsonl
+tcg_grader_autonomy*.json.lock
+
+# V391 Tablet GPT self-diagnosis/stress/lifecycle state is device-local.
+.tablet_autonomy_v391_state.json
+.tablet_autonomy_execution_v391.lock
+tablet_autonomy_v391_report.json
+tablet_autonomy_improvement_plan_v391.json
+
+# V397 Tablet GPT owned self-extension/rollback state is device-local.
+.tablet_autonomy_v397_state.json
+.tablet_autonomy_execution_v397.lock
+tablet_autonomy_v397_report.json
+tablet_autonomy_feature_lifecycle_v397.json
+
+# V398 verified multi-candidate Tablet GPT tournament state is device-local.
+.tablet_autonomy_v398_state.json
+.tablet_autonomy_execution_v398.lock
+tablet_autonomy_v398_report.json
+tablet_autonomy_candidate_tournament_v398.json

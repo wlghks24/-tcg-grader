@@ -1,0 +1,57 @@
+{
+  "schema_version": "1.1-tablet-gpt-tcg-grader-learning-sync",
+  "namespace": "TABLET_GPT",
+  "snapshot_kind": "learning_delta",
+  "run_date_kst": "2026-10-02",
+  "built_at": "2026-10-02T22:04:00+09:00",
+  "status": "finalized",
+  "source_repository": "wlghks24/-tcg-grader",
+  "prior_delta": "TCG_CROSSCHECK/TABLET_GPT/learning_snapshot_v390_delta.json",
+  "prior_lesson_digest_sha256": "3901dc795a1c6547243b3940e3e264941f54afebebc5f14e136a161a00a9f7e4",
+  "source_main_sha": "80c1210c453b779021292d8eb16015bd5f54147d",
+  "share_policy": {
+    "explicit_patch_and_learning_lessons_only": true,
+    "chatgpt_model_weights_exported": false,
+    "raw_grading_calibration_shared": false,
+    "device_local_runtime_memory_overwritten": false,
+    "peer_verified_never_auto_promotes_local": true,
+    "candidate_performance_summary_only": true,
+    "candidate_memory_device_local_only": true,
+    "source_feature_runtime_code_generation": false
+  },
+  "covered_merges": [
+    {
+      "pr": 401,
+      "version": "tcg-grader-local-mutual-sync-autonomous-evolution-v397",
+      "merge_sha": "179ad0be3f83421ef0a61e623cb219ef30b17312"
+    }
+  ],
+  "lesson_digest_sha256": "70f73a5649824ed9063b9b80d5cbe9cb28a35adb07de94cd1e48531fa2d26b58",
+  "lessons": [
+    {
+      "lesson_id": "TABLET-GPT-VERIFIED-MULTI-CANDIDATE-SELF-EVOLUTION-V398",
+      "subsystem": "tablet_gpt_verified_multi_candidate_self_evolution",
+      "issue_class": "v397_single_owned_extension_needs_bounded_multi_candidate_tournament_verified_recipe_memory_and_failure_quarantine",
+      "trigger_condition": "V397 can own and roll back one canonical declarative extension, but it relies on a single upstream candidate and does not explicitly synthesize several safe operational alternatives, compare them with verified local outcome memory, quarantine repeatedly failing recipes, or prevent overlapping V397/V398 experiments.",
+      "prevention_rule": "V398 must preserve V397/V391/V390 and all prior hard gates, synthesize only canonical V373 declarative candidates from operational freshness, coverage, source health, neural consensus, drift, uncertainty, resource and upstream verified evidence, rank them deterministically with V390 goal alignment plus local verified KPI outcome memory, apply at most one V398-owned next-cycle canary, quarantine materially regressing recipes, roll back only the exact V398-owned capability, defer when a V397 experiment is present, and keep source-level functionality on the non-executable verified-canary to protected-PR/CI path.",
+      "validation_required": [
+        "base main is exactly 80c1210c453b779021292d8eb16015bd5f54147d",
+        "functional watched-path candidate is exactly 47fe605f68e2f8a73b0cf50bb51244db03e12f2b",
+        "watched paths are main, tablet_autonomous_evolution_v398.py and tablet_runtime_manifest.py",
+        "main evolve route uses tablet_autonomous_evolution_v398.py with tablet_gpt domain",
+        "tablet runtime manifest includes v398 while preserving v397, v391, v390 and prior controllers",
+        "candidate synthesis uses canonical V373 primitives only and operational evidence only",
+        "candidate tournament is deterministic and combines current evidence, V390 goal alignment, bounded exploration and local verified KPI outcome memory",
+        "at most one V398-owned declarative canary is active and it applies to the next cycle only",
+        "material KPI regression or upstream hard hold rolls back only the exact V398-owned capability",
+        "failed V398 recipes are quarantined for bounded cycles and are not selected while quarantined",
+        "an active V397 experiment prevents a competing V398 experiment and retains the V397 lifecycle owner",
+        "source-level functionality remains non-executable and continues through verified canary evidence and protected PR/CI",
+        "market direction, facts, prices and grades are never invented",
+        "source code is never auto-generated or auto-rewritten and Git/main is never written by runtime autonomy",
+        "physical Tablet runtime and Drive readback remain unverified until matching external evidence exists"
+      ],
+      "safety_boundary": "V398 may synthesize and rank multiple allowlisted operational capability recipes, learn only from local verified KPI outcomes, run one owned next-cycle canary, reuse successful recipes, and quarantine or roll back failing recipes. It does not generate or rewrite source code, execute arbitrary commands, write Git/main, bypass V397/V391/V390/V388 or earlier verification, infer market direction, promote unverified facts/prices/grades, import peer weights/raw state, or claim physical-device success without evidence."
+    }
+  ]
+}

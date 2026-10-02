@@ -1,0 +1,64 @@
+{
+  "schema_version": "1.1-tablet-gpt-tcg-grader-learning-sync",
+  "namespace": "TABLET_GPT",
+  "snapshot_kind": "learning_delta",
+  "run_date_kst": "2026-10-02",
+  "built_at": "2026-10-02T20:33:00+09:00",
+  "status": "finalized",
+  "source_repository": "wlghks24/-tcg-grader",
+  "prior_delta": "TCG_CROSSCHECK/TABLET_GPT/learning_snapshot_v389_delta.json",
+  "prior_lesson_digest_sha256": "7941d71640db45651b5e6675bc64573290b70f1efcf7166b990fc5618cd58cad",
+  "source_main_sha": "8701be1d348cb024e9c9675d4fb0eb3034a75d9d",
+  "share_policy": {
+    "explicit_patch_and_learning_lessons_only": true,
+    "chatgpt_model_weights_exported": false,
+    "raw_grading_calibration_shared": false,
+    "device_local_runtime_memory_overwritten": false,
+    "peer_verified_never_auto_promotes_local": true,
+    "meta_critic_summary_only": true,
+    "self_diagnostic_fault_summary_only": true,
+    "owned_capability_state_device_local_only": true,
+    "source_feature_runtime_code_generation": false
+  },
+  "covered_merges": [
+    {
+      "pr": 397,
+      "version": "tablet-v391-self-diagnosing-verified-adaptive-evolution",
+      "merge_sha": "8701be1d348cb024e9c9675d4fb0eb3034a75d9d"
+    },
+    {
+      "pr": 398,
+      "version": "tcg-grader-v396-verified-mutual-sync-autonomy",
+      "merge_sha": "d0e2236e13e6feb13887276ca6d383592d104adc"
+    }
+  ],
+  "lesson_digest_sha256": "3901dc795a1c6547243b3940e3e264941f54afebebc5f14e136a161a00a9f7e4",
+  "lessons": [
+    {
+      "lesson_id": "TABLET-GPT-BOUNDED-SELF-EXTENSION-ROLLBACK-V397",
+      "subsystem": "tablet_gpt_bounded_self_extension_rollback",
+      "issue_class": "v391_diagnosis_and_feature_lifecycle_need_owned_runtime_capability_measurement_rollback_and_verified_canary_promotion",
+      "trigger_condition": "V391 can diagnose operational faults, stress-test decisions, block verified regression and maintain a non-executable feature lifecycle, but the current runtime still lacks an explicit one-at-a-time owned self-extension record with a baseline KPI, automatic rollback of that exact added capability after material operational regression or an upstream hard hold, and verified canary evidence gates for protected-PR promotion.",
+      "prevention_rule": "V397 must keep V391/V390 and every prior hard gate mandatory, add at most one V397-owned canonical V373 declarative capability for the next cycle, persist its baseline operational KPI, remove only that exact owned capability after a material KPI drop or upstream hold, use operational market-flow evidence only, and allow source-level feature promotion to protected-PR candidate only after explicit verified canary successes, positive verified KPI delta and actual-output validation.",
+      "validation_required": [
+        "base main is exactly 8701be1d348cb024e9c9675d4fb0eb3034a75d9d",
+        "functional watched-path candidate is exactly fff9ed46696f7b9148c61c60f97f62a820527fa7",
+        "watched paths are main, tablet_autonomous_evolution_v397.py and tablet_runtime_manifest.py",
+        "main evolve route uses tablet_autonomous_evolution_v397.py with tablet_gpt domain",
+        "tablet runtime manifest includes v397 while preserving v391, v390 and prior controllers",
+        "V397 selects only operational modes from freshness, coverage, source health, V391 diagnosis, drift, uncertainty, neural consensus and resource headroom",
+        "at most one V397-owned canonical V373 declarative capability is active and is next-cycle only",
+        "V391 and V390 are invoked with apply_capabilities false so they cannot persist a competing capability during the V397 owned lifecycle",
+        "V397 records a baseline operational KPI for its owned capability",
+        "material operational KPI regression or a V391 upstream hard hold requests rollback of only the exact V397-owned capability",
+        "missing or expired owned capabilities are reconciled from bounded device-local state without importing peer state",
+        "source features require at least two verified canary successes, positive verified KPI delta and verified output before protected-PR candidacy",
+        "source-level feature candidates remain non-executable and still require protected PR/CI, targeted tests, regression, full runtime, repository integrity and Tablet GPT alignment",
+        "market direction, facts, prices and grades are never invented",
+        "source code is never auto-generated or auto-rewritten and Git/main is never written by runtime autonomy",
+        "physical Tablet runtime and Drive readback remain unverified until matching external evidence exists"
+      ],
+      "safety_boundary": "V397 may autonomously choose an operational mode, own one allowlisted declarative runtime extension, measure it, roll back only that owned extension after verified operational regression, and promote verified source-feature evidence to a protected-PR candidate. It does not generate or rewrite source code, execute arbitrary commands, write Git/main, bypass V391/V390/V388 or earlier verification, promote unverified facts/prices/grades, infer market direction, import peer weights/raw state, or claim physical-device success without evidence."
+    }
+  ]
+}
