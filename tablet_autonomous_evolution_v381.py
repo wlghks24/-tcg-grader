@@ -81,12 +81,21 @@ def _next(state,base,k,d,g,rel,now):
  if recipe and rel.get("quarantine_recommended") is True: q[recipe]={"until":(now+timedelta(seconds=QUARANTINE_SECONDS)).isoformat(timespec="seconds"),"reason":"verified_strategy_regression","evidence_digest":str(rel.get("evidence_digest") or "")}
  ex=base.get("information_exchange_manager") if isinstance(base.get("information_exchange_manager"),dict) else {}; h=list(s.get("history") or []); h.append({"at":now.isoformat(timespec="seconds"),"status":g.get("status"),"kpi":k["score"],"drift":d["score"]}); s.update({"last_kpis":k,"last_regime":_regime(base),"last_model_signature":_model_sig(base),"last_exchange_digest":str(ex.get("input_digest") or ""),"quarantines":q,"history":h[-96:]}); return s
 def _lock(path):
+ fd=None
  try:
   flags=os.O_RDWR|os.O_CREAT|(os.O_CLOEXEC if hasattr(os,"O_CLOEXEC") else 0)|(os.O_NOFOLLOW if hasattr(os,"O_NOFOLLOW") else 0); fd=os.open(path,flags,0o600); info=os.fstat(fd)
   if not stat.S_ISREG(info.st_mode): os.close(fd); return None,"V381_LOCK_UNAVAILABLE"
   os.fchmod(fd,0o600); fcntl.flock(fd,fcntl.LOCK_EX|fcntl.LOCK_NB); return fd,"V381_LOCK_ACQUIRED"
- except BlockingIOError: return None,"V381_CONCURRENT_AUTONOMY_HOLD"
- except OSError: return None,"V381_LOCK_UNAVAILABLE"
+ except BlockingIOError:
+  if fd is not None:
+   try: os.close(fd)
+   except OSError: pass
+  return None,"V381_CONCURRENT_AUTONOMY_HOLD"
+ except OSError:
+  if fd is not None:
+   try: os.close(fd)
+   except OSError: pass
+  return None,"V381_LOCK_UNAVAILABLE"
 def run_cycle(*,execute=False,apply_capabilities=False,train_meta=False,apply_skills=False,root=ROOT,now=None,proc_root=Path("/proc"),state_path=None,capability_path=None,meta_model_path=None,meta_outcomes_path=None,skill_state_path=None,skill_outcomes_path=None,journal_path=None,core_lock_path=None,quality_policy_path=None,v381_state_path=None,v381_lock_path=None,persist_outputs=True):
  moment=(now or _now()).astimezone(timezone.utc); sp=v381_state_path or root/STATE_PATH.name; si=load_state(sp); mut=bool(execute or apply_capabilities or train_meta or apply_skills); fd=None; ls="V381_LOCK_NOT_REQUIRED"
  if mut:
