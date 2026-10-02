@@ -23,7 +23,7 @@
       "merge_sha": "8e8f8b0f5fa35c93507647d1ecfdc1d84786771d"
     }
   ],
-  "lesson_digest_sha256": "e83ac7d22ebbbc460767afa1a8a7477af74e72131ce0fb109f521c275ca60993",
+  "lesson_digest_sha256": "84d2cac63ec9541d559e177f8021c4ada0b0dd5b20b9145cf2487dadfa355d45",
   "lessons": [
     {
       "lesson_id": "TABLET-GPT-DRIVE-PACKAGE-FAIL-CLOSED-TRANSIENT-RECOVERY-V383",
@@ -33,7 +33,7 @@
       "prevention_rule": "V383 must keep every production freshness and verification threshold unchanged, permit at most one additional full verified collection cycle only when all remaining high findings are DEGRADED_COLLECTION_OUTPUT on mandatory collectors and every current error is an allowlisted transient timeout, URLError, HTTP 408/425, or HTTP 5xx condition, reject access, rate-limit, retired-source, structural, code, security, or critical failures, then rerun the unchanged package gates and upload only on full success",
       "validation_required": [
         "base main is exactly 8e8f8b0f5fa35c93507647d1ecfdc1d84786771d",
-        "functional candidate commit is exactly 5c32f8ba82f458316c7c3544c8f05539ae78b0c4",
+        "functional candidate commit is exactly 97bd3f9b6185669bf7536e5028376532bee89442",
         "the only V383 watched-path change is .github/workflows/gpt-tcg-drive-package.yml",
         "freshness thresholds are never widened",
         "critical findings always block additional transient recovery",
