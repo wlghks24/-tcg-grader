@@ -11,7 +11,7 @@
     "TCG_CROSSCHECK/TABLET_GPT/learning_snapshot_v380_delta.json"
   ],
   "prior_lesson_digest_sha256": "59248d01be5d0843a882dfd19ac16e99c1fc9302940aafaf4800fb8a76dd7454",
-  "delta_lesson_digest_sha256": "bd40117fc65838ecfffaaa78e147b0c5a5b28d6fafe3f1983cabccfcda4047e2",
+  "delta_lesson_digest_sha256": "d6dd5204fa04515dc5e7b14f8dc1b92bd0773e56cf10344d2c9fc19fe67a4bcb",
   "accepted_lesson_ids": [
     "TABLET-GPT-DECISION-SPECIFIC-100-1000-GOVERNANCE-V380"
   ],
@@ -30,7 +30,8 @@
     "information_exchange_conflict_blocks_mutation": true,
     "information_exchange_invalid_blocks_mutation": true,
     "decision_specific_100_plus_1000_matrix_required": true,
-    "hard_blocker_outvote_forbidden": true
+    "hard_blocker_outvote_forbidden": true,
+    "information_exchange_governance_must_remain_enforced": true
   },
   "verification": {
     "contract_version": "v380",
