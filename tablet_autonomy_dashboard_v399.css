@@ -1,0 +1,49 @@
+.tablet-autonomy-v399{
+  margin:12px 0 14px;padding:14px;border:1px solid #bfdbfe;border-radius:18px;
+  background:linear-gradient(145deg,#eef6ff 0%,#fff 52%,#f0fdfa 100%);
+  box-shadow:0 8px 22px rgba(37,99,235,.09)
+}
+.tablet-autonomy-head{display:flex;align-items:flex-start;justify-content:space-between;gap:12px}
+.tablet-autonomy-intro{min-width:0}.tablet-autonomy-kicker{display:inline-block;margin-bottom:4px;color:#1d4ed8;font-size:9px;font-weight:900;letter-spacing:.08em}
+.tablet-autonomy-head h4{margin:0;color:#0f172a;font-size:17px;line-height:1.35;letter-spacing:-.02em}
+.tablet-autonomy-head p{margin:4px 0 0;color:#64748b;font-size:10px;line-height:1.5}
+.tablet-autonomy-refresh{width:auto!important;flex:0 0 auto;margin:0!important;padding:9px 11px!important;background:#1d4ed8!important;font-size:11px!important}
+.tablet-autonomy-status{margin:11px 0;padding:9px 10px;border:1px solid #dbeafe;border-radius:11px;background:#f8fafc;color:#334155;font-size:10px;line-height:1.5}
+.tablet-autonomy-status[data-state="ok"]{background:#ecfdf5;border-color:#a7f3d0;color:#166534}
+.tablet-autonomy-status[data-state="hold"]{background:#fff7ed;border-color:#fed7aa;color:#9a3412}
+.tablet-autonomy-status[data-state="loading"]{background:#eff6ff;color:#1d4ed8}
+.tablet-autonomy-flow{display:flex;gap:5px;overflow-x:auto;padding:1px 0 8px;scrollbar-width:thin}
+.tablet-autonomy-flow-step{flex:0 0 auto;padding:6px 8px;border:1px solid #dbeafe;border-radius:999px;background:#fff;color:#475569;font-size:8.5px;font-weight:850;white-space:nowrap}
+.tablet-autonomy-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:7px}
+.tablet-autonomy-metric{min-width:0;padding:9px;border:1px solid #dbeafe;border-radius:12px;background:rgba(255,255,255,.9)}
+.tablet-autonomy-metric span{display:block;color:#64748b;font-size:8.5px;font-weight:800}
+.tablet-autonomy-metric b{display:block;margin-top:4px;color:#0f172a;font-size:11px;line-height:1.35;overflow-wrap:anywhere}
+.tablet-autonomy-health{margin-top:9px;padding:10px;border:1px solid #dbeafe;border-radius:13px;background:#fff}
+.tablet-autonomy-health-head{display:flex;align-items:center;justify-content:space-between;gap:8px;color:#334155;font-size:10px}
+.tablet-autonomy-health-score{color:#1d4ed8;font-weight:900}
+.tablet-autonomy-health-bar{height:8px;margin-top:8px;overflow:hidden;border-radius:999px;background:#e2e8f0}
+.tablet-autonomy-health-bar i{display:block;height:100%;border-radius:inherit;background:linear-gradient(90deg,#2563eb,#10b981);transition:width .2s ease}
+.tablet-autonomy-health p{margin:7px 0 0;color:#64748b;font-size:9px;line-height:1.45}
+.tablet-autonomy-footer{display:flex;flex-wrap:wrap;gap:5px;margin-top:8px}
+.tablet-autonomy-footer span{padding:5px 7px;border-radius:8px;background:#f8fafc;border:1px solid #e2e8f0;color:#475569;font-size:8.5px;font-weight:800}
+@media(max-width:720px){.tablet-autonomy-grid{grid-template-columns:repeat(3,minmax(0,1fr))}}
+@media(max-width:540px){.tablet-autonomy-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:430px){
+  .tablet-autonomy-head{display:grid}.tablet-autonomy-refresh{width:100%!important}
+  .tablet-autonomy-grid{grid-template-columns:1fr 1fr}
+}
+@media(max-width:340px){.tablet-autonomy-grid{grid-template-columns:1fr}}
+@media(prefers-reduced-motion:reduce){
+  .tablet-autonomy-v399 *{animation:none!important;transition:none!important;scroll-behavior:auto!important}
+}
+@media(prefers-contrast:more){
+  .tablet-autonomy-v399,.tablet-autonomy-metric,.tablet-autonomy-health,.tablet-autonomy-flow-step{border-color:#64748b!important}
+}
+@media(prefers-color-scheme:dark){
+  .tablet-autonomy-v399{background:linear-gradient(145deg,#111827,#0f172a);border-color:#334155}
+  .tablet-autonomy-head h4,.tablet-autonomy-metric b{color:#f8fafc}
+  .tablet-autonomy-head p,.tablet-autonomy-metric span,.tablet-autonomy-health p{color:#cbd5e1}
+  .tablet-autonomy-metric,.tablet-autonomy-health,.tablet-autonomy-flow-step{background:#172033;border-color:#334155}
+  .tablet-autonomy-health-head,.tablet-autonomy-flow-step{color:#e2e8f0}
+  .tablet-autonomy-footer span{background:#172033;border-color:#334155;color:#cbd5e1}
+}
