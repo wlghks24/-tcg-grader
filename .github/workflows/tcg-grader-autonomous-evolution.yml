@@ -1,4 +1,4 @@
-name: TCG Grader Autonomous Evolution V393
+name: TCG Grader Autonomous Evolution V394
 
 on:
   workflow_dispatch:
@@ -12,6 +12,10 @@ on:
       - 'test_tcg_grader_autonomous_evolution_v391.py'
       - 'test_tcg_grader_autonomous_evolution_v392.py'
       - 'test_tcg_grader_autonomous_evolution_v393.py'
+      - 'tcg_grader_autonomous_evolution_v394.py'
+      - 'test_tcg_grader_autonomous_evolution_v394.py'
+      - 'tcg_grader_autonomous_evolution_v394.py'
+      - 'test_tcg_grader_autonomous_evolution_v394.py'
       - 'TCG_GRADER_AUTONOMY.cmd'
       - 'INSTALL_TCG_GRADER_AUTONOMY_SCHEDULE.cmd'
       - '.github/workflows/tcg-grader-autonomous-evolution.yml'
@@ -32,7 +36,7 @@ permissions:
   contents: read
 
 concurrency:
-  group: tcg-grader-autonomy-v393-${{ github.ref }}
+  group: tcg-grader-autonomy-v394-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
@@ -44,9 +48,9 @@ jobs:
       - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97
         with:
           python-version: '3.11'
-      - name: Verify TCG Grader V393 experiment safety contract
+      - name: Verify TCG Grader V394 experiment safety contract
         run: python tcg_grader_autonomous_evolution_v393.py --self-test
-      - name: Run focused V393 shadow-canary tests
+      - name: Run focused V394 shadow-canary tests
         run: python -m unittest -v test_tcg_grader_autonomous_evolution_v393.py
       - name: Preserve V392 neural closed-loop regression
         run: |
@@ -62,7 +66,7 @@ jobs:
           python -m unittest -v test_verified_grade_learning_v135.py test_verified_grade_learning_v135_safe.py test_grading_hierarchy_v17.py verify_vision_calibration.py test_grading_company_health_diagnostics_v252.py
       - name: Run company calibration CV regression
         run: python verify_v99_accuracy.py
-      - name: Plan current TCG Grader V393 evolution without source mutation
+      - name: Plan current TCG Grader V394 evolution without source mutation
         run: python tcg_grader_autonomous_evolution_v393.py --quiet
       - name: Confirm Main SELFREFINE remains fail-closed
         run: python main_selfrefine_gate.py --self-test
@@ -80,4 +84,6 @@ jobs:
             tcg_grader_autonomy_v392_plan.json
             tcg_grader_autonomy_v393_report.json
             tcg_grader_autonomy_v393_plan.json
+            tcg_grader_autonomy_v394_report.json
+            tcg_grader_autonomy_v394_plan.json
           if-no-files-found: ignore
