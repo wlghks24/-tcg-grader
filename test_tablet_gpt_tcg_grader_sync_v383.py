@@ -12,7 +12,7 @@ DELTA = ROOT / "TCG_CROSSCHECK" / "TABLET_GPT" / "learning_snapshot_v383_delta.j
 RECEIPT = ROOT / "TCG_CROSSCHECK" / "TCG_GRADER" / "tablet_gpt_learning_receipt_v383.json"
 WORKFLOW = ROOT / ".github" / "workflows" / "gpt-tcg-drive-package.yml"
 BASE_SHA = "8e8f8b0f5fa35c93507647d1ecfdc1d84786771d"
-CANDIDATE_SHA = "97bd3f9b6185669bf7536e5028376532bee89442"
+CANDIDATE_SHA = "f23a48e67a54a90e045bb920bc61a4a76707dc3a"
 LESSON_ID = "TABLET-GPT-DRIVE-PACKAGE-FAIL-CLOSED-TRANSIENT-RECOVERY-V383"
 EXPECTED_WATCHED = [".github/workflows/gpt-tcg-drive-package.yml"]
 
