@@ -1,0 +1,75 @@
+name: V398 Exact Tree Finalizer
+
+on:
+  push:
+    branches:
+      - feature/tablet-autonomous-evolution-v398
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: v398-exact-tree-finalizer
+  cancel-in-progress: true
+
+jobs:
+  finalize:
+    if: github.actor == github.repository_owner
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    env:
+      PYTHONDONTWRITEBYTECODE: '1'
+      PYTHONUNBUFFERED: '1'
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          fetch-depth: 0
+          ref: feature/tablet-autonomous-evolution-v398
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97
+        with:
+          python-version: '3.12'
+      - name: Require exact protected candidate ancestry
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "${GITHUB_ACTOR}" = "${GITHUB_REPOSITORY_OWNER}"
+          test "${GITHUB_REF_NAME}" = "feature/tablet-autonomous-evolution-v398"
+          git fetch origin +refs/heads/main:refs/remotes/origin/main
+          git merge-base --is-ancestor origin/main HEAD
+          test "$(git rev-parse --abbrev-ref HEAD)" != "main"
+      - name: Remove one-shot workflow before exact-tree manifest
+        shell: bash
+        run: |
+          set -euo pipefail
+          git rm -- .github/workflows/v398-exact-tree-finalizer.yml
+      - name: Rebuild exact-tree manifest
+        shell: bash
+        run: |
+          set -euo pipefail
+          python static_integrity_manifest.py --write integrity_manifest.json
+          python static_integrity_manifest.py --check integrity_manifest.json
+      - name: Verify V398 autonomy and sync chain
+        shell: bash
+        run: |
+          set -euo pipefail
+          python -m py_compile tablet_autonomous_evolution_v398.py test_tablet_autonomous_evolution_v398.py sync_v376_successor_test_support.py test_tablet_gpt_tcg_grader_sync_v391.py
+          python tablet_autonomous_evolution_v398.py --self-test
+          python -m unittest -v test_tablet_autonomous_evolution_v398.py
+          mapfile -t sync_tests < <(find . -maxdepth 1 -type f -name 'test_tablet_gpt_tcg_grader_sync_v*.py' -printf '%f\n' | sort -V)
+          python -m unittest -v "${sync_tests[@]}"
+          python tablet_runtime_manifest.py --check --compile
+          python quality_review_policy.py --check
+          python repository_integrity_guard.py
+          git diff --check
+      - name: Commit exact final tree
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add -A
+          test "$(git diff --cached --name-only | sort | tr '\n' ' ')" = ".github/workflows/v398-exact-tree-finalizer.yml integrity_manifest.json "
+          git diff --cached --check
+          git commit -m 'Finalize Tablet V398 exact tree and integrity manifest'
+          git push origin "HEAD:feature/tablet-autonomous-evolution-v398"
