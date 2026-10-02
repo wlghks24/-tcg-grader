@@ -1,0 +1,53 @@
+{
+  "schema_version": "1.1-tablet-gpt-tcg-grader-learning-sync",
+  "namespace": "TABLET_GPT",
+  "snapshot_kind": "learning_delta",
+  "run_date_kst": "2026-10-02",
+  "built_at": "2026-10-02T11:16:22+09:00",
+  "status": "finalized",
+  "source_repository": "wlghks24/-tcg-grader",
+  "prior_delta": "TCG_CROSSCHECK/TABLET_GPT/learning_snapshot_v380_delta.json",
+  "prior_lesson_digest_sha256": "8bc7fb12df703f625951c1d51fa08632d9206d7015d870f33f788c4ab228ceae",
+  "source_main_sha": "108adece2681783ddb46f6911da345bdb938c0cd",
+  "share_policy": {
+    "explicit_patch_and_learning_lessons_only": true,
+    "chatgpt_model_weights_exported": false,
+    "raw_grading_calibration_shared": false,
+    "device_local_runtime_memory_overwritten": false,
+    "peer_verified_never_auto_promotes_local": true
+  },
+  "covered_merges": [
+    {
+      "pr": 370,
+      "version": "v381-verified-adaptive-policy-evolution-base",
+      "merge_sha": "108adece2681783ddb46f6911da345bdb938c0cd"
+    }
+  ],
+  "lesson_digest_sha256": "66f59903dce6e7542a1ee509373dce6920a9e07136df646120058caceb217a17",
+  "lessons": [
+    {
+      "lesson_id": "TABLET-GPT-VERIFIED-ADAPTIVE-POLICY-EVOLUTION-V381",
+      "subsystem": "tablet_gpt_verified_adaptive_policy_evolution",
+      "issue_class": "decision_specific_governance_lacks_persistent_verified_champion_challenger_policy_memory",
+      "trigger_condition": "V380 computes a current 100+1000 decision matrix and reuses the V373 verified-outcome neural model, but it does not persist a bounded summary-only champion/challenger policy that learns across verified outcomes and composes a next-cycle allowlisted capability recipe from market and information-exchange state",
+      "prevention_rule": "V381 must learn policy preferences only from V373 verified outcome rows, require at least eight verified samples and a bounded promotion margin before a challenger replaces a champion, persist only summary policy and exchange-digest evidence, classify market state only by freshness coverage and source health without predicting direction, compose at most three canonical V373 declarative capabilities for the next cycle only after bounded V380 success, block mutation on corrupt policy memory, and leave source-level gaps as non-executable protected PR/CI proposals",
+      "validation_required": [
+        "base main is exactly 108adece2681783ddb46f6911da345bdb938c0cd",
+        "functional candidate commit is exactly aced561a5c930b099583fa35f2746104c0420243",
+        "main evolve route uses tablet_autonomous_evolution_v381.py",
+        "tablet runtime manifest includes v381 while preserving v380 v379 v378 v377 and v376",
+        "V381 reuses V373 verified-outcome meta-neural evidence instead of training from raw peer content",
+        "policy promotion requires at least eight verified samples and a score margin of at least 0.05",
+        "information-exchange policy memory stores only status management action counts signal score and input digest, never raw lessons or fixes",
+        "market adaptation uses freshness coverage source health and resource evidence only and never infers market direction",
+        "next-cycle capability recipes contain at most three rows and every row passes the canonical V373 capability validator",
+        "capability recipes are persisted only after the bounded V380 core allows and completes the mutation path",
+        "corrupt or unsafe policy state blocks mutation before a second mutating V380 call",
+        "source-level gaps remain auto_apply false and pr_required true behind protected PR CI and full regression",
+        "source code auto generation rewrite arbitrary command execution Git main writes verification bypass fact price grade invention remain forbidden",
+        "physical Tablet runtime and Drive readback remain unverified until matching external evidence exists"
+      ],
+      "safety_boundary": "V381 expands verified adaptive policy selection and declarative next-cycle composition only; it does not generate or rewrite source code, execute arbitrary commands, write Git/main, weaken verification or freshness, promote peer facts/trust/prices/grades, predict market direction, or claim physical-device success without evidence"
+    }
+  ]
+}
