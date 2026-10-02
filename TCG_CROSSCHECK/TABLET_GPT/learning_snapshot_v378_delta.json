@@ -1,0 +1,47 @@
+{
+  "schema_version": "1.1-tablet-gpt-tcg-grader-learning-sync",
+  "namespace": "TABLET_GPT",
+  "snapshot_kind": "learning_delta",
+  "run_date_kst": "2026-10-02",
+  "built_at": "2026-10-02T09:03:00+09:00",
+  "status": "finalized",
+  "source_repository": "wlghks24/-tcg-grader",
+  "prior_delta": "TCG_CROSSCHECK/TABLET_GPT/learning_snapshot_v377_delta.json",
+  "prior_lesson_digest_sha256": "ea50b3d696d6b2ae36ffa089ddcb52f67b8a24c51ffc5034e44408ba2639ebaa",
+  "source_main_sha": "e318e7995eb35363256901197413f34aea4facb1",
+  "share_policy": {
+    "explicit_patch_and_learning_lessons_only": true,
+    "chatgpt_model_weights_exported": false,
+    "raw_grading_calibration_shared": false,
+    "device_local_runtime_memory_overwritten": false,
+    "peer_verified_never_auto_promotes_local": true
+  },
+  "covered_merges": [
+    {"pr": 365, "version": "v378-100-1000-quality-governor-base", "merge_sha": "e318e7995eb35363256901197413f34aea4facb1"}
+  ],
+  "lesson_digest_sha256": "993e20b42ea94eea50acfcb9d975fb5b17237eb888507f6423be7330c5a2d4da",
+  "lessons": [
+    {
+      "lesson_id": "TABLET-GPT-100-1000-QUALITY-GOVERNOR-V378",
+      "subsystem": "tablet_gpt_autonomous_quality_governance",
+      "issue_class": "autonomous_neural_decisions_not_directly_gated_by_100_senior_plus_1000_multi_lens_quality_frame",
+      "trigger_condition": "a mutating autonomy cycle can otherwise rely on verified neural/runtime gates without computing the configured 100 preparation perspectives and 25x40 expert review cells for the same decision",
+      "prevention_rule": "compute the 100+1000 internal QA matrix before every mutating autonomy cycle; hard safety/state/evidence/provenance blockers cannot be outvoted; keep existing verified-only meta-neural learning and bounded market recovery; self-added runtime functions remain allowlisted declarative capabilities; source-level changes remain non-executable proposals requiring protected PR/CI",
+      "validation_required": [
+        "base main is exactly e318e7995eb35363256901197413f34aea4facb1",
+        "functional candidate commit is exactly 03cd6a1a66baef13697ca9b6614bb8510a50c3fd",
+        "main evolve route uses tablet_autonomous_evolution_v378.py",
+        "tablet runtime manifest includes tablet_autonomous_evolution_v378.py and preserves v377/v376",
+        "quality policy validates 100 senior preparation perspectives before expert review",
+        "quality governor computes exactly 25 expert groups x 40 review lenses = 1000 cells",
+        "hard blockers cannot be overridden by review ratios or neural confidence",
+        "market freshness stress permits only bounded recovery/observation behavior",
+        "existing verified-only meta-neural training and transactional execution remain delegated to v377/v376",
+        "runtime self-extension remains allowlisted declarative capability composition only",
+        "source feature proposals remain non-executable and require protected PR/CI",
+        "physical Tablet runtime and Drive readback remain unverified until matching external evidence exists"
+      ],
+      "safety_boundary": "V378 adds an internal quality decision gate only; it does not grant source-code generation, Git writes, verification bypass, trust promotion, price/grade invention, market-direction prediction, or physical-device authority"
+    }
+  ]
+}
