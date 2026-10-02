@@ -83,7 +83,8 @@
     "shadow_challenger_advisory_only": true,
     "feature_contracts_non_executable": true,
     "feature_contracts_require_protected_pr_ci": true,
-    "v380_gate_cannot_be_bypassed": true
+    "v380_gate_cannot_be_bypassed": true,
+    "lock_acquisition_failure_must_close_fd": true
   },
   "current_required_merge_prs": [
     206,
@@ -242,7 +243,7 @@
   },
   "candidate_sync": {
     "base_main_sha": "108adece2681783ddb46f6911da345bdb938c0cd",
-    "candidate_commit": "f6e9557c4d528c0282b7cefebcee2609700ab5cd",
+    "candidate_commit": "f1e5987233b5ec4801e974ed4256206dd1d06998",
     "watched_paths": [
       "main",
       "tablet_autonomous_evolution_v381.py",
