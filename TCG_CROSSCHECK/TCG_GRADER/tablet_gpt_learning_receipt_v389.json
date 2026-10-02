@@ -1,0 +1,50 @@
+{
+  "schema_version": "1.1-tablet-gpt-tcg-grader-learning-sync",
+  "receiver": "TCG_GRADER",
+  "source_namespace": "TABLET_GPT",
+  "source_repository": "wlghks24/-tcg-grader",
+  "source_main_sha": "d450fd918ebb2ed25adb49e2cbb14a4b14f6dadc",
+  "received_at": "2026-10-02T20:33:00+09:00",
+  "status": "SYNCED_VERIFIED",
+  "source_snapshots": [
+    "TCG_CROSSCHECK/TABLET_GPT/learning_snapshot_v388_delta.json",
+    "TCG_CROSSCHECK/TABLET_GPT/learning_snapshot_v389_delta.json"
+  ],
+  "prior_lesson_digest_sha256": "729344408aa21087881f15a5d871e413ad65c06f5aef3293ec06a6cf5bfea5bd",
+  "delta_lesson_digest_sha256": "71d04a3d4bec14ad83cdb7f9e029c68484fdc841b942d849d7aa0b059a87c7ae",
+  "accepted_lesson_ids": [
+    "TABLET-GPT-SELF-DIAGNOSING-VERIFIED-ADAPTIVE-EVOLUTION-V391"
+  ],
+  "alignment_policy": {
+    "same_digest_required": true,
+    "same_lesson_ids_required": true,
+    "same_source_main_required_for_delta": true,
+    "covered_patch_commits_must_be_ancestors": true,
+    "future_watched_main_changes_require_new_delta": true,
+    "pull_request_freshness_check_nonblocking": false,
+    "successor_generation_must_exactly_cover_prior_staleness": true,
+    "device_local_learning_state_merge_required": true,
+    "blind_overwrite_forbidden": true,
+    "grading_calibration_auto_import_forbidden": true,
+    "peer_verified_never_auto_promotes_local": true,
+    "v390_gate_cannot_be_bypassed": true,
+    "v388_gate_cannot_be_bypassed": true,
+    "self_diagnosis_operational_evidence_only": true,
+    "persistent_fault_streaks_device_local_only": true,
+    "counterfactual_decision_stress_test_deterministic": true,
+    "verified_non_recovery_regression_hold": true,
+    "recovery_regression_observe_only": true,
+    "runtime_capability_owner_v390_canonical_allowlist_only": true,
+    "source_feature_runtime_code_generation": false,
+    "source_feature_protected_pr_ci_required": true
+  },
+  "verification": {
+    "contract_version": "v389",
+    "verification_test": "test_tablet_gpt_tcg_grader_sync_v389.py",
+    "verification_mode": "exact_candidate_v391_self_diagnosing_verified_adaptive_evolution",
+    "verified_result": "TABLET_GPT_TCG_GRADER_MATCH",
+    "physical_tablet_runtime_verified": false,
+    "physical_drive_readback_verified": false,
+    "device_reverification_required": true
+  }
+}\n
