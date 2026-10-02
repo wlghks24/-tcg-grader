@@ -1,0 +1,46 @@
+{
+  "schema_version": "1.1-tablet-gpt-tcg-grader-learning-sync",
+  "receiver": "TCG_GRADER",
+  "source_namespace": "TABLET_GPT",
+  "source_repository": "wlghks24/-tcg-grader",
+  "source_main_sha": "d4e4bd16e7e853a53274119f9f10f7a5521b114c",
+  "received_at": "2026-10-02T17:05:00+09:00",
+  "status": "SYNCED_VERIFIED",
+  "source_snapshots": [
+    "TCG_CROSSCHECK/TABLET_GPT/learning_snapshot_v387_delta.json",
+    "TCG_CROSSCHECK/TABLET_GPT/learning_snapshot_v388_delta.json"
+  ],
+  "prior_lesson_digest_sha256": "c629e031276d5bff7cbb817ede6a281dc53d9ef6b822eee2343934b75384b1ca",
+  "delta_lesson_digest_sha256": "729344408aa21087881f15a5d871e413ad65c06f5aef3293ec06a6cf5bfea5bd",
+  "accepted_lesson_ids": [
+    "TABLET-GPT-GOAL-DIRECTED-VERIFIED-SELF-IMPROVEMENT-V390"
+  ],
+  "alignment_policy": {
+    "same_digest_required": true,
+    "same_lesson_ids_required": true,
+    "same_source_main_required_for_delta": true,
+    "covered_patch_commits_must_be_ancestors": true,
+    "future_watched_main_changes_require_new_delta": true,
+    "pull_request_freshness_check_nonblocking": false,
+    "successor_generation_must_exactly_cover_prior_staleness": true,
+    "device_local_learning_state_merge_required": true,
+    "blind_overwrite_forbidden": true,
+    "grading_calibration_auto_import_forbidden": true,
+    "peer_verified_never_auto_promotes_local": true,
+    "v388_gate_cannot_be_bypassed": true,
+    "meta_critic_new_verified_samples_only": true,
+    "goal_capability_canonical_allowlist_only": true,
+    "goal_capability_v388_preview_gate_required": true,
+    "source_feature_runtime_code_generation": false,
+    "source_feature_protected_pr_ci_required": true
+  },
+  "verification": {
+    "contract_version": "v388",
+    "verification_test": "test_tablet_gpt_tcg_grader_sync_v388.py",
+    "verification_mode": "exact_candidate_v390_goal_directed_verified_self_improvement",
+    "verified_result": "TABLET_GPT_TCG_GRADER_MATCH",
+    "physical_tablet_runtime_verified": false,
+    "physical_drive_readback_verified": false,
+    "device_reverification_required": true
+  }
+}
