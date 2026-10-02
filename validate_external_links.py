@@ -105,7 +105,7 @@ def _canonicalize_retired_pokemon_kr_url(url: str) -> str:
         return url
     old_path = parsed.path.rstrip("/") or "/"
     if old_path in {"/", "/card"}:
-        new_path = "/main"
+        return "https://pokemonkorea.co.kr/"
     else:
         parts = old_path.strip("/").split("/")
         if not (
