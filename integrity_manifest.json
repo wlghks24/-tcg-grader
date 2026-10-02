@@ -1,7 +1,7 @@
 {
   "version": 2,
   "engine": "v109-card-identity-ocr-learning",
-  "generated_at": "2026-10-02T07:08:00+00:00",
+  "generated_at": "2026-10-02T07:38:00+00:00",
   "files": {
     "_audit_progress.py": {
       "sha256": "e4561a89779fc9c8f4b4d474bc2ce4285b65174eb29a6bf20f47a5e30456d674",
@@ -1764,8 +1764,8 @@
       "bytes": 7715
     },
     "multi_route_event_discovery.py": {
-      "sha256": "a46a598df18906c2446ba1dbfcbe7249c19742a9f6d4f0010873b6b2edbeef71",
-      "bytes": 53055
+      "sha256": "2062ed6fd7f2ae996e8b10974acc3bb8b750ceb29e7670f7b6f5a4613f6424d4",
+      "bytes": 53053
     },
     "oauth.html": {
       "sha256": "881fba6c292e9d2c888a5b2753a0a4d2320a00aab3279f78abc4a2d5085c06de",
@@ -1880,8 +1880,8 @@
       "bytes": 6413
     },
     "release_history_backfill.py": {
-      "sha256": "12312feec89376342307eecfd730644af2e580b7ad6bf86e50d609fd20cc1aed",
-      "bytes": 20921
+      "sha256": "980d8db0af3cc0966c16aacf4b7e4f330100e626dbc675a92b7b52cc8bf1faae",
+      "bytes": 20961
     },
     "release_parser_learning.json": {
       "sha256": "6f04fa4ec27f6f304ea8249265e2d680a00c52e915208c0e1c13e412c2695e8f",
@@ -2036,8 +2036,8 @@
       "bytes": 24754
     },
     "social_event_discovery.py": {
-      "sha256": "33a8a14d77e0453d5884a503437c2bffaf9a6e5bb609302bc147f6a3d505bef0",
-      "bytes": 60378
+      "sha256": "a4dd6595de8861f6ed80d4ec4cbe86a59b4590b54218ebf7c29c63839498adf4",
+      "bytes": 60424
     },
     "social_stock_discovery.py": {
       "sha256": "285a313f5b451568b90f03f3f06bbf7a3f25e440df5c6260417cbf1a05b74ab6",
@@ -3024,8 +3024,8 @@
       "bytes": 115273
     },
     "test_0600_operational_refresh_v25.py": {
-      "sha256": "b112b778ff37ae47863ddc4786750d8b7489333f2f575fd8b88eed4b7d4e8a45",
-      "bytes": 13158
+      "sha256": "74b81dd702b34dc2cc75e051de4a9d9c2e0b5d8b348aeb5a53f2856c5e6687d9",
+      "bytes": 14320
     },
     "test_adaptive_collection_learner.py": {
       "sha256": "93ae49d960ea2468197242283bd99264fe320eb0d94f0baa455ee434b40253f1",
@@ -3208,8 +3208,8 @@
       "bytes": 4687
     },
     "test_collection_scope_compat_v214.py": {
-      "sha256": "79a161d9ef8482e73e3b3b241f4fe37fee94501fd443bf552ba68a9b509090ea",
-      "bytes": 2617
+      "sha256": "8fd3102bd19a637bc2978adac52400a13501c4bb929b957664d7de8454c8e3f5",
+      "bytes": 2681
     },
     "test_collection_verification_contextual_v257.py": {
       "sha256": "6bca7eec9887c60e9771671203cba9e34c9847f3b4bc752f4a8f34e2d0b22622",
@@ -3600,12 +3600,12 @@
       "bytes": 2478
     },
     "test_pokemon_kr_official_alias_recovery_v387.py": {
-      "sha256": "4b4b8b79526fe6a67504126171e4b69646df5bbb611bce44339a74242e30f689",
-      "bytes": 5870
+      "sha256": "18f0cb9f1a803a499a4aafc6ae55afca6bca98552a43719cecae2bcc6ceff87c",
+      "bytes": 6046
     },
     "test_pokemon_retired_link_migration_v356.py": {
-      "sha256": "4f9f4a3569f9e26847e4f515c3d1f3b46b0cc3f3a920fb883a63cc2468e688f3",
-      "bytes": 1747
+      "sha256": "5f71f03ec6f073882eef0083420609d8cfd9c390363a3ef213d65c26b5b33d28",
+      "bytes": 1826
     },
     "test_pokemon_run30_asia_recovery_v208.py": {
       "sha256": "0d5ab52c926da45c28e0572e6d4fc137e69be7c08d30ca4418718ae0ce03fd65",
@@ -3652,8 +3652,8 @@
       "bytes": 5947
     },
     "test_release_history_coverage_v4.py": {
-      "sha256": "aab22b61842b9705ba262ed6aa38d9c0de65ee9cf70a499658794180a7ded88b",
-      "bytes": 7823
+      "sha256": "432440db26494e747f021afe260d29ab39a31299df921aeac32e35d07c436c8a",
+      "bytes": 7893
     },
     "test_release_history_cumulative_coverage_v229.py": {
       "sha256": "74892232a7fca00d71f94a84f0f4d6013ce0cca5a47f74fc62e1acacb45e2c50",
@@ -4268,16 +4268,16 @@
       "bytes": 6848
     },
     "update_promo_events.py": {
-      "sha256": "6461320de9b9fee00550aad921fde7dc3f75a20613f33cea69a1679b5962f741",
-      "bytes": 65155
+      "sha256": "557274779e705ce8dbf0a01c7ae36dadfb049c9de5eb37bd3b1f7e686e8afea8",
+      "bytes": 66109
     },
     "update_purchase_sources.py": {
-      "sha256": "fdbb5bb648929347918fe8db8f83ecc4c4958c58d1b8b04e88b25a295b46fffc",
-      "bytes": 31420
+      "sha256": "bbced2d59f3d8f1081418b2a5ca689da2abb620aa024a2b71e0d87dd9a2986dd",
+      "bytes": 31382
     },
     "update_releases.py": {
-      "sha256": "9fd873f5992fe10e47a0bb1a3060874798f898d73113c06023d199d4c09fedc3",
-      "bytes": 38972
+      "sha256": "94b80f5df5167a68d12c7970afb44534c2401857fce539204171d68240a14144",
+      "bytes": 39024
     },
     "upgrade_self_learning.py": {
       "sha256": "ff772658de94366314ba785efe16c99c8783e28f6d2a6dd2f25445e5213f4c98",
@@ -4328,8 +4328,8 @@
       "bytes": 1385
     },
     "validate_external_links.py": {
-      "sha256": "c92328364ac6ccc49dab40fd9db52f1906b018de3963461b08f1fa0984735b7a",
-      "bytes": 23458
+      "sha256": "e9ae145f175fa861c1a2b1ea010257487adda7713e7faad247d959a702920864",
+      "bytes": 23274
     },
     "verified_certifications.json": {
       "sha256": "8218d4862f7e7c207eff599d530414479939773df60f0c7fbaf99aaa648efd60",

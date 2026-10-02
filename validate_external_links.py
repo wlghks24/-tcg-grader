@@ -54,11 +54,11 @@ def _probe_pair(task):
     url, request_timeout = task
     return url, probe(url, request_timeout=request_timeout)
 FALLBACKS={
- "new.pokemonkorea.co.kr":"https://new.pokemonkorea.co.kr/card",
- "pokemoncard.co.kr":"https://new.pokemonkorea.co.kr/card",
- "www.pokemoncard.co.kr":"https://new.pokemonkorea.co.kr/card",
- "pokemonkorea.co.kr":"https://new.pokemonkorea.co.kr/card",
- "www.pokemonkorea.co.kr":"https://new.pokemonkorea.co.kr/card",
+ "new.pokemonkorea.co.kr":"https://pokemonkorea.co.kr/",
+ "pokemoncard.co.kr":"https://pokemonkorea.co.kr/",
+ "www.pokemoncard.co.kr":"https://pokemonkorea.co.kr/",
+ "pokemonkorea.co.kr":"https://pokemonkorea.co.kr/",
+ "www.pokemonkorea.co.kr":"https://pokemonkorea.co.kr/",
  "onepiece-cardgame.kr":"https://onepiece-cardgame.kr/",
  "www.onepiece-cardgame.kr":"https://onepiece-cardgame.kr/",
  "www.onepiece-cardgame.com":"https://www.onepiece-cardgame.com/",
@@ -103,28 +103,18 @@ def _canonicalize_retired_pokemon_kr_url(url: str) -> str:
     host = (parsed.hostname or "").rstrip(".").lower()
     if parsed.scheme != "https":
         return url
-    live_host = "new.pokemonkorea.co.kr"
-    old_hosts = {"pokemoncard.co.kr", "www.pokemoncard.co.kr"}
-    if host == live_host:
-        return url
-    if host not in old_hosts:
+    volatile_hosts = {
+        "pokemoncard.co.kr", "www.pokemoncard.co.kr", "new.pokemonkorea.co.kr"
+    }
+    if host not in volatile_hosts:
         return url
     old_path = parsed.path.rstrip("/") or "/"
     if old_path in {"/", "/main", "/card", "/card/category/product", "/card/225"}:
-        new_path = "/card"
-    else:
-        parts = old_path.strip("/").split("/")
-        if not (
-            len(parts) == 2
-            and parts[0] == "card"
-            and parts[1].isdigit()
-            and 1 <= len(parts[1]) <= 8
-        ):
-            return url
-        new_path = f"/card/{parts[1]}"
-    return urllib.parse.urlunsplit(
-        ("https", live_host, new_path, parsed.query, parsed.fragment)
-    )
+        return "https://pokemonkorea.co.kr/"
+    # There is no safe ID-preserving mapping from legacy /card/<id> to /news/2/<id>.
+    # Preserve the original detail URL until GET proves it broken; _apply_results()
+    # will then retain original_url/original_source while using the official fallback.
+    return url
 
 def _render_template_probe(url: str) -> str:
     """Render known placeholders and encode Unicode request components safely."""

@@ -28,6 +28,7 @@ HEADERS = {
 }
 ALLOWED = {
     "pokemoncard.co.kr", "www.pokemoncard.co.kr", "new.pokemonkorea.co.kr",
+    "pokemonkorea.co.kr", "www.pokemonkorea.co.kr",
     "www.pokemon-card.com", "www.30th.pokemon-card.com", "www.pokemon.com",
     "onepiece-cardgame.kr", "www.onepiece-cardgame.kr",
     "www.onepiece-cardgame.com", "en.onepiece-cardgame.com",
