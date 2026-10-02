@@ -1,0 +1,55 @@
+{
+  "schema_version": "1.1-tablet-gpt-tcg-grader-learning-sync",
+  "namespace": "TABLET_GPT",
+  "snapshot_kind": "learning_delta",
+  "run_date_kst": "2026-10-03",
+  "built_at": "2026-10-03T08:07:00+09:00",
+  "status": "finalized",
+  "source_repository": "wlghks24/-tcg-grader",
+  "prior_delta": "TCG_CROSSCHECK/TABLET_GPT/learning_snapshot_v391_delta.json",
+  "prior_lesson_digest_sha256": "70f73a5649824ed9063b9b80d5cbe9cb28a35adb07de94cd1e48531fa2d26b58",
+  "source_main_sha": "62bc132373bc9dafb88d9057e8b3c54c2c388fea",
+  "share_policy": {
+    "explicit_patch_and_learning_lessons_only": true,
+    "chatgpt_model_weights_exported": false,
+    "raw_grading_calibration_shared": false,
+    "device_local_runtime_memory_overwritten": false,
+    "peer_verified_never_auto_promotes_local": true,
+    "ui_gap_recurrence_summary_only": true,
+    "source_feature_runtime_code_generation": false,
+    "runtime_ui_source_auto_rewrite": false
+  },
+  "covered_merges": [
+    {
+      "pr": 389,
+      "version": "team-masters-exact-official-proof-v390",
+      "merge_sha": "62bc132373bc9dafb88d9057e8b3c54c2c388fea"
+    }
+  ],
+  "lesson_digest_sha256": "7542396d90bebe06da97a5ac77a6bdea6d1b36b11553dd17d79a7cb0784139bd",
+  "lessons": [
+    {
+      "lesson_id": "TABLET-GPT-CROSS-SURFACE-UI-PWA-SELF-EVOLUTION-V399",
+      "subsystem": "tablet_gpt_cross_surface_ui_pwa_self_evolution",
+      "issue_class": "v398_verified_multi_candidate_autonomy_needs_ui_pwa_runtime_health_governance_recurrence_learning_and_operator_visibility",
+      "trigger_condition": "V398 autonomously synthesizes and evaluates verified declarative runtime capabilities, but UI/UX, PWA cache wiring, static report exposure and runtime-manifest composition are not part of the same self-diagnosis surface and the tablet has no integrated read-only view of goals, learning, canary, rollback and UI health.",
+      "prevention_rule": "V399 must keep V398 and all prior hard gates mandatory, add deterministic UI/PWA/static-server/runtime-manifest health checks, learn only recurrence counts for repeated composition gaps, promote repeated source-level UI gaps only to non-executable protected PR/CI candidates, expose a read-only tablet dashboard for the verified autonomy state, and keep runtime self-extension on V398's canonical V373 declarative capability tournament without automatic source generation or rewriting.",
+      "validation_required": [
+        "base main is exactly 62bc132373bc9dafb88d9057e8b3c54c2c388fea",
+        "functional watched-path candidate is exactly e1fd8e92784761dda62b90be8fd0597ca8e1a6e1",
+        "watched paths exactly cover VERIFY_TABLET_FINAL.sh, index.html, main, sw.js, tablet_autonomous_evolution_v399.py, tablet_autonomy_dashboard_v399.css, tablet_autonomy_dashboard_v399.js, tablet_runtime_manifest.py and tcg_updater.py",
+        "main evolve route uses tablet_autonomous_evolution_v399.py with tablet_gpt domain",
+        "tablet runtime manifest includes v399 while preserving v398, v397, v391, v390 and prior controllers",
+        "V399 delegates autonomous capability synthesis, tournament, canary learning, quarantine and exact rollback to V398 without bypass",
+        "UI runtime health checks cover dashboard assets, index wiring, PWA core assets, static report exposure, runtime manifest and main route",
+        "repeated UI/PWA composition gaps learn recurrence only and become protected PR/CI candidates after bounded recurrence",
+        "UI source-feature candidates never auto-execute, auto-generate source, auto-rewrite source or write Git",
+        "dashboard is read-only and displays goal, verified critic learning, candidate tournament, selected capability, canary, rollback, UI/PWA health and safety gate",
+        "PWA caches only the dashboard code/assets while the runtime report remains live server data",
+        "market direction, facts, prices and grades are never invented",
+        "physical Tablet runtime and Drive readback remain unverified until matching external evidence exists"
+      ],
+      "safety_boundary": "V399 extends diagnosis and visibility across UI/UX/PWA/server/runtime composition while preserving V398's verified declarative autonomy. It does not generate or rewrite source code, execute arbitrary commands, write Git/main, bypass V398/V397/V391/V390 or earlier verification, infer market direction, promote unverified facts/prices/grades, import peer weights/raw state, or claim physical-device success without evidence."
+    }
+  ]
+}
