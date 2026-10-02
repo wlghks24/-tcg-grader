@@ -46,7 +46,7 @@ FETCH_ALLOWED = ALLOWED | OFFICIAL_SOCIAL_HOSTS
 INDEXES = (
     ("KR", "원피스 카드", "https://onepiece-cardgame.kr/events.do"),
     ("KR", "원피스 카드", "https://onepiece-cardgame.kr/topics.do"),
-    ("KR", "포켓몬 카드", "https://pokemoncard.co.kr/main"),
+    ("KR", "포켓몬 카드", "https://www.pokemonkorea.co.kr/news/2"),
     ("KR", "나루토 카드", "https://www.naruto-cardgame.com/asia-en/"),
     ("JP", "포켓몬 카드", "https://www.pokemon-card.com/info/"),
     ("JP", "포켓몬 카드", "https://www.pokemon.co.jp/info/"),
@@ -74,11 +74,11 @@ DATE_PRECISIONS = {"day", "month", "season", "start-only", "unannounced"}
 ARCHIVE_GRACE_DAYS = 5
 OFFICIAL_SOURCE_REPLACEMENTS = {
     "https://pokemonkorea.co.kr/2026_battle_tournament3":
-        "https://pokemoncard.co.kr/main",
+        "https://www.pokemonkorea.co.kr/news/2",
     "https://pokemonkorea.co.kr/2026_battle_tournament3/menu800":
-        "https://pokemoncard.co.kr/main",
-    "https://pokemonkorea.co.kr/": "https://pokemoncard.co.kr/main",
-    "https://www.pokemonkorea.co.kr/": "https://pokemoncard.co.kr/main",
+        "https://www.pokemonkorea.co.kr/news/2",
+    "https://pokemonkorea.co.kr/": "https://www.pokemonkorea.co.kr/",
+    "https://www.pokemonkorea.co.kr/": "https://www.pokemonkorea.co.kr/",
 }
 
 def canonical_pokemon_kr_card_url(value: str) -> str:
@@ -103,8 +103,8 @@ KR_MOVIE_TRACKERS = (
         "reward": "한국 극장 개봉·재개봉·특별상영 일정이 공식 발표되면 날짜와 극장 정보를 표시",
         "condition": "포켓몬코리아 및 KOBIS 기준. 현재 확인 가능한 2026년 한국 신작 극장 개봉일은 공식 발표되지 않아 임의 날짜를 만들지 않음.",
         "location": "대한민국", "status": "한국 개봉일 미발표",
-        "source": "https://pokemoncard.co.kr/main",
-        "collection_source": "https://pokemoncard.co.kr/main",
+        "source": "https://www.pokemonkorea.co.kr/",
+        "collection_source": "https://www.pokemonkorea.co.kr/news/2",
         "verification_source": "https://www.kobis.or.kr/kobis/business/mast/mvie/searchMovieList.do",
         "tracking_only": True,
     },
@@ -932,14 +932,30 @@ def _pokemon_kr_same_company_event_index(url: str) -> str | None:
         return None
     if not re.fullmatch(r"/card/\d+/?", parsed.path or ""):
         return None
-    return "https://pokemoncard.co.kr/card"
+    return "https://www.pokemonkorea.co.kr/news/2"
+
+
+def _fetch_pokemon_kr_collection(url: str) -> tuple[str, str | None]:
+    """Fail over only an HTTP 410 from the retired Korean card host to current official news."""
+    try:
+        return fetch(url), None
+    except urllib.error.HTTPError as exc:
+        parsed = urllib.parse.urlsplit(str(url or ""))
+        host = (parsed.hostname or "").lower()
+        if int(getattr(exc, "code", 0) or 0) != 410 or host not in {"pokemoncard.co.kr", "www.pokemoncard.co.kr"}:
+            raise
+        fallback = "https://www.pokemonkorea.co.kr/news/2"
+        return fetch(fallback), fallback
 
 
 def check_existing(item: dict) -> tuple[dict, str | None]:
     checked = dict(item)
     try:
         collection_url = str(checked.get("collection_source") or checked["source"])
-        page = fetch(collection_url)
+        page, collection_failover = _fetch_pokemon_kr_collection(collection_url)
+        if collection_failover:
+            checked["collection_fallback_source"] = collection_failover
+            checked["collection_fallback_checked_at"] = dt.datetime.now(dt.timezone.utc).isoformat(timespec="seconds")
         if checked.get("tracking_only"):
             secondary = str(checked.get("verification_source") or "").strip()
             if secondary and secondary != checked.get("source"):
